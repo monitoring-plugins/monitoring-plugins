@@ -27,14 +27,6 @@ int timeout_interval = DEFAULT_SOCKET_TIMEOUT;
 
 /* Test input types */
 
-int is_host (char *);
-int is_addr (char *);
-int is_inet_addr (char *);
-#ifdef USE_IPV6
-int is_inet6_addr (char *);
-#endif
-int is_hostname (char *);
-
 int is_integer (char *);
 int is_intpos (char *);
 int is_intneg (char *);

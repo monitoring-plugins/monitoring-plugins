@@ -386,7 +386,7 @@ else
         if test x$enable_emulate_getaddrinfo != xyes ; then
                 AC_MSG_ERROR([getaddrinfo not found: try --with-lwres or --enable-emulate-getaddrinfo])
         fi
-        LIBOBJS="$LIBOBJS getaddrinfo.o"
+	EXTRA_NETOBJS="$EXTRA_NETOBJS getaddrinfo.o"
 fi
 
 if test x"$enable_emulate_getaddrinfo" != xno ; then
@@ -414,7 +414,8 @@ if test x"$enable_emulate_getaddrinfo" != xno ; then
         AC_SEARCH_LIBS(gethostbyname, resolv bind nsl, ,
                        [AC_MSG_ERROR([cannot find gethostbyname])])
     fi
-    LIBOBJS="$LIBOBJS gethostbyname.o"
+    EXTRA_NETOBJS="$EXTRA_NETOBJS gethostbyname.o"
+    AC_DEFINE(EMULATE_GETADDRINFO,1,[Define if emulating getaddrinfo])
 
 fi
 
@@ -1451,7 +1452,7 @@ AC_TRY_COMPILE([#ifdef __STDC__
 		[NEED_VA_LIST=-DNEED_VA_LIST AC_SUBST(NEED_VA_LIST) AC_MSG_RESULT(no)])
 
 AC_SUBST(EXTRAS)
-AC_SUBST(LIBOBJS)
+AC_SUBST(EXTRA_NETOBJS)
 AC_SUBST(DEPLIBS)
 
 AC_DEFINE_UNQUOTED(PACKAGE_VERSION,"${VERSION}",[package version])

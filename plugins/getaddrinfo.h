@@ -4,6 +4,7 @@
  *  This file is part of libESMTP, a library for submission of RFC 2822
  *  formatted electronic mail messages using the SMTP protocol described
  *  in RFC 2821.
+ *  Modified by Jeremy T. Bouse for use in Nagios plugins
  *
  *  Copyright (C) 2001,2002  Brian Stafford  <brian@stafford.uklinux.net>
  *

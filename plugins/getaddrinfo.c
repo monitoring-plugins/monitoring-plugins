@@ -2,6 +2,7 @@
  *  This file is part of libESMTP, a library for submission of RFC 2822
  *  formatted electronic mail messages using the SMTP protocol described
  *  in RFC 2821.
+ *  Modified by Jeremy T. Bouse for use in Nagios plugins
  *
  *  Copyright (C) 2001,2002  Brian Stafford  <brian@stafford.uklinux.net>
  *
@@ -89,26 +90,17 @@ getaddrinfo (const char *nodename, const char *servname,
       hints = &hint;
     }
 
-  /* servname must not be NULL in this implementation */
-  if (servname == NULL)
-    return EAI_NONAME;
-
-  /* check for tcp or udp sockets only */
-  if (hints->ai_socktype == SOCK_STREAM)
-    socktype = "tcp";
-  else if (hints->ai_socktype == SOCK_DGRAM)
-    socktype = "udp";
-  else
-    return EAI_SERVICE;
   result.ai_socktype = hints->ai_socktype;
 
   /* Note: maintain port in host byte order to make debugging easier */
-  if (isdigit (*servname))
-    port = strtol (servname, NULL, 10);
-  else if ((servent = getservbyname (servname, socktype)) != NULL)
-    port = ntohs (servent->s_port);
-  else
-    return EAI_NONAME;
+  if (servname != NULL) {
+    if (isdigit (*servname))
+      port = strtol (servname, NULL, 10);
+    else if ((servent = getservbyname (servname, socktype)) != NULL)
+      port = ntohs (servent->s_port);
+    else
+      return EAI_NONAME;
+  }
 
   /* if nodename == NULL refer to the local host for a client or any
      for a server */
@@ -309,4 +301,3 @@ gai_strerror (int ecode)
     return "unknown error";
   return eai_descr[ecode];
 }
-

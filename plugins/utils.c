@@ -27,15 +27,6 @@ void print_revision (const char *, const char *);
 void terminate (int, const char *fmt, ...);
 RETSIGTYPE timeout_alarm_handler (int);
 
-int is_host (char *);
-int is_addr (char *);
-int resolve_host_or_addr (char *, int);
-int is_inet_addr (char *);
-#ifdef USE_IPV6
-int is_inet6_addr (char *);
-#endif
-int is_hostname (char *);
-
 int is_integer (char *);
 int is_intpos (char *);
 int is_intneg (char *);
@@ -168,78 +159,6 @@ timeout_alarm_handler (int signo)
 						timeout_interval);
 		exit (STATE_CRITICAL);
 	}
-}
-
-int
-is_host (char *address)
-{
-	if (is_addr (address) || is_hostname (address))
-		return (TRUE);
-
-	return (FALSE);
-}
-
-int
-is_addr (char *address)
-{
-#ifdef USE_IPV6
-	if (is_inet_addr (address) || is_inet6_addr (address))
-#else
-	if (is_inet_addr (address))
-#endif
-		return (TRUE);
-
-	return (FALSE);
-}
-
-int
-resolve_host_or_addr (char *address, int family)
-{
-	struct addrinfo hints;
-	struct addrinfo *res;
-	int retval;
-
-	memset (&hints, 0, sizeof (hints));
-	hints.ai_family = family;
-	retval = getaddrinfo (address, NULL, &hints, &res);
-
-	if (retval != 0)
-		return FALSE;
-	else {
-		freeaddrinfo (res);
-		return TRUE;
-	}
-}
-
-int
-is_inet_addr (char *address)
-{
-	return resolve_host_or_addr (address, AF_INET);
-}
-
-#ifdef USE_IPV6
-int
-is_inet6_addr (char *address)
-{
-	return resolve_host_or_addr (address, AF_INET6);
-}
-#endif
-
-/* from RFC-1035
- * 
- * The labels must follow the rules for ARPANET host names.  They must
- * start with a letter, end with a letter or digit, and have as interior
- * characters only letters, digits, and hyphen.  There are also some
- * restrictions on the length.  Labels must be 63 characters or less. */
-
-int
-is_hostname (char *s1)
-{
-#ifdef USE_IPV6
-	return resolve_host_or_addr (s1, AF_UNSPEC);
-#else
-	return resolve_host_or_addr (s1, AF_INET);
-#endif
 }
 
 int

@@ -29,22 +29,9 @@
 *
 ****************************************************************************/
 
-#include "config.h"
-#include "common.h"
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include "netutils.h"
 
-extern int socket_timeout;
-RETSIGTYPE socket_timeout_alarm_handler (int);
-
-int process_tcp_request2 (char *, int, char *, char *, int);
-int process_tcp_request (char *, int, char *, char *, int);
-int process_udp_request (char *, int, char *, char *, int);
-int process_request (char *, int, int, char *, char *, int);
-
-int my_tcp_connect (char *, int, int *);
-int my_udp_connect (char *, int, int *);
-int my_connect (char *, int, int *, int);
+int socket_timeout = DEFAULT_SOCKET_TIMEOUT; 
 
 /* handles socket timeouts */
 void
@@ -304,3 +291,69 @@ my_connect (char *host_name, int port, int *sd, int proto)
 		return STATE_CRITICAL;
 	}
 }
+
+int
+is_host (char *address)
+{
+        if (is_addr (address) || is_hostname (address))
+                return (TRUE);
+
+        return (FALSE);
+}
+
+int
+is_addr (char *address)
+{
+#ifdef USE_IPV6
+        if (is_inet_addr (address) || is_inet6_addr (address))
+#else
+        if (is_inet_addr (address))
+#endif
+                return (TRUE);
+
+        return (FALSE);
+}
+
+int
+resolve_host_or_addr (char *address, int family)
+{
+        struct addrinfo hints;
+        struct addrinfo *res;
+        int retval;
+
+        memset (&hints, 0, sizeof (hints));
+        hints.ai_family = family;
+        retval = getaddrinfo (address, NULL, &hints, &res);
+
+        if (retval != 0)
+                return FALSE;
+        else {
+                freeaddrinfo (res);
+                return TRUE;
+        }
+}
+
+int
+is_inet_addr (char *address)
+{
+        return resolve_host_or_addr (address, AF_INET);
+}
+
+#ifdef USE_IPV6
+int
+is_inet6_addr (char *address)
+{
+        return resolve_host_or_addr (address, AF_INET6);
+}
+#endif
+
+int
+is_hostname (char *s1)
+{
+#ifdef USE_IPV6
+        return resolve_host_or_addr (s1, AF_UNSPEC);
+#else
+        return resolve_host_or_addr (s1, AF_INET);
+#endif
+}
+

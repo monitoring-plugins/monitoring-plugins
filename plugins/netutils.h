@@ -43,11 +43,20 @@ int process_tcp_request (char *address, int port, char *sbuffer,
 	char *rbuffer, int rsize);
 int process_udp_request (char *address, int port, char *sbuffer,
 	char *rbuffer, int rsize);
-int process_request (char *address, int port, char *proto, char *sbuffer,
+int process_request (char *address, int port, int proto, char *sbuffer,
 	char *rbuffer, int rsize);
 
 int my_tcp_connect (char *address, int port, int *sd);
 int my_udp_connect (char *address, int port, int *sd);
 int my_connect (char *address, int port, int *sd, int proto);
 
-int socket_timeout = DEFAULT_SOCKET_TIMEOUT;
+int is_host (char *);
+int is_addr (char *);
+int resolve_host_or_addr (char *, int);
+int is_inet_addr (char *);
+#ifdef USE_IPV6
+int is_inet6_addr (char *);
+#endif
+int is_hostname (char *);
+
+extern int socket_timeout;
