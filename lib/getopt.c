@@ -2,24 +2,26 @@
    NOTE: getopt is now part of the C library, so if you don't know what
    "Keep this file name-space clean" means, talk to drepper@gnu.org
    before changing it!
-   Copyright (C) 1987,88,89,90,91,92,93,94,95,96,98,99,2000,2001,2002
-   	Free Software Foundation, Inc.
+
+   Copyright (C) 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
+   1996, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation,
+   Inc.
+
    This file is part of the GNU C Library.
 
-   The GNU C Library is free software; you can redistribute it and/or
-   modify it under the terms of the GNU Lesser General Public
-   License as published by the Free Software Foundation; either
-   version 2.1 of the License, or (at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
 
-   The GNU C Library is distributed in the hope that it will be useful,
+   This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   Lesser General Public License for more details.
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-   You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   You should have received a copy of the GNU General Public License along
+   with this program; if not, write to the Free Software Foundation,
+   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* This tells Alpha OSF/1 not to define a getopt prototype in <stdio.h>.
    Ditto for AIX 3.2 and <stdlib.h>.  */
@@ -29,14 +31,6 @@
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
-#endif
-
-#if !defined __STDC__ || !__STDC__
-/* This is a separate conditional since some stdc systems
-   reject `defined (const)'.  */
-# ifndef const
-#  define const
-# endif
 #endif
 
 #include <stdio.h>
@@ -69,26 +63,22 @@
 # include <unistd.h>
 #endif	/* GNU C library.  */
 
+#include <string.h>
+
 #ifdef VMS
 # include <unixlib.h>
-# if HAVE_STRING_H - 0
-#  include <string.h>
-# endif
 #endif
 
-#ifndef _
+#ifdef _LIBC
+# include <libintl.h>
+#else
 /* This is for other GNU distributions with internationalized messages.  */
-# if (HAVE_LIBINTL_H && ENABLE_NLS) || defined _LIBC
-#  include <libintl.h>
-#  ifndef _
-#   define _(msgid)	gettext (msgid)
-#  endif
-# else
-#  define _(msgid)	(msgid)
-# endif
-# if defined _LIBC && defined USE_IN_LIBIO
-#  include <wchar.h>
-# endif
+# include "gettext.h"
+#endif
+#define _(msgid) gettext (msgid)
+
+#if defined _LIBC && defined USE_IN_LIBIO
+# include <wchar.h>
 #endif
 
 #ifndef attribute_hidden
@@ -197,20 +187,7 @@ static enum
 /* Value of POSIXLY_CORRECT environment variable.  */
 static char *posixly_correct;
 
-#ifdef	__GNU_LIBRARY__
-/* We want to avoid inclusion of string.h with non-GNU libraries
-   because there are many ways it can cause trouble.
-   On some systems, it contains special magic macros that don't work
-   in GCC.  */
-# include <string.h>
-# define my_index	strchr
-#else
-
-# if HAVE_STRING_H
-#  include <string.h>
-# else
-#  include <strings.h>
-# endif
+#ifndef	__GNU_LIBRARY__
 
 /* Avoid depending on library functions or files
    whose names are inconsistent.  */
@@ -218,32 +195,6 @@ static char *posixly_correct;
 #ifndef getenv
 extern char *getenv ();
 #endif
-
-static char *
-my_index (str, chr)
-     const char *str;
-     int chr;
-{
-  while (*str)
-    {
-      if (*str == chr)
-	return (char *) str;
-      str++;
-    }
-  return 0;
-}
-
-/* If using GCC, we can safely declare strlen this way.
-   If not using GCC, it is ok not to declare it.  */
-#ifdef __GNUC__
-/* Note that Motorola Delta 68k R3V7 comes with GCC but not stddef.h.
-   That was relevant to code that was here before.  */
-# if (!defined __STDC__ || !__STDC__) && !defined strlen
-/* gcc with -traditional declares the built-in strlen to return int,
-   and has done so at least since version 2.4.5. -- rms.  */
-extern int strlen (const char *);
-# endif /* not __STDC__ */
-#endif /* __GNUC__ */
 
 #endif /* not __GNU_LIBRARY__ */
 
@@ -298,13 +249,8 @@ static int nonoption_flags_len;
    `first_nonopt' and `last_nonopt' are relocated so that they describe
    the new indices of the non-options in ARGV after they are moved.  */
 
-#if defined __STDC__ && __STDC__
-static void exchange (char **);
-#endif
-
 static void
-exchange (argv)
-     char **argv;
+exchange (char **argv)
 {
   int bottom = first_nonopt;
   int middle = last_nonopt;
@@ -384,14 +330,8 @@ exchange (argv)
 
 /* Initialize the internal data when the first call is made.  */
 
-#if defined __STDC__ && __STDC__
-static const char *_getopt_initialize (int, char *const *, const char *);
-#endif
 static const char *
-_getopt_initialize (argc, argv, optstring)
-     int argc;
-     char *const *argv;
-     const char *optstring;
+_getopt_initialize (int argc, char *const *argv, const char *optstring)
 {
   /* Start processing options with ARGV-element 1 (since ARGV-element 0
      is the program name); the sequence of previously skipped
@@ -510,13 +450,9 @@ _getopt_initialize (argc, argv, optstring)
    long-named options.  */
 
 int
-_getopt_internal (argc, argv, optstring, longopts, longind, long_only)
-     int argc;
-     char *const *argv;
-     const char *optstring;
-     const struct option *longopts;
-     int *longind;
-     int long_only;
+_getopt_internal (int argc, char *const *argv,
+		  const char *optstring, const struct option *longopts,
+		  int *longind, int long_only)
 {
   int print_errors = opterr;
   if (optstring[0] == ':')
@@ -641,7 +577,8 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
 
   if (longopts != NULL
       && (argv[optind][1] == '-'
-	  || (long_only && (argv[optind][2] || !my_index (optstring, argv[optind][1])))))
+	  || (long_only
+	      && (argv[optind][2] || !strchr (optstring, argv[optind][1])))))
     {
       char *nameend;
       const struct option *p;
@@ -826,7 +763,7 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
 	 option, then it's an error.
 	 Otherwise interpret it as a short option.  */
       if (!long_only || argv[optind][1] == '-'
-	  || my_index (optstring, *nextchar) == NULL)
+	  || strchr (optstring, *nextchar) == NULL)
 	{
 	  if (print_errors)
 	    {
@@ -881,7 +818,7 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
 
   {
     char c = *nextchar++;
-    char *temp = my_index (optstring, c);
+    char *temp = strchr (optstring, c);
 
     /* Increment `optind' when we start to process its last character.  */
     if (*nextchar == '\0')
@@ -1191,10 +1128,7 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
 }
 
 int
-getopt (argc, argv, optstring)
-     int argc;
-     char *const *argv;
-     const char *optstring;
+getopt (int argc, char *const *argv, const char *optstring)
 {
   return _getopt_internal (argc, argv, optstring,
 			   (const struct option *) 0,
@@ -1210,9 +1144,7 @@ getopt (argc, argv, optstring)
    the above definition of `getopt'.  */
 
 int
-main (argc, argv)
-     int argc;
-     char **argv;
+main (int argc, char **argv)
 {
   int c;
   int digit_optind = 0;

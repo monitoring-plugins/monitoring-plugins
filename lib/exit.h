@@ -1,5 +1,5 @@
-/* Work around bug on some systems where malloc (0) fails.
-   Copyright (C) 1997, 1998 Free Software Foundation, Inc.
+/* exit() function.
+   Copyright (C) 1995, 2001 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,22 +15,18 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-/* written by Jim Meyering */
+#ifndef _EXIT_H
+#define _EXIT_H
 
-#if HAVE_CONFIG_H
-# include <config.h>
-#endif
-#undef malloc
-
+/* Get exit() declaration.  */
 #include <stdlib.h>
 
-/* Allocate an N-byte block of memory from the heap.
-   If N is zero, allocate a 1-byte block.  */
+/* Some systems do not define EXIT_*, even with STDC_HEADERS.  */
+#ifndef EXIT_SUCCESS
+# define EXIT_SUCCESS 0
+#endif
+#ifndef EXIT_FAILURE
+# define EXIT_FAILURE 1
+#endif
 
-void *
-rpl_malloc (size_t n)
-{
-  if (n == 0)
-    n = 1;
-  return malloc (n);
-}
+#endif /* _EXIT_H */

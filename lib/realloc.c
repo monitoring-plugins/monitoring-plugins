@@ -1,5 +1,5 @@
 /* Work around bug on some systems where realloc (NULL, 0) fails.
-   Copyright (C) 1997 Free Software Foundation, Inc.
+   Copyright (C) 1997, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,19 +22,14 @@
 #endif
 #undef realloc
 
-#include <sys/types.h>
-
-char *malloc ();
-char *realloc ();
+#include <stdlib.h>
 
 /* Change the size of an allocated block of memory P to N bytes,
    with error checking.  If N is zero, change it to 1.  If P is NULL,
    use malloc.  */
 
-char *
-rpl_realloc (p, n)
-     char *p;
-     size_t n;
+void *
+rpl_realloc (void *p, size_t n)
 {
   if (n == 0)
     n = 1;

@@ -1,5 +1,7 @@
 /* mountlist.h -- declarations for list of mounted filesystems
-   Copyright (C) 1991, 1992, 1998, 2000 Free Software Foundation, Inc.
+
+   Copyright (C) 1991, 1992, 1998, 2000, 2001, 2002, 2003 Free
+   Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -24,27 +26,28 @@ struct mount_entry
   dev_t me_dev;			/* Device number of me_mountdir. */
   unsigned int me_dummy : 1;	/* Nonzero for dummy filesystems. */
   unsigned int me_remote : 1;	/* Nonzero for remote fileystems. */
+  unsigned int me_type_malloced : 1; /* Nonzero if me_type was malloced. */
   struct mount_entry *me_next;
 };
 
-#ifndef PARAMS
-# if defined PROTOTYPES || (defined __STDC__ && __STDC__)
-#  define PARAMS(Args) Args
-# else
-#  define PARAMS(Args) ()
-# endif
-#endif
-
-struct mount_entry *read_filesystem_list PARAMS ((int need_fs_type));
+struct mount_entry *read_filesystem_list (int need_fs_type);
 
 #ifndef ME_DUMMY
-# define ME_DUMMY(fs_name, fs_type) \
-    (!strcmp (fs_type, "auto") \
-     || !strcmp (fs_type, "autofs") \
+# define ME_DUMMY(Fs_name, Fs_type) \
+    (!strcmp (Fs_type, "autofs") \
      /* for Irix 6.5 */ \
-     || !strcmp (fs_type, "ignore"))
+     || !strcmp (Fs_type, "ignore"))
 #endif
 
+#undef STREQ
+#define STREQ(a, b) (strcmp ((a), (b)) == 0)
+
 #ifndef ME_REMOTE
-# define ME_REMOTE(fs_name, fs_type) (strchr (fs_name, ':') != 0)
+/* A file system is `remote' if its Fs_name contains a `:'
+   or if (it is of type smbfs and its Fs_name starts with `//').  */
+# define ME_REMOTE(Fs_name, Fs_type)	\
+    (strchr ((Fs_name), ':') != 0	\
+     || ((Fs_name)[0] == '/'		\
+	 && (Fs_name)[1] == '/'		\
+	 && STREQ (Fs_type, "smbfs")))
 #endif

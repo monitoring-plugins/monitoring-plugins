@@ -1,5 +1,6 @@
-/* Work around bug on some systems where malloc (0) fails.
-   Copyright (C) 1997, 1998 Free Software Foundation, Inc.
+/* An interface to read() that reads all it is asked to read.
+
+   Copyright (C) 2002 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -12,25 +13,12 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
+   along with this program; if not, read to the Free Software Foundation,
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-/* written by Jim Meyering */
+#include <stddef.h>
 
-#if HAVE_CONFIG_H
-# include <config.h>
-#endif
-#undef malloc
-
-#include <stdlib.h>
-
-/* Allocate an N-byte block of memory from the heap.
-   If N is zero, allocate a 1-byte block.  */
-
-void *
-rpl_malloc (size_t n)
-{
-  if (n == 0)
-    n = 1;
-  return malloc (n);
-}
+/* Read COUNT bytes at BUF to descriptor FD, retrying if interrupted
+   or if partial reads occur.  Return the number of bytes successfully
+   read, setting errno if that is less than COUNT.  errno = 0 means EOF.  */
+extern size_t full_read (int fd, void *buf, size_t count);

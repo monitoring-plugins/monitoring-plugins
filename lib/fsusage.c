@@ -1,5 +1,7 @@
 /* fsusage.c -- return space usage of mounted filesystems
-   Copyright (C) 1991, 1992, 1996, 1998, 1999 Free Software Foundation, Inc.
+
+   Copyright (C) 1991, 1992, 1996, 1998, 1999, 2002, 2003 Free
+   Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,23 +17,26 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-#include "config.h"
+#if HAVE_CONFIG_H
+# include <config.h>
+#endif
 
 #if HAVE_INTTYPES_H
 # include <inttypes.h>
+#else
+# if HAVE_STDINT_H
+#  include <stdint.h>
+# endif
 #endif
+#ifndef UINTMAX_MAX
+# define UINTMAX_MAX ((uintmax_t) -1)
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "fsusage.h"
 
-#if HAVE_LIMITS_H
-# include <limits.h>
-#endif
-#ifndef CHAR_BIT
-# define CHAR_BIT 8
-#endif
-
-int statfs ();
+#include <limits.h>
 
 #if HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -49,7 +54,7 @@ int statfs ();
 # include <sys/fs/s5param.h>
 #endif
 
-#if defined (HAVE_SYS_FILSYS_H) && !defined (_CRAY)
+#if defined HAVE_SYS_FILSYS_H && !defined _CRAY
 # include <sys/filsys.h>	/* SVR2 */
 #endif
 
@@ -70,11 +75,18 @@ int statfs ();
 int statvfs ();
 #endif
 
+#include "full-read.h"
+
 /* Many space usage primitives use all 1 bits to denote a value that is
    not applicable or unknown.  Propagate this information by returning
-   a uintmax_t value that is all 1 bits if the argument is all 1 bits,
-   even if the argument is unsigned and smaller than uintmax_t.  */
-#define PROPAGATE_ALL_ONES(x) ((x) == -1 ? (uintmax_t) -1 : (uintmax_t) (x))
+   a uintmax_t value that is all 1 bits if X is all 1 bits, even if X
+   is unsigned and narrower than uintmax_t.  */
+#define PROPAGATE_ALL_ONES(x) \
+  ((sizeof (x) < sizeof (uintmax_t) \
+    && (~ (x) == (sizeof (x) < sizeof (int) \
+		  ? - (1 << (sizeof (x) * CHAR_BIT)) \
+		  : 0))) \
+   ? UINTMAX_MAX : (x))
 
 /* Extract the top bit of X as an uintmax_t value.  */
 #define EXTRACT_TOP_BIT(x) ((x) \
@@ -88,8 +100,6 @@ int statvfs ();
    Use PROPAGATE_TOP_BIT if the original value might be negative;
    otherwise, use PROPAGATE_ALL_ONES.  */
 #define PROPAGATE_TOP_BIT(x) ((x) | ~ (EXTRACT_TOP_BIT (x) - 1))
-
-int safe_read ();
 
 /* Fill in the fields of FSP with information about space usage for
    the filesystem on which PATH resides.
@@ -147,7 +157,7 @@ get_fs_usage (const char *path, const char *disk, struct fs_usage *fsp)
   if (fd < 0)
     return -1;
   lseek (fd, (off_t) SUPERBOFF, 0);
-  if (safe_read (fd, (char *) &fsd, sizeof fsd) != sizeof fsd)
+  if (full_read (fd, (char *) &fsd, sizeof fsd) != sizeof fsd)
     {
       close (fd);
       return -1;
@@ -160,7 +170,7 @@ get_fs_usage (const char *path, const char *disk, struct fs_usage *fsp)
   fsp->fsu_bavail = PROPAGATE_TOP_BIT (fsd.s_tfree);
   fsp->fsu_bavail_top_bit_set = EXTRACT_TOP_BIT (fsd.s_tfree) != 0;
   fsp->fsu_files = (fsd.s_isize == -1
-		    ? (uintmax_t) -1
+		    ? UINTMAX_MAX
 		    : (fsd.s_isize - 2) * INOPB * (fsd.s_type == Fs2b ? 2 : 1));
   fsp->fsu_ffree = PROPAGATE_ALL_ONES (fsd.s_tinode);
 
@@ -217,7 +227,7 @@ get_fs_usage (const char *path, const char *disk, struct fs_usage *fsp)
   /* Empirically, the block counts on most SVR3 and SVR3-derived
      systems seem to always be in terms of 512-byte blocks,
      no matter what value f_bsize has.  */
-# if _AIX || defined(_CRAY)
+# if _AIX || defined _CRAY
    fsp->fsu_blocksize = PROPAGATE_ALL_ONES (fsd.f_bsize);
 # else
    fsp->fsu_blocksize = 512;
@@ -233,12 +243,13 @@ get_fs_usage (const char *path, const char *disk, struct fs_usage *fsp)
     return -1;
 
   /* f_frsize isn't guaranteed to be supported.  */
-  fsp->fsu_blocksize =
-    PROPAGATE_ALL_ONES (fsd.f_frsize ? fsd.f_frsize : fsd.f_bsize);
+  fsp->fsu_blocksize = (fsd.f_frsize
+			? PROPAGATE_ALL_ONES (fsd.f_frsize)
+			: PROPAGATE_ALL_ONES (fsd.f_bsize));
 
 #endif /* STAT_STATVFS */
 
-#if !defined(STAT_STATFS2_FS_DATA) && !defined(STAT_READ_FILSYS)
+#if !defined STAT_STATFS2_FS_DATA && !defined STAT_READ_FILSYS
 				/* !Ultrix && !SVR2 */
 
   fsp->fsu_blocks = PROPAGATE_ALL_ONES (fsd.f_blocks);
@@ -253,7 +264,7 @@ get_fs_usage (const char *path, const char *disk, struct fs_usage *fsp)
   return 0;
 }
 
-#if defined(_AIX) && defined(_I386)
+#if defined _AIX && defined _I386
 /* AIX PS/2 does not supply statfs.  */
 
 int
