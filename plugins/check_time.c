@@ -43,6 +43,7 @@ unsigned long critical_diff = 0;
 int check_critical_diff = FALSE;
 int server_port = TIME_PORT;
 char *server_address = NULL;
+int use_udp = FALSE;
 
 int process_arguments (int, char **);
 void print_help (void);
@@ -65,7 +66,13 @@ main (int argc, char **argv)
 	time (&start_time);
 
 	/* try to connect to the host at the given port number */
-	if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK) {
+	if (use_udp) {
+		result = my_udp_connect (server_address, server_port, &sd);
+	} else {
+		result = my_tcp_connect (server_address, server_port, &sd);
+	}
+
+	if (result != STATE_OK) {
 		if (check_critical_time == TRUE)
 			result = STATE_CRITICAL;
 		else if (check_warning_time == TRUE)
@@ -75,6 +82,20 @@ main (int argc, char **argv)
 		die (result,
 		           _("TIME UNKNOWN - could not connect to server %s, port %d\n"),
 		           server_address, server_port);
+	}
+
+	if (use_udp) {
+		if (send (sd, "", 0, 0) < 0) {
+			if (check_critical_time == TRUE)
+				result = STATE_CRITICAL;
+			else if (check_warning_time == TRUE)
+				result = STATE_WARNING;
+			else
+				result = STATE_UNKNOWN;
+			die (result, 
+			  _("TIME UNKNOWN - could not send UDP request to server %s, port %d\n"),
+			  server_address, server_port);
+		}
 	}
 
 	/* watch for the connection string */
@@ -146,6 +167,7 @@ process_arguments (int argc, char **argv)
 		{"warning-connect", required_argument, 0, 'W'},
 		{"critical-connect", required_argument, 0, 'C'},
 		{"port", required_argument, 0, 'p'},
+		{"udp", no_argument, 0, 'u'},
 		{"timeout", required_argument, 0, 't'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
@@ -169,7 +191,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "hVH:w:c:W:C:p:t:", longopts,
+		c = getopt_long (argc, argv, "hVH:w:c:W:C:p:t:u", longopts,
 									 &option);
 
 		if (c == -1 || c == EOF)
@@ -252,6 +274,8 @@ process_arguments (int argc, char **argv)
 			else
 				socket_timeout = atoi (optarg);
 			break;
+		case 'u':									/* udp */
+			use_udp = TRUE;
 		}
 	}
 
@@ -296,6 +320,8 @@ This plugin will check the time on the specified host.\n\n"));
 	printf (_(UT_HOST_PORT), 'p', myport);
 
 	printf (_("\
+ -u, --udp\n\
+    Use UDP to connect, not TCP\n\
  -w, --warning-variance=INTEGER\n\
     Time difference (sec.) necessary to result in a warning status\n\
  -c, --critical-variance=INTEGER\n\
@@ -317,7 +343,7 @@ void
 print_usage (void)
 {
 	printf (_("\
-Usage: %s -H <host_address> [-p port] [-w variance] [-c variance]\n\
+Usage: %s -H <host_address> [-p port] [-u] [-w variance] [-c variance]\n\
     [-W connect_time] [-C connect_time] [-t timeout]\n"), progname);
 	printf (_(UT_HLP_VRS), progname, progname);
 }
