@@ -63,7 +63,7 @@ main (int argc, char **argv)
 	char proc_name[MAX_INPUT_BUFFER];
 	char *message = "";
 
-	if (!process_arguments (argc, argv)) {
+	if (process_arguments (argc, argv) == ERROR) {
 		printf ("%s: failure parsing arguments\n", progname);
 		print_help (progname);
 		return STATE_UNKNOWN;
@@ -166,7 +166,6 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* help */
-			printf ("%s: Unknown argument: %s\n\n", progname, optarg);
 			print_usage (progname);
 			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
