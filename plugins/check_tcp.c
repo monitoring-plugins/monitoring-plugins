@@ -22,7 +22,6 @@
  *
  *****************************************************************************/
 
-/* const char *progname = "check_tcp"; */
 #define REVISION "$Revision$"
 #define DESCRIPTION "Check a TCP port"
 #define AUTHOR "Ethan Galstad"
@@ -65,7 +64,7 @@ int process_arguments (int, char **);
 void print_usage (void);
 void print_help (void);
 
-char *progname = NULL;
+char *progname = "check_tcp";
 char *SERVICE = NULL;
 char *SEND = NULL;
 char *EXPECT = NULL;
