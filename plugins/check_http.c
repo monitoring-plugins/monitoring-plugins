@@ -650,7 +650,7 @@ check_http (void)
 		}
 
 		/* send a newline so the server knows we're done with the request */
-		asprintf (&buf, "\r\n\r\n");
+		asprintf (&buf, "\r\n");
 		send (sd, buf, strlen (buf), 0);
 #ifdef HAVE_SSL
 	}
