@@ -8,8 +8,8 @@
 %define name %{archive}
 %endif
 
-%define version 1.3.0
-%define release alpha1
+%define version @PACKAGE_VERSION@
+%define release @PACKAGE_RELEASE@
 %define source http://nagiosplug.sourceforge.net/src/%{archive}-%{version}-%{release}.tar.gz
 
 Name: %{name}
