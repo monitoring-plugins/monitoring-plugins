@@ -470,7 +470,7 @@ int receive_dhcp_packet(void *buffer, int buffer_size, int sock, int timeout, st
         /* make sure some data has arrived */
         if(!FD_ISSET(sock,&readfds)){
 #ifdef DEBUG
-                printf("No (more) data recieved\n");
+                printf("No (more) data received\n");
 #endif
                 return ERROR;
                 }

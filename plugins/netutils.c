@@ -121,7 +121,7 @@ process_tcp_request2 (const char *server_address, int server_port,
 		if (!FD_ISSET (sd, &readfds)) {	/* it hasn't */
 			if (!recv_length) {
 				strcpy (recv_buffer, "");
-				printf ("No data was recieved from host!\n");
+				printf ("No data was received from host!\n");
 				result = STATE_WARNING;
 			}
 			else {										/* this one failed, but previous ones worked */
@@ -197,7 +197,7 @@ process_request (const char *server_address, int server_port, int proto,
 	/* make sure some data has arrived */
 	if (!FD_ISSET (sd, &readfds)) {
 		strcpy (recv_buffer, "");
-		printf ("No data was recieved from host!\n");
+		printf ("No data was received from host!\n");
 		result = STATE_WARNING;
 	}
 

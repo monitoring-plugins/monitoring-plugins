@@ -319,7 +319,7 @@ main (int argc, char **argv)
 
 	if (found == 0)
 		die (STATE_UNKNOWN,
-		     _("%s problem - No data recieved from host\nCMD: %s\n"),
+		     _("%s problem - No data received from host\nCMD: %s\n"),
 		     label,
 		     command_line);
 
