@@ -32,7 +32,6 @@ unsigned int db_port = MYSQL_PORT;
 
 int process_arguments (int, char **);
 int validate_arguments (void);
-int check_disk (int usp, int free_disk);
 void print_help (void);
 void print_usage (void);
 
