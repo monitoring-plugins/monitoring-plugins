@@ -1,4 +1,4 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.1//EN">
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.1//EN" >
 <book>
   <title>Nagios Plug-in Developer Guidelines</title>
 
@@ -149,19 +149,19 @@
 				</thead>
 				<tbody>
 					<row>
-						<entry align=center><para>0</para></entry>
+						<entry align="center"><para>0</para></entry>
 						<entry><para>Single line, minimal output. Summary</para></entry>
 					</row>
 					<row>
-						<entry align=center><para>1</para></entry>
+						<entry align="center"><para>1</para></entry>
 						<entry><para>Single line, additional information (eg list processes that fail)</para></entry>
 					</row>
 					<row>
-						<entry align=center><para>2</para></entry>
+						<entry align="center"><para>2</para></entry>
 						<entry><para>Multi line, configuration debug output (eg ps command used)</para></entry>
 					</row>
 					<row>
-						<entry align=center><para>3</para></entry>
+						<entry align="center"><para>3</para></entry>
 						<entry><para>Lots of detail for plugin problem diagnosis</para></entry>
 					</row>
 				</tbody>
@@ -209,27 +209,27 @@
 				</thead>
 				<tbody>
 					<row>
-						<entry align=center><para>0</para></entry>
-						<entry valign=middle><para>OK</para></entry>
+						<entry align="center"><para>0</para></entry>
+						<entry valign="middle"><para>OK</para></entry>
 						<entry><para>The plugin was able to check the service and it 
 						appeared to be functioning properly</para></entry>
 					</row>
 					<row>
-						<entry align=center><para>1</para></entry>
-						<entry valign=middle><para>Warning</para></entry>
+						<entry align="center"><para>1</para></entry>
+						<entry valign="middle"><para>Warning</para></entry>
 						<entry><para>The plugin was able to check the service, but it 
 						appeared to be above some "warning" threshold or did not appear 
 						to be working properly</para></entry>
 					</row>
 					<row>
-						<entry align=center><para>2</para></entry>
-						<entry valign=middle><para>Critical</para></entry>
+						<entry align="center"><para>2</para></entry>
+						<entry valign="middle"><para>Critical</para></entry>
 						<entry><para>The plugin detected that either the service was not 
 						running or it was above some "critical" threshold</para></entry>
 					</row>
 					<row>
-						<entry align=center><para>3</para></entry>
-						<entry valign=middle><para>Unknown</para></entry>
+						<entry align="center"><para>3</para></entry>
+						<entry valign="middle"><para>Unknown</para></entry>
 						<entry><para>Invalid command line arguments were supplied to the 
 						plugin or the plugin was unable to check the status of the given 
 						hosts/service</para></entry>
@@ -254,7 +254,7 @@
 	
 		<para>Notes:</para>
 		<orderedlist>
-		<listitem><para>start < end</para>
+		<listitem><para>start &gt; end></para>
 			</listitem>
 		<listitem><para>start and ":" is not required if start=0</para>
 			</listitem>
@@ -421,7 +421,7 @@
 			variable values will still be in effect.</para>
 	  		</listitem>
 			
-			<listitem><para>Do not use < DATA > (these simply do not compile under ePN).</para>
+			<listitem><para>Do not use &gt; DATA &lt; (these simply do not compile under ePN).</para>
 	   		</listitem>
 
 			<listitem><para>Do not use named subroutines</para> 
@@ -429,7 +429,7 @@
 
 			<listitem><para>If writing to a file (perhaps recording
 			performance data) explicitly close close it.  The plugin never
-			calls <emphasis role=strong>exit</emphasis>; that is caught by
+			calls <emphasis role="strong">exit</emphasis>; that is caught by
 			p1.pl, so output streams are never closed.</para>
 			</listitem>
 		
@@ -649,6 +649,13 @@ update the AUTHORS file.</para>
 	<ulink url="http://sourceforge.net/tracker/?group_id=29880&amp;atid=397599">SourceForge's
 	tracker system for Nagiosplug patches</ulink> 
 	and be announced to the nagiosplug-devel mailing list.</para>
+
+	<para>Submission of a patch implies that the submmitter acknowledges that they
+	are the author of the code (or have permission from the author to release the code)
+	and agree that the code can be released under the GPL. The copyright for the changes will 
+	then revert to the Nagios Plugin Development Team - this is required so that any copyright 
+	infringements can be investigated quickly without contacting a huge list of copyright holders.
+	Credit will always be given for any patches through a THANKS file in the distribution.</para>
 	</section>
 
 	<section id="New_plugins"><title>New plugins</title>
