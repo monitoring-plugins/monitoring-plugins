@@ -718,6 +718,40 @@ utils (perl or c or sh) rather than cooking it's own</para>
 
 </section>
 
+<section id="Using_Sourceforge"><title>Using Sourceforge</title>
+<table id="Project_member_access"><title>Project Member Access</title>
+	<tgroup cols="9">
+		<thead>
+			<row>
+				<entry><para>Member type</para></entry>
+				<entry><para>CVS Access</para></entry>
+				<entry><para>Shell Access</para></entry>
+				<entry><para>Release Tech</para></entry>
+				<entry><para>Tracker Manager</para></entry>
+				<entry><para>Task Manager</para></entry>
+				<entry><para>Forums</para></entry>
+				<entry><para>Doc Manager</para></entry>
+				<entry><para>News</para></entry>
+				<entry><para>Screenshots</para></entry>
+			</row>
+		</thead>
+		<tbody>
+			<row>
+				<entry><para>Developer</para></entry>
+				<entry><para>Yes</para></entry>
+				<entry><para>Yes</para></entry>
+				<entry><para>No</para></entry>
+				<entry><para>-</para></entry>
+				<entry><para>A&amp;T</para></entry>
+				<entry><para>Moderator</para></entry>
+				<entry><para>Editor</para></entry>
+				<entry><para>-</para></entry>
+				<entry><para>-</para></entry>
+			</row>
+		</tbody>
+	</tgroup>
+</table>
+</section>
 </article>
   
 </book>
