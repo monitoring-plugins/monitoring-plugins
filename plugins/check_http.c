@@ -41,7 +41,7 @@ strings and regular expressions, check connection times, and report on\n\
 certificate expiration times.\n"
 
 #define OPTIONS "\
-\(-H <vhost> | -I <IP-address>) [-u <uri>] [-p <port>]\n\
+(-H <vhost> | -I <IP-address>) [-u <uri>] [-p <port>]\n\
             [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L]\n\
             [-a auth] [-f <ok | warn | critcal | follow>] [-e <expect>]\n\
             [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n\
