@@ -2,6 +2,9 @@
 # $Id$
 #
 # $Log$
+# Revision 1.3  2002/05/10 03:49:22  sghosh
+# added programs to autoconf
+#
 # Revision 1.2  2002/05/08 05:10:35  sghosh
 #  is_hostname added, update CODES to POSIX
 #
@@ -19,9 +22,17 @@ sub usage;
 sub support();
 sub is_hostname;
 
+## updated by autoconf
+$PATH_TO_RPCINFO = "@PATH_TO_RPCINFO@" ;
+$PATH_TO_NTPDATE = "@PATH_TO_NTPDATE@" ;
+$PATH_TO_NTPDC   = "@PATH_TO_NTPDC@" ;
+$PATH_TO_LMSTAT  = "@PATH_TO_LMSTAT@" ;
+
+## common variables
 $TIMEOUT = 15;
 %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
 
+## utility subroutines
 sub print_revision ($$) {
 	my $commandName = shift;
 	my $pluginRevision = shift;

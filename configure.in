@@ -629,6 +629,27 @@ fi
 AC_PATH_PROG(PATH_TO_UPTIME,uptime)
 AC_DEFINE_UNQUOTED(PATH_TO_UPTIME,"$PATH_TO_UPTIME")
 
+AC_PATH_PROG(PATH_TO_RPCINFO,rpcinfo)
+AC_DEFINE_UNQUOTED(PATH_TO_RPCINFO,"$PATH_TO_RPCINFO")
+
+AC_PATH_PROG(PATH_TO_NTPDATE,ntpdate)
+AC_PATH_PROG(PATH_TO_NTPDC,ntpdc)
+if (test -x "$PATH_TO_NTPDATE" || test -x "$PATH_TO_NTPDC")
+then
+	AC_DEFINE_UNQUOTED(PATH_TO_NTPDC,"$PATH_TO_NTPDC")
+	AC_DEFINE_UNQUOTED(PATH_TO_NTPDATE,"$PATH_TO_NTPDATE")
+else
+	echo "** Install NTP programs if you want to monitor time synchronization"
+fi
+
+AC_PATH_PROG(PATH_TO_LMSTAT,lmstat)
+if test -x "$PATH_TO_LMSTAT"
+then
+	AC_DEFINE_UNQUOTED(PATH_TO_LMSTAT,"$PATH_TO_LMSTAT")
+else
+	echo "** Get lmstat from Globetrotter Software to monitor flexlm licenses"
+fi
+
 AC_PATH_PROG(PATH_TO_WHO,who)
 if [who -q 2>/dev/null | egrep -i "^# users=[0-9]+$" >/dev/null]
 then
@@ -638,7 +659,7 @@ else
 fi
 
 AC_PATH_PROG(PATH_TO_SNMPGET,snmpget)
-if test -f "$PATH_TO_SNMPGET"
+if test -x "$PATH_TO_SNMPGET"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_SNMPGET,"$PATH_TO_SNMPGET")
 	EXTRAS="$EXTRAS check_hpjd check_snmp"
@@ -647,18 +668,26 @@ else
 fi
 
 AC_PATH_PROG(PATH_TO_SNMPGETNEXT,snmpgetnext)
-if test -f "$PATH_TO_SNMPGETNEXT"
+if test -x "$PATH_TO_SNMPGETNEXT"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_SNMPGETNEXT,"$PATH_TO_SNMPGETNEXT")
 fi
 
+if ( $PERL -MNet::SNMP -e 'print $Net::SNMP::VERSION;'  )
+then
+	echo "Found Net::SNMP perl module"
+else
+	echo "** Tried $PERL - install Net::SNMP perl module if you want to"
+	echo "        use the perl snmp plugins"
+fi
+
 AC_PATH_PROG(PATH_TO_QUAKESTAT,quakestat)
 AC_PATH_PROG(PATH_TO_QSTAT,qstat)
-if test -n "$PATH_TO_QUAKESTAT"
+if test -x "$PATH_TO_QUAKESTAT"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_QSTAT,"$PATH_TO_QUAKESTAT")
 	EXTRAS="$EXTRAS check_game"
-elif test -n "$PATH_TO_QSTAT"
+elif test -x "$PATH_TO_QSTAT"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_QSTAT,"$PATH_TO_QSTAT")
 	EXTRAS="$EXTRAS check_game"
@@ -667,7 +696,7 @@ else
 fi
 
 AC_PATH_PROG(PATH_TO_FPING,fping)
-if test -n "$PATH_TO_FPING"
+if test -x "$PATH_TO_FPING"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_FPING,"$PATH_TO_FPING")
 	EXTRAS="$EXTRAS check_fping"
@@ -676,7 +705,7 @@ else
 fi
 
 AC_PATH_PROG(PATH_TO_SSH,ssh)
-if test -f "$PATH_TO_SSH"
+if test -x "$PATH_TO_SSH"
 then
 	AC_DEFINE_UNQUOTED(SSH_COMMAND,"$PATH_TO_SSH")
 	EXTRAS="$EXTRAS check_by_ssh"
