@@ -34,6 +34,7 @@
 #undef HAVE_STRINGS_H
 #undef HAVE_STRING_H
 
+#include "config.h"
 #include "common.h"
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -41,22 +42,16 @@
 void socket_timeout_alarm_handler (int);
 
 int process_tcp_request2 (char *address, int port, char *sbuffer,
-													char *rbuffer, int rsize);
+	char *rbuffer, int rsize);
 int process_tcp_request (char *address, int port, char *sbuffer,
-												 char *rbuffer, int rsize);
+	char *rbuffer, int rsize);
 int process_udp_request (char *address, int port, char *sbuffer,
-												 char *rbuffer, int rsize);
+	char *rbuffer, int rsize);
 int process_request (char *address, int port, char *proto, char *sbuffer,
-										 char *rbuffer, int rsize);
+	char *rbuffer, int rsize);
 
 int my_tcp_connect (char *address, int port, int *sd);
 int my_udp_connect (char *address, int port, int *sd);
-int my_connect (char *address, int port, int *sd, char *proto);
+int my_connect (char *address, int port, int *sd, int proto);
 
-int my_inet_aton (register const char *cp, struct in_addr *addr);
-
-#ifndef DEFAULT_SOCKET_TIMEOUT
-#include "config.h"
-#include "common.h"
-#endif
 int socket_timeout = DEFAULT_SOCKET_TIMEOUT;

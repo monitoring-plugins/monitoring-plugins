@@ -17,6 +17,8 @@
 #include <stdarg.h>
 #include <limits.h>
 
+#include <arpa/inet.h>
+
 extern int timeout_interval;
 extern const char *progname;
 
@@ -27,7 +29,10 @@ void terminate (int, const char *fmt, ...);
 RETSIGTYPE timeout_alarm_handler (int);
 
 int is_host (char *);
-int is_dotted_quad (char *);
+int is_addr (char *);
+int resolve_host_or_addr (char *, int);
+int is_inet_addr (char *);
+int is_inet6_addr (char *);
 int is_hostname (char *);
 
 int is_integer (char *);
@@ -58,7 +63,7 @@ char *strpcat (char *dest, const char *src, const char *str);
 #define TXTBLK 128
 
 /* **************************************************************************
- * max_state(STATE_x, STATE_y)
+ /* max_state(STATE_x, STATE_y)
  * compares STATE_x to  STATE_y and returns result based on the following
  * STATE_UNKNOWN < STATE_OK < STATE_WARNING < STATE_CRITICAL
  *
@@ -167,28 +172,50 @@ timeout_alarm_handler (int signo)
 int
 is_host (char *address)
 {
-	if (is_dotted_quad (address) || is_hostname (address))
+	if (is_addr (address) || is_hostname (address))
 		return (TRUE);
+
 	return (FALSE);
 }
 
 int
-is_dotted_quad (char *address)
+is_addr (char *address)
 {
-	int o1, o2, o3, o4;
-	char c[1];
+	if (is_inet_addr (address) || is_inet6_addr (address))
+		return (TRUE);
 
-	if (!address)
-		return FALSE;
+	return (FALSE);
+}
 
-	if (sscanf (address, "%d.%d.%d.%d%c", &o1, &o2, &o3, &o4, c) != 4)
+int
+resolve_host_or_addr (char *address, int family)
+{
+	struct addrinfo hints;
+	struct addrinfo *res;
+	int retval;
+
+	memset (&hints, 0, sizeof (hints));
+	hints.ai_family = family;
+	retval = getaddrinfo (address, NULL, &hints, &res);
+
+	if (retval != 0)
 		return FALSE;
-	else if (o1 > 255 || o2 > 255 || o3 > 255 || o4 > 255)
-		return FALSE;
-	else if (o1 < 0 || o2 < 0 || o3 < 0 || o4 < 0)
-		return FALSE;
-	else
+	else {
+		freeaddrinfo (res);
 		return TRUE;
+	}
+}
+
+int
+is_inet_addr (char *address)
+{
+	return resolve_host_or_addr (address, AF_INET);
+}
+
+int
+is_inet6_addr (char *address)
+{
+	return resolve_host_or_addr (address, AF_INET6);
 }
 
 /* from RFC-1035
@@ -201,22 +228,7 @@ is_dotted_quad (char *address)
 int
 is_hostname (char *s1)
 {
-	if (!s1 || strlen (s1) > 63) {
-		return FALSE;
-	}
-	if (strcspn (s1, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUWVXYZ0123456789-.") !=	0) {
-		return FALSE;
-	}
-	if (strspn (s1, "0123456789-.") == 1) {
-		return FALSE;
-	}
-	while ((s1 = index (s1, '.'))) {
-		s1++;
-		if (strspn (s1, "0123456789-.") == 1) {
-			return FALSE;
-		}
-	}
-	return TRUE;
+	return resolve_host_or_addr (s1, AF_UNSPEC);
 }
 
 int
