@@ -16,8 +16,11 @@ Nagios Plugins README
   the basic guidleines for development will provide detailed help when
   invoked with the '-h' option ('--help' also, if long options are enabled).
 
-* The file command.cfg contains xample configurations for many of the
+* The file command.cfg contains example configurations for many of the
   plugins
+
+* The check_nt plugin is no longer distributed here.  See the main NSClient
+  distribution at http://nsclient.ready2run.nl
 
 You can check for the latest plugins at:
   ftp://download.sourceforge.net/pub/sourceforge/nagiosplug
