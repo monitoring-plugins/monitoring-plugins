@@ -91,10 +91,10 @@ static int require_sync = 0;
 
 /* A filesystem type to display. */
 
-struct fs_type_list
+struct name_list
 {
-  char *fs_name;
-  struct fs_type_list *fs_next;
+  char *name;
+  struct name_list *name_next;
 };
 
 /* Linked list of filesystem types to display.
@@ -108,12 +108,16 @@ struct fs_type_list
    Some filesystem types:
    4.2 4.3 ufs nfs swap ignore io vm efs dbg */
 
-static struct fs_type_list *fs_select_list;
+static struct name_list *fs_select_list;
 
 /* Linked list of filesystem types to omit.
    If the list is empty, don't exclude any types.  */
 
-static struct fs_type_list *fs_exclude_list;
+static struct name_list *fs_exclude_list;
+
+static struct name_list *path_select_list;
+
+static struct name_list *dev_select_list;
 
 /* Linked list of mounted filesystems. */
 static struct mount_entry *mount_list;
@@ -169,28 +173,36 @@ main (int argc, char **argv)
 	struct fs_usage fsp;
 	char *disk;
 
+	mount_list = read_filesystem_list (0);
+
 	if (process_arguments (argc, argv) != OK)
 		usage ("Could not parse arguments\n");
 
-	mount_list = read_filesystem_list (0);
-
   for (me = mount_list; me; me = me->me_next) {
-		get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
+
+		if ((dev_select_list &&
+		     ! strcmp (dev_select_list->name, me->me_devname)) ||
+		    (path_select_list &&
+		     ! strcmp (path_select_list->name, me->me_mountdir)))
+			get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
+		else if (dev_select_list || path_select_list)
+			continue;
+		else
+			get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
+
 		if (fsp.fsu_blocks && strcmp ("none", me->me_mountdir)) {
 			usp = (fsp.fsu_blocks - fsp.fsu_bavail) * 100 / fsp.fsu_blocks;
 			disk_result = check_disk (usp, fsp.fsu_bavail);
 			result = max_state (disk_result, result);
-			asprintf (&output, "%s %llu of %llu kB (%2.0f%%) free (%d-byte blocks) on %s (%s) %d\n",
+			asprintf (&output, "%s %llu of %llu MB (%2.0f%%) free on %s\n",
 			          output,
-			          fsp.fsu_bavail*fsp.fsu_blocksize/1024,
-			          fsp.fsu_blocks*fsp.fsu_blocksize/1024,
+			          fsp.fsu_bavail*fsp.fsu_blocksize/1024/1024,
+			          fsp.fsu_blocks*fsp.fsu_blocksize/1024/1024,
 			          (double)fsp.fsu_bavail*100/fsp.fsu_blocks,
-			          fsp.fsu_blocksize,
-			          me->me_mountdir,
-			          me->me_type, usp);
+			          display_mntp ? me->me_devname : me->me_mountdir);
 		}
-	}
 
+	}
 
 	terminate (result, "DISK %s %s\n", state_text (result), output);
 }
@@ -200,6 +212,9 @@ int
 process_arguments (int argc, char **argv)
 {
 	int c;
+  struct name_list *se;
+  struct name_list **pathtail = &path_select_list;
+  struct name_list **devtail = &dev_select_list;
 
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -213,6 +228,7 @@ process_arguments (int argc, char **argv)
 		{"errors-only", no_argument, 0, 'e'},
 		{"help", no_argument, 0, 'h'},
 		{"mountpoint", no_argument, 0, 'm'},
+		{"device", no_argument, 0, 'd'},
 		{"exclude_device", required_argument, 0, 'x'},
 		{"quiet", no_argument, 0, 'q'},
 
@@ -227,7 +243,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "+?Vqhvet:c:w:p:x:m", long_options, &option_index);
+		c = getopt_long (argc, argv, "+?Vqhvet:c:w:p:d:x:m", long_options, &option_index);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -274,7 +290,16 @@ process_arguments (int argc, char **argv)
 				usage ("Timeout Interval must be an integer!\n");
 			}
 		case 'p':									/* path or partition */
-			path = optarg;
+			se = (struct name_list *) malloc (sizeof (struct name_list));
+			se->name = strdup (optarg);
+			*pathtail = se;
+			pathtail = &se->name_next;
+			break;
+		case 'd':									/* path or partition */
+			se = (struct name_list *) malloc (sizeof (struct name_list));
+			se->name = strdup (optarg);
+			*devtail = se;
+			devtail = &se->name_next;
 			break;
 		case 'v':									/* verbose */
 			verbose++;
