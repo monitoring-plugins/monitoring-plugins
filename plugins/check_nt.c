@@ -316,7 +316,7 @@ int main(int argc, char **argv){
 
 	case CHECK_NONE:
 	default:
-		usage (_(""));
+		usage (_("Please specify a variable to check"));
 		break;
 
 	}
