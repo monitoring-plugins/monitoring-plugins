@@ -99,26 +99,45 @@ main (int argc, char **argv)
 	if (statfs (path, &buf) == -1) {
 		switch (errno)
 			{
+#ifdef ENOTDIR
 			case ENOTDIR:
 				terminate (STATE_UNKNOWN, "A component of the path prefix is not a directory.\n");
+#endif
+#ifdef ENAMETOOLONG
 			case ENAMETOOLONG:
 				terminate (STATE_UNKNOWN, "path is too long.\n");
+#endif
+#ifdef ENOENT
 			case ENOENT:
 				terminate (STATE_UNKNOWN, "The file referred to by path does not exist.\n");
+#endif
+#ifdef EACCES
 			case EACCES:
 				terminate (STATE_UNKNOWN, "Search permission is denied for a component of the path prefix of path.\n");
+#endif
+#ifdef ELOOP
 			case ELOOP:
 				terminate (STATE_UNKNOWN, "Too many symbolic links were encountered in translating path.\n");
+#endif
+#ifdef EFAULT
 			case EFAULT:
 				terminate (STATE_UNKNOWN, "Buf or path points to an invalid address.\n");
+#endif
+#ifdef EIO
 			case EIO:
 				terminate (STATE_UNKNOWN, "An I/O error occurred while reading from or writing to the file system.\n");
+#endif
+#ifdef ENOMEM
 			case ENOMEM:
 				terminate (STATE_UNKNOWN, "Insufficient kernel memory was available.\n");
+#endif
+#ifdef ENOSYS
 			case ENOSYS:
 				terminate (STATE_UNKNOWN, "The  filesystem path is on does not support statfs.\n");
+#endif
 			}
 	}
+
 	usp = (buf.f_blocks - buf.f_bavail) / buf.f_blocks;
 	disk_result = check_disk (usp, buf.f_bavail);
 	result = disk_result;
