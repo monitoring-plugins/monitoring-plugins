@@ -220,9 +220,9 @@ process_arguments (int argc, char **argv)
 			usage ("Invalid host name/address\n");
 		server_address = argv[c++];
 	}
-	else {
+
+	if (server_address == NULL)
 		usage ("Host name was not supplied\n");
-	}
 
 	return c;
 }
