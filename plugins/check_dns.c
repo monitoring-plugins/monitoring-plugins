@@ -212,8 +212,9 @@ main (int argc, char **argv)
 		else
 			multi_address = TRUE;
 
-		printf (_("DNS ok - %.3f seconds response time, address%s %s|time=%ldus\n"),
-						elapsed_time, (multi_address==TRUE ? "es are" : " is"), address, microsec);
+		printf (_("DNS ok - %.3f seconds response time, address%s %s|%s\n"),
+						elapsed_time, (multi_address==TRUE ? "es are" : " is"), address,
+						perfdata ("time", microsec, "us", FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
 	}
 	else if (result == STATE_WARNING)
 		printf (_("DNS WARNING - %s\n"),
