@@ -960,7 +960,7 @@ fi
 
 AC_DEFINE_UNQUOTED(DF_COMMAND,"$with_df_command",[path and args for df command])
 
-jm_AFS
+dnl jm_AFS
 jm_LIST_MOUNTED_FILESYSTEMS([list_mounted_fs=yes], [list_mounted_fs=no])
 jm_FSTYPENAME
 jm_FILE_SYSTEM_USAGE([space=yes], [space=no])
