@@ -256,6 +256,7 @@ my_connect (char *host_name, int port, int *sd, int proto)
 	memset (&hints, 0, sizeof (hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_protocol = proto;
+	hints.ai_socktype = (proto == IPPROTO_UDP) ? SOCK_DGRAM : SOCK_STREAM;
 
 	snprintf (port_str, sizeof (port_str), "%d", port);
 	result = getaddrinfo (host_name, port_str, &hints, &res);
