@@ -69,6 +69,7 @@ to gather the requested system information.\n"
      DCB      = dirty cache buffers as a percentage of the total\n\
      TCB      = dirty cache buffers as a percentage of the original\n\
      UPTIME   = server uptime\n\
+     NLM:<nlm> = check if NLM is loaded and report version (e.g. \"NLM:TSANDS.NLM\")\n\
 -w, --warning=INTEGER\n\
   Threshold which will result in a warning status\n\
 -c, --critical=INTEGER\n\
@@ -127,11 +128,13 @@ Notes:\n\
 #define CHECK_TCB           26 /* check total cache buffers as a percentage of the original */
 #define CHECK_DSVER         27 /* check NDS version */
 #define CHECK_UPTIME        28 /* check server uptime */
+#define CHECK_NLM           29 /* check NLM loaded */
 
 #define PORT 9999
 
 char *server_address=NULL;
 char *volume_name=NULL;
+char *nlm_name=NULL;
 int server_port=PORT;
 unsigned long warning_value=0L;
 unsigned long critical_value=0L;
@@ -702,6 +705,20 @@ int main(int argc, char **argv){
 
 	  	asprintf(&output_message,"Up %s",recv_buffer);
 
+        } else if (vars_to_check==CHECK_NLM) {
+ 	        asprintf(&send_buffer,"S24:%s\r\n",nlm_name);
+                result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+                if(result!=STATE_OK)
+		        return result;
+
+                recv_buffer[strlen(recv_buffer)-1]=0;
+                if(strcmp(recv_buffer,"-1")) {
+                        asprintf(&output_message,"Module %s version %s is loaded",nlm_name,recv_buffer);
+                } else {
+		        result=STATE_CRITICAL;
+                        asprintf(&output_message,"Module %s is not loaded",nlm_name);
+		}
+
 	} else {
 
 		output_message = strscpy(output_message,"Nothing to check!\n");
@@ -875,6 +892,10 @@ int process_arguments(int argc, char **argv){
 					vars_to_check=CHECK_DSVER;
 				else if(!strcmp(optarg,"UPTIME"))
 					vars_to_check=CHECK_UPTIME;
+				else if(strncmp(optarg,"NLM:",4)==0) {
+				        vars_to_check=CHECK_NLM;
+					nlm_name=strscpy(nlm_name,optarg+4);
+                                }
 				else
 					return ERROR;
 				break;
