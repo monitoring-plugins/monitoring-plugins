@@ -1,35 +1,24 @@
 /******************************************************************************
-*
-* CHECK_FPING.C
-*
-* Program: Fping plugin for Nagios
-* License: GPL
-* Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)
-* $Id$
-*
-* Modifications:
-*
-* 08-24-1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)
-*            Intial Coding
-* 09-11-1999 Karl DeBisschop (kdebiss@alum.mit.edu)
-*            Change to spopen
-*            Fix so that state unknown is returned by default
-*            (formerly would give state ok if no fping specified)
-*            Add server_name to output
-*            Reformat to 80-character standard screen
-* 11-18-1999 Karl DeBisschop (kdebiss@alum.mit.edu)
-*            set STATE_WARNING of stderr written or nonzero status returned
-*
-* Description:
-*
-* This plugin will use the /bin/fping command (from saint) to ping
-* the specified host for a fast check if the host is alive. Note that
-* it is necessary to set the suid flag on fping.
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
 ******************************************************************************/
 
 const char *progname = "check_fping";
 const char *revision = "$Revision$";
-const char *copyright = "1999-2003";
+const char *copyright = "2000-2003";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -37,13 +26,12 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "netutils.h"
 #include "utils.h"
 
-#define PACKET_COUNT 1
-#define PACKET_SIZE 56
-#define UNKNOWN_PACKET_LOSS 200	/* 200% */
-#define UNKNOWN_TRIP_TIME -1.0	/* -1 seconds */
-
-#define PL 0
-#define RTA 1
+enum {
+	PACKET_COUNT = 1,
+	PACKET_SIZE = 56,
+	PL = 0,
+	RTA = 1
+};
 
 int textscan (char *buf);
 int process_arguments (int, char **);
@@ -52,13 +40,17 @@ void print_help (void);
 void print_usage (void);
 
 char *server_name = NULL;
-int cpl = UNKNOWN_PACKET_LOSS;
-int wpl = UNKNOWN_PACKET_LOSS;
-double crta = UNKNOWN_TRIP_TIME;
-double wrta = UNKNOWN_TRIP_TIME;
 int packet_size = PACKET_SIZE;
 int packet_count = PACKET_COUNT;
 int verbose = FALSE;
+int cpl;
+int wpl;
+double crta;
+double wrta;
+int cpl_p = FALSE;
+int wpl_p = FALSE;
+int crta_p = FALSE;
+int wrta_p = FALSE;
 
 int
 main (int argc, char **argv)
@@ -160,18 +152,21 @@ textscan (char *buf)
 		rtastr = 1 + index (rtastr, '/');
 		loss = strtod (losstr, NULL);
 		rta = strtod (rtastr, NULL);
-		if (cpl != UNKNOWN_PACKET_LOSS && loss > cpl)
+		if (cpl_p == TRUE && loss > cpl)
 			status = STATE_CRITICAL;
-		else if (crta <= 0 && rta > crta)
+		else if (crta_p == TRUE  && rta > crta)
 			status = STATE_CRITICAL;
-		else if (wpl != UNKNOWN_PACKET_LOSS && loss > wpl)
+		else if (wpl_p == TRUE && loss > wpl)
 			status = STATE_WARNING;
-		else if (wrta >= 0 && rta > wrta)
+		else if (wrta_p == TRUE && rta > wrta)
 			status = STATE_WARNING;
 		else
 			status = STATE_OK;
-		die (status, _("FPING %s - %s (loss=%f%%, rta=%f ms)\n"),
-							 state_text (status), server_name, loss, rta);
+		die (status,
+		      _("FPING %s - %s (loss=%.0f%%, rta=%f ms)|%s %s\n"),
+				 state_text (status), server_name, loss, rta,
+		     perfdata ("loss", (int)loss, "%", wpl_p, wpl, cpl_p, cpl, TRUE, 0, TRUE, 100),
+		     perfdata ("rta", (long int)(rta*1.0e3), "us", wrta_p, (long int)(wrta*1.0e3), crta_p, (long int)(crta*1.0e3), TRUE, 0, FALSE, 0));
 
 	}
 	else if(strstr (buf, "xmt/rcv/%loss") ) {
@@ -182,15 +177,16 @@ textscan (char *buf)
 		loss = strtod (losstr, NULL);
 		if (atoi(losstr) == 100)
 			status = STATE_CRITICAL;
-		else if (cpl != UNKNOWN_PACKET_LOSS && loss > cpl)
+		else if (cpl_p == TRUE && loss > cpl)
 			status = STATE_CRITICAL;
-		else if (wpl != UNKNOWN_PACKET_LOSS && loss > wpl)
+		else if (wpl_p == TRUE && loss > wpl)
 			status = STATE_WARNING;
 		else
 			status = STATE_OK;
-		
-		die (status, _("FPING %s - %s (loss=%f%% )\n"),
-							 state_text (status), server_name, loss );		
+		/* loss=%.0f%%;%d;%d;0;100 */
+		die (status, _("FPING %s - %s (loss=%.0f%% )|%s\n"),
+		     state_text (status), server_name, loss ,
+		     perfdata ("loss", (int)loss, "%", wpl_p, wpl, cpl_p, cpl, TRUE, 0, TRUE, 100));
 	
 	}
 	else {
@@ -267,22 +263,26 @@ process_arguments (int argc, char **argv)
 		case 'c':
 			get_threshold (optarg, rv);
 			if (rv[RTA]) {
-				crta = strtod (rv[RTA], NULL);
+				crta = 1e3 * strtod (rv[RTA], NULL);
+				crta_p = TRUE;
 				rv[RTA] = NULL;
 			}
 			if (rv[PL]) {
 				cpl = atoi (rv[PL]);
+				cpl_p = TRUE;
 				rv[PL] = NULL;
 			}
 			break;
 		case 'w':
 			get_threshold (optarg, rv);
 			if (rv[RTA]) {
-				wrta = strtod (rv[RTA], NULL);
+				wrta = 1e3 * strtod (rv[RTA], NULL);
+				wrta_p = TRUE;
 				rv[RTA] = NULL;
 			}
 			if (rv[PL]) {
 				wpl = atoi (rv[PL]);
+				wpl_p = TRUE;
 				rv[PL] = NULL;
 			}
 			break;
@@ -355,7 +355,6 @@ get_threshold (char *arg, char *rv[2])
 
 
 
-
 
 void
 print_help (void)
@@ -363,8 +362,10 @@ print_help (void)
 
 	print_revision (progname, "$Revision$");
 
+	printf (_("Copyright (c) 1999 Didi Rieder <adrieder@sbox.tu-graz.ac.at>\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
 	printf (_("\
-Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)\n\n\
 This plugin will use the /bin/fping command (from saint) to ping the\n\
 specified host for a fast check if the host is alive. Note that it is\n\
 necessary to set the suid flag on fping.\n\n"));
