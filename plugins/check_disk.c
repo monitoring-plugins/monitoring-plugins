@@ -62,6 +62,7 @@ main (int argc, char **argv)
 	int used_disk = -1;
 	int free_disk = -1;
 	int result = STATE_UNKNOWN;
+	int temp_result = STATE_UNKNOWN;
 	char *command_line = NULL;
 	char input_buffer[MAX_INPUT_BUFFER] = "";
 	char file_system[MAX_INPUT_BUFFER] = "";
@@ -99,7 +100,36 @@ main (int argc, char **argv)
 				|| sscanf (input_buffer, "%s %*s %d %d %d %d%% %s", file_system,
 				 &total_disk, &used_disk, &free_disk, &usp, &mntp) == 6) {
 
-			result = max (result, check_disk (usp, free_disk));
+			/* cannot use max now that STATE_UNKNOWN is greater than STATE_CRITICAL
+			result = max (result, check_disk (usp, free_disk)); */
+			temp_result = check_disk (usp, free_disk) ;
+
+					
+			if ( temp_result == STATE_CRITICAL ) {
+				result = STATE_CRITICAL;
+			}
+			else if (temp_result == STATE_WARNING) {
+				if ( !( result == STATE_CRITICAL) ) {
+					result = STATE_WARNING;
+				}
+			}
+			else if (temp_result == STATE_OK) {
+				if ( ! ( result == STATE_CRITICAL || result == STATE_WARNING) ){
+					result = STATE_OK;
+				}
+			}
+			else if (temp_result == STATE_UNKNOWN) {
+				if ( ! ( result == STATE_CRITICAL || result == STATE_WARNING || result == STATE_OK) ){
+					result = STATE_UNKNOWN;
+				}
+			}
+			else {
+				/* don't have a match with the return value from check_disk() */
+				result = STATE_UNKNOWN;
+			}
+				
+
+				
 			len =
 				snprintf (outbuf, MAX_INPUT_BUFFER - 1,
 									" [%d kB (%d%%) free on %s]", free_disk, 100 - usp,
@@ -115,15 +145,20 @@ main (int argc, char **argv)
 
 	/* If we get anything on stderr, at least set warning */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
-		result = max (result, STATE_WARNING);
+		/*result = max (result, STATE_WARNING); */
+		if( !( result == STATE_CRITICAL) ) {
+			result = STATE_WARNING;
+		}
 
 	/* close stderr */
 	(void) fclose (child_stderr);
 
 	/* close the pipe */
 	if (spclose (child_process))
-		result = max (result, STATE_WARNING);
-
+		/*result = max (result, STATE_WARNING); */
+		if( !( result == STATE_CRITICAL) ) {
+			result = STATE_WARNING;
+		}
 	if (usp < 0)
 		printf ("Disk \"%s\" not mounted or nonexistant\n", path);
 	else if (result == STATE_UNKNOWN)

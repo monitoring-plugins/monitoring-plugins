@@ -121,8 +121,12 @@ main (int argc, char **argv)
 	else if (pl >= wpl || rta >= wrta)
 		result = STATE_WARNING;
 	else if (pl < wpl && rta < wrta && pl >= 0 && rta >= 0)
-		result = max (result, STATE_OK);
-
+		/* cannot use the max function because STATE_UNKNOWN is now 3 gt STATE_OK			
+		result = max (result, STATE_OK);  */
+		if( !( (result == STATE_WARNING) || (result == STATE_CRITICAL) )  ) {
+			result = STATE_OK;	
+		}
+	
 	if (display_html == TRUE)
 		printf ("<A HREF='%s/traceroute.cgi?%s'>", CGIURL, server_address);
 	if (pl == 100)
@@ -381,7 +385,12 @@ run_ping (char *command_line)
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
 
 		if (strstr (input_buffer, "(DUP!)")) {
-			result = max (result, STATE_WARNING);
+			/* cannot use the max function since STATE_UNKNOWN is max
+			result = max (result, STATE_WARNING); */
+			if( !(result == STATE_CRITICAL) ){
+				result = STATE_WARNING;
+			}
+			
 			warn_text = realloc (warn_text, strlen (WARN_DUPLICATES) + 1);
 			if (warn_text == NULL)
 				terminate (STATE_UNKNOWN, "unable to realloc warn_text");
@@ -445,6 +454,9 @@ run_ping (char *command_line)
 		else if (strstr (input_buffer, "Destination Host Unreachable"))
 			terminate (STATE_CRITICAL, "PING CRITICAL - Host Unreachable (%s)",
 								 server_address);
+		else if (strstr (input_buffer, "unknown host" ) )
+			terminate (STATE_CRITICAL, "PING CRITICAL - Host not found (%s)",
+								server_address);
 
 		warn_text =
 			realloc (warn_text, strlen (warn_text) + strlen (input_buffer) + 2);
@@ -456,9 +468,15 @@ run_ping (char *command_line)
 			sprintf (warn_text, "%s %s", warn_text, input_buffer);
 
 		if (strstr (input_buffer, "DUPLICATES FOUND"))
-			result = max (result, STATE_WARNING);
+			/* cannot use the max function since STATE_UNKNOWN is max
+			result = max (result, STATE_WARNING); */
+			if( !(result == STATE_CRITICAL) ){
+				result = STATE_WARNING;
+			}
 		else
-			result = max (result, STATE_CRITICAL);
+			/* cannot use the max function since STATE_UNKNOWN is max
+			result = max (result, STATE_CRITICAL); */
+			result = STATE_CRITICAL ;
 	}
 	(void) fclose (child_stderr);
 
@@ -469,7 +487,7 @@ run_ping (char *command_line)
 
 	return result;
 }
-
+
 
 void
 print_usage (void)

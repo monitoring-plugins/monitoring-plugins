@@ -145,18 +145,29 @@ main (int argc, char **argv)
 	/* If we get anything on STDERR, at least set warning */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
 		if (verbose)
-			printf ("%s", input_buffer);
-		result = max (result, STATE_WARNING);
+			printf ("STDERR: %s", input_buffer);
+		/*Cannot use max() any more as STATE_UNKNOWN is gt STATE_CRITICAL 
+		result = max (result, STATE_WARNING); */
+		if ( !(result == STATE_CRITICAL) ) {
+			result = STATE_WARNING;
+		}
+			printf ("System call sent warnings to stderr\n");
 	}
-	if (result > STATE_OK)
+	
+/*	if (result == STATE_UNKNOWN || result == STATE_WARNING)
 		printf ("System call sent warnings to stderr\n");
-
+*/
 	(void) fclose (child_stderr);
 
 	/* close the pipe */
 	if (spclose (child_process)) {
 		printf ("System call returned nonzero status\n");
-		return max (result, STATE_WARNING);
+		if ( !(result == STATE_CRITICAL) ) {
+			return STATE_WARNING;
+		}
+		else {
+			return result ;
+		}
 	}
 
 	if (options == ALL)
@@ -164,7 +175,8 @@ main (int argc, char **argv)
 
 	if (found == 0) {							/* no process lines parsed so return STATE_UNKNOWN */
 		printf ("Unable to read output\n");
-		return max (result, STATE_UNKNOWN);
+
+		return result;
 	}
 
 	if (verbose && (options & STAT))
@@ -199,15 +211,30 @@ main (int argc, char **argv)
 	}
 	else if (wmax >= 0 && procs > wmax) {
 		printf (format, "WARNING", procs);
-		return max (result, STATE_WARNING);
+		if ( !(result == STATE_CRITICAL) ) {
+			return STATE_WARNING;
+		}
+		else {
+			return result ;
+		}
+		/*return max (result, STATE_WARNING); */
 	}
 	else if (wmin >= 0 && procs < wmin) {
 		printf (format, "WARNING", procs);
-		return max (result, STATE_WARNING);
+		if ( !(result == STATE_CRITICAL) ) {
+			return STATE_WARNING;
+		}
+		else {
+			return result ;
+		}
+		/*return max (result, STATE_WARNING); */
 	}
 
 	printf (format, "OK", procs);
-	return max (result, STATE_OK);
+	if ( result == STATE_UNKNOWN ) {
+		result = STATE_OK;
+	}
+	return result;
 }
 
 /* process command-line arguments */
