@@ -19,6 +19,8 @@ const char *revision = "$Revision$";
 const char *copyright = "1999-2002";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
+#define SLAVERESULTSIZE 40
+
 #include "common.h"
 #include "utils.h"
 #include "netutils.h"
@@ -30,6 +32,7 @@ char *db_host = NULL;
 char *db_pass = NULL;
 char *db = NULL;
 unsigned int db_port = MYSQL_PORT;
+int check_slave = 0;
 
 int process_arguments (int, char **);
 int validate_arguments (void);
@@ -41,7 +44,10 @@ main (int argc, char **argv)
 {
 
 	MYSQL mysql;
+	MYSQL_RES *res;
+	MYSQL_ROW row;
 	char *result = NULL;
+	char slaveresult[SLAVERESULTSIZE];
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -82,11 +88,58 @@ main (int argc, char **argv)
 			die (STATE_CRITICAL, "%s\n", mysql_error (&mysql));
 	}
 
+	if(check_slave) {
+		/* check the slave status */
+		if (mysql_query (&mysql, "show slave status") != 0) {
+			mysql_close (&mysql);
+			die (STATE_CRITICAL, "slave query error: %s\n", mysql_error (&mysql));
+		}
+
+		/* store the result */
+		if ( (res = mysql_store_result (&mysql)) == NULL) {
+			mysql_close (&mysql);
+			die (STATE_CRITICAL, "slave store_result error: %s\n", mysql_error (&mysql));
+		}
+
+		/* fetch the first row */
+		if ( (row = mysql_fetch_row (res)) == NULL) {
+			mysql_free_result (res);
+			mysql_close (&mysql);
+			die (STATE_CRITICAL, "slave fetch row error: %s\n", mysql_error (&mysql));
+		}
+
+		if (mysql_field_count (&mysql) == 12) {
+			/* mysql 3.23.x */
+			snprintf (slaveresult, SLAVERESULTSIZE, "Slave running: %s", row[6]);
+			if (strcmp (row[6], "Yes") != 0) {
+				mysql_free_result (res);
+				mysql_close (&mysql);
+				die (STATE_CRITICAL, "%s\n", slaveresult);
+			}
+
+		} else {
+			/* mysql 4.x.x */
+			snprintf (slaveresult, SLAVERESULTSIZE, "Slave IO: %s Slave SQL: %s", row[9], row[10]);
+			if (strcmp (row[9], "Yes") != 0 || strcmp (row[10], "Yes") != 0) {
+				mysql_free_result (res);
+				mysql_close (&mysql);
+				die (STATE_CRITICAL, "%s\n", slaveresult);
+			}
+		}
+
+		/* free the result */
+		mysql_free_result (res);
+	}
+
 	/* close the connection */
 	mysql_close (&mysql);
 
 	/* print out the result of stats */
-	printf ("%s\n", result);
+	if (check_slave) {
+		printf ("%s %s\n", result, slaveresult);
+	} else {
+		printf ("%s\n", result);
+	}
 
 	return STATE_OK;
 }
@@ -108,6 +161,7 @@ process_arguments (int argc, char **argv)
 		{"username", required_argument, 0, 'u'},
 		{"password", required_argument, 0, 'p'},
 		{"port", required_argument, 0, 'P'},
+		{"check-slave", no_argument, 0, 'S'},
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
@@ -118,7 +172,7 @@ process_arguments (int argc, char **argv)
 		return ERROR;
 
 	while (1) {
-		c = getopt_long (argc, argv, "hVP:p:u:d:H:", longopts, &option);
+		c = getopt_long (argc, argv, "hVSP:p:u:d:H:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -143,6 +197,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'P':									/* critical time threshold */
 			db_port = atoi (optarg);
+			break;
+		case 'S':
+			check_slave = 1;							/* check-slave */
 			break;
 		case 'V':									/* version */
 			print_revision (progname, revision);
@@ -234,7 +291,9 @@ print_help (void)
  -p, --password=STRING\n\
    Use the indicated password to authenticate the connection\n\
    ==> IMPORTANT: THIS FORM OF AUTHENTICATION IS NOT SECURE!!! <==\n\
-   Your clear-text password will be visible as a process table entry\n"));
+   Your clear-text password will be visible as a process table entry\n\
+ -S, --check-slave\n\
+   Check if the slave thread is running properly.\n"));
 
 	printf (_("\n\
 There are no required arguments. By default, the local database with\n\
@@ -250,7 +309,7 @@ void
 print_usage (void)
 {
 	printf (_("\
-Usage: %s [-d database] [-H host] [-P port] [-u user] [-p password]\n"),
+Usage: %s [-d database] [-H host] [-P port] [-u user] [-p password] [-S]\n"),
 	        progname);
 	printf (_(UT_HLP_VRS), progname, progname);
 }
