@@ -141,13 +141,13 @@ main(int argc, char **argv) {
 		if (result!=STATE_OK)
 			return result;
 		if (!strcmp(recv_buffer,"-1\n"))
-			asprintf (&netware_version, "%s", "");
+			netware_version = strdup("");
 		else {
 			recv_buffer[strlen(recv_buffer)-1]=0;
 			asprintf (&netware_version,_("NetWare %s: "),recv_buffer);
 		}
 	} else
-		asprintf (&netware_version, "%s", "");
+		netware_version = strdup("");
 
 
 	/* check CPU load */
