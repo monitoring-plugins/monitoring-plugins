@@ -139,7 +139,9 @@ main (int argc, char **argv)
 				address = strdup (temp_buffer);
 				strip (address);
 				if (address==NULL || strlen(address)==0)
-					terminate (STATE_CRITICAL, "DNS CRITICAL - '%s' returned empty host name string", NSLOOKUP_COMMAND);
+					terminate (STATE_CRITICAL,
+					           "DNS CRITICAL - '%s' returned empty host name string\n",
+					           NSLOOKUP_COMMAND);
 				result = STATE_OK;
 			}
 			else {
@@ -175,6 +177,13 @@ main (int argc, char **argv)
 		if (!strcmp (output, ""))
 			output = strscpy (output, "nslookup returned error status");
 	}
+
+	/* If we got here, we should have an address string, 
+	   and we can segfault if we do not */
+	if (address==NULL || strlen(address)==0)
+		terminate (STATE_CRITICAL,
+		           "DNS CRITICAL - '%s' output parsing exited with no address\n",
+		           NSLOOKUP_COMMAND);
 
 	/* compare to expected address */
 	if (result == STATE_OK && match_expected_address && strcmp(address, expected_address)) {
