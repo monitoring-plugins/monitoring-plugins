@@ -63,6 +63,10 @@ to gather the requested system information.\n"
      VKNP<vol> = KB of not yet purgeable space on volume <vol>\n\
      ABENDS   = number of abended threads (NW 5.x only)\n\
      CSPROCS  = number of current service processes (NW 5.x only)\n\
+     TSYNC    = timesync status \n\
+     LRUS     = LRU sitting time in seconds\n\
+     DCB      = dirty cache buffers as a percentage of the total\n\
+     TCB      = dirty cache buffers as a percentage of the original\n\
 -w, --warning=INTEGER\n\
   Threshold which will result in a warning status\n\
 -c, --critical=INTEGER\n\
@@ -84,7 +88,8 @@ Notes:\n\
   extension for NetWare be loaded on the Novell servers you wish to check.\n\
   (available from http://www.engr.wisc.edu/~drews/mrtg/)\n\
 - Values for critical thresholds should be lower than warning thresholds\n\
-  when the following variables are checked: VPF, VKF, LTCH, CBUFF, and LRUM.\n"
+  when the following variables are checked: VPF, VKF, LTCH, CBUFF, DCB, \n\
+  TCB, LRUS and LRUM.\n"
 
 #include "config.h"
 #include "common.h"
@@ -114,6 +119,10 @@ Notes:\n\
 #define CHECK_VPNP          20 /* check % not yet purgeable space on volume */
 #define CHECK_ABENDS        21 /* check abended thread count */
 #define CHECK_CSPROCS       22 /* check number of current service processes */
+#define CHECK_TSYNC         23 /* check timesync status 0=no 1=yes in sync to the network */
+#define CHECK_LRUS          24 /* check LRU sitting time in seconds */
+#define CHECK_DCB           25 /* check dirty cache buffers as a percentage of the total */
+#define CHECK_TCB           26 /* check total cache buffers as a percentage of the original */
 
 #define PORT 9999
 
@@ -140,6 +149,9 @@ int main(int argc, char **argv){
 	char *temp_buffer=NULL;
 	char *netware_version=NULL;
 
+	int total_cache_buffers=0;
+	int dirty_cache_buffers=0;
+	int time_sync_status=0;
 	int open_files=0;
 	int abended_threads=0;
 	int max_service_processes=0;
@@ -602,6 +614,70 @@ int main(int argc, char **argv){
 
 		asprintf(&output_message,"%d current service processes (%d max)",current_service_processes,max_service_processes);
 
+	/* check # Timesync Status */
+        } else if (vars_to_check==CHECK_TSYNC) {
+
+	        asprintf(&send_buffer,"S22\r\n");
+		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		if(result!=STATE_OK)
+		        return result;
+
+		time_sync_status=atoi(recv_buffer);
+
+		if(time_sync_status==0) {
+		        result=STATE_CRITICAL;
+			asprintf(&output_message,"Critical: Time not in sync with network!");
+		}
+		else {
+		        asprintf(&output_message,"OK! Time in sync with network!");
+		}
+
+	/* check LRU sitting time in secondss */
+	} else if (vars_to_check==CHECK_LRUS) {
+
+		send_buffer = strscpy(send_buffer,"S4\r\n");
+		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		if(result!=STATE_OK)
+			return result;
+		lru_time=strtoul(recv_buffer,NULL,10);
+
+		if(check_critical_value==TRUE && lru_time <= critical_value)
+			result=STATE_CRITICAL;
+		else if(check_warning_value==TRUE && lru_time <= warning_value)
+			result=STATE_WARNING;
+		asprintf(&output_message,"LRU sitting time = %lu seconds",lru_time);
+
+
+	/* check % dirty cache buffers as a percentage of the total*/
+	} else if (vars_to_check==CHECK_DCB) {
+
+		send_buffer = strscpy(send_buffer,"S6\r\n");
+		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		if(result!=STATE_OK)
+			return result;
+		dirty_cache_buffers=atoi(recv_buffer);
+
+		if(check_critical_value==TRUE && dirty_cache_buffers <= critical_value)
+			result=STATE_CRITICAL;
+		else if(check_warning_value==TRUE && dirty_cache_buffers <= warning_value)
+			result=STATE_WARNING;
+		asprintf(&output_message,"dirty cache buffers = %d%% of the total",dirty_cache_buffers);
+
+	/* check % total cache buffers as a percentage of the original*/
+	} else if (vars_to_check==CHECK_TCB) {
+
+		send_buffer = strscpy(send_buffer,"S7\r\n");
+		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		if(result!=STATE_OK)
+			return result;
+		total_cache_buffers=atoi(recv_buffer);
+
+		if(check_critical_value==TRUE && total_cache_buffers <= critical_value)
+			result=STATE_CRITICAL;
+		else if(check_warning_value==TRUE && total_cache_buffers <= warning_value)
+			result=STATE_WARNING;
+		asprintf(&output_message,"total cache buffers = %d%% of the original",total_cache_buffers);
+		
 	} else {
 
 		output_message = strscpy(output_message,"Nothing to check!\n");
@@ -700,12 +776,18 @@ int process_arguments(int argc, char **argv){
 					vars_to_check=CHECK_CONNS;
 				else if(!strcmp(optarg,"LTCH"))
 					vars_to_check=CHECK_LTCH;
+				else if(!strcmp(optarg,"DCB"))
+					vars_to_check=CHECK_DCB;
+				else if(!strcmp(optarg,"TCB"))
+					vars_to_check=CHECK_TCB;
 				else if(!strcmp(optarg,"CBUFF"))
 					vars_to_check=CHECK_CBUFF;
 				else if(!strcmp(optarg,"CDBUFF"))
 					vars_to_check=CHECK_CDBUFF;
 				else if(!strcmp(optarg,"LRUM"))
 					vars_to_check=CHECK_LRUM;
+				else if(!strcmp(optarg,"LRUS"))
+					vars_to_check=CHECK_LRUS;
 				else if(strncmp(optarg,"VPF",3)==0){
 					vars_to_check=CHECK_VPF;
 					volume_name = strscpy(volume_name,optarg+3);
@@ -763,6 +845,8 @@ int process_arguments(int argc, char **argv){
 					vars_to_check=CHECK_ABENDS;
 				else if(!strcmp(optarg,"CSPROCS"))
 					vars_to_check=CHECK_CSPROCS;
+				else if(!strcmp(optarg,"TSYNC"))
+					vars_to_check=CHECK_TSYNC;
 				else
 					return ERROR;
 				break;
