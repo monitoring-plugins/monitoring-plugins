@@ -835,45 +835,6 @@ AC_DEFINE_UNQUOTED(PS_COMMAND,"$ac_cv_ps_command",
 AC_DEFINE_UNQUOTED(PS_FORMAT,"$ac_cv_ps_format",
 	[Format string for scanning ps output in check_procs])
 
-AC_PATH_PROG(PATH_TO_DF,df)
-AC_PATH_PROG(PATH_TO_BDF,bdf)
-
-AC_ARG_WITH(df_command,
-	ACX_HELP_STRING([--with-df-command=SYNTAX],
-		[sets syntax for df]),
-	with_df_command=$withval,)
-
-AC_MSG_CHECKING(for df syntax)
-if test -n "$with_df_command"
-then
-	AC_MSG_RESULT([$with_df_command])
-
-elif df -Pk 2>/dev/null | egrep -i ["^(/dev/|[a-zA-Z]:)[a-z0-9/\\]+ +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+% +/[a-z0-9/\\]*"] >/dev/null
-then
-	with_df_command="$PATH_TO_DF -Pk"
-	AC_MSG_RESULT([$with_df_command])
-
-elif df -k 2>/dev/null | egrep -i ["^/dev/[a-z0-9/]+ +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+% +/[a-z0-9/]*"] >/dev/null
-then
-	with_df_command="$PATH_TO_DF -k"
-	AC_MSG_RESULT([$with_df_command])
-
-elif df 2>/dev/null | egrep -i ["^/dev/[a-z0-9/]+ +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+% +/[a-z0-9/]*"] >/dev/null
-then
-	with_df_command="$PATH_TO_DF"
-	AC_MSG_RESULT([$with_df_command])
-
-elif bdf 2>/dev/null | egrep -i ["^/dev/[a-z0-9/]+ +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+% +/[a-z0-9/]*"] >/dev/null
-then
-	with_df_command="$PATH_TO_BDF"
-	AC_MSG_RESULT([$with_df_command])
-
-else
-	AC_MSG_WARN([unable to find usable df syntax])
-fi
-
-AC_DEFINE_UNQUOTED(DF_COMMAND,"$with_df_command",[path and args for df command])
-
 dnl jm_AFS
 jm_LIST_MOUNTED_FILESYSTEMS([list_mounted_fs=yes], [list_mounted_fs=no])
 jm_FSTYPENAME
@@ -1295,6 +1256,9 @@ dnl if /bin/test -e "/proc/meminfo"
 AC_PATH_PROG(PATH_TO_SWAP,swap)
 AC_PATH_PROG(PATH_TO_SWAPINFO,swapinfo)
 
+if ( test -n "$PATH_TO_SWAP" || test -n "$PATH_TO_SWAPINFO" )
+then
+
 AC_MSG_CHECKING(for how to check memory)
 if [cat /proc/meminfo > /dev/null 2>&1]
 then
@@ -1365,6 +1329,9 @@ then
 	AC_DEFINE_UNQUOTED(SWAP_CONVERSION,$ac_cv_swap_conv,
 		[Conversion factor to MB])
 fi
+
+dnl End of if SWAP
+fi 
 
 AC_PATH_PROG(PATH_TO_DIG,dig)
 AC_DEFINE_UNQUOTED(PATH_TO_DIG,"$PATH_TO_DIG",[Path to dig command, if present])
