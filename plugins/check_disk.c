@@ -115,6 +115,8 @@ static struct name_list *fs_select_list;
 
 static struct name_list *fs_exclude_list;
 
+static struct name_list *dp_exclude_list;
+
 static struct name_list *path_select_list;
 
 static struct name_list *dev_select_list;
@@ -191,6 +193,10 @@ main (int argc, char **argv)
 			continue;
 		else if (fs_exclude_list && walk_name_list (fs_exclude_list, me->me_type))
 			continue;
+		else if (dp_exclude_list && 
+		         walk_name_list (dp_exclude_list, me->me_devname) ||
+		         walk_name_list (dp_exclude_list, me->me_mountdir))
+			continue;
 		else
 			get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
 
@@ -237,6 +243,7 @@ process_arguments (int argc, char **argv)
   struct name_list **pathtail = &path_select_list;
   struct name_list **devtail = &dev_select_list;
   struct name_list **fstail = &fs_exclude_list;
+  struct name_list **dptail = &dp_exclude_list;
 
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -311,21 +318,29 @@ process_arguments (int argc, char **argv)
 			else {
 				usage ("Timeout Interval must be an integer!\n");
 			}
-		case 'p':									/* path or partition */
+		case 'p':									/* selec path */
 			se = (struct name_list *) malloc (sizeof (struct name_list));
 			se->name = strdup (optarg);
 			se->name_next = NULL;
 			*pathtail = se;
 			pathtail = &se->name_next;
 			break;
-		case 'd':									/* path or partition */
+		case 'd':									/* select partition/device */
 			se = (struct name_list *) malloc (sizeof (struct name_list));
 			se->name = strdup (optarg);
 			se->name_next = NULL;
 			*devtail = se;
 			devtail = &se->name_next;
 			break;
-		case 'X':									/* path or partition */
+ 		case 'x':									/* exclude path or partition */
+			se = (struct name_list *) malloc (sizeof (struct name_list));
+			se->name = strdup (optarg);
+			se->name_next = NULL;
+			*dptail = se;
+			dptail = &se->name_next;
+			break;
+ 			break;
+		case 'X':									/* exclude file system type */
 			se = (struct name_list *) malloc (sizeof (struct name_list));
 			se->name = strdup (optarg);
 			se->name_next = NULL;
@@ -344,9 +359,6 @@ process_arguments (int argc, char **argv)
 		case 'm': /* display mountpoint */
 			display_mntp = TRUE;
 			break;
- 		case 'x':									/* exclude path or partition */
- 			exclude_device = optarg;
- 			break;
 		case 'V':									/* version */
 			print_revision (progname, revision);
 			exit (STATE_OK);
