@@ -55,6 +55,9 @@ main (int argc, char **argv)
 	char procprog[MAX_INPUT_BUFFER];
 	char *procargs;
 	int pos, cols;
+	int expected_cols = PS_COLS - 1;
+	const char *zombie = "Z";
+	char *temp_string;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -89,6 +92,9 @@ main (int argc, char **argv)
 	}
 	fclose (fp);
 
+	if (verbose >= 2)
+		printf("command: %s\n", PS_COMMAND);
+
 	/* run the command to check for the Nagios process.. */
 	child_process = spopen (PS_COMMAND);
 	if (child_process == NULL) {
@@ -106,14 +112,31 @@ main (int argc, char **argv)
 	/* count the number of matching Nagios processes... */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
 		cols = sscanf (input_buffer, PS_FORMAT, PS_VARLIST);
-		if ( cols >= 6 ) {
+                /* Zombie processes do not give a procprog command */
+                if ( cols == (expected_cols - 1) && strstr(procstat, zombie) ) {
+                        cols = expected_cols;
+                        /* Set some value for procargs for the strip command further below
+                        Seen to be a problem on some Solaris 7 and 8 systems */
+                        input_buffer[pos] = '\n';
+                        input_buffer[pos+1] = 0x0;
+                }
+		if ( cols >= expected_cols ) {
 			asprintf (&procargs, "%s", input_buffer + pos);
 			strip (procargs);
 			
-			if (!strstr(procargs, argv[0]) && strstr(procargs, process_string)) {
+			/* Some ps return full pathname for command. This removes path */
+                        temp_string = strtok ((char *)procprog, "/");
+                        while (temp_string) {
+                                strcpy(procprog, temp_string);
+                                temp_string = strtok (NULL, "/");
+                        }
+
+			/* May get empty procargs */
+			if (!strstr(procargs, argv[0]) && strstr(procprog, process_string) && strcmp(procargs,"")) {
 				proc_entries++;
-				if (verbose)
-					printf (_("Found process: %s\n"), procargs);
+				if (verbose >= 2) {
+					printf (_("Found process: %s %s\n"), procprog, procargs);
+				}
 			}
 		}
 	}
