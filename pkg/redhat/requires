@@ -1,5 +1,5 @@
 Requires:       bind-utils
-Requires:	coreutils
+Requires:	fileutils
 Requires:	gawk
 Requires:	grep
 Requires:       iputils
@@ -14,11 +14,12 @@ Requires:	perl
 Requires:       procps
 Requires:	python
 Requires:	samba-client
+Requires:       sh-utils
 Requires:	shadow-utils
+Requires:	textutils
 Requires:	traceroute
 Requires:	/usr/bin/mailq
 BuildRequires:  bind-utils
-BuildRequires:  coreutils
 BuildRequires:  iputils
 BuildRequires:  mysql-devel
 BuildRequires:  net-snmp-utils
@@ -30,4 +31,5 @@ BuildRequires:	openssl-devel
 BuildRequires:	postgresql-devel
 BuildRequires:  procps
 BuildRequires:  samba-client
+BuildRequires:  sh-utils
 BuildRequires:	/usr/bin/mailq
