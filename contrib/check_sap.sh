@@ -3,10 +3,17 @@
 # 
 # CHECK_SAP plugin for Nagios 
 # 
-# Written by Karel Salavec (karel.salavec@ct.cz) 
-# Last Modified: 20Apr2000 
+# Originally Written by Karel Salavec (karel.salavec@ct.cz) 
+#
+# Last Modified: 26 May 2003 by Tom De Blende (tom.deblende@village.uunet.be)
+#
+# Version 1.1 (Tom De Blende)
+# - Added output to feed to Nagios instead of just an exit code.
+# - Changed info on where to get the SAP client tools for Linux.
 # 
-# Command line: CHECK_SAP <typ_of_check> <param1> <param2> [<param3>] 
+# Version 1.0 (Karel Salavec)
+#
+# Command line: check_sap.sh <typ_of_check> <param1> <param2> [<param3>] 
 # 
 # Description: 
 # This plugin will attempt to open an SAP connection with the message 
@@ -14,11 +21,9 @@
 #  It need the sapinfo program installed on your server (see Notes). 
 # 
 #  Notes: 
-#   - This plugin requires that the saprfc-devel-45A-1.i386.rpm (or higher) 
-#     package be installed on your machine. Sapinfo program 
-#     is a part of this package. 
-#   - You can find this package at SAP ftp server in 
-#    /general/misc/unsupported/linux 
+#   - This plugin requires that the sapinfo program is installed. 
+#   - Sapinfo is part of a client package that can be found 
+#     at ftp://ftp.sap.com/pub/linuxlab/contrib/. 
 # 
 # 
 #  Parameters: 
@@ -39,8 +44,16 @@
 #
 ##############################################################################
 
+sapinfocmd='/usr/sap/rfcsdk/bin/sapinfo'
+grepcmd=`which grep`
+wccmd=`which wc`
+cutcmd=`which cut`
+awkcmd=`which awk`
+
+##############################################################################
+
 if [ $# -lt 3 ]; then
-echo "Need min. 3 parameters"
+echo "Usage: $0 <typ_of_check> <param1> <param2> [<param3>]"
 exit 2
 fi
 
@@ -58,13 +71,19 @@ case "$1"
         params="ashost=$2 sysnr=$3"
         ;;
     *)
-        echo "The first parametr must be ms (message server) or as (application server)!"
+        echo "The first parameter must be ms (message server) or as (application server)!"
         exit 2
         ;;
 esac
 
-if /usr/sap/rfcsdk/bin/sapinfo $params | grep -i ERROR ; then
-exit 2
+output="$($sapinfocmd $params)"
+error="$(echo "$output" | $grepcmd ERROR | $wccmd -l)"
+if [ "$error" -gt "0" ]; then
+        output="$(echo "$output" | $grepcmd Key | $cutcmd -dy -f2)"
+        echo "CRITICAL - SAP server not ready: " $output.
+        exit 2
 else
-exit 0
+	output="$(echo "$output" | $grepcmd Destination | $awkcmd '{ print $2 }')"
+        echo "OK - SAP server $output available."
+        exit 0	
 fi
