@@ -48,7 +48,7 @@ int
 main (int argc, char **argv)
 {
 	int i = 0, found = 0, result = STATE_UNKNOWN;
-	char command_line[MAX_INPUT_BUFFER] = "";
+	char *cmd = NULL;
 	char input_buffer[MAX_INPUT_BUFFER];
 
 	if (argc < 2) {
@@ -71,20 +71,20 @@ main (int argc, char **argv)
 		exit (STATE_UNKNOWN);
 	}
 
-	sprintf (command_line, "%s", argv[2]);
+	cmd = ssprintf (cmd, "%s", argv[2]);
 	for (i = 3; i < argc; i++) {
-		sprintf (command_line, "%s %s", command_line, argv[i]);
+		cmd = ssprintf (cmd, "%s %s", cmd, argv[i]);
 	}
 
-	child_process = spopen (command_line);
+	child_process = spopen (cmd);
 	if (child_process == NULL) {
-		printf ("Could not open pipe: %s\n", command_line);
+		printf ("Could not open pipe: %s\n", cmd);
 		exit (STATE_UNKNOWN);
 	}
 
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL) {
-		printf ("Could not open stderr for %s\n", command_line);
+		printf ("Could not open stderr for %s\n", cmd);
 	}
 
 	printf ("<A href=\"%s\">", argv[1]);
@@ -101,7 +101,7 @@ main (int argc, char **argv)
 
 	if (!found) {
 		printf ("%s problem - No data recieved from host\nCMD: %s\n", argv[0],
-						command_line);
+						cmd);
 		exit (STATE_UNKNOWN);
 	}
 
