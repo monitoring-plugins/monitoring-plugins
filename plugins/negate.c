@@ -31,7 +31,7 @@ const char *progname = "negate";
 #define SUMMARY "Negates the status of a plugin (returns OK for CRITICAL, and vice-versa).\n"
 
 #define OPTIONS "\
-\[-t timeout] <definition of wrapped plugin>"
+[-t timeout] <definition of wrapped plugin>"
 
 #define LONGOPTIONS "\
   -t, --timeout=INTEGER\n\
@@ -117,7 +117,7 @@ main (int argc, char **argv)
 	char input_buffer[MAX_INPUT_BUFFER];
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage ("Could not parse arguments");
+		usage ("Could not parse arguments\n");
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR)
@@ -282,6 +282,8 @@ process_arguments (int argc, char **argv)
 int
 validate_arguments ()
 {
+	if (command_line == NULL)
+		return ERROR;
 	return STATE_OK;
 }
 
