@@ -142,7 +142,7 @@ main (int argc, char **argv)
 		asprintf (&PROGNAME, "check_pop");
 		asprintf (&SERVICE, "POP");
 		SEND = NULL;
-		asprintf (&EXPECT, "110");
+		asprintf (&EXPECT, "+OK");
 		asprintf (&QUIT, "QUIT\r\n");
 		PROTOCOL = TCP_PROTOCOL;
 		PORT = 110;
@@ -205,7 +205,7 @@ main (int argc, char **argv)
 
 	/* use default expect if none listed in process_arguments() */
 	if (EXPECT && server_expect_count == 0) {
-		server_expect = malloc (1);
+		server_expect = malloc (++server_expect_count);
 		server_expect[server_expect_count - 1] = EXPECT;
 	}
 
