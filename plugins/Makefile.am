@@ -9,7 +9,7 @@ libexec_PROGRAMS = check_disk check_dummy check_ftp check_http \
 		check_nntp check_nwstat check_overcr \
 		check_ping check_pop check_procs check_real \
 		check_smtp check_ssh check_tcp check_time check_udp \
-		check_ups check_users check_vsz urlize \
+		check_ups check_users check_vsz negate urlize \
 		@EXTRAS@
 
 EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
@@ -73,6 +73,7 @@ check_ups_LDADD = $(NETLIBS)
 check_users_LDADD = $(BASEOBJS) popen.o
 check_vsz_LDADD = $(BASEOBJS) popen.o
 check_by_ssh_LDADD = $(BASEOBJS) popen.o
+negate_LDADD = $(BASEOBJS) popen.o
 urlize_LDADD = $(BASEOBJS) popen.o
 
 check_dig_DEPENDENCIES = check_dig.c $(BASEOBJS) popen.o $(DEPLIBS)
@@ -112,6 +113,7 @@ check_ups_DEPENDENCIES = check_ups.c $(NETOBJS) $(DEPLIBS)
 check_users_DEPENDENCIES = check_users.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_vsz_DEPENDENCIES = check_vsz.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_by_ssh_DEPENDENCIES = check_by_ssh.c $(BASEOBJS) popen.o $(DEPLIBS)
+negate_DEPENDENCIES = negate.c $(BASEOBJS) popen.o $(DEPLIBS)
 urlize_DEPENDENCIES = urlize.c $(BASEOBJS) popen.o $(DEPLIBS)
 
 ##############################################################################
