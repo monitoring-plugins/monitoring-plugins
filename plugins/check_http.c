@@ -177,7 +177,7 @@ int errcode;
 #define HTTP_EXPECT "HTTP/1."
 #define HTTP_URL "/"
 
-char timestamp[10] = "";
+char timestamp[17] = "";
 int specify_port = FALSE;
 int server_port = HTTP_PORT;
 char server_port_text[6] = "";
@@ -434,7 +434,7 @@ process_arguments (int argc, char **argv)
 			regexp[MAX_RE_SIZE - 1] = 0;
 			errcode = regcomp (&preg, regexp, cflags);
 			if (errcode != 0) {
-				regerror (errcode, &preg, errbuf, MAX_INPUT_BUFFER);
+				(void) regerror (errcode, &preg, errbuf, MAX_INPUT_BUFFER);
 				printf ("Could Not Compile Regular Expression: %s", errbuf);
 				return ERROR;
 			}
@@ -530,7 +530,10 @@ check_http (void)
 	int i = 0;
 	size_t pagesize = 0;
 	char *full_page = NULL;
+	char *buf = NULL;
 	char *pos = NULL;
+	char *x = NULL;
+	char *orig_url = NULL;
 
 	/* try to connect to the host at the given port number */
 #ifdef HAVE_SSL
@@ -549,25 +552,25 @@ check_http (void)
 			return STATE_CRITICAL;
 		}
 
-		snprintf (buffer, MAX_INPUT_BUFFER - 1, "%s %s HTTP/1.0\r\n", http_method, server_url);
-		if (SSL_write (ssl, buffer, strlen (buffer)) == -1) {
+		buf = ssprintf (buf, "%s %s HTTP/1.0\r\n", http_method, server_url);
+		if (SSL_write (ssl, buf, strlen (buf)) == -1) {
 			ERR_print_errors_fp (stderr);
 			return STATE_CRITICAL;
 		}
 
 		/* optionally send the host header info (not clear if it's usable) */
 		if (strcmp (host_name, "")) {
-			snprintf (buffer, MAX_INPUT_BUFFER - 1, "Host: %s\r\n", host_name);
-			if (SSL_write (ssl, buffer, strlen (buffer)) == -1) {
+			buf = ssprintf (buf, "Host: %s\r\n", host_name);
+			if (SSL_write (ssl, buf, strlen (buf)) == -1) {
 				ERR_print_errors_fp (stderr);
 				return STATE_CRITICAL;
 			}
 		}
 
 		/* send user agent */
-		snprintf (buffer, MAX_INPUT_BUFFER - 1, "User-Agent: check_http/%s (nagios-plugins %s)\r\n",
+		buf = ssprintf (buf, "User-Agent: check_http/%s (nagios-plugins %s)\r\n",
 		         clean_revstring (REVISION), PACKAGE_VERSION);
-		if (SSL_write (ssl, buffer, strlen (buffer)) == -1) {
+		if (SSL_write (ssl, buf, strlen (buf)) == -1) {
 			ERR_print_errors_fp (stderr);
 			return STATE_CRITICAL;
 		}
@@ -575,8 +578,8 @@ check_http (void)
 		/* optionally send the authentication info */
 		if (strcmp (user_auth, "")) {
 			auth = base64 (user_auth, strlen (user_auth));
-			snprintf (buffer, MAX_INPUT_BUFFER - 1, "Authorization: Basic %s\r\n", auth);
-			if (SSL_write (ssl, buffer, strlen (buffer)) == -1) {
+			buf = ssprintf (buf, "Authorization: Basic %s\r\n", auth);
+			if (SSL_write (ssl, buf, strlen (buf)) == -1) {
 				ERR_print_errors_fp (stderr);
 				return STATE_CRITICAL;
 			}
@@ -584,13 +587,13 @@ check_http (void)
 
 		/* optionally send http POST data */
 		if (http_post_data) {
-			snprintf (buffer, MAX_INPUT_BUFFER - 1, "Content-Type: application/x-www-form-urlencoded\r\n");
-			if (SSL_write (ssl, buffer, strlen (buffer)) == -1) {
+			buf = ssprintf (buf, "Content-Type: application/x-www-form-urlencoded\r\n");
+			if (SSL_write (ssl, buf, strlen (buf)) == -1) {
 				ERR_print_errors_fp (stderr);
 				return STATE_CRITICAL;
 			}
-			snprintf (buffer, MAX_INPUT_BUFFER - 1, "Content-Length: %i\r\n\r\n", strlen (http_post_data));
-			if (SSL_write (ssl, buffer, strlen (buffer)) == -1) {
+			buf = ssprintf (buf, "Content-Length: %i\r\n\r\n", strlen (http_post_data));
+			if (SSL_write (ssl, buf, strlen (buf)) == -1) {
 				ERR_print_errors_fp (stderr);
 				return STATE_CRITICAL;
 			}
@@ -602,8 +605,8 @@ check_http (void)
 		}
 
 		/* send a newline so the server knows we're done with the request */
-		snprintf (buffer, MAX_INPUT_BUFFER - 1, "\r\n\r\n");
-		if (SSL_write (ssl, buffer, strlen (buffer)) == -1) {
+		buf = ssprintf (buf, "\r\n\r\n");
+		if (SSL_write (ssl, buf, strlen (buf)) == -1) {
 			ERR_print_errors_fp (stderr);
 			return STATE_CRITICAL;
 		}
@@ -615,44 +618,44 @@ check_http (void)
 			msg = ssprintf (msg, "Unable to open TCP socket");
 			terminate (STATE_CRITICAL, msg);
 		}
-		snprintf (buffer, MAX_INPUT_BUFFER - 1, "%s %s HTTP/1.0\r\n", http_method, server_url);
-		send (sd, buffer, strlen (buffer), 0);
+		buf = ssprintf (buf, "%s %s HTTP/1.0\r\n", http_method, server_url);
+		send (sd, buf, strlen (buf), 0);
 		
 
 
 		/* optionally send the host header info */
 		if (strcmp (host_name, "")) {
-			snprintf (buffer, MAX_INPUT_BUFFER - 1, "Host: %s\r\n", host_name);
-			send (sd, buffer, strlen (buffer), 0);
+			buf = ssprintf (buf, "Host: %s\r\n", host_name);
+			send (sd, buf, strlen (buf), 0);
 		}
 
 		/* send user agent */
-		snprintf (buffer, MAX_INPUT_BUFFER - 1, 
+		buf = ssprintf (buf,
 		         "User-Agent: check_http/%s (nagios-plugins %s)\r\n",
 		         clean_revstring (REVISION), PACKAGE_VERSION);
-		send (sd, buffer, strlen (buffer), 0);
+		send (sd, buf, strlen (buf), 0);
 
 		/* optionally send the authentication info */
 		if (strcmp (user_auth, "")) {
 			auth = base64 (user_auth, strlen (user_auth));
-			snprintf (buffer, MAX_INPUT_BUFFER - 1, "Authorization: Basic %s\r\n", auth);
-			send (sd, buffer, strlen (buffer), 0);
+			buf = ssprintf (buf, "Authorization: Basic %s\r\n", auth);
+			send (sd, buf, strlen (buf), 0);
 		}
 
 		/* optionally send http POST data */
 		/* written by Chris Henesy <lurker@shadowtech.org> */
 		if (http_post_data) {
-			snprintf (buffer, MAX_INPUT_BUFFER - 1, "Content-Type: application/x-www-form-urlencoded\r\n");
-			send (sd, buffer, strlen (buffer), 0);
-			snprintf (buffer, MAX_INPUT_BUFFER - 1, "Content-Length: %i\r\n\r\n", strlen (http_post_data));
-			send (sd, buffer, strlen (buffer), 0);
+			buf = ssprintf (buf, "Content-Type: application/x-www-form-urlencoded\r\n");
+			send (sd, buf, strlen (buf), 0);
+			buf = ssprintf (buf, "Content-Length: %i\r\n\r\n", strlen (http_post_data));
+			send (sd, buf, strlen (buf), 0);
 			http_post_data = strscat (http_post_data, "\r\n");
 			send (sd, http_post_data, strlen (http_post_data), 0);
 		}
 
 		/* send a newline so the server knows we're done with the request */
-		snprintf (buffer, MAX_INPUT_BUFFER - 1, "\r\n\r\n");
-		send (sd, buffer, strlen (buffer), 0);
+		buf = ssprintf (buf, "\r\n\r\n");
+		send (sd, buf, strlen (buf), 0);
 #ifdef HAVE_SSL
 	}
 #endif
@@ -759,19 +762,20 @@ check_http (void)
 		    strstr (status_line, "303") ||
 		    strstr (status_line, "304")) {
 			if (onredirect == STATE_DEPENDENT) {
-			
+
+				orig_url = strscpy(NULL, server_url);
 				pos = header;
 				while (pos) {
 					server_address = realloc (server_address, MAX_IPV4_HOSTLENGTH);
 					if (server_address == NULL)
 						terminate (STATE_UNKNOWN,
 										 "HTTP UNKNOWN: could not allocate server_address");
-					if (strspn (pos, "\r\n") > server_url_length) {
-						server_url = realloc (server_url, strspn (pos, "\r\n"));
+					if (strcspn (pos, "\r\n") > server_url_length) {
+						server_url = realloc (server_url, strcspn (pos, "\r\n"));
 						if (server_url == NULL)
 							terminate (STATE_UNKNOWN,
-											 "HTTP UNKNOWN: could not allocate server_url");
-						server_url_length = strspn (pos, "\r\n");
+							           "HTTP UNKNOWN: could not allocate server_url");
+						server_url_length = strcspn (pos, "\r\n");
 					}
 					if (sscanf (pos, HDR_LOCATION URI_HTTP URI_HOST URI_PORT URI_PATH, server_type, server_address, server_port_text, server_url) == 4) {
 						host_name = strscpy (host_name, server_address);
@@ -799,9 +803,13 @@ check_http (void)
 						server_port = server_port_check (use_ssl);
 						check_http ();
 					}
-					else if	(sscanf (pos, HDR_LOCATION URI_PATH, server_url) == 1) {
+					else if (sscanf (pos, HDR_LOCATION URI_PATH, server_url) == 1) {
+						if ((server_url[0] != '/') && (x = strrchr(orig_url, '/'))) {
+							*x = '\0';
+							server_url = ssprintf (server_url, "%s/%s", orig_url, server_url);
+						}
 						check_http ();
-					}	
+					} 					
 					pos += (size_t) strcspn (pos, "\r\n");
 					pos += (size_t) strspn (pos, "\r\n");
 				} /* end while (pos) */
@@ -945,8 +953,6 @@ check_certificate (X509 ** certificate)
 	int offset;
 	struct tm stamp;
 	int days_left;
-	/* int result = STATE_OK; */
-	/* char timestamp[14]; */
 
 
 	/* Retrieve timestamp of certificate */
@@ -991,7 +997,7 @@ check_certificate (X509 ** certificate)
 
 	days_left = (mktime (&stamp) - time (NULL)) / 86400;
 	snprintf
-		(timestamp, MAX_INPUT_BUFFER - 1, "%02d/%02d/%04d %02d:%02d",
+		(timestamp, 16, "%02d/%02d/%04d %02d:%02d",
 		 stamp.tm_mon + 1,
 		 stamp.tm_mday, stamp.tm_year + 1900, stamp.tm_hour, stamp.tm_min);
 
