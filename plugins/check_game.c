@@ -81,6 +81,8 @@ char server_ip[MAX_HOST_ADDRESS_LENGTH];
 char game_type[MAX_INPUT_BUFFER];
 char port[MAX_INPUT_BUFFER];
 
+int qstat_game_players_max = 4;
+int qstat_game_players = 5;
 int qstat_game_field = 2;
 int qstat_map_field = 3;
 int qstat_ping_field = 5;
@@ -199,8 +201,12 @@ main (int argc, char **argv)
 		result = STATE_CRITICAL;
 	}
 	else {
-		printf ("OK: %s (%s), Ping: %s ms\n", ret[qstat_game_field],
-						ret[qstat_map_field], ret[qstat_ping_field]);
+		printf ("OK: %s/%s %s (%s), Ping: %s ms\n", 
+		ret[qstat_game_players_max],
+		ret[qstat_game_players],
+                ret[qstat_game_field], 
+		ret[qstat_map_field],
+		ret[qstat_ping_field]);
 	}
 
 	/* close the pipe */
