@@ -260,7 +260,7 @@ main (int argc, char **argv)
 			printf (_("%d crit, %d warn out of "), crit, warn);
 		}
 	} 
-	printf (ngettext ("%d process", "%d processes", procs), procs);
+	printf (ngettext ("%d process", "%d processes", (unsigned long) procs), procs);
 	
 	if (strcmp(fmt,"") != 0) {
 		printf (_(" with %s"), fmt);
@@ -361,10 +361,7 @@ process_arguments (int argc, char **argv)
 				options |= PPID;
 				break;
 			}
-			printf (_("%s: Parent Process ID must be an integer!\n\n"),
-			        progname);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("%s: Parent Process ID must be an integer!\n\n"),  progname);
 		case 's':									/* status */
 			if (statopts)
 				break;
@@ -378,20 +375,14 @@ process_arguments (int argc, char **argv)
 				uid = atoi (optarg);
 				pw = getpwuid ((uid_t) uid);
 				/*  check to be sure user exists */
-				if (pw == NULL) {
-					printf (_("UID %d was not found\n"), uid);
-					print_usage ();
-					exit (STATE_UNKNOWN);
-				}
+				if (pw == NULL)
+					usage2 (_("UID %d was not found\n"), uid);
 			}
 			else {
 				pw = getpwnam (optarg);
 				/*  check to be sure user exists */
-				if (pw == NULL) {
-					printf (_("User name %s was not found\n"), optarg);
-					print_usage ();
-					exit (STATE_UNKNOWN);
-				}
+				if (pw == NULL)
+					usage2 (_("User name %s was not found\n"), optarg);
 				/*  then get uid */
 				uid = pw->pw_uid;
 			}
@@ -423,20 +414,14 @@ process_arguments (int argc, char **argv)
 				options |= RSS;
 				break;
 			}
-			printf (_("%s: RSS must be an integer!\n\n"),
-			        progname);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("%s: RSS must be an integer!\n\n"), progname);
 		case 'z':					/* VSZ */
 			if (sscanf (optarg, "%d%[^0-9]", &vsz, tmp) == 1) {
 				asprintf (&fmt, _("%s%sVSZ >= %d"), (fmt ? fmt : ""), (options ? ", " : ""), vsz);
 				options |= VSZ;
 				break;
 			}
-			printf (_("%s: VSZ must be an integer!\n\n"),
-			        progname);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("%s: VSZ must be an integer!\n\n"), progname);
 		case 'P':					/* PCPU */
 			/* TODO: -P 1.5.5 is accepted */
 			if (sscanf (optarg, "%f%[^0-9.]", &pcpu, tmp) == 1) {
@@ -444,10 +429,7 @@ process_arguments (int argc, char **argv)
 				options |= PCPU;
 				break;
 			}
-			printf (_("%s: PCPU must be a float!\n\n"),
-			        progname);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("%s: PCPU must be a float!\n\n"), progname);
 		case 'm':
 			asprintf (&metric_name, "%s", optarg);
 			if ( strcmp(optarg, "PROCS") == 0) {
