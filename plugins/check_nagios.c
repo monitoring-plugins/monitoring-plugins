@@ -55,6 +55,9 @@ main (int argc, char **argv)
 	FILE *fp;
 	int procuid = 0;
 	int procppid = 0;
+	int procvsz = 0;
+	int procrss = 0;
+	float procpcpu = 0;
 	char procstat[8];
 	char procprog[MAX_INPUT_BUFFER];
 	char *procargs;
@@ -106,7 +109,7 @@ main (int argc, char **argv)
 	/* count the number of matching Nagios processes... */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
 		cols = sscanf (input_buffer, PS_FORMAT, PS_VARLIST);
-		if ( cols >= 4 ) {
+		if ( cols >= 6 ) {
 			asprintf (&procargs, "%s", input_buffer + pos);
 			strip (procargs);
 			

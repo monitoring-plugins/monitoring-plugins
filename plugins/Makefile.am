@@ -7,7 +7,7 @@ INCLUDES = -I.. -I$(top_srcdir)/lib @LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@
 libexec_PROGRAMS = check_disk check_dummy check_http check_load \
 	check_mrtg check_mrtgtraf check_nwstat check_overcr check_ping \
 	check_procs check_real check_smtp check_ssh check_tcp check_time \
-	check_udp check_ups check_users check_vsz negate urlize \
+	check_udp check_ups check_users negate urlize \
 	@EXTRAS@
 
 EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
@@ -68,7 +68,6 @@ check_time_LDADD = $(NETLIBS)
 check_udp_LDADD = $(NETLIBS)
 check_ups_LDADD = $(NETLIBS)
 check_users_LDADD = $(BASEOBJS) popen.o
-check_vsz_LDADD = $(BASEOBJS) popen.o
 check_by_ssh_LDADD = $(NETLIBS) popen.o
 negate_LDADD = $(BASEOBJS) popen.o
 urlize_LDADD = $(BASEOBJS) popen.o
@@ -104,7 +103,6 @@ check_time_DEPENDENCIES = check_time.c $(NETOBJS) $(DEPLIBS)
 check_udp_DEPENDENCIES = check_udp.c $(NETOBJS) $(DEPLIBS)
 check_ups_DEPENDENCIES = check_ups.c $(NETOBJS) $(DEPLIBS)
 check_users_DEPENDENCIES = check_users.c $(BASEOBJS) popen.o $(DEPLIBS)
-check_vsz_DEPENDENCIES = check_vsz.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_by_ssh_DEPENDENCIES = check_by_ssh.c $(NETOBJS) popen.o $(DEPLIBS)
 negate_DEPENDENCIES = negate.c $(BASEOBJS) popen.o $(DEPLIBS)
 urlize_DEPENDENCIES = urlize.c $(BASEOBJS) popen.o $(DEPLIBS)
