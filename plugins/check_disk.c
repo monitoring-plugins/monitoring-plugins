@@ -112,7 +112,7 @@ enum
 int process_arguments (int, char **);
 void print_path (const char *mypath);
 int validate_arguments (uintmax_t, uintmax_t, double, double, char *);
-int check_disk (double usp, uintmax_t free_disk);
+int check_disk (double usp, double free_disk);
 int walk_name_list (struct name_list *list, const char *name);
 void print_help (void);
 void print_usage (void);
@@ -187,7 +187,7 @@ main (int argc, char **argv)
 
 		if (fsp.fsu_blocks && strcmp ("none", me->me_mountdir)) {
 			usp = (double)(fsp.fsu_blocks - fsp.fsu_bavail) * 100 / fsp.fsu_blocks;
-			disk_result = check_disk (usp, fsp.fsu_bavail * fsp.fsu_blocksize);
+			disk_result = check_disk (usp, (double)(fsp.fsu_bavail * fsp.fsu_blocksize / mult));
 			result = max_state (disk_result, result);
 			psize = fsp.fsu_blocks*fsp.fsu_blocksize/mult;
 			asprintf (&perf, "%s %s", perf,
@@ -525,7 +525,7 @@ INPUT ERROR: C_DF (%lu) should be less than W_DF (%lu) and both should be greate
 
 
 int
-check_disk (double usp, uintmax_t free_disk)
+check_disk (double usp, double free_disk)
 {
 	int result = STATE_UNKNOWN;
 	/* check the percent used space against thresholds */
@@ -585,11 +585,11 @@ and generates an alert if free space is less than one of the threshold values.")
 
 	printf (_("\
  -w, --warning=INTEGER\n\
-   Exit with WARNING status if less than INTEGER kilobytes of disk are free\n\
+   Exit with WARNING status if less than INTEGER --units of disk are free\n\
  -w, --warning=PERCENT%%\n\
    Exit with WARNING status if less than PERCENT of disk space is free\n\
  -c, --critical=INTEGER\n\
-   Exit with CRITICAL status if less than INTEGER kilobytes of disk are free\n\
+   Exit with CRITICAL status if less than INTEGER --units of disk are free\n\
  -c, --critical=PERCENT%%\n\
    Exit with CRITCAL status if less than PERCENT of disk space is free\n\
  -C, --clear\n\
