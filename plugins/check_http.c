@@ -111,6 +111,7 @@ int redir_depth = 0;
 int max_depth = 15;
 char *http_method;
 char *http_post_data;
+char *http_content_type;
 char buffer[MAX_INPUT_BUFFER];
 
 int process_arguments (int, char **);
@@ -207,6 +208,7 @@ process_arguments (int argc, char **argv)
  		{"linespan", no_argument, 0, 'l'},
 		{"onredirect", required_argument, 0, 'f'},
 		{"certificate", required_argument, 0, 'C'},
+		{"content-type", required_argument, 0, 'T'},
 		{"min", required_argument, 0, 'm'},
 		{"use-ipv4", no_argument, 0, '4'},
 		{"use-ipv6", no_argument, 0, '6'},
@@ -344,6 +346,9 @@ process_arguments (int argc, char **argv)
 			strncpy (server_expect, optarg, MAX_INPUT_BUFFER - 1);
 			server_expect[MAX_INPUT_BUFFER - 1] = 0;
 			server_expect_yn = 1;
+			break;
+		case 'T': /* Content-type */
+			asprintf (&http_content_type, "%s", optarg);
 			break;
 #ifndef HAVE_REGEX_H
  		case 'l': /* linespan */
@@ -519,7 +524,11 @@ check_http (void)
 
 	/* either send http POST data */
 	if (http_post_data) {
-		asprintf (&buf, "%sContent-Type: application/x-www-form-urlencoded\r\n", buf);
+		if (http_content_type) {
+			asprintf (&buf, "%sContent-Type: %s\r\n", buf, http_content_type);
+		} else {
+			asprintf (&buf, "%sContent-Type: application/x-www-form-urlencoded\r\n", buf);
+		}
 		asprintf (&buf, "%sContent-Length: %i\r\n\r\n", buf, strlen (http_post_data));
 		asprintf (&buf, "%s%s%s", buf, http_post_data, CRLF);
 	}
@@ -1143,7 +1152,9 @@ certificate expiration times.\n"));
  -u, --url=PATH\n\
    URL to GET or POST (default: /)\n\
  -P, --post=STRING\n\
-   URL encoded http POST data\n"), HTTP_EXPECT);
+   URL encoded http POST data\n\
+ -T, --content-type=STRING\n\
+   specify Content-Type header media type when POSTing\n"), HTTP_EXPECT);
 
 #ifdef HAVE_REGEX_H
 	printf (_("\
