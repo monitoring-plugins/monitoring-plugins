@@ -89,3 +89,34 @@ char *state_text (int result);
 {"warning",required_argument,0,'w'},\
 {"hostname",required_argument,0,'H'}
 
+#define COPYRIGHT "Copyright (c) %s Nagios Plugin Development Team\n\
+\t<%s>\n\n"
+
+#define HELP_VRSN "\
+\nOptions:\n\
+ -h, --help\n\
+    Print detailed help screen\n\
+ -V, --version\n\
+    Print version information\n"
+
+#define HOST_PORT_46 "\
+ -H, --hostname=ADDRESS\n\
+    Host name or IP Address%s\n\
+ -%c, --port=INTEGER\n\
+    Port number (default: %s)\n\
+ -4, --use-ipv4\n\
+    Use IPv4 connection\n\
+ -6, --use-ipv6\n\
+    Use IPv6 connection\n"
+
+#define VRBS "\
+ -v, --verbose\n\
+    Show details for command-line debugging (Nagios may truncate output)\n"
+
+#define WARN_CRIT_TO "\
+ -w, --warning=DOUBLE\n\
+    Response time to result in warning status (seconds)\n\
+ -c, --critical=DOUBLE\n\
+    Response time to result in critical status (seconds)\n\
+ -t, --timeout=INTEGER\n\
+    Seconds before connection times out (default: %s)\n"
