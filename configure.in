@@ -229,20 +229,29 @@ if test "$FOUNDINCLUDE" = "no"; then
                    FOUNDINCLUDE=yes,
                    FOUNDINCLUDE=no)
 fi
-AC_SUBST(SSLINCLUDE)
-CPPFLAGS="$_SAVEDCPPFLAGS $SSLINCLUDE"
+AC_SUBST(KRBINCLUDE)
+if test "$FOUNDINCLUDE" = "no"; then
+  CPPFLAGS="$_SAVEDCPPFLAGS"
+fi
 
 dnl Check for OpenSSL header files
+unset FOUNDINCLUDE
 _SAVEDCPPFLAGS="$CPPFLAGS"
-FOUNDINCLUDE=yes
-CPPFLAGS="-I$OPENSSL/include"
-AC_CHECK_HEADERS(openssl/x509.h openssl/ssl.h openssl/rsa.h openssl/pem.h openssl/crypto.h openssl/err.h,SSLINCLUDE="-I$OPENSSL/include",FOUNDINCLUDE=no)
+CPPFLAGS="$CPPFLAGS -I$OPENSSL/include"
+AC_CHECK_HEADERS(openssl/ssl.h openssl/x509.h openssl/rsa.h openssl/pem.h openssl/crypto.h openssl/err.h,
+                 SSLINCLUDE="-I$OPENSSL/include"
+                 FOUNDINCLUDE=yes,
+                 FOUNDINCLUDE=no)
 if test "$FOUNDINCLUDE" = "no"; then
-  FOUNDINCLUDE=yes
-  AC_CHECK_HEADERS(x509.h ssl.h rsa.h pem.h crypto.h err.h,SSLINCLUDE="-I$OPENSSL/include",FOUNDINCLUDE=no)
+  AC_CHECK_HEADERS(ssl.h x509.h rsa.h pem.h crypto.h err.h,
+                   SSLINCLUDE="-I$OPENSSL/include"
+                   FOUNDINCLUDE=yes,
+                   FOUNDINCLUDE=no)
 fi
 AC_SUBST(SSLINCLUDE)
-CPPFLAGS="$_SAVEDCPPFLAGS $SSLINCLUDE"
+if test "$FOUNDINCLUDE" = "no"; then
+  CPPFLAGS="$_SAVEDCPPFLAGS"
+fi
 
 dnl Check for crypto lib
 _SAVEDLIBS="$LIBS"
