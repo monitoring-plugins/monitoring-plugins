@@ -59,14 +59,15 @@ main (int argc, char **argv)
 	long unsigned int dsktotal, dskused, dskfree;
 	int result = STATE_OK;
 	char input_buffer[MAX_INPUT_BUFFER];
-#ifdef HAVE_SWAP
+#ifdef HAVE_PROC_MEMINFO
+	FILE *fp;
+#else
+# ifdef HAVE_SWAP
 	int conv_factor;		/* Convert to MBs */
 	char *temp_buffer;
 	char *swap_command;
 	char *swap_format;
-#endif
-#ifdef HAVE_PROC_MEMINFO
-	FILE *fp;
+# endif
 #endif
 	char str[32];
 	char *status;
@@ -88,8 +89,20 @@ main (int argc, char **argv)
 			dsktotal = dsktotal / 1048576;
 			dskused = dskused / 1048576;
 			dskfree = dskfree / 1048576;
-#endif
-#ifdef HAVE_SWAP
+			total_swap += dsktotal;
+			used_swap += dskused;
+			free_swap += dskfree;
+			if (allswaps) {
+				percent = 100 * (((double) dskused) / ((double) dsktotal));
+				result = max_state (result, check_swap (percent, dskfree));
+				if (verbose)
+					asprintf (&status, "%s [%lu (%d%%)]", status, dskfree, 100 - percent);
+			}
+		}
+	}
+	fclose(fp);
+#else
+# ifdef HAVE_SWAP
 	if (!allswaps && sun) {
 		asprintf(&swap_command, "%s", "/usr/sbin/swap -s");
 		asprintf(&swap_format, "%s", "%*s %*dk %*s %*s + %*dk %*s = %dk %*s %dk %*s");
@@ -103,7 +116,7 @@ main (int argc, char **argv)
 	if (verbose >= 2)
 		printf (_("Command: %s\n"), swap_command);
 	if (verbose >= 3)
-		printf ("_(Format: %s\n"), swap_format);
+		printf (_("Format: %s\n"), swap_format);
 
 	child_process = spopen (swap_command);
 	if (child_process == NULL) {
@@ -146,7 +159,6 @@ main (int argc, char **argv)
 				printf (_("total=%d, free=%d\n"), dsktotal, dskfree);
 
 			dskused = dsktotal - dskfree;
-#endif
 			total_swap += dsktotal;
 			used_swap += dskused;
 			free_swap += dskfree;
@@ -158,15 +170,6 @@ main (int argc, char **argv)
 			}
 		}
 	}
-	percent_used = 100 * ((double) used_swap) / ((double) total_swap);
-	result = max_state (result, check_swap (percent_used, free_swap));
-	asprintf (&status, _(" %d%% free (%lu MB out of %lu MB)%s"),
-						(100 - percent_used), free_swap, total_swap, status);
-
-#ifdef HAVE_PROC_MEMINFO
-	fclose(fp);
-#endif
-#ifdef HAVE_SWAP
 	/* If we get anything on STDERR, at least set warning */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
 		result = max_state (result, STATE_WARNING);
@@ -177,7 +180,13 @@ main (int argc, char **argv)
 	/* close the pipe */
 	if (spclose (child_process))
 		result = max_state (result, STATE_WARNING);
+# endif
 #endif
+
+	percent_used = 100 * ((double) used_swap) / ((double) total_swap);
+	result = max_state (result, check_swap (percent_used, free_swap));
+	asprintf (&status, _(" %d%% free (%lu MB out of %lu MB)%s"),
+						(100 - percent_used), free_swap, total_swap, status);
 
 	die (result, "SWAP %s:%s\n", state_text (result), status);
 	return STATE_UNKNOWN;

@@ -1248,17 +1248,12 @@ fi
 dnl SWAP info required is amount allocated/available and amount free
 dnl The plugin works through all the swap devices and adds up the total swap
 dnl available.
+AC_PATH_PROG(PATH_TO_SWAP,swap)
+AC_PATH_PROG(PATH_TO_SWAPINFO,swapinfo)
 
 dnl dunno why this does not work below - use hack (kbd)
 dnl fine on linux, broken on solaris
 dnl if /bin/test -e "/proc/meminfo"
-
-AC_PATH_PROG(PATH_TO_SWAP,swap)
-AC_PATH_PROG(PATH_TO_SWAPINFO,swapinfo)
-
-if ( test -n "$PATH_TO_SWAP" || test -n "$PATH_TO_SWAPINFO" )
-then
-
 AC_MSG_CHECKING(for how to check memory)
 if [cat /proc/meminfo > /dev/null 2>&1]
 then
@@ -1266,8 +1261,12 @@ then
 	AC_DEFINE(HAVE_PROC_MEMINFO,1,[Define if we have /proc/meminfo])
 	AC_DEFINE_UNQUOTED(PROC_MEMINFO,"/proc/meminfo",[path to /proc/meminfo if name changes])
 	EXTRAS="$EXTRAS check_swap"
+fi
 
-elif [$PATH_TO_SWAP -l 2>&1 >/dev/null]
+if ( test -n "$PATH_TO_SWAP" || test -n "$PATH_TO_SWAPINFO" )
+then
+
+if [$PATH_TO_SWAP -l 2>&1 >/dev/null]
 then
 	ac_cv_have_swap=yes
 	ac_cv_swap_command="$PATH_TO_SWAP -l"
