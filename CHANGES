@@ -1,20 +1,14 @@
 This file documents the major additions and syntax changes between releases.
 
 1.4
-	check_http --min changed to --pagesize, added max so min:max in check
 	IPv6 support in check_ping, check_by_ssh, check_http, check_ldap, check_smtp, check_tcp
 	Internationalisation support
-	Performance data added (not all plugins yet)
+	Performance data added to most plugins
+	New plugins - check_dhcp, check_icmp
+	contrib/check_citrix has been replaced by contrib/check_ica* (requires packet_utils.pm in libexec)
+	check_http --min changed to --pagesize, added max so min:max in check
 	check_vsz and check_rss deprecated - functionality moved into check_procs
 	check_swap % thresholds changed to measure amount free, instead of amount used
 	check_disk syntax changes for -p, -m/-M, defaults to MB instead of kB
 	check_procs -C expects no path for the command name
-	New plugins - check_dhcp, check_icmp
-
-Caveats, Notes
-
-2 contrib/check_citrix has been replaced by contrib/check_ica* (requires packet_utils.pm in libexec)
-
-
-
 
