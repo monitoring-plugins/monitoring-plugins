@@ -9,4 +9,18 @@ if [ -f debian/rules ] ; then
   chmod +x debian/rules
 fi
 
-cd doc && make
+# Lots of fiddling as Solaris' which command does give error if which fails
+docbook=0
+if [ `uname -s` = "SunOS" ] ; then
+	if [ "`which docbook2html`" = "/"* ] ; then
+		docbook=1
+	fi
+else
+	if which docbook2html ; then
+		docbook=1
+	fi
+fi
+
+if [ $docbook = 1 ] ; then
+	cd doc && make
+fi
