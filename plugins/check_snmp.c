@@ -34,7 +34,9 @@
 -H <ip_address> -o <OID> [-w warn_range] [-c crit_range] \n\
           [-C community] [-s string] [-r regex] [-R regexi] [-t timeout]\n\
           [-l label] [-u units] [-p port-number] [-d delimiter]\n\
-          [-D output-delimiter] [-m miblist]"
+          [-D output-delimiter] [-m miblist] [-P snmp version]\n\
+					[-L seclevel] [-U secname] [-a authproto] [-A authpasswd]\n\
+					[-X privpasswd]\n"
 
 #define LONGOPTIONS "\
  -H, --hostname=HOST\n\
@@ -645,7 +647,7 @@ process_arguments (int argc, char **argv)
 			secname = strscpy(secname, optarg);
 			break;
 		case 'a':     /* auth protocol */
-			authproto = strscpy(authproto, optarg);
+			asprintf (&authproto, optarg);
 			break;
 		case 'A':     /* auth passwd */
 			authpasswd = strscpy(authpasswd, optarg);
@@ -705,30 +707,18 @@ validate_arguments ()
 	if (units == NULL)
 		asprintf (&units, "");
 
-	if ( strcmp(seclevel, "noAuthNoPriv") && strcmp(seclevel, "authNoPriv") && strcmp(seclevel, "authPriv") ) {
-		if (seclevel == NULL) 
-			asprintf (&seclevel, "noAuthNoPriv");
-		else {
-			printf ("Invalid seclevel: %s! \n", seclevel);
-			print_usage ();
-			exit (STATE_UNKNOWN);	
-		}
-	}
+	/* Need better checks to verify seclevel and authproto choices */
+	
+	if (seclevel == NULL) 
+		asprintf (&seclevel, "noAuthNoPriv");
 
 
-	if ( strcmp (authproto, "SHA") && strcmp(authproto, "MD5") ) {
-		if (authproto == NULL ) 
-			asprintf(&authproto, DEFAULT_AUTH_PROTOCOL);
-		else{
-			printf ("Invalid authproto: %s! \n", authproto);
-			print_usage ();
-			exit (STATE_UNKNOWN);
-		}
-	}
-
+	if (authproto == NULL ) 
+		asprintf(&authproto, DEFAULT_AUTH_PROTOCOL);
+	
 	 
 	
-	if (proto == NULL || !strcmp(proto,DEFAULT_PROTOCOL) ) {        /* default protocol version */
+	if (proto == NULL || (strcmp(proto,DEFAULT_PROTOCOL) == 0) ) {        /* default protocol version */
 		asprintf(&proto, DEFAULT_PROTOCOL);
 		asprintf(&authpriv, "%s%s", "-c ", community);
 	}
@@ -752,7 +742,7 @@ validate_arguments ()
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
-			authpriv = ssprintf(authpriv, "-l authPriv -a %s -u %s -A %s -X %s ", authproto, secname, authpasswd, privpasswd);
+			authpriv = ssprintf(authpriv, "-l authPriv -a %s -u %s -A %s -x DES -X %s ", authproto, secname, authpasswd, privpasswd);
 		}
 		
 									
