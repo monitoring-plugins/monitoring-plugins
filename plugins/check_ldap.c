@@ -29,7 +29,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include <ldap.h>
 
 enum {
-	UNDEFINED = -1,
+	UNDEFINED = 0,
 #ifdef HAVE_LDAP_SET_OPTION
 	DEFAULT_PROTOCOL = 2,
 #endif
@@ -53,6 +53,7 @@ int ld_protocol = DEFAULT_PROTOCOL;
 #endif
 int warn_time = UNDEFINED;
 int crit_time = UNDEFINED;
+struct timeval tv;
 
 int
 main (int argc, char *argv[])
@@ -61,8 +62,9 @@ main (int argc, char *argv[])
 	LDAP *ld;
 	LDAPMessage *result;
 
-	int t_diff;
-	time_t time0, time1;
+	int status;
+	long microsec;
+	double elapsed_time;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -78,7 +80,7 @@ main (int argc, char *argv[])
 	alarm (socket_timeout);
 
 	/* get the start time */
-	time (&time0);
+	gettimeofday (&tv, NULL);
 
 	/* initialize ldap */
 	if (!(ld = ldap_open (ld_host, ld_port))) {
@@ -117,26 +119,28 @@ main (int argc, char *argv[])
 	/* reset the alarm handler */
 	alarm (0);
 
-	/* get the finish time */
-	time (&time1);
-
 	/* calcutate the elapsed time and compare to thresholds */
-	t_diff = time1 - time0;
 
-	if (crit_time!=UNDEFINED && t_diff>=crit_time) {
-		printf (_("LDAP CRITICAL - %i seconds response time\n"), t_diff);
-		return STATE_CRITICAL;
-	}
+	microsec = deltime (tv);
+	elapsed_time = (double)microsec / 1.0e6;
 
-	if (warn_time!=UNDEFINED && t_diff>=warn_time) {
-		printf (_("LDAP WARNING - %i seconds response time\n"), t_diff);
-		return STATE_WARNING;
-	}
+	if (crit_time!=UNDEFINED && elapsed_time>crit_time)
+		status = STATE_CRITICAL;
+	else if (warn_time!=UNDEFINED && elapsed_time>warn_time)
+		status = STATE_WARNING;
+	else
+		status = STATE_OK;
 
 	/* print out the result */
-	printf (_("LDAP OK - %i seconds response time\n"), t_diff);
+	printf (_("LDAP %s - %.3f seconds response time|%s\n"),
+	        state_text (status),
+	        elapsed_time,
+	        perfdata ("time", microsec, "us",
+	                  warn_time, warn_time,
+	                  crit_time, crit_time,
+	                  TRUE, 0, FALSE, 0));
 
-	return STATE_OK;
+	return status;
 }
 
 /* process command-line arguments */
@@ -256,10 +260,10 @@ process_arguments (int argc, char **argv)
 int
 validate_arguments ()
 {
-	if (strlen(ld_host) == 0)
+	if (ld_host==NULL || strlen(ld_host)==0)
 		usage (_("please specify the host name\n"));
 
-	if (strlen(ld_base) == 0)
+	if (ld_base==NULL || strlen(ld_base)==0)
 		usage (_("please specify the LDAP base\n"));
 
 	return OK;
