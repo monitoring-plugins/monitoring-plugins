@@ -26,7 +26,7 @@
 #define DESCRIPTION "Check a TCP port"
 #define AUTHOR "Ethan Galstad"
 #define EMAIL "nagios@nagios.org"
-#define COPYRIGHTDATE "1999"
+#define COPYRIGHTDATE "2002"
 
 #include "config.h"
 #include "common.h"
@@ -163,10 +163,20 @@ main (int argc, char **argv)
 		SERVICE=strscpy(SERVICE,"SIMAP");
 		SEND=NULL;
 		EXPECT=strscpy(EXPECT,"* OK");
-		QUIT=strscpy(QUIT,"a1 LOGOUT\n");
+		QUIT=strscpy(QUIT,"a1 LOGOUT\r\n");
 		PROTOCOL=TCP_PROTOCOL;
 		use_ssl=TRUE;
 		PORT=993;
+	}
+	else if (strstr(argv[0],"check_spop")) {
+		PROGNAME=strscpy(PROGNAME,"check_spop");
+		SERVICE=strscpy(SERVICE,"SPOP");
+		SEND=NULL;
+		EXPECT=strscpy(EXPECT,"110");
+		QUIT=strscpy(QUIT,"QUIT\r\n");
+		PROTOCOL=TCP_PROTOCOL;
+		use_ssl=TRUE;
+		PORT=995;
 	}
 #endif
 	else if (strstr (argv[0], "check_nntp")) {
