@@ -228,8 +228,8 @@ main (int argc, char **argv)
 	        state_text (result), elapsed_time,
           verbose?", ":"", verbose?buffer:"",
 	        perfdata ("time", microsec, "us",
-	                  check_warning_time, (long)(1000000*warning_time),
-	                  check_critical_time, (long)(1000000*critical_time),
+	                  (int)check_warning_time, warning_time,
+	                  (int)check_critical_time, critical_time,
 	                  TRUE, 0, FALSE, 0));
 
 	return result;

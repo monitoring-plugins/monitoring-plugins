@@ -167,13 +167,13 @@ main (int argc, char **argv)
 				result = max_state (result, STATE_WARNING);
 			}
 			asprintf (&data, "%s",
-			          perfdata ("voltage", (long)(1000*ups_utility_voltage), "mV",
-			                    check_warn, (long)(1000*warning_value),
-			                    check_crit, (long)(1000*critical_value),
+			          fperfdata ("voltage", ups_utility_voltage, "V",
+			                    check_warn, warning_value,
+			                    check_crit, critical_value,
 			                    TRUE, 0, FALSE, 0));
 		} else {
 			asprintf (&data, "%s",
-			          perfdata ("voltage", (long)(1000*ups_utility_voltage), "mV",
+			          fperfdata ("voltage", ups_utility_voltage, "V",
 			                    FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
 		}
 	}

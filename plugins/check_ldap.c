@@ -51,8 +51,8 @@ int ld_port = DEFAULT_PORT;
 #ifdef HAVE_LDAP_SET_OPTION
 int ld_protocol = DEFAULT_PROTOCOL;
 #endif
-int warn_time = UNDEFINED;
-int crit_time = UNDEFINED;
+double warn_time = UNDEFINED;
+double crit_time = UNDEFINED;
 struct timeval tv;
 
 int
@@ -135,9 +135,9 @@ main (int argc, char *argv[])
 	printf (_("LDAP %s - %.3f seconds response time|%s\n"),
 	        state_text (status),
 	        elapsed_time,
-	        perfdata ("time", microsec, "us",
-	                  warn_time, warn_time,
-	                  crit_time, crit_time,
+	        fperfdata ("time", elapsed_time, "s",
+	                  (int)warn_time, warn_time,
+	                  (int)crit_time, crit_time,
 	                  TRUE, 0, FALSE, 0));
 
 	return status;
@@ -218,10 +218,10 @@ process_arguments (int argc, char **argv)
 			ld_passwd = optarg;
 			break;
 		case 'w':
-			warn_time = atoi (optarg);
+			warn_time = strtod (optarg, NULL);
 			break;
 		case 'c':
-			crit_time = atoi (optarg);
+			crit_time = strtod (optarg, NULL);
 			break;
 #ifdef HAVE_LDAP_SET_OPTION
 		case '2':

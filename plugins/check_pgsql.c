@@ -45,8 +45,8 @@ char *pgtty = NULL;
 char dbName[NAMEDATALEN] = DEFAULT_DB;
 char *pguser = NULL;
 char *pgpasswd = NULL;
-int twarn = DEFAULT_WARN;
-int tcrit = DEFAULT_CRIT;
+double twarn = (double)DEFAULT_WARN;
+double tcrit = (double)DEFAULT_CRIT;
 
 PGconn *conn;
 /*PGresult   *res;*/
@@ -168,8 +168,8 @@ main (int argc, char **argv)
 	PQfinish (conn);
 	printf (_("PGSQL: %s - database %s (%d sec.)|%s\n"), 
 	        state_text(status), dbName, elapsed_time,
-	        perfdata("time", (long)elapsed_time, "s",
-	                 twarn, (long)twarn, tcrit, (long)tcrit, TRUE, 0, FALSE,0));
+	        fperfdata("time", elapsed_time, "s",
+	                 (int)twarn, twarn, (int)tcrit, tcrit, TRUE, 0, FALSE,0));
 	return status;
 }
 
@@ -221,16 +221,16 @@ process_arguments (int argc, char **argv)
 				timeout_interval = atoi (optarg);
 			break;
 		case 'c':     /* critical time threshold */
-			if (!is_integer (optarg))
+			if (!is_nonnegative (optarg))
 				usage2 (_("Invalid critical threshold"), optarg);
 			else
-				tcrit = atoi (optarg);
+				tcrit = strtod (optarg, NULL);
 			break;
 		case 'w':     /* warning time threshold */
-			if (!is_integer (optarg))
+			if (!is_nonnegative (optarg))
 				usage2 (_("Invalid critical threshold"), optarg);
 			else
-				twarn = atoi (optarg);
+				twarn = strtod (optarg, NULL);
 			break;
 		case 'H':     /* host */
 			if (!is_host (optarg))

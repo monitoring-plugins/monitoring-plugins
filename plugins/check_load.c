@@ -152,9 +152,9 @@ main (int argc, char **argv)
 	     "%s - %s|%s %s %s\n",
 	     state_text (result),
 	     status_line,
-	     perfdata ("load1", la1, "", wload1, wload1, cload1, cload1, TRUE, 0, FALSE, 0),
-	     perfdata ("load5", la5, "", wload5, wload5, cload5, cload5, TRUE, 0, FALSE, 0),
-	     perfdata ("load15", la15, "", wload15, wload15, cload15, cload15, TRUE, 0, FALSE, 0));
+	     fperfdata ("load1", la1, "", (int)wload1, wload1, (int)cload1, cload1, TRUE, 0, FALSE, 0),
+	     fperfdata ("load5", la5, "", (int)wload5, wload5, (int)cload5, cload5, TRUE, 0, FALSE, 0),
+	     fperfdata ("load15", la15, "", (int)wload15, wload15, (int)cload15, cload15, TRUE, 0, FALSE, 0));
 	return STATE_OK;
 }
 

@@ -332,11 +332,11 @@ main (int argc, char **argv)
 	if (status && strlen(status) > 0)
 		printf (" [%s]", status);
 
-	printf (" |%s\n", perfdata ("time", microsec, "us",
-		TRUE, warning_time*1000,
-		TRUE, critical_time*1000,
+	printf (" |%s\n", fperfdata ("time", elapsed_time, "s",
+		TRUE, warning_time,
+		TRUE, critical_time,
 		TRUE, 0,
-		TRUE, socket_timeout*1000));
+		TRUE, socket_timeout));
 
 	return result;
 }
@@ -481,7 +481,7 @@ process_arguments (int argc, char **argv)
 			else
 				maxbytes = atoi (optarg);
 		case 'q':
-			server_quit = optarg;
+			asprintf(&server_quit, "%s\r\n", optarg);
 			break;
 		case 'r':
 			if (!strncmp(optarg,"ok",2))
