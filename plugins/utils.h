@@ -92,37 +92,35 @@ char *state_text (int result);
 #define COPYRIGHT "Copyright (c) %s Nagios Plugin Development Team\n\
 \t<%s>\n\n"
 
-#define HELP_VRSN "\
+#define UT_HELP_VRSN "\
 \nOptions:\n\
  -h, --help\n\
     Print detailed help screen\n\
  -V, --version\n\
     Print version information\n"
 
-#define HOST_PORT "\
+#define UT_HOST_PORT "\
  -H, --hostname=ADDRESS\n\
     Host name or IP Address\n\
  -%c, --port=INTEGER\n\
     Port number (default: %s)\n"
 
-#define IPv46 "\
+#define UT_IPv46 "\
  -4, --use-ipv4\n\
     Use IPv4 connection\n\
  -6, --use-ipv6\n\
     Use IPv6 connection\n"
 
-#define VRBS "\
+#define UT_VERBOSE "\
  -v, --verbose\n\
     Show details for command-line debugging (Nagios may truncate output)\n"
 
-#define WARN_CRIT_TO "\
+#define UT_WARN_CRIT "\
  -w, --warning=DOUBLE\n\
     Response time to result in warning status (seconds)\n\
  -c, --critical=DOUBLE\n\
-    Response time to result in critical status (seconds)\n\
- -t, --timeout=INTEGER\n\
-    Seconds before connection times out (default: %d)\n"
+    Response time to result in critical status (seconds)\n"
 
-#define TIMEOUT "\
+#define UT_TIMEOUT "\
  -t, --timeout=INTEGER\n\
     Seconds before connection times out (default: %d)\n"

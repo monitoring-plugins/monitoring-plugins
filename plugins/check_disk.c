@@ -59,7 +59,7 @@ and generates an alert if free space is less than one of the threshold values.")
 
 	print_usage ();
 
-	printf (_(HELP_VRSN));
+	printf (_(UT_HELP_VRSN));
 
 	printf (_("\
  -w, --warning=INTEGER\n\
@@ -95,9 +95,11 @@ and generates an alert if free space is less than one of the threshold values.")
  -e, --errors-only\n\
     Display only devices/mountpoints with errors\n"));
 
-	printf (_(TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+	printf (_(UT_WARN_CRIT));
 
-	printf (_(VRBS));
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(UT_VERBOSE));
 
 	printf ("%s", _("Examples:\n\
  check_disk -w 10% -c 5% -p /tmp -p /var -C -w 100000 -c 50000 -p /\n\

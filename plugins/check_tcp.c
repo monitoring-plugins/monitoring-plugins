@@ -98,9 +98,9 @@ print_usage (void)
 {
 	printf (_("\
 Usage: %s -H host -p port [-w <warning time>] [-c <critical time>]\n\
-	[-s <send string>] [-e <expect string>] [-q <quit string>]\n\
-	[-m <maximum bytes>] [-d <delay>] [-t <timeout seconds>]\n\
-	[-r <refuse state>] [-v] [-4|-6]\n"), progname);
+  [-s <send string>] [-e <expect string>] [-q <quit string>]\n\
+  [-m <maximum bytes>] [-d <delay>] [-t <timeout seconds>]\n\
+  [-r <refuse state>] [-v] [-4|-6]\n"), progname);
 	printf ("       %s (-h|--help)\n", progname);
 	printf ("       %s (-V|--version)\n", progname);
 }
@@ -116,11 +116,11 @@ print_help (void)
 
 	print_usage ();
 
-	printf (_(HELP_VRSN));
+	printf (_(UT_HELP_VRSN));
 
-	printf (_(HOST_PORT), 'p', "none");
+	printf (_(UT_HOST_PORT), 'p', "none");
 
-	printf (_(IPv46));
+	printf (_(UT_IPv46));
 
 	printf (_("\
  -s, --send=STRING\n\
@@ -138,9 +138,11 @@ print_help (void)
  -d, --delay=INTEGER\n\
     Seconds to wait between sending string and polling for response\n"));
 
-	printf (_(WARN_CRIT_TO), DEFAULT_SOCKET_TIMEOUT);
+	printf (_(UT_WARN_CRIT));
 
-	printf (_(VRBS));
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(UT_VERBOSE));
 
 	support ();
 }

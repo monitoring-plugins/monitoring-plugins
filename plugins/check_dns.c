@@ -73,7 +73,7 @@ print_help (void)
 
 	print_usage ();
 
-	printf (_(HELP_VRSN));
+	printf (_(UT_HELP_VRSN));
 
 	printf (_("\
 -H, --hostname=HOST\n\
@@ -83,7 +83,7 @@ print_help (void)
 -a, --expected-address=IP-ADDRESS\n\
    Optional IP address you expect the DNS server to return\n"));
 
-	printf (_(TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
 	printf (_("\n\
 This plugin uses the nslookup program to obtain the IP address\n\
@@ -155,9 +155,9 @@ main (int argc, char **argv)
 
 		if (strstr (input_buffer, ".in-addr.arpa")) {
 			if ((temp_buffer = strstr (input_buffer, "name = ")))
-				address = strscpy (address, temp_buffer + 7);
+				address = strdup (temp_buffer + 7);
 			else {
-				output = strscpy (output, _("Unknown error (plugin)"));
+				output = strdup (_("Unknown error (plugin)"));
 				result = STATE_WARNING;
 			}
 		}
@@ -195,7 +195,7 @@ main (int argc, char **argv)
 
 		result = error_scan (input_buffer);
 		if (result != STATE_OK) {
-			output = strscpy (output, 1 + index (input_buffer, ':'));
+			output = strdup (1 + index (input_buffer, ':'));
 			strip (output);
 			break;
 		}
@@ -206,7 +206,7 @@ main (int argc, char **argv)
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
 		if (error_scan (input_buffer) != STATE_OK) {
 			result = max_state (result, error_scan (input_buffer));
-			output = strscpy (output, 1 + index (input_buffer, ':'));
+			output = strdup (1 + index (input_buffer, ':'));
 			strip (output);
 		}
 	}
@@ -218,7 +218,7 @@ main (int argc, char **argv)
 	if (spclose (child_process)) {
 		result = max_state (result, STATE_WARNING);
 		if (!strcmp (output, ""))
-			output = strscpy (output, _("nslookup returned error status"));
+			output = strdup (_("nslookup returned error status"));
 	}
 
 	/* If we got here, we should have an address string, 
@@ -268,42 +268,39 @@ error_scan (char *input_buffer)
 	    strstr (input_buffer, "the `-sil[ent]' option to prevent this message from appearing."))
 		return STATE_OK;
 
-	/* the DNS lookup timed out */
-	else if (strstr (input_buffer, "Timed out"))
-		terminate (STATE_WARNING, "Request timed out at server\n");
-
 	/* DNS server is not running... */
 	else if (strstr (input_buffer, "No response from server"))
-		terminate (STATE_CRITICAL, "No response from name server %s\n", dns_server);
+		terminate (STATE_CRITICAL, _("No response from name server %s\n"), dns_server);
 
 	/* Host name is valid, but server doesn't have records... */
 	else if (strstr (input_buffer, "No records"))
-		terminate (STATE_CRITICAL, "Name server %s has no records\n", dns_server);
+		terminate (STATE_CRITICAL, _("Name server %s has no records\n"), dns_server);
 
 	/* Connection was refused */
 	else if (strstr (input_buffer, "Connection refused") ||
 	         (strstr (input_buffer, "** server can't find") &&
 	          strstr (input_buffer, ": REFUSED")) ||
 	         (strstr (input_buffer, "Refused")))
-		terminate (STATE_CRITICAL, "Connection to name server %s was refused\n", dns_server);
+		terminate (STATE_CRITICAL, _("Connection to name server %s was refused\n"), dns_server);
 
 	/* Host or domain name does not exist */
 	else if (strstr (input_buffer, "Non-existent") ||
 	         strstr (input_buffer, "** server can't find") ||
 	         strstr (input_buffer,"NXDOMAIN"))
-		terminate (STATE_CRITICAL, "Domain %s was not found by the server\n", query_address);
+		terminate (STATE_CRITICAL, _("Domain %s was not found by the server\n"), query_address);
 
 	/* Network is unreachable */
 	else if (strstr (input_buffer, "Network is unreachable"))
-		terminate (STATE_CRITICAL, "Network is unreachable\n");
+		terminate (STATE_CRITICAL, _("Network is unreachable\n"));
 
 	/* Internal server failure */
 	else if (strstr (input_buffer, "Server failure"))
-		terminate (STATE_CRITICAL, "Server failure for %s\n", dns_server);
+		terminate (STATE_CRITICAL, _("Server failure for %s\n"), dns_server);
 
-	/* Request error */
-	else if (strstr (input_buffer, "Format error"))
-		terminate (STATE_WARNING, "Format error\n");
+	/* Request error or the DNS lookup timed out */
+	else if (strstr (input_buffer, "Format error") ||
+	         strstr (input_buffer, "Timed out"))
+		return STATE_WARNING;
 
 	return STATE_OK;
 

@@ -77,7 +77,7 @@ print_help (void)
 
 	print_usage ();
 
-	printf (_(HELP_VRSN));
+	printf (_(UT_HELP_VRSN));
 
 	printf (_("\n\
  -w, --warning=INTEGER\n\

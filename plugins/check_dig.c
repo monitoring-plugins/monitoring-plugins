@@ -62,17 +62,19 @@ print_help (void)
 
 	print_usage ();
 
-	printf (_(HELP_VRSN));
+	printf (_(UT_HELP_VRSN));
 
-	printf (_(HOST_PORT), 'P', myport);
+	printf (_(UT_HOST_PORT), 'P', myport);
 
 	printf (_("\
  -l, --lookup=STRING\n\
    machine name to lookup\n"));
 
-	printf (_(WARN_CRIT_TO), DEFAULT_SOCKET_TIMEOUT);
+	printf (_(UT_WARN_CRIT));
 
-	printf (_(VRBS));
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(UT_VERBOSE));
 
 	support ();
 }

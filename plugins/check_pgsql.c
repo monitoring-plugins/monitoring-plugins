@@ -136,11 +136,11 @@ print_help (void)
 
 	print_usage ();
 
-	printf (_(HELP_VRSN));
+	printf (_(UT_HELP_VRSN));
 
-	printf (_(HOST_PORT), 'P', myport);
+	printf (_(UT_HOST_PORT), 'P', myport);
 
-	printf (_(IPv46));
+	printf (_(UT_IPv46));
 
 	printf (S_("\
   -d, --database=STRING\n\
@@ -150,9 +150,11 @@ print_help (void)
   -p, --password = STRING\n\
     Password (BIG SECURITY ISSUE)\n"), DEFAULT_DB);
 
-	printf (_(WARN_CRIT_TO), DEFAULT_SOCKET_TIMEOUT);
+	printf (_(UT_WARN_CRIT));
 
-	printf (_(VRBS));
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(UT_VERBOSE));
 
 	printf (S_("\nAll parameters are optional.\n\
 \n\

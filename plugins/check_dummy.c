@@ -57,11 +57,13 @@ print_help (void)
 
 	print_usage ();
 
-	printf (_(HELP_VRSN));
+	printf (_(UT_HELP_VRSN));
 
 	printf (_("\n\
 This plugin will simply return the state corresponding to the numeric value\n\
 of the <state> argument.\n"));
+
+	support ();
 }
 
 int

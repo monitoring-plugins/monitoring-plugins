@@ -49,11 +49,11 @@ print_help (void)
 
 	print_usage ();
 
-	printf (_(HELP_VRSN));
+	printf (_(UT_HELP_VRSN));
 
-	printf (_(HOST_PORT), 'p', "none");
+	printf (_(UT_HOST_PORT), 'p', "none");
 
-	printf (_(IPv46));
+	printf (_(UT_IPv46));
 
 	printf (_("\
  -1, --proto1\n\
@@ -77,7 +77,9 @@ print_help (void)
  -n, --name=NAME\n\
     short name of host in nagios configuration [optional]\n"));
 
-	printf (_(WARN_CRIT_TO), DEFAULT_SOCKET_TIMEOUT);
+	printf (_(UT_WARN_CRIT));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
 	printf (_("\n\
 The most common mode of use is to refer to a local identity file with\n\
