@@ -251,9 +251,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?': /* usage */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 			break;
 		case 'h': /* help */
 			print_help ();
@@ -299,7 +297,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'S': /* use SSL */
 #ifndef HAVE_SSL
-			usage (_("check_http: invalid option - SSL is not available\n"));
+			usage4 (_("Invalid option - SSL is not available"));
 #endif
 			use_ssl = TRUE;
 			if (specify_port == FALSE)
@@ -314,7 +312,7 @@ process_arguments (int argc, char **argv)
 				check_cert = TRUE;
 			}
 #else
-			usage (_("Invalid option - SSL is not available\n"));
+			usage4 (_("Invalid option - SSL is not available"));
 #endif
 			break;
 		case 'f': /* onredirect */
