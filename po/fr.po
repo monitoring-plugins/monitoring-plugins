@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-12-26 00:06+0100\n"
-"PO-Revision-Date: 2004-12-29 00:09+0100\n"
+"PO-Revision-Date: 2004-12-29 00:39+0100\n"
 "Last-Translator: Benoit Mortier <benoit.mortier@opensides.be>\n"
 "Language-Team: Français <fr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -350,7 +350,7 @@ msgstr "Plus de données reçues\n"
 #: plugins/check_dhcp.c:633
 #, c-format
 msgid "recvfrom() failed, "
-msgstr "La réception à échoué\n"
+msgstr "La réception a échoué, "
 
 #: plugins/check_dhcp.c:640
 #, c-format
@@ -404,17 +404,17 @@ msgstr "Durée du Bail: Infini\n"
 #: plugins/check_dhcp.c:789
 #, c-format
 msgid "Lease Time: %lu seconds\n"
-msgstr "Durée du Bai: %lu secondes\n"
+msgstr "Durée du Bail: %lu secondes\n"
 
 #: plugins/check_dhcp.c:791
 #, c-format
 msgid "Renewal Time: Infinite\n"
-msgstr ""
+msgstr "Renouvellement du bail: Infini\n"
 
 #: plugins/check_dhcp.c:793
-#, fuzzy, c-format
+#, c-format
 msgid "Renewal Time: %lu seconds\n"
-msgstr "LRU temps d'attente = %lu secondes"
+msgstr "Durée du renouvellement = %lu secondes\n"
 
 #: plugins/check_dhcp.c:795
 #, c-format
@@ -422,19 +422,19 @@ msgid "Rebinding Time: Infinite\n"
 msgstr ""
 
 #: plugins/check_dhcp.c:796
-#, fuzzy, c-format
+#, c-format
 msgid "Rebinding Time: %lu seconds\n"
-msgstr "LRU temps d'attente = %lu secondes"
+msgstr ""
 
 #: plugins/check_dhcp.c:812
 #, c-format
 msgid "Added offer from server @ %s"
-msgstr ""
+msgstr "Rajouté offre du server %s"
 
 #: plugins/check_dhcp.c:813
 #, c-format
 msgid " of IP address %s\n"
-msgstr ""
+msgstr "de l'adresse IP %s\n"
 
 #: plugins/check_dhcp.c:880
 #, c-format
@@ -444,22 +444,22 @@ msgstr ""
 #: plugins/check_dhcp.c:881
 #, c-format
 msgid " Requested=%s\n"
-msgstr ""
+msgstr " Demandé=%s\n"
 
 #: plugins/check_dhcp.c:920
 #, c-format
 msgid "No DHCPOFFERs were received.\n"
-msgstr ""
+msgstr "Pas de DHCPOFFERs reçus.\n"
 
 #: plugins/check_dhcp.c:924
 #, c-format
 msgid "Received %d DHCPOFFER(s)"
-msgstr ""
+msgstr "Reçu %d DHCPOFFER(s)"
 
 #: plugins/check_dhcp.c:927
 #, c-format
 msgid ", %s%d of %d requested servers responded"
-msgstr ""
+msgstr ", %s%d de %d serveurs ont répondus"
 
 #: plugins/check_dhcp.c:930
 #, c-format
@@ -469,46 +469,48 @@ msgstr ""
 #: plugins/check_dhcp.c:932
 #, c-format
 msgid ", max lease time = "
-msgstr ""
+msgstr ", bail maximum = "
 
 #: plugins/check_dhcp.c:934
 #, c-format
 msgid "Infinity"
-msgstr ""
+msgstr "Infini"
 
 #: plugins/check_dhcp.c:1121
 #, c-format
 msgid "Error: DLPI stream API failed to get MAC in check_ctrl: %s.\n"
-msgstr ""
+msgstr "Erreur: Impossible d'obtenir la MAC par l'API DLPI dans check_ctrl: %s.\n"
 
 #: plugins/check_dhcp.c:1132
 #, c-format
 msgid "Error: DLPI stream API failed to get MAC in put_ctrl/putmsg(): %s.\n"
-msgstr ""
+msgstr "Erreur: Impossible d'obtenir la MAC par l'API DLPI dans put_ctrl/putmsg(): %s.\n"
 
 #: plugins/check_dhcp.c:1144
 #, c-format
 msgid "Error: DLPI stream API failed to get MAC in put_both/putmsg().\n"
-msgstr ""
+msgstr "Erreur: Impossible d'obtenir la MAC par l'API DLPI dans put_both/putmsg().\n"
 
 #: plugins/check_dhcp.c:1155
 #, c-format
 msgid "Error: DLPI stream API failed to get MAC in dl_attach_req/open(%s..): %s.\n"
 msgstr ""
+"Erreur: Impossible d'obtenir la MAC par l'API DLPI dans \n"
+"dl_attach_req/open(%s..): %s.\n"
 
 #: plugins/check_dhcp.c:1179
 #, c-format
 msgid "Error: DLPI stream API failed to get MAC in dl_bind/check_ctrl(): %s.\n"
 msgstr ""
+"Erreur: Impossible d'obtenir la MAC par l'API DLPI dans \n"
+"dl_bind/check_ctrl(): %s.\n"
 
 #: plugins/check_dhcp.c:1227
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "This plugin tests the availability of DHCP servers on a network.\n"
 "\n"
-msgstr ""
-"Ce plugin teste le service REAL sur l'hôte spécifié.\n"
-"\n"
+msgstr "Ce plugin teste la disponibilité de serveurs DHCP dans un réseau.\n"
 
 #: plugins/check_dhcp.c:1231
 #, c-format
@@ -532,7 +534,7 @@ msgstr ""
 #: plugins/check_dig.c:84 plugins/check_dig.c:86
 #, c-format
 msgid "Looking for: '%s'\n"
-msgstr ""
+msgstr "Cherche : '%s'\n"
 
 #: plugins/check_dig.c:130
 msgid "Server not found in ANSWER SECTION"
@@ -637,9 +639,9 @@ msgid "failed allocating storage for '%s'\n"
 msgstr "Impossible d'allouer de l'espace pour '%s'\n"
 
 #: plugins/check_disk.c:489
-#, fuzzy, c-format
+#, c-format
 msgid " for %s\n"
-msgstr "Format: %s\n"
+msgstr " pour %s\n"
 
 #: plugins/check_disk.c:500
 #, c-format
@@ -774,7 +776,7 @@ msgstr "DNS CRITIQUE - '%s' à retourné un nom d'hôte vide\n"
 
 #: plugins/check_dns.c:138
 msgid "Non-authoritative answer:"
-msgstr ""
+msgstr "Réponse non autoritative:"
 
 #: plugins/check_dns.c:171
 msgid "nslookup returned error status"
@@ -1061,19 +1063,19 @@ msgid "CRITICAL - Host type parameter incorrect!\n"
 msgstr "CRITIQUE - Argument de type hôte incorrect!\n"
 
 #: plugins/check_game.c:126
-#, fuzzy, c-format
+#, c-format
 msgid "CRITICAL - Host not found\n"
-msgstr "CRITIQUE - Hôte non trouvé (%s)"
+msgstr "CRITIQUE - Hôte non trouvé\n"
 
 #: plugins/check_game.c:130
-#, fuzzy, c-format
+#, c-format
 msgid "CRITICAL - Game server down or unavailable\n"
-msgstr "CRITIQUE - Date du serveur \"%100s\" illisible"
+msgstr "CRITIQUE - Serveur de jeux en panne ou non disponible\n"
 
 #: plugins/check_game.c:134
-#, fuzzy, c-format
+#, c-format
 msgid "CRITICAL - Game server timeout\n"
-msgstr "CRITIQUE - Impossible d'obtenir le certificat du serveur.\n"
+msgstr "CRITIQUE - Temps d'attente pour le serveur de jeux dépassé\n"
 
 #: plugins/check_game.c:300
 #, c-format
@@ -1206,9 +1208,8 @@ msgid "Warning threshold must be integer"
 msgstr "Le seuil d'alerte doit être un entier positif"
 
 #: plugins/check_http.c:300 plugins/check_http.c:315
-#, fuzzy
 msgid "Invalid option - SSL is not available"
-msgstr "Option invalide - SSL n'est pas disponible\n"
+msgstr "Option invalide - SSL n'est pas disponible"
 
 #: plugins/check_http.c:309 plugins/check_tcp.c:576
 msgid "Invalid certificate expiration period"
@@ -1634,65 +1635,65 @@ msgstr ""
 #: plugins/check_icmp.c:313
 #, c-format
 msgid "Root access needed (for raw sockets)\n"
-msgstr ""
+msgstr "Accès root nécéssaire (pour les sockets)\n"
 
 #: plugins/check_icmp.c:319
 msgid "icmp: unknown protocol"
-msgstr ""
+msgstr "icmp: protocole inconnu"
 
 #: plugins/check_icmp.c:325
 msgid "Can't create raw socket"
-msgstr ""
+msgstr "Impossible de créer un socket"
 
 #: plugins/check_icmp.c:337
 msgid "Unable to allocate memory for host name list\n"
-msgstr ""
+msgstr "Impossible d'allouer de la mémoire pour la liste des hôtes\n"
 
 #: plugins/check_icmp.c:362 plugins/check_icmp.c:367 plugins/check_icmp.c:546
 #: plugins/check_icmp.c:551
-#, fuzzy
 msgid "Failed to allocate memory for hostname"
-msgstr "Impossible d'allouer de l'espace pour '%s'\n"
+msgstr "Impossible d'allouer de la mémoire pour l'hôte"
 
 #: plugins/check_icmp.c:378 plugins/check_icmp.c:385
 #, c-format
+#, fuzzy
 msgid "Illegal threshold pair specified for -%c"
-msgstr ""
+msgstr "Seuil illégal spécifié pour -%c"
 
 #: plugins/check_icmp.c:392 plugins/check_icmp.c:399 plugins/check_icmp.c:421
 #, c-format
 msgid "Option -%c requires integer argument\n"
-msgstr ""
+msgstr "L'option -%c nécéssite un nombre entier comme argument\n"
 
 #: plugins/check_icmp.c:406 plugins/check_icmp.c:414
 #, c-format
 msgid "Option -%c requires positive non-zero integer argument\n"
-msgstr ""
+msgstr "L'option -%c nécéssite un nombre entier comme argument\n"
 
 #: plugins/check_icmp.c:470
 #, c-format
 msgid "Option flag -%c specified, but not recognized\n"
-msgstr ""
+msgstr "l'option -%c à été spécifié, mais est inconnue\n"
 
 #: plugins/check_icmp.c:497
 #, c-format
 msgid "%s: these options are too risky for mere mortals.\n"
-msgstr ""
+msgstr "%s: ces options sont trop risquées pour un utilisateur normal.\n"
 
 #: plugins/check_icmp.c:498
 #, c-format
 msgid "%s: You need i >= %u and r < %u\n"
-msgstr ""
+msgstr "%s: i >= %u et r < %u\n"
 
 #: plugins/check_icmp.c:500
 #, c-format
 msgid "Current settings; i = %d, r = %d\n"
-msgstr ""
+msgstr "Paramètres actuels; i= %d,r = %d\n"
 
 #: plugins/check_icmp.c:506
 #, c-format
 msgid "%s: data size %u not valid, must be between %u and %u\n"
-msgstr ""
+msgstr "%s: taille des données %u non valide, doit être entre %u et %u\n"
 
 #: plugins/check_icmp.c:513
 #, c-format
@@ -1702,7 +1703,7 @@ msgstr ""
 #: plugins/check_icmp.c:520
 #, c-format
 msgid "%s: count %u not valid, must be less than %u\n"
-msgstr ""
+msgstr "%s: somme %u non valide, doit être moins de %u\n"
 
 #: plugins/check_icmp.c:539
 #, c-format
@@ -1715,6 +1716,8 @@ msgid ""
 "No hosts to work with!\n"
 "\n"
 msgstr ""
+"Pas d'hôtes a vérifier!\n"
+"\n"
 
 #: plugins/check_icmp.c:574
 msgid "Can't malloc array of hosts"
@@ -1723,12 +1726,12 @@ msgstr ""
 #: plugins/check_icmp.c:706
 #, c-format
 msgid "%s is down (lost 100%%)"
-msgstr ""
+msgstr "%s est en panne (perdu 100%%)"
 
 #: plugins/check_icmp.c:757
-#, fuzzy, c-format
+#, c-format
 msgid "No hostaddress specified.\n"
-msgstr "Pas de compteur spécifié"
+msgstr "pas d'adresse d'hôte spécifiée.\n"
 
 #: plugins/check_icmp.c:768
 #, c-format
