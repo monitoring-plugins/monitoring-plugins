@@ -1,9 +1,7 @@
 #!/usr/local/bin/perl -w
 
-# (c)2003 John Koyle, RFP Depot, LLC.
+# (c)2004 John Koyle, RFP Depot, LLC.
 # This is free software use it however you would like.
-# Thanks to the folks at http://www.think-forward.com for the SQL query
-
 
 use strict;
 use DBI;
@@ -25,10 +23,10 @@ my $orapwd = "";
 
 
 if (!$ENV{ORACLE_HOME}) {
-        $ENV{ORACLE_HOME} = '/a01/app/oracle/product/9.2.0.1';
+        $ENV{ORACLE_HOME} = '/u01/app/oracle/product/9.2';
 }
 
-#*****************You shouldn't need to modify anything below here *************
+#*******************************************************************************
 my $state = $ERRORS{'UNKNOWN'};
 my $answer = undef;
 
@@ -37,9 +35,11 @@ my $VERSION = sprintf("%d.%02d", $MAJOR_VERSION - 1, $MINOR_VERSION);
 
 my $opt_debug;                  # -d|--debug
 my $opt_help;                   # -h|--help
-my $opt_version;				# -V|--version
+my $opt_version;		# -V|--version
 my $opt_warn_space; 	        # -w|--warn-space
 my $opt_crit_space; 	        # -c|--crit-space
+
+
 
 my $help = <<MARK;      # help statement
 
@@ -59,6 +59,7 @@ MARK
 ## We want exact matches to the switches
 
 Getopt::Long::config('no_auto_abbrev', 'no_ignore_case');
+
 
 my $rc = GetOptions(
                 "debug|d"               => \$opt_debug,
@@ -103,17 +104,18 @@ if (! defined $opt_crit_space)
 
 my $array_ref = executeSQL();
 
+# Don't match certain tablespaces.
 foreach my $row (@$array_ref) {
-    my ( $tbs_name, $tot_mb, $free_mb, $free_pct, $used_pct, $fsfi) = @$row;
-    if ($opt_debug) { print STDOUT "Output: $tbs_name\t$tot_mb\t$free_mb\t$free_pct\t$used_pct\t$fsfi\n\n"; }
-    if ($used_pct > (100 - $opt_crit_space) && $tbs_name !~ /RBS/) {
+    my ( $tbs_name, $free_mb, $tot_mb, $free_pct) = @$row;
+    if ($opt_debug) { print STDOUT "Output: $tbs_name\t$tot_mb\t$free_mb\t$free_pct\n\n"; }
+    if ($free_pct < $opt_crit_space && $tbs_name !~ /RBS/ && $tbs_name !~ /PERFSTAT/ && $tbs_name !~ /UNDOTBS/) {
         $state = $ERRORS{'CRITICAL'};
-        $answer .= "$tbs_name = $used_pct\% ";
+        $answer .= "Critical: $tbs_name = $free_pct\% ";
         last;
     }
-    if ($used_pct > (100 - $opt_warn_space) && $tbs_name !~ /RBS/) {
+    if ($free_pct < $opt_warn_space && $tbs_name !~ /RBS/ && $tbs_name !~ /PERFSTAT/ && $tbs_name !~ /UNDOTBS/) {
         $state = $ERRORS{'WARNING'};
-        $answer .= "$tbs_name = $used_pct\% ";
+        $answer .= "Warning: $tbs_name = $free_pct\% ";
     }
 }
 
@@ -132,6 +134,7 @@ foreach my $key (keys %ERRORS) {
 }
 exit $state;
 
+#------------------SUBS-------------------------------------------------------
 sub executeSQL
 {
     my ($dbh, $sth, $results);
@@ -140,20 +143,29 @@ sub executeSQL
 
     eval {
       $dbh->{RaiseError} = 1;
-      # This query is taken from this URL and used with permission: http://www.think-forward.com/sql/tspace.htm
       $sth = $dbh->prepare(q{
-            select df.tablespace_name tspace, 
-                   df.bytes/(1024*1024) tot_ts_size,
-                   sum(fs.bytes)/(1024*1024) free_ts_size,
-                   round(sum(fs.bytes)*100/df.bytes) ts_pct,
-                   round((df.bytes-sum(fs.bytes))*100/df.bytes) ts_pct1,
-                   ROUND(100*SQRT(MAX(fs.bytes)/SUM(fs.bytes))*
-                   (1/SQRT(SQRT(COUNT(fs.bytes)))) ,2) FSFI
-              from dba_free_space fs, (select tablespace_name, sum(bytes) bytes
-                                         from dba_data_files
-                                     group by tablespace_name ) df          
-             where fs.tablespace_name = df.tablespace_name
-          group by df.tablespace_name, df.bytes
+         select ts.tablespace_name,
+                trunc(sum(ts.free_b)/1024/1024) free,
+                trunc(sum(ts.max_b)/1024/1024)  total,
+                trunc( sum(ts.free_b)/sum(ts.max_b)*1000) / 10 as pct_free
+          from
+                (select a.file_id,
+                        a.tablespace_name,
+                        decode(a.autoextensible,'YES',a.maxsize-a.bytes+b.free,'NO',b.free) free_b,
+                        a.maxsize max_b
+                   from (select file_id,
+                                tablespace_name,
+                                autoextensible,
+                                bytes,
+                                decode(autoextensible,'YES',maxbytes,bytes) maxsize
+                           from dba_data_files) a,
+                        (select file_id,
+                                tablespace_name,
+                                sum(bytes) free
+                           from dba_free_space
+                       group by file_id, tablespace_name) b
+                  where a.file_id=b.file_id(+)) ts
+       group by tablespace_name
          });
 
       $sth->execute();
