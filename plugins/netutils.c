@@ -32,7 +32,7 @@
 #include "common.h"
 #include "netutils.h"
 
-int socket_timeout = DEFAULT_SOCKET_TIMEOUT; 
+unsigned int socket_timeout = DEFAULT_SOCKET_TIMEOUT; 
 int econn_refuse_state = STATE_CRITICAL;
 int was_refused = FALSE;
 int address_family = AF_UNSPEC;
@@ -131,7 +131,7 @@ process_tcp_request2 (char *server_address, int server_port,
 		else {											/* it has */
 			recv_result =
 				recv (sd, recv_buffer + recv_length, 
-					recv_size - recv_length - 1, 0);
+					(size_t)recv_size - recv_length - 1, 0);
 			if (recv_result == -1) {
 				/* recv failed, bail out */
 				strcpy (recv_buffer + recv_length, "");
@@ -201,7 +201,7 @@ process_request (char *server_address, int server_port, int proto,
 	}
 
 	else {
-		recv_result = recv (sd, recv_buffer, recv_size - 1, 0);
+		recv_result = recv (sd, recv_buffer, (size_t)recv_size - 1, 0);
 		if (recv_result == -1) {
 			strcpy (recv_buffer, "");
 			if (proto != IPPROTO_TCP)

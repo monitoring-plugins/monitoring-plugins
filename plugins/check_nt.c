@@ -65,7 +65,7 @@ const char *progname = "check_nt";
 
 int process_arguments(int, char **);
 void preparelist(char *string);
-int strtoularray(unsigned long *array, char *string, char *delim);
+int strtoularray(unsigned long *array, char *string, const char *delim);
 void print_help(void);
 void print_usage(void);
 
@@ -117,7 +117,7 @@ int main(int argc, char **argv){
 	else if(vars_to_check==CHECK_CPULOAD){
 
 		if (check_value_list==TRUE) {																			
-			if (strtoularray(&lvalue_list,value_list,",")==TRUE) {
+			if (strtoularray(lvalue_list,value_list,",")==TRUE) {
 				/* -l parameters is present with only integers */
 				return_code=STATE_OK;
 				asprintf(&temp_string,_("CPU Load"));
@@ -514,7 +514,7 @@ int process_arguments(int argc, char **argv){
 
 
 
-int strtoularray(unsigned long *array, char *string, char *delim) {
+int strtoularray(unsigned long *array, char *string, const char *delim) {
 	/* split a <delim> delimited string into a long array */
 	int idx=0;
 	char *t1;

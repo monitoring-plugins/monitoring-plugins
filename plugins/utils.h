@@ -16,16 +16,16 @@ suite of plugins. */
 void support (void);
 char *clean_revstring (const char *revstring);
 void print_revision (const char *, const char *);
-void die (int result, const char *fmt, ...);
+void die (int result, const char *fmt, ...) __attribute__((noreturn));
 
 /* Handle timeouts */
 
 #ifdef LOCAL_TIMEOUT_ALARM_HANDLER
-extern int timeout_interval;
-RETSIGTYPE timeout_alarm_handler (int);
+extern unsigned int timeout_interval;
+RETSIGTYPE timeout_alarm_handler (int) __attribute__((noreturn));
 #else
-int timeout_interval = DEFAULT_SOCKET_TIMEOUT;
-extern RETSIGTYPE timeout_alarm_handler (int);
+unsigned int timeout_interval = DEFAULT_SOCKET_TIMEOUT;
+extern RETSIGTYPE timeout_alarm_handler (int) __attribute__((noreturn));
 #endif
 
 time_t start_time, end_time;
@@ -72,9 +72,9 @@ char *strpcat (char *dest, const char *src, const char *str);
 
 int max_state (int a, int b);
 
-void usage (char *msg);
-void usage2(char *msg, char *arg);
-void usage3(char *msg, char arg);
+void usage (char *msg) __attribute__((noreturn));
+void usage2(char *msg, char *arg) __attribute__((noreturn));
+void usage3(char *msg, char arg) __attribute__((noreturn));
 
 char *state_text (int result);
 

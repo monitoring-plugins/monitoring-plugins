@@ -34,7 +34,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-RETSIGTYPE socket_timeout_alarm_handler (int);
+RETSIGTYPE socket_timeout_alarm_handler (int) __attribute__((noreturn));
 
 int process_tcp_request2 (char *address, int port, char *sbuffer,
 	char *rbuffer, int rsize);
@@ -58,7 +58,7 @@ int is_inet6_addr (char *);
 #endif
 int is_hostname (char *);
 
-extern int socket_timeout;
+extern unsigned int socket_timeout;
 extern int econn_refuse_state;
 extern int was_refused;
 extern int address_family;

@@ -1,25 +1,19 @@
 /******************************************************************************
- *
- * This file is part of the Nagios Plugins.
- *
- * Copyright (c) 1999, 2000, 2001 Karl DeBisschop <karl@debisschop.net>
- *
- * The Nagios Plugins are free software; you can redistribute them
- * and/or modify them under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- * $Id$
- *
+
+ The Nagios Plugins are free software; you can redistribute them
+ and/or modify them under the terms of the GNU General Public
+ License as published by the Free Software Foundation; either
+ version 2 of the License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
  *****************************************************************************/
  
 const char *progname = "check_by_ssh";
@@ -27,7 +21,6 @@ const char *revision = "$Revision$";
 const char *copyright = "2000-2003";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
-#include "config.h"
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
@@ -38,83 +31,10 @@ int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
 
-void
-print_help (void)
-{
-	print_revision (progname, revision);
-
-	printf (_(COPYRIGHT), copyright, email);
-
-	printf (_("This plugin uses SSH to execute commands on a remote host\n\n"));
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_(UT_HOST_PORT), 'p', "none");
-
-	printf (_(UT_IPv46));
-
-	printf (_("\
- -1, --proto1\n\
-    tell ssh to use Protocol 1\n\
- -2, --proto2\n\
-    tell ssh to use Protocol 2\n\
- -f\n\
-    tells ssh to fork rather than create a tty\n"));
-
-	printf (_("\
- -C, --command='COMMAND STRING'\n\
-    command to execute on the remote machine\n\
- -l, --logname=USERNAME\n\
-    SSH user name on remote host [optional]\n\
- -i, --identity=KEYFILE\n\
-    identity of an authorized key [optional]\n\
- -O, --output=FILE\n\
-    external command file for nagios [optional]\n\
- -s, --services=LIST\n\
-    list of nagios service names, separated by ':' [optional]\n\
- -n, --name=NAME\n\
-    short name of host in nagios configuration [optional]\n"));
-
-	printf (_(UT_WARN_CRIT));
-
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-
-	printf (_("\n\
-The most common mode of use is to refer to a local identity file with\n\
-the '-i' option. In this mode, the identity pair should have a null\n\
-passphrase and the public key should be listed in the authorized_keys\n\
-file of the remote host. Usually the key will be restricted to running\n\
-only one command on the remote server. If the remote SSH server tracks\n\
-invocation agruments, the one remote program may be an agent that can\n\
-execute additional commands as proxy\n"));
-
-	printf (_("\n\
-To use passive mode, provide multiple '-C' options, and provide\n\
-all of -O, -s, and -n options (servicelist order must match '-C'\n\
-options)\n"));
-}
-
-
-
-
-
-void
-print_usage (void)
-{
-	printf (_("Usage:\n\
-check_by_ssh [-f46] [-t timeout] [-i identity] [-l user] -H <host> -C <command>\n\
-             [-n name] [-s servicelist] [-O outputfile] [-p port]\n\
-check_by_ssh  -V prints version info\n\
-check_by_ssh  -h prints more detailed help\n"));
-}
-
-
 int commands = 0;
 int services = 0;
-char *remotecmd = "";
-char *comm = SSH_COMMAND;
+char *remotecmd = NULL;
+char *comm = NULL;
 char *hostname = NULL;
 char *outputfile = NULL;
 char *host_shortname = NULL;
@@ -123,20 +43,26 @@ int passive = FALSE;
 int verbose = FALSE;
 
 
+
+
+
+
 int
 main (int argc, char **argv)
 {
 
 	char input_buffer[MAX_INPUT_BUFFER];
-	char *result_text = "";
+	char *result_text;
 	char *status_text;
-	char *output = "";
+	char *output;
 	char *eol = NULL;
 	int cresult;
 	int result = STATE_UNKNOWN;
 	time_t local_time;
 	FILE *fp = NULL;
 
+	asprintf (&remotecmd, "%s", "");
+	asprintf (&comm, "%s", SSH_COMMAND);
 
 	/* process arguments */
 	if (process_arguments (argc, argv) == ERROR)
@@ -235,6 +161,7 @@ main (int argc, char **argv)
 
 
 
+
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -391,4 +318,82 @@ validate_arguments (void)
 		die (STATE_UNKNOWN, _("%s: In passive mode, you must provide the host short name from the nagios configs.\n"), progname);
 
 	return OK;
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 1999 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("This plugin uses SSH to execute commands on a remote host\n\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_HOST_PORT), 'p', "none");
+
+	printf (_(UT_IPv46));
+
+	printf (_("\
+ -1, --proto1\n\
+    tell ssh to use Protocol 1\n\
+ -2, --proto2\n\
+    tell ssh to use Protocol 2\n\
+ -f\n\
+    tells ssh to fork rather than create a tty\n"));
+
+	printf (_("\
+ -C, --command='COMMAND STRING'\n\
+    command to execute on the remote machine\n\
+ -l, --logname=USERNAME\n\
+    SSH user name on remote host [optional]\n\
+ -i, --identity=KEYFILE\n\
+    identity of an authorized key [optional]\n\
+ -O, --output=FILE\n\
+    external command file for nagios [optional]\n\
+ -s, --services=LIST\n\
+    list of nagios service names, separated by ':' [optional]\n\
+ -n, --name=NAME\n\
+    short name of host in nagios configuration [optional]\n"));
+
+	printf (_(UT_WARN_CRIT));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_("\n\
+The most common mode of use is to refer to a local identity file with\n\
+the '-i' option. In this mode, the identity pair should have a null\n\
+passphrase and the public key should be listed in the authorized_keys\n\
+file of the remote host. Usually the key will be restricted to running\n\
+only one command on the remote server. If the remote SSH server tracks\n\
+invocation agruments, the one remote program may be an agent that can\n\
+execute additional commands as proxy\n"));
+
+	printf (_("\n\
+To use passive mode, provide multiple '-C' options, and provide\n\
+all of -O, -s, and -n options (servicelist order must match '-C'\n\
+options)\n"));
+}
+
+
+
+
+
+void
+print_usage (void)
+{
+	printf (_("\n\
+Usage: %s [-f46] [-t timeout] [-i identity] [-l user] -H <host> \n\
+  -C <command> [-n name] [-s servicelist] [-O outputfile] [-p port]\n"),
+	        progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }

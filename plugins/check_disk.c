@@ -35,80 +35,6 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 # include <limits.h>
 #endif
 
-void
-print_usage (void)
-{
-	printf (_("\
-Usage: %s -w limit -c limit [-p path | -x device] [-t timeout] [-m] [-e]\n\
-        [-v] [-q]\n\
-       %s (-h|--help)\n\
-       %s (-V|--version)\n"),
-	        progname,  progname, progname);
-}
-
-void
-print_help (void)
-{
-	print_revision (progname, revision);
-
-	printf (_(COPYRIGHT), copyright, email);
-
-	printf (_("\
-This plugin checks the amount of used disk space on a mounted file system\n\
-and generates an alert if free space is less than one of the threshold values."));
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_("\
- -w, --warning=INTEGER\n\
-   Exit with WARNING status if less than INTEGER kilobytes of disk are free\n\
- -w, --warning=PERCENT%%\n\
-   Exit with WARNING status if less than PERCENT of disk space is free\n\
- -c, --critical=INTEGER\n\
-   Exit with CRITICAL status if less than INTEGER kilobytes of disk are free\n\
- -c, --critical=PERCENT%%\n\
-   Exit with CRITCAL status if less than PERCENT of disk space is free\n\
- -C, --clear\n\
-    Clear thresholds\n"));
-
-	printf (_("\
- -u, --units=STRING\n\
-    Choose bytes, kB, MB, GB, TB (default: MB)\n\
- -k, --kilobytes\n\
-    Same as '--units kB'\n\
- -m, --megabytes\n\
-    Same as '--units MB'\n"));
-
-	printf (_("\
- -l, --local\n\
-    Only check local filesystems\n\
- -p, --path=PATH, --partition=PARTITION\n\
-    Path or partition (may be repeated)\n\
- -x, --exclude_device=PATH <STRING>\n\
-    Ignore device (only works if -p unspecified)\n\
- -X, --exclude-type=TYPE <STRING>\n\
-    Ignore all filesystems of indicated type (may be repeated)\n\
- -M, --mountpoint\n\
-    Display the mountpoint instead of the partition\n\
- -e, --errors-only\n\
-    Display only devices/mountpoints with errors\n"));
-
-	printf (_(UT_WARN_CRIT));
-
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-
-	printf (_(UT_VERBOSE));
-
-	printf ("%s", _("Examples:\n\
- check_disk -w 10% -c 5% -p /tmp -p /var -C -w 100000 -c 50000 -p /\n\
-   Checks /tmp and /var at 10%,5% and / at 100MB, 50MB\n"));
-
-	support ();
-}
-
-
 /* If nonzero, show inode information. */
 /* static int inode_format; */
 
@@ -135,8 +61,8 @@ struct name_list
 {
   char *name;
   int found;
-  int w_df;
-  int c_df;
+  uintmax_t w_df;
+  uintmax_t c_df;
   double w_dfp;
   double c_dfp;
   struct name_list *name_next;
@@ -183,18 +109,21 @@ enum
 #endif
 
 int process_arguments (int, char **);
-int validate_arguments (int, int, double, double, char *);
-int check_disk (int usp, int free_disk);
+void print_path (char *mypath);
+int validate_arguments (uintmax_t, uintmax_t, double, double, char *);
+int check_disk (int usp, uintmax_t free_disk);
 int walk_name_list (struct name_list *list, const char *name);
+void print_help (void);
+void print_usage (void);
 
-int w_df = -1;
-int c_df = -1;
+uintmax_t w_df = 0;
+uintmax_t c_df = 0;
 double w_dfp = -1.0;
 double c_dfp = -1.0;
 char *path = "";
 char *exclude_device = "";
-char *units = "MB";
-unsigned long mult = 1024 * 1024;
+char *units = NULL;
+uintmax_t mult = 1024 * 1024;
 int verbose = 0;
 int erronly = FALSE;
 int display_mntp = FALSE;
@@ -202,10 +131,12 @@ int display_mntp = FALSE;
 /* Linked list of mounted filesystems. */
 static struct mount_entry *mount_list;
 
+
+
 int
 main (int argc, char **argv)
 {
-	int usp = -1;
+	double usp = -1.0;
 	int result = STATE_UNKNOWN;
 	int disk_result = STATE_UNKNOWN;
 	char file_system[MAX_INPUT_BUFFER];
@@ -244,7 +175,7 @@ main (int argc, char **argv)
 			get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
 
 		if (fsp.fsu_blocks && strcmp ("none", me->me_mountdir)) {
-			usp = (fsp.fsu_blocks - fsp.fsu_bavail) * 100 / fsp.fsu_blocks;
+			usp = (double)(fsp.fsu_blocks - fsp.fsu_bavail) * 100 / fsp.fsu_blocks;
 			disk_result = check_disk (usp, fsp.fsu_bavail);
 			result = max_state (disk_result, result);
 			if (disk_result==STATE_OK && erronly && !verbose)
@@ -364,7 +295,7 @@ process_arguments (int argc, char **argv)
 			}
 			else if (strpbrk (optarg, ",:") &&
 							 strstr (optarg, "%") &&
-							 sscanf (optarg, "%d%*[:,]%lf%%", &w_df, &w_dfp) == 2) {
+							 sscanf (optarg, "%ul%*[:,]%lf%%", &w_df, &w_dfp) == 2) {
 				break;
 			}
 			else if (strstr (optarg, "%") && sscanf (optarg, "%lf%%", &w_dfp) == 1) {
@@ -380,7 +311,7 @@ process_arguments (int argc, char **argv)
 			}
 			else if (strpbrk (optarg, ",:") &&
 							 strstr (optarg, "%") &&
-							 sscanf (optarg, "%d%*[,:]%lf%%", &c_df, &c_dfp) == 2) {
+							 sscanf (optarg, "%ul%*[,:]%lf%%", &c_df, &c_dfp) == 2) {
 				break;
 			}
 			else if (strstr (optarg, "%") && sscanf (optarg, "%lf%%", &c_dfp) == 1) {
@@ -391,19 +322,19 @@ process_arguments (int argc, char **argv)
 			}
 		case 'u':
 			if (! strcmp (optarg, "bytes")) {
-				mult = 1;
+				mult = (uintmax_t)1;
 				units = "B";
 			} else if (! strcmp (optarg, "kB")) {
-				mult = 1024;
+				mult = (uintmax_t)1024;
 				units = "kB";
 			} else if (! strcmp (optarg, "MB")) {
-				mult = 1024 * 1024;
+				mult = (uintmax_t)1024 * 1024;
 				units = "MB";
 			} else if (! strcmp (optarg, "GB")) {
-				mult = 1024 * 1024 * 1024;
+				mult = (uintmax_t)1024 * 1024 * 1024;
 				units = "GB";
 			} else if (! strcmp (optarg, "TB")) {
-				mult = (unsigned long)1024 * 1024 * 1024 * 1024;
+				mult = (uintmax_t)1024 * 1024 * 1024 * 1024;
 				units = "TB";
 			} else {
 				die (STATE_UNKNOWN, _("unit type %s not known\n"), optarg);
@@ -458,8 +389,8 @@ process_arguments (int argc, char **argv)
 			display_mntp = TRUE;
 			break;
 		case 'C':
-			w_df = -1;
-			c_df = -1;
+			w_df = 0;
+			c_df = 0;
 			w_dfp = -1.0;
 			c_dfp = -1.0;
 			break;
@@ -477,10 +408,10 @@ process_arguments (int argc, char **argv)
 
 	/* Support for "check_disk warn crit [fs]" with thresholds at used level */
 	c = optind;
-	if (w_dfp == -1 && argc > c && is_intnonneg (argv[c]))
+	if (w_dfp < 0 && argc > c && is_intnonneg (argv[c]))
 		w_dfp = (100.0 - atof (argv[c++]));
 
-	if (c_dfp == -1 && argc > c && is_intnonneg (argv[c]))
+	if (c_dfp < 0 && argc > c && is_intnonneg (argv[c]))
 		c_dfp = (100.0 - atof (argv[c++]));
 
 	if (argc > c && strlen (path) == 0) {
@@ -520,9 +451,9 @@ void print_path (char *mypath)
 }
 
 int
-validate_arguments (int w, int c, double wp, double cp, char *mypath)
+validate_arguments (uintmax_t w, uintmax_t c, double wp, double cp, char *mypath)
 {
-	if (w < 0 && c < 0 && wp < 0.0 && cp < 0.0) {
+	if (w == 0 && c == 0 && wp < 0.0 && cp < 0.0) {
 		printf (_("INPUT ERROR: No thresholds specified"));
 		print_path (mypath);
 		return ERROR;
@@ -535,10 +466,10 @@ INPUT ERROR: C_DFP (%f) should be less than W_DFP (%.1f) and both should be betw
 		print_path (path);
 		return ERROR;
 	}
-	else if ((w > 0 || c > 0) && (w < 0 || c < 0 || c > w)) {
+	else if ((w > 0 || c > 0) && (w == 0 || c == 0 || c > w)) {
 		printf (_("\
-INPUT ERROR: C_DF (%d) should be less than W_DF (%d) and both should be greater than zero"),
-		        c, w);
+INPUT ERROR: C_DF (%lu) should be less than W_DF (%lu) and both should be greater than zero"),
+		        (unsigned long)c, (unsigned long)w);
 		print_path (path);
 		return ERROR;
 	}
@@ -551,17 +482,17 @@ INPUT ERROR: C_DF (%d) should be less than W_DF (%d) and both should be greater 
 
 
 int
-check_disk (int usp, int free_disk)
+check_disk (int usp, uintmax_t free_disk)
 {
 	int result = STATE_UNKNOWN;
 	/* check the percent used space against thresholds */
-	if (usp >= 0 && usp >= (100.0 - c_dfp))
+	if (usp >= 0.0 && usp >= (100.0 - c_dfp))
 		result = STATE_CRITICAL;
-	else if (c_df >= 0 && free_disk <= c_df)
+	else if (c_df > 0 && free_disk <= c_df)
 		result = STATE_CRITICAL;
-	else if (usp >= 0 && usp >= (100.0 - w_dfp))
+	else if (usp >= 0.0 && usp >= (100.0 - w_dfp))
 		result = STATE_WARNING;
-	else if (w_df >= 0 && free_disk <= w_df)
+	else if (w_df > 0 && free_disk <= w_df)
 		result = STATE_WARNING;
 	else if (usp >= 0.0)
 		result = STATE_OK;
@@ -579,11 +510,92 @@ walk_name_list (struct name_list *list, const char *name)
 			/* if required for name_lists that have not saved w_df, etc (eg exclude lists) */
 			if (list->w_df) w_df = list->w_df;
 			if (list->c_df) c_df = list->c_df;
-			if (list->w_dfp) w_dfp = list->w_dfp;
-			if (list->c_dfp) c_dfp = list->c_dfp;
+			if (list->w_dfp>=0.0) w_dfp = list->w_dfp;
+			if (list->c_dfp>=0.0) c_dfp = list->c_dfp;
 			return TRUE;
 		}
 		list = list->name_next;
 	}
 	return FALSE;
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("\
+This plugin checks the amount of used disk space on a mounted file system\n\
+and generates an alert if free space is less than one of the threshold values."));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_("\
+ -w, --warning=INTEGER\n\
+   Exit with WARNING status if less than INTEGER kilobytes of disk are free\n\
+ -w, --warning=PERCENT%%\n\
+   Exit with WARNING status if less than PERCENT of disk space is free\n\
+ -c, --critical=INTEGER\n\
+   Exit with CRITICAL status if less than INTEGER kilobytes of disk are free\n\
+ -c, --critical=PERCENT%%\n\
+   Exit with CRITCAL status if less than PERCENT of disk space is free\n\
+ -C, --clear\n\
+    Clear thresholds\n"));
+
+	printf (_("\
+ -u, --units=STRING\n\
+    Choose bytes, kB, MB, GB, TB (default: MB)\n\
+ -k, --kilobytes\n\
+    Same as '--units kB'\n\
+ -m, --megabytes\n\
+    Same as '--units MB'\n"));
+
+	printf (_("\
+ -l, --local\n\
+    Only check local filesystems\n\
+ -p, --path=PATH, --partition=PARTITION\n\
+    Path or partition (may be repeated)\n\
+ -x, --exclude_device=PATH <STRING>\n\
+    Ignore device (only works if -p unspecified)\n\
+ -X, --exclude-type=TYPE <STRING>\n\
+    Ignore all filesystems of indicated type (may be repeated)\n\
+ -M, --mountpoint\n\
+    Display the mountpoint instead of the partition\n\
+ -e, --errors-only\n\
+    Display only devices/mountpoints with errors\n"));
+
+	printf (_(UT_WARN_CRIT));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(UT_VERBOSE));
+
+	printf ("%s", _("Examples:\n\
+ check_disk -w 10% -c 5% -p /tmp -p /var -C -w 100000 -c 50000 -p /\n\
+   Checks /tmp and /var at 10%,5% and / at 100MB, 50MB\n"));
+
+	support ();
+}
+
+
+
+
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -w limit -c limit [-p path | -x device] [-t timeout] [-m] [-e]\n\
+        [-v] [-q]\n\
+       %s (-h|--help)\n\
+       %s (-V|--version)\n"),
+	        progname,  progname, progname);
 }
