@@ -123,11 +123,11 @@ gethostbyname.o: gethostbyname.h $(PLUGINHDRS)
 all-local: $(check_tcp_programs)
 
 $(check_tcp_programs): check_tcp
-	ln -sf check_tcp $@
+	ln -s -f check_tcp $@
 
 install-exec-hook:
 	cd $(DESTDIR)$(libexecdir) && \
-	for i in $(check_tcp_programs) ; do rm -f $$i; ln -sf check_tcp $$i ; done
+	for i in $(check_tcp_programs) ; do rm -f $$i; ln -s -f check_tcp $$i ; done
 
 clean-local:
 	rm -f $(check_tcp_programs)
