@@ -871,6 +871,10 @@ else
 	echo "** Could not find mailq or eqivalent"
 fi
 
+dnl SWAP info required is amount allocated/available and amount free
+dnl The plugin works through all the swap devices and adds up the total swap
+dnl available.
+
 dnl dunno why this does not work below - use hack (kbd)
 dnl fine on linux, broken on solaris
 dnl if /bin/test -e "/proc/meminfo"
@@ -901,7 +905,7 @@ then
 		echo "      using Solaris format"
 	fi
 	EXTRAS="$EXTRAS check_swap"
-elif [swapinfo -k 2>&1 | egrep -i "Device" >/dev/null]
+elif [swapinfo -k 2>&1 | egrep -i "^Device" >/dev/null]
 then
 	echo "found swapinfo command"
 	AC_DEFINE(HAVE_SWAP,1,[Define if swap/swapinfo command is found])
@@ -913,11 +917,11 @@ then
 		echo "      using FreeBSD format"
 	fi
 	EXTRAS="$EXTRAS check_swap"
-elif [swapinfo -d 2>/dev/null | egrep -i "^TYPE +AVAIL +USED +FREE" >/dev/null]
+elif [swapinfo -dfM 2>/dev/null | egrep -i "^TYPE +AVAIL +USED +FREE" >/dev/null]
 then
 	AC_DEFINE(HAVE_SWAP,1,[Define if swap/swapinfo command is found])
 	AC_PATH_PROG(PATH_TO_SWAP,swapinfo)
-	AC_DEFINE_UNQUOTED(SWAP_COMMAND,"/bin/sh '$PATH_TO_SWAP -d | /bin/tail -l +2'",[Path to swap/swapinfo binary, with any args])
+	AC_DEFINE_UNQUOTED(SWAP_COMMAND,"$PATH_TO_SWAP -dfM",[Path to swap/swapinfo binary, with any args])
 	AC_DEFINE_UNQUOTED(SWAP_FORMAT,["%*s %d %*d %d"],[Format string for parsing swap output ])
 	echo "        using HP-UX format HP-UX"
 fi
