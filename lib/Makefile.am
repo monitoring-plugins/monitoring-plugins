@@ -4,7 +4,7 @@ noinst_LIBRARIES = libnagiosplug.a
 
 noinst_HEADERS = getopt.h getaddrinfo.h gethostbyname.h
 
-libnagiosplug_a_SOURCES = getopt.c getopt1.c getloadavg.c
+libnagiosplug_a_SOURCES = getopt.c getopt1.c getloadavg.c snprintf.c
 
 INCLUDES = -I$(srcdir)
 

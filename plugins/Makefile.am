@@ -16,8 +16,7 @@ EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 
 check_tcp_programs = check_ftp check_imap check_nntp check_pop
 
-EXTRA_DIST = t utils.c netutils.c popen.c \
-	snprintf.c 
+EXTRA_DIST = t utils.c netutils.c popen.c
 
 PLUGINHDRS = common.h config.h
 
@@ -117,12 +116,6 @@ popen.o: popen.c popen.h $(PLUGINHDRS)
 utils.o: utils.c utils.h $(PLUGINHDRS)
 
 netutils.o: netutils.c netutils.h $(PLUGINHDRS)
-
-snprintf.o: snprintf.c
-	$(COMPILE) @NEED_VA_LIST@ -c $(srcdir)/snprintf.c -o $@
-
-libsnprintf.a: snprintf.o
-	$(AR) -r $@ snprintf.o
 
 all-local: $(check_tcp_programs)
 
