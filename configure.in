@@ -40,7 +40,6 @@ srcdir=$saved_srcdir
 
 ifdef([AC_FUNC_STRTOD],[AC_FUNC_STRTOD],[AM_FUNC_STRTOD])
 dnl AM_WITH_REGEX
-AC_PROG_RANLIB
 
 PLUGIN_TEST=`echo $srcdir/plugins/t/*.t|sed -e 's,\.*/plugins/,,g'`
 AC_SUBST(PLUGIN_TEST)dnl
@@ -51,7 +50,7 @@ AC_SUBST(SCRIPT_TEST)dnl
 WARRANTY="The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\ncopies of the plugins under the terms of the GNU General Public License.\nFor more information about these matters, see the file named COPYING.\n"
 AC_SUBST(WARRANTY)
 
-SUPPORT="Send email to nagios-users@lists.sourceforge.net if you have questions\nregarding use of this software. To submit patches or suggest improvements,\nsend email to nagiosplug-devel@lists.sourceforge.net\nPlease include version information with all correspondence. (when possible, use output from the --version option of the plugin itself)."
+SUPPORT="Send email to nagios-users@lists.sourceforge.net if you have questions\nregarding use of this software. To submit patches or suggest improvements,\nsend email to nagiosplug-devel@lists.sourceforge.net.\nPlease include version information with all correspondence (when possible,\nuse output from the --version option of the plugin itself).\n"
 AC_SUBST(SUPPORT)
 
 dnl CGIURL has changed for Nagios with 1.0 beta
