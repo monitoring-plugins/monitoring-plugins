@@ -61,6 +61,7 @@ my $snmpIfOperStatus = '1.3.6.1.2.1.2.2.1.8';
 my $snmpIfName = '1.3.6.1.2.1.31.1.1.1.1';
 my $snmpIfAlias = '1.3.6.1.2.1.31.1.1.1.18';
 my $snmpLocIfDescr = '1.3.6.1.4.1.9.2.2.1.1.28';
+my $snmpIfType = '1.3.6.1.2.1.2.2.1.3';
 my $hostname;
 my $session;
 my $error;
@@ -156,6 +157,7 @@ if ( ! $snmp_version ) {
 push(@snmpoids,$snmpIfOperStatus);
 push(@snmpoids,$snmpIfAdminStatus);
 push(@snmpoids,$snmpIfDescr);
+push(@snmpoids,$snmpIfType);
 push(@snmpoids,$snmpIfName) if ( defined $ifXTable);
 
 
@@ -184,17 +186,18 @@ foreach $key (keys %ifStatus) {
 
 	# check only if interface is administratively up
     if ($ifStatus{$key}{$snmpIfAdminStatus} == 1 ) {
-    	if ($ifStatus{$key}{$snmpIfOperStatus} == 1 ) { $ifup++ ;}
-        if ($ifStatus{$key}{$snmpIfOperStatus} == 2 ) {
-             $ifdown++ ;
-             $ifmessage .= sprintf("%s: down -> %s<BR>",
+    	# check only if interface is not of type 23  aka PPP interface
+		if ($ifStatus{$key}{$snmpIfType} != 23 ) {
+			if ($ifStatus{$key}{$snmpIfOperStatus} == 1 ) { $ifup++ ;}
+        	if ($ifStatus{$key}{$snmpIfOperStatus} == 2 ) {
+            	$ifdown++ ;
+				$ifmessage .= sprintf("%s: down -> %s<BR>",
                                  $ifStatus{$key}{$snmpIfDescr},
 								 $ifStatus{$key}{$snmpIfName});
-
-         }
-         if ($ifStatus{$key}{$snmpIfOperStatus} == 5 ) { $ifdormant++ ;}
-      }
-   }
+			}
+         	if ($ifStatus{$key}{$snmpIfOperStatus} == 5 ) { $ifdormant++ ;}
+		}
+	}
    
 
    if ($ifdown > 0) {
@@ -232,7 +235,7 @@ sub usage {
 
 sub print_help {
 	printf "check_ifstatus plugin for Nagios monitors operational \n";
-  	printf "status of each network interface on the target host\n";
+  	printf "status of each network interface (except PPP interfaces) on the target host\n";
 	printf "\nUsage:\n";
 	printf "   -H (--hostname)   Hostname to query - (required)\n";
 	printf "   -C (--community)  SNMP read community (defaults to public,\n";
