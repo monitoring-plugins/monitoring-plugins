@@ -1,3 +1,11 @@
+# Utility drawer for Nagios plugins.
+# $Id$
+#
+# $Log$
+# Revision 1.2  2002/05/08 05:10:35  sghosh
+#  is_hostname added, update CODES to POSIX
+#
+# 
 package utils;
 
 require Exporter;
@@ -9,9 +17,10 @@ require Exporter;
 sub print_revision ($$);
 sub usage;
 sub support();
+sub is_hostname;
 
 $TIMEOUT = 15;
-%ERRORS=('UNKNOWN'=>-1,'OK'=>0,'WARNING'=>1,'CRITICAL'=>2);
+%ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
 
 sub print_revision ($$) {
 	my $commandName = shift;
@@ -33,6 +42,15 @@ sub usage {
 	my $format=shift;
 	printf($format,@_);
 	exit $ERRORS{'UNKNOWN'};
+}
+
+sub is_hostname {
+	my $host1 = shift;
+	if ($host1 && $host1 =~ m/^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|[a-zA-Z][-a-zA-Z0-9]+(\.[a-zA-Z][-a-zA-Z0-9]+)*)$/) {
+		return 1;
+	}else{
+		return 0;
+	}
 }
 
 1;
