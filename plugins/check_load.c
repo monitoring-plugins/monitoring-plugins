@@ -226,32 +226,32 @@ process_arguments (int argc, char **argv)
 	if (c == argc)
 		return validate_arguments ();
 	if (wload1 < 0 && is_nonnegative (argv[c]))
-		wload1 = atof (argv[c]);
+		wload1 = atof (argv[c++]);
 
 	if (c == argc)
 		return validate_arguments ();
 	if (cload1 < 0 && is_nonnegative (argv[c]))
-		cload1 = atof (argv[c]);
+		cload1 = atof (argv[c++]);
 
 	if (c == argc)
 		return validate_arguments ();
 	if (wload5 < 0 && is_nonnegative (argv[c]))
-		wload5 = atof (argv[c]);
+		wload5 = atof (argv[c++]);
 
 	if (c == argc)
 		return validate_arguments ();
 	if (cload5 < 0 && is_nonnegative (argv[c]))
-		cload5 = atof (argv[c]);
+		cload5 = atof (argv[c++]);
 
 	if (c == argc)
 		return validate_arguments ();
 	if (wload15 < 0 && is_nonnegative (argv[c]))
-		wload15 = atof (argv[c]);
+		wload15 = atof (argv[c++]);
 
 	if (c == argc)
 		return validate_arguments ();
 	if (cload15 < 0 && is_nonnegative (argv[c]))
-		cload15 = atof (argv[c]);
+		cload15 = atof (argv[c++]);
 
 	return validate_arguments ();
 }
@@ -263,12 +263,24 @@ process_arguments (int argc, char **argv)
 int
 validate_arguments (void)
 {
-	if ((wload1 > cload1) || (wload5 > cload5) || (wload15 > cload15)) {
-		printf
-			("Inconsistence in parameters: \"warning load\" greater than \"critical load\".\n");
-		return STATE_UNKNOWN;
-	}
-
+	if (wload1 < 0)
+		usage ("Warning threshold for 1-minute load average is not specified\n");
+	if (wload5 < 0)
+		usage ("Warning threshold for 5-minute load average is not specified\n");
+	if (wload15 < 0)
+		usage ("Warning threshold for 15-minute load average is not specified\n");
+	if (cload1 < 0)
+		usage ("Critical threshold for 1-minute load average is not specified\n");
+	if (cload5 < 0)
+		usage ("Critical threshold for 5-minute load average is not specified\n");
+	if (cload15 < 0)
+		usage ("Critical threshold for 15-minute load average is not specified\n");
+	if (wload1 > cload1)
+		usage ("Parameter inconsistency: 1-minute \"warning load\" greater than \"critical load\".\n");
+	if (wload5 > cload5)
+		usage ("Parameter inconsistency: 5-minute \"warning load\" greater than \"critical load\".\n");
+	if (wload15 > cload15)
+		usage ("Parameter inconsistency: 15-minute \"warning load\" greater than \"critical load\".\n");
 	return OK;
 }
 
