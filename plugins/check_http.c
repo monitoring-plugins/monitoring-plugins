@@ -1,27 +1,20 @@
-/****************************************************************************
- *
- * Program: HTTP plugin for Nagios
- * License: GPL
- *
- * License Information:
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- * $Id$
- *
- *****************************************************************************/
+/******************************************************************************
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+******************************************************************************/
 
 const char *progname = "check_http";
 const char *revision = "$Revision$";
@@ -38,125 +31,6 @@ enum {
 	HTTP_PORT = 80,
 	HTTPS_PORT = 443
 };
-
-void
-print_usage (void)
-{
-	printf (_("\
-Usage: %s (-H <vhost> | -I <IP-address>) [-u <uri>] [-p <port>]\n\
-  [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L]\n\
-  [-a auth] [-f <ok | warn | critcal | follow>] [-e <expect>]\n\
-  [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n\
-  [-P string] [-m min_pg_size] [-4|-6]\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
-}
-
-void
-print_help (void)
-{
-	print_revision (progname, revision);
-
-	printf (_(COPYRIGHT), copyright, email);
-
-	printf (_("\
-This plugin tests the HTTP service on the specified host. It can test\n\
-normal (http) and secure (https) servers, follow redirects, search for\n\
-strings and regular expressions, check connection times, and report on\n\
-certificate expiration times.\n"));
-
-	print_usage ();
-
-	printf (_("NOTE: One or both of -H and -I must be specified\n"));
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_("\
- -H, --hostname=ADDRESS\n\
-    Host name argument for servers using host headers (virtual host)\n\
- -I, --IP-address=ADDRESS\n\
-   IP address or name (use numeric address if possible to bypass DNS lookup).\n\
- -p, --port=INTEGER\n\
-   Port number (default: %d)\n"), HTTP_PORT);
-
-	printf (_(UT_IPv46));
-
-#ifdef HAVE_SSL
-	printf (_("\
- -S, --ssl\n\
-    Connect via SSL\n\
- -C, --certificate=INTEGER\n\
-    Minimum number of days a certificate has to be valid.\n\
-    (when this option is used the url is not checked.)\n"));
-#endif
-
-	printf (_("\
- -e, --expect=STRING\n\
-   String to expect in first (status) line of server response (default: %s)\n\
-   If specified skips all other status line logic (ex: 3xx, 4xx, 5xx processing)\n\
- -s, --string=STRING\n\
-   String to expect in the content\n\
- -u, --url=PATH\n\
-   URL to GET or POST (default: /)\n\
- -P, --post=STRING\n\
-   URL encoded http POST data\n"), HTTP_EXPECT);
-
-#ifdef HAVE_REGEX_H
-	printf (_("\
- -l, --linespan\n\
-    Allow regex to span newlines (must precede -r or -R)\n\
- -r, --regex, --ereg=STRING\n\
-    Search page for regex STRING\n\
- -R, --eregi=STRING\n\
-    Search page for case-insensitive regex STRING\n"));
-#endif
-
-	printf (_("\
- -a, --authorization=AUTH_PAIR\n\
-   Username:password on sites with basic authentication\n\
- -L, --link=URL\n\
-   Wrap output in HTML link (obsoleted by urlize)\n\
- -f, --onredirect=<ok|warning|critical|follow>\n\
-   How to handle redirected pages\n\
- -m, --min=INTEGER\n\
-   Minimum page size required (bytes)\n"));
-
-	printf (_(UT_WARN_CRIT));
-
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-
-	printf (_(UT_VERBOSE));
-
-					printf (_("\
-This plugin will attempt to open an HTTP connection with the host. Successful\n\
-connects return STATE_OK, refusals and timeouts return STATE_CRITICAL, other\n\
-errors return STATE_UNKNOWN.  Successful connects, but incorrect reponse\n\
-messages from the host result in STATE_WARNING return values.  If you are\n\
-checking a virtual server that uses 'host headers' you must supply the FQDN\n\
-(fully qualified domain name) as the [host_name] argument.\n"));
-
-#ifdef HAVE_SSL
-	printf (_("\n\
-This plugin can also check whether an SSL enabled web server is able to\n\
-serve content (optionally within a specified time) or whether the X509 \n\
-certificate is still valid for the specified number of days.\n"));
-	printf (_("\n\
-CHECK CONTENT: check_http -w 5 -c 10 --ssl www.verisign.com\n\n\
-When the 'www.verisign.com' server returns its content within 5 seconds, a\n\
-STATE_OK will be returned. When the server returns its content but exceeds\n\
-the 5-second threshold, a STATE_WARNING will be returned. When an error occurs,\n\
-a STATE_CRITICAL will be returned.\n\n"));
-
-	printf (_("\
-CHECK CERTIFICATE: check_http www.verisign.com -C 14\n\n\
-When the certificate of 'www.verisign.com' is valid for more than 14 days, a\n\
-STATE_OK is returned. When the certificate is still valid, but for less than\n\
-14 days, a STATE_WARNING is returned. A STATE_CRITICAL will be returned when\n\
-the certificate is expired.\n"));
-#endif
-
-	printf (_(UT_SUPPORT));
-
-}
 
 #ifdef HAVE_SSL_H
 #include <rsa.h>
@@ -249,10 +123,12 @@ char *http_post_data = "";
 char buffer[MAX_INPUT_BUFFER];
 
 int process_arguments (int, char **);
-static char *base64 (char *bin, int len);
+static char *base64 (char *bin, size_t len);
 int check_http (void);
 int my_recv (void);
 int my_close (void);
+void print_help (void);
+void print_usage (void);
 
 int
 main (int argc, char **argv)
@@ -376,19 +252,24 @@ process_arguments (int argc, char **argv)
 		case 't': /* timeout period */
 			if (!is_intnonneg (optarg))
 				usage2 (_("timeout interval must be a non-negative integer"), optarg);
-			socket_timeout = atoi (optarg);
+			else
+				socket_timeout = atoi (optarg);
 			break;
 		case 'c': /* critical time threshold */
 			if (!is_intnonneg (optarg))
 				usage2 (_("invalid critical threshold"), optarg);
-			critical_time = strtod (optarg, NULL);
-			check_critical_time = TRUE;
+			else {
+				critical_time = strtod (optarg, NULL);
+				check_critical_time = TRUE;
+			}
 			break;
 		case 'w': /* warning time threshold */
 			if (!is_intnonneg (optarg))
 				usage2 (_("invalid warning threshold"), optarg);
-			warning_time = strtod (optarg, NULL);
-			check_warning_time = TRUE;
+			else {
+				warning_time = strtod (optarg, NULL);
+				check_warning_time = TRUE;
+			}
 			break;
 		case 'L': /* show html link */
 			display_html = TRUE;
@@ -408,8 +289,10 @@ process_arguments (int argc, char **argv)
 #ifdef HAVE_SSL
 			if (!is_intnonneg (optarg))
 				usage2 (_("invalid certificate expiration period"), optarg);
-			days_till_exp = atoi (optarg);
-			check_cert = TRUE;
+			else {
+				days_till_exp = atoi (optarg);
+				check_cert = TRUE;
+			}
 #else
 			usage (_("check_http: invalid option - SSL is not available\n"));
 #endif
@@ -442,8 +325,10 @@ process_arguments (int argc, char **argv)
 		case 'p': /* Host or server */
 			if (!is_intnonneg (optarg))
 				usage2 (_("invalid port number"), optarg);
-			server_port = atoi (optarg);
-			specify_port = TRUE;
+			else {
+				server_port = atoi (optarg);
+				specify_port = TRUE;
+			}
 			break;
 		case 'a': /* authorization info */
 			strncpy (user_auth, optarg, MAX_INPUT_BUFFER - 1);
@@ -529,11 +414,11 @@ process_arguments (int argc, char **argv)
 
 /* written by lauri alanko */
 static char *
-base64 (char *bin, int len)
+base64 (char *bin, size_t len)
 {
 
 	char *buf = (char *) malloc ((len + 2) / 3 * 4 + 1);
-	int i = 0, j = 0;
+	size_t i = 0, j = 0;
 
 	char BASE64_END = '=';
 	char base64_table[64];
@@ -645,7 +530,7 @@ check_http (void)
 
 #ifdef HAVE_SSL
 	if (use_ssl == TRUE) {
-		if (SSL_write (ssl, buf, strlen (buf)) == -1) {
+		if (SSL_write (ssl, buf, (int)strlen(buf)) == -1) {
 			ERR_print_errors_fp (stderr);
 			return STATE_CRITICAL;
 		}
@@ -732,7 +617,7 @@ check_http (void)
 			asprintf (&msg,
 			                _("Invalid HTTP response received from host on port %d\n"),
 			                server_port);
-		die (STATE_CRITICAL, msg);
+		die (STATE_CRITICAL, "%s", msg);
 	}
 
 
@@ -840,7 +725,7 @@ check_http (void)
 			asprintf (&msg, _(" - %s - %.3f second response time %s%s|time=%.3f\n"),
 		                 status_line, elapsed_time, timestamp,
 	                   (display_html ? "</A>" : ""), elapsed_time);
-			die (onredirect, msg);
+			die (onredirect, "%s", msg);
 		} /* end if (strstr (status_line, "30[0-4]") */
 
 
@@ -853,9 +738,9 @@ check_http (void)
 	               status_line, elapsed_time, timestamp,
 	               (display_html ? "</A>" : ""), elapsed_time);
 	if (check_critical_time == TRUE && elapsed_time > critical_time)
-		die (STATE_CRITICAL, msg);
+		die (STATE_CRITICAL, "%s", msg);
 	if (check_warning_time == TRUE && elapsed_time > warning_time)
-		die (STATE_WARNING, msg);
+		die (STATE_WARNING, "%s", msg);
 
 	/* Page and Header content checks go here */
 	/* these checks should be last */
@@ -908,7 +793,7 @@ check_http (void)
 	asprintf (&msg, _("HTTP OK %s - %.3f second response time %s%s|time=%.3f\n"),
 	                status_line, (float)elapsed_time,
 	                timestamp, (display_html ? "</A>" : ""), elapsed_time);
-	die (STATE_OK, msg);
+	die (STATE_OK, "%s", msg);
 	return STATE_UNKNOWN;
 }
 
@@ -920,7 +805,7 @@ int connect_SSL (void)
 	SSL_METHOD *meth;
 
 	asprintf (&randbuff, "%s", "qwertyuiopasdfghjklqwertyuiopasdfghjkl");
-	RAND_seed (randbuff, strlen (randbuff));
+	RAND_seed (randbuff, (int)strlen(randbuff));
 	if (verbose)
 		printf(_("SSL seeding: %s\n"), (RAND_status()==1 ? _("OK") : _("Failed")) );
 
@@ -1077,4 +962,131 @@ my_close (void)
 #ifdef HAVE_SSL
 	}
 #endif
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("\
+This plugin tests the HTTP service on the specified host. It can test\n\
+normal (http) and secure (https) servers, follow redirects, search for\n\
+strings and regular expressions, check connection times, and report on\n\
+certificate expiration times.\n"));
+
+	print_usage ();
+
+	printf (_("NOTE: One or both of -H and -I must be specified\n"));
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_("\
+ -H, --hostname=ADDRESS\n\
+    Host name argument for servers using host headers (virtual host)\n\
+ -I, --IP-address=ADDRESS\n\
+   IP address or name (use numeric address if possible to bypass DNS lookup).\n\
+ -p, --port=INTEGER\n\
+   Port number (default: %d)\n"), HTTP_PORT);
+
+	printf (_(UT_IPv46));
+
+#ifdef HAVE_SSL
+	printf (_("\
+ -S, --ssl\n\
+    Connect via SSL\n\
+ -C, --certificate=INTEGER\n\
+    Minimum number of days a certificate has to be valid.\n\
+    (when this option is used the url is not checked.)\n"));
+#endif
+
+	printf (_("\
+ -e, --expect=STRING\n\
+   String to expect in first (status) line of server response (default: %s)\n\
+   If specified skips all other status line logic (ex: 3xx, 4xx, 5xx processing)\n\
+ -s, --string=STRING\n\
+   String to expect in the content\n\
+ -u, --url=PATH\n\
+   URL to GET or POST (default: /)\n\
+ -P, --post=STRING\n\
+   URL encoded http POST data\n"), HTTP_EXPECT);
+
+#ifdef HAVE_REGEX_H
+	printf (_("\
+ -l, --linespan\n\
+    Allow regex to span newlines (must precede -r or -R)\n\
+ -r, --regex, --ereg=STRING\n\
+    Search page for regex STRING\n\
+ -R, --eregi=STRING\n\
+    Search page for case-insensitive regex STRING\n"));
+#endif
+
+	printf (_("\
+ -a, --authorization=AUTH_PAIR\n\
+   Username:password on sites with basic authentication\n\
+ -L, --link=URL\n\
+   Wrap output in HTML link (obsoleted by urlize)\n\
+ -f, --onredirect=<ok|warning|critical|follow>\n\
+   How to handle redirected pages\n\
+ -m, --min=INTEGER\n\
+   Minimum page size required (bytes)\n"));
+
+	printf (_(UT_WARN_CRIT));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(UT_VERBOSE));
+
+					printf (_("\
+This plugin will attempt to open an HTTP connection with the host. Successful\n\
+connects return STATE_OK, refusals and timeouts return STATE_CRITICAL, other\n\
+errors return STATE_UNKNOWN.  Successful connects, but incorrect reponse\n\
+messages from the host result in STATE_WARNING return values.  If you are\n\
+checking a virtual server that uses 'host headers' you must supply the FQDN\n\
+(fully qualified domain name) as the [host_name] argument.\n"));
+
+#ifdef HAVE_SSL
+	printf (_("\n\
+This plugin can also check whether an SSL enabled web server is able to\n\
+serve content (optionally within a specified time) or whether the X509 \n\
+certificate is still valid for the specified number of days.\n"));
+	printf (_("\n\
+CHECK CONTENT: check_http -w 5 -c 10 --ssl www.verisign.com\n\n\
+When the 'www.verisign.com' server returns its content within 5 seconds, a\n\
+STATE_OK will be returned. When the server returns its content but exceeds\n\
+the 5-second threshold, a STATE_WARNING will be returned. When an error occurs,\n\
+a STATE_CRITICAL will be returned.\n\n"));
+
+	printf (_("\
+CHECK CERTIFICATE: check_http www.verisign.com -C 14\n\n\
+When the certificate of 'www.verisign.com' is valid for more than 14 days, a\n\
+STATE_OK is returned. When the certificate is still valid, but for less than\n\
+14 days, a STATE_WARNING is returned. A STATE_CRITICAL will be returned when\n\
+the certificate is expired.\n"));
+#endif
+
+	printf (_(UT_SUPPORT));
+
+}
+
+
+
+
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s (-H <vhost> | -I <IP-address>) [-u <uri>] [-p <port>]\n\
+  [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L]\n\
+  [-a auth] [-f <ok | warn | critcal | follow>] [-e <expect>]\n\
+  [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n\
+  [-P string] [-m min_pg_size] [-4|-6]\n"), progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }
