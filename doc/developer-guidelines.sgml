@@ -109,7 +109,42 @@
 		when it notifies contacts about potential problems. If you print
 		multiple lines, you're out of luck. Remember, keep it short and
 		to the point.</para>
-	    </section>
+		</section>
+
+		<section><title>Verbose output</title>
+		<para>Use the -v flag for verbose output. You should allow multiple
+		-v options for additional verbosity, up to a maximum of 3. The standard
+		type of output should be:</para>
+
+		<table id="verbose_levels"><title>Verbose output levels</title>
+			<tgroup cols="2">
+				<thead>
+					<row>
+						<entry><para>Verbosity level</para></entry>
+						<entry><para>Type of output</para></entry>
+					</row>
+				</thead>
+				<tbody>
+					<row>
+						<entry align=center><para>0</para></entry>
+						<entry><para>Single line, minimal output. Summary</para></entry>
+					</row>
+					<row>
+						<entry align=center><para>1</para></entry>
+						<entry><para>Single line, additional information (eg list processes that fail)</para></entry>
+					</row>
+					<row>
+						<entry align=center><para>2</para></entry>
+						<entry><para>Multi line, configuration debug output (eg ps command used)</para></entry>
+					</row>
+					<row>
+						<entry align=center><para>3</para></entry>
+						<entry><para>Lots of detail for plugin problem diagnosis</para></entry>
+					</row>
+				</tbody>
+			</tgroup>
+		</table>
+		</section>
 
 		<section><title>Screen Output</title>
 		<para>The plug-in should print the diagnostic and just the
@@ -345,9 +380,8 @@
 		<section><title>Option Processing</title>
 
 		<para>For plugins written in C, we recommend the C standard
-		getopt library for short options. If using getopt_long, check to
-		be sure that HAVE_GETOPT_H is defined (configure checks this and
-		sets the #define in common/config.h).</para>
+		getopt library for short options. Getopt_long is always available.
+		</para>
 
 		<para>For plugins written in Perl, we recommend Getopt::Long module.</para>
 
@@ -363,6 +397,7 @@
           -w warning threshold (--warning)
           -c critical threshold (--critical)
           -H hostname (--hostname)
+          -v verbose (--verbose)
 		</literallayout>
 
 		<para>In addition to the reserved options above, some other standard options are:</para>
@@ -397,6 +432,9 @@
 		help. Help text should fit on an 80-character width display, but
 		may run as many lines as needed.</para>
 
+		<para>The option -v or --verbose should be present in all plugins.
+		The user should be allowed to specify -v multiple times to increase
+		the verbosity level, as described in <xref linkend="verbose_levels">.</para>
     </section>
 
     <section>
@@ -405,7 +443,7 @@
 
       <para>Old style was to do things like -ct for critical time and
       -cv for critical value. That goes out the window with POSIX
-      getopt. The allowable alternatves are:</para>
+      getopt. The allowable alternatives are:</para>
 
       <orderedlist>
 	<listitem>
@@ -449,23 +487,51 @@
 
       <para>As always, comments are welcome - making this consistent
       without a host of long options was quite a hassle, and I would
-      suspect that there are flaws in this strategy. Perhaps clear
-      long-options is the most important of the above choices, but not
-      all POSIX systems have C libraries for long options, so the
-      short forms must exist as well.</para>
+      suspect that there are flaws in this strategy. 
+      </para>
     </section>
+</section>
+
+<section id="CodingGuidelines"><title>Coding guidelines</title>
+	<para>See <ulink url="http://www.gnu.org/prep/standards_toc.html">GNU
+	Coding standards</ulink> for general guidelines.</para>
+	<section><title>Comments</title>
+	<para>You should use /* */ for comments and not // as some compilers
+	do not handle the latter form</para>
+	</section>
 </section>
 
 <section id="SubmittingChanges"><title>New submissions and patches</title>
 
-	<para>If you would like other to use your plugins and have it included in
-	the standard distribution, please include patches for the relavant
-	configuration files, in particular "configure.in" Otherwise submitted 
+	<para>If you would like others to use your plugins and have it included in
+	the standard distribution, please include patches for the relevant
+	configuration files, in particular "configure.in". Otherwise submitted 
 	plugins will be included in the contrib directory.</para>
 	
 	<para>Plugins in the contrib directory are going to be migrated to the
 	standard plugins/plugin-scripts directory as time permits and per user
-	requests</para>
+	requests. The minimum requirements are:</para>
+
+      <orderedlist>
+	<listitem>
+	  <para>The standard command options are supported (--help, --version,
+	  --timeout, --warning, --critical)</para>
+	</listitem>
+	<listitem>
+	  <para>It is determined to be not redundant (for instance, we would not 
+		add a new version of check_disk just because someone had provide 
+		a plugin that had perf checking - we would incorporate the features 
+		into an exisiting plugin)</para>
+	</listitem>
+	<listitem>
+	  <para>One of the developers has had the time to audit the code and declare
+		it ready for core</para>
+	</listitem>
+	<listitem>
+	  <para>It should also follow code format guidelines, and use functions from
+utils (perl or c or sh) rather than cooking it's own</para>
+	</listitem>
+      </orderedlist>
 
 	<para>Patches should be submitted via the SourceForge and be announced to
 	the mailing list.</para>
