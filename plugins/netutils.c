@@ -326,11 +326,11 @@ is_host (char *address)
 int
 is_addr (char *address)
 {
-	if (is_inet_addr (address))
+	if (is_inet_addr (address) && address_family != AF_INET6)
 		return (TRUE);
 
 #ifdef USE_IPV6
-	if (is_inet6_addr (address))
+	if (is_inet6_addr (address) && address_family != AF_INET)
 		return (TRUE);
 #endif
 
@@ -374,7 +374,7 @@ int
 is_hostname (char *s1)
 {
 #ifdef USE_IPV6
-	return resolve_host_or_addr (s1, AF_UNSPEC);
+	return resolve_host_or_addr (s1, address_family);
 #else
 	return resolve_host_or_addr (s1, AF_INET);
 #endif

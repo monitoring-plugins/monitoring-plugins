@@ -19,11 +19,15 @@ const char *progname = "check_ping";
 
 #define OPTIONS "\
 -H <host_address> -w <wrta>,<wpl>%% -c <crta>,<cpl>%%\n\
-       [-p packets] [-t timeout] [-L]\n"
+       [-p packets] [-t timeout] [-L] [-4] [-6]\n"
 
 #define LONGOPTIONS "\
 -H, --hostname=HOST\n\
    host to ping\n\
+-4, --use-ipv4\n\
+   Use IPv4 ICMP PING\n\
+-6, --use-ipv6\n\
+   Use IPv6 ICMP PING\n\
 -w, --warning=THRESHOLD\n\
    warning threshold pair\n\
 -c, --critical=THRESHOLD\n\
@@ -46,6 +50,7 @@ the contrib area of the downloads section at http://www.nagios.org\n\n"
 
 #include "config.h"
 #include "common.h"
+#include "netutils.h"
 #include "popen.h"
 #include "utils.h"
 
@@ -106,12 +111,12 @@ main (int argc, char **argv)
 		/* does the host address of number of packets argument come first? */
 #ifdef PING6_COMMAND
 # ifdef PING_PACKETS_FIRST
-	if (is_inet6_addr(addresses[i]))
+	if (is_inet6_addr(addresses[i]) && address_family != AF_INET)
 		asprintf (&command_line, PING6_COMMAND, max_packets, addresses[i]);
 	else
 		asprintf (&command_line, PING_COMMAND, max_packets, addresses[i]);
 # else
-	if (is_inet6_addr(addresses[i]))
+	if (is_inet6_addr(addresses[i]) && address_family != AF_INET) 
 		asprintf (&command_line, PING6_COMMAND, addresses[i], max_packets);
 	else
 		asprintf (&command_line, PING_COMMAND, addresses[i], max_packets);
@@ -182,6 +187,8 @@ process_arguments (int argc, char **argv)
 		{"packets", required_argument, 0, 'p'},
 		{"nohtml", no_argument, 0, 'n'},
 		{"link", no_argument, 0, 'L'},
+		{"use-ipv4", no_argument, 0, '4'},
+		{"use-ipv6", no_argument, 0, '6'},
 		{0, 0, 0, 0}
 	};
 
@@ -196,7 +203,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "VvhnLt:c:w:H:p:", long_options, &option_index);
+		c = getopt_long (argc, argv, "VvhnL46t:c:w:H:p:", long_options, &option_index);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -215,6 +222,12 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'v':	/* verbose mode */
 			verbose = TRUE;
+			break;
+		case '4':	/* IPv4 only */
+			address_family = AF_INET;
+			break;
+		case '6':	/* IPv6 only */
+			address_family = AF_INET6;
 			break;
 		case 'H':	/* hostname */
 			ptr=optarg;
