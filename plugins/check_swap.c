@@ -150,36 +150,6 @@ main (int argc, char **argv)
 int
 process_arguments (int argc, char **argv)
 {
-	int c;
-
-	if (argc < 2)
-		return ERROR;
-
-	c = 0;
-	while (c += (call_getopt (argc - c, &argv[c]))) {
-		if (argc <= c)
-			break;
-
-		if (warn_percent > 100 && is_intnonneg (argv[c]))
-			warn_percent = atoi (argv[c]);
-		else if (crit_percent > 100 && is_intnonneg (argv[c]))
-			crit_percent = atoi (argv[c]);
-		else if (warn_size < 0 && is_intnonneg (argv[c]))
-			warn_size = atoi (argv[c]);
-		else if (crit_size < 0 && is_intnonneg (argv[c]))
-			crit_size = atoi (argv[c]);
-	}
-
-	return validate_arguments ();
-}
-
-
-
-
-
-int
-call_getopt (int argc, char **argv)
-{
 	int c, i = 0;
 
 #ifdef HAVE_GETOPT_H
@@ -194,6 +164,9 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+	if (argc < 2)
+		return ERROR;
+
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c = getopt_long (argc, argv, "+?Vhc:w:", long_options, &option_index);
@@ -201,16 +174,8 @@ call_getopt (int argc, char **argv)
 		c = getopt (argc, argv, "+?Vhc:w:");
 #endif
 
-		i++;
-
 		if (c == -1 || c == EOF)
 			break;
-
-		switch (c) {
-		case 'c':
-		case 'w':
-			i++;
-		}
 
 		switch (c) {
 		case 'w':									/* warning time threshold */
@@ -257,7 +222,29 @@ call_getopt (int argc, char **argv)
 			usage ("Invalid argument\n");
 		}
 	}
-	return i;
+
+	c = optind;
+	if (c == argc)
+		return validate_arguments ();
+	if (warn_percent > 100 && is_intnonneg (argv[c]))
+		warn_percent = atoi (argv[c++]);
+
+	if (c == argc)
+		return validate_arguments ();
+	if (crit_percent > 100 && is_intnonneg (argv[c]))
+		crit_percent = atoi (argv[c++]);
+
+	if (c == argc)
+		return validate_arguments ();
+	if (warn_size < 0 && is_intnonneg (argv[c]))
+		warn_size = atoi (argv[c++]);
+
+	if (c == argc)
+		return validate_arguments ();
+	if (crit_size < 0 && is_intnonneg (argv[c]))
+		crit_size = atoi (argv[c++]);
+
+	return validate_arguments ();
 }
 
 
