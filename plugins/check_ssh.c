@@ -34,6 +34,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 int port = -1;
 char *server_name = NULL;
+char *remote_version = NULL;
 int verbose = FALSE;
 
 int process_arguments (int, char **);
@@ -41,7 +42,7 @@ int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
 
-int ssh_connect (char *haddr, int hport);
+int ssh_connect (char *haddr, int hport, char *remote_version);
 
 int
 main (int argc, char **argv)
@@ -60,7 +61,7 @@ main (int argc, char **argv)
 	alarm (socket_timeout);
 
 	/* ssh_connect exits if error is found */
-	result = ssh_connect (server_name, port);
+	result = ssh_connect (server_name, port, remote_version);
 
 	alarm (0);
 
@@ -84,6 +85,7 @@ process_arguments (int argc, char **argv)
 		{"use-ipv6", no_argument, 0, '6'},
 		{"timeout", required_argument, 0, 't'},
 		{"verbose", no_argument, 0, 'v'},
+		{"remote-version", required_argument, 0, 'r'},
 		{0, 0, 0, 0}
 	};
 
@@ -95,7 +97,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "+Vhv46t:H:p:", longopts, &option);
+		c = getopt_long (argc, argv, "+Vhv46t:r:H:p:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -109,7 +111,7 @@ process_arguments (int argc, char **argv)
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
-		case 'v':									/* verose */
+		case 'v':									/* verbose */
 			verbose = TRUE;
 			break;
 		case 't':									/* timeout period */
@@ -127,6 +129,9 @@ process_arguments (int argc, char **argv)
 #else
 			usage (_("IPv6 support not available\n"));
 #endif
+			break;
+		case 'r':									/* remote version */
+			remote_version = optarg;
 			break;
 		case 'H':									/* host */
 			if (is_host (optarg) == FALSE)
@@ -183,7 +188,7 @@ validate_arguments (void)
 *-----------------------------------------------------------------------*/
 
 int
-ssh_connect (char *haddr, int hport)
+ssh_connect (char *haddr, int hport, char *remote_version)
 {
 	int sd;
 	int result;
@@ -214,13 +219,22 @@ ssh_connect (char *haddr, int hport)
 		ssh_proto = output + 4;
 		ssh_server = ssh_proto + strspn (ssh_proto, "-0123456789. ");
 		ssh_proto[strspn (ssh_proto, "0123456789. ")] = 0;
-		printf
-			(_("SSH OK - %s (protocol %s)\n"),
-			 ssh_server, ssh_proto);
+
 		asprintf (&buffer, "SSH-%s-check_ssh_%s\r\n", ssh_proto, rev_no);
 		send (sd, buffer, strlen (buffer), MSG_DONTWAIT);
 		if (verbose)
 			printf ("%s\n", buffer);
+
+		if (remote_version && strcmp(remote_version, ssh_server)) {
+			printf
+				(_("SSH WARNING - %s (protocol %s) version mismatch, expected '%s'\n"),
+				 ssh_server, ssh_proto, remote_version);
+			exit (STATE_WARNING);
+		}
+		
+		printf
+			(_("SSH OK - %s (protocol %s)\n"),
+			 ssh_server, ssh_proto);
 		exit (STATE_OK);
 	}
 }
@@ -248,6 +262,10 @@ print_help (void)
 
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
+	printf (_("\
+ -r, --remote-version=STRING\n\
+    Warn if string doesn't match expected server version (ex: OpenSSH_3.9p1)\n"));
+	
 	printf (_(UT_VERBOSE));
 
 	printf (_(UT_SUPPORT));
@@ -257,7 +275,7 @@ void
 print_usage (void)
 {
 	printf (_("\
-Usage: %s [-46] [-t <timeout>] [-p <port>] <host>\n"), progname);
+Usage: %s [-46] [-t <timeout>] [-r <remote version>] [-p <port>] <host>\n"), progname);
 	printf (_(UT_HLP_VRS), progname, progname);
 }
 
