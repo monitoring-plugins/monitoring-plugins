@@ -64,6 +64,9 @@ const char *options = "\
 #include <stdarg.h>
 #include "../lib/fsusage.h"
 #include "../lib/mountlist.h"
+#if HAVE_LIMITS_H
+# include <limits.h>
+#endif
 
 /* If nonzero, show inode information. */
 static int inode_format;
