@@ -97,7 +97,7 @@ int main(int argc, char **argv){
 	int updays=0;
 	int uphours=0;
 	int upminutes=0;
-	req_password=strscpy(req_password,"None");
+	asprintf(&req_password,"None");
 
 	if(process_arguments(argc,argv)==ERROR)
 		usage("Could not parse arguments\n");
@@ -110,11 +110,11 @@ int main(int argc, char **argv){
 
 	if (vars_to_check==CHECK_CLIENTVERSION) {
 			
-		send_buffer = strscpy(send_buffer,strcat(req_password,"&1"));
+		asprintf(&send_buffer,strcat(req_password,"&1"));
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if(result!=STATE_OK)
 			return result;
-		output_message = strscpy(output_message,recv_buffer);
+		asprintf(&output_message,recv_buffer);
 		return_code=STATE_OK;
 	}
 	else if(vars_to_check==CHECK_CPULOAD){
@@ -123,7 +123,7 @@ int main(int argc, char **argv){
 			if (strtolarray(&lvalue_list,value_list,",")==TRUE) {
 				// -l parameters is present with only integers
 				return_code=STATE_OK;
-				temp_string = strscpy(temp_string,"CPU Load");
+				asprintf(&temp_string,"CPU Load");
 				while (lvalue_list[0+offset]>0 && lvalue_list[0+offset]<=17280 && 
 							lvalue_list[1+offset]>=0 && lvalue_list[1+offset]<=100 && 
 							lvalue_list[2+offset]>=0 && lvalue_list[2+offset]<=100) {
@@ -149,7 +149,7 @@ int main(int argc, char **argv){
 						return_code=STATE_WARNING;
 
 					asprintf(&output_message," (%lu min. %lu%)",lvalue_list[0+offset], utilization);
-					temp_string = strscat(temp_string,output_message);
+					asprintf(&temp_string,"%s%s",temp_string,output_message);
 					offset+=3;	//move accross the array 
 				}		
 				if (strlen(temp_string)>10) {
@@ -157,18 +157,18 @@ int main(int argc, char **argv){
 					asprintf(&output_message,"%s",temp_string);
 				}	
 				else
-					output_message = strscpy(output_message,"not enough values for -l parameters");
+					asprintf(&output_message,"%s","not enough values for -l parameters");
 					
 			} else 
-				output_message = strscpy(output_message,"wrong -l parameter.");
+				asprintf(&output_message,"wrong -l parameter.");
 
 		} else
-			output_message = strscpy(output_message,"missing -l parameters");
+			asprintf(&output_message,"missing -l parameters");
 	}
 
 	else if(vars_to_check==CHECK_UPTIME){
 
-		send_buffer = strscpy(send_buffer,strcat(req_password,"&3"));
+		asprintf(&send_buffer,strcat(req_password,"&3"));
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if(result!=STATE_OK)
 			return result;
@@ -227,9 +227,9 @@ int main(int argc, char **argv){
 				}		
 			}
 			else 
-				output_message = strscpy(output_message,"wrong -l argument");
+				asprintf(&output_message,"wrong -l argument");
 		} else 
-			output_message = strscpy(output_message,"missing -l parameters");
+			asprintf(&output_message,"missing -l parameters");
 			
 	}
 
@@ -252,7 +252,7 @@ int main(int argc, char **argv){
 			asprintf(&output_message, "%s",temp_string);
 		}
 		else 
-			output_message = strscpy(output_message,"No service/process specified");
+			asprintf(&output_message,"No service/process specified");
 	}
 
 	else if(vars_to_check==CHECK_MEMUSE) {
@@ -326,7 +326,7 @@ int main(int argc, char **argv){
 		
 		}
 		else {
-			output_message = strscpy(output_message,"No counter specified");
+			asprintf(&output_message,"No counter specified");
 			result=STATE_UNKNOWN;
 		}
 	}
@@ -369,7 +369,7 @@ int main(int argc, char **argv){
 		
 		}
 		else {
-			output_message = strscpy(output_message,"No file specified");
+			asprintf(&output_message,"No file specified");
 			result=STATE_UNKNOWN;
 		}
 	}
@@ -449,7 +449,7 @@ int process_arguments(int argc, char **argv){
 				server_address=optarg;
 				break;
 			case 's': /* password */
-				req_password=strscpy(req_password,optarg);
+				asprintf(&req_password,optarg);
 				break;
 			case 'p': /* port */
 				if (is_intnonneg(optarg))
@@ -482,7 +482,7 @@ int process_arguments(int argc, char **argv){
 					return ERROR;
 				break;
 			case 'l': /* value list */
-				value_list=strscpy(value_list,optarg);
+				asprintf(&value_list,"%s",optarg);
 				check_value_list=TRUE;
 				break;
 			case 'w': /* warning threshold */
