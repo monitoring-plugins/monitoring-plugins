@@ -356,7 +356,12 @@ int main(int argc, char **argv){
 	    		{
 	      			/* Let's format the output string, finally... */
 
-	      			asprintf (&output_message, "%s = %.2f %s", description, counter_value, counter_unit);
+					if (strstr(description, "%") == NULL) {
+						asprintf (&output_message, "%s = %.2f %s", description, counter_value, counter_unit);
+					} else {
+						/* has formatting, will segv if wrong */
+	      				asprintf (&output_message, description, counter_value);
+					}
 	      			output_message = strcat (output_message, "|");
 	      			output_message = strcat (output_message,
 							fperfdata (description, counter_value, counter_unit,
@@ -672,7 +677,8 @@ Windows NT/2000/XP/2003 server.\n\n"));
      Request a -l parameters with the following syntax:\n\
 		 -l \"\\\\<performance object>\\\\counter\",\"<description>\n\
      The <description> parameter is optional and \n\
-     is given to a printf output command which require a float parameters.\n\
+     is given to a printf output command which requires a float parameter.\n\
+     If <description> does not include \"%%\", it is used as a label.\n\
      Some examples:\n\
        \"Paging file usage is %%.2f %%%%\"\n\
        \"%%.f %%%% paging file used.\"\n"));
