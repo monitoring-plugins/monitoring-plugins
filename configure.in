@@ -4,7 +4,7 @@ include(`getloadavg.m4')
 AC_REVISION ($Revision$)
 AC_INIT(Helper.pm)
 VER=1.3.0
-REL=beta2
+REL=beta3
 AC_SUBST(VER)
 AC_SUBST(REL)
 PACKAGE_VERSION="${VER}-${REL}"
@@ -106,7 +106,10 @@ if test "$ac_cv_lib_crypt_main" = "yes"; then
     AC_CHECK_HEADERS(pgsql/libpq-fe.h)
     AC_CHECK_HEADERS(postgresql/libpq-fe.h)
     AC_CHECK_HEADERS(libpq-fe.h)
-    if test  "$ac_cv_header_pgsql_libpq_fe_h" = "yes"; then
+    if [[ -n "$PGSQL" -a "$ac_cv_header_libpq_fe_h" = "yes" ]]; then
+      PGLIBS="-L$PGSQL/lib -lpq -lcrypt"
+      PGINCLUDE="-I$PGSQL/include"
+    elif test  "$ac_cv_header_pgsql_libpq_fe_h" = "yes"; then
       PGLIBS="-lpq -lcrypt"
       PGINCLUDE="-I/usr/include/pgsql"
     elif test  "$ac_cv_header_postgresql_libpq_fe_h" = "yes"; then
