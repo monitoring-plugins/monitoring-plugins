@@ -583,6 +583,9 @@
 	  </varlistentry>
 	</variablelist>
 	</para>
+	<para>If the change is due to a contribution, please quote the contributor's name 
+	and, if applicable, add the SourceForge Tracker number. Don't forget to 
+update the AUTHORS file.</para>
 	</section>
 </section>
 
