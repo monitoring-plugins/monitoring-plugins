@@ -401,11 +401,11 @@ print_help (void)
  -w, --warning=INTEGER\n\
    Exit with WARNING status if less than INTEGER bytes of swap space are free\n\
  -w, --warning=PERCENT%%\n\
-   Exit with WARNING status if less than PERCENT of swap space has been used\n\
+   Exit with WARNING status if less than PERCENT of swap space is free\n\
  -c, --critical=INTEGER\n\
    Exit with CRITICAL status if less than INTEGER bytes of swap space are free\n\
  -c, --critical=PERCENT%%\n\
-   Exit with CRITCAL status if less than PERCENT of swap space has been used\n\
+   Exit with CRITCAL status if less than PERCENT of swap space is free\n\
  -a, --allswaps\n\
     Conduct comparisons for all swap partitions, one by one\n"));
 
