@@ -616,16 +616,13 @@ fi
 dnl #### Process table test
 
 AC_PATH_PROG(PATH_TO_PS,ps)
-ac_cv_use_ps_vars=no
 
 AC_MSG_CHECKING(for ps syntax)
 dnl  STAT UCOMM              VSZ   RSS USER       UID  PPID COMMAND
 if ps -weo 'stat comm vsz rss user uid ppid args' 2>/dev/null | \
 	egrep -i ["^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ +U[ID]+ +P[PID]+ +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_use_ps_vars=yes
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
-	ac_cv_ps_raw_command="$PATH_TO_PS -weo 'stat user ppid args'"
 	ac_cv_ps_command="$PATH_TO_PS -weo 'stat uid ppid comm args'"
 	ac_cv_ps_format="%s %d %d %s %n"
 	ac_cv_vsz_command="$PATH_TO_PS -weo 'vsz comm'"
@@ -639,9 +636,7 @@ dnl FreeBSD
 elif ps waxco 'state command vsz rss uid user ppid' 2>/dev/null | \
 	egrep -i ["^STAT +COMMAND +VSZ +RSS +UID +USER +PPID"] >/dev/null
 then
-	ac_cv_use_ps_vars=yes
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
-	ac_cv_ps_raw_command="$PATH_TO_PS waxo 'state uid ppid command'"
 	ac_cv_ps_command="$PATH_TO_PS waxco 'state uid ppid command command'"
 	ac_cv_ps_format="%s %d %d %s %n"
 	ac_cv_vsz_command="$PATH_TO_PS waxco 'vsz command'"
@@ -655,9 +650,7 @@ dnl BSD-like mode in RH 6.1
 elif ps waxno 'state comm vsz rss uid user ppid args' 2>/dev/null | \
 	egrep -i ["^S +COMMAND +VSZ +RSS +UID +USER +PPID +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_use_ps_vars=yes
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
-	ac_cv_ps_raw_command="$PATH_TO_PS waxno 'state user ppid comm'"
 	ac_cv_ps_command="$PATH_TO_PS waxno 'state uid ppid comm args'"
 	ac_cv_ps_format="%s %d %d %s %n"
 	ac_cv_vsz_command="$PATH_TO_PS waxno 'vsz comm'"
@@ -672,8 +665,6 @@ dnl  F  UID  PID  PPID  CP  PRI  NI  SZ  RSS  WCHAN  STAT  TT  TIME  COMMAND
 elif ps -laxnwww 2>/dev/null | \
 	egrep -i ["^ *F(LAGS)? +UID +PID +PPID +CP +PRI +NI +(SZ)|(VSZ)|(SIZE) +RSS +WCHAN +STAT? +TTY? +TIME +COMMAND"] >/dev/null
 then
-	ac_cv_use_ps_vars=yes
-	ac_cv_ps_raw_command="$PATH_TO_PS laxnwww"
 	ac_cv_ps_varlist="[&procuid,&procppid,procstat,&pos,procprog]"
 	ac_cv_ps_command="$PATH_TO_PS -laxnwww"
 	ac_cv_ps_format="%*s %d %*s %d %*s %*s %*s %*s %*s %*s %s %*s %*s %n%s"
@@ -691,8 +682,6 @@ dnl
 elif ps laxnwww 2>/dev/null | \
 	egrep -i ["^ *F(LAGS)? +UID +PID +PPID +PRI +NI +(VSZ)|(SIZE) +RSS +WCHAN +STAT? TTY +TIME +COMMAND"] >/dev/null
 then
-	ac_cv_use_ps_vars=yes
-	ac_cv_ps_raw_command="$PATH_TO_PS laxnwww"
 	ac_cv_ps_varlist="[&procuid,&procppid,procstat,&pos,procprog]"
 	ac_cv_ps_command="$PATH_TO_PS laxnwww"
 	ac_cv_ps_format="%*s %d %*s %d %*s %*s %*s %*s %*s %s %*s %*s %n%s"
@@ -707,9 +696,7 @@ dnl OpenBSD (needs to come early because -exo appears to work, but does not give
 elif ps -axo 'stat comm vsz rss user uid ppid args' 2>/dev/null | \
 	egrep -i ["^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ +U[ID]+ +P[PID]+ +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_use_ps_vars=yes
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
-	ac_cv_ps_raw_command="$PATH_TO_PS -axo 'stat user ppid args'"
 	ac_cv_ps_command="$PATH_TO_PS -axo 'stat uid ppid comm args'"
 	ac_cv_ps_format="%s %d %d %s %n"
 	ac_cv_vsz_command="$PATH_TO_PS -axo 'vsz comm'"
@@ -723,9 +710,7 @@ dnl AIX 4.3.3 - needs verification. This works for Tru64 - needs %*[ +] in PS_FO
 elif ps -ao 'stat comm vsz rss user uid ppid args' 2>/dev/null | \
 	egrep -i ["^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ +U[ID]+ +P[PID]+ +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_use_ps_vars=yes
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
-	ac_cv_ps_raw_command="$PATH_TO_PS -ao 'stat user ppid args'"
 	ac_cv_ps_command="$PATH_TO_PS -ao 'stat uid ppid comm args'"
 	ac_cv_ps_format="[["%s%*[ +] %d %d %s %n"]]"
 	ac_cv_vsz_command="$PATH_TO_PS -ao 'vsz comm'"
@@ -738,9 +723,7 @@ then
 elif ps -eo 's comm vsz rss user uid ppid args' 2>/dev/null | \
 	egrep -i ["^S[TAUES]* +C[OMDNA]+ +[VSIZE]+ +U[SER]+ +U[ID]+ +P[PID]+ +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_use_ps_vars=yes
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
-	ac_cv_ps_raw_command="$PATH_TO_PS -eo 's user ppid args'"
 	ac_cv_ps_command="$PATH_TO_PS -eo 's uid ppid comm args'"
 	ac_cv_ps_format="%s %d %d %s %n"
 	ac_cv_vsz_command="$PATH_TO_PS -eo 'vsz comm'"
@@ -753,9 +736,7 @@ then
 elif ps -Ao 's comm vsz rss uid user ppid args' 2>/dev/null | \
 	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PPID +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_use_ps_vars=yes
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
-	ac_cv_ps_raw_command="$PATH_TO_PS -Ao 's user ppid args'"
 	ac_cv_ps_command="$PATH_TO_PS -Ao 's uid ppid comm args'"
 	ac_cv_ps_format="%s %d %d %s %n"
 	ac_cv_vsz_command="$PATH_TO_PS -Ao 'vsz comm'"
@@ -768,9 +749,7 @@ then
 elif ps -Ao 'status comm vsz rss uid user ppid args' 2>/dev/null | \
 	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PPID +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_use_ps_vars=yes
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
-	ac_cv_ps_raw_command="$PATH_TO_PS -Ao 'status user ppid args'"
 	ac_cv_ps_command="$PATH_TO_PS -Ao 'status uid ppid comm args'"
 	ac_cv_ps_format="%s %d %d %s %n"
 	ac_cv_vsz_command="$PATH_TO_PS -Ao 'vsz comm'"
@@ -783,9 +762,7 @@ then
 elif ps -Ao 'state comm vsz rss uid user ppid args' 2>/dev/null | \
 	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PPID +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_use_ps_vars=yes
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
-	ac_cv_ps_raw_command="$PATH_TO_PS -Ao 'state user ppid args'"
 	ac_cv_ps_command="$PATH_TO_PS -Ao 'state uid ppid comm args'"
 	ac_cv_ps_format="%s %d %d %s %n"
 	ac_cv_vsz_command="$PATH_TO_PS -Ao 'vsz comm'"
@@ -799,9 +776,7 @@ dnl wonder who takes state instead of stat
 elif ps -ao 'state command vsz rss user ppid args' 2>/dev/null | \
 	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PPID +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_use_ps_vars=yes
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
-	ac_cv_ps_raw_command="$PATH_TO_PS -ao 'state user ppid args'"
 	ac_cv_ps_command="$PATH_TO_PS -ao 'state uid ppid command args'"
 	ac_cv_ps_format="%s %d %d %s %n"
 	ac_cv_vsz_command="$PATH_TO_PS -ao 'vsz command'"
@@ -815,7 +790,6 @@ dnl IRIX 53
 elif ps -el 2>/dev/null | \
 	egrep -i ["^ *F +S +UID +PID +PPID +C +PRI +NI +P +SZ +RSS +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_use_ps_vars=yes
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&pos,procprog]"
 	ac_cv_ps_command="$PATH_TO_PS -el"
 	ac_cv_ps_format="%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %n%s"
@@ -829,7 +803,6 @@ dnl IRIX 63
 elif ps -el 2>/dev/null | \
 	egrep -i ["^ *F +S +UID +PID +PPID +C +PRI +NI +P +ADDR +SZ +RSS +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_use_ps_vars=yes
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&pos,procprog]"
 	ac_cv_ps_command="$PATH_TO_PS -el"
 	ac_cv_ps_format="%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %n%s"
@@ -845,7 +818,6 @@ dnl    303 A        0     0     0 120  16 -- 1c07  20   24              -  0:45 
 elif ps -el 2>/dev/null | \
 	egrep -i ["^ *F +S +UID +PID +PPID +C +PRI +NI +ADDR +SZ +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_use_ps_vars=yes
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&pos,procprog]"
 	ac_cv_ps_command="$PATH_TO_PS -el"
 	ac_cv_ps_format="%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %n%s"
@@ -859,7 +831,6 @@ dnl AIX?
 elif ps glaxen 2>/dev/null | \
 	egrep -i ["^ *F +UID +PID +PPID +PRI +NI +VSZ +RSS +WCHAN +STAT +TTY +TIME +COMMAND"] >/dev/null
 then
-	ac_cv_use_ps_vars=yes
 	ac_cv_ps_varlist="[&procuid,&procppid,procstat,&pos,procprog]"
 	ac_cv_ps_command="$PATH_TO_PS glaxen"
 	ac_cv_ps_format="%*s %d %*s %d %*s %*s %*s %*s %*s %s %*s %*s %n%s"
@@ -876,9 +847,7 @@ dnl Ss       1308    272     0 root        0 init             /sbin/init
 elif ps waxo 'state vsz rss uid user ppid ucomm command' 2>/dev/null | \
 	egrep -i ["^STAT +VSZ +RSS +UID +USER +PPID +UCOMM +COMMAND"] >/dev/null
 then
-	ac_cv_use_ps_vars=yes
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
-	ac_cv_ps_raw_command="$PATH_TO_PS waxo 'state uid ppid command'"
 	ac_cv_ps_command="$PATH_TO_PS waxo 'state uid ppid ucomm command'"
 	ac_cv_ps_format="%s %d %d %s %n"
 	ac_cv_vsz_command="$PATH_TO_PS waxco 'vsz command'"
@@ -892,7 +861,6 @@ dnl UnixWare
 elif ps -Al 2>/dev/null | \
 	egrep -i ["^ *F +S +UID +PID +PPID +CLS +PRI +NI +C +ADDR +SZ +WCHAN +TTY +TIME +COMD"] >/dev/null
 then
-	ac_cv_use_ps_vars=yes
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&pos,procprog]"
 	ac_cv_ps_command="$PATH_TO_PS -Al"
 	ac_cv_ps_format="%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %n%s"
@@ -908,14 +876,8 @@ else
 	AC_MSG_WARN([unable to find usable ps syntax])
 fi
 
-if test "x$ac_cv_use_ps_vars" != "xno"
-then
-	AC_DEFINE(USE_PS_VARS,1,[Define if 'ps' will be parsed with sscanf])
-fi
 AC_DEFINE_UNQUOTED(PS_VARLIST,$ac_cv_ps_varlist,
 	[Variable list for sscanf of 'ps' output])
-AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$ac_cv_ps_raw_command",
-	[Verbatim command to execute for ps in check_netsaint])
 AC_DEFINE_UNQUOTED(PS_COMMAND,"$ac_cv_ps_command",
 	[Verbatim command to execute for ps in check_procs])
 AC_DEFINE_UNQUOTED(PS_FORMAT,"$ac_cv_ps_format",

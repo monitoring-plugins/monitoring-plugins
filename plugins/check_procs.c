@@ -117,12 +117,8 @@ main (int argc, char **argv)
 	fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process);
 
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
-#ifdef USE_PS_VARS
 		cols = sscanf (input_buffer, PS_FORMAT, PS_VARLIST);
-#else
-		cols = sscanf (input_buffer, PS_FORMAT, procstat, &procuid, 
-							&procppid, &pos, procprog);
-#endif
+
 		/* Zombie processes do not give a procprog command */
 		if ( cols == 3 && strstr(procstat, zombie) ) {
 			strcpy(procprog, "");
