@@ -33,12 +33,18 @@
  *
  *****************************************************************************/
 
+#define PROGNAME "check_vsz"
+#define REVISION "$Revision$"
+#define COPYRIGHT "1999-2002"
+#define AUTHOR "Karl DeBisschop"
+#define EMAIL "karl@debisschop.net"
+#define SUMMARY "Check the image size of a running program.\n"
+
 #include "common.h"
 #include "popen.h"
 #include "utils.h"
 
 int process_arguments (int argc, char **argv);
-int call_getopt (int argc, char **argv);
 void print_help (char *cmd);
 void print_usage (char *cmd);
 
@@ -146,47 +152,6 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	if (argc < 2)
-		return ERROR;
-
-	c = 0;
-	while (c += (call_getopt (argc - c, &argv[c]))) {
-		if (argc <= c)
-			break;
-		if (warn == -1) {
-			if (!is_intnonneg (argv[c])) {
-				printf ("%s: critical threshold must be an integer: %s\n",
-								my_basename (argv[0]), argv[c]);
-				print_usage (my_basename (argv[0]));
-				exit (STATE_UNKNOWN);
-			}
-			warn = atoi (argv[c]);
-		}
-		else if (crit == -1) {
-			if (!is_intnonneg (argv[c])) {
-				printf ("%s: critical threshold must be an integer: %s\n",
-								my_basename (argv[0]), argv[c]);
-				print_usage (my_basename (argv[0]));
-				exit (STATE_UNKNOWN);
-			}
-			crit = atoi (argv[c]);
-		}
-		else if (proc == NULL) {
-			proc = malloc (strlen (argv[c]) + 1);
-			if (proc == NULL)
-				terminate (STATE_UNKNOWN,
-									 "check_vsz: failed malloc of proc in process_arguments");
-			strcpy (proc, argv[c]);
-		}
-	}
-	return c;
-}
-
-int
-call_getopt (int argc, char **argv)
-{
-	int c, i = 1;
-
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -199,6 +164,9 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+	if (argc < 2)
+		return ERROR;
+
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c = getopt_long (argc, argv, "+hVc:w:C:", long_options, &option_index);
@@ -207,14 +175,6 @@ call_getopt (int argc, char **argv)
 #endif
 		if (c == EOF)
 			break;
-
-		i++;
-		switch (c) {
-		case 'c':
-		case 'w':
-		case 'C':
-			i++;
-		}
 
 		switch (c) {
 		case '?':									/* help */
@@ -254,7 +214,37 @@ call_getopt (int argc, char **argv)
 			break;
 		}
 	}
-	return i;
+
+	c = optind;
+	if (warn == -1) {
+		if (!is_intnonneg (argv[c])) {
+			printf ("%s: critical threshold must be an integer: %s\n",
+							PROGNAME, argv[c]);
+			print_usage (PROGNAME);
+			exit (STATE_UNKNOWN);
+		}
+		warn = atoi (argv[c++]);
+	}
+
+	if (crit == -1) {
+		if (!is_intnonneg (argv[c])) {
+			printf ("%s: critical threshold must be an integer: %s\n",
+							PROGNAME, argv[c]);
+			print_usage (PROGNAME);
+			exit (STATE_UNKNOWN);
+		}
+		crit = atoi (argv[c++]);
+	}
+
+	if (proc == NULL) {
+		proc = malloc (strlen (argv[c]) + 1);
+		if (proc == NULL)
+			terminate (STATE_UNKNOWN,
+								 "check_vsz: failed malloc of proc in process_arguments");
+		strcpy (proc, argv[c]);
+	}
+
+	return c;
 }
 
 void
