@@ -58,8 +58,8 @@ require 5.004;
 use POSIX;
 use strict;
 use Getopt::Long;
-use vars qw($opt_V $opt_h $opt_H $opt_w $opt_c $verbose $PROGNAME);
-use lib utils.pm ;
+use vars qw($opt_V $opt_h $opt_H $opt_w $opt_c $opt_j $opt_k $verbose $PROGNAME);
+use lib utils.pm; 
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 
 $PROGNAME="check_ntp";
@@ -71,13 +71,21 @@ $ENV{'PATH'}='';
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
+# defaults in millisec
+my $DEFAULT_OFFSET_WARN =  60000; 
+my $DEFAULT_OFFSET_CRIT = 120000; 
+my $DEFAULT_JITTER_WARN =   5000;
+my $DEFAULT_JITTER_CRIT =  10000; 
+
 Getopt::Long::Configure('bundling');
 GetOptions
 	("V"   => \$opt_V, "version"    => \$opt_V,
 	 "h"   => \$opt_h, "help"       => \$opt_h,
-	 "v" => \$verbose, "verbose"  => \$verbose,
+	 "v" => \$verbose, "verbose"  	=> \$verbose,
 	 "w=f" => \$opt_w, "warning=f"  => \$opt_w,   # offset|adjust warning if above this number
 	 "c=f" => \$opt_c, "critical=f" => \$opt_c,   # offset|adjust critical if above this number
+	 "j=s" => \$opt_j, "jwarn=s"    => \$opt_j,   # jitter warning if above this number
+	 "k=s" => \$opt_k, "jcrit=s"    => \$opt_k,   # jitter critical if above this number
 	 "H=s" => \$opt_H, "hostname=s" => \$opt_H);
 
 if ($opt_V) {
@@ -98,36 +106,48 @@ unless ($host) {
 	exit $ERRORS{'UNKNOWN'};
 }
 
-($opt_w) || ($opt_w = 60);
-my $warning = $1 if ($opt_w =~ /([0-9.]+)/);
+($opt_w) || ($opt_w = $DEFAULT_OFFSET_WARN);
+my $owarn = $1 if ($opt_w =~ /([0-9.]+)/);
 
-($opt_c) || ($opt_c = 120);
-my $critical = $1 if ($opt_c =~ /([0-9.]+)/);
+($opt_c) || ($opt_c = $DEFAULT_OFFSET_CRIT);
+my $ocrit = $1 if ($opt_c =~ /([0-9.]+)/);
 
+($opt_j) || ($opt_j = $DEFAULT_JITTER_WARN);
+my $jwarn = $1 if ($opt_j =~ /([0-9]+)/);
 
-if ($critical < $warning ) {
+($opt_k) || ($opt_k = $DEFAULT_JITTER_CRIT);
+my $jcrit = $1 if ($opt_k =~ /([0-9]+)/);
+
+if ($ocrit < $owarn ) {
 	print "Critical offset should be larger than warning offset\n";
 	print_usage();
 	exit $ERRORS{"UNKNOWN"};
+}
+if ($opt_k < $opt_j) {
+	print "Critical jitter should be larger than warning jitter\n";
+	print_usage();
+	exit $ERRORS{'UNKNOWN'};
 }
 
 my $stratum = -1;
 my $ignoreret = 0;
 my $answer = undef;
 my $offset = undef;
+my $jitter = undef;
+my $syspeer = undef;
+my $candidates = 0;
 my $msg; # first line of output to print if format is invalid
 
 my $state = $ERRORS{'UNKNOWN'};
 my $ntpdate_error = $ERRORS{'UNKNOWN'};
-my $dispersion_error = $ERRORS{'UNKNOWN'};
+my $jitter_error = $ERRORS{'UNKNOWN'};
 
-my $key = undef;
-# some systems don't have a proper ntpdc/xntpdc
-my $have_ntpdc = undef;
-if ($utils::PATH_TO_NTPDC && -x $utils::PATH_TO_NTPDC ) {
-	$have_ntpdc = 1;  
+# some systems don't have a proper ntpq  (migrated from ntpdc)
+my $have_ntpq = undef;
+if ($utils::PATH_TO_NTPQ && -x $utils::PATH_TO_NTPQ ) {
+	$have_ntpq = 1;  
 }else{
-	$have_ntpdc = 0;
+	$have_ntpq = 0;
 }
 
 # Just in case of problems, let's not hang Nagios
@@ -194,28 +214,54 @@ if ( $? && !$ignoreret ) {
 
 ###
 ###
-### Then scan xntpdc/ntpdc if it exists
-### and look in the 8th column for dispersion (ntpd v4) or jitter (ntpd v3)
+### Then scan xntpq/ntpq if it exists
+### and look in the 11th column for jitter 
 ###
+# Field 1: Tally Code ( Space, 'x','.','-','+','#','*','o')
+#           Only match for '*' which implies sys.peer 
+#           or 'o' which implies pps.peer
+#           If both exist, the last one is picked. 
+# Field 2: address of the remote peer
+# Field 3: Refid of the clock (0.0.0.0 if unknown)
+# Field 4: stratum (0-15)
+# Field 5: Type of the peer: local (l), unicast (u), multicast (m) 
+#          broadcast (b); not sure about multicast/broadcast
+# Field 6: last packet receive (in seconds)
+# Field 7: polling interval
+# Field 8: reachability resgister (octal) 
+# Field 9: delay
+# Field 10: offset
+# Field 11: dispersion/jitter
+# 
 
-if ($have_ntpdc) {
+if ($have_ntpq) {
 
-	if ( open(NTPDC,"$utils::PATH_TO_NTPDC -s $host 2>&1 |") ) {
-		while (<NTPDC>) {
+	if ( open(NTPQ,"$utils::PATH_TO_NTPQ -np $host 2>&1 |") ) {
+		while (<NTPQ>) {
 			print $_ if ($verbose);
-			if (/([^\s]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)/) {
-				if ($8 gt $critical) {
-					print "Dispersion_crit = $8 :$critical\n" if ($verbose);
-					$dispersion_error = $ERRORS{'CRITICAL'};
-				} elsif ($8 gt $warning ) {
-					print "Dispersion_warn = $8 :$warning \n" if ($verbose);
-					$dispersion_error = $ERRORS{'WARNING'};
+			# number of candidates on <host> for sys.peer
+			if (/^(\*|\+|\#|o])/) {
+				++$candidates;
+				print "Candiate count= $candidates\n" if ($verbose);
+			}
+
+			# match sys.peer or pps.peer
+			if (/^(\*|o)([-0-9.\s]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([lumb]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)/) {
+				$syspeer = $2;				
+				$jitter = $11;
+				print "match $_ \n" if $verbose;
+				if ($jitter > $jcrit) {
+					print "Jitter_crit = $11 :$jcrit\n" if ($verbose);
+					$jitter_error = $ERRORS{'CRITICAL'};
+				} elsif ($jitter > $jwarn ) {
+					print "Jitter_warn = $11 :$jwarn \n" if ($verbose);
+					$jitter_error = $ERRORS{'WARNING'};
 				} else {
-					$dispersion_error = $ERRORS{'OK'};
+					$jitter_error = $ERRORS{'OK'};
 				}
 			}
 		}
-		close NTPDC;
+		close NTPQ;
 	}
 }
 
@@ -229,42 +275,58 @@ if ($ntpdate_error != $ERRORS{'OK'}) {
 		$answer = $msg . "Server for ntp probably down\n";
 	}
 
-	if (defined($offset) && abs($offset) > $critical) {
+	if (defined($offset) && abs($offset) > $ocrit) {
 		$state = $ERRORS{'CRITICAL'};
-		$answer = "Server Error and time difference $offset seconds greater than +/- $critical sec\n";
-	} elsif (defined($offset) && abs($offset) > $warning) {
-		$answer = "Server error and time difference $offset seconds greater than +/- $warning sec\n";
+		$answer = "Server Error and offset $offset msec > +/- $ocrit msec\n";
+	} elsif (defined($offset) && abs($offset) > $owarn) {
+		$answer = "Server error and offset $offset msec > +/- $owarn msec\n";
+	} elsif (defined($jitter) && abs($jitter) > $jcrit) {
+		$answer = "Server error and jitter $jitter msec > +/- $jcrit msec\n";
+	} elsif (defined($jitter) && abs($jitter) > $jwarn) {
+		$answer = "Server error and jitter $jitter msec > +/- $jwarn msec\n";
 	}
 
-} elsif ($have_ntpdc && $dispersion_error != $ERRORS{'OK'}) {
-	$state = $dispersion_error;
-	$answer = "Dispersion too high\n";
-	if (defined($offset) && abs($offset) > $critical) {
+} elsif ($have_ntpq && $jitter_error != $ERRORS{'OK'}) {
+	$state = $jitter_error;
+	$answer = "Jitter $jitter too high\n";
+	if (defined($offset) && abs($offset) > $ocrit) {
 		$state = $ERRORS{'CRITICAL'};
-		$answer = "Dispersion error and time difference $offset seconds greater than +/- $critical sec\n";
-	} elsif (defined($offset) && abs($offset) > $warning) {
-		$answer = "Dispersion error and time difference $offset seconds greater than +/- $warning sec\n";
+		$answer = "Jitter error and offset $offset msec > +/- $ocrit msec\n";
+	} elsif (defined($offset) && abs($offset) > $owarn) {
+		$answer = "Jitter error and offset $offset msec > +/- $owarn msec\n";
+	} elsif (defined($jitter) && abs($jitter) > $jcrit) {
+		$answer = "Jitter error and jitter $jitter msec > +/- $jcrit msec\n";
+	} elsif (defined($jitter) && abs($jitter) > $jwarn) {
+		$answer = "Jitter error and jitter $jitter msec > +/- $jwarn msec\n";
 	}
 
-} else { # no errors from ntpdate or xntpdc
-	if (defined $offset) {
-		if (abs($offset) > $critical) {
-			$state = $ERRORS{'CRITICAL'};
-			$answer = "Time difference $offset seconds greater than +/- $critical sec\n";
-		} elsif (abs($offset) > $warning) {
-			$state = $ERRORS{'WARNING'};
-			$answer = "Time difference $offset seconds greater than +/- $warning sec\n";
-		} elsif (abs($offset) <= $warning) {
-			$state = $ERRORS{'OK'};
-			$answer = "Time difference $offset seconds\n";
-		}
-	} else { # no offset defined
-		$state = $ERRORS{'UNKNOWN'};
-		$answer = "Invalid format returned from ntpdate ($msg)\n";
+} else { # no errors from ntpdate or ntpq
+	if (abs($offset) > $ocrit) {
+		$state = $ERRORS{'CRITICAL'};
+		$answer = "Offset $offset msec > +/- $ocrit msec, jitter $jitter msec\n";
+	} elsif (abs($jitter) > $jcrit ) {
+		$state = $ERRORS{'CRITICAL'};
+		$answer = "Jitter $jitter msec> +/- $jcrit msec, offset $offset msec \n";
+	} elsif (abs($offset) > $owarn) {
+		$state = $ERRORS{'WARNING'};
+		$answer = "Offset $offset msec > +/- $owarn msec, jitter $jitter msec\n";
+	} elsif (abs($jitter) > $jwarn ) {
+		$state = $ERRORS{'WARNING'};
+		$answer = "Jitter $jitter msec> +/- $jwarn msec, offset $offset msec \n";
+
+	} else {
+		$state = $ERRORS{'OK'};
+		$answer = "Offset $offset msecs, jitter $jitter msec\n";
 	}
+	
+#	 else { # no offset defined
+#		$state = $ERRORS{'UNKNOWN'};
+#		$answer = "Invalid format returned from ntpdate ($msg)\n";
+#	}
+
 }
 
-foreach $key (keys %ERRORS) {
+foreach my $key (keys %ERRORS) {
 	if ($state==$ERRORS{$key}) {
 		print ("$key: $answer");
 		last;
@@ -272,8 +334,12 @@ foreach $key (keys %ERRORS) {
 }
 exit $state;
 
+
+####
+#### subs
+
 sub print_usage () {
-	print "Usage: $PROGNAME -H <host> [-w <warn>] [-c <crit>] [-v verbose]\n";
+	print "Usage: $PROGNAME -H <host> [-w <warn>] [-c <crit>] [-j <warn>] [-k <crit>] [-v verbose]\n";
 }
 
 sub print_help () {
@@ -281,10 +347,16 @@ sub print_help () {
 	print "Copyright (c) 2000 Bo Kersey/Karl DeBisschop\n";
 	print "\n";
 	print_usage();
-	print "\n";
-	print "<warn> = Clock offset in seconds at which a warning message will be generated.\n	Defaults to 60.\n";
-	print "<crit> = Clock offset in seconds at which a critical message will be generated.\n	Defaults to 120.\n\n";
-	print "The same warning and critical values are used to check against the dispersion \n";
-	print "column of ntpdc/xntpdc for the host being queried.\n\n";
+	print "
+Checks the local timestamp offset versus <host> with ntpdate
+Checks the jitter/dispersion of clock signal between <host> and its sys.peer with ntpq\n
+-w ( --warning)
+     Clock offset in milliseconds at which a warning message will be generated.\n	Defaults to $DEFAULT_OFFSET_WARN.
+-c (--critical) 
+     Clock offset in milliseconds at which a critical message will be generated.\n	Defaults to $DEFAULT_OFFSET_CRIT.
+-j (--jwarn)
+     Clock jitter in milliseconds at which a warning message will be generated.\n	Defaults to $DEFAULT_JITTER_WARN.
+-k (--jcrit)
+    Clock jitter in milliseconds at which a warning message will be generated.\n	Defaults to $DEFAULT_JITTER_CRIT.\n";
 	support();
 }

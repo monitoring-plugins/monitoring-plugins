@@ -2,6 +2,9 @@
 # $Id$
 #
 # $Log$
+# Revision 1.6  2003/02/03 20:29:55  sghosh
+# change ntpdc to ntpq (Jonathan Rozes,Thomas Schimpke, bug-656237 )
+#
 # Revision 1.5  2002/10/30 05:07:29  sghosh
 # monitor mailq
 #
@@ -32,6 +35,7 @@ sub is_hostname;
 $PATH_TO_RPCINFO = "@PATH_TO_RPCINFO@" ;
 $PATH_TO_NTPDATE = "@PATH_TO_NTPDATE@" ;
 $PATH_TO_NTPDC   = "@PATH_TO_NTPDC@" ;
+$PATH_TO_NTPQ    = "@PATH_TO_NTPQ@" ;
 $PATH_TO_LMSTAT  = "@PATH_TO_LMSTAT@" ;
 $PATH_TO_SMBCLIENT = "@PATH_TO_SMBCLIENT@" ;
 $PATH_TO_MAILQ   = "@PATH_TO_MAILQ@";

@@ -772,9 +772,10 @@ AC_DEFINE_UNQUOTED(PATH_TO_RPCINFO,"$PATH_TO_RPCINFO",[path to rpcinfo binary])
 
 AC_PATH_PROG(PATH_TO_NTPDATE,ntpdate)
 AC_PATH_PROGS(PATH_TO_NTPDC,ntpdc xntpdc)
-if (test -x "$PATH_TO_NTPDATE" || test -x "$PATH_TO_NTPDC")
+AC_PATH_PROGS(PATH_TO_NTPQ,ntpq)
+if (test -x "$PATH_TO_NTPDATE" || test -x "$PATH_TO_NTPQ")
 then
-	AC_DEFINE_UNQUOTED(PATH_TO_NTPDC,"$PATH_TO_NTPDC",[path to ntpdc binary])
+	AC_DEFINE_UNQUOTED(PATH_TO_NTPQ,"$PATH_TO_NTPQ",[path to ntpq binary])
 	AC_DEFINE_UNQUOTED(PATH_TO_NTPDATE,"$PATH_TO_NTPDATE",[path to ntpdate binary])
 else
 	echo "** Install NTP programs (http://www.ntp.org) if you want to monitor time synchronization"
