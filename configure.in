@@ -300,12 +300,6 @@ AC_ARG_WITH(openssl,
 		[sets path to openssl installation]),
 	OPENSSL=$withval,)
 
-AC_ARG_WITH([ipv6],
-              ACX_HELP_STRING([--with-ipv6],
-                             [enable IPv6 support (default=no)]),
-              ,
-              with_ipv6=no)
-
 dnl Check for AF_INET6 support
 AC_CACHE_CHECK([for IPv6 support], with_ipv6, [
 	AC_TRY_COMPILE([#include <netinet/in.h>
