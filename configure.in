@@ -159,8 +159,6 @@ LIBS="$_SAVEDLIBS"
 dnl Check for mysql libraries
 _SAVEDLIBS="$LIBS"
 _SAVEDCPPFLAGS="$CPPFLAGS"
-dnl CPPFLAGS="-I/usr/include"
-
 AC_ARG_WITH(mysql,--with-mysql=<dir> sets path to mysql installation (assumes lib/mysql and include subdirs),[MYSQL=$withval])
 if test -n "$MYSQL"; then
   MYSQLLIBDIR=$MYSQL/lib/mysql
@@ -184,19 +182,18 @@ if test "$ac_cv_lib_mysqlclient_mysql_init" = "yes" -o "$ac_cv_lib_mysqlclient_m
   AC_CHECK_HEADERS(mysql/mysql.h mysql/errmsg.h, MYSQLINCLUDE="-I$MYSQL/include" )
   if test "$ac_cv_header_mysql_mysql_h" = "yes" -a "$ac_cv_header_mysql_errmsg_h" = "yes"; then
     EXTRAS="$EXTRAS check_mysql"
-	CPPFLAGS="$_SAVEDCPPFLAGS -I$MYSQL/include"
+    AC_SUBST(MYSQLINCLUDE)
     AC_SUBST(MYSQLLIBS)
     AC_SUBST(check_mysql_LDFLAGS)
   else
     AC_MSG_WARN([Skipping mysql plugin])
     AC_MSG_WARN([install mysql client headers to compile this plugin (see Requirements).])
-    CPPFLAGS="$_SAVEDCPPFLAGS"
   fi
 else
   AC_MSG_WARN([Skipping mysql plugin])
   AC_MSG_WARN([install mysql client libs to compile this plugin (see Requirements).])
-  CPPFLAGS="$_SAVEDCPPFLAGS"
 fi
+CPPFLAGS="$_SAVEDCPPFLAGS"
 LIBS="$_SAVEDLIBS"
 
 dnl Check for OpenSSL location
@@ -289,6 +286,7 @@ AC_CACHE_CHECK([for LL suffix on long long integers],ac_cv_compiler_supports_ll,
 if test x"$ac_cv_compiler_supports_ll" = x"yes"; then
    AC_DEFINE(COMPILER_SUPPORTS_LL,1,[Define if compiler support long long])
 fi
+
 AC_CACHE_CHECK([for __va_copy],ac_cv_HAVE_VA_COPY,[
 AC_TRY_LINK([#include <stdarg.h>
 va_list ap1,ap2;], [__va_copy(ap1,ap2);],
@@ -444,7 +442,7 @@ then
 	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS -Ao 's user ppid args'",[Verbatim command to execute for ps in check_netsaint])
 	EXTRAS="$EXTRAS check_nagios"
 	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -Ao 's uid ppid comm args'",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[Format string for scanning ps output in check_procs],[])
+	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[Format string for scanning ps output in check_procs])
 	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -Ao 'vsz comm'",[])
 	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[])
 	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -Ao 'rss comm'",[])
@@ -484,7 +482,7 @@ then
 	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS -ao 'state user ppid args'",[])
 	EXTRAS="$EXTRAS check_nagios"
 	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -ao 'state uid ppid command args'",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[])
+	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[Format string for scanning ps output in check_procs])
 	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -ao 'vsz command'",[])
 	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[])
 	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -ao 'rss command'",[])
@@ -498,7 +496,7 @@ then
 	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS waxo 'state uid ppid command'",[])
 	EXTRAS="$EXTRAS check_nagios"
 	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS waxco 'state uid ppid command command'",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[])
+	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[Format string for scanning ps output in check_procs])
 	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS waxco 'vsz command'",[])
 	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[])
 	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS waxco 'rss command'",[])
@@ -512,7 +510,7 @@ then
 	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS waxno 'state user ppid comm'",[])
 	EXTRAS="$EXTRAS check_nagios"
 	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS waxno 'state uid ppid comm args'",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[])
+	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[Format string for scanning ps output in check_procs])
 	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS waxno 'vsz comm'",[])
 	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[])
 	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS waxno 'rss comm'",[])
@@ -524,7 +522,7 @@ then
 	AC_DEFINE(USE_PS_VARS,1,[Define if we use custom variable list for sscanf])
 	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,&pos,procprog],[])
 	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -el",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %n%s",[])
+	AC_DEFINE_UNQUOTED(PS_FORMAT,"%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %n%s",[Format string for scanning ps output in check_procs])
 	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -el",[])
 	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%*s %*s %*s %*s %d",[])
 	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -el",[])
@@ -536,7 +534,7 @@ then
 	AC_DEFINE(USE_PS_VARS,1,[Define if we use custom variable list for sscanf])
 	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,&pos,procprog],[])
 	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -el",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %n%s",[])
+	AC_DEFINE_UNQUOTED(PS_FORMAT,"%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %n%s",[Format string for scanning ps output in check_procs])
 	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -el",[])
 	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%*s %*s %*s %*s %d",[])
 	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -el",[])
@@ -552,7 +550,7 @@ then
 	EXTRAS="$EXTRAS check_nagios"
 	AC_DEFINE_UNQUOTED(PS_VARLIST,[&procuid,&procppid,procstat,&pos,procprog],[])
 	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -laxnwww",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%*s %d %*s %d %*s %*s %*s %*s %*s %*s %s %*s %*s %n%s",[])
+	AC_DEFINE_UNQUOTED(PS_FORMAT,"%*s %d %*s %d %*s %*s %*s %*s %*s %*s %s %*s %*s %n%s",[Format string for scanning ps output in check_procs])
 	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS laxnwww",[])
 	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%*s %*s %*s %*s %*s %*s %*s %d",[])
 	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS laxnwww",[])
@@ -569,7 +567,7 @@ then
 	EXTRAS="$EXTRAS check_nagios"
 	AC_DEFINE_UNQUOTED(PS_VARLIST,[&procuid,&procppid,procstat,&pos,procprog],[])
 	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS laxnwww",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%*s %d %*s %d %*s %*s %*s %*s %*s %s %*s %*s %n%s",[])
+	AC_DEFINE_UNQUOTED(PS_FORMAT,"%*s %d %*s %d %*s %*s %*s %*s %*s %s %*s %*s %n%s",[Format string for scanning ps output in check_procs])
 	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS laxnwww",[])
 	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%*s %*s %*s %*s %*s %*s %d",[])
 	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS laxnwww",[])
@@ -584,7 +582,7 @@ then
 	AC_DEFINE(USE_PS_VARS,1,[Define if we use custom variable list for sscanf])
 	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,&pos,procprog],[])
 	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -el",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %n%s",[])
+	AC_DEFINE_UNQUOTED(PS_FORMAT,"%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %n%s",[Format string for scanning ps output in check_procs])
 	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -el",[])
 	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%*s %*s %*s %*s %*s %*s %*s %*s %*s %d",[])
 	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -el",[])
@@ -596,7 +594,7 @@ then
 	AC_DEFINE(USE_PS_VARS,1,[Define if we use custom variable list for sscanf])
 	AC_DEFINE_UNQUOTED(PS_VARLIST,[&procuid,&procppid,procstat,&pos,procprog],[])
 	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS glaxen",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%*s %d %*s %d %*s %*s %*s %*s %*s %s %*s %*s %n%s",[])
+	AC_DEFINE_UNQUOTED(PS_FORMAT,"%*s %d %*s %d %*s %*s %*s %*s %*s %s %*s %*s %n%s",[Format string for scanning ps output in check_procs])
 	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS glaxen",[])
 	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%*s %*s %*s %*s %*s %*s %d",[])
 	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS glaxen",[])
@@ -880,7 +878,6 @@ elif test -f ../plugins/check_nt.c ; then
   EXTRAS="$EXTRAS check_nt"
 fi
 
-dnl AC_EGREP_HEADER (PATTERN, HEADER-FILE, ACTION-IF-FOUND [,          ACTION-IF-NOT-FOUND])
 AC_TRY_COMPILE([#ifdef __STDC__
 #include <stdio.h>
 #include <stdlib.h>
