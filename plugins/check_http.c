@@ -189,16 +189,17 @@ struct timeval tv;
 #define HTTPS_PORT 443
 #define HTTP_EXPECT "HTTP/1."
 #define HTTP_URL "/"
+#define CRLF "\r\n"
 
 char timestamp[17] = "";
 int specify_port = FALSE;
 int server_port = HTTP_PORT;
 char server_port_text[6] = "";
 char server_type[6] = "http";
-/*@null@*/ char *server_address = NULL; 
+char *server_address = ""; 
 char *host_name = "";
-/*@null@*/ char *server_url = NULL;
-int server_url_length = 0;
+char *server_url = HTTP_URL;
+int server_url_length = 1;
 int server_expect_yn = 0;
 char server_expect[MAX_INPUT_BUFFER] = HTTP_EXPECT;
 char string_expect[MAX_INPUT_BUFFER] = "";
@@ -212,8 +213,8 @@ int onredirect = STATE_OK;
 int use_ssl = FALSE;
 int verbose = FALSE;
 int sd;
-/*@null@*/ char *http_method = NULL;
-/*@null@*/ char *http_post_data = NULL;
+char *http_method = "GET";
+char *http_post_data = "";
 char buffer[MAX_INPUT_BUFFER];
 
 void print_usage (void);
@@ -404,11 +405,11 @@ process_arguments (int argc, char **argv)
  			asprintf (&host_name, "%s", optarg);
 			break;
 		case 'I': /* Server IP-address */
- 			server_address = strscpy (server_address, optarg);
+ 			asprintf (&server_address, "%s", optarg);
 			break;
 		case 'u': /* Host or server */
-			server_url = strscpy (server_url, optarg);
-			server_url_length = strlen (optarg);
+			asprintf (&server_url, "%s", optarg);
+			server_url_length = strlen (server_url);
 			break;
 		case 'p': /* Host or server */
 			if (!is_intnonneg (optarg))
@@ -421,8 +422,8 @@ process_arguments (int argc, char **argv)
 			user_auth[MAX_INPUT_BUFFER - 1] = 0;
 			break;
 		case 'P': /* HTTP POST data in URL encoded format */
-			http_method = strscpy (http_method, "POST");
-			http_post_data = strscpy (http_post_data, optarg);
+			asprintf (&http_method, "%s", "POST");
+			asprintf (&http_post_data, "%s", optarg);
 			break;
 		case 's': /* string or substring */
 			strncpy (string_expect, optarg, MAX_INPUT_BUFFER - 1);
@@ -464,27 +465,17 @@ process_arguments (int argc, char **argv)
 
 	c = optind;
 
-	if (server_address == NULL) {
-		if (c < argc) {
-			server_address = strscpy (NULL, argv[c++]);
-		}
-		else if (strcmp (host_name ,"") == 0) {
-			usage ("check_http: you must specify a server address\n");
-		}
-	}
+	if (strcmp (server_address, "") == 0 && c < argc)
+			asprintf (&server_address, "%s", argv[c++]);
 
-	if (strcmp (host_name ,"") == 0 && c < argc)
+	if (strcmp (host_name, "") == 0 && c < argc)
  		asprintf (&host_name, "%s", argv[c++]);
 
-	if (server_address == NULL)
-		server_address = strscpy (NULL, host_name);
-
-	if (http_method == NULL)
-		http_method = strscpy (http_method, "GET");
-
-	if (server_url == NULL) {
-		server_url = strscpy (NULL, "/");
-		server_url_length = strlen(HTTP_URL);
+	if (strcmp (server_address ,"") == 0) {
+		if (strcmp (host_name, "") == 0)
+			usage ("check_http: you must specify a server address or host name\n");
+		else
+			asprintf (&server_address, "%s", host_name);
 	}
 
 	return TRUE;
@@ -600,7 +591,7 @@ check_http (void)
 		}
 
 		/* either send http POST data */
-		if (http_post_data) {
+		if (strlen (http_post_data)) {
 			asprintf (&buf, "Content-Type: application/x-www-form-urlencoded\r\n");
 			if (SSL_write (ssl, buf, strlen (buf)) == -1) {
 				ERR_print_errors_fp (stderr);
@@ -611,8 +602,12 @@ check_http (void)
 				ERR_print_errors_fp (stderr);
 				return STATE_CRITICAL;
 			}
-			http_post_data = strscat (http_post_data, "\r\n");
 			if (SSL_write (ssl, http_post_data, strlen (http_post_data)) == -1) {
+				ERR_print_errors_fp (stderr);
+				return STATE_CRITICAL;
+			}
+			asprintf (&buf, CRLF);
+			if (SSL_write (ssl, buf, strlen (buf)) == -1) {
 				ERR_print_errors_fp (stderr);
 				return STATE_CRITICAL;
 			}
@@ -655,13 +650,13 @@ check_http (void)
 
 		/* either send http POST data */
 		/* written by Chris Henesy <lurker@shadowtech.org> */
-		if (http_post_data) {
+		if (strlen (http_post_data)) {
 			asprintf (&buf, "Content-Type: application/x-www-form-urlencoded\r\n");
 			send (sd, buf, strlen (buf), 0);
 			asprintf (&buf, "Content-Length: %i\r\n\r\n", strlen (http_post_data));
 			send (sd, buf, strlen (buf), 0);
-			http_post_data = strscat (http_post_data, "\r\n");
 			send (sd, http_post_data, strlen (http_post_data), 0);
+			send (sd, CRLF, strlen (CRLF), 0);
 		}
 		else {
 			/* or just a newline so the server knows we're done with the request */
@@ -773,7 +768,7 @@ check_http (void)
 		    strstr (status_line, "304")) {
 			if (onredirect == STATE_DEPENDENT) {
 
-				orig_url = strscpy(NULL, server_url);
+				asprintf (&orig_url, "%s", server_url);
 				pos = header;
 				while (pos) {
 					server_address = realloc (server_address, MAX_IPV4_HOSTLENGTH);
@@ -788,26 +783,26 @@ check_http (void)
 						server_url_length = strcspn (pos, "\r\n");
 					}
 					if (sscanf (pos, HDR_LOCATION URI_HTTP URI_HOST URI_PORT URI_PATH, server_type, server_address, server_port_text, server_url) == 4) {
-						host_name = strscpy (host_name, server_address);
+						asprintf (&host_name, "%s", server_address);
 						use_ssl = server_type_check (server_type);
 						server_port = atoi (server_port_text);
 						check_http ();
 					}
 					else if (sscanf (pos, HDR_LOCATION URI_HTTP URI_HOST URI_PATH, server_type, server_address, server_url) == 3 ) { 
-						host_name = strscpy (host_name, server_address);
+						asprintf (&host_name, "%s", server_address);
 						use_ssl = server_type_check (server_type);
 						server_port = server_port_check (use_ssl);
 						check_http ();
 					}
 					else if (sscanf (pos, HDR_LOCATION URI_HTTP URI_HOST URI_PORT, server_type, server_address, server_port_text) == 3) {
-						host_name = strscpy (host_name, server_address);
+						asprintf (&host_name, "%s", server_address);
 						strcpy (server_url, "/");
 						use_ssl = server_type_check (server_type);
 						server_port = atoi (server_port_text);
 						check_http ();
 					}
 					else if (sscanf (pos, HDR_LOCATION URI_HTTP URI_HOST, server_type, server_address) == 2) {
-						host_name = strscpy (host_name, server_address);
+						asprintf (&host_name, "%s", server_address);
 						strcpy (server_url, "/");
 						use_ssl = server_type_check (server_type);
 						server_port = server_port_check (use_ssl);
@@ -912,7 +907,7 @@ int connect_SSL (void)
 {
 	SSL_METHOD *meth;
 
-	randbuff = strscpy (NULL, "qwertyuiopasdfghjkl");
+	asprintf (randbuff, "%s", "qwertyuiopasdfghjkl");
 	RAND_seed (randbuff, strlen (randbuff));
 	/* Initialize SSL context */
 	SSLeay_add_ssl_algorithms ();
