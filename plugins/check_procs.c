@@ -202,12 +202,14 @@ main (int argc, char **argv)
 			if (metric != METRIC_PROCS) {
 				if (i == STATE_WARNING) {
 					warn++;
+					asprintf (&fails, "%s%s%s", fails, (strcmp(fails,"") ? ", " : ""), procprog);
+					result = max_state (result, i);
 				}
 				if (i == STATE_CRITICAL) {
 					crit++;
+					asprintf (&fails, "%s%s%s", fails, (strcmp(fails,"") ? ", " : ""), procprog);
+					result = max_state (result, i);
 				}
-				asprintf (&fails, "%s%s%s", fails, (strcmp(fails,"") ? ", " : ""), procprog);
-				result = max_state (result, i);
 			}
 		} 
 		/* This should not happen */
@@ -341,7 +343,7 @@ process_arguments (int argc, char **argv)
 			else
 				usage (_("Critical Process Count must be an integer!\n\n"));
 			break;							 
-		case 'w':									/* warning time threshold */
+		case 'w':									/* warning threshold */
 			if (is_integer (optarg))
 				wmax = atoi (optarg);
 			else if (sscanf (optarg, ":%d", &wmax) == 1)
@@ -351,7 +353,7 @@ process_arguments (int argc, char **argv)
 			else if (sscanf (optarg, "%d:", &wmin) == 1)
 				break;
 			else
-				usage (_("%s: Warning Process Count must be an integer!\n\n"));
+				usage (_("Warning Process Count must be an integer!\n\n"));
 			break;
 		case 'p':									/* process id */
 			if (sscanf (optarg, "%d%[^0-9]", &ppid, tmp) == 1) {
@@ -655,7 +657,9 @@ Examples:\n\
    Warning alert if > 10 processes with command arguments containing \n\
    '/usr/local/bin/perl' and owned by root\n\n\
  check_procs -w 50000 -c 100000 --metric=VSZ\n\
-   Alert if vsz of any processes over 50K or 100K\n\n"));
+   Alert if vsz of any processes over 50K or 100K\n\
+ check_procs -w 10 -c 20 --metric=CPU\n\
+   Alert if cpu of any processes over 10% or 20%\n\n"));
 
 	printf (_(UT_SUPPORT));
 }
