@@ -94,7 +94,7 @@ int errcode, excode;
 
 char *server_address = NULL;
 char *community = NULL;
-char oid[MAX_INPUT_BUFFER] = "";
+char *oid = NULL;
 char *label = NULL;
 char *units = NULL;
 char *port = NULL;
@@ -105,6 +105,7 @@ int nlabels = 0;
 int labels_size = 8;
 int nunits = 0;
 int unitv_size = 8;
+int verbose = FALSE;
 unsigned long lower_warn_lim[MAX_OIDS];
 unsigned long upper_warn_lim[MAX_OIDS];
 unsigned long lower_crit_lim[MAX_OIDS];
@@ -144,10 +145,10 @@ main (int argc, char **argv)
 		usage ("Incorrect arguments supplied\n");
 
 	/* create the command line to execute */
-	asprintf
-		(&command_line,
-		 "%s -p %s -m ALL -v 1 %s -c %s %s",
-		 PATH_TO_SNMPGET, port, server_address, community, oid);
+	asprintf (&command_line, "%s -p %s -m ALL -v 1 %s -c %s %s",
+	          PATH_TO_SNMPGET, port, server_address, community, oid);
+	if (verbose)
+		printf ("%s\n", command_line);
 
 	/* run the command */
 	child_process = spopen (command_line);
@@ -161,8 +162,12 @@ main (int argc, char **argv)
 		printf ("Could not open stderr for %s\n", command_line);
 	}
 
+	asprintf (&output, "");
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process))
-		output = strscat (output, input_buffer);
+		asprintf (&output, "%s%s", output, input_buffer);
+
+	if (verbose)
+		printf ("%s\n", output);
 
 	ptr = output;
 
@@ -264,15 +269,12 @@ main (int argc, char **argv)
 		result = max_state (result, iresult);
 
 		if (nlabels > 1 && i < nlabels && labels[i] != NULL)
-			asprintf
-				(&outbuff,
-				 "%s%s%s %s%s%s",
-				 outbuff,
-				 (i == 0) ? " " : output_delim,
-				 labels[i], mark (iresult), show, mark (iresult));
+			asprintf (&outbuff, "%s%s%s %s%s%s", outbuff,
+			          (i == 0) ? " " : output_delim,
+			          labels[i], mark (iresult), show, mark (iresult));
 		else
-			asprintf (&outbuff, "%s%s%s%s%s", outbuff,
-				 (i == 0) ? " " : output_delim, mark (iresult), show, mark (iresult));
+			asprintf (&outbuff, "%s%s%s%s%s", outbuff, (i == 0) ? " " : output_delim,
+			          mark (iresult), show, mark (iresult));
 
 		if (nunits > 0 && i < nunits)
 			asprintf (&outbuff, "%s %s", outbuff, unitv[i]);
@@ -310,52 +312,6 @@ main (int argc, char **argv)
 int
 process_arguments (int argc, char **argv)
 {
-	int c;
-
-	if (argc < 2)
-		return ERROR;
-
-	for (c = 1; c < argc; c++) {
-		if (strcmp ("-to", argv[c]) == 0)
-			strcpy (argv[c], "-t");
-		if (strcmp ("-wv", argv[c]) == 0)
-			strcpy (argv[c], "-w");
-		if (strcmp ("-cv", argv[c]) == 0)
-			strcpy (argv[c], "-c");
-	}
-
-	c = 0;
-	while (c += (call_getopt (argc - c, &argv[c]))) {
-		if (argc <= c)
-			break;
-		if (server_address == NULL)
-			server_address = strscpy (NULL, argv[c]);
-	}
-
-	if (community == NULL)
-		community = strscpy (NULL, "public");
-
-	if (delimiter == NULL)
-		delimiter = strscpy (NULL, DEFAULT_DELIMITER);
-
-	if (output_delim == NULL)
-		output_delim = strscpy (NULL, DEFAULT_OUTPUT_DELIMITER);
-
-	if (label == NULL)
-		label = strscpy (NULL, "SNMP");
-
-	if (units == NULL)
-		units = strscpy (NULL, "");
-
-	if (port == NULL)
-		port = strscpy(NULL,"161");
-
-	return c;
-}
-
-int
-call_getopt (int argc, char **argv)
-{
 	char *ptr;
 	int c, i = 1;
 	int j = 0, jj = 0;
@@ -363,12 +319,7 @@ call_getopt (int argc, char **argv)
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
-		{"help", no_argument, 0, 'h'},
-		{"version", no_argument, 0, 'V'},
-		{"timeout", required_argument, 0, 't'},
-		{"critical", required_argument, 0, 'c'},
-		{"warning", required_argument, 0, 'w'},
-		{"hostname", required_argument, 0, 'H'},
+		STD_LONG_OPTS,
 		{"community", required_argument, 0, 'C'},
 		{"oid", required_argument, 0, 'o'},
 		{"object", required_argument, 0, 'o'},
@@ -385,6 +336,22 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+	if (argc < 2)
+		return ERROR;
+
+	/* reverse compatibility for very old non-POSIX usage forms */
+	for (c = 1; c < argc; c++) {
+		if (strcmp ("-to", argv[c]) == 0)
+			strcpy (argv[c], "-t");
+		if (strcmp ("-wv", argv[c]) == 0)
+			strcpy (argv[c], "-w");
+		if (strcmp ("-cv", argv[c]) == 0)
+			strcpy (argv[c], "-c");
+	}
+
+	/* initialize some args */
+	asprintf (&oid, "");
+
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
@@ -397,25 +364,6 @@ call_getopt (int argc, char **argv)
 		if (c == -1 || c == EOF)
 			break;
 
-		i++;
-		switch (c) {
-		case 't':
-		case 'c':
-		case 'w':
-		case 'H':
-		case 'C':
-		case 'o':
-		case 'd':
-		case 'D':
-		case 's':
-		case 'R':
-		case 'r':
-		case 'l':
-		case 'u':
-		case 'p':
-			i++;
-		}
-
 		switch (c) {
 		case '?':									/* help */
 			printf ("%s: Unknown argument: %s\n\n", my_basename (argv[0]), optarg);
@@ -427,6 +375,9 @@ call_getopt (int argc, char **argv)
 		case 'V':									/* version */
 			print_revision (my_basename (argv[0]), "$Revision$");
 			exit (STATE_OK);
+		case 'v': /* verbose */
+			verbose = TRUE;
+			break;
 		case 't':									/* timeout period */
 			if (!is_integer (optarg)) {
 				printf ("%s: Timeout Interval must be an integer!\n\n",
@@ -472,11 +423,10 @@ call_getopt (int argc, char **argv)
 			break;
 		case 'o':									/* object identifier */
 			for (ptr = optarg; (ptr = index (ptr, ',')); ptr++)
-				ptr[0] = ' ';
-			strncpy (oid, optarg, sizeof (oid) - 1);
-			oid[sizeof (oid) - 1] = 0;
+				ptr[0] = ' '; /* relpace comma with space */
 			for (ptr = optarg, j = 1; (ptr = index (ptr, ' ')); ptr++)
-				j++;
+				j++; /* count OIDs */
+			asprintf (&oid, "%s %s", oid, optarg);
 			break;
 		case 'd':									/* delimiter */
 			delimiter = strscpy (delimiter, optarg);
@@ -578,6 +528,29 @@ call_getopt (int argc, char **argv)
 
 		}
 	}
+
+	c = optind;
+	if (server_address == NULL)
+		server_address = strscpy (NULL, argv[c++]);
+
+	if (community == NULL)
+		community = strscpy (NULL, "public");
+
+	if (delimiter == NULL)
+		delimiter = strscpy (NULL, DEFAULT_DELIMITER);
+
+	if (output_delim == NULL)
+		output_delim = strscpy (NULL, DEFAULT_OUTPUT_DELIMITER);
+
+	if (label == NULL)
+		label = strscpy (NULL, "SNMP");
+
+	if (units == NULL)
+		units = strscpy (NULL, "");
+
+	if (port == NULL)
+		port = strscpy(NULL,"161");
+
 	return i;
 }
 
