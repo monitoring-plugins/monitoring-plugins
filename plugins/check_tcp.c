@@ -447,7 +447,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVv46H:s:e:q:m:c:w:t:p:C:W:d:Sr:j:D",
+		c = getopt_long (argc, argv, "+hVv46H:s:e:q:m:c:w:t:p:C:W:d:Sr:jD:",
 		                 longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)
@@ -574,7 +574,7 @@ process_arguments (int argc, char **argv)
 	if (server_address == NULL)
 		usage (_("You must provide a server address\n"));
 
-	return OK;
+	return TRUE;
 }
 
 
