@@ -6,9 +6,9 @@
  *
  *  Notes:
  *	   ide-smart has the same functionality as before. Some return
- *	   values were changed, otherwise the --net-saint option was added.
+ *	   values were changed, otherwise the --nagios option was added.
  *
- *	   Run with:  check_ide-smart --net-saint [-d] <DRIVE>
+ *	   Run with:  check_ide-smart --nagios [-d] <DRIVE>
  *	   Where DRIVE is an IDE drive, ie. /dev/hda, /dev/hdb, /dev/hdc
  *
  *	     - Returns 0 on no errors
@@ -169,7 +169,7 @@ main (int argc, char *argv[])
 		{"quiet-check", no_argument, 0, 'q'}, 
 		{"auto-on", no_argument, 0, '1'}, 
 		{"auto-off", no_argument, 0, '0'}, 
-		{"net-saint", no_argument, 0, 'n'}, 
+		{"nagios", no_argument, 0, 'n'}, 
 		{"help", no_argument, 0, 'h'}, 
 		{"version", no_argument, 0, 'V'}, {0, 0, 0, 0} 
 	};
@@ -497,6 +497,8 @@ print_help (void)
 	printf ("Nagios feature - 1999 Robert Dale <rdale@digital-mission.com>\n");
 	printf ("(C) 1999 Ragnar Hojland Espinosa <ragnar@lightside.dhis.org>\n");
 	printf (COPYRIGHT, copyright, email);
+
+	printf(_("This plugin checks this host's IDE hard drive through the (Linux specific) SMART command interface.\n\n"));
 	
 	printf ("\
 Usage: %s [DEVICE] [OPTION]\n\
