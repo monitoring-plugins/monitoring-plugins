@@ -19,7 +19,7 @@ Frequently Asked Questions
 
     Note that this string include both the assigned package release
     name and the CVS-generated revision for the individual plugin.
-    Authors hould strictly adhere to this format.  All bug reports
+    Authors should strictly adhere to this format.  All bug reports
     and help requests should reference this information.
 
 3.  Q: What information do I need to include when asking for help or
@@ -45,11 +45,11 @@ Frequently Asked Questions
     (nagios-plugins-<version>.<arch>.rpm).  Most people will need to
     use RPM's '--nodeps' option to install this package.
 
-5.  Q: My sysem uses the .deb package format. What pacakges should I
+5.  Q: My system uses the .deb package format. What packages should I
     install?
 
     A: We strive for cooperation between all packagers and developers.
-    The answers for .deb are the same as for RPM, afetr changing the
+    The answers for .deb are the same as for RPM, after changing the
     package name suffixes accordingly.
 
 6.  Q: I prefer to build my own RPMs. Do I need to install all of the
@@ -69,10 +69,10 @@ Frequently Asked Questions
     when I run Nagios. (Often check_ping runs just fine on the
     command line).
 
-    A: Commonly, system adminitartors will make security as tight as
+    A: Commonly, system administrators will make security as tight as
     possible on the monitoring system. Sometimes this includes OS
-    options or hardening scripts that prevent unpriveleged users from
-    running the ping command. Nagios runs with no more priveleges
+    options or hardening scripts that prevent unprivileged users from
+    running the ping command. Nagios runs with no more privileges
     than 'nobody' -- check to be sure that the nagios user can
     actually run check ping.  (This can also happen with other binaries
     executed by nagios, but ping seems to be far and away the biggest
