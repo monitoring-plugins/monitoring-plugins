@@ -25,8 +25,6 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include <mysql/mysql.h>
 #include <mysql/errmsg.h>
 
-unsigned int db_port = MYSQL_PORT;
-
 void
 print_usage (void)
 {
@@ -39,6 +37,9 @@ Usage: %s [-d database] [-H host] [-P port] [-u user] [-p password]\n"),
 void
 print_help (void)
 {
+	char *myport;
+	asprintf (&myport, "%d", MYSQL_PORT);
+
 	print_revision (progname, revision);
 
 	printf (_(COPYRIGHT), copyright, email);
@@ -49,7 +50,7 @@ print_help (void)
 
 	printf (_(UT_HELP_VRSN));
 
-	printf (_(UT_HOST_PORT), 'P', atoi(MYSQL_PORT));
+	printf (_(UT_HOST_PORT), 'P', myport);
 
 	printf (_("\
  -d, --database=STRING\n\
@@ -72,6 +73,7 @@ char *db_user = "";
 char *db_host = "";
 char *db_pass = "";
 char *db = "";
+unsigned int db_port = MYSQL_PORT;
 
 int process_arguments (int, char **);
 int validate_arguments (void);
