@@ -194,16 +194,11 @@ main (int argc, char **argv)
 				          units,
 				          free_space_pct,
 				          (!strcmp(file_system, "none") || display_mntp) ? me->me_devname : me->me_mountdir);
-			asprintf (&details, _("%s\n%.0f of %.0f %s (%.0f%%) free on %s (type %s mounted on %s) warn:%d crit:%d warn%%:%.0f%% crit%%:%.0f%%"),
-			          details,
-			          free_space,
-			          total_space,
-			          units,
-			          free_space_pct,
-			          me->me_devname,
-			          me->me_type,
-			          me->me_mountdir,
-				  w_df, c_df, w_dfp, c_dfp);
+			asprintf (&details, _("%s\n\
+%.0f of %.0f %s (%.0f%%) free on %s (type %s mounted on %s) warn:%lu crit:%lu warn%%:%.0f%% crit%%:%.0f%%"),
+			          details, free_space, total_space, units, free_space_pct,
+			          me->me_devname, me->me_type, me->me_mountdir,
+			          (unsigned long)w_df, (unsigned long)c_df, w_dfp, c_dfp);
 		}
 
 	}
@@ -238,6 +233,7 @@ process_arguments (int argc, char **argv)
 	struct name_list **fstail = &fs_exclude_list;
 	struct name_list **dptail = &dp_exclude_list;
 	struct name_list *temp_list;
+	unsigned long l;
 	int result = OK;
 
 	int option_index = 0;
@@ -298,7 +294,8 @@ process_arguments (int argc, char **argv)
 			}
 			else if (strpbrk (optarg, ",:") &&
 							 strstr (optarg, "%") &&
-							 sscanf (optarg, "%ul%*[:,]%lf%%", &w_df, &w_dfp) == 2) {
+							 sscanf (optarg, "%lu%*[:,]%lf%%", &l, &w_dfp) == 2) {
+				w_df = (uintmax_t)l;
 				break;
 			}
 			else if (strstr (optarg, "%") && sscanf (optarg, "%lf%%", &w_dfp) == 1) {
@@ -314,7 +311,8 @@ process_arguments (int argc, char **argv)
 			}
 			else if (strpbrk (optarg, ",:") &&
 							 strstr (optarg, "%") &&
-							 sscanf (optarg, "%ul%*[,:]%lf%%", &c_df, &c_dfp) == 2) {
+							 sscanf (optarg, "%lu%*[,:]%lf%%", &l, &c_dfp) == 2) {
+				c_df = (uintmax_t)l;
 				break;
 			}
 			else if (strstr (optarg, "%") && sscanf (optarg, "%lf%%", &c_dfp) == 1) {
@@ -326,30 +324,30 @@ process_arguments (int argc, char **argv)
 		case 'u':
 			if (! strcmp (optarg, "bytes")) {
 				mult = (uintmax_t)1;
-				units = "B";
+				units = strdup ("B");
 			} else if (! strcmp (optarg, "kB")) {
 				mult = (uintmax_t)1024;
-				units = "kB";
+				units = strdup ("kB");
 			} else if (! strcmp (optarg, "MB")) {
 				mult = (uintmax_t)1024 * 1024;
-				units = "MB";
+				units = strdup ("MB");
 			} else if (! strcmp (optarg, "GB")) {
 				mult = (uintmax_t)1024 * 1024 * 1024;
-				units = "GB";
+				units = strdup ("GB");
 			} else if (! strcmp (optarg, "TB")) {
 				mult = (uintmax_t)1024 * 1024 * 1024 * 1024;
-				units = "TB";
+				units = strdup ("TB");
 			} else {
 				die (STATE_UNKNOWN, _("unit type %s not known\n"), optarg);
 			}
 			break;
 		case 'k': /* display mountpoint */
 			mult = 1024;
-			units = "kB";
+			units = strdup ("kB");
 			break;
 		case 'm': /* display mountpoint */
 			mult = 1024 * 1024;
-			units = "MB";
+			units = strdup ("kB");
 			break;
 		case 'l':
 			show_local_fs = 1;			
@@ -476,9 +474,10 @@ INPUT ERROR: C_DF (%lu) should be less than W_DF (%lu) and both should be greate
 		print_path (path);
 		return ERROR;
 	}
-	else {
-		return OK;
-	}
+	
+	if (units == NULL)
+		units = strdup ("MB");
+	return OK;
 }
 
 
