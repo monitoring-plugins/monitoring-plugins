@@ -264,6 +264,7 @@ OPT_OPENSSL=$withval)
 
 if test X"$OPT_OPENSSL" = "Xno"; then
   AC_MSG_WARN([openssl disabled, you will not be able to use ssl options in some plugins])
+  with_openssl=no
 else
   dnl backup the pre-ssl variables
   CLEANLDFLAGS="$LDFLAGS"
@@ -383,14 +384,18 @@ else
 
   fi
 
-  if test X"$OPT_OPENSSL" != Xoff &&
+  if test X"$OPT_OPENSSL" != "Xno" &&
      test "$OPENSSL_ENABLED" != "1"; then
-    AC_MSG_ERROR([OpenSSL libs and/or directories were not found where specified!])
+    AC_MSG_WARN([OpenSSL libs and/or directories were not found where specified!])
+    with_openssl="no"
   elif test "$OPENSSL_ENABLED" = "1"; then
     check_tcp_ssl="check_simap check_spop check_jabber check_nntps"
     AC_SUBST(check_tcp_ssl)
     AC_DEFINE(HAVE_SSL,1,[Define if SSL libraries are found])
     with_openssl="yes"
+
+    # Needed for subsequent compiled programs
+    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$OPENSSL/lib"
   fi
 fi
 
