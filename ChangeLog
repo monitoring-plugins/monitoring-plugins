@@ -1,3 +1,329 @@
+2005-02-04 00:29  tonvoon
+
+	* BUGS: New file to note known bugs for major releases
+
+2005-02-04 00:28  tonvoon
+
+	* CHANGES: Reordering of items with most important announcements
+	  first
+
+2005-02-04 00:27  stanleyhopcroft
+
+	* contrib/check_oracle_tbs: New version (1.1) from John Koyle
+
+2005-02-04 00:26  tonvoon
+
+	* Makefile.am: BUGS file addition to release
+
+2005-02-04 00:26  tonvoon
+
+	* README: Cleanup and addition of reference to BUGS file
+
+2005-02-04 00:25  tonvoon
+
+	* doc/RELEASING: Updated with corrections. Added note to update
+	  BUGS file
+
+2005-02-03 23:52  tonvoon
+
+	* THANKS.in: Patch against check_log
+
+2005-02-03 23:51  tonvoon
+
+	* plugins-scripts/check_log.sh: Check for log file readability
+
+2005-02-02 09:47  stanleyhopcroft
+
+	* contrib/check_email_loop.pl: Add debug option from John Rouillard
+
+2005-02-02 06:42  stanleyhopcroft
+
+	* plugins/check_ide_smart.c: try again to stop looping
+
+2005-02-02 05:44  stanleyhopcroft
+
+	* plugins/check_ide_smart.c: restructure main() to stop looping on
+	  -n
+
+2005-02-01 12:43  stanleyhopcroft
+
+	* contrib/check_traceroute-pure_perl.pl: Thank you to Myke Place
+	  for check_traceroute-pure_perl.pl
+
+2005-02-01 12:42  stanleyhopcroft
+
+	* THANKS.in: Thank you for contributed plugins
+
+2005-02-01 12:30  stanleyhopcroft
+
+	* plugins/Makefile.am: check_icmp added to libexec_PROGRAMS
+
+2005-02-01 12:25  stanleyhopcroft
+
+	* CHANGES: check_icmp no longer regarded as volatile; built by
+	  default
+
+2005-02-01 12:23  stanleyhopcroft
+
+	* plugins/linux.h: plugins/linux.h, vestigeal header required for
+	  prior versions of check_icmp, no longer required.
+
+2005-02-01 07:35  stanleyhopcroft
+
+	* CHANGES: Amendments for check_icmp
+
+2005-02-01 07:34  stanleyhopcroft
+
+	* plugins/Makefile.am: hacks to partly support check_icmp.c (1.0).
+
+2005-02-01 07:33  stanleyhopcroft
+
+	* plugins/check_icmp.c: Revised check_icmp (1.0) from A Ericsson.
+
+2005-02-01 04:19  stanleyhopcroft
+
+	* contrib/: check_asterisk.pl,
+	  check_http-with-client-certificate.c, check_email_loop.pl,
+	  tarballs/check_traffic-0.91b.tar.gz: New or revised plugin in
+	  /contrib
+
+2005-01-28 22:42  stanleyhopcroft
+
+	* contrib/check_sybase: New version of Simon Bellwoods check_sybase
+	  (0.4). Thank you.
+
+2005-01-27 10:34  stanleyhopcroft
+
+	* contrib/check_traceroute.pl: Jon Meek's check_traceroute for Mon
+	  hacked by YT for Nagios. Prob pretty weak
+
+2005-01-27 10:32  stanleyhopcroft
+
+	* contrib/check_smart.pl: Candidate successor to
+	  /plugins/check_ide_smart.c. Now in /contrib. NB there is another
+	  new plugin with sim function
+
+2005-01-27 04:52  stanleyhopcroft
+
+	* contrib/: check_fan_cpq_present, check_fan_fsc_present,
+	  check_temp_cpq, check_temp_fsc, check_mysqlslave.pl: New /contrib
+	  plugin
+
+2005-01-27 04:43  stanleyhopcroft
+
+	* contrib/: check_pfstate, check_logins.c, check_arping.pl,
+	  check_frontpage, check_oracle_tbs, check_pcpmetric.py,
+	  check_cpqarray.c: New /contrib plugin
+
+2005-01-27 02:27  stanleyhopcroft
+
+	* CHANGES, THANKS.in, contrib/README.TXT, po/de.po, po/fr.po:
+
+	  1 New /contrib plugins 2 Revised check_dhcp.c status in CHANGES
+
+2005-01-27 01:38  harpermann
+
+	* plugins/Makefile.am: Added check_dhcp bask into libexec_PROGRAMS
+	  after talking with Stanley.
+
+2005-01-26 21:39  tonvoon
+
+	* THANKS.in: More contributors
+
+2005-01-26 21:21  tonvoon
+
+	* plugins/check_dig.c: Convert tabs to spaces from dig's answer
+	  section (Randy O'Meara - 1107651)
+
+2005-01-26 20:53  tonvoon
+
+	* REQUIREMENTS: Add recommendation for check_procs on Mandrake
+	  systems (Paulo Fessel - 1106849)
+
+2005-01-25 22:15  stanleyhopcroft
+
+	* plugins/check_ide_smart.c: Display usage if no argv (Reuben
+	  Farrelly)
+
+2005-01-25 18:11  harpermann
+
+	* plugins/check_dhcp.c: Tracker:1109261  This was an alignment
+	  problem on Solaris.  Linux kernel fixes alignment so this was not
+	  seen there.  Memcpy takes care of proper alignment.  Tested on
+	  RHEL V3 U3, RHEL V4, FreeBSD 4.10 (Thanks Stanley!) and Solaris 9
+	  with the GNU env.
+
+2005-01-25 12:43  stanleyhopcroft
+
+	* plugins/check_ide_smart.c: Trivial text changes (print_help,
+	  commentary & -n option)
+
+2005-01-25 09:20  stanleyhopcroft
+
+	* contrib/tarballs/check_icmp-0.8.tar.gz: moved to /plugins (core
+	  plugin)
+
+2005-01-25 09:19  stanleyhopcroft
+
+	* contrib/tarballs/check_cit.tgz: replaced by contrib/check_ica*
+	  (esp check_ica_metaframe_pub_apps)
+
+2005-01-25 09:16  stanleyhopcroft
+
+	* contrib/check_dhcp.c: moved to /plugins (core plugin)
+
+2005-01-25 09:15  stanleyhopcroft
+
+	* contrib/check_citrix: Replaced by the check_ica* pair of plugins
+	  (mainly check_ica_metaframe_pub_apps)
+
+2005-01-25 09:12  stanleyhopcroft
+
+	* contrib/packet_utils.pm: packet creation and dumping hacks used
+	  by check_ica* and check_lotus
+
+2005-01-25 09:09  stanleyhopcroft
+
+	* contrib/check_ica_master_browser.pl: New plugin - checks that ICA
+	  master browser is what it should be (important for firewalled
+	  dialup)
+
+2005-01-25 09:07  stanleyhopcroft
+
+	* contrib/check_ica_metaframe_pub_apps.pl: Replacement (structured
+	  name mainly) for check_citrix: check of ICA browse service
+
+2005-01-25 09:05  stanleyhopcroft
+
+	* contrib/check_ica_program_neigbourhood.pl: New plugin to check
+	  Citrix Metaframe XP "Program Neighbourhood"
+
+2005-01-25 09:04  stanleyhopcroft
+
+	* contrib/check_lotus.pl: New plugin to check responsiveness of
+	  Louts Notes (v5 at least) servers
+
+2005-01-24 23:17  stanleyhopcroft
+
+	* plugins/Makefile.am: Removed check_dhcp and check_icmp from
+	  libexec_PROGRAMS (ie dont build by defaut)
+
+2005-01-24 23:15  stanleyhopcroft
+
+	* CHANGES: Notes about check_dhcp and check_icmp (no longer built
+	  by default, use at own peril, volatile)
+
+2005-01-21 09:24  stanleyhopcroft
+
+	* configure.in: Set arch specifc preprocessor symbols in config.h.
+	  TEMPORARY hack for check_dhcp.c [on FreeBSD 4: /check_dhcp -i
+	  fxp0 -> DHCP ok: Received 1 DHCPOFFER(s), max lease time = 259200
+	  sec.
+
+2005-01-21 01:03  harpermann
+
+	* plugins/check_snmp.c: Tracker 1106378 fixed - The -t (timeout)
+	  arg was not handled correctly when passed to the snmpget command.
+	  Added -e --retries for the correct retries value to snmpcmd.
+
+2005-01-21 00:01  tonvoon
+
+	* doc/developer-guidelines.sgml: Changing copyright to the Nagios
+	  Plugins Development Team, rather than individual names. Also,
+	  clarified use of ACKNOWLEDGEMENTS, THANKS.in and AUTHORS
+
+2005-01-20 23:40  harpermann
+
+	* plugins/check_http.c: Changed long argument --minmax to
+	  --pagesize and updated help and usage
+
+2005-01-20 23:39  tonvoon
+
+	* AUTHORS, Makefile.am, THANKS.in: The AUTHORS file now used for
+	  the plugin team, with THANKS.in as the contributors list.
+
+2005-01-20 23:37  harpermann
+
+	* CHANGES: Added comment about check_http --pagesize and added max
+	  value to page size check
+
+2005-01-20 23:25  tonvoon
+
+	* AUTHORS: Added Sean for bug reports
+
+2005-01-20 22:50  harpermann
+
+	* plugins/check_http.c: Tracker 1099682 fix.  Now getting the page
+	  size from Content-Length in the header.  Added max value to the
+	  -m switch so can do "-m min:max".  Retained "-m min" convention.
+	  Renamed long arg name to --minmax
+
+2005-01-19 23:39  harpermann
+
+	* plugins/check_nt.c: In the CHECK_COUNTER block, there were
+	  several strcats writing to unallocated memory.  Changed to
+	  asprintf. We're not freeing since plugin run is short.
+
+2005-01-19 21:14  tonvoon
+
+	* plugins/check_swap.c: Fixed parsing of AIX lsps command (1093522)
+
+2005-01-14 14:39  tonvoon
+
+	* AUTHORS: More contributors
+
+2005-01-14 14:13  tonvoon
+
+	* plugins/check_disk.c: Fix logic error with -e switch where result
+	  not set (Daniel Austin - 1102012)
+
+2005-01-14 10:59  tonvoon
+
+	* configure.in: Fixed ssl configure problems on Solaris (Bug
+	  1096091)
+
+2005-01-13 18:24  tonvoon
+
+	* configure.in, plugins/check_swap.c: Use floats for holding memory
+	  values to avoid different types on different OSes. Seems to have
+	  a problem with the perf data for check_swap on Sol 2.6, but not
+	  critical
+
+2005-01-05 21:32  tonvoon
+
+	* configure.in, package.def: Update version number to next release
+
+2005-01-04 00:16  opensides
+
+	* plugins/check_ide_smart.c:
+	  still trying to fix #1094326
+
+2005-01-03 01:37  opensides
+
+	* plugins/check_ide_smart.c:
+	  more fixes for #1094326
+
+2005-01-03 00:59  opensides
+
+	* plugins-scripts/check_mailq.pl:
+	  fixes for #1094324
+
+2005-01-02 14:00  opensides
+
+	* plugins/check_ide_smart.c:
+	  fixing bug #1094326
+
+	  still need to check the makefile for check_ide_smart.c
+
+2005-01-01 16:15  tonvoon
+
+	* plugins/check_smtp.c: Removed old terminate function (Bug
+	  1093491)
+
+2004-12-30 17:17  tonvoon
+
+	* ChangeLog: Updated with r1_4-beta1 details
+
 2004-12-30 14:23  tonvoon
 
 	* CHANGES: Note some syntax changes to check_disk
