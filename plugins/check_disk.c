@@ -57,6 +57,8 @@ const char *options = "\
     Display the mountpoint instead of the partition\n\
  -e, --errors-only\n\
     Display only devices/mountpoints with errors\n\
+ -C, --clear\n\
+    Clear thresholds\n\
  -v, --verbose\n\
     Show details for command-line debugging (do not use with nagios server)\n\
  -h, --help\n\
@@ -65,6 +67,11 @@ const char *options = "\
     Print version information\n";
 
 const char *notes = "\
+\n";
+
+const char *examples = "\
+ check_disk -w 10% -c 5% -p /tmp -p /var -C -w 100000 -c 50000 -p /\n\
+   Checks /tmp and /var at 10%,5% and / at 100MB, 50MB\n\
 \n";
 
 #include "common.h"
@@ -107,6 +114,10 @@ struct name_list
 {
   char *name;
   int found;
+  int w_df;
+  int c_df;
+  float w_dfp;
+  float c_dfp;
   struct name_list *name_next;
 };
 
@@ -151,7 +162,7 @@ enum
 #endif
 
 int process_arguments (int, char **);
-int validate_arguments (void);
+int validate_arguments (int, int, float, float, char *);
 int check_disk (int usp, int free_disk);
 int walk_name_list (struct name_list *list, const char *name);
 void print_help (void);
@@ -237,7 +248,7 @@ main (int argc, char **argv)
 				          units,
 				          free_space_pct,
 				          (!strcmp(file_system, "none") || display_mntp) ? me->me_devname : me->me_mountdir);
-			asprintf (&details, "%s\n%.0f of %.0f %s (%2.0f%%) free on %s (type %s mounted on %s)",
+			asprintf (&details, "%s\n%.0f of %.0f %s (%2.0f%%) free on %s (type %s mounted on %s) warn:%d crit:%d warn%%:%.0f%% crit%%:%.0f%%",
 			          details,
 			          free_space,
 			          total_space,
@@ -245,7 +256,8 @@ main (int argc, char **argv)
 			          free_space_pct,
 			          me->me_devname,
 			          me->me_type,
-			          me->me_mountdir);
+			          me->me_mountdir,
+				  w_df, c_df, w_dfp, c_dfp);
 		}
 
 	}
@@ -279,6 +291,8 @@ process_arguments (int argc, char **argv)
 	struct name_list **devtail = &dev_select_list;
 	struct name_list **fstail = &fs_exclude_list;
 	struct name_list **dptail = &dp_exclude_list;
+	struct name_list *temp_list;
+	int result = OK;
 
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -297,6 +311,7 @@ process_arguments (int argc, char **argv)
 		{"errors-only", no_argument, 0, 'e'},
 		{"verbose", no_argument, 0, 'v'},
 		{"quiet", no_argument, 0, 'q'},
+		{"clear", no_argument, 0, 'C'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
@@ -316,7 +331,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "+?Vqhvet:c:w:u:p:x:X:mklM", long_options, &option_index);
+		c = getopt_long (argc, argv, "+?VqhveCt:c:w:u:p:x:X:mklM", long_options, &option_index);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -397,6 +412,10 @@ process_arguments (int argc, char **argv)
 			se = (struct name_list *) malloc (sizeof (struct name_list));
 			se->name = strdup (optarg);
 			se->name_next = NULL;
+			se->w_df = w_df;
+			se->c_df = c_df;
+			se->w_dfp = w_dfp;
+			se->c_dfp = c_dfp;
 			*pathtail = se;
 			pathtail = &se->name_next;
 			break;
@@ -427,6 +446,12 @@ process_arguments (int argc, char **argv)
 		case 'M': /* display mountpoint */
 			display_mntp = TRUE;
 			break;
+		case 'C':
+			w_df = -1;
+			c_df = -1;
+			w_dfp = -1.0;
+			c_dfp = -1.0;
+			break;
 		case 'V':									/* version */
 			print_revision (progname, revision);
 			exit (STATE_OK);
@@ -449,30 +474,49 @@ process_arguments (int argc, char **argv)
 	if (argc > c && strlen (path) == 0)
 		path = argv[c++];
 
-	return validate_arguments ();
+	if (path_select_list) {
+		temp_list = path_select_list;
+		while (temp_list) {
+			if (validate_arguments (temp_list->w_df, temp_list->c_df, temp_list->w_dfp, temp_list->c_dfp, temp_list->name) == ERROR)
+				result = ERROR;
+			temp_list = temp_list->name_next;
+		}
+		return result;
+	} else {
+		return validate_arguments (w_df, c_df, w_dfp, c_dfp, NULL);
+	}
 }
 
 
+void print_path (char *path) 
+{
+	if (path)
+		printf (" for %s", path);
+	printf ("\n");
+}
 
 int
-validate_arguments ()
+validate_arguments (int w, int c, float wp, float cp, char *path)
 {
-	if (w_df < 0 && c_df < 0 && w_dfp < 0 && c_dfp < 0) {
-		printf ("INPUT ERROR: Unable to parse command line\n");
+	if (w < 0 && c < 0 && wp < 0 && cp < 0) {
+		printf ("INPUT ERROR: No thresholds specified");
+		print_path (path);
 		return ERROR;
 	}
-	else if ((w_dfp >= 0 || c_dfp >= 0)
-					 && (w_dfp < 0 || c_dfp < 0 || w_dfp > 100 || c_dfp > 100
-							 || c_dfp > w_dfp)) {
+	else if ((wp >= 0 || cp >= 0)
+					 && (wp < 0 || cp < 0 || wp > 100 || cp > 100
+							 || cp > wp)) {
 		printf
-			("INPUT ERROR: C_DFP (%f) should be less than W_DFP (%f) and both should be between zero and 100 percent, inclusive\n",
-			 c_dfp, w_dfp);
+			("INPUT ERROR: C_DFP (%f) should be less than W_DFP (%.1f) and both should be between zero and 100 percent, inclusive",
+			 cp, wp);
+		print_path (path);
 		return ERROR;
 	}
-	else if ((w_df > 0 || c_df > 0) && (w_df < 0 || c_df < 0 || c_df > w_df)) {
+	else if ((w > 0 || c > 0) && (w < 0 || c < 0 || c > w)) {
 		printf
-			("INPUT ERROR: C_DF (%d) should be less than W_DF (%d) and both should be greater than zero\n",
-			 c_df, w_df);
+			("INPUT ERROR: C_DF (%d) should be less than W_DF (%d) and both should be greater than zero",
+			 c, w);
+		print_path (path);
 		return ERROR;
 	}
 	else {
@@ -509,6 +553,10 @@ walk_name_list (struct name_list *list, const char *name)
 	while (list) {
 		if (! strcmp(list->name, name)) {
 			list->found = 1;
+			w_df = list->w_df;
+			c_df = list->c_df;
+			w_dfp = list->w_dfp;
+			c_dfp = list->c_dfp;
 			return TRUE;
 		}
 		list = list->name_next;
@@ -529,6 +577,7 @@ print_help (void)
 	printf ("\nOptions:\n");
 	printf (options);
 	printf (notes);
+	printf ("Examples:\n%s", examples);
 	support ();
 }
 
