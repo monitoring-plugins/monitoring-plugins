@@ -14,7 +14,8 @@ EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 	check_swap check_fping check_ldap check_game check_dig \
 	check_nagios check_by_ssh check_dns check_nt
 
-check_tcp_programs = check_ftp check_imap check_nntp check_pop
+check_tcp_programs = check_ftp check_imap check_nntp check_pop \
+	@check_tcp_ssl@
 
 EXTRA_DIST = t utils.c netutils.c popen.c \
 	snprintf.c 
