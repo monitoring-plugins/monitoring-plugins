@@ -4,6 +4,8 @@
 #   transmittal.  
 #
 # Initial version support sendmail's mailq command
+#  Support for mutiple sendmail queues (Carlos Canau)
+#  Support for qmail (Benjamin Schmid)
 
 # License Information:
 # This program is free software; you can redistribute it and/or modify
@@ -25,11 +27,11 @@
 use POSIX;
 use strict;
 use Getopt::Long;
-use vars qw($opt_V $opt_h $opt_v $verbose $PROGNAME $opt_w $opt_c $opt_t $status $state $msg $msg_q );
+use vars qw($opt_V $opt_h $opt_v $verbose $PROGNAME $opt_w $opt_c $opt_t
+					$opt_M $mailq $status $state $msg $msg_q $msg_p $opt_W $opt_C $mailq @lines
+					%srcdomains %dstdomains);
 use lib  utils.pm;
 use utils qw(%ERRORS &print_revision &support &usage );
-
-#my $MAILQ = "/usr/bin/mailq";   # need to migrate support to utils.pm and autoconf
 
 
 sub print_help ();
@@ -40,6 +42,10 @@ $ENV{'PATH'}='';
 $ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
 $PROGNAME = "check_mailq";
+$mailq = 'sendmail';	# default
+$msg_q = 0 ;
+$msg_p = 0 ;
+$state = $ERRORS{'UNKNOWN'};
 
 Getopt::Long::Configure('bundling');
 $status = process_arguments();
@@ -54,60 +60,329 @@ $SIG{'ALRM'} = sub {
 };
 alarm($opt_t);
 
-## open mailq 
-if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
-	if (! open (MAILQ, "$utils::PATH_TO_MAILQ | " ) ) {
-		print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
+# switch based on MTA
+
+if ($mailq eq "sendmail") {
+
+	## open mailq 
+	if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
+		if (! open (MAILQ, "$utils::PATH_TO_MAILQ | " ) ) {
+			print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
+			exit $ERRORS{'UNKNOWN'};
+		}
+	}elsif( defined $utils::PATH_TO_MAILQ){
+		unless (-x $utils::PATH_TO_MAILQ) {
+			print "ERROR: $utils::PATH_TO_MAILQ is not executable by (uid $>:gid($)))\n";
+			exit $ERRORS{'UNKNOWN'};
+		}
+	} else {
+		print "ERROR: \$utils::PATH_TO_MAILQ is not defined\n";
 		exit $ERRORS{'UNKNOWN'};
 	}
-}else{
-	print "ERROR: Could not find mailq executable!\n";
-	exit $ERRORS{'UNKNOWN'};
-}
+#  single queue empty
+##/var/spool/mqueue is empty
+#  single queue: 1
+##                /var/spool/mqueue (1 request)
+##----Q-ID---- --Size-- -----Q-Time----- ------------Sender/Recipient------------
+##h32E30p01763     2782 Wed Apr  2 15:03 <silvaATkpnqwest.pt>
+##      8BITMIME
+##                                       <silvaATeunet.pt>
 
-# only first line is relevant in this iteration.
-while (<MAILQ>) {
-	if (/mqueue/) {
-		print "$utils::PATH_TO_MAILQ = $_ "if $verbose ;
-		if (/empty/ ) {
-			$msg = "OK: mailq is empty";
-			$msg_q = 0;
-			$state = $ERRORS{'OK'};
-		}elsif ( /(\d+)/ ) {
-			$msg_q = $1 ;
+#  multi queue empty
+##/var/spool/mqueue/q0/df is empty
+##/var/spool/mqueue/q1/df is empty
+##/var/spool/mqueue/q2/df is empty
+##/var/spool/mqueue/q3/df is empty
+##/var/spool/mqueue/q4/df is empty
+##/var/spool/mqueue/q5/df is empty
+##/var/spool/mqueue/q6/df is empty
+##/var/spool/mqueue/q7/df is empty
+##/var/spool/mqueue/q8/df is empty
+##/var/spool/mqueue/q9/df is empty
+##/var/spool/mqueue/qA/df is empty
+##/var/spool/mqueue/qB/df is empty
+##/var/spool/mqueue/qC/df is empty
+##/var/spool/mqueue/qD/df is empty
+##/var/spool/mqueue/qE/df is empty
+##/var/spool/mqueue/qF/df is empty
+##                Total Requests: 0
+#  multi queue: 1
+##/var/spool/mqueue/q0/df is empty
+##/var/spool/mqueue/q1/df is empty
+##/var/spool/mqueue/q2/df is empty
+##                /var/spool/mqueue/q3/df (1 request)
+##----Q-ID---- --Size-- -----Q-Time----- ------------Sender/Recipient------------
+##h32De2f23534*      48 Wed Apr  2 14:40 nocol
+##                                       nouserATEUnet.pt
+##                                       canau
+##/var/spool/mqueue/q4/df is empty
+##/var/spool/mqueue/q5/df is empty
+##/var/spool/mqueue/q6/df is empty
+##/var/spool/mqueue/q7/df is empty
+##/var/spool/mqueue/q8/df is empty
+##/var/spool/mqueue/q9/df is empty
+##/var/spool/mqueue/qA/df is empty
+##/var/spool/mqueue/qB/df is empty
+##/var/spool/mqueue/qC/df is empty
+##/var/spool/mqueue/qD/df is empty
+##/var/spool/mqueue/qE/df is empty
+##/var/spool/mqueue/qF/df is empty
+##                Total Requests: 1
 
-			print "msg_q = $msg_q warn=$opt_w crit=$opt_c\n" if $verbose;
-
-			if ($msg_q < $opt_w) {
-				$msg = "OK: mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
-				$state = $ERRORS{'OK'};
-			}elsif ($msg_q >= $opt_w  && $msg_q < $opt_c) {
-				$msg = "WARNING: mailq is $msg_q (threshold w = $opt_w)";
-				$state = $ERRORS{'WARNING'};
-			}else {
-				$msg = "CRITICAL: mailq is $msg_q (threshold c = $opt_c)";
-				$state = $ERRORS{'CRITICAL'};
+	
+	while (<MAILQ>) {
+	
+		# match email addr on queue listing
+		if ( (/<.*@.*\.(\w+\.\w+)>/) || (/<.*@(\w+\.\w+)>/) ) {
+			my $domain = $1;
+			if (/^\w+/) {
+	  		print "$utils::PATH_TO_MAILQ = srcdomain = $domain \n" if $verbose ;
+		    $srcdomains{$domain} ++;
 			}
-			
+			next;
+		}
+	
+		#
+		# ...
+		# sendmail considers a message with more than one destiny, say N, to the same MX 
+		# to have N messages in queue.
+		# we will only consider one in this code
+		if (( /\s\(reply:\sread\serror\sfrom\s.*\.(\w+\.\w+)\.$/ ) || ( /\s\(reply:\sread\serror\sfrom\s(\w+\.\w+)\.$/ ) ||
+			( /\s\(timeout\swriting\smessage\sto\s.*\.(\w+\.\w+)\.:/ ) || ( /\s\(timeout\swriting\smessage\sto\s(\w+\.\w+)\.:/ ) ||
+			( /\s\(host\smap:\slookup\s\(.*\.(\w+\.\w+)\):/ ) || ( /\s\(host\smap:\slookup\s\((\w+\.\w+)\):/ ) || 
+			( /\s\(Deferred:\s.*\s.*\.(\w+\.\w+)\.\)/ ) || ( /\s\(Deferred:\s.*\s(\w+\.\w+)\.\)/ ) ) {
+	
+			print "$utils::PATH_TO_MAILQ = dstdomain = $1 \n" if $verbose ;
+			$dstdomains{$1} ++;
+		}
+	
+		if (/\s+\(I\/O\serror\)/) {
+			print "$utils::PATH_TO_MAILQ = dstdomain = UNKNOWN \n" if $verbose ;
+			$dstdomains{'UNKNOWN'} ++;
 		}
 
-		last;
+		# Finally look at the overall queue length
+		#
+		if (/mqueue/) {
+			print "$utils::PATH_TO_MAILQ = $_ "if $verbose ;
+			if (/ \((\d+) request/) {
+	    	#
+		    # single queue: first line
+		    # multi queue: one for each queue. overwrite on multi queue below
+	  	  $msg_q = $1 ;
+			}
+		} elsif (/^\s+Total\sRequests:\s(\d+)$/) {
+			print "$utils::PATH_TO_MAILQ = $_ \n" if $verbose ;
+			#
+			# multi queue: last line
+			$msg_q = $1 ;
+		}
+	
 	}
 	
-}
 
-close (MAILQ); 
-# declare an error if we also get a non-zero return code from mailq
-# unless already set to critical
-if ( $? ) {
-	print "stderr = $? : $! \n" if $verbose;
-	$state = $state == $ERRORS{"CRITICAL"} ? $ERRORS{"CRITICAL"} : $ERRORS{"UNKNOWN"}  ;
-	print "MAILQ error: $!\n" if $verbose;
-}
-## close mailq
+	## close mailq
+
+	close (MAILQ); 
+	# declare an error if we also get a non-zero return code from mailq
+	# unless already set to critical
+	if ( $? ) {
+		$state = $state == $ERRORS{"CRITICAL"} ? $ERRORS{"CRITICAL"} : $ERRORS{"WARNING"}  ;
+		print "STDERR $?: $!\n" if $verbose;
+		$msg = "$state: (stderr)\n";
+	}
+
+	## shut off the alarm
+	alarm(0);
+
+
+
+	## now check the queue length(s)
+
+	if ($msg_q == 0) {
+		$msg = "OK: mailq is empty";
+		$state = $ERRORS{'OK'};
+	} else {
+		print "msg_q = $msg_q warn=$opt_w crit=$opt_c\n" if $verbose;
+	
+		# overall queue length
+		if ($msg_q < $opt_w) {
+			$msg = "OK: mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
+			$state = $ERRORS{'OK'};
+		}elsif ($msg_q >= $opt_w  && $msg_q < $opt_c) {
+			$msg = "WARNING: mailq is $msg_q (threshold w = $opt_w)";
+			$state = $ERRORS{'WARNING'};
+		}else {
+			$msg = "CRITICAL: mailq is $msg_q (threshold c = $opt_c)";
+			$state = $ERRORS{'CRITICAL'};
+		}
+
+		# check for domain specific queue lengths if requested
+		if (defined $opt_W) {
+		
+			# Apply threshold to queue lengths FROM domain
+			my @srckeys = sort { $srcdomains{$b} <=> $srcdomains{$a} } keys %srcdomains;
+  	  my $srcmaxkey = $srckeys[0];
+    	print "src max is $srcmaxkey with $srcdomains{$srcmaxkey} messages\n" if $verbose;
+		
+			if ($srcdomains{$srcmaxkey} >= $opt_W && $srcdomains{$srcmaxkey} < $opt_C) {
+				if ($state == $ERRORS{'OK'}) {
+					$msg = "WARNING: $srcdomains{$srcmaxkey} messages in queue FROM $srcmaxkey (threshold W = $opt_W)";
+					$state = $ERRORS{'WARNING'};
+				} elsif (($state == $ERRORS{'WARNING'}) || ($state == $ERRORS{'CRITICAL'})){
+		    	$msg .= " -and- $srcdomains{$srcmaxkey} messages in queue FROM $srcmaxkey (threshold W = $opt_W)";
+				} else {
+					$msg = "WARNING: $srcdomains{$srcmaxkey} messages in queue FROM $srcmaxkey (threshold W = $opt_W)";
+					$state = $ERRORS{'WARNING'};
+				}
+  	  } elsif ($srcdomains{$srcmaxkey} >= $opt_C) {
+				if ($state == $ERRORS{'OK'}) {
+					$msg = "CRITICAL: $srcdomains{$srcmaxkey} messages in queue FROM $srcmaxkey (threshold C = $opt_C)";
+					$state = $ERRORS{'CRITICAL'};
+				} elsif ($state == $ERRORS{'WARNING'}) {
+					$msg = "CRITICAL: $srcdomains{$srcmaxkey} messages in queue FROM $srcmaxkey (threshold C = $opt_C) -and- " . $msg;
+					$msg =~ s/WARNING: //;
+				} elsif ($state == $ERRORS{'CRITICAL'}) {
+					$msg .= " -and- $srcdomains{$srcmaxkey} messages in queue FROM $srcmaxkey (threshold W = $opt_W)";
+				} else {
+					$msg = "CRITICAL: $srcdomains{$srcmaxkey} messages in queue FROM $srcmaxkey (threshold W = $opt_W)";
+					$state = $ERRORS{'CRITICAL'};
+				}
+	    } else {
+				if ($srcdomains{$srcmaxkey} > 0) {
+					$msg .= " $srcdomains{$srcmaxkey} msgs. FROM $srcmaxkey is below threshold ($opt_W/$opt_C)";
+				}
+			}
+
+			# Apply threshold to queue lengths TO domain
+			my @dstkeys = sort { $dstdomains{$b} <=> $dstdomains{$a} } keys %dstdomains;
+	    my $dstmaxkey = $dstkeys[0];
+  	  print "dst max is $dstmaxkey with $dstdomains{$dstmaxkey} messages\n" if $verbose;
+		
+			if ($dstdomains{$dstmaxkey} >= $opt_W && $dstdomains{$dstmaxkey} < $opt_C) {
+				if ($state == $ERRORS{'OK'}) {
+					$msg = "WARNING: $dstdomains{$dstmaxkey} messages in queue TO $dstmaxkey (threshold W = $opt_W)";
+					$state = $ERRORS{'WARNING'};
+				} elsif (($state == $ERRORS{'WARNING'}) || ($state == $ERRORS{'CRITICAL'})){
+					$msg .= " -and- $dstdomains{$dstmaxkey} messages in queue TO $dstmaxkey (threshold W = $opt_W)";
+				} else {
+					$msg = "WARNING: $dstdomains{$dstmaxkey} messages in queue TO $dstmaxkey (threshold W = $opt_W)";
+					$state = $ERRORS{'WARNING'};
+				}
+			} elsif ($dstdomains{$dstmaxkey} >= $opt_C) {
+				if ($state == $ERRORS{'OK'}) {
+					$msg = "CRITICAL: $dstdomains{$dstmaxkey} messages in queue TO $dstmaxkey (threshold C = $opt_C)";
+					$state = $ERRORS{'CRITICAL'};
+				} elsif ($state == $ERRORS{'WARNING'}) {
+					$msg = "CRITICAL: $dstdomains{$dstmaxkey} messages in queue TO $dstmaxkey (threshold C = $opt_C) -and- " . $msg;
+					$msg =~ s/WARNING: //;
+				} elsif ($state == $ERRORS{'CRITICAL'}) {
+					$msg .= " -and- $dstdomains{$dstmaxkey} messages in queue TO $dstmaxkey (threshold W = $opt_W)";
+				} else {
+					$msg = "CRITICAL: $dstdomains{$dstmaxkey} messages in queue TO $dstmaxkey (threshold W = $opt_W)";
+					$state = $ERRORS{'CRITICAL'};
+				}
+			} else {
+				if ($dstdomains{$dstmaxkey} > 0) {
+					$msg .= " $dstdomains{$dstmaxkey} msgs. TO $dstmaxkey is below threshold ($opt_W/$opt_C)";
+				}
+			}
+
+		} # End of queue length thresholds
+
+	}
+
+} # end of ($mailq eq "sendmail")
+elsif ( $mailq eq "qmail" ) {
+
+	# open qmail-qstat 
+	if ( defined $utils::PATH_TO_QMAIL_QSTAT && -x $utils::PATH_TO_QMAIL_QSTAT ) {
+		if (! open (MAILQ, "$utils::PATH_TO_QMAIL_QSTAT | " ) ) {
+			print "ERROR: could not open $utils::PATH_TO_QMAIL_QSTAT \n";
+			exit $ERRORS{'UNKNOWN'};
+		}
+	}elsif( defined $utils::PATH_TO_QMAIL_QSTAT){
+		unless (-x $utils::PATH_TO_QMAIL_QSTAT) {
+			print "ERROR: $utils::PATH_TO_QMAIL_QSTAT is not executable by (uid $>:gid($)))\n";
+			exit $ERRORS{'UNKNOWN'};
+		}
+	} else {
+		print "ERROR: \$utils::PATH_TO_QMAIL_QSTAT is not defined\n";
+		exit $ERRORS{'UNKNOWN'};
+	}
+
+	@lines = <MAILQ>;
+
+	# close qmail-qstat
+	close MAILQ;
+	# declare an error if we also get a non-zero return code from mailq
+	# unless already set to critical
+	if ( $? ) {
+		$state = $state == $ERRORS{"CRITICAL"} ? $ERRORS{"CRITICAL"} : $ERRORS{"WARNING"}  ;
+		print "STDERR $?: $!\n" if $verbose;
+		$msg = "$state: (stderr)\n";
+	}
+
+	## shut off the alarm
+	alarm(0);
+
+	# check queue length
+	if ($lines[0]=~/^messages in queue: (\d+)/) {
+		$msg_q = $1 ;
+	}else{
+		print "Couldn't match $utils::PATH_TO_QMAIL_QSTAT output\n";
+		exit   $ERRORS{'UNKNOWN'};
+	}
+
+	# check messages not processed
+	if ($lines[1]=~/^messages in queue but not yet preprocessed: (\d+)/) {
+		my $msg_p = $1;
+	}else{
+		print "Couldn't match $utils::PATH_TO_QMAIL_QSTAT output\n";
+		exit  $ERRORS{'UNKNOWN'};
+	}
+
+
+	# check queue length(s)
+	if ($msg_q == 0){
+		$msg = "OK: qmail-qstat reports queue is empty";
+		$state = $ERRORS{'OK'};
+	} else {
+		print "msg_q = $msg_q warn=$opt_w crit=$opt_c\n" if $verbose;
+		
+		# overall queue length
+		if ($msg_q < $opt_w) {
+			$msg = "OK: mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
+			$state = $ERRORS{'OK'};
+		}elsif ($msg_q >= $opt_w  && $msg_q < $opt_c) {
+			$msg = "WARNING: mailq is $msg_q (threshold w = $opt_w)";
+			$state = $ERRORS{'WARNING'};
+		}else {
+			$msg = "CRITICAL: mailq is $msg_q (threshold c = $opt_c)";
+			$state = $ERRORS{'CRITICAL'};
+		}
+
+		# check messages not yet preprocessed (only compare is $opt_W and $opt_C
+		# are defined)
+		
+		if (defined $opt_W) {
+			$msg .= "[Preprocessed = $msg_p]";
+			if ($msg_p >= $opt_W && $msg_p < $opt_C ) {
+				$state = $state == $ERRORS{"CRITICAL"} ? $ERRORS{"CRITICAL"} : $ERRORS{"WARNING"}  ;
+			}elsif ($msg_p >= $opt_C ) {
+				$state = $ERRORS{"CRITICAL"} ;
+			}
+		}
+	}				
+		
+
+
+} # end of ($mailq eq "qmail")
+
+
 
 # Perfdata support
-print "$msg | mailq = $msg_q\n";
+print "$msg |mailq=$msg_q\n";
 exit $state;
 
 
@@ -120,8 +395,11 @@ sub process_arguments(){
 		("V"   => \$opt_V, "version"	=> \$opt_V,
 		 "v"   => \$opt_v, "verbose"	=> \$opt_v,
 		 "h"   => \$opt_h, "help"		=> \$opt_h,
+		 "M:s" => \$opt_M, "mailserver:s" => \$opt_M, # mailserver (default	sendmail)
 		 "w=i" => \$opt_w, "warning=i"  => \$opt_w,   # warning if above this number
 		 "c=i" => \$opt_c, "critical=i" => \$opt_c,	  # critical if above this number
+		 "W=i" => \$opt_W, "Warning=i"  => \$opt_W,   # warning if above this number
+		 "C=i" => \$opt_C, "Critical=i" => \$opt_C,	  # critical if above this number
 		 "t=i" => \$opt_t, "timeout=i"  => \$opt_t 
 		 );
 
@@ -149,31 +427,65 @@ sub process_arguments(){
 	}
 
 	if ( $opt_w >= $opt_c) {
-		print "Warning cannot be greater than Critical!\n";
+		print "Warning (-w) cannot be greater than Critical (-c)!\n";
 		exit $ERRORS{'UNKNOWN'};
 	}
 
+	if (defined $opt_W && ! defined !$opt_C) {
+		print "Need -C if using -W\n";
+		exit $ERRORS{'UNKNOWN'};
+	}elsif(defined $opt_W && defined $opt_C) {
+		if ($opt_W >= $opt_C) {
+			print "Warning (-W) cannot be greater than Critical (-C)!\n";
+			exit $ERRORS{'UNKNOWN'};
+		}
+	}
+
+	if (defined $opt_M) {
+		if ($opt_M =~ /sendmail/ || $opt_M =~ /qmail/ ) {
+			$mailq = $opt_M ;
+		}elsif( $opt_M eq ''){
+			$mailq = 'sendmail';
+		}else{
+			print "-M: $opt_M is not supported\n";
+			exit $ERRORS{'UNKNOWN'};
+		}
+	}else{
+		$mailq = 'sendmail' ;
+	}
+		
 	return $ERRORS{'OK'};
 }
 
 sub print_usage () {
-	print "Usage: $PROGNAME [-w <warn>] [-c <crit>] [-t <timeout>] [-v verbose]\n";
+	print "Usage: $PROGNAME [-w <warn>] [-c <crit>] [-W <warn>] [-C <crit>] [-M <MTA>] [-t <timeout>] [-v verbose]\n";
 }
 
 sub print_help () {
 	print_revision($PROGNAME,'$Revision$');
-	print "Copyright (c) 2002 Subhendu Ghosh\n";
+	print "Copyright (c) 2002 Subhendu Ghosh/Carlos Canau/Benjamin Schmid\n";
 	print "\n";
 	print_usage();
 	print "\n";
-	print "   Checks the number of messages in the mail queue\n";
+	print "   Checks the number of messages in the mail queue (supports multiple sendmail queues, qmail)\n";
 	print "   Feedback/patches to support non-sendmail mailqueue welcome\n\n";
 	print "-w (--warning)   = Min. number of messages in queue to generate warning\n";
 	print "-c (--critical)  = Min. number of messages in queu to generate critical alert ( w < c )\n";
+	print "-W (--Warning)   = Min. number of messages for same domain in queue to generate warning\n";
+	print "-C (--Critical)  = Min. number of messages for same domain in queue to generate critical alert ( W < C )\n";
 	print "-t (--timeout)   = Plugin timeout in seconds (default = $utils::TIMEOUT)\n";
+	print "-M (--mailserver) = [ sendmail | qmail ] (default = sendmail)\n";
 	print "-h (--help)\n";
 	print "-V (--version)\n";
-	print "-v (--verbose)   = deebugging output\n";
+	print "-v (--verbose)   = debugging output\n";
+	print "\n\n";
+	print "Note: -w and -c are required arguments.  -W and -C are optional.\n";
+	print " -W and -C are applied to domains listed on the queues - both FROM and TO. (sendmail)\n";
+	print " -W and -C are applied message not yet preproccessed. (qmail)\n";
+	print " This plugin uses the system mailq command (sendmail) or qmail-stat (qmail)\n";
+	print " to look at the queues. Mailq can usually only be accessed by root or \n";
+	print " a TrustedUser. You will have to set appropriate permissions for the plugin to work.\n";
+	print "";
 	print "\n\n";
 	support();
 }
