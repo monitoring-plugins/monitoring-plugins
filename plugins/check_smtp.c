@@ -154,9 +154,7 @@ main (int argc, char **argv)
 				if (verbose == TRUE)
 					printf ("SMTP %s - %d sec. response time, %s\n",
 									state_text (result), (int) (end_time - start_time), buffer);
-				else
-					printf ("SMTP %s - %d second response time\n", state_text (result),
-									(int) (end_time - start_time));
+				
 			}
 		}
 
@@ -187,6 +185,8 @@ main (int argc, char **argv)
 
 	/* reset the alarm */
 	alarm (0);
+
+	printf ("SMTP %s - %d second response time\n", state_text (result), (int) (end_time - start_time));
 
 	return result;
 }
