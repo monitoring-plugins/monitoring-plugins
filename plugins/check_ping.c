@@ -1,54 +1,26 @@
-/*****************************************************************************
-*
-* CHECK_PING.C
-*
-* Program: Ping plugin for Nagios
-* License: GPL
-* Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
-*
-* $Id$
-*
-*****************************************************************************/
+/******************************************************************************
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+******************************************************************************/
 
 const char *progname = "check_ping";
-#define REVISION "$Revision$"
-#define COPYRIGHT "1999-2001"
-#define AUTHOR "Ethan Galstad/Karl DeBisschop"
-#define EMAIL "kdebisschop@users.sourceforge.net"
-#define SUMMARY "Use ping to check connection statistics for a remote host.\n"
+const char *revision = "$Revision$";
+const char *copyright = "2000-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
-#define OPTIONS "\
--H <host_address> -w <wrta>,<wpl>%% -c <crta>,<cpl>%%\n\
-       [-p packets] [-t timeout] [-L] [-4|-6]\n"
-
-#define LONGOPTIONS "\
--H, --hostname=HOST\n\
-   host to ping\n\
--4, --use-ipv4\n\
-   Use IPv4 ICMP PING\n\
--6, --use-ipv6\n\
-   Use IPv6 ICMP PING\n\
--w, --warning=THRESHOLD\n\
-   warning threshold pair\n\
--c, --critical=THRESHOLD\n\
-   critical threshold pair\n\
--p, --packets=INTEGER\n\
-   number of ICMP ECHO packets to send (Default: %d)\n\
--t, --timeout=INTEGER\n\
-   optional specified timeout in second (Default: %d)\n\
--L, --link\n\
-   show HTML in the plugin output (obsoleted by urlize)\n\
-THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel\n\
-time (ms) which triggers a WARNING or CRITICAL state, and <pl> is the\n\
-percentage of packet loss to trigger an alarm state.\n"
-
-#define DESCRIPTION "\
-This plugin uses the ping command to probe the specified host for packet loss\n\
-(percentage) and round trip average (milliseconds). It can produce HTML output\n\
-linking to a traceroute CGI contributed by Ian Cass. The CGI can be found in\n\
-the contrib area of the downloads section at http://www.nagios.org\n\n"
-
-#include "config.h"
 #include "common.h"
 #include "netutils.h"
 #include "popen.h"
@@ -94,12 +66,12 @@ main (int argc, char **argv)
 	addresses = malloc (max_addr);
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage ("Could not parse arguments");
+		usage (_("Could not parse arguments"));
 	exit;
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
-		printf ("Cannot catch SIGALRM");
+		printf (_("Cannot catch SIGALRM"));
 		return STATE_UNKNOWN;
 	}
 
@@ -138,7 +110,7 @@ main (int argc, char **argv)
 		if (pl == UNKNOWN_PACKET_LOSS || rta == UNKNOWN_TRIP_TIME) {
 			printf ("%s\n", command_line);
 			terminate (STATE_UNKNOWN,
-								 "Error: Could not interpret output from ping command\n");
+			           _("Error: Could not interpret output from ping command\n"));
 		}
 
 		if (pl >= cpl || rta >= crta || rta < 0)
@@ -154,10 +126,10 @@ main (int argc, char **argv)
 		if (display_html == TRUE)
 			printf ("<A HREF='%s/traceroute.cgi?%s'>", CGIURL, addresses[i]);
 		if (pl == 100)
-			printf ("PING %s - %sPacket loss = %d%%", state_text (this_result), warn_text,
+			printf (_("PING %s - %sPacket loss = %d%%"), state_text (this_result), warn_text,
 							pl);
 		else
-			printf ("PING %s - %sPacket loss = %d%%, RTA = %2.2f ms",
+			printf (_("PING %s - %sPacket loss = %d%%, RTA = %2.2f ms"),
 							state_text (this_result), warn_text, pl, rta);
 		if (display_html == TRUE)
 			printf ("</A>");
@@ -210,12 +182,12 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':	/* usage */
-			usage3 ("Unknown argument", optopt);
+			usage3 (_("Unknown argument"), optopt);
 		case 'h':	/* help */
 			print_help ();
 			exit (STATE_OK);
 		case 'V':	/* version */
-			print_revision (progname, REVISION);
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 't':	/* timeout period */
 			timeout_interval = atoi (optarg);
@@ -230,7 +202,7 @@ process_arguments (int argc, char **argv)
 #ifdef USE_IPV6
 			address_family = AF_INET6;
 #else
-			usage ("IPv6 support not available\n");
+			usage (_("IPv6 support not available\n"));
 #endif
 			break;
 		case 'H':	/* hostname */
@@ -241,10 +213,10 @@ process_arguments (int argc, char **argv)
 					max_addr *= 2;
 					addresses = realloc (addresses, max_addr);
 					if (addresses == NULL)
-						terminate (STATE_UNKNOWN, "Could not realloc() addresses\n");
+						terminate (STATE_UNKNOWN, _("Could not realloc() addresses\n"));
 				}
 				addresses[n_addresses-1] = ptr;
-				if (ptr = index (ptr, ',')) {
+				if ((ptr = index (ptr, ','))) {
 					strcpy (ptr, "");
 					ptr += sizeof(char);
 				} else {
@@ -256,7 +228,7 @@ process_arguments (int argc, char **argv)
 			if (is_intnonneg (optarg))
 				max_packets = atoi (optarg);
 			else
-				usage2 ("<max_packets> (%s) must be a non-negative number\n", optarg);
+				usage2 (_("<max_packets> (%s) must be a non-negative number\n"), optarg);
 			break;
 		case 'n':	/* no HTML */
 			display_html = FALSE;
@@ -279,7 +251,7 @@ process_arguments (int argc, char **argv)
 
 	if (addresses[0] == NULL) {
 		if (is_host (argv[c]) == FALSE) {
-			printf ("Invalid host name/address: %s\n\n", argv[c]);
+			printf (_("Invalid host name/address: %s\n\n"), argv[c]);
 			return ERROR;
 		} else {
 			addresses[0] = argv[c++];
@@ -290,7 +262,7 @@ process_arguments (int argc, char **argv)
 
 	if (wpl == UNKNOWN_PACKET_LOSS) {
 		if (is_intpercent (argv[c]) == FALSE) {
-			printf ("<wpl> (%s) must be an integer percentage\n", argv[c]);
+			printf (_("<wpl> (%s) must be an integer percentage\n"), argv[c]);
 			return ERROR;
 		} else {
 			wpl = atoi (argv[c++]);
@@ -301,7 +273,7 @@ process_arguments (int argc, char **argv)
 
 	if (cpl == UNKNOWN_PACKET_LOSS) {
 		if (is_intpercent (argv[c]) == FALSE) {
-			printf ("<cpl> (%s) must be an integer percentage\n", argv[c]);
+			printf (_("<cpl> (%s) must be an integer percentage\n"), argv[c]);
 			return ERROR;
 		} else {
 			cpl = atoi (argv[c++]);
@@ -312,7 +284,7 @@ process_arguments (int argc, char **argv)
 
 	if (wrta == UNKNOWN_TRIP_TIME) {
 		if (is_negative (argv[c])) {
-			printf ("<wrta> (%s) must be a non-negative number\n", argv[c]);
+			printf (_("<wrta> (%s) must be a non-negative number\n"), argv[c]);
 			return ERROR;
 		} else {
 			wrta = atof (argv[c++]);
@@ -323,7 +295,7 @@ process_arguments (int argc, char **argv)
 
 	if (crta == UNKNOWN_TRIP_TIME) {
 		if (is_negative (argv[c])) {
-			printf ("<crta> (%s) must be a non-negative number\n", argv[c]);
+			printf (_("<crta> (%s) must be a non-negative number\n"), argv[c]);
 			return ERROR;
 		} else {
 			crta = atof (argv[c++]);
@@ -336,7 +308,7 @@ process_arguments (int argc, char **argv)
 		if (is_intnonneg (argv[c])) {
 			max_packets = atoi (argv[c++]);
 		}	else {
-			printf ("<max_packets> (%s) must be a non-negative number\n", argv[c]);
+			printf (_("<max_packets> (%s) must be a non-negative number\n"), argv[c]);
 			return ERROR;
 		}
 	}
@@ -353,8 +325,9 @@ get_threshold (char *arg, float *trta, int *tpl)
 		return OK;
 	else if (strstr (arg, "%") && sscanf (arg, "%d%%", tpl) == 1) 
 		return OK;
-	else
-		usage2 ("%s: Warning threshold must be integer or percentage!\n\n", arg);
+
+	usage2 (_("%s: Warning threshold must be integer or percentage!\n\n"), arg);
+	return STATE_UNKNOWN;
 }
 
 int
@@ -364,27 +337,27 @@ validate_arguments ()
 	int i;
 
 	if (wrta == UNKNOWN_TRIP_TIME) {
-		printf ("<wrta> was not set\n");
+		printf (_("<wrta> was not set\n"));
 		return ERROR;
 	}
 	else if (crta == UNKNOWN_TRIP_TIME) {
-		printf ("<crta> was not set\n");
+		printf (_("<crta> was not set\n"));
 		return ERROR;
 	}
 	else if (wpl == UNKNOWN_PACKET_LOSS) {
-		printf ("<wpl> was not set\n");
+		printf (_("<wpl> was not set\n"));
 		return ERROR;
 	}
 	else if (cpl == UNKNOWN_PACKET_LOSS) {
-		printf ("<cpl> was not set\n");
+		printf (_("<cpl> was not set\n"));
 		return ERROR;
 	}
 	else if (wrta > crta) {
-		printf ("<wrta> (%f) cannot be larger than <crta> (%f)\n", wrta, crta);
+		printf (_("<wrta> (%f) cannot be larger than <crta> (%f)\n"), wrta, crta);
 		return ERROR;
 	}
 	else if (wpl > cpl) {
-		printf ("<wpl> (%d) cannot be larger than <cpl> (%d)\n", wpl, cpl);
+		printf (_("<wpl> (%d) cannot be larger than <cpl> (%d)\n"), wpl, cpl);
 		return ERROR;
 	}
 
@@ -397,7 +370,7 @@ validate_arguments ()
 
 	for (i=0; i<n_addresses; i++) {
 		if (is_host(addresses[i]) == FALSE)
-			usage2 ("Invalid host name/address", addresses[i]);
+			usage2 (_("Invalid host name/address"), addresses[i]);
 	}
 
 	return OK;
@@ -407,25 +380,25 @@ validate_arguments ()
 int
 run_ping (char *command_line, char *server_address)
 {
-	char input_buffer[MAX_INPUT_BUFFER];
+	char buf[MAX_INPUT_BUFFER];
 	int result = STATE_UNKNOWN;
 
 	warn_text = malloc (1);
 	if (warn_text == NULL)
-		terminate (STATE_UNKNOWN, "unable to malloc warn_text");
+		terminate (STATE_UNKNOWN, _("unable to malloc warn_text"));
 	warn_text[0] = 0;
 
 	if ((child_process = spopen (command_line)) == NULL) {
-		printf ("Cannot open pipe: ");
+		printf (_("Cannot open pipe: "));
 		terminate (STATE_UNKNOWN, command_line);
 	}
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL)
-		printf ("Cannot open stderr for %s\n", command_line);
+		printf (_("Cannot open stderr for %s\n"), command_line);
 
-	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
+	while (fgets (buf, MAX_INPUT_BUFFER - 1, child_process)) {
 
-		if (strstr (input_buffer, "(DUP!)")) {
+		if (strstr (buf, _("(DUP!)"))) {
 			/* cannot use the max function since STATE_UNKNOWN is max
 			result = max (result, STATE_WARNING); */
 			if( !(result == STATE_CRITICAL) ){
@@ -434,46 +407,26 @@ run_ping (char *command_line, char *server_address)
 			
 			warn_text = realloc (warn_text, strlen (WARN_DUPLICATES) + 1);
 			if (warn_text == NULL)
-				terminate (STATE_UNKNOWN, "unable to realloc warn_text");
+				terminate (STATE_UNKNOWN, _("unable to realloc warn_text"));
 			strcpy (warn_text, WARN_DUPLICATES);
 		}
 
 		/* get the percent loss statistics */
-		if (sscanf
-					(input_buffer, "%*d packets transmitted, %*d packets received, +%*d errors, %d%% packet loss",
-						 &pl) == 1
-				|| sscanf 
-					(input_buffer, "%*d packets transmitted, %*d packets received, %d%% packet loss",
-						&pl) == 1
-				|| sscanf 
-					(input_buffer, "%*d packets transmitted, %*d packets received, %d%% loss, time", &pl) == 1
-				|| sscanf
-					(input_buffer, "%*d packets transmitted, %*d received, %d%% loss, time", &pl) == 1
-					/* Suse 8.0 as reported by Richard * Brodie */
-				)
+		if(sscanf(buf,"%*d packets transmitted, %*d packets received, +%*d errors, %d%% packet loss",&pl)==1 ||
+			 sscanf(buf,"%*d packets transmitted, %*d packets received, %d%% packet loss",&pl)==1	||
+			 sscanf(buf,"%*d packets transmitted, %*d packets received, %d%% loss, time",&pl)==1 ||
+			 sscanf(buf,"%*d packets transmitted, %*d received, %d%% loss, time", &pl)==1)
 			continue;
 
 		/* get the round trip average */
 		else
-			if (sscanf (input_buffer, "round-trip min/avg/max = %*f/%f/%*f", &rta)
-					== 1
-					|| sscanf (input_buffer,
-										 "round-trip min/avg/max/mdev = %*f/%f/%*f/%*f",
-										 &rta) == 1
-					|| sscanf (input_buffer,
-										 "round-trip min/avg/max/sdev = %*f/%f/%*f/%*f",
-										 &rta) == 1
-					|| sscanf (input_buffer,
-										 "round-trip min/avg/max/stddev = %*f/%f/%*f/%*f",
-										 &rta) == 1
-					|| sscanf (input_buffer,
-										 "round-trip min/avg/max/std-dev = %*f/%f/%*f/%*f",
-										 &rta) == 1
-					|| sscanf (input_buffer, "round-trip (ms) min/avg/max = %*f/%f/%*f",
-										 &rta) == 1
-					|| sscanf (input_buffer, "rtt min/avg/max/mdev = %*f/%f/%*f/%*f ms",
-										 &rta) == 1
-										)
+			if(sscanf(buf,"round-trip min/avg/max = %*f/%f/%*f",&rta)==1 ||
+				 sscanf(buf,"round-trip min/avg/max/mdev = %*f/%f/%*f/%*f",&rta)==1 ||
+				 sscanf(buf,"round-trip min/avg/max/sdev = %*f/%f/%*f/%*f",&rta)==1 ||
+				 sscanf(buf,"round-trip min/avg/max/stddev = %*f/%f/%*f/%*f",&rta)==1 ||
+				 sscanf(buf,"round-trip min/avg/max/std-dev = %*f/%f/%*f/%*f",&rta)==1 ||
+				 sscanf(buf,"round-trip (ms) min/avg/max = %*f/%f/%*f",&rta)==1 ||
+				 sscanf(buf,"rtt min/avg/max/mdev = %*f/%f/%*f/%*f ms",&rta)==1)
 			continue;
 	}
 
@@ -483,32 +436,33 @@ run_ping (char *command_line, char *server_address)
 
 
 	/* check stderr */
-	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
-		if (strstr
-				(input_buffer,
-				 "Warning: no SO_TIMESTAMP support, falling back to SIOCGSTAMP"))
+	while (fgets (buf, MAX_INPUT_BUFFER - 1, child_stderr)) {
+		if (strstr(buf,"Warning: no SO_TIMESTAMP support, falling back to SIOCGSTAMP"))
 				continue;
 
-		if (strstr (input_buffer, "Network is unreachable"))
-			terminate (STATE_CRITICAL, "PING CRITICAL - Network unreachable (%s)",
-								 server_address);
-		else if (strstr (input_buffer, "Destination Host Unreachable"))
-			terminate (STATE_CRITICAL, "PING CRITICAL - Host Unreachable (%s)",
-								 server_address);
-		else if (strstr (input_buffer, "unknown host" ) )
-			terminate (STATE_CRITICAL, "PING CRITICAL - Host not found (%s)",
-								server_address);
+		if (strstr (buf, "Network is unreachable"))
+			terminate (STATE_CRITICAL,
+			           _("PING CRITICAL - Network unreachable (%s)"),
+			           server_address);
+		else if (strstr (buf, "Destination Host Unreachable"))
+			terminate (STATE_CRITICAL,
+			           _("PING CRITICAL - Host Unreachable (%s)"),
+			           server_address);
+		else if (strstr (buf, "unknown host" ))
+			terminate (STATE_CRITICAL,
+			           _("PING CRITICAL - Host not found (%s)"),
+			           server_address);
 
 		warn_text =
-			realloc (warn_text, strlen (warn_text) + strlen (input_buffer) + 2);
+			realloc (warn_text, strlen (warn_text) + strlen (buf) + 2);
 		if (warn_text == NULL)
-			terminate (STATE_UNKNOWN, "unable to realloc warn_text");
+			terminate (STATE_UNKNOWN, _("unable to realloc warn_text"));
 		if (strlen (warn_text) == 0)
-			strcpy (warn_text, input_buffer);
+			strcpy (warn_text, buf);
 		else
-			sprintf (warn_text, "%s %s", warn_text, input_buffer);
+			sprintf (warn_text, "%s %s", warn_text, buf);
 
-		if (strstr (input_buffer, "DUPLICATES FOUND")) {
+		if (strstr (buf, "DUPLICATES FOUND")) {
 			if( !(result == STATE_CRITICAL) ){
 				result = STATE_WARNING;
 			}
@@ -530,22 +484,53 @@ run_ping (char *command_line, char *server_address)
 void
 print_usage (void)
 {
-	printf ("Usage:\n" " %s %s\n"
-					" %s (-h | --help) for detailed help\n"
-					" %s (-V | --version) for version information\n",
-					progname, OPTIONS, progname, progname);
+	printf (\
+"Usage: %s -H <host_address> -w <wrta>,<wpl>%% -c <crta>,<cpl>%%\n\
+  [-p packets] [-t timeout] [-L] [-4|-6]\n", progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }
 
 void
 print_help (void)
 {
-	print_revision (progname, REVISION);
-	printf
-		("Copyright (c) %s %s <%s>\n\n%s\n",
-		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("Use ping to check connection statistics for a remote host.\n\n"));
+
 	print_usage ();
-	printf
-		("\nOptions:\n" LONGOPTIONS "\n" DESCRIPTION "\n", 
-		 DEFAULT_MAX_PACKETS, DEFAULT_SOCKET_TIMEOUT);
-	support ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_IPv46));
+
+	printf (_("\
+-H, --hostname=HOST\n\
+   host to ping\n\
+-w, --warning=THRESHOLD\n\
+   warning threshold pair\n\
+-c, --critical=THRESHOLD\n\
+   critical threshold pair\n\
+-p, --packets=INTEGER\n\
+   number of ICMP ECHO packets to send (Default: %d)\n\
+-L, --link\n\
+   show HTML in the plugin output (obsoleted by urlize)\n"),
+	        DEFAULT_MAX_PACKETS);
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_("\
+THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel\n\
+time (ms) which triggers a WARNING or CRITICAL state, and <pl> is the\n\
+percentage of packet loss to trigger an alarm state.\n\n"));
+
+	printf (_("\
+This plugin uses the ping command to probe the specified host for packet loss\n\
+(percentage) and round trip average (milliseconds). It can produce HTML output\n\
+linking to a traceroute CGI contributed by Ian Cass. The CGI can be found in\n\
+the contrib area of the downloads section at http://www.nagios.org\n\n"));
+
+	printf (_(UT_SUPPORT));
 }
