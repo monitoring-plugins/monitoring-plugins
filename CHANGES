@@ -1,0 +1,9 @@
+This file documents the major additions and syntax changes between releases.
+
+1.4
+	IPv6 support in check_ping, check_by_ssh, check_http, check_ldap, check_smtp, check_tcp
+	Internationalisation support
+	Performance data added (not all plugins yet)
+	check_vsz and check_rss deprecated - functionality moved into check_procs
+	check_swap % thresholds changed to measure amount free, instead of amount used
+	check_disk syntax changes for -p
