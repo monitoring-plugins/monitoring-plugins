@@ -312,7 +312,7 @@ process_arguments (int argc, char **argv)
 				server_port = atoi (optarg);
 			}
 			else {
-				usage (_("Port must be a positive integer\n"));
+				usage4 (_("Port must be a positive integer"));
 			}
 			break;
 		case 'w':									/* warning time threshold */
@@ -321,7 +321,7 @@ process_arguments (int argc, char **argv)
 				check_warning_time = TRUE;
 			}
 			else {
-				usage (_("Warning time must be a positive integer\n"));
+				usage4 (_("Warning time must be a positive integer"));
 			}
 			break;
 		case 'c':									/* critical time threshold */
@@ -330,7 +330,7 @@ process_arguments (int argc, char **argv)
 				check_critical_time = TRUE;
 			}
 			else {
-				usage (_("Critical time must be a nonnegative integer\n"));
+				usage4 (_("Critical time must be a nonnegative integer"));
 			}
 			break;
 		case 'v':									/* verbose */
@@ -341,7 +341,7 @@ process_arguments (int argc, char **argv)
 				socket_timeout = atoi (optarg);
 			}
 			else {
-				usage (_("Time interval must be a nonnegative integer\n"));
+				usage4 (_("Time interval must be a nonnegative integer"));
 			}
 			break;
 		case 'V':									/* version */

@@ -165,14 +165,14 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'c':									/* critical */
 			if (!is_intnonneg (optarg))
-				usage (_("Critical threshold must be a positive integer\n"));
+				usage4 (_("Critical threshold must be a positive integer"));
 			else
 				critical_time = atoi (optarg);
 			check_critical_time = TRUE;
 			break;
 		case 'w':									/* warning */
 			if (!is_intnonneg (optarg))
-				usage (_("Warning threshold must be a positive integer\n"));
+				usage4 (_("Warning threshold must be a positive integer"));
 			else
 				warning_time = atoi (optarg);
 			check_warning_time = TRUE;
@@ -185,7 +185,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'p':									/* port */
 			if (!is_intnonneg (optarg))
-				usage (_("Port must be a positive integer\n"));
+				usage4 (_("Port must be a positive integer"));
 			else
 				server_port = atoi (optarg);
 			break;

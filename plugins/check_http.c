@@ -1496,5 +1496,5 @@ Usage: %s -H <vhost> | -I <IP-address>) [-u <uri>] [-p <port>]\n\
                   [-a auth] [-f <ok | warn | critcal | follow>] [-e <expect>]\n\
                   [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n\
                   [-P string] [-m min_pg_size] [-4|-6] [-N] [-M <age>]\n\
-									[-A string] [-k string]\n"), progname);
+                  [-A string] [-k string]\n"), progname);
 }

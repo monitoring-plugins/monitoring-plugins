@@ -411,5 +411,5 @@ print_usage (void)
 {
 	printf ("\n\
 Usage: %s [-f46] [-t timeout] [-i identity] [-l user] -H <host> -C <command>\n\
-          [-n name] [-s servicelist] [-O outputfile] [-p port]\n", progname);
+                  [-n name] [-s servicelist] [-O outputfile] [-p port]\n", progname);
 }

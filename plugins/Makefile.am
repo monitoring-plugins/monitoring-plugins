@@ -21,7 +21,7 @@ check_tcp_programs = check_ftp check_imap check_nntp check_pop check_udp2 \
 
 EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 	check_swap check_fping check_ldap check_game check_dig \
-	check_nagios check_by_ssh check_dns check_nt check_ide-smart check_procs
+	check_nagios check_by_ssh check_dns check_nt check_ide_smart check_procs
 
 EXTRA_DIST = t utils.c netutils.c popen.c utils.h netutils.h popen.h common.h \
 	getaddrinfo.c getaddrinfo.h gethostbyname.c gethostbyname.h
@@ -76,6 +76,7 @@ check_udp_LDADD = $(NETLIBS)
 check_ups_LDADD = $(NETLIBS)
 check_users_LDADD = $(BASEOBJS) popen.o
 check_by_ssh_LDADD = $(NETLIBS) popen.o
+check_ide_smart_LDADD = $(BASEOBJS)
 negate_LDADD = $(BASEOBJS) popen.o
 urlize_LDADD = $(BASEOBJS) popen.o
 
@@ -111,6 +112,7 @@ check_udp_DEPENDENCIES = check_udp.c $(NETOBJS) $(DEPLIBS)
 check_ups_DEPENDENCIES = check_ups.c $(NETOBJS) $(DEPLIBS)
 check_users_DEPENDENCIES = check_users.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_by_ssh_DEPENDENCIES = check_by_ssh.c $(NETOBJS) popen.o $(DEPLIBS)
+check_ide_smart_DEPENDENCIES = check_ide_smart.c $(BASEOBJS) $(DEPLIBS)
 negate_DEPENDENCIES = negate.c $(BASEOBJS) popen.o $(DEPLIBS)
 urlize_DEPENDENCIES = urlize.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_icmp_DEPENDENCIES = check_icmp.c $(DEPLIBS)

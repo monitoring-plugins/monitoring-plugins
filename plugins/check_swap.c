@@ -515,6 +515,6 @@ void
 print_usage (void)
 {
 	printf ("\
-	Usage: %s [-av] -w <percent_free>%% -c <percent_free>%%\n\
-         %s [-av] -w <bytes_free> -c <bytes_free>\n", progname, progname);
+Usage: %s [-av] -w <percent_free>%% -c <percent_free>%%\n\
+       %s [-av] -w <bytes_free> -c <bytes_free>\n", progname, progname);
 }

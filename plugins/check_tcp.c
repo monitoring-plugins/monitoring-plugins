@@ -474,7 +474,7 @@ process_arguments (int argc, char **argv)
 #ifdef USE_IPV6
 			address_family = AF_INET6;
 #else
-			usage (_("IPv6 support not available\n"));
+			usage4 (_("IPv6 support not available"));
 #endif
 			break;
 		case 'H':                 /* hostname */
@@ -484,7 +484,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'c':                 /* critical */
 			if (!is_intnonneg (optarg))
-				usage (_("Critical threshold must be a positive integer\n"));
+				usage4 (_("Critical threshold must be a positive integer"));
 			else
 				critical_time = strtod (optarg, NULL);
 			check_critical_time = TRUE;
@@ -494,7 +494,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'w':                 /* warning */
 			if (!is_intnonneg (optarg))
-				usage (_("Warning threshold must be a positive integer\n"));
+				usage4 (_("Warning threshold must be a positive integer"));
 			else
 				warning_time = strtod (optarg, NULL);
 			check_warning_time = TRUE;
@@ -509,13 +509,13 @@ process_arguments (int argc, char **argv)
 			break;
 		case 't':                 /* timeout */
 			if (!is_intpos (optarg))
-				usage (_("Timeout interval must be a positive integer\n"));
+				usage4 (_("Timeout interval must be a positive integer"));
 			else
 				socket_timeout = atoi (optarg);
 			break;
 		case 'p':                 /* port */
 			if (!is_intpos (optarg))
-				usage (_("Port must be a positive integer\n"));
+				usage4 (_("Port must be a positive integer"));
 			else
 				server_port = atoi (optarg);
 			break;
@@ -532,7 +532,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'm':
 			if (!is_intpos (optarg))
-				usage (_("Maxbytes must be a positive integer\n"));
+				usage4 (_("Maxbytes must be a positive integer"));
 			else
 				maxbytes = atoi (optarg);
 		case 'q':
@@ -546,13 +546,13 @@ process_arguments (int argc, char **argv)
 			else if (!strncmp(optarg,"crit",4))
 				econn_refuse_state = STATE_CRITICAL;
 			else
-				usage (_("Refuse must be one of ok, warn, crit\n"));
+				usage4 (_("Refuse must be one of ok, warn, crit"));
 			break;
 		case 'd':
 			if (is_intpos (optarg))
 				delay = atoi (optarg);
 			else
-				usage (_("Delay must be a positive integer\n"));
+				usage4 (_("Delay must be a positive integer"));
 			break;
                  case 'D': /* Check SSL cert validity - days 'til certificate expiration */
 #ifdef HAVE_SSL

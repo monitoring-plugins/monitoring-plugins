@@ -688,5 +688,5 @@ void print_usage(void)
 {
 	printf("\
 Usage: %s -H host -v variable [-p port] [-w warning] [-c critical]\n\
-                  [-l params] [-d SHOWALL] [-t timeout]\n", progname);
+                [-l params] [-d SHOWALL] [-t timeout]\n", progname);
 }

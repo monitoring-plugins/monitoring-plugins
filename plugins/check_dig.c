@@ -355,6 +355,6 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -H host -l lookup [-p <server port>] [-T <query type>]\n\
-         [-w <warning interval>] [-c <critical interval>] [-t <timeout>]\n\
-         [-a <expected answer address>] [-v]\n", progname);
+                  [-w <warning interval>] [-c <critical interval>] [-t <timeout>]\n\
+                  [-a <expected answer address>] [-v]\n", progname);
 }

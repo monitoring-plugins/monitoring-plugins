@@ -378,5 +378,5 @@ print_usage (void)
 	printf ("\
 Usage: %s -F log_file -a <AVG | MAX> -v variable -w warning -c critical\n\
                   [-l label] [-u units] [-e expire_minutes] [-t timeout]\n\
-									[-v]\n", progname);
+                  [-v]\n", progname);
 }

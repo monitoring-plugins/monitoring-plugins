@@ -295,7 +295,7 @@ process_arguments (int argc, char **argv)
 			if (is_intpos (optarg))
 				server_port = atoi (optarg);
 			else
-				usage (_("Port must be a positive integer\n"));
+				usage4 (_("Port must be a positive integer"));
 			break;
 		case 'f':									/* from argument */
 			from_arg = optarg;
@@ -330,7 +330,7 @@ process_arguments (int argc, char **argv)
 				check_critical_time = TRUE;
 			}
 			else {
-				usage (_("Critical time must be a positive integer\n"));
+				usage4 (_("Critical time must be a positive integer"));
 			}
 			break;
 		case 'w':									/* warning time threshold */
@@ -339,7 +339,7 @@ process_arguments (int argc, char **argv)
 				check_warning_time = TRUE;
 			}
 			else {
-				usage (_("Warning time must be a positive integer\n"));
+				usage4 (_("Warning time must be a positive integer"));
 			}
 			break;
 		case 'v':									/* verbose */
@@ -350,7 +350,7 @@ process_arguments (int argc, char **argv)
 				socket_timeout = atoi (optarg);
 			}
 			else {
-				usage (_("Time interval must be a positive integer\n"));
+				usage4 (_("Time interval must be a positive integer"));
 			}
 			break;
 		case '4':
@@ -360,7 +360,7 @@ process_arguments (int argc, char **argv)
 #ifdef USE_IPV6
 			address_family = AF_INET6;
 #else
-			usage (_("IPv6 support not available\n"));
+			usage4 (_("IPv6 support not available"));
 #endif
 			break;
 		case 'V':									/* version */

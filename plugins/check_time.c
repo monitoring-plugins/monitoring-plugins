@@ -241,11 +241,11 @@ process_arguments (int argc, char **argv)
 					check_warning_time = TRUE;
 				}
 				else {
-					usage (_("Warning thresholds must be a positive integer\n"));
+					usage4 (_("Warning thresholds must be a positive integer"));
 				}
 			}
 			else {
-				usage (_("Warning threshold must be a positive integer\n"));
+				usage4 (_("Warning threshold must be a positive integer"));
 			}
 			break;
 		case 'c':									/* critical-variance */
@@ -260,30 +260,30 @@ process_arguments (int argc, char **argv)
 					check_critical_time = TRUE;
 				}
 				else {
-					usage (_("Critical thresholds must be a positive integer\n"));
+					usage4 (_("Critical thresholds must be a positive integer"));
 				}
 			}
 			else {
-				usage (_("Critical threshold must be a positive integer\n"));
+				usage4 (_("Critical threshold must be a positive integer"));
 			}
 			break;
 		case 'W':									/* warning-connect */
 			if (!is_intnonneg (optarg))
-				usage (_("Warning threshold must be a positive integer\n"));
+				usage4 (_("Warning threshold must be a positive integer"));
 			else
 				warning_time = atoi (optarg);
 			check_warning_time = TRUE;
 			break;
 		case 'C':									/* critical-connect */
 			if (!is_intnonneg (optarg))
-				usage (_("Critical threshold must be a positive integer\n"));
+				usage4 (_("Critical threshold must be a positive integer"));
 			else
 				critical_time = atoi (optarg);
 			check_critical_time = TRUE;
 			break;
 		case 'p':									/* port */
 			if (!is_intnonneg (optarg))
-				usage (_("Port must be a positive integer\n"));
+				usage4 (_("Port must be a positive integer"));
 			else
 				server_port = atoi (optarg);
 			break;
@@ -306,7 +306,7 @@ process_arguments (int argc, char **argv)
 			server_address = argv[c];
 		}
 		else {
-			usage (_("Hostname was not supplied\n"));
+			usage4 (_("Hostname was not supplied"));
 		}
 	}
 
