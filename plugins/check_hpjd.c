@@ -139,8 +139,8 @@ main (int argc, char **argv)
 		 HPJD_GD_DOOR_OPEN, HPJD_GD_PAPER_OUTPUT, HPJD_GD_STATUS_DISPLAY);
 
 	/* get the command to run */
-	sprintf (command_line, "%s -m : -v 1 %s -c %s %s", PATH_TO_SNMPGET, address,
-					 community, query_string);
+	sprintf (command_line, "%s -m : -v 1 -c %s  %s %s", PATH_TO_SNMPGET, community, address,
+					  query_string);
 
 	/* run the command */
 	child_process = spopen (command_line);
@@ -526,10 +526,10 @@ print_usage (void)
 	}
 
 	/* get the IP address of the JetDirect device */
-	strcpy(address,argv[1]);
+/*	strcpy(address,argv[1]); */
 	
 	/* get the community name to use for SNMP communication */
-	if(argc>=3)
+/*	if(argc>=3)
 	strcpy(community,argv[2]);
 	else
 	strcpy(community,"public");
