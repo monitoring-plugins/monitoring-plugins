@@ -17,7 +17,6 @@
 #define PROGNAME "check_swap"
 
 int process_arguments (int argc, char **argv);
-int call_getopt (int argc, char **argv);
 int validate_arguments (void);
 void print_usage (void);
 void print_help (void);
