@@ -102,7 +102,7 @@ main (int argc, char **argv)
 
 	if (!found)
 		die (STATE_UNKNOWN,
-		     _("%s problem - No data received from host\nCMD: %s</A>\n"),
+		     _("%s UNKNOWN - No data received from host\nCMD: %s</A>\n"),
 		     argv[0], cmd);
 
 	/* close the pipe */
