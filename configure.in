@@ -255,87 +255,6 @@ fi
 CPPFLAGS="$_SAVEDCPPFLAGS $MYSQLINCLUDE"
 LIBS="$_SAVEDLIBS"
 
-dnl Check for OpenSSL location
-AC_PATH_PROG(OPENSSL,openssl)
-if test "$OPENSSL" = "/usr/bin/openssl"; then
-  OPENSSL=/usr
-elif test "$OPENSSL" = "/usr/sbin/openssl"; then
-  OPENSSL=/usr
-elif test "$OPENSSL" = "/opt/bin/openssl"; then
-  OPENSSL=/opt
-elif test "$OPENSSL" = "/opt/openssl/bin/openssl"; then
-  OPENSSL=/opt/openssl
-elif test "$OPENSSL" = "/usr/slocal/bin/openssl"; then
-  OPENSSL=/usr/slocal
-elif test "$OPENSSL" = "/usr/local/bin/openssl"; then
-  OPENSSL=/usr/local
-elif test "$OPENSSL" = "/usr/local/ssl/bin/openssl"; then
-  OPENSSL=/usr/local/ssl
-fi
-AC_ARG_WITH(openssl,
-AC_HELP_STRING([--with-openssl=DIR], [sets path to openssl installation])
-AC_HELP_STRING([--without-openssl], [disable openssl]),
-OPENSSL=$withval)
-
-if test X"$OPENSSL" = "Xno"; then
-  AC_MSG_WARN([openssl disabled, you will not be able to use ssl options in some plugins])
-  FOUNDSSL="dontbother"
-else
-  dnl Check for OpenSSL header files
-  unset FOUNDINCLUDE
-  _SAVEDCPPFLAGS="$CPPFLAGS"
-  if test "$OPENSSL" != "/usr"; then
-    CPPFLAGS="$CPPFLAGS -I$OPENSSL/include"
-  fi
-  AC_CHECK_HEADERS(openssl/ssl.h openssl/x509.h openssl/rsa.h openssl/pem.h openssl/crypto.h openssl/err.h,
-                 SSLINCLUDE="-I$OPENSSL/include"
-                 FOUNDINCLUDE=yes,
-                 FOUNDINCLUDE=no)
-  if test "$FOUNDINCLUDE" = "no"; then
-    AC_CHECK_HEADERS(ssl.h x509.h rsa.h pem.h crypto.h err.h,
-                   SSLINCLUDE="-I$OPENSSL/include"
-                   FOUNDINCLUDE=yes,
-                   FOUNDINCLUDE=no)
-  fi
-  AC_SUBST(SSLINCLUDE)
-  if test "$FOUNDINCLUDE" = "no"; then
-    CPPFLAGS="$_SAVEDCPPFLAGS"
-  fi
-
-  dnl Check for crypto lib
-  _SAVEDLIBS="$LIBS"
-  AC_CHECK_LIB(crypto,CRYPTO_lock,,,-L$OPENSSL/lib)
-  if test "$ac_cv_lib_crypto_CRYPTO_lock" = "yes"; then
-    dnl Check for SSL lib
-    AC_CHECK_LIB(ssl,main,LDFLAGS="$LDFLAGS -L$OPENSSL/lib" SSLLIBS="-lssl -lcrypto",AC_CHECK_LIB(ssl,main,LDFLAGS="$LDFLAGS -L$OPENSSL/lib" SSLLIBS="-lssl -lcrypto"),-L$OPENSSL/lib -lcrypto)
-  fi
-  LIBS="$_SAVEDLIBS"
-
-  FOUNDSSL="no"
-  dnl test headers and libs to decide whether check_http should use SSL
-  if test "$ac_cv_lib_crypto_CRYPTO_lock" = "yes"; then
-    if test "$ac_cv_lib_ssl_main" = "yes"; then
-      if test "$FOUNDINCLUDE" = "yes"; then
-        FOUNDSSL="yes"
-      fi
-    fi
-  fi
-fi
-
-if test "$FOUNDSSL" = "yes"; then
-  check_tcp_ssl="check_simap check_spop check_jabber check_nntps"
-  AC_SUBST(check_tcp_ssl)
-  AC_SUBST(SSLLIBS)
-  AC_DEFINE(HAVE_SSL,1,[Define if SSL libraries are found])
-  with_openssl="yes"
-elif test "$FOUNDSSL" = "no"; then
-  AC_MSG_WARN([OpenSSL libs could not be found])
-  with_openssl="no"
-else
-  with_openssl="no"
-fi
-CPPFLAGS="$_SAVEDCPPFLAGS"
-
 AC_CHECK_HEADERS(unistd.h)
 
 dnl Check for AF_INET6 support - unistd.h required for Darwin
@@ -462,6 +381,7 @@ if test x"$enable_emulate_getaddrinfo" != xno ; then
 
 fi
 
+dnl Checks for Kerberos. Must come before openssl checks for Redhat EL 3
 AC_CHECK_HEADERS(krb5.h,FOUNDINCLUDE=yes,FOUNDINCLUDE=no)
 if test "$FOUNDINCLUDE" = "no"; then
   _SAVEDCPPFLAGS="$CPPFLAGS"
@@ -476,6 +396,87 @@ AC_SUBST(KRBINCLUDE)
 if test "$FOUNDINCLUDE" = "no"; then
   CPPFLAGS="$_SAVEDCPPFLAGS"
 fi
+
+dnl Check for OpenSSL location
+AC_PATH_PROG(OPENSSL,openssl)
+if test "$OPENSSL" = "/usr/bin/openssl"; then
+  OPENSSL=/usr
+elif test "$OPENSSL" = "/usr/sbin/openssl"; then
+  OPENSSL=/usr
+elif test "$OPENSSL" = "/opt/bin/openssl"; then
+  OPENSSL=/opt
+elif test "$OPENSSL" = "/opt/openssl/bin/openssl"; then
+  OPENSSL=/opt/openssl
+elif test "$OPENSSL" = "/usr/slocal/bin/openssl"; then
+  OPENSSL=/usr/slocal
+elif test "$OPENSSL" = "/usr/local/bin/openssl"; then
+  OPENSSL=/usr/local
+elif test "$OPENSSL" = "/usr/local/ssl/bin/openssl"; then
+  OPENSSL=/usr/local/ssl
+fi
+AC_ARG_WITH(openssl,
+AC_HELP_STRING([--with-openssl=DIR], [sets path to openssl installation])
+AC_HELP_STRING([--without-openssl], [disable openssl]),
+OPENSSL=$withval)
+
+if test X"$OPENSSL" = "Xno"; then
+  AC_MSG_WARN([openssl disabled, you will not be able to use ssl options in some plugins])
+  FOUNDSSL="dontbother"
+else
+  dnl Check for OpenSSL header files
+  unset FOUNDINCLUDE
+  _SAVEDCPPFLAGS="$CPPFLAGS"
+  if test "$OPENSSL" != "/usr"; then
+    CPPFLAGS="$CPPFLAGS -I$OPENSSL/include"
+  fi
+  AC_CHECK_HEADERS(openssl/ssl.h openssl/x509.h openssl/rsa.h openssl/pem.h openssl/crypto.h openssl/err.h,
+                 SSLINCLUDE="-I$OPENSSL/include"
+                 FOUNDINCLUDE=yes,
+                 FOUNDINCLUDE=no)
+  if test "$FOUNDINCLUDE" = "no"; then
+    AC_CHECK_HEADERS(ssl.h x509.h rsa.h pem.h crypto.h err.h,
+                   SSLINCLUDE="-I$OPENSSL/include"
+                   FOUNDINCLUDE=yes,
+                   FOUNDINCLUDE=no)
+  fi
+  AC_SUBST(SSLINCLUDE)
+  if test "$FOUNDINCLUDE" = "no"; then
+    CPPFLAGS="$_SAVEDCPPFLAGS"
+  fi
+
+  dnl Check for crypto lib
+  _SAVEDLIBS="$LIBS"
+  AC_CHECK_LIB(crypto,CRYPTO_lock,,,-L$OPENSSL/lib)
+  if test "$ac_cv_lib_crypto_CRYPTO_lock" = "yes"; then
+    dnl Check for SSL lib
+    AC_CHECK_LIB(ssl,main,LDFLAGS="$LDFLAGS -L$OPENSSL/lib" SSLLIBS="-lssl -lcrypto",AC_CHECK_LIB(ssl,main,LDFLAGS="$LDFLAGS -L$OPENSSL/lib" SSLLIBS="-lssl -lcrypto"),-L$OPENSSL/lib -lcrypto)
+  fi
+  LIBS="$_SAVEDLIBS"
+
+  FOUNDSSL="no"
+  dnl test headers and libs to decide whether check_http should use SSL
+  if test "$ac_cv_lib_crypto_CRYPTO_lock" = "yes"; then
+    if test "$ac_cv_lib_ssl_main" = "yes"; then
+      if test "$FOUNDINCLUDE" = "yes"; then
+        FOUNDSSL="yes"
+      fi
+    fi
+  fi
+fi
+
+if test "$FOUNDSSL" = "yes"; then
+  check_tcp_ssl="check_simap check_spop check_jabber check_nntps"
+  AC_SUBST(check_tcp_ssl)
+  AC_SUBST(SSLLIBS)
+  AC_DEFINE(HAVE_SSL,1,[Define if SSL libraries are found])
+  with_openssl="yes"
+elif test "$FOUNDSSL" = "no"; then
+  AC_MSG_WARN([OpenSSL libs could not be found])
+  with_openssl="no"
+else
+  with_openssl="no"
+fi
+CPPFLAGS="$_SAVEDCPPFLAGS"
 
 dnl
 dnl Checks for header files.
@@ -1455,8 +1456,9 @@ AC_SUBST(DEPLIBS)
 AM_GNU_GETTEXT([no-libtool], [need-ngettext])
 AM_GNU_GETTEXT_VERSION(0.11.5)
 
-dnl External libraries
+dnl External libraries - see ACKNOWLEDGEMENTS
 np_COREUTILS
+np_CURL
 
 AC_OUTPUT(
   Makefile 

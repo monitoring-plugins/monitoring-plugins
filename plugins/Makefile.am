@@ -53,6 +53,7 @@ check_fping_LDADD = $(NETLIBS) popen.o
 check_game_LDADD = $(BASEOBJS) popen.o
 check_http_LDADD = $(NETLIBS) $(SSLLIBS)
 check_hpjd_LDADD = $(NETLIBS) popen.o
+check_icmp_LDADD = $(NETLIBS)
 check_ldap_LDADD = $(NETLIBS) $(LDAPLIBS)
 check_load_LDADD = $(BASEOBJS) popen.o
 check_mrtg_LDADD = $(BASEOBJS)

@@ -17,5 +17,13 @@ Kompf, Martin 200-2003 Copyright the author
 http://cplus.kompf.de/macaddr.html
 Using the DLPI support on SysV systems to get the host MAC address in check_dhcp.c
 
+Stenberg, Daniel
+Copyright (c) 1996 - 2004, Daniel Stenberg, <daniel@haxx.se>
+http://curl.haxx.se/
+Use of duplication of macros in m4/np_curl.m4
 
+Coreutils team
+Copyright (C) 91, 1995-2004 Free Software Foundation, Inc.
+http://www.gnu.org/software/coreutils/
+Use of macros and lib files in m4/np_coreutils.m4 and lib/
 
