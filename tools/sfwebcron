@@ -1,7 +1,7 @@
 #! /bin/bash
 # sfwebcron
 
-# To update the developers-guidelines.html and put in main area
+# To update the developers-guidelines.html and put in html area
 #
 # Install in cron with something like:
 #  47 7 * * * $HOME/bin/sfwebcron
@@ -11,8 +11,7 @@ function die { echo $1; exit 1; }
 # Set working variables
 PROJECT=nagiosplug
 IN=${HOME}/tmp_sfwebcron
-OUT="/home/groups/n/na/nagiosplug/htdocs/ton"
-DS=`date -u +%Y%m%d%H%M`
+OUT="/home/groups/n/na/nagiosplug/htdocs"
 
 # Get latest dev guildelines
 [[ ! -d $IN ]] && mkdir $IN
@@ -24,9 +23,7 @@ cd nagiosplug/doc
 cvs update
 
 # Is the dev guidelines updated?
-touch now
 make
-if [[ developer-guidelines.html -nt now ]] ; then
+if [[ developer-guidelines.html -nt $OUT/developer-guidelines.html ]] ; then
 	cp developer-guidelines.html developer-guidelines.sgml $OUT
 fi
-rm now
