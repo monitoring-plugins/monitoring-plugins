@@ -203,24 +203,24 @@ spclose (FILE * fp)
 	pid_t pid;
 
 	if (childpid == NULL)
-		return (-1);								/* popen() has never been called */
+		return (1);								/* popen() has never been called */
 
 	fd = fileno (fp);
 	if ((pid = childpid[fd]) == 0)
-		return (-1);								/* fp wasn't opened by popen() */
+		return (1);								/* fp wasn't opened by popen() */
 
 	childpid[fd] = 0;
 	if (fclose (fp) == EOF)
-		return (-1);
+		return (1);
 
 	while (waitpid (pid, &stat, 0) < 0)
 		if (errno != EINTR)
-			return (-1);							/* error other than EINTR from waitpid() */
+			return (1);							/* error other than EINTR from waitpid() */
 
 	if (WIFEXITED (stat))
 		return (WEXITSTATUS (stat));	/* return child's termination status */
 
-	return (STATE_UNKNOWN);
+	return (1);
 }
 
 #ifdef	OPEN_MAX
