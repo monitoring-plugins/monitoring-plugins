@@ -42,8 +42,8 @@ void print_help (void);
 
 int warn_percent = 0;
 int crit_percent = 0;
-long unsigned int warn_size = 0;
-long unsigned int crit_size = 0;
+unsigned long long warn_size = 0;
+unsigned long long crit_size = 0;
 int verbose;
 int allswaps;
 
@@ -51,8 +51,8 @@ int
 main (int argc, char **argv)
 {
 	int percent_used, percent;
-	long unsigned int total_swap = 0, used_swap = 0, free_swap = 0;
-	long unsigned int dsktotal, dskused, dskfree;
+	unsigned long long total_swap = 0, used_swap = 0, free_swap = 0;
+	unsigned long long dsktotal, dskused, dskfree;
 	int result = STATE_OK;
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *perf;
@@ -82,7 +82,7 @@ main (int argc, char **argv)
 #ifdef HAVE_PROC_MEMINFO
 	fp = fopen (PROC_MEMINFO, "r");
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, fp)) {
-		if (sscanf (input_buffer, " %s %lu %lu %lu", str, &dsktotal, &dskused, &dskfree) == 4 &&
+		if (sscanf (input_buffer, " %s %llu %llu %llu", str, &dsktotal, &dskused, &dskfree) == 4 &&
 		    strstr (str, "Swap")) {
 			dsktotal = dsktotal / 1048576;
 			dskused = dskused / 1048576;
@@ -94,7 +94,7 @@ main (int argc, char **argv)
 				percent = 100 * (((double) dskused) / ((double) dsktotal));
 				result = max_state (result, check_swap (percent, dskfree));
 				if (verbose)
-					asprintf (&status, "%s [%lu (%d%%)]", status, dskfree, 100 - percent);
+					asprintf (&status, "%s [%llu (%d%%)]", status, dskfree, 100 - percent);
 			}
 		}
 	}
@@ -195,7 +195,7 @@ main (int argc, char **argv)
 				percent = 100 * (((double) dskused) / ((double) dsktotal));
 				result = max_state (result, check_swap (percent, dskfree));
 				if (verbose)
-					asprintf (&status, "%s [%lu (%d%%)]", status, dskfree, 100 - percent);
+					asprintf (&status, "%s [%llu (%d%%)]", status, dskfree, 100 - percent);
 			}
 		}
 #  ifdef _AIX
@@ -221,7 +221,7 @@ main (int argc, char **argv)
 
 	percent_used = 100 * ((double) used_swap) / ((double) total_swap);
 	result = max_state (result, check_swap (percent_used, free_swap));
-	asprintf (&status, _(" %d%% free (%lu MB out of %lu MB)%s"),
+	asprintf (&status, _(" %d%% free (%llu MB out of %llu MB)%s"),
 						(100 - percent_used), free_swap, total_swap, status);
 
 	asprintf (&perf, "%s", perfdata ("swap", (long) free_swap, "MB",
@@ -289,7 +289,7 @@ process_arguments (int argc, char **argv)
 			}
 			else if (strstr (optarg, ",") &&
 							 strstr (optarg, "%") &&
-							 sscanf (optarg, "%lu,%d%%", &warn_size, &warn_percent) == 2) {
+							 sscanf (optarg, "%llu,%d%%", &warn_size, &warn_percent) == 2) {
 				break;
 			}
 			else if (strstr (optarg, "%") &&
@@ -306,7 +306,7 @@ process_arguments (int argc, char **argv)
 			}
 			else if (strstr (optarg, ",") &&
 							 strstr (optarg, "%") &&
-							 sscanf (optarg, "%lu,%d%%", &crit_size, &crit_percent) == 2) {
+							 sscanf (optarg, "%llu,%d%%", &crit_size, &crit_percent) == 2) {
 				break;
 			}
 			else if (strstr (optarg, "%") &&
