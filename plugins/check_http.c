@@ -26,6 +26,8 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "netutils.h"
 #include "utils.h"
 
+#define INPUT_DELIMITER ";"
+
 #define HTTP_EXPECT "HTTP/1."
 enum {
 	MAX_IPV4_HOSTLENGTH = 255,
@@ -104,6 +106,7 @@ double critical_time = 0;
 int check_critical_time = FALSE;
 char user_auth[MAX_INPUT_BUFFER] = "";
 int display_html = FALSE;
+char *http_opt_headers;
 int onredirect = STATE_OK;
 int use_ssl = FALSE;
 int verbose = FALSE;
@@ -211,6 +214,8 @@ process_arguments (int argc, char **argv)
  		{"linespan", no_argument, 0, 'l'},
 		{"onredirect", required_argument, 0, 'f'},
 		{"certificate", required_argument, 0, 'C'},
+		{"useragent", required_argument, 0, 'A'},
+		{"header", required_argument, 0, 'k'},
 		{"no-body", no_argument, 0, 'N'},
 		{"max-age", required_argument, 0, 'M'},
 		{"content-type", required_argument, 0, 'T'},
@@ -237,7 +242,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvh46t:c:w:H:P:T:I:a:e:p:s:R:r:u:f:C:nlLSm:M:N", longopts, &option);
+		c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:T:I:a:e:p:s:R:r:u:f:C:nlLSm:M:N", longopts, &option);
 		if (c == -1 || c == EOF)
 			break;
 
@@ -274,6 +279,12 @@ process_arguments (int argc, char **argv)
 				warning_time = strtod (optarg, NULL);
 				check_warning_time = TRUE;
 			}
+			break;
+		case 'A': /* User Agent String */
+			asprintf (&user_agent, "User-Agent: %s", optarg);
+			break;
+		case 'k': /* Additional headers */
+			asprintf (&http_opt_headers, "%s", optarg);
 			break;
 		case 'L': /* show html link */
 			display_html = TRUE;
@@ -740,6 +751,12 @@ check_http (void)
 	/* optionally send the host header info */
 	if (host_name)
 		asprintf (&buf, "%sHost: %s\r\n", buf, host_name);
+
+	/* optionally send any other header tag */
+	if (http_opt_headers) {
+		for ((pos = strtok(http_opt_headers, INPUT_DELIMITER)); pos; (pos = strtok(NULL, INPUT_DELIMITER)))
+			asprintf (&buf, "%s%s\r\n", buf, pos);
+	}
 
 	/* optionally send the authentication info */
 	if (strlen(user_auth)) {
@@ -1410,6 +1427,10 @@ certificate expiration times.\n"));
 	printf (_("\
  -a, --authorization=AUTH_PAIR\n\
    Username:password on sites with basic authentication\n\
+ -A, --useragent=STRING\n\
+   String to be sent in http header as \"User Agent\"\n\
+ -k, --header=STRING\n\
+   Any other tags to be sent in http header, separated by semicolon\n\
  -L, --link=URL\n\
    Wrap output in HTML link (obsoleted by urlize)\n\
  -f, --onredirect=<ok|warning|critical|follow>\n\
@@ -1466,6 +1487,7 @@ Usage: %s (-H <vhost> | -I <IP-address>) [-u <uri>] [-p <port>]\n\
   [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L]\n\
   [-a auth] [-f <ok | warn | critcal | follow>] [-e <expect>]\n\
   [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n\
-  [-P string] [-m min_pg_size] [-4|-6] [-N] [-M <age>]\n"), progname);
+  [-P string] [-m min_pg_size] [-4|-6] [-N] [-M <age>] [-A string]\n\
+  [-k string]\n"), progname);
 	printf (_(UT_HLP_VRS), progname, progname);
 }
