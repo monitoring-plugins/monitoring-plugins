@@ -120,67 +120,26 @@ int vsnprintf(char *str, size_t size, const char  *format, va_list ap);
  *
  */
 
-#define OK		0
-#define ERROR		-1
+enum {
+	OK = 0,
+	ERROR = -1
+};
 
-#define TRUE		1
-#define FALSE		0
+enum {
+	FALSE,
+	TRUE
+};
 
-#define	STATE_CRITICAL 	2				/* service state return codes */
-#define STATE_WARNING 	1
-#define STATE_OK       	0
-#define STATE_UNKNOWN  	3
-#define STATE_DEPENDENT	4
+enum {
+	STATE_OK,
+	STATE_WARNING,
+	STATE_CRITICAL,
+	STATE_UNKNOWN,
+	STATE_DEPENDENT
+};
 
-#define DEFAULT_SOCKET_TIMEOUT	10	/* timeout after 10 seconds */
-
-#define MAX_INPUT_BUFFER	1024	/* max size of most buffers we use */
-
-#define MAX_HOST_ADDRESS_LENGTH	256	/* max size of a host address */
-
-
-#ifndef HAVE_SNPRINTF
-/*
-int snprintf (char *str, size_t n, const char *fmt, ...);
-int snprintf (char *str, size_t n, const char *fmt, ...)
-{
-	char *buf;
-	int i;
-	int j=0;
-	va_list ap;
-	int d;
-	char c, *p, *s;
-	
-	if((buf=malloc(n))==NULL){ 
-		puts("could not malloc snprintf buffer\n");
-		exit(-1);
-	}
-	va_start(ap,fmt);
-	i=strlen(fmt);
-	while((jj=index(&fmt[j],'%'))){
-		j+=jj+1;
-		switch fmt[j]
-			{
-			case 's':
-				s = va_arg(ap, char *);
-				i+=strlen(s);
-				break;
-			case 'd':
-				d = va_arg(ap, int);
-				i++;
-				if (d<0) i++;
-				while((d=d/10)>0) i++;
-				break;
-			case 'c':
-				c = va_arg(ap, char);
-				i++;
-				break;
-			}
-	}
-	va_end(ap);
-	vsprintf(buf,fmt,ap);
-	strcpy(str,buf[1:n-1]);
-	exit(result);
-}
-*/
-#endif
+enum {
+	DEFAULT_SOCKET_TIMEOUT = 10,	 /* timeout after 10 seconds */
+	MAX_INPUT_BUFFER = 1024,	     /* max size of most buffers we use */
+	MAX_HOST_ADDRESS_LENGTH = 256	 /* max size of a host address */
+};
