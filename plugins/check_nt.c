@@ -148,9 +148,9 @@ int main(int argc, char **argv){
 					else if(utilization >= lvalue_list[1+offset] && return_code<STATE_WARNING)
 						return_code=STATE_WARNING;
 
-					asprintf(&output_message," (%lu min. %lu%)",lvalue_list[0+offset], utilization);
+					asprintf(&output_message," %lu%% (%lu min average)", utilization, lvalue_list[0+offset]);
 					asprintf(&temp_string,"%s%s",temp_string,output_message);
-					offset+=3;	//move accross the array 
+					offset+=3;	//move across the array 
 				}		
 				if (strlen(temp_string)>10) {
 					// we had at least on loop
