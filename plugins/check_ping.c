@@ -10,7 +10,7 @@
 *
 *****************************************************************************/
 
-#define PROGNAME "check_pgsql"
+#define PROGNAME "check_ping"
 #define REVISION "$Revision$"
 #define COPYRIGHT "1999-2001"
 #define AUTHOR "Ethan Galstad/Karl DeBisschop"
@@ -390,12 +390,14 @@ run_ping (char *command_line)
 
 		/* get the percent loss statistics */
 		if (sscanf
-				(input_buffer,
-				 "%*d packets transmitted, %*d packets received, +%*d errors, %d%% packet loss",
-				 &pl) == 1
-				|| sscanf (input_buffer,
-									 "%*d packets transmitted, %*d packets received, %d%% packet loss",
-									 &pl) == 1)
+					(input_buffer, "%*d packets transmitted, %*d packets received, +%*d errors, %d%% packet loss",
+						 &pl) == 1
+				|| sscanf 
+					(input_buffer, "%*d packets transmitted, %*d packets received, %d%% packet loss",
+						&pl) == 1
+				|| sscanf 
+					(input_buffer, "%*d packets transmitted, %*d packets received, %d%% loss, time", &pl) == 1	
+				)
 			continue;
 
 		/* get the round trip average */
@@ -415,7 +417,10 @@ run_ping (char *command_line)
 										 "round-trip min/avg/max/std-dev = %*f/%f/%*f/%*f",
 										 &rta) == 1
 					|| sscanf (input_buffer, "round-trip (ms) min/avg/max = %*f/%f/%*f",
-										 &rta) == 1)
+										 &rta) == 1
+					|| sscanf (input_buffer, "rtt min/avg/max/mdev = %*f/%f/%*f/%*f ms",
+										 &rta) == 1
+										)
 			continue;
 	}
 
