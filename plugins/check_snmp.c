@@ -146,8 +146,8 @@ main (int argc, char **argv)
 	/* create the command line to execute */
 	command_line = ssprintf
 		(command_line,
-		 "%s -m ALL -v 1 %s %s %s",
-		 PATH_TO_SNMPGET, server_address, community, oid);
+		 "%s -p %s -m ALL -v 1 %s -c %s %s",
+		 PATH_TO_SNMPGET, port, server_address, community, oid);
 
 	/* run the command */
 	child_process = spopen (command_line);
@@ -221,7 +221,8 @@ main (int argc, char **argv)
 			p2 = strpbrk (p2, "0123456789");
 			response_value[i] = strtoul (p2, NULL, 10);
 			iresult = check_num (i);
-			show = ssprintf (show, "%lu", response_value[i]);
+			/*For consistency- full SNMP response every time */
+			show = ssprintf (show, "%d", response);
 		}
 
 		else if (eval_method[i] & CRIT_STRING) {
@@ -260,7 +261,7 @@ main (int argc, char **argv)
 				iresult = STATE_WARNING;
 		}
 
-		result = max_state (result, iresult);
+		result = max (result, iresult);
 
 		if (nlabels > 1 && i < nlabels && labels[i] != NULL)
 			outbuff = ssprintf
@@ -291,14 +292,14 @@ main (int argc, char **argv)
 
 	/* WARNING if output found on stderr */
 	if (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
-		result = max_state (result, STATE_WARNING);
+		result = max (result, STATE_WARNING);
 
 	/* close stderr */
 	(void) fclose (child_stderr);
 
 	/* close the pipe */
 	if (spclose (child_process))
-		result = max_state (result, STATE_WARNING);
+		result = max (result, STATE_WARNING);
 
 	if (nunits > 0)
 		printf ("%s %s -%s\n", label, state_text (result), outbuff);
@@ -352,9 +353,6 @@ process_arguments (int argc, char **argv)
 	if (port == NULL)
 		port = strscpy(NULL,"161");
 
-	if (port == NULL)
-		port = strscpy(NULL,"161");
-
 	return c;
 }
 
@@ -385,6 +383,7 @@ call_getopt (int argc, char **argv)
 		{"eregi", required_argument, 0, 'R'},
 		{"label", required_argument, 0, 'l'},
 		{"units", required_argument, 0, 'u'},
+		{"port", required_argument, 0, 'p'},
 		{0, 0, 0, 0}
 	};
 #endif
@@ -392,10 +391,10 @@ call_getopt (int argc, char **argv)
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
-			getopt_long (argc, argv, "+?hVt:c:w:H:C:o:d:D:s:R:r:l:u:",
+			getopt_long (argc, argv, "+?hVt:c:w:H:C:o:d:D:s:R:r:l:u:p:",
 									 long_options, &option_index);
 #else
-		c = getopt (argc, argv, "+?hVt:c:w:H:C:o:d:D:s:R:r:l:u:");
+		c = getopt (argc, argv, "+?hVt:c:w:H:C:o:d:D:s:R:r:l:u:p:");
 #endif
 
 		if (c == -1 || c == EOF)
@@ -576,6 +575,10 @@ call_getopt (int argc, char **argv)
 					unitv[nunits - 1] = ptr;
 			}
 			break;
+		case 'p':       /* TCP port number */
+			port = strscpy(port, optarg);
+			break;
+
 		}
 	}
 	return i;
@@ -587,7 +590,7 @@ print_usage (void)
 	printf
 		("Usage: check_snmp -H <ip_address> -o <OID> [-w warn_range] [-c crit_range] \n"
 		 "                  [-C community] [-s string] [-r regex] [-R regexi] [-t timeout]\n"
-		 "                  [-l label] [-u units] [-d delimiter] [-D output-delimiter]\n"
+		 "                  [-l label] [-u units] [-p port-number] [-d delimiter] [-D output-delimiter]\n"
 		 "       check_snmp --help\n" "       check_snmp --version\n");
 }
 
@@ -617,7 +620,7 @@ print_help (char *cmd)
 		 " -u, --units=STRING\n"
 		 "    Units label(s) for output data (e.g., 'sec.').\n"
 		 " -p, --port=STRING\n"
-		 "    TCP port number target is listening on.\n"
+         "    UDP port number target is listening on.\n"
 		 " -d, --delimiter=STRING\n"
 		 "    Delimiter to use when parsing returned data. Default is \"%s\"\n"
 		 "    Any data on the right hand side of the delimiter is considered\n"
