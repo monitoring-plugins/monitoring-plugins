@@ -119,6 +119,15 @@ main (int argc, char **argv)
 	if (process_arguments (argc, argv) == ERROR)
 		usage (_("Unable to parse command line\n"));
 
+
+	/* Set signal handling and alarm timeout */
+	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
+		printf (_("Cannot catch SIGALRM"));
+		return STATE_UNKNOWN;
+	}
+	alarm (timeout_interval);
+
+
 	if (verbose >= 2)
 		printf (_("CMD: %s\n"), PS_COMMAND);
 
@@ -603,7 +612,11 @@ Optional Arguments:\n\
    PROCS - number of processes (default)\n\
    VSZ  - virtual memory size\n\
    RSS  - resident set memory size\n\
-   CPU  - percentage cpu\n\
+   CPU  - percentage cpu\n"));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf(_("\
  -v, --verbose\n\
    Extra information. Up to 3 verbosity levels\n"));
 
@@ -664,7 +677,7 @@ print_usage (void)
 	printf ("\
 Usage: %s -w <range> -c <range> [-m metric] [-s state] [-p ppid]\n\
   [-u user] [-r rss] [-z vsz] [-P %%cpu] [-a argument-array]\n\
-  [-C command] [-v]\n", progname);	
+  [-C command] [-t timeout] [-v]\n", progname);	
 	printf (_(UT_HLP_VRS), progname, progname);
 }
 
