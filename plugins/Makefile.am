@@ -72,11 +72,6 @@ check_by_ssh_LDADD = $(BASEOBJS) popen.o
 negate_LDADD = $(BASEOBJS) popen.o
 urlize_LDADD = $(BASEOBJS) popen.o
 
-#check_ftp_LDADD = $(NETLIBS) $(SSLLIBS)
-#check_imap_LDADD = $(NETLIBS) $(SSLLIBS)
-#check_nntp_LDADD = $(NETLIBS) $(SSLLIBS)
-#check_pop_LDADD = $(NETLIBS) $(SSLLIBS)
-
 check_dig_DEPENDENCIES = check_dig.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_disk_DEPENDENCIES = check_disk.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_dns_DEPENDENCIES = check_dns.c $(BASEOBJS) popen.o $(DEPLIBS)
@@ -112,11 +107,6 @@ check_by_ssh_DEPENDENCIES = check_by_ssh.c $(BASEOBJS) popen.o $(DEPLIBS)
 negate_DEPENDENCIES = negate.c $(BASEOBJS) popen.o $(DEPLIBS)
 urlize_DEPENDENCIES = urlize.c $(BASEOBJS) popen.o $(DEPLIBS)
 
-#check_ftp_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
-#check_imap_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
-#check_nntp_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
-#check_pop_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
-
 ##############################################################################
 # secondary dependencies
 
@@ -147,9 +137,8 @@ $(check_tcp_programs): check_tcp
 	ln -sf check_tcp $@
 
 install-exec-hook:
-	for i in $(check_tcp_programs) ; do \
-		ln -sf $(DESTDIR)$(libexecdir)/check_tcp $$i; \
-	done
+	cd $(DESTDIR)$(libexecdir)
+	for i in $(check_tcp_programs) ; do ln -sf check_tcp $$i ; done
 
 clean-local:
 	rm -f $(check_tcp_programs)
