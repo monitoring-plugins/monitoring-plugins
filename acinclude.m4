@@ -14,7 +14,7 @@ dnl
 dnl based on version by Caolan McNamara <caolan@skynet.ie>
 dnl based on David Arnold's autoconf suggestion in the threads faq
 dnl
-AC_DEFUN(ACX_WHICH_GETHOSTBYNAME_R,
+AC_DEFUN([ACX_WHICH_GETHOSTBYNAME_R],
 [AC_CACHE_CHECK(number of arguments to gethostbyname_r,
                 acx_which_gethostbyname_r, [
         AC_TRY_COMPILE([

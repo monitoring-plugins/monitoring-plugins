@@ -1,4 +1,4 @@
-#serial 7
+#serial 9
 
 # From fileutils/configure.in
 
@@ -8,7 +8,7 @@
 #
 # jm_FILE_SYSTEM_USAGE([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])
 
-AC_DEFUN(jm_FILE_SYSTEM_USAGE,
+AC_DEFUN([jm_FILE_SYSTEM_USAGE],
 [
 
 echo "checking how to get filesystem space usage..."
@@ -24,13 +24,18 @@ if test $ac_fsusage_space = no; then
   # SVR4
   AC_CACHE_CHECK([for statvfs function (SVR4)], fu_cv_sys_stat_statvfs,
 		 [AC_TRY_LINK([#include <sys/types.h>
+#ifdef __GLIBC__
+Do not use statvfs on systems with GNU libc, because that function stats
+all preceding entries in /proc/mounts, and that makes df hang if even
+one of the corresponding file systems is hard-mounted, but not available.
+#endif
 #include <sys/statvfs.h>],
 			      [struct statvfs fsd; statvfs (0, &fsd);],
 			      fu_cv_sys_stat_statvfs=yes,
 			      fu_cv_sys_stat_statvfs=no)])
   if test $fu_cv_sys_stat_statvfs = yes; then
     ac_fsusage_space=yes
-    AC_DEFINE_UNQUOTED(STAT_STATVFS, 1,
+    AC_DEFINE(STAT_STATVFS, 1,
 	      [  Define if there is a function named statvfs.  (SVR4)])
   fi
 fi
@@ -55,7 +60,7 @@ if test $ac_fsusage_space = no; then
   AC_MSG_RESULT($fu_cv_sys_stat_statfs3_osf1)
   if test $fu_cv_sys_stat_statfs3_osf1 = yes; then
     ac_fsusage_space=yes
-    AC_DEFINE_UNQUOTED(STAT_STATFS3_OSF1, 1,
+    AC_DEFINE(STAT_STATFS3_OSF1, 1,
 	      [   Define if  statfs takes 3 args.  (DEC Alpha running OSF/1)])
   fi
 fi
@@ -87,7 +92,7 @@ member (AIX, 4.3BSD)])
   AC_MSG_RESULT($fu_cv_sys_stat_statfs2_bsize)
   if test $fu_cv_sys_stat_statfs2_bsize = yes; then
     ac_fsusage_space=yes
-    AC_DEFINE_UNQUOTED(STAT_STATFS2_BSIZE, 1,
+    AC_DEFINE(STAT_STATFS2_BSIZE, 1,
 [  Define if statfs takes 2 args and struct statfs has a field named f_bsize.
    (4.3BSD, SunOS 4, HP-UX, AIX PS/2)])
   fi
@@ -110,7 +115,7 @@ if test $ac_fsusage_space = no; then
   AC_MSG_RESULT($fu_cv_sys_stat_statfs4)
   if test $fu_cv_sys_stat_statfs4 = yes; then
     ac_fsusage_space=yes
-    AC_DEFINE_UNQUOTED(STAT_STATFS4, 1,
+    AC_DEFINE(STAT_STATFS4, 1,
 	      [  Define if statfs takes 4 args.  (SVR3, Dynix, Irix, Dolphin)])
   fi
 fi
@@ -139,7 +144,7 @@ member (4.4BSD and NetBSD)])
   AC_MSG_RESULT($fu_cv_sys_stat_statfs2_fsize)
   if test $fu_cv_sys_stat_statfs2_fsize = yes; then
     ac_fsusage_space=yes
-    AC_DEFINE_UNQUOTED(STAT_STATFS2_FSIZE, 1,
+    AC_DEFINE(STAT_STATFS2_FSIZE, 1,
 [  Define if statfs takes 2 args and struct statfs has a field named f_fsize.
    (4.4BSD, NetBSD)])
   fi
@@ -172,7 +177,7 @@ if test $ac_fsusage_space = no; then
   AC_MSG_RESULT($fu_cv_sys_stat_fs_data)
   if test $fu_cv_sys_stat_fs_data = yes; then
     ac_fsusage_space=yes
-    AC_DEFINE_UNQUOTED(STAT_STATFS2_FS_DATA, 1,
+    AC_DEFINE(STAT_STATFS2_FS_DATA, 1,
 [  Define if statfs takes 2 args and the second argument has
    type struct fs_data.  (Ultrix)])
   fi
@@ -182,7 +187,7 @@ if test $ac_fsusage_space = no; then
   # SVR2
   AC_TRY_CPP([#include <sys/filsys.h>
     ],
-    AC_DEFINE_UNQUOTED(STAT_READ_FILSYS, 1,
+    AC_DEFINE(STAT_READ_FILSYS, 1,
       [Define if there is no specific function for reading filesystems usage
        information and you have the <sys/filsys.h> header file.  (SVR2)])
     ac_fsusage_space=yes)
