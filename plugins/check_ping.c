@@ -104,11 +104,25 @@ main (int argc, char **argv)
 	for (i = 0 ; i < n_addresses ; i++) {
 
 		/* does the host address of number of packets argument come first? */
-#ifdef PING_PACKETS_FIRST
+#ifdef PING6_COMMAND
+# ifdef PING_PACKETS_FIRST
+	if (is_inet6_addr(addresses[i]))
+		asprintf (&command_line, PING6_COMMAND, max_packets, addresses[i]);
+	else
 		asprintf (&command_line, PING_COMMAND, max_packets, addresses[i]);
-#else
+# else
+	if (is_inet6_addr(addresses[i]))
+		asprintf (&command_line, PING6_COMMAND, addresses[i], max_packets);
+	else
 		asprintf (&command_line, PING_COMMAND, addresses[i], max_packets);
-#endif
+# endif
+#else /* USE_IPV6 */
+# ifdef PING_PACKETS_FIRST
+		asprintf (&command_line, PING_COMMAND, max_packets, addresses[i]);
+# else
+		asprintf (&command_line, PING_COMMAND, addresses[i], max_packets);
+# endif
+#endif /* USE_IPV6 */
 
 		if (verbose)
 			printf ("%s ==> ", command_line);
