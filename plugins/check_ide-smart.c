@@ -398,8 +398,6 @@ Usage: %s [DEVICE] [OPTION]\n\
     Turn off automatic offline tests\n\
  -n, --net-saint\n\
     Output suitable for Net Saint\n", progname);
-	
-	printf (UT_HLP_VRS, progname, progname);
 }
 
 

@@ -427,6 +427,4 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -H host [-s server] [-a expected-address] [-A] [-t timeout]\n", progname);
-
-	printf (UT_HLP_VRS, progname, progname);
 }

@@ -335,6 +335,5 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -H host -F config_file -u username -p password [-n nas-id] [-P port]\n\
-  [-t timeout] [-r retries] [-e expect]\n", progname);
-	printf (UT_HLP_VRS, progname, progname);
+          [-t timeout] [-r retries] [-e expect]\n", progname);
 }

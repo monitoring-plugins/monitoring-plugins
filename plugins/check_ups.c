@@ -32,7 +32,6 @@ const char *revision = "$Revision$";
 const char *copyright = "2000-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
-#include <locale.h>
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
@@ -649,6 +648,5 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -H host -u ups [-p port] [-v variable]\n\
-  [-wv warn_value] [-cv crit_value] [-to to_sec] [-T]\n", progname);
-	printf (UT_HLP_VRS, progname, progname);
+          [-wv warn_value] [-cv crit_value] [-to to_sec] [-T]\n", progname);
 }

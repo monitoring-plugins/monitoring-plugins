@@ -533,7 +533,5 @@ void
 print_usage (void)
 {
 	printf ("Usage: %s -H <host_address> -w <wrta>,<wpl>%% -c <crta>,<cpl>%%\n\
-  [-p packets] [-t timeout] [-L] [-4|-6]\n", progname);
-	
-	printf (UT_HLP_VRS, progname, progname);
+                     [-p packets] [-t timeout] [-L] [-4|-6]\n", progname);
 }

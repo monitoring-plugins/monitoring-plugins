@@ -306,9 +306,6 @@ validate_arguments (void)
 
 
 
-
-
-
 void
 print_help (void)
 {
@@ -372,7 +369,6 @@ this plugin works well for monitoring that kind of data as well.\n\n"));
 
 
 
-
 /* original command line: 
 	 <log_file> <expire_minutes> <AVG|MAX> <variable> <vwl> <vcl> <label> [units] */
 
@@ -381,7 +377,5 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -F log_file -a <AVG | MAX> -v variable -w warning -c critical\n\
-  [-l label] [-u units] [-e expire_minutes] [-t timeout] [-v]\n", progname);
-	
-	printf (UT_HLP_VRS, progname, progname);
+         [-l label] [-u units] [-e expire_minutes] [-t timeout] [-v]\n", progname);
 }

@@ -638,7 +638,5 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -w limit -c limit [-p path | -x device] [-t timeout] [-m] [-e]\n\
-        [-v] [-q]\n", progname);
-
-	printf (UT_HLP_VRS, progname, progname);
+          [-v] [-q]\n", progname);
 }

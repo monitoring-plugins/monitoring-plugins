@@ -303,8 +303,5 @@ void
 print_usage (void)
 {
 	printf ("\
-Usage: %s -F <status log file> -e <expire_minutes> -C <process_string>\n",
-	        progname);
-					
-	printf (UT_HLP_VRS, progname, progname);
+Usage: %s -F <status log file> -e <expire_minutes> -C <process_string>\n", progname);
 }

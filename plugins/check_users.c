@@ -215,6 +215,4 @@ void
 print_usage (void)
 {
 	printf ("Usage: %s -w <users> -c <users>\n", progname);
-	
-	printf (UT_HLP_VRS, progname, progname);
 }

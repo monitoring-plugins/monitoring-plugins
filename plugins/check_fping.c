@@ -400,5 +400,4 @@ void
 print_usage (void)
 {
 	printf ("Usage: %s <host_address>\n", progname);
-	printf (UT_HLP_VRS, progname, progname);
 }

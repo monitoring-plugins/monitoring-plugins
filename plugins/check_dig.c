@@ -357,6 +357,4 @@ print_usage (void)
 Usage: %s -H host -l lookup [-p <server port>] [-T <query type>]\n\
          [-w <warning interval>] [-c <critical interval>] [-t <timeout>]\n\
          [-a <expected answer address>] [-v]\n", progname);
-				 
-	printf (UT_HLP_VRS, progname, progname);
 }

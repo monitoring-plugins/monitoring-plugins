@@ -311,5 +311,4 @@ print_usage (void)
 	printf ("\
 Usage: %s [-d database] [-H host] [-P port] [-u user] [-p password] [-S]\n",
 	        progname);
-	printf (UT_HLP_VRS, progname, progname);
 }

@@ -405,18 +405,6 @@ process_arguments (int argc, char **argv)
 
 
 void
-print_usage (void)
-{
-	printf (_("\
-Usage: %s -H host [-p port] [-v variable] [-w warning] [-c critical]\n\
-  [-t timeout]\n"),
-	        progname);
-	printf (_(UT_HLP_VRS), progname, progname);
-}
-
-
-
-void
 print_help (void)
 {
 	char *myport;
@@ -468,4 +456,14 @@ Notes:\n\
    0.99.53 of the Over-CR collector)\n\n"));
 
 	printf (_(UT_SUPPORT));
+}
+
+
+
+void
+print_usage (void)
+{
+	printf ("\
+Usage: %s -H host [-p port] [-v variable] [-w warning] [-c critical]\n\
+          [-t timeout]\n", progname);
 }

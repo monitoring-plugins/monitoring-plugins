@@ -239,11 +239,10 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
-	printf (_(COPYRIGHT), copyright, email);
+	printf (COPYRIGHT, copyright, email);
 
 	printf (_("\
-Negates the status of a plugin (returns OK for CRITICAL, and vice-versa).\n\
-\n"));
+Negates the status of a plugin (returns OK for CRITICAL, and vice-versa).\n\n"));
 
 	print_usage ();
 
@@ -274,8 +273,5 @@ Otherwise, the output state of the wrapped plugin is unchanged.\n"));
 void
 print_usage (void)
 {
-	printf ("Usage: %s [-t timeout] <definition of wrapped plugin>\n",
-	        progname);
-					
-	printf (UT_HLP_VRS, progname, progname);
+	printf ("Usage: %s [-t timeout] <definition of wrapped plugin>\n",progname);
 }

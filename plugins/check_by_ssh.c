@@ -410,9 +410,6 @@ void
 print_usage (void)
 {
 	printf ("\n\
-Usage: %s [-f46] [-t timeout] [-i identity] [-l user] -H <host> \n\
-  -C <command> [-n name] [-s servicelist] [-O outputfile] [-p port]\n",
-	        progname);
-					
-	printf (_(UT_HLP_VRS), progname, progname);
+Usage: %s [-f46] [-t timeout] [-i identity] [-l user] -H <host> -C <command>\n\
+          [-n name] [-s servicelist] [-O outputfile] [-p port]\n", progname);
 }

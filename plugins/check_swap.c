@@ -517,6 +517,4 @@ print_usage (void)
 	printf ("Usage:\n\
  %s [-av] -w <percent_free>%% -c <percent_free>%%\n\
  %s [-av] -w <bytes_free> -c <bytes_free>\n", progname, progname);
- 
- printf (UT_HLP_VRS, progname, progname);
 }

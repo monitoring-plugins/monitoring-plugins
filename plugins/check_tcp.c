@@ -795,10 +795,8 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -H host -p port [-w <warning time>] [-c <critical time>]\n\
-  [-s <send string>] [-e <expect string>] [-q <quit string>]\n\
-  [-m <maximum bytes>] [-d <delay>] [-t <timeout seconds>]\n\
-  [-r <refuse state>] [-v] [-4|-6] [-j] [-D <days to cert expiry>]\n\
-  [-S <use SSL>]\n", progname);
-	
-	printf (UT_HLP_VRS, progname, progname);
+          [-s <send string>] [-e <expect string>] [-q <quit string>]\n\
+          [-m <maximum bytes>] [-d <delay>] [-t <timeout seconds>]\n\
+          [-r <refuse state>] [-v] [-4|-6] [-j] [-D <days to cert expiry>]\n\
+          [-S <use SSL>]\n", progname);
 }

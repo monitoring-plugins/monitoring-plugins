@@ -443,7 +443,5 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s [-H <host>] [-P <port>] [-c <critical time>] [-w <warning time>]\n\
-            [-t <timeout>] [-d <database>] [-l <logname>] [-p <password>]\n", progname);
-						
-	printf (UT_HLP_VRS, progname, progname);
+          [-t <timeout>] [-d <database>] [-l <logname>] [-p <password>]\n", progname);
 }

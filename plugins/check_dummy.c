@@ -41,7 +41,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (argc < 2)
-		usage4 (_("Incorrect number of arguments supplied"));
+		usage4 (_("Could not parse arguments"));
 	else if (strcmp (argv[1], "-V") == 0 || strcmp (argv[1], "--version") == 0) {
 		print_revision (progname, revision);
 		exit (STATE_OK);
