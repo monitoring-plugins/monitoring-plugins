@@ -2,7 +2,7 @@
 
 VPATH = $(top_srcdir) $(top_srcdir)/plugins $(top_srcdir)/plugins/t
 
-INCLUDES = @SSLINCLUDE@ 
+INCLUDES = @LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@ 
 
 libexec_PROGRAMS = check_disk check_dummy check_http check_load \
 	check_mrtg check_mrtgtraf check_nwstat check_overcr check_ping \
@@ -13,7 +13,7 @@ libexec_PROGRAMS = check_disk check_dummy check_http check_load \
 
 EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 	check_swap check_fping check_ldap check_game check_dig \
-	check_nagios check_by_ssh check_dns
+	check_nagios check_by_ssh check_dns check_nt
 
 EXTRA_DIST = t utils.c netutils.c popen.c getopt.h getopt.c getopt1.c \
 	snprintf.c getloadavg.c
@@ -55,6 +55,7 @@ check_mrtg_LDADD = $(BASEOBJS)
 check_mrtgtraf_LDADD = $(BASEOBJS)
 check_mysql_LDADD = $(BASEOBJS) $(MYSQLLIBS)
 check_nagios_LDADD = $(BASEOBJS) popen.o
+check_nt_LDADD = $(NETLIBS)
 check_nwstat_LDADD = $(NETLIBS)
 check_overcr_LDADD = $(NETLIBS)
 check_pgsql_LDADD = $(BASEOBJS) $(PGLIBS)
@@ -94,6 +95,7 @@ check_mrtg_DEPENDENCIES = check_mrtg.c  $(DEPLIBS)
 check_mrtgtraf_DEPENDENCIES = check_mrtgtraf.c  $(DEPLIBS)
 check_mysql_DEPENDENCIES = check_mysql.c  $(DEPLIBS)
 check_nagios_DEPENDENCIES = check_nagios.c $(BASEOBJS) popen.o $(DEPLIBS)
+check_nt_DEPENDENCIES = check_nt.c $(NETOBJS) $(DEPLIBS)
 check_nwstat_DEPENDENCIES = check_nwstat.c $(NETOBJS) $(DEPLIBS)
 check_overcr_DEPENDENCIES = check_overcr.c $(NETOBJS) $(DEPLIBS)
 check_pgsql_DEPENDENCIES = check_pgsql.c  $(DEPLIBS)
@@ -118,10 +120,6 @@ check_ftp_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
 check_imap_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
 check_nntp_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
 check_pop_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
-
-check_mysql_INCLUDES = @MYSQLINCLUDE@
-check_pgsql_INCLUDES = @PGINCLUDE@
-check_ldap_INCLUDES = @LDAPINCLUDE@
 
 ##############################################################################
 # secondary dependencies
