@@ -52,8 +52,11 @@
  *
  * According to rfc821 you can include a null reversepath in the from command
  * - but a log message is generated on the smtp server.
+ *
+ * Use the -f option to provide a FROM address
  */
-#define SMTP_DUMMYCMD  "MAIL FROM:<>\r\n"
+  
+#define SMTP_DUMMYCMD  "MAIL "
 #define SMTP_USE_DUMMYCMD 1
 #define SMTP_QUIT	"QUIT\r\n"
 
@@ -67,6 +70,7 @@ void print_usage (void);
 int server_port = SMTP_PORT;
 char *server_address = NULL;
 char *server_expect = NULL;
+char *from_arg = " ";
 int warning_time = 0;
 int check_warning_time = FALSE;
 int critical_time = 0;
@@ -80,16 +84,31 @@ main (int argc, char **argv)
 	int result;
 	char buffer[MAX_INPUT_BUFFER] = "";
 	char helocmd[255] = SMTP_HELO ;
+	char from_str[255] = SMTP_DUMMYCMD ;
 	char myhostname[248];
 	
 
 	if (process_arguments (argc, argv) != OK)
 		usage ("Invalid command arguments supplied\n");
 
-	/* initalize the HELO command with the localhostname */
+	/* initialize the HELO command with the localhostname */
 	gethostname(myhostname, sizeof(myhostname));
 	strcat(helocmd, myhostname);
 	strcat(helocmd, "\r\n");
+
+	/* initialize the MAIL command with optional FROM command  */
+	if (from_arg) {
+		strcat(from_str, "FROM: ");
+		strcat(from_str, from_arg);
+	}
+	/* terminate line with a CRLF */
+	strcat(from_str, "\r\n");
+		
+	if (verbose == TRUE){
+		printf ("FROMCMD: %s\n", from_str);
+	}
+
+	
 	
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
@@ -157,9 +176,11 @@ main (int argc, char **argv)
 		recv(sd,buffer,MAX_INPUT_BUFFER-1,0);
 				
 #ifdef SMTP_USE_DUMMYCMD
-               send(sd,SMTP_DUMMYCMD,strlen(SMTP_DUMMYCMD),0);
-               /* allow for response to DUMMYCMD to reach us */
-               recv(sd,buffer,MAX_INPUT_BUFFER-1,0);
+		send(sd,from_str,strlen(from_str),0);
+		/* allow for response to DUMMYCMD to reach us */
+		recv(sd,buffer,MAX_INPUT_BUFFER-1,0);
+		if (verbose == TRUE) 
+			printf("DUMMYCMD: %s\n%s\n",from_str,buffer);		
 #endif /* SMTP_USE_DUMMYCMD */
 
 		/* finally close the connection */
@@ -240,7 +261,8 @@ call_getopt (int argc, char **argv)
 		{"expect", required_argument, 0, 'e'},
 		{"critical", required_argument, 0, 'c'},
 		{"warning", required_argument, 0, 'w'},
-		{"port", required_argument, 0, 'P'},
+		{"port", required_argument, 0, 'p'},
+		{"from", required_argument, 0, 'f'},
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
@@ -251,10 +273,10 @@ call_getopt (int argc, char **argv)
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
-			getopt_long (argc, argv, "+hVvt:p:e:c:w:H:", long_options,
+			getopt_long (argc, argv, "+hVvt:p:f:e:c:w:H:", long_options,
 									 &option_index);
 #else
-		c = getopt (argc, argv, "+?hVvt:p:e:c:w:H:");
+		c = getopt (argc, argv, "+?hVvt:p:f:e:c:w:H:");
 #endif
 
 		i++;
@@ -266,6 +288,7 @@ call_getopt (int argc, char **argv)
 		case 't':
 		case 'p':
 		case 'e':
+		case 'f':
 		case 'c':
 		case 'w':
 		case 'H':
@@ -289,7 +312,10 @@ call_getopt (int argc, char **argv)
 				usage ("Server port must be a positive integer\n");
 			}
 			break;
-		case 'e':									/* username */
+		case 'f':									/* from argument */
+			from_arg = optarg;
+			break;
+		case 'e':									/* server expect string on 220  */
 			server_expect = optarg;
 			break;
 		case 'c':									/* critical time threshold */
@@ -364,6 +390,8 @@ print_help (void)
 		 "   Make connection on the indicated port (default: %d)\n"
 		 " -e, --expect=STRING\n"
 		 "   String to expect in first line of server response (default: %s)\n"
+		 " -f, --from=STRING\n"
+		 "   from address to include in MAIL command (default NULL, Exchange2000 requires one)\n"
 		 " -w, --warning=INTEGER\n"
 		 "   Seconds necessary to result in a warning status\n"
 		 " -c, --critical=INTEGER\n"
@@ -388,7 +416,7 @@ void
 print_usage (void)
 {
 	printf
-		("Usage: %s -H host [-e expect] [-p port] [-w warn] [-c crit] [-t timeout] [-v]\n"
+		("Usage: %s -H host [-e expect] [-p port] [-f from addr] [-w warn] [-c crit] [-t timeout] [-v]\n"
 		 "       %s --help\n"
 		 "       %s --version\n", PROGNAME, PROGNAME, PROGNAME);
 }
