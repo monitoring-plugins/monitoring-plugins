@@ -79,7 +79,7 @@ int
 main (int argc, char **argv)
 {
 	int sd;
-	int result;
+	int result = STATE_UNKNOWN;
 	char buffer[MAX_INPUT_BUFFER] = "";
 	char *from_str = NULL;
 	char *helocmd = NULL;
@@ -114,20 +114,15 @@ main (int argc, char **argv)
 	/* we connected, so close connection before exiting */
 	if (result == STATE_OK) {
 
-		/* watch for the SMTP connection string */
-		result = recv (sd, buffer, MAX_INPUT_BUFFER - 1, 0);
-
-		/* strip the buffer of carriage returns */
-		strip (buffer);
-
+		/* watch for the SMTP connection string and */
 		/* return a WARNING status if we couldn't read any data */
-		if (result == -1) {
+		if (recv (sd, buffer, MAX_INPUT_BUFFER - 1, 0) == -1) {
 			printf ("recv() failed\n");
 			result = STATE_WARNING;
 		}
-
 		else {
-
+			/* strip the buffer of carriage returns */
+			strip (buffer);
 			/* make sure we find the response we are looking for */
 			if (!strstr (buffer, server_expect)) {
 				if (server_port == SMTP_PORT)
@@ -137,30 +132,9 @@ main (int argc, char **argv)
 									server_port);
 				result = STATE_WARNING;
 			}
-
-			else {
-
-				time (&end_time);
-
-				result = STATE_OK;
-
-				if (check_critical_time == TRUE
-						&& (end_time - start_time) > critical_time) result =
-						STATE_CRITICAL;
-				else if (check_warning_time == TRUE
-								 && (end_time - start_time) > warning_time) result =
-						STATE_WARNING;
-
-				if (verbose == TRUE)
-					printf ("SMTP %s - %d sec. response time, %s\n",
-									state_text (result), (int) (end_time - start_time), buffer);
-				
-			}
 		}
 
-		/* close the connection */
-
-		/* first send the HELO command */
+		/* send the HELO command */
 		send(sd, helocmd, strlen(helocmd), 0);
 
 		/* allow for response to helo command to reach us */
@@ -186,7 +160,18 @@ main (int argc, char **argv)
 	/* reset the alarm */
 	alarm (0);
 
-	printf ("SMTP %s - %d second response time\n", state_text (result), (int) (end_time - start_time));
+	time (&end_time);
+
+	if (check_critical_time == TRUE && (end_time - start_time) > critical_time)
+		result = STATE_CRITICAL;
+	else if (check_warning_time == TRUE && (end_time - start_time) > warning_time)
+		result = STATE_WARNING;
+
+	if (verbose == TRUE)
+		printf ("SMTP %s - %d sec. response time, %s\n",
+						state_text (result), (int) (end_time - start_time), buffer);
+	else
+		printf ("SMTP %s - %d second response time\n", state_text (result), (int) (end_time - start_time));
 
 	return result;
 }
