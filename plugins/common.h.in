@@ -102,8 +102,8 @@
 #define	STATE_CRITICAL 	2				/* service state return codes */
 #define STATE_WARNING 	1
 #define STATE_OK       	0
-#define STATE_UNKNOWN  	-1
-#define STATE_DEPENDENT	-2
+#define STATE_UNKNOWN  	3
+#define STATE_DEPENDENT	4
 
 #define DEFAULT_SOCKET_TIMEOUT	10	/* timeout after 10 seconds */
 
