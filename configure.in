@@ -415,7 +415,6 @@ if test x"$enable_emulate_getaddrinfo" != xno ; then
                        [AC_MSG_ERROR([cannot find gethostbyname])])
     fi
     EXTRA_NETOBJS="$EXTRA_NETOBJS gethostbyname.o"
-    AC_DEFINE(EMULATE_GETADDRINFO,1,[Define if emulating getaddrinfo])
 
 fi
 
