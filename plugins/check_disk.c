@@ -493,7 +493,7 @@ print_path (const char *mypath)
 int
 validate_arguments (uintmax_t w, uintmax_t c, double wp, double cp, char *mypath)
 {
-	if (w == 0 && c == 0 && wp < 0.0 && cp < 0.0) {
+	if (w < 0 && c < 0 && wp < 0.0 && cp < 0.0) {
 		printf (_("INPUT ERROR: No thresholds specified"));
 		print_path (mypath);
 		return ERROR;
