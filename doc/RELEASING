@@ -37,5 +37,5 @@ Step 4: Send notice
 
 Send email to nagiosplug-help, nagios-announce, nagiosplug-devel
 
-Change version number in configure.in
+Change version number in configure.in and package.def
 
