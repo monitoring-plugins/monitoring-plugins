@@ -74,7 +74,8 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
-	addresses = malloc ((size_t)max_addr);
+	addresses = malloc (sizeof(char*) * max_addr);
+	addresses[0] = NULL;
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage (_("Could not parse arguments"));
@@ -228,7 +229,7 @@ process_arguments (int argc, char **argv)
 				n_addresses++;
 				if (n_addresses > max_addr) {
 					max_addr *= 2;
-					addresses = realloc (addresses, (size_t)max_addr);
+					addresses = realloc (addresses, sizeof(char*) * max_addr);
 					if (addresses == NULL)
 						die (STATE_UNKNOWN, _("Could not realloc() addresses\n"));
 				}
@@ -272,6 +273,7 @@ process_arguments (int argc, char **argv)
 			return ERROR;
 		} else {
 			addresses[0] = argv[c++];
+			n_addresses++;
 			if (c == argc)
 				return validate_arguments ();
 		}
