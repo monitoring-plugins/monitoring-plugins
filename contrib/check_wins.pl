@@ -3,6 +3,9 @@
 # $Id$
 
 # $Log$
+# Revision 1.3  2004/11/25 04:46:16  stanleyhopcroft
+# Non functional tidy ups to check_wins
+#
 # Revision 1.2  2003/08/20 08:31:49  tonvoon
 # Changed netsaint to nagios in use lib
 #
@@ -22,7 +25,6 @@ my $PROGNAME = 'check_wins' ;
 
 use constant SAMBA_DEBUG_LVL	=> 2 ;
 use constant MY_DCS 		=> ('dc1','dc2') ;
-# use constant MY_DCS 		=> qw(ipa01 ipa02 ipa03) ;
 
 my $NMBLOOKUP_PATH		= '/usr/bin/nmblookup' ;
 my $NMBLOOKUP			= sub { return `$NMBLOOKUP_PATH $_[2] -R -U $_[0] $_[1]` } ;
@@ -67,8 +69,8 @@ my (@addr_dcs_of_domain, @found_dcs, %address2dc) ;
 my (@dc_query) ;
 
 # tsitc> /usr/local/samba/bin/nmblookup -R -U wins ipa01
-# Sending queries to 10.0.100.29
-# 10.0.100.16 ipa01<00>
+# Sending queries to 192.168.1.29
+# 192.168.1.16 ipa01<00>
 
 eval {
   alarm($TIMEOUT) ;
@@ -93,11 +95,17 @@ if ( scalar grep(/name_query failed/, @dc_query) ) {
   exit $ERRORS{"CRITICAL"} ;
 }
 
-# the results of looking up the DCs (by their name) in the WINS 
+=begin comment
 
-# 10.0.100.16 ipa01<20>
-# 10.0.100.1 ipa02<20>
-# 10.0.100.104 ipa03<20>
+the results of looking up the DCs (by their name) in the WINS 
+
+192.168.1.16 ipa01<20>
+192.168.1.1 ipa02<20>
+192.168.1.104 ipa03<20>
+
+=end comment
+
+=cut
 
 @dc_addresses = () ;
 foreach (@dc_query) {
@@ -129,34 +137,23 @@ shift @dcs_of_domain ;
 chomp @dcs_of_domain ;
 @addr_dcs_of_domain = map /^(\S+)/, @dcs_of_domain ;
 
-# tsitc> /usr/local/samba/bin/nmblookup -R -U wins ipaustralia#1c
-# Sending queries to 10.0.100.29
-# 10.0.100.114 ipaustralia<1c>
-# 168.168.102.129 ipaustralia<1c>
-# 192.168.101.221 ipaustralia<1c>
-# 10.0.100.61 ipaustralia<1c>
-# 192.168.108.129 ipaustralia<1c>
-# 192.168.102.128 ipaustralia<1c>
-# 10.0.4.126 ipaustralia<1c>
-# 192.168.106.214 ipaustralia<1c>
-# 10.0.3.165 ipaustralia<1c>
-# 192.168.105.214 ipaustralia<1c>
-# 10.0.6.145 ipaustralia<1c>
-# 192.168.104.128 ipaustralia<1c>
-# 10.0.4.59 ipaustralia<1c>
-# 10.9.99.99 ipaustralia<1c>
-# 10.99.99.99 ipaustralia<1c>
-# 10.9.99.254 ipaustralia<1c>
-# 10.0.3.15 ipaustralia<1c>
-# 192.168.102.129 ipaustralia<1c>
-# 192.168.103.129 ipaustralia<1c>
-# 192.168.105.129 ipaustralia<1c>
-# 192.168.106.129 ipaustralia<1c>
-# 192.168.101.129 ipaustralia<1c>
-# 192.168.104.129 ipaustralia<1c>
-# 10.0.3.123 ipaustralia<1c>
-# 10.0.100.67 ipaustralia<1c>
-# tsitc> 
+=begin comment
+
+tsitc> /usr/local/samba/bin/nmblookup -R -U wins ipaustralia#1c
+Sending queries to 192.168.1.29
+192.168.1.114 ipaustralia<1c>
+192.168.1.221 ipaustralia<1c>
+192.168.1.61 ipaustralia<1c>
+192.168.1.129 ipaustralia<1c>
+192.168.1.128 ipaustralia<1c>
+192.168.1.214 ipaustralia<1c>
+192.168.1.67 ipaustralia<1c>
+tsitc> 
+
+=end comment
+
+=cut
+
 
 my %x ;
 @found_dcs = grep { ! $x{$_}++ } @address2dc{ grep exists $address2dc{$_}, @addr_dcs_of_domain} ;
