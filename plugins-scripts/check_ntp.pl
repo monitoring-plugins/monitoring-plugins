@@ -61,7 +61,7 @@ require 5.004;
 use POSIX;
 use strict;
 use Getopt::Long;
-use vars qw($opt_V $opt_h $opt_H $opt_w $opt_c $opt_j $opt_k $verbose $PROGNAME $def_jitter);
+use vars qw($opt_V $opt_h $opt_H $opt_t $opt_w $opt_c $opt_j $opt_k $verbose $PROGNAME $def_jitter);
 use lib utils.pm; 
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 
@@ -88,8 +88,9 @@ GetOptions
 	 "v" => \$verbose, "verbose"  	=> \$verbose,
 	 "w=f" => \$opt_w, "warning=f"  => \$opt_w,   # offset|adjust warning if above this number
 	 "c=f" => \$opt_c, "critical=f" => \$opt_c,   # offset|adjust critical if above this number
-	 "j=s" => \$opt_j, "jwarn=s"    => \$opt_j,   # jitter warning if above this number
-	 "k=s" => \$opt_k, "jcrit=s"    => \$opt_k,   # jitter critical if above this number
+	 "j=s" => \$opt_j, "jwarn=i"    => \$opt_j,   # jitter warning if above this number
+	 "k=s" => \$opt_k, "jcrit=i"    => \$opt_k,   # jitter critical if above this number
+	 "t=s" => \$opt_t, "timeout=i"  => \$opt_t,
 	 "H=s" => \$opt_H, "hostname=s" => \$opt_H);
 
 if ($opt_V) {
@@ -115,17 +116,22 @@ unless ($host) {
 	exit $ERRORS{'UNKNOWN'};
 }
 
-($opt_w) || ($opt_w = $DEFAULT_OFFSET_WARN);
-my $owarn = $1 if ($opt_w =~ /([0-9.]+)/);
+my ($timeout, $owarn, $ocrit, $jwarn, $jcrit);
 
-($opt_c) || ($opt_c = $DEFAULT_OFFSET_CRIT);
-my $ocrit = $1 if ($opt_c =~ /([0-9.]+)/);
+$timeout = $TIMEOUT;
+($opt_t) && ($opt_t =~ /^([0-9]+)$/) && ($timeout = $1);
 
-($opt_j) || ($opt_j = $DEFAULT_JITTER_WARN);
-my $jwarn = $1 if ($opt_j =~ /([0-9]+)/);
+$owarn = $DEFAULT_OFFSET_WARN;
+($opt_w) && ($opt_w =~ /^([0-9.]+)$/) && ($owarn = $1);
 
-($opt_k) || ($opt_k = $DEFAULT_JITTER_CRIT);
-my $jcrit = $1 if ($opt_k =~ /([0-9]+)/);
+$ocrit = $DEFAULT_OFFSET_CRIT;
+($opt_c) && ($opt_c =~ /^([0-9.]+)$/) && ($ocrit = $1);
+
+$jwarn = $DEFAULT_JITTER_WARN;
+($opt_j) && ($opt_j =~ /^([0-9]+)$/) && ($jwarn = $1);
+
+$jcrit = $DEFAULT_JITTER_CRIT;
+($opt_k) && ($opt_k =~ /^([0-9]+)$/) && ($jcrit = $1);
 
 if ($ocrit < $owarn ) {
 	print "Critical offset should be larger than warning offset\n";
@@ -165,7 +171,7 @@ $SIG{'ALRM'} = sub {
 	print ("ERROR: No response from ntp server (alarm)\n");
 	exit $ERRORS{"UNKNOWN"};
 };
-alarm($TIMEOUT);
+alarm($timeout);
 
 
 ###
