@@ -87,7 +87,7 @@ $SIG{'ALRM'} = sub {
      print ("ERROR: No snmp response from $hostname (alarm)\n");
      exit $ERRORS{"UNKNOWN"};
 };
-#alarm($TIMEOUT);
+alarm($TIMEOUT);
 
 
 ### Validate Arguments
