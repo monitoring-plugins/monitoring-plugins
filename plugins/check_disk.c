@@ -150,8 +150,10 @@ main (int argc, char **argv)
 	if (spclose(child_process)!=0 && result!=STATE_CRITICAL)
 			result = STATE_WARNING;
 
-	if (usp < 0)
+	if (usp < 0) {
 		printf ("Disk \"%s\" not mounted or nonexistant\n", path);
+		result = STATE_CRITICAL;
+	}
 	else if (result == STATE_UNKNOWN)
 		printf ("Unable to read output\n%s\n%s\n", command_line, input_buffer);
 	else
