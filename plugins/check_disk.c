@@ -55,16 +55,79 @@ const char *options = "\
     Print version information\n";
 
 #include "common.h"
+#if HAVE_INTTYPES_H
+# include <inttypes.h>
+#endif
+#include <assert.h>
 #include "popen.h"
 #include "utils.h"
 #include <stdarg.h>
+#include "../lib/fsusage.h"
+
+/* If nonzero, show inode information. */
+static int inode_format;
+
+/* If nonzero, show even filesystems with zero size or
+   uninteresting types. */
+static int show_all_fs;
+
+/* If nonzero, show only local filesystems.  */
+static int show_local_fs;
+
+/* If nonzero, output data for each filesystem corresponding to a
+   command line argument -- even if it's a dummy (automounter) entry.  */
+static int show_listed_fs;
+
+/* If positive, the units to use when printing sizes;
+   if negative, the human-readable base.  */
+static int output_block_size;
+
+/* If nonzero, invoke the `sync' system call before getting any usage data.
+   Using this option can make df very slow, especially with many or very
+   busy disks.  Note that this may make a difference on some systems --
+   SunOs4.1.3, for one.  It is *not* necessary on Linux.  */
+static int require_sync = 0;
+
+/* A filesystem type to display. */
+
+struct fs_type_list
+{
+  char *fs_name;
+  struct fs_type_list *fs_next;
+};
+
+/* Linked list of filesystem types to display.
+   If `fs_select_list' is NULL, list all types.
+   This table is generated dynamically from command-line options,
+   rather than hardcoding into the program what it thinks are the
+   valid filesystem types; let the user specify any filesystem type
+   they want to, and if there are any filesystems of that type, they
+   will be shown.
+
+   Some filesystem types:
+   4.2 4.3 ufs nfs swap ignore io vm efs dbg */
+
+static struct fs_type_list *fs_select_list;
+
+/* Linked list of filesystem types to omit.
+   If the list is empty, don't exclude any types.  */
+
+static struct fs_type_list *fs_exclude_list;
+
+/* Linked list of mounted filesystems. */
+static struct mount_entry *mount_list;
+
+/* For long options that have no equivalent short option, use a
+   non-character as a pseudo short option, starting with CHAR_MAX + 1.  */
+enum
+{
+  SYNC_OPTION = CHAR_MAX + 1,
+  NO_SYNC_OPTION,
+  BLOCK_SIZE_OPTION
+};
 
 #ifdef _AIX
  #pragma alloca
-#endif
-
-#if HAVE_INTTYPES_H
-# include <inttypes.h>
 #endif
 
 int process_arguments (int, char **);
@@ -99,151 +162,22 @@ main (int argc, char **argv)
 	char mntp[MAX_INPUT_BUFFER];
 	char *output = "";
 
-#ifdef HAVE_STRUCT_STATFS
-#ifdef HAVE_SYS_VFS_H
-#include <sys/vfs.h>
-#else
-#include <sys/param.h>
-#include <sys/mount.h>
-#endif
-	struct statfs buf;
-#endif
+	struct fs_usage fsp;
+	char *disk;
 
 	if (process_arguments (argc, argv) != OK)
 		usage ("Could not parse arguments\n");
 
-#ifdef HAVE_STRUCT_STATFS
+	get_fs_usage (path, disk, &fsp);
 
-	if (statfs (path, &buf) == -1) {
-		switch (errno)
-			{
-#ifdef ENOTDIR
-			case ENOTDIR:
-				terminate (STATE_UNKNOWN, "A component of the path prefix is not a directory.\n");
-#endif
-#ifdef ENAMETOOLONG
-			case ENAMETOOLONG:
-				terminate (STATE_UNKNOWN, "path is too long.\n");
-#endif
-#ifdef ENOENT
-			case ENOENT:
-				terminate (STATE_UNKNOWN, "The file referred to by path does not exist.\n");
-#endif
-#ifdef EACCES
-			case EACCES:
-				terminate (STATE_UNKNOWN, "Search permission is denied for a component of the path prefix of path.\n");
-#endif
-#ifdef ELOOP
-			case ELOOP:
-				terminate (STATE_UNKNOWN, "Too many symbolic links were encountered in translating path.\n");
-#endif
-#ifdef EFAULT
-			case EFAULT:
-				terminate (STATE_UNKNOWN, "Buf or path points to an invalid address.\n");
-#endif
-#ifdef EIO
-			case EIO:
-				terminate (STATE_UNKNOWN, "An I/O error occurred while reading from or writing to the file system.\n");
-#endif
-#ifdef ENOMEM
-			case ENOMEM:
-				terminate (STATE_UNKNOWN, "Insufficient kernel memory was available.\n");
-#endif
-#ifdef ENOSYS
-			case ENOSYS:
-				terminate (STATE_UNKNOWN, "The  filesystem path is on does not support statfs.\n");
-#endif
-			}
-	}
-
-	usp = (buf.f_blocks - buf.f_bavail) / buf.f_blocks;
-	disk_result = check_disk (usp, buf.f_bavail);
+	usp = (fsp.fsu_blocks - fsp.fsu_bavail) / fsp.fsu_blocks;
+	disk_result = check_disk (usp, fsp.fsu_bavail);
 	result = disk_result;
-	asprintf (&output, "%ld of %ld kB free (%ld-byte blocks)",
-	          buf.f_bavail*buf.f_bsize/1024, buf.f_blocks*buf.f_bsize/1024, buf.f_bsize);
-
-#else
-
-	asprintf (&command_line, "%s %s", DF_COMMAND, path);
-
-	if (verbose>0)
-		printf ("%s ==> ", command_line);
-
-	child_process = spopen (command_line);
-	if (child_process == NULL) {
-		printf ("Could not open pipe: %s\n", command_line);
-		return STATE_UNKNOWN;
-	}
-
-	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
-	if (child_stderr == NULL) {
-		printf ("Could not open stderr for %s\n", command_line);
-	}
-
-	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
-
-		if (!index (input_buffer, '/'))
-			continue;
-
-		/* Fixes AIX /proc fs which lists - for size values */
-		if (strstr (input_buffer, "/proc ") == input_buffer)
-			continue;
-
-		if (sscanf (input_buffer, "%s %d %d %d %d%% %s", file_system,
-		     &total_disk, &used_disk, &free_disk, &usp, mntp) == 6 ||
-		    sscanf (input_buffer, "%s %*s %d %d %d %d%% %s", file_system,
-				 &total_disk, &used_disk, &free_disk, &usp, mntp) == 6) {
-
- 			if (strcmp(exclude_device,file_system) == 0 ||
-			    strcmp(exclude_device,mntp) == 0) {
- 				if (verbose>0)
- 					printf ("ignoring %s.", file_system);
-				continue;
- 			}
-
-			disk_result = check_disk (usp, free_disk);
-
-			if (strcmp (file_system, "none") == 0)
-				strncpy (file_system, mntp, MAX_INPUT_BUFFER-1);
-
-			if (disk_result==STATE_OK && erronly && !verbose)
-				continue;
-
-			if (disk_result!=STATE_OK || verbose>=0) 
-				asprintf (&output, "%s [%d kB (%d%%) free on %s]", output,
-				          free_disk, 100 - usp, display_mntp ? mntp : file_system);
-
-			result = max_state (result, disk_result);
-		}
-
-		else {
-			printf ("Unable to read output:\n%s\n%s\n", command_line, input_buffer);
-			return result;
-		}
-
-	}
-
-	/* If we get anything on stderr, at least set warning */
-	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
-		if (result != STATE_CRITICAL) {
-			result = STATE_WARNING;
-		}
-	}
-
-	/* close stderr */
-	if (child_stderr) 
-		(void) fclose (child_stderr);
-
-	/* close the pipe */
-	if (spclose(child_process)!=0 && result!=STATE_CRITICAL)
-			result = STATE_WARNING;
-
-	if (usp < 0)
-		terminate (result, "Disk \"%s\" not mounted or nonexistant\n", path);
-	else if (result == STATE_UNKNOWN)
-		terminate (result, "Unable to read output\n%s\n%s\n", command_line, input_buffer);
-
-#endif
+	asprintf (&output, "%llu of %llu kB (%2.0f%%) free (%d-byte blocks)",
+	          fsp.fsu_bavail*fsp.fsu_blocksize/1024,
+	          fsp.fsu_blocks*fsp.fsu_blocksize/1024,
+	          (double)fsp.fsu_bavail*100/fsp.fsu_blocks,
+	          fsp.fsu_blocksize);
 
 	terminate (result, "DISK %s %s\n", state_text (result), output);
 }
