@@ -47,8 +47,8 @@ const char *options = "\
     Same as '--units MB'\n\
  -l, --local\n\
     Only check local filesystems\n\
- -p, --path=PATH, --partition=PARTTION\n\
-    Path or partition  (may be repeated)\n\
+ -p, --path=PATH, --partition=PARTITION\n\
+    Path or partition (may be repeated)\n\
  -x, --exclude_device=PATH <STRING>\n\
     Ignore device (only works if -p unspecified)\n\
  -X, --exclude-type=TYPE <STRING>\n\
@@ -186,8 +186,9 @@ main (int argc, char **argv)
 	char mntp[MAX_INPUT_BUFFER];
 	char *output = "";
 	char *details = "";
+	float free_space, free_space_pct, total_space;
 
-  struct mount_entry *me;
+	struct mount_entry *me;
 	struct fs_usage fsp;
 	char *disk;
 
@@ -196,7 +197,7 @@ main (int argc, char **argv)
 	if (process_arguments (argc, argv) != OK)
 		usage ("Could not parse arguments\n");
 
-  for (me = mount_list; me; me = me->me_next) {
+	for (me = mount_list; me; me = me->me_next) {
 
 		if ((dev_select_list &&
 		     walk_name_list (dev_select_list, me->me_devname)) ||
@@ -225,19 +226,22 @@ main (int argc, char **argv)
 			if (disk_result==STATE_OK && erronly && !verbose)
 				continue;
 
-			if (disk_result!=STATE_OK || verbose>=0) 
-				asprintf (&output, "%s [%llu %s (%2.0f%%) free on %s]",
+			free_space = (float)fsp.fsu_bavail*fsp.fsu_blocksize/mult;
+			free_space_pct = (float)fsp.fsu_bavail*100/fsp.fsu_blocks;
+			total_space = (float)fsp.fsu_blocks*fsp.fsu_blocksize/mult;
+			if (disk_result!=STATE_OK || verbose>=0)
+				asprintf (&output, "%s [%.0f %s (%2.0f%%) free on %s]",
 				          output,
-				          fsp.fsu_bavail*fsp.fsu_blocksize/mult,
-									units,
-				          (double)fsp.fsu_bavail*100/fsp.fsu_blocks,
+				          free_space,
+				          units,
+				          free_space_pct,
 				          (!strcmp(file_system, "none") || display_mntp) ? me->me_devname : me->me_mountdir);
-			asprintf (&details, "%s\n%llu of %llu %s (%2.0f%%) free on %s (type %s mounted on %s)",
+			asprintf (&details, "%s\n%.0f of %.0f %s (%2.0f%%) free on %s (type %s mounted on %s)",
 			          details,
-			          fsp.fsu_bavail*fsp.fsu_blocksize/mult,
-			          fsp.fsu_blocks*fsp.fsu_blocksize/mult,
-								units,
-			          (double)fsp.fsu_bavail*100/fsp.fsu_blocks,
+			          free_space,
+			          total_space,
+			          units,
+			          free_space_pct,
 			          me->me_devname,
 			          me->me_type,
 			          me->me_mountdir);
