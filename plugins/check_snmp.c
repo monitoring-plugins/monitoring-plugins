@@ -82,6 +82,7 @@ regex_t preg;
 regmatch_t pmatch[10];
 char timestamp[10] = "";
 char errbuf[MAX_INPUT_BUFFER];
+char perfstr[MAX_INPUT_BUFFER];
 int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
 int eflags = 0;
 int errcode, excode;
@@ -136,6 +137,7 @@ main (int argc, char **argv)
 	char *ptr = NULL;
 	char *p2 = NULL;
 	char *show = NULL;
+	char type[8];
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -153,7 +155,7 @@ main (int argc, char **argv)
 	port = strdup (DEFAULT_PORT);
 	outbuff = strdup ("");
 	output = strdup ("");
-	delimiter = strdup (DEFAULT_DELIMITER);
+	delimiter = strdup (" = ");
 	output_delim = strdup (DEFAULT_OUTPUT_DELIMITER);
 	miblist = strdup (DEFAULT_MIBLIST);
 	timeout_interval = DEFAULT_TIMEOUT;
@@ -189,9 +191,14 @@ main (int argc, char **argv)
 
 	ptr = output;
 
+	strcat(perfstr, "| ");
 	while (ptr) {
+		char *foo;
 
-		ptr = strstr (ptr, delimiter);
+		foo = strstr (ptr, delimiter);
+		strncat(perfstr, ptr, foo-ptr);
+		ptr = foo; 
+
 		if (ptr == NULL)
 			break;
 
@@ -227,8 +234,10 @@ main (int argc, char **argv)
 			show = strstr (response, "Gauge: ") + 7;
 		else if (strstr (response, "Gauge32: "))
 			show = strstr (response, "Gauge32: ") + 9;
-		else if (strstr (response, "Counter32: "))
+		else if (strstr (response, "Counter32: ")) {
 			show = strstr (response, "Counter32: ") + 11;
+			strcpy(type, "c");
+		}
 		else if (strstr (response, "INTEGER: "))
 			show = strstr (response, "INTEGER: ") + 9;
 		else if (strstr (response, "STRING: "))
@@ -317,7 +326,11 @@ main (int argc, char **argv)
 
 		i++;
 
-	}															/* end while (ptr) */
+		char *str[MAX_INPUT_BUFFER];
+		asprintf(str, "=%s%s;;;; ", show, type ? type : "");
+		strcat(perfstr, *str);
+
+	}	/* end while (ptr) */
 
 	if (found == 0)
 		die (STATE_UNKNOWN,
@@ -339,7 +352,7 @@ main (int argc, char **argv)
 /* 	if (nunits == 1 || i == 1) */
 /* 		printf ("%s %s -%s %s\n", label, state_text (result), outbuff, units); */
 /* 	else */
-	printf ("%s %s -%s\n", label, state_text (result), outbuff);
+	printf ("%s %s -%s %s \n", label, state_text (result), outbuff, perfstr);
 
 	return result;
 }
