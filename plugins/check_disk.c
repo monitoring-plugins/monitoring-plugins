@@ -242,13 +242,13 @@ main (int argc, char **argv)
 			free_space_pct = (float)fsp.fsu_bavail*100/fsp.fsu_blocks;
 			total_space = (float)fsp.fsu_blocks*fsp.fsu_blocksize/mult;
 			if (disk_result!=STATE_OK || verbose>=0)
-				asprintf (&output, "%s [%.0f %s (%2.0f%%) free on %s]",
+				asprintf (&output, "%s [%.0f %s (%.0f%%) free on %s]",
 				          output,
 				          free_space,
 				          units,
 				          free_space_pct,
 				          (!strcmp(file_system, "none") || display_mntp) ? me->me_devname : me->me_mountdir);
-			asprintf (&details, "%s\n%.0f of %.0f %s (%2.0f%%) free on %s (type %s mounted on %s) warn:%d crit:%d warn%%:%.0f%% crit%%:%.0f%%",
+			asprintf (&details, "%s\n%.0f of %.0f %s (%.0f%%) free on %s (type %s mounted on %s) warn:%d crit:%d warn%%:%.0f%% crit%%:%.0f%%",
 			          details,
 			          free_space,
 			          total_space,
@@ -553,10 +553,11 @@ walk_name_list (struct name_list *list, const char *name)
 	while (list) {
 		if (! strcmp(list->name, name)) {
 			list->found = 1;
-			w_df = list->w_df;
-			c_df = list->c_df;
-			w_dfp = list->w_dfp;
-			c_dfp = list->c_dfp;
+			/* if required for name_lists that have not saved w_df, etc (eg exclude lists) */
+			if (list->w_df) w_df = list->w_df;
+			if (list->c_df) c_df = list->c_df;
+			if (list->w_dfp) w_dfp = list->w_dfp;
+			if (list->c_dfp) c_dfp = list->c_dfp;
 			return TRUE;
 		}
 		list = list->name_next;
