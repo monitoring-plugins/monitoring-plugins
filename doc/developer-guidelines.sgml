@@ -518,8 +518,20 @@
 	</section>
 </section>
 
-<section id="SubmittingChanges"><title>New submissions and patches</title>
+<section id="SubmittingChanges"><title>Submission of new plugins and patches</title>
 
+	<section id="Patches"><title>Patches</title>
+	<para>If you have a bug patch, please supply a unified or context diff against the
+	version you are using. For new features, please supply a diff against
+	the CVS HEAD version.</para>
+
+	<para>Patches should be submitted via 
+	<ulink url="http://sourceforge.net/tracker/?group_id=29880&atid=397599">SourceForge's
+	tracker system for Nagiosplug patches</ulink> 
+	and be announced to the nagiosplug-devel mailing list.</para>
+	</section>
+
+	<section id="New plugins"><title>New plugins</title>
 	<para>If you would like others to use your plugins and have it included in
 	the standard distribution, please include patches for the relevant
 	configuration files, in particular "configure.in". Otherwise submitted 
@@ -550,8 +562,10 @@ utils (perl or c or sh) rather than cooking it's own</para>
 	</listitem>
       </orderedlist>
 
-	<para>Patches should be submitted via the SourceForge and be announced to
-	the mailing list.</para>
+	<para>New plugins should be submitted via 
+	<ulink url="http://sourceforge.net/tracker/?group_id=29880&atid=541465">SourceForge's
+	tracker system for Nagiosplug new plugins</ulink> 
+	and be announced to the nagiosplug-devel mailing list.</para>
 	
 	<para>For new plugins, provide a diff to add to the EXTRAS list (configure.in) 
 	unless you are fairly sure that the plugin will work for all platforms with 
@@ -559,8 +573,10 @@ utils (perl or c or sh) rather than cooking it's own</para>
 
 	<para>If possible please submit a test harness. Documentation on sample
 	tests coming soon.</para>
+	</section>
 
 </section>
+
 </article>
   
 </book>
