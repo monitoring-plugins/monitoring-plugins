@@ -19,29 +19,46 @@
 #include "common.h"
 #include "popen.h"
 #include "utils.h"
+#include "netutils.h"
+
+#define DEFAULT_COMMUNITY "public"
 
 const char *progname = "check_hpjd";
 const char *revision = "$Revision$";
-const char *authors = "Nagios Plugin Development Team";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
 const char *copyright = "2000-2003";
-
-const char *summary = "\
-This plugin tests the STATUS of an HP printer with a JetDirect card.\n\
-Net-snmp must be installed on the computer running the plugin.\n\n";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 const char *option_summary = "-H host [-C community]\n";
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -H host [-C community]\n"), progname);
+	printf (_(UT_HLP_VRS), progname, progname);
+}
 
-const char *options = "\
- -H, --hostname=STRING or IPADDRESS\n\
-   Check server on the indicated host\n\
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("\
+This plugin tests the STATUS of an HP printer with a JetDirect card.\n\
+Net-snmp must be installed on the computer running the plugin.\n\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_("\
  -C, --community=STRING\n\
-   The SNMP community name (default=%s)\n\
- -h, --help\n\
-   Print detailed help screen\n\
- -V, --version\n\
-   Print version information\n\n";
+    The SNMP community name (default=%s)\n"), DEFAULT_COMMUNITY);
 
+	printf (_(UT_SUPPORT));
+}
+
 #define HPJD_LINE_STATUS		".1.3.6.1.4.1.11.2.3.9.1.1.2.1"
 #define HPJD_PAPER_STATUS		".1.3.6.1.4.1.11.2.3.9.1.1.2.2"
 #define HPJD_INTERVENTION_REQUIRED	".1.3.6.1.4.1.11.2.3.9.1.1.2.3"
@@ -58,16 +75,11 @@ const char *options = "\
 #define ONLINE		0
 #define OFFLINE		1
 
-#define DEFAULT_COMMUNITY "public"
-
 int process_arguments (int, char **);
 int validate_arguments (void);
-void print_help (void);
-void print_usage (void);
 
 char *community = DEFAULT_COMMUNITY;
 char *address = NULL;
-
 
 int
 main (int argc, char **argv)
@@ -94,7 +106,7 @@ main (int argc, char **argv)
 	char *temp ;
 
 	if (process_arguments (argc, argv) != OK)
-		usage ("Invalid command arguments supplied\n");
+		usage (_("Invalid command arguments supplied\n"));
 
 	/* removed ' 2>1' at end of command 10/27/1999 - EG */
 	/* create the query string */
@@ -119,13 +131,13 @@ main (int argc, char **argv)
 	/* run the command */
 	child_process = spopen (command_line);
 	if (child_process == NULL) {
-		printf ("Could not open pipe: %s\n", command_line);
+		printf (_("Could not open pipe: %s\n"), command_line);
 		return STATE_UNKNOWN;
 	}
 
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL) {
-		printf ("Could not open stderr for %s\n", command_line);
+		printf (_("Could not open stderr for %s\n"), command_line);
 	}
 
 	result = STATE_OK;
@@ -293,54 +305,54 @@ main (int argc, char **argv)
 
 		if (paper_jam) {
 			result = STATE_WARNING;
-			strcpy (error_message, "Paper Jam");
+			strcpy (error_message, _("Paper Jam"));
 		}
 		else if (paper_out) {
 			result = STATE_WARNING;
-			strcpy (error_message, "Out of Paper");
+			strcpy (error_message, _("Out of Paper"));
 		}
 		else if (line_status == OFFLINE) {
 			if (strcmp (error_message, "POWERSAVE ON") != 0) {
 				result = STATE_WARNING;
-				strcpy (error_message, "Printer Offline");
+				strcpy (error_message, _("Printer Offline"));
 			}
 		}
 		else if (peripheral_error) {
 			result = STATE_WARNING;
-			strcpy (error_message, "Peripheral Error");
+			strcpy (error_message, _("Peripheral Error"));
 		}
 		else if (intervention_required) {
 			result = STATE_WARNING;
-			strcpy (error_message, "Intervention Required");
+			strcpy (error_message, _("Intervention Required"));
 		}
 		else if (toner_low) {
 			result = STATE_WARNING;
-			strcpy (error_message, "Toner Low");
+			strcpy (error_message, _("Toner Low"));
 		}
 		else if (memory_out) {
 			result = STATE_WARNING;
-			strcpy (error_message, "Insufficient Memory");
+			strcpy (error_message, _("Insufficient Memory"));
 		}
 		else if (door_open) {
 			result = STATE_WARNING;
-			strcpy (error_message, "A Door is Open");
+			strcpy (error_message, _("A Door is Open"));
 		}
 		else if (paper_output) {
 			result = STATE_WARNING;
-			strcpy (error_message, "Output Tray is Full");
+			strcpy (error_message, _("Output Tray is Full"));
 		}
 		else if (page_punt) {
 			result = STATE_WARNING;
-			strcpy (error_message, "Data too Slow for Engine");
+			strcpy (error_message, _("Data too Slow for Engine"));
 		}
 		else if (paper_status) {
 			result = STATE_WARNING;
-			strcpy (error_message, "Unknown Paper Error");
+			strcpy (error_message, _("Unknown Paper Error"));
 		}
 	}
 
 	if (result == STATE_OK)
-		printf ("Printer ok - (%s)\n", display_message);
+		printf (_("Printer ok - (%s)\n"), display_message);
 
 	else if (result == STATE_UNKNOWN) {
 
@@ -395,7 +407,7 @@ process_arguments (int argc, char **argv)
 				address = strscpy(address, optarg) ;
 			}
 			else {
-				usage ("Invalid host name\n");
+				usage (_("Invalid host name\n"));
 			}
 			break;
 		case 'C':									/* community */
@@ -408,7 +420,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* help */
-			usage ("Invalid argument\n");
+			usage (_("Invalid argument\n"));
 		}
 	}
 
@@ -418,7 +430,7 @@ process_arguments (int argc, char **argv)
 			address = argv[c++];
 		}
 		else {
-			usage ("Invalid host name");
+			usage (_("Invalid host name"));
 		}
 	}
 	
@@ -438,33 +450,3 @@ validate_arguments (void)
 {
 	return OK;
 }
-
-
-
-
-
-void
-print_help (void)
-{
-	print_revision (progname, revision);
-	printf ("Copyright (c) %s %s\n\t<%s>\n\n", copyright, authors, email);
-	printf (summary);
-	print_usage ();
-	printf ("\nOptions:\n");
-	printf (options, DEFAULT_COMMUNITY);
-	support ();
-}
-
-void
-print_usage (void)
-{
-	printf ("\
-Usage:\n\
- %s %s\n\
- %s (-h | --help) for detailed help\n\
- %s (-V | --version) for version information\n",
-	        progname, option_summary, progname, progname);
-}
-
-
-
