@@ -43,6 +43,8 @@
 
 #define SMTP_PORT	25
 #define SMTP_EXPECT     "220"
+#define SMTP_HELO "HELO "
+
 /* sendmail will syslog a "NOQUEUE" error if session does not attempt
  * to do something useful. This can be prevented by giving a command
  * even if syntax is illegal (MAIL requires a FROM:<...> argument)
@@ -74,10 +76,18 @@ main (int argc, char **argv)
 	int sd;
 	int result;
 	char buffer[MAX_INPUT_BUFFER] = "";
+	char helocmd[255] = SMTP_HELO ;
+	char myhostname[248];
+	
 
 	if (process_arguments (argc, argv) != OK)
 		usage ("Invalid command arguments supplied\n");
 
+	/* initalize the HELO command with the localhostname */
+	gethostname(myhostname, sizeof(myhostname));
+	strcat(helocmd, myhostname);
+	strcat(helocmd, "\r\n");
+	
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
 
@@ -138,12 +148,18 @@ main (int argc, char **argv)
 		}
 
 		/* close the connection */
+		/* first send the HELO command */
+		send(sd,helocmd,strlen(helocmd),0);
+		/* allow for response to helo command to reach us */
+		recv(sd,buffer,MAX_INPUT_BUFFER-1,0);
+				
 #ifdef SMTP_USE_DUMMYCMD
                send(sd,SMTP_DUMMYCMD,strlen(SMTP_DUMMYCMD),0);
                /* allow for response to DUMMYCMD to reach us */
                recv(sd,buffer,MAX_INPUT_BUFFER-1,0);
 #endif /* SMTP_USE_DUMMYCMD */
 
+		/* finally close the connection */
 		send (sd, SMTP_QUIT, strlen (SMTP_QUIT), 0);
 		close (sd);
 	}
