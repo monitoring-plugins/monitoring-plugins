@@ -23,7 +23,7 @@
  *
  *****************************************************************************/
 
-const char *progname = "check_pgsql"
+const char *progname = "check_pgsql";
 #define REVISION "$Revision$"
 #define COPYRIGHT "1999-2001"
 #define AUTHOR "Karl DeBisschop"

@@ -14,7 +14,7 @@
 * This plugin is for testing a mysql server.
 ******************************************************************************/
 
-const char *progname = "check_mysql"
+const char *progname = "check_mysql";
 #define REVISION "$Revision$"
 #define COPYRIGHT "1999-2002"
 
