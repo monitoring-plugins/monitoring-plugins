@@ -43,13 +43,14 @@ void print_help (char *command_name);
 void print_usage (void);
 
 
-int commands;
-char *remotecmd = NULL;
-char *comm = NULL;
+int commands = 0;
+int services = 0;
+char *remotecmd = "";
+char *comm = SSH_COMMAND;
 char *hostname = NULL;
 char *outputfile = NULL;
 char *host_shortname = NULL;
-char *servicelist = NULL;
+char **service;
 int passive = FALSE;
 int verbose = FALSE;
 
@@ -59,9 +60,10 @@ main (int argc, char **argv)
 {
 
 	char input_buffer[MAX_INPUT_BUFFER] = "";
-	char *result_text = NULL;
+	char *result_text = "";
 	char *status_text;
-	char *output = NULL;
+	char *output = "";
+	char *summary = "";
 	char *eol = NULL;
 	char *srvc_desc = NULL;
 	int cresult;
@@ -104,10 +106,8 @@ main (int argc, char **argv)
 
 
 	/* get results from remote command */
-	result_text = realloc (result_text, 1);
-	result_text[0] = 0;
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process))
-		result_text = strscat (result_text, input_buffer);
+		asprintf (&result_text, "%s%s", result_text, input_buffer);
 
 
 	/* WARNING if output found on stderr */
@@ -131,24 +131,23 @@ main (int argc, char **argv)
 		}
 
 		time (&local_time);
-		srvc_desc = strtok (servicelist, ":");
-		while (result_text != NULL) {
+		commands = 0;
+		while (result_text && strlen(result_text) > 0) {
 			status_text = (strstr (result_text, "STATUS CODE: "));
 			if (status_text == NULL) {
 				printf ("%s", result_text);
 				return result;
 			}
-			output = result_text;
+			asprintf (&output, "%s", result_text);
 			result_text = strnl (status_text);
 			eol = strpbrk (output, "\r\n");
 			if (eol != NULL)
 				eol[0] = 0;
-			if (srvc_desc && status_text
+			if (service[commands] && status_text
 					&& sscanf (status_text, "STATUS CODE: %d", &cresult) == 1) {
-				fprintf (fp, "%d PROCESS_SERVICE_CHECK_RESULT;%s;%s;%d;%s\n",
-								 (int) local_time, host_shortname, srvc_desc, cresult,
+				fprintf (fp, "[%d] PROCESS_SERVICE_CHECK_RESULT;%s;%s;%d;%s\n",
+								 (int) local_time, host_shortname, service[commands++], cresult,
 								 output);
-				srvc_desc = strtok (NULL, ":");
 			}
 		}
 
@@ -156,13 +155,11 @@ main (int argc, char **argv)
 
 	/* print the first line from the remote command */
 	else {
-		eol = strpbrk (result_text, "\r\n");
-		if (eol)
-			eol[0] = 0;
-		printf ("%s\n", result_text);
-
+ 		eol = strpbrk (result_text, "\r\n");
+ 		if (eol)
+ 			eol[0] = 0;
+ 		printf ("%s\n", result_text);
 	}
-
 
 	/* return error status from remote command */
 	return result;
@@ -176,60 +173,9 @@ main (int argc, char **argv)
 int
 process_arguments (int argc, char **argv)
 {
-	int c;
-
-	if (argc < 2)
-		return ERROR;
-
-	remotecmd = realloc (remotecmd, 1);
-	remotecmd[0] = 0;
-
-	for (c = 1; c < argc; c++)
-		if (strcmp ("-to", argv[c]) == 0)
-			strcpy (argv[c], "-t");
-
-	comm = strscpy (comm, SSH_COMMAND);
-
-	c = 0;
-	while (c += (call_getopt (argc - c, &argv[c]))) {
-
-		if (argc <= c)
-			break;
-
-		if (hostname == NULL) {
-			if (!is_host (argv[c]))
-				terminate (STATE_UNKNOWN, "%s: Invalid host name %s\n", PROGNAME,
-									 argv[c]);
-			hostname = argv[c];
-		}
-		else if (remotecmd == NULL) {
-			remotecmd = strscpy (remotecmd, argv[c++]);
-			for (; c < argc; c++)
-				remotecmd = ssprintf (remotecmd, "%s %s", remotecmd, argv[c]);
-		}
-
-	}
-
-	if (commands > 1)
-		remotecmd = strscat (remotecmd, ";echo STATUS CODE: $?;");
-
-	if (remotecmd == NULL || strlen (remotecmd) <= 1)
-		usage ("No remotecmd\n");
-
-	comm = ssprintf (comm, "%s %s '%s'", comm, hostname, remotecmd);
-
-	return validate_arguments ();
-}
-
-
-
-
-
-/* Call getopt */
-int
-call_getopt (int argc, char **argv)
-{
-	int c, i = 1;
+	int c, i;
+	char *p1, *p2;
+	size_t len;
 
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
@@ -254,6 +200,13 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+	if (argc < 2)
+		return ERROR;
+
+	for (c = 1; c < argc; c++)
+		if (strcmp ("-to", argv[c]) == 0)
+			strcpy (argv[c], "-t");
+
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
@@ -265,20 +218,6 @@ call_getopt (int argc, char **argv)
 
 		if (c == -1 || c == EOF)
 			break;
-
-		i++;
-		switch (c) {
-		case 't':
-		case 'H':
-		case 'O':
-		case 'p':
-		case 'i':
-		case 'u':
-		case 'l':
-		case 'n':
-		case 's':
-			i++;
-		}
 
 		switch (c) {
 		case '?':									/* help */
@@ -306,14 +245,22 @@ call_getopt (int argc, char **argv)
 		case 'p': /* port number */
 			if (!is_integer (optarg))
 				usage2 ("port must be an integer", optarg);
-			comm = ssprintf (comm,"%s -p %s", comm, optarg);
+			asprintf (&comm,"%s -p %s", comm, optarg);
 			break;
 		case 'O':									/* output file */
 			outputfile = optarg;
 			passive = TRUE;
 			break;
 		case 's':									/* description of service to check */
-			servicelist = optarg;
+			service = realloc (service, ++services);
+			p1 = optarg;
+			while (p2 = index (p1, ':')) {
+				*p2 = '\0';
+				asprintf (&service[services-1], "%s", p1);
+				service = realloc (service, ++services);
+				p1 = p2 + 1;
+			}
+			asprintf (&service[services-1], "%s", p1);
 			break;
 		case 'n':									/* short name of host in nagios configuration */
 			host_shortname = optarg;
@@ -322,21 +269,42 @@ call_getopt (int argc, char **argv)
 			c = 'l';
 		case 'l':									/* login name */
 		case 'i':									/* identity */
-			comm = ssprintf (comm, "%s -%c %s", comm, c, optarg);
+			asprintf (&comm, "%s -%c %s", comm, c, optarg);
 			break;
 		case '4':									/* Pass these switches directly to ssh */
 		case '6': 								/* -4 for IPv4, -6 for IPv6 */
 		case 'f':									/* fork to background */
-			comm = ssprintf (comm, "%s -%c", comm, c);
+			asprintf (&comm, "%s -%c", comm, c);
 			break;
 		case 'C':									/* Command for remote machine */
 			commands++;
 			if (commands > 1)
-				remotecmd = strscat (remotecmd, ";echo STATUS CODE: $?;");
-			remotecmd = strscat (remotecmd, optarg);
+				asprintf (&remotecmd, "%s;echo STATUS CODE: $?;", remotecmd);
+			asprintf (&remotecmd, "%s%s", remotecmd, optarg);
 		}
 	}
-	return i;
+
+	c = optind;
+	if (hostname == NULL) {
+		if (!is_host (argv[c]))
+			terminate (STATE_UNKNOWN, "%s: Invalid host name %s\n", PROGNAME, argv[c]);
+		hostname = argv[c++];
+	}
+
+	if (strlen(remotecmd) == 0) {
+		for (; c < argc; c++)
+			asprintf (&remotecmd, "%s %s", remotecmd, argv[c]);
+	}
+
+	if (commands > 1)
+		remotecmd = strscat (remotecmd, ";echo STATUS CODE: $?;");
+
+	if (remotecmd == NULL || strlen (remotecmd) <= 1)
+		usage ("No remotecmd\n");
+
+	asprintf (&comm, "%s %s '%s'", comm, hostname, remotecmd);
+
+	return validate_arguments ();
 }
 
 
@@ -348,6 +316,13 @@ validate_arguments (void)
 {
 	if (remotecmd == NULL || hostname == NULL)
 		return ERROR;
+
+	if (passive && commands != services)
+		terminate (STATE_UNKNOWN, "%s: In passive mode, you must provide a service name for each command.\n", PROGNAME);
+
+	if (passive && host_shortname == NULL)
+		terminate (STATE_UNKNOWN, "%s: In passive mode, you must provide the host short name from the nagios configs.\n", PROGNAME);
+
 	return OK;
 }
 
