@@ -52,8 +52,7 @@ function make_dist {
 PROJECT=nagiosplug
 IN=${HOME}/tmp_snapshot
 OUT_SERVER="shell.sf.net"
-#OUT="/home/groups/n/na/nagiosplug/htdocs/snapshot"
-OUT="~/test"
+OUT="/home/groups/n/na/nagiosplug/htdocs/snapshot"
 CF="usf-cf-x86-linux-2"
 DS=`date -u +%Y%m%d%H%M`
 
