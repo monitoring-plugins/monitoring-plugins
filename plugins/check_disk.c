@@ -373,7 +373,7 @@ process_arguments (int argc, char **argv)
 			mult = 1024 * 1024;
 			if (units)
 				free(units);
-			units = strdup ("kB");
+			units = strdup ("MB");
 			break;
 		case 'l':
 			show_local_fs = 1;			
