@@ -192,6 +192,7 @@ case "$cmd" in
     fi
     result=`sqlplus -s ${3}/${4}@${2} << EOF
 set pagesize 0
+set numf '9999999.99'
 select (1-(pr.value/(dbg.value+cg.value)))*100
 from v\\$sysstat pr, v\\$sysstat dbg, v\\$sysstat cg
 where pr.name='physical reads'
@@ -205,9 +206,10 @@ EOF`
       exit $STATE_CRITICAL
     fi
 
-    buf_hr=`echo $result | awk '{print int($1)}'` 
+    buf_hr=`echo "$result" | awk '/^[0-9\. \t]+$/ {print int($1)}'` 
     result=`sqlplus -s ${3}/${4}@${2} << EOF
 set pagesize 0
+set numf '9999999.99'
 select sum(lc.pins)/(sum(lc.pins)+sum(lc.reloads))*100
 from v\\$librarycache lc;
 EOF`
@@ -218,7 +220,7 @@ EOF`
       exit $STATE_CRITICAL
     fi
 
-    lib_hr=`echo $result | awk '{print int($1)}'`
+    lib_hr=`echo "$result" | awk '/^[0-9\. \t]+$/ {print int($1)}'`
 
     if [ $buf_hr -le ${5} -o $lib_hr -le ${5} ] ; then
   	echo "${2} CRITICAL - Cache Hit Rates: $lib_hr% Lib -- $buf_hr% Buff"
@@ -239,6 +241,7 @@ EOF`
     fi
     result=`sqlplus -s ${3}/${4}@${2} << EOF
 set pagesize 0
+set numf '9999999.99'
 select b.free,a.total,100 - trunc(b.free/a.total * 1000) / 10 prc
 from (
 select tablespace_name,sum(bytes)/1024/1024 total
@@ -254,18 +257,18 @@ EOF`
       exit $STATE_CRITICAL
     fi
 
-    ts_free=`echo $result | awk '{print int($1)}'` 
-    ts_total=`echo $result | awk '{print int($2)}'` 
-    ts_pct=`echo $result | awk '{print int($3)}'` 
-    if [ $ts_free -eq 0 -a $ts_total -eq 0 -a $ts_pct -eq 0 ] ; then
+    ts_free=`echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($1)}'` 
+    ts_total=`echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($2)}'` 
+    ts_pct=`echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($3)}'` 
+    if [ "$ts_free" -eq 0 -a "$ts_total" -eq 0 -a "$ts_pct" -eq 0 ] ; then
         echo "No data returned by Oracle - tablespace $5 not found?"
         exit $STATE_UNKNOWN
     fi
-    if [ $ts_pct -ge ${6} ] ; then
+    if [ "$ts_pct" -ge ${6} ] ; then
   	echo "${2} : ${5} CRITICAL - $ts_pct% used [ $ts_free / $ts_total MB available ]"
 	exit $STATE_CRITICAL
     fi
-    if [ $ts_pct -ge ${7} ] ; then
+    if [ "$ts_pct" -ge ${7} ] ; then
   	echo "${2} : ${5} WARNING  - $ts_pct% used [ $ts_free / $ts_total MB available ]"
 	exit $STATE_WARNING
     fi
