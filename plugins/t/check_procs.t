@@ -13,39 +13,39 @@ my $str;
 my $t;
 
 # Reverse Compatibility
-$cmd = "./check_procs 100000 100000";
+$cmd = "./check_procs -w 100000 -c 100000";
 $str = `$cmd`;
 $t += ok $?>>8,0;
 print "Test was: $cmd\n" if ($?);
-$t += ok $str, '/^OK - [0-9]+ processes running$/';
+$t += ok $str, '/^PROCS OK: [0-9]+ process(es)?$/';
 
 # Reverse Compatibility
-$cmd = "./check_procs 100000 100000 Z";
+$cmd = "./check_procs -w 100000 -c 100000 -s Z";
 $str = `$cmd`;
 $t += ok $?>>8,0;
 print "Test was: $cmd\n" if ($?);
-$t += ok $str, '/^OK - [0-9]+ processes running with /';
+$t += ok $str, '/^PROCS OK: [0-9]+ process(es)? with /';
 
 # Reverse Compatibility
-$cmd = "./check_procs 0 10000000";
+$cmd = "./check_procs -w 0 -c 10000000";
 $str = `$cmd`;
 $t += ok $?>>8,1;
 print "Test was: $cmd\n" unless ($?);
-$t += ok $str, '/^WARNING - [0-9]+ processes running$/';
+$t += ok $str, '/^PROCS WARNING: [0-9]+ process(es)?$/';
 
 # Reverse Compatibility
-$cmd = "./check_procs 0 0";
+$cmd = "./check_procs -w 0 -c 0";
 $str = `$cmd`;
 $t += ok $?>>8,2;
 print "Test was: $cmd\n" unless ($?);
-$t += ok $str, '/^CRITICAL - [0-9]+ processes running$/';
+$t += ok $str, '/^PROCS CRITICAL: [0-9]+ process(es)?$/';
 
 # Reverse Compatibility
-$cmd = "./check_procs 0 0 S";
+$cmd = "./check_procs -w 0 -c 0 -s S";
 $str = `$cmd`;
 $t += ok $?>>8,2;
 print "Test was: $cmd\n" unless ($?);
-$t += ok $str, '/^CRITICAL - [0-9]+ processes running with /';
+$t += ok $str, '/^PROCS CRITICAL: [0-9]+ process(es)? with /';
 
 exit(0) if defined($Test::Harness::VERSION);
 exit($tests - $t);
