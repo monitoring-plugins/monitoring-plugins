@@ -252,11 +252,7 @@ my_connect (const char *host_name, int port, int *sd, int proto)
 			if (result < 0) {
 				switch (errno) {
 				case ECONNREFUSED:
-					switch (econn_refuse_state) {
-					case STATE_OK:
-					case STATE_WARNING:
-						was_refused = TRUE;
-					}
+					was_refused = TRUE;
 					break;
 				}
 			}
@@ -269,8 +265,21 @@ my_connect (const char *host_name, int port, int *sd, int proto)
 
 	if (result == 0)
 		return STATE_OK;
-	else if (was_refused)
-		return econn_refuse_state;
+	else if (was_refused) {
+		switch (econn_refuse_state) { /* a user-defined expected outcome */
+		case STATE_OK:       
+		case STATE_WARNING:  /* user wants WARN or OK on refusal */
+			return econn_refuse_state;
+			break;
+		case STATE_CRITICAL: /* user did not set econn_refuse_state */
+			printf ("%s\n", strerror(errno));
+			return econn_refuse_state;
+			break;
+		default: /* it's a logic error if we do not end up in STATE_(OK|WARNING|CRITICAL) */
+			return STATE_UNKNOWN;
+			break;
+		}
+	}
 	else {
 		printf ("%s\n", strerror(errno));
 		return STATE_CRITICAL;

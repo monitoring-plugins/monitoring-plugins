@@ -206,6 +206,7 @@ main (int argc, char **argv)
 	server_port = PORT;
 	server_send = SEND;
 	server_quit = QUIT;
+	status = strdup ("");
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage (_("Could not parse arguments\n"));
@@ -259,7 +260,6 @@ main (int argc, char **argv)
 
 		buffer = malloc (MAXBUF);
 		memset (buffer, '\0', MAXBUF);
-		status = strdup ("");
 		/* watch for the expect string */
 		while ((i = my_recv ()) > 0) {
 			buffer[i] = '\0';
@@ -271,7 +271,7 @@ main (int argc, char **argv)
 		}
 
 		/* return a CRITICAL status if we couldn't read any data */
-		if (status == NULL)
+		if (strlen(status) == 0)
 			die (STATE_CRITICAL, _("No data received from host\n"));
 
 		strip (status);
