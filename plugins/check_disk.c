@@ -15,7 +15,7 @@
  * currently mounted filesystems.  If the percent used disk space is
  * above <c_dfp>, a STATE_CRITICAL is returned.  If the percent used
  * disk space is above <w_dfp>, a STATE_WARNING is returned.  If the
- * speicified filesystem cannot be read, a STATE_CRITICAL is returned,
+ * specified filesystem cannot be read, a STATE_CRITICAL is returned,
  * other errors with reading the output result in a STATE_UNKNOWN
  * error.
  *
@@ -94,6 +94,10 @@ main (int argc, char **argv)
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
 
 		if (!index (input_buffer, '/'))
+			continue;
+
+		/* Fixes AIX /proc fs which lists - for size values */
+		if (strstr (input_buffer, "/proc ") == input_buffer)
 			continue;
 
 		if (sscanf (input_buffer, "%s %d %d %d %d%% %s", file_system,
