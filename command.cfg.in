@@ -203,6 +203,10 @@ command[check_radius]=@libexecdir@/check_radius $ARG1$ $ARG2$ $HOSTADDRESS$ 1812
 # This is a command for checking squid or other proxy servers which uses check
 # http to ensure an HTTP 200 comes back ..... i.e. squid actually
 # serves the page and not an error message.
+# Using check_http will allow verification of authenticated proxies
+#
+# Note:: This used to call "check_reply" which was pretty close to check_tcp
+#        The functionality of check_reply has been merged into check_tcp
 
 command[check_squid]=@libexecdir@/check_http -H $HOSTADDRESS$ -p $ARG1$  -u $ARG2$  -e 'HTTP/1.0 200 OK'
 
