@@ -1,48 +1,20 @@
 /******************************************************************************
- *
- * CHECK_DNS.C
- *
- * Program: DNS plugin for Nagios
- * License: GPL
- * Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
- *
- * Last Modified: $Date$
- *
- * Notes:
- *  - Safe popen added by Karl DeBisschop 9-11-99
- *  - expected-address parameter added by Alex Chaffee - 7 Oct 2002
- *
- * Command line: (see print_usage)
- *
- * Description:
- *
- * This program will use the nslookup program to obtain the IP address
- * for a given host name.  A optional DNS server may be specified.  If
- * no DNS server is specified, the default server(s) for the system
- * are used.
- *
- * Return Values:
- *  OK           The DNS query was successful (host IP address was returned).
- *  WARNING      The DNS server responded, but could not fulfill the request.
- *  CRITICAL     The DNS server is not responding or encountered an error.
- *
- * License Information:
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- *****************************************************************************/
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+******************************************************************************/
 
 #include "common.h"
 #include "popen.h"
@@ -51,7 +23,7 @@
 
 const char *progname = "check_dns";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2003";
+const char *copyright = "2000-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 int process_arguments (int, char **);
@@ -81,6 +53,7 @@ main (int argc, char **argv)
 	long microsec;
 	struct timeval tv;
 	int multi_address;
+	int parse_address = FALSE;	/* This flag scans for Address: but only after Name: */
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -105,6 +78,7 @@ main (int argc, char **argv)
 
 	if (verbose)
 		printf ("%s\n", command_line);
+
 	/* run the command */
 	child_process = spopen (command_line);
 	if (child_process == NULL) {
@@ -120,7 +94,7 @@ main (int argc, char **argv)
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
 
 		if (verbose)
-			printf ("%s\n", input_buffer);
+			printf ("%s", input_buffer);
 
 		if (strstr (input_buffer, ".in-addr.arpa")) {
 			if ((temp_buffer = strstr (input_buffer, "name = ")))
@@ -132,34 +106,26 @@ main (int argc, char **argv)
 		}
 
 		/* the server is responding, we just got the host name... */
-		if (strstr (input_buffer, "Name:")) {
+		if (strstr (input_buffer, "Name:"))
+			parse_address = TRUE;
+		else if (strstr (input_buffer, "Address:") && parse_address == TRUE) {
+			temp_buffer = index (input_buffer, ':');
+			temp_buffer++;
 
-			/* get the host address */
-			if (!fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process))
-				break;
-
-			if (verbose)
-				printf ("%s\n", input_buffer);
-
-			if ((temp_buffer = index (input_buffer, ':'))) {
-				temp_buffer++;
-				/* Strip leading spaces */
-				for (; *temp_buffer != '\0' && *temp_buffer == ' '; temp_buffer++)
-					/* NOOP */;
-				address = strdup (temp_buffer);
-				strip (address);
-				if (address==NULL || strlen(address)==0)
-					die (STATE_CRITICAL,
-										 _("DNS CRITICAL - '%s' returned empty host name string\n"),
+			/* Strip leading spaces */
+			for (; *temp_buffer != '\0' && *temp_buffer == ' '; temp_buffer++)
+				/* NOOP */;
+			
+			strip(temp_buffer);
+			if (temp_buffer==NULL || strlen(temp_buffer)==0) {
+				die (STATE_CRITICAL, _("DNS CRITICAL - '%s' returned empty host name string\n"),
 										 NSLOOKUP_COMMAND);
-				result = STATE_OK;
-			}
-			else {
-				output = strdup (_("Unknown error (plugin)"));
-				result = STATE_WARNING;
 			}
 
-			break;
+			if (address == NULL)
+				address = strdup (temp_buffer);
+			else
+				asprintf(&address, "%s,%s", address, temp_buffer);
 		}
 
 		result = error_scan (input_buffer);
@@ -212,9 +178,10 @@ main (int argc, char **argv)
 		else
 			multi_address = TRUE;
 
-		printf (_("DNS ok - %.3f seconds response time, address%s %s|%s\n"),
-						elapsed_time, (multi_address==TRUE ? "es are" : " is"), address,
-						perfdata ("time", microsec, "us", FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
+		printf ("%s %s: ", _("DNS"), _("OK"));
+		printf (ngettext("%.3f second response time, ", "%.3f seconds response time, ", elapsed_time), elapsed_time);
+		printf (_("%s returns %s"), query_address, address);
+		printf ("|%s\n", perfdata ("time", microsec, "us", FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
 	}
 	else if (result == STATE_WARNING)
 		printf (_("DNS WARNING - %s\n"),
