@@ -28,6 +28,7 @@ EXTRA_DIST += np_coreutils.m4
 EXTRA_DIST += onceonly.m4
 EXTRA_DIST += progtest.m4
 EXTRA_DIST += realloc.m4
+EXTRA_DIST += stdbool.m4
 EXTRA_DIST += stdint_h.m4
 EXTRA_DIST += uintmax_t.m4
 EXTRA_DIST += ulonglong.m4
