@@ -64,7 +64,7 @@ my $smbclientoptions="";
 # Options checking
 
 ($opt_H) || ($opt_H = shift) || usage("Host name not specified\n");
-my $host = $1 if ($opt_H =~ /([-_.A-Za-z0-9]+)/);
+my $host = $1 if ($opt_H =~ /([-_.A-Za-z0-9]+\$?)/);
 ($host) || usage("Invalid host: $opt_H\n");
 
 ($opt_s) || ($opt_s = shift) || usage("Share volume not specified\n");
