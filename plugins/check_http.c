@@ -304,13 +304,13 @@ process_arguments (int argc, char **argv)
 			break;
 		/* Note: H, I, and u must be malloc'd or will fail on redirects */
 		case 'H': /* Host Name (virtual host) */
- 			host_name = optarg;
+ 			host_name = strdup (optarg);
 			break;
 		case 'I': /* Server IP-address */
- 			server_address = optarg;
+ 			server_address = strdup (optarg);
 			break;
 		case 'u': /* URL path */
-			asprintf (&server_url, "%s", optarg);
+			server_url = strdup (optarg);
 			server_url_length = strlen (server_url);
 			break;
 		case 'p': /* Server port */
@@ -328,7 +328,7 @@ process_arguments (int argc, char **argv)
 		case 'P': /* HTTP POST data in URL encoded format */
 			if (http_method || http_post_data) break;
 			http_method = strdup("POST");
-			http_post_data = optarg;
+			http_post_data = strdup (optarg);
 			break;
 		case 's': /* string or substring */
 			strncpy (string_expect, optarg, MAX_INPUT_BUFFER - 1);
@@ -387,7 +387,7 @@ process_arguments (int argc, char **argv)
 		server_address = strdup (argv[c++]);
 
 	if (host_name == NULL && c < argc)
- 		asprintf (&host_name, "%s", argv[c++]);
+ 		host_name = strdup (argv[c++]);
 
 	if (server_address == NULL) {
 		if (host_name == NULL)
@@ -456,11 +456,11 @@ base64 (char *bin, size_t len)
 #define URI_HOST "%[-.abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
 #define URI_PORT ":%[0123456789]"
 #define URI_PATH "%[-_.!~*'();/?:@&=+$,%#abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
-#define HD1 HDR_LOCATION URI_HTTP URI_HOST URI_PORT URI_PATH
-#define HD2 HDR_LOCATION URI_HTTP URI_HOST URI_PATH
-#define HD3 HDR_LOCATION URI_HTTP URI_HOST URI_PORT
-#define HD4 HDR_LOCATION URI_HTTP URI_HOST
-#define HD5 HDR_LOCATION URI_PATH
+#define HD1 URI_HTTP URI_HOST URI_PORT URI_PATH
+#define HD2 URI_HTTP URI_HOST URI_PATH
+#define HD3 URI_HTTP URI_HOST URI_PORT
+#define HD4 URI_HTTP URI_HOST
+#define HD5 URI_PATH
 
 int
 check_http (void)
@@ -476,6 +476,7 @@ check_http (void)
 	char *buf;
 	char *pos;
 	char *x;
+	char xx[2];
 	char *orig_url;
 	long microsec;
 	double elapsed_time;
@@ -590,7 +591,7 @@ check_http (void)
 	page = full_page;
 
 	if (verbose)
-		printf ("Page is %d characters\n", pagesize);
+		printf ("%s://%s:%d%s is %d characters\n", server_type, server_address, server_port, server_url, pagesize);
 
 	/* find status line and null-terminate it */
 	status_line = page;
@@ -669,17 +670,27 @@ check_http (void)
 		    strstr (status_line, "306")) {
 			if (onredirect == STATE_DEPENDENT) {
 
+				server_address = realloc (server_address, MAX_IPV4_HOSTLENGTH + 1);
+				if (server_address == NULL)
+					die (STATE_UNKNOWN,_("ERROR: could not allocate server_address"));
+
 				asprintf (&orig_url, "%s", server_url);
+				if (strcspn (pos, "\r\n") > (size_t)server_url_length) {
+					server_url = realloc (server_url, strcspn (pos, "\r\n"));
+					if (server_url == NULL)
+						die (STATE_UNKNOWN, _("ERROR: could not allocate server_url"));
+					server_url_length = strcspn (pos, "\r\n");
+				}
+
 				pos = header;
 				while (pos) {
-					server_address = realloc (server_address, MAX_IPV4_HOSTLENGTH + 1);
-					if (server_address == NULL)
-						die (STATE_UNKNOWN,_("ERROR: could not allocate server_address"));
-					if (strcspn (pos, "\r\n") > (size_t)server_url_length) {
-						server_url = realloc (server_url, strcspn (pos, "\r\n"));
-						if (server_url == NULL)
-							die (STATE_UNKNOWN, _("ERROR: could not allocate server_url"));
-						server_url_length = strcspn (pos, "\r\n");
+					if (sscanf (pos, "%[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]:%n", xx, &i) > 0) {
+						pos += i;
+						pos += strspn (pos, " \t\r\n");
+					} else {
+						pos += (size_t) strcspn (pos, "\r\n");
+						pos += (size_t) strspn (pos, "\r\n");
+						continue;
 					}
 					/* HDR_LOCATION, URI_HTTP, URI_HOST, URI_PORT, URI_PATH */
 					if (sscanf (pos, HD1, server_type, server_address, server_port_text, server_url) == 4) {
@@ -723,8 +734,6 @@ check_http (void)
 						}
 						check_http ();
 					} 					
-					pos += (size_t) strcspn (pos, "\r\n");
-					pos += (size_t) strspn (pos, "\r\n");
 				} /* end while (pos) */
 				printf (_("UNKNOWN - Could not find redirect location - %s%s"),
 				        status_line, (display_html ? "</A>" : ""));
