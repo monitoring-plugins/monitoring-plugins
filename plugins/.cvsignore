@@ -35,6 +35,9 @@ check_hpjd
 check_snmp
 check_by_ssh
 check_swap
+check_dig
+check_nt
+negate
 stamp-h*
 *.h
 Makefile
