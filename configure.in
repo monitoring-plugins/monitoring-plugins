@@ -960,10 +960,10 @@ fi
 
 AC_DEFINE_UNQUOTED(DF_COMMAND,"$with_df_command",[path and args for df command])
 
-dnl jm_LIST_MOUNTED_FILESYSTEMS([list_mounted_fs=yes], [list_mounted_fs=no])
+jm_AFS
+jm_LIST_MOUNTED_FILESYSTEMS([list_mounted_fs=yes], [list_mounted_fs=no])
 jm_FSTYPENAME
 jm_FILE_SYSTEM_USAGE([space=yes], [space=no])
-jm_AFS
 
 AC_PATH_PROG(PATH_TO_PING,ping)
 AC_PATH_PROG(PATH_TO_PING6,ping6)
