@@ -1062,8 +1062,10 @@ print_help (void)
 void
 print_usage (void)
 {
-	printf ("Usage:\n" " %s %s\n"
-	        " %s (-h | --help) for detailed help\n"
-	        " %s (-V | --version) for version information\n",
+	printf ("\
+Usage:\n\
+ %s %s\n\
+ %s (-h | --help) for detailed help\n\
+ %s (-V | --version) for version information\n",
 	progname, OPTIONS, progname, progname);
 }

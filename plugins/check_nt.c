@@ -70,13 +70,11 @@ void preparelist(char *string);
 
 int main(int argc, char **argv){
 	int result;
-	int return_code;
+	int return_code = STATE_UNKNOWN;
 	char *send_buffer=NULL;
 	char recv_buffer[MAX_INPUT_BUFFER];
 	char *output_message=NULL;
-	char *temp_buffer=NULL;
 	char *temp_string=NULL;
-	char *sep_string=NULL;
 	char *description=NULL;
 
 	double total_disk_space=0;
@@ -84,18 +82,15 @@ int main(int argc, char **argv){
 	double percent_used_space=0;
 	double mem_commitLimit=0;
 	double mem_commitByte=0;
-	unsigned long current_connections=0;
 	unsigned long utilization;
 	unsigned long uptime;
-	unsigned long cache_hits;
-	unsigned long cache_buffers;
-	unsigned long lru_time;
 	unsigned long age_in_minutes;
 	double counter_value;
 	int offset=0;
 	int updays=0;
 	int uphours=0;
 	int upminutes=0;
+
 	asprintf(&req_password,"None");
 
 	if(process_arguments(argc,argv)==ERROR)
@@ -108,14 +103,16 @@ int main(int argc, char **argv){
 	alarm(socket_timeout);
 
 	if (vars_to_check==CHECK_CLIENTVERSION) {
-			
+
 		asprintf(&send_buffer,strcat(req_password,"&1"));
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if(result!=STATE_OK)
 			return result;
 		asprintf(&output_message,recv_buffer);
 		return_code=STATE_OK;
+
 	}
+
 	else if(vars_to_check==CHECK_CPULOAD){
 
 		if (check_value_list==TRUE) {																			
@@ -123,9 +120,12 @@ int main(int argc, char **argv){
 				/* -l parameters is present with only integers */
 				return_code=STATE_OK;
 				asprintf(&temp_string,"CPU Load");
-				while (lvalue_list[0+offset]>0 && lvalue_list[0+offset]<=17280 && 
-							lvalue_list[1+offset]>=0 && lvalue_list[1+offset]<=100 && 
-							lvalue_list[2+offset]>=0 && lvalue_list[2+offset]<=100) {
+				while (lvalue_list[0+offset]>(unsigned long)0 &&
+				       lvalue_list[0+offset]<=(unsigned long)17280 && 
+				       lvalue_list[1+offset]>=(unsigned long)0 &&
+				       lvalue_list[1+offset]<=(unsigned long)100 && 
+				       lvalue_list[2+offset]>=(unsigned long)0 &&
+				       lvalue_list[2+offset]<=(unsigned long)100) {
 					/* loop until one of the parameters is wrong or not present */
 
 					/* Send request and retrieve data */
@@ -514,51 +514,73 @@ void print_usage(void)
 void print_help(void)
 {
 	print_revision(progname,"$Revision$");
-	printf
-		("Copyright (c) 2000 Yves Rubin (rubiyz@yahoo.com)\n\n"
-		 "This plugin attempts to contact the NSClient service running on a Windows NT/2000/XP server to\n"
-		 "gather the requested system information.\n\n");
+	printf ("\
+Copyright (c) 2000 Yves Rubin (rubiyz@yahoo.com)\n\n\
+This plugin collects data from the NSClient service running on a\n\
+Windows NT/2000/XP server.\n\n");
 	print_usage();
-  printf
-		("\nOptions:\n"
-		 "-H, --hostname=HOST\n"
-		 "   Name of the host to check\n"
-		 "-p, --port=INTEGER\n"
-		 "   Optional port number (default: %d)\n"
-		 "-s <password>\n"
-		 "   Password needed for the request\n"
-		 "-v, --variable=STRING\n"
-		 "   Variable to check.  Valid variables are:\n"
-		 "      CLIENTVERSION = Get the NSClient version\n"
-		 "      CPULOAD = Average CPU load on last x minutes. Request a -l parameter with the following syntax:\n"
-		 "        -l <minutes range>,<warning threshold>,<critical threshold>. <minute range> should be less than 24*60.\n"
-		 "        Thresholds are percentage and up to 10 requests can be done in one shot. ie: -l 60,90,95,120,90,95\n"
-		 "      UPTIME = Get the uptime of the machine. No specific parameters. No warning or critical threshold\n"
-		 "      USEDDISKSPACE = Size and percentage of disk use. Request a -l parameter containing the drive letter only.\n"
-		 "                      Warning and critical thresholds can be specified with -w and -c.\n"
-		 "      MEMUSE = Memory use. Warning and critical thresholds can be specified with -w and -c.\n" 
-		 "      SERVICESTATE = Check the state of one or several services. Request a -l parameters with the following syntax:\n"
-		 "        -l <service1>,<service2>,<service3>,... You can specify -d SHOWALL in case you want to see working services\n"
-		 "        in the returned string.\n"
-		 "      PROCSTATE = Check if one or several process are running. Same syntax as SERVICESTATE.\n"
-		 "      COUNTER = Check any performance counter of Windows NT/2000. Request a -l parameters with the following syntax:\n"
-		 "        -l \"\\\\<performance object>\\\\counter\",\"<description>\"  The <description> parameter is optional and \n"
-		 "        is given to a printf output command which require a float parameters. Some examples:\n"
-		 "          \"Paging file usage is %%.2f %%%%\" or \"%%.f %%%% paging file used.\"\n"
-		 " -w, --warning=INTEGER\n"
-		 "   Threshold which will result in a warning status\n"
-		 " -c, --critical=INTEGER\n"
-		 "   Threshold which will result in a critical status\n"
-		 " -t, --timeout=INTEGER\n"
-		 "   Seconds before connection attempt times out (default: %d)\n"
-		 "-h, --help\n"
-		 "   Print this help screen\n"
-		 "-V, --version\n"
-		 "   Print version information\n\n"
-		 "Notes:\n"
-		 " - The NSClient service should be running on the server to get any information\n"
-		 "   (http://nsclient.ready2run.nl).\n"
-		 " - Critical thresholds should be lower than warning thresholds\n", PORT, DEFAULT_SOCKET_TIMEOUT);
+  printf ("\nOptions:\n\
+-H, --hostname=HOST\n\
+  Name of the host to check\n\
+-p, --port=INTEGER\n\
+  Optional port number (default: %d)\n\
+-s <password>\n\
+  Password needed for the request\n\
+-w, --warning=INTEGER\n\
+  Threshold which will result in a warning status\n\
+-c, --critical=INTEGER\n\
+  Threshold which will result in a critical status\n\
+-t, --timeout=INTEGER\n\
+  Seconds before connection attempt times out (default: %d)\n\
+-h, --help\n\
+  Print this help screen\n\
+-V, --version\n\
+  Print version information\n",
+	        PORT, DEFAULT_SOCKET_TIMEOUT);
+  printf ("\
+-v, --variable=STRING\n\
+  Variable to check.  Valid variables are:\n");
+  printf ("\
+   CLIENTVERSION = Get the NSClient version\n");
+  printf ("\
+   CPULOAD = Average CPU load on last x minutes.\n\
+     Request a -l parameter with the following syntax:\n\
+     -l <minutes range>,<warning threshold>,<critical threshold>.\n\
+     <minute range> should be less than 24*60.\n\
+     Thresholds are percentage and up to 10 requests can be done in one shot.\n\
+     ie: -l 60,90,95,120,90,95\n");
+  printf ("\
+   UPTIME = Get the uptime of the machine.\n\
+     No specific parameters. No warning or critical threshold\n");
+  printf ("\
+   USEDDISKSPACE = Size and percentage of disk use.\n\
+     Request a -l parameter containing the drive letter only.\n\
+     Warning and critical thresholds can be specified with -w and -c.\n");
+  printf ("\
+   MEMUSE = Memory use.\n\
+     Warning and critical thresholds can be specified with -w and -c.\n");
+  printf ("\
+   SERVICESTATE = Check the state of one or several services.\n\
+     Request a -l parameters with the following syntax:\n\
+     -l <service1>,<service2>,<service3>,...\n\
+     You can specify -d SHOWALL in case you want to see working services\n\
+		 in the returned string.\n");
+  printf ("\
+   PROCSTATE = Check if one or several process are running.\n\
+     Same syntax as SERVICESTATE.\n");
+  printf ("\
+   COUNTER = Check any performance counter of Windows NT/2000.\n\
+     Request a -l parameters with the following syntax:\n\
+		 -l \"\\\\<performance object>\\\\counter\",\"<description>\n\
+     The <description> parameter is optional and \n\
+     is given to a printf output command which require a float parameters.\n\
+     Some examples:\n\
+       \"Paging file usage is %%.2f %%%%\"\n\
+       \"%%.f %%%% paging file used.\"\n");
+	printf ("Notes:\n\
+ - The NSClient service should be running on the server to get any information\n\
+   (http://nsclient.ready2run.nl).\n\
+ - Critical thresholds should be lower than warning thresholds\n");
 }
 
 int strtolarray(unsigned long *array, char *string, char *delim) {
@@ -584,7 +606,7 @@ void preparelist(char *string) {
 	/* Replace all , with & which is the delimiter for the request */
 	int i;
 
-	for (i = 0; i < strlen(string); i++)
+	for (i = 0; (size_t)i < strlen(string); i++)
 		if (string[i] == ',') {
 			string[i]='&';
 		}

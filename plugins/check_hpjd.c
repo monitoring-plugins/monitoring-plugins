@@ -1,50 +1,5 @@
 /******************************************************************************
 *
-* CHECK_HPJD.C
-*
-* Program: HP printer plugin for Nagios
-* License: GPL
-* Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
-*
-* Last Modified: $Date$
-*
-* Command line: CHECK_HPJD <ip_address> [community]
-*
-* Description:
-*
-* This plugin will attempt to check the status of an HP printer.  The
-* printer must have a JetDirect card installed and TCP/IP protocol
-* stack enabled.  This plugin has only been tested on a few printers
-* and may not work well on all models of JetDirect cards.  Multiple
-* port JetDirect devices must have an IP address assigned to each
-* port in order to be monitored.
-*
-* Dependencies:
-*
-* This plugin used the 'snmpget' command included with the UCD-SNMP
-* package.  If you don't have the package installed you will need to
-* download it from http://ucd-snmp.ucdavis.edu before you can use
-* this plugin.
-*
-* Return Values:
-*
-* UNKNOWN	= The plugin could not read/process the output from the printer
-* OK		= Printer looks normal
-* WARNING	= Low toner, paper jam, intervention required, paper out, etc.
-* CRITICAL	= The printer could not be reached (it's probably turned off)
-*
-* Acknowledgements:
-*
-* The idea for the plugin (as well as some code) were taken from Jim
-* Trocki's pinter alert script in his "mon" utility, found at
-* http://www.kernel.org/software/mon
-*
-* Notes:
-* 'JetDirect' is copyrighted by Hewlett-Packard.  
-*                    HP, please don't sue me... :-)
-*
-* License Information:
-*
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation; either version 2 of the License, or
@@ -66,8 +21,26 @@
 #include "utils.h"
 
 const char *progname = "check_hpjd";
-#define REVISION "$Revision$"
-#define COPYRIGHT "2000-2002"
+const char *revision = "$Revision$";
+const char *authors = "Nagios Plugin Development Team";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *copyright = "2000-2003";
+
+const char *summary = "\
+This plugin tests the STATUS of an HP printer with a JetDirect card.\n\
+Net-snmp must be installed on the computer running the plugin.\n\n";
+
+const char *option_summary = "-H host [-C community]\n";
+
+const char *options = "\
+ -H, --hostname=STRING or IPADDRESS\n\
+   Check server on the indicated host\n\
+ -C, --community=STRING\n\
+   The SNMP community name (default=%s)\n\
+ -h, --help\n\
+   Print detailed help screen\n\
+ -V, --version\n\
+   Print version information\n\n";
 
 #define HPJD_LINE_STATUS		".1.3.6.1.4.1.11.2.3.9.1.1.2.1"
 #define HPJD_PAPER_STATUS		".1.3.6.1.4.1.11.2.3.9.1.1.2.2"
@@ -425,7 +398,7 @@ process_arguments (int argc, char **argv)
 			community = strscpy (community, optarg);
 			break;
 		case 'V':									/* version */
-			print_revision (progname, REVISION);
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -469,60 +442,43 @@ validate_arguments (void)
 void
 print_help (void)
 {
-	print_revision (progname, REVISION);
-	printf
-		("Copyright (c) 2000 Ethan Galstad/Karl DeBisschop\n\n"
-		 "This plugin tests the STATUS of an HP printer with a JetDirect card.\n"
-		 "Net-snmp must be installed on the computer running the plugin.\n\n");
+	print_revision (progname, revision);
+	printf ("Copyright (c) %s %s\n\t<%s>\n\n", copyright, authors, email);
+	printf (summary);
 	print_usage ();
-	printf
-		("\nOptions:\n"
-		 " -H, --hostname=STRING or IPADDRESS\n"
-		 "   Check server on the indicated host\n"
-		 " -C, --community=STRING\n"
-		 "   The SNMP community name (default=%s)\n"
-		 " -h, --help\n"
-		 "   Print detailed help screen\n"
-		 " -V, --version\n" "   Print version information\n\n",DEFAULT_COMMUNITY);
+	printf ("\nOptions:\n");
+	printf (options, DEFAULT_COMMUNITY);
 	support ();
 }
-
-
-
-
 
 void
 print_usage (void)
 {
-	printf
-		("Usage: %s -H host [-C community]\n"
-		 "       %s --help\n"
-		 "       %s --version\n", progname, progname, progname);
+	printf ("\
+Usage:\n\
+ %s %s\n\
+ %s (-h | --help) for detailed help\n\
+ %s (-V | --version) for version information\n",
+	        progname, option_summary, progname, progname);
 }
 
 
 /*
 	if(argc<2||argc>3){
 	printf("Incorrect number of arguments supplied\n");
-	printf("\n");
 	print_revision(argv[0],"$Revision$");
 	printf("Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)\n");
 	printf("License: GPL\n");
-	printf("\n");
 	printf("Usage: %s <ip_address> [community]\n",argv[0]);
-	printf("\n");
 	printf("Note:\n");
 	printf(" <ip_address>     = The IP address of the JetDirect card\n");
 	printf(" [community]      = An optional community string used for SNMP communication\n");
 	printf("                    with the JetDirect card.  The default is 'public'.\n");
-	printf("\n");
 	return STATE_UNKNOWN;
 	}
-
-	/* get the IP address of the JetDirect device */
+	// get the IP address of the JetDirect device
 	strcpy(address,argv[1]);
-	
-	/* get the community name to use for SNMP communication */
+	// get the community name to use for SNMP communication
 	if(argc>=3)
 	strcpy(community,argv[2]);
 	else
