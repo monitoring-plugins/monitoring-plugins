@@ -259,7 +259,7 @@ main (int argc, char **argv)
 
 		/* Process this block for string matching */
 		else if (eval_method[i] & CRIT_STRING) {
-			if (strcmp (response, string_value))
+			if (strcmp (show, string_value))
 				iresult = STATE_CRITICAL;
 			else
 				iresult = STATE_OK;
