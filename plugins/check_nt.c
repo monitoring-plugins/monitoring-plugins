@@ -81,7 +81,8 @@ int main(int argc, char **argv){
 	char *perfdata=NULL;
 	char *temp_string=NULL;
 	char *temp_string_perf=NULL;
-	char *description=NULL;
+	char *description=NULL,*counter_unit = NULL;
+	char *minval = NULL, *maxval = NULL, *errcvt = NULL;
 
 	double total_disk_space=0;
 	double free_disk_space=0;
@@ -90,6 +91,7 @@ int main(int argc, char **argv){
 	double critical_used_space=0;
 	double mem_commitLimit=0;
 	double mem_commitByte=0;
+	double fminval = 0, fmaxval = 0;
 	unsigned long utilization;
 	unsigned long uptime;
 	unsigned long age_in_minutes;
@@ -98,6 +100,9 @@ int main(int argc, char **argv){
 	int updays=0;
 	int uphours=0;
 	int upminutes=0;
+
+	int isPercent = FALSE;
+	int allRight = FALSE;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -252,12 +257,13 @@ int main(int argc, char **argv){
 		warning_used_space = ((float)warning_value / 100) * mem_commitLimit;
 		critical_used_space = ((float)critical_value / 100) * mem_commitLimit;
 
-		// Changed divisor in following line from 1048567 to 3044515 to accurately reflect memory size
+		/* Divisor should be 1048567, not 3044515, as we are measuring "Commit Charge" here, 
+		which equals RAM + Pagefiles. */
 		asprintf(&output_message,_("Memory usage: total:%.2f Mb - used: %.2f Mb (%.0f%%) - free: %.2f Mb (%.0f%%)"), 
-		  mem_commitLimit / 3044515, mem_commitByte / 3044515, percent_used_space,  
-		  (mem_commitLimit - mem_commitByte) / 3044515, (mem_commitLimit - mem_commitByte) / mem_commitLimit * 100);
-		asprintf(&perfdata,_("'Memory usage'=%.2fMb;%.2f;%.2f;0.00;%.2f"), mem_commitByte / 3044515,
-		  warning_used_space / 3044515, critical_used_space / 3044515, mem_commitLimit / 3044515);
+		  mem_commitLimit / 1048567, mem_commitByte / 1048567, percent_used_space,  
+		  (mem_commitLimit - mem_commitByte) / 1048567, (mem_commitLimit - mem_commitByte) / mem_commitLimit * 100);
+		asprintf(&perfdata,_("'Memory usage'=%.2fMb;%.2f;%.2f;0.00;%.2f"), mem_commitByte / 1048567,
+		  warning_used_space / 1048567, critical_used_space / 1048567, mem_commitLimit / 1048567);
 	
 		return_code=STATE_OK;
 		if(check_critical_value==TRUE && percent_used_space >= critical_value)
@@ -269,40 +275,108 @@ int main(int argc, char **argv){
 
 	case CHECK_COUNTER:
 
-		if (value_list==NULL)
+
+		/* 
+		CHECK_COUNTER has been modified to provide extensive perfdata information.
+       	 	In order to do this, some modifications have been done to the code
+       		and some constraints have been introduced.
+       		
+       		1) For the sake of simplicity of the code, perfdata information will only be 
+       		 provided when the "description" field is added. 
+       		
+       		2) If the counter you're going to measure is percent-based, the code will detect
+       		 the percent sign in its name and will attribute minimum (0%) and maximum (100%) 
+       		 values automagically, as well the ¨%" sign to graph units.
+
+       		3) OTOH, if the counter is "absolute", you'll have to provide the following
+       		 the counter unit - that is, the dimensions of the counter you're getting. Examples:
+       		 pages/s, packets transferred, etc.
+
+       		4) If you want, you may provide the minimum and maximum values to expect. They aren't mandatory,
+       		 but once specified they MUST have the same order of magnitude and units of -w and -c; otherwise.
+       		 strange things will happen when you make graphs of your data.
+		*/
+
+      		if (value_list == NULL)
 			output_message = strdup (_("No counter specified"));
-		else {
-			preparelist(value_list);		/* replace , between services with & to send the request */
-			asprintf(&send_buffer,"%s&8&%s", req_password,value_list);
-			fetch_data (server_address, server_port, send_buffer);
-			strtok(value_list,"&");			/* burn the first parameters */
-			description = strtok(NULL,"&");
-			counter_value = atof(recv_buffer);
+      		else
+		{
+	  		preparelist (value_list);	/* replace , between services with & to send the request */
+	  		isPercent = (strchr (value_list, '%') != NULL);
 
-			if (description == NULL) 
-				asprintf(&output_message, "%.f", counter_value);
-			else
-				asprintf(&output_message,"%s = %.f",  description, counter_value);
-			asprintf(&perfdata,"'%s'=%.f",  description, counter_value);
-	
-			if (critical_value > warning_value) {        /* Normal thresholds */
-				if(check_critical_value==TRUE && counter_value >= critical_value)
-					return_code=STATE_CRITICAL;
-				else if (check_warning_value==TRUE && counter_value >= warning_value)
-					return_code=STATE_WARNING;	
-				else
-					return_code=STATE_OK;	
-			} 
-			else {                                       /* inverse thresholds */
-				return_code=STATE_OK;
-				if(check_critical_value==TRUE && counter_value <= critical_value)
-					return_code=STATE_CRITICAL;
-				else if (check_warning_value==TRUE && counter_value <= warning_value)
-					return_code=STATE_WARNING;	
-			}
+	  		strtok (value_list, "&");	/* burn the first parameters */
+	  		description = strtok (NULL, "&");
+	  		counter_unit = strtok (NULL, "&");
+	  		asprintf (&send_buffer, "%s&8&%s", req_password, value_list);
+	  		fetch_data (server_address, server_port, send_buffer);
+	  		counter_value = atof (recv_buffer);
+
+
+	  		if (description == NULL)
+	    		asprintf (&output_message, "%.f", counter_value);
+	  		else if (isPercent)
+	    		     {	
+	      			counter_unit = strdup (_("%"));
+	      			allRight = TRUE;
+	    		     }
+
+	  		if ((counter_unit != NULL) && (!allRight))
+	    		{	
+	      			minval = strtok (NULL, "&");
+	      			maxval = strtok (NULL, "&");
+
+	      			/* All parameters specified. Let's check the numbers */
+
+	      			fminval = (minval != NULL) ? strtod (minval, &errcvt) : -1;
+	      			fmaxval = (minval != NULL) ? strtod (maxval, &errcvt) : -1;
+
+	      			if ((fminval == 0) && (minval == errcvt))
+					output_message = strdup (_("Minimum value contains non-numbers"));
+			        else
+				{
+		  			if ((fmaxval == 0) && (maxval == errcvt))
+		  	  			output_message = strdup (_("Maximum value contains non-numbers"));
+		  			else
+		    				allRight = TRUE;	/* Everything is OK. */
+
+				}
+	    		}
+	  		else if ((counter_unit == NULL) && (description != NULL))
+	    			output_message = strdup (_("No unit counter specified"));
+
+	  		if (allRight)
+	    		{
+	      			/* Let's format the output string, finally... */
+
+	      			asprintf (&output_message, "%s = %.2f %s", description, counter_value, counter_unit);
+	      			output_message = strcat (output_message, "|");
+	      			output_message = strcat (output_message,
+							fperfdata (description, counter_value, counter_unit,
+				   				   1, warning_value, 1, critical_value,
+				   				   (!(isPercent) && (minval != NULL)), fminval,
+				   				   (!(isPercent) && (minval != NULL)), fmaxval));
+	    		}
 		}
-		break;
 
+      		if (critical_value > warning_value)
+		{			/* Normal thresholds */
+	  		if (check_critical_value == TRUE && counter_value >= critical_value)
+	    		     return_code = STATE_CRITICAL;
+	  		else if (check_warning_value == TRUE && counter_value >= warning_value)
+	    			return_code = STATE_WARNING;
+	  		     else
+	    			return_code = STATE_OK;
+		}
+      		else
+		{			/* inverse thresholds */
+	  		return_code = STATE_OK;
+	  		if (check_critical_value == TRUE && counter_value <= critical_value)
+	    		     return_code = STATE_CRITICAL;
+	  		else if (check_warning_value == TRUE && counter_value <= warning_value)
+				    return_code = STATE_WARNING;
+		}
+        break;
+		
 	case CHECK_FILEAGE:
 
 		if (value_list==NULL)
