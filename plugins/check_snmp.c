@@ -43,18 +43,14 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 void
 print_usage (void)
 {
-	printf ("\
+	printf (_("\
 Usage: %s -H <ip_address> -o <OID> [-w warn_range] [-c crit_range] \n\
   [-C community] [-s string] [-r regex] [-R regexi] [-t timeout]\n\
   [-l label] [-u units] [-p port-number] [-d delimiter]\n\
   [-D output-delimiter] [-m miblist] [-P snmp version]\n\
   [-L seclevel] [-U secname] [-a authproto] [-A authpasswd]\n\
-  [-X privpasswd]\n",
-	        progname);
-	printf ("\
-       %s (-h | --help) for detailed help\n\
-       %s (-V | --version) for version information\n",
-	        progname, progname);
+  [-X privpasswd]\n"), progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }
 
 void
@@ -160,7 +156,7 @@ Check status of remote machines and obtain sustem information via SNMP\n\n"));
 - All evaluation methods other than PR, STR, and SUBSTR expect that the value\n\
   returned from the SNMP query is an unsigned integer.\n"));
 
-	support ();
+	printf (_(UT_SUPPORT));
 }
 
 
@@ -271,7 +267,7 @@ main (int argc, char **argv)
 	i = 0;
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage ("Incorrect arguments supplied\n");
+		usage (_("Incorrect arguments supplied\n"));
 
 	/* create the command line to execute */
 	asprintf (&command_line, "%s -t 1 -r %d -m %s -v %s %s %s:%s %s",
@@ -283,13 +279,13 @@ main (int argc, char **argv)
 	/* run the command */
 	child_process = spopen (command_line);
 	if (child_process == NULL) {
-		printf ("Could not open pipe: %s\n", command_line);
+		printf (_("Could not open pipe: %s\n"), command_line);
 		exit (STATE_UNKNOWN);
 	}
 
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL) {
-		printf ("Could not open stderr for %s\n", command_line);
+		printf (_("Could not open stderr for %s\n"), command_line);
 	}
 
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process))
@@ -388,14 +384,14 @@ main (int argc, char **argv)
 			}
 			else if (excode != REG_NOMATCH) {
 				regerror (excode, &preg, errbuf, MAX_INPUT_BUFFER);
-				printf ("Execute Error: %s\n", errbuf);
+				printf (_("Execute Error: %s\n"), errbuf);
 				exit (STATE_CRITICAL);
 			}
 			else {
 				iresult = STATE_CRITICAL;
 			}
 #else
-			printf ("%s UNKNOWN: call for regex which was not a compiled option", label);
+			printf (_("%s UNKNOWN: call for regex which was not a compiled option"), label);
 			exit (STATE_UNKNOWN);
 #endif
 		}
@@ -433,7 +429,7 @@ main (int argc, char **argv)
 	if (found == 0)
 		terminate
 			(STATE_UNKNOWN,
-			 "%s problem - No data recieved from host\nCMD: %s\n",
+			 _("%s problem - No data recieved from host\nCMD: %s\n"),
 			 label, command_line);
 
 	/* WARNING if output found on stderr */
@@ -554,14 +550,14 @@ process_arguments (int argc, char **argv)
 			break;
 		case 't':	/* timeout period */
 			if (!is_integer (optarg))
-				usage2 ("Timeout Interval must be an integer", optarg);
+				usage2 (_("Timeout Interval must be an integer"), optarg);
 			timeout_interval = atoi (optarg);
 			break;
 
 	/* Test parameters */
 		case 'c':									/* critical time threshold */
 			if (strspn (optarg, "0123456789:,") < strlen (optarg)) {
-				printf ("Invalid critical threshold: %s\n", optarg);
+				printf (_("Invalid critical threshold: %s\n"), optarg);
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
@@ -575,7 +571,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'w':									/* warning time threshold */
 			if (strspn (optarg, "0123456789:,") < strlen (optarg)) {
-				printf ("Invalid warning threshold: %s\n", optarg);
+				printf (_("Invalid warning threshold: %s\n"), optarg);
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
@@ -622,13 +618,13 @@ process_arguments (int argc, char **argv)
 			errcode = regcomp (&preg, regex_expect, cflags);
 			if (errcode != 0) {
 				regerror (errcode, &preg, errbuf, MAX_INPUT_BUFFER);
-				printf ("Could Not Compile Regular Expression");
+				printf (_("Could Not Compile Regular Expression"));
 				return ERROR;
 			}
 			eval_method[jj++] = CRIT_REGEX;
 			ii++;
 #else
-			printf ("%s UNKNOWN: call for regex which was not a compiled option", label);
+			printf (_("%s UNKNOWN: call for regex which was not a compiled option"), label);
 			exit (STATE_UNKNOWN);
 #endif
 			break;
@@ -648,7 +644,7 @@ process_arguments (int argc, char **argv)
 				labels = realloc (labels, labels_size);
 				if (labels == NULL)
 					terminate (STATE_UNKNOWN,
-										 "Could not realloc() labels[%d]", nlabels);
+										 _("Could not realloc() labels[%d]"), nlabels);
 			}
 			labels[nlabels - 1] = optarg;
 			ptr = thisarg (optarg);
@@ -661,7 +657,7 @@ process_arguments (int argc, char **argv)
 					labels_size += 8;
 					labels = realloc (labels, labels_size);
 					if (labels == NULL)
-						terminate (STATE_UNKNOWN, "Could not realloc() labels\n");
+						terminate (STATE_UNKNOWN, _("Could not realloc() labels\n"));
 				}
 				labels++;
 				ptr = thisarg (ptr);
@@ -679,7 +675,7 @@ process_arguments (int argc, char **argv)
 				unitv = realloc (unitv, unitv_size);
 				if (unitv == NULL)
 					terminate (STATE_UNKNOWN,
-										 "Could not realloc() units [%d]\n", nunits);
+										 _("Could not realloc() units [%d]\n"), nunits);
 			}
 			unitv[nunits - 1] = optarg;
 			ptr = thisarg (optarg);
@@ -692,7 +688,7 @@ process_arguments (int argc, char **argv)
 					unitv_size += 8;
 					unitv = realloc (unitv, unitv_size);
 					if (units == NULL)
-						terminate (STATE_UNKNOWN, "Could not realloc() units\n");
+						terminate (STATE_UNKNOWN, _("Could not realloc() units\n"));
 				}
 				nunits++;
 				ptr = thisarg (ptr);
@@ -759,7 +755,7 @@ validate_arguments ()
 		}
 		else if ( strcmp(seclevel, "authNoPriv") == 0 ) {
 			if ( secname == NULL || authpasswd == NULL) {
-				printf ("Missing secname (%s) or authpassword (%s) ! \n",secname, authpasswd );
+				printf (_("Missing secname (%s) or authpassword (%s) ! \n)"),secname, authpasswd );
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
@@ -767,7 +763,7 @@ validate_arguments ()
 		}
 		else if ( strcmp(seclevel, "authPriv") == 0 ) {
 			if ( secname == NULL || authpasswd == NULL || privpasswd == NULL ) {
-				printf ("Missing secname (%s), authpassword (%s), or privpasswd (%s)! \n",secname, authpasswd,privpasswd );
+				printf (("Missing secname (%s), authpassword (%s), or privpasswd (%s)! \n"),secname, authpasswd,privpasswd );
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
@@ -777,7 +773,7 @@ validate_arguments ()
 									
 	}
 	else {
-		printf ("Invalid SNMP version: %s\n", proto);
+		printf (_("Invalid SNMP version: %s\n"), proto);
 		print_usage ();
 		exit (STATE_UNKNOWN);				
 	}

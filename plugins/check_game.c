@@ -19,34 +19,52 @@
 const char *progname = "check_game";
 const char *revision = "$Revision$";
 const char *copyright = "2002-2003";
-const char *authors = "Nagios Plugin Development Team";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
-
-const char *summary = "\
-This plugin tests %s connections with the specified host.\n";
-
-const char *option_summary = "\
-%s <game> <ip_address> [-p port] [-gf game_field] [-mf map_field] [-pf ping_field]\n";
-
-const char *options = "\
-<game>        = Game type that is recognised by qstat (without the leading dash)\n\
-<ip_address>  = The IP address of the device you wish to query\n\
- [port]        = Optional port of which to connect\n\
- [game_field]  = Field number in raw qstat output that contains game name\n\
- [map_field]   = Field number in raw qstat output that contains map name\n\
- [ping_field]  = Field number in raw qstat output that contains ping time\n\
-\n\
-Notes:\n\
-- This plugin uses the 'qstat' command, the popular game server status query tool .\n\
-  If you don't have the package installed, you will need to download it from\n\
-  http://www.activesw.com/people/steve/qstat.html before you can use this plugin.\n";
 
 #include "common.h"
 #include "popen.h"
 #include "utils.h"
 
-void print_usage (void);
-void print_help (void);
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s <game> <ip_address> [-p port] [-gf game_field] [-mf map_field]\n\
+  [-pf ping_field]\n"), progname);
+	printf (_(UT_HLP_VRS), progname, progname);
+}
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("This plugin tests %s connections with the specified host."), progname);
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_("\
+<game>        = Game type that is recognised by qstat (without the leading dash)\n\
+<ip_address>  = The IP address of the device you wish to query\n\
+ [port]        = Optional port of which to connect\n\
+ [game_field]  = Field number in raw qstat output that contains game name\n\
+ [map_field]   = Field number in raw qstat output that contains map name\n\
+ [ping_field]  = Field number in raw qstat output that contains ping time\n"),
+	        DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_("\n\
+Notes:\n\
+- This plugin uses the 'qstat' command, the popular game server status query tool .\n\
+  If you don't have the package installed, you will need to download it from\n\
+  http://www.activesw.com/people/steve/qstat.html before you can use this plugin.\n"));
+
+	printf (_(UT_SUPPORT));
+}
+
 int process_arguments (int, char **);
 int validate_arguments (void);
 
@@ -83,11 +101,11 @@ main (int argc, char **argv)
 	result = process_arguments (argc, argv);
 
 	if (result != OK) {
-		printf ("Incorrect arguments supplied\n");
+		printf (_("Incorrect arguments supplied\n"));
 		printf ("\n");
-		print_revision (argv[0], "$Revision$");
-		printf ("Copyright (c) 1999 Ian Cass, Knowledge Matters Limited\n");
-		printf ("License: GPL\n");
+		print_revision (progname, revision);
+		printf (_("Copyright (c) 1999 Ian Cass, Knowledge Matters Limited\n"));
+		printf (_("License: GPL\n"));
 		printf ("\n");
 		return STATE_UNKNOWN;
 	}
@@ -107,7 +125,7 @@ main (int argc, char **argv)
 	/* run the command */
 	fp = spopen (command_line);
 	if (fp == NULL) {
-		printf ("Error - Could not open pipe: %s\n", command_line);
+		printf (_("Error - Could not open pipe: %s\n"), command_line);
 		return STATE_UNKNOWN;
 	}
 
@@ -127,7 +145,7 @@ main (int argc, char **argv)
 	 */
 
 	if (!strncmp (input_buffer, "unknown option", 14)) {
-		printf ("ERROR: Host type parameter incorrect!\n");
+		printf (_("ERROR: Host type parameter incorrect!\n"));
 		result = STATE_CRITICAL;
 		return result;
 	}
@@ -217,7 +235,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?': /* args not parsable */
-			printf ("%s: Unknown argument: %s\n\n", progname, optarg);
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h': /* help */
@@ -234,7 +252,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H': /* hostname */
 			if (strlen (optarg) >= MAX_HOST_ADDRESS_LENGTH)
-				terminate (STATE_UNKNOWN, "Input buffer overflow\n");
+				terminate (STATE_UNKNOWN, _("Input buffer overflow\n"));
 			server_ip = strdup (optarg);
 			break;
 		case 'P': /* port */
@@ -242,7 +260,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'G': /* hostname */
 			if (strlen (optarg) >= MAX_INPUT_BUFFER)
-				terminate (STATE_UNKNOWN, "Input buffer overflow\n");
+				terminate (STATE_UNKNOWN, _("Input buffer overflow\n"));
 			game_type = strdup (optarg);
 			break;
 		case 'p': /* index of ping field */
@@ -290,27 +308,3 @@ validate_arguments (void)
 {
 		return OK;
 }
-
-
-void
-print_help (void)
-{
-        print_revision (progname, revision);
-        printf ("Copyright (c) %s %s\n\t<%s>\n\n",
-                 copyright, authors, email);
-	printf (summary, progname);
-        print_usage ();
-        printf ("\nOptions:\n");
-        printf (options, DEFAULT_SOCKET_TIMEOUT);
-        support ();
-}
-
-void
-print_usage (void)
-{
-        printf
-                ("Usage: %s %s\n"
-                 "       %s (-h|--help)\n"
-                 "       %s (-V|--version)\n", progname, option_summary, progname, progname);
-}
-

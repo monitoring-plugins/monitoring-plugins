@@ -15,25 +15,66 @@
 ******************************************************************************/
 
 const char *progname = "check_mysql";
-#define REVISION "$Revision$"
-#define COPYRIGHT "1999-2002"
+const char *revision = "$Revision$";
+const char *copyright = "1999-2002";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
 #include "utils.h"
-
+#include "netutils.h"
 #include <mysql/mysql.h>
 #include <mysql/errmsg.h>
 
+unsigned int db_port = MYSQL_PORT;
+
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s [-d database] [-H host] [-P port] [-u user] [-p password]\n"),
+	        progname);
+	printf (_(UT_HLP_VRS), progname, progname);
+}
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("This program tests connections to a mysql server\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_HOST_PORT), 'P', atoi(MYSQL_PORT));
+
+	printf (_("\
+ -d, --database=STRING\n\
+   Check database with indicated name\n\
+ -u, --username=STRING\n\
+   Connect using the indicated username\n\
+ -p, --password=STRING\n\
+   Use the indicated password to authenticate the connection\n\
+   ==> IMPORTANT: THIS FORM OF AUTHENTICATION IS NOT SECURE!!! <==\n\
+   Your clear-text password will be visible as a process table entry\n"));
+
+	printf (_("\n\
+There are no required arguments. By default, the local database with\n\
+a server listening on MySQL standard port %d will be checked\n"), MYSQL_PORT);
+
+	printf (_(UT_SUPPORT));
+}
+
 char *db_user = "";
 char *db_host = "";
 char *db_pass = "";
 char *db = "";
-unsigned int db_port = MYSQL_PORT;
 
 int process_arguments (int, char **);
 int validate_arguments (void);
-void print_help (void);
-void print_usage (void);
 
 int
 main (int argc, char **argv)
@@ -43,7 +84,7 @@ main (int argc, char **argv)
 	char result[1024];
 
 	if (process_arguments (argc, argv) != OK)
-		usage ("Invalid command arguments supplied\n");
+		usage (_("Invalid command arguments supplied\n"));
 
 	/* initialize mysql  */
 	mysql_init (&mysql);
@@ -154,7 +195,7 @@ process_arguments (int argc, char **argv)
 				db_host = optarg;
 			}
 			else {
-				usage ("Invalid host name\n");
+				usage (_("Invalid host name\n"));
 			}
 			break;
 		case 'd':									/* hostname */
@@ -170,13 +211,13 @@ process_arguments (int argc, char **argv)
 			db_port = atoi (optarg);
 			break;
 		case 'V':									/* version */
-			print_revision (progname, REVISION);
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* help */
-			usage ("Invalid argument\n");
+			usage (_("Invalid argument\n"));
 		}
 	}
 
@@ -214,51 +255,4 @@ int
 validate_arguments (void)
 {
 	return OK;
-}
-
-
-
-
-
-void
-print_help (void)
-{
-	print_revision (progname, REVISION);
-	printf
-		("Copyright (c) 2000 Didi Rieder/Karl DeBisschop\n\n"
-		 "This plugin is for testing a mysql server.\n");
-	print_usage ();
-	printf
-		("\nThere are no required arguments. By default, the local database with\n"
-		 "a server listening on MySQL standard port %d will be checked\n\n"
-		 "Options:\n"
-		 " -d, --database=STRING\n"
-		 "   Check database with indicated name\n"
-		 " -H, --hostname=STRING or IPADDRESS\n"
-		 "   Check server on the indicated host\n"
-		 " -P, --port=INTEGER\n"
-		 "   Make connection on the indicated port\n"
-		 " -u, --username=STRING\n"
-		 "   Connect using the indicated username\n"
-		 " -p, --password=STRING\n"
-		 "   Use the indicated password to authenticate the connection\n"
-		 "   ==> IMPORTANT: THIS FORM OF AUTHENTICATION IS NOT SECURE!!! <==\n"
-		 "   Your clear-text password will be visible as a process table entry\n"
-		 " -h, --help\n"
-		 "    Print detailed help screen\n"
-		 " -V, --version\n" "    Print version information\n\n", MYSQL_PORT);
-	support ();
-}
-
-
-
-
-
-void
-print_usage (void)
-{
-	printf
-		("Usage: %s [-d database] [-H host] [-P port] [-u user] [-p password]\n"
-		 "       %s --help\n"
-		 "       %s --version\n", progname, progname, progname);
 }

@@ -88,7 +88,7 @@ time (ms) which triggers a WARNING or CRITICAL state, and <pl> is the\n\
 percentage of packet loss to trigger an alarm state.\n"));
 
 }
-
+
 int textscan (char *buf);
 int process_arguments (int, char **);
 int get_threshold (char *arg, char *rv[2]);
@@ -112,7 +112,7 @@ main (int argc, char **argv)
 	input_buffer = malloc (MAX_INPUT_BUFFER);
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage ("Could not parse arguments\n");
+		usage (_("Could not parse arguments\n"));
 
 	server = strscpy (server, server_name);
 
@@ -126,13 +126,13 @@ main (int argc, char **argv)
 	/* run the command */
 	child_process = spopen (command_line);
 	if (child_process == NULL) {
-		printf ("Unable to open pipe: %s\n", command_line);
+		printf (_("Unable to open pipe: %s\n"), command_line);
 		return STATE_UNKNOWN;
 	}
 
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL) {
-		printf ("Could not open stderr for %s\n", command_line);
+		printf (_("Could not open stderr for %s\n"), command_line);
 	}
 
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
@@ -173,16 +173,16 @@ textscan (char *buf)
 	int status = STATE_UNKNOWN;
 
 	if (strstr (buf, "not found")) {
-		terminate (STATE_CRITICAL, "FPING unknown - %s not found\n", server_name);
+		terminate (STATE_CRITICAL, _("FPING unknown - %s not found\n"), server_name);
 
 	}
 	else if (strstr (buf, "is unreachable") || strstr (buf, "Unreachable")) {
-		terminate (STATE_CRITICAL, "FPING critical - %s is unreachable\n",
+		terminate (STATE_CRITICAL, _("FPING critical - %s is unreachable\n"),
 							 "host");
 
 	}
 	else if (strstr (buf, "is down")) {
-		terminate (STATE_CRITICAL, "FPING critical - %s is down\n", server_name);
+		terminate (STATE_CRITICAL, _("FPING critical - %s is down\n"), server_name);
 
 	}
 	else if (strstr (buf, "is alive")) {
@@ -208,7 +208,7 @@ textscan (char *buf)
 			status = STATE_WARNING;
 		else
 			status = STATE_OK;
-		terminate (status, "FPING %s - %s (loss=%f%%, rta=%f ms)\n",
+		terminate (status, _("FPING %s - %s (loss=%f%%, rta=%f ms)\n"),
 							 state_text (status), server_name, loss, rta);
 
 	}
@@ -227,7 +227,7 @@ textscan (char *buf)
 		else
 			status = STATE_OK;
 		
-		terminate (status, "FPING %s - %s (loss=%f%% )\n",
+		terminate (status, _("FPING %s - %s (loss=%f%% )\n"),
 							 state_text (status), server_name, loss );		
 	
 	}
@@ -237,7 +237,7 @@ textscan (char *buf)
 
 	return status;
 }
-
+
 
 
 
@@ -282,21 +282,21 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf ("%s: Unknown argument: %s\n\n", progname, optarg);
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (progname, "$Revision$");
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'v':									/* verbose mode */
 			verbose = TRUE;
 			break;
 		case 'H':									/* hostname */
 			if (is_host (optarg) == FALSE) {
-				printf ("Invalid host name/address\n\n");
+				printf (_("Invalid host name/address\n\n"));
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
@@ -328,20 +328,20 @@ process_arguments (int argc, char **argv)
 			if (is_intpos (optarg))
 				packet_size = atoi (optarg);
 			else
-				usage ("Packet size must be a positive integer");
+				usage (_("Packet size must be a positive integer"));
 			break;
 		case 'n':									/* number of packets */
 			if (is_intpos (optarg))
 				packet_count = atoi (optarg);
 			else
-				usage ("Packet count must be a positive integer");
+				usage (_("Packet count must be a positive integer"));
 			break;
 		}
 	}
 
 
 	if (server_name == NULL)
-		usage ("Host name was not supplied\n\n");
+		usage (_("Host name was not supplied\n\n"));
 
 	return OK;
 }
@@ -364,11 +364,11 @@ get_threshold (char *arg, char *rv[2])
 		arg1[strcspn (arg1, ",:")] = 0;
 		if (strstr (arg1, "%") && strstr (arg2, "%"))
 			terminate (STATE_UNKNOWN,
-								 "%s: Only one threshold may be packet loss (%s)\n", progname,
+								 _("%s: Only one threshold may be packet loss (%s)\n"), progname,
 								 arg);
 		if (!strstr (arg1, "%") && !strstr (arg2, "%"))
 			terminate (STATE_UNKNOWN,
-								 "%s: Only one threshold must be packet loss (%s)\n",
+								 _("%s: Only one threshold must be packet loss (%s)\n"),
 								 progname, arg);
 	}
 

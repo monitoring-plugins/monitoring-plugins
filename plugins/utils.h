@@ -97,6 +97,10 @@ char *state_text (int result);
 #define COPYRIGHT "Copyright (c) %s Nagios Plugin Development Team\n\
 \t<%s>\n\n"
 
+#define UT_HLP_VRS "\
+       %s (-h | --help) for detailed help\n\
+       %s (-V | --version) for version information\n"
+
 #define UT_HELP_VRSN "\
 \nOptions:\n\
  -h, --help\n\
