@@ -1,63 +1,83 @@
 /******************************************************************************
- *
- * CHECK_MRTGTRAF.C
- *
- * Program: MRTG (Multi-Router Traffic Grapher) traffic plugin for Nagios
- * License: GPL
- * Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
- *
- * Last Modified: $Date$
- *
- * Command line: CHECK_MRTGTRAF <log_file> <expire_minutes> <AVG|MAX> <iwl> <icl> <owl> <ocl>
- *
- * Description:
- *
- * This plugin will check the incoming/outgoing transfer rates of a
- * router, switch, etc recorded in an MRTG log.  If the newest log
- * entry is older than <expire_minutes>, a WARNING status is returned.
- * If either the incoming or outgoing rates exceed the <icl> or <ocl>
- * thresholds (in Bytes/sec), a CRITICAL status results.  If either of
- * the rates exceed the <iwl> or <owl> thresholds (in Bytes/sec), a
- * WARNING status results.
- *
- * Notes:
- * - MRTG stands for the Multi Router Traffic Grapher.  It can be
- *   downloaded from
- *   http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html
- * - While MRTG can monitor things other than traffic rates, this
- *   plugin probably won't work with much else without modification.
- * - The calculated i/o rates are a little off from what MRTG actually
- *   reports.  I'm not sure why this is right now, but will look into it
- *   for future enhancements of this plugin.
- *
- * License Information:
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- *****************************************************************************/
 
-#include "config.h"
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+******************************************************************************/
+
 #include "common.h"
 #include "utils.h"
 
 const char *progname = "check_mrtgtraf";
+const char *revision = "$Revision$";
+const char *copyright = "1999-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -F <log_file> -a <AVG | MAX> -v <variable> -w <warning_pair> -c <critical_pair>\n\
+  [-e expire_minutes] [-t timeout] [-v]\n"), progname);
+	printf (_(UT_HLP_VRS), progname, progname);
+}
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_("\
+ -F, --filename=STRING\n\
+   File to read log from\n\
+ -e, --expires=INTEGER\n\
+   Minutes after which log expires\n\
+ -a, --aggregation=(AVG|MAX)\n\
+   Test average or maximum\n\
+ -w, --warning\n\
+   Warning threshold pair \"<incoming>,<outgoing>\"\n\
+ -c, --critical\n\
+   Critical threshold pair \"<incoming>,<outgoing>\"\n"));
+
+	printf (_("\n\
+This plugin will check the incoming/outgoing transfer rates of a router,\n\
+switch, etc recorded in an MRTG log.  If the newest log entry is older\n\
+than <expire_minutes>, a WARNING status is returned. If either the\n\
+incoming or outgoing rates exceed the <icl> or <ocl> thresholds (in\n\
+Bytes/sec), a CRITICAL status results.  If either of the rates exceed\n\
+the <iwl> or <owl> thresholds (in Bytes/sec), a WARNING status results.\n\n"));
+
+	printf (_("Notes:\n\
+- MRTG stands for Multi Router Traffic Grapher. It can be downloaded from\n\
+  http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html\n\
+- While MRTG can monitor things other than traffic rates, this\n\
+  plugin probably won't work with much else without modification.\n\
+- The calculated i/o rates are a little off from what MRTG actually\n\
+  reports.  I'm not sure why this is right now, but will look into it\n\
+  for future enhancements of this plugin.\n"));
+
+	printf (_(UT_SUPPORT));
+}
+
 int process_arguments (int, char **);
 int validate_arguments (void);
-void print_help (void);
-void print_usage (void);
 
 char *log_file = NULL;
 int expire_minutes = -1;
@@ -90,12 +110,12 @@ main (int argc, char **argv)
 	char outgoing_speed_rating[8];
 
 	if (process_arguments (argc, argv) != OK)
-		usage ("Invalid command arguments supplied\n");
+		usage (_("Invalid command arguments supplied\n"));
 
 	/* open the MRTG log file for reading */
 	fp = fopen (log_file, "r");
 	if (fp == NULL)
-		usage ("Unable to open MRTG log file\n");
+		usage (_("Unable to open MRTG log file\n"));
 
 	line = 0;
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, fp)) {
@@ -137,14 +157,14 @@ main (int argc, char **argv)
 
 	/* if we couldn't read enough data, return an unknown error */
 	if (line <= 2)
-		usage ("Unable to process MRTG log file\n");
+		usage (_("Unable to process MRTG log file\n"));
 
 	/* make sure the MRTG data isn't too old */
 	time (&current_time);
 	if (expire_minutes > 0
 			&& (current_time - timestamp) >
 			(expire_minutes * 60)) terminate (STATE_WARNING,
-																				"MRTG data has expired (%d minutes old)\n",
+																				_("MRTG data has expired (%d minutes old)\n"),
 																				(int) ((current_time - timestamp) /
 																							 60));
 
@@ -197,34 +217,30 @@ main (int argc, char **argv)
 	if (incoming_rate > incoming_critical_threshold
 			|| outgoing_rate > outgoing_critical_threshold) {
 		result = STATE_CRITICAL;
-		asprintf (&error_message, "Traffic CRITICAL %s. In = %0.1f %s, %s. Out = %0.1f %s",
-						 (use_average == TRUE) ? "Avg" : "Max", adjusted_incoming_rate,
-						 incoming_speed_rating, (use_average == TRUE) ? "Avg" : "Max",
-						 adjusted_outgoing_rate, outgoing_speed_rating);
+		asprintf (&error_message, _("Traffic CRITICAL %s. In = %0.1f %s, %s. Out = %0.1f %s"),
+							(use_average == TRUE) ? _("Avg") : _("Max"), adjusted_incoming_rate,
+							incoming_speed_rating, (use_average == TRUE) ? "Avg" : "Max",
+							adjusted_outgoing_rate, outgoing_speed_rating);
 	}
 	else if (incoming_rate > incoming_warning_threshold
 					 || outgoing_rate > outgoing_warning_threshold) {
 		result = STATE_WARNING;
-		asprintf (&error_message, "Traffic WARNING %s. In = %0.1f %s, %s. Out = %0.1f %s",
-						 (use_average == TRUE) ? "Avg" : "Max", adjusted_incoming_rate,
-						 incoming_speed_rating, (use_average == TRUE) ? "Avg" : "Max",
-						 adjusted_outgoing_rate, outgoing_speed_rating);
+		asprintf (&error_message, _("Traffic WARNING %s. In = %0.1f %s, %s. Out = %0.1f %s"),
+							(use_average == TRUE) ? _("Avg") : _("Max"), adjusted_incoming_rate,
+							incoming_speed_rating, (use_average == TRUE) ? _("Avg") : _("Max"),
+							adjusted_outgoing_rate, outgoing_speed_rating);
 	}
 	else if (result == STATE_OK)
-		printf ("Traffic OK - %s. In = %0.1f %s, %s. Out = %0.1f %s\n",
-						(use_average == TRUE) ? "Avg" : "Max", adjusted_incoming_rate,
-						incoming_speed_rating, (use_average == TRUE) ? "Avg" : "Max",
+		printf (_("Traffic OK - %s. In = %0.1f %s, %s. Out = %0.1f %s\n"),
+						(use_average == TRUE) ? _("Avg") : _("Max"), adjusted_incoming_rate,
+						incoming_speed_rating, (use_average == TRUE) ? _("Avg") : _("Max"),
 						adjusted_outgoing_rate, outgoing_speed_rating);
 	else
-		printf ("UNKNOWN %s\n", error_message);
+		printf (_("UNKNOWN %s\n"), error_message);
 
 	return result;
 }
-
-
-
-
-
+
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -285,13 +301,13 @@ process_arguments (int argc, char **argv)
 							&outgoing_warning_threshold);
 			break;
 		case 'V':									/* version */
-			print_revision (progname, "$Revision$");
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* help */
-			usage ("Invalid argument\n");
+			usage (_("Invalid argument\n"));
 		}
 	}
 
@@ -340,48 +356,4 @@ int
 validate_arguments (void)
 {
 	return OK;
-}
-
-
-
-
-
-void
-print_help (void)
-{
-	print_revision (progname, "$Revision$");
-	printf
-		("Copyright (c) 2000 Tom Shields/Karl DeBisschop\n\n"
-		 "This plugin tests the UPS service on the specified host.\n\n");
-	print_usage ();
-	printf
-		("\nOptions:\n"
-		 " -F, --filename=STRING\n"
-		 "   File to read log from\n"
-		 " -e, --expires=INTEGER\n"
-		 "   Minutes after which log expires\n"
-		 " -a, --aggregation=(AVG|MAX)\n"
-		 "   Test average or maximum"
-		 " -w, --warning\n"
-		 "   Warning threshold pair \"<incoming>,<outgoing>\"\n"
-		 " -c, --critical\n"
-		 "   Critical threshold pair \"<incoming>,<outgoing>\"\n"
-		 " -h, --help\n"
-		 "   Print detailed help screen\n"
-		 " -V, --version\n" "   Print version information\n\n");
-	support ();
-}
-
-
-
-
-
-void
-print_usage (void)
-{
-	printf
-		("Usage: %s  -F <log_file> -a <AVG | MAX> -v <variable> -w <warning_pair> -c <critical_pair>\n"
-		 "            [-e expire_minutes] [-t timeout] [-v]\n"
-		 "       %s --help\n"
-		 "       %s --version\n", progname, progname, progname);
 }
