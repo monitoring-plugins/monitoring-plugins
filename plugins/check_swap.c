@@ -136,7 +136,7 @@ main (int argc, char **argv)
 #  ifdef _AIX
 	if (!allswaps) {
 		asprintf(&swap_command, "%s", "/usr/sbin/lsps -s");
-		asprintf(&swap_format, "%s", "%d%*s %d");
+		asprintf(&swap_format, "%s", "%f%*s %f");
 		conv_factor = 1;
 	}
 #  endif
