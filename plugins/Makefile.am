@@ -3,7 +3,7 @@
 VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t 
 
 INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/intl \
-@LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@ 
+@LDAPINCLUDE@ @PGINCLUDE@ 
 
 datadir = @datadir@
 localedir = $(datadir)/locale
