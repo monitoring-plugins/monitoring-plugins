@@ -36,6 +36,7 @@ print_usage() {
   echo "Usage:"
   echo "  $PROGNAME --tns <Oracle Sid or Hostname/IP address>"
   echo "  $PROGNAME --db <ORACLE_SID>"
+  echo "  $PROGNAME --login <ORACLE_SID>"
   echo "  $PROGNAME --oranames <Hostname>"
   echo "  $PROGNAME --help"
   echo "  $PROGNAME --version"
@@ -53,6 +54,8 @@ print_help() {
   echo "--db=SID"
   echo "   Check local database (search /bin/ps for PMON process and check"
 	echo "   filesystem for sgadefORACLE_SID.dbf"
+  echo "--login=SID"
+  echo "   Attempt a dummy login and alert if not ORA-01017: invalid username/password"
   echo "--oranames=Hostname"
   echo "   Check remote Oracle Names server"
   echo "--help"
@@ -78,6 +81,26 @@ case "$1" in
     ;;
 *)
     cmd="$1"
+    ;;
+esac
+
+# Information options
+case "$cmd" in
+--help)
+		print_help
+    exit $STATE_OK
+    ;;
+-h)
+		print_help
+    exit $STATE_OK
+    ;;
+--version)
+		print_revision $PLUGIN $REVISION
+    exit $STATE_OK
+    ;;
+-V)
+		print_revision $PLUGIN $REVISION
+    exit $STATE_OK
     ;;
 esac
 
@@ -156,21 +179,17 @@ case "$cmd" in
 	exit $STATE_CRITICAL
     fi
     ;;
---help)
-		print_help
-    exit $STATE_OK
-    ;;
--h)
-		print_help
-    exit $STATE_OK
-    ;;
---version)
-		print_revision $PLUGIN $REVISION
-    exit $STATE_OK
-    ;;
--V)
-		print_revision $PLUGIN $REVISION
-    exit $STATE_OK
+--login)
+    loginchk=`sqlplus dummy/user@$2 < /dev/null`
+    loginchk2=` echo  $loginchk | grep -c ORA-01017`
+    if [ ${loginchk2} -eq 1 ] ; then 
+	echo "OK - dummy login connected"
+	exit $STATE_OK
+    else
+	loginchk3=` echo "$loginchk" | grep "ORA-" | head -1`
+	echo "CRITICAL - $loginchk3"
+	exit $STATE_CRITICAL
+    fi
     ;;
 *)
     print_usage
