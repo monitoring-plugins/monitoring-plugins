@@ -151,11 +151,11 @@ main (int argc, char **argv)
 
 	printf ("DNS %s - %s|%s\n",
 	        state_text (result), output,
-	        perfdata("time", microsec, "us",
+	        fperfdata("time", elapsed_time, "s",
 	                 (warning_interval>UNDEFINED?TRUE:FALSE),
-	                 (int)(1e6*warning_interval),
+	                 warning_interval,
 	                 (critical_interval>UNDEFINED?TRUE:FALSE),
-	                 (int)(1e6*critical_interval),
+	                 critical_interval,
 									 TRUE, 0, FALSE, 0));
 	return result;
 }

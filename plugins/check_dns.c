@@ -198,7 +198,7 @@ main (int argc, char **argv)
 		printf ("%s %s: ", _("DNS"), _("OK"));
 		printf (ngettext("%.3f second response time, ", "%.3f seconds response time, ", elapsed_time), elapsed_time);
 		printf (_("%s returns %s"), query_address, address);
-		printf ("|%s\n", perfdata ("time", microsec, "us", FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
+		printf ("|%s\n", fperfdata ("time", elapsed_time, "s", FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
 	}
 	else if (result == STATE_WARNING)
 		printf (_("DNS WARNING - %s\n"),

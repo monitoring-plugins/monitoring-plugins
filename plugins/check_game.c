@@ -152,7 +152,7 @@ main (int argc, char **argv)
 						perfdata ("players", atol(ret[qstat_game_players]), "",
 		                  FALSE, 0, FALSE, 0,
 		                  TRUE, 0, TRUE, atol(ret[qstat_game_players_max])),
-						perfdata ("ping", atol(ret[qstat_ping_field]), "",
+						fperfdata ("ping", strtod(ret[qstat_ping_field], NULL), "",
 		                  FALSE, 0, FALSE, 0,
 		                  TRUE, 0, FALSE, 0));
 	}
