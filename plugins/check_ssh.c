@@ -32,7 +32,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #define SSH_DFL_PORT    22
 #define BUFF_SZ         256
 
-short port = -1;
+int port = -1;
 char *server_name = NULL;
 int verbose = FALSE;
 
@@ -41,7 +41,7 @@ int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
 
-int ssh_connect (char *haddr, short hport);
+int ssh_connect (char *haddr, int hport);
 
 int
 main (int argc, char **argv)
@@ -111,7 +111,8 @@ process_arguments (int argc, char **argv)
 		case 't':									/* timeout period */
 			if (!is_integer (optarg))
 				usage (_("Timeout Interval must be an integer!\n\n"));
-			socket_timeout = atoi (optarg);
+			else
+				socket_timeout = atoi (optarg);
 			break;
 		case '4':
 			address_family = AF_INET;
@@ -178,7 +179,7 @@ validate_arguments (void)
 *-----------------------------------------------------------------------*/
 
 int
-ssh_connect (char *haddr, short hport)
+ssh_connect (char *haddr, int hport)
 {
 	int sd;
 	int result;

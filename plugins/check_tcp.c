@@ -1,21 +1,27 @@
 /*****************************************************************************
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
 *****************************************************************************/
-#include "config.h"
+
+/* progname changes depending on symlink called */
+char *progname = "check_tcp";
+const char *revision = "$Revision$";
+const char *copyright = "1999-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
@@ -51,9 +57,9 @@ enum {
 };
 
 int process_arguments (int, char **);
-void print_usage (void);
-void print_help (void);
 int my_recv (void);
+void print_help (void);
+void print_usage (void);
 
 char *SERVICE = NULL;
 char *SEND = NULL;
@@ -67,94 +73,35 @@ char *server_address = NULL;
 char *server_send = NULL;
 char *server_quit = NULL;
 char **server_expect = NULL;
-int server_expect_count = 0;
+size_t server_expect_count = 0;
 int maxbytes = 0;
 char **warn_codes = NULL;
-int warn_codes_count = 0;
+size_t warn_codes_count = 0;
 char **crit_codes = NULL;
-int crit_codes_count = 0;
-int delay = 0;
+size_t crit_codes_count = 0;
+unsigned int delay = 0;
 double warning_time = 0;
 int check_warning_time = FALSE;
 double critical_time = 0;
 int check_critical_time = FALSE;
 double elapsed_time = 0;
+long microsec;
 int verbose = FALSE;
 int use_ssl = FALSE;
 int sd = 0;
-char *buffer = "";
+char *buffer;
 
-/* progname changes depending on symlink called */
-char *progname = "check_tcp";
-const char *revision = "$Revision$";
-const char *copyright = "1999-2003";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
+
+
+
 
-
-
-
-void
-print_usage (void)
-{
-	printf (_("\
-Usage: %s -H host -p port [-w <warning time>] [-c <critical time>]\n\
-  [-s <send string>] [-e <expect string>] [-q <quit string>]\n\
-  [-m <maximum bytes>] [-d <delay>] [-t <timeout seconds>]\n\
-  [-r <refuse state>] [-v] [-4|-6]\n"), progname);
-	printf ("       %s (-h|--help)\n", progname);
-	printf ("       %s (-V|--version)\n", progname);
-}
-void
-print_help (void)
-{
-	print_revision (progname, revision);
-
-	printf (_(COPYRIGHT), copyright, email);
-
-	printf (_("This plugin tests %s connections with the specified host.\n\n"),
-	        SERVICE);
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_(UT_HOST_PORT), 'p', "none");
-
-	printf (_(UT_IPv46));
-
-	printf (_("\
- -s, --send=STRING\n\
-    String to send to the server\n\
- -e, --expect=STRING\n\
-    String to expect in server response\n\
- -q, --quit=STRING\n\
-    String to send server to initiate a clean close of the connection\n"));
-
-	printf (_("\
- -r, --refuse=ok|warn|crit\n\
-    Accept tcp refusals with states ok, warn, crit (default: crit)\n\
- -m, --maxbytes=INTEGER\n\
-    Close connection once more than this number of bytes are received\n\
- -d, --delay=INTEGER\n\
-    Seconds to wait between sending string and polling for response\n"));
-
-	printf (_(UT_WARN_CRIT));
-
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-
-	printf (_(UT_VERBOSE));
-
-	printf (_(UT_SUPPORT));
-}
-
-
-
 int
 main (int argc, char **argv)
 {
 	int result;
 	int i;
-	char *status = "";
+	char *status;
 	struct timeval tv;
 
 	setlocale (LC_ALL, "");
@@ -296,10 +243,10 @@ main (int argc, char **argv)
 		asprintf (&server_send, "%s\r\n", server_send);
 #ifdef HAVE_SSL
 		if (use_ssl)
-			SSL_write(ssl, server_send, strlen (server_send));
+			SSL_write(ssl, server_send, (int)strlen(server_send));
 		else
 #endif
-			send (sd, server_send, strlen (server_send), 0);
+			send (sd, server_send, strlen(server_send), 0);
 	}
 
 	if (delay > 0) {
@@ -311,6 +258,7 @@ main (int argc, char **argv)
 
 		buffer = malloc (MAXBUF);
 		memset (buffer, '\0', MAXBUF);
+		status = strdup ("");
 		/* watch for the expect string */
 		while ((i = my_recv ()) > 0) {
 			buffer[i] = '\0';
@@ -333,8 +281,8 @@ main (int argc, char **argv)
 		if (server_expect_count > 0) {
 			for (i = 0;; i++) {
 				if (verbose)
-					printf ("%d %d\n", i, server_expect_count);
-				if (i >= server_expect_count)
+					printf ("%d %d\n", i, (int)server_expect_count);
+				if (i >= (int)server_expect_count)
 					die (STATE_WARNING, _("Invalid response from host\n"));
 				if (strstr (status, server_expect[i]))
 					break;
@@ -345,7 +293,7 @@ main (int argc, char **argv)
 	if (server_quit != NULL) {
 #ifdef HAVE_SSL
 		if (use_ssl) {
-			SSL_write (ssl, server_quit, strlen (server_quit));
+			SSL_write (ssl, server_quit, (int)strlen(server_quit));
 			SSL_shutdown (ssl);
  			SSL_free (ssl);
  			SSL_CTX_free (ctx);
@@ -362,7 +310,8 @@ main (int argc, char **argv)
 	if (sd)
 		close (sd);
 
-	elapsed_time = delta_time (tv);
+	microsec = deltime (tv);
+	elapsed_time = (double)microsec / 1.0e6;
 
 	if (check_critical_time == TRUE && elapsed_time > critical_time)
 		result = STATE_CRITICAL;
@@ -382,7 +331,7 @@ main (int argc, char **argv)
 	if (status && strlen(status) > 0)
 		printf (" [%s]", status);
 
-	printf ("|time=%.3f\n", elapsed_time);
+	printf ("|time=%ldus\n", microsec);
 
 	return result;
 }
@@ -479,13 +428,15 @@ process_arguments (int argc, char **argv)
 		case 'c':                 /* critical */
 			if (!is_intnonneg (optarg))
 				usage (_("Critical threshold must be a nonnegative integer\n"));
-			critical_time = strtod (optarg, NULL);
+			else
+				critical_time = strtod (optarg, NULL);
 			check_critical_time = TRUE;
 			break;
 		case 'w':                 /* warning */
 			if (!is_intnonneg (optarg))
 				usage (_("Warning threshold must be a nonnegative integer\n"));
-			warning_time = strtod (optarg, NULL);
+			else
+				warning_time = strtod (optarg, NULL);
 			check_warning_time = TRUE;
 			break;
 		case 'C':
@@ -499,12 +450,14 @@ process_arguments (int argc, char **argv)
 		case 't':                 /* timeout */
 			if (!is_intpos (optarg))
 				usage (_("Timeout interval must be a positive integer\n"));
-			socket_timeout = atoi (optarg);
+			else
+				socket_timeout = atoi (optarg);
 			break;
 		case 'p':                 /* port */
 			if (!is_intpos (optarg))
 				usage (_("Server port must be a positive integer\n"));
-			server_port = atoi (optarg);
+			else
+				server_port = atoi (optarg);
 			break;
 		case 's':
 			server_send = optarg;
@@ -520,7 +473,8 @@ process_arguments (int argc, char **argv)
 		case 'm':
 			if (!is_intpos (optarg))
 				usage (_("Maxbytes must be a positive integer\n"));
-			maxbytes = atoi (optarg);
+			else
+				maxbytes = atoi (optarg);
 		case 'q':
 			server_quit = optarg;
 			break;
@@ -626,4 +580,67 @@ my_recv (void)
 #endif
 
 	return i;
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("This plugin tests %s connections with the specified host.\n\n"),
+	        SERVICE);
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_HOST_PORT), 'p', "none");
+
+	printf (_(UT_IPv46));
+
+	printf (_("\
+ -s, --send=STRING\n\
+    String to send to the server\n\
+ -e, --expect=STRING\n\
+    String to expect in server response\n\
+ -q, --quit=STRING\n\
+    String to send server to initiate a clean close of the connection\n"));
+
+	printf (_("\
+ -r, --refuse=ok|warn|crit\n\
+    Accept tcp refusals with states ok, warn, crit (default: crit)\n\
+ -m, --maxbytes=INTEGER\n\
+    Close connection once more than this number of bytes are received\n\
+ -d, --delay=INTEGER\n\
+    Seconds to wait between sending string and polling for response\n"));
+
+	printf (_(UT_WARN_CRIT));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(UT_VERBOSE));
+
+	printf (_(UT_SUPPORT));
+}
+
+
+
+
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -H host -p port [-w <warning time>] [-c <critical time>]\n\
+  [-s <send string>] [-e <expect string>] [-q <quit string>]\n\
+  [-m <maximum bytes>] [-d <delay>] [-t <timeout seconds>]\n\
+  [-r <refuse state>] [-v] [-4|-6]\n"), progname);
+	printf ("       %s (-h|--help)\n", progname);
+	printf ("       %s (-V|--version)\n", progname);
 }

@@ -25,56 +25,9 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "netutils.h"
 #include "utils.h"
 
-/* Original Command line: 
-   check_udp <host_address> [-p port] [-s send] [-e expect] \
-   [-wt warn_time] [-ct crit_time] [-to to_sec] */
-void
-print_usage (void)
-{
-	printf (_("\
-Usage: %s -H <host_address> [-p port] [-w warn_time] [-c crit_time]\n\
-    [-e expect] [-s send] [-t to_sec] [-v]\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
-}
-
-void
-print_help (void)
-{
-	print_revision (progname, revision);
-
-	printf (_("Copyright (c) 1999 Ethan Galstad\n"));
-	printf (_(COPYRIGHT), copyright, email);
-
-	printf (_("\
-This plugin tests an UDP connection with the specified host.\n\n"));
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_(UT_HOST_PORT), 'p', "none");
-
-	printf (_("\
- -e, --expect=STRING <optional>\n\
-    String to expect in first line of server response\n\
- -s, --send=STRING <optional>\n\
-    String to send to the server when initiating the connection\n"));
-
-	printf (_(UT_WARN_CRIT));
-
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-
-	printf (_(UT_VERBOSE));
-
-	printf (_("\
-This plugin will attempt to connect to the specified port on the host.\n\
-Successful connects return STATE_OK, refusals and timeouts return\n\
-STATE_CRITICAL, other errors return STATE_UNKNOWN.\n\n"));
-
-	printf(_(UT_SUPPORT));
-}
-
 int process_arguments (int, char **);
+void print_help (void);
+void print_usage (void);
 
 int warning_time = 0;
 int check_warning_time = FALSE;
@@ -84,7 +37,7 @@ int verbose = FALSE;
 int server_port = 0;
 char *server_address = NULL;
 char *server_expect = NULL;
-char *server_send = "";
+char *server_send;
 
 int
 main (int argc, char **argv)
@@ -207,24 +160,28 @@ process_arguments (int argc, char **argv)
 		case 'c':									/* critical */
 			if (!is_intnonneg (optarg))
 				usage (_("Critical threshold must be a nonnegative integer\n"));
-			critical_time = atoi (optarg);
+			else
+				critical_time = atoi (optarg);
 			check_critical_time = TRUE;
 			break;
 		case 'w':									/* warning */
 			if (!is_intnonneg (optarg))
 				usage (_("Warning threshold must be a nonnegative integer\n"));
-			warning_time = atoi (optarg);
+			else
+				warning_time = atoi (optarg);
 			check_warning_time = TRUE;
 			break;
 		case 't':									/* timeout */
 			if (!is_intnonneg (optarg))
 				usage (_("Timeout interval must be a nonnegative integer\n"));
-			socket_timeout = atoi (optarg);
+			else
+				socket_timeout = atoi (optarg);
 			break;
 		case 'p':									/* port */
 			if (!is_intnonneg (optarg))
 				usage (_("Server port must be a nonnegative integer\n"));
-			server_port = atoi (optarg);
+			else
+				server_port = atoi (optarg);
 			break;
 		case 'e':									/* expect */
 			server_expect = optarg;
@@ -245,5 +202,65 @@ process_arguments (int argc, char **argv)
 	if (server_address == NULL)
 		usage (_("Host name was not supplied\n"));
 
+	if (server_send == NULL)
+		server_send = strdup("");
+
 	return c;
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 1999 Ethan Galstad\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("\
+This plugin tests an UDP connection with the specified host.\n\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_HOST_PORT), 'p', "none");
+
+	printf (_("\
+ -e, --expect=STRING <optional>\n\
+    String to expect in first line of server response\n\
+ -s, --send=STRING <optional>\n\
+    String to send to the server when initiating the connection\n"));
+
+	printf (_(UT_WARN_CRIT));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(UT_VERBOSE));
+
+	printf (_("\
+This plugin will attempt to connect to the specified port on the host.\n\
+Successful connects return STATE_OK, refusals and timeouts return\n\
+STATE_CRITICAL, other errors return STATE_UNKNOWN.\n\n"));
+
+	printf(_(UT_SUPPORT));
+}
+
+
+
+
+/* Original Command line: 
+   check_udp <host_address> [-p port] [-s send] [-e expect] \
+   [-wt warn_time] [-ct crit_time] [-to to_sec] */
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -H <host_address> [-p port] [-w warn_time] [-c crit_time]\n\
+    [-e expect] [-s send] [-t to_sec] [-v]\n"), progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }

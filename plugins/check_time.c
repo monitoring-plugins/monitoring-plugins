@@ -29,51 +29,6 @@ enum {
 	TIME_PORT = 37
 };
 
-void
-print_usage (void)
-{
-	printf (_("\
-Usage: %s -H <host_address> [-p port] [-w variance] [-c variance]\n\
-    [-W connect_time] [-C connect_time] [-t timeout]\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
-}
-
-void
-print_help (void)
-{
-	char *myport;
-	asprintf (&myport, "%d", TIME_PORT);
-
-	print_revision (progname, revision);
-
-	printf (_("Copyright (c) 1999 Ethan Galstad\n"));
-	printf (_(COPYRIGHT), copyright, email);
-
-	printf (_("\
-This plugin will check the time on the specified host.\n\n"));
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_(UT_HOST_PORT), 'p', myport);
-
-	printf (_("\
- -w, --warning-variance=INTEGER\n\
-    Time difference (sec.) necessary to result in a warning status\n\
- -c, --critical-variance=INTEGER\n\
-    Time difference (sec.) necessary to result in a critical status\n\
- -W, --warning-connect=INTEGER\n\
-    Response time (sec.) necessary to result in warning status\n\
- -C, --critical-connect=INTEGER\n\
-    Response time (sec.) necessary to result in critical status\n"));
-
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-
-	support ();
-}
-
-
 #define	UNIX_EPOCH 2208988800UL
 
 unsigned long server_time, raw_server_time;
@@ -89,11 +44,9 @@ int check_critical_diff = FALSE;
 int server_port = TIME_PORT;
 char *server_address = NULL;
 
-
 int process_arguments (int, char **);
-void print_usage (void);
 void print_help (void);
-
+void print_usage (void);
 
 int
 main (int argc, char **argv)
@@ -276,24 +229,28 @@ process_arguments (int argc, char **argv)
 		case 'W':									/* warning-connect */
 			if (!is_intnonneg (optarg))
 				usage (_("Warning threshold must be a nonnegative integer\n"));
-			warning_time = atoi (optarg);
+			else
+				warning_time = atoi (optarg);
 			check_warning_time = TRUE;
 			break;
 		case 'C':									/* critical-connect */
 			if (!is_intnonneg (optarg))
 				usage (_("Critical threshold must be a nonnegative integer\n"));
-			critical_time = atoi (optarg);
+			else
+				critical_time = atoi (optarg);
 			check_critical_time = TRUE;
 			break;
 		case 'p':									/* port */
 			if (!is_intnonneg (optarg))
 				usage (_("Server port must be a nonnegative integer\n"));
-			server_port = atoi (optarg);
+			else
+				server_port = atoi (optarg);
 			break;
 		case 't':									/* timeout */
 			if (!is_intnonneg (optarg))
 				usage (_("Timeout interval must be a nonnegative integer\n"));
-			socket_timeout = atoi (optarg);
+			else
+				socket_timeout = atoi (optarg);
 			break;
 		}
 	}
@@ -311,4 +268,56 @@ process_arguments (int argc, char **argv)
 	}
 
 	return OK;
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+	char *myport;
+	asprintf (&myport, "%d", TIME_PORT);
+
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 1999 Ethan Galstad\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("\
+This plugin will check the time on the specified host.\n\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_HOST_PORT), 'p', myport);
+
+	printf (_("\
+ -w, --warning-variance=INTEGER\n\
+    Time difference (sec.) necessary to result in a warning status\n\
+ -c, --critical-variance=INTEGER\n\
+    Time difference (sec.) necessary to result in a critical status\n\
+ -W, --warning-connect=INTEGER\n\
+    Response time (sec.) necessary to result in warning status\n\
+ -C, --critical-connect=INTEGER\n\
+    Response time (sec.) necessary to result in critical status\n"));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	support ();
+}
+
+
+
+
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -H <host_address> [-p port] [-w variance] [-c variance]\n\
+    [-W connect_time] [-C connect_time] [-t timeout]\n"), progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }

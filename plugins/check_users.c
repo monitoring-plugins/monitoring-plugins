@@ -25,43 +25,11 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "popen.h"
 #include "utils.h"
 
-void
-print_usage (void)
-{
-	printf ("Usage: %s -w <users> -c <users>\n", progname);
-	printf (_(UT_HLP_VRS), progname, progname);
-}
-
-void
-print_help (void)
-{
-	print_revision (progname, revision);
-
-	printf (_("Copyright (c) 1999 Ethan Galstad\n"));
-	printf (_(COPYRIGHT), copyright, email);
-
-	printf (_("\
-This plugin checks the number of users currently logged in on the local\n\
-system and generates an error if the number exceeds the thresholds specified.\n"));
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_("\
- -w, --warning=INTEGER\n\
-    Set WARNING status if more than INTEGER users are logged in\n\
- -c, --critical=INTEGER\n\
-    Set CRITICAL status if more than INTEGER users are logged in\n"));
-
-	printf (_(UT_SUPPORT));
-}
-
 #define possibly_set(a,b) ((a) == 0 ? (b) : 0)
 
 int process_arguments (int, char **);
-void print_usage (void);
 void print_help (void);
+void print_usage (void);
 
 int wusers = -1;
 int cusers = -1;
@@ -171,12 +139,14 @@ process_arguments (int argc, char **argv)
 		case 'c':									/* critical */
 			if (!is_intnonneg (optarg))
 				usage (_("Critical threshold must be a nonnegative integer\n"));
-			cusers = atoi (optarg);
+			else
+				cusers = atoi (optarg);
 			break;
 		case 'w':									/* warning */
 			if (!is_intnonneg (optarg))
 				usage (_("Warning threshold must be a nonnegative integer\n"));
-			wusers = atoi (optarg);
+			else
+				wusers = atoi (optarg);
 			break;
 		}
 	}
@@ -185,14 +155,56 @@ process_arguments (int argc, char **argv)
 	if (wusers == -1 && argc > c) {
 		if (is_intnonneg (argv[c]) == FALSE)
 			usage (_("Warning threshold must be a nonnegative integer\n"));
-		wusers = atoi (argv[c++]);
+		else
+			wusers = atoi (argv[c++]);
 	}
 
 	if (cusers == -1 && argc > c) {
 		if (is_intnonneg (argv[c]) == FALSE)
 			usage (_("Warning threshold must be a nonnegative integer\n"));
-		cusers = atoi (argv[c]);
+		else
+			cusers = atoi (argv[c]);
 	}
 
 	return OK;
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 1999 Ethan Galstad\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("\
+This plugin checks the number of users currently logged in on the local\n\
+system and generates an error if the number exceeds the thresholds specified.\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_("\
+ -w, --warning=INTEGER\n\
+    Set WARNING status if more than INTEGER users are logged in\n\
+ -c, --critical=INTEGER\n\
+    Set CRITICAL status if more than INTEGER users are logged in\n"));
+
+	printf (_(UT_SUPPORT));
+}
+
+
+
+
+void
+print_usage (void)
+{
+	printf ("Usage: %s -w <users> -c <users>\n", progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }

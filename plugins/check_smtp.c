@@ -41,8 +41,8 @@ int server_port = SMTP_PORT;
 char *server_address = NULL;
 char *server_expect = NULL;
 int smtp_use_dummycmd = 1;
-char *mail_command = "MAIL ";
-char *from_arg = " ";
+char *mail_command;
+char *from_arg;
 int warning_time = 0;
 int check_warning_time = FALSE;
 int critical_time = 0;
@@ -60,7 +60,7 @@ main (int argc, char **argv)
 	int sd;
 	double elapsed_time;
 	int result = STATE_UNKNOWN;
-	char buffer[MAX_INPUT_BUFFER] = "";
+	char buffer[MAX_INPUT_BUFFER];
 	char *from_str = NULL;
 	char *helocmd = NULL;
 	struct timeval tv;
@@ -313,7 +313,13 @@ process_arguments (int argc, char **argv)
 	}
 
 	if (server_expect == NULL)
-		asprintf (&server_expect, SMTP_EXPECT);
+		server_expect = strdup (SMTP_EXPECT);
+
+	if (mail_command == NULL)
+		mail_command = strdup("MAIL ");
+
+	if (from_arg==NULL)
+		from_arg = strdup(" ");
 
 	return validate_arguments ();
 }
