@@ -64,26 +64,26 @@ my $smbclientoptions="";
 # Options checking
 
 ($opt_H) || ($opt_H = shift) || usage("Host name not specified\n");
-my $host = $1 if ($opt_H =~ /([-_.A-Za-z0-9]+\$?)/);
+my $host = $1 if ($opt_H =~ /^([-_.A-Za-z0-9]+\$?)$/);
 ($host) || usage("Invalid host: $opt_H\n");
 
 ($opt_s) || ($opt_s = shift) || usage("Share volume not specified\n");
-my $share = $1 if ($opt_s =~ /([-_.A-Za-z0-9]+\$?)/);
+my $share = $1 if ($opt_s =~ /^([-_.A-Za-z0-9]+\$?)$/);
 ($share) || usage("Invalid share: $opt_s\n");
 
 ($opt_u) || ($opt_u = shift) || ($opt_u = "guest");
-my $user = $1 if ($opt_u =~ /([-_.A-Za-z0-9\\]+)/);
+my $user = $1 if ($opt_u =~ /^([-_.A-Za-z0-9\\]+)$/);
 ($user) || usage("Invalid user: $opt_u\n");
 
 ($opt_p) || ($opt_p = shift) || ($opt_p = "guest");
 my $pass = $1 if ($opt_p =~ /(.*)/);
 
 ($opt_w) || ($opt_w = shift) || ($opt_w = 85);
-my $warn = $1 if ($opt_w =~ /([0-9]{1,2}\%?|100\%?|[0-9]+[kMG])/);
+my $warn = $1 if ($opt_w =~ /^([0-9]{1,2}\%?|100\%?|[0-9]+[kMG])$/);
 ($warn) || usage("Invalid warning threshold: $opt_w\n");
 
 ($opt_c) || ($opt_c = shift) || ($opt_c = 95);
-my $crit = $1 if ($opt_c =~ /([0-9]{1,2}\%?|100\%?|[0-9]+[kMG])/);
+my $crit = $1 if ($opt_c =~ /^([0-9]{1,2}\%?|100\%?|[0-9]+[kMG])$/);
 ($crit) || usage("Invalid critical threshold: $opt_c\n");
 
 # check if both warning and critical are percentage or size
