@@ -122,3 +122,7 @@ char *state_text (int result);
     Response time to result in critical status (seconds)\n\
  -t, --timeout=INTEGER\n\
     Seconds before connection times out (default: %d)\n"
+
+#define TIMEOUT "\
+ -t, --timeout=INTEGER\n\
+    Seconds before connection times out (default: %d)\n"
