@@ -3,8 +3,7 @@
 SUBDIRS = lib plugins plugins-scripts
 
 EXTRA_DIST = CODING FAQ LEGAL REQUIREMENTS SUPPORT \
-	subst.in subst.sh Helper.pm	\
-	contrib nagios-plugins.spec.in
+	Helper.pm	contrib nagios-plugins.spec.in
 
 ACLOCAL_AMFLAGS = -I lib
 

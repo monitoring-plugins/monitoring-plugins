@@ -1469,7 +1469,7 @@ AC_SUBST(DEPLIBS)
 
 AC_DEFINE_UNQUOTED(PACKAGE_VERSION,"${VERSION}",[package version])
 
-AC_OUTPUT(Makefile subst lib/Makefile plugins/Makefile plugins-scripts/Makefile plugins-scripts/subst plugins-scripts/utils.pm plugins-scripts/utils.sh command.cfg test.pl,PATH=.:..:$PATH subst.sh command.cfg)
+AC_OUTPUT(Makefile lib/Makefile plugins/Makefile plugins-scripts/Makefile plugins-scripts/subst plugins-scripts/utils.pm plugins-scripts/utils.sh command.cfg test.pl,PATH=.:..:$PATH command.cfg)
 
 ACX_FEATURE([with],[cgiurl])
 ACX_FEATURE([with],[nagios-user])
