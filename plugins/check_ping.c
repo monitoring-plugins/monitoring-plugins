@@ -78,7 +78,7 @@ main (int argc, char **argv)
 	addresses = malloc (sizeof(char*) * max_addr);
 	addresses[0] = NULL;
 
-	if (process_arguments (argc, argv) == ERROR)
+	if (process_arguments (argc, argv) != OK)
 		usage (_("check_ping: could not parse arguments\n"));
 
 	/* Set signal handling and alarm */
@@ -121,7 +121,7 @@ main (int argc, char **argv)
 		if (pl == UNKNOWN_PACKET_LOSS || rta < 0.0) {
 			printf ("%s\n", cmd);
 			die (STATE_UNKNOWN,
-			           _("Error: Could not interpret output from ping command\n"));
+			           _("CRITICAL - Could not interpret output from ping command\n"));
 		}
 
 		if (pl >= cpl || rta >= crta || rta < 0)

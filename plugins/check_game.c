@@ -67,7 +67,7 @@ main (int argc, char **argv)
 
 //	result = process_arguments (argc, argv);
 	
-	if (process_arguments (argc, argv) == ERROR)
+	if (process_arguments (argc, argv) != OK)
 		usage (_("check_game: could not parse arguments\n"));
 
 /*	if (result != OK) {
@@ -116,7 +116,7 @@ main (int argc, char **argv)
 	 */
 
 	if (!strncmp (input_buffer, "unknown option", 14)) {
-		printf (_("ERROR: Host type parameter incorrect!\n"));
+		printf (_("CRITICAL - Host type parameter incorrect!\n"));
 		result = STATE_CRITICAL;
 		return result;
 	}
@@ -136,15 +136,15 @@ main (int argc, char **argv)
 	}
 
 	if (strstr (ret[2], QSTAT_HOST_ERROR)) {
-		printf ("ERROR: Host not found\n");
+		printf ("CRITICAL - Host not found\n");
 		result = STATE_CRITICAL;
 	}
 	else if (strstr (ret[2], QSTAT_HOST_DOWN)) {
-		printf ("ERROR: Game server down or unavailable\n");
+		printf ("CRITICAL - Game server down or unavailable\n");
 		result = STATE_CRITICAL;
 	}
 	else if (strstr (ret[2], QSTAT_HOST_TIMEOUT)) {
-		printf ("ERROR: Game server timeout\n");
+		printf ("CRITICAL - Game server timeout\n");
 		result = STATE_CRITICAL;
 	}
 	else {

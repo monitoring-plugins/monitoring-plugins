@@ -121,8 +121,8 @@ main(int argc, char **argv) {
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
-	if (process_arguments(argc,argv)==ERROR)
-		usage(_("check_nwstat: could not parse arguments\n"));
+	if (process_arguments(argc,argv) != OK)
+		usage (_("check_nwstat: could not parse arguments\n"));
 
 	/* initialize alarm signal handling */
 	signal(SIGALRM,socket_timeout_alarm_handler);
@@ -293,7 +293,7 @@ main(int argc, char **argv) {
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			asprintf (&output_message,_("Error: Volume '%s' does not exist!"),volume_name);
+			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
 			result=STATE_CRITICAL;
 		}	else {
 			free_disk_space=strtoul(recv_buffer,NULL,10);
@@ -318,7 +318,7 @@ main(int argc, char **argv) {
 
 		if (!strcmp(recv_buffer,"-1\n")) {
 
-			asprintf (&output_message,_("Error: Volume '%s' does not exist!"),volume_name);
+			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
 			result=STATE_CRITICAL;
 
 		} else {
@@ -438,7 +438,7 @@ main(int argc, char **argv) {
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			asprintf (&output_message,_("Error: Volume '%s' does not exist!"),volume_name);
+			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
 			result=STATE_CRITICAL;
 		} else {
 			purgeable_disk_space=strtoul(recv_buffer,NULL,10);
@@ -459,7 +459,7 @@ main(int argc, char **argv) {
 
 		if (!strcmp(recv_buffer,"-1\n")) {
 
-			asprintf (&output_message,_("Error: Volume '%s' does not exist!"),volume_name);
+			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
 			result=STATE_CRITICAL;
 
 		} else {
@@ -491,7 +491,7 @@ main(int argc, char **argv) {
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			asprintf (&output_message,_("Error: Volume '%s' does not exist!"),volume_name);
+			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
 			result=STATE_CRITICAL;
 		} else {
 			non_purgeable_disk_space=strtoul(recv_buffer,NULL,10);
@@ -512,7 +512,7 @@ main(int argc, char **argv) {
 
 		if (!strcmp(recv_buffer,"-1\n")) {
 
-			asprintf (&output_message,_("Error: Volume '%s' does not exist!"),volume_name);
+			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
 			result=STATE_CRITICAL;
 
 		} else {

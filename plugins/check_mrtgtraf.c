@@ -191,7 +191,9 @@ main (int argc, char **argv)
 
 	return result;
 }
-
+
+
+
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -303,15 +305,11 @@ process_arguments (int argc, char **argv)
 
 
 
-
-
 int
 validate_arguments (void)
 {
 	return OK;
 }
-
-
 
 
 

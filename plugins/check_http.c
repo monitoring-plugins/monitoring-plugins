@@ -145,7 +145,7 @@ main (int argc, char **argv)
 	asprintf (&user_agent, "User-Agent: check_http/%s (nagios-plugins %s)",
 	          clean_revstring (revision), VERSION);
 
-	if (process_arguments (argc, argv) == ERROR)
+	if (process_arguments (argc, argv) != OK)
 		usage (_("check_http: could not parse arguments\n"));
 
 	if (strstr (timestamp, ":")) {
@@ -174,7 +174,7 @@ main (int argc, char **argv)
 			X509_free (server_cert);
 		}
 		else {
-			printf (_("ERROR: Cannot retrieve server certificate.\n"));
+			printf (_("CRITICAL - Cannot retrieve server certificate.\n"));
 			result = STATE_CRITICAL;
 		}
 		SSL_shutdown (ssl);
@@ -738,7 +738,7 @@ check_http (void)
 			X509_free (server_cert);
 		}
 		else {
-			printf (_("ERROR: Cannot retrieve server certificate.\n"));
+			printf (_("CRITICAL - Cannot retrieve server certificate.\n"));
 			return STATE_CRITICAL;
 		}
 
@@ -1049,11 +1049,11 @@ redir (char *pos, char *status_line)
 
 	addr = malloc (MAX_IPV4_HOSTLENGTH + 1);
 	if (addr == NULL)
-		die (STATE_UNKNOWN, _("ERROR: could not allocate addr\n"));
+		die (STATE_UNKNOWN, _("could not allocate addr\n"));
 	
 	url = malloc (strcspn (pos, "\r\n"));
 	if (url == NULL)
-		die (STATE_UNKNOWN, _("ERROR: could not allocate url\n"));
+		die (STATE_UNKNOWN, _("could not allocate url\n"));
 
 	while (pos) {
 
@@ -1073,7 +1073,7 @@ redir (char *pos, char *status_line)
 
 		url = realloc (url, strcspn (pos, "\r\n"));
 		if (url == NULL)
-			die (STATE_UNKNOWN, _("ERROR: could not allocate url\n"));
+			die (STATE_UNKNOWN, _("could not allocate url\n"));
 
 		/* URI_HTTP, URI_HOST, URI_PORT, URI_PATH */
 		if (sscanf (pos, HD1, type, addr, port, url) == 4) {

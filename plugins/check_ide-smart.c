@@ -249,7 +249,7 @@ net_saint (values_t * p, thresholds_t * t)
 		        total);
 		break;
 	case OPERATIONAL:
-		printf (_("STATUS - Operational (%d/%d tests passed)\n"), passed, total);
+		printf (_("OK - Operational (%d/%d tests passed)\n"), passed, total);
 		break;
 	default:
 		printf (_("ERROR - Status '%d' uknown. %d/%d tests passed\n"), status,

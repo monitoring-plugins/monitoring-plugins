@@ -110,8 +110,8 @@ int main(int argc, char **argv){
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
-	if(process_arguments(argc,argv)==ERROR)
-		usage(_("check_nt: could not parse arguments\n"));
+	if(process_arguments(argc,argv) != OK)
+		usage (_("check_nt: could not parse arguments\n"));
 
 	/* initialize alarm signal handling */
 	signal(SIGALRM,socket_timeout_alarm_handler);

@@ -39,6 +39,8 @@ int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
 
+
+
 int
 main (int argc, char **argv)
 {

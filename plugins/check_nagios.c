@@ -65,7 +65,7 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
-	if (process_arguments (argc, argv) == ERROR)
+	if (process_arguments (argc, argv) != OK)
 		usage (_("check_nagios: could not parse arguments\n"));
 
 	/* Set signal handling and alarm */
@@ -80,7 +80,7 @@ main (int argc, char **argv)
 	/* open the status log */
 	fp = fopen (status_log, "r");
 	if (fp == NULL) {
-		printf (_("ERROR - Cannot open status log for reading!\n"));
+		printf (_("CRITICAL - Cannot open status log for reading!\n"));
 		return STATE_CRITICAL;
 	}
 
@@ -227,7 +227,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (progname, "$Revision$");
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'F':									/* status log */
 			status_log = optarg;

@@ -124,7 +124,7 @@ main (int argc, char **argv)
 		else
 			result = STATE_UNKNOWN;
 		die (result,
-							 _("TIME UNKNOWN - no data on recv() from server %s, port %d\n"),
+							 _("TIME UNKNOWN - no data received from server %s, port %d\n"),
 							 server_address, server_port);
 	}
 

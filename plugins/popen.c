@@ -123,7 +123,7 @@ spopen (const char *cmdstring)
 		str += strspn (str, " \t\r\n");	/* trim any leading whitespace */
 
 		if (i >= argc - 2) {
-			printf ("You've got a big problem buddy! You need more args!!!\n");
+			printf ("CRITICAL - You need more args!!!\n");
 			return (NULL);
 		}
 

@@ -345,7 +345,7 @@ process_arguments (int argc, char **argv)
 			}
 			break;
 		case 'V':									/* version */
-			print_revision (progname, "$Revision$");
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -395,7 +395,7 @@ print_help (void)
 	char *myport;
 	asprintf (&myport, "%d", PORT);
 
-	print_revision (progname, "$Revision$");
+	print_revision (progname, revision);
 
 	printf ("Copyright (c) 1999 Pedro Leite <leite@cic.ua.pt>\n");
 	printf (COPYRIGHT, copyright, email);

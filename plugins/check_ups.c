@@ -396,20 +396,20 @@ get_ups_variable (const char *varname, char *buf, size_t buflen)
 		ptr = temp_buffer + strlen (varname) + 5;
 
 	if (!strcmp (ptr, "NOT-SUPPORTED")) {
-		printf ("Error: Variable '%s' is not supported\n", varname);
+		printf ("CRITICAL - Variable '%s' is not supported\n", varname);
 		return ERROR;
 	}
 
 	if (!strcmp (ptr, "DATA-STALE")) {
-		printf ("Error: UPS data is stale\n");
+		printf ("CRITICAL - UPS data is stale\n");
 		return ERROR;
 	}
 
 	if (!strcmp (ptr, "UNKNOWN-UPS")) {
 		if (ups_name)
-			printf ("Error: UPS '%s' is unknown\n", ups_name);
+			printf ("CRITICAL - UPS '%s' is unknown\n", ups_name);
 		else
-			printf ("Error: UPS is unknown\n");
+			printf ("CRITICAL - UPS is unknown\n");
 		return ERROR;
 	}
 

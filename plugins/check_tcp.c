@@ -230,7 +230,7 @@ main (int argc, char **argv)
 	}
 	else {
 		progname = strdup ("check_tcp");
-		usage (_("ERROR: Generic check_tcp called with unknown service\n"));
+		usage (_("CRITICAL - Generic check_tcp called with unknown service\n"));
 	}
 
 	server_address = strdup ("127.0.0.1");
@@ -239,7 +239,7 @@ main (int argc, char **argv)
 	server_quit = QUIT;
 	status = strdup ("");
 
-	if (process_arguments (argc, argv) == ERROR)
+	if (process_arguments (argc, argv) != OK)
 		usage (_("check_tcp: could not parse arguments\n"));
 
 	/* use default expect if none listed in process_arguments() */
@@ -259,13 +259,13 @@ main (int argc, char **argv)
 #ifdef HAVE_SSL
 	if (use_ssl && check_cert == TRUE) {
 	  if (connect_SSL () != OK)
-	    die (STATE_CRITICAL,"TCP CRITICAL - Could not make SSL connection\n");
+	    die (STATE_CRITICAL,"CRITICAL - Could not make SSL connection\n");
 	  if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
 	    result = check_certificate (&server_cert);
 	    X509_free(server_cert);
 	  }
 	  else {
-	    printf("ERROR: Cannot retrieve server certificate.\n");
+	    printf("CRITICAL Cannot retrieve server certificate.\n");
 	    result = STATE_CRITICAL;
 	  }
 	  SSL_shutdown (ssl);
@@ -592,7 +592,7 @@ connect_SSL (void)
   OpenSSL_add_all_algorithms();
   if ((ctx = SSL_CTX_new (meth)) == NULL)
     {
-      printf (_("ERROR: Cannot create SSL context.\n"));
+      printf (_("CRITICAL - Cannot create SSL context.\n"));
       return STATE_CRITICAL;
     }
 
@@ -615,13 +615,13 @@ connect_SSL (void)
         if (SSL_connect(ssl) == 1)
           return OK;
         /* ERR_print_errors_fp (stderr); */
-	printf (_("ERROR: Cannot make  SSL connection "));
+	printf (_("CRITICAL - Cannot make  SSL connection "));
         ERR_print_errors_fp (stdout);
 	/* printf("\n"); */
       }
       else
       {
-        printf (_("ERROR: Cannot initiate SSL handshake.\n"));
+        printf (_("CRITICAL - Cannot initiate SSL handshake.\n"));
       }
       SSL_free (ssl);
     }
@@ -651,7 +651,7 @@ check_certificate (X509 ** certificate)
   /* Generate tm structure to process timestamp */
   if (tm->type == V_ASN1_UTCTIME) {
     if (tm->length < 10) {
-      printf ("ERROR: Wrong time format in certificate.\n");
+      printf ("CRITICAL - Wrong time format in certificate.\n");
       return STATE_CRITICAL;
     }
     else {
@@ -663,7 +663,7 @@ check_certificate (X509 ** certificate)
   }
   else {
     if (tm->length < 12) {
-      printf ("ERROR: Wrong time format in certificate.\n");
+      printf ("CRITICAL - Wrong time format in certificate.\n");
       return STATE_CRITICAL;
     }
     else {

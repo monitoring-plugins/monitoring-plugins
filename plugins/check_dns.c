@@ -107,7 +107,7 @@ main (int argc, char **argv)
 			if ((temp_buffer = strstr (input_buffer, "name = ")))
 				address = strdup (temp_buffer + 7);
 			else {
-				output = strdup (_("Unknown error (plugin)"));
+				output = strdup (_("Warning plugin error"));
 				result = STATE_WARNING;
 			}
 		}

@@ -156,7 +156,7 @@ main (int argc, char **argv)
 	output_delim = strdup (DEFAULT_OUTPUT_DELIMITER);
 	miblist = strdup (DEFAULT_MIBLIST);
 
-	if (process_arguments (argc, argv) == ERROR)
+	if (process_arguments (argc, argv) != OK)
 		usage (_("check_snmp: could not parse arguments\n"));
 
 	/* create the command line to execute */

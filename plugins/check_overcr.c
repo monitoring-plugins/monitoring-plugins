@@ -85,7 +85,7 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
-	if (process_arguments (argc, argv) == ERROR)
+	if (process_arguments (argc, argv) != OK)
 		usage (_("check_overcr: could not parse arguments\n"));
 
 	/* initialize alarm signal handling */
@@ -180,7 +180,7 @@ main (int argc, char **argv)
 		/* error if we couldn't find the info for the disk */
 		if (found_disk == FALSE)
 			die (STATE_CRITICAL,
-			           "Error: Disk '%s' non-existent or not mounted",
+			           "CRITICAL - Disk '%s' non-existent or not mounted",
 			           disk_name);
 
 		if (check_critical_value == TRUE && (percent_used_disk_space >= critical_value))
@@ -339,7 +339,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (progname, "$Revision$");
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'H':									/* hostname */
 			server_address = optarg;

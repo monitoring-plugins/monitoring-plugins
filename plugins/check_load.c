@@ -51,9 +51,6 @@ char *status_line;
 
 
 
-
-
-
 int
 main (int argc, char **argv)
 {
@@ -76,7 +73,7 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
-	if (process_arguments (argc, argv) == ERROR)
+	if (process_arguments (argc, argv) != OK)
 		usage (_("check_load: could not parse arguments\n"));
 
 #if HAVE_GETLOADAVG==1
@@ -162,9 +159,6 @@ main (int argc, char **argv)
 
 
 
-
-
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -223,7 +217,7 @@ process_arguments (int argc, char **argv)
 				usage (_("Critical threshold must be float or float triplet!\n"));
 			break;
 		case 'V':									/* version */
-			print_revision (progname, "$Revision$");
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -271,8 +265,6 @@ process_arguments (int argc, char **argv)
 
 
 
-
-
 int
 validate_arguments (void)
 {
@@ -299,9 +291,6 @@ validate_arguments (void)
 
 
 
-
-
-
 void
 print_help (void)
 {
