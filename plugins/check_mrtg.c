@@ -140,9 +140,9 @@ main (int argc, char **argv)
 		asprintf (&message, "%s. %s = %lu %s|%s",
 		          (use_average == TRUE) ? _("Avg") : _("Max"),
 		          label, rate, units,
-		          perfdata(label, rate, units,
-		                   value_warning_threshold, value_warning_threshold,
-		                   value_critical_threshold, value_critical_threshold,
+		          perfdata(label, (long) rate, units,
+		                   (int) value_warning_threshold, (long) value_warning_threshold,
+		                   (int) value_critical_threshold, (long) value_critical_threshold,
 		                   0, 0, 0, 0));
 	}
 

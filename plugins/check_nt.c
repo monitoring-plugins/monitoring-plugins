@@ -118,7 +118,7 @@ int main(int argc, char **argv){
 			asprintf (&output_message, _("Wrong client version - running: %s, required: %s"), recv_buffer, value_list);
 			return_code = STATE_WARNING;
 		} else {
-			asprintf (&output_message, recv_buffer);
+			asprintf (&output_message, "%s", recv_buffer);
 			return_code = STATE_OK;
 		}
 		break;
@@ -238,12 +238,11 @@ int main(int argc, char **argv){
 			mem_commitLimit / 1048576, mem_commitByte / 1048567, percent_used_space,  
 			(mem_commitLimit - mem_commitByte) / 1048576, (mem_commitLimit - mem_commitByte) / mem_commitLimit * 100);
 	
+		return_code=STATE_OK;
 		if(check_critical_value==TRUE && percent_used_space >= critical_value)
 			return_code=STATE_CRITICAL;
 		else if (check_warning_value==TRUE && percent_used_space >= warning_value)
 			return_code=STATE_WARNING;	
-		else
-			return_code=STATE_OK;	
 
 		break;
 
@@ -273,13 +272,12 @@ int main(int argc, char **argv){
 					return_code=STATE_OK;	
 			} 
 			else {                                       /* inverse thresholds */
+				return_code=STATE_OK;
 				if(check_critical_value==TRUE && counter_value <= critical_value)
 					return_code=STATE_CRITICAL;
 				else if (check_warning_value==TRUE && counter_value <= warning_value)
 					return_code=STATE_WARNING;	
-				else
-					return_code=STATE_OK;	
-			}	
+			}
 		}
 		break;
 
