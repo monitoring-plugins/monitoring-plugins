@@ -81,3 +81,8 @@ EOF
 
 rm -f $files
 
+# Work out success or failure
+expected=$(($# + 1))
+set -- $files
+[[ $# -ne $expected ]] && die "Expected $expected, got $#"
+exit 0
