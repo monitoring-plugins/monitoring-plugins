@@ -32,7 +32,7 @@ connects, but incorrect reponse messages from the host result in\n\
 STATE_WARNING return values.\n";
 
 const char *option_summary = "\
--H host [-p port] [-e expect] [-C command] [-f from addr] 
+-H host [-p port] [-e expect] [-C command] [-f from addr]\n\
          [-w warn] [-c crit] [-t timeout] [-n] [-v]";
 
 const char *options = "\
@@ -200,10 +200,10 @@ main (int argc, char **argv)
 		result = STATE_WARNING;
 
 	if (verbose)
-		printf ("SMTP %s - %7.3f sec. response time, %s|time=%7.3f\n",
+		printf ("SMTP %s - %.3f sec. response time, %s|time=%.3f\n",
 		        state_text (result), elapsed_time, buffer, elapsed_time);
 	else
-		printf ("SMTP %s - %7.3f second response time|time=%7.3f\n",
+		printf ("SMTP %s - %.3f second response time|time=%.3f\n",
 		        state_text (result), elapsed_time, elapsed_time);
 
 	return result;
