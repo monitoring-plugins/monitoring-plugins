@@ -316,7 +316,7 @@ is_option (char *str)
 
 
 
-#ifndef HAVE_GETTIMEOFDAY
+#ifdef NEED_GETTIMEOFDAY
 int
 gettimeofday (struct timeval *tv, struct timezone *tz)
 {

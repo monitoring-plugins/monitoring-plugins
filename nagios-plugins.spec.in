@@ -8,8 +8,8 @@
 %define name %{archive}
 %endif
 
-%define version PACKAGE_VERSION
-%define release PACKAGE_RELEASE
+%define version %%{VER}
+%define release %%{REL}
 %define source %{archive}-%{version}
 
 Name: %{name}
@@ -95,6 +95,7 @@ rm -rf $RPM_BUILD_ROOT
 %else
 %{_prefix}/lib/nagios/plugins/check_by_ssh
 %{_prefix}/lib/nagios/plugins/check_breeze
+%{_prefix}/lib/nagios/plugins/check_dig
 %{_prefix}/lib/nagios/plugins/check_disk
 %{_prefix}/lib/nagios/plugins/check_disk_smb
 %{_prefix}/lib/nagios/plugins/check_dns
@@ -102,10 +103,13 @@ rm -rf $RPM_BUILD_ROOT
 %{_prefix}/lib/nagios/plugins/check_flexlm
 %{_prefix}/lib/nagios/plugins/check_ftp
 %{_prefix}/lib/nagios/plugins/check_http
+%{_prefix}/lib/nagios/plugins/check_ifoperstatus
+%{_prefix}/lib/nagios/plugins/check_ifstatus
 %{_prefix}/lib/nagios/plugins/check_imap
 %{_prefix}/lib/nagios/plugins/check_ircd
 %{_prefix}/lib/nagios/plugins/check_load
 %{_prefix}/lib/nagios/plugins/check_log
+%{_prefix}/lib/nagios/plugins/check_mailq
 %{_prefix}/lib/nagios/plugins/check_mrtg
 %{_prefix}/lib/nagios/plugins/check_mrtgtraf
 %{_prefix}/lib/nagios/plugins/check_nagios
@@ -130,6 +134,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_prefix}/lib/nagios/plugins/check_users
 %{_prefix}/lib/nagios/plugins/check_vsz
 %{_prefix}/lib/nagios/plugins/check_wave
+%{_prefix}/lib/nagios/plugins/negate
 %{_prefix}/lib/nagios/plugins/utils.pm
 %{_prefix}/lib/nagios/plugins/utils.sh
 %{_prefix}/lib/nagios/plugins/urlize
