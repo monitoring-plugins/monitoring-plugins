@@ -57,8 +57,10 @@ RETSIGTYPE popen_timeout_alarm_handler (int);
 #define	min(a,b)	((a) < (b) ? (a) : (b))
 #define	max(a,b)	((a) > (b) ? (a) : (b))
 int open_max (void);						/* {Prog openmax} */
-void err_sys (const char *, ...);
+static void err_sys (const char *, ...) __attribute__((noreturn,format(printf, 1, 2)));
 char *rtrim (char *, const char *);
+
+char *pname = NULL;							/* caller can set this from argv[0] */
 
 /*int *childerr = NULL;*//* ptr to array allocated at run-time */
 /*extern pid_t *childpid = NULL; *//* ptr to array allocated at run-time */
@@ -67,7 +69,7 @@ static int maxfd;								/* from our open_max(), {Prog openmax} */
 FILE *
 spopen (const char *cmdstring)
 {
-	char *env[] = { "LC_ALL=C", (char*)0 };
+	char *env[2];
 	char *cmd = NULL;
 	char **argv = NULL;
 	char *str;
@@ -83,6 +85,9 @@ spopen (const char *cmdstring)
 	limit.rlim_cur = 0;
 	setrlimit (RLIMIT_CORE, &limit);
 #endif
+
+	env[0] = strdup("LC_ALL=C");
+	env[1] = '\0';
 
 	/* if no command was passed, return with no error */
 	if (cmdstring == NULL)
@@ -148,13 +153,13 @@ spopen (const char *cmdstring)
 
 	if (childpid == NULL) {				/* first time through */
 		maxfd = open_max ();				/* allocate zeroed out array for child pids */
-		if ((childpid = calloc (maxfd, sizeof (pid_t))) == NULL)
+		if ((childpid = calloc ((size_t)maxfd, sizeof (pid_t))) == NULL)
 			return (NULL);
 	}
 
 	if (child_stderr_array == NULL) {	/* first time through */
 		maxfd = open_max ();				/* allocate zeroed out array for child pids */
-		if ((child_stderr_array = calloc (maxfd, sizeof (int))) == NULL)
+		if ((child_stderr_array = calloc ((size_t)maxfd, sizeof (int))) == NULL)
 			return (NULL);
 	}
 
@@ -259,34 +264,22 @@ open_max (void)
 }
 
 
-static void err_doit (int, const char *, va_list);
-
-char *pname = NULL;							/* caller can set this from argv[0] */
 
 /* Fatal error related to a system call.
  * Print a message and die. */
 
-void
-err_sys (const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start (ap, fmt);
-	err_doit (1, fmt, ap);
-	va_end (ap);
-	exit (1);
-}
-
-/* Print a message and return to caller.
- * Caller specifies "errnoflag". */
-
 #define MAXLINE 2048
 static void
-err_doit (int errnoflag, const char *fmt, va_list ap)
+err_sys (const char *fmt, ...)
 {
+	int errnoflag = 1;
 	int errno_save;
 	char buf[MAXLINE];
 
+	va_list ap;
+
+	va_start (ap, fmt);
+	/* err_doit (1, fmt, ap); */
 	errno_save = errno;						/* value caller might want printed */
 	vsprintf (buf, fmt, ap);
 	if (errnoflag)
@@ -295,7 +288,8 @@ err_doit (int errnoflag, const char *fmt, va_list ap)
 	fflush (stdout);							/* in case stdout and stderr are the same */
 	fputs (buf, stderr);
 	fflush (NULL);								/* flushes all stdio output streams */
-	return;
+	va_end (ap);
+	exit (1);
 }
 
 char *
@@ -313,3 +307,4 @@ rtrim (char *str, const char *tok)
 	}
 	return str;
 }
+

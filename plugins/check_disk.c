@@ -109,7 +109,7 @@ enum
 #endif
 
 int process_arguments (int, char **);
-void print_path (char *mypath);
+void print_path (const char *mypath);
 int validate_arguments (uintmax_t, uintmax_t, double, double, char *);
 int check_disk (double usp, uintmax_t free_disk);
 int walk_name_list (struct name_list *list, const char *name);
@@ -216,7 +216,7 @@ main (int argc, char **argv)
 		temp_list = temp_list->name_next;
 	}
 
-	die (result, "DISK %s%s\n", state_text (result), output, details);
+	die (result, "DISK %s%s%s\n", state_text (result), output, details);
 	return STATE_UNKNOWN;
 }
 
@@ -453,11 +453,15 @@ process_arguments (int argc, char **argv)
 }
 
 
-void print_path (char *mypath) 
+void
+print_path (const char *mypath) 
 {
-	if (mypath)
-		printf (" for %s", mypath);
-	printf ("\n");
+	if (mypath == NULL)
+		printf ("\n");
+	else
+		printf (" for %s\n", mypath);
+
+	return;
 }
 
 int
@@ -473,14 +477,14 @@ validate_arguments (uintmax_t w, uintmax_t c, double wp, double cp, char *mypath
 		printf (_("\
 INPUT ERROR: C_DFP (%f) should be less than W_DFP (%.1f) and both should be between zero and 100 percent, inclusive"),
 		        cp, wp);
-		print_path (path);
+		print_path (mypath);
 		return ERROR;
 	}
 	else if ((w > 0 || c > 0) && (w == 0 || c == 0 || c > w)) {
 		printf (_("\
 INPUT ERROR: C_DF (%lu) should be less than W_DF (%lu) and both should be greater than zero"),
 		        (unsigned long)c, (unsigned long)w);
-		print_path (path);
+		print_path (mypath);
 		return ERROR;
 	}
 	
@@ -542,6 +546,7 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
+	printf (_("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n"));
 	printf (_(COPYRIGHT), copyright, email);
 
 	printf (_("\
@@ -596,7 +601,7 @@ and generates an alert if free space is less than one of the threshold values.")
  check_disk -w 10% -c 5% -p /tmp -p /var -C -w 100000 -c 50000 -p /\n\
    Checks /tmp and /var at 10%,5% and / at 100MB, 50MB\n"));
 
-	support ();
+	printf (_(UT_SUPPORT));
 }
 
 

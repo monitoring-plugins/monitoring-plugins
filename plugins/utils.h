@@ -16,7 +16,7 @@ suite of plugins. */
 void support (void);
 char *clean_revstring (const char *revstring);
 void print_revision (const char *, const char *);
-void die (int result, const char *fmt, ...) __attribute__((noreturn));
+void die (int result, const char *fmt, ...) __attribute__((noreturn,format(printf, 2, 3)));
 
 /* Handle timeouts */
 

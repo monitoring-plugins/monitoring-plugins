@@ -54,7 +54,7 @@ max_state (int a, int b)
 
 void usage (char *msg)
 {
-	printf (msg);
+	printf ("%s", msg);
 	print_usage ();
 	exit (STATE_UNKNOWN);
 }
