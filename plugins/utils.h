@@ -1,14 +1,14 @@
-/* header file for nagios plugins utils.c */
+/* Header file for nagios plugins utils.c */
 
-/* this file should be included in all plugins */
+/* This file should be included in all plugins */
 
-/* The purpose of this package is to provide safer alternantives to C
+/* The purpose of this package is to provide safer alternatives to C
 functions that might otherwise be vulnerable to hacking. This
 currently includes a standard suite of validation routines to be sure
 that an string argument acually converts to its intended type and a
 suite of string handling routine that do their own memory management
 in order to resist overflow attacks. In addition, a few functions are
-provided to standardize version and error reporting accross the entire
+provided to standardize version and error reporting across the entire
 suite of plugins. */
 
 /* Standardize version information, termination */
@@ -46,7 +46,7 @@ int is_percentage (char *);
 
 int is_option (char *);
 
-/* generalized timer that will do milliseconds if available */
+/* Generalized timer that will do milliseconds if available */
 #ifndef HAVE_STRUCT_TIMEVAL
 struct timeval {
 	long tv_sec;        /* seconds */
