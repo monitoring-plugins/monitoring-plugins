@@ -93,12 +93,12 @@ main (int argc, char **argv)
 		else
 			result = STATE_UNKNOWN;
 		terminate (result,
-							 "TIME UNKNOWN - could not connect to server %s, port %d\n",
-							 server_address, server_port);
+		           "TIME UNKNOWN - could not connect to server %s, port %d\n",
+		           server_address, server_port);
 	}
 
 	/* watch for the connection string */
-	result = recv (sd, &raw_server_time, sizeof (raw_server_time), 0);
+	result = recv (sd, (void *)&raw_server_time, sizeof (raw_server_time), 0);
 
 	/* close the connection */
 	close (sd);
