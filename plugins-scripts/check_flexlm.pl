@@ -1,4 +1,4 @@
-#! /usr/bin/perl -wT
+#! /usr/bin/perl -w
 #
 # usage: 
 #    check_flexlm.pl license_file
@@ -66,7 +66,11 @@ $SIG{'ALRM'} = sub {
 };
 alarm($TIMEOUT);
 
-my $lmstat = "/opt/lic/sw/cadadm/default/bin/lmstat";
+my $lmstat = $utils::PATH_TO_LMSTAT ;
+unless (-x $lmstat ) {
+	print "Cannot find \"lmstat\"\n";
+	exit $ERRORS{'UNKNOWN'};
+}
 
 ($opt_F) || ($opt_F = shift) || usage("License file not specified\n");
 my $licfile = $1 if ($opt_F =~ /^(.*)$/);
