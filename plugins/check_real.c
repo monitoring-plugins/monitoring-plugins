@@ -97,15 +97,15 @@ main (int argc, char **argv)
 	/* Part I - Server Check */
 
 	/* send the OPTIONS request */
-	sprintf (buffer, "OPTIONS rtsp://%s:%d RTSP/1.0\n", host_name, server_port);
+	sprintf (buffer, "OPTIONS rtsp://%s:%d RTSP/1.0\r\n", host_name, server_port);
 	result = send (sd, buffer, strlen (buffer), 0);
 
 	/* send the header sync */
-	sprintf (buffer, "CSeq: 1\n");
+	sprintf (buffer, "CSeq: 1\r\n");
 	result = send (sd, buffer, strlen (buffer), 0);
 
 	/* send a newline so the server knows we're done with the request */
-	sprintf (buffer, "\n");
+	sprintf (buffer, "\r\n");
 	result = send (sd, buffer, strlen (buffer), 0);
 
 	/* watch for the REAL connection string */
