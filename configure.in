@@ -41,11 +41,6 @@ ifdef([AC_FUNC_STRTOD],[AC_FUNC_STRTOD],[AM_FUNC_STRTOD])
 dnl AM_WITH_REGEX
 AC_PROG_RANLIB
 
-AC_PATH_PROG(ACLOCAL,aclocal)
-AC_PATH_PROG(AUTOMAKE,automake)
-AC_PATH_PROG(AUTOCONF,autoconf)
-AC_PATH_PROG(AUTOHEADER,autoheader)
-
 PLUGIN_TEST=`echo $srcdir/plugins/t/*.t|sed -e 's,\.*/plugins/,,g'`
 AC_SUBST(PLUGIN_TEST)dnl
 
