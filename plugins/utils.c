@@ -24,7 +24,8 @@ extern const char *progname;
 void support (void);
 char *clean_revstring (const char *);
 void print_revision (const char *, const char *);
-void terminate (int, const char *fmt, ...);
+void die (int result, const char *fmt, ...);
+void terminate (int result, const char *fmt, ...);
 RETSIGTYPE timeout_alarm_handler (int);
 
 int is_integer (char *);
@@ -49,6 +50,8 @@ char *strscat (char *dest, char *src);
 char *strnl (char *str);
 char *strpcpy (char *dest, const char *src, const char *str);
 char *strpcat (char *dest, const char *src, const char *str);
+
+char *state_text (int result);
 
 #define LABELLEN 63
 #define STRLEN 64
@@ -140,6 +143,33 @@ print_revision (const char *command_name, const char *revision_string)
 
 }
 
+char *
+state_text (int result)
+{
+	switch (result) {
+	case STATE_OK:
+		return "OK";
+	case STATE_WARNING:
+		return "WARNING";
+	case STATE_CRITICAL:
+		return "CRITICAL";
+	case STATE_DEPENDENT:
+		return "DEPENDENT";
+	default:
+		return "UNKNOWN";
+	}
+}
+
+void
+die (int result, const char *fmt, ...)
+{
+	printf ("%s %s: ", sizeof (char) + index(progname, '_'), state_text(result));
+	va_list ap;
+	va_start (ap, fmt);
+	vprintf (fmt, ap);
+	va_end (ap);
+	exit (result);
+}
 
 void
 terminate (int result, const char *fmt, ...)

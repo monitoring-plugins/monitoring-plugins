@@ -17,6 +17,7 @@ char *my_basename (char *);
 void support (void);
 char *clean_revstring (const char *revstring);
 void print_revision (const char *, const char *);
+void die (int result, const char *fmt, ...);
 void terminate (int result, char *msg, ...);
 extern RETSIGTYPE timeout_alarm_handler (int);
 
@@ -71,16 +72,9 @@ void usage (char *msg);
 void usage2(char *msg, char *arg);
 void usage3(char *msg, char arg);
 
+char *state_text (int result);
 
 #define max(a,b) (((a)>(b))?(a):(b))
-
-#define state_text(a) \
-(a)==0?"OK":\
-(a)==1?"WARNING":\
-(a)==2?"CRITICAL":\
-(a)==3?"UNKNOWN":\
-(a)==4?"DEPENDENT":\
-"UNKNOWN"
 
 /* The idea here is that, although not every plugin will use all of these, 
    most will or should.  Therefore, for consistency, these very common 
