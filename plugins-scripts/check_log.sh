@@ -167,6 +167,9 @@ done
 if [ ! -e $logfile ]; then
     $ECHO "Log check error: Log file $logfile does not exist!\n"
     exit $STATE_UNKNOWN
+elif [ ! -r $logfile ] ; then
+    $ECHO "Log check error: Log file $logfile is not readable!\n"
+    exit $STATE_UNKNOWN
 fi
 
 # If the old log file doesn't exist, this must be the first time
