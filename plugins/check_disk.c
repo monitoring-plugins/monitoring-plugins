@@ -63,6 +63,7 @@ const char *options = "\
 #include "utils.h"
 #include <stdarg.h>
 #include "../lib/fsusage.h"
+#include "../lib/mountlist.h"
 
 /* If nonzero, show inode information. */
 static int inode_format;
@@ -146,6 +147,8 @@ int verbose = 0;
 int erronly = FALSE;
 int display_mntp = FALSE;
 
+/* Linked list of mounted filesystems. */
+static struct mount_entry *mount_list;
 
 int
 main (int argc, char **argv)
@@ -162,22 +165,32 @@ main (int argc, char **argv)
 	char mntp[MAX_INPUT_BUFFER];
 	char *output = "";
 
+  struct mount_entry *me;
 	struct fs_usage fsp;
 	char *disk;
 
 	if (process_arguments (argc, argv) != OK)
 		usage ("Could not parse arguments\n");
 
-	get_fs_usage (path, disk, &fsp);
+	mount_list = read_filesystem_list (0);
 
-	usp = (fsp.fsu_blocks - fsp.fsu_bavail) / fsp.fsu_blocks;
-	disk_result = check_disk (usp, fsp.fsu_bavail);
-	result = disk_result;
-	asprintf (&output, "%llu of %llu kB (%2.0f%%) free (%d-byte blocks)",
-	          fsp.fsu_bavail*fsp.fsu_blocksize/1024,
-	          fsp.fsu_blocks*fsp.fsu_blocksize/1024,
-	          (double)fsp.fsu_bavail*100/fsp.fsu_blocks,
-	          fsp.fsu_blocksize);
+  for (me = mount_list; me; me = me->me_next) {
+		get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
+		if (fsp.fsu_blocks && strcmp ("none", me->me_mountdir)) {
+			usp = (fsp.fsu_blocks - fsp.fsu_bavail) * 100 / fsp.fsu_blocks;
+			disk_result = check_disk (usp, fsp.fsu_bavail);
+			result = max_state (disk_result, result);
+			asprintf (&output, "%s %llu of %llu kB (%2.0f%%) free (%d-byte blocks) on %s (%s) %d\n",
+			          output,
+			          fsp.fsu_bavail*fsp.fsu_blocksize/1024,
+			          fsp.fsu_blocks*fsp.fsu_blocksize/1024,
+			          (double)fsp.fsu_bavail*100/fsp.fsu_blocks,
+			          fsp.fsu_blocksize,
+			          me->me_mountdir,
+			          me->me_type, usp);
+		}
+	}
+
 
 	terminate (result, "DISK %s %s\n", state_text (result), output);
 }
