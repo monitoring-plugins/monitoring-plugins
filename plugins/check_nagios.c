@@ -272,29 +272,26 @@ print_help (void)
 	printf (_(COPYRIGHT), copyright, email);
 
 	printf (_("\
-This plugin attempts to check the status of the Nagios process on the local\n\
+This plugin checks the status of the Nagios process on the local\n\
 machine. The plugin will check to make sure the Nagios status log is no older\n\
-than the number of minutes specified by the <expire_minutes> option.  It also\n\
-uses the /bin/ps command to check for a process matching whatever you specify\n\
-by the <process_string> argument.\n\n"));
+than the number of seconds specified by the expires option. It also\n\
+checks the process table for a process matching the command argument.\n\n"));
 
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
 
 	printf (_("\
--F, --filename=FILE\n\
+ -F, --filename=FILE\n\
    Name of the log file to check\n\
--e, --expires=INTEGER\n\
-   Seconds aging afterwhich logfile is condsidered stale\n\
--C, --command=STRING\n\
+ -e, --expires=INTEGER\n\
+   Seconds aging after which logfile is considered stale\n\
+ -C, --command=STRING\n\
    Command to search for in process table\n"));
 
 	printf (_("\
 Example:\n\
-   ./check_nagios -e 5 \\\
-   -F /usr/local/nagios/var/status.log \\\
-   -C /usr/local/nagios/bin/nagios\n"));
+   ./check_nagios -e 5 -F /usr/local/nagios/var/status.log -C nagios\n"));
 }
 
 
@@ -303,5 +300,5 @@ void
 print_usage (void)
 {
 	printf ("\
-Usage: %s -F <status log file> -e <expire_minutes> -C <process_string>\n", progname);
+Usage: %s -F <status log file> -e <expire_minutes> -C <process_name>\n", progname);
 }
