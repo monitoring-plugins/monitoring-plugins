@@ -3,7 +3,7 @@
 SUBDIRS = intl lib plugins plugins-scripts m4 po
 
 EXTRA_DIST = config.rpath \
-	ABOUT-NLS CHANGES CODING FAQ LEGAL REQUIREMENTS SUPPORT THANKS \
+	ABOUT-NLS ACKNOWLEDGEMENTS AUTHORS CHANGES CODING FAQ LEGAL REQUIREMENTS SUPPORT THANKS \
 	Helper.pm contrib pkg nagios-plugins.spec
 
 ACLOCAL_AMFLAGS = -I m4
@@ -38,7 +38,7 @@ solpkg:
 	$(INSTALL) pkg/solaris/pkginfo $(BUILDDIR)
 	cd $(BUILDDIR) && $(PERL) ../$(PKGSCRIPT) ../$(PACKDIR)
 
-THANKS: AUTHORS
+THANKS: THANKS.in
 	@echo "This software is brought to you by the Nagios Plugins Development Team. However," > $@
 	@echo "there have been many contributors to this project. Everyone below has helped in " >> $@
 	@echo "raising bug reports, creating patches or contributing new plugins." >> $@
