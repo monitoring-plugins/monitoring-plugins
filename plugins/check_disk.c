@@ -142,14 +142,17 @@ main (int argc, char **argv)
 	char file_system[MAX_INPUT_BUFFER];
 	char *output;
 	char *details;
+	char *perf;
+	uintmax_t psize;
 	float free_space, free_space_pct, total_space;
 
 	struct mount_entry *me;
 	struct fs_usage fsp;
 	struct name_list *temp_list;
 
-	output = strdup ("");
+	output = strdup (" - free space:");
 	details = strdup ("");
+	perf = strdup ("");
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -185,6 +188,14 @@ main (int argc, char **argv)
 			usp = (double)(fsp.fsu_blocks - fsp.fsu_bavail) * 100 / fsp.fsu_blocks;
 			disk_result = check_disk (usp, fsp.fsu_bavail);
 			result = max_state (disk_result, result);
+			psize = fsp.fsu_blocks*fsp.fsu_blocksize/mult;
+			asprintf (&perf, "%s %s", perf,
+			          perfdata ((!strcmp(file_system, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
+			                    fsp.fsu_bavail*fsp.fsu_blocksize/mult, units,
+			                    TRUE, min ((uintmax_t)psize-(uintmax_t)w_df, (uintmax_t)((1.0-w_dfp/100.0)*psize)),
+			                    TRUE, min ((uintmax_t)psize-(uintmax_t)c_df, (uintmax_t)((1.0-c_dfp/100.0)*psize)),
+			                    TRUE, 0,
+			                    TRUE, psize));
 			if (disk_result==STATE_OK && erronly && !verbose)
 				continue;
 
@@ -192,12 +203,12 @@ main (int argc, char **argv)
 			free_space_pct = (float)fsp.fsu_bavail*100/fsp.fsu_blocks;
 			total_space = (float)fsp.fsu_blocks*fsp.fsu_blocksize/mult;
 			if (disk_result!=STATE_OK || verbose>=0)
-				asprintf (&output, ("%s [%.0f %s (%.0f%%) free on %s]"),
+				asprintf (&output, ("%s %s %.0f %s (%.0f%%);"),
 				          output,
+				          (!strcmp(file_system, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
 				          free_space,
 				          units,
-				          free_space_pct,
-				          (!strcmp(file_system, "none") || display_mntp) ? me->me_devname : me->me_mountdir);
+									free_space_pct);
 			asprintf (&details, _("%s\n\
 %.0f of %.0f %s (%.0f%%) free on %s (type %s mounted on %s) warn:%lu crit:%lu warn%%:%.0f%% crit%%:%.0f%%"),
 			          details, free_space, total_space, units, free_space_pct,
@@ -206,6 +217,8 @@ main (int argc, char **argv)
 		}
 
 	}
+
+	asprintf (&output, "%s|%s", output, perf);
 
 	if (verbose > 2)
 		asprintf (&output, "%s%s", output, details);
@@ -220,8 +233,8 @@ main (int argc, char **argv)
 		temp_list = temp_list->name_next;
 	}
 
-	die (result, "DISK %s%s%s\n", state_text (result), output, details);
-	return STATE_UNKNOWN;
+	printf ("DISK %s%s\n", state_text (result), output);
+	return result;
 }
 
 
@@ -507,11 +520,11 @@ check_disk (double usp, uintmax_t free_disk)
 {
 	int result = STATE_UNKNOWN;
 	/* check the percent used space against thresholds */
-	if (usp >= 0.0 && usp >= (100.0 - c_dfp))
+	if (usp >= 0.0 && c_dfp >=0.0 && usp >= (100.0 - c_dfp))
 		result = STATE_CRITICAL;
 	else if (c_df > 0 && free_disk <= c_df)
 		result = STATE_CRITICAL;
-	else if (usp >= 0.0 && usp >= (100.0 - w_dfp))
+	else if (usp >= 0.0 && w_dfp >=0.0 && usp >= (100.0 - w_dfp))
 		result = STATE_WARNING;
 	else if (w_df > 0 && free_disk <= w_df)
 		result = STATE_WARNING;
