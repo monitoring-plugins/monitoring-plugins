@@ -1,12 +1,12 @@
 #!/usr/bin/perl
 # ------------------------------------------------------------------------------
-# File Name:		check_pop3.pl
-# Author:		Richard Mayhew - South Africa
-# Date:			2000/01/21
-# Version:		1.0
-# Description:		This script will check to see if an POP3 is running
-#			and whether authentication can take place.
-# Email:		netsaint@splash.co.za
+# File Name:    check_pop3.pl
+# Author:    Richard Mayhew - South Africa
+# Date:      2000/01/21
+# Version:    1.0
+# Description:    This script will check to see if an POP3 is running
+#      and whether authentication can take place.
+# Email:    netsaint@splash.co.za
 # ------------------------------------------------------------------------------
 # Copyright 1999 (c) Richard Mayhew
 # Credits go to Ethan Galstad for coding Nagios
@@ -14,15 +14,20 @@
 # changes :)
 # License GPL
 # ------------------------------------------------------------------------------
-# Date		Author		Reason
-# ----		------		------
-# 1999/09/20	RM		Creation
-# 1999/09/20	TP		Changed script to use strict, more secure by
-#				specifying $ENV variables. The bind command is
-#				still insecure through.  Did most of my work
-#				with perl -wT and 'use strict'
-# 2000/01/20	RM		Corrected POP3 Exit State.
-# 2000/01/21	RM		Fix Exit Codes Again!!
+# Date    Author    Reason
+# ----    ------    ------
+# 1999/09/20  RM    Creation
+# 1999/09/20  TP    Changed script to use strict, more secure by
+#        specifying $ENV variables. The bind command is
+#        still insecure through.  Did most of my work
+#        with perl -wT and 'use strict'
+# 2000/01/20  RM    Corrected POP3 Exit State.
+# 2000/01/21  RM    Fix Exit Codes Again!!
+# 2003/12/30  CZ    Proper CRLF in communication w/server
+#        Fixed infinite loop
+#        Error checking on welcome banner, USER, PASS commands
+#        Better error condition handling
+
 # ------------------------------------------------------------------------------
 
 # -----------------------------------------------------------------[ Require ]--
@@ -38,7 +43,7 @@ $ENV{BASH_ENV} = "";
 $|=1;
 # ------------------------------------------------------------------[ Global ]--
 my $TIMEOUT = 60;
-	
+
 # -------------------------------------------------------------------[ usage ]--
 sub usage
 {
@@ -69,8 +74,8 @@ sub bindRemote
 	$sockaddr = 'S n a4 x8';
 	$this = pack($sockaddr, AF_INET, 0, $thisaddr);
 	$that = pack($sockaddr, AF_INET, $in_remoteport, $thataddr);
-	if (!bind(ClientSocket, $this)) { print "Connection Refused"; exit 2; }
-	if (!connect(ClientSocket, $that)) { print "Connection Refused"; exit 2; }
+	if (!bind(ClientSocket, $this)) { print "Connection Refused\n"; exit 2; }
+	if (!connect(ClientSocket, $that)) { print "Connection Refused\n"; exit 2; }
 	select(ClientSocket); $| = 1; select(STDOUT);
 	return \*ClientSocket;
 }
@@ -97,48 +102,47 @@ MAIN:
 	my $ClientSocket = &bindRemote($remotehost,$remoteport,$hostname);
 	
 
-print ClientSocket "user $username\n";
+	&err("no welcome banner\n") unless $_ = <ClientSocket>;
+	&err("bad welcome banner: " . $_) unless $_ =~ /^\+OK/;
 
-#Debug Server
-#print "user $username\n";
+	print ClientSocket "USER $username\r\n";
 
-#Sleep or 3 secs, incase server is slow.
-sleep 3;
+	&err("no response to USER command\n") unless $_ = <ClientSocket>;
+	&err("bad response to USER: " . $_) unless $_ =~ /^\+OK/;
 
-print ClientSocket "pass $password\n";
+	print ClientSocket "PASS $password\r\n";
 
-#Debug Server
-#print "pass $password\n";
+	&err("no response to PASS command\n") unless $_ = <ClientSocket>;
+	&err("bad response to PASS: " . $_) unless $_ =~ /^\+OK/;
 
-while (<ClientSocket>) {
+	print ClientSocket "LIST\r\n";
 
-print ClientSocket "pass $password\n";
-
-#Debug Server
-#print $_;
-
-err($_) if (m/\-ERR\s+(.*)\s+.*/);
-message($_) if (m/\+OK Mailbox open,\s+(.*\d)\s+messages.*/);
-}
+	my $bad = 1;
+	my $msgs = 0;
+	while (<ClientSocket>) {
+		&err(($1||' UNKNOWN')."\n") if (m/\-ERR(.*)/);
+		$bad = 0 if /^\+OK/;
+		$msgs = $1 if /^(\d+)\s+/;
+		last if /^\./;
+	}
+	&message("$msgs\n") unless $bad;
+	&err("missing +OK to LIST command\n");
 }
 
 sub message 
 {
-	my $answer = "UNKNOWN";
-  	$answer = "Pop3 OK - Total Messages On Server :- $1";	
+	my $msg = shift;
 	alarm(0);
-	print ClientSocket "quit\n";
-	print "$answer";
+	print ClientSocket "QUIT\r\n";
+	print "POP3 OK - Total Messages On Server: $msg";
 	exit 0;
 }
 
 sub err
 {
-	my $answer = "UNKNOWN";
-	$answer = "Pop3 Error :- $1";
+	my $msg = shift;
 	alarm(0);
-	print ClientSocket "quit\n";
-	print "$answer";
+	print ClientSocket "QUIT\r\n";
+	print "POP3 Error: $msg";
 	exit 2;
 }
-
