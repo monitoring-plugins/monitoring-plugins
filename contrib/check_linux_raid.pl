@@ -36,9 +36,11 @@ while(<MDSTAT>) {
     if ($found) {
         if (/(\[[_U]+\])/) {
             $status = $1;
-        } elsif (/recovery = (.*?)\s/) {  
+            last;
+    } elsif (/recovery = (.*?)\s/) {  
             $recovery = $1;
             ($finish) = /finish=(.*?min)/;
+	    last;
         }
     } else {
         if (/$ARGV[0]/) {
