@@ -40,22 +40,22 @@ enum {
 #include <ssl.h>
 #include <err.h>
 #include <rand.h>
-#endif
-
-#ifdef HAVE_OPENSSL_SSL_H
-#include <openssl/rsa.h>
-#include <openssl/crypto.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
+#else
+# ifdef HAVE_OPENSSL_SSL_H
+# include <openssl/rsa.h>
+# include <openssl/crypto.h>
+# include <openssl/x509.h>
+# include <openssl/pem.h>
+# include <openssl/ssl.h>
+# include <openssl/err.h>
+# include <openssl/rand.h>
+# endif
 #endif
 
 #ifdef HAVE_SSL
 int check_cert = FALSE;
 int days_till_exp;
-char *randbuff = "";
+char *randbuff;
 SSL_CTX *ctx;
 SSL *ssl;
 X509 *server_cert;
@@ -84,14 +84,6 @@ struct timeval tv;
 
 #define server_port_check(use_ssl) (use_ssl ? HTTPS_PORT : HTTP_PORT)
 
-/* per RFC 2396 */
- 
-#define HDR_LOCATION "%*[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]: "
-#define URI_HTTP "%[HTPShtps]://"
-#define URI_HOST "%[-.abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
-#define URI_PORT ":%[0123456789]"
-#define URI_PATH "%[-_.!~*'();/?:@&=+$,%#abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
-
 #define HTTP_URL "/"
 #define CRLF "\r\n"
 
@@ -100,9 +92,9 @@ int specify_port = FALSE;
 int server_port = HTTP_PORT;
 char server_port_text[6] = "";
 char server_type[6] = "http";
-char *server_address = ""; 
-char *host_name = "";
-char *server_url = "";
+char *server_address;
+char *host_name;
+char *server_url;
 int server_url_length;
 int server_expect_yn = 0;
 char server_expect[MAX_INPUT_BUFFER] = HTTP_EXPECT;
@@ -118,8 +110,8 @@ int use_ssl = FALSE;
 int verbose = FALSE;
 int sd;
 int min_page_len = 0;
-char *http_method = "GET";
-char *http_post_data = "";
+char *http_method;
+char *http_post_data;
 char buffer[MAX_INPUT_BUFFER];
 
 int process_arguments (int, char **);
@@ -136,7 +128,7 @@ main (int argc, char **argv)
 	int result = STATE_UNKNOWN;
 
 	/* Set default URL. Must be malloced for subsequent realloc if --onredirect=follow */
-	asprintf (&server_url, "%s", HTTP_URL);
+	server_url = strdup(HTTP_URL);
 	server_url_length = strlen(server_url);
 
 	if (process_arguments (argc, argv) == ERROR)
@@ -161,8 +153,7 @@ main (int argc, char **argv)
 #ifdef HAVE_SSL
 	if (use_ssl && check_cert == TRUE) {
 		if (connect_SSL () != OK)
-			die (STATE_CRITICAL,
-			           _("HTTP CRITICAL - Could not make SSL connection\n"));
+			die (STATE_CRITICAL, _("HTTP CRITICAL - Could not make SSL connection\n"));
 		if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
 			result = check_certificate (&server_cert);
 			X509_free (server_cert);
@@ -313,16 +304,16 @@ process_arguments (int argc, char **argv)
 			break;
 		/* Note: H, I, and u must be malloc'd or will fail on redirects */
 		case 'H': /* Host Name (virtual host) */
- 			asprintf (&host_name, "%s", optarg);
+ 			host_name = strdup (optarg);
 			break;
 		case 'I': /* Server IP-address */
- 			asprintf (&server_address, "%s", optarg);
+ 			server_address = strdup(optarg);
 			break;
-		case 'u': /* Host or server */
+		case 'u': /* URL path */
 			asprintf (&server_url, "%s", optarg);
 			server_url_length = strlen (server_url);
 			break;
-		case 'p': /* Host or server */
+		case 'p': /* Server port */
 			if (!is_intnonneg (optarg))
 				usage2 (_("invalid port number"), optarg);
 			else {
@@ -335,8 +326,9 @@ process_arguments (int argc, char **argv)
 			user_auth[MAX_INPUT_BUFFER - 1] = 0;
 			break;
 		case 'P': /* HTTP POST data in URL encoded format */
-			asprintf (&http_method, "%s", "POST");
-			asprintf (&http_post_data, "%s", optarg);
+			if (http_method || http_post_data) break;
+			http_method = strdup("POST");
+			http_post_data = strdup(optarg);
 			break;
 		case 's': /* string or substring */
 			strncpy (string_expect, optarg, MAX_INPUT_BUFFER - 1);
@@ -391,21 +383,24 @@ process_arguments (int argc, char **argv)
 
 	c = optind;
 
-	if (strcmp (server_address, "") == 0 && c < argc)
-			asprintf (&server_address, "%s", argv[c++]);
+	if (server_address == NULL && c < argc)
+		server_address = strdup (argv[c++]);
 
-	if (strcmp (host_name, "") == 0 && c < argc)
+	if (host_name == NULL && c < argc)
  		asprintf (&host_name, "%s", argv[c++]);
 
-	if (strcmp (server_address ,"") == 0) {
-		if (strcmp (host_name, "") == 0)
+	if (server_address == NULL) {
+		if (host_name == NULL)
 			usage (_("check_http: you must specify a server address or host name\n"));
 		else
-			asprintf (&server_address, "%s", host_name);
+			server_address = strdup (host_name);
 	}
 
 	if (check_critical_time && critical_time>(double)socket_timeout)
 		socket_timeout = (int)critical_time + 1;
+
+	if (http_method == NULL)
+		http_method = strdup ("GET");
 
 	return TRUE;
 }
@@ -455,21 +450,34 @@ base64 (char *bin, size_t len)
 
 
 
+/* per RFC 2396 */
+#define HDR_LOCATION "%*[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]: "
+#define URI_HTTP "%[HTPShtps]://"
+#define URI_HOST "%[-.abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
+#define URI_PORT ":%[0123456789]"
+#define URI_PATH "%[-_.!~*'();/?:@&=+$,%#abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
+#define HD1 HDR_LOCATION URI_HTTP URI_HOST URI_PORT URI_PATH
+#define HD2 HDR_LOCATION URI_HTTP URI_HOST URI_PATH
+#define HD3 HDR_LOCATION URI_HTTP URI_HOST URI_PORT
+#define HD4 HDR_LOCATION URI_HTTP URI_HOST
+#define HD5 HDR_LOCATION URI_PATH
+
 int
 check_http (void)
 {
-	char *msg = NULL;
-	char *status_line = "";
-	char *header = NULL;
-	char *page = "";
-	char *auth = NULL;
+	char *msg;
+	char *status_line;
+	char *header;
+	char *page;
+	char *auth;
 	int i = 0;
 	size_t pagesize = 0;
-	char *full_page = "";
-	char *buf = NULL;
-	char *pos = "";
-	char *x = NULL;
-	char *orig_url = NULL;
+	char *full_page;
+	char *buf;
+	char *pos;
+	char *x;
+	char *orig_url;
+	long microsec;
 	double elapsed_time;
 	int page_len = 0;
 #ifdef HAVE_SSL
@@ -504,7 +512,7 @@ check_http (void)
 	asprintf (&buf, "%s %s HTTP/1.0\r\n", http_method, server_url);
 
 	/* optionally send the host header info (not clear if it's usable) */
-	if (strcmp (host_name, ""))
+	if (host_name)
 		asprintf (&buf, "%sHost: %s\r\n", buf, host_name);
 
 	/* send user agent */
@@ -512,13 +520,13 @@ check_http (void)
 	          buf, clean_revstring (revision), VERSION);
 
 	/* optionally send the authentication info */
-	if (strcmp (user_auth, "")) {
+	if (strlen(user_auth)) {
 		auth = base64 (user_auth, strlen (user_auth));
 		asprintf (&buf, "%sAuthorization: Basic %s\r\n", buf, auth);
 	}
 
 	/* either send http POST data */
-	if (strlen (http_post_data)) {
+	if (http_post_data) {
 		asprintf (&buf, "%sContent-Type: application/x-www-form-urlencoded\r\n", buf);
 		asprintf (&buf, "%sContent-Length: %i\r\n\r\n", buf, strlen (http_post_data));
 		asprintf (&buf, "%s%s%s", buf, http_post_data, CRLF);
@@ -543,6 +551,7 @@ check_http (void)
 #endif
 
 	/* fetch the page */
+	full_page = strdup("");
 	while ((i = my_recv ()) > 0) {
 		buffer[i] = '\0';
 		asprintf (&full_page, "%s%s", full_page, buffer);
@@ -663,42 +672,49 @@ check_http (void)
 				while (pos) {
 					server_address = realloc (server_address, MAX_IPV4_HOSTLENGTH + 1);
 					if (server_address == NULL)
-						die (STATE_UNKNOWN,
-										 _("HTTP UNKNOWN: could not allocate server_address"));
+						die (STATE_UNKNOWN,_("ERROR: could not allocate server_address"));
 					if (strcspn (pos, "\r\n") > (size_t)server_url_length) {
 						server_url = realloc (server_url, strcspn (pos, "\r\n"));
 						if (server_url == NULL)
-							die (STATE_UNKNOWN,
-							           _("HTTP UNKNOWN: could not allocate server_url"));
+							die (STATE_UNKNOWN, _("ERROR: could not allocate server_url"));
 						server_url_length = strcspn (pos, "\r\n");
 					}
-					if (sscanf (pos, HDR_LOCATION URI_HTTP URI_HOST URI_PORT URI_PATH, server_type, server_address, server_port_text, server_url) == 4) {
-						asprintf (&host_name, "%s", server_address);
+					/* HDR_LOCATION, URI_HTTP, URI_HOST, URI_PORT, URI_PATH */
+					if (sscanf (pos, HD1, server_type, server_address, server_port_text, server_url) == 4) {
+						if (host_name != NULL) free(host_name);
+						host_name = strdup(server_address);
 						use_ssl = server_type_check (server_type);
 						server_port = atoi (server_port_text);
 						check_http ();
 					}
-					else if (sscanf (pos, HDR_LOCATION URI_HTTP URI_HOST URI_PATH, server_type, server_address, server_url) == 3 ) { 
-						asprintf (&host_name, "%s", server_address);
+					/* HDR_LOCATION URI_HTTP URI_HOST URI_PATH */
+					else if (sscanf (pos, HD2, server_type, server_address, server_url) == 3 ) { 
+						if (host_name != NULL) free(host_name);
+						host_name = strdup(server_address);
 						use_ssl = server_type_check (server_type);
 						server_port = server_port_check (use_ssl);
 						check_http ();
 					}
-					else if (sscanf (pos, HDR_LOCATION URI_HTTP URI_HOST URI_PORT, server_type, server_address, server_port_text) == 3) {
-						asprintf (&host_name, "%s", server_address);
+					/* HDR_LOCATION URI_HTTP URI_HOST URI_PORT */
+					else if(sscanf (pos, HD3, server_type, server_address, server_port_text) == 3) {
+						if (host_name != NULL) free(host_name);
+						host_name = strdup(server_address);
 						strcpy (server_url, "/");
 						use_ssl = server_type_check (server_type);
 						server_port = atoi (server_port_text);
 						check_http ();
 					}
-					else if (sscanf (pos, HDR_LOCATION URI_HTTP URI_HOST, server_type, server_address) == 2) {
-						asprintf (&host_name, "%s", server_address);
+					/* HDR_LOCATION URI_HTTP URI_HOST */
+					else if(sscanf (pos, HD4, server_type, server_address) == 2) {
+						if (host_name != NULL) free(host_name);
+						host_name = strdup(server_address);
 						strcpy (server_url, "/");
 						use_ssl = server_type_check (server_type);
 						server_port = server_port_check (use_ssl);
 						check_http ();
 					}
-					else if (sscanf (pos, HDR_LOCATION URI_PATH, server_url) == 1) {
+					/* HDR_LOCATION URI_PATH */
+					else if (sscanf (pos, HD5, server_url) == 1) {
 						if ((server_url[0] != '/') && (x = strrchr(orig_url, '/'))) {
 							*x = '\0';
 							asprintf (&server_url, "%s/%s", orig_url, server_url);
@@ -721,10 +737,11 @@ check_http (void)
 				printf (_("WARNING"));
 			else if (onredirect == STATE_CRITICAL)
 				printf (_("CRITICAL"));
-			elapsed_time = delta_time (tv);
-			asprintf (&msg, _(" - %s - %.3f second response time %s%s|time=%.3f\n"),
+			microsec = deltime (tv);
+			elapsed_time = (double)microsec / 1.0e6;
+			asprintf (&msg, _(" - %s - %.3f second response time %s%s|time=%ldus size=%dB\n"),
 		                 status_line, elapsed_time, timestamp,
-	                   (display_html ? "</A>" : ""), elapsed_time);
+	                   (display_html ? "</A>" : ""), microsec, pagesize);
 			die (onredirect, "%s", msg);
 		} /* end if (strstr (status_line, "30[0-4]") */
 
@@ -733,10 +750,11 @@ check_http (void)
 
 		
 	/* check elapsed time */
-	elapsed_time = delta_time (tv);
-	asprintf (&msg, _("HTTP problem: %s - %.3f second response time %s%s|time=%.3f\n"),
+	microsec = deltime (tv);
+	elapsed_time = (double)microsec / 1.0e6;
+	asprintf (&msg, _("HTTP problem: %s - %.3f second response time %s%s|time=%ldus size=%dB\n"),
 	               status_line, elapsed_time, timestamp,
-	               (display_html ? "</A>" : ""), elapsed_time);
+	               (display_html ? "</A>" : ""), microsec, pagesize);
 	if (check_critical_time == TRUE && elapsed_time > critical_time)
 		die (STATE_CRITICAL, "%s", msg);
 	if (check_warning_time == TRUE && elapsed_time > warning_time)
@@ -747,14 +765,14 @@ check_http (void)
 
 	if (strlen (string_expect)) {
 		if (strstr (page, string_expect)) {
-			printf (_("HTTP OK %s - %.3f second response time %s%s|time=%.3f\n"),
+			printf (_("HTTP OK %s - %.3f second response time %s%s|time=%ldus size=%dB\n"),
 			        status_line, elapsed_time,
-			        timestamp, (display_html ? "</A>" : ""), elapsed_time);
+			        timestamp, (display_html ? "</A>" : ""), microsec, pagesize);
 			exit (STATE_OK);
 		}
 		else {
-			printf (_("CRITICAL - string not found%s|time=%.3f\n"),
-			        (display_html ? "</A>" : ""), elapsed_time);
+			printf (_("CRITICAL - string not found%s|time=%ldus\n size=%dB"),
+			        (display_html ? "</A>" : ""), microsec, pagesize);
 			exit (STATE_CRITICAL);
 		}
 	}
@@ -762,15 +780,15 @@ check_http (void)
 	if (strlen (regexp)) {
 		errcode = regexec (&preg, page, REGS, pmatch, 0);
 		if (errcode == 0) {
-			printf (_("HTTP OK %s - %.3f second response time %s%s|time=%.3f\n"),
+			printf (_("HTTP OK %s - %.3f second response time %s%s|time=%ldus size=%dB\n"),
 			        status_line, elapsed_time,
-			        timestamp, (display_html ? "</A>" : ""), elapsed_time);
+			        timestamp, (display_html ? "</A>" : ""), microsec, pagesize);
 			exit (STATE_OK);
 		}
 		else {
 			if (errcode == REG_NOMATCH) {
-				printf (_("CRITICAL - pattern not found%s|time=%.3f\n"),
-				        (display_html ? "</A>" : ""), elapsed_time);
+				printf (_("CRITICAL - pattern not found%s|time=%ldus size=%dB\n"),
+				        (display_html ? "</A>" : ""), microsec, pagesize);
 				exit (STATE_CRITICAL);
 			}
 			else {
@@ -790,9 +808,9 @@ check_http (void)
 		exit (STATE_WARNING);
 	}
 	/* We only get here if all tests have been passed */
-	asprintf (&msg, _("HTTP OK %s - %.3f second response time %s%s|time=%.3f\n"),
-	                status_line, (float)elapsed_time,
-	                timestamp, (display_html ? "</A>" : ""), elapsed_time);
+	asprintf (&msg, _("HTTP OK %s - %.3f second response time %s%s|time=%ldus size=%dB\n"),
+	                status_line, elapsed_time,
+	                timestamp, (display_html ? "</A>" : ""), microsec, pagesize);
 	die (STATE_OK, "%s", msg);
 	return STATE_UNKNOWN;
 }
