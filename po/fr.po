@@ -10,9 +10,9 @@ msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-12-26 00:06+0100\n"
-"PO-Revision-Date: 2004-12-20 21:03+0100\n"
+"PO-Revision-Date: 2004-12-27 23:43+0100\n"
 "Last-Translator: Benoit Mortier <benoit.mortier@opensides.be>\n"
-"Language-Team: Français <benoit.mortier@opensides.be>\n"
+"Language-Team: Français <fr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -77,11 +77,8 @@ msgstr "SSH ALERTE: impossible d'ouvrir %s\n"
 #: plugins/check_time.c:219 plugins/check_udp.c:149 plugins/check_ups.c:484
 #: plugins/check_users.c:143 plugins/check_ide_smart.c:209
 #: plugins/negate.c:177 plugins/urlize.c:74
-#, fuzzy
 msgid "Unknown argument"
-msgstr ""
-"%s: Argument inconnu: %c\n"
-"\n"
+msgstr "Argument inconnu"
 
 #: plugins/check_by_ssh.c:228 plugins/check_dig.c:264 plugins/check_disk.c:308
 #: plugins/check_http.c:266 plugins/check_ldap.c:268 plugins/check_pgsql.c:221
@@ -130,10 +127,8 @@ msgstr "Pas de commande distante"
 
 #: plugins/check_by_ssh.c:325
 #, c-format
-msgid ""
-"%s: In passive mode, you must provide a service name for each command.\n"
-msgstr ""
-"%s: En mode passif, vous devez fournir un service pour chaque commande.\n"
+msgid "%s: In passive mode, you must provide a service name for each command.\n"
+msgstr "%s: En mode passif, vous devez fournir un service pour chaque commande.\n"
 
 #: plugins/check_by_ssh.c:328
 #, c-format
@@ -244,28 +239,33 @@ msgstr ""
 #: plugins/check_dhcp.c:293
 #, c-format
 msgid "Error: Could not get hardware address of interface '%s'\n"
-msgstr ""
+msgstr "Error: Impossible d'obtenir l'addresse matérielle pour l'interface '%s'\n"
 
 #: plugins/check_dhcp.c:315
 #, c-format
 msgid "Error: if_nametoindex error - %s.\n"
-msgstr ""
+msgstr "Erreur: if_nametoindex erreur - %s.\n"
 
 #: plugins/check_dhcp.c:320
 #, c-format
 msgid "Error: Couldn't get hardware address from %s. sysctl 1 error - %s.\n"
 msgstr ""
+"Erreur: Impossible d'obtenir l'addresse matérielle depuis %s\n"
+" erreur sysctl 1 - %s.\n"
 
 #: plugins/check_dhcp.c:325
 #, c-format
-msgid ""
-"Error: Couldn't get hardware address from interface %s. malloc error - %s.\n"
+msgid "Error: Couldn't get hardware address from interface %s. malloc error - %s.\n"
 msgstr ""
+"Erreur: Impossible d'obtenir l'addresse matérielle depuis l'interface %s\n"
+" erreur malloc - %s.\n"
 
 #: plugins/check_dhcp.c:330
 #, c-format
 msgid "Error: Couldn't get hardware address from %s. sysctl 2 error - %s.\n"
 msgstr ""
+"Erreur: Impossible d'obtenir l'addresse matérielle depuis %s\n"
+" erreur sysctl 2 - %s.\n"
 
 #: plugins/check_dhcp.c:355
 #, c-format
@@ -273,6 +273,8 @@ msgid ""
 "Error: can't find unit number in interface_name (%s) - expecting TypeNumber "
 "eg lnc0.\n"
 msgstr ""
+"Erreur: impossible de trouver le numéro dans le nom de l'interface (%s).\n"
+"J'attendais le nom suivi du type ex lnc0.\n"
 
 #: plugins/check_dhcp.c:360 plugins/check_dhcp.c:372
 #, c-format
@@ -280,21 +282,23 @@ msgid ""
 "Error: can't read MAC address from DLPI streams interface for device %s unit "
 "%d.\n"
 msgstr ""
+"Erreur: impossible de lire l'addresse MAC depuis l'interface DLPI pour le \n"
+"périphérique %s numéro %d.\n"
 
 #: plugins/check_dhcp.c:378
 #, c-format
 msgid "Error: can't get MAC address for this architecture.\n"
-msgstr ""
+msgstr "Erreur: impossible d'obtenir l'adresse MAC pour cette architecture.\n"
 
 #: plugins/check_dhcp.c:383
 #, c-format
 msgid "Hardware address: "
-msgstr ""
+msgstr "Addresse matérielle: "
 
 #: plugins/check_dhcp.c:458
 #, c-format
 msgid "DHCPDISCOVER to %s port %d\n"
-msgstr ""
+msgstr "DHCPDISCOVER vers %s port %d\n"
 
 #: plugins/check_dhcp.c:509
 #, c-format
@@ -309,13 +313,12 @@ msgstr ""
 #: plugins/check_dhcp.c:521
 #, c-format
 msgid "DHCPOFFER from IP address %s\n"
-msgstr ""
+msgstr "DHCPOFFER depuis l'addresse IP %s\n"
 
 #: plugins/check_dhcp.c:528
 #, c-format
-msgid ""
-"DHCPOFFER XID (%lu) did not match DHCPDISCOVER XID (%lu) - ignoring packet\n"
-msgstr ""
+msgid "DHCPOFFER XID (%lu) did not match DHCPDISCOVER XID (%lu) - ignoring packet\n"
+msgstr "DHCPOFFER XID (%lu) ne correspond pas à DHCPDISCOVER XID (%lu) - paquet ignoré\n"
 
 #: plugins/check_dhcp.c:550
 #, c-format
@@ -374,14 +377,12 @@ msgstr ""
 
 #: plugins/check_dhcp.c:694
 #, c-format
-msgid ""
-"Error: Could not bind socket to interface %s.  Check your privileges...\n"
+msgid "Error: Could not bind socket to interface %s.  Check your privileges...\n"
 msgstr ""
 
 #: plugins/check_dhcp.c:704
 #, c-format
-msgid ""
-"Error: Could not bind to DHCP socket (port %d)!  Check your privileges...\n"
+msgid "Error: Could not bind to DHCP socket (port %d)!  Check your privileges...\n"
 msgstr ""
 
 #: plugins/check_dhcp.c:737
@@ -486,8 +487,7 @@ msgstr ""
 
 #: plugins/check_dhcp.c:1155
 #, c-format
-msgid ""
-"Error: DLPI stream API failed to get MAC in dl_attach_req/open(%s..): %s.\n"
+msgid "Error: DLPI stream API failed to get MAC in dl_attach_req/open(%s..): %s.\n"
 msgstr ""
 
 #: plugins/check_dhcp.c:1179
@@ -987,14 +987,12 @@ msgstr "Le nom de l'hôte n'a pas été spécifié"
 #: plugins/check_fping.c:323
 #, c-format
 msgid "%s: Only one threshold may be packet loss (%s)\n"
-msgstr ""
-"%s: Seulement un seuil peut être utilisé pour les pertes de paquets (%s)\n"
+msgstr "%s: Seulement un seuil peut être utilisé pour les pertes de paquets (%s)\n"
 
 #: plugins/check_fping.c:327
 #, c-format
 msgid "%s: Only one threshold must be packet loss (%s)\n"
-msgstr ""
-"%s: Seulement un seuil doit être utilisé pour les pertes de paquets (%s)\n"
+msgstr "%s: Seulement un seuil doit être utilisé pour les pertes de paquets (%s)\n"
 
 #: plugins/check_fping.c:359
 #, c-format
@@ -1386,8 +1384,7 @@ msgstr "INCONNU - Impossible de définir l'endroit de la relocation - %s%s\n"
 #: plugins/check_http.c:1127
 #, c-format
 msgid "WARNING - maximum redirection depth %d exceeded - %s://%s:%d%s%s\n"
-msgstr ""
-"ALERTE - le niveau maximum de redirection %d à été dépassé - %s://%s:%d%s%s\n"
+msgstr "ALERTE - le niveau maximum de redirection %d à été dépassé - %s://%s:%d%s%s\n"
 
 #: plugins/check_http.c:1135
 #, c-format
@@ -1978,13 +1975,11 @@ msgstr "Le seuil critique doit être un nombre à virgule flottante!\n"
 
 #: plugins/check_load.c:271
 msgid "Warning threshold for 1-minute load average is not specified\n"
-msgstr ""
-"Le seuil d'alerte pour la charge système après 1 minute n'est pas spécifié\n"
+msgstr "Le seuil d'alerte pour la charge système après 1 minute n'est pas spécifié\n"
 
 #: plugins/check_load.c:273
 msgid "Warning threshold for 5-minute load average is not specified\n"
-msgstr ""
-"Le seuil d'alerte pour la charge système après 5 minutes n'est pas spécifié\n"
+msgstr "Le seuil d'alerte pour la charge système après 5 minutes n'est pas spécifié\n"
 
 #: plugins/check_load.c:275
 msgid "Warning threshold for 15-minute load average is not specified\n"
@@ -1994,18 +1989,15 @@ msgstr ""
 
 #: plugins/check_load.c:277
 msgid "Critical threshold for 1-minute load average is not specified\n"
-msgstr ""
-"Le seuil critique pour la charge système après 1 minute n'est pas spécifié\n"
+msgstr "Le seuil critique pour la charge système après 1 minute n'est pas spécifié\n"
 
 #: plugins/check_load.c:279
 msgid "Critical threshold for 5-minute load average is not specified\n"
-msgstr ""
-"Le seuil critique pour la charge système après 5 minutes n'est pas spécifié\n"
+msgstr "Le seuil critique pour la charge système après 5 minutes n'est pas spécifié\n"
 
 #: plugins/check_load.c:281
 msgid "Critical threshold for 15-minute load average is not specified\n"
-msgstr ""
-"Le seuil critique pour la charge système après 15 minute n'est pas spécifié\n"
+msgstr "Le seuil critique pour la charge système après 15 minute n'est pas spécifié\n"
 
 #: plugins/check_load.c:283
 msgid ""
@@ -2474,8 +2466,7 @@ msgstr "Argument -l erroné"
 #: plugins/check_nt.c:219
 #, c-format
 msgid "%s:\\ - total: %.2f Gb - used: %.2f Gb (%.0f%%) - free %.2f Gb (%.0f%%)"
-msgstr ""
-"%s:\\ - total: %.2f Gb - utilisé: %.2f Gb (%.0f%%) - libre %.2f Gb (%.0f%%)"
+msgstr "%s:\\ - total: %.2f Gb - utilisé: %.2f Gb (%.0f%%) - libre %.2f Gb (%.0f%%)"
 
 #: plugins/check_nt.c:222
 #, c-format
@@ -2492,8 +2483,7 @@ msgstr "Pas de service/processus spécifié"
 
 #: plugins/check_nt.c:270
 #, c-format
-msgid ""
-"Memory usage: total:%.2f Mb - used: %.2f Mb (%.0f%%) - free: %.2f Mb (%.0f%%)"
+msgid "Memory usage: total:%.2f Mb - used: %.2f Mb (%.0f%%) - free: %.2f Mb (%.0f%%)"
 msgstr ""
 "Mémoire utilisée: total:%.2f Mb - utilisée: %.2f Mb (%.0f%%) - libre: %.2f "
 "Mb (%.0f%%)"
@@ -2975,8 +2965,7 @@ msgstr ""
 
 #: plugins/check_overcr.c:110
 msgid "Unknown error fetching load data\n"
-msgstr ""
-"Erreur inconnue lors de la récupération des données de charge système\n"
+msgstr "Erreur inconnue lors de la récupération des données de charge système\n"
 
 #: plugins/check_overcr.c:114
 msgid "Invalid response from server - no load information\n"
@@ -4663,14 +4652,12 @@ msgstr "CRITIQUE - SMART_READ_VALUES: %s\n"
 #: plugins/check_ide_smart.c:361
 #, c-format
 msgid "CRITICAL - %d Harddrive PreFailure%cDetected! %d/%d tests failed.\n"
-msgstr ""
-"CRITIQUE - %d État de pré-panne %c Détecté! %d/%d les tests on échoués.\n"
+msgstr "CRITIQUE - %d État de pré-panne %c Détecté! %d/%d les tests on échoués.\n"
 
 #: plugins/check_ide_smart.c:368
 #, c-format
 msgid "WARNING - %d Harddrive Advisor%s Detected. %d/%d tests failed.\n"
-msgstr ""
-"ALERTE -  %d État de pré-panne %s Détecté! %d/%d les tests on échoués.\n"
+msgstr "ALERTE -  %d État de pré-panne %s Détecté! %d/%d les tests on échoués.\n"
 
 #: plugins/check_ide_smart.c:375
 #, c-format
@@ -4685,8 +4672,7 @@ msgstr "ERREUR - État '%d' inconnu. %d/%d les tests on réussi\n"
 #: plugins/check_ide_smart.c:411
 #, fuzzy, c-format
 msgid "OffLineStatus=%d {%s}, AutoOffLine=%s, OffLineTimeout=%d minutes\n"
-msgstr ""
-"Etat Hors Ligne=%d {%s}, Hors Ligne Auto=%s, OffLineTimeout=%d minutes\n"
+msgstr "Etat Hors Ligne=%d {%s}, Hors Ligne Auto=%s, OffLineTimeout=%d minutes\n"
 
 #: plugins/check_ide_smart.c:417
 #, c-format
@@ -4840,69 +4826,3 @@ msgstr "Impossible d'allouer de l'espace pour '%s'\n"
 msgid "failed malloc in strscat\n"
 msgstr "Impossible d'allouer de l'espace pour '%s'\n"
 
-#~ msgid ""
-#~ "Expiration time must be an integer (seconds)\n"
-#~ "Type '%s -h' for additional help\n"
-#~ msgstr ""
-#~ "Le délai d'expiration doit être un entier (en secondes)\n"
-#~ "Tapez '%s -h' pour de l'aide additionelle\n"
-
-#, fuzzy
-#~ msgid "Server port an integer (seconds)\n"
-#~ msgstr ""
-#~ "Le port du server doit être un entier (secondes)\n"
-#~ "Tapez '%s -h' pour de l'aide additionelle\n"
-
-#~ msgid ""
-#~ "Hostname was not supplied\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Le nom de l'hôte n'a pas été fourni\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "%s: Unknown argument: %s\n"
-#~ "\n"
-#~ msgstr ""
-#~ "%s: Argument inconnu: %s\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "%s: Unknown argument: %c\n"
-#~ "\n"
-#~ msgstr ""
-#~ "%s: Argument inconnu: %c\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "You must provide the status_log\n"
-#~ "Type '%s -h' for additional help\n"
-#~ msgstr ""
-#~ "Vous devez fournir le fichier status_log\n"
-#~ "Tapez '%s -h' pour de l'aide additionelle\n"
-
-#~ msgid ""
-#~ "You must provide a process string\n"
-#~ "Type '%s -h' for additional help\n"
-#~ msgstr ""
-#~ "Vous devez fournir le nom du processus\n"
-#~ "Tapez '%s -h' pour de l'aide additionelle\n"
-
-#, fuzzy
-#~ msgid "Critical time must be a nonnegative integer"
-#~ msgstr "Le temps critique doit être un entier positif"
-
-#~ msgid "Time interval must be a nonnegative integer"
-#~ msgstr "L'intervalle de temps doit être un entier positif"
-
-#~ msgid "Time interval must be a positive integer"
-#~ msgstr "L'intervalle de temps doit être un entier positif"
-
-#~ msgid "Critical threshold must be a positive integer\n"
-#~ msgstr "Critique le seuil doit être un entier positif\n"
-
-#~ msgid "Warning threshold must be a positive integer\n"
-#~ msgstr "Alerte le seuil doit être un entier positif\n"
-
-#~ msgid "check_http: invalid option - SSL is not available\n"
-#~ msgstr "check_http: option invalide - SSL n'est pas disponible\n"
