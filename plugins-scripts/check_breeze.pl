@@ -3,7 +3,7 @@
 
 use strict;
 use Getopt::Long;
-use vars qw($opt_V $opt_h $opt_H $opt_w $opt_c $PROGNAME);
+use vars qw($opt_V $opt_h $opt_w $opt_c $opt_H $opt_C $PROGNAME);
 use lib utils.pm ;
 use utils qw(%ERRORS &print_revision &support &usage);
 
