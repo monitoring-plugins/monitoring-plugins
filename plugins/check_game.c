@@ -1,75 +1,54 @@
 /******************************************************************************
- *
- * CHECK_GAME.C
- *
- * Program: GAME plugin for Nagios
- * License: GPL
- * Copyright (c) 1999 Ian Cass (ian@knowledge.com)
- *
- * Last Modified: $Date$
- *
- * Mod History
- *
- * 25-8-99 Ethan Galstad <nagios@nagios.org>
- *	   Integrated with common plugin code, minor cleanup stuff
- *
- * 17-8-99 version 1.1b
- *
- * 17-8-99 make port a separate argument so we can use something like
- *         check_game q2s!27910 with the probe set up as
- *         check_game $ARG1$ $HOSTADDRESS$ $ARG2$
- *
- * 17-8-99 Put in sanity check for ppl who enter the wrong server type
- *
- * 17-8-99 Release version 1.0b
- *
- * Command line: CHECK_GAME <server type> <ip_address> [port]
- *
- * server type = a server type that qstat understands (type qstat & look at the -default line)
- * ip_address  = either a dotted address or a FQD name
- * port        = defaults game default port
- *                        
- *
- * Description:
- * 
- * Needed to explore writing my own probes for nagios. It looked
- * pretty simple so I thought I'd write one for monitoring the status
- * of game servers. It uses qstat to do the actual monitoring and
- * analyses the result. Doing it this way means I can support all the
- * servers that qstat does and will do in the future.
- *
- *
- * Dependencies:
- *
- * This plugin uses the 'qstat' command If you don't
- * have the package installed you will need to download it from 
- * http://www.activesw.com/people/steve/qstat.html or any popular files archive
- * before you can use this plugin.
- *
- * License Information:
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- *****************************************************************************/
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+*****************************************************************************/
 
-#include "config.h"
+const char *progname = "check_game";
+const char *revision = "$Revision$";
+const char *copyright = "2002-2003";
+const char *authors = "Nagios Plugin Development Team";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
+const char *summary = "\
+This plugin tests %s connections with the specified host.\n";
+
+const char *option_summary = "\
+%s <game> <ip_address> [-p port] [-gf game_field] [-mf map_field] [-pf ping_field]\n";
+
+const char *options = "\
+<game>        = Game type that is recognised by qstat (without the leading dash)\n\
+<ip_address>  = The IP address of the device you wish to query\n\
+ [port]        = Optional port of which to connect\n\
+ [game_field]  = Field number in raw qstat output that contains game name\n\
+ [map_field]   = Field number in raw qstat output that contains map name\n\
+ [ping_field]  = Field number in raw qstat output that contains ping time\n\
+\n\
+Notes:\n\
+- This plugin uses the 'qstat' command, the popular game server status query tool .\n\
+  If you don't have the package installed, you will need to download it from\n\
+  http://www.activesw.com/people/steve/qstat.html before you can use this plugin.\n";
+
 #include "common.h"
+#include "popen.h"
 #include "utils.h"
 
+void print_usage (void);
+void print_help (void);
 int process_arguments (int, char **);
-const char *progname = "check_game";
+int validate_arguments (void);
 
 #define QSTAT_DATA_DELIMITER 	","
 
@@ -78,9 +57,11 @@ const char *progname = "check_game";
 #define QSTAT_HOST_TIMEOUT	"TIMEOUT"
 #define QSTAT_MAX_RETURN_ARGS	12
 
-char server_ip[MAX_HOST_ADDRESS_LENGTH];
-char game_type[MAX_INPUT_BUFFER];
-char port[MAX_INPUT_BUFFER];
+char *server_ip;
+char *game_type;
+int port = 0;
+
+int verbose;
 
 int qstat_game_players_max = 4;
 int qstat_game_players = 5;
@@ -92,13 +73,10 @@ int qstat_ping_field = 5;
 int
 main (int argc, char **argv)
 {
-	char command_line[MAX_INPUT_BUFFER];
+	char *command_line;
 	int result;
 	FILE *fp;
 	char input_buffer[MAX_INPUT_BUFFER];
-	char response[MAX_INPUT_BUFFER];
-	char *temp_ptr;
-	int found;
 	char *p, *ret[QSTAT_MAX_RETURN_ARGS];
 	int i;
 
@@ -111,49 +89,28 @@ main (int argc, char **argv)
 		printf ("Copyright (c) 1999 Ian Cass, Knowledge Matters Limited\n");
 		printf ("License: GPL\n");
 		printf ("\n");
-		printf
-			("Usage: %s <game> <ip_address> [-p port] [-gf game_field] [-mf map_field] [-pf ping_field]\n",
-			 argv[0]);
-		printf ("\n");
-		printf ("Options:\n");
-		printf
-			(" <game>        = Game type that is recognised by qstat (without the leading dash)\n");
-		printf
-			(" <ip_address>  = The IP address of the device you wish to query\n");
-		printf (" [port]        = Optional port of which to connect\n");
-		printf
-			(" [game_field]  = Field number in raw qstat output that contains game name\n");
-		printf
-			(" [map_field]   = Field number in raw qstat output that contains map name\n");
-		printf
-			(" [ping_field]  = Field number in raw qstat output that contains ping time\n");
-		printf ("\n");
-		printf ("Notes:\n");
-		printf
-			("- This plugin uses the 'qstat' command, the popular game server status query tool .\n");
-		printf
-			("  If you don't have the package installed, you will need to download it from\n");
-		printf
-			("  http://www.activesw.com/people/steve/qstat.html before you can use this plugin.\n");
-		printf ("\n");
 		return STATE_UNKNOWN;
 	}
 
 	result = STATE_OK;
 
 	/* create the command line to execute */
-	snprintf (command_line, sizeof (command_line) - 1, "%s -raw %s -%s %s%s",
-						PATH_TO_QSTAT, QSTAT_DATA_DELIMITER, game_type, server_ip, port);
-	command_line[sizeof (command_line) - 1] = 0;
+	asprintf (&command_line, "%s -raw %s -%s %s",
+						PATH_TO_QSTAT, QSTAT_DATA_DELIMITER, game_type, server_ip);
+	
+	if (port)
+		asprintf (&command_line, "%s:%-d", command_line, port);
+
+	if (verbose > 0)
+		printf ("%s\n", command_line);
 
 	/* run the command */
-	fp = popen (command_line, "r");
+	fp = spopen (command_line);
 	if (fp == NULL) {
 		printf ("Error - Could not open pipe: %s\n", command_line);
 		return STATE_UNKNOWN;
 	}
 
-	found = 0;
 	fgets (input_buffer, MAX_INPUT_BUFFER - 1, fp);	/* Only interested in the first line */
 
 	/* strip the newline character from the end of the input */
@@ -203,15 +160,15 @@ main (int argc, char **argv)
 	}
 	else {
 		printf ("OK: %s/%s %s (%s), Ping: %s ms\n", 
-		ret[qstat_game_players_max],
-		ret[qstat_game_players],
-                ret[qstat_game_field], 
-		ret[qstat_map_field],
-		ret[qstat_ping_field]);
+		        ret[qstat_game_players],
+		        ret[qstat_game_players_max],
+		        ret[qstat_game_field], 
+		        ret[qstat_map_field],
+		        ret[qstat_ping_field]);
 	}
 
 	/* close the pipe */
-	pclose (fp);
+	spclose (fp);
 
 	return result;
 }
@@ -221,79 +178,139 @@ main (int argc, char **argv)
 int
 process_arguments (int argc, char **argv)
 {
-	int x;
+	int c;
 
-	/* not enough options were supplied */
-	if (argc < 3)
+	int opt_index = 0;
+	static struct option long_opts[] = {
+		{"help", no_argument, 0, 'h'},
+		{"version", no_argument, 0, 'V'},
+		{"verbose", no_argument, 0, 'v'},
+		{"timeout", required_argument, 0, 't'},
+		{"hostname", required_argument, 0, 'H'},
+		{"port", required_argument, 0, 'P'},
+		{"game-type", required_argument, 0, 'G'},
+		{"map-field", required_argument, 0, 'm'},
+		{"ping-field", required_argument, 0, 'p'},
+		{"game-field", required_argument, 0, 'g'},
+		{"players-field", required_argument, 0, 129},
+		{"max-players-field", required_argument, 0, 130},
+		{0, 0, 0, 0}
+	};
+
+	if (argc < 2)
 		return ERROR;
 
-	/* first option is always the game type */
-	strncpy (game_type, argv[1], sizeof (game_type) - 1);
-	game_type[sizeof (game_type) - 1] = 0;
-
-	/* Second option is always the server name */
-	strncpy (server_ip, argv[2], sizeof (server_ip) - 1);
-	server_ip[sizeof (server_ip) - 1] = 0;
-
-	/* process all remaining arguments */
-	for (x = 4; x <= argc; x++) {
-
-		/* we got the port number to connect to */
-		if (!strcmp (argv[x - 1], "-p")) {
-			if (x < argc) {
-				snprintf (port, sizeof (port) - 2, ":%s", argv[x]);
-				port[sizeof (port) - 1] = 0;
-				x++;
-			}
-			else
-				return ERROR;
-		}
-
-		/* we got the game field */
-		else if (!strcmp (argv[x - 1], "-gf")) {
-			if (x < argc) {
-				qstat_game_field = atoi (argv[x]);
-				if (qstat_game_field < 0 || qstat_game_field > QSTAT_MAX_RETURN_ARGS)
-					return ERROR;
-				x++;
-			}
-			else
-				return ERROR;
-		}
-
-		/* we got the map field */
-		else if (!strcmp (argv[x - 1], "-mf")) {
-			if (x < argc) {
-				qstat_map_field = atoi (argv[x]);
-				if (qstat_map_field < 0 || qstat_map_field > QSTAT_MAX_RETURN_ARGS)
-					return ERROR;
-				x++;
-			}
-			else
-				return ERROR;
-		}
-
-		/* we got the ping field */
-		else if (!strcmp (argv[x - 1], "-pf")) {
-			if (x < argc) {
-				qstat_ping_field = atoi (argv[x]);
-				if (qstat_ping_field < 0 || qstat_ping_field > QSTAT_MAX_RETURN_ARGS)
-					return ERROR;
-				x++;
-			}
-			else
-				return ERROR;
-		}
-
-		/* else we got something else... */
-		else
-			return ERROR;
+	for (c = 1; c < argc; c++) {
+		if (strcmp ("-mf", argv[c]) == 0)
+			strcpy (argv[c], "-m");
+		else if (strcmp ("-pf", argv[c]) == 0)
+			strcpy (argv[c], "-p");
+		else if (strcmp ("-gf", argv[c]) == 0)
+			strcpy (argv[c], "-g");
 	}
 
-	return OK;
+	while (1) {
+		c = getopt_long (argc, argv, "hVvt:H:P:G:g:p:m:", long_opts, &opt_index);
+
+		if (c == -1 || c == EOF)
+			break;
+
+		switch (c) {
+		case '?': /* args not parsable */
+			printf ("%s: Unknown argument: %s\n\n", progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
+		case 'h': /* help */
+			print_help ();
+			exit (STATE_OK);
+		case 'V': /* version */
+			print_revision (progname, revision);
+			exit (STATE_OK);
+		case 'v': /* version */
+			verbose = TRUE;
+			break;
+		case 't': /* timeout period */
+			timeout_interval = atoi (optarg);
+			break;
+		case 'H': /* hostname */
+			if (strlen (optarg) >= MAX_HOST_ADDRESS_LENGTH)
+				terminate (STATE_UNKNOWN, "Input buffer overflow\n");
+			server_ip = strdup (optarg);
+			break;
+		case 'P': /* port */
+			port = atoi (optarg);
+			break;
+		case 'G': /* hostname */
+			if (strlen (optarg) >= MAX_INPUT_BUFFER)
+				terminate (STATE_UNKNOWN, "Input buffer overflow\n");
+			game_type = strdup (optarg);
+			break;
+		case 'p': /* index of ping field */
+			qstat_ping_field = atoi (optarg);
+			if (qstat_ping_field < 0 || qstat_ping_field > QSTAT_MAX_RETURN_ARGS)
+				return ERROR;
+			break;
+		case 'm': /* index on map field */
+			qstat_map_field = atoi (optarg);
+			if (qstat_map_field < 0 || qstat_map_field > QSTAT_MAX_RETURN_ARGS)
+				return ERROR;
+			break;
+		case 'g': /* index of game field */
+			qstat_game_field = atoi (optarg);
+			if (qstat_game_field < 0 || qstat_game_field > QSTAT_MAX_RETURN_ARGS)
+				return ERROR;
+			break;
+		case 129: /* index of player count field */
+			qstat_game_players = atoi (optarg);
+			if (qstat_game_players < 0 || qstat_game_players > QSTAT_MAX_RETURN_ARGS)
+				return ERROR;
+			break;
+		case 130: /* index of max players field */
+			qstat_game_players_max = atoi (optarg);
+			if (qstat_game_players_max < 0 || qstat_game_players_max > QSTAT_MAX_RETURN_ARGS)
+				return ERROR;
+			break;
+		}
+	}
+
+	c = optind;
+	/* first option is the game type */
+	if (!game_type && c<argc)
+		game_type = strdup (argv[c++]);
+
+	/* Second option is the server name */
+	if (!server_ip && c<argc)
+		server_ip = strdup (argv[c++]);
+
+	return validate_arguments ();
 }
 
-void print_usage (void)
+int
+validate_arguments (void)
 {
-	return STATE_OK;
+		return OK;
 }
+
+
+void
+print_help (void)
+{
+        print_revision (progname, revision);
+        printf ("Copyright (c) %s %s\n\t<%s>\n\n",
+                 copyright, authors, email);
+	printf (summary, progname);
+        print_usage ();
+        printf ("\nOptions:\n");
+        printf (options, DEFAULT_SOCKET_TIMEOUT);
+        support ();
+}
+
+void
+print_usage (void)
+{
+        printf
+                ("Usage: %s %s\n"
+                 "       %s (-h|--help)\n"
+                 "       %s (-V|--version)\n", progname, option_summary, progname, progname);
+}
+
