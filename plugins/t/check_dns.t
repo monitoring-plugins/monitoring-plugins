@@ -14,11 +14,10 @@ my $cmd;
 my $str;
 my $t;
 
-$cmd = "./check_dns 127.0.0.1 -to 5";
-$str = `$cmd`;
+$str = `./check_dns $Cache::dnshost -to 5`;
 $t += ok $?>>8,0;
 print "Test was: $cmd\n" if ($?);
-$t += ok $str, '/DNS ok - +[\.0-9]+ seconds response time, Address\(es\) is\/are /';
+$t += ok $str, '/DNS OK: +[\.0-9]+ seconds response time, /';
 
 $cmd = "./check_dns $Cache::nullhost -to 1";
 $str = `$cmd`;

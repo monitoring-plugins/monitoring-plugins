@@ -14,14 +14,16 @@ require Exporter;
 }
 
 use Helper;
-my ($tstdir,$spath,$hostname,$mailhost,$noserver,$nullhost,$quickcheck);
+my ($tstdir,$spath,$hostname,$httphost,$mailhost,$dnshost,$noserver,$nullhost,$quickcheck);
 
 use Getopt::Long;
 GetOptions
 	("tstdir:s"=>\$tstdir,
 	 "spath:s"=>\$spath,
 	 "hostname:s"=>\$hostname,
+	 "httpname:s"=>\$httphost,
 	 "mailhost:s"=>\$mailhost,
+	 "dnshost:s"=>\$dnshost,
 	 "noserver:s"=>\$noserver,
 	 "nullhost:s"=>\$nullhost,
 	 "quickcheck"=>\$quickcheck);
@@ -30,8 +32,10 @@ $spath = "." unless ($spath);
 
 unless ($quickcheck) {
     
-	$hostname = get_option("hostname","host for FTP/HTTP/UDP tests")	unless ($hostname);
+	$hostname = get_option("hostname","host for FTP/UDP tests")		unless ($hostname);
+	$httphost = get_option("httphost","host for HTTP tests")		unless ($httphost);
 	$mailhost = get_option("mailhost","host for SMTP/IMAP/POP tests")	unless ($mailhost);
+	$dnshost  = get_option("dnshost","hostname to lookup for DNS tests")	unless ($dnshost);
 	$noserver = get_option("noserver","host that rejects above services")	unless ($noserver);
 	# This machine should not be locatable from your network.  Use IP
 	# private addresses like 10.x.x.x and pick one that does not exist
