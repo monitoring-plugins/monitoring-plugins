@@ -415,8 +415,9 @@ fi
 
 AC_PATH_PROG(PATH_TO_PS,ps)
 dnl For OpenBSD 3.2 & 3.3. Must come before ps -weo
+dnl Should also work for FreeBSD 5.2.1 and 5.3
 dnl  STAT UCOMM              VSZ   RSS USER      PPID COMMAND
-if ps -axwo 'stat comm vsz rss user uid ppid args' 2>/dev/null | egrep -i ["^ *STAT +UCOMM +VSZ +RSS +USER +UID +PPID +COMMAND"] > /dev/null
+if ps -axwo 'stat comm vsz rss user uid ppid args' 2>/dev/null | egrep -i ["^ *STAT +[UCOMAND]+ +VSZ +RSS +USER +UID +PPID +COMMAND"] > /dev/null
 then
 	AC_DEFINE(USE_PS_VARS,1,[Define if 'ps' will be parsed with sscanf])
 	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,procprog,&pos],[Variable list for sscanf of 'ps' output])
