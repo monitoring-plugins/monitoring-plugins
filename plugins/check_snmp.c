@@ -415,9 +415,6 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-c");
 	}
 
-	/* initialize some args */
-	asprintf (&oid, "");
-
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
@@ -453,7 +450,7 @@ process_arguments (int argc, char **argv)
 				ptr[0] = ' '; /* relpace comma with space */
 			for (ptr = optarg; (ptr = index (ptr, ' ')); ptr++)
 				eval_method[++j] |= WARN_PRESENT;
-			asprintf (&oid, "%s %s", oid, optarg);
+			asprintf (&oid, "%s %s", (oid?oid:""), optarg);
 			break;
 		case 'E': /* PRELIMINARY - may change */
 			eval_method[j] |= WARN_PRESENT;
@@ -461,7 +458,7 @@ process_arguments (int argc, char **argv)
 				ptr[0] = ' '; /* relpace comma with space */
 			for (ptr = optarg; (ptr = index (ptr, ' ')); ptr++)
 				eval_method[++j] |= CRIT_PRESENT;
-			asprintf (&oid, "%s %s", oid, optarg);
+			asprintf (&oid, "%s %s", (oid?oid:""), optarg);
 			break;
 		case 'c':									/* critical time threshold */
 			if (strspn (optarg, "0123456789:,") < strlen (optarg)) {
@@ -500,10 +497,9 @@ process_arguments (int argc, char **argv)
 		case 'o':									/* object identifier */
 			for (ptr = optarg; (ptr = index (ptr, ',')); ptr++)
 				ptr[0] = ' '; /* relpace comma with space */
-			for (ptr = optarg; (ptr = index (ptr, ' ')); ptr++) {
+			for (ptr = optarg; (ptr = index (ptr, ' ')); ptr++)
 				j++; /* count OIDs */
-			}
-			asprintf (&oid, "%s %s", oid, optarg);
+			asprintf (&oid, "%s %s", (oid?oid:""), optarg);
 			break;
 		case 'd':									/* delimiter */
 			delimiter = strscpy (delimiter, optarg);
