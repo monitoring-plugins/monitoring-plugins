@@ -37,7 +37,6 @@
 #define PROGNAME "check_by_ssh"
 
 int process_arguments (int, char **);
-int call_getopt (int, char **);
 int validate_arguments (void);
 void print_help (char *command_name);
 void print_usage (void);

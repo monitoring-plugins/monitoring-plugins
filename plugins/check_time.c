@@ -40,6 +40,11 @@
 #include "utils.h"
 
 #define PROGNAME "check_time"
+#define REVISION "$Revision$"
+#define COPYRIGHT "1999-2002"
+#define AUTHOR "Ethan Galstad"
+#define EMAIL "nagios@nagios.org"
+#define SUMMARY "Check time on the specified host.\n"
 
 #define TIME_PORT	37
 #define UNIX_EPOCH	2208988800UL
@@ -59,7 +64,6 @@ char *server_address = NULL;
 
 
 int process_arguments (int, char **);
-int call_getopt (int, char **);
 void print_usage (void);
 void print_help (void);
 
@@ -93,7 +97,7 @@ main (int argc, char **argv)
 							 server_address, server_port);
 	}
 
-	/* watch for the FTP connection string */
+	/* watch for the connection string */
 	result = recv (sd, &raw_server_time, sizeof (raw_server_time), 0);
 
 	/* close the connection */
@@ -154,52 +158,6 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	if (argc < 2)
-		usage ("\n");
-
-	for (c = 1; c < argc; c++) {
-		if (strcmp ("-to", argv[c]) == 0)
-			strcpy (argv[c], "-t");
-		else if (strcmp ("-wd", argv[c]) == 0)
-			strcpy (argv[c], "-w");
-		else if (strcmp ("-cd", argv[c]) == 0)
-			strcpy (argv[c], "-c");
-		else if (strcmp ("-wt", argv[c]) == 0)
-			strcpy (argv[c], "-W");
-		else if (strcmp ("-ct", argv[c]) == 0)
-			strcpy (argv[c], "-C");
-	}
-
-	c = 0;
-	while ((c += call_getopt (argc - c, &argv[c])) < argc) {
-
-		if (is_option (argv[c]))
-			continue;
-
-		if (server_address == NULL) {
-			if (argc > c) {
-				if (is_host (argv[c]) == FALSE)
-					usage ("Invalid host name/address\n");
-				server_address = argv[c];
-			}
-			else {
-				usage ("Host name was not supplied\n");
-			}
-		}
-	}
-
-	return OK;
-}
-
-
-
-
-
-int
-call_getopt (int argc, char **argv)
-{
-	int c, i = 0;
-
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -216,41 +174,42 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+	if (argc < 2)
+		usage ("\n");
+
+	for (c = 1; c < argc; c++) {
+		if (strcmp ("-to", argv[c]) == 0)
+			strcpy (argv[c], "-t");
+		else if (strcmp ("-wd", argv[c]) == 0)
+			strcpy (argv[c], "-w");
+		else if (strcmp ("-cd", argv[c]) == 0)
+			strcpy (argv[c], "-c");
+		else if (strcmp ("-wt", argv[c]) == 0)
+			strcpy (argv[c], "-W");
+		else if (strcmp ("-ct", argv[c]) == 0)
+			strcpy (argv[c], "-C");
+	}
+
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
-			getopt_long (argc, argv, "+hVH:w:c:W:C:p:t:", long_options,
+			getopt_long (argc, argv, "hVH:w:c:W:C:p:t:", long_options,
 									 &option_index);
 #else
-		c = getopt (argc, argv, "+hVH:w:c:W:C:p:t:");
+		c = getopt (argc, argv, "hVH:w:c:W:C:p:t:");
 #endif
 
-		i++;
-
-		if (c == -1 || c == EOF || c == 1)
+		if (c == -1 || c == EOF)
 			break;
 
 		switch (c) {
-		case 'H':
-		case 'w':
-		case 'c':
-		case 'W':
-		case 'C':
-		case 'p':
-		case 't':
-			i++;
-		}
-
-		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf ("%s: Unknown argument: %s\n\n", my_basename (argv[0]), optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage3 ("Unknown argument", optopt);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (my_basename (argv[0]), "$Revision$");
+			print_revision (PROGNAME, REVISION);
 			exit (STATE_OK);
 		case 'H':									/* hostname */
 			if (is_host (optarg) == FALSE)
@@ -318,7 +277,20 @@ call_getopt (int argc, char **argv)
 			break;
 		}
 	}
-	return i;
+
+	c = optind;
+	if (server_address == NULL) {
+		if (argc > c) {
+			if (is_host (argv[c]) == FALSE)
+				usage ("Invalid host name/address\n");
+			server_address = argv[c];
+		}
+		else {
+			usage ("Host name was not supplied\n");
+		}
+	}
+
+	return OK;
 }
 
 
@@ -329,8 +301,12 @@ void
 print_usage (void)
 {
 	printf
-		("Usage: check_time -H <host_address> [-p port] [-w variance] [-c variance]\n"
-		 "                 [-W connect_time] [-C connect_time] [-t timeout]\n");
+		("Usage:\n"
+		 " %s -H <host_address> [-p port] [-w variance] [-c variance]\n"
+		 "           [-W connect_time] [-C connect_time] [-t timeout]\n"
+		 " %s (-h | --help) for detailed help\n"
+		 " %s (-V | --version) for version information\n",
+		 PROGNAME, PROGNAME, PROGNAME);
 }
 
 
@@ -340,10 +316,10 @@ print_usage (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, "$Revision$");
+	print_revision (PROGNAME, REVISION);
 	printf
-		("Copyright (c) 2000 Ethan Galstad/Karl DeBisschop\n\n"
-		 "This plugin connects to a time port on the specified host.\n\n");
+		("Copyright (c) %s %s <%s>\n\n%s\n",
+		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
 	print_usage ();
 	printf
 		("Options:\n"

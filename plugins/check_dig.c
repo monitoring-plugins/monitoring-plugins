@@ -1,14 +1,24 @@
 /******************************************************************************
-*
-* check_dig.c
-*
-* Program: dig plugin for Nagios
-* License: GPL
-* Copyright (c) 2000
-*
-* $Id$
-*
-*****************************************************************************/
+ *
+ * Program: SNMP plugin for Nagios
+ * License: GPL
+ *
+ * License Information:
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *****************************************************************************/
 
 #include "config.h"
 #include "common.h"
@@ -16,6 +26,11 @@
 #include "popen.h"
 
 #define PROGNAME "check_dig"
+#define REVISION "$Revision$"
+#define COPYRIGHT "2000-2002"
+#define AUTHOR "Karl DeBisschop"
+#define EMAIL "karl@debisschop.net"
+#define SUMMARY "Test the DNS service on the specified host using dig\n"
 
 int process_arguments (int, char **);
 int call_getopt (int, char **);
@@ -140,42 +155,6 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	if (argc < 2)
-		return ERROR;
-
-
-	c = 0;
-	while ((c += (call_getopt (argc - c, &argv[c]))) < argc) {
-
-		if (is_option (argv[c]))
-			continue;
-
-		if (dns_server == NULL) {
-			if (is_host (argv[c])) {
-				dns_server = argv[c];
-			}
-			else {
-				usage ("Invalid host name");
-			}
-		}
-	}
-
-	if (dns_server == NULL)
-		dns_server = strscpy (NULL, "127.0.0.1");
-
-	return validate_arguments ();
-}
-
-
-
-
-
-
-int
-call_getopt (int argc, char **argv)
-{
-	int c, i = 0;
-
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -188,26 +167,22 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+	if (argc < 2)
+		return ERROR;
+
 	while (1) {
 #ifdef HAVE_GETOPT_H
-		c = getopt_long (argc, argv, "+hVvt:l:H:", long_options, &option_index);
+		c = getopt_long (argc, argv, "hVvt:l:H:", long_options, &option_index);
 #else
-		c = getopt (argc, argv, "+?hVvt:l:H:");
+		c = getopt (argc, argv, "hVvt:l:H:");
 #endif
 
-		i++;
-
-		if (c == -1 || c == EOF || c == 1)
+		if (c == -1 || c == EOF)
 			break;
 
 		switch (c) {
-		case 't':
-		case 'l':
-		case 'H':
-			i++;
-		}
-
-		switch (c) {
+		case '?':									/* help */
+			usage3 ("Unknown argument", optopt);
 		case 'H':									/* hostname */
 			if (is_host (optarg)) {
 				dns_server = optarg;
@@ -236,11 +211,25 @@ call_getopt (int argc, char **argv)
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
-		case '?':									/* help */
-			usage ("Invalid argument\n");
 		}
 	}
-	return i;
+
+	c = optind;
+	if (dns_server == NULL) {
+		if (c < argc) {
+			if (is_host (argv[c])) {
+				dns_server = argv[c];
+			}
+			else {
+				usage ("Invalid host name");
+			}
+		}
+		else {
+			dns_server = strscpy (NULL, "127.0.0.1");
+		}
+	}
+
+	return validate_arguments ();
 }
 
 
@@ -262,8 +251,8 @@ print_help (void)
 {
 	print_revision (PROGNAME, "$Revision$");
 	printf
-		("Copyright (c) 2000 Karl DeBisschop\n\n"
-		 "This plugin use dig to test the DNS service on the specified host.\n\n");
+		("Copyright (c) %s %s <%s>\n\n%s\n",
+		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
 	print_usage ();
 	printf
 		("\nOptions:\n"

@@ -56,7 +56,6 @@ the contrib area of the downloads section at http://www.nagios.org\n\n"
 #define WARN_DUPLICATES "DUPLICATES FOUND! "
 
 int process_arguments (int, char **);
-int call_getopt (int, char **);
 int get_threshold (char *, float *, int *);
 int validate_arguments (void);
 int run_ping (char *);
