@@ -67,7 +67,7 @@ static int maxfd;								/* from our open_max(), {Prog openmax} */
 FILE *
 spopen (const char *cmdstring)
 {
-	char *environ[] = { NULL };
+	char *env[] = { "LC_ALL=C", (char*)0 };
 	char *cmd = NULL;
 	char **argv = NULL;
 	char *str;
@@ -182,7 +182,7 @@ spopen (const char *cmdstring)
 			if (childpid[i] > 0)
 				close (i);
 
-		execve (argv[0], argv, environ);
+		execve (argv[0], argv, env);
 		_exit (0);
 	}
 
@@ -199,7 +199,7 @@ spopen (const char *cmdstring)
 int
 spclose (FILE * fp)
 {
-	int fd, stat;
+	int fd, status;
 	pid_t pid;
 
 	if (childpid == NULL)
@@ -213,12 +213,12 @@ spclose (FILE * fp)
 	if (fclose (fp) == EOF)
 		return (1);
 
-	while (waitpid (pid, &stat, 0) < 0)
+	while (waitpid (pid, &status, 0) < 0)
 		if (errno != EINTR)
 			return (1);							/* error other than EINTR from waitpid() */
 
-	if (WIFEXITED (stat))
-		return (WEXITSTATUS (stat));	/* return child's termination status */
+	if (WIFEXITED (status))
+		return (WEXITSTATUS (status));	/* return child's termination status */
 
 	return (1);
 }
