@@ -182,9 +182,9 @@ struct timeval tv;
 
 #define HDR_LOCATION "%*[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]: "
 #define URI_HTTP "%[HTPShtps]://"
-#define URI_HOST "%[a-zA-Z0-9.-]"
-#define URI_PORT ":%[0-9]"
-#define URI_PATH "%[/a-zA-Z0-9._-=@,]"
+#define URI_HOST "%[-.abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
+#define URI_PORT ":%[-0123456789]"
+#define URI_PATH "%[-_=@,?&#;/.abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
 
 enum {
 	MAX_IPV4_HOSTLENGTH = 255,
