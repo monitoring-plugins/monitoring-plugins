@@ -83,6 +83,7 @@ main (int argc, char **argv)
 {
 	char *command_line = NULL;
 	int result = STATE_UNKNOWN;
+	int this_result = STATE_UNKNOWN;
 	int i;
 
 	addresses = malloc (max_addr);
@@ -113,7 +114,7 @@ main (int argc, char **argv)
 			printf ("%s ==> ", command_line);
 
 		/* run the command */
-		run_ping (command_line, addresses[i]);
+		this_result = run_ping (command_line, addresses[i]);
 
 		if (pl == UNKNOWN_PACKET_LOSS || rta == UNKNOWN_TRIP_TIME) {
 			printf ("%s\n", command_line);
@@ -122,30 +123,32 @@ main (int argc, char **argv)
 		}
 
 		if (pl >= cpl || rta >= crta || rta < 0)
-			result = STATE_CRITICAL;
+			this_result = STATE_CRITICAL;
 		else if (pl >= wpl || rta >= wrta)
-			result = STATE_WARNING;
-		else if (pl < wpl && rta < wrta && pl >= 0 && rta >= 0)
-			/* cannot use the max function because STATE_UNKNOWN is now 3 gt STATE_OK			
-				 result = max (result, STATE_OK);  */
-			if( !( (result == STATE_WARNING) || (result == STATE_CRITICAL) )  ) {
-				result = STATE_OK;	
-			}
+			this_result = STATE_WARNING;
+		else if (pl >= 0 && rta >= 0)
+			this_result = max_state (STATE_OK, this_result);	
 	
+		if (n_addresses > 1 && this_result != STATE_UNKNOWN)
+			terminate (STATE_OK, "%s is alive\n", addresses[i]);
+
 		if (display_html == TRUE)
 			printf ("<A HREF='%s/traceroute.cgi?%s'>", CGIURL, addresses[i]);
 		if (pl == 100)
-			printf ("PING %s - %sPacket loss = %d%%", state_text (result), warn_text,
+			printf ("PING %s - %sPacket loss = %d%%", state_text (this_result), warn_text,
 							pl);
 		else
 			printf ("PING %s - %sPacket loss = %d%%, RTA = %2.2f ms",
-							state_text (result), warn_text, pl, rta);
+							state_text (this_result), warn_text, pl, rta);
 		if (display_html == TRUE)
 			printf ("</A>");
 		printf ("\n");
 
 		if (verbose)
 			printf ("%f:%d%% %f:%d%%\n", wrta, wpl, crta, cpl);
+
+		result = max_state (result, this_result);
+
 	}
 
 	return result;
@@ -157,6 +160,7 @@ int
 process_arguments (int argc, char **argv)
 {
 	int c = 1;
+	char *ptr;
 
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
@@ -169,7 +173,7 @@ process_arguments (int argc, char **argv)
 	};
 #endif
 
-#define OPTCHARS "Vvht:c:w:H:p:nL"
+#define OPTCHARS "VvhnLt:c:w:H:p:"
 
 	if (argc < 2)
 		return ERROR;
@@ -206,16 +210,23 @@ process_arguments (int argc, char **argv)
 			verbose = TRUE;
 			break;
 		case 'H':	/* hostname */
-			if (is_host (optarg) == FALSE)
-				usage2 ("Invalid host name/address", optarg);
-			n_addresses++;
-			if (n_addresses > max_addr) {
-				max_addr *= 2;
-				addresses = realloc (addresses, max_addr);
-				if (addresses == NULL)
-					terminate (STATE_UNKNOWN, "Could not realloc() addresses\n");
+			ptr=optarg;
+			while (1) {
+				n_addresses++;
+				if (n_addresses > max_addr) {
+					max_addr *= 2;
+					addresses = realloc (addresses, max_addr);
+					if (addresses == NULL)
+						terminate (STATE_UNKNOWN, "Could not realloc() addresses\n");
+				}
+				addresses[n_addresses-1] = ptr;
+				if (ptr = index (ptr, ',')) {
+					strcpy (ptr, "");
+					ptr += sizeof(char);
+				} else {
+					break;
+				}
 			}
-			addresses[n_addresses-1] = optarg;
 			break;
 		case 'p':	/* number of packets to send */
 			if (is_intnonneg (optarg))
@@ -326,6 +337,7 @@ int
 validate_arguments ()
 {
 	float max_seconds;
+	int i;
 
 	if (wrta == UNKNOWN_TRIP_TIME) {
 		printf ("<wrta> was not set\n");
@@ -358,6 +370,11 @@ validate_arguments ()
 	max_seconds = crta / 1000.0 * max_packets + max_packets;
 	if (max_seconds > timeout_interval)
 		timeout_interval = (int)max_seconds;
+
+	for (i=0; i<n_addresses; i++) {
+		if (is_host(addresses[i]) == FALSE)
+			usage2 ("Invalid host name/address", addresses[i]);
+	}
 
 	return OK;
 }
