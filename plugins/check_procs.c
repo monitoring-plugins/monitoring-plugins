@@ -79,7 +79,9 @@ char tmp[MAX_INPUT_BUFFER];
 int
 main (int argc, char **argv)
 {
-	char input_buffer[MAX_INPUT_BUFFER];
+	char *input_buffer;
+	char *input_line;
+	char *procprog;
 
 	int procuid = 0;
 	int procppid = 0;
@@ -87,7 +89,6 @@ main (int argc, char **argv)
 	int procrss = 0;
 	float procpcpu = 0;
 	char procstat[8];
-	char procprog[MAX_INPUT_BUFFER];
 	char *procargs;
 	char *temp_string;
 
@@ -109,6 +110,9 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
+	input_buffer = malloc (MAX_INPUT_BUFFER);
+	procprog = malloc (MAX_INPUT_BUFFER);
+
 	asprintf (&metric_name, "PROCS");
 	metric = METRIC_PROCS;
 
@@ -128,13 +132,25 @@ main (int argc, char **argv)
 	if (child_stderr == NULL)
 		printf (_("Could not open stderr for %s\n"), PS_COMMAND);
 
+	/* flush first line */
 	fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process);
+	while ( input_buffer[strlen(input_buffer)-1] != '\n' )
+		fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process);
 
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
+		asprintf (&input_line, "%s", input_buffer);
+		while ( input_buffer[strlen(input_buffer)-1] != '\n' ) {
+			fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process);
+			asprintf (&input_line, "%s%s", input_line, input_buffer);
+		}
+
+		if (verbose >= 3)
+			printf ("%s", input_line);
+
 		strcpy (procprog, "");
 		asprintf (&procargs, "%s", "");
 
-		cols = sscanf (input_buffer, PS_FORMAT, PS_VARLIST);
+		cols = sscanf (input_line, PS_FORMAT, PS_VARLIST);
 
 		/* Zombie processes do not give a procprog command */
 		if ( cols == (expected_cols - 1) && strstr(procstat, zombie) ) {
@@ -146,7 +162,7 @@ main (int argc, char **argv)
 		}
 		if ( cols >= expected_cols ) {
 			resultsum = 0;
-			asprintf (&procargs, "%s", input_buffer + pos);
+			asprintf (&procargs, "%s", input_line + pos);
 			strip (procargs);
 
 			/* Some ps return full pathname for command. This removes path */
