@@ -16,7 +16,8 @@
 *
 *****************************************************************************/
 
-const char *progname = "check_tcp";
+/* progname changes depending on symlink called */
+char *progname = "check_tcp";
 const char *revision = "$Revision$";
 const char *copyright = "2002-2003";
 const char *authors = "Nagios Plugin Development Team";
