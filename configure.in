@@ -416,6 +416,19 @@ then
 fi
 
 AC_PATH_PROG(PATH_TO_PS,ps)
+dnl For OpenBSD 3.2 & 3.3. Must come before ps -weo
+dnl  STAT UCOMM              VSZ   RSS USER      PPID COMMAND
+if ps -axwo 'stat comm vsz rss user uid ppid args' 2>/dev/null | egrep -i ["^ *STAT +UCOMM +VSZ +RSS +USER +UID +PPID +COMMAND"] > /dev/null
+	AC_DEFINE(USE_PS_VARS,1,[Define if 'ps' will be parsed with sscanf])
+	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,procprog,&pos],[Variable list for sscanf of 'ps' output])
+	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS -axwo 'stat uid ppid args'",[Verbatim command to execute for ps in check_netsaint])
+	EXTRAS="$EXTRAS check_nagios"
+	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -axwo 'stat uid ppid comm args'",[Verbatim command to execute for ps in check_procs])
+	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[Format string for scanning ps output in check_procs])
+	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -axwo 'vsz comm'",[Verbatim command to execute for ps in check_vsz])
+	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[Format string for scanning ps output in check_vsz])
+	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -axwo 'rss comm'",[Verbatim command to execute for ps in check_rss])
+	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s",[Format string for scanning ps output in check_rss])
 dnl  STAT UCOMM              VSZ   RSS USER       UID  PPID COMMAND
 if ps -weo 'stat comm vsz rss user uid ppid args' 2>/dev/null | egrep -i ["^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ +U[ID]+ +P[PID]+ +[RGSCOMDNA]+"] >/dev/null
 then
