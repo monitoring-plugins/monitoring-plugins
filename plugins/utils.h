@@ -78,6 +78,7 @@ void usage3(const char *msg, int arg) __attribute__((noreturn));
 const char *state_text (int result);
 
 #define max(a,b) (((a)>(b))?(a):(b))
+#define min(a,b) (((a)<(b))?(a):(b))
 
 char *perfdata (const char *label,
  long int val,
