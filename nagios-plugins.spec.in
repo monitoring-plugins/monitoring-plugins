@@ -10,7 +10,7 @@
 
 %define version %%{VER}
 %define release %%{REL}
-%define source %{archive}-%{version}
+%define source %{archive}-%{version}-%{release}
 
 Name: %{name}
 Version: %{version}
