@@ -7,6 +7,8 @@
 # Assumes:
 #  ssh setup to send to shell.sf.net and $CF without password prompt
 #  autconf and automake installed on shell cf at v 2.57 & 1.72 and in PATH
+# Install in cron with something like:
+#  47 * * * * $HOME/bin/mail_error -o $HOME/sfsnapshot.out -m tonvoon@users.sf.net sfsnapshot r1_3_0
 
 function die { echo $1; exit 1; }
 
@@ -53,7 +55,6 @@ function make_dist {
 }
 
 # Set working variables
-PATH=$HOME/local/bin:$PATH
 PROJECT=nagiosplug
 IN=${HOME}/tmp_snapshot
 OUT_SERVER="shell.sf.net"

@@ -1,9 +1,11 @@
 #!/bin/bash
 # mail_error -o file -m email_address command
-# Runs command and redirects all output to file
-# If command rc != 0, sends file to email_address
+# Runs command from cron and redirects all output to file
+# If command rc != 0, sends output to email_address
 
 function die { echo $1 ; exit 1; }
+
+PATH=$HOME/bin:$HOME/local/bin:$PATH
 
 while getopts "o:m:" c; do
 	case $c in
