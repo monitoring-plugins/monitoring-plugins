@@ -35,8 +35,8 @@ int use_average = TRUE;
 int variable_number = -1;
 unsigned long value_warning_threshold = 0L;
 unsigned long value_critical_threshold = 0L;
-char *value_label;
-char *units_label;
+char *label;
+char *units;
 
 int
 main (int argc, char **argv)
@@ -47,11 +47,11 @@ main (int argc, char **argv)
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *temp_buffer;
 	time_t current_time;
-	char error_message[MAX_INPUT_BUFFER];
+	char* message;
 	time_t timestamp = 0L;
 	unsigned long average_value_rate = 0L;
 	unsigned long maximum_value_rate = 0L;
-	unsigned long value_rate = 0L;
+	unsigned long rate = 0L;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -111,7 +111,7 @@ main (int argc, char **argv)
 	/* if we couldn't read enough data, return an unknown error */
 	if (line <= 2) {
 		result = STATE_UNKNOWN;
-		sprintf (error_message, _("Unable to process MRTG log file\n"));
+		asprintf (&message, _("Unable to process MRTG log file\n"));
 	}
 
 	/* make sure the MRTG data isn't too old */
@@ -120,29 +120,33 @@ main (int argc, char **argv)
 		if (expire_minutes > 0
 				&& (current_time - timestamp) > (expire_minutes * 60)) {
 			result = STATE_WARNING;
-			sprintf (error_message, _("MRTG data has expired (%d minutes old)\n"),
+			asprintf (&message, _("MRTG data has expired (%d minutes old)\n"),
 							 (int) ((current_time - timestamp) / 60));
 		}
 	}
 
 	/* else check the incoming/outgoing rates */
 	if (result == STATE_OK) {
-
 		if (use_average == TRUE)
-			value_rate = average_value_rate;
+			rate = average_value_rate;
 		else
-			value_rate = maximum_value_rate;
+			rate = maximum_value_rate;
 
-		if (value_rate > value_critical_threshold)
+		if (rate > value_critical_threshold)
 			result = STATE_CRITICAL;
-		else if (value_rate > value_warning_threshold)
+		else if (rate > value_warning_threshold)
 			result = STATE_WARNING;
+
+		asprintf (&message, "%s. %s = %lu %s|%s",
+		          (use_average == TRUE) ? _("Avg") : _("Max"),
+		          label, rate, units,
+		          perfdata(label, rate, units,
+		                   value_warning_threshold, value_warning_threshold,
+		                   value_critical_threshold, value_critical_threshold,
+		                   0, 0, 0, 0));
 	}
 
-	sprintf (error_message, "%s. %s = %lu %s",
-					 (use_average == TRUE) ? _("Ave") : _("Max"), value_label, value_rate,
-					 units_label);
-	printf ("%s\n", error_message);
+	printf ("%s\n", message);
 
 	return result;
 }
@@ -213,10 +217,10 @@ process_arguments (int argc, char **argv)
 			value_critical_threshold = strtoul (optarg, NULL, 10);
 			break;
 		case 'l':									/* label */
-			value_label = optarg;
+			label = optarg;
 			break;
 		case 'u':									/* timeout */
-			units_label = optarg;
+			units = optarg;
 			break;
 		case 'V':									/* version */
 			print_revision (progname, revision);
@@ -268,12 +272,12 @@ process_arguments (int argc, char **argv)
 		value_critical_threshold = strtoul (argv[c++], NULL, 10);
 	}
 
-	if (argc > c && strlen (value_label) == 0) {
-		value_label = argv[c++];
+	if (argc > c && strlen (label) == 0) {
+		label = argv[c++];
 	}
 
-	if (argc > c && strlen (units_label) == 0) {
-		units_label = argv[c++];
+	if (argc > c && strlen (units) == 0) {
+		units = argv[c++];
 	}
 
 	return validate_arguments ();
@@ -285,11 +289,11 @@ validate_arguments (void)
 	if (variable_number == -1)
 		usage (_("You must supply the variable number\n"));
 
-	if (value_label == NULL)
-		value_label = strdup ("");
+	if (label == NULL)
+		label = strdup ("value");
 
-	if (units_label == NULL)
-		units_label = strdup ("");
+	if (units == NULL)
+		units = strdup ("");
 
 	return OK;
 }
