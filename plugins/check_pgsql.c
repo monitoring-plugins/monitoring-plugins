@@ -30,45 +30,9 @@ const char *progname = "check_pgsql";
 #define EMAIL "kdebisschop@users.sourceforge.net"
 #define SUMMARY "Tests to see if a PostgreSQL DBMS is accepting connections.\n"
 
-#define OPTIONS "[-c critical_time] [-w warning_time] [-t timeout] [-H host]\n\
-             [-P port] [-d database] [-l logname] [-p password]"
-
-#define LONGOPTIONS "\
-  -c, --critical=INTEGER\n\
-    Exit STATE_CRITICAL if connection time exceeds threshold (default: %d)\n\
-  -w, --warning=INTEGER\n\
-    Exit STATE_WARNING if connection time exceeds threshold (default: %d)\n\
-  -t, --timeout=INTEGER\n\
-    Terminate test if timeout limit is exceeded (default: %d)\n\
-  -H, --hostname=STRING\n\
-    Name or numeric IP address of machine running backend\n\
-  -P, --port=INTEGER\n\
-    Port running backend (default: %d)\n\
-  -d, --database=STRING\n\
-    Database to check (default: %s)\n\
-  -l, --logname = STRING\n\
-    Login name of user\n\
-  -p, --password = STRING\n\
-    Password (BIG SECURITY ISSUE)\n"
-
-#define DESCRIPTION "All parameters are optional.\n\
-\n\
-This plugin tests a PostgreSQL DBMS to determine whether it is active and\n\
-accepting queries. In its current operation, it simply connects to the\n\
-specified database, and then disconnects. If no database is specified, it\n\
-connects to the template1 database, which is present in every functioning \n\
-PostgreSQL DBMS.\n\
-\n\
-The plugin will connect to a local postmaster if no host is specified. To\n\
-connect to a remote host, be sure that the remote postmaster accepts TCP/IP\n\
-connections (start the postmaster with the -i option).\n\
-\n\
-Typically, the nagios user (unless the --logname option is used) should be\n\
-able to connect to the database without a password. The plugin can also send\n\
-a password, but no effort is made to obsure or encrypt the password.\n"
-
 #define DEFAULT_DB "template1"
 #define DEFAULT_HOST "127.0.0.1"
+
 enum {
 	DEFAULT_PORT = 5432,
 	DEFAULT_WARN = 2,
@@ -156,6 +120,82 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 <title>Functions</title>
 -@@
 ******************************************************************************/
+
+
+
+
+void
+print_help (void)
+{
+	print_revision (progname, REVISION);
+	printf
+		("Copyright (c) %s %s <%s>\n\n%s\n",
+		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
+	print_usage ();
+	printf (_("\
+\nOptions:\n\
+ -H, --hostname=ADDRESS\n\
+    Host name argument for servers using host headers (use numeric\n\
+    address if possible to bypass DNS lookup).\n\
+ -P, --port=INTEGER\n\
+    Port number (default: %d)\n\
+ -4, --use-ipv4\n\
+    Use IPv4 connection\n\
+ -6, --use-ipv6\n\
+    Use IPv6 connection\n"), DEFAULT_PORT);
+	printf (S_("\
+  -d, --database=STRING\n\
+    Database to check (default: %s)\n\
+  -l, --logname = STRING\n\
+    Login name of user\n\
+  -p, --password = STRING\n\
+    Password (BIG SECURITY ISSUE)\n\n"), DEFAULT_DB);
+	printf (S_("\nOptions:\n\
+  -c, --critical=INTEGER\n\
+    Exit STATE_CRITICAL if connection time exceeds threshold (default: %d)\n\
+  -w, --warning=INTEGER\n\
+    Exit STATE_WARNING if connection time exceeds threshold (default: %d)\n\
+  -t, --timeout=INTEGER\n\
+    Terminate test if timeout limit is exceeded (default: %d)\n"),
+	        DEFAULT_WARN, DEFAULT_CRIT, DEFAULT_TIMEOUT);
+	printf (_("\
+ -v, --verbose\n\
+    Show details for command-line debugging (Nagios may truncate output)\n\
+ -h, --help\n\
+    Print detailed help screen\n\
+ -V, --version\n\
+    Print version information\n\n"));
+	printf (S_("All parameters are optional.\n\
+\n\
+This plugin tests a PostgreSQL DBMS to determine whether it is active and\n\
+accepting queries. In its current operation, it simply connects to the\n\
+specified database, and then disconnects. If no database is specified, it\n\
+connects to the template1 database, which is present in every functioning \n\
+PostgreSQL DBMS.\n"));
+	printf (S_("\n\
+The plugin will connect to a local postmaster if no host is specified. To\n\
+connect to a remote host, be sure that the remote postmaster accepts TCP/IP\n\
+connections (start the postmaster with the -i option).\n"));
+	printf (S_("\n\
+Typically, the nagios user (unless the --logname option is used) should be\n\
+able to connect to the database without a password. The plugin can also send\n\
+a password, but no effort is made to obsure or encrypt the password.\n"));
+
+	support ();
+}
+
+void
+print_usage (void)
+{
+	printf (S_("\
+Usage:\n %s [-H <host>] [-P <port>] [-c <critical time>] [-w <warning time>]\n\
+            [-t <timeout>]"), progname);
+	printf (S_("[-d <database>] [-l <logname>] [-p <password>]\n"));
+	printf (S_("\
+         %s (-h | --help) for detailed help\n\
+         %s (-V | --version) for version information\n"),
+					progname, progname);
+}
 
 int
 main (int argc, char **argv)
@@ -175,7 +215,7 @@ main (int argc, char **argv)
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR) {
-		printf ("Cannot catch SIGALRM");
+		printf (_("Cannot catch SIGALRM"));
 		return STATE_UNKNOWN;
 	}
 	alarm (timeout_interval);
@@ -189,53 +229,27 @@ main (int argc, char **argv)
 
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus (conn) == CONNECTION_BAD) {
-		printf ("PGSQL: CRITICAL - no connection to '%s' (%s).\n", dbName,
+		printf (_("PGSQL: CRITICAL - no connection to '%s' (%s).\n"), dbName,
 						PQerrorMessage (conn));
 		PQfinish (conn);
 		return STATE_CRITICAL;
 	}
 	else if (elapsed_time > tcrit) {
 		PQfinish (conn);
-		printf ("PGSQL: CRITICAL - database %s (%d sec.)\n", dbName,
+		printf (_("PGSQL: CRITICAL - database %s (%d sec.)\n"), dbName,
 						elapsed_time);
 		return STATE_CRITICAL;
 	}
 	else if (elapsed_time > twarn) {
 		PQfinish (conn);
-		printf ("PGSQL: WARNING - database %s (%d sec.)\n", dbName, elapsed_time);
+		printf (_("PGSQL: WARNING - database %s (%d sec.)\n"), dbName, elapsed_time);
 		return STATE_WARNING;
 	}
 	else {
 		PQfinish (conn);
-		printf ("PGSQL: ok - database %s (%d sec.)\n", dbName, elapsed_time);
+		printf (_("PGSQL: ok - database %s (%d sec.)\n"), dbName, elapsed_time);
 		return STATE_OK;
 	}
-}
-
-
-
-
-void
-print_help (void)
-{
-	print_revision (progname, REVISION);
-	printf
-		("Copyright (c) %s %s <%s>\n\n%s\n",
-		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
-	print_usage ();
-	printf
-		("\nOptions:\n" LONGOPTIONS "\n" DESCRIPTION "\n", 
-		 DEFAULT_WARN, DEFAULT_CRIT, DEFAULT_TIMEOUT, DEFAULT_PORT, DEFAULT_DB);
-	support ();
-}
-
-void
-print_usage (void)
-{
-	printf ("Usage:\n" " %s %s\n"
-					" %s (-h | --help) for detailed help\n"
-					" %s (-V | --version) for version information\n",
-					progname, OPTIONS, progname, progname);
 }
 
 
@@ -271,7 +285,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':     /* usage */
-			usage3 ("Unknown argument", optopt);
+			usage3 (_("Unknown argument"), optopt);
 		case 'h':     /* help */
 			print_help ();
 			exit (STATE_OK);
@@ -280,38 +294,38 @@ process_arguments (int argc, char **argv)
 			exit (STATE_OK);
 		case 't':     /* timeout period */
 			if (!is_integer (optarg))
-				usage2 ("Timeout Interval must be an integer", optarg);
+				usage2 (_("Timeout Interval must be an integer"), optarg);
 			timeout_interval = atoi (optarg);
 			break;
 		case 'c':     /* critical time threshold */
 			if (!is_integer (optarg))
-				usage2 ("Invalid critical threshold", optarg);
+				usage2 (_("Invalid critical threshold"), optarg);
 			tcrit = atoi (optarg);
 			break;
 		case 'w':     /* warning time threshold */
 			if (!is_integer (optarg))
-				usage2 ("Invalid critical threshold", optarg);
+				usage2 (_("Invalid critical threshold"), optarg);
 			twarn = atoi (optarg);
 			break;
 		case 'H':     /* host */
 			if (!is_host (optarg))
-				usage2 ("You gave an invalid host name", optarg);
+				usage2 (_("You gave an invalid host name"), optarg);
 			pghost = optarg;
 			break;
 		case 'P':     /* port */
 			if (!is_integer (optarg))
-				usage2 ("Port must be an integer", optarg);
+				usage2 (_("Port must be an integer"), optarg);
 			pgport = optarg;
 			break;
 		case 'd':     /* database name */
 			if (!is_pg_dbname (optarg))
-				usage2 ("Database name is not valid", optarg);
+				usage2 (_("Database name is not valid"), optarg);
 			strncpy (dbName, optarg, NAMEDATALEN - 1);
 			dbName[NAMEDATALEN - 1] = 0;
 			break;
 		case 'l':     /* login name */
 			if (!is_pg_logname (optarg))
-				usage2 ("user name is not valid", optarg);
+				usage2 (_("user name is not valid"), optarg);
 			pguser = optarg;
 			break;
 		case 'p':     /* authentication password */
