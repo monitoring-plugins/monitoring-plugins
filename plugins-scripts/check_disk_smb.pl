@@ -68,11 +68,11 @@ my $host = $1 if ($opt_H =~ /([-_.A-Za-z0-9]+\$?)/);
 ($host) || usage("Invalid host: $opt_H\n");
 
 ($opt_s) || ($opt_s = shift) || usage("Share volume not specified\n");
-my $share = $1 if ($opt_s =~ /([-_.A-Za-z0-9]+)/);
+my $share = $1 if ($opt_s =~ /([-_.A-Za-z0-9]+\$?)/);
 ($share) || usage("Invalid share: $opt_s\n");
 
 ($opt_u) || ($opt_u = shift) || ($opt_u = "guest");
-my $user = $1 if ($opt_u =~ /([-_.A-Za-z0-9]+)/);
+my $user = $1 if ($opt_u =~ /([-_.A-Za-z0-9\\]+)/);
 ($user) || usage("Invalid user: $opt_u\n");
 
 ($opt_p) || ($opt_p = shift) || ($opt_p = "guest");
