@@ -14,4 +14,4 @@ EXTRA_DIST = ulonglong.m4 codeset.m4 getloadavg.m4 gettext.m4 glibc21.m4 iconv.m
 		fstypename.m4 fsusage.m4 ls-mntd-fs.m4 getopt.h gettext.h fsusage.h mountlist.h\
 		error.m4 error.h error.c xalloc.h unlocked-io.h malloc.c realloc.c strtod.c
 
-INCLUDES = -I$(srcdir)
+INCLUDES = -I$(srcdir) -I$(top_srcdir)/intl
