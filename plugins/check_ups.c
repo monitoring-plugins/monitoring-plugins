@@ -408,7 +408,7 @@ get_ups_variable (const char *varname, char *buf, size_t buflen)
 	}
 
 	if (strcmp (ptr, "ERR VAR-NOT-SUPPORTED") == 0) {
-		//printf ("Error: Variable '%s' is not supported\n", varname);
+		/*printf ("Error: Variable '%s' is not supported\n", varname);*/
 		return NOSUCHVAR;
 	}
 

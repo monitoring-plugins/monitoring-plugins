@@ -19,7 +19,7 @@
 *****************************************************************************/
 
 const char *progname = "check_disk";
-const char *program_name = "check_disk";	// Required for coreutils libs
+const char *program_name = "check_disk";	/* Required for coreutils libs */
 const char *revision = "$Revision$";
 const char *copyright = "1999-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";

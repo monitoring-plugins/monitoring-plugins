@@ -182,7 +182,7 @@ main (int argc, char **argv)
 		  /* send the STARTTLS command */
 		  send(sd, SMTP_STARTTLS, strlen(SMTP_STARTTLS), 0);
 
-		  recv(sd,buffer, MAX_INPUT_BUFFER-1, 0); // wait for it
+		  recv(sd,buffer, MAX_INPUT_BUFFER-1, 0); /* wait for it */
 		  if (!strstr (buffer, server_expect)) {
 		    printf (_("Server does not support STARTTLS\n"));
 		    return STATE_UNKNOWN;
@@ -254,8 +254,6 @@ main (int argc, char **argv)
 			if (n < nresponses) {
 #ifdef HAVE_REGEX_H
 				cflags |= REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
-				//strncpy (regex_expect, responses[n], sizeof (regex_expect) - 1);
-				//regex_expect[sizeof (regex_expect) - 1] = '\0';
 				errcode = regcomp (&preg, responses[n], cflags);
 				if (errcode != 0) {
 					regerror (errcode, &preg, errbuf, MAX_INPUT_BUFFER);
@@ -610,7 +608,7 @@ connect_STARTTLS (void)
   /* this causes a seg faul
      not sure why, being sloppy
      and commenting it out */
-  //  SSL_free (ssl);
+  /*  SSL_free (ssl); */
   SSL_CTX_free(ctx);
   my_close();
   
