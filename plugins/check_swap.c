@@ -89,7 +89,7 @@ main (int argc, char **argv)
 	tmp_status = strdup ("");
 	perf = strdup ("");
 
-	if (process_arguments (argc, argv) != TRUE)
+	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
 #ifdef HAVE_PROC_MEMINFO

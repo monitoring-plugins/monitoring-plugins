@@ -71,7 +71,7 @@ main (int argc, char **argv)
 		usage4 (_("Cannot catch SIGALRM"));
 	}
 
-	if (process_arguments (argc, argv) != TRUE) {
+	if (process_arguments (argc, argv) == ERROR) {
 		usage4 (_("Could not parse arguments"));
 	}
 

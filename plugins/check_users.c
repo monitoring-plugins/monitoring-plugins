@@ -50,7 +50,7 @@ main (int argc, char **argv)
 
 	perf = strdup("");
 
-	if (process_arguments (argc, argv) != TRUE)
+	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
 	/* run the command */

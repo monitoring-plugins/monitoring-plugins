@@ -156,7 +156,7 @@ main (int argc, char **argv)
 	output_delim = strdup (DEFAULT_OUTPUT_DELIMITER);
 	miblist = strdup (DEFAULT_MIBLIST);
 
-	if (process_arguments (argc, argv) != TRUE)
+	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
 	/* create the command line to execute */

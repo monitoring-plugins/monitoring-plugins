@@ -62,7 +62,7 @@ main (int argc, char **argv)
 	char incoming_speed_rating[8];
 	char outgoing_speed_rating[8];
 
-	if (process_arguments (argc, argv) != TRUE)
+	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
 	/* open the MRTG log file for reading */

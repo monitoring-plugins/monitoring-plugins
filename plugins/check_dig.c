@@ -68,7 +68,7 @@ main (int argc, char **argv)
 	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR)
 		usage4 (_("Cannot catch SIGALRM"));
 
-	if (process_arguments (argc, argv) != TRUE)
+	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
 	/* get the command to run */

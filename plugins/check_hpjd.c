@@ -85,7 +85,7 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
-	if (process_arguments (argc, argv) != TRUE)
+	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
 	/* removed ' 2>1' at end of command 10/27/1999 - EG */
