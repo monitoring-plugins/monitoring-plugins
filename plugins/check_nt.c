@@ -7,6 +7,8 @@
  * Copyright (c) 2000-2002 Yves Rubin (rubiyz@yahoo.com)
  *
  * Description:
+ * 
+ * This requires NSClient software to run on NT (http://nsclient.ready2run.nl/)
  *
  * License Information:
  *
