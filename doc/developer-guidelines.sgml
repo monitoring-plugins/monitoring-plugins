@@ -153,7 +153,7 @@
 		-v options for additional verbosity, up to a maximum of 3. The standard
 		type of output should be:</para>
 
-		<table id="verbose_levels"><title>Verbose output levels</title>
+		<table id="verboselevels"><title>Verbose output levels</title>
 			<tgroup cols="2">
 				<thead>
 					<row>
@@ -566,7 +566,7 @@
 
 		<para>The option -v or --verbose should be present in all plugins.
 		The user should be allowed to specify -v multiple times to increase
-		the verbosity level, as described in <xref linkend="verbose_levels">.</para>
+		the verbosity level, as described in <xref linkend="verboselevels">.</para>
     </section>
 
     <section>
@@ -677,7 +677,7 @@ update the AUTHORS file.</para>
 	Credit will always be given for any patches through a THANKS file in the distribution.</para>
 	</section>
 
-	<section id="New_plugins"><title>New plugins</title>
+	<section id="Newplugins"><title>New plugins</title>
 	<para>If you would like others to use your plugins and have it included in
 	the standard distribution, please include patches for the relevant
 	configuration files, in particular "configure.in". Otherwise submitted 
@@ -723,8 +723,8 @@ utils (perl or c or sh) rather than cooking it's own</para>
 
 </section>
 
-<section id="Using_Sourceforge"><title>Using Sourceforge</title>
-<table id="Project_member_access"><title>Project Member Access</title>
+<section id="UsingSourceforge"><title>Using Sourceforge</title>
+<table id="Projectmemberaccess"><title>Project Member Access</title>
 	<tgroup cols="9">
 		<thead>
 			<row>
@@ -738,9 +738,23 @@ utils (perl or c or sh) rather than cooking it's own</para>
 				<entry><para>Doc Manager</para></entry>
 				<entry><para>News</para></entry>
 				<entry><para>Screenshots</para></entry>
+				<entry><para>Notes</para></entry>
 			</row>
 		</thead>
 		<tbody>
+			<row>
+				<entry><para>Translator</para></entry>
+				<entry><para>Yes</para></entry>
+				<entry><para>Yes</para></entry>
+				<entry><para>No</para></entry>
+				<entry><para>-</para></entry>
+				<entry><para>-</para></entry>
+				<entry><para>-</para></entry>
+				<entry><para>-</para></entry>
+				<entry><para>-</para></entry>
+				<entry><para>-</para></entry>
+				<entry><para>Add developer to CVSROOT/avail for translation files</para></entry>
+			</row>
 			<row>
 				<entry><para>Developer</para></entry>
 				<entry><para>Yes</para></entry>
@@ -752,10 +766,12 @@ utils (perl or c or sh) rather than cooking it's own</para>
 				<entry><para>Editor</para></entry>
 				<entry><para>-</para></entry>
 				<entry><para>-</para></entry>
+				<entry><para>Need to set tracker access individually. Add developer to CVSROOT/avail for all files</para></entry>
 			</row>
 		</tbody>
 	</tgroup>
 </table>
+<para>Add all members to the nagiosplug-team mailing list</para>
 </section>
 </article>
   
