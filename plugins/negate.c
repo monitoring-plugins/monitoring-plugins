@@ -234,10 +234,10 @@ process_arguments (int argc, char **argv)
 
 	while (1) {
 #ifdef HAVE_GETOPT_H
-		c = getopt_long (argc, argv, "hVt:",
+		c = getopt_long (argc, argv, "+hVt:",
 		                 long_options, &option_index);
 #else
-		c = getopt (argc, argv, "hVt:");
+		c = getopt (argc, argv, "+hVt:");
 #endif
 		if (c == -1 || c == EOF)
 			break;
