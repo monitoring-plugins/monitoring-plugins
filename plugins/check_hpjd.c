@@ -85,13 +85,15 @@ const char *progname = "check_hpjd";
 #define ONLINE		0
 #define OFFLINE		1
 
+#define DEFAULT_COMMUNITY "public"
+
 int process_arguments (int, char **);
 int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
 
-char *community = NULL;
-char *address = "127.0.0.1";
+char *community = DEFAULT_COMMUNITY;
+char *address = NULL;
 
 
 int
@@ -392,11 +394,10 @@ process_arguments (int argc, char **argv)
 	int option_index = 0;
 	static struct option long_options[] = {
 		{"hostname", required_argument, 0, 'H'},
-		{"expect", required_argument, 0, 'e'},
+		{"community", required_argument, 0, 'C'},
 /*  		{"critical",       required_argument,0,'c'}, */
 /*  		{"warning",        required_argument,0,'w'}, */
 /*  		{"port",           required_argument,0,'P'}, */
-		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
@@ -406,15 +407,7 @@ process_arguments (int argc, char **argv)
 	if (argc < 2)
 		return ERROR;
 
-	for (c = 1; c < argc; c++) {
-		if (strcmp ("-to", argv[c]) == 0)
-			strcpy (argv[c], "-t");
-		else if (strcmp ("-wt", argv[c]) == 0)
-			strcpy (argv[c], "-w");
-		else if (strcmp ("-ct", argv[c]) == 0)
-			strcpy (argv[c], "-c");
-	}
-
+	
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c = getopt_long (argc, argv, "+hVH:C:", long_options, &option_index);
@@ -428,14 +421,14 @@ process_arguments (int argc, char **argv)
 		switch (c) {
 		case 'H':									/* hostname */
 			if (is_host (optarg)) {
-				address = optarg;
+				address = strscpy(address, optarg) ;
 			}
 			else {
 				usage ("Invalid host name\n");
 			}
 			break;
 		case 'C':									/* community */
-			community = optarg;
+			community = strscpy (community, optarg);
 			break;
 		case 'V':									/* version */
 			print_revision (progname, REVISION);
@@ -457,9 +450,9 @@ process_arguments (int argc, char **argv)
 			usage ("Invalid host name");
 		}
 	}
-
-	if (community == NULL) {
-		community = argv[c++];
+	
+	if (argv[c] != NULL ) {
+		community = argv[c];
 	}
 
 	return validate_arguments ();
@@ -493,10 +486,10 @@ print_help (void)
 		 " -H, --hostname=STRING or IPADDRESS\n"
 		 "   Check server on the indicated host\n"
 		 " -C, --community=STRING\n"
-		 "   The SNMP community name\n"
+		 "   The SNMP community name (default=%s)\n"
 		 " -h, --help\n"
 		 "   Print detailed help screen\n"
-		 " -V, --version\n" "   Print version information\n\n");
+		 " -V, --version\n" "   Print version information\n\n",DEFAULT_COMMUNITY);
 	support ();
 }
 
