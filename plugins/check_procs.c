@@ -129,13 +129,12 @@ main (int argc, char **argv)
 			cols = 4;
 		}
 		if ( cols >= 4 ) {
-			found++;
 			resultsum = 0;
 			asprintf (&procargs, "%s", input_buffer + pos);
  			strip (procargs);
 			if ((options & STAT) && (strstr (statopts, procstat)))
 				resultsum |= STAT;
-			if ((options & ARGS) && procargs && (strstr (procargs, args) == procargs))
+			if ((options & ARGS) && procargs && (strstr (procargs, args) != NULL))
 				resultsum |= ARGS;
 			if ((options & PROG) && procprog && (strcmp (prog, procprog) == 0))
 				resultsum |= PROG;
@@ -151,6 +150,10 @@ main (int argc, char **argv)
 				printf ("%d %d %d %s %s %s\n", procs, procuid, procppid, procstat,
 								procprog, procargs);
 #endif
+			if (strcmp (procprog, progname) == 0)
+				continue;
+			found++;
+
 			if (options == resultsum)
 				procs++;
 		} 
@@ -491,7 +494,7 @@ print_help (void)
 		 " -u, --user=USER\n"
 		 "    Only scan for proceses with user name or ID indicated.\n"
 		 " -a, --argument-array=STRING\n"
-		 "    Only scan for ARGS that match up to the length of the given STRING\n"
+		 "    Only scan for processes with args that contain STRING.\n"
 		 " -C, --command=COMMAND\n"
 		 "    Only scan for exact matches to the named COMMAND.\n\n"
 		 "RANGEs are specified 'min:max' or 'min:' or ':max' (or 'max'). If\n"
