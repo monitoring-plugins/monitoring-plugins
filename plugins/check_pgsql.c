@@ -403,7 +403,7 @@ print_help (void)
 
 	printf (_(UT_IPv46));
 
-	printf (S_("\
+	printf (_("\
   -d, --database=STRING\n\
     Database to check (default: %s)\n\
   -l, --logname = STRING\n\
@@ -417,18 +417,18 @@ print_help (void)
 
 	printf (_(UT_VERBOSE));
 
-	printf (S_("\nAll parameters are optional.\n\
+	printf (_("\nAll parameters are optional.\n\
 \n\
 This plugin tests a PostgreSQL DBMS to determine whether it is active and\n\
 accepting queries. In its current operation, it simply connects to the\n\
 specified database, and then disconnects. If no database is specified, it\n\
 connects to the template1 database, which is present in every functioning \n\
 PostgreSQL DBMS.\n"));
-	printf (S_("\n\
+	printf (_("\n\
 The plugin will connect to a local postmaster if no host is specified. To\n\
 connect to a remote host, be sure that the remote postmaster accepts TCP/IP\n\
 connections (start the postmaster with the -i option).\n"));
-	printf (S_("\n\
+	printf (_("\n\
 Typically, the nagios user (unless the --logname option is used) should be\n\
 able to connect to the database without a password. The plugin can also send\n\
 a password, but no effort is made to obsure or encrypt the password.\n"));
