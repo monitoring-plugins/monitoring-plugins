@@ -99,14 +99,12 @@ int max_state(int, int);
    most will or should.  Therefore, for consistency, these very common 
    options should have only these meanings throughout the overall suite */
 
-#define STD_OPTS "Vvht:c:w:H:F:"
-#define STD_OPTS_LONG \
+#define STD_LONG_OPTS \
 {"version",no_argument,0,'V'},\
 {"verbose",no_argument,0,'v'},\
 {"help",no_argument,0,'h'},\
 {"timeout",required_argument,0,'t'},\
 {"critical",required_argument,0,'c'},\
 {"warning",required_argument,0,'w'},\
-{"hostname",required_argument,0,'H'},\
-{"file",required_argument,0,'F'}
+{"hostname",required_argument,0,'H'}
 
