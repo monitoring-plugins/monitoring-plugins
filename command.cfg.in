@@ -140,10 +140,10 @@ command[snmp_tcpstats]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o tcp
 command[check_ifstatus]=@libexecdir@/check_ifstatus -H $HOSTADDRESS$ -C public 
 
 # check particular interface by snmp ifIndex key
-command[check_ifoperstatus]=@libexecdir@/check_ifoperstatus -H $HOSTADDRESS$ -C public -k $ARG1$
+command[check_ifoperstatus_ifindex]=@libexecdir@/check_ifoperstatus -H $HOSTADDRESS$ -C public -k $ARG1$
 
 # check particular interface by snmp ifDescr value (verify uniqueness before using)
-command[check_ifoperstatus]=@libexecdir@/check_ifoperstatus -H $HOSTADDRESS$ -C public -d $ARG1$
+command[check_ifoperstatus_ifdescr]=@libexecdir@/check_ifoperstatus -H $HOSTADDRESS$ -C public -d $ARG1$
 
 # verify all you BGP session on a device are running (only returns warning due to some hardcoded option - to be fixed soon)
 command[check_snmp_bgpstate]=@libexecdir@/check_bgpstate -H $HOSTADDRESS$ -C public
