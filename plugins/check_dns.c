@@ -342,7 +342,7 @@ process_arguments (int argc, char **argv)
 			strcpy (ptr_server, optarg);
 			break;
 		case 'a': /* expected address */
-			if (is_dotted_quad (optarg) == FALSE) {
+			if (is_addr (optarg) == FALSE) {
 				printf ("Invalid expected address\n\n");
 				print_usage ();
 				exit (STATE_UNKNOWN);
