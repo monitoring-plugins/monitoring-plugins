@@ -726,7 +726,8 @@ check_http (void)
 
 	/* Exit here if server_expect was set by user and not default */
 	if ( server_expect_yn  )  {
-		msg = ssprintf (msg, "HTTP OK: Status line output matched \"%s\"\n",server_expect);
+		msg = ssprintf (msg, "HTTP OK: Status line output matched \"%s\"\n",
+	                  server_expect);
 		if (verbose)
 			printf ("%s\n",msg);
 
@@ -821,9 +822,9 @@ check_http (void)
 			else if (onredirect == STATE_CRITICAL)
 				printf ("HTTP CRITICAL");
 			time (&end_time);
-			msg = ssprintf (msg, ": %s - %d second response time %s%s\n",
-		                status_line, (int) (end_time - start_time),
-		                timestamp, (display_html ? "</A>" : ""));
+			msg = ssprintf (msg, ": %s - %d second response time %s%s|time=%d\n",
+		                 status_line, (int) (end_time - start_time), timestamp,
+	                   (display_html ? "</A>" : ""), (int) (end_time - start_time));
 			terminate (onredirect, msg);
 		} /* end if (strstr (status_line, "30[0-4]") */
 
@@ -833,9 +834,9 @@ check_http (void)
 		
 	/* check elapsed time */
 	time (&end_time);
-	msg = ssprintf (msg, "HTTP problem: %s - %d second response time %s%s\n",
-	               status_line, (int) (end_time - start_time),
-	               timestamp, (display_html ? "</A>" : ""));
+	msg = ssprintf (msg, "HTTP problem: %s - %d second response time %s%s|time=%d\n",
+	               status_line, (int) (end_time - start_time), timestamp,
+	               (display_html ? "</A>" : ""), (int) (end_time - start_time));
 	if (check_critical_time == TRUE && (end_time - start_time) > critical_time)
 		terminate (STATE_CRITICAL, msg);
 	if (check_warning_time == TRUE && (end_time - start_time) > warning_time)
@@ -846,14 +847,14 @@ check_http (void)
 
 	if (strlen (string_expect)) {
 		if (strstr (page, string_expect)) {
-			printf ("HTTP ok: %s - %d second response time %s%s\n",
+			printf ("HTTP ok: %s - %d second response time %s%s|time=%d\n",
 			        status_line, (int) (end_time - start_time),
-			        timestamp, (display_html ? "</A>" : ""));
+			        timestamp, (display_html ? "</A>" : ""), (int) (end_time - start_time));
 			exit (STATE_OK);
 		}
 		else {
-			printf ("HTTP CRITICAL: string not found%s\n",
-			        (display_html ? "</A>" : ""));
+			printf ("HTTP CRITICAL: string not found%s|time=%d\n",
+			        (display_html ? "</A>" : ""), (int) (end_time - start_time));
 			exit (STATE_CRITICAL);
 		}
 	}
@@ -861,15 +862,15 @@ check_http (void)
 	if (strlen (regexp)) {
 		errcode = regexec (&preg, page, REGS, pmatch, 0);
 		if (errcode == 0) {
-			printf ("HTTP ok: %s - %d second response time %s%s\n",
+			printf ("HTTP ok: %s - %d second response time %s%s|time=%d\n",
 			        status_line, (int) (end_time - start_time),
-			        timestamp, (display_html ? "</A>" : ""));
+			        timestamp, (display_html ? "</A>" : ""), (int) (end_time - start_time));
 			exit (STATE_OK);
 		}
 		else {
 			if (errcode == REG_NOMATCH) {
-				printf ("HTTP CRITICAL: pattern not found%s\n",
-				        (display_html ? "</A>" : ""));
+				printf ("HTTP CRITICAL: pattern not found%s|time=%d\n",
+				        (display_html ? "</A>" : ""), (int) (end_time - start_time));
 				exit (STATE_CRITICAL);
 			}
 			else {
@@ -882,9 +883,9 @@ check_http (void)
 #endif
 
 	/* We only get here if all tests have been passed */
-	msg = ssprintf (msg, "HTTP ok: %s - %d second response time %s%s\n",
+	msg = ssprintf (msg, "HTTP ok: %s - %d second response time %s%s|time=%d\n",
 	                status_line, (int) (end_time - start_time),
-	                timestamp, (display_html ? "</A>" : ""));
+	                timestamp, (display_html ? "</A>" : ""), (int) (end_time - start_time));
 	terminate (STATE_OK, msg);
 	return STATE_UNKNOWN;
 }

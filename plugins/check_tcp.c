@@ -300,9 +300,9 @@ main (int argc, char **argv)
 		 state_text (result), (int) (end_time - start_time), server_port);
 
 	if (status)
-		printf (" [%s]\n", status);
-	else
-		printf ("\n");
+		printf (" [%s]", status);
+
+	printf ("|time=%d\n", (int) (end_time - start_time));
 
 	return result;
 }
