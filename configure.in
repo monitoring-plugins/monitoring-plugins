@@ -909,11 +909,11 @@ then
 	elif [swap -l 2>/dev/null | egrep -i "^swapfile +dev +swaplo +blocks +free" >/dev/null]
 	then
 		AC_DEFINE_UNQUOTED(SWAP_FORMAT,["%*s %*[[0-9,-]] %*d %d %d"],[Format string for parsing swap output])
-		echo "      using UnixWare format"
+		echo "      using Solaris format"
 	elif [swap -l 2>/dev/null | egrep -i "^path +dev +swaplo +blocks +free" >/dev/null]
 	then
 		AC_DEFINE_UNQUOTED(SWAP_FORMAT,["%*s %*[[0-9,-]] %*d %d %d"],[Format string for parsing swap output])
-		echo "      using Solaris format"
+		echo "      using Unixware format"
 	fi
 	EXTRAS="$EXTRAS check_swap"
 elif [swapinfo -k 2>&1 | egrep -i "^Device" >/dev/null]
