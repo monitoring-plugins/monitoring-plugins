@@ -28,7 +28,7 @@ This plugin tests %s connections with the specified host.\n";
 
 const char *option_summary = "\
 -H host -p port [-w warn_time] [-c crit_time] [-s send]\n\
-	[-e expect] [-W wait] [-t to_sec] [-v]\n";
+	[-e expect] [-W wait] [-t to_sec] [-r refuse_state] [-v]\n";
 
 const char *options = "\
  -H, --hostname=ADDRESS\n\
@@ -48,6 +48,8 @@ const char *options = "\
     Response time to result in critical status (seconds)\n\
  -t, --timeout=INTEGER\n\
     Seconds before connection times out (default: %d)\n\
+ -r, --refuse=ok|warn|crit\n\
+    Accept tcp refusals with states ok, warn, crit (default: crit)\n\
  -v\n\
     Show details for command-line debugging (do not use with nagios server)\n\
  -h, --help\n\
@@ -337,9 +339,11 @@ main (int argc, char **argv)
 	alarm (0);
 
 	printf
-		("%s %s - %.3f second response time on port %d",
+		("%s %s%s - %.3f second response time on port %d",
 		 SERVICE,
-		 state_text (result), elapsed_time, server_port);
+		 state_text (result),
+		 (was_refused) ? " (refused)" : "",
+		 elapsed_time, server_port);
 
 	if (status && strlen(status) > 0)
 		printf (" [%s]", status);
@@ -375,6 +379,7 @@ process_arguments (int argc, char **argv)
 		{"expect", required_argument, 0, 'e'},
 		{"quit", required_argument, 0, 'q'},
 		{"delay", required_argument, 0, 'd'},
+		{"refuse", required_argument, 0, 'r'},
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
@@ -402,7 +407,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVvH:s:e:q:c:w:t:p:C:W:d:S", long_options,
+		c = getopt_long (argc, argv, "+hVvH:s:e:q:c:w:t:p:C:W:d:Sr:", long_options,
 									 &option_index);
 
 		if (c == -1 || c == EOF || c == 1)
@@ -470,6 +475,16 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'q':
 			server_quit = optarg;
+			break;
+		case 'r':
+			if (!strncmp(optarg,"ok",2))
+				econn_refuse_state = STATE_OK;
+			else if (!strncmp(optarg,"warn",4))
+				econn_refuse_state = STATE_WARNING;
+			else if (!strncmp(optarg,"crit",4))
+				econn_refuse_state = STATE_CRITICAL;
+			else
+				usage ("Refuse mut be one of ok, warn, crit\n");
 			break;
 		case 'd':
 			if (is_intpos (optarg))
@@ -541,7 +556,7 @@ connect_SSL (void)
   time (&start_time);
 
   /* Make TCP connection */
-  if (my_tcp_connect (server_address, server_port, &sd) == STATE_OK)
+  if (my_tcp_connect (server_address, server_port, &sd) == STATE_OK && was_refused == FALSE)
     {
     /* Do the SSL handshake */
       if ((ssl = SSL_new (ctx)) != NULL)

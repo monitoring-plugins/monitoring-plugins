@@ -32,6 +32,8 @@
 #include "netutils.h"
 
 int socket_timeout = DEFAULT_SOCKET_TIMEOUT; 
+int econn_refuse_state = STATE_CRITICAL;
+int was_refused = FALSE;
 
 /* handles socket timeouts */
 void
@@ -275,8 +277,22 @@ my_connect (char *host_name, int port, int *sd, int proto)
 			/* attempt to open a connection */
 			result = connect (*sd, res->ai_addr, res->ai_addrlen);
 
-			if (result == 0)
+			if (result == 0) {
+				was_refused = FALSE;
 				break;
+			}
+
+			if (result < 0) {
+				switch (errno) {
+					case ECONNREFUSED:
+						switch (econn_refuse_state) {
+							case STATE_OK:
+							case STATE_WARNING:
+								was_refused = TRUE;
+						}
+						break;
+				}
+			}
 
 			close (*sd);
 			res = res->ai_next;
@@ -286,6 +302,8 @@ my_connect (char *host_name, int port, int *sd, int proto)
 
 	if (result == 0)
 		return STATE_OK;
+	else if (was_refused)
+		return econn_refuse_state;
 	else {
 		printf ("%s\n", strerror(errno));
 		return STATE_CRITICAL;
