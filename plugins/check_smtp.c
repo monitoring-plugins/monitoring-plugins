@@ -43,6 +43,13 @@
 
 #define SMTP_PORT	25
 #define SMTP_EXPECT     "220"
+/* sendmail will syslog a "NOQUEUE" error if session does not attempt
+ * to do something useful. This can be prevented by giving a command
+ * even if syntax is illegal (MAIL requires a FROM:<...> argument)
+ * You can disable sending DUMMYCMD by undefining SMTP_USE_DUMMYCMD.
+ */
+#define SMTP_DUMMYCMD  "MAIL\n"
+#define SMTP_USE_DUMMYCMD 1
 #define SMTP_QUIT	"QUIT\n"
 
 int process_arguments (int, char **);
@@ -131,6 +138,12 @@ main (int argc, char **argv)
 		}
 
 		/* close the connection */
+#ifdef SMTP_USE_DUMMYCMD
+               send(sd,SMTP_DUMMYCMD,strlen(SMTP_DUMMYCMD),0);
+               /* allow for response to DUMMYCMD to reach us */
+               recv(sd,buffer,MAX_INPUT_BUFFER-1,0);
+#endif /* SMTP_USE_DUMMYCMD */
+
 		send (sd, SMTP_QUIT, strlen (SMTP_QUIT), 0);
 		close (sd);
 	}
