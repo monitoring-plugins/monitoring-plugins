@@ -171,7 +171,7 @@ main (int argc, char **argv)
 		asprintf (&PROGNAME, "check_spop");
 		asprintf (&SERVICE, "SPOP");
 		SEND=NULL;
-		asprintf (&EXPECT, "110");
+		asprintf (&EXPECT, "+OK");
 		asprintf (&QUIT, "QUIT\r\n");
 		PROTOCOL=TCP_PROTOCOL;
 		use_ssl=TRUE;
