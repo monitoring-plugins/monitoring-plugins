@@ -26,7 +26,7 @@ function make_dist {
 	# Variables will be expanded locally before being run on $CF
 	ssh $CF <<EOF
 	set -x
-	PATH=$PATH
+	PATH=$PATH:/usr/local/bin
 	[[ ! -d $COMPILE_DIR/$cvs_rel ]] && mkdir -p $COMPILE_DIR/$cvs_rel
 	cd $COMPILE_DIR/$cvs_rel
 
@@ -35,7 +35,6 @@ function make_dist {
 
 	cd $PROJECT
 
-	# TODO: Maybe this should only be run when necessary?
 	tools/setup
 
 	./configure
@@ -46,6 +45,7 @@ function make_dist {
 	# May fail if file not generated - do not trap
 	mv *.gz $IN
 
+	rm -rf $COMPILE_DIR
 	# End ssh
 EOF
 }
@@ -64,7 +64,7 @@ OUT_SERVER="shell.sf.net"
 OUT="/home/groups/n/na/nagiosplug/htdocs/snapshot"
 
 # Make sure prereqs are satisfied on server!
-CF="x86-solaris1"
+CF="x86-linux2"
 DS=`date -u +%Y%m%d%H%M`
 
 # Setup home directory area
@@ -80,11 +80,11 @@ done
 set -x
 files=$(ls $IN/*.gz 2>/dev/null)
 [[ -z $files ]] && die "No files created"
-ssh $OUT_SERVER "rm -f $OUT/*.gz"
-scp $files $OUT_SERVER:$OUT
+ssh -2 $OUT_SERVER "rm -f $OUT/*.gz"
+scp -2 $files $OUT_SERVER:$OUT
 
 # Create MD5 sum
-ssh $OUT_SERVER << EOF
+ssh -2 $OUT_SERVER << EOF
 cd $OUT
 cat <<-END_README > README
 This is the daily CVS snapshot of nagiosplug, consisting of the CVS HEAD
