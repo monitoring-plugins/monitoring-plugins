@@ -30,11 +30,15 @@
  *
  *****************************************************************************/
 
+#include "config.h"
+
+#ifdef HAVE_FEATURES_H
+#include <features.h>
+#endif
+
 #include <stdio.h>							/* obligatory includes */
 #include <stdlib.h>
 #include <errno.h>
-
-#include "config.h"
 
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
