@@ -34,7 +34,7 @@
 *
 ******************************************************************************/
 
-const char *progname = "check_snmp";
+const char *progname = "check_procs";
 #define REVISION "$Revision$"
 #define COPYRIGHT "1999-2002"
 #define AUTHOR "Ethan Galstad"
