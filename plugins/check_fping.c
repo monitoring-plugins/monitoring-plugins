@@ -127,16 +127,16 @@ textscan (char *buf)
 	int status = STATE_UNKNOWN;
 
 	if (strstr (buf, "not found")) {
-		die (STATE_CRITICAL, _("FPING unknown - %s not found\n"), server_name);
+		die (STATE_CRITICAL, _("FPING UNKNOW - %s not found\n"), server_name);
 
 	}
 	else if (strstr (buf, "is unreachable") || strstr (buf, "Unreachable")) {
-		die (STATE_CRITICAL, _("FPING critical - %s is unreachable\n"),
+		die (STATE_CRITICAL, _("FPING CRITICAL - %s is unreachable\n"),
 							 "host");
 
 	}
 	else if (strstr (buf, "is down")) {
-		die (STATE_CRITICAL, _("FPING critical - %s is down\n"), server_name);
+		die (STATE_CRITICAL, _("FPING CRITICAL - %s is down\n"), server_name);
 
 	}
 	else if (strstr (buf, "is alive")) {
@@ -254,7 +254,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H':									/* hostname */
 			if (is_host (optarg) == FALSE) {
-				usage2 (_("Invalid host name/address"), optarg);
+				usage2 (_("Invalid hostname/address"), optarg);
 			}
 			server_name = strscpy (server_name, optarg);
 			break;
@@ -301,7 +301,7 @@ process_arguments (int argc, char **argv)
 
 
 	if (server_name == NULL)
-		usage (_("Host name was not supplied\n\n"));
+		usage (_("Hostname was not supplied\n\n"));
 
 	return OK;
 }

@@ -151,7 +151,7 @@ main (int argc, char **argv)
 	if (spclose (child_process)) {
 		result = max_state (result, STATE_WARNING);
 		if (strlen (output) == 0)
-			asprintf (&output, _("dig returned error status"));
+			asprintf (&output, _("dig returned an error status"));
 	}
 
 	microsec = deltime (tv);
@@ -183,7 +183,6 @@ main (int argc, char **argv)
 
 
 
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -228,7 +227,7 @@ process_arguments (int argc, char **argv)
 				dns_server = optarg;
 			}
 			else {
-				usage2 (_("Invalid host name"), optarg);
+				usage2 (_("Invalid hostname/adress"), optarg);
 			}
 			break;
 		case 'p':                 /* server port */
@@ -236,7 +235,7 @@ process_arguments (int argc, char **argv)
 				server_port = atoi (optarg);
 			}
 			else {
-				usage2 (_("Server port must be a nonnegative integer"), optarg);
+				usage2 (_("port must be a positive integer"), optarg);
 			}
 			break;
 		case 'l':									/* address to lookup */
@@ -247,7 +246,7 @@ process_arguments (int argc, char **argv)
 				warning_interval = strtod (optarg, NULL);
 			}
 			else {
-				usage2 (_("Warning interval must be a nonnegative integer"), optarg);
+				usage2 (_("Warning interval must be a positive integer"), optarg);
 			}
 			break;
 		case 'c':									/* critical */
@@ -255,7 +254,7 @@ process_arguments (int argc, char **argv)
 				critical_interval = strtod (optarg, NULL);
 			}
 			else {
-				usage2 (_("Critical interval must be a nonnegative integer"), optarg);
+				usage2 (_("Critical interval must be a positive integer"), optarg);
 			}
 			break;
 		case 't':									/* timeout */
@@ -263,7 +262,7 @@ process_arguments (int argc, char **argv)
 				timeout_interval = atoi (optarg);
 			}
 			else {
-				usage2 (_("Time interval must be a nonnegative integer"), optarg);
+				usage2 (_("Timeout interval must be a positive integer"), optarg);
 			}
 			break;
 		case 'v':									/* verbose */
@@ -285,7 +284,7 @@ process_arguments (int argc, char **argv)
 				dns_server = argv[c];
 			}
 			else {
-				usage2 (_("Invalid host name"), argv[c]);
+				usage2 (_("Invalid hostname/adress"), argv[c]);
 			}
 		}
 		else {
@@ -311,7 +310,6 @@ validate_arguments (void)
 
 
 
-
 void
 print_help (void)
 {

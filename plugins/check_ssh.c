@@ -104,7 +104,8 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* help */
-			usage ("");
+			usage (_("Unknow argument\n"));
+			break;
 		case 'V':									/* version */
 			print_revision (progname, revision);
 			exit (STATE_OK);
@@ -135,7 +136,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H':									/* host */
 			if (is_host (optarg) == FALSE)
-				usage2 (_("Invalid host name/address"), optarg);
+				usage2 (_("Invalid hostname/address"), optarg);
 			server_name = optarg;
 			break;
 		case 'p':									/* port */
@@ -250,7 +251,7 @@ print_help (void)
 	printf ("Copyright (c) 1999 Remi Paulmier <remi@sinfomic.fr>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("Try to connect to SSH server at specified server and port\n\n"));
+	printf (_("Try to connect to an SSH server at specified server and port\n\n"));
 
 	print_usage ();
 

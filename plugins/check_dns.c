@@ -207,7 +207,7 @@ main (int argc, char **argv)
 		printf (_("DNS CRITICAL - %s\n"),
 		        !strcmp (output, "") ? _(" Probably a non-existent host/domain") : output);
 	else
-		printf (_("DNS problem - %s\n"),
+		printf (_("DNS UNKNOW - %s\n"),
 		        !strcmp (output, "") ? _(" Probably a non-existent host/domain") : output);
 
 	return result;
@@ -331,7 +331,7 @@ process_arguments (int argc, char **argv)
 		case 'r': /* reverse server name */
 			/* TODO: Is this is_host necessary? */
 			if (is_host (optarg) == FALSE) {
-				usage2 (_("Invalid host name/address"), optarg);
+				usage2 (_("Invalid hostname/address"), optarg);
 			}
 			if (strlen (optarg) >= ADDRESS_LENGTH)
 				die (STATE_UNKNOWN, _("Input buffer overflow\n"));
@@ -359,7 +359,7 @@ process_arguments (int argc, char **argv)
 	if (strlen(dns_server)==0 && c<argc) {
 		/* TODO: See -s option */
 		if (is_host(argv[c]) == FALSE) {
-			printf (_("Invalid name/address: %s\n\n"), argv[c]);
+			printf (_("Invalid hostname/address: %s\n\n"), argv[c]);
 			return ERROR;
 		}
 		if (strlen(argv[c]) >= ADDRESS_LENGTH)

@@ -167,11 +167,6 @@ main (int argc, char **argv)
 	return result;
 }
 
-
-
-
-
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -238,12 +233,12 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H':									/* host */
 			if (!is_host (optarg))
-				usage2 (_("Invalid host name"), optarg);
+				usage2 (_("Invalid hostname/adress"), optarg);
 			hostname = optarg;
 			break;
 		case 'p': /* port number */
 			if (!is_integer (optarg))
-				usage2 (_("port must be an integer"), optarg);
+				usage2 (_("port must be a positive integer"), optarg);
 			asprintf (&comm,"%s -p %s", comm, optarg);
 			break;
 		case 'O':									/* output file */
@@ -340,10 +335,6 @@ validate_arguments (void)
 }
 
 
-
-
-
-
 void
 print_help (void)
 {
