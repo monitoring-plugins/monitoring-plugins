@@ -1,32 +1,58 @@
 /******************************************************************************
- *
- * This file is part of the Nagios Plugins.
- *
- * Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>
- *
- * The Nagios Plugins are free software; you can redistribute them
- * and/or modify them under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- * $Id$
- *
- *****************************************************************************/
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+*****************************************************************************/
 
-#define REVISION "$Revision$"
-#define DESCRIPTION "Check a TCP port"
-#define AUTHOR "Ethan Galstad"
-#define EMAIL "nagios@nagios.org"
-#define COPYRIGHTDATE "2002"
+const char *progname = "check_tcp";
+const char *revision = "$Revision$";
+const char *copyright = "2002-2003";
+const char *authors = "Nagios Plugin Development Team";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
+const char *summary = "\
+This plugin tests %s connections with the specified host.\n";
+
+const char *option_summary = "\
+-H host -p port [-w warn_time] [-c crit_time] [-s send]\n\
+	[-e expect] [-W wait] [-t to_sec] [-v]\n";
+
+const char *options = "\
+ -H, --hostname=ADDRESS\n\
+    Host name argument for servers using host headers (use numeric\n\
+    address if possible to bypass DNS lookup).\n\
+ -p, --port=INTEGER\n\
+    Port number\n\
+ -s, --send=STRING\n\
+    String to send to the server\n\
+ -e, --expect=STRING\n\
+    String to expect in server response\n\
+ -W, --wait=INTEGER\n\
+    Seconds to wait between sending string and polling for response\n\
+ -w, --warning=DOUBLE\n\
+    Response time to result in warning status (seconds)\n\
+ -c, --critical=DOUBLE\n\
+    Response time to result in critical status (seconds)\n\
+ -t, --timeout=INTEGER\n\
+    Seconds before connection times out (default: %d)\n\
+ -v\n\
+    Show details for command-line debugging (do not use with nagios server)\n\
+ -h, --help\n\
+    Print detailed help screen\n\
+ -V, --version\n\
+    Print version information";
 
 #include "config.h"
 #include "common.h"
@@ -68,7 +94,6 @@ void print_usage (void);
 void print_help (void);
 int my_recv (void);
 
-char *progname = "check_tcp";
 char *SERVICE = NULL;
 char *SEND = NULL;
 char *EXPECT = NULL;
@@ -467,58 +492,27 @@ process_arguments (int argc, char **argv)
 	return OK;
 }
 
-
-
-
+void
+print_help (void)
+{
+        print_revision (progname, revision);
+        printf ("Copyright (c) %s %s\n\t<%s>\n\n",
+                 copyright, authors, email);
+	printf (summary, SERVICE);
+        print_usage ();
+        printf ("\nOptions:\n");
+        printf (options, DEFAULT_SOCKET_TIMEOUT);
+        support ();
+}
 
 void
 print_usage (void)
 {
-	printf
-		("Usage: %s -H host -p port [-w warn_time] [-c crit_time] [-s send]\n"
-		 "         [-e expect] [-W wait] [-t to_sec] [-v]\n", progname);
+        printf
+                ("Usage: %s %s\n"
+                 "       %s (-h|--help)\n"
+                 "       %s (-V|--version)\n", progname, option_summary, progname, progname);
 }
-
-
-
-
-
-void
-print_help (void)
-{
-	print_revision (progname, "$Revision$");
-	printf
-		("Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)\n\n"
-		 "This plugin tests %s connections with the specified host.\n\n",
-		 SERVICE);
-	print_usage ();
-	printf
-		("Options:\n"
-		 " -H, --hostname=ADDRESS\n"
-		 "    Host name argument for servers using host headers (use numeric\n"
-		 "    address if possible to bypass DNS lookup).\n"
-		 " -p, --port=INTEGER\n"
-		 "    Port number\n"
-		 " -s, --send=STRING\n"
-		 "    String to send to the server\n"
-		 " -e, --expect=STRING\n"
-		 "    String to expect in server response"
-		 " -W, --wait=INTEGER\n"
-		 "    Seconds to wait between sending string and polling for response\n"
-		 " -w, --warning=DOUBLE\n"
-		 "    Response time to result in warning status (seconds)\n"
-		 " -c, --critical=DOUBLE\n"
-		 "    Response time to result in critical status (seconds)\n"
-		 " -t, --timeout=INTEGER\n"
-		 "    Seconds before connection times out (default: %d)\n"
-		 " -v"
-		 "    Show details for command-line debugging (do not use with nagios server)\n"
-		 " -h, --help\n"
-		 "    Print detailed help screen\n"
-		 " -V, --version\n"
-		 "    Print version information\n", DEFAULT_SOCKET_TIMEOUT);
-}
-
 
 #ifdef HAVE_SSL
 int
