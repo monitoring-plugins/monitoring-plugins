@@ -209,61 +209,55 @@ main (int argc, char **argv)
 	return result;
 }
 
+
 int
 error_scan (char *input_buffer)
 {
 
 	/* the DNS lookup timed out */
-	if (strstr (input_buffer,
-	     "Note:  nslookup is deprecated and may be removed from future releases.")
-	    || strstr (input_buffer,
-	     "Consider using the `dig' or `host' programs instead.  Run nslookup with")
-	    || strstr (input_buffer,
-	     "the `-sil[ent]' option to prevent this message from appearing."))
+	if (strstr (input_buffer,	"Note:  nslookup is deprecated and may be removed from future releases.") ||
+	    strstr (input_buffer, "Consider using the `dig' or `host' programs instead.  Run nslookup with") ||
+	    strstr (input_buffer, "the `-sil[ent]' option to prevent this message from appearing."))
 		return STATE_OK;
 
 	/* the DNS lookup timed out */
 	else if (strstr (input_buffer, "Timed out"))
-		return STATE_WARNING;
+		terminate (STATE_WARNING, "Request timed out at server\n");
 
 	/* DNS server is not running... */
 	else if (strstr (input_buffer, "No response from server"))
-		return STATE_CRITICAL;
+		terminate (STATE_CRITICAL, "No response from name server %s\n", dns_server);
 
 	/* Host name is valid, but server doesn't have records... */
 	else if (strstr (input_buffer, "No records"))
-		return STATE_WARNING;
-
-	/* Host or domain name does not exist */
-	else if (strstr (input_buffer, "Non-existent"))
-		return STATE_CRITICAL;
-	else if (strstr (input_buffer, "** server can't find"))
-		return STATE_CRITICAL;
-	else if(strstr(input_buffer,"NXDOMAIN")) /* 9.x */
-		return STATE_CRITICAL;
+		terminate (STATE_CRITICAL, "Name server %s has no records\n", dns_server);
 
 	/* Connection was refused */
-	else if (strstr (input_buffer, "Connection refused"))
-		return STATE_CRITICAL;
+	else if (strstr (input_buffer, "Connection refused") ||
+	         (strstr (input_buffer, "** server can't find") &&
+	          strstr (input_buffer, ": REFUSED")) ||
+	         (strstr (input_buffer, "Refused")))
+		terminate (STATE_CRITICAL, "Connection to name server %s was refused\n", dns_server);
+
+	/* Host or domain name does not exist */
+	else if (strstr (input_buffer, "Non-existent") ||
+	         strstr (input_buffer, "** server can't find") ||
+	         strstr (input_buffer,": NXDOMAIN"))
+		terminate (STATE_CRITICAL, "Domain %s was not found by the server\n", query_address);
 
 	/* Network is unreachable */
 	else if (strstr (input_buffer, "Network is unreachable"))
-		return STATE_CRITICAL;
+		terminate (STATE_CRITICAL, "Network is unreachable\n");
 
 	/* Internal server failure */
 	else if (strstr (input_buffer, "Server failure"))
-		return STATE_CRITICAL;
-
-	/* DNS server refused to service request */
-	else if (strstr (input_buffer, "Refused"))
-		return STATE_CRITICAL;
+		terminate (STATE_CRITICAL, "Server failure for %s\n", dns_server);
 
 	/* Request error */
 	else if (strstr (input_buffer, "Format error"))
-		return STATE_WARNING;
+		terminate (STATE_WARNING, "Format error\n");
 
-	else
-		return STATE_OK;
+	return STATE_OK;
 
 }
 
