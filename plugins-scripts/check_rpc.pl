@@ -41,6 +41,7 @@ sub in ($$);
 $ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
 $ENV{'PATH'}='';
+$ENV{'LC_ALL'}='C';
 
 #Initialise protocol for each progname number
 # 'u' for UDP, 't' for TCP 
