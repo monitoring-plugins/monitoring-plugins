@@ -33,7 +33,7 @@ jm_PREREQ_ERROR
 AC_FUNC_ERROR_AT_LINE
 
 AC_CONFIG_LIBOBJ_DIR(lib)
-AC_FUNC_GETLOADAVG($topdir/lib)
+AC_FUNC_GETLOADAVG([lib])
 
 ifdef([AC_FUNC_STRTOD],[AC_FUNC_STRTOD],[AM_FUNC_STRTOD])
 dnl AM_WITH_REGEX
@@ -557,12 +557,22 @@ if test x"$ac_cv_compiler_supports_ll" = x"yes"; then
    AC_DEFINE(COMPILER_SUPPORTS_LL,1,[Define if compiler support long long])
 fi
 
-AC_CACHE_CHECK([for __va_copy],ac_cv_HAVE_VA_COPY,[
+AC_CACHE_CHECK([for va_copy],ac_cv_HAVE_VA_COPY,[
 AC_TRY_LINK([#include <stdarg.h>
-va_list ap1,ap2;], [__va_copy(ap1,ap2);],
-ac_cv_HAVE_VA_COPY=yes,ac_cv_HAVE_VA_COPY=no)])
+va_list ap1,ap2;], [va_copy(ap1,ap2);],
+ac_cv_HAVE_VA_COPY=yes,
+ac_cv_HAVE_VA_COPY=no)])
 if test x"$ac_cv_HAVE_VA_COPY" = x"yes"; then
-    AC_DEFINE(HAVE_VA_COPY,1,[Define if system has va_copy])
+    AC_DEFINE(HAVE_VA_COPY,1,[Whether va_copy() is available])
+else    
+    AC_CACHE_CHECK([for __va_copy],ac_cv_HAVE___VA_COPY,[
+    AC_TRY_LINK([#include <stdarg.h>
+    va_list ap1,ap2;], [__va_copy(ap1,ap2);],
+    ac_cv_HAVE___VA_COPY=yes,
+    ac_cv_HAVE___VA_COPY=no)])
+    if test x"$ac_cv_HAVE___VA_COPY" = x"yes"; then
+        AC_DEFINE(HAVE___VA_COPY,1,[Whether __va_copy() is available])
+    fi
 fi
 
 AC_CHECK_FUNCS(vsnprintf snprintf asprintf vasprintf)
