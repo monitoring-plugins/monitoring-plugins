@@ -330,6 +330,8 @@ process_arguments (int argc, char **argv)
 		/* Note: H, I, and u must be malloc'd or will fail on redirects */
 		case 'H': /* Host Name (virtual host) */
  			host_name = strdup (optarg);
+			if (strstr (optarg, ":"))
+				sscanf (optarg, "%*[^:]:%d", &server_port);
 			break;
 		case 'I': /* Server IP-address */
  			server_address = strdup (optarg);
@@ -1381,6 +1383,7 @@ certificate expiration times.\n"));
 	printf (_("\
  -H, --hostname=ADDRESS\n\
     Host name argument for servers using host headers (virtual host)\n\
+    Append a port to include it in the header (eg: example.com:5000)\n\
  -I, --IP-address=ADDRESS\n\
    IP address or name (use numeric address if possible to bypass DNS lookup).\n\
  -p, --port=INTEGER\n\
