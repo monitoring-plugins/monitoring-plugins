@@ -33,16 +33,19 @@ function make_dist {
 	else
 		cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/nagiosplug co -r $cvs_rel nagiosplug
 		cd $PROJECT
-		aclocal -I lib
-		autoheader
-		autoconf
-		automake --add-missing --copy
-		autoreconf
-		./configure
 	fi
 
+	sed 's/^VER=.*/VER=$v$DS/;s/^REL=.*/REL=snapshot/' configure.in > configure.tmp
+	mv configure.tmp configure.in
+	aclocal -I lib
+	autoheader
+	autoconf
+	automake --add-missing --copy
+	autoreconf
+	./configure
+
 	# Make the Nagiosplug dist tarball
-	VER=$v$DS VERSION=$v$DS REL=snapshot make -e dist
+	make dist
 
 	# End ssh
 	EOF
