@@ -298,9 +298,9 @@ if ($ntpdate_error != $ERRORS{'OK'}) {
 
 	if (defined($offset) && abs($offset) > $ocrit) {
 		$state = $ERRORS{'CRITICAL'};
-		$answer = "Server Error and offset $offset msec > +/- $ocrit msec\n";
+		$answer = "Server Error and offset $offset sec > +/- $ocrit sec\n";
 	} elsif (defined($offset) && abs($offset) > $owarn) {
-		$answer = "Server error and offset $offset msec > +/- $owarn msec\n";
+		$answer = "Server error and offset $offset sec > +/- $owarn sec\n";
 	} elsif (defined($jitter) && abs($jitter) > $jcrit) {
 		$answer = "Server error and jitter $jitter msec > +/- $jcrit msec\n";
 	} elsif (defined($jitter) && abs($jitter) > $jwarn) {
