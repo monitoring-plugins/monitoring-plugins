@@ -55,6 +55,7 @@ main (int argc, char **argv)
 	long unsigned int dsktotal, dskused, dskfree;
 	int result = STATE_OK;
 	char input_buffer[MAX_INPUT_BUFFER];
+	char *perf;
 #ifdef HAVE_PROC_MEMINFO
 	FILE *fp;
 #else
@@ -73,6 +74,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	status = strdup("");
+	perf = strdup("");
 
 	if (process_arguments (argc, argv) != OK)
 		usage (_("Invalid command arguments supplied\n"));
@@ -222,7 +224,12 @@ main (int argc, char **argv)
 	asprintf (&status, _(" %d%% free (%lu MB out of %lu MB)%s"),
 						(100 - percent_used), free_swap, total_swap, status);
 
-	die (result, "SWAP %s:%s\n", state_text (result), status);
+	asprintf (&perf, "%s", perfdata ("swap", free_swap, "MB",
+		TRUE, max (warn_size/1024, warn_percent/100.0*total_swap),
+		TRUE, max (crit_size/1024, crit_percent/100.0*total_swap),
+		TRUE, 0,
+		TRUE, total_swap));
+	die (result, "SWAP %s:%s |%s\n", state_text (result), status, perf);
 	return STATE_UNKNOWN;
 }
 
@@ -329,12 +336,12 @@ process_arguments (int argc, char **argv)
 	c = optind;
 	if (c == argc)
 		return validate_arguments ();
-	if (warn_percent > 100 && is_intnonneg (argv[c]))
+	if (warn_percent == 0 && is_intnonneg (argv[c]))
 		warn_percent = atoi (argv[c++]);
 
 	if (c == argc)
 		return validate_arguments ();
-	if (crit_percent > 100 && is_intnonneg (argv[c]))
+	if (crit_percent == 0 && is_intnonneg (argv[c]))
 		crit_percent = atoi (argv[c++]);
 
 	if (c == argc)
@@ -357,7 +364,7 @@ process_arguments (int argc, char **argv)
 int
 validate_arguments (void)
 {
-	if (warn_percent > 100 && crit_percent > 100 && warn_size == 0
+	if (warn_percent == 0 && crit_percent == 0 && warn_size == 0
 			&& crit_size == 0) {
 		return ERROR;
 	}
