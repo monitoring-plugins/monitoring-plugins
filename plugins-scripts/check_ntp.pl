@@ -8,7 +8,7 @@
 # should already have it installed.
 #
 # $Id$
-# 
+#
 # Nothing clever done in this program - its a very simple bare basics hack to
 # get the job done.
 #
@@ -61,8 +61,8 @@ require 5.004;
 use POSIX;
 use strict;
 use Getopt::Long;
-use vars qw($opt_V $opt_h $opt_H $opt_t $opt_w $opt_c $opt_j $opt_k $verbose $PROGNAME $def_jitter);
-use lib utils.pm; 
+use vars qw($opt_V $opt_h $opt_H $opt_t $opt_w $opt_c $opt_j $opt_k $verbose $PROGNAME $def_jitter $ipv4 $ipv6);
+use lib utils.pm;
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 
 $PROGNAME="check_ntp";
@@ -85,7 +85,9 @@ Getopt::Long::Configure('bundling');
 GetOptions
 	("V"   => \$opt_V, "version"    => \$opt_V,
 	 "h"   => \$opt_h, "help"       => \$opt_h,
-	 "v" => \$verbose, "verbose"  	=> \$verbose,
+	 "v"   => \$verbose, "verbose" 	=> \$verbose,
+	 "4"   => \$ipv4, "use-ipv4"	=> \$ipv4,
+	 "6"   => \$ipv6, "use-ipv6"	=> \$ipv6,
 	 "w=f" => \$opt_w, "warning=f"  => \$opt_w,   # offset|adjust warning if above this number
 	 "c=f" => \$opt_c, "critical=f" => \$opt_c,   # offset|adjust critical if above this number
 	 "j=s" => \$opt_j, "jwarn=i"    => \$opt_j,   # jitter warning if above this number
@@ -177,6 +179,18 @@ $SIG{'ALRM'} = sub {
 };
 alarm($timeout);
 
+# Determine protocol to be used for ntpdate and ntpq
+my $ntpdate = $utils::PATH_TO_NTPDATE;
+my $ntpq    = $utils::PATH_TO_NTPQ;
+if ($ipv4) {
+        $ntpdate .= " -4";
+        $ntpq .= " -4";
+}
+elsif ($ipv6) {
+        $ntpdate .= " -6";
+        $ntpq .= " -6";
+}
+# else don't use any flags
 
 ###
 ###
@@ -184,7 +198,7 @@ alarm($timeout);
 ###
 ###
 
-if (!open (NTPDATE, "$utils::PATH_TO_NTPDATE -q $host 2>&1 |")) {
+if (!open (NTPDATE, $ntpdate . " -q $host 2>&1 |")) {
 	print "Could not open ntpdate\n";
 	exit $ERRORS{"UNKNOWN"};
 }
@@ -259,7 +273,7 @@ if ( $? && !$ignoreret ) {
 
 if ($have_ntpq) {
 
-	if ( open(NTPQ,"$utils::PATH_TO_NTPQ -np $host 2>&1 |") ) {
+	if ( open(NTPQ, $ntpq . " -np $host 2>&1 |") ) {
 		while (<NTPQ>) {
 			print $_ if ($verbose);
 			if ( /timed out/ ){
@@ -409,7 +423,7 @@ exit $state;
 #### subs
 
 sub print_usage () {
-	print "Usage: $PROGNAME -H <host> [-w <warn>] [-c <crit>] [-j <warn>] [-k <crit>] [-v verbose]\n";
+	print "Usage: $PROGNAME -H <host> [-46] [-w <warn>] [-c <crit>] [-j <warn>] [-k <crit>] [-v verbose]\n";
 }
 
 sub print_help () {
@@ -427,10 +441,14 @@ Checks the jitter/dispersion of clock signal between <host> and its sys.peer wit
 -j (--jwarn)
      Clock jitter in milliseconds at which a warning message will be generated.\n	Defaults to $DEFAULT_JITTER_WARN.
 -k (--jcrit)
-    Clock jitter in milliseconds at which a warning message will be generated.\n	Defaults to $DEFAULT_JITTER_CRIT.\n
+    Clock jitter in milliseconds at which a warning message will be generated.\n	Defaults to $DEFAULT_JITTER_CRIT.
     
     If jitter/dispersion is specified with -j or -k and ntpq times out, then a
-    warning is returned.
-";	
+    warning is returned.\n
+-4 (--use-ipv4)
+    Use IPv4 connection
+-6 (--use-ipv6)
+    Use IPv6 connection
+\n";	
 support();
 }
