@@ -30,8 +30,7 @@ const char *progname = "check_pgsql";
 #define EMAIL "kdebisschop@users.sourceforge.net"
 #define SUMMARY "Tests to see if a PostgreSQL DBMS is accepting connections.\n"
 
-#define OPTIONS "\
-\[-c critical_time] [-w warning_time] [-t timeout] [-H host]\n\
+#define OPTIONS "[-c critical_time] [-w warning_time] [-t timeout] [-H host]\n\
              [-P port] [-d database] [-l logname] [-p password]"
 
 #define LONGOPTIONS "\
