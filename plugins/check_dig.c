@@ -37,6 +37,8 @@ enum {
 };
 
 char *query_address = NULL;
+char *record_type = "A";
+char *expected_address = NULL;
 char *dns_server = NULL;
 int verbose = FALSE;
 int server_port = DEFAULT_PORT;
@@ -68,14 +70,20 @@ main (int argc, char **argv)
 		usage (_("Could not parse arguments\n"));
 
 	/* get the command to run */
-	asprintf (&command_line, "%s @%s -p %d %s",
-	          PATH_TO_DIG, dns_server, server_port, query_address);
+	asprintf (&command_line, "%s @%s -p %d %s -t %s",
+	          PATH_TO_DIG, dns_server, server_port, query_address, record_type);
 
 	alarm (timeout_interval);
 	gettimeofday (&tv, NULL);
 
-	if (verbose)
+	if (verbose) {
 		printf ("%s\n", command_line);
+		if(expected_address != NULL) {
+			printf ("Looking for: '%s'\n", expected_address);
+		} else {
+			printf ("Looking for: '%s'\n", query_address);
+		}
+	}
 
 	/* run the command */
 	child_process = spopen (command_line);
@@ -93,28 +101,39 @@ main (int argc, char **argv)
 		/* the server is responding, we just got the host name... */
 		if (strstr (input_buffer, ";; ANSWER SECTION:")) {
 
-			/* get the host address */
-			if (!fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process))
-				break;
+			/* loop through the whole 'ANSWER SECTION' */
+			do {
+				/* get the host address */
+				if (!fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process))
+					break;
 
-			if (strpbrk (input_buffer, "\r\n"))
-				input_buffer[strcspn (input_buffer, "\r\n")] = '\0';
+				if (strpbrk (input_buffer, "\r\n"))
+					input_buffer[strcspn (input_buffer, "\r\n")] = '\0';
 
-			if (strstr (input_buffer, query_address) == input_buffer) {
-				output = strdup(input_buffer);
-				result = STATE_OK;
-			}
-			else {
-				asprintf (&output, _("Server not found in ANSWER SECTION"));
-				result = STATE_WARNING;
-			}
+				if (verbose && !strstr (input_buffer, ";; ")) 
+					printf ("%s\n", input_buffer); 
 
-			continue;
+				if (expected_address==NULL && strstr (input_buffer, query_address) != NULL) {
+					output = strdup(input_buffer);
+					result = STATE_OK;
+				}
+				else if (expected_address != NULL && strstr (input_buffer, expected_address) != NULL) {
+					output = strdup(input_buffer);
+                        	        result = STATE_OK;
+				}
+
+			} while (!strstr (input_buffer, ";; "));
+
+			if (result == STATE_UNKNOWN) {
+		        	asprintf (&output, _("Server not found in ANSWER SECTION"));
+	                        result = STATE_WARNING;
+                        }
+
 		}
 
 	}
 
-	if (result != STATE_OK) {
+	if (result == STATE_UNKNOWN) {
 		asprintf (&output, _("No ANSWER SECTION found"));
 	}
 
@@ -181,6 +200,8 @@ process_arguments (int argc, char **argv)
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
+		{"record_type", required_argument, 0, 'T'},
+		{"expected_address", required_argument, 0, 'a'},
 		{0, 0, 0, 0}
 	};
 
@@ -188,7 +209,7 @@ process_arguments (int argc, char **argv)
 		return ERROR;
 
 	while (1) {
-		c = getopt_long (argc, argv, "hVvt:l:H:w:c:", longopts, &option);
+		c = getopt_long (argc, argv, "hVvt:l:H:w:c:T:a:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -247,6 +268,12 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'v':									/* verbose */
 			verbose = TRUE;
+			break;
+		case 'T':
+			record_type = optarg;
+			break;
+		case 'a':
+			expected_address = optarg;
 			break;
 		}
 	}
@@ -309,6 +336,15 @@ print_help (void)
  -l, --lookup=STRING\n\
    machine name to lookup\n"));
 
+        printf (_("\
+ -T, --record_type=STRING\n\
+   record type to lookup (default: A)\n"));
+
+        printf (_("\
+ -a, --expected_address=STRING\n\
+   an address expected to be in the asnwer section.\n\
+   if not set, uses whatever was in -l\n"));
+
 	printf (_(UT_WARN_CRIT));
 
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
@@ -325,8 +361,9 @@ void
 print_usage (void)
 {
 	printf (_("\
-Usage: %s -H host -l lookup [-p <server port>] [-w <warning interval>]\n\
-         [-c <critical interval>] [-t <timeout>] [-v]\n"),
+Usage: %s -H host -l lookup [-p <server port>] [-T <query type>]\n\
+         [-w <warning interval>] [-c <critical interval>] [-t <timeout>]\n\
+         [-a <expected answer address>] [-v]\n"),
 	        progname);
 	printf ("       %s (-h|--help)\n", progname);
 	printf ("       %s (-V|--version)\n", progname);
