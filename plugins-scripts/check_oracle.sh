@@ -158,7 +158,7 @@ case "$cmd" in
     }'
     ;;
 --db)
-    pmonchk=`ps -ef | grep -v grep | grep "^${2}$" | grep -c pmon`
+    pmonchk=`ps -ef | grep -v grep | grep ${2} | grep -c pmon`
     if [ ${pmonchk} -ge 1 ] ; then
 	echo "${2} OK - ${pmonchk} PMON process(es) running"
 	exit $STATE_OK
@@ -207,6 +207,7 @@ EOF`
     fi
 
     buf_hr=`echo "$result" | awk '/^[0-9\. \t]+$/ {print int($1)}'` 
+    buf_hrx=`echo "$result" | awk '/^[0-9\. \t]+$/ {print $1}'` 
     result=`sqlplus -s ${3}/${4}@${2} << EOF
 set pagesize 0
 set numf '9999999.99'
@@ -221,16 +222,17 @@ EOF`
     fi
 
     lib_hr=`echo "$result" | awk '/^[0-9\. \t]+$/ {print int($1)}'`
+    lib_hrx=`echo "$result" | awk '/^[0-9\. \t]+$/ {print $1}'`
 
     if [ $buf_hr -le ${5} -o $lib_hr -le ${5} ] ; then
-  	echo "${2} CRITICAL - Cache Hit Rates: $lib_hr% Lib -- $buf_hr% Buff"
+  	echo "${2} CRITICAL - Cache Hit Rates: $lib_hrx% Lib -- $buf_hrx% Buff|lib=$lib_hrx%;${6};${5};0;100 buffer=$buf_hrx%;${6};${5};0;100"
 	exit $STATE_CRITICAL
     fi
     if [ $buf_hr -le ${6} -o $lib_hr -le ${6} ] ; then
-  	echo "${2} WARNING  - Cache Hit Rates: $lib_hr% Lib -- $buf_hr% Buff"
+  	echo "${2} WARNING  - Cache Hit Rates: $lib_hrx% Lib -- $buf_hrx% Buff|lib=$lib_hrx%;${6};${5};0;100 buffer=$buf_hrx%;${6};${5};0;100"
 	exit $STATE_WARNING
     fi
-    echo "${2} OK - Cache Hit Rates: $lib_hr% Lib -- $buf_hr% Buff"
+    echo "${2} OK - Cache Hit Rates: $lib_hrx% Lib -- $buf_hrx% Buff|lib=$lib_hrx%;${6};${5};0;100 buffer=$buf_hrx%;${6};${5};0;100"
 
     exit $STATE_OK
     ;;
@@ -260,19 +262,20 @@ EOF`
     ts_free=`echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($1)}'` 
     ts_total=`echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($2)}'` 
     ts_pct=`echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($3)}'` 
+    ts_pctx=`echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print $3}'` 
     if [ "$ts_free" -eq 0 -a "$ts_total" -eq 0 -a "$ts_pct" -eq 0 ] ; then
         echo "No data returned by Oracle - tablespace $5 not found?"
         exit $STATE_UNKNOWN
     fi
     if [ "$ts_pct" -ge ${6} ] ; then
-  	echo "${2} : ${5} CRITICAL - $ts_pct% used [ $ts_free / $ts_total MB available ]"
+  	echo "${2} : ${5} CRITICAL - $ts_pctx% used [ $ts_free / $ts_total MB available ]|${5}=$ts_pctx%;${7};${6};0;100"
 	exit $STATE_CRITICAL
     fi
     if [ "$ts_pct" -ge ${7} ] ; then
-  	echo "${2} : ${5} WARNING  - $ts_pct% used [ $ts_free / $ts_total MB available ]"
+  	echo "${2} : ${5} WARNING  - $ts_pctx% used [ $ts_free / $ts_total MB available ]|${5}=$ts_pctx%;${7};${6};0;100"
 	exit $STATE_WARNING
     fi
-    echo "${2} : ${5} OK - $ts_pct% used [ $ts_free / $ts_total MB available ]"
+    echo "${2} : ${5} OK - $ts_pctx% used [ $ts_free / $ts_total MB available ]|${5}=$ts_pctx%;${7};${6};0;100"
     exit $STATE_OK
     ;;
 *)
