@@ -110,7 +110,7 @@
 
 	<literallayout>
 	gnu make 3.79
-	automake 1.8.3
+	automake 1.8
 	autoconf 2.58
 	gettext 0.11.5
 	</literallayout>
