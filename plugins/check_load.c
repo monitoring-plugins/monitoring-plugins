@@ -116,7 +116,7 @@ main (int argc, char **argv)
 		printf (_("Could not open stderr for %s\n"), PATH_TO_UPTIME);
 	}
 	fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process);
-	sscanf (input_buffer, "%*[^l]load average: %f, %f, %f"), &la1, &la5, &la15);
+	sscanf (input_buffer, "%*[^l]load average: %f, %f, %f", &la1, &la5, &la15);
 
 	result = spclose (child_process);
 	if (result) {
