@@ -48,9 +48,9 @@
  * even if syntax is illegal (MAIL requires a FROM:<...> argument)
  * You can disable sending DUMMYCMD by undefining SMTP_USE_DUMMYCMD.
  */
-#define SMTP_DUMMYCMD  "MAIL\n"
+#define SMTP_DUMMYCMD  "MAIL\r\n"
 #define SMTP_USE_DUMMYCMD 1
-#define SMTP_QUIT	"QUIT\n"
+#define SMTP_QUIT	"QUIT\r\n"
 
 int process_arguments (int, char **);
 int call_getopt (int, char **);
