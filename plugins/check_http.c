@@ -151,7 +151,7 @@ the certificate is expired.\n"
 #ifdef HAVE_SSL
 int check_cert = FALSE;
 int days_till_exp;
-unsigned char *randbuff;
+char *randbuff = "";
 SSL_CTX *ctx;
 SSL *ssl;
 X509 *server_cert;
@@ -866,8 +866,11 @@ int connect_SSL (void)
 {
 	SSL_METHOD *meth;
 
-	asprintf (&randbuff, "%s", "qwertyuiopasdfghjkl");
+	asprintf (&randbuff, "%s", "qwertyuiopasdfghjklqwertyuiopasdfghjkl");
 	RAND_seed (randbuff, strlen (randbuff));
+	if (verbose)
+		printf("SSL seeding: %s\n", (RAND_status()==1 ? "OK" : "Failed") );
+
 	/* Initialize SSL context */
 	SSLeay_add_ssl_algorithms ();
 	meth = SSLv23_client_method ();
