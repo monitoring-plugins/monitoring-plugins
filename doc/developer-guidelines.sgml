@@ -526,12 +526,12 @@
 	the CVS HEAD version.</para>
 
 	<para>Patches should be submitted via 
-	<ulink url="http://sourceforge.net/tracker/?group_id=29880&atid=397599">SourceForge's
+	<ulink url="http://sourceforge.net/tracker/?group_id=29880&amp;atid=397599">SourceForge's
 	tracker system for Nagiosplug patches</ulink> 
 	and be announced to the nagiosplug-devel mailing list.</para>
 	</section>
 
-	<section id="New plugins"><title>New plugins</title>
+	<section id="New_plugins"><title>New plugins</title>
 	<para>If you would like others to use your plugins and have it included in
 	the standard distribution, please include patches for the relevant
 	configuration files, in particular "configure.in". Otherwise submitted 
@@ -563,7 +563,7 @@ utils (perl or c or sh) rather than cooking it's own</para>
       </orderedlist>
 
 	<para>New plugins should be submitted via 
-	<ulink url="http://sourceforge.net/tracker/?group_id=29880&atid=541465">SourceForge's
+	<ulink url="http://sourceforge.net/tracker/?group_id=29880&amp;atid=541465">SourceForge's
 	tracker system for Nagiosplug new plugins</ulink> 
 	and be announced to the nagiosplug-devel mailing list.</para>
 	
