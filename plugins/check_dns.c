@@ -196,7 +196,7 @@ main (int argc, char **argv)
 			multi_address = TRUE;
 
 		printf ("DNS %s: ", _("OK"));
-		printf (_("%.3f seconds response time "), elapsed_time);
+		printf (ngettext("%.3f second response time ", "%.3f seconds response time ", elapsed_time), elapsed_time);
 		printf (_("%s returns %s"), query_address, address);
 		printf ("|%s\n", fperfdata ("time", elapsed_time, "s", FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
 	}

@@ -288,7 +288,7 @@ main (int argc, char **argv)
 			printf (_("%d crit, %d warn out of "), crit, warn);
 		}
 	} 
-	printf ("%d %s", procs, procs == 1 ? _("process") : _("processes"));
+	printf (ngettext ("%d process", "%d processes", (unsigned long) procs), procs);
 	
 	if (strcmp(fmt,"") != 0) {
 		printf (_(" with %s"), fmt);
