@@ -182,13 +182,10 @@ main (int argc, char *argv[])
 		
 		o = getopt_long (argc, argv, "+d:iq10nhV", longopts, &longindex);
 
-		switch (o) {
-		case -1: 
-								/* 
-								 * bail out of the switch but not the loop, so
-								 * that device can be extracted from argv.
-								 */
+		if (o == -1 || o == EOF || o == 1)
 			break;
+
+		switch (o) {
 		case 'd':
 			device = optarg;
 			break;
