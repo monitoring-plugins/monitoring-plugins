@@ -376,7 +376,7 @@ process_arguments (int argc, char **argv)
 				pw = getpwuid ((uid_t) uid);
 				/*  check to be sure user exists */
 				if (pw == NULL)
-					usage2 (_("UID %d was not found\n"), uid);
+					usage2 (_("UID %s was not found\n"), optarg);
 			}
 			else {
 				pw = getpwnam (optarg);
