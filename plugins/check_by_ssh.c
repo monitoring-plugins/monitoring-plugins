@@ -190,6 +190,8 @@ process_arguments (int argc, char **argv)
 		{"user", required_argument, 0, 'u'},
 		{"logname", required_argument, 0, 'l'},
 		{"command", required_argument, 0, 'C'},
+		{"proto1", no_argument, 0, '1'},
+		{"proto2", no_argument, 0, '2'},
 		{"use-ipv4", no_argument, 0, '4'},
 		{"use-ipv6", no_argument, 0, '6'},
 		{0, 0, 0, 0}
@@ -203,7 +205,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvh46ft:H:O:p:i:u:l:C:n:s:", long_options,
+		c = getopt_long (argc, argv, "Vvh1246ft:H:O:p:i:u:l:C:n:s:", long_options,
 									 &option_index);
 
 		if (c == -1 || c == EOF)
@@ -261,8 +263,10 @@ process_arguments (int argc, char **argv)
 		case 'i':									/* identity */
 			asprintf (&comm, "%s -%c %s", comm, c, optarg);
 			break;
-		case '4':									/* Pass these switches directly to ssh */
-		case '6': 								/* -4 for IPv4, -6 for IPv6 */
+		case '1':									/* Pass these switches directly to ssh */
+		case '2':									/* 1 to force version 1, 2 to force version 2 */
+		case '4':									/* -4 for IPv4 */
+		case '6': 								/* -6 for IPv6 */
 		case 'f':									/* fork to background */
 			asprintf (&comm, "%s -%c", comm, c);
 			break;
@@ -357,6 +361,10 @@ print_help (const char *cmd)
 		 "   list of nagios service names, separated by ':' [optional]\n"
 		 "-n, --name=NAME\n"
 		 "   short name of host in nagios configuration [optional]\n"
+		 "-1, --proto1\n"
+		 "   tell ssh to use Protocol 1\n"
+		 "-2, --proto2\n"
+		 "   tell ssh to use Protocol 2\n"
 		 "-4, --use-ipv4\n"
 		 "   tell ssh to use IPv4\n"
 		 "-6, --use-ipv6\n"
