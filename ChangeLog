@@ -1,62 +1,807 @@
-2003-03-02  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-07-11  kdebisschop
+
+	* plugins/Makefile.am, configure.in:
+	link check_spop and check_simap if ssl libs are compiled into check_tcp
+
+2003-07-03  tonvoon
+
+	* plugins/check_procs.c:
+	Fixed seg fault on some Sol 7/8 servers (Patch 764745 - Alexander Matey)
+
+	* tools/setup: Changing $() to `` to be compatible with Solaris' sh
+
+2003-07-03  kdebisschop
+
+	* autogen.sh, tools/setup: mv GNU toolchain check into tools/setup
+
+2003-07-02  tonvoon
+
+	* plugins-scripts/check_oracle.sh:
+	Check for ORA- errors for tablespace and cache (patch 755456 - Sven Meyer)
+
+	* plugins-scripts/check_disk_smb.pl:
+	Update error message from smbclient v2.2.7 (Patch 740132 - Cove Schneider)
+
+	* configure.in: Fixed SUPPORT message
+
+2003-07-01  tonvoon
+
+	* plugins/check_disk.c:
+	Fix for large filesystems > 3TB (Stuart Webster)
+
+2003-06-29  undrgrid
+
+	* configure.in, plugins/check_ldap.c:
+	Included patch for check_ldap from Patch #753621 by Ziya Suzen
+
+2003-06-29  tonvoon
+
+	* plugins/check_nwstat.c: Added NLM test (Phil Randal)
+
+	* plugins/check_swap.c:
+	Corrected reported size for PROC_MEMINFO systems
+
+	* tools/sfwebcron: Fixed so goes to correct web area
+
+	* tools/sfwebcron:
+	New tool to run on shell.sf.net to update the dev guidelines
+
+	* doc/makefile: Fixed makefile
+
+2003-06-27  tonvoon
+
+	* configure.in, plugins/check_swap.c:
+	Support for swap -s for solaris. Also changes size of swap to MBs through
+	a conversion amount in configure. Possible breakage on other OSes
+
+	* doc/makefile: Remove if which check - done in tools/setup instead
+
+	* tools/setup: Fiddling as Solaris' which command is broken
+
+2003-06-26  tonvoon
+
+	* plugins/check_disk.c:
+	Fixed different thresholds if using exclude lists
+
+2003-06-21  kdebisschop
+
+	* plugins/Makefile.am: solaris 8 needs 'ln -s -f' instead of 'ln -sf'
+
+	* plugins/check_http.c: add remaining URI_PATH chars per RFC 2396
+	remove '-' from URI_PORT
+
+2003-06-12  undrgrid
+
+	* command.cfg.in:
+	Renamed duplicate check_snmp command definitions to be unique
+
+	* command.cfg.in, configure.in:
+	Made the two check_ifoperstatus commands unique to remove conflicts
+
+2003-06-11  kdebisschop
+
+	* plugins/check_http.c: character classes were wrong for URI_PATH etc:
+	1) must include ?&#; for PATH
+	2) POSIX states "If a '-' is in the scanlist and is not the first character, nor the second where the first character is a '^' , nor the last character, the behavior is implementation-defined"
+
+2003-06-10  kdebisschop
+
+	* contrib/urlize.pl:
+	add comment about shell quote removal to address https://sourceforge.net/tracker/index.php?func=detail&aid=661916&group_id=29880&atid=397597
+
+	* plugins/urlize.c:
+	add note about effect of shell quote handling to address https://sourceforge.net/tracker/index.php?func=detail&aid=661916&group_id=29880&atid=397597
+
+2003-06-08  tonvoon
+
+	* configure.in: Fixed quoting on SWAP_FORMAT
+
+	* configure.in: Support for OpenBSD 3.2 & 3.3 ps (Julien Touche)
+
+2003-06-07  sghosh
+
+	* plugins/check_real.c: \r\n patch from Mathias
+
+2003-06-04  tonvoon
+
+	* configure.in: Display ps command used
+
+	* configure.in: Stupid bug - what happens when you don't bother testing
+
+	* configure.in: Support for OpenBSD 3.2 & 3.3 ps (Julien Touche)
+
+	* plugins/check_disk.c: Argument to asprintf in wrong order
+
+	* pkg/solaris/solpkg:
+	Remove /usr as well. Maybe this is best done by changing BASEDIR to
+	configure's prefix?
+
+2003-06-02  kdebisschop
+
+	* plugins/check_tcp.c:
+	finish recv() loop when stream GT or EQ maxbytes (was GT)
+
+2003-06-01  kdebisschop
+
+	* plugins/check_tcp.c: typos in doco
+
+	* plugins/check_tcp.c: allow user to limit number of bytes fetched
+	fix some doco (wait is now delay, server_quit was not shown)
+
+	* plugins/check_tcp.c:
+	allow user to limit the number of bytes to be fetched
+
+2003-05-31  kdebisschop
+
+	* plugins/check_dns.c: first revised patch failed to trap the
+	"break" in while()
+
+	* plugins/check_dns.c:
+	first revised patch failed to trap the "break" in while()
+
+	* plugins/check_dns.c: typo in args to terminate
+
+	* plugins/check_dns.c: trap null or empty returns from nslookup
+
+2003-05-27  stanleyhopcroft
+
+	* contrib/check_sap.sh:
+	check_sap.sh plugin to check SAP /R3 servers from Karel Salavec and Tom De Blende.
+
+2003-05-26  stanleyhopcroft
+
+	* contrib/check_axis.sh, contrib/check_mssql.sh:
+	Revisions to Tom De Blende contributed plugins: check_axis.sh and check_mssql.sh
+
+2003-05-17  tonvoon
+
+	* plugins/t/check_ftp.t: Fixed test (Mathew Ericson - 738609)
+
+	* plugins/t/check_load.t: Fixed tests (Mathew Ericson - 738607)
+
+	* plugins/t/check_procs.t:
+	Fixed test commands (Mathew Ericson - 738605)
+
+	* plugins/t/check_http.t: Fixed tests (Mathew Ericson - 738608)
+
+	* plugins/t/check_tcp.t: Fixed tests (Mathew Ericson - 738604)
+	CV: ----------------------------------------------------------------------
+
+	* plugins/t/check_tcp.t: Fixed tests (Mathew Ericson - 738604)
+
+2003-05-16  sghosh
+
+	* plugins-scripts/check_ntp.pl: bug fix
+
+2003-05-14  tonvoon
+
+	* plugins/negate.c: Added examples
+
+	* plugins-scripts/check_mailq.pl:
+	Added postfix support (Thomas Nilsen - 735218)
+
+	* plugins/check_nwstat.c:
+	Added DSVER and UPTIME checks (Phil Randal - 737617)
+
+	* pkg/solaris/solpkg: Typo
+
+	* doc/.cvsignore:
+	Ignore developer-guidelines.html as generated from docbook
+
+	* Makefile.am, pkg/solaris/pkginfo.in, pkg/solaris/solpkg:
+	Remove dependency on gnu make
+
+2003-05-13  tonvoon
+
+	* doc/developer-guidelines.sgml:
+	Updated docs to include comments, contrib->main, getopts_long and
+	verbose output levels
+
+	* tools/sfsnapshot:
+	Calls tools/setup and creates a README for the snapshot directory
+
+	* doc/makefile, tools/setup, doc/developer-guidelines.html:
+	The developer-guidelines.html file is now generated from the sgml file
+	by docbook2html at tools/setup time
+
+2003-05-13  stanleyhopcroft
+
+	* contrib/tarballs/hopcroft-plugins.tar.gz:
+	Removed contrib/tarballs/hopcroft-plugins.tar.gz. This is archaic, anachronistic, unmaintained and humblingly embarrassing.
+
+	* contrib/check_mssql.sh:
+	check_mssql.sh. A new plugin from Mr T DE BLENDE to check MS SQLServer databases.
+
+2003-05-09  kdebisschop
+
+	* plugins/check_http.c: fix error when server closes connection
+	immediately
+
+	* plugins/check_http.c:
+	fix error when server closes connection immediately
+
+	* plugins/check_snmp.c:
+	cause snmpget try try for 1 second less than the timeout (allowing plugin to force close if needed)
+
+2003-05-07  undrgrid
+
+	* plugins/check_ping.c:
+	Modified check_ping to handle IPv6 as well as IPv4 ICMP checks using the
+	PING6_COMMAND determined during the configure script execution. As
+	USE_IPV6 may be defined and PING6_COMMAND is not defined if there is not
+	IPv6 TCP stack available when configure is run I condition it off
+	PING6_COMMAND existing to remove build errors for being undefined.
+
+2003-04-25  sghosh
+
+	* plugins-scripts/check_ntp.pl: corrected output units
+
+2003-04-23  kdebisschop
+
+	* plugins/check_http.c, plugins/utils.c:
+	update to RFC1123 hostname specs
+
+2003-04-17  kdebisschop
+
+	* nagios-plugins.spec.in: add check_nt, drop check_vsz
+
+	* plugins/check_dig.c, plugins/check_tcp.c, plugins/check_users.c, plugins/netutils.c:
+	code cleanup to clear strict compiler warnings
+
+2003-04-16  sghosh
+
+	* plugins/check_real.c: old behavior - no stream check unless -u
+
+	* plugins/check_real.c:
+	reset to old behavior of not checking stream by default
+
+2003-04-13  sghosh
+
+	* plugins/check_hpjd.c:
+	reduce compiler warning between gcc3 and gcc2.96
+
+	* configure.in, plugins-scripts/utils.pm.in:
+	update for check_mailq - qmail support
+
+	* plugins-scripts/check_mailq.pl:
+	Added sendmail multi-queue support (Canau), merged qmail support (Schmid)
+
+2003-04-12  tonvoon
+
+	* plugins/check_procs.c:
+	Match -a STRING anywhere in ps args (Laurent Vaslin - 719783)
+
+2003-04-11  tonvoon
+
+	* plugins/check_procs.c:
+	Match -a STRING anywhere in ps args (Laurent Vaslin - 719783)
+
+2003-04-11  sghosh
+
+	* plugins-scripts/check_ifstatus.pl:
+	added feature -u (list of unused ifIndex)
+
+	* plugins-scripts/check_ifstatus.pl:
+	bug 691412, added feature -x (list of excluded ifTypes)
+
+	* plugins/check_hpjd.c:
+	patch 698384 - order of args to snmpget + print a bit of stderr
+
+	* plugins/check_hpjd.c: patch 698384 - order of args to snmpget
+
+2003-04-09  kdebisschop
+
+	* plugins/check_hpjd.c, plugins/check_nt.c, plugins/check_http.c:
+	cleanup to suppress various strict compiler warnings
+
+	* plugins/common.h: rewrite #elif to be compatible with traditional C
+
+	* plugins/Makefile.am: check_game needs popen.c now
+
+2003-04-08  tonvoon
+
+	* plugins/check_hpjd.c, plugins/check_nt.c:
+	Changed // to /* */ comments as some compilers do not like them
+
+	* command.cfg.in: Updated command for new check_procs
+
+	* plugins/check_nt.c, plugins/check_hpjd.c:
+	Changed // to /* */ comments as some compilers do not like them
+
+2003-04-08  stanleyhopcroft
+
+	* contrib/check_axis.sh:
+	check_axis.sh (Axis 5xx print servers) from Tom De Blende
+
+2003-04-07  tonvoon
+
+	* plugins/check_procs.c: Fixed zombie processes
+
+	* configure.in: Missed some PS_FORMAT strings
+
+	* plugins/check_procs.c, plugins/check_vsz.c, plugins/Makefile.am, plugins/check_nagios.c, configure.in:
+	Souped up check_procs with different metrics
+
+	* plugins/check_snmp.c:
+	Removed unnecessary array for AIX compile (reported by Alwyn Cherrington)
+
+	* plugins/check_snmp.c: Removed unnecessary regex array
+
+2003-04-07  kdebisschop
+
+	* plugins/check_http.c:
+	ste timeout one second greater than critical time
+
+	* plugins/check_game.c:
+	had been grandfathered ibto core, finally use normal getopts, add options for player, max-player array positions
+
+2003-04-03  tonvoon
+
+	* plugins-scripts/check_oracle.sh: Cleaned up cache output
+
+2003-04-01  tonvoon
+
+	* plugins-scripts/check_oracle.sh:
+	Fixed sqlplus calls and rearranged parameters for --tablespace & --cache
+
+2003-04-01  kdebisschop
+
+	* configure.in: remove PATH_PROG call for autoconf/automake components
+
+2003-03-31  kdebisschop
+
+	* plugins/check_disk.c: checkpoint
+	 supresses iso9660
+	 adds option for checking only local
+	 adds choice of scale factor
+
+2003-03-27  tonvoon
+
+	* plugins/check_nwstat.c:
+	Extra Netware checks (Patch 710247 - Dietmar Ruzicka)
+
+2003-03-26  tonvoon
+
+	* configure.in: ipv6 check requires unistd.h for Darwin
+
+	* configure.in, plugins/check_procs.c: Removal of ps_raw and ps_vars
+
+	* plugins/check_nagios.c: Uses same ps command as check_procs
+
+2003-03-25  kdebisschop
+
+	* .cvsignore: subst is no longer used
+
+2003-03-24  undrgrid
+
+	* Makefile.am, .cvsignore:
+	Better stripping of prefix for Solaris package install needs to remove
+		/usr/local as package installs there by default
+
+	* plugins/check_disk.c, pkg/solaris/.cvsignore, pkg/solaris/pkginfo.in, Makefile.am:
+	Minor changes to build for Solaris packages
+
+2003-03-24  tonvoon
+
+	* plugins/check_procs.c: Use max_state
+
+	* tools/mail_error, tools/sfsnapshot:
+	PATH set in correct place and extra comments
+
+	* tools/mail_error, tools/sfsnapshot: Bug fixes
+
+	* tools/mail_error: Sends email if non-zero return code from command
+
+	* tools/sfsnapshot: Error code depending on number of files generated
+
+	* lib/ls-mntd-fs.m4:
+	Using coreutils 4.5.11 version to fix Darwin problem
+
+	* REQUIREMENTS: Add NSClient requirement for check_nt
+
+	* plugins/check_nt.c: Reference to web site to get NSClient
+
+2003-03-23  undrgrid
+
+	* lib/Makefile.am, pkg/solaris/pkginfo.in, pkg/solaris/solpkg, Makefile.am, autogen.sh, configure.in:
+	Solaris package build system
+
+2003-03-23  kdebisschop
+
+	* plugins/check_disk.c:
+	can once again exclude indiviual path/partitions
+
+	* plugins/check_disk.c:
+	add -X to exclude FS type, now works with more than one path/dev specified
+
+2003-03-22  kdebisschop
+
+	* plugins/utils.c: declaration must precede printf
+
+2003-03-21  tonvoon
+
+	* configure.in: Stupid bug!
+
+2003-03-21  kdebisschop
+
+	* plugins/check_disk.c:
+	checkpoint, allows selecting devices and paths now
+
+	* configure.in: instructions for posting plugin version number
+
+2003-03-19  kdebisschop
+
+	* plugins/check_by_ssh.c:
+	allow to specify -1 and -2 for protocol version
+
+2003-03-19  tonvoon
+
+	* configure.in: Tru64 df support (Paul Clayton)
+
+2003-03-19  kdebisschop
+
+	* plugins/utils.c, plugins/utils.h: make state_text a function
+
+	* lib/mountlist.c, plugins/check_disk.c:
+	check_disk working with mountlist.c
+
+	* Makefile.am, configure.in: subst.* was replaced by dist-hook
+
+	* subst.in, subst.sh: these were replaced by dist-hook
+
+2003-03-18  kdebisschop
+
+	* configure.in: running the AFS macro causes newer AC/AM to barf
+
+	* configure.in: afs checking
+
+	* lib/afs.m4, lib/ls-mntd-fs.m4: use AC_DEFINE_UNQOUTED
+
+	* lib/ls-mntd-fs.m4: stop warning on autoheader 2.13
+
+	* plugins/netutils.c, plugins/netutils.h: common.h was doubly included
+
+	* plugins/common.h:
+	use enum instead of define, remove some cruft from old snprintf implementation
+
+	* plugins/check_disk.c, configure.in, lib/Makefile.am:
+	use GNU fileutils for check_disk
+
+	* lib/afs.m4, lib/fstypename.m4, lib/fsusage.c, lib/fsusage.h, lib/fsusage.m4, lib/ls-mntd-fs.m4, lib/mountlist.c, lib/mountlist.h:
+	from GNU fileutils for check_disk
+
+2003-03-17  tonvoon
+
+	* plugins-scripts/check_oracle.sh:
+	Allow default Oracle home from oratab (reported by Walbert Oberngruber)
+
+2003-03-16  undrgrid
+
+	* configure.in:
+	Modified to automatically enable getaddrinfo emulation if lwres is not used and
+	getaddrinfo is not found in the system.
+
+	* plugins/check_tcp.c, plugins/netutils.c, plugins/netutils.h:
+	Applied patch #660973 for tcp refusals
+
+2003-03-15  undrgrid
+
+	* configure.in: Left over debug define
+
+	* lib/Makefile.am, lib/getaddrinfo.c, lib/getaddrinfo.h, lib/gethostbyname.c, lib/gethostbyname.h, plugins/Makefile.am, plugins/getaddrinfo.c, plugins/getaddrinfo.h, plugins/gethostbyname.c, plugins/gethostbyname.h, plugins/netutils.c, plugins/netutils.h, plugins/utils.c, plugins/utils.h, configure.in:
+	Spent the day working on backwards compatability using getaddrinfo()
+	Moved getaddrinfo.? and gethostbyname.? from lib/ to plugins/ due to
+	problems with compiling into the libnagiosplug.a as it required linking
+	against socket libraries which are unneeded except for network based
+	plugins.
+	This code should hopefully happily work for all systems and has been tested
+	prior to commit on Debian GNU/Linux, SPARC Solaris 7 and SPARC Solaris 9.
+
+2003-03-14  kdebisschop
+
+	* plugins-scripts/check_ntp.pl: add timeout, fix taint chacking diom
+
+2003-03-13  undrgrid
+
+	* lib/Makefile.am, configure.in, .cvsignore:
+	Working out issues with getaddrinfo emulation build environment
+
+2003-03-13  tonvoon
+
+	* plugins/check_tcp.c, plugins/check_dns.c, plugins/check_http.c:
+	Strip leading spaces in perf data
+
+	* plugins/check_smtp.c:
+	Perf data without leading spaces and fix ANSI C complaint about \n
+
+	* plugins/check_tcp.c: Fix compiler warnings re progname
+
+2003-03-13  undrgrid
+
+	* depcomp: Removed auto-tools script that automake adds
+
+	* plugins/common.h, plugins/common.h.in, plugins/netutils.h, plugins/netutils.h.in, plugins/popen.h, plugins/popen.h.in, plugins/utils.c, plugins/utils.h, plugins/utils.h.in, plugins/version.h.in, .cvsignore, configure.in, install-sh, missing, mkinstalldirs, plugins/.cvsignore, plugins/Makefile.am:
+	Updated cvs ignore files to reflect changes
+	Moved header files from being ran through configure to standard
+	Removed auto-tools scripts that get added by automake
+
+2003-03-13  kdebisschop
+
+	* plugins/negate.c:
+	negate must be POSIXly correct in handling options, else wrapped options get passed to it
+
+2003-03-13  undrgrid
+
+	* configure.in:
+	Removed --with-ipv6 configure option so it determines IPv6 availablity
+	completely on it's own per suggestion by Karl
+
+2003-03-13  kdebisschop
+
+	* plugins/negate.c:
+	negate must be POSIXly correct in handling options, else wrapped options get passed to it
+
+2003-03-12  undrgrid
+
+	* plugins/check_tcp.c: doco standarization
+
+	* plugins-scripts/subst.in, configure.in: Just a lil namespace clean-up
+
+	* configure.in: Minor fix to --with-ipv6 behavior
+
+	* plugins/utils.c, plugins/utils.h.in, configure.in, autogen.sh:
+	Added autogen.sh script that rebuilds using autotools and runs configure
+	Modified configure.in to include some debug build option info at the end
+	of the scripts execution. Can be removed by release time.
+	Modified configure.in to include a --with-ipv6 option
+	Default build is without IPv6 support now to enable you need to use the
+	--with-ipv6 command line option to configure.
+	Modified plugins/utils.* to use USE_IPV6
+
+2003-03-12  kdebisschop
+
+	* plugins/check_disk.c: doco standarization
+
+	* plugins/check_disk.c: errors for statfs
+
+	* plugins/check_smtp.c:
+	comment/doco cleanup for embeeded doc work, control STMP command via options instead of defines
+
+	* configure.in: version increase, statfs work
+
+2003-03-12  undrgrid
+
+	* plugins/.cvsignore: Add some more extra plugins
+
+	* plugins/check_dig.c: Code clean-up
+
+	* plugins/check_http.c: Clean up of output from plugin
+
+	* plugins/check_http.c, plugins/check_ldap.c, plugins/check_udp.c:
+	Code clean-up
+
+	* plugins/check_tcp.c: Code cleanup
+
+2003-03-12  tonvoon
+
+	* plugins/check_dns.c:
+	Removed is_host checks to speed up code. Fixed timings so no spaces
+
+	* plugins/check_dns.c: Timings in milliseconds and nicer output
+
+2003-03-11  tonvoon
+
+	* plugins-scripts/.cvsignore: Add script ignores
+
+	* plugins/negate.c: Remove getopt_long checks
+
+	* plugins/negate.c:
+	Fixed reading too many argv parameters and changed to asprintf
+
+	* plugins/check_tcp.c, plugins/check_time.c, plugins/check_udp.c, plugins/check_ups.c, plugins/check_users.c, plugins/check_vsz.c, plugins/check_mrtg.c, plugins/check_mrtgtraf.c, plugins/check_mysql.c, plugins/check_nagios.c, plugins/check_nt.c, plugins/check_nwstat.c, plugins/check_overcr.c, plugins/check_pgsql.c, plugins/check_ping.c, plugins/check_procs.c, plugins/check_radius.c, plugins/check_real.c, plugins/check_smtp.c, plugins/check_snmp.c, plugins/check_ssh.c, plugins/check_swap.c, plugins/check_http.c, plugins/check_ide-smart.c, plugins/check_ldap.c, plugins/check_load.c, plugins/check_dig.c, plugins/check_disk.c, plugins/check_dns.c, plugins/check_fping.c, plugins/check_hpjd.c, plugins/check_by_ssh.c:
+	Remove getopt_long checks
+
+2003-03-11  undrgrid
+
+	* configure.in: Fixed some ping6 variables
+
+	* configure.in: Minor change to Karl's statfs check
+	Inclusion of ICMPv6 ping tests to define PING6_COMMAND
+	Minor fix to ps syntax checking to fix bug I introduced last nite
+
+	* Makefile.am, configure.in: Removed acconfig.h from EXTRA_DIST
+	Fixed problem with test in SWAP_FORMAT and SWAP_COMMAND
+
+2003-03-11  kdebisschop
+
+	* configure.in, plugins/check_disk.c:
+	use statfs for check_disk (still needs fs scan)
+
+2003-03-11  undrgrid
+
+	* acconfig.h, configure.in: Finishing clean-up of configure.in
+	Removing acconfig.h as it's no longer needed
+
+2003-03-10  undrgrid
+
+	* configure.in, acconfig.h:
+	Cleaned up configure for PS and PING to produce cleaner config.h
+
+2003-03-09  undrgrid
+
+	* plugins/common.h.in:
+	Make sure sys/socket.h is explicitly included if HAVE_SYS_SOCKET_H is defined
+
+2003-03-09  tonvoon
+
+	* plugins/check_disk.c:
+	Implement error-only option for check_disk (Ian Duggan)
+
+2003-03-08  tonvoon
+
+	* plugins/check_disk.c: Fix AIX /proc filesystem (Ian Duggan)
+
+	* configure.in: snprintf checks in configure.in like samba
+
+2003-03-08  undrgrid
+
+	* plugins/check_dns.c:
+	Modified code to call is_addr() rather than is_dotted_quad() with the
+		new AF indepdent function routines
+
+	* plugins/netutils.c, plugins/netutils.h.in, plugins/utils.c, plugins/utils.h.in:
+	AF indepedent routines introduced.
+	Modifed process_request() & my_connect() parameters to make 'proto' type
+		'int' rather than 'char *' and use IPPROTO_* POSIX values.
+	Removed is_dotted_quad() & my_inet_aton() functions
+	Added is_addr(), is_inet_addr(), is_inet6_addr() and resolve_host_or_addr()
+		functions to check whether it is a valid IP address
+	Modified is_host() to call is_addr() and is_hostname()
+
+2003-03-08  tonvoon
+
+	* tools/sfsnapshot: Need to remove configure.in
+
+	* plugins/Makefile.am, plugins/snprintf.c, lib/Makefile.am, lib/snprintf.c:
+	Move snprintf into lib
+
+	* tools/sfsnapshot:
+	Have to run through whole automake procedure as datestamp in RELEASE variable
+
+	* tools/sfsnapshot:
+	Added automake parameters for config.sub and config.guess
+
+	* tools/sfsnapshot: Fixed production OUT variable
+
+	* tools/sfsnapshot:
+	Adds MD5SUM file, creates multiple branch snapshots and doesn't
+	rerun configure/automake/autoconf unnecessarily
+
+	* Makefile.am:
+	Use Makefile's variables (to support a shortcut in sfsnapshot)
+
+2003-03-07  undrgrid
+
+	* lib/getaddrinfo.h, lib/gethostbyname.c, lib/gethostbyname.h, plugins/check_pgsql.c, plugins/common.h.in, plugins/netutils.c, plugins/netutils.h.in, tools/setup, lib/Makefile.am, lib/getaddrinfo.c, configure.in:
+	Added getaddrinfo.[ch] & gethostbyname.[ch] to provide RFC2553 functions
+		if missing in system libs and lwres not present
+	Moved all references to netdb.h and sys/socket.h into common.h.in
+	Modified automake call in tools/setup to include adding missing files
+		so config.sub and config.guess will be available
+
+2003-03-07  tonvoon
+
+	* plugins/check_nt.c: Make output for CPU load nicer
+
+2003-03-07  kdebisschop
+
+	* plugins/check_smtp.c: millisecond timing and perf data
+
+	* plugins/check_smtp.c:
+	whole timer loop was on the wrong side of connection close code
+
+	* plugins/check_udp.c: fix for -H invocation of hostname
+
+2003-03-06  undrgrid
+
+	* configure.in, acinclude.m4:
+	Adds --with-lwres and --enable-emulate-getaddrinfo but are not used in any of
+	the code at this time. Has a check for IPv6 support but only runs if using the
+	emulate-getaddrinfo routines, this needs to be modified.
+	!!! I need input from results of this run on various platforms to see what
+	results are seen in plugins/config.h so please help test !!!
+
+2003-03-05  kdebisschop
+
+	* plugins-scripts/check_ntp.pl: add "m" to regex for minutes
+
+2003-03-05  sghosh
+
+	* plugins/check_smtp.c: remove race condition for a long HELO
+
+	* command.cfg.in: corrected snmp commands
+
+	* plugins-scripts/check_ntp.pl: regex fix per Marc Poulin
+
+2003-03-05  tonvoon
+
+	* plugins/check_http.c:
+	check_http min size option (680467 - Dave Viner)
+
+2003-03-04  tonvoon
+
+	* plugins/check_nt.c: Make output message for CPU Load a bit nicer
+
+	* tools/sfsnapshot: To create nagiosplug daily snapshots on SF
+
+2003-03-03  kdebisschop
+
+	* plugins/check_ping.c:
+	accept comma-delimted list of hosts for checking if a multihomed host is alive
+
+2003-03-02  kdebisschop
+
+	* plugins/check_ping.c: add logic to check multiple servers
+
+2003-03-02  kdebisschop
 
 	* configure.in, nagios-plugins.spec.in:
 	adjustments to remove beta tagging
 
 	* ChangeLog: update from CVS
 
-2003-03-01  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-03-01  kdebisschop
 
 	* nagios-plugins.spec.in: we were missing some docs in the RPM
 
-2003-03-01  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-03-01  kdebisschop
 
 	* nagios-plugins.spec.in: we were missing some docs in the RPM
 
-2003-02-23  sghosh  <sghosh>
+2003-02-23  sghosh
 
 	* REQUIREMENTS: Novell requirements
 
 	* contrib/check_bgpstate.pl: removed community string in CRIT message
 
-2003-02-22  tonvoon  <tonvoon>
+2003-02-22  tonvoon
 
 	* configure.in:
 	Solaris and Unixware labels round the wrong way for swap command
 
-2003-02-22  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-02-22  kdebisschop
 
 	* Makefile.am: provide target for nagios-plugins.spec
 
 	* Makefile.am: add CODING FAQ LEGAL to distribution tarball
 
-2003-02-21  tonvoon  <tonvoon>
+2003-02-21  tonvoon
 
 	* plugins/check_http.c: Fixed coredump with unallocated string
 
 	* plugins/check_dns.c:
 	Strip leading spaces on dns return value (689563 - Simon L Nielsen)
 
-2003-02-20  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-02-20  kdebisschop
 
 	* plugins-scripts/check_disk_smb.pl:
 	option regexs need to include ^ and $
 
-2003-02-19  tonvoon  <tonvoon>
+2003-02-19  tonvoon
 
 	* lib/Makefile.am: Removing getloadavg.m4 from dist
 
-2003-02-19  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-02-19  kdebisschop
 
 	* lib/getloadavg.m4, tools/setup, INSTALL, configure.in:
 	remove getloadavg.m4
 
-2003-02-19  tonvoon  <tonvoon>
+2003-02-19  tonvoon
 
 	* getloadavg.m4, lib/Makefile.am, lib/getloadavg.c, lib/getloadavg.m4, plugins/Makefile.am, plugins/getloadavg.c, Makefile.am, configure.in:
 	Move getloadavg to lib directory. Must run "aclocal -I lib"
 
-2003-02-18  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-02-18  kdebisschop
 
 	* plugins/check_pgsql.c: spurious backslash escape
 
@@ -66,7 +811,7 @@
 
 	* plugins/check_tcp.c: failed if header was more than 1023 bytes
 
-2003-02-18  tonvoon  <tonvoon>
+2003-02-18  tonvoon
 
 	* plugins/check_load.c: Fixed the output messages (Bug 688729 - Jayjay)
 
@@ -75,12 +820,12 @@
 	* plugins/check_http.c:
 	Fixed compiler warning and increased the SSL random key for a Solaris PRNG problem
 
-2003-02-18  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-02-18  kdebisschop
 
 	* configure.in:
 	remainder of ps fix for UnixWare, and move [] in if/elif to indicate m4 quoting instead of test invocation
 
-2003-02-18  sghosh  <sghosh>
+2003-02-18  sghosh
 
 	* contrib/check_appletalk.pl: Appletalk ping plugin
 
@@ -91,7 +836,7 @@
 	* configure.in:
 	regex fix to catch *BSD swapinfo and not HP-UX error and memory/file swap in addition to device for HP-UX
 
-2003-02-17  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-02-17  kdebisschop
 
 	* configure.in: typo in testing uname output
 
@@ -99,27 +844,27 @@
 
 	* configure.in: library search dirs are part of LDFLAGS
 
-2003-02-17  sghosh  <sghosh>
+2003-02-17  sghosh
 
 	* REQUIREMENTS: location updates
 
-2003-02-16  tonvoon  <tonvoon>
+2003-02-16  tonvoon
 
 	* plugins/Makefile.am: Fixed dependencies for check_nt
 
 	* plugins/check_nt.c:
 	Coredump if no variable set (reported by Marc C. Poulin)
 
-2003-02-16  egalstad  <egalstad>
+2003-02-16  egalstad
 
 	* contrib/check_dhcp.c: Interface patch byor Clemens Resen
 
-2003-02-16  sghosh  <sghosh>
+2003-02-16  sghosh
 
 	* plugins-scripts/check_ntp.pl:
 	all alphanumeric accepted for refid on ntpq
 
-2003-02-12  tonvoon  <tonvoon>
+2003-02-12  tonvoon
 
 	* plugins/.cvsignore: Added extra plugins
 
@@ -134,7 +879,7 @@
 	* configure.in:
 	Inadequate quoting for PS_FORMAT & removal of grep "*** for Tru64
 
-2003-02-12  sghosh  <sghosh>
+2003-02-12  sghosh
 
 	* command.cfg.in: forced ntpq jitter check
 
@@ -143,12 +888,12 @@
 	* plugins-scripts/check_ntp.pl:
 	fixed regex for stratum1 peer, added logic for failed ntpq call(e.g. sntp host)
 
-2003-02-11  tonvoon  <tonvoon>
+2003-02-11  tonvoon
 
 	* plugins/check_mysql.c:
 	Patch by Dave Viner for seg fault on RH 7.3 (655903)
 
-2003-02-10  tonvoon  <tonvoon>
+2003-02-10  tonvoon
 
 	* configure.in: Update with references to REQUIREMENTS
 
@@ -173,7 +918,7 @@
 
 	* configure.in: Fixed Tru64 ps command (Bug 669585 - Paula Arnold)
 
-2003-02-10  undrgrid  <undrgrid>
+2003-02-10  undrgrid
 
 	* plugins/check_ssh.c:
 	Added argc checks before attempting to access argv[]
@@ -186,11 +931,11 @@
 	Corrected code to properly handle input of server hostname and port on
 	commandline without option flags.
 
-2003-02-10  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-02-10  kdebisschop
 
 	* contrib/check_fping_in.c: this plugin is in core as check_fping
 
-2003-02-09  undrgrid  <undrgrid>
+2003-02-09  undrgrid
 
 	* tools/setup:
 	Reordered program calls so autoheader was called before automake thus
@@ -198,7 +943,7 @@
 	was called. Also puts it inline with documentation in
 	INSTALL & INSTALLING
 
-2003-02-09  sghosh  <sghosh>
+2003-02-09  sghosh
 
 	* contrib/check_adptraid.sh, contrib/check_compaq_insight.pl, contrib/check_file_age.pl:
 	 new plugins
@@ -211,15 +956,15 @@
 	* contrib/tarballs/fetchlog-0.92.tar.gz, contrib/tarballs/fetchlog-0.94.tar.gz:
 	new version
 
-2003-02-09  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-02-09  kdebisschop
 
 	* README, CODING, FAQ: spell check
 
-2003-02-09  sghosh  <sghosh>
+2003-02-09  sghosh
 
 	* SUPPORT: ispell
 
-2003-02-08  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-02-08  kdebisschop
 
 	* plugins/check_pgsql.c: use enum instead of define
 
@@ -229,7 +974,7 @@
 
 	* plugins/check_http.c: submit request with one send
 
-2003-02-05  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-02-05  kdebisschop
 
 	* configure.in: fix for SSL build on RedHat rawhide
 
@@ -238,7 +983,7 @@
 
 	* plugins/check_http.c: fix segfault due to bad asprintf invocation
 
-2003-02-04  sghosh  <sghosh>
+2003-02-04  sghosh
 
 	* plugins-scripts/Makefile.am:
 	 install user:grp perms [patch 679703 -Detlef Boehm]
@@ -247,14 +992,14 @@
 
 	* plugins-scripts/check_ntp.pl: corrected ntpdate offset to seconds
 
-2003-02-03  tonvoon  <tonvoon>
+2003-02-03  tonvoon
 
 	* plugins/check_snmp.c:
 	Avoid core dump with null or invalid data (679400 - Mathieu Masseboeuf)
 
 	* plugins/Makefile.am: Patch for Mac OS X compile (652080 - Ton Voon)
 
-2003-02-03  sghosh  <sghosh>
+2003-02-03  sghosh
 
 	* contrib/tarballs/check_cit.tgz: Citrix plugin
 
@@ -271,7 +1016,7 @@
 	* plugins/check_hpjd.c:
 	added default community [bug-patch #600349 jbaumgartner]
 
-2003-01-31  tonvoon  <tonvoon>
+2003-01-31  tonvoon
 
 	* plugins/check_procs.c:
 	Fix for zombie processes on Solaris (Bug 677803 - Matthew Brown)
@@ -283,7 +1028,7 @@
 	Removed all unnecessary asprintf calls. Replaced with original check_nt.c
 	to minimise amount of changes (reported by Reuben Farrelly)
 
-2003-01-30  tonvoon  <tonvoon>
+2003-01-30  tonvoon
 
 	* plugins/check_nt.c: Added reference to the official NSClient web site
 
@@ -291,7 +1036,7 @@
 
 	* plugins/check_procs.c: Fixed progname
 
-2003-01-29  tonvoon  <tonvoon>
+2003-01-29  tonvoon
 
 	* plugins/check_mrtgtraf.c:
 	Fixed error and success codes (638656 - Paul Dlug)
@@ -302,7 +1047,7 @@
 	* plugins/check_nt.c, plugins/Makefile.am:
 	Added in check_nt for bug 646516
 
-2003-01-29  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-01-29  kdebisschop
 
 	* plugins/check_mysql.c: remove incorrect check_disk() declaration
 
@@ -311,7 +1056,7 @@
 
 	* plugins/check_by_ssh.c: 1.8
 
-2003-01-29  tonvoon  <tonvoon>
+2003-01-29  tonvoon
 
 	* plugins/check_http.c:
 	Better error if server requests client based certificate (609382 - Olaf Greis)
@@ -329,7 +1074,7 @@
 	Fixed NULL status in Solaris (644783 - Fabian Pehla)
 	Fixed -p options (652082 - Ton Voon)
 
-2003-01-28  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-01-28  kdebisschop
 
 	* contrib/checkciscotemp.pl:
 	typo: had commented use Net::SNMP for testing
@@ -344,29 +1089,29 @@
 	* plugins/check_http.c:
 	remove NULL string inits that can lead to segfaults
 
-2003-01-28  tonvoon  <tonvoon>
+2003-01-28  tonvoon
 
 	* configure.in: ps support for Darwin / MacOSX
 
-2003-01-27  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-01-27  kdebisschop
 
 	* plugins/check_http.c: do not pass host if none is provided
 
 	* plugins/check_http.c: we were sending extra CRLF
 
-2003-01-19  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-01-19  kdebisschop
 
 	* plugins-scripts/check_rpc.pl:
 	indicate new default state in get_rpcinfo, also fix a bunch of indents for consistent format
 
-2003-01-17  sghosh  <sghosh>
+2003-01-17  sghosh
 
 	* plugins-scripts/check_rpc.pl:
 	bug fix for state and opt_c initialization
 
 	* plugins/check_snmp.c: Counter32 tag parsing added
 
-2003-01-16  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-01-16  kdebisschop
 
 	* plugins/check_mysql.c, plugins/check_pgsql.c:
 	semicolon needed where progname define was replaced
@@ -389,7 +1134,7 @@
 
 	* plugins/check_by_ssh.c: avoid segfault when host is not given
 
-2003-01-13  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-01-13  kdebisschop
 
 	* contrib/check_dhcp.c, contrib/check_fping_in.c, contrib/check_rbl.c, plugins/check_http.c, plugins/check_ldap.c, plugins/check_load.c, plugins/check_mrtg.c, plugins/check_mrtgtraf.c, plugins/check_mysql.c, plugins/check_nagios.c, plugins/check_nwstat.c, plugins/check_overcr.c, plugins/check_pgsql.c, plugins/check_ping.c, plugins/check_procs.c, plugins/check_radius.c, plugins/check_real.c, plugins/check_smtp.c, plugins/check_snmp.c, plugins/check_ssh.c, plugins/check_swap.c, plugins/check_tcp.c, plugins/check_time.c, plugins/check_udp.c, plugins/check_ups.c, plugins/check_users.c, plugins/check_vsz.c, plugins/negate.c, plugins/urlize.c, plugins/utils.c, plugins/utils.h.in, plugins/check_by_ssh.c, plugins/check_dig.c, plugins/check_disk.c, plugins/check_dns.c, plugins/check_dummy.c, plugins/check_fping.c, plugins/check_hpjd.c:
 	convert PROGNAME from a define to a const char
@@ -402,12 +1147,12 @@
 	* plugins/check_disk.c:
 	add options for excluding devices and for skipping OK devices in summary
 
-2003-01-03  kdebisschop@alert.infoplease.com  <kdebisschop>
+2003-01-03  kdebisschop
 
 	* plugins/utils.c:
 	protect against some null strings, make formats more uniform
 
-2002-12-19  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-12-19  kdebisschop
 
 	* plugins/check_tcp.c: expect is +OK for SPOP too
 
@@ -416,24 +1161,24 @@
 
 	* plugins/check_http.c: remove spurious CRLF
 
-2002-11-29  stanleyhopcroft  <stanleyhopcroft>
+2002-11-29  stanleyhopcroft
 
 	* contrib/check_citrix:
 	New plugin to check the ICA browse service (used by Citrix Metaframe servers) from
 	Ed Rolison and Tom De Blende.
 
-2002-11-25  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-11-25  kdebisschop
 
 	* plugins/check_tcp.c: was segfaulting if no dtat was returned
 
-2002-11-24  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-11-24  kdebisschop
 
 	* tools/snapshot: some fixes needed to move off old devel box
 
 	* tools/snapshot:
 	make routine snapshots of nagios and plugin CVS to expand testing
 
-2002-11-22  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-11-22  kdebisschop
 
 	* plugins/check_ups.c:
 	add replace battery condition, replace unchecked strcat calls with asprintf (I do not think buffer overflow was possible here, but lets be consistent)
@@ -450,11 +1195,11 @@
 	* configure.in:
 	get long args output to work on linux check_procs (needs OpenBSD testing)
 
-2002-11-21  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-11-21  kdebisschop
 
 	* plugins/check_dig.c: fix empty output on errors
 
-2002-11-20  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-11-20  kdebisschop
 
 	* plugins/check_swap.c: add switch to evaluate each swap individually
 
@@ -465,7 +1210,7 @@
 
 	* plugins/check_dig.c: replace some strcpy with strscpy
 
-2002-11-19  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-11-19  kdebisschop
 
 	* plugins/Makefile.am: another try at portable symlinking
 
@@ -473,14 +1218,14 @@
 
 	* plugins/Makefile.am: rewrite of install-exec-hook for solaris
 
-2002-11-18  sghosh  <sghosh>
+2002-11-18  sghosh
 
 	* contrib/check_javaproc.pl, contrib/nagios_sendim.pl: javaproc, sendim
 
 	* contrib-reporting/process_perfdata.pl:
 	New directory to for perfdata and reporting scripts
 
-2002-11-18  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-11-18  kdebisschop
 
 	* plugins/check_swap.c: test total swap instead of individual disks
 
@@ -488,7 +1233,7 @@
 
 	* plugins/utils.c: more readable max_state() code
 
-2002-11-16  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-11-16  kdebisschop
 
 	* plugins/Makefile.am:
 	fix too many sources problem for programs tha are symlinks to check_tcp
@@ -496,12 +1241,12 @@
 	* plugins/check_snmp.c:
 	my take on Subhendu's patches, plus a few comments for clarity
 
-2002-11-15  sghosh  <sghosh>
+2002-11-15  sghosh
 
 	* plugins/check_snmp.c:
 	memory bounds in options, no output comparison case
 
-2002-11-15  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-11-15  kdebisschop
 
 	* nagios-plugins.spec.in:
 	make spec work again, now that release is in source name again
@@ -511,7 +1256,7 @@
 	* plugins/check_snmp.c:
 	fix label handling, replace accidentally deleted elseif l.310
 
-2002-11-14  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-11-14  kdebisschop
 
 	* plugins/utils.c, configure.in, nagios-plugins.spec.in, Makefile.am, acconfig.h:
 	fix bug with gettimeofday test, improve version/release handling, update rpm spec
@@ -536,19 +1281,19 @@
 	* plugins/Makefile.am, plugins/check_dns.c, plugins/check_ldap.c, plugins/check_mrtg.c, plugins/check_mrtgtraf.c, plugins/check_nwstat.c, plugins/check_radius.c, plugins/utils.c, plugins/version.h.in:
 	remove call_getopt and ssprintf
 
-2002-11-13  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-11-13  kdebisschop
 
 	* plugins/check_disk.c, plugins/check_dns.c, plugins/check_fping.c, plugins/check_hpjd.c, plugins/check_mrtg.c, plugins/check_nwstat.c, plugins/check_ping.c, plugins/check_vsz.c, plugins/urlize.c, plugins/utils.c:
 	remove call_getopt and asprintf
 
-2002-11-12  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-11-12  kdebisschop
 
 	* plugins/check_dig.c: cleanup asprintf, old function decls
 
 	* plugins/check_mysql.c, plugins/check_real.c, plugins/check_ups.c:
 	remove call_getopt
 
-2002-11-11  sghosh  <sghosh>
+2002-11-11  sghosh
 
 	* plugins/check_snmp.c: should use asprintf
 
@@ -561,7 +1306,7 @@
 
 	* plugins/check_snmp.c: misc doc fix, missing verbose option
 
-2002-11-09  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-11-09  kdebisschop
 
 	* plugins/check_ups.c, plugins/check_users.c, plugins/check_by_ssh.c, plugins/check_dig.c, plugins/check_ping.c, plugins/check_time.c:
 	remove call_getopt
@@ -576,7 +1321,7 @@
 	* plugins/snprintf.c:
 	HAVE_C99_SNPRINTF is not tested, so remove from ifdef
 
-2002-11-08  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-11-08  kdebisschop
 
 	* plugins/check_snmp.c: user reports NULL still getting into asprintf
 
@@ -590,7 +1335,7 @@
 
 	* tools/oneliners: some useful onliners
 
-2002-11-07  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-11-07  kdebisschop
 
 	* plugins/check_snmp.c:
 	bugfixes to command format and (null) text created by asprintf switch
@@ -599,7 +1344,7 @@
 
 	* configure.in: test snprintf function family for ifdefs in snprintf.c
 
-2002-10-30  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-10-30  kdebisschop
 
 	* plugins/check_tcp.c: replace fixed-lentgh buffer with asprintf
 
@@ -614,21 +1359,21 @@
 	* tools/setup:
 	debian builds not actively maintained, so suppress error in setup script
 
-2002-10-30  sghosh  <sghosh>
+2002-10-30  sghosh
 
 	* acconfig.h, configure.in, plugins-scripts/Makefile.am, plugins-scripts/check_mailq.pl, plugins-scripts/utils.pm.in:
 	monitor mailq
 
-2002-10-28  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-10-28  kdebisschop
 
 	* plugins-scripts/check_rpc.pl, plugins-scripts/check_sensors.sh, plugins-scripts/check_wave.pl, plugins-scripts/check_flexlm.pl, plugins-scripts/check_log.sh, plugins-scripts/check_ntp.pl, plugins-scripts/check_breeze.pl, plugins-scripts/check_disk_smb.pl:
 	remove pspace in shebang since no sequent users replied
 
-2002-10-26  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-10-26  kdebisschop
 
 	* nagios-plugins.spec.in: release should not be in tarball name
 
-2002-10-25  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-10-25  kdebisschop
 
 	* nagios-plugins.spec.in: tweak source macro
 
@@ -637,7 +1382,7 @@
 	* plugins/Makefile.am, Makefile.am:
 	include getloadavg sources, add some Solaris pkg build support
 
-2002-10-22  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-10-22  kdebisschop
 
 	* plugins/check_ssh.c:
 	remove call_getopt, replace ssprintf with asprintf,better server version reporting
@@ -647,7 +1392,7 @@
 	* plugins/check_procs.c:
 	remove call_getopt, replace ssprintf with asprintf
 
-2002-10-22  sghosh  <sghosh>
+2002-10-22  sghosh
 
 	* contrib/check_procr.sh:
 	From: Jerome Tytgat - checks to see if named process is running
@@ -655,7 +1400,7 @@
 	* README, plugins/check_nt.c:
 	check_nt is downloadable from nsclient.ready2run.nl
 
-2002-10-21  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-10-21  kdebisschop
 
 	* plugins/check_swap.c: use asprintf instead of ssprintf
 
@@ -677,7 +1422,7 @@
 
 	* plugins/check_pgsql.c: now we provide long opts if they do not exist
 
-2002-10-20  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-10-20  kdebisschop
 
 	* plugins/check_snmp.c:
 	fixed scanning for multiple OIDs, which was not working
@@ -690,7 +1435,7 @@
 	  (If someine has a rationale for the change, maybe it could be done as an option? - it seems
 	    fairly clear that the Web display should be sensible to PHBs so long as there's no real loss)
 
-2002-10-18  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-10-18  kdebisschop
 
 	* plugins/check_swap.c: remove old call_getopt
 
@@ -707,14 +1452,14 @@
 
 	* plugins/check_ping.c: remove broken call_getopt stuff
 
-2002-10-17  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-10-17  kdebisschop
 
 	* plugins/check_tcp.c: using asprintf
 
 	* tools/setup, INSTALL, INSTALLING:
 	revise now that aclocal is remved from CVS
 
-2002-10-16  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-10-16  kdebisschop
 
 	* configure.in: need some quoting on ifdef
 
@@ -768,51 +1513,51 @@
 
 	* configure.in: work with newer automake, begin swithc to asprintf
 
-2002-10-15  sghosh  <sghosh>
+2002-10-15  sghosh
 
 	* plugins-scripts/check_ifoperstatus.pl:
 	new exit states, more conditional checking
 
-2002-10-07  sghosh  <sghosh>
+2002-10-07  sghosh
 
 	* plugins/check_dns.c: patch for expected IP address
 
-2002-10-07  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-10-07  kdebisschop
 
 	* plugins/popen.c:
 	make sure we do not run past the end of an unterminated string
 
 	* plugins/negate.c: use asprintf, inhibit splint warning
 
-2002-10-05  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-10-05  kdebisschop
 
 	* getloadavg.m4, plugins/getloadavg.c:
 	lets use library instead od inconsistent command line interfaces
 
-2002-09-26  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-09-26  kdebisschop
 
 	* plugins/urlize.c: use ssprintf instead of sprintf
 
-2002-09-25  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-09-25  kdebisschop
 
 	* plugins/check_http.c:
 	incorporate comment on my_recv from Russell Scibetti
 
 	* plugins/check_http.c: incorporate comments from Russell Scibetti
 
-2002-09-24  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-09-24  kdebisschop
 
 	* plugins/check_http.c:
 	replace remaining occurences of sprintf with snprintf
 
-2002-09-16  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-09-16  kdebisschop
 
 	* INSTALL: needed for latest autoconf
 
 	* Makefile.am, aclocal.m4, configure.in, nagios-plugins.spec.in:
 	finish ckleanup of rpm spec porcessing
 
-2002-09-14  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-09-14  kdebisschop
 
 	* nagios-plugins.spec, nagios-plugins.spec.in:
 	complete spec based on confugure.in
@@ -826,21 +1571,21 @@
 	* plugins-scripts/check_log.sh:
 	patch from Matthew Peters <mattp@esec.com.au>, plus turned up a few bugs on my own
 
-2002-09-12  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-09-12  kdebisschop
 
 	* plugins/Makefile.am: negate wrapper
 
-2002-09-08  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-09-08  kdebisschop
 
 	* plugins/negate.c: wrapper to invert return status
 
 	* plugins/utils.c: clears up warnings in splint
 
-2002-09-06  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-09-06  kdebisschop
 
 	* plugins-scripts/check_rpc.pl: case on key to ERRORS hash
 
-2002-09-04  sghosh  <sghosh>
+2002-09-04  sghosh
 
 	* configure.in: more Mysql patches
 
@@ -852,18 +1597,18 @@
 	* contrib/check_ifstatus.pl, contrib/check_ifoperstatus.pl:
 	moved to supported plugins-scripts
 
-2002-09-02  sghosh  <sghosh>
+2002-09-02  sghosh
 
 	* plugins/check_smtp.c:
 	new -f option for adding a FROM address for RFC correctness
 
-2002-09-01  sghosh  <sghosh>
+2002-09-01  sghosh
 
 	* INSTALL, INSTALLING: file rename for MacOS X
 
 	* plugins/check_smtp.c: Valid MAIL command
 
-2002-08-22  sghosh  <sghosh>
+2002-08-22  sghosh
 
 	* contrib/check_snmp_process_monitor.pl: updates
 
@@ -872,12 +1617,12 @@
 	* contrib/check_snmp_disk_monitor.pl, contrib/check_snmp_process_monitor.pl:
 	new plugins contrib
 
-2002-08-18  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-08-18  kdebisschop
 
 	* plugins/check_by_ssh.c: typo in options passed to ssh for ipv6.
 	fix by setting a generic hook for 1-char pasthhru options
 
-2002-08-14  sghosh  <sghosh>
+2002-08-14  sghosh
 
 	* plugins-scripts/check_disk_smb.pl: patch for admin shares
 
@@ -900,68 +1645,68 @@
 
 	* contrib/check_smb.sh: new smb check - users
 
-2002-08-13  egalstad  <egalstad>
+2002-08-13  egalstad
 
 	* plugins/check_game.c:
 	Mod to display current/max number of players in a game (Frank Kannemann)
 
-2002-08-12  egalstad  <egalstad>
+2002-08-12  egalstad
 
 	* contrib/check_disk_snmp.pl: Updated to use getopt (Christoph Maser)
 
-2002-08-01  sghosh  <sghosh>
+2002-08-01  sghosh
 
 	* plugins/check_snmp.c: re-patched exit state comparison
 
 	* plugins/check_snmp.c:
 	port option added, -c support net-snmpv5, complete response string output
 
-2002-08-01  egalstad  <egalstad>
+2002-08-01  egalstad
 
 	* contrib/check_digitemp.pl:
 	Add Brian Lane's Digitemp (1-wire temp sensor) plugin
 
-2002-07-16  egalstad  <egalstad>
+2002-07-16  egalstad
 
 	* contrib/check_disk_snmp.pl:
 	Christoph Maser's plugin to check disk usage via SNMP3
 
-2002-07-16  stanleyhopcroft  <stanleyhopcroft>
+2002-07-16  stanleyhopcroft
 
 	* contrib/check_ms_spooler.pl:
 	Primitive and in need of refinement test of MS spooler (with smbclient)
 
-2002-07-04  sghosh  <sghosh>
+2002-07-04  sghosh
 
 	* contrib/check_procl.sh:
 	Jerome Tytgat - accumulated/percentage CPU/MEM per process - bash plugin
 
 	* INSTALL: doc update
 
-2002-06-28  sghosh  <sghosh>
+2002-06-28  sghosh
 
 	* INSTALL: note about autoconf/automake version
 
-2002-06-25  sghosh  <sghosh>
+2002-06-25  sghosh
 
 	* contrib/check_rbl.c:
 	Check if IP address is specified on RBL - Tim Bell
 
 	* contrib/check_lmmon.pl: check motherboard/cpu temp via lmmon
 
-2002-06-24  sghosh  <sghosh>
+2002-06-24  sghosh
 
 	* plugins/check_http.c:
 	ignore return status codes if user specified status line check
 
 	* plugins/check_snmp.c: printf bug for large numbers - Jeff Murray
 
-2002-06-20  sghosh  <sghosh>
+2002-06-20  sghosh
 
 	* plugins-scripts/check_disk_smb.pl:
 	logic fix for disk space thresholds
 
-2002-06-19  sghosh  <sghosh>
+2002-06-19  sghosh
 
 	* plugins/check_dig.c, plugins/check_dns.c, plugins/check_fping.c, plugins/check_hpjd.c, plugins/check_nagios.c, plugins/check_ping.c, plugins/check_snmp.c, plugins/check_vsz.c, plugins/urlize.c, plugins/utils.c, plugins/utils.h.in:
 	more POSIX return value comparison related code fixes
@@ -969,28 +1714,28 @@
 	* plugins/check_disk.c, plugins/check_ping.c, plugins/check_procs.c:
 	fixes for using POSIX return codes
 
-2002-06-18  sghosh  <sghosh>
+2002-06-18  sghosh
 
 	* plugins/common.h.in:  updated to POSIX return codes
 
 	* contrib/check_cluster.c: Ethan's check_cluster
 
-2002-06-13  sghosh  <sghosh>
+2002-06-13  sghosh
 
 	* plugins/check_smtp.c: conformance to RFC 821 <CRLF>
 
 	* configure.in: use xntpdc on Solaris for check_ntp
 
-2002-06-10  sghosh  <sghosh>
+2002-06-10  sghosh
 
 	* plugins/check_smtp.c:
 	patch to stop NOQUEUE syslog messages - Karl Ewald
 
-2002-06-08  sghosh  <sghosh>
+2002-06-08  sghosh
 
 	* plugins-scripts/check_ntp.pl: xntpdc/ntpdc patch - John Koyle
 
-2002-06-06  sghosh  <sghosh>
+2002-06-06  sghosh
 
 	* plugins-scripts/subst.in, plugins-scripts/utils.sh.in:
 	corrected result codes - for sh; corrected substition for libexec - Tom Bertelson
@@ -1004,15 +1749,15 @@
 
 	* plugins-scripts/check_ntp.pl: conditional on ntpdc
 
-2002-05-29  sghosh  <sghosh>
+2002-05-29  sghosh
 
 	* command.cfg.in: notes added
 
-2002-05-28  sghosh  <sghosh>
+2002-05-28  sghosh
 
 	* command.cfg.in: option updates, more examples
 
-2002-05-27  sghosh  <sghosh>
+2002-05-27  sghosh
 
 	* plugins-scripts/check_ntp.pl: checked in too quickly
 
@@ -1028,12 +1773,12 @@
 
 	* plugins-scripts/check_disk_smb.pl: ePN fix and support for utils.pm
 
-2002-05-23  sghosh  <sghosh>
+2002-05-23  sghosh
 
 	* contrib/check_log2.pl, contrib/check_vcs.pl:
 	New plugins from Aaron Bostick - Veritas Cluster, logfile
 
-2002-05-10  sghosh  <sghosh>
+2002-05-10  sghosh
 
 	* plugins-scripts/check_rpc.pl:
 	updates for ePN, patch for multiple version check
@@ -1042,12 +1787,12 @@
 
 	* acconfig.h: Added programs for autoconf
 
-2002-05-09  sghosh  <sghosh>
+2002-05-09  sghosh
 
 	* plugins-scripts/Makefile.am, plugins-scripts/check_ifoperstatus.pl:
 	migrated check_ifoperstatus to standard plugin
 
-2002-05-08  sghosh  <sghosh>
+2002-05-08  sghosh
 
 	* plugins/check_ping.c:  patch for Suse 8.0 loss output
 
@@ -1061,12 +1806,12 @@
 	* plugins-scripts/Makefile.am, plugins-scripts/check_ifstatus.pl:
 	moved updated check_ifstatus to standard plugin
 
-2002-05-07  sghosh  <sghosh>
+2002-05-07  sghosh
 
 	* plugins-scripts/check_breeze.pl, plugins-scripts/check_flexlm.pl, plugins-scripts/check_ircd.pl, plugins-scripts/check_netdns.pl, plugins-scripts/check_ntp.pl, plugins-scripts/check_wave.pl:
 	2nd fix for ePN
 
-2002-05-02  sghosh  <sghosh>
+2002-05-02  sghosh
 
 	* plugins-scripts/check_breeze.pl, plugins-scripts/check_disk_smb.pl, plugins-scripts/check_flexlm.pl, plugins-scripts/check_ircd.pl, plugins-scripts/check_netdns.pl, plugins-scripts/check_ntp.pl, plugins-scripts/check_rpc.pl, plugins-scripts/check_wave.pl:
 	fix for embedded perl
@@ -1074,41 +1819,41 @@
 	* tools/README, tools/mini_epn.c, tools/p1.pl:
 	updated mini_epn and p1.pl added to plugins distribution
 
-2002-05-01  sghosh  <sghosh>
+2002-05-01  sghosh
 
 	* contrib/tarballs/fetchlog-0.92.tar.gz:
 	remote log check (via snmp possible) by  Alexander Haderer
 
-2002-04-29  kdebisschop@alert.infoplease.com  <kdebisschop>
+2002-04-29  kdebisschop
 
 	* plugins/getopt.h:
 	failed to carry over from old plugins, listed in EXTRA_DIST, needed for build
 
-2002-04-23  sghosh  <sghosh>
+2002-04-23  sghosh
 
 	* plugins/check_ping.c:
 	corrected program name and added rtt patch for RH7.2+beta
 
-2002-04-18  egalstad  <egalstad>
+2002-04-18  egalstad
 
 	* contrib/check_inodes.pl:
 	add check_inodes contrib plugin by John Jolet
 
 	* configure.in: configure script patch for ping syntax
 
-2002-04-07  sghosh  <sghosh>
+2002-04-07  sghosh
 
 	* contrib/check_backup.pl, contrib/check_dl_size.pl:
 	plugins from Patrick Greenwell
 
-2002-04-05  sghosh  <sghosh>
+2002-04-05  sghosh
 
 	* acconfig.h: added HOST_COMMAND
 
 	* contrib/tarballs/check_spread.tar:
 	plugin to check spread messaging toolkit
 
-2002-04-03  sghosh  <sghosh>
+2002-04-03  sghosh
 
 	* contrib/check_oracle_instance.pl:
 	 from Sven Dolderer - check oracle instance
@@ -1116,19 +1861,19 @@
 	* plugins-scripts/check_nfs.pl:
 	check_nfs functionality exists in check_rpc
 
-2002-03-18  sghosh  <sghosh>
+2002-03-18  sghosh
 
 	* plugins-scripts/subst.in:
 	function to update perl plugin scripts to find utils.pm
 
-2002-03-01  egalstad  <egalstad>
+2002-03-01  egalstad
 
 	* plugins/.cvsignore, plugins/config.h.in: Fix for stupid me
 
 	* contrib/check_breeze.pl, contrib/check_dhcp.c, contrib/check_flexlm.pl, contrib/check_hltherm.c, contrib/check_hprsc.pl, contrib/check_ipxping.c, contrib/check_memory.tgz, contrib/check_mysql.c, contrib/check_uptime.c, contrib/check_wave.pl, contrib/readme.txt, contrib/tarballs/berger-ping.tar.gz, contrib/tarballs/bowen-langley_plugins.tar.gz, contrib/tarballs/check_bgp-1.0.tar.gz, contrib/tarballs/check_breeze.tar.gz, contrib/tarballs/check_flexlm.tar.gz, contrib/tarballs/check_hltherm.tar.gz, contrib/tarballs/check_hprsc.tar.gz, contrib/tarballs/check_memory.tgz, contrib/tarballs/check_radius.tar.gz, contrib/tarballs/check_wave.tar.gz, contrib/tarballs/hopcroft-plugins.tar.gz, contrib/tarballs/radius.tar.gz, plugins/.cvsignore, plugins/config.h.in:
 	Contrib plugin cleanup
 
-2002-02-28  egalstad  <egalstad>
+2002-02-28  egalstad
 
 	* plugins-scripts/.cvsignore, plugins-scripts/Makefile.am, plugins-scripts/check_breeze.pl, plugins-scripts/check_disk_smb.pl, plugins-scripts/check_flexlm.pl, plugins-scripts/check_ircd.pl, plugins-scripts/check_log.sh, plugins-scripts/check_netdns.pl, plugins-scripts/check_nfs.pl, plugins-scripts/check_ntp.pl, plugins-scripts/check_oracle.sh, plugins-scripts/check_rpc.pl, plugins-scripts/check_sensors.sh, plugins-scripts/check_wave.pl, plugins-scripts/subst.in, plugins-scripts/t/check_rpc.t, plugins-scripts/utils.pm.in, plugins-scripts/utils.sh.in, plugins/check_nagios.c, plugins/t/check_disk.t, plugins/t/check_dns.t, plugins/t/check_fping.t, plugins/t/check_ftp.t, plugins/t/check_hpjd.t, plugins/t/check_http.t, plugins/t/check_imap.t, plugins/t/check_load.t, plugins/t/check_mysql.t, plugins/t/check_ping.t, plugins/t/check_pop.t, plugins/t/check_procs.t, plugins/t/check_smtp.t, plugins/t/check_snmp.t, plugins/t/check_swap.t, plugins/t/check_tcp.t, plugins/t/check_time.t, plugins/t/check_udp.t, plugins/t/check_users.t, plugins/t/check_vsz.t, plugins/tests/check_disk, plugins/tests/check_dns, plugins/tests/check_ftp, plugins/tests/check_hpjd, plugins/tests/check_http, plugins/tests/check_load, plugins/tests/check_ping, plugins/tests/check_procs, plugins/tests/check_swap, plugins/tests/check_users, plugins/tests/check_vsz, plugins/utils.c, plugins/utils.h.in, plugins/version.h.in, tools/setup, tools/tango:
 	Initial import of existing plugin code
@@ -1188,12 +1933,12 @@
 
 	* .cvsignore, AUTHORS, CODING: New file.
 
-2000-12-08  karldebisschop  <karldebisschop>
+2000-12-08  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_http.c, /cvsroot/netsaintplug/netsaintplug/plugins/utils.c:
 	fix memory leaks
 
-2000-12-07  karldebisschop  <karldebisschop>
+2000-12-07  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/contrib/check_qmailq.pl:
 	checks mail in queue (needs much work still)
@@ -1201,7 +1946,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/contrib/check_ftpget.pl:
 	tests fetching files from FTP server
 
-2000-12-02  karldebisschop  <karldebisschop>
+2000-12-02  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ldap.c:
 	password authentication patch, indent, standardize usage/help functions
@@ -1238,7 +1983,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/t/check_fping.t:
 	test on nullhost may return warning or error
 
-2000-12-01  karldebisschop  <karldebisschop>
+2000-12-01  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_dns.c:
 	typo - fix dns left trim on bind 9
@@ -1279,7 +2024,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/contrib/check_rrd_data.pl:
 	checks RRD data (for use with cricket)
 
-2000-12-01  karldebisschop  <karldebisschop@skillet.infoplease.com>
+2000-12-01  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/package.def: 1.2.9-beta3
 
@@ -1315,7 +2060,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/contrib/check_rrd_data.pl:
 	checks RRD data (for use with cricket)
 
-2000-12-01  karldebisschop  <karldebisschop@skillet.infoplease.com>
+2000-12-01  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/configure.in:
 	add argsument-array option to check_procs
@@ -1338,7 +2083,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/contrib/check_rrd_data.pl:
 	checks RRD data (for use with cricket)
 
-2000-11-30  karldebisschop  <karldebisschop@skillet.infoplease.com>
+2000-11-30  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c:
 	fix typo, indent
@@ -1346,19 +2091,19 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c:
 	don't trigger warning for Redhat 7 ping output on stderr (Warning: no SO_TIMESTAMP support, falling back to SIOCGSTAMP)
 
-2000-11-28  karldebisschop  <karldebisschop@skillet.infoplease.com>
+2000-11-28  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_snmp.c: indent
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_http.c:
 	remove line continuations
 
-2000-11-18  karldebisschop  <karldebisschop@skillet.infoplease.com>
+2000-11-18  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_disk_smb.pl:
 	add option for workgroups
 
-2000-11-17  karldebisschop  <karldebisschop@skillet.infoplease.com>
+2000-11-17  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_disk.c:
 	run `indent -ts2 -sob check_disk.c`
@@ -1366,7 +2111,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/common.h.in:
 	typo in #ifndef HAVE_STROL
 
-2000-11-16  karldebisschop  <karldebisschop@skillet.infoplease.com>
+2000-11-16  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ssh.c: run indent
 	fix bugs on solaris
@@ -1382,17 +2127,17 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/t/check_snmp.t, /cvsroot/netsaintplug/netsaintplug/plugins/check_snmp.c:
 	explicitly initialize eval_method array
 
-2000-11-15  hgayosso  <hgayosso@skillet.infoplease.com>
+2000-11-15  hgayosso
 
 	* /cvsroot/netsaintplug/netsaintplug/command.cfg.in:
 	Added examples for: check_reply and check_radius.
 
-2000-11-08  karldebisschop  <karldebisschop@skillet.infoplease.com>
+2000-11-08  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/contrib/check_joy.sh:
 	checks joystick port
 
-2000-11-07  karldebisschop  <karldebisschop@skillet.infoplease.com>
+2000-11-07  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_real.c: fix segfault
 
@@ -1402,12 +2147,12 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c:
 	automatically increase timeout if critical treshold is greater than crta
 
-2000-11-03  karldebisschop  <karldebisschop@skillet.infoplease.com>
+2000-11-03  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_tcp.c:
 	fis segfault looking for EOL on stripped line
 
-2000-10-25  karldebisschop  <karldebisschop@skillet.infoplease.com>
+2000-10-25  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/ChangeLog: automatic update
 
@@ -1415,7 +2160,7 @@
 	move a slight bit closer to SSH protocal compliance
 	needs much more work
 
-2000-10-25  karldebisschop  <karldebisschop>
+2000-10-25  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ssh.c: cleanup
 	move a slight bit closer to SSH protocal compliance
@@ -1425,7 +2170,7 @@
 	change type of counter 'i' to int
 	allow = in url query string
 
-2000-10-11  karldebisschop  <karldebisschop>
+2000-10-11  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_mrtg.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_mrtgtraf.c:
 	allow expiration to be optional
@@ -1454,12 +2199,12 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_snmp.c:
 	cleanup arrays for '-u' and '-l' options
 
-2000-10-10  karldebisschop  <karldebisschop>
+2000-10-10  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_tcp.c:
 	fix count of expect strings
 
-2000-10-06  karldebisschop  <karldebisschop>
+2000-10-06  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/contrib/checkciscotemp.pl:
 	missing comma
@@ -1482,19 +2227,19 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_tcp.c:
 	additional fixes for munged multiple expect loop
 
-2000-10-02  karldebisschop  <karldebisschop>
+2000-10-02  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_tcp.c:
 	fix bug in server expect code, due to bad logic in testing for
 	alternative expects for check_nntp
 
-2000-09-27  karldebisschop  <karldebisschop>
+2000-09-27  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/command.cfg.in:
 	fix some extraneous linefeeds
 	fix missing leading dots in a few SNMP OIDs
 
-2000-09-25  karldebisschop  <karldebisschop>
+2000-09-25  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/.cvsignore:
 	make a separate distrib directory to run 'make dist'
@@ -1505,7 +2250,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/popen.c:
 	set cmd to NULL when there are characters left, but they are all whitespace
 
-2000-09-24  karldebisschop  <karldebisschop>
+2000-09-24  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_time.c, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_time.t:
 	something funky in check_time failure mode -- remove tests for now
@@ -1516,7 +2261,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_time.c:
 	give CRITICAL|WARNING on connect failures only if connect-time checking used
 
-2000-09-24  karldebisschop  <karldebisschop>
+2000-09-24  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_time.c, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_time.t:
 	something funky in check_time failure mode -- remove tests for now
@@ -1527,12 +2272,12 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_time.c:
 	give CRITICAL|WARNING on connect failures only if connect-time checking used
 
-2000-09-21  karldebisschop  <karldebisschop>
+2000-09-21  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/aclocal.m4, /cvsroot/netsaintplug/netsaintplug/configure.in, /cvsroot/netsaintplug/netsaintplug/plugins/common.h.in, /cvsroot/netsaintplug/netsaintplug/plugins/getopt1.c, /cvsroot/netsaintplug/netsaintplug/plugins/getopt.c, /cvsroot/netsaintplug/netsaintplug/plugins/getopt.h, /cvsroot/netsaintplug/netsaintplug/plugins/Makefile.am:
 	provide getopt_long for those OS's that do not have it
 
-2000-09-20  karldebisschop  <karldebisschop>
+2000-09-20  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/t/check_time.t:
 	plugin now warns if server is not present
@@ -1551,13 +2296,13 @@
 	fix missed token in reverse-compatibility mode
 	help was completely worng
 
-2000-09-18  karldebisschop  <karldebisschop>
+2000-09-18  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_nntp.c:
 	look for error codes oonly at beginning of string
 	add option to switch to MODE READER
 
-2000-09-14  karldebisschop  <karldebisschop>
+2000-09-14  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/INSTALL:
 	Use list as primry contact, not Ethan
@@ -1567,7 +2312,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c:
 	add 'mdev' to output forms to scan
 
-2000-09-13  karldebisschop  <karldebisschop>
+2000-09-13  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/test.pl.in:
 	get path a little closer to working on solaris with build dirs
@@ -1581,7 +2326,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_http.c:
 	authentication for SSL
 
-2000-09-12  karldebisschop  <karldebisschop>
+2000-09-12  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/t/check_load.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_mysql.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_ping.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_pop.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_procs.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_smtp.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_snmp.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_swap.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_users.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_vsz.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_imap.t:
 	better nessages when errors are found
@@ -1596,7 +2341,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/t/check_ftp.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_hpjd.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_tcp.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_time.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_disk.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_dns.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_fping.t:
 	print better messages on failure
 
-2000-09-11  karldebisschop  <karldebisschop>
+2000-09-11  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/ChangeLog: beta 1
 
@@ -1622,7 +2367,7 @@
 	don't check output when testing against nullhost or noserver
 	  - there are just too many variants
 
-2000-09-11  karldebisschop  <karldebisschop>
+2000-09-11  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/netsaint-plugins-custom.spec, /cvsroot/netsaintplug/netsaintplug/netsaint-plugins.spec, /cvsroot/netsaintplug/netsaintplug/package.def:
 	1.2.9-b1
@@ -1651,12 +2396,12 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/t/check_http.t:
 	don't check output string when testing nullhost
 
-2000-09-10  karldebisschop  <karldebisschop>
+2000-09-10  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_http.c:
 	bug killing 'ssl' twice cause segfault
 
-2000-09-07  karldebisschop  <karldebisschop>
+2000-09-07  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_dig.c:
 	decalaration was moved into autoconf
@@ -1692,12 +2437,12 @@
 	* /cvsroot/netsaintplug/netsaintplug/configure.in:
 	PS_RAW_COMMAND needs to look at full path
 
-2000-09-06  karldebisschop  <karldebisschop>
+2000-09-06  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c:
 	use ssprintf function to formulate command
 
-2000-09-01  karldebisschop  <karldebisschop>
+2000-09-01  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_nntp.c:
 	accidentally dropped !
@@ -1705,7 +2450,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_nntp.c:
 	add verbose printf's and checnge NNRP to NNTP
 
-2000-09-01  karldebisschop  <kdebisschop>
+2000-09-01  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/subst.in:
 	escape = for nawk (AIX)
@@ -1725,7 +2470,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_snmp.c, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_snmp.t:
 	handle multiple line output
 
-2000-08-31  karldebisschop  <kdebisschop>
+2000-08-31  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/Makefile.am: add acconfig.h
 
@@ -1743,7 +2488,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/utils.c:
 	was reallocing the wrong thing
 
-2000-08-31  karldebisschop  <kdebisschop>
+2000-08-31  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_ircd.pl:
 	add space in '$Revision$' to make emacs perl-maode work right
@@ -1766,7 +2511,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/t/check_rpc.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_dns.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_fping.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_ftp.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_hpjd.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_http.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_imap.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_load.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_mysql.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_ping.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_pop.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_procs.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_smtp.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_snmp.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_swap.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_tcp.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_time.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_udp.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_users.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_vsz.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_disk.t:
 	always return 0 if called from Test::Harness
 
-2000-08-30  karldebisschop  <kdebisschop>
+2000-08-30  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/Makefile.am, /cvsroot/netsaintplug/netsaintplug/plugins-scripts/Makefile.am:
 	fix test environment
@@ -1777,7 +2522,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/configure.in:
 	get check_disk to build on cygwin
 
-2000-08-28  karldebisschop  <kdebisschop>
+2000-08-28  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/ChangeLog: autoupdate
 
@@ -1806,7 +2551,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/opttest.pl:
 	test -h, -V, --help, --version, and check for correct PROGNAME
 
-2000-08-28  karldebisschop  <kdebisschop>
+2000-08-28  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/t/check_time.t: use Helper
 
@@ -1833,7 +2578,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/opttest.pl:
 	test -h, -V, --help, --version, and check for correct PROGNAME
 
-2000-08-28  karldebisschop  <kdebisschop>
+2000-08-28  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/t/check_time.t:
 	use udp_hostname instead of localhost
@@ -1865,7 +2610,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/configure.in:
 	PS_COMMAND checks for debian
 
-2000-08-25  karldebisschop  <kdebisschop>
+2000-08-25  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/Makefile.am:
 	chieck_by_ssh should also be in extras
@@ -1887,7 +2632,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_fping.c:
 	check times, variable packet size
 
-2000-08-25  karldebisschop  <kdebisschop>
+2000-08-25  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/ChangeLog: update
 
@@ -1906,7 +2651,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_fping.c:
 	check times, variable packet size
 
-2000-08-23  karldebisschop  <kdebisschop>
+2000-08-23  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/netsaint-plugins-custom.spec, /cvsroot/netsaintplug/netsaintplug/netsaint-plugins.spec:
 	1.2.9 alpha 5
@@ -1933,7 +2678,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_tcp.c, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_tcp.t:
 	Should now answer for any of check_(imap|pop|smtp|udp|tcp|reply)
 
-2000-08-22  karldebisschop  <kdebisschop>
+2000-08-22  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_load.c:
 	HOUX reveals bug with PROC_LOADAVG logic
@@ -1950,7 +2695,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/netsaint-plugins.spec, /cvsroot/netsaintplug/netsaintplug/plugins-scripts/Makefile.am:
 	need to install utils.pm and utils.sh
 
-2000-08-18  karldebisschop  <kdebisschop>
+2000-08-18  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/Makefile.am, /cvsroot/netsaintplug/netsaintplug/netsaint-plugins-custom.spec, /cvsroot/netsaintplug/netsaintplug/netsaint-plugins.spec:
 	last few things to get rpm working for 1.2.9-a4
@@ -1963,7 +2708,7 @@
 	update spec for 1.2.9a4
 	add Helper.pm to dist
 
-2000-08-17  karldebisschop  <kdebisschop>
+2000-08-17  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/t/check_rpc.t:
 	output does not begin with ./
@@ -1974,7 +2719,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/configure.in:
 	standard option handling for shell scripts
 
-2000-08-16  karldebisschop  <kdebisschop>
+2000-08-16  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_tcp.c, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_imap.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_pop.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_smtp.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_udp.t:
 	tcp: don't scan unless --expect or --send
@@ -1983,12 +2728,12 @@
 	* /cvsroot/netsaintplug/netsaintplug/acconfig.h, /cvsroot/netsaintplug/netsaintplug/configure.in, /cvsroot/netsaintplug/netsaintplug/package.def, /cvsroot/netsaintplug/netsaintplug/plugins/config.h.in, /cvsroot/netsaintplug/netsaintplug/plugins-scripts/utils.pm.in, /cvsroot/netsaintplug/netsaintplug/plugins/utils.c:
 	lost correct release tracking with change to automake - fixed
 
-2000-08-15  karldebisschop  <kdebisschop>
+2000-08-15  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/configure.in, /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_breeze.pl, /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_disk_smb.pl, /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_ircd.pl, /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_ntp.pl, /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_rpc.pl, /cvsroot/netsaintplug/netsaintplug/plugins-scripts/subst.in, /cvsroot/netsaintplug/netsaintplug/plugins-scripts/utils.pm.in:
 	convert to getopt
 
-2000-08-12  karldebisschop  <kdebisschop>
+2000-08-12  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_ntp.pl, /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_rpc.pl, /cvsroot/netsaintplug/netsaintplug/plugins-scripts/utils.pm.in:
 	conversion to getopt and automake
@@ -1999,12 +2744,12 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_reply.c:
 	obsolete - functionanlity added to check_tcp
 
-2000-08-11  karldebisschop  <kdebisschop>
+2000-08-11  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/contrib/checkciscotemp.pl, /cvsroot/netsaintplug/netsaintplug/plugins/check_nwstat.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_tcp.c, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_tcp.t, /cvsroot/netsaintplug/netsaintplug/netsaint-plugins-custom.spec:
 	conversion to standard options syntax
 
-2000-08-10  karldebisschop  <kdebisschop>
+2000-08-10  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_radius.c:
 	complete change to getopt
@@ -2018,7 +2763,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_fping.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_netsaint.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_nwstat.c:
 	convert to getopt
 
-2000-08-08  karldebisschop  <kdebisschop>
+2000-08-08  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/.cvsignore, /cvsroot/netsaintplug/netsaintplug/plugins-scripts/.cvsignore, /cvsroot/netsaintplug/netsaintplug/.cvsignore:
 	Makefile.in is built by automake
@@ -2042,12 +2787,12 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/config.h.in, /cvsroot/netsaintplug/netsaintplug/plugins/Makefile.in, /cvsroot/netsaintplug/netsaintplug/plugins/netutils.h.in, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_disk.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_dns.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_fping.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_ftp.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_hpjd.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_http.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_imap.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_load.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_mysql.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_ping.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_pop.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_procs.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_smtp.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_snmp.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_swap.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_tcp.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_time.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_udp.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_users.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_vsz.t:
 	convert to automake
 
-2000-08-04  karldebisschop  <kdebisschop>
+2000-08-04  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/popen.c:
 	needed for cygwin, other systems that don't meet SVr4 or BSD4.3
 
-2000-08-03  karldebisschop  <kdebisschop>
+2000-08-03  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/.cvsignore, /cvsroot/netsaintplug/netsaintplug/plugins/.cvsignore:
 	prep for automake
@@ -2072,7 +2817,7 @@
 
 	* /cvsroot/netsaintplug/netsaintplug/acconfig.h: use autoheader
 
-2000-08-02  karldebisschop  <kdebisschop>
+2000-08-02  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/configure.in, /cvsroot/netsaintplug/netsaintplug/Makefile.in, /cvsroot/netsaintplug/netsaintplug/plugins/common.h.in, /cvsroot/netsaintplug/netsaintplug/plugins/config.h.in, /cvsroot/netsaintplug/netsaintplug/plugins/Makefile.in, /cvsroot/netsaintplug/netsaintplug/plugins/version.h.in:
 	get rid of common/*.h
@@ -2095,12 +2840,12 @@
 	* /cvsroot/netsaintplug/netsaintplug/configure.in, /cvsroot/netsaintplug/netsaintplug/plugins/Makefile.in:
 	reorganize LIBS to use as .IGNORED deps -- -L/usr/lib must be in LDFLAGS
 
-2000-07-30  hgayosso  <hgayosso>
+2000-07-30  hgayosso
 
 	* /cvsroot/netsaintplug/netsaintplug/command.cfg.in:
 	Added examples for: check_nmap.
 
-2000-07-29  karldebisschop  <kdebisschop>
+2000-07-29  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/.cvsignore: add sparc64
 
@@ -2121,12 +2866,12 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/utils.c:
 	better way of doing is_int
 
-2000-07-26  karldebisschop  <kdebisschop>
+2000-07-26  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/.cvsignore:
 	ignore arch-specific build directories
 
-2000-07-25  karldebisschop  <kdebisschop>
+2000-07-25  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_mysql.c:
 	convert to getopt
@@ -2142,7 +2887,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_snmp.c:
 	delete extra printf
 
-2000-07-23  karldebisschop  <kdebisschop>
+2000-07-23  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_by_ssh.c:
 	improve documentation of -i option and its use
@@ -2150,7 +2895,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/subst.in:
 	add -_ to acceptable cahracters in commad name
 
-2000-07-21  karldebisschop  <kdebisschop>
+2000-07-21  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_rpc.pl:
 	we use explicit path with new subst script
@@ -2161,7 +2906,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/command.cfg.in:
 	use -H where possible, change @libexec@ to @libexecdir@
 
-2000-07-20  karldebisschop  <kdebisschop>
+2000-07-20  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_rpc.pl:
 	taint checking for -p option
@@ -2178,7 +2923,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/package.def:
 	defines package release
 
-2000-07-19  karldebisschop  <kdebisschop>
+2000-07-19  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ssh.c:
 	remove debugging printf
@@ -2199,7 +2944,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ssh.c:
 	send ident string (suppresses server error)
 
-2000-07-17  karldebisschop  <kdebisschop>
+2000-07-17  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_ntp.pl:
 	use utils.py
@@ -2211,7 +2956,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/utils.pm.in:
 	perl script essential functions
 
-2000-07-15  karldebisschop  <kdebisschop>
+2000-07-15  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/contrib/utils.py:
 	user contribution
@@ -2221,7 +2966,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/contrib/check_nmap.py:
 	closing in on consiostent options, etc
 
-2000-07-14  karldebisschop  <kdebisschop>
+2000-07-14  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/contrib/check_ircd.tar.gz:
 	This was in core
@@ -2235,13 +2980,13 @@
 	* /cvsroot/netsaintplug/netsaintplug/contrib/check_nmap.py:
 	contributor revisions
 
-2000-07-13  karldebisschop  <kdebisschop>
+2000-07-13  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_ntp.pl:
 	if xntpdc is present, check dispersion
 	set $state to be integer so compares can be done
 
-2000-07-12  karldebisschop  <kdebisschop>
+2000-07-12  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/rpm: typo in macro for srcrpmdir
 
@@ -2293,13 +3038,13 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_disk.c:
 	use comma for pairs of options, reserve colon for ranges
 
-2000-07-12  hgayosso  <hgayosso>
+2000-07-12  hgayosso
 
 	* /cvsroot/netsaintplug/netsaintplug/command.cfg.in:
 	Added command examples for: check_fping, check_game, check_imap, check_rpc.
 	Changed one `/bin/printf' for `/bin/echo -e'. (hgayosso)
 
-2000-07-11  karldebisschop  <kdebisschop>
+2000-07-11  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/REQUIREMENTS: add check_radius
 
@@ -2312,7 +3057,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_swap.c:
 	convert to getopt
 
-2000-07-07  karldebisschop  <kdebisschop>
+2000-07-07  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_time.c, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_time.t:
 	make output a little more standard
@@ -2327,7 +3072,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/contrib/check_mem.pl:
 	check memory (written on BSD)
 
-2000-07-06  karldebisschop  <kdebisschop>
+2000-07-06  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_tcp.c: typos in docs
 
@@ -2343,7 +3088,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c:
 	this mod is wrong - it will go away
 
-2000-07-05  karldebisschop  <kdebisschop>
+2000-07-05  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/Changelog, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_fping.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_tcp.t, /cvsroot/netsaintplug/netsaintplug/plugins/t/check_users.t, /cvsroot/netsaintplug/netsaintplug/make-tarball, /cvsroot/netsaintplug/netsaintplug/plugins/check_ftp.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_tcp.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_users.c, /cvsroot/netsaintplug/netsaintplug/plugins/utils.h.in:
 	1.2.9-a1 cleanup
@@ -2351,12 +3096,12 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_procs.c:
 	fix usage statement
 
-2000-07-04  karldebisschop  <kdebisschop>
+2000-07-04  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_fping.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_ftp.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_tcp.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_users.c:
 	convert to getopt
 
-2000-07-03  karldebisschop  <kdebisschop>
+2000-07-03  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_by_ssh.c:
 	minor bug fixes
@@ -2394,7 +3139,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_by_ssh.c:
 	functional multichecks, still need to tweak args
 
-2000-06-30  karldebisschop  <kdebisschop>
+2000-06-30  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/utils.c:
 	better error trapping for strscpy and strscat
@@ -2403,7 +3148,7 @@
 	further work on checking multiple partitions - some cleanup left,
 	 plus documentation
 
-2000-06-29  karldebisschop  <kdebisschop>
+2000-06-29  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_disk.c:
 	snapshot working toward multidisk checks
@@ -2411,7 +3156,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_by_ssh.c, /cvsroot/netsaintplug/netsaintplug/plugins/utils.c:
 	next snapshot for passive multichecks
 
-2000-06-28  karldebisschop  <kdebisschop>
+2000-06-28  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c:
 	add new form of rta for FreeBSD
@@ -2434,7 +3179,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/configure.in, /cvsroot/netsaintplug/netsaintplug/plugins/check_procs.c:
 	now able to specify varlist to ps so various orders can be handled (AIX)
 
-2000-06-27  karldebisschop  <kdebisschop>
+2000-06-27  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/Helper.pm, /cvsroot/netsaintplug/netsaintplug/plugins-scripts/Makefile.in:
 	multiplatform builds
@@ -2454,12 +3199,12 @@
 	* /cvsroot/netsaintplug/netsaintplug/netsaint-plugins-custom.spec, /cvsroot/netsaintplug/netsaintplug/netsaint-plugins.spec:
 	1.2.8-4 plus switch to bzip2
 
-2000-06-26  karldebisschop  <kdebisschop>
+2000-06-26  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/netsaint-plugins.spec:
 	1.2.8-41.2.8-41.2.8-41.2.8-4
 
-2000-06-25  karldebisschop  <kdebisschop>
+2000-06-25  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c:
 	use standard POSIX getopt (only GNU supports '-' leadin for optarg
@@ -2467,7 +3212,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c, /cvsroot/netsaintplug/netsaintplug/plugins/Makefile.in, /cvsroot/netsaintplug/netsaintplug/plugins/utils.c, /cvsroot/netsaintplug/netsaintplug/plugins/utils.h.in:
 	possible fix for check_ping
 
-2000-06-23  karldebisschop  <kdebisschop>
+2000-06-23  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c:
 	try to get -p 1 at end of line to work
@@ -2475,7 +3220,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c:
 	misplaced paren on host strlen
 
-2000-06-22  karldebisschop  <kdebisschop>
+2000-06-22  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/make-tarball, /cvsroot/netsaintplug/netsaintplug/netsaint-plugins-custom.spec, /cvsroot/netsaintplug/netsaintplug/rpm:
 	housekeeping for rpm builds
@@ -2500,7 +3245,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/Makefile.in, /cvsroot/netsaintplug/netsaintplug/make-tarball, /cvsroot/netsaintplug/netsaintplug/netsaint-plugins-custom.spec, /cvsroot/netsaintplug/netsaintplug/netsaint-plugins.spec, /cvsroot/netsaintplug/netsaintplug/plugins/Makefile.in:
 	houskeeping
 
-2000-06-21  karldebisschop  <kdebisschop>
+2000-06-21  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/Changelog: regular update
 
@@ -2533,7 +3278,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/netsaint-plugins.spec:
 	first step in making SRPM more mandrake compatible
 
-2000-06-19  karldebisschop  <kdebisschop>
+2000-06-19  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/Changelog: update
 
@@ -2542,12 +3287,12 @@
 
 	* /cvsroot/netsaintplug/netsaintplug/Changelog: typo
 
-2000-06-18  karldebisschop  <kdebisschop>
+2000-06-18  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/Changelog:
 	1.2.8-2 -- really this time
 
-2000-06-17  karldebisschop  <kdebisschop>
+2000-06-17  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_vsz.c:
 	assume 20-char max size for int
@@ -2555,7 +3300,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c:
 	fix DUP checking, use malloc instead of fixed length strings
 
-2000-06-16  karldebisschop  <kdebisschop>
+2000-06-16  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c:
 	fix docs, use malloc, fix bug with warn on DUPs
@@ -2570,7 +3315,7 @@
 	show header, status, content separately
 	do more rigorous parsing of where content starts
 
-2000-06-15  karldebisschop  <kdebisschop>
+2000-06-15  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/urlize.c: doc fix
 
@@ -2592,7 +3337,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_http.c:
 	fix docs, add separate option for vhost
 
-2000-06-14  karldebisschop  <kdebisschop>
+2000-06-14  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/Changelog: dd todays changes
 
@@ -2632,7 +3377,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_http.c:
 	clean up documentation, retabify
 
-2000-06-13  karldebisschop  <kdebisschop>
+2000-06-13  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_snmp.c, /cvsroot/netsaintplug/netsaintplug/Changelog:
 	tabify, update documentation
@@ -2658,7 +3403,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/Makefile.in:
 	dd netlibs to check_ldap
 
-2000-06-12  karldebisschop  <kdebisschop>
+2000-06-12  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_by_ssh.c:
 	convert spaces to tab stops
@@ -2669,7 +3414,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/configure.in, /cvsroot/netsaintplug/netsaintplug/Makefile.in:
 	remove some GNUisms in Makefile, quote test strings
 
-2000-06-09  karldebisschop  <kdebisschop>
+2000-06-09  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/netsaint-plugins-custom.spec, /cvsroot/netsaintplug/netsaintplug/netsaint-plugins.spec:
 	1.2.8 release
@@ -2680,7 +3425,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_ntp.pl:
 	patch from William Pietri
 
-2000-06-08  karldebisschop  <kdebisschop>
+2000-06-08  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/Changelog: just getting up to date
 
@@ -2696,7 +3441,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/contrib/restrict.pl, /cvsroot/netsaintplug/netsaintplug/contrib/check_ora_table_space.pl:
 	new contributions
 
-2000-06-07  karldebisschop  <kdebisschop>
+2000-06-07  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/netsaint-plugins.spec:
 	no  check_https anymore
@@ -2742,7 +3487,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/t/check_http.t:
 	use hostname to test http
 
-2000-06-06  karldebisschop  <kdebisschop>
+2000-06-06  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/configure.in:
 	clean up warn where user has no libcrypto
@@ -2761,7 +3506,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/make-tarball:
 	clean and autoconf first to prvent careless errors
 
-2000-06-05  karldebisschop  <kdebisschop>
+2000-06-05  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/netsaint-plugin-core.spec, /cvsroot/netsaintplug/netsaintplug/plugins/check_http.c, /cvsroot/netsaintplug/netsaintplug/plugins/Makefile.in:
 	try to get sane build of extras
@@ -2773,7 +3518,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/configure.in, /cvsroot/netsaintplug/netsaintplug/Makefile.in:
 	typo in configure, plus try to get AIX to make scripts
 
-2000-06-04  karldebisschop  <kdebisschop>
+2000-06-04  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/configure.in:
 	try to make postgres work on non-redhat
@@ -2805,7 +3550,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/Makefile.in:
 	quickcheck target is not defined anymore
 
-2000-06-03  karldebisschop  <kdebisschop>
+2000-06-03  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/netsaint-plugins.spec:
 	update for 1.2.8pre5
@@ -2821,7 +3566,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/t/check_ping.t:
 	fix needed to match new output from plugin
 
-2000-06-02  karldebisschop  <kdebisschop>
+2000-06-02  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_http2.c:
 	put up short term - will soon replace check_http and check_https
@@ -2855,7 +3600,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/configure.in:
 	fix logic for check_https
 
-2000-06-01  karldebisschop  <kdebisschop>
+2000-06-01  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/netsaint-plugins.spec:
 	delet build root
@@ -2873,7 +3618,7 @@
 	fix bad @LIBS@ in makefiles
 	update version
 
-2000-05-31  karldebisschop  <kdebisschop>
+2000-05-31  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/netsaint-plugins.spec:
 	random changes
@@ -2911,7 +3656,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/urlize.c:
 	wraps output of another plugin with a URL
 
-2000-05-30  karldebisschop  <kdebisschop>
+2000-05-30  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/contrib/check_netapp.pl:
 	new contribution
@@ -2919,7 +3664,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/contrib/checkciscotemp.pl, /cvsroot/netsaintplug/netsaintplug/contrib/check_nwstat.pl, /cvsroot/netsaintplug/netsaintplug/contrib/mrtgext.pl, /cvsroot/netsaintplug/netsaintplug/contrib/urlize.pl:
 	new contributions, pending review and inclusion in main source tree
 
-2000-05-25  karldebisschop  <kdebisschop>
+2000-05-25  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_hpjd.c:
 	general cleanup  - keep test order consistent so possible bugs are
@@ -2931,12 +3676,12 @@
 	* /cvsroot/netsaintplug/netsaintplug/configure.in:
 	get openssl and mysql to work on redhat 6.2
 
-2000-05-24  karldebisschop  <kdebisschop>
+2000-05-24  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_hpjd.c:
 	some printers may be going offline with POWERSAVE mode
 
-2000-05-19  karldebisschop  <kdebisschop>
+2000-05-19  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_http.c:
 	realloc crashes when calloc outside of memory page - code page size as
@@ -2945,7 +3690,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/popen.c:
 	fix possible sscanf overflow
 
-2000-05-18  karldebisschop  <kdebisschop>
+2000-05-18  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_http.c:
 	get regex and string searched to work for HTML pages longer than 1024 chars
@@ -2955,7 +3700,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_rpc.pl:
 	spell author names correctly, fix help screen info
 
-2000-05-11  karldebisschop  <kdebisschop>
+2000-05-11  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_by_ssh.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_disk.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_dns.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_ide-smart.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_ldap.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_pgsql.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_procs.c:
 	use text constants (no|required)_argument instead of numbers in getopt_long
@@ -2965,17 +3710,17 @@
 	make regex scan work
 	fix errors in specification of getopt_long parameters
 
-2000-05-10  karldebisschop  <kdebisschop>
+2000-05-10  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/Makefile.in:
 	drop reference to old saintcheck script
 
-2000-05-05  karldebisschop  <kdebisschop>
+2000-05-05  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/command.cfg.in:
 	fix typoes in OID definition
 
-2000-05-04  karldebisschop  <kdebisschop>
+2000-05-04  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/saintcheck: obsoleted by test.pl
 
@@ -2985,7 +3730,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_rpc.pl:
 	add author, revision tracking
 
-2000-05-03  karldebisschop  <kdebisschop>
+2000-05-03  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_rpc.pl, /cvsroot/netsaintplug/netsaintplug/plugins-scripts/t/check_rpc.t:
 	try to get arg checking to work, add full rpc list
@@ -3027,7 +3772,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_dummy.c:
 	add --version and --help
 
-2000-05-02  karldebisschop  <kdebisschop>
+2000-05-02  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_sensors:
 	moved to check_sensor.sh
@@ -3044,7 +3789,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/Makefile.in:
 	fix 'clean' target
 
-2000-05-01  karldebisschop  <kdebisschop>
+2000-05-01  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/Makefile.in:
 	changes to get paths right for scripts
@@ -3075,7 +3820,7 @@
 
 	* /cvsroot/netsaintplug/netsaintplug/make-tarball: Makes a tar ball
 
-2000-02-17  karldebisschop  <kdebisschop>
+2000-02-17  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/configure.in, /cvsroot/netsaintplug/netsaintplug/Makefile.in, /cvsroot/netsaintplug/netsaintplug/plugins/Makefile.in:
 	changes for check_https
@@ -3084,7 +3829,7 @@
 	C contribs unmodified.
 	Script had to be retyed from scratch - maybe CR/LF problem?
 
-2000-02-15  karldebisschop  <kdebisschop>
+2000-02-15  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ldap.c:
 	add argv[0] to uasge
@@ -3096,12 +3841,12 @@
 	* /cvsroot/netsaintplug/netsaintplug/configure.in:
 	fix solaris check_swap bug - change sscanf format from %*d,%*d to %*[0-9,-]
 
-2000-02-11  karldebisschop  <kdebisschop>
+2000-02-11  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/configure.in, /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c:
 	modify to check uid and ppid for architectures other than linux
 
-2000-02-09  karldebisschop  <kdebisschop>
+2000-02-09  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_procs.c, /cvsroot/netsaintplug/netsaintplug/configure.in:
 	step one to testing user (actually, userid) and ppid in check_procs
@@ -3138,7 +3883,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_process.c:
 	Patch submitted by author to use strncpy
 
-2000-02-08  karldebisschop  <kdebisschop>
+2000-02-08  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/configure, /cvsroot/netsaintplug/netsaintplug/configure.in:
 	fix problem with test -e for solaris - kludge with 'cat filename'
@@ -3150,7 +3895,7 @@
 	use configure to check signal return type
 	use subst.in to fillin command.cfg
 
-2000-02-05  karldebisschop  <kdebisschop>
+2000-02-05  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/configure, /cvsroot/netsaintplug/netsaintplug/configure.in:
 	fix typo - triple slash in a few URLs
@@ -3158,7 +3903,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_radius.c:
 	remove extra comma in terminate subroutine
 
-2000-02-04  karldebisschop  <kdebisschop>
+2000-02-04  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_oracle:
 	submission by latigid010@yahoo.com
@@ -3173,7 +3918,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_ntp.pl:
 	better arg checking for perl taint
 
-2000-02-01  hgayosso  <hgayosso>
+2000-02-01  hgayosso
 
 	* /cvsroot/netsaintplug/netsaintplug/contrib/check_hprsc.tar.gz:
 	Perl script (check_hprsc) to check HP-UX resources via SNMP daemon (hgayosso)
@@ -3181,7 +3926,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/contrib/readme.txt:
 	check_hprsc.tar.gz added to the contrib plugins (hgayosso)
 
-2000-01-28  karldebisschop  <kdebisschop>
+2000-01-28  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_disk.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_dns.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_dummy.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_fping.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_ftp.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_game.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_hpjd.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_http.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_imap.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_ldap.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_load.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_mrtg.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_mrtgtraf.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_mysql.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_netsaint.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_nntp.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_nwstat.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_overcr.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_pgsql.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_pop.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_process.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_procs.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_radius.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_real.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_reply.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_smtp.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_snmp.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_ssh.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_swap.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_tcp.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_time.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_udp.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_ups.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_users.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_vsz.c, /cvsroot/netsaintplug/netsaintplug/plugins/Makefile.in, /cvsroot/netsaintplug/netsaintplug/plugins/netutils.c, /cvsroot/netsaintplug/netsaintplug/plugins/netutils.h.in:
 	get date include correct
@@ -3208,7 +3953,7 @@
 	clean up use of externs in popen.[hc] and utils.[hc] for above
 	handle percent or KB in check_disk
 
-2000-01-23  karldebisschop  <kdebisschop>
+2000-01-23  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_snmp.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_ups.c, /cvsroot/netsaintplug/netsaintplug/plugins/utils.c:
 	snmp: start trying to clarify hex mesages
@@ -3221,13 +3966,13 @@
 	 ntp - return critical if server is down
 	 oracle - make no temp files
 
-2000-01-22  karldebisschop  <kdebisschop>
+2000-01-22  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c, /cvsroot/netsaintplug/netsaintplug/plugins/utils.c:
 	streamline utils functions is_integer and is_numeric
 	tighten check_ping error prose so it nearly shows on a 80x24 display
 
-2000-01-21  karldebisschop  <kdebisschop>
+2000-01-21  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/configure, /cvsroot/netsaintplug/netsaintplug/configure.in, /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_procs.c, /cvsroot/netsaintplug/netsaintplug/plugins/utils.c, /cvsroot/netsaintplug/netsaintplug/plugins/utils.h:
 	fix bug in adapting configure to check_netsaint
@@ -3240,14 +3985,14 @@
 	modify check_procs to look for specific comman names and test on ranges
 	modify configure.in tests so check_netsaint can maybe work with more OS's
 
-2000-01-20  karldebisschop  <kdebisschop>
+2000-01-20  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_by_ssh.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_dns.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_http.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_httpstr.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_pgsql.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c, /cvsroot/netsaintplug/netsaintplug/plugins/netutils.h.in, /cvsroot/netsaintplug/netsaintplug/plugins/Makefile.in, /cvsroot/netsaintplug/netsaintplug/saintcheck:
 	set default timeout to 10 seconds
 	make tests give fewer warnings
 	move check_httpstr to check_http
 
-2000-01-19  karldebisschop  <kdebisschop>
+2000-01-19  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/configure, /cvsroot/netsaintplug/netsaintplug/configure.in, /cvsroot/netsaintplug/netsaintplug/plugins/check_pgsql.c, /cvsroot/netsaintplug/netsaintplug/plugins/check_users.c, /cvsroot/netsaintplug/netsaintplug/plugins/Makefile.in, /cvsroot/netsaintplug/netsaintplug/plugins/utils.c:
 	use -q option for who if available
@@ -3255,7 +4000,7 @@
 	make check_users work even if no users are logged in
 	clean up (developmental) utils.c
 
-2000-01-17  karldebisschop  <kdebisschop>
+2000-01-17  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/configure, /cvsroot/netsaintplug/netsaintplug/configure.in:
 	use the -n switch to prevent host lookups in check_ping
@@ -3267,7 +4012,7 @@
 	  modify check_users to work without -q option
 	  modify check_vsz test to work without requiring 'init' listing in `ps` output
 
-2000-01-13  karldebisschop  <kdebisschop>
+2000-01-13  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/configure, /cvsroot/netsaintplug/netsaintplug/configure.in:
 	add HAVE_REGEX_H to configure
@@ -3279,7 +4024,7 @@
 	check redirects working
 	regex content search working
 
-2000-01-10  karldebisschop  <kdebisschop>
+2000-01-10  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_ping.c, /cvsroot/netsaintplug/netsaintplug/plugins/netutils.c:
 	Incorporate netsaint_plugins-1.2.7p1 changes:
@@ -3287,7 +4032,7 @@
 	  (patch by Luiz Felipe R E)
 	- Fixed uninitialized memory bug in netutils.c (patch by Frank Conrad)
 
-1999-12-28  holoway  <holoway>
+1999-12-28  holoway
 
 	* /cvsroot/netsaintplug/netsaintplug/netsaint-plugins.spec:
 	I'm a schmuck. :)  Would help if I deleted the line, doncha think?
@@ -3297,7 +4042,7 @@
 	live on a machine without it. (nrpe or nrpep may use the plugins without
 	having netsaint proper present)
 
-1999-12-17  karldebisschop  <kdebisschop>
+1999-12-17  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/contrib/berger-ping.tar.gz, /cvsroot/netsaintplug/netsaintplug/contrib/bowen-langley_plugins.tar.gz, /cvsroot/netsaintplug/netsaintplug/contrib/check_bgp-1.0.tar.gz, /cvsroot/netsaintplug/netsaintplug/contrib/check_breeze.tar.gz, /cvsroot/netsaintplug/netsaintplug/contrib/check_flexlm.tar.gz, /cvsroot/netsaintplug/netsaintplug/contrib/check_hltherm.tar.gz, /cvsroot/netsaintplug/netsaintplug/contrib/check_ipxping.tar.gz, /cvsroot/netsaintplug/netsaintplug/contrib/check_ircd.tar.gz, /cvsroot/netsaintplug/netsaintplug/contrib/check_memory.tgz, /cvsroot/netsaintplug/netsaintplug/contrib/check_nfs.tar.gz, /cvsroot/netsaintplug/netsaintplug/contrib/check_ntp.tar.gz, /cvsroot/netsaintplug/netsaintplug/contrib/check_real.tar.gz, /cvsroot/netsaintplug/netsaintplug/contrib/check_wave.tar.gz, /cvsroot/netsaintplug/netsaintplug/contrib/hopcroft-plugins.tar.gz, /cvsroot/netsaintplug/netsaintplug/contrib/radius.tar.gz, /cvsroot/netsaintplug/netsaintplug/contrib/readme.txt:
 	adds files from www.netsaint.org contrib area.
@@ -3312,7 +4057,7 @@
 	added option checking for --onredirect
 	added long-style syntax for all other current options
 
-1999-12-15  holoway  <holoway>
+1999-12-15  holoway
 
 	* /cvsroot/netsaintplug/netsaintplug/netsaint-plugins.spec:
 	Modified the spec file to change the name of the tarball to
@@ -3321,7 +4066,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/netsaint-plugins.spec:
 	Added the spec file for creating RPMs from the CVS source.
 
-1999-12-14  karldebisschop  <kdebisschop>
+1999-12-14  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_httpstr.c:
 	checkpoint - incorporate version info in header
@@ -3332,7 +4077,7 @@
 	* /cvsroot/netsaintplug/netsaintplug/plugins/check_httpstr.c:
 	use sscanf to clean up HTTP error code checking
 
-1999-12-10  karldebisschop  <kdebisschop>
+1999-12-10  kdebisschop
 
 	* /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_ircd.pl, /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_nfs.pl, /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_ntp.pl, /cvsroot/netsaintplug/netsaintplug/plugins-scripts/check_wave.pl:
 	Initial checkin.
