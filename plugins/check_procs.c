@@ -72,10 +72,10 @@ int options = 0; /* bitmask of filter criteria to test against */
 int verbose = FALSE;
 int uid;
 int ppid;
-char *statopts = NULL;
-char *prog = NULL;
-char *args = NULL;
-char *fmt = NULL;
+char *statopts = "";
+char *prog = "";
+char *args = "";
+char *fmt = "";
 char tmp[MAX_INPUT_BUFFER];
 
 int
@@ -275,8 +275,6 @@ process_arguments (int argc, char **argv)
 	};
 #endif
 
-	asprintf (&fmt, "");
-
 	for (c = 1; c < argc; c++)
 		if (strcmp ("-to", argv[c]) == 0)
 			strcpy (argv[c], "-t");
@@ -351,7 +349,7 @@ process_arguments (int argc, char **argv)
 			}
 		case 'p':									/* process id */
 			if (sscanf (optarg, "%d%[^0-9]", &ppid, tmp) == 1) {
-				asprintf (&fmt, "%s%sPPID = %d", (options ? ", " : ""), ppid);
+				asprintf (&fmt, "%s%sPPID = %d", fmt, (options ? ", " : ""), ppid);
 				options |= PPID;
 				break;
 			}
@@ -387,7 +385,7 @@ process_arguments (int argc, char **argv)
 				uid = pw->pw_uid;
 			}
 			user = pw->pw_name;
-			asprintf (&fmt, "%s%sUID = %d (%s)", (options ? ", " : ""), fmt,
+			asprintf (&fmt, "%s%sUID = %d (%s)", fmt, (options ? ", " : ""),
 			          uid, user);
 			options |= USER;
 			break;
