@@ -189,7 +189,7 @@
 		occurred and error code is 138 or 255 or some such number.  These
 		are usually caused by plugins using system commands and having not 
 		enough checks to catch unexpected output.  Developers should include a
-		default catch-all for system command output that returns an UNKOWN
+		default catch-all for system command output that returns an UNKNOWN
 		return code.</para>
 		
 		<table id="ReturnCodes"><title>Plugin Return Codes</title>
@@ -235,7 +235,57 @@
       
 		</section>
 
+		<section><title>Performance data</title>
+		<para>Performance data is defined by Nagios as "everything after the | of the plugin output" -
+		please refer to Nagios documentation for information on capturing this data to logfiles.
+		However, it is the responsibility of the plugin writer to ensure the 
+		performance data is in a "Nagios plugins" format.
+		This is the expected format:</para>
 
+		<literallayout>
+		'label'=value[UOM];[crit];[warn][;[max];[min]]
+		</literallayout>
+
+		<para>Notes:</para>
+		<orderedlist>
+		<listitem><para>space separated list of label/value pairs</para>
+			</listitem>
+		<listitem><para>label can contain any characters</para>
+			</listitem>
+		<listitem><para>the single quotes for the label are optional. Required if 
+			spaces, = or ' are in the label</para>
+			</listitem>
+		<listitem><para>label length is arbitrary, but ideally the first 19 characters
+			are unique (due to a limitation in RRD). Be aware of a limitation in the
+			amount of data that NRPE returns to Nagios</para>
+			</listitem>
+		<listitem><para>to specify a quote character, use two single quotes</para>
+			</listitem>
+		<listitem><para>crit or warn may be null (if the threshold is not defined)</para>
+			</listitem>
+		<listitem><para>max and min are optional. Holds maximum values for the
+			particular UOM (not required if UOM=%)</para>
+			</listitem>
+		<listitem><para>value, crit, warn, max and min in class [-0-9.]. Must all be the
+			same UOM</para>
+			</listitem>
+		<listitem><para>UOM (unit of measurement) is one of:</para>
+			<orderedlist>
+			<listitem><para>no unit specified - assume a number (int or float) 
+				of things (eg, users, processes, load averages)</para>
+				</listitem>
+			<listitem><para>s - seconds (also us, ms)</para></listitem>
+			<listitem><para>% - percentage</para></listitem>
+			<listitem><para>B - bytes (also KB, MB, TB)</para></listitem>
+			<listitem><para>c - a continous counter (such as bytes
+				transmitted on an interface)</para></listitem>
+			</orderedlist>
+			</listitem>
+		</orderedlist>
+
+		<para>It is up to third party programs to convert the Nagios plugins 
+		performance data into graphs.</para>
+		</section>
 </section>
 
 <section id="SysCmdAuxFiles"><title>System Commands and Auxiliary Files</title>
