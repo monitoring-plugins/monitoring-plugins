@@ -165,8 +165,8 @@ textscan (char *buf)
 		die (status,
 		      _("FPING %s - %s (loss=%.0f%%, rta=%f ms)|%s %s\n"),
 				 state_text (status), server_name, loss, rta,
-		     perfdata ("loss", (int)loss, "%", wpl_p, wpl, cpl_p, cpl, TRUE, 0, TRUE, 100),
-		     perfdata ("rta", (long int)(rta*1.0e3), "us", wrta_p, (long int)(wrta*1.0e3), crta_p, (long int)(crta*1.0e3), TRUE, 0, FALSE, 0));
+		     perfdata ("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, TRUE, 0, TRUE, 100),
+		     fperfdata ("rta", rta/1.0e3, "s", wrta_p, wrta/1.0e3, crta_p, crta/1.0e3, TRUE, 0, FALSE, 0));
 
 	}
 	else if(strstr (buf, "xmt/rcv/%loss") ) {
@@ -186,7 +186,7 @@ textscan (char *buf)
 		/* loss=%.0f%%;%d;%d;0;100 */
 		die (status, _("FPING %s - %s (loss=%.0f%% )|%s\n"),
 		     state_text (status), server_name, loss ,
-		     perfdata ("loss", (int)loss, "%", wpl_p, wpl, cpl_p, cpl, TRUE, 0, TRUE, 100));
+		     perfdata ("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, TRUE, 0, TRUE, 100));
 	
 	}
 	else {
@@ -263,7 +263,7 @@ process_arguments (int argc, char **argv)
 		case 'c':
 			get_threshold (optarg, rv);
 			if (rv[RTA]) {
-				crta = 1e3 * strtod (rv[RTA], NULL);
+				crta = 1e-3 * strtod (rv[RTA], NULL);
 				crta_p = TRUE;
 				rv[RTA] = NULL;
 			}
@@ -276,7 +276,7 @@ process_arguments (int argc, char **argv)
 		case 'w':
 			get_threshold (optarg, rv);
 			if (rv[RTA]) {
-				wrta = 1e3 * strtod (rv[RTA], NULL);
+				wrta = 1e-3 * strtod (rv[RTA], NULL);
 				wrta_p = TRUE;
 				rv[RTA] = NULL;
 			}
