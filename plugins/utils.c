@@ -32,7 +32,9 @@ int is_host (char *);
 int is_addr (char *);
 int resolve_host_or_addr (char *, int);
 int is_inet_addr (char *);
+#ifdef USE_IPV6
 int is_inet6_addr (char *);
+#endif
 int is_hostname (char *);
 
 int is_integer (char *);
@@ -181,7 +183,11 @@ is_host (char *address)
 int
 is_addr (char *address)
 {
+#ifdef USE_IPV6
 	if (is_inet_addr (address) || is_inet6_addr (address))
+#else
+	if (is_inet_addr (address))
+#endif
 		return (TRUE);
 
 	return (FALSE);
@@ -212,11 +218,13 @@ is_inet_addr (char *address)
 	return resolve_host_or_addr (address, AF_INET);
 }
 
+#ifdef USE_IPV6
 int
 is_inet6_addr (char *address)
 {
 	return resolve_host_or_addr (address, AF_INET6);
 }
+#endif
 
 /* from RFC-1035
  * 
@@ -228,7 +236,11 @@ is_inet6_addr (char *address)
 int
 is_hostname (char *s1)
 {
+#ifdef USE_IPV6
 	return resolve_host_or_addr (s1, AF_UNSPEC);
+#else
+	return resolve_host_or_addr (s1, AF_INET);
+#endif
 }
 
 int
