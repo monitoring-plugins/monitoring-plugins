@@ -297,7 +297,7 @@ main (int argc, char **argv)
 			asprintf (&status, "%s%s", status, buffer);
 			if (buffer[i-2] == '\r' && buffer[i-1] == '\n')
 				break;
-			if (maxbytes>0 && strlen(status)>maxbytes)
+			if (maxbytes>0 && strlen(status)>=maxbytes)
 				break;
 		}
 
