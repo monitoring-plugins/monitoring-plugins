@@ -89,6 +89,7 @@ main (int argc, char **argv)
 	char procstat[8];
 	char procprog[MAX_INPUT_BUFFER];
 	char *procargs;
+	char *temp_string;
 
 	const char *zombie = "Z";
 
@@ -97,6 +98,7 @@ main (int argc, char **argv)
 	int procs = 0; /* counter for number of processes meeting filter criteria */
 	int pos; /* number of spaces before 'args' in `ps` output */
 	int cols; /* number of columns in ps output */
+	int expected_cols = PS_COLS - 1;
 	int warn = 0; /* number of processes in warn state */
 	int crit = 0; /* number of processes in crit state */
 	int i = 0;
@@ -135,17 +137,34 @@ main (int argc, char **argv)
 		cols = sscanf (input_buffer, PS_FORMAT, PS_VARLIST);
 
 		/* Zombie processes do not give a procprog command */
-		if ( cols == 6 && strstr(procstat, zombie) ) {
-			cols = 7;
+		if ( cols == (expected_cols - 1) && strstr(procstat, zombie) ) {
+			cols = expected_cols;
 			/* Set some value for procargs for the strip command further below 
 			Seen to be a problem on some Solaris 7 and 8 systems */
 			input_buffer[pos] = '\n';
 			input_buffer[pos+1] = 0x0;
 		}
-		if ( cols >= 7 ) {
+		if ( cols >= expected_cols ) {
 			resultsum = 0;
 			asprintf (&procargs, "%s", input_buffer + pos);
 			strip (procargs);
+
+			/* Some ps return full pathname for command. This removes path */
+			temp_string = strtok ((char *)procprog, "/");
+			while (temp_string) {
+				strcpy(procprog, temp_string);
+				temp_string = strtok (NULL, "/");
+			}
+
+			if (verbose >= 3)
+				printf ("%d %d %d %d %d %.2f %s %s %s\n", 
+					procs, procuid, procvsz, procrss,
+					procppid, procpcpu, procstat, procprog, procargs);
+
+			/* Ignore self */
+			if (strcmp (procprog, progname) == 0) {
+				continue;
+			}
 
 			if ((options & STAT) && (strstr (statopts, procstat)))
 				resultsum |= STAT;
@@ -163,15 +182,6 @@ main (int argc, char **argv)
 				resultsum |= RSS;
 			if ((options & PCPU)  && (procpcpu >= pcpu))
 				resultsum |= PCPU;
-
-			if (verbose >= 3)
-				printf ("%d %d %d %d %d %.2f %s %s %s\n", 
-					procs, procuid, procvsz, procrss,
-					procppid, procpcpu, procstat, procprog, procargs);
-
-			/* Ignore self */
-			if (strcmp (procprog, progname) == 0)
-				continue;
 
 			found++;
 
@@ -192,12 +202,11 @@ main (int argc, char **argv)
 			if (metric != METRIC_PROCS) {
 				if (i == STATE_WARNING) {
 					warn++;
-					asprintf (&fails, "%s%s%s", fails, (fails == "" ? "" : ", "), procprog);
 				}
 				if (i == STATE_CRITICAL) {
 					crit++;
-					asprintf (&fails, "%s%s%s", fails, (fails == "" ? "" : ", "), procprog);
 				}
+				asprintf (&fails, "%s%s%s", fails, (strcmp(fails,"") ? ", " : ""), procprog);
 				result = max_state (result, i);
 			}
 		} 
@@ -237,33 +246,25 @@ main (int argc, char **argv)
 	}
 
 	if ( result == STATE_OK ) {
-		printf (_("%s OK: %d process%s"), 
-			metric_name, procs, ( procs != 1 ? "es" : "") );
+		printf ("%s %s: ", metric_name, _("OK"));
 	} else if (result == STATE_WARNING) {
-		if ( metric == METRIC_PROCS ) {
-			printf (_("PROCS WARNING: %d process%s"), procs, 
-				( procs != 1 ? "es" : ""));
-		} else {
-			printf (_("%s WARNING: %d warn out of %d process%s"), 
-				metric_name, warn, procs, 
-				( procs != 1 ? "es" : ""));
+		printf ("%s %s: ", metric_name, _("WARNING"));
+		if ( metric != METRIC_PROCS ) {
+			printf (_("%d warn out of "), warn);
 		}
 	} else if (result == STATE_CRITICAL) {
-		if (metric == METRIC_PROCS) {
-			printf (_("PROCS CRITICAL: %d process%s"), procs, 
-				( procs != 1 ? "es" : ""));
-		} else {
-			printf (_("%s CRITICAL: %d crit, %d warn out of %d process%s"), 
-				metric_name, crit, warn, procs, 
-				( procs != 1 ? "es" : ""));
+		printf ("%s %s: ", metric_name, _("CRITICAL"));
+		if (metric != METRIC_PROCS) {
+			printf (_("%d crit, %d warn out of "), crit, warn);
 		}
 	} 
+	printf (ngettext ("%d process", "%d processes", procs), procs);
 	
 	if (strcmp(fmt,"") != 0) {
 		printf (_(" with %s"), fmt);
 	}
 
-	if ( verbose >= 1 && fails != "" )
+	if ( verbose >= 1 && strcmp(fails,"") )
 		printf (" [%s]", fails);
 
 	printf ("\n");
@@ -631,7 +632,7 @@ Optional Filters:\n\
  -a, --argument-array=STRING\n\
    Only scan for processes with args that contain STRING.\n\
  -C, --command=COMMAND\n\
-   Only scan for exact matches to the named COMMAND.\n"));
+   Only scan for exact matches of COMMAND (without path).\n"));
 
 	printf(_("\n\
 RANGEs are specified 'min:max' or 'min:' or ':max' (or 'max'). If\n\

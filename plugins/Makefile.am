@@ -12,7 +12,7 @@ LIBS = @LIBINTL@ @LIBS@
 
 libexec_PROGRAMS = check_disk check_dummy check_http check_load \
 	check_mrtg check_mrtgtraf check_nwstat check_overcr check_ping \
-	check_procs check_real check_smtp check_ssh check_tcp check_time \
+	check_real check_smtp check_ssh check_tcp check_time \
 	check_udp check_ups check_users negate urlize \
 	@EXTRAS@
 
@@ -21,7 +21,7 @@ check_tcp_programs = check_ftp check_imap check_nntp check_pop check_udp2 \
 
 EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 	check_swap check_fping check_ldap check_game check_dig \
-	check_nagios check_by_ssh check_dns check_nt check_ide-smart
+	check_nagios check_by_ssh check_dns check_nt check_ide-smart check_procs
 
 EXTRA_DIST = t utils.c netutils.c popen.c utils.h netutils.h popen.h common.h \
 	getaddrinfo.c getaddrinfo.h gethostbyname.c gethostbyname.h
