@@ -89,7 +89,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) != TRUE)
-		usage (_("check_smtp: could not parse arguments\n"));
+		usage4 (_("Could not parse arguments"));
 
 	/* initialize the HELO command with the localhostname */
 #ifndef HOST_MAX_BYTES

@@ -112,6 +112,7 @@ spopen (const char *cmdstring)
 	/* there cannot be more args than characters */
 	argc = strlen (cmdstring) + 1;	/* add 1 for NULL termination */
 	argv = malloc (sizeof(char*)*argc);
+	
 	if (argv == NULL) {
 		printf ("Could not malloc argv array in popen()\n");
 		return NULL;

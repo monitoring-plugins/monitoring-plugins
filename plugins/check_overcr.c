@@ -86,7 +86,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) != TRUE)
-		usage (_("check_overcr: could not parse arguments\n"));
+		usage4 (_("Could not parse arguments"));
 
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);

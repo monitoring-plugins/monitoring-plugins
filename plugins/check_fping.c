@@ -68,7 +68,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) != TRUE)
-		usage (_("check_fping: could not parse arguments\n"));
+		usage4 (_("Could not parse arguments"));
 
 	server = strscpy (server, server_name);
 

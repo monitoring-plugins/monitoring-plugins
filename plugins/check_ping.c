@@ -79,12 +79,11 @@ main (int argc, char **argv)
 	addresses[0] = NULL;
 
 	if (process_arguments (argc, argv) != TRUE)
-		usage (_("check_ping: could not parse arguments\n"));
+		usage4 (_("Could not parse arguments"));
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
-		printf (_("Cannot catch SIGALRM"));
-		return STATE_UNKNOWN;
+		usage4 (_("Cannot catch SIGALRM"));
 	}
 
 	/* handle timeouts gracefully */

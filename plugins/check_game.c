@@ -64,22 +64,9 @@ main (int argc, char **argv)
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
-
-//	result = process_arguments (argc, argv);
 	
 	if (process_arguments (argc, argv) != TRUE)
-		usage (_("check_game: could not parse arguments\n"));
-
-/*	if (result != OK) {
-		printf (_("Incorrect arguments supplied\n"));
-		printf ("\n");
-		print_revision (progname, revision);
-		printf ("Copyright (c) 1999 Ian Cass, Knowledge Matters Limited\n");
-		printf (_("License: GPL\n"));
-		printf ("\n");
-		return STATE_UNKNOWN;
-	}
-*/
+		usage4 (_("Could not parse arguments"));
 
 	result = STATE_OK;
 
@@ -312,6 +299,7 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
+	printf ("Copyright (c) 1999 Ian Cass, Knowledge Matters Limited\n");
 	printf (_(COPYRIGHT), copyright, email);
 
 	printf (_("This plugin tests %s connections with the specified host."), progname);

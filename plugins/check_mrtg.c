@@ -60,7 +60,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) != TRUE)
-		usage (_("check_mrtg: could not parse arguments\n"));
+		usage4 (_("Could not parse arguments\n"));
 
 	/* open the MRTG log file for reading */
 	fp = fopen (log_file, "r");

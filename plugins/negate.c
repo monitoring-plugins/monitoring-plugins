@@ -84,7 +84,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) != TRUE)
-		usage (_("negate: could not parse arguments\n"));
+		usage4 (_("Could not parse arguments"));
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR)
@@ -97,6 +97,7 @@ main (int argc, char **argv)
 		die (STATE_UNKNOWN, _("Could not open pipe: %s\n"), command_line);
 
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
+	
 	if (child_stderr == NULL) {
 		printf (_("Could not open stderr for %s\n"), command_line);
 	}

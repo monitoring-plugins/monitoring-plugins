@@ -73,6 +73,13 @@ usage3 (const char *msg, int arg)
 	exit (STATE_UNKNOWN);
 }
 
+void
+usage4 (const char *msg)
+{
+	printf ("%s: %s\n", progname, msg);
+	print_usage();
+	exit (STATE_UNKNOWN);
+}
 
 void
 support (void)

@@ -240,7 +240,7 @@ main (int argc, char **argv)
 	status = strdup ("");
 
 	if (process_arguments (argc, argv) != TRUE)
-		usage (_("check_tcp: could not parse arguments\n"));
+		usage4 (_("Could not parse arguments"));
 
 	/* use default expect if none listed in process_arguments() */
 	if (EXPECT && server_expect_count == 0) {
@@ -265,7 +265,7 @@ main (int argc, char **argv)
 	    X509_free(server_cert);
 	  }
 	  else {
-	    printf("CRITICAL Cannot retrieve server certificate.\n");
+	    printf("CRITICAL - Cannot retrieve server certificate.\n");
 	    result = STATE_CRITICAL;
 	  }
 	  SSL_shutdown (ssl);

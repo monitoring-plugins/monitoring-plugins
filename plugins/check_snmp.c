@@ -157,7 +157,7 @@ main (int argc, char **argv)
 	miblist = strdup (DEFAULT_MIBLIST);
 
 	if (process_arguments (argc, argv) != TRUE)
-		usage (_("check_snmp: could not parse arguments\n"));
+		usage4 (_("Could not parse arguments"));
 
 	/* create the command line to execute */
 	asprintf (&command_line, "%s -t 1 -r %d -m %s -v %s %s %s:%s %s",

@@ -146,7 +146,7 @@ main (int argc, char **argv)
 	          clean_revstring (revision), VERSION);
 
 	if (process_arguments (argc, argv) != TRUE)
-		usage (_("check_http: could not parse arguments\n"));
+		usage4 (_("Could not parse arguments"));
 
 	if (strstr (timestamp, ":")) {
 		if (strstr (server_url, "?"))

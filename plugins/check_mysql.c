@@ -56,7 +56,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) != TRUE)
-		usage (_("check_mysql: could not parse arguments\n"));
+		usage4 (_("Could not parse arguments"));
 
 	/* initialize mysql  */
 	mysql_init (&mysql);

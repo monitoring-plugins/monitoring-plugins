@@ -51,7 +51,7 @@ main (int argc, char **argv)
 	perf = strdup("");
 
 	if (process_arguments (argc, argv) != TRUE)
-		usage (_("check_users: could not parse arguments\n"));
+		usage4 (_("Could not parse arguments"));
 
 	/* run the command */
 	child_process = spopen (WHO_COMMAND);

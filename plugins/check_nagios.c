@@ -66,12 +66,11 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) != TRUE)
-		usage (_("check_nagios: could not parse arguments\n"));
+		usage4 (_("Could not parse arguments"));
 
-	/* Set signal handling and alarm */
+	/* Set signal handling and alarm timeout */
 	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR) {
-		printf (_("Cannot catch SIGALRM"));
-		return STATE_UNKNOWN;
+		usage4 (_("Cannot catch SIGALRM"));
 	}
 
 	/* handle timeouts gracefully... */

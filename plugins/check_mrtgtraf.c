@@ -63,12 +63,12 @@ main (int argc, char **argv)
 	char outgoing_speed_rating[8];
 
 	if (process_arguments (argc, argv) != TRUE)
-		usage (_("check_ldap: could not parse arguments\n"));
+		usage4 (_("Could not parse arguments"));
 
 	/* open the MRTG log file for reading */
 	fp = fopen (log_file, "r");
 	if (fp == NULL)
-		usage (_("Unable to open MRTG log file\n"));
+		usage4 (_("Unable to open MRTG log file"));
 
 	line = 0;
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, fp)) {
@@ -110,7 +110,7 @@ main (int argc, char **argv)
 
 	/* if we couldn't read enough data, return an unknown error */
 	if (line <= 2)
-		usage (_("Unable to process MRTG log file\n"));
+		usage4 (_("Unable to process MRTG log file"));
 
 	/* make sure the MRTG data isn't too old */
 	time (&current_time);

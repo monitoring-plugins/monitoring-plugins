@@ -68,12 +68,11 @@ main (int argc, char **argv)
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
-		printf (_("Cannot catch SIGALRM"));
-		return STATE_UNKNOWN;
+		usage4 (_("Cannot catch SIGALRM"));
 	}
 
 	if (process_arguments (argc, argv) != TRUE) {
-		usage (_("check_dns: could not parse arguments\n"));
+		usage4 (_("Could not parse arguments"));
 	}
 
 	/* get the command to run */
