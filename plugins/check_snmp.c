@@ -137,6 +137,10 @@ main (int argc, char **argv)
 	char *p2 = NULL;
 	char *show = NULL;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	labels = malloc (labels_size);
 	unitv = malloc (unitv_size);
 	for (i = 0; i < MAX_OIDS; i++)
@@ -443,7 +447,8 @@ process_arguments (int argc, char **argv)
 		case 't':	/* timeout period */
 			if (!is_integer (optarg))
 				usage2 (_("Timeout Interval must be an integer"), optarg);
-			timeout_interval = atoi (optarg);
+			else
+				timeout_interval = atoi (optarg);
 			break;
 
 	/* Test parameters */

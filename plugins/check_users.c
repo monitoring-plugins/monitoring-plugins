@@ -41,6 +41,10 @@ main (int argc, char **argv)
 	int result = STATE_OK;
 	char input_buffer[MAX_INPUT_BUFFER];
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage (_("Could not parse arguments\n"));
 

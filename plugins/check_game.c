@@ -60,6 +60,10 @@ main (int argc, char **argv)
 	char *p, *ret[QSTAT_MAX_RETURN_ARGS];
 	int i;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	result = process_arguments (argc, argv);
 
 	if (result != OK) {

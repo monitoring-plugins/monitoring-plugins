@@ -45,6 +45,10 @@ main (int argc, char **argv)
 		{0, 0, 0, 0}
 	};
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	while (1) {
 		c = getopt_long (argc, argv, "+hVu:", longopts, &option);
 

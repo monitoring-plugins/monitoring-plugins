@@ -79,6 +79,10 @@ main (int argc, char **argv)
 	int uptime_hours = 0;
 	int uptime_minutes = 0;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage ("Could not parse arguments\n");
 

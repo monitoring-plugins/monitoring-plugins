@@ -103,6 +103,10 @@ main (int argc, char **argv)
 
 	int result = STATE_UNKNOWN;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	asprintf (&metric_name, "PROCS");
 	metric = METRIC_PROCS;
 

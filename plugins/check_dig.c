@@ -42,11 +42,6 @@ int server_port = DEFAULT_PORT;
 int warning_interval = -1;
 int critical_interval = -1;
 
-
-
-
-
-
 int
 main (int argc, char **argv)
 {
@@ -56,6 +51,10 @@ main (int argc, char **argv)
 	int result = STATE_UNKNOWN;
 
 	output = strdup ("");
+
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR)
@@ -280,6 +279,7 @@ print_help (void)
 
 	print_revision (progname, revision);
 
+	printf (_("Copyright (c) 2000 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n"));
 	printf (_(COPYRIGHT), copyright, email);
 
 	printf (_("Test the DNS service on the specified host using dig\n\n"));

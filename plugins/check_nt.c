@@ -96,6 +96,10 @@ int main(int argc, char **argv){
 	int uphours=0;
 	int upminutes=0;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	if(process_arguments(argc,argv)==ERROR)
 		usage(_("Could not parse arguments\n"));
 

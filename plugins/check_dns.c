@@ -82,6 +82,10 @@ main (int argc, char **argv)
 	struct timeval tv;
 	int multi_address;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
 		printf (_("Cannot catch SIGALRM"));
@@ -398,6 +402,7 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
+	printf (_("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n"));
 	printf (_(COPYRIGHT), copyright, email);
 
 	print_usage ();

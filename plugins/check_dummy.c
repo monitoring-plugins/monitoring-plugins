@@ -34,6 +34,10 @@ main (int argc, char **argv)
 {
 	int result;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	if (argc != 2)
 		usage (_("Incorrect number of arguments supplied\n"));
 	else if (strcmp (argv[1], "-V") == 0 || strcmp (argv[1], "--version") == 0) {

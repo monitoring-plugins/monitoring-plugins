@@ -16,8 +16,8 @@
 
 *****************************************************************************/
 
-/* progname changes depending on symlink called */
-char *progname = "check_tcp";
+/* progname "check_tcp" changes depending on symlink called */
+char *progname;
 const char *revision = "$Revision$";
 const char *copyright = "1999-2003";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
@@ -198,6 +198,7 @@ main (int argc, char **argv)
 		PORT = 119;
 	}
 	else {
+		progname = strdup ("check_tcp");
 		usage (_("ERROR: Generic check_tcp called with unknown service\n"));
 	}
 
@@ -592,6 +593,7 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
+	printf (_("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n"));
 	printf (_(COPYRIGHT), copyright, email);
 
 	printf (_("This plugin tests %s connections with the specified host.\n\n"),

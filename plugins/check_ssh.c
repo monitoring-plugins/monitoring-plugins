@@ -48,6 +48,10 @@ main (int argc, char **argv)
 {
 	int result;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage (_("Could not parse arguments\n"));
 

@@ -79,8 +79,12 @@ main (int argc, char **argv)
 	int result = STATE_OK;
 	char *message;
 	char temp_buffer[MAX_INPUT_BUFFER];
-
 	double ups_utility_deviation = 0.0;
+
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	ups_status = strdup ("N/A");
 
 	if (process_arguments (argc, argv) != OK)

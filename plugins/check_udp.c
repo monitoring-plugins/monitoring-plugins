@@ -45,6 +45,10 @@ main (int argc, char **argv)
 	int result;
 	char recv_buffer[MAX_INPUT_BUFFER];
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage ("\n");
 

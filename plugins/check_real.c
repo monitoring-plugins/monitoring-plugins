@@ -61,6 +61,10 @@ main (int argc, char **argv)
 	char buffer[MAX_INPUT_BUFFER];
 	char *status_line = NULL;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	if (process_arguments (argc, argv) != OK)
 		usage (_("Invalid command arguments supplied\n"));
 

@@ -75,6 +75,10 @@ main (int argc, char **argv)
 	int found = 0, result = STATE_UNKNOWN;
 	char *buf;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage (_("Could not parse arguments\n"));
 

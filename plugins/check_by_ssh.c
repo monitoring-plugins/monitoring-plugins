@@ -42,11 +42,6 @@ char **service;
 int passive = FALSE;
 int verbose = FALSE;
 
-
-
-
-
-
 int
 main (int argc, char **argv)
 {
@@ -61,8 +56,13 @@ main (int argc, char **argv)
 	time_t local_time;
 	FILE *fp = NULL;
 
-	asprintf (&remotecmd, "%s", "");
-	asprintf (&comm, "%s", SSH_COMMAND);
+	remotecmd = strdup ("");
+	comm = strdup (SSH_COMMAND);
+	result_text = strdup ("");
+
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
 
 	/* process arguments */
 	if (process_arguments (argc, argv) == ERROR)
@@ -71,7 +71,7 @@ main (int argc, char **argv)
 
 	/* Set signal handling and alarm timeout */
 	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
-		printf ("Cannot catch SIGALRM");
+		printf (_("Cannot catch SIGALRM"));
 		return STATE_UNKNOWN;
 	}
 	alarm (timeout_interval);
@@ -97,7 +97,7 @@ main (int argc, char **argv)
 	}
 
 
-	/* get results from remote command */
+	/* build up results from remote command in result_text */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process))
 		asprintf (&result_text, "%s%s", result_text, input_buffer);
 
@@ -105,6 +105,8 @@ main (int argc, char **argv)
 	/* WARNING if output found on stderr */
 	if (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
 		printf ("%s\n", input_buffer);
+		while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process))
+			printf ("%s\n", input_buffer);
 		return STATE_WARNING;
 	}
 	(void) fclose (child_stderr);
@@ -122,10 +124,10 @@ main (int argc, char **argv)
 			exit (STATE_UNKNOWN);
 		}
 
-		time (&local_time);
+		local_time = time (NULL);
 		commands = 0;
 		while (result_text && strlen(result_text) > 0) {
-			status_text = strstr (result_text, _("STATUS CODE: "));
+			status_text = strstr (result_text, "STATUS CODE: ");
 			if (status_text == NULL) {
 				printf ("%s", result_text);
 				return result;
@@ -136,7 +138,7 @@ main (int argc, char **argv)
 			if (eol != NULL)
 				eol[0] = 0;
 			if (service[commands] && status_text
-					&& sscanf (status_text, _("STATUS CODE: %d"), &cresult) == 1) {
+					&& sscanf (status_text, "STATUS CODE: %d", &cresult) == 1) {
 				fprintf (fp, _("[%d] PROCESS_SERVICE_CHECK_RESULT;%s;%s;%d;%s\n"),
 								 (int) local_time, host_shortname, service[commands++], cresult,
 								 output);
@@ -144,6 +146,7 @@ main (int argc, char **argv)
 		}
 
 	}
+
 
 	/* print the first line from the remote command */
 	else {
@@ -153,7 +156,8 @@ main (int argc, char **argv)
  		printf ("%s\n", result_text);
 	}
 
-	/* return error status from remote command */
+
+	/* return error status from remote command */	
 	return result;
 }
 
@@ -222,7 +226,8 @@ process_arguments (int argc, char **argv)
 		case 't':									/* timeout period */
 			if (!is_integer (optarg))
 				usage2 (_("timeout interval must be an integer"), optarg);
-			timeout_interval = atoi (optarg);
+			else
+				timeout_interval = atoi (optarg);
 			break;
 		case 'H':									/* host */
 			if (!is_host (optarg))
@@ -382,6 +387,8 @@ execute additional commands as proxy\n"));
 To use passive mode, provide multiple '-C' options, and provide\n\
 all of -O, -s, and -n options (servicelist order must match '-C'\n\
 options)\n"));
+
+	printf (_(UT_SUPPORT));
 }
 
 

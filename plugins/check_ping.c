@@ -70,6 +70,10 @@ main (int argc, char **argv)
 	int this_result = STATE_UNKNOWN;
 	int i;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	addresses = malloc ((size_t)max_addr);
 
 	if (process_arguments (argc, argv) == ERROR)

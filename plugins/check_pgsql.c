@@ -128,6 +128,10 @@ main (int argc, char **argv)
 	pgoptions = NULL;  /* special options to start up the backend server */
 	pgtty = NULL;      /* debugging tty for the backend server */
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage ("Could not parse arguments");
 

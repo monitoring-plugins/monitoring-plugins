@@ -151,6 +151,10 @@ main (int argc, char **argv)
 	output = strdup ("");
 	details = strdup ("");
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	mount_list = read_filesystem_list (0);
 
 	if (process_arguments (argc, argv) != OK)

@@ -79,6 +79,10 @@ main (int argc, char **argv)
 
 	errmsg = malloc(MAX_INPUT_BUFFER);
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	if (process_arguments (argc, argv) != OK)
 		usage (_("Invalid command arguments supplied\n"));
 
@@ -374,6 +378,7 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
+	printf (_("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n"));
 	printf (_(COPYRIGHT), copyright, email);
 
 	printf (_("\

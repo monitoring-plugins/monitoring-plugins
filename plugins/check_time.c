@@ -55,6 +55,10 @@ main (int argc, char **argv)
 	int sd;
 	int result;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	if (process_arguments (argc, argv) != OK)
 		usage (_("Invalid command arguments supplied\n"));
 

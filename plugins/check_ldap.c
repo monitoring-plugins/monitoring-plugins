@@ -64,6 +64,10 @@ main (int argc, char *argv[])
 	int t_diff;
 	time_t time0, time1;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage (_("check_ldap: could not parse arguments\n"));
 

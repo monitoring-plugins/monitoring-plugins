@@ -71,6 +71,10 @@ main (int argc, char **argv)
 	char str[32];
 	char *status;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	status = strdup("");
 
 	if (process_arguments (argc, argv) != OK)
@@ -205,8 +209,6 @@ int
 process_arguments (int argc, char **argv)
 {
 	int c = 0;  /* option character */
-	int wc = 0; /* warning counter  */
-	int cc = 0; /* critical counter */
 
 	int option = 0;
 	static struct option longopts[] = {
@@ -229,7 +231,7 @@ process_arguments (int argc, char **argv)
 			break;
 
 		switch (c) {
-		case 'w':									/* warning time threshold */
+		case 'w':									/* warning size threshold */
 			if (is_intnonneg (optarg)) {
 				warn_size = atoi (optarg);
 				break;
@@ -246,7 +248,7 @@ process_arguments (int argc, char **argv)
 			else {
 				usage (_("Warning threshold must be integer or percentage!\n"));
 			}
-		case 'c':									/* critical time threshold */
+		case 'c':									/* critical size threshold */
 			if (is_intnonneg (optarg)) {
 				crit_size = atoi (optarg);
 				break;

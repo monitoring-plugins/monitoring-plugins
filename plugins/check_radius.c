@@ -103,6 +103,10 @@ main (int argc, char **argv)
 	UINT4 client_id;
 	char *str;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage (_("Could not parse arguments\n"));
 

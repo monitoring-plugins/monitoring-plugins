@@ -396,6 +396,10 @@ main (int argc, char *argv[])
 		{"version", no_argument, 0, 'V'}, {0, 0, 0, 0} 
 	};
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	while (1) {
 		
 		o = getopt_long (argc, argv, "+d:iq10nhV", longopts, &longindex);

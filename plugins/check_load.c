@@ -71,6 +71,10 @@ main (int argc, char **argv)
 
 	float la1, la5, la15;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage ("failed processing arguments\n");
 

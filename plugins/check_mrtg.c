@@ -53,6 +53,10 @@ main (int argc, char **argv)
 	unsigned long maximum_value_rate = 0L;
 	unsigned long value_rate = 0L;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	if (process_arguments (argc, argv) != OK)
 		usage (_("Invalid command arguments supplied\n"));
 

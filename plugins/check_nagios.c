@@ -56,6 +56,10 @@ main (int argc, char **argv)
 	char *procargs;
 	int pos, cols;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage (_("Could not parse arguments\n"));
 
