@@ -519,10 +519,10 @@ print_usage (void)
 	return STATE_UNKNOWN;
 	}
 
-	// get the IP address of the JetDirect device
+	/* get the IP address of the JetDirect device */
 	strcpy(address,argv[1]);
 	
-	// get the community name to use for SNMP communication
+	/* get the community name to use for SNMP communication */
 	if(argc>=3)
 	strcpy(community,argv[2]);
 	else
