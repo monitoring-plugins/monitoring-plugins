@@ -40,8 +40,8 @@ int validate_arguments (void);
 void print_usage (void);
 void print_help (void);
 
-int warn_percent = 200;
-int crit_percent = 200;
+int warn_percent = 0;
+int crit_percent = 0;
 long unsigned int warn_size = 0;
 long unsigned int crit_size = 0;
 int verbose;
@@ -233,11 +233,12 @@ int
 check_swap (int usp, long unsigned int free_swap)
 {
 	int result = STATE_UNKNOWN;
-	if (usp >= 0 && usp >= (100.0 - crit_percent))
+	free_swap = free_swap * 1024;		/* Convert back to bytes as warn and crit specified in bytes */
+	if (usp >= 0 && crit_percent != 0 && usp >= (100.0 - crit_percent))
 		result = STATE_CRITICAL;
 	else if (crit_size > 0 && free_swap <= crit_size)
 		result = STATE_CRITICAL;
-	else if (usp >= 0 && usp >= (100.0 - warn_percent))
+	else if (usp >= 0 && warn_percent != 0 && usp >= (100.0 - warn_percent))
 		result = STATE_WARNING;
 	else if (warn_size > 0 && free_swap <= warn_size)
 		result = STATE_WARNING;
