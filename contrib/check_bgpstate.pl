@@ -141,7 +141,7 @@ foreach $snmpoid (@snmpoids) {
       $answer=$session->error;
       $session->close;
       $state = 'CRITICAL';
-      print ("$state: $answer,$community,$snmpkey");
+      print ("$state: $answer,$snmpkey");
       exit $ERRORS{$state};
    }
 
