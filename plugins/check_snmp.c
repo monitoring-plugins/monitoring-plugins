@@ -453,11 +453,8 @@ process_arguments (int argc, char **argv)
 
 	/* Test parameters */
 		case 'c':									/* critical time threshold */
-			if (strspn (optarg, "0123456789:,") < strlen (optarg)) {
-				printf (_("Invalid critical threshold: %s\n"), optarg);
-				print_usage ();
-				exit (STATE_UNKNOWN);
-			}
+			if (strspn (optarg, "0123456789:,") < strlen (optarg))
+				usage2 (_("Invalid critical threshold: %s\n"), optarg);
 			for (ptr = optarg; ptr && jj < MAX_OIDS; jj++) {
 				if (lu_getll (&lower_crit_lim[jj], ptr) == 1)
 					eval_method[jj] |= CRIT_LT;
@@ -467,11 +464,8 @@ process_arguments (int argc, char **argv)
 			}
 			break;
 		case 'w':									/* warning time threshold */
-			if (strspn (optarg, "0123456789:,") < strlen (optarg)) {
-				printf (_("Invalid warning threshold: %s\n"), optarg);
-				print_usage ();
-				exit (STATE_UNKNOWN);
-			}
+			if (strspn (optarg, "0123456789:,") < strlen (optarg))
+				usage2 (_("Invalid warning threshold: %s\n"), optarg);
 			for (ptr = optarg; ptr && ii < MAX_OIDS; ii++) {
 				if (lu_getll (&lower_warn_lim[ii], ptr) == 1)
 					eval_method[ii] |= WARN_LT;
@@ -545,10 +539,9 @@ process_arguments (int argc, char **argv)
 			}
 			labels[nlabels - 1] = optarg;
 			ptr = thisarg (optarg);
+			labels[nlabels - 1] = ptr;
 			if (strstr (ptr, "'") == ptr)
 				labels[nlabels - 1] = ptr + 1;
-			else
-				labels[nlabels - 1] = ptr;
 			while (ptr && (ptr = nextarg (ptr))) {
 				if (nlabels >= labels_size) {
 					labels_size += 8;
@@ -576,10 +569,9 @@ process_arguments (int argc, char **argv)
 			}
 			unitv[nunits - 1] = optarg;
 			ptr = thisarg (optarg);
+			unitv[nunits - 1] = ptr;
 			if (strstr (ptr, "'") == ptr)
 				unitv[nunits - 1] = ptr + 1;
-			else
-				unitv[nunits - 1] = ptr;
 			while (ptr && (ptr = nextarg (ptr))) {
 				if (nunits >= unitv_size) {
 					unitv_size += 8;
@@ -832,23 +824,21 @@ char *
 nextarg (char *str)
 {
 	if (strstr (str, "'") == str) {
+		str[0] = 0;
 		if (strlen (str) > 1) {
 			str = strstr (str + 1, "'");
-			str[0] = 0;
 			return (++str);
 		}
 		else {
-			str[0] = 0;
 			return NULL;
 		}
 	}
 	if (strstr (str, ",") == str) {
+		str[0] = 0;
 		if (strlen (str) > 1) {
-			str[0] = 0;
 			return (++str);
 		}
 		else {
-			str[0] = 0;
 			return NULL;
 		}
 	}
