@@ -1,62 +1,39 @@
-/*****************************************************************************
-*
-* CHECK_REAL.C
-*
-* Program: RealMedia plugin for Nagios
-* License: GPL
-* Copyright (c) 1999 Pedro Leite (leite@cic.ua.pt)
-*
-* Based on CHECK_HTTP.C
-* Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
-*
-* Last Modified: $Date$
-*
-* Command line: CHECK_REAL <host_address> [-e expect] [-u url] [-p port]
-*                          [-hn host_name] [-wt warn_time] [-ct crit_time]
-*                          [-to to_sec]
-*
-* Description:
-*
-* This plugin will attempt to open an RTSP connection with the host.
-* Successul connects return STATE_OK, refusals and timeouts return
-* STATE_CRITICAL, other errors return STATE_UNKNOWN.  Successful connects,
-* but incorrect reponse messages from the host result in STATE_WARNING return
-* values.  If you are checking a virtual server that uses "host headers"you
-* must supply the FQDN (fully qualified domain name) as the [host_name]
-* argument.
-*
-* License Information:
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*
-****************************************************************************/
+/******************************************************************************
 
-#include "config.h"
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+******************************************************************************/
+
+const char *progname = "check_real";
+const char *revision = "$Revision$";
+const char *copyright = "2000-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
 
-const char *progname = "check_real";
+enum {
+	PORT	= 554
+};
 
-#define PORT	554
 #define EXPECT	"RTSP/1."
 #define URL	""
 
 int process_arguments (int, char **);
 int validate_arguments (void);
-int check_disk (int usp, int free_disk);
 void print_help (void);
 void print_usage (void);
 
@@ -71,6 +48,11 @@ int critical_time = 0;
 int check_critical_time = FALSE;
 int verbose = FALSE;
 
+
+
+
+
+
 int
 main (int argc, char **argv)
 {
@@ -80,7 +62,7 @@ main (int argc, char **argv)
 	char *status_line = NULL;
 
 	if (process_arguments (argc, argv) != OK)
-		usage ("Invalid command arguments supplied\n");
+		usage (_("Invalid command arguments supplied\n"));
 
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
@@ -91,7 +73,7 @@ main (int argc, char **argv)
 
 	/* try to connect to the host at the given port number */
 	if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK)
-		die (STATE_CRITICAL, "Unable to connect to %s on port %d\n",
+		die (STATE_CRITICAL, _("Unable to connect to %s on port %d\n"),
 							 server_address, server_port);
 
 	/* Part I - Server Check */
@@ -113,14 +95,14 @@ main (int argc, char **argv)
 
 	/* return a CRITICAL status if we couldn't read any data */
 	if (result == -1)
-		die (STATE_CRITICAL, "No data received from %s\n", host_name);
+		die (STATE_CRITICAL, _("No data received from %s\n"), host_name);
 
 	/* make sure we find the response we are looking for */
 	if (!strstr (buffer, server_expect)) {
 		if (server_port == PORT)
-			printf ("Invalid REAL response received from host\n");
+			printf (_("Invalid REAL response received from host\n"));
 		else
-			printf ("Invalid REAL response received from host on port %d\n",
+			printf (_("Invalid REAL response received from host on port %d\n"),
 							server_port);
 	}
 	else {
@@ -184,16 +166,16 @@ main (int argc, char **argv)
 
 		/* return a CRITICAL status if we couldn't read any data */
 		if (result == -1) {
-			printf ("No data received from host\n");
+			printf (_("No data received from host\n"));
 			result = STATE_CRITICAL;
 		}
 		else {
 			/* make sure we find the response we are looking for */
 			if (!strstr (buffer, server_expect)) {
 				if (server_port == PORT)
-					printf ("Invalid REAL response received from host\n");
+					printf (_("Invalid REAL response received from host\n"));
 				else
-					printf ("Invalid REAL response received from host on port %d\n",
+					printf (_("Invalid REAL response received from host on port %d\n"),
 									server_port);
 			}
 			else {
@@ -247,8 +229,8 @@ main (int argc, char **argv)
 				STATE_WARNING;
 
 		/* Put some HTML in here to create a dynamic link */
-		printf ("REAL %s - %d second response time\n",
-						(result == STATE_OK) ? "ok" : "problem",
+		printf (_("REAL %s - %d second response time\n"),
+						state_text (result),
 						(int) (end_time - start_time));
 	}
 	else
@@ -267,7 +249,7 @@ main (int argc, char **argv)
 
 
 
-
+
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -316,7 +298,7 @@ process_arguments (int argc, char **argv)
 				server_address = optarg;
 			}
 			else {
-				usage ("Invalid host name\n");
+				usage (_("Invalid host name\n"));
 			}
 			break;
 		case 'e':									/* string to expect in response header */
@@ -330,7 +312,7 @@ process_arguments (int argc, char **argv)
 				server_port = atoi (optarg);
 			}
 			else {
-				usage ("Server port must be a positive integer\n");
+				usage (_("Server port must be a positive integer\n"));
 			}
 			break;
 		case 'w':									/* warning time threshold */
@@ -339,7 +321,7 @@ process_arguments (int argc, char **argv)
 				check_warning_time = TRUE;
 			}
 			else {
-				usage ("Warning time must be a nonnegative integer\n");
+				usage (_("Warning time must be a nonnegative integer\n"));
 			}
 			break;
 		case 'c':									/* critical time threshold */
@@ -348,7 +330,7 @@ process_arguments (int argc, char **argv)
 				check_critical_time = TRUE;
 			}
 			else {
-				usage ("Critical time must be a nonnegative integer\n");
+				usage (_("Critical time must be a nonnegative integer\n"));
 			}
 			break;
 		case 'v':									/* verbose */
@@ -359,7 +341,7 @@ process_arguments (int argc, char **argv)
 				socket_timeout = atoi (optarg);
 			}
 			else {
-				usage ("Time interval must be a nonnegative integer\n");
+				usage (_("Time interval must be a nonnegative integer\n"));
 			}
 			break;
 		case 'V':									/* version */
@@ -368,8 +350,8 @@ process_arguments (int argc, char **argv)
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
-		case '?':									/* help */
-			usage ("Invalid argument\n");
+		case '?':									/* usage */
+			usage (_("Invalid argument\n"));
 		}
 	}
 
@@ -379,12 +361,12 @@ process_arguments (int argc, char **argv)
 			server_address = argv[c++];
 		}
 		else {
-			usage ("Invalid host name");
+			usage (_("Invalid host name"));
 		}
 	}
 
 	if (strlen(server_address) == 0)
-		usage ("You must provide a server to check\n");
+		usage (_("You must provide a server to check\n"));
 
 	if (strlen(host_name) == 0)
 		asprintf (&host_name, "%s", server_address);
@@ -405,41 +387,47 @@ validate_arguments (void)
 
 
 
-
+
 void
 print_help (void)
 {
+	char *myport;
+	asprintf (&myport, "%d", PORT);
+
 	print_revision (progname, "$Revision$");
-	printf
-		("Copyright (c) 2000 Pedro Leite (leite@cic.ua.pt)/Karl DeBisschop\n\n"
-		 "This plugin tests the REAL service on the specified host.\n\n");
+
+	printf (_("Copyright (c) 1999 Pedro Leite <leite@cic.ua.pt>\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("This plugin tests the REAL service on the specified host.\n\n"));
+
 	print_usage ();
-	printf
-		("\nOptions:\n"
-		 " -H, --hostname=STRING or IPADDRESS\n"
-		 "   Check this server on the indicated host\n"
-		 " -I, --IPaddress=STRING or IPADDRESS\n"
-		 "   Check server at this host address\n"
-		 " -p, --port=INTEGER\n"
-		 "   Make connection on the indicated port (default: %d)\n"
-		 " -u, --url=STRING\n"
-		 "   Connect to this url\n"
-		 " -e, --expect=STRING\n"
-		 "   String to expect in first line of server response (default: %s)\n"
-		 " -w, --warning=INTEGER\n"
-		 "   Seconds necessary to result in a warning status\n"
-		 " -c, --critical=INTEGER\n"
-		 "   Seconds necessary to result in a critical status\n"
-		 " -t, --timeout=INTEGER\n"
-		 "   Seconds before connection attempt times out (default: %d)\n"
-		 " -v, --verbose\n"
-		 "   Print extra information (command-line use only)\n"
-		 " -h, --help\n"
-		 "   Print detailed help screen\n"
-		 " -V, --version\n"
-		 "   Print version information\n\n",
-		 PORT, EXPECT, DEFAULT_SOCKET_TIMEOUT);
-	support ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_HOST_PORT), 'p', myport);
+
+	printf (_("\
+ -u, --url=STRING\n\
+   Connect to this url\n\
+ -e, --expect=STRING\n\
+   String to expect in first line of server response (default: %s)\n"),
+	       EXPECT);
+
+	printf (_(UT_WARN_CRIT));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(UT_VERBOSE));
+
+	printf(_("\
+This plugin will attempt to open an RTSP connection with the host.\n\
+Successul connects return STATE_OK, refusals and timeouts return\n\
+STATE_CRITICAL, other errors return STATE_UNKNOWN.  Successful connects,\n\
+but incorrect reponse messages from the host result in STATE_WARNING return\n\
+values."));
+
+	printf (_(UT_SUPPORT));
 }
 
 
@@ -449,9 +437,8 @@ print_help (void)
 void
 print_usage (void)
 {
-	printf
-		("Usage: %s -H host [-e expect] [-p port] [-w warn] [-c crit]\n"
-		 "            [-t timeout] [-v]\n"
-		 "       %s --help\n"
-		 "       %s --version\n", progname, progname, progname);
+	printf ("\
+Usage: %s -H host [-e expect] [-p port] [-w warn] [-c crit]\n\
+  [-t timeout] [-v]\n", progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }
