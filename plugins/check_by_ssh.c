@@ -23,22 +23,91 @@
  *****************************************************************************/
  
 const char *progname = "check_by_ssh";
-#define DESCRIPTION "Run checks on a remote system using ssh, wrapping the proper timeout around the ssh invocation."
-#define AUTHOR "Karl DeBisschop"
-#define EMAIL "karl@debisschop.net"
-#define COPYRIGHTDATE "1999, 2000, 2001"
+const char *revision = "$Revision$";
+const char *copyright = "2000-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "config.h"
 #include "common.h"
-#include "popen.h"
+#include "netutils.h"
 #include "utils.h"
-#include <time.h>
+#include "popen.h"
 
 int process_arguments (int, char **);
 int validate_arguments (void);
-void print_help (const char *command_name);
+void print_help (void);
 void print_usage (void);
 
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("This plugin uses SSH to execute commands on a remote host\n\n"));
+
+	print_usage ();
+
+	printf (_(HELP_VRSN));
+
+	printf (_(HOST_PORT), 'p', "none");
+
+	printf (_(IPv46));
+
+	printf (_("\
+ -1, --proto1\n\
+    tell ssh to use Protocol 1\n\
+ -2, --proto2\n\
+    tell ssh to use Protocol 2\n\
+ -f\n\
+    tells ssh to fork rather than create a tty\n"));
+
+	printf (_("\
+ -C, --command='COMMAND STRING'\n\
+    command to execute on the remote machine\n\
+ -l, --logname=USERNAME\n\
+    SSH user name on remote host [optional]\n\
+ -i, --identity=KEYFILE\n\
+    identity of an authorized key [optional]\n\
+ -O, --output=FILE\n\
+    external command file for nagios [optional]\n\
+ -s, --services=LIST\n\
+    list of nagios service names, separated by ':' [optional]\n\
+ -n, --name=NAME\n\
+    short name of host in nagios configuration [optional]\n"));
+
+	printf (_(WARN_CRIT_TO), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_("\n\
+The most common mode of use is to refer to a local identity file with\n\
+the '-i' option. In this mode, the identity pair should have a null\n\
+passphrase and the public key should be listed in the authorized_keys\n\
+file of the remote host. Usually the key will be restricted to running\n\
+only one command on the remote server. If the remote SSH server tracks\n\
+invocation agruments, the one remote program may be an agent that can\n\
+execute additional commands as proxy\n"));
+
+	printf (_("\n\
+To use passive mode, provide multiple '-C' options, and provide\n\
+all of -O, -s, and -n options (servicelist order must match '-C'\n\
+options)\n"));
+}
+
+
+
+
+
+void
+print_usage (void)
+{
+	printf (_("Usage:\n\
+check_by_ssh [-f46] [-t timeout] [-i identity] [-l user] -H <host> -C <command>\n\
+             [-n name] [-s servicelist] [-O outputfile] [-p port]\n\
+check_by_ssh  -V prints version info\n\
+check_by_ssh  -h prints more detailed help\n"));
+}
+
 
 int commands = 0;
 int services = 0;
@@ -56,13 +125,11 @@ int
 main (int argc, char **argv)
 {
 
-	char input_buffer[MAX_INPUT_BUFFER] = "";
+	char input_buffer[MAX_INPUT_BUFFER];
 	char *result_text = "";
 	char *status_text;
 	char *output = "";
-	char *summary = "";
 	char *eol = NULL;
-	char *srvc_desc = NULL;
 	int cresult;
 	int result = STATE_UNKNOWN;
 	time_t local_time;
@@ -71,7 +138,7 @@ main (int argc, char **argv)
 
 	/* process arguments */
 	if (process_arguments (argc, argv) == ERROR)
-		usage ("Could not parse arguments\n");
+		usage (_("Could not parse arguments\n"));
 
 
 	/* Set signal handling and alarm timeout */
@@ -90,7 +157,7 @@ main (int argc, char **argv)
 	child_process = spopen (comm);
 
 	if (child_process == NULL) {
-		printf ("Unable to open pipe: %s", comm);
+		printf (_("Unable to open pipe: %s"), comm);
 		return STATE_UNKNOWN;
 	}
 
@@ -98,7 +165,7 @@ main (int argc, char **argv)
 	/* open STDERR  for spopen */
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL) {
-		printf ("Could not open stderr for %s\n", SSH_COMMAND);
+		printf (_("Could not open stderr for %s\n"), SSH_COMMAND);
 	}
 
 
@@ -123,14 +190,14 @@ main (int argc, char **argv)
 	if (passive) {
 
 		if (!(fp = fopen (outputfile, "a"))) {
-			printf ("SSH WARNING: could not open %s\n", outputfile);
+			printf (_("SSH WARNING: could not open %s\n"), outputfile);
 			exit (STATE_UNKNOWN);
 		}
 
 		time (&local_time);
 		commands = 0;
 		while (result_text && strlen(result_text) > 0) {
-			status_text = (strstr (result_text, "STATUS CODE: "));
+			status_text = strstr (result_text, _("STATUS CODE: "));
 			if (status_text == NULL) {
 				printf ("%s", result_text);
 				return result;
@@ -141,8 +208,8 @@ main (int argc, char **argv)
 			if (eol != NULL)
 				eol[0] = 0;
 			if (service[commands] && status_text
-					&& sscanf (status_text, "STATUS CODE: %d", &cresult) == 1) {
-				fprintf (fp, "[%d] PROCESS_SERVICE_CHECK_RESULT;%s;%s;%d;%s\n",
+					&& sscanf (status_text, _("STATUS CODE: %d"), &cresult) == 1) {
+				fprintf (fp, _("[%d] PROCESS_SERVICE_CHECK_RESULT;%s;%s;%d;%s\n"),
 								 (int) local_time, host_shortname, service[commands++], cresult,
 								 output);
 			}
@@ -170,9 +237,8 @@ main (int argc, char **argv)
 int
 process_arguments (int argc, char **argv)
 {
-	int c, i;
+	int c;
 	char *p1, *p2;
-	size_t len;
 
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -219,24 +285,24 @@ process_arguments (int argc, char **argv)
 			print_revision (progname, "$Revision$");
 			exit (STATE_OK);
 		case 'h':									/* help */
-			print_help (progname);
+			print_help ();
 			exit (STATE_OK);
 		case 'v':									/* help */
 			verbose = TRUE;
 			break;
 		case 't':									/* timeout period */
 			if (!is_integer (optarg))
-				usage2 ("timeout interval must be an integer", optarg);
+				usage2 (_("timeout interval must be an integer"), optarg);
 			timeout_interval = atoi (optarg);
 			break;
 		case 'H':									/* host */
 			if (!is_host (optarg))
-				usage2 ("invalid host name", optarg);
+				usage2 (_("invalid host name"), optarg);
 			hostname = optarg;
 			break;
 		case 'p': /* port number */
 			if (!is_integer (optarg))
-				usage2 ("port must be an integer", optarg);
+				usage2 (_("port must be an integer"), optarg);
 			asprintf (&comm,"%s -p %s", comm, optarg);
 			break;
 		case 'O':									/* output file */
@@ -246,7 +312,7 @@ process_arguments (int argc, char **argv)
 		case 's':									/* description of service to check */
 			service = realloc (service, (++services) * sizeof(char *));
 			p1 = optarg;
-			while (p2 = index (p1, ':')) {
+			while ((p2 = index (p1, ':'))) {
 				*p2 = '\0';
 				asprintf (&service[services-1], "%s", p1);
 				service = realloc (service, (++services) * sizeof(char *));
@@ -281,9 +347,9 @@ process_arguments (int argc, char **argv)
 	c = optind;
 	if (hostname == NULL) {
 		if (c <= argc) {
-			terminate (STATE_UNKNOWN, "%s: You must provide a host name\n", progname);
+			terminate (STATE_UNKNOWN, _("%s: You must provide a host name\n"), progname);
 		} else if (!is_host (argv[c]))
-			terminate (STATE_UNKNOWN, "%s: Invalid host name %s\n", progname, argv[c]);
+			terminate (STATE_UNKNOWN, _("%s: Invalid host name %s\n"), progname, argv[c]);
 		hostname = argv[c++];
 	}
 
@@ -299,7 +365,7 @@ process_arguments (int argc, char **argv)
 		remotecmd = strscat (remotecmd, ";echo STATUS CODE: $?;");
 
 	if (remotecmd == NULL || strlen (remotecmd) <= 1)
-		usage ("No remotecmd\n");
+		usage (_("No remotecmd\n"));
 
 	asprintf (&comm, "%s %s '%s'", comm, hostname, remotecmd);
 
@@ -317,83 +383,10 @@ validate_arguments (void)
 		return ERROR;
 
 	if (passive && commands != services)
-		terminate (STATE_UNKNOWN, "%s: In passive mode, you must provide a service name for each command.\n", progname);
+		terminate (STATE_UNKNOWN, _("%s: In passive mode, you must provide a service name for each command.\n"), progname);
 
 	if (passive && host_shortname == NULL)
-		terminate (STATE_UNKNOWN, "%s: In passive mode, you must provide the host short name from the nagios configs.\n", progname);
+		terminate (STATE_UNKNOWN, _("%s: In passive mode, you must provide the host short name from the nagios configs.\n"), progname);
 
 	return OK;
-}
-
-
-
-
-
-void
-print_help (const char *cmd)
-{
-	print_revision (cmd, "$Revision$");
-
-	printf
-		("Copyright (c) 1999	Karl DeBisschop (kdebisschop@alum.mit.edu)\n\n"
-		 "This plugin will execute a command on a remote host using SSH\n\n");
-
-	print_usage ();
-
-	printf
-		("\nOptions:\n"
-		 "-H, --hostname=HOST\n"
-		 "   name or IP address of remote host\n"
-		 "-C, --command='COMMAND STRING'\n"
-		 "   command to execute on the remote machine\n"
-		 "-f tells ssh to fork rather than create a tty\n"
-		 "-t, --timeout=INTEGER\n"
-		 "   specify timeout (default: %d seconds) [optional]\n"
-		 "-p, --port=PORT\n"
- 		 "   port to connect to on remote system [optional]\n"
-         "-l, --logname=USERNAME\n"
-		 "   SSH user name on remote host [optional]\n"
-		 "-i, --identity=KEYFILE\n"
-		 "   identity of an authorized key [optional]\n"
-		 "-O, --output=FILE\n"
-		 "   external command file for nagios [optional]\n"
-		 "-s, --services=LIST\n"
-		 "   list of nagios service names, separated by ':' [optional]\n"
-		 "-n, --name=NAME\n"
-		 "   short name of host in nagios configuration [optional]\n"
-		 "-1, --proto1\n"
-		 "   tell ssh to use Protocol 1\n"
-		 "-2, --proto2\n"
-		 "   tell ssh to use Protocol 2\n"
-		 "-4, --use-ipv4\n"
-		 "   tell ssh to use IPv4\n"
-		 "-6, --use-ipv6\n"
-		 "   tell ssh to use IPv6\n"
-		 "\n"
-		 "The most common mode of use is to refer to a local identity file with\n"
-		 "the '-i' option. In this mode, the identity pair should have a null\n"
-		 "passphrase and the public key should be listed in the authorized_keys\n"
-		 "file of the remote host. Usually the key will be restricted to running\n"
-		 "only one command on the remote server. If the remote SSH server tracks\n"
-		 "invocation agruments, the one remote program may be an agent that can\n"
-		 "execute additional commands as proxy\n"
-		 "\n"
-		 "To use passive mode, provide multiple '-C' options, and provide\n"
-		 "all of -O, -s, and -n options (servicelist order must match '-C'\n"
-		 "options)\n", DEFAULT_SOCKET_TIMEOUT);
-}
-
-
-
-
-
-void
-print_usage (void)
-{
-	printf
-		("Usage:\n"
-		 "check_by_ssh [-f46] [-t timeout] [-i identity] [-l user] -H <host> -C <command>\n"
-		 "             [-n name] [-s servicelist] [-O outputfile] [-p port]\n"
-		 "check_by_ssh  -V prints version info\n"
-		 "check_by_ssh  -h prints more detailed help\n");
 }
