@@ -643,7 +643,7 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		else if (check_warning_value==TRUE && dirty_cache_buffers <= warning_value)
 			result=STATE_WARNING;
-		asprintf (&output_message,_("dirty cache buffers = %lu%% of the total"),dirty_cache_buffers);
+		asprintf (&output_message,_("Dirty cache buffers = %lu%% of the total"),dirty_cache_buffers);
 
 		/* check % total cache buffers as a percentage of the original*/
 	} else if (vars_to_check==TCB) {
@@ -658,7 +658,7 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		else if (check_warning_value==TRUE && total_cache_buffers <= warning_value)
 			result=STATE_WARNING;
-		asprintf (&output_message,_("total cache buffers = %lu%% of the original"),total_cache_buffers);
+		asprintf (&output_message,_("Total cache buffers = %lu%% of the original"),total_cache_buffers);
 		
 	} else if (vars_to_check==DSVER) {
 		asprintf (&send_buffer,"S13\r\n");

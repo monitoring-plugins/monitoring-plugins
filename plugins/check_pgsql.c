@@ -256,7 +256,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'l':     /* login name */
 			if (!is_pg_logname (optarg))
-				usage2 (_("user name is not valid"), optarg);
+				usage2 (_("User name is not valid"), optarg);
 			else
 				pguser = optarg;
 			break;

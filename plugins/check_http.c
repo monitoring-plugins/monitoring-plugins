@@ -346,7 +346,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'p': /* Server port */
 			if (!is_intnonneg (optarg))
-				usage2 (_("invalid port number"), optarg);
+				usage2 (_("Invalid port number"), optarg);
 			else {
 				server_port = atoi (optarg);
 				specify_port = TRUE;
@@ -377,7 +377,7 @@ process_arguments (int argc, char **argv)
  		case 'l': /* linespan */
  		case 'r': /* linespan */
  		case 'R': /* linespan */
-			usage (_("check_http: call for regex which was not a compiled option\n"));
+			usage4 (_("Call for regex which was not a compiled option"));
 			break;
 #else
  		case 'l': /* linespan */
@@ -403,7 +403,7 @@ process_arguments (int argc, char **argv)
 #ifdef USE_IPV6
 			address_family = AF_INET6;
 #else
-			usage (_("IPv6 support not available\n"));
+			usage4 (_("IPv6 support not available"));
 #endif
 			break;
 		case 'v': /* verbose */
@@ -446,7 +446,7 @@ process_arguments (int argc, char **argv)
 
 	if (server_address == NULL) {
 		if (host_name == NULL)
-			usage (_("check_http: you must specify a server address or host name\n"));
+			usage4 (_("You must specify a server address or host name"));
 		else
 			server_address = strdup (host_name);
 	}
@@ -1049,11 +1049,11 @@ redir (char *pos, char *status_line)
 
 	addr = malloc (MAX_IPV4_HOSTLENGTH + 1);
 	if (addr == NULL)
-		die (STATE_UNKNOWN, _("could not allocate addr\n"));
+		die (STATE_UNKNOWN, _("Could not allocate addr\n"));
 	
 	url = malloc (strcspn (pos, "\r\n"));
 	if (url == NULL)
-		die (STATE_UNKNOWN, _("could not allocate url\n"));
+		die (STATE_UNKNOWN, _("Could not allocate url\n"));
 
 	while (pos) {
 

@@ -73,7 +73,7 @@ main (int argc, char **argv)
 
 	/* Set signal handling and alarm timeout */
 	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
-		usage4 (_("	Cannot catch SIGALRM"));
+		usage4 (_("Cannot catch SIGALRM"));
 	}
 	alarm (timeout_interval);
 

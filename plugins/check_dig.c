@@ -318,7 +318,7 @@ print_help (void)
 	printf ("Copyright (c) 2000 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("Test the DNS service on the specified host using dig\n\n"));
+	printf (_("Test the DNS service on the specified host using dig\n"));
 
 	print_usage ();
 

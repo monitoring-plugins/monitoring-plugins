@@ -206,7 +206,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	if (server_address == NULL)
-		usage (_("Host name was not supplied\n"));
+		usage4 (_("Hostname was not supplied"));
 
 	if (server_send == NULL)
 		server_send = strdup("");

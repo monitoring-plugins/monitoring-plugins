@@ -475,7 +475,7 @@ error_scan (char buf[MAX_INPUT_BUFFER], const char *addr)
 			warn_text = strdup (_(WARN_DUPLICATES));
 		else if (! strstr (warn_text, _(WARN_DUPLICATES)) &&
 		         asprintf (&warn_text, "%s %s", warn_text, _(WARN_DUPLICATES)) == -1)
-			die (STATE_UNKNOWN, _("unable to realloc warn_text"));
+			die (STATE_UNKNOWN, _("Unable to realloc warn_text"));
 		return (STATE_WARNING);
 	}
 
