@@ -137,8 +137,8 @@ $(check_tcp_programs): check_tcp
 	ln -sf check_tcp $@
 
 install-exec-hook:
-	cd $(DESTDIR)$(libexecdir)
-	for i in $(check_tcp_programs) ; do ln -sf check_tcp $$i ; done
+	cd $(DESTDIR)$(libexecdir) && \
+	for i in $(check_tcp_programs) ; do rm $$i; ln -sf check_tcp $$i ; done
 
 clean-local:
 	rm -f $(check_tcp_programs)
