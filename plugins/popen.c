@@ -114,7 +114,7 @@ spopen (const char *cmdstring)
 	argv = malloc (sizeof(char*)*argc);
 	
 	if (argv == NULL) {
-		printf ("Could not malloc argv array in popen()\n");
+		printf (_("Could not malloc argv array in popen()\n"));
 		return NULL;
 	}
 
@@ -124,7 +124,7 @@ spopen (const char *cmdstring)
 		str += strspn (str, " \t\r\n");	/* trim any leading whitespace */
 
 		if (i >= argc - 2) {
-			printf ("CRITICAL - You need more args!!!\n");
+			printf (_("CRITICAL - You need more args!!!\n"));
 			return (NULL);
 		}
 
@@ -239,16 +239,18 @@ static int openmax = 0;
 #define	OPEN_MAX_GUESS	256			/* if OPEN_MAX is indeterminate */
 				/* no guarantee this is adequate */
 
+
 void
 popen_timeout_alarm_handler (int signo)
 {
 	if (signo == SIGALRM) {
 		kill (childpid[fileno (child_process)], SIGKILL);
-		printf ("CRITICAL - Plugin timed out after %d seconds\n",
+		printf (_("CRITICAL - Plugin timed out after %d seconds\n"),
 						timeout_interval);
 		exit (STATE_CRITICAL);
 	}
 }
+
 
 int
 open_max (void)
@@ -259,12 +261,11 @@ open_max (void)
 			if (errno == 0)
 				openmax = OPEN_MAX_GUESS;	/* it's indeterminate */
 			else
-				err_sys ("sysconf error for _SC_OPEN_MAX");
+				err_sys (_("sysconf error for _SC_OPEN_MAX"));
 		}
 	}
 	return (openmax);
 }
-
 
 
 /* Fatal error related to a system call.
@@ -309,4 +310,3 @@ rtrim (char *str, const char *tok)
 	}
 	return str;
 }
-

@@ -310,19 +310,19 @@ int main(int argc, char **argv)
 	
 	/* check if we are root */
 	if(geteuid()) {
-		printf("Root access needed (for raw sockets)\n");
+		printf(_("Root access needed (for raw sockets)\n"));
 		exit(STATE_UNKNOWN);
 	}
 
 	/* confirm that ICMP is available on this machine */
 	if((proto = getprotobyname("icmp")) == NULL)
-		crash("icmp: unknown protocol");
+		crash(_("icmp: unknown protocol"));
 
 	/* create raw socket for ICMP calls (ping) */
 	sock = socket(AF_INET, SOCK_RAW, proto->p_proto);
 
 	if(sock < 0)
-		crash("can't create raw socket");
+		crash(_("Can't create raw socket"));
 
 	/* drop privileges now that we have the socket */
 	if((uid = getuid())) {
@@ -334,7 +334,7 @@ int main(int argc, char **argv)
 	ident = getpid() & 0xFFFF;
 
 	if(!(host_base_ptr = malloc(sizeof(struct host_name_list)))) {
-		crash("Unable to allocate memory for host name list\n");
+		crash(_("Unable to allocate memory for host name list\n"));
 	}
 	host_ptr = host_base_ptr;
 
@@ -359,12 +359,12 @@ int main(int argc, char **argv)
 		switch (c) {
 			case 'H':
 				if(!(host_ptr->entry = malloc(strlen(optarg) + 1))) {
-					crash("Failed to allocate memory for hostname");
+					crash(_("Failed to allocate memory for hostname"));
 				}
 				memset(host_ptr->entry, 0, strlen(optarg) + 1);
 				host_ptr->entry = memcpy(host_ptr->entry, optarg, strlen(optarg));
 				if(!(host_ptr->next = malloc(sizeof(struct host_name_list))))
-					crash("Failed to allocate memory for hostname");
+					crash(_("Failed to allocate memory for hostname"));
 				host_ptr = host_ptr->next;
 				host_ptr->next = NULL;
 //				add_name(optarg);
@@ -375,35 +375,35 @@ int main(int argc, char **argv)
 				break;
 			case 'w':
 				if(get_threshold(optarg, &warn)) {
-					printf("Illegal threshold pair specified for -%c", c);
+					printf(_("Illegal threshold pair specified for -%c"), c);
 					print_usage();
 				}
 				break;
 
 			case 'c':
 				if(get_threshold(optarg, &crit)) {
-					printf("Illegal threshold pair specified for -%c", c);
+					printf(_("Illegal threshold pair specified for -%c"), c);
 					print_usage();
 				}
 				break;
 
 			case 't':
 				if(!(timeout = (u_int) strtoul(optarg, NULL, 0) * 100)) {
-					printf("option -%c requires integer argument\n", c);
+					printf(_("Option -%c requires integer argument\n"), c);
 					print_usage();
 				}
 				break;
 
 			case 'r':
 				if(!(retry = (u_int) strtoul(optarg, NULL, 0))) {
-					printf("option -%c requires integer argument\n", c);
+					printf(_("Option -%c requires integer argument\n"), c);
 					print_usage();
 				}
 				break;
 
 			case 'i':
 				if(!(interval = (u_int) strtoul(optarg, NULL, 0) * 100)) {
-					printf("option -%c requires positive non-zero integer argument\n", c);
+					printf(_("Option -%c requires positive non-zero integer argument\n"), c);
 					print_usage();
 				}
 				break;
@@ -411,14 +411,14 @@ int main(int argc, char **argv)
 			case 'p':
 			case 'n':
 				if(!(count = (u_int) strtoul(optarg, NULL, 0))) {
-					printf("option -%c requires positive non-zero integer argument\n", c);
+					printf(_("Option -%c requires positive non-zero integer argument\n"), c);
 					print_usage();
 				}
 				break;
 
 			case 'b':
 				if(!(ping_data_size = (u_int) strtoul(optarg, NULL, 0))) {
-					printf("option -%c requires integer argument\n", c);
+					printf(_("Option -%c requires integer argument\n"), c);
 					print_usage();
 				}
 				break;
@@ -467,7 +467,7 @@ int main(int argc, char **argv)
 				break;
 
 			default:
-				printf("option flag -%c specified, but not recognized\n", c);
+				printf(_("Option flag -%c specified, but not recognized\n"), c);
 				print_usage();
 				break;
 		}
@@ -494,30 +494,30 @@ int main(int argc, char **argv)
 	else if(timeout < warn.rta) timeout = warn.rta;
 
 	if((interval < MIN_INTERVAL * 100 || retry > MAX_RETRY) && getuid()) {
-		printf("%s: these options are too risky for mere mortals.\n", prog);
-		printf("%s: You need i >= %u and r < %u\n",
+		printf(_("%s: these options are too risky for mere mortals.\n"), prog);
+		printf(_("%s: You need i >= %u and r < %u\n"),
 				prog, MIN_INTERVAL, MAX_RETRY);
-		printf("Current settings; i = %d, r = %d\n",
+		printf(_("Current settings; i = %d, r = %d\n"),
 			   interval / 100, retry);
 		print_usage();
 	}
 
 	if((ping_data_size > MAX_PING_DATA) || (ping_data_size < MIN_PING_DATA)) {
-		printf("%s: data size %u not valid, must be between %u and %u\n",
+		printf(_("%s: data size %u not valid, must be between %u and %u\n"),
 				prog, ping_data_size, MIN_PING_DATA, MAX_PING_DATA);
 		print_usage();
 
 	}
 
 	if((backoff > MAX_BACKOFF_FACTOR) || (backoff < MIN_BACKOFF_FACTOR)) {
-		printf("%s: backoff factor %.1f not valid, must be between %.1f and %.1f\n",
+		printf(_("%s: backoff factor %.1f not valid, must be between %.1f and %.1f\n"),
 				prog, backoff, MIN_BACKOFF_FACTOR, MAX_BACKOFF_FACTOR);
 		print_usage();
 
 	}
 
 	if(count > MAX_COUNT) {
-		printf("%s: count %u not valid, must be less than %u\n",
+		printf(_("%s: count %u not valid, must be less than %u\n"),
 				prog, count, MAX_COUNT);
 		print_usage();
 	}
@@ -536,19 +536,19 @@ int main(int argc, char **argv)
 
 	/* generate requires command line parameters beyond the switches */
 	if(generate_flag && !*argv) {
-		printf("generate flag requires command line parameters beyond switches\n");
+		printf(_("Generate flag requires command line parameters beyond switches\n"));
 		print_usage();
 	}
 
 	if(*argv && !generate_flag) {
 		while(*argv) {
 			if(!(host_ptr->entry = malloc(strlen(*argv) + 1))) {
-				crash("Failed to allocate memory for hostname");
+				crash(_("Failed to allocate memory for hostname"));
 			}
 			memset(host_ptr->entry, 0, strlen(*argv) + 1);
 			host_ptr->entry = memcpy(host_ptr->entry, *argv, strlen(*argv));
 			if(!(host_ptr->next = malloc(sizeof(struct host_name_list))))
-				crash("Failed to allocate memory for hostname");
+				crash(_("Failed to allocate memory for hostname"));
 			host_ptr = host_ptr->next;
 			host_ptr->next = NULL;
 
@@ -565,13 +565,13 @@ int main(int argc, char **argv)
 	}
 
 	if(!num_hosts) {
-		printf("No hosts to work with!\n\n");
+		printf(_("No hosts to work with!\n\n"));
 		print_usage();
 	}
 
 	/* allocate array to hold outstanding ping requests */
 	table = (HOST_ENTRY **) malloc(sizeof(HOST_ENTRY *) * num_hosts);
-	if(!table) crash("Can't malloc array of hosts");
+	if(!table) crash(_("Can't malloc array of hosts"));
 
 	cursor = rrlist;
 
@@ -703,7 +703,7 @@ void finish()
 					   warn.pl, crit.pl);
 			}
 			else {
-				printf("%s is down (lost 100%%)", h->host);
+				printf(_("%s is down (lost 100%%)"), h->host);
 			}
 		}
 		else {
@@ -754,7 +754,7 @@ void finish()
 	}
 
 	if(num_noaddress) {
-		printf("No hostaddress specified.\n");
+		printf(_("No hostaddress specified.\n"));
 		print_usage();
 	}
 	else if(num_alive != num_hosts) {
@@ -765,10 +765,10 @@ void finish()
 
 	if(num_hosts > 1) {
 		if(num_alive == num_hosts) {
-			printf("OK - All %d hosts are alive\n", num_hosts);
+			printf(_("OK - All %d hosts are alive\n"), num_hosts);
 		}
 		else {
-			printf("CRITICAL - %d of %d hosts are alive\n", num_alive, num_hosts);
+			printf(_("CRITICAL - %d of %d hosts are alive\n"), num_alive, num_hosts);
 		}
 	}
 	exit(fin_stat);
@@ -784,7 +784,7 @@ void send_ping(int lsock, HOST_ENTRY *h)
 
 	buffer = (char *)malloc((size_t) ping_pkt_size);
 	if(!buffer)
-		crash("can't malloc ping packet");
+		crash(_("Can't malloc ping packet"));
 
 	memset(buffer, 0, ping_pkt_size * sizeof(char));
 	icp = (struct icmp *)buffer;
@@ -808,7 +808,7 @@ void send_ping(int lsock, HOST_ENTRY *h)
 
 	if(n < 0 || (unsigned int)n != ping_pkt_size) {
 		if(unreachable_flag) {
-			printf("%s error while sending ping: %s\n",
+			printf(_("%s error while sending ping: %s\n"),
 				   h->host, strerror(errno));
 		}			/* IF */
 
@@ -860,7 +860,7 @@ int wait_for_reply(int lsock)
 #endif /* defined(__alpha__) && __STDC__ */
 
 	if(result < hlen + ICMP_MINLEN) {
-		printf("received packet too short for ICMP (%d bytes from %s)\n", result,
+		printf(_("Received packet too short for ICMP (%d bytes from %s)\n"), result,
 			   inet_ntoa(response_addr.sin_addr));
 
 		return (1);				/* too short */
@@ -903,7 +903,7 @@ int wait_for_reply(int lsock)
 	/* note reply time in array, probably */
 	if((this_count >= 0) && ((unsigned int)this_count < trials)) {
 		if(h->resp_times[this_count] != RESP_WAITING) {
-			printf("%s : duplicate for [%d], %d bytes, %s ms",
+			printf(_("%s : duplicate for [%d], %d bytes, %s ms"),
 				   h->host, this_count, result, sprint_tm(this_reply));
 
 			if(response_addr.sin_addr.s_addr != h->saddr.sin_addr.s_addr)
@@ -913,7 +913,7 @@ int wait_for_reply(int lsock)
 	}						/* IF */
 	else {
 		/* count is out of bounds?? */
-		printf("%s : duplicate for [%d], %d bytes, %s ms\n",
+		printf(_("%s : duplicate for [%d], %d bytes, %s ms\n"),
 			   h->host, this_count, result, sprint_tm(this_reply));
 		}						/* ELSE */
 	
@@ -942,12 +942,12 @@ int handle_random_icmp(struct icmp *p, struct sockaddr_in *addr)
 			h = table[sent_icmp->icmp_seq];
 
 			if(p->icmp_code > ICMP_UNREACH_MAXTYPE) {
-				printf("ICMP Unreachable (Invalid Code) from %s for ICMP Echo sent to %s",
+				printf(_("ICMP Unreachable (Invalid Code) from %s for ICMP Echo sent to %s"),
 						inet_ntoa(addr->sin_addr), h->host);
 
 			}					/* IF */
 			else {
-				printf("ICMP Unreachable from %s for ICMP Echo sent to %s",
+				printf(_("ICMP Unreachable from %s for ICMP Echo sent to %s"),
 					   inet_ntoa(addr->sin_addr), h->host);
 
 			}					/* ELSE */
@@ -971,7 +971,7 @@ int handle_random_icmp(struct icmp *p, struct sockaddr_in *addr)
 		   (sent_icmp->icmp_seq < (n_short) num_hosts)) {
 			/* this is a response to a ping we sent */
 			h = table[sent_icmp->icmp_seq];
-			printf("ICMP Unreachable from %s for ICMP Echo sent to %s",
+			printf(_("ICMP Unreachable from %s for ICMP Echo sent to %s"),
 					inet_ntoa(addr->sin_addr), h->host);
 
 			if(inet_addr(h->host) == INADDR_NONE)
@@ -1056,7 +1056,7 @@ void add_name(char *name)
 		}						/* IF */
 
 		if(host_ent == NULL) {
-			printf("%s address not found\n", name);
+			printf(_("%s address not found\n"), name);
 			num_noaddress++;
 			return;
 		}						/* IF */
@@ -1064,7 +1064,7 @@ void add_name(char *name)
 
 	host_add = (struct in_addr *)*(host_ent->h_addr_list);
 	if(host_add == NULL) {
-		printf("%s has no address data\n", name);
+		printf(_("%s has no address data\n"), name);
 		num_noaddress++;
 		return;
 	}							/* IF */
@@ -1097,7 +1097,7 @@ char *na_cat(char *name, struct in_addr ipaddr)
 	nm = (char *)malloc(strlen(name) + strlen(as) + 4);
 
 	if(!nm)
-		crash("can't allocate some space for a string");
+		crash(_("Can't allocate some space for a string"));
 
 	strcpy(nm, name);
 	strcat(nm, " (");
@@ -1116,7 +1116,7 @@ void add_addr(char *name, char *host, struct in_addr ipaddr)
 	int *i;
 
 	if(!(p = (HOST_ENTRY *) malloc(sizeof(HOST_ENTRY)))) {
-		crash("can't allocate HOST_ENTRY");
+		crash(_("Can't allocate HOST_ENTRY"));
 	}
 
 	memset((char *)p, 0, sizeof(HOST_ENTRY));
@@ -1129,7 +1129,7 @@ void add_addr(char *name, char *host, struct in_addr ipaddr)
 
 	/* array for response time results */
 	if(!(i = (int *)malloc(trials * sizeof(int)))) {
-		crash("can't allocate resp_times array");
+		crash(_("Can't allocate resp_times array"));
 	}
 
 	for(n = 1; n < trials; n++)
@@ -1193,7 +1193,7 @@ char *cpystr(char *string)
 
 	if(string) {
 		dst = (char *)malloc(1 + strlen(string));
-		if(!dst) crash("malloc() failed!");
+		if(!dst) crash(_("malloc() failed!"));
 
 		strcpy(dst, string);
 		return dst;
@@ -1210,7 +1210,7 @@ void crash(char *msg)
 		if(errno)
 			printf("%s: %s : %s\n", prog, msg, strerror(errno));
 		if(h_errno)
-			printf("%s: %s : A network error occurred\n", prog, msg);
+			printf(_("%s: %s : A network error occurred\n"), prog, msg);
 	}
 	else printf("%s: %s\n", prog, msg);
 
@@ -1276,7 +1276,7 @@ void u_sleep(int u_sec)
 	FD_ZERO(&readset);
 	nfound = select(0, &readset, &writeset, NULL, &to);
 	if(nfound < 0)
-		crash("select() in u_sleep:");
+		crash(_("select() in u_sleep:"));
 
 	return;
 }								/* u_sleep() */
@@ -1306,14 +1306,14 @@ int recvfrom_wto(int lsock, char *buf, int len, struct sockaddr *saddr, int timo
 	FD_ZERO(&writeset);
 	FD_SET(lsock, &readset);
 	nfound = select(lsock + 1, &readset, &writeset, NULL, &to);
-	if(nfound < 0) crash("select() in recvfrom_wto");
+	if(nfound < 0) crash(_("select() in recvfrom_wto"));
 
 	if(nfound == 0) return -1;				/* timeout */
 
 	if(nfound) {
 		slen = sizeof(struct sockaddr);
 		n = recvfrom(sock, buf, len, 0, saddr, &slen);
-		if(n < 0) crash("recvfrom");
+		if(n < 0) crash(_("recvfrom"));
 		return(n);
 	}
 

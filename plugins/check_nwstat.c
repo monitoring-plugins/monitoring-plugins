@@ -760,9 +760,7 @@ int process_arguments(int argc, char **argv) {
 		switch (c)
 			{
 			case '?': /* print short usage statement if args not parsable */
-				printf ("%s: Unknown argument: %s\n\n", progname, optarg);
-				print_usage();
-				exit(STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 			case 'h': /* help */
 				print_help();
 				exit(STATE_OK);
@@ -779,7 +777,7 @@ int process_arguments(int argc, char **argv) {
 				if (is_intnonneg(optarg))
 					server_port=atoi(optarg);
 				else
-					die(STATE_UNKNOWN,_("Server port an integer (seconds)\nType '%s -h' for additional help\n"),progname);
+					die(STATE_UNKNOWN,_("Server port an integer\n"));
 				break;
 			case 'v':
 				if (strlen(optarg)<3)

@@ -199,12 +199,12 @@ process_arguments (int argc, char **argv)
 		if (is_intpos (argv[5]))
 			retries = atoi (argv[5]);
 		else
-			usage (_("Number of retries must be a positive integer"));
+			usage4 (_("Number of retries must be a positive integer"));
 		server = argv[6];
 		if (is_intpos (argv[7]))
 			port = atoi (argv[7]);
 		else
-			usage (_("Port must be a positive integer"));
+			usage4 (_("Port must be a positive integer"));
 		expect = argv[8];
 		return OK;
 	}
@@ -218,9 +218,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		case 'h':									/* help */
 			print_help ();
 			exit (OK);
@@ -240,7 +238,7 @@ process_arguments (int argc, char **argv)
 			if (is_intnonneg (optarg))
 				port = atoi (optarg);
 			else
-				usage (_("Port must be a positive integer"));
+				usage4 (_("Port must be a positive integer"));
 			break;
 		case 'u':									/* username */
 			username = optarg;
@@ -261,7 +259,7 @@ process_arguments (int argc, char **argv)
 			if (is_intpos (optarg))
 				retries = atoi (optarg);
 			else
-				usage (_("Number of retries must be a positive integer"));
+				usage4 (_("Number of retries must be a positive integer"));
 			break;
 		case 't':									/* timeout */
 			if (is_intpos (optarg))

@@ -224,9 +224,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* help */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		}
 	}
 

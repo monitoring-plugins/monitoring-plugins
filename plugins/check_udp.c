@@ -67,7 +67,7 @@ main (int argc, char **argv)
 	time (&end_time);
 
 	if (result != STATE_OK) {
-		printf ("No response from host on port %d\n", server_port);
+		printf (_("No response from host on port %d\n"), server_port);
 		result = STATE_CRITICAL;
 	}
 
@@ -76,7 +76,7 @@ main (int argc, char **argv)
 		/* check to see if we got the response we wanted */
 		if (server_expect) {
 			if (!strstr (recv_buffer, server_expect)) {
-				printf ("Invalid response received from host on port %d\n",
+				printf (_("Invalid response received from host on port %d\n"),
 								server_port);
 				result = STATE_CRITICAL;
 			}
@@ -146,9 +146,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
@@ -252,8 +250,6 @@ STATE_CRITICAL, other errors return STATE_UNKNOWN.\n\n"));
 
 	printf(_(UT_SUPPORT));
 }
-
-
 
 
 /* Original Command line: 

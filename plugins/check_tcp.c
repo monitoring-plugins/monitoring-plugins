@@ -259,13 +259,13 @@ main (int argc, char **argv)
 #ifdef HAVE_SSL
 	if (use_ssl && check_cert == TRUE) {
 	  if (connect_SSL () != OK)
-	    die (STATE_CRITICAL,"CRITICAL - Could not make SSL connection\n");
+	    die (STATE_CRITICAL,_("CRITICAL - Could not make SSL connection\n"));
 	  if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
 	    result = check_certificate (&server_cert);
 	    X509_free(server_cert);
 	  }
 	  else {
-	    printf("CRITICAL - Cannot retrieve server certificate.\n");
+	    printf(_("CRITICAL - Cannot retrieve server certificate.\n"));
 	    result = STATE_CRITICAL;
 	  }
 	  SSL_shutdown (ssl);
@@ -434,7 +434,7 @@ process_arguments (int argc, char **argv)
 	};
 
 	if (argc < 2)
-		usage ("No arguments found\n");
+		usage4 (_("No arguments found"));
 
 	/* backwards compatibility */
 	for (c = 1; c < argc; c++) {
@@ -462,14 +462,12 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':                 /* print short usage statement if args not parsable */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		case 'h':                 /* help */
 			print_help ();
 			exit (STATE_OK);
 		case 'V':                 /* version */
-			print_revision (progname, "$Revision$");
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'v':                 /* verbose mode */
 			verbose = TRUE;
@@ -575,7 +573,7 @@ process_arguments (int argc, char **argv)
                  case 'D': /* Check SSL cert validity - days 'til certificate expiration */
 #ifdef HAVE_SSL
 			if (!is_intnonneg (optarg))
-				usage2 ("invalid certificate expiration period", optarg);
+				usage2 (_("Invalid certificate expiration period"), optarg);
 			days_till_exp = atoi (optarg);
 			check_cert = TRUE;
 			use_ssl = TRUE;
@@ -583,14 +581,14 @@ process_arguments (int argc, char **argv)
 		case 'S':
 			use_ssl = TRUE;
 #else
-			die (STATE_UNKNOWN, "SSL support not available.  Install OpenSSL and recompile.");
+			die (STATE_UNKNOWN, _("SSL support not available.  Install OpenSSL and recompile."));
 #endif
 			break;
 		}
 	}
 
 	if (server_address == NULL)
-		usage (_("You must provide a server address\n"));
+		usage4 (_("You must provide a server address"));
 
 	return TRUE;
 }
@@ -669,7 +667,7 @@ check_certificate (X509 ** certificate)
   /* Generate tm structure to process timestamp */
   if (tm->type == V_ASN1_UTCTIME) {
     if (tm->length < 10) {
-      printf ("CRITICAL - Wrong time format in certificate.\n");
+      printf (_("CRITICAL - Wrong time format in certificate.\n"));
       return STATE_CRITICAL;
     }
     else {
@@ -681,7 +679,7 @@ check_certificate (X509 ** certificate)
   }
   else {
     if (tm->length < 12) {
-      printf ("CRITICAL - Wrong time format in certificate.\n");
+      printf (_("CRITICAL - Wrong time format in certificate.\n"));
       return STATE_CRITICAL;
     }
     else {
@@ -710,20 +708,20 @@ check_certificate (X509 ** certificate)
 	   stamp.tm_mday, stamp.tm_year + 1900, stamp.tm_hour, stamp.tm_min);
 
         if (days_left > 0 && days_left <= days_till_exp) {
-	  printf ("Certificate expires in %d day(s) (%s).\n", days_left, timestamp);
+	  printf (_("Certificate expires in %d day(s) (%s).\n"), days_left, timestamp);
 	  return STATE_WARNING;
         }
         if (days_left < 0) {
-	  printf ("Certificate expired on %s.\n", timestamp);
+	  printf (_("Certificate expired on %s.\n"), timestamp);
 	  return STATE_CRITICAL;
         }
 
         if (days_left == 0) {
-	  printf ("Certificate expires today (%s).\n", timestamp);
+	  printf (_("Certificate expires today (%s).\n"), timestamp);
 	  return STATE_WARNING;
         }
 
-        printf ("Certificate will expire on %s.\n", timestamp);
+        printf (_("Certificate will expire on %s.\n"), timestamp);
 
         return STATE_OK;
 }

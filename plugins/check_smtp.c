@@ -351,7 +351,7 @@ process_arguments (int argc, char **argv)
 				socket_timeout = atoi (optarg);
 			}
 			else {
-				usage4 (_("Time interval must be a positive integer"));
+				usage4 (_("Timeout interval must be a positive integer"));
 			}
 			break;
 		case '4':
@@ -371,9 +371,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* help */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		}
 	}
 

@@ -239,7 +239,7 @@ main (int argc, char **argv)
 	/* and now, tally 'em up */
 	swapctl_res=swapctl(SC_LIST, tbl);
 	if(swapctl_res < 0){
-		perror("swapctl failed: ");
+		perror(_("swapctl failed: "));
 		result = STATE_WARNING;
 	}
 
@@ -278,7 +278,7 @@ main (int argc, char **argv)
 	/* and now, tally 'em up */
 	swapctl_res=swapctl(SWAP_STATS, ent, nswaps);
 	if(swapctl_res < 0){
-		perror("swapctl failed: ");
+		perror(_("swapctl failed: "));
 		result = STATE_WARNING;
 	}
 
@@ -388,7 +388,7 @@ process_arguments (int argc, char **argv)
 				break;
 			}
 			else {
-				usage (_("Warning threshold must be integer or percentage!\n"));
+				usage4 (_("Warning threshold must be integer or percentage!"));
 			}
 		case 'c':									/* critical size threshold */
 			if (is_intnonneg (optarg)) {
@@ -420,9 +420,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* error */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		}
 	}
 

@@ -194,9 +194,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':	/* usage */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		case 'h':	/* help */
 			print_help ();
 			exit (STATE_OK);

@@ -206,9 +206,7 @@ main (int argc, char *argv[])
 			print_revision (progname, revision);
 			return STATE_OK;
 		default:
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		}
 
 		if (optind < argc) {
@@ -488,7 +486,6 @@ smart_read_thresholds (int fd, thresholds_t * thresholds)
 }
 
 
-
 void
 print_help () 
 {
@@ -513,7 +510,6 @@ Usage: %s [DEVICE] [OPTION]\n\
  -n, --net-saint\n\
     Output suitable for Net Saint\n", progname);
 }
-
 
 
 void

@@ -95,7 +95,7 @@ main (int argc, char **argv)
 	fclose (fp);
 
 	if (verbose >= 2)
-		printf("command: %s\n", PS_COMMAND);
+		printf(_("command: %s\n"), PS_COMMAND);
 
 	/* run the command to check for the Nagios process.. */
 	child_process = spopen (PS_COMMAND);
@@ -206,8 +206,7 @@ process_arguments (int argc, char **argv)
 			expire_minutes = atoi (argv[2]);
 		else
 			die (STATE_UNKNOWN,
-								 _("Expiration time must be an integer (seconds)\nType '%s -h' for additional help\n"),
-								 progname);
+								 _("Expiration time must be an integer (seconds)\n"));
 		process_string = argv[3];
 		return OK;
 	}
@@ -220,9 +219,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf (_("%s: Unknown argument: %c\n\n"), progname, optopt);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
@@ -240,8 +237,7 @@ process_arguments (int argc, char **argv)
 				expire_minutes = atoi (optarg);
 			else
 				die (STATE_UNKNOWN,
-				     _("Expiration time must be an integer (seconds)\nType '%s -h' for additional help\n"),
-				     progname);
+				     _("Expiration time must be an integer (seconds)\n"));
 			break;
 		case 'v':
 			verbose++;
@@ -252,12 +248,10 @@ process_arguments (int argc, char **argv)
 
 	if (status_log == NULL)
 		die (STATE_UNKNOWN,
-		     _("You must provide the status_log\nType '%s -h' for additional help\n"),
-		     progname);
+		     _("You must provide the status_log\n"));
 	else if (process_string == NULL)
 		die (STATE_UNKNOWN,
-							 _("You must provide a process string\nType '%s -h' for additional help\n"),
-							 progname);
+							 _("You must provide a process string\n"));
 
 	return OK;
 }

@@ -123,15 +123,15 @@ main (int argc, char **argv)
 	}
 
 	if (strstr (ret[2], QSTAT_HOST_ERROR)) {
-		printf ("CRITICAL - Host not found\n");
+		printf (_("CRITICAL - Host not found\n"));
 		result = STATE_CRITICAL;
 	}
 	else if (strstr (ret[2], QSTAT_HOST_DOWN)) {
-		printf ("CRITICAL - Game server down or unavailable\n");
+		printf (_("CRITICAL - Game server down or unavailable\n"));
 		result = STATE_CRITICAL;
 	}
 	else if (strstr (ret[2], QSTAT_HOST_TIMEOUT)) {
-		printf ("CRITICAL - Game server timeout\n");
+		printf (_("CRITICAL - Game server timeout\n"));
 		result = STATE_CRITICAL;
 	}
 	else {
@@ -154,7 +154,6 @@ main (int argc, char **argv)
 
 	return result;
 }
-
 
 
 int
@@ -199,9 +198,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?': /* args not parsable */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		case 'h': /* help */
 			print_help ();
 			exit (STATE_OK);
@@ -269,6 +266,7 @@ process_arguments (int argc, char **argv)
 	return validate_arguments ();
 }
 
+
 int
 validate_arguments (void)
 {
@@ -289,9 +287,6 @@ validate_arguments (void)
 
 	return OK;
 }
-
-
-
 
 
 void

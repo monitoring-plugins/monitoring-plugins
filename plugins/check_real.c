@@ -330,7 +330,7 @@ process_arguments (int argc, char **argv)
 				check_critical_time = TRUE;
 			}
 			else {
-				usage4 (_("Critical time must be a nonnegative integer"));
+				usage4 (_("Critical time must be a positive integer"));
 			}
 			break;
 		case 'v':									/* verbose */
@@ -341,7 +341,7 @@ process_arguments (int argc, char **argv)
 				socket_timeout = atoi (optarg);
 			}
 			else {
-				usage4 (_("Time interval must be a nonnegative integer"));
+				usage4 (_("Timeout interval must be a positive integer"));
 			}
 			break;
 		case 'V':									/* version */
@@ -351,9 +351,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* usage */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		}
 	}
 
@@ -368,7 +366,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	if (server_address==NULL)
-		usage (_("You must provide a server to check\n"));
+		usage4 (_("You must provide a server to check"));
 
 	if (host_name==NULL)
 		host_name = strdup (server_address);

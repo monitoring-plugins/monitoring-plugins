@@ -98,25 +98,25 @@ main (int argc, char **argv)
 		/* check the slave status */
 		if (mysql_query (&mysql, "show slave status") != 0) {
 			mysql_close (&mysql);
-			die (STATE_CRITICAL, "slave query error: %s\n", mysql_error (&mysql));
+			die (STATE_CRITICAL, _("slave query error: %s\n"), mysql_error (&mysql));
 		}
 
 		/* store the result */
 		if ( (res = mysql_store_result (&mysql)) == NULL) {
 			mysql_close (&mysql);
-			die (STATE_CRITICAL, "slave store_result error: %s\n", mysql_error (&mysql));
+			die (STATE_CRITICAL, _("slave store_result error: %s\n"), mysql_error (&mysql));
 		}
 
 		/* fetch the first row */
 		if ( (row = mysql_fetch_row (res)) == NULL) {
 			mysql_free_result (res);
 			mysql_close (&mysql);
-			die (STATE_CRITICAL, "slave fetch row error: %s\n", mysql_error (&mysql));
+			die (STATE_CRITICAL, _("slave fetch row error: %s\n"), mysql_error (&mysql));
 		}
 
 		if (mysql_field_count (&mysql) == 12) {
 			/* mysql 3.23.x */
-			snprintf (slaveresult, SLAVERESULTSIZE, "Slave running: %s", row[6]);
+			snprintf (slaveresult, SLAVERESULTSIZE, _("Slave running: %s"), row[6]);
 			if (strcmp (row[6], "Yes") != 0) {
 				mysql_free_result (res);
 				mysql_close (&mysql);
@@ -149,7 +149,6 @@ main (int argc, char **argv)
 
 	return STATE_OK;
 }
-
 
 
 /* process command-line arguments */
@@ -212,9 +211,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* help */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		}
 	}
 
@@ -245,7 +242,6 @@ process_arguments (int argc, char **argv)
 }
 
 
-
 int
 validate_arguments (void)
 {
@@ -263,7 +259,6 @@ validate_arguments (void)
 
 	return OK;
 }
-
 
 
 void
@@ -302,7 +297,6 @@ a server listening on MySQL standard port %d will be checked\n"), MYSQL_PORT);
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 void

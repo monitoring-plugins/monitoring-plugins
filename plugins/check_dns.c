@@ -135,7 +135,7 @@ main (int argc, char **argv)
 				asprintf(&address, "%s,%s", address, temp_buffer);
 		}
 
-		else if (strstr (input_buffer, "Non-authoritative answer:")) {
+		else if (strstr (input_buffer, _("Non-authoritative answer:"))) {
 			non_authoritative = TRUE;
 		}
 
@@ -277,7 +277,6 @@ error_scan (char *input_buffer)
 }
 
 
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -313,9 +312,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?': /* args not parsable */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		case 'h': /* help */
 			print_help ();
 			exit (STATE_OK);
@@ -386,7 +383,6 @@ process_arguments (int argc, char **argv)
 }
 
 
-
 int
 validate_arguments ()
 {
@@ -395,7 +391,6 @@ validate_arguments ()
 	else
 		return OK;
 }
-
 
 
 void
@@ -430,7 +425,6 @@ specified in /etc/resolv.conf will be used.\n\n"));
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 void

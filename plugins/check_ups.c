@@ -133,48 +133,48 @@ main (int argc, char **argv)
 		}
 		else if ((status & (UPSSTATUS_OB | UPSSTATUS_LB)) ==
 						 (UPSSTATUS_OB | UPSSTATUS_LB)) {
-			asprintf (&ups_status, "On Battery, Low Battery");
+			asprintf (&ups_status, _("On Battery, Low Battery"));
 			result = STATE_CRITICAL;
 		}
 		else {
 			if (status & UPSSTATUS_OL) {
-				asprintf (&ups_status, "%s%s", ups_status, "Online");
+				asprintf (&ups_status, "%s%s", ups_status, _("Online"));
 			}
 			if (status & UPSSTATUS_OB) {
-				asprintf (&ups_status, "%s%s", ups_status, "On Battery");
+				asprintf (&ups_status, "%s%s", ups_status, _("On Battery"));
 				result = STATE_WARNING;
 			}
 			if (status & UPSSTATUS_LB) {
-				asprintf (&ups_status, "%s%s", ups_status, ", Low Battery");
+				asprintf (&ups_status, "%s%s", ups_status, _(", Low Battery"));
 				result = STATE_WARNING;
 			}
 			if (status & UPSSTATUS_CAL) {
-				asprintf (&ups_status, "%s%s", ups_status, ", Calibrating");
+				asprintf (&ups_status, "%s%s", ups_status, _(", Calibrating"));
 			}
 			if (status & UPSSTATUS_RB) {
-				asprintf (&ups_status, "%s%s", ups_status, ", Replace Battery");
+				asprintf (&ups_status, "%s%s", ups_status, _(", Replace Battery"));
 				result = STATE_WARNING;
 			}
 			if (status & UPSSTATUS_BYPASS) {
-				asprintf (&ups_status, "%s%s", ups_status, ", On Bypass");
+				asprintf (&ups_status, "%s%s", ups_status, _(", On Bypass"));
 			}
 			if (status & UPSSTATUS_OVER) {
-				asprintf (&ups_status, "%s%s", ups_status, ", Overload");
+				asprintf (&ups_status, "%s%s", ups_status, _(", Overload"));
 			}
 			if (status & UPSSTATUS_TRIM) {
-				asprintf (&ups_status, "%s%s", ups_status, ", Trimming");
+				asprintf (&ups_status, "%s%s", ups_status, _(", Trimming"));
 			}
 			if (status & UPSSTATUS_BOOST) {
-				asprintf (&ups_status, "%s%s", ups_status, ", Boosting");
+				asprintf (&ups_status, "%s%s", ups_status, _(", Boosting"));
 			}
 			if (status & UPSSTATUS_CHRG) {
-				asprintf (&ups_status, "%s%s", ups_status, ", Charging");
+				asprintf (&ups_status, "%s%s", ups_status, _(", Charging"));
 			}
 			if (status & UPSSTATUS_DISCHRG) {
-				asprintf (&ups_status, "%s%s", ups_status, ", Discharging");
+				asprintf (&ups_status, "%s%s", ups_status, _(", Discharging"));
 			}
 			if (status & UPSSTATUS_UNKOWN) {
-				asprintf (&ups_status, "%s%s", ups_status, ", Unknown");
+				asprintf (&ups_status, "%s%s", ups_status, _(", Unknown"));
 			}
 		}
 		asprintf (&message, "%sStatus=%s ", message, ups_status);
@@ -311,7 +311,7 @@ main (int argc, char **argv)
 	/* if the UPS does not support any options we are looking for, report an error */
 	if (supported_options == UPS_NONE) {
 		result = STATE_CRITICAL;
-		asprintf (&message, "UPS does not support any available options\n");
+		asprintf (&message, _("UPS does not support any available options\n"));
 	}
 
 	/* reset timeout */
@@ -335,7 +335,7 @@ determine_status (void)
 	res=get_ups_variable ("ups.status", recv_buffer, sizeof (recv_buffer));
 	if (res == NOSUCHVAR) return OK;
 	if (res != STATE_OK) {
-		printf ("Invalid response received from host\n");
+		printf (_("Invalid response received from host\n"));
 		return ERROR;
 	}
 
@@ -395,7 +395,7 @@ get_ups_variable (const char *varname, char *buf, size_t buflen)
 	if (process_tcp_request
 			(server_address, server_port, send_buffer, temp_buffer,
 			 sizeof (temp_buffer)) != STATE_OK) {
-		printf ("Invalid response received from host\n");
+		printf (_("Invalid response received from host\n"));
 		return ERROR;
 	}
 
@@ -403,7 +403,7 @@ get_ups_variable (const char *varname, char *buf, size_t buflen)
 	len = strlen(ptr);
 	if (len > 0 && ptr[len-1] == '\n') ptr[len-1]=0;
 	if (strcmp (ptr, "ERR UNKNOWN-UPS") == 0) {
-		printf ("CRITICAL - no such ups '%s' on that host\n", ups_name);
+		printf (_("CRITICAL - no such ups '%s' on that host\n"), ups_name);
 		return ERROR;
 	}
 
@@ -413,19 +413,19 @@ get_ups_variable (const char *varname, char *buf, size_t buflen)
 	}
 
 	if (strcmp (ptr, "ERR DATA-STALE") == 0) {
-		printf ("CRITICAL - UPS data is stale\n");
+		printf (_("CRITICAL - UPS data is stale\n"));
 		return ERROR;
 	}
 
 	if (strncmp (ptr, "ERR", 3) == 0) {
-		printf ("Unknown error: %s\n", ptr);
+		printf (_("Unknown error: %s\n"), ptr);
 		return ERROR;
 	}
 
 	ptr = temp_buffer + strlen (varname) + strlen (ups_name) + 6;
 	len = strlen(ptr);
 	if (len < 2 || ptr[0] != '"' || ptr[len-1] != '"') {
-		printf ("Error: unable to parse variable\n");
+		printf (_("Error: unable to parse variable\n"));
 		return ERROR;
 	}
 	strncpy (buf, ptr+1, len - 2);
@@ -481,9 +481,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* help */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		case 'H':									/* hostname */
 			if (is_host (optarg)) {
 				server_address = optarg;
@@ -503,7 +501,7 @@ process_arguments (int argc, char **argv)
 				server_port = atoi (optarg);
 			}
 			else {
-				usage2 ("Port must be a positive integer", optarg);
+				usage2 (_("Port must be a positive integer"), optarg);
 			}
 			break;
 		case 'c':									/* critical time threshold */
@@ -512,7 +510,7 @@ process_arguments (int argc, char **argv)
 				check_crit = TRUE;
 			}
 			else {
-				usage2 ("Critical time must be a positive integer", optarg);
+				usage2 (_("Critical time must be a positive integer"), optarg);
 			}
 			break;
 		case 'w':									/* warning time threshold */
@@ -521,7 +519,7 @@ process_arguments (int argc, char **argv)
 				check_warn = TRUE;
 			}
 			else {
-				usage2 ("Warning time must be a positive integer", optarg);
+				usage2 (_("Warning time must be a positive integer"), optarg);
 			}
 			break;
 		case 'v':									/* variable */
@@ -534,14 +532,14 @@ process_arguments (int argc, char **argv)
 			else if (!strcmp (optarg, "LOADPCT"))
 				check_variable = UPS_LOADPCT;
 			else
-				usage2 ("Unrecognized UPS variable", optarg);
+				usage2 (_("Unrecognized UPS variable"), optarg);
 			break;
 		case 't':									/* timeout */
 			if (is_intnonneg (optarg)) {
 				socket_timeout = atoi (optarg);
 			}
 			else {
-				usage ("Time interval must be a positive integer\n");
+				usage4 (_("Timeout interval must be a positive integer"));
 			}
 			break;
 		case 'V':									/* version */
@@ -568,17 +566,15 @@ process_arguments (int argc, char **argv)
 }
 
 
-
 int
 validate_arguments (void)
 {
 	if (! ups_name) {
-		printf ("Error : no ups indicated\n");
+		printf (_("Error : no ups indicated\n"));
 		return ERROR;
 	}
 	return OK;
 }
-
 
 
 void
@@ -639,7 +635,6 @@ http://www.networkupstools.org\n\n"));
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 void

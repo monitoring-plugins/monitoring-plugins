@@ -110,9 +110,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* help */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		case 'V':									/* version */
 			print_revision (progname, revision);
 			exit (STATE_OK);
@@ -135,7 +133,7 @@ process_arguments (int argc, char **argv)
 #ifdef USE_IPV6
 			address_family = AF_INET6;
 #else
-			usage (_("IPv6 support not available\n"));
+			usage4 (_("IPv6 support not available"));
 #endif
 			break;
 		case 'r':									/* remote version */
@@ -151,11 +149,9 @@ process_arguments (int argc, char **argv)
 				port = atoi (optarg);
 			}
 			else {
-				printf ("Port number nust be a positive integer: %s\n", optarg);
-				usage ("");
+				usage2 (_("Port number must be a positive integer"), optarg);
 			}
 		}
-
 	}
 
 	c = optind;

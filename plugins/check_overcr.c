@@ -272,15 +272,7 @@ main (int argc, char **argv)
 		die (STATE_UNKNOWN, _("Nothing to check!\n"));
 		break;
 	}
-
-	/* reset timeout */
-/* 	alarm (0); */
-
-/* 	printf (_("Reached end of program with no data returned\n")); */
-
-/* 	return result; */
 }
-
 
 
 /* process command-line arguments */
@@ -332,9 +324,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
@@ -349,8 +339,7 @@ process_arguments (int argc, char **argv)
 				server_port = atoi (optarg);
 			else
 				die (STATE_UNKNOWN,
-									 _("Server port an integer (seconds)\nType '%s -h' for additional help\n"),
-									 progname);
+									 _("Server port an integer\n"));
 			break;
 		case 'v':									/* variable */
 			if (strcmp (optarg, "LOAD") == 0) {
@@ -401,7 +390,6 @@ process_arguments (int argc, char **argv)
 	}
 	return OK;
 }
-
 
 
 void
@@ -457,7 +445,6 @@ Notes:\n\
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 void

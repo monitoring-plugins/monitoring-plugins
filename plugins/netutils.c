@@ -45,9 +45,9 @@ void
 socket_timeout_alarm_handler (int sig)
 {
 	if (sig == SIGALRM)
-		printf ("CRITICAL - Socket timeout after %d seconds\n", socket_timeout);
+		printf (_("CRITICAL - Socket timeout after %d seconds\n"), socket_timeout);
 	else
-		printf ("CRITICAL - Abnormal timeout after %d seconds\n", socket_timeout);
+		printf (_("CRITICAL - Abnormal timeout after %d seconds\n"), socket_timeout);
 
 	exit (STATE_CRITICAL);
 }
@@ -106,7 +106,7 @@ process_tcp_request2 (const char *server_address, int server_port,
 
 	send_result = send (sd, send_buffer, strlen (send_buffer), 0);
 	if (send_result<0 || (size_t)send_result!=strlen(send_buffer)) {
-		printf ("Send failed\n");
+		printf (_("Send failed\n"));
 		result = STATE_WARNING;
 	}
 
@@ -123,7 +123,7 @@ process_tcp_request2 (const char *server_address, int server_port,
 		if (!FD_ISSET (sd, &readfds)) {	/* it hasn't */
 			if (!recv_length) {
 				strcpy (recv_buffer, "");
-				printf ("No data was received from host!\n");
+				printf (_("No data was received from host!\n"));
 				result = STATE_WARNING;
 			}
 			else {										/* this one failed, but previous ones worked */
@@ -239,7 +239,7 @@ my_connect (const char *host_name, int port, int *sd, int proto)
 			              SOCK_DGRAM : SOCK_STREAM, res->ai_protocol);
 
 			if (*sd < 0) {
-				printf ("Socket creation failed\n");
+				printf (_("Socket creation failed\n"));
 				freeaddrinfo (res);
 				return STATE_UNKNOWN;
 			}
@@ -315,7 +315,7 @@ send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int
 
 	send_result = send (sd, send_buffer, strlen (send_buffer), 0);
 	if (send_result<0 || (size_t)send_result!=strlen(send_buffer)) {
-		printf ("Send failed\n");
+		printf (_("Send failed\n"));
 		result = STATE_WARNING;
 	}
 
@@ -330,7 +330,7 @@ send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int
 	/* make sure some data has arrived */
 	if (!FD_ISSET (sd, &readfds)) {
 		strcpy (recv_buffer, "");
-		printf ("No data was received from host!\n");
+		printf (_("No data was received from host!\n"));
 		result = STATE_WARNING;
 	}
 
@@ -339,7 +339,7 @@ send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int
 		if (recv_result == -1) {
 			strcpy (recv_buffer, "");
 			if (proto != IPPROTO_TCP)
-				printf ("Receive failed\n");
+				printf (_("Receive failed\n"));
 			result = STATE_WARNING;
 		}
 		else

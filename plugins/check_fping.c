@@ -242,9 +242,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
@@ -301,13 +299,11 @@ process_arguments (int argc, char **argv)
 		}
 	}
 
-
 	if (server_name == NULL)
-		usage (_("Hostname was not supplied\n\n"));
+		usage4 (_("Hostname was not supplied"));
 
 	return OK;
 }
-
 
 
 int
@@ -351,7 +347,6 @@ get_threshold (char *arg, char *rv[2])
 }
 
 
-
 void
 print_help (void)
 {
@@ -393,7 +388,6 @@ percentage of packet loss to trigger an alarm state.\n"));
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 void

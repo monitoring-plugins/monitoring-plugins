@@ -286,7 +286,6 @@ main (int argc, char **argv)
 }
 
 
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -334,9 +333,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* help */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		}
 	}
 
@@ -361,13 +358,11 @@ process_arguments (int argc, char **argv)
 }
 
 
-
 int
 validate_arguments (void)
 {
 	return OK;
 }
-
 
 
 void

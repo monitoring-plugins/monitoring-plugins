@@ -134,11 +134,11 @@ main (int argc, char *argv[])
  			if (ldap_set_option (ld, LDAP_OPT_X_TLS, &tls) != LDAP_SUCCESS)
  			{
  				/*ldap_perror(ld, "ldaps_option"); */
- 				printf ("Could not init TLS at port %i!\n", ld_port);
+ 				printf (_("Could not init TLS at port %i!\n"), ld_port);
 				return STATE_CRITICAL;
    		}
 #else
-			printf ("TLS not supported by the libraries!\n", ld_port);
+			printf (_("TLS not supported by the libraries!\n"), ld_port);
 			return STATE_CRITICAL;
 #endif /* LDAP_OPT_X_TLS */
 		} else {
@@ -157,11 +157,11 @@ main (int argc, char *argv[])
 			if (ldap_start_tls_s(ld, NULL, NULL) != LDAP_SUCCESS)
 			{
 				/*ldap_perror(ld, "ldap_start_tls"); */
-				printf ("Could not init startTLS at port %i!\n", ld_port);
+				printf (_("Could not init startTLS at port %i!\n"), ld_port);
 				return STATE_CRITICAL;
 			}
 #else
-			printf ("startTLS not supported by the library, needs LDAPv3!\n");
+			printf (_("startTLS not supported by the library, needs LDAPv3!\n"));
 			return STATE_CRITICAL;
 #endif /* HAVE_LDAP_START_TLS_S */
 		}
@@ -312,9 +312,7 @@ process_arguments (int argc, char **argv)
 #endif
 			break;
 		default:
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		}
 	}
 
@@ -328,19 +326,18 @@ process_arguments (int argc, char **argv)
 	return validate_arguments ();
 }
 
+
 int
 validate_arguments ()
 {
 	if (ld_host==NULL || strlen(ld_host)==0)
-		usage (_("please specify the host name\n"));
+		usage4 (_("Please specify the host name\n"));
 
 	if (ld_base==NULL || strlen(ld_base)==0)
-		usage (_("please specify the LDAP base\n"));
+		usage4 (_("Please specify the LDAP base\n"));
 
 	return OK;
-
 }
-
 
 
 void
@@ -390,7 +387,6 @@ print_help (void)
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 void

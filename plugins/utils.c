@@ -53,7 +53,7 @@ max_state (int a, int b)
 
 void usage (const char *msg)
 {
-	printf ("%s", msg);
+	printf ("%s\n", msg);
 	print_usage ();
 	exit (STATE_UNKNOWN);
 }
@@ -133,7 +133,7 @@ void
 timeout_alarm_handler (int signo)
 {
 	if (signo == SIGALRM) {
-		printf ("CRITICAL - Plugin timed out after %d seconds\n",
+		printf (_("CRITICAL - Plugin timed out after %d seconds\n"),
 						timeout_interval);
 		exit (STATE_CRITICAL);
 	}
@@ -430,7 +430,7 @@ strpcpy (char *dest, const char *src, const char *str)
 	if (dest == NULL || strlen (dest) < len)
 		dest = realloc (dest, len + 1);
 	if (dest == NULL)
-		die (STATE_UNKNOWN, "failed realloc in strpcpy\n");
+		die (STATE_UNKNOWN, _("failed realloc in strpcpy\n"));
 
 	strncpy (dest, src, len);
 	dest[len] = '\0';
@@ -472,7 +472,7 @@ strpcat (char *dest, const char *src, const char *str)
 
 	dest = realloc (dest, len + l2 + 1);
 	if (dest == NULL)
-		die (STATE_UNKNOWN, "failed malloc in strscat\n");
+		die (STATE_UNKNOWN, _("failed malloc in strscat\n"));
 
 	strncpy (dest + len, src, l2);
 	dest[len + l2] = '\0';

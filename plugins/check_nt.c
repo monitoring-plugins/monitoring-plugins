@@ -423,7 +423,7 @@ int main(int argc, char **argv){
 
 	case CHECK_NONE:
 	default:
-		usage (_("Please specify a variable to check"));
+		usage4 (_("Please specify a variable to check"));
 		break;
 
 	}
@@ -487,14 +487,12 @@ int process_arguments(int argc, char **argv){
 		switch (c)
 			{
 			case '?': /* print short usage statement if args not parsable */
-				printf("%s: Unknown argument: %s\n\n",progname,optarg);
-				print_usage();
-				exit(STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 			case 'h': /* help */
 				print_help();
 				exit(STATE_OK);
 			case 'V': /* version */
-				print_revision(progname,"$Revision$");
+				print_revision(progname,revision);
 				exit(STATE_OK);
 			case 'H': /* hostname */
 				if (server_address)	free(server_address);
@@ -507,7 +505,7 @@ int process_arguments(int argc, char **argv){
 				if (is_intnonneg(optarg))
 					server_port=atoi(optarg);
 				else
-					die(STATE_UNKNOWN,_("Server port an integer (seconds)\nType '%s -h' for additional help\n"),progname);
+					die(STATE_UNKNOWN,_("Server port must be an integer\n"));
 				break;
 			case 'v':
 				if(strlen(optarg)<4)
@@ -573,7 +571,7 @@ void fetch_data (const char *address, int port, const char *sendb) {
 	result=process_tcp_request(address, port, sendb, recv_buffer,sizeof(recv_buffer));
 
 	if(result!=STATE_OK)
-		die (result, "could not fetch information from server\n");
+		die (result, _("could not fetch information from server\n"));
 		
 	if (!strncmp(recv_buffer,"ERROR",5))
 		die (STATE_UNKNOWN, "NSClient - %s\n",recv_buffer);

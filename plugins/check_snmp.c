@@ -251,7 +251,7 @@ main (int argc, char **argv)
 		    eval_method[i] & WARN_NE) {
 			p2 = strpbrk (p2, "0123456789");
 			if (p2 == NULL) 
-				die (STATE_UNKNOWN,"No valid data returned");
+				die (STATE_UNKNOWN,_("No valid data returned"));
 			response_value[i] = strtoul (p2, NULL, 10);
 			iresult = check_num (i);
 			asprintf (&show, "%lu", response_value[i]);
@@ -398,9 +398,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':	/* usage */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		case 'h':	/* help */
 			print_help ();
 			exit (STATE_OK); 
@@ -795,7 +793,7 @@ thisarg (char *str)
 	str += strspn (str, " \t\r\n");	/* trim any leading whitespace */
 	if (strstr (str, "'") == str) {	/* handle SIMPLE quoted strings */
 		if (strlen (str) == 1 || !strstr (str + 1, "'"))
-			die (STATE_UNKNOWN, "Unbalanced quotes\n");
+			die (STATE_UNKNOWN, _("Unbalanced quotes\n"));
 	}
 	return str;
 }

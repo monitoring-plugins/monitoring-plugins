@@ -140,9 +140,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
@@ -151,13 +149,13 @@ process_arguments (int argc, char **argv)
 			exit (STATE_OK);
 		case 'c':									/* critical */
 			if (!is_intnonneg (optarg))
-				usage (_("Critical threshold must be a positive integer\n"));
+				usage4 (_("Critical threshold must be a positive integer"));
 			else
 				cusers = atoi (optarg);
 			break;
 		case 'w':									/* warning */
 			if (!is_intnonneg (optarg))
-				usage (_("Warning threshold must be a positive integer\n"));
+				usage4 (_("Warning threshold must be a positive integer"));
 			else
 				wusers = atoi (optarg);
 			break;
@@ -167,14 +165,14 @@ process_arguments (int argc, char **argv)
 	c = optind;
 	if (wusers == -1 && argc > c) {
 		if (is_intnonneg (argv[c]) == FALSE)
-			usage (_("Warning threshold must be a positive integer\n"));
+			usage4 (_("Warning threshold must be a positive integer"));
 		else
 			wusers = atoi (argv[c++]);
 	}
 
 	if (cusers == -1 && argc > c) {
 		if (is_intnonneg (argv[c]) == FALSE)
-			usage (_("Warning threshold must be a positive integer\n"));
+			usage4 (_("Warning threshold must be a positive integer"));
 		else
 			cusers = atoi (argv[c]);
 	}
@@ -208,7 +206,6 @@ system and generates an error if the number exceeds the thresholds specified.\n"
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 void

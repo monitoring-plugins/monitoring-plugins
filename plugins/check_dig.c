@@ -81,9 +81,9 @@ main (int argc, char **argv)
 	if (verbose) {
 		printf ("%s\n", command_line);
 		if(expected_address != NULL) {
-			printf ("Looking for: '%s'\n", expected_address);
+			printf (_("Looking for: '%s'\n"), expected_address);
 		} else {
-			printf ("Looking for: '%s'\n", query_address);
+			printf (_("Looking for: '%s'\n"), query_address);
 		}
 	}
 
@@ -214,9 +214,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* help */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);

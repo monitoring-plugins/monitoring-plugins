@@ -71,9 +71,7 @@ main (int argc, char **argv)
 			break;
 		case '?':
 		default:
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		}
 	}
 

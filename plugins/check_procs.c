@@ -343,9 +343,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* help */
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage2 (_("Unknown argument"), optarg);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
@@ -368,7 +366,7 @@ process_arguments (int argc, char **argv)
 			else if (sscanf (optarg, "%d:", &cmin) == 1)
 				break;
 			else
-				usage (_("Critical Process Count must be an integer!\n\n"));
+				usage4 (_("Critical Process Count must be an integer!"));
 			break;							 
 		case 'w':									/* warning threshold */
 			if (is_integer (optarg))
@@ -380,7 +378,7 @@ process_arguments (int argc, char **argv)
 			else if (sscanf (optarg, "%d:", &wmin) == 1)
 				break;
 			else
-				usage (_("Warning Process Count must be an integer!\n\n"));
+				usage4 (_("Warning Process Count must be an integer!"));
 			break;
 		case 'p':									/* process id */
 			if (sscanf (optarg, "%d%[^0-9]", &ppid, tmp) == 1) {
@@ -388,7 +386,7 @@ process_arguments (int argc, char **argv)
 				options |= PPID;
 				break;
 			}
-			usage2 (_("%s: Parent Process ID must be an integer!\n\n"),  progname);
+			usage4 (_("Parent Process ID must be an integer!"));
 		case 's':									/* status */
 			if (statopts)
 				break;
@@ -403,13 +401,13 @@ process_arguments (int argc, char **argv)
 				pw = getpwuid ((uid_t) uid);
 				/*  check to be sure user exists */
 				if (pw == NULL)
-					usage2 (_("UID %s was not found\n"), optarg);
+					usage2 (_("UID %s was not found"), optarg);
 			}
 			else {
 				pw = getpwnam (optarg);
 				/*  check to be sure user exists */
 				if (pw == NULL)
-					usage2 (_("User name %s was not found\n"), optarg);
+					usage2 (_("User name %s was not found"), optarg);
 				/*  then get uid */
 				uid = pw->pw_uid;
 			}
@@ -443,14 +441,14 @@ process_arguments (int argc, char **argv)
 				options |= RSS;
 				break;
 			}
-			usage2 (_("%s: RSS must be an integer!\n\n"), progname);
+			usage4 (_("RSS must be an integer!"));
 		case 'z':					/* VSZ */
 			if (sscanf (optarg, "%d%[^0-9]", &vsz, tmp) == 1) {
 				asprintf (&fmt, _("%s%sVSZ >= %d"), (fmt ? fmt : ""), (options ? ", " : ""), vsz);
 				options |= VSZ;
 				break;
 			}
-			usage2 (_("%s: VSZ must be an integer!\n\n"), progname);
+			usage4 (_("VSZ must be an integer!"));
 		case 'P':					/* PCPU */
 			/* TODO: -P 1.5.5 is accepted */
 			if (sscanf (optarg, "%f%[^0-9.]", &pcpu, tmp) == 1) {
@@ -458,7 +456,7 @@ process_arguments (int argc, char **argv)
 				options |= PCPU;
 				break;
 			}
-			usage2 (_("%s: PCPU must be a float!\n\n"), progname);
+			usage4 (_("PCPU must be a float!"));
 		case 'm':
 			asprintf (&metric_name, "%s", optarg);
 			if ( strcmp(optarg, "PROCS") == 0) {
@@ -482,10 +480,7 @@ process_arguments (int argc, char **argv)
 				break;
 			}
 				
-			printf (_("%s: metric must be one of PROCS, VSZ, RSS, CPU, ELAPSED!\n\n"),
-				progname);
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			usage4 (_("Metric must be one of PROCS, VSZ, RSS, CPU, ELAPSED!"));
 		case 'v':									/* command */
 			verbose++;
 			break;
@@ -588,8 +583,6 @@ check_thresholds (int value)
 }
 
 
-
-
 /* convert the elapsed time to seconds */
 int
 convert_to_seconds(char *etime) {
@@ -651,7 +644,6 @@ convert_to_seconds(char *etime) {
 	}
 	return total;
 }
-
 
 
 void
