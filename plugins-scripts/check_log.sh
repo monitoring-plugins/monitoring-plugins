@@ -74,27 +74,27 @@ REVISION=`echo '$Revision$' | /bin/sed -e 's/[^0-9.]//g'`
 . $PROGPATH/utils.sh
 
 print_usage() {
-	echo "Usage: $PROGNAME -F logfile -O oldlog -q query"
-	echo "Usage: $PROGNAME --help"
-	echo "Usage: $PROGNAME --version"
+    echo "Usage: $PROGNAME -F logfile -O oldlog -q query"
+    echo "Usage: $PROGNAME --help"
+    echo "Usage: $PROGNAME --version"
 }
 
 print_help() {
-	print_revision $PROGNAME $REVISION
-	echo ""
-	print_usage
-	echo ""
-	echo "Log file pattern detector plugin for Nagios"
-	echo ""
-	support
+    print_revision $PROGNAME $REVISION
+    echo ""
+    print_usage
+    echo ""
+    echo "Log file pattern detector plugin for Nagios"
+    echo ""
+    support
 }
 
 # Make sure the correct number of command line
 # arguments have been supplied
 
 if [ $# -lt 1 ]; then
-	print_usage
-	exit $STATE_UNKNOWN
+    print_usage
+    exit $STATE_UNKNOWN
 fi
 
 # Grab the command line arguments
@@ -104,69 +104,69 @@ fi
 #query=$3
 exitstatus=$STATE_WARNING #default
 while test -n "$1"; do
-	case "$1" in
-		--help)
-			print_help
-			exit $STATE_OK
-			;;
-		-h)
-			print_help
-			exit $STATE_OK
-			;;
-		--version)
-			print_revision $PROGNAME $VERSION
-			exit $STATE_OK
-			;;
-		-V)
-			print_revision $PROGNAME $VERSION
-			exit $STATE_OK
-			;;
-		--filename)
-			logfile=$2
-			shift
-			;;
-		-F)
-			logfile=$2
-			shift
-			;;
-		--oldlog)
-			oldlog=$2
-			shift
-			;;
-		-O)
-			oldlog=$2
-			shift
-			;;
-		--query)
-			query=$2
-			shift
-			;;
-		-q)
-			query=$2
-			shift
-			;;
-		-x)
-			exitstatus=$2
-			shift
-			;;
-		--exitstatus)
-			exitstatus=$2
-			shift
-			;;
-		*)
-			echo "Unknown argument: $1"
-			print_usage
-			exit $STATE_UNKNOWN
-			;;
-	esac
-	shift
+    case "$1" in
+        --help)
+            print_help
+            exit $STATE_OK
+            ;;
+        -h)
+            print_help
+            exit $STATE_OK
+            ;;
+        --version)
+            print_revision $PROGNAME $VERSION
+            exit $STATE_OK
+            ;;
+        -V)
+            print_revision $PROGNAME $VERSION
+            exit $STATE_OK
+            ;;
+        --filename)
+            logfile=$2
+            shift
+            ;;
+        -F)
+            logfile=$2
+            shift
+            ;;
+        --oldlog)
+            oldlog=$2
+            shift
+            ;;
+        -O)
+            oldlog=$2
+            shift
+            ;;
+        --query)
+            query=$2
+            shift
+            ;;
+        -q)
+            query=$2
+            shift
+            ;;
+        -x)
+            exitstatus=$2
+            shift
+            ;;
+        --exitstatus)
+            exitstatus=$2
+            shift
+            ;;
+        *)
+            echo "Unknown argument: $1"
+            print_usage
+            exit $STATE_UNKNOWN
+            ;;
+    esac
+    shift
 done
 
 # If the source log file doesn't exist, exit
 
 if [ ! -e $logfile ]; then
-	$ECHO "Log check error: Log file $logfile does not exist!\n"
-	exit 2
+    $ECHO "Log check error: Log file $logfile does not exist!\n"
+    exit $STATE_UNKNOWN
 fi
 
 # If the old log file doesn't exist, this must be the first time
@@ -174,21 +174,22 @@ fi
 # the old diff file and exit
 
 if [ ! -e $oldlog ]; then
-	$CAT $logfile > $oldlog
-	$ECHO "Log check data initialized...\n"
-	exit 0
+    $CAT $logfile > $oldlog
+    $ECHO "Log check data initialized...\n"
+    exit $STATE_OK
 fi
 
 # The old log file exists, so compare it to the original log now
 
 # The temporary file that the script should use while
 # processing the log file.
-if [-x /bin/mktemp]; then
-	tempdiff="/bin/mktemp /tmp/check_log.XXXXXXXXXX"
+if [ -x /bin/mktemp ]; then
+    tempdiff=`/bin/mktemp /tmp/check_log.XXXXXXXXXX`
 else
-	tempdiff="/tmp/check_log.`/bin/date '+%H%M%S'`"
-  /bin/touch $tempdiff
-	chmod 600 $tempdiff
+    tempdiff=`/bin/date '+%H%M%S'`
+    tempdiff="/tmp/check_log.${tempdiff}"
+    /bin/touch $tempdiff
+    chmod 600 $tempdiff
 fi
 
 $DIFF $logfile $oldlog > $tempdiff
@@ -203,12 +204,11 @@ $RM -f $tempdiff
 $CAT $logfile > $oldlog
 
 if [ "$count" = "0" ]; then # no matches, exit with no error
-	$ECHO "Log check ok - 0 pattern matches found\n"
-	exitstatus=0
+    $ECHO "Log check ok - 0 pattern matches found\n"
+    exitstatus=$STATE_OK
 else # Print total matche count and the last entry we found
-	$ECHO "($count) $lastentry"
+    $ECHO "($count) $lastentry"
+    exitstatus=$STATE_CRITICAL
 fi
 
-exit exitstatus
-
-
+exit $exitstatus
