@@ -643,28 +643,30 @@ check_http (void)
 
 		/* check the return code */
 		/* server errors result in a critical state */
-		if (strstr (status_line, "500") ||
-	  	  strstr (status_line, "501") ||
-	    	strstr (status_line, "502") ||
-		    strstr (status_line, "503")) {
-			die (STATE_CRITICAL, _("HTTP CRITICAL: %s\n"), status_line);
+		if (strstr (status_line, "500") || strstr (status_line, "501") ||
+		    strstr (status_line, "502") || strstr (status_line, "503") ||
+		    strstr (status_line, "504") || strstr (status_line, "505")) {
+ 			die (STATE_CRITICAL, _("HTTP CRITICAL: %s\n"), status_line);
 		}
 
 		/* client errors result in a warning state */
-		if (strstr (status_line, "400") ||
-	  	  strstr (status_line, "401") ||
-	    	strstr (status_line, "402") ||
-		    strstr (status_line, "403") ||
-		    strstr (status_line, "404")) {
+		if (strstr (status_line, "400") || strstr (status_line, "401") ||
+		    strstr (status_line, "402") || strstr (status_line, "403") ||
+		    strstr (status_line, "404") || strstr (status_line, "405") ||
+		    strstr (status_line, "406") || strstr (status_line, "407") ||
+		    strstr (status_line, "408") || strstr (status_line, "409") ||
+		    strstr (status_line, "410") || strstr (status_line, "411") ||
+		    strstr (status_line, "412") || strstr (status_line, "413") ||
+		    strstr (status_line, "414") || strstr (status_line, "415") ||
+		    strstr (status_line, "416") || strstr (status_line, "417")) {
 			die (STATE_WARNING, _("HTTP WARNING: %s\n"), status_line);
 		}
 
 		/* check redirected page if specified */
-		if (strstr (status_line, "300") ||
-	  	  strstr (status_line, "301") ||
-	    	strstr (status_line, "302") ||
-		    strstr (status_line, "303") ||
-		    strstr (status_line, "304")) {
+		if (strstr (status_line, "300") || strstr (status_line, "301") ||
+		    strstr (status_line, "302") || strstr (status_line, "303") ||
+		    strstr (status_line, "304") || strstr (status_line, "305") ||
+		    strstr (status_line, "306")) {
 			if (onredirect == STATE_DEPENDENT) {
 
 				asprintf (&orig_url, "%s", server_url);
