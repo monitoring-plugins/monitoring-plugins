@@ -4,7 +4,7 @@ Nagios Plugins README
 * For instructions on installing these plugins for use with Nagios, read
   the INSTALL file.
 
-* For information on what chages have been made or plugin have been added,
+* For information on what changes have been made or plugin have been added,
   read the Changelog file.
 
 * Some plugins require that you have additional programs and/or
@@ -13,14 +13,11 @@ Nagios Plugins README
   usually not compiled. Read the REQUIREMENTS file for more information.
 
 * Individual plugins are self documenting.  All plugins that comply with
-  the basic guidleines for development will provide detailed help when
+  the basic guidelines for development will provide detailed help when
   invoked with the '-h' option ('--help' also, if long options are enabled).
 
 * The file command.cfg contains example configurations for many of the
   plugins
-
-* The check_nt plugin is no longer distributed here.  See the main NSClient
-  distribution at http://nsclient.ready2run.nl
 
 You can check for the latest plugins at:
   ftp://download.sourceforge.net/pub/sourceforge/nagiosplug
@@ -30,7 +27,7 @@ Send mail to nagiosplug-help@lists.sourceforge.net for assistance.  Please
 include the OS type and version that you are using.  Also, run the plugin with
 the '-v' option and provide the resulting version information.  Of course, 
 there may be additional diagnostic information required as well.  Use good
-judgement.
+judgment.
 
 Send mail to nagiosplug-devel@lists.sourceforge.net for developer discussions.
 

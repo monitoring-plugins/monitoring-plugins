@@ -11,10 +11,10 @@ Foundation Coding standards (which are currently available at
 http://www.gnu.org/prep/standards_toc.html). We also follow most of
 the FSF guidelines. Developers may suggest deviations from the FSF
 style recommendations, which will be considered by open discussion on
-the netsaintplug-devel mailing list. Any such deviations will apply to
+the nagiosplug-devel mailing list. Any such deviations will apply to
 the entire code base to ensure consistency.
 
-Currently, the exceptions to FSF recommendatios are roughly equivalent
+Currently, the exceptions to FSF recommendations are roughly equivalent
 to GNU indent with invoked as 'indent -ts 2 -br'. Specifically, the
 exceptions are as follows:
 
