@@ -51,6 +51,7 @@ float w_dfp = -1.0;
 float c_dfp = -1.0;
 char *path = NULL;
 int verbose = FALSE;
+int display_mntp = FALSE;
 
 int
 main (int argc, char **argv)
@@ -64,6 +65,7 @@ main (int argc, char **argv)
 	char *command_line = NULL;
 	char input_buffer[MAX_INPUT_BUFFER] = "";
 	char file_system[MAX_INPUT_BUFFER] = "";
+	char mntp[MAX_INPUT_BUFFER] = "";
 	char outbuf[MAX_INPUT_BUFFER] = "";
 	char *output = NULL;
 
@@ -92,15 +94,16 @@ main (int argc, char **argv)
 			continue;
 
 		if (sscanf
-				(input_buffer, "%s %d %d %d %d%%", file_system, &total_disk,
-				 &used_disk, &free_disk, &usp) == 5
-				|| sscanf (input_buffer, "%s %*s %d %d %d %d%%", file_system,
-									 &total_disk, &used_disk, &free_disk, &usp) == 5) {
+				(input_buffer, "%s %d %d %d %d%% %s", file_system, &total_disk,
+				 &used_disk, &free_disk, &usp, &mntp) == 6
+				|| sscanf (input_buffer, "%s %*s %d %d %d %d%% %s", file_system,
+				 &total_disk, &used_disk, &free_disk, &usp, &mntp) == 6) {
+
 			result = max (result, check_disk (usp, free_disk));
 			len =
 				snprintf (outbuf, MAX_INPUT_BUFFER - 1,
 									" [%d kB (%d%%) free on %s]", free_disk, 100 - usp,
-									file_system);
+									display_mntp ? mntp : file_system);
 			outbuf[len] = 0;
 			output = strscat (output, outbuf);
 		}
@@ -121,8 +124,8 @@ main (int argc, char **argv)
 	if (spclose (child_process))
 		result = max (result, STATE_WARNING);
 
-	else if (usp < 0)
-		printf ("Disk %s not mounted or nonexistant\n", argv[3]);
+	if (usp < 0)
+		printf ("Disk \"%s\" not mounted or nonexistant\n", path);
 	else if (result == STATE_UNKNOWN)
 		printf ("Unable to read output\n%s\n%s\n", command_line, input_buffer);
 	else
@@ -183,6 +186,7 @@ call_getopt (int argc, char **argv)
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
+		{"mountpoint", no_argument, 0, 'm'},
 		{0, 0, 0, 0}
 	};
 #endif
@@ -190,9 +194,9 @@ call_getopt (int argc, char **argv)
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
-			getopt_long (argc, argv, "+?Vhvt:c:w:p:", long_options, &option_index);
+			getopt_long (argc, argv, "+?Vhvt:c:w:p:m", long_options, &option_index);
 #else
-		c = getopt (argc, argv, "+?Vhvt:c:w:p:");
+		c = getopt (argc, argv, "+?Vhvt:c:w:p:m");
 #endif
 
 		i++;
@@ -254,6 +258,9 @@ call_getopt (int argc, char **argv)
 			break;
 		case 'v':									/* verbose */
 			verbose = TRUE;
+			break;
+		case 'm': /* display mountpoint */
+			display_mntp = TRUE;
 			break;
 		case 'V':									/* version */
 			print_revision (my_basename (argv[0]), "$Revision$");
@@ -335,6 +342,8 @@ print_help (void)
 		 "   Exit with CRITCAL status if more than PERCENT of disk space is free\n"
 		 " -p, --path=PATH, --partition=PARTTION\n"
 		 "    Path or partition (checks all mounted partitions if unspecified)\n"
+		 " -m, --mountpoint\n"
+		 "    Display the mountpoint instead of the partition\n"
 		 " -v, --verbose\n"
 		 "    Show details for command-line debugging (do not use with nagios server)\n"
 		 " -h, --help\n"
@@ -347,7 +356,7 @@ void
 print_usage (void)
 {
 	printf
-		("Usage: %s -w limit -c limit [-p path] [-t timeout] [--verbose]\n"
+		("Usage: %s -w limit -c limit [-p path] [-t timeout] [-m] [--verbose]\n"
 		 "       %s (-h|--help)\n"
 		 "       %s (-V|--version)\n", PROGNAME, PROGNAME, PROGNAME);
 }
