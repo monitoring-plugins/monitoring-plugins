@@ -112,8 +112,8 @@ main (int argc, char **argv)
 		 HPJD_GD_DOOR_OPEN, HPJD_GD_PAPER_OUTPUT, HPJD_GD_STATUS_DISPLAY);
 
 	/* get the command to run */
-	sprintf (command_line, "%s -m : -v 1 %s -c %s %s", PATH_TO_SNMPGET, address,
-					 community, query_string);
+	sprintf (command_line, "%s -m : -v 1 -c %s %s %s", PATH_TO_SNMPGET, community, 
+									address, query_string);
 
 	/* run the command */
 	child_process = spopen (command_line);
@@ -261,9 +261,15 @@ main (int argc, char **argv)
 	}
 
 	/* WARNING if output found on stderr */
-	if (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
+	if (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
 		result = max_state (result, STATE_WARNING);
+		/* remove CRLF */
+		if (input_buffer[strlen (input_buffer) - 1] == '\n')
+			input_buffer[strlen (input_buffer) - 1] = 0;
+		sprintf (error_message, "%s", input_buffer );
 
+	}
+	
 	/* close stderr */
 	(void) fclose (child_stderr);
 
@@ -281,7 +287,10 @@ main (int argc, char **argv)
 
 		/* might not be the problem, but most likely is.. */
 		result = STATE_UNKNOWN;
-		sprintf (error_message, "Timeout: No response from %s\n", address);
+		char *temp ;
+		asprintf (&temp, error_message);
+		sprintf (error_message, "%s : Timeout from host %s\n", temp, address );
+		 
 	}
 
 	/* if we had no read errors, check the printer status results... */
