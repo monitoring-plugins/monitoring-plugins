@@ -327,6 +327,7 @@ AC_ARG_ENABLE([emulate-getaddrinfo],
                              [enable getaddrinfo emulation (default=no)]),
               ,
               enable_emulate_getaddrinfo=no)
+
 AC_ARG_WITH(lwres,
             ACX_HELP_STRING([--with-lwres=DIR],
                            [use lwres library for getaddrinfo (default=no)]),
@@ -384,7 +385,9 @@ if test x$have_getaddrinfo != xno ; then
                   [Does system provide RFC 2553/Posix getaddrinfo?])
 else
         if test x$enable_emulate_getaddrinfo != xyes ; then
-                AC_MSG_ERROR([getaddrinfo not found: try --with-lwres or --enable-emulate-getaddrinfo])
+dnl                AC_MSG_ERROR([getaddrinfo not found: try --with-lwres or --enable-emulate-getaddrinfo])
+               enable_emulate_getaddrinfo=yes
+               AC_MSG_WARN([enabling getaddrinfo emulation])
         fi
 	EXTRA_NETOBJS="$EXTRA_NETOBJS getaddrinfo.o"
 fi
