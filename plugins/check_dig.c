@@ -88,11 +88,11 @@ main (int argc, char **argv)
 				input_buffer[strcspn (input_buffer, "\r\n")] = '\0';
 
 			if (strstr (input_buffer, query_address) == input_buffer) {
-				output = strscpy (output, input_buffer);
+				asprintf (&output, input_buffer);
 				result = STATE_OK;
 			}
 			else {
-				strscpy (output, "Server not found in ANSWER SECTION");
+				asprintf (&output, "Server not found in ANSWER SECTION");
 				result = STATE_WARNING;
 			}
 
@@ -102,7 +102,7 @@ main (int argc, char **argv)
 	}
 
 	if (result != STATE_OK) {
-		strscpy (output, "No ANSWER SECTION found");
+		asprintf (&output, "No ANSWER SECTION found");
 	}
 
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
@@ -110,7 +110,7 @@ main (int argc, char **argv)
 		result = max_state (result, STATE_WARNING);
 		printf ("%s", input_buffer);
 		if (strlen (output) == 0)
-			strscpy (output, 1 + index (input_buffer, ':'));
+			asprintf (&output, 1 + index (input_buffer, ':'));
 	}
 
 	(void) fclose (child_stderr);
@@ -119,13 +119,13 @@ main (int argc, char **argv)
 	if (spclose (child_process)) {
 		result = max_state (result, STATE_WARNING);
 		if (strlen (output) == 0)
-			strscpy (output, "dig returned error status");
+			asprintf (&output, "dig returned error status");
 	}
 
 	(void) time (&end_time);
 
-	if (output == NULL || strcmp (output, "") == 0 || strlen (output) == 0 || strspn (output, " \t\r\n") == strlen (output))
-		strscpy (output, " Probably a non-existent host/domain");
+	if (output == NULL || strlen (output) == 0)
+		asprintf (&output, " Probably a non-existent host/domain");
 
 	if (result == STATE_OK)
 		printf ("DNS ok - %d seconds response time (%s)\n",
@@ -216,7 +216,7 @@ process_arguments (int argc, char **argv)
 			}
 		}
 		else {
-			dns_server = strscpy (NULL, "127.0.0.1");
+			asprintf (&dns_server, "127.0.0.1");
 		}
 	}
 
