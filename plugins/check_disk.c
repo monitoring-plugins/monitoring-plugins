@@ -138,6 +138,7 @@ enum
 int process_arguments (int, char **);
 int validate_arguments (void);
 int check_disk (int usp, int free_disk);
+int walk_name_list (struct name_list *list, const char *name);
 void print_help (void);
 void print_usage (void);
 
@@ -168,6 +169,7 @@ main (int argc, char **argv)
 	char file_system[MAX_INPUT_BUFFER];
 	char mntp[MAX_INPUT_BUFFER];
 	char *output = "";
+	char *details = "";
 
   struct mount_entry *me;
 	struct fs_usage fsp;
@@ -181,11 +183,13 @@ main (int argc, char **argv)
   for (me = mount_list; me; me = me->me_next) {
 
 		if ((dev_select_list &&
-		     ! strcmp (dev_select_list->name, me->me_devname)) ||
+		     walk_name_list (dev_select_list, me->me_devname)) ||
 		    (path_select_list &&
-		     ! strcmp (path_select_list->name, me->me_mountdir)))
+		     walk_name_list (path_select_list, me->me_mountdir)))
 			get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
 		else if (dev_select_list || path_select_list)
+			continue;
+		else if (fs_exclude_list && walk_name_list (fs_exclude_list, me->me_type))
 			continue;
 		else
 			get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
@@ -194,19 +198,36 @@ main (int argc, char **argv)
 			usp = (fsp.fsu_blocks - fsp.fsu_bavail) * 100 / fsp.fsu_blocks;
 			disk_result = check_disk (usp, fsp.fsu_bavail);
 			result = max_state (disk_result, result);
-			asprintf (&output, "%s %llu of %llu MB (%2.0f%%) free on %s\n",
-			          output,
+			if (disk_result==STATE_OK && erronly && !verbose)
+				continue;
+
+			if (disk_result!=STATE_OK || verbose>=0) 
+				asprintf (&output, "%s [%llu MB (%2.0f%%) free on %s]",
+				          output,
+				          fsp.fsu_bavail*fsp.fsu_blocksize/1024/1024,
+				          (double)fsp.fsu_bavail*100/fsp.fsu_blocks,
+				          (!strcmp(file_system, "none") || display_mntp) ? me->me_devname : me->me_mountdir);
+			asprintf (&details, "%s\n%llu of %llu MB (%2.0f%%) free on %s (type %s mounted on %s)",
+			          details,
 			          fsp.fsu_bavail*fsp.fsu_blocksize/1024/1024,
 			          fsp.fsu_blocks*fsp.fsu_blocksize/1024/1024,
 			          (double)fsp.fsu_bavail*100/fsp.fsu_blocks,
-			          display_mntp ? me->me_devname : me->me_mountdir);
+			          me->me_devname,
+			          me->me_type,
+			          me->me_mountdir);
 		}
 
 	}
 
-	terminate (result, "DISK %s %s\n", state_text (result), output);
+	if (verbose > 2)
+		asprintf (&output, "%s%s", output, details);
+
+	terminate (result, "DISK %s%s\n", state_text (result), output, details);
 }
 
+
+
+
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -215,6 +236,7 @@ process_arguments (int argc, char **argv)
   struct name_list *se;
   struct name_list **pathtail = &path_select_list;
   struct name_list **devtail = &dev_select_list;
+  struct name_list **fstail = &fs_exclude_list;
 
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -243,7 +265,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "+?Vqhvet:c:w:p:d:x:m", long_options, &option_index);
+		c = getopt_long (argc, argv, "+?Vqhvet:c:w:p:d:x:X:m", long_options, &option_index);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -292,14 +314,23 @@ process_arguments (int argc, char **argv)
 		case 'p':									/* path or partition */
 			se = (struct name_list *) malloc (sizeof (struct name_list));
 			se->name = strdup (optarg);
+			se->name_next = NULL;
 			*pathtail = se;
 			pathtail = &se->name_next;
 			break;
 		case 'd':									/* path or partition */
 			se = (struct name_list *) malloc (sizeof (struct name_list));
 			se->name = strdup (optarg);
+			se->name_next = NULL;
 			*devtail = se;
 			devtail = &se->name_next;
+			break;
+		case 'X':									/* path or partition */
+			se = (struct name_list *) malloc (sizeof (struct name_list));
+			se->name = strdup (optarg);
+			se->name_next = NULL;
+			*fstail = se;
+			fstail = &se->name_next;
 			break;
 		case 'v':									/* verbose */
 			verbose++;
@@ -341,6 +372,8 @@ process_arguments (int argc, char **argv)
 	return validate_arguments ();
 }
 
+
+
 int
 validate_arguments ()
 {
@@ -367,8 +400,11 @@ validate_arguments ()
 	}
 }
 
+
+
+
 int
-check_disk (usp, free_disk)
+check_disk (int usp, int free_disk)
 {
 	int result = STATE_UNKNOWN;
 	/* check the percent used space against thresholds */
@@ -385,6 +421,22 @@ check_disk (usp, free_disk)
 	return result;
 }
 
+
+
+int
+walk_name_list (struct name_list *list, const char *name)
+{
+	while (list) {
+		if (! strcmp(list->name, name))
+			return TRUE;
+		list = list->name_next;
+	}
+	return FALSE;
+}
+
+
+
+
 void
 print_help (void)
 {
