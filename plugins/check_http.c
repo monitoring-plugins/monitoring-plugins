@@ -486,6 +486,9 @@ process_arguments (int argc, char **argv)
 			asprintf (&server_address, "%s", host_name);
 	}
 
+	if (check_critical_time && critical_time>(double)socket_timeout)
+		socket_timeout = (int)critical_time + 1;
+
 	return TRUE;
 }
 
