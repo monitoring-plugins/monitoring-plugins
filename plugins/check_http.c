@@ -196,7 +196,7 @@ int server_port = HTTP_PORT;
 char server_port_text[6] = "";
 char server_type[6] = "http";
 /*@null@*/ char *server_address = NULL; 
-/*@null@*/ char *host_name = NULL;
+char *host_name = "";
 /*@null@*/ char *server_url = NULL;
 int server_url_length = 0;
 int server_expect_yn = 0;
@@ -401,7 +401,7 @@ process_arguments (int argc, char **argv)
 			break;
 		/* Note: H, I, and u must be malloc'd or will fail on redirects */
 		case 'H': /* Host Name (virtual host) */
- 			host_name = strscpy (host_name, optarg);
+ 			asprintf (&host_name, "%s", optarg);
 			break;
 		case 'I': /* Server IP-address */
  			server_address = strscpy (server_address, optarg);
@@ -464,18 +464,20 @@ process_arguments (int argc, char **argv)
 
 	c = optind;
 
-	if (server_address == NULL && host_name == NULL) {		server_address = strscpy (NULL, argv[c]);
-		host_name = strscpy (NULL, argv[c++]);
+	if (server_address == NULL) {
+		if (c < argc) {
+			server_address = strscpy (NULL, argv[c++]);
+		}
+		else if (strcmp (host_name ,"") == 0) {
+			usage ("check_http: you must specify a server address\n");
+		}
 	}
 
-	if (server_address == NULL && host_name == NULL)
-		usage ("check_http: you must specify a host name\n");
+	if (strcmp (host_name ,"") == 0 && c < argc)
+ 		asprintf (&host_name, "%s", argv[c++]);
 
 	if (server_address == NULL)
 		server_address = strscpy (NULL, host_name);
-
-	if (host_name == NULL)
-		host_name = strscpy (NULL, server_address);
 
 	if (http_method == NULL)
 		http_method = strscpy (http_method, "GET");
@@ -631,8 +633,6 @@ check_http (void)
 			terminate (STATE_CRITICAL, "Unable to open TCP socket");
 		asprintf (&buf, "%s %s HTTP/1.0\r\n", http_method, server_url);
 		send (sd, buf, strlen (buf), 0);
-		
-
 
 		/* optionally send the host header info */
 		if (strcmp (host_name, "")) {
@@ -664,7 +664,7 @@ check_http (void)
 			send (sd, http_post_data, strlen (http_post_data), 0);
 		}
 		else {
-			/* send a newline so the server knows we're done with the request */
+			/* or just a newline so the server knows we're done with the request */
 			asprintf (&buf, "\r\n");
 			send (sd, buf, strlen (buf), 0);
 		}
