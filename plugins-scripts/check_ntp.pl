@@ -358,13 +358,13 @@ if ($ntpdate_error != $ERRORS{'OK'}) {
 } elsif( !$have_ntpq ) { # no errors from ntpdate and no ntpq or ntpq timed out
 	if (abs($offset) > $ocrit) {
 		$state = $ERRORS{'CRITICAL'};
-		$answer = "Offset $offset msec > +/- $ocrit sec\n";
+		$answer = "Offset $offset sec > +/- $ocrit sec\n";
 	} elsif (abs($offset) > $owarn) {
 		$state = $ERRORS{'WARNING'};
-		$answer = "Offset $offset msec > +/- $owarn sec\n";
+		$answer = "Offset $offset sec > +/- $owarn sec\n";
 	} elsif (( abs($offset) > $owarn) && $def_jitter ) {
 		$state = $ERRORS{'WARNING'};
-		$answer = "Offset $offset msec > +/- $owarn sec, ntpq timed out\n";
+		$answer = "Offset $offset sec > +/- $owarn sec, ntpq timed out\n";
 	} elsif ( $def_jitter ) {
 		$state = $ERRORS{'WARNING'};
 		$answer = "Offset $offset secs, ntpq timed out\n";
@@ -378,13 +378,13 @@ if ($ntpdate_error != $ERRORS{'OK'}) {
 } else { # no errors from ntpdate or ntpq
 	if (abs($offset) > $ocrit) {
 		$state = $ERRORS{'CRITICAL'};
-		$answer = "Offset $offset msec > +/- $ocrit sec, jitter $jitter msec\n";
+		$answer = "Offset $offset sec > +/- $ocrit sec, jitter $jitter msec\n";
 	} elsif (abs($jitter) > $jcrit ) {
 		$state = $ERRORS{'CRITICAL'};
 		$answer = "Jitter $jitter msec> +/- $jcrit msec, offset $offset sec \n";
 	} elsif (abs($offset) > $owarn) {
 		$state = $ERRORS{'WARNING'};
-		$answer = "Offset $offset msec > +/- $owarn sec, jitter $jitter msec\n";
+		$answer = "Offset $offset sec > +/- $owarn sec, jitter $jitter msec\n";
 	} elsif (abs($jitter) > $jwarn ) {
 		$state = $ERRORS{'WARNING'};
 		$answer = "Jitter $jitter msec> +/- $jwarn msec, offset $offset sec \n";
