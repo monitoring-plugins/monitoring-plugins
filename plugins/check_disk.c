@@ -118,6 +118,8 @@ main (int argc, char **argv)
 			if (strcmp (file_system, "none") == 0)
 				strncpy (file_system, mntp, MAX_INPUT_BUFFER-1);
 
+			result = max_state (result, disk_result);
+
 			if (disk_result==STATE_OK && erronly && !verbose)
 				continue;
 
@@ -125,7 +127,6 @@ main (int argc, char **argv)
 				asprintf (&output, "%s [%.0f kB (%d%%) free on %s]", output,
 				          free_disk, 100 - usp, display_mntp ? mntp : file_system);
 
-			result = max_state (result, disk_result);
 		}
 
 		else {
