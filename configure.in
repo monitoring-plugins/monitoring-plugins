@@ -501,7 +501,7 @@ then
 	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS -ao 'stat user ppid args'",[Verbatim command to execute for ps in check_netsaint])
 	EXTRAS="$EXTRAS check_nagios"
 	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -ao 'stat uid ppid comm args'")
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s%*[ +] %d %d %s %n",[Format string for scanning ps output in check_procs])
+	AC_DEFINE_UNQUOTED(PS_FORMAT,[["%s%*[ +] %d %d %s %n"]],[Format string for scanning ps output in check_procs])
 	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -ao 'vsz comm'",[])
 	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[])
 	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -ao 'rss comm'",[])
@@ -728,7 +728,7 @@ AC_PATH_PROG(PATH_TO_NSLOOKUP,nslookup)
 if test -n "$ac_cv_path_PATH_TO_NSLOOKUP"
 then
 	AC_MSG_CHECKING("nslookup syntax")
-	if [nslookup -sil 127.0.0.1 2>&1 | grep "*** Invalid option: sil" >/dev/null]
+	if [nslookup -sil 127.0.0.1 2>&1 | grep "Invalid option: sil" >/dev/null]
 	then
 		AC_MSG_RESULT("$PATH_TO_NSLOOKUP")
 		AC_DEFINE_UNQUOTED(NSLOOKUP_COMMAND,"$PATH_TO_NSLOOKUP",[path and args for nslookup])
