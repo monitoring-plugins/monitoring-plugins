@@ -22,6 +22,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
+# $Id$
+#
 ############################################################################
 
 use POSIX;
@@ -517,8 +519,6 @@ sub process_arguments(){
 		 "M:s" => \$opt_M, "mailserver:s" => \$opt_M, # mailserver (default	sendmail)
 		 "w=i" => \$opt_w, "warning=i"  => \$opt_w,   # warning if above this number
 		 "c=i" => \$opt_c, "critical=i" => \$opt_c,	  # critical if above this number
-		 "W=i" => \$opt_W, "Warning=i"  => \$opt_W,   # warning if above this number
-		 "C=i" => \$opt_C, "Critical=i" => \$opt_C,	  # critical if above this number
 		 "t=i" => \$opt_t, "timeout=i"  => \$opt_t 
 		 );
 
