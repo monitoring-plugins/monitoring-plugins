@@ -168,11 +168,7 @@ process_request (const char *server_address, int server_port, int proto,
 	const char *send_buffer, char *recv_buffer, int recv_size)
 {
 	int result;
-	int send_result;
-	int recv_result;
 	int sd;
-	struct timeval tv;
-	fd_set readfds;
 
 	result = STATE_OK;
 
@@ -180,41 +176,7 @@ process_request (const char *server_address, int server_port, int proto,
 	if (result != STATE_OK)
 		return STATE_CRITICAL;
 
-	send_result = send (sd, send_buffer, strlen (send_buffer), 0);
-	if (send_result<0 || (size_t)send_result!=strlen(send_buffer)) {
-		printf ("send() failed\n");
-		result = STATE_WARNING;
-	}
-
-	/* wait up to the number of seconds for socket timeout minus one 
-	   for data from the host */
-	tv.tv_sec = socket_timeout - 1;
-	tv.tv_usec = 0;
-	FD_ZERO (&readfds);
-	FD_SET (sd, &readfds);
-	select (sd + 1, &readfds, NULL, NULL, &tv);
-
-	/* make sure some data has arrived */
-	if (!FD_ISSET (sd, &readfds)) {
-		strcpy (recv_buffer, "");
-		printf ("No data was received from host!\n");
-		result = STATE_WARNING;
-	}
-
-	else {
-		recv_result = recv (sd, recv_buffer, (size_t)recv_size - 1, 0);
-		if (recv_result == -1) {
-			strcpy (recv_buffer, "");
-			if (proto != IPPROTO_TCP)
-				printf ("recv() failed\n");
-			result = STATE_WARNING;
-		}
-		else
-			recv_buffer[recv_result] = 0;
-
-		/* die returned string */
-		recv_buffer[recv_size - 1] = 0;
-	}
+	result = send_request (sd, proto, send_buffer, recv_buffer, recv_size);
 
 	close (sd);
 
@@ -314,6 +276,69 @@ my_connect (const char *host_name, int port, int *sd, int proto)
 		return STATE_CRITICAL;
 	}
 }
+
+
+int
+send_tcp_request (int sd, const char *send_buffer, char *recv_buffer, int recv_size)
+{
+	return send_request (sd, IPPROTO_TCP, send_buffer, recv_buffer, recv_size);
+}
+
+
+int
+send_udp_request (int sd, const char *send_buffer, char *recv_buffer, int recv_size)
+{
+	return send_request (sd, IPPROTO_UDP, send_buffer, recv_buffer, recv_size);
+}
+
+
+int
+send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int recv_size)
+{
+	int result;
+	int send_result;
+	int recv_result;
+	struct timeval tv;
+	fd_set readfds;
+
+	send_result = send (sd, send_buffer, strlen (send_buffer), 0);
+	if (send_result<0 || (size_t)send_result!=strlen(send_buffer)) {
+		printf ("send() failed\n");
+		result = STATE_WARNING;
+	}
+
+	/* wait up to the number of seconds for socket timeout minus one 
+	   for data from the host */
+	tv.tv_sec = socket_timeout - 1;
+	tv.tv_usec = 0;
+	FD_ZERO (&readfds);
+	FD_SET (sd, &readfds);
+	select (sd + 1, &readfds, NULL, NULL, &tv);
+
+	/* make sure some data has arrived */
+	if (!FD_ISSET (sd, &readfds)) {
+		strcpy (recv_buffer, "");
+		printf ("No data was received from host!\n");
+		result = STATE_WARNING;
+	}
+
+	else {
+		recv_result = recv (sd, recv_buffer, (size_t)recv_size - 1, 0);
+		if (recv_result == -1) {
+			strcpy (recv_buffer, "");
+			if (proto != IPPROTO_TCP)
+				printf ("recv() failed\n");
+			result = STATE_WARNING;
+		}
+		else
+			recv_buffer[recv_result] = 0;
+
+		/* die returned string */
+		recv_buffer[recv_size - 1] = 0;
+	}
+	return result;
+}
+
 
 int
 is_host (const char *address)

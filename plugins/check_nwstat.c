@@ -86,6 +86,7 @@ void print_usage(void);
 int
 main(int argc, char **argv) {
 	int result;
+	int sd;
 	char *send_buffer=NULL;
 	char recv_buffer[MAX_INPUT_BUFFER];
 	char *output_message=NULL;
@@ -129,11 +130,14 @@ main(int argc, char **argv) {
 
 	/* set socket timeout */
 	alarm(socket_timeout);
-	
+
+	/* open connection */
+	my_tcp_connect (server_address, server_port, &sd);
+
 	/* get OS version string */
 	if (check_netware_version==TRUE) {
 		send_buffer = strdup ("S19\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 		if (!strcmp(recv_buffer,"-1\n"))
@@ -162,12 +166,12 @@ main(int argc, char **argv) {
 		}
 
 		asprintf (&send_buffer,"UTIL%s\r\n",temp_buffer);
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 		utilization=strtoul(recv_buffer,NULL,10);
 		send_buffer = strdup ("UPTIME\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 		recv_buffer[strlen(recv_buffer)-1]=0;
@@ -189,7 +193,7 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==CONNS) {
 
 		send_buffer = strdup ("CONNECT\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 		current_connections=strtoul(recv_buffer,NULL,10);
@@ -208,7 +212,7 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==LTCH) {
 
 		send_buffer = strdup ("S1\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 		cache_hits=atoi(recv_buffer);
@@ -227,7 +231,7 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==CBUFF) {
 
 		send_buffer = strdup ("S2\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 		cache_buffers=strtoul(recv_buffer,NULL,10);
@@ -246,7 +250,7 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==CDBUFF) {
 
 		send_buffer = strdup ("S3\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 		cache_buffers=strtoul(recv_buffer,NULL,10);
@@ -265,7 +269,7 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==LRUM) {
 
 		send_buffer = strdup ("S5\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 		lru_time=strtoul(recv_buffer,NULL,10);
@@ -285,7 +289,7 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==VKF) {
 
 		asprintf (&send_buffer,"VKF%s\r\n",volume_name);
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
@@ -309,7 +313,7 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==VPF) {
 
 		asprintf (&send_buffer,"VKF%s\r\n",volume_name);
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
@@ -323,7 +327,7 @@ main(int argc, char **argv) {
 			free_disk_space=strtoul(recv_buffer,NULL,10);
 
 			asprintf (&send_buffer,"VKS%s\r\n",volume_name);
-			result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+			result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 			if (result!=STATE_OK)
 				return result;
 			total_disk_space=strtoul(recv_buffer,NULL,10);
@@ -342,7 +346,7 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==DSDB) {
 
 		send_buffer = strdup ("S11\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 		if (atoi(recv_buffer)==1)
@@ -351,7 +355,7 @@ main(int argc, char **argv) {
 			result=STATE_WARNING;
  
 		send_buffer = strdup ("S13\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		temp_buffer=strtok(recv_buffer,"\r\n");
  
 		asprintf (&output_message,_("Directory Services Database is %s (DS version %s)"),(result==STATE_OK)?"open":"closed",temp_buffer);
@@ -360,7 +364,7 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==LOGINS) {
 
 		send_buffer = strdup ("S12\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 		if (atoi(recv_buffer)==1)
@@ -374,14 +378,14 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==UPRB || vars_to_check==PUPRB) {
  
 		asprintf (&send_buffer,"S15\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		used_packet_receive_buffers=atoi(recv_buffer);
 
 		asprintf (&send_buffer,"S16\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
@@ -410,7 +414,7 @@ main(int argc, char **argv) {
 			asprintf (&send_buffer,"S9\r\n");
 		else
 			asprintf (&send_buffer,"S9.%d\r\n",sap_number);
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
  
@@ -430,7 +434,7 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==VKP) {
 
 		asprintf (&send_buffer,"VKP%s\r\n",volume_name);
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
@@ -450,7 +454,7 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==VPP) {
 
 		asprintf (&send_buffer,"VKP%s\r\n",volume_name);
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
@@ -464,7 +468,7 @@ main(int argc, char **argv) {
 			purgeable_disk_space=strtoul(recv_buffer,NULL,10);
 
 			asprintf (&send_buffer,"VKS%s\r\n",volume_name);
-			result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+			result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 			if (result!=STATE_OK)
 				return result;
 			total_disk_space=strtoul(recv_buffer,NULL,10);
@@ -483,7 +487,7 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==VKNP) {
 
 		asprintf (&send_buffer,"VKNP%s\r\n",volume_name);
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
@@ -503,7 +507,7 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==VPNP) {
 
 		asprintf (&send_buffer,"VKNP%s\r\n",volume_name);
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
@@ -517,7 +521,7 @@ main(int argc, char **argv) {
 			non_purgeable_disk_space=strtoul(recv_buffer,NULL,10);
 
 			asprintf (&send_buffer,"VKS%s\r\n",volume_name);
-			result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+			result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 			if (result!=STATE_OK)
 				return result;
 			total_disk_space=strtoul(recv_buffer,NULL,10);
@@ -536,7 +540,7 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==OFILES) {
 
 		asprintf (&send_buffer,"S18\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
  
@@ -553,7 +557,7 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==ABENDS) {
 
 		asprintf (&send_buffer,"S17\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
  
@@ -570,14 +574,14 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==CSPROCS) {
 
 		asprintf (&send_buffer,"S20\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
  
 		max_service_processes=atoi(recv_buffer);
  
 		asprintf (&send_buffer,"S21\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
  
@@ -597,7 +601,7 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==TSYNC) {
 
 		asprintf (&send_buffer,"S22\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
@@ -615,7 +619,7 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==LRUS) {
 
 		send_buffer = strdup ("S4\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 		lru_time=strtoul(recv_buffer,NULL,10);
@@ -631,7 +635,7 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==DCB) {
 
 		send_buffer = strdup ("S6\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 		dirty_cache_buffers=atoi(recv_buffer);
@@ -646,7 +650,7 @@ main(int argc, char **argv) {
 	} else if (vars_to_check==TCB) {
 
 		send_buffer = strdup ("S7\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 		total_cache_buffers=atoi(recv_buffer);
@@ -659,7 +663,7 @@ main(int argc, char **argv) {
 		
 	} else if (vars_to_check==DSVER) {
 		asprintf (&send_buffer,"S13\r\n");
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
@@ -668,7 +672,7 @@ main(int argc, char **argv) {
 		asprintf (&output_message,_("NDS Version %s"),recv_buffer);
 
 	} else if (vars_to_check==UPTIME) {
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 	 		return result;
 
@@ -678,7 +682,7 @@ main(int argc, char **argv) {
 
 	} else if (vars_to_check==NLM) {
 		asprintf (&send_buffer,"S24:%s\r\n",nlm_name);
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
@@ -696,6 +700,8 @@ main(int argc, char **argv) {
 		result=STATE_UNKNOWN;
 
 	}
+
+	close (sd);
 
 	/* reset timeout */
 	alarm(0);

@@ -48,6 +48,10 @@ int process_request (const char *address, int port, int proto,
 int my_tcp_connect (const char *address, int port, int *sd);
 int my_udp_connect (const char *address, int port, int *sd);
 
+int send_tcp_request (int sd, const char *send_buffer, char *recv_buffer, int recv_size);
+int send_udp_request (int sd, const char *send_buffer, char *recv_buffer, int recv_size);
+int send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int recv_size);
+
 int is_host (const char *);
 int is_addr (const char *);
 int resolve_host_or_addr (const char *, int);
