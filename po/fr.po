@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-12-14 23:06+0100\n"
+"POT-Creation-Date: 2004-12-20 19:49+1100\n"
 "PO-Revision-Date: 2004-12-15 01:05+0100\n"
 "Last-Translator: Benoit Mortier <benoit.mortier@opensides.be>\n"
 "Language-Team: Français <fr@li.org>\n"
@@ -44,8 +44,7 @@ msgstr "impossible d'obtenir le signal SIGALRM"
 #: plugins/check_nagios.c:103 plugins/check_procs.c:137
 #: plugins/check_snmp.c:172 plugins/check_swap.c:151 plugins/check_users.c:59
 #: plugins/negate.c:97 plugins/urlize.c:90
-#, c-format
-#, fuzzy
+#, fuzzy, c-format
 msgid "Could not open pipe: %s\n"
 msgstr "Impossible d'ouvrir le pipe: %s\n"
 
@@ -129,8 +128,10 @@ msgstr "Pas de commande distante"
 
 #: plugins/check_by_ssh.c:327
 #, c-format
-msgid "%s: In passive mode, you must provide a service name for each command.\n"
-msgstr "%s: En mode passif, vous devez fournir un service pour chaque commande.\n"
+msgid ""
+"%s: In passive mode, you must provide a service name for each command.\n"
+msgstr ""
+"%s: En mode passif, vous devez fournir un service pour chaque commande.\n"
 
 #: plugins/check_by_ssh.c:330
 #, c-format
@@ -214,11 +215,13 @@ msgid ""
 "execute additional commands as proxy\n"
 msgstr ""
 "\n"
-"L'utilisation la plus courantes est de se référer à une identité locale avec\n"
+"L'utilisation la plus courantes est de se référer à une identité locale "
+"avec\n"
 "l'option -i. Dans ce mode, l'identité doit avoir une phrase nulle\n"
 "et la clef publique doit être listée dans les authorized_keys\n"
 "sur l'hôte distant. Habituellement la clef sera restreinte a l'exécution\n"
-"d'une seule commande sur l'hôte distant. Si le serveur SSH lit les arguments,\n"
+"d'une seule commande sur l'hôte distant. Si le serveur SSH lit les "
+"arguments,\n"
 "le programme distantpeut être un agent qui peu exécuter des commandes\n"
 "supplémentaires comme un proxy\n"
 
@@ -231,8 +234,10 @@ msgid ""
 "options)\n"
 msgstr ""
 "\n"
-"Pour utiliser le mode passif, utilisez plusieurs fois l'option '-C',and les options\n"
-"-O, -s, n (l'ordre des services doit correspondre les différentes options '-C'\n"
+"Pour utiliser le mode passif, utilisez plusieurs fois l'option '-C',and les "
+"options\n"
+"-O, -s, n (l'ordre des services doit correspondre les différentes options '-"
+"C'\n"
 
 #: plugins/check_dig.c:130
 msgid "Server not found in ANSWER SECTION"
@@ -310,8 +315,8 @@ msgid ""
 "lu warn%%:%.0f%% crit%%:%.0f%%"
 msgstr ""
 "%s\n"
-"%.0f de %.0f %s (%.0f%%) libre sur %s (type %s monté sur %s) alerte:%lu crit:%"
-"lu alerte%%:%.0f%% crit%%:%.0f%%"
+"%.0f de %.0f %s (%.0f%%) libre sur %s (type %s monté sur %s) alerte:%lu crit:"
+"%lu alerte%%:%.0f%% crit%%:%.0f%%"
 
 #: plugins/check_disk.c:233
 #, c-format
@@ -441,7 +446,8 @@ msgstr ""
 " -x, --exclude_device=PATH <STRING>\n"
 "    Ignorer le périphérique (marche seulement si -p est spécifié)\n"
 " -X, --exclude-type=TYPE <STRING>\n"
-"    Ignorer tout les types de systèmes de fichier spécifiés (peut être répété)\n"
+"    Ignorer tout les types de systèmes de fichier spécifiés (peut être "
+"répété)\n"
 " -M, --mountpoint\n"
 "    Affiche seulement les points de montage au lieu de la partition\n"
 " -e, --errors-only\n"
@@ -687,12 +693,14 @@ msgstr ""
 #: plugins/check_fping.c:327
 #, c-format
 msgid "%s: Only one threshold may be packet loss (%s)\n"
-msgstr "%s: Seulement un seuil peut être utilisé pour les pertes de paquets (%s)\n"
+msgstr ""
+"%s: Seulement un seuil peut être utilisé pour les pertes de paquets (%s)\n"
 
 #: plugins/check_fping.c:331
 #, c-format
 msgid "%s: Only one threshold must be packet loss (%s)\n"
-msgstr "%s: Seulement un seuil doit être utilisé pour les pertes de paquets (%s)\n"
+msgstr ""
+"%s: Seulement un seuil doit être utilisé pour les pertes de paquets (%s)\n"
 
 #: plugins/check_fping.c:364
 #, c-format
@@ -704,7 +712,8 @@ msgid ""
 msgstr ""
 "Ce plugin va utiliser la commande /bin/fping pour pinger l'hôte\n"
 "spécifié pour une vérification rapide.\n"
-"Veuillez noter qu'il est nécessaire de mettre le flag suid sur le fichier fping.\n"
+"Veuillez noter qu'il est nécessaire de mettre le flag suid sur le fichier "
+"fping.\n"
 "\n"
 
 #: plugins/check_fping.c:373
@@ -755,8 +764,7 @@ msgid "This plugin tests game server connections with the specified host."
 msgstr "Le plugin teste la connection au serveur de jeux avec l'hôte spécifié."
 
 #: plugins/check_game.c:311
-#, c-format
-#, fuzzy
+#, fuzzy, c-format
 msgid ""
 "<game>        = Game type that is recognised by qstat (without the leading "
 "dash)\n"
@@ -766,7 +774,8 @@ msgid ""
 " [map_field]   = Field number in raw qstat output that contains map name\n"
 " [ping_field]  = Field number in raw qstat output that contains ping time\n"
 msgstr ""
-"<game>          = Type de jeux qui est reconnu par qstat (sans le tiret de début)\n"
+"<game>          = Type de jeux qui est reconnu par qstat (sans le tiret de "
+"début)\n"
 "<ip_address>  = L'adresse IP de l'hôte qui herberge le serveur de jeu\n"
 " [port]             = Port optionnel sur lequel se connecter\n"
 " [game_field]  = Numéro du champ qui contient le nom du jeu\n"
@@ -787,9 +796,11 @@ msgid ""
 msgstr ""
 "\n"
 "Notes:\n"
-"- Ce plugin utilise la commande 'qstat', l'outil populaire pour vérifier l'état des serveurs de jeux.\n"
+"- Ce plugin utilise la commande 'qstat', l'outil populaire pour vérifier "
+"l'état des serveurs de jeux.\n"
 "  Si vous ne l'avez pas installé, vous pourrez le télécharger depuis\n"
-"  http://www.activesw.com/people/steve/qstat.html avant de pouvoir utiliser ce plugin.\n"
+"  http://www.activesw.com/people/steve/qstat.html avant de pouvoir utiliser "
+"ce plugin.\n"
 
 #: plugins/check_hpjd.c:224
 msgid "Paper Jam"
@@ -1064,7 +1075,8 @@ msgstr "INCONNU - Impossible de définir l'endroit de la relocation - %s%s\n"
 #: plugins/check_http.c:1129
 #, c-format
 msgid "WARNING - maximum redirection depth %d exceeded - %s://%s:%d%s%s\n"
-msgstr "ALERTE - le niveau maximum de redirection %d à été dépassé - %s://%s:%d%s%s\n"
+msgstr ""
+"ALERTE - le niveau maximum de redirection %d à été dépassé - %s://%s:%d%s%s\n"
 
 #: plugins/check_http.c:1137
 #, c-format
@@ -1125,8 +1137,11 @@ msgid ""
 "\n"
 msgstr ""
 "Ce plugin teste le service HHTP sur l'hôte spécifié. Il peut tester \n"
-"la version normale (http) et la version sécurisée (https), suivre des redirections,\n chercher pour des chaînes de caractères et des expressions régulières, \n"
-"vérifier les temps de connection, et avertir lors de l'expiration des certificats.\n"
+"la version normale (http) et la version sécurisée (https), suivre des "
+"redirections,\n"
+" chercher pour des chaînes de caractères et des expressions régulières, \n"
+"vérifier les temps de connection, et avertir lors de l'expiration des "
+"certificats.\n"
 "\n"
 
 #: plugins/check_http.c:1383
@@ -1249,8 +1264,7 @@ msgstr ""
 "est toujours valide pour le nombre de jours spécifiés.\n"
 
 #: plugins/check_http.c:1469
-#, c-format
-#, fuzzy
+#, fuzzy, c-format
 msgid ""
 "\n"
 "CHECK CONTENT: check_http -w 5 -c 10 --ssl www.verisign.com\n"
@@ -1265,8 +1279,10 @@ msgstr ""
 "\n"
 "CHECK CONTENT: check_http -w 5 -c 10 --ssl www.verisign.com\n"
 "\n"
-"Quand le server 'www.verisign.com' renvoie son contenu dans les 5 secondes,un\n"
-"STATE_OK sera renvoyé. Quand le server renvoie son contenu, mais dépasse les\n"
+"Quand le server 'www.verisign.com' renvoie son contenu dans les 5 secondes,"
+"un\n"
+"STATE_OK sera renvoyé. Quand le server renvoie son contenu, mais dépasse "
+"les\n"
 "5 secondes, un STATE_WARNING sera retourné. Qaund une erreur se produit un\n"
 "STATE_CRITICAL sera retourné.\n"
 "\n"
@@ -1286,9 +1302,12 @@ msgid ""
 msgstr ""
 "CHECK CERTIFICATE: check_http www.verisign.com -C 14\n"
 "\n"
-"Quand le certificat de 'www.verisign.com' est valide pour plus de 14 jours, un\n"
-"état STATE_OK est renvoyé. Quand le certificat est valide pour moins de 14 jours\n"
-"un état STATE_WARNING est renvoyé. un état STATE_CRITICAL est renvoyé quand le certificat est expiré.\n"
+"Quand le certificat de 'www.verisign.com' est valide pour plus de 14 jours, "
+"un\n"
+"état STATE_OK est renvoyé. Quand le certificat est valide pour moins de 14 "
+"jours\n"
+"un état STATE_WARNING est renvoyé. un état STATE_CRITICAL est renvoyé quand "
+"le certificat est expiré.\n"
 
 #: plugins/check_ldap.c:112
 #, c-format
@@ -1398,45 +1417,58 @@ msgstr "Le seuil critique doit être un nombre à virgule flottante!\n"
 
 #: plugins/check_load.c:273
 msgid "Warning threshold for 1-minute load average is not specified\n"
-msgstr "Le seuil d'alerte pour la charge système après 1 minute n'est pas spécifié\n"
+msgstr ""
+"Le seuil d'alerte pour la charge système après 1 minute n'est pas spécifié\n"
 
 #: plugins/check_load.c:275
 msgid "Warning threshold for 5-minute load average is not specified\n"
-msgstr "Le seuil d'alerte pour la charge système après 5 minutes n'est pas spécifié\n"
+msgstr ""
+"Le seuil d'alerte pour la charge système après 5 minutes n'est pas spécifié\n"
 
 #: plugins/check_load.c:277
 msgid "Warning threshold for 15-minute load average is not specified\n"
-msgstr "Le seuil d'alerte pour la charge système après 15 minutes n'est pas spécifié\n"
+msgstr ""
+"Le seuil d'alerte pour la charge système après 15 minutes n'est pas "
+"spécifié\n"
 
 #: plugins/check_load.c:279
 msgid "Critical threshold for 1-minute load average is not specified\n"
-msgstr "Le seuil critique pour la charge système après 1 minute n'est pas spécifié\n"
+msgstr ""
+"Le seuil critique pour la charge système après 1 minute n'est pas spécifié\n"
 
 #: plugins/check_load.c:281
 msgid "Critical threshold for 5-minute load average is not specified\n"
-msgstr "Le seuil critique pour la charge système après 5 minutes n'est pas spécifié\n"
+msgstr ""
+"Le seuil critique pour la charge système après 5 minutes n'est pas spécifié\n"
 
 #: plugins/check_load.c:283
 msgid "Critical threshold for 15-minute load average is not specified\n"
-msgstr "Le seuil critique pour la charge système après 15 minute n'est pas spécifié\n"
+msgstr ""
+"Le seuil critique pour la charge système après 15 minute n'est pas spécifié\n"
 
 #: plugins/check_load.c:285
 msgid ""
 "Parameter inconsistency: 1-minute \"warning load\" greater than \"critical "
 "load\".\n"
-msgstr "Arguments Incorrects: 1-minute \"warning load\" est plus grand que \"critical load\".\n"
+msgstr ""
+"Arguments Incorrects: 1-minute \"warning load\" est plus grand que "
+"\"critical load\".\n"
 
 #: plugins/check_load.c:287
 msgid ""
 "Parameter inconsistency: 5-minute \"warning load\" greater than \"critical "
 "load\".\n"
-msgstr "Arguments Incorrects: 5-minute \"warning load\" est plus grand que \"critical load\".\n"
+msgstr ""
+"Arguments Incorrects: 5-minute \"warning load\" est plus grand que "
+"\"critical load\".\n"
 
 #: plugins/check_load.c:289
 msgid ""
 "Parameter inconsistency: 15-minute \"warning load\" greater than \"critical "
 "load\".\n"
-msgstr "Arguments Incorrects: 15-minute \"warning load\" est plus grand que \"critical load\".\n"
+msgstr ""
+"Arguments Incorrects: 15-minute \"warning load\" est plus grand que "
+"\"critical load\".\n"
 
 #: plugins/check_load.c:303
 #, c-format
@@ -1567,7 +1599,8 @@ msgid ""
 "   \"Bytes Per Second\", \"%% Utilization\")\n"
 msgstr ""
 " -l, --label=STRING\n"
-"   Label de type pour les données (Exemples: Conns, \"Charge processeur\", Entrée, Sortie)\n"
+"   Label de type pour les données (Exemples: Conns, \"Charge processeur\", "
+"Entrée, Sortie)\n"
 " -u, --units=STRING\n"
 "   Label optionnel pour les données (Exemple: Paquets/Sec, Erreurs/Sec, \n"
 "   \"Bytes Par Secondes\", \"%% Utilisation\")\n"
@@ -1581,8 +1614,10 @@ msgid ""
 "status is returned and a warning message is printed.\n"
 "\n"
 msgstr ""
-"Si la valeur dépasse le seuil défini dans <vwl>, un status ALERTE sera renvoyé.\n"
-"Si la valeur dépasse le seuil défini dans <vcl>, un status CRITIQUE sera renvoyé\n"
+"Si la valeur dépasse le seuil défini dans <vwl>, un status ALERTE sera "
+"renvoyé.\n"
+"Si la valeur dépasse le seuil défini dans <vcl>, un status CRITIQUE sera "
+"renvoyé\n"
 "Si les données dans le fichier de log sont plus vieux que <expire_minutes>, "
 "un status ALERTE est renvoyé and un message d'alerte est affiché.\n"
 "\n"
@@ -1795,8 +1830,12 @@ msgid ""
 "by the <process_string> argument.\n"
 "\n"
 msgstr ""
-"Ce plugin essaye de vérifier l'état des processus Nagios sur la machine locale\n"
-"Le plugin vérifiera si le Nagios status log n'est pa plus vieux que le nombre de minutes spécifiées par l'option <expire_minutes>. Il utilise la commande /bin/ps pour vérifier un processus dont le nom est donné par l'option <process_string>.\n"
+"Ce plugin essaye de vérifier l'état des processus Nagios sur la machine "
+"locale\n"
+"Le plugin vérifiera si le Nagios status log n'est pa plus vieux que le "
+"nombre de minutes spécifiées par l'option <expire_minutes>. Il utilise la "
+"commande /bin/ps pour vérifier un processus dont le nom est donné par "
+"l'option <process_string>.\n"
 "\n"
 
 #: plugins/check_nagios.c:285
@@ -1812,7 +1851,8 @@ msgstr ""
 "-F, --filename=FILE\n"
 "   Nom du fichier de log à verifier\n"
 "-e, --expires=INTEGER\n"
-"   Nombre de secondes après lesquelles le fichier de log est considère trop ancien\n"
+"   Nombre de secondes après lesquelles le fichier de log est considère trop "
+"ancien\n"
 "-C, --command=STRING\n"
 "   Commande à chercher dans la table des processus\n"
 
@@ -1870,7 +1910,8 @@ msgstr "Argument -l erroné"
 #: plugins/check_nt.c:219
 #, c-format
 msgid "%s:\\ - total: %.2f Gb - used: %.2f Gb (%.0f%%) - free %.2f Gb (%.0f%%)"
-msgstr "%s:\\ - total: %.2f Gb - utilisé: %.2f Gb (%.0f%%) - libre %.2f Gb (%.0f%%)"
+msgstr ""
+"%s:\\ - total: %.2f Gb - utilisé: %.2f Gb (%.0f%%) - libre %.2f Gb (%.0f%%)"
 
 #: plugins/check_nt.c:222
 #, c-format
@@ -1887,10 +1928,11 @@ msgstr "Pas de service/processus spécifié"
 
 #: plugins/check_nt.c:270
 #, c-format
-msgid "Memory usage: total:%.2f Mb - used: %.2f Mb (%.0f%%) - free: %.2f Mb (%.0f%%)"
+msgid ""
+"Memory usage: total:%.2f Mb - used: %.2f Mb (%.0f%%) - free: %.2f Mb (%.0f%%)"
 msgstr ""
-"Mémoire utilisée: total:%.2f Mb - utilisée: %.2f Mb (%.0f%%) - libre: %.2f Mb "
-"(%.0f%%)"
+"Mémoire utilisée: total:%.2f Mb - utilisée: %.2f Mb (%.0f%%) - libre: %.2f "
+"Mb (%.0f%%)"
 
 #: plugins/check_nt.c:273
 #, c-format
@@ -2063,7 +2105,8 @@ msgid ""
 " - Critical thresholds should be lower than warning thresholds\n"
 msgstr ""
 "Notes:\n"
-" - Le service NSClient doit tourner sur le serveur à surveiller pour obtenir des informations\n"
+" - Le service NSClient doit tourner sur le serveur à surveiller pour obtenir "
+"des informations\n"
 "   (http://nsclient.ready2run.nl).\n"
 " - Les seuil critiques doivent être plus bas que les seuils d'alertes\n"
 
@@ -2256,8 +2299,7 @@ msgstr ""
 "\n"
 
 #: plugins/check_nwstat.c:920
-#, c-format
-#, fuzzy
+#, fuzzy, c-format
 msgid ""
 " -v, --variable=STRING\n"
 "    Variable to check.  Valid variables include:\n"
@@ -2278,8 +2320,7 @@ msgstr ""
 "      UPTIME    = server uptime\n"
 
 #: plugins/check_nwstat.c:930
-#, c-format
-#, fuzzy
+#, fuzzy, c-format
 msgid ""
 "      LTCH      = percent long term cache hits\n"
 "      CBUFF     = current number of cache buffers\n"
@@ -2361,7 +2402,8 @@ msgstr ""
 
 #: plugins/check_overcr.c:110
 msgid "Unknown error fetching load data\n"
-msgstr "Erreur inconnue lors de la récupération des données de charge système\n"
+msgstr ""
+"Erreur inconnue lors de la récupération des données de charge système\n"
 
 #: plugins/check_overcr.c:114
 msgid "Invalid response from server - no load information\n"
@@ -2455,7 +2497,9 @@ msgid ""
 "\n"
 msgstr ""
 "Notes:\n"
-" - Pour toutes les options disponibles, le seuil critique doit toujours être plus\n grand que le seuil d'alerte SAUF pour l'option uptime\n"
+" - Pour toutes les options disponibles, le seuil critique doit toujours être "
+"plus\n"
+" grand que le seuil d'alerte SAUF pour l'option uptime\n"
 "\n"
 
 #: plugins/check_overcr.c:452
@@ -2545,7 +2589,8 @@ msgid ""
 msgstr ""
 "\n"
 "Ce plugin va se connecter à une base de données locale si aucun hôte n'est \n"
-"spécifié. Pour se connecter à un ahôte distant, assurez vous que celui ci accepte \n"
+"spécifié. Pour se connecter à un ahôte distant, assurez vous que celui ci "
+"accepte \n"
 "les connections TCP/IP (démarrez le postmaster avec l'option -i).\n"
 
 #: plugins/check_pgsql.c:431
@@ -2678,7 +2723,8 @@ msgid ""
 "Use ping to check connection statistics for a remote host.\n"
 "\n"
 msgstr ""
-"Utilise ping pour verifier les statistiques de connections d'un hôte distant.\n"
+"Utilise ping pour verifier les statistiques de connections d'un hôte "
+"distant.\n"
 "\n"
 
 #: plugins/check_ping.c:505
@@ -2868,8 +2914,7 @@ msgstr ""
 "\n"
 
 #: plugins/check_procs.c:485
-#, c-format
-#, fuzzy
+#, fuzzy, c-format
 msgid ""
 "%s: metric must be one of PROCS, VSZ, RSS, CPU, ELAPSED!\n"
 "\n"
@@ -2898,8 +2943,10 @@ msgid ""
 "check.\n"
 "\n"
 msgstr ""
-"Vérifie tout les processus et génère un état ALERTE ou CRITIQUE si les mesures\n"
-"spécifiées sont au dela des seuils précisés. Les mesures par défaut sont le \n"
+"Vérifie tout les processus et génère un état ALERTE ou CRITIQUE si les "
+"mesures\n"
+"spécifiées sont au dela des seuils précisés. Les mesures par défaut sont "
+"le \n"
 "nombres de processus. Des filtres de recherches peuvent être utilisés pour \n"
 "limiter la recherche.\n"
 
@@ -3310,8 +3357,7 @@ msgid "Could not realloc() units\n"
 msgstr "Impossible de réallouer des unités\n"
 
 #: plugins/check_snmp.c:651
-#, c-format
-#, fuzzy
+#, fuzzy, c-format
 msgid ""
 "Missing secname (%s) or authpassword (%s) ! \n"
 ")"
@@ -3335,7 +3381,8 @@ msgid ""
 "Check status of remote machines and obtain sustem information via SNMP\n"
 "\n"
 msgstr ""
-"Verifie l'état des machines distantes et obtient l'information système via SNMP\n"
+"Verifie l'état des machines distantes et obtient l'information système via "
+"SNMP\n"
 "\n"
 
 #: plugins/check_snmp.c:857
@@ -3426,7 +3473,8 @@ msgid ""
 "  http://net-snmp.sourceforge.net before you can use this plugin.\n"
 msgstr ""
 "\n"
-"- Ce plugin utilise la commande 'snmpget' inclus dans la distribution NET-SNMP\n"
+"- Ce plugin utilise la commande 'snmpget' inclus dans la distribution NET-"
+"SNMP\n"
 "Si vous n'avez pas ce logiciel installé, vous devez le télécharger depuis \n"
 "http://net-snmp.sourceforge.net avant de pouvoir utiliser ce plugin.\n"
 
@@ -3502,7 +3550,8 @@ msgid ""
 "OpenSSH_3.9p1)\n"
 msgstr ""
 " -r, --remote-version=STRING\n"
-"    Etat d'alerte si la chaîne ne correspond pas à la version précisée (ex: OpenSSH_3.9p1)\n"
+"    Etat d'alerte si la chaîne ne correspond pas à la version précisée (ex: "
+"OpenSSH_3.9p1)\n"
 
 #: plugins/check_swap.c:145
 #, c-format
@@ -3583,8 +3632,11 @@ msgid ""
 "real memory\n"
 msgstr ""
 "\n"
-"Sur Solaris, si -a est spécifié, utilisez swap -l, au sinon utilisez swap -s.\n"
-"Il aura des différences car swap -s compte la swap allouée et inclus la mémoire\n vive\n"
+"Sur Solaris, si -a est spécifié, utilisez swap -l, au sinon utilisez swap -"
+"s.\n"
+"Il aura des différences car swap -s compte la swap allouée et inclus la "
+"mémoire\n"
+" vive\n"
 
 #: plugins/check_swap.c:506
 #, c-format
@@ -3593,7 +3645,8 @@ msgid ""
 "On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s.\n"
 msgstr ""
 "\n"
-"Sur AIX, si -a est spécifié, utilisez lsps -a, au sinon utilisez uses lsps -s.\n"
+"Sur AIX, si -a est spécifié, utilisez lsps -a, au sinon utilisez uses lsps -"
+"s.\n"
 
 #: plugins/check_tcp.c:233
 msgid "CRITICAL - Generic check_tcp called with unknown service\n"
@@ -3806,7 +3859,8 @@ msgid ""
 "\n"
 msgstr ""
 "Ce plugin teste le service UPS sur l'hôte spécifié.\n"
-"Le logiciel Network UPS Tools de www.networkupstools.org doit fonctionner sur \n"
+"Le logiciel Network UPS Tools de www.networkupstools.org doit fonctionner "
+"sur \n"
 "l'hôte pour que ce plugin fonctionne.\n"
 "\n"
 
@@ -3893,7 +3947,8 @@ msgid ""
 "system and generates an error if the number exceeds the thresholds "
 "specified.\n"
 msgstr ""
-"Ce plugin vérifie le nombre d'utilisateurs actuellement conncté sur le sytème\n"
+"Ce plugin vérifie le nombre d'utilisateurs actuellement conncté sur le "
+"sytème\n"
 "local et génère une erreur si le nombre excède le seuil spécifié.\n"
 
 #: plugins/check_users.c:203
@@ -3923,12 +3978,14 @@ msgstr "CRITIQUE - SMART_READ_VALUES: %s\n"
 #: plugins/check_ide_smart.c:363
 #, c-format
 msgid "CRITICAL - %d Harddrive PreFailure%cDetected! %d/%d tests failed.\n"
-msgstr "CRITIQUE - %d État de pré-panne %c Détecté! %d/%d les tests on échoués.\n"
+msgstr ""
+"CRITIQUE - %d État de pré-panne %c Détecté! %d/%d les tests on échoués.\n"
 
 #: plugins/check_ide_smart.c:370
 #, c-format
 msgid "WARNING - %d Harddrive Advisor%s Detected. %d/%d tests failed.\n"
-msgstr "ALERTE -  %d État de pré-panne %s Détecté! %d/%d les tests on échoués.\n"
+msgstr ""
+"ALERTE -  %d État de pré-panne %s Détecté! %d/%d les tests on échoués.\n"
 
 #: plugins/check_ide_smart.c:377
 #, c-format
@@ -3943,7 +4000,8 @@ msgstr "ERREUR - État '%d' inconnu. %d/%d les tests on réussi\n"
 #: plugins/check_ide_smart.c:413
 #, fuzzy, c-format
 msgid "OffLineStatus=%d {%s}, AutoOffLine=%s, OffLineTimeout=%d minutes\n"
-msgstr "Etat Hors Ligne=%d {%s}, Hors Ligne Auto=%s, OffLineTimeout=%d minutes\n"
+msgstr ""
+"Etat Hors Ligne=%d {%s}, Hors Ligne Auto=%s, OffLineTimeout=%d minutes\n"
 
 #: plugins/check_ide_smart.c:419
 #, c-format
@@ -4037,4 +4095,3 @@ msgid ""
 "\n"
 "    urlize http://example.com/ \"check_http -H example.com -r 'two words'\"\n"
 msgstr ""
-

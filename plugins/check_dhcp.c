@@ -55,7 +55,7 @@
 #include <sys/sysctl.h>
 #include <net/if_dl.h>
 
-#elif defined(__sun__) || defined(__solaris__)
+#elif defined(__sun__) || defined(__solaris__) || defined(__hpux__)
 
 #define INSAP 22 
 #define OUTSAP 24 
@@ -367,13 +367,30 @@ int get_hardware_address(int sock,char *interface_name){
 		exit(STATE_UNKNOWN);
 	}
 
+#elif defined(__hpux__)
+
+	/* Martin Kompf again
+         *
+         * Nagios plugins thank you sincerely
+         */
+
+	long stat;
+	char dev[20] = "/dev/dlpi" ;
+	int unit = 0;
+
+	stat = mac_addr_dlpi(dev, unit, client_hardware_address);
+	if (stat != 0) {
+		printf("Error: can't read MAC address from DLPI streams interface for device %s unit %d.\n", dev, unit);
+		exit(STATE_UNKNOWN);
+	}
+
 #else
-	printf("Error: can't get MAC address for this architcture.\n");
+	printf("Error: can't get MAC address for this architecture.\n");
 	exit(STATE_UNKNOWN);
 #endif
 
 	if (verbose) { 
-		printf( "Hadrware address: ");
+		printf( "Hardware address: ");
 		for (i=0; i<6; ++i)
 			printf("%2.2x", client_hardware_address[i]);
 		printf( "\n");
@@ -1137,7 +1154,7 @@ int validate_arguments(void){
 	return OK;
         }
 
-#if defined(__sun__) || defined(__solaris__)
+#if defined(__sun__) || defined(__solaris__) || defined(__hpux__)
 
 
 /*
