@@ -536,7 +536,8 @@ base64 (char *bin, int len)
 	int i = 0, j = 0;
 
 	char BASE64_END = '=';
-	char base64_table[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	char base64_table[64];
+	strncpy (base64_table, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", 64);
 
 	while (j < len - 2) {
 		buf[i++] = base64_table[bin[j] >> 2];

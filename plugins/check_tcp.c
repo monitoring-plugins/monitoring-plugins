@@ -87,7 +87,7 @@ char *buffer = "";
 /* progname changes depending on symlink called */
 char *progname = "check_tcp";
 const char *revision = "$Revision$";
-const char *copyright = "2002-2003";
+const char *copyright = "1999-2003";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 
@@ -144,7 +144,7 @@ print_help (void)
 
 	printf (_(UT_VERBOSE));
 
-	support ();
+	printf (_(UT_SUPPORT));
 }
 
 

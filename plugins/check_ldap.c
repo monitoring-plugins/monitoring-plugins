@@ -1,27 +1,25 @@
-/***************************************************************************** *
- * CHECK_LDAP.C
- *
- * Program: Ldap plugin for Nagios
- * License: GPL
- * Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)
- * 
- * Last Modified: $Date$
- *
- * Command line: check_ldap -H <host> -b <base_dn> -p <port> -w <warn_time> -w <crit_time>
- *
- * Description:
- *
- * This plugin is for testing a ldap server.
- *
- * Modifications:
- *
- * 08-25-1999 Ethan Galstad (nagios@nagios.org)
- *            Modified to use common plugin include file
- *
- *****************************************************************************/
+/******************************************************************************
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+******************************************************************************/
 
 const char *progname = "check_ldap";
 const char *revision = "$Revision$";
+const char *copyright = "2000-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "config.h"
 #include "common.h"
@@ -39,10 +37,61 @@ enum {
 	DEFAULT_PORT = 389
 };
 
+void
+print_usage ()
+{
+	printf (_("\
+Usage: %s -H <host> -b <base_dn> [-p <port>] [-a <attr>] [-D <binddn>]\n\
+  [-P <password>] [-w <warn_time>] [-c <crit_time>] [-t timeout]%s\n\
+(Note: all times are in seconds.)\n"),
+	        progname, (HAVE_LDAP_SET_OPTION ? "[-2|-3] [-4|-6]" : ""));
+	printf (_(UT_HLP_VRS), progname, progname);
+}
+
+void
+print_help ()
+{
+	char *myport;
+	asprintf (&myport, "%d", DEFAULT_PORT);
+
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_HOST_PORT), 'p', myport);
+
+	printf (_(UT_IPv46));
+
+	printf (_("\
+ -a [--attr]\n\
+    ldap attribute to search (default: \"(objectclass=*)\"\n\
+ -b [--base]\n\
+    ldap base (eg. ou=my unit, o=my org, c=at)\n\
+ -D [--bind]\n\
+    ldap bind DN (if required)\n\
+ -P [--pass]\n\
+    ldap password (if required)\n"));
+
+#ifdef HAVE_LDAP_SET_OPTION
+	printf (_("\
+ -2 [--ver2]\n\
+     use ldap protocol version 2\n\
+ -3 [--ver3]\n\
+    use ldap protocol version 3\n\
+    (default protocol version: %d)\n"),
+	        DEFAULT_PROTOCOL);
+#endif
+
+	printf (_(UT_WARN_CRIT));
+}
+
 int process_arguments (int, char **);
 int validate_arguments (void);
-void print_help (void);
-void print_usage (void);
 
 char ld_defattr[] = "(objectclass=*)";
 char *ld_attr = ld_defattr;
@@ -68,7 +117,7 @@ main (int argc, char *argv[])
 	time_t time0, time1;
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage ("check_ldap: could not parse arguments\n");
+		usage (_("check_ldap: could not parse arguments\n"));
 
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
@@ -82,7 +131,7 @@ main (int argc, char *argv[])
 	/* initialize ldap */
 	if (!(ld = ldap_open (ld_host, ld_port))) {
 		/*ldap_perror(ld, "ldap_open"); */
-		printf ("Could not connect to the server at port %i\n", ld_port);
+		printf (_("Could not connect to the server at port %i\n"), ld_port);
 		return STATE_CRITICAL;
 	}
 
@@ -90,7 +139,7 @@ main (int argc, char *argv[])
 	/* set ldap options */
 	if (ldap_set_option (ld, LDAP_OPT_PROTOCOL_VERSION, &ld_protocol) !=
 			LDAP_OPT_SUCCESS ) {
-		printf("Could not set protocol version %d\n", ld_protocol);
+		printf(_("Could not set protocol version %d\n"), ld_protocol);
 		return STATE_CRITICAL;
 	}
 #endif
@@ -98,7 +147,7 @@ main (int argc, char *argv[])
 	if (ldap_bind_s (ld, ld_binddn, ld_passwd, LDAP_AUTH_SIMPLE) !=
 			LDAP_SUCCESS) {
 		/*ldap_perror(ld, "ldap_bind"); */
-		printf ("Could not bind to the ldap-server\n");
+		printf (_("Could not bind to the ldap-server\n"));
 		return STATE_CRITICAL;
 	}
 
@@ -106,7 +155,7 @@ main (int argc, char *argv[])
 	if (ldap_search_s (ld, ld_base, LDAP_SCOPE_BASE, ld_attr, NULL, 0, &result)
 			!= LDAP_SUCCESS) {
 		/*ldap_perror(ld, "ldap_search"); */
-		printf ("Could not search/find objectclasses in %s\n", ld_base);
+		printf (_("Could not search/find objectclasses in %s\n"), ld_base);
 		return STATE_CRITICAL;
 	}
 
@@ -123,17 +172,17 @@ main (int argc, char *argv[])
 	t_diff = time1 - time0;
 
 	if (crit_time!=UNDEFINED && t_diff>=crit_time) {
-		printf ("LDAP CRITICAL - %i seconds response time\n", t_diff);
+		printf (_("LDAP CRITICAL - %i seconds response time\n"), t_diff);
 		return STATE_CRITICAL;
 	}
 
 	if (warn_time!=UNDEFINED && t_diff>=warn_time) {
-		printf ("LDAP WARNING - %i seconds response time\n", t_diff);
+		printf (_("LDAP WARNING - %i seconds response time\n"), t_diff);
 		return STATE_WARNING;
 	}
 
 	/* print out the result */
-	printf ("LDAP OK - %i seconds response time\n", t_diff);
+	printf (_("LDAP OK - %i seconds response time\n"), t_diff);
 
 	return STATE_OK;
 }
@@ -190,7 +239,7 @@ process_arguments (int argc, char **argv)
 			exit (STATE_OK);
 		case 't':									/* timeout period */
 			if (!is_intnonneg (optarg))
-				usage2 ("timeout interval must be a positive integer", optarg);
+				usage2 (_("timeout interval must be a positive integer"), optarg);
 			socket_timeout = atoi (optarg);
 			break;
 		case 'H':
@@ -232,11 +281,11 @@ process_arguments (int argc, char **argv)
 #ifdef USE_IPV6
 			address_family = AF_INET6;
 #else
-			usage ("IPv6 support not available\n");
+			usage (_("IPv6 support not available\n"));
 #endif
 			break;
 		default:
-			usage ("check_ldap: could not parse unknown arguments\n");
+			usage (_("check_ldap: could not parse unknown arguments\n"));
 			break;
 		}
 	}
@@ -256,61 +305,11 @@ int
 validate_arguments ()
 {
 	if (strlen(ld_host) == 0)
-		usage ("please specify the host name\n");
+		usage (_("please specify the host name\n"));
 
 	if (strlen(ld_base) == 0)
-		usage ("please specify the LDAP base\n");
+		usage (_("please specify the LDAP base\n"));
 
-	else
-		return OK;
+	return OK;
 
-}
-
-
-
-/* function print_help */
-void
-print_help ()
-{
-	print_revision (progname, revision);
-	printf
-		("Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)\n"
-		 "License: GPL\n" "\n");
-	print_usage ();
-	printf
-		("\n"
-		 "Options:\n"
-		 "\t-H [--host] ... host\n"
-		 "\t-a [--attr] ... ldap attribute to search (default: \"(objectclass=*)\"\n"
-		 "\t-b [--base] ... ldap base (eg. ou=my unit, o=my org, c=at)\n"
-		 "\t-D [--bind] ... ldap bind DN (if required)\n"
-		 "\t-P [--pass] ... ldap password (if required)\n"
-		 "\t-p [--port] ... ldap port (default: %d)\n"
-#ifdef HAVE_LDAP_SET_OPTION
-		 "\t-2 [--ver2] ... use ldap protocol version 2\n"
-		 "\t-3 [--ver3] ... use ldap protocol version 3\n"
-		 "\t-4 [--use-ipv4] ... use IPv4 protocol\n"
-		 "\t-6 [--use-ipv6] ... use IPv6 protocol\n"
-		 "\t\t(default protocol version: %d)\n"
-#endif
-		 "\t-w [--warn] ... time in secs. - if the exceeds <warn> the STATE_WARNING will be returned\n"
-		 "\t-c [--crit] ... time in secs. - if the exceeds <crit> the STATE_CRITICAL will be returned\n"
-		 "\n", DEFAULT_PORT
-#ifdef HAVE_LDAP_SET_OPTION
- 		     , DEFAULT_PROTOCOL
-#endif
-		);
-}
-
-
-void
-print_usage ()
-{
-	printf
-		("Usage: %s -H <host> -b <base_dn> [-p <port>] [-a <attr>] [-D <binddn>]\n"
-		 "         [-P <password>] [-w <warn_time>] [-c <crit_time>] [-t timeout]\n"
-#ifdef HAVE_LDAP_SET_OPTION
-		 "         [-2|-3] [-4|-6]\n"
-#endif
-		 "(Note: all times are in seconds.)\n", progname);
 }
