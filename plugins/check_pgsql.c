@@ -233,13 +233,8 @@ void
 print_usage (void)
 {
 	printf ("Usage:\n" " %s %s\n"
-#ifdef HAVE_GETOPT_H
 					" %s (-h | --help) for detailed help\n"
 					" %s (-V | --version) for version information\n",
-#else
-					" %s -h for detailed help\n"
-					" %s -V for version information\n",
-#endif
 					PROGNAME, OPTIONS, PROGNAME, PROGNAME);
 }
 
@@ -280,7 +275,7 @@ process_arguments (int argc, char **argv)
 			break;
 
 		switch (c) {
-		case '?':     /* help */
+		case '?':     /* usage */
 			usage2 ("Unknown argument", optarg);
 		case 'h':     /* help */
 			print_help ();
