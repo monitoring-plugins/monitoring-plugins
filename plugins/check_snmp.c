@@ -155,7 +155,7 @@ int errcode, excode;
 
 char *server_address = NULL;
 char *community = NULL;
-char *oid = NULL;
+char *oid = "";
 char *label = NULL;
 char *units = NULL;
 char *port = NULL;
@@ -189,7 +189,7 @@ main (int argc, char **argv)
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *command_line = NULL;
 	char *response = NULL;
-	char *outbuff = NULL;
+	char *outbuff = "";
 	char *output = NULL;
 	char *ptr = NULL;
 	char *p2 = NULL;
@@ -197,7 +197,6 @@ main (int argc, char **argv)
 
 	labels = malloc (labels_size);
 	unitv = malloc (unitv_size);
-	outbuff = strscpy (outbuff, "");
 	for (i = 0; i < MAX_OIDS; i++)
 		eval_method[i] = CHECK_UNDEF;
 	i = 0;
@@ -206,8 +205,8 @@ main (int argc, char **argv)
 		usage ("Incorrect arguments supplied\n");
 
 	/* create the command line to execute */
-	asprintf (&command_line, "%s -p %s -m ALL -v 1 %s -c %s %s",
-	          PATH_TO_SNMPGET, port, server_address, community, oid);
+	asprintf (&command_line, "%s -m ALL -v 1 -c %s %s:%s %s",
+	          PATH_TO_SNMPGET, community, server_address, port, oid);
 	if (verbose)
 		printf ("%s\n", command_line);
 
@@ -368,9 +367,9 @@ main (int argc, char **argv)
 		result = max_state (result, STATE_WARNING);
 
 	if (nunits > 0)
-		printf ("%s %s -%s\n", label, state_text (result), outbuff);
-	else
 		printf ("%s %s -%s %s\n", label, state_text (result), outbuff, units);
+	else
+		printf ("%s %s -%s\n", label, state_text (result), outbuff);
 
 	return result;
 }
