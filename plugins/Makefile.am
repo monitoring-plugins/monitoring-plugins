@@ -1,8 +1,8 @@
 ## Process this file with automake to produce Makefile.in
 
-VPATH = $(top_srcdir) $(top_srcdir)/plugins $(top_srcdir)/plugins/t
+VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t 
 
-INCLUDES = @LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@ 
+INCLUDES = -I.. -I$(top_srcdir)/lib @LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@ 
 
 libexec_PROGRAMS = check_disk check_dummy check_http check_load \
 	check_mrtg check_mrtgtraf check_nwstat check_overcr check_ping \
@@ -16,12 +16,12 @@ EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 
 check_tcp_programs = check_ftp check_imap check_nntp check_pop
 
-EXTRA_DIST = t utils.c netutils.c popen.c getopt.h getopt.c getopt1.c \
+EXTRA_DIST = t utils.c netutils.c popen.c \
 	snprintf.c getloadavg.c
 
 PLUGINHDRS = common.h config.h
 
-BASEOBJS = utils.o
+BASEOBJS = utils.o ../lib/libnagiosplug.a
 NETOBJS = netutils.o $(BASEOBJS)
 NETLIBS = $(NETOBJS) $(SOCKETLIBS)
 
@@ -118,18 +118,8 @@ utils.o: utils.c utils.h $(PLUGINHDRS)
 
 netutils.o: netutils.c netutils.h $(PLUGINHDRS)
 
-getopt.o: getopt.c getopt.h
-	$(COMPILE) -c $(srcdir)/getopt.c -o $@
-
-getopt1.o: getopt1.c getopt.h
-	$(COMPILE) -c $(srcdir)/getopt1.c -o $@
-
 snprintf.o: snprintf.c
 	$(COMPILE) @NEED_VA_LIST@ -c $(srcdir)/snprintf.c -o $@
-
-libgetopt.a: getopt.o getopt1.o
-	$(AR) -r $@ getopt.o getopt1.o
-	$(RANLIB) $@
 
 libsnprintf.a: snprintf.o
 	$(AR) -r $@ snprintf.o
