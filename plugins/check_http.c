@@ -63,6 +63,8 @@ X509 *server_cert;
 int connect_SSL (void);
 int check_certificate (X509 **);
 #endif
+int no_body = FALSE;
+int maximum_age = -1;
 
 #ifdef HAVE_REGEX_H
 enum {
@@ -209,6 +211,8 @@ process_arguments (int argc, char **argv)
  		{"linespan", no_argument, 0, 'l'},
 		{"onredirect", required_argument, 0, 'f'},
 		{"certificate", required_argument, 0, 'C'},
+		{"no-body", no_argument, 0, 'N'},
+		{"max-age", required_argument, 0, 'M'},
 		{"content-type", required_argument, 0, 'T'},
 		{"min", required_argument, 0, 'm'},
 		{"use-ipv4", no_argument, 0, '4'},
@@ -233,7 +237,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvh46t:c:w:H:P:T:I:a:e:p:s:R:r:u:f:C:nlLSm:", longopts, &option);
+		c = getopt_long (argc, argv, "Vvh46t:c:w:H:P:T:I:a:e:p:s:R:r:u:f:C:nlLSm:M:N", longopts, &option);
 		if (c == -1 || c == EOF)
 			break;
 
@@ -390,6 +394,27 @@ process_arguments (int argc, char **argv)
 		case 'm': /* min_page_length */
 			min_page_len = atoi (optarg);
 			break;
+		case 'N': /* no-body */
+			no_body = TRUE;
+			break;
+		case 'M': /* max-age */
+                  {
+                    int L = strlen(optarg);
+                    if (L && optarg[L-1] == 'm')
+                      maximum_age = atoi (optarg) * 60;
+                    else if (L && optarg[L-1] == 'h')
+                      maximum_age = atoi (optarg) * 60 * 60;
+                    else if (L && optarg[L-1] == 'd')
+                      maximum_age = atoi (optarg) * 60 * 60 * 24;
+                    else if (L && (optarg[L-1] == 's' ||
+                                   isdigit (optarg[L-1])))
+                      maximum_age = atoi (optarg);
+                    else {
+                      fprintf (stderr, "unparsable max-age: %s\n", optarg);
+                      exit (1);
+                    }
+                  }
+                  break;
 		}
 	}
 
@@ -461,6 +486,205 @@ base64 (const char *bin, size_t len)
 }
 
 
+
+
+
+/* Returns 1 if we're done processing the document body; 0 to keep going */
+static int
+document_headers_done (char *full_page)
+{
+	const char *body, *s;
+	const char *end;
+
+	for (body = full_page; *body; body++) {
+		if (!strncmp (body, "\n\n", 2) || !strncmp (body, "\n\r\n", 3))
+			break;
+	}
+
+	if (!*body)
+		return 0;  /* haven't read end of headers yet */
+
+	full_page[body - full_page] = 0;
+	return 1;
+}
+
+static time_t
+parse_time_string (const char *string)
+{
+	struct tm tm;
+	time_t t;
+	memset (&tm, 0, sizeof(tm));
+
+	/* Like this: Tue, 25 Dec 2001 02:59:03 GMT */
+
+	if (isupper (string[0])  &&  /* Tue */
+		islower (string[1])  &&
+		islower (string[2])  &&
+		',' ==   string[3]   &&
+		' ' ==   string[4]   &&
+		(isdigit(string[5]) || string[5] == ' ') &&   /* 25 */
+		isdigit (string[6])  &&
+		' ' ==   string[7]   &&
+		isupper (string[8])  &&  /* Dec */
+		islower (string[9])  &&
+		islower (string[10]) &&
+		' ' ==   string[11]  &&
+		isdigit (string[12]) &&  /* 2001 */
+		isdigit (string[13]) &&
+		isdigit (string[14]) &&
+		isdigit (string[15]) &&
+		' ' ==   string[16]  &&
+		isdigit (string[17]) &&  /* 02: */
+		isdigit (string[18]) &&
+		':' ==   string[19]  &&
+		isdigit (string[20]) &&  /* 59: */
+		isdigit (string[21]) &&
+		':' ==   string[22]  &&
+		isdigit (string[23]) &&  /* 03 */
+		isdigit (string[24]) &&
+		' ' ==   string[25]  &&
+		'G' ==   string[26]  &&  /* GMT */
+		'M' ==   string[27]  &&  /* GMT */
+		'T' ==   string[28]) {
+
+		tm.tm_sec  = 10 * (string[23]-'0') + (string[24]-'0');
+		tm.tm_min  = 10 * (string[20]-'0') + (string[21]-'0');
+		tm.tm_hour = 10 * (string[17]-'0') + (string[18]-'0');
+		tm.tm_mday = 10 * (string[5] == ' ' ? 0 : string[5]-'0') + (string[6]-'0');
+		tm.tm_mon = (!strncmp (string+8, "Jan", 3) ? 0 :
+			!strncmp (string+8, "Feb", 3) ? 1 :
+			!strncmp (string+8, "Mar", 3) ? 2 :
+			!strncmp (string+8, "Apr", 3) ? 3 :
+			!strncmp (string+8, "May", 3) ? 4 :
+			!strncmp (string+8, "Jun", 3) ? 5 :
+			!strncmp (string+8, "Jul", 3) ? 6 :
+			!strncmp (string+8, "Aug", 3) ? 7 :
+			!strncmp (string+8, "Sep", 3) ? 8 :
+			!strncmp (string+8, "Oct", 3) ? 9 :
+			!strncmp (string+8, "Nov", 3) ? 10 :
+			!strncmp (string+8, "Dec", 3) ? 11 :
+			-1);
+		tm.tm_year = ((1000 * (string[12]-'0') +
+			100 * (string[13]-'0') +
+			10 * (string[14]-'0') +
+			(string[15]-'0'))
+			- 1900);
+
+		tm.tm_isdst = 0;  /* GMT is never in DST, right? */
+
+		if (tm.tm_mon < 0 || tm.tm_mday < 1 || tm.tm_mday > 31)
+			return 0;
+
+		/* 
+		This is actually wrong: we need to subtract the local timezone
+		offset from GMT from this value.  But, that's ok in this usage,
+		because we only comparing these two GMT dates against each other,
+		so it doesn't matter what time zone we parse them in.
+		*/
+
+		t = mktime (&tm);
+		if (t == (time_t) -1) t = 0;
+
+		if (verbose) {
+			const char *s = string;
+			while (*s && *s != '\r' && *s != '\n')
+			fputc (*s++, stdout);
+			printf (" ==> %lu\n", (unsigned long) t);
+		}
+
+		return t;
+
+	} else {
+		return 0;
+	}
+}
+
+
+static void
+check_document_dates (const char *headers)
+{
+	const char *s;
+	char *server_date = 0;
+	char *document_date = 0;
+
+	s = headers;
+	while (*s) {
+		const char *field = s;
+		const char *value = 0;
+
+		/* Find the end of the header field */
+		while (*s && !isspace(*s) && *s != ':')
+			s++;
+
+		/* Remember the header value, if any. */
+		if (*s == ':')
+			value = ++s;
+
+		/* Skip to the end of the header, including continuation lines. */
+		while (*s && !(*s == '\n' && (s[1] != ' ' && s[1] != '\t')))
+			s++;
+		s++;
+
+		/* Process this header. */
+		if (value && value > field+2) {
+			char *ff = (char *) malloc (value-field);
+			char *ss = ff;
+			while (field < value-1)
+				*ss++ = tolower(*field++);
+			*ss++ = 0;
+
+			if (!strcmp (ff, "date") || !strcmp (ff, "last-modified")) {
+				const char *e;
+				while (*value && isspace (*value))
+					value++;
+				for (e = value; *e && *e != '\r' && *e != '\n'; e++)
+					;
+				ss = (char *) malloc (e - value + 1);
+				strncpy (ss, value, e - value);
+				ss[e - value] = 0;
+				if (!strcmp (ff, "date")) {
+					if (server_date) free (server_date);
+					server_date = ss;
+				} else {
+					if (document_date) free (document_date);
+					document_date = ss;
+				}
+			}
+			free (ff);
+		}
+	}
+
+	/* Done parsing the body.  Now check the dates we (hopefully) parsed.  */
+	if (!server_date || !*server_date) {
+		die (STATE_UNKNOWN, _("Server date unknown\n"));
+	} else if (!document_date || !*document_date) {
+		die (STATE_CRITICAL, _("Document modification date unknown\n"));
+	} else {
+		time_t sd = parse_time_string (server_date);
+		time_t dd = parse_time_string (document_date);
+
+		if (sd <= 0) {
+			die (STATE_CRITICAL, _("CRITICAL - Server date \"%100s\" unparsable"), server_date);
+		} else if (dd <= 0) {
+			die (STATE_CRITICAL, _("CRITICAL - Document date \"%100s\" unparsable"), document_date);
+		} else if (dd > sd + 30) {
+			die (STATE_CRITICAL, _("CRITICAL - Document is %d seconds in the future\n"), dd - sd);
+		} else if (dd < sd - maximum_age) {
+		int n = (sd - dd);
+		if (n > (60 * 60 * 24 * 2))
+			die (STATE_CRITICAL,
+			  _("CRITICAL - Last modified %.1f days ago\n"),
+			  ((float) n) / (60 * 60 * 24));
+	else
+		die (STATE_CRITICAL,
+		    _("CRITICAL - Last modified %d:%02d:%02d ago\n"),
+		    n / (60 * 60), (n / 60) % 60, n % 60);
+    }
+
+    free (server_date);
+    free (document_date);
+  }
+}
 
 
 
@@ -561,6 +785,11 @@ check_http (void)
 		buffer[i] = '\0';
 		asprintf (&full_page, "%s%s", full_page, buffer);
 		pagesize += i;
+
+                if (no_body && document_headers_done (full_page)) {
+                  i = 0;
+                  break;
+                }
 	}
 
 	if (i < 0 && errno != ECONNRESET) {
@@ -621,7 +850,8 @@ check_http (void)
 	page += (size_t) strspn (page, "\r\n");
 	header[pos - header] = 0;
 	if (verbose)
-		printf ("**** HEADER ****\n%s\n**** CONTENT ****\n%s\n", header, page);
+		printf ("**** HEADER ****\n%s\n**** CONTENT ****\n%s\n", header,
+                (no_body ? "  [[ skipped ]]" : page));
 
 	/* make sure the status line matches the response we are looking for */
 	if (!strstr (status_line, server_expect)) {
@@ -691,6 +921,10 @@ check_http (void)
 
 	} /* end else (server_expect_yn)  */
 		
+        if (maximum_age >= 0) {
+          check_document_dates (header);
+        }
+
 	/* check elapsed time */
 	microsec = deltime (tv);
 	elapsed_time = (double)microsec / 1.0e6;
@@ -1154,6 +1388,12 @@ certificate expiration times.\n"));
    URL to GET or POST (default: /)\n\
  -P, --post=STRING\n\
    URL encoded http POST data\n\
+ -N, --no-body\n\
+   Don't wait for document body: stop reading after headers.\n\
+   (Note that this still does an HTTP GET or POST, not a HEAD.)\n\
+ -M, --max-age=SECONDS\n\
+   Warn if document is more than SECONDS old. the number can also be of \n\
+   the form \"10m\" for minutes, \"10h\" for hours, or \"10d\" for days.\n\
  -T, --content-type=STRING\n\
    specify Content-Type header media type when POSTing\n"), HTTP_EXPECT);
 
@@ -1226,6 +1466,6 @@ Usage: %s (-H <vhost> | -I <IP-address>) [-u <uri>] [-p <port>]\n\
   [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L]\n\
   [-a auth] [-f <ok | warn | critcal | follow>] [-e <expect>]\n\
   [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n\
-  [-P string] [-m min_pg_size] [-4|-6]\n"), progname);
+  [-P string] [-m min_pg_size] [-4|-6] [-N] [-M <age>]\n"), progname);
 	printf (_(UT_HLP_VRS), progname, progname);
 }
