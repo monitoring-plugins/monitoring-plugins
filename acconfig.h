@@ -7,6 +7,7 @@
 #undef HAVE_SSL
 #undef HAVE_SWAP
 #undef NSLOOKUP_COMMAND
+#undef HOST_COMMAND
 #undef PACKAGE_VERSION
 #undef PATH_TO_DIG
 #undef PATH_TO_FPING
