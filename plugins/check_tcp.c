@@ -57,12 +57,16 @@ SSL *ssl;
 int connect_SSL (void);
 #endif
 
-#define TCP_PROTOCOL 1
-#define UDP_PROTOCOL 2
+enum {
+	TCP_PROTOCOL = 1,
+	UDP_PROTOCOL = 2,
+	MAXBUF = 1024
+};
 
 int process_arguments (int, char **);
 void print_usage (void);
 void print_help (void);
+int my_recv (void);
 
 char *progname = "check_tcp";
 char *SERVICE = NULL;
@@ -91,13 +95,13 @@ double elapsed_time = 0;
 int verbose = FALSE;
 int use_ssl = FALSE;
 int sd = 0;
+char *buffer = "";
 
 int
 main (int argc, char **argv)
 {
 	int result;
 	int i;
-	char *buffer = "";
 	char *status = "";
 	struct timeval tv;
 
@@ -248,15 +252,15 @@ main (int argc, char **argv)
 
 	if (server_send || server_expect_count > 0) {
 
-		buffer = malloc (MAX_INPUT_BUFFER);
+		buffer = malloc (MAXBUF);
+		memset (buffer, '\0', MAXBUF);
 		/* watch for the expect string */
-#ifdef HAVE_SSL
-		if (use_ssl && SSL_read (ssl, buffer, MAX_INPUT_BUFFER - 1) > 0)
+		while ((i = my_recv ()) > 0) {
+			buffer[i] = '\0';
 			asprintf (&status, "%s%s", status, buffer);
-		else
-#endif
-			if (recv (sd, buffer, MAX_INPUT_BUFFER - 1, 0) > 0)
-				asprintf (&status, "%s%s", status, buffer);
+			if (buffer[i-2] == '\r' && buffer[i-1] == '\n')
+				break;
+		}
 
 		/* return a CRITICAL status if we couldn't read any data */
 		if (status == NULL)
@@ -279,7 +283,7 @@ main (int argc, char **argv)
 		}
 	}
 
-	if (server_quit)
+	if (server_quit != NULL)
 #ifdef HAVE_SSL
 		if (use_ssl) {
 			SSL_write (ssl, QUIT, strlen (QUIT));
@@ -572,3 +576,23 @@ connect_SSL (void)
 }
 #endif
 
+
+
+int
+my_recv (void)
+{
+	int i;
+
+#ifdef HAVE_SSL
+	if (use_ssl) {
+		i = SSL_read (ssl, buffer, MAXBUF - 1);
+	}
+	else {
+#endif
+		i = read (sd, buffer, MAXBUF - 1);
+#ifdef HAVE_SSL
+	}
+#endif
+
+	return i;
+}
