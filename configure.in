@@ -231,6 +231,121 @@ elif test "$OPENSSL" = "/usr/local/ssl/bin/openssl"; then
 fi
 AC_ARG_WITH(openssl,--with-openssl=<dir> sets path to openssl installation,[OPENSSL=$withval])
 
+dnl #########################################################################
+dnl Check if Posix getaddrinfo() is available.  It is also possible to use
+dnl the version from the lwres library distributed with BIND.
+dnl #########################################################################
+AC_ARG_ENABLE([emulate-getaddrinfo],
+              ACX_HELP_STRING([--enable-emulate-getaddrinfo],
+                             [enable getaddrinfo emulation (default=no)]),
+              ,
+              enable_emulate_getaddrinfo=no)
+AC_ARG_WITH(lwres,
+            ACX_HELP_STRING([--with-lwres=DIR],
+                           [use lwres library for getaddrinfo (default=no)]),
+            ,
+            with_lwres=no)
+
+dnl ## enable force to test getaddrinfo.c
+if test x$enable_emulate_getaddrinfo = xforce ; then
+        enable_emulate_getaddrinfo=yes
+        have_getaddrinfo=no
+else
+
+have_getaddrinfo=no
+if test x$with_lwres != xno ; then
+        if test "$with_lwres" != yes ; then
+                   CPPFLAGS="-I${with_lwres}/include $CPPFLAGS"
+                   LDFLAGS="-L${with_lwres}/lib $LDFLAGS"
+        fi
+        AC_CHECK_HEADERS(lwres/netdb.h, ,
+                        [AC_MSG_ERROR([cannot find <lwres/netdb.h>])])
+        AC_CHECK_LIB(lwres, lwres_getaddrinfo, ,
+                     [AC_MSG_ERROR([cannot find the lwres library])],
+                     -lnsl -lpthread)
+        have_getaddrinfo=yes
+fi
+
+if test x$have_getaddrinfo != xyes ; then
+        AC_SEARCH_LIBS(getaddrinfo, socket resolv bind nsl c_r cr, have_getaddrinfo=yes)
+fi
+
+dnl # Special nonsense for systems that actually have getaddrinfo but
+dnl # redefine the name to something else, e.g. OSF
+if test x$have_getaddrinfo != xyes ; then
+        AC_MSG_CHECKING(if getaddrinfo is redefined in netdb.h)
+        AC_TRY_LINK([
+#               include <netdb.h>
+        ], [
+                struct addrinfo hints, *res;
+                int err;
+
+                err = getaddrinfo ("host", "service", &hints, &res);
+        ], [
+                have_getaddrinfo=yes
+                AC_MSG_RESULT(yes)
+        ], [AC_MSG_RESULT(no)])
+fi
+
+fi
+
+if test x$have_getaddrinfo != xno ; then
+        if test x$enable_emulate_getaddrinfo != xno ; then
+                AC_MSG_ERROR([getaddrinfo found but emulate-getaddrinfo was enabled])
+        fi
+        AC_DEFINE(HAVE_GETADDRINFO, 1,
+                  [Does system provide RFC 2553/Posix getaddrinfo?])
+else
+        if test x$enable_emulate_getaddrinfo != xyes ; then
+                AC_MSG_ERROR([getaddrinfo not found: try --with-lwres or --enable-emulate-getaddrinfo])
+        fi
+        LIBOBJS="$LIBOBJS getaddrinfo.o"
+fi
+
+if test x"$enable_emulate_getaddrinfo" != xno ; then
+    have_resolver=no
+
+  dnl  Try for getipnodebyname
+    AC_SEARCH_LIBS(getipnodebyname, resolv bind nsl c_r cr, have_resolver=yes)
+    if test x"$have_resolver" != xno ; then
+         AC_DEFINE(HAVE_GETIPNODEBYNAME, 1,
+                   [Set when getipnodebyname is available])
+    fi
+
+  dnl  Try for gethostbyname_r
+    if test x"$have_resolver" = xno ; then
+        AC_SEARCH_LIBS(gethostbyname_r, resolv bind nsl c_r cr,
+                       [have_resolver=yes
+                        ACX_WHICH_GETHOSTBYNAME_R])
+    fi
+
+  dnl  Try for gethostbyname
+    if test x"$have_resolver" = xno ; then
+        if test x"$enable_pthreads" != xno ; then
+            AC_MSG_WARN([using threads but cannot find gethostbyname_r or getipnodebyname])
+        fi
+        AC_SEARCH_LIBS(gethostbyname, resolv bind nsl, ,
+                       [AC_MSG_ERROR([cannot find gethostbyname])])
+    fi
+    LIBOBJS="$LIBOBJS gethostbyname.o"
+
+    AC_CACHE_CHECK([for IPv6 support], acx_cv_sys_use_ipv6, [
+            AC_TRY_COMPILE([
+#               include <netinet/in.h>
+            ], [
+                struct sockaddr_in6 sin6;
+                void *p;
+
+                sin6.sin6_family = AF_INET6;
+                sin6.sin6_port = 587;
+                p = &sin6.sin6_addr;
+            ], [acx_cv_sys_use_ipv6=yes], [acx_cv_sys_use_ipv6=no])
+    ])
+    if test x"$acx_cv_sys_use_ipv6" != xno ; then
+            AC_DEFINE(USE_IPV6,1,[Enable IPv6 support])
+    fi
+fi
+
 AC_CHECK_HEADERS(krb5.h,FOUNDINCLUDE=yes,FOUNDINCLUDE=no)
 if test "$FOUNDINCLUDE" = "no"; then
   _SAVEDCPPFLAGS="$CPPFLAGS"
