@@ -169,7 +169,7 @@ command[check-router-alive]=@libexecdir@/check_ping -H $HOSTADDRESS$ -w 5000,100
 command[check-fast-alive]=@libexecdir@/check_fping -H $HOSTADDRESS$
 
 # Check if the IMAP service is alive (default port=143)
-command[check-imap]=@libexecdir@/check_imap $HOSTADDRESS$
+command[check-imap]=@libexecdir@/check_imap -H $HOSTADDRESS$
 
 # Check RPC services
 command[check-rpc]=@libexecdir@/check_rpc -H $HOSTADDRESS$ -C $ARG1$
@@ -177,7 +177,7 @@ command[check-rpc]=@libexecdir@/check_rpc -H $HOSTADDRESS$ -C $ARG1$
 # Check if the NFS server is running (version 2 and version 3)
 command[check-nfs]=@libexecdir@/check_rpc -H $HOSTADDRESS$ -C nfs -c2,3
 
-# Check game servers/bin/ps -axo 'stat uid ppid comm args'
+# Check game servers
 command[check_quake]=@libexecdir@/check_game qs $HOSTADDRESS$
 command[check_unreal]=@libexecdir@/check_game uns $HOSTADDRESS$ -p $ARG1$ -pf 8
 
@@ -213,9 +213,16 @@ command[check_real_url]=@libexecdir@/check_real $HOSTADDRESS$ -p $ARG1$ -wt $ARG
 ## Check RealAudio server response
 command[check_real]=@libexecdir@/check_real $HOSTADDRESS$ -p $ARG1$ -wt $ARG2$ -ct $ARG3$ -to 5
 
+# NetWare checks via check_nwstat
+# how many current logins
+command[check_netware_logins]=@libexecdir@/check_nwstat -H $HOSTADDRESS$ -v "CONNS" -w $ARG1$ -c $ARG2$
+# 5 minute avg cpu load
+command[check_netware_5load]=@libexecdir@/check_nwstat -H $HOSTADDRESS$ -v "LOAD5" -w 70 -c 90
+# Netware 5 abends
+command[check_netware_abend]=@libexecdir@/check_nwstat -H $HOSTADDRESS$ -v "ABENDS" -w 10 -c 30
+
 
 # Still have to write sample entries for the following:
 #
 # check_ldap
-# check_nwstat
 # check_overcr
