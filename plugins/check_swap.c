@@ -43,16 +43,17 @@ void print_help (void);
 
 int warn_percent = 200;
 int crit_percent = 200;
-int warn_size = -1;
-int crit_size = -1;
+long unsigned int warn_size = 0;
+long unsigned int crit_size = 0;
 int verbose;
 int allswaps;
 
 int
 main (int argc, char **argv)
 {
-	int total_swap = 0, used_swap = 0, free_swap = 0, percent_used;
-	int total, used, free, percent;
+	int percent_used, percent;
+	long unsigned int total_swap = 0, used_swap = 0, free_swap = 0;
+	long unsigned int total, used, free;
 	int result = STATE_OK;
 	char input_buffer[MAX_INPUT_BUFFER];
 #ifdef HAVE_SWAP
@@ -71,28 +72,28 @@ main (int argc, char **argv)
 	fp = fopen (PROC_MEMINFO, "r");
 	asprintf (&status, "%s", "Swap used:");
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, fp)) {
-		if (sscanf (input_buffer, " %s %d %d %d", str, &total, &used, &free) == 4 &&
+		if (sscanf (input_buffer, " %s %lu %lu %lu", str, &total, &used, &free) == 4 &&
 		    strstr (str, "Swap")) {
 			total_swap += total;
 			used_swap += used;
 			free_swap += free;
 			if (allswaps) {
-				percent = 100 * (((float) used) / ((float) total));
+				percent = 100 * (((double) used) / ((double) total));
 				if (percent >= crit_percent || free <= crit_size)
 					result = max_state (STATE_CRITICAL, result);
 				else if (percent >= warn_percent || free <= warn_size)
 					result = max_state (STATE_WARNING, result);
 				if (verbose)
-					asprintf (&status, "%s [%d/%d]", status, used, total);
+					asprintf (&status, "%s [%lu/%lu]", status, used, total);
 			}
 		}
 	}
-	percent_used = 100 * (((float) used_swap) / ((float) total_swap));
+	percent_used = 100 * (((double) used_swap) / ((double) total_swap));
 	if (percent_used >= crit_percent || free_swap <= crit_size)
 		result = max_state (STATE_CRITICAL, result);
 	else if (percent_used >= warn_percent || free_swap <= warn_size)
 		result = max_state (STATE_WARNING, result);
-	asprintf (&status, "%s %2d%% (%d out of %d)", status, percent_used,
+	asprintf (&status, "%s %2d%% (%lu out of %lu)", status, percent_used,
 	          used_swap, total_swap);
 	fclose (fp);
 #else
@@ -131,22 +132,22 @@ main (int argc, char **argv)
 		used_swap += used;
 		free_swap += free;
 		if (allswaps) {
-			percent = 100 * (((float) used) / ((float) total));
+			percent = 100 * (((double) used) / ((double) total));
 			if (percent >= crit_percent || free <= crit_size)
 				result = max_state (STATE_CRITICAL, result);
 			else if (percent >= warn_percent || free <= warn_size)
 				result = max_state (STATE_WARNING, result);
 			if (verbose)
-				asprintf (&status, "%s [%d/%d]", status, used, total);
+				asprintf (&status, "%s [%lu/%lu]", status, used, total);
 		}
 	}
-	percent_used = 100 * ((float) used_swap) / ((float) total_swap);
-	asprintf (&status, "%s %2d%% (%d out of %d)",
-						status, percent_used, used_swap, total_swap);
+	percent_used = 100 * ((double) used_swap) / ((double) total_swap);
 	if (percent_used >= crit_percent || free_swap <= crit_size)
 		result = max_state (STATE_CRITICAL, result);
 	else if (percent_used >= warn_percent || free_swap <= warn_size)
 		result = max_state (STATE_WARNING, result);
+	asprintf (&status, "%s %2d%% (%lu out of %lu)",
+						status, percent_used, used_swap, total_swap);
 
 	/* If we get anything on STDERR, at least set warning */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
@@ -231,7 +232,7 @@ process_arguments (int argc, char **argv)
 			}
 			else if (strstr (optarg, ",") &&
 							 strstr (optarg, "%") &&
-							 sscanf (optarg, "%d,%d%%", &warn_size, &warn_percent) == 2) {
+							 sscanf (optarg, "%lu,%d%%", &warn_size, &warn_percent) == 2) {
 				break;
 			}
 			else if (strstr (optarg, "%") &&
@@ -249,7 +250,7 @@ process_arguments (int argc, char **argv)
 			}
 			else if (strstr (optarg, ",") &&
 							 strstr (optarg, "%") &&
-							 sscanf (optarg, "%d,%d%%", &crit_size, &crit_percent) == 2) {
+							 sscanf (optarg, "%lu,%d%%", &crit_size, &crit_percent) == 2) {
 				break;
 			}
 			else if (strstr (optarg, "%") &&
