@@ -45,7 +45,7 @@ yes
   AC_MSG_RESULT($fu_cv_sys_mounted_cray_listmntent)
   if test $fu_cv_sys_mounted_cray_listmntent = yes; then
     ac_list_mounted_fs=found
-    AC_DEFINE(MOUNTED_LISTMNTENT, 1,
+    AC_DEFINE_UNQUOTED(MOUNTED_LISTMNTENT, 1,
       [Define if there is a function named listmntent that can be used to
    list all mounted filesystems. (UNICOS)])
   fi
@@ -66,7 +66,7 @@ if test $ac_cv_func_getmntent = yes; then
     AC_MSG_RESULT($fu_cv_sys_mounted_getmntent1)
     if test $fu_cv_sys_mounted_getmntent1 = yes; then
       ac_list_mounted_fs=found
-      AC_DEFINE(MOUNTED_GETMNTENT1, 1,
+      AC_DEFINE_UNQUOTED(MOUNTED_GETMNTENT1, 1,
   [Define if there is a function named getmntent for reading the list
    of mounted filesystems, and that function takes a single argument.
    (4.3BSD, SunOS, HP-UX, Dynix, Irix)])
@@ -83,7 +83,7 @@ if test $ac_cv_func_getmntent = yes; then
     AC_MSG_RESULT($fu_cv_sys_mounted_getmntent2)
     if test $fu_cv_sys_mounted_getmntent2 = yes; then
       ac_list_mounted_fs=found
-      AC_DEFINE(MOUNTED_GETMNTENT2, 1,
+      AC_DEFINE_UNQUOTED(MOUNTED_GETMNTENT2, 1,
   [Define if there is a function named getmntent for reading the list of
    mounted filesystems, and that function takes two arguments.  (SVR4)])
     fi
@@ -110,7 +110,7 @@ if test -z "$ac_list_mounted_fs"; then
   AC_MSG_RESULT($fu_cv_sys_mounted_getsstat)
   if test $fu_cv_sys_mounted_getsstat = yes; then
     ac_list_mounted_fs=found
-    AC_DEFINE(MOUNTED_GETFSSTAT, 1,
+    AC_DEFINE_UNQUOTED(MOUNTED_GETFSSTAT, 1,
 	      [Define if there is a function named getfsstat for reading the
    list of mounted filesystems.  (DEC Alpha running OSF/1)])
   fi
@@ -126,7 +126,7 @@ if test -z "$ac_list_mounted_fs"; then
   AC_MSG_RESULT($fu_cv_sys_mounted_vmount)
   if test $fu_cv_sys_mounted_vmount = yes; then
     ac_list_mounted_fs=found
-    AC_DEFINE(MOUNTED_VMOUNT, 1,
+    AC_DEFINE_UNQUOTED(MOUNTED_VMOUNT, 1,
 	[Define if there is a function named mntctl that can be used to read
    the list of mounted filesystems, and there is a system header file
    that declares struct vmount.  (AIX)])
@@ -146,7 +146,7 @@ if test -z "$ac_list_mounted_fs"; then
   AC_MSG_RESULT($fu_cv_sys_mounted_fread_fstyp)
   if test $fu_cv_sys_mounted_fread_fstyp = yes; then
     ac_list_mounted_fs=found
-    AC_DEFINE(MOUNTED_FREAD_FSTYP, 1,
+    AC_DEFINE_UNQUOTED(MOUNTED_FREAD_FSTYP, 1,
 [Define if (like SVR2) there is no specific function for reading the
    list of mounted filesystems, and your system has these header files:
    <sys/fstyp.h> and <sys/statfs.h>.  (SVR3)])
@@ -170,7 +170,7 @@ if test -z "$ac_list_mounted_fs"; then
   AC_MSG_RESULT($fu_cv_sys_mounted_getmntinfo)
   if test $fu_cv_sys_mounted_getmntinfo = yes; then
     ac_list_mounted_fs=found
-    AC_DEFINE(MOUNTED_GETMNTINFO, 1,
+    AC_DEFINE_UNQUOTED(MOUNTED_GETMNTINFO, 1,
 	      [Define if there is a function named getmntinfo for reading the
    list of mounted filesystems.  (4.4BSD)])
   fi
@@ -188,7 +188,7 @@ if test -z "$ac_list_mounted_fs"; then
   AC_MSG_RESULT($fu_cv_sys_mounted_getmnt)
   if test $fu_cv_sys_mounted_getmnt = yes; then
     ac_list_mounted_fs=found
-    AC_DEFINE(MOUNTED_GETMNT, 1,
+    AC_DEFINE_UNQUOTED(MOUNTED_GETMNT, 1,
       [Define if there is a function named getmnt for reading the list of
    mounted filesystems.  (Ultrix)])
   fi
@@ -209,7 +209,7 @@ if test -z "$ac_list_mounted_fs"; then
   AC_MSG_RESULT($fu_result)
   if test $fu_result = yes; then
     ac_list_mounted_fs=found
-    AC_DEFINE(MOUNTED_FS_STAT_DEV, 1,
+    AC_DEFINE_UNQUOTED(MOUNTED_FS_STAT_DEV, 1,
       [Define if there are functions named next_dev and fs_stat_dev for
    reading the list of mounted filesystems.  (BeOS)])
   fi
@@ -225,7 +225,7 @@ if test -z "$ac_list_mounted_fs"; then
   AC_MSG_RESULT($fu_cv_sys_mounted_fread)
   if test $fu_cv_sys_mounted_fread = yes; then
     ac_list_mounted_fs=found
-    AC_DEFINE(MOUNTED_FREAD, 1,
+    AC_DEFINE_UNQUOTED(MOUNTED_FREAD, 1,
 	      [Define if there is no specific function for reading the list of
    mounted filesystems.  fread will be used to read /etc/mnttab.  (SVR2) ])
   fi
