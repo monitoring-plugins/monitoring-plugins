@@ -328,7 +328,7 @@ process_arguments (int argc, char **argv)
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
-		case '?':									/* help */
+		case '?':									/* error */
 			usage (_("Invalid argument\n"));
 		}
 	}
@@ -407,7 +407,9 @@ print_help (void)
  -c, --critical=PERCENT%%\n\
    Exit with CRITCAL status if less than PERCENT of swap space is free\n\
  -a, --allswaps\n\
-    Conduct comparisons for all swap partitions, one by one\n"));
+    Conduct comparisons for all swap partitions, one by one\n\
+ -v, --verbose\n\
+    Verbose output. Up to 3 levels\n"));
 
 	printf (_("\n\
 On Solaris, if -a specified, uses swap -l, otherwise uses swap -s.\n\
@@ -426,8 +428,8 @@ void
 print_usage (void)
 {
 	printf (_("Usage:\n\
- %s [-a] -w <used_percentage>%% -c <used_percentage>%%\n\
- %s [-a] -w <bytes_free> -c <bytes_free>\n\
+ %s [-av] -w <percent_free>%% -c <percent_free>%%\n\
+ %s [-av] -w <bytes_free> -c <bytes_free>\n\
  %s (-h | --help) for detailed help\n\
  %s (-V | --version) for version information\n"),
 	        progname, progname, progname, progname);
