@@ -44,14 +44,6 @@ check_radius.tar.gz     - C program to check RADIUS authentication. This is a ha
 		          will not appear in the core plugin distribution!
 		          (Adam Jacob)
 
-hopcroft-plugins.tar.gz - Various example plugin scripts contributed by Stanley Hopcroft.
-			  Includes a plugin to check Internet connectivity by checking various
-			  popular search engines, a plugin to check the availability of login
- 			  to a TN/3270 mainframe database using Expect to search for "usual"
-			  screens, and another plugin to test the availability of a database
-			  search via the web.
-			  (Stanley Hopcroft)
-
 radius.tar.gz           - Code modifications necessary to make the radexample app 
 			  supplied with the radiusclient code work as a RADIUS plugin
 			  for Nagios (Nick Shore)
@@ -62,6 +54,4 @@ fetchlog-0.94.tar.gz   - C program: The fetchlog utility displays the last new m
                          plugin to monitor local logfiles or together with Net-SNMP to monitor
                          remote logfiles. The README shows how to setup fetchlog for Nagios.
                          (Alexander Haderer)
-
-check_cit.tgz	-Perl plugins to monitor Citrix server
 
