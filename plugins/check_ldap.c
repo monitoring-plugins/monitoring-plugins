@@ -21,7 +21,7 @@
  *****************************************************************************/
 
 const char *progname = "check_ldap";
-#define REVISION "$Revision$"
+const char *revision = "$Revision$";
 
 #include "config.h"
 #include "common.h"
@@ -31,7 +31,10 @@ const char *progname = "check_ldap";
 #include <lber.h>
 #include <ldap.h>
 
-#define UNKNOWN -1
+enum {
+	UNDEFINED = -1,
+	DEFAULT_PORT = 389
+};
 
 int process_arguments (int, char **);
 int validate_arguments (void);
@@ -40,9 +43,13 @@ void print_usage (void);
 
 char ld_defattr[] = "(objectclass=*)";
 char *ld_attr = ld_defattr;
-char *ld_host = NULL, *ld_base = NULL, *ld_passwd = NULL, *ld_binddn = NULL;
-unsigned int ld_port = 389;
-int warn_time = UNKNOWN, crit_time = UNKNOWN;
+char *ld_host = "";
+char *ld_base = "";
+char *ld_passwd = NULL;
+char *ld_binddn = NULL;
+unsigned int ld_port = DEFAULT_PORT;
+int warn_time = UNDEFINED;
+int crit_time = UNDEFINED;
 
 int
 main (int argc, char *argv[])
@@ -98,17 +105,17 @@ main (int argc, char *argv[])
 	/* get the finish time */
 	time (&time1);
 
-	/* calcutate the elapsed time */
+	/* calcutate the elapsed time and compare to thresholds */
 	t_diff = time1 - time0;
 
-	/* check if warn_time or crit_time was exceeded */
-	if ((t_diff >= warn_time) && (t_diff < crit_time)) {
-		printf ("LDAP warning - %i seconds response time\n", t_diff);
-		return STATE_WARNING;
-	}
-	if (t_diff >= crit_time) {
+	if (crit_time!=UNDEFINED && t_diff>=crit_time) {
 		printf ("LDAP critical - %i seconds response time\n", t_diff);
 		return STATE_CRITICAL;
+	}
+
+	if (warn_time!=UNDEFINED && t_diff>=warn_time) {
+		printf ("LDAP warning - %i seconds response time\n", t_diff);
+		return STATE_WARNING;
 	}
 
 	/* print out the result */
@@ -165,11 +172,11 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (progname, REVISION);
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 't':									/* timeout period */
 			if (!is_intnonneg (optarg))
-				usage2 ("timeout interval must be an integer", optarg);
+				usage2 ("timeout interval must be a positive integer", optarg);
 			socket_timeout = atoi (optarg);
 			break;
 		case 'H':
@@ -212,14 +219,15 @@ process_arguments (int argc, char **argv)
 int
 validate_arguments ()
 {
-	if (ld_host[0] == 0 ||
-			ld_base[0] == 0 ||
-			ld_port == UNKNOWN || warn_time == UNKNOWN || crit_time == UNKNOWN) {
-		return ERROR;
-	}
-	else {
+	if (strlen(ld_host) == 0)
+		usage ("please specify the host name\n");
+
+	if (strlen(ld_base) == 0)
+		usage ("please specify the LDAP base\n");
+
+	else
 		return OK;
-	}
+
 }
 
 
@@ -228,7 +236,7 @@ validate_arguments ()
 void
 print_help ()
 {
-	print_revision (progname, REVISION);
+	print_revision (progname, revision);
 	printf
 		("Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)\n"
 		 "License: GPL\n" "\n");
@@ -241,10 +249,10 @@ print_help ()
 		 "\t-b [--base] ... ldap base (eg. ou=my unit, o=my org, c=at)\n"
 		 "\t-D [--bind] ... ldap bind DN (if required)\n"
 		 "\t-P [--pass] ... ldap password (if required)\n"
-		 "\t-p [--port] ... ldap port (normaly 389)\n"
+		 "\t-p [--port] ... ldap port (default: %d)\n"
 		 "\t-w [--warn] ... time in secs. - if the exceeds <warn> the STATE_WARNING will be returned\n"
 		 "\t-c [--crit] ... time in secs. - if the exceeds <crit> the STATE_CRITICAL will be returned\n"
-		 "\n");
+		 "\n", DEFAULT_PORT);
 }
 
 
@@ -252,7 +260,7 @@ void
 print_usage ()
 {
 	printf
-		("Usage: %s -H <host> -b <base_dn> -p <port> [-a <attr>] [-D <binddn>]\n"
+		("Usage: %s -H <host> -b <base_dn> [-p <port>] [-a <attr>] [-D <binddn>]\n"
 		 "         [-P <password>] [-w <warn_time>] [-c <crit_time>] [-t timeout]\n"
 		 "(Note: all times are in seconds.)\n", progname);
 }
