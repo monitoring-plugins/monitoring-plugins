@@ -73,8 +73,8 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
-	status = strdup("");
-	perf = strdup("");
+	status = strdup ("");
+	perf = strdup ("");
 
 	if (process_arguments (argc, argv) != OK)
 		usage (_("Invalid command arguments supplied\n"));
@@ -90,7 +90,10 @@ main (int argc, char **argv)
 			used_swap += dskused;
 			free_swap += dskfree;
 			if (allswaps) {
-				percent = 100 * (((double) dskused) / ((double) dsktotal));
+				if (dsktotal == 0)
+					percent=100.0;
+				else
+					percent = 100 * (((double) dskused) / ((double) dsktotal));
 				result = max_state (result, check_swap (percent, dskfree));
 				if (verbose)
 					asprintf (&status, "%s [%llu (%d%%)]", status, dskfree, 100 - percent);
