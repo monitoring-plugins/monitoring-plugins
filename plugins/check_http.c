@@ -201,6 +201,7 @@ process_arguments (int argc, char **argv)
 		{"verbose", no_argument, 0, 'v'},
 		{"post", required_argument, 0, 'P'},
 		{"IP-address", required_argument, 0, 'I'},
+		{"url", required_argument, 0, 'u'},
 		{"string", required_argument, 0, 's'},
 		{"regex", required_argument, 0, 'r'},
 		{"ereg", required_argument, 0, 'r'},
