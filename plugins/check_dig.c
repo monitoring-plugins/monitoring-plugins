@@ -75,8 +75,6 @@ main (int argc, char **argv)
 	if (child_stderr == NULL)
 		printf ("Could not open stderr for %s\n", command_line);
 
-	output = strscpy (output, "");
-
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
 
 		/* the server is responding, we just got the host name... */
@@ -111,7 +109,7 @@ main (int argc, char **argv)
 		/* If we get anything on STDERR, at least set warning */
 		result = max_state (result, STATE_WARNING);
 		printf ("%s", input_buffer);
-		if (!strcmp (output, ""))
+		if (strlen (output) == 0)
 			strscpy (output, 1 + index (input_buffer, ':'));
 	}
 
@@ -120,27 +118,24 @@ main (int argc, char **argv)
 	/* close the pipe */
 	if (spclose (child_process)) {
 		result = max_state (result, STATE_WARNING);
-		if (!strcmp (output, ""))
-			strscpy (output, "nslookup returned error status");
+		if (strlen (output) == 0)
+			strscpy (output, "dig returned error status");
 	}
 
 	(void) time (&end_time);
+
+	if (output == NULL || strcmp (output, "") == 0 || strlen (output) == 0 || strspn (output, " \t\r\n") == strlen (output))
+		strscpy (output, " Probably a non-existent host/domain");
 
 	if (result == STATE_OK)
 		printf ("DNS ok - %d seconds response time (%s)\n",
 						(int) (end_time - start_time), output);
 	else if (result == STATE_WARNING)
-		printf ("DNS WARNING - %s\n",
-						!strcmp (output,
-										 "") ? " Probably a non-existent host/domain" : output);
+		printf ("DNS WARNING - %s\n", output);
 	else if (result == STATE_CRITICAL)
-		printf ("DNS CRITICAL - %s\n",
-						!strcmp (output,
-										 "") ? " Probably a non-existent host/domain" : output);
+		printf ("DNS CRITICAL - %s\n", output);
 	else
-		printf ("DNS problem - %s\n",
-						!strcmp (output,
-										 "") ? " Probably a non-existent host/domain" : output);
+		printf ("DNS problem - %s\n", output);
 
 	return result;
 }
