@@ -39,12 +39,22 @@ const char *options = "\
    Exit with CRITICAL status if less than INTEGER kilobytes of disk are free\n\
  -c, --critical=PERCENT%%\n\
    Exit with CRITCAL status if less than PERCENT of disk space is free\n\
+ -u, --units=STRING\n\
+    Choose bytes, kB, MB, GB, TB (default: MB)\n\
+ -k, --kilobytes\n\
+    Same as '--units kB'\n\
+ -m, --megabytes\n\
+    Same as '--units MB'\n\
+ -l, --local\n\
+    Only check local filesystems\n\
  -p, --path=PATH, --partition=PARTTION\n\
-    Path or partition (checks all mounted partitions if unspecified)\n\
- -m, --mountpoint\n\
-    Display the mountpoint instead of the partition\n\
- -x, --exclude_device=PATH\n\
+    Path or partition  (may be repeated)\n\
+ -x, --exclude_device=PATH <STRING>\n\
     Ignore device (only works if -p unspecified)\n\
+ -X, --exclude-type=TYPE <STRING>\n\
+    Ignore all filesystems of indicated type (may be repeated)\n\
+ -M, --mountpoint\n\
+    Display the mountpoint instead of the partition\n\
  -e, --errors-only\n\
     Display only devices/mountpoints with errors\n\
  -v, --verbose\n\
@@ -53,6 +63,9 @@ const char *options = "\
     Print detailed help screen\n\
  -V, --version\n\
     Print version information\n";
+
+const char *notes = "\
+\n";
 
 #include "common.h"
 #if HAVE_INTTYPES_H
@@ -73,14 +86,10 @@ static int inode_format;
 
 /* If nonzero, show even filesystems with zero size or
    uninteresting types. */
-static int show_all_fs;
+static int show_all_fs = 1;
 
 /* If nonzero, show only local filesystems.  */
-static int show_local_fs;
-
-/* If nonzero, output data for each filesystem corresponding to a
-   command line argument -- even if it's a dummy (automounter) entry.  */
-static int show_listed_fs;
+static int show_local_fs = 0;
 
 /* If positive, the units to use when printing sizes;
    if negative, the human-readable base.  */
@@ -153,6 +162,8 @@ float w_dfp = -1.0;
 float c_dfp = -1.0;
 char *path = "";
 char *exclude_device = "";
+char *units = "MB";
+unsigned long mult = 1024 * 1024;
 int verbose = 0;
 int erronly = FALSE;
 int display_mntp = FALSE;
@@ -194,6 +205,10 @@ main (int argc, char **argv)
 			get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
 		else if (dev_select_list || path_select_list)
 			continue;
+		else if (me->me_remote && show_local_fs)
+			continue;
+		else if (me->me_dummy && !show_all_fs)
+			continue;
 		else if (fs_exclude_list && walk_name_list (fs_exclude_list, me->me_type))
 			continue;
 		else if (dp_exclude_list && 
@@ -211,15 +226,17 @@ main (int argc, char **argv)
 				continue;
 
 			if (disk_result!=STATE_OK || verbose>=0) 
-				asprintf (&output, "%s [%llu MB (%2.0f%%) free on %s]",
+				asprintf (&output, "%s [%llu %s (%2.0f%%) free on %s]",
 				          output,
-				          fsp.fsu_bavail*fsp.fsu_blocksize/1024/1024,
+				          fsp.fsu_bavail*fsp.fsu_blocksize/mult,
+									units,
 				          (double)fsp.fsu_bavail*100/fsp.fsu_blocks,
 				          (!strcmp(file_system, "none") || display_mntp) ? me->me_devname : me->me_mountdir);
-			asprintf (&details, "%s\n%llu of %llu MB (%2.0f%%) free on %s (type %s mounted on %s)",
+			asprintf (&details, "%s\n%llu of %llu %s (%2.0f%%) free on %s (type %s mounted on %s)",
 			          details,
-			          fsp.fsu_bavail*fsp.fsu_blocksize/1024/1024,
-			          fsp.fsu_blocks*fsp.fsu_blocksize/1024/1024,
+			          fsp.fsu_bavail*fsp.fsu_blocksize/mult,
+								units,
+			          fsp.fsu_blocks*fsp.fsu_blocksize/mult,
 			          (double)fsp.fsu_bavail*100/fsp.fsu_blocks,
 			          me->me_devname,
 			          me->me_type,
@@ -250,37 +267,55 @@ process_arguments (int argc, char **argv)
 
 	int option_index = 0;
 	static struct option long_options[] = {
+		{"timeout", required_argument, 0, 't'},
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
-		{"timeout", required_argument, 0, 't'},
+		{"local", required_argument, 0, 'l'},
+		{"kilobytes", required_argument, 0, 'k'},
+		{"megabytes", required_argument, 0, 'm'},
+		{"units", required_argument, 0, 'u'},
 		{"path", required_argument, 0, 'p'},
 		{"partition", required_argument, 0, 'p'},
-		{"verbose", no_argument, 0, 'v'},
-		{"version", no_argument, 0, 'V'},
-		{"errors-only", no_argument, 0, 'e'},
-		{"help", no_argument, 0, 'h'},
-		{"mountpoint", no_argument, 0, 'm'},
-		{"device", no_argument, 0, 'd'},
+		{"device", required_argument, 0, 'd'},
 		{"exclude_device", required_argument, 0, 'x'},
+		{"exclude-type", required_argument, 0, 'X'},
+		{"mountpoint", no_argument, 0, 'M'},
+		{"errors-only", no_argument, 0, 'e'},
+		{"verbose", no_argument, 0, 'v'},
 		{"quiet", no_argument, 0, 'q'},
-
+		{"version", no_argument, 0, 'V'},
+		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
 	};
 
 	if (argc < 2)
 		return ERROR;
 
+	se = (struct name_list *) malloc (sizeof (struct name_list));
+	se->name = strdup ("iso9660");
+	se->name_next = NULL;
+	*fstail = se;
+	fstail = &se->name_next;
+
 	for (c = 1; c < argc; c++)
 		if (strcmp ("-to", argv[c]) == 0)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "+?Vqhvet:c:w:p:d:x:X:m", long_options, &option_index);
+		c = getopt_long (argc, argv, "+?Vqhvet:c:w:u:p:d:x:X:mklM", long_options, &option_index);
 
 		if (c == -1 || c == EOF)
 			break;
 
 		switch (c) {
+		case 't':									/* timeout period */
+			if (is_integer (optarg)) {
+				timeout_interval = atoi (optarg);
+				break;
+			}
+			else {
+				usage ("Timeout Interval must be an integer!\n");
+			}
 		case 'w':									/* warning time threshold */
 			if (is_intnonneg (optarg)) {
 				w_df = atoi (optarg);
@@ -313,14 +348,37 @@ process_arguments (int argc, char **argv)
 			else {
 				usage ("Critical threshold must be integer or percentage!\n");
 			}
-		case 't':									/* timeout period */
-			if (is_integer (optarg)) {
-				timeout_interval = atoi (optarg);
-				break;
+		case 'u':
+			if (! strcmp (optarg, "bytes")) {
+				mult = 1;
+				units = "B";
+			} else if (! strcmp (optarg, "kB")) {
+				mult = 1024;
+				units = "kB";
+			} else if (! strcmp (optarg, "MB")) {
+				mult = 1024 * 1024;
+				units = "MB";
+			} else if (! strcmp (optarg, "GB")) {
+				mult = 1024 * 1024 * 1024;
+				units = "GB";
+			} else if (! strcmp (optarg, "TB")) {
+				mult = (unsigned long)1024 * 1024 * 1024 * 1024;
+				units = "TB";
+			} else {
+				terminate (STATE_UNKNOWN, "unit type %s not known", optarg);
 			}
-			else {
-				usage ("Timeout Interval must be an integer!\n");
-			}
+			break;
+		case 'k': /* display mountpoint */
+			mult = 1024;
+			units = "kB";
+			break;
+		case 'm': /* display mountpoint */
+			mult = 1024 * 1024;
+			units = "MB";
+			break;
+		case 'l':
+			show_local_fs = 1;			
+			break;
 		case 'p':									/* selec path */
 			se = (struct name_list *) malloc (sizeof (struct name_list));
 			se->name = strdup (optarg);
@@ -359,7 +417,7 @@ process_arguments (int argc, char **argv)
 		case 'e':
 			erronly = TRUE;
 			break;
-		case 'm': /* display mountpoint */
+		case 'M': /* display mountpoint */
 			display_mntp = TRUE;
 			break;
 		case 'V':									/* version */
@@ -461,6 +519,7 @@ print_help (void)
 	print_usage ();
 	printf ("\nOptions:\n");
 	printf (options);
+	printf (notes);
 	support ();
 }
 
