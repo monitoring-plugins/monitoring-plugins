@@ -45,7 +45,7 @@ void print_usage (void);
 float wload1 = -1, wload5 = -1, wload15 = -1;
 float cload1 = -1, cload5 = -1, cload15 = -1;
 
-char *status_line = "";
+char *status_line;
 
 
 
@@ -72,7 +72,7 @@ main (int argc, char **argv)
 	float la1, la5, la15;
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage ("\n");
+		usage ("failed processing arguments\n");
 
 #if HAVE_GETLOADAVG==1
 	result = getloadavg (la, 3);
@@ -122,7 +122,7 @@ main (int argc, char **argv)
 # endif
 #endif
 
-	if ((la1 == -1) || (la5 == -1) || (la15 == -1)) {
+	if ((la1 < 0.0) || (la5 < 0.0) || (la15 < 0.0)) {
 #if HAVE_GETLOADAVG==1
 		printf (_("Error in getloadavg()\n"));
 #else

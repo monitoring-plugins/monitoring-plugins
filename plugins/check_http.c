@@ -992,6 +992,7 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
+	printf (_("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n"));
 	printf (_(COPYRIGHT), copyright, email);
 
 	printf (_("\

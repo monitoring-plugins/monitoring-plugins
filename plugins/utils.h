@@ -71,9 +71,9 @@ char *strpcat (char *dest, const char *src, const char *str);
 
 int max_state (int a, int b);
 
-void usage (char *msg) __attribute__((noreturn));
-void usage2(char *msg, char *arg) __attribute__((noreturn));
-void usage3(char *msg, int arg) __attribute__((noreturn));
+void usage (const char *msg) __attribute__((noreturn));
+void usage2(const char *msg, const char *arg) __attribute__((noreturn));
+void usage3(const char *msg, int arg) __attribute__((noreturn));
 
 const char *state_text (int result);
 

@@ -55,7 +55,7 @@ int verbose = FALSE;
 float rta = UNKNOWN_TRIP_TIME;
 int pl = UNKNOWN_PACKET_LOSS;
 
-char *warn_text = "";
+char *warn_text;
 
 
 
@@ -69,11 +69,10 @@ main (int argc, char **argv)
 	int this_result = STATE_UNKNOWN;
 	int i;
 
-	addresses = malloc (max_addr);
+	addresses = malloc ((size_t)max_addr);
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage (_("Could not parse arguments"));
-	exit;
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
@@ -113,7 +112,7 @@ main (int argc, char **argv)
 		/* run the command */
 		this_result = run_ping (cmd, addresses[i]);
 
-		if (pl == UNKNOWN_PACKET_LOSS || rta == UNKNOWN_TRIP_TIME) {
+		if (pl == UNKNOWN_PACKET_LOSS || rta < 0.0) {
 			printf ("%s\n", cmd);
 			die (STATE_UNKNOWN,
 			           _("Error: Could not interpret output from ping command\n"));
@@ -193,12 +192,15 @@ process_arguments (int argc, char **argv)
 		switch (c) {
 		case '?':	/* usage */
 			usage3 (_("Unknown argument"), optopt);
+			break;
 		case 'h':	/* help */
 			print_help ();
 			exit (STATE_OK);
+			break;
 		case 'V':	/* version */
 			print_revision (progname, revision);
 			exit (STATE_OK);
+			break;
 		case 't':	/* timeout period */
 			timeout_interval = atoi (optarg);
 			break;
@@ -221,7 +223,7 @@ process_arguments (int argc, char **argv)
 				n_addresses++;
 				if (n_addresses > max_addr) {
 					max_addr *= 2;
-					addresses = realloc (addresses, max_addr);
+					addresses = realloc (addresses, (size_t)max_addr);
 					if (addresses == NULL)
 						die (STATE_UNKNOWN, _("Could not realloc() addresses\n"));
 				}
@@ -292,7 +294,7 @@ process_arguments (int argc, char **argv)
 		}
 	}
 
-	if (wrta == UNKNOWN_TRIP_TIME) {
+	if (wrta < 0.0) {
 		if (is_negative (argv[c])) {
 			printf (_("<wrta> (%s) must be a non-negative number\n"), argv[c]);
 			return ERROR;
@@ -303,7 +305,7 @@ process_arguments (int argc, char **argv)
 		}
 	}
 
-	if (crta == UNKNOWN_TRIP_TIME) {
+	if (crta < 0.0) {
 		if (is_negative (argv[c])) {
 			printf (_("<crta> (%s) must be a non-negative number\n"), argv[c]);
 			return ERROR;
@@ -346,11 +348,11 @@ validate_arguments ()
 	float max_seconds;
 	int i;
 
-	if (wrta == UNKNOWN_TRIP_TIME) {
+	if (wrta < 0.0) {
 		printf (_("<wrta> was not set\n"));
 		return ERROR;
 	}
-	else if (crta == UNKNOWN_TRIP_TIME) {
+	else if (crta < 0.0) {
 		printf (_("<crta> was not set\n"));
 		return ERROR;
 	}
@@ -397,10 +399,9 @@ run_ping (char *cmd, char *server_address)
 	char buf[MAX_INPUT_BUFFER];
 	int result = STATE_UNKNOWN;
 
-	if ((child_process = spopen (cmd)) == NULL) {
-		printf (_("Cannot open pipe: "));
-		die (STATE_UNKNOWN, cmd);
-	}
+	if ((child_process = spopen (cmd)) == NULL)
+		die (STATE_UNKNOWN, _("Cannot open pipe: %s"), cmd);
+
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL)
 		printf (_("Cannot open stderr for %s\n"), cmd);
@@ -455,7 +456,7 @@ run_ping (char *cmd, char *server_address)
 			           _("PING CRITICAL - Host not found (%s)"),
 			           server_address);
 
-		if (strlen (warn_text) == 0)
+		if (warn_text == NULL)
 			warn_text = strdup (buf);
 		else if (asprintf (&warn_text, "%s %s", warn_text, buf) == -1)
 			die (STATE_UNKNOWN, _("unable to realloc warn_text"));
@@ -471,6 +472,9 @@ run_ping (char *cmd, char *server_address)
 	/* close the pipe - WARNING if status is set */
 	if (spclose (child_process))
 		result = max_state (result, STATE_WARNING);
+
+	if (warn_text == NULL)
+		warn_text = strdup("");
 
 	return result;
 }

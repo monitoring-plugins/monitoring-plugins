@@ -97,7 +97,7 @@ main (int argc, char **argv)
 				input_buffer[strcspn (input_buffer, "\r\n")] = '\0';
 
 			if (strstr (input_buffer, query_address) == input_buffer) {
-				asprintf (&output, input_buffer);
+				output = strdup(input_buffer);
 				result = STATE_OK;
 			}
 			else {
@@ -119,7 +119,7 @@ main (int argc, char **argv)
 		result = max_state (result, STATE_WARNING);
 		printf ("%s", input_buffer);
 		if (strlen (output) == 0)
-			asprintf (&output, 1 + index (input_buffer, ':'));
+			output = strdup (1 + index (input_buffer, ':'));
 	}
 
 	(void) fclose (child_stderr);

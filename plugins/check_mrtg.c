@@ -24,80 +24,10 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "common.h"
 #include "utils.h"
 
-/* original command line: 
-	 <log_file> <expire_minutes> <AVG|MAX> <variable> <vwl> <vcl> <label> [units] */
-
-void
-print_usage (void)
-{
-	printf (_("\
-Usage: %s -F log_file -a <AVG | MAX> -v variable -w warning -c critical\n\
-  [-l label] [-u units] [-e expire_minutes] [-t timeout] [-v]\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
-}
-
-void
-print_help (void)
-{
-	print_revision (progname, revision);
-
-	printf (_(COPYRIGHT), copyright, email);
-
-	printf(_("\
-This plugin will check either the average or maximum value of one of the\n\
-two variables recorded in an MRTG log file.\n"));
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_("\
- -F, --logfile=FILE\n\
-   The MRTG log file containing the data you want to monitor\n\
- -e, --expires=MINUTES\n\
-   Minutes before MRTG data is considered to be too old\n\
- -a, --aggregation=AVG|MAX\n\
-   Should we check average or maximum values?\n\
- -v, --variable=INTEGER\n\
-   Which variable set should we inspect? (1 or 2)\n\
- -w, --warning=INTEGER\n\
-   Threshold value for data to result in WARNING status\n\
- -c, --critical=INTEGER\n\
-   Threshold value for data to result in CRITICAL status\n"));
-
-	printf (_("\
- -l, --label=STRING\n\
-   Type label for data (Examples: Conns, \"Processor Load\", In, Out)\n\
- -u, --units=STRING\n\
-   Option units label for data (Example: Packets/Sec, Errors/Sec, \n\
-   \"Bytes Per Second\", \"%% Utilization\")\n"));
-
-	printf (_("\
-If the value exceeds the <vwl> threshold, a WARNING status is returned.  If\n\
-the value exceeds the <vcl> threshold, a CRITICAL status is returned.  If\n\
-the data in the log file is older than <expire_minutes> old, a WARNING\n\
-status is returned and a warning message is printed.\n\n"));
-
-	printf(_("This plugin is useful for monitoring MRTG data that does not correspond to\n\
-bandwidth usage.  (Use the check_mrtgtraf plugin for monitoring bandwidth).\n\
-It can be used to monitor any kind of data that MRTG is monitoring - errors,\n\
-packets/sec, etc.  I use MRTG in conjuction with the Novell NLM that allows\n\
-me to track processor utilization, user connections, drive space, etc and\n\
-this plugin works well for monitoring that kind of data as well.\n\n"));
-
-	printf (_("Notes:\n\
-- This plugin only monitors one of the two variables stored in the MRTG log\n\
-  file.  If you want to monitor both values you will have to define two\n\
-  commands with different values for the <variable> argument.  Of course,\n\
-  you can always hack the code to make this plugin work for you...\n\
-- MRTG stands for the Multi Router Traffic Grapher.  It can be downloaded from\n\
-  http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html\n"));
-
-	printf (_(UT_SUPPORT));
-}
-
 int process_arguments (int, char **);
 int validate_arguments (void);
+void print_help (void);
+void print_usage (void);
 
 char *log_file = NULL;
 int expire_minutes = 0;
@@ -105,8 +35,8 @@ int use_average = TRUE;
 int variable_number = -1;
 unsigned long value_warning_threshold = 0L;
 unsigned long value_critical_threshold = 0L;
-char *value_label = "";
-char *units_label = "";
+char *value_label;
+char *units_label;
 
 int
 main (int argc, char **argv)
@@ -351,5 +281,92 @@ validate_arguments (void)
 	if (variable_number == -1)
 		usage (_("You must supply the variable number\n"));
 
+	if (value_label == NULL)
+		value_label = strdup ("");
+
+	if (units_label == NULL)
+		units_label = strdup ("");
+
 	return OK;
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf(_("\
+This plugin will check either the average or maximum value of one of the\n\
+two variables recorded in an MRTG log file.\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_("\
+ -F, --logfile=FILE\n\
+   The MRTG log file containing the data you want to monitor\n\
+ -e, --expires=MINUTES\n\
+   Minutes before MRTG data is considered to be too old\n\
+ -a, --aggregation=AVG|MAX\n\
+   Should we check average or maximum values?\n\
+ -v, --variable=INTEGER\n\
+   Which variable set should we inspect? (1 or 2)\n\
+ -w, --warning=INTEGER\n\
+   Threshold value for data to result in WARNING status\n\
+ -c, --critical=INTEGER\n\
+   Threshold value for data to result in CRITICAL status\n"));
+
+	printf (_("\
+ -l, --label=STRING\n\
+   Type label for data (Examples: Conns, \"Processor Load\", In, Out)\n\
+ -u, --units=STRING\n\
+   Option units label for data (Example: Packets/Sec, Errors/Sec, \n\
+   \"Bytes Per Second\", \"%% Utilization\")\n"));
+
+	printf (_("\
+If the value exceeds the <vwl> threshold, a WARNING status is returned.  If\n\
+the value exceeds the <vcl> threshold, a CRITICAL status is returned.  If\n\
+the data in the log file is older than <expire_minutes> old, a WARNING\n\
+status is returned and a warning message is printed.\n\n"));
+
+	printf(_("This plugin is useful for monitoring MRTG data that does not correspond to\n\
+bandwidth usage.  (Use the check_mrtgtraf plugin for monitoring bandwidth).\n\
+It can be used to monitor any kind of data that MRTG is monitoring - errors,\n\
+packets/sec, etc.  I use MRTG in conjuction with the Novell NLM that allows\n\
+me to track processor utilization, user connections, drive space, etc and\n\
+this plugin works well for monitoring that kind of data as well.\n\n"));
+
+	printf (_("Notes:\n\
+- This plugin only monitors one of the two variables stored in the MRTG log\n\
+  file.  If you want to monitor both values you will have to define two\n\
+  commands with different values for the <variable> argument.  Of course,\n\
+  you can always hack the code to make this plugin work for you...\n\
+- MRTG stands for the Multi Router Traffic Grapher.  It can be downloaded from\n\
+  http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html\n"));
+
+	printf (_(UT_SUPPORT));
+}
+
+
+
+
+/* original command line: 
+	 <log_file> <expire_minutes> <AVG|MAX> <variable> <vwl> <vcl> <label> [units] */
+
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -F log_file -a <AVG | MAX> -v variable -w warning -c critical\n\
+  [-l label] [-u units] [-e expire_minutes] [-t timeout] [-v]\n"), progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }

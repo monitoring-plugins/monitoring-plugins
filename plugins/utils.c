@@ -52,14 +52,14 @@ max_state (int a, int b)
 		return max (a, b);
 }
 
-void usage (char *msg)
+void usage (const char *msg)
 {
 	printf ("%s", msg);
 	print_usage ();
 	exit (STATE_UNKNOWN);
 }
 
-void usage2(char *msg, char *arg)
+void usage2(const char *msg, const char *arg)
 {
 	printf ("%s: %s - %s\n",progname,msg,arg);
 	print_usage ();
@@ -67,7 +67,7 @@ void usage2(char *msg, char *arg)
 }
 
 void
-usage3 (char *msg, int arg)
+usage3 (const char *msg, int arg)
 {
 	printf ("%s: %s - %c\n", progname, msg, arg);
 	print_usage();

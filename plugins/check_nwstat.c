@@ -75,9 +75,14 @@ enum checkvar vars_to_check = NONE;
 int sap_number=-1;
 
 int process_arguments(int, char **);
-void print_usage(void);
 void print_help(void);
+void print_usage(void);
 
+
+
+
+
+
 int
 main(int argc, char **argv) {
 	int result;
@@ -878,15 +883,12 @@ int process_arguments(int argc, char **argv) {
 
 	return OK;
 }
-
-void print_usage(void)
-{
-	printf (_("\
-Usage: %s -H host [-p port] [-v variable] [-w warning] [-c critical]\n\
-  [-t timeout].\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
-}
 
+
+
+
+
+
 void print_help(void)
 {
 	char *myport;
@@ -894,7 +896,7 @@ void print_help(void)
 
 	print_revision (progname, revision);
 
-	printf (_("Copyright (c) 1999-2001 Ethan Galstad <nagios@nagios.org>\n"));
+	printf (_("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n"));
 	printf (_(COPYRIGHT), copyright, email);
 
 	printf (_("\
@@ -971,4 +973,15 @@ Notes:\n\
   TCB, LRUS and LRUM.\n"));
 
 	printf (_(UT_SUPPORT));
+}
+
+
+
+
+void print_usage(void)
+{
+	printf (_("\
+Usage: %s -H host [-p port] [-v variable] [-w warning] [-c critical]\n\
+  [-t timeout].\n"), progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }

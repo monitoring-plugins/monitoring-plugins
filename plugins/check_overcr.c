@@ -106,17 +106,20 @@ main (int argc, char **argv)
 		temp_ptr = (char *) strtok (recv_buffer, "\r\n");
 		if (temp_ptr == NULL)
 			die (STATE_CRITICAL, _("Invalid response from server - no load information\n"));
-		load_1min = strtod (temp_ptr, NULL);
+		else
+			load_1min = strtod (temp_ptr, NULL);
 
 		temp_ptr = (char *) strtok (NULL, "\r\n");
 		if (temp_ptr == NULL)
 			die (STATE_CRITICAL, _("Invalid response from server after load 1\n"));
-		load_5min = strtod (temp_ptr, NULL);
+		else
+			load_5min = strtod (temp_ptr, NULL);
 
 		temp_ptr = (char *) strtok (NULL, "\r\n");
 		if (temp_ptr == NULL)
 			die (STATE_CRITICAL, _("Invalid response from server after load 5\n"));
-		load_15min = strtod (temp_ptr, NULL);
+		else
+			load_15min = strtod (temp_ptr, NULL);
 
 		switch (vars_to_check) {
 		case LOAD1:
@@ -160,7 +163,8 @@ main (int argc, char **argv)
 				temp_ptr = (char *) strtok (NULL, "%");
 				if (temp_ptr == NULL)
 					die (STATE_CRITICAL, _("Invalid response from server\n"));
-				percent_used_disk_space = strtoul (temp_ptr, NULL, 10);
+				else
+					percent_used_disk_space = strtoul (temp_ptr, NULL, 10);
 				break;
 			}
 
@@ -186,8 +190,8 @@ main (int argc, char **argv)
 
 		if (result != STATE_OK)
 			die (result, _("Unknown error fetching network status\n"));
-
-		port_connections = strtod (recv_buffer, NULL);
+		else
+			port_connections = strtod (recv_buffer, NULL);
 
 		if (check_critical_value == TRUE && (port_connections >= critical_value))
 			result = STATE_CRITICAL;
@@ -215,8 +219,8 @@ main (int argc, char **argv)
 		temp_ptr = (char *) strtok (NULL, ")");
 		if (temp_ptr == NULL)
 			die (STATE_CRITICAL, _("Invalid response from server\n"));
-
-		processes = strtod (temp_ptr, NULL);
+		else
+			processes = strtod (temp_ptr, NULL);
 
 		if (check_critical_value == TRUE && (processes >= critical_value))
 			result = STATE_CRITICAL;
@@ -264,11 +268,11 @@ main (int argc, char **argv)
 	}
 
 	/* reset timeout */
-	alarm (0);
+/* 	alarm (0); */
 
-	printf (_("Reached end of program with no data returned\n"));
+/* 	printf (_("Reached end of program with no data returned\n")); */
 
-	return result;
+/* 	return result; */
 }
 
 

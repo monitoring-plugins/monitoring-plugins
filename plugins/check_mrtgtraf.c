@@ -24,60 +24,10 @@ const char *revision = "$Revision$";
 const char *copyright = "1999-2003";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
-void
-print_usage (void)
-{
-	printf (_("\
-Usage: %s -F <log_file> -a <AVG | MAX> -v <variable> -w <warning_pair> -c <critical_pair>\n\
-  [-e expire_minutes] [-t timeout] [-v]\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
-}
-
-void
-print_help (void)
-{
-	print_revision (progname, revision);
-
-	printf (_(COPYRIGHT), copyright, email);
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_("\
- -F, --filename=STRING\n\
-   File to read log from\n\
- -e, --expires=INTEGER\n\
-   Minutes after which log expires\n\
- -a, --aggregation=(AVG|MAX)\n\
-   Test average or maximum\n\
- -w, --warning\n\
-   Warning threshold pair \"<incoming>,<outgoing>\"\n\
- -c, --critical\n\
-   Critical threshold pair \"<incoming>,<outgoing>\"\n"));
-
-	printf (_("\n\
-This plugin will check the incoming/outgoing transfer rates of a router,\n\
-switch, etc recorded in an MRTG log.  If the newest log entry is older\n\
-than <expire_minutes>, a WARNING status is returned. If either the\n\
-incoming or outgoing rates exceed the <icl> or <ocl> thresholds (in\n\
-Bytes/sec), a CRITICAL status results.  If either of the rates exceed\n\
-the <iwl> or <owl> thresholds (in Bytes/sec), a WARNING status results.\n\n"));
-
-	printf (_("Notes:\n\
-- MRTG stands for Multi Router Traffic Grapher. It can be downloaded from\n\
-  http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html\n\
-- While MRTG can monitor things other than traffic rates, this\n\
-  plugin probably won't work with much else without modification.\n\
-- The calculated i/o rates are a little off from what MRTG actually\n\
-  reports.  I'm not sure why this is right now, but will look into it\n\
-  for future enhancements of this plugin.\n"));
-
-	printf (_(UT_SUPPORT));
-}
-
 int process_arguments (int, char **);
 int validate_arguments (void);
+void print_help(void);
+void print_usage(void);
 
 char *log_file = NULL;
 int expire_minutes = -1;
@@ -87,6 +37,10 @@ unsigned long incoming_critical_threshold = 0L;
 unsigned long outgoing_warning_threshold = 0L;
 unsigned long outgoing_critical_threshold = 0L;
 
+
+
+
+
 int
 main (int argc, char **argv)
 {
@@ -356,4 +310,65 @@ int
 validate_arguments (void)
 {
 	return OK;
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_("\
+ -F, --filename=STRING\n\
+   File to read log from\n\
+ -e, --expires=INTEGER\n\
+   Minutes after which log expires\n\
+ -a, --aggregation=(AVG|MAX)\n\
+   Test average or maximum\n\
+ -w, --warning\n\
+   Warning threshold pair \"<incoming>,<outgoing>\"\n\
+ -c, --critical\n\
+   Critical threshold pair \"<incoming>,<outgoing>\"\n"));
+
+	printf (_("\n\
+This plugin will check the incoming/outgoing transfer rates of a router,\n\
+switch, etc recorded in an MRTG log.  If the newest log entry is older\n\
+than <expire_minutes>, a WARNING status is returned. If either the\n\
+incoming or outgoing rates exceed the <icl> or <ocl> thresholds (in\n\
+Bytes/sec), a CRITICAL status results.  If either of the rates exceed\n\
+the <iwl> or <owl> thresholds (in Bytes/sec), a WARNING status results.\n\n"));
+
+	printf (_("Notes:\n\
+- MRTG stands for Multi Router Traffic Grapher. It can be downloaded from\n\
+  http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html\n\
+- While MRTG can monitor things other than traffic rates, this\n\
+  plugin probably won't work with much else without modification.\n\
+- The calculated i/o rates are a little off from what MRTG actually\n\
+  reports.  I'm not sure why this is right now, but will look into it\n\
+  for future enhancements of this plugin.\n"));
+
+	printf (_(UT_SUPPORT));
+}
+
+
+
+
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -F <log_file> -a <AVG | MAX> -v <variable> -w <warning_pair> -c <critical_pair>\n\
+  [-e expire_minutes] [-t timeout] [-v]\n"), progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }

@@ -38,10 +38,10 @@ void print_help (void);
 void print_usage (void);
 
 int server_port = PORT;
-char *server_address = "";
-char *host_name = "";
+char *server_address;
+char *host_name;
 char *server_url = NULL;
-char *server_expect = EXPECT;
+char *server_expect;
 int warning_time = 0;
 int check_warning_time = FALSE;
 int critical_time = 0;
@@ -294,18 +294,18 @@ process_arguments (int argc, char **argv)
 		switch (c) {
 		case 'I':									/* hostname */
 		case 'H':									/* hostname */
-			if (is_host (optarg)) {
-				server_address = optarg;
-			}
-			else {
+			if (server_address)
+				break;
+			else if (is_host (optarg))
+				server_address = strdup(optarg);
+			else
 				usage (_("Invalid host name\n"));
-			}
 			break;
 		case 'e':									/* string to expect in response header */
-			server_expect = optarg;
+			server_expect = strdup(optarg);
 			break;
 		case 'u':									/* server URL */
-			server_url = optarg;
+			server_url = strdup(optarg);
 			break;
 		case 'p':									/* port */
 			if (is_intpos (optarg)) {
@@ -356,7 +356,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	c = optind;
-	if (strlen(server_address)==0 && argc>c) {
+	if (server_address==NULL && argc>c) {
 		if (is_host (argv[c])) {
 			server_address = argv[c++];
 		}
@@ -365,11 +365,14 @@ process_arguments (int argc, char **argv)
 		}
 	}
 
-	if (strlen(server_address) == 0)
+	if (server_address==NULL)
 		usage (_("You must provide a server to check\n"));
 
-	if (strlen(host_name) == 0)
-		asprintf (&host_name, "%s", server_address);
+	if (host_name==NULL)
+		host_name = strdup (server_address);
+
+	if (server_expect == NULL)
+		server_expect = strdup(EXPECT);
 
 	return validate_arguments ();
 }

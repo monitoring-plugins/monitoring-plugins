@@ -49,12 +49,14 @@ int options = 0; /* bitmask of filter criteria to test against */
 #define PCPU 256
 
 /* Different metrics */
-int metric = 0;
-#define METRIC_PROCS 0
-#define METRIC_VSZ 1
-#define METRIC_RSS 2
-#define METRIC_CPU 3
-char *metric_name = "";
+char *metric_name;
+enum metric {
+	METRIC_PROCS,
+	METRIC_VSZ,
+	METRIC_RSS,
+	METRIC_CPU
+};
+enum metric metric = METRIC_PROCS;
 
 int verbose = 0;
 int uid;
@@ -62,11 +64,11 @@ int ppid;
 int vsz;
 int rss;
 float pcpu;
-char *statopts = "";
-char *prog = "";
-char *args = "";
-char *fmt = "";
-char *fails = "";
+char *statopts;
+char *prog;
+char *args;
+char *fmt;
+char *fails;
 char tmp[MAX_INPUT_BUFFER];
 
 
@@ -317,54 +319,35 @@ process_arguments (int argc, char **argv)
 			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 't':									/* timeout period */
-			if (!is_integer (optarg)) {
-				printf (_("%s: Timeout Interval must be an integer!\n\n"),
-				        progname);
-				print_usage ();
-				exit (STATE_UNKNOWN);
-			}
-			timeout_interval = atoi (optarg);
+			if (!is_integer (optarg))
+				usage (_("Timeout Interval must be an integer!\n\n"));
+			else
+				timeout_interval = atoi (optarg);
 			break;
 		case 'c':									/* critical threshold */
-			if (is_integer (optarg)) {
+			if (is_integer (optarg))
 				cmax = atoi (optarg);
+			else if (sscanf (optarg, ":%d", &cmax) == 1)
 				break;
-			}
-			else if (sscanf (optarg, ":%d", &cmax) == 1) {
+			else if (sscanf (optarg, "%d:%d", &cmin, &cmax) == 2)
 				break;
-			}
-			else if (sscanf (optarg, "%d:%d", &cmin, &cmax) == 2) {
+			else if (sscanf (optarg, "%d:", &cmin) == 1)
 				break;
-			}
-			else if (sscanf (optarg, "%d:", &cmin) == 1) {
-				break;
-			}
-			else {
-				printf (_("%s: Critical Process Count must be an integer!\n\n"),
-				        progname);
-				print_usage ();
-				exit (STATE_UNKNOWN);
-			}
+			else
+				usage (_("Critical Process Count must be an integer!\n\n"));
+			break;							 
 		case 'w':									/* warning time threshold */
-			if (is_integer (optarg)) {
+			if (is_integer (optarg))
 				wmax = atoi (optarg);
+			else if (sscanf (optarg, ":%d", &wmax) == 1)
 				break;
-			}
-			else if (sscanf (optarg, ":%d", &wmax) == 1) {
+			else if (sscanf (optarg, "%d:%d", &wmin, &wmax) == 2)
 				break;
-			}
-			else if (sscanf (optarg, "%d:%d", &wmin, &wmax) == 2) {
+			else if (sscanf (optarg, "%d:", &wmin) == 1)
 				break;
-			}
-			else if (sscanf (optarg, "%d:", &wmin) == 1) {
-				break;
-			}
-			else {
-				printf (_("%s: Warning Process Count must be an integer!\n\n"),
-				        progname);
-				print_usage ();
-				exit (STATE_UNKNOWN);
-			}
+			else
+				usage (_("%s: Warning Process Count must be an integer!\n\n"));
+			break;
 		case 'p':									/* process id */
 			if (sscanf (optarg, "%d%[^0-9]", &ppid, tmp) == 1) {
 				asprintf (&fmt, "%s%sPPID = %d", fmt, (options ? ", " : ""), ppid);
@@ -376,7 +359,10 @@ process_arguments (int argc, char **argv)
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 's':									/* status */
-			asprintf (&statopts, "%s", optarg);
+			if (statopts)
+				break;
+			else
+				statopts = strdup(optarg);
 			asprintf (&fmt, _("%s%sSTATE = %s"), fmt, (options ? ", " : ""), statopts);
 			options |= STAT;
 			break;
@@ -408,13 +394,19 @@ process_arguments (int argc, char **argv)
 			options |= USER;
 			break;
 		case 'C':									/* command */
-			asprintf (&prog, "%s", optarg);
+			if (prog)
+				break;
+			else
+				prog = strdup(optarg);
 			asprintf (&fmt, _("%s%scommand name '%s'"), fmt, (options ? ", " : ""),
 			          prog);
 			options |= PROG;
 			break;
 		case 'a':									/* args (full path name with args) */
-			asprintf (&args, "%s", optarg);
+			if (args)
+				break;
+			else
+				args = strdup(optarg);
 			asprintf (&fmt, _("%s%sargs '%s'"), fmt, (options ? ", " : ""), args);
 			options |= ARGS;
 			break;
@@ -520,6 +512,21 @@ validate_arguments ()
 
 	if (options == 0)
 		options = ALL;
+
+	if (statopts==NULL)
+		statopts = strdup("");
+
+	if (prog==NULL)
+		prog = strdup("");
+
+	if (args==NULL)
+		args = strdup("");
+
+	if (fmt==NULL)
+		fmt = strdup("");
+
+	if (fails==NULL)
+		fails = strdup("");
 
 	return options;
 }
