@@ -317,14 +317,14 @@ is_option (char *str)
 
 
 double
-delta_time (struct timeval *tv)
+delta_time (struct timeval tv)
 {
-	struct timeval *pt;
-	struct timezone *tz;
+	struct timeval now;
+	struct timezone tz;
+	double et;
 
-	gettimeofday (pt, tz);
-
-	return (pt->tv_sec - tv->tv_sec + (pt->tv_usec - tv->tv_usec) / 1000000);
+	gettimeofday (&now, NULL);
+	return ((double)(now.tv_sec - tv.tv_sec) + (double)(now.tv_usec - tv.tv_usec) / (double)1000000);
 }
 
 

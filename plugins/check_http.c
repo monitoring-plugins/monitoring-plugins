@@ -31,7 +31,6 @@
 
 #include "config.h"
 #include "common.h"
-#include "version.h"
 #include "netutils.h"
 #include "utils.h"
 
@@ -160,6 +159,8 @@ int cflags = REG_NOSUB | REG_EXTENDED | REG_NEWLINE;
 int errcode;
 #endif
 
+struct timeval tv;
+
 #define server_type_check(server_type) \
 (strcmp (server_type, "https") ? FALSE : TRUE)
 
@@ -189,9 +190,9 @@ int server_url_length = 0;
 int server_expect_yn = 0;
 char server_expect[MAX_INPUT_BUFFER] = HTTP_EXPECT;
 char string_expect[MAX_INPUT_BUFFER] = "";
-int warning_time = 0;
+double warning_time = 0;
 int check_warning_time = FALSE;
-int critical_time = 0;
+double critical_time = 0;
 int check_critical_time = FALSE;
 char user_auth[MAX_INPUT_BUFFER] = "";
 int display_html = FALSE;
@@ -234,7 +235,7 @@ main (int argc, char **argv)
 	/* initialize alarm signal handling, set socket timeout, start timer */
 	(void) signal (SIGALRM, socket_timeout_alarm_handler);
 	(void) alarm (socket_timeout);
-	(void) time (&start_time);
+	gettimeofday (&tv, NULL);
 
 #ifdef HAVE_SSL
 	if (use_ssl && check_cert == TRUE) {
@@ -340,13 +341,13 @@ process_arguments (int argc, char **argv)
 		case 'c': /* critical time threshold */
 			if (!is_intnonneg (optarg))
 				usage2 ("invalid critical threshold", optarg);
-			critical_time = atoi (optarg);
+			critical_time = strtod (optarg, NULL);
 			check_critical_time = TRUE;
 			break;
 		case 'w': /* warning time threshold */
 			if (!is_intnonneg (optarg))
 				usage2 ("invalid warning threshold", optarg);
-			warning_time = atoi (optarg);
+			warning_time = strtod (optarg, NULL);
 			check_warning_time = TRUE;
 			break;
 		case 'L': /* show html link */
@@ -363,7 +364,7 @@ process_arguments (int argc, char **argv)
 			if (specify_port == FALSE)
 				server_port = HTTPS_PORT;
 			break;
-		case 'C': /* warning time threshold */
+		case 'C': /* Check SSL cert validity */
 #ifdef HAVE_SSL
 			if (!is_intnonneg (optarg))
 				usage2 ("invalid certificate expiration period", optarg);
@@ -389,10 +390,10 @@ process_arguments (int argc, char **argv)
 			break;
 		/* Note: H, I, and u must be malloc'd or will fail on redirects */
 		case 'H': /* Host Name (virtual host) */
-			host_name = strscpy (host_name, optarg);
+ 			host_name = strscpy (host_name, optarg);
 			break;
 		case 'I': /* Server IP-address */
-			server_address = strscpy (server_address, optarg);
+ 			server_address = strscpy (server_address, optarg);
 			break;
 		case 'u': /* Host or server */
 			server_url = strscpy (server_url, optarg);
@@ -534,6 +535,7 @@ check_http (void)
 	char *pos = NULL;
 	char *x = NULL;
 	char *orig_url = NULL;
+	double elapsed_time;
 
 	/* try to connect to the host at the given port number */
 #ifdef HAVE_SSL
@@ -657,10 +659,11 @@ check_http (void)
 #endif
 
 	/* fetch the page */
-	pagesize = (size_t) 0;
+	pagesize = (size_t) 1;
+	asprintf (&full_page, "");
 	while ((i = my_recv ()) > 0) {
-		buffer[i] = '\0'; 
-		full_page = strscat (full_page, buffer);
+		buffer[i] = '\0';
+		asprintf (&full_page, "%s%s", full_page, buffer);
 		pagesize += i;
 	}
 
@@ -821,10 +824,10 @@ check_http (void)
 				printf ("HTTP WARNING");
 			else if (onredirect == STATE_CRITICAL)
 				printf ("HTTP CRITICAL");
-			time (&end_time);
-			asprintf (&msg, ": %s - %d second response time %s%s|time=%d\n",
-		                 status_line, (int) (end_time - start_time), timestamp,
-	                   (display_html ? "</A>" : ""), (int) (end_time - start_time));
+			elapsed_time = delta_time (tv);
+			asprintf (&msg, ": %s - %6.2f second response time %s%s|time=%6.2f\n",
+		                 status_line, elapsed_time, timestamp,
+	                   (display_html ? "</A>" : ""), elapsed_time);
 			terminate (onredirect, msg);
 		} /* end if (strstr (status_line, "30[0-4]") */
 
@@ -833,13 +836,13 @@ check_http (void)
 
 		
 	/* check elapsed time */
-	time (&end_time);
-	asprintf (&msg, "HTTP problem: %s - %d second response time %s%s|time=%d\n",
-	               status_line, (int) (end_time - start_time), timestamp,
-	               (display_html ? "</A>" : ""), (int) (end_time - start_time));
-	if (check_critical_time == TRUE && (end_time - start_time) > critical_time)
+	elapsed_time = delta_time (tv);
+	asprintf (&msg, "HTTP problem: %s - %6.2f second response time %s%s|time=%6.2f\n",
+	               status_line, elapsed_time, timestamp,
+	               (display_html ? "</A>" : ""), elapsed_time);
+	if (check_critical_time == TRUE && elapsed_time > critical_time)
 		terminate (STATE_CRITICAL, msg);
-	if (check_warning_time == TRUE && (end_time - start_time) > warning_time)
+	if (check_warning_time == TRUE && elapsed_time > warning_time)
 		terminate (STATE_WARNING, msg);
 
 	/* Page and Header content checks go here */
@@ -847,14 +850,14 @@ check_http (void)
 
 	if (strlen (string_expect)) {
 		if (strstr (page, string_expect)) {
-			printf ("HTTP ok: %s - %d second response time %s%s|time=%d\n",
-			        status_line, (int) (end_time - start_time),
-			        timestamp, (display_html ? "</A>" : ""), (int) (end_time - start_time));
+			printf ("HTTP ok: %s - %6.2f second response time %s%s|time=%6.2f\n",
+			        status_line, elapsed_time,
+			        timestamp, (display_html ? "</A>" : ""), elapsed_time);
 			exit (STATE_OK);
 		}
 		else {
-			printf ("HTTP CRITICAL: string not found%s|time=%d\n",
-			        (display_html ? "</A>" : ""), (int) (end_time - start_time));
+			printf ("HTTP CRITICAL: string not found%s|time=%6.2f\n",
+			        (display_html ? "</A>" : ""), elapsed_time);
 			exit (STATE_CRITICAL);
 		}
 	}
@@ -862,15 +865,15 @@ check_http (void)
 	if (strlen (regexp)) {
 		errcode = regexec (&preg, page, REGS, pmatch, 0);
 		if (errcode == 0) {
-			printf ("HTTP ok: %s - %d second response time %s%s|time=%d\n",
-			        status_line, (int) (end_time - start_time),
-			        timestamp, (display_html ? "</A>" : ""), (int) (end_time - start_time));
+			printf ("HTTP ok: %s - %6.2f second response time %s%s|time=%6.2f\n",
+			        status_line, elapsed_time,
+			        timestamp, (display_html ? "</A>" : ""), elapsed_time);
 			exit (STATE_OK);
 		}
 		else {
 			if (errcode == REG_NOMATCH) {
-				printf ("HTTP CRITICAL: pattern not found%s|time=%d\n",
-				        (display_html ? "</A>" : ""), (int) (end_time - start_time));
+				printf ("HTTP CRITICAL: pattern not found%s|time=%6.2f\n",
+				        (display_html ? "</A>" : ""), elapsed_time);
 				exit (STATE_CRITICAL);
 			}
 			else {
@@ -883,9 +886,9 @@ check_http (void)
 #endif
 
 	/* We only get here if all tests have been passed */
-	asprintf (&msg, "HTTP ok: %s - %d second response time %s%s|time=%d\n",
-	                status_line, (int) (end_time - start_time),
-	                timestamp, (display_html ? "</A>" : ""), (int) (end_time - start_time));
+	asprintf (&msg, "HTTP ok: %s - %6.2f second response time %s%s|time=%6.2f\n",
+	                status_line, (float)elapsed_time,
+	                timestamp, (display_html ? "</A>" : ""), elapsed_time);
 	terminate (STATE_OK, msg);
 	return STATE_UNKNOWN;
 }
@@ -915,7 +918,7 @@ int connect_SSL (void)
 	alarm (socket_timeout);
 
 	/* Save start time */
-	time (&start_time);
+	gettimeofday (&tv, NULL);
 
 	/* Make TCP connection */
 	if (my_tcp_connect (server_address, server_port, &sd) == STATE_OK) {
