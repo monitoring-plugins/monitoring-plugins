@@ -48,6 +48,8 @@ main (int argc, char **argv)
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *command_line;
 	char *output;
+	long microsec;
+	double elapsed_time;
 	int result = STATE_UNKNOWN;
 
 	output = strdup ("");
@@ -68,10 +70,11 @@ main (int argc, char **argv)
 	          PATH_TO_DIG, dns_server, server_port, query_address);
 
 	alarm (timeout_interval);
-	time (&start_time);
+	gettimeofday (&tv, NULL);
 
 	if (verbose)
 		printf ("%s\n", command_line);
+
 	/* run the command */
 	child_process = spopen (command_line);
 	if (child_process == NULL) {
@@ -130,20 +133,34 @@ main (int argc, char **argv)
 			asprintf (&output, _("dig returned error status"));
 	}
 
-	(void) time (&end_time);
+	microsec = deltime (tv);
+	elapsed_time = (double)microsec / 1.0e6;
 
 	if (output == NULL || strlen (output) == 0)
 		asprintf (&output, _(" Probably a non-existent host/domain"));
 
-	if (result == STATE_OK)
-		printf (_("DNS OK - %d seconds response time (%s)\n"),
-						(int) (end_time - start_time), output);
-	else if (result == STATE_WARNING)
-		printf (_("DNS WARNING - %s\n"), output);
+	if (elapsed_time > critical_interval)
+		die (STATE_CRITICAL,
+		     _("DNS OK - %d seconds response time (%s)|time=%ldus\n"),
+		     elapsed_time, output, microsec);
+
 	else if (result == STATE_CRITICAL)
-		printf (_("DNS CRITICAL - %s\n"), output);
+		printf (_("DNS CRITICAL - %s|time=%ldus\n"), output);
+
+	else if (elapsed_time > warning_interval)
+		die (STATE_WARNING,
+		     _("DNS OK - %d seconds response time (%s)|time=%ldus\n"),
+		     elapsed_time, output, microsec);
+
+	else if (result == STATE_WARNING)
+		printf (_("DNS WARNING - %s|time=%ldus\n"), output);
+
+	else if (result == STATE_OK)
+		printf (_("DNS OK - %d seconds response time (%s)|time=%ldus\n"),
+						elapsed_time, output, microsec);
+
 	else
-		printf (_("DNS problem - %s\n"), output);
+		printf (_("DNS problem - %s|time=%ldus\n"), output);
 
 	return result;
 }
