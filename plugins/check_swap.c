@@ -224,13 +224,13 @@ main (int argc, char **argv)
 	asprintf (&status, _(" %d%% free (%lu MB out of %lu MB)%s"),
 						(100 - percent_used), free_swap, total_swap, status);
 
-	asprintf (&perf, "%s", perfdata ("swap", free_swap, "MB",
-		TRUE, max (warn_size/1024, warn_percent/100.0*total_swap),
-		TRUE, max (crit_size/1024, crit_percent/100.0*total_swap),
+	asprintf (&perf, "%s", perfdata ("swap", (long) free_swap, "MB",
+		TRUE, (long) max (warn_size/1024, warn_percent/100.0*total_swap),
+		TRUE, (long) max (crit_size/1024, crit_percent/100.0*total_swap),
 		TRUE, 0,
-		TRUE, total_swap));
-	die (result, "SWAP %s:%s |%s\n", state_text (result), status, perf);
-	return STATE_UNKNOWN;
+		TRUE, (long) total_swap));
+	printf ("SWAP %s:%s |%s\n", state_text (result), status, perf);
+	return result;
 }
 
 

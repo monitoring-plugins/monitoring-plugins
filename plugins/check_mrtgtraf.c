@@ -175,18 +175,18 @@ main (int argc, char **argv)
 		result = STATE_WARNING;
 	}
 
-	asprintf (&error_message, _("%s. In = %0.1f %s, %s. Out = %0.1f %s\n"),
+	asprintf (&error_message, _("%s. In = %0.1f %s, %s. Out = %0.1f %s|%s %s\n"),
 	          (use_average == TRUE) ? _("Avg") : _("Max"), adjusted_incoming_rate,
 	          incoming_speed_rating, (use_average == TRUE) ? _("Avg") : _("Max"),
 	          adjusted_outgoing_rate, outgoing_speed_rating,
-	          perfdata("in", adjusted_incoming_rate, incoming_speed_rating,
-	                   incoming_warning_threshold, incoming_warning_threshold,
-	                   incoming_critical_threshold, incoming_critical_threshold,
-	                   TRUE, 0, TRUE, incoming_speed_rating),
-	          perfdata("in", adjusted_outgoing_rate, outgoing_speed_rating,
-	                   outgoing_warning_threshold, outgoing_warning_threshold,
-	                   outgoing_critical_threshold, outgoing_critical_threshold,
-	                   TRUE, 0, TRUE, outgoing_speed_rating));
+	          perfdata("in", (long) adjusted_incoming_rate, incoming_speed_rating,
+	                   (int) incoming_warning_threshold, (long) incoming_warning_threshold,
+	                   (int) incoming_critical_threshold, (long) incoming_critical_threshold,
+	                   TRUE, 0, TRUE, (long) incoming_speed_rating),
+	          perfdata("in", (long) adjusted_outgoing_rate, outgoing_speed_rating,
+	                   (int) outgoing_warning_threshold, (long) outgoing_warning_threshold,
+	                   (int) outgoing_critical_threshold, (long) outgoing_critical_threshold,
+	                   TRUE, 0, TRUE, (long) outgoing_speed_rating));
 
 	printf (_("Traffic %s - %s\n"), state_text(result), error_message);
 
