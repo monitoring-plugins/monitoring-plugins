@@ -45,9 +45,14 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #endif
 
 #ifdef HAVE_SSL
+int check_cert = FALSE;
+int days_till_exp;
+char *randbuff = "";
 SSL_CTX *ctx;
 SSL *ssl;
+X509 *server_cert;
 int connect_SSL (void);
+int check_certificate (X509 **);
 #endif
 
 enum {
@@ -68,6 +73,7 @@ char *QUIT = NULL;
 int PROTOCOL = 0;
 int PORT = 0;
 
+char timestamp[17] = "";
 int server_port = 0;
 char *server_address = NULL;
 char *server_send = NULL;
@@ -184,6 +190,31 @@ main (int argc, char **argv)
 		use_ssl=TRUE;
 		PORT=995;
 	}
+	else if (strstr(argv[0],"check_jabber")) {
+		progname = strdup("check_jabber");
+		SERVICE = strdup("JABBER");
+		SEND = strdup("<stream:stream to=\'host\' xmlns=\'jabber:client\' xmlns:stream=\'http://etherx.jabber.org/streams\'>\n");
+		EXPECT = strdup("<?xml version=\'1.0\'?><stream:stream xmlns:stream=\'http://etherx.jabber.org/streams\'");
+		QUIT = strdup("</stream:stream>\n");
+		PROTOCOL=TCP_PROTOCOL;
+		use_ssl=TRUE;
+		PORT = 5222;
+	}
+       else if (strstr (argv[0], "check_nntps")) {
+		progname = strdup("check_nntps");
+		SERVICE = strdup("NNTPS");
+		SEND = NULL;
+		EXPECT = NULL;
+		server_expect = realloc (server_expect, ++server_expect_count);
+		asprintf (&server_expect[server_expect_count - 1], "200");
+		server_expect = realloc (server_expect, ++server_expect_count);
+		asprintf (&server_expect[server_expect_count - 1], "201");
+		QUIT = strdup("QUIT\r\n");
+		PROTOCOL = TCP_PROTOCOL;
+		use_ssl=TRUE;
+		PORT = 563;
+}
+
 #endif
 	else if (strstr (argv[0], "check_nntp")) {
 		progname = strdup ("check_nntp");
@@ -227,7 +258,24 @@ main (int argc, char **argv)
 	/* try to connect to the host at the given port number */
 	gettimeofday (&tv, NULL);
 #ifdef HAVE_SSL
-	if (use_ssl)
+	if (use_ssl && check_cert == TRUE) {
+	  if (connect_SSL () != OK)
+	    die (STATE_CRITICAL,"TCP CRITICAL - Could not make SSL connection\n");
+	  if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
+	    result = check_certificate (&server_cert);
+	    X509_free(server_cert);
+	  }
+	  else {
+	    printf("ERROR: Cannot retrieve server certificate.\n");
+	    result = STATE_CRITICAL;
+	  }
+	  SSL_shutdown (ssl);
+	  SSL_free (ssl);
+	  SSL_CTX_free (ctx);
+	  close (sd);
+	  return result;
+	}
+	else if (use_ssl)
 		result = connect_SSL ();
 	else
 #endif
@@ -373,6 +421,10 @@ process_arguments (int argc, char **argv)
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
+#ifdef HAVE_SSL
+		{"ssl", no_argument, 0, 'S'},
+		{"certificate", required_argument, 0, 'D'},
+#endif
 		{0, 0, 0, 0}
 	};
 
@@ -429,7 +481,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H':                 /* hostname */
 			if (is_host (optarg) == FALSE)
-				usage2 (_("Invalid host name/address"), optarg);
+				usage2 (_("invalid host name or address"), optarg);
 			server_address = optarg;
 			break;
 		case 'c':                 /* critical */
@@ -459,7 +511,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 't':                 /* timeout */
 			if (!is_intpos (optarg))
-				usage2 (_("Timeout interval must be a positive integer"), optarg);
+				usage (_("Timeout interval must be a positive integer\n"));
 			else
 				socket_timeout = atoi (optarg);
 			break;
@@ -504,12 +556,19 @@ process_arguments (int argc, char **argv)
 			else
 				usage (_("Delay must be a positive integer\n"));
 			break;
-		case 'S':
-#ifndef HAVE_SSL
-			die (STATE_UNKNOWN,
-				_("SSL support not available. Install OpenSSL and recompile."));
-#endif
+                 case 'D': /* Check SSL cert validity - days 'til certificate expiration */
+#ifdef HAVE_SSL
+			if (!is_intnonneg (optarg))
+				usage2 ("invalid certificate expiration period", optarg);
+			days_till_exp = atoi (optarg);
+			check_cert = TRUE;
 			use_ssl = TRUE;
+			break;
+		case 'S':
+			use_ssl = TRUE;
+#else
+			die (STATE_UNKNOWN, "SSL support not available.  Install OpenSSL and recompile.");
+#endif
 			break;
 		}
 	}
@@ -556,7 +615,10 @@ connect_SSL (void)
         SSL_set_fd (ssl, sd);
         if (SSL_connect(ssl) == 1)
           return OK;
-        ERR_print_errors_fp (stderr);
+        /* ERR_print_errors_fp (stderr); */
+	printf (_("ERROR: Cannot make  SSL connection "));
+        ERR_print_errors_fp (stdout);
+	/* printf("\n"); */
       }
       else
       {
@@ -572,7 +634,81 @@ connect_SSL (void)
 }
 #endif
 
+#ifdef HAVE_SSL
+int
+check_certificate (X509 ** certificate)
+{
+  ASN1_STRING *tm;
+  int offset;
+  struct tm stamp;
+  int days_left;
 
+
+  /* Retrieve timestamp of certificate */
+  tm = X509_get_notAfter (*certificate);
+
+  /* Generate tm structure to process timestamp */
+  if (tm->type == V_ASN1_UTCTIME) {
+    if (tm->length < 10) {
+      printf ("ERROR: Wrong time format in certificate.\n");
+      return STATE_CRITICAL;
+    }
+    else {
+      stamp.tm_year = (tm->data[0] - '0') * 10 + (tm->data[1] - '0');
+      if (stamp.tm_year < 50)
+	stamp.tm_year += 100;
+      offset = 0;
+    }
+  }
+  else {
+    if (tm->length < 12) {
+      printf ("ERROR: Wrong time format in certificate.\n");
+      return STATE_CRITICAL;
+    }
+    else {
+                        stamp.tm_year =
+			  (tm->data[0] - '0') * 1000 + (tm->data[1] - '0') * 100 +
+			  (tm->data[2] - '0') * 10 + (tm->data[3] - '0');
+                        stamp.tm_year -= 1900;
+                        offset = 2;
+    }
+  }
+        stamp.tm_mon =
+	  (tm->data[2 + offset] - '0') * 10 + (tm->data[3 + offset] - '0') - 1;
+        stamp.tm_mday =
+	  (tm->data[4 + offset] - '0') * 10 + (tm->data[5 + offset] - '0');
+        stamp.tm_hour =
+	  (tm->data[6 + offset] - '0') * 10 + (tm->data[7 + offset] - '0');
+        stamp.tm_min =
+	  (tm->data[8 + offset] - '0') * 10 + (tm->data[9 + offset] - '0');
+        stamp.tm_sec = 0;
+        stamp.tm_isdst = -1;
+
+        days_left = (mktime (&stamp) - time (NULL)) / 86400;
+        snprintf
+	  (timestamp, 16, "%02d/%02d/%04d %02d:%02d",
+	   stamp.tm_mon + 1,
+	   stamp.tm_mday, stamp.tm_year + 1900, stamp.tm_hour, stamp.tm_min);
+
+        if (days_left > 0 && days_left <= days_till_exp) {
+	  printf ("Certificate expires in %d day(s) (%s).\n", days_left, timestamp);
+	  return STATE_WARNING;
+        }
+        if (days_left < 0) {
+	  printf ("Certificate expired on %s.\n", timestamp);
+	  return STATE_CRITICAL;
+        }
+
+        if (days_left == 0) {
+	  printf ("Certificate expires today (%s).\n", timestamp);
+	  return STATE_WARNING;
+        }
+
+        printf ("Certificate will expire on %s.\n", timestamp);
+
+        return STATE_OK;
+}
+#endif
 
 int
 my_recv (void)
@@ -603,8 +739,8 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
-	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
-	printf (COPYRIGHT, copyright, email);
+	printf (_("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n"));
+	printf (_(COPYRIGHT), copyright, email);
 
 	printf (_("This plugin tests %s connections with the specified host.\n\n"),
 	        SERVICE);
@@ -635,6 +771,14 @@ print_help (void)
  -d, --delay=INTEGER\n\
     Seconds to wait between sending string and polling for response\n"));
 
+#ifdef HAVE_SSL
+	printf (_("\
+ -D, --certificate=INTEGER\n\
+    Minimum number of days a certificate has to be valid.\n\
+ -S, --ssl\n\
+    Use SSL for the connection.\n"));
+#endif
+
 	printf (_(UT_WARN_CRIT));
 
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
@@ -654,7 +798,8 @@ print_usage (void)
 Usage: %s -H host -p port [-w <warning time>] [-c <critical time>]\n\
   [-s <send string>] [-e <expect string>] [-q <quit string>]\n\
   [-m <maximum bytes>] [-d <delay>] [-t <timeout seconds>]\n\
-  [-r <refuse state>] [-v] [-4|-6] [-j]\n"), progname);
+  [-r <refuse state>] [-v] [-4|-6] [-j] [-D <days to cert expiry>]\n\
+  [-S <use SSL>]\n"), progname);
 	printf ("       %s (-h|--help)\n", progname);
 	printf ("       %s (-V|--version)\n", progname);
 }
