@@ -99,7 +99,7 @@
 	<literallayout>
 	gnu make 3.79
 	automake 1.6
-	autoconf 2.52
+	autoconf 2.54
 	gettext 0.11.5
 	</literallayout>
 
@@ -235,6 +235,42 @@
       
 		</section>
 
+		<section id="thresholdformat"><title>Threshold range format</title>
+		<para>Thresholds ranges define the warning and critical levels for plugins to 
+		alert on. The theory is that the plugin will do some sort of check which returns
+		back a numerical value, or metric, which is then compared to the warning and 
+		critical thresholds.
+		This is the generalised format for threshold ranges:</para>
+
+		<literallayout>
+		[@]start:end
+		</literallayout>
+	
+		<para>Notes:</para>
+		<orderedlist>
+		<listitem><para>start < end</para>
+			</listitem>
+		<listitem><para>start and ":" is not required if start=0</para>
+			</listitem>
+		<listitem><para>if range is of format "start:" and end is not specified, 
+			assume end is infinity</para>
+			</listitem>
+		<listitem><para>to specify negative infinity, use "~"</para>
+			</listitem>
+		<listitem><para>alert is raised if metric is outside start and end range
+			(inclusive of endpoints)</para>
+			</listitem>
+		<listitem><para>if range starts with "@", then alert if inside this range
+			(inclusive of endpoints)</para>
+			</listitem>
+		</orderedlist>
+		
+		<para>Note: Not all plugins are coded to expect ranges in this format. It is
+		planned for a future release to
+		provide standard libraries to parse and compare metrics against ranges. There
+		will also be some work in providing multiple metrics.</para>
+		</section>
+
 		<section><title>Performance data</title>
 		<para>Performance data is defined by Nagios as "everything after the | of the plugin output" -
 		please refer to Nagios documentation for information on capturing this data to logfiles.
@@ -267,8 +303,11 @@
 			</listitem>
 		<listitem><para>min and max are not required if UOM=%</para>
 			</listitem>
-		<listitem><para>value, crit, warn, max and min in class [-0-9.]. Must all be the
+		<listitem><para>value, min and max in class [-0-9.]. Must all be the
 			same UOM</para>
+			</listitem>
+		<listitem><para>warn and crit are in the range format (see 
+			<xref linkend="thresholdformat">)</para>
 			</listitem>
 		<listitem><para>UOM (unit of measurement) is one of:</para>
 			<orderedlist>
