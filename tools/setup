@@ -6,10 +6,10 @@
 # Requires: automake, autoconf, dpkg-dev
 # set -e
 
-MAKE=$(which gnumake)
-if test ! -x "$MAKE" ; then MAKE=$(which gmake) ; fi
-if test ! -x "$MAKE" ; then MAKE=$(which make) ; fi
-HAVE_GNU_MAKE=$($MAKE --version|grep -c "Free Software Foundation")
+MAKE=`which gnumake`
+if test ! -x "$MAKE" ; then MAKE=`which gmake` ; fi
+if test ! -x "$MAKE" ; then MAKE=`which make` ; fi
+HAVE_GNU_MAKE=`$MAKE --version|grep -c "Free Software Foundation"`
 
 if test "$HAVE_GNU_MAKE" != "1"; then 
 	echo Could not find GNU make on this system, can not proceed with build.
