@@ -50,7 +50,7 @@
 # Modifed to run under Embedded Perl  (sghosh@users.sf.net)
 #   - combined logic some blocks together..
 # 
-# Todo - non-hardcoded dispersion values...
+# Added ntpdate check for stratum 16 desynch peer (James Fidell) Feb 03, 2003
 #
 
 
@@ -111,6 +111,8 @@ if ($critical < $warning ) {
 	exit $ERRORS{"UNKNOWN"};
 }
 
+my $stratum = -1;
+my $ignoreret = 0;
 my $answer = undef;
 my $offset = undef;
 my $msg; # first line of output to print if format is invalid
@@ -137,7 +139,7 @@ alarm($TIMEOUT);
 
 
 ###
-###$dispersion_error = $ERRORS{'
+###
 ### First, check ntpdate
 ###
 ###
@@ -150,6 +152,11 @@ if (!open (NTPDATE, "$utils::PATH_TO_NTPDATE -q $host 2>&1 |")) {
 while (<NTPDATE>) {
 	print if ($verbose);
 	$msg = $_ unless ($msg);
+	
+	if (/stratum\s(\d+)/) {
+		$stratum = $1;
+	}
+	
 	if (/(offset|adjust)\s+([-.\d]+)/i) {
 		$offset = $2;
 
@@ -163,8 +170,15 @@ while (<NTPDATE>) {
 	}
 
 	if (/no server suitable for synchronization found/) {
-		$ntpdate_error = $ERRORS{"CRITICAL"};
-		$msg = "No suitable peer server found - ";
+		if ($stratum == 16) {
+			$ntpdate_error = $ERRORS{"WARNING"};
+			$msg = "Desynchronized peer server found";
+			$ignoreret=1;
+		}
+		else {
+			$ntpdate_error = $ERRORS{"CRITICAL"};
+			$msg = "No suitable peer server found - ";
+		}
 	}
 
 }
@@ -172,7 +186,7 @@ while (<NTPDATE>) {
 close (NTPDATE); 
 # declare an error if we also get a non-zero return code from ntpdate
 # unless already set to critical
-if ( $? ) {
+if ( $? && !$ignoreret ) {
 	print "stderr = $? : $! \n" if $verbose;
 	$ntpdate_error = $ntpdate_error == $ERRORS{"CRITICAL"} ? $ERRORS{"CRITICAL"} : $ERRORS{"UNKNOWN"}  ;
 	print "ntperr = $ntpdate_error : $!\n" if $verbose;
@@ -208,7 +222,13 @@ if ($have_ntpdc) {
 
 if ($ntpdate_error != $ERRORS{'OK'}) {
 	$state = $ntpdate_error;
-	$answer = $msg . "Server for ntp probably down\n";
+	if ($ntpdate_error == $ERRORS{'WARNING'} ) {
+		$answer = $msg . "\n";
+	}
+	else {
+		$answer = $msg . "Server for ntp probably down\n";
+	}
+
 	if (defined($offset) && abs($offset) > $critical) {
 		$state = $ERRORS{'CRITICAL'};
 		$answer = "Server Error and time difference $offset seconds greater than +/- $critical sec\n";
