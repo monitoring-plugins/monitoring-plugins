@@ -18,6 +18,7 @@
 
 #include <arpa/inet.h>
 
+extern void print_usage (void);
 extern int timeout_interval;
 extern const char *progname;
 
@@ -57,7 +58,7 @@ char *state_text (int result);
 #define TXTBLK 128
 
 /* **************************************************************************
- /* max_state(STATE_x, STATE_y)
+ * max_state(STATE_x, STATE_y)
  * compares STATE_x to  STATE_y and returns result based on the following
  * STATE_UNKNOWN < STATE_OK < STATE_WARNING < STATE_CRITICAL
  *
@@ -109,10 +110,10 @@ usage3 (char *msg, char arg)
 void
 support (void)
 {
-	printf
-		("Send email to nagios-users@lists.sourceforge.net if you have questions\n"
-		 "regarding use of this software. To submit patches or suggest improvements,\n"
-		 "send email to nagiosplug-devel@lists.sourceforge.net\n");
+	printf (_("\n\
+Send email to nagios-users@lists.sourceforge.net if you have questions\n\
+regarding use of this software. To submit patches or suggest improvements,\n\
+send email to nagiosplug-devel@lists.sourceforge.net\n"));
 }
 
 
@@ -134,11 +135,11 @@ print_revision (const char *command_name, const char *revision_string)
 	if (sscanf (revision_string, "$Revision: %[0-9.]", plugin_revision) != 1)
 		strncpy (plugin_revision, "N/A", STRLEN);
 	printf ("%s (%s %s) %s\n",
-					progname, PACKAGE, VERSION, plugin_revision);
-	printf
-		("The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n"
-		 "copies of the plugins under the terms of the GNU General Public License.\n"
-		 "For more information about these matters, see the file named COPYING.\n");
+					command_name, PACKAGE, VERSION, plugin_revision);
+	printf (_("\
+The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\
+copies of the plugins under the terms of the GNU General Public License.\n\
+For more information about these matters, see the file named COPYING.\n"));
 
 }
 
