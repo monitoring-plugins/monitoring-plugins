@@ -36,6 +36,14 @@
 #include "utils.h"
 #include <stdarg.h>
 
+#ifdef _AIX
+ #pragma alloca
+#endif
+
+#if HAVE_INTTYPES_H
+# include <inttypes.h>
+#endif
+
 #define REVISION "$Revision$"
 #define COPYRIGHT "2000-2002"
 
@@ -73,8 +81,51 @@ main (int argc, char **argv)
 	char mntp[MAX_INPUT_BUFFER];
 	char *output = "";
 
+#ifdef HAVE_STRUCT_STATFS
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#else
+#include <sys/param.h>
+#include <sys/mount.h>
+#endif
+	struct statfs buf;
+#endif
+
 	if (process_arguments (argc, argv) != OK)
 		usage ("Could not parse arguments\n");
+
+#ifdef HAVE_STRUCT_STATFS
+
+	if (statfs (path, &buf) == -1) {
+		switch (errno)
+			{
+			case ENOTDIR:
+				terminate (STATE_UNKNOWN, "A component of the path prefix is not a directory.\n");
+			case ENAMETOOLONG:
+				terminate (STATE_UNKNOWN, "path is too long.\n");
+			case ENOENT:
+				terminate (STATE_UNKNOWN, "The file referred to by path does not exist.\n");
+			case EACCES:
+				terminate (STATE_UNKNOWN, "Search permission is denied for a component of the path prefix of path.\n");
+			case ELOOP:
+				terminate (STATE_UNKNOWN, "Too many symbolic links were encountered in translating path.\n");
+			case EFAULT:
+				terminate (STATE_UNKNOWN, "Buf or path points to an invalid address.\n");
+			case EIO:
+				terminate (STATE_UNKNOWN, "An I/O error occurred while reading from or writing to the file system.\n");
+			case ENOMEM:
+				terminate (STATE_UNKNOWN, "Insufficient kernel memory was available.\n");
+			case ENOSYS:
+				terminate (STATE_UNKNOWN, "The  filesystem path is on does not support statfs.\n");
+			}
+	}
+	usp = (buf.f_blocks - buf.f_bavail) / buf.f_blocks;
+	disk_result = check_disk (usp, buf.f_bavail);
+	result = disk_result;
+	asprintf (&output, "%ld of %ld kB free (%ld-byte blocks)",
+	          buf.f_bavail*buf.f_bsize/1024, buf.f_blocks*buf.f_bsize/1024, buf.f_bsize);
+
+#else
 
 	asprintf (&command_line, "%s %s", DF_COMMAND, path);
 
@@ -151,13 +202,13 @@ main (int argc, char **argv)
 			result = STATE_WARNING;
 
 	if (usp < 0)
-		printf ("Disk \"%s\" not mounted or nonexistant\n", path);
+		terminate (result, "Disk \"%s\" not mounted or nonexistant\n", path);
 	else if (result == STATE_UNKNOWN)
-		printf ("Unable to read output\n%s\n%s\n", command_line, input_buffer);
-	else
-		printf ("DISK %s%s\n", state_text (result), output);
+		terminate (result, "Unable to read output\n%s\n%s\n", command_line, input_buffer);
 
-	return result;
+#endif
+
+	terminate (result, "DISK %s %s\n", state_text (result), output);
 }
 
 /* process command-line arguments */
