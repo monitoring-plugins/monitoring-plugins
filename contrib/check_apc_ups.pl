@@ -9,18 +9,11 @@
 #   remaining: hh:mm:ss" if all is well, and a list of specific problems
 #   if something is broken. 
 
-BEGIN {
-	if ($0 =~ m/^(.*?)[\/\\]([^\/\\]+)$/) {
-		$runtimedir = $1;
-		$PROGNAME = $2;
-	}
-}
-
 use strict;
 use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_H $opt_T $opt_t $opt_R $opt_r 
   $opt_L $opt_l $PROGNAME);
-use lib $main::runtimedir;
+use lib utils.pm;
 use utils qw(%ERRORS &print_revision &support &usage);
 
 sub print_help ();
