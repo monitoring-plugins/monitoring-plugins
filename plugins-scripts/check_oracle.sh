@@ -212,6 +212,12 @@ and dbg.name='db block gets'
 and cg.name='consistent gets';
 EOF`
 
+    if [ -n "`echo $result | grep ORA-`" ] ; then
+      error=` echo "$result" | grep "ORA-" | head -1`
+      echo "CRITICAL - $error"
+      exit $STATE_CRITICAL
+    fi
+
     buf_hr=`echo $result | awk '{print int($1)}'` 
     result=`sqlplus -s ${3}/${4}@${2} << EOF
 set pagesize 0
@@ -219,6 +225,12 @@ select sum(lc.pins)/(sum(lc.pins)+sum(lc.reloads))*100
 from v\\$librarycache lc;
 EOF`
 	
+    if [ -n "`echo $result | grep ORA-`" ] ; then
+      error=` echo "$result" | grep "ORA-" | head -1`
+      echo "CRITICAL - $error"
+      exit $STATE_CRITICAL
+    fi
+
     lib_hr=`echo $result | awk '{print int($1)}'`
 
     if [ $buf_hr -le ${5} -o $lib_hr -le ${5} ] ; then
@@ -248,6 +260,12 @@ from dba_data_files group by tablespace_name) A,
 from dba_free_space group by tablespace_name) B
 where a.tablespace_name=b.tablespace_name and a.tablespace_name='${5}';
 EOF`
+
+    if [ -n "`echo $result | grep ORA-`" ] ; then
+      error=` echo "$result" | grep "ORA-" | head -1`
+      echo "CRITICAL - $error"
+      exit $STATE_CRITICAL
+    fi
 
     ts_free=`echo $result | awk '{print int($1)}'` 
     ts_total=`echo $result | awk '{print int($2)}'` 
