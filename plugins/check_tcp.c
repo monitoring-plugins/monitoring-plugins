@@ -23,6 +23,7 @@
  *****************************************************************************/
 
 #define PROGRAM check_tcp
+#define REVISION "$Revision$"
 #define DESCRIPTION "Check a TCP port"
 #define AUTHOR "Ethan Galstad"
 #define EMAIL "nagios@nagios.org"
@@ -98,7 +99,7 @@ main (int argc, char **argv)
 	int result;
 	int i;
 	char buffer[MAX_INPUT_BUFFER] = "";
-	char *status = NULL;
+	char *status = "";
 	char *output = NULL;
 	char *ptr = NULL;
 	struct timeval tv;
@@ -234,14 +235,13 @@ main (int argc, char **argv)
 		return STATE_CRITICAL;
 
 	if (server_send != NULL) {		/* Something to send? */
-		snprintf (buffer, MAX_INPUT_BUFFER - 1, "%s\r\n", server_send);
-		buffer[MAX_INPUT_BUFFER - 1] = 0;
+		asprintf (&server_send, "%s\r\n", server_send);
 #ifdef HAVE_SSL
 		if (use_ssl)
-			SSL_write(ssl,buffer,strlen(buffer));
+			SSL_write(ssl, server_send, strlen (server_send));
 		else
 #endif
-			send (sd, buffer, strlen (buffer), 0);
+			send (sd, server_send, strlen (server_send), 0);
 	}
 
 	if (delay > 0) {
@@ -250,8 +250,6 @@ main (int argc, char **argv)
 	}
 
 	if (server_send || server_expect_count > 0) {
-
-		asprintf (&status, "");
 
 		/* watch for the expect string */
 #ifdef HAVE_SSL
@@ -314,7 +312,7 @@ main (int argc, char **argv)
 		 SERVICE,
 		 state_text (result), elapsed_time, server_port);
 
-	if (status)
+	if (strlen (status))
 		printf (" [%s]", status);
 
 	printf ("|time=%7.3f\n", elapsed_time);
