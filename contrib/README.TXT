@@ -31,10 +31,8 @@ bowen-langley_plugins.tar.gz
 
 
 check_bgp-1.0.tar.gz   - Perl script intended for monitoring BGP sessions on Cisco routers.
-			  Only useful if you are using BGP4 as a routing protocol.  For 
-			  critical alert the AS (autonomous system) number has to be in the
-			  uplinks hash (see the source code).  Requires SNMP read community.
-			  (Christoph Kron)
+                         Uses Net::Telnet to telnet into a cisco router and
+						 run "sh ip bgp"
 
 check_memory.tgz        - C plugin to check available system memory
 
@@ -57,4 +55,13 @@ hopcroft-plugins.tar.gz - Various example plugin scripts contributed by Stanley 
 radius.tar.gz           - Code modifications necessary to make the radexample app 
 			  supplied with the radiusclient code work as a RADIUS plugin
 			  for Nagios (Nick Shore)
+
+fetchlog-0.94.tar.gz   - C program: The fetchlog utility displays the last new messages of a
+                         logfile. It is similar like tail(1) but offers some extra functionality  
+                         for output formatting. fetchlog can be used standalone or as a Nagios
+                         plugin to monitor local logfiles or together with Net-SNMP to monitor
+                         remote logfiles. The README shows how to setup fetchlog for Nagios.
+                         (Alexander Haderer)
+
+check_cit.tgz	-Perl plugins to monitor Citrix server
 
