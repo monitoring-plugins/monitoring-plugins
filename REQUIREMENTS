@@ -10,6 +10,7 @@ below...
 check_fping:
 	- Requires the fping utility distributed with SATAN.  Either
 	  download and install SATAN or grab the fping program from
+	  http://www.fping.com
 	  http://www.stanford.edu/~schemers/docs/fping/fping.html
 		ftp://ftp.redhat.com/pub/contrib/libc6/SRPMS/fping-2.2b1-1.src.rpm 
 		ftp://ftp.redhat.com/pub/contrib/libc6/RPMS/fping-2.2b1-1.i386.rpm 
@@ -17,12 +18,13 @@ check_fping:
 
 check_game:
 	- Requires the qstat utility available from
+	  http://www.qstat.org
 	  http://www.activesw.com/people/steve/qstat.html
 	  Last tested on qstat 2.3d BETA
 
 check_hpjd:
-	- Requires the UCD-SNMP package available from 
-	  http://ucd-snmp.ucdavis.edu
+	- Requires the NET-SNMP package available from 
+	  http://net-snmp.sourceforge.net
 	  The snmpget binary is all that is required.
 
 check_ldap:
@@ -48,5 +50,10 @@ check_radius:
 		RPM (rpmfind): radiusclient-0.3.1-1, radiusclient-devel-0.3.1-1
 
 check_snmp:
-	- Requires the UCD-SNMP package available from 
-	  http://ucd-snmp.ucdavis.edu
+	- Requires the NET-SNMP package available from 
+	  http://net-snmp.sourceforge.net
+
+check_ifstatus/check_ifoperstatus
+    - Requires Net::SNMP perl module
+	   http://www.perl.com/CPAN/modules/by-authors/id/D/DT/DTOWN/
+	   
