@@ -23,7 +23,7 @@ require 5.004;
 use POSIX;
 use strict;
 use Getopt::Long;
-use vars qw($opt_V $opt_h $opt_H $opt_s $opt_W $opt_u $opt_p $opt_w $opt_c $verbose);
+use vars qw($opt_P $opt_V $opt_h $opt_H $opt_s $opt_W $opt_u $opt_p $opt_w $opt_c $verbose);
 use vars qw($PROGNAME);
 use lib utils.pm ;
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
@@ -40,6 +40,7 @@ $ENV{'ENV'}='';
 Getopt::Long::Configure('bundling');
 GetOptions
 	("v"   => \$verbose, "verbose"    => \$verbose,
+	 "P=s" => \$opt_P, "port=s"     => \$opt_P,
 	 "V"   => \$opt_V, "version"    => \$opt_V,
 	 "h"   => \$opt_h, "help"       => \$opt_h,
 	 "w=s" => \$opt_w, "warning=s"  => \$opt_w,
@@ -58,7 +59,7 @@ if ($opt_V) {
 if ($opt_h) {print_help(); exit $ERRORS{'OK'};}
 
 my $smbclient= "$utils::PATH_TO_SMBCLIENT " ;
-my $smbclientoptions="";
+my $smbclientoptions= $opt_P ? "-p $opt_P " : "";
 
 
 # Options checking
@@ -230,7 +231,7 @@ exit $ERRORS{$state};
 
 sub print_usage () {
 	print "Usage: $PROGNAME -H <host> -s <share> -u <user> -p <password> 
-      -w <warn> -c <crit> [-W <workgroup>]\n";
+      -w <warn> -c <crit> [-W <workgroup>] [-P <port>]\n";
 }
 
 sub print_help () {
@@ -257,6 +258,8 @@ Perl Check SMB Disk plugin for Nagios
       
 -c, --critical=INTEGER or INTEGER[kMG]
    Percent of used space at which a critical will be generated (Defaults: 95%)
+-P, --port=INTEGER
+   Port to be used to connect to. Some Windows boxes use 139, others 445 (Defaults to smbclient default)
    
    If thresholds are followed by either a k, M, or G then check to see if that
    much disk space is available (kilobytes, Megabytes, Gigabytes)
