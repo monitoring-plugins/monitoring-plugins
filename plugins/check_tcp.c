@@ -27,8 +27,9 @@ const char *summary = "\
 This plugin tests %s connections with the specified host.\n";
 
 const char *option_summary = "\
--H host -p port [-w warn_time] [-c crit_time] [-s send]\n\
-	[-e expect] [-W wait] [-t to_sec] [-r refuse_state] [-v]\n";
+-H host -p port [-w warn_time] [-c crit_time] [-s send_string]\n\
+	[-e expect_string] [-q quit_string] [-m maxbytes] [-d delay]\n\
+  [-t to_sec] [-r refuse_state] [-v]\n";
 
 const char *options = "\
  -H, --hostname=ADDRESS\n\
@@ -40,7 +41,11 @@ const char *options = "\
     String to send to the server\n\
  -e, --expect=STRING\n\
     String to expect in server response\n\
- -W, --wait=INTEGER\n\
+ -q, --quit=STRING\n\
+    String to send server to initiate a clean close of the connection\n\
+ -m, --maxbytes=INTEGER\n\
+    Close connection once more than this number of bytes are received\n\
+ -d, --delay=INTEGER\n\
     Seconds to wait between sending string and polling for response\n\
  -w, --warning=DOUBLE\n\
     Response time to result in warning status (seconds)\n\
@@ -50,8 +55,8 @@ const char *options = "\
     Seconds before connection times out (default: %d)\n\
  -r, --refuse=ok|warn|crit\n\
     Accept tcp refusals with states ok, warn, crit (default: crit)\n\
- -v\n\
-    Show details for command-line debugging (do not use with nagios server)\n";
+ -v, --verbose\n\
+    Show details for command-line debugging (Nagios may truncate output)\n";
 
 const char *standard_options = "\
  -h, --help\n\
@@ -112,6 +117,7 @@ char *server_send = NULL;
 char *server_quit = NULL;
 char **server_expect = NULL;
 int server_expect_count = 0;
+int maxbytes = 0;
 char **warn_codes = NULL;
 int warn_codes_count = 0;
 char **crit_codes = NULL;
@@ -291,6 +297,8 @@ main (int argc, char **argv)
 			asprintf (&status, "%s%s", status, buffer);
 			if (buffer[i-2] == '\r' && buffer[i-1] == '\n')
 				break;
+			if (maxbytes>0 && strlen(status)>maxbytes)
+				break;
 		}
 
 		/* return a CRITICAL status if we couldn't read any data */
@@ -380,6 +388,7 @@ process_arguments (int argc, char **argv)
 		{"port", required_argument, 0, 'p'},
 		{"send", required_argument, 0, 's'},
 		{"expect", required_argument, 0, 'e'},
+		{"maxbytes", required_argument, 0, 'm'},
 		{"quit", required_argument, 0, 'q'},
 		{"delay", required_argument, 0, 'd'},
 		{"refuse", required_argument, 0, 'r'},
@@ -410,8 +419,8 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVvH:s:e:q:c:w:t:p:C:W:d:Sr:", long_options,
-									 &option_index);
+		c = getopt_long (argc, argv, "+hVvH:s:e:q:m:c:w:t:p:C:W:d:Sr:",
+		                 long_options, &option_index);
 
 		if (c == -1 || c == EOF || c == 1)
 			break;
@@ -476,6 +485,10 @@ process_arguments (int argc, char **argv)
 				server_expect = realloc (server_expect, ++server_expect_count);
 			server_expect[server_expect_count - 1] = optarg;
 			break;
+		case 'm':
+			if (!is_intpos (optarg))
+				usage ("Maxbytes must be a positive integer\n");
+			maxbytes = atoi (optarg);
 		case 'q':
 			server_quit = optarg;
 			break;
