@@ -70,15 +70,10 @@
 </bookinfo>
 
 
-  <preface id=preface>
-    <title>About the guidelines</title>
-
+<preface id="preface"><title>Preface</title>
     <para>The purpose of this guidelines is to provide a reference for
     the plug-in developers and encourage the standarization of the
     different kind of plug-ins: C, shell, perl, python, etc.</para>
-
-
-    <section> <title>Copyright</title>
 
         <para>Nagios Plug-in Development Guidelines Copyright (C) 2000 2001
 		2002
@@ -89,13 +84,34 @@
         copies of this manual provided the copyright notice and this
         permission notice are preserved on all copies.</para>
 
-		<para>The plugins themselves are copyrighted by their respective
-		authors.</para>
-
-    </section>
+	<para>The plugins themselves are copyrighted by their respective
+	authors.</para>
 </preface>
 
 <article>
+<section id="DevRequirements"><title>Development platform requirements</title>
+	<para>
+	While the requirements for compiling the Nagios plugins release is very small,
+	to develop from CVS needs additional software to be installed. These are the 
+	minimum levels of software required:
+
+	<literallayout>
+	gnu make 3.79
+	automake 1.6
+	autoconf 2.52
+	gettext 0.11.5
+	</literallayout>
+
+	To compile from CVS, after you have checked out the code, run:
+	<literallayout>
+	tools/setup
+	./configure
+	make
+	make install
+	</literallayout>
+	</para>
+</section>
+
 <section id="PlugOutput"><title>Plugin Output for Nagios</title>
 	
 		<para>You should always print something to STDOUT that tells if the 
