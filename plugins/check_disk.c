@@ -54,6 +54,7 @@ float c_dfp = -1.0;
 char *path = "";
 char *exclude_device = "";
 int verbose = 0;
+int erronly = FALSE;
 int display_mntp = FALSE;
 
 
@@ -117,6 +118,9 @@ main (int argc, char **argv)
 			if (strcmp (file_system, "none") == 0)
 				strncpy (file_system, mntp, MAX_INPUT_BUFFER-1);
 
+			if (disk_result==STATE_OK && erronly && !verbose)
+				continue;
+
 			if (disk_result!=STATE_OK || verbose>=0) 
 				asprintf (&output, "%s [%d kB (%d%%) free on %s]", output,
 				          free_disk, 100 - usp, display_mntp ? mntp : file_system);
@@ -172,6 +176,7 @@ process_arguments (int argc, char **argv)
 		{"partition", required_argument, 0, 'p'},
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
+		{"errors-only", no_argument, 0, 'e'},
 		{"help", no_argument, 0, 'h'},
 		{"mountpoint", no_argument, 0, 'm'},
 		{"exclude_device", required_argument, 0, 'x'},
@@ -191,9 +196,9 @@ process_arguments (int argc, char **argv)
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
- 			getopt_long (argc, argv, "+?Vqhvt:c:w:p:x:m", long_options, &option_index);
+ 			getopt_long (argc, argv, "+?Vqhvet:c:w:p:x:m", long_options, &option_index);
 #else
- 		c = getopt (argc, argv, "+?Vqhvt:c:w:p:x:m");
+ 		c = getopt (argc, argv, "+?Vqhvet:c:w:p:x:m");
 #endif
 
 		if (c == -1 || c == EOF)
@@ -248,6 +253,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'q':									/* verbose */
 			verbose--;
+			break;
+		case 'e':
+			erronly = TRUE;
 			break;
 		case 'm': /* display mountpoint */
 			display_mntp = TRUE;
