@@ -624,7 +624,7 @@ if ps -weo 'stat comm vsz rss user uid ppid args' 2>/dev/null | \
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -weo 'stat uid ppid vsz rss pcpu comm args'"
-	ac_cv_ps_format="%s %d %d %s %n"
+	ac_cv_ps_format="%s %d %d %d %d %f %s %n"
 	EXTRAS="$EXTRAS check_nagios"
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
@@ -634,7 +634,7 @@ elif ps waxco 'state command vsz rss uid user ppid' 2>/dev/null | \
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS waxco 'state uid ppid vsz rss pcpu command command'"
-	ac_cv_ps_format="%s %d %d %s %n"
+	ac_cv_ps_format="%s %d %d %d %d %f %s %n"
 	EXTRAS="$EXTRAS check_nagios"
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
@@ -644,7 +644,7 @@ elif ps waxno 'state comm vsz rss uid user ppid args' 2>/dev/null | \
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS waxno 'state uid ppid vsz rss pcpu comm args'"
-	ac_cv_ps_format="%s %d %d %s %n"
+	ac_cv_ps_format="%s %d %d %d %d %f %s %n"
 	EXTRAS="$EXTRAS check_nagios"
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
@@ -678,7 +678,7 @@ elif ps -axo 'stat comm vsz rss user uid ppid args' 2>/dev/null | \
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -axo 'stat uid ppid vsz rss pcpu comm args'"
-	ac_cv_ps_format="%s %d %d %s %n"
+	ac_cv_ps_format="%s %d %d %d %d %f %s %n"
 	EXTRAS="$EXTRAS check_nagios"
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
@@ -688,7 +688,7 @@ elif ps -ao 'stat comm vsz rss user uid ppid args' 2>/dev/null | \
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -ao 'stat uid ppid vsz rss pcpu comm args'"
-	ac_cv_ps_format="[["%s%*[ +] %d %d %s %n"]]"
+	ac_cv_ps_format="[["%s%*[ +] %d %d %d %d %f %s %n"]]"
 	EXTRAS="$EXTRAS check_nagios"
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
@@ -697,7 +697,7 @@ elif ps -eo 's comm vsz rss user uid ppid args' 2>/dev/null | \
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -eo 's uid ppid vsz rss pcpu comm args'"
-	ac_cv_ps_format="%s %d %d %s %n"
+	ac_cv_ps_format="%s %d %d %d %d %f %s %n"
 	EXTRAS="$EXTRAS check_nagios"
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
@@ -706,7 +706,7 @@ elif ps -Ao 's comm vsz rss uid user ppid args' 2>/dev/null | \
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -Ao 's uid ppid vsz rss pcpu comm args'"
-	ac_cv_ps_format="%s %d %d %s %n"
+	ac_cv_ps_format="%s %d %d %d %d %f %s %n"
 	EXTRAS="$EXTRAS check_nagios"
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
@@ -715,7 +715,7 @@ elif ps -Ao 'status comm vsz rss uid user ppid args' 2>/dev/null | \
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -Ao 'status uid ppid vsz rss pcpu comm args'"
-	ac_cv_ps_format="%s %d %d %s %n"
+	ac_cv_ps_format="%s %d %d %d %d %f %s %n"
 	EXTRAS="$EXTRAS check_nagios"
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
@@ -724,7 +724,7 @@ elif ps -Ao 'state comm vsz rss uid user ppid args' 2>/dev/null | \
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -Ao 'state uid ppid vsz rss pcpu comm args'"
-	ac_cv_ps_format="%s %d %d %s %n"
+	ac_cv_ps_format="%s %d %d %d %d %f %s %n"
 	EXTRAS="$EXTRAS check_nagios"
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
@@ -734,7 +734,7 @@ elif ps -ao 'state command vsz rss user ppid args' 2>/dev/null | \
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -ao 'state uid ppid vsz rss pcpu command args'"
-	ac_cv_ps_format="%s %d %d %s %n"
+	ac_cv_ps_format="%s %d %d %d %d %f %s %n"
 	EXTRAS="$EXTRAS check_nagios"
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
