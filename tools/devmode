@@ -1,0 +1,3 @@
+echo \# do \"eval \`$0\`\" to get pedantic compiler settings
+echo
+echo export CFLAGS=\"-g -O3 -pedantic -Wall -W -Wformat=2 -Wfloat-equal -Wtraditional -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wsign-compare -Waggregate-return -Wstrict-prototypes -Wmissing-prototypes -Wmissing-noreturn -Wmissing-format-attribute -Wnested-externs -Wunreachable-code -Winline\"
