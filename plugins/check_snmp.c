@@ -167,7 +167,6 @@ char regex_expect[MAX_INPUT_BUFFER] = "";
 regex_t preg;
 regmatch_t pmatch[10];
 char timestamp[10] = "";
-char regex[MAX_INPUT_BUFFER];
 char errbuf[MAX_INPUT_BUFFER];
 int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
 int eflags = 0;
