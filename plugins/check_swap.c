@@ -30,12 +30,11 @@
 #include "utils.h"
 
 const char *progname = "check_swap";
-#define REVISION "$Revision$"
-#define COPYRIGHT "2000-2002"
-#define AUTHOR "Karl DeBisschop"
-#define EMAIL "kdebisschop@users.sourceforge.net"
-#define SUMMARY "Check swap space on local server.\n"
+const char *revision = "$Revision$";
+const char *copyright = "2000-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
+int check_swap (int usp, int free_swap);
 int process_arguments (int argc, char **argv);
 int validate_arguments (void);
 void print_usage (void);
@@ -52,16 +51,68 @@ int allswaps;
 int sun = 0;	/* defined by compiler if it is a sun solaris system */
 #endif
 
+void
+print_usage (void)
+{
+	printf (_("Usage:\n\
+ %s [-a] -w <used_percentage>%% -c <used_percentage>%%\n\
+ %s [-a] -w <bytes_free> -c <bytes_free>\n\
+ %s (-h | --help) for detailed help\n\
+ %s (-V | --version) for version information\n"),
+	        progname, progname, progname, progname);
+}
+
+
+
+
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("Check swap space on local server.\n\n"));
+
+	print_usage ();
+
+	printf (_(HELP_VRSN));
+
+	printf (_("\n\
+ -w, --warning=INTEGER\n\
+   Exit with WARNING status if less than INTEGER bytes of swap space are free\n\
+ -w, --warning=PERCENT%%\n\
+   Exit with WARNING status if less than PERCENT of swap space has been used\n\
+ -c, --critical=INTEGER\n\
+   Exit with CRITICAL status if less than INTEGER bytes of swap space are free\n\
+ -c, --critical=PERCENT%%\n\
+   Exit with CRITCAL status if less than PERCENT of swap space has been used\n\
+ -a, --allswaps\n\
+    Conduct comparisons for all swap partitions, one by one\n"));
+
+#ifdef sun
+	printf (_("\n\
+On Solaris, if -a specified, uses swap -l, otherwise uses swap -s.\n\
+Will be discrepencies because swap -s counts allocated swap and includes\n\
+real memory\n"));
+#endif
+
+	support ();
+}
+
+
+
 int
 main (int argc, char **argv)
 {
 	int percent_used, percent;
 	long unsigned int total_swap = 0, used_swap = 0, free_swap = 0;
-	long unsigned int total, used, free;
-	int conv_factor;		/* Convert to MBs */
+	long unsigned int dsktotal, dskused, dskfree;
 	int result = STATE_OK;
 	char input_buffer[MAX_INPUT_BUFFER];
 #ifdef HAVE_SWAP
+	int conv_factor;		/* Convert to MBs */
 	char *temp_buffer;
 	char *swap_command;
 	char *swap_format;
@@ -78,11 +129,11 @@ main (int argc, char **argv)
 #ifdef HAVE_PROC_MEMINFO
 	fp = fopen (PROC_MEMINFO, "r");
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, fp)) {
-		if (sscanf (input_buffer, " %s %lu %lu %lu", str, &total, &used, &free) == 4 &&
+		if (sscanf (input_buffer, " %s %lu %lu %lu", str, &dsktotal, &dskused, &dskfree) == 4 &&
 		    strstr (str, "Swap")) {
-			total = total / 1048576;
-			used = used / 1048576;
-			free = free / 1048576;
+			dsktotal = dsktotal / 1048576;
+			dskused = dskused / 1048576;
+			dskfree = dskfree / 1048576;
 #endif
 #ifdef HAVE_SWAP
 	if (!allswaps && sun) {
@@ -118,7 +169,7 @@ main (int argc, char **argv)
 		while (temp_buffer) {
 			if (strstr (temp_buffer, "blocks"))
 				sprintf (str, "%s %s", str, "%f");
-			else if (strstr (temp_buffer, "free"))
+			else if (strstr (temp_buffer, "dskfree"))
 				sprintf (str, "%s %s", str, "%f");
 			else
 				sprintf (str, "%s %s", str, "%*s");
@@ -133,23 +184,23 @@ main (int argc, char **argv)
 		total_swap = used_swap + free_swap;
 	} else {
 		while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
-			sscanf (input_buffer, swap_format, &total, &free);
+			sscanf (input_buffer, swap_format, &dsktotal, &dskfree);
 
-			total = total / conv_factor;
-			free = free / conv_factor;
+			dsktotal = dsktotal / conv_factor;
+			dskfree = dskfree / conv_factor;
 			if (verbose >= 3)
-				printf ("total=%d, free=%d\n", total, free);
+				printf ("total=%d, free=%d\n", dsktotal, dskfree);
 
-			used = total - free;
+			dskused = dsktotal - dskfree;
 #endif
-			total_swap += total;
-			used_swap += used;
-			free_swap += free;
+			total_swap += dsktotal;
+			used_swap += dskused;
+			free_swap += dskfree;
 			if (allswaps) {
-				percent = 100 * (((double) used) / ((double) total));
-				result = max_state (result, check_swap (percent, free));
+				percent = 100 * (((double) dskused) / ((double) dsktotal));
+				result = max_state (result, check_swap (percent, dskfree));
 				if (verbose)
-					asprintf (&status, "%s [%lu (%d%%)]", status, free, 100 - percent);
+					asprintf (&status, "%s [%lu (%d%%)]", status, dskfree, 100 - percent);
 			}
 		}
 	}
@@ -175,6 +226,7 @@ main (int argc, char **argv)
 #endif
 
 	terminate (result, "SWAP %s:%s\n", state_text (result), status);
+	return STATE_UNKNOWN;
 }
 
 
@@ -186,11 +238,11 @@ check_swap (int usp, int free_swap)
 	int result = STATE_UNKNOWN;
 	if (usp >= 0 && usp >= (100.0 - crit_percent))
 		result = STATE_CRITICAL;
-	else if (crit_size >= 0 && free_swap <= crit_size)
+	else if (crit_size > 0 && (unsigned)free_swap <= crit_size)
 		result = STATE_CRITICAL;
 	else if (usp >= 0 && usp >= (100.0 - warn_percent))
 		result = STATE_WARNING;
-	else if (warn_size >= 0 && free_swap <= warn_size)
+	else if (warn_size > 0 && (unsigned)free_swap <= warn_size)
 		result = STATE_WARNING;
 	else if (usp >= 0.0)
 		result = STATE_OK;
@@ -270,7 +322,7 @@ process_arguments (int argc, char **argv)
 			verbose++;
 			break;
 		case 'V':									/* version */
-			print_revision (progname, "$Revision$");
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -293,12 +345,12 @@ process_arguments (int argc, char **argv)
 
 	if (c == argc)
 		return validate_arguments ();
-	if (warn_size < 0 && is_intnonneg (argv[c]))
+	if (warn_size == 0 && is_intnonneg (argv[c]))
 		warn_size = atoi (argv[c++]);
 
 	if (c == argc)
 		return validate_arguments ();
-	if (crit_size < 0 && is_intnonneg (argv[c]))
+	if (crit_size == 0 && is_intnonneg (argv[c]))
 		crit_size = atoi (argv[c++]);
 
 	return validate_arguments ();
@@ -311,8 +363,8 @@ process_arguments (int argc, char **argv)
 int
 validate_arguments (void)
 {
-	if (warn_percent > 100 && crit_percent > 100 && warn_size < 0
-			&& crit_size < 0) {
+	if (warn_percent > 100 && crit_percent > 100 && warn_size == 0
+			&& crit_size == 0) {
 		return ERROR;
 	}
 	else if (warn_percent < crit_percent) {
@@ -324,55 +376,4 @@ validate_arguments (void)
 			("Warning free space should be more than critical free space\n");
 	}
 	return OK;
-}
-
-
-
-
-
-void
-print_usage (void)
-{
-	printf
-		("Usage:\n"
-		 " %s [-a] -w <used_percentage>%% -c <used_percentage>%%\n"
-		 " %s [-a] -w <bytes_free> -c <bytes_free>\n"
-		 " %s (-h | --help) for detailed help\n"
-		 " %s (-V | --version) for version information\n",
-		 progname, progname, progname, progname);
-}
-
-
-
-
-
-void
-print_help (void)
-{
-	print_revision (progname, REVISION);
-	printf
-		("Copyright (c) %s %s <%s>\n\n%s\n", COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
-	print_usage ();
-	printf
-		("\nOptions:\n"
-		 " -w, --warning=INTEGER\n"
-		 "   Exit with WARNING status if less than INTEGER bytes of swap space are free\n"
-		 " -w, --warning=PERCENT%%\n"
-		 "   Exit with WARNING status if less than PERCENT of swap space has been used\n"
-		 " -c, --critical=INTEGER\n"
-		 "   Exit with CRITICAL status if less than INTEGER bytes of swap space are free\n"
-		 " -c, --critical=PERCENT%%\n"
-		 "   Exit with CRITCAL status if less than PERCENT of swap space has been used\n"
-		 " -a, --allswaps\n"
-		 "    Conduct comparisons for all swap partitions, one by one\n"
-		 " -h, --help\n"
-		 "    Print detailed help screen\n"
-		 " -V, --version\n" "    Print version information\n"
-#ifdef sun
-		 "\nOn Solaris, if -a specified, uses swap -l, otherwise uses swap -s.\n"
-		 "Will be discrepencies because swap -s counts allocated swap and includes real memory\n"
-#endif
-		 "\n"
-		 );
-	support ();
 }

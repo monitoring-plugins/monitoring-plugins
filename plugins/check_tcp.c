@@ -99,39 +99,26 @@ print_usage (void)
 	printf (_("\
 Usage: %s -H host -p port [-w <warning time>] [-c <critical time>]\n\
 	[-s <send string>] [-e <expect string>] [-q <quit string>]\n\
-	[-m <maximum bytes>] [-d <delay>]	[-t <timeout seconds>]\n\
+	[-m <maximum bytes>] [-d <delay>] [-t <timeout seconds>]\n\
 	[-r <refuse state>] [-v] [-4|-6]\n"), progname);
 	printf ("       %s (-h|--help)\n", progname);
 	printf ("       %s (-V|--version)\n", progname);
 }
-
 void
 print_help (void)
 {
 	print_revision (progname, revision);
 
-	printf (_("\
-Copyright (c) %s Nagios Plugin Development Team\n\
-\t<%s>\n\n"),
-	        copyright, email);
+	printf (_(COPYRIGHT), copyright, email);
 
-	printf (_("\
-This plugin tests %s connections with the specified host.\n\n"),
+	printf (_("This plugin tests %s connections with the specified host.\n\n"),
 	        SERVICE);
 
 	print_usage ();
 
-	printf (_("\
-\nOptions:\n\
- -H, --hostname=ADDRESS\n\
-    Host name argument for servers using host headers (use numeric\n\
-    address if possible to bypass DNS lookup).\n\
- -p, --port=INTEGER\n\
-    Port number\n\
- -4, --use-ipv4\n\
-    Use IPv4 connection\n\
- -6, --use-ipv6\n\
-    Use IPv6 connection\n"));
+	printf (_(HELP_VRSN));
+
+	printf (_(HOST_PORT_46), 'p', "none");
 
 	printf (_("\
  -s, --send=STRING\n\
@@ -147,22 +134,11 @@ This plugin tests %s connections with the specified host.\n\n"),
  -m, --maxbytes=INTEGER\n\
     Close connection once more than this number of bytes are received\n\
  -d, --delay=INTEGER\n\
-    Seconds to wait between sending string and polling for response\n\
- -w, --warning=DOUBLE\n\
-    Response time to result in warning status (seconds)\n\
- -c, --critical=DOUBLE\n\
-    Response time to result in critical status (seconds)\n"));
+    Seconds to wait between sending string and polling for response\n"));
 
-	printf (_("\
- -t, --timeout=INTEGER\n\
-    Seconds before connection times out (default: %d)\n\
- -v, --verbose\n\
-    Show details for command-line debugging (Nagios may truncate output)\n\
- -h, --help\n\
-    Print detailed help screen\n\
- -V, --version\n\
-    Print version information\n\n"),
-					DEFAULT_SOCKET_TIMEOUT);
+	printf (_(WARN_CRIT_TO), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(VRBS));
 
 	support ();
 }

@@ -23,13 +23,6 @@
  *
  *****************************************************************************/
 
-const char *progname = "check_pgsql";
-#define REVISION "$Revision$"
-#define COPYRIGHT "1999-2001"
-#define AUTHOR "Karl DeBisschop"
-#define EMAIL "kdebisschop@users.sourceforge.net"
-#define SUMMARY "Tests to see if a PostgreSQL DBMS is accepting connections.\n"
-
 #define DEFAULT_DB "template1"
 #define DEFAULT_HOST "127.0.0.1"
 
@@ -65,6 +58,11 @@ int tcrit = DEFAULT_CRIT;
 
 PGconn *conn;
 /*PGresult   *res;*/
+
+const char *progname = "check_pgsql";
+const char *revision = "$Revision$";
+const char *copyright = "1999-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 
 /******************************************************************************
@@ -127,22 +125,18 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 void
 print_help (void)
 {
-	print_revision (progname, REVISION);
-	printf
-		("Copyright (c) %s %s <%s>\n\n%s\n",
-		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("Test whether a PostgreSQL DBMS is accepting connections.\n\n"));
+
 	print_usage ();
-	printf (_("\
-\nOptions:\n\
- -H, --hostname=ADDRESS\n\
-    Host name argument for servers using host headers (use numeric\n\
-    address if possible to bypass DNS lookup).\n\
- -P, --port=INTEGER\n\
-    Port number (default: %d)\n\
- -4, --use-ipv4\n\
-    Use IPv4 connection\n\
- -6, --use-ipv6\n\
-    Use IPv6 connection\n"), DEFAULT_PORT);
+
+	printf (_(HELP_VRSN));
+
+	printf (_(HOST_PORT_46), 'P', "5432");
+
 	printf (S_("\
   -d, --database=STRING\n\
     Database to check (default: %s)\n\
@@ -150,22 +144,12 @@ print_help (void)
     Login name of user\n\
   -p, --password = STRING\n\
     Password (BIG SECURITY ISSUE)\n\n"), DEFAULT_DB);
-	printf (S_("\nOptions:\n\
-  -c, --critical=INTEGER\n\
-    Exit STATE_CRITICAL if connection time exceeds threshold (default: %d)\n\
-  -w, --warning=INTEGER\n\
-    Exit STATE_WARNING if connection time exceeds threshold (default: %d)\n\
-  -t, --timeout=INTEGER\n\
-    Terminate test if timeout limit is exceeded (default: %d)\n"),
-	        DEFAULT_WARN, DEFAULT_CRIT, DEFAULT_TIMEOUT);
-	printf (_("\
- -v, --verbose\n\
-    Show details for command-line debugging (Nagios may truncate output)\n\
- -h, --help\n\
-    Print detailed help screen\n\
- -V, --version\n\
-    Print version information\n\n"));
-	printf (S_("All parameters are optional.\n\
+
+	printf (_(WARN_CRIT_TO), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(VRBS));
+
+	printf (S_("\nAll parameters are optional.\n\
 \n\
 This plugin tests a PostgreSQL DBMS to determine whether it is active and\n\
 accepting queries. In its current operation, it simply connects to the\n\
@@ -290,7 +274,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case 'V':     /* version */
-			print_revision (progname, REVISION);
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 't':     /* timeout period */
 			if (!is_integer (optarg))
