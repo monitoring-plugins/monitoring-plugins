@@ -29,6 +29,7 @@
 *
 ****************************************************************************/
 
+#include "common.h"
 #include "netutils.h"
 
 int socket_timeout = DEFAULT_SOCKET_TIMEOUT; 
