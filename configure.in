@@ -488,7 +488,7 @@ then
 	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS waxno 'vsz comm'",[])
 	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[])
 	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS waxno 'rss comm'",[])
-	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s,[]")
+	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s,"[])
 	echo "      ps syntax... $PATH_TO_PS -waxco 'state comm vsz rss'"
 dnl IRIX 53
 elif [ps -el 2>/dev/null | egrep -i "^ *F +S +UID +PID +PPID +C +PRI +NI +P +SZ +RSS +WCHAN +TTY +TIME +[RGSCOMDNA]+" >/dev/null]
