@@ -31,10 +31,8 @@
 
 #include "config.h"
 #include "common.h"
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <netdb.h>
 
 extern int socket_timeout;
 RETSIGTYPE socket_timeout_alarm_handler (int);

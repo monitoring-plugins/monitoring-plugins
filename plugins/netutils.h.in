@@ -34,10 +34,9 @@
 #undef HAVE_STRINGS_H
 #undef HAVE_STRING_H
 
-#include <sys/socket.h>
+#include "common.h"
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <netdb.h>
 
 void socket_timeout_alarm_handler (int);
 

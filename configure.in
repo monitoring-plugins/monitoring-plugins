@@ -11,6 +11,7 @@ PACKAGE_RELEASE="${REL}"
 AC_SUBST(PACKAGE_RELEASE)
 AM_INIT_AUTOMAKE(nagios-plugins,${PACKAGE_VERSION})
 AM_CONFIG_HEADER(plugins/config.h plugins/common.h plugins/version.h plugins/netutils.h plugins/utils.h plugins/popen.h)
+AC_CANONICAL_HOST
 
 AC_PREFIX_DEFAULT(/usr/local/nagios)
 
@@ -52,18 +53,38 @@ SUPPORT="Send email to nagios-users@lists.sourceforge.net if you have questions\
 AC_SUBST(SUPPORT)
 
 dnl CGIURL has changed for Nagios with 1.0 beta
-AC_ARG_WITH(cgiurl,--with-cgiurl=<dir> sets URL for cgi programs,cgiurl=$withval,cgiurl=/nagios/cgi-bin)
+dnl AC_ARG_WITH(cgiurl,--with-cgiurl=<dir> sets URL for cgi programs,cgiurl=$withval,cgiurl=/nagios/cgi-bin)
+AC_ARG_WITH(cgiurl,
+	ACX_HELP_STRING([--with-cgiurl=DIR],
+		[sets URL for cgi programs]),
+	cgiurl=$withval,
+	cgiurl=/nagios/cgi-bin)
 CGIURL="$cgiurl"
 AC_DEFINE_UNQUOTED(CGIURL,"$CGIURL",[URL of CGI programs])
 
-AC_ARG_WITH(nagios_user,--with-nagios-user=<user> sets user name to run nagios,nagios_usr=$withval,nagios_usr=nagios)
-AC_ARG_WITH(nagios_group,--with-nagios-group=<group> sets group name to run nagios,nagios_grp=$withval,nagios_grp=nagios)
+dnl AC_ARG_WITH(nagios_user,--with-nagios-user=<user> sets user name to run nagios,nagios_usr=$withval,nagios_usr=nagios)
+AC_ARG_WITH(nagios_user,
+	ACX_HELP_STRING([--with-nagios-user=USER],
+		[set user name to run nagios]),
+	nagios_usr=$withval,
+	nagios_usr=nagios)
+dnl AC_ARG_WITH(nagios_group,--with-nagios-group=<group> sets group name to run nagios,nagios_grp=$withval,nagios_grp=nagios)
+AC_ARG_WITH(nagios_group,
+	ACX_HELP_STRING([--with-nagios-group=GROUP],
+		[set group name to run nagios]),
+	nagios_grp=$withval,
+	nagios_grp=nagios)
 AC_SUBST(nagios_usr)
 AC_SUBST(nagios_grp)
 INSTALL_OPTS="-o $nagios_usr -g $nagios_grp"
 AC_SUBST(INSTALL_OPTS)
 
-AC_ARG_WITH(trusted_path,--with-trusted-path=/bin:/sbin:/usr/bin:/usr/sbin sets trusted path for executables called by scripts,trusted_path=$withval,trusted_path=/bin:/sbin:/usr/bin:/usr/sbin)
+dnl AC_ARG_WITH(trusted_path,--with-trusted-path=/bin:/sbin:/usr/bin:/usr/sbin sets trusted path for executables called by scripts,trusted_path=$withval,trusted_path=/bin:/sbin:/usr/bin:/usr/sbin)
+AC_ARG_WITH(trusted_path,
+	ACX_HELP_STRING([--with-trusted-path=PATH],
+		[sets trusted path for executables called by scripts (default=/bin:/sbin:/usr/bin:/usr/sbin)]),
+	trusted_path=$withval,
+	trusted_path=/bin:/sbin:/usr/bin:/usr/sbin)
 AC_SUBST(trusted_path)
 
 EXTRAS=
@@ -84,6 +105,18 @@ AC_PATH_PROG(SH,sh)
 AC_PATH_PROG(HOSTNAME,hostname)
 AC_PATH_PROG(BASENAME,basename)
 
+dnl
+dnl Check for miscellaneous stuff
+dnl 
+
+case $host_vender-$host_os in
+sun*)
+	AC_DEFINE(__EXTENSIONS__,1,[Sun's netdb.h needs this for getaddrinfo])
+	;;
+osf*)
+	AC_DEFINE(_OSF_SOURCE,1,[OSF needs this for getaddrinfo])
+	;;
+esac
 
 dnl
 dnl Checks for libraries.
@@ -98,7 +131,11 @@ AC_SUBST(SOCKETLIBS)
 dnl Check for PostgreSQL libraries
 _SAVEDLIBS="$LIBS"
 _SAVEDCPPFLAGS="$CPPFLAGS"
-AC_ARG_WITH(pgsql,--with-pgsql=<dir> sets path to pgsql installation,[PGSQL=$withval])
+dnl AC_ARG_WITH(pgsql,--with-pgsql=<dir> sets path to pgsql installation,[PGSQL=$withval])
+AC_ARG_WITH(pgsql,
+	ACX_HELP_STRING([--with-pgsql=DIR],
+		[sets path to pgsql installation]),
+	PGSQL=$withval,)
 AC_CHECK_LIB(crypt,main)
 if test "$ac_cv_lib_crypt_main" = "yes"; then
   if test -n "$PGSQL"; then
@@ -175,7 +212,11 @@ LIBS="$_SAVEDLIBS"
 dnl Check for mysql libraries
 _SAVEDLIBS="$LIBS"
 _SAVEDCPPFLAGS="$CPPFLAGS"
-AC_ARG_WITH(mysql,--with-mysql=<dir> sets path to mysql installation (assumes lib/mysql and include subdirs),[MYSQL=$withval])
+dnl AC_ARG_WITH(mysql,--with-mysql=<dir> sets path to mysql installation (assumes lib/mysql and include subdirs),[MYSQL=$withval])
+AC_ARG_WITH(mysql,
+	ACX_HELP_STRING([--with-mysql=DIR],
+		[sets path to mysql installation (assumes lib/mysql and include subdirs]),
+	MYSQL=$withval,)
 if test -n "$MYSQL"; then
   MYSQLLIBDIR=$MYSQL/lib/mysql
   CPPFLAGS="-I$MYSQL/include"
@@ -229,7 +270,11 @@ elif test "$OPENSSL" = "/usr/local/bin/openssl"; then
 elif test "$OPENSSL" = "/usr/local/ssl/bin/openssl"; then
   OPENSSL=/usr/local/ssl
 fi
-AC_ARG_WITH(openssl,--with-openssl=<dir> sets path to openssl installation,[OPENSSL=$withval])
+dnl AC_ARG_WITH(openssl,--with-openssl=<dir> sets path to openssl installation,[OPENSSL=$withval])
+AC_ARG_WITH(openssl,
+	ACX_HELP_STRING([--with-openssl=DIR],
+		[sets path to openssl installation]),
+	OPENSSL=$withval,)
 
 dnl #########################################################################
 dnl Check if Posix getaddrinfo() is available.  It is also possible to use
@@ -785,7 +830,11 @@ else
 	echo "** Unable to find usable ps syntax"
 fi
 
-AC_ARG_WITH(df_command,--with-df-command=<syntax> sets syntax for df,DF_COMMAND=$withval)
+dnl AC_ARG_WITH(df_command,--with-df-command=<syntax>,sets syntax for df,DF_COMMAND=$withval)
+AC_ARG_WITH(df_command,
+	ACX_HELP_STRING([--with-df-command=SYNTAX],
+		[sets syntax for df]),
+	DF_COMMAND=$withval,)
 if test -n "$DF_COMMAND"
 then
 	AC_DEFINE_UNQUOTED(DF_COMMAND,"$DF_COMMAND",[path and args for df command])
@@ -815,7 +864,11 @@ fi
 
 AC_PATH_PROG(PATH_TO_PING,ping)
 
-AC_ARG_WITH(ping_command,--with-ping-command=<syntax> sets syntax for ping,PING_COMMAND=$withval)
+dnl AC_ARG_WITH(ping_command,--with-ping-command=<syntax> sets syntax for ping,PING_COMMAND=$withval)
+AC_ARG_WITH(ping_command,
+	ACX_HELP_STRING([--with-ping-command=SYNTAX],
+		[sets syntax for ping]),
+	PING_COMMAND=$withval,)
 if test -n "$PING_COMMAND"
 then
 	echo "      ping syntax... (command-line) $PING_COMMAND"

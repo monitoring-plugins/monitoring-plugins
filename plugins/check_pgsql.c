@@ -79,7 +79,6 @@ enum {
 #include "config.h"
 #include "common.h"
 #include "utils.h"
-#include <netdb.h>
 #include <libpq-fe.h>
 
 int process_arguments (int, char **);
