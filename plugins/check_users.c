@@ -49,11 +49,14 @@
 #include "utils.h"
 
 #define PROGNAME "check_users"
+#define REVISION "$Revision$"
+#define COPYRIGHT "1999-2002"
+#define AUTHOR "Ethan Galstad"
+#define EMAIL "nagios@nagios.org"
 
 #define possibly_set(a,b) ((a) == 0 ? (b) : 0)
 
 int process_arguments (int, char **);
-int call_getopt (int, char **);
 void print_usage (void);
 void print_help (void);
 
@@ -133,40 +136,6 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	if (argc < 2)
-		usage ("\n");
-
-	c = 0;
-	while ((c += call_getopt (argc - c, &argv[c])) < argc) {
-
-		if (is_option (argv[c]))
-			continue;
-
-		if (wusers == -1 && argc > c) {
-			if (is_intnonneg (argv[c]) == FALSE)
-				usage ("Warning threshold must be a nonnegative integer\n");
-			wusers = atoi (argv[c]);
-
-		}
-		else if (cusers == -1 && argc > c) {
-			if (is_intnonneg (argv[c]) == FALSE)
-				usage ("Warning threshold must be a nonnegative integer\n");
-			cusers = atoi (argv[c]);
-		}
-	}
-
-	return OK;
-}
-
-
-
-
-
-int
-call_getopt (int argc, char **argv)
-{
-	int c, i = 0;
-
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -178,6 +147,9 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+	if (argc < 2)
+		usage ("\n");
+
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c = getopt_long (argc, argv, "+hVvc:w:", long_options, &option_index);
@@ -185,27 +157,19 @@ call_getopt (int argc, char **argv)
 		c = getopt (argc, argv, "+hVvc:w:");
 #endif
 
-		i++;
-
 		if (c == -1 || c == EOF || c == 1)
 			break;
 
 		switch (c) {
-		case 'c':
-		case 'w':
-			i++;
-		}
-
-		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf ("%s: Unknown argument: %s\n\n", my_basename (argv[0]), optarg);
+			printf ("%s: Unknown argument: %s\n\n", PROGNAME, optarg);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (my_basename (argv[0]), "$Revision$");
+			print_revision (PROGNAME, REVISION);
 			exit (STATE_OK);
 		case 'c':									/* critical */
 			if (!is_intnonneg (optarg))
@@ -219,7 +183,21 @@ call_getopt (int argc, char **argv)
 			break;
 		}
 	}
-	return i;
+
+	c = optind;
+	if (wusers == -1 && argc > c) {
+		if (is_intnonneg (argv[c]) == FALSE)
+			usage ("Warning threshold must be a nonnegative integer\n");
+		wusers = atoi (argv[c++]);
+	}
+
+	if (cusers == -1 && argc > c) {
+		if (is_intnonneg (argv[c]) == FALSE)
+			usage ("Warning threshold must be a nonnegative integer\n");
+		cusers = atoi (argv[c]);
+	}
+
+	return OK;
 }
 
 
@@ -239,9 +217,9 @@ print_usage (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, "$Revision$");
+	print_revision (PROGNAME, REVISION);
 	printf
-		("Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)\n\n"
+		("Copyright (c) " COPYRIGHT " " AUTHOR "(" EMAIL ")\n\n"
 		 "This plugin checks the number of users currently logged in on the local\n"
 		 "system and generates an error if the number exceeds the thresholds specified.\n");
 	print_usage ();

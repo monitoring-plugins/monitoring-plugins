@@ -57,6 +57,10 @@
 #include "utils.h"
 
 #define PROGNAME "check_ups"
+#define REVISION "$Revision$"
+#define COPYRIGHT "1999-2002"
+#define AUTHOR "Ethan Galstad"
+#define EMAIL "nagios@nagios.org"
 
 #define CHECK_NONE	0
 
@@ -433,50 +437,6 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	if (argc < 2)
-		return ERROR;
-
-	for (c = 1; c < argc; c++) {
-		if (strcmp ("-to", argv[c]) == 0)
-			strcpy (argv[c], "-t");
-		else if (strcmp ("-wt", argv[c]) == 0)
-			strcpy (argv[c], "-w");
-		else if (strcmp ("-ct", argv[c]) == 0)
-			strcpy (argv[c], "-c");
-	}
-
-	c = 0;
-	while ((c += (call_getopt (argc - c, &argv[c]))) < argc) {
-
-		if (is_option (argv[c]))
-			continue;
-
-		if (server_address == NULL) {
-			if (is_host (argv[c])) {
-				server_address = argv[c];
-			}
-			else {
-				usage ("Invalid host name");
-			}
-		}
-	}
-
-	if (server_address == NULL)
-		server_address = strscpy (NULL, "127.0.0.1");
-
-	return validate_arguments ();
-}
-
-
-
-
-
-
-int
-call_getopt (int argc, char **argv)
-{
-	int c, i = 0;
-
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -493,40 +453,39 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+	if (argc < 2)
+		return ERROR;
+
+	for (c = 1; c < argc; c++) {
+		if (strcmp ("-to", argv[c]) == 0)
+			strcpy (argv[c], "-t");
+		else if (strcmp ("-wt", argv[c]) == 0)
+			strcpy (argv[c], "-w");
+		else if (strcmp ("-ct", argv[c]) == 0)
+			strcpy (argv[c], "-c");
+	}
+
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
-			getopt_long (argc, argv, "+hVH:u:p:v:c:w:t:", long_options,
+			getopt_long (argc, argv, "hVH:u:p:v:c:w:t:", long_options,
 									 &option_index);
 #else
-		c = getopt (argc, argv, "+?hVH:u:p:v:c:w:t:");
+		c = getopt (argc, argv, "hVH:u:p:v:c:w:t:");
 #endif
 
-		i++;
-
-		if (c == -1 || c == EOF || c == 1)
+		if (c == -1 || c == EOF)
 			break;
 
 		switch (c) {
-		case 'H':
-		case 'u':
-		case 'p':
-		case 'v':
-		case 'c':
-		case 'w':
-		case 't':
-			i++;
-		}
-
-		switch (c) {
 		case '?':									/* help */
-			usage ("Invalid argument\n");
+			usage3 ("Unknown option", optopt);
 		case 'H':									/* hostname */
 			if (is_host (optarg)) {
 				server_address = optarg;
 			}
 			else {
-				usage ("Invalid host name\n");
+				usage2 ("Invalid host name", optarg);
 			}
 			break;
 		case 'u':									/* ups name */
@@ -537,7 +496,7 @@ call_getopt (int argc, char **argv)
 				server_port = atoi (optarg);
 			}
 			else {
-				usage ("Server port must be a positive integer\n");
+				usage2 ("Server port must be a positive integer", optarg);
 			}
 			break;
 		case 'c':									/* critical time threshold */
@@ -546,7 +505,7 @@ call_getopt (int argc, char **argv)
 				check_critical_value = TRUE;
 			}
 			else {
-				usage ("Critical time must be a nonnegative integer\n");
+				usage2 ("Critical time must be a nonnegative integer", optarg);
 			}
 			break;
 		case 'w':									/* warning time threshold */
@@ -555,7 +514,7 @@ call_getopt (int argc, char **argv)
 				check_warning_value = TRUE;
 			}
 			else {
-				usage ("Warning time must be a nonnegative integer\n");
+				usage2 ("Warning time must be a nonnegative integer", optarg);
 			}
 			break;
 		case 'v':									/* variable */
@@ -568,7 +527,7 @@ call_getopt (int argc, char **argv)
 			else if (!strcmp (optarg, "LOADPCT"))
 				check_variable = UPS_LOADPCT;
 			else
-				usage ("Unrecognized UPS variable\n");
+				usage2 ("Unrecognized UPS variable", optarg);
 			break;
 		case 't':									/* timeout */
 			if (is_intnonneg (optarg)) {
@@ -586,7 +545,20 @@ call_getopt (int argc, char **argv)
 			exit (STATE_OK);
 		}
 	}
-	return i;
+
+
+	if (server_address == NULL) {
+		if (optind >= argc) {
+			server_address = strscpy (NULL, "127.0.0.1");
+		}
+		else if (is_host (argv[optind])) {
+			server_address = argv[optind++];
+		}
+		else {
+			usage ("Invalid host name");
+		}
+	}
+	return validate_arguments();
 }
 
 
