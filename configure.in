@@ -782,7 +782,7 @@ elif ps -el 2>/dev/null | \
 	egrep -i ["^ *F +S +UID +PID +PPID +C +PRI +NI +P +SZ +RSS +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&procvsz,&procrss,&pos,procprog]"
-	ac_cv_ps_command="$PATH_TO_PS -el"
+	ac_cv_ps_command="$PATH_TO_PS -el (IRIX 53)"
 	ac_cv_ps_format="%*s %s %d %*s %d %*s %*s %*s %*s %d %d %*s %*s %*s %n%s"
 	ac_cv_ps_cols=7
 	AC_MSG_RESULT([$ac_cv_ps_command])
@@ -792,7 +792,7 @@ elif ps -el 2>/dev/null | \
 	egrep -i ["^ *F +S +UID +PID +PPID +C +PRI +NI +P +ADDR +SZ +RSS +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&pos,procprog]"
-	ac_cv_ps_command="$PATH_TO_PS -el"
+	ac_cv_ps_command="$PATH_TO_PS -el (IRIX 63)"
 	ac_cv_ps_format="%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %n%s"
 	ac_cv_ps_cols=5
 	AC_MSG_RESULT([$ac_cv_ps_command])
@@ -804,9 +804,9 @@ elif ps -el 2>/dev/null | \
 	egrep -i ["^ *F +S +UID +PID +PPID +C +PRI +NI +ADDR +SZ +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&pos,procprog]"
-	ac_cv_ps_command="$PATH_TO_PS -el"
+	ac_cv_ps_command="$PATH_TO_PS -el (AIX 4.1)"
 	ac_cv_ps_format="%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %n%s"
-	ac_cv_ps_cols=7
+	ac_cv_ps_cols=5
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl AIX?
