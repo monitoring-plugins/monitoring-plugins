@@ -5,16 +5,16 @@ VPATH = $(top_srcdir) $(top_srcdir)/plugins $(top_srcdir)/plugins/t
 INCLUDES = @LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@ 
 
 libexec_PROGRAMS = check_disk check_dummy check_ftp check_http \
-		check_imap check_load check_mrtg check_mrtgtraf \
-		check_nntp check_nwstat check_overcr \
-		check_ping check_pop check_procs check_real \
-		check_smtp check_ssh check_tcp check_time check_udp \
-		check_ups check_users check_vsz negate urlize \
-		@EXTRAS@
+	check_imap check_load check_mrtg check_mrtgtraf \
+	check_nntp check_nwstat check_overcr \
+	check_ping check_pop check_procs check_real \
+	check_smtp check_ssh check_tcp check_time check_udp \
+	check_ups check_users check_vsz negate urlize \
+	@EXTRAS@
 
 EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
-		check_swap check_fping check_ldap check_game check_dig \
-		check_nagios check_by_ssh check_dns check_nt
+	check_swap check_fping check_ldap check_game check_dig \
+	check_nagios check_by_ssh check_dns check_nt
 
 EXTRA_DIST = t utils.c netutils.c popen.c getopt.h getopt.c getopt1.c snprintf.c
 
@@ -29,7 +29,7 @@ TESTS_ENVIRONMENT = perl -I $(top_builddir) -I $(top_srcdir)
 TESTS = @PLUGIN_TEST@
 
 test:
-	perl -I $(top_builddir) -I $(top_srcdir) ../test.pl
+perl -I $(top_builddir) -I $(top_srcdir) ../test.pl
 
 AM_INSTALL_PROGRAM_FLAGS = @INSTALL_OPTS@
 
@@ -41,24 +41,24 @@ check_disk_LDADD = $(BASEOBJS) popen.o
 check_dns_LDADD = $(BASEOBJS) popen.o
 check_dummy_LDADD = $(BASEOBJS)
 check_fping_LDADD = $(BASEOBJS) popen.o
-check_ftp_LDADD = $(NETLIBS)
+#check_ftp_LDADD = $(NETLIBS)
 check_game_LDADD = $(BASEOBJS)
 check_http_LDADD = $(NETLIBS) $(SSLLIBS)
 check_hpjd_LDADD = $(BASEOBJS) popen.o
-check_imap_LDADD = $(NETLIBS)
+#check_imap_LDADD = $(NETLIBS)
 check_ldap_LDADD = $(NETLIBS) $(LDAPLIBS)
 check_load_LDADD = $(BASEOBJS) popen.o
 check_mrtg_LDADD = $(BASEOBJS)
 check_mrtgtraf_LDADD = $(BASEOBJS)
 check_mysql_LDADD = $(BASEOBJS) $(MYSQLLIBS)
 check_nagios_LDADD = $(BASEOBJS) popen.o
-check_nntp_LDADD = $(NETLIBS)
+#check_nntp_LDADD = $(NETLIBS)
 check_nt_LDADD = $(NETLIBS)
 check_nwstat_LDADD = $(NETLIBS)
 check_overcr_LDADD = $(NETLIBS)
 check_pgsql_LDADD = $(BASEOBJS) $(PGLIBS)
 check_ping_LDADD = $(BASEOBJS) popen.o
-check_pop_LDADD = $(NETLIBS)
+#check_pop_LDADD = $(NETLIBS)
 check_procs_LDADD = $(BASEOBJS) popen.o
 check_radius_LDADD = $(BASEOBJS) $(RADIUSLIBS)
 check_real_LDADD = $(NETLIBS)
@@ -81,24 +81,24 @@ check_disk_DEPENDENCIES = check_disk.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_dns_DEPENDENCIES = check_dns.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_dummy_DEPENDENCIES = check_dummy.c  $(DEPLIBS)
 check_fping_DEPENDENCIES = check_fping.c $(BASEOBJS) popen.o $(DEPLIBS)
-check_ftp_DEPENDENCIES = check_ftp.c $(NETOBJS) $(DEPLIBS)
+#check_ftp_DEPENDENCIES = check_ftp.c $(NETOBJS) $(DEPLIBS)
 check_game_DEPENDENCIES = check_game.c  $(DEPLIBS)
 check_http_DEPENDENCIES = check_http.c $(NETOBJS) $(DEPLIBS)
 check_hpjd_DEPENDENCIES = check_hpjd.c $(BASEOBJS) popen.o $(DEPLIBS)
-check_imap_DEPENDENCIES = check_imap.c $(NETOBJS) $(DEPLIBS)
+#check_imap_DEPENDENCIES = check_imap.c $(NETOBJS) $(DEPLIBS)
 check_ldap_DEPENDENCIES = check_ldap.c $(NETOBJS) $(DEPLIBS)
 check_load_DEPENDENCIES = check_load.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_mrtg_DEPENDENCIES = check_mrtg.c  $(DEPLIBS)
 check_mrtgtraf_DEPENDENCIES = check_mrtgtraf.c  $(DEPLIBS)
 check_mysql_DEPENDENCIES = check_mysql.c  $(DEPLIBS)
 check_nagios_DEPENDENCIES = check_nagios.c $(BASEOBJS) popen.o $(DEPLIBS)
-check_nntp_DEPENDENCIES = check_nntp.c $(NETOBJS) $(DEPLIBS)
+#check_nntp_DEPENDENCIES = check_nntp.c $(NETOBJS) $(DEPLIBS)
 check_nt_DEPENDENCIES = check_nt.c $(NETOBJS) $(DEPLIBS)
 check_nwstat_DEPENDENCIES = check_nwstat.c $(NETOBJS) $(DEPLIBS)
 check_overcr_DEPENDENCIES = check_overcr.c $(NETOBJS) $(DEPLIBS)
 check_pgsql_DEPENDENCIES = check_pgsql.c  $(DEPLIBS)
 check_ping_DEPENDENCIES = check_ping.c $(BASEOBJS) popen.o $(DEPLIBS)
-check_pop_DEPENDENCIES = check_pop.c $(NETOBJS) $(DEPLIBS)
+#check_pop_DEPENDENCIES = check_pop.c $(NETOBJS) $(DEPLIBS)
 check_procs_DEPENDENCIES = check_procs.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_radius_DEPENDENCIES = check_radius.c  $(DEPLIBS)
 check_real_DEPENDENCIES = check_real.c $(NETOBJS) $(DEPLIBS)
@@ -126,16 +126,19 @@ utils.o: utils.c utils.h $(PLUGINHDRS)
 netutils.o: netutils.c netutils.h $(PLUGINHDRS)
 
 getopt.o: getopt.c getopt.h
-	$(COMPILE) -c $(srcdir)/getopt.c -o $@
+$(COMPILE) -c $(srcdir)/getopt.c -o $@
 
 getopt1.o: getopt1.c getopt.h
-	$(COMPILE) -c $(srcdir)/getopt1.c -o $@
+$(COMPILE) -c $(srcdir)/getopt1.c -o $@
 
 snprintf.o: snprintf.c
-	$(COMPILE) @NEED_VA_LIST@ -c $? -o $@
+$(COMPILE) @NEED_VA_LIST@ -c $? -o $@
 
 libgetopt.a: getopt.o getopt1.o
-	$(AR) -r $@ getopt.o getopt1.o
+$(AR) -r $@ getopt.o getopt1.o
 
 libsnprintf.a: snprintf.o
-	$(AR) -r $@ snprintf.o
+$(AR) -r $@ snprintf.o
+
+check_ftp check_imap check_nntp check_pop:
+	ln -sf check_tcp $@
