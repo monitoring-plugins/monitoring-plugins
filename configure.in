@@ -452,6 +452,8 @@ dnl test headers and libs to decide whether check_http should use SSL
 if test "$ac_cv_lib_crypto_CRYPTO_lock" = "yes"; then
   if test "$ac_cv_lib_ssl_main" = "yes"; then
     if test "$FOUNDINCLUDE" = "yes"; then
+      check_tcp_ssl="check_simap check_spop"
+      AC_SUBST(check_tcp_ssl)
       AC_SUBST(SSLLIBS)
       AC_DEFINE(HAVE_SSL,1,[Define if SSL libraries are found])
     fi
