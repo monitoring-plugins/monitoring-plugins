@@ -1465,6 +1465,21 @@ AC_TRY_COMPILE([#ifdef __STDC__
 		[AC_MSG_RESULT(yes)],
 		[NEED_VA_LIST=-DNEED_VA_LIST AC_SUBST(NEED_VA_LIST) AC_MSG_RESULT(no)])
 
+case $host in
+	*bsd*)
+		AC_DEFINE(__bsd__,1,[bsd specific code in check_dhcp.c])
+	;;
+	*linux*)
+		AC_DEFINE(__linux__,1,[sun specific code in check_dhcp.c])
+	;;
+	*sun* | solaris*)
+		AC_DEFINE(__sun__,1,[sun specific code in check_dhcp.c])
+	;;
+	*hpux*)  
+		AC_DEFINE(__hpux__,1,[hpux specific code in check_dhcp.c])
+	;;
+esac
+
 AC_SUBST(EXTRAS)
 AC_SUBST(EXTRA_NETOBJS)
 AC_SUBST(DEPLIBS)
