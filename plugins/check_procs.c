@@ -34,6 +34,17 @@
 *
 ******************************************************************************/
 
+#define PROGNAME "check_snmp"
+#define REVISION "$Revision$"
+#define COPYRIGHT "1999-2002"
+#define AUTHOR "Ethan Galstad"
+#define EMAIL "nagios@nagios.org"
+#define SUMMARY "Check the number of currently running processes and generates WARNING or\n\
+CRITICAL states if the process count is outside the specified threshold\n\
+ranges. The process count can be filtered by process owner, parent process\n\
+PID, current state (e.g., 'Z'), or may be the total number of running\n\
+processes\n"
+
 #include "config.h"
 #include <pwd.h>
 #include "common.h"
@@ -41,10 +52,9 @@
 #include "utils.h"
 
 int process_arguments (int, char **);
-int call_getopt (int, char **);
 int validate_arguments (void);
 void print_usage (void);
-void print_help (char *);
+void print_help (void);
 
 int wmax = -1;
 int cmax = -1;
@@ -65,7 +75,7 @@ int ppid;
 char *statopts = NULL;
 char *prog = NULL;
 char *args = NULL;
-char *format = NULL;
+char *fmt = NULL;
 char tmp[MAX_INPUT_BUFFER];
 
 int
@@ -188,29 +198,35 @@ main (int argc, char **argv)
 	if (verbose && (options & USER))
 		printf ("%d ", uid);
 
-	if (cmax >= 0 && cmin >= 0 && cmax < cmin) {
+ 	if (wmax == -1 && cmax == -1 && wmin == -1 && cmin == -1) {
+		if (result == STATE_UNKNOWN)
+			result = STATE_OK;
+		printf (fmt, "OK", procs);
+		return result;
+ 	}
+	else if (cmax >= 0 && cmin >= 0 && cmax < cmin) {
 		if (procs > cmax && procs < cmin) {
-			printf (format, "CRITICAL", procs);
+			printf (fmt, "CRITICAL", procs);
 			return STATE_CRITICAL;
 		}
 	}
 	else if (cmax >= 0 && procs > cmax) {
-		printf (format, "CRITICAL", procs);
+		printf (fmt, "CRITICAL", procs);
 		return STATE_CRITICAL;
 	}
 	else if (cmin >= 0 && procs < cmin) {
-		printf (format, "CRITICAL", procs);
+		printf (fmt, "CRITICAL", procs);
 		return STATE_CRITICAL;
 	}
 
 	if (wmax >= 0 && wmin >= 0 && wmax < wmin) {
 		if (procs > wmax && procs < wmin) {
-			printf (format, "CRITICAL", procs);
+			printf (fmt, "CRITICAL", procs);
 			return STATE_CRITICAL;
 		}
 	}
 	else if (wmax >= 0 && procs > wmax) {
-		printf (format, "WARNING", procs);
+		printf (fmt, "WARNING", procs);
 		if ( !(result == STATE_CRITICAL) ) {
 			return STATE_WARNING;
 		}
@@ -220,7 +236,7 @@ main (int argc, char **argv)
 		/*return max (result, STATE_WARNING); */
 	}
 	else if (wmin >= 0 && procs < wmin) {
-		printf (format, "WARNING", procs);
+		printf (fmt, "WARNING", procs);
 		if ( !(result == STATE_CRITICAL) ) {
 			return STATE_WARNING;
 		}
@@ -230,7 +246,7 @@ main (int argc, char **argv)
 		/*return max (result, STATE_WARNING); */
 	}
 
-	printf (format, "OK", procs);
+	printf (fmt, "OK", procs);
 	if ( result == STATE_UNKNOWN ) {
 		result = STATE_OK;
 	}
@@ -240,39 +256,6 @@ main (int argc, char **argv)
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
-{
-	int c;
-
-	if (argc < 2)
-		return ERROR;
-
-	for (c = 1; c < argc; c++)
-		if (strcmp ("-to", argv[c]) == 0)
-			strcpy (argv[c], "-t");
-
-	c = 0;
-	while (c += (call_getopt (argc - c, &argv[c]))) {
-		if (argc <= c)
-			break;
-		if (wmax == -1)
-			wmax = atoi (argv[c]);
-		else if (cmax == -1)
-			cmax = atoi (argv[c]);
-		else if (statopts == NULL) {
-			statopts = strscpy (statopts, argv[c]);
-			format =
-				strscat (format,
-								 ssprintf (NULL, "%sSTATE = %s", (options ? ", " : ""),
-													 statopts));
-			options |= STAT;
-		}
-	}
-
-	return validate_arguments ();
-}
-
-int
-call_getopt (int argc, char **argv)
 {
 	int c, i = 1;
 	char *user;
@@ -294,45 +277,35 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+	asprintf (&fmt, "");
+
+	for (c = 1; c < argc; c++)
+		if (strcmp ("-to", argv[c]) == 0)
+			strcpy (argv[c], "-t");
+
 	while (1) {
 #ifdef HAVE_GETOPT_H
-		c =
-			getopt_long (argc, argv, "+Vvht:c:w:p:s:u:C:a:", long_options,
-									 &option_index);
+		c =	getopt_long (argc, argv, "Vvht:c:w:p:s:u:C:a:", long_options, &option_index);
 #else
-		c = getopt (argc, argv, "+Vvht:c:w:p:s:u:C:a:");
+		c = getopt (argc, argv, "Vvht:c:w:p:s:u:C:a:");
 #endif
-
-		if (c == EOF)
+		if (c == -1 || c == EOF)
 			break;
-
-		i++;
-		switch (c) {
-		case 't':
-		case 'c':
-		case 'w':
-		case 'p':
-		case 's':
-		case 'a':
-		case 'u':
-		case 'C':
-			i++;
-		}
 
 		switch (c) {
 		case '?':									/* help */
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
-			print_help (my_basename (argv[0]));
+			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (my_basename (argv[0]), "$Revision$");
+			print_revision (PROGNAME, REVISION);
 			exit (STATE_OK);
 		case 't':									/* timeout period */
 			if (!is_integer (optarg)) {
 				printf ("%s: Timeout Interval must be an integer!\n\n",
-								my_basename (argv[0]));
+				        my_basename (argv[0]));
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
@@ -354,7 +327,7 @@ call_getopt (int argc, char **argv)
 			}
 			else {
 				printf ("%s: Critical Process Count must be an integer!\n\n",
-								my_basename (argv[0]));
+				        my_basename (argv[0]));
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
@@ -374,29 +347,23 @@ call_getopt (int argc, char **argv)
 			}
 			else {
 				printf ("%s: Warning Process Count must be an integer!\n\n",
-								my_basename (argv[0]));
+				        my_basename (argv[0]));
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
 		case 'p':									/* process id */
 			if (sscanf (optarg, "%d%[^0-9]", &ppid, tmp) == 1) {
-				format =
-					strscat (format,
-									 ssprintf (NULL, "%sPPID = %d", (options ? ", " : ""),
-														 ppid));
+				asprintf (&fmt, "%s%sPPID = %d", (options ? ", " : ""), ppid);
 				options |= PPID;
 				break;
 			}
 			printf ("%s: Parent Process ID must be an integer!\n\n",
-							my_basename (argv[0]));
+			        my_basename (argv[0]));
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 's':									/* status */
-			statopts = strscpy (statopts, optarg);
-			format =
-				strscat (format,
-								 ssprintf (NULL, "%sSTATE = %s", (options ? ", " : ""),
-													 statopts));
+			asprintf (&statopts, "%s", optarg);
+			asprintf (&fmt, "%s%sSTATE = %s", fmt, (options ? ", " : ""), statopts);
 			options |= STAT;
 			break;
 		case 'u':									/* user or user id */
@@ -422,25 +389,19 @@ call_getopt (int argc, char **argv)
 				uid = pw->pw_uid;
 			}
 			user = pw->pw_name;
-			format =
-				strscat (format,
-								 ssprintf (NULL, "%sUID = %d (%s)", (options ? ", " : ""),
-													 uid, user));
+			asprintf (&fmt, "%s%sUID = %d (%s)", (options ? ", " : ""), fmt,
+			          uid, user);
 			options |= USER;
 			break;
 		case 'C':									/* command */
-			prog = strscpy (prog, optarg);
-			format =
-				strscat (format,
-								 ssprintf (NULL, "%scommand name %s", (options ? ", " : ""),
-													 prog));
+			asprintf (&prog, "%s", optarg);
+			asprintf (&fmt, "%s%scommand name %s", fmt, (options ? ", " : ""),
+			          prog);
 			options |= PROG;
 			break;
 		case 'a':									/* args (full path name with args) */
-			args = strscpy (args, optarg);
-			format =
-				strscat (format,
-								 ssprintf (NULL, "%sargs %s", (options ? ", " : ""), args));
+			asprintf (&args, "%s", optarg);
+			asprintf (&fmt, "%s%sargs %s", fmt, (options ? ", " : ""), args);
 			options |= ARGS;
 			break;
 		case 'v':									/* command */
@@ -448,7 +409,19 @@ call_getopt (int argc, char **argv)
 			break;
 		}
 	}
-	return i;
+
+	c = optind;
+	if (wmax == -1 && argv[c])
+		wmax = atoi (argv[c++]);
+	if (cmax == -1 && argv[c])
+		cmax = atoi (argv[c++]);
+	if (statopts == NULL && argv[c]) {
+		asprintf (&statopts, "%s", argv[c++]);
+		asprintf (&fmt, "%s%sSTATE = %s", fmt, (options ? ", " : ""), statopts);
+		options |= STAT;
+	}
+
+	return validate_arguments ();
 }
 
 
@@ -456,7 +429,7 @@ int
 validate_arguments ()
 {
 
-	if (wmax >= 0 && wmin == -1)
+if (wmax >= 0 && wmin == -1)
 		wmin = 0;
 	if (cmax >= 0 && cmin == -1)
 		cmin = 0;
@@ -471,18 +444,17 @@ validate_arguments ()
 		}
 	}
 
-	if (wmax == -1 && cmax == -1 && wmin == -1 && cmin == -1) {
-		printf ("At least one threshold must be set\n");
-		return ERROR;
-	}
+/* 	if (wmax == -1 && cmax == -1 && wmin == -1 && cmin == -1) { */
+/* 		printf ("At least one threshold must be set\n"); */
+/* 		return ERROR; */
+/* 	} */
 
 	if (options == 0) {
 		options = 1;
-		format = ssprintf (format, "%%s - %%d processes running\n");
+		asprintf (&fmt, "%%s - %%d processes running\n");
 	}
 	else {
-		format =
-			ssprintf (format, "%%s - %%d processes running with %s\n", format);
+		asprintf (&fmt, "%%s - %%d processes running with %s\n", fmt);
 	}
 
 	return options;
@@ -490,16 +462,12 @@ validate_arguments ()
 
 
 void
-print_help (char *cmd)
+print_help (void)
 {
-	print_revision (cmd, "$Revision$");
+	print_revision (PROGNAME, REVISION);
 	printf
-		("Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)\n\n"
-		 "This plugin checks the number of currently running processes and\n"
-		 "generates WARNING or CRITICAL states if the process count is outside\n"
-		 "the specified threshold ranges. The process count can be filtered by\n"
-		 "process owner, parent process PID, current state (e.g., 'Z'), or may\n"
-		 "be the total number of running processes\n\n");
+		("Copyright (c) %s %s <%s>\n\n%s\n",
+		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
 	print_usage ();
 	printf
 		("\nRequired Arguments:\n"
