@@ -65,6 +65,9 @@ check_nt:
 	- Requires NSClient to run on the NT server to monitor
 	  http://nsclient.ready2run.nl/
 
+check_ups:
+       - Requires Network UPS Tools (>= 1.4) to run on the server to monitor
+         http://www.networkupstools.org/
 
 OS Specific Issues
 ------------------

@@ -1,5 +1,14 @@
 /******************************************************************************
 
+ check_ups
+
+ Program: Network UPS Tools plugin for Nagios
+ License: GPL
+ Copyright (c) 2000 Tom Shields
+               2004 Alain Richard <alain.richard@equation.fr>
+               2004 Arnaud Quette <arnaud.quette@mgeups.com>
+
+ 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation; either version 2 of the License, or (at
@@ -23,6 +32,7 @@ const char *revision = "$Revision$";
 const char *copyright = "2000-2002";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
+#include <locale.h>
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
@@ -40,14 +50,22 @@ enum {
 #define UPS_TEMP     8   /* supports UPS temperature */
 #define UPS_LOADPCT	16   /* supports load percent */
 
-#define UPSSTATUS_NONE     0
-#define UPSSTATUS_OFF      1
-#define UPSSTATUS_OL       2
-#define UPSSTATUS_OB       4
-#define UPSSTATUS_LB       8
-#define UPSSTATUS_CAL     16
-#define UPSSTATUS_RB      32  /*Replace Battery */
-#define UPSSTATUS_UNKOWN  64
+#define UPSSTATUS_NONE       0
+#define UPSSTATUS_OFF        1
+#define UPSSTATUS_OL         2
+#define UPSSTATUS_OB         4
+#define UPSSTATUS_LB         8
+#define UPSSTATUS_CAL       16
+#define UPSSTATUS_RB        32  /*Replace Battery */
+#define UPSSTATUS_BYPASS    64
+#define UPSSTATUS_OVER     128
+#define UPSSTATUS_TRIM     256
+#define UPSSTATUS_BOOST    512
+#define UPSSTATUS_CHRG    1024
+#define UPSSTATUS_DISCHRG 2048
+#define UPSSTATUS_UNKOWN  4096
+
+enum { NOSUCHVAR = ERROR-1 };
 
 int server_port = PORT;
 char *server_address;
@@ -65,9 +83,9 @@ double ups_battery_percent = 0.0;
 double ups_load_percent = 0.0;
 double ups_temperature = 0.0;
 char *ups_status;
+int temp_output_c = 0;
 
 int determine_status (void);
-int determine_supported_vars (void);
 int get_ups_variable (const char *, char *, size_t);
 
 int process_arguments (int, char **);
@@ -83,6 +101,7 @@ main (int argc, char **argv)
 	char *data;
 	char temp_buffer[MAX_INPUT_BUFFER];
 	double ups_utility_deviation = 0.0;
+	int res;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -90,6 +109,7 @@ main (int argc, char **argv)
 
 	ups_status = strdup ("N/A");
 	data = strdup ("");
+	message = strdup ("");
 
 	if (process_arguments (argc, argv) != OK)
 		usage (_("check_ups: could not parse arguments\n"));
@@ -100,15 +120,11 @@ main (int argc, char **argv)
 	/* set socket timeout */
 	alarm (socket_timeout);
 
-	/* determine what variables the UPS supports */
-	if (determine_supported_vars () != OK)
-		return STATE_CRITICAL;
-
 	/* get the ups status if possible */
+	if (determine_status () != OK)
+		return STATE_CRITICAL;
 	if (supported_options & UPS_STATUS) {
 
-		if (determine_status () != OK)
-			return STATE_CRITICAL;
 		ups_status = strdup ("");
 		result = STATE_OK;
 
@@ -140,6 +156,24 @@ main (int argc, char **argv)
 				asprintf (&ups_status, "%s%s", ups_status, ", Replace Battery");
 				result = STATE_WARNING;
 			}
+			if (status & UPSSTATUS_BYPASS) {
+				asprintf (&ups_status, "%s%s", ups_status, ", On Bypass");
+			}
+			if (status & UPSSTATUS_OVER) {
+				asprintf (&ups_status, "%s%s", ups_status, ", Overload");
+			}
+			if (status & UPSSTATUS_TRIM) {
+				asprintf (&ups_status, "%s%s", ups_status, ", Trimming");
+			}
+			if (status & UPSSTATUS_BOOST) {
+				asprintf (&ups_status, "%s%s", ups_status, ", Boosting");
+			}
+			if (status & UPSSTATUS_CHRG) {
+				asprintf (&ups_status, "%s%s", ups_status, ", Charging");
+			}
+			if (status & UPSSTATUS_DISCHRG) {
+				asprintf (&ups_status, "%s%s", ups_status, ", Discharging");
+			}
 			if (status & UPSSTATUS_UNKOWN) {
 				asprintf (&ups_status, "%s%s", ups_status, ", Unknown");
 			}
@@ -148,10 +182,12 @@ main (int argc, char **argv)
 	}
 
 	/* get the ups utility voltage if possible */
-	if (supported_options & UPS_UTILITY) {
-
-		if (get_ups_variable ("UTILITY", temp_buffer, sizeof (temp_buffer)) != OK)
-			return STATE_CRITICAL;
+	res=get_ups_variable ("input.voltage", temp_buffer, sizeof (temp_buffer));
+	if (res == NOSUCHVAR) supported_options &= ~UPS_UTILITY;
+	else if (res != OK)
+		return STATE_CRITICAL;
+	else {
+		supported_options |= UPS_UTILITY;
 
 		ups_utility_voltage = atof (temp_buffer);
 		asprintf (&message, "%sUtility=%3.1fV ", message, ups_utility_voltage);
@@ -169,23 +205,24 @@ main (int argc, char **argv)
 				result = max_state (result, STATE_WARNING);
 			}
 			asprintf (&data, "%s",
-			          fperfdata ("voltage", ups_utility_voltage, "V",
-			                    check_warn, warning_value,
-			                    check_crit, critical_value,
+			          perfdata ("voltage", (long)(1000*ups_utility_voltage), "mV",
+			                    check_warn, (long)(1000*warning_value),
+			                    check_crit, (long)(1000*critical_value),
 			                    TRUE, 0, FALSE, 0));
 		} else {
 			asprintf (&data, "%s",
-			          fperfdata ("voltage", ups_utility_voltage, "V",
+			          perfdata ("voltage", (long)(1000*ups_utility_voltage), "mV",
 			                    FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
 		}
 	}
 
 	/* get the ups battery percent if possible */
-	if (supported_options & UPS_BATTPCT) {
-
-		if (get_ups_variable ("BATTPCT", temp_buffer, sizeof (temp_buffer)) != OK)
-			return STATE_CRITICAL;
-
+	res=get_ups_variable ("battery.charge", temp_buffer, sizeof (temp_buffer));
+	if (res == NOSUCHVAR) supported_options &= ~UPS_BATTPCT;
+	else if ( res != OK)
+		return STATE_CRITICAL;
+	else {
+		supported_options |= UPS_BATTPCT;
 		ups_battery_percent = atof (temp_buffer);
 		asprintf (&message, "%sBatt=%3.1f%% ", message, ups_battery_percent);
 
@@ -209,11 +246,12 @@ main (int argc, char **argv)
 	}
 
 	/* get the ups load percent if possible */
-	if (supported_options & UPS_LOADPCT) {
-
-		if (get_ups_variable ("LOADPCT", temp_buffer, sizeof (temp_buffer)) != OK)
-			return STATE_CRITICAL;
-
+	res=get_ups_variable ("ups.load", temp_buffer, sizeof (temp_buffer));
+	if ( res == NOSUCHVAR ) supported_options &= ~UPS_LOADPCT;
+	else if ( res != OK)
+		return STATE_CRITICAL;
+	else {
+		supported_options |= UPS_LOADPCT;
 		ups_load_percent = atof (temp_buffer);
 		asprintf (&message, "%sLoad=%3.1f%% ", message, ups_load_percent);
 
@@ -237,13 +275,20 @@ main (int argc, char **argv)
 	}
 
 	/* get the ups temperature if possible */
-	if (supported_options & UPS_TEMP) {
-
-		if (get_ups_variable ("UPSTEMP", temp_buffer, sizeof (temp_buffer)) != OK)
-			return STATE_CRITICAL;
-
-		ups_temperature = (atof (temp_buffer) * 1.8) + 32;
-		asprintf (&message, "%sTemp=%3.1fF", message, ups_temperature);
+	res=get_ups_variable ("ups.temperature", temp_buffer, sizeof (temp_buffer));
+	if ( res == NOSUCHVAR ) supported_options &= ~UPS_TEMP;
+	else if ( res != OK)
+		return STATE_CRITICAL;
+	else {
+ 		supported_options |= UPS_TEMP;
+		if (temp_output_c) {
+		  ups_temperature = atof (temp_buffer);
+		  asprintf (&message, "%sTemp=%3.1fC", message, ups_temperature);
+		}
+		else {
+		  ups_temperature = (atof (temp_buffer) * 1.8) + 32;
+		  asprintf (&message, "%sTemp=%3.1fF", message, ups_temperature);
+		}
 
 		if (check_variable == UPS_TEMP) {
 			if (check_crit==TRUE && ups_temperature>=critical_value) {
@@ -286,14 +331,16 @@ determine_status (void)
 	char recv_buffer[MAX_INPUT_BUFFER];
 	char temp_buffer[MAX_INPUT_BUFFER];
 	char *ptr;
+	int res;
 
-	if (get_ups_variable ("STATUS", recv_buffer, sizeof (recv_buffer)) !=
-			STATE_OK) {
+	res=get_ups_variable ("ups.status", recv_buffer, sizeof (recv_buffer));
+	if (res == NOSUCHVAR) return OK;
+	if (res != STATE_OK) {
 		printf ("Invalid response received from host\n");
 		return ERROR;
 	}
 
-	recv_buffer[strlen (recv_buffer) - 1] = 0;
+	supported_options |= UPS_STATUS;
 
 	strcpy (temp_buffer, recv_buffer);
 	for (ptr = (char *) strtok (temp_buffer, " "); ptr != NULL;
@@ -310,57 +357,20 @@ determine_status (void)
 			status |= UPSSTATUS_CAL;
 		else if (!strcmp (ptr, "RB"))
 			status |= UPSSTATUS_RB;
+		else if (!strcmp (ptr, "BYPASS"))
+			status |= UPSSTATUS_BYPASS;
+		else if (!strcmp (ptr, "OVER"))
+			status |= UPSSTATUS_OVER;
+		else if (!strcmp (ptr, "TRIM"))
+			status |= UPSSTATUS_TRIM;
+		else if (!strcmp (ptr, "BOOST"))
+			status |= UPSSTATUS_BOOST;
+		else if (!strcmp (ptr, "CHRG"))
+			status |= UPSSTATUS_CHRG;
+		else if (!strcmp (ptr, "DISCHRG"))
+			status |= UPSSTATUS_DISCHRG;
 		else
 			status |= UPSSTATUS_UNKOWN;
-	}
-
-	return OK;
-}
-
-
-/* determines what options are supported by the UPS */
-int
-determine_supported_vars (void)
-{
-	char send_buffer[MAX_INPUT_BUFFER];
-	char recv_buffer[MAX_INPUT_BUFFER];
-	char temp_buffer[MAX_INPUT_BUFFER];
-	char *ptr;
-
-
-	/* get the list of variables that this UPS supports */
-	if (ups_name)
-		sprintf (send_buffer, "LISTVARS %s\r\n", ups_name);
-	else
-		sprintf (send_buffer, "LISTVARS\r\n");
-	if (process_tcp_request
-			(server_address, server_port, send_buffer, recv_buffer,
-			 sizeof (recv_buffer)) != STATE_OK) {
-		printf ("Invalid response received from host\n");
-		return ERROR;
-	}
-
-	recv_buffer[strlen (recv_buffer) - 1] = 0;
-
-	if (ups_name)
-		ptr = recv_buffer + 5 + strlen (ups_name) + 2;
-	else
-		ptr = recv_buffer + 5;
-
-	strcpy (temp_buffer, recv_buffer);
-
-	for (ptr = (char *) strtok (temp_buffer, " "); ptr != NULL;
-			 ptr = (char *) strtok (NULL, " ")) {
-		if (!strcmp (ptr, "UTILITY"))
-			supported_options |= UPS_UTILITY;
-		else if (!strcmp (ptr, "BATTPCT"))
-			supported_options |= UPS_BATTPCT;
-		else if (!strcmp (ptr, "LOADPCT"))
-			supported_options |= UPS_LOADPCT;
-		else if (!strcmp (ptr, "STATUS"))
-			supported_options |= UPS_STATUS;
-		else if (!strcmp (ptr, "UPSTEMP"))
-			supported_options |= UPS_TEMP;
 	}
 
 	return OK;
@@ -375,12 +385,12 @@ get_ups_variable (const char *varname, char *buf, size_t buflen)
 	char temp_buffer[MAX_INPUT_BUFFER];
 	char send_buffer[MAX_INPUT_BUFFER];
 	char *ptr;
+	int len;
 
+	*buf=0;
+	
 	/* create the command string to send to the UPS daemon */
-	if (ups_name)
-		sprintf (send_buffer, "REQ %s@%s\n", varname, ups_name);
-	else
-		sprintf (send_buffer, "REQ %s\n", varname);
+	sprintf (send_buffer, "GET VAR %s %s\n", ups_name, varname);
 
 	/* send the command to the daemon and get a response back */
 	if (process_tcp_request
@@ -390,38 +400,43 @@ get_ups_variable (const char *varname, char *buf, size_t buflen)
 		return ERROR;
 	}
 
-	if (ups_name)
-		ptr = temp_buffer + strlen (varname) + 5 + strlen (ups_name) + 1;
-	else
-		ptr = temp_buffer + strlen (varname) + 5;
-
-	if (!strcmp (ptr, "NOT-SUPPORTED")) {
-		printf ("CRITICAL - Variable '%s' is not supported\n", varname);
+	ptr = temp_buffer;
+	len = strlen(ptr);
+	if (len > 0 && ptr[len-1] == '\n') ptr[len-1]=0;
+	if (strcmp (ptr, "ERR UNKNOWN-UPS") == 0) {
+		printf ("CRITICAL - no such ups '%s' on that host\n", ups_name);
 		return ERROR;
 	}
 
-	if (!strcmp (ptr, "DATA-STALE")) {
+	if (strcmp (ptr, "ERR VAR-NOT-SUPPORTED") == 0) {
+		//printf ("Error: Variable '%s' is not supported\n", varname);
+		return NOSUCHVAR;
+	}
+
+	if (strcmp (ptr, "ERR DATA-STALE") == 0) {
 		printf ("CRITICAL - UPS data is stale\n");
 		return ERROR;
 	}
 
-	if (!strcmp (ptr, "UNKNOWN-UPS")) {
-		if (ups_name)
-			printf ("CRITICAL - UPS '%s' is unknown\n", ups_name);
-		else
-			printf ("CRITICAL - UPS is unknown\n");
+	if (strncmp (ptr, "ERR", 3) == 0) {
+		printf ("Unknown error: %s\n", ptr);
 		return ERROR;
 	}
 
-	strncpy (buf, ptr, buflen - 1);
-	buf[buflen - 1] = 0;
+	ptr = temp_buffer + strlen (varname) + strlen (ups_name) + 6;
+	len = strlen(ptr);
+	if (len < 2 || ptr[0] != '"' || ptr[len-1] != '"') {
+		printf ("Error: unable to parse variable\n");
+		return ERROR;
+	}
+	strncpy (buf, ptr+1, len - 2);
+	buf[len - 2] = 0;
 
 	return OK;
 }
 
 
-
-/* Command line: CHECK_UPS <host_address> [-u ups] [-p port] [-v variable] 
+/* Command line: CHECK_UPS -H <host_address> -u ups [-p port] [-v variable] 
 			   [-wv warn_value] [-cv crit_value] [-to to_sec] */
 
 
@@ -439,6 +454,7 @@ process_arguments (int argc, char **argv)
 		{"critical", required_argument, 0, 'c'},
 		{"warning", required_argument, 0, 'w'},
 		{"timeout", required_argument, 0, 't'},
+		{"temperature", no_argument, 0, 'T'},
 		{"variable", required_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
@@ -458,7 +474,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "hVH:u:p:v:c:w:t:", longopts,
+		c = getopt_long (argc, argv, "hVTH:u:p:v:c:w:t:", longopts,
 									 &option);
 
 		if (c == -1 || c == EOF)
@@ -476,6 +492,9 @@ process_arguments (int argc, char **argv)
 			else {
 				usage2 (_("Invalid hostname/address"), optarg);
 			}
+			break;
+		case 'T': /* FIXME: to be improved (ie "-T C" for Celsius or "-T F" for Farenheit) */ 
+			temp_output_c = 1;
 			break;
 		case 'u':									/* ups name */
 			ups_name = optarg;
@@ -554,6 +573,10 @@ process_arguments (int argc, char **argv)
 int
 validate_arguments (void)
 {
+	if (! ups_name) {
+		printf ("Error : no ups indicated\n");
+		return ERROR;
+	}
 	return OK;
 }
 
@@ -568,11 +591,14 @@ print_help (void)
 	print_revision (progname, revision);
 
 	printf ("Copyright (c) 2000 Tom Shields");
+	printf ("Copyright (c) 2004 Alain Richard <alain.richard@equation.fr>\n");
+	printf ("Copyright (c) 2004 Arnaud Quette <arnaud.quette@mgeups.com>\n");
+
 	printf (COPYRIGHT, copyright, email);
 
 	printf (_("This plugin tests the UPS service on the specified host.\n\
-Network UPS Tools from www.exploits.org must be running for this plugin to\n\
-work.\n\n"));
+Network UPS Tools from www.networkupstools.org must be running for this\n\
+plugin to work.\n\n"));
 
 	print_usage ();
 
@@ -583,6 +609,10 @@ work.\n\n"));
 	printf (_("\
  -u, --ups=STRING\n\
     Name of UPS\n"));
+
+	printf (_("\
+ -T, --temperature\n\
+    Output of temperatures in Celsius\n"));
 
 	printf (_(UT_WARN_CRIT));
 
@@ -607,7 +637,7 @@ will have to use the [ups] option to specify which UPS to check.\n\n"));
 This plugin requires that the UPSD daemon distributed with Russel Kroll's\n\
 Smart UPS Tools be installed on the remote host.  If you do not have the\n\
 package installed on your system, you can download it from\n\
-http://www.exploits.org/nut\n\n"));
+http://www.networkupstools.org\n\n"));
 
 	printf (_(UT_SUPPORT));
 }
@@ -618,7 +648,7 @@ void
 print_usage (void)
 {
 	printf (_("\
-Usage: %s -H host [-e expect] [-p port] [-w warn] [-c crit]\n\
-    [-t timeout] [-v]\n"), progname);
+Usage: %s -H host -u ups [-p port] [-v variable]\n\
+  [-wv warn_value] [-cv crit_value] [-to to_sec] [-T]\n"), progname);
 	printf (_(UT_HLP_VRS), progname, progname);
 }
