@@ -88,6 +88,10 @@ print_help ()
 
 	printf (_(UT_WARN_CRIT));
 
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(UT_VERBOSE));
+
 	printf (_(UT_SUPPORT));
 }
 

@@ -1,45 +1,60 @@
 /******************************************************************************
- *
- * Program: radius server check plugin for Nagios
- * License: GPL
- *
- * License Information:
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- * $Id$
- *
- *****************************************************************************/
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+ ******************************************************************************/
 
 const char *progname = "check_radius";
-#define REVISION "$Revision$"
-#define COPYRIGHT "1999-2001"
-#define AUTHORS "Robert August Vincent II/Karl DeBisschop"
-#define EMAIL "kdebisschop@users.sourceforge.net"
-#define SUMMARY "Tests to see if a radius server is accepting connections.\n"
+const char *revision = "$Revision$";
+const char *copyright = "2000-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
-#define OPTIONS "\
--H host -F config_file -u username -p password\'\
-              [-P port] [-t timeout] [-r retries] [-e expect]"
+#include "config.h"
+#include "common.h"
+#include "utils.h"
+#include <radiusclient.h>
 
-#define LONGOPTIONS "\
- -H, --hostname=HOST\n\
-    Host name argument for servers using host headers (use numeric\n\
-    address if possible to bypass DNS lookup).\n\
- -P, --port=INTEGER\n\
-    Port number (default: %d)\n\
+void
+print_usage (void)
+{
+	printf ("\
+Usage: %s -H host -F config_file -u username -p password [-P port]\n\
+  [-t timeout] [-r retries] [-e expect]\n", progname);
+	printf (_(UT_HLP_VRS), progname, progname);
+}
+
+void
+print_help (void)
+{
+	char *myport;
+	asprintf (&myport, "%d", PW_AUTH_UDP_PORT);
+
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 1999 Robert August Vincent II\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf(_("Tests to see if a radius server is accepting connections.\n\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_HOST_PORT), 'P', myport);
+
+	printf (_("\
  -u, --username=STRING\n\
     The user to authenticate\n\
  -p, --password=STRING\n\
@@ -49,48 +64,38 @@ const char *progname = "check_radius";
  -e, --expect=STRING\n\
     Response string to expect from the server\n\
  -r, --retries=INTEGER\n\
-    Number of times to retry a failed connection\n\
- -t, --timeout=INTEGER\n\
-    Seconds before connection times out (default: %d)\n\
- -v, --verbose\n\
-    Show details for command-line debugging (do not use with nagios server)\n\
- -h, --help\n\
-    Print detailed help screen\n\
- -V, --version\n\
-    Print version information\n"
+    Number of times to retry a failed connection\n"));
 
-#define DESCRIPTION "\
+	printf (_(UT_TIMEOUT), timeout_interval);
+
+	printf (_("\n\
 This plugin tests a radius server to see if it is accepting connections.\n\
 \n\
 The server to test must be specified in the invocation, as well as a user\n\
 name and password. A configuration file may also be present. The format of\n\
-the configuration file is described in the radiusclient library sources.\n\
-\n\
+the configuration file is described in the radiusclient library sources.\n\n"));
+
+	printf (_("\
 The password option presents a substantial security issue because the\n\
 password can be determined by careful watching of the command line in\n\
 a process listing.  This risk is exacerbated because nagios will\n\
 run the plugin at regular prdictable intervals.  Please be sure that\n\
 the password used does not allow access to sensitive system resources,\n\
-otherwise compormise could occur.\n"
+otherwise compormise could occur.\n"));
 
-#include "config.h"
-#include "common.h"
-#include "utils.h"
-#include <radiusclient.h>
-
+	printf (_(UT_SUPPORT));
+}
+
 int process_arguments (int, char **);
-void print_usage (void);
-void print_help (void);
 
 char *server = NULL;
-int port = PW_AUTH_UDP_PORT;
 char *username = NULL;
 char *password = NULL;
 char *expect = NULL;
 char *config_file = NULL;
+int port = PW_AUTH_UDP_PORT;
 int retries = 1;
 int verbose = FALSE;
-
 ENV *env = NULL;
 
 /******************************************************************************
@@ -151,23 +156,23 @@ main (int argc, char **argv)
 {
 	UINT4 service;
 	char msg[BUFFER_LEN];
-	SEND_DATA data = { 0 };
+	SEND_DATA data;
 	int result;
 	UINT4 client_id;
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage ("Could not parse arguments\n");
+		usage (_("Could not parse arguments\n"));
 
 	if ((config_file && rc_read_config (config_file)) ||
 			rc_read_dictionary (rc_conf_str ("dictionary")))
-		terminate (STATE_UNKNOWN, "Config file error");
+		terminate (STATE_UNKNOWN, _("Config file error"));
 
 	service = PW_AUTHENTICATE_ONLY;
 
 	if (!(rc_avpair_add (&data.send_pairs, PW_SERVICE_TYPE, &service, 0) &&
 				rc_avpair_add (&data.send_pairs, PW_USER_NAME, username, 0) &&
 				rc_avpair_add (&data.send_pairs, PW_USER_PASSWORD, password, 0)))
-		terminate (STATE_UNKNOWN, "Out of Memory?");
+		terminate (STATE_UNKNOWN, _("Out of Memory?"));
 
 	/* 
 	 * Fill in NAS-IP-Address 
@@ -188,15 +193,15 @@ main (int argc, char **argv)
 		rc_avpair_free (data.receive_pairs);
 
 	if (result == TIMEOUT_RC)
-		terminate (STATE_CRITICAL, "Timeout");
+		terminate (STATE_CRITICAL, _("Timeout"));
 	if (result == ERROR_RC)
-		terminate (STATE_CRITICAL, "Auth Error");
+		terminate (STATE_CRITICAL, _("Auth Error"));
 	if (result == BADRESP_RC)
-		terminate (STATE_WARNING, "Auth Failed");
+		terminate (STATE_WARNING, _("Auth Failed"));
 	if (expect && !strstr (msg, expect))
 		terminate (STATE_WARNING, msg);
 	if (result == OK_RC)
-		terminate (STATE_OK, "Auth OK");
+		terminate (STATE_OK, _("Auth OK"));
 	return (0);
 }
 
@@ -234,16 +239,16 @@ process_arguments (int argc, char **argv)
 		if (is_intpos (argv[4]))
 			timeout_interval = atoi (argv[4]);
 		else
-			usage ("Timeout interval must be a positive integer");
+			usage (_("Timeout interval must be a positive integer"));
 		if (is_intpos (argv[5]))
 			retries = atoi (argv[5]);
 		else
-			usage ("Number of retries must be a positive integer");
+			usage (_("Number of retries must be a positive integer"));
 		server = argv[6];
 		if (is_intpos (argv[7]))
 			port = atoi (argv[7]);
 		else
-			usage ("Server port must be a positive integer");
+			usage (_("Server port must be a positive integer"));
 		expect = argv[8];
 		return OK;
 	}
@@ -257,21 +262,21 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf ("%s: Unknown argument: %s\n\n", progname, optarg);
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
 			exit (OK);
 		case 'V':									/* version */
-			print_revision (progname, "$Revision$");
+			print_revision (progname, revision);
 			exit (OK);
 		case 'v':									/* verbose mode */
 			verbose = TRUE;
 			break;
 		case 'H':									/* hostname */
 			if (is_host (optarg) == FALSE) {
-				printf ("Invalid host name/address\n\n");
+				printf (_("Invalid host name/address\n\n"));
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
@@ -281,7 +286,7 @@ process_arguments (int argc, char **argv)
 			if (is_intnonneg (optarg))
 				port = atoi (optarg);
 			else
-				usage ("Server port must be a positive integer");
+				usage (_("Server port must be a positive integer"));
 			break;
 		case 'u':									/* username */
 			username = optarg;
@@ -299,41 +304,15 @@ process_arguments (int argc, char **argv)
 			if (is_intpos (optarg))
 				retries = atoi (optarg);
 			else
-				usage ("Number of retries must be a positive integer");
+				usage (_("Number of retries must be a positive integer"));
 			break;
 		case 't':									/* timeout */
 			if (is_intpos (optarg))
 				timeout_interval = atoi (optarg);
 			else
-				usage ("Timeout interval must be a positive integer");
+				usage (_("Timeout interval must be a positive integer"));
 			break;
 		}
 	}
 	return OK;
-}
-
-
-
-void
-print_help (void)
-{
-	print_revision (progname, REVISION);
-	printf
-		("Copyright (c) %s %s <%s>\n\n%s\n",
-		 COPYRIGHT, AUTHORS, EMAIL, SUMMARY);
-	print_usage ();
-	printf
-		("\nOptions:\n" LONGOPTIONS "\n" DESCRIPTION "\n", 
-		 port, timeout_interval);
-	support ();
-}
-
-
-void
-print_usage (void)
-{
-	printf ("Usage:\n" " %s %s\n"
-					" %s (-h | --help) for detailed help\n"
-					" %s (-V | --version) for version information\n",
-					progname, OPTIONS, progname, progname);
 }

@@ -1,40 +1,72 @@
 /******************************************************************************
- *
- * CHECK_NAGIOS.C
- *
- * Program: Nagios process plugin for Nagios
- * License: GPL
- * Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
- *
- * $Id$
- *
- * License Information:
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- *****************************************************************************/
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+******************************************************************************/
+
+const char *progname = "check_nagios";
+const char *revision = "$Revision$";
+const char *copyright = "1999-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
 #include "popen.h"
 #include "utils.h"
 
-const char *progname = "check_nagios";
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -F <status log file> -e <expire_minutes> -C <process_string>\n"),
+	        progname);
+}
 
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("\
+This plugin attempts to check the status of the Nagios process on the local\n\
+machine. The plugin will check to make sure the Nagios status log is no older\n\
+than the number of minutes specified by the <expire_minutes> option.  It also\n\
+uses the /bin/ps command to check for a process matching whatever you specify\n\
+by the <process_string> argument.\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_("\
+-F, --filename=FILE\n\
+   Name of the log file to check\n\
+-e, --expires=INTEGER\n\
+   Seconds aging afterwhich logfile is condsidered stale\n\
+-C, --command=STRING\n\
+   Command to search for in process table\n"));
+
+	printf (_("\
+Example:\n\
+   ./check_nagios -e 5 \\\
+   -F /usr/local/nagios/var/status.log \\\
+   -C /usr/local/nagios/bin/nagios\n"));
+}
+
 int process_arguments (int, char **);
-void print_usage (void);
-void print_help (void);
 
 char *status_log = NULL;
 char *process_string = NULL;
@@ -64,11 +96,11 @@ main (int argc, char **argv)
 	int pos, cols;
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage ("Could not parse arguments\n");
+		usage (_("Could not parse arguments\n"));
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR) {
-		printf ("Cannot catch SIGALRM");
+		printf (_("Cannot catch SIGALRM"));
 		return STATE_UNKNOWN;
 	}
 
@@ -78,7 +110,7 @@ main (int argc, char **argv)
 	/* open the status log */
 	fp = fopen (status_log, "r");
 	if (fp == NULL) {
-		printf ("Error: Cannot open status log for reading!\n");
+		printf (_("Error: Cannot open status log for reading!\n"));
 		return STATE_CRITICAL;
 	}
 
@@ -95,13 +127,13 @@ main (int argc, char **argv)
 	/* run the command to check for the Nagios process.. */
 	child_process = spopen (PS_COMMAND);
 	if (child_process == NULL) {
-		printf ("Could not open pipe: %s\n", PS_COMMAND);
+		printf (_("Could not open pipe: %s\n"), PS_COMMAND);
 		return STATE_UNKNOWN;
 	}
 
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL) {
-		printf ("Could not open stderr for %s\n", PS_COMMAND);
+		printf (_("Could not open stderr for %s\n"), PS_COMMAND);
 	}
 
 	fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process);
@@ -116,7 +148,7 @@ main (int argc, char **argv)
 			if (!strstr(procargs, argv[0]) && strstr(procargs, process_string)) {
 				proc_entries++;
 				if (verbose)
-					printf ("Found process: %s\n", procargs);
+					printf (_("Found process: %s\n"), procargs);
 			}
 		}
 	}
@@ -136,18 +168,18 @@ main (int argc, char **argv)
 	alarm (0);
 
 	if (proc_entries == 0) {
-		printf ("Could not locate a running Nagios process!\n");
+		printf (_("Could not locate a running Nagios process!\n"));
 		return STATE_CRITICAL;
 	}
 
 	result = STATE_OK;
 
 	time (&current_time);
-	if ((current_time - latest_entry_time) > (expire_minutes * 60))
+	if ((int)(current_time - latest_entry_time) > (expire_minutes * 60))
 		result = STATE_WARNING;
 
 	printf
-		("Nagios %s: located %d process%s, status log updated %d second%s ago\n",
+		(_("Nagios %s: located %d process%s, status log updated %d second%s ago\n"),
 		 (result == STATE_OK) ? "ok" : "problem", proc_entries,
 		 (proc_entries == 1) ? "" : "es",
 		 (int) (current_time - latest_entry_time),
@@ -186,7 +218,7 @@ process_arguments (int argc, char **argv)
 			expire_minutes = atoi (argv[2]);
 		else
 			terminate (STATE_UNKNOWN,
-								 "Expiration time must be an integer (seconds)\nType '%s -h' for additional help\n",
+								 _("Expiration time must be an integer (seconds)\nType '%s -h' for additional help\n"),
 								 progname);
 		process_string = argv[3];
 		return OK;
@@ -200,7 +232,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf ("%s: Unknown argument: %c\n\n", progname, optopt);
+			printf (_("%s: Unknown argument: %c\n\n"), progname, optopt);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
@@ -220,7 +252,7 @@ process_arguments (int argc, char **argv)
 				expire_minutes = atoi (optarg);
 			else
 				terminate (STATE_UNKNOWN,
-									 "Expiration time must be an integer (seconds)\nType '%s -h' for additional help\n",
+									 _("Expiration time must be an integer (seconds)\nType '%s -h' for additional help\n"),
 									 progname);
 			break;
 		case 'v':
@@ -232,56 +264,12 @@ process_arguments (int argc, char **argv)
 
 	if (status_log == NULL)
 		terminate (STATE_UNKNOWN,
-							 "You must provide the status_log\nType '%s -h' for additional help\n",
+							 _("You must provide the status_log\nType '%s -h' for additional help\n"),
 							 progname);
 	else if (process_string == NULL)
 		terminate (STATE_UNKNOWN,
-							 "You must provide a process string\nType '%s -h' for additional help\n",
+							 _("You must provide a process string\nType '%s -h' for additional help\n"),
 							 progname);
 
 	return OK;
-}
-
-
-
-
-
-void
-print_usage (void)
-{
-	printf
-		("Usage: %s -F <status log file> -e <expire_minutes> -C <process_string>\n",
-		 progname);
-}
-
-
-
-
-
-void
-print_help (void)
-{
-	print_revision (progname, "$Revision$");
-	printf
-		("Copyright (c) 2000 Ethan Galstad/Karl DeBisschop\n\n"
-		 "This plugin attempts to check the status of the Nagios process on the local\n"
-		 "machine. The plugin will check to make sure the Nagios status log is no older\n"
-		 "than the number of minutes specified by the <expire_minutes> option.  It also\n"
-		 "uses the /bin/ps command to check for a process matching whatever you specify\n"
-		 "by the <process_string> argument.\n");
-	print_usage ();
-	printf
-		("\nOptions:\n"
-		 "-F, --filename=FILE\n"
-		 "   Name of the log file to check\n"
-		 "-e, --expires=INTEGER\n"
-		 "   Seconds aging afterwhich logfile is condsidered stale\n"
-		 "-C, --command=STRING\n"
-		 "   Command to search for in process table\n"
-		 "-h, --help\n"
-		 "   Print this help screen\n"
-		 "-V, --version\n"
-		 "   Print version information\n\n"
-		 "Example:\n"
-		 "   ./check_nagios -F /usr/local/nagios/var/status.log -e 5 -C /usr/local/nagios/bin/nagios\n");
 }

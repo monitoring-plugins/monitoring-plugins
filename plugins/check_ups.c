@@ -1,70 +1,97 @@
 /******************************************************************************
-*
-* CHECK_UPS.C
-*
-* Program: UPS monitor plugin for Nagios
-* License: GPL
-* Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
-*
-* Last Modified: $Date$
-*
-* Command line: CHECK_UPS <host_address> [-u ups] [-p port] [-v variable] \
-*			   [-wv warn_value] [-cv crit_value] [-to to_sec]
-*
-* Description:
-*
 
-* This plugin attempts to determine the status of an UPS
-* (Uninterruptible Power Supply) on a remote host (or the local host)
-* that is being monitored with Russel Kroll's "Smarty UPS Tools"
-* package. If the UPS is online or calibrating, the plugin will
-* return an OK state. If the battery is on it will return a WARNING
-* state.  If the UPS is off or has a low battery the plugin will
-* return a CRITICAL state.  You may also specify a variable to check
-* (such as temperature, utility voltage, battery load, etc.)  as well
-* as warning and critical thresholds for the value of that variable.
-* If the remote host has multiple UPS that are being monitored you
-* will have to use the [ups] option to specify which UPS to check.
-*
-* Notes:
-*
-* This plugin requires that the UPSD daemon distributed with Russel
-* Kroll's "Smart UPS Tools" be installed on the remote host.  If you
-* don't have the package installed on your system, you can download
-* it from http://www.exploits.org/nut
-*
-* License Information:
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or (at
+ your option) any later version.
+
+ This program is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
 ******************************************************************************/
 
-#include "config.h"
+const char *progname = "check_ups";
+const char *revision = "$Revision$";
+const char *copyright = "2000-2002";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
 
-const char *progname = "check_ups";
-#define REVISION "$Revision$"
-#define COPYRIGHT "1999-2002"
-#define AUTHOR "Ethan Galstad"
-#define EMAIL "nagios@nagios.org"
+enum {
+	PORT = 3493
+};
 
-#define CHECK_NONE	0
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -H host [-e expect] [-p port] [-w warn] [-c crit]\n\
+    [-t timeout] [-v]\n"), progname);
+	printf (_(UT_HLP_VRS), progname, progname);
+}
 
-#define PORT     3493
+void
+print_help (void)
+{
+	char *myport;
+	asprintf (&myport, "%d", PORT);
+
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 2000 Tom Shields"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("This plugin tests the UPS service on the specified host.\n\
+Network UPS Tools from www.exploits.org must be running for this plugin to\n\
+work.\n\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_HOST_PORT), 'p', myport);
+
+	printf (_("\
+ -u, --ups=STRING\n\
+    Name of UPS\n"));
+
+	printf (_(UT_WARN_CRIT));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(UT_VERBOSE));
+
+	printf (_("\
+This plugin attempts to determine the status of a UPS (Uninterruptible Power\n\
+Supply) on a local or remote host. If the UPS is online or calibrating, the\n\
+plugin will return an OK state. If the battery is on it will return a WARNING\n\
+state.  If the UPS is off or has a low battery the plugin will return a CRITICAL\n\
+state.\n\n"));
+
+	printf (_("\
+You may also specify a variable to check [such as temperature, utility voltage,\n\
+battery load, etc.]  as well as warning and critical thresholds for the value of\n\
+that variable.  If the remote host has multiple UPS that are being monitored you\n\
+will have to use the [ups] option to specify which UPS to check.\n\n"));
+
+	printf (_("Notes:\n\n\
+This plugin requires that the UPSD daemon distributed with Russel Kroll's\n\
+Smart UPS Tools be installed on the remote host.  If you do not have the\n\
+package installed on your system, you can download it from\n\
+http://www.exploits.org/nut\n\n"));
+
+	printf (_(UT_SUPPORT));
+}
+
+#define CHECK_NONE	 0
 
 #define UPS_NONE     0   /* no supported options */
 #define UPS_UTILITY  1   /* supports utility line voltage */
@@ -85,18 +112,18 @@ const char *progname = "check_ups";
 int server_port = PORT;
 char *server_address = "127.0.0.1";
 char *ups_name = NULL;
-double warning_value = 0.0L;
-double critical_value = 0.0L;
+double warning_value = 0.0;
+double critical_value = 0.0;
 int check_warning_value = FALSE;
 int check_critical_value = FALSE;
 int check_variable = UPS_NONE;
 int supported_options = UPS_NONE;
 int status = UPSSTATUS_NONE;
 
-double ups_utility_voltage = 0.0L;
-double ups_battery_percent = 0.0L;
-double ups_load_percent = 0.0L;
-double ups_temperature = 0.0L;
+double ups_utility_voltage = 0.0;
+double ups_battery_percent = 0.0;
+double ups_load_percent = 0.0;
+double ups_temperature = 0.0;
 char *ups_status = "N/A";
 
 int determine_status (void);
@@ -105,8 +132,6 @@ int get_ups_variable (const char *, char *, int);
 
 int process_arguments (int, char **);
 int validate_arguments (void);
-void print_help (void);
-void print_usage (void);
 
 int
 main (int argc, char **argv)
@@ -115,7 +140,7 @@ main (int argc, char **argv)
 	char *message;
 	char temp_buffer[MAX_INPUT_BUFFER];
 
-	double ups_utility_deviation = 0.0L;
+	double ups_utility_deviation = 0.0;
 
 	if (process_arguments (argc, argv) != OK)
 		usage ("Invalid command arguments supplied\n");
@@ -555,54 +580,4 @@ int
 validate_arguments (void)
 {
 	return OK;
-}
-
-
-
-
-
-void
-print_help (void)
-{
-	print_revision (progname, "$Revision$");
-	printf
-		("Copyright (c) 2000 Tom Shields/Karl DeBisschop\n\n"
-		 "This plugin tests the UPS service on the specified host.\n"
-		 "Newtork UPS Tools for www.exploits.org must be running for this plugin to work.\n\n");
-	print_usage ();
-	printf
-		("\nOptions:\n"
-		 " -H, --hostname=STRING or IPADDRESS\n"
-		 "   Check server on the indicated host\n"
-		 " -p, --port=INTEGER\n"
-		 "   Make connection on the indicated port (default: %d)\n"
-		 " -u, --ups=STRING\n"
-		 "   Name of UPS\n"
-		 " -w, --warning=INTEGER\n"
-		 "   Seconds necessary to result in a warning status\n"
-		 " -c, --critical=INTEGER\n"
-		 "   Seconds necessary to result in a critical status\n"
-		 " -t, --timeout=INTEGER\n"
-		 "   Seconds before connection attempt times out (default: %d)\n"
-		 " -v, --verbose\n"
-		 "   Print extra information (command-line use only)\n"
-		 " -h, --help\n"
-		 "   Print detailed help screen\n"
-		 " -V, --version\n"
-		 "   Print version information\n\n", PORT, DEFAULT_SOCKET_TIMEOUT);
-	support ();
-}
-
-
-
-
-
-void
-print_usage (void)
-{
-	printf
-		("Usage: %s -H host [-e expect] [-p port] [-w warn] [-c crit]\n"
-		 "            [-t timeout] [-v]\n"
-		 "       %s --help\n"
-		 "       %s --version\n", progname, progname, progname);
 }

@@ -1,57 +1,84 @@
 /******************************************************************************
-*
-* CHECK_UDP.C
-*
-* Program: UDP port plugin for Nagios
-* License: GPL
-* Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
-*
-* Last Modified: $Date$
-*
-* Command line: CHECK_UDP <host_address> [-p port] [-s send] [-e expect] \
-*			   [-wt warn_time] [-ct crit_time] [-to to_sec]
-*
-* Description:
-*
-* This plugin will attempt to connect to the specified port
-* on the host.  Successul connects return STATE_OK, refusals
-* and timeouts return STATE_CRITICAL, other errors return
-* STATE_UNKNOWN.
-*
-* License Information:
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
 *****************************************************************************/
 
-#include "config.h"
+const char *progname = "check_udp";
+const char *revision = "$Revision$";
+const char *copyright = "1999-2002";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
 
-const char *progname = "check_udp";
+/* Original Command line: 
+   check_udp <host_address> [-p port] [-s send] [-e expect] \
+   [-wt warn_time] [-ct crit_time] [-to to_sec] */
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -H <host_address> [-p port] [-w warn_time] [-c crit_time]\n\
+    [-e expect] [-s send] [-t to_sec] [-v]\n"), progname);
+}
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 1999 Ethan Galstad\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("\
+This plugin tests an UDP connection with the specified host.\n\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_HOST_PORT), 'p', "none");
+
+	printf (_("\
+ -e, --expect=STRING <optional>\n\
+    String to expect in first line of server response\n\
+ -s, --send=STRING <optional>\n\
+    String to send to the server when initiating the connection\n"));
+
+	printf (_(UT_WARN_CRIT));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(UT_VERBOSE));
+
+	printf (_("\
+This plugin will attempt to connect to the specified port on the host.\n\
+Successful connects return STATE_OK, refusals and timeouts return\n\
+STATE_CRITICAL, other errors return STATE_UNKNOWN.\n\n"));
+
+	printf(_(UT_SUPPORT));
+}
+
+int process_arguments (int, char **);
 
 int warning_time = 0;
 int check_warning_time = FALSE;
 int critical_time = 0;
 int check_critical_time = FALSE;
-
-int process_arguments (int, char **);
-void print_usage (void);
-void print_help (void);
-
 int verbose = FALSE;
 int server_port = 0;
 char *server_address = NULL;
@@ -104,8 +131,8 @@ main (int argc, char **argv)
 						 && (end_time - start_time) > warning_time) result =
 				STATE_WARNING;
 
-		printf ("Connection %s on port %d - %d second response time\n",
-						(result == STATE_OK) ? "accepted" : "problem", server_port,
+		printf (_("Connection %s on port %d - %d second response time\n"),
+						(result == STATE_OK) ? _("accepted") : _("problem"), server_port,
 						(int) (end_time - start_time));
 	}
 
@@ -159,43 +186,43 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf ("%s: Unknown argument: %s\n\n", progname, optarg);
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (progname, "$Revision$");
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'v':									/* verbose mode */
 			verbose = TRUE;
 			break;
 		case 'H':									/* hostname */
 			if (is_host (optarg) == FALSE)
-				usage ("Invalid host name/address\n");
+				usage (_("Invalid host name/address\n"));
 			server_address = optarg;
 			break;
 		case 'c':									/* critical */
 			if (!is_intnonneg (optarg))
-				usage ("Critical threshold must be a nonnegative integer\n");
+				usage (_("Critical threshold must be a nonnegative integer\n"));
 			critical_time = atoi (optarg);
 			check_critical_time = TRUE;
 			break;
 		case 'w':									/* warning */
 			if (!is_intnonneg (optarg))
-				usage ("Warning threshold must be a nonnegative integer\n");
+				usage (_("Warning threshold must be a nonnegative integer\n"));
 			warning_time = atoi (optarg);
 			check_warning_time = TRUE;
 			break;
 		case 't':									/* timeout */
 			if (!is_intnonneg (optarg))
-				usage ("Timeout interval must be a nonnegative integer\n");
+				usage (_("Timeout interval must be a nonnegative integer\n"));
 			socket_timeout = atoi (optarg);
 			break;
 		case 'p':									/* port */
 			if (!is_intnonneg (optarg))
-				usage ("Serevr port must be a nonnegative integer\n");
+				usage (_("Server port must be a nonnegative integer\n"));
 			server_port = atoi (optarg);
 			break;
 		case 'e':									/* expect */
@@ -210,61 +237,12 @@ process_arguments (int argc, char **argv)
 	c = optind;
 	if (server_address == NULL && c < argc && argv[c]) {
 		if (is_host (argv[c]) == FALSE)
-			usage ("Invalid host name/address\n");
+			usage (_("Invalid host name/address\n"));
 		server_address = argv[c++];
 	}
 
 	if (server_address == NULL)
-		usage ("Host name was not supplied\n");
+		usage (_("Host name was not supplied\n"));
 
 	return c;
-}
-
-
-
-
-
-void
-print_usage (void)
-{
-	printf
-		("Usage: %s -H <host_address> [-p port] [-w warn_time] [-c crit_time]\n"
-		 "         [-e expect] [-s send] [-t to_sec] [-v]\n", progname);
-}
-
-
-
-
-
-void
-print_help (void)
-{
-	print_revision (progname, "$Revision$");
-	printf
-		("Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)\n\n"
-		 "This plugin tests an UDP connection with the specified host.\n\n");
-	print_usage ();
-	printf
-		("Options:\n"
-		 " -H, --hostname=ADDRESS\n"
-		 "    Host name argument for servers using host headers (use numeric\n"
-		 "    address if possible to bypass DNS lookup).\n"
-		 " -p, --port=INTEGER\n"
-		 "    Port number\n"
-		 " -e, --expect=STRING <optional>\n"
-		 "    String to expect in first line of server response\n"
-		 " -s, --send=STRING <optional>\n"
-		 "    String to send to the server when initiating the connection\n"
-		 " -w, --warning=INTEGER <optional>\n"
-		 "    Response time to result in warning status (seconds)\n"
-		 " -c, --critical=INTEGER <optional>\n"
-		 "    Response time to result in critical status (seconds)\n"
-		 " -t, --timeout=INTEGER <optional>\n"
-		 "    Seconds before connection times out (default: %d)\n"
-		 " -v, --verbose <optional>\n"
-		 "    Show details for command-line debugging (do not use with nagios server)\n"
-		 " -h, --help\n"
-		 "    Print detailed help screen and exit\n"
-		 " -V, --version\n"
-		 "    Print version information and exit\n", DEFAULT_SOCKET_TIMEOUT);
 }

@@ -1,54 +1,25 @@
 /******************************************************************************
- *
- * Program: Inverting plugin wrapper for Nagios
- * License: GPL
- *
- * License Information:
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- * $Id$
- *
- *****************************************************************************/
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+******************************************************************************/
 
 const char *progname = "negate";
-#define REVISION "$Revision$"
-#define COPYRIGHT "2002"
-#define AUTHOR "Karl DeBisschop"
-#define EMAIL "kdebisschop@users.sourceforge.net"
-#define SUMMARY "Negates the status of a plugin (returns OK for CRITICAL, and vice-versa).\n"
-
-#define OPTIONS "\
-[-t timeout] <definition of wrapped plugin>"
-
-#define LONGOPTIONS "\
-  -t, --timeout=INTEGER\n\
-    Terminate test if timeout limit is exceeded (default: %d)\n\
-     [keep this less than the plugin timeout to retain CRITICAL status]\n"
-
-#define EXAMPLES "\
-  negate \"/usr/local/nagios/libexec/check_ping -H host\"\n\
-    Run check_ping and invert result. Must use full path to plugin\n\
-  negate \"/usr/local/nagios/libexec/check_procs -a 'vi negate.c'\"\n\
-    Use single quotes if you need to retain spaces\n"
-
-#define DESCRIPTION "\
-This plugin is a wrapper to take the output of another plugin and invert it.\n\
-If the wrapped plugin returns STATE_OK, the wrapper will return STATE_CRITICAL.\n\
-If the wrapped plugin returns STATE_CRITICAL, the wrapper will return STATE_OK.\n\
-Otherwise, the output state of the wrapped plugin is unchanged.\n"
+const char *revision = "$Revision$";
+const char *copyright = "2002-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #define DEFAULT_TIMEOUT 9
 
@@ -56,13 +27,53 @@ Otherwise, the output state of the wrapped plugin is unchanged.\n"
 #include "utils.h"
 #include "popen.h"
 
+void
+print_usage (void)
+{
+	printf (_("Usage: %s [-t timeout] <definition of wrapped plugin>\n"),
+	        progname);
+	printf (_(UT_HLP_VRS), progname, progname);
+}
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("\
+Negates the status of a plugin (returns OK for CRITICAL, and vice-versa).\n\
+\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_TIMEOUT), DEFAULT_TIMEOUT);
+
+	printf (_("\
+     [keep timeout than the plugin timeout to retain CRITICAL status]\n"));
+
+	printf (_("\
+  negate \"/usr/local/nagios/libexec/check_ping -H host\"\n\
+    Run check_ping and invert result. Must use full path to plugin\n\
+  negate \"/usr/local/nagios/libexec/check_procs -a 'vi negate.c'\"\n\
+    Use single quotes if you need to retain spaces\n"));
+
+	printf (_("\
+This plugin is a wrapper to take the output of another plugin and invert it.\n\
+If the wrapped plugin returns STATE_OK, the wrapper will return STATE_CRITICAL.\n\
+If the wrapped plugin returns STATE_CRITICAL, the wrapper will return STATE_OK.\n\
+Otherwise, the output state of the wrapped plugin is unchanged.\n"));
+
+	printf (_(UT_SUPPORT));
+}
+
 char *command_line;
 
 int process_arguments (int, char **);
 int validate_arguments (void);
-void print_usage (void);
-void print_help (void);
-
 /******************************************************************************
 
 The (psuedo?)literate programming XML is contained within \@\@\- <XML> \-\@\@
@@ -123,21 +134,21 @@ main (int argc, char **argv)
 	char input_buffer[MAX_INPUT_BUFFER];
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage ("Could not parse arguments\n");
+		usage (_("Could not parse arguments\n"));
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR)
-		terminate (STATE_UNKNOWN, "Cannot catch SIGALRM");
+		terminate (STATE_UNKNOWN, _("Cannot catch SIGALRM"));
 
 	(void) alarm ((unsigned) timeout_interval);
 
 	child_process = spopen (command_line);
 	if (child_process == NULL)
-		terminate (STATE_UNKNOWN, "Could not open pipe: %s\n", command_line);
+		terminate (STATE_UNKNOWN, _("Could not open pipe: %s\n"), command_line);
 
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL) {
-		printf ("Could not open stderr for %s\n", command_line);
+		printf (_("Could not open stderr for %s\n"), command_line);
 	}
 
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
@@ -153,7 +164,7 @@ main (int argc, char **argv)
 
 	if (!found)
 		terminate (STATE_UNKNOWN,\
-		           "%s problem - No data recieved from host\nCMD: %s\n",\
+		           _("%s problem - No data recieved from host\nCMD: %s\n"),\
 		           argv[0],	command_line);
 
 	/* close the pipe */
@@ -172,32 +183,6 @@ main (int argc, char **argv)
 		exit (EXIT_SUCCESS);
 	else
 		exit (result);
-}
-
-
-
-
-void
-print_help (void)
-{
-	print_revision (progname, REVISION);
-	printf
-		("Copyright (c) %s %s <%s>\n\n%s\n",
-		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
-	print_usage ();
-	printf
-		("\nOptions:\n" LONGOPTIONS "\n" "Examples:\n" EXAMPLES "\n"
-		 DESCRIPTION "\n", DEFAULT_TIMEOUT);
-	support ();
-}
-
-void
-print_usage (void)
-{
-	printf ("Usage:\n" " %s %s\n"
-					" %s (-h | --help) for detailed help\n"
-					" %s (-V | --version) for version information\n",
-					progname, OPTIONS, progname, progname);
 }
 
 
@@ -240,16 +225,16 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':     /* help */
-			usage3 ("Unknown argument", optopt);
+			usage3 (_("Unknown argument"), optopt);
 		case 'h':     /* help */
 			print_help ();
 			exit (EXIT_SUCCESS);
 		case 'V':     /* version */
-			print_revision (progname, REVISION);
+			print_revision (progname, revision);
 			exit (EXIT_SUCCESS);
 		case 't':     /* timeout period */
 			if (!is_integer (optarg))
-				usage2 ("Timeout Interval must be an integer", optarg);
+				usage2 (_("Timeout Interval must be an integer"), optarg);
 			timeout_interval = atoi (optarg);
 			break;
 		}
