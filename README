@@ -49,9 +49,9 @@ Nagios Plugins Quick-and-Dirty Installation Instructions
    start out, run ./tools/setup
 
    For development, we generally use the most recent stable tools from
-   the FSF. Currently we use gettext 0.11.5, autoconf 2.57, and
-   automake 1.76. No other versions are tested, and you may see
-   warnings or errors with other versions.
+   the FSF. Currently we use gettext 0.11.5, autoconf 2.58, and
+   automake 1.7.9. You may see warnings or errors with other versions,
+   particularly with autoconf < 2.54.
 
 
 1) Run the configure script to initialize variables and create a Makefile, etc.
