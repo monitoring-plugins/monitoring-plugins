@@ -91,7 +91,7 @@ command[check_procs]=@libexecdir@/check_procs -w $ARG1$ -c $ARG2$
 command[check_procs_zombie]=@libexecdir@/check_procs -w $ARG1$ -c $ARG2$ -s Z
 command[check_procs_httpd]=@libexecdir@/check_procs -w 5:$ARG1$ -c 1:$ARG2$ -C httpd
 command[check_procs_vsz]=@libexecdir@/check_procs -w 8096 -c 16182 -C httpd --metric VSZ
-command[check_ups]=@libexecdir@/check_ups -H $HOSTADDRESS$ -u $UPS$
+command[check_ups]=@libexecdir@/check_ups -H $HOSTADDRESS$ -u $ARG1$
 
 # An example of using check_by_ssh as an active service check
 command[ssh_disk]=@libexecdir@/check_by_ssh -H $HOSTADDRESS$ -C '@libexecdir@/check_disk -w 85% -c 95% -p $ARG1$'
