@@ -160,8 +160,10 @@ int check_certificate (X509 **);
 #endif
 
 #ifdef HAVE_REGEX_H
-#define REGS 2
-#define MAX_RE_SIZE 256
+enum {
+	REGS = 2,
+	MAX_RE_SIZE = 256
+};
 #include <regex.h>
 regex_t preg;
 regmatch_t pmatch[REGS];
@@ -178,15 +180,18 @@ struct timeval tv;
 
 #define server_port_check(use_ssl) (use_ssl ? HTTPS_PORT : HTTP_PORT)
 
-#define MAX_IPV4_HOSTLENGTH 64
 #define HDR_LOCATION "%*[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]: "
 #define URI_HTTP "%[HTPShtps]://"
 #define URI_HOST "%[a-zA-Z0-9.-]"
 #define URI_PORT ":%[0-9]"
 #define URI_PATH "%[/a-zA-Z0-9._-=@,]"
 
-#define HTTP_PORT 80
-#define HTTPS_PORT 443
+enum {
+	MAX_IPV4_HOSTLENGTH = 64,
+	HTTP_PORT = 80,
+	HTTPS_PORT = 443
+};
+
 #define HTTP_EXPECT "HTTP/1."
 #define HTTP_URL "/"
 #define CRLF "\r\n"
@@ -549,8 +554,9 @@ check_http (void)
 #ifdef HAVE_SSL
 	if (use_ssl == TRUE) {
 
-		if (connect_SSL () != OK)
+		if (connect_SSL () != OK) {
 			terminate (STATE_CRITICAL, "Unable to open TCP socket");
+		}
 
 		if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
 			X509_free (server_cert);
@@ -560,112 +566,52 @@ check_http (void)
 			return STATE_CRITICAL;
 		}
 
-		asprintf (&buf, "%s %s HTTP/1.0\r\n", http_method, server_url);
-		if (SSL_write (ssl, buf, strlen (buf)) == -1) {
-			ERR_print_errors_fp (stderr);
-			return STATE_CRITICAL;
-		}
-
-		/* optionally send the host header info (not clear if it's usable) */
-		if (strcmp (host_name, "")) {
-			asprintf (&buf, "Host: %s\r\n", host_name);
-			if (SSL_write (ssl, buf, strlen (buf)) == -1) {
-				ERR_print_errors_fp (stderr);
-				return STATE_CRITICAL;
-			}
-		}
-
-		/* send user agent */
-		asprintf (&buf, "User-Agent: check_http/%s (nagios-plugins %s)\r\n",
-		         clean_revstring (REVISION), PACKAGE_VERSION);
-		if (SSL_write (ssl, buf, strlen (buf)) == -1) {
-			ERR_print_errors_fp (stderr);
-			return STATE_CRITICAL;
-		}
-
-		/* optionally send the authentication info */
-		if (strcmp (user_auth, "")) {
-			auth = base64 (user_auth, strlen (user_auth));
-			asprintf (&buf, "Authorization: Basic %s\r\n", auth);
-			if (SSL_write (ssl, buf, strlen (buf)) == -1) {
-				ERR_print_errors_fp (stderr);
-				return STATE_CRITICAL;
-			}
-		}
-
-		/* either send http POST data */
-		if (strlen (http_post_data)) {
-			asprintf (&buf, "Content-Type: application/x-www-form-urlencoded\r\n");
-			if (SSL_write (ssl, buf, strlen (buf)) == -1) {
-				ERR_print_errors_fp (stderr);
-				return STATE_CRITICAL;
-			}
-			asprintf (&buf, "Content-Length: %i\r\n\r\n", strlen (http_post_data));
-			if (SSL_write (ssl, buf, strlen (buf)) == -1) {
-				ERR_print_errors_fp (stderr);
-				return STATE_CRITICAL;
-			}
-			if (SSL_write (ssl, http_post_data, strlen (http_post_data)) == -1) {
-				ERR_print_errors_fp (stderr);
-				return STATE_CRITICAL;
-			}
-			asprintf (&buf, CRLF);
-			if (SSL_write (ssl, buf, strlen (buf)) == -1) {
-				ERR_print_errors_fp (stderr);
-				return STATE_CRITICAL;
-			}
-		}
-		else {
-			/* or just a newline so the server knows we're done with the request */
-			asprintf (&buf, "\r\n");
-			if (SSL_write (ssl, buf, strlen (buf)) == -1) {
-				ERR_print_errors_fp (stderr);
-				return STATE_CRITICAL;
-			}
-		}
-
 	}
 	else {
 #endif
 		if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK)
 			terminate (STATE_CRITICAL, "Unable to open TCP socket");
-		asprintf (&buf, "%s %s HTTP/1.0\r\n", http_method, server_url);
+#ifdef HAVE_SSL
+	}
+#endif
+
+	asprintf (&buf, "%s %s HTTP/1.0\r\n", http_method, server_url);
+
+	/* optionally send the host header info (not clear if it's usable) */
+	if (strcmp (host_name, ""))
+		asprintf (&buf, "%sHost: %s\r\n", buf, host_name);
+
+	/* send user agent */
+	asprintf (&buf, "%sUser-Agent: check_http/%s (nagios-plugins %s)\r\n",
+	          buf, clean_revstring (REVISION), PACKAGE_VERSION);
+
+	/* optionally send the authentication info */
+	if (strcmp (user_auth, "")) {
+		auth = base64 (user_auth, strlen (user_auth));
+		asprintf (&buf, "%sAuthorization: Basic %s\r\n", buf, auth);
+	}
+
+	/* either send http POST data */
+	if (strlen (http_post_data)) {
+		asprintf (&buf, "%sContent-Type: application/x-www-form-urlencoded\r\n", buf);
+		asprintf (&buf, "%sContent-Length: %i\r\n\r\n", buf, strlen (http_post_data));
+		asprintf (&buf, "%s%s%s", buf, http_post_data, CRLF);
+	}
+	else {
+		/* or just a newline so the server knows we're done with the request */
+		asprintf (&buf, "%s%s", buf, CRLF);
+	}
+
+#ifdef HAVE_SSL
+	if (use_ssl == TRUE) {
+		if (SSL_write (ssl, buf, strlen (buf)) == -1) {
+			ERR_print_errors_fp (stderr);
+			return STATE_CRITICAL;
+		}
+	}
+	else {
+#endif
 		send (sd, buf, strlen (buf), 0);
-
-		/* optionally send the host header info */
-		if (strcmp (host_name, "")) {
-			asprintf (&buf, "Host: %s\r\n", host_name);
-			send (sd, buf, strlen (buf), 0);
-		}
-
-		/* send user agent */
-		asprintf (&buf,
-		         "User-Agent: check_http/%s (nagios-plugins %s)\r\n",
-		         clean_revstring (REVISION), PACKAGE_VERSION);
-		send (sd, buf, strlen (buf), 0);
-
-		/* optionally send the authentication info */
-		if (strcmp (user_auth, "")) {
-			auth = base64 (user_auth, strlen (user_auth));
-			asprintf (&buf, "Authorization: Basic %s\r\n", auth);
-			send (sd, buf, strlen (buf), 0);
-		}
-
-		/* either send http POST data */
-		/* written by Chris Henesy <lurker@shadowtech.org> */
-		if (strlen (http_post_data)) {
-			asprintf (&buf, "Content-Type: application/x-www-form-urlencoded\r\n");
-			send (sd, buf, strlen (buf), 0);
-			asprintf (&buf, "Content-Length: %i\r\n\r\n", strlen (http_post_data));
-			send (sd, buf, strlen (buf), 0);
-			send (sd, http_post_data, strlen (http_post_data), 0);
-			send (sd, CRLF, strlen (CRLF), 0);
-		}
-		else {
-			/* or just a newline so the server knows we're done with the request */
-			asprintf (&buf, "\r\n");
-			send (sd, buf, strlen (buf), 0);
-		}
 #ifdef HAVE_SSL
 	}
 #endif
