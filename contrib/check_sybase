@@ -13,12 +13,14 @@
 # Revision history:
 # 0.1	01-OCT-2004	Initial version.
 # 0.2	08-NOV-2004	Initial release.
-my $VERSION = "0.2";
+# 0.3	13-JAN-2004	Fixed lib path, improved timeouts.
+# 0.4	26-JAN-2004	Added loginTimeout.
+my $VERSION = "0.4";
 
 use strict;
 use DBI;
 use Getopt::Long;
-use lib "/usr/local/nagios/libexec";
+use lib qw( /usr/lib/nagios/plugins/ /usr/local/nagios/libexec/ );
 use utils qw(%ERRORS &print_revision &support &usage $TIMEOUT);
 
 
@@ -26,6 +28,7 @@ my $PROGNAME = "check_sybase";
 my $DEFAULT_CHECKTYPE = "FREESPACE";
 my $DEFAULT_WARNING   = "25";
 my $DEFAULT_CRITICAL  = "10";
+my $DEFAULT_TIMEOUT   = "30";
 
 my ($user, $pass, $dbsvr, $dbname, $config, $checktype, $warn, $crit, $timeout,
     $help, $version);
@@ -55,7 +58,7 @@ if (! $options_okay) # Bad option passed
 $warn = $warn || $DEFAULT_WARNING;
 $crit = $crit || $DEFAULT_CRITICAL;
 $checktype = $checktype || $DEFAULT_CHECKTYPE;
-$timeout = $timeout || $TIMEOUT;
+$timeout = $timeout || $TIMEOUT || $DEFAULT_TIMEOUT;
 
 if ($help)
 {
@@ -105,8 +108,8 @@ my $dbh;
 my $is_connected;
 sub connect
 {
-	$dbh = DBI->connect("dbi:Sybase:server=$dbsvr;database=$dbname",
-	                    $user, $pass)
+	$dbh = DBI->connect("dbi:Sybase:server=$dbsvr;database=$dbname;".
+	               "timeout=$timeout,loginTimeout=$timeout", $user, $pass)
 		or &ncrit("Could not connect to '$dbname' on '$dbsvr'");
 
 	# Report success for a check of type CONNECT
@@ -262,7 +265,7 @@ Mandatory arguments to long options are mandatory for short options too.
   -c, --critical	Critical threshold, in percent (default 10)
   -t, --timeout		Timeout value, in seconds (default 30)
   -h, --help		This help message
-  -V, --version		Version information
+  -V, --version		Version information ($VERSION)
 
 Examples:
 	$PROGNAME -U sa -P secret -S bigbox -D orders
