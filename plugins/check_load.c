@@ -55,8 +55,8 @@ char *status_line;
 int
 main (int argc, char **argv)
 {
-#if HAVE_GETLOADAVG==1
 	int result;
+#if HAVE_GETLOADAVG==1
 	double la[3] = { 0.0, 0.0, 0.0 };	/* NetBSD complains about unitialized arrays */
 #else
 # if HAVE_PROC_LOADAVG==1
@@ -64,7 +64,6 @@ main (int argc, char **argv)
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *tmp_ptr;
 # else
-	int result;
 	char input_buffer[MAX_INPUT_BUFFER];
 # endif
 #endif
@@ -126,6 +125,7 @@ main (int argc, char **argv)
 # endif
 #endif
 
+
 	if ((la1 < 0.0) || (la5 < 0.0) || (la15 < 0.0)) {
 #if HAVE_GETLOADAVG==1
 		printf (_("Error in getloadavg()\n"));
@@ -138,16 +138,23 @@ main (int argc, char **argv)
 #endif
 		return STATE_UNKNOWN;
 	}
+
 	asprintf(&status_line, _("load average: %.2f, %.2f, %.2f"), la1, la5, la15);
-	if ((la1 >= cload1) || (la5 >= cload5) || (la15 >= cload15)) {
-		printf(_("CRITICAL - %s\n"), status_line);
-		return STATE_CRITICAL;
-	}
-	if ((la1 >= wload1) || (la5 >= wload5) || (la15 >= wload15)) {
-		printf (_("WARNING - %s\n"), status_line);
-		return STATE_WARNING;
-	}
-	printf (_("OK - %s\n"), status_line);
+
+	if ((la1 >= cload1) || (la5 >= cload5) || (la15 >= cload15))
+		result = STATE_CRITICAL;
+	else if ((la1 >= wload1) || (la5 >= wload5) || (la15 >= wload15))
+		result = STATE_WARNING;
+	else
+		result = STATE_OK;
+
+	die (result,
+	     "%s - %s|%s %s %s\n",
+	     state_text (result),
+	     status_line,
+	     perfdata ("load1", la1, "", wload1, wload1, cload1, cload1, TRUE, 0, FALSE, 0),
+	     perfdata ("load5", la5, "", wload5, wload5, cload5, cload5, TRUE, 0, FALSE, 0),
+	     perfdata ("load15", la15, "", wload15, wload15, cload15, cload15, TRUE, 0, FALSE, 0));
 	return STATE_OK;
 }
 
