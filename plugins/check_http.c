@@ -838,9 +838,9 @@ redir (char *pos, char *status_line)
 		else if (sscanf (pos, HD5, url) == 1) {
 			/* relative url */
 			if ((url[0] != '/')) {
-				if ((x = strrchr(url, '/')))
+				if ((x = strrchr(server_url, '/')))
 					*x = '\0';
-				asprintf (&server_url, "%s/%s", server_url, url);
+				asprintf (&url, "%s/%s", server_url, url);
 			}
 			i = server_port;
 			strcpy (type, server_type);
