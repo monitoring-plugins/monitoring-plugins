@@ -739,7 +739,7 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
-	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n"));
+	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf (COPYRIGHT, copyright, email);
 
 	printf (_("This plugin tests %s connections with the specified host.\n\n"),
