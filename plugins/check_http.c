@@ -45,7 +45,7 @@ certificate expiration times.\n"
             [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L]\n\
             [-a auth] [-f <ok | warn | critcal | follow>] [-e <expect>]\n\
             [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n\
-            [-P string]"
+            [-P string] [-m min_pg_size]"
 
 #define LONGOPTIONS "\
  -H, --hostname=ADDRESS\n\
@@ -75,6 +75,8 @@ certificate expiration times.\n"
    Wrap output in HTML link (obsoleted by urlize)\n\
  -f, --onredirect=<ok|warning|critical|follow>\n\
    How to handle redirected pages\n%s%s\
+-m, --min=INTEGER\n\
+   Minimum page size required (bytes)\n\
  -v, --verbose\n\
     Show details for command-line debugging (do not use with nagios server)\n\
  -h, --help\n\
@@ -218,6 +220,7 @@ int onredirect = STATE_OK;
 int use_ssl = FALSE;
 int verbose = FALSE;
 int sd;
+int min_page_len = 0;
 char *http_method = "GET";
 char *http_post_data = "";
 char buffer[MAX_INPUT_BUFFER];
@@ -311,6 +314,7 @@ process_arguments (int argc, char **argv)
  		{"linespan", no_argument, 0, 'l'},
 		{"onredirect", required_argument, 0, 'f'},
 		{"certificate", required_argument, 0, 'C'},
+		{"min", required_argument, 0, 'm'},
 		{0, 0, 0, 0}
 	};
 #endif
@@ -331,7 +335,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-n");
 	}
 
-#define OPTCHARS "Vvht:c:w:H:P:I:a:e:p:s:R:r:u:f:C:nlLS"
+#define OPTCHARS "Vvht:c:w:H:P:I:a:e:p:s:R:r:u:f:C:nlLSm:"
 
 	while (1) {
 #ifdef HAVE_GETOPT_H
@@ -469,6 +473,9 @@ process_arguments (int argc, char **argv)
 		case 'v': /* verbose */
 			verbose = TRUE;
 			break;
+		case 'm': /* min_page_length */
+			min_page_len = atoi (optarg);
+			break;
 		}
 	}
 
@@ -550,6 +557,7 @@ check_http (void)
 	char *x = NULL;
 	char *orig_url = NULL;
 	double elapsed_time;
+	int page_len = 0;
 #ifdef HAVE_SSL
 	int sslerr;
 #endif
@@ -855,6 +863,13 @@ check_http (void)
 	}
 #endif
 
+	/* make sure the page is of an appropriate size */
+	page_len = strlen (page);
+	if ((min_page_len > 0) && (page_len < min_page_len)) {
+		printf ("HTTP WARNING: page size too small%s|size=%i\n",
+			(display_html ? "</A>" : ""), page_len );
+		exit (STATE_WARNING);
+	}
 	/* We only get here if all tests have been passed */
 	asprintf (&msg, "HTTP ok: %s - %7.3f second response time %s%s|time=%7.3f\n",
 	                status_line, (float)elapsed_time,
