@@ -566,6 +566,10 @@
 	<section><title>Comments</title>
 	<para>You should use /* */ for comments and not // as some compilers
 	do not handle the latter form.</para>
+	<para>There should not be any named credits in the source code - contributors
+	should be added 
+	into the AUTHORS file instead. The only exception to this is if a routine
+	has been copied from another source.</para>
 	</section>
 
 	<section><title>CVS comments</title>
