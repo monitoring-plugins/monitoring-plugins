@@ -29,8 +29,8 @@ my ($verbose,@proto,%prognum,$host,$response,$prognum,$port,$cmd,$progver,$state
 my ($array_ref,$test,$element,@progkeys,$proto,$a,$b);
 my ($opt_V,$opt_h,$opt_C,$opt_p,$opt_H,$opt_c,$opt_u,$opt_t);
 my ($line, @progvers, $response2,$response3);
-$opt_V = $opt_h = $opt_C = $opt_p = $opt_H = $opt_c = $opt_u = $opt_t ='';
-$state = 'OK';
+$opt_V = $opt_h = $opt_C = $opt_p = $opt_H =  $opt_u = $opt_t ='';
+$state = 'UNKNOWN';
 $progver = $response=$response2= $response3 ='';
 
 $PROGNAME = "check_rpc";
