@@ -29,7 +29,7 @@
 
 const char *progname = "check_ups";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2002";
+const char *copyright = "2000-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include <locale.h>
@@ -96,7 +96,7 @@ void print_usage (void);
 int
 main (int argc, char **argv)
 {
-	int result = STATE_OK;
+	int result = STATE_UNKNOWN;
 	char *message;
 	char *data;
 	char temp_buffer[MAX_INPUT_BUFFER];

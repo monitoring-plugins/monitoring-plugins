@@ -17,6 +17,11 @@
 * $Id$
 *****************************************************************************/
 
+const char *progname = "check_hpjd";
+const char *revision = "$Revision$";
+const char *copyright = "2000-2004";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
 #include "common.h"
 #include "popen.h"
 #include "utils.h"
@@ -24,10 +29,6 @@
 
 #define DEFAULT_COMMUNITY "public"
 
-const char *progname = "check_hpjd";
-const char *revision = "$Revision$";
-const char *copyright = "2000-2003";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 const char *option_summary = "-H host [-C community]\n";
 
@@ -59,7 +60,7 @@ int
 main (int argc, char **argv)
 {
 	char command_line[1024];
-	int result;
+	int result = STATE_UNKNOWN;
 	int line;
 	char input_buffer[MAX_INPUT_BUFFER];
 	char query_string[512];
@@ -85,7 +86,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) != TRUE)
-		usage4 (_("Could not parse arguments\n"));
+		usage4 (_("Could not parse arguments"));
 
 	/* removed ' 2>1' at end of command 10/27/1999 - EG */
 	/* create the query string */

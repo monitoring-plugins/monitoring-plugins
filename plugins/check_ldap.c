@@ -20,7 +20,7 @@
 
 const char *progname = "check_ldap";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2003";
+const char *copyright = "2000-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -64,7 +64,9 @@ main (int argc, char *argv[])
 	LDAP *ld;
 	LDAPMessage *result;
 
-	int status;
+	/* should be 	int result = STATE_UNKNOWN; */
+	
+	int status = STATE_UNKNOW;
 	long microsec;
 	double elapsed_time;
 

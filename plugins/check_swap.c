@@ -25,14 +25,14 @@
  *
  *****************************************************************************/
 
+const char *progname = "check_swap";
+const char *revision = "$Revision$";
+const char *copyright = "2000-2004";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
 #include "common.h"
 #include "popen.h"
 #include "utils.h"
-
-const char *progname = "check_swap";
-const char *revision = "$Revision$";
-const char *copyright = "2000-2003";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 int check_swap (int usp, long unsigned int free_swap);
 int process_arguments (int argc, char **argv);
@@ -53,7 +53,7 @@ main (int argc, char **argv)
 	int percent_used, percent;
 	unsigned long long total_swap = 0, used_swap = 0, free_swap = 0;
 	unsigned long long dsktotal = 0, dskused = 0, dskfree = 0, tmp = 0;
-	int result = STATE_OK;
+	int result = STATE_UNKNOWN;
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *perf;
 	int conv_factor = SWAP_CONVERSION;

@@ -20,7 +20,7 @@
 
 const char *progname = "check_load";
 const char *revision = "$Revision$";
-const char *copyright = "1999-2003";
+const char *copyright = "1999-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -54,7 +54,8 @@ char *status_line;
 int
 main (int argc, char **argv)
 {
-	int result;
+	int result = STATE_UNKNOWN;
+	
 #if HAVE_GETLOADAVG==1
 	double la[3] = { 0.0, 0.0, 0.0 };	/* NetBSD complains about unitialized arrays */
 #else

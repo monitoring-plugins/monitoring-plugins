@@ -20,7 +20,7 @@
 
 const char *progname = "check_real";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2003";
+const char *copyright = "2000-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -56,7 +56,7 @@ int
 main (int argc, char **argv)
 {
 	int sd;
-	int result;
+	int result = STATE_UNKNOWN;
 	char buffer[MAX_INPUT_BUFFER];
 	char *status_line = NULL;
 

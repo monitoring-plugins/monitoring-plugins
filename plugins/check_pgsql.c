@@ -18,6 +18,17 @@
  
  *****************************************************************************/
 
+const char *progname = "check_pgsql";
+const char *revision = "$Revision$";
+const char *copyright = "1999-2004";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
+#include "common.h"
+#include "utils.h"
+
+#include "netutils.h"
+#include <libpq-fe.h>
+
 #define DEFAULT_DB "template1"
 #define DEFAULT_HOST "127.0.0.1"
 
@@ -27,10 +38,7 @@ enum {
 	DEFAULT_CRIT = 8
 };
 
-#include "common.h"
-#include "utils.h"
-#include "netutils.h"
-#include <libpq-fe.h>
+
 
 int process_arguments (int, char **);
 int validate_arguments (void);
@@ -52,11 +60,6 @@ double tcrit = (double)DEFAULT_CRIT;
 
 PGconn *conn;
 /*PGresult   *res;*/
-
-const char *progname = "check_pgsql";
-const char *revision = "$Revision$";
-const char *copyright = "1999-2003";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 
 /******************************************************************************

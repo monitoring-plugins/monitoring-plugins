@@ -55,7 +55,7 @@
 
 const char *progname = "negate";
 const char *revision = "$Revision$";
-const char *copyright = "2002-2003";
+const char *copyright = "2002-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #define DEFAULT_TIMEOUT 9

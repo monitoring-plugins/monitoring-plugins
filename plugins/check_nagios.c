@@ -20,7 +20,7 @@
 
 const char *progname = "check_nagios";
 const char *revision = "$Revision$";
-const char *copyright = "1999-2003";
+const char *copyright = "1999-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"

@@ -18,6 +18,11 @@
  
 *****************************************************************************/
 
+const char *progname = "check_dig";
+const char *revision = "$Revision$";
+const char *copyright = "2002-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
@@ -27,11 +32,6 @@ int process_arguments (int, char **);
 int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
-
-const char *progname = "check_dig";
-const char *revision = "$Revision$";
-const char *copyright = "2002-2003";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 enum {
 	UNDEFINED = 0,

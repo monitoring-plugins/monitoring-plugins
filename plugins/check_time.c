@@ -18,14 +18,14 @@
  
 ******************************************************************************/
 
+const char *progname = "check_time";
+const char *revision = "$Revision$";
+const char *copyright = "1999-2004";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
-
-const char *progname = "check_time";
-const char *revision = "$Revision$";
-const char *copyright = "1999-2003";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 enum {
 	TIME_PORT = 37
@@ -55,7 +55,7 @@ int
 main (int argc, char **argv)
 {
 	int sd;
-	int result;
+	int result = STATE_UNKNOWN;
 	time_t conntime;
 
 	setlocale (LC_ALL, "");

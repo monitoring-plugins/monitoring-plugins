@@ -30,6 +30,11 @@
  *
  *****************************************************************************/
 
+const char *progname = "check_nt";
+const char *revision = "$Revision$";
+const char *copyright = "2003-2004";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
@@ -65,8 +70,6 @@ int check_critical_value=FALSE;
 enum checkvars vars_to_check = CHECK_NONE;
 int show_all=FALSE;
 
-const char *progname = "check_nt";
-
 char recv_buffer[MAX_INPUT_BUFFER];
 
 void fetch_data (const char* address, int port, const char* sendb);
@@ -77,6 +80,9 @@ void print_help(void);
 void print_usage(void);
 
 int main(int argc, char **argv){
+
+/* should be 	int result = STATE_UNKNOWN; */
+
 	int return_code = STATE_UNKNOWN;
 	char *send_buffer=NULL;
 	char *output_message=NULL;

@@ -19,7 +19,7 @@
 
 const char *progname = "check_game";
 const char *revision = "$Revision$";
-const char *copyright = "2002-2003";
+const char *copyright = "2002-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -55,7 +55,7 @@ int
 main (int argc, char **argv)
 {
 	char *command_line;
-	int result;
+	int result = STATE_UNKNOWN;
 	FILE *fp;
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *p, *ret[QSTAT_MAX_RETURN_ARGS];

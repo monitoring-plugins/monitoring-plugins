@@ -20,7 +20,7 @@
 
 const char *progname = "check_users";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2003";
+const char *copyright = "2000-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -40,7 +40,7 @@ int
 main (int argc, char **argv)
 {
 	int users = -1;
-	int result = STATE_OK;
+	int result = STATE_UNKNOWN;
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *perf;
 

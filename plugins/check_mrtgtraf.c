@@ -23,7 +23,7 @@
 
 const char *progname = "check_mrtgtraf";
 const char *revision = "$Revision$";
-const char *copyright = "1999-2003";
+const char *copyright = "1999-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 int process_arguments (int, char **);
@@ -43,7 +43,7 @@ unsigned long outgoing_critical_threshold = 0L;
 int
 main (int argc, char **argv)
 {
-	int result = STATE_OK;
+	int result = STATE_UNKNOWN;
 	FILE *fp;
 	int line;
 	char input_buffer[MAX_INPUT_BUFFER];

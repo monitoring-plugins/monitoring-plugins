@@ -18,14 +18,14 @@
  
 ******************************************************************************/
 
+const char *progname = "check_ssh";
+const char *revision = "$Revision$";
+const char *copyright = "2000-2004";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
-
-const char *progname = "check_ssh";
-const char *revision = "$Revision$";
-const char *copyright = "2000-2003";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #ifndef MSG_DONTWAIT
 #define MSG_DONTWAIT 0
@@ -51,7 +51,7 @@ int ssh_connect (char *haddr, int hport, char *remote_version);
 int
 main (int argc, char **argv)
 {
-	int result;
+	int result = STATE_UNKNOWN;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -62,6 +62,7 @@ main (int argc, char **argv)
 
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
+	
 	alarm (socket_timeout);
 
 	/* ssh_connect exits if error is found */

@@ -20,7 +20,7 @@
 
 const char *progname = "check_fping";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2003";
+const char *copyright = "2000-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -57,6 +57,8 @@ int wrta_p = FALSE;
 int
 main (int argc, char **argv)
 {
+/* normaly should be 	int result = STATE_UNKNOWN; */
+
 	int status = STATE_UNKNOWN;
 	char *server = NULL;
 	char *command_line = NULL;

@@ -20,7 +20,7 @@
 
 const char *progname = "check_udp";
 const char *revision = "$Revision$";
-const char *copyright = "1999-2002";
+const char *copyright = "1999-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -44,7 +44,7 @@ char *server_send;
 int
 main (int argc, char **argv)
 {
-	int result;
+	int result = STATE_UNKNOWN;
 	char recv_buffer[MAX_INPUT_BUFFER];
 
 	setlocale (LC_ALL, "");
@@ -63,6 +63,7 @@ main (int argc, char **argv)
 	time (&start_time);
 	result = process_udp_request (server_address, server_port, server_send,
 			recv_buffer, MAX_INPUT_BUFFER - 1);
+			
 	time (&end_time);
 
 	if (result != STATE_OK) {

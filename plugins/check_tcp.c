@@ -21,7 +21,7 @@
 /* progname "check_tcp" changes depending on symlink called */
 char *progname;
 const char *revision = "$Revision$";
-const char *copyright = "1999-2003";
+const char *copyright = "1999-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -105,7 +105,7 @@ char *buffer;
 int
 main (int argc, char **argv)
 {
-	int result;
+	int result = STATE_UNKNOWN;
 	int i;
 	char *status;
 	struct timeval tv;

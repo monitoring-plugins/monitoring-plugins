@@ -36,9 +36,15 @@
  *
  * $Id$
  */
+
+const char *progname = "check_ide_smart";
+const char *revision = "$Revision$";
+const char *copyright = "2000-2004";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 	
 #include "common.h"
 #include "utils.h"
+
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>

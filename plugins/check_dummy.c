@@ -18,13 +18,13 @@
  
 ******************************************************************************/
 
-#include "common.h"
-#include "utils.h"
-
 const char *progname = "check_dummy";
 const char *revision = "$Revision$";
-const char *copyright = "1999-2003";
+const char *copyright = "1999-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
+#include "common.h"
+#include "utils.h"
 
 void print_help (void);
 void print_usage (void);
@@ -34,7 +34,7 @@ void print_usage (void);
 int
 main (int argc, char **argv)
 {
-	int result;
+	int result = STATE_UNKNOWN;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);

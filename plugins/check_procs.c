@@ -20,12 +20,13 @@
 
 const char *progname = "check_procs";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2003";
+const char *copyright = "2000-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
 #include "popen.h"
 #include "utils.h"
+
 #include <pwd.h>
 
 int process_arguments (int, char **);

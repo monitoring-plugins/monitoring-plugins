@@ -20,7 +20,7 @@
 
 const char *progname = "check_nwstat";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2003";
+const char *copyright = "2000-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -84,7 +84,7 @@ void print_usage(void);
 
 int
 main(int argc, char **argv) {
-	int result;
+	int result = STATE_UNKNOWN;
 	int sd;
 	char *send_buffer=NULL;
 	char recv_buffer[MAX_INPUT_BUFFER];

@@ -104,7 +104,7 @@ main (int argc, char **argv)
 	UINT4 service;
 	char msg[BUFFER_LEN];
 	SEND_DATA data;
-	int result;
+	int result = STATE_UNKNOWN;
 	UINT4 client_id;
 	char *str;
 

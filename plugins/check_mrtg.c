@@ -20,7 +20,7 @@
 
 const char *progname = "check_mrtg";
 const char *revision =  "$Revision$";
-const char *copyright = "1999-2001";
+const char *copyright = "1999-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -43,7 +43,7 @@ char *units;
 int
 main (int argc, char **argv)
 {
-	int result = STATE_OK;
+	int result = STATE_UNKNOWN;
 	FILE *fp;
 	int line;
 	char input_buffer[MAX_INPUT_BUFFER];
@@ -152,7 +152,9 @@ main (int argc, char **argv)
 
 	return result;
 }
-
+
+
+
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -210,7 +212,7 @@ process_arguments (int argc, char **argv)
 		case 'v':
 			variable_number = atoi (optarg);
 			if (variable_number < 1 || variable_number > 2)
-				usage (_("Invalid variable number\n"));
+				usage4 (_("Invalid variable number"));
 			break;
 		case 'w':									/* critical time threshold */
 			value_warning_threshold = strtoul (optarg, NULL, 10);
@@ -291,7 +293,7 @@ int
 validate_arguments (void)
 {
 	if (variable_number == -1)
-		usage (_("You must supply the variable number\n"));
+		usage4 (_("You must supply the variable number"));
 
 	if (label == NULL)
 		label = strdup ("value");

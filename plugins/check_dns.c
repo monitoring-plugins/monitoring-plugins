@@ -21,15 +21,15 @@
 
 ******************************************************************************/
 
-#include "common.h"
-#include "popen.h"
-#include "utils.h"
-#include "netutils.h"
-
 const char *progname = "check_dns";
 const char *revision = "$Revision$";
 const char *copyright = "2000-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
+#include "common.h"
+#include "popen.h"
+#include "utils.h"
+#include "netutils.h"
 
 int process_arguments (int, char **);
 int validate_arguments (void);

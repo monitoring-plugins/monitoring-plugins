@@ -16,7 +16,7 @@
 
 const char *progname = "check_mysql";
 const char *revision = "$Revision$";
-const char *copyright = "1999-2002";
+const char *copyright = "1999-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #define SLAVERESULTSIZE 40
@@ -24,6 +24,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "common.h"
 #include "utils.h"
 #include "netutils.h"
+
 #include <mysql/mysql.h>
 #include <mysql/errmsg.h>
 
@@ -48,6 +49,9 @@ main (int argc, char **argv)
 	MYSQL mysql;
 	MYSQL_RES *res;
 	MYSQL_ROW row;
+	
+	/* should be status */
+	
 	char *result = NULL;
 	char slaveresult[SLAVERESULTSIZE];
 
