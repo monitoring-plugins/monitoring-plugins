@@ -26,7 +26,7 @@ EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 EXTRA_DIST = t utils.c netutils.c popen.c utils.h netutils.h popen.h common.h \
 	getaddrinfo.c getaddrinfo.h gethostbyname.c gethostbyname.h
 
-PLUGINHDRS = common.h config.h
+PLUGINHDRS = common.h
 
 BASEOBJS = utils.o ../lib/libnagiosplug.a
 NETOBJS = netutils.o $(BASEOBJS) $(EXTRA_NETOBJS)
