@@ -33,10 +33,10 @@ function make_dist {
 	else
 		cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/nagiosplug co -r $cvs_rel nagiosplug
 		cd $PROJECT
-		aclocal
+		aclocal -I lib
 		autoheader
 		autoconf
-		automake
+		automake --add-missing --copy
 		autoreconf
 		./configure
 	fi
