@@ -52,8 +52,8 @@ char *server_address;
 char *ups_name = NULL;
 double warning_value = 0.0;
 double critical_value = 0.0;
-int check_warning_value = FALSE;
-int check_critical_value = FALSE;
+int check_warn = FALSE;
+int check_crit = FALSE;
 int check_variable = UPS_NONE;
 int supported_options = UPS_NONE;
 int status = UPSSTATUS_NONE;
@@ -78,6 +78,7 @@ main (int argc, char **argv)
 {
 	int result = STATE_OK;
 	char *message;
+	char *data;
 	char temp_buffer[MAX_INPUT_BUFFER];
 	double ups_utility_deviation = 0.0;
 
@@ -140,6 +141,7 @@ main (int argc, char **argv)
 				asprintf (&ups_status, "%s%s", ups_status, ", Unknown");
 			}
 		}
+		asprintf (&message, "%sStatus=%s ", message, ups_status);
 	}
 
 	/* get the ups utility voltage if possible */
@@ -149,6 +151,7 @@ main (int argc, char **argv)
 			return STATE_CRITICAL;
 
 		ups_utility_voltage = atof (temp_buffer);
+		asprintf (&message, "%sUtility=%3.1fV ", message, ups_utility_voltage);
 
 		if (ups_utility_voltage > 120.0)
 			ups_utility_deviation = 120.0 - ups_utility_voltage;
@@ -156,11 +159,21 @@ main (int argc, char **argv)
 			ups_utility_deviation = ups_utility_voltage - 120.0;
 
 		if (check_variable == UPS_UTILITY) {
-			if (check_critical_value == TRUE
-					&& ups_utility_deviation >= critical_value) result = STATE_CRITICAL;
-			else if (check_warning_value == TRUE
-							 && ups_utility_deviation >= warning_value
-							 && result < STATE_WARNING) result = STATE_WARNING;
+			if (check_crit==TRUE && ups_utility_deviation>=critical_value) {
+				result = STATE_CRITICAL;
+			}
+			else if (check_warn==TRUE && ups_utility_deviation>=warning_value) {
+				result = max_state (result, STATE_WARNING);
+			}
+			asprintf (&data, "%s ",
+			          perfdata ("voltage", (long)(1000*ups_utility_voltage), "mV",
+			                    check_warn, (long)(1000*warning_value),
+			                    check_crit, (long)(1000*critical_value),
+			                    TRUE, 0, FALSE, 0));
+		} else {
+			asprintf (&data, "%s ",
+			          perfdata ("voltage", (long)(1000*ups_utility_voltage), "mV",
+			                    FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
 		}
 	}
 
@@ -171,13 +184,24 @@ main (int argc, char **argv)
 			return STATE_CRITICAL;
 
 		ups_battery_percent = atof (temp_buffer);
+		asprintf (&message, "%sBatt=%3.1f%% ", message, ups_battery_percent);
 
 		if (check_variable == UPS_BATTPCT) {
-			if (check_critical_value == TRUE
-					&& ups_battery_percent <= critical_value) result = STATE_CRITICAL;
-			else if (check_warning_value == TRUE
-							 && ups_battery_percent <= warning_value
-							 && result < STATE_WARNING) result = STATE_WARNING;
+			if (check_crit==TRUE && ups_battery_percent <= critical_value) {
+				result = STATE_CRITICAL;
+			}
+			else if (check_warn==TRUE && ups_battery_percent<=warning_value) {
+				result = max_state (result, STATE_WARNING);
+			}
+			asprintf (&data, "%s ",
+			          perfdata ("battery", (long)ups_battery_percent, "%",
+			                    check_warn, (long)(1000*warning_value),
+			                    check_crit, (long)(1000*critical_value),
+			                    TRUE, 0, TRUE, 100));
+		} else {
+			asprintf (&data, "%s ",
+			          perfdata ("battery", (long)ups_battery_percent, "%",
+			                    FALSE, 0, FALSE, 0, TRUE, 0, TRUE, 100));
 		}
 	}
 
@@ -188,13 +212,24 @@ main (int argc, char **argv)
 			return STATE_CRITICAL;
 
 		ups_load_percent = atof (temp_buffer);
+		asprintf (&message, "%sLoad=%3.1f%% ", message, ups_load_percent);
 
 		if (check_variable == UPS_LOADPCT) {
-			if (check_critical_value == TRUE && ups_load_percent >= critical_value)
+			if (check_crit==TRUE && ups_load_percent>=critical_value) {
 				result = STATE_CRITICAL;
-			else if (check_warning_value == TRUE
-							 && ups_load_percent >= warning_value && result < STATE_WARNING)
-				result = STATE_WARNING;
+			}
+			else if (check_warn==TRUE && ups_load_percent>=warning_value) {
+				result = max_state (result, STATE_WARNING);
+			}
+			asprintf (&data, "%s ",
+			          perfdata ("load", (long)ups_load_percent, "%",
+			                    check_warn, (long)(1000*warning_value),
+			                    check_crit, (long)(1000*critical_value),
+			                    TRUE, 0, TRUE, 100));
+		} else {
+			asprintf (&data, "%s ",
+			          perfdata ("load", (long)ups_load_percent, "%",
+			                    FALSE, 0, FALSE, 0, TRUE, 0, TRUE, 100));
 		}
 	}
 
@@ -205,46 +240,37 @@ main (int argc, char **argv)
 			return STATE_CRITICAL;
 
 		ups_temperature = (atof (temp_buffer) * 1.8) + 32;
+		asprintf (&message, "%sTemp=%3.1fF", message, ups_temperature);
 
 		if (check_variable == UPS_TEMP) {
-			if (check_critical_value == TRUE && ups_temperature >= critical_value)
+			if (check_crit==TRUE && ups_temperature>=critical_value) {
 				result = STATE_CRITICAL;
-			else if (check_warning_value == TRUE && ups_temperature >= warning_value
-							 && result < STATE_WARNING)
-				result = STATE_WARNING;
+			}
+			else if (check_warn == TRUE && ups_temperature>=warning_value) {
+				result = max_state (result, STATE_WARNING);
+			}
+			asprintf (&data, "%s ",
+			          perfdata ("temp", (long)ups_temperature, "degF",
+			                    check_warn, (long)(1000*warning_value),
+			                    check_crit, (long)(1000*critical_value),
+			                    TRUE, 0, FALSE, 0));
+		} else {
+			asprintf (&data, "%s ",
+			          perfdata ("temp", (long)ups_temperature, "degF",
+			                    FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
 		}
 	}
 
 	/* if the UPS does not support any options we are looking for, report an error */
-	if (supported_options == UPS_NONE)
+	if (supported_options == UPS_NONE) {
 		result = STATE_CRITICAL;
+		asprintf (&message, "UPS does not support any available options\n");
+	}
 
 	/* reset timeout */
 	alarm (0);
 
-
-	asprintf (&message, "UPS %s - ", (result == STATE_OK) ? "ok" : "problem");
-
-	if (supported_options & UPS_STATUS)
-		asprintf (&message, "%sStatus=%s ", message, ups_status);
-
-	if (supported_options & UPS_UTILITY)
-		asprintf (&message, "%sUtility=%3.1fV ", message, ups_utility_voltage);
-
-	if (supported_options & UPS_BATTPCT)
-		asprintf (&message, "%sBatt=%3.1f%% ", message, ups_battery_percent);
-
-	if (supported_options & UPS_LOADPCT)
-		asprintf (&message, "%sLoad=%3.1f%% ", message, ups_load_percent);
-
-	if (supported_options & UPS_TEMP)
-		asprintf (&message, "%sTemp=%3.1fF", message, ups_temperature);
-
-	if (supported_options == UPS_NONE)
-		asprintf (&message, "UPS does not support any available options\n");
-
-	printf ("%s\n", message);
-
+	printf ("UPS %s - %s|%s\n", state_text(result), message, data);
 	return result;
 }
 
@@ -462,7 +488,7 @@ process_arguments (int argc, char **argv)
 		case 'c':									/* critical time threshold */
 			if (is_intnonneg (optarg)) {
 				critical_value = atoi (optarg);
-				check_critical_value = TRUE;
+				check_crit = TRUE;
 			}
 			else {
 				usage2 ("Critical time must be a nonnegative integer", optarg);
@@ -471,7 +497,7 @@ process_arguments (int argc, char **argv)
 		case 'w':									/* warning time threshold */
 			if (is_intnonneg (optarg)) {
 				warning_value = atoi (optarg);
-				check_warning_value = TRUE;
+				check_warn = TRUE;
 			}
 			else {
 				usage2 ("Warning time must be a nonnegative integer", optarg);
