@@ -154,6 +154,7 @@ main (int argc, char **argv)
 		result = error_scan (input_buffer);
 		if (result != STATE_OK) {
 			output = strscpy (output, 1 + index (input_buffer, ':'));
+			strip (output);
 			break;
 		}
 
@@ -164,6 +165,7 @@ main (int argc, char **argv)
 		if (error_scan (input_buffer) != STATE_OK) {
 			result = max_state (result, error_scan (input_buffer));
 			output = strscpy (output, 1 + index (input_buffer, ':'));
+			strip (output);
 		}
 	}
 
@@ -191,7 +193,7 @@ main (int argc, char **argv)
 		else
 			multi_address = TRUE;
 
-		printf ("DNS ok - %-7.3f seconds response time, address%s %s|time=%-7.3f\n",
+		printf ("DNS ok - %-5.3f seconds response time, address%s %s|time=%-5.3f\n",
 		  elapsed_time, (multi_address==TRUE ? "es are" : " is"), address, elapsed_time);
 	}
 	else if (result == STATE_WARNING)
@@ -315,16 +317,13 @@ process_arguments (int argc, char **argv)
 			timeout_interval = atoi (optarg);
 			break;
 		case 'H': /* hostname */
-			if (is_host (optarg) == FALSE) {
-				printf ("Invalid host name/address\n\n");
-				print_usage ();
-				exit (STATE_UNKNOWN);
-			}
 			if (strlen (optarg) >= ADDRESS_LENGTH)
 				terminate (STATE_UNKNOWN, "Input buffer overflow\n");
 			strcpy (query_address, optarg);
 			break;
 		case 's': /* server name */
+			/* TODO: this is_host check is probably unnecessary. Better to confirm nslookup
+			   response matches */
 			if (is_host (optarg) == FALSE) {
 				printf ("Invalid server name/address\n\n");
 				print_usage ();
@@ -335,6 +334,7 @@ process_arguments (int argc, char **argv)
 			strcpy (dns_server, optarg);
 			break;
 		case 'r': /* reverse server name */
+			/* TODO: Is this is_host necessary? */
 			if (is_host (optarg) == FALSE) {
 				printf ("Invalid host name/address\n\n");
 				print_usage ();
@@ -345,11 +345,6 @@ process_arguments (int argc, char **argv)
 			strcpy (ptr_server, optarg);
 			break;
 		case 'a': /* expected address */
-			if (is_addr (optarg) == FALSE) {
-				printf ("Invalid expected address\n\n");
-				print_usage ();
-				exit (STATE_UNKNOWN);
-			}
 			if (strlen (optarg) >= ADDRESS_LENGTH)
 				terminate (STATE_UNKNOWN, "Input buffer overflow\n");
 			strcpy (expected_address, optarg);
@@ -360,16 +355,13 @@ process_arguments (int argc, char **argv)
 
 	c = optind;
 	if (strlen(query_address)==0 && c<argc) {
-		if (is_host(argv[c])==FALSE) {
-			printf ("Invalid name/address: %s\n\n", argv[c]);
-			return ERROR;
-		}
 		if (strlen(argv[c])>=ADDRESS_LENGTH)
 			terminate (STATE_UNKNOWN, "Input buffer overflow\n");
 		strcpy (query_address, argv[c++]);
 	}
 
 	if (strlen(dns_server)==0 && c<argc) {
+		/* TODO: See -s option */
 		if (is_host(argv[c]) == FALSE) {
 			printf ("Invalid name/address: %s\n\n", argv[c]);
 			return ERROR;
