@@ -30,18 +30,18 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 const char *option_summary = "-H host [-C community]\n";
 
-#define HPJD_LINE_STATUS		".1.3.6.1.4.1.11.2.3.9.1.1.2.1"
-#define HPJD_PAPER_STATUS		".1.3.6.1.4.1.11.2.3.9.1.1.2.2"
-#define HPJD_INTERVENTION_REQUIRED	".1.3.6.1.4.1.11.2.3.9.1.1.2.3"
-#define HPJD_GD_PERIPHERAL_ERROR	".1.3.6.1.4.1.11.2.3.9.1.1.2.6"
-#define HPJD_GD_PAPER_JAM		".1.3.6.1.4.1.11.2.3.9.1.1.2.8"
-#define HPJD_GD_PAPER_OUT		".1.3.6.1.4.1.11.2.3.9.1.1.2.9"
-#define HPJD_GD_TONER_LOW		".1.3.6.1.4.1.11.2.3.9.1.1.2.10"
-#define HPJD_GD_PAGE_PUNT		".1.3.6.1.4.1.11.2.3.9.1.1.2.11"
-#define HPJD_GD_MEMORY_OUT		".1.3.6.1.4.1.11.2.3.9.1.1.2.12"
-#define HPJD_GD_DOOR_OPEN	 	".1.3.6.1.4.1.11.2.3.9.1.1.2.17"
-#define HPJD_GD_PAPER_OUTPUT		".1.3.6.1.4.1.11.2.3.9.1.1.2.19"
-#define HPJD_GD_STATUS_DISPLAY		".1.3.6.1.4.1.11.2.3.9.1.1.3"
+#define HPJD_LINE_STATUS           ".1.3.6.1.4.1.11.2.3.9.1.1.2.1"
+#define HPJD_PAPER_STATUS          ".1.3.6.1.4.1.11.2.3.9.1.1.2.2"
+#define HPJD_INTERVENTION_REQUIRED ".1.3.6.1.4.1.11.2.3.9.1.1.2.3"
+#define HPJD_GD_PERIPHERAL_ERROR   ".1.3.6.1.4.1.11.2.3.9.1.1.2.6"
+#define HPJD_GD_PAPER_JAM          ".1.3.6.1.4.1.11.2.3.9.1.1.2.8"
+#define HPJD_GD_PAPER_OUT          ".1.3.6.1.4.1.11.2.3.9.1.1.2.9"
+#define HPJD_GD_TONER_LOW          ".1.3.6.1.4.1.11.2.3.9.1.1.2.10"
+#define HPJD_GD_PAGE_PUNT          ".1.3.6.1.4.1.11.2.3.9.1.1.2.11"
+#define HPJD_GD_MEMORY_OUT         ".1.3.6.1.4.1.11.2.3.9.1.1.2.12"
+#define HPJD_GD_DOOR_OPEN          ".1.3.6.1.4.1.11.2.3.9.1.1.2.17"
+#define HPJD_GD_PAPER_OUTPUT       ".1.3.6.1.4.1.11.2.3.9.1.1.2.19"
+#define HPJD_GD_STATUS_DISPLAY     ".1.3.6.1.4.1.11.2.3.9.1.1.3"
 
 #define ONLINE		0
 #define OFFLINE		1
