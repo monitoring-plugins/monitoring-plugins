@@ -5,6 +5,7 @@
 # Copyright (C) 2000 Christoph Kron,
 # Modified 5/2002 to conform to updated Nagios Plugin Guidelines
 # Added support for named interfaces per Valdimir Ivaschenko (S. Ghosh)
+# Added SNMPv3 support (10/2003)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -42,6 +43,10 @@ use Getopt::Long;
 &Getopt::Long::config('bundling');
 
 my $PROGNAME = "check_ifoperstatus";
+sub print_help ();
+sub usage ();
+sub process_arguments ();
+
 my $status;
 my %ifOperStatus = 	('1','up',
 			 '2','down',
@@ -55,6 +60,8 @@ my $state = "UNKNOWN";
 my $answer = "";
 my $snmpkey = 0;
 my $community = "public";
+my $maxmsgsize = 1472 ; # Net::SNMP default is 1472
+my ($seclevel, $authproto, $secname, $authpass, $privpass, $auth, $priv, $context);
 my $port = 161;
 my @snmpoids;
 my $sysUptime        = '1.3.6.1.2.1.1.3.0';
@@ -92,81 +99,7 @@ alarm($TIMEOUT);
 
 ### Validate Arguments
 
-$status = GetOptions(
-			"V"   => \$opt_V, "version"    => \$opt_V,
-			"h"   => \$opt_h, "help"       => \$opt_h,
-			"v=i" => \$snmp_version, "snmp_version=i"  => \$snmp_version,
-			"C=s" =>\$community, "community=s" => \$community,
-			"k=i" =>\$snmpkey, "key=i",\$snmpkey,
-			"d=s" =>\$ifdescr, "descr=s" => \$ifdescr,
-			"l=s" => \$lastc,  "lastchange=s" => \$lastc,
-			"p=i" =>\$port,  "port=i",\$port,
-			"H=s" => \$hostname, "hostname=s" => \$hostname,
-			"I"	  => \$ifXTable, "ifmib" => \$ifXTable,
-			"n=s" => \$ifName, "name=s" => \$ifName,
-			"w=s" => \$dormantWarn, "warn=s" => \$dormantWarn );
-
-
-				
-if ($status == 0)
-{
-	print_help();
-	exit $ERRORS{'OK'};
-}
-  
-if ($opt_V) {
-	print_revision($PROGNAME,'$Revision$ ');
-	exit $ERRORS{'OK'};
-}
-
-if ($opt_h) {
-	print_help();
-	exit $ERRORS{'OK'};
-}
-
-if (! utils::is_hostname($hostname)){
-	usage();
-	exit $ERRORS{"UNKNOWN"};
-}
-
-
-unless ($snmpkey > 0 || defined $ifdescr){
-	printf "Either a valid snmpkey key (-k) or a ifDescr (-d) must be provided)\n";
-	usage();
-	exit $ERRORS{"UNKNOWN"};
-}
-
-
-if (defined $name) {
-	$ifXTable=1;
-}
-
-if ( $snmp_version =~ /[12]/ ) {
-   ($session, $error) = Net::SNMP->session(
-		-hostname  => $hostname,
-		-community => $community,
-		-port      => $port,
-		-version	=> $snmp_version
-	);
-
-	if (!defined($session)) {
-		$state='UNKNOWN';
-		$answer=$error;
-		print ("$state: $answer");
-		exit $ERRORS{$state};
-	}
-}elsif ( $snmp_version =~ /3/ ) {
-	$state='UNKNOWN';
-	print ("$state: No support for SNMP v3 yet\n");
-	exit $ERRORS{$state};
-}else{
-	$state='UNKNOWN';
-	print ("$state: No support for SNMP v$snmp_version yet\n");
-	exit $ERRORS{$state};
-}
-
-## End validation
-
+$status = process_arguments();
 
 
 ## map ifdescr to ifindex - should look at being able to cache this value
@@ -179,7 +112,7 @@ if (defined $ifdescr) {
 							  # recommend use of SNMP v2 (get-bulk)
 	if ($status==0) {
 		$state = "UNKNOWN";
-		printf "$state: could not retrive snmpkey - $status-$snmpkey\n";
+		printf "$state: could not retrive ifdescr snmpkey - $status-$snmpkey\n";
 		$session->close;
 		exit $ERRORS{$state};
 	}
@@ -245,21 +178,21 @@ push(@snmpoids,$snmpIfAlias) if (defined $ifXTable) ;
       $answer = "Interface $name (index $snmpkey) is down.";
    } elsif ( $response->{$snmpIfOperStatus} == 5 ) {
       if (defined $dormantWarn ) {
-	    if ($dormantWarn eq "w") {
-	  	  $state = 'WARNNG';
-		  $answer = "Interface $name (index $snmpkey) is dormant.";
-	    }elsif($dormantWarn eq "c") {
-	  	  $state = 'CRITICAL';
-		  $answer = "Interface $name (index $snmpkey) is dormant.";
+				if ($dormantWarn eq "w") {
+		  	  $state = 'WARNNG';
+				  $answer = "Interface $name (index $snmpkey) is dormant.";
+	  	  }elsif($dormantWarn eq "c") {
+	  	  	$state = 'CRITICAL';
+				  $answer = "Interface $name (index $snmpkey) is dormant.";
         }elsif($dormantWarn eq "i") {
-	  	  $state = 'OK';
-		  $answer = "Interface $name (index $snmpkey) is dormant.";
+	  		  $state = 'OK';
+		  		$answer = "Interface $name (index $snmpkey) is dormant.";
         }
-	 }else{
-	    # dormant interface  - but warning/critical/ignore not requested
- 	   $state = 'CRITICAL';
-	   $answer = "Interface $name (index $snmpkey) is dormant.";
-	}
+			}else{
+	    	# dormant interface  - but warning/critical/ignore not requested
+	 	   $state = 'CRITICAL';
+		   $answer = "Interface $name (index $snmpkey) is dormant.";
+			}
    } elsif ( $response->{$snmpIfOperStatus} == 6 ) {
 	   $state = 'CRITICAL';
 	   $answer = "Interface $name (index $snmpkey) notPresent - possible hotswap in progress.";
@@ -311,7 +244,7 @@ sub fetch_ifdescr {
 	return $snmpkey;
 }
 
-sub usage {
+sub usage() {
   printf "\nMissing arguments!\n";
   printf "\n";
   printf "usage: \n";
@@ -324,7 +257,7 @@ sub usage {
   exit $ERRORS{"UNKNOWN"};
 }
 
-sub print_help {
+sub print_help() {
 	printf "check_ifoperstatus plugin for Nagios monitors operational \n";
   	printf "status of a particular network interface on the target host\n";
 	printf "\nUsage:\n";
@@ -335,6 +268,16 @@ sub print_help {
 	printf "                        2 for SNMP v2c\n";
 	printf "                        SNMP v2c will use get_bulk for less overhead\n";
 	printf "                        if monitoring with -d\n";
+	printf "   -L (--seclevel)   choice of \"noAuthNoPriv\", \"authNoPriv\", or	\"authPriv\"\n";
+	printf "   -U (--secname)    username for SNMPv3 context\n";
+	printf "   -c (--context)    SNMPv3 context name (default is empty	string)";
+	printf "   -A (--authpass)   authentication password (cleartext ascii or localized key\n";
+	printf "                     in hex with 0x prefix generated by using	\"snmpkey\" utility\n"; 
+	printf "                     auth password and authEngineID\n";
+	printf "   -a (--authproto)  Authentication protocol ( MD5 or SHA1)\n";
+	printf "   -X (--privpass)   privacy password (cleartext ascii or localized key\n";
+	printf "                     in hex with 0x prefix generated by using	\"snmpkey\" utility\n"; 
+	printf "                     privacy password and authEngineID\n";
 	printf "   -k (--key)        SNMP IfIndex value\n";
 	printf "   -d (--descr)      SNMP ifDescr value\n";
 	printf "   -p (--port)       SNMP port (default 161)\n";
@@ -343,6 +286,7 @@ sub print_help {
 	printf "   -n (--name)       the value should match the returned ifName\n";
 	printf "                     (Implies the use of -I)\n";
 	printf "   -w (--warn =i|w|c) ignore|warn|crit if the interface is dormant (default critical)\n";
+	printf "   -M (--maxmsgsize) Max message size - usefull only for v1 or v2c\n";
 	printf "   -V (--version)    Plugin version\n";
 	printf "   -h (--help)       usage help \n\n";
 	printf " -k or -d must be specified\n\n";
@@ -353,3 +297,192 @@ sub print_help {
 	print_revision($PROGNAME, '$Revision$');
 	
 }
+
+sub process_arguments() {
+	$status = GetOptions(
+			"V"   => \$opt_V, "version"    => \$opt_V,
+			"h"   => \$opt_h, "help"       => \$opt_h,
+			"v=i" => \$snmp_version, "snmp_version=i"  => \$snmp_version,
+			"C=s" => \$community, "community=s" => \$community,
+			"L=s" => \$seclevel, "seclevel=s" => \$seclevel,
+			"a=s" => \$authproto, "authproto=s" => \$authproto,
+			"U=s" => \$secname,   "secname=s"   => \$secname,
+			"A=s" => \$authpass,  "authpass=s"  => \$authpass,
+			"X=s" => \$privpass,  "privpass=s"  => \$privpass,
+			"c=s" => \$context,   "context=s"   => \$context,
+			"k=i" => \$snmpkey, "key=i",\$snmpkey,
+			"d=s" => \$ifdescr, "descr=s" => \$ifdescr,
+			"l=s" => \$lastc,  "lastchange=s" => \$lastc,
+			"p=i" = >\$port,  "port=i" =>\$port,
+			"H=s" => \$hostname, "hostname=s" => \$hostname,
+			"I"	  => \$ifXTable, "ifmib" => \$ifXTable,
+			"n=s" => \$ifName, "name=s" => \$ifName,
+			"w=s" => \$dormantWarn, "warn=s" => \$dormantWarn,
+			"M=i" => \$maxmsgsize, "maxmsgsize=i" => \$maxmsgsize);
+
+
+				
+	if ($status == 0){
+		print_help();
+		exit $ERRORS{'OK'};
+	}
+  
+	if ($opt_V) {
+		print_revision($PROGNAME,'$Revision$ ');
+		exit $ERRORS{'OK'};
+	}
+
+	if ($opt_h) {
+		print_help();
+		exit $ERRORS{'OK'};
+	}
+
+	if (! utils::is_hostname($hostname)){
+		usage();
+		exit $ERRORS{"UNKNOWN"};
+	}
+
+
+	unless ($snmpkey > 0 || defined $ifdescr){
+		printf "Either a valid snmpkey key (-k) or a ifDescr (-d) must be provided)\n";
+		usage();
+		exit $ERRORS{"UNKNOWN"};
+	}
+
+
+	if (defined $name) {
+		$ifXTable=1;
+	}	
+
+	if (defined $dormantWarn) {
+		unless ($dormantWarn =~ /^(w|c|i)$/ ) {
+			printf "Dormant alerts must be one of w|c|i \n";
+			exit $ERRORS{'UNKNOWN'};
+		}
+	}
+	
+	if ($snmp_version =~ /3/ ) {
+		# Must define a security level even though default is noAuthNoPriv
+		# v3 requires a security username
+		if (defined $seclevel  && defined $secname) {
+		
+			# Must define a security level even though defualt is noAuthNoPriv
+			unless ($seclevel eq ('noAuthNoPriv' || 'authNoPriv' || 'authPriv' ) ) {
+				usage();
+				exit $ERRORS{"UNKNOWN"};
+			}
+			
+			# Authentication wanted
+			if ($seclevel eq ('authNoPriv' || 'authPriv') ) {
+		
+				unless ($authproto eq ('MD5' || 'SHA1') ) {
+					usage();
+					exit $ERRORS{"UNKNOWN"};
+				}
+
+				if ( !defined $authpass) {
+					usage();
+					exit $ERRORS{"UNKNOWN"};
+				}else{
+					if ($authpass =~ /^0x/ ) {
+						$auth = "-authkey => $authpass" ;
+					}else{
+						$auth = "-authpassword => $authpass";
+					}
+				}
+					
+			}
+			
+			# Privacy (DES encryption) wanted
+			if ($seclevel eq  'authPriv' ) {
+				if (! defined $privpass) {
+					usage();
+					exit $ERRORS{"UNKNOWN"};
+				}else{
+					if ($privpass =~ /^0x/){
+						$priv = "-privkey => $privpass";
+					}else{
+						$priv = "-privpassword => $privpass";
+					}
+				}
+			}
+
+			# Context name defined or default
+
+			unless ( defined $context) {
+				$context = "";
+			}
+		
+		
+		
+		}else {
+					usage();
+					exit $ERRORS{'UNKNOWN'}; ;
+		}
+	} # end snmpv3
+
+
+	if ( $snmp_version =~ /[12]/ ) {
+  	($session, $error) = Net::SNMP->session(
+			-hostname  => $hostname,
+			-community => $community,
+			-port      => $port,
+			-version	=> $snmp_version,
+			-maxmsgsize => $maxmsgsize
+		);
+
+		if (!defined($session)) {
+			$state='UNKNOWN';
+			$answer=$error;
+			print ("$state: $answer");
+			exit $ERRORS{$state};
+		}
+	
+	}elsif ( $snmp_version =~ /3/ ) {
+
+		if ($seclevel eq 'noAuthNoPriv') {
+			($session, $error) = Net::SNMP->session(
+				-hostname  => $hostname,
+				-port      => $port,
+				-version  => $snmp_version,
+				-username => $secname,
+			);
+
+		}elsif ( $seclevel eq 'authNoPriv' ) {
+			($session, $error) = Net::SNMP->session(
+				-hostname  => $hostname,
+				-port      => $port,
+				-version  => $snmp_version,
+				-username => $secname,
+				$auth,
+				-authprotocol => $authproto,
+			);	
+		}elsif ($seclevel eq 'authPriv' ) {
+			($session, $error) = Net::SNMP->session(
+				-hostname  => $hostname,
+				-port      => $port,
+				-version  => $snmp_version,
+				-username => $secname,
+				$auth,
+				-authprotocol => $authproto,
+				$priv
+			);
+		}
+					
+					
+		if (!defined($session)) {
+					$state='UNKNOWN';
+					$answer=$error;
+					print ("$state: $answer");
+					exit $ERRORS{$state};
+		}
+
+	}else{
+		$state='UNKNOWN';
+		print ("$state: No support for SNMP v$snmp_version yet\n");
+		exit $ERRORS{$state};
+	}
+
+}
+## End validation
+
