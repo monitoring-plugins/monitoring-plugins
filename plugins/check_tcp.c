@@ -228,7 +228,8 @@ main (int argc, char **argv)
 		{
 			if (PROTOCOL == UDP_PROTOCOL)
 				result = my_udp_connect (server_address, server_port, &sd);
-			else													/* default is TCP */
+			else
+				/* default is TCP */
 				result = my_tcp_connect (server_address, server_port, &sd);
 		}
 
