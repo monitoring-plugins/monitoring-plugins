@@ -3,3 +3,16 @@ Makefile.in
 subst
 utils.pm
 utils.sh
+check_breeze
+check_disk_smb
+check_flexlm
+check_ifoperstatus
+check_ifstatus
+check_ircd
+check_log
+check_mailq
+check_ntp
+check_oracle
+check_rpc
+check_sensors
+check_wave
