@@ -49,7 +49,6 @@ int critical_time = 0;
 int check_critical_time = FALSE;
 
 int process_arguments (int, char **);
-int call_getopt (int, char **);
 void print_usage (void);
 void print_help (void);
 
@@ -57,7 +56,7 @@ int verbose = FALSE;
 int server_port = 0;
 char *server_address = NULL;
 char *server_expect = NULL;
-char *server_send = NULL;
+char *server_send = "";
 
 int
 main (int argc, char **argv)
@@ -126,51 +125,6 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	if (argc < 2)
-		usage ("\n");
-
-	for (c = 1; c < argc; c++) {
-		if (strcmp ("-to", argv[c]) == 0)
-			strcpy (argv[c], "-t");
-		else if (strcmp ("-wt", argv[c]) == 0)
-			strcpy (argv[c], "-w");
-		else if (strcmp ("-ct", argv[c]) == 0)
-			strcpy (argv[c], "-c");
-	}
-
-	c = 0;
-	while ((c += call_getopt (argc - c, &argv[c])) < argc) {
-
-		if (is_option (argv[c]))
-			continue;
-
-		if (server_address == NULL) {
-			if (argc > c) {
-				if (is_host (argv[c]) == FALSE)
-					usage ("Invalid host name/address\n");
-				server_address = argv[c];
-			}
-			else {
-				usage ("Host name was not supplied\n");
-			}
-		}
-	}
-
-	if (server_send == NULL)
-		server_send = strscpy (server_send, "");
-
-	return OK;
-}
-
-
-
-
-
-int
-call_getopt (int argc, char **argv)
-{
-	int c, i = 0;
-
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -188,30 +142,24 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+	if (argc < 2)
+		usage ("\n");
+
+	for (c = 1; c < argc; c++) {
+		if (strcmp ("-to", argv[c]) == 0)
+			strcpy (argv[c], "-t");
+		else if (strcmp ("-wt", argv[c]) == 0)
+			strcpy (argv[c], "-w");
+		else if (strcmp ("-ct", argv[c]) == 0)
+			strcpy (argv[c], "-c");
+	}
+
 	while (1) {
 #ifdef HAVE_GETOPT_H
-		c =
-			getopt_long (argc, argv, "+hVvH:e:s:c:w:t:p:", long_options,
-									 &option_index);
+		c =	getopt_long (argc, argv, "+hVvH:e:s:c:w:t:p:", long_options, &option_index);
 #else
 		c = getopt (argc, argv, "+hVvH:e:s:c:w:t:p:");
 #endif
-
-		i++;
-
-		if (c == -1 || c == EOF || c == 1)
-			break;
-
-		switch (c) {
-		case 'H':
-		case 'c':
-		case 'w':
-		case 't':
-		case 'p':
-		case 'e':
-		case 's':
-			i++;
-		}
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
@@ -262,7 +210,18 @@ call_getopt (int argc, char **argv)
 			break;
 		}
 	}
-	return i;
+
+	c = optind;
+	if (server_address == NULL && argv[c]) {
+		if (is_host (argv[c]) == FALSE)
+			usage ("Invalid host name/address\n");
+		server_address = argv[c++];
+	}
+	else {
+		usage ("Host name was not supplied\n");
+	}
+
+	return c;
 }
 
 
