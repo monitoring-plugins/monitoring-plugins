@@ -22,6 +22,9 @@ Nagios Plugins README
 * The file command.cfg contains example configurations for many of the
   plugins
 
+* The win32 subdir contains plugins specific to the Win32 platform. 
+  These are scripts or binaries.
+
 You can check for the latest plugins at:
   ftp://download.sourceforge.net/pub/sourceforge/nagiosplug
   http://sourceforge.net/projects/nagiosplug/
