@@ -416,6 +416,8 @@ char *
 strscat (char *dest, const char *src)
 {
 
+	if (dest == NULL)
+		return src;
 	if (src != NULL)
 		asprintf (&dest, "%s%s", dest, src);
 
