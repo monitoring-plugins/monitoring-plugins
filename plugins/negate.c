@@ -38,6 +38,12 @@ const char *progname = "negate";
     Terminate test if timeout limit is exceeded (default: %d)\n\
      [keep this less than the plugin timeout to retain CRITICAL status]\n"
 
+#define EXAMPLES "\
+  negate \"/usr/local/nagios/libexec/check_ping -H host\"\n\
+    Run check_ping and invert result. Must use full path to plugin\n\
+  negate \"/usr/local/nagios/libexec/check_procs -a 'vi negate.c'\"\n\
+    Use single quotes if you need to retain spaces\n"
+
 #define DESCRIPTION "\
 This plugin is a wrapper to take the output of another plugin and invert it.\n\
 If the wrapped plugin returns STATE_OK, the wrapper will return STATE_CRITICAL.\n\
@@ -180,8 +186,8 @@ print_help (void)
 		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
 	print_usage ();
 	printf
-		("\nOptions:\n" LONGOPTIONS "\n" DESCRIPTION "\n", 
-		 DEFAULT_TIMEOUT);
+		("\nOptions:\n" LONGOPTIONS "\n" "Examples:\n" EXAMPLES "\n"
+		 DESCRIPTION "\n", DEFAULT_TIMEOUT);
 	support ();
 }
 
