@@ -7,6 +7,8 @@
 # Modified 5/2002 to conform to updated Nagios Plugin Guidelines (S. Ghosh)
 #  Added -x option (4/2003)
 #  Added -u option (4/2003)
+#  Added -M option (10/2003)
+#  Added SNMPv3 support (10/2003)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -40,9 +42,13 @@ Getopt::Long::Configure('bundling');
 
 my $PROGNAME = "check_ifstatus";
 
+sub print_help ();
+sub usage ();
+sub process_arguments ();
+
 
 my $status;
-my %ifOperStatus = 	('1','up',
+my %ifOperStatus =	('1','up',
 			 '2','down',
 			 '3','testing',
 			 '4','unknown',
@@ -55,6 +61,8 @@ my $snmpkey=0;
 my $snmpoid=0;
 my $key=0;
 my $community = "public";
+my $maxmsgsize = 1472 ; # Net::SNMP default is 1472
+my ($seclevel, $authproto, $secname, $authpass, $privpass, $auth, $priv, $context);
 my $port = 161;
 my @snmpoids;
 my $snmpIfAdminStatus = '1.3.6.1.2.1.2.2.1.7';
@@ -93,98 +101,19 @@ $SIG{'ALRM'} = sub {
      print ("ERROR: No snmp response from $hostname (alarm timeout)\n");
      exit $ERRORS{"UNKNOWN"};
 };
-alarm($TIMEOUT);
-
 
 
 #Option checking
-$status = GetOptions(
-		"V"   => \$opt_V, "version"    => \$opt_V,
-		"h"   => \$opt_h, "help"       => \$opt_h,
-		"v=i" => \$snmp_version, "snmp_version=i"  => \$snmp_version,
-		"C=s" =>\$community,"community=s" => \$community,
-		"p=i" =>\$port, "port=i" => \$port,
-		"H=s" => \$hostname, "hostname=s" => \$hostname,
-		"I"	  => \$ifXTable, "ifmib" => \$ifXTable,
-		"x:s"		=>	\$opt_x,   "exclude:s" => \$opt_x,
-		"u=s" => \$opt_u,  "unused_ports=s" => \$opt_u);
-		
-if ($status == 0)
+$status = process_arguments();
+
+if ($status != 0)
 {
 	print_help() ;
 	exit $ERRORS{'OK'};
 }
 
 
-if ($opt_V) {
-	print_revision($PROGNAME,'$Revision$ ');
-	exit $ERRORS{'OK'};
-}
-
-if ($opt_h) {
-	print_help();
-	exit $ERRORS{'OK'};
-}
-
-
-if (defined $opt_x) {
-	my @x = split(/,/, $opt_x);
-	if ( @x) {
-		foreach $key (@x){
-			$excluded{$key} = 1;
-		}
-	}else{
-		$excluded{23} = 1; # default PPP(23) if empty list - note (AIX seems to think PPP is 22 according to a post)
-	}
-	#debugging
-	#foreach $x (keys %excluded) 
-	#	{ print "key = $x  val = $excluded{$x}\n";}
-}
-
-if ($opt_u) {
-	@unused_ports = split(/,/,$opt_u);
-	foreach $key (@unused_ports) { 
-		$ifStatus{$key}{'notInUse'}++ ;
-	}
-}
-
-if (! utils::is_hostname($hostname)){
-	usage();
-	exit $ERRORS{"UNKNOWN"};
-}
-
-if ( ! $snmp_version ) {
-	$snmp_version =1 ;
-}else{
-	if ( $snmp_version =~ /[12]/ ) {
-			
-		($session, $error) = Net::SNMP->session(
-		      -hostname  => $hostname,
-		      -community => $community,
-		      -port      => $port,
-			  -version	=> $snmp_version
-			   );
-
-		if (!defined($session)) {
-		      $state='UNKNOWN';
-		      $answer=$error;
-		      print ("$state: $answer");
-		      exit $ERRORS{$state};
-		}
-
-		
-	}elsif ( $snmp_version =~ /3/ ) {
-		$state='UNKNOWN';
-		print ("$state: No support for SNMP v3 yet\n");
-		exit $ERRORS{$state};
-	}else{
-		$state='UNKNOWN';
-		print ("$state: No support for SNMP v$snmp_version yet\n");
-		exit $ERRORS{$state};
-	}
-}
-
-
+alarm($TIMEOUT);
 
 push(@snmpoids,$snmpIfOperStatus);
 push(@snmpoids,$snmpIfAdminStatus);
@@ -205,7 +134,7 @@ foreach $snmpoid (@snmpoids) {
 			if ( ( $snmpoid =~ $snmpIfName ) && defined $ifXTable ) {
 				print ("$state: Device does not support ifTable - try without -I option\n");
 			}else{
-	      print ("$state: $answer for $snmpoid  with snmp version $snmp_version\n");
+				print ("$state: $answer for $snmpoid  with snmp version $snmp_version\n");
 			}
       exit $ERRORS{$state};
    }
@@ -220,6 +149,8 @@ foreach $snmpoid (@snmpoids) {
 
 $session->close;
 
+alarm(0);
+
 foreach $key (keys %ifStatus) {
 
 	# skip unused interfaces
@@ -230,18 +161,18 @@ foreach $key (keys %ifStatus) {
 			# check only if interface type is not listed in %excluded
 			if (!defined $excluded{$ifStatus{$key}{$snmpIfType}} ) {
 				if ($ifStatus{$key}{$snmpIfOperStatus} == 1 ) { $ifup++ ;}
-     		if ($ifStatus{$key}{$snmpIfOperStatus} == 2 ) {
-          	  	$ifdown++ ;
+				if ($ifStatus{$key}{$snmpIfOperStatus} == 2 ) {
+								$ifdown++ ;
 								if (defined $ifXTable) {
 									$ifmessage .= sprintf("%s: down -> %s<BR>",
                                 $ifStatus{$key}{$snmpIfName},
-								 								$ifStatus{$key}{$snmpIfAlias});
+																$ifStatus{$key}{$snmpIfAlias});
 								}else{
 									$ifmessage .= sprintf("%s: down <BR>",
 																$ifStatus{$key}{$snmpIfDescr});
 								}
 				}
-       	if ($ifStatus{$key}{$snmpIfOperStatus} == 5 ) { $ifdormant++ ;}
+				if ($ifStatus{$key}{$snmpIfOperStatus} == 5 ) { $ifdormant++ ;}
 			}else{
 				$ifexclude++;
 			}
@@ -278,7 +209,7 @@ print ("$state: $answer |$perfdata\n");
 exit $ERRORS{$state};
 
 
-sub usage {
+sub usage (){
 	printf "\nMissing arguments!\n";
 	printf "\n";
 	printf "check_ifstatus -C <READCOMMUNITY> -p <PORT> -H <HOSTNAME>\n";
@@ -289,24 +220,230 @@ sub usage {
 	exit $ERRORS{"UNKNOWN"};
 }
 
-sub print_help {
+sub print_help (){
 	printf "check_ifstatus plugin for Nagios monitors operational \n";
- 	printf "status of each network interface on the target host\n";
+	printf "status of each network interface on the target host\n";
 	printf "\nUsage:\n";
 	printf "   -H (--hostname)   Hostname to query - (required)\n";
 	printf "   -C (--community)  SNMP read community (defaults to public,\n";
 	printf "                     used with SNMP v1 and v2c\n";
 	printf "   -v (--snmp_version)  1 for SNMP v1 (default)\n";
 	printf "                        2 for SNMP v2c\n";
-	printf "                        SNMP v2c will use get_bulk for less overhead\n";
+	printf "                          SNMP v2c will use get_bulk for less overhead\n";
+	printf "                        3 for SNMPv3 (requires -U option)";
 	printf "   -p (--port)       SNMP port (default 161)\n";
 	printf "   -I (--ifmib)      Agent supports IFMIB ifXTable.  For Cisco - this will provide\n";
 	printf "                     the descriptive name.  Do not use if you don't know what this is. \n";
 	printf "   -x (--exclude)    A comma separated list of ifType values that should be excluded \n";
 	printf "                     from the report (default for an empty list is PPP(23).\n";
+	printf "   -u (--unused_ports) A comma separated list of ifIndex values that should be excluded \n";
+	printf "                     from the report (default is an empty exclusion list).\n";
 	printf "                     See the IANAifType-MIB for a list of interface types.\n";
+	printf "   -L (--seclevel)   choice of \"noAuthNoPriv\", \"authNoPriv\", or	\"authPriv\"\n";
+	printf "   -U (--secname)    username for SNMPv3 context\n";
+	printf "   -c (--context)    SNMPv3 context name (default is empty	string)";
+	printf "   -A (--authpass)   authentication password (cleartext ascii or localized key\n";
+	printf "                     in hex with 0x prefix generated by using	\"snmpkey\" utility\n"; 
+	printf "                     auth password and authEngineID\n";
+	printf "   -a (--authproto)  Authentication protocol ( MD5 or SHA1)\n";
+	printf "   -X (--privpass)   privacy password (cleartext ascii or localized key\n";
+	printf "                     in hex with 0x prefix generated by using	\"snmpkey\" utility\n"; 
+	printf "                     privacy password and authEngineID\n";
+	printf "   -M (--maxmsgsize) Max message size - usefull only for v1 or v2c\n";
 	printf "   -V (--version)    Plugin version\n";
 	printf "   -h (--help)       usage help \n\n";
 	print_revision($PROGNAME, '$Revision$');
 	
+}
+
+sub process_arguments() {
+	$status = GetOptions(
+		"V"   => \$opt_V, "version"    => \$opt_V,
+		"h"   => \$opt_h, "help"       => \$opt_h,
+		"v=i" => \$snmp_version, "snmp_version=i"  => \$snmp_version,
+		"C=s" => \$community,"community=s" => \$community,
+		"L=s" => \$seclevel, "seclevel=s" => \$seclevel,
+		"a=s" => \$authproto, "authproto=s" => \$authproto,
+		"U=s" => \$secname,   "secname=s"   => \$secname,
+		"A=s" => \$authpass,  "authpass=s"  => \$authpass,
+		"X=s" => \$privpass,  "privpass=s"  => \$privpass,
+		"c=s" => \$context,   "context=s"   => \$context,
+		"p=i" =>\$port, "port=i" => \$port,
+		"H=s" => \$hostname, "hostname=s" => \$hostname,
+		"I"		=> \$ifXTable, "ifmib" => \$ifXTable,
+		"x:s"		=>	\$opt_x,   "exclude:s" => \$opt_x,
+		"u=s" => \$opt_u,  "unused_ports=s" => \$opt_u,
+		"M=i" => \$maxmsgsize, "maxmsgsize=i" => \$maxmsgsize);
+		
+	if ($status == 0){
+		print_help() ;
+		exit $ERRORS{'OK'};
+	}
+	if ($opt_V) {
+		print_revision($PROGNAME,'$Revision$ ');
+		exit $ERRORS{'OK'};
+	}
+
+	if ($opt_h) {
+		print_help();
+		exit $ERRORS{'OK'};
+	}
+
+
+	if ($snmp_version =~ /3/ ) {
+		# Must define a security level even though default is noAuthNoPriv
+		# v3 requires a security username
+		if (defined $seclevel  && defined $secname) {
+		
+			# Must define a security level even though defualt is noAuthNoPriv
+			unless ($seclevel eq ('noAuthNoPriv' || 'authNoPriv' || 'authPriv' ) ) {
+				usage();
+				exit $ERRORS{"UNKNOWN"};
+			}
+			
+			# Authentication wanted
+			if ($seclevel eq ('authNoPriv' || 'authPriv') ) {
+		
+				unless ($authproto eq ('MD5' || 'SHA1') ) {
+					usage();
+					exit $ERRORS{"UNKNOWN"};
+				}
+
+				if ( !defined $authpass) {
+					usage();
+					exit $ERRORS{"UNKNOWN"};
+				}else{
+					if ($authpass =~ /^0x/ ) {
+						$auth = "-authkey => $authpass" ;
+					}else{
+						$auth = "-authpassword => $authpass";
+					}
+				}
+					
+			}
+			
+			# Privacy (DES encryption) wanted
+			if ($seclevel eq  'authPriv' ) {
+				if (! defined $privpass) {
+					usage();
+					exit $ERRORS{"UNKNOWN"};
+				}else{
+					if ($privpass =~ /^0x/){
+						$priv = "-privkey => $privpass";
+					}else{
+						$priv = "-privpassword => $privpass";
+					}
+				}
+			}
+
+			# Context name defined or default
+
+			unless ( defined $context) {
+				$context = "";
+			}
+		
+		
+		
+		}else {
+					usage();
+					exit $ERRORS{'UNKNOWN'}; ;
+		}
+	} # end snmpv3
+
+	# for snmp v1 & v2c we default to community = "public"
+	
+	# Excluded interfaces types (ifType) (backup interfaces, dial-on demand interfaces, PPP interfaces
+	if (defined $opt_x) {
+		my @x = split(/,/, $opt_x);
+		if ( @x) {
+			foreach $key (@x){
+				$excluded{$key} = 1;
+			}
+		}else{
+			$excluded{23} = 1; # default PPP(23) if empty list - note (AIX seems to think PPP is 22 according to a post)
+		}
+	}
+	
+	# Excluded interface ports (ifIndex) - management reasons
+	if ($opt_u) {
+		@unused_ports = split(/,/,$opt_u);
+		foreach $key (@unused_ports) { 
+			$ifStatus{$key}{'notInUse'}++ ;
+		}
+	}
+
+	if (! utils::is_hostname($hostname)){
+		usage();
+		exit $ERRORS{"UNKNOWN"};
+	}
+
+	# create SNMP session handle based on options passed.
+
+	if ( ! $snmp_version ) {
+		$snmp_version =1 ;
+	}else{
+		if ( $snmp_version =~ /[12]/ ) {
+	
+			($session, $error) = Net::SNMP->session(
+						-hostname  => $hostname,
+						-community => $community,
+						-port      => $port,
+						-version	=> $snmp_version,
+						-maxmsgsize => $maxmsgsize
+			 );
+
+		if (!defined($session)) {
+					$state='UNKNOWN';
+					$answer=$error;
+					print ("$state: $answer");
+					exit $ERRORS{$state};
+		}
+
+		
+	}elsif ( $snmp_version =~ /3/ ) {
+
+		if ($seclevel eq 'noAuthNoPriv') {
+			($session, $error) = Net::SNMP->session(
+				-hostname  => $hostname,
+				-port      => $port,
+				-version  => $snmp_version,
+				-username => $secname,
+			);
+
+		}elsif ( $seclevel eq 'authNoPriv' ) {
+			($session, $error) = Net::SNMP->session(
+				-hostname  => $hostname,
+				-port      => $port,
+				-version  => $snmp_version,
+				-username => $secname,
+				$auth
+			);	
+		}elsif ($seclevel eq 'authPriv' ) {
+			($session, $error) = Net::SNMP->session(
+				-hostname  => $hostname,
+				-port      => $port,
+				-version  => $snmp_version,
+				-username => $secname,
+				$auth,
+				$priv
+			);
+		}
+					
+					
+		if (!defined($session)) {
+					$state='UNKNOWN';
+					$answer=$error;
+					print ("$state: $answer");
+					exit $ERRORS{$state};
+		}
+			
+	}else{
+		$state='UNKNOWN';
+		print ("$state: No support for SNMP v$snmp_version yet\n");
+		exit $ERRORS{$state};
+	}
+}
+
+return $ERRORS{"OK"};
+				
 }
