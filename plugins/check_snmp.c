@@ -34,7 +34,7 @@
 -H <ip_address> -o <OID> [-w warn_range] [-c crit_range] \n\
           [-C community] [-s string] [-r regex] [-R regexi] [-t timeout]\n\
           [-l label] [-u units] [-p port-number] [-d delimiter]\n\
-          [-D output-delimiter]"
+          [-D output-delimiter] [-m miblist]"
 
 #define LONGOPTIONS "\
  -H, --hostname=HOST\n\
@@ -70,9 +70,9 @@
  -l, --label=STRING\n\
     Prefix label for output from plugin (default -s 'SNMP')\n\
  -v, --verbose\n\
-    Debugging the output\n\ 
-		
-		"
+    Debugging the output\n\
+ -m, --miblist=STRING\n\
+    List of MIBS to be loaded (default = ALL)\n"
 
 #define NOTES "\
 - This plugin uses the 'snmpget' command included with the NET-SNMP package.\n\
@@ -99,6 +99,7 @@ This plugin gets system information on a remote server via snmp.\n"
 #define DEFAULT_COMMUNITY "public"
 #define DEFAULT_PORT "161"
 #define DEFAULT_TIMEOUT 10
+#define DEFAULT_MIBLIST "ALL"
 
 #include "common.h"
 #include "utils.h"
@@ -181,6 +182,7 @@ int check_critical_value = FALSE;
 int eval_method[MAX_OIDS];
 char *delimiter = NULL;
 char *output_delim = NULL;
+char *miblist = NULL;
 
 
 int
@@ -209,8 +211,8 @@ main (int argc, char **argv)
 		usage ("Incorrect arguments supplied\n");
 
 	/* create the command line to execute */
-	asprintf (&command_line, "%s -m ALL -v 1 -c %s %s:%s %s",
-	          PATH_TO_SNMPGET, community, server_address, port, oid);
+	asprintf (&command_line, "%s -m %s -v 1 -c %s %s:%s %s",
+	          PATH_TO_SNMPGET, miblist, community, server_address, port, oid);
 	if (verbose)
 		printf ("%s\n", command_line);
 
@@ -422,10 +424,10 @@ process_arguments (int argc, char **argv)
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
-			getopt_long (argc, argv, "hvVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:",
+			getopt_long (argc, argv, "hvVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:m:",
 									 long_options, &option_index);
 #else
-		c = getopt (argc, argv, "hvVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:");
+		c = getopt (argc, argv, "hvVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:m:");
 #endif
 
 		if (c == -1 || c == EOF)
@@ -602,6 +604,9 @@ process_arguments (int argc, char **argv)
 		case 'p':       /* TCP port number */
 			port = strscpy(port, optarg);
 			break;
+		case 'm':      /* List of MIBS  */
+			miblist = strscpy(miblist, optarg);
+			break;
 
 		}
 	}
@@ -644,6 +649,9 @@ validate_arguments ()
 
 	if (output_delim == NULL)
 		asprintf (&output_delim, DEFAULT_OUTPUT_DELIMITER);
+
+	if (miblist == NULL)
+		asprintf (&miblist, DEFAULT_MIBLIST);
 
 	if (label == NULL)
 		asprintf (&label, "SNMP");
