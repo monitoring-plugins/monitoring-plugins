@@ -498,7 +498,7 @@ print_help ()
 	printf ("(C) 1999 Ragnar Hojland Espinosa <ragnar@lightside.dhis.org>\n");
 	printf (COPYRIGHT, copyright, email);
 	
-	printf (_("\
+	printf ("\
 Usage: %s [DEVICE] [OPTION]\n\
  -d, --device=DEVICE\n\
     Select device DEVICE\n\

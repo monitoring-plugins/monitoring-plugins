@@ -140,8 +140,9 @@ $(check_tcp_programs): check_tcp
 
 install-exec-hook:
 	cd $(DESTDIR)$(libexecdir) && \
-	for i in $(check_tcp_programs) ; do rm -f $$i; ln -s check_tcp $$i ; done
-
+	for i in $(check_tcp_programs) ; do rm -f $$i; ln -s check_tcp $$i ; done ;\
+	rm -f check_ldaps ; ln -s -f check_ldap check_ldaps
+	
 clean-local:
 	rm -f $(check_tcp_programs)
 

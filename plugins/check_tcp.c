@@ -479,7 +479,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H':                 /* hostname */
 			if (is_host (optarg) == FALSE)
-				usage2 (_("invalid hostname/address"), optarg);
+				usage2 (_("Invalid hostname/address"), optarg);
 			server_address = optarg;
 			break;
 		case 'c':                 /* critical */

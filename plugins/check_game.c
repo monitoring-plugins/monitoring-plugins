@@ -300,9 +300,9 @@ print_help (void)
 	print_revision (progname, revision);
 
 	printf ("Copyright (c) 1999 Ian Cass, Knowledge Matters Limited\n");
-	printf (_(COPYRIGHT), copyright, email);
+	printf (COPYRIGHT, copyright, email);
 
-	printf (_("This plugin tests game server connections with the specified host."), progname);
+	printf (_("This plugin tests game server connections with the specified host."));
 
 	print_usage ();
 

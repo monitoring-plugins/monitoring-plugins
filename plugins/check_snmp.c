@@ -656,7 +656,7 @@ validate_arguments ()
 		}
 		else if ( strcmp(seclevel, "authPriv") == 0 ) {
 			if ( secname == NULL || authpasswd == NULL || privpasswd == NULL ) {
-				printf (("Missing secname (%s), authpassword (%s), or privpasswd (%s)! \n"),secname, authpasswd,privpasswd );
+				printf (_("Missing secname (%s), authpassword (%s), or privpasswd (%s)! \n"),secname, authpasswd,privpasswd );
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}

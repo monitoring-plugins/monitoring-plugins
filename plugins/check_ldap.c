@@ -57,6 +57,10 @@ double warn_time = UNDEFINED;
 double crit_time = UNDEFINED;
 struct timeval tv;
 
+/* for ldap tls */
+
+char *SERVICE = "LDAP";
+
 int
 main (int argc, char *argv[])
 {
@@ -69,11 +73,20 @@ main (int argc, char *argv[])
 	int status = STATE_UNKNOWN;
 	long microsec;
 	double elapsed_time;
+	
+	/* for ldap tls */
+	
+ 	int tls; 
+ 	int version=3;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
+	if (strstr(argv[0],"check_ldaps")) {
+      asprintf (&progname, "check_ldaps");
+ 	}
+	
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
@@ -87,12 +100,19 @@ main (int argc, char *argv[])
 	gettimeofday (&tv, NULL);
 
 	/* initialize ldap */
+#ifdef HAVE_LDAP_INIT
+	if (!(ld = ldap_init (ld_host, ld_port))) {
+		printf ("Could not connect to the server at port %i\n", ld_port);
+		return STATE_CRITICAL;
+	}
+#else	
 	if (!(ld = ldap_open (ld_host, ld_port))) {
 		/*ldap_perror(ld, "ldap_open"); */
 		printf (_("Could not connect to the server at port %i\n"), ld_port);
 		return STATE_CRITICAL;
 	}
-
+#endif /* HAVE_LDAP_INIT */
+	
 #ifdef HAVE_LDAP_SET_OPTION
 	/* set ldap options */
 	if (ldap_set_option (ld, LDAP_OPT_PROTOCOL_VERSION, &ld_protocol) !=
@@ -101,6 +121,51 @@ main (int argc, char *argv[])
 		return STATE_CRITICAL;
 	}
 #endif
+
+	if (strstr(argv[0],"check_ldaps")) {
+	/* with TLS */
+		if ( ld_port == LDAPS_PORT ) {
+ 			asprintf (&SERVICE, "LDAPS");
+#if defined(HAVE_LDAP_SET_OPTION) && defined(LDAP_OPT_X_TLS)
+ 			/* ldaps: set option tls */
+ 			tls = LDAP_OPT_X_TLS_HARD;
+			
+ 			if (ldap_set_option (ld, LDAP_OPT_X_TLS, &tls) != LDAP_SUCCESS)
+ 			{
+ 				/*ldap_perror(ld, "ldaps_option"); */
+ 				printf ("Could not init TLS at port %i!\n", ld_port);
+				return STATE_CRITICAL;
+   		}
+#else
+			printf ("TLS not supported by the libraries!\n", ld_port);
+			return STATE_CRITICAL;
+#endif /* LDAP_OPT_X_TLS */
+		} else {
+			asprintf (&SERVICE, "LDAP-TLS");
+#if defined(HAVE_LDAP_SET_OPTION) && defined(HAVE_LDAP_START_TLS_S)
+			/* ldap with startTLS: set option version */
+			if (ldap_get_option(ld,LDAP_OPT_PROTOCOL_VERSION, &version) == LDAP_OPT_SUCCESS )
+			{
+				if (version < LDAP_VERSION3)
+				{
+					version = LDAP_VERSION3;
+					ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION, &version);
+				}
+			}
+			/* call start_tls */
+			if (ldap_start_tls_s(ld, NULL, NULL) != LDAP_SUCCESS)
+			{
+				/*ldap_perror(ld, "ldap_start_tls"); */
+				printf ("Could not init startTLS at port %i!\n", ld_port);
+				return STATE_CRITICAL;
+			}
+#else
+			printf ("startTLS not supported by the library, needs LDAPv3!\n");
+			return STATE_CRITICAL;
+#endif /* HAVE_LDAP_START_TLS_S */
+		}
+	}
+	
 	/* bind to the ldap server */
 	if (ldap_bind_s (ld, ld_binddn, ld_passwd, LDAP_AUTH_SIMPLE) !=
 			LDAP_SUCCESS) {
