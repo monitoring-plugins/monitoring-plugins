@@ -1,6 +1,8 @@
 /*
- * check_icmp - A hack of fping2 to work with nagios.
- *              This way we don't have to use the output parser.
+ * $Id$
+ *
+ * This is a hack of fping2 made to work with nagios.
+ * It's fast and removes the necessity of parsing another programs output.
  *
  * VIEWING NOTES:
  * This file was formatted with tab indents at a tab stop of 4.
@@ -40,14 +42,8 @@
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 
-/* Linux has bizarre ip.h and ip_icmp.h */
-/* Taken from the fping distro. Thank you. */
-#if defined( __linux__ )
-#include "linux.h"
-#else
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
-#endif /* defined(__linux__) */
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -70,9 +66,8 @@ extern char *optarg;
 extern int optind, opterr;
 
 /*** Constants ***/
-#define REV_DATE	"2004-09-06"
 #define EMAIL		"ae@op5.se"
-#define VERSION		"0.8"
+#define VERSION		"0.8.1"
 
 #ifndef INADDR_NONE
 # define INADDR_NONE 0xffffffU
@@ -441,7 +436,7 @@ int main(int argc, char **argv)
 				break;
 
 			case 'v':
-				printf("%s: Version %s $Date$\n", prog, VERSION, REV_DATE);
+				printf("%s: Version %s $Date$\n", prog, VERSION);
 				printf("%s: comments to %s\n", prog, EMAIL);
 				exit(STATE_OK);
 
@@ -1275,7 +1270,7 @@ void u_sleep(int u_sec)
  * crash on any other errrors
  ************************************************************/
 /* TODO: add MSG_DONTWAIT to recvfrom flags (currently 0) */
-int recvfrom_wto(int sock, char *buf, int len, struct sockaddr *saddr, int timo)
+int recvfrom_wto(int lsock, char *buf, int len, struct sockaddr *saddr, int timo)
 {
 	int nfound = 0, slen, n;
 	struct timeval to;
@@ -1289,8 +1284,8 @@ int recvfrom_wto(int sock, char *buf, int len, struct sockaddr *saddr, int timo)
 
 	FD_ZERO(&readset);
 	FD_ZERO(&writeset);
-	FD_SET(sock, &readset);
-	nfound = select(sock + 1, &readset, &writeset, NULL, &to);
+	FD_SET(lsock, &readset);
+	nfound = select(lsock + 1, &readset, &writeset, NULL, &to);
 	if(nfound < 0) crash("select() in recvfrom_wto");
 
 	if(nfound == 0) return -1;				/* timeout */

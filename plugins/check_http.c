@@ -676,17 +676,17 @@ check_document_dates (const char *headers)
 	} else if (!document_date || !*document_date) {
 		die (STATE_CRITICAL, _("Document modification date unknown\n"));
 	} else {
-		time_t sd = parse_time_string (server_date);
-		time_t dd = parse_time_string (document_date);
+		time_t srv_data = parse_time_string (server_date);
+		time_t doc_data = parse_time_string (document_date);
 
-		if (sd <= 0) {
+		if (srv_data <= 0) {
 			die (STATE_CRITICAL, _("CRITICAL - Server date \"%100s\" unparsable"), server_date);
-		} else if (dd <= 0) {
+		} else if (doc_data <= 0) {
 			die (STATE_CRITICAL, _("CRITICAL - Document date \"%100s\" unparsable"), document_date);
-		} else if (dd > sd + 30) {
-			die (STATE_CRITICAL, _("CRITICAL - Document is %d seconds in the future\n"), dd - sd);
-		} else if (dd < sd - maximum_age) {
-		int n = (sd - dd);
+		} else if (doc_data > srv_data + 30) {
+			die (STATE_CRITICAL, _("CRITICAL - Document is %d seconds in the future\n"), (int)doc_data - (int)srv_data);
+		} else if (doc_data < srv_data - maximum_age) {
+		int n = (srv_data - doc_data);
 		if (n > (60 * 60 * 24 * 2))
 			die (STATE_CRITICAL,
 			  _("CRITICAL - Last modified %.1f days ago\n"),

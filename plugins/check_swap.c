@@ -56,10 +56,10 @@ main (int argc, char **argv)
 	int result = STATE_UNKNOWN;
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *perf;
-	int conv_factor = SWAP_CONVERSION;
 #ifdef HAVE_PROC_MEMINFO
 	FILE *fp;
 #else
+	int conv_factor = SWAP_CONVERSION;
 # ifdef HAVE_SWAP
 	char *temp_buffer;
 	char *swap_command;

@@ -909,8 +909,7 @@ void print_help(void)
 
 	printf (_("\
 This plugin attempts to contact the MRTGEXT NLM running on a\n\
-Novell server to gather the requested system information.\n\n"),
-	        progname);
+Novell server to gather the requested system information.\n\n"));
 
 	print_usage();
 

@@ -16,9 +16,9 @@ suite of plugins. */
 /* $Id$ */
 
 void support (void);
-char *clean_revstring (const char *revstring);
+char *clean_revstring (const char *);
 void print_revision (const char *, const char *);
-void die (int result, const char *fmt, ...) __attribute__((noreturn,format(printf, 2, 3)));
+void die (int, const char *, ...) __attribute__((noreturn,format(printf, 2, 3)));
 
 /* Handle timeouts */
 
@@ -57,7 +57,7 @@ struct timeval {
 #endif
 
 #ifndef HAVE_GETTIMEOFDAY
-int gettimeofday(struct timeval *tv, struct timezone *tz);
+int gettimeofday(struct timeval *, struct timezone *);
 #endif
 
 double delta_time (struct timeval tv);
@@ -65,46 +65,47 @@ long deltime (struct timeval tv);
 
 /* Handle strings safely */
 
-void strip (char *buffer);
-char *strscpy (char *dest, const char *src);
-char *strnl (char *str);
-char *strpcpy (char *dest, const char *src, const char *str);
-char *strpcat (char *dest, const char *src, const char *str);
+void strip (char *);
+char *strscpy (char *, const char *);
+char *strnl (char *);
+char *strpcpy (char *, const char *, const char *);
+char *strpcat (char *, const char *, const char *);
 
 int max_state (int a, int b);
 
-void usage (const char *msg) __attribute__((noreturn));
-void usage2(const char *msg, const char *arg) __attribute__((noreturn));
-void usage3(const char *msg, int arg) __attribute__((noreturn));
+void usage (const char *) __attribute__((noreturn));
+void usage2(const char *, const char *) __attribute__((noreturn));
+void usage3(const char *, int) __attribute__((noreturn));
+void usage4(const char *);
 
-const char *state_text (int result);
+const char *state_text (int);
 
 #define max(a,b) (((a)>(b))?(a):(b))
 #define min(a,b) (((a)<(b))?(a):(b))
 
-char *perfdata (const char *label,
- long int val,
- const char *uom,
- int warnp,
- long int warn,
- int critp,
- long int crit,
- int minp,
- long int minv,
- int maxp,
- long int maxv);
+char *perfdata (const char *,
+ long int,
+ const char *,
+ int,
+ long int,
+ int,
+ long int,
+ int,
+ long int,
+ int,
+ long int);
 
-char *fperfdata (const char *label,
- double val,
- const char *uom,
- int warnp,
- double warn,
- int critp,
- double crit,
- int minp,
- double minv,
- int maxp,
- double maxv);
+char *fperfdata (const char *,
+ double,
+ const char *,
+ int,
+ double,
+ int,
+ double,
+ int,
+ double,
+ int,
+ double);
 
 /* The idea here is that, although not every plugin will use all of these, 
    most will or should.  Therefore, for consistency, these very common 
