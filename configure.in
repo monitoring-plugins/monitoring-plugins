@@ -430,6 +430,7 @@ then
 	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[Format string for scanning ps output in check_vsz])
 	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -axwo 'rss comm'",[Verbatim command to execute for ps in check_rss])
 	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s",[Format string for scanning ps output in check_rss])
+  echo "      ps syntax... $PATH_TO_PS -axwo 'stat uid ppid comm args'"
 dnl  STAT UCOMM              VSZ   RSS USER       UID  PPID COMMAND
 elif ps -weo 'stat comm vsz rss user uid ppid args' 2>/dev/null | egrep -i ["^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ +U[ID]+ +P[PID]+ +[RGSCOMDNA]+"] >/dev/null
 then
