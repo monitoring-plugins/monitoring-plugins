@@ -11,8 +11,9 @@ Nagios Plugins Quick-and-Dirty Installation Instructions
 
    or you can run ./tools/setup
 
-   Currently we are only supporting autoconf 2.13 and automake 1.4p5. Support
-   for the latest autoconf and automake are in the works.
+   For best results, please use the most recent versions of autoconf
+   and automake. Older versions may also work, but are not
+   specifically supprted.
 
 
 1) Run the configure script to initialize variables and create a Makefile, etc.
