@@ -145,7 +145,7 @@ main (int argc, char **argv)
 	asprintf (&user_agent, "User-Agent: check_http/%s (nagios-plugins %s)",
 	          clean_revstring (revision), VERSION);
 
-	if (process_arguments (argc, argv) != OK)
+	if (process_arguments (argc, argv) != TRUE)
 		usage (_("check_http: could not parse arguments\n"));
 
 	if (strstr (timestamp, ":")) {
