@@ -111,7 +111,7 @@ unsigned long upper_crit_lim[MAX_OIDS];
 unsigned long response_value[MAX_OIDS];
 int check_warning_value = FALSE;
 int check_critical_value = FALSE;
-int eval_method[MAX_OIDS];
+unsigned long eval_method[MAX_OIDS];
 char *delimiter;
 char *output_delim;
 char *miblist;
@@ -745,7 +745,7 @@ check_num (int i)
 	}
 
 	if (eval_method[i] & CRIT_GT && eval_method[i] & CRIT_LT &&
-			lower_warn_lim[i] > upper_warn_lim[i]) {
+			lower_crit_lim[i] > upper_crit_lim[i]) {
 		if (response_value[i] <= lower_crit_lim[i] &&
 				response_value[i] >= upper_crit_lim[i]) {
 			result = STATE_CRITICAL;
