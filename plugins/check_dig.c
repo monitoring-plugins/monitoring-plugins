@@ -32,6 +32,7 @@ const char *copyright = "2002-2003";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 enum {
+	UNDEFINED = 0,
 	DEFAULT_PORT = 53
 };
 
@@ -39,8 +40,8 @@ char *query_address = NULL;
 char *dns_server = NULL;
 int verbose = FALSE;
 int server_port = DEFAULT_PORT;
-int warning_interval = -1;
-int critical_interval = -1;
+double warning_interval = UNDEFINED;
+double critical_interval = UNDEFINED;
 struct timeval tv;
 
 int
@@ -140,31 +141,21 @@ main (int argc, char **argv)
 	if (output == NULL || strlen (output) == 0)
 		asprintf (&output, _(" Probably a non-existent host/domain"));
 
-	if (critical_interval > 0 && elapsed_time > critical_interval)
-		printf (_("DNS OK - %.3f seconds response time (%s)"), elapsed_time, output);
+	if (critical_interval != UNDEFINED && elapsed_time > critical_interval)
+		result = STATE_CRITICAL;
 
-	else if (result == STATE_CRITICAL)
-		printf (_("DNS CRITICAL - %s"), output);
+	else if (warning_interval != UNDEFINED && elapsed_time > warning_interval)
+		result = STATE_WARNING;
 
-	else if (warning_interval > 0 && elapsed_time > warning_interval)
-		printf (_("DNS OK - %.3f seconds response time (%s)"), elapsed_time, output);
+	asprintf (&output, _("%.3f seconds response time (%s)"), elapsed_time, output);
 
-	else if (result == STATE_WARNING)
-		printf (_("DNS WARNING - %s"), output);
-
-	else if (result == STATE_OK)
-		printf (_("DNS OK - %.3f seconds response time (%s)"),
-						elapsed_time, output);
-
-	else
-		printf (_("DNS problem - %s"), output);
-
-	printf ("|%s\n",
+	printf ("DNS %s - %s|%s\n",
+	        state_text (result), output,
 	        perfdata("time", microsec, "us",
-	                 (warning_interval>0?TRUE:FALSE),
-	                 (int)1e6*warning_interval,
-	                 (critical_interval>0?TRUE:FALSE),
-	                 (int)1e6*critical_interval,
+	                 (warning_interval!=UNDEFINED?TRUE:FALSE),
+	                 (int)(1e6*warning_interval),
+	                 (critical_interval!=UNDEFINED?TRUE:FALSE),
+	                 (int)(1e6*critical_interval),
 									 TRUE, 0, FALSE, 0));
 	return result;
 }
@@ -224,26 +215,30 @@ process_arguments (int argc, char **argv)
 				server_port = atoi (optarg);
 			}
 			else {
-				usage2 (_("Server port must be a nonnegative integer\n"), optarg);
+				usage2 (_("Server port must be a nonnegative integer"), optarg);
 			}
 			break;
 		case 'l':									/* address to lookup */
 			query_address = optarg;
 			break;
 		case 'w':									/* warning */
-			if (is_intnonneg (optarg)) {
-				warning_interval = atoi (optarg);
+			if (is_nonnegative (optarg)) {
+				warning_interval = strtod (optarg, NULL);
+				if (warning_interval == HUGE_VAL)
+					usage2 (_("Input causes overflow in warning interval"), optarg);
 			}
 			else {
-				usage2 (_("Warning interval must be a nonnegative integer\n"), optarg);
+				usage2 (_("Warning interval must be a nonnegative integer"), optarg);
 			}
 			break;
 		case 'c':									/* critical */
-			if (is_intnonneg (optarg)) {
-				critical_interval = atoi (optarg);
+			if (is_nonnegative (optarg)) {
+				critical_interval = strtod (optarg, NULL);
+				if (critical_interval == HUGE_VAL)
+					usage2 (_("Input causes overflow in critical interval"), optarg);
 			}
 			else {
-				usage2 (_("Critical interval must be a nonnegative integer\n"), optarg);
+				usage2 (_("Critical interval must be a nonnegative integer"), optarg);
 			}
 			break;
 		case 't':									/* timeout */
@@ -251,7 +246,7 @@ process_arguments (int argc, char **argv)
 				timeout_interval = atoi (optarg);
 			}
 			else {
-				usage2 (_("Time interval must be a nonnegative integer\n"), optarg);
+				usage2 (_("Time interval must be a nonnegative integer"), optarg);
 			}
 			break;
 		case 'v':									/* verbose */
