@@ -694,6 +694,11 @@ then
 	AC_PATH_PROG(PATH_TO_DF,bdf)
 	AC_MSG_RESULT([      df syntax... $PATH_TO_DF])
 	AC_DEFINE_UNQUOTED(DF_COMMAND,"$PATH_TO_DF",[path and args for df command])
+dnl Tru64 support
+elif df -Pk 2>/dev/null | egrep -i ["^[a-z_]+#[a-z_]+ +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+% +/[a-z0-9/]*"] > /dev/null
+        AC_PATH_PROG(PATH_TO_DF,df)
+        AC_MSG_RESULT([      df syntax... $PATH_TO_DF -Pk (Tru64)])
+        AC_DEFINE_UNQUOTED(DF_COMMAND,"$PATH_TO_DF -Pk",[path and args for df command])
 else
 	AC_MSG_WARN("unable to find usable df syntax")
 fi
