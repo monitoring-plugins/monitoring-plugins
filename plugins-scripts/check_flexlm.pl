@@ -28,13 +28,16 @@
 # License: GPL
 # $Id$
 #
+# lmstat output patches from Steve Rigler/Cliff Rice 13-Apr-2002
+# srigler@marathonoil.com,cerice@marathonoil.com
+
 
 
 use strict;
 use Getopt::Long;
-use vars qw($opt_V $opt_h $opt_F $verbose $PROGNAME);
+use vars qw($opt_V $opt_h $opt_F $opt_t $verbose $PROGNAME);
 use lib utils.pm;
-use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
+use utils qw(%ERRORS &print_revision &support &usage);
 
 $PROGNAME="check_flexlm";
 
@@ -50,21 +53,32 @@ GetOptions
 	("V"   => \$opt_V,   "version"    => \$opt_V,
 	 "h"   => \$opt_h,   "help"       => \$opt_h,
 	 "v"   => \$verbose, "verbose"    => \$verbose,
-	 "F=s" => \$opt_F,   "filename=s" => \$opt_F);
+	 "F=s" => \$opt_F,   "filename=s" => \$opt_F,
+	 "t=i" => \$opt_t, "timeout=i"  => \$opt_t);
 
 if ($opt_V) {
 	print_revision($PROGNAME,'$Revision$');
 	exit $ERRORS{'OK'};
 }
 
+unless (defined $opt_t) {
+	$opt_t = $utils::TIMEOUT ;	# default timeout
+}
+
+
 if ($opt_h) {print_help(); exit $ERRORS{'OK'};}
 
+unless (defined $opt_F) {
+	print "Missing license.dat file\n";
+	print_usage();
+	exit $ERRORS{'UNKNOWN'};
+}
 # Just in case of problems, let's not hang Nagios
 $SIG{'ALRM'} = sub {
-	print "No Answer from Client\n";
-	exit 2;
+	print "Timeout: No Answer from Client\n";
+	exit $ERRORS{'UNKNOWN'};
 };
-alarm($TIMEOUT);
+alarm($opt_t);
 
 my $lmstat = $utils::PATH_TO_LMSTAT ;
 unless (-x $lmstat ) {
@@ -78,50 +92,125 @@ my $licfile = $1 if ($opt_F =~ /^(.*)$/);
 
 print "$licfile\n" if $verbose;
 
-open CMD,"$lmstat -c $licfile |";
+if ( ! open(CMD,"$lmstat -c $licfile |") ) {
+	print "ERROR: Could not open \"$lmstat -c $licfile\" ($!)\n";
+	exit exit $ERRORS{'UNKNOWN'};
+}
 
 my $serverup = 0;
-my ($ls1,$ls2,$ls3,$lf1,$lf2,$lf3,$servers);
+my @upsrv; 
+my @downsrv;  # list of servers up and down
+
+#my ($ls1,$ls2,$ls3,$lf1,$lf2,$lf3,$servers);
+ 
+# key off of the term "license server" and 
+# grab the status.  Keep going until "Vendor" is found
+#
+
+#
+# Collect list of license servers by their status
+# Vendor daemon status is ignored for the moment.
 
 while ( <CMD> ) {
-  if ( /^License server status: [0-9]*@([-0-9a-zA-Z_]*),[0-9]*@([-0-9a-zA-Z_]*),[0-9]*@([-0-9a-zA-Z_]*)/ ) {
-	$ls1 = $1;
-	$ls2 = $2;
-	$ls3 = $3;
-	$lf1 = $lf2 = $lf3 = 0;
-	$servers = 3;
-  } elsif ( /^License server status: [0-9]*@([-0-9a-zA-Z_]*)/ ) {
-	$ls1 = $1;
-	$ls2 = $ls3 = "";
-	$lf1 = $lf2 = $lf3 = 0;
-	$servers = 1;
-  } elsif ( / *$ls1: license server UP/ ) {
-	print "$ls1 UP, ";
-	$lf1 = 1
-  } elsif ( / *$ls2: license server UP/ ) {
-	print "$ls2 UP, ";
-	$lf2 = 1
-  } elsif ( / *$ls3: license server UP/ ) {
-	print "$ls3 UP, ";
-	$lf3 = 1
-  } elsif ( / *([^:]*: UP .*)/ ) {
-	print " license server for $1\n";
-	$serverup = 1;
-  }
-}
-if ( $serverup == 0 ) {
-    print " license server not running\n";
-    exit 2;	
+	next if (/^lmstat/);   # ignore 1st line - copyright
+	next if (/^Flexible/); # ignore 2nd line - timestamp
+	(/^Vendor/) && last;   # ignore Vendor daemon status
+	print $_ if $verbose;
+	
+		if ($_ =~ /license server /) {	# matched 1 (of possibly 3) license server
+			s/^\s*//;					#some servers start at col 1, other have whitespace
+										# strip staring whitespace if any
+			if ( $_ =~ /UP/) {
+				$_ =~ /^(.*):/ ;
+				push(@upsrv, $1);
+				print "up:$1:\n" if $verbose;
+			} else {
+				$_ =~ /^(.*):/; 
+				push(@downsrv, $1);
+				print "down:$1:\n" if $verbose;
+			}
+		
+		}
+	
+
+#	if ( /^License server status: [0-9]*@([-0-9a-zA-Z_]*),[0-9]*@([-0-9a-zA-Z_]*),[0-9]*@([-0-9a-zA-Z_]*)/ ) {
+#	$ls1 = $1;
+#	$ls2 = $2;
+#	$ls3 = $3;
+#	$lf1 = $lf2 = $lf3 = 0;
+#	$servers = 3;
+#  } elsif ( /^License server status: [0-9]*@([-0-9a-zA-Z_]*)/ ) {
+#	$ls1 = $1;
+#	$ls2 = $ls3 = "";
+#	$lf1 = $lf2 = $lf3 = 0;
+#	$servers = 1;
+#  } elsif ( / *$ls1: license server UP/ ) {
+#	print "$ls1 UP, ";
+#	$lf1 = 1
+#  } elsif ( / *$ls2: license server UP/ ) {
+#	print "$ls2 UP, ";
+#	$lf2 = 1
+#  } elsif ( / *$ls3: license server UP/ ) {
+#	print "$ls3 UP, ";
+#	$lf3 = 1
+#  } elsif ( / *([^:]*: UP .*)/ ) {
+#	print " license server for $1\n";
+#	$serverup = 1;
+#  }
+
 }
 
-exit $ERRORS{'OK'} if ( $servers == $lf1 + $lf2 + $lf3 );
-exit $ERRORS{'WARNING'} if ( $servers == 3 && $lf1 + $lf2 + $lf3 == 2 );
+#if ( $serverup == 0 ) {
+#    print " license server not running\n";
+#    exit 2;	
+#}
+
+close CMD;
+
+if ($verbose) {
+	print "License Servers running: ".scalar(@upsrv) ."\n";
+	foreach my $upserver (@upsrv) {
+		print "$upserver\n";
+	}
+	print "License servers not running: ".scalar(@downsrv)."\n";
+	foreach my $downserver (@downsrv) {
+		print "$downserver\n";
+	}
+}
+
+#
+# print list of servers which are up. 
+#
+if (scalar(@upsrv) > 0) {
+   print "License Servers running:";
+   foreach my $upserver (@upsrv) {
+      print "$upserver,";
+   }
+}
+#
+# Ditto for those which are down.
+#
+if (scalar(@downsrv) > 0) {
+   print "License servers NOT running:";
+   foreach my $downserver (@downsrv) {
+      print "$downserver,";
+   }
+}
+
+# perfdata
+print "\n|flexlm::up:".scalar(@upsrv).";down:".scalar(@downsrv)."\n";
+
+exit $ERRORS{'OK'} if ( scalar(@downsrv) == 0 );
+exit $ERRORS{'WARNING'} if ( (scalar(@upsrv) > 0) && (scalar(@downsrv) > 0));
+
+#exit $ERRORS{'OK'} if ( $servers == $lf1 + $lf2 + $lf3 );
+#exit $ERRORS{'WARNING'} if ( $servers == 3 && $lf1 + $lf2 + $lf3 == 2 );
 exit $ERRORS{'CRITICAL'};
 
 
 sub print_usage () {
 	print "Usage:
-   $PROGNAME -F <filename> [--verbose]
+   $PROGNAME -F <filename> [-v] [-t] [-V] [-h]
    $PROGNAME --help
    $PROGNAME --version
 ";
@@ -137,14 +226,20 @@ Check available flexlm license managers
 	print_usage();
 	print "
 -F, --filename=FILE
-   Name of license file
+   Name of license file (usually \"license.dat\")
 -v, --verbose
    Print some extra debugging information (not advised for normal operation)
+-t, --timeout
+   Plugin time out in seconds (default = $utils::TIMEOUT )
 -V, --version
    Show version and license information
 -h, --help
    Show this help screen
 
+Flexlm license managers usually run as a single server or three servers and a
+quorum is needed.  The plugin return OK if 1 (single) or 3 (triple) servers
+are running, CRITICAL if 1(single) or 3 (triple) servers are down, and WARNING
+if 1 or 2 of 3 servers are running\n
 ";
 	support();
 }
