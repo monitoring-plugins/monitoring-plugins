@@ -291,10 +291,7 @@ int get_hardware_address(int sock,char *interface_name){
 	memcpy(&client_hardware_address[0],&ifr.ifr_hwaddr.sa_data,6);
 
 #elif defined(__bsd__)
-
-	/* Code from getmac.c posted at http://lists.freebsd.org/pipermail/freebsd-hackers/2004-June/007415.html
-         * by Alecs King based on Unix Network programming Ch 17
-         */
+						/* King 2004	see ACKNOWLEDGEMENTS */
 
         int                     mib[6], len;
         char                    *buf;
@@ -332,20 +329,11 @@ int get_hardware_address(int sock,char *interface_name){
         sdl = (struct sockaddr_dl *)(ifm + 1);
         ptr = (unsigned char *)LLADDR(sdl);
         memcpy(&client_hardware_address[0], ptr, 6) ;
+						/* King 2004 */
 
 #elif defined(__sun__) || defined(__solaris__)
 
-	/*
- 	* Lifted from
- 	*
- 	* mac_addr_dlpi.c
- 	*
- 	* Copyright @2000, 2003 Martin Kompf, martin@kompf.de
- 	*
- 	* Return the MAC (ie, ethernet hardware) address by using the dlpi api.
- 	*
- 	*/
-
+						/* Kompf 2000-2003	see ACKNOWLEDGEMENTS */
 	long stat;
 	char dev[20] = "/dev/";
 	char *p;
@@ -369,11 +357,6 @@ int get_hardware_address(int sock,char *interface_name){
 
 #elif defined(__hpux__)
 
-	/* Martin Kompf again
-         *
-         * Nagios plugins thank you sincerely
-         */
-
 	long stat;
 	char dev[20] = "/dev/dlpi" ;
 	int unit = 0;
@@ -383,6 +366,7 @@ int get_hardware_address(int sock,char *interface_name){
 		printf("Error: can't read MAC address from DLPI streams interface for device %s unit %d.\n", dev, unit);
 		exit(STATE_UNKNOWN);
 	}
+						/* Kompf 2000-2003 */
 
 #else
 	printf("Error: can't get MAC address for this architecture.\n");
@@ -1156,12 +1140,7 @@ int validate_arguments(void){
 
 #if defined(__sun__) || defined(__solaris__) || defined(__hpux__)
 
-
-/*
- * Copyright @2000, 2003 Martin Kompf, martin@kompf.de
- * 
- * Nagios plugins thanks Martin for this code.
- */
+						/* Kompf 2000-2003	see ACKNOWLEDGEMENTS */
 
 /* get a message from a stream; return type of message */
 static int get_msg(int fd)
@@ -1289,4 +1268,5 @@ long mac_addr_dlpi( const char *dev, int unit, u_char  *addr) {
 }
 
 #endif
+						/* Kompf 2000-2003 */
 
