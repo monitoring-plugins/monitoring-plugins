@@ -332,7 +332,11 @@ main (int argc, char **argv)
 	if (status && strlen(status) > 0)
 		printf (" [%s]", status);
 
-	printf ("|time=%ldus\n", microsec);
+	printf (" |%s\n", perfdata ("time", microsec, "us",
+		TRUE, warning_time*1000,
+		TRUE, critical_time*1000,
+		TRUE, 0,
+		TRUE, socket_timeout*1000));
 
 	return result;
 }
