@@ -228,7 +228,7 @@ main (int argc, char **argv)
 	printf (_("SMTP %s - %.3f sec. response time%s%s|%s\n"),
 	        state_text (result), elapsed_time,
           verbose?", ":"", verbose?buffer:"",
-	        perfdata ("time", microsec, "us",
+	        fperfdata ("time", elapsed_time, "s",
 	                  (int)check_warning_time, warning_time,
 	                  (int)check_critical_time, critical_time,
 	                  TRUE, 0, FALSE, 0));
