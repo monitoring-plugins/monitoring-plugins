@@ -87,6 +87,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	ups_status = strdup ("N/A");
+	data = strdup ("");
 
 	if (process_arguments (argc, argv) != OK)
 		usage ("Invalid command arguments supplied\n");
@@ -165,13 +166,13 @@ main (int argc, char **argv)
 			else if (check_warn==TRUE && ups_utility_deviation>=warning_value) {
 				result = max_state (result, STATE_WARNING);
 			}
-			asprintf (&data, "%s ",
+			asprintf (&data, "%s",
 			          perfdata ("voltage", (long)(1000*ups_utility_voltage), "mV",
 			                    check_warn, (long)(1000*warning_value),
 			                    check_crit, (long)(1000*critical_value),
 			                    TRUE, 0, FALSE, 0));
 		} else {
-			asprintf (&data, "%s ",
+			asprintf (&data, "%s",
 			          perfdata ("voltage", (long)(1000*ups_utility_voltage), "mV",
 			                    FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
 		}
@@ -193,13 +194,13 @@ main (int argc, char **argv)
 			else if (check_warn==TRUE && ups_battery_percent<=warning_value) {
 				result = max_state (result, STATE_WARNING);
 			}
-			asprintf (&data, "%s ",
+			asprintf (&data, "%s %s", data,
 			          perfdata ("battery", (long)ups_battery_percent, "%",
 			                    check_warn, (long)(1000*warning_value),
 			                    check_crit, (long)(1000*critical_value),
 			                    TRUE, 0, TRUE, 100));
 		} else {
-			asprintf (&data, "%s ",
+			asprintf (&data, "%s %s", data,
 			          perfdata ("battery", (long)ups_battery_percent, "%",
 			                    FALSE, 0, FALSE, 0, TRUE, 0, TRUE, 100));
 		}
@@ -221,13 +222,13 @@ main (int argc, char **argv)
 			else if (check_warn==TRUE && ups_load_percent>=warning_value) {
 				result = max_state (result, STATE_WARNING);
 			}
-			asprintf (&data, "%s ",
+			asprintf (&data, "%s %s", data,
 			          perfdata ("load", (long)ups_load_percent, "%",
 			                    check_warn, (long)(1000*warning_value),
 			                    check_crit, (long)(1000*critical_value),
 			                    TRUE, 0, TRUE, 100));
 		} else {
-			asprintf (&data, "%s ",
+			asprintf (&data, "%s %s", data,
 			          perfdata ("load", (long)ups_load_percent, "%",
 			                    FALSE, 0, FALSE, 0, TRUE, 0, TRUE, 100));
 		}
@@ -249,13 +250,13 @@ main (int argc, char **argv)
 			else if (check_warn == TRUE && ups_temperature>=warning_value) {
 				result = max_state (result, STATE_WARNING);
 			}
-			asprintf (&data, "%s ",
+			asprintf (&data, "%s %s", data,
 			          perfdata ("temp", (long)ups_temperature, "degF",
 			                    check_warn, (long)(1000*warning_value),
 			                    check_crit, (long)(1000*critical_value),
 			                    TRUE, 0, FALSE, 0));
 		} else {
-			asprintf (&data, "%s ",
+			asprintf (&data, "%s %s", data,
 			          perfdata ("temp", (long)ups_temperature, "degF",
 			                    FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
 		}
