@@ -53,7 +53,6 @@ char *strpcat (char *dest, const char *src, const char *str);
 
 char *state_text (int result);
 
-#define LABELLEN 63
 #define STRLEN 64
 #define TXTBLK 128
 
