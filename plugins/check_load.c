@@ -303,8 +303,8 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
-	printf (_("Copyright (c) 1999 Felipe Gustavo de Almeida <galmeida@linux.ime.usp.br>\n"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 1999 Felipe Gustavo de Almeida <galmeida@linux.ime.usp.br>\n");
+	printf (COPYRIGHT, copyright, email);
 
 	printf (_("This plugin tests the current system load average.\n\n"));
 

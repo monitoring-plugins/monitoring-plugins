@@ -303,7 +303,7 @@ process_arguments (int argc, char **argv)
 			else if (is_host (optarg))
 				server_address = optarg;
 			else
-				usage (_("Invalid host name\n"));
+				usage2 (_("Invalid host name"), optarg);
 			break;
 		case 'e':									/* string to expect in response header */
 			server_expect = optarg;
@@ -365,7 +365,7 @@ process_arguments (int argc, char **argv)
 			server_address = argv[c++];
 		}
 		else {
-			usage (_("Invalid host name"));
+			usage2 (_("Invalid host name"), argv[c]);
 		}
 	}
 
@@ -403,8 +403,8 @@ print_help (void)
 
 	print_revision (progname, "$Revision$");
 
-	printf (_("Copyright (c) 1999 Pedro Leite <leite@cic.ua.pt>\n"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 1999 Pedro Leite <leite@cic.ua.pt>\n");
+	printf (COPYRIGHT, copyright, email);
 
 	printf (_("This plugin tests the REAL service on the specified host.\n\n"));
 

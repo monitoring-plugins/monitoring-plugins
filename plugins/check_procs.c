@@ -348,7 +348,7 @@ process_arguments (int argc, char **argv)
 			exit (STATE_OK);
 		case 't':									/* timeout period */
 			if (!is_integer (optarg))
-				usage (_("Timeout Interval must be an integer!\n\n"));
+				usage2 (_("Timeout interval must be a positive integer"), optarg);
 			else
 				timeout_interval = atoi (optarg);
 			break;
@@ -588,8 +588,8 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
-	printf (_("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>");
+	printf (COPYRIGHT, copyright, email);
 
 	printf(_("\
 Checks all processes and generates WARNING or CRITICAL states if the specified\n\

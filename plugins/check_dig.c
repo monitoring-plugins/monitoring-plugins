@@ -321,8 +321,8 @@ print_help (void)
 
 	print_revision (progname, revision);
 
-	printf (_("Copyright (c) 2000 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 2000 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n");
+	printf (COPYRIGHT, copyright, email);
 
 	printf (_("Test the DNS service on the specified host using dig\n\n"));
 

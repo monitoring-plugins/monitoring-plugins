@@ -420,8 +420,8 @@ print_help (void)
 
 	print_revision (progname, revision);
 
-	printf (_("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
+	printf (COPYRIGHT, copyright, email);
 
 	printf (_("\
 This plugin attempts to contact the Over-CR collector daemon running on the\n\

@@ -297,7 +297,7 @@ process_arguments (int argc, char **argv)
 		if (c <= argc) {
 			die (STATE_UNKNOWN, _("%s: You must provide a host name\n"), progname);
 		} else if (!is_host (argv[c]))
-			die (STATE_UNKNOWN, _("%s: Invalid host name %s\n"), progname, argv[c]);
+			die (STATE_UNKNOWN, "%s: %s %s\n", progname, _("Invalid host name"), argv[c]);
 		hostname = argv[c++];
 	}
 

@@ -190,7 +190,7 @@ process_arguments (int argc, char **argv)
 		if (is_intpos (argv[4]))
 			timeout_interval = atoi (argv[4]);
 		else
-			usage (_("Timeout interval must be a positive integer"));
+			usage2 (_("Timeout interval must be a positive integer"), optarg);
 		if (is_intpos (argv[5]))
 			retries = atoi (argv[5]);
 		else
@@ -227,9 +227,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H':									/* hostname */
 			if (is_host (optarg) == FALSE) {
-				printf (_("Invalid host name/address\n\n"));
-				print_usage ();
-				exit (STATE_UNKNOWN);
+				usage2 (_("Invalid host name/address"), optarg);
 			}
 			server = optarg;
 			break;
@@ -264,7 +262,7 @@ process_arguments (int argc, char **argv)
 			if (is_intpos (optarg))
 				timeout_interval = atoi (optarg);
 			else
-				usage (_("Timeout interval must be a positive integer"));
+				usage2 (_("Timeout interval must be a positive integer"), optarg);
 			break;
 		}
 	}
@@ -284,8 +282,8 @@ print_help (void)
 
 	print_revision (progname, revision);
 
-	printf (_("Copyright (c) 1999 Robert August Vincent II\n"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 1999 Robert August Vincent II\n");
+	printf (COPYRIGHT, copyright, email);
 
 	printf(_("Tests to see if a radius server is accepting connections.\n\n"));
 

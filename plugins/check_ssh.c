@@ -114,7 +114,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 't':									/* timeout period */
 			if (!is_integer (optarg))
-				usage (_("Timeout Interval must be an integer!\n\n"));
+				usage2 (_("Timeout interval must be a positive integer"), optarg);
 			else
 				socket_timeout = atoi (optarg);
 			break;
@@ -130,7 +130,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H':									/* host */
 			if (is_host (optarg) == FALSE)
-				usage ("Invalid hostname/address\n");
+				usage2 (_("Invalid host name/address"), optarg);
 			server_name = optarg;
 			break;
 		case 'p':									/* port */
@@ -233,8 +233,8 @@ print_help (void)
 
 	print_revision (progname, revision);
 
-	printf (_("Copyright (c) 1999 Remi Paulmier <remi@sinfomic.fr>\n"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 1999 Remi Paulmier <remi@sinfomic.fr>\n");
+	printf (COPYRIGHT, copyright, email);
 
 	printf (_("Try to connect to SSH server at specified server and port\n\n"));
 

@@ -472,7 +472,7 @@ process_arguments (int argc, char **argv)
 				server_address = optarg;
 			}
 			else {
-				usage2 ("Invalid host name", optarg);
+				usage2 (_("Invalid host name"), optarg);
 			}
 			break;
 		case 'u':									/* ups name */
@@ -538,7 +538,7 @@ process_arguments (int argc, char **argv)
 		if (is_host (argv[optind]))
 			server_address = argv[optind++];
 		else
-			usage ("Invalid host name");
+			usage2 (_("Invalid host name"), optarg);
 	}
 
 	if (server_address == NULL)
@@ -570,8 +570,8 @@ print_help (void)
 
 	print_revision (progname, revision);
 
-	printf (_("Copyright (c) 2000 Tom Shields"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 2000 Tom Shields");
+	printf (COPYRIGHT, copyright, email);
 
 	printf (_("This plugin tests the UPS service on the specified host.\n\
 Network UPS Tools from www.exploits.org must be running for this plugin to\n\

@@ -129,8 +129,8 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
-	printf (_("Copyright (c) 2000 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 2000 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n");
+	printf (COPYRIGHT, copyright, email);
 
 	printf (_("\n\
 This plugin wraps the text output of another command (plugin) in HTML\n\

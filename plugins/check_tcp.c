@@ -429,7 +429,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H':                 /* hostname */
 			if (is_host (optarg) == FALSE)
-				usage2 (_("invalid host name or address"), optarg);
+				usage2 (_("Invalid host name/address"), optarg);
 			server_address = optarg;
 			break;
 		case 'c':                 /* critical */
@@ -459,7 +459,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 't':                 /* timeout */
 			if (!is_intpos (optarg))
-				usage (_("Timeout interval must be a positive integer\n"));
+				usage2 (_("Timeout interval must be a positive integer"), optarg);
 			else
 				socket_timeout = atoi (optarg);
 			break;
@@ -603,8 +603,8 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
-	printf (_("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
+	printf (COPYRIGHT, copyright, email);
 
 	printf (_("This plugin tests %s connections with the specified host.\n\n"),
 	        SERVICE);

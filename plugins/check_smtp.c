@@ -292,7 +292,7 @@ process_arguments (int argc, char **argv)
 				server_address = optarg;
 			}
 			else {
-				usage (_("Invalid host name\n"));
+				usage2 (_("Invalid host name"), optarg);
 			}
 			break;
 		case 'p':									/* port */
@@ -384,7 +384,7 @@ process_arguments (int argc, char **argv)
 			if (is_host (argv[c]))
 				server_address = argv[c];
 			else
-				usage (_("Invalid host name"));
+				usage2 (_("Invalid host name"), argv[c]);
 		}
 		else {
 			asprintf (&server_address, "127.0.0.1");
@@ -426,8 +426,8 @@ print_help (void)
 
 	print_revision (progname, revision);
 
-	printf (_("Copyright (c) 1999-2001 Ethan Galstad <nagios@nagios.org>\n"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 1999-2001 Ethan Galstad <nagios@nagios.org>\n");
+	printf (COPYRIGHT, copyright, email);
 
 	printf(_("\
 This plugin will attempt to open an SMTP connection with the host.\n\n"));

@@ -158,7 +158,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H':									/* hostname */
 			if (is_host (optarg) == FALSE)
-				usage (_("Invalid host name/address\n"));
+				usage2 (_("Invalid host name/address"), optarg);
 			server_address = optarg;
 			break;
 		case 'c':									/* critical */
@@ -177,7 +177,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 't':									/* timeout */
 			if (!is_intnonneg (optarg))
-				usage (_("Timeout interval must be a nonnegative integer\n"));
+				usage2 (_("Timeout interval must be a positive integer"), optarg);
 			else
 				socket_timeout = atoi (optarg);
 			break;
@@ -199,7 +199,7 @@ process_arguments (int argc, char **argv)
 	c = optind;
 	if (server_address == NULL && c < argc && argv[c]) {
 		if (is_host (argv[c]) == FALSE)
-			usage (_("Invalid host name/address\n"));
+			usage2 (_("Invalid host name/address"), optarg);
 		server_address = argv[c++];
 	}
 
@@ -222,8 +222,8 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
-	printf (_("Copyright (c) 1999 Ethan Galstad\n"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 1999 Ethan Galstad\n");
+	printf (COPYRIGHT, copyright, email);
 
 	printf (_("\
 This plugin tests an UDP connection with the specified host.\n\n"));

@@ -80,7 +80,7 @@ main (int argc, char **argv)
 	/* run the command */
 	child_process = spopen (command_line);
 	if (child_process == NULL) {
-		printf (_("Unable to open pipe: %s\n"), command_line);
+		printf (_("Could not open pipe: %s\n"), command_line);
 		return STATE_UNKNOWN;
 	}
 
@@ -254,9 +254,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H':									/* hostname */
 			if (is_host (optarg) == FALSE) {
-				printf (_("Invalid host name/address\n\n"));
-				print_usage ();
-				exit (STATE_UNKNOWN);
+				usage2 (_("Invalid host name/address"), optarg);
 			}
 			server_name = strscpy (server_name, optarg);
 			break;
@@ -362,8 +360,8 @@ print_help (void)
 
 	print_revision (progname, "$Revision$");
 
-	printf (_("Copyright (c) 1999 Didi Rieder <adrieder@sbox.tu-graz.ac.at>\n"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 1999 Didi Rieder <adrieder@sbox.tu-graz.ac.at>\n");
+	printf (COPYRIGHT, copyright, email);
 
 	printf (_("\
 This plugin will use the /bin/fping command (from saint) to ping the\n\

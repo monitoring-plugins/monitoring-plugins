@@ -180,7 +180,7 @@ process_arguments (int argc, char **argv)
 			exit (EXIT_SUCCESS);
 		case 't':     /* timeout period */
 			if (!is_integer (optarg))
-				usage2 (_("Timeout Interval must be an integer"), optarg);
+				usage2 (_("Timeout interval must be a positive integer"), optarg);
 			else
 				timeout_interval = atoi (optarg);
 			break;

@@ -321,7 +321,7 @@ process_arguments (int argc, char **argv)
 				address = strscpy(address, optarg) ;
 			}
 			else {
-				usage (_("Invalid host name\n"));
+				usage2 (_("Invalid host name"), optarg);
 			}
 			break;
 		case 'C':									/* community */
@@ -344,7 +344,7 @@ process_arguments (int argc, char **argv)
 			address = argv[c++];
 		}
 		else {
-			usage (_("Invalid host name"));
+			usage2 (_("Invalid host name"), argv[c]);
 		}
 	}
 	
@@ -378,8 +378,8 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
-	printf (_("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
+	printf (COPYRIGHT, copyright, email);
 
 	printf (_("\
 This plugin tests the STATUS of an HP printer with a JetDirect card.\n\

@@ -183,7 +183,7 @@ process_arguments (int argc, char **argv)
 				db_host = optarg;
 			}
 			else {
-				usage (_("Invalid host name\n"));
+				usage2 (_("Invalid host name"), optarg);
 			}
 			break;
 		case 'd':									/* hostname */
@@ -221,7 +221,7 @@ process_arguments (int argc, char **argv)
 				db_host = argv[c++];
 			}
 			else {
-				usage ("Invalid host name");
+				usage2 (_("Invalid host name"), optarg);
 			}
 		else if (strlen(db_user) == 0)
 			db_user = argv[c++];

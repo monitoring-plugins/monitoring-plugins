@@ -331,9 +331,7 @@ process_arguments (int argc, char **argv)
 		case 'r': /* reverse server name */
 			/* TODO: Is this is_host necessary? */
 			if (is_host (optarg) == FALSE) {
-				printf (_("Invalid host name/address\n\n"));
-				print_usage ();
-				exit (STATE_UNKNOWN);
+				usage2 (_("Invalid host name/address"), optarg);
 			}
 			if (strlen (optarg) >= ADDRESS_LENGTH)
 				die (STATE_UNKNOWN, _("Input buffer overflow\n"));
@@ -391,8 +389,8 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
-	printf (_("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
+	printf (COPYRIGHT, copyright, email);
 
 	print_usage ();
 

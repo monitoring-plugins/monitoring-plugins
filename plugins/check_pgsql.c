@@ -216,7 +216,7 @@ process_arguments (int argc, char **argv)
 			exit (STATE_OK);
 		case 't':     /* timeout period */
 			if (!is_integer (optarg))
-				usage2 (_("Timeout Interval must be an integer"), optarg);
+				usage2 (_("Timeout interval must be a positive integer"), optarg);
 			else
 				timeout_interval = atoi (optarg);
 			break;
@@ -234,7 +234,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H':     /* host */
 			if (!is_host (optarg))
-				usage2 (_("You gave an invalid host name"), optarg);
+				usage2 (_("Invalid host name"), optarg);
 			else
 				pghost = optarg;
 			break;

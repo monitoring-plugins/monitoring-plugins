@@ -70,7 +70,7 @@ main (int argc, char **argv)
 		printf (_("Incorrect arguments supplied\n"));
 		printf ("\n");
 		print_revision (progname, revision);
-		printf (_("Copyright (c) 1999 Ian Cass, Knowledge Matters Limited\n"));
+		printf ("Copyright (c) 1999 Ian Cass, Knowledge Matters Limited\n");
 		printf (_("License: GPL\n"));
 		printf ("\n");
 		return STATE_UNKNOWN;
@@ -91,7 +91,7 @@ main (int argc, char **argv)
 	/* run the command */
 	fp = spopen (command_line);
 	if (fp == NULL) {
-		printf (_("Error - Could not open pipe: %s\n"), command_line);
+		printf (_("Could not open pipe: %s\n"), command_line);
 		return STATE_UNKNOWN;
 	}
 

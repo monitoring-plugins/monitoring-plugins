@@ -192,8 +192,8 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
-	printf (_("Copyright (c) 1999 Ethan Galstad\n"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 1999 Ethan Galstad\n");
+	printf (COPYRIGHT, copyright, email);
 
 	printf (_("\
 This plugin checks the number of users currently logged in on the local\n\

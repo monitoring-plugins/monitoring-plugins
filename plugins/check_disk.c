@@ -304,7 +304,7 @@ process_arguments (int argc, char **argv)
 				break;
 			}
 			else {
-				usage (_("Timeout Interval must be an integer!\n"));
+				usage2 (_("Timeout interval must be a positive integer"), optarg);
 			}
 		case 'w':									/* warning threshold */
 			if (is_intnonneg (optarg)) {
@@ -572,8 +572,8 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
-	printf (_("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
+	printf (COPYRIGHT, copyright, email);
 
 	printf (_("\
 This plugin checks the amount of used disk space on a mounted file system\n\

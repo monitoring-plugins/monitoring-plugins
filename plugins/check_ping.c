@@ -270,8 +270,7 @@ process_arguments (int argc, char **argv)
 
 	if (addresses[0] == NULL) {
 		if (is_host (argv[c]) == FALSE) {
-			printf (_("Invalid host name/address: %s\n\n"), argv[c]);
-			return ERROR;
+			usage2 (_("Invalid host name/address"), argv[c]);
 		} else {
 			addresses[0] = argv[c++];
 			n_addresses++;
@@ -506,8 +505,8 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
-	printf (_("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>");
+	printf (COPYRIGHT, copyright, email);
 
 	printf (_("Use ping to check connection statistics for a remote host.\n\n"));
 
