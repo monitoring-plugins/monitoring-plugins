@@ -11,6 +11,9 @@ commit new ChangeLog
 
 Check configure.in with right version
 cvs tag r1_4-alpha2
+If a main release (eg, non alpha/beta), branch here:
+cvs tab -b r1_4-patches
+Consider the SF snapshot branches - should you remove any other branches?
 
 checkout new version:
 cd /tmp
@@ -30,7 +33,7 @@ put file
 SF -> Submit News about release.
 Get URL to news item
 
-SF -> Admin -> File Release System
+SF -> Admin -> File Releases
 Add a release to nagiosplug and create a file release
 name: 1.4-alpha2. Commit
 Step 1: Add release notes pointing to news item
@@ -40,5 +43,5 @@ Step 4: Send notice
 
 Send email to nagiosplug-help, nagios-announce
 
-Change version number in configure.in and package.def
+Change to next version number in configure.in and package.def
 
