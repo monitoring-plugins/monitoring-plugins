@@ -61,6 +61,8 @@ my $smbclient= "$utils::PATH_TO_SMBCLIENT " ;
 my $smbclientoptions="";
 
 
+# Options checking
+
 ($opt_H) || ($opt_H = shift) || usage("Host name not specified\n");
 my $host = $1 if ($opt_H =~ /([-_.A-Za-z0-9]+)/);
 ($host) || usage("Invalid host: $opt_H\n");
@@ -77,14 +79,33 @@ my $user = $1 if ($opt_u =~ /([-_.A-Za-z0-9]+)/);
 my $pass = $1 if ($opt_p =~ /(.*)/);
 
 ($opt_w) || ($opt_w = shift) || ($opt_w = 85);
-my $warn = $1 if ($opt_w =~ /([0-9]{1,2}\%?|100\%?|[0-9]+[kmKM])+/);
+my $warn = $1 if ($opt_w =~ /([0-9]{1,2}\%?|100\%?|[0-9]+[kMG])/);
 ($warn) || usage("Invalid warning threshold: $opt_w\n");
 
 ($opt_c) || ($opt_c = shift) || ($opt_c = 95);
-my $crit = $1 if ($opt_c =~ /([0-9]{1,2}\%?|100\%?|[0-9]+[kmKM])/);
+my $crit = $1 if ($opt_c =~ /([0-9]{1,2}\%?|100\%?|[0-9]+[kMG])/);
 ($crit) || usage("Invalid critical threshold: $opt_c\n");
 
+# check if both warning and critical are percentage or size
+unless( ( ($opt_w =~ /([0-9]){1,2}$/ ) && ($opt_c =~ /([0-9]){1,2}$/ )  )|| (( $opt_w =~ /[kMG]/ ) && ($opt_c =~ /[kMG]/) )  ){
+	usage("Both warning and critical should be same type- warning: $opt_w critical: $opt_c \n");
+}
+
+# verify warning is less than critical
+if ( $opt_w =~ /[kMG]/) {
+	unless ( $warn > $crit) {
+		usage("Disk size: warning ($opt_w) should be greater than critical ($opt_c) \n");
+	}
+}else{
+	unless ( $warn < $crit) {
+		usage("Percentage: warning ($opt_w) should be less than critical ($opt_c) \n");
+	}
+}
+
 my $workgroup = $1 if (defined($opt_W) && $opt_W =~ /(.*)/);
+
+# end of options checking
+
 
 my $state = "OK";
 my $answer = undef;
@@ -129,27 +150,28 @@ if (/\s*(\d*) blocks of size (\d*)\. (\d*) blocks available/) {
 	#P = Percent, K = KBytes
 	my $warn_type;
 	my $crit_type;
-	if ($warn =~ /^([0-9]+$)/) {
+
+	if ($opt_w =~ /^([0-9]+$)/) {
 		$warn_type = "P";
-	} elsif ($warn =~ /^([0-9]+)k$/) {
-		my ($warn_type) = "K";
+	} elsif ($opt_w =~ /^([0-9]+)k$/) {
+		$warn_type = "K";
 		$warn = $1;
-	} elsif ($warn =~ /^([0-9]+)M$/) {
+	} elsif ($opt_w =~ /^([0-9]+)M$/) {
 		$warn_type = "K";
 		$warn = $1 * 1024;
-	} elsif ($warn =~ /^([0-9]+)G$/) {
+	} elsif ($opt_w =~ /^([0-9]+)G$/) {
 		$warn_type = "K";
 		$warn = $1 * 1048576;
 	}
-	if ($crit =~ /^([0-9]+$)/) {
+	if ($opt_c =~ /^([0-9]+$)/) {
 		$crit_type = "P";
-	} elsif ($crit =~ /^([0-9]+)k$/) {
+	} elsif ($opt_c =~ /^([0-9]+)k$/) {
 		$crit_type = "K";
 		$crit = $1;
-	} elsif ($crit =~ /^([0-9]+)M$/) {
+	} elsif ($opt_c =~ /^([0-9]+)M$/) {
 		$crit_type = "K";
 		$crit = $1 * 1024;
-	} elsif ($crit =~ /^([0-9]+)G$/) {
+	} elsif ($opt_c =~ /^([0-9]+)G$/) {
 		$crit_type = "K";
 		$crit = $1 * 1048576;
 	}
@@ -158,25 +180,26 @@ if (/\s*(\d*) blocks of size (\d*)\. (\d*) blocks available/) {
 		$avail = int($avail / 1024);
 		if (int($avail /1024) > 0) {
 			$avail = (int(($avail / 1024)*100))/100;
-			$avail = $avail."G";
+			$avail = $avail ."G";
 		} else {
-			$avail = $avail."M";
+			$avail = $avail ."M";
 		}
 	} else {
-		$avail = $avail."K";
+		$avail = $avail ."K";
 	}
 
 #print ":$warn:$warn_type:\n";
 #print ":$crit:$crit_type:\n";
 #print ":$avail:$avail_bytes:$capper:$mountpt:\n";
+
 	if ((($warn_type eq "P") && (100 - $capper) < $warn) || (($warn_type eq "K") && ($avail_bytes > $warn))) { 
 		$answer = "Disk ok - $avail ($capper%) free on $mountpt\n";
 	} elsif ((($crit_type eq "P") && (100 - $capper) < $crit) || (($crit_type eq "K") && ($avail_bytes > $crit))) {
 		$state = "WARNING";
-		$answer = "Only $avail ($capper%) free on $mountpt\n";
+		$answer = "WARNING: Only $avail ($capper%) free on $mountpt\n";
 	} else {
 		$state = "CRITICAL";
-		$answer = "Only $avail ($capper%) free on $mountpt\n";
+		$answer = "CRITICAL: Only $avail ($capper%) free on $mountpt\n";
 	}
 } else {
 	$answer = "Result from smbclient not suitable\n";
@@ -188,7 +211,8 @@ if (/\s*(\d*) blocks of size (\d*)\. (\d*) blocks available/) {
 			last;
 		}
 		if (/(Unknown host \w*)/) {
-			$answer = "$1\n";
+			$answer = "$1\n";_
+
 			$state = "CRITICAL";
 			last;
 		}
@@ -229,12 +253,17 @@ Perl Check SMB Disk plugin for Nagios
    Username to log in to server. (Defaults to \"guest\")
 -p, --password=STRING
    Password to log in to server. (Defaults to \"guest\")
--w, --warning=INTEGER
+-w, --warning=INTEGER or INTEGER[kMG]
    Percent of used space at which a warning will be generated (Default: 85%)
-   
--c, --critical=INTEGER
+      
+-c, --critical=INTEGER or INTEGER[kMG]
    Percent of used space at which a critical will be generated (Defaults: 95%)
    
+   If thresholds are followed by either a k, M, or G then check to see if that
+   much disk space is available (kilobytes, Megabytes, Gigabytes)
+
+   Warning percentage should be less than critical
+   Warning (remaining) disk space should be greater than critical.
 
 ";
 	support();
