@@ -1,4 +1,4 @@
-#! /usr/bin/perl -w
+#!/usr/bin/perl -w
 #
 #
 # check_disk.pl <host> <share> <user> <pass> [warn] [critical] [port]

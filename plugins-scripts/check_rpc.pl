@@ -1,4 +1,4 @@
-#! /usr/local/bin/perl -w
+#!/usr/local/bin/perl -w
 #
 # check_rpc plugin for nagios
 #

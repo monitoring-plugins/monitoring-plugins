@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 #
 # Log file pattern detector plugin for Nagios
 # Written by Ethan Galstad (nagios@nagios.org)

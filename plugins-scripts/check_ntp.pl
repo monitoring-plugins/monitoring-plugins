@@ -1,4 +1,4 @@
-#! /usr/bin/perl -w
+#!/usr/bin/perl -w
 
 # (c)1999 Ian Cass, Knowledge Matters Ltd.
 # Read the GNU copyright stuff for all the legalese
