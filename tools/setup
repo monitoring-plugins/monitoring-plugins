@@ -31,7 +31,7 @@ aclocal -I lib
 autoheader
 automake --add-missing --copy
 autoconf
-autopoint
+autopoint --force
 
 if [ -f debian/rules ] ; then
   chmod +x debian/rules
