@@ -612,6 +612,20 @@ else
 	AC_MSG_WARN("nslookup command not found")
 fi
 
+AC_PATH_PROG(PATH_TO_HOST,host)
+if test -n "$ac_cv_path_PATH_TO_HOST"
+then
+	AC_MSG_CHECKING("host syntax")
+	if [host 127.0.0.1 2>&1 | grep -v "ommand not found" > /dev/null]
+	then
+		AC_MSG_RESULT("$PATH_TO_HOST")
+		AC_DEFINE_UNQUOTED(HOST_COMMAND,"$PATH_TO_HOST")
+	fi
+	EXTRAS="$EXTRAS check_dns"
+else	
+	AC_MSG_WARN("host command not found")
+fi
+
 AC_PATH_PROG(PATH_TO_UPTIME,uptime)
 AC_DEFINE_UNQUOTED(PATH_TO_UPTIME,"$PATH_TO_UPTIME")
 
@@ -629,7 +643,7 @@ then
 	AC_DEFINE_UNQUOTED(PATH_TO_SNMPGET,"$PATH_TO_SNMPGET")
 	EXTRAS="$EXTRAS check_hpjd check_snmp"
 else
-	echo "** Get snmpget from http://ucd-snmp.ucdavis.edu to make check_hpjd and check_snmp plugins"
+	echo "** Get snmpget from http://net-snmp.sourceforge.net to make check_hpjd and check_snmp plugins"
 fi
 
 AC_PATH_PROG(PATH_TO_SNMPGETNEXT,snmpgetnext)
@@ -658,7 +672,7 @@ then
 	AC_DEFINE_UNQUOTED(PATH_TO_FPING,"$PATH_TO_FPING")
 	EXTRAS="$EXTRAS check_fping"
 else
-	echo "** Get fping from http://www.stanford.edu/~schemers/docs/fping/fping.html in order to make check_fping plugin"
+	echo "** Get fping from http://www.fping.com in order to make check_fping plugin"
 fi
 
 AC_PATH_PROG(PATH_TO_SSH,ssh)
