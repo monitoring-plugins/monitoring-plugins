@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: nagios-plugins 1.3.99\n"
-"POT-Creation-Date: 2003-07-25 23:10-0400\n"
+"POT-Creation-Date: 2003-07-26 01:27-0400\n"
 "PO-Revision-Date: 2003-07-20 22:24-0400\n"
 "Last-Translator: Michael Wirtgen <Michael.Wirtgen@miwi-dv.com>\n"
 "Language-Team: de <LL@li.org>\n"
@@ -15,13 +15,34 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: plugins/check_tcp.c:516
+#: plugins/check_tcp.c:99
 #, c-format
-msgid "This plugin tests %s connections with the specified host.\n"
+msgid ""
+"Usage: %s -H host -p port [-w <warning time>] [-c <critical time>]\n"
+"\t[-s <send string>] [-e <expect string>] [-q <quit string>]\n"
+"\t[-m <maximum bytes>] [-d <delay>]\t[-t <timeout seconds>]\n"
+"\t[-r <refuse state>] [-v] [-4|-6]\n"
 msgstr ""
 
-#: plugins/check_tcp.c:523
+#: plugins/check_tcp.c:113
+#, c-format
 msgid ""
+"Copyright (c) %s Nagios Plugin Development Team\n"
+"\t<%s>\n"
+"\n"
+msgstr ""
+
+#: plugins/check_tcp.c:118
+#, c-format
+msgid ""
+"This plugin tests %s connections with the specified host.\n"
+"\n"
+msgstr ""
+
+#: plugins/check_tcp.c:124
+msgid ""
+"\n"
+"Options:\n"
 " -H, --hostname=ADDRESS\n"
 "    Host name argument for servers using host headers (use numeric\n"
 "    address if possible to bypass DNS lookup).\n"
@@ -33,7 +54,7 @@ msgid ""
 "    Use IPv6 connection\n"
 msgstr ""
 
-#: plugins/check_tcp.c:534
+#: plugins/check_tcp.c:136
 msgid ""
 " -s, --send=STRING\n"
 "    String to send to the server\n"
@@ -43,7 +64,7 @@ msgid ""
 "    String to send server to initiate a clean close of the connection\n"
 msgstr ""
 
-#: plugins/check_tcp.c:542
+#: plugins/check_tcp.c:144
 msgid ""
 " -r, --refuse=ok|warn|crit\n"
 "    Accept tcp refusals with states ok, warn, crit (default: crit)\n"
@@ -57,7 +78,7 @@ msgid ""
 "    Response time to result in critical status (seconds)\n"
 msgstr ""
 
-#: plugins/check_tcp.c:554
+#: plugins/check_tcp.c:156
 #, c-format
 msgid ""
 " -t, --timeout=INTEGER\n"
@@ -71,9 +92,82 @@ msgid ""
 "\n"
 msgstr ""
 
-#: plugins/check_tcp.c:571
+#: plugins/check_tcp.c:274
+msgid "ERROR: Generic check_tcp called with unknown service\n"
+msgstr ""
+
+#: plugins/check_tcp.c:283
+msgid "Could not parse arguments\n"
+msgstr ""
+
+#: plugins/check_tcp.c:346
+msgid "No data received from host\n"
+msgstr ""
+
+#: plugins/check_tcp.c:358
+msgid "Invalid response from host\n"
+msgstr ""
+
+#: plugins/check_tcp.c:396
+#, c-format
+msgid "%s %s%s - %.3f second response time on port %d"
+msgstr ""
+
+#: plugins/check_tcp.c:472
+#, c-format
 msgid ""
-"-H host -p port [-w warn_time] [-c crit_time] [-s send_string]\n"
-"\t[-e expect_string] [-q quit_string] [-m maxbytes] [-d delay]\n"
-"\t[-t to_sec] [-r refuse_state] [-v] [-4|-6]\n"
+"%s: Unknown argument: %s\n"
+"\n"
+msgstr ""
+
+#: plugins/check_tcp.c:491
+msgid "IPv6 support not available\n"
+msgstr ""
+
+#: plugins/check_tcp.c:496
+msgid "invalid host name or address"
+msgstr ""
+
+#: plugins/check_tcp.c:501
+msgid "Critical threshold must be a nonnegative integer\n"
+msgstr ""
+
+#: plugins/check_tcp.c:507
+msgid "Warning threshold must be a nonnegative integer\n"
+msgstr ""
+
+#: plugins/check_tcp.c:521
+msgid "Timeout interval must be a positive integer\n"
+msgstr ""
+
+#: plugins/check_tcp.c:526
+msgid "Server port must be a positive integer\n"
+msgstr ""
+
+#: plugins/check_tcp.c:542
+msgid "Maxbytes must be a positive integer\n"
+msgstr ""
+
+#: plugins/check_tcp.c:555
+msgid "Refuse mut be one of ok, warn, crit\n"
+msgstr ""
+
+#: plugins/check_tcp.c:561
+msgid "Delay must be a positive integer\n"
+msgstr ""
+
+#: plugins/check_tcp.c:566
+msgid "SSL support not available. Install OpenSSL and recompile."
+msgstr ""
+
+#: plugins/check_tcp.c:574
+msgid "You must provide a server address\n"
+msgstr ""
+
+#: plugins/check_tcp.c:592
+msgid "ERROR: Cannot create SSL context.\n"
+msgstr ""
+
+#: plugins/check_tcp.c:618
+msgid "ERROR: Cannot initiate SSL handshake.\n"
 msgstr ""
