@@ -186,7 +186,7 @@ main (int argc, char **argv)
 
 		if (fsp.fsu_blocks && strcmp ("none", me->me_mountdir)) {
 			usp = (double)(fsp.fsu_blocks - fsp.fsu_bavail) * 100 / fsp.fsu_blocks;
-			disk_result = check_disk (usp, fsp.fsu_bavail);
+			disk_result = check_disk (usp, fsp.fsu_bavail * fsp.fsu_blocksize);
 			result = max_state (disk_result, result);
 			psize = fsp.fsu_blocks*fsp.fsu_blocksize/mult;
 			asprintf (&perf, "%s %s", perf,
