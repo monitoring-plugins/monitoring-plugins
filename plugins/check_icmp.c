@@ -21,6 +21,15 @@
  * The fping website can be found at http://www.fping.com
  */
 
+const char *progname = "check_icmp";
+const char *revision = "$Revision$";
+const char *copyright = "2004";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
+#include "common.h"
+#include "netutils.h"
+#include "utils.h"
+
 #include <stdio.h>
 #include <errno.h>
 #include <time.h>
@@ -66,8 +75,8 @@ extern char *optarg;
 extern int optind, opterr;
 
 /*** Constants ***/
-#define EMAIL		"ae@op5.se"
-#define VERSION		"0.8.1"
+//#define EMAIL		"ae@op5.se"
+//#define VERSION		"0.8.1"
 
 #ifndef INADDR_NONE
 # define INADDR_NONE 0xffffffU
@@ -219,9 +228,9 @@ int num_pingsent = 0;			/* total pings sent */
 int num_pingreceived = 0;		/* total pings received */
 int num_othericmprcvd = 0;		/* total non-echo-reply ICMP received */
 
-struct timeval current_time;	/* current time (pseudo) */
-struct timeval start_time;
-struct timeval end_time;
+struct timeval current_time;	  /* current time (pseudo) */
+struct timeval my_start_time;   /* conflict with utils.c 33, but not found ?? */
+struct timeval my_end_time;     /* conflict with utils.c 33, but not found ?? */
 struct timeval last_send_time;	/* time last ping was sent */
 struct timezone tz;
 
@@ -245,23 +254,29 @@ int recvfrom_wto(int, char *, int, struct sockaddr *, int);
 void remove_job(HOST_ENTRY *);
 void send_ping(int, HOST_ENTRY *);
 long timeval_diff(struct timeval *, struct timeval *);
-void usage(void);
+//void usage(void);
 int wait_for_reply(int);
 void finish(void);
 int handle_random_icmp(struct icmp *, struct sockaddr_in *);
 char *sprint_tm(int);
 int get_threshold(char *, threshold *);
 
+/* common functions */
+void print_help (void);
+void print_usage (void);
+
 /*** the various exit-states */
-enum {
+/*enum {
 	STATE_OK = 0,
 	STATE_WARNING,
 	STATE_CRITICAL,
 	STATE_UNKNOWN,
 	STATE_DEPENDANT,
 	STATE_OOB
-};
+};*/
+
 /* the strings that correspond to them */
+/*
 char *status_string[STATE_OOB] = {
 	"OK",
 	"WARNING",
@@ -269,6 +284,7 @@ char *status_string[STATE_OOB] = {
 	"UNKNOWN",
 	"DEPENDANT"
 };
+*/
 
 int status = STATE_OK;
 int fin_stat = STATE_OK;
@@ -288,6 +304,10 @@ int main(int argc, char **argv)
 	if(strchr(argv[0], '/')) prog = strrchr(argv[0], '/') + 1;
 	else prog = argv[0];
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+	
 	/* check if we are root */
 	if(geteuid()) {
 		printf("Root access needed (for raw sockets)\n");
@@ -309,7 +329,7 @@ int main(int argc, char **argv)
 		seteuid(uid);
 	}
 	
-	if(argc < 2) usage();
+	if(argc < 2) print_usage();
 
 	ident = getpid() & 0xFFFF;
 
@@ -356,35 +376,35 @@ int main(int argc, char **argv)
 			case 'w':
 				if(get_threshold(optarg, &warn)) {
 					printf("Illegal threshold pair specified for -%c", c);
-					usage();
+					print_usage();
 				}
 				break;
 
 			case 'c':
 				if(get_threshold(optarg, &crit)) {
 					printf("Illegal threshold pair specified for -%c", c);
-					usage();
+					print_usage();
 				}
 				break;
 
 			case 't':
 				if(!(timeout = (u_int) strtoul(optarg, NULL, 0) * 100)) {
 					printf("option -%c requires integer argument\n", c);
-					usage();
+					print_usage();
 				}
 				break;
 
 			case 'r':
 				if(!(retry = (u_int) strtoul(optarg, NULL, 0))) {
 					printf("option -%c requires integer argument\n", c);
-					usage();
+					print_usage();
 				}
 				break;
 
 			case 'i':
 				if(!(interval = (u_int) strtoul(optarg, NULL, 0) * 100)) {
 					printf("option -%c requires positive non-zero integer argument\n", c);
-					usage();
+					print_usage();
 				}
 				break;
 
@@ -392,19 +412,19 @@ int main(int argc, char **argv)
 			case 'n':
 				if(!(count = (u_int) strtoul(optarg, NULL, 0))) {
 					printf("option -%c requires positive non-zero integer argument\n", c);
-					usage();
+					print_usage();
 				}
 				break;
 
 			case 'b':
 				if(!(ping_data_size = (u_int) strtoul(optarg, NULL, 0))) {
 					printf("option -%c requires integer argument\n", c);
-					usage();
+					print_usage();
 				}
 				break;
 
 			case 'h':
-				usage();
+				print_usage();
 				break;
 
 			case 'e':
@@ -437,7 +457,7 @@ int main(int argc, char **argv)
 
 			case 'v':
 				printf("%s: Version %s $Date$\n", prog, VERSION);
-				printf("%s: comments to %s\n", prog, EMAIL);
+				printf("%s: comments to %s\n", prog, email);
 				exit(STATE_OK);
 
 			case 'g':
@@ -448,7 +468,7 @@ int main(int argc, char **argv)
 
 			default:
 				printf("option flag -%c specified, but not recognized\n", c);
-				usage();
+				print_usage();
 				break;
 		}
 	}
@@ -479,27 +499,27 @@ int main(int argc, char **argv)
 				prog, MIN_INTERVAL, MAX_RETRY);
 		printf("Current settings; i = %d, r = %d\n",
 			   interval / 100, retry);
-		usage();
+		print_usage();
 	}
 
 	if((ping_data_size > MAX_PING_DATA) || (ping_data_size < MIN_PING_DATA)) {
 		printf("%s: data size %u not valid, must be between %u and %u\n",
 				prog, ping_data_size, MIN_PING_DATA, MAX_PING_DATA);
-		usage();
+		print_usage();
 
 	}
 
 	if((backoff > MAX_BACKOFF_FACTOR) || (backoff < MIN_BACKOFF_FACTOR)) {
 		printf("%s: backoff factor %.1f not valid, must be between %.1f and %.1f\n",
 				prog, backoff, MIN_BACKOFF_FACTOR, MAX_BACKOFF_FACTOR);
-		usage();
+		print_usage();
 
 	}
 
 	if(count > MAX_COUNT) {
 		printf("%s: count %u not valid, must be less than %u\n",
 				prog, count, MAX_COUNT);
-		usage();
+		print_usage();
 	}
 
 	if(count_flag) {
@@ -517,7 +537,7 @@ int main(int argc, char **argv)
 	/* generate requires command line parameters beyond the switches */
 	if(generate_flag && !*argv) {
 		printf("generate flag requires command line parameters beyond switches\n");
-		usage();
+		print_usage();
 	}
 
 	if(*argv && !generate_flag) {
@@ -546,7 +566,7 @@ int main(int argc, char **argv)
 
 	if(!num_hosts) {
 		printf("No hosts to work with!\n\n");
-		usage();
+		print_usage();
 	}
 
 	/* allocate array to hold outstanding ping requests */
@@ -566,8 +586,8 @@ int main(int argc, char **argv)
 
 	signal(SIGINT, (void *)finish);
 
-	gettimeofday(&start_time, &tz);
-	current_time = start_time;
+	gettimeofday(&my_start_time, &tz);
+	current_time = my_start_time;
 
 	last_send_time.tv_sec = current_time.tv_sec - 10000;
 
@@ -666,7 +686,7 @@ void finish()
 	int i;
 	HOST_ENTRY *h;
 
-	gettimeofday(&end_time, &tz);
+	gettimeofday(&my_end_time, &tz);
 
 	/* tot up unreachables */
 	for(i=0; i<num_hosts; i++) {
@@ -712,7 +732,7 @@ void finish()
 
 			if(num_hosts == 1 || status != STATE_OK) {
 				printf("%s - %s: rta %s ms, lost %d%%",
-					   status_string[status], h->host,
+					   state_text(status), h->host,
 					   sprint_tm(h->total_time / h->num_recv),
 					   h->num_sent > 0 ? ((h->num_sent - h->num_recv) * 100) / h->num_sent : 0
 					   );
@@ -735,7 +755,7 @@ void finish()
 
 	if(num_noaddress) {
 		printf("No hostaddress specified.\n");
-		usage();
+		print_usage();
 	}
 	else if(num_alive != num_hosts) {
 		/* for future multi-check support */
@@ -1340,37 +1360,57 @@ int get_threshold(char *str, threshold *th)
 	return 0;
 }
 
-/* make a blahblah */
-void usage(void)
+void
+print_help (void)
 {
-	printf("\nUsage: %s [options] [targets]\n", prog);
-	printf("  -H host  target host\n");
-	printf("  -b n     ping packet size in bytes (default %d)\n", ping_data_size);
-	printf("  -n|p n   number of pings to send to each target (default %d)\n", count);
-	printf("  -r n     number of retries (default %d)\n", retry);
-	printf("  -t n     timeout value (in msec) (default %d)\n", timeout / 100);
-	printf("  -i n     packet interval (in msec) (default %d)\n", DEFAULT_INTERVAL);
-/* XXX - possibly on todo-list
-	printf("  -m       ping multiple interfaces on target host\n");
-	printf("  -a       show targets that are alive\n");
-	printf("  -d       show dead targets\n");
-*/	printf("  -v       show version\n");
-	printf("  -D       increase debug output level\n");
-	printf("  -w       warning threshold pair, given as RTA[ums],PL[%%]\n");
-	printf("  -c       critical threshold pair, given as RTA[ums],PL[%%]\n");
-	printf("\n");
-	printf("Note:\n");
-	printf("* This program requires root privileges to run properly.\n");
-	printf("  If it is run as setuid root it will halt with an error if;\n");
-	printf("    interval < 25 || retries > 5\n\n");
-	printf("* Threshold pairs are given as such;\n");
-	printf("    100,40%%\n");
-	printf("  to set a threshold value pair of 100 milliseconds and 40%% packetloss\n");
-	printf("  The '%%' sign is optional, and if rta value is suffixed by;\n");
-	printf("    s, rta time is set in seconds\n");
-	printf("    m, rta time will be set in milliseconds (this is default)\n");
-	printf("    u, rta time will be set in microseconds\n");
-	printf("  Decimal points are silently ignored for sideways compatibility.\n");
-	printf("\n");
-	exit(3);
-}								/* usage() */
+	print_revision (progname, revision);
+
+	printf ("Copyright (c) 2004 Andreas Ericsson <ae@op5.se>\n");
+	printf (COPYRIGHT, copyright, email);
+
+	printf (_("This plugin will check hosts sending icmp pings\n\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+	
+	printf (_("\
+ -H, \n\
+    Host name argument for servers\n\
+ -b  \n\
+   ping packet size in bytes (default %d)\n\
+ -n  \n\
+   number of pings to send to each target (default %d)\n\
+ -r  \n\
+   number of retries (default %d)\n\
+ -t  \n\
+   timeout value (in msec) (default %d)\n\
+ -i  \n\
+   packet interval (in msec) (default %d)\n\
+ -w  \n\
+   warning threshold pair, given as RTA[ums],PL[%%]\n\
+ -c  \n\
+   critical threshold pair, given as RTA[ums],PL[%%]\n\
+ -D  \n\
+   increase debug output level\n\n"),ping_data_size,count,retry,(timeout / 100),DEFAULT_INTERVAL);
+
+	printf (_(UT_WARN_CRIT));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(UT_VERBOSE));
+
+//	printf (_("This plugin will check hosts sending icmp pings\n"));
+
+	printf (_(UT_SUPPORT));
+}
+
+void
+print_usage (void)
+{
+	printf ("\
+Usage: %s -H <vhost> | [-b <ping packet size in bytes>] [-n <number of pings>]\n\
+                  [-r <number of retries>] [-t <timeout>] [-i packet interval]\n\
+                  [-w <warning threshold>] [-c <critical threshold>]\n\
+                  [-D <debug>] \n", progname);
+}

@@ -7,6 +7,7 @@ plugins/check_fping.c
 plugins/check_game.c
 plugins/check_hpjd.c
 plugins/check_http.c
+plugins/check_icmp.c
 plugins/check_ldap.c
 plugins/check_load.c
 plugins/check_mrtg.c
