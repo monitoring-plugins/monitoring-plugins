@@ -120,10 +120,11 @@ my $dispersion_error = $ERRORS{'UNKNOWN'};
 
 my $key = undef;
 # some systems don't have a proper ntpdc/xntpdc
+my $have_ntpdc = undef;
 if ($utils::PATH_TO_NTPDC && -x $utils::PATH_TO_NTPDC ) {
-	my $have_ntpdc = 1;  
+	$have_ntpdc = 1;  
 }else{
-	my $have_ntpdc = 0;
+	$have_ntpdc = 0;
 }
 
 # Just in case of problems, let's not hang Nagios
