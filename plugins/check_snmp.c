@@ -24,57 +24,95 @@
  *****************************************************************************/
 
 const char *progname = "check_snmp";
-#define REVISION "$Revision$"
-#define COPYRIGHT "1999-2002"
-#define AUTHOR "Ethan Galstad"
-#define EMAIL "nagios@nagios.org"
-#define SUMMARY "Check status of remote machines using SNMP.\n"
+const char *revision = "$Revision$";
+const char *copyright = "1999-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
-#define OPTIONS "\
--H <ip_address> -o <OID> [-w warn_range] [-c crit_range] \n\
-          [-C community] [-s string] [-r regex] [-R regexi] [-t timeout]\n\
-          [-l label] [-u units] [-p port-number] [-d delimiter]\n\
-          [-D output-delimiter] [-m miblist] [-P snmp version]\n\
-          [-L seclevel] [-U secname] [-a authproto] [-A authpasswd]\n\
-          [-X privpasswd]\n"
+#define DEFAULT_COMMUNITY "public"
+#define DEFAULT_PORT "161"
+#define DEFAULT_MIBLIST "ALL"
+#define DEFAULT_PROTOCOL "1"
+#define DEFAULT_AUTH_PROTOCOL "MD5"
+#define DEFAULT_DELIMITER "="
+#define DEFAULT_OUTPUT_DELIMITER " "
 
-#define LONGOPTIONS "\
- -H, --hostname=HOST\n\
-    Name or IP address of the device you wish to query\n\
- -o, --oid=OID(s)\n\
-    Object identifier(s) whose value you wish to query\n\
- -w, --warning=INTEGER_RANGE(s)\n\
-    Range(s) which will not result in a WARNING status\n\
- -c, --critical=INTEGER_RANGE(s)\n\
-    Range(s) which will not result in a CRITICAL status\n\
- -C, --community=STRING\n\
-    Optional community string for SNMP communication\n\
-    (default is \"%s\")\n\
- -u, --units=STRING\n\
-    Units label(s) for output data (e.g., 'sec.').\n\
- -p, --port=STRING\n\
-    UDP port number target is listening on. Default is \"%s\"\n\
+#include "common.h"
+#include "utils.h"
+#include "popen.h"
+
+void
+print_usage (void)
+{
+	printf ("\
+Usage: %s -H <ip_address> -o <OID> [-w warn_range] [-c crit_range] \n\
+  [-C community] [-s string] [-r regex] [-R regexi] [-t timeout]\n\
+  [-l label] [-u units] [-p port-number] [-d delimiter]\n\
+  [-D output-delimiter] [-m miblist] [-P snmp version]\n\
+  [-L seclevel] [-U secname] [-a authproto] [-A authpasswd]\n\
+  [-X privpasswd]\n",
+	        progname);
+	printf ("\
+       %s (-h | --help) for detailed help\n\
+       %s (-V | --version) for version information\n",
+	        progname, progname);
+}
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("\
+Check status of remote machines and obtain sustem information via SNMP"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_HOST_PORT), 'p', DEFAULT_PORT);
+
+	/* SNMP and Authentication Protocol */
+	printf (_("\
  -P, --protocol=[1|3]\n\
     SNMP protocol version\n\
  -L, --seclevel=[noAuthNoPriv|authNoPriv|authPriv]\n\
     SNMPv3 securityLevel\n\
+ -a, --authproto=[MD5|SHA]\n\
+    SNMPv3 auth proto\n"));
+
+	/* Authentication Tokens*/
+	printf (_("\
+ -C, --community=STRING\n\
+    Optional community string for SNMP communication\n\
+    (default is \"%s\")\n\
  -U, --secname=USERNAME\n\
     SNMPv3 username\n\
- -a, --authproto=[MD5|SHA]\n\
-    SNMPv3 auth proto\n\
  -A, --authpassword=PASSWORD\n\
     SNMPv3 authentication password\n\
  -X, --privpasswd=PASSWORD\n\
-    SNMPv3 crypt passwd (DES)\n\
- -d, --delimiter=STRING\n\
+    SNMPv3 crypt passwd (DES)\n"), DEFAULT_COMMUNITY);
+
+	/* OID Stuff */
+	printf (_("\
+ -o, --oid=OID(s)\n\
+    Object identifier(s) whose value you wish to query\n\
+ -m, --miblist=STRING\n\
+    List of MIBS to be loaded (default = ALL)\n -d, --delimiter=STRING\n\
     Delimiter to use when parsing returned data. Default is \"%s\"\n\
     Any data on the right hand side of the delimiter is considered\n\
-    to be the data that should be used in the evaluation.\n\
- -t, --timeout=INTEGER\n\
-    Seconds to wait before plugin times out (see also nagios server timeout).\n\
-    Default is %d seconds\n\
- -D, --output-delimiter=STRING\n\
-    Separates output on multiple OID requests\n\
+    to be the data that should be used in the evaluation.\n"), DEFAULT_DELIMITER);
+
+	/* Tests Against Integers */
+	printf (_("\
+ -w, --warning=INTEGER_RANGE(s)\n\
+    Range(s) which will not result in a WARNING status\n\
+ -c, --critical=INTEGER_RANGE(s)\n\
+    Range(s) which will not result in a CRITICAL status\n"));
+
+	/* Tests Against Strings */
+	printf (_("\
  -s, --string=STRING\n\
     Return OK state (for that OID) if STRING is an exact match\n\
  -r, --ereg=REGEX\n\
@@ -82,44 +120,49 @@ const char *progname = "check_snmp";
  -R, --eregi=REGEX\n\
     Return OK state (for that OID) if case-insensitive extended REGEX matches\n\
  -l, --label=STRING\n\
-    Prefix label for output from plugin (default -s 'SNMP')\n\
- -v, --verbose\n\
-    Debugging the output\n\
- -m, --miblist=STRING\n\
-    List of MIBS to be loaded (default = ALL)\n"
+    Prefix label for output from plugin (default -s 'SNMP')\n"));
 
-#define NOTES "\
+	/* Output Formatting */
+	printf (_("\
+ -u, --units=STRING\n\
+    Units label(s) for output data (e.g., 'sec.').\n\
+ -D, --output-delimiter=STRING\n\
+    Separates output on multiple OID requests\n"));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(UT_VERBOSE));
+
+	printf (_("\
 - This plugin uses the 'snmpget' command included with the NET-SNMP package.\n\
   If you don't have the package installed, you will need to download it from\n\
-  http://net-snmp.sourceforge.net before you can use this plugin.\n\
+  http://net-snmp.sourceforge.net before you can use this plugin.\n"));
+
+	printf (_("\
 - Multiple OIDs may be indicated by a comma- or space-delimited list (lists with\n\
-  internal spaces must be quoted) [max 8 OIDs]\n\
+  internal spaces must be quoted) [max 8 OIDs]\n"));
+
+	printf (_("\
 - Ranges are inclusive and are indicated with colons. When specified as\n\
   'min:max' a STATE_OK will be returned if the result is within the indicated\n\
   range or is equal to the upper or lower bound. A non-OK state will be\n\
-  returned if the result is outside the specified range.\n\
+  returned if the result is outside the specified range.\n"));
+
+	printf (_("\
 - If specified in the order 'max:min' a non-OK state will be returned if the\n\
-  result is within the (inclusive) range.\n\
+  result is within the (inclusive) range.\n"));
+
+	printf (_("\
 - Upper or lower bounds may be omitted to skip checking the respective limit.\n\
 - Bare integers are interpreted as upper limits.\n\
 - When checking multiple OIDs, separate ranges by commas like '-w 1:10,1:,:20'\n\
 - Note that only one string and one regex may be checked at present\n\
 - All evaluation methods other than PR, STR, and SUBSTR expect that the value\n\
-  returned from the SNMP query is an unsigned integer.\n"
+  returned from the SNMP query is an unsigned integer.\n"));
 
-#define DESCRIPTION "\
-This plugin gets system information on a remote server via snmp.\n"
-
-#define DEFAULT_COMMUNITY "public"
-#define DEFAULT_PORT "161"
-#define DEFAULT_TIMEOUT 10
-#define DEFAULT_MIBLIST "ALL"
-#define DEFAULT_PROTOCOL "1"
-#define DEFAULT_AUTH_PROTOCOL "MD5"
-
-#include "common.h"
-#include "utils.h"
-#include "popen.h"
+	support ();
+}
+
 
 #define mark(a) ((a)!=0?"*":"")
 
@@ -147,8 +190,6 @@ This plugin gets system information on a remote server via snmp.\n"
 
 #define MAX_OIDS 8
 #define MAX_DELIM_LENGTH 8
-#define DEFAULT_DELIMITER "="
-#define DEFAULT_OUTPUT_DELIMITER " "
 
 void print_usage (void);
 void print_help (void);
@@ -474,7 +515,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK); 
 		case 'V':	/* version */
-			print_revision (progname, REVISION);
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'v': /* verbose */
 			verbose = TRUE;
@@ -745,31 +786,6 @@ validate_arguments ()
 	
 
 	return OK;
-}
-
-
-
-void
-print_help (void)
-{
-	print_revision (progname, REVISION);
-	printf
-		("Copyright (c) %s %s <%s>\n\n%s\n", COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
-	print_usage ();
-	printf
-		("\nOptions:\n" LONGOPTIONS "\n" DESCRIPTION "\n" NOTES "\n", 
-		 DEFAULT_COMMUNITY, DEFAULT_PORT, DEFAULT_DELIMITER, DEFAULT_TIMEOUT);
-	support ();
-}
-
-void
-print_usage (void)
-{
-	printf
-		("Usage:\n" " %s %s\n"
-		 " %s (-h | --help) for detailed help\n"
-		 " %s (-V | --version) for version information\n",
-		 progname, OPTIONS, progname, progname);
 }
 
 
