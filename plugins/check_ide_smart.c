@@ -181,11 +181,14 @@ main (int argc, char *argv[])
 	while (1) {
 		
 		o = getopt_long (argc, argv, "+d:iq10nhV", longopts, &longindex);
-		
-		if (o == -1 || o == EOF)
-			break;
 
 		switch (o) {
+		case -1: 
+								/* 
+								 * bail out of the switch but not the loop, so
+								 * that device can be extracted from argv.
+								 */
+			break;
 		case 'd':
 			device = optarg;
 			break;
@@ -226,7 +229,7 @@ main (int argc, char *argv[])
 		fd = open (device, O_RDONLY);
 
 		if (fd < 0) {
-			printf (_("CRITICAL - Couldn't open device: %s\n"), strerror (errno));
+			printf (_("CRITICAL - Couldn't open device %s: %s\n"), device, strerror (errno));
 			return 2;
 		}
 
@@ -498,12 +501,13 @@ print_help (void)
 	printf ("(C) 1999 Ragnar Hojland Espinosa <ragnar@lightside.dhis.org>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf(_("This plugin checks this host's IDE hard drive through the (Linux specific) SMART command interface.\n\n"));
+	printf(_("This plugin checks a local hard drive with the (Linux specific) SMART interface [http://smartlinux.sourceforge.net/smart/index.php].\n\n"));
 	
 	printf ("\
-Usage: %s [DEVICE] [OPTION]\n\
+Usage: %s [OPTION] [DEVICE]\n\
  -d, --device=DEVICE\n\
     Select device DEVICE\n\
+    Note: if the device is selected with this option, _no_ other options are accepted\n\
  -i, --immediate\n\
     Perform immediately offline tests\n\
  -q, --quiet-check\n\
