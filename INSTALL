@@ -8,6 +8,11 @@ Nagios Plugins Quick-and-Dirty Installation Instructions
 	# autoheader
 	# automake
 
+   or you can run ./tools/setup
+
+   Currently we are only supporting autoconf 2.13 and automake 1.4p5. Support
+   for the latest autoconf and automake are in the works.
+
 
 1) Run the configure script to initialize variables and create a Makefile, etc.
 
@@ -44,6 +49,9 @@ Nagios Plugins Quick-and-Dirty Installation Instructions
 
 
 That's it.  If you have any problems or questions, feel free send mail
-to nagios-users@lists.sourceforge.net
+to nagios-users@lists.sourceforge.net or nagiosplug-help@lists.sourceforge.net
+
+Please send patches and bugs to nagiosplug-devel@lists.sourceforge.net and
+post them on http://sourceforge.net/projects/nagiosplug.
 
 
