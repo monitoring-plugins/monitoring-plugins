@@ -88,8 +88,86 @@ char *buffer = "";
 char *progname = "check_tcp";
 const char *revision = "$Revision$";
 const char *copyright = "2002-2003";
-const char *authors = "Nagios Plugin Development Team";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
+
+
+
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -H host -p port [-w <warning time>] [-c <critical time>]\n\
+	[-s <send string>] [-e <expect string>] [-q <quit string>]\n\
+	[-m <maximum bytes>] [-d <delay>]	[-t <timeout seconds>]\n\
+	[-r <refuse state>] [-v] [-4|-6]\n"), progname);
+	printf ("       %s (-h|--help)\n", progname);
+	printf ("       %s (-V|--version)\n", progname);
+}
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_("\
+Copyright (c) %s Nagios Plugin Development Team\n\
+\t<%s>\n\n"),
+	        copyright, email);
+
+	printf (_("\
+This plugin tests %s connections with the specified host.\n\n"),
+	        SERVICE);
+
+	print_usage ();
+
+	printf (_("\
+\nOptions:\n\
+ -H, --hostname=ADDRESS\n\
+    Host name argument for servers using host headers (use numeric\n\
+    address if possible to bypass DNS lookup).\n\
+ -p, --port=INTEGER\n\
+    Port number\n\
+ -4, --use-ipv4\n\
+    Use IPv4 connection\n\
+ -6, --use-ipv6\n\
+    Use IPv6 connection\n"));
+
+	printf (_("\
+ -s, --send=STRING\n\
+    String to send to the server\n\
+ -e, --expect=STRING\n\
+    String to expect in server response\n\
+ -q, --quit=STRING\n\
+    String to send server to initiate a clean close of the connection\n"));
+
+	printf (_("\
+ -r, --refuse=ok|warn|crit\n\
+    Accept tcp refusals with states ok, warn, crit (default: crit)\n\
+ -m, --maxbytes=INTEGER\n\
+    Close connection once more than this number of bytes are received\n\
+ -d, --delay=INTEGER\n\
+    Seconds to wait between sending string and polling for response\n\
+ -w, --warning=DOUBLE\n\
+    Response time to result in warning status (seconds)\n\
+ -c, --critical=DOUBLE\n\
+    Response time to result in critical status (seconds)\n"));
+
+	printf (_("\
+ -t, --timeout=INTEGER\n\
+    Seconds before connection times out (default: %d)\n\
+ -v, --verbose\n\
+    Show details for command-line debugging (Nagios may truncate output)\n\
+ -h, --help\n\
+    Print detailed help screen\n\
+ -V, --version\n\
+    Print version information\n\n"),
+					DEFAULT_SOCKET_TIMEOUT);
+
+	support ();
+}
+
+
 
 int
 main (int argc, char **argv)
@@ -193,7 +271,7 @@ main (int argc, char **argv)
 		PORT = 119;
 	}
 	else {
-		usage ("ERROR: Generic check_tcp called with unknown service\n");
+		usage (_("ERROR: Generic check_tcp called with unknown service\n"));
 	}
 
 	server_address = strdup ("127.0.0.1");
@@ -202,7 +280,7 @@ main (int argc, char **argv)
 	server_quit = QUIT;
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage ("Could not parse arguments\n");
+		usage (_("Could not parse arguments\n"));
 
 	/* use default expect if none listed in process_arguments() */
 	if (EXPECT && server_expect_count == 0) {
@@ -265,7 +343,7 @@ main (int argc, char **argv)
 
 		/* return a CRITICAL status if we couldn't read any data */
 		if (status == NULL)
-			terminate (STATE_CRITICAL, "No data received from host\n");
+			terminate (STATE_CRITICAL, _("No data received from host\n"));
 
 		strip (status);
 
@@ -277,7 +355,7 @@ main (int argc, char **argv)
 				if (verbose)
 					printf ("%d %d\n", i, server_expect_count);
 				if (i >= server_expect_count)
-					terminate (STATE_WARNING, "Invalid response from host\n");
+					terminate (STATE_WARNING, _("Invalid response from host\n"));
 				if (strstr (status, server_expect[i]))
 					break;
 			}
@@ -315,7 +393,7 @@ main (int argc, char **argv)
 	alarm (0);
 
 	printf
-		("%s %s%s - %.3f second response time on port %d",
+		(_("%s %s%s - %.3f second response time on port %d"),
 		 SERVICE,
 		 state_text (result),
 		 (was_refused) ? " (refused)" : "",
@@ -391,7 +469,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':                 /* print short usage statement if args not parsable */
-			printf ("%s: Unknown argument: %s\n\n", progname, optarg);
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h':                 /* help */
@@ -410,23 +488,23 @@ process_arguments (int argc, char **argv)
 #ifdef USE_IPV6
 			address_family = AF_INET6;
 #else
-			usage ("IPv6 support not available\n");
+			usage (_("IPv6 support not available\n"));
 #endif
 			break;
 		case 'H':                 /* hostname */
 			if (is_host (optarg) == FALSE)
-				usage2 ("invalid host name or address", optarg);
+				usage2 (_("invalid host name or address"), optarg);
 			server_address = optarg;
 			break;
 		case 'c':                 /* critical */
 			if (!is_intnonneg (optarg))
-				usage ("Critical threshold must be a nonnegative integer\n");
+				usage (_("Critical threshold must be a nonnegative integer\n"));
 			critical_time = strtod (optarg, NULL);
 			check_critical_time = TRUE;
 			break;
 		case 'w':                 /* warning */
 			if (!is_intnonneg (optarg))
-				usage ("Warning threshold must be a nonnegative integer\n");
+				usage (_("Warning threshold must be a nonnegative integer\n"));
 			warning_time = strtod (optarg, NULL);
 			check_warning_time = TRUE;
 			break;
@@ -440,12 +518,12 @@ process_arguments (int argc, char **argv)
 			break;
 		case 't':                 /* timeout */
 			if (!is_intpos (optarg))
-				usage ("Timeout interval must be a positive integer\n");
+				usage (_("Timeout interval must be a positive integer\n"));
 			socket_timeout = atoi (optarg);
 			break;
 		case 'p':                 /* port */
 			if (!is_intpos (optarg))
-				usage ("Server port must be a positive integer\n");
+				usage (_("Server port must be a positive integer\n"));
 			server_port = atoi (optarg);
 			break;
 		case 's':
@@ -461,7 +539,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'm':
 			if (!is_intpos (optarg))
-				usage ("Maxbytes must be a positive integer\n");
+				usage (_("Maxbytes must be a positive integer\n"));
 			maxbytes = atoi (optarg);
 		case 'q':
 			server_quit = optarg;
@@ -474,18 +552,18 @@ process_arguments (int argc, char **argv)
 			else if (!strncmp(optarg,"crit",4))
 				econn_refuse_state = STATE_CRITICAL;
 			else
-				usage ("Refuse mut be one of ok, warn, crit\n");
+				usage (_("Refuse mut be one of ok, warn, crit\n"));
 			break;
 		case 'd':
 			if (is_intpos (optarg))
 				delay = atoi (optarg);
 			else
-				usage ("Delay must be a positive integer\n");
+				usage (_("Delay must be a positive integer\n"));
 			break;
 		case 'S':
 #ifndef HAVE_SSL
 			terminate (STATE_UNKNOWN,
-				"SSL support not available. Install OpenSSL and recompile.");
+				_("SSL support not available. Install OpenSSL and recompile."));
 #endif
 			use_ssl = TRUE;
 			break;
@@ -493,86 +571,11 @@ process_arguments (int argc, char **argv)
 	}
 
 	if (server_address == NULL)
-		usage ("You must provide a server address\n");
+		usage (_("You must provide a server address\n"));
 
 	return OK;
 }
 
-
-
-
-void
-print_help (void)
-{
-	print_revision (progname, revision);
-
-	printf ("Copyright (c) %s %s\n\t<%s>\n\n", copyright, authors, email);
-
-	printf (_("\
-This plugin tests %s connections with the specified host.\n"), SERVICE);
-
-	print_usage ();
-
-	printf ("\nOptions:\n");
-
-	printf (_("\
- -H, --hostname=ADDRESS\n\
-    Host name argument for servers using host headers (use numeric\n\
-    address if possible to bypass DNS lookup).\n\
- -p, --port=INTEGER\n\
-    Port number\n\
- -4, --use-ipv4\n\
-    Use IPv4 connection\n\
- -6, --use-ipv6\n\
-    Use IPv6 connection\n"));
-
-	printf (_("\
- -s, --send=STRING\n\
-    String to send to the server\n\
- -e, --expect=STRING\n\
-    String to expect in server response\n\
- -q, --quit=STRING\n\
-    String to send server to initiate a clean close of the connection\n"));
-
-	printf (_("\
- -r, --refuse=ok|warn|crit\n\
-    Accept tcp refusals with states ok, warn, crit (default: crit)\n\
- -m, --maxbytes=INTEGER\n\
-    Close connection once more than this number of bytes are received\n\
- -d, --delay=INTEGER\n\
-    Seconds to wait between sending string and polling for response\n\
- -w, --warning=DOUBLE\n\
-    Response time to result in warning status (seconds)\n\
- -c, --critical=DOUBLE\n\
-    Response time to result in critical status (seconds)\n"));
-
-	printf (_("\
- -t, --timeout=INTEGER\n\
-    Seconds before connection times out (default: %d)\n\
- -v, --verbose\n\
-    Show details for command-line debugging (Nagios may truncate output)\n\
- -h, --help\n\
-    Print detailed help screen\n\
- -V, --version\n\
-    Print version information\n\n"),
-					DEFAULT_SOCKET_TIMEOUT);
-
-	support ();
-}
-
-void
-print_usage (void)
-{
-	printf ("Usage: %s %s\n", progname, _("\
--H host -p port [-w warn_time] [-c crit_time] [-s send_string]\n\
-	[-e expect_string] [-q quit_string] [-m maxbytes] [-d delay]\n\
-	[-t to_sec] [-r refuse_state] [-v] [-4|-6]\n"));
-	printf ("       %s (-h|--help)\n", progname);
-	printf ("       %s (-V|--version)\n", progname);
-}
-
-
-
 
 #ifdef HAVE_SSL
 int
@@ -586,7 +589,7 @@ connect_SSL (void)
   SSL_load_error_strings ();
   if ((ctx = SSL_CTX_new (meth)) == NULL)
     {
-      printf ("ERROR: Cannot create SSL context.\n");
+      printf (_("ERROR: Cannot create SSL context.\n"));
       return STATE_CRITICAL;
     }
 
@@ -612,7 +615,7 @@ connect_SSL (void)
       }
       else
       {
-        printf ("ERROR: Cannot initiate SSL handshake.\n");
+        printf (_("ERROR: Cannot initiate SSL handshake.\n"));
       }
       SSL_free (ssl);
     }
