@@ -52,7 +52,7 @@ main (int argc, char **argv)
 {
 	int percent_used, percent;
 	unsigned long long total_swap = 0, used_swap = 0, free_swap = 0;
-	unsigned long long dsktotal, dskused, dskfree;
+	unsigned long long dsktotal, dskused, dskfree, tmp;
 	int result = STATE_OK;
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *perf;
@@ -82,8 +82,7 @@ main (int argc, char **argv)
 #ifdef HAVE_PROC_MEMINFO
 	fp = fopen (PROC_MEMINFO, "r");
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, fp)) {
-		if (sscanf (input_buffer, " %s %llu %llu %llu", str, &dsktotal, &dskused, &dskfree) == 4 &&
-		    strstr (str, "Swap")) {
+		if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%*[:] %llu %llu %llu", &dsktotal, &dskused, &dskfree) == 3) {
 			dsktotal = dsktotal / 1048576;
 			dskused = dskused / 1048576;
 			dskfree = dskfree / 1048576;
@@ -97,8 +96,20 @@ main (int argc, char **argv)
 					asprintf (&status, "%s [%llu (%d%%)]", status, dskfree, 100 - percent);
 			}
 		}
+		else if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%[TotalFre]%*[:] %llu %*[k]%*[B]", str, &tmp)) {
+			if (strcmp ("Total", str) == 0) {
+				dsktotal = tmp / 1024;
+			}
+			else if (strcmp ("Free", str) == 0) {
+				dskfree = tmp / 1024;
+			}
+		}
 	}
 	fclose(fp);
+	dskused = dsktotal - dskfree;
+	total_swap = dsktotal;
+	used_swap = dskused;
+	free_swap = dskfree;
 #else
 # ifdef HAVE_SWAP
 	asprintf(&swap_command, "%s", SWAP_COMMAND);
