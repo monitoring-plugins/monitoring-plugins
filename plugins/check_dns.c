@@ -139,7 +139,7 @@ main (int argc, char **argv)
 				address = strdup (temp_buffer);
 				strip (address);
 				if (address==NULL || strlen(address)==0)
-					terminate (STATE_CRITICAL, "DNS CRITICAL - '%s' returned empty host name string", %s);
+					terminate (STATE_CRITICAL, "DNS CRITICAL - '%s' returned empty host name string", NSLOOKUP_COMMAND);
 				result = STATE_OK;
 			}
 			else {
