@@ -19,8 +19,22 @@ function which(c,path) {
 	return c;
 }
 
+# used to replace "use lib utils.pm" with "use lib @libexecdir"
+#
+function led() {
+	led1 = "@libexecdir@";
+	led2 = "@exec_prefix@";
+	led3 = "@prefix@";
+	if ( match(led1, /^\$\{exec_prefix\}/ ) != 0 ) {
+		return "\"" led3 "/libexec\" " ;
+	
+	}
+	return led1;
+}
+
 BEGIN {
 	split(ENVIRON["PATH"] ":/sbin:/usr/sbin",path,/:/);
+
 }
 
 # scripting language (first line)
@@ -29,6 +43,10 @@ BEGIN {
 /^#! ?\/.*\/perl/ {sub(/^#! ?\/.*\/perl/,"#! @PERL@");}
 /^#! ?\/.*\/[a-z]{0,2}awk/ {sub(/^#! ?\/.*\/[a-z]{0,2}awk/,"#! @AWK@");}
 /^#! ?\/.*\/sh/ {sub(/^#! ?\/.*\/sh/,"#! @SHELL@");}
+
+# add to libexecdir to INC for perl utils.pm
+/^use/ { if (/lib/) { if (/utils.pm/ ) {sub(/utils.pm/,led() )} } }
+
 
 # Trusted path mechanism (deprecated)
 
