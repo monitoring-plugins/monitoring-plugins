@@ -29,7 +29,7 @@ This plugin tests %s connections with the specified host.\n";
 const char *option_summary = "\
 -H host -p port [-w warn_time] [-c crit_time] [-s send_string]\n\
 	[-e expect_string] [-q quit_string] [-m maxbytes] [-d delay]\n\
-	[-t to_sec] [-r refuse_state] [-v] [-4] [-6]\n";
+	[-t to_sec] [-r refuse_state] [-v] [-4|-6]\n";
 
 const char *options = "\
  -H, --hostname=ADDRESS\n\

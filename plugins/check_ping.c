@@ -19,7 +19,7 @@ const char *progname = "check_ping";
 
 #define OPTIONS "\
 -H <host_address> -w <wrta>,<wpl>%% -c <crta>,<cpl>%%\n\
-       [-p packets] [-t timeout] [-L] [-4] [-6]\n"
+       [-p packets] [-t timeout] [-L] [-4|-6]\n"
 
 #define LONGOPTIONS "\
 -H, --hostname=HOST\n\
