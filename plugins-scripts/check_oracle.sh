@@ -3,21 +3,8 @@
 # latigid010@yahoo.com
 # 01/06/2000
 #
-#  This Nagios plugin was created to check remote or local TNS
-#  status and check local Database status.
+#  This Nagios plugin was created to check Oracle status
 #
-#  Add the following lines to your object config file (i.e. commands.cfg)
-#         command[check-tns]=/usr/local/nagios/libexec/check_ora 1 $ARG$
-#         command[check-oradb]=/usr/local/nagios/libexec/check_ora 2 $ARG$
-#
-#
-# Usage: 
-#      To check TNS Status:  ./check_ora 1 <Oracle Sid or Hostname/IP address>
-#  To Check local database:  ./check_ora 2 <ORACLE_SID>
-#
-# I have the script checking for the Oracle PMON process and 
-# the sgadefORACLE_SID.dbf file.
-# 
 
 PROGNAME=`basename $0`
 PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
@@ -43,14 +30,14 @@ print_help() {
   echo ""
   print_usage
   echo ""
-  echo "Check remote or local TNS status and check local Database status"
+  echo "Check Oracle status"
   echo ""
-  echo "--tns=SID/IP Address"
+  echo "--tns SID/IP Address"
   echo "   Check remote TNS server"
-  echo "--db=SID"
+  echo "--db SID"
   echo "   Check local database (search /bin/ps for PMON process) and check"
   echo "   filesystem for sgadefORACLE_SID.dbf"
-  echo "--login=SID"
+  echo "--login SID"
   echo "   Attempt a dummy login and alert if not ORA-01017: invalid username/password"
   echo "--cache"
   echo "   Check local database for library and buffer cache hit ratios"
@@ -60,7 +47,7 @@ print_help() {
   echo "   Check local database for tablespace capacity in ORACLE_SID"
   echo "       --->  Requires Oracle user/password specified."
   echo "       		--->  Requires select on dba_data_files and dba_free_space"
-  echo "--oranames=Hostname"
+  echo "--oranames Hostname"
   echo "   Check remote Oracle Names server"
   echo "--help"
   echo "   Print this help screen"
@@ -71,7 +58,7 @@ print_help() {
   echo "variable is set, that ORACLE_HOME/bin is in your PATH, and the"
   echo "tnsnames.ora file is locatable and is properly configured."
   echo ""
-  echo "When checking Local Database status your ORACLE_SID is case sensitive."
+  echo "When checking local database status your ORACLE_SID is case sensitive."
   echo ""
   echo "If you want to use a default Oracle home, add in your oratab file:"
   echo "*:/opt/app/oracle/product/7.3.4:N"
