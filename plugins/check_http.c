@@ -781,21 +781,21 @@ check_http (void)
 					pos += (size_t) strcspn (pos, "\r\n");
 					pos += (size_t) strspn (pos, "\r\n");
 				} /* end while (pos) */
-				printf ("HTTP UNKNOWN: Could not find redirect location - %s%s",
+				printf ("UNKNOWN - Could not find redirect location - %s%s",
 				        status_line, (display_html ? "</A>" : ""));
 				exit (STATE_UNKNOWN);
 			} /* end if (onredirect == STATE_DEPENDENT) */
 			
 			else if (onredirect == STATE_UNKNOWN)
-				printf ("HTTP UNKNOWN");
+				printf ("UNKNOWN");
 			else if (onredirect == STATE_OK)
-				printf ("HTTP ok");
+				printf ("OK");
 			else if (onredirect == STATE_WARNING)
-				printf ("HTTP WARNING");
+				printf ("WARNING");
 			else if (onredirect == STATE_CRITICAL)
-				printf ("HTTP CRITICAL");
+				printf ("CRITICAL");
 			elapsed_time = delta_time (tv);
-			asprintf (&msg, ": %s - %7.3f second response time %s%s|time=%7.3f\n",
+			asprintf (&msg, " - %s - %7.3f second response time %s%s|time=%7.3f\n",
 		                 status_line, elapsed_time, timestamp,
 	                   (display_html ? "</A>" : ""), elapsed_time);
 			terminate (onredirect, msg);
@@ -826,7 +826,7 @@ check_http (void)
 			exit (STATE_OK);
 		}
 		else {
-			printf ("HTTP CRITICAL: string not found%s|time=%7.3f\n",
+			printf ("CRITICAL - string not found%s|time=%7.3f\n",
 			        (display_html ? "</A>" : ""), elapsed_time);
 			exit (STATE_CRITICAL);
 		}
@@ -842,13 +842,13 @@ check_http (void)
 		}
 		else {
 			if (errcode == REG_NOMATCH) {
-				printf ("HTTP CRITICAL: pattern not found%s|time=%7.3f\n",
+				printf ("CRITICAL - pattern not found%s|time=%7.3f\n",
 				        (display_html ? "</A>" : ""), elapsed_time);
 				exit (STATE_CRITICAL);
 			}
 			else {
 				regerror (errcode, &preg, errbuf, MAX_INPUT_BUFFER);
-				printf ("Execute Error: %s\n", errbuf);
+				printf ("CRITICAL - Execute Error: %s\n", errbuf);
 				exit (STATE_CRITICAL);
 			}
 		}
@@ -887,7 +887,7 @@ int connect_SSL (void)
 	meth = SSLv23_client_method ();
 	SSL_load_error_strings ();
 	if ((ctx = SSL_CTX_new (meth)) == NULL) {
-		printf ("ERROR: Cannot create SSL context.\n");
+		printf ("CRITICAL -  Cannot create SSL context.\n");
 		return STATE_CRITICAL;
 	}
 
@@ -911,7 +911,7 @@ int connect_SSL (void)
 			ERR_print_errors_fp (stderr);
 		}
 		else {
-			printf ("ERROR: Cannot initiate SSL handshake.\n");
+			printf ("CRITICAL - Cannot initiate SSL handshake.\n");
 		}
 		SSL_free (ssl);
 	}
@@ -939,7 +939,7 @@ check_certificate (X509 ** certificate)
 	/* Generate tm structure to process timestamp */
 	if (tm->type == V_ASN1_UTCTIME) {
 		if (tm->length < 10) {
-			printf ("ERROR: Wrong time format in certificate.\n");
+			printf ("CRITICAL - Wrong time format in certificate.\n");
 			return STATE_CRITICAL;
 		}
 		else {
@@ -951,7 +951,7 @@ check_certificate (X509 ** certificate)
 	}
 	else {
 		if (tm->length < 12) {
-			printf ("ERROR: Wrong time format in certificate.\n");
+			printf ("CRITICAL - Wrong time format in certificate.\n");
 			return STATE_CRITICAL;
 		}
 		else {
@@ -980,20 +980,20 @@ check_certificate (X509 ** certificate)
 		 stamp.tm_mday, stamp.tm_year + 1900, stamp.tm_hour, stamp.tm_min);
 
 	if (days_left > 0 && days_left <= days_till_exp) {
-		printf ("Certificate expires in %d day(s) (%s).\n", days_left, timestamp);
+		printf ("WARNING - Certificate expires in %d day(s) (%s).\n", days_left, timestamp);
 		return STATE_WARNING;
 	}
 	if (days_left < 0) {
-		printf ("Certificate expired on %s.\n", timestamp);
+		printf ("CRITICAL - Certificate expired on %s.\n", timestamp);
 		return STATE_CRITICAL;
 	}
 
 	if (days_left == 0) {
-		printf ("Certificate expires today (%s).\n", timestamp);
+		printf ("WARNING - Certificate expires today (%s).\n", timestamp);
 		return STATE_WARNING;
 	}
 
-	printf ("Certificate will expire on %s.\n", timestamp);
+	printf ("OK - Certificate will expire on %s.\n", timestamp);
 
 	return STATE_OK;
 }
