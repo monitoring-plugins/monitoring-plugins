@@ -396,7 +396,10 @@ run_ping (char *command_line)
 					(input_buffer, "%*d packets transmitted, %*d packets received, %d%% packet loss",
 						&pl) == 1
 				|| sscanf 
-					(input_buffer, "%*d packets transmitted, %*d packets received, %d%% loss, time", &pl) == 1	
+					(input_buffer, "%*d packets transmitted, %*d packets received, %d%% loss, time", &pl) == 1
+				|| sscanf
+					(input_buffer, "%*d packets transmitted, %*d received, %d%% loss, time", &pl) == 1
+					/* Suse 8.0 as reported by Richard * Brodie */
 				)
 			continue;
 
