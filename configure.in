@@ -9,7 +9,7 @@ AC_SUBST(VER)
 AC_SUBST(REL)
 PACKAGE_VERSION="${VER}-${REL}"
 AC_SUBST(PACKAGE_VERSION)
-PACKAGE_RELEASE="alpha1"
+PACKAGE_RELEASE="${REL}"
 AC_SUBST(PACKAGE_RELEASE)
 AM_INIT_AUTOMAKE(nagios-plugins,${PACKAGE_VERSION})
 AM_CONFIG_HEADER(plugins/config.h plugins/common.h plugins/version.h plugins/netutils.h plugins/utils.h plugins/popen.h)
