@@ -120,17 +120,14 @@ main (int argc, char **argv)
 		usage ("Could not parse arguments");
 
 	/* Set signal handling and alarm */
-	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR) {
-		printf ("Cannot catch SIGALRM");
-		return STATE_UNKNOWN;
-	}
-	alarm (timeout_interval);
+	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR)
+		terminate (STATE_UNKNOWN, "Cannot catch SIGALRM");
+
+	(void) alarm ((unsigned) timeout_interval);
 
 	child_process = spopen (command_line);
-	if (child_process == NULL) {
-		printf ("Could not open pipe: %s\n", command_line);
-		exit (STATE_UNKNOWN);
-	}
+	if (child_process == NULL)
+		terminate (STATE_UNKNOWN, "Could not open pipe: %s\n", command_line);
 
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL) {
@@ -139,7 +136,7 @@ main (int argc, char **argv)
 
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
 		found++;
-		if (index (input_buffer, '\n')) {
+		if (strchr (input_buffer, '\n')) {
 			input_buffer[strcspn (input_buffer, "\n")] = 0;
 			printf ("%s\n", input_buffer);
 		}
@@ -148,11 +145,10 @@ main (int argc, char **argv)
 		}
 	}
 
-	if (!found) {
-		printf ("%s problem - No data recieved from host\nCMD: %s\n", argv[0],
-						command_line);
-		exit (STATE_UNKNOWN);
-	}
+	if (!found)
+		terminate (STATE_UNKNOWN,\
+		           "%s problem - No data recieved from host\nCMD: %s\n",\
+		           argv[0],	command_line);
 
 	/* close the pipe */
 	result = spclose (child_process);
@@ -165,11 +161,11 @@ main (int argc, char **argv)
 	(void) fclose (child_stderr);
 
 	if (result == STATE_OK)
-		return STATE_CRITICAL;
+		exit (STATE_CRITICAL);
 	else if (result == STATE_CRITICAL)
-		return STATE_OK;
+		exit (EXIT_SUCCESS);
 	else
-		return result;
+		exit (result);
 }
 
 
@@ -251,10 +247,10 @@ process_arguments (int argc, char **argv)
 			usage2 ("Unknown argument", optarg);
 		case 'h':     /* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (EXIT_SUCCESS);
 		case 'V':     /* version */
 			print_revision (PROGNAME, REVISION);
-			exit (STATE_OK);
+			exit (EXIT_SUCCESS);
 		case 't':     /* timeout period */
 			if (!is_integer (optarg))
 				usage2 ("Timeout Interval must be an integer", optarg);
@@ -265,7 +261,7 @@ process_arguments (int argc, char **argv)
 
 	command_line = strscpy (command_line, argv[optind]);
 	for (c = optind+1; c <= argc; c++) {
-		command_line = ssprintf (command_line, "%s %s", command_line, argv[c]);
+		asprintf (&command_line, "%s %s", command_line, argv[c]);
 	}
 
 	return validate_arguments ();
@@ -286,7 +282,7 @@ process_arguments (int argc, char **argv)
 int
 validate_arguments ()
 {
-	return OK;
+	return STATE_OK;
 }
 
 
