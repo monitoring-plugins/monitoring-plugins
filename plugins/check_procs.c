@@ -164,28 +164,16 @@ main (int argc, char **argv)
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
 		if (verbose)
 			printf ("STDERR: %s", input_buffer);
-		/*Cannot use max() any more as STATE_UNKNOWN is gt STATE_CRITICAL 
-		result = max (result, STATE_WARNING); */
-		if ( !(result == STATE_CRITICAL) ) {
-			result = STATE_WARNING;
-		}
-			printf ("System call sent warnings to stderr\n");
+		result = max_state (result, STATE_WARNING);
+		printf ("System call sent warnings to stderr\n");
 	}
 	
-/*	if (result == STATE_UNKNOWN || result == STATE_WARNING)
-		printf ("System call sent warnings to stderr\n");
-*/
 	(void) fclose (child_stderr);
 
 	/* close the pipe */
 	if (spclose (child_process)) {
 		printf ("System call returned nonzero status\n");
-		if ( !(result == STATE_CRITICAL) ) {
-			return STATE_WARNING;
-		}
-		else {
-			return result ;
-		}
+		result = max_state (result, STATE_WARNING);
 	}
 
 	if (options == ALL)
@@ -235,23 +223,11 @@ main (int argc, char **argv)
 	}
 	else if (wmax >= 0 && procs > wmax) {
 		printf (fmt, "WARNING", procs);
-		if ( !(result == STATE_CRITICAL) ) {
-			return STATE_WARNING;
-		}
-		else {
-			return result ;
-		}
-		/*return max (result, STATE_WARNING); */
+		return max_state (result, STATE_WARNING);
 	}
 	else if (wmin >= 0 && procs < wmin) {
 		printf (fmt, "WARNING", procs);
-		if ( !(result == STATE_CRITICAL) ) {
-			return STATE_WARNING;
-		}
-		else {
-			return result ;
-		}
-		/*return max (result, STATE_WARNING); */
+		return max_state (result, STATE_WARNING);
 	}
 
 	printf (fmt, "OK", procs);
