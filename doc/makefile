@@ -6,3 +6,6 @@ developer-guidelines.html: developer-guidelines.sgml
 		mv developer-guidelines/developer-guidelines.html . ;\
 		rm -f developer-guidelines ;\
 	fi
+
+clean:
+	rm -f developer-guidelines.html
