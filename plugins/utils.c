@@ -316,6 +316,19 @@ is_option (char *str)
 
 
 
+double
+delta_time (struct timeval *tv)
+{
+	struct timeval *pt;
+	struct timezone *tz;
+
+	gettimeofday (pt, tz);
+
+	return (pt->tv_sec - tv->tv_sec + (pt->tv_usec - tv->tv_usec) / 1000000);
+}
+
+
+
 
 void
 strip (char *buffer)

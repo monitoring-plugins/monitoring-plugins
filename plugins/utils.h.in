@@ -45,13 +45,31 @@ int is_percentage (char *);
 
 int is_option (char *);
 
+/* generalized timer that will do milliseconds if available */
+#ifndef HAVE_GETTIMEOFDAY
+struct timeval {
+	long tv_sec;        /* seconds */
+	long tv_usec;  /* microseconds */
+};
+
+struct timezone {
+	int  tz_minuteswest; /* minutes W of Greenwich */
+	int  tz_dsttime;     /* type of dst correction */
+};
+
+#define gettimeofday (tvp,tz) {\
+ tvp->tv_usec=0;\
+ tvp->tv_sec=(long)time();\
+}
+#endif
+
 /* Handle strings safely */
 
 void strip (char *buffer);
 char *strscpy (char *dest, char *src);
 char *strscat (char *dest, char *src);
 char *strnl (char *str);
-char *ssprintf (char *str, const char *fmt, ...);
+char *ssprintf (char *str, const char *fmt, ...); /* deprecate for asprintf */
 char *strpcpy (char *dest, const char *src, const char *str);
 char *strpcat (char *dest, const char *src, const char *str);
 
@@ -61,15 +79,15 @@ int max_state(int, int);
 #define max(a,b) ((a)>(b))?(a):(b)
 
 #define usage(msg) {\
-  printf(msg);\
-  print_usage();\
-exit(STATE_UNKNOWN);\
+ printf(msg);\
+ print_usage();\
+ exit(STATE_UNKNOWN);\
 }
 
 #define usage2(msg,arg) {\
-  printf("%s: %s - %s\n",PROGNAME,msg,arg);\
-  print_usage();\
-  exit(STATE_UNKNOWN);\
+ printf("%s: %s - %s\n",PROGNAME,msg,arg);\
+ print_usage();\
+ exit(STATE_UNKNOWN);\
 }
 
 #define state_text(a) \
@@ -94,3 +112,4 @@ exit(STATE_UNKNOWN);\
 {"warning",required_argument,0,'w'},\
 {"hostname",required_argument,0,'H'},\
 {"file",required_argument,0,'F'}
+
