@@ -505,13 +505,16 @@ int process_arguments(int argc, char **argv){
 
 	}
 
+	if (vars_to_check==CHECK_NONE)
+		return ERROR;
+
 	return OK;
 }
 
 
 void print_usage(void)
 {
-	printf("Usage: %s -H host [-p port] [-v variable] [-w warning] [-c critical] [-l params] [-d SHOWALL] [-t timeout]\n",progname);
+	printf("Usage: %s -H host -v variable [-p port] [-w warning] [-c critical] [-l params] [-d SHOWALL] [-t timeout]\n",progname);
 }
 
 
