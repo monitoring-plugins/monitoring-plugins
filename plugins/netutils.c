@@ -304,7 +304,7 @@ send_udp_request (int sd, const char *send_buffer, char *recv_buffer, int recv_s
 int
 send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int recv_size)
 {
-	int result;
+	int result = STATE_OK;
 	int send_result;
 	int recv_result;
 	struct timeval tv;
