@@ -346,6 +346,18 @@
 		<para>It is up to third party programs to convert the Nagios plugins 
 		performance data into graphs.</para>
 		</section>
+
+	<section><title>Translations</title>
+	<para>If possible, use translation tools for all output. Currently, most of the core C plugins 
+	use gettext for translation. General guidelines are:</para>
+
+	<orderedlist>
+	<listitem><para>short help is not translated</para></listitem>
+	<listitem><para>long help has options in English language, but text translated</para></listitem>
+	<listitem><para>"Copyright" kept in English</para></listitem>
+	<listitem><para>copyright holder names kept in original text</para></listitem>
+	</orderedlist>
+	</section>
 </section>
 
 <section id="SysCmdAuxFiles"><title>System Commands and Auxiliary Files</title>
