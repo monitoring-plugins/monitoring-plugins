@@ -335,6 +335,13 @@ print_usage (void)
 Usage: %s -H <host> -b <base_dn> [-p <port>] [-a <attr>] [-D <binddn>]\n\
   [-P <password>] [-w <warn_time>] [-c <crit_time>] [-t timeout]%s\n\
 (Note: all times are in seconds.)\n"),
-	        progname, (HAVE_LDAP_SET_OPTION ? "[-2|-3] [-4|-6]" : ""));
+	        progname,
+#ifdef HAVE_LDAP_SET_OPTION
+			" [-2|-3] [-4|-6]"
+#else
+			""
+#endif
+			);
+
 	printf (_(UT_HLP_VRS), progname, progname);
 }
