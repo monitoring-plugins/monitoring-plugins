@@ -10,8 +10,9 @@
  *
  * Notes:
  *  - Safe popen added by Karl DeBisschop 9-11-99
+ *  - expected-address parameter added by Alex Chaffee - 7 Oct 2002
  *
- * Command line: CHECK_DNS <query_address> [dns_server]
+ * Command line: (see print_usage)
  *
  * Description:
  *
@@ -59,6 +60,8 @@ char query_address[ADDRESS_LENGTH] = "";
 char dns_server[ADDRESS_LENGTH] = "";
 char ptr_server[ADDRESS_LENGTH] = "";
 int verbose = FALSE;
+char expected_address[ADDRESS_LENGTH] = "";
+int match_expected_address = FALSE;
 
 int
 main (int argc, char **argv)
@@ -165,6 +168,12 @@ main (int argc, char **argv)
 			output = strscpy (output, "nslookup returned error status");
 	}
 
+	/* compare to expected address */
+	if (result == STATE_OK && match_expected_address && strcmp(address, expected_address)) {
+	        result = STATE_CRITICAL;
+	        output = ssprintf(output, "expected %s but got %s", expected_address, address);
+		}
+	
 	(void) time (&end_time);
 
 	if (result == STATE_OK)
@@ -297,6 +306,7 @@ call_getopt (int argc, char **argv)
 		{"hostname", required_argument, 0, 'H'},
 		{"server", required_argument, 0, 's'},
 		{"reverse-server", required_argument, 0, 'r'},
+		{"expected-address", required_argument, 0, 'a'},
 		{0, 0, 0, 0}
 	};
 #endif
@@ -304,9 +314,9 @@ call_getopt (int argc, char **argv)
 
 	while (1) {
 #ifdef HAVE_GETOPT_H
-		c = getopt_long (argc, argv, "+?hVvt:H:s:r:", long_opts, &opt_index);
+		c = getopt_long (argc, argv, "+?hVvt:H:s:r:a:", long_opts, &opt_index);
 #else
-		c = getopt (argc, argv, "+?hVvt:H:s:r:");
+		c = getopt (argc, argv, "+?hVvt:H:s:r:a:");
 #endif
 
 		if (c == -1 || c == EOF)
@@ -318,6 +328,7 @@ call_getopt (int argc, char **argv)
 		case 'H':
 		case 's':
 		case 'r':
+		case 'a':
 			i++;
 		}
 
@@ -368,6 +379,17 @@ call_getopt (int argc, char **argv)
 				terminate (STATE_UNKNOWN, "Input buffer overflow\n");
 			strcpy (ptr_server, optarg);
 			break;
+		case 'a': /* expected address */
+			if (is_dotted_quad (optarg) == FALSE) {
+				printf ("Invalid expected address\n\n");
+				print_usage (my_basename (argv[0]));
+				exit (STATE_UNKNOWN);
+			}
+			if (strlen (optarg) >= ADDRESS_LENGTH)
+				terminate (STATE_UNKNOWN, "Input buffer overflow\n");
+			strcpy (expected_address, optarg);
+			match_expected_address = TRUE;
+			break;
 		}
 	}
 	return i;
@@ -385,7 +407,7 @@ validate_arguments ()
 void
 print_usage (char *cmd)
 {
-	printf ("Usage: %s -H host [-s server] [-t timeout]\n" "       %s --help\n"
+	printf ("Usage: %s -H host [-s server] [-a expected-address] [-t timeout]\n" "       %s --help\n"
 					"       %s --version\n", cmd, cmd, cmd);
 }
 
@@ -401,6 +423,8 @@ print_help (char *cmd)
 		 "   The name or address you want to query\n"
 		 "-s, --server=HOST\n"
 		 "   Optional DNS server you want to use for the lookup\n"
+		 "-a, --expected-address=IP-ADDRESS\n"
+		 "   Optional IP address you expect the DNS server to return\n"
 		 "-t, --timeout=INTEGER\n"
 		 "   Seconds before connection times out (default: %d)\n"
 		 "-h, --help\n"
