@@ -1,10 +1,11 @@
 Nagios Plugins README
 ---------------------
 
-* For instructions on installing these plugins for use with Nagios, read
-  the INSTALL file.
+* For instructions on installing these plugins for use with Nagios,
+  see below. In addition, generic instructions for the GNU toolchain
+  can be found in the INSTALL file.
 
-* For information on what changes have been made or plugin have been added,
+* For information on what changes have been made or plugins have been added,
   read the Changelog file.
 
 * Some plugins require that you have additional programs and/or
@@ -14,7 +15,7 @@ Nagios Plugins README
 
 * Individual plugins are self documenting.  All plugins that comply with
   the basic guidelines for development will provide detailed help when
-  invoked with the '-h' option ('--help' also, if long options are enabled).
+  invoked with the '-h' or '--help' options.
 
 * The file command.cfg contains example configurations for many of the
   plugins
@@ -37,6 +38,60 @@ patch tool from the summary page).  Patches should be relative to the current
 CVS head (development), or to the head of the current stable branch. Also, 
 please include version information for your OS and the plugin(s) your are 
 patching/reporting.
- 
+
+
+
+
+Nagios Plugins Quick-and-Dirty Installation Instructions
+--------------------------------------------------------
+
+0) If using the CVS tree, you need m4, gettext, automake, and autoconf. To
+   start out, run ./tools/setup
+
+   For development, we generally use the most recent stable tools from
+   the FSF. Currently we use gettext 0.11.5, autoconf 2.57, and
+   automake 1.76. No other versions are tested, and you may see
+   warnings or errors with other versions.
+
+
+1) Run the configure script to initialize variables and create a Makefile, etc.
+
+	./configure --prefix=BASEDIRECTORY --with-nagios-user=SOMEUSER --with-nagios-group=SOMEGROUP --with-cgiurl=SOMEURL
+
+   a) Replace BASEDIRECTORY with the path of the directory under which Nagios
+      is installed (default is '/usr/local/nagios')
+   b) Replace SOMEUSER with the name of a user on your system that will be
+      assigned permissions to the installed plugins (default is 'nagios')
+   c) Replace SOMEGRP with the name of a group on your system that will be
+      assigned permissions to the installed plugins (default is 'nagios')
+   d) Replace CGIURL with the path used to access the Nagios CGIs with
+      a web browser (default is '/nagios/cgi-bin')
+
+
+2) Compile the plugins with the following command:
+
+	make
+
+
+3) Install the compiled plugins and plugin scripts with the following command:
+
+	make install
+
+   The installation procedure will attempt to place the plugins in a 
+   'libexec/' subdirectory in the base directory you specified with
+   the --prefix argument to the configure script.
+
+
+4) Verify that your host configuration file (hosts.cfg) for Nagios contains
+   the correct paths to the new plugins.
+
+
+
+That's it.  If you have any problems or questions, feel free send mail
+to nagios-users@lists.sourceforge.net or nagiosplug-help@lists.sourceforge.net
+
+
+
+
 --
 Karl DeBisschop (kdebisschop@users.sourceforge.net)

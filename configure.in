@@ -1382,7 +1382,7 @@ AC_SUBST(EXTRAS)
 AC_SUBST(EXTRA_NETOBJS)
 AC_SUBST(DEPLIBS)
 
-AM_GNU_GETTEXT_VERSION(0.11.4)
+AM_GNU_GETTEXT_VERSION(0.11.5)
 AM_GNU_GETTEXT
 
 AC_OUTPUT(Makefile lib/Makefile plugins/Makefile plugins-scripts/Makefile plugins-scripts/subst plugins-scripts/utils.pm plugins-scripts/utils.sh command.cfg test.pl pkg/solaris/pkginfo intl/Makefile po/Makefile.in )
