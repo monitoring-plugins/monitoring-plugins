@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_REVISION ($Revision$)
 AC_PREREQ(2.50)
-AC_INIT(nagios-plugins,1.4.0alpha1)
+AC_INIT(nagios-plugins,1.4.0alpha2)
 AC_CONFIG_SRCDIR(Helper.pm)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADER(config.h)
@@ -1428,7 +1428,6 @@ ACX_FEATURE([with],[cgiurl])
 ACX_FEATURE([with],[nagios-user])
 ACX_FEATURE([with],[nagios-group])
 ACX_FEATURE([with],[trusted-path])
-ACX_FEATURE([with],[df-command])
 ACX_FEATURE([with],[ping-command])
 ACX_FEATURE([with],[ping6-command])
 ACX_FEATURE([with],[lwres])
