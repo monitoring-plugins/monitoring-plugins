@@ -73,16 +73,18 @@ int warning_time = 0;
 int check_warning_time = FALSE;
 int critical_time = 0;
 int check_critical_time = FALSE;
-int verbose = FALSE;
+int verbose = 0;
 
 int
 main (int argc, char **argv)
 {
 	int sd;
+	double elapsed_time;
 	int result = STATE_UNKNOWN;
 	char buffer[MAX_INPUT_BUFFER] = "";
 	char *from_str = NULL;
 	char *helocmd = NULL;
+	struct timeval tv;
 
 	if (process_arguments (argc, argv) != OK)
 		usage ("Invalid command arguments supplied\n");
@@ -98,17 +100,19 @@ main (int argc, char **argv)
 	/* initialize the MAIL command with optional FROM command  */
 	asprintf (&from_str, "%sFROM: %s%s", SMTP_DUMMYCMD, from_arg, "\r\n");
 
-	if (verbose == TRUE)
+	if (verbose)
 		printf ("FROMCMD: %s\n", from_str);
 	
 	/* initialize alarm signal handling */
-	signal (SIGALRM, socket_timeout_alarm_handler);
+	(void) signal (SIGALRM, socket_timeout_alarm_handler);
 
 	/* set socket timeout */
-	alarm (socket_timeout);
+	(void) alarm (socket_timeout);
+
+	/* start timer */
+	gettimeofday (&tv, NULL);
 
 	/* try to connect to the host at the given port number */
-	time (&start_time);
 	result = my_tcp_connect (server_address, server_port, &sd);
 
 	/* we connected, so close connection before exiting */
@@ -146,7 +150,7 @@ main (int argc, char **argv)
 		/* allow for response to DUMMYCMD to reach us */
 		recv(sd, buffer, MAX_INPUT_BUFFER-1, 0);
 
-		if (verbose == TRUE) 
+		if (verbose) 
 			printf("DUMMYCMD: %s\n%s\n",from_str,buffer);
 #endif /* SMTP_USE_DUMMYCMD */
 
@@ -160,18 +164,19 @@ main (int argc, char **argv)
 	/* reset the alarm */
 	alarm (0);
 
-	time (&end_time);
+	elapsed_time = delta_time (tv);
 
-	if (check_critical_time == TRUE && (end_time - start_time) > critical_time)
+	if (check_critical_time && elapsed_time > (double) critical_time)
 		result = STATE_CRITICAL;
-	else if (check_warning_time == TRUE && (end_time - start_time) > warning_time)
+	else if (check_warning_time && elapsed_time > (double) warning_time)
 		result = STATE_WARNING;
 
-	if (verbose == TRUE)
-		printf ("SMTP %s - %d sec. response time, %s\n",
-						state_text (result), (int) (end_time - start_time), buffer);
+	if (verbose)
+		printf ("SMTP %s - %7.3f sec. response time, %s|time=%7.3f\n",
+		        state_text (result), elapsed_time, buffer, elapsed_time);
 	else
-		printf ("SMTP %s - %d second response time\n", state_text (result), (int) (end_time - start_time));
+		printf ("SMTP %s - %7.3f second response time|time=%7.3f\n",
+		        state_text (result), elapsed_time, elapsed_time);
 
 	return result;
 }
@@ -268,7 +273,7 @@ process_arguments (int argc, char **argv)
 			}
 			break;
 		case 'v':									/* verbose */
-			verbose = TRUE;
+			verbose++;
 			break;
 		case 't':									/* timeout */
 			if (is_intnonneg (optarg)) {
