@@ -226,7 +226,7 @@ process_arguments (int argc, char **argv)
 	};
 
 	while (1) {
-		c = getopt_long (argc, argv, "hVt:",
+		c = getopt_long (argc, argv, "+hVt:",
 		                 long_options, &option_index);
 
 		if (c == -1 || c == EOF)
