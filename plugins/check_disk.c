@@ -201,10 +201,9 @@ main (int argc, char **argv)
 
 	for (me = mount_list; me; me = me->me_next) {
 
-		if ((dev_select_list &&
-		     walk_name_list (dev_select_list, me->me_devname)) ||
-		    (path_select_list &&
-		     walk_name_list (path_select_list, me->me_mountdir)))
+		if (path_select_list &&
+		     (walk_name_list (path_select_list, me->me_mountdir) ||
+		      walk_name_list (path_select_list, me->me_devname) ) )
 			get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
 		else if (dev_select_list || path_select_list)
 			continue;
@@ -275,11 +274,11 @@ int
 process_arguments (int argc, char **argv)
 {
 	int c;
-  struct name_list *se;
-  struct name_list **pathtail = &path_select_list;
-  struct name_list **devtail = &dev_select_list;
-  struct name_list **fstail = &fs_exclude_list;
-  struct name_list **dptail = &dp_exclude_list;
+	struct name_list *se;
+	struct name_list **pathtail = &path_select_list;
+	struct name_list **devtail = &dev_select_list;
+	struct name_list **fstail = &fs_exclude_list;
+	struct name_list **dptail = &dp_exclude_list;
 
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -292,7 +291,6 @@ process_arguments (int argc, char **argv)
 		{"units", required_argument, 0, 'u'},
 		{"path", required_argument, 0, 'p'},
 		{"partition", required_argument, 0, 'p'},
-		{"device", required_argument, 0, 'd'},
 		{"exclude_device", required_argument, 0, 'x'},
 		{"exclude-type", required_argument, 0, 'X'},
 		{"mountpoint", no_argument, 0, 'M'},
@@ -318,7 +316,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "+?Vqhvet:c:w:u:p:d:x:X:mklM", long_options, &option_index);
+		c = getopt_long (argc, argv, "+?Vqhvet:c:w:u:p:x:X:mklM", long_options, &option_index);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -401,13 +399,6 @@ process_arguments (int argc, char **argv)
 			se->name_next = NULL;
 			*pathtail = se;
 			pathtail = &se->name_next;
-			break;
-		case 'd':									/* select partition/device */
-			se = (struct name_list *) malloc (sizeof (struct name_list));
-			se->name = strdup (optarg);
-			se->name_next = NULL;
-			*devtail = se;
-			devtail = &se->name_next;
 			break;
  		case 'x':									/* exclude path or partition */
 			se = (struct name_list *) malloc (sizeof (struct name_list));
