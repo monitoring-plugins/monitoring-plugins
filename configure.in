@@ -256,153 +256,85 @@ CPPFLAGS="$_SAVEDCPPFLAGS $MYSQLINCLUDE"
 LIBS="$_SAVEDLIBS"
 
 dnl Check for OpenSSL location
-dnl This whole check is inspired by curl 7.12.2's configure.ac
-OPT_OPENSSL=off
+AC_PATH_PROG(OPENSSL,openssl)
+if test "$OPENSSL" = "/usr/bin/openssl"; then
+  OPENSSL=/usr
+elif test "$OPENSSL" = "/usr/sbin/openssl"; then
+  OPENSSL=/usr
+elif test "$OPENSSL" = "/opt/bin/openssl"; then
+  OPENSSL=/opt
+elif test "$OPENSSL" = "/opt/openssl/bin/openssl"; then
+  OPENSSL=/opt/openssl
+elif test "$OPENSSL" = "/usr/slocal/bin/openssl"; then
+  OPENSSL=/usr/slocal
+elif test "$OPENSSL" = "/usr/local/bin/openssl"; then
+  OPENSSL=/usr/local
+elif test "$OPENSSL" = "/usr/local/ssl/bin/openssl"; then
+  OPENSSL=/usr/local/ssl
+fi
 AC_ARG_WITH(openssl,
 AC_HELP_STRING([--with-openssl=DIR], [sets path to openssl installation])
 AC_HELP_STRING([--without-openssl], [disable openssl]),
-OPT_OPENSSL=$withval)
+OPENSSL=$withval)
 
-if test X"$OPT_OPENSSL" = "Xno"; then
+if test X"$OPENSSL" = "Xno"; then
   AC_MSG_WARN([openssl disabled, you will not be able to use ssl options in some plugins])
-  with_openssl=no
+  FOUNDSSL="dontbother"
 else
-  dnl backup the pre-ssl variables
-  CLEANLDFLAGS="$LDFLAGS"
-  CLEANCPPFLAGS="$CPPFLAGS"
-  CLEANLIBS="$LIBS"
-
-  case "$OPT_OPENSSL" in
-  yes)
-    dnl --with-openssl (without path) used
-    PKGTEST="yes"
-    ;;
-  off)
-    dnl no --with-openssl given, check default places
-    PKGTEST="yes"
-    ;;
-  *)
-    dnl use the given area
-    PKGTEST="no"
-    OPENSSL=$OPT_OPENSSL
-    LDFLAGS="$LDFLAGS -L$OPENSSL/lib"
-    CPPFLAGS="$CPPFLAGS -I$OPENSSL/include/openssl -I$OPENSSL/include"
-  ;;
-  esac
-
-  dnl Check usual areas for openssl
-  if test "$PKGTEST" = "yes"; then
-    AC_PATH_PROG(OPENSSL,openssl)
-    dnl The /usr checks need to be done so that the right area is include'd
-    if test "$OPENSSL" = "/usr/bin/openssl"; then
-      OPENSSL=/usr
-    elif test "$OPENSSL" = "/usr/sbin/openssl"; then
-      OPENSSL=/usr
-    elif test "$OPENSSL" = "/opt/bin/openssl"; then
-      OPENSSL=/opt
-    elif test "$OPENSSL" = "/opt/openssl/bin/openssl"; then
-      OPENSSL=/opt/openssl
-    elif test "$OPENSSL" = "/usr/slocal/bin/openssl"; then
-      OPENSSL=/usr/slocal
-    elif test "$OPENSSL" = "/usr/local/bin/openssl"; then
-      OPENSSL=/usr/local
-    elif test "$OPENSSL" = "/usr/local/ssl/bin/openssl"; then
-      OPENSSL=/usr/local/ssl
-    fi
+  dnl Check for OpenSSL header files
+  unset FOUNDINCLUDE
+  _SAVEDCPPFLAGS="$CPPFLAGS"
+  if test "$OPENSSL" != "/usr"; then
+    CPPFLAGS="$CPPFLAGS -I$OPENSSL/include"
+  fi
+  AC_CHECK_HEADERS(openssl/ssl.h openssl/x509.h openssl/rsa.h openssl/pem.h openssl/crypto.h openssl/err.h,
+                 SSLINCLUDE="-I$OPENSSL/include"
+                 FOUNDINCLUDE=yes,
+                 FOUNDINCLUDE=no)
+  if test "$FOUNDINCLUDE" = "no"; then
+    AC_CHECK_HEADERS(ssl.h x509.h rsa.h pem.h crypto.h err.h,
+                   SSLINCLUDE="-I$OPENSSL/include"
+                   FOUNDINCLUDE=yes,
+                   FOUNDINCLUDE=no)
+  fi
+  AC_SUBST(SSLINCLUDE)
+  if test "$FOUNDINCLUDE" = "no"; then
+    CPPFLAGS="$_SAVEDCPPFLAGS"
   fi
 
-  AC_CHECK_LIB(crypto, CRYPTO_lock,[
-     HAVECRYPTO="yes"
-     ],[
-     LDFLAGS="$CLEANLDFLAGS -L$OPENSSL/lib"
-     CPPFLAGS="$CLEANCPPFLAGS -I$OPENSSL/include/openssl -I$OPENSSL/include"
-     AC_CHECK_LIB(crypto, CRYPTO_add_lock,[
-       HAVECRYPTO="yes" ], [
-       LDFLAGS="$CLEANLDFLAGS"
-       CPPFLAGS="$CLEANCPPFLAGS"
-       LIBS="$CLEANLIBS"
-       ])
-    ])
-
-  if test "$HAVECRYPTO" = "yes"; then
-    dnl This is only reasonable to do if crypto actually is there: check for
-    dnl SSL libs NOTE: it is important to do this AFTER the crypto lib
-
-    dnl This is for Msys/Mingw
-    AC_MSG_CHECKING([for gdi32])
-    my_ac_save_LIBS=$LIBS
-    LIBS="-lgdi32 $LIBS"
-    AC_TRY_LINK([#include <windef.h>
-                 #include <wingdi.h>],
-               [GdiFlush();],
-               [ dnl worked!
-               AC_MSG_RESULT([yes])],
-               [ dnl failed, restore LIBS
-               LIBS=$my_ac_save_LIBS
-               AC_MSG_RESULT(no)]
-              )
-
-    AC_CHECK_LIB(crypto, CRYPTO_add_lock)
-    AC_CHECK_LIB(ssl, SSL_connect)
-
-    if test "$ac_cv_lib_ssl_SSL_connect" != yes; then
-        dnl we didn't find the SSL lib, try the RSAglue/rsaref stuff
-        AC_MSG_CHECKING(for ssl with RSAglue/rsaref libs in use);
-        OLIBS=$LIBS
-        LIBS="$LIBS -lRSAglue -lrsaref"
-        AC_CHECK_LIB(ssl, SSL_connect)
-        if test "$ac_cv_lib_ssl_SSL_connect" != yes; then
-            dnl still no SSL_connect
-            AC_MSG_RESULT(no)
-            LIBS=$OLIBS
-        else
-            AC_MSG_RESULT(yes)
-        fi
-    fi
-
-
-    dnl Check for SSLeay headers
-    AC_CHECK_HEADERS(openssl/x509.h openssl/rsa.h openssl/crypto.h \
-                     openssl/pem.h openssl/ssl.h openssl/err.h,
-      OPENSSL_ENABLED=1)
-
-    if test $ac_cv_header_openssl_x509_h = no; then
-      AC_CHECK_HEADERS(x509.h rsa.h crypto.h pem.h ssl.h err.h,
-        OPENSSL_ENABLED=1)
-    fi
-
-    dnl If the ENGINE library seems to be around, check for the OpenSSL engine
-    dnl header, it is kind of "separated" from the main SSL check
-    AC_CHECK_FUNC(ENGINE_init, [ AC_CHECK_HEADERS(openssl/engine.h) ])
-
-    dnl AC_SUBST(OPENSSL_ENABLED)
-
-    dnl these can only exist if openssl exists
-    AC_CHECK_FUNCS( RAND_status \
-                    RAND_screen \
-                    RAND_egd \
-                    CRYPTO_cleanup_all_ex_data )
-
+  dnl Check for crypto lib
+  _SAVEDLIBS="$LIBS"
+  AC_CHECK_LIB(crypto,CRYPTO_lock,,,-L$OPENSSL/lib)
+  if test "$ac_cv_lib_crypto_CRYPTO_lock" = "yes"; then
+    dnl Check for SSL lib
+    AC_CHECK_LIB(ssl,main,LDFLAGS="$LDFLAGS -L$OPENSSL/lib" SSLLIBS="-lssl -lcrypto",AC_CHECK_LIB(ssl,main,LDFLAGS="$LDFLAGS -L$OPENSSL/lib" SSLLIBS="-lssl -lcrypto"),-L$OPENSSL/lib -lcrypto)
   fi
+  LIBS="$_SAVEDLIBS"
 
-  if test "$OPENSSL_ENABLED" != "1"; then
-    if test "$PKGTEST" = "yes"; then
-      AC_MSG_WARN([OpenSSL libs could not be found])
-    else
-      AC_MSG_WARN([OpenSSL libs and/or directories were not found where specified!])
+  FOUNDSSL="no"
+  dnl test headers and libs to decide whether check_http should use SSL
+  if test "$ac_cv_lib_crypto_CRYPTO_lock" = "yes"; then
+    if test "$ac_cv_lib_ssl_main" = "yes"; then
+      if test "$FOUNDINCLUDE" = "yes"; then
+        FOUNDSSL="yes"
+      fi
     fi
-    with_openssl="no"
-  else
-    check_tcp_ssl="check_simap check_spop check_jabber check_nntps"
-    AC_SUBST(check_tcp_ssl)
-    AC_DEFINE(HAVE_SSL,1,[Define if SSL libraries are found])
-    with_openssl="yes"
-
-    # Needed for subsequent compiled programs
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$OPENSSL/lib$libsuff"
-    export LD_LIBRARY_PATH
   fi
 fi
+
+if test "$FOUNDSSL" = "yes"; then
+  check_tcp_ssl="check_simap check_spop check_jabber check_nntps"
+  AC_SUBST(check_tcp_ssl)
+  AC_SUBST(SSLLIBS)
+  AC_DEFINE(HAVE_SSL,1,[Define if SSL libraries are found])
+  with_openssl="yes"
+elif test "$FOUNDSSL" = "no"; then
+  AC_MSG_WARN([OpenSSL libs could not be found])
+  with_openssl="no"
+else
+  with_openssl="no"
+fi
+CPPFLAGS="$_SAVEDCPPFLAGS"
 
 AC_CHECK_HEADERS(unistd.h)
 

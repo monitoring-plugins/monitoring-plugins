@@ -8,7 +8,7 @@ INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/intl \
 datadir = @datadir@
 localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
-LIBS = @LIBINTL@ @LIBS@
+LIBS = @LIBINTL@ @LIBS@ @SSLINCLUDE@
 
 libexec_PROGRAMS = check_dhcp check_disk check_dummy check_http check_load \
 	check_mrtg check_mrtgtraf check_nwstat check_overcr check_ping \
@@ -90,7 +90,7 @@ check_fping_DEPENDENCIES = check_fping.c $(NETOBJS) popen.o $(DEPLIBS)
 check_game_DEPENDENCIES = check_game.c  $(DEPLIBS)
 check_http_DEPENDENCIES = check_http.c $(NETOBJS) $(DEPLIBS)
 check_hpjd_DEPENDENCIES = check_hpjd.c $(NETOBJS) popen.o $(DEPLIBS)
-check_icmp_DEPENDENCIES = check_icmp.c $(DEPLIBS)
+check_icmp_DEPENDENCIES = check_icmp.c $(DEPLIBS) $(NETOBJS)
 check_ide_smart_DEPENDENCIES = check_ide_smart.c $(BASEOBJS) $(DEPLIBS)
 check_ldap_DEPENDENCIES = check_ldap.c $(NETOBJS) $(DEPLIBS)
 check_load_DEPENDENCIES = check_load.c $(BASEOBJS) popen.o $(DEPLIBS)
