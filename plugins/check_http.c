@@ -255,7 +255,7 @@ process_arguments (int argc, char **argv)
 				socket_timeout = atoi (optarg);
 			break;
 		case 'c': /* critical time threshold */
-			if (!is_intnonneg (optarg))
+			if (!is_nonnegative (optarg))
 				usage2 (_("invalid critical threshold"), optarg);
 			else {
 				critical_time = strtod (optarg, NULL);
@@ -263,7 +263,7 @@ process_arguments (int argc, char **argv)
 			}
 			break;
 		case 'w': /* warning time threshold */
-			if (!is_intnonneg (optarg))
+			if (!is_nonnegative (optarg))
 				usage2 (_("invalid warning threshold"), optarg);
 			else {
 				warning_time = strtod (optarg, NULL);
