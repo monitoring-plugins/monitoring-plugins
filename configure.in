@@ -1308,12 +1308,12 @@ then
 
 	elif [$PATH_TO_SWAP -l 2>/dev/null | egrep -i "^swapfile +dev +swaplo +blocks +free" >/dev/null]
 	then
-		ac_cv_swap_format=["%*s %*[[0-9,-]] %*d %d %d"]
+		ac_cv_swap_format=["%*s %*[0-9,-] %*d %d %d"]
 		AC_MSG_RESULT([using Solaris format swap])
 
 	elif [$PATH_TO_SWAP -l 2>/dev/null | egrep -i "^path +dev +swaplo +blocks +free" >/dev/null]
 	then
-		ac_cv_swap_format=["%*s %*[[0-9,-]] %*d %d %d"]
+		ac_cv_swap_format=["%*s %*[0-9,-] %*d %d %d"]
 		AC_MSG_RESULT([using Unixware format swap])
 
 	fi
