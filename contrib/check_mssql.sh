@@ -10,6 +10,7 @@
 #
 # Version 1.0.
 # Version 1.1: rewritten the initial script so that it not only works from the CLI but also from within Nagios. Always helpful...
+# Version 1.2: grouped output so things look a bit better.
 #
 # You might want to change these values:
 
@@ -21,6 +22,7 @@ mktempcmd=`which mktemp`
 wccmd=`which wc`
 sedcmd=`which sed`
 trcmd=`which tr`
+uniqcmd=`which uniq`
 
 ###################################################################################################################
 
@@ -68,7 +70,7 @@ if [ ! -s $resultfile ]; then
 	exit 2;
 else
 	nmbr=`$catcmd $resultfile | $grepcmd -v "\-\-\-\-\-" | $grepcmd -v "loginame" | $grepcmd -v "affected" | $sedcmd '/^$/d' | $sedcmd 's/ //g' | $wccmd -l | sed 's/ //g'`;
-	users=`$catcmd $resultfile | $grepcmd -v "\-\-\-\-\-" | $grepcmd -v "loginame" | $grepcmd -v "affected" | $sedcmd '/^$/d' | $sedcmd 's/ //g' | $trcmd \\\n , | $sedcmd 's/,$/./g' | $sedcmd 's/,/, /g'`;
+	users=`$catcmd $resultfile | $grepcmd -v "\-\-\-\-\-" | $grepcmd -v "loginame" | $grepcmd -v "affected" | $sedcmd '/^$/d' | $sedcmd 's/ //g' | $uniqcmd -c | $trcmd \\\n , | $sedcmd 's/,$/./g' | $sedcmd 's/,/, /g' | $sedcmd 's/  //g' | $trcmd \\\t " "`;
         $rmcmd -f $tmpfile $resultfile;
         echo "OK - MS SQL Server $srv has $nmbr user(s) connected: $users" | sed 's/: $/./g';
         exit 0;

@@ -73,6 +73,8 @@ elif [ "$status" == "Printing" ]; then
                 exit="1" && stdio="WARNING - PRINTING. Out of paper.";
         elif [ "$comments" == "Out of" ]; then
                 exit="1" && stdio="WARNING - PRINTING. Out of paper. Bytes printed: $bytes.";        
+        elif [ "$comments" == "Busy Out" ]; then
+                exit="1" && stdio="WARNING - Busy, out of paper.";
 	elif [ "$comments" == "Ready " ]; then
                 exit="0" && stdio="OK - PRINTING. Bytes printed: $bytes.";        
         elif [ "$comments" == "Printer off-line" ]; then
