@@ -10,7 +10,7 @@
 
 %define version PACKAGE_VERSION
 %define release PACKAGE_RELEASE
-%define source %{archive}-%{version}-%{release}
+%define source %{archive}-%{version}
 
 Name: %{name}
 Version: %{version}
