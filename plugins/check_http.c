@@ -207,7 +207,6 @@ char buffer[MAX_INPUT_BUFFER];
 void print_usage (void);
 void print_help (void);
 int process_arguments (int, char **);
-int call_getopt (int, char **);
 static char *base64 (char *bin, int len);
 int check_http (void);
 int my_recv (void);
@@ -276,7 +275,8 @@ process_arguments (int argc, char **argv)
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
-		STD_OPTS_LONG,
+		STD_LONG_OPTS,
+		{"file",required_argument,0,'F'},
 		{"link", no_argument, 0, 'L'},
 		{"nohtml", no_argument, 0, 'n'},
 		{"ssl", no_argument, 0, 'S'},
@@ -309,14 +309,13 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-n");
 	}
 
-	snprintf (optchars, MAX_INPUT_BUFFER, "%s%s", STD_OPTS,
-	          "P:I:a:e:p:s:R:r:u:f:C:nLS");
+#define OPTCHARS "Vvht:c:w:H:P:I:a:e:p:s:R:r:u:f:C:nLS"
 
 	while (1) {
 #ifdef HAVE_GETOPT_H
-		c = getopt_long (argc, argv, optchars, long_options, &option_index);
+		c = getopt_long (argc, argv, OPTCHARS, long_options, &option_index);
 #else
-		c = getopt (argc, argv, optchars);
+		c = getopt (argc, argv, OPTCHARS);
 #endif
 		if (c == -1 || c == EOF)
 			break;
@@ -825,7 +824,7 @@ check_http (void)
 			else if (onredirect == STATE_CRITICAL)
 				printf ("HTTP CRITICAL");
 			elapsed_time = delta_time (tv);
-			asprintf (&msg, ": %s - %6.2f second response time %s%s|time=%6.2f\n",
+			asprintf (&msg, ": %s - %7.3f second response time %s%s|time=%7.3f\n",
 		                 status_line, elapsed_time, timestamp,
 	                   (display_html ? "</A>" : ""), elapsed_time);
 			terminate (onredirect, msg);
@@ -837,7 +836,7 @@ check_http (void)
 		
 	/* check elapsed time */
 	elapsed_time = delta_time (tv);
-	asprintf (&msg, "HTTP problem: %s - %6.2f second response time %s%s|time=%6.2f\n",
+	asprintf (&msg, "HTTP problem: %s - %7.3f second response time %s%s|time=%7.3f\n",
 	               status_line, elapsed_time, timestamp,
 	               (display_html ? "</A>" : ""), elapsed_time);
 	if (check_critical_time == TRUE && elapsed_time > critical_time)
@@ -850,13 +849,13 @@ check_http (void)
 
 	if (strlen (string_expect)) {
 		if (strstr (page, string_expect)) {
-			printf ("HTTP ok: %s - %6.2f second response time %s%s|time=%6.2f\n",
+			printf ("HTTP ok: %s - %7.3f second response time %s%s|time=%7.3f\n",
 			        status_line, elapsed_time,
 			        timestamp, (display_html ? "</A>" : ""), elapsed_time);
 			exit (STATE_OK);
 		}
 		else {
-			printf ("HTTP CRITICAL: string not found%s|time=%6.2f\n",
+			printf ("HTTP CRITICAL: string not found%s|time=%7.3f\n",
 			        (display_html ? "</A>" : ""), elapsed_time);
 			exit (STATE_CRITICAL);
 		}
@@ -865,14 +864,14 @@ check_http (void)
 	if (strlen (regexp)) {
 		errcode = regexec (&preg, page, REGS, pmatch, 0);
 		if (errcode == 0) {
-			printf ("HTTP ok: %s - %6.2f second response time %s%s|time=%6.2f\n",
+			printf ("HTTP ok: %s - %7.3f second response time %s%s|time=%7.3f\n",
 			        status_line, elapsed_time,
 			        timestamp, (display_html ? "</A>" : ""), elapsed_time);
 			exit (STATE_OK);
 		}
 		else {
 			if (errcode == REG_NOMATCH) {
-				printf ("HTTP CRITICAL: pattern not found%s|time=%6.2f\n",
+				printf ("HTTP CRITICAL: pattern not found%s|time=%7.3f\n",
 				        (display_html ? "</A>" : ""), elapsed_time);
 				exit (STATE_CRITICAL);
 			}
@@ -886,7 +885,7 @@ check_http (void)
 #endif
 
 	/* We only get here if all tests have been passed */
-	asprintf (&msg, "HTTP ok: %s - %6.2f second response time %s%s|time=%6.2f\n",
+	asprintf (&msg, "HTTP ok: %s - %7.3f second response time %s%s|time=%7.3f\n",
 	                status_line, (float)elapsed_time,
 	                timestamp, (display_html ? "</A>" : ""), elapsed_time);
 	terminate (STATE_OK, msg);
