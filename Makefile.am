@@ -2,7 +2,7 @@
 
 SUBDIRS = lib plugins plugins-scripts
 
-EXTRA_DIST = REQUIREMENTS acconfig.h subst.in subst.sh Helper.pm	\
+EXTRA_DIST = REQUIREMENTS SUPPORT acconfig.h subst.in subst.sh Helper.pm	\
 contrib nagios-plugins.spec.in getloadavg.m4
 
 dist-hook:
