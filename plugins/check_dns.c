@@ -7,7 +7,7 @@
 
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  GNU General Public License for more details.
 
  You should have received a copy of the GNU General Public License
@@ -42,6 +42,7 @@ char ptr_server[ADDRESS_LENGTH] = "";
 int verbose = FALSE;
 char expected_address[ADDRESS_LENGTH] = "";
 int match_expected_address = FALSE;
+int expect_authority = FALSE;
 
 int
 main (int argc, char **argv)
@@ -51,12 +52,13 @@ main (int argc, char **argv)
 	char *output = NULL;
 	char *address = NULL;
 	char *temp_buffer = NULL;
+	int non_authoritative = FALSE;
 	int result = STATE_UNKNOWN;
 	double elapsed_time;
 	long microsec;
 	struct timeval tv;
 	int multi_address;
-	int parse_address = FALSE;	/* This flag scans for Address: but only after Name: */
+	int parse_address = FALSE; /* This flag scans for Address: but only after Name: */
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -74,7 +76,7 @@ main (int argc, char **argv)
 	}
 
 	/* get the command to run */
-	asprintf (&command_line, "%s %s %s", NSLOOKUP_COMMAND,	query_address, dns_server);
+	asprintf (&command_line, "%s %s %s", NSLOOKUP_COMMAND, query_address, dns_server);
 
 	alarm (timeout_interval);
 	gettimeofday (&tv, NULL);
@@ -111,7 +113,8 @@ main (int argc, char **argv)
 		/* the server is responding, we just got the host name... */
 		if (strstr (input_buffer, "Name:"))
 			parse_address = TRUE;
-		else if (parse_address == TRUE && (strstr (input_buffer, "Address:") || strstr (input_buffer, "Addresses:"))) {
+		else if (parse_address == TRUE && (strstr (input_buffer, "Address:") ||
+		         strstr (input_buffer, "Addresses:"))) {
 			temp_buffer = index (input_buffer, ':');
 			temp_buffer++;
 
@@ -121,14 +124,19 @@ main (int argc, char **argv)
 			
 			strip(temp_buffer);
 			if (temp_buffer==NULL || strlen(temp_buffer)==0) {
-				die (STATE_CRITICAL, _("DNS CRITICAL - '%s' returned empty host name string\n"),
-										 NSLOOKUP_COMMAND);
+				die (STATE_CRITICAL,
+				     _("DNS CRITICAL - '%s' returned empty host name string\n"),
+				     NSLOOKUP_COMMAND);
 			}
 
 			if (address == NULL)
 				address = strdup (temp_buffer);
 			else
 				asprintf(&address, "%s,%s", address, temp_buffer);
+		}
+
+		else if (strstr (input_buffer, "Non-authoritative answer:")) {
+			non_authoritative = TRUE;
 		}
 
 		result = error_scan (input_buffer);
@@ -163,13 +171,19 @@ main (int argc, char **argv)
 		 and we can segfault if we do not */
 	if (address==NULL || strlen(address)==0)
 		die (STATE_CRITICAL,
-							 _("DNS CRITICAL - '%s' output parsing exited with no address\n"),
-							 NSLOOKUP_COMMAND);
+		     _("DNS CRITICAL - '%s' output parsing exited with no address\n"),
+		     NSLOOKUP_COMMAND);
 
 	/* compare to expected address */
 	if (result == STATE_OK && match_expected_address && strcmp(address, expected_address)) {
 		result = STATE_CRITICAL;
 		asprintf(&output, _("expected %s but got %s"), expected_address, address);
+	}
+
+	/* check if authoritative */
+	if (result == STATE_OK && expect_authority && non_authoritative) {
+		result = STATE_CRITICAL;
+		asprintf(&output, _("server %s is not authoritative for %s"), dns_server, query_address);
 	}
 
 	microsec = deltime (tv);
@@ -188,13 +202,13 @@ main (int argc, char **argv)
 	}
 	else if (result == STATE_WARNING)
 		printf (_("DNS WARNING - %s\n"),
-						!strcmp (output, "") ? _(" Probably a non-existent host/domain") : output);
+		        !strcmp (output, "") ? _(" Probably a non-existent host/domain") : output);
 	else if (result == STATE_CRITICAL)
 		printf (_("DNS CRITICAL - %s\n"),
-						!strcmp (output, "") ? _(" Probably a non-existent host/domain") : output);
+		        !strcmp (output, "") ? _(" Probably a non-existent host/domain") : output);
 	else
 		printf (_("DNS problem - %s\n"),
-						!strcmp (output, "") ? _(" Probably a non-existent host/domain") : output);
+		        !strcmp (output, "") ? _(" Probably a non-existent host/domain") : output);
 
 	return result;
 }
@@ -204,7 +218,7 @@ error_scan (char *input_buffer)
 {
 
 	/* the DNS lookup timed out */
-	if (strstr (input_buffer,	"Note:  nslookup is deprecated and may be removed from future releases.") ||
+	if (strstr (input_buffer, "Note: nslookup is deprecated and may be removed from future releases.") ||
 	    strstr (input_buffer, "Consider using the `dig' or `host' programs instead.  Run nslookup with") ||
 	    strstr (input_buffer, "the `-sil[ent]' option to prevent this message from appearing."))
 		return STATE_OK;
@@ -219,9 +233,9 @@ error_scan (char *input_buffer)
 
 	/* Connection was refused */
 	else if (strstr (input_buffer, "Connection refused") ||
+	         strstr (input_buffer, "Refused") ||
 	         (strstr (input_buffer, "** server can't find") &&
-	          strstr (input_buffer, ": REFUSED")) ||
-	         (strstr (input_buffer, "Refused")))
+	          strstr (input_buffer, ": REFUSED")))
 		die (STATE_CRITICAL, _("Connection to name server %s was refused\n"), dns_server);
 
 	/* Host or domain name does not exist */
@@ -263,6 +277,7 @@ process_arguments (int argc, char **argv)
 		{"server", required_argument, 0, 's'},
 		{"reverse-server", required_argument, 0, 'r'},
 		{"expected-address", required_argument, 0, 'a'},
+		{"expect-authority", no_argument, 0, 'A'},
 		{0, 0, 0, 0}
 	};
 
@@ -274,7 +289,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "hVvt:H:s:r:a:", long_opts, &opt_index);
+		c = getopt_long (argc, argv, "hVvAt:H:s:r:a:", long_opts, &opt_index);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -302,8 +317,8 @@ process_arguments (int argc, char **argv)
 			strcpy (query_address, optarg);
 			break;
 		case 's': /* server name */
-			/* TODO: this is_host check is probably unnecessary. Better to confirm nslookup
-			   response matches */
+			/* TODO: this is_host check is probably unnecessary. */
+			/* Better to confirm nslookup response matches */
 			if (is_host (optarg) == FALSE) {
 				printf (_("Invalid server name/address\n\n"));
 				print_usage ();
@@ -329,6 +344,9 @@ process_arguments (int argc, char **argv)
 				die (STATE_UNKNOWN, _("Input buffer overflow\n"));
 			strcpy (expected_address, optarg);
 			match_expected_address = TRUE;
+			break;
+		case 'A': /* expect authority */
+			expect_authority = TRUE;
 			break;
 		}
 	}
@@ -386,7 +404,9 @@ print_help (void)
 -s, --server=HOST\n\
    Optional DNS server you want to use for the lookup\n\
 -a, --expected-address=IP-ADDRESS\n\
-   Optional IP address you expect the DNS server to return\n"));
+   Optional IP address you expect the DNS server to return\n\
+-A, --expect-authority\n\
+   Optionally expect the DNS server to be authoritative for the lookup\n"));
 
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
@@ -406,8 +426,7 @@ void
 print_usage (void)
 {
 	printf (_("\
-Usage: %s -H host [-s server] [-a expected-address] [-t timeout]\n\
+Usage: %s -H host [-s server] [-a expected-address] [-A] [-t timeout]\n\
        %s --help\n\
-       %s --version\n"),
-					progname, progname, progname);
+       %s --version\n"), progname, progname, progname);
 }
