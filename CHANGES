@@ -9,3 +9,15 @@ This file documents the major additions and syntax changes between releases.
 	check_swap % thresholds changed to measure amount free, instead of amount used
 	check_disk syntax changes for -p, -m/-M, defaults to MB instead of kB
 	check_procs -C expects no path for the command name
+	New plugins - check_dhcp, check_icmp
+
+Caveats, Notes
+
+1 check_dhcp and check_icmp may not build or run on all architectures. Both plugins should be regarded
+  as volatile (subject to change - see the CVS if in doubt). cd plugins && make plugin' to build.
+
+1.1 check_dhcp: tested successfully on Linux and FreeBSD; fails on Solaris 9; unknown on HPUX and AIX
+1.2 check_icmp: recently renamed by the author (A Ericsson) to 'check_rta' and substantially updated.
+		check_icmp is known to run on *FreeBSD.
+
+
