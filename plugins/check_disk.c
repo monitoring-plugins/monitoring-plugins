@@ -106,6 +106,7 @@ static int require_sync = 0;
 struct name_list
 {
   char *name;
+  int found;
   struct name_list *name_next;
 };
 
@@ -190,6 +191,7 @@ main (int argc, char **argv)
 
 	struct mount_entry *me;
 	struct fs_usage fsp;
+	struct name_list *temp_list;
 	char *disk;
 
 	mount_list = read_filesystem_list (0);
@@ -251,6 +253,16 @@ main (int argc, char **argv)
 
 	if (verbose > 2)
 		asprintf (&output, "%s%s", output, details);
+
+	/* Override result if paths specified and not found */
+	temp_list = path_select_list;
+	while (temp_list) {
+		if (temp_list->found != TRUE) {
+			asprintf (&output, "%s [%s not found]", output, temp_list->name);
+			result = STATE_CRITICAL;
+		}
+		temp_list = temp_list->name_next;
+	}
 
 	terminate (result, "DISK %s%s\n", state_text (result), output, details);
 }
@@ -369,7 +381,7 @@ process_arguments (int argc, char **argv)
 				mult = (unsigned long)1024 * 1024 * 1024 * 1024;
 				units = "TB";
 			} else {
-				terminate (STATE_UNKNOWN, "unit type %s not known", optarg);
+				terminate (STATE_UNKNOWN, "unit type %s not known\n", optarg);
 			}
 			break;
 		case 'k': /* display mountpoint */
@@ -383,7 +395,7 @@ process_arguments (int argc, char **argv)
 		case 'l':
 			show_local_fs = 1;			
 			break;
-		case 'p':									/* selec path */
+		case 'p':									/* select path */
 			se = (struct name_list *) malloc (sizeof (struct name_list));
 			se->name = strdup (optarg);
 			se->name_next = NULL;
@@ -504,8 +516,10 @@ int
 walk_name_list (struct name_list *list, const char *name)
 {
 	while (list) {
-		if (! strcmp(list->name, name))
+		if (! strcmp(list->name, name)) {
+			list->found = 1;
 			return TRUE;
+		}
 		list = list->name_next;
 	}
 	return FALSE;
