@@ -75,10 +75,8 @@
     the plug-in developers and encourage the standarization of the
     different kind of plug-ins: C, shell, perl, python, etc.</para>
 
-        <para>Nagios Plug-in Development Guidelines Copyright (C) 2000 2001
-		2002
-        Karl DeBisschop, Ethan Galstad, Hugo Gayosso, Stanley Hopcroft, 
-		Subhendu Ghosh</para>
+        <para>Nagios Plug-in Development Guidelines Copyright (C) 2000-2003
+        (Karl DeBisschop, Ethan Galstad, Stanley Hopcroft, Subhendu Ghosh, Ton Voon, Jeremy T. Bouse)</para>
 
         <para>Permission is granted to make and distribute verbatim
         copies of this manual provided the copyright notice and this
