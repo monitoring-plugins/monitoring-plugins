@@ -79,6 +79,18 @@ const char *state_text (int result);
 
 #define max(a,b) (((a)>(b))?(a):(b))
 
+char *perfdata (const char *label,
+ long int val,
+ const char *uom,
+ int warnp,
+ long int warn,
+ int critp,
+ long int crit,
+ int minp,
+ long int minv,
+ int maxp,
+ long int maxv);
+
 /* The idea here is that, although not every plugin will use all of these, 
    most will or should.  Therefore, for consistency, these very common 
    options should have only these meanings throughout the overall suite */

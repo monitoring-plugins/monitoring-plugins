@@ -497,3 +497,47 @@ strpcat (char *dest, const char *src, const char *str)
 
 	return dest;
 }
+
+
+
+
+/******************************************************************************
+ *
+ * Print perfdata in a standard format
+ *
+ ******************************************************************************/
+
+char *perfdata (const char *label,
+ long int val,
+ const char *uom,
+ int warnp,
+ long int warn,
+ int critp,
+ long int crit,
+ int minp,
+ long int minv,
+ int maxp,
+ long int maxv)
+{
+	char *data = NULL;
+
+	asprintf (&data, "\"%s\"=%ld%s;", label, val, uom);
+
+	if (warnp)
+		asprintf (&data, "%s%ld;", data, warn);
+	else
+		asprintf (&data, "%s;", data);
+
+	if (critp)
+		asprintf (&data, "%s%ld;", data, crit);
+	else
+		asprintf (&data, "%s;", data);
+
+	if (minp)
+		asprintf (&data, "%s%ld", data, minv);
+
+	if (maxp)
+		asprintf (&data, "%s;%ld", data, maxv);
+
+	return data;
+}
