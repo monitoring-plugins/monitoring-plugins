@@ -1,22 +1,29 @@
-/*
-* check_ssh.c
-* 
-* Made by (Remi PAULMIER)
-* Login   <remi@sinfomic.fr>
-* 
-* Started on  Fri Jul  9 09:18:23 1999 Remi PAULMIER
-* Update Thu Jul 22 12:50:04 1999 remi paulmier
-* $Id$
-*
-*/
+/******************************************************************************
 
-#include "config.h"
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+******************************************************************************/
+
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
 
 const char *progname = "check_ssh";
-#define REVISION "$Revision$"
+const char *revision = "$Revision$";
+const char *copyright = "2000-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #ifndef MSG_DONTWAIT
 #define MSG_DONTWAIT 0
@@ -42,7 +49,7 @@ main (int argc, char **argv)
 	int result;
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage ("Could not parse arguments\n");
+		usage (_("Could not parse arguments\n"));
 
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
@@ -62,17 +69,17 @@ int
 process_arguments (int argc, char **argv)
 {
 	int c;
-	char *tmp = NULL;
 
 	int option_index = 0;
 	static struct option long_options[] = {
-		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
+		{"version", no_argument, 0, 'V'},
+		{"host", required_argument, 0, 'H'},
+		{"port", required_argument, 0, 'p'},
 		{"use-ipv4", no_argument, 0, '4'},
 		{"use-ipv6", no_argument, 0, '6'},
-		{"verbose", no_argument, 0, 'v'},
 		{"timeout", required_argument, 0, 't'},
-		{"host", required_argument, 0, 'H'},
+		{"verbose", no_argument, 0, 'v'},
 		{0, 0, 0, 0}
 	};
 
@@ -93,7 +100,7 @@ process_arguments (int argc, char **argv)
 		case '?':									/* help */
 			usage ("");
 		case 'V':									/* version */
-			print_revision (progname, REVISION);
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -103,7 +110,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 't':									/* timeout period */
 			if (!is_integer (optarg))
-				usage ("Timeout Interval must be an integer!\n\n");
+				usage (_("Timeout Interval must be an integer!\n\n"));
 			socket_timeout = atoi (optarg);
 			break;
 		case '4':
@@ -113,7 +120,7 @@ process_arguments (int argc, char **argv)
 #ifdef USE_IPV6
 			address_family = AF_INET6;
 #else
-			usage ("IPv6 support not available\n");
+			usage (_("IPv6 support not available\n"));
 #endif
 			break;
 		case 'H':									/* host */
@@ -179,9 +186,9 @@ ssh_connect (char *haddr, short hport)
 	char *buffer = NULL;
 	char *ssh_proto = NULL;
 	char *ssh_server = NULL;
-	char revision[20];
+	char rev_no[20];
 
-	sscanf ("$Revision$", "$Revision: %[0123456789.]", revision);
+	sscanf ("$Revision$", "$Revision: %[0123456789.]", rev_no);
 
 	result = my_tcp_connect (haddr, hport, &sd);
 
@@ -192,7 +199,7 @@ ssh_connect (char *haddr, short hport)
 	memset (output, 0, BUFF_SZ + 1);
 	recv (sd, output, BUFF_SZ, 0);
 	if (strncmp (output, "SSH", 3)) {
-		printf ("Server answer: %s", output);
+		printf (_("Server answer: %s"), output);
 		exit (STATE_CRITICAL);
 	}
 	else {
@@ -203,9 +210,9 @@ ssh_connect (char *haddr, short hport)
 		ssh_server = ssh_proto + strspn (ssh_proto, "-0123456789. ");
 		ssh_proto[strspn (ssh_proto, "0123456789. ")] = 0;
 		printf
-			("SSH OK - %s (protocol %s)\n",
+			(_("SSH OK - %s (protocol %s)\n"),
 			 ssh_server, ssh_proto);
-		asprintf (&buffer, "SSH-%s-check_ssh_%s\r\n", ssh_proto, revision);
+		asprintf (&buffer, "SSH-%s-check_ssh_%s\r\n", ssh_proto, rev_no);
 		send (sd, buffer, strlen (buffer), MSG_DONTWAIT);
 		if (verbose)
 			printf ("%s\n", buffer);
@@ -216,23 +223,37 @@ ssh_connect (char *haddr, short hport)
 void
 print_help (void)
 {
-	print_revision (progname, REVISION);
-	printf ("Copyright (c) 1999 Remi Paulmier (remi@sinfomic.fr)\n\n");
+	char *myport;
+	asprintf (&myport, "%d", SSH_DFL_PORT);
+
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 1999 Remi Paulmier <remi@sinfomic.fr>\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("Try to connect to SSH server at specified server and port\n\n"));
+
 	print_usage ();
-	printf ("by default, port is %d\n", SSH_DFL_PORT);
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_HOST_PORT), 'p', myport);
+
+	printf (_(UT_IPv46));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(UT_VERBOSE));
+
+	printf (_(UT_SUPPORT));
 }
 
 void
 print_usage (void)
 {
-	printf
-		("Usage:\n"
-		 " %s -t [timeout] -p [port] <host>\n"
-		 " %s -V prints version info\n"
-		 " %s -4 use IPv4 connection\n"
-		 " %s -6 use IPv6 connection\n"
-		 " %s -h prints more detailed help\n", 
-		 progname, progname, progname, progname, progname);
+	printf (_("\
+Usage: %s [-46] [-t <timeout>] [-p <port>] <host>\n"), progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }
 
 /* end of check_ssh.c */
