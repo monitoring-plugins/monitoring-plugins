@@ -1,19 +1,7 @@
 /******************************************************************************
  *
- * CHECK_SNMP.C
- *
  * Program: SNMP plugin for Nagios
  * License: GPL
- * Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
- *
- * Last Modified: $Date$
- *
- * Description:
- *
- * This plugin uses the 'snmpget' command included with the UCD-SNMP
- * package.  If you don't have the package installed you will need to
- * download it from http://ucd-snmp.ucdavis.edu before you can use
- * this plugin.
  *
  * License Information:
  *
@@ -30,14 +18,87 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  *./plugins/check_snmp 127.0.0.1 -c public -o .1.3.6.1.4.1.2021.9.1.2.1
+ *
  *****************************************************************************/
+
+#define PROGNAME "check_snmp"
+#define REVISION "$Revision$"
+#define COPYRIGHT "1999-2002"
+#define AUTHOR "Ethan Galstad"
+#define EMAIL "nagios@nagios.org"
+#define SUMMARY "Check status of remote machines using SNMP.\n"
+
+#define OPTIONS "\
+-H <ip_address> -o <OID> [-w warn_range] [-c crit_range] \n\
+          [-C community] [-s string] [-r regex] [-R regexi] [-t timeout]\n\
+          [-l label] [-u units] [-p port-number] [-d delimiter]\n\
+          [-D output-delimiter]"
+
+#define LONGOPTIONS "\
+ -H, --hostname=HOST\n\
+    Name or IP address of the device you wish to query\n\
+ -o, --oid=OID(s)\n\
+    Object identifier(s) whose value you wish to query\n\
+ -w, --warning=INTEGER_RANGE(s)\n\
+    Range(s) which will not result in a WARNING status\n\
+ -c, --critical=INTEGER_RANGE(s)\n\
+    Range(s) which will not result in a CRITICAL status\n\
+ -C, --community=STRING\n\
+    Optional community string for SNMP communication\n\
+    (default is \"%s\")\n\
+ -u, --units=STRING\n\
+    Units label(s) for output data (e.g., 'sec.').\n\
+ -p, --port=STRING\n\
+    UDP port number target is listening on. Default is \"%s\"\n\
+ -d, --delimiter=STRING\n\
+    Delimiter to use when parsing returned data. Default is \"%s\"\n\
+    Any data on the right hand side of the delimiter is considered\n\
+    to be the data that should be used in the evaluation.\n\
+ -t, --timeout=INTEGER\n\
+    Seconds to wait before plugin times out (see also nagios server timeout).\n\
+    Default is %d seconds\n\
+ -D, --output-delimiter=STRING\n\
+    Separates output on multiple OID requests\n\
+ -s, --string=STRING\n\
+    Return OK state (for that OID) if STRING is an exact match\n\
+ -r, --ereg=REGEX\n\
+    Return OK state (for that OID) if extended regular expression REGEX matches\n\
+ -R, --eregi=REGEX\n\
+    Return OK state (for that OID) if case-insensitive extended REGEX matches\n\
+ -l, --label=STRING\n\
+    Prefix label for output from plugin (default -s 'SNMP')\n"
+
+#define NOTES "\
+- This plugin uses the 'snmpget' command included with the UCD-SNMP package.\n\
+  If you don't have the package installed, you will need to download it from\n\
+  http://ucd-snmp.ucdavis.edu before you can use this plugin.\n\
+- Multiple OIDs may be indicated by a comma- or space-delimited list (lists with\n\
+  internal spaces must be quoted)\n\
+- Ranges are inclusive and are indicated with colons. When specified as\n\
+  'min:max' a STATE_OK will be returned if the result is within the indicated\n\
+  range or is equal to the upper or lower bound. A non-OK state will be\n\
+  returned if the result is outside the specified range.\n\
+- If spcified in the order 'max:min' a non-OK state will be returned if the\n\
+  result is within the (inclusive) range.\n\
+- Upper or lower bounds may be omitted to skip checking the respective limit.\n\
+- Bare integers are interpreted as upper limits.\n\
+- When checking multiple OIDs, separate ranges by commas like '-w 1:10,1:,:20'\n\
+- Note that only one string and one regex may be checked at present\n\
+- All evaluation methods other than PR, STR, and SUBSTR expect that the value\n\
+  returned from the SNMP query is an unsigned integer.\n"
+
+#define DESCRIPTION "\
+This plugin gets system information on a remote server via snmp.\n"
+
+#define DEFAULT_COMMUNITY "public"
+#define DEFAULT_PORT "161"
+#define DEFAULT_TIMEOUT 10
 
 #include "common.h"
 #include "utils.h"
 #include "popen.h"
-
-#define PROGNAME check_snmp
 
 #define mark(a) ((a)!=0?"*":"")
 
@@ -69,9 +130,9 @@
 #define DEFAULT_OUTPUT_DELIMITER " "
 
 void print_usage (void);
-void print_help (char *);
+void print_help (void);
 int process_arguments (int, char **);
-int call_getopt (int, char **);
+int validate_arguments (void);
 int check_num (int);
 char *clarify_message (char *);
 int lu_getll (unsigned long *, char *);
@@ -212,6 +273,14 @@ main (int argc, char **argv)
 			show = response;
 		p2 = show;
 
+		iresult = STATE_DEPENDENT;
+
+		if (eval_method[i] & CRIT_PRESENT) {
+			iresult = STATE_CRITICAL;
+		} else if (eval_method[i] & WARN_PRESENT) {
+			iresult = STATE_WARNING;
+		}
+
 		if (eval_method[i] & CRIT_GT ||
 				eval_method[i] & CRIT_LT ||
 				eval_method[i] & CRIT_GE ||
@@ -257,14 +326,12 @@ main (int argc, char **argv)
 #endif
 		}
 
-		else {
-			if (response)
-				iresult = STATE_OK;
-			else if (eval_method[i] & CRIT_PRESENT)
-				iresult = STATE_CRITICAL;
-			else
-				iresult = STATE_WARNING;
-		}
+		if (response && iresult == STATE_DEPENDENT)
+			iresult = STATE_OK;
+		else if (eval_method[i] & CRIT_PRESENT)
+			iresult = STATE_CRITICAL;
+		else
+			iresult = STATE_WARNING;
 
 		result = max_state (result, iresult);
 
@@ -313,7 +380,7 @@ int
 process_arguments (int argc, char **argv)
 {
 	char *ptr;
-	int c, i = 1;
+	int c = 1;
 	int j = 0, jj = 0;
 
 #ifdef HAVE_GETOPT_H
@@ -355,37 +422,47 @@ process_arguments (int argc, char **argv)
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
-			getopt_long (argc, argv, "+?hVt:c:w:H:C:o:d:D:s:R:r:l:u:p:",
+			getopt_long (argc, argv, "+?hVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:",
 									 long_options, &option_index);
 #else
-		c = getopt (argc, argv, "+?hVt:c:w:H:C:o:d:D:s:R:r:l:u:p:");
+		c = getopt (argc, argv, "+?hVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:");
 #endif
 
 		if (c == -1 || c == EOF)
 			break;
 
 		switch (c) {
-		case '?':									/* help */
-			printf ("%s: Unknown argument: %s\n\n", my_basename (argv[0]), optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
-		case 'h':									/* help */
-			print_help (my_basename (argv[0]));
+		case '?':	/* usage */
+			usage2 ("Unknown argument", optarg);
+		case 'h':	/* help */
+			print_help ();
 			exit (STATE_OK);
-		case 'V':									/* version */
-			print_revision (my_basename (argv[0]), "$Revision$");
+		case 'V':	/* version */
+			print_revision (PROGNAME, REVISION);
 			exit (STATE_OK);
 		case 'v': /* verbose */
 			verbose = TRUE;
 			break;
-		case 't':									/* timeout period */
-			if (!is_integer (optarg)) {
-				printf ("%s: Timeout Interval must be an integer!\n\n",
-								my_basename (argv[0]));
-				print_usage ();
-				exit (STATE_UNKNOWN);
-			}
+		case 't':	/* timeout period */
+			if (!is_integer (optarg))
+				usage2 ("Timeout Interval must be an integer", optarg);
 			timeout_interval = atoi (optarg);
+			break;
+		case 'e': /* PRELIMINARY - may change */
+			eval_method[j] |= WARN_PRESENT;
+			for (ptr = optarg; (ptr = index (ptr, ',')); ptr++)
+				ptr[0] = ' '; /* relpace comma with space */
+			for (ptr = optarg; (ptr = index (ptr, ' ')); ptr++)
+				eval_method[++j] |= WARN_PRESENT;
+			asprintf (&oid, "%s %s", oid, optarg);
+			break;
+		case 'E': /* PRELIMINARY - may change */
+			eval_method[j] |= WARN_PRESENT;
+			for (ptr = optarg; (ptr = index (ptr, ',')); ptr++)
+				ptr[0] = ' '; /* relpace comma with space */
+			for (ptr = optarg; (ptr = index (ptr, ' ')); ptr++)
+				eval_method[++j] |= CRIT_PRESENT;
+			asprintf (&oid, "%s %s", oid, optarg);
 			break;
 		case 'c':									/* critical time threshold */
 			if (strspn (optarg, "0123456789:,") < strlen (optarg)) {
@@ -424,8 +501,9 @@ process_arguments (int argc, char **argv)
 		case 'o':									/* object identifier */
 			for (ptr = optarg; (ptr = index (ptr, ',')); ptr++)
 				ptr[0] = ' '; /* relpace comma with space */
-			for (ptr = optarg, j = 1; (ptr = index (ptr, ' ')); ptr++)
+			for (ptr = optarg; (ptr = index (ptr, ' ')); ptr++) {
 				j++; /* count OIDs */
+			}
 			asprintf (&oid, "%s %s", oid, optarg);
 			break;
 		case 'd':									/* delimiter */
@@ -529,103 +607,84 @@ process_arguments (int argc, char **argv)
 		}
 	}
 
-	c = optind;
 	if (server_address == NULL)
-		server_address = strscpy (NULL, argv[c++]);
+		asprintf (&server_address, argv[optind]);
+
+	return validate_arguments ();
+}
+
+/******************************************************************************
+
+@@-
+<sect3>
+<title>validate_arguments</title>
+
+<para>&PROTO_validate_arguments;</para>
+
+<para>Given a database name, this function returns TRUE if the string
+is a valid PostgreSQL database name, and returns false if it is
+not.</para>
+
+<para>Valid PostgreSQL database names are less than &NAMEDATALEN;
+characters long and consist of letters, numbers, and underscores. The
+first character cannot be a number, however.</para>
+
+</sect3>
+-@@
+******************************************************************************/
+
+int
+validate_arguments ()
+{
 
 	if (community == NULL)
-		community = strscpy (NULL, "public");
+		asprintf (&community, DEFAULT_COMMUNITY);
 
 	if (delimiter == NULL)
-		delimiter = strscpy (NULL, DEFAULT_DELIMITER);
+		asprintf (&delimiter, DEFAULT_DELIMITER);
 
 	if (output_delim == NULL)
-		output_delim = strscpy (NULL, DEFAULT_OUTPUT_DELIMITER);
+		asprintf (&output_delim, DEFAULT_OUTPUT_DELIMITER);
 
 	if (label == NULL)
-		label = strscpy (NULL, "SNMP");
+		asprintf (&label, "SNMP");
 
 	if (units == NULL)
-		units = strscpy (NULL, "");
+		asprintf (&units, "");
 
 	if (port == NULL)
-		port = strscpy(NULL,"161");
+		asprintf (&port, DEFAULT_PORT);
 
-	return i;
+	return OK;
+}
+
+
+
+void
+print_help (void)
+{
+	print_revision (PROGNAME, REVISION);
+	printf
+		("Copyright (c) %s %s <%s>\n\n%s\n",
+		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
+	print_usage ();
+	printf
+		("\nOptions:\n" LONGOPTIONS "\n" DESCRIPTION "\n" NOTES "\n", 
+		 DEFAULT_COMMUNITY, DEFAULT_PORT, DEFAULT_DELIMITER, DEFAULT_TIMEOUT);
+	support ();
 }
 
 void
 print_usage (void)
 {
 	printf
-		("Usage: check_snmp -H <ip_address> -o <OID> [-w warn_range] [-c crit_range] \n"
-		 "                  [-C community] [-s string] [-r regex] [-R regexi] [-t timeout]\n"
-		 "                  [-l label] [-u units] [-p port-number] [-d delimiter] [-D output-delimiter]\n"
-		 "       check_snmp --help\n" "       check_snmp --version\n");
+		("Usage:\n" " %s %s\n"
+		 " %s (-h | --help) for detailed help\n"
+		 " %s (-V | --version) for version information\n",
+		 PROGNAME, OPTIONS, PROGNAME, PROGNAME);
 }
+
 
-void
-print_help (char *cmd)
-{
-	printf ("Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)\n"
-					"License: GPL\n\n");
-	print_usage ();
-	printf
-		("\nOptions:\n"
-		 " -h, --help\n"
-		 "    Print detailed help screen\n"
-		 " -V, --version\n"
-		 "    Print version information\n"
-		 " -H, --hostname=HOST\n"
-		 "    Name or IP address of the device you wish to query\n"
-		 " -o, --oid=OID(s)\n"
-		 "    Object identifier(s) whose value you wish to query\n"
-		 " -w, --warning=INTEGER_RANGE(s)\n"
-		 "    Range(s) which will not result in a WARNING status\n"
-		 " -c, --critical=INTEGER_RANGE(s)\n"
-		 "    Range(s) which will not result in a CRITICAL status\n"
-		 " -C, --community=STRING\n"
-		 "    Optional community string for SNMP communication\n"
-		 "    (default is \"public\")\n"
-		 " -u, --units=STRING\n"
-		 "    Units label(s) for output data (e.g., 'sec.').\n"
-		 " -p, --port=STRING\n"
-         "    UDP port number target is listening on.\n"
-		 " -d, --delimiter=STRING\n"
-		 "    Delimiter to use when parsing returned data. Default is \"%s\"\n"
-		 "    Any data on the right hand side of the delimiter is considered\n"
-		 "    to be the data that should be used in the evaluation.\n"
-		 " -t, --timeout=INTEGER\n"
-		 "    Seconds to wait before plugin times out (see also nagios server timeout)\n"
-		 " -D, --output-delimiter=STRING\n"
-		 "    Separates output on multiple OID requests\n"
-		 " -s, --string=STRING\n"
-		 "    Return OK state (for that OID) if STRING is an exact match\n"
-		 " -r, --ereg=REGEX\n"
-		 "    Return OK state (for that OID) if extended regular expression REGEX matches\n"
-		 " -R, --eregi=REGEX\n"
-		 "    Return OK state (for that OID) if case-insensitive extended REGEX matches\n"
-		 " -l, --label=STRING\n"
-		 "    Prefix label for output from plugin (default -s 'SNMP')\n\n"
-		 "- This plugin uses the 'snmpget' command included with the UCD-SNMP package.\n"
-		 "  If you don't have the package installed, you will need to download it from\n"
-		 "  http://ucd-snmp.ucdavis.edu before you can use this plugin.\n"
-		 "- Multiple OIDs may be indicated by a comma- or space-delimited list (lists with\n"
-		 "  internal spaces must be quoted)\n"
-		 "- Ranges are inclusive and are indicated with colons. When specified as\n"
-		 "  'min:max' a STATE_OK will be returned if the result is within the indicated\n"
-		 "  range or is equal to the upper or lower bound. A non-OK state will be\n"
-		 "  returned if the result is outside the specified range.\n"
-		 "- If spcified in the order 'max:min' a non-OK state will be returned if the\n"
-		 "  result is within the (inclusive) range.\n"
-		 "- Upper or lower bounds may be omitted to skip checking the respective limit.\n"
-		 "- Bare integers are interpreted as upper limits.\n"
-		 "- When checking multiple OIDs, separate ranges by commas like '-w 1:10,1:,:20'\n"
-		 "- Note that only one string and one regex may be checked at present\n"
-		 "- All evaluation methods other than PR, STR, and SUBSTR expect that the value\n"
-		 "  returned from the SNMP query is an unsigned integer.\n\n",
-		 DEFAULT_DELIMITER);
-}
 
 char *
 clarify_message (char *msg)
