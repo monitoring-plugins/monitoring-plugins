@@ -66,9 +66,9 @@
 #include <signal.h>
 #endif
 
-/* #ifdef HAVE_GETOPT_H */
+/* TODO: define can be removed when all ifdef in each plugin has been removed */
+#define HAVE_GETOPT_H
 #include <getopt.h>
-/* #endif */
 
 #include <ctype.h>
 
