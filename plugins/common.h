@@ -80,7 +80,7 @@
 
 #include <ctype.h>
 
-#if HAVE_LWRES_NETDB_H
+#ifdef HAVE_LWRES_NETDB_H
 #include <lwres/netdb.h>
 #else
 # if !HAVE_GETADDRINFO
@@ -88,6 +88,10 @@
 # else
 #  include <netdb.h>
 # endif
+#endif
+
+#ifdef HAVE_LOCALE_H
+#include <locale.h>
 #endif
 
 /*
@@ -156,7 +160,7 @@ enum {
  *
  */
 
-#if ENABLE_NLS
+#ifdef ENABLE_NLS
 #  include "gettext.h"
 #  define _(String) gettext (String)
 #  define S_(String) gettext (String)
