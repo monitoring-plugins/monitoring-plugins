@@ -4,6 +4,7 @@ code that is consistent with the existing core plugins.
 The primary goals of these standards are internal consistency, and
 readability in a wide range of environments.
 
+
 1. C Language Programming
 
 All code should comply with the requirements of the Free Software
@@ -33,6 +34,83 @@ characters
 e) The opening brace of an if or while block is on the same line as
 the end of the conditional expression (the '-br' option).
 
+
 2. Perl Language Programming
 
-<To Be Written>
+Taken from the O'Reilly book "Programming Perl" (3rd edition, pages 604-606) with
+modifications for clarity and to cohere with C coding standards.
+
+*) Always check the return code of system calls.
+
+a) Use tab indentation.
+
+b) Put space before the opening brace of a multiline block.
+
+c) A short block may be put on one line, including braces.
+
+d) Never omit the semicolon.
+
+e)  Surround most operators with space.
+
+	$x = 5;    # do this
+	$y=5;      # don't do this
+
+f) Surround a "complex" subscript (inside brackets) with space.
+
+g) Put empty lines between chunks of code that do different things.
+
+*) Always check the return code of system calls.
+
+h) Put a newline between closing brace and else or elsif.
+
+i) Do not put space between a function name and its opening parenthesis.
+
+j) Do not put space before a semicolon.
+
+k) Put space after each comma.
+
+l) Break long lines after an operator (but before 'and' and 'or', even when
+spelled as && and ||)).
+
+*) Always check the return code of system calls.
+
+m) Line up corresponding items vertically.
+
+n) Use redundant parentheses only where it increases readability.
+
+o) An opening brace should be put on the same line as its preceding keyword,
+if  possible; otherwise, line them up vertically.
+
+	while ($condition) {
+		# do something
+	}
+
+	while ($this_condition and $that_condition and $some_other_condition
+	       and $this_really_really_really_long_condition)
+	{
+		# do something
+	}
+
+p) Do things the most readable way. For instance:
+
+	open(FOO, $foo) or die "Can't open $foo: $!";
+
+is  better than
+
+	die "Can't open $foo: $!" unless open(FOO, $foo);
+
+because the second way hides the main point of the statement in a modifier.
+
+q) Just because an operator lets you assume default arguments doesn't mean
+that you should always use them. The defaults are there for lazy programmers
+writing one-shot, non-shared programs. If you want your program to be readable,
+consider supplying the argument.
+
+r) Choose mnemonic identifiers. That is, don't name your variables $h, $c
+and $w. Try $hostaddress, $critical and $warning instead ($host, $crit and
+$warn is OK too).
+
+s) Use underscore to split words in long identifiers. That is, use
+$service_port instead of $ServicePort as the former is much more readable.
+
+*) Always check the return code of system calls.
