@@ -8,3 +8,4 @@ subst
 command.cfg
 Cache.pm
 build-*
+autom4te-*.cache
