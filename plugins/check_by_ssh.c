@@ -33,6 +33,7 @@ void print_usage (void);
 
 int commands = 0;
 int services = 0;
+int skip_lines = 0;
 char *remotecmd = NULL;
 char *comm = NULL;
 char *hostname = NULL;
@@ -101,15 +102,20 @@ main (int argc, char **argv)
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process))
 		asprintf (&result_text, "%s%s", result_text, input_buffer);
 
-
 	/* WARNING if output found on stderr */
-	if (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
-		printf ("%s\n", input_buffer);
-		while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process))
-			printf ("%s\n", input_buffer);
-		return STATE_WARNING;
+	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
+		if (skip_lines > 0) {
+			if (input_buffer[strlen(input_buffer)-1] == '\n') {
+				skip_lines--;
+			}
+		} else {
+			printf ("%s", input_buffer);
+			result = STATE_WARNING;
+		}
 	}
 	(void) fclose (child_stderr);
+	if (result == STATE_WARNING)
+		return result;
 
 
 	/* close the pipe */
@@ -189,6 +195,7 @@ process_arguments (int argc, char **argv)
 		{"user", required_argument, 0, 'u'},
 		{"logname", required_argument, 0, 'l'},
 		{"command", required_argument, 0, 'C'},
+		{"skip", required_argument, 0, 'S'},
 		{"proto1", no_argument, 0, '1'},
 		{"proto2", no_argument, 0, '2'},
 		{"use-ipv4", no_argument, 0, '4'},
@@ -204,7 +211,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvh1246ft:H:O:p:i:u:l:C:n:s:", longopts,
+		c = getopt_long (argc, argv, "Vvh1246ft:H:O:p:i:u:l:C:S:n:s:", longopts,
 									 &option);
 
 		if (c == -1 || c == EOF)
@@ -275,6 +282,13 @@ process_arguments (int argc, char **argv)
 			if (commands > 1)
 				asprintf (&remotecmd, "%s;echo STATUS CODE: $?;", remotecmd);
 			asprintf (&remotecmd, "%s%s", remotecmd, optarg);
+			break;
+		case 'S':									/* Skip n lines in the output to ignore system banner */
+			if (!is_integer (optarg))
+				usage2 (_("skip lines must be an integer"), optarg);
+			else
+				skip_lines = atoi (optarg);
+			break;
 		}
 	}
 
@@ -353,6 +367,8 @@ print_help (void)
     tell ssh to use Protocol 1\n\
  -2, --proto2\n\
     tell ssh to use Protocol 2\n\
+ -S, --skiplines=n\n\
+    Ignore first n lines on STDERR (to suppress a logon banner)\n\
  -f\n\
     tells ssh to fork rather than create a tty\n"));
 
