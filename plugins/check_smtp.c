@@ -1,70 +1,29 @@
 /******************************************************************************
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*
-*****************************************************************************/
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+******************************************************************************/
 
 const char *progname = "check_smtp";
 const char *revision = "$Revision$";
-const char *copyright = "1999-2003";
-const char *authors = "Nagios Plugin Development Team";
+const char *copyright = "2000-2003";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
-const char *summary = "\
-This plugin will attempt to open an SMTP connection with the host.\n";
-
-const char *description = "\
-Successul connects return STATE_OK, refusals and timeouts return\n\
-STATE_CRITICAL, other errors return STATE_UNKNOWN.  Successful\n\
-connects, but incorrect reponse messages from the host result in\n\
-STATE_WARNING return values.\n";
-
-const char *option_summary = "\
--H host [-p port] [-e expect] [-C command] [-f from addr]\n\
-         [-w warn] [-c crit] [-t timeout] [-n] [-v] [-4|-6]";
-
-const char *options = "\
- -H, --hostname=STRING or IPADDRESS\n\
-   Check server on the indicated host\n\
- -4, --use-ipv4\n\
-   Use IPv4 protocol\n\
- -6, --use-ipv6\n\
-   Use IPv6 protocol\n\
- -p, --port=INTEGER\n\
-   Make connection on the indicated port (default: %d)\n\
- -e, --expect=STRING\n\
-   String to expect in first line of server response (default: '%s')\n\
- -n, nocommand\n\
-   Suppress SMTP command\n\
- -C, --command=STRING\n\
-   SMTP command (default: '%s')\n\
- -f, --from=STRING\n\
-   FROM-address to include in MAIL command, required by Exchange 2000\n\
-   (default: '%s')\n\
- -w, --warning=INTEGER\n\
-   Seconds necessary to result in a warning status\n\
- -c, --critical=INTEGER\n\
-   Seconds necessary to result in a critical status\n\
- -t, --timeout=INTEGER\n\
-   Seconds before connection attempt times out (default: %d)\n\
- -v, --verbose\n\
-   Print extra information (command-line use only)\n\
- -h, --help\n\
-   Print detailed help screen\n\
- -V, --version\n\
-   Print version information\n\n";
+#include "common.h"
+#include "netutils.h"
+#include "utils.h"
 
 enum {
 	SMTP_PORT	= 25
@@ -72,11 +31,6 @@ enum {
 const char *SMTP_EXPECT = "220";
 const char *SMTP_HELO = "HELO ";
 const char *SMTP_QUIT	= "QUIT\r\n";
-
-#include "config.h"
-#include "common.h"
-#include "netutils.h"
-#include "utils.h"
 
 int process_arguments (int, char **);
 int validate_arguments (void);
@@ -95,6 +49,11 @@ int critical_time = 0;
 int check_critical_time = FALSE;
 int verbose = 0;
 
+
+
+
+
+
 int
 main (int argc, char **argv)
 {
@@ -107,7 +66,7 @@ main (int argc, char **argv)
 	struct timeval tv;
 
 	if (process_arguments (argc, argv) != OK)
-		usage ("Invalid command arguments supplied\n");
+		usage (_("Invalid command arguments supplied\n"));
 
 	/* initialize the HELO command with the localhostname */
 #ifndef HOST_MAX_BYTES
@@ -141,7 +100,7 @@ main (int argc, char **argv)
 		/* watch for the SMTP connection string and */
 		/* return a WARNING status if we couldn't read any data */
 		if (recv (sd, buffer, MAX_INPUT_BUFFER - 1, 0) == -1) {
-			printf ("recv() failed\n");
+			printf (_("recv() failed\n"));
 			result = STATE_WARNING;
 		}
 		else {
@@ -150,9 +109,9 @@ main (int argc, char **argv)
 			/* make sure we find the response we are looking for */
 			if (!strstr (buffer, server_expect)) {
 				if (server_port == SMTP_PORT)
-					printf ("Invalid SMTP response received from host\n");
+					printf (_("Invalid SMTP response received from host\n"));
 				else
-					printf ("Invalid SMTP response received from host on port %d\n",
+					printf (_("Invalid SMTP response received from host on port %d\n"),
 									server_port);
 				result = STATE_WARNING;
 			}
@@ -182,7 +141,7 @@ main (int argc, char **argv)
 			recv(sd, buffer, MAX_INPUT_BUFFER-1, 0);
 
 			if (verbose) 
-				printf("DUMMYCMD: %s\n%s\n",from_str,buffer);
+				printf(_("DUMMYCMD: %s\n%s\n"),from_str,buffer);
 
 		} /* smtp_use_dummycmd */
 
@@ -204,10 +163,10 @@ main (int argc, char **argv)
 		result = STATE_WARNING;
 
 	if (verbose)
-		printf ("SMTP %s - %.3f sec. response time, %s|time=%.3f\n",
+		printf (_("SMTP %s - %.3f sec. response time, %s|time=%.3f\n"),
 		        state_text (result), elapsed_time, buffer, elapsed_time);
 	else
-		printf ("SMTP %s - %.3f second response time|time=%.3f\n",
+		printf (_("SMTP %s - %.3f second response time|time=%.3f\n"),
 		        state_text (result), elapsed_time, elapsed_time);
 
 	return result;
@@ -217,7 +176,7 @@ main (int argc, char **argv)
 
 
 
-
+
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -268,16 +227,14 @@ process_arguments (int argc, char **argv)
 				server_address = optarg;
 			}
 			else {
-				usage ("Invalid host name\n");
+				usage (_("Invalid host name\n"));
 			}
 			break;
 		case 'p':									/* port */
-			if (is_intpos (optarg)) {
+			if (is_intpos (optarg))
 				server_port = atoi (optarg);
-			}
-			else {
-				usage ("Server port must be a positive integer\n");
-			}
+			else
+				usage (_("Server port must be a positive integer\n"));
 			break;
 		case 'f':									/* from argument */
 			from_arg = optarg;
@@ -298,7 +255,7 @@ process_arguments (int argc, char **argv)
 				check_critical_time = TRUE;
 			}
 			else {
-				usage ("Critical time must be a nonnegative integer\n");
+				usage (_("Critical time must be a nonnegative integer\n"));
 			}
 			break;
 		case 'w':									/* warning time threshold */
@@ -307,7 +264,7 @@ process_arguments (int argc, char **argv)
 				check_warning_time = TRUE;
 			}
 			else {
-				usage ("Warning time must be a nonnegative integer\n");
+				usage (_("Warning time must be a nonnegative integer\n"));
 			}
 			break;
 		case 'v':									/* verbose */
@@ -318,7 +275,7 @@ process_arguments (int argc, char **argv)
 				socket_timeout = atoi (optarg);
 			}
 			else {
-				usage ("Time interval must be a nonnegative integer\n");
+				usage (_("Time interval must be a nonnegative integer\n"));
 			}
 			break;
 		case '4':
@@ -328,7 +285,7 @@ process_arguments (int argc, char **argv)
 #ifdef USE_IPV6
 			address_family = AF_INET6;
 #else
-			usage ("IPv6 support not available\n");
+			usage (_("IPv6 support not available\n"));
 #endif
 			break;
 		case 'V':									/* version */
@@ -338,7 +295,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* help */
-			usage ("Invalid argument\n");
+			usage (_("Invalid argument\n"));
 		}
 	}
 
@@ -348,7 +305,7 @@ process_arguments (int argc, char **argv)
 			if (is_host (argv[c]))
 				server_address = argv[c];
 			else
-				usage ("Invalid host name");
+				usage (_("Invalid host name"));
 		}
 		else {
 			asprintf (&server_address, "127.0.0.1");
@@ -375,17 +332,53 @@ validate_arguments (void)
 
 
 
+
 void
 print_help (void)
 {
+	char *myport;
+	asprintf (&myport, "%d", SMTP_PORT);
+
 	print_revision (progname, revision);
-	printf ("Copyright (c) %s %s\n\t<%s>\n\n%s\n",
-	         copyright, authors, email, summary);
+
+	printf (_("Copyright (c) 1999-2001 Ethan Galstad <nagios@nagios.org>\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf(_("\
+This plugin will attempt to open an SMTP connection with the host.\n\n"));
+
 	print_usage ();
-	printf ("\nOptions:\n");
-	printf (options, SMTP_PORT, SMTP_EXPECT, mail_command, from_arg,
-	        DEFAULT_SOCKET_TIMEOUT);
-	support ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_HOST_PORT), 'p', myport);
+
+	printf (_(UT_IPv46));
+
+	printf (_("\
+ -e, --expect=STRING\n\
+   String to expect in first line of server response (default: '%s')\n\
+ -n, nocommand\n\
+   Suppress SMTP command\n\
+ -C, --command=STRING\n\
+   SMTP command (default: '%s')\n\
+ -f, --from=STRING\n\
+   FROM-address to include in MAIL command, required by Exchange 2000\n\
+   (default: '%s')\n"), SMTP_EXPECT, mail_command, from_arg);
+
+	printf (_(UT_WARN_CRIT));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(UT_VERBOSE));
+
+	printf(_("\n\
+Successul connects return STATE_OK, refusals and timeouts return\n\
+STATE_CRITICAL, other errors return STATE_UNKNOWN.  Successful\n\
+connects, but incorrect reponse messages from the host result in\n\
+STATE_WARNING return values.\n"));
+
+	printf (_(UT_SUPPORT));
 }
 
 
@@ -395,8 +388,11 @@ print_help (void)
 void
 print_usage (void)
 {
-	printf ("Usage: %s %s\n"
-	        "       %s --help\n"
-	        "       %s --version\n",
-	        progname, option_summary, progname, progname);
+	printf ("\
+Usage: %s -H host [-p port] [-e expect] [-C command] [-f from addr]\n\
+  [-w warn] [-c crit] [-t timeout] [-n] [-v] [-4|-6]\n", progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }
+
+ 
+
