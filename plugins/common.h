@@ -110,6 +110,10 @@
 # endif
 #endif
 
+#ifndef SWAP_CONVERSION
+# define SWAP_CONVERSION 1
+#endif
+
 /*
  *
  * Missing Functions

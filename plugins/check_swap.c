@@ -56,29 +56,37 @@ main (int argc, char **argv)
 	int result = STATE_OK;
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *perf;
+	int conv_factor = SWAP_CONVERSION;
 #ifdef HAVE_PROC_MEMINFO
 	FILE *fp;
 #else
 # ifdef HAVE_SWAP
-	int conv_factor;		/* Convert to MBs */
 	char *temp_buffer;
 	char *swap_command;
 	char *swap_format;
 # else
 #  ifdef HAVE_DECL_SWAPCTL
-	int i=0, nswaps=0;
-	swaptbl_t tbl;
+	int i=0, nswaps=0, swapctl_res=0;
+#   ifdef CHECK_SWAP_SWAPCTL_SVR4
+	swaptbl_t *tbl=NULL;
+	swapent_t *ent=NULL;
+#   else
+#    ifdef CHECK_SWAP_SWAPCTL_BSD
+	struct swapent *ent;
+#    endif /* CHECK_SWAP_SWAPCTL_BSD */
+#   endif /* CHECK_SWAP_SWAPCTL_SVR4 */
 #  endif /* HAVE_DECL_SWAPCTL */
 # endif
 #endif
 	char str[32];
-	char *status;
+	char *status, *tmp_status;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
 	status = strdup ("");
+	tmp_status = strdup ("");
 	perf = strdup ("");
 
 	if (process_arguments (argc, argv) != OK)
@@ -122,7 +130,6 @@ main (int argc, char **argv)
 # ifdef HAVE_SWAP
 	asprintf(&swap_command, "%s", SWAP_COMMAND);
 	asprintf(&swap_format, "%s", SWAP_FORMAT);
-	conv_factor = SWAP_CONVERSION;
 
 /* These override the command used if a summary (and thus ! allswaps) is required */
 /* The summary flag returns more accurate information about swap usage on these OSes */
@@ -132,14 +139,6 @@ main (int argc, char **argv)
 		asprintf(&swap_format, "%s", "%d%*s %d");
 		conv_factor = 1;
 	}
-#  else
-#   ifdef sun
-	if (!allswaps) {
-		asprintf(&swap_command, "%s", "/usr/sbin/swap -s");
-		asprintf(&swap_format, "%s", "%*s %*dk %*s %*s + %*dk %*s = %dk %*s %dk %*s");
-		conv_factor = 2048;
-	}
-#   endif
 #  endif
 
 	if (verbose >= 2)
@@ -183,15 +182,6 @@ main (int argc, char **argv)
 		if (verbose >= 3)
 			printf (_("total=%d, used=%d, free=%d\n"), total_swap, used_swap, free_swap);
 	} else {
-#  else
-#   ifdef sun
-	if (!allswaps) {
-		sscanf (input_buffer, swap_format, &used_swap, &free_swap);
-		used_swap = used_swap / 1024;
-		free_swap = free_swap / 1024;
-		total_swap = used_swap + free_swap;
-	} else {
-#   endif
 #  endif
 		while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
 			sscanf (input_buffer, swap_format, &dsktotal, &dskfree);
@@ -219,10 +209,6 @@ main (int argc, char **argv)
 		}
 #  ifdef _AIX
 	}
-#  else
-#   ifdef sun
-	}
-#   endif
 #  endif
 
 	/* If we get anything on STDERR, at least set warning */
@@ -236,31 +222,38 @@ main (int argc, char **argv)
 	if (spclose (child_process))
 		result = max_state (result, STATE_WARNING);
 # else
-#  ifdef HAVE_DECL_SWAPCTL
-
-	/* initialize swap table entries */
-	memset(&tbl, 0, sizeof(swaptbl_t));
-	tbl.swt_ent[0].ste_path=(char*)malloc(sizeof(char)*(MAXPATHLEN+1));
-	memset(tbl.swt_ent[0].ste_path, 0, sizeof(char)*(MAXPATHLEN+1));
-	tbl.swt_n=1;
+#  ifdef CHECK_SWAP_SWAPCTL_SVR4
 
 	/* get the number of active swap devices */
 	nswaps=swapctl(SC_GETNSWP, NULL);
 
-	/* and now, tally 'em up */
+	/* initialize swap table + entries */
+	tbl=(swaptbl_t*)malloc(sizeof(swaptbl_t)+(sizeof(swapent_t)*nswaps));
+	memset(tbl, 0, sizeof(swaptbl_t)+(sizeof(swapent_t)*nswaps));
+	tbl->swt_n=nswaps;
 	for(i=0;i<nswaps;i++){
-		swapctl(SC_LIST, &tbl);
-		/* on tru64, swap is stored in 8k pages.  i'd
-		   use conv_factor or SWAP_CONVERSION, but they're
-		   both buried under a bunch of ifdef's.  ideally
-		   all functions could call getpagesize(2)...  */
-		dsktotal = tbl.swt_ent[0].ste_pages / 128;
-		dskfree = tbl.swt_ent[0].ste_free / 128;
-		dskused = ( total_swap - free_swap );
+		ent=&tbl->swt_ent[i];
+		ent->ste_path=(char*)malloc(sizeof(char)*MAXPATHLEN);
+	}
+
+	/* and now, tally 'em up */
+	swapctl_res=swapctl(SC_LIST, tbl);
+	if(swapctl_res < 0){
+		perror("swapctl failed: ");
+		result = STATE_WARNING;
+	}
+
+	for(i=0;i<nswaps;i++){
+		dsktotal = tbl->swt_ent[i].ste_pages / SWAP_CONVERSION;
+		dskfree = tbl->swt_ent[i].ste_free /  SWAP_CONVERSION;
+		dskused = ( dsktotal - dskfree );
 
 		if(allswaps && dsktotal > 0){
 			percent = 100 * (((double) dskused) / ((double) dsktotal));
 			result = max_state (result, check_swap (percent, dskfree));
+			if (verbose) {
+				asprintf (&status, "%s [%d (%d%%)]", status, (int)dskfree, 100 - percent);
+			}
 		}
 
 		total_swap += dsktotal;
@@ -269,16 +262,58 @@ main (int argc, char **argv)
 	}
 
 	/* and clean up after ourselves */
-	free(tbl.swt_ent[0].ste_path);
+	for(i=0;i<nswaps;i++){
+		free(tbl->swt_ent[i].ste_path);
+	}
+	free(tbl);
+#  else
+#   ifdef CHECK_SWAP_SWAPCTL_BSD
 
-#  endif /* HAVE_DECL_SWAPCTL */
+	/* get the number of active swap devices */
+	nswaps=swapctl(SWAP_NSWAP, NULL, 0);
+
+	/* initialize swap table + entries */
+	ent=(struct swapent*)malloc(sizeof(struct swapent)*nswaps);
+
+	/* and now, tally 'em up */
+	swapctl_res=swapctl(SWAP_STATS, ent, nswaps);
+	if(swapctl_res < 0){
+		perror("swapctl failed: ");
+		result = STATE_WARNING;
+	}
+
+	for(i=0;i<nswaps;i++){
+		dsktotal = ent->se_nblks / conv_factor;
+		dskused = ent->se_inuse / conv_factor;
+		dskfree = ( dsktotal - dskused );
+
+		if(allswaps && dsktotal > 0){
+			percent = 100 * (((double) dskused) / ((double) dsktotal));
+			result = max_state (result, check_swap (percent, dskfree));
+			if (verbose) {
+				asprintf (&status, "%s [%d (%d%%)]", status, (int)dskfree, 100 - percent);
+			}
+		}
+
+		total_swap += dsktotal;
+		free_swap += dskfree;
+		used_swap += dskused;
+	}
+
+	/* and clean up after ourselves */
+	free(ent);
+
+#   endif /* CHECK_SWAP_SWAPCTL_BSD */
+#  endif /* CHECK_SWAP_SWAPCTL_SVR4 */
 # endif /* HAVE_SWAP */
 #endif /* HAVE_PROC_MEMINFO */
 
 	percent_used = 100 * ((double) used_swap) / ((double) total_swap);
 	result = max_state (result, check_swap (percent_used, free_swap));
-	asprintf (&status, _(" %d%% free (%llu MB out of %llu MB)%s"),
-						(100 - percent_used), free_swap, total_swap, status);
+	/* broken into two steps because of funkiness with builtin asprintf */
+	asprintf (&tmp_status, _(" %d%% free (%llu MB out of %llu MB)"),
+						(100 - percent_used), free_swap, total_swap);
+	asprintf (&status, "%s%s", tmp_status, status);
 
 	asprintf (&perf, "%s", perfdata ("swap", (long) free_swap, "MB",
 		TRUE, (long) max (warn_size/1024, warn_percent/100.0*total_swap),

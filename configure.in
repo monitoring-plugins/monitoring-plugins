@@ -1303,18 +1303,16 @@ then
 		ac_cv_swap_conv=2048
 		AC_MSG_RESULT([using IRIX format swap])
 
-	elif [$PATH_TO_SWAP -l 2>/dev/null | egrep -i "^swapfile +dev +swaplo +blocks +free" >/dev/null]
-	then
-		ac_cv_swap_format=["%*s %*[0-9,-] %*d %d %d"]
-		ac_cv_swap_conv=2048
-		AC_MSG_RESULT([using Solaris format swap])
-
 	elif [$PATH_TO_SWAP -l 2>/dev/null | egrep -i "^path +dev +swaplo +blocks +free" >/dev/null]
 	then
 		ac_cv_swap_format=["%*s %*[0-9,-] %*d %d %d"]
 		ac_cv_swap_conv=2048
 		AC_MSG_RESULT([using Unixware format swap])
-
+	else
+		dnl if we don't know what format swap's output is
+		dnl we might as well pretend we didn't see it
+		ac_cv_have_swap=""
+		ac_cv_swap_command=""
 	fi
 fi
 dnl end if for PATH_TO_SWAP
@@ -1362,46 +1360,83 @@ fi
 dnl end if for PATH_TO_SWAPINFO
 fi
 
-AC_PATH_PROG(PATH_TO_SWAPCTL,swapctl,,[$PATH:/sbin])
-if (test -n "$PATH_TO_SWAPCTL")
-then
-AC_MSG_CHECKING([for $PATH_TO_SWAPCTL format])
-if [$PATH_TO_SWAPCTL -l 2>&1 >/dev/null]
-then
-	ac_cv_have_swap=yes
-	ac_cv_swap_command="$PATH_TO_SWAPCTL -l"
-	if [$PATH_TO_SWAPCTL -l 2>/dev/null | \
-		egrep -i "^Device +1K-blocks +Used +Avail +Capacity +Priority" >/dev/null ]
-	then
-		ac_cv_swap_format=["%*s %llu %*d %llu %*d"]
-		ac_cv_swap_conv=1024
-		AC_MSG_RESULT([using 1K BSD format swapctl])
-
-	elif [$PATH_TO_SWAPCTL -l 2>/dev/null | \
-		egrep -i "^Device +512-blocks +Used +Avail +Capacity +Priority" >/dev/null ]
-	then
-		ac_cv_swap_format=["%*s %llu %*d %llu %*d"]
-		ac_cv_swap_conv=2048
-		AC_MSG_RESULT([using 512 byte BSD format swapctl])
-	fi
-fi
-dnl end if for PATH_TO_SWAPCTL
-fi
-
 dnl
-dnl test for swapctl system call, as found in tru64 and solaris
-dnl note: the way the ifdef logic in check_swap is right now,
-dnl this will only affect systems that don't pass one of the
-dnl earlier tests.
+dnl test for swapctl system call, both the 2-arg and 3-arg variants
+dnl fwict, the 2-arg is an SVR4 standard, whereas the 3-arg is shared
+dnl in the various BSD's
 dnl
+
 AC_CHECK_HEADERS([sys/swap.h sys/stat.h sys/param.h])
 AC_CHECK_DECLS([swapctl],,,[
-	#include <sys/types.h>
-	#include <sys/stat.h>
-	#include <sys/swap.h>
-	])
+               #include <unistd.h>
+               #include <sys/types.h>
+               #include <sys/stat.h>
+               #include <sys/swap.h>
+               ])
+AC_CHECK_TYPES([swaptbl_t, swapent_t],,,[
+               #include <sys/types.h>
+               #include <sys/stat.h>
+               #include <sys/swap.h>
+               ])
+AC_CHECK_MEMBERS([struct swapent.se_nblks],,,[
+               #include <unistd.h>
+               #include <sys/types.h>
+               #include <sys/stat.h>
+               #include <sys/swap.h>
+               ])
+
+if test "$ac_cv_have_decl_swapctl" = "yes"; 
+then
+	EXTRAS="$EXTRAS check_swap"
+	AC_MSG_CHECKING([for 2-arg (SVR4) swapctl])
+	if test "$ac_cv_type_swaptbl_t" = "yes" -a \
+	        "$ac_cv_type_swapent_t" = "yes"; 
+	then
+		AC_MSG_RESULT([yes])
+		ac_cv_check_swap_swapctl_svr4="1";
+		AC_DEFINE([CHECK_SWAP_SWAPCTL_SVR4],1,
+		          [Define if 2-argument SVR4 swapctl exists])
+	else
+		AC_MSG_RESULT([no])
+		AC_MSG_CHECKING([for 3-arg (*BSD) swapctl])
+		if test "$ac_cv_member_struct_swapent_se_nblks" = "yes"; 
+		then
+			AC_MSG_RESULT([yes])
+			AC_DEFINE([CHECK_SWAP_SWAPCTL_BSD],1,
+			          [Define if 3-argument BSD swapctl exists])
+		else
+			AC_MSG_RESULT([no])
+		fi
+	fi
+	AC_MSG_CHECKING([for whether swapctl uses blocks or pages])
+	if test "$ac_cv_check_swap_swapctl_svr4" = "1";
+	then
+		dnl
+		dnl the SVR4 spec returns values in pages
+		dnl
+		AC_MSG_RESULT([page])
+		AC_CHECK_DECLS([sysconf])
+		AC_MSG_CHECKING([for system page size])
+		if test "$ac_cv_have_decl_sysconf" = "yes";
+		then
+			AC_MSG_RESULT([determined by sysconf(3)])
+			ac_cv_swap_conv="(1048576/sysconf(_SC_PAGESIZE))"
+		else
+			AC_MSG_WARN([don't know. guessing 4096k])
+			ac_cv_swap_conv=256
+		fi
+	else
+		dnl
+		dnl the BSD spec returns values in blocks
+		dnl
+		AC_MSG_RESULT([blocks (assuming 512b)])
+		ac_cv_swap_conv=2048
+	fi
+	AC_DEFINE_UNQUOTED(SWAP_CONVERSION,$ac_cv_swap_conv,
+		[Conversion factor to MB])
+fi
 dnl
-dnl end test for swapctl system call
+dnl end tests for the swapctl system calls
 dnl
 
 
