@@ -113,7 +113,7 @@ if test "$ac_cv_lib_crypt_main" = "yes"; then
     fi
     if test -z "$PGINCLUDE"; then
       AC_MSG_WARN([Skipping PostgreSQL plugin (check_pgsql)])
-      AC_MSG_WARN([install PostgreSQL headers to compile this plugin (see Requirements).])
+      AC_MSG_WARN([install PostgreSQL headers to compile this plugin (see REQUIREMENTS).])
     else
       AC_SUBST(PGLIBS)
       AC_SUBST(PGINCLUDE)
@@ -122,11 +122,11 @@ if test "$ac_cv_lib_crypt_main" = "yes"; then
   else
     AC_MSG_WARN([Skipping PostgreSQL plugin (check_pgsql)])
     AC_MSG_WARN([LIBS="$LIBS" CPPFLAGS="$CPPFLAGS"])
-    AC_MSG_WARN([install PostgreSQL libs to compile this plugin (see Requirements).])
+    AC_MSG_WARN([install PostgreSQL libs to compile this plugin (see REQUIREMENTS).])
   fi
 else
   AC_MSG_WARN([Skipping PostgreSQL plugin (check_pgsql)])
-  AC_MSG_WARN([install lib crypt and PostgreSQL libs to compile this plugin (see Requirements).])
+  AC_MSG_WARN([install lib crypt and PostgreSQL libs to compile this plugin (see REQUIREMENTS).])
 fi
 LIBS="$_SAVEDLIBS"
 CPPFLAGS="$_SAVEDCPPFLAGS"
@@ -140,7 +140,7 @@ if test "$ac_cv_lib_radiusclient_rc_read_config" = "yes"; then
   AC_SUBST(RADIUSLIBS)
 else
   AC_MSG_WARN([Skipping radius plugin])
-  AC_MSG_WARN([install radius libs to compile this plugin (see Requirements).])
+  AC_MSG_WARN([install radius libs to compile this plugin (see REQUIREMENTS).])
 fi
 LIBS="$_SAVEDLIBS"
 
@@ -155,7 +155,7 @@ if test "$ac_cv_lib_ldap_main" = "yes"; then
   EXTRAS="$EXTRAS check_ldap"
 else
   AC_MSG_WARN([Skipping LDAP plugin])
-  AC_MSG_WARN([install LDAP libs to compile this plugin (see Requirements).])
+  AC_MSG_WARN([install LDAP libs to compile this plugin (see REQUIREMENTS).])
 fi
 LIBS="$_SAVEDLIBS"
 
@@ -191,11 +191,11 @@ if test "$ac_cv_lib_mysqlclient_mysql_init" = "yes" -o "$ac_cv_lib_mysqlclient_m
     AC_SUBST(check_mysql_LDFLAGS)
   else
     AC_MSG_WARN([Skipping mysql plugin])
-    AC_MSG_WARN([install mysql client headers to compile this plugin (see Requirements).])
+    AC_MSG_WARN([install mysql client headers to compile this plugin (see REQUIREMENTS).])
   fi
 else
   AC_MSG_WARN([Skipping mysql plugin])
-  AC_MSG_WARN([install mysql client libs to compile this plugin (see Requirements).])
+  AC_MSG_WARN([install mysql client libs to compile this plugin (see REQUIREMENTS).])
 fi
 CPPFLAGS="$_SAVEDCPPFLAGS"
 LIBS="$_SAVEDLIBS"
