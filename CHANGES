@@ -14,13 +14,9 @@ This file documents the major additions and syntax changes between releases.
 Caveats, Notes
 
 1 check_icmp may not build or run on all architectures. This plugin should be regarded
-  as volatile (subject to change - see the CVS if in doubt). cd plugins && make plugin' to build.
+  as volatile (subject to change - see the CVS if in doubt). cd plugins && make check_icmp to build.
 
-check_icmp was  recently renamed by the author (A Ericsson) to 'check_rta' and _substantially_ updated
-(see http://oss.op5.se/nagios)
-check_icmp is known to run on *FreeBSD.
-
-2 contrib/check_citrix has been replaced by contrib/check_ica* 
+2 contrib/check_citrix has been replaced by contrib/check_ica* (requires packet_utils.pm in libexec)
 
 
 
