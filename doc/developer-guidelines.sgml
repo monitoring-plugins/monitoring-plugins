@@ -407,12 +407,12 @@
 		<orderedlist>
 			
 			<listitem><para> Do not use BEGIN and END blocks since they will be called 
-			the first time and when Nagios shuts down with Embedded Perl (ePN).  In 
+			only once (when Nagios starts and shuts down) with Embedded Perl (ePN).  In 
 			particular, do not use BEGIN blocks to initialize variables.</para>
 			</listitem>
 	  
 			<listitem><para>To use utils.pm, you need to provide a full path to the
-			module in order for it to work with ePN.</para>
+			module in order for it to work.</para>
 			
 	  <literallayout>
 	  e.g.
@@ -429,16 +429,18 @@
 			variable. </para>
 			
 
-			<para>Explicitly initialize each varialable in use.  Otherwise with
-			caching enabled, the plugin will not be recompilied each time, and
+			<para>Explicitly initialize each variable in use.  Otherwise with
+			caching enabled, the plugin will not be recompiled each time, and
 			therefore Perl will not reinitialize all the variables.  All old
 			variable values will still be in effect.</para>
 	  		</listitem>
 			
-			<listitem><para>Do not use &gt; DATA &lt; (these simply do not compile under ePN).</para>
+			<listitem><para>Do not use &gt;DATA&lt; handles (these simply do not compile under ePN).</para>
 	   		</listitem>
 
-			<listitem><para>Do not use named subroutines</para> 
+			<listitem><para>Do not use global variables in named subroutines. This is bad practise anyway, but with ePN the
+			compiler will report an error "&lt;global_var&gt; will not stay shared ..". Values used by
+			subroutines should be passed in the argument list.</para> 
 			</listitem>
 
 			<listitem><para>If writing to a file (perhaps recording
@@ -449,7 +451,10 @@
 		
 			<listitem><para>As in <xref linkend="runtime"> all plugins need 
 			to monitor their runtime, specially if they are using network
-			resources.  Use of the <emphasis>alarm</emphasis> is recommended.
+			resources.  Use of the <emphasis>alarm</emphasis> is recommended
+			noting that some Perl modules (eg LWP) manage timers, so that an alarm
+			set by a plugin using such a module is overwritten by the module.
+			(workarounds are cunning (TM) or using the module timer)
 			Plugins may import a default time out ($TIMEOUT) from utils.pm.
 			</para>
 			</listitem>
