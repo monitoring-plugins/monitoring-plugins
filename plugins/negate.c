@@ -259,8 +259,8 @@ process_arguments (int argc, char **argv)
 		}
 	}
 
-	command_line = strscpy (command_line, argv[optind]);
-	for (c = optind+1; c <= argc; c++) {
+	asprintf (&command_line, "%s", argv[optind]);
+	for (c = optind+1; c < argc; c++) {
 		asprintf (&command_line, "%s %s", command_line, argv[c]);
 	}
 
