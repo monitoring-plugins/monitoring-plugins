@@ -1,0 +1,14 @@
+This file lists known bugs in this specific release. It lists the major bugs from the Nagios
+Plugins page on Sourceforge at http://sourceforge.net/tracker/?group_id=29880&atid=397597.
+
+For the 1.4 release:
+
+1107524 - check_ping can segfault if DNS lookups exceed timeout
+1108499 - check_ping with -U on Debian fails
+1106849 - check_procs returns WARNING with procps 3.1.15
+1105015 - nagios.spec.in problems
+1094326 - check_ide_smart usage errors
+1090549 - check_dhcp ignores DHCP replies
+1081520 - check_snmp only works for version 1 and 3 of SNMP protocol
+ 990948 - check_disk_smb doesn't allow spaces in share names
+
