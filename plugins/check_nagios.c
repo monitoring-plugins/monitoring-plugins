@@ -54,6 +54,7 @@ main (int argc, char **argv)
 	int procrss = 0;
 	float procpcpu = 0;
 	char procstat[8];
+	char procetime[MAX_INPUT_BUFFER];
 	char procprog[MAX_INPUT_BUFFER];
 	char *procargs;
 	int pos, cols;
