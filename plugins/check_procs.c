@@ -32,6 +32,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 int process_arguments (int, char **);
 int validate_arguments (void);
 int check_thresholds (int);
+int convert_to_seconds (char *); 
 void print_help (void);
 void print_usage (void);
 
@@ -50,14 +51,15 @@ int options = 0; /* bitmask of filter criteria to test against */
 #define VSZ  64
 #define RSS  128
 #define PCPU 256
-
+#define ELAPSED 512
 /* Different metrics */
 char *metric_name;
 enum metric {
 	METRIC_PROCS,
 	METRIC_VSZ,
 	METRIC_RSS,
-	METRIC_CPU
+	METRIC_CPU,
+	METRIC_ELAPSED
 };
 enum metric metric = METRIC_PROCS;
 
@@ -87,8 +89,10 @@ main (int argc, char **argv)
 	int procppid = 0;
 	int procvsz = 0;
 	int procrss = 0;
+	int procseconds = 0;
 	float procpcpu = 0;
 	char procstat[8];
+	char procetime[MAX_INPUT_BUFFER];
 	char *procargs;
 	char *temp_string;
 
@@ -174,10 +178,14 @@ main (int argc, char **argv)
 				temp_string = strtok (NULL, "/");
 			}
 
+			/* we need to convert the elapsed time to seconds */
+			procseconds = convert_to_seconds(procetime);
+
 			if (verbose >= 3)
-				printf ("%d %d %d %d %d %.2f %s %s %s\n", 
+				printf ("%d %d %d %d %d %.2f %s %s %s %s\n", 
 					procs, procuid, procvsz, procrss,
-					procppid, procpcpu, procstat, procprog, procargs);
+					procppid, procpcpu, procstat, 
+					procetime, procprog, procargs);
 
 			/* Ignore self */
 			if (strcmp (procprog, progname) == 0) {
@@ -216,6 +224,8 @@ main (int argc, char **argv)
 			/* TODO? float thresholds for --metric=CPU */
 			else if (metric == METRIC_CPU)
 				i = check_thresholds ((int)procpcpu); 
+			else if (metric == METRIC_ELAPSED)
+				i = check_thresholds (procseconds);
 
 			if (metric != METRIC_PROCS) {
 				if (i == STATE_WARNING) {
@@ -312,6 +322,7 @@ process_arguments (int argc, char **argv)
 		{"vsz", required_argument, 0, 'z'},
 		{"rss", required_argument, 0, 'r'},
 		{"pcpu", required_argument, 0, 'P'},
+		{"elapsed", required_argument, 0, 'e'},
 		{"argument-array", required_argument, 0, 'a'},
 		{"help", no_argument, 0, 'h'},
 		{"version", no_argument, 0, 'V'},
@@ -408,6 +419,7 @@ process_arguments (int argc, char **argv)
 			options |= USER;
 			break;
 		case 'C':									/* command */
+			/* TODO: allow this to be passed in with --metric */
 			if (prog)
 				break;
 			else
@@ -417,6 +429,7 @@ process_arguments (int argc, char **argv)
 			options |= PROG;
 			break;
 		case 'a':									/* args (full path name with args) */
+			/* TODO: allow this to be passed in with --metric */
 			if (args)
 				break;
 			else
@@ -464,7 +477,12 @@ process_arguments (int argc, char **argv)
 				metric = METRIC_CPU;
 				break;
 			}
-			printf (_("%s: metric must be one of PROCS, VSZ, RSS, CPU!\n\n"),
+			else if ( strcmp(optarg, "ELAPSED") == 0) {
+				metric = METRIC_ELAPSED;
+				break;
+			}
+				
+			printf (_("%s: metric must be one of PROCS, VSZ, RSS, CPU, ELAPSED!\n\n"),
 				progname);
 			print_usage ();
 			exit (STATE_UNKNOWN);
@@ -597,11 +615,15 @@ Required Arguments:\n\
 Optional Arguments:\n\
  -m, --metric=TYPE\n\
    Check thresholds against metric. Valid types:\n\
-   PROCS - number of processes (default)\n\
-   VSZ  - virtual memory size\n\
-   RSS  - resident set memory size\n\
-   CPU  - percentage cpu\n"));
-
+   PROCS   - number of processes (default)\n\
+   VSZ     - virtual memory size\n\
+   RSS     - resident set memory size\n\
+   CPU     - percentage cpu\n"));
+/* only linux etime is support currently */
+#if defined( __linux__ )
+	printf(_("\
+   ELAPSED - time elapsed in seconds\n"));
+#endif /* defined(__linux__) */
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
 	printf(_("\
@@ -654,12 +676,74 @@ Examples:\n\
  check_procs -w 50000 -c 100000 --metric=VSZ\n\
    Alert if vsz of any processes over 50K or 100K\n\
  check_procs -w 10 -c 20 --metric=CPU\n\
-   Alert if cpu of any processes over 10% or 20%\n\n"));
+   Alert if cpu of any processes over 10%% or 20%%\n\n"));
 
 	printf (_(UT_SUPPORT));
 }
 
 
+
+/* convert the elapsed time to seconds */
+int
+convert_to_seconds(char *etime) {
+
+	char *ptr;
+	int total;
+
+	int hyphcnt;
+	int coloncnt;
+	int days;
+	int hours;
+	int minutes;
+	int seconds;
+
+	hyphcnt = 0;
+	coloncnt = 0;
+	days = 0;
+	hours = 0;
+	minutes = 0;
+	seconds = 0;
+
+	for (ptr = etime; *ptr != '\0'; ptr++) {
+	
+		if (*ptr == '-') {
+			hyphcnt++;
+			continue;
+		}
+		if (*ptr == ':') {
+			coloncnt++;
+			continue;
+		}
+	}
+
+	if (hyphcnt > 0) {
+		sscanf(etime, "%d-%d:%d:%d",
+				&days, &hours, &minutes, &seconds);
+		/* linux 2.6.5/2.6.6 reporting some processes with infinite
+		 * elapsed times for some reason */
+		if (days == 49710) {
+			return 0;
+		}
+	} else {
+		if (coloncnt == 2) {
+			sscanf(etime, "%d:%d:%d",
+				&hours, &minutes, &seconds);
+		} else if (coloncnt == 1) {
+			sscanf(etime, "%d:%d",
+				&minutes, &seconds);
+		}
+	}
+
+	total = (days * 86400) +
+		(hours * 3600) +
+		(minutes * 60) +
+		seconds;
+
+	if (verbose >= 3) {
+		printf("seconds: %d\n", total);
+	}
+	return total;
+}
 
 void
 print_usage (void)
