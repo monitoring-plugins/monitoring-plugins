@@ -30,7 +30,7 @@
 #include "popen.h"
 #include "utils.h"
 
-#define PROGNAME "check_nagios"
+const char *PROGNAME = "check_nagios";
 
 int process_arguments (int, char **);
 void print_usage (void);
@@ -93,9 +93,9 @@ main (int argc, char **argv)
 		printf ("Could not open stderr for %s\n", PS_RAW_COMMAND);
 	}
 
-	/* cound the number of matching Nagios processes... */
+	/* count the number of matching Nagios processes... */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
-		if (strstr (input_buffer, process_string))
+		if (!strstr(input_buffer, argv[0]) && strstr(input_buffer, process_string))
 			proc_entries++;
 	}
 
@@ -183,14 +183,14 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf ("%s: Unknown argument: %c\n\n", my_basename (argv[0]), optopt);
+			printf ("%s: Unknown argument: %c\n\n", PROGNAME, optopt);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (my_basename (argv[0]), "$Revision$");
+			print_revision (PROGNAME, "$Revision$");
 			exit (STATE_OK);
 		case 'F':									/* hostname */
 			status_log = optarg;
@@ -263,5 +263,5 @@ print_help (void)
 		 "-V, --version\n"
 		 "   Print version information\n\n"
 		 "Example:\n"
-		 "   ./check_nagios -H /usr/local/nagios/var/status.log -e 5 -C /usr/local/nagios/bin/nagios\n");
+		 "   ./check_nagios -F /usr/local/nagios/var/status.log -e 5 -C /usr/local/nagios/bin/nagios\n");
 }
