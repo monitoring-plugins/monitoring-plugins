@@ -511,7 +511,7 @@ then
 	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -axo 'rss comm'",[Verbatim command to execute for ps in check_rss])
 	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s",[Format string for scanning ps output in check_rss])
   echo "      ps syntax... $PATH_TO_PS -axo 'stat comm vsz rss user ppid args'"
-dnl AIX 4.3.3 - needs verification.
+dnl AIX 4.3.3 - needs verification. This works for Tru64 - needs %*[ +] in PS_FORMAT
 elif [ps -ao 'stat comm vsz rss user uid ppid args' 2>/dev/null | egrep -i "^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ +U[ID]+ +P[PID]+ +[RGSCOMDNA]+" >/dev/null]
 then
 	AC_DEFINE(USE_PS_VARS,1,[Define if 'ps' will be parsed with sscanf])
@@ -519,7 +519,7 @@ then
 	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS -ao 'stat user ppid args'",[Verbatim command to execute for ps in check_netsaint])
 	EXTRAS="$EXTRAS check_nagios"
 	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -ao 'stat uid ppid comm args'")
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[Format string for scanning ps output in check_procs])
+	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s%*[ +] %d %d %s %n",[Format string for scanning ps output in check_procs])
 	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -ao 'vsz comm'",[])
 	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[])
 	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -ao 'rss comm'",[])
