@@ -333,10 +333,10 @@ print_help (void)
 void
 print_usage (void)
 {
-	printf (_("\
+	printf ("\
 Usage: %s -H <host> -b <base_dn> [-p <port>] [-a <attr>] [-D <binddn>]\n\
   [-P <password>] [-w <warn_time>] [-c <crit_time>] [-t timeout]%s\n\
-(Note: all times are in seconds.)\n"),
+(Note: all times are in seconds.)\n",
 	        progname,
 #ifdef HAVE_LDAP_SET_OPTION
 			" [-2|-3] [-4|-6]"
@@ -345,5 +345,5 @@ Usage: %s -H <host> -b <base_dn> [-p <port>] [-a <attr>] [-D <binddn>]\n\
 #endif
 			);
 
-	printf (_(UT_HLP_VRS), progname, progname);
+	printf (UT_HLP_VRS, progname, progname);
 }

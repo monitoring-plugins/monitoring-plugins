@@ -363,8 +363,9 @@ the <iwl> or <owl> thresholds (in Bytes/sec), a WARNING status results.\n\n"));
 void
 print_usage (void)
 {
-	printf (_("\
+	printf ("\
 Usage: %s -F <log_file> -a <AVG | MAX> -v <variable> -w <warning_pair> -c <critical_pair>\n\
-  [-e expire_minutes] [-t timeout] [-v]\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
+  [-e expire_minutes] [-t timeout] [-v]\n", progname);
+	
+	printf (UT_HLP_VRS, progname, progname);
 }

@@ -333,10 +333,11 @@ Notes:\n\
 void
 print_usage (void)
 {
-	printf (_("\
+	printf ("\
 Usage: %s <game> <ip_address> [-p port] [-gf game_field] [-mf map_field]\n\
-  [-pf ping_field]\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
+  [-pf ping_field]\n", progname);
+	
+	printf (UT_HLP_VRS, progname, progname);
 }
 
 /******************************************************************************

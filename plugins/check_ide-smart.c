@@ -385,7 +385,7 @@ void
 show_help () 
 {
 	printf (_("\
-Usage: check_ide-smart [DEVICE] [OPTION]\n\
+Usage: %s [DEVICE] [OPTION]\n\
  -d, --device=DEVICE\n\
     Select device DEVICE\n\
  -i, --immediate\n\
@@ -397,9 +397,9 @@ Usage: check_ide-smart [DEVICE] [OPTION]\n\
  -0, --auto-off\n\
     Turn off automatic offline tests\n\
  -n, --net-saint\n\
-    Output suitable for Net Saint\n\
- -h, --help\n\
- -V, --version\n"));
+    Output suitable for Net Saint\n", progname);
+	
+	printf (UT_HLP_VRS, progname, progname);
 }
 
 

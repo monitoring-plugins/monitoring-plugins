@@ -379,8 +379,9 @@ this plugin works well for monitoring that kind of data as well.\n\n"));
 void
 print_usage (void)
 {
-	printf (_("\
+	printf ("\
 Usage: %s -F log_file -a <AVG | MAX> -v variable -w warning -c critical\n\
-  [-l label] [-u units] [-e expire_minutes] [-t timeout] [-v]\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
+  [-l label] [-u units] [-e expire_minutes] [-t timeout] [-v]\n", progname);
+	
+	printf (UT_HLP_VRS, progname, progname);
 }

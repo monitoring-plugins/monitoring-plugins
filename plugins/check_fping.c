@@ -399,6 +399,6 @@ percentage of packet loss to trigger an alarm state.\n"));
 void
 print_usage (void)
 {
-	printf (_("Usage: %s <host_address>\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
+	printf ("Usage: %s <host_address>\n", progname);
+	printf (UT_HLP_VRS, progname, progname);
 }

@@ -425,8 +425,8 @@ specified in /etc/resolv.conf will be used.\n"));
 void
 print_usage (void)
 {
-	printf (_("\
-Usage: %s -H host [-s server] [-a expected-address] [-A] [-t timeout]\n\
-       %s --help\n\
-       %s --version\n"), progname, progname, progname);
+	printf ("\
+Usage: %s -H host [-s server] [-a expected-address] [-A] [-t timeout]\n", progname);
+
+	printf (UT_HLP_VRS, progname, progname);
 }

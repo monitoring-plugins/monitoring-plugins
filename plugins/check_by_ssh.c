@@ -308,7 +308,7 @@ process_arguments (int argc, char **argv)
 		asprintf (&remotecmd, "%s;echo STATUS CODE: $?;", remotecmd);
 
 	if (remotecmd == NULL || strlen (remotecmd) <= 1)
-		usage (_("No remotecmd\n"));
+		usage4 (_("No remotecmd"));
 
 	asprintf (&comm, "%s %s '%s'", comm, hostname, remotecmd);
 
@@ -409,9 +409,10 @@ $ cat /tmp/foo\n\
 void
 print_usage (void)
 {
-	printf (_("\n\
+	printf ("\n\
 Usage: %s [-f46] [-t timeout] [-i identity] [-l user] -H <host> \n\
-  -C <command> [-n name] [-s servicelist] [-O outputfile] [-p port]\n"),
+  -C <command> [-n name] [-s servicelist] [-O outputfile] [-p port]\n",
 	        progname);
+					
 	printf (_(UT_HLP_VRS), progname, progname);
 }

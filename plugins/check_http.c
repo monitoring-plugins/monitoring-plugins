@@ -1497,5 +1497,6 @@ Usage: %s (-H <vhost> | -I <IP-address>) [-u <uri>] [-p <port>]\n\
   [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n\
   [-P string] [-m min_pg_size] [-4|-6] [-N] [-M <age>] [-A string]\n\
   [-k string]\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
+	
+	printf (UT_HLP_VRS, progname, progname);
 }

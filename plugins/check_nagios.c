@@ -302,7 +302,9 @@ Example:\n\
 void
 print_usage (void)
 {
-	printf (_("\
-Usage: %s -F <status log file> -e <expire_minutes> -C <process_string>\n"),
+	printf ("\
+Usage: %s -F <status log file> -e <expire_minutes> -C <process_string>\n",
 	        progname);
+					
+	printf (UT_HLP_VRS, progname, progname);
 }

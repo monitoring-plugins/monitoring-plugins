@@ -319,7 +319,7 @@ the load average format is the same used by \"uptime\" and \"w\"\n\n"));
 void
 print_usage (void)
 {
-	printf (_("Usage: %s -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15\n"),
+	printf ("Usage: %s -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15\n"),
 	        progname);
-	printf (_(UT_HLP_VRS), progname, progname);
+	printf (UT_HLP_VRS, progname, progname);
 }

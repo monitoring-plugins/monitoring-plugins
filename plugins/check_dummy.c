@@ -41,7 +41,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (argc < 2)
-		usage (_("Incorrect number of arguments supplied\n"));
+		usage4 (_("Incorrect number of arguments supplied"));
 	else if (strcmp (argv[1], "-V") == 0 || strcmp (argv[1], "--version") == 0) {
 		print_revision (progname, revision);
 		exit (STATE_OK);
@@ -51,7 +51,7 @@ main (int argc, char **argv)
 		exit (STATE_OK);
 	}
 	else if (!is_integer (argv[1]))
-		usage (_("Arguments to check_dummy must be an integer\n"));
+		usage4 (_("Arguments to check_dummy must be an integer"));
 	else
 		result = atoi (argv[1]);
 
@@ -107,5 +107,5 @@ of the <state> argument with optional text.\n"));
 void
 print_usage (void)
 {
-	printf (_("Usage: %s <integer state> [optional text]\n"), progname);
+	printf ("Usage: %s <integer state> [optional text]\n", progname);
 }

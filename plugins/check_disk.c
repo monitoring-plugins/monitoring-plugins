@@ -322,7 +322,7 @@ process_arguments (int argc, char **argv)
 				break;
 			}
 			else {
-				usage (_("Warning threshold must be integer or percentage!\n"));
+				usage4 (_("Warning threshold must be integer or percentage!"));
 			}
 		case 'c':									/* critical threshold */
 			if (is_intnonneg (optarg)) {
@@ -339,7 +339,7 @@ process_arguments (int argc, char **argv)
 				break;
 			}
 			else {
-				usage (_("Critical threshold must be integer or percentage!\n"));
+				usage4 (_("Critical threshold must be integer or percentage!"));
 			}
 		case 'u':
 			if (units)
@@ -636,10 +636,9 @@ and generates an alert if free space is less than one of the threshold values.")
 void
 print_usage (void)
 {
-	printf (_("\
+	printf ("\
 Usage: %s -w limit -c limit [-p path | -x device] [-t timeout] [-m] [-e]\n\
-        [-v] [-q]\n\
-       %s (-h|--help)\n\
-       %s (-V|--version)\n"),
-	        progname,  progname, progname);
+        [-v] [-q]\n", progname);
+
+	printf (UT_HLP_VRS, progname, progname);
 }

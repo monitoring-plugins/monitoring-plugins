@@ -607,7 +607,7 @@ void preparelist(char *string) {
 
 void print_help(void)
 {
-	print_revision(progname,"$Revision$");
+	print_revision(progname,revision);
 	printf (_("\
 Copyright (c) 2000 Yves Rubin (rubiyz@yahoo.com)\n\n\
 This plugin collects data from the NSClient service running on a\n\
@@ -682,8 +682,9 @@ Windows NT/2000/XP server.\n\n"));
 
 void print_usage(void)
 {
-	printf(_("\
+	printf("\
 Usage: %s -H host -v variable [-p port] [-w warning] [-c critical]\n\
-  [-l params] [-d SHOWALL] [-t timeout]\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
+  [-l params] [-d SHOWALL] [-t timeout]\n", progname);
+	
+	printf (UT_HLP_VRS, progname, progname);
 }

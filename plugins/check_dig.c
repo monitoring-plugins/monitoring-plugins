@@ -353,11 +353,10 @@ print_help (void)
 void
 print_usage (void)
 {
-	printf (_("\
+	printf ("\
 Usage: %s -H host -l lookup [-p <server port>] [-T <query type>]\n\
          [-w <warning interval>] [-c <critical interval>] [-t <timeout>]\n\
-         [-a <expected answer address>] [-v]\n"),
-	        progname);
-	printf ("       %s (-h|--help)\n", progname);
-	printf ("       %s (-V|--version)\n", progname);
+         [-a <expected answer address>] [-v]\n", progname);
+				 
+	printf (UT_HLP_VRS, progname, progname);
 }

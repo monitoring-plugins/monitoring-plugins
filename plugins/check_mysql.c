@@ -308,8 +308,8 @@ a server listening on MySQL standard port %d will be checked\n"), MYSQL_PORT);
 void
 print_usage (void)
 {
-	printf (_("\
-Usage: %s [-d database] [-H host] [-P port] [-u user] [-p password] [-S]\n"),
+	printf ("\
+Usage: %s [-d database] [-H host] [-P port] [-u user] [-p password] [-S]\n",
 	        progname);
-	printf (_(UT_HLP_VRS), progname, progname);
+	printf (UT_HLP_VRS, progname, progname);
 }

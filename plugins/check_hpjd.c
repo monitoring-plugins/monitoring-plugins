@@ -400,5 +400,6 @@ print_usage (void)
 {
 	printf (_("\
 Usage: %s -H host [-C community]\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
+
+	printf (UT_HLP_VRS, progname, progname);
 }
