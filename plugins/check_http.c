@@ -527,7 +527,7 @@ check_http (void)
 	char *page = "";
 	char *auth = NULL;
 	int i = 0;
-	size_t pagesize = 1;
+	size_t pagesize = 0;
 	char *full_page = "";
 	char *buf = NULL;
 	char *pos = "";
