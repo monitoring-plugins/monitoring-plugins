@@ -353,13 +353,7 @@ strip (char *buffer)
 
 /******************************************************************************
  *
- * Copies one string to another
- *
- * Given a pointer destination string, which may or may not already
- * hold some text, and a source string with additional text (possibly
- * NULL or empty), returns a pointer to a a copy of the source
- * string. Uses realloc to free memory held by the dest argument if
- * new storage space is required, and any previously existing data in
+ * Copies one string to another. Any previously existing data in
  * the destination string is lost.
  *
  * Example:
@@ -375,17 +369,9 @@ strscpy (char *dest, const char *src)
 	size_t len;
 
 	if (src == NULL)
-		return dest;
+		return NULL;
 
-	len = strlen (src) + 1;
-	if (dest == NULL)
-		dest = malloc (len);
-	else if (strlen (dest) < len)
-		dest = realloc (dest, len);
-	if (dest == NULL)
-		terminate (STATE_UNKNOWN, "failed realloc in strscpy\n");
-
-	strncpy (dest, src, len);
+	asprintf (&dest, "%s", src);
 
 	return dest;
 }
