@@ -240,7 +240,7 @@ call_getopt (int argc, char **argv)
 		{"fork", no_argument, 0, 'f'},
 		{"timeout", required_argument, 0, 't'},
 		{"host", required_argument, 0, 'H'},
-		{"port", required_argument,0,'P'},
+		{"port", required_argument,0,'p'},
 		{"output", required_argument, 0, 'O'},
 		{"name", required_argument, 0, 'n'},
 		{"services", required_argument, 0, 's'},
@@ -248,6 +248,8 @@ call_getopt (int argc, char **argv)
 		{"user", required_argument, 0, 'u'},
 		{"logname", required_argument, 0, 'l'},
 		{"command", required_argument, 0, 'C'},
+		{"use-ipv4", no_argument, 0, '4'},
+		{"use-ipv6", no_argument, 0, '6'},
 		{0, 0, 0, 0}
 	};
 #endif
@@ -255,10 +257,10 @@ call_getopt (int argc, char **argv)
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
-			getopt_long (argc, argv, "+?Vvhft:H:O:P:p:i:u:l:C:n:s:", long_options,
+			getopt_long (argc, argv, "+?Vvhft46:H:O:p:i:u:l:C:n:s:", long_options,
 									 &option_index);
 #else
-		c = getopt (argc, argv, "+?Vvhft:H:O:P:p:i:u:l:C:n:s:");
+		c = getopt (argc, argv, "+?Vvhft46:H:O:p:i:u:l:C:n:s:");
 #endif
 
 		if (c == -1 || c == EOF)
@@ -304,7 +306,6 @@ call_getopt (int argc, char **argv)
 				usage2 ("invalid host name", optarg);
 			hostname = optarg;
 			break;
-		case 'P': /* port number */
 		case 'p': /* port number */
 			if (!is_integer (optarg))
 				usage2 ("port must be an integer", optarg);
@@ -325,6 +326,12 @@ call_getopt (int argc, char **argv)
 		case 'l':									/* login name */
 		case 'i':									/* identity */
 			comm = ssprintf (comm, "%s -%c %s", comm, c, optarg);
+			break;
+		case '4':									/* IPv4 */
+			comm = ssprintf (comm, "%s -4", comm);
+			break;
+		case '6': 									/* IPv6 */
+			comm = ssprintf (comm, "%s -4", comm);
 			break;
 		case 'C':									/* Command for remote machine */
 			commands++;
@@ -372,7 +379,9 @@ print_help (char *cmd)
 		 "-f tells ssh to fork rather than create a tty\n"
 		 "-t, --timeout=INTEGER\n"
 		 "   specify timeout (default: %d seconds) [optional]\n"
-		 "-l, --logname=USERNAME\n"
+		 "-p, --port=PORT\n"
+ 		 "   port to connect to on remote system [optional]\n"
+         "-l, --logname=USERNAME\n"
 		 "   SSH user name on remote host [optional]\n"
 		 "-i, --identity=KEYFILE\n"
 		 "   identity of an authorized key [optional]\n"
@@ -382,6 +391,10 @@ print_help (char *cmd)
 		 "   list of nagios service names, separated by ':' [optional]\n"
 		 "-n, --name=NAME\n"
 		 "   short name of host in nagios configuration [optional]\n"
+		 "-4, --use-ipv4\n"
+		 "   tell ssh to use IPv4\n"
+		 "-6, --use-ipv6\n"
+		 "   tell ssh to use IPv6\n"
 		 "\n"
 		 "The most common mode of use is to refer to a local identity file with\n"
 		 "the '-i' option. In this mode, the identity pair should have a null\n"
@@ -405,8 +418,8 @@ print_usage (void)
 {
 	printf
 		("Usage:\n"
-		 "check_by_ssh [-f] [-t timeout] [-i identity] [-l user] -H <host> <command>\n"
-		 "             [-n name] [-s servicelist] [-O outputfile] [-P port]\n"
+		 "check_by_ssh [-f46] [-t timeout] [-i identity] [-l user] -H <host> -C <command>\n"
+		 "             [-n name] [-s servicelist] [-O outputfile] [-p port]\n"
 		 "check_by_ssh  -V prints version info\n"
 		 "check_by_ssh  -h prints more detailed help\n");
 }
