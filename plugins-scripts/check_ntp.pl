@@ -232,7 +232,7 @@ if ( $? && !$ignoreret ) {
 #           or 'o' which implies pps.peer
 #           If both exist, the last one is picked. 
 # Field 2: address of the remote peer
-# Field 3: Refid of the clock (0.0.0.0 if unknown, WWWV/PPS/GPS if Stratum1)
+# Field 3: Refid of the clock (0.0.0.0 if unknown, WWWV/PPS/GPS/ACTS/USNO/PCS/... if Stratum1)
 # Field 4: stratum (0-15)
 # Field 5: Type of the peer: local (l), unicast (u), multicast (m) 
 #          broadcast (b); not sure about multicast/broadcast
@@ -260,7 +260,7 @@ if ($have_ntpq) {
 			}
 
 			# match sys.peer or pps.peer
-			if (/^(\*|o)([-0-9.\s]+)\s+([-0-9WwVvGgPpSs.]+)\s+([-0-9.]+)\s+([lumb]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)/) {
+			if (/^(\*|o)([-0-9.\s]+)\s+([-0-9A-Za-z.]+)\s+([-0-9.]+)\s+([lumb]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)/) {
 				$syspeer = $2;
 				$stratum = $4;
 				$jitter = $11;
