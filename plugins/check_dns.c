@@ -139,12 +139,16 @@ main (int argc, char **argv)
 				/* Strip leading spaces */
 				for (; *temp_buffer != '\0' && *temp_buffer == ' '; temp_buffer++)
 					/* NOOP */;
-				address = strscpy (address, temp_buffer);
+				address = strdup (temp_buffer);
 				strip (address);
+				if (address==NULL || strlen(address)==0)
+					terminate (STATE_CRITICAL,
+					           "DNS CRITICAL - '%s' returned empty host name string\n",
+					           NSLOOKUP_COMMAND);
 				result = STATE_OK;
 			}
 			else {
-				output = strscpy (output, "Unknown error (plugin)");
+				output = strdup ("Unknown error (plugin)");
 				result = STATE_WARNING;
 			}
 
@@ -179,11 +183,18 @@ main (int argc, char **argv)
 			output = strscpy (output, "nslookup returned error status");
 	}
 
+	/* If we got here, we should have an address string, 
+	   and we can segfault if we do not */
+	if (address==NULL || strlen(address)==0)
+		terminate (STATE_CRITICAL,
+		           "DNS CRITICAL - '%s' output parsing exited with no address\n",
+		           NSLOOKUP_COMMAND);
+
 	/* compare to expected address */
 	if (result == STATE_OK && match_expected_address && strcmp(address, expected_address)) {
-	        result = STATE_CRITICAL;
-	        asprintf(&output, "expected %s but got %s", expected_address, address);
-		}
+		result = STATE_CRITICAL;
+		asprintf(&output, "expected %s but got %s", expected_address, address);
+	}
 	
 	elapsed_time = delta_time (tv);
 
