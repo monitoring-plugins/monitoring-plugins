@@ -18,7 +18,7 @@ if ($pwd =~ '\/usr\/local') {
 die  "Wrong location, please cd to <PKGBASE>/usr/local/ and run again.\n"
         if ($pwd eq "");
 
-open (PREPROTO,"$find . -print |$pkgproto |") ||
+open (PREPROTO,"$find . -print |$egrep -v \"^.(/usr(/local)|/opt)?\$\" | $pkgproto |") ||
 	die "Unable to read prototype information ($!)\n";
 open (PROTO,">$prototype") ||
 	die "Unable to write file prototype ($!)\n";

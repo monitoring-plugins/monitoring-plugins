@@ -18,19 +18,17 @@ nagios-plugins.spec: nagios-plugins.spec.in
 	sed "s/%%{VER}/${VER}/;s/%%{REL}/${REL}/;" $? > $@
 
 # Solaris pkgmk
-BUILDDIR := $(shell pwd)/build-solaris
-PACKDIR := $(shell pwd)/build-pkg
-PKGSCRIPT := $(shell pwd)/pkg/solaris/solpkg
-PKGPFX := $(shell echo ${prefix} |sed -e 's@^/usr/local@@')
-VERSION=@PACKAGE_VERSION@
+BUILDDIR = build-solaris
+PACKDIR = build-pkg
+PKGSCRIPT = pkg/solaris/solpkg
 
 solpkg:
 	if [ ! -d $(BUILDDIR) ] ; then mkdir $(BUILDDIR); fi
 	if [ ! -d $(PACKDIR) ] ; then mkdir $(PACKDIR); fi
 	$(MAKE) all
-	$(MAKE) DESTDIR=$(BUILDDIR) prefix=$(PKGPFX) install
+	$(MAKE) DESTDIR=$$PWD/$(BUILDDIR) install
 	$(INSTALL) pkg/solaris/pkginfo $(BUILDDIR)
-	cd $(BUILDDIR) && $(PERL) $(PKGSCRIPT) $(PACKDIR)
+	cd $(BUILDDIR) && $(PERL) ../$(PKGSCRIPT) ../$(PACKDIR)
 
 pkgclean:
 	rm -rf $(BUILDDIR) $(PACKDIR)

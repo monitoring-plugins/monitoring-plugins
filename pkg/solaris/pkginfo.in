@@ -7,6 +7,6 @@ CATEGORY="application"
 VENDOR="Nagios Plugin Development Team"
 EMAIL="nagiosplug-devel@lists.sourceforge.net"
 PSTAMP="nag@REV_TIMESTAMP@"
-BASEDIR="/usr/local"
+BASEDIR="/"
 CLASSES="none"
 
