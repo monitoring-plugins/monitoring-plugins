@@ -55,9 +55,8 @@ $wc =~ s/domains//g;
 $x = rand $wc;
 ($z,$y) = split(/\./,$x);
 
-print `$check $data[$z] $host`;
-
-
+system($check, $data[$z], $host);
+exit ($? / 256);
 
 sub usage
 {
