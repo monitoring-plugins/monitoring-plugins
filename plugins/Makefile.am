@@ -36,10 +36,10 @@ AM_INSTALL_PROGRAM_FLAGS = @INSTALL_OPTS@
 ##############################################################################
 # the actual targets
 
-#check_ftp_SOURCES = check_tcp.c
-#check_imap_SOURCES = check_tcp.c
-#check_nntp_SOURCES = check_tcp.c
-#check_pop_SOURCES = check_tcp.c
+check_ftp_SOURCES = check_tcp.c
+check_imap_SOURCES = check_tcp.c
+check_nntp_SOURCES = check_tcp.c
+check_pop_SOURCES = check_tcp.c
 
 check_dig_LDADD = $(BASEOBJS) popen.o
 check_disk_LDADD = $(BASEOBJS) popen.o
