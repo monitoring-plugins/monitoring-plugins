@@ -103,7 +103,7 @@ int main(int argc, char **argv){
 	unsigned long utilization;
 	unsigned long uptime;
 	unsigned long age_in_minutes;
-	double counter_value;
+	double counter_value = 0.0;
 	int offset=0;
 	int updays=0;
 	int uphours=0;
@@ -609,7 +609,7 @@ void print_help(void)
 {
 	print_revision(progname,revision);
 	
-	printf (_("Copyright (c) 2000 Yves Rubin (rubiyz@yahoo.com)\n"));
+	printf ("Copyright (c) 2000 Yves Rubin (rubiyz@yahoo.com)\n");
 	printf (COPYRIGHT, copyright, email);
 	
 	printf (_("This plugin collects data from the NSClient service running on a\n\

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-12-04 13:22+0100\n"
+"POT-Creation-Date: 2004-12-05 02:57+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -67,7 +67,7 @@ msgstr ""
 #: plugins/check_overcr.c:335 plugins/check_pgsql.c:212
 #: plugins/check_ping.c:197 plugins/check_procs.c:346
 #: plugins/check_radius.c:221 plugins/check_real.c:354
-#: plugins/check_smtp.c:373 plugins/check_snmp.c:401 plugins/check_ssh.c:113
+#: plugins/check_smtp.c:374 plugins/check_snmp.c:401 plugins/check_ssh.c:113
 #: plugins/check_swap.c:423 plugins/check_tcp.c:458 plugins/check_time.c:219
 #: plugins/check_udp.c:149 plugins/check_ups.c:484 plugins/check_users.c:143
 #: plugins/check_ide_smart.c:209 plugins/negate.c:177 plugins/urlize.c:74
@@ -87,12 +87,13 @@ msgid "Timeout interval must be a positive integer"
 msgstr ""
 
 #: plugins/check_by_ssh.c:236 plugins/check_by_ssh.c:295
-#: plugins/check_dig.c:231 plugins/check_dig.c:288 plugins/check_dns.c:338
-#: plugins/check_fping.c:259 plugins/check_hpjd.c:324 plugins/check_hpjd.c:349
-#: plugins/check_mysql.c:190 plugins/check_mysql.c:230
-#: plugins/check_pgsql.c:241 plugins/check_ping.c:270 plugins/check_ping.c:393
+#: plugins/check_dig.c:231 plugins/check_dig.c:288 plugins/check_dns.c:327
+#: plugins/check_dns.c:336 plugins/check_fping.c:259 plugins/check_hpjd.c:324
+#: plugins/check_hpjd.c:349 plugins/check_mysql.c:190
+#: plugins/check_mysql.c:230 plugins/check_pgsql.c:241
+#: plugins/check_ping.c:270 plugins/check_ping.c:393
 #: plugins/check_radius.c:235 plugins/check_real.c:302
-#: plugins/check_real.c:366 plugins/check_smtp.c:291 plugins/check_smtp.c:385
+#: plugins/check_real.c:366 plugins/check_smtp.c:292 plugins/check_smtp.c:386
 #: plugins/check_ssh.c:146 plugins/check_time.c:230 plugins/check_time.c:305
 #: plugins/check_udp.c:163 plugins/check_udp.c:204 plugins/check_ups.c:492
 #: plugins/check_ups.c:561
@@ -102,7 +103,7 @@ msgstr ""
 #: plugins/check_by_ssh.c:241 plugins/check_dig.c:239
 #: plugins/check_pgsql.c:247 plugins/check_radius.c:207
 #: plugins/check_radius.c:243 plugins/check_real.c:315
-#: plugins/check_smtp.c:298 plugins/check_tcp.c:518 plugins/check_time.c:286
+#: plugins/check_smtp.c:299 plugins/check_tcp.c:518 plugins/check_time.c:286
 #: plugins/check_udp.c:188
 msgid "Port must be a positive integer"
 msgstr ""
@@ -131,12 +132,6 @@ msgstr ""
 msgid ""
 "%s: In passive mode, you must provide the host short name from the nagios "
 "configs.\n"
-msgstr ""
-
-#: plugins/check_by_ssh.c:341
-#, c-format
-msgid ""
-"Copyright (c) 1999 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n"
 msgstr ""
 
 #: plugins/check_by_ssh.c:344
@@ -466,27 +461,20 @@ msgstr ""
 msgid "DNS failure for %s\n"
 msgstr ""
 
-#: plugins/check_dns.c:320 plugins/check_dns.c:332 plugins/check_dns.c:341
-#: plugins/check_dns.c:346 plugins/check_dns.c:359 plugins/check_dns.c:370
+#: plugins/check_dns.c:320 plugins/check_dns.c:330 plugins/check_dns.c:339
+#: plugins/check_dns.c:344 plugins/check_dns.c:357 plugins/check_dns.c:368
 #: plugins/check_game.c:219 plugins/check_game.c:227
 msgid "Input buffer overflow\n"
 msgstr ""
 
-#: plugins/check_dns.c:327
-#, c-format
-msgid ""
-"Invalid hostname/address\n"
-"\n"
-msgstr ""
-
-#: plugins/check_dns.c:366
+#: plugins/check_dns.c:364
 #, c-format
 msgid ""
 "Invalid hostname/address: %s\n"
 "\n"
 msgstr ""
 
-#: plugins/check_dns.c:398
+#: plugins/check_dns.c:396
 #, c-format
 msgid ""
 "This plugin uses the nslookup program to obtain the IP address\n"
@@ -496,7 +484,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: plugins/check_dns.c:408
+#: plugins/check_dns.c:406
 #, c-format
 msgid ""
 "-H, --hostname=HOST\n"
@@ -770,7 +758,7 @@ msgstr ""
 msgid "Could Not Compile Regular Expression: %s"
 msgstr ""
 
-#: plugins/check_http.c:406 plugins/check_smtp.c:363 plugins/check_tcp.c:477
+#: plugins/check_http.c:406 plugins/check_smtp.c:364 plugins/check_tcp.c:477
 msgid "IPv6 support not available"
 msgstr ""
 
@@ -1671,11 +1659,6 @@ msgstr ""
 msgid "None"
 msgstr ""
 
-#: plugins/check_nt.c:612
-#, c-format
-msgid "Copyright (c) 2000 Yves Rubin (rubiyz@yahoo.com)\n"
-msgstr ""
-
 #: plugins/check_nt.c:615
 #, c-format
 msgid ""
@@ -1980,7 +1963,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: plugins/check_nwstat.c:921
+#: plugins/check_nwstat.c:920
 #, c-format
 msgid ""
 " -v, --variable=STRING\n"
@@ -1993,7 +1976,7 @@ msgid ""
 "      UPTIME    = server uptime\n"
 msgstr ""
 
-#: plugins/check_nwstat.c:931
+#: plugins/check_nwstat.c:930
 #, c-format
 msgid ""
 "      LTCH      = percent long term cache hits\n"
@@ -2003,7 +1986,7 @@ msgid ""
 "      TCB       = dirty cache buffers as a percentage of the original\n"
 msgstr ""
 
-#: plugins/check_nwstat.c:938
+#: plugins/check_nwstat.c:937
 #, c-format
 msgid ""
 "      OFILES    = number of open files\n"
@@ -2015,7 +1998,7 @@ msgid ""
 "      VKNP<vol> = KB of not yet purgeable space on volume <vol>\n"
 msgstr ""
 
-#: plugins/check_nwstat.c:947
+#: plugins/check_nwstat.c:946
 #, c-format
 msgid ""
 "      LRUM      = LRU sitting time in minutes\n"
@@ -2028,7 +2011,7 @@ msgid ""
 "      SAPENTRIES<n> = number of entries in the SAP table for SAP type <n>\n"
 msgstr ""
 
-#: plugins/check_nwstat.c:957
+#: plugins/check_nwstat.c:956
 #, c-format
 msgid ""
 "      TSYNC     = timesync status \n"
@@ -2038,7 +2021,7 @@ msgid ""
 "                  (e.g. \"NLM:TSANDS.NLM\")\n"
 msgstr ""
 
-#: plugins/check_nwstat.c:964
+#: plugins/check_nwstat.c:963
 #, c-format
 msgid ""
 " -w, --warning=INTEGER\n"
@@ -2049,7 +2032,7 @@ msgid ""
 "    Include server version string in results\n"
 msgstr ""
 
-#: plugins/check_nwstat.c:974
+#: plugins/check_nwstat.c:973
 #, c-format
 msgid ""
 "\n"
@@ -2300,18 +2283,23 @@ msgstr ""
 msgid "CRITICAL - Host not found (%s)"
 msgstr ""
 
-#: plugins/check_ping.c:478
+#: plugins/check_ping.c:473
+#, c-format
+msgid "CRITICAL - Time to live exceeded (%s)"
+msgstr ""
+
+#: plugins/check_ping.c:480
 msgid "Unable to realloc warn_text"
 msgstr ""
 
-#: plugins/check_ping.c:495
+#: plugins/check_ping.c:497
 #, c-format
 msgid ""
 "Use ping to check connection statistics for a remote host.\n"
 "\n"
 msgstr ""
 
-#: plugins/check_ping.c:503
+#: plugins/check_ping.c:505
 #, c-format
 msgid ""
 "-H, --hostname=HOST\n"
@@ -2326,7 +2314,7 @@ msgid ""
 "   show HTML in the plugin output (obsoleted by urlize)\n"
 msgstr ""
 
-#: plugins/check_ping.c:518
+#: plugins/check_ping.c:520
 #, c-format
 msgid ""
 "THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel\n"
@@ -2335,7 +2323,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: plugins/check_ping.c:523
+#: plugins/check_ping.c:525
 #, c-format
 msgid ""
 "This plugin uses the ping command to probe the specified host for packet "
@@ -2726,7 +2714,7 @@ msgstr ""
 msgid "REAL %s - %d second response time\n"
 msgstr ""
 
-#: plugins/check_real.c:324 plugins/check_smtp.c:342
+#: plugins/check_real.c:324 plugins/check_smtp.c:343
 msgid "Warning time must be a positive integer"
 msgstr ""
 
@@ -2798,32 +2786,32 @@ msgstr ""
 msgid "Execute Error: %s\n"
 msgstr ""
 
-#: plugins/check_smtp.c:227
+#: plugins/check_smtp.c:228
 #, c-format
 msgid "SMTP %s - %.3f sec. response time%s%s|%s\n"
 msgstr ""
 
-#: plugins/check_smtp.c:312 plugins/check_smtp.c:322 plugins/check_snmp.c:566
+#: plugins/check_smtp.c:313 plugins/check_smtp.c:323 plugins/check_snmp.c:566
 #, c-format
 msgid "Could not realloc() units [%d]\n"
 msgstr ""
 
-#: plugins/check_smtp.c:333
+#: plugins/check_smtp.c:334
 msgid "Critical time must be a positive integer"
 msgstr ""
 
-#: plugins/check_smtp.c:353
+#: plugins/check_smtp.c:354
 msgid "Time interval must be a positive integer"
 msgstr ""
 
-#: plugins/check_smtp.c:425
+#: plugins/check_smtp.c:426
 #, c-format
 msgid ""
 "This plugin will attempt to open an SMTP connection with the host.\n"
 "\n"
 msgstr ""
 
-#: plugins/check_smtp.c:435
+#: plugins/check_smtp.c:436
 #, c-format
 msgid ""
 " -e, --expect=STRING\n"
@@ -2838,7 +2826,7 @@ msgid ""
 "   FROM-address to include in MAIL command, required by Exchange 2000\n"
 msgstr ""
 
-#: plugins/check_smtp.c:454
+#: plugins/check_smtp.c:455
 #, c-format
 msgid ""
 "\n"
