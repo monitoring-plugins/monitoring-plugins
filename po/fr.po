@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-11-28 21:55+0100\n"
-"PO-Revision-Date: 2004-11-30 01:20+0100\n"
+"PO-Revision-Date: 2004-11-30 08:36+0100\n"
 "Last-Translator: Benoit Mortier <benoit.mortier@opensides.be>\n"
 "Language-Team: Français <fr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -373,14 +373,13 @@ msgstr ""
 
 #: plugins/check_disk.c:578
 #, c-format
-#, fuzzy
 msgid ""
 "This plugin checks the amount of used disk space on a mounted file system\n"
 "and generates an alert if free space is less than one of the threshold "
 "values."
 msgstr ""
-"Ce plugin vérifie le montant de place utilisé sur un système de fichier monté\n"
-"et génère une alerte si la place disponible est plus petite que une des valeurs fournies."
+"Ce plugin vérifie la place utilisé sur un système de fichier monté\n"
+"et génère une alerte si la place disponible est plus petite q'une des valeurs fournies."
 
 #: plugins/check_disk.c:586
 #, c-format
@@ -559,7 +558,6 @@ msgstr "Le réseau est injoignable\n"
 
 #: plugins/check_dns.c:253
 #, c-format
-#, fuzzy
 msgid "DNS failure for %s\n"
 msgstr "Echec DNS pour %s\n"
 
@@ -577,7 +575,6 @@ msgstr ""
 #: plugins/check_dns.c:316 plugins/check_dns.c:328 plugins/check_dns.c:337
 #: plugins/check_dns.c:342 plugins/check_dns.c:355 plugins/check_dns.c:366
 #: plugins/check_game.c:227 plugins/check_game.c:235
-#, fuzzy
 msgid "Input buffer overflow\n"
 msgstr "Le tampon d'entrée a débordé\n"
 
@@ -1135,7 +1132,6 @@ msgstr "INCONNU - Impossible de trouver l'endroit de la relocation - %s%s\n"
 
 #: plugins/check_http.c:1117
 #, c-format
-#, fuzzy
 msgid "UNKNOWN - Could not parse redirect location - %s%s\n"
 msgstr "INCONNU - Impossible de définir l'endroit de la relocation - %s%s\n"
 
@@ -1927,7 +1923,7 @@ msgstr "Impossible de trouver un processus Nagios actif!\n"
 #: plugins/check_nagios.c:170
 #, c-format
 msgid "Nagios %s: located %d process%s, status log updated %d second%s ago\n"
-msgstr ""
+msgstr "Nagios %s: à trouvé %d processus%s, status log mis à jour %d secondes%s auparavant\n"
 
 #: plugins/check_nagios.c:209 plugins/check_nagios.c:243
 #, c-format
@@ -1935,6 +1931,8 @@ msgid ""
 "Expiration time must be an integer (seconds)\n"
 "Type '%s -h' for additional help\n"
 msgstr ""
+"Le délai d'expiration doit être un entier (en secondes)\n"
+"Tapez '%s -h' pour de l'aide additionelle\n"
 
 #: plugins/check_nagios.c:223
 #, c-format
@@ -1951,6 +1949,8 @@ msgid ""
 "You must provide the status_log\n"
 "Type '%s -h' for additional help\n"
 msgstr ""
+"You must provide the status_log\n"
+"Type '%s -h' for additional help\n"
 
 #: plugins/check_nagios.c:259
 #, c-format
@@ -2021,12 +2021,12 @@ msgstr "Charge CPU"
 #: plugins/check_nt.c:167
 #, c-format
 msgid " %lu%% (%lu min average)"
-msgstr ""
+msgstr " %lu%% (%lu moyenne minimale)"
 
 #: plugins/check_nt.c:169
 #, c-format
 msgid " '%lu min avg Load'=%lu%%;%lu;%lu;0;100"
-msgstr ""
+msgstr " '%lu Charge moyenne minimale'=%lu%%;%lu;%lu;0;100"
 
 #: plugins/check_nt.c:179
 msgid "not enough values for -l parameters"
@@ -2281,12 +2281,12 @@ msgstr ""
 #: plugins/check_nwstat.c:495 plugins/check_nwstat.c:516
 #, c-format
 msgid "Error: Volume '%s' does not exist!"
-msgstr ""
+msgstr "ERREUR: Le volume '%s' n'existe pas !"
 
 #: plugins/check_nwstat.c:306
 #, c-format
 msgid "%s%lu KB free on volume %s"
-msgstr ""
+msgstr "%s%lu KB libre sur le volume %s"
 
 #: plugins/check_nwstat.c:307 plugins/check_nwstat.c:450
 #: plugins/check_nwstat.c:503
@@ -2306,7 +2306,7 @@ msgstr "La base de données Directory Services est %s (DS version %s)"
 #: plugins/check_nwstat.c:375
 #, c-format
 msgid "Logins are %s"
-msgstr ""
+msgstr "Les logins sont %s"
 
 #: plugins/check_nwstat.c:375
 msgid "enabled"
@@ -2324,12 +2324,12 @@ msgstr ""
 #: plugins/check_nwstat.c:429
 #, c-format
 msgid "%lu entries in SAP table"
-msgstr ""
+msgstr "%lu entrées dans la table SAP"
 
 #: plugins/check_nwstat.c:431
 #, c-format
 msgid "%lu entries in SAP table for SAP type %d"
-msgstr ""
+msgstr "%lu entrées dans la table SAP pour le type SAP %d"
 
 #: plugins/check_nwstat.c:450
 #, c-format
@@ -2354,7 +2354,7 @@ msgstr ""
 #: plugins/check_nwstat.c:554
 #, c-format
 msgid "%lu open files"
-msgstr ""
+msgstr "%lu fichiers ouverts"
 
 #: plugins/check_nwstat.c:571
 #, c-format
@@ -2367,12 +2367,13 @@ msgid "%lu current service processes (%lu max)"
 msgstr ""
 
 #: plugins/check_nwstat.c:612
+#, fuzzy
 msgid "Critical: Time not in sync with network!"
-msgstr ""
+msgstr "CRTITIQUE: Le temps n'est pas synchronisé avec le réseau!"
 
 #: plugins/check_nwstat.c:615
 msgid "OK! Time in sync with network!"
-msgstr ""
+msgstr "OK! Le temps est synchronisé avec le réseau!"
 
 #: plugins/check_nwstat.c:631
 #, c-format
@@ -2420,6 +2421,9 @@ msgid ""
 "on a Novell server to gather the requested system information.\n"
 "\n"
 msgstr ""
+"Usage: %s Ce plugin essaye de contacter le NLM MRTGEXT qui s'execute sur\n"
+"un serveur Novell pour récupèrer l'information système demandée.\n"
+"\n"
 
 #: plugins/check_nwstat.c:923
 #, c-format
@@ -2512,11 +2516,12 @@ msgstr ""
 
 #: plugins/check_overcr.c:108
 msgid "Unknown error fetching load data\n"
-msgstr ""
+msgstr "Erreur inconnue lors de la récupération des données de charge\n"
 
 #: plugins/check_overcr.c:112
+#, fuzzy
 msgid "Invalid response from server - no load information\n"
-msgstr ""
+msgstr "Réponse invalide du serveur - pas d'information de charge système\n"
 
 #: plugins/check_overcr.c:118
 msgid "Invalid response from server after load 1\n"
@@ -2538,11 +2543,11 @@ msgstr ""
 #: plugins/check_overcr.c:169 plugins/check_overcr.c:221
 #: plugins/check_overcr.c:225
 msgid "Invalid response from server\n"
-msgstr ""
+msgstr "Réponse invalide reçue du serveur\n"
 
 #: plugins/check_overcr.c:196
 msgid "Unknown error fetching network status\n"
-msgstr ""
+msgstr "Erreur inconnue lors de la réception de l'état du réseau\n"
 
 #: plugins/check_overcr.c:206
 #, c-format
@@ -2577,6 +2582,8 @@ msgid ""
 "remote UNIX server in order to gather the requested system information.\n"
 "\n"
 msgstr ""
+"Ce plugin essaye de joindre le service Over CR tournant sur le serveur UNIX\n"
+"distant afin de récupèrer les informations système demandées.\n"
 
 #: plugins/check_overcr.c:436
 #, c-format
@@ -2619,16 +2626,21 @@ msgid ""
 "   0.99.53 of the Over-CR collector)\n"
 "\n"
 msgstr ""
+" - Ce plugin nécessite le service Over CR de Eric Molitors sur le serveur\n"
+"   distant. Over CR peut être téléchargé depuis \n"
+"   http://www.molitor.org/overcr (Ce plugin à été testé avec la version\n"
+"   0.99.53 du service Over CR)\n"
+"\n"
 
 #: plugins/check_pgsql.c:154
 #, c-format
 msgid "PGSQL: CRITICAL - no connection to '%s' (%s).\n"
-msgstr ""
+msgstr "PGSQL: CRITIQUE - pas de connection à '%s' (%s).\n"
 
 #: plugins/check_pgsql.c:169
 #, c-format
 msgid "PGSQL: %s - database %s (%d sec.)|%s\n"
-msgstr ""
+msgstr "PGSQL: %s - base de données %s (%d sec.)|%s\n"
 
 #: plugins/check_pgsql.c:225 plugins/check_pgsql.c:231
 msgid "Invalid critical threshold"
@@ -2640,11 +2652,11 @@ msgstr ""
 
 #: plugins/check_pgsql.c:249
 msgid "Database name is not valid"
-msgstr ""
+msgstr "Le nom de la base de données est invalide"
 
 #: plugins/check_pgsql.c:255
 msgid "user name is not valid"
-msgstr ""
+msgstr "Le nom de l'utilisateur est invalide"
 
 #: plugins/check_pgsql.c:389
 #, c-format
@@ -2652,10 +2664,12 @@ msgid ""
 "Test whether a PostgreSQL DBMS is accepting connections.\n"
 "\n"
 msgstr ""
+"Teste si un base de données Postgresql accepté les connections.\n"
+"\n"
 
 #: plugins/check_ping.c:82
 msgid "Could not parse arguments"
-msgstr ""
+msgstr "Impossible de parcourir les arguments"
 
 #: plugins/check_ping.c:124
 msgid "Error: Could not interpret output from ping command\n"
@@ -2750,17 +2764,17 @@ msgstr ""
 #: plugins/check_ping.c:471
 #, c-format
 msgid "PING CRITICAL - Network unreachable (%s)"
-msgstr ""
+msgstr "PING CRITIQUE - Le réseau est injoignable (%s)"
 
 #: plugins/check_ping.c:473
 #, c-format
 msgid "PING CRITICAL - Host Unreachable (%s)"
-msgstr ""
+msgstr "PING CRITIQUE - Hôte injoignable (%s)"
 
 #: plugins/check_ping.c:475
 #, c-format
 msgid "PING CRITICAL - Host not found (%s)"
-msgstr ""
+msgstr "PING CRITIQUE - Hôte non trouvé (%s)"
 
 #: plugins/check_ping.c:482
 msgid "unable to realloc warn_text"
@@ -2858,13 +2872,13 @@ msgstr ""
 #, c-format
 msgid "%d process"
 msgid_plural "%d processes"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d processus"
+msgstr[1] "%d processus"
 
 #: plugins/check_procs.c:287
 #, c-format
 msgid " with %s"
-msgstr ""
+msgstr "avec %s"
 
 #: plugins/check_procs.c:365
 msgid ""
@@ -2888,7 +2902,7 @@ msgstr ""
 #: plugins/check_procs.c:391 plugins/check_procs.c:489
 #, c-format
 msgid "%s%sSTATE = %s"
-msgstr ""
+msgstr "%s%sETAT = %s"
 
 #: plugins/check_procs.c:400
 #, c-format
@@ -2898,12 +2912,12 @@ msgstr ""
 #: plugins/check_procs.c:406
 #, c-format
 msgid "User name %s was not found\n"
-msgstr ""
+msgstr "L'utilisateur %s n'a pas été trouvé\n"
 
 #: plugins/check_procs.c:411
 #, c-format
 msgid "%s%sUID = %d (%s)"
-msgstr ""
+msgstr "%s%sUID = %d (%s)"
 
 #: plugins/check_procs.c:420
 #, c-format
@@ -3094,15 +3108,15 @@ msgstr ""
 
 #: plugins/check_radius.c:148
 msgid "Auth Error"
-msgstr ""
+msgstr "Erreur d'authentification"
 
 #: plugins/check_radius.c:150
 msgid "Auth Failed"
-msgstr ""
+msgstr "L'authentification à échoué"
 
 #: plugins/check_radius.c:154
 msgid "Auth OK"
-msgstr ""
+msgstr "L'authentification à réussi"
 
 #: plugins/check_radius.c:197 plugins/check_radius.c:259
 msgid "Number of retries must be a positive integer"
