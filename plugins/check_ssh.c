@@ -16,6 +16,7 @@
 #include "utils.h"
 
 #define PROGNAME "check_ssh"
+#define REVISION "$Revision$"
 
 #ifndef MSG_DONTWAIT
 #define MSG_DONTWAIT 0
@@ -63,46 +64,6 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	if (argc < 2)
-		return ERROR;
-
-	for (c = 1; c < argc; c++)
-		if (strcmp ("-to", argv[c]) == 0)
-			strcpy (argv[c], "-t");
-
-	c = 0;
-	while (c += (call_getopt (argc - c, &argv[c]))) {
-		if (argc <= c)
-			break;
-		if (server_name == NULL) {
-			server_name = argv[c];
-		}
-		else if (port == -1) {
-			if (is_intpos (argv[c])) {
-				port = atoi (argv[c]);
-			}
-			else {
-				print_usage ();
-				exit (STATE_UNKNOWN);
-			}
-		}
-	}
-
-	return validate_arguments ();
-}
-
-
-/************************************************************************
-*
-* Run the getopt until we encounter a non-option entry in the arglist
-*
-*-----------------------------------------------------------------------*/
-
-int
-call_getopt (int argc, char **argv)
-{
-	int c, i = 1;
-
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -115,29 +76,27 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+	if (argc < 2)
+		return ERROR;
+
+	for (c = 1; c < argc; c++)
+		if (strcmp ("-to", argv[c]) == 0)
+			strcpy (argv[c], "-t");
+
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c = getopt_long (argc, argv, "+Vhvt:H:p:", long_options, &option_index);
 #else
 		c = getopt (argc, argv, "+Vhvt:H:p:");
 #endif
-
 		if (c == -1 || c == EOF)
 			break;
-
-		i++;
-		switch (c) {
-		case 't':
-		case 'H':
-		case 'p':
-			i++;
-		}
 
 		switch (c) {
 		case '?':									/* help */
 			usage ("");
 		case 'V':									/* version */
-			print_revision (my_basename (argv[0]), "$Revision$");
+			print_revision (PROGNAME, REVISION);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -164,7 +123,22 @@ call_getopt (int argc, char **argv)
 		}
 
 	}
-	return i;
+
+	c = optind;
+	if (server_name == NULL && argv[c]) {
+		server_name = argv[c++];
+	}
+	else if (port == -1 && argv[c]) {
+		if (is_intpos (argv[c])) {
+			port = atoi (argv[c++]);
+		}
+		else {
+			print_usage ();
+			exit (STATE_UNKNOWN);
+		}
+	}
+
+	return validate_arguments ();
 }
 
 int
@@ -249,13 +223,12 @@ ssh_connect (char *haddr, short hport)
 		if (verbose)
 			printf ("%s\n", output);
 		ssh_proto = output + 4;
-		ssh_server = ssh_proto + strspn (ssh_proto, "0123456789-. ");
-		ssh_proto[strspn (ssh_proto, "0123456789-. ")] = 0;
+		ssh_server = ssh_proto + strspn (ssh_proto, "-0123456789. ");
+		ssh_proto[strspn (ssh_proto, "0123456789. ")] = 0;
 		printf
-			("SSH ok - protocol version %s - server version %s\n",
-			 ssh_proto, ssh_server);
-		buffer =
-			ssprintf (buffer, "SSH-%s-check_ssh_%s\r\n", ssh_proto, revision);
+			("SSH ok - %s (protocol %s)\n",
+			 ssh_server, ssh_proto);
+		asprintf (&buffer, "SSH-%s-check_ssh_%s\r\n", ssh_proto, revision);
 		send (s, buffer, strlen (buffer), MSG_DONTWAIT);
 		if (verbose)
 			printf ("%s\n", buffer);
@@ -266,7 +239,7 @@ ssh_connect (char *haddr, short hport)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, "$Revision$");
+	print_revision (PROGNAME, REVISION);
 	printf ("Copyright (c) 1999 Remi Paulmier (remi@sinfomic.fr)\n\n");
 	print_usage ();
 	printf ("by default, port is %d\n", SSH_DFL_PORT);
