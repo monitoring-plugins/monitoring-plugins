@@ -1,1416 +1,1199 @@
 /*
  * $Id$
  *
- * This is a hack of fping2 made to work with nagios.
- * It's fast and removes the necessity of parsing another programs output.
+ * Author: Andreas Ericsson <ae@op5.se>
  *
- * VIEWING NOTES:
- * This file was formatted with tab indents at a tab stop of 4.
+ * License: GNU GPL 2.0 or any later version.
  *
- * It is highly recommended that your editor is set to this
- * tab stop setting for viewing and editing.
+ * Relevant RFC's: 792 (ICMP), 791 (IP)
  *
- * COPYLEFT;
- * This programs copyright status is currently undetermined. Much of
- * the code in it comes from the fping2 program which used to be licensed
- * under the Stanford General Software License (available at
- * http://graphics.stanford.edu/software/license.html). It is presently
- * unclear what license (if any) applies to the original code at the
- * moment.
+ * This program was modeled somewhat after the check_icmp program,
+ * which was in turn a hack of fping (www.fping.org) but has been
+ * completely rewritten since to generate higher precision rta values,
+ * and support several different modes as well as setting ttl to control.
+ * redundant routes. The only remainders of fping is currently a few
+ * function names.
  *
- * The fping website can be found at http://www.fping.com
  */
 
-const char *progname = "check_icmp";
-const char *revision = "$Revision$";
-const char *copyright = "2004";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
-
-#include "common.h"
-#include "netutils.h"
-#include "utils.h"
-
-#include <stdio.h>
-#include <errno.h>
-#include <time.h>
-#include <signal.h>
-
-#include <unistd.h>
-
-#include <stdlib.h>
-
-#include <string.h>
-#include <stddef.h>
-
-#include <sys/types.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include <stddef.h>
+#include <errno.h>
+#include <string.h>
+#include <ctype.h>
+#include <netdb.h>
 #include <sys/socket.h>
-
-#include <sys/file.h>
-
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
-
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
-
 #include <arpa/inet.h>
-#include <netdb.h>
+#include <signal.h>
 
-/* RS6000 has sys/select.h */
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif							/* HAVE_SYS_SELECT_H */
-
-/* rta threshold values can't be larger than MAXTTL seconds */
+/** sometimes undefined system macros (quite a few, actually) **/
 #ifndef MAXTTL
-#  define MAXTTL	255
+# define MAXTTL	255
 #endif
-#ifndef IPDEFTTL
-#  define IPDEFTTL	64
-#endif
-
-/*** externals ***/
-extern char *optarg;
-extern int optind, opterr;
-
-/*** Constants ***/
-//#define EMAIL		"ae@op5.se"
-//#define VERSION		"0.8.1"
-
 #ifndef INADDR_NONE
 # define INADDR_NONE 0xffffffU
 #endif
 
-/*** Ping packet defines ***/
-/* data added after ICMP header for our nefarious purposes */
-typedef struct ping_data {
-	unsigned int ping_count;	/* counts up to -[n|p] count or 1 */
-	struct timeval ping_ts;		/* time sent */
-} PING_DATA;
-
-#define MIN_PING_DATA	sizeof(PING_DATA)
-#define	MAX_IP_PACKET	65536	/* (theoretical) max IP packet size */
-#define SIZE_IP_HDR		20
-#define SIZE_ICMP_HDR	ICMP_MINLEN	/* from ip_icmp.h */
-#define MAX_PING_DATA	(MAX_IP_PACKET - SIZE_IP_HDR - SIZE_ICMP_HDR)
-
-/*
- *  Interval is the minimum amount of time between sending a ping packet to
- *  any host.
- *
- *  Perhost_interval is the minimum amount of time between sending a ping
- *  packet to a particular responding host
- *
- *  Timeout  is the initial amount of time between sending a ping packet to
- *  a particular non-responding host.
- *
- *  Retry is the number of ping packets to send to a non-responding host
- *  before giving up (in is-it-alive mode).
- *
- *  Backoff factor is how much longer to wait on successive retries.
- */
-#ifndef DEFAULT_INTERVAL
-#define DEFAULT_INTERVAL 25		/* default time between packets (msec) */
+#ifndef SOL_IP
+#define SOL_IP 0
 #endif
 
-#ifndef DEFAULT_RETRY
-#define DEFAULT_RETRY	1			/* number of times to retry a host */
+/* we bundle these in one #ifndef, since they're all from BSD
+ * Put individual #ifndef's around those that bother you */
+#ifndef ICMP_UNREACH_NET_UNKNOWN
+# define ICMP_UNREACH_NET_UNKNOWN 6
+# define ICMP_UNREACH_HOST_UNKNOWN 7
+# define ICMP_UNREACH_ISOLATED 8
+# define ICMP_UNREACH_NET_PROHIB 9
+# define ICMP_UNREACH_HOST_PROHIB 10
+# define ICMP_UNREACH_TOSNET 11
+# define ICMP_UNREACH_TOSHOST 12
+#endif
+/* tru64 has the ones above, but not these */
+#ifndef ICMP_UNREACH_FILTER_PROHIB
+# define ICMP_UNREACH_FILTER_PROHIB 13
+# define ICMP_UNREACH_HOST_PRECEDENCE 14
+# define ICMP_UNREACH_PRECEDENCE_CUTOFF 15
 #endif
 
-#ifndef DEFAULT_TIMEOUT
-# define DEFAULT_TIMEOUT 1000
-#endif
 
-#ifndef DEFAULT_BACKOFF_FACTOR
-#define DEFAULT_BACKOFF_FACTOR 1.5	/* exponential timeout factor */
-#endif
-#define MIN_BACKOFF_FACTOR     1.0	/* exponential timeout factor */
-#define MAX_BACKOFF_FACTOR     5.0	/* exponential timeout factor */
-
-#ifndef DNS_TIMEOUT
-#define DNS_TIMEOUT 1000		/* time in usec for dns retry */
-#endif
-
-#ifndef MAX_RTA_THRESHOLD_VALUE
-# define MAX_RTA_THRESHOLD_VALUE 120*1000000 /* 2 minutes should be enough */
-#endif
-#ifndef MIN_RTA_THRESHOLD_VALUE
-# define MIN_RTA_THRESHOLD_VALUE 10000	/* minimum RTA threshold value */
-#endif
-
-/* sized so as to be like traditional ping */
-#define DEFAULT_PING_DATA_SIZE	(MIN_PING_DATA + 44)
-
-/* maxima and minima */
-#define MAX_COUNT				50		/* max count even if we're root */
-#define MAX_RETRY				5
-#define MIN_INTERVAL			25	/* msecs */
-#define MIN_TIMEOUT				50	/* msecs */
-
-/* response time array flags */
-#define RESP_WAITING	-1
-#define RESP_UNUSED		-2
-
-#define	ICMP_UNREACH_MAXTYPE	15
-
-/* entry used to keep track of each host we are pinging */
-struct host_entry {
-	int i;						/* index into array */
-	char *name;					/* name as given by user */
-	char *host;					/* text description of host */
-	struct sockaddr_in saddr;	/* internet address */
-	unsigned short **pr;		/* TCP port range to check for connectivity */
-	struct timeval last_send_time;	/* time of last packet sent */
-	unsigned int num_sent;		/* number of ping packets sent */
-	unsigned int num_recv;		/* number of pings received */
-	unsigned int total_time;	/* sum of response times */
-	unsigned int status;		/* this hosts status */
-	unsigned int running;		/* unset when through sending */
-	unsigned int waiting;		/* waiting for response */
-	int *resp_times;	/* individual response times */
-	struct host_entry *prev, *next;	/* doubly linked list */
-};
-
-typedef struct host_entry HOST_ENTRY;
-
-struct host_name_list {
-	char *entry;
-	struct host_name_list *next;
-};
-
-/* threshold structure */
-struct threshold {
-	unsigned int pl;	/* packet loss */
-	unsigned int rta;	/* roundtrip time average */
-};
-typedef struct threshold threshold;
-
-/*****************************************************************************
- *                             Global Variables                              *
- *****************************************************************************/
-
-HOST_ENTRY *rrlist = NULL;		/* linked list of hosts be pinged */
-HOST_ENTRY **table = NULL;		/* array of pointers to items in the list */
-HOST_ENTRY *cursor;
-
-char *prog;						/* our name */
-int ident;						/* our pid, for marking icmp packets */
-int sock;						/* socket */
-u_int debug = 0;
-
-/* threshold value defaults;
- * WARNING;  60% packetloss or 200 msecs round trip average
- * CRITICAL; 80% packetloss or 500 msecs round trip average */
-threshold warn = {60, 200 * 1000};
-threshold crit = {80, 500 * 1000};
-
-/* times get *100 because all times are calculated in 10 usec units, not ms */
-unsigned int retry = DEFAULT_RETRY;
-u_int timeout = DEFAULT_TIMEOUT * 100;
-u_int interval = DEFAULT_INTERVAL * 100;
-float backoff = DEFAULT_BACKOFF_FACTOR;
-u_int select_time;	/* calculated using maximum threshold rta value */
-u_int ping_data_size = DEFAULT_PING_DATA_SIZE;
-u_int ping_pkt_size;
-unsigned int count = 5;
-unsigned int trials = 1;
-
-/* global stats */
-int total_replies = 0;
-int num_jobs = 0;				/* number of hosts still to do */
-int num_hosts = 0;				/* total number of hosts */
-int num_alive = 0;				/* total number alive */
-int num_unreachable = 0;		/* total number unreachable */
-int num_noaddress = 0;			/* total number of addresses not found */
-int num_timeout = 0;			/* number of timed out packets */
-int num_pingsent = 0;			/* total pings sent */
-int num_pingreceived = 0;		/* total pings received */
-int num_othericmprcvd = 0;		/* total non-echo-reply ICMP received */
-
-struct timeval current_time;	  /* current time (pseudo) */
-struct timeval my_start_time;   /* conflict with utils.c 33, but not found ?? */
-struct timeval my_end_time;     /* conflict with utils.c 33, but not found ?? */
-struct timeval last_send_time;	/* time last ping was sent */
-struct timezone tz;
-
-/* switches */
-int generate_flag = 0;			/* flag for IP list generation */
-int stats_flag, unreachable_flag, alive_flag;
-int elapsed_flag, version_flag, count_flag;
-int name_flag, addr_flag, backoff_flag;
-int multif_flag;
-
-/*** prototypes ***/
-void add_name(char *);
-void add_addr(char *, char *, struct in_addr);
-char *na_cat(char *, struct in_addr);
-char *cpystr(char *);
-void crash(char *);
-char *get_host_by_address(struct in_addr);
-int in_cksum(u_short *, int);
-void u_sleep(int);
-int recvfrom_wto(int, char *, int, struct sockaddr *, int);
-void remove_job(HOST_ENTRY *);
-void send_ping(int, HOST_ENTRY *);
-long timeval_diff(struct timeval *, struct timeval *);
-//void usage(void);
-int wait_for_reply(int);
-void finish(void);
-int handle_random_icmp(struct icmp *, struct sockaddr_in *);
-char *sprint_tm(int);
-int get_threshold(char *, threshold *);
-
-/* common functions */
-void print_help (void);
-void print_usage (void);
-
-/*** the various exit-states */
-/*enum {
+/** typedefs and such **/
+enum states {
 	STATE_OK = 0,
 	STATE_WARNING,
 	STATE_CRITICAL,
 	STATE_UNKNOWN,
-	STATE_DEPENDANT,
+	STATE_DEPENDENT,
 	STATE_OOB
-};*/
-
-/* the strings that correspond to them */
-/*
-char *status_string[STATE_OOB] = {
-	"OK",
-	"WARNING",
-	"CRITICAL",
-	"UNKNOWN",
-	"DEPENDANT"
 };
-*/
 
-int status = STATE_OK;
-int fin_stat = STATE_OK;
+typedef unsigned short range_t;  /* type for get_range() -- unimplemented */
 
-/*****************************************************************************
- *                           Code block start                                *
- *****************************************************************************/
-int main(int argc, char **argv)
+typedef struct rta_host {
+	unsigned short id;           /* id in **table, and icmp pkts */
+	char *name;                  /* arg used for adding this host */
+	char *msg;                   /* icmp error message, if any */
+	struct sockaddr_in saddr_in; /* the address of this host */
+	struct in_addr error_addr;   /* stores address of error replies */
+	unsigned long long time_waited; /* total time waited, in usecs */
+	unsigned int icmp_sent, icmp_recv, icmp_lost; /* counters */
+	unsigned char icmp_type, icmp_code; /* type and code from errors */
+	unsigned short flags;        /* control/status flags */
+	double rta;                  /* measured RTA */
+	unsigned char pl;            /* measured packet loss */
+	struct rta_host *next;       /* linked list */
+} rta_host;
+
+#define FLAG_LOST_CAUSE 0x01  /* decidedly dead target. */
+
+/* threshold structure. all values are maximum allowed, exclusive */
+typedef struct threshold {
+	unsigned char pl;    /* max allowed packet loss in percent */
+	unsigned int rta;  /* roundtrip time average, microseconds */
+} threshold;
+
+/* the data structure */
+typedef struct icmp_ping_data {
+	struct timeval stime;	/* timestamp (saved in protocol struct as well) */
+	unsigned short ping_id;
+} icmp_ping_data;
+
+/* the different modes of this program are as follows:
+ * MODE_RTA: send all packets no matter what (mimic check_icmp and check_ping)
+ * MODE_HOSTCHECK: Return immediately upon any sign of life
+ *                 In addition, sends packets to ALL addresses assigned
+ *                 to this host (as returned by gethostbyname() or
+ *                 gethostbyaddr() and expects one host only to be checked at
+ *                 a time.  Therefore, any packet response what so ever will
+ *                 count as a sign of life, even when received outside
+ *                 crit.rta limit. Do not misspell any additional IP's.
+ * MODE_ALL:  Requires packets from ALL requested IP to return OK (default).
+ * MODE_ICMP: implement something similar to check_icmp (MODE_RTA without
+ *            tcp and udp args does this)
+ */
+#define MODE_RTA 0
+#define MODE_HOSTCHECK 1
+#define MODE_ALL 2
+#define MODE_ICMP 3
+
+/* the different ping types we can do
+ * TODO: investigate ARP ping as well */
+#define HAVE_ICMP 1
+#define HAVE_UDP 2
+#define HAVE_TCP 4
+#define HAVE_ARP 8
+
+#define MIN_PING_DATA_SIZE sizeof(struct icmp_ping_data)
+#define MAX_IP_PKT_SIZE 65536	/* (theoretical) max IP packet size */
+#define IP_HDR_SIZE 20
+#define MAX_PING_DATA (MAX_IP_PKT_SIZE - IP_HDR_SIZE - ICMP_MINLEN)
+#define DEFAULT_PING_DATA_SIZE (MIN_PING_DATA_SIZE + 44)
+
+/* various target states */
+#define TSTATE_INACTIVE 0x01	/* don't ping this host anymore */
+#define TSTATE_WAITING 0x02		/* unanswered packets on the wire */
+#define TSTATE_ALIVE 0x04       /* target is alive (has answered something) */
+#define TSTATE_UNREACH 0x08
+
+/** prototypes **/
+static void usage(unsigned char, char *);
+static u_int get_timevar(const char *);
+static u_int get_timevaldiff(struct timeval *, struct timeval *);
+static int wait_for_reply(int, u_int);
+static int recvfrom_wto(int, char *, unsigned int, struct sockaddr *, u_int *);
+static int send_icmp_ping(int, struct rta_host *);
+static int get_threshold(char *str, threshold *th);
+static void run_checks(void);
+static int add_target(char *);
+static int add_target_ip(char *, struct in_addr *);
+static int handle_random_icmp(struct icmp *, struct sockaddr_in *);
+static unsigned short icmp_checksum(unsigned short *, int);
+static void finish(int);
+static void crash(const char *, ...);
+
+/** external **/
+extern int optind, opterr, optopt;
+extern char *optarg;
+extern char **environ;
+
+/** global variables **/
+static char *progname;
+static struct rta_host **table, *cursor, *list;
+static threshold crit = {80, 500000}, warn = {40, 200000};
+static int mode, protocols, sockets, debug = 0, timeout = 10;
+static unsigned short icmp_pkt_size, icmp_data_size = DEFAULT_PING_DATA_SIZE;
+static unsigned int icmp_sent = 0, icmp_recv = 0, icmp_lost = 0;
+#define icmp_pkts_en_route (icmp_sent - (icmp_recv + icmp_lost))
+static unsigned short targets_down = 0, targets = 0, packets = 0;
+#define targets_alive (targets - targets_down)
+static unsigned int retry_interval, pkt_interval, target_interval;
+static int icmp_sock, tcp_sock, udp_sock, status = STATE_OK;
+static pid_t pid;
+static struct timezone tz;
+static struct timeval prog_start;
+static unsigned long long max_completion_time = 0;
+static unsigned char ttl = 0;	/* outgoing ttl */
+static unsigned int warn_down = 1, crit_down = 1; /* host down threshold values */
+float pkt_backoff_factor = 1.5;
+float target_backoff_factor = 1.5;
+
+/** code start **/
+static void
+crash(const char *fmt, ...)
 {
-	int c;
-	u_int lt, ht;
-	int advance;
-	struct protoent *proto;
-	uid_t uid;
-	struct host_name_list *host_ptr, *host_base_ptr;
+	va_list ap;
 
-	if(strchr(argv[0], '/')) prog = strrchr(argv[0], '/') + 1;
-	else prog = argv[0];
+	printf("%s: ", progname);
 
-	setlocale (LC_ALL, "");
-	bindtextdomain (PACKAGE, LOCALEDIR);
-	textdomain (PACKAGE);
-	
-	/* check if we are root */
-	if(geteuid()) {
-		printf(_("Root access needed (for raw sockets)\n"));
-		exit(STATE_UNKNOWN);
-	}
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
 
-	/* confirm that ICMP is available on this machine */
-	if((proto = getprotobyname("icmp")) == NULL)
-		crash(_("icmp: unknown protocol"));
+	if(errno) printf(": %s", strerror(errno));
+	puts("");
 
-	/* create raw socket for ICMP calls (ping) */
-	sock = socket(AF_INET, SOCK_RAW, proto->p_proto);
-
-	if(sock < 0)
-		crash(_("Can't create raw socket"));
-
-	/* drop privileges now that we have the socket */
-	if((uid = getuid())) {
-		seteuid(uid);
-	}
-	
-	if(argc < 2) print_usage();
-
-	ident = getpid() & 0xFFFF;
-
-	if(!(host_base_ptr = malloc(sizeof(struct host_name_list)))) {
-		crash(_("Unable to allocate memory for host name list\n"));
-	}
-	host_ptr = host_base_ptr;
-
-	backoff_flag = 0;
-	opterr = 1;
-
-	/* get command line options
-	 * -H denotes a host (actually ignored and picked up later)
-	 * -h for help
-	 * -V or -v for version
-	 * -d to display hostnames rather than addresses
-	 * -t sets timeout for packets and tcp connects
-	 * -r defines retries (persistence)
-	 * -p or -n sets packet count (5)
-	 * -b sets packet size (56)
-	 * -w sets warning threshhold (200,40%)
-	 * -c sets critical threshhold (500,80%)
-	 * -i sets interval for both packet transmissions and connect attempts
-	 */
-#define OPT_STR "amH:hvVDdAp:n:b:r:t:i:w:c:"
-	while((c = getopt(argc, argv, OPT_STR)) != EOF) {
-		switch (c) {
-			case 'H':
-				if(!(host_ptr->entry = malloc(strlen(optarg) + 1))) {
-					crash(_("Failed to allocate memory for hostname"));
-				}
-				memset(host_ptr->entry, 0, strlen(optarg) + 1);
-				host_ptr->entry = memcpy(host_ptr->entry, optarg, strlen(optarg));
-				if(!(host_ptr->next = malloc(sizeof(struct host_name_list))))
-					crash(_("Failed to allocate memory for hostname"));
-				host_ptr = host_ptr->next;
-				host_ptr->next = NULL;
-//				add_name(optarg);
-				break;
-				/* this is recognized, but silently ignored.
-				 * host(s) are added later on */
-
-				break;
-			case 'w':
-				if(get_threshold(optarg, &warn)) {
-					printf(_("Illegal threshold pair specified for -%c"), c);
-					print_usage();
-				}
-				break;
-
-			case 'c':
-				if(get_threshold(optarg, &crit)) {
-					printf(_("Illegal threshold pair specified for -%c"), c);
-					print_usage();
-				}
-				break;
-
-			case 't':
-				if(!(timeout = (u_int) strtoul(optarg, NULL, 0) * 100)) {
-					printf(_("Option -%c requires integer argument\n"), c);
-					print_usage();
-				}
-				break;
-
-			case 'r':
-				if(!(retry = (u_int) strtoul(optarg, NULL, 0))) {
-					printf(_("Option -%c requires integer argument\n"), c);
-					print_usage();
-				}
-				break;
-
-			case 'i':
-				if(!(interval = (u_int) strtoul(optarg, NULL, 0) * 100)) {
-					printf(_("Option -%c requires positive non-zero integer argument\n"), c);
-					print_usage();
-				}
-				break;
-
-			case 'p':
-			case 'n':
-				if(!(count = (u_int) strtoul(optarg, NULL, 0))) {
-					printf(_("Option -%c requires positive non-zero integer argument\n"), c);
-					print_usage();
-				}
-				break;
-
-			case 'b':
-				if(!(ping_data_size = (u_int) strtoul(optarg, NULL, 0))) {
-					printf(_("Option -%c requires integer argument\n"), c);
-					print_usage();
-				}
-				break;
-
-			case 'h':
-				print_usage();
-				break;
-
-			case 'e':
-				elapsed_flag = 1;
-				break;
-				
-			case 'm':
-				multif_flag = 1;
-				break;
-				
-			case 'd':
-				name_flag = 1;
-				break;
-
-			case 'A':
-				addr_flag = 1;
-				break;
-				
-			case 's':
-				stats_flag = 1;
-				break;
-
-			case 'u':
-				unreachable_flag = 1;
-				break;
-
-			case 'a':
-				alive_flag = 1;
-				break;
-
-			case 'v':
-				printf("%s: Version %s $Date$\n", prog, VERSION);
-				printf("%s: comments to %s\n", prog, email);
-				exit(STATE_OK);
-
-			case 'g':
-				/* use IP list generation */
-				/* mutex with file input or command line targets */
-				generate_flag = 1;
-				break;
-
-			default:
-				printf(_("Option flag -%c specified, but not recognized\n"), c);
-				print_usage();
-				break;
-		}
-	}
-
-	/* arguments are parsed, so now we validate them */
-
-	if(count > 1) count_flag = 1;
-
-	/* set threshold values to 10usec units (inherited from fping.c) */
-	crit.rta = crit.rta / 10;
-	warn.rta = warn.rta / 10;
-	select_time = crit.rta;
-	/* this isn't critical, but will most likely not be what the user expects
-	 * so we tell him/her about it, but keep running anyways */
-	if(warn.pl > crit.pl || warn.rta > crit.rta) {
-		select_time = warn.rta;
-		printf("(WARNING threshold > CRITICAL threshold) :: ");
-		fflush(stdout);
-	}
-
-	/* A timeout smaller than maximum rta threshold makes no sense */
-	if(timeout < crit.rta) timeout = crit.rta;
-	else if(timeout < warn.rta) timeout = warn.rta;
-
-	if((interval < MIN_INTERVAL * 100 || retry > MAX_RETRY) && getuid()) {
-		printf(_("%s: these options are too risky for mere mortals.\n"), prog);
-		printf(_("%s: You need i >= %u and r < %u\n"),
-				prog, MIN_INTERVAL, MAX_RETRY);
-		printf(_("Current settings; i = %d, r = %d\n"),
-			   interval / 100, retry);
-		print_usage();
-	}
-
-	if((ping_data_size > MAX_PING_DATA) || (ping_data_size < MIN_PING_DATA)) {
-		printf(_("%s: data size %u not valid, must be between %u and %u\n"),
-				prog, ping_data_size, MIN_PING_DATA, MAX_PING_DATA);
-		print_usage();
-
-	}
-
-	if((backoff > MAX_BACKOFF_FACTOR) || (backoff < MIN_BACKOFF_FACTOR)) {
-		printf(_("%s: backoff factor %.1f not valid, must be between %.1f and %.1f\n"),
-				prog, backoff, MIN_BACKOFF_FACTOR, MAX_BACKOFF_FACTOR);
-		print_usage();
-
-	}
-
-	if(count > MAX_COUNT) {
-		printf(_("%s: count %u not valid, must be less than %u\n"),
-				prog, count, MAX_COUNT);
-		print_usage();
-	}
-
-	if(count_flag) {
-		alive_flag = unreachable_flag = 0;
-	}
-
-	trials = (count > retry + 1) ? count : retry + 1;
-
-	/* handle host names supplied on command line or in a file */
-	/* if the generate_flag is on, then generate the IP list */
-	argv = &argv[optind];
-
-	/* cover allowable conditions */
-
-	/* generate requires command line parameters beyond the switches */
-	if(generate_flag && !*argv) {
-		printf(_("Generate flag requires command line parameters beyond switches\n"));
-		print_usage();
-	}
-
-	if(*argv && !generate_flag) {
-		while(*argv) {
-			if(!(host_ptr->entry = malloc(strlen(*argv) + 1))) {
-				crash(_("Failed to allocate memory for hostname"));
-			}
-			memset(host_ptr->entry, 0, strlen(*argv) + 1);
-			host_ptr->entry = memcpy(host_ptr->entry, *argv, strlen(*argv));
-			if(!(host_ptr->next = malloc(sizeof(struct host_name_list))))
-				crash(_("Failed to allocate memory for hostname"));
-			host_ptr = host_ptr->next;
-			host_ptr->next = NULL;
-
-//			add_name(*argv);
-			argv++;
-		}
-	}
-
-	// now add all the hosts
-	host_ptr = host_base_ptr;
-	while(host_ptr->next) {
-		add_name(host_ptr->entry);
-		host_ptr = host_ptr->next;
-	}
-
-	if(!num_hosts) {
-		printf(_("No hosts to work with!\n\n"));
-		print_usage();
-	}
-
-	/* allocate array to hold outstanding ping requests */
-	table = (HOST_ENTRY **) malloc(sizeof(HOST_ENTRY *) * num_hosts);
-	if(!table) crash(_("Can't malloc array of hosts"));
-
-	cursor = rrlist;
-
-	for(num_jobs = 0; num_jobs < num_hosts; num_jobs++) {
-		table[num_jobs] = cursor;
-		cursor->i = num_jobs;
-
-		cursor = cursor->next;
-	}							/* FOR */
-
-	ping_pkt_size = ping_data_size + SIZE_ICMP_HDR;
-
-	signal(SIGINT, (void *)finish);
-
-	gettimeofday(&my_start_time, &tz);
-	current_time = my_start_time;
-
-	last_send_time.tv_sec = current_time.tv_sec - 10000;
-
-	cursor = rrlist;
-	advance = 0;
-
-	/* main loop */
-	while(num_jobs) {
-		/* fetch all packets that receive within time boundaries */
-		while(num_pingsent &&
-			  cursor &&
-			  cursor->num_sent > cursor->num_recv &&
-			  wait_for_reply(sock)) ;
-
-		if(cursor && advance) {
-			cursor = cursor->next;
-		}
-
-		gettimeofday(&current_time, &tz);
-		lt = timeval_diff(&current_time, &last_send_time);
-		ht = timeval_diff(&current_time, &cursor->last_send_time);
-
-		advance = 1;
-
-		/* if it's OK to send while counting or looping or starting */
-		if(lt > interval) {
-			/* send if starting or looping */
-			if((cursor->num_sent == 0)) {
-				send_ping(sock, cursor);
-				continue;
-			}					/* IF */
-
-			/* send if counting and count not exceeded */
-			if(count_flag) {
-				if(cursor->num_sent < count) {
-					send_ping(sock, cursor);
-					continue;
-				}				/* IF */
-			}					/* IF */
-		}						/* IF */
-
-		/* is-it-alive mode, and timeout exceeded while waiting for a reply */
-		/*   and we haven't exceeded our retries                            */
-		if((lt > interval) && !count_flag && !cursor->num_recv &&
-		   (ht > timeout) && (cursor->waiting < retry + 1)) {
-			num_timeout++;
-
-			/* try again */
-			send_ping(sock, cursor);
-			continue;
-		}						/* IF */
-
-		/* didn't send, can we remove? */
-
-		/* remove if counting and count exceeded */
-		if(count_flag) {
-			if((cursor->num_sent >= count)) {
-				remove_job(cursor);
-				continue;
-			}					/* IF */
-		}						/* IF */
-		else {
-			/* normal mode, and we got one */
-			if(cursor->num_recv) {
-				remove_job(cursor);
-				continue;
-			}					/* IF */
-
-			/* normal mode, and timeout exceeded while waiting for a reply */
-			/* and we've run out of retries, so node is unreachable */
-			if((ht > timeout) && (cursor->waiting >= retry + 1)) {
-				num_timeout++;
-				remove_job(cursor);
-				continue;
-
-			}					/* IF */
-		}						/* ELSE */
-
-		/* could send to this host, so keep considering it */
-		if(ht > interval) {
-			advance = 0;
-		}
-	}							/* WHILE */
-
-	finish();
-	return 0;
-}								/* main() */
-
-/************************************************************
- * Description:
- *
- * Main program clean up and exit point
- ************************************************************/
-void finish()
-{
-	int i;
-	HOST_ENTRY *h;
-
-	gettimeofday(&my_end_time, &tz);
-
-	/* tot up unreachables */
-	for(i=0; i<num_hosts; i++) {
-		h = table[i];
-
-		if(!h->num_recv) {
-			num_unreachable++;
-			status = fin_stat = STATE_CRITICAL;
-			if(num_hosts == 1) {
-				printf("CRITICAL - %s is down (lost 100%%)|"
-					   "rta=;%d;%d;; pl=100%%;%d;%d;;\n",
-					   h->host,
-					   warn.rta / 100, crit.rta / 100,
-					   warn.pl, crit.pl);
-			}
-			else {
-				printf(_("%s is down (lost 100%%)"), h->host);
-			}
-		}
-		else {
-			/* reset the status */
-			status = STATE_OK;
-
-			/* check for warning before critical, for debugging purposes */
-			if(warn.rta <= h->total_time / h->num_recv) {
-/*				printf("warn.rta exceeded\n");
-*/				status = STATE_WARNING;
-			}
-			if(warn.pl <= ((h->num_sent - h->num_recv) * 100) / h->num_sent) {
-/*				printf("warn.pl exceeded (pl=%d)\n",
-					   ((h->num_sent - h->num_recv) * 100) / h->num_sent);
-*/				status = STATE_WARNING;
-			}
-			if(crit.rta <= h->total_time / h->num_recv) {
-/*				printf("crit.rta exceeded\n");
-*/				status = STATE_CRITICAL;
-			}
-			if(crit.pl <= ((h->num_sent - h->num_recv) * 100) / h->num_sent) {
-/*				printf("crit.pl exceeded (pl=%d)\n",
-					   ((h->num_sent - h->num_recv) * 100) / h->num_sent);
-*/				status = STATE_CRITICAL;
-			}
-
-			if(num_hosts == 1 || status != STATE_OK) {
-				printf("%s - %s: rta %s ms, lost %d%%",
-					   state_text(status), h->host,
-					   sprint_tm(h->total_time / h->num_recv),
-					   h->num_sent > 0 ? ((h->num_sent - h->num_recv) * 100) / h->num_sent : 0
-					   );
-				/* perfdata only available for single-host stuff */
-				if(num_hosts == 1) {
-					printf("|rta=%sms;%d;%d;; pl=%d%%;%d;%d;;\n",
-						   sprint_tm(h->total_time / h->num_recv), warn.rta / 100, crit.rta / 100,
-						   h->num_sent > 0 ? ((h->num_sent - h->num_recv) * 100) / h->num_sent : 0, warn.pl, crit.pl
-						   );
-				}
-				else printf(" :: ");
-			}
-
-			/* fin_stat should always hold the WORST state */
-			if(fin_stat != STATE_CRITICAL && status != STATE_OK) {
-				fin_stat = status;
-			}
-		}
-	}
-
-	if(num_noaddress) {
-		printf(_("No hostaddress specified.\n"));
-		print_usage();
-	}
-	else if(num_alive != num_hosts) {
-		/* for future multi-check support */
-		/*printf("num_alive != num_hosts (%d : %d)\n", num_alive, num_hosts);*/
-		fin_stat = STATE_CRITICAL;
-	}
-
-	if(num_hosts > 1) {
-		if(num_alive == num_hosts) {
-			printf(_("OK - All %d hosts are alive\n"), num_hosts);
-		}
-		else {
-			printf(_("CRITICAL - %d of %d hosts are alive\n"), num_alive, num_hosts);
-		}
-	}
-	exit(fin_stat);
+	exit(3);
 }
 
 
-void send_ping(int lsock, HOST_ENTRY *h)
+static char *
+get_icmp_error_msg(unsigned char icmp_type, unsigned char icmp_code)
 {
-	char *buffer;
-	struct icmp *icp;
-	PING_DATA *pdp;
-	int n;
+	char *msg = "unreachable";
 
-	buffer = (char *)malloc((size_t) ping_pkt_size);
-	if(!buffer)
-		crash(_("Can't malloc ping packet"));
-
-	memset(buffer, 0, ping_pkt_size * sizeof(char));
-	icp = (struct icmp *)buffer;
-
-	gettimeofday(&h->last_send_time, &tz);
-
-	icp->icmp_type = ICMP_ECHO;
-	icp->icmp_code = 0;
-	icp->icmp_cksum = 0;
-	icp->icmp_seq = h->i;
-	icp->icmp_id = ident;
-
-	pdp = (PING_DATA *) (buffer + SIZE_ICMP_HDR);
-	pdp->ping_ts = h->last_send_time;
-	pdp->ping_count = h->num_sent;
-
-	icp->icmp_cksum = in_cksum((u_short *) icp, ping_pkt_size);
-
-	n = sendto(lsock, buffer, ping_pkt_size, 0,
-			   (struct sockaddr *)&h->saddr, sizeof(struct sockaddr_in));
-
-	if(n < 0 || (unsigned int)n != ping_pkt_size) {
-		if(unreachable_flag) {
-			printf(_("%s error while sending ping: %s\n"),
-				   h->host, strerror(errno));
-		}			/* IF */
-
-		num_unreachable++;
-		remove_job(h);
-	}				/* IF */
-	else {
-		/* mark this trial as outstanding */
-		h->resp_times[h->num_sent] = RESP_WAITING;
-
-		h->num_sent++;
-		h->waiting++;
-		num_pingsent++;
-		last_send_time = h->last_send_time;
-	}				/* ELSE */
-
-	free(buffer);
-}					/* send_ping() */
-
-int wait_for_reply(int lsock)
-{
-	int result;
-	static char buffer[4096];
-	struct sockaddr_in response_addr;
-	struct ip *ip;
-	int hlen;
-	struct icmp *icp;
-	int n;
-	HOST_ENTRY *h = NULL;
-	long this_reply;
-	int this_count;
-	struct timeval sent_time;
-
-	result = recvfrom_wto(lsock, buffer, sizeof(buffer),
-						  (struct sockaddr *)&response_addr, select_time);
-
-	if(result < 0) return 0;		/* timeout */
-
-	ip = (struct ip *)buffer;
-
-#if defined( __alpha__ ) && __STDC__ && !defined( __GLIBC__ )
-	/* The alpha headers are decidedly broken.
-	 * Using an ANSI compiler, it provides ip_vhl instead of ip_hl and
-	 * ip_v.  So, to get ip_hl, we mask off the bottom four bits.
-	 */
-	hlen = (ip->ip_vhl & 0x0F) << 2;
-#else
-	hlen = ip->ip_hl << 2;
-#endif /* defined(__alpha__) && __STDC__ */
-
-	if(result < hlen + ICMP_MINLEN) {
-		printf(_("Received packet too short for ICMP (%d bytes from %s)\n"), result,
-			   inet_ntoa(response_addr.sin_addr));
-
-		return (1);				/* too short */
-	}							/* IF */
-
-	icp = (struct icmp *)(buffer + hlen);
-	if(icp->icmp_type != ICMP_ECHOREPLY) {
-		/* handle some problem */
-		if(handle_random_icmp(icp, &response_addr))
-			num_othericmprcvd++;
-
-		return 1;
-	}							/* IF */
-
-	if(icp->icmp_id != ident)
-		return 1;				/* packet received, but not the one we are looking for! */
-
-	num_pingreceived++;
-
-	if(icp->icmp_seq >= (n_short) num_hosts)
-		return(1);				/* packet received, don't worry about it anymore */
-
-	n = icp->icmp_seq;
-	h = table[n];
-	
-	/* received ping is cool, so process it */
-
-	gettimeofday(&current_time, &tz);
-	h->waiting = 0;
-	h->num_recv++;
-
-	memcpy(&sent_time, icp->icmp_data + offsetof(PING_DATA, ping_ts),
-		   sizeof(sent_time));
-	memcpy(&this_count, icp->icmp_data, sizeof(this_count));
-
-	this_reply = timeval_diff(&current_time, &sent_time);
-	h->total_time += this_reply;
-	total_replies++;
-
-	/* note reply time in array, probably */
-	if((this_count >= 0) && ((unsigned int)this_count < trials)) {
-		if(h->resp_times[this_count] != RESP_WAITING) {
-			printf(_("%s : duplicate for [%d], %d bytes, %s ms"),
-				   h->host, this_count, result, sprint_tm(this_reply));
-
-			if(response_addr.sin_addr.s_addr != h->saddr.sin_addr.s_addr)
-				printf(" [<- %s]\n", inet_ntoa(response_addr.sin_addr));
-		}					/* IF */
-		else h->resp_times[this_count] = this_reply;
-	}						/* IF */
-	else {
-		/* count is out of bounds?? */
-		printf(_("%s : duplicate for [%d], %d bytes, %s ms\n"),
-			   h->host, this_count, result, sprint_tm(this_reply));
-		}						/* ELSE */
-	
-	if(h->num_recv == 1) {
-		num_alive++;
-	}							/* IF */
-
-	return num_jobs;
-}								/* wait_for_reply() */
-
-int handle_random_icmp(struct icmp *p, struct sockaddr_in *addr)
-{
-	struct icmp *sent_icmp;
-	u_char *c;
-	HOST_ENTRY *h;
-
-	c = (u_char *) p;
-	switch (p->icmp_type) {
+	if(debug > 1) printf("get_icmp_error_msg(%u, %u)\n", icmp_type, icmp_code);
+	switch(icmp_type) {
 	case ICMP_UNREACH:
-		sent_icmp = (struct icmp *)(c + 28);
+		switch(icmp_code) {
+		case ICMP_UNREACH_NET: msg = "Net unreachable"; break;
+		case ICMP_UNREACH_HOST:	msg = "Host unreachable"; break;
+		case ICMP_UNREACH_PROTOCOL: msg = "Protocol unreachable (firewall?)"; break;
+		case ICMP_UNREACH_PORT: msg = "Port unreachable (firewall?)"; break;
+		case ICMP_UNREACH_NEEDFRAG: msg = "Fragmentation needed"; break;
+		case ICMP_UNREACH_SRCFAIL: msg = "Source route failed"; break;
+		case ICMP_UNREACH_ISOLATED: msg = "Source host isolated"; break;
+		case ICMP_UNREACH_NET_UNKNOWN: msg = "Unknown network"; break;
+		case ICMP_UNREACH_HOST_UNKNOWN: msg = "Unknown host"; break;
+		case ICMP_UNREACH_NET_PROHIB: msg = "Network denied (firewall?)"; break;
+		case ICMP_UNREACH_HOST_PROHIB: msg = "Host denied (firewall?)"; break;
+		case ICMP_UNREACH_TOSNET: msg = "Bad TOS for network (firewall?)"; break;
+		case ICMP_UNREACH_TOSHOST: msg = "Bad TOS for host (firewall?)"; break;
+		case ICMP_UNREACH_FILTER_PROHIB: msg = "Prohibited by filter (firewall)"; break;
+		case ICMP_UNREACH_HOST_PRECEDENCE: msg = "Host precedence violation"; break;
+		case ICMP_UNREACH_PRECEDENCE_CUTOFF: msg = "Precedence cutoff"; break;
+		default: msg = "Invalid code"; break;
+		}
+		break;
 
-		if((sent_icmp->icmp_type == ICMP_ECHO) &&
-		   (sent_icmp->icmp_id == ident) &&
-		   (sent_icmp->icmp_seq < (n_short) num_hosts)) {
-			/* this is a response to a ping we sent */
-			h = table[sent_icmp->icmp_seq];
-
-			if(p->icmp_code > ICMP_UNREACH_MAXTYPE) {
-				printf(_("ICMP Unreachable (Invalid Code) from %s for ICMP Echo sent to %s"),
-						inet_ntoa(addr->sin_addr), h->host);
-
-			}					/* IF */
-			else {
-				printf(_("ICMP Unreachable from %s for ICMP Echo sent to %s"),
-					   inet_ntoa(addr->sin_addr), h->host);
-
-			}					/* ELSE */
-
-			if(inet_addr(h->host) == INADDR_NONE)
-				printf(" (%s)", inet_ntoa(h->saddr.sin_addr));
-
-			printf("\n");
-
-		}						/* IF */
-
-		return 1;
-
-	case ICMP_SOURCEQUENCH:
-	case ICMP_REDIRECT:
 	case ICMP_TIMXCEED:
-	case ICMP_PARAMPROB:
-		sent_icmp = (struct icmp *)(c + 28);
-		if((sent_icmp->icmp_type = ICMP_ECHO) &&
-		   (sent_icmp->icmp_id = ident) &&
-		   (sent_icmp->icmp_seq < (n_short) num_hosts)) {
-			/* this is a response to a ping we sent */
-			h = table[sent_icmp->icmp_seq];
-			printf(_("ICMP Unreachable from %s for ICMP Echo sent to %s"),
-					inet_ntoa(addr->sin_addr), h->host);
+		/* really 'out of reach', or non-existant host behind a router serving
+		 * two different subnets */
+		switch(icmp_code) {
+		case ICMP_TIMXCEED_INTRANS: msg = "Time to live exceeded in transit"; break;
+		case ICMP_TIMXCEED_REASS: msg = "Fragment reassembly time exceeded"; break;
+		default: msg = "Invalid code"; break;
+		}
+		break;
 
-			if(inet_addr(h->host) == INADDR_NONE)
-				printf(" (%s)", inet_ntoa(h->saddr.sin_addr));
+	case ICMP_SOURCEQUENCH: msg = "Transmitting too fast"; break;
+	case ICMP_REDIRECT: msg = "Redirect (change route)"; break;
+	case ICMP_PARAMPROB: msg = "Bad IP header (required option absent)"; break;
 
-			printf("\n");
-		}						/* IF */
-
-		return 2;
-
-		/* no way to tell whether any of these are sent due to our ping */
-		/* or not (shouldn't be, of course), so just discard            */
+		/* the following aren't error messages, so ignore */
 	case ICMP_TSTAMP:
 	case ICMP_TSTAMPREPLY:
 	case ICMP_IREQ:
 	case ICMP_IREQREPLY:
 	case ICMP_MASKREQ:
 	case ICMP_MASKREPLY:
-	default:
+	default: msg = ""; break;
+	}
+
+	return msg;
+}
+
+static int
+handle_random_icmp(struct icmp *p, struct sockaddr_in *addr)
+{
+	struct icmp *sent_icmp = NULL;
+	struct rta_host *host = NULL;
+	unsigned char *ptr;
+
+	if(p->icmp_type == ICMP_ECHO && p->icmp_id == pid) {
+		/* echo request from us to us (pinging localhost) */
 		return 0;
+	}
 
-	}							/* SWITCH */
+	ptr = (unsigned char *)p;
+	if(debug) printf("handle_random_icmp(%p, %p)\n", (void *)p, (void *)addr);
 
-}								/* handle_random_icmp() */
+	/* only handle a few types, since others can't possibly be replies to
+	 * us in a sane network (if it is anyway, it will be counted as lost
+	 * at summary time, but not as quickly as a proper response */
+	/* TIMXCEED can be an unreach from a router with multiple IP's which
+	 * serves two different subnets on the same interface and a dead host
+	 * on one net is pinged from the other. The router will respond to
+	 * itself and thus set TTL=0 so as to not loop forever.  Even when
+	 * TIMXCEED actually sends a proper icmp response we will have passed
+	 * too many hops to have a hope of reaching it later, in which case it
+	 * indicates overconfidence in the network, poor routing or both. */
+	if(p->icmp_type != ICMP_UNREACH && p->icmp_type != ICMP_TIMXCEED &&
+	   p->icmp_type != ICMP_SOURCEQUENCH && p->icmp_type != ICMP_PARAMPROB)
+	{
+		return 0;
+	}
 
-int in_cksum(u_short * p, int n)
-{
-	register u_short answer;
-	register long sum = 0;
-	u_short odd_byte = 0;
+	/* might be for us. At least it holds the original package (according
+	 * to RFC 792). If it isn't, just ignore it */
+	sent_icmp = (struct icmp *)(ptr + 28);
+	if(sent_icmp->icmp_type != ICMP_ECHO || sent_icmp->icmp_id != pid ||
+	   sent_icmp->icmp_seq >= targets)
+	{
+		if(debug) printf("Packet is no response to a packet we sent\n");
+		return 0;
+	}
 
-	while(n > 1) {
-		sum += *p++;
-		n -= 2;
-	}							/* WHILE */
+	/* it is indeed a response for us */
+	host = table[sent_icmp->icmp_seq];
+	if(debug) {
+		printf("Received \"%s\" from %s for ICMP ECHO sent to %s.\n",
+			   get_icmp_error_msg(p->icmp_type, p->icmp_code),
+			   inet_ntoa(addr->sin_addr), host->name);
+	}
 
-	/* mop up an odd byte, if necessary */
-	if(n == 1) {
-		*(u_char *) (&odd_byte) = *(u_char *) p;
-		sum += odd_byte;
-	}							/* IF */
+	icmp_lost++;
+	host->icmp_lost++;
+	/* don't spend time on lost hosts any more */
+	if(host->flags & FLAG_LOST_CAUSE) return 0;
 
-	sum = (sum >> 16) + (sum & 0xffff);	/* add hi 16 to low 16 */
-	sum += (sum >> 16);			/* add carry */
-	answer = ~sum;				/* ones-complement, truncate */
-
-	return (answer);
-
-}								/* in_cksum() */
-
-void add_name(char *name)
-{
-	struct hostent *host_ent;
-	int ipaddress;
-	struct in_addr *ipa = (struct in_addr *)&ipaddress;
-	struct in_addr *host_add;
-	char *nm;
-	int i = 0;
-	
-	if((ipaddress = inet_addr(name)) != -1) {
-		/* input name is an IP addr, go with it */
-		if(name_flag) {
-			if(addr_flag)
-				add_addr(name, na_cat(get_host_by_address(*ipa), *ipa), *ipa);
-			else {
-				nm = cpystr(get_host_by_address(*ipa));
-				add_addr(name, nm, *ipa);
-
-			}					/* ELSE */
-		}						/* IF */
-		else add_addr(name, name, *ipa);
-
-		return;
-	}							/* IF */
-
-	/* input name is not an IP addr, maybe it's a host name */
-	host_ent = gethostbyname(name);
-	if(host_ent == NULL) {
-		if(h_errno == TRY_AGAIN) {
-			u_sleep(DNS_TIMEOUT);
-			host_ent = gethostbyname(name);
-		}						/* IF */
-
-		if(host_ent == NULL) {
-			printf(_("%s address not found\n"), name);
-			num_noaddress++;
-			return;
-		}						/* IF */
-	}							/* IF */
-
-	host_add = (struct in_addr *)*(host_ent->h_addr_list);
-	if(host_add == NULL) {
-		printf(_("%s has no address data\n"), name);
-		num_noaddress++;
-		return;
-	}							/* IF */
+	/* source quench means we're sending too fast, so increase the
+	 * interval and mark this packet lost */
+	if(p->icmp_type == ICMP_SOURCEQUENCH) {
+		pkt_interval *= pkt_backoff_factor;
+		target_interval *= target_backoff_factor;
+	}
 	else {
-		/* it is indeed a hostname with a real address */
-		while(host_add) {
-			if(name_flag && addr_flag)
-				add_addr(name, na_cat(name, *host_add), *host_add);
-			else if(addr_flag) {
-				nm = cpystr(inet_ntoa(*host_add));
-				add_addr(name, nm, *host_add);
-			}					/* ELSE IF */
-			else {
-				add_addr(name, name, *host_add);
+		targets_down++;
+		host->flags |= FLAG_LOST_CAUSE;
+	}
+	host->icmp_type = p->icmp_type;
+	host->icmp_code = p->icmp_code;
+	host->error_addr.s_addr = addr->sin_addr.s_addr;
+
+	return 0;
+}
+
+int
+main(int argc, char **argv)
+{
+	int i;
+	char *ptr;
+	long int arg;
+	int icmp_sockerrno, udp_sockerrno, tcp_sockerrno;
+	int result;
+	struct rta_host *host;
+	
+	/* we only need to be setsuid when we get the sockets, so do
+	 * that before pointer magic (esp. on network data) */
+	icmp_sockerrno = udp_sockerrno = tcp_sockerrno = sockets = 0;
+
+	if((icmp_sock = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP)) != -1)
+		sockets |= HAVE_ICMP;
+	else icmp_sockerrno = errno;
+
+	/* if((udp_sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) != -1) */
+	/* 	sockets |= HAVE_UDP; */
+	/* else udp_sockerrno = errno; */
+
+	/* if((tcp_sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) != -1) */
+	/* 	sockets |= HAVE_TCP; */
+	/* else tcp_sockerrno = errno; */
+
+	/* now drop privileges (no effect if not setsuid or geteuid() == 0) */
+	setuid(getuid());
+
+	/* POSIXLY_CORRECT might break things, so unset it (the portable way) */
+	environ = NULL;
+
+	/* use the pid to mark packets as ours */
+	pid = getpid();
+	/* printf("pid = %u\n", pid); */
+
+	/* get calling name the old-fashioned way for portability instead
+	 * of relying on the glibc-ism __progname */
+	ptr = strrchr(argv[0], '/');
+	if(ptr) progname = &ptr[1];
+	else progname = argv[0];
+
+	/* now set defaults. Use progname to set them initially (allows for
+	 * superfast check_host program when target host is up */
+	cursor = list = NULL;
+	table = NULL;
+
+	mode = MODE_RTA;
+	crit.rta = 500000;
+	crit.pl = 80;
+	warn.rta = 200000;
+	warn.pl = 40;
+	protocols = HAVE_ICMP | HAVE_UDP | HAVE_TCP;
+	pkt_interval = 80000;  /* 80 msec packet interval by default */
+	packets = 5;
+
+	if(!strcmp(progname, "check_icmp") || !strcmp(progname, "check_ping")) {
+		mode = MODE_ICMP;
+		protocols = HAVE_ICMP;
+	}
+	else if(!strcmp(progname, "check_host")) {
+		mode = MODE_HOSTCHECK;
+		pkt_interval = 1000000;
+		packets = 5;
+		crit.rta = warn.rta = 1000000;
+		crit.pl = warn.pl = 100;
+	}
+	else if(!strcmp(progname, "check_rta_multi")) {
+		mode = MODE_ALL;
+		target_interval = 0;
+		pkt_interval = 50000;
+		packets = 5;
+	}
+
+	/* parse the arguments */
+	for(i = 1; i < argc; i++) {
+		while((arg = getopt(argc, argv, "vhVw:c:n:p:t:H:i:b:I:l:")) != EOF) {
+			switch(arg) {
+			case 'v':
+				debug++;
+				break;
+			case 'b':
+				/* silently ignored for now */
+				break;
+			case 'i':
+				pkt_interval = get_timevar(optarg);
+				break;
+			case 'I':
+				target_interval = get_timevar(optarg);
+				break;
+			case 'w':
+				get_threshold(optarg, &warn);
+				break;
+			case 'c':
+				get_threshold(optarg, &crit);
+				break;
+			case 'n':
+			case 'p':
+				packets = strtoul(optarg, NULL, 0);
+				break;
+			case 't':
+				timeout = strtoul(optarg, NULL, 0);
+				if(!timeout) timeout = 10;
+				break;
+			case 'H':
+				add_target(optarg);
+				break;
+			case 'l':
+				ttl = (unsigned char)strtoul(optarg, NULL, 0);
+				break;
+			case 'd': /* implement later, for cluster checks */
+				warn_down = (unsigned char)strtoul(optarg, &ptr, 0);
+				if(ptr) {
+					crit_down = (unsigned char)strtoul(ptr + 1, NULL, 0);
+				}
+				break;
+			case 'h': case 'V': default:
+				usage(arg, NULL);
+				break;
 			}
-
-			if(!multif_flag) break;
-
-			host_add = (struct in_addr *)(host_ent->h_addr_list[++i]);
-		}						/* WHILE */
-	}							/* ELSE */
-}								/* add_name() */
-
-
-char *na_cat(char *name, struct in_addr ipaddr)
-{
-	char *nm, *as;
-
-	as = inet_ntoa(ipaddr);
-	nm = (char *)malloc(strlen(name) + strlen(as) + 4);
-
-	if(!nm)
-		crash(_("Can't allocate some space for a string"));
-
-	strcpy(nm, name);
-	strcat(nm, " (");
-	strcat(nm, as);
-	strcat(nm, ")");
-
-	return (nm);
-
-}								/* na_cat() */
-
-
-void add_addr(char *name, char *host, struct in_addr ipaddr)
-{
-	HOST_ENTRY *p;
-	unsigned int n;
-	int *i;
-
-	if(!(p = (HOST_ENTRY *) malloc(sizeof(HOST_ENTRY)))) {
-		crash(_("Can't allocate HOST_ENTRY"));
+		}
 	}
 
-	memset((char *)p, 0, sizeof(HOST_ENTRY));
-
-	p->name = name;
-	p->host = host;
-	p->saddr.sin_family = AF_INET;
-	p->saddr.sin_addr = ipaddr;
-	p->running = 1;
-
-	/* array for response time results */
-	if(!(i = (int *)malloc(trials * sizeof(int)))) {
-		crash(_("Can't allocate resp_times array"));
+	argv = &argv[optind];
+	while(*argv) {
+		add_target(*argv);
+		argv++;
+	}
+	if(!targets) {
+		errno = 0;
+		crash("No hosts to check");
+		exit(3);
 	}
 
-	for(n = 1; n < trials; n++)
-		i[n] = RESP_UNUSED;
-
-		p->resp_times = i;
-
-	if(!rrlist) {
-		rrlist = p;
-		p->next = p;
-		p->prev = p;
-	}							/* IF */
-	else {
-		p->next = rrlist;
-		p->prev = rrlist->prev;
-		p->prev->next = p;
-		p->next->prev = p;
-	}							/* ELSE */
-
-	num_hosts++;
-}								/* add_addr() */
-
-
-void remove_job(HOST_ENTRY * h)
-{
-	h->running = 0;
-	h->waiting = 0;
-	num_jobs--;
-
-	
-	if(num_jobs) {
-		/* remove us from list of active jobs */
-		h->prev->next = h->next;
-		h->next->prev = h->prev;
-		if(h == cursor) cursor = h->next;
-	}							/* IF */
-	else {
-		cursor = NULL;
-		rrlist = NULL;
-	}							/* ELSE */
-
-}								/* remove_job() */
-
-
-char *get_host_by_address(struct in_addr in)
-{
-	struct hostent *h;
-	h = gethostbyaddr((char *)&in, sizeof(struct in_addr), AF_INET);
-
-	if(h == NULL || h->h_name == NULL)
-		return inet_ntoa(in);
-	else
-		return (char *)h->h_name;
-
-}								/* get_host_by_address() */
-
-
-char *cpystr(char *string)
-{
-	char *dst;
-
-	if(string) {
-		dst = (char *)malloc(1 + strlen(string));
-		if(!dst) crash(_("malloc() failed!"));
-
-		strcpy(dst, string);
-		return dst;
-
-	}							/* IF */
-	else return NULL;
-
-}								/* cpystr() */
-
-
-void crash(char *msg)
-{
-	if(errno || h_errno) {
-		if(errno)
-			printf("%s: %s : %s\n", prog, msg, strerror(errno));
-		if(h_errno)
-			printf(_("%s: %s : A network error occurred\n"), prog, msg);
+	if(!sockets) {
+		if(icmp_sock == -1) {
+			errno = icmp_sockerrno;
+			crash("Failed to obtain ICMP socket");
+			return -1;
+		}
+		/* if(udp_sock == -1) { */
+		/* 	errno = icmp_sockerrno; */
+		/* 	crash("Failed to obtain UDP socket"); */
+		/* 	return -1; */
+		/* } */
+		/* if(tcp_sock == -1) { */
+		/* 	errno = icmp_sockerrno; */
+		/* 	crash("Failed to obtain TCP socker"); */
+		/* 	return -1; */
+		/* } */
 	}
-	else printf("%s: %s\n", prog, msg);
+	if(!ttl) ttl = 64;
 
-	exit(STATE_UNKNOWN);
-}								/* crash() */
+	if(icmp_sock) {
+		result = setsockopt(icmp_sock, SOL_IP, IP_TTL, &ttl, sizeof(ttl));
+		if(debug) {
+			if(result == -1) printf("setsockopt failed\n");
+			else printf("ttl set to %u\n", ttl);
+		}
+	}
 
+	/* stupid users should be able to give whatever thresholds they want
+	 * (nothing will break if they do), but some anal plugin maintainer
+	 * will probably add some printf() thing here later, so it might be
+	 * best to at least show them where to do it. ;) */
+	if(warn.pl > crit.pl) warn.pl = crit.pl;
+	if(warn.rta > crit.rta) warn.rta = crit.rta;
+	if(warn_down > crit_down) crit_down = warn_down;
 
-long timeval_diff(struct timeval *a, struct timeval *b)
+	signal(SIGINT, finish);
+	signal(SIGHUP, finish);
+	signal(SIGTERM, finish);
+	signal(SIGALRM, finish);
+	if(debug) printf("Setting alarm timeout to %u seconds\n", timeout);
+	alarm(timeout);
+
+	/* make sure we don't wait any longer than necessary */
+	gettimeofday(&prog_start, &tz);
+	max_completion_time =
+		((targets * packets * pkt_interval) + (targets * target_interval)) +
+		(targets * packets * crit.rta) + crit.rta;
+
+	if(debug) {
+		printf("packets: %u, targets: %u\n"
+			   "target_interval: %0.3f, pkt_interval %0.3f\n"
+			   "crit.rta: %0.3f\n"
+			   "max_completion_time: %0.3f\n",
+			   packets, targets,
+			   (float)target_interval / 1000, (float)pkt_interval / 1000,
+			   (float)crit.rta / 1000,
+			   (float)max_completion_time / 1000);
+	}
+
+	if(debug) {
+		if(max_completion_time > (u_int)timeout * 1000000) {
+			printf("max_completion_time: %llu  timeout: %u\n",
+				   max_completion_time, timeout);
+			printf("Timout must be at lest %llu\n",
+				   max_completion_time / 1000000 + 1);
+		}
+	}
+
+	icmp_pkt_size = icmp_data_size + ICMP_MINLEN;
+	if(debug > 2) printf("icmp_pkt_size = %u\n", icmp_pkt_size);
+	if(icmp_pkt_size < sizeof(struct icmp) + sizeof(struct icmp_ping_data)) {
+		icmp_pkt_size = sizeof(struct icmp) + sizeof(struct icmp_ping_data);
+	}
+	if(debug > 2) printf("icmp_pkt_size = %u\n", icmp_pkt_size);
+
+	if(debug) {
+		printf("crit = {%u, %u%%}, warn = {%u, %u%%}\n",
+			   crit.rta, crit.pl, warn.rta, warn.pl);
+		printf("pkt_interval: %u  target_interval: %u  retry_interval: %u\n",
+			   pkt_interval, target_interval, retry_interval);
+		printf("icmp_pkt_size: %u  timeout: %u\n",
+			   icmp_pkt_size, timeout);
+	}
+
+	if(packets > 20) {
+		errno = 0;
+		crash("packets is > 20 (%d)", packets);
+	}
+
+	host = list;
+	table = malloc(sizeof(struct rta_host **) * (argc - 1));
+	i = 0;
+	while(host) {
+		host->id = i;
+		table[i] = host;
+		host = host->next;
+		i++;
+	}
+
+	run_checks();
+
+	errno = 0;
+	finish(0);
+
+	return(0);
+}
+
+static void
+run_checks()
 {
-	double temp;
+	u_int i, t, result;
+	u_int final_wait, time_passed;
 
-	temp = (((a->tv_sec * 1000000) + a->tv_usec) -
-			((b->tv_sec * 1000000) + b->tv_usec)) / 10;
+	/* this loop might actually violate the pkt_interval or target_interval
+	 * settings, but only if there aren't any packets on the wire which
+	 * indicates that the target can handle an increased packet rate */
+	for(i = 0; i < packets; i++) {
+		for(t = 0; t < targets; t++) {
+			/* don't send useless packets */
+			if(!targets_alive) finish(0);
+			if(table[t]->flags & FLAG_LOST_CAUSE) {
+				if(debug) printf("%s is a lost cause. not sending any more\n",
+								 table[t]->name);
+				continue;
+			}
+			
+			/* we're still in the game, so send next packet */
+			(void)send_icmp_ping(icmp_sock, table[t]);
+			result = wait_for_reply(icmp_sock, target_interval);
+		}
+		result = wait_for_reply(icmp_sock, pkt_interval * targets);
+	}
 
-	return (long)temp;
+	if(icmp_pkts_en_route && targets_alive) {
+		time_passed = get_timevaldiff(NULL, NULL);
+		final_wait = max_completion_time - time_passed;
 
-}								/* timeval_diff() */
+		if(debug) {
+			printf("time_passed: %u  final_wait: %u  max_completion_time: %llu\n",
+				   time_passed, final_wait, max_completion_time);
+		}
+		if(time_passed > max_completion_time) {
+			if(debug) printf("Time passed. Finishing up\n");
+			finish(0);
+		}
 
+		/* catch the packets that might come in within the timeframe, but
+		 * haven't yet */
+		if(debug) printf("Waiting for %u micro-seconds (%0.3f msecs)\n",
+						 final_wait, (float)final_wait / 1000);
+		result = wait_for_reply(icmp_sock, final_wait);
+	}
+}
 
-char *sprint_tm(int t)
-{
-	static char buf[10];
-
-	/* <= 0.99 ms */
-	if(t < 100) {
-		sprintf(buf, "0.%02d", t);
-		return (buf);
-	}							/* IF */
-
-	/* 1.00 - 9.99 ms */
-	if(t < 1000) {
-		sprintf(buf, "%d.%02d", t / 100, t % 100);
-		return (buf);
-	}							/* IF */
-
-	/* 10.0 - 99.9 ms */
-	if(t < 10000) {
-		sprintf(buf, "%d.%d", t / 100, (t % 100) / 10);
-		return (buf);
-	}							/* IF */
-
-	/* >= 100 ms */
-	sprintf(buf, "%d", t / 100);
-	return (buf);
-}								/* sprint_tm() */
-
-
-/*
- * select() is posix, so we expect it to be around
+/* response structure:
+ * ip header   : 20 bytes
+ * icmp header : 28 bytes
+ * icmp echo reply : the rest
  */
-void u_sleep(int u_sec)
+static int
+wait_for_reply(int sock, u_int t)
 {
-	int nfound;
-	struct timeval to;
-	fd_set readset, writeset;
-	
-	to.tv_sec = u_sec / 1000000;
-	to.tv_usec = u_sec - (to.tv_sec * 1000000);
-/*	printf("u_sleep :: to.tv_sec: %d, to_tv_usec: %d\n",
-		   (int)to.tv_sec, (int)to.tv_usec);
-*/	
-	FD_ZERO(&writeset);
-	FD_ZERO(&readset);
-	nfound = select(0, &readset, &writeset, NULL, &to);
-	if(nfound < 0)
-		crash(_("select() in u_sleep:"));
+	int n, hlen;
+	static char buf[4096];
+	struct sockaddr_in resp_addr;
+	struct ip *ip;
+	struct icmp *icp, *sent_icmp;
+	struct rta_host *host;
+	struct icmp_ping_data *data;
+	struct timeval wait_start, now;
+	u_int tdiff, i, per_pkt_wait;
 
-	return;
-}								/* u_sleep() */
+	/* if we can't listen or don't have anything to listen to, just return */
+	if(!t || !icmp_pkts_en_route) return 0;
 
+	gettimeofday(&wait_start, &tz);
 
-/************************************************************
- * Description:
- *
- * receive with timeout
- * returns length of data read or -1 if timeout
- * crash on any other errrors
- ************************************************************/
-/* TODO: add MSG_DONTWAIT to recvfrom flags (currently 0) */
-int recvfrom_wto(int lsock, char *buf, int len, struct sockaddr *saddr, int timo)
-{
-	int nfound = 0, slen, n;
-	struct timeval to;
-	fd_set readset, writeset;
+	i = t;
+	per_pkt_wait = t / icmp_pkts_en_route;
+	while(icmp_pkts_en_route && get_timevaldiff(&wait_start, NULL) < i) {
+		t = per_pkt_wait;
 
-	to.tv_sec = timo / 1000000;
-	to.tv_usec = (timo - (to.tv_sec * 1000000)) * 10;
+		/* wrap up if all targets are declared dead */
+		if(!targets_alive ||
+		   get_timevaldiff(&prog_start, NULL) >= max_completion_time ||
+		   (mode == MODE_HOSTCHECK && targets_down))
+		{
+			finish(0);
+		}
 
-/*	printf("to.tv_sec: %d, to.tv_usec: %d\n", (int)to.tv_sec, (int)to.tv_usec);
-*/
+		/* reap responses until we hit a timeout */
+		n = recvfrom_wto(sock, buf, sizeof(buf),
+						 (struct sockaddr *)&resp_addr, &t);
+		if(!n) {
+			if(debug > 1) {
+				printf("recvfrom_wto() timed out during a %u usecs wait\n",
+					   per_pkt_wait);
+			}
+			continue;	/* timeout for this one, so keep trying */
+		}
+		if(n < 0) {
+			if(debug) printf("recvfrom_wto() returned errors\n");
+			return n;
+		}
 
-	FD_ZERO(&readset);
-	FD_ZERO(&writeset);
-	FD_SET(lsock, &readset);
-	nfound = select(lsock + 1, &readset, &writeset, NULL, &to);
-	if(nfound < 0) crash(_("select() in recvfrom_wto"));
+		ip = (struct ip *)buf;
+		if(debug > 1) printf("received %u bytes from %s\n",
+						 ntohs(ip->ip_len), inet_ntoa(resp_addr.sin_addr));
 
-	if(nfound == 0) return -1;				/* timeout */
+/* obsolete. alpha on tru64 provides the necessary defines, but isn't broken */
+/* #if defined( __alpha__ ) && __STDC__ && !defined( __GLIBC__ ) */
+		/* alpha headers are decidedly broken. Using an ansi compiler,
+		 * they provide ip_vhl instead of ip_hl and ip_v, so we mask
+		 * off the bottom 4 bits */
+/* 		hlen = (ip->ip_vhl & 0x0f) << 2; */
+/* #else */
+		hlen = ip->ip_hl << 2;
+/* #endif */
 
-	if(nfound) {
-		slen = sizeof(struct sockaddr);
-		n = recvfrom(sock, buf, len, 0, saddr, &slen);
-		if(n < 0) crash(_("recvfrom"));
-		return(n);
+		if(n < (hlen + ICMP_MINLEN)) {
+			crash("received packet too short for ICMP (%d bytes, expected %d) from %s\n",
+				  n, hlen + icmp_pkt_size, inet_ntoa(resp_addr.sin_addr));
+		}
+		/* else if(debug) { */
+		/* 	printf("ip header size: %u, packet size: %u (expected %u, %u)\n", */
+		/* 		   hlen, ntohs(ip->ip_len) - hlen, */
+		/* 		   sizeof(struct ip), icmp_pkt_size); */
+		/* } */
+
+		/* check the response */
+		icp = (struct icmp *)(buf + hlen);
+		sent_icmp = (struct icmp *)(buf + hlen + ICMP_MINLEN);
+		/* printf("buf: %p, icp: %p, distance: %u (expected %u)\n", */
+		/* 	   buf, icp, */
+		/* 	   (u_int)icp - (u_int)buf, hlen); */
+		/* printf("buf: %p, sent_icmp: %p, distance: %u (expected %u)\n", */
+		/* 	   buf, sent_icmp, */
+		/* 	   (u_int)sent_icmp - (u_int)buf, hlen + ICMP_MINLEN); */
+
+		if(icp->icmp_id != pid) {
+			handle_random_icmp(icp, &resp_addr);
+			continue;
+		}
+
+		if(icp->icmp_type != ICMP_ECHOREPLY || icp->icmp_seq >= targets) {
+			if(debug > 2) printf("not a proper ICMP_ECHOREPLY\n");
+			handle_random_icmp(icp, &resp_addr);
+			continue;
+		}
+
+		/* this is indeed a valid response */
+		data = (struct icmp_ping_data *)(icp->icmp_data);
+
+		host = table[icp->icmp_seq];
+		gettimeofday(&now, &tz);
+		tdiff = get_timevaldiff(&data->stime, &now);
+
+		host->time_waited += tdiff;
+		host->icmp_recv++;
+		icmp_recv++;
+
+		if(debug) {
+			printf("%0.3f ms rtt from %s, outgoing ttl: %u, incoming ttl: %u\n",
+				   (float)tdiff / 1000, inet_ntoa(resp_addr.sin_addr),
+				   ttl, ip->ip_ttl);
+		}
+
+		/* if we're in hostcheck mode, exit with limited printouts */
+		if(mode == MODE_HOSTCHECK) {
+			printf("OK - %s responds to ICMP. Packet %u, rta %0.3fms|"
+				   "pkt=%u;;0;%u rta=%0.3f;%0.3f;%0.3f;;\n",
+				   host->name, icmp_recv, (float)tdiff / 1000,
+				   icmp_recv, packets, (float)tdiff / 1000,
+				   (float)warn.rta / 1000, (float)crit.rta / 1000);
+			exit(STATE_OK);
+		}
 	}
 
-	return(0);	/* 0 bytes read, so return it */
-}								/* recvfrom_wto() */
+	return 0;
+}
 
+/* the ping functions */
+static int
+send_icmp_ping(int sock, struct rta_host *host)
+{
+	static char *buf = NULL; /* re-use so we prevent leaks */
+	long int len;
+	struct icmp *icp;
+	struct icmp_ping_data *data;
+	struct timeval tv;
+	struct sockaddr *addr;
 
+	
+	if(sock == -1) {
+		errno = 0;
+		crash("Attempt to send on bogus socket");
+		return -1;
+	}
+	addr = (struct sockaddr *)&host->saddr_in;
+
+	if(!buf) {
+		buf = (char *)malloc(icmp_pkt_size + sizeof(struct ip));
+		if(!buf) {
+			crash("send_icmp_ping(): failed to malloc %d bytes for send buffer",
+				  icmp_pkt_size);
+			return -1;	/* might be reached if we're in debug mode */
+		}
+	}
+	memset(buf, 0, icmp_pkt_size + sizeof(struct ip));
+
+	if((gettimeofday(&tv, &tz)) == -1) return -1;
+
+	icp = (struct icmp *)buf;
+	icp->icmp_type = ICMP_ECHO;
+	icp->icmp_code = 0;
+	icp->icmp_cksum = 0;
+	icp->icmp_id = pid;
+	icp->icmp_seq = host->id;
+	data = (struct icmp_ping_data *)icp->icmp_data;
+	data->ping_id = 10; /* host->icmp.icmp_sent; */
+	memcpy(&data->stime, &tv, sizeof(struct timeval));
+	icp->icmp_cksum = icmp_checksum((u_short *)icp, icmp_pkt_size);
+
+	len = sendto(sock, buf, icmp_pkt_size, 0, (struct sockaddr *)addr,
+				 sizeof(struct sockaddr));
+
+	if(len < 0 || (unsigned int)len != icmp_pkt_size) {
+		if(debug) printf("Failed to send ping to %s\n",
+						 inet_ntoa(host->saddr_in.sin_addr));
+		return -1;
+	}
+
+	icmp_sent++;
+	host->icmp_sent++;
+
+	return 0;
+}
+
+static int
+recvfrom_wto(int sock, char *buf, unsigned int len, struct sockaddr *saddr,
+			 u_int *timo)
+{
+	u_int slen;
+	int n;
+	struct timeval to, then, now;
+	fd_set rd, wr;
+
+	if(!*timo) {
+		if(debug) printf("*timo is not\n");
+		return 0;
+	}
+
+	to.tv_sec = *timo / 1000000;
+	to.tv_usec = (*timo - (to.tv_sec * 1000000));
+
+	FD_ZERO(&rd);
+	FD_ZERO(&wr);
+	FD_SET(sock, &rd);
+	errno = 0;
+	gettimeofday(&then, &tz);
+	n = select(sock + 1, &rd, &wr, NULL, &to);
+	if(n < 0) crash("select() in recvfrom_wto");
+	gettimeofday(&now, &tz);
+	*timo = get_timevaldiff(&then, &now);
+
+	if(!n) return 0;				/* timeout */
+
+	slen = sizeof(struct sockaddr);
+
+	return recvfrom(sock, buf, len, 0, saddr, &slen);
+}
+
+static void
+finish(int sig)
+{
+	u_int i = 0;
+	unsigned char pl;
+	double rta;
+	struct rta_host *host;
+	char *status_string[] =
+	{"OK", "WARNING", "CRITICAL", "UNKNOWN", "DEPENDENT"};
+
+	alarm(0);
+	if(debug > 1) printf("finish(%d) called\n", sig);
+
+	if(icmp_sock != -1) close(icmp_sock);
+	if(udp_sock != -1) close(udp_sock);
+	if(tcp_sock != -1) close(tcp_sock);
+
+	if(debug) {
+		printf("icmp_sent: %u  icmp_recv: %u  icmp_lost: %u\n",
+			   icmp_sent, icmp_recv, icmp_lost);
+		printf("targets: %u  targets_alive: %u\n", targets, targets_alive);
+	}
+
+	/* iterate thrice to calculate values, give output, and print perfparse */
+	host = list;
+	while(host) {
+		if(!host->icmp_recv) {
+			/* rta 0 is ofcourse not entirely correct, but will still show up
+			 * conspicuosly as missing entries in perfparse and cacti */
+			pl = 100;
+			rta = 0;
+			status = STATE_CRITICAL;
+			/* up the down counter if not already counted */
+			if(!(host->flags & FLAG_LOST_CAUSE) && targets_alive) targets_down++;
+		}
+		else {
+			pl = ((host->icmp_sent - host->icmp_recv) * 100) / host->icmp_sent;
+			rta = (double)host->time_waited / host->icmp_recv;
+		}
+		host->pl = pl;
+		host->rta = rta;
+		if(!status && (pl >= warn.pl || rta >= warn.rta)) status = STATE_WARNING;
+		if(pl >= crit.pl || rta >= crit.rta) status = STATE_CRITICAL;
+
+		host = host->next;
+	}
+	/* this is inevitable */
+	if(!targets_alive) status = STATE_CRITICAL;
+	printf("%s - ", status_string[status]);
+
+	host = list;
+	while(host) {
+		if(debug) puts("");
+		if(i) {
+			if(i < targets) printf(" :: ");
+			else printf("\n");
+		}
+		i++;
+		if(!host->icmp_recv) {
+			status = STATE_CRITICAL;
+			if(host->flags & FLAG_LOST_CAUSE) {
+				printf("%s: %s @ %s. rta nan, lost %d%%",
+					   host->name,
+					   get_icmp_error_msg(host->icmp_type, host->icmp_code),
+					   inet_ntoa(host->error_addr),
+					   100);
+			}
+			else { /* not marked as lost cause, so we have no flags for it */
+				printf("%s: rta nan, lost 100%%", host->name);
+			}
+		}
+		else {	/* !icmp_recv */
+			printf("%s: rta %0.3fms, lost %u%%",
+				   host->name, host->rta / 1000, host->pl);
+		}
+
+		host = host->next;
+	}
+
+	/* iterate once more for pretty perfparse output */
+	printf("|");
+	i = 0;
+	host = list;
+	while(host) {
+		if(debug) puts("");
+		printf("%srta=%0.3fms;%0.3f;%0.3f;0; %spl=%u%%;%u;%u;; ",
+			   (targets > 1) ? host->name : "",
+			   host->rta / 1000, (float)warn.rta / 1000, (float)crit.rta / 1000,
+			   (targets > 1) ? host->name : "",
+			   host->pl, warn.pl, crit.pl);
+
+		host = host->next;
+	}
+
+	/* finish with an empty line */
+	puts("");
+	if(debug) printf("targets: %u, targets_alive: %u\n",
+					 targets, targets_alive);
+
+	exit(status);
+}
+
+static u_int
+get_timevaldiff(struct timeval *early, struct timeval *later)
+{
+	u_int ret;
+	struct timeval now;
+
+	if(!later) {
+		gettimeofday(&now, &tz);
+		later = &now;
+	}
+	if(!early) early = &prog_start;
+
+	/* if early > later we return 0 so as to indicate a timeout */
+	if(early->tv_sec > early->tv_sec ||
+	   (early->tv_sec == later->tv_sec && early->tv_usec > later->tv_usec))
+	{
+		return 0;
+	}
+
+	ret = (later->tv_sec - early->tv_sec) * 1000000;
+	ret += later->tv_usec - early->tv_usec;
+
+	return ret;
+}
+
+static int
+add_target_ip(char *arg, struct in_addr *in)
+{
+	struct rta_host *host;
+
+	/* disregard obviously stupid addresses */
+	if(in->s_addr == INADDR_NONE || in->s_addr == INADDR_ANY)
+		return -1;
+
+	/* no point in adding two identical IP's, so don't. ;) */
+	host = list;
+	while(host) {
+		if(host->saddr_in.sin_addr.s_addr == in->s_addr) {
+			if(debug) printf("Identical IP already exists. Not adding %s\n", arg);
+			return -1;
+		}
+		host = host->next;
+	}
+
+	/* add the fresh ip */
+	host = malloc(sizeof(struct rta_host));
+	if(!host) {
+		crash("add_target_ip(%s, %s): malloc(%d) failed",
+			  arg, inet_ntoa(*in), sizeof(struct rta_host));
+	}
+	memset(host, 0, sizeof(struct rta_host));
+
+	/* set the values. use calling name for output */
+	host->name = strdup(arg);
+
+	/* fill out the sockaddr_in struct */
+	host->saddr_in.sin_family = AF_INET;
+	host->saddr_in.sin_addr.s_addr = in->s_addr;
+
+	if(!list) list = cursor = host;
+	else cursor->next = host;
+
+	cursor = host;
+	targets++;
+
+	return 0;
+}
+
+/* wrapper for add_target_ip */
+static int
+add_target(char *arg)
+{
+	int i;
+	struct hostent *he;
+	struct in_addr *in, ip;
+
+	/* don't resolve if we don't have to */
+	if((ip.s_addr = inet_addr(arg)) != INADDR_NONE) {
+		/* don't add all ip's if we were given a specific one */
+		return add_target_ip(arg, &ip);
+		/* he = gethostbyaddr((char *)in, sizeof(struct in_addr), AF_INET); */
+		/* if(!he) return add_target_ip(arg, in); */
+	}
+	else {
+		errno = 0;
+		he = gethostbyname(arg);
+		if(!he) {
+			errno = 0;
+			crash("Failed to resolve %s", arg);
+			return -1;
+		}
+	}
+
+	/* possibly add all the IP's as targets */
+	for(i = 0; he->h_addr_list[i]; i++) {
+		in = (struct in_addr *)he->h_addr_list[i];
+		add_target_ip(arg, in);
+
+		/* this is silly, but it works */
+		if(mode == MODE_HOSTCHECK || mode == MODE_ALL) {
+			printf("mode: %d\n", mode);
+			continue;
+		}
+		break;
+	}
+
+	return 0;
+}
 /*
  * u = micro
  * m = milli
  * s = seconds
+ * return value is in microseconds
  */
-int get_threshold(char *str, threshold *th)
+static u_int
+get_timevar(const char *str)
 {
-	unsigned int i, factor = 0;
-	char *p = NULL;
+	char p, u, *ptr;
+	unsigned int len;
+	u_int i, d;	            /* integer and decimal, respectively */
+	u_int factor = 1000;    /* default to milliseconds */
+
+	if(!str) return 0;
+	len = strlen(str);
+	if(!len) return 0;
+
+	/* unit might be given as ms|m (millisec),
+	 * us|u (microsec) or just plain s, for seconds */
+	u = p = '\0';
+	u = str[len - 1];
+	if(len >= 2 && !isdigit((int)str[len - 2])) p = str[len - 2];
+	if(p && u == 's') u = p;
+	else if(!p) p = u;
+	if(debug > 2) printf("evaluating %s, u: %c, p: %c\n", str, u, p);
+
+	if(u == 'u') factor = 1;            /* microseconds */
+	else if(u == 'm') factor = 1000;	/* milliseconds */
+	else if(u == 's') factor = 1000000;	/* seconds */
+	if(debug > 2) printf("factor is %u\n", factor);
+
+	i = strtoul(str, &ptr, 0);
+	if(!ptr || *ptr != '.' || strlen(ptr) < 2 || factor == 1)
+		return i * factor;
+
+	/* time specified in usecs can't have decimal points, so ignore them */
+	if(factor == 1) return i;
+
+	d = strtoul(ptr + 1, NULL, 0);
+
+	/* d is decimal, so get rid of excess digits */
+	while(d >= factor) d /= 10;
+
+	/* the last parenthesis avoids floating point exceptions. */
+	return ((i * factor) + (d * (factor / 10)));
+}
+
+/* not too good at checking errors, but it'll do (main() should barfe on -1) */
+static int
+get_threshold(char *str, threshold *th)
+{
+	char *p = NULL, i = 0;
 
 	if(!str || !strlen(str) || !th) return -1;
 
-	for(i=0; i<strlen(str); i++) {
-		/* we happily accept decimal points in round trip time thresholds,
-		 * but we ignore them quite blandly. The new way of specifying higher
-		 * precision is to specify 'u' (for microseconds),
-		 * 'm' (for millisecs - default) or 's' for seconds. */
-		if(!p && !factor) {
-			if(str[i] == 's') factor = 1000000;		/* seconds */
-			else if(str[i] == 'm') factor = 1000;	/* milliseconds */
-			else if(str[i] == 'u') factor = 1;		/* microseconds */
+	/* pointer magic slims code by 10 lines. i is bof-stop on stupid libc's */
+	p = &str[strlen(str) - 1];
+	while(p != &str[1]) {
+		if(*p == '%') *p = '\0';
+		else if(*p == ',' && i) {
+			*p = '\0';	/* reset it so get_timevar(str) works nicely later */
+			th->pl = (unsigned char)strtoul(p+1, NULL, 0);
+			break;
 		}
-
-		if(str[i] == '%') str[i] = '\0';
-		else if(str[i] == ',' && !p && i != (strlen(str) - 1)) {
-			p = &str[i+1];
-			str[i] = '\0';
-		}
+		i = 1;
+		p--;
 	}
+	th->rta = get_timevar(str);
 
-	/* default to milliseconds */
-	if(!factor) factor = 1000;
+	if(!th->rta) return -1;
 
-	if(!p || !strlen(p)) return -1;
-	th->rta = (unsigned int)strtoul(str, NULL, 0) * factor;
-	th->pl = (unsigned int)strtoul(p, NULL, 0);
+	if(th->rta > MAXTTL * 1000000) th->rta = MAXTTL * 1000000;
+	if(th->pl > 100) th->pl = 100;
+
 	return 0;
 }
 
-void
-print_help (void)
+unsigned short
+icmp_checksum(unsigned short *p, int n)
 {
-	print_revision (progname, revision);
+	register unsigned short cksum;
+	register long sum = 0;
 
-	printf ("Copyright (c) 2004 Andreas Ericsson <ae@op5.se>\n");
-	printf (COPYRIGHT, copyright, email);
+	while(n > 1) {
+		sum += *p++;
+		n -= 2;
+	}
 
-	printf (_("This plugin will check hosts sending icmp pings\n\n"));
+	/* mop up the occasional odd byte */
+	if(n == 1) sum += (unsigned char)*p;
 
-	print_usage ();
+	sum = (sum >> 16) + (sum & 0xffff);	/* add hi 16 to low 16 */
+	sum += (sum >> 16);			/* add carry */
+	cksum = ~sum;				/* ones-complement, trunc to 16 bits */
 
-	printf (_(UT_HELP_VRSN));
-	
-	printf (_("\
- -H, \n\
-    Host name argument for servers\n\
- -b  \n\
-   ping packet size in bytes (default %d)\n\
- -n  \n\
-   number of pings to send to each target (default %d)\n\
- -r  \n\
-   number of retries (default %d)\n\
- -t  \n\
-   timeout value (in msec) (default %d)\n\
- -i  \n\
-   packet interval (in msec) (default %d)\n\
- -w  \n\
-   warning threshold pair, given as RTA[ums],PL[%%]\n\
- -c  \n\
-   critical threshold pair, given as RTA[ums],PL[%%]\n\
- -D  \n\
-   increase debug output level\n\n"),ping_data_size,count,retry,(timeout / 100),DEFAULT_INTERVAL);
-
-	printf (_(UT_WARN_CRIT));
-
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-
-	printf (_(UT_VERBOSE));
-
-//	printf (_("This plugin will check hosts sending icmp pings\n"));
-
-	printf (_(UT_SUPPORT));
+	return cksum;
 }
 
-void
-print_usage (void)
+/* make core plugin developers happy (silly, really) */
+static void
+usage(unsigned char arg, char *msg)
 {
-	printf ("\
-Usage: %s -H <vhost> | [-b <ping packet size in bytes>] [-n <number of pings>]\n\
-                  [-r <number of retries>] [-t <timeout>] [-i packet interval]\n\
-                  [-w <warning threshold>] [-c <critical threshold>]\n\
-                  [-D <debug>] \n", progname);
+	if(msg) printf("%s: %s\n", progname, msg);
+
+	if(arg == 'V') {
+		printf("$Id$\n");
+		exit(STATE_UNKNOWN);
+	}
+
+	printf("Usage: %s [options] [-H] host1 host2 hostn\n\n", progname);
+
+	if(arg != 'h') exit(3);
+
+	printf("Where options are any combination of:\n"
+		   " * -H | --host        specify a target\n"
+		   " * -w | --warn        warning threshold (currently %0.3fms,%u%%)\n"
+		   " * -c | --crit        critical threshold (currently %0.3fms,%u%%)\n"
+		   " * -n | --packets     number of packets to send (currently %u)\n"
+		   " * -i | --interval    max packet interval (currently %0.3fms)\n"
+		   " * -I | --hostint     max target interval (currently %0.3fms)\n"
+		   " * -l | --ttl         TTL on outgoing packets (currently %u)\n"
+		   " * -t | --timeout     timeout value (seconds, currently  %u)\n"
+		   " * -b | --bytes       icmp packet size (currenly ignored)\n"
+		   "   -v | --verbose     verbosity++\n"
+		   "   -h | --help        this cruft\n",
+		   (float)warn.rta / 1000, warn.pl, (float)crit.rta / 1000, crit.pl,
+		   packets,
+		   (float)pkt_interval / 1000, (float)target_interval / 1000,
+		   ttl, timeout);
+
+	puts("\nThe -H switch is optional. Naming a host (or several) to check is not.\n\n"
+		 "Threshold format for -w and -c is 200.25,60% for 200.25 msec RTA and 60%\n"
+		 "packet loss.  The default values should work well for most users.\n"
+		 "You can specify different RTA factors using the standardized abbreviations\n"
+		 "us (microseconds), ms (milliseconds, default) or just plain s for seconds.\n\n"
+		 "Threshold format for -d is warn,crit.  12,14 means WARNING if >= 12 hops\n"
+		 "are spent and CRITICAL if >= 14 hops are spent.\n"
+		 "NOTE: Some systems decrease TTL when forming ICMP_ECHOREPLY, others do not.\n\n"
+		 "The -v switch can be specified several times for increased verbosity.\n\n"
+		 "Long options are currently unsupported.\n\n"
+		 "Options marked with * require an argument\n");
+
+	puts("The latest version of this plugin can be found at http://oss.op5.se/nagios\n"
+		 "or https://devel.op5.se/oss until the day it is included in the official\n"
+		 "plugin distribution.\n");
+
+	exit(3);
 }
