@@ -37,7 +37,8 @@ AC_ARG_PROGRAM
 
 dnl AC_ARG_WITH(nonposix_state_defs,--with-nonposix-state-defs uses POSIXLY incorrect states for netsaint < 0.0.7b2,,AC_DEFINE(POSIX_STATE_DEFS))
 
-AC_ARG_WITH(cgiurl,--with-cgiurl=<dir> sets URL for cgi programs,cgiurl=$withval,cgiurl=/cgi-bin/nagios)
+dnl CGIURL has changed for Nagios with 1.0 beta
+AC_ARG_WITH(cgiurl,--with-cgiurl=<dir> sets URL for cgi programs,cgiurl=$withval,cgiurl=/nagios/cgi-bin)
 CGIURL="$cgiurl"
 AC_DEFINE_UNQUOTED(CGIURL,"$CGIURL")
 
@@ -52,7 +53,7 @@ AC_ARG_WITH(trusted_path,--with-trusted-path=/bin:/sbin:/usr/bin:/usr/sbin sets 
 AC_SUBST(trusted_path)
 
 EXTRAS=
-PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/etc:/usr/local/bin:/usr/local/sbin:$PATH
+dnl PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/etc:/usr/local/bin:/usr/local/sbin:$PATH
 
 LDFLAGS="$LDFLAGS -L."
 
@@ -314,7 +315,21 @@ then
 	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s")
 	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -axo 'rss comm'")
 	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s")
-  echo "      ps syntax... $PATH_TO_PS -eo 'stat comm vsz rss user ppid args'"
+  echo "      ps syntax... $PATH_TO_PS -axo 'stat comm vsz rss user ppid args'"
+dnl AIX 4.3.3 - needs verification.
+elif [ps -ao 'stat comm vsz rss user uid ppid args' 2>/dev/null | egrep -i "^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ +U[ID]+ +P[PID]+ +[RGSCOMDNA]+" >/dev/null]
+then
+	AC_DEFINE(USE_PS_VARS)
+	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,procprog,&pos])
+	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS -ao 'stat user ppid args'")
+	EXTRAS="$EXTRAS check_nagios"
+	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -ao 'stat uid ppid comm args'")
+	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n")
+	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -ao 'vsz comm'")
+	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s")
+	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -ao 'rss comm'")
+	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s")
+  echo "      ps syntax... $PATH_TO_PS -ao 'stat comm vsz rss user ppid args'"
 elif [ps -eo 's comm vsz rss user uid ppid args' 2>/dev/null | egrep -i "^S[TAUES]* +C[OMDNA]+ +[VSIZE]+ +U[SER]+ +U[ID]+ +P[PID]+ +[RGSCOMDNA]+" >/dev/null]
 then
 	AC_DEFINE(USE_PS_VARS)
@@ -367,6 +382,7 @@ then
 	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -Ao 'rss comm'")
 	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s")
 	echo "      ps syntax... $PATH_TO_PS -Ao 'state comm vsz rss'"
+dnl wonder who takes state instead of stat
 elif [ps -ao 'state command vsz rss user ppid args' 2>/dev/null | egrep -i "^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PPID +[RGSCOMDNA]+" >/dev/null]
 then
 	AC_DEFINE(USE_PS_VARS)
@@ -650,6 +666,15 @@ else
 	echo "** Get lmstat from Globetrotter Software to monitor flexlm licenses"
 fi
 
+AC_PATH_PROG(PATH_TO_SMBCLIENT,smbclient)
+if test -x "$PATH_TO_SMBCLIENT"
+then
+	AC_DEFINE_UNQUOTED(PATH_TO_SMBCLIENT,"$PATH_TO_SMBCLIENT")
+else
+	echo "** Get smbclient from Samba.org to monitor SMB shares"
+fi
+
+
 AC_PATH_PROG(PATH_TO_WHO,who)
 if [who -q 2>/dev/null | egrep -i "^# users=[0-9]+$" >/dev/null]
 then
@@ -673,7 +698,7 @@ then
 	AC_DEFINE_UNQUOTED(PATH_TO_SNMPGETNEXT,"$PATH_TO_SNMPGETNEXT")
 fi
 
-if ( $PERL -MNet::SNMP -e 'print $Net::SNMP::VERSION;'  )
+if ( $PERL -M"Net::SNMP 3.6" -e 'exit' 2>/dev/null  )
 then
 	echo "Found Net::SNMP perl module"
 else
