@@ -463,9 +463,11 @@ check_http (void)
 {
 	char *msg;
 	char *status_line;
+	char *status_code;
 	char *header;
 	char *page;
 	char *auth;
+	int http_status;
 	int i = 0;
 	size_t pagesize = 0;
 	char *full_page;
@@ -614,51 +616,49 @@ check_http (void)
 	/* make sure the status line matches the response we are looking for */
 	if (!strstr (status_line, server_expect)) {
 		if (server_port == HTTP_PORT)
-			asprintf (&msg, _("Invalid HTTP response received from host\n"));
+			asprintf (&msg,
+		            _("Invalid HTTP response received from host\n"));
 		else
 			asprintf (&msg,
-			                _("Invalid HTTP response received from host on port %d\n"),
-			                server_port);
+			          _("Invalid HTTP response received from host on port %d\n"),
+			          server_port);
 		die (STATE_CRITICAL, "%s", msg);
 	}
 
 	/* Exit here if server_expect was set by user and not default */
 	if ( server_expect_yn  )  {
-		asprintf (&msg, _("HTTP OK: Status line output matched \"%s\"\n"),
-	                  server_expect);
+		asprintf (&msg,
+		          _("HTTP OK: Status line output matched \"%s\"\n"),
+		          server_expect);
 		if (verbose)
 			printf ("%s\n",msg);
-
 	}
 	else {
-	
+		/* Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF */
+		/* HTTP-Version   = "HTTP" "/" 1*DIGIT "." 1*DIGIT */
+    /* Status-Code = 3 DIGITS */
+
+		status_code = strchr (status_line, ' ') + sizeof (char);
+		if (strspn (status_code, "1234567890") != 3)
+ 			die (STATE_CRITICAL, _("HTTP CRITICAL: Invalid Status Line (%s)\n"), status_line);
+
+		http_status = atoi (status_code);
 
 		/* check the return code */
+
+		if (http_status >= 600 || http_status < 100)
+			die (STATE_CRITICAL, _("HTTP CRITICAL: Invalid Status (%s)\n"), status_line);
+
 		/* server errors result in a critical state */
-		if (strstr (status_line, "500") || strstr (status_line, "501") ||
-		    strstr (status_line, "502") || strstr (status_line, "503") ||
-		    strstr (status_line, "504") || strstr (status_line, "505")) {
+		else if (http_status >= 500)
  			die (STATE_CRITICAL, _("HTTP CRITICAL: %s\n"), status_line);
-		}
 
 		/* client errors result in a warning state */
-		if (strstr (status_line, "400") || strstr (status_line, "401") ||
-		    strstr (status_line, "402") || strstr (status_line, "403") ||
-		    strstr (status_line, "404") || strstr (status_line, "405") ||
-		    strstr (status_line, "406") || strstr (status_line, "407") ||
-		    strstr (status_line, "408") || strstr (status_line, "409") ||
-		    strstr (status_line, "410") || strstr (status_line, "411") ||
-		    strstr (status_line, "412") || strstr (status_line, "413") ||
-		    strstr (status_line, "414") || strstr (status_line, "415") ||
-		    strstr (status_line, "416") || strstr (status_line, "417")) {
+		else if (http_status >= 400)
 			die (STATE_WARNING, _("HTTP WARNING: %s\n"), status_line);
-		}
 
 		/* check redirected page if specified */
-		if (strstr (status_line, "300") || strstr (status_line, "301") ||
-		    strstr (status_line, "302") || strstr (status_line, "303") ||
-		    strstr (status_line, "304") || strstr (status_line, "305") ||
-		    strstr (status_line, "306")) {
+		else if (http_status >= 300) {
 
 			if (onredirect == STATE_DEPENDENT)
 				redir (header, status_line);
@@ -677,11 +677,9 @@ check_http (void)
 			     status_line, elapsed_time, timestamp,
 			     (display_html ? "</A>" : ""),
 					 perfd_time (microsec), perfd_size (pagesize));
-		} /* end if (strstr (status_line, "30[0-4]") */
-
+		} /* end if (http_status >= 300) */
 
 	} /* end else (server_expect_yn)  */
-
 		
 	/* check elapsed time */
 	microsec = deltime (tv);
