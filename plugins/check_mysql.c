@@ -189,25 +189,26 @@ process_arguments (int argc, char **argv)
 
 	c = optind;
 
-	if (strlen(db_host) == 0 && argc > c)
-		if (is_host (argv[c])) {
-			db_host = argv[c++];
-		}
-		else {
-			usage ("Invalid host name");
-		}
+	while ( argc > c ) {
 
-	if (strlen(db_user) == 0 && argc > c)
-		db_user = argv[c++];
-
-	if (strlen(db_pass) == 0 && argc > c)
-		db_pass = argv[c++];
-
-	if (strlen(db) == 0 && argc > c)
-		db = argv[c++];
-
-	if (is_intnonneg (argv[c]) && argc > c)
-		db_port = atoi (argv[c++]);
+		if (strlen(db_host) == 0)
+			if (is_host (argv[c])) {
+				db_host = argv[c++];
+			}
+			else {
+				usage ("Invalid host name");
+			}
+		else if (strlen(db_user) == 0)
+			db_user = argv[c++];
+		else if (strlen(db_pass) == 0)
+			db_pass = argv[c++];
+		else if (strlen(db) == 0)
+			db = argv[c++];
+		else if (is_intnonneg (argv[c]))
+			db_port = atoi (argv[c++]);
+		else
+			break;
+	}
 
 	return validate_arguments ();
 }
