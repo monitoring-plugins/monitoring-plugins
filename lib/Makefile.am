@@ -1,20 +1,38 @@
 ## Process this file with automake to produce Makefile.in
 
-noinst_LIBRARIES = libnagiosplug.a
+noinst_LIBRARIES = libcoreutils.a libnagiosplug.a
 
-libnagiosplug_a_SOURCES = getopt.c getopt1.c fsusage.c snprintf.c mountlist.c \
-		xmalloc.c xstrdup.c exitfail.c
+# Will auto pick up fsusage.c mountlist.c
+libcoreutils_a_SOURCES = \
+  cloexec.c cloexec.h \
+  exit.h \
+  exitfail.c exitfail.h \
+  fsusage.h \
+  full-read.c full-read.h \
+  full-write.c full-write.h \
+  getopt.c getopt.h getopt1.c \
+  gettext.h \
+  mountlist.h \
+  safe-read.c safe-read.h \
+  safe-write.c safe-write.h \
+  unlocked-io.h \
+  xalloc.h \
+  xmalloc.c \
+  xstrdup.c
 
-libnagiosplug_a_LIBADD = @LIBOBJS@
-libnagiosplug_a_DEPENDENCIES = $(libnagiosplug_a_LIBADD)
+other_coreutils_files = \
+  error.c error.h \
+  fsusage.c \
+  getloadaavg.c \
+  malloc.c \
+  mountlist.c \
+  realloc.c \
+  strtod.c
 
-# Extra GNU libraries required if target is missing these functions
-EXTRA_DIST = ulonglong.m4 codeset.m4 gettext.m4 glibc21.m4 iconv.m4 intdiv0.m4 \
-		inttypes.m4 inttypes_h.m4 inttypes-pri.m4 isc-posix.m4 lcmessage.m4 lib-ld.m4 \
-		lib-link.m4 lib-prefix.m4 progtest.m4 stdint_h.m4 uintmax_t.m4 afs.m4 \
-		fstypename.m4 fsusage.m4 ls-mntd-fs.m4 getopt.h gettext.h fsusage.h mountlist.h\
-		error.m4 error.h error.c getloadavg.c xalloc.h unlocked-io.h unlocked-io.m4 malloc.c \
-		onceonly.m4 realloc.c strtod.c exitfail.h full-read.h xstrdup.c xalloc.m4 exit.h \
-		cloexec.c cloexec.h getopt.m4 exitfail.m4
+libcoreutils_a_LIBADD = $(LIBOBJS)
+libcoreutils_a_DEPENDENCIES = $(libcoreutils_a_LIBADD)
+
+libnagiosplug_a_SOURCES = snprintf.c
 
 INCLUDES = -I$(srcdir) -I$(top_srcdir)/intl
+
