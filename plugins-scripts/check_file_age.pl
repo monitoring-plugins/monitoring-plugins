@@ -1,7 +1,7 @@
 #!/bin/perl -w
 # $Id$
 
-# check_file.pl Copyright (C) 2003 Steven Grimm <koreth-nagios@midwinter.com>
+# check_file_age.pl Copyright (C) 2003 Steven Grimm <koreth-nagios@midwinter.com>
 #
 # Checks a file's size and modification time to make sure it's not empty
 # and that it's sufficiently recent.
@@ -36,7 +36,7 @@ sub print_usage ();
 my ($opt_c, $opt_f, $opt_w, $opt_C, $opt_W, $opt_h, $opt_V);
 my ($result, $message, $age, $size, $st);
 
-$PROGNAME="check_file";
+$PROGNAME="check_file_age";
 
 $opt_w = 240;
 $opt_c = 600;
