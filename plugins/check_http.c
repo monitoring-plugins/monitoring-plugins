@@ -597,7 +597,7 @@ check_http (void)
 			}
 		}
 
-		/* optionally send http POST data */
+		/* either send http POST data */
 		if (http_post_data) {
 			asprintf (&buf, "Content-Type: application/x-www-form-urlencoded\r\n");
 			if (SSL_write (ssl, buf, strlen (buf)) == -1) {
@@ -615,12 +615,13 @@ check_http (void)
 				return STATE_CRITICAL;
 			}
 		}
-
-		/* send a newline so the server knows we're done with the request */
-		asprintf (&buf, "\r\n\r\n");
-		if (SSL_write (ssl, buf, strlen (buf)) == -1) {
-			ERR_print_errors_fp (stderr);
-			return STATE_CRITICAL;
+		else {
+			/* or just a newline so the server knows we're done with the request */
+			asprintf (&buf, "\r\n");
+			if (SSL_write (ssl, buf, strlen (buf)) == -1) {
+				ERR_print_errors_fp (stderr);
+				return STATE_CRITICAL;
+			}
 		}
 
 	}
@@ -652,7 +653,7 @@ check_http (void)
 			send (sd, buf, strlen (buf), 0);
 		}
 
-		/* optionally send http POST data */
+		/* either send http POST data */
 		/* written by Chris Henesy <lurker@shadowtech.org> */
 		if (http_post_data) {
 			asprintf (&buf, "Content-Type: application/x-www-form-urlencoded\r\n");
@@ -662,10 +663,11 @@ check_http (void)
 			http_post_data = strscat (http_post_data, "\r\n");
 			send (sd, http_post_data, strlen (http_post_data), 0);
 		}
-
-		/* send a newline so the server knows we're done with the request */
-		asprintf (&buf, "\r\n");
-		send (sd, buf, strlen (buf), 0);
+		else {
+			/* send a newline so the server knows we're done with the request */
+			asprintf (&buf, "\r\n");
+			send (sd, buf, strlen (buf), 0);
+		}
 #ifdef HAVE_SSL
 	}
 #endif
