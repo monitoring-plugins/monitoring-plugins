@@ -633,6 +633,23 @@ then
 	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS glaxen",[])
 	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%*s %*s %*s %*s %*s %*s %*s %d",[])
 	echo "      ps syntax... $PATH_TO_PS glaxen"
+dnl MacOSX / Darwin
+dnl TODO: MacOSX has commands with spaces which will cause problems to PS_FORMAT
+dnl STAT      VSZ    RSS   UID USER     PPID UCOMM            COMMAND
+dnl Ss       1308    272     0 root        0 init             /sbin/init
+elif [ps waxo 'state vsz rss uid user ppid ucomm command' 2>/dev/null | egrep -i "^STAT +VSZ +RSS +UID +USER +PPID +UCOMM +COMMAND" >/dev/null]
+then
+	AC_DEFINE(USE_PS_VARS,1,[Define if we use custom variable list for sscanf])
+	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,procprog,&pos],[])
+	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS waxo 'state uid ppid command'",[])
+	EXTRAS="$EXTRAS check_nagios"
+	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS waxo 'state uid ppid ucomm command'",[])
+	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[Format string for scanning ps output in check_procs])
+	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS waxco 'vsz command'",[])
+	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[])
+	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS waxco 'rss command'",[])
+	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s",[])
+	echo "      ps syntax... $PATH_TO_PS waxo 'state vsz rss command'"
 else
 	echo "** Unable to find usable ps syntax"
 fi
