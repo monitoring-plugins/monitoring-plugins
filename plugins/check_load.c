@@ -47,7 +47,6 @@
 #define PROGNAME "check_load"
 
 int process_arguments (int argc, char **argv);
-int call_getopt (int argc, char **argv);
 int validate_arguments (void);
 void print_usage (void);
 void print_help (void);
@@ -152,40 +151,6 @@ main (int argc, char **argv)
 int
 process_arguments (int argc, char **argv)
 {
-	int c;
-
-	if (argc < 2)
-		return ERROR;
-
-	c = 0;
-	while (c += (call_getopt (argc - c, &argv[c]))) {
-		if (argc <= c)
-			break;
-
-		if (wload1 < 0 && is_nonnegative (argv[c]))
-			wload1 = atof (argv[c]);
-		else if (cload1 < 0 && is_nonnegative (argv[c]))
-			cload1 = atof (argv[c]);
-		else if (wload5 < 0 && is_nonnegative (argv[c]))
-			wload5 = atof (argv[c]);
-		else if (cload5 < 0 && is_nonnegative (argv[c]))
-			cload5 = atof (argv[c]);
-		else if (wload15 < 0 && is_nonnegative (argv[c]))
-			wload15 = atof (argv[c]);
-		else if (cload15 < 0 && is_nonnegative (argv[c]))
-			cload15 = atof (argv[c]);
-	}
-
-	return validate_arguments ();
-}
-
-
-
-
-
-int
-call_getopt (int argc, char **argv)
-{
 	int c, i = 0;
 
 #ifdef HAVE_GETOPT_H
@@ -199,59 +164,53 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+#define OPTCHARS "Vhc:w:"
+
+	if (argc < 2)
+		return ERROR;
+
 	while (1) {
 #ifdef HAVE_GETOPT_H
-		c = getopt_long (argc, argv, "+?Vhc:w:", long_options, &option_index);
+		c = getopt_long (argc, argv, OPTCHARS, long_options, &option_index);
 #else
-		c = getopt (argc, argv, "+?Vhc:w:");
+		c = getopt (argc, argv, OPTCHARS);
 #endif
-
-		i++;
-
 		if (c == -1 || c == EOF)
 			break;
 
 		switch (c) {
-		case 'c':
-		case 'w':
-			i++;
-		}
-
-		switch (c) {
 		case 'w':									/* warning time threshold */
 			if (is_intnonneg (optarg)) {
-				if (wload1 < 0 && is_nonnegative (argv[c]))
-					wload1 = atof (argv[c]);
-				else if (wload5 < 0 && is_nonnegative (argv[c]))
-					wload5 = atof (argv[c]);
-				else if (wload15 < 0 && is_nonnegative (argv[c]))
-					wload15 = atof (argv[c]);
+				wload1 = atof (optarg);
+				wload5 = atof (optarg);
+				wload15 = atof (optarg);
 				break;
 			}
 			else if (strstr (optarg, ",") &&
-							 sscanf (optarg, "%f,%f,%f", &wload1, &wload5, &wload15) == 3) {
+								 sscanf (optarg, "%f,%f,%f", &wload1, &wload5, &wload15) == 3)
 				break;
-			}
-			else {
+			else if (strstr (optarg, ":") &&
+							 sscanf (optarg, "%f:%f:%f", &wload1, &wload5, &wload15) == 3)
+				break;
+			else
 				usage ("Warning threshold must be float or float triplet!\n");
-			}
+			break;
 		case 'c':									/* critical time threshold */
 			if (is_intnonneg (optarg)) {
-				if (cload1 < 0 && is_nonnegative (argv[c]))
-					cload1 = atof (argv[c]);
-				else if (cload5 < 0 && is_nonnegative (argv[c]))
-					cload5 = atof (argv[c]);
-				else if (cload15 < 0 && is_nonnegative (argv[c]))
-					cload15 = atof (argv[c]);
+				cload1 = atof (optarg);
+				cload5 = atof (optarg);
+				cload15 = atof (optarg);
 				break;
 			}
 			else if (strstr (optarg, ",") &&
-							 sscanf (optarg, "%f,%f,%f", &cload1, &cload5, &cload15) == 3) {
+							 sscanf (optarg, "%f,%f,%f", &cload1, &cload5, &cload15) == 3)
 				break;
-			}
-			else {
+			else if (strstr (optarg, ":") &&
+							 sscanf (optarg, "%f:%f:%f", &cload1, &cload5, &cload15) == 3)
+				break;
+			else
 				usage ("Critical threshold must be float or float triplet!\n");
-			}
+			break;
 		case 'V':									/* version */
 			print_revision (my_basename (argv[0]), "$Revision$");
 			exit (STATE_OK);
@@ -262,7 +221,39 @@ call_getopt (int argc, char **argv)
 			usage ("Invalid argument\n");
 		}
 	}
-	return i;
+
+	c = optind;
+	if (c == argc)
+		return validate_arguments ();
+	if (wload1 < 0 && is_nonnegative (argv[c]))
+		wload1 = atof (argv[c]);
+
+	if (c == argc)
+		return validate_arguments ();
+	if (cload1 < 0 && is_nonnegative (argv[c]))
+		cload1 = atof (argv[c]);
+
+	if (c == argc)
+		return validate_arguments ();
+	if (wload5 < 0 && is_nonnegative (argv[c]))
+		wload5 = atof (argv[c]);
+
+	if (c == argc)
+		return validate_arguments ();
+	if (cload5 < 0 && is_nonnegative (argv[c]))
+		cload5 = atof (argv[c]);
+
+	if (c == argc)
+		return validate_arguments ();
+	if (wload15 < 0 && is_nonnegative (argv[c]))
+		wload15 = atof (argv[c]);
+
+	if (c == argc)
+		return validate_arguments ();
+	if (cload15 < 0 && is_nonnegative (argv[c]))
+		cload15 = atof (argv[c]);
+
+	return validate_arguments ();
 }
 
 
