@@ -38,9 +38,31 @@
 #include "utils.h"
 
 const char *progname = "check_dummy";
+const char *revision = "$Revision$";
+const char *copyright = "1999-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
-void print_help (const char *);
-void print_usage (const char *);
+void
+print_usage (void)
+{
+	printf (_("Usage: %s <integer state>\n"), progname);
+}
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	print_usage ();
+
+	printf (_(HELP_VRSN));
+
+	printf (_("\n\
+This plugin will simply return the state corresponding to the numeric value\n\
+of the <state> argument.\n"));
+}
 
 int
 main (int argc, char **argv)
@@ -48,19 +70,19 @@ main (int argc, char **argv)
 	int result;
 
 	if (argc != 2) {
-		printf ("Incorrect number of arguments supplied\n");
+		printf (_("Incorrect number of arguments supplied\n"));
 		exit (STATE_UNKNOWN);
 	}
 	else if (strcmp (argv[1], "-V") == 0 || strcmp (argv[1], "--version") == 0) {
-		print_revision (argv[0], "$Revision$");
+		print_revision (progname, revision);
 		exit (STATE_OK);
 	}
 	else if (strcmp (argv[1], "-h") == 0 || strcmp (argv[1], "--help") == 0) {
-		print_help (argv[0]);
+		print_help ();
 		exit (STATE_OK);
 	}
 	else if (!is_integer (argv[1])) {
-		print_usage (argv[0]);
+		print_usage ();
 		exit (STATE_UNKNOWN);
 	}
 	result = atoi (argv[1]);
@@ -81,22 +103,4 @@ main (int argc, char **argv)
 	}
 
 	return result;
-}
-
-void
-print_help (const char *cmd)
-{
-	print_revision (cmd, "$Revision$");
-	printf ("Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)\n"
-					"License: GPL\n\n");
-	print_usage (cmd);
-	printf
-		("\nThis plugin will simply return the state corresponding to the numeric value\n"
-		 "of the <state> argument.\n");
-}
-
-void
-print_usage (const char *cmd)
-{
-	printf ("Usage: %s <integer state>\n", cmd);
 }
