@@ -493,6 +493,7 @@ if test x"$ac_cv_HAVE_VA_COPY" = x"yes"; then
     AC_DEFINE(HAVE_VA_COPY,1,[Define if system has va_copy])
 fi
 
+AC_CHECK_FUNCS(vsnprintf snprintf asprintf vasprintf)
 AC_CACHE_CHECK([for C99 vsnprintf],ac_cv_HAVE_C99_VSNPRINTF,[
 AC_TRY_RUN([
 #include <sys/types.h>
@@ -521,28 +522,6 @@ main() { foo("hello"); }
 ac_cv_HAVE_C99_VSNPRINTF=yes,ac_cv_HAVE_C99_VSNPRINTF=no,ac_cv_HAVE_C99_VSNPRINTF=cross)])
 if test x"$ac_cv_HAVE_C99_VSNPRINTF" = x"yes"; then
     AC_DEFINE(HAVE_C99_VSNPRINTF,1,[Define if system has C99 compatible vsnprintf])
-fi
-
-#AC_HAVE_DECL(asprintf, [#include <stdio.h>])
-#AC_HAVE_DECL(vasprintf, [#include <stdio.h>])
-#AC_HAVE_DECL(vsnprintf, [#include <stdio.h>])
-#AC_HAVE_DECL(snprintf, [#include <stdio.h>])
-
-AC_CHECK_FUNC(snprintf,
-              AC_DEFINE(HAVE_SNPRINTF,1,[Define if snprintf is present]),
-              LIBS="$LIBS -lsnprintf" DEPLIBS="$DEPLIBS libsnprintf.a")
-AC_CHECK_FUNC(vsnprintf,
-              AC_DEFINE(HAVE_VSNPRINTF,1,[Define if vsnprintf is present]),
-              LIBS="$LIBS -lsnprintf" DEPLIBS="$DEPLIBS libsnprintf.a")
-AC_CHECK_FUNC(vasprintf,
-              AC_DEFINE(HAVE_VASPRINTF,1,[Define if vasprintf is present]),
-              LIBS="$LIBS -lsnprintf" DEPLIBS="$DEPLIBS libsnprintf.a")
-AC_CHECK_FUNC(asprintf,
-              AC_DEFINE(HAVE_ASPRINTF,1,[Define if asprintf is present]),
-              LIBS="$LIBS -lsnprintf" DEPLIBS="$DEPLIBS libsnprintf.a")
-
-if test x"$ac_cv_HAVE_SNPRINTF" = x"no" -o x"$ac_cv_HAVE_VSNPRINTF" = x"no" -o x"$ac_cv_HAVE_VASPRINTF" = x"no" -o x"$ac_cv_HAVE_ASPRINTF" = x"no"; then
-  LIBS="$LIBS -lsnprintf" DEPLIBS="$DEPLIBS libsnprintf.a"
 fi
 
 AC_TRY_COMPILE([#include <sys/time.h>],
