@@ -84,7 +84,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) != OK)
-		usage (_("Invalid command arguments supplied\n"));
+		usage (_("Incorrect arguments supplied\n"));
 
 	/* removed ' 2>1' at end of command 10/27/1999 - EG */
 	/* create the query string */

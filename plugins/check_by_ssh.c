@@ -86,7 +86,7 @@ main (int argc, char **argv)
 	child_process = spopen (comm);
 
 	if (child_process == NULL) {
-		printf (_("Unable to open pipe: %s"), comm);
+		printf (_("Could not open pipe: %s\n"), comm);
 		return STATE_UNKNOWN;
 	}
 
@@ -145,7 +145,7 @@ main (int argc, char **argv)
 				eol[0] = 0;
 			if (service[commands] && status_text
 					&& sscanf (status_text, "STATUS CODE: %d", &cresult) == 1) {
-				fprintf (fp, _("[%d] PROCESS_SERVICE_CHECK_RESULT;%s;%s;%d;%s\n"),
+				fprintf (fp, "[%d] PROCESS_SERVICE_CHECK_RESULT;%s;%s;%d;%s\n",
 								 (int) local_time, host_shortname, service[commands++], cresult,
 								 output);
 			}
@@ -232,13 +232,13 @@ process_arguments (int argc, char **argv)
 			break;
 		case 't':									/* timeout period */
 			if (!is_integer (optarg))
-				usage2 (_("timeout interval must be an integer"), optarg);
+				usage2 (_("Timeout interval must be a positive integer"), optarg);
 			else
 				timeout_interval = atoi (optarg);
 			break;
 		case 'H':									/* host */
 			if (!is_host (optarg))
-				usage2 (_("invalid host name"), optarg);
+				usage2 (_("Invalid host name"), optarg);
 			hostname = optarg;
 			break;
 		case 'p': /* port number */

@@ -195,7 +195,7 @@ main (int argc, char **argv)
 		else
 			multi_address = TRUE;
 
-		printf ("%s %s: ", _("DNS"), _("OK"));
+		printf ("DNS %s: ", _("OK"));
 		printf (ngettext("%.3f second response time, ", "%.3f seconds response time, ", elapsed_time), elapsed_time);
 		printf (_("%s returns %s"), query_address, address);
 		printf ("|%s\n", fperfdata ("time", elapsed_time, "s", FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
@@ -225,18 +225,18 @@ error_scan (char *input_buffer)
 
 	/* DNS server is not running... */
 	else if (strstr (input_buffer, "No response from server"))
-		die (STATE_CRITICAL, _("No response from name server %s\n"), dns_server);
+		die (STATE_CRITICAL, _("No response from DNS %s\n"), dns_server);
 
 	/* Host name is valid, but server doesn't have records... */
 	else if (strstr (input_buffer, "No records"))
-		die (STATE_CRITICAL, _("Name server %s has no records\n"), dns_server);
+		die (STATE_CRITICAL, _("DNS %s has no records\n"), dns_server);
 
 	/* Connection was refused */
 	else if (strstr (input_buffer, "Connection refused") ||
 	         strstr (input_buffer, "Refused") ||
 	         (strstr (input_buffer, "** server can't find") &&
 	          strstr (input_buffer, ": REFUSED")))
-		die (STATE_CRITICAL, _("Connection to name server %s was refused\n"), dns_server);
+		die (STATE_CRITICAL, _("Connection to DNS %s was refused\n"), dns_server);
 
 	/* Host or domain name does not exist */
 	else if (strstr (input_buffer, "Non-existent") ||
@@ -250,7 +250,7 @@ error_scan (char *input_buffer)
 
 	/* Internal server failure */
 	else if (strstr (input_buffer, "Server failure"))
-		die (STATE_CRITICAL, _("Server failure for %s\n"), dns_server);
+		die (STATE_CRITICAL, _("DNS failure for %s\n"), dns_server);
 
 	/* Request error or the DNS lookup timed out */
 	else if (strstr (input_buffer, "Format error") ||

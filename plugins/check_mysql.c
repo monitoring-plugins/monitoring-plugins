@@ -54,7 +54,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) != OK)
-		usage (_("Invalid command arguments supplied\n"));
+		usage (_("Incorrect arguments supplied\n"));
 
 	/* initialize mysql  */
 	mysql_init (&mysql);

@@ -64,7 +64,7 @@ main (int argc, char **argv)
 	char outgoing_speed_rating[8];
 
 	if (process_arguments (argc, argv) != OK)
-		usage (_("Invalid command arguments supplied\n"));
+		usage (_("Incorrect arguments supplied\n"));
 
 	/* open the MRTG log file for reading */
 	fp = fopen (log_file, "r");

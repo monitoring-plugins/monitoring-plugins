@@ -90,7 +90,7 @@ main (int argc, char **argv)
 	perf = strdup ("");
 
 	if (process_arguments (argc, argv) != OK)
-		usage (_("Invalid command arguments supplied\n"));
+		usage (_("Incorrect arguments supplied\n"));
 
 #ifdef HAVE_PROC_MEMINFO
 	fp = fopen (PROC_MEMINFO, "r");
