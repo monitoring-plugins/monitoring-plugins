@@ -69,6 +69,7 @@
 #include "utils.h"
 
 int process_arguments (int, char **);
+const char *progname = "check_game";
 
 #define QSTAT_DATA_DELIMITER 	","
 
@@ -290,4 +291,9 @@ process_arguments (int argc, char **argv)
 	}
 
 	return OK;
+}
+
+void print_usage (void)
+{
+	return STATE_OK;
 }
