@@ -205,18 +205,17 @@ if (/\s*(\d*) blocks of size (\d*)\. (\d*) blocks available/) {
 	$answer = "Result from smbclient not suitable\n";
 	$state = "UNKNOWN";
 	foreach (@lines) {
-		if (/Access denied/) {
+		if (/(Access denied|NT_STATUS_LOGON_FAILURE)/) {
 			$answer = "Access Denied\n";
 			$state = "CRITICAL";
 			last;
 		}
-		if (/(Unknown host \w*)/) {
-			$answer = "$1\n";_
-
+		if (/(Unknown host \w*|Connection.*failed)/) {
+			$answer = "$1\n";
 			$state = "CRITICAL";
 			last;
 		}
-		if (/(You specified an invalid share name)/) {
+		if (/(You specified an invalid share name|NT_STATUS_BAD_NETWORK_NAME)/) {
 			$answer = "Invalid share name \\\\$host\\$share\n";
 			$state = "CRITICAL";
 			last;
