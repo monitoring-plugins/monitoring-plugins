@@ -61,9 +61,7 @@
 #define SMTP_QUIT	"QUIT\r\n"
 
 int process_arguments (int, char **);
-int call_getopt (int, char **);
 int validate_arguments (void);
-int check_disk (int usp, int free_disk);
 void print_help (void);
 void print_usage (void);
 
@@ -80,35 +78,28 @@ int verbose = FALSE;
 int
 main (int argc, char **argv)
 {
-	int sd;
+	int sd, c;
 	int result;
 	char buffer[MAX_INPUT_BUFFER] = "";
-	char helocmd[255] = SMTP_HELO ;
-	char from_str[255] = SMTP_DUMMYCMD ;
-	char myhostname[248];
-	
+	char *from_str = NULL;
+	char *helocmd = NULL;
 
 	if (process_arguments (argc, argv) != OK)
 		usage ("Invalid command arguments supplied\n");
 
 	/* initialize the HELO command with the localhostname */
-	gethostname(myhostname, sizeof(myhostname));
-	strcat(helocmd, myhostname);
-	strcat(helocmd, "\r\n");
+#ifndef HOST_MAX_BYTES
+#define HOST_MAX_BYTES 255
+#endif
+	helocmd = malloc (HOST_MAX_BYTES);
+	gethostname(helocmd, HOST_MAX_BYTES);
+	asprintf (&helocmd, "%s%s%s", SMTP_HELO, helocmd, "\r\n");
 
 	/* initialize the MAIL command with optional FROM command  */
-	if (from_arg) {
-		strcat(from_str, "FROM: ");
-		strcat(from_str, from_arg);
-	}
-	/* terminate line with a CRLF */
-	strcat(from_str, "\r\n");
-		
-	if (verbose == TRUE){
-		printf ("FROMCMD: %s\n", from_str);
-	}
+	asprintf (&from_str, "%sFROM: %s%s", SMTP_DUMMYCMD, from_arg, "\r\n");
 
-	
+	if (verbose == TRUE)
+		printf ("FROMCMD: %s\n", from_str);
 	
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
@@ -170,21 +161,27 @@ main (int argc, char **argv)
 		}
 
 		/* close the connection */
+
 		/* first send the HELO command */
-		send(sd,helocmd,strlen(helocmd),0);
+		send(sd, helocmd, strlen(helocmd), 0);
+
 		/* allow for response to helo command to reach us */
-		recv(sd,buffer,MAX_INPUT_BUFFER-1,0);
+		recv(sd, buffer, MAX_INPUT_BUFFER-1, 0);
 				
 #ifdef SMTP_USE_DUMMYCMD
-		send(sd,from_str,strlen(from_str),0);
+		send(sd, from_str, strlen(from_str), 0);
+
 		/* allow for response to DUMMYCMD to reach us */
-		recv(sd,buffer,MAX_INPUT_BUFFER-1,0);
+		recv(sd, buffer, MAX_INPUT_BUFFER-1, 0);
+
 		if (verbose == TRUE) 
-			printf("DUMMYCMD: %s\n%s\n",from_str,buffer);		
+			printf("DUMMYCMD: %s\n%s\n",from_str,buffer);
 #endif /* SMTP_USE_DUMMYCMD */
 
-		/* finally close the connection */
+		/* tell the server we're done */
 		send (sd, SMTP_QUIT, strlen (SMTP_QUIT), 0);
+
+		/* finally close the connection */
 		close (sd);
 	}
 
@@ -205,55 +202,6 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	if (argc < 2)
-		return ERROR;
-
-	for (c = 1; c < argc; c++) {
-		if (strcmp ("-to", argv[c]) == 0)
-			strcpy (argv[c], "-t");
-		else if (strcmp ("-wt", argv[c]) == 0)
-			strcpy (argv[c], "-w");
-		else if (strcmp ("-ct", argv[c]) == 0)
-			strcpy (argv[c], "-c");
-	}
-
-
-
-	c = 0;
-	while ((c += (call_getopt (argc - c, &argv[c]))) < argc) {
-
-		if (is_option (argv[c]))
-			continue;
-
-		if (server_address == NULL) {
-			if (is_host (argv[c])) {
-				server_address = argv[c];
-			}
-			else {
-				usage ("Invalid host name");
-			}
-		}
-	}
-
-	if (server_address == NULL)
-		server_address = strscpy (NULL, "127.0.0.1");
-
-	if (server_expect == NULL)
-		server_expect = strscpy (NULL, SMTP_EXPECT);
-
-	return validate_arguments ();
-}
-
-
-
-
-
-
-int
-call_getopt (int argc, char **argv)
-{
-	int c, i = 0;
-
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -270,6 +218,18 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+	if (argc < 2)
+		return ERROR;
+
+	for (c = 1; c < argc; c++) {
+		if (strcmp ("-to", argv[c]) == 0)
+			strcpy (argv[c], "-t");
+		else if (strcmp ("-wt", argv[c]) == 0)
+			strcpy (argv[c], "-w");
+		else if (strcmp ("-ct", argv[c]) == 0)
+			strcpy (argv[c], "-c");
+	}
+
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
@@ -278,22 +238,8 @@ call_getopt (int argc, char **argv)
 #else
 		c = getopt (argc, argv, "+?hVvt:p:f:e:c:w:H:");
 #endif
-
-		i++;
-
-		if (c == -1 || c == EOF || c == 1)
+		if (c == -1 || c == EOF)
 			break;
-
-		switch (c) {
-		case 't':
-		case 'p':
-		case 'e':
-		case 'f':
-		case 'c':
-		case 'w':
-		case 'H':
-			i++;
-		}
 
 		switch (c) {
 		case 'H':									/* hostname */
@@ -357,7 +303,24 @@ call_getopt (int argc, char **argv)
 			usage ("Invalid argument\n");
 		}
 	}
-	return i;
+
+	c = optind;
+	if (server_address == NULL) {
+		if (argv[c]) {
+			if (is_host (argv[c]))
+				server_address = argv[c];
+			else
+				usage ("Invalid host name");
+		}
+		else {
+			asprintf (&server_address, "127.0.0.1");
+		}
+	}
+
+	if (server_expect == NULL)
+		asprintf (&server_expect, SMTP_EXPECT);
+
+	return validate_arguments ();
 }
 
 
