@@ -115,6 +115,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_prefix}/lib/nagios/plugins/check_mrtgtraf
 %{_prefix}/lib/nagios/plugins/check_nagios
 %{_prefix}/lib/nagios/plugins/check_nntp
+%{_prefix}/lib/nagios/plugins/check_nt
 %{_prefix}/lib/nagios/plugins/check_ntp
 %{_prefix}/lib/nagios/plugins/check_nwstat
 %{_prefix}/lib/nagios/plugins/check_oracle
