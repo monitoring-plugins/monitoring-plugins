@@ -297,6 +297,8 @@ main (int argc, char **argv)
 			show = strstr (response, "Gauge: ") + 7;
 		else if (strstr (response, "Gauge32: "))
 			show = strstr (response, "Gauge32: ") + 9;
+		else if (strstr (response, "INTEGER: "))
+			show = strstr (response, "INTEGER: ") + 9;
 		else
 			show = response;
 		p2 = show;
@@ -310,16 +312,17 @@ main (int argc, char **argv)
 		}
 
 		if (eval_method[i] & CRIT_GT ||
-				eval_method[i] & CRIT_LT ||
-				eval_method[i] & CRIT_GE ||
-				eval_method[i] & CRIT_LE ||
-				eval_method[i] & CRIT_EQ ||
-				eval_method[i] & CRIT_NE ||
-				eval_method[i] & WARN_GT ||
-				eval_method[i] & WARN_LT ||
-				eval_method[i] & WARN_GE ||
-				eval_method[i] & WARN_LE ||
-				eval_method[i] & WARN_EQ || eval_method[i] & WARN_NE) {
+		    eval_method[i] & CRIT_LT ||
+		    eval_method[i] & CRIT_GE ||
+		    eval_method[i] & CRIT_LE ||
+		    eval_method[i] & CRIT_EQ ||
+		    eval_method[i] & CRIT_NE ||
+		    eval_method[i] & WARN_GT ||
+		    eval_method[i] & WARN_LT ||
+		    eval_method[i] & WARN_GE ||
+		    eval_method[i] & WARN_LE ||
+		    eval_method[i] & WARN_EQ ||
+		    eval_method[i] & WARN_NE) {
 			p2 = strpbrk (p2, "0123456789");
 			response_value[i] = strtoul (p2, NULL, 10);
 			iresult = check_num (i);
@@ -358,7 +361,7 @@ main (int argc, char **argv)
 			iresult = STATE_OK;
 		else if (eval_method[i] & CRIT_PRESENT)
 			iresult = STATE_CRITICAL;
-		else
+		else if (eval_method[i] & WARN_PRESENT)
 			iresult = STATE_WARNING;
 
 		result = max_state (result, iresult);
@@ -376,7 +379,7 @@ main (int argc, char **argv)
 
 		i++;
 
-	}															/* end while */
+	}															/* end while (ptr) */
 
 	if (found == 0)
 		terminate
@@ -395,10 +398,10 @@ main (int argc, char **argv)
 	if (spclose (child_process))
 		result = max_state (result, STATE_WARNING);
 
-	if (nunits > 0)
-		printf ("%s %s -%s %s\n", label, state_text (result), outbuff, units);
-	else
-		printf ("%s %s -%s\n", label, state_text (result), outbuff);
+/* 	if (nunits == 1 || i == 1) */
+/* 		printf ("%s %s -%s %s\n", label, state_text (result), outbuff, units); */
+/* 	else */
+	printf ("%s %s -%s\n", label, state_text (result), outbuff);
 
 	return result;
 }
