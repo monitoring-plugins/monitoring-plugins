@@ -191,7 +191,7 @@ main (int argc, char **argv)
 			psize = fsp.fsu_blocks*fsp.fsu_blocksize/mult;
 			asprintf (&perf, "%s %s", perf,
 			          perfdata ((!strcmp(file_system, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
-			                    fsp.fsu_bavail*fsp.fsu_blocksize/mult, units,
+			                    psize-(fsp.fsu_bavail*fsp.fsu_blocksize/mult), units,
 			                    TRUE, min ((uintmax_t)psize-(uintmax_t)w_df, (uintmax_t)((1.0-w_dfp/100.0)*psize)),
 			                    TRUE, min ((uintmax_t)psize-(uintmax_t)c_df, (uintmax_t)((1.0-c_dfp/100.0)*psize)),
 			                    TRUE, 0,
