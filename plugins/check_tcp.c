@@ -239,15 +239,17 @@ main (int argc, char **argv)
 
 	if (server_send || server_expect_count > 0) {
 
+		asprintf (&status, "");
+
 		/* watch for the expect string */
 #ifdef HAVE_SSL
 		if (use_ssl && SSL_read (ssl, buffer, MAX_INPUT_BUFFER - 1)>=0)
-			status = strscat(status,buffer);
+			asprintf (&status, "%s%s", status, buffer);
 		else
 #endif
 			{
 				if (recv (sd, buffer, MAX_INPUT_BUFFER - 1, 0) >= 0)
-					status = strscat (status, buffer);
+					asprintf (&status, "%s%s", status, buffer);
 			}
 		strip (status);
 
@@ -260,7 +262,8 @@ main (int argc, char **argv)
 
 		if (server_expect_count > 0) {
 			for (i = 0;; i++) {
-				printf ("%d %d\n", i, server_expect_count);
+				if (verbose)
+					printf ("%d %d\n", i, server_expect_count);
 				if (i >= server_expect_count)
 					terminate (STATE_WARNING, "Invalid response from host\n");
 				if (strstr (status, server_expect[i]))
@@ -425,7 +428,7 @@ process_arguments (int argc, char **argv)
 		case 's':
 			server_send = optarg;
 			break;
-		case 'e':
+		case 'e': /* expect string (may be repeated) */
 			EXPECT = NULL;
 			if (server_expect_count == 0)
 				server_expect = malloc (++server_expect_count);
