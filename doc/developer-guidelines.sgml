@@ -5,68 +5,13 @@
   <bookinfo>
     <authorgroup>
       <author>
-	<firstname>Karl</firstname>
-	<surname>DeBisschop</surname>
-	<affiliation>
-	  <address><email>karl@debisschop.net</email></address>
-	</affiliation>
-      </author>
-
-      <author>
-	<firstname>Ethan</firstname>
-	<surname>Galstad</surname>
-	<authorblurb>
-	  <para>Author of Nagios</para>
-	  <para><ulink url="http://www.nagios.org"></ulink></para>
-	</authorblurb>
-	<affiliation>
-	  <address><email>netsaint@linuxbox.com</email></address>
-	</affiliation>
-      </author>
-
-      <author>
-	<firstname>Hugo</firstname>
-	<surname>Gayosso</surname>
-	<affiliation>
-	  <address><email>hgayosso@gnu.org</email></address>
-	</affiliation>
-      </author>
-
-	  
-	<author>
-	<firstname>Subhendu</firstname>
-	<surname>Ghosh</surname>
-	<affiliation>
-		<address><email>sghosh@sourceforge.net</email></address>
-	</affiliation>
-	</author>
-	
-	<author>
-	<firstname>Stanley</firstname>
-	<surname>Hopcroft</surname>
-	<affiliation>
-		<address><email>stanleyhopcroft@sourceforge.net</email></address>
-	</affiliation>
-	</author>	
-
-      <author>
-	<firstname>Ton</firstname>
-	<surname>Voon</surname>
-	<affiliation>
-	  <address><email>tonvoon@users.sourceforge.net</email></address>
-	</affiliation>
-      </author>
-
-       <author>
-	<firstname>Jeremy T</firstname>
-	<surname>Bouse</surname>
-	<affiliation>
-	  <address><email>undrgrid@users.sourceforge.net</email></address>
-	</affiliation>
+        <affiliation>
+          <orgname>Nagios Plugins Development Team</orgname>
+        </affiliation>
       </author>
     </authorgroup>
 
-    <pubdate>2002</pubdate>
+    <pubdate>2005</pubdate>
     <title>Nagios plug-in development guidelines</title>
 	
     <revhistory>
@@ -77,7 +22,7 @@
     </revhistory>
 
 	<copyright>
-		<year>2000 - 2004</year> 
+		<year>2000 - 2005</year> 
 		<holder>Nagios Plugins Development Team</holder>
 	</copyright>
 
@@ -89,8 +34,8 @@
     the plug-in developers and encourage the standarization of the
     different kind of plug-ins: C, shell, perl, python, etc.</para>
 
-        <para>Nagios Plug-in Development Guidelines Copyright (C) 2000-2003
-        (Karl DeBisschop, Ethan Galstad, Stanley Hopcroft, Subhendu Ghosh, Ton Voon, Jeremy T. Bouse)</para>
+        <para>Nagios Plug-in Development Guidelines Copyright (C) 2000-2005
+        (Nagios Plugins Team)</para>
 
         <para>Permission is granted to make and distribute verbatim
         copies of this manual provided the copyright notice and this
@@ -642,10 +587,12 @@
 	<section><title>Comments</title>
 	<para>You should use /* */ for comments and not // as some compilers
 	do not handle the latter form.</para>
-	<para>There should not be any named credits in the source code - contributors
-	should be added 
-	into the AUTHORS file instead. The only exception to this is if a routine
-	has been copied from another source.</para>
+	<para>If you have copied a routine from another source, make sure the licence
+	from your source allows this. Add a comment referencing the ACKNOWLEDGEMENTS
+	file, where you can put more detail about the source.</para>
+	<para>For contributed code, do not add any named credits in the source code 
+	- contributors should be added into the THANKS.in file instead. 
+	</para>
 	</section>
 
 	<section><title>CVS comments</title>
@@ -665,7 +612,7 @@
 	</para>
 	<para>If the change is due to a contribution, please quote the contributor's name 
 	and, if applicable, add the SourceForge Tracker number. Don't forget to 
-update the AUTHORS file.</para>
+update the THANKS.in file.</para>
 	</section>
 </section>
 
