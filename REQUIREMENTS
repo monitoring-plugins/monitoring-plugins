@@ -65,3 +65,10 @@ check_nt:
 	- Requires NSClient to run on the NT server to monitor
 	  http://nsclient.ready2run.nl/
 
+
+OS Specific Issues
+------------------
+
+HP-UX 11.11
+You need to use the version of gcc provided by HP at version 3.3.3. 
+Also, you need GNU make 3.8
