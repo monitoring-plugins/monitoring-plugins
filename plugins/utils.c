@@ -521,7 +521,10 @@ char *perfdata (const char *label,
 {
 	char *data = NULL;
 
-	asprintf (&data, "\"%s\"=%ld%s;", label, val, uom);
+	if (index (label, '"'))
+		asprintf (&data, "\"%s\"=%ld%s;", label, val, uom);
+	else
+		asprintf (&data, "%s=%ld%s;", label, val, uom);
 
 	if (warnp)
 		asprintf (&data, "%s%ld;", data, warn);
