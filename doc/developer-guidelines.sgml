@@ -114,7 +114,7 @@
 <section id="PlugOutput"><title>Plugin Output for Nagios</title>
 	
 		<para>You should always print something to STDOUT that tells if the 
-		service is working or why its failing. Try to keep the output short - 
+		service is working or why it is failing. Try to keep the output short - 
 		probably less that 80 characters. Remember that you ideally would like 
 		the entire output to appear in a pager message, which will get chopped
 		off after a certain length.</para>
@@ -124,6 +124,14 @@
 		when it notifies contacts about potential problems. If you print
 		multiple lines, you're out of luck. Remember, keep it short and
 		to the point.</para>
+
+		<para>Output should be in the format:</para>
+		<literallayout>
+		METRIC STATUS: Information text
+		</literallayout>
+		<para>However, note that this is not a requirement of the API, so you cannot depend on this
+		being an accurate reflection of the status of the service - the status should always 
+		be determined by the return code.</para>
 		</section>
 
 		<section><title>Verbose output</title>
