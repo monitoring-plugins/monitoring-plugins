@@ -192,24 +192,41 @@ is_dotted_quad (char *address)
 }
 
 /* from RFC-1035
- * 
- * The labels must follow the rules for ARPANET host names.  They must
- * start with a letter, end with a letter or digit, and have as interior
- * characters only letters, digits, and hyphen.  There are also some
- * restrictions on the length.  Labels must be 63 characters or less. */
+* 
+* The labels must follow the rules for ARPANET host names.  They must
+* start with a letter, end with a letter or digit, and have as interior
+* characters only letters, digits, and hyphen.  There are also some
+* restrictions on the length.  Labels must be 63 characters or less.
+*
+* Then RFC-1123:
+*
+*  2.1  Host Names and Numbers
+*
+*    The syntax of a legal Internet host name was specified in RFC-952
+*    [DNS:4].  One aspect of host name syntax is hereby changed: the
+*    restriction on the first character is relaxed to allow either a
+*    letter or a digit.  Host software MUST support this more liberal
+*    syntax.
+*
+*    Host software MUST handle host names of up to 63 characters and
+*    SHOULD handle host names of up to 255 characters.
+*/
 
 int
 is_hostname (char *s1)
 {
-	if (!s1 || strlen (s1) > 63) {
+	if (!s1 || strlen (s1) > 255) {
 		return FALSE;
 	}
+	/* if s1 contains anything but ALPHA, NUM, dash, or period*/
 	if (strcspn (s1, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUWVXYZ0123456789-.") !=	0) {
 		return FALSE;
 	}
-	if (strspn (s1, "0123456789-.") == 1) {
+	/* or if s1 begins with dash or period */
+	if (strspn (s1, "-.") == 1) {
 		return FALSE;
 	}
+  /* '..' and '.-' are not legal either */
 	while ((s1 = index (s1, '.'))) {
 		s1++;
 		if (strspn (s1, "0123456789-.") == 1) {

@@ -187,7 +187,7 @@ struct timeval tv;
 #define URI_PATH "%[/a-zA-Z0-9._-=@,]"
 
 enum {
-	MAX_IPV4_HOSTLENGTH = 64,
+	MAX_IPV4_HOSTLENGTH = 255,
 	HTTP_PORT = 80,
 	HTTPS_PORT = 443
 };
@@ -734,7 +734,7 @@ check_http (void)
 				asprintf (&orig_url, "%s", server_url);
 				pos = header;
 				while (pos) {
-					server_address = realloc (server_address, MAX_IPV4_HOSTLENGTH);
+					server_address = realloc (server_address, MAX_IPV4_HOSTLENGTH + 1);
 					if (server_address == NULL)
 						terminate (STATE_UNKNOWN,
 										 "HTTP UNKNOWN: could not allocate server_address");
