@@ -7,10 +7,11 @@
 #
 msgid ""
 msgstr ""
+"Plural-Forms:  nplurals=2; plural=(n > 1);\n"
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-11-28 21:55+0100\n"
-"PO-Revision-Date: 2004-11-29 01:46+0100\n"
+"PO-Revision-Date: 2004-11-30 01:20+0100\n"
 "Last-Translator: Benoit Mortier <benoit.mortier@opensides.be>\n"
 "Language-Team: Français <fr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -63,7 +64,7 @@ msgstr "SSH ATTENTION: impossible d'ouvrir %s\n"
 #: plugins/check_tcp.c:462 plugins/check_time.c:291 plugins/check_udp.c:180
 #: plugins/negate.c:183
 msgid "Timeout interval must be a positive integer"
-msgstr ""
+msgstr "L'intervalle de temps doit être un entier positif"
 
 #: plugins/check_by_ssh.c:241 plugins/check_by_ssh.c:300
 #: plugins/check_dig.c:231 plugins/check_dig.c:288 plugins/check_hpjd.c:324
@@ -80,7 +81,7 @@ msgstr "le port doit être un nombre entier"
 
 #: plugins/check_by_ssh.c:288
 msgid "skip lines must be an integer"
-msgstr ""
+msgstr "le nombres de lignes à sauter doit être un entier"
 
 #: plugins/check_by_ssh.c:298
 #, c-format
@@ -182,6 +183,14 @@ msgid ""
 "invocation agruments, the one remote program may be an agent that can\n"
 "execute additional commands as proxy\n"
 msgstr ""
+"\n"
+"L'utilisation la plus courantes est de se référer à une identité locale avec\n"
+"l'option -i. Dans ce mode, l'identité doit avoir une phrase nulle\n"
+"et la clef publique doit être listée dans les authorized_keys\n"
+"sur l'hôte distant. Habituellement la clef sera restreinte a l'exécution\n"
+"d'une seule commande sur l'hôte distant. Si le serveur SSH lit les arguments,\n"
+"le programme distantpeut être un agent qui peu exécuter des commandes\n"
+"supplémentaires comme un proxy\n"
 
 #: plugins/check_by_ssh.c:402
 #, c-format
@@ -332,7 +341,7 @@ msgstr ""
 #: plugins/check_disk.c:362
 #, c-format
 msgid "unit type %s not known\n"
-msgstr ""
+msgstr "unité de type %s inconnue\n"
 
 #: plugins/check_disk.c:365
 #, c-format
@@ -364,11 +373,14 @@ msgstr ""
 
 #: plugins/check_disk.c:578
 #, c-format
+#, fuzzy
 msgid ""
 "This plugin checks the amount of used disk space on a mounted file system\n"
 "and generates an alert if free space is less than one of the threshold "
 "values."
 msgstr ""
+"Ce plugin vérifie le montant de place utilisé sur un système de fichier monté\n"
+"et génère une alerte si la place disponible est plus petite que une des valeurs fournies."
 
 #: plugins/check_disk.c:586
 #, c-format
@@ -459,11 +471,6 @@ msgid ""
 "       %s (-h|--help)\n"
 "       %s (-V|--version)\n"
 msgstr ""
-"Usage: %s -w limit -c limit [-p path | -x device] [-t timeout] [-m] [-"
-"e]\n"
-"        [-v] [-q]\n"
-"       %s (-h|--help)\n"
-"       %s (-V|--version)\n"
 
 #: plugins/check_dns.c:108
 msgid "Unknown error (plugin)"
@@ -472,7 +479,7 @@ msgstr "Erreur inconnue (plugin)"
 #: plugins/check_dns.c:128
 #, c-format
 msgid "DNS CRITICAL - '%s' returned empty host name string\n"
-msgstr ""
+msgstr "DNS CRITIQUE - '%s' à retourné un nom d'hôte vide\n"
 
 #: plugins/check_dns.c:167
 msgid "nslookup returned error status"
@@ -481,7 +488,7 @@ msgstr "nslookup à retourné une erreur"
 #: plugins/check_dns.c:174
 #, c-format
 msgid "DNS CRITICAL - '%s' output parsing exited with no address\n"
-msgstr ""
+msgstr "DNS CRITIQUE - '%s' n'a pas retourné d'adresse\n"
 
 #: plugins/check_dns.c:180
 #, c-format
@@ -514,17 +521,17 @@ msgstr "%s renvoie %s"
 #: plugins/check_dns.c:204
 #, c-format
 msgid "DNS WARNING - %s\n"
-msgstr ""
+msgstr "DNS ATTENTION - %s\n"
 
 #: plugins/check_dns.c:207
 #, c-format
 msgid "DNS CRITICAL - %s\n"
-msgstr ""
+msgstr "DNS CRITIQUE - %s\n"
 
 #: plugins/check_dns.c:210
 #, c-format
 msgid "DNS problem - %s\n"
-msgstr ""
+msgstr "DNS problème - %s\n"
 
 #: plugins/check_dns.c:228
 #, c-format
@@ -552,8 +559,9 @@ msgstr "Le réseau est injoignable\n"
 
 #: plugins/check_dns.c:253
 #, c-format
+#, fuzzy
 msgid "DNS failure for %s\n"
-msgstr ""
+msgstr "Echec DNS pour %s\n"
 
 #: plugins/check_dns.c:299 plugins/check_fping.c:243 plugins/check_game.c:210
 #: plugins/check_overcr.c:335 plugins/check_radius.c:216
@@ -569,8 +577,9 @@ msgstr ""
 #: plugins/check_dns.c:316 plugins/check_dns.c:328 plugins/check_dns.c:337
 #: plugins/check_dns.c:342 plugins/check_dns.c:355 plugins/check_dns.c:366
 #: plugins/check_game.c:227 plugins/check_game.c:235
+#, fuzzy
 msgid "Input buffer overflow\n"
-msgstr ""
+msgstr "Le tampon d'entrée a débordé\n"
 
 #: plugins/check_dns.c:323
 #, c-format
@@ -627,6 +636,11 @@ msgid ""
 "be specified.  If no DNS server is specified, the default server(s)\n"
 "specified in /etc/resolv.conf will be used.\n"
 msgstr ""
+"\n"
+"Ce plugin utilise le programme nslookup pour obtenir l'adresse IP\n"
+"pour l'hôte à vérifier. Un DNS optionnel peut être spécifié\n"
+"Si aucun DNS n'est spécifié, le serveur DNS par défaut spécifié\n"
+"dans /etc/resolv.conf sera utilisé.\n"
 
 #: plugins/check_dns.c:426
 #, c-format
@@ -662,7 +676,7 @@ msgstr "INCONNU"
 #: plugins/check_dummy.c:70
 #, c-format
 msgid "Status %d is not a supported error state\n"
-msgstr "Le status %d n'est pas un status supporté\n"
+msgstr "L'état %d n'est pas un état supporté\n"
 
 #: plugins/check_dummy.c:96
 #, c-format
@@ -671,6 +685,9 @@ msgid ""
 "This plugin will simply return the state corresponding to the numeric value\n"
 "of the <state> argument with optional text.\n"
 msgstr ""
+"\n"
+"Ce plugin retournera simplement l'état correspondant à la valeur numérique\n"
+"de l'argument <state> avec un texte optionnel.\n"
 
 #: plugins/check_dummy.c:108
 #, c-format
@@ -685,12 +702,12 @@ msgstr ""
 #: plugins/check_fping.c:134
 #, c-format
 msgid "FPING critical - %s is unreachable\n"
-msgstr ""
+msgstr "FPING CRITIQUE - %s est injoignable\n"
 
 #: plugins/check_fping.c:139
 #, c-format
 msgid "FPING critical - %s is down\n"
-msgstr ""
+msgstr "FPING CRITIQUE - %s est en panne\n"
 
 #: plugins/check_fping.c:166
 #, c-format
@@ -736,9 +753,13 @@ msgid ""
 "necessary to set the suid flag on fping.\n"
 "\n"
 msgstr ""
+"Ce plugin va utiliser la commande /bin/fping pour pinger l'hôte\n"
+"spécifié pour une vérification rapide. Veuillez noter qu'il est nécessaire\n"
+"de mettre le flag suid sur le fichier fping.\n"
 
 #: plugins/check_fping.c:375
 #, c-format
+#, fuzzy
 msgid ""
 " -H, --hostname=HOST\n"
 "    Name or IP Address of host to ping (IP Address bypasses name lookup,\n"
@@ -793,9 +814,8 @@ msgstr "Licence: GPL\n"
 
 #: plugins/check_game.c:114
 #, c-format
-#, fuzzy
 msgid "ERROR: Host type parameter incorrect!\n"
-msgstr "ERREUR: "
+msgstr "ERREUR: Argument de type hôte incorrect!\n"
 
 #: plugins/check_game.c:313
 #, c-format
@@ -963,7 +983,7 @@ msgstr ""
 #: plugins/check_http.c:390
 #, c-format
 msgid "Could Not Compile Regular Expression: %s"
-msgstr ""
+msgstr "Impossible de compiler l'expression régulière: %s"
 
 #: plugins/check_http.c:402 plugins/check_ldap.c:241 plugins/check_ping.c:224
 #: plugins/check_smtp.c:367 plugins/check_ssh.c:130 plugins/check_tcp.c:427
@@ -1181,11 +1201,17 @@ msgid ""
 "strings and regular expressions, check connection times, and report on\n"
 "certificate expiration times.\n"
 msgstr ""
+"Ce plugin teste le service HHTP sur l'hôte spécifié. Il peut tester\n"
+"de la version normale (http) et la version sécurisée (https), suivre des\n"
+"redirections, chercher pour des chaînes de caractères et des expressions\n"
+"régulières, vérifier les temps de connection, et avertir lors de l'expiration\n"
+"des certificats.\n"
 
 #: plugins/check_http.c:1379
 #, c-format
+#, fuzzy
 msgid "NOTE: One or both of -H and -I must be specified\n"
-msgstr ""
+msgstr "ATTENTION: un ou les deux peuvent être spécifiés -H et -I\n"
 
 #: plugins/check_http.c:1383
 #, c-format
@@ -1202,7 +1228,7 @@ msgstr ""
 " -H, --hostname=ADDRESS\n"
 "    Nom de l'hôte pour les serveurs utilisant les entêtes de l'hôte (hôtes "
 "virtuels)\n"
-"    Rajoutez un port pour l'inclure dans les headers (ex: example.com:5000)\n"
+"    Rajoutez un port pour l'inclure dans les entetes (ex: example.com:5000)\n"
 " -I, --IP-address=ADDRESS\n"
 "   Adresse IP ou nom (utilisez une adresse numérique si possible pour "
 "bypasser le DNS).\n"
@@ -1296,6 +1322,10 @@ msgid ""
 "serve content (optionally within a specified time) or whether the X509 \n"
 "certificate is still valid for the specified number of days.\n"
 msgstr ""
+"\n"
+"Ce plugin peut aussi chercher si un serveur web SSL peut fournir \n"
+"le contenu (éventuellement dans un temps défini) ou si le certificat X509\n"
+"est toujours valide pour le nombre de jours spécifiés.\n"
 
 #: plugins/check_http.c:1465
 #, c-format
@@ -1363,8 +1393,9 @@ msgstr "ERREUR: État '%d' inconnu. %d/%d les tests on réussi\n"
 
 #: plugins/check_ide-smart.c:274
 #, c-format
+#, fuzzy
 msgid "OffLineStatus=%d {%s}, AutoOffLine=%s, OffLineTimeout=%d minutes\n"
-msgstr ""
+msgstr "Etat Hors Ligne=%d {%s}, Hors Ligne Auto=%s, OffLineTimeout=%d minutes\n"
 
 #: plugins/check_ide-smart.c:280
 #, c-format
@@ -1374,7 +1405,7 @@ msgstr ""
 #: plugins/check_ide-smart.c:286
 #, c-format
 msgid "SmartRevision=%d, CheckSum=%d, SmartCapability=%d {%s %s}\n"
-msgstr ""
+msgstr "Revision Smart=%d, Somme de contrôle=%d, Capacité Smart=%d {%s %s}\n"
 
 #: plugins/check_ide-smart.c:323
 #, c-format
@@ -1388,7 +1419,6 @@ msgstr "CRITIQUE: SMART_READ_THRESHOLDS: %s\n"
 
 #: plugins/check_ide-smart.c:358
 #, c-format
-#, fuzzy
 msgid ""
 "Usage: check_ide-smart [DEVICE] [OPTION]\n"
 " -d, --device=DEVICE\n"
@@ -1418,7 +1448,7 @@ msgstr ""
 " -0, --auto-off\n"
 "    Désactive les tests automatiques hors ligne\n"
 " -n, --net-saint\n"
-"    Output suitable for Net Saint\n"
+"    Sortie utilisable par netsaint\n"
 " -h, --help\n"
 " -V, --version\n"
 
@@ -1657,7 +1687,7 @@ msgstr "Max"
 
 #: plugins/check_mrtg.c:211 plugins/check_mrtg.c:263
 msgid "Invalid variable number\n"
-msgstr ""
+msgstr "Numéro de la variable invalide\n"
 
 #: plugins/check_mrtg.c:246
 #, c-format
@@ -1670,7 +1700,7 @@ msgstr ""
 
 #: plugins/check_mrtg.c:290
 msgid "You must supply the variable number\n"
-msgstr ""
+msgstr "Vous devez fournir le numéro de la variable\n"
 
 #: plugins/check_mrtg.c:314
 #, c-format
@@ -1678,6 +1708,8 @@ msgid ""
 "This plugin will check either the average or maximum value of one of the\n"
 "two variables recorded in an MRTG log file.\n"
 msgstr ""
+"Ce plugin va vérifier la moyenne ou le maximum d'une ou deux variables\n"
+"écrites dans un fichier de log MRTG.\n"
 
 #: plugins/check_mrtg.c:322
 #, c-format
@@ -1791,7 +1823,7 @@ msgstr ""
 " -e, --expires=INTEGER\n"
 "   Le nombres de minutes après lesquelle le fichier de log expire\n"
 " -a, --aggregation=(AVG|MAX)\n"
-"   Test average or maximum\n"
+"   Teste la moyenne ou le maximum\n"
 " -w, --warning\n"
 "   Warning threshold pair \"<incoming>,<outgoing>\"\n"
 " -c, --critical\n"
@@ -1830,14 +1862,11 @@ msgid ""
 "<critical_pair>\n"
 "  [-e expire_minutes] [-t timeout] [-v]\n"
 msgstr ""
-"Utilisation: %s -F <log_file> -a <AVG | MAX> -v <variable> -w <warning_pair> "
-"-c <critical_pair>\n"
-"  [-e expire_minutes] [-t timeout] [-v]\n"
 
 #: plugins/check_mysql.c:278
 #, c-format
 msgid "This program tests connections to a mysql server\n"
-msgstr ""
+msgstr "Ce plugin teste une connection vers un serveur mysql\n"
 
 #: plugins/check_mysql.c:286
 #, c-format
@@ -1853,6 +1882,16 @@ msgid ""
 " -S, --check-slave\n"
 "   Check if the slave thread is running properly.\n"
 msgstr ""
+" -d, --database=STRING\n"
+"   Vérifie la database avec le nom indique\n"
+" -u, --username=STRING\n"
+"   Connection avec le nom de l'utilisateur indique\n"
+" -p, --password=STRING\n"
+"   Utilise le mot de passe indique pour se connecter authentifier la connection\n"
+"   ==> CETTE FORME D'AUTHENTIFICATION N'EST PAS SURE!!! <==\n"
+"   Votre mot de passe sera visible dans la liste des processus\n"
+" -S, --check-slave\n"
+"   Vérifier si le processus esclave fonctionne correctement.\n"
 
 #: plugins/check_mysql.c:298
 #, c-format
@@ -1861,6 +1900,9 @@ msgid ""
 "There are no required arguments. By default, the local database with\n"
 "a server listening on MySQL standard port %d will be checked\n"
 msgstr ""
+"\n"
+"Il n'y a pas d'arguments nécessaires. Par défaut la base de donnée locale\n"
+"avec un serveur MySQL écoutant sur le port %d sera vérifiée\n"
 
 #: plugins/check_mysql.c:311
 #, c-format
