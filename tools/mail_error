@@ -5,7 +5,9 @@
 
 function die { echo $1 ; exit 1; }
 
-PATH=$HOME/bin:$HOME/local/bin:$PATH
+# Must be export so that sfsnapshot uses correct versions
+# of GNU toolchain
+export PATH=$HOME/bin:$HOME/local/bin:$PATH
 
 while getopts "o:m:" c; do
 	case $c in
