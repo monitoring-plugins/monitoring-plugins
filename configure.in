@@ -219,6 +219,19 @@ elif test "$OPENSSL" = "/usr/local/ssl/bin/openssl"; then
 fi
 AC_ARG_WITH(openssl,--with-openssl=<dir> sets path to openssl installation,[OPENSSL=$withval])
 
+AC_CHECK_HEADERS(krb5.h,FOUNDINCLUDE=yes,FOUNDINCLUDE=no)
+if test "$FOUNDINCLUDE" = "no"; then
+  _SAVEDCPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="$_SAVEDCPPFLAGS -I/usr/kerberos/include"
+  unset ac_cv_header_krb5_h
+  AC_CHECK_HEADERS(krb5.h,
+                   KRB5INCLUDE="-I/usr/kerberos/include"
+                   FOUNDINCLUDE=yes,
+                   FOUNDINCLUDE=no)
+fi
+AC_SUBST(SSLINCLUDE)
+CPPFLAGS="$_SAVEDCPPFLAGS $SSLINCLUDE"
+
 dnl Check for OpenSSL header files
 _SAVEDCPPFLAGS="$CPPFLAGS"
 FOUNDINCLUDE=yes
