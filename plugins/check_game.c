@@ -43,11 +43,11 @@ int port = 0;
 
 int verbose;
 
-int qstat_game_players_max = 4;
-int qstat_game_players = 5;
-int qstat_game_field = 2;
-int qstat_map_field = 3;
-int qstat_ping_field = 5;
+int qstat_game_players_max = -1;
+int qstat_game_players = -1;
+int qstat_game_field = -1;
+int qstat_map_field = -1;
+int qstat_ping_field = -1;
 
 
 int
@@ -143,12 +143,18 @@ main (int argc, char **argv)
 		result = STATE_CRITICAL;
 	}
 	else {
-		printf ("OK: %s/%s %s (%s), Ping: %s ms\n", 
+		printf ("OK: %s/%s %s (%s), Ping: %s ms|%s %s\n", 
 		        ret[qstat_game_players],
 		        ret[qstat_game_players_max],
 		        ret[qstat_game_field], 
 		        ret[qstat_map_field],
-		        ret[qstat_ping_field]);
+		        ret[qstat_ping_field],
+						perfdata ("players", atol(ret[qstat_game_players]), "",
+		                  FALSE, 0, FALSE, 0,
+		                  TRUE, 0, TRUE, atol(ret[qstat_game_players_max])),
+						perfdata ("ping", atol(ret[qstat_ping_field]), "",
+		                  FALSE, 0, FALSE, 0,
+		                  TRUE, 0, FALSE, 0));
 	}
 
 	/* close the pipe */
@@ -246,6 +252,8 @@ process_arguments (int argc, char **argv)
 			break;
 		case 129: /* index of player count field */
 			qstat_game_players = atoi (optarg);
+			if (qstat_game_players_max == 0)
+				qstat_game_players_max = qstat_game_players - 1;
 			if (qstat_game_players < 0 || qstat_game_players > QSTAT_MAX_RETURN_ARGS)
 				return ERROR;
 			break;
@@ -272,7 +280,22 @@ process_arguments (int argc, char **argv)
 int
 validate_arguments (void)
 {
-		return OK;
+	if (qstat_game_players_max < 0)
+		qstat_game_players_max = 4;
+
+	if (qstat_game_players < 0)
+		qstat_game_players = 5;
+
+	if (qstat_game_field < 0)
+		qstat_game_field = 2;
+
+	if (qstat_map_field < 0)
+		qstat_map_field = 3;
+
+	if (qstat_ping_field < 0)
+		qstat_ping_field = 5;
+
+	return OK;
 }
 
 
@@ -323,3 +346,18 @@ Usage: %s <game> <ip_address> [-p port] [-gf game_field] [-mf map_field]\n\
   [-pf ping_field]\n"), progname);
 	printf (_(UT_HLP_VRS), progname, progname);
 }
+
+/******************************************************************************
+ *
+ * Test Cases:
+ *
+ * ./check_game --players 7 -p 8 --map 5 qs 67.20.190.61 26000
+ * 
+ * qstat -raw , -qs 67.20.190.61
+ *  ==> QS,67.20.190.61,Nightmare.fintek.ca,67.20.190.61:26000,3,e2m1,6,0,83,0
+ *
+ * qstat -qs 67.20.190.61
+ *  ==> ADDRESS           PLAYERS      MAP   RESPONSE TIME    NAME
+ *  ==> 67.20.190.61            0/ 6     e2m1     79 / 0   Nightmare.fintek.ca
+ *
+ ******************************************************************************/
