@@ -301,6 +301,8 @@ main (int argc, char **argv)
 			show = strstr (response, "Counter32: ") + 11;
 		else if (strstr (response, "INTEGER: "))
 			show = strstr (response, "INTEGER: ") + 9;
+		else if (strstr (response, "STRING: "))
+			show = strstr (response, "STRING: ") + 8;
 		else
 			show = response;
 		p2 = show;
