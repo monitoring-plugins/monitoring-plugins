@@ -219,8 +219,7 @@ main (int argc, char *argv[])
 		}
 
 		if (!device) {
-			show_help ();
-			show_version ();
+			print_help ();
 			return -1;
 		}
 
