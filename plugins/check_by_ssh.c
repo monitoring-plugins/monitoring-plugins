@@ -249,12 +249,12 @@ process_arguments (int argc, char **argv)
 			passive = TRUE;
 			break;
 		case 's':									/* description of service to check */
-			service = realloc (service, ++services);
+			service = realloc (service, (++services) * sizeof(char *));
 			p1 = optarg;
 			while (p2 = index (p1, ':')) {
 				*p2 = '\0';
 				asprintf (&service[services-1], "%s", p1);
-				service = realloc (service, ++services);
+				service = realloc (service, (++services) * sizeof(char *));
 				p1 = p2 + 1;
 			}
 			asprintf (&service[services-1], "%s", p1);
