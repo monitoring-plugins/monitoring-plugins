@@ -132,7 +132,7 @@ main (int argc, char **argv)
 		temp_buffer = strtok (input_buffer, "=");
 		temp_buffer = strtok (NULL, "=");
 
-		if (temp_buffer != NULL) {
+		if (temp_buffer == NULL) {
 
 				result = STATE_UNKNOWN;
 				strcpy (errmsg, input_buffer);
