@@ -737,12 +737,15 @@ then
 	ac_cv_ps_cols=7
 	AC_MSG_RESULT([$ac_cv_ps_command - with no RSS])
 
+dnl Solaris 2.6
 elif ps -Ao 's comm vsz rss uid user ppid args' 2>/dev/null | \
 	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PPID +[RGSCOMDNA]+"] >/dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -Ao 's uid ppid vsz rss pcpu comm args'"
-	ac_cv_ps_format="%s %d %d %d %d %f %s %n"
+	# There must be no space between the %s and %n due to a wierd problem in sscanf where
+	# it will return %n as longer than the line length
+	ac_cv_ps_format="%s %d %d %d %d %f %s%n"
 	ac_cv_ps_cols=8
 	AC_MSG_RESULT([$ac_cv_ps_command])
 

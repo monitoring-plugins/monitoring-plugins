@@ -155,10 +155,6 @@ main (int argc, char **argv)
 		/* Zombie processes do not give a procprog command */
 		if ( cols == (expected_cols - 1) && strstr(procstat, zombie) ) {
 			cols = expected_cols;
-			/* Set some value for procargs for the strip command further below 
-			Seen to be a problem on some Solaris 7 and 8 systems */
-			input_buffer[pos] = '\n';
-			input_buffer[pos+1] = 0x0;
 		}
 		if ( cols >= expected_cols ) {
 			resultsum = 0;
