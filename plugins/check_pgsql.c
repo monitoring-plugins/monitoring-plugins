@@ -121,7 +121,8 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 int
 main (int argc, char **argv)
 {
-	int elapsed_time, status;
+	int elapsed_time;
+	int status = STATE_UNKNOWN;
 
 	/* begin, by setting the parameters for a backend connection if the
 	 * parameters are null, then the system will try to use reasonable

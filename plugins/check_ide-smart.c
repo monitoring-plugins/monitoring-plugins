@@ -376,6 +376,7 @@ show_version ()
 	printf ("check_ide-smart v.1 - FREE Software with NO WARRANTY\n");
 	printf ("Nagios feature - Robert Dale <rdale@digital-mission.com>\n");
 	printf ("(C) 1999 Ragnar Hojland Espinosa <ragnar@lightside.dhis.org>\n");
+	printf (COPYRIGHT, copyright, email);
 }
 
 
