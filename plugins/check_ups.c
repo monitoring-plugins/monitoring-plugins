@@ -31,7 +31,7 @@
 * This plugin requires that the UPSD daemon distributed with Russel
 * Kroll's "Smart UPS Tools" be installed on the remote host.  If you
 * don't have the package installed on your system, you can download
-* it from http://www.exploits.org/~rkroll/smartupstools
+* it from http://www.exploits.org/nut
 *
 * License Information:
 *
@@ -66,20 +66,21 @@
 
 #define PORT	3305
 
-#define UPS_NONE	0							/* no supported options */
-#define UPS_UTILITY	1						/* supports utility line voltage */
-#define UPS_BATTPCT	2						/* supports percent battery remaining */
-#define UPS_STATUS	4						/* supports UPS status */
-#define UPS_TEMP	8							/* supports UPS temperature */
-#define UPS_LOADPCT	16					/* supports load percent */
+#define UPS_NONE     0   /* no supported options */
+#define UPS_UTILITY  1   /* supports utility line voltage */
+#define UPS_BATTPCT  2   /* supports percent battery remaining */
+#define UPS_STATUS   4   /* supports UPS status */
+#define UPS_TEMP     8   /* supports UPS temperature */
+#define UPS_LOADPCT	16   /* supports load percent */
 
-#define UPSSTATUS_NONE		0
-#define UPSSTATUS_OFF		1
-#define UPSSTATUS_OL		2
-#define UPSSTATUS_OB		4
-#define UPSSTATUS_LB		8
-#define UPSSTATUS_CAL		16
-#define UPSSTATUS_UNKOWN	32
+#define UPSSTATUS_NONE     0
+#define UPSSTATUS_OFF      1
+#define UPSSTATUS_OL       2
+#define UPSSTATUS_OB       4
+#define UPSSTATUS_LB       8
+#define UPSSTATUS_CAL     16
+#define UPSSTATUS_RB      32  /*Replace Battery */
+#define UPSSTATUS_UNKOWN  64
 
 int server_port = PORT;
 char *server_address = "127.0.0.1";
@@ -96,7 +97,7 @@ double ups_utility_voltage = 0.0L;
 double ups_battery_percent = 0.0L;
 double ups_load_percent = 0.0L;
 double ups_temperature = 0.0L;
-char ups_status[MAX_INPUT_BUFFER] = "N/A";
+char *ups_status = "N/A";
 
 int determine_status (void);
 int determine_supported_vars (void);
@@ -111,7 +112,7 @@ int
 main (int argc, char **argv)
 {
 	int result = STATE_OK;
-	char output_message[MAX_INPUT_BUFFER];
+	char *message;
 	char temp_buffer[MAX_INPUT_BUFFER];
 
 	double ups_utility_deviation = 0.0L;
@@ -134,35 +135,39 @@ main (int argc, char **argv)
 
 		if (determine_status () != OK)
 			return STATE_CRITICAL;
-		ups_status[0] = 0;
+		asprintf (&ups_status, "");
 		result = STATE_OK;
 
 		if (status & UPSSTATUS_OFF) {
-			strcpy (ups_status, "Off");
+			asprintf (&ups_status, "Off");
 			result = STATE_CRITICAL;
 		}
 		else if ((status & (UPSSTATUS_OB | UPSSTATUS_LB)) ==
 						 (UPSSTATUS_OB | UPSSTATUS_LB)) {
-			strcpy (ups_status, "On Battery, Low Battery");
+			asprintf (&ups_status, "On Battery, Low Battery");
 			result = STATE_CRITICAL;
 		}
 		else {
 			if (status & UPSSTATUS_OL) {
-				strcat (ups_status, "Online");
+				asprintf (&ups_status, "%s%s", ups_status, "Online");
 			}
 			if (status & UPSSTATUS_OB) {
-				strcat (ups_status, "On Battery");
+				asprintf (&ups_status, "%s%s", ups_status, "On Battery");
 				result = STATE_WARNING;
 			}
 			if (status & UPSSTATUS_LB) {
-				strcat (ups_status, ", Low Battery");
+				asprintf (&ups_status, "%s%s", ups_status, ", Low Battery");
 				result = STATE_WARNING;
 			}
 			if (status & UPSSTATUS_CAL) {
-				strcat (ups_status, ", Calibrating");
+				asprintf (&ups_status, "%s%s", ups_status, ", Calibrating");
+			}
+			if (status & UPSSTATUS_RB) {
+				asprintf (&ups_status, "%s%s", ups_status, ", Replace Battery");
+				result = STATE_WARNING;
 			}
 			if (status & UPSSTATUS_UNKOWN) {
-				strcat (ups_status, ", Unknown");
+				asprintf (&ups_status, "%s%s", ups_status, ", Unknown");
 			}
 		}
 	}
@@ -248,36 +253,27 @@ main (int argc, char **argv)
 	alarm (0);
 
 
-	sprintf (output_message, "UPS %s - ",
-					 (result == STATE_OK) ? "ok" : "problem");
+	asprintf (&message, "UPS %s - ", (result == STATE_OK) ? "ok" : "problem");
 
-	if (supported_options & UPS_STATUS) {
-		sprintf (temp_buffer, "Status=%s ", ups_status);
-		strcat (output_message, temp_buffer);
-	}
-	if (supported_options & UPS_UTILITY) {
-		sprintf (temp_buffer, "Utility=%3.1fV ", ups_utility_voltage);
-		strcat (output_message, temp_buffer);
-	}
-	if (supported_options & UPS_BATTPCT) {
-		sprintf (temp_buffer, "Batt=%3.1f%% ", ups_battery_percent);
-		strcat (output_message, temp_buffer);
-	}
-	if (supported_options & UPS_LOADPCT) {
-		sprintf (temp_buffer, "Load=%3.1f%% ", ups_load_percent);
-		strcat (output_message, temp_buffer);
-	}
-	if (supported_options & UPS_TEMP) {
-		sprintf (temp_buffer, "Temp=%3.1fF", ups_temperature);
-		strcat (output_message, temp_buffer);
-	}
-	if (supported_options == UPS_NONE) {
-		sprintf (temp_buffer,
-						 "UPS does not appear to support any available options\n");
-		strcat (output_message, temp_buffer);
-	}
+	if (supported_options & UPS_STATUS)
+		asprintf (&message, "%sStatus=%s ", message, ups_status);
 
-	printf ("%s\n", output_message);
+	if (supported_options & UPS_UTILITY)
+		asprintf (&message, "%sUtility=%3.1fV ", message, ups_utility_voltage);
+
+	if (supported_options & UPS_BATTPCT)
+		asprintf (&message, "%sBatt=%3.1f%% ", message, ups_battery_percent);
+
+	if (supported_options & UPS_LOADPCT)
+		asprintf (&message, "%sLoad=%3.1f%% ", message, ups_load_percent);
+
+	if (supported_options & UPS_TEMP)
+		asprintf (&message, "%sTemp=%3.1fF", message, ups_temperature);
+
+	if (supported_options == UPS_NONE)
+		asprintf (&message, "UPS does not support any available options\n");
+
+	printf ("%s\n", message);
 
 	return result;
 }
@@ -313,6 +309,8 @@ determine_status (void)
 			status |= UPSSTATUS_LB;
 		else if (!strcmp (ptr, "CAL"))
 			status |= UPSSTATUS_CAL;
+		else if (!strcmp (ptr, "RB"))
+			status |= UPSSTATUS_RB;
 		else
 			status |= UPSSTATUS_UNKOWN;
 	}
