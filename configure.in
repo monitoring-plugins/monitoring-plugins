@@ -420,7 +420,9 @@ fi
 dnl Check for OpenSSL header files
 unset FOUNDINCLUDE
 _SAVEDCPPFLAGS="$CPPFLAGS"
-CPPFLAGS="$CPPFLAGS -I$OPENSSL/include"
+if test "$OPENSSL" != "/usr"; then
+  CPPFLAGS="$CPPFLAGS -I$OPENSSL/include"
+fi
 AC_CHECK_HEADERS(openssl/ssl.h openssl/x509.h openssl/rsa.h openssl/pem.h openssl/crypto.h openssl/err.h,
                  SSLINCLUDE="-I$OPENSSL/include"
                  FOUNDINCLUDE=yes,
