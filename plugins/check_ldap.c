@@ -18,7 +18,8 @@
  
 ******************************************************************************/
 
-const char *progname = "check_ldap";
+/* progname may be check_ldaps */
+char *progname = "check_ldap";
 const char *revision = "$Revision$";
 const char *copyright = "2000-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
@@ -84,7 +85,7 @@ main (int argc, char *argv[])
 	textdomain (PACKAGE);
 
 	if (strstr(argv[0],"check_ldaps")) {
-      asprintf (&progname, "check_ldaps");
+		asprintf (&progname, "check_ldaps");
  	}
 	
 	if (process_arguments (argc, argv) == ERROR)
