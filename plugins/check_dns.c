@@ -72,9 +72,8 @@ main (int argc, char **argv)
 		return STATE_UNKNOWN;
 	}
 
-	if (process_arguments (argc, argv) != OK) {
+	if (process_arguments (argc, argv) != TRUE) {
 		usage (_("check_dns: could not parse arguments\n"));
-		return STATE_UNKNOWN;
 	}
 
 	/* get the command to run */

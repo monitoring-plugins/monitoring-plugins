@@ -68,7 +68,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	/* process arguments */
-	if (process_arguments (argc, argv) == ERROR)
+	if (process_arguments (argc, argv) != TRUE)
 		usage (_("check_by_ssh: could not parse arguments\n"));
 
 

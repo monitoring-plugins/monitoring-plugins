@@ -89,7 +89,7 @@ main (int argc, char **argv)
 	tmp_status = strdup ("");
 	perf = strdup ("");
 
-	if (process_arguments (argc, argv) != OK)
+	if (process_arguments (argc, argv) != TRUE)
 		usage (_("Incorrect arguments supplied\n"));
 
 #ifdef HAVE_PROC_MEMINFO

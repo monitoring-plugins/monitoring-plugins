@@ -65,7 +65,7 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
-	if (process_arguments (argc, argv) != OK)
+	if (process_arguments (argc, argv) != TRUE)
 		usage (_("check_nagios: could not parse arguments\n"));
 
 	/* Set signal handling and alarm */

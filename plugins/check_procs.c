@@ -115,7 +115,7 @@ main (int argc, char **argv)
 	asprintf (&metric_name, "PROCS");
 	metric = METRIC_PROCS;
 
-	if (process_arguments (argc, argv) != OK)
+	if (process_arguments (argc, argv) != TRUE)
 		usage (_("check_procs: could not parse arguments\n"));
 
 	/* Set signal handling and alarm timeout */

@@ -239,7 +239,7 @@ main (int argc, char **argv)
 	server_quit = QUIT;
 	status = strdup ("");
 
-	if (process_arguments (argc, argv) != OK)
+	if (process_arguments (argc, argv) != TRUE)
 		usage (_("check_tcp: could not parse arguments\n"));
 
 	/* use default expect if none listed in process_arguments() */

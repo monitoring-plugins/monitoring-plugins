@@ -78,7 +78,7 @@ main (int argc, char **argv)
 	addresses = malloc (sizeof(char*) * max_addr);
 	addresses[0] = NULL;
 
-	if (process_arguments (argc, argv) != OK)
+	if (process_arguments (argc, argv) != TRUE)
 		usage (_("check_ping: could not parse arguments\n"));
 
 	/* Set signal handling and alarm */

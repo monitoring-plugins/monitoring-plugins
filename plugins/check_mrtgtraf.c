@@ -62,7 +62,7 @@ main (int argc, char **argv)
 	char incoming_speed_rating[8];
 	char outgoing_speed_rating[8];
 
-	if (process_arguments (argc, argv) != OK)
+	if (process_arguments (argc, argv) != TRUE)
 		usage (_("check_ldap: could not parse arguments\n"));
 
 	/* open the MRTG log file for reading */

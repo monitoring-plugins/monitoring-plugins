@@ -67,7 +67,7 @@ main (int argc, char **argv)
 
 //	result = process_arguments (argc, argv);
 	
-	if (process_arguments (argc, argv) != OK)
+	if (process_arguments (argc, argv) != TRUE)
 		usage (_("check_game: could not parse arguments\n"));
 
 /*	if (result != OK) {

@@ -163,7 +163,7 @@ main (int argc, char **argv)
 
 	mount_list = read_filesystem_list (0);
 
-	if (process_arguments (argc, argv) != OK)
+	if (process_arguments (argc, argv) != TRUE)
 		usage (_("check_disk: could not parse arguments\n"));
 
 	for (me = mount_list; me; me = me->me_next) {

@@ -111,7 +111,7 @@ main (int argc, char **argv)
 	data = strdup ("");
 	message = strdup ("");
 
-	if (process_arguments (argc, argv) != OK)
+	if (process_arguments (argc, argv) != TRUE)
 		usage (_("check_ups: could not parse arguments\n"));
 
 	/* initialize alarm signal handling */

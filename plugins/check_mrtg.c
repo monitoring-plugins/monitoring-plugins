@@ -59,7 +59,7 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
-	if (process_arguments (argc, argv) != OK)
+	if (process_arguments (argc, argv) != TRUE)
 		usage (_("check_mrtg: could not parse arguments\n"));
 
 	/* open the MRTG log file for reading */
