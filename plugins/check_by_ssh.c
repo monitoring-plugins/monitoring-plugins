@@ -257,10 +257,10 @@ call_getopt (int argc, char **argv)
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
-			getopt_long (argc, argv, "+?Vvhft46:H:O:p:i:u:l:C:n:s:", long_options,
+			getopt_long (argc, argv, "+?Vvhft46H:O:p:i:u:l:C:n:s:", long_options,
 									 &option_index);
 #else
-		c = getopt (argc, argv, "+?Vvhft46:H:O:p:i:u:l:C:n:s:");
+		c = getopt (argc, argv, "+?Vvhft46H:O:p:i:u:l:C:n:s:");
 #endif
 
 		if (c == -1 || c == EOF)
@@ -293,9 +293,6 @@ call_getopt (int argc, char **argv)
 		case 'v':									/* help */
 			verbose = TRUE;
 			break;
-		case 'f':									/* fork to background */
-			comm = ssprintf (comm, "%s -f", comm);
-			break;
 		case 't':									/* timeout period */
 			if (!is_integer (optarg))
 				usage2 ("timeout interval must be an integer", optarg);
@@ -327,11 +324,10 @@ call_getopt (int argc, char **argv)
 		case 'i':									/* identity */
 			comm = ssprintf (comm, "%s -%c %s", comm, c, optarg);
 			break;
-		case '4':									/* IPv4 */
-			comm = ssprintf (comm, "%s -4", comm);
-			break;
-		case '6': 									/* IPv6 */
-			comm = ssprintf (comm, "%s -4", comm);
+		case '4':									/* Pass these switches directly to ssh */
+		case '6': 								/* -4 for IPv4, -6 for IPv6 */
+		case 'f':									/* fork to background */
+			comm = ssprintf (comm, "%s -%c", comm, c);
 			break;
 		case 'C':									/* Command for remote machine */
 			commands++;
