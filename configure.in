@@ -1165,7 +1165,7 @@ else
 	AC_MSG_WARN([Get qstat from http://www.activesw.com/people/steve/qstat.html in order to make check_game plugin])
 fi
 
-if test x$ac_cv_path_to_qstat != x
+if test $ac_cv_path_to_qstat 
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_QSTAT,"$ac_cv_path_to_qstat",
 		[path to qstat/quakestat])
@@ -1262,16 +1262,13 @@ then
 	AC_MSG_RESULT([using HP-UX format swapinfo])
 fi
 
-if test x$ac_cv_have_swap != x
+if test x$ac_cv_have_swap != x 
 then
 	AC_DEFINE(HAVE_SWAP,1,[Define if swap/swapinfo command is found])
 fi
-if test x$ac_cv_swap_format != x
-then
-	AC_DEFINE_UNQUOTED(SWAP_FORMAT,"$ac_cv_swap_format",
-		[Format string for parsing swap output])
-fi
-if test x$ac_cv_swap_command != x
+AC_DEFINE_UNQUOTED(SWAP_FORMAT,"$ac_cv_swap_format",
+	[Format string for parsing swap output])
+if test "x$ac_cv_swap_command" != "x" 
 then
 	AC_DEFINE_UNQUOTED(SWAP_COMMAND,"$ac_cv_swap_command",
 		[Path to swap/swapinfo binary, with any args])
