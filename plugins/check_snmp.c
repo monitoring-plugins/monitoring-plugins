@@ -31,6 +31,8 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #define DEFAULT_PORT "161"
 #define DEFAULT_MIBLIST "ALL"
 #define DEFAULT_PROTOCOL "1"
+#define DEFAULT_TIMEOUT 1
+#define DEFAULT_RETRIES 5
 #define DEFAULT_AUTH_PROTOCOL "MD5"
 #define DEFAULT_DELIMITER "="
 #define DEFAULT_OUTPUT_DELIMITER " "
@@ -113,12 +115,11 @@ unsigned long upper_crit_lim[MAX_OIDS];
 unsigned long response_value[MAX_OIDS];
 int check_warning_value = FALSE;
 int check_critical_value = FALSE;
+int retries = 0;
 unsigned long eval_method[MAX_OIDS];
 char *delimiter;
 char *output_delim;
 char *miblist;
-
-
 
 int
 main (int argc, char **argv)
@@ -155,13 +156,15 @@ main (int argc, char **argv)
 	delimiter = strdup (DEFAULT_DELIMITER);
 	output_delim = strdup (DEFAULT_OUTPUT_DELIMITER);
 	miblist = strdup (DEFAULT_MIBLIST);
+	timeout_interval = DEFAULT_TIMEOUT;
+	retries = DEFAULT_RETRIES;
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
 	/* create the command line to execute */
-	asprintf (&command_line, "%s -t 1 -r %d -m %s -v %s %s %s:%s %s",
-	          PATH_TO_SNMPGET, timeout_interval - 1, miblist, proto,
+	asprintf (&command_line, "%s -t %d -r %d -m %s -v %s %s %s:%s %s",
+	          PATH_TO_SNMPGET, timeout_interval, retries, miblist, proto,
 	          authpriv, server_address, port, oid);
 	if (verbose)
 		printf ("%s\n", command_line);
@@ -360,12 +363,14 @@ process_arguments (int argc, char **argv)
 		{"delimiter", required_argument, 0, 'd'},
 		{"output-delimiter", required_argument, 0, 'D'},
 		{"string", required_argument, 0, 's'},
+		{"timeout", required_argument, 0, 't'},
 		{"regex", required_argument, 0, 'r'},
 		{"ereg", required_argument, 0, 'r'},
 		{"eregi", required_argument, 0, 'R'},
 		{"label", required_argument, 0, 'l'},
 		{"units", required_argument, 0, 'u'},
 		{"port", required_argument, 0, 'p'},
+		{"retries", required_argument, 0, 'e'},
 		{"miblist", required_argument, 0, 'm'},
 		{"protocol", required_argument, 0, 'P'},
 		{"seclevel", required_argument, 0, 'L'},
@@ -390,7 +395,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "hvVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:m:P:L:U:a:A:X:",
+		c = getopt_long (argc, argv, "hvVt:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:L:U:a:A:X:",
 									 longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -470,9 +475,14 @@ process_arguments (int argc, char **argv)
 				(ptr = index (ptr, ',')) ? ptr++ : ptr;
 			}
 			break;
-		case 'o':									/* object identifier */
 		case 'e': /* PRELIMINARY - may change */
 		case 'E': /* PRELIMINARY - may change */
+			if (!is_integer (optarg))
+				usage2 (_("Retries interval must be a positive integer"), optarg);
+			else
+				retries = atoi(optarg);
+			break;
+		case 'o':									/* object identifier */
 			for (ptr = optarg; (ptr = index (ptr, ',')); ptr++)
 				ptr[0] = ' '; /* relpace comma with space */
 			for (ptr = optarg; (ptr = index (ptr, ' ')); ptr++)
@@ -944,7 +954,8 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -H <ip_address> -o <OID> [-w warn_range] [-c crit_range] \n\
-                  [-C community] [-s string] [-r regex] [-R regexi] [-t timeout]\n\
+                  [-C community] [-s string] [-r regex] [-R regexi]\n\
+                  [-t timeout] [-e retries]\n\
                   [-l label] [-u units] [-p port-number] [-d delimiter]\n\
                   [-D output-delimiter] [-m miblist] [-P snmp version]\n\
                   [-L seclevel] [-U secname] [-a authproto] [-A authpasswd]\n\
