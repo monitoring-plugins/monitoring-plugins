@@ -47,6 +47,7 @@ sub print_help ();
 sub usage ();
 sub process_arguments ();
 
+my $timeout;
 my $status;
 my %ifOperStatus = 	('1','up',
 			 '2','down',
@@ -87,6 +88,9 @@ my $lastc;
 my $dormantWarn;
 my $name;
 
+### Validate Arguments
+
+$status = process_arguments();
 
 
 # Just in case of problems, let's not hang Nagios
@@ -94,12 +98,8 @@ $SIG{'ALRM'} = sub {
      print ("ERROR: No snmp response from $hostname (alarm)\n");
      exit $ERRORS{"UNKNOWN"};
 };
-alarm($TIMEOUT);
 
-
-### Validate Arguments
-
-$status = process_arguments();
+alarm($timeout);
 
 
 ## map ifdescr to ifindex - should look at being able to cache this value
@@ -287,6 +287,7 @@ sub print_help() {
 	printf "                     (Implies the use of -I)\n";
 	printf "   -w (--warn =i|w|c) ignore|warn|crit if the interface is dormant (default critical)\n";
 	printf "   -M (--maxmsgsize) Max message size - usefull only for v1 or v2c\n";
+	printf "   -t (--timeout)    seconds before the plugin times out (default=$TIMEOUT)\n";
 	printf "   -V (--version)    Plugin version\n";
 	printf "   -h (--help)       usage help \n\n";
 	printf " -k or -d must be specified\n\n";
@@ -313,12 +314,14 @@ sub process_arguments() {
 			"k=i" => \$snmpkey, "key=i",\$snmpkey,
 			"d=s" => \$ifdescr, "descr=s" => \$ifdescr,
 			"l=s" => \$lastc,  "lastchange=s" => \$lastc,
-			"p=i" = >\$port,  "port=i" =>\$port,
+			"p=i" => \$port,  "port=i" =>\$port,
 			"H=s" => \$hostname, "hostname=s" => \$hostname,
 			"I"	  => \$ifXTable, "ifmib" => \$ifXTable,
 			"n=s" => \$ifName, "name=s" => \$ifName,
 			"w=s" => \$dormantWarn, "warn=s" => \$dormantWarn,
-			"M=i" => \$maxmsgsize, "maxmsgsize=i" => \$maxmsgsize);
+			"M=i" => \$maxmsgsize, "maxmsgsize=i" => \$maxmsgsize,
+			"t=i" => \$timeout,    "timeout=i" => \$timeout,
+			);
 
 
 				
@@ -361,6 +364,10 @@ sub process_arguments() {
 		}
 	}
 	
+	unless (defined $timeout) {
+		$timeout = $TIMEOUT;
+	}
+
 	if ($snmp_version =~ /3/ ) {
 		# Must define a security level even though default is noAuthNoPriv
 		# v3 requires a security username
