@@ -259,8 +259,8 @@ main (int argc, char **argv)
 		}
 	} 
 	
-	if (fmt != "") {
-		printf (" with %s", fmt);
+	if (strcmp(fmt,"") != 0) {
+		printf (_(" with %s"), fmt);
 	}
 
 	if ( verbose >= 1 && fails != "" )
@@ -354,7 +354,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'p':									/* process id */
 			if (sscanf (optarg, "%d%[^0-9]", &ppid, tmp) == 1) {
-				asprintf (&fmt, "%s%sPPID = %d", fmt, (options ? ", " : ""), ppid);
+				asprintf (&fmt, "%s%sPPID = %d", (fmt ? fmt : "") , (options ? ", " : ""), ppid);
 				options |= PPID;
 				break;
 			}
@@ -367,7 +367,7 @@ process_arguments (int argc, char **argv)
 				break;
 			else
 				statopts = optarg;
-			asprintf (&fmt, _("%s%sSTATE = %s"), fmt, (options ? ", " : ""), statopts);
+			asprintf (&fmt, _("%s%sSTATE = %s"), (fmt ? fmt : ""), (options ? ", " : ""), statopts);
 			options |= STAT;
 			break;
 		case 'u':									/* user or user id */
@@ -393,7 +393,7 @@ process_arguments (int argc, char **argv)
 				uid = pw->pw_uid;
 			}
 			user = pw->pw_name;
-			asprintf (&fmt, _("%s%sUID = %d (%s)"), fmt, (options ? ", " : ""),
+			asprintf (&fmt, _("%s%sUID = %d (%s)"), (fmt ? fmt : ""), (options ? ", " : ""),
 			          uid, user);
 			options |= USER;
 			break;
@@ -402,7 +402,7 @@ process_arguments (int argc, char **argv)
 				break;
 			else
 				prog = optarg;
-			asprintf (&fmt, _("%s%scommand name '%s'"), fmt, (options ? ", " : ""),
+			asprintf (&fmt, _("%s%scommand name '%s'"), (fmt ? fmt : ""), (options ? ", " : ""),
 			          prog);
 			options |= PROG;
 			break;
@@ -411,12 +411,12 @@ process_arguments (int argc, char **argv)
 				break;
 			else
 				args = optarg;
-			asprintf (&fmt, _("%s%sargs '%s'"), fmt, (options ? ", " : ""), args);
+			asprintf (&fmt, _("%s%sargs '%s'"), (fmt ? fmt : ""), (options ? ", " : ""), args);
 			options |= ARGS;
 			break;
 		case 'r': 					/* RSS */
 			if (sscanf (optarg, "%d%[^0-9]", &rss, tmp) == 1) {
-				asprintf (&fmt, _("%s%sRSS >= %d"), fmt, (options ? ", " : ""), rss);
+				asprintf (&fmt, _("%s%sRSS >= %d"), (fmt ? fmt : ""), (options ? ", " : ""), rss);
 				options |= RSS;
 				break;
 			}
@@ -426,7 +426,7 @@ process_arguments (int argc, char **argv)
 			exit (STATE_UNKNOWN);
 		case 'z':					/* VSZ */
 			if (sscanf (optarg, "%d%[^0-9]", &vsz, tmp) == 1) {
-				asprintf (&fmt, _("%s%sVSZ >= %d"), fmt, (options ? ", " : ""), vsz);
+				asprintf (&fmt, _("%s%sVSZ >= %d"), (fmt ? fmt : ""), (options ? ", " : ""), vsz);
 				options |= VSZ;
 				break;
 			}
@@ -437,7 +437,7 @@ process_arguments (int argc, char **argv)
 		case 'P':					/* PCPU */
 			/* TODO: -P 1.5.5 is accepted */
 			if (sscanf (optarg, "%f%[^0-9.]", &pcpu, tmp) == 1) {
-				asprintf (&fmt, _("%s%sPCPU >= %.2f"), fmt, (options ? ", " : ""), pcpu);
+				asprintf (&fmt, _("%s%sPCPU >= %.2f"), (fmt ? fmt : ""), (options ? ", " : ""), pcpu);
 				options |= PCPU;
 				break;
 			}
@@ -480,7 +480,7 @@ process_arguments (int argc, char **argv)
 		cmax = atoi (argv[c++]);
 	if (statopts == NULL && argv[c]) {
 		asprintf (&statopts, "%s", argv[c++]);
-		asprintf (&fmt, _("%s%sSTATE = %s"), fmt, (options ? ", " : ""), statopts);
+		asprintf (&fmt, _("%s%sSTATE = %s"), (fmt ? fmt : ""), (options ? ", " : ""), statopts);
 		options |= STAT;
 	}
 
