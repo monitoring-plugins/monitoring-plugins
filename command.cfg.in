@@ -43,6 +43,17 @@ command[host-notify-by-email]=/bin/echo -e "***** Nagios *****\n\nHost "$HOSTALI
 
 command[host-notify-by-epager]=/bin/echo '$HOSTALIAS$ is $HOSTSTATE$!' | /bin/mail -s 'Host $HOSTNAME$ is $HOSTSTATE$!' $CONTACTPAGER$
 
+
+## Send notifications to a pager using modem with Qpage (www.qpage.com)
+
+command[notify-by-qpage]=/usr/bin/printf "Service: %s\nHost: %s\nAddress: %s\nState: %s\nInfo: %s\nDate: %s" '$SERVICEDESC$' '$HOSTNAME$' '$HOSTADDRESS$' '$SERVICESTATE$' '$OUTPUT$' '$DATETIME' | /usr/local/bin/qpage -l 0 -p $CONTACTPAGER$
+
+command[host-notify-by-qpage]=/usr/bin/printf "Host: %s is %s\nInfo: %s\nDate: %s" '$HOSTALIAS$' '$HOSTSTATES$' '$OUTPUT$' '$DATETIME' | /usr/local/bin/qpage -l 0 -p $CONTACTPAGER$
+
+
+
+
+
 # These are some example service check commands.  See the HTML
 # documentation on the plugins for examples of how to configure
 # command definitions.
