@@ -140,29 +140,32 @@ main (int argc, char **argv)
 	if (output == NULL || strlen (output) == 0)
 		asprintf (&output, _(" Probably a non-existent host/domain"));
 
-	if (elapsed_time > critical_interval)
-		die (STATE_CRITICAL,
-		     _("DNS OK - %.3f seconds response time (%s)|time=%ldus\n"),
-		     elapsed_time, output, microsec);
+	if (critical_interval > 0 && elapsed_time > critical_interval)
+		printf (_("DNS OK - %.3f seconds response time (%s)"), elapsed_time, output);
 
 	else if (result == STATE_CRITICAL)
-		printf (_("DNS CRITICAL - %s|time=%ldus\n"), output, microsec);
+		printf (_("DNS CRITICAL - %s"), output);
 
-	else if (elapsed_time > warning_interval)
-		die (STATE_WARNING,
-		     _("DNS OK - %.3f seconds response time (%s)|time=%ldus\n"),
-		     elapsed_time, output, microsec);
+	else if (warning_interval > 0 && elapsed_time > warning_interval)
+		printf (_("DNS OK - %.3f seconds response time (%s)"), elapsed_time, output);
 
 	else if (result == STATE_WARNING)
-		printf (_("DNS WARNING - %s|time=%ldus\n"), output, microsec);
+		printf (_("DNS WARNING - %s"), output);
 
 	else if (result == STATE_OK)
-		printf (_("DNS OK - %.3f seconds response time (%s)|time=%ldus\n"),
-						elapsed_time, output, microsec);
+		printf (_("DNS OK - %.3f seconds response time (%s)"),
+						elapsed_time, output);
 
 	else
-		printf (_("DNS problem - %s|time=%ldus\n"), output, microsec);
+		printf (_("DNS problem - %s"), output);
 
+	printf ("|%s\n",
+	        perfdata("time", microsec, "us",
+	                 (warning_interval>0?TRUE:FALSE),
+	                 (int)1e6*warning_interval,
+	                 (critical_interval>0?TRUE:FALSE),
+	                 (int)1e6*critical_interval,
+									 TRUE, 0, FALSE, 0));
 	return result;
 }
 
@@ -180,7 +183,10 @@ process_arguments (int argc, char **argv)
 	int option = 0;
 	static struct option longopts[] = {
 		{"hostname", required_argument, 0, 'H'},
-		{"query_address", required_argument, 0, 'e'},
+		{"query_address", required_argument, 0, 'l'},
+		{"warning", required_argument, 0, 'w'},
+		{"critical", required_argument, 0, 'c'},
+		{"timeout", required_argument, 0, 't'},
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
@@ -191,7 +197,7 @@ process_arguments (int argc, char **argv)
 		return ERROR;
 
 	while (1) {
-		c = getopt_long (argc, argv, "hVvt:l:H:", longopts, &option);
+		c = getopt_long (argc, argv, "hVvt:l:H:w:c:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -213,7 +219,7 @@ process_arguments (int argc, char **argv)
 				usage2 (_("Invalid host name"), optarg);
 			}
 			break;
-		case 'p':
+		case 'p':                 /* server port */
 			if (is_intpos (optarg)) {
 				server_port = atoi (optarg);
 			}
@@ -221,10 +227,10 @@ process_arguments (int argc, char **argv)
 				usage2 (_("Server port must be a nonnegative integer\n"), optarg);
 			}
 			break;
-		case 'l':									/* username */
+		case 'l':									/* address to lookup */
 			query_address = optarg;
 			break;
-		case 'w':									/* timeout */
+		case 'w':									/* warning */
 			if (is_intnonneg (optarg)) {
 				warning_interval = atoi (optarg);
 			}
@@ -232,7 +238,7 @@ process_arguments (int argc, char **argv)
 				usage2 (_("Warning interval must be a nonnegative integer\n"), optarg);
 			}
 			break;
-		case 'c':									/* timeout */
+		case 'c':									/* critical */
 			if (is_intnonneg (optarg)) {
 				critical_interval = atoi (optarg);
 			}
