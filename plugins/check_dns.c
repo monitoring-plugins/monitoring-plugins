@@ -132,7 +132,11 @@ main (int argc, char **argv)
 				printf ("%s\n", input_buffer);
 
 			if ((temp_buffer = index (input_buffer, ':'))) {
-				address = strscpy (address, temp_buffer + 2);
+				temp_buffer++;
+				/* Strip leading spaces */
+				for (; *temp_buffer != '\0' && *temp_buffer == ' '; temp_buffer++)
+					/* NOOP */;
+				address = strscpy (address, temp_buffer);
 				strip (address);
 				result = STATE_OK;
 			}
