@@ -189,13 +189,8 @@ void
 print_usage (void)
 {
 	printf ("Usage:\n" " %s %s\n"
-#ifdef HAVE_GETOPT_H
 					" %s (-h | --help) for detailed help\n"
 					" %s (-V | --version) for version information\n",
-#else
-					" %s -h for detailed help\n"
-					" %s -V for version information\n",
-#endif
 					progname, OPTIONS, progname, progname);
 }
 
@@ -222,7 +217,6 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-#ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
 		{"help", no_argument, 0, 'h'},
@@ -230,15 +224,11 @@ process_arguments (int argc, char **argv)
 		{"timeout", required_argument, 0, 't'},
 		{0, 0, 0, 0}
 	};
-#endif
 
 	while (1) {
-#ifdef HAVE_GETOPT_H
 		c = getopt_long (argc, argv, "hVt:",
 		                 long_options, &option_index);
-#else
-		c = getopt (argc, argv, "hVt:");
-#endif
+
 		if (c == -1 || c == EOF)
 			break;
 
