@@ -67,6 +67,11 @@ dnl PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/etc:/usr/local/bin:/usr/local/sbin:$
 
 LDFLAGS="$LDFLAGS -L."
 
+$ac_cv_uname_m=`uname -m`
+$ac_cv_uname_s=`uname -s`
+$ac_cv_uname_r=`uname -r`
+$ac_cv_uname_v=`uname -v`
+
 dnl Checks for programs.
 AC_PATH_PROG(PYTHON,python)
 AC_PATH_PROG(PERL,perl)
@@ -683,6 +688,11 @@ then
 	then
 		AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$PING_COMMAND",[Define if packet count must precede host])
 	fi
+elif [ "z$ac_cv_uname_s" == "zUnixWare" && ping -n -s 127.0.0.1 56 1 2>/dev/null | egrep -i "^round-trip|^rtt" >/dev/null]
+then
+        PING_COMMAND="$PATH_TO_PING -n -U -c %d %s"
+        AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$PING_COMMAND",[Define if packet count must precede host])
+        echo "      ping syntax... $PATH_TO_PING -n -U -c <count> <host>"
 elif [ping -n -U -c 1 127.0.0.1 2>/dev/null | egrep -i "^round-trip|^rtt" >/dev/null]
 then
         PING_COMMAND="$PATH_TO_PING -n -U -c %d %s"
@@ -871,7 +881,7 @@ then
 	AC_DEFINE(HAVE_PROC_MEMINFO,1,[Define if we have /proc/meminfo])
 	AC_DEFINE_UNQUOTED(PROC_MEMINFO,"/proc/meminfo",[path to /proc/meminfo if name changes])
 	EXTRAS="$EXTRAS check_swap"
-elif [swap -l 2>&1 | egrep -i "swapfile" >/dev/null]
+elif [swap -l 2>&1 >/dev/null]
 then
 	echo "found swap command"
 	AC_DEFINE(HAVE_SWAP,1,[Define if swap/swapinfo command is found])
@@ -882,6 +892,10 @@ then
 		AC_DEFINE_UNQUOTED(SWAP_FORMAT,[" %*d %*s %*d,%*d %*d %*d %d %d"],[Format string for parsing swap output])
 		echo "      using IRIX format"
 	elif [swap -l 2>/dev/null | egrep -i "^swapfile +dev +swaplo +blocks +free" >/dev/null]
+	then
+		AC_DEFINE_UNQUOTED(SWAP_FORMAT,["%*s %*[[0-9,-]] %*d %d %d"],[Format string for parsing swap output])
+		echo "      using UnixWare format"
+	elif [swap -l 2>/dev/null | egrep -i "^path +dev +swaplo +blocks +free" >/dev/null]
 	then
 		AC_DEFINE_UNQUOTED(SWAP_FORMAT,["%*s %*[[0-9,-]] %*d %d %d"],[Format string for parsing swap output])
 		echo "      using Solaris format"
