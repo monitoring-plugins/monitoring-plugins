@@ -52,7 +52,9 @@
 # 
 # Added ntpdate check for stratum 16 desynch peer (James Fidell) Feb 03, 2003
 #
-
+# ntpdate - offset is in seconds
+# changed ntpdc to ntpq - jitter/dispersion is in milliseconds
+#
 
 require 5.004;
 use POSIX;
@@ -71,11 +73,12 @@ $ENV{'PATH'}='';
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
-# defaults in millisec
-my $DEFAULT_OFFSET_WARN =  60000; 
-my $DEFAULT_OFFSET_CRIT = 120000; 
-my $DEFAULT_JITTER_WARN =   5000;
-my $DEFAULT_JITTER_CRIT =  10000; 
+# defaults in sec
+my $DEFAULT_OFFSET_WARN =  60;  # 1 minute
+my $DEFAULT_OFFSET_CRIT = 120;  # 2 minutes
+# default in millisec
+my $DEFAULT_JITTER_WARN =   5000; # 5 sec
+my $DEFAULT_JITTER_CRIT =  10000; # 10 sec
 
 Getopt::Long::Configure('bundling');
 GetOptions
@@ -291,9 +294,9 @@ if ($ntpdate_error != $ERRORS{'OK'}) {
 	$answer = "Jitter $jitter too high\n";
 	if (defined($offset) && abs($offset) > $ocrit) {
 		$state = $ERRORS{'CRITICAL'};
-		$answer = "Jitter error and offset $offset msec > +/- $ocrit msec\n";
+		$answer = "Jitter error and offset $offset sec > +/- $ocrit sec\n";
 	} elsif (defined($offset) && abs($offset) > $owarn) {
-		$answer = "Jitter error and offset $offset msec > +/- $owarn msec\n";
+		$answer = "Jitter error and offset $offset sec > +/- $owarn sec\n";
 	} elsif (defined($jitter) && abs($jitter) > $jcrit) {
 		$answer = "Jitter error and jitter $jitter msec > +/- $jcrit msec\n";
 	} elsif (defined($jitter) && abs($jitter) > $jwarn) {
@@ -303,20 +306,20 @@ if ($ntpdate_error != $ERRORS{'OK'}) {
 } else { # no errors from ntpdate or ntpq
 	if (abs($offset) > $ocrit) {
 		$state = $ERRORS{'CRITICAL'};
-		$answer = "Offset $offset msec > +/- $ocrit msec, jitter $jitter msec\n";
+		$answer = "Offset $offset msec > +/- $ocrit sec, jitter $jitter msec\n";
 	} elsif (abs($jitter) > $jcrit ) {
 		$state = $ERRORS{'CRITICAL'};
-		$answer = "Jitter $jitter msec> +/- $jcrit msec, offset $offset msec \n";
+		$answer = "Jitter $jitter msec> +/- $jcrit msec, offset $offset sec \n";
 	} elsif (abs($offset) > $owarn) {
 		$state = $ERRORS{'WARNING'};
-		$answer = "Offset $offset msec > +/- $owarn msec, jitter $jitter msec\n";
+		$answer = "Offset $offset msec > +/- $owarn sec, jitter $jitter msec\n";
 	} elsif (abs($jitter) > $jwarn ) {
 		$state = $ERRORS{'WARNING'};
-		$answer = "Jitter $jitter msec> +/- $jwarn msec, offset $offset msec \n";
+		$answer = "Jitter $jitter msec> +/- $jwarn msec, offset $offset sec \n";
 
 	} else {
 		$state = $ERRORS{'OK'};
-		$answer = "Offset $offset msecs, jitter $jitter msec\n";
+		$answer = "Offset $offset secs, jitter $jitter msec\n";
 	}
 	
 #	 else { # no offset defined
@@ -351,9 +354,9 @@ sub print_help () {
 Checks the local timestamp offset versus <host> with ntpdate
 Checks the jitter/dispersion of clock signal between <host> and its sys.peer with ntpq\n
 -w ( --warning)
-     Clock offset in milliseconds at which a warning message will be generated.\n	Defaults to $DEFAULT_OFFSET_WARN.
+     Clock offset in seconds at which a warning message will be generated.\n	Defaults to $DEFAULT_OFFSET_WARN.
 -c (--critical) 
-     Clock offset in milliseconds at which a critical message will be generated.\n	Defaults to $DEFAULT_OFFSET_CRIT.
+     Clock offset in seconds at which a critical message will be generated.\n	Defaults to $DEFAULT_OFFSET_CRIT.
 -j (--jwarn)
      Clock jitter in milliseconds at which a warning message will be generated.\n	Defaults to $DEFAULT_JITTER_WARN.
 -k (--jcrit)
