@@ -33,9 +33,7 @@
 #define SUMMARY "Test the DNS service on the specified host using dig\n"
 
 int process_arguments (int, char **);
-int call_getopt (int, char **);
 int validate_arguments (void);
-int check_disk (int usp, int free_disk);
 void print_help (void);
 void print_usage (void);
 
@@ -59,9 +57,7 @@ main (int argc, char **argv)
 		usage ("Could not parse arguments\n");
 
 	/* get the command to run */
-	command_line =
-		ssprintf (command_line, "%s @%s %s", PATH_TO_DIG, dns_server,
-							query_address);
+	asprintf (&command_line, "%s @%s %s", PATH_TO_DIG, dns_server, query_address);
 
 	alarm (timeout_interval);
 	time (&start_time);
