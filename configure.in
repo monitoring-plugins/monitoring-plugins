@@ -386,7 +386,7 @@ else
   fi
 
   if test "$OPENSSL_ENABLED" != "1"; then
-    if test "$PKGTEST" ="yes"; then
+    if test "$PKGTEST" = "yes"; then
       AC_MSG_WARN([OpenSSL libs could not be found])
     else
       AC_MSG_WARN([OpenSSL libs and/or directories were not found where specified!])
