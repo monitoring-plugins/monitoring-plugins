@@ -82,6 +82,7 @@ char *server_send = NULL;
 char *server_quit = NULL;
 char **server_expect = NULL;
 int server_expect_count = 0;
+int maxbytes = 0;
 char **warn_codes = NULL;
 int warn_codes_count = 0;
 char **crit_codes = NULL;
@@ -260,6 +261,8 @@ main (int argc, char **argv)
 			asprintf (&status, "%s%s", status, buffer);
 			if (buffer[i-2] == '\r' && buffer[i-1] == '\n')
 				break;
+			if (maxbytes>0 && strlen(status)>maxbytes)
+				break;
 		}
 
 		/* return a CRITICAL status if we couldn't read any data */
@@ -347,6 +350,7 @@ process_arguments (int argc, char **argv)
 		{"port", required_argument, 0, 'p'},
 		{"send", required_argument, 0, 's'},
 		{"expect", required_argument, 0, 'e'},
+		{"maxbytes", required_argument, 0, 'm'},
 		{"quit", required_argument, 0, 'q'},
 		{"delay", required_argument, 0, 'd'},
 		{"verbose", no_argument, 0, 'v'},
@@ -379,10 +383,10 @@ process_arguments (int argc, char **argv)
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
-			getopt_long (argc, argv, "+hVvH:s:e:q:c:w:t:p:C:W:d:S", long_options,
+			getopt_long (argc, argv, "+hVvH:s:e:q:m:c:w:t:p:C:W:d:S", long_options,
 									 &option_index);
 #else
-		c = getopt (argc, argv, "+hVvH:s:e:q:c:w:t:p:C:W:d:S");
+		c = getopt (argc, argv, "+hVvH:s:e:q:m:c:w:t:p:C:W:d:S");
 #endif
 
 		if (c == -1 || c == EOF || c == 1)
@@ -448,6 +452,10 @@ process_arguments (int argc, char **argv)
 				server_expect = realloc (server_expect, ++server_expect_count);
 			server_expect[server_expect_count - 1] = optarg;
 			break;
+		case 'm':
+			if (!is_intpos (optarg))
+				usage ("Maxbytes must be a positive integer\n");
+			maxbytes = atoi (optarg);
 		case 'q':
 			server_quit = optarg;
 			break;
@@ -481,8 +489,9 @@ void
 print_usage (void)
 {
 	printf
-		("Usage: %s -H host -p port [-w warn_time] [-c crit_time] [-s send]\n"
-		 "         [-e expect] [-W wait] [-t to_sec] [-v]\n", progname);
+		("Usage: %s -H host -p port [-w warn_time] [-c crit_time] [-s send_string]\n"
+		 "         [-e expect_string] [-q quit_string] [-m maxbytes] [-W wait]\n"
+		 "         [-t to_sec] [-v]\n", progname);
 }
 
 
@@ -508,8 +517,12 @@ print_help (void)
 		 " -s, --send=STRING\n"
 		 "    String to send to the server\n"
 		 " -e, --expect=STRING\n"
-		 "    String to expect in server response"
-		 " -W, --wait=INTEGER\n"
+		 "    String to expect in server response\n"
+		 " -q, --quit=STRING\n"
+		 "    String to send server to initiate a clean close of the connection\n"
+		 " -m, --maxbytes=INTEGER\n"
+		 "    Close connection once more than this number of bytes are received\n"
+		 " -d, --delay=INTEGER\n"
 		 "    Seconds to wait between sending string and polling for response\n"
 		 " -w, --warning=DOUBLE\n"
 		 "    Response time to result in warning status (seconds)\n"
@@ -525,6 +538,12 @@ print_help (void)
 		 "    Print version information\n", DEFAULT_SOCKET_TIMEOUT);
 }
 
+/*
+		 " -W, --warning-codes=STRING\n"
+		 "    \n"
+		 " -C, --critical-code=STRING\n"
+		 "    \n"
+*/
 
 #ifdef HAVE_SSL
 int
