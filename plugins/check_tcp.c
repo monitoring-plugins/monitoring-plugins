@@ -84,6 +84,7 @@ double warning_time = 0;
 int check_warning_time = FALSE;
 double critical_time = 0;
 int check_critical_time = FALSE;
+int hide_output = FALSE;
 double elapsed_time = 0;
 long microsec;
 int verbose = FALSE;
@@ -329,7 +330,7 @@ main (int argc, char **argv)
 		 (was_refused) ? " (refused)" : "",
 		 elapsed_time, server_port);
 
-	if (status && strlen(status) > 0)
+	if (hide_output == FALSE && status && strlen(status) > 0)
 		printf (" [%s]", status);
 
 	printf (" |%s\n", fperfdata ("time", elapsed_time, "s",
@@ -364,6 +365,7 @@ process_arguments (int argc, char **argv)
 		{"expect", required_argument, 0, 'e'},
 		{"maxbytes", required_argument, 0, 'm'},
 		{"quit", required_argument, 0, 'q'},
+		{"jail", required_argument, 0, 'j'},
 		{"delay", required_argument, 0, 'd'},
 		{"refuse", required_argument, 0, 'r'},
 		{"use-ipv4", no_argument, 0, '4'},
@@ -395,7 +397,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVv46H:s:e:q:m:c:w:t:p:C:W:d:Sr:",
+		c = getopt_long (argc, argv, "+hVv46H:s:e:q:m:c:w:t:p:C:W:d:Sr:j",
 		                 longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)
@@ -436,6 +438,9 @@ process_arguments (int argc, char **argv)
 			else
 				critical_time = strtod (optarg, NULL);
 			check_critical_time = TRUE;
+			break;
+		case 'j':		  /* hide output */
+			hide_output = TRUE;
 			break;
 		case 'w':                 /* warning */
 			if (!is_intnonneg (optarg))
@@ -622,6 +627,8 @@ print_help (void)
 	printf (_("\
  -r, --refuse=ok|warn|crit\n\
     Accept tcp refusals with states ok, warn, crit (default: crit)\n\
+ -j, --jail\n\
+    Hide output from TCP socket\n\
  -m, --maxbytes=INTEGER\n\
     Close connection once more than this number of bytes are received\n\
  -d, --delay=INTEGER\n\
@@ -646,7 +653,7 @@ print_usage (void)
 Usage: %s -H host -p port [-w <warning time>] [-c <critical time>]\n\
   [-s <send string>] [-e <expect string>] [-q <quit string>]\n\
   [-m <maximum bytes>] [-d <delay>] [-t <timeout seconds>]\n\
-  [-r <refuse state>] [-v] [-4|-6]\n"), progname);
+  [-r <refuse state>] [-v] [-4|-6] [-j]\n"), progname);
 	printf ("       %s (-h|--help)\n", progname);
 	printf ("       %s (-V|--version)\n", progname);
 }
