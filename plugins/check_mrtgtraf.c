@@ -197,27 +197,26 @@ main (int argc, char **argv)
 	if (incoming_rate > incoming_critical_threshold
 			|| outgoing_rate > outgoing_critical_threshold) {
 		result = STATE_CRITICAL;
-		asprintf (&error_message, "%s. In = %0.1f %s, %s. Out = %0.1f %s",
-						 (use_average == TRUE) ? "Ave" : "Max", adjusted_incoming_rate,
-						 incoming_speed_rating, (use_average == TRUE) ? "Ave" : "Max",
+		asprintf (&error_message, "Traffic CRITICAL %s. In = %0.1f %s, %s. Out = %0.1f %s",
+						 (use_average == TRUE) ? "Avg" : "Max", adjusted_incoming_rate,
+						 incoming_speed_rating, (use_average == TRUE) ? "Avg" : "Max",
 						 adjusted_outgoing_rate, outgoing_speed_rating);
 	}
 	else if (incoming_rate > incoming_warning_threshold
 					 || outgoing_rate > outgoing_warning_threshold) {
 		result = STATE_WARNING;
-		asprintf (&error_message, "%s. In = %0.1f %s, %s. Out = %0.1f %s",
-						 (use_average == TRUE) ? "Ave" : "Max", adjusted_incoming_rate,
-						 incoming_speed_rating, (use_average == TRUE) ? "Ave" : "Max",
+		asprintf (&error_message, "Traffic WARNING %s. In = %0.1f %s, %s. Out = %0.1f %s",
+						 (use_average == TRUE) ? "Avg" : "Max", adjusted_incoming_rate,
+						 incoming_speed_rating, (use_average == TRUE) ? "Avg" : "Max",
 						 adjusted_outgoing_rate, outgoing_speed_rating);
 	}
-
-	if (result == STATE_OK)
-		printf ("Traffic ok - %s. In = %0.1f %s, %s. Out = %0.1f %s\n",
-						(use_average == TRUE) ? "Ave" : "Max", adjusted_incoming_rate,
-						incoming_speed_rating, (use_average == TRUE) ? "Ave" : "Max",
+	else if (result == STATE_OK)
+		printf ("Traffic OK - %s. In = %0.1f %s, %s. Out = %0.1f %s\n",
+						(use_average == TRUE) ? "Avg" : "Max", adjusted_incoming_rate,
+						incoming_speed_rating, (use_average == TRUE) ? "Avg" : "Max",
 						adjusted_outgoing_rate, outgoing_speed_rating);
 	else
-		printf ("%s\n", error_message);
+		printf ("UNKNOWN %s\n", error_message);
 
 	return result;
 }
