@@ -4,6 +4,7 @@ Nagios Plugins Quick-and-Dirty Installation Instructions
 0) If using the CVS tree, you need m4, automake, and autoconf. To
    start out, run:
 
+	# aclocal
 	# autoconf
 	# autoheader
 	# automake
