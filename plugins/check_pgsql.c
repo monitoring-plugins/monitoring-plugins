@@ -44,7 +44,7 @@ const char *progname = "check_pgsql";
   -H, --hostname=STRING\n\
     Name or numeric IP address of machine running backend\n\
   -P, --port=INTEGER\n\
-    Port running backend (default: %s)\n\
+    Port running backend (default: %d)\n\
   -d, --database=STRING\n\
     Database to check (default: %s)\n\
   -l, --logname = STRING\n\
@@ -70,10 +70,12 @@ a password, but no effort is made to obsure or encrypt the password.\n"
 
 #define DEFAULT_DB "template1"
 #define DEFAULT_HOST "127.0.0.1"
-#define DEFAULT_PORT "5432"
-#define DEFAULT_WARN 2
-#define DEFAULT_CRIT 8
-#define DEFAULT_TIMEOUT 30
+enum {
+	DEFAULT_PORT = 5432,
+	DEFAULT_WARN = 2,
+	DEFAULT_CRIT = 8,
+	DEFAULT_TIMEOUT = 30
+};
 
 #include "config.h"
 #include "common.h"
@@ -90,7 +92,7 @@ int is_pg_logname (char *);
 
 char *pghost = NULL;						/* host name of the backend server */
 char *pgport = NULL;						/* port of the backend server */
-char default_port[4] = DEFAULT_PORT;
+int default_port = DEFAULT_PORT;
 char *pgoptions = NULL;
 char *pgtty = NULL;
 char dbName[NAMEDATALEN] = DEFAULT_DB;
