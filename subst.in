@@ -1,4 +1,0 @@
-#! /bin/sed
-
-s|\${exec_prefix}|@exec_prefix@|;
-s|\${prefix}|@prefix@|;
