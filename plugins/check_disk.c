@@ -41,7 +41,7 @@
 
 int process_arguments (int, char **);
 int validate_arguments (void);
-int check_disk (int usp, int free_disk);
+int check_disk (int usp, float free_disk);
 void print_help (void);
 void print_usage (void);
 
@@ -62,9 +62,9 @@ int
 main (int argc, char **argv)
 {
 	int usp = -1;
-	int total_disk = -1;
-	int used_disk = -1;
-	int free_disk = -1;
+	float total_disk = -1;
+	float used_disk = -1;
+	float free_disk = -1;
 	int result = STATE_UNKNOWN;
 	int disk_result = STATE_UNKNOWN;
 	char *command_line = "";
@@ -101,9 +101,9 @@ main (int argc, char **argv)
 		if (strstr (input_buffer, "/proc ") == input_buffer)
 			continue;
 
-		if (sscanf (input_buffer, "%s %d %d %d %d%% %s", file_system,
+		if (sscanf (input_buffer, "%s %f %f %f %d%% %s", file_system,
 		     &total_disk, &used_disk, &free_disk, &usp, mntp) == 6 ||
-		    sscanf (input_buffer, "%s %*s %d %d %d %d%% %s", file_system,
+		    sscanf (input_buffer, "%s %*s %f %f %f %d%% %s", file_system,
 				 &total_disk, &used_disk, &free_disk, &usp, mntp) == 6) {
 
  			if (strcmp(exclude_device,file_system) == 0 ||
@@ -122,7 +122,7 @@ main (int argc, char **argv)
 				continue;
 
 			if (disk_result!=STATE_OK || verbose>=0) 
-				asprintf (&output, "%s [%d kB (%d%%) free on %s]", output,
+				asprintf (&output, "%s [%.0f kB (%d%%) free on %s]", output,
 				          free_disk, 100 - usp, display_mntp ? mntp : file_system);
 
 			result = max_state (result, disk_result);
@@ -317,7 +317,7 @@ validate_arguments ()
 }
 
 int
-check_disk (usp, free_disk)
+check_disk (int usp, float free_disk)
 {
 	int result = STATE_UNKNOWN;
 	/* check the percent used space against thresholds */
