@@ -13,7 +13,6 @@
 
 #define LOCAL_TIMEOUT_ALARM_HANDLER
 
-#include "config.h"
 #include "common.h"
 #include "utils.h"
 #include <stdarg.h>
