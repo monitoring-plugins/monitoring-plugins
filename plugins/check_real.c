@@ -63,7 +63,7 @@ void print_usage (void);
 int server_port = PORT;
 char *server_address = "";
 char *host_name = "";
-char *server_url = "/";
+char *server_url = NULL;
 char *server_expect = EXPECT;
 int warning_time = 0;
 int check_warning_time = FALSE;
@@ -162,7 +162,7 @@ main (int argc, char **argv)
 	}
 
 	/* Part II - Check stream exists and is ok */
-	if (result == STATE_OK) {
+	if ((result == STATE_OK)&& (server_url != NULL) ) {
 
 		/* Part I - Server Check */
 
