@@ -463,6 +463,20 @@ AC_CHECK_HEADERS(signal.h strings.h string.h syslog.h uio.h errno.h regex.h sys/
 AC_CHECK_HEADERS(features.h stdarg.h sys/unistd.h ctype.h stdlib.h)
 AC_CHECK_HEADERS(limits.h sys/param.h sys/mount.h sys/vfs.h sys/fs/s5param.h sys/filsys.h fcntl.h sys/statfs.h sys/dustat.h sys/statvfs.h)
 
+# glibc 2.3.2 stdlib.h does not define HUGE_VAL (see man strtod)
+AC_MSG_CHECKING([for HUGE_VAL in <stdlib.h>])
+AC_TRY_COMPILE([#include <stdlib.h>],
+               [double x = HUGE_VAL;],
+               [AC_MSG_RESULT(yes)],
+               [AC_MSG_RESULT(no)
+                AC_MSG_CHECKING([for HUGE_VAL in <math.h>])
+                AC_TRY_COMPILE([#include <math.h>],
+                               [double x = HUGE_VAL;],
+                               [AC_MSG_RESULT(yes)
+                                AC_DEFINE_UNQUOTED(HUGE_VAL_NEEDS_MATH_H, 1,
+                                                  [Define if <math.h> is required for HUGE_VAL])],
+                               [AC_MSG_RESULT(no)])])
+
 # Define HAVE_INTTYPES_H if <inttypes.h> exists,
 # doesn't clash with <sys/types.h>, and declares uintmax_t.
 

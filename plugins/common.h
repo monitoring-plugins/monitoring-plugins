@@ -40,6 +40,10 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#ifdef HUGE_VAL_NEEDS_MATH_H
+#include <math.h>
+#endif
+
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
