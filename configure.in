@@ -419,15 +419,17 @@ AC_HELP_STRING([--with-openssl=DIR], [sets path to openssl installation])
 AC_HELP_STRING([--without-openssl], [disable openssl]),
 OPENSSL=$withval)
 
+_SAVEDCPPFLAGS="$CPPFLAGS"
+_SAVEDLDFLAGS="$LDFLAGS"
 if test X"$OPENSSL" = "Xno"; then
   AC_MSG_WARN([openssl disabled, you will not be able to use ssl options in some plugins])
   FOUNDSSL="dontbother"
 else
   dnl Check for OpenSSL header files
   unset FOUNDINCLUDE
-  _SAVEDCPPFLAGS="$CPPFLAGS"
   if test "$OPENSSL" != "/usr"; then
     CPPFLAGS="$CPPFLAGS -I$OPENSSL/include"
+    LDFLAGS="$LDFLAGS -R$OPENSSL/lib"
   fi
   AC_CHECK_HEADERS(openssl/ssl.h openssl/x509.h openssl/rsa.h openssl/pem.h openssl/crypto.h openssl/err.h,
                  SSLINCLUDE="-I$OPENSSL/include"
@@ -470,13 +472,15 @@ if test "$FOUNDSSL" = "yes"; then
   AC_SUBST(SSLLIBS)
   AC_DEFINE(HAVE_SSL,1,[Define if SSL libraries are found])
   with_openssl="yes"
-elif test "$FOUNDSSL" = "no"; then
-  AC_MSG_WARN([OpenSSL libs could not be found])
-  with_openssl="no"
 else
+  if test "$FOUNDSSL" = "no"; then
+    AC_MSG_WARN([OpenSSL libs could not be found])
+  dnl else deliberately disabled
+  fi
   with_openssl="no"
+  CPPFLAGS="$_SAVEDCPPFLAGS"
+  LDFLAGS="$_SAVEDLDFLAGS"
 fi
-CPPFLAGS="$_SAVEDCPPFLAGS"
 
 dnl
 dnl Checks for header files.
