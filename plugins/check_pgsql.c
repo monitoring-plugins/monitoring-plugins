@@ -118,7 +118,7 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 int
 main (int argc, char **argv)
 {
-	int elapsed_time;
+	int elapsed_time, status;
 
 	/* begin, by setting the parameters for a backend connection if the
 	 * parameters are null, then the system will try to use reasonable
@@ -151,27 +151,26 @@ main (int argc, char **argv)
 
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus (conn) == CONNECTION_BAD) {
-		printf (_("PGSQL: CRITICAL - no connection to '%s' (%s).\n"), dbName,
-						PQerrorMessage (conn));
+		printf (_("PGSQL: CRITICAL - no connection to '%s' (%s).\n"),
+		        dbName,	PQerrorMessage (conn));
 		PQfinish (conn);
 		return STATE_CRITICAL;
 	}
 	else if (elapsed_time > tcrit) {
-		PQfinish (conn);
-		printf (_("PGSQL: CRITICAL - database %s (%d sec.)\n"), dbName,
-						elapsed_time);
-		return STATE_CRITICAL;
+		status = STATE_CRITICAL;
 	}
 	else if (elapsed_time > twarn) {
-		PQfinish (conn);
-		printf (_("PGSQL: WARNING - database %s (%d sec.)\n"), dbName, elapsed_time);
-		return STATE_WARNING;
+		status = STATE_WARNING;
 	}
 	else {
-		PQfinish (conn);
-		printf (_("PGSQL: ok - database %s (%d sec.)\n"), dbName, elapsed_time);
-		return STATE_OK;
+		status = STATE_OK;
 	}
+	PQfinish (conn);
+	printf (_("PGSQL: %s - database %s (%d sec.)|%s\n"), 
+	        state_text(status), dbName, elapsed_time,
+	        perfdata("time", (long)elapsed_time, "s",
+	                 twarn, (long)twarn, tcrit, (long)tcrit, TRUE, 0, FALSE,0));
+	return status;
 }
 
 
