@@ -18,12 +18,6 @@
 # I have the script checking for the Oracle PMON process and 
 # the sgadefORACLE_SID.dbf file.
 # 
-#
-# If you have any problems check that you have the $ORACLE_HOME
-# enviroment variable set, have $ORACLE_HOME/bin in your PATH, and
-# dont forget about your tnsnames.ora file.  when checking Local
-# Database status your ORACLE_SID is case sensitive.
-#
 
 PROGNAME=`basename $0`
 PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
@@ -45,17 +39,17 @@ print_usage() {
 }
 
 print_help() {
-	print_revision $PROGNAME $REVISION
-	echo ""
-	print_usage
-	echo ""
-	echo "Check remote or local TNS status and check local Database status"
-	echo ""
+  print_revision $PROGNAME $REVISION
+  echo ""
+  print_usage
+  echo ""
+  echo "Check remote or local TNS status and check local Database status"
+  echo ""
   echo "--tns=SID/IP Address"
   echo "   Check remote TNS server"
   echo "--db=SID"
   echo "   Check local database (search /bin/ps for PMON process and check"
-	echo "   filesystem for sgadefORACLE_SID.dbf"
+  echo "   filesystem for sgadefORACLE_SID.dbf"
   echo "--login=SID"
   echo "   Attempt a dummy login and alert if not ORA-01017: invalid username/password"
   echo "--cache"
@@ -69,17 +63,20 @@ print_help() {
   echo "--oranames=Hostname"
   echo "   Check remote Oracle Names server"
   echo "--help"
-	echo "   Print this help screen"
+  echo "   Print this help screen"
   echo "--version"
-	echo "   Print version and license information"
-	echo ""
+  echo "   Print version and license information"
+  echo ""
   echo "If the plugin doesn't work, check that the ORACLE_HOME environment"
-	echo "variable is set, that ORACLE_HOME/bin is in your PATH, and the"
+  echo "variable is set, that ORACLE_HOME/bin is in your PATH, and the"
   echo "tnsnames.ora file is locatable and is properly configured."
   echo ""
   echo "When checking Local Database status your ORACLE_SID is case sensitive."
   echo ""
-	support
+  echo "If you want to use a default Oracle home, add in your oratab file:"
+  echo "*:/opt/app/oracle/product/7.3.4:N"
+  echo ""
+  support
 }
 
 case "$1" in
@@ -123,7 +120,7 @@ if [ -z "$ORACLE_HOME" ] ; then
 	ORACLE_HOME=`IFS=:
 		while read SID ORACLE_HOME junk;
 		do
-			if [ "$SID" = "$2" ] ; then
+			if [ "$SID" = "$2" -o "$SID" = "*" ] ; then
 				echo $ORACLE_HOME;
 				exit;
 			fi;
