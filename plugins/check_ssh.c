@@ -34,7 +34,6 @@ int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
 
-char *ssh_resolve (char *hostname);
 int ssh_connect (char *haddr, short hport);
 
 int
@@ -49,7 +48,7 @@ main (int argc, char **argv)
 	alarm (socket_timeout);
 
 	/* ssh_connect exits if error is found */
-	ssh_connect (ssh_resolve (server_name), port);
+	ssh_connect (server_name, port);
 
 	alarm (0);
 
@@ -62,6 +61,7 @@ int
 process_arguments (int argc, char **argv)
 {
 	int c;
+	char *tmp = NULL;
 
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
@@ -109,6 +109,8 @@ process_arguments (int argc, char **argv)
 			socket_timeout = atoi (optarg);
 			break;
 		case 'H':									/* host */
+			if (is_host (optarg) == FALSE)
+				usage ("Invalid hostname/address\n");
 			server_name = optarg;
 			break;
 		case 'p':									/* port */
@@ -125,9 +127,12 @@ process_arguments (int argc, char **argv)
 
 	c = optind;
 	if (server_name == NULL && argv[c]) {
-		server_name = argv[c++];
+		if (is_host (argv[c])) {
+			server_name = argv[c++];
+		}
 	}
-	else if (port == -1 && argv[c]) {
+
+	if (port == -1 && argv[c]) {
 		if (is_intpos (argv[c])) {
 			port = atoi (argv[c++]);
 		}
@@ -153,26 +158,6 @@ validate_arguments (void)
 
 /************************************************************************
 *
-* Resolve hostname into IP address
-*
-*-----------------------------------------------------------------------*/
-
-char *
-ssh_resolve (char *hostname)
-{
-	struct hostent *host;
-
-	host = gethostbyname (hostname);
-	if (!host) {
-		herror (hostname);
-		exit (STATE_CRITICAL);
-	}
-	return (host->h_addr);
-}
-
-
-/************************************************************************
-*
 * Try to connect to SSH server at specified server and port
 *
 *-----------------------------------------------------------------------*/
@@ -180,10 +165,8 @@ ssh_resolve (char *hostname)
 int
 ssh_connect (char *haddr, short hport)
 {
-	int s;
-	struct sockaddr_in addr;
-	int addrlen;
-	int len;
+	int sd;
+	int result;
 	char *output = NULL;
 	char *buffer = NULL;
 	char *ssh_proto = NULL;
@@ -192,27 +175,14 @@ ssh_connect (char *haddr, short hport)
 
 	sscanf ("$Revision$", "$Revision: %[0123456789.]", revision);
 
-	addrlen = sizeof (addr);
-	memset (&addr, 0, addrlen);
-	addr.sin_port = htons (hport);
-	addr.sin_family = AF_INET;
-	bcopy (haddr, (void *) &addr.sin_addr.s_addr, 4);
+	result = my_tcp_connect (haddr, hport, &sd);
 
-	s = socket (AF_INET, SOCK_STREAM, 0);
-	if (!s) {
-		printf ("socket(): %s for %s:%d\n", strerror (errno), server_name, hport);
-		exit (STATE_CRITICAL);
-	}
-
-	if (connect (s, (struct sockaddr *) &addr, addrlen)) {
-		printf ("connect(): %s for %s:%d\n", strerror (errno), server_name,
-						hport);
-		exit (STATE_CRITICAL);
-	}
+	if (result != STATE_OK)
+		return result;
 
 	output = (char *) malloc (BUFF_SZ + 1);
 	memset (output, 0, BUFF_SZ + 1);
-	recv (s, output, BUFF_SZ, 0);
+	recv (sd, output, BUFF_SZ, 0);
 	if (strncmp (output, "SSH", 3)) {
 		printf ("Server answer: %s", output);
 		exit (STATE_CRITICAL);
@@ -228,7 +198,7 @@ ssh_connect (char *haddr, short hport)
 			("SSH ok - %s (protocol %s)\n",
 			 ssh_server, ssh_proto);
 		asprintf (&buffer, "SSH-%s-check_ssh_%s\r\n", ssh_proto, revision);
-		send (s, buffer, strlen (buffer), MSG_DONTWAIT);
+		send (sd, buffer, strlen (buffer), MSG_DONTWAIT);
 		if (verbose)
 			printf ("%s\n", buffer);
 		exit (STATE_OK);
