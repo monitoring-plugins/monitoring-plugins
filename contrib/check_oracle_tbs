@@ -1,0 +1,206 @@
+#!/usr/local/bin/perl -w
+
+# (c)2003 John Koyle, RFP Depot, LLC.
+# This is free software use it however you would like.
+# Thanks to the folks at http://www.think-forward.com for the SQL query
+
+
+use strict;
+use DBI;
+use Getopt::Long 2.16;
+use lib "/usr/local/nagios/libexec";
+use utils qw(%ERRORS);
+
+
+#*******************************************************************************
+# Set user configureable options here.
+#
+# Global Oracle info set here rather than command line to avoid output in ps -ef
+# Make sure this script is mode 700 and owner of the nrpe user
+#
+#*******************************************************************************
+my $orasid = "";
+my $orauser = "";
+my $orapwd = "";
+
+
+if (!$ENV{ORACLE_HOME}) {
+        $ENV{ORACLE_HOME} = '/a01/app/oracle/product/9.2.0.1';
+}
+
+#*****************You shouldn't need to modify anything below here *************
+my $state = $ERRORS{'UNKNOWN'};
+my $answer = undef;
+
+my ($MAJOR_VERSION, $MINOR_VERSION) = q$Revision$ =~ /(\d+)\.(\d+)/;
+my $VERSION = sprintf("%d.%02d", $MAJOR_VERSION - 1, $MINOR_VERSION);
+
+my $opt_debug;                  # -d|--debug
+my $opt_help;                   # -h|--help
+my $opt_version;				# -V|--version
+my $opt_warn_space; 	        # -w|--warn-space
+my $opt_crit_space; 	        # -c|--crit-space
+
+my $help = <<MARK;      # help statement
+
+check_oracle_tbs v$VERSION
+
+Checks the tablespaces in an Oracle database for available free space.
+Usage: check_oracle_tbs [-w <warn>] [-c <crit>]
+
+  -d, --debug              Output debug to screen.
+  -h, --help               Displays this help and exits.
+  -w, --warn-space=...     Warning threshold % free (default 15)
+  -c, --crit-space=...     Critical threshold % free (default 10)
+  -V, --version            Output version information and exit.
+
+MARK
+
+## We want exact matches to the switches
+
+Getopt::Long::config('no_auto_abbrev', 'no_ignore_case');
+
+my $rc = GetOptions(
+                "debug|d"               => \$opt_debug,
+                "help|h"                => \$opt_help,
+                "w|warn-space=s"        => \$opt_warn_space,
+                "c|crit-space=s"        => \$opt_crit_space,
+                "V|version"             => \$opt_version,
+                   );
+
+
+#***********************************************************************
+# Process command-line switches
+#***********************************************************************
+
+if (! $rc || defined $opt_help)
+{
+    print STDERR $help;
+    exit (defined $opt_help ? 0 : 1);
+}
+
+if (defined $opt_version)
+{
+    print STDERR "check_oracle_tbs v$VERSION\n";
+    exit 0;
+}
+
+if (! defined $opt_warn_space)
+{
+    if(defined $opt_debug) {
+        print STDOUT "Warn space not defined, using 80%\n\n";
+    }
+    $opt_warn_space = 15;
+}
+
+if (! defined $opt_crit_space)
+{
+    if(defined $opt_debug) {
+        print STDOUT "Crit space not defined, using 90%\n\n";
+    }
+    $opt_crit_space = 10;
+}
+
+my $array_ref = executeSQL();
+
+foreach my $row (@$array_ref) {
+    my ( $tbs_name, $tot_mb, $free_mb, $free_pct, $used_pct, $fsfi) = @$row;
+    if ($opt_debug) { print STDOUT "Output: $tbs_name\t$tot_mb\t$free_mb\t$free_pct\t$used_pct\t$fsfi\n\n"; }
+    if ($used_pct > (100 - $opt_crit_space) && $tbs_name !~ /RBS/) {
+        $state = $ERRORS{'CRITICAL'};
+        $answer .= "$tbs_name = $used_pct\% ";
+        last;
+    }
+    if ($used_pct > (100 - $opt_warn_space) && $tbs_name !~ /RBS/) {
+        $state = $ERRORS{'WARNING'};
+        $answer .= "$tbs_name = $used_pct\% ";
+    }
+}
+
+if ($state != $ERRORS{'CRITICAL'} && $state != $ERRORS{'WARNING'}) {
+    $state = $ERRORS{'OK'};
+    $answer = "All Tablespaces OK";
+}
+
+if ($opt_debug && $state != $ERRORS{'OK'}) { print STDOUT "The following tablespaces are in question: $answer\n\n"; }
+
+foreach my $key (keys %ERRORS) {
+        if ($state==$ERRORS{$key}) {
+                print ("$key: $answer");
+                last;
+        }
+}
+exit $state;
+
+sub executeSQL
+{
+    my ($dbh, $sth, $results);
+
+    $dbh = openOracle();
+
+    eval {
+      $dbh->{RaiseError} = 1;
+      # This query is taken from this URL and used with permission: http://www.think-forward.com/sql/tspace.htm
+      $sth = $dbh->prepare(q{
+            select df.tablespace_name tspace, 
+                   df.bytes/(1024*1024) tot_ts_size,
+                   sum(fs.bytes)/(1024*1024) free_ts_size,
+                   round(sum(fs.bytes)*100/df.bytes) ts_pct,
+                   round((df.bytes-sum(fs.bytes))*100/df.bytes) ts_pct1,
+                   ROUND(100*SQRT(MAX(fs.bytes)/SUM(fs.bytes))*
+                   (1/SQRT(SQRT(COUNT(fs.bytes)))) ,2) FSFI
+              from dba_free_space fs, (select tablespace_name, sum(bytes) bytes
+                                         from dba_data_files
+                                     group by tablespace_name ) df          
+             where fs.tablespace_name = df.tablespace_name
+          group by df.tablespace_name, df.bytes
+         });
+
+      $sth->execute();
+      $results = $sth->fetchall_arrayref();
+      $sth->finish;
+      $dbh->{RaiseError} = 0;
+    };
+
+    if ($@) {
+      closeOracle($dbh);
+      if($opt_debug) { print STDOUT "DB Failed Query: $@\n"; }
+      CleanupAndExit($ERRORS{'UNKNOWN'});
+    }
+
+    closeOracle($dbh);
+
+    return $results;
+}
+
+#------ Open the connection to the database and return the handle
+sub openOracle
+{
+   my ($dbh);
+
+   $dbh = DBI->connect("$orasid", "$orauser", "$orapwd", "Oracle");
+
+   if (!$dbh) {
+      if ($opt_debug) { print "ERROR: Could not connect to Oracle!\n\n"; }
+      CleanupAndExit($ERRORS{'UNKNOWN'});
+   }
+   if ($opt_debug) { print "Connected to Oracle SID $orasid\n\n"; }
+   return $dbh;
+}
+
+#------- Close the database connection
+sub closeOracle()
+{
+   my ($dbh) = @_;
+
+   $dbh->disconnect;
+}
+
+#------ Exit with the current return code
+sub CleanupAndExit
+{
+        my ($rc) = @_;
+
+        exit($rc);
+}
+
