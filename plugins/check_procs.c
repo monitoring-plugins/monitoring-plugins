@@ -77,6 +77,7 @@ char *prog = "";
 char *args = "";
 char *fmt = "";
 char tmp[MAX_INPUT_BUFFER];
+const char *zombie = "Z";
 
 int
 main (int argc, char **argv)
@@ -93,6 +94,7 @@ main (int argc, char **argv)
 	int found = 0; /* counter for number of lines returned in `ps` output */
 	int procs = 0; /* counter for number of processes meeting filter criteria */
 	int pos; /* number of spaces before 'args' in `ps` output */
+	int cols; /* number of columns in ps output */
 
 	int result = STATE_UNKNOWN;
 
@@ -115,14 +117,18 @@ main (int argc, char **argv)
 	fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process);
 
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
-		if (
 #ifdef USE_PS_VARS
-				 sscanf (input_buffer, PS_FORMAT, PS_VARLIST) >= 4
+		cols = sscanf (input_buffer, PS_FORMAT, PS_VARLIST);
 #else
-				 sscanf (input_buffer, PS_FORMAT, procstat, &procuid, &procppid, &pos,
-								 procprog) >= 4
+		cols = sscanf (input_buffer, PS_FORMAT, procstat, &procuid, 
+							&procppid, &pos, procprog);
 #endif
-			) {
+		/* Zombie processes do not give a procprog command */
+		if ( cols == 3 && strstr(procstat, zombie) ) {
+			strcpy(procprog, "");
+			cols = 4;
+		}
+		if ( cols >= 4 ) {
 			found++;
 			resultsum = 0;
 			asprintf (&procargs, "%s", input_buffer + pos);
@@ -147,6 +153,10 @@ main (int argc, char **argv)
 #endif
 			if (options == resultsum)
 				procs++;
+		} 
+		/* This should not happen */
+		else if (verbose) {
+			printf("Not parseable: %s", input_buffer);
 		}
 	}
 
