@@ -221,7 +221,7 @@ main (int argc, char **argv)
 			p2 = strpbrk (p2, "0123456789");
 			response_value[i] = strtoul (p2, NULL, 10);
 			iresult = check_num (i);
-			show = ssprintf (show, "%d", response_value[i]);
+			show = ssprintf (show, "%lu", response_value[i]);
 		}
 
 		else if (eval_method[i] & CRIT_STRING) {
