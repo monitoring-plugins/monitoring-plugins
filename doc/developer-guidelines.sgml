@@ -49,6 +49,21 @@
 	</affiliation>
 	</author>	
 
+      <author>
+	<firstname>Ton</firstname>
+	<surname>Voon</surname>
+	<affiliation>
+	  <address><email>tonvoon@users.sourceforge.net</email></address>
+	</affiliation>
+      </author>
+
+       <author>
+	<firstname>Jeremy T</firstname>
+	<surname>Bouse</surname>
+	<affiliation>
+	  <address><email>undrgrid@users.sourceforge.net</email></address>
+	</affiliation>
+      </author>
     </authorgroup>
 
     <pubdate>2002</pubdate>
@@ -56,15 +71,14 @@
 	
     <revhistory>
        <revision>
-          <revnumber>0.4</revnumber>
-          <date>2 May 2002</date>
+          <revnumber>$Revision$</revnumber>
+          <date>$Date$</date>
        </revision>
     </revhistory>
 
 	<copyright>
-		<year>2000 2001 2002</year> 
-		<holder>Karl DeBisschop, Ethan Galstad, 
-		Hugo Gayosso, Stanley Hopcroft, Subhendu Ghosh</holder>
+		<year>2000 - 2004</year> 
+		<holder>Nagios Plugins Development Team</holder>
 	</copyright>
 
 </bookinfo>
