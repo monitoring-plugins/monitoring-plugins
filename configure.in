@@ -303,7 +303,7 @@ AC_ARG_WITH(openssl,
 AC_ARG_WITH([ipv6],
               ACX_HELP_STRING([--with-ipv6],
                              [enable IPv6 support (default=no)]),
-              ac_cv_sys_use_ipv6=$withval,
+              ,
               ac_cv_sys_use_ipv6=no)
 
 dnl Check for AF_INET6 support
