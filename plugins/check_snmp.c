@@ -65,7 +65,7 @@ print_help (void)
 	printf (_(COPYRIGHT), copyright, email);
 
 	printf (_("\
-Check status of remote machines and obtain sustem information via SNMP"));
+Check status of remote machines and obtain sustem information via SNMP\n\n"));
 
 	print_usage ();
 
@@ -133,7 +133,7 @@ Check status of remote machines and obtain sustem information via SNMP"));
 
 	printf (_(UT_VERBOSE));
 
-	printf (_("\
+	printf (_("\n\
 - This plugin uses the 'snmpget' command included with the NET-SNMP package.\n\
   If you don't have the package installed, you will need to download it from\n\
   http://net-snmp.sourceforge.net before you can use this plugin.\n"));

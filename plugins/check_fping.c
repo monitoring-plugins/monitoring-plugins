@@ -22,17 +22,20 @@
 *
 * Description:
 *
-* This plugin will use the /bin/fping command (form saint) to ping
+* This plugin will use the /bin/fping command (from saint) to ping
 * the specified host for a fast check if the host is alive. Note that
 * it is necessary to set the suid flag on fping.
 ******************************************************************************/
 
-#include "config.h"
+const char *progname = "check_fping";
+const char *revision = "$Revision$";
+const char *copyright = "1999-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
 #include "common.h"
 #include "popen.h"
 #include "utils.h"
 
-const char *progname = "check_fping";
 #define PACKET_COUNT 1
 #define PACKET_SIZE 56
 #define UNKNOWN_PACKET_LOSS 200	/* 200% */
@@ -41,11 +44,54 @@ const char *progname = "check_fping";
 #define PL 0
 #define RTA 1
 
+void
+print_usage (void)
+{
+	printf (_("Usage: %s <host_address>\n"), progname);
+}
+
+void
+print_help (void)
+{
+
+	print_revision (progname, "$Revision$");
+
+	printf (_("\
+Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)\n\n\
+This plugin will use the /bin/fping command (from saint) to ping the\n\
+specified host for a fast check if the host is alive. Note that it is\n\
+necessary to set the suid flag on fping.\n\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_("\
+ -H, --hostname=HOST\n\
+    Name or IP Address of host to ping (IP Address bypasses name lookup,\n\
+    reducing system load)\n\
+ -w, --warning=THRESHOLD\n\
+    warning threshold pair\n\
+ -c, --critical=THRESHOLD\n\
+    critical threshold pair\n\
+ -b, --bytes=INTEGER\n\
+    Size of ICMP packet (default: %d)\n\
+ -n, --number=INTEGER\n\
+    Number of ICMP packets to send (default: %d)\n"),
+	        PACKET_SIZE, PACKET_COUNT);
+
+	printf (_(UT_VERBOSE));
+
+	printf (_("\n\
+THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel\n\
+time (ms) which triggers a WARNING or CRITICAL state, and <pl> is the\n\
+percentage of packet loss to trigger an alarm state.\n"));
+
+}
+
 int textscan (char *buf);
 int process_arguments (int, char **);
 int get_threshold (char *arg, char *rv[2]);
-void print_usage (void);
-void print_help (void);
 
 char *server_name = NULL;
 int cpl = UNKNOWN_PACKET_LOSS;
@@ -342,57 +388,4 @@ get_threshold (char *arg, char *rv[2])
 	}
 
 	return OK;
-}
-
-
-
-
-
-void
-print_usage (void)
-{
-	printf ("Usage: %s <host_address>\n", progname);
-}
-
-
-
-
-
-void
-print_help (void)
-{
-
-	print_revision (progname, "$Revision$");
-
-	printf
-		("Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)\n\n"
-		 "This plugin will use the /bin/fping command (from saint) to ping the\n"
-		 "specified host for a fast check if the host is alive. Note that it is\n"
-		 "necessary to set the suid flag on fping.\n\n");
-
-	print_usage ();
-
-	printf
-		("\nOptions:\n"
-		 "-H, --hostname=HOST\n"
-		 "   Name or IP Address of host to ping (IP Address bypasses name lookup,\n"
-		 "   reducing system load)\n"
-		 "-w, --warning=THRESHOLD\n"
-		 "   warning threshold pair\n"
-		 "-c, --critical=THRESHOLD\n"
-		 "   critical threshold pair\n"
-		 "-b, --bytes=INTEGER\n"
-		 "   Size of ICMP packet (default: %d)\n"
-		 "-n, --number=INTEGER\n"
-		 "   Number of ICMP packets to send (default: %d)\n"
-		 "-v, --verbose\n"
-		 "   Show details for command-line debugging (do not use with nagios server)\n"
-		 "-h, --help\n"
-		 "   Print this help screen\n"
-		 "-V, --version\n"
-		 "   Print version information\n"
-		 "THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel\n"
-		 "time (ms) which triggers a WARNING or CRITICAL state, and <pl> is the\n"
-		 "percentage of packet loss to trigger an alarm state.\n",
-		 PACKET_SIZE, PACKET_COUNT);
 }
