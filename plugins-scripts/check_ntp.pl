@@ -76,8 +76,8 @@ GetOptions
 	("V"   => \$opt_V, "version"    => \$opt_V,
 	 "h"   => \$opt_h, "help"       => \$opt_h,
 	 "v" => \$verbose, "verbose"  => \$verbose,
-	 "w=s" => \$opt_w, "warning=s"  => \$opt_w,   # offset|adjust warning if above this number
-	 "c=s" => \$opt_c, "critical=s" => \$opt_c,   # offset|adjust critical if above this number
+	 "w=f" => \$opt_w, "warning=f"  => \$opt_w,   # offset|adjust warning if above this number
+	 "c=f" => \$opt_c, "critical=f" => \$opt_c,   # offset|adjust critical if above this number
 	 "H=s" => \$opt_H, "hostname=s" => \$opt_H);
 
 if ($opt_V) {
@@ -98,13 +98,14 @@ unless ($host) {
 	exit $ERRORS{'UNKNOWN'};
 }
 
-($opt_w) || ($opt_w = shift) || ($opt_w = 60);
-my $warning = $1 if ($opt_w =~ /([0-9]+)/);
+($opt_w) || ($opt_w = 60);
+my $warning = $1 if ($opt_w =~ /([0-9.]+)/);
 
-($opt_c) || ($opt_c = shift) || ($opt_c = 120);
-my $critical = $1 if ($opt_c =~ /([0-9]+)/);
+($opt_c) || ($opt_c = 120);
+my $critical = $1 if ($opt_c =~ /([0-9.]+)/);
 
-if ($opt_c < $opt_w) {
+
+if ($critical < $warning ) {
 	print "Critical offset should be larger than warning offset\n";
 	print_usage();
 	exit $ERRORS{"UNKNOWN"};
@@ -189,11 +190,11 @@ if ($have_ntpdc) {
 		while (<NTPDC>) {
 			print $_ if ($verbose);
 			if (/([^\s]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)/) {
-				if ($8>15) {
-					print "Dispersion = $8 \n" if ($verbose);
+				if ($8 gt $critical) {
+					print "Dispersion_crit = $8 :$critical\n" if ($verbose);
 					$dispersion_error = $ERRORS{'CRITICAL'};
-				} elsif ($8>5 && $dispersion_error<$ERRORS{'CRITICAL'}) {
-					print "Dispersion = $8 \n" if ($verbose);
+				} elsif ($8 gt $warning ) {
+					print "Dispersion_warn = $8 :$warning \n" if ($verbose);
 					$dispersion_error = $ERRORS{'WARNING'};
 				} else {
 					$dispersion_error = $ERRORS{'OK'};
@@ -252,7 +253,7 @@ foreach $key (keys %ERRORS) {
 exit $state;
 
 sub print_usage () {
-	print "Usage: $PROGNAME -H <host> [-w <warn>] [-c <crit>]\n";
+	print "Usage: $PROGNAME -H <host> [-w <warn>] [-c <crit>] [-v verbose]\n";
 }
 
 sub print_help () {
@@ -263,5 +264,7 @@ sub print_help () {
 	print "\n";
 	print "<warn> = Clock offset in seconds at which a warning message will be generated.\n	Defaults to 60.\n";
 	print "<crit> = Clock offset in seconds at which a critical message will be generated.\n	Defaults to 120.\n\n";
+	print "The same warning and critical values are used to check against the dispersion \n";
+	print "column of ntpdc/xntpdc for the host being queried.\n\n";
 	support();
 }
