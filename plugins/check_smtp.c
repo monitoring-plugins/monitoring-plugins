@@ -1,23 +1,5 @@
 /******************************************************************************
 *
-* CHECK_SMTP.C
-*
-* Program: SMTP plugin for Nagios
-* License: GPL
-* Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
-*
-* $Id$
-*
-* Description:
-*
-* This plugin will attempt to open an SMTP connection with the host.
-* Successul connects return STATE_OK, refusals and timeouts return
-* STATE_CRITICAL, other errors return STATE_UNKNOWN.  Successful
-* connects, but incorrect reponse messages from the host result in
-* STATE_WARNING return values.
-*
-* License Information:
-*
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation; either version 2 of the License, or
@@ -34,31 +16,63 @@
 *
 *****************************************************************************/
 
+const char *progname = "check_smtp";
+const char *revision = "$Revision$";
+const char *copyright = "1999-2003";
+const char *authors = "Nagios Plugin Development Team";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
+const char *summary = "\
+This plugin will attempt to open an SMTP connection with the host.\n";
+
+const char *description = "\
+Successul connects return STATE_OK, refusals and timeouts return\n\
+STATE_CRITICAL, other errors return STATE_UNKNOWN.  Successful\n\
+connects, but incorrect reponse messages from the host result in\n\
+STATE_WARNING return values.\n";
+
+const char *option_summary = "\
+-H host [-p port] [-e expect] [-C command] [-f from addr] 
+         [-w warn] [-c crit] [-t timeout] [-n] [-v]";
+
+const char *options = "\
+ -H, --hostname=STRING or IPADDRESS\n\
+   Check server on the indicated host\n\
+ -p, --port=INTEGER\n\
+   Make connection on the indicated port (default: %d)\n\
+ -e, --expect=STRING\n\
+   String to expect in first line of server response (default: '%s')\n\
+ -n, nocommand\n\
+   Suppress SMTP command\n\
+ -C, --command=STRING\n\
+   SMTP command (default: '%s')\n\
+ -f, --from=STRING\n\
+   FROM-address to include in MAIL command, required by Exchange 2000\n\
+   (default: '%s')\n\
+ -w, --warning=INTEGER\n\
+   Seconds necessary to result in a warning status\n\
+ -c, --critical=INTEGER\n\
+   Seconds necessary to result in a critical status\n\
+ -t, --timeout=INTEGER\n\
+   Seconds before connection attempt times out (default: %d)\n\
+ -v, --verbose\n\
+   Print extra information (command-line use only)\n\
+ -h, --help\n\
+   Print detailed help screen\n\
+ -V, --version\n\
+   Print version information\n\n";
+
+enum {
+	SMTP_PORT	= 25
+};
+const char *SMTP_EXPECT = "220";
+const char *SMTP_HELO = "HELO ";
+const char *SMTP_QUIT	= "QUIT\r\n";
+
 #include "config.h"
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
-
-const char *progname = "check_smtp";
-
-#define SMTP_PORT	25
-#define SMTP_EXPECT     "220"
-#define SMTP_HELO "HELO "
-
-/* sendmail will syslog a "NOQUEUE" error if session does not attempt
- * to do something useful. This can be prevented by giving a command
- * even if syntax is illegal (MAIL requires a FROM:<...> argument)
- * You can disable sending DUMMYCMD by undefining SMTP_USE_DUMMYCMD.
- *
- * According to rfc821 you can include a null reversepath in the from command
- * - but a log message is generated on the smtp server.
- *
- * Use the -f option to provide a FROM address
- */
-  
-#define SMTP_DUMMYCMD  "MAIL "
-#define SMTP_USE_DUMMYCMD 1
-#define SMTP_QUIT	"QUIT\r\n"
 
 int process_arguments (int, char **);
 int validate_arguments (void);
@@ -68,6 +82,8 @@ void print_usage (void);
 int server_port = SMTP_PORT;
 char *server_address = NULL;
 char *server_expect = NULL;
+int smtp_use_dummycmd = 1;
+char *mail_command = "MAIL ";
 char *from_arg = " ";
 int warning_time = 0;
 int check_warning_time = FALSE;
@@ -98,7 +114,7 @@ main (int argc, char **argv)
 	asprintf (&helocmd, "%s%s%s", SMTP_HELO, helocmd, "\r\n");
 
 	/* initialize the MAIL command with optional FROM command  */
-	asprintf (&from_str, "%sFROM: %s%s", SMTP_DUMMYCMD, from_arg, "\r\n");
+	asprintf (&from_str, "%sFROM: %s%s", mail_command, from_arg, "\r\n");
 
 	if (verbose)
 		printf ("FROMCMD: %s\n", from_str);
@@ -144,15 +160,27 @@ main (int argc, char **argv)
 		/* allow for response to helo command to reach us */
 		recv(sd, buffer, MAX_INPUT_BUFFER-1, 0);
 				
-#ifdef SMTP_USE_DUMMYCMD
-		send(sd, from_str, strlen(from_str), 0);
+		/* sendmail will syslog a "NOQUEUE" error if session does not attempt
+		 * to do something useful. This can be prevented by giving a command
+		 * even if syntax is illegal (MAIL requires a FROM:<...> argument)
+		 *
+		 * According to rfc821 you can include a null reversepath in the from command
+		 * - but a log message is generated on the smtp server.
+		 *
+		 * You can disable sending mail_command with '--nocommand'
+		 * Use the -f option to provide a FROM address
+		 */
+		if (smtp_use_dummycmd) {
 
-		/* allow for response to DUMMYCMD to reach us */
-		recv(sd, buffer, MAX_INPUT_BUFFER-1, 0);
+			send(sd, from_str, strlen(from_str), 0);
 
-		if (verbose) 
-			printf("DUMMYCMD: %s\n%s\n",from_str,buffer);
-#endif /* SMTP_USE_DUMMYCMD */
+			/* allow for response to mail_command to reach us */
+			recv(sd, buffer, MAX_INPUT_BUFFER-1, 0);
+
+			if (verbose) 
+				printf("DUMMYCMD: %s\n%s\n",from_str,buffer);
+
+		} /* smtp_use_dummycmd */
 
 		/* tell the server we're done */
 		send (sd, SMTP_QUIT, strlen (SMTP_QUIT), 0);
@@ -198,8 +226,11 @@ process_arguments (int argc, char **argv)
 		{"expect", required_argument, 0, 'e'},
 		{"critical", required_argument, 0, 'c'},
 		{"warning", required_argument, 0, 'w'},
+		{"timeout", required_argument, 0, 't'},
 		{"port", required_argument, 0, 'p'},
 		{"from", required_argument, 0, 'f'},
+		{"command", required_argument, 0, 'C'},
+		{"nocommand", required_argument, 0, 'n'},
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
@@ -219,8 +250,8 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVvt:p:f:e:c:w:H:", long_options,
-									 &option_index);
+		c = getopt_long (argc, argv, "+hVvt:p:f:e:c:w:H:C:",
+		                 long_options, &option_index);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -247,6 +278,13 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'e':									/* server expect string on 220  */
 			server_expect = optarg;
+			break;
+		case 'C':									/* server expect string on 220  */
+			mail_command = optarg;
+			smtp_use_dummycmd = 1;
+			break;
+		case 'n':									/* server expect string on 220  */
+			smtp_use_dummycmd = 0;
 			break;
 		case 'c':									/* critical time threshold */
 			if (is_intnonneg (optarg)) {
@@ -278,7 +316,7 @@ process_arguments (int argc, char **argv)
 			}
 			break;
 		case 'V':									/* version */
-			print_revision (progname, "$Revision$");
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -324,34 +362,13 @@ validate_arguments (void)
 void
 print_help (void)
 {
-	print_revision (progname, "$Revision$");
-	printf
-		("Copyright (c) 2000 Ethan Galstad/Karl DeBisschop\n\n"
-		 "This plugin test the SMTP service on the specified host.\n\n");
+	print_revision (progname, revision);
+	printf ("Copyright (c) %s %s\n\t<%s>\n\n%s\n",
+	         copyright, authors, email, summary);
 	print_usage ();
-	printf
-		("\nOptions:\n"
-		 " -H, --hostname=STRING or IPADDRESS\n"
-		 "   Check server on the indicated host\n"
-		 " -p, --port=INTEGER\n"
-		 "   Make connection on the indicated port (default: %d)\n"
-		 " -e, --expect=STRING\n"
-		 "   String to expect in first line of server response (default: %s)\n"
-		 " -f, --from=STRING\n"
-		 "   from address to include in MAIL command (default NULL, Exchange2000 requires one)\n"
-		 " -w, --warning=INTEGER\n"
-		 "   Seconds necessary to result in a warning status\n"
-		 " -c, --critical=INTEGER\n"
-		 "   Seconds necessary to result in a critical status\n"
-		 " -t, --timeout=INTEGER\n"
-		 "   Seconds before connection attempt times out (default: %d)\n"
-		 " -v, --verbose\n"
-		 "   Print extra information (command-line use only)\n"
-		 " -h, --help\n"
-		 "   Print detailed help screen\n"
-		 " -V, --version\n"
-		 "   Print version information\n\n",
-		 SMTP_PORT, SMTP_EXPECT, DEFAULT_SOCKET_TIMEOUT);
+	printf ("\nOptions:\n");
+	printf (options, SMTP_PORT, SMTP_EXPECT, mail_command, from_arg,
+	        DEFAULT_SOCKET_TIMEOUT);
 	support ();
 }
 
@@ -362,8 +379,8 @@ print_help (void)
 void
 print_usage (void)
 {
-	printf
-		("Usage: %s -H host [-e expect] [-p port] [-f from addr] [-w warn] [-c crit] [-t timeout] [-v]\n"
-		 "       %s --help\n"
-		 "       %s --version\n", progname, progname, progname);
+	printf ("Usage: %s %s\n"
+	        "       %s --help\n"
+	        "       %s --version\n",
+	        progname, option_summary, progname, progname);
 }
