@@ -24,6 +24,11 @@
 # back till now) or if a mails got lost (meaning a mail, that was
 # send later came back prior to another mail).
 # 
+# Michael Markstaller, mm@elabnet.de various changes/additions
+# MM 021003: fixed some unquoted strings
+# MM 021116: fixed/added pendwarn/lostwarn
+# MM 030515: added deleting of orphaned check-emails 
+#					  changed to use "top" instead of get to minimize traffic (required changing match-string from "Subject: Email-ping [" to "Email-Ping ["
 
 use Net::POP3;
 use Net::SMTP;
@@ -40,8 +45,8 @@ my %ERRORS = ('UNKNOWN' , '-1',
               'CRITICAL', '2');
 
 my $state = "UNKNOWN";
-my ($sender,$receiver, $pophost, $popuser, $poppasswd, $smtphost);
-my ($poptimeout,$smtptimeout,$pinginterval)=(60,60,5);
+my ($sender,$receiver, $pophost, $popuser, $poppasswd, $smtphost,$keeporphaned);
+my ($poptimeout,$smtptimeout,$pinginterval,$maxmsg)=(60,60,5,50);
 my ($lostwarn, $lostcrit,$pendwarn, $pendcrit);
 
 # Internal Vars
@@ -73,10 +78,12 @@ my $status = GetOptions(
 			"smtptimeout=i",\$smtptimeout,
 			"statfile=s",\$statfile,
 			"interval=i",\$pinginterval,
-			"lostwarr=i",\$lostwarn,
+			"lostwarn=i",\$lostwarn,
 			"lostcrit=i",\$lostcrit,
 			"pendwarn=i",\$pendwarn,
 			"pendcrit=i",\$pendcrit,
+			"maxmsg=i",\$maxmsg,
+			"keeporphaned=s",\$keeporphaned,
 			);
 usage() if ($status == 0 || ! ($pophost && $popuser && $poppasswd &&
 	$smtphost && $receiver && $sender ));
@@ -127,10 +134,12 @@ $statinfo="$msgcount mails on POP3";
 
 nsexit("POP3 login failed (user:$popuser)",'CRITICAL') if (!defined($msgcount));
 
+# Check if more than maxmsg mails in pop3-box
+nsexit(">$maxmsg Mails ($msgcount Mails on POP3); Please delete !",'WARNING') if ($msgcount > $maxmsg);
+
 # Count messages, that we are looking 4:
 while ($msgcount > 0) {
-  @msglines = @{$pop->get($msgcount)};
-
+  @msglines = @{$pop->top($msgcount,1)};
   for (my $i=0; $i < scalar @messageids; $i++) {
     if (messagematchsid(\@msglines,$messageids[$i])) { 
       $matchcount++;
@@ -138,11 +147,18 @@ while ($msgcount > 0) {
       $newestid = $messageids[$i] if ($messageids[$i] > $newestid || !defined $newestid);
       $pop->delete($msgcount);  # remove E-Mail from POP3 server
       splice @messageids, $i, 1;# remove id from List
-      last;                     # stop looking in list
-    }
+	  last;                     # stop looking in list
+	} 
   } 
+	# Delete orphaned Email-ping msg
+	my @msgsubject = grep /^Subject/, @msglines;
+	chomp @msgsubject;
+	# Scan Subject if email is an Email-Ping. In fact we match and delete also successfully retrieved messages here again.
+	if (!defined $keeporphaned && $msgsubject[0] =~ /E-Mail Ping \[/) {
+	    $pop->delete($msgcount);  # remove E-Mail from POP3 server
+	}
 
-  $msgcount--;
+	$msgcount--;
 }
 
 $pop->quit();  # necessary for pop3 deletion!
@@ -194,7 +210,7 @@ nsexit($statinfo);
 # ----------------------------------------------------------------------
 
 sub usage {
-  print "check_email_loop 1.0 Nagios Plugin - Real check of a E-Mail system\n";
+  print "check_email_loop 1.1 Nagios Plugin - Real check of a E-Mail system\n";
   print "=" x 75,"\nERROR: Missing or wrong arguments!\n","=" x 75,"\n";
   print "This script sends a mail with a specific id in the subject via an given\n";
   print "smtp-server to a given email-adress. When the script is run again, it checks\n";
@@ -210,19 +226,21 @@ sub usage {
   print "   -smtphost=text     IP oder name of the SMTP host\n";
   print "   -smtptimeout=num   Timeout in seconds for the SMTP-server\n";
   print "   -statfile=text     File to save ids of messages ($statfile)\n";
-#  print "   -interval=num      Time (in minutes) that must pass by before sending\n"
-#  print "                      another Ping-mail (gibe a new try);\n"; 
+  print "   -interval=num      Time (in minutes) that must pass by before sending\n";
+  print "                      another Ping-mail (gibe a new try);\n"; 
   print "   -lostwarn=num      WARNING-state if more than num lost emails\n";
   print "   -lostcrit=num      CRITICAL \n";
   print "   -pendwarn=num      WARNING-state if more than num pending emails\n";
   print "   -pendcrit=num      CRITICAL \n";
+  print "   -maxmsg=num        WARNING if more than num emails on POP3 (default 50)\n";
+  print "   -keeporphaned      Set this to NOT delete orphaned E-Mail Ping msg from POP3\n\n";
   print " Options may abbreviated!\n";
   print " LOST mails are mails, being sent before the last mail arrived back.\n";
   print " PENDING mails are those, which are not. (supposed to be on the way)\n";
   print "\nExample: \n";
   print " $0 -poph=host -pa=pw -popu=popts -smtph=host -from=root\@me.com\n ";
   print "      -to=remailer\@testxy.com -lostc=0 -pendc=2\n";
-  print "\nCopyleft 19.10.2000, Benjamin Schmid\n";
+  print "\nCopyleft 19.10.2000, Benjamin Schmid / 2003 Michael Markstaller, mm\@elabnet.de\n";
   print "This script comes with ABSOLUTELY NO WARRANTY\n";
   print "This programm is licensed under the terms of the ";
   print "GNU General Public License\n\n";
@@ -247,7 +265,7 @@ sub messagematchsid {
  
   # ID
   $id =~ s/^LI/ID/;    # evtl. remove lost mail mark
-  @tmp = grep /Subject: E-Mail Ping \[/, @$mailref;
+  @tmp = grep /E-Mail Ping \[/, @$mailref;
   chomp @tmp;
   if (($tmp[0] =~ /$id/)) 
     { $match = 1; }
