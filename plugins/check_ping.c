@@ -26,11 +26,13 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "popen.h"
 #include "utils.h"
 
-#define UNKNOWN_PACKET_LOSS 200	/* 200% */
-#define UNKNOWN_TRIP_TIME -1.0	/* -1 seconds */
-#define DEFAULT_MAX_PACKETS 5		/* default no. of ICMP ECHO packets */
-
 #define WARN_DUPLICATES "DUPLICATES FOUND! "
+#define UNKNOWN_TRIP_TIME -1.0	/* -1 seconds */
+
+enum {
+	UNKNOWN_PACKET_LOSS = 200,    /* 200% */
+	DEFAULT_MAX_PACKETS = 5       /* default no. of ICMP ECHO packets */
+};
 
 int process_arguments (int, char **);
 int get_threshold (char *, float *, int *);
@@ -53,12 +55,16 @@ int verbose = FALSE;
 float rta = UNKNOWN_TRIP_TIME;
 int pl = UNKNOWN_PACKET_LOSS;
 
-char *warn_text = NULL;
+char *warn_text = "";
 
+
+
+
+
 int
 main (int argc, char **argv)
 {
-	char *command_line = NULL;
+	char *cmd = NULL;
 	int result = STATE_UNKNOWN;
 	int this_result = STATE_UNKNOWN;
 	int i;
@@ -84,32 +90,32 @@ main (int argc, char **argv)
 #ifdef PING6_COMMAND
 # ifdef PING_PACKETS_FIRST
 	if (is_inet6_addr(addresses[i]) && address_family != AF_INET)
-		asprintf (&command_line, PING6_COMMAND, max_packets, addresses[i]);
+		asprintf (&cmd, PING6_COMMAND, max_packets, addresses[i]);
 	else
-		asprintf (&command_line, PING_COMMAND, max_packets, addresses[i]);
+		asprintf (&cmd, PING_COMMAND, max_packets, addresses[i]);
 # else
 	if (is_inet6_addr(addresses[i]) && address_family != AF_INET) 
-		asprintf (&command_line, PING6_COMMAND, addresses[i], max_packets);
+		asprintf (&cmd, PING6_COMMAND, addresses[i], max_packets);
 	else
-		asprintf (&command_line, PING_COMMAND, addresses[i], max_packets);
+		asprintf (&cmd, PING_COMMAND, addresses[i], max_packets);
 # endif
 #else /* USE_IPV6 */
 # ifdef PING_PACKETS_FIRST
-		asprintf (&command_line, PING_COMMAND, max_packets, addresses[i]);
+		asprintf (&cmd, PING_COMMAND, max_packets, addresses[i]);
 # else
-		asprintf (&command_line, PING_COMMAND, addresses[i], max_packets);
+		asprintf (&cmd, PING_COMMAND, addresses[i], max_packets);
 # endif
 #endif /* USE_IPV6 */
 
 		if (verbose)
-			printf ("%s ==> ", command_line);
+			printf ("%s ==> ", cmd);
 
 		/* run the command */
-		this_result = run_ping (command_line, addresses[i]);
+		this_result = run_ping (cmd, addresses[i]);
 
 		if (pl == UNKNOWN_PACKET_LOSS || rta == UNKNOWN_TRIP_TIME) {
-			printf ("%s\n", command_line);
-			terminate (STATE_UNKNOWN,
+			printf ("%s\n", cmd);
+			die (STATE_UNKNOWN,
 			           _("Error: Could not interpret output from ping command\n"));
 		}
 
@@ -121,7 +127,7 @@ main (int argc, char **argv)
 			this_result = max_state (STATE_OK, this_result);	
 	
 		if (n_addresses > 1 && this_result != STATE_UNKNOWN)
-			terminate (STATE_OK, "%s is alive\n", addresses[i]);
+			die (STATE_OK, "%s is alive\n", addresses[i]);
 
 		if (display_html == TRUE)
 			printf ("<A HREF='%s/traceroute.cgi?%s'>", CGIURL, addresses[i]);
@@ -144,8 +150,12 @@ main (int argc, char **argv)
 
 	return result;
 }
-
 
+
+
+
+
+
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -213,7 +223,7 @@ process_arguments (int argc, char **argv)
 					max_addr *= 2;
 					addresses = realloc (addresses, max_addr);
 					if (addresses == NULL)
-						terminate (STATE_UNKNOWN, _("Could not realloc() addresses\n"));
+						die (STATE_UNKNOWN, _("Could not realloc() addresses\n"));
 				}
 				addresses[n_addresses-1] = ptr;
 				if ((ptr = index (ptr, ','))) {
@@ -307,7 +317,7 @@ process_arguments (int argc, char **argv)
 	if (max_packets == -1) {
 		if (is_intnonneg (argv[c])) {
 			max_packets = atoi (argv[c++]);
-		}	else {
+		} else {
 			printf (_("<max_packets> (%s) must be a non-negative number\n"), argv[c]);
 			return ERROR;
 		}
@@ -375,40 +385,33 @@ validate_arguments ()
 
 	return OK;
 }
-
 
+
+
+
+
+
 int
-run_ping (char *command_line, char *server_address)
+run_ping (char *cmd, char *server_address)
 {
 	char buf[MAX_INPUT_BUFFER];
 	int result = STATE_UNKNOWN;
 
-	warn_text = malloc (1);
-	if (warn_text == NULL)
-		terminate (STATE_UNKNOWN, _("unable to malloc warn_text"));
-	warn_text[0] = 0;
-
-	if ((child_process = spopen (command_line)) == NULL) {
+	if ((child_process = spopen (cmd)) == NULL) {
 		printf (_("Cannot open pipe: "));
-		terminate (STATE_UNKNOWN, command_line);
+		die (STATE_UNKNOWN, cmd);
 	}
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL)
-		printf (_("Cannot open stderr for %s\n"), command_line);
+		printf (_("Cannot open stderr for %s\n"), cmd);
 
 	while (fgets (buf, MAX_INPUT_BUFFER - 1, child_process)) {
 
 		if (strstr (buf, _("(DUP!)"))) {
-			/* cannot use the max function since STATE_UNKNOWN is max
-			result = max (result, STATE_WARNING); */
-			if( !(result == STATE_CRITICAL) ){
-				result = STATE_WARNING;
-			}
-			
-			warn_text = realloc (warn_text, strlen (WARN_DUPLICATES) + 1);
-			if (warn_text == NULL)
-				terminate (STATE_UNKNOWN, _("unable to realloc warn_text"));
-			strcpy (warn_text, WARN_DUPLICATES);
+			result = max_state (result, STATE_WARNING);
+			warn_text = strdup (WARN_DUPLICATES);
+			if (!warn_text)
+				die (STATE_UNKNOWN, _("unable to realloc warn_text"));
 		}
 
 		/* get the percent loss statistics */
@@ -434,39 +437,31 @@ run_ping (char *command_line, char *server_address)
 	if (pl == 100)
 		rta = crta;
 
-
 	/* check stderr */
 	while (fgets (buf, MAX_INPUT_BUFFER - 1, child_stderr)) {
 		if (strstr(buf,"Warning: no SO_TIMESTAMP support, falling back to SIOCGSTAMP"))
 				continue;
 
 		if (strstr (buf, "Network is unreachable"))
-			terminate (STATE_CRITICAL,
+			die (STATE_CRITICAL,
 			           _("PING CRITICAL - Network unreachable (%s)"),
 			           server_address);
 		else if (strstr (buf, "Destination Host Unreachable"))
-			terminate (STATE_CRITICAL,
+			die (STATE_CRITICAL,
 			           _("PING CRITICAL - Host Unreachable (%s)"),
 			           server_address);
 		else if (strstr (buf, "unknown host" ))
-			terminate (STATE_CRITICAL,
+			die (STATE_CRITICAL,
 			           _("PING CRITICAL - Host not found (%s)"),
 			           server_address);
 
-		warn_text =
-			realloc (warn_text, strlen (warn_text) + strlen (buf) + 2);
-		if (warn_text == NULL)
-			terminate (STATE_UNKNOWN, _("unable to realloc warn_text"));
 		if (strlen (warn_text) == 0)
-			strcpy (warn_text, buf);
-		else
-			sprintf (warn_text, "%s %s", warn_text, buf);
+			warn_text = strdup (buf);
+		else if (asprintf (&warn_text, "%s %s", warn_text, buf) == -1)
+			die (STATE_UNKNOWN, _("unable to realloc warn_text"));
 
-		if (strstr (buf, "DUPLICATES FOUND")) {
-			if( !(result == STATE_CRITICAL) ){
-				result = STATE_WARNING;
-			}
-		}
+		if (strstr (buf, "DUPLICATES FOUND"))
+			result = max_state (result, STATE_WARNING);
 		else
 			result = STATE_CRITICAL ;
 	}
@@ -481,6 +476,10 @@ run_ping (char *command_line, char *server_address)
 }
 
 
+
+
+
+
 void
 print_usage (void)
 {
