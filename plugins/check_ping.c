@@ -430,6 +430,7 @@ run_ping (const char *cmd, const char *addr)
 				 sscanf(buf,"round-trip min/avg/max/stddev = %*f/%f/%*f/%*f",&rta)==1 ||
 				 sscanf(buf,"round-trip min/avg/max/std-dev = %*f/%f/%*f/%*f",&rta)==1 ||
 				 sscanf(buf,"round-trip (ms) min/avg/max = %*f/%f/%*f",&rta)==1 ||
+				 sscanf(buf,"round-trip (ms) min/avg/max/stddev = %*f/%f/%*f/%*f",&rta)==1 ||
 				 sscanf(buf,"rtt min/avg/max/mdev = %*f/%f/%*f/%*f ms",&rta)==1)
 			continue;
 	}
