@@ -129,6 +129,7 @@ snprintf.o: snprintf.c
 
 libgetopt.a: getopt.o getopt1.o
 	$(AR) -r $@ getopt.o getopt1.o
+	$(RANLIB) $@
 
 libsnprintf.a: snprintf.o
 	$(AR) -r $@ snprintf.o
