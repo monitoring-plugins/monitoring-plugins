@@ -22,7 +22,14 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
+* $Id$
+*
 *****************************************************************************/
+
+const char *progname = "check_dhcp";
+const char *revision = "$Revision$";
+const char *copyright = "2001-2004";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
 #include "netutils.h"
@@ -93,8 +100,6 @@ static int dl_bind(int, int, u_char *);
 long mac_addr_dlpi( const char *, int, u_char *);
 
 #endif
-
-const char *progname = "check_dhcp";
 
 #define HAVE_GETOPT_H
 
@@ -238,12 +243,13 @@ int main(int argc, char **argv){
 	int dhcp_socket;
 	int result;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+	
 	if(process_arguments(argc,argv)!=OK){
-		/*usage("Invalid command arguments supplied\n");*/
-		printf("Invalid command arguments supplied\n");
-		exit(STATE_UNKNOWN);
-	        }
-
+		usage4 (_("Could not parse arguments"));
+		}
 
 	/* create socket for DHCP communications */
 	dhcp_socket=create_dhcp_socket();
@@ -284,7 +290,7 @@ int get_hardware_address(int sock,char *interface_name){
 	
 	/* try and grab hardware address of requested interface */
 	if(ioctl(sock,SIOCGIFHWADDR,&ifr)<0){
-                printf("Error: Could not get hardware address of interface '%s'\n",interface_name);
+                printf(_("Error: Could not get hardware address of interface '%s'\n"),interface_name);
 		exit(STATE_UNKNOWN);
 	        }
 
@@ -306,22 +312,22 @@ int get_hardware_address(int sock,char *interface_name){
         mib[4] = NET_RT_IFLIST;
 
         if ((mib[5] = if_nametoindex(interface_name)) == 0) {
-                printf("Error: if_nametoindex error - %s.\n", strerror(errno));
+                printf(_("Error: if_nametoindex error - %s.\n"), strerror(errno));
                 exit(STATE_UNKNOWN);
         }
 
         if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0) {
-                printf("Error: Couldn't get hardware address from %s. sysctl 1 error - %s.\n", interface_name, strerror(errno));
+                printf(_("Error: Couldn't get hardware address from %s. sysctl 1 error - %s.\n"), interface_name, strerror(errno));
                 exit(STATE_UNKNOWN);
         }
 
         if ((buf = malloc(len)) == NULL) {
-                printf("Error: Couldn't get hardware address from interface %s. malloc error - %s.\n", interface_name, strerror(errno));
+                printf(_("Error: Couldn't get hardware address from interface %s. malloc error - %s.\n"), interface_name, strerror(errno));
                 exit(4);
         }
 
         if (sysctl(mib, 6, buf, &len, NULL, 0) < 0) {
-                printf("Error: Couldn't get hardware address from %s. sysctl 2 error - %s.\n", interface_name, strerror(errno));
+                printf(_("Error: Couldn't get hardware address from %s. sysctl 2 error - %s.\n"), interface_name, strerror(errno));
                 exit(STATE_UNKNOWN);
         }
 
@@ -346,12 +352,12 @@ int get_hardware_address(int sock,char *interface_name){
 		*p = '\0' ;
 		strncat(dev, interface_name, 6) ;
 	} else {
-		printf("Error: can't find unit number in interface_name (%s) - expecting TypeNumber eg lnc0.\n", interface_name);
+		printf(_("Error: can't find unit number in interface_name (%s) - expecting TypeNumber eg lnc0.\n"), interface_name);
 		exit(STATE_UNKNOWN);
 	}
 	stat = mac_addr_dlpi(dev, unit, client_hardware_address);
 	if (stat != 0) {
-		printf("Error: can't read MAC address from DLPI streams interface for device %s unit %d.\n", dev, unit);
+		printf(_("Error: can't read MAC address from DLPI streams interface for device %s unit %d.\n"), dev, unit);
 		exit(STATE_UNKNOWN);
 	}
 
@@ -363,18 +369,18 @@ int get_hardware_address(int sock,char *interface_name){
 
 	stat = mac_addr_dlpi(dev, unit, client_hardware_address);
 	if (stat != 0) {
-		printf("Error: can't read MAC address from DLPI streams interface for device %s unit %d.\n", dev, unit);
+		printf(_("Error: can't read MAC address from DLPI streams interface for device %s unit %d.\n"), dev, unit);
 		exit(STATE_UNKNOWN);
 	}
 						/* Kompf 2000-2003 */
 
 #else
-	printf("Error: can't get MAC address for this architecture.\n");
+	printf(_("Error: can't get MAC address for this architecture.\n"));
 	exit(STATE_UNKNOWN);
 #endif
 
 	if (verbose) { 
-		printf( "Hardware address: ");
+		printf(_("Hardware address: "));
 		for (i=0; i<6; ++i)
 			printf("%2.2x", client_hardware_address[i]);
 		printf( "\n");
@@ -449,7 +455,7 @@ int send_dhcp_discover(int sock){
 
 
 	if (verbose) {
-		printf("DHCPDISCOVER to %s port %d\n",inet_ntoa(sockaddr_broadcast.sin_addr),ntohs(sockaddr_broadcast.sin_port));
+		printf(_("DHCPDISCOVER to %s port %d\n"),inet_ntoa(sockaddr_broadcast.sin_addr),ntohs(sockaddr_broadcast.sin_port));
 		printf("DHCPDISCOVER XID: %lu (0x%X)\n",ntohl(discover_packet.xid),ntohl(discover_packet.xid));
 		printf("DHCDISCOVER ciaddr:  %s\n",inet_ntoa(discover_packet.ciaddr));
 		printf("DHCDISCOVER yiaddr:  %s\n",inet_ntoa(discover_packet.yiaddr));
@@ -500,26 +506,26 @@ int get_dhcp_offer(int sock){
 		
 		if(result!=OK){
 			if (verbose)
-				printf("Result=ERROR\n");
+				printf(_("Result=ERROR\n"));
 
 			continue;
 		        }
 		else{
 			if (verbose) 
-				printf("Result=OK\n");
+				printf(_("Result=OK\n"));
 
 			responses++;
 		        }
 
 		if (verbose) {
-			printf("DHCPOFFER from IP address %s\n",inet_ntoa(source.sin_addr));
+			printf(_("DHCPOFFER from IP address %s\n"),inet_ntoa(source.sin_addr));
 			printf("DHCPOFFER XID: %lu (0x%X)\n",ntohl(offer_packet.xid),ntohl(offer_packet.xid));
 		}
 
 		/* check packet xid to see if its the same as the one we used in the discover packet */
 		if(ntohl(offer_packet.xid)!=packet_xid){
 			if (verbose)
-				printf("DHCPOFFER XID (%lu) did not match DHCPDISCOVER XID (%lu) - ignoring packet\n",ntohl(offer_packet.xid),packet_xid);
+				printf(_("DHCPOFFER XID (%lu) did not match DHCPDISCOVER XID (%lu) - ignoring packet\n"),ntohl(offer_packet.xid),packet_xid);
 
 			continue;
 		        }
@@ -541,7 +547,7 @@ int get_dhcp_offer(int sock){
 
 		if(result==ERROR){
 			if (verbose) 
-				printf("DHCPOFFER hardware address did not match our own - ignoring packet\n");
+				printf(_("DHCPOFFER hardware address did not match our own - ignoring packet\n"));
 
 			continue;
 		        }
@@ -559,8 +565,8 @@ int get_dhcp_offer(int sock){
 	        }
 
 	if (verbose) {
-		printf("Total responses seen on the wire: %d\n",responses);
-		printf("Valid responses for this machine: %d\n",valid_responses);
+		printf(_("Total responses seen on the wire: %d\n"),responses);
+		printf(_("Valid responses for this machine: %d\n"),valid_responses);
 	}
 
 	return OK;
@@ -576,7 +582,7 @@ int send_dhcp_packet(void *buffer, int buffer_size, int sock, struct sockaddr_in
 	result=sendto(sock,(char *)buffer,buffer_size,0,(struct sockaddr *)dest,sizeof(*dest));
 
 	if (verbose) 
-		printf("send_dhcp_packet result: %d\n",result);
+		printf(_("send_dhcp_packet result: %d\n"),result);
 
 	if(result<0)
 		return ERROR;
@@ -605,7 +611,7 @@ int receive_dhcp_packet(void *buffer, int buffer_size, int sock, int timeout, st
         /* make sure some data has arrived */
         if(!FD_ISSET(sock,&readfds)){
 		if (verbose)
-                	printf("No (more) data received\n");
+                	printf(_("No (more) data received\n"));
                 return ERROR;
                 }
 
@@ -624,15 +630,15 @@ int receive_dhcp_packet(void *buffer, int buffer_size, int sock, int timeout, st
 
                 if(recv_result==-1){
 			if (verbose) {
-				printf("recvfrom() failed, ");
+				printf(_("recvfrom() failed, "));
 				printf("errno: (%d) -> %s\n",errno,strerror(errno));
 			}
                         return ERROR;
                         }
 		else{
 			if (verbose) {
-				printf("receive_dhcp_packet() result: %d\n",recv_result);
-				printf("receive_dhcp_packet() source: %s\n",inet_ntoa(source_address.sin_addr));
+				printf(_("receive_dhcp_packet() result: %d\n"),recv_result);
+				printf(_("receive_dhcp_packet() source: %s\n"),inet_ntoa(source_address.sin_addr));
 			}
 
 			memcpy(address,&source_address,sizeof(source_address));
@@ -642,7 +648,6 @@ int receive_dhcp_packet(void *buffer, int buffer_size, int sock, int timeout, st
 
 	return OK;
         }
-
 
 
 /* creates a socket for DHCP communication */
@@ -662,7 +667,7 @@ int create_dhcp_socket(void){
         /* create a socket for DHCP communications */
 	sock=socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
         if(sock<0){
-		printf("Error: Could not create socket!\n");
+		printf(_("Error: Could not create socket!\n"));
 		exit(STATE_UNKNOWN);
 	        }
 
@@ -672,13 +677,13 @@ int create_dhcp_socket(void){
         /* set the reuse address flag so we don't get errors when restarting */
         flag=1;
         if(setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,(char *)&flag,sizeof(flag))<0){
-		printf("Error: Could not set reuse address option on DHCP socket!\n");
+		printf(_("Error: Could not set reuse address option on DHCP socket!\n"));
 		exit(STATE_UNKNOWN);
 	        }
 
         /* set the broadcast option - we need this to listen to DHCP broadcast messages */
         if(setsockopt(sock,SOL_SOCKET,SO_BROADCAST,(char *)&flag,sizeof flag)<0){
-		printf("Error: Could not set broadcast option on DHCP socket!\n");
+		printf(_("Error: Could not set broadcast option on DHCP socket!\n"));
 		exit(STATE_UNKNOWN);
 	        }
 
@@ -686,7 +691,7 @@ int create_dhcp_socket(void){
 #if defined(__linux__)
 	strncpy(interface.ifr_ifrn.ifrn_name,network_interface_name,IFNAMSIZ);
 	if(setsockopt(sock,SOL_SOCKET,SO_BINDTODEVICE,(char *)&interface,sizeof(interface))<0){
-		printf("Error: Could not bind socket to interface %s.  Check your privileges...\n",network_interface_name);
+		printf(_("Error: Could not bind socket to interface %s.  Check your privileges...\n"),network_interface_name);
 		exit(STATE_UNKNOWN);
 	        }
 
@@ -696,15 +701,12 @@ int create_dhcp_socket(void){
 
         /* bind the socket */
         if(bind(sock,(struct sockaddr *)&myname,sizeof(myname))<0){
-		printf("Error: Could not bind to DHCP socket (port %d)!  Check your privileges...\n",DHCP_CLIENT_PORT);
+		printf(_("Error: Could not bind to DHCP socket (port %d)!  Check your privileges...\n"),DHCP_CLIENT_PORT);
 		exit(STATE_UNKNOWN);
 	        }
 
         return sock;
         }
-
-
-
 
 
 /* closes DHCP socket */
@@ -714,8 +716,6 @@ int close_dhcp_socket(int sock){
 
 	return OK;
         }
-
-
 
 
 /* adds a requested server address to list in memory */
@@ -734,7 +734,7 @@ int add_requested_server(struct in_addr server_address){
 	requested_servers++;
 
 	if (verbose)
-		printf("Requested server address: %s\n",inet_ntoa(new_server->server_address));
+		printf(_("Requested server address: %s\n"),inet_ntoa(new_server->server_address));
 
 	return OK;
         }
@@ -784,23 +784,22 @@ int add_dhcp_offer(struct in_addr source,dhcp_packet *offer_packet){
 
 	if (verbose) {
 		if(dhcp_lease_time==DHCP_INFINITE_TIME)
-			printf("Lease Time: Infinite\n");
+			printf(_("Lease Time: Infinite\n"));
 		else
-			printf("Lease Time: %lu seconds\n",(unsigned long)dhcp_lease_time);
+			printf(_("Lease Time: %lu seconds\n"),(unsigned long)dhcp_lease_time);
 		if(dhcp_renewal_time==DHCP_INFINITE_TIME)
-			printf("Renewal Time: Infinite\n");
+			printf(_("Renewal Time: Infinite\n"));
 		else
-			printf("Renewal Time: %lu seconds\n",(unsigned long)dhcp_renewal_time);
+			printf(_("Renewal Time: %lu seconds\n"),(unsigned long)dhcp_renewal_time);
 		if(dhcp_rebinding_time==DHCP_INFINITE_TIME)
-			printf("Rebinding Time: Infinite\n");
-		printf("Rebinding Time: %lu seconds\n",(unsigned long)dhcp_rebinding_time);
+			printf(_("Rebinding Time: Infinite\n"));
+		printf(_("Rebinding Time: %lu seconds\n"),(unsigned long)dhcp_rebinding_time);
 	}
 
 	new_offer=(dhcp_offer *)malloc(sizeof(dhcp_offer));
 
 	if(new_offer==NULL)
 		return ERROR;
-
 
 	new_offer->server_address=source;
 	new_offer->offered_address=offer_packet->yiaddr;
@@ -810,8 +809,8 @@ int add_dhcp_offer(struct in_addr source,dhcp_packet *offer_packet){
 
 
 	if (verbose) {
-		printf("Added offer from server @ %s",inet_ntoa(new_offer->server_address));
-		printf(" of IP address %s\n",inet_ntoa(new_offer->offered_address));
+		printf(_("Added offer from server @ %s"),inet_ntoa(new_offer->server_address));
+		printf(_(" of IP address %s\n"),inet_ntoa(new_offer->offered_address));
 	}
 
 	/* add new offer to head of list */
@@ -820,8 +819,6 @@ int add_dhcp_offer(struct in_addr source,dhcp_packet *offer_packet){
 
 	return OK;
         }
-
-
 
 
 /* frees memory allocated to DHCP OFFER list */
@@ -836,8 +833,6 @@ int free_dhcp_offer_list(void){
 
 	return OK;
         }
-
-
 
 
 /* frees memory allocated to requested server list */
@@ -882,8 +877,8 @@ int get_results(void){
 				/* see if the servers we wanted a response from talked to us or not */
 				if(!memcmp(&temp_offer->server_address,&temp_server->server_address,sizeof(temp_server->server_address))){
 	if (verbose) {
-					printf("DHCP Server Match: Offerer=%s",inet_ntoa(temp_offer->server_address));
-					printf(" Requested=%s\n",inet_ntoa(temp_server->server_address));
+					printf(_("DHCP Server Match: Offerer=%s"),inet_ntoa(temp_offer->server_address));
+					printf(_(" Requested=%s\n"),inet_ntoa(temp_server->server_address));
 	}				       
 					requested_responses++;
 				        }
@@ -922,21 +917,21 @@ int get_results(void){
 
 	/* we didn't receive any DHCPOFFERs */
 	if(dhcp_offer_list==NULL){
-		printf("No DHCPOFFERs were received.\n");
+		printf(_("No DHCPOFFERs were received.\n"));
 		return result;
 	        }
 
-	printf("Received %d DHCPOFFER(s)",valid_responses);
+	printf(_("Received %d DHCPOFFER(s)"),valid_responses);
 
 	if(requested_servers>0)
-		printf(", %s%d of %d requested servers responded",((requested_responses<requested_servers) && requested_responses>0)?"only ":"",requested_responses,requested_servers);
+		printf(_(", %s%d of %d requested servers responded"),((requested_responses<requested_servers) && requested_responses>0)?"only ":"",requested_responses,requested_servers);
 
 	if(request_specific_address==TRUE)
-		printf(", requested address (%s) was %soffered",inet_ntoa(requested_address),(received_requested_address==TRUE)?"":"not ");
+		printf(_(", requested address (%s) was %soffered"),inet_ntoa(requested_address),(received_requested_address==TRUE)?"":"not ");
 
-	printf(", max lease time = ");
+	printf(_(", max lease time = "));
 	if(max_lease_time==DHCP_INFINITE_TIME)
-		printf("Infinity");
+		printf(_("Infinity"));
 	else
 		printf("%lu sec",(unsigned long)max_lease_time);
 
@@ -944,57 +939,6 @@ int get_results(void){
 
 	return result;
         }
-
-
-
-
-
-
-/* print usage help */
-void print_help(void){
-
-	/*print_revision(progname,"$Revision$");*/
-
-	printf("Copyright (c) 2001-2004 Ethan Galstad (nagios@nagios.org)\n\n");
-	printf("This plugin tests the availability of DHCP servers on a network.\n\n");
-
-	print_usage();
-
-	printf
-		("\nOptions:\n"
-		 " -s, --serverip=IPADDRESS\n"
-		 "   IP address of DHCP server that we must hear from\n"
-		 " -r, --requestedip=IPADDRESS\n"
-		 "   IP address that should be offered by at least one DHCP server\n"
-		 " -t, --timeout=INTEGER\n"
-		 "   Seconds to wait for DHCPOFFER before timeout occurs\n"
-		 " -i, --interface=STRING\n"
-		 "   Interface to to use for listening (i.e. eth0)\n"
-		 " -v, --verbose\n"
-		 "   Print extra information (command-line use only)\n"
-		 " -h, --help\n"
-		 "   Print detailed help screen\n"
-		 " -V, --version\n"
-		 "   Print version information\n\n"
-		 );
-
-	/*support();*/
-
-	return;
-        }
-
-
-/* prints usage information */
-void print_usage(void){
-
-	printf("Usage: %s [-s serverip] [-r requestedip] [-t timeout] [-i interface]\n",progname);
-	printf("       %s --help\n",progname);
-	printf("       %s --version\n",progname);
-
-	return;
-        }
-
-
 
 
 /* process command-line arguments */
@@ -1174,7 +1118,7 @@ static int check_ctrl(int prim)
 {
     dl_error_ack_t *err_ack = (dl_error_ack_t *)ctl_area;
     if(err_ack->dl_primitive != prim) {
-	printf("Error: DLPI stream API failed to get MAC in check_ctrl: %s.\n", strerror(errno));
+	printf(_("Error: DLPI stream API failed to get MAC in check_ctrl: %s.\n"), strerror(errno));
         exit(STATE_UNKNOWN);
     }
     return 0;
@@ -1185,7 +1129,7 @@ static int put_ctrl(int fd, int len, int pri)
 {
     ctl.len = len;
     if(putmsg(fd, &ctl, 0, pri) < 0) {
-	printf("Error: DLPI stream API failed to get MAC in put_ctrl/putmsg(): %s.\n", strerror(errno));
+	printf(_("Error: DLPI stream API failed to get MAC in put_ctrl/putmsg(): %s.\n"), strerror(errno));
         exit(STATE_UNKNOWN);
     }
     return  0;
@@ -1197,7 +1141,7 @@ static int put_both(int fd, int clen, int dlen, int pri)
     ctl.len = clen;
     dat.len = dlen;
     if(putmsg(fd, &ctl, &dat, pri) < 0) {
-	printf("Error: DLPI stream API failed to get MAC in put_both/putmsg().\n", strerror(errno));
+	printf(_("Error: DLPI stream API failed to get MAC in put_both/putmsg().\n"), strerror(errno));
         exit(STATE_UNKNOWN);
     }
     return  0;
@@ -1208,7 +1152,7 @@ static int dl_open(const char *dev, int unit, int *fd)
 {
     dl_attach_req_t *attach_req = (dl_attach_req_t *)ctl_area;
     if((*fd = open(dev, O_RDWR)) == -1) {
-	printf("Error: DLPI stream API failed to get MAC in dl_attach_req/open(%s..): %s.\n", dev, strerror(errno));
+	printf(_("Error: DLPI stream API failed to get MAC in dl_attach_req/open(%s..): %s.\n"), dev, strerror(errno));
         exit(STATE_UNKNOWN);
     }
     attach_req->dl_primitive = DL_ATTACH_REQ;
@@ -1232,7 +1176,7 @@ static int dl_bind(int fd, int sap, u_char *addr)
     put_ctrl(fd, sizeof(dl_bind_req_t), 0);
     get_msg(fd);
     if (GOT_ERR == check_ctrl(DL_BIND_ACK)) {
-	printf("Error: DLPI stream API failed to get MAC in dl_bind/check_ctrl(): %s.\n", strerror(errno));
+	printf(_("Error: DLPI stream API failed to get MAC in dl_bind/check_ctrl(): %s.\n"), strerror(errno));
         exit(STATE_UNKNOWN);
     }
     bcopy((u_char *)bind_ack + bind_ack->dl_addr_offset, addr,
@@ -1267,6 +1211,47 @@ long mac_addr_dlpi( const char *dev, int unit, u_char  *addr) {
 	return -1;
 }
 
-#endif
 						/* Kompf 2000-2003 */
+
+#endif
+
+
+/* print usage help */
+void print_help(void){
+
+	print_revision(progname,revision);
+
+	printf("Copyright (c) 2001-2004 Ethan Galstad (nagios@nagios.org)\n\n");
+	printf (COPYRIGHT, copyright, email);
+	
+	printf(_("This plugin tests the availability of DHCP servers on a network.\n\n"));
+
+	print_usage();
+
+	printf(_("\
+ -s, --serverip=IPADDRESS\n\
+   IP address of DHCP server that we must hear from\n\
+ -r, --requestedip=IPADDRESS\n\
+   IP address that should be offered by at least one DHCP server\n\
+ -t, --timeout=INTEGER\n\
+   Seconds to wait for DHCPOFFER before timeout occurs\n\
+ -i, --interface=STRING\n\
+   Interface to to use for listening (i.e. eth0)\n\
+ -v, --verbose\n\
+   Print extra information (command-line use only)\n\
+ -h, --help\n\
+   Print detailed help screen\n\
+ -V, --version\n\
+   Print version information\n"));
+}
+
+
+void print_usage(void)
+{
+	printf("\
+Usage: %s [-s serverip] [-r requestedip] [-t timeout] [-i interface]\n\
+                  [-v]",progname);
+}
+
+
 
