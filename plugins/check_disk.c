@@ -404,6 +404,10 @@ process_arguments (int argc, char **argv)
 			se = (struct name_list *) malloc (sizeof (struct name_list));
 			se->name = optarg;
 			se->name_next = NULL;
+			se->w_df = 0;
+			se->c_df = 0;
+			se->w_dfp = -1.0;
+			se->c_dfp = -1.0;
 			*fstail = se;
 			fstail = &se->name_next;
 			break;
