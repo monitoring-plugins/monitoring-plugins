@@ -13,7 +13,7 @@ my $t;
 
 $str = `./check_http $Cache::hostname -wt 300 -ct 600`;
 $t += ok $?>>8,0;
-$t += ok $str, '/HTTP\/1.1 [0-9]{3} (OK|Found) - [0-9]+ second response time/';
+$t += ok $str, '/(HTTP\s[o|O][k|K]\s)?\s?HTTP\/1.[01]\s[0-9]{3}\s(OK|Found)\s-\s+([0-9]+|[0-9]+\.[0-9]+)\ssecond response time/';
 
 $str = `./check_http $Cache::nullhost -wt 1 -ct 2`;
 $t += ok $?>>8,2;
