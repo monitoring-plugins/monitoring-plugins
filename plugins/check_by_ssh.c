@@ -169,8 +169,8 @@ process_arguments (int argc, char **argv)
 	int c;
 	char *p1, *p2;
 
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
 		{"verbose", no_argument, 0, 'v'},
@@ -200,8 +200,8 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvh1246ft:H:O:p:i:u:l:C:n:s:", long_options,
-									 &option_index);
+		c = getopt_long (argc, argv, "Vvh1246ft:H:O:p:i:u:l:C:n:s:", longopts,
+									 &option);
 
 		if (c == -1 || c == EOF)
 			break;

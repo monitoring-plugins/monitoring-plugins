@@ -28,7 +28,6 @@
  *
  *****************************************************************************/
 
-#include "config.h"
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
@@ -331,8 +330,8 @@ int main(int argc, char **argv){
 int process_arguments(int argc, char **argv){
 	int c;
 
-	int option_index = 0;
-	static struct option long_options[] =
+	int option = 0;
+	static struct option longopts[] =
 	{ 
 		{"port",     required_argument,0,'p'},
 		{"timeout",  required_argument,0,'t'},
@@ -366,7 +365,7 @@ int process_arguments(int argc, char **argv){
 	}
 
 	while (1){
-		c = getopt_long(argc,argv,"+hVH:t:c:w:p:v:l:s:d:",long_options,&option_index);
+		c = getopt_long(argc,argv,"+hVH:t:c:w:p:v:l:s:d:",longopts,&option);
 
 		if (c==-1||c==EOF||c==1)
 			break;
@@ -385,10 +384,10 @@ int process_arguments(int argc, char **argv){
 				exit(STATE_OK);
 			case 'H': /* hostname */
 				if (server_address)	free(server_address);
-				server_address = strdup(optarg);
+				server_address = optarg;
 				break;
 			case 's': /* password */
-				req_password = strdup (optarg);
+				req_password = optarg;
 				break;
 			case 'p': /* port */
 				if (is_intnonneg(optarg))
@@ -421,7 +420,7 @@ int process_arguments(int argc, char **argv){
 					return ERROR;
 				break;
 			case 'l': /* value list */
-				value_list = strdup (optarg);
+				value_list = optarg;
 				break;
 			case 'w': /* warning threshold */
 				warning_value=strtoul(optarg,NULL,10);

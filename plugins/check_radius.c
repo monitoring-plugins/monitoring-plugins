@@ -21,79 +21,21 @@ const char *revision = "$Revision$";
 const char *copyright = "2000-2003";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
-#include "config.h"
 #include "common.h"
 #include "utils.h"
+#include "netutils.h"
 #include <radiusclient.h>
 
-void
-print_usage (void)
-{
-	printf ("\
-Usage: %s -H host -F config_file -u username -p password [-P port]\n\
-  [-t timeout] [-r retries] [-e expect]\n", progname);
-	printf (_(UT_HLP_VRS), progname, progname);
-}
-
-void
-print_help (void)
-{
-	char *myport;
-	asprintf (&myport, "%d", PW_AUTH_UDP_PORT);
-
-	print_revision (progname, revision);
-
-	printf (_("Copyright (c) 1999 Robert August Vincent II\n"));
-	printf (_(COPYRIGHT), copyright, email);
-
-	printf(_("Tests to see if a radius server is accepting connections.\n\n"));
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_(UT_HOST_PORT), 'P', myport);
-
-	printf (_("\
- -u, --username=STRING\n\
-    The user to authenticate\n\
- -p, --password=STRING\n\
-    Password for autentication (SECURITY RISK)\n\
- -F, --filename=STRING\n\
-    Configuration file\n\
- -e, --expect=STRING\n\
-    Response string to expect from the server\n\
- -r, --retries=INTEGER\n\
-    Number of times to retry a failed connection\n"));
-
-	printf (_(UT_TIMEOUT), timeout_interval);
-
-	printf (_("\n\
-This plugin tests a radius server to see if it is accepting connections.\n\
-\n\
-The server to test must be specified in the invocation, as well as a user\n\
-name and password. A configuration file may also be present. The format of\n\
-the configuration file is described in the radiusclient library sources.\n\n"));
-
-	printf (_("\
-The password option presents a substantial security issue because the\n\
-password can be determined by careful watching of the command line in\n\
-a process listing.  This risk is exacerbated because nagios will\n\
-run the plugin at regular prdictable intervals.  Please be sure that\n\
-the password used does not allow access to sensitive system resources,\n\
-otherwise compormise could occur.\n"));
-
-	printf (_(UT_SUPPORT));
-}
-
 int process_arguments (int, char **);
+void print_help (void);
+void print_usage (void);
 
 char *server = NULL;
 char *username = NULL;
 char *password = NULL;
 char *expect = NULL;
 char *config_file = NULL;
-int port = PW_AUTH_UDP_PORT;
+unsigned short port = PW_AUTH_UDP_PORT;
 int retries = 1;
 int verbose = FALSE;
 ENV *env = NULL;
@@ -159,12 +101,14 @@ main (int argc, char **argv)
 	SEND_DATA data;
 	int result;
 	UINT4 client_id;
+	char *str;
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage (_("Could not parse arguments\n"));
 
+	str = strdup ("dictionary");
 	if ((config_file && rc_read_config (config_file)) ||
-			rc_read_dictionary (rc_conf_str ("dictionary")))
+			rc_read_dictionary (rc_conf_str (str)))
 		die (STATE_UNKNOWN, _("Config file error"));
 
 	service = PW_AUTHENTICATE_ONLY;
@@ -184,8 +128,8 @@ main (int argc, char **argv)
 	if (rc_avpair_add (&(data.send_pairs), PW_NAS_IP_ADDRESS, &client_id, 0) ==
 			NULL) return (ERROR_RC);
 
-	rc_buildreq (&data, PW_ACCESS_REQUEST, server, port, timeout_interval,
-							 retries);
+	rc_buildreq (&data, PW_ACCESS_REQUEST, server, port, (int)timeout_interval,
+	             retries);
 
 	result = rc_send_server (&data, msg);
 	rc_avpair_free (data.send_pairs);
@@ -199,7 +143,7 @@ main (int argc, char **argv)
 	if (result == BADRESP_RC)
 		die (STATE_WARNING, _("Auth Failed"));
 	if (expect && !strstr (msg, expect))
-		die (STATE_WARNING, msg);
+		die (STATE_WARNING, "%s", msg);
 	if (result == OK_RC)
 		die (STATE_OK, _("Auth OK"));
 	return (0);
@@ -213,8 +157,8 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		{"hostname", required_argument, 0, 'H'},
 		{"port", required_argument, 0, 'P'},
 		{"username", required_argument, 0, 'u'},
@@ -254,8 +198,8 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVvH:P:F:u:p:t:r:e:", long_options,
-									 &option_index);
+		c = getopt_long (argc, argv, "+hVvH:P:F:u:p:t:r:e:", longopts,
+									 &option);
 
 		if (c == -1 || c == EOF || c == 1)
 			break;
@@ -315,4 +259,72 @@ process_arguments (int argc, char **argv)
 		}
 	}
 	return OK;
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+	char *myport;
+	asprintf (&myport, "%d", PW_AUTH_UDP_PORT);
+
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 1999 Robert August Vincent II\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf(_("Tests to see if a radius server is accepting connections.\n\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_HOST_PORT), 'P', myport);
+
+	printf (_("\
+ -u, --username=STRING\n\
+    The user to authenticate\n\
+ -p, --password=STRING\n\
+    Password for autentication (SECURITY RISK)\n\
+ -F, --filename=STRING\n\
+    Configuration file\n\
+ -e, --expect=STRING\n\
+    Response string to expect from the server\n\
+ -r, --retries=INTEGER\n\
+    Number of times to retry a failed connection\n"));
+
+	printf (_(UT_TIMEOUT), timeout_interval);
+
+	printf (_("\n\
+This plugin tests a radius server to see if it is accepting connections.\n\
+\n\
+The server to test must be specified in the invocation, as well as a user\n\
+name and password. A configuration file may also be present. The format of\n\
+the configuration file is described in the radiusclient library sources.\n\n"));
+
+	printf (_("\
+The password option presents a substantial security issue because the\n\
+password can be determined by careful watching of the command line in\n\
+a process listing.  This risk is exacerbated because nagios will\n\
+run the plugin at regular prdictable intervals.  Please be sure that\n\
+the password used does not allow access to sensitive system resources,\n\
+otherwise compormise could occur.\n"));
+
+	printf (_(UT_SUPPORT));
+}
+
+
+
+
+void
+print_usage (void)
+{
+	printf ("\
+Usage: %s -H host -F config_file -u username -p password [-P port]\n\
+  [-t timeout] [-r retries] [-e expect]\n", progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }

@@ -138,8 +138,8 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		{"hostname", required_argument, 0, 'H'},
 		{"warning-variance", required_argument, 0, 'w'},
 		{"critical-variance", required_argument, 0, 'c'},
@@ -169,8 +169,8 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "hVH:w:c:W:C:p:t:", long_options,
-									 &option_index);
+		c = getopt_long (argc, argv, "hVH:w:c:W:C:p:t:", longopts,
+									 &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -307,7 +307,7 @@ This plugin will check the time on the specified host.\n\n"));
 
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
-	support ();
+	printf (_(UT_SUPPORT));
 }
 
 

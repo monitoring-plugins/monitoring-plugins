@@ -70,8 +70,8 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		{"help", no_argument, 0, 'h'},
 		{"version", no_argument, 0, 'V'},
 		{"host", required_argument, 0, 'H'},
@@ -91,7 +91,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "+Vhv46t:H:p:", long_options, &option_index);
+		c = getopt_long (argc, argv, "+Vhv46t:H:p:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;

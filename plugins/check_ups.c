@@ -400,8 +400,8 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		{"hostname", required_argument, 0, 'H'},
 		{"ups", required_argument, 0, 'u'},
 		{"port", required_argument, 0, 'p'},
@@ -427,8 +427,8 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "hVH:u:p:v:c:w:t:", long_options,
-									 &option_index);
+		c = getopt_long (argc, argv, "hVH:u:p:v:c:w:t:", longopts,
+									 &option);
 
 		if (c == -1 || c == EOF)
 			break;

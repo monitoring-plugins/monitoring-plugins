@@ -29,36 +29,7 @@ const char *copyright = "2000-2003";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 const char *option_summary = "-H host [-C community]\n";
-void
-print_usage (void)
-{
-	printf (_("\
-Usage: %s -H host [-C community]\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
-}
 
-void
-print_help (void)
-{
-	print_revision (progname, revision);
-
-	printf (_(COPYRIGHT), copyright, email);
-
-	printf (_("\
-This plugin tests the STATUS of an HP printer with a JetDirect card.\n\
-Net-snmp must be installed on the computer running the plugin.\n\n"));
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_("\
- -C, --community=STRING\n\
-    The SNMP community name (default=%s)\n"), DEFAULT_COMMUNITY);
-
-	printf (_(UT_SUPPORT));
-}
-
 #define HPJD_LINE_STATUS		".1.3.6.1.4.1.11.2.3.9.1.1.2.1"
 #define HPJD_PAPER_STATUS		".1.3.6.1.4.1.11.2.3.9.1.1.2.2"
 #define HPJD_INTERVENTION_REQUIRED	".1.3.6.1.4.1.11.2.3.9.1.1.2.3"
@@ -77,8 +48,10 @@ Net-snmp must be installed on the computer running the plugin.\n\n"));
 
 int process_arguments (int, char **);
 int validate_arguments (void);
+void print_help (void);
+void print_usage (void);
 
-char *community = DEFAULT_COMMUNITY;
+char *community = NULL;
 char *address = NULL;
 
 int
@@ -89,7 +62,7 @@ main (int argc, char **argv)
 	int line;
 	char input_buffer[MAX_INPUT_BUFFER];
 	char query_string[512];
-	char error_message[MAX_INPUT_BUFFER];
+	char *errmsg;
 	char *temp_buffer;
 	int line_status = ONLINE;
 	int paper_status = 0;
@@ -103,7 +76,8 @@ main (int argc, char **argv)
 	int door_open = 0;
 	int paper_output = 0;
 	char display_message[MAX_INPUT_BUFFER];
-	char *temp ;
+
+	errmsg = malloc(MAX_INPUT_BUFFER);
 
 	if (process_arguments (argc, argv) != OK)
 		usage (_("Invalid command arguments supplied\n"));
@@ -154,118 +128,55 @@ main (int argc, char **argv)
 		temp_buffer = strtok (input_buffer, "=");
 		temp_buffer = strtok (NULL, "=");
 
-		switch (line) {
+		if (temp_buffer != NULL) {
 
-		case 1:										/* 1st line should contain the line status */
-			if (temp_buffer != NULL)
+				result = STATE_UNKNOWN;
+				strcpy (errmsg, input_buffer);
+
+		} else {
+
+			switch (line) {
+
+			case 1:										/* 1st line should contain the line status */
 				line_status = atoi (temp_buffer);
-			else {
-				result = STATE_UNKNOWN;
-				strcpy (error_message, input_buffer);
-			}
-			break;
-
-		case 2:										/* 2nd line should contain the paper status */
-			if (temp_buffer != NULL)
+				break;
+			case 2:										/* 2nd line should contain the paper status */
 				paper_status = atoi (temp_buffer);
-			else {
-				result = STATE_UNKNOWN;
-				strcpy (error_message, input_buffer);
-			}
-			break;
-
-		case 3:										/* 3rd line should be intervention required */
-			if (temp_buffer != NULL)
+				break;
+			case 3:										/* 3rd line should be intervention required */
 				intervention_required = atoi (temp_buffer);
-			else {
-				result = STATE_UNKNOWN;
-				strcpy (error_message, input_buffer);
-			}
-			break;
-
-		case 4:										/* 4th line should be peripheral error */
-			if (temp_buffer != NULL)
+				break;
+			case 4:										/* 4th line should be peripheral error */
 				peripheral_error = atoi (temp_buffer);
-			else {
-				result = STATE_UNKNOWN;
-				strcpy (error_message, input_buffer);
-			}
-			break;
-
-		case 5:										/* 5th line should contain the paper jam status */
-			if (temp_buffer != NULL)
+				break;
+			case 5:										/* 5th line should contain the paper jam status */
 				paper_jam = atoi (temp_buffer);
-			else {
-				result = STATE_UNKNOWN;
-				strcpy (error_message, input_buffer);
-			}
-			break;
-
-		case 6:										/* 6th line should contain the paper out status */
-			if (temp_buffer != NULL)
+				break;
+			case 6:										/* 6th line should contain the paper out status */
 				paper_out = atoi (temp_buffer);
-			else {
-				result = STATE_UNKNOWN;
-				strcpy (error_message, input_buffer);
-			}
-			break;
-
-		case 7:										/* 7th line should contain the toner low status */
-			if (temp_buffer != NULL)
+				break;
+			case 7:										/* 7th line should contain the toner low status */
 				toner_low = atoi (temp_buffer);
-			else {
-				result = STATE_UNKNOWN;
-				strcpy (error_message, input_buffer);
-			}
-			break;
-
-		case 8:										/* did data come too slow for engine */
-			if (temp_buffer != NULL)
+				break;
+			case 8:										/* did data come too slow for engine */
 				page_punt = atoi (temp_buffer);
-			else {
-				result = STATE_UNKNOWN;
-				strcpy (error_message, input_buffer);
-			}
-			break;
-
-		case 9:										/* did we run out of memory */
-			if (temp_buffer != NULL)
+				break;
+			case 9:										/* did we run out of memory */
 				memory_out = atoi (temp_buffer);
-			else {
-				result = STATE_UNKNOWN;
-				strcpy (error_message, input_buffer);
-			}
-			break;
-
-		case 10:										/* is there a door open */
-			if (temp_buffer != NULL)
+				break;
+			case 10:										/* is there a door open */
 				door_open = atoi (temp_buffer);
-			else {
-				result = STATE_UNKNOWN;
-				strcpy (error_message, input_buffer);
-			}
-			break;
-
-		case 11:										/* is output tray full */
-			if (temp_buffer != NULL)
+				break;
+			case 11:										/* is output tray full */
 				paper_output = atoi (temp_buffer);
-			else {
-				result = STATE_UNKNOWN;
-				strcpy (error_message, input_buffer);
-			}
-			break;
-
-		case 12:										/* display panel message */
-			if (temp_buffer != NULL)
+				break;
+			case 12:										/* display panel message */
 				strcpy (display_message, temp_buffer + 1);
-			else {
-				result = STATE_UNKNOWN;
-				strcpy (error_message, input_buffer);
+				break;
+			default:
+				break;
 			}
-			break;
 
-		default:
-			break;
 		}
 
 		/* break out of the read loop if we encounter an error */
@@ -279,7 +190,7 @@ main (int argc, char **argv)
 		/* remove CRLF */
 		if (input_buffer[strlen (input_buffer) - 1] == '\n')
 			input_buffer[strlen (input_buffer) - 1] = 0;
-		sprintf (error_message, "%s", input_buffer );
+		sprintf (errmsg, "%s", input_buffer );
 
 	}
 	
@@ -295,8 +206,7 @@ main (int argc, char **argv)
 
 		/* might not be the problem, but most likely is. */
 		result = STATE_UNKNOWN ;
-		asprintf (&temp, error_message);
-		sprintf (error_message, "%s : Timeout from host %s\n", temp, address );
+		asprintf (&errmsg, "%s : Timeout from host %s\n", errmsg, address );
 		 
 	}
 
@@ -305,49 +215,49 @@ main (int argc, char **argv)
 
 		if (paper_jam) {
 			result = STATE_WARNING;
-			strcpy (error_message, _("Paper Jam"));
+			strcpy (errmsg, _("Paper Jam"));
 		}
 		else if (paper_out) {
 			result = STATE_WARNING;
-			strcpy (error_message, _("Out of Paper"));
+			strcpy (errmsg, _("Out of Paper"));
 		}
 		else if (line_status == OFFLINE) {
-			if (strcmp (error_message, "POWERSAVE ON") != 0) {
+			if (strcmp (errmsg, "POWERSAVE ON") != 0) {
 				result = STATE_WARNING;
-				strcpy (error_message, _("Printer Offline"));
+				strcpy (errmsg, _("Printer Offline"));
 			}
 		}
 		else if (peripheral_error) {
 			result = STATE_WARNING;
-			strcpy (error_message, _("Peripheral Error"));
+			strcpy (errmsg, _("Peripheral Error"));
 		}
 		else if (intervention_required) {
 			result = STATE_WARNING;
-			strcpy (error_message, _("Intervention Required"));
+			strcpy (errmsg, _("Intervention Required"));
 		}
 		else if (toner_low) {
 			result = STATE_WARNING;
-			strcpy (error_message, _("Toner Low"));
+			strcpy (errmsg, _("Toner Low"));
 		}
 		else if (memory_out) {
 			result = STATE_WARNING;
-			strcpy (error_message, _("Insufficient Memory"));
+			strcpy (errmsg, _("Insufficient Memory"));
 		}
 		else if (door_open) {
 			result = STATE_WARNING;
-			strcpy (error_message, _("A Door is Open"));
+			strcpy (errmsg, _("A Door is Open"));
 		}
 		else if (paper_output) {
 			result = STATE_WARNING;
-			strcpy (error_message, _("Output Tray is Full"));
+			strcpy (errmsg, _("Output Tray is Full"));
 		}
 		else if (page_punt) {
 			result = STATE_WARNING;
-			strcpy (error_message, _("Data too Slow for Engine"));
+			strcpy (errmsg, _("Data too Slow for Engine"));
 		}
 		else if (paper_status) {
 			result = STATE_WARNING;
-			strcpy (error_message, _("Unknown Paper Error"));
+			strcpy (errmsg, _("Unknown Paper Error"));
 		}
 	}
 
@@ -356,15 +266,15 @@ main (int argc, char **argv)
 
 	else if (result == STATE_UNKNOWN) {
 
-		printf ("%s\n", error_message);
+		printf ("%s\n", errmsg);
 
 		/* if printer could not be reached, escalate to critical */
-		if (strstr (error_message, "Timeout"))
+		if (strstr (errmsg, "Timeout"))
 			result = STATE_CRITICAL;
 	}
 
 	else if (result == STATE_WARNING)
-		printf ("%s (%s)\n", error_message, display_message);
+		printf ("%s (%s)\n", errmsg, display_message);
 
 	return result;
 }
@@ -379,8 +289,8 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		{"hostname", required_argument, 0, 'H'},
 		{"community", required_argument, 0, 'C'},
 /*  		{"critical",       required_argument,0,'c'}, */
@@ -396,7 +306,7 @@ process_arguments (int argc, char **argv)
 
 	
 	while (1) {
-		c = getopt_long (argc, argv, "+hVH:C:", long_options, &option_index);
+		c = getopt_long (argc, argv, "+hVH:C:", longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)
 			break;
@@ -434,8 +344,11 @@ process_arguments (int argc, char **argv)
 		}
 	}
 	
-	if (argv[c] != NULL ) {
-		community = argv[c];
+	if (community == NULL) {
+		if (argv[c] != NULL )
+			community = argv[c];
+		else
+			community = strdup (DEFAULT_COMMUNITY);
 	}
 
 	return validate_arguments ();
@@ -449,4 +362,42 @@ int
 validate_arguments (void)
 {
 	return OK;
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("\
+This plugin tests the STATUS of an HP printer with a JetDirect card.\n\
+Net-snmp must be installed on the computer running the plugin.\n\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_("\
+ -C, --community=STRING\n\
+    The SNMP community name (default=%s)\n"), DEFAULT_COMMUNITY);
+
+	printf (_(UT_SUPPORT));
+}
+
+
+
+
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -H host [-C community]\n"), progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }

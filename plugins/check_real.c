@@ -256,8 +256,8 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		{"hostname", required_argument, 0, 'H'},
 		{"IPaddress", required_argument, 0, 'I'},
 		{"expect", required_argument, 0, 'e'},
@@ -285,8 +285,8 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVI:H:e:u:p:w:c:t:", long_options,
-									 &option_index);
+		c = getopt_long (argc, argv, "+hVI:H:e:u:p:w:c:t:", longopts,
+									 &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -297,15 +297,15 @@ process_arguments (int argc, char **argv)
 			if (server_address)
 				break;
 			else if (is_host (optarg))
-				server_address = strdup(optarg);
+				server_address = optarg;
 			else
 				usage (_("Invalid host name\n"));
 			break;
 		case 'e':									/* string to expect in response header */
-			server_expect = strdup(optarg);
+			server_expect = optarg;
 			break;
 		case 'u':									/* server URL */
-			server_url = strdup(optarg);
+			server_url = optarg;
 			break;
 		case 'p':									/* port */
 			if (is_intpos (optarg)) {

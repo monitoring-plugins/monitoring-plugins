@@ -34,7 +34,7 @@ const char *revision = "$Revision$";
 const char *copyright = "2000-2003";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
-int check_swap (int usp, int free_swap);
+int check_swap (int usp, long unsigned int free_swap);
 int process_arguments (int argc, char **argv);
 int validate_arguments (void);
 void print_usage (void);
@@ -50,58 +50,6 @@ int allswaps;
 #if !defined(sun)
 int sun = 0;	/* defined by compiler if it is a sun solaris system */
 #endif
-
-void
-print_usage (void)
-{
-	printf (_("Usage:\n\
- %s [-a] -w <used_percentage>%% -c <used_percentage>%%\n\
- %s [-a] -w <bytes_free> -c <bytes_free>\n\
- %s (-h | --help) for detailed help\n\
- %s (-V | --version) for version information\n"),
-	        progname, progname, progname, progname);
-}
-
-
-
-
-
-void
-print_help (void)
-{
-	print_revision (progname, revision);
-
-	printf (_(COPYRIGHT), copyright, email);
-
-	printf (_("Check swap space on local server.\n\n"));
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_("\n\
- -w, --warning=INTEGER\n\
-   Exit with WARNING status if less than INTEGER bytes of swap space are free\n\
- -w, --warning=PERCENT%%\n\
-   Exit with WARNING status if less than PERCENT of swap space has been used\n\
- -c, --critical=INTEGER\n\
-   Exit with CRITICAL status if less than INTEGER bytes of swap space are free\n\
- -c, --critical=PERCENT%%\n\
-   Exit with CRITCAL status if less than PERCENT of swap space has been used\n\
- -a, --allswaps\n\
-    Conduct comparisons for all swap partitions, one by one\n"));
-
-#ifdef sun
-	printf (_("\n\
-On Solaris, if -a specified, uses swap -l, otherwise uses swap -s.\n\
-Will be discrepencies because swap -s counts allocated swap and includes\n\
-real memory\n"));
-#endif
-
-	support ();
-}
-
-
 
 int
 main (int argc, char **argv)
@@ -121,7 +69,9 @@ main (int argc, char **argv)
 	FILE *fp;
 #endif
 	char str[32];
-	char *status = "";
+	char *status;
+
+	status = strdup("");
 
 	if (process_arguments (argc, argv) != OK)
 		usage (_("Invalid command arguments supplied\n"));
@@ -233,16 +183,16 @@ main (int argc, char **argv)
 
 
 int
-check_swap (int usp, int free_swap)
+check_swap (int usp, long unsigned int free_swap)
 {
 	int result = STATE_UNKNOWN;
 	if (usp >= 0 && usp >= (100.0 - crit_percent))
 		result = STATE_CRITICAL;
-	else if (crit_size > 0 && (unsigned)free_swap <= crit_size)
+	else if (crit_size > 0 && free_swap <= crit_size)
 		result = STATE_CRITICAL;
 	else if (usp >= 0 && usp >= (100.0 - warn_percent))
 		result = STATE_WARNING;
-	else if (warn_size > 0 && (unsigned)free_swap <= warn_size)
+	else if (warn_size > 0 && free_swap <= warn_size)
 		result = STATE_WARNING;
 	else if (usp >= 0.0)
 		result = STATE_OK;
@@ -258,8 +208,8 @@ process_arguments (int argc, char **argv)
 	int wc = 0; /* warning counter  */
 	int cc = 0; /* critical counter */
 
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
 		{"allswaps", no_argument, 0, 'a'},
@@ -273,7 +223,7 @@ process_arguments (int argc, char **argv)
 		return ERROR;
 
 	while (1) {
-		c = getopt_long (argc, argv, "+?Vvhac:w:", long_options, &option_index);
+		c = getopt_long (argc, argv, "+?Vvhac:w:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -296,7 +246,6 @@ process_arguments (int argc, char **argv)
 			else {
 				usage (_("Warning threshold must be integer or percentage!\n"));
 			}
-			wc++;
 		case 'c':									/* critical time threshold */
 			if (is_intnonneg (optarg)) {
 				crit_size = atoi (optarg);
@@ -314,7 +263,6 @@ process_arguments (int argc, char **argv)
 			else {
 				usage (_("Critical threshold must be integer or percentage!\n"));
 			}
-			cc++;
 		case 'a':									/* all swap */
 			allswaps = TRUE;
 			break;
@@ -376,4 +324,58 @@ validate_arguments (void)
 			(_("Warning free space should be more than critical free space\n"));
 	}
 	return OK;
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("Check swap space on local server.\n\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_("\n\
+ -w, --warning=INTEGER\n\
+   Exit with WARNING status if less than INTEGER bytes of swap space are free\n\
+ -w, --warning=PERCENT%%\n\
+   Exit with WARNING status if less than PERCENT of swap space has been used\n\
+ -c, --critical=INTEGER\n\
+   Exit with CRITICAL status if less than INTEGER bytes of swap space are free\n\
+ -c, --critical=PERCENT%%\n\
+   Exit with CRITCAL status if less than PERCENT of swap space has been used\n\
+ -a, --allswaps\n\
+    Conduct comparisons for all swap partitions, one by one\n"));
+
+#ifdef sun
+	printf (_("\n\
+On Solaris, if -a specified, uses swap -l, otherwise uses swap -s.\n\
+Will be discrepencies because swap -s counts allocated swap and includes\n\
+real memory\n"));
+#endif
+
+	printf (_(UT_SUPPORT));
+}
+
+
+
+
+void
+print_usage (void)
+{
+	printf (_("Usage:\n\
+ %s [-a] -w <used_percentage>%% -c <used_percentage>%%\n\
+ %s [-a] -w <bytes_free> -c <bytes_free>\n\
+ %s (-h | --help) for detailed help\n\
+ %s (-V | --version) for version information\n"),
+	        progname, progname, progname, progname);
 }

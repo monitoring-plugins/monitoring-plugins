@@ -25,48 +25,9 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "popen.h"
 #include "utils.h"
 
-void
-print_usage (void)
-{
-	printf (_("\
-Usage: %s -F <status log file> -e <expire_minutes> -C <process_string>\n"),
-	        progname);
-}
-
-void
-print_help (void)
-{
-	print_revision (progname, revision);
-
-	printf (_(COPYRIGHT), copyright, email);
-
-	printf (_("\
-This plugin attempts to check the status of the Nagios process on the local\n\
-machine. The plugin will check to make sure the Nagios status log is no older\n\
-than the number of minutes specified by the <expire_minutes> option.  It also\n\
-uses the /bin/ps command to check for a process matching whatever you specify\n\
-by the <process_string> argument.\n"));
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_("\
--F, --filename=FILE\n\
-   Name of the log file to check\n\
--e, --expires=INTEGER\n\
-   Seconds aging afterwhich logfile is condsidered stale\n\
--C, --command=STRING\n\
-   Command to search for in process table\n"));
-
-	printf (_("\
-Example:\n\
-   ./check_nagios -e 5 \\\
-   -F /usr/local/nagios/var/status.log \\\
-   -C /usr/local/nagios/bin/nagios\n"));
-}
-
 int process_arguments (int, char **);
+void print_help (void);
+void print_usage (void);
 
 char *status_log = NULL;
 char *process_string = NULL;
@@ -198,8 +159,8 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		{"filename", required_argument, 0, 'F'},
 		{"expires", required_argument, 0, 'e'},
 		{"command", required_argument, 0, 'C'},
@@ -225,7 +186,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVvF:C:e:", long_options, &option_index);
+		c = getopt_long (argc, argv, "+hVvF:C:e:", longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)
 			break;
@@ -252,8 +213,8 @@ process_arguments (int argc, char **argv)
 				expire_minutes = atoi (optarg);
 			else
 				die (STATE_UNKNOWN,
-									 _("Expiration time must be an integer (seconds)\nType '%s -h' for additional help\n"),
-									 progname);
+				     _("Expiration time must be an integer (seconds)\nType '%s -h' for additional help\n"),
+				     progname);
 			break;
 		case 'v':
 			verbose++;
@@ -264,12 +225,61 @@ process_arguments (int argc, char **argv)
 
 	if (status_log == NULL)
 		die (STATE_UNKNOWN,
-							 _("You must provide the status_log\nType '%s -h' for additional help\n"),
-							 progname);
+		     _("You must provide the status_log\nType '%s -h' for additional help\n"),
+		     progname);
 	else if (process_string == NULL)
 		die (STATE_UNKNOWN,
 							 _("You must provide a process string\nType '%s -h' for additional help\n"),
 							 progname);
 
 	return OK;
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("\
+This plugin attempts to check the status of the Nagios process on the local\n\
+machine. The plugin will check to make sure the Nagios status log is no older\n\
+than the number of minutes specified by the <expire_minutes> option.  It also\n\
+uses the /bin/ps command to check for a process matching whatever you specify\n\
+by the <process_string> argument.\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_("\
+-F, --filename=FILE\n\
+   Name of the log file to check\n\
+-e, --expires=INTEGER\n\
+   Seconds aging afterwhich logfile is condsidered stale\n\
+-C, --command=STRING\n\
+   Command to search for in process table\n"));
+
+	printf (_("\
+Example:\n\
+   ./check_nagios -e 5 \\\
+   -F /usr/local/nagios/var/status.log \\\
+   -C /usr/local/nagios/bin/nagios\n"));
+}
+
+
+
+
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -F <status log file> -e <expire_minutes> -C <process_string>\n"),
+	        progname);
 }

@@ -54,47 +54,11 @@ const char *revision = "$Revision$";
 const char *copyright = "2000-2003";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
-void
-print_usage (void)
-{
-	printf (_("\
-Usage: %s -H host [-s server] [-a expected-address] [-t timeout]\n\
-       %s --help\n\
-       %s --version\n"),
-					progname, progname, progname);
-}
-
-void
-print_help (void)
-{
-	print_revision (progname, revision);
-
-	printf (_(COPYRIGHT), copyright, email);
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_("\
--H, --hostname=HOST\n\
-   The name or address you want to query\n\
--s, --server=HOST\n\
-   Optional DNS server you want to use for the lookup\n\
--a, --expected-address=IP-ADDRESS\n\
-   Optional IP address you expect the DNS server to return\n"));
-
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-
-	printf (_("\n\
-This plugin uses the nslookup program to obtain the IP address\n\
-for the given host/domain query.  A optional DNS server to use may\n\
-be specified.  If no DNS server is specified, the default server(s)\n\
-specified in /etc/resolv.conf will be used.\n"));
-}
-
 int process_arguments (int, char **);
 int validate_arguments (void);
 int error_scan (char *);
+void print_help (void);
+void print_usage (void);
 
 #define ADDRESS_LENGTH 256
 char query_address[ADDRESS_LENGTH] = "";
@@ -420,4 +384,52 @@ validate_arguments ()
 		return ERROR;
 	else
 		return OK;
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_("\
+-H, --hostname=HOST\n\
+   The name or address you want to query\n\
+-s, --server=HOST\n\
+   Optional DNS server you want to use for the lookup\n\
+-a, --expected-address=IP-ADDRESS\n\
+   Optional IP address you expect the DNS server to return\n"));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_("\n\
+This plugin uses the nslookup program to obtain the IP address\n\
+for the given host/domain query.  A optional DNS server to use may\n\
+be specified.  If no DNS server is specified, the default server(s)\n\
+specified in /etc/resolv.conf will be used.\n"));
+
+	printf (_(UT_SUPPORT));
+}
+
+
+
+
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -H host [-s server] [-a expected-address] [-t timeout]\n\
+       %s --help\n\
+       %s --version\n"),
+					progname, progname, progname);
 }

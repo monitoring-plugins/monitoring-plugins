@@ -278,8 +278,8 @@ process_arguments (int argc, char **argv)
 	int c = 1;
 	char *user;
 	struct passwd *pw;
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
 		{"metric", required_argument, 0, 'm'},
@@ -303,7 +303,7 @@ process_arguments (int argc, char **argv)
 
 	while (1) {
 		c = getopt_long (argc, argv, "Vvht:c:w:p:s:u:C:a:z:r:m:P:", 
-			long_options, &option_index);
+			longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -362,7 +362,7 @@ process_arguments (int argc, char **argv)
 			if (statopts)
 				break;
 			else
-				statopts = strdup(optarg);
+				statopts = optarg;
 			asprintf (&fmt, _("%s%sSTATE = %s"), fmt, (options ? ", " : ""), statopts);
 			options |= STAT;
 			break;
@@ -397,7 +397,7 @@ process_arguments (int argc, char **argv)
 			if (prog)
 				break;
 			else
-				prog = strdup(optarg);
+				prog = optarg;
 			asprintf (&fmt, _("%s%scommand name '%s'"), fmt, (options ? ", " : ""),
 			          prog);
 			options |= PROG;
@@ -406,7 +406,7 @@ process_arguments (int argc, char **argv)
 			if (args)
 				break;
 			else
-				args = strdup(optarg);
+				args = optarg;
 			asprintf (&fmt, _("%s%sargs '%s'"), fmt, (options ? ", " : ""), args);
 			options |= ARGS;
 			break;

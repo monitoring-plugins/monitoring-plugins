@@ -34,6 +34,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
 #include "popen.h"
+#include "netutils.h"
 #include "utils.h"
 
 #define PACKET_COUNT 1
@@ -44,54 +45,11 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #define PL 0
 #define RTA 1
 
-void
-print_usage (void)
-{
-	printf (_("Usage: %s <host_address>\n"), progname);
-}
-
-void
-print_help (void)
-{
-
-	print_revision (progname, "$Revision$");
-
-	printf (_("\
-Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)\n\n\
-This plugin will use the /bin/fping command (from saint) to ping the\n\
-specified host for a fast check if the host is alive. Note that it is\n\
-necessary to set the suid flag on fping.\n\n"));
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_("\
- -H, --hostname=HOST\n\
-    Name or IP Address of host to ping (IP Address bypasses name lookup,\n\
-    reducing system load)\n\
- -w, --warning=THRESHOLD\n\
-    warning threshold pair\n\
- -c, --critical=THRESHOLD\n\
-    critical threshold pair\n\
- -b, --bytes=INTEGER\n\
-    Size of ICMP packet (default: %d)\n\
- -n, --number=INTEGER\n\
-    Number of ICMP packets to send (default: %d)\n"),
-	        PACKET_SIZE, PACKET_COUNT);
-
-	printf (_(UT_VERBOSE));
-
-	printf (_("\n\
-THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel\n\
-time (ms) which triggers a WARNING or CRITICAL state, and <pl> is the\n\
-percentage of packet loss to trigger an alarm state.\n"));
-
-}
-
 int textscan (char *buf);
 int process_arguments (int, char **);
 int get_threshold (char *arg, char *rv[2]);
+void print_help (void);
+void print_usage (void);
 
 char *server_name = NULL;
 int cpl = UNKNOWN_PACKET_LOSS;
@@ -200,11 +158,11 @@ textscan (char *buf)
 		rta = strtod (rtastr, NULL);
 		if (cpl != UNKNOWN_PACKET_LOSS && loss > cpl)
 			status = STATE_CRITICAL;
-		else if (crta != UNKNOWN_TRIP_TIME && rta > crta)
+		else if (crta <= 0 && rta > crta)
 			status = STATE_CRITICAL;
 		else if (wpl != UNKNOWN_PACKET_LOSS && loss > wpl)
 			status = STATE_WARNING;
-		else if (wrta != UNKNOWN_TRIP_TIME && rta > wrta)
+		else if (wrta >= 0 && rta > wrta)
 			status = STATE_WARNING;
 		else
 			status = STATE_OK;
@@ -218,7 +176,7 @@ textscan (char *buf)
 		losstr = 1 + strstr (losstr, "/");
 		losstr = 1 + strstr (losstr, "/");
 		loss = strtod (losstr, NULL);
-		if (loss == 100)
+		if (atoi(losstr) == 100)
 			status = STATE_CRITICAL;
 		else if (cpl != UNKNOWN_PACKET_LOSS && loss > cpl)
 			status = STATE_CRITICAL;
@@ -248,8 +206,8 @@ process_arguments (int argc, char **argv)
 	int c;
 	char *rv[2];
 
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		{"hostname", required_argument, 0, 'H'},
 		{"critical", required_argument, 0, 'c'},
 		{"warning", required_argument, 0, 'w'},
@@ -275,7 +233,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVvH:c:w:b:n:", long_options, &option_index);
+		c = getopt_long (argc, argv, "+hVvH:c:w:b:n:", longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)
 			break;
@@ -388,4 +346,59 @@ get_threshold (char *arg, char *rv[2])
 	}
 
 	return OK;
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+
+	print_revision (progname, "$Revision$");
+
+	printf (_("\
+Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)\n\n\
+This plugin will use the /bin/fping command (from saint) to ping the\n\
+specified host for a fast check if the host is alive. Note that it is\n\
+necessary to set the suid flag on fping.\n\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_("\
+ -H, --hostname=HOST\n\
+    Name or IP Address of host to ping (IP Address bypasses name lookup,\n\
+    reducing system load)\n\
+ -w, --warning=THRESHOLD\n\
+    warning threshold pair\n\
+ -c, --critical=THRESHOLD\n\
+    critical threshold pair\n\
+ -b, --bytes=INTEGER\n\
+    Size of ICMP packet (default: %d)\n\
+ -n, --number=INTEGER\n\
+    Number of ICMP packets to send (default: %d)\n"),
+	        PACKET_SIZE, PACKET_COUNT);
+
+	printf (_(UT_VERBOSE));
+
+	printf (_("\n\
+THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel\n\
+time (ms) which triggers a WARNING or CRITICAL state, and <pl> is the\n\
+percentage of packet loss to trigger an alarm state.\n"));
+
+	printf (_(UT_SUPPORT));
+}
+
+
+
+
+void
+print_usage (void)
+{
+	printf (_("Usage: %s <host_address>\n"), progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }

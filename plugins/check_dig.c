@@ -160,8 +160,8 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		{"hostname", required_argument, 0, 'H'},
 		{"query_address", required_argument, 0, 'e'},
 		{"verbose", no_argument, 0, 'v'},
@@ -174,7 +174,7 @@ process_arguments (int argc, char **argv)
 		return ERROR;
 
 	while (1) {
-		c = getopt_long (argc, argv, "hVvt:l:H:", long_options, &option_index);
+		c = getopt_long (argc, argv, "hVvt:l:H:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -300,7 +300,7 @@ print_help (void)
 
 	printf (_(UT_VERBOSE));
 
-	support ();
+	printf (_(UT_SUPPORT));
 }
 
 

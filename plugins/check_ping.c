@@ -162,8 +162,8 @@ process_arguments (int argc, char **argv)
 	int c = 1;
 	char *ptr;
 
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		STD_LONG_OPTS,
 		{"packets", required_argument, 0, 'p'},
 		{"nohtml", no_argument, 0, 'n'},
@@ -184,7 +184,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "VvhnL46t:c:w:H:p:", long_options, &option_index);
+		c = getopt_long (argc, argv, "VvhnL46t:c:w:H:p:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;

@@ -285,8 +285,8 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		{"port", required_argument, 0, 'p'},
 		{"timeout", required_argument, 0, 't'},
 		{"critical", required_argument, 0, 'c'},
@@ -320,8 +320,8 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVH:t:c:w:p:v:", long_options,
-									 &option_index);
+		c = getopt_long (argc, argv, "+hVH:t:c:w:p:v:", longopts,
+									 &option);
 
 		if (c == -1 || c == EOF || c == 1)
 			break;

@@ -84,7 +84,7 @@ int errcode, excode;
 #endif
 
 char *server_address = NULL;
-char *community = DEFAULT_COMMUNITY;
+char *community = NULL;
 char *authpriv = NULL;
 char *proto = NULL;
 char *seclevel = NULL;
@@ -92,17 +92,17 @@ char *secname = NULL;
 char *authproto = NULL;
 char *authpasswd = NULL;
 char *privpasswd = NULL;
-char *oid = "";
-char *label = "SNMP";
-char *units = "";
-char *port = DEFAULT_PORT;
+char *oid;
+char *label;
+char *units;
+char *port;
 char string_value[MAX_INPUT_BUFFER] = "";
 char **labels = NULL;
 char **unitv = NULL;
-int nlabels = 0;
-int labels_size = 8;
-int nunits = 0;
-int unitv_size = 8;
+size_t nlabels = 0;
+size_t labels_size = 8;
+size_t nunits = 0;
+size_t unitv_size = 8;
 int verbose = FALSE;
 unsigned long lower_warn_lim[MAX_OIDS];
 unsigned long upper_warn_lim[MAX_OIDS];
@@ -112,9 +112,9 @@ unsigned long response_value[MAX_OIDS];
 int check_warning_value = FALSE;
 int check_critical_value = FALSE;
 int eval_method[MAX_OIDS];
-char *delimiter = DEFAULT_DELIMITER;
-char *output_delim = DEFAULT_OUTPUT_DELIMITER;
-char *miblist = DEFAULT_MIBLIST;
+char *delimiter;
+char *output_delim;
+char *miblist;
 
 
 
@@ -131,8 +131,8 @@ main (int argc, char **argv)
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *command_line = NULL;
 	char *response = NULL;
-	char *outbuff = "";
-	char *output = "";
+	char *outbuff;
+	char *output;
 	char *ptr = NULL;
 	char *p2 = NULL;
 	char *show = NULL;
@@ -142,6 +142,16 @@ main (int argc, char **argv)
 	for (i = 0; i < MAX_OIDS; i++)
 		eval_method[i] = CHECK_UNDEF;
 	i = 0;
+
+	oid = strdup ("");
+	label = strdup ("SNMP");
+	units = strdup ("");
+	port = strdup (DEFAULT_PORT);
+	outbuff = strdup ("");
+	output = strdup ("");
+	delimiter = strdup (DEFAULT_DELIMITER);
+	output_delim = strdup (DEFAULT_OUTPUT_DELIMITER);
+	miblist = strdup (DEFAULT_MIBLIST);
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage (_("Incorrect arguments supplied\n"));
@@ -287,7 +297,7 @@ main (int argc, char **argv)
 		result = max_state (result, iresult);
 
 		/* Prepend a label for this OID if there is one */
-		if (nlabels > 1 && i < nlabels && labels[i] != NULL)
+		if (nlabels > (size_t)1 && (size_t)i < nlabels && labels[i] != NULL)
 			asprintf (&outbuff, "%s%s%s %s%s%s", outbuff,
 			          (i == 0) ? " " : output_delim,
 			          labels[i], mark (iresult), show, mark (iresult));
@@ -296,7 +306,7 @@ main (int argc, char **argv)
 			          mark (iresult), show, mark (iresult));
 
 		/* Append a unit string for this OID if there is one */
-		if (nunits > 0 && i < nunits && unitv[i] != NULL)
+		if (nunits > (size_t)0 && (size_t)i < nunits && unitv[i] != NULL)
 			asprintf (&outbuff, "%s %s", outbuff, unitv[i]);
 
 		i++;
@@ -341,8 +351,8 @@ process_arguments (int argc, char **argv)
 	int c = 1;
 	int j = 0, jj = 0, ii = 0;
 
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		STD_LONG_OPTS,
 		{"community", required_argument, 0, 'C'},
 		{"oid", required_argument, 0, 'o'},
@@ -381,7 +391,7 @@ process_arguments (int argc, char **argv)
 
 	while (1) {
 		c = getopt_long (argc, argv, "hvVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:m:P:L:U:a:A:X:",
-									 long_options, &option_index);
+									 longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -401,34 +411,34 @@ process_arguments (int argc, char **argv)
 
 	/* Connection info */
 		case 'C':									/* group or community */
-			community = strscpy (community, optarg);
+			community = optarg;
 			break;
 		case 'H':									/* Host or server */
-			server_address = strscpy (server_address, optarg);
+			server_address = optarg;
 			break;
 		case 'p':       /* TCP port number */
-			port = strscpy(port, optarg);
+			port = optarg;
 			break;
 		case 'm':      /* List of MIBS  */
-			miblist = strscpy(miblist, optarg);
+			miblist = optarg;
 			break;
 		case 'P':     /* SNMP protocol version */
-			proto = strscpy(proto, optarg);
+			proto = optarg;
 			break;
 		case 'L':     /* security level */
-			seclevel = strscpy(seclevel,optarg);
+			seclevel = optarg;
 			break;
 		case 'U':     /* security username */
-			secname = strscpy(secname, optarg);
+			secname = optarg;
 			break;
 		case 'a':     /* auth protocol */
-			asprintf (&authproto, optarg);
+			authproto = optarg;
 			break;
 		case 'A':     /* auth passwd */
-			authpasswd = strscpy(authpasswd, optarg);
+			authpasswd = optarg;
 			break;
 		case 'X':     /* priv passwd */
-			privpasswd = strscpy(privpasswd, optarg);
+			privpasswd = optarg;
 			break;
 		case 't':	/* timeout period */
 			if (!is_integer (optarg))
@@ -585,7 +595,10 @@ process_arguments (int argc, char **argv)
 	}
 
 	if (server_address == NULL)
-		asprintf (&server_address, argv[optind]);
+		server_address = argv[optind];
+
+	if (community == NULL)
+		community = strdup (DEFAULT_COMMUNITY);
 
 	return validate_arguments ();
 }

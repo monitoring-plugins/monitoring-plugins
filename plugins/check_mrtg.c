@@ -149,8 +149,8 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		{"logfile", required_argument, 0, 'F'},
 		{"expires", required_argument, 0, 'e'},
 		{"aggregation", required_argument, 0, 'a'},
@@ -178,8 +178,8 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "hVF:e:a:v:c:w:l:u:", long_options,
-									 &option_index);
+		c = getopt_long (argc, argv, "hVF:e:a:v:c:w:l:u:", longopts,
+									 &option);
 
 		if (c == -1 || c == EOF)
 			break;

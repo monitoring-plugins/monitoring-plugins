@@ -25,65 +25,23 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include <mysql/mysql.h>
 #include <mysql/errmsg.h>
 
-void
-print_usage (void)
-{
-	printf (_("\
-Usage: %s [-d database] [-H host] [-P port] [-u user] [-p password]\n"),
-	        progname);
-	printf (_(UT_HLP_VRS), progname, progname);
-}
-
-void
-print_help (void)
-{
-	char *myport;
-	asprintf (&myport, "%d", MYSQL_PORT);
-
-	print_revision (progname, revision);
-
-	printf (_(COPYRIGHT), copyright, email);
-
-	printf (_("This program tests connections to a mysql server\n"));
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_(UT_HOST_PORT), 'P', myport);
-
-	printf (_("\
- -d, --database=STRING\n\
-   Check database with indicated name\n\
- -u, --username=STRING\n\
-   Connect using the indicated username\n\
- -p, --password=STRING\n\
-   Use the indicated password to authenticate the connection\n\
-   ==> IMPORTANT: THIS FORM OF AUTHENTICATION IS NOT SECURE!!! <==\n\
-   Your clear-text password will be visible as a process table entry\n"));
-
-	printf (_("\n\
-There are no required arguments. By default, the local database with\n\
-a server listening on MySQL standard port %d will be checked\n"), MYSQL_PORT);
-
-	printf (_(UT_SUPPORT));
-}
-
-char *db_user = "";
-char *db_host = "";
-char *db_pass = "";
-char *db = "";
+char *db_user = NULL;
+char *db_host = NULL;
+char *db_pass = NULL;
+char *db = NULL;
 unsigned int db_port = MYSQL_PORT;
 
 int process_arguments (int, char **);
 int validate_arguments (void);
+void print_help (void);
+void print_usage (void);
 
 int
 main (int argc, char **argv)
 {
 
 	MYSQL mysql;
-	char result[1024];
+	char *result = NULL;
 
 	if (process_arguments (argc, argv) != OK)
 		usage (_("Invalid command arguments supplied\n"));
@@ -92,62 +50,32 @@ main (int argc, char **argv)
 	mysql_init (&mysql);
 
 	/* establish a connection to the server and error checking */
-	if (!mysql_real_connect
-			(&mysql, db_host, db_user, db_pass, db, db_port, NULL, 0)) {
-
-		if (mysql_errno (&mysql) == CR_UNKNOWN_HOST) {
-			printf ("%s\n", mysql_error (&mysql));
-			return STATE_WARNING;
-
-		}
-		else if (mysql_errno (&mysql) == CR_VERSION_ERROR) {
-			printf ("%s\n", mysql_error (&mysql));
-			return STATE_WARNING;
-
-		}
-		else if (mysql_errno (&mysql) == CR_OUT_OF_MEMORY) {
-			printf ("%s\n", mysql_error (&mysql));
-			return STATE_WARNING;
-
-		}
-		else if (mysql_errno (&mysql) == CR_IPSOCK_ERROR) {
-			printf ("%s\n", mysql_error (&mysql));
-			return STATE_WARNING;
-
-		}
-		else if (mysql_errno (&mysql) == CR_SOCKET_CREATE_ERROR) {
-			printf ("%s\n", mysql_error (&mysql));
-			return STATE_WARNING;
-
-		}
-		else {
-			printf ("%s\n", mysql_error (&mysql));
-			return STATE_CRITICAL;
-		}
-
+	if (!mysql_real_connect(&mysql,db_host,db_user,db_pass,db,db_port,NULL,0)) {
+		if (mysql_errno (&mysql) == CR_UNKNOWN_HOST)
+			die (STATE_WARNING, "%s\n", mysql_error (&mysql));
+		else if (mysql_errno (&mysql) == CR_VERSION_ERROR)
+			die (STATE_WARNING, "%s\n", mysql_error (&mysql));
+		else if (mysql_errno (&mysql) == CR_OUT_OF_MEMORY)
+			die (STATE_WARNING, "%s\n", mysql_error (&mysql));
+		else if (mysql_errno (&mysql) == CR_IPSOCK_ERROR)
+			die (STATE_WARNING, "%s\n", mysql_error (&mysql));
+		else if (mysql_errno (&mysql) == CR_SOCKET_CREATE_ERROR)
+			die (STATE_WARNING, "%s\n", mysql_error (&mysql));
+		else
+			die (STATE_CRITICAL, "%s\n", mysql_error (&mysql));
 	}
 
 	/* get the server stats */
-	sprintf (result, mysql_stat (&mysql));
+	result = strdup (mysql_stat (&mysql));
 
 	/* error checking once more */
 	if (mysql_error (&mysql)) {
-
-		if (mysql_errno (&mysql) == CR_SERVER_GONE_ERROR) {
-			printf ("%s\n", mysql_error (&mysql));
-			return STATE_CRITICAL;
-
-		}
-		else if (mysql_errno (&mysql) == CR_SERVER_LOST) {
-			printf ("%s\n", mysql_error (&mysql));
-			return STATE_CRITICAL;
-
-		}
-		else if (mysql_errno (&mysql) == CR_UNKNOWN_ERROR) {
-			printf ("%s\n", mysql_error (&mysql));
-			return STATE_UNKNOWN;
-		}
-
+		if (mysql_errno (&mysql) == CR_SERVER_GONE_ERROR)
+			die (STATE_CRITICAL, "%s\n", mysql_error (&mysql));
+		else if (mysql_errno (&mysql) == CR_SERVER_LOST)
+			die (STATE_CRITICAL, "%s\n", mysql_error (&mysql));
+		else if (mysql_errno (&mysql) == CR_UNKNOWN_ERROR)
+			die (STATE_CRITICAL, "%s\n", mysql_error (&mysql));
 	}
 
 	/* close the connection */
@@ -169,8 +97,8 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		{"hostname", required_argument, 0, 'H'},
 		{"database", required_argument, 0, 'd'},
 		{"username", required_argument, 0, 'u'},
@@ -186,7 +114,7 @@ process_arguments (int argc, char **argv)
 		return ERROR;
 
 	while (1) {
-		c = getopt_long (argc, argv, "hVP:p:u:d:H:", long_options, &option_index);
+		c = getopt_long (argc, argv, "hVP:p:u:d:H:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -256,5 +184,69 @@ process_arguments (int argc, char **argv)
 int
 validate_arguments (void)
 {
+	if (db_user == NULL)
+		db_user = strdup("");
+
+	if (db_host == NULL)
+		db_host = strdup("");
+
+	if (db_pass == NULL)
+		db_pass == strdup("");
+
+	if (db == NULL)
+		db = strdup("");
+
 	return OK;
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+	char *myport;
+	asprintf (&myport, "%d", MYSQL_PORT);
+
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("This program tests connections to a mysql server\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_HOST_PORT), 'P', myport);
+
+	printf (_("\
+ -d, --database=STRING\n\
+   Check database with indicated name\n\
+ -u, --username=STRING\n\
+   Connect using the indicated username\n\
+ -p, --password=STRING\n\
+   Use the indicated password to authenticate the connection\n\
+   ==> IMPORTANT: THIS FORM OF AUTHENTICATION IS NOT SECURE!!! <==\n\
+   Your clear-text password will be visible as a process table entry\n"));
+
+	printf (_("\n\
+There are no required arguments. By default, the local database with\n\
+a server listening on MySQL standard port %d will be checked\n"), MYSQL_PORT);
+
+	printf (_(UT_SUPPORT));
+}
+
+
+
+
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s [-d database] [-H host] [-P port] [-u user] [-p password]\n"),
+	        progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }

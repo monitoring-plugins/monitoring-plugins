@@ -184,8 +184,8 @@ process_arguments (int argc, char **argv)
 {
 	int c = 1;
 
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		STD_LONG_OPTS,
 		{"file",required_argument,0,'F'},
 		{"link", no_argument, 0, 'L'},
@@ -224,7 +224,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvh46t:c:w:H:P:I:a:e:p:s:R:r:u:f:C:nlLSm:", long_options, &option_index);
+		c = getopt_long (argc, argv, "Vvh46t:c:w:H:P:I:a:e:p:s:R:r:u:f:C:nlLSm:", longopts, &option);
 		if (c == -1 || c == EOF)
 			break;
 
@@ -304,10 +304,10 @@ process_arguments (int argc, char **argv)
 			break;
 		/* Note: H, I, and u must be malloc'd or will fail on redirects */
 		case 'H': /* Host Name (virtual host) */
- 			host_name = strdup (optarg);
+ 			host_name = optarg;
 			break;
 		case 'I': /* Server IP-address */
- 			server_address = strdup(optarg);
+ 			server_address = optarg;
 			break;
 		case 'u': /* URL path */
 			asprintf (&server_url, "%s", optarg);
@@ -328,7 +328,7 @@ process_arguments (int argc, char **argv)
 		case 'P': /* HTTP POST data in URL encoded format */
 			if (http_method || http_post_data) break;
 			http_method = strdup("POST");
-			http_post_data = strdup(optarg);
+			http_post_data = optarg;
 			break;
 		case 's': /* string or substring */
 			strncpy (string_expect, optarg, MAX_INPUT_BUFFER - 1);

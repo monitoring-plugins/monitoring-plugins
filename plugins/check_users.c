@@ -107,8 +107,8 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		{"critical", required_argument, 0, 'c'},
 		{"warning", required_argument, 0, 'w'},
 		{"version", no_argument, 0, 'V'},
@@ -120,7 +120,7 @@ process_arguments (int argc, char **argv)
 		usage ("\n");
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVvc:w:", long_options, &option_index);
+		c = getopt_long (argc, argv, "+hVvc:w:", longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)
 			break;

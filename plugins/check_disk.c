@@ -237,8 +237,8 @@ process_arguments (int argc, char **argv)
 
 	unsigned long l;
 
-	int option_index = 0;
-	static struct option long_options[] = {
+	int option = 0;
+	static struct option longopts[] = {
 		{"timeout", required_argument, 0, 't'},
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
@@ -274,7 +274,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "+?VqhveCt:c:w:u:p:x:X:mklM", long_options, &option_index);
+		c = getopt_long (argc, argv, "+?VqhveCt:c:w:u:p:x:X:mklM", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -363,7 +363,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'p':									/* select path */
 			se = (struct name_list *) malloc (sizeof (struct name_list));
-			se->name = strdup (optarg);
+			se->name = optarg;
 			se->name_next = NULL;
 			se->w_df = w_df;
 			se->c_df = c_df;
@@ -374,14 +374,14 @@ process_arguments (int argc, char **argv)
 			break;
  		case 'x':									/* exclude path or partition */
 			se = (struct name_list *) malloc (sizeof (struct name_list));
-			se->name = strdup (optarg);
+			se->name = optarg;
 			se->name_next = NULL;
 			*dptail = se;
 			dptail = &se->name_next;
 			break;
 		case 'X':									/* exclude file system type */
 			se = (struct name_list *) malloc (sizeof (struct name_list));
-			se->name = strdup (optarg);
+			se->name = optarg;
 			se->name_next = NULL;
 			*fstail = se;
 			fstail = &se->name_next;

@@ -36,75 +36,18 @@ enum {
 	DEFAULT_PORT = 389
 };
 
-void
-print_usage ()
-{
-	printf (_("\
-Usage: %s -H <host> -b <base_dn> [-p <port>] [-a <attr>] [-D <binddn>]\n\
-  [-P <password>] [-w <warn_time>] [-c <crit_time>] [-t timeout]%s\n\
-(Note: all times are in seconds.)\n"),
-	        progname, (HAVE_LDAP_SET_OPTION ? "[-2|-3] [-4|-6]" : ""));
-	printf (_(UT_HLP_VRS), progname, progname);
-}
-
-void
-print_help ()
-{
-	char *myport;
-	asprintf (&myport, "%d", DEFAULT_PORT);
-
-	print_revision (progname, revision);
-
-	printf (_("Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)\n"));
-	printf (_(COPYRIGHT), copyright, email);
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_(UT_HOST_PORT), 'p', myport);
-
-	printf (_(UT_IPv46));
-
-	printf (_("\
- -a [--attr]\n\
-    ldap attribute to search (default: \"(objectclass=*)\"\n\
- -b [--base]\n\
-    ldap base (eg. ou=my unit, o=my org, c=at)\n\
- -D [--bind]\n\
-    ldap bind DN (if required)\n\
- -P [--pass]\n\
-    ldap password (if required)\n"));
-
-#ifdef HAVE_LDAP_SET_OPTION
-	printf (_("\
- -2 [--ver2]\n\
-     use ldap protocol version 2\n\
- -3 [--ver3]\n\
-    use ldap protocol version 3\n\
-    (default protocol version: %d)\n"),
-	        DEFAULT_PROTOCOL);
-#endif
-
-	printf (_(UT_WARN_CRIT));
-
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-
-	printf (_(UT_VERBOSE));
-
-	printf (_(UT_SUPPORT));
-}
-
 int process_arguments (int, char **);
 int validate_arguments (void);
+void print_help (void);
+void print_usage (void);
 
 char ld_defattr[] = "(objectclass=*)";
 char *ld_attr = ld_defattr;
-char *ld_host = "";
-char *ld_base = "";
+char *ld_host = NULL;
+char *ld_base = NULL;
 char *ld_passwd = NULL;
 char *ld_binddn = NULL;
-unsigned int ld_port = DEFAULT_PORT;
+int ld_port = DEFAULT_PORT;
 #ifdef HAVE_LDAP_SET_OPTION
 int ld_protocol = DEFAULT_PROTOCOL;
 #endif
@@ -198,7 +141,7 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	int option_index = 0;
+	int option = 0;
 	/* initialize the long option struct */
 	static struct option longopts[] = {
 		{"help", no_argument, 0, 'h'},
@@ -230,7 +173,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "hV2346t:c:w:H:b:p:a:D:P:", longopts, &option_index);
+		c = getopt_long (argc, argv, "hV2346t:c:w:H:b:p:a:D:P:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -245,7 +188,8 @@ process_arguments (int argc, char **argv)
 		case 't':									/* timeout period */
 			if (!is_intnonneg (optarg))
 				usage2 (_("timeout interval must be a positive integer"), optarg);
-			socket_timeout = atoi (optarg);
+			else
+				socket_timeout = atoi (optarg);
 			break;
 		case 'H':
 			ld_host = optarg;
@@ -296,12 +240,11 @@ process_arguments (int argc, char **argv)
 	}
 
 	c = optind;
-	if (strlen(ld_host) == 0 && is_host(argv[c])) {
-		asprintf (&ld_host, "%s", argv[c++]);
-	}
-	if (strlen(ld_base) == 0 && argv[c]) {
-		asprintf (&ld_base, "%s", argv[c++]);
-	}
+	if (ld_host == NULL && is_host(argv[c]))
+		ld_host = strdup (argv[c++]);
+
+	if (ld_base == NULL && argv[c])
+		ld_base = strdup (argv[c++]);
 
 	return validate_arguments ();
 }
@@ -317,4 +260,71 @@ validate_arguments ()
 
 	return OK;
 
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+	char *myport;
+	asprintf (&myport, "%d", DEFAULT_PORT);
+
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_HOST_PORT), 'p', myport);
+
+	printf (_(UT_IPv46));
+
+	printf (_("\
+ -a [--attr]\n\
+    ldap attribute to search (default: \"(objectclass=*)\"\n\
+ -b [--base]\n\
+    ldap base (eg. ou=my unit, o=my org, c=at)\n\
+ -D [--bind]\n\
+    ldap bind DN (if required)\n\
+ -P [--pass]\n\
+    ldap password (if required)\n"));
+
+#ifdef HAVE_LDAP_SET_OPTION
+	printf (_("\
+ -2 [--ver2]\n\
+     use ldap protocol version 2\n\
+ -3 [--ver3]\n\
+    use ldap protocol version 3\n\
+    (default protocol version: %d)\n"),
+	        DEFAULT_PROTOCOL);
+#endif
+
+	printf (_(UT_WARN_CRIT));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(UT_VERBOSE));
+
+	printf (_(UT_SUPPORT));
+}
+
+
+
+
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -H <host> -b <base_dn> [-p <port>] [-a <attr>] [-D <binddn>]\n\
+  [-P <password>] [-w <warn_time>] [-c <crit_time>] [-t timeout]%s\n\
+(Note: all times are in seconds.)\n"),
+	        progname, (HAVE_LDAP_SET_OPTION ? "[-2|-3] [-4|-6]" : ""));
+	printf (_(UT_HLP_VRS), progname, progname);
 }

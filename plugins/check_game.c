@@ -25,48 +25,10 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "popen.h"
 #include "utils.h"
 
-void
-print_usage (void)
-{
-	printf (_("\
-Usage: %s <game> <ip_address> [-p port] [-gf game_field] [-mf map_field]\n\
-  [-pf ping_field]\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
-}
-
-void
-print_help (void)
-{
-	print_revision (progname, revision);
-
-	printf (_(COPYRIGHT), copyright, email);
-
-	printf (_("This plugin tests %s connections with the specified host."), progname);
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_("\
-<game>        = Game type that is recognised by qstat (without the leading dash)\n\
-<ip_address>  = The IP address of the device you wish to query\n\
- [port]        = Optional port of which to connect\n\
- [game_field]  = Field number in raw qstat output that contains game name\n\
- [map_field]   = Field number in raw qstat output that contains map name\n\
- [ping_field]  = Field number in raw qstat output that contains ping time\n"),
-	        DEFAULT_SOCKET_TIMEOUT);
-
-	printf (_("\n\
-Notes:\n\
-- This plugin uses the 'qstat' command, the popular game server status query tool .\n\
-  If you don't have the package installed, you will need to download it from\n\
-  http://www.activesw.com/people/steve/qstat.html before you can use this plugin.\n"));
-
-	printf (_(UT_SUPPORT));
-}
-
 int process_arguments (int, char **);
 int validate_arguments (void);
+void print_help (void);
+void print_usage (void);
 
 #define QSTAT_DATA_DELIMITER 	","
 
@@ -152,7 +114,7 @@ main (int argc, char **argv)
 
 	/* initialize the returned data buffer */
 	for (i = 0; i < QSTAT_MAX_RETURN_ARGS; i++)
-		ret[i] = "";
+		ret[i] = strdup("");
 
 	i = 0;
 	p = (char *) strtok (input_buffer, QSTAT_DATA_DELIMITER);
@@ -253,7 +215,7 @@ process_arguments (int argc, char **argv)
 		case 'H': /* hostname */
 			if (strlen (optarg) >= MAX_HOST_ADDRESS_LENGTH)
 				die (STATE_UNKNOWN, _("Input buffer overflow\n"));
-			server_ip = strdup (optarg);
+			server_ip = optarg;
 			break;
 		case 'P': /* port */
 			port = atoi (optarg);
@@ -261,7 +223,7 @@ process_arguments (int argc, char **argv)
 		case 'G': /* hostname */
 			if (strlen (optarg) >= MAX_INPUT_BUFFER)
 				die (STATE_UNKNOWN, _("Input buffer overflow\n"));
-			game_type = strdup (optarg);
+			game_type = optarg;
 			break;
 		case 'p': /* index of ping field */
 			qstat_ping_field = atoi (optarg);
@@ -307,4 +269,53 @@ int
 validate_arguments (void)
 {
 		return OK;
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("This plugin tests %s connections with the specified host."), progname);
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_("\
+<game>        = Game type that is recognised by qstat (without the leading dash)\n\
+<ip_address>  = The IP address of the device you wish to query\n\
+ [port]        = Optional port of which to connect\n\
+ [game_field]  = Field number in raw qstat output that contains game name\n\
+ [map_field]   = Field number in raw qstat output that contains map name\n\
+ [ping_field]  = Field number in raw qstat output that contains ping time\n"));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_("\n\
+Notes:\n\
+- This plugin uses the 'qstat' command, the popular game server status query tool .\n\
+  If you don't have the package installed, you will need to download it from\n\
+  http://www.activesw.com/people/steve/qstat.html before you can use this plugin.\n"));
+
+	printf (_(UT_SUPPORT));
+}
+
+
+
+
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s <game> <ip_address> [-p port] [-gf game_field] [-mf map_field]\n\
+  [-pf ping_field]\n"), progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }

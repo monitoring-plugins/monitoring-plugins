@@ -18,8 +18,7 @@ int spclose(FILE *);
  *
  ******************************************************************************/
 
-#include <config.h>
-#include <common.h>
+#include "common.h"
 
 /* extern so plugin has pid to kill exec'd process on timeouts */
 extern int timeout_interval;
