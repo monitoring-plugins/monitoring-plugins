@@ -332,7 +332,7 @@ process_arguments (int argc, char **argv)
 		value_warning_threshold = strtoul (argv[c++], NULL, 10);
 	}
 
-	if (vargc > c && alue_critical_threshold == 0) {
+	if (argc > c && value_critical_threshold == 0) {
 		value_critical_threshold = strtoul (argv[c++], NULL, 10);
 	}
 

@@ -88,7 +88,7 @@ main (int argc, char **argv)
 	}
 
 	/* get the command to run */
-	sprintf (&command_line, "%s %s %s", NSLOOKUP_COMMAND,	query_address, dns_server);
+	asprintf (&command_line, "%s %s %s", NSLOOKUP_COMMAND,	query_address, dns_server);
 
 	alarm (timeout_interval);
 	time (&start_time);

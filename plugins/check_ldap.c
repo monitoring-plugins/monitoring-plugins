@@ -34,7 +34,6 @@
 #define UNKNOWN -1
 
 int process_arguments (int, char **);
-int call_getopt (int, char **);
 int validate_arguments (void);
 static void print_help (void);
 static void print_usage (void);
@@ -124,35 +123,10 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	if (argc < 2)
-		return ERROR;
-
-	for (c = 1; c < argc; c++) {
-		if (strcmp ("-to", argv[c]) == 0)
-			strcpy (argv[c], "-t");
-	}
-
-	c = 0;
-	while (c += (call_getopt (argc - c, &argv[c]))) {
-		if (argc <= c)
-			break;
-		if (ld_host[0] == 0) {
-			strncpy (ld_host, argv[c], sizeof (ld_host) - 1);
-			ld_host[sizeof (ld_host) - 1] = 0;
-		}
-	}
-
-	return c;
-}
-
-int
-call_getopt (int argc, char **argv)
-{
-	int c, i = 1;
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	/* initialize the long option struct */
-	static struct option long_options[] = {
+	static struct option longopts[] = {
 		{"help", no_argument, 0, 'h'},
 		{"version", no_argument, 0, 'V'},
 		{"timeout", required_argument, 0, 't'},
@@ -168,35 +142,23 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
-	for (c = 1; c < argc; c++)
+	if (argc < 2)
+		return ERROR;
+
+	for (c = 1; c < argc; c++) {
 		if (strcmp ("-to", argv[c]) == 0)
 			strcpy (argv[c], "-t");
+	}
 
 	while (1) {
 #ifdef HAVE_GETOPT_H
-		c =
-			getopt_long (argc, argv, "+hVt:c:w:H:b:p:a:D:P:", long_options,
-									 &option_index);
+		c =	getopt_long (argc, argv, "hVt:c:w:H:b:p:a:D:P:", longopts, &option_index);
 #else
 		c = getopt (argc, argv, "+?hVt:c:w:H:b:p:a:D:P:");
 #endif
 
 		if (c == -1 || c == EOF)
 			break;
-
-		i++;
-		switch (c) {
-		case 't':
-		case 'c':
-		case 'w':
-		case 'H':
-		case 'b':
-		case 'p':
-		case 'a':
-		case 'D':
-		case 'P':
-			i++;
-		}
 
 		switch (c) {
 		case 'h':									/* help */
@@ -239,7 +201,12 @@ call_getopt (int argc, char **argv)
 			break;
 		}
 	}
-	return i;
+
+	if (ld_host[0] == 0) {
+		asprintf (&ld_host, "%s", argv[c]);
+	}
+
+	return validate_arguments ();
 }
 
 int

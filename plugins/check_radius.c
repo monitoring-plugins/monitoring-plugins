@@ -52,7 +52,7 @@
     Number of times to retry a failed connection\n\
  -t, --timeout=INTEGER\n\
     Seconds before connection times out (default: %d)\n\
- -v\n\
+ -v, --verbose\n\
     Show details for command-line debugging (do not use with nagios server)\n\
  -h, --help\n\
     Print detailed help screen\n\
@@ -60,11 +60,17 @@
     Print version information\n"
 
 #define DESCRIPTION "\
-The password option presents a substantial security issue because the 
-password can be determined by careful watching of the command line in
-a process listing.  This risk is exacerbated because nagios will
-run the plugin at regular prdictable intervals.  Please be sure that
-the password used does not allow access to sensitive system resources,
+This plugin tests a radius server to see if it is accepting connections.\n\
+\n\
+The server to test must be specified in the invocation, as well as a user\n\
+name and password. A configuration file may also be present. The format of\n\
+the configuration file is described in the radiusclient library sources.\n\
+\n\
+The password option presents a substantial security issue because the\n\
+password can be determined by careful watching of the command line in\n\
+a process listing.  This risk is exacerbated because nagios will\n\
+run the plugin at regular prdictable intervals.  Please be sure that\n\
+the password used does not allow access to sensitive system resources,\n\
 otherwise compormise could occur.\n"
 
 #include "config.h"
@@ -128,7 +134,7 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 
 <sect2>
 <title>Future Enhancements</title>
-<para>ToDo List</para>
+<para>Todo List</para>
 <itemizedlist>
 <listitem>Add option to get password from a secured file rather than the command line</listitem>
 </itemizedlist>

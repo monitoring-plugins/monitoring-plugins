@@ -2,7 +2,7 @@
 
 VPATH = $(top_srcdir) $(top_srcdir)/plugins $(top_srcdir)/plugins/t
 
-INCLUDES = @LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@ 
+INCLUDES = @SSLINCLUDE@ 
 
 libexec_PROGRAMS = check_disk check_dummy check_http check_load \
 	check_mrtg check_mrtgtraf check_nwstat check_overcr check_ping \
@@ -118,6 +118,10 @@ check_ftp_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
 check_imap_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
 check_nntp_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
 check_pop_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
+
+check_mysql_INCLUDES = @MYSQLINCLUDE@
+check_pgsql_INCLUDES = @PGINCLUDE@
+check_ldap_INCLUDES = @LDAPINCLUDE@
 
 ##############################################################################
 # secondary dependencies

@@ -55,7 +55,6 @@
 #define PROGNAME "check_mrtgtraf"
 
 int process_arguments (int, char **);
-int call_getopt (int, char **);
 int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
@@ -77,7 +76,7 @@ main (int argc, char **argv)
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *temp_buffer;
 	time_t current_time;
-	char error_message[MAX_INPUT_BUFFER];
+	char *error_message;
 	time_t timestamp = 0L;
 	unsigned long average_incoming_rate = 0L;
 	unsigned long average_outgoing_rate = 0L;
@@ -198,7 +197,7 @@ main (int argc, char **argv)
 	if (incoming_rate > incoming_critical_threshold
 			|| outgoing_rate > outgoing_critical_threshold) {
 		result = STATE_CRITICAL;
-		sprintf (error_message, "%s. In = %0.1f %s, %s. Out = %0.1f %s",
+		asprintf (&error_message, "%s. In = %0.1f %s, %s. Out = %0.1f %s",
 						 (use_average == TRUE) ? "Ave" : "Max", adjusted_incoming_rate,
 						 incoming_speed_rating, (use_average == TRUE) ? "Ave" : "Max",
 						 adjusted_outgoing_rate, outgoing_speed_rating);
@@ -206,7 +205,7 @@ main (int argc, char **argv)
 	else if (incoming_rate > incoming_warning_threshold
 					 || outgoing_rate > outgoing_warning_threshold) {
 		result = STATE_WARNING;
-		sprintf (error_message, "%s. In = %0.1f %s, %s. Out = %0.1f %s",
+		asprintf (&error_message, "%s. In = %0.1f %s, %s. Out = %0.1f %s",
 						 (use_average == TRUE) ? "Ave" : "Max", adjusted_incoming_rate,
 						 incoming_speed_rating, (use_average == TRUE) ? "Ave" : "Max",
 						 adjusted_outgoing_rate, outgoing_speed_rating);
@@ -233,68 +232,9 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	if (argc < 2)
-		return ERROR;
-
-	for (c = 1; c < argc; c++) {
-		if (strcmp ("-to", argv[c]) == 0)
-			strcpy (argv[c], "-t");
-		else if (strcmp ("-wt", argv[c]) == 0)
-			strcpy (argv[c], "-w");
-		else if (strcmp ("-ct", argv[c]) == 0)
-			strcpy (argv[c], "-c");
-	}
-
-
-
-	c = 0;
-	while ((c += (call_getopt (argc - c, &argv[c]))) < argc) {
-
-		if (is_option (argv[c]))
-			continue;
-
-		if (log_file == NULL) {
-			log_file = argv[c];
-		}
-		else if (expire_minutes == -1) {
-			expire_minutes = atoi (optarg);
-		}
-		else if (strcmp (argv[c], "MAX") == 0) {
-			use_average = FALSE;
-		}
-		else if (strcmp (argv[c], "AVG") == 0) {
-			use_average = TRUE;
-		}
-		else if (incoming_warning_threshold == 0) {
-			incoming_warning_threshold = strtoul (argv[c], NULL, 10);
-		}
-		else if (incoming_critical_threshold == 0) {
-			incoming_critical_threshold = strtoul (argv[c], NULL, 10);
-		}
-		else if (outgoing_warning_threshold == 0) {
-			outgoing_warning_threshold = strtoul (argv[c], NULL, 10);
-		}
-		else if (outgoing_critical_threshold == 0) {
-			outgoing_critical_threshold = strtoul (argv[c], NULL, 10);
-		}
-	}
-
-	return validate_arguments ();
-}
-
-
-
-
-
-
-int
-call_getopt (int argc, char **argv)
-{
-	int c, i = 0;
-
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
-	static struct option long_options[] = {
+	static struct option longopts[] = {
 		{"logfile", required_argument, 0, 'F'},
 		{"expires", required_argument, 0, 'e'},
 		{"aggregation", required_argument, 0, 'a'},
@@ -308,27 +248,27 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+	if (argc < 2)
+		return ERROR;
+
+	for (c = 1; c < argc; c++) {
+		if (strcmp ("-to", argv[c]) == 0)
+			strcpy (argv[c], "-t");
+		else if (strcmp ("-wt", argv[c]) == 0)
+			strcpy (argv[c], "-w");
+		else if (strcmp ("-ct", argv[c]) == 0)
+			strcpy (argv[c], "-c");
+	}
+
 	while (1) {
 #ifdef HAVE_GETOPT_H
-		c =
-			getopt_long (argc, argv, "+hVF:e:a:c:w:", long_options, &option_index);
+		c =	getopt_long (argc, argv, "hVF:e:a:c:w:", longopts, &option_index);
 #else
-		c = getopt (argc, argv, "+hVF:e:a:c:w:");
+		c = getopt (argc, argv, "hVF:e:a:c:w:");
 #endif
 
-		i++;
-
-		if (c == -1 || c == EOF || c == 1)
+		if (c == -1 || c == EOF)
 			break;
-
-		switch (c) {
-		case 'F':
-		case 'e':
-		case 'a':
-		case 'c':
-		case 'w':
-			i++;
-		}
 
 		switch (c) {
 		case 'F':									/* input file */
@@ -361,7 +301,42 @@ call_getopt (int argc, char **argv)
 			usage ("Invalid argument\n");
 		}
 	}
-	return i;
+
+	c = optind;
+	if (argc > c && log_file == NULL) {
+		log_file = argv[c++];
+	}
+
+	if (argc > c && expire_minutes == -1) {
+		expire_minutes = atoi (argv[c++]);
+	}
+
+	if (argc > c && strcmp (argv[c], "MAX") == 0) {
+		use_average = FALSE;
+		c++;
+	}
+	else if (argc > c && strcmp (argv[c], "AVG") == 0) {
+		use_average = TRUE;
+		c++;
+	}
+
+	if (argc > c && incoming_warning_threshold == 0) {
+		incoming_warning_threshold = strtoul (argv[c++], NULL, 10);
+	}
+
+	if (argc > c && incoming_critical_threshold == 0) {
+		incoming_critical_threshold = strtoul (argv[c++], NULL, 10);
+	}
+
+	if (argc > c && outgoing_warning_threshold == 0) {
+		outgoing_warning_threshold = strtoul (argv[c++], NULL, 10);
+	}
+	
+	if (argc > c && outgoing_critical_threshold == 0) {
+		outgoing_critical_threshold = strtoul (argv[c++], NULL, 10);
+	}
+
+	return validate_arguments ();
 }
 
 

@@ -296,7 +296,7 @@ int main(int argc, char **argv){
 			result=STATE_CRITICAL;
 		else if(check_warning_value==TRUE && lru_time <= warning_value)
 			result=STATE_WARNING;
-		sprintf(&output_message,"LRU sitting time = %lu minutes",lru_time);
+		asprintf(&output_message,"LRU sitting time = %lu minutes",lru_time);
 
 
 	/* check KB free space on volume */
@@ -590,7 +590,7 @@ int main(int argc, char **argv){
  
 		max_service_processes=atoi(recv_buffer);
  
-		sprintf(&send_buffer,"S21\r\n");
+		asprintf(&send_buffer,"S21\r\n");
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if(result!=STATE_OK)
 			return result;

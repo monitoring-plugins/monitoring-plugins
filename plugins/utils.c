@@ -48,7 +48,7 @@ double delta_time (struct timeval tv);
 
 void strip (char *);
 char *strscpy (char *dest, const char *src);
-char *strscat (char *dest, const char *src);
+char *strscat (char *dest, char *src);
 char *strnl (char *str);
 char *strpcpy (char *dest, const char *src, const char *str);
 char *strpcat (char *dest, const char *src, const char *str);
@@ -406,7 +406,7 @@ strscpy (char *dest, const char *src)
  *****************************************************************************/
 
 char *
-strscat (char *dest, const char *src)
+strscat (char *dest, char *src)
 {
 
 	if (dest == NULL)
