@@ -19,7 +19,7 @@ function make_dist {
 		v="$1-"
 	else
 		cvs_rel="HEAD"
-		v=""
+		v="HEAD-"
 	fi
 	
 	# Get compile server to do the work
@@ -29,16 +29,16 @@ function make_dist {
 	PATH=$PATH
 	[[ ! -d $IN/$cvs_rel ]] && mkdir -p $IN/$cvs_rel
 	cd $IN/$cvs_rel
-	rm -f $PROJECT/configure.in
+	#rm -f $PROJECT/configure.in
 	cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/nagiosplug co -r $cvs_rel nagiosplug
 	cd $PROJECT
-	sed 's/^VER=.*/VER=$v$DS/;s/^REL=.*/REL=snapshot/' configure.in > configure.tmp
-	mv configure.tmp configure.in
+	#sed 's/^VER=.*/VER=$v$DS/;s/^REL=.*/REL=snapshot/' configure.in > configure.tmp
+	#mv configure.tmp configure.in
 	tools/setup
 	./configure
 
 	# Make the Nagiosplug dist tarball
-	make dist
+	make dist VERSION=$v$DS RELEASE=snapshot
 
 	# End ssh
 EOF
@@ -50,6 +50,9 @@ IN=${HOME}/tmp_snapshot
 OUT_SERVER="shell.sf.net"
 OUT="/home/groups/n/na/nagiosplug/htdocs/snapshot"
 CF="usf-cf-x86-linux-2"
+CF="usf-cf-x86-linux-1"
+CF="x86-linux2"
+CF="x86-linux1"
 DS=`date -u +%Y%m%d%H%M`
 
 # Make dists for HEAD and any others in command parameters
