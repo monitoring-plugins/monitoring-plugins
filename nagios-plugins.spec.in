@@ -21,6 +21,7 @@ BuildRoot: %{_tmppath}/%{name}-buildroot
 Prefix: %{_prefix}/lib/nagios/plugins
 Packager: Karl DeBisschop <kdebisschop@users.sourceforge.net>
 Vendor: Nagios Plugin Development Group
+Provides: nagios-plugins
 %if %custom
 Obsoletes: nagios-plugins nagios-plugins-extras
 %else
@@ -30,6 +31,13 @@ AutoReqProv: no
 Summary: Host/service/network monitoring program plugins for Nagios
 Group: Applications/System
 
+#BuildRequires: nagios-devel
+#BuildRequires: postgresql-devel, openssl-devel, bind-devel, openldap-devel, mysql-devel
+#BuildRequires: perl(Net::SNMP), %{?rh73:, ucd-snmp-devel} %{?rh80:, net-snmp-devel} %{?rh90:, net-snmp-devel}
+#BuildRequires: fping, bind-utils, ntp, samba-client, openssh-clients, radiusclient-devel
+#BuildRequires: qstat
+
+#Requires: perl, perl(Net::SNMP), openssl
 
 %description
 
@@ -62,6 +70,8 @@ This package contains plugins which use additional libraries or system
 calls that are not installed on all systems.  As a result, most users
 will need to install the '--nodeps' option when invoking `rpm`
 
+#Requires: fping, openldap, mysql, postgresql-libs
+
 
 %prep
 %setup -q -n %{source}
@@ -75,7 +85,7 @@ CFLAGS="$RPM_OPT_FLAGS" CXXFLAGS="$RPM_OPT_FLAGS" ./configure \
 --sysconfdir=%{_sysconfdir}/nagios \
 --datadir=%{_datadir} \
 --with-cgiurl=/nagios/cgi-bin
-make
+make 
 
 
 %install
@@ -90,7 +100,7 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 %config(missingok,noreplace) /etc/nagios/command.cfg
-%doc CODING COPYING FAQ INSTALL LEGAL README REQUIREMENTS SUPPORT
+%doc CODING COPYING FAQ INSTALL LEGAL README REQUIREMENTS SUPPORT THANKS
 %doc ChangeLog command.cfg
 %defattr(775,root,root)
 %dir %{_exec_prefix}/lib/nagios/plugins
