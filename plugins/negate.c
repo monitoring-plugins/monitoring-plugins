@@ -147,7 +147,7 @@ main (int argc, char **argv)
 
 	if (!found)
 		terminate (STATE_UNKNOWN,\
-		           "%s problem - No data recieved from host\nCMD: %s\n",\
+		           "%s problem - No data received from host\nCMD: %s\n",\
 		           argv[0],	command_line);
 
 	/* close the pipe */

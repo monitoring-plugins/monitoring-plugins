@@ -102,7 +102,7 @@ main (int argc, char **argv)
 	}
 
 	if (!found) {
-		printf ("%s problem - No data recieved from host\nCMD: %s\n</A>\n", argv[0],
+		printf ("%s problem - No data received from host\nCMD: %s\n</A>\n", argv[0],
 						cmd);
 		exit (STATE_UNKNOWN);
 	}
