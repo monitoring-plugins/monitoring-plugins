@@ -207,7 +207,7 @@ process_arguments (int argc, char **argv)
 	if (strlen(db) == 0 && argc > c)
 		db = argv[c++];
 
-	if (is_intnonneg (argv[c]))
+	if (is_intnonneg (argv[c]) && argc > c)
 		db_port = atoi (argv[c++]);
 
 	return validate_arguments ();
