@@ -115,12 +115,10 @@ main (int argc, char **argv)
 
 	/* make sure the MRTG data isn't too old */
 	time (&current_time);
-	if (expire_minutes > 0
-			&& (current_time - timestamp) >
-			(expire_minutes * 60)) die (STATE_WARNING,
-																				_("MRTG data has expired (%d minutes old)\n"),
-																				(int) ((current_time - timestamp) /
-																							 60));
+	if ((expire_minutes > 0) &&
+	    (current_time - timestamp) > (expire_minutes * 60))
+		die (STATE_WARNING,	_("MRTG data has expired (%d minutes old)\n"),
+		     (int) ((current_time - timestamp) / 60));
 
 	/* else check the incoming/outgoing rates */
 	if (use_average == TRUE) {
@@ -171,26 +169,26 @@ main (int argc, char **argv)
 	if (incoming_rate > incoming_critical_threshold
 			|| outgoing_rate > outgoing_critical_threshold) {
 		result = STATE_CRITICAL;
-		asprintf (&error_message, _("Traffic CRITICAL %s. In = %0.1f %s, %s. Out = %0.1f %s"),
-							(use_average == TRUE) ? _("Avg") : _("Max"), adjusted_incoming_rate,
-							incoming_speed_rating, (use_average == TRUE) ? "Avg" : "Max",
-							adjusted_outgoing_rate, outgoing_speed_rating);
 	}
 	else if (incoming_rate > incoming_warning_threshold
 					 || outgoing_rate > outgoing_warning_threshold) {
 		result = STATE_WARNING;
-		asprintf (&error_message, _("Traffic WARNING %s. In = %0.1f %s, %s. Out = %0.1f %s"),
-							(use_average == TRUE) ? _("Avg") : _("Max"), adjusted_incoming_rate,
-							incoming_speed_rating, (use_average == TRUE) ? _("Avg") : _("Max"),
-							adjusted_outgoing_rate, outgoing_speed_rating);
 	}
-	else if (result == STATE_OK)
-		printf (_("Traffic OK - %s. In = %0.1f %s, %s. Out = %0.1f %s\n"),
-						(use_average == TRUE) ? _("Avg") : _("Max"), adjusted_incoming_rate,
-						incoming_speed_rating, (use_average == TRUE) ? _("Avg") : _("Max"),
-						adjusted_outgoing_rate, outgoing_speed_rating);
-	else
-		printf (_("UNKNOWN %s\n"), error_message);
+
+	asprintf (&error_message, _("%s. In = %0.1f %s, %s. Out = %0.1f %s\n"),
+	          (use_average == TRUE) ? _("Avg") : _("Max"), adjusted_incoming_rate,
+	          incoming_speed_rating, (use_average == TRUE) ? _("Avg") : _("Max"),
+	          adjusted_outgoing_rate, outgoing_speed_rating,
+	          perfdata("in", adjusted_incoming_rate, incoming_speed_rating,
+	                   incoming_warning_threshold, incoming_warning_threshold,
+	                   incoming_critical_threshold, incoming_critical_threshold,
+	                   TRUE, 0, TRUE, incoming_speed_rating),
+	          perfdata("in", adjusted_outgoing_rate, outgoing_speed_rating,
+	                   outgoing_warning_threshold, outgoing_warning_threshold,
+	                   outgoing_critical_threshold, outgoing_critical_threshold,
+	                   TRUE, 0, TRUE, outgoing_speed_rating));
+
+	printf (_("Traffic %s - %s\n"), state_text(result), error_message);
 
 	return result;
 }
