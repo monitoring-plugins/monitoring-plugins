@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-12-04 00:09+0100\n"
+"POT-Creation-Date: 2004-12-04 13:22+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -61,8 +61,7 @@ msgstr ""
 
 #: plugins/check_by_ssh.c:216 plugins/check_dig.c:217 plugins/check_disk.c:441
 #: plugins/check_dns.c:303 plugins/check_fping.c:245 plugins/check_game.c:202
-#: plugins/check_hpjd.c:337 plugins/check_http.c:254
-#: plugins/check_ide-smart.c:209 plugins/check_ldap.c:249
+#: plugins/check_hpjd.c:337 plugins/check_http.c:254 plugins/check_ldap.c:249
 #: plugins/check_load.c:227 plugins/check_mrtg.c:236
 #: plugins/check_mrtgtraf.c:263 plugins/check_mysql.c:215
 #: plugins/check_overcr.c:335 plugins/check_pgsql.c:212
@@ -71,7 +70,7 @@ msgstr ""
 #: plugins/check_smtp.c:373 plugins/check_snmp.c:401 plugins/check_ssh.c:113
 #: plugins/check_swap.c:423 plugins/check_tcp.c:458 plugins/check_time.c:219
 #: plugins/check_udp.c:149 plugins/check_ups.c:484 plugins/check_users.c:143
-#: plugins/negate.c:177 plugins/urlize.c:74
+#: plugins/check_ide_smart.c:209 plugins/negate.c:177 plugins/urlize.c:74
 #, c-format
 msgid ""
 "%s: Unknown argument: %s\n"
@@ -82,7 +81,8 @@ msgstr ""
 #: plugins/check_http.c:268 plugins/check_ldap.c:202 plugins/check_pgsql.c:223
 #: plugins/check_procs.c:357 plugins/check_radius.c:198
 #: plugins/check_radius.c:270 plugins/check_snmp.c:447 plugins/check_ssh.c:127
-#: plugins/check_time.c:292 plugins/check_udp.c:182 plugins/negate.c:190
+#: plugins/check_tcp.c:512 plugins/check_time.c:292 plugins/check_udp.c:182
+#: plugins/negate.c:190
 msgid "Timeout interval must be a positive integer"
 msgstr ""
 
@@ -101,7 +101,9 @@ msgstr ""
 
 #: plugins/check_by_ssh.c:241 plugins/check_dig.c:239
 #: plugins/check_pgsql.c:247 plugins/check_radius.c:207
-#: plugins/check_radius.c:243
+#: plugins/check_radius.c:243 plugins/check_real.c:315
+#: plugins/check_smtp.c:298 plugins/check_tcp.c:518 plugins/check_time.c:286
+#: plugins/check_udp.c:188
 msgid "Port must be a positive integer"
 msgstr ""
 
@@ -412,7 +414,7 @@ msgstr ""
 
 #: plugins/check_dns.c:199
 #, c-format
-msgid "%.3f seconds response time"
+msgid "%.3f seconds response time "
 msgstr ""
 
 #: plugins/check_dns.c:200
@@ -768,7 +770,7 @@ msgstr ""
 msgid "Could Not Compile Regular Expression: %s"
 msgstr ""
 
-#: plugins/check_http.c:406
+#: plugins/check_http.c:406 plugins/check_smtp.c:363 plugins/check_tcp.c:477
 msgid "IPv6 support not available"
 msgstr ""
 
@@ -1125,85 +1127,7 @@ msgid ""
 "                  [-s string] [-l] [-r <regex> | -R <case-insensitive "
 "regex>]\n"
 "                  [-P string] [-m min_pg_size] [-4|-6] [-N] [-M <age>]\n"
-"\t\t\t\t\t\t\t\t\t[-A string] [-k string]\n"
-msgstr ""
-
-#: plugins/check_ide-smart.c:227
-#, c-format
-msgid "CRITICAL - Couldn't open device: %s\n"
-msgstr ""
-
-#: plugins/check_ide-smart.c:232
-#, c-format
-msgid "CRITICAL - SMART_CMD_ENABLE\n"
-msgstr ""
-
-#: plugins/check_ide-smart.c:294
-#, c-format
-msgid "CRITICAL - SMART_READ_VALUES: %s\n"
-msgstr ""
-
-#: plugins/check_ide-smart.c:363
-#, c-format
-msgid "CRITICAL - %d Harddrive PreFailure%cDetected! %d/%d tests failed.\n"
-msgstr ""
-
-#: plugins/check_ide-smart.c:370
-#, c-format
-msgid "WARNING - %d Harddrive Advisor%s Detected. %d/%d tests failed.\n"
-msgstr ""
-
-#: plugins/check_ide-smart.c:377
-#, c-format
-msgid "OK - Operational (%d/%d tests passed)\n"
-msgstr ""
-
-#: plugins/check_ide-smart.c:380
-#, c-format
-msgid "ERROR - Status '%d' uknown. %d/%d tests passed\n"
-msgstr ""
-
-#: plugins/check_ide-smart.c:413
-#, c-format
-msgid "OffLineStatus=%d {%s}, AutoOffLine=%s, OffLineTimeout=%d minutes\n"
-msgstr ""
-
-#: plugins/check_ide-smart.c:419
-#, c-format
-msgid "OffLineCapability=%d {%s %s %s}\n"
-msgstr ""
-
-#: plugins/check_ide-smart.c:425
-#, c-format
-msgid "SmartRevision=%d, CheckSum=%d, SmartCapability=%d {%s %s}\n"
-msgstr ""
-
-#: plugins/check_ide-smart.c:464
-#, c-format
-msgid "CRITICAL - %s: %s\n"
-msgstr ""
-
-#: plugins/check_ide-smart.c:483
-#, c-format
-msgid "CRITICAL - SMART_READ_THRESHOLDS: %s\n"
-msgstr ""
-
-#: plugins/check_ide-smart.c:501
-#, c-format
-msgid ""
-"Usage: %s [DEVICE] [OPTION]\n"
-" -d, --device=DEVICE\n"
-"    Select device DEVICE\n"
-" -i, --immediate\n"
-"    Perform immediately offline tests\n"
-" -q, --quiet-check\n"
-"    Returns the number of failed tests\n"
-" -1, --auto-on\n"
-"    Turn on automatic offline tests\n"
-" -0, --auto-off\n"
-"    Turn off automatic offline tests\n"
-" -n, --net-saint\n"
-"    Output suitable for Net Saint\n"
+"                  [-A string] [-k string]\n"
 msgstr ""
 
 #: plugins/check_ldap.c:92
@@ -1231,8 +1155,7 @@ msgstr ""
 msgid "LDAP %s - %.3f seconds response time|%s\n"
 msgstr ""
 
-#: plugins/check_ldap.c:245 plugins/check_ping.c:221 plugins/check_smtp.c:363
-#: plugins/check_ssh.c:138 plugins/check_tcp.c:477
+#: plugins/check_ldap.c:245 plugins/check_ping.c:221 plugins/check_ssh.c:138
 msgid "IPv6 support not available\n"
 msgstr ""
 
@@ -2252,7 +2175,8 @@ msgstr ""
 msgid " %s - database %s (%d sec.)|%s\n"
 msgstr ""
 
-#: plugins/check_pgsql.c:229 plugins/check_pgsql.c:235
+#: plugins/check_pgsql.c:229 plugins/check_pgsql.c:235 plugins/check_tcp.c:487
+#: plugins/check_time.c:267 plugins/check_time.c:279 plugins/check_udp.c:168
 msgid "Critical threshold must be a positive integer"
 msgstr ""
 
@@ -2802,21 +2726,16 @@ msgstr ""
 msgid "REAL %s - %d second response time\n"
 msgstr ""
 
-#: plugins/check_real.c:315 plugins/check_smtp.c:298 plugins/check_tcp.c:518
-#: plugins/check_time.c:286 plugins/check_udp.c:188
-msgid "Port must be a positive integer\n"
-msgstr ""
-
 #: plugins/check_real.c:324 plugins/check_smtp.c:342
-msgid "Warning time must be a positive integer\n"
+msgid "Warning time must be a positive integer"
 msgstr ""
 
 #: plugins/check_real.c:333
-msgid "Critical time must be a nonnegative integer\n"
+msgid "Critical time must be a nonnegative integer"
 msgstr ""
 
 #: plugins/check_real.c:344
-msgid "Time interval must be a nonnegative integer\n"
+msgid "Time interval must be a nonnegative integer"
 msgstr ""
 
 #: plugins/check_real.c:371
@@ -2890,11 +2809,11 @@ msgid "Could not realloc() units [%d]\n"
 msgstr ""
 
 #: plugins/check_smtp.c:333
-msgid "Critical time must be a positive integer\n"
+msgid "Critical time must be a positive integer"
 msgstr ""
 
 #: plugins/check_smtp.c:353
-msgid "Time interval must be a positive integer\n"
+msgid "Time interval must be a positive integer"
 msgstr ""
 
 #: plugins/check_smtp.c:425
@@ -3152,7 +3071,7 @@ msgstr ""
 
 #: plugins/check_swap.c:197
 #, c-format
-msgid "total=%d, free=%d\n"
+msgid "total=%llu, free=%llu\n"
 msgstr ""
 
 #: plugins/check_swap.c:314
@@ -3236,31 +3155,21 @@ msgstr ""
 msgid "invalid hostname/address"
 msgstr ""
 
-#: plugins/check_tcp.c:487 plugins/check_time.c:267 plugins/check_time.c:279
-#: plugins/check_udp.c:168 plugins/check_users.c:154
-msgid "Critical threshold must be a positive integer\n"
-msgstr ""
-
 #: plugins/check_tcp.c:497 plugins/check_time.c:248 plugins/check_time.c:272
-#: plugins/check_udp.c:175 plugins/check_users.c:160 plugins/check_users.c:170
-#: plugins/check_users.c:177
-msgid "Warning threshold must be a positive integer\n"
-msgstr ""
-
-#: plugins/check_tcp.c:512
-msgid "Timeout interval must be a positive integer\n"
+#: plugins/check_udp.c:175
+msgid "Warning threshold must be a positive integer"
 msgstr ""
 
 #: plugins/check_tcp.c:535
-msgid "Maxbytes must be a positive integer\n"
+msgid "Maxbytes must be a positive integer"
 msgstr ""
 
 #: plugins/check_tcp.c:549
-msgid "Refuse must be one of ok, warn, crit\n"
+msgid "Refuse must be one of ok, warn, crit"
 msgstr ""
 
 #: plugins/check_tcp.c:555
-msgid "Delay must be a positive integer\n"
+msgid "Delay must be a positive integer"
 msgstr ""
 
 #: plugins/check_tcp.c:575
@@ -3343,15 +3252,15 @@ msgid "TIME %s - %lu second time difference|%s %s\n"
 msgstr ""
 
 #: plugins/check_time.c:244
-msgid "Warning thresholds must be a positive integer\n"
+msgid "Warning thresholds must be a positive integer"
 msgstr ""
 
 #: plugins/check_time.c:263
-msgid "Critical thresholds must be a positive integer\n"
+msgid "Critical thresholds must be a positive integer"
 msgstr ""
 
-#: plugins/check_time.c:309
-msgid "Hostname was not supplied\n"
+#: plugins/check_time.c:309 plugins/check_udp.c:209
+msgid "Hostname was not supplied"
 msgstr ""
 
 #: plugins/check_time.c:329
@@ -3387,10 +3296,6 @@ msgstr ""
 
 #: plugins/check_udp.c:96
 msgid "problem"
-msgstr ""
-
-#: plugins/check_udp.c:209
-msgid "Hostname was not supplied"
 msgstr ""
 
 #: plugins/check_udp.c:227
@@ -3490,6 +3395,15 @@ msgstr ""
 msgid "USERS %s - %d users currently logged in |%s\n"
 msgstr ""
 
+#: plugins/check_users.c:154
+msgid "Critical threshold must be a positive integer\n"
+msgstr ""
+
+#: plugins/check_users.c:160 plugins/check_users.c:170
+#: plugins/check_users.c:177
+msgid "Warning threshold must be a positive integer\n"
+msgstr ""
+
 #: plugins/check_users.c:195
 #, c-format
 msgid ""
@@ -3505,6 +3419,84 @@ msgid ""
 "    Set WARNING status if more than INTEGER users are logged in\n"
 " -c, --critical=INTEGER\n"
 "    Set CRITICAL status if more than INTEGER users are logged in\n"
+msgstr ""
+
+#: plugins/check_ide_smart.c:227
+#, c-format
+msgid "CRITICAL - Couldn't open device: %s\n"
+msgstr ""
+
+#: plugins/check_ide_smart.c:232
+#, c-format
+msgid "CRITICAL - SMART_CMD_ENABLE\n"
+msgstr ""
+
+#: plugins/check_ide_smart.c:294
+#, c-format
+msgid "CRITICAL - SMART_READ_VALUES: %s\n"
+msgstr ""
+
+#: plugins/check_ide_smart.c:363
+#, c-format
+msgid "CRITICAL - %d Harddrive PreFailure%cDetected! %d/%d tests failed.\n"
+msgstr ""
+
+#: plugins/check_ide_smart.c:370
+#, c-format
+msgid "WARNING - %d Harddrive Advisor%s Detected. %d/%d tests failed.\n"
+msgstr ""
+
+#: plugins/check_ide_smart.c:377
+#, c-format
+msgid "OK - Operational (%d/%d tests passed)\n"
+msgstr ""
+
+#: plugins/check_ide_smart.c:380
+#, c-format
+msgid "ERROR - Status '%d' uknown. %d/%d tests passed\n"
+msgstr ""
+
+#: plugins/check_ide_smart.c:413
+#, c-format
+msgid "OffLineStatus=%d {%s}, AutoOffLine=%s, OffLineTimeout=%d minutes\n"
+msgstr ""
+
+#: plugins/check_ide_smart.c:419
+#, c-format
+msgid "OffLineCapability=%d {%s %s %s}\n"
+msgstr ""
+
+#: plugins/check_ide_smart.c:425
+#, c-format
+msgid "SmartRevision=%d, CheckSum=%d, SmartCapability=%d {%s %s}\n"
+msgstr ""
+
+#: plugins/check_ide_smart.c:464
+#, c-format
+msgid "CRITICAL - %s: %s\n"
+msgstr ""
+
+#: plugins/check_ide_smart.c:483
+#, c-format
+msgid "CRITICAL - SMART_READ_THRESHOLDS: %s\n"
+msgstr ""
+
+#: plugins/check_ide_smart.c:501
+#, c-format
+msgid ""
+"Usage: %s [DEVICE] [OPTION]\n"
+" -d, --device=DEVICE\n"
+"    Select device DEVICE\n"
+" -i, --immediate\n"
+"    Perform immediately offline tests\n"
+" -q, --quiet-check\n"
+"    Returns the number of failed tests\n"
+" -1, --auto-on\n"
+"    Turn on automatic offline tests\n"
+" -0, --auto-off\n"
+"    Turn off automatic offline tests\n"
+" -n, --net-saint\n"
+"    Output suitable for Net Saint\n"
 msgstr ""
 
 #: plugins/negate.c:244
