@@ -38,14 +38,52 @@
  *****************************************************************************/
 
 const char *progname = "urlize";
+const char *revision = "$Revision$";
+const char *copyright = "2000-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
 #include "utils.h"
 #include "popen.h"
 
-void print_usage (const char *);
-void print_help (const char *);
+void
+print_usage (void)
+{
+	printf (_("Usage:\n %s <url> <plugin> <arg1> ... <argN>\n"), progname);
+}
 
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 2000 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("\n\
+This plugin wraps the text output of another command (plugin) in HTML\n\
+<A> tags, thus displaying the plugin output in as a clickable link in\n\
+the Nagios status screen.  The return status is the same as the invoked\n\
+plugin.\n\n"));
+
+	print_usage ();
+
+	printf (_("\n\
+Pay close attention to quoting to ensure that the shell passes the expected\n\
+data to the plugin. For example, in:\n\
+\n\
+    urlize http://example.com/ check_http -H example.com -r 'two words'\n\
+\n\
+the shell will remove the single quotes and urlize will see:\n\
+\n\
+    urlize http://example.com/ check_http -H example.com -r two words\n\
+\n\
+You probably want:\n\
+\n\
+    urlize http://example.com/ \"check_http -H example.com -r 'two words'\"\n"));
+	exit (STATE_OK);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -54,22 +92,22 @@ main (int argc, char **argv)
 	char input_buffer[MAX_INPUT_BUFFER];
 
 	if (argc < 2) {
-		print_usage (progname);
+		print_usage ();
 		exit (STATE_UNKNOWN);
 	}
 
 	if (!strcmp (argv[1], "-h") || !strcmp (argv[1], "--help")) {
-		print_help (argv[0]);
+		print_help ();
 		exit (STATE_OK);
 	}
 
 	if (!strcmp (argv[1], "-V") || !strcmp (argv[1], "--version")) {
-		print_revision (progname, "$Revision$");
+		print_revision (progname, revision);
 		exit (STATE_OK);
 	}
 
 	if (argc < 2) {
-		print_usage (progname);
+		print_usage ();
 		exit (STATE_UNKNOWN);
 	}
 
@@ -80,13 +118,13 @@ main (int argc, char **argv)
 
 	child_process = spopen (cmd);
 	if (child_process == NULL) {
-		printf ("Could not open pipe: %s\n", cmd);
+		printf (_("Could not open pipe: %s\n"), cmd);
 		exit (STATE_UNKNOWN);
 	}
 
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL) {
-		printf ("Could not open stderr for %s\n", cmd);
+		printf (_("Could not open stderr for %s\n"), cmd);
 	}
 
 	printf ("<A href=\"%s\">", argv[1]);
@@ -102,7 +140,7 @@ main (int argc, char **argv)
 	}
 
 	if (!found) {
-		printf ("%s problem - No data recieved from host\nCMD: %s</A>\n", argv[0],
+		printf (_("%s problem - No data recieved from host\nCMD: %s</A>\n"), argv[0],
 						cmd);
 		exit (STATE_UNKNOWN);
 	}
@@ -119,37 +157,4 @@ main (int argc, char **argv)
 
 	printf ("</A>\n");
 	return result;
-}
-
-void
-print_usage (const char *cmd)
-{
-	printf ("Usage:\n %s <url> <plugin> <arg1> ... <argN>\n",	cmd);
-}
-
-void
-print_help (const char *cmd)
-{
-	print_revision (progname, "$Revision$");
-	printf ("\
-Copyright (c) 2000 Karl DeBisschop (kdebiss@alum.mit.edu)\n\n\
-\nThis plugin wraps the text output of another command (plugin) in HTML\n\
-<A> tags, thus displaying the plugin output in as a clickable link in\n\
-the Nagios status screen.  The return status is the same as the invoked\n\
-plugin.\n\n");
-	print_usage (cmd);
-	printf ("\n\
-Pay close attention to quoting to ensure that the shell passes the expected\n\
-data to the plugin. For example, in:\n\
-\n\
-    urlize http://example.com/ check_http -H example.com -r 'two words'\n\
-\n\
-the shell will remove the single quotes and urlize will see:\n\
-\n\
-    urlize http://example.com/ check_http -H example.com -r two words\n\
-\n\
-You probably want:\n\
-\n\
-    urlize http://example.com/ \"check_http -H example.com -r 'two words'\"\n");
-	exit (STATE_OK);
 }

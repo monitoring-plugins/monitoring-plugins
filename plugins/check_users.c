@@ -1,49 +1,62 @@
 /*****************************************************************************
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
 *****************************************************************************/
+
+const char *progname = "check_users";
+const char *revision = "$Revision$";
+const char *copyright = "2000-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
 #include "popen.h"
 #include "utils.h"
 
-const char *progname = "check_users";
-const char *revision = "$Revision$";
-const char *copyright = "2002-2003";
-const char *authors = "Nagios Plugin Development Team";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+void
+print_usage (void)
+{
+	printf ("Usage: %s -w <users> -c <users>\n", progname);
+	printf (_(UT_HLP_VRS), progname, progname);
+}
 
-const char *summary = "\
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 1999 Ethan Galstad\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("\
 This plugin checks the number of users currently logged in on the local\n\
-system and generates an error if the number exceeds the thresholds specified.\n";
+system and generates an error if the number exceeds the thresholds specified.\n"));
 
-const char *option_summary = "-w <users> -c <users>";
+	print_usage ();
 
-const char *options = "\
+	printf (_(UT_HELP_VRSN));
+
+	printf (_("\
  -w, --warning=INTEGER\n\
     Set WARNING status if more than INTEGER users are logged in\n\
  -c, --critical=INTEGER\n\
-    Set CRITICAL status if more than INTEGER users are logged in\n";
+    Set CRITICAL status if more than INTEGER users are logged in\n"));
 
-const char *standard_options = "\
- -h, --help\n\
-    Print detailed help screen\n\
- -V, --version\n\
-    Print version information\n\n";
-
+	printf (_(UT_SUPPORT));
+}
+
 #define possibly_set(a,b) ((a) == 0 ? (b) : 0)
 
 int process_arguments (int, char **);
@@ -61,18 +74,18 @@ main (int argc, char **argv)
 	char input_buffer[MAX_INPUT_BUFFER];
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage ("Could not parse arguments\n");
+		usage (_("Could not parse arguments\n"));
 
 	/* run the command */
 	child_process = spopen (WHO_COMMAND);
 	if (child_process == NULL) {
-		printf ("Could not open pipe: %s\n", WHO_COMMAND);
+		printf (_("Could not open pipe: %s\n"), WHO_COMMAND);
 		return STATE_UNKNOWN;
 	}
 
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL)
-		printf ("Could not open stderr for %s\n", WHO_COMMAND);
+		printf (_("Could not open stderr for %s\n"), WHO_COMMAND);
 
 	users = 0;
 
@@ -85,7 +98,7 @@ main (int argc, char **argv)
 		}
 
 		/* get total logged in users */
-		if (sscanf (input_buffer, "# users=%d", &users) == 1)
+		if (sscanf (input_buffer, _("# users=%d"), &users) == 1)
 			break;
 
 	}
@@ -108,9 +121,9 @@ main (int argc, char **argv)
 		result = STATE_OK;
 
 	if (result == STATE_UNKNOWN)
-		printf ("Unable to read output\n");
+		printf (_("Unable to read output\n"));
 	else
-		printf ("USERS %s - %d users currently logged in\n", state_text (result),
+		printf (_("USERS %s - %d users currently logged in\n"), state_text (result),
 						users);
 
 	return result;
@@ -146,7 +159,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf ("%s: Unknown argument: %s\n\n", progname, optarg);
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
@@ -157,12 +170,12 @@ process_arguments (int argc, char **argv)
 			exit (STATE_OK);
 		case 'c':									/* critical */
 			if (!is_intnonneg (optarg))
-				usage ("Critical threshold must be a nonnegative integer\n");
+				usage (_("Critical threshold must be a nonnegative integer\n"));
 			cusers = atoi (optarg);
 			break;
 		case 'w':									/* warning */
 			if (!is_intnonneg (optarg))
-				usage ("Warning threshold must be a nonnegative integer\n");
+				usage (_("Warning threshold must be a nonnegative integer\n"));
 			wusers = atoi (optarg);
 			break;
 		}
@@ -171,44 +184,15 @@ process_arguments (int argc, char **argv)
 	c = optind;
 	if (wusers == -1 && argc > c) {
 		if (is_intnonneg (argv[c]) == FALSE)
-			usage ("Warning threshold must be a nonnegative integer\n");
+			usage (_("Warning threshold must be a nonnegative integer\n"));
 		wusers = atoi (argv[c++]);
 	}
 
 	if (cusers == -1 && argc > c) {
 		if (is_intnonneg (argv[c]) == FALSE)
-			usage ("Warning threshold must be a nonnegative integer\n");
+			usage (_("Warning threshold must be a nonnegative integer\n"));
 		cusers = atoi (argv[c]);
 	}
 
 	return OK;
-}
-
-
-
-
-
-void
-print_help (void)
-{
-	print_revision (progname, revision);
-	printf ("Copyright (c) %s %s\n\t<%s>\n\n", copyright, authors, email);
-	printf (summary);
-	print_usage ();
-	printf ("\nOptions:\n");
-	printf (options);
-	printf (standard_options);
-	support ();
-}
-
-
-
-
-
-void
-print_usage (void)
-{
-	printf ("Usage: %s %s\n", progname, option_summary);
-	printf ("       %s (-h|--help)\n", progname);
-	printf ("       %s (-V|--version)\n", progname);
 }
