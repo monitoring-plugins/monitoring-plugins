@@ -11,7 +11,7 @@ DOCUMENTATION:
   the lines of a literate programming model. So far, we have site 
   documentation in DocBook. I have some ideas here, which I will
   discuss in a separate thread.
-
+
 
 
 OPTION PROCESSING:
@@ -80,7 +80,7 @@ As has been the case, ranges are specified with colons, like 'i:j'
 and list are specified with commas like 'i,k' and may contain ranges
 if it makes sense to do so. Perhaps it would be good to build a
 standard list/range processing function for this task.
-
+
 
 Programming:
   I would like to follow the GNU guidelines and remove all fixed

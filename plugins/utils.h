@@ -164,7 +164,7 @@ Send email to nagios-users@lists.sourceforge.net if you have questions\n\
 regarding use of this software. To submit patches or suggest improvements,\n\
 send email to nagiosplug-devel@lists.sourceforge.net\n"
 
-#define UT_NOWARRANTY "\
+#define UT_NOWARRANTY "\n\
 The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\
 copies of the plugins under the terms of the GNU General Public License.\n\
 For more information about these matters, see the file named COPYING.\n"

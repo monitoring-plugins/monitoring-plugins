@@ -274,7 +274,8 @@ Otherwise, the output state of the wrapped plugin is unchanged.\n"));
 void
 print_usage (void)
 {
-	printf (_("Usage: %s [-t timeout] <definition of wrapped plugin>\n"),
+	printf ("Usage: %s [-t timeout] <definition of wrapped plugin>\n",
 	        progname);
-	printf (_(UT_HLP_VRS), progname, progname);
+					
+	printf (UT_HLP_VRS, progname, progname);
 }
