@@ -1,0 +1,6 @@
+perl -ne '(m/AC_DEFINE(_UNQUOTED)?\(([^,]+)/) && print "$2\n";' configure.in | sort | uniq > DEFS
+perl -ne '(m/^.undef (.*)$/) && print "$1\n";' plugins/config.h.in | sort | uniq | diff - DEFS | grep '>'
+for f in plugins/check_*; do if test -x $f ; then ./$f --help > /dev/null; if [ $? -gt 0 ]; then echo $f failed; fi; fi; done
+for f in plugins/check_*; do if test -x $f ; then ./$f --version > /dev/null; if [ $? -gt 0 ]; then echo $f failed; fi; fi; done
+for f in check_*; do if test -x $f ; then ./$f --help > /dev/null; if [ $? -gt 0 ]; then echo $f failed; fi; fi; done
+for f in check_*; do if test -x $f ; then ./$f --version > /dev/null; if [ $? -gt 0 ]; then echo $f failed; fi; fi; done
