@@ -71,9 +71,8 @@ main (int argc, char **argv)
 	server = strscpy (server, server_name);
 
 	/* compose the command */
-	command_line = ssprintf
-		(command_line, "%s -b %d -c %d %s",
-		 PATH_TO_FPING, packet_size, packet_count, server);
+	asprintf (&command_line, "%s -b %d -c %d %s", PATH_TO_FPING,
+	          packet_size, packet_count, server);
 
 	if (verbose)
 		printf ("%s\n", command_line);

@@ -37,9 +37,10 @@
 #include <stdarg.h>
 
 #define PROGNAME "check_disk"
+#define REVISION "$Revision$"
+#define COPYRIGHT "2000-2002"
 
 int process_arguments (int, char **);
-int call_getopt (int, char **);
 int validate_arguments (void);
 int check_disk (int usp, int free_disk);
 void print_help (void);
@@ -49,7 +50,7 @@ int w_df = -1;
 int c_df = -1;
 float w_dfp = -1.0;
 float c_dfp = -1.0;
-char *path = NULL;
+char *path = "";
 int verbose = FALSE;
 int display_mntp = FALSE;
 
@@ -73,7 +74,7 @@ main (int argc, char **argv)
 	if (process_arguments (argc, argv) != OK)
 		usage ("Could not parse arguments\n");
 
-	command_line = ssprintf (command_line, "%s %s", DF_COMMAND, path);
+	asprintf (&command_line, "%s %s", DF_COMMAND, path);
 
 	if (verbose)
 		printf ("%s ==> ", command_line);
@@ -175,41 +176,6 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	if (argc < 2)
-		return ERROR;
-
-	for (c = 1; c < argc; c++) {
-		if (strcmp ("-to", argv[c]) == 0) {
-			strcpy (argv[c], "-t");
-		}
-	}
-
-	c = 0;
-	while ((c += (call_getopt (argc - c, &argv[c]))) < argc) {
-
-		if (w_dfp == -1 && is_intnonneg (argv[c]))
-			w_dfp = (100.0 - atof (argv[c]));
-		else if (c_dfp == -1 && is_intnonneg (argv[c]))
-			c_dfp = (100.0 - atof (argv[c]));
-		else if (path == NULL || path[0] == 0)
-			path = strscpy (path, argv[c]);
-	}
-
-	if (path == NULL) {
-		path = malloc (1);
-		if (path == NULL)
-			terminate (STATE_UNKNOWN, "Could not malloc empty path\n");
-		path[0] = 0;
-	}
-
-	return validate_arguments ();
-}
-
-int
-call_getopt (int argc, char **argv)
-{
-	int c, i = 0;
-
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -226,26 +192,23 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+	if (argc < 2)
+		return ERROR;
+
+	for (c = 1; c < argc; c++)
+		if (strcmp ("-to", argv[c]) == 0)
+			strcpy (argv[c], "-t");
+
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
-			getopt_long (argc, argv, "+?Vhvt:c:w:p:m", long_options, &option_index);
+			getopt_long (argc, argv, "Vhvt:c:w:p:m", long_options, &option_index);
 #else
-		c = getopt (argc, argv, "+?Vhvt:c:w:p:m");
+		c = getopt (argc, argv, "Vhvt:c:w:p:m");
 #endif
 
-		i++;
-
-		if (c == -1 || c == EOF || c == 1)
+		if (c == -1 || c == EOF)
 			break;
-
-		switch (c) {
-		case 't':
-		case 'c':
-		case 'w':
-		case 'p':
-			i++;
-		}
 
 		switch (c) {
 		case 'w':									/* warning time threshold */
@@ -298,7 +261,7 @@ call_getopt (int argc, char **argv)
 			display_mntp = TRUE;
 			break;
 		case 'V':									/* version */
-			print_revision (my_basename (argv[0]), "$Revision$");
+			print_revision (PROGNAME, REVISION);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -308,7 +271,18 @@ call_getopt (int argc, char **argv)
 			break;
 		}
 	}
-	return i;
+
+	c = optind;
+	if (w_dfp == -1 && argc > c && is_intnonneg (argv[c]))
+		w_dfp = (100.0 - atof (argv[c++]));
+
+	if (c_dfp == -1 && argc > c && is_intnonneg (argv[c]))
+		c_dfp = (100.0 - atof (argv[c++]));
+
+	if (argc > c && strlen (path) == 0)
+		path = argv[c++];
+
+	return validate_arguments ();
 }
 
 int
@@ -358,7 +332,7 @@ check_disk (usp, free_disk)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, "$Revision$");
+	print_revision (PROGNAME, REVISION);
 	printf
 		("Copyright (c) 2000 Ethan Galstad/Karl DeBisschop\n\n"
 		 "This plugin will check the percent of used disk space on a mounted\n"

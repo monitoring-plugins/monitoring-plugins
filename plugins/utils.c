@@ -50,7 +50,6 @@ void strip (char *);
 char *strscpy (char *dest, const char *src);
 char *strscat (char *dest, const char *src);
 char *strnl (char *str);
-char *ssprintf (char *str, const char *fmt, ...);
 char *strpcpy (char *dest, const char *src, const char *str);
 char *strpcat (char *dest, const char *src, const char *str);
 
@@ -488,72 +487,6 @@ strnl (char *str)
 	if (strlen (str) == 0)
 		return NULL;
 	return str;
-}
-
-
-
-
-
-/******************************************************************************
- *
- * Does a formatted print to a string variable
- *
- * Given a pointer destination string, which may or may not already
- * hold some text, and a source string with additional text (possibly
- * NULL or empty), returns a pointer to a string that cntains the
- * results of the specified formatted print
- *
- * Example:
- *
- * char *str=NULL;
- * str = ssprintf(str,"%d %s",1,"string");
- *
- *****************************************************************************/
-
-char *
-ssprintf (char *ptr, const char *fmt, ...)
-{
-	va_list ap;
-	int nchars;
-	size_t size;
-	char *str = NULL;
-
-	if (str == NULL) {
-		str = malloc (TXTBLK);
-		if (str == NULL)
-			terminate (STATE_UNKNOWN, "malloc failed in ssprintf");
-		size = TXTBLK;
-	}
-	else
-		size = max (strlen (str), TXTBLK);
-
-	va_start (ap, fmt);
-
-	while (1) {
-
-		nchars = vsnprintf (str, size, fmt, ap);
-
-		if (nchars > -1)
-			if (nchars < (int) size) {
-				va_end (ap);
-				str[nchars] = '\0';
-				if (ptr)
-					free (ptr);
-				return str;
-			}
-			else {
-				size = (size_t) (nchars + 1);
-			}
-
-		else
-			size *= 2;
-
-		str = realloc (str, size);
-
-		if (str == NULL)
-			terminate (STATE_UNKNOWN, "realloc failed in ssprintf");
-	}
-
 }
 
 

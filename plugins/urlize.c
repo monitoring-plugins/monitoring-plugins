@@ -71,9 +71,9 @@ main (int argc, char **argv)
 		exit (STATE_UNKNOWN);
 	}
 
-	cmd = ssprintf (cmd, "%s", argv[2]);
+	asprintf (&cmd, "%s", argv[2]);
 	for (i = 3; i < argc; i++) {
-		cmd = ssprintf (cmd, "%s %s", cmd, argv[i]);
+		asprintf (&cmd, "%s %s", cmd, argv[i]);
 	}
 
 	child_process = spopen (cmd);

@@ -180,13 +180,13 @@ int main(int argc, char **argv){
 		if(result!=STATE_OK)
 			return result;
 		if(!strcmp(recv_buffer,"-1\n"))
-			netware_version = ssprintf(netware_version,"");
+			asprintf(&netware_version,"");
 		else {
 			recv_buffer[strlen(recv_buffer)-1]=0;
-			netware_version = ssprintf(netware_version,"NetWare %s: ",recv_buffer);
+			asprintf(&netware_version,"NetWare %s: ",recv_buffer);
 		}
 	} else
-		netware_version = ssprintf(netware_version,"");
+		asprintf(&netware_version,"");
 
 
 	/* check CPU load */
@@ -204,7 +204,7 @@ int main(int argc, char **argv){
 			break;
 		}
 
-		send_buffer = ssprintf(send_buffer,"UTIL%s\r\n",temp_buffer);
+		asprintf(&send_buffer,"UTIL%s\r\n",temp_buffer);
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if(result!=STATE_OK)
 			return result;
@@ -221,7 +221,7 @@ int main(int argc, char **argv){
 		else if(check_warning_value==TRUE && utilization >= warning_value)
 			result=STATE_WARNING;
 
-		output_message = ssprintf(output_message,"Load %s - %s %s-min load average = %lu%%",(result==STATE_OK)?"ok":"problem",uptime,temp_buffer,utilization);
+		asprintf(&output_message,"Load %s - %s %s-min load average = %lu%%",(result==STATE_OK)?"ok":"problem",uptime,temp_buffer,utilization);
 
 	/* check number of user connections */
 	} else if (vars_to_check==CHECK_CONNS) {
@@ -236,7 +236,7 @@ int main(int argc, char **argv){
 			result=STATE_CRITICAL;
 		else if(check_warning_value==TRUE && current_connections >= warning_value)
 			result=STATE_WARNING;
-		output_message = ssprintf(output_message,"Conns %s - %lu current connections",(result==STATE_OK)?"ok":"problem",current_connections);
+		asprintf(&output_message,"Conns %s - %lu current connections",(result==STATE_OK)?"ok":"problem",current_connections);
 
 	/* check % long term cache hits */
 	} else if (vars_to_check==CHECK_LTCH) {
@@ -251,7 +251,7 @@ int main(int argc, char **argv){
 			result=STATE_CRITICAL;
 		else if(check_warning_value==TRUE && cache_hits <= warning_value)
 			result=STATE_WARNING;
-		output_message = ssprintf(output_message,"Long term cache hits = %d%%",cache_hits);
+		asprintf(&output_message,"Long term cache hits = %d%%",cache_hits);
 
 	/* check cache buffers */
 	} else if (vars_to_check==CHECK_CBUFF) {
@@ -266,7 +266,7 @@ int main(int argc, char **argv){
 			result=STATE_CRITICAL;
 		else if(check_warning_value==TRUE && cache_buffers <= warning_value)
 			result=STATE_WARNING;
-		output_message = ssprintf(output_message,"Total cache buffers = %lu",cache_buffers);
+		asprintf(&output_message,"Total cache buffers = %lu",cache_buffers);
 
 	/* check dirty cache buffers */
 	} else if (vars_to_check==CHECK_CDBUFF) {
@@ -281,7 +281,7 @@ int main(int argc, char **argv){
 			result=STATE_CRITICAL;
 		else if(check_warning_value==TRUE && cache_buffers >= warning_value)
 			result=STATE_WARNING;
-		output_message = ssprintf(output_message,"Dirty cache buffers = %lu",cache_buffers);
+		asprintf(&output_message,"Dirty cache buffers = %lu",cache_buffers);
 
 	/* check LRU sitting time in minutes */
 	} else if (vars_to_check==CHECK_LRUM) {
@@ -296,19 +296,19 @@ int main(int argc, char **argv){
 			result=STATE_CRITICAL;
 		else if(check_warning_value==TRUE && lru_time <= warning_value)
 			result=STATE_WARNING;
-		output_message = ssprintf(output_message,"LRU sitting time = %lu minutes",lru_time);
+		sprintf(&output_message,"LRU sitting time = %lu minutes",lru_time);
 
 
 	/* check KB free space on volume */
 	} else if (vars_to_check==CHECK_VKF) {
 
-		send_buffer = ssprintf(send_buffer,"VKF%s\r\n",volume_name);
+		asprintf(&send_buffer,"VKF%s\r\n",volume_name);
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if(result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			output_message = ssprintf(output_message,"Error: Volume '%s' does not exist!",volume_name);
+			asprintf(&output_message,"Error: Volume '%s' does not exist!",volume_name);
 			result=STATE_CRITICAL;
 		}	else {
 			free_disk_space=strtoul(recv_buffer,NULL,10);
@@ -316,27 +316,27 @@ int main(int argc, char **argv){
 				result=STATE_CRITICAL;
 			else if(check_warning_value==TRUE && free_disk_space <= warning_value)
 				result=STATE_WARNING;
-			output_message = ssprintf(output_message,"%s%lu KB free on volume %s",(result==STATE_OK)?"":"Only ",free_disk_space,volume_name);
+			asprintf(&output_message,"%s%lu KB free on volume %s",(result==STATE_OK)?"":"Only ",free_disk_space,volume_name);
 		}
 
 	/* check % free space on volume */
 	} else if (vars_to_check==CHECK_VPF) {
 
-		send_buffer = ssprintf(send_buffer,"VKF%s\r\n",volume_name);
+		asprintf(&send_buffer,"VKF%s\r\n",volume_name);
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if(result!=STATE_OK)
 			return result;
 
 		if(!strcmp(recv_buffer,"-1\n")){
 
-			output_message = ssprintf(output_message,"Error: Volume '%s' does not exist!",volume_name);
+			asprintf(&output_message,"Error: Volume '%s' does not exist!",volume_name);
 			result=STATE_CRITICAL;
 
 		} else {
 
 			free_disk_space=strtoul(recv_buffer,NULL,10);
 
-			send_buffer = ssprintf(send_buffer,"VKS%s\r\n",volume_name);
+			asprintf(&send_buffer,"VKS%s\r\n",volume_name);
 			result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 			if(result!=STATE_OK)
 				return result;
@@ -349,7 +349,7 @@ int main(int argc, char **argv){
 			else if(check_warning_value==TRUE && percent_free_space <= warning_value)
 				result=STATE_WARNING;
 			free_disk_space/=1024;
-			output_message = ssprintf(output_message,"%lu MB (%d%%) free on volume %s",free_disk_space,percent_free_space,volume_name);
+			asprintf(&output_message,"%lu MB (%d%%) free on volume %s",free_disk_space,percent_free_space,volume_name);
 		}
 
 	/* check to see if DS Database is open or closed */
@@ -368,7 +368,7 @@ int main(int argc, char **argv){
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 		temp_buffer=strtok(recv_buffer,"\r\n");
  
-		output_message = ssprintf(output_message,"Directory Services Database is %s (DS version %s)",(result==STATE_OK)?"open":"closed",temp_buffer);
+		asprintf(&output_message,"Directory Services Database is %s (DS version %s)",(result==STATE_OK)?"open":"closed",temp_buffer);
 
 	/* check to see if logins are enabled */
 	} else if (vars_to_check==CHECK_LOGINS) {
@@ -382,19 +382,19 @@ int main(int argc, char **argv){
 		else
 			result=STATE_WARNING;
  
-		output_message = ssprintf(output_message,"Logins are %s",(result==STATE_OK)?"enabled":"disabled");
+		asprintf(&output_message,"Logins are %s",(result==STATE_OK)?"enabled":"disabled");
 
 	/* check packet receive buffers */
 	} else if (vars_to_check==CHECK_UPRB || vars_to_check==CHECK_PUPRB) {
  
-		send_buffer = ssprintf(send_buffer,"S15\r\n",volume_name);
+		asprintf(&send_buffer,"S15\r\n",volume_name);
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if(result!=STATE_OK)
 			return result;
 
 		used_packet_receive_buffers=atoi(recv_buffer);
 
-		send_buffer = ssprintf(send_buffer,"S16\r\n",volume_name);
+		asprintf(&send_buffer,"S16\r\n",volume_name);
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if(result!=STATE_OK)
 			return result;
@@ -415,15 +415,15 @@ int main(int argc, char **argv){
 				result=STATE_WARNING;
 		}
  
-		output_message = ssprintf(output_message,"%d of %d (%lu%%) packet receive buffers used",used_packet_receive_buffers,max_packet_receive_buffers,percent_used_packet_receive_buffers);
+		asprintf(&output_message,"%d of %d (%lu%%) packet receive buffers used",used_packet_receive_buffers,max_packet_receive_buffers,percent_used_packet_receive_buffers);
 
 	/* check SAP table entries */
 	} else if (vars_to_check==CHECK_SAPENTRIES) {
 
 		if(sap_number==-1)
-			send_buffer = ssprintf(send_buffer,"S9\r\n");
+			asprintf(&send_buffer,"S9\r\n");
 		else
-			send_buffer = ssprintf(send_buffer,"S9.%d\r\n",sap_number);
+			asprintf(&send_buffer,"S9.%d\r\n",sap_number);
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if(result!=STATE_OK)
 			return result;
@@ -436,20 +436,20 @@ int main(int argc, char **argv){
 			result=STATE_WARNING;
 
 		if(sap_number==-1)
-			output_message = ssprintf(output_message,"%d entries in SAP table",sap_entries);
+			asprintf(&output_message,"%d entries in SAP table",sap_entries);
 		else
-			output_message = ssprintf(output_message,"%d entries in SAP table for SAP type %d",sap_entries,sap_number);
+			asprintf(&output_message,"%d entries in SAP table for SAP type %d",sap_entries,sap_number);
 
 	/* check KB purgeable space on volume */
 	} else if (vars_to_check==CHECK_VKP) {
 
-		send_buffer = ssprintf(send_buffer,"VKP%s\r\n",volume_name);
+		asprintf(&send_buffer,"VKP%s\r\n",volume_name);
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if(result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			output_message = ssprintf(output_message,"Error: Volume '%s' does not exist!",volume_name);
+			asprintf(&output_message,"Error: Volume '%s' does not exist!",volume_name);
 			result=STATE_CRITICAL;
 		} else {
 			purgeable_disk_space=strtoul(recv_buffer,NULL,10);
@@ -457,27 +457,27 @@ int main(int argc, char **argv){
 				result=STATE_CRITICAL;
 			else if(check_warning_value==TRUE && purgeable_disk_space >= warning_value)
 				result=STATE_WARNING;
-			output_message = ssprintf(output_message,"%s%lu KB purgeable on volume %s",(result==STATE_OK)?"":"Only ",purgeable_disk_space,volume_name);
+			asprintf(&output_message,"%s%lu KB purgeable on volume %s",(result==STATE_OK)?"":"Only ",purgeable_disk_space,volume_name);
 		}
 
 	/* check % purgeable space on volume */
 	} else if (vars_to_check==CHECK_VPP) {
 
-		send_buffer = ssprintf(send_buffer,"VKP%s\r\n",volume_name);
+		asprintf(&send_buffer,"VKP%s\r\n",volume_name);
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if(result!=STATE_OK)
 			return result;
 
 		if(!strcmp(recv_buffer,"-1\n")){
 
-			output_message = ssprintf(output_message,"Error: Volume '%s' does not exist!",volume_name);
+			asprintf(&output_message,"Error: Volume '%s' does not exist!",volume_name);
 			result=STATE_CRITICAL;
 
 		} else {
 
 			purgeable_disk_space=strtoul(recv_buffer,NULL,10);
 
-			send_buffer = ssprintf(send_buffer,"VKS%s\r\n",volume_name);
+			asprintf(&send_buffer,"VKS%s\r\n",volume_name);
 			result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 			if(result!=STATE_OK)
 				return result;
@@ -490,19 +490,19 @@ int main(int argc, char **argv){
 			else if(check_warning_value==TRUE && percent_purgeable_space >= warning_value)
 				result=STATE_WARNING;
 			purgeable_disk_space/=1024;
-			output_message = ssprintf(output_message,"%lu MB (%d%%) purgeable on volume %s",purgeable_disk_space,percent_purgeable_space,volume_name);
+			asprintf(&output_message,"%lu MB (%d%%) purgeable on volume %s",purgeable_disk_space,percent_purgeable_space,volume_name);
 		}
 
 	/* check KB not yet purgeable space on volume */
 	} else if (vars_to_check==CHECK_VKNP) {
 
-		send_buffer = ssprintf(send_buffer,"VKNP%s\r\n",volume_name);
+		asprintf(&send_buffer,"VKNP%s\r\n",volume_name);
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if(result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			output_message = ssprintf(output_message,"Error: Volume '%s' does not exist!",volume_name);
+			asprintf(&output_message,"Error: Volume '%s' does not exist!",volume_name);
 			result=STATE_CRITICAL;
 		} else {
 			non_purgeable_disk_space=strtoul(recv_buffer,NULL,10);
@@ -510,27 +510,27 @@ int main(int argc, char **argv){
 				result=STATE_CRITICAL;
 			else if(check_warning_value==TRUE && non_purgeable_disk_space >= warning_value)
 				result=STATE_WARNING;
-			output_message = ssprintf(output_message,"%s%lu KB not yet purgeable on volume %s",(result==STATE_OK)?"":"Only ",non_purgeable_disk_space,volume_name);
+			asprintf(&output_message,"%s%lu KB not yet purgeable on volume %s",(result==STATE_OK)?"":"Only ",non_purgeable_disk_space,volume_name);
 		}
 
 	/* check % not yet purgeable space on volume */
 	} else if (vars_to_check==CHECK_VPNP) {
 
-		send_buffer = ssprintf(send_buffer,"VKNP%s\r\n",volume_name);
+		asprintf(&send_buffer,"VKNP%s\r\n",volume_name);
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if(result!=STATE_OK)
 			return result;
 
 		if(!strcmp(recv_buffer,"-1\n")){
 
-			output_message = ssprintf(output_message,"Error: Volume '%s' does not exist!",volume_name);
+			asprintf(&output_message,"Error: Volume '%s' does not exist!",volume_name);
 			result=STATE_CRITICAL;
 
 		} else {
 
 			non_purgeable_disk_space=strtoul(recv_buffer,NULL,10);
 
-			send_buffer = ssprintf(send_buffer,"VKS%s\r\n",volume_name);
+			asprintf(&send_buffer,"VKS%s\r\n",volume_name);
 			result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 			if(result!=STATE_OK)
 				return result;
@@ -543,13 +543,13 @@ int main(int argc, char **argv){
 			else if(check_warning_value==TRUE && percent_non_purgeable_space >= warning_value)
 				result=STATE_WARNING;
 			purgeable_disk_space/=1024;
-			output_message = ssprintf(output_message,"%lu MB (%d%%) not yet purgeable on volume %s",non_purgeable_disk_space,percent_non_purgeable_space,volume_name);
+			asprintf(&output_message,"%lu MB (%d%%) not yet purgeable on volume %s",non_purgeable_disk_space,percent_non_purgeable_space,volume_name);
 		}
 
 	/* check # of open files */
 	} else if (vars_to_check==CHECK_OFILES) {
 
-		send_buffer = ssprintf(send_buffer,"S18\r\n");
+		asprintf(&send_buffer,"S18\r\n");
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if(result!=STATE_OK)
 			return result;
@@ -561,12 +561,12 @@ int main(int argc, char **argv){
 		else if(check_warning_value==TRUE && open_files >= warning_value)
 			result=STATE_WARNING;
 
-		output_message = ssprintf(output_message,"%d open files",open_files);
+		asprintf(&output_message,"%d open files",open_files);
 
 	/* check # of abended threads (Netware 5.x only) */
 	} else if (vars_to_check==CHECK_ABENDS) {
 
-		send_buffer = ssprintf(send_buffer,"S17\r\n");
+		asprintf(&send_buffer,"S17\r\n");
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if(result!=STATE_OK)
 			return result;
@@ -578,19 +578,19 @@ int main(int argc, char **argv){
 		else if(check_warning_value==TRUE && abended_threads >= warning_value)
 			result=STATE_WARNING;
 
-		output_message = ssprintf(output_message,"%d abended threads",abended_threads);
+		asprintf(&output_message,"%d abended threads",abended_threads);
 
 	/* check # of current service processes (Netware 5.x only) */
 	} else if (vars_to_check==CHECK_CSPROCS) {
 
-		send_buffer = ssprintf(send_buffer,"S20\r\n");
+		asprintf(&send_buffer,"S20\r\n");
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if(result!=STATE_OK)
 			return result;
  
 		max_service_processes=atoi(recv_buffer);
  
-		send_buffer = ssprintf(send_buffer,"S21\r\n");
+		sprintf(&send_buffer,"S21\r\n");
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if(result!=STATE_OK)
 			return result;
@@ -602,7 +602,7 @@ int main(int argc, char **argv){
 		else if(check_warning_value==TRUE && current_service_processes >= warning_value)
 			result=STATE_WARNING;
 
-		output_message = ssprintf(output_message,"%d current service processes (%d max)",current_service_processes,max_service_processes);
+		asprintf(&output_message,"%d current service processes (%d max)",current_service_processes,max_service_processes);
 
 	} else {
 

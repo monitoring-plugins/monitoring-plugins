@@ -86,7 +86,6 @@ Notes:\n\
 #include "utils.h"
 
 int process_arguments (int, char **);
-int call_getopt (int, char **);
 int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
@@ -97,8 +96,8 @@ int use_average = TRUE;
 int variable_number = -1;
 unsigned long value_warning_threshold = 0L;
 unsigned long value_critical_threshold = 0L;
-char *value_label = NULL;
-char *units_label = NULL;
+char *value_label = "";
+char *units_label = "";
 
 int
 main (int argc, char **argv)
@@ -215,83 +214,6 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	if (argc < 2)
-		return ERROR;
-
-	for (c = 1; c < argc; c++) {
-		if (strcmp ("-to", argv[c]) == 0)
-			strcpy (argv[c], "-t");
-		else if (strcmp ("-wt", argv[c]) == 0)
-			strcpy (argv[c], "-w");
-		else if (strcmp ("-ct", argv[c]) == 0)
-			strcpy (argv[c], "-c");
-	}
-
-
-
-	c = 0;
-	while ((c += (call_getopt (argc - c, &argv[c]))) < argc) {
-
-		if (is_option (argv[c]))
-			continue;
-
-		if (log_file == NULL) {
-			log_file = argv[c];
-		}
-		else if (expire_minutes <= 0) {
-			if (is_intpos (argv[c]))
-				expire_minutes = atoi (argv[c]);
-			else
-				terminate (STATE_UNKNOWN,
-									 "%s is not a valid expiration time\nUse '%s -h' for additional help\n",
-									 argv[c], PROGNAME);
-		}
-		else if (strcmp (argv[c], "MAX") == 0) {
-			use_average = FALSE;
-		}
-		else if (strcmp (argv[c], "AVG") == 0) {
-			use_average = TRUE;
-		}
-		else if (variable_number == -1) {
-			variable_number = atoi (argv[c]);
-			if (variable_number < 1 || variable_number > 2) {
-				printf ("%s :", argv[c]);
-				usage ("Invalid variable number\n");
-			}
-		}
-		else if (value_warning_threshold == 0) {
-			value_warning_threshold = strtoul (argv[c], NULL, 10);
-		}
-		else if (value_critical_threshold == 0) {
-			value_critical_threshold = strtoul (argv[c], NULL, 10);
-		}
-		else if (value_label == NULL) {
-			value_label = argv[c];
-		}
-		else if (units_label == NULL) {
-			units_label = argv[c];
-		}
-	}
-
-	if (value_label == NULL)
-		value_label = strscpy (NULL, "");
-
-	if (units_label == NULL)
-		units_label = strscpy (NULL, "");
-
-	return validate_arguments ();
-}
-
-
-
-
-
-
-int
-call_getopt (int argc, char **argv)
-{
-	int c, i = 0;
-
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -310,31 +232,29 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+	if (argc < 2)
+		return ERROR;
+
+	for (c = 1; c < argc; c++) {
+		if (strcmp ("-to", argv[c]) == 0)
+			strcpy (argv[c], "-t");
+		else if (strcmp ("-wt", argv[c]) == 0)
+			strcpy (argv[c], "-w");
+		else if (strcmp ("-ct", argv[c]) == 0)
+			strcpy (argv[c], "-c");
+	}
+
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
-			getopt_long (argc, argv, "+hVF:e:a:v:c:w:l:u:", long_options,
+			getopt_long (argc, argv, "hVF:e:a:v:c:w:l:u:", long_options,
 									 &option_index);
 #else
-		c = getopt (argc, argv, "+?hVF:e:a:v:c:w:l:u:");
+		c = getopt (argc, argv, "hVF:e:a:v:c:w:l:u:");
 #endif
 
-		i++;
-
-		if (c == -1 || c == EOF || c == 1)
+		if (c == -1 || c == EOF)
 			break;
-
-		switch (c) {
-		case 'F':
-		case 'e':
-		case 'a':
-		case 'v':
-		case 'c':
-		case 'w':
-		case 'l':
-		case 'u':
-			i++;
-		}
 
 		switch (c) {
 		case 'F':									/* input file */
@@ -367,7 +287,7 @@ call_getopt (int argc, char **argv)
 			units_label = optarg;
 			break;
 		case 'V':									/* version */
-			print_revision (PROGNAME, "$Revision$");
+			print_revision (PROGNAME, REVISION);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -376,7 +296,55 @@ call_getopt (int argc, char **argv)
 			usage ("Invalid argument\n");
 		}
 	}
-	return i;
+
+	c = optind;
+	if (log_file == NULL && argc > c) {
+		log_file = argv[c++];
+	}
+
+	if (expire_minutes <= 0 && argc > c) {
+		if (is_intpos (argv[c]))
+			expire_minutes = atoi (argv[c++]);
+		else
+			terminate (STATE_UNKNOWN,
+			           "%s is not a valid expiration time\nUse '%s -h' for additional help\n",
+			           argv[c], PROGNAME);
+	}
+
+	if (argc > c && strcmp (argv[c], "MAX") == 0) {
+		use_average = FALSE;
+		c++;
+	}
+	else if (argc > c && strcmp (argv[c], "AVG") == 0) {
+		use_average = TRUE;
+		c++;
+	}
+
+	if (argc > c && variable_number == -1) {
+		variable_number = atoi (argv[c++]);
+		if (variable_number < 1 || variable_number > 2) {
+			printf ("%s :", argv[c]);
+			usage ("Invalid variable number\n");
+		}
+	}
+
+	if (argc > c && value_warning_threshold == 0) {
+		value_warning_threshold = strtoul (argv[c++], NULL, 10);
+	}
+
+	if (vargc > c && alue_critical_threshold == 0) {
+		value_critical_threshold = strtoul (argv[c++], NULL, 10);
+	}
+
+	if (argc > c && strlen (value_label) == 0) {
+		value_label = argv[c++];
+	}
+
+	if (argc > c && strlen (units_label) == 0) {
+		units_label = argv[c++];
+	}
+
+	return validate_arguments ();
 }
 
 int

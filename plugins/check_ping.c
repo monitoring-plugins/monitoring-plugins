@@ -88,11 +88,9 @@ main (int argc, char **argv)
 
 	/* does the host address of number of packets argument come first? */
 #ifdef PING_PACKETS_FIRST
-	command_line =
-		ssprintf (command_line, PING_COMMAND, max_packets, server_address);
+	asprintf (&command_line, PING_COMMAND, max_packets, server_address);
 #else
-	command_line =
-		ssprintf (command_line, PING_COMMAND, server_address, max_packets);
+	asprintf (&command_line, PING_COMMAND, server_address, max_packets);
 #endif
 
 	/* Set signal handling and alarm */

@@ -61,7 +61,7 @@ main (int argc, char **argv)
 	int proc_size = -1;
 	char input_buffer[MAX_INPUT_BUFFER];
 	char proc_name[MAX_INPUT_BUFFER];
-	char *message = NULL;
+	char *message = "";
 
 	if (!process_arguments (argc, argv)) {
 		printf ("%s: failure parsing arguments\n", my_basename (argv[0]));
@@ -80,8 +80,6 @@ main (int argc, char **argv)
 	if (child_stderr == NULL)
 		printf ("Could not open stderr for %s\n", VSZ_COMMAND);
 
-	message = malloc ((size_t) 1);
-	message[0] = 0;
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
 
 		line++;
@@ -93,12 +91,7 @@ main (int argc, char **argv)
 		if (sscanf (input_buffer, VSZ_FORMAT, &proc_size, proc_name) == 2) {
 			if (proc == NULL) {
 				if (proc_size > warn) {
-					len = strlen (message) + strlen (proc_name) + 23;
-					message = realloc (message, len);
-					if (message == NULL)
-						terminate (STATE_UNKNOWN,
-											 "check_vsz: could not malloc message (1)");
-					sprintf (message, "%s %s(%d)", message, proc_name, proc_size);
+					asprintf (&message, "%s %s(%d)", message, proc_name, proc_size);
 					result = max_state (result, STATE_WARNING);
 				}
 				if (proc_size > crit) {
@@ -106,12 +99,7 @@ main (int argc, char **argv)
 				}
 			}
 			else if (strstr (proc_name, proc)) {
-				len = strlen (message) + 21;
-				message = realloc (message, len);
-				if (message == NULL)
-					terminate (STATE_UNKNOWN,
-										 "check_vsz: could not malloc message (2)");
-				sprintf (message, "%s %d", message, proc_size);
+				asprintf (&message, "%s %d", message, proc_size);
 				if (proc_size > warn) {
 					result = max_state (result, STATE_WARNING);
 				}
@@ -206,11 +194,7 @@ process_arguments (int argc, char **argv)
 			warn = atoi (optarg);
 			break;
 		case 'C':									/* command name */
-			proc = malloc (strlen (optarg) + 1);
-			if (proc == NULL)
-				terminate (STATE_UNKNOWN,
-									 "check_vsz: failed malloc of proc in process_arguments");
-			strcpy (proc, optarg);
+			proc = optarg;
 			break;
 		}
 	}
@@ -236,13 +220,8 @@ process_arguments (int argc, char **argv)
 		crit = atoi (argv[c++]);
 	}
 
-	if (proc == NULL) {
-		proc = malloc (strlen (argv[c]) + 1);
-		if (proc == NULL)
-			terminate (STATE_UNKNOWN,
-								 "check_vsz: failed malloc of proc in process_arguments");
-		strcpy (proc, argv[c]);
-	}
+	if (proc == NULL)
+		proc = argv[c];
 
 	return c;
 }

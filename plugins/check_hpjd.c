@@ -66,6 +66,8 @@
 #include "utils.h"
 
 #define PROGNAME "check_hpjd"
+#define REVISION "$Revision$"
+#define COPYRIGHT "2000-2002"
 
 #define HPJD_LINE_STATUS		".1.3.6.1.4.1.11.2.3.9.1.1.2.1"
 #define HPJD_PAPER_STATUS		".1.3.6.1.4.1.11.2.3.9.1.1.2.2"
@@ -84,13 +86,13 @@
 #define OFFLINE		1
 
 int process_arguments (int, char **);
-int call_getopt (int, char **);
 int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
 
 char *community = NULL;
-char *address = NULL;
+char *address = "127.0.0.1";
+
 
 int
 main (int argc, char **argv)
@@ -386,55 +388,6 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	if (argc < 2)
-		return ERROR;
-
-	for (c = 1; c < argc; c++) {
-		if (strcmp ("-to", argv[c]) == 0)
-			strcpy (argv[c], "-t");
-		else if (strcmp ("-wt", argv[c]) == 0)
-			strcpy (argv[c], "-w");
-		else if (strcmp ("-ct", argv[c]) == 0)
-			strcpy (argv[c], "-c");
-	}
-
-
-
-	c = 0;
-	while ((c += (call_getopt (argc - c, &argv[c]))) < argc) {
-
-		if (is_option (argv[c]))
-			continue;
-
-		if (address == NULL) {
-			if (is_host (argv[c])) {
-				address = argv[c];
-			}
-			else {
-				usage ("Invalid host name");
-			}
-		}
-		else if (community == NULL) {
-			community = argv[c];
-		}
-	}
-
-	if (address == NULL)
-		address = strscpy (NULL, "127.0.0.1");
-
-	return validate_arguments ();
-}
-
-
-
-
-
-
-int
-call_getopt (int argc, char **argv)
-{
-	int c, i = 0;
-
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -450,6 +403,18 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+	if (argc < 2)
+		return ERROR;
+
+	for (c = 1; c < argc; c++) {
+		if (strcmp ("-to", argv[c]) == 0)
+			strcpy (argv[c], "-t");
+		else if (strcmp ("-wt", argv[c]) == 0)
+			strcpy (argv[c], "-w");
+		else if (strcmp ("-ct", argv[c]) == 0)
+			strcpy (argv[c], "-c");
+	}
+
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c = getopt_long (argc, argv, "+hVH:C:", long_options, &option_index);
@@ -457,16 +422,8 @@ call_getopt (int argc, char **argv)
 		c = getopt (argc, argv, "+?hVH:C:");
 #endif
 
-		i++;
-
 		if (c == -1 || c == EOF || c == 1)
 			break;
-
-		switch (c) {
-		case 'H':
-		case 'C':
-			i++;
-		}
 
 		switch (c) {
 		case 'H':									/* hostname */
@@ -481,7 +438,7 @@ call_getopt (int argc, char **argv)
 			community = optarg;
 			break;
 		case 'V':									/* version */
-			print_revision (PROGNAME, "$Revision$");
+			print_revision (PROGNAME, REVISION);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -490,7 +447,22 @@ call_getopt (int argc, char **argv)
 			usage ("Invalid argument\n");
 		}
 	}
-	return i;
+
+	c = optind;
+	if (address == NULL) {
+		if (is_host (argv[c])) {
+			address = argv[c++];
+		}
+		else {
+			usage ("Invalid host name");
+		}
+	}
+
+	if (community == NULL) {
+		community = argv[c++];
+	}
+
+	return validate_arguments ();
 }
 
 
@@ -510,7 +482,7 @@ validate_arguments (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, "$Revision$");
+	print_revision (PROGNAME, REVISION);
 	printf
 		("Copyright (c) 2000 Ethan Galstad/Karl DeBisschop\n\n"
 		 "This plugin tests the STATUS of an HP printer with a JetDirect card.\n"

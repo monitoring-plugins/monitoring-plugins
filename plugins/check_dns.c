@@ -48,11 +48,14 @@
 #include "popen.h"
 #include "utils.h"
 
+#define PROGNAME "check_dns"
+#define REVISION "$Revision$"
+#define COPYRIGHT "2000-2002"
+
 int process_arguments (int, char **);
-int call_getopt (int, char **);
 int validate_arguments (void);
-void print_usage (char *);
-void print_help (char *);
+void print_usage (void);
+void print_help (void);
 int error_scan (char *);
 
 #define ADDRESS_LENGTH 256
@@ -80,13 +83,12 @@ main (int argc, char **argv)
 	}
 
 	if (process_arguments (argc, argv) != OK) {
-		print_usage (my_basename (argv[0]));
+		print_usage ();
 		return STATE_UNKNOWN;
 	}
 
 	/* get the command to run */
-	command_line = ssprintf (command_line, "%s %s %s", NSLOOKUP_COMMAND,
-		query_address, dns_server);
+	sprintf (&command_line, "%s %s %s", NSLOOKUP_COMMAND,	query_address, dns_server);
 
 	alarm (timeout_interval);
 	time (&start_time);
@@ -171,7 +173,7 @@ main (int argc, char **argv)
 	/* compare to expected address */
 	if (result == STATE_OK && match_expected_address && strcmp(address, expected_address)) {
 	        result = STATE_CRITICAL;
-	        output = ssprintf(output, "expected %s but got %s", expected_address, address);
+	        asprintf(&output, "expected %s but got %s", expected_address, address);
 		}
 	
 	(void) time (&end_time);
@@ -256,46 +258,6 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	if (argc < 2)
-		return ERROR;
-
-	for (c = 1; c < argc; c++)
-		if (strcmp ("-to", argv[c]) == 0)
-			strcpy (argv[c], "-t");
-
-	c = 0;
-	while (c += (call_getopt (argc - c, &argv[c]))) {
-		if (argc <= c)
-			break;
-		if (query_address[0] == 0) {
-			if (is_host (argv[c]) == FALSE) {
-				printf ("Invalid name/address: %s\n\n", argv[c]);
-				return ERROR;
-			}
-			if (strlen (argv[c]) >= ADDRESS_LENGTH)
-				terminate (STATE_UNKNOWN, "Input buffer overflow\n");
-			strcpy (query_address, argv[c]);
-		}
-		else if (dns_server[0] == 0) {
-			if (is_host (argv[c]) == FALSE) {
-				printf ("Invalid name/address: %s\n\n", argv[c]);
-				return ERROR;
-			}
-			if (strlen (argv[c]) >= ADDRESS_LENGTH)
-				terminate (STATE_UNKNOWN, "Input buffer overflow\n");
-			strcpy (dns_server, argv[c]);
-		}
-	}
-
-	return validate_arguments ();
-
-}
-
-int
-call_getopt (int argc, char **argv)
-{
-	int c, i = 1;
-
 #ifdef HAVE_GETOPT_H
 	int opt_index = 0;
 	static struct option long_opts[] = {
@@ -311,37 +273,33 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+	if (argc < 2)
+		return ERROR;
+
+	for (c = 1; c < argc; c++)
+		if (strcmp ("-to", argv[c]) == 0)
+			strcpy (argv[c], "-t");
 
 	while (1) {
 #ifdef HAVE_GETOPT_H
-		c = getopt_long (argc, argv, "+?hVvt:H:s:r:a:", long_opts, &opt_index);
+		c = getopt_long (argc, argv, "hVvt:H:s:r:a:", long_opts, &opt_index);
 #else
-		c = getopt (argc, argv, "+?hVvt:H:s:r:a:");
+		c = getopt (argc, argv, "hVvt:H:s:r:a:");
 #endif
 
 		if (c == -1 || c == EOF)
 			break;
 
-		i++;
-		switch (c) {
-		case 't':
-		case 'H':
-		case 's':
-		case 'r':
-		case 'a':
-			i++;
-		}
-
 		switch (c) {
 		case '?': /* args not parsable */
-			printf ("%s: Unknown argument: %s\n\n", my_basename (argv[0]), optarg);
-			print_usage (my_basename (argv[0]));
+			printf ("%s: Unknown argument: %s\n\n", PROGNAME, optarg);
+			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h': /* help */
-			print_help (my_basename (argv[0]));
+			print_help ();
 			exit (STATE_OK);
 		case 'V': /* version */
-			print_revision (my_basename (argv[0]), "$Revision$");
+			print_revision (PROGNAME, REVISION);
 			exit (STATE_OK);
 		case 'v': /* version */
 			verbose = TRUE;
@@ -352,7 +310,7 @@ call_getopt (int argc, char **argv)
 		case 'H': /* hostname */
 			if (is_host (optarg) == FALSE) {
 				printf ("Invalid host name/address\n\n");
-				print_usage (my_basename (argv[0]));
+				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
 			if (strlen (optarg) >= ADDRESS_LENGTH)
@@ -362,7 +320,7 @@ call_getopt (int argc, char **argv)
 		case 's': /* server name */
 			if (is_host (optarg) == FALSE) {
 				printf ("Invalid server name/address\n\n");
-				print_usage (my_basename (argv[0]));
+				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
 			if (strlen (optarg) >= ADDRESS_LENGTH)
@@ -372,7 +330,7 @@ call_getopt (int argc, char **argv)
 		case 'r': /* reverse server name */
 			if (is_host (optarg) == FALSE) {
 				printf ("Invalid host name/address\n\n");
-				print_usage (my_basename (argv[0]));
+				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
 			if (strlen (optarg) >= ADDRESS_LENGTH)
@@ -382,7 +340,7 @@ call_getopt (int argc, char **argv)
 		case 'a': /* expected address */
 			if (is_dotted_quad (optarg) == FALSE) {
 				printf ("Invalid expected address\n\n");
-				print_usage (my_basename (argv[0]));
+				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
 			if (strlen (optarg) >= ADDRESS_LENGTH)
@@ -392,7 +350,29 @@ call_getopt (int argc, char **argv)
 			break;
 		}
 	}
-	return i;
+
+	c = optind;
+	if (query_address[0] == 0) {
+		if (is_host (argv[c]) == FALSE) {
+			printf ("Invalid name/address: %s\n\n", argv[c]);
+			return ERROR;
+		}
+		if (strlen (argv[c]) >= ADDRESS_LENGTH)
+			terminate (STATE_UNKNOWN, "Input buffer overflow\n");
+		strcpy (query_address, argv[c++]);
+	}
+
+	if (dns_server[0] == 0) {
+		if (is_host (argv[c]) == FALSE) {
+			printf ("Invalid name/address: %s\n\n", argv[c]);
+			return ERROR;
+		}
+		if (strlen (argv[c]) >= ADDRESS_LENGTH)
+			terminate (STATE_UNKNOWN, "Input buffer overflow\n");
+		strcpy (dns_server, argv[c++]);
+	}
+
+	return validate_arguments ();
 }
 
 int
@@ -405,21 +385,21 @@ validate_arguments ()
 }
 
 void
-print_usage (char *cmd)
+print_usage (void)
 {
 	printf ("Usage: %s -H host [-s server] [-a expected-address] [-t timeout]\n" "       %s --help\n"
-					"       %s --version\n", cmd, cmd, cmd);
+					"       %s --version\n", PROGNAME, PROGNAME, PROGNAME);
 }
 
 void
-print_help (char *cmd)
+print_help (void)
 {
-	print_revision (cmd, "$Revision$");
+	print_revision (PROGNAME, REVISION);
 	printf ("Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)\n\n");
-	print_usage (cmd);
-	printf ("\n");
+	print_usage ();
 	printf
-		("-H, --hostname=HOST\n"
+		("\nOptions:\n"
+		 "-H, --hostname=HOST\n"
 		 "   The name or address you want to query\n"
 		 "-s, --server=HOST\n"
 		 "   Optional DNS server you want to use for the lookup\n"
