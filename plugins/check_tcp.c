@@ -83,10 +83,11 @@ int warn_codes_count = 0;
 char **crit_codes = NULL;
 int crit_codes_count = 0;
 int delay = 0;
-int warning_time = 0;
+double warning_time = 0;
 int check_warning_time = FALSE;
-int critical_time = 0;
+double critical_time = 0;
 int check_critical_time = FALSE;
+double elapsed_time = 0;
 int verbose = FALSE;
 int use_ssl = FALSE;
 int sd;
@@ -100,6 +101,7 @@ main (int argc, char **argv)
 	char *status = NULL;
 	char *output = NULL;
 	char *ptr = NULL;
+	struct timeval tv;
 
 	if (strstr (argv[0], "check_udp")) {
 		PROGNAME = strscpy (PROGNAME, "check_udp");
@@ -205,7 +207,7 @@ main (int argc, char **argv)
 	alarm (socket_timeout);
 
 	/* try to connect to the host at the given port number */
-	time (&start_time);
+	gettimeofday (&tv, NULL);
 #ifdef HAVE_SSL
 	if (use_ssl)
 		result = connect_SSL ();
@@ -233,7 +235,7 @@ main (int argc, char **argv)
 	}
 
 	if (delay > 0) {
-		start_time = start_time + delay;
+		tv.tv_sec += delay;
 		sleep (delay);
 	}
 
@@ -287,25 +289,25 @@ main (int argc, char **argv)
 	/* close the connection */
 	close (sd);
 
-	time (&end_time);
+	elapsed_time = delta_time (tv);
 
-	if (check_critical_time == TRUE && (end_time - start_time) > critical_time)
+	if (check_critical_time == TRUE && elapsed_time > critical_time)
 		result = STATE_CRITICAL;
-	else if (check_warning_time == TRUE
-					 && (end_time - start_time) > warning_time) result = STATE_WARNING;
+	else if (check_warning_time == TRUE && elapsed_time > warning_time)
+		result = STATE_WARNING;
 
 	/* reset the alarm */
 	alarm (0);
 
 	printf
-		("%s %s - %d second response time on port %d",
+		("%s %s - %7.3f second response time on port %d",
 		 SERVICE,
-		 state_text (result), (int) (end_time - start_time), server_port);
+		 state_text (result), elapsed_time, server_port);
 
 	if (status)
 		printf (" [%s]", status);
 
-	printf ("|time=%d\n", (int) (end_time - start_time));
+	printf ("|time=%7.3f\n", elapsed_time);
 
 	return result;
 }
@@ -398,13 +400,13 @@ process_arguments (int argc, char **argv)
 		case 'c':                 /* critical */
 			if (!is_intnonneg (optarg))
 				usage ("Critical threshold must be a nonnegative integer\n");
-			critical_time = atoi (optarg);
+			critical_time = strtod (optarg, NULL);
 			check_critical_time = TRUE;
 			break;
 		case 'w':                 /* warning */
 			if (!is_intnonneg (optarg))
 				usage ("Warning threshold must be a nonnegative integer\n");
-			warning_time = atoi (optarg);
+			warning_time = strtod (optarg, NULL);
 			check_warning_time = TRUE;
 			break;
 		case 'C':
@@ -499,9 +501,9 @@ print_help (void)
 		 "    String to expect in server response"
 		 " -W, --wait=INTEGER\n"
 		 "    Seconds to wait between sending string and polling for response\n"
-		 " -w, --warning=INTEGER\n"
+		 " -w, --warning=DOUBLE\n"
 		 "    Response time to result in warning status (seconds)\n"
-		 " -c, --critical=INTEGER\n"
+		 " -c, --critical=DOUBLE\n"
 		 "    Response time to result in critical status (seconds)\n"
 		 " -t, --timeout=INTEGER\n"
 		 "    Seconds before connection times out (default: %d)\n"
