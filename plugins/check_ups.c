@@ -609,7 +609,8 @@ print_help (void)
 	print_revision (PROGNAME, "$Revision$");
 	printf
 		("Copyright (c) 2000 Tom Shields/Karl DeBisschop\n\n"
-		 "This plugin tests the UPS service on the specified host.\n\n");
+		 "This plugin tests the UPS service on the specified host.\n"
+		 "Newtork UPS Tools for www.exploits.org must be running for this plugin to work.\n\n");
 	print_usage ();
 	printf
 		("\nOptions:\n"

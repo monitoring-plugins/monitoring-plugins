@@ -135,7 +135,7 @@ main (int argc, char **argv)
 		 HPJD_GD_DOOR_OPEN, HPJD_GD_PAPER_OUTPUT, HPJD_GD_STATUS_DISPLAY);
 
 	/* get the command to run */
-	sprintf (command_line, "%s -v 1 %s %s %s", PATH_TO_SNMPGET, address,
+	sprintf (command_line, "%s -m : -v 1 %s %s %s", PATH_TO_SNMPGET, address,
 					 community, query_string);
 
 	/* run the command */
