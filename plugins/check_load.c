@@ -54,6 +54,8 @@ void print_help (void);
 float wload1 = -1, wload5 = -1, wload15 = -1;
 float cload1 = -1, cload5 = -1, cload15 = -1;
 
+char *status_line = "";
+
 int
 main (int argc, char **argv)
 {
@@ -130,16 +132,16 @@ main (int argc, char **argv)
 #endif
 		return STATE_UNKNOWN;
 	}
-	printf ("load average: %.2f, %.2f, %.2f", la1, la5, la15);
+	asprintf(&status_line, "load average: %.2f, %.2f, %.2f", la1, la5, la15);
 	if ((la1 >= cload1) || (la5 >= cload5) || (la15 >= cload15)) {
-		printf (" CRITICAL\n");
+		printf("CRITICAL - %s\n", status_line);
 		return STATE_CRITICAL;
 	}
 	if ((la1 >= wload1) || (la5 >= wload5) || (la15 >= wload15)) {
-		printf (" WARNING\n");
+		printf ("WARNING - %s\n", status_line);
 		return STATE_WARNING;
 	}
-	printf ("\n");
+	printf ("OK - %s\n", status_line);
 	return STATE_OK;
 }
 
