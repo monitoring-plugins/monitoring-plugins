@@ -257,7 +257,7 @@ main (int argc, char **argv)
 int
 process_arguments (int argc, char **argv)
 {
-	int c, i = 1;
+	int c = 1;
 	char *user;
 	struct passwd *pw;
 #ifdef HAVE_GETOPT_H

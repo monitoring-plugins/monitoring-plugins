@@ -269,8 +269,7 @@ main (int argc, char **argv)
 int
 process_arguments (int argc, char **argv)
 {
-	int c, i = 1;
-	char optchars[MAX_INPUT_BUFFER];
+	int c = 1;
 
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;

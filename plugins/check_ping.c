@@ -151,7 +151,7 @@ main (int argc, char **argv)
 int
 process_arguments (int argc, char **argv)
 {
-	int c, i = 1;
+	int c = 1;
 
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
@@ -455,15 +455,12 @@ run_ping (char *command_line)
 		else
 			sprintf (warn_text, "%s %s", warn_text, input_buffer);
 
-		if (strstr (input_buffer, "DUPLICATES FOUND"))
-			/* cannot use the max function since STATE_UNKNOWN is max
-			result = max (result, STATE_WARNING); */
+		if (strstr (input_buffer, "DUPLICATES FOUND")) {
 			if( !(result == STATE_CRITICAL) ){
 				result = STATE_WARNING;
 			}
+		}
 		else
-			/* cannot use the max function since STATE_UNKNOWN is max
-			result = max (result, STATE_CRITICAL); */
 			result = STATE_CRITICAL ;
 	}
 	(void) fclose (child_stderr);

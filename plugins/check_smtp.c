@@ -78,7 +78,7 @@ int verbose = FALSE;
 int
 main (int argc, char **argv)
 {
-	int sd, c;
+	int sd;
 	int result;
 	char buffer[MAX_INPUT_BUFFER] = "";
 	char *from_str = NULL;

@@ -151,7 +151,7 @@ main (int argc, char **argv)
 int
 process_arguments (int argc, char **argv)
 {
-	int c, i = 0;
+	int c = 0;
 
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;

@@ -100,8 +100,6 @@ main (int argc, char **argv)
 	int i;
 	char buffer[MAX_INPUT_BUFFER] = "";
 	char *status = "";
-	char *output = NULL;
-	char *ptr = NULL;
 	struct timeval tv;
 
 	if (strstr (argv[0], "check_udp")) {
