@@ -187,9 +187,9 @@ main (int argc, char **argv)
 		asprintf (&SERVICE, "NNTP");
 		SEND = NULL;
 		EXPECT = NULL;
-		server_expect = realloc (server_expect, ++server_expect_count);
+		server_expect = realloc (server_expect, sizeof (char *) * (++server_expect_count));
 		asprintf (&server_expect[server_expect_count - 1], "200");
-		server_expect = realloc (server_expect, ++server_expect_count);
+		server_expect = realloc (server_expect, sizeof (char *) * (++server_expect_count));
 		asprintf (&server_expect[server_expect_count - 1], "201");
 		asprintf (&QUIT, "QUIT\r\n");
 		PROTOCOL = TCP_PROTOCOL;
@@ -209,7 +209,7 @@ main (int argc, char **argv)
 
 	/* use default expect if none listed in process_arguments() */
 	if (EXPECT && server_expect_count == 0) {
-		server_expect = malloc (++server_expect_count);
+		server_expect = malloc (sizeof (char *) * (++server_expect_count));
 		server_expect[server_expect_count - 1] = EXPECT;
 	}
 
@@ -447,9 +447,9 @@ process_arguments (int argc, char **argv)
 		case 'e': /* expect string (may be repeated) */
 			EXPECT = NULL;
 			if (server_expect_count == 0)
-				server_expect = malloc (++server_expect_count);
+				server_expect = malloc (sizeof (char *) * (++server_expect_count));
 			else
-				server_expect = realloc (server_expect, ++server_expect_count);
+				server_expect = realloc (server_expect, sizeof (char *) * (++server_expect_count));
 			server_expect[server_expect_count - 1] = optarg;
 			break;
 		case 'm':
