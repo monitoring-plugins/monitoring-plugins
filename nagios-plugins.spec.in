@@ -1,43 +1,25 @@
-%{!?custom:%global custom 0}
+Name: nagios-plugins
+Version: %%{VERSION}
+Release: %%{RELEASE}
+Summary: Host/service/network monitoring program plugins for Nagios
 
-%define archive nagios-plugins
+Group: Applications/System
+License: GPL
+URL: http://nagiosplug.sourceforge.net/
+Source0: http://dl.sf.net/sourceforge/nagiosplug/%{name}-%{version}.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-%if %custom
-%define name %{archive}-custom
-%else
-%define name %{archive}
-%endif
-
-%define version %%{VERSION}
-%define release %%{RELEASE}
-%define source %{archive}-%{version}
-
-Name: %{name}
-Version: %{version}
-Release: %{release}
-Copyright: GPL
-Source: %{source}.tar.gz
-BuildRoot: %{_tmppath}/%{name}-buildroot
 Prefix: %{_prefix}/lib/nagios/plugins
 Packager: Karl DeBisschop <kdebisschop@users.sourceforge.net>
 Vendor: Nagios Plugin Development Group
 Provides: nagios-plugins
-%if %custom
-Obsoletes: nagios-plugins nagios-plugins-extras
-%else
-Obsoletes: nagios-plugins-custom
-%endif
-AutoReqProv: no
-Summary: Host/service/network monitoring program plugins for Nagios
-Group: Applications/System
 
-#BuildRequires: nagios-devel
-#BuildRequires: postgresql-devel, openssl-devel, bind-devel, openldap-devel, mysql-devel
-#BuildRequires: perl(Net::SNMP), %{?rh73:, ucd-snmp-devel} %{?rh80:, net-snmp-devel} %{?rh90:, net-snmp-devel}
-#BuildRequires: fping, bind-utils, ntp, samba-client, openssh-clients, radiusclient-devel
-#BuildRequires: qstat
+%{!?custom:%global custom 0}
+Obsoletes: nagios-plugins-custom nagios-plugins-extras
 
-#Requires: perl, perl(Net::SNMP), openssl
+
+# Requires
+
 
 %description
 
@@ -46,58 +28,38 @@ network, and to email or page you when a problem arises or is
 resolved. Nagios runs on a unix server as a background or daemon
 process, intermittently running checks on various services that you
 specify. The actual service checks are performed by separate "plugin"
-programs which return the status of the checks to Nagios.
-
-This package contains the basic plugins necessary for use with the
-Nagios package.  This package should install cleanly on almost any
-RPM-based system.
-
-
-%package extras
-Summary: Plugins which depend on the presence of other packages
-Group: Applications/System
-
-%description extras
-
-Nagios is a program that will monitor hosts and services on your
-network, and to email or page you when a problem arises or is
-resolved. Nagios runs on a unix server as a background or daemon
-process, intermittently running checks on various services that you
-specify. The actual service checks are performed by separate "plugin"
-programs which return the status of the checks to Nagios.
-
-This package contains plugins which use additional libraries or system
-calls that are not installed on all systems.  As a result, most users
-will need to install the '--nodeps' option when invoking `rpm`
-
-#Requires: fping, openldap, mysql, postgresql-libs
+programs which return the status of the checks to Nagios. This package
+contains those plugins.
 
 
 %prep
-%setup -q -n %{source}
+%setup -q
 
 
 %build
-CFLAGS="$RPM_OPT_FLAGS" CXXFLAGS="$RPM_OPT_FLAGS" ./configure \
+./configure \
 --prefix=%{_prefix} \
 --exec-prefix=%{_exec_prefix} \
 --libexecdir=%{_exec_prefix}/lib/nagios/plugins \
 --sysconfdir=%{_sysconfdir}/nagios \
 --datadir=%{_datadir} \
 --with-cgiurl=/nagios/cgi-bin
-make 
+make %{?_smp_mflags}
 
 
 %install
+rm -rf $RPM_BUILD_ROOT
 make AM_INSTALL_PROGRAM_FLAGS="" DESTDIR=${RPM_BUILD_ROOT} install
 install -d ${RPM_BUILD_ROOT}/etc/nagios
 install -m 664 command.cfg ${RPM_BUILD_ROOT}/etc/nagios
+%find_lang %{name}
+
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 
-%files
+%files -f %{name}.lang
 %defattr(-,root,root)
 %config(missingok,noreplace) /etc/nagios/command.cfg
 %doc CODING COPYING FAQ INSTALL LEGAL README REQUIREMENTS SUPPORT THANKS
@@ -106,9 +68,13 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{_exec_prefix}/lib/nagios/plugins
 %{_datadir}/locale/de/LC_MESSAGES/nagios-plugins.mo
 %{_datadir}/locale/fr/LC_MESSAGES/nagios-plugins.mo
+
 %if %custom
+
 %{_exec_prefix}/lib/nagios/plugins/*
+
 %else
+
 %{_exec_prefix}/lib/nagios/plugins/check_by_ssh
 %{_exec_prefix}/lib/nagios/plugins/check_breeze
 %{_exec_prefix}/lib/nagios/plugins/check_dig
@@ -155,11 +121,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_exec_prefix}/lib/nagios/plugins/utils.sh
 %{_exec_prefix}/lib/nagios/plugins/urlize
 %{_exec_prefix}/lib/nagios/plugins/check_file_age
-%endif
-
-%if ! %custom
-%files extras
-%defattr(775,root,root)
 %{_exec_prefix}/lib/nagios/plugins/check_fping
 %{_exec_prefix}/lib/nagios/plugins/check_game
 %{_exec_prefix}/lib/nagios/plugins/check_ldap
@@ -172,50 +133,5 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
-* Wed Jan 17 2001 Karl DeBisschop <karl@debisschop.net> (1.2.9-1)
-- switch from /usr/libexec to /usr/lib because FHS has no libexec
-- use 'custom' macro define to merge with nagios-plugins-custom spec
-- add check_game to extras
-
-* Mon Jun 26 2000 Karl DeBisschop <karl@debisschop.net>
-- Release 1.2.8-4 (check_ping bug fix)
-- use bzip2 insted of gzip for mandrake compatibility
-
-* Thu Jun 22 2000 Karl DeBisschop <karl@debisschop.net>
-- Release 1.2.8-3 (bug fixes)
-- Add macros to spec where possible
-
-* Fri Jun 16 2000 Karl DeBisschop <karl@debisschop.net>
-- Release 1.2.8-2 (bug fixes)
-
-* Fri Jun 09 2000 Karl DeBisschop <karl@debisschop.net>
-- Release to 1.2.8
-
-* Wed Jun 07 2000 Karl DeBisschop <karl@debisschop.net>
-- Upgrade to 1.2.8pre7
-
-* Sat Jun 03 2000 Karl DeBisschop <karl@debisschop.net>
-- Upgraded to 1.2.8pre5
-- use RPM_OPT_FALGS to set compiler options
-- cahneg group to Applications/System
-
-* Fri May 19 2000 Karl DeBisschop <karl@debisschop.net>
-- Upgraded to 1.2.8pre3 (release-3)
-
-* Mon Mar 20 2000 Karl DeBisschop <karl@debisschop.net>
-- Upgraded to 1.2.8b2
-
-* Tue Dec 14 1999 Adam Jacob <adam@cybertrails.com> (1.2.7-1cvs)
-- Upgraded package from 1.2.6 to 1.2.7 from the latest CVS code
-- Modified SPEC file to contain the proper build_root stuff. :)
-
-* Tue Oct 19 1999 Mike McHenry <mmchen@minn.net> (1.2.6)
-- Upgraded package from 1.2.4 to 1.2.6
-- Resolved dependancy issue with libpq.so
-- Added support for check_fping
-
-* Fri Sep 03 1999 Mike McHenry <mmchen@minn.net> (1.2.4)
-- Upgraded package from 1.2.2 to 1.2.4
-
-* Mon Aug 16 1999 Mike McHenry <mmchen@minn.net> (1.2.2)
-- First RPM build (1.2.2)
+* Tue Mar 04 2004 Karl DeBisschop <karl[AT]debisschop.net> - 1.4.0alpha1
+- extensive rewrite to facilitate processing into various distro-compatible specs

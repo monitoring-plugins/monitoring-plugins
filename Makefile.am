@@ -12,14 +12,18 @@ localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\"
 
 dist-hook:
-	make THANKS nagios-plugins.spec
+	make THANKS nagios-plugins.spec pkg/fedora/nagios-plugins.spec
 
 test:
 	cd plugins; $(MAKE) test
 	cd plugins-scripts; $(MAKE) test
 
 nagios-plugins.spec: nagios-plugins.spec.in
-	sed "s/%%{VERSION}/${VERSION}/;s/%%{RELEASE}/${RELEASE}/;" $? > $@
+	sed "s/%%{VERSION}/${VERSION}/;s/%%{RELEASE}/${RELEASE}/;s/^%%{requires}$$//" $? > $@
+
+pkg/fedora/nagios-plugins.spec: nagios-plugins.spec.in
+	$(top_srcdir)/mkinstalldirs pkg/fedora
+	sed "s/%%{VERSION}/${VERSION}/;s/%%{RELEASE}/${RELEASE}/;/^# Requires$$/r $(top_srcdir)/pkg/fedora/requires" $? > $@
 
 # Solaris pkgmk
 BUILDDIR = build-solaris
