@@ -56,4 +56,8 @@ check_snmp:
 check_ifstatus/check_ifoperstatus
     - Requires Net::SNMP perl module
 	   http://www.perl.com/CPAN/modules/by-authors/id/D/DT/DTOWN/
-	   
+
+check_nwstat:
+	- Requires MRTGEXT NLM for Novell Servers
+	  http://www.engr.wisc.edu/~drews/mrtg/
+
