@@ -53,7 +53,8 @@ my %ifOperStatus =	('1','up',
 			 '3','testing',
 			 '4','unknown',
 			 '5','dormant',
-			 '6','notPresent');
+			 '6','notPresent',
+			 '7','lowerLayerDown');  # down due to the state of lower layer interface(s));
 
 my $state = "UNKNOWN";
 my $answer = "";
@@ -416,6 +417,7 @@ sub process_arguments() {
 				-port      => $port,
 				-version  => $snmp_version,
 				-username => $secname,
+				-authprotocol => $authproto,
 				$auth
 			);	
 		}elsif ($seclevel eq 'authPriv' ) {
@@ -424,6 +426,7 @@ sub process_arguments() {
 				-port      => $port,
 				-version  => $snmp_version,
 				-username => $secname,
+				-authprotocol => $authproto,
 				$auth,
 				$priv
 			);
