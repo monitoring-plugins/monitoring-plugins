@@ -174,7 +174,6 @@ process_arguments (int argc, char **argv)
 	char *p1, *p2;
 	size_t len;
 
-#ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
 		{"version", no_argument, 0, 'V'},
@@ -195,7 +194,6 @@ process_arguments (int argc, char **argv)
 		{"use-ipv6", no_argument, 0, '6'},
 		{0, 0, 0, 0}
 	};
-#endif
 
 	if (argc < 2)
 		return ERROR;
@@ -205,13 +203,8 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-#ifdef HAVE_GETOPT_H
-		c =
-			getopt_long (argc, argv, "Vvh46ft:H:O:p:i:u:l:C:n:s:", long_options,
+		c = getopt_long (argc, argv, "Vvh46ft:H:O:p:i:u:l:C:n:s:", long_options,
 									 &option_index);
-#else
-		c = getopt (argc, argv, "Vvh46ft:H:O:p:i:u:l:C:n:s:");
-#endif
 
 		if (c == -1 || c == EOF)
 			break;

@@ -262,7 +262,6 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-#ifdef HAVE_GETOPT_H
 	int opt_index = 0;
 	static struct option long_opts[] = {
 		{"help", no_argument, 0, 'h'},
@@ -275,7 +274,6 @@ process_arguments (int argc, char **argv)
 		{"expected-address", required_argument, 0, 'a'},
 		{0, 0, 0, 0}
 	};
-#endif
 
 	if (argc < 2)
 		return ERROR;
@@ -285,11 +283,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-#ifdef HAVE_GETOPT_H
 		c = getopt_long (argc, argv, "hVvt:H:s:r:a:", long_opts, &opt_index);
-#else
-		c = getopt (argc, argv, "hVvt:H:s:r:a:");
-#endif
 
 		if (c == -1 || c == EOF)
 			break;

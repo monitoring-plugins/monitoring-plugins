@@ -231,7 +231,6 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-#ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option longopts[] = {
 		{"logfile", required_argument, 0, 'F'},
@@ -245,7 +244,6 @@ process_arguments (int argc, char **argv)
 		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
 	};
-#endif
 
 	if (argc < 2)
 		return ERROR;
@@ -260,11 +258,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-#ifdef HAVE_GETOPT_H
-		c =	getopt_long (argc, argv, "hVF:e:a:c:w:", longopts, &option_index);
-#else
-		c = getopt (argc, argv, "hVF:e:a:c:w:");
-#endif
+		c = getopt_long (argc, argv, "hVF:e:a:c:w:", longopts, &option_index);
 
 		if (c == -1 || c == EOF)
 			break;

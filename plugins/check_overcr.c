@@ -317,7 +317,6 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-#ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
 		{"port", required_argument, 0, 'p'},
@@ -330,7 +329,6 @@ process_arguments (int argc, char **argv)
 		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
 	};
-#endif
 
 	/* no options were supplied */
 	if (argc < 2)
@@ -354,13 +352,8 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-#ifdef HAVE_GETOPT_H
-		c =
-			getopt_long (argc, argv, "+hVH:t:c:w:p:v:", long_options,
+		c = getopt_long (argc, argv, "+hVH:t:c:w:p:v:", long_options,
 									 &option_index);
-#else
-		c = getopt (argc, argv, "+hVH:t:c:w:p:v:");
-#endif
 
 		if (c == -1 || c == EOF || c == 1)
 			break;

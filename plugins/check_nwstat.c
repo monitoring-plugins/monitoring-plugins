@@ -622,7 +622,6 @@ int main(int argc, char **argv){
 int process_arguments(int argc, char **argv){
 	int c;
 
-#ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] =
 	{ 
@@ -637,7 +636,6 @@ int process_arguments(int argc, char **argv){
 		{"help",     no_argument,      0,'h'},
 		{0,0,0,0}
 	};
-#endif
 
 	/* no options were supplied */
 	if(argc<2) return ERROR;
@@ -660,11 +658,7 @@ int process_arguments(int argc, char **argv){
 	}
 
 	while (1){
-#ifdef HAVE_GETOPT_H
 		c = getopt_long(argc,argv,"+hoVH:t:c:w:p:v:",long_options,&option_index);
-#else
-		c = getopt(argc,argv,"+hoVH:t:c:w:p:v:");
-#endif
 
 		if (c==-1||c==EOF||c==1)
 			break;
@@ -797,13 +791,8 @@ void print_usage(void)
 	printf
 		("Usage:\n"
 		 " %s %s\n"
-#ifdef HAVE_GETOPT_H
 		 " %s (-h | --help) for detailed help\n"
 		 " %s (-V | --version) for version information\n",
-#else
-		 " %s -h for detailed help\n"
-		 " %s -V for version information\n",
-#endif
 		 progname, OPTIONS, progname, progname);
 }
 

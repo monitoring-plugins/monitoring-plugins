@@ -422,7 +422,6 @@ process_arguments (int argc, char **argv)
 	int c = 1;
 	int j = 0, jj = 0, ii = 0;
 
-#ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
 		STD_LONG_OPTS,
@@ -447,7 +446,6 @@ process_arguments (int argc, char **argv)
 		{"privpasswd", required_argument, 0, 'X'},
 		{0, 0, 0, 0}
 	};
-#endif
 
 	if (argc < 2)
 		return ERROR;
@@ -463,13 +461,8 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-#ifdef HAVE_GETOPT_H
-		c =
-			getopt_long (argc, argv, "hvVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:m:P:L:U:a:A:X:",
+		c = getopt_long (argc, argv, "hvVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:m:P:L:U:a:A:X:",
 									 long_options, &option_index);
-#else
-		c = getopt (argc, argv, "hvVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:m:P:L:U:a:A:X:");
-#endif
 
 		if (c == -1 || c == EOF)
 			break;

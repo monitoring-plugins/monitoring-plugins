@@ -296,7 +296,6 @@ process_arguments (int argc, char **argv)
 {
 	int c = 1;
 
-#ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
 		STD_LONG_OPTS,
@@ -317,7 +316,6 @@ process_arguments (int argc, char **argv)
 		{"min", required_argument, 0, 'm'},
 		{0, 0, 0, 0}
 	};
-#endif
 
 	if (argc < 2)
 		return ERROR;
@@ -335,14 +333,8 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-n");
 	}
 
-#define OPTCHARS "Vvht:c:w:H:P:I:a:e:p:s:R:r:u:f:C:nlLSm:"
-
 	while (1) {
-#ifdef HAVE_GETOPT_H
-		c = getopt_long (argc, argv, OPTCHARS, long_options, &option_index);
-#else
-		c = getopt (argc, argv, OPTCHARS);
-#endif
+		c = getopt_long (argc, argv, "Vvht:c:w:H:P:I:a:e:p:s:R:r:u:f:C:nlLSm:", long_options, &option_index);
 		if (c == -1 || c == EOF)
 			break;
 
@@ -1068,12 +1060,7 @@ void
 print_usage (void)
 {
 	printf ("Usage:\n" " %s %s\n"
-#ifdef HAVE_GETOPT_H
 	        " %s (-h | --help) for detailed help\n"
 	        " %s (-V | --version) for version information\n",
-#else
-	        " %s -h for detailed help\n"
-	        " %s -V for version information\n",
-#endif
 	progname, OPTIONS, progname, progname);
 }

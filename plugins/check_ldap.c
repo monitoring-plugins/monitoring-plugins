@@ -130,7 +130,6 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-#ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	/* initialize the long option struct */
 	static struct option longopts[] = {
@@ -147,7 +146,6 @@ process_arguments (int argc, char **argv)
 		{"crit", required_argument, 0, 'c'},
 		{0, 0, 0, 0}
 	};
-#endif
 
 	if (argc < 2)
 		return ERROR;
@@ -158,11 +156,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-#ifdef HAVE_GETOPT_H
-		c =	getopt_long (argc, argv, "hVt:c:w:H:b:p:a:D:P:", longopts, &option_index);
-#else
-		c = getopt (argc, argv, "+?hVt:c:w:H:b:p:a:D:P:");
-#endif
+		c = getopt_long (argc, argv, "hVt:c:w:H:b:p:a:D:P:", longopts, &option_index);
 
 		if (c == -1 || c == EOF)
 			break;

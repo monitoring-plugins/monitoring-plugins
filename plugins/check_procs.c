@@ -268,7 +268,6 @@ process_arguments (int argc, char **argv)
 	int c = 1;
 	char *user;
 	struct passwd *pw;
-#ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
 		{"warning", required_argument, 0, 'w'},
@@ -283,18 +282,14 @@ process_arguments (int argc, char **argv)
 		{"verbose", no_argument, 0, 'v'},
 		{0, 0, 0, 0}
 	};
-#endif
 
 	for (c = 1; c < argc; c++)
 		if (strcmp ("-to", argv[c]) == 0)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-#ifdef HAVE_GETOPT_H
-		c =	getopt_long (argc, argv, "Vvht:c:w:p:s:u:C:a:", long_options, &option_index);
-#else
-		c = getopt (argc, argv, "Vvht:c:w:p:s:u:C:a:");
-#endif
+		c = getopt_long (argc, argv, "Vvht:c:w:p:s:u:C:a:", long_options, &option_index);
+
 		if (c == -1 || c == EOF)
 			break;
 

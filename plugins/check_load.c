@@ -155,7 +155,6 @@ process_arguments (int argc, char **argv)
 {
 	int c = 0;
 
-#ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
 		{"warning", required_argument, 0, 'w'},
@@ -164,19 +163,13 @@ process_arguments (int argc, char **argv)
 		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
 	};
-#endif
-
-#define OPTCHARS "Vhc:w:"
 
 	if (argc < 2)
 		return ERROR;
 
 	while (1) {
-#ifdef HAVE_GETOPT_H
-		c = getopt_long (argc, argv, OPTCHARS, long_options, &option_index);
-#else
-		c = getopt (argc, argv, OPTCHARS);
-#endif
+		c = getopt_long (argc, argv, "Vhc:w:", long_options, &option_index);
+
 		if (c == -1 || c == EOF)
 			break;
 

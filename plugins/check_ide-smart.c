@@ -44,7 +44,6 @@
 #include <unistd.h>
 #include <linux/hdreg.h>
 #include <linux/types.h>
-#include <getopt.h>
 #include <errno.h>
 	
 #define NR_ATTRIBUTES	30
@@ -342,7 +341,6 @@ main (int argc, char *argv[])
 	int o, longindex;
 	int retval = 0;
 	
-#ifdef HAVE_GETOPT_H
 	const struct option longopts[] = { 
 			{"device", required_argument, 0, 'd'}, 
 		{"immediate", no_argument, 0, 'i'}, 
@@ -354,16 +352,10 @@ main (int argc, char *argv[])
 		{"version", no_argument, 0, 'V'}, {0, 0, 0, 0} 
 	};
 	
-#endif	/*  */
 		while (1) {
 		
-#ifdef HAVE_GETOPT_H
 			o = getopt_long (argc, argv, "+d:iq10nhV", longopts, &longindex);
 		
-#else	/*  */
-			o = getopt (argc, argv, "+d:iq10nhV");
-		
-#endif	/*  */
 			if (o == -1 || o == EOF)
 			break;
 		switch (o) {
