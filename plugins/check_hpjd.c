@@ -135,7 +135,7 @@ main (int argc, char **argv)
 		 HPJD_GD_DOOR_OPEN, HPJD_GD_PAPER_OUTPUT, HPJD_GD_STATUS_DISPLAY);
 
 	/* get the command to run */
-	sprintf (command_line, "%s -m : -v 1 %s %s %s", PATH_TO_SNMPGET, address,
+	sprintf (command_line, "%s -m : -v 1 %s -c %s %s", PATH_TO_SNMPGET, address,
 					 community, query_string);
 
 	/* run the command */
@@ -514,7 +514,7 @@ print_help (void)
 	printf
 		("Copyright (c) 2000 Ethan Galstad/Karl DeBisschop\n\n"
 		 "This plugin tests the STATUS of an HP printer with a JetDirect card.\n"
-		 "Ucd-snmp must be installed on the computer running the plugin.\n\n");
+		 "Net-snmp must be installed on the computer running the plugin.\n\n");
 	print_usage ();
 	printf
 		("\nOptions:\n"
