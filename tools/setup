@@ -1,9 +1,9 @@
 #! /bin/sh
 
 aclocal
-automake
-autoheader
 autoconf
+autoheader
+automake
 
 if [ -f debian/rules ] ; then
   chmod +x debian/rules
