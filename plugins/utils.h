@@ -92,6 +92,18 @@ char *perfdata (const char *label,
  int maxp,
  long int maxv);
 
+char *fperfdata (const char *label,
+ double val,
+ const char *uom,
+ int warnp,
+ double warn,
+ int critp,
+ double crit,
+ int minp,
+ double minv,
+ int maxp,
+ double maxv);
+
 /* The idea here is that, although not every plugin will use all of these, 
    most will or should.  Therefore, for consistency, these very common 
    options should have only these meanings throughout the overall suite */
