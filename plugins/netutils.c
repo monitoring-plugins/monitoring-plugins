@@ -213,7 +213,7 @@ static int
 my_connect (const char *host_name, int port, int *sd, int proto)
 {
 	struct addrinfo hints;
-	struct addrinfo *res;
+	struct addrinfo *res, *res0;
 	char port_str[6];
 	int result;
 
@@ -223,13 +223,14 @@ my_connect (const char *host_name, int port, int *sd, int proto)
 	hints.ai_socktype = (proto == IPPROTO_UDP) ? SOCK_DGRAM : SOCK_STREAM;
 
 	snprintf (port_str, sizeof (port_str), "%d", port);
-	result = getaddrinfo (host_name, port_str, &hints, &res);
+	result = getaddrinfo (host_name, port_str, &hints, &res0);
 
 	if (result != 0) {
 		printf ("%s\n", gai_strerror (result));
 		return STATE_UNKNOWN;
 	}
 	else {
+		res = res0;
 		while (res) {
 			/* attempt to create a socket */
 			*sd = socket (res->ai_family, (proto == IPPROTO_UDP) ?
@@ -260,7 +261,7 @@ my_connect (const char *host_name, int port, int *sd, int proto)
 			close (*sd);
 			res = res->ai_next;
 		}
-		freeaddrinfo (res);
+		freeaddrinfo (res0);
 	}
 
 	if (result == 0)
