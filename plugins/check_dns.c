@@ -352,22 +352,22 @@ process_arguments (int argc, char **argv)
 	}
 
 	c = optind;
-	if (query_address[0] == 0) {
-		if (is_host (argv[c]) == FALSE) {
+	if (strlen(query_address)==0 && c<argc) {
+		if (is_host(argv[c])==FALSE) {
 			printf ("Invalid name/address: %s\n\n", argv[c]);
 			return ERROR;
 		}
-		if (strlen (argv[c]) >= ADDRESS_LENGTH)
+		if (strlen(argv[c])>=ADDRESS_LENGTH)
 			terminate (STATE_UNKNOWN, "Input buffer overflow\n");
 		strcpy (query_address, argv[c++]);
 	}
 
-	if (dns_server[0] == 0) {
-		if (is_host (argv[c]) == FALSE) {
+	if (strlen(dns_server)==0 && c<argc) {
+		if (is_host(argv[c]) == FALSE) {
 			printf ("Invalid name/address: %s\n\n", argv[c]);
 			return ERROR;
 		}
-		if (strlen (argv[c]) >= ADDRESS_LENGTH)
+		if (strlen(argv[c]) >= ADDRESS_LENGTH)
 			terminate (STATE_UNKNOWN, "Input buffer overflow\n");
 		strcpy (dns_server, argv[c++]);
 	}
