@@ -40,9 +40,15 @@ void print_usage (void);
 int server_port = SMTP_PORT;
 char *server_address = NULL;
 char *server_expect = NULL;
-int smtp_use_dummycmd = 1;
-char *mail_command;
-char *from_arg;
+int smtp_use_dummycmd = 0;
+char *mail_command = NULL;
+char *from_arg = NULL;
+int ncommands=0;
+int command_size=0;
+int nresponses=0;
+int response_size=0;
+char **commands = NULL;
+char **responses = NULL;
 int warning_time = 0;
 int check_warning_time = FALSE;
 int critical_time = 0;
@@ -58,11 +64,12 @@ int
 main (int argc, char **argv)
 {
 	int sd;
+	int n = 0;
 	double elapsed_time;
 	long microsec;
 	int result = STATE_UNKNOWN;
 	char buffer[MAX_INPUT_BUFFER];
-	char *from_str = NULL;
+	char *cmd_str = NULL;
 	char *helocmd = NULL;
 	struct timeval tv;
 
@@ -82,10 +89,10 @@ main (int argc, char **argv)
 	asprintf (&helocmd, "%s%s%s", SMTP_HELO, helocmd, "\r\n");
 
 	/* initialize the MAIL command with optional FROM command  */
-	asprintf (&from_str, "%sFROM: %s%s", mail_command, from_arg, "\r\n");
+	asprintf (&cmd_str, "%sFROM: %s%s", mail_command, from_arg, "\r\n");
 
-	if (verbose)
-		printf ("FROMCMD: %s\n", from_str);
+	if (verbose && smtp_use_dummycmd)
+		printf ("FROM CMD: %s", cmd_str);
 	
 	/* initialize alarm signal handling */
 	(void) signal (SIGALRM, socket_timeout_alarm_handler);
@@ -99,8 +106,7 @@ main (int argc, char **argv)
 	/* try to connect to the host at the given port number */
 	result = my_tcp_connect (server_address, server_port, &sd);
 
-	/* we connected, so close connection before exiting */
-	if (result == STATE_OK) {
+	if (result == STATE_OK) { /* we connected */
 
 		/* watch for the SMTP connection string and */
 		/* return a WARNING status if we couldn't read any data */
@@ -109,6 +115,8 @@ main (int argc, char **argv)
 			result = STATE_WARNING;
 		}
 		else {
+			if (verbose)
+				printf ("%s", buffer);
 			/* strip the buffer of carriage returns */
 			strip (buffer);
 			/* make sure we find the response we are looking for */
@@ -139,16 +147,25 @@ main (int argc, char **argv)
 		 * Use the -f option to provide a FROM address
 		 */
 		if (smtp_use_dummycmd) {
-
-			send(sd, from_str, strlen(from_str), 0);
-
-			/* allow for response to mail_command to reach us */
+			send(sd, cmd_str, strlen(cmd_str), 0);
 			recv(sd, buffer, MAX_INPUT_BUFFER-1, 0);
-
 			if (verbose) 
-				printf(_("DUMMYCMD: %s\n%s\n"),from_str,buffer);
+				printf("%s", buffer);
+		}
 
-		} /* smtp_use_dummycmd */
+		while (n < ncommands) {
+			asprintf (&cmd_str, "%s%s", commands[n], "\r\n");
+			send(sd, cmd_str, strlen(cmd_str), 0);
+			recv(sd, buffer, MAX_INPUT_BUFFER-1, 0);
+			if (verbose) 
+				printf("%s", buffer);
+			strip (buffer);
+			if (n < nresponses && strstr(buffer, responses[n])!=buffer) {
+				result = STATE_WARNING;
+				printf (_("SMTP %s - Invalid response '%s' to command '%s'\n"), state_text (result), buffer, commands[n]);
+			}
+			n++;
+		}
 
 		/* tell the server we're done */
 		send (sd, SMTP_QUIT, strlen (SMTP_QUIT), 0);
@@ -200,6 +217,7 @@ process_arguments (int argc, char **argv)
 		{"port", required_argument, 0, 'p'},
 		{"from", required_argument, 0, 'f'},
 		{"command", required_argument, 0, 'C'},
+		{"response", required_argument, 0, 'R'},
 		{"nocommand", required_argument, 0, 'n'},
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
@@ -222,7 +240,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVv46t:p:f:e:c:w:H:C:",
+		c = getopt_long (argc, argv, "+hVv46t:p:f:e:c:w:H:C:R:",
 		                 longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -245,16 +263,30 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'f':									/* from argument */
 			from_arg = optarg;
+			smtp_use_dummycmd = 1;
 			break;
 		case 'e':									/* server expect string on 220  */
 			server_expect = optarg;
 			break;
-		case 'C':									/* server expect string on 220  */
-			mail_command = optarg;
-			smtp_use_dummycmd = 1;
+		case 'C':									/* commands  */
+			if (ncommands >= command_size) {
+				commands = realloc (commands, command_size+8);
+				if (commands == NULL)
+					die (STATE_UNKNOWN,
+					     _("Could not realloc() units [%d]\n"), ncommands);
+			}
+			commands[ncommands] = optarg;
+			ncommands++;
 			break;
-		case 'n':									/* server expect string on 220  */
-			smtp_use_dummycmd = 0;
+		case 'R':									/* server responses */
+			if (nresponses >= response_size) {
+				responses = realloc (responses, response_size+8);
+				if (responses == NULL)
+					die (STATE_UNKNOWN,
+					     _("Could not realloc() units [%d]\n"), nresponses);
+			}
+			responses[nresponses] = optarg;
+			nresponses++;
 			break;
 		case 'c':									/* critical time threshold */
 			if (is_intnonneg (optarg)) {
