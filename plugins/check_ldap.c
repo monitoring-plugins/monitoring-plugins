@@ -33,6 +33,9 @@ const char *revision = "$Revision$";
 
 enum {
 	UNDEFINED = -1,
+#ifdef HAVE_LDAP_SET_OPTION
+	DEFAULT_PROTOCOL = 2,
+#endif
 	DEFAULT_PORT = 389
 };
 
@@ -48,6 +51,9 @@ char *ld_base = "";
 char *ld_passwd = NULL;
 char *ld_binddn = NULL;
 unsigned int ld_port = DEFAULT_PORT;
+#ifdef HAVE_LDAP_SET_OPTION
+int ld_protocol = DEFAULT_PROTOCOL;
+#endif
 int warn_time = UNDEFINED;
 int crit_time = UNDEFINED;
 
@@ -80,6 +86,14 @@ main (int argc, char *argv[])
 		return STATE_CRITICAL;
 	}
 
+#ifdef HAVE_LDAP_SET_OPTION
+	/* set ldap options */
+	if (ldap_set_option (ld, LDAP_OPT_PROTOCOL_VERSION, &ld_protocol) !=
+			LDAP_OPT_SUCCESS ) {
+		printf("Could not set protocol version %d\n", ld_protocol);
+		return STATE_CRITICAL;
+	}
+#endif
 	/* bind to the ldap server */
 	if (ldap_bind_s (ld, ld_binddn, ld_passwd, LDAP_AUTH_SIMPLE) !=
 			LDAP_SUCCESS) {
@@ -141,6 +155,10 @@ process_arguments (int argc, char **argv)
 		{"attr", required_argument, 0, 'a'},
 		{"bind", required_argument, 0, 'D'},
 		{"pass", required_argument, 0, 'P'},
+#ifdef HAVE_LDAP_SET_OPTION
+		{"ver2", no_argument, 0, '2'},
+		{"ver3", no_argument, 0, '3'},
+#endif
 		{"port", required_argument, 0, 'p'},
 		{"warn", required_argument, 0, 'w'},
 		{"crit", required_argument, 0, 'c'},
@@ -156,7 +174,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "hVt:c:w:H:b:p:a:D:P:", longopts, &option_index);
+		c = getopt_long (argc, argv, "hV23t:c:w:H:b:p:a:D:P:", longopts, &option_index);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -197,6 +215,14 @@ process_arguments (int argc, char **argv)
 		case 'c':
 			crit_time = atoi (optarg);
 			break;
+#ifdef HAVE_LDAP_SET_OPTION
+		case '2':
+			ld_protocol = 2;
+			break;
+		case '3':
+			ld_protocol = 3;
+			break;
+#endif
 		default:
 			usage ("check_ldap: could not parse unknown arguments\n");
 			break;
@@ -244,9 +270,18 @@ print_help ()
 		 "\t-D [--bind] ... ldap bind DN (if required)\n"
 		 "\t-P [--pass] ... ldap password (if required)\n"
 		 "\t-p [--port] ... ldap port (default: %d)\n"
+#ifdef HAVE_LDAP_SET_OPTION
+		 "\t-2 [--ver2] ... use ldap porotocol version 2\n"
+		 "\t-3 [--ver3] ... use ldap porotocol version 3\n"
+		 "\t\t(default protocol version: %d)\n"
+#endif
 		 "\t-w [--warn] ... time in secs. - if the exceeds <warn> the STATE_WARNING will be returned\n"
 		 "\t-c [--crit] ... time in secs. - if the exceeds <crit> the STATE_CRITICAL will be returned\n"
-		 "\n", DEFAULT_PORT);
+		 "\n", DEFAULT_PORT
+#ifdef HAVE_LDAP_SET_OPTION
+ 		     , DEFAULT_PROTOCOL
+#endif
+		);
 }
 
 
@@ -256,5 +291,8 @@ print_usage ()
 	printf
 		("Usage: %s -H <host> -b <base_dn> [-p <port>] [-a <attr>] [-D <binddn>]\n"
 		 "         [-P <password>] [-w <warn_time>] [-c <crit_time>] [-t timeout]\n"
+#ifdef HAVE_LDAP_SET_OPTION
+		 "         [-2|-3]\n"
+#endif
 		 "(Note: all times are in seconds.)\n", progname);
 }

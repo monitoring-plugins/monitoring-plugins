@@ -206,6 +206,7 @@ if test "$ac_cv_lib_ldap_main" = "yes"; then
   LDAPINCLUDE="-I/usr/include/ldap"
   AC_SUBST(LDAPLIBS)
   AC_SUBST(LDAPINCLUDE)
+  AC_CHECK_FUNCS(ldap_set_option)
   EXTRAS="$EXTRAS check_ldap"
 else
   AC_MSG_WARN([Skipping LDAP plugin])
