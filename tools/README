@@ -1,0 +1,8 @@
+$Id$
+The tools subdirectory contains anciliary files that can be used to configure
+or test the plugins.
+
+1. setup - used to get the configuration initialized after a CVS download
+2. tango -
+3. mini_epn/p1.pl - used to test perl plugins for functionality under embedded
+   perl
