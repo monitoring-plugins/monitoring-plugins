@@ -80,6 +80,9 @@ main (int argc, char **argv)
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, fp)) {
 		if (sscanf (input_buffer, " %s %lu %lu %lu", str, &total, &used, &free) == 4 &&
 		    strstr (str, "Swap")) {
+			total = total / 1048576;
+			used = used / 1048576;
+			free = free / 1048576;
 #endif
 #ifdef HAVE_SWAP
 	if (!allswaps && sun) {
