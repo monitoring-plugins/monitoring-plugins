@@ -87,7 +87,8 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 %config(missingok,noreplace) /etc/nagios/command.cfg
-%doc INSTALL README REQUIREMENTS COPYING ChangeLog command.cfg
+%doc CODING COPYING FAQ INSTALL LEGAL README REQUIREMENTS SUPPORT
+%doc ChangeLog command.cfg
 %defattr(775,root,root)
 %dir %{_prefix}/lib/nagios/plugins
 %if %custom
