@@ -283,9 +283,14 @@ AC_ARG_WITH(openssl,
 		[sets path to openssl installation]),
 	OPENSSL=$withval,)
 
-dnl Check for AF_INET6 support
+AC_CHECK_HEADERS(unistd.h)
+
+dnl Check for AF_INET6 support - unistd.h required for Darwin
 AC_CACHE_CHECK([for IPv6 support], with_ipv6, [
-	AC_TRY_COMPILE([#include <netinet/in.h>
+	AC_TRY_COMPILE([#ifdef HAVE_UNISTD_H
+			#include <unistd.h>
+			#endif
+			#include <netinet/in.h>
 			#include <sys/socket.h>],
 			[struct sockaddr_in6 sin6;
 			void *p;
@@ -465,8 +470,8 @@ dnl
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS(signal.h strings.h string.h syslog.h unistd.h uio.h errno.h regex.h sys/types.h sys/time.h sys/socket.h sys/loadavg.h)
-AC_CHECK_HEADERS(stdarg.h sys/unistd.h unistd.h ctype.h stdlib.h)
+AC_CHECK_HEADERS(signal.h strings.h string.h syslog.h uio.h errno.h regex.h sys/types.h sys/time.h sys/socket.h sys/loadavg.h)
+AC_CHECK_HEADERS(stdarg.h sys/unistd.h ctype.h stdlib.h)
 AC_CHECK_HEADERS(limits.h sys/param.h sys/mount.h sys/vfs.h sys/fs/s5param.h sys/filsys.h fcntl.h sys/statfs.h sys/dustat.h sys/statvfs.h)
 
 # Define HAVE_INTTYPES_H if <inttypes.h> exists,
