@@ -557,7 +557,8 @@ void print_help(void)
 		 "-V, --version\n"
 		 "   Print version information\n\n"
 		 "Notes:\n"
-		 " - The NSClient service should be running on the server to get any information.\n"
+		 " - The NSClient service should be running on the server to get any information\n"
+		 "   (http://nsclient.ready2run.nl).\n"
 		 " - Critical thresholds should be lower than warning thresholds\n", PORT, DEFAULT_SOCKET_TIMEOUT);
 }
 
