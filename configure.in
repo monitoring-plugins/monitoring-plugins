@@ -53,7 +53,6 @@ SUPPORT="Send email to nagios-users@lists.sourceforge.net if you have questions\
 AC_SUBST(SUPPORT)
 
 dnl CGIURL has changed for Nagios with 1.0 beta
-dnl AC_ARG_WITH(cgiurl,--with-cgiurl=<dir> sets URL for cgi programs,cgiurl=$withval,cgiurl=/nagios/cgi-bin)
 AC_ARG_WITH(cgiurl,
 	ACX_HELP_STRING([--with-cgiurl=DIR],
 		[sets URL for cgi programs]),
@@ -62,13 +61,11 @@ AC_ARG_WITH(cgiurl,
 CGIURL="$cgiurl"
 AC_DEFINE_UNQUOTED(CGIURL,"$CGIURL",[URL of CGI programs])
 
-dnl AC_ARG_WITH(nagios_user,--with-nagios-user=<user> sets user name to run nagios,nagios_usr=$withval,nagios_usr=nagios)
 AC_ARG_WITH(nagios_user,
 	ACX_HELP_STRING([--with-nagios-user=USER],
 		[set user name to run nagios]),
 	nagios_usr=$withval,
 	nagios_usr=nagios)
-dnl AC_ARG_WITH(nagios_group,--with-nagios-group=<group> sets group name to run nagios,nagios_grp=$withval,nagios_grp=nagios)
 AC_ARG_WITH(nagios_group,
 	ACX_HELP_STRING([--with-nagios-group=GROUP],
 		[set group name to run nagios]),
@@ -79,7 +76,6 @@ AC_SUBST(nagios_grp)
 INSTALL_OPTS="-o $nagios_usr -g $nagios_grp"
 AC_SUBST(INSTALL_OPTS)
 
-dnl AC_ARG_WITH(trusted_path,--with-trusted-path=/bin:/sbin:/usr/bin:/usr/sbin sets trusted path for executables called by scripts,trusted_path=$withval,trusted_path=/bin:/sbin:/usr/bin:/usr/sbin)
 AC_ARG_WITH(trusted_path,
 	ACX_HELP_STRING([--with-trusted-path=PATH],
 		[sets trusted path for executables called by scripts (default=/bin:/sbin:/usr/bin:/usr/sbin)]),
@@ -131,7 +127,6 @@ AC_SUBST(SOCKETLIBS)
 dnl Check for PostgreSQL libraries
 _SAVEDLIBS="$LIBS"
 _SAVEDCPPFLAGS="$CPPFLAGS"
-dnl AC_ARG_WITH(pgsql,--with-pgsql=<dir> sets path to pgsql installation,[PGSQL=$withval])
 AC_ARG_WITH(pgsql,
 	ACX_HELP_STRING([--with-pgsql=DIR],
 		[sets path to pgsql installation]),
@@ -212,7 +207,6 @@ LIBS="$_SAVEDLIBS"
 dnl Check for mysql libraries
 _SAVEDLIBS="$LIBS"
 _SAVEDCPPFLAGS="$CPPFLAGS"
-dnl AC_ARG_WITH(mysql,--with-mysql=<dir> sets path to mysql installation (assumes lib/mysql and include subdirs),[MYSQL=$withval])
 AC_ARG_WITH(mysql,
 	ACX_HELP_STRING([--with-mysql=DIR],
 		[sets path to mysql installation (assumes lib/mysql and include subdirs]),
@@ -270,7 +264,6 @@ elif test "$OPENSSL" = "/usr/local/bin/openssl"; then
 elif test "$OPENSSL" = "/usr/local/ssl/bin/openssl"; then
   OPENSSL=/usr/local/ssl
 fi
-dnl AC_ARG_WITH(openssl,--with-openssl=<dir> sets path to openssl installation,[OPENSSL=$withval])
 AC_ARG_WITH(openssl,
 	ACX_HELP_STRING([--with-openssl=DIR],
 		[sets path to openssl installation]),
@@ -554,262 +547,331 @@ then
   AC_DEFINE_UNQUOTED(PROC_LOADAVG,"/proc/loadavg",[Location of /proc/loadavg])
 fi
 
+dnl #### Process table test
+
 AC_PATH_PROG(PATH_TO_PS,ps)
+ac_cv_use_ps_vars=no
+
 dnl  STAT UCOMM              VSZ   RSS USER       UID  PPID COMMAND
-if ps -weo 'stat comm vsz rss user uid ppid args' 2>/dev/null | egrep -i ["^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ +U[ID]+ +P[PID]+ +[RGSCOMDNA]+"] >/dev/null
+if ps -weo 'stat comm vsz rss user uid ppid args' 2>/dev/null | \
+	egrep -i ["^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ +U[ID]+ \
+	+P[PID]+ +[RGSCOMDNA]+"] >/dev/null
 then
-	AC_DEFINE(USE_PS_VARS,1,[Define if 'ps' will be parsed with sscanf])
-	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,procprog,&pos],[Variable list for sscanf of 'ps' output])
-	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS -weo 'stat user ppid args'",[Verbatim command to execute for ps in check_netsaint])
+	ac_cv_use_ps_vars=yes
+	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
+	ac_cv_ps_raw_command="$PATH_TO_PS -weo 'stat user ppid args'"
+	ac_cv_ps_command="$PATH_TO_PS -weo 'stat uid ppid comm args'"
+	ac_cv_ps_format="%s %d %d %s %n"
+	ac_cv_vsz_command="$PATH_TO_PS -weo 'vsz comm'"
+	ac_cv_vsz_format="%d %s"
+	ac_cv_rss_command="$PATH_TO_PS -weo 'rss comm'"
+	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -weo 'stat uid ppid comm args'",[Verbatim command to execute for ps in check_procs])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[Format string for scanning ps output in check_procs])
-	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -weo 'vsz comm'",[Verbatim command to execute for ps in check_vsz])
-	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[Format string for scanning ps output in check_vsz])
-	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -weo 'rss comm'",[Verbatim command to execute for ps in check_rss])
-	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s",[Format string for scanning ps output in check_rss])
-  echo "      ps syntax... $PATH_TO_PS -weo 'stat comm vsz rss user ppid args'"
+  	echo "      ps syntax... $PATH_TO_PS -weo 'stat comm vsz rss user ppid args'"
+
 dnl FreeBSD
-elif ps waxco 'state command vsz rss uid user ppid' 2>/dev/null | egrep -i ["^STAT +COMMAND +VSZ +RSS +UID +USER +PPID"] >/dev/null
+elif ps waxco 'state command vsz rss uid user ppid' 2>/dev/null | \
+	egrep -i ["^STAT +COMMAND +VSZ +RSS +UID +USER +PPID"] >/dev/null
 then
-	AC_DEFINE(USE_PS_VARS,1,[Define if we use custom variable list for sscanf])
-	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,procprog,&pos],[])
-	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS waxo 'state uid ppid command'",[])
+	ac_cv_use_ps_vars=yes
+	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
+	ac_cv_ps_raw_command="$PATH_TO_PS waxo 'state uid ppid command'"
+	ac_cv_ps_command="$PATH_TO_PS waxco 'state uid ppid command command'"
+	ac_cv_ps_format="%s %d %d %s %n"
+	ac_cv_vsz_command="$PATH_TO_PS waxco 'vsz command'"
+	ac_cv_vsz_format="%d %s"
+	ac_cv_rss_command="$PATH_TO_PS waxco 'rss command'"
+	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS waxco 'state uid ppid command command'",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[Format string for scanning ps output in check_procs])
-	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS waxco 'vsz command'",[])
-	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[])
-	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS waxco 'rss command'",[])
-	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s",[])
 	echo "      ps syntax... $PATH_TO_PS -Ao 'state command vsz rss'"
+
 dnl BSD-like mode in RH 6.1
-elif ps waxno 'state comm vsz rss uid user ppid args' 2>/dev/null | egrep -i ["^S +COMMAND +VSZ +RSS +UID +USER +PPID +[RGSCOMDNA]+"] >/dev/null
+elif ps waxno 'state comm vsz rss uid user ppid args' 2>/dev/null | \
+	egrep -i ["^S +COMMAND +VSZ +RSS +UID +USER +PPID +[RGSCOMDNA]+"] \
+	>/dev/null
 then
-	AC_DEFINE(USE_PS_VARS,1,[Define if we use custom variable list for sscanf])
-	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,procprog,&pos],[])
-	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS waxno 'state user ppid comm'",[])
+	ac_cv_use_ps_vars=yes
+	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
+	ac_cv_ps_raw_command="$PATH_TO_PS waxno 'state user ppid comm'"
+	ac_cv_ps_command="$PATH_TO_PS waxno 'state uid ppid comm args'"
+	ac_cv_ps_format="%s %d %d %s %n"
+	ac_cv_vsz_command="$PATH_TO_PS waxno 'vsz comm'"
+	ac_cv_vsz_format="%d %s"
+	ac_cv_rss_command="$PATH_TO_PS waxno 'rss comm'"
+	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS waxno 'state uid ppid comm args'",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[Format string for scanning ps output in check_procs])
-	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS waxno 'vsz comm'",[])
-	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[])
-	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS waxno 'rss comm'",[])
-	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s",[])
 	echo "      ps syntax... $PATH_TO_PS -waxco 'state comm vsz rss'"
+
 dnl SunOS 4.1.3:
 dnl  F  UID  PID  PPID  CP  PRI  NI  SZ  RSS  WCHAN  STAT  TT  TIME  COMMAND
-dnl
-elif ps -laxnwww 2>/dev/null | egrep -i ["^ *F(LAGS)? +UID +PID +PPID +CP +PRI +NI +(SZ)|(VSZ)|(SIZE) +RSS +WCHAN +STAT? +TTY? +TIME +COMMAND"] >/dev/null
+elif ps -laxnwww 2>/dev/null | egrep -i ["^ *F(LAGS)? +UID +PID +PPID \
+	+CP +PRI +NI +(SZ)|(VSZ)|(SIZE) +RSS +WCHAN +STAT? +TTY? +TIME \
+	+COMMAND"] >/dev/null
 then
-	AC_DEFINE(USE_PS_VARS,1,[Define if we use custom variable list for sscanf])
-	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS laxnwww",[])
+	ac_cv_use_ps_vars=yes
+	ac_cv_ps_raw_command="$PATH_TO_PS laxnwww"
+	ac_cv_ps_varlist="[&procuid,&procppid,procstat,&pos,procprog]"
+	ac_cv_ps_command="$PATH_TO_PS -laxnwww"
+	ac_cv_ps_format="%*s %d %*s %d %*s %*s %*s %*s %*s %*s %s %*s %*s %n%s"
+	ac_cv_vsz_command="$PATH_TO_PS laxnwww"
+	ac_cv_vsz_format="%*s %*s %*s %*s %*s %*s %*s %d"
+	ac_cv_rss_command="$PATH_TO_PS laxnwww"
+	ac_cv_rss_format="%*s %*s %*s %*s %*s %*s %*s %*s %d"
 	EXTRAS="$EXTRAS check_nagios"
-	AC_DEFINE_UNQUOTED(PS_VARLIST,[&procuid,&procppid,procstat,&pos,procprog],[])
-	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -laxnwww",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%*s %d %*s %d %*s %*s %*s %*s %*s %*s %s %*s %*s %n%s",[Format string for scanning ps output in check_procs])
-	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS laxnwww",[])
-	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%*s %*s %*s %*s %*s %*s %*s %d",[])
-	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS laxnwww",[])
-	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%*s %*s %*s %*s %*s %*s %*s %*s %d",[])
 	echo "      ps syntax... $PATH_TO_PS laxnwww"
+
 dnl Debian Linux / procps v1.2.9:
 dnl  FLAGS   UID   PID  PPID PRI  NI   SIZE   RSS WCHAN       STA TTY TIME COMMAND
 dnl    100     0     1     0   0   0    776    76  c0131c8c   S  ffff  0:11 init [2]
 dnl
-elif ps laxnwww 2>/dev/null | egrep -i ["^ *F(LAGS)? +UID +PID +PPID +PRI +NI +(VSZ)|(SIZE) +RSS +WCHAN +STAT? TTY +TIME +COMMAND"] >/dev/null
+elif ps laxnwww 2>/dev/null | egrep -i ["^ *F(LAGS)? +UID +PID +PPID +PRI \
+	+NI +(VSZ)|(SIZE) +RSS +WCHAN +STAT? TTY +TIME +COMMAND"] >/dev/null
 then
-	AC_DEFINE(USE_PS_VARS,1,[Define if we use custom variable list for sscanf])
-	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS laxnwww",[])
+	ac_cv_use_ps_vars=yes
+	ac_cv_ps_raw_command="$PATH_TO_PS laxnwww"
+	ac_cv_ps_varlist="[&procuid,&procppid,procstat,&pos,procprog]"
+	ac_cv_ps_command="$PATH_TO_PS laxnwww"
+	ac_cv_ps_format="%*s %d %*s %d %*s %*s %*s %*s %*s %s %*s %*s %n%s"
+	ac_cv_vsz_command="$PATH_TO_PS laxnwww"
+	ac_cv_vsz_format="%*s %*s %*s %*s %*s %*s %d"
+	ac_cv_rss_command="$PATH_TO_PS laxnwww"
+	ac_cv_rss_format="%*s %*s %*s %*s %*s %*s %*s %d"
 	EXTRAS="$EXTRAS check_nagios"
-	AC_DEFINE_UNQUOTED(PS_VARLIST,[&procuid,&procppid,procstat,&pos,procprog],[])
-	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS laxnwww",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%*s %d %*s %d %*s %*s %*s %*s %*s %s %*s %*s %n%s",[Format string for scanning ps output in check_procs])
-	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS laxnwww",[])
-	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%*s %*s %*s %*s %*s %*s %d",[])
-	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS laxnwww",[])
-	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%*s %*s %*s %*s %*s %*s %*s %d",[])
 	echo "      ps syntax... $PATH_TO_PS laxnwww"
+
 dnl OpenBSD (needs to come early because -exo appears to work, but does not give all procs)
-elif ps -axo 'stat comm vsz rss user uid ppid args' 2>/dev/null | egrep -i ["^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ +U[ID]+ +P[PID]+ +[RGSCOMDNA]+"] >/dev/null
+elif ps -axo 'stat comm vsz rss user uid ppid args' 2>/dev/null | \
+	egrep -i ["^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ \
+	+U[ID]+ +P[PID]+ +[RGSCOMDNA]+"] >/dev/null
 then
-	AC_DEFINE(USE_PS_VARS,1,[Define if 'ps' will be parsed with sscanf])
-	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,procprog,&pos],[Variable list for sscanf of 'ps' output])
-	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS -axo 'stat user ppid args'",[Verbatim command to execute for ps in check_netsaint])
+	ac_cv_use_ps_vars=yes
+	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
+	ac_cv_ps_raw_command="$PATH_TO_PS -axo 'stat user ppid args'"
+	ac_cv_ps_command="$PATH_TO_PS -axo 'stat uid ppid comm args'"
+	ac_cv_ps_format="%s %d %d %s %n"
+	ac_cv_vsz_command="$PATH_TO_PS -axo 'vsz comm'"
+	ac_cv_vsz_format="%d %s"
+	ac_cv_rss_command="$PATH_TO_PS -axo 'rss comm'"
+	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -axo 'stat uid ppid comm args'",[Verbatim command to execute for ps in check_procs])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[Format string for scanning ps output in check_procs])
-	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -axo 'vsz comm'",[Verbatim command to execute for ps in check_vsz])
-	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[Format string for scanning ps output in check_vsz])
-	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -axo 'rss comm'",[Verbatim command to execute for ps in check_rss])
-	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s",[Format string for scanning ps output in check_rss])
-  echo "      ps syntax... $PATH_TO_PS -axo 'stat comm vsz rss user ppid args'"
+	echo "      ps syntax... $PATH_TO_PS -axo 'stat comm vsz rss user ppid args'"
+
 dnl AIX 4.3.3 - needs verification. This works for Tru64 - needs %*[ +] in PS_FORMAT
-elif ps -ao 'stat comm vsz rss user uid ppid args' 2>/dev/null | egrep -i ["^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ +U[ID]+ +P[PID]+ +[RGSCOMDNA]+"] >/dev/null
+elif ps -ao 'stat comm vsz rss user uid ppid args' 2>/dev/null | \
+	egrep -i ["^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ \
+	+U[ID]+ +P[PID]+ +[RGSCOMDNA]+"] >/dev/null
 then
-	AC_DEFINE(USE_PS_VARS,1,[Define if 'ps' will be parsed with sscanf])
-	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,procprog,&pos],[Variable list for sscanf of 'ps' output])
-	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS -ao 'stat user ppid args'",[Verbatim command to execute for ps in check_netsaint])
+	ac_cv_use_ps_vars=yes
+	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
+	ac_cv_ps_raw_command="$PATH_TO_PS -ao 'stat user ppid args'"
+	ac_cv_ps_command="$PATH_TO_PS -ao 'stat uid ppid comm args'"
+	ac_cv_ps_format="[["%s%*[ +] %d %d %s %n"]]"
+	ac_cv_vsz_command="$PATH_TO_PS -ao 'vsz comm'"
+	ac_cv_vsz_format="%d %s"
+	ac_cv_rss_command="$PATH_TO_PS -ao 'rss comm'"
+	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -ao 'stat uid ppid comm args'")
-	AC_DEFINE_UNQUOTED(PS_FORMAT,[["%s%*[ +] %d %d %s %n"]],[Format string for scanning ps output in check_procs])
-	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -ao 'vsz comm'",[])
-	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[])
-	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -ao 'rss comm'",[])
-	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s",[])
-  echo "      ps syntax... $PATH_TO_PS -ao 'stat comm vsz rss user ppid args'"
-elif ps -eo 's comm vsz rss user uid ppid args' 2>/dev/null | egrep -i ["^S[TAUES]* +C[OMDNA]+ +[VSIZE]+ +U[SER]+ +U[ID]+ +P[PID]+ +[RGSCOMDNA]+"] >/dev/null
+	echo "      ps syntax... $PATH_TO_PS -ao 'stat comm vsz rss user ppid args'"
+
+elif ps -eo 's comm vsz rss user uid ppid args' 2>/dev/null | \
+	egrep -i ["^S[TAUES]* +C[OMDNA]+ +[VSIZE]+ +U[SER]+ +U[ID]+ \
+	+P[PID]+ +[RGSCOMDNA]+"] >/dev/null
 then
-	AC_DEFINE(USE_PS_VARS,1,[Define if 'ps' will be parsed with sscanf])
-	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,procprog,&pos],[Variable list for sscanf of 'ps' output])
-	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS -eo 's user ppid args'",[Verbatim command to execute for ps in check_netsaint])
+	ac_cv_use_ps_vars=yes
+	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
+	ac_cv_ps_raw_command="$PATH_TO_PS -eo 's user ppid args'"
+	ac_cv_ps_command="$PATH_TO_PS -eo 's uid ppid comm args'"
+	ac_cv_ps_format="%s %d %d %s %n"
+	ac_cv_vsz_command="$PATH_TO_PS -eo 'vsz comm'"
+	ac_cv_vsz_format="%d %s"
+	ac_cv_rss_command="$PATH_TO_PS -eo 'rss comm'"
+	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -eo 's uid ppid comm args'")
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[Format string for scanning ps output in check_procs])
-	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -eo 'vsz comm'",[])
-	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[])
-	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -eo 'rss comm'",[])
-	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s",[])
         echo "      ps syntax... $PATH_TO_PS -eo 's  comm vsz rss user ppid args'"
-elif ps -Ao 's comm vsz rss uid user ppid args' 2>/dev/null | egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PPID +[RGSCOMDNA]+"] >/dev/null
+
+elif ps -Ao 's comm vsz rss uid user ppid args' 2>/dev/null | \
+	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER \
+	+PPID +[RGSCOMDNA]+"] >/dev/null
 then
-	AC_DEFINE(USE_PS_VARS,1,[Define if 'ps' will be parsed with sscanf])
-	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,procprog,&pos],[Variable list for sscanf of 'ps' output])
-	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS -Ao 's user ppid args'",[Verbatim command to execute for ps in check_netsaint])
+	ac_cv_use_ps_vars=yes
+	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
+	ac_cv_ps_raw_command="$PATH_TO_PS -Ao 's user ppid args'"
+	ac_cv_ps_command="$PATH_TO_PS -Ao 's uid ppid comm args'"
+	ac_cv_ps_format="%s %d %d %s %n"
+	ac_cv_vsz_command="$PATH_TO_PS -Ao 'vsz comm'"
+	ac_cv_vsz_format="%d %s"
+	ac_cv_rss_command="$PATH_TO_PS -Ao 'rss comm'"
+	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -Ao 's uid ppid comm args'",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[Format string for scanning ps output in check_procs])
-	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -Ao 'vsz comm'",[])
-	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[])
-	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -Ao 'rss comm'",[])
-	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s",[])
 	echo "      ps syntax... $PATH_TO_PS -Ao 's comm vsz rss'"
-elif ps -Ao 'status comm vsz rss uid user ppid args' 2>/dev/null | egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PPID +[RGSCOMDNA]+"] >/dev/null
+
+elif ps -Ao 'status comm vsz rss uid user ppid args' 2>/dev/null | \
+	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER \
+	+PPID +[RGSCOMDNA]+"] >/dev/null
 then
-	AC_DEFINE(USE_PS_VARS,1,[Define if we use custom variable list for sscanf])
-	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,procprog,&pos])
-	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS -Ao 'status user ppid args'",[Verbatim command to execute for ps in check_netsaint])
+	ac_cv_use_ps_vars=yes
+	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
+	ac_cv_ps_raw_command="$PATH_TO_PS -Ao 'status user ppid args'"
+	ac_cv_ps_command="$PATH_TO_PS -Ao 'status uid ppid comm args'"
+	ac_cv_ps_format="%s %d %d %s %n"
+	ac_cv_vsz_command="$PATH_TO_PS -Ao 'vsz comm'"
+	ac_cv_vsz_format="%d %s"
+	ac_cv_rss_command="$PATH_TO_PS -Ao 'rss comm'"
+	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -Ao 'status uid ppid comm args'",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[Format string for scanning ps output in check_procs])
-	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -Ao 'vsz comm'",[])
-	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[])
-	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -Ao 'rss comm'",[])
-	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s",[])
 	echo "      ps syntax... $PATH_TO_PS -Ao 'status comm vsz rss'"
-elif ps -Ao 'state comm vsz rss uid user ppid args' 2>/dev/null | egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PPID +[RGSCOMDNA]+"] >/dev/null
+
+elif ps -Ao 'state comm vsz rss uid user ppid args' 2>/dev/null | \
+	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER \
+	+PPID +[RGSCOMDNA]+"] >/dev/null
 then
-	AC_DEFINE(USE_PS_VARS,1,[Define if we use custom variable list for sscanf])
-	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,procprog,&pos])
-	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS -Ao 'state user ppid args'",[Verbatim command to execute for ps in check_netsaint])
+	ac_cv_use_ps_vars=yes
+	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
+	ac_cv_ps_raw_command="$PATH_TO_PS -Ao 'state user ppid args'"
+	ac_cv_ps_command="$PATH_TO_PS -Ao 'state uid ppid comm args'"
+	ac_cv_ps_format="%s %d %d %s %n"
+	ac_cv_vsz_command="$PATH_TO_PS -Ao 'vsz comm'"
+	ac_cv_vsz_format="%d %s"
+	ac_cv_rss_command="$PATH_TO_PS -Ao 'rss comm'"
+	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -Ao 'state uid ppid comm args'",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[Format string for scanning ps output in check_procs])
-	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -Ao 'vsz comm'",[])
-	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[])
-	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -Ao 'rss comm'",[])
-	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s",[])
 	echo "      ps syntax... $PATH_TO_PS -Ao 'state comm vsz rss'"
+
 dnl wonder who takes state instead of stat
-elif ps -ao 'state command vsz rss user ppid args' 2>/dev/null | egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PPID +[RGSCOMDNA]+"] >/dev/null
+elif ps -ao 'state command vsz rss user ppid args' 2>/dev/null | \
+	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER \
+	+PPID +[RGSCOMDNA]+"] >/dev/null
 then
-	AC_DEFINE(USE_PS_VARS,1,[Define if we use custom variable list for sscanf])
-	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,procprog,&pos],[])
-	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS -ao 'state user ppid args'",[])
+	ac_cv_use_ps_vars=yes
+	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
+	ac_cv_ps_raw_command="$PATH_TO_PS -ao 'state user ppid args'"
+	ac_cv_ps_command="$PATH_TO_PS -ao 'state uid ppid command args'"
+	ac_cv_ps_format="%s %d %d %s %n"
+	ac_cv_vsz_command="$PATH_TO_PS -ao 'vsz command'"
+	ac_cv_vsz_format="%d %s"
+	ac_cv_rss_command="$PATH_TO_PS -ao 'rss command'"
+	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -ao 'state uid ppid command args'",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[Format string for scanning ps output in check_procs])
-	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -ao 'vsz command'",[])
-	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[])
-	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -ao 'rss command'",[])
-	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s",[])
 	echo "      ps syntax... $PATH_TO_PS -ao 'state command vsz rss'"
+
 dnl IRIX 53
-elif ps -el 2>/dev/null | egrep -i ["^ *F +S +UID +PID +PPID +C +PRI +NI +P +SZ +RSS +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
+elif ps -el 2>/dev/null | egrep -i ["^ *F +S +UID +PID +PPID +C +PRI \
+	+NI +P +SZ +RSS +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
 then
-	AC_DEFINE(USE_PS_VARS,1,[Define if we use custom variable list for sscanf])
-	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,&pos,procprog],[])
-	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -el",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %n%s",[Format string for scanning ps output in check_procs])
-	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -el",[])
-	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%*s %*s %*s %*s %d",[])
-	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -el",[])
-	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %d",[])
+	ac_cv_use_ps_vars=yes
+	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&pos,procprog]"
+	ac_cv_ps_command="$PATH_TO_PS -el"
+	ac_cv_ps_format="%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %n%s"
+	ac_cv_vsz_command="$PATH_TO_PS -el"
+	ac_cv_vsz_format="%*s %*s %*s %*s %d"
+	ac_cv_rss_command="$PATH_TO_PS -el"
+	ac_cv_rss_format="%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %d"
 	echo "      ps syntax... $PATH_TO_PS -el"
+
 dnl IRIX 63
-elif ps -el 2>/dev/null | egrep -i ["^ *F +S +UID +PID +PPID +C +PRI +NI +P +ADDR +SZ +RSS +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
+elif ps -el 2>/dev/null | egrep -i ["^ *F +S +UID +PID +PPID +C +PRI \
+	+NI +P +ADDR +SZ +RSS +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
 then
-	AC_DEFINE(USE_PS_VARS,1,[Define if we use custom variable list for sscanf])
-	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,&pos,procprog],[])
-	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -el",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %n%s",[Format string for scanning ps output in check_procs])
-	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -el",[])
-	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%*s %*s %*s %*s %d",[])
-	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -el",[])
-	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %d",[])
+	ac_cv_use_ps_vars=yes
+	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&pos,procprog]"
+	ac_cv_ps_command="$PATH_TO_PS -el"
+	ac_cv_ps_format="%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %n%s"
+	ac_cv_vsz_command="$PATH_TO_PS -el"
+	ac_cv_vsz_format="%*s %*s %*s %*s %d"
+	ac_cv_rss_command="$PATH_TO_PS -el"
+	ac_cv_rss_format="%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %d"
 	echo "      ps syntax... $PATH_TO_PS -el"
-dnl    
+
 dnl AIX 4.1:
 dnl     F S      UID   PID  PPID   C PRI NI ADDR  SZ  RSS   WCHAN    TTY  TIME CMD
 dnl    303 A        0     0     0 120  16 -- 1c07  20   24              -  0:45 swapper
-elif ps -el 2>/dev/null | egrep -i ["^ *F +S +UID +PID +PPID +C +PRI +NI +ADDR +SZ +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
+elif ps -el 2>/dev/null | egrep -i ["^ *F +S +UID +PID +PPID +C +PRI \
+	+NI +ADDR +SZ +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
 then
-	AC_DEFINE(USE_PS_VARS,1,[Define if we use custom variable list for sscanf])
-	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,&pos,procprog],[])
-	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -el",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %n%s",[Format string for scanning ps output in check_procs])
-	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -el",[])
-	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%*s %*s %*s %*s %*s %*s %*s %*s %*s %d",[])
-	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS -el",[])
-	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%*s %*s %*s %*s %*s %*s %*s %*s %*s %d",[])
+	ac_cv_use_ps_vars=yes
+	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&pos,procprog]"
+	ac_cv_ps_command="$PATH_TO_PS -el"
+	ac_cv_ps_format="%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %n%s"
+	ac_cv_vsz_command="$PATH_TO_PS -el"
+	ac_cv_vsz_format="%*s %*s %*s %*s %*s %*s %*s %*s %*s %d"
+	ac_cv_rss_command="$PATH_TO_PS -el"
+	ac_cv_rss_format="%*s %*s %*s %*s %*s %*s %*s %*s %*s %d"
 	echo "      ps syntax... $PATH_TO_PS -el"
+
 dnl AIX?
-elif ps glaxen 2>/dev/null | egrep -i ["^ *F +UID +PID +PPID +PRI +NI +VSZ +RSS +WCHAN +STAT +TTY +TIME +COMMAND"] >/dev/null
+elif ps glaxen 2>/dev/null | egrep -i ["^ *F +UID +PID +PPID +PRI +NI \
+	+VSZ +RSS +WCHAN +STAT +TTY +TIME +COMMAND"] >/dev/null
 then
-	AC_DEFINE(USE_PS_VARS,1,[Define if we use custom variable list for sscanf])
-	AC_DEFINE_UNQUOTED(PS_VARLIST,[&procuid,&procppid,procstat,&pos,procprog],[])
-	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS glaxen",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%*s %d %*s %d %*s %*s %*s %*s %*s %s %*s %*s %n%s",[Format string for scanning ps output in check_procs])
-	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS glaxen",[])
-	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%*s %*s %*s %*s %*s %*s %d",[])
-	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS glaxen",[])
-	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%*s %*s %*s %*s %*s %*s %*s %d",[])
+	ac_cv_use_ps_vars=yes
+	ac_cv_ps_varlist="[&procuid,&procppid,procstat,&pos,procprog]"
+	ac_cv_ps_command="$PATH_TO_PS glaxen"
+	ac_cv_ps_format="%*s %d %*s %d %*s %*s %*s %*s %*s %s %*s %*s %n%s"
+	ac_cv_vsz_command="$PATH_TO_PS glaxen"
+	ac_cv_vsz_format="%*s %*s %*s %*s %*s %*s %d"
+	ac_cv_rss_command="$PATH_TO_PS glaxen"
+	ac_cv_rss_format="%*s %*s %*s %*s %*s %*s %*s %d"
 	echo "      ps syntax... $PATH_TO_PS glaxen"
+
 dnl MacOSX / Darwin
 dnl TODO: MacOSX has commands with spaces which will cause problems to PS_FORMAT
 dnl STAT      VSZ    RSS   UID USER     PPID UCOMM            COMMAND
 dnl Ss       1308    272     0 root        0 init             /sbin/init
-elif ps waxo 'state vsz rss uid user ppid ucomm command' 2>/dev/null | egrep -i ["^STAT +VSZ +RSS +UID +USER +PPID +UCOMM +COMMAND"] >/dev/null
+elif ps waxo 'state vsz rss uid user ppid ucomm command' 2>/dev/null | \
+	egrep -i ["^STAT +VSZ +RSS +UID +USER +PPID +UCOMM +COMMAND"] >/dev/null
 then
-	AC_DEFINE(USE_PS_VARS,1,[Define if we use custom variable list for sscanf])
-	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,procprog,&pos],[])
-	AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$PATH_TO_PS waxo 'state uid ppid command'",[])
+	ac_cv_use_ps_vars=yes
+	ac_cv_ps_varlist="[procstat,&procuid,&procppid,procprog,&pos]"
+	ac_cv_ps_raw_command="$PATH_TO_PS waxo 'state uid ppid command'"
+	ac_cv_ps_command="$PATH_TO_PS waxo 'state uid ppid ucomm command'"
+	ac_cv_ps_format="%s %d %d %s %n"
+	ac_cv_vsz_command="$PATH_TO_PS waxco 'vsz command'"
+	ac_cv_vsz_format="%d %s"
+	ac_cv_rss_command="$PATH_TO_PS waxco 'rss command'"
+	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS waxo 'state uid ppid ucomm command'",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%s %d %d %s %n",[Format string for scanning ps output in check_procs])
-	AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS waxco 'vsz command'",[])
-	AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%d %s",[])
-	AC_DEFINE_UNQUOTED(RSS_COMMAND,"$PATH_TO_PS waxco 'rss command'",[])
-	AC_DEFINE_UNQUOTED(RSS_FORMAT,"%d %s",[])
 	echo "      ps syntax... $PATH_TO_PS waxo 'state vsz rss command'"
+
 dnl UnixWare 
-elif ps -Al 2>/dev/null | egrep -i ["^ *F +S +UID +PID +PPID +CLS +PRI +NI +C +ADDR +SZ +WCHAN +TTY +TIME +COMD"] >/dev/null
+elif ps -Al 2>/dev/null | egrep -i ["^ *F +S +UID +PID +PPID +CLS +PRI \
+	+NI +C +ADDR +SZ +WCHAN +TTY +TIME +COMD"] >/dev/null
 then
-	AC_DEFINE(USE_PS_VARS,1,[Define if we use custom variable list for sscanf])
-	AC_DEFINE_UNQUOTED(PS_VARLIST,[procstat,&procuid,&procppid,&pos,procprog],[])
-	AC_DEFINE_UNQUOTED(PS_COMMAND,"$PATH_TO_PS -Al",[])
-	AC_DEFINE_UNQUOTED(PS_FORMAT,"%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %n%s",[Format string for scanning ps output in check_procs])
-	if ps -Ao 'vsz comm' 2>/dev/null | egrep -i ["^ *VSZ +COMMAND"] >/dev/null
+	ac_cv_use_ps_vars=yes
+	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&pos,procprog]"
+	ac_cv_ps_command="$PATH_TO_PS -Al"
+	ac_cv_ps_format="%*s %s %d %*s %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %n%s"
+	if ps -Ao 'vsz comm' 2>/dev/null | \
+		egrep -i ["^ *VSZ +COMMAND"] >/dev/null
 	then
-		AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$PATH_TO_PS -Ao 'vsz comm'",[])
-		AC_DEFINE_UNQUOTED(VSZ_FORMAT,"%*s %d",[])
+		ac_cv_vsz_command="$PATH_TO_PS -Ao 'vsz comm'"
+		ac_cv_vsz_format="%*s %d"
 	fi
 	echo "      ps syntax... $PATH_TO_PS -Al"
+
 else
-	echo "** Unable to find usable ps syntax"
+	AC_MSG_WARN([unable to find usable ps syntax])
 fi
 
-dnl AC_ARG_WITH(df_command,--with-df-command=<syntax>,sets syntax for df,DF_COMMAND=$withval)
+if test "x$ac_cv_use_ps_vars" != "xno"
+then
+	AC_DEFINE(USE_PS_VARS,1,[Define if 'ps' will be parsed with sscanf])
+fi
+AC_DEFINE_UNQUOTED(PS_VARLIST,$ac_cv_ps_varlist,
+	[Variable list for sscanf of 'ps' output])
+AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,$ac_cv_ps_raw_command,
+	[Verbatim command to execute for ps in check_netsaint])
+AC_DEFINE_UNQUOTED(PS_COMMAND,$ac_cv_ps_command,
+	[Verbatim command to execute for ps in check_procs])
+AC_DEFINE_UNQUOTED(PS_FORMAT,$ac_cv_ps_format,
+	[Format string for scanning ps output in check_procs])
+AC_DEFINE_UNQUOTED(VSZ_COMMAND,$ac_cv_vsz_command,
+	[Verbatim command to execute for ps in check_vsz])
+AC_DEFINE_UNQUOTED(VSZ_FORMAT,$ac_cv_vsz_format,
+	[Format string for scanning ps output in check_vsz])
+AC_DEFINE_UNQUOTED(RSS_COMMAND,$ac_cv_rss_command,
+	[Verbatim command to execute for ps in check_rss])
+AC_DEFINE_UNQUOTED(RSS_FORMAT,$ac_cv_rss_format,
+	[Format string for scanning ps output in check_rss])
+
 AC_ARG_WITH(df_command,
 	ACX_HELP_STRING([--with-df-command=SYNTAX],
 		[sets syntax for df]),
@@ -817,89 +879,128 @@ AC_ARG_WITH(df_command,
 if test -n "$DF_COMMAND"
 then
 	AC_DEFINE_UNQUOTED(DF_COMMAND,"$DF_COMMAND",[path and args for df command])
+
 elif df -Pk 2>/dev/null | egrep -i ["^(/dev/|[a-zA-Z]:)[a-z0-9/\\]+ +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+% +/[a-z0-9/\\]*"] >/dev/null
 then
 	AC_PATH_PROG(PATH_TO_DF,df)
 	AC_MSG_RESULT([      df syntax... $PATH_TO_DF -Pk])
 	AC_DEFINE_UNQUOTED(DF_COMMAND,"$PATH_TO_DF -Pk",[path and args for df command])
+
 elif df -k 2>/dev/null | egrep -i ["^/dev/[a-z0-9/]+ +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+% +/[a-z0-9/]*"] >/dev/null
 then
 	AC_PATH_PROG(PATH_TO_DF,df)
 	AC_MSG_RESULT([      df syntax... $PATH_TO_DF -k])
 	AC_DEFINE_UNQUOTED(DF_COMMAND,"$PATH_TO_DF -k",[path and args for df command])
+
 elif df 2>/dev/null | egrep -i ["^/dev/[a-z0-9/]+ +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+% +/[a-z0-9/]*"] >/dev/null
 then
 	AC_PATH_PROG(PATH_TO_DF,df)
 	AC_MSG_RESULT([      df syntax... $PATH_TO_DF])
 	AC_DEFINE_UNQUOTED(DF_COMMAND,"$PATH_TO_DF",[path and args for df command])
+
 elif bdf 2>/dev/null | egrep -i ["^/dev/[a-z0-9/]+ +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+% +/[a-z0-9/]*"] >/dev/null
 then
 	AC_PATH_PROG(PATH_TO_DF,bdf)
 	AC_MSG_RESULT([      df syntax... $PATH_TO_DF])
 	AC_DEFINE_UNQUOTED(DF_COMMAND,"$PATH_TO_DF",[path and args for df command])
+
 else
-	AC_MSG_WARN("unable to find usable df syntax")
+	AC_MSG_WARN([unable to find usable df syntax])
 fi
 
 AC_PATH_PROG(PATH_TO_PING,ping)
+AC_PATH_PROG(PATH_TO_PING6,ping6)
 
-dnl AC_ARG_WITH(ping_command,--with-ping-command=<syntax> sets syntax for ping,PING_COMMAND=$withval)
 AC_ARG_WITH(ping_command,
 	ACX_HELP_STRING([--with-ping-command=SYNTAX],
-		[sets syntax for ping]),
-	PING_COMMAND=$withval,)
-if test -n "$PING_COMMAND"
+		[sets syntax for ICMP ping]),
+	ac_cv_ping_command=$withval,)
+
+if test -n "$ac_cv_ping_command"
 then
-	echo "      ping syntax... (command-line) $PING_COMMAND"
+	echo "      ping syntax... (command-line) $ac_cv_ping_command"
 	if test -n "$PING_PACKETS_FIRST"
 	then
-		AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$PING_COMMAND",[Define if packet count must precede host])
+		AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$ac_cv_ping_command",
+			[Define if packet count must precede host])
 	fi
-elif [[ "z$ac_cv_uname_s" = "zUnixWare" ]] && ping -n -s 127.0.0.1 56 1 2>/dev/null | egrep -i "^round-trip|^rtt" >/dev/null
+
+elif [[ "z$ac_cv_uname_s" = "zUnixWare" ]] && \
+	$PATH_TO_PING -n -s 127.0.0.1 56 1 2>/dev/null | \
+	egrep -i "^round-trip|^rtt" >/dev/null
 then
-        PING_COMMAND="$PATH_TO_PING -n -U -c %d %s"
-        AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$PING_COMMAND",[Define if packet count must precede host])
-        echo "      ping syntax... $PATH_TO_PING -n -U -c <count> <host>"
-elif ping -n -U -c 1 127.0.0.1 2>/dev/null | egrep -i "^round-trip|^rtt" >/dev/null
+        ac_cv_ping_command="$PATH_TO_PING -n -U -c %d %s"
+        dnl AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$ac_cv_ping_command",
+	dnl	[Define if packet count must precede host])
+        echo "      ping syntax... ping -n -U -c <count> <host>"
+
+elif $PATH_TO_PING -n -U -c 1 127.0.0.1 2>/dev/null | \
+	egrep -i "^round-trip|^rtt" >/dev/null
 then
-        PING_COMMAND="$PATH_TO_PING -n -U -c %d %s"
-        AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$PING_COMMAND",[Define if packet count must precede host])
-        echo "      ping syntax... $PATH_TO_PING -n -U -c <count> <host>"
-elif ping -n -c 1 127.0.0.1 2>/dev/null | egrep -i "^round-trip|^rtt" >/dev/null
+        ac_cv_ping_command="$PATH_TO_PING -n -U -c %d %s"
+        dnl AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$ac_cv_ping_command",
+	dnl	[Define if packet count must precede host])
+        echo "      ping syntax... ping -n -U -c <count> <host>"
+
+elif $PATH_TO_PING -n -c 1 127.0.0.1 2>/dev/null | \
+	egrep -i "^round-trip|^rtt" >/dev/null
 then
-	PING_COMMAND="$PATH_TO_PING -n -c %d %s"
-	AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$PING_COMMAND",[Define if packet count must precede host])
+	ac_cv_ping_command="$PATH_TO_PING -n -c %d %s"
+	dnl AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$ac_cv_ping_command",
+	dnl	[Define if packet count must precede host])
 	echo "      ping syntax... $PATH_TO_PING -n -c <count> <host>"
-elif ping -n 127.0.0.1 -c 1 2>/dev/null | egrep -i "^round-trip|^rtt" >/dev/null
+
+elif $PATH_TO_PING -n 127.0.0.1 -c 1 2>/dev/null | \
+	egrep -i "^round-trip|^rtt" >/dev/null
 then
-	PING_COMMAND="$PATH_TO_PING -n %s -c %d"
+	ac_cv_ping_command="$PATH_TO_PING -n %s -c %d"
 	echo "      ping syntax... $PATH_TO_PING -n <host> -c <count>"
-elif ping 127.0.0.1 -n 1 2>/dev/null | egrep -i "^round-trip|^rtt" >/dev/null
+
+elif $PATH_TO_PING 127.0.0.1 -n 1 2>/dev/null | \
+	egrep -i "^round-trip|^rtt" >/dev/null
 then
-	PING_COMMAND="$PATH_TO_PING %s -n %d"
+	ac_cv_ping_command="$PATH_TO_PING %s -n %d"
 	echo "      ping syntax... $PATH_TO_PING <host> -n <count>"
-elif ping -n -s 127.0.0.1 56 1 2>/dev/null | egrep -i "^round-trip|^rtt" >/dev/null
+
+elif $PATH_TO_PING -n -s 127.0.0.1 56 1 2>/dev/null | \
+	egrep -i "^round-trip|^rtt" >/dev/null
 then
-	PING_COMMAND="$PATH_TO_PING -n -s %s 56 %d"
+	ac_cv_ping_command="$PATH_TO_PING -n -s %s 56 %d"
 	echo "      ping syntax... $PATH_TO_PING -n -s <host> 56 <count>"
-elif ping -n -h 127.0.0.1 -s 56 -c 1 2>/dev/null | egrep -i "^round-trip|^rtt" >/dev/null
+
+elif $PATH_TO_PING -n -h 127.0.0.1 -s 56 -c 1 2>/dev/null | \
+	egrep -i "^round-trip|^rtt" >/dev/null
 then
-	PING_COMMAND="$PATH_TO_PING -n -h %s -s 56 -c %d"
+	ac_cv_ping_command="$PATH_TO_PING -n -h %s -s 56 -c %d"
 	echo "      ping syntax... $PATH_TO_PING -n -h <host> -s 56 -c <count>"
-elif ping -n -s 56 -c 1 127.0.0.1 2>/dev/null | egrep -i "^round-trip|^rtt" >/dev/null
+
+elif $PATH_TO_PING -n -s 56 -c 1 127.0.0.1 2>/dev/null | \
+	egrep -i "^round-trip|^rtt" >/dev/null
 then
-	PING_COMMAND="$PATH_TO_PING -n -s 56 -c %d %s"
-	AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$PING_COMMAND",[Define if packet count must precede host])
+	ac_cv_ping_command="$PATH_TO_PING -n -s 56 -c %d %s"
+	dnl AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$ac_cv_ping_command",
+	dnl	[Define if packet count must precede host])
 	echo "      ping syntax... $PATH_TO_PING -n -s 56 -c <count> <host>"
-elif ping -n -c 1 127.0.0.1 2>/dev/null | egrep -i "^round-trip|^rtt" >/dev/null
+
+elif $PATH_TO_PING -n -c 1 127.0.0.1 2>/dev/null | \
+	egrep -i "^round-trip|^rtt" >/dev/null
 then
-	PING_COMMAND="$PATH_TO_PING -n -c %d %s"
-	AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$PING_COMMAND",[Define if packet count must precede host])
+	ac_cv_ping_command="$PATH_TO_PING -n -c %d %s"
+	dnl AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$ac_cv_ping_command",
+	dnl	[Define if packet count must precede host])
 	echo "      ping syntax... $PATH_TO_PING -n -c <count> <host>"
+
 else
-	AC_MSG_WARN("unable to find usable ping syntax")
+	AC_MSG_WARN([unable to find usable ping syntax])
 fi
-AC_DEFINE_UNQUOTED(PING_COMMAND,"$PING_COMMAND",[path and args for ping command])
+
+AC_DEFINE_UNQUOTED(PING_COMMAND,"$ac_cv_ping_command",
+	[path and args for ICMP ping command])
+
+AC_ARG_WITH(ping6_command,
+	ACX_HELP_STRING([--with-ping6-command=SYNTAX],
+		[sets syntax for ICMPv6 ping]),
+	PING6_COMMAND=$withval,)
 
 AC_PATH_PROG(PATH_TO_NSLOOKUP,nslookup)
 if test -n "$ac_cv_path_PATH_TO_NSLOOKUP"
@@ -929,6 +1030,7 @@ AC_DEFINE_UNQUOTED(PATH_TO_UPTIME,"$PATH_TO_UPTIME",[path to uptime binary])
 AC_PATH_PROG(PATH_TO_RPCINFO,rpcinfo)
 AC_DEFINE_UNQUOTED(PATH_TO_RPCINFO,"$PATH_TO_RPCINFO",[path to rpcinfo binary])
 
+M
 AC_PATH_PROG(PATH_TO_NTPDATE,ntpdate)
 AC_PATH_PROGS(PATH_TO_NTPDC,ntpdc xntpdc)
 AC_PATH_PROGS(PATH_TO_NTPQ,ntpq)
@@ -937,7 +1039,8 @@ then
 	AC_DEFINE_UNQUOTED(PATH_TO_NTPQ,"$PATH_TO_NTPQ",[path to ntpq binary])
 	AC_DEFINE_UNQUOTED(PATH_TO_NTPDATE,"$PATH_TO_NTPDATE",[path to ntpdate binary])
 else
-	echo "** Install NTP programs (http://www.ntp.org) if you want to monitor time synchronization"
+	dnl echo "** Install NTP programs (http://www.ntp.org) if you want to monitor time synchronization"
+	AC_MSG_WARN([Install NTP programs (http://www.ntp.org) if you want to monitor time synchronization])
 fi
 
 AC_PATH_PROG(PATH_TO_LMSTAT,lmstat)
@@ -945,7 +1048,8 @@ if test -x "$PATH_TO_LMSTAT"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_LMSTAT,"$PATH_TO_LMSTAT",[path to lmstat])
 else
-	echo "** Get lmstat from Globetrotter Software to monitor flexlm licenses"
+	dnl echo "** Get lmstat from Globetrotter Software to monitor flexlm licenses"
+	AC_MSG_WARN([Get lmstat from Globetrotter Software to monitor flexlm licenses])
 fi
 
 AC_PATH_PROG(PATH_TO_SMBCLIENT,smbclient)
@@ -953,7 +1057,8 @@ if test -x "$PATH_TO_SMBCLIENT"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_SMBCLIENT,"$PATH_TO_SMBCLIENT",[path to smbclient binary])
 else
-	echo "** Get smbclient from Samba.org to monitor SMB shares"
+	dnl echo "** Get smbclient from Samba.org to monitor SMB shares"
+	AC_MSG_WARN([Get smbclient from Samba.org to monitor SMB shares])
 fi
 
 
@@ -971,7 +1076,8 @@ then
 	AC_DEFINE_UNQUOTED(PATH_TO_SNMPGET,"$PATH_TO_SNMPGET",[path to snmpget binary])
 	EXTRAS="$EXTRAS check_hpjd check_snmp"
 else
-	echo "** Get snmpget from http://net-snmp.sourceforge.net to make check_hpjd and check_snmp plugins"
+	dnl echo "** Get snmpget from http://net-snmp.sourceforge.net to make check_hpjd and check_snmp plugins"
+	AC_MSG_WARN([Get snmpget from http://net-snmp.sourceforge.net to make check_hpjd and check_snmp plugins])
 fi
 
 AC_PATH_PROG(PATH_TO_SNMPGETNEXT,snmpgetnext)
@@ -984,8 +1090,9 @@ if ( $PERL -M"Net::SNMP 3.6" -e 'exit' 2>/dev/null  )
 then
 	echo "Found Net::SNMP perl module"
 else
-	echo "** Tried $PERL - install Net::SNMP perl module if you want to"
-	echo "        use the perl snmp plugins"
+	dnl echo "** Tried $PERL - install Net::SNMP perl module if you want to"
+	dnl echo "        use the perl snmp plugins"
+	AC_MSG_WARN([Tried $PERL - install Net::SNMP perl module if you want to use the perl snmp plugins])
 fi
 
 AC_PATH_PROG(PATH_TO_QUAKESTAT,quakestat)
@@ -999,7 +1106,8 @@ then
 	AC_DEFINE_UNQUOTED(PATH_TO_QSTAT,"$PATH_TO_QSTAT",[path to qstat/quakestat])
 	EXTRAS="$EXTRAS check_game"
 else
-	echo "** Get qstat from http://www.activesw.com/people/steve/qstat.html in order to make check_game plugin"
+	dnl echo "** Get qstat from http://www.activesw.com/people/steve/qstat.html in order to make check_game plugin"
+	AC_MSG_WARN([Get qstat from http://www.activesw.com/people/steve/qstat.html in order to make check_game plugin])
 fi
 
 AC_PATH_PROG(PATH_TO_FPING,fping)
@@ -1008,7 +1116,8 @@ then
 	AC_DEFINE_UNQUOTED(PATH_TO_FPING,"$PATH_TO_FPING",[path to fping])
 	EXTRAS="$EXTRAS check_fping"
 else
-	echo "** Get fping from http://www.fping.com in order to make check_fping plugin"
+	dnl echo "** Get fping from http://www.fping.com in order to make check_fping plugin"
+	AC_MSG_WARN([Get fping from http://www.fping.com in order to make check_fping plugin])
 fi
 
 AC_PATH_PROG(PATH_TO_SSH,ssh)
@@ -1017,7 +1126,8 @@ then
 	AC_DEFINE_UNQUOTED(SSH_COMMAND,"$PATH_TO_SSH",[path to ssh binary])
 	EXTRAS="$EXTRAS check_by_ssh"
 else
-	echo "** Get ssh in order to make check_by_ssh plugin"
+	dnl echo "** Get ssh in order to make check_by_ssh plugin"
+	AC_MSG_WARN([Get ssh in order to make check_by_ssh plugin])
 fi
 
 
@@ -1026,7 +1136,8 @@ if test -x "$PATH_TO_MAILQ"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_MAILQ,"$PATH_TO_MAILQ",[path to mailq])
 else
-	echo "** Could not find mailq or eqivalent"
+	dnl echo "** Could not find mailq or eqivalent"
+	AC_MSG_WARN([Could not find mailq or eqivalent])
 fi
 
 dnl SWAP info required is amount allocated/available and amount free
