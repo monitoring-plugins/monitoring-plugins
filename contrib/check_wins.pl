@@ -3,6 +3,9 @@
 # $Id$
 
 # $Log$
+# Revision 1.2  2003/08/20 08:31:49  tonvoon
+# Changed netsaint to nagios in use lib
+#
 # Revision 1.1  2003/02/09 14:16:28  sghosh
 # more contribs
 #
@@ -12,7 +15,7 @@ use strict ;
 use Getopt::Long ;
 use vars qw($opt_H $opt_D $opt_W $opt_T $debug @my_dcs);
 
-use lib '/usr/local/netsaint/libexec/' ;
+use lib '/usr/local/nagios/libexec/' ;
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
 
 my $PROGNAME = 'check_wins' ;
