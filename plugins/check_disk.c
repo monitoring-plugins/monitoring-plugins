@@ -36,7 +36,6 @@
 #include "utils.h"
 #include <stdarg.h>
 
-#define PROGNAME "check_disk"
 #define REVISION "$Revision$"
 #define COPYRIGHT "2000-2002"
 
@@ -46,29 +45,31 @@ int check_disk (int usp, int free_disk);
 void print_help (void);
 void print_usage (void);
 
+const char *PROGNAME = "check_disk";
+
 int w_df = -1;
 int c_df = -1;
 float w_dfp = -1.0;
 float c_dfp = -1.0;
 char *path = "";
-int verbose = FALSE;
+char *exclude_device = "";
+int verbose = 0;
 int display_mntp = FALSE;
+
 
 int
 main (int argc, char **argv)
 {
-	int len;
 	int usp = -1;
 	int total_disk = -1;
 	int used_disk = -1;
 	int free_disk = -1;
 	int result = STATE_UNKNOWN;
-	int temp_result = STATE_UNKNOWN;
-	char *command_line = NULL;
-	char input_buffer[MAX_INPUT_BUFFER] = "";
-	char file_system[MAX_INPUT_BUFFER] = "";
-	char mntp[MAX_INPUT_BUFFER] = "";
-	char outbuf[MAX_INPUT_BUFFER] = "";
+	int disk_result = STATE_UNKNOWN;
+	char *command_line = "";
+	char input_buffer[MAX_INPUT_BUFFER];
+	char file_system[MAX_INPUT_BUFFER];
+	char mntp[MAX_INPUT_BUFFER];
 	char *output = "";
 
 	if (process_arguments (argc, argv) != OK)
@@ -76,7 +77,7 @@ main (int argc, char **argv)
 
 	asprintf (&command_line, "%s %s", DF_COMMAND, path);
 
-	if (verbose)
+	if (verbose>0)
 		printf ("%s ==> ", command_line);
 
 	child_process = spopen (command_line);
@@ -95,15 +96,30 @@ main (int argc, char **argv)
 		if (!index (input_buffer, '/'))
 			continue;
 
-		if (sscanf
-				(input_buffer, "%s %d %d %d %d%% %s", file_system, &total_disk,
-				 &used_disk, &free_disk, &usp, &mntp) == 6
-				|| sscanf (input_buffer, "%s %*s %d %d %d %d%% %s", file_system,
-				 &total_disk, &used_disk, &free_disk, &usp, &mntp) == 6) {
-			asprintf (&output, "%s [%d kB (%d%%) free on %s]", output, free_disk,
-			          100 - usp, display_mntp ? mntp : file_system);
-			result = max_state (result, check_disk (usp, free_disk));
+		if (sscanf (input_buffer, "%s %d %d %d %d%% %s", file_system,
+		     &total_disk, &used_disk, &free_disk, &usp, mntp) == 6 ||
+		    sscanf (input_buffer, "%s %*s %d %d %d %d%% %s", file_system,
+				 &total_disk, &used_disk, &free_disk, &usp, mntp) == 6) {
+
+ 			if (strcmp(exclude_device,file_system) == 0 ||
+			    strcmp(exclude_device,mntp) == 0) {
+ 				if (verbose>0)
+ 					printf ("ignoring %s.", file_system);
+				continue;
+ 			}
+
+			disk_result = check_disk (usp, free_disk);
+
+			if (strcmp (file_system, "none") == 0)
+				strncpy (file_system, mntp, MAX_INPUT_BUFFER-1);
+
+			if (disk_result!=STATE_OK || verbose>=0) 
+				asprintf (&output, "%s [%d kB (%d%%) free on %s]", output,
+				          free_disk, 100 - usp, display_mntp ? mntp : file_system);
+
+			result = max_state (result, disk_result);
 		}
+
 		else {
 			printf ("Unable to read output:\n%s\n%s\n", command_line, input_buffer);
 			return result;
@@ -112,27 +128,26 @@ main (int argc, char **argv)
 	}
 
 	/* If we get anything on stderr, at least set warning */
-	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
-		/*result = max (result, STATE_WARNING); */
-		if( !( result == STATE_CRITICAL) ) {
+	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
+		if (result != STATE_CRITICAL) {
 			result = STATE_WARNING;
 		}
+	}
 
 	/* close stderr */
-	(void) fclose (child_stderr);
+	if (child_stderr) 
+		(void) fclose (child_stderr);
 
 	/* close the pipe */
-	if (spclose (child_process))
-		/*result = max (result, STATE_WARNING); */
-		if( !( result == STATE_CRITICAL) ) {
+	if (spclose(child_process)!=0 && result!=STATE_CRITICAL)
 			result = STATE_WARNING;
-		}
+
 	if (usp < 0)
 		printf ("Disk \"%s\" not mounted or nonexistant\n", path);
 	else if (result == STATE_UNKNOWN)
 		printf ("Unable to read output\n%s\n%s\n", command_line, input_buffer);
 	else
-		printf ("DISK %s -%s\n", state_text (result), output);
+		printf ("DISK %s%s\n", state_text (result), output);
 
 	return result;
 }
@@ -155,6 +170,9 @@ process_arguments (int argc, char **argv)
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
 		{"mountpoint", no_argument, 0, 'm'},
+		{"exclude_device", required_argument, 0, 'x'},
+		{"quiet", no_argument, 0, 'q'},
+
 		{0, 0, 0, 0}
 	};
 #endif
@@ -169,9 +187,9 @@ process_arguments (int argc, char **argv)
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
-			getopt_long (argc, argv, "Vhvt:c:w:p:m", long_options, &option_index);
+ 			getopt_long (argc, argv, "+?Vqhvt:c:w:p:x:m", long_options, &option_index);
 #else
-		c = getopt (argc, argv, "Vhvt:c:w:p:m");
+ 		c = getopt (argc, argv, "+?Vqhvt:c:w:p:x:m");
 #endif
 
 		if (c == -1 || c == EOF)
@@ -222,11 +240,17 @@ process_arguments (int argc, char **argv)
 			path = optarg;
 			break;
 		case 'v':									/* verbose */
-			verbose = TRUE;
+			verbose++;
+			break;
+		case 'q':									/* verbose */
+			verbose--;
 			break;
 		case 'm': /* display mountpoint */
 			display_mntp = TRUE;
 			break;
+ 		case 'x':									/* exclude path or partition */
+ 			exclude_device = optarg;
+ 			break;
 		case 'V':									/* version */
 			print_revision (PROGNAME, REVISION);
 			exit (STATE_OK);
@@ -311,15 +335,19 @@ print_help (void)
 		 " -w, --warning=INTEGER\n"
 		 "   Exit with WARNING status if less than INTEGER kilobytes of disk are free\n"
 		 " -w, --warning=PERCENT%%\n"
-		 "   Exit with WARNING status if more than PERCENT of disk space is free\n"
+		 "   Exit with WARNING status if less than PERCENT of disk space is free\n"
 		 " -c, --critical=INTEGER\n"
 		 "   Exit with CRITICAL status if less than INTEGER kilobytes of disk are free\n"
 		 " -c, --critical=PERCENT%%\n"
-		 "   Exit with CRITCAL status if more than PERCENT of disk space is free\n"
+		 "   Exit with CRITCAL status if less than PERCENT of disk space is free\n"
 		 " -p, --path=PATH, --partition=PARTTION\n"
 		 "    Path or partition (checks all mounted partitions if unspecified)\n"
 		 " -m, --mountpoint\n"
 		 "    Display the mountpoint instead of the partition\n"
+		 " -x, --exclude_device=PATH\n"
+		 "    Ignore device (only works if -p unspecified)\n"
+		 " -e, --errors-only\n"
+		 "    Display only devices/mountpoints with errors\n"
 		 " -v, --verbose\n"
 		 "    Show details for command-line debugging (do not use with nagios server)\n"
 		 " -h, --help\n"
@@ -332,7 +360,7 @@ void
 print_usage (void)
 {
 	printf
-		("Usage: %s -w limit -c limit [-p path] [-t timeout] [-m] [--verbose]\n"
+		("Usage: %s -w limit -c limit [-p path | -x device] [-t timeout] [-m] [-e] [--verbose]\n"
 		 "       %s (-h|--help)\n"
 		 "       %s (-V|--version)\n", PROGNAME, PROGNAME, PROGNAME);
 }
