@@ -46,7 +46,7 @@ main (int argc, char **argv)
 {
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *command_line = NULL;
-	char *output = NULL;
+	char *output = "";
 	int result = STATE_UNKNOWN;
 
 	/* Set signal handling and alarm */
@@ -94,7 +94,7 @@ main (int argc, char **argv)
 				result = STATE_OK;
 			}
 			else {
-				strcpy (output, "Server not found in ANSWER SECTION");
+				strscpy (output, "Server not found in ANSWER SECTION");
 				result = STATE_WARNING;
 			}
 
@@ -104,7 +104,7 @@ main (int argc, char **argv)
 	}
 
 	if (result != STATE_OK) {
-		strcpy (output, "No ANSWER SECTION found");
+		strscpy (output, "No ANSWER SECTION found");
 	}
 
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
@@ -112,7 +112,7 @@ main (int argc, char **argv)
 		result = max_state (result, STATE_WARNING);
 		printf ("%s", input_buffer);
 		if (!strcmp (output, ""))
-			strcpy (output, 1 + index (input_buffer, ':'));
+			strscpy (output, 1 + index (input_buffer, ':'));
 	}
 
 	(void) fclose (child_stderr);
@@ -121,7 +121,7 @@ main (int argc, char **argv)
 	if (spclose (child_process)) {
 		result = max_state (result, STATE_WARNING);
 		if (!strcmp (output, ""))
-			strcpy (output, "nslookup returned error status");
+			strscpy (output, "nslookup returned error status");
 	}
 
 	(void) time (&end_time);
