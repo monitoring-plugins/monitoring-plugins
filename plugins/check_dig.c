@@ -142,26 +142,26 @@ main (int argc, char **argv)
 
 	if (elapsed_time > critical_interval)
 		die (STATE_CRITICAL,
-		     _("DNS OK - %d seconds response time (%s)|time=%ldus\n"),
+		     _("DNS OK - %.3f seconds response time (%s)|time=%ldus\n"),
 		     elapsed_time, output, microsec);
 
 	else if (result == STATE_CRITICAL)
-		printf (_("DNS CRITICAL - %s|time=%ldus\n"), output);
+		printf (_("DNS CRITICAL - %s|time=%ldus\n"), output, microsec);
 
 	else if (elapsed_time > warning_interval)
 		die (STATE_WARNING,
-		     _("DNS OK - %d seconds response time (%s)|time=%ldus\n"),
+		     _("DNS OK - %.3f seconds response time (%s)|time=%ldus\n"),
 		     elapsed_time, output, microsec);
 
 	else if (result == STATE_WARNING)
-		printf (_("DNS WARNING - %s|time=%ldus\n"), output);
+		printf (_("DNS WARNING - %s|time=%ldus\n"), output, microsec);
 
 	else if (result == STATE_OK)
-		printf (_("DNS OK - %d seconds response time (%s)|time=%ldus\n"),
+		printf (_("DNS OK - %.3f seconds response time (%s)|time=%ldus\n"),
 						elapsed_time, output, microsec);
 
 	else
-		printf (_("DNS problem - %s|time=%ldus\n"), output);
+		printf (_("DNS problem - %s|time=%ldus\n"), output, microsec);
 
 	return result;
 }
