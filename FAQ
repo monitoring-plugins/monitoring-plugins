@@ -78,4 +78,10 @@ Frequently Asked Questions
     executed by nagios, but ping seems to be far and away the biggest
     offender.)
 
+8.  Q: I have a plugin to offer. What do I do to get it accepted?
 
+    A: Send it to nagiosplug-devel@lists.sourceforge.net. Usually, we
+    just drop it into contrib until we have a chance to check if the
+    standard options are used, etc.
+
+    You can also get feedback on improving the plugin via the mailing list.
