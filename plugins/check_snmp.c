@@ -158,7 +158,7 @@ char *community = NULL;
 char *oid = "";
 char *label = NULL;
 char *units = NULL;
-char *port = NULL;
+char *port = DEFAULT_PORT;
 char string_value[MAX_INPUT_BUFFER] = "";
 char **labels = NULL;
 char **unitv = NULL;
@@ -646,9 +646,6 @@ validate_arguments ()
 
 	if (units == NULL)
 		asprintf (&units, "");
-
-	if (port == NULL)
-		asprintf (&port, DEFAULT_PORT);
 
 	return OK;
 }
