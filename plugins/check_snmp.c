@@ -356,13 +356,14 @@ main (int argc, char **argv)
 			exit (STATE_UNKNOWN);
 #endif
 		}
-
-		if (response && iresult == STATE_DEPENDENT)
-			iresult = STATE_OK;
-		else if (eval_method[i] & CRIT_PRESENT)
-			iresult = STATE_CRITICAL;
-		else if (eval_method[i] & WARN_PRESENT)
-			iresult = STATE_WARNING;
+		else {
+			if (response && iresult == STATE_DEPENDENT) 
+				iresult = STATE_OK;
+			else if (eval_method[i] & CRIT_PRESENT)
+				iresult = STATE_CRITICAL;
+			else if (eval_method[i] & WARN_PRESENT)
+				iresult = STATE_WARNING;
+		}
 
 		result = max_state (result, iresult);
 
@@ -549,7 +550,7 @@ process_arguments (int argc, char **argv)
 		case 's':									/* string or substring */
 			strncpy (string_value, optarg, sizeof (string_value) - 1);
 			string_value[sizeof (string_value) - 1] = 0;
-			eval_method[jj++] = CRIT_STRING;
+			eval_method[jj] = CRIT_STRING;
 			break;
 		case 'R':									/* regex */
 #ifdef HAVE_REGEX_H
@@ -566,7 +567,7 @@ process_arguments (int argc, char **argv)
 				printf ("Could Not Compile Regular Expression");
 				return ERROR;
 			}
-			eval_method[jj++] = CRIT_REGEX;
+			eval_method[jj] = CRIT_REGEX;
 #else
 			printf ("SNMP UNKNOWN: call for regex which was not a compiled option");
 			exit (STATE_UNKNOWN);
