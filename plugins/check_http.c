@@ -627,16 +627,21 @@ check_http (void)
 		pagesize += i;
 	}
 
-	if (i < 0) {
+	if (i < 0 && errno != ECONNRESET) {
 #ifdef HAVE_SSL
-		sslerr=SSL_get_error(ssl, i);
-		if ( sslerr == SSL_ERROR_SSL ) {
-			terminate (STATE_WARNING, "Client Certificate Required\n");
-		} else {
-			terminate (STATE_CRITICAL, "Error in recv()");
+		if (use_ssl) {
+			sslerr=SSL_get_error(ssl, i);
+			if ( sslerr == SSL_ERROR_SSL ) {
+				terminate (STATE_WARNING, "Client Certificate Required\n");
+			} else {
+				terminate (STATE_CRITICAL, "Error in recv()");
+			}
 		}
-#else
-		terminate (STATE_CRITICAL, "Error in recv()");
+		else {
+#endif
+			terminate (STATE_CRITICAL, "Error in recv()");
+#ifdef HAVE_SSL
+		}
 #endif
 	}
 
