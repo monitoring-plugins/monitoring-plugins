@@ -51,11 +51,11 @@ BEGIN {
 # Trusted path mechanism (deprecated)
 
 /^[ \t]*\$ENV[ \t]*\{[ \t'"]*PATH[ \t"']*\}[ \t]*=/ {
-	sub(/\=[ \t]*['"][^"']+["']/,"='@trusted_path@' # autoconf-derived");
+	sub(/\=[ \t]*['"][^"']+["']/,"='@with_trusted_path@' # autoconf-derived");
 }
 
 /^[\t ]*(export[\t ]*)?PATH[\t ]*=['"]+.+["']$/ {
-	sub(/\=.*$/,"='@trusted_path@' # autoconf-derived");
+	sub(/\=.*$/,"='@with_trusted_path@' # autoconf-derived");
 }
 
 # Specific programs

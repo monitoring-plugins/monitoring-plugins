@@ -87,32 +87,32 @@ dnl CGIURL has changed for Nagios with 1.0 beta
 AC_ARG_WITH(cgiurl,
 	ACX_HELP_STRING([--with-cgiurl=DIR],
 		[sets URL for cgi programs]),
-	cgiurl=$withval,
-	cgiurl=/nagios/cgi-bin)
-CGIURL="$cgiurl"
+	with_cgiurl=$withval,
+	with_cgiurl=/nagios/cgi-bin)
+CGIURL="$with_cgiurl"
 AC_DEFINE_UNQUOTED(CGIURL,"$CGIURL",[URL of CGI programs])
 
 AC_ARG_WITH(nagios_user,
 	ACX_HELP_STRING([--with-nagios-user=USER],
 		[set user name to run nagios]),
-	nagios_usr=$withval,
-	nagios_usr=nagios)
+	with_nagios_user=$withval,
+	with_nagios_user=nagios)
 AC_ARG_WITH(nagios_group,
 	ACX_HELP_STRING([--with-nagios-group=GROUP],
 		[set group name to run nagios]),
-	nagios_grp=$withval,
-	nagios_grp=nagios)
-AC_SUBST(nagios_usr)
-AC_SUBST(nagios_grp)
-INSTALL_OPTS="-o $nagios_usr -g $nagios_grp"
+	with_nagios_group=$withval,
+	with_nagios_group=nagios)
+AC_SUBST(with_nagios_user)
+AC_SUBST(with_nagios_group)
+INSTALL_OPTS="-o $with_nagios_user -g $with_nagios_group"
 AC_SUBST(INSTALL_OPTS)
 
 AC_ARG_WITH(trusted_path,
 	ACX_HELP_STRING([--with-trusted-path=PATH],
 		[sets trusted path for executables called by scripts (default=/bin:/sbin:/usr/bin:/usr/sbin)]),
-	trusted_path=$withval,
-	trusted_path=/bin:/sbin:/usr/bin:/usr/sbin)
-AC_SUBST(trusted_path)
+	with_trusted_path=$withval,
+	with_trusted_path=/bin:/sbin:/usr/bin:/usr/sbin)
+AC_SUBST(with_trusted_path)
 
 EXTRAS=
 dnl PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/etc:/usr/local/bin:/usr/local/sbin:$PATH
@@ -304,22 +304,23 @@ AC_ARG_WITH([ipv6],
               ACX_HELP_STRING([--with-ipv6],
                              [enable IPv6 support (default=no)]),
               ,
-              ac_cv_sys_use_ipv6=no)
+              with_ipv6=no)
 
 dnl Check for AF_INET6 support
-AC_CACHE_CHECK([for IPv6 support], ac_cv_sys_use_ipv6, [
-	AC_TRY_COMPILE([#include <netinet/in.h>],
+AC_CACHE_CHECK([for IPv6 support], with_ipv6, [
+	AC_TRY_COMPILE([#include <netinet/in.h>
+			#include <sys/socket.h>],
 			[struct sockaddr_in6 sin6;
 			void *p;
 
 			sin6.sin6_family = AF_INET6;
 			sin6.sin6_port = 587;
 			p = &sin6.sin6_addr;],
-			[ac_cv_sys_use_ipv6=yes], 
-			[ac_cv_sys_use_ipv6=no])
+			[with_ipv6=yes], 
+			[with_ipv6=no])
 	])
 
-if test x"$ac_cv_sys_use_ipv6" != xno ; then
+if test x"$with_ipv6" != xno ; then
 	AC_DEFINE(USE_IPV6,1,[Enable IPv6 support])
 fi
 
@@ -924,38 +925,38 @@ AC_PATH_PROG(PATH_TO_BDF,bdf)
 AC_ARG_WITH(df_command,
 	ACX_HELP_STRING([--with-df-command=SYNTAX],
 		[sets syntax for df]),
-	ac_cv_df_command=$withval,)
+	with_df_command=$withval,)
 
 AC_MSG_CHECKING(for df syntax)
-if test -n "$ac_cv_df_command"
+if test -n "$with_df_command"
 then
-	AC_MSG_RESULT([$ac_cv_df_command])
+	AC_MSG_RESULT([$with_df_command])
 
 elif df -Pk 2>/dev/null | egrep -i ["^(/dev/|[a-zA-Z]:)[a-z0-9/\\]+ +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+% +/[a-z0-9/\\]*"] >/dev/null
 then
-	ac_cv_df_command="$PATH_TO_DF -Pk"
-	AC_MSG_RESULT([$ac_cv_df_command])
+	with_df_command="$PATH_TO_DF -Pk"
+	AC_MSG_RESULT([$with_df_command])
 
 elif df -k 2>/dev/null | egrep -i ["^/dev/[a-z0-9/]+ +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+% +/[a-z0-9/]*"] >/dev/null
 then
-	ac_cv_df_command="$PATH_TO_DF -k"
-	AC_MSG_RESULT([$ac_cv_df_command])
+	with_df_command="$PATH_TO_DF -k"
+	AC_MSG_RESULT([$with_df_command])
 
 elif df 2>/dev/null | egrep -i ["^/dev/[a-z0-9/]+ +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+% +/[a-z0-9/]*"] >/dev/null
 then
-	ac_cv_df_command="$PATH_TO_DF"
-	AC_MSG_RESULT([$ac_cv_df_command])
+	with_df_command="$PATH_TO_DF"
+	AC_MSG_RESULT([$with_df_command])
 
 elif bdf 2>/dev/null | egrep -i ["^/dev/[a-z0-9/]+ +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+% +/[a-z0-9/]*"] >/dev/null
 then
-	ac_cv_df_command="$PATH_TO_BDF"
-	AC_MSG_RESULT([$ac_cv_df_command])
+	with_df_command="$PATH_TO_BDF"
+	AC_MSG_RESULT([$with_df_command])
 
 else
 	AC_MSG_WARN([unable to find usable df syntax])
 fi
 
-AC_DEFINE_UNQUOTED(DF_COMMAND,"$ac_cv_df_command",[path and args for df command])
+AC_DEFINE_UNQUOTED(DF_COMMAND,"$with_df_command",[path and args for df command])
 
 AC_PATH_PROG(PATH_TO_PING,ping)
 AC_PATH_PROG(PATH_TO_PING6,ping6)
@@ -963,85 +964,83 @@ AC_PATH_PROG(PATH_TO_PING6,ping6)
 AC_ARG_WITH(ping_command,
 	ACX_HELP_STRING([--with-ping-command=SYNTAX],
 		[sets syntax for ICMP ping]),
-	ac_cv_ping_command=$withval,)
+	with_ping_command=$withval,)
 
 AC_MSG_CHECKING(for ICMP ping syntax)
 ac_cv_ping_packets_first=no
-if test -n "$ac_cv_ping_command"
+if test -n "$with_ping_command"
 then
-	AC_MSG_RESULT([(command-line) $ac_cv_ping_command])
+	AC_MSG_RESULT([(command-line) $with_ping_command])
 	if test -n "$ac_cv_ping_packets_first"
 	then
 		ac_cv_ping_packets_first=yes
-		dnl AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$ac_cv_ping_command",
-		dnl	[Define if packet count must precede host])
 	fi
 
 elif [[ "z$ac_cv_uname_s" = "zUnixWare" ]] && \
 	$PATH_TO_PING -n -s 127.0.0.1 56 1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
-        ac_cv_ping_command="$PATH_TO_PING -n -U -c %d %s"
+        with_ping_command="$PATH_TO_PING -n -U -c %d %s"
 	ac_cv_ping_packets_first=yes
-	AC_MSG_RESULT([$ac_cv_ping_command])
+	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n -U -c 1 127.0.0.1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
-        ac_cv_ping_command="$PATH_TO_PING -n -U -c %d %s"
+        with_ping_command="$PATH_TO_PING -n -U -c %d %s"
 	ac_cv_ping_packets_first=yes
-	AC_MSG_RESULT([$ac_cv_ping_command])
+	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n -c 1 127.0.0.1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
-	ac_cv_ping_command="$PATH_TO_PING -n -c %d %s"
+	with_ping_command="$PATH_TO_PING -n -c %d %s"
 	ac_cv_ping_packets_first=yes
-	AC_MSG_RESULT([$ac_cv_ping_command])
+	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n 127.0.0.1 -c 1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
-	ac_cv_ping_command="$PATH_TO_PING -n %s -c %d"
-	AC_MSG_RESULT([$ac_cv_ping_command])
+	with_ping_command="$PATH_TO_PING -n %s -c %d"
+	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING 127.0.0.1 -n 1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
-	ac_cv_ping_command="$PATH_TO_PING %s -n %d"
-	AC_MSG_RESULT([$ac_cv_ping_command])
+	with_ping_command="$PATH_TO_PING %s -n %d"
+	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n -s 127.0.0.1 56 1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
-	ac_cv_ping_command="$PATH_TO_PING -n -s %s 56 %d"
-	AC_MSG_RESULT([$ac_cv_ping_command])
+	with_ping_command="$PATH_TO_PING -n -s %s 56 %d"
+	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n -h 127.0.0.1 -s 56 -c 1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
-	ac_cv_ping_command="$PATH_TO_PING -n -h %s -s 56 -c %d"
-	AC_MSG_RESULT([$ac_cv_ping_command])
+	with_ping_command="$PATH_TO_PING -n -h %s -s 56 -c %d"
+	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n -s 56 -c 1 127.0.0.1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
-	ac_cv_ping_command="$PATH_TO_PING -n -s 56 -c %d %s"
+	with_ping_command="$PATH_TO_PING -n -s 56 -c %d %s"
 	ac_cv_ping_packets_first=yes
-	AC_MSG_RESULT([$ac_cv_ping_command])
+	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n -c 1 127.0.0.1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
-	ac_cv_ping_command="$PATH_TO_PING -n -c %d %s"
+	with_ping_command="$PATH_TO_PING -n -c %d %s"
 	ac_cv_ping_packets_first=yes
-	AC_MSG_RESULT([$ac_cv_ping_command])
+	AC_MSG_RESULT([$with_ping_command])
 
 else
 	AC_MSG_WARN([unable to find usable ping syntax])
 fi
 
-AC_DEFINE_UNQUOTED(PING_COMMAND,"$ac_cv_ping_command",
+AC_DEFINE_UNQUOTED(PING_COMMAND,"$with_ping_command",
 	[path and args for ICMP ping command])
 
 if test "x$ac_cv_ping_packets_first" != "xno"
@@ -1053,14 +1052,14 @@ fi
 AC_ARG_WITH(ping6_command,
 	ACX_HELP_STRING([--with-ping6-command=SYNTAX],
 		[sets syntax for ICMPv6 ping]),
-	ac_cv_ping6_command=$withval,)
+	with_ping6_command=$withval,)
 
-if test x"$ac_cv_sys_use_ipv6" != xno ; then
+if test x"$with_ipv6" != xno ; then
 AC_MSG_CHECKING(for ICMPv6 ping syntax)
 ac_cv_ping6_packets_first=no
-if test -n "$ac_cv_ping6_command"
+if test -n "$with_ping6_command"
 then
-	AC_MSG_RESULT([(command-line) $ac_cv_ping6_command])
+	AC_MSG_RESULT([(command-line) $with_ping6_command])
 	if test -n "$ac_cv_ping6_packets_first"
 	then
 		ac_cv_ping6_packets_first=yes
@@ -1071,61 +1070,61 @@ elif test "x$PATH_TO_PING6" != "x"; then
 		$PATH_TO_PING6 -n -s ::1 56 1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-        	ac_cv_ping6_command="$PATH_TO_PING6 -n -U -c %d %s"
+        	with_ping6_command="$PATH_TO_PING6 -n -U -c %d %s"
 		ac_cv_ping6_packets_first=yes
-		AC_MSG_RESULT([$ac_cv_ping6_command])
+		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING6 -n -U -c 1 ::1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-        	ac_cv_ping6_command="$PATH_TO_PING6 -n -U -c %d %s"
+        	with_ping6_command="$PATH_TO_PING6 -n -U -c %d %s"
 		ac_cv_ping6_packets_first=yes
-		AC_MSG_RESULT([$ac_cv_ping6_command])
+		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING6 -n -c 1 ::1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-		ac_cv_ping6_command="$PATH_TO_PING6 -n -c %d %s"
+		with_ping6_command="$PATH_TO_PING6 -n -c %d %s"
 		ac_cv_ping6_packets_first=yes
-		AC_MSG_RESULT([$ac_cv_ping6_command])
+		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING6 -n ::1 -c 1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-		ac_cv_ping6_command="$PATH_TO_PING6 -n %s -c %d"
-		AC_MSG_RESULT([$ac_cv_ping6_command])
+		with_ping6_command="$PATH_TO_PING6 -n %s -c %d"
+		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING6 ::1 -n 1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-		ac_cv_ping6_command="$PATH_TO_PING6 %s -n %d"
-		AC_MSG_RESULT([$ac_cv_ping6_command])
+		with_ping6_command="$PATH_TO_PING6 %s -n %d"
+		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING6 -n -s ::1 56 1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-		ac_cv_ping6_command="$PATH_TO_PING6 -n -s %s 56 %d"
-		AC_MSG_RESULT([$ac_cv_ping6_command])
+		with_ping6_command="$PATH_TO_PING6 -n -s %s 56 %d"
+		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING6 -n -h ::1 -s 56 -c 1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-		ac_cv_ping6_command="$PATH_TO_PING6 -n -h %s -s 56 -c %d"
-		AC_MSG_RESULT([$ac_cv_ping6_command])
+		with_ping6_command="$PATH_TO_PING6 -n -h %s -s 56 -c %d"
+		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING6 -n -s 56 -c 1 ::1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-		ac_cv_ping6_command="$PATH_TO_PING6 -n -s 56 -c %d %s"
+		with_ping6_command="$PATH_TO_PING6 -n -s 56 -c %d %s"
 		ac_cv_ping6_packets_first=yes
-		AC_MSG_RESULT([$ac_cv_ping_command])
+		AC_MSG_RESULT([$with_ping_command])
 
 	elif $PATH_TO_PING6 -n -c 1 ::1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-		ac_cv_ping6_command="$PATH_TO_PING6 -n -c %d %s"
+		with_ping6_command="$PATH_TO_PING6 -n -c %d %s"
 		ac_cv_ping6_packets_first=yes
-		AC_MSG_RESULT([$ac_cv_ping6_command])
+		AC_MSG_RESULT([$with_ping6_command])
 
 	fi
 
@@ -1134,68 +1133,68 @@ elif test "x$PATH_TO_PING" != "x"; then
 		$PATH_TO_PING -A inet6 -n -s ::1 56 1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-        	ac_cv_ping6_command="$PATH_TO_PING -A inet6 -n -U -c %d %s"
+        	with_ping6_command="$PATH_TO_PING -A inet6 -n -U -c %d %s"
 		ac_cv_ping6_packets_first=yes
-		AC_MSG_RESULT([$ac_cv_ping6_command])
+		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING -A inet6 -n -U -c 1 ::1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-        	ac_cv_ping6_command="$PATH_TO_PING -A inet6 -n -U -c %d %s"
+        	with_ping6_command="$PATH_TO_PING -A inet6 -n -U -c %d %s"
 		ac_cv_ping6_packets_first=yes
-		AC_MSG_RESULT([$ac_cv_ping6_command])
+		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING -A inet6 -n -c 1 ::1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-		ac_cv_ping6_command="$PATH_TO_PING -A inet6 -n -c %d %s"
+		with_ping6_command="$PATH_TO_PING -A inet6 -n -c %d %s"
 		ac_cv_ping6_packets_first=yes
-		AC_MSG_RESULT([$ac_cv_ping6_command])
+		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING -A inet6 -n ::1 -c 1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-		ac_cv_ping6_command="$PATH_TO_PING -A inet6 -n %s -c %d"
-		AC_MSG_RESULT([$ac_cv_ping6_command])
+		with_ping6_command="$PATH_TO_PING -A inet6 -n %s -c %d"
+		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING -A inet6 ::1 -n 1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-		ac_cv_ping6_command="$PATH_TO_PING -A inet6 %s -n %d"
-		AC_MSG_RESULT([$ac_cv_ping6_command])
+		with_ping6_command="$PATH_TO_PING -A inet6 %s -n %d"
+		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING -A inet6 -n -s ::1 56 1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-		ac_cv_ping6_command="$PATH_TO_PING -A inet6 -n -s %s 56 %d"
-		AC_MSG_RESULT([$ac_cv_ping6_command])
+		with_ping6_command="$PATH_TO_PING -A inet6 -n -s %s 56 %d"
+		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING -A inet6 -n -h ::1 -s 56 -c 1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-		ac_cv_ping6_command="$PATH_TO_PING -A inet6 -n -h %s -s 56 -c %d"
-		AC_MSG_RESULT([$ac_cv_ping6_command])
+		with_ping6_command="$PATH_TO_PING -A inet6 -n -h %s -s 56 -c %d"
+		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING -A inet6 -n -s 56 -c 1 ::1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-		ac_cv_ping6_command="$PATH_TO_PING -A inet6 -n -s 56 -c %d %s"
+		with_ping6_command="$PATH_TO_PING -A inet6 -n -s 56 -c %d %s"
 		ac_cv_ping6_packets_first=yes
-		AC_MSG_RESULT([$ac_cv_ping_command])
+		AC_MSG_RESULT([$with_ping_command])
 
 	elif $PATH_TO_PING -A inet6 -n -c 1 ::1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-		ac_cv_ping6_command="$PATH_TO_PING -A inet6 -n -c %d %s"
+		with_ping6_command="$PATH_TO_PING -A inet6 -n -c %d %s"
 		ac_cv_ping6_packets_first=yes
-		AC_MSG_RESULT([$ac_cv_ping6_command])
+		AC_MSG_RESULT([$with_ping6_command])
 
 	fi
 
 fi
 
-if test "x$ac_cv_ping6_command" != "x"; then
-	AC_DEFINE_UNQUOTED(PING6_COMMAND,"$ac_cv_ping6_command",
+if test "x$with_ping6_command" != "x"; then
+	AC_DEFINE_UNQUOTED(PING6_COMMAND,"$with_ping6_command",
 		[path and args for ICMPv6 ping command])
 else
 	AC_MSG_RESULT([none])
@@ -1464,13 +1463,13 @@ AC_DEFINE_UNQUOTED(PACKAGE_VERSION,"${VERSION}",[package version])
 
 AC_OUTPUT(Makefile subst lib/Makefile plugins/Makefile plugins-scripts/Makefile plugins-scripts/subst plugins-scripts/utils.pm plugins-scripts/utils.sh command.cfg test.pl,echo timestamp > plugins/stamp-h1;echo timestamp > plugins/stamp-h2;echo timestamp > plugins/stamp-h3;echo timestamp > plugins/stamp-h4;echo timestamp > plugins/stamp-h5;echo timestamp > plugins/stamp-h6;PATH=.:..:$PATH subst.sh command.cfg)
 
-ACX_FEATURE([with],[cgiurl],[$cgiurl])
-ACX_FEATURE([with],[nagios-user],[$nagios_usr])
-ACX_FEATURE([with],[nagios-group],[$nagios_grp])
-ACX_FEATURE([with],[trusted-path],[$trusted_path])
-ACX_FEATURE([with],[df-command],[$ac_cv_df_command])
-ACX_FEATURE([with],[ping-command],[$ac_cv_ping_command])
-ACX_FEATURE([with],[ping6-command],[$ac_cv_ping6_command])
+ACX_FEATURE([with],[cgiurl])
+ACX_FEATURE([with],[nagios-user])
+ACX_FEATURE([with],[nagios-group])
+ACX_FEATURE([with],[trusted-path])
+ACX_FEATURE([with],[df-command])
+ACX_FEATURE([with],[ping-command])
+ACX_FEATURE([with],[ping6-command])
 ACX_FEATURE([with],[lwres])
-ACX_FEATURE([with],[ipv6],[$ac_cv_sys_use_ipv6])
+ACX_FEATURE([with],[ipv6])
 ACX_FEATURE([enable],[emulate-getaddrinfo])
