@@ -141,10 +141,10 @@ main (int argc, char **argv)
 	if (output == NULL || strlen (output) == 0)
 		asprintf (&output, _(" Probably a non-existent host/domain"));
 
-	if (critical_interval != UNDEFINED && elapsed_time > critical_interval)
+	if (critical_interval > UNDEFINED && elapsed_time > critical_interval)
 		result = STATE_CRITICAL;
 
-	else if (warning_interval != UNDEFINED && elapsed_time > warning_interval)
+	else if (warning_interval > UNDEFINED && elapsed_time > warning_interval)
 		result = STATE_WARNING;
 
 	asprintf (&output, _("%.3f seconds response time (%s)"), elapsed_time, output);
@@ -152,9 +152,9 @@ main (int argc, char **argv)
 	printf ("DNS %s - %s|%s\n",
 	        state_text (result), output,
 	        perfdata("time", microsec, "us",
-	                 (warning_interval!=UNDEFINED?TRUE:FALSE),
+	                 (warning_interval>UNDEFINED?TRUE:FALSE),
 	                 (int)(1e6*warning_interval),
-	                 (critical_interval!=UNDEFINED?TRUE:FALSE),
+	                 (critical_interval>UNDEFINED?TRUE:FALSE),
 	                 (int)(1e6*critical_interval),
 									 TRUE, 0, FALSE, 0));
 	return result;
@@ -224,8 +224,6 @@ process_arguments (int argc, char **argv)
 		case 'w':									/* warning */
 			if (is_nonnegative (optarg)) {
 				warning_interval = strtod (optarg, NULL);
-				if (warning_interval == HUGE_VAL)
-					usage2 (_("Input causes overflow in warning interval"), optarg);
 			}
 			else {
 				usage2 (_("Warning interval must be a nonnegative integer"), optarg);
@@ -234,8 +232,6 @@ process_arguments (int argc, char **argv)
 		case 'c':									/* critical */
 			if (is_nonnegative (optarg)) {
 				critical_interval = strtod (optarg, NULL);
-				if (critical_interval == HUGE_VAL)
-					usage2 (_("Input causes overflow in critical interval"), optarg);
 			}
 			else {
 				usage2 (_("Critical interval must be a nonnegative integer"), optarg);
