@@ -41,6 +41,7 @@ int verbose = FALSE;
 int server_port = DEFAULT_PORT;
 int warning_interval = -1;
 int critical_interval = -1;
+struct timeval tv;
 
 int
 main (int argc, char **argv)
