@@ -91,20 +91,20 @@ int check_critical_time = FALSE;
 double elapsed_time = 0;
 int verbose = FALSE;
 int use_ssl = FALSE;
-int sd;
+int sd = 0;
 
 int
 main (int argc, char **argv)
 {
 	int result;
 	int i;
-	char buffer[MAX_INPUT_BUFFER] = "";
+	char *buffer = "";
 	char *status = "";
 	struct timeval tv;
 
 	if (strstr (argv[0], "check_udp")) {
-		PROGNAME = strscpy (PROGNAME, "check_udp");
-		SERVICE = strscpy (SERVICE, "UDP");
+		asprintf (&PROGNAME, "check_udp");
+		asprintf (&SERVICE, "UDP");
 		SEND = NULL;
 		EXPECT = NULL;
 		QUIT = NULL;
@@ -112,8 +112,8 @@ main (int argc, char **argv)
 		PORT = 0;
 	}
 	else if (strstr (argv[0], "check_tcp")) {
-		PROGNAME = strscpy (PROGNAME, "check_tcp");
-		SERVICE = strscpy (SERVICE, "TCP");
+		asprintf (&PROGNAME, "check_tcp");
+		asprintf (&SERVICE, "TCP");
 		SEND = NULL;
 		EXPECT = NULL;
 		QUIT = NULL;
@@ -121,73 +121,73 @@ main (int argc, char **argv)
 		PORT = 0;
 	}
 	else if (strstr (argv[0], "check_ftp")) {
-		PROGNAME = strscpy (PROGNAME, "check_ftp");
-		SERVICE = strscpy (SERVICE, "FTP");
+		asprintf (&PROGNAME, "check_ftp");
+		asprintf (&SERVICE, "FTP");
 		SEND = NULL;
-		EXPECT = strscpy (EXPECT, "220");
-		QUIT = strscpy (QUIT, "QUIT\r\n");
+		asprintf (&EXPECT, "220");
+		asprintf (&QUIT, "QUIT\r\n");
 		PROTOCOL = TCP_PROTOCOL;
 		PORT = 21;
 	}
 	else if (strstr (argv[0], "check_smtp")) {
-		PROGNAME = strscpy (PROGNAME, "check_smtp");
-		SERVICE = strscpy (SERVICE, "SMTP");
+		asprintf (&PROGNAME, "check_smtp");
+		asprintf (&SERVICE, "SMTP");
 		SEND = NULL;
-		EXPECT = strscpy (EXPECT, "220");
-		QUIT = strscpy (QUIT, "QUIT\r\n");
+		asprintf (&EXPECT, "220");
+		asprintf (&QUIT, "QUIT\r\n");
 		PROTOCOL = TCP_PROTOCOL;
 		PORT = 25;
 	}
 	else if (strstr (argv[0], "check_pop")) {
-		PROGNAME = strscpy (PROGNAME, "check_pop");
-		SERVICE = strscpy (SERVICE, "POP");
+		asprintf (&PROGNAME, "check_pop");
+		asprintf (&SERVICE, "POP");
 		SEND = NULL;
-		EXPECT = strscpy (EXPECT, "110");
-		QUIT = strscpy (QUIT, "QUIT\r\n");
+		asprintf (&EXPECT, "110");
+		asprintf (&QUIT, "QUIT\r\n");
 		PROTOCOL = TCP_PROTOCOL;
 		PORT = 110;
 	}
 	else if (strstr (argv[0], "check_imap")) {
-		PROGNAME = strscpy (PROGNAME, "check_imap");
-		SERVICE = strscpy (SERVICE, "IMAP");
+		asprintf (&PROGNAME, "check_imap");
+		asprintf (&SERVICE, "IMAP");
 		SEND = NULL;
-		EXPECT = strscpy (EXPECT, "* OK");
-		QUIT = strscpy (QUIT, "a1 LOGOUT\r\n");
+		asprintf (&EXPECT, "* OK");
+		asprintf (&QUIT, "a1 LOGOUT\r\n");
 		PROTOCOL = TCP_PROTOCOL;
 		PORT = 143;
 	}
 #ifdef HAVE_SSL
 	else if (strstr(argv[0],"check_simap")) {
-		PROGNAME=strscpy(PROGNAME,"check_simap");
-		SERVICE=strscpy(SERVICE,"SIMAP");
+		asprintf (&PROGNAME, "check_simap");
+		asprintf (&SERVICE, "SIMAP");
 		SEND=NULL;
-		EXPECT=strscpy(EXPECT,"* OK");
-		QUIT=strscpy(QUIT,"a1 LOGOUT\r\n");
+		asprintf (&EXPECT, "* OK");
+		asprintf (&QUIT, "a1 LOGOUT\r\n");
 		PROTOCOL=TCP_PROTOCOL;
 		use_ssl=TRUE;
 		PORT=993;
 	}
 	else if (strstr(argv[0],"check_spop")) {
-		PROGNAME=strscpy(PROGNAME,"check_spop");
-		SERVICE=strscpy(SERVICE,"SPOP");
+		asprintf (&PROGNAME, "check_spop");
+		asprintf (&SERVICE, "SPOP");
 		SEND=NULL;
-		EXPECT=strscpy(EXPECT,"110");
-		QUIT=strscpy(QUIT,"QUIT\r\n");
+		asprintf (&EXPECT, "110");
+		asprintf (&QUIT, "QUIT\r\n");
 		PROTOCOL=TCP_PROTOCOL;
 		use_ssl=TRUE;
 		PORT=995;
 	}
 #endif
 	else if (strstr (argv[0], "check_nntp")) {
-		PROGNAME = strscpy (PROGNAME, "check_nntp");
-		SERVICE = strscpy (SERVICE, "NNTP");
+		asprintf (&PROGNAME, "check_nntp");
+		asprintf (&SERVICE, "NNTP");
 		SEND = NULL;
 		EXPECT = NULL;
 		server_expect = realloc (server_expect, ++server_expect_count);
-		server_expect[server_expect_count - 1] = strscpy (EXPECT, "200");
+		asprintf (&server_expect[server_expect_count - 1], "200");
 		server_expect = realloc (server_expect, ++server_expect_count);
-		server_expect[server_expect_count - 1] = strscpy (NULL, "201");
-		QUIT = strscpy (QUIT, "QUIT\r\n");
+		asprintf (&server_expect[server_expect_count - 1], "201");
+		asprintf (&QUIT, "QUIT\r\n");
 		PROTOCOL = TCP_PROTOCOL;
 		PORT = 119;
 	}
@@ -195,7 +195,7 @@ main (int argc, char **argv)
 		usage ("ERROR: Generic check_tcp called with unknown service\n");
 	}
 
-	server_address = strscpy (NULL, "127.0.0.1");
+	asprintf (&server_address, "127.0.0.1");
 	server_port = PORT;
 	server_send = SEND;
 	server_quit = QUIT;
@@ -249,21 +249,21 @@ main (int argc, char **argv)
 
 	if (server_send || server_expect_count > 0) {
 
+		buffer = malloc (MAX_INPUT_BUFFER);
 		/* watch for the expect string */
 #ifdef HAVE_SSL
-		if (use_ssl && SSL_read (ssl, buffer, MAX_INPUT_BUFFER - 1)>=0)
+		if (use_ssl && SSL_read (ssl, buffer, MAX_INPUT_BUFFER - 1) > 0)
 			asprintf (&status, "%s%s", status, buffer);
 		else
 #endif
-			{
-				if (recv (sd, buffer, MAX_INPUT_BUFFER - 1, 0) >= 0)
-					asprintf (&status, "%s%s", status, buffer);
-			}
-		strip (status);
+			if (recv (sd, buffer, MAX_INPUT_BUFFER - 1, 0) > 0)
+				asprintf (&status, "%s%s", status, buffer);
 
 		/* return a CRITICAL status if we couldn't read any data */
 		if (status == NULL)
 			terminate (STATE_CRITICAL, "No data received from host\n");
+
+		strip (status);
 
 		if (status && verbose)
 			printf ("%s\n", status);
@@ -285,15 +285,16 @@ main (int argc, char **argv)
 		if (use_ssl) {
 			SSL_write (ssl, QUIT, strlen (QUIT));
 			SSL_shutdown (ssl);
-			SSL_free (ssl);
-			SSL_CTX_free (ctx);
+ 			SSL_free (ssl);
+ 			SSL_CTX_free (ctx);
 		}
 		else
 #endif
   		send (sd, server_quit, strlen (server_quit), 0);
 
 	/* close the connection */
-	close (sd);
+	if (sd)
+		close (sd);
 
 	elapsed_time = delta_time (tv);
 
@@ -310,7 +311,7 @@ main (int argc, char **argv)
 		 SERVICE,
 		 state_text (result), elapsed_time, server_port);
 
-	if (strlen (status))
+	if (status && strlen(status) > 0)
 		printf (" [%s]", status);
 
 	printf ("|time=%7.3f\n", elapsed_time);
