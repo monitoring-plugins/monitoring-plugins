@@ -79,11 +79,6 @@ int errcode;
 
 struct timeval tv;
 
-#define server_type_check(server_type) \
-(strcmp (server_type, "https") ? FALSE : TRUE)
-
-#define server_port_check(use_ssl) (use_ssl ? HTTPS_PORT : HTTP_PORT)
-
 #define HTTP_URL "/"
 #define CRLF "\r\n"
 
@@ -110,13 +105,18 @@ int use_ssl = FALSE;
 int verbose = FALSE;
 int sd;
 int min_page_len = 0;
+int redir_depth = 0;
+int max_depth = 15;
 char *http_method;
 char *http_post_data;
 char buffer[MAX_INPUT_BUFFER];
 
 int process_arguments (int, char **);
-static char *base64 (char *bin, size_t len);
+static char *base64 (const char *bin, size_t len);
 int check_http (void);
+int redir (char *pos, char *status_line);
+int server_type_check(const char *type);
+int server_port_check(int ssl_flag);
 int my_recv (void);
 int my_close (void);
 void print_help (void);
@@ -409,7 +409,7 @@ process_arguments (int argc, char **argv)
 
 /* written by lauri alanko */
 static char *
-base64 (char *bin, size_t len)
+base64 (const char *bin, size_t len)
 {
 
 	char *buf = (char *) malloc ((len + 2) / 3 * 4 + 1);
@@ -450,17 +450,7 @@ base64 (char *bin, size_t len)
 
 
 
-/* per RFC 2396 */
-#define HDR_LOCATION "%*[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]: "
-#define URI_HTTP "%[HTPShtps]://"
-#define URI_HOST "%[-.abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
-#define URI_PORT ":%[0123456789]"
-#define URI_PATH "%[-_.!~*'();/?:@&=+$,%#abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
-#define HD1 URI_HTTP URI_HOST URI_PORT URI_PATH
-#define HD2 URI_HTTP URI_HOST URI_PATH
-#define HD3 URI_HTTP URI_HOST URI_PORT
-#define HD4 URI_HTTP URI_HOST
-#define HD5 URI_PATH
+
 
 int
 check_http (void)
@@ -475,9 +465,6 @@ check_http (void)
 	char *full_page;
 	char *buf;
 	char *pos;
-	char *x;
-	char xx[2];
-	char *orig_url;
 	long microsec;
 	double elapsed_time;
 	int page_len = 0;
@@ -490,7 +477,7 @@ check_http (void)
 	if (use_ssl == TRUE) {
 
 		if (connect_SSL () != OK) {
-			die (STATE_CRITICAL, _("Unable to open TCP socket"));
+			die (STATE_CRITICAL, _("Unable to open TCP socket\n"));
 		}
 
 		if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
@@ -505,7 +492,7 @@ check_http (void)
 	else {
 #endif
 		if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK)
-			die (STATE_CRITICAL, _("Unable to open TCP socket"));
+			die (STATE_CRITICAL, _("Unable to open TCP socket\n"));
 #ifdef HAVE_SSL
 	}
 #endif
@@ -566,12 +553,12 @@ check_http (void)
 			if ( sslerr == SSL_ERROR_SSL ) {
 				die (STATE_WARNING, _("Client Certificate Required\n"));
 			} else {
-				die (STATE_CRITICAL, _("Error in recv()"));
+				die (STATE_CRITICAL, _("Error in recv()\n"));
 			}
 		}
 		else {
 #endif
-			die (STATE_CRITICAL, _("Error in recv()"));
+			die (STATE_CRITICAL, _("Error in recv()\n"));
 #ifdef HAVE_SSL
 		}
 #endif
@@ -579,7 +566,7 @@ check_http (void)
 
 	/* return a CRITICAL status if we couldn't read any data */
 	if (pagesize == (size_t) 0)
-		die (STATE_CRITICAL, _("No data received %s"), timestamp);
+		die (STATE_CRITICAL, _("No data received %s\n"), timestamp);
 
 	/* close the connection */
 	my_close ();
@@ -668,78 +655,9 @@ check_http (void)
 		    strstr (status_line, "302") || strstr (status_line, "303") ||
 		    strstr (status_line, "304") || strstr (status_line, "305") ||
 		    strstr (status_line, "306")) {
-			if (onredirect == STATE_DEPENDENT) {
 
-				server_address = realloc (server_address, MAX_IPV4_HOSTLENGTH + 1);
-				if (server_address == NULL)
-					die (STATE_UNKNOWN,_("ERROR: could not allocate server_address"));
-
-				asprintf (&orig_url, "%s", server_url);
-				if (strcspn (pos, "\r\n") > (size_t)server_url_length) {
-					server_url = realloc (server_url, strcspn (pos, "\r\n"));
-					if (server_url == NULL)
-						die (STATE_UNKNOWN, _("ERROR: could not allocate server_url"));
-					server_url_length = strcspn (pos, "\r\n");
-				}
-
-				pos = header;
-				while (pos) {
-					if (sscanf (pos, "%[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]:%n", xx, &i) > 0) {
-						pos += i;
-						pos += strspn (pos, " \t\r\n");
-					} else {
-						pos += (size_t) strcspn (pos, "\r\n");
-						pos += (size_t) strspn (pos, "\r\n");
-						continue;
-					}
-					/* HDR_LOCATION, URI_HTTP, URI_HOST, URI_PORT, URI_PATH */
-					if (sscanf (pos, HD1, server_type, server_address, server_port_text, server_url) == 4) {
-						if (host_name != NULL) free(host_name);
-						host_name = strdup(server_address);
-						use_ssl = server_type_check (server_type);
-						server_port = atoi (server_port_text);
-						check_http ();
-					}
-					/* HDR_LOCATION URI_HTTP URI_HOST URI_PATH */
-					else if (sscanf (pos, HD2, server_type, server_address, server_url) == 3 ) { 
-						if (host_name != NULL) free(host_name);
-						host_name = strdup(server_address);
-						use_ssl = server_type_check (server_type);
-						server_port = server_port_check (use_ssl);
-						check_http ();
-					}
-					/* HDR_LOCATION URI_HTTP URI_HOST URI_PORT */
-					else if(sscanf (pos, HD3, server_type, server_address, server_port_text) == 3) {
-						if (host_name != NULL) free(host_name);
-						host_name = strdup(server_address);
-						strcpy (server_url, "/");
-						use_ssl = server_type_check (server_type);
-						server_port = atoi (server_port_text);
-						check_http ();
-					}
-					/* HDR_LOCATION URI_HTTP URI_HOST */
-					else if(sscanf (pos, HD4, server_type, server_address) == 2) {
-						if (host_name != NULL) free(host_name);
-						host_name = strdup(server_address);
-						strcpy (server_url, "/");
-						use_ssl = server_type_check (server_type);
-						server_port = server_port_check (use_ssl);
-						check_http ();
-					}
-					/* HDR_LOCATION URI_PATH */
-					else if (sscanf (pos, HD5, server_url) == 1) {
-						if ((server_url[0] != '/') && (x = strrchr(orig_url, '/'))) {
-							*x = '\0';
-							asprintf (&server_url, "%s/%s", orig_url, server_url);
-						}
-						check_http ();
-					} 					
-				} /* end while (pos) */
-				printf (_("UNKNOWN - Could not find redirect location - %s%s"),
-				        status_line, (display_html ? "</A>" : ""));
-				exit (STATE_UNKNOWN);
-			} /* end if (onredirect == STATE_DEPENDENT) */
-			
+			if (onredirect == STATE_DEPENDENT)
+				redir (header, status_line);
 			else if (onredirect == STATE_UNKNOWN)
 				printf (_("UNKNOWN"));
 			else if (onredirect == STATE_OK)
@@ -824,6 +742,149 @@ check_http (void)
 	                timestamp, (display_html ? "</A>" : ""), microsec, pagesize);
 	die (STATE_OK, "%s", msg);
 	return STATE_UNKNOWN;
+}
+
+
+
+
+/* per RFC 2396 */
+#define HDR_LOCATION "%*[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]: "
+#define URI_HTTP "%[HTPShtps]://"
+#define URI_HOST "%[-.abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
+#define URI_PORT ":%[0123456789]"
+#define URI_PATH "%[-_.!~*'();/?:@&=+$,%#abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
+#define HD1 URI_HTTP URI_HOST URI_PORT URI_PATH
+#define HD2 URI_HTTP URI_HOST URI_PATH
+#define HD3 URI_HTTP URI_HOST URI_PORT
+#define HD4 URI_HTTP URI_HOST
+#define HD5 URI_PATH
+
+int
+redir (char *pos, char *status_line)
+{
+	int i = 0;
+	char *x;
+	char xx[2];
+	char type[6];
+	char *addr;
+	char port[6];
+	char *url;
+
+	addr = malloc (MAX_IPV4_HOSTLENGTH + 1);
+	if (addr == NULL)
+		die (STATE_UNKNOWN, _("ERROR: could not allocate addr\n"));
+	
+	url = malloc (strcspn (pos, "\r\n"));
+	if (url == NULL)
+		die (STATE_UNKNOWN, _("ERROR: could not allocate url\n"));
+
+	while (pos) {
+
+		if (sscanf (pos, "%[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]:%n", xx, &i) > 0) {
+
+			pos += i;
+			pos += strspn (pos, " \t\r\n");
+
+			/* URI_HTTP, URI_HOST, URI_PORT, URI_PATH */
+			if (sscanf (pos, HD1, type, addr, port, url) == 4) {
+				use_ssl = server_type_check (type);
+				i = atoi (port);
+			}
+
+			/* URI_HTTP URI_HOST URI_PATH */
+			else if (sscanf (pos, HD2, type, addr, url) == 3 ) { 
+				use_ssl = server_type_check (type);
+				i = server_port_check (use_ssl);
+			}
+
+			/* URI_HTTP URI_HOST URI_PORT */
+			else if(sscanf (pos, HD3, type, addr, port) == 3) {
+				strcpy (url, HTTP_URL);
+				use_ssl = server_type_check (type);
+				i = atoi (port);
+			}
+
+			/* URI_HTTP URI_HOST */
+			else if(sscanf (pos, HD4, type, addr) == 2) {
+				strcpy (url, HTTP_URL);
+				use_ssl = server_type_check (type);
+				i = server_port_check (use_ssl);
+			}
+
+			/* URI_PATH */
+			else if (sscanf (pos, HD5, url) == 1) {
+				/* relative url */
+				if ((url[0] != '/')) {
+					if (x = strrchr(url, '/'))
+						*x = '\0';
+					asprintf (&server_url, "%s/%s", server_url, url);
+				}
+				i = server_port;
+				strcpy (type, server_type);
+				strcpy (addr, host_name);
+			} 					
+
+			else {
+				die (STATE_UNKNOWN,
+						 _("UNKNOWN - Could not parse redirect location - %s%s\n"),
+						 pos, (display_html ? "</A>" : ""));
+			}
+
+			break;
+
+		} else {
+
+			pos += (size_t) strcspn (pos, "\r\n");
+			pos += (size_t) strspn (pos, "\r\n");
+			if (strlen(pos) == 0) 
+				die (STATE_UNKNOWN,
+						 _("UNKNOWN - Could not find redirect location - %s%s\n"),
+						 status_line, (display_html ? "</A>" : ""));
+
+		}
+
+	} /* end while (pos) */
+
+	if (++redir_depth > max_depth)
+		die (STATE_WARNING,
+		     _("WARNING - maximum redirection depth %d exceeded - %s://%s:%d%s%s\n"),
+		     max_depth, type, addr, i, url, (display_html ? "</A>" : ""));
+
+	if (server_port==i &&
+	    !strcmp(server_address, addr) &&
+	    (host_name && !strcmp(host_name, addr)) &&
+	    !strcmp(server_url, url))
+		die (STATE_WARNING,
+		     _("WARNING - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
+		     type, addr, i, url, (display_html ? "</A>" : ""));
+
+	server_port = i;
+	strcpy (server_type, type);
+	asprintf (&host_name, "%s", addr);
+	asprintf (&server_address, "%s", addr);
+	asprintf (&server_url, "%s", url);
+
+	return check_http ();
+}
+
+
+
+int
+server_type_check (const char *type)
+{
+	if (strcmp (type, "https"))
+		return FALSE;
+	else
+		return TRUE;
+}
+
+int
+server_port_check (int ssl_flag)
+{
+	if (ssl_flag)
+		return HTTPS_PORT;
+	else
+		return HTTP_PORT;
 }
 
 
