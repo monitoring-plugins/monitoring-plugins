@@ -50,6 +50,9 @@ command[notify-by-qpage]=/usr/bin/printf "Service: %s\nHost: %s\nAddress: %s\nSt
 
 command[host-notify-by-qpage]=/usr/bin/printf "Host: %s is %s\nInfo: %s\nDate: %s" '$HOSTALIAS$' '$HOSTSTATES$' '$OUTPUT$' '$DATETIME' | /usr/local/bin/qpage -l 0 -p $CONTACTPAGER$
 
+## Send notifications using SMSclient (www.smsclient.org)
+command[notify-by-smsclient]=/usr/bin/sms_client -q $CONTACTPAGER$ "$NOTIFICATIONTYPE$: $HOSTADDRESS$ $HOSTALIAS$: $SERVICEDESC$ is $SERVICESTATE$"
+command[host-notify-by-smsclient]=/usr/bin/sms_client -q $CONTACTPAGER$ "Host $HOSTALIAS$ is $HOSTSTATE$; $OUTPUT$; $DATETIME$"
 
 
 
