@@ -263,49 +263,49 @@ error_scan (char *input_buffer)
 {
 
 	/* the DNS lookup timed out */
-	if (strstr (input_buffer,	_("Note:  nslookup is deprecated and may be removed from future releases.")) ||
-	    strstr (input_buffer, _("Consider using the `dig' or `host' programs instead.  Run nslookup with")) ||
-	    strstr (input_buffer, _("the `-sil[ent]' option to prevent this message from appearing.")))
+	if (strstr (input_buffer,	"Note:  nslookup is deprecated and may be removed from future releases.") ||
+	    strstr (input_buffer, "Consider using the `dig' or `host' programs instead.  Run nslookup with") ||
+	    strstr (input_buffer, "the `-sil[ent]' option to prevent this message from appearing."))
 		return STATE_OK;
 
 	/* the DNS lookup timed out */
-	else if (strstr (input_buffer, _("Timed out")))
+	else if (strstr (input_buffer, "Timed out"))
 		return STATE_WARNING;
 
 	/* DNS server is not running... */
-	else if (strstr (input_buffer, _("No response from server")))
+	else if (strstr (input_buffer, "No response from server"))
 		return STATE_CRITICAL;
 
 	/* Host name is valid, but server doesn't have records... */
-	else if (strstr (input_buffer, _("No records")))
+	else if (strstr (input_buffer, "No records"))
 		return STATE_WARNING;
 
 	/* Host or domain name does not exist */
-	else if (strstr (input_buffer, _("Non-existent")))
+	else if (strstr (input_buffer, "Non-existent"))
 		return STATE_CRITICAL;
-	else if (strstr (input_buffer, _("** server can't find")))
+	else if (strstr (input_buffer, "** server can't find"))
 		return STATE_CRITICAL;
 	else if(strstr(input_buffer,"NXDOMAIN")) /* 9.x */
 		return STATE_CRITICAL;
 
 	/* Connection was refused */
-	else if (strstr (input_buffer, _("Connection refused")))
+	else if (strstr (input_buffer, "Connection refused"))
 		return STATE_CRITICAL;
 
 	/* Network is unreachable */
-	else if (strstr (input_buffer, _("Network is unreachable")))
+	else if (strstr (input_buffer, "Network is unreachable"))
 		return STATE_CRITICAL;
 
 	/* Internal server failure */
-	else if (strstr (input_buffer, _("Server failure")))
+	else if (strstr (input_buffer, "Server failure"))
 		return STATE_CRITICAL;
 
 	/* DNS server refused to service request */
-	else if (strstr (input_buffer, _("Refused")))
+	else if (strstr (input_buffer, "Refused"))
 		return STATE_CRITICAL;
 
 	/* Request error */
-	else if (strstr (input_buffer, _("Format error")))
+	else if (strstr (input_buffer, "Format error"))
 		return STATE_WARNING;
 
 	else
