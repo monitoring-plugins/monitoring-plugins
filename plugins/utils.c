@@ -561,25 +561,30 @@ char *fperfdata (const char *label,
 	char *data = NULL;
 
 	if (strpbrk (label, "'= "))
-		asprintf (&data, "'%s'=%ld%s;", label, val, uom);
+		asprintf (&data, "'%s'=", label);
 	else
-		asprintf (&data, "%s=%ld%s;", label, val, uom);
+		asprintf (&data, "%s=", label);
+
+	asprintf (&data, "%s%f", data, val);
+	asprintf (&data, "%s%s;", data, uom);
 
 	if (warnp)
-		asprintf (&data, "%s%ld;", data, warn);
-	else
-		asprintf (&data, "%s;", data);
+		asprintf (&data, "%s%f", data, warn);
+
+	asprintf (&data, "%s;", data);
 
 	if (critp)
-		asprintf (&data, "%s%ld;", data, crit);
-	else
-		asprintf (&data, "%s;", data);
+		asprintf (&data, "%s%f", data, crit);
+
+	asprintf (&data, "%s;", data);
 
 	if (minp)
-		asprintf (&data, "%s%ld", data, minv);
+		asprintf (&data, "%s%f", data, minv);
 
-	if (maxp)
-		asprintf (&data, "%s;%ld", data, maxv);
+	if (maxp) {
+		asprintf (&data, "%s;", data);
+		asprintf (&data, "%s%f", data, maxv);
+	}
 
 	return data;
 }

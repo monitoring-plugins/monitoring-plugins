@@ -120,7 +120,7 @@ int check_http (void);
 void redir (char *pos, char *status_line);
 int server_type_check(const char *type);
 int server_port_check(int ssl_flag);
-char *perfd_time (long microsec);
+char *perfd_time (double microsec);
 char *perfd_size (int page_len);
 int my_recv (void);
 int my_close (void);
@@ -685,7 +685,7 @@ check_http (void)
 			     _(" - %s - %.3f second response time %s%s|%s %s\n"),
 			     status_line, elapsed_time, timestamp,
 			     (display_html ? "</A>" : ""),
-					 perfd_time (microsec), perfd_size (pagesize));
+					 perfd_time (elapsed_time), perfd_size (pagesize));
 		} /* end if (http_status >= 300) */
 
 	} /* end else (server_expect_yn)  */
@@ -697,7 +697,7 @@ check_http (void)
 	          _("HTTP problem: %s - %.3f second response time %s%s|%s %s\n"),
 	          status_line, elapsed_time, timestamp,
 	          (display_html ? "</A>" : ""),
-						perfd_time (microsec), perfd_size (pagesize));
+						perfd_time (elapsed_time), perfd_size (pagesize));
 	if (check_critical_time == TRUE && elapsed_time > critical_time)
 		die (STATE_CRITICAL, "%s", msg);
 	if (check_warning_time == TRUE && elapsed_time > warning_time)
@@ -711,13 +711,13 @@ check_http (void)
 			printf (_("HTTP OK %s - %.3f second response time %s%s|%s %s\n"),
 			        status_line, elapsed_time,
 			        timestamp, (display_html ? "</A>" : ""),
-			        perfd_time (microsec), perfd_size (pagesize));
+			        perfd_time (elapsed_time), perfd_size (pagesize));
 			exit (STATE_OK);
 		}
 		else {
 			printf (_("CRITICAL - string not found%s|%s %s\n"),
 			        (display_html ? "</A>" : ""),
-			        perfd_time (microsec), perfd_size (pagesize));
+			        perfd_time (elapsed_time), perfd_size (pagesize));
 			exit (STATE_CRITICAL);
 		}
 	}
@@ -728,14 +728,14 @@ check_http (void)
 			printf (_("HTTP OK %s - %.3f second response time %s%s|%s %s\n"),
 			        status_line, elapsed_time,
 			        timestamp, (display_html ? "</A>" : ""),
-			        perfd_time (microsec), perfd_size (pagesize));
+			        perfd_time (elapsed_time), perfd_size (pagesize));
 			exit (STATE_OK);
 		}
 		else {
 			if (errcode == REG_NOMATCH) {
 				printf (_("CRITICAL - pattern not found%s|%s %s\n"),
 				        (display_html ? "</A>" : ""),
-				        perfd_time (microsec), perfd_size (pagesize));
+				        perfd_time (elapsed_time), perfd_size (pagesize));
 				exit (STATE_CRITICAL);
 			}
 			else {
@@ -758,7 +758,7 @@ check_http (void)
 	asprintf (&msg, _("HTTP OK %s - %d bytes in %.3f seconds %s%s|%s %s\n"),
 	          status_line, page_len, elapsed_time,
 	          timestamp, (display_html ? "</A>" : ""),
-						perfd_time (microsec), perfd_size (page_len));
+						perfd_time (elapsed_time), perfd_size (page_len));
 	die (STATE_OK, "%s", msg);
 	return STATE_UNKNOWN;
 }
@@ -1045,12 +1045,12 @@ check_certificate (X509 ** certificate)
 
 
 
-char *perfd_time (long microsec)
+char *perfd_time (double elapsed_time)
 {
-	return perfdata ("time", microsec, "us",
-	          check_warning_time, (int)(1e6*warning_time),
-	          check_critical_time, (int)(1e6*critical_time),
-	          TRUE, 0, FALSE, 0);
+	return fperfdata ("time", elapsed_time, "s",
+	          check_warning_time, warning_time,
+	          check_critical_time, critical_time,
+									 TRUE, 0, FALSE, 0);
 }
 
 
