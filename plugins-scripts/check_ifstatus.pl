@@ -70,11 +70,14 @@ my %ifStatus;
 my $ifup =0 ;
 my $ifdown =0;
 my $ifdormant = 0;
+my $ifexclude =0 ;
 my $ifmessage = "";
 my $snmp_version = 1;
 my $ifXTable;
 my $opt_h ;
 my $opt_V ;
+my $opt_x ;
+my %excluded ;
 
 
 
@@ -97,7 +100,8 @@ $status = GetOptions(
 		"C=s" =>\$community,"community=s" => \$community,
 		"p=i" =>\$port, "port=i" => \$port,
 		"H=s" => \$hostname, "hostname=s" => \$hostname,
-		"I"	  => \$ifXTable, "ifmib" => \$ifXTable );
+		"I"	  => \$ifXTable, "ifmib" => \$ifXTable,
+		"x:s"		=>	\$opt_x,   "exclude:s" => \$opt_x);
 		
 if ($status == 0)
 {
@@ -114,6 +118,22 @@ if ($opt_V) {
 if ($opt_h) {
 	print_help();
 	exit $ERRORS{'OK'};
+}
+
+
+if (defined $opt_x) {
+	my @x = split(",", $opt_x);
+	my $x;
+	if ( @x) {
+		foreach $x (@x){
+			$excluded{$x} = 1;
+		}
+	}else{
+		$excluded{23} = 1; # default PPP(23) if empty list - note (AIX seems to think PPP is 22 according to a post)
+	}
+	#debugging
+	#foreach $x (keys %excluded) 
+	#	{ print "key = $x  val = $excluded{$x}\n";}
 }
 
 if (! utils::is_hostname($hostname)){
@@ -159,6 +179,8 @@ push(@snmpoids,$snmpIfAdminStatus);
 push(@snmpoids,$snmpIfDescr);
 push(@snmpoids,$snmpIfType);
 push(@snmpoids,$snmpIfName) if ( defined $ifXTable);
+push(@snmpoids,$snmpIfAlias) if ( defined $ifXTable);
+
 
 
 
@@ -168,7 +190,11 @@ foreach $snmpoid (@snmpoids) {
       $answer=$session->error;
       $session->close;
       $state = 'CRITICAL';
-      print ("$state: $answer for $snmpoid  with snmp version $snmp_version\n");
+			if ( ( $snmpoid =~ $snmpIfName ) && defined $ifXTable ) {
+				print ("$state: Device does not support ifTable - try without -I option\n");
+			}else{
+	      print ("$state: $answer for $snmpoid  with snmp version $snmp_version\n");
+			}
       exit $ERRORS{$state};
    }
 
@@ -186,40 +212,52 @@ foreach $key (keys %ifStatus) {
 
 	# check only if interface is administratively up
     if ($ifStatus{$key}{$snmpIfAdminStatus} == 1 ) {
-    	# check only if interface is not of type 23  aka PPP interface
-		if ($ifStatus{$key}{$snmpIfType} != 23 ) {
+    
+		# check only if interface type is not listed in %excluded
+		
+		if (!defined $excluded{$ifStatus{$key}{$snmpIfType}} ) {
 			if ($ifStatus{$key}{$snmpIfOperStatus} == 1 ) { $ifup++ ;}
         	if ($ifStatus{$key}{$snmpIfOperStatus} == 2 ) {
             	$ifdown++ ;
-				$ifmessage .= sprintf("%s: down -> %s<BR>",
-                                 $ifStatus{$key}{$snmpIfDescr},
-								 $ifStatus{$key}{$snmpIfName});
+							if (defined $ifXTable) {
+								$ifmessage .= sprintf("%s: down -> %s<BR>",
+                                $ifStatus{$key}{$snmpIfName},
+								 								$ifStatus{$key}{$snmpIfAlias});
+							}else{
+								$ifmessage .= sprintf("%s: down <BR>",
+																$ifStatus{$key}{$snmpIfDescr});
+							}
 			}
          	if ($ifStatus{$key}{$snmpIfOperStatus} == 5 ) { $ifdormant++ ;}
+		}else{
+			$ifexclude++;
 		}
+		
 	}
    
 }
 
    if ($ifdown > 0) {
       $state = 'CRITICAL';
-      $answer = sprintf("host '%s', interfaces up: %d, down: %d, dormant: %d<BR>",
+      $answer = sprintf("host '%s', interfaces up: %d, down: %d, dormant: %d, excluded: %d<BR>",
                         $hostname,
 			$ifup,
 			$ifdown,
-			$ifdormant);
+			$ifdormant,
+			$ifexclude);
       $answer = $answer . $ifmessage . "\n";
    }
    else {
       $state = 'OK';
-      $answer = sprintf("host '%s', interfaces up: %d, down: %d, dormant: %d\n",
+      $answer = sprintf("host '%s', interfaces up: %d, down: %d, dormant: %d, excluded: %d",
                         $hostname,
 			$ifup,
 			$ifdown,
-			$ifdormant);
+			$ifdormant,
+			$ifexclude);
    }
-
-print ("$state: $answer");
+my $perfdata = sprintf("up:%d,down:%d,dormant:%d,excluded:%d",$ifup,$ifdown,$ifdormant,$ifexclude);
+print ("$state: $answer |$perfdata\n");
 exit $ERRORS{$state};
 
 
@@ -236,7 +274,7 @@ sub usage {
 
 sub print_help {
 	printf "check_ifstatus plugin for Nagios monitors operational \n";
-  	printf "status of each network interface (except PPP interfaces) on the target host\n";
+ 	printf "status of each network interface on the target host\n";
 	printf "\nUsage:\n";
 	printf "   -H (--hostname)   Hostname to query - (required)\n";
 	printf "   -C (--community)  SNMP read community (defaults to public,\n";
@@ -245,8 +283,11 @@ sub print_help {
 	printf "                        2 for SNMP v2c\n";
 	printf "                        SNMP v2c will use get_bulk for less overhead\n";
 	printf "   -p (--port)       SNMP port (default 161)\n";
-	printf "   -I (--ifmib)      Agent supports IFMIB ifXTable.  Do not use if\n";
-	printf "                     you don't know what this is.\n";
+	printf "   -I (--ifmib)      Agent supports IFMIB ifXTable.  For Cisco - this will provide\n";
+	printf "                     the descriptive name.  Do not use if you don't know what this is. \n";
+	printf "   -x (--exclude)    A comma separated list of ifType values that should be excluded \n";
+	printf "                     from the report (default for an empty list is PPP(23).\n";
+	printf "                     See the IANAifType-MIB for a list of interface types.\n";
 	printf "   -V (--version)    Plugin version\n";
 	printf "   -h (--help)       usage help \n\n";
 	print_revision($PROGNAME, '$Revision$');
