@@ -1312,12 +1312,12 @@ dnl fwict, the 2-arg is an SVR4 standard, whereas the 3-arg is shared
 dnl in the various BSD's
 dnl
 
+AC_CHECK_HEADERS([sys/stat.h sys/param.h])
 AC_CHECK_HEADERS([sys/swap.h], [], [], [
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
 ])
-AC_CHECK_HEADERS([sys/stat.h sys/param.h])
 AC_CHECK_DECLS([swapctl],,,[
                #include <unistd.h>
                #include <sys/types.h>
