@@ -233,8 +233,9 @@ main (int argc, char **argv)
 		usage ("Incorrect arguments supplied\n");
 
 	/* create the command line to execute */
-	asprintf (&command_line, "%s -m %s -v %s %s %s:%s %s",
-	          PATH_TO_SNMPGET, miblist, proto, authpriv, server_address, port, oid);
+	asprintf (&command_line, "%s -t 1 -r %d -m %s -v %s %s %s:%s %s",
+	          PATH_TO_SNMPGET, timeout_interval - 1, miblist, proto,
+	          authpriv, server_address, port, oid);
 	if (verbose)
 		printf ("%s\n", command_line);
 
