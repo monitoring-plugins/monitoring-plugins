@@ -9,14 +9,14 @@ contrib nagios-plugins.spec.in
 ACLOCAL_AMFLAGS = -I lib
 
 dist-hook:
-	sed "s/%%{VER}/@VER@/;s/%%{REL}/@REL@/;" $(srcdir)/nagios-plugins.spec.in > $(distdir)/nagios-plugins.spec
+	sed "s/%%{VER}/${VER}/;s/%%{REL}/${REL}/;" $(srcdir)/nagios-plugins.spec.in > $(distdir)/nagios-plugins.spec
 
 test:
 	cd plugins; $(MAKE) test
 	cd plugins-scripts; $(MAKE) test
 
 nagios-plugins.spec: nagios-plugins.spec.in
-	sed "s/%%{VER}/@VER@/;s/%%{REL}/@REL@/;" $? > $@
+	sed "s/%%{VER}/${VER}/;s/%%{REL}/${REL}/;" $? > $@
 
 # Solaris pkgmk
 PACKDIR=build-pkg
