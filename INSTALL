@@ -25,7 +25,7 @@ Nagios Plugins Quick-and-Dirty Installation Instructions
    c) Replace SOMEGRP with the name of a group on your system that will be
       assigned permissions to the installed plugins (default is 'nagios')
    d) Replace CGIURL with the path used to access the Nagios CGIs with
-      a web browser (default is '/cgi-bin/nagios')
+      a web browser (default is '/nagios/cgi-bin')
 
 
 2) Compile the plugins with the following command:
