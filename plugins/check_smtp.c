@@ -49,8 +49,11 @@
  * to do something useful. This can be prevented by giving a command
  * even if syntax is illegal (MAIL requires a FROM:<...> argument)
  * You can disable sending DUMMYCMD by undefining SMTP_USE_DUMMYCMD.
+ *
+ * According to rfc821 you can include a null reversepath in the from command
+ * - but a log message is generated on the smtp server.
  */
-#define SMTP_DUMMYCMD  "MAIL\r\n"
+#define SMTP_DUMMYCMD  "MAIL FROM:<>\r\n"
 #define SMTP_USE_DUMMYCMD 1
 #define SMTP_QUIT	"QUIT\r\n"
 
