@@ -123,9 +123,9 @@ command[snmp_mem2]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o host.hr
 
 command[snmp_swap2]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageUsed.102,host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageSize.102 -w $ARG2$ -c $ARG3$
 
-command[snmp_mem]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageUsed.101,host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageSize.101 -w $ARG2$ -c $ARG3$
+command[snmp_mem3]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageUsed.101,host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageSize.101 -w $ARG2$ -c $ARG3$
 
-command[snmp_swap]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageUsed.102,host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageSize.102 -w $ARG2$ -c $ARG3$
+command[snmp_swap3]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageUsed.102,host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageSize.102 -w $ARG2$ -c $ARG3$
 
 command[snmp_disk2]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageUsed.$ARG2$ -w $ARG3$ -c $ARG4$ 
 
