@@ -40,11 +40,7 @@ function make_dist {
 
 	sed 's/^VER=.*/VER=$v$DS/;s/^REL=.*/REL=snapshot/' configure.in > configure.tmp
 	mv configure.tmp configure.in
-	aclocal -I lib
-	autoheader
-	autoconf
-	automake --add-missing --copy
-	autoreconf
+	tools/setup
 	./configure
 
 	# Make the Nagiosplug dist tarball
@@ -78,7 +74,12 @@ scp $files $OUT_SERVER:$OUT
 # Create MD5 sum
 ssh $OUT_SERVER << EOF
 cd $OUT
-md5sum *.gz > MD5SUM
+cat <<-END_README > README
+This is the daily CVS snapshot of nagiosplug, consisting of the CVS HEAD
+and any other branches
+The MD5SUM is:
+END_README
+md5sum *.gz | tee -a README > MD5SUM
 EOF
 
 rm -f $files
