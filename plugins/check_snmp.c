@@ -35,8 +35,8 @@
           [-C community] [-s string] [-r regex] [-R regexi] [-t timeout]\n\
           [-l label] [-u units] [-p port-number] [-d delimiter]\n\
           [-D output-delimiter] [-m miblist] [-P snmp version]\n\
-					[-L seclevel] [-U secname] [-a authproto] [-A authpasswd]\n\
-					[-X privpasswd]\n"
+          [-L seclevel] [-U secname] [-a authproto] [-A authpasswd]\n\
+          [-X privpasswd]\n"
 
 #define LONGOPTIONS "\
  -H, --hostname=HOST\n\
@@ -726,7 +726,7 @@ validate_arguments ()
 		asprintf(&proto, "%s", "3");
 		
 		if ( (strcmp(seclevel, "noAuthNoPriv") == 0) || seclevel == NULL ) {
-			authpriv = ssprintf(authpriv, "%s", "-l noAuthNoPriv" );
+			asprintf(&authpriv, "%s", "-l noAuthNoPriv" );
 		}
 		else if ( strcmp(seclevel, "authNoPriv") == 0 ) {
 			if ( secname == NULL || authpasswd == NULL) {
@@ -734,7 +734,7 @@ validate_arguments ()
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
-			authpriv = ssprintf(authpriv, "-l authNoPriv -a %s -u %s -A %s ", authproto, secname, authpasswd);
+			asprintf(&authpriv, "-l authNoPriv -a %s -u %s -A %s ", authproto, secname, authpasswd);
 		}
 		else if ( strcmp(seclevel, "authPriv") == 0 ) {
 			if ( secname == NULL || authpasswd == NULL || privpasswd == NULL ) {
@@ -742,7 +742,7 @@ validate_arguments ()
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
-			authpriv = ssprintf(authpriv, "-l authPriv -a %s -u %s -A %s -x DES -X %s ", authproto, secname, authpasswd, privpasswd);
+			asprintf(&authpriv, "-l authPriv -a %s -u %s -A %s -x DES -X %s ", authproto, secname, authpasswd, privpasswd);
 		}
 		
 									
