@@ -75,6 +75,9 @@ main (int argc, char **argv)
 	char *address = NULL;
 	char *temp_buffer = NULL;
 	int result = STATE_UNKNOWN;
+	double elapsed_time;
+	struct timeval tv;
+	int multi_address;
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
@@ -91,7 +94,7 @@ main (int argc, char **argv)
 	asprintf (&command_line, "%s %s %s", NSLOOKUP_COMMAND,	query_address, dns_server);
 
 	alarm (timeout_interval);
-	time (&start_time);
+	gettimeofday (&tv, NULL);
 
 	if (verbose)
 		printf ("%s\n", command_line);
@@ -180,11 +183,17 @@ main (int argc, char **argv)
 	        asprintf(&output, "expected %s but got %s", expected_address, address);
 		}
 	
-	(void) time (&end_time);
+	elapsed_time = delta_time (tv);
 
-	if (result == STATE_OK)
-		printf ("DNS ok - %d seconds response time, Address(es) is/are %s\n",
-						(int) (end_time - start_time), address);
+	if (result == STATE_OK) {
+		if (strchr (address, ',') == NULL)
+			multi_address = FALSE;
+		else
+			multi_address = TRUE;
+
+		printf ("DNS ok - %-7.3f seconds response time, address%s %s|time=%-7.3f\n",
+		  elapsed_time, (multi_address==TRUE ? "es are" : " is"), address, elapsed_time);
+	}
 	else if (result == STATE_WARNING)
 		printf ("DNS WARNING - %s\n",
 			!strcmp (output, "") ? " Probably a non-existent host/domain" : output);
