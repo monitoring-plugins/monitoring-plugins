@@ -202,7 +202,7 @@ process_arguments (int argc, char **argv)
 	static struct option long_options[] = {
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
-		{"all", no_argument, 0, 'a'},
+		{"allswaps", no_argument, 0, 'a'},
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
