@@ -29,7 +29,7 @@ function led() {
 		return "\"" led3 "/libexec\" " ;
 	
 	}
-	return led1;
+	return "\"" led1 "\"" ;
 }
 
 BEGIN {
