@@ -47,7 +47,6 @@ int process_request (const char *address, int port, int proto,
 
 int my_tcp_connect (const char *address, int port, int *sd);
 int my_udp_connect (const char *address, int port, int *sd);
-int my_connect (const char *address, int port, int *sd, int proto);
 
 int is_host (const char *);
 int is_addr (const char *);

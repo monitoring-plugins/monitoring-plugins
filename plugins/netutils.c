@@ -37,6 +37,7 @@ int econn_refuse_state = STATE_CRITICAL;
 int was_refused = FALSE;
 int address_family = AF_UNSPEC;
 
+static int my_connect(const char *address, int port, int *sd, int proto);
 /* handles socket timeouts */
 void
 socket_timeout_alarm_handler (int sig)
@@ -246,7 +247,7 @@ my_udp_connect (const char *host_name, int port, int *sd)
 
 
 /* opens a tcp or udp connection to a remote host */
-int
+static int
 my_connect (const char *host_name, int port, int *sd, int proto)
 {
 	struct addrinfo hints;
