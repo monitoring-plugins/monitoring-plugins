@@ -80,7 +80,7 @@ Optional Filters:\n\
  -u, --user=USER\n\
    Only scan for processes with user name or ID indicated.\n\
  -a, --argument-array=STRING\n\
-   Only scan for ARGS that match up to the length of the given STRING.\n\
+   Only scan for processes with args that contain STRING.\n\
  -C, --command=COMMAND\n\
    Only scan for exact matches to the named COMMAND.\n\
 \n\
@@ -206,14 +206,13 @@ main (int argc, char **argv)
 			cols = 7;
 		}
 		if ( cols >= 7 ) {
-			found++;
 			resultsum = 0;
 			asprintf (&procargs, "%s", input_buffer + pos);
  			strip (procargs);
 
 			if ((options & STAT) && (strstr (statopts, procstat)))
 				resultsum |= STAT;
-			if ((options & ARGS) && procargs && (strstr (procargs, args) == procargs))
+			if ((options & ARGS) && procargs && (strstr (procargs, args) != NULL))
 				resultsum |= ARGS;
 			if ((options & PROG) && procprog && (strcmp (prog, procprog) == 0))
 				resultsum |= PROG;
@@ -232,6 +231,12 @@ main (int argc, char **argv)
 				printf ("%d %d %d %d %d %.2f %s %s %s\n", 
 					procs, procuid, procvsz, procrss,
 					procppid, procpcpu, procstat, procprog, procargs);
+
+			/* Ignore self */
+			if (strcmp (procprog, progname) == 0)
+				continue;
+
+			found++;
 
 			/* Next line if filters not matched */
 			if (!(options == resultsum || options == ALL))
