@@ -16,3 +16,4 @@ check_oracle
 check_rpc
 check_sensors
 check_wave
+check_file_age

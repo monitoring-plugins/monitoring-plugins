@@ -45,7 +45,7 @@ BEGIN {
 /^#! ?\/.*\/sh/ {sub(/^#! ?\/.*\/sh/,"#! @SHELL@");}
 
 # add to libexecdir to INC for perl utils.pm
-/^use/ { if (/lib/) { if (/utils.pm/ ) {sub(/utils.pm/,led() )} } }
+/^use/ { if (/lib/) { if (/utils.pm|"."/ ) {sub(/utils.pm|"."/,led() )} } }
 
 
 # Trusted path mechanism (deprecated)

@@ -27,7 +27,7 @@ use English;
 use Getopt::Long;
 use File::stat;
 use vars qw($PROGNAME);
-use lib utils.pm;
+use lib ".";
 use utils qw (%ERRORS &print_revision &support);
 
 sub print_help ();
