@@ -222,14 +222,14 @@ EOF`
     lib_hr=`echo $result | awk '{print int($1)}'`
 
     if [ $buf_hr -le ${5} -o $lib_hr -le ${5} ] ; then
-  	echo "${4} : ${2} CRITICAL - Cache Hit Rates: $lib_hr % Lib -- $buf_hr % Buff"
+  	echo "${2} CRITICAL - Cache Hit Rates: $lib_hr% Lib -- $buf_hr% Buff"
 	exit $STATE_CRITICAL
     fi
     if [ $buf_hr -le ${6} -o $lib_hr -le ${6} ] ; then
-  	echo "${4} : ${2} WARNING  - Cache Hit Rates: $lib_hr % Lib -- $buf_hr % Buff"
+  	echo "${2} WARNING  - Cache Hit Rates: $lib_hr% Lib -- $buf_hr% Buff"
 	exit $STATE_WARNING
     fi
-    echo "${4} : ${2} OK - Cache Hit Rates: $lib_hr % Lib -- $buf_hr % Buff"
+    echo "${2} OK - Cache Hit Rates: $lib_hr% Lib -- $buf_hr% Buff"
 
     exit $STATE_OK
     ;;
