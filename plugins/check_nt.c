@@ -28,7 +28,6 @@
  *
  *****************************************************************************/
 
-//#include "stdlib.h"
 #include "config.h"
 #include "common.h"
 #include "netutils.h"
@@ -121,15 +120,15 @@ int main(int argc, char **argv){
 
 		if (check_value_list==TRUE) {																			
 			if (strtolarray(&lvalue_list,value_list,",")==TRUE) {
-				// -l parameters is present with only integers
+				/* -l parameters is present with only integers */
 				return_code=STATE_OK;
 				asprintf(&temp_string,"CPU Load");
 				while (lvalue_list[0+offset]>0 && lvalue_list[0+offset]<=17280 && 
 							lvalue_list[1+offset]>=0 && lvalue_list[1+offset]<=100 && 
 							lvalue_list[2+offset]>=0 && lvalue_list[2+offset]<=100) {
-					// loop until one of the parameters is wrong or not present
+					/* loop until one of the parameters is wrong or not present */
 
-					// Send request and retrieve data
+					/* Send request and retrieve data */
 					asprintf(&send_buffer,"%s&2&%lu",req_password,lvalue_list[0+offset]);
 					result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 					if(result!=STATE_OK)
@@ -142,7 +141,7 @@ int main(int argc, char **argv){
 
 					utilization=strtoul(recv_buffer,NULL,10);
 
-					// Check if any of the request is in a warning or critical state
+					/* Check if any of the request is in a warning or critical state */
 					if(utilization >= lvalue_list[2+offset])
 						return_code=STATE_CRITICAL;
 					else if(utilization >= lvalue_list[1+offset] && return_code<STATE_WARNING)
@@ -150,10 +149,10 @@ int main(int argc, char **argv){
 
 					asprintf(&output_message," %lu%% (%lu min average)", utilization, lvalue_list[0+offset]);
 					asprintf(&temp_string,"%s%s",temp_string,output_message);
-					offset+=3;	//move across the array 
+					offset+=3;	/* move across the array */
 				}		
 				if (strlen(temp_string)>10) {
-					// we had at least on loop
+					/* we had at least on loop */
 					asprintf(&output_message,"%s",temp_string);
 				}	
 				else
@@ -236,7 +235,7 @@ int main(int argc, char **argv){
 	else if(vars_to_check==CHECK_SERVICESTATE || vars_to_check==CHECK_PROCSTATE){
 
 		if (check_value_list==TRUE) {
-			preparelist(value_list);		// replace , between services with & to send the request
+			preparelist(value_list);		/* replace , between services with & to send the request */
 			asprintf(&send_buffer,"%s&%u&%s&%s", req_password,(vars_to_check==CHECK_SERVICESTATE)?5:6,
 				(show_all==TRUE)?"ShowAll":"ShowFail",value_list);
 			result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
@@ -286,7 +285,7 @@ int main(int argc, char **argv){
 	else if(vars_to_check==CHECK_COUNTER) {
 
 		if (check_value_list==TRUE) {																			
-			preparelist(value_list);		// replace , between services with & to send the request
+			preparelist(value_list);		/* replace , between services with & to send the request */
 			asprintf(&send_buffer,"%s&8&%s", req_password,value_list);
 			result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 			if (result!=STATE_OK)
@@ -297,7 +296,7 @@ int main(int argc, char **argv){
 				exit(STATE_UNKNOWN);
 			}
 
-			strtok(value_list,"&");			// burn the first parameters
+			strtok(value_list,"&");			/* burn the first parameters */
 			description = strtok(NULL,"&");
 			counter_value = atof(recv_buffer);
 			if (description == NULL) 
@@ -306,7 +305,7 @@ int main(int argc, char **argv){
 				asprintf(&output_message, description, counter_value);
 	
 			if (critical_value > warning_value) {
-				// Normal thresholds		
+				/* Normal thresholds */
 				if(check_critical_value==TRUE && counter_value >= critical_value)
 					return_code=STATE_CRITICAL;
 				else if (check_warning_value==TRUE && counter_value >= warning_value)
@@ -315,7 +314,7 @@ int main(int argc, char **argv){
 					return_code=STATE_OK;	
 			} 
 			else {
-				// inverse thresholds		
+				/* inverse thresholds */
 				if(check_critical_value==TRUE && counter_value <= critical_value)
 					return_code=STATE_CRITICAL;
 				else if (check_warning_value==TRUE && counter_value <= warning_value)
@@ -333,7 +332,7 @@ int main(int argc, char **argv){
 	else if(vars_to_check==CHECK_FILEAGE) {
 
 		if (check_value_list==TRUE) {																			
-			preparelist(value_list);		// replace , between services with & to send the request
+			preparelist(value_list);		/* replace , between services with & to send the request */
 			asprintf(&send_buffer,"%s&9&%s", req_password,value_list);
 			result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
 			if (result!=STATE_OK)
@@ -349,7 +348,7 @@ int main(int argc, char **argv){
 			asprintf(&output_message, description);
 	
 			if (critical_value > warning_value) {
-				// Normal thresholds		
+				/* Normal thresholds */
 				if(check_critical_value==TRUE && age_in_minutes >= critical_value)
 					return_code=STATE_CRITICAL;
 				else if (check_warning_value==TRUE && age_in_minutes >= warning_value)
@@ -358,7 +357,7 @@ int main(int argc, char **argv){
 					return_code=STATE_OK;	
 			} 
 			else {
-				// inverse thresholds		
+				/* inverse thresholds */
 				if(check_critical_value==TRUE && age_in_minutes <= critical_value)
 					return_code=STATE_CRITICAL;
 				else if (check_warning_value==TRUE && age_in_minutes <= warning_value)
@@ -569,7 +568,7 @@ void print_help(void)
 }
 
 int strtolarray(unsigned long *array, char *string, char *delim) {
-	// split a <delim> delimited string into a long array
+	/* split a <delim> delimited string into a long array */
 	int idx=0;
 	char *t1;
 
@@ -588,7 +587,7 @@ int strtolarray(unsigned long *array, char *string, char *delim) {
 }
 
 void preparelist(char *string) {
-	// Replace all , with & which is the delimiter for the request
+	/* Replace all , with & which is the delimiter for the request */
 	int i;
 
 	for (i = 0; i < strlen(string); i++)
