@@ -395,7 +395,7 @@ else
     with_openssl="yes"
 
     # Needed for subsequent compiled programs
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$OPENSSL/lib"
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$OPENSSL/lib$libsuff"
     export LD_LIBRARY_PATH
   fi
 fi
