@@ -30,16 +30,12 @@
 *
 ******************************************************************************/
 
-#undef STDC_HEADERS
-#undef HAVE_STRINGS_H
-#undef HAVE_STRING_H
-
 #include "config.h"
 #include "common.h"
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-void socket_timeout_alarm_handler (int);
+RETSIGTYPE socket_timeout_alarm_handler (int);
 
 int process_tcp_request2 (char *address, int port, char *sbuffer,
 	char *rbuffer, int rsize);

@@ -40,7 +40,7 @@ check_dig
 check_nt
 negate
 stamp-h*
-*.h
+config.h
 Makefile
 Makefile.in
 config.h.in

@@ -16,7 +16,7 @@ EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 
 check_tcp_programs = check_ftp check_imap check_nntp check_pop
 
-EXTRA_DIST = t utils.c netutils.c popen.c
+EXTRA_DIST = t utils.c netutils.c popen.c utils.h netutils.h popen.h common.h 
 
 PLUGINHDRS = common.h config.h
 
