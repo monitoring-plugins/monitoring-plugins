@@ -1,32 +1,29 @@
 /******************************************************************************
- *
- * Program: SNMP plugin for Nagios
- * License: GPL
- *
- * License Information:
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- *./plugins/check_snmp 127.0.0.1 -c public -o .1.3.6.1.4.1.2021.9.1.2.1
- *
- *****************************************************************************/
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+******************************************************************************/
 
 const char *progname = "check_snmp";
 const char *revision = "$Revision$";
 const char *copyright = "1999-2003";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
+#include "common.h"
+#include "utils.h"
+#include "popen.h"
 
 #define DEFAULT_COMMUNITY "public"
 #define DEFAULT_PORT "161"
@@ -35,130 +32,6 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #define DEFAULT_AUTH_PROTOCOL "MD5"
 #define DEFAULT_DELIMITER "="
 #define DEFAULT_OUTPUT_DELIMITER " "
-
-#include "common.h"
-#include "utils.h"
-#include "popen.h"
-
-void
-print_usage (void)
-{
-	printf (_("\
-Usage: %s -H <ip_address> -o <OID> [-w warn_range] [-c crit_range] \n\
-  [-C community] [-s string] [-r regex] [-R regexi] [-t timeout]\n\
-  [-l label] [-u units] [-p port-number] [-d delimiter]\n\
-  [-D output-delimiter] [-m miblist] [-P snmp version]\n\
-  [-L seclevel] [-U secname] [-a authproto] [-A authpasswd]\n\
-  [-X privpasswd]\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
-}
-
-void
-print_help (void)
-{
-	print_revision (progname, revision);
-
-	printf (_(COPYRIGHT), copyright, email);
-
-	printf (_("\
-Check status of remote machines and obtain sustem information via SNMP\n\n"));
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_(UT_HOST_PORT), 'p', DEFAULT_PORT);
-
-	/* SNMP and Authentication Protocol */
-	printf (_("\
- -P, --protocol=[1|3]\n\
-    SNMP protocol version\n\
- -L, --seclevel=[noAuthNoPriv|authNoPriv|authPriv]\n\
-    SNMPv3 securityLevel\n\
- -a, --authproto=[MD5|SHA]\n\
-    SNMPv3 auth proto\n"));
-
-	/* Authentication Tokens*/
-	printf (_("\
- -C, --community=STRING\n\
-    Optional community string for SNMP communication\n\
-    (default is \"%s\")\n\
- -U, --secname=USERNAME\n\
-    SNMPv3 username\n\
- -A, --authpassword=PASSWORD\n\
-    SNMPv3 authentication password\n\
- -X, --privpasswd=PASSWORD\n\
-    SNMPv3 crypt passwd (DES)\n"), DEFAULT_COMMUNITY);
-
-	/* OID Stuff */
-	printf (_("\
- -o, --oid=OID(s)\n\
-    Object identifier(s) whose value you wish to query\n\
- -m, --miblist=STRING\n\
-    List of MIBS to be loaded (default = ALL)\n -d, --delimiter=STRING\n\
-    Delimiter to use when parsing returned data. Default is \"%s\"\n\
-    Any data on the right hand side of the delimiter is considered\n\
-    to be the data that should be used in the evaluation.\n"), DEFAULT_DELIMITER);
-
-	/* Tests Against Integers */
-	printf (_("\
- -w, --warning=INTEGER_RANGE(s)\n\
-    Range(s) which will not result in a WARNING status\n\
- -c, --critical=INTEGER_RANGE(s)\n\
-    Range(s) which will not result in a CRITICAL status\n"));
-
-	/* Tests Against Strings */
-	printf (_("\
- -s, --string=STRING\n\
-    Return OK state (for that OID) if STRING is an exact match\n\
- -r, --ereg=REGEX\n\
-    Return OK state (for that OID) if extended regular expression REGEX matches\n\
- -R, --eregi=REGEX\n\
-    Return OK state (for that OID) if case-insensitive extended REGEX matches\n\
- -l, --label=STRING\n\
-    Prefix label for output from plugin (default -s 'SNMP')\n"));
-
-	/* Output Formatting */
-	printf (_("\
- -u, --units=STRING\n\
-    Units label(s) for output data (e.g., 'sec.').\n\
- -D, --output-delimiter=STRING\n\
-    Separates output on multiple OID requests\n"));
-
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-
-	printf (_(UT_VERBOSE));
-
-	printf (_("\n\
-- This plugin uses the 'snmpget' command included with the NET-SNMP package.\n\
-  If you don't have the package installed, you will need to download it from\n\
-  http://net-snmp.sourceforge.net before you can use this plugin.\n"));
-
-	printf (_("\
-- Multiple OIDs may be indicated by a comma- or space-delimited list (lists with\n\
-  internal spaces must be quoted) [max 8 OIDs]\n"));
-
-	printf (_("\
-- Ranges are inclusive and are indicated with colons. When specified as\n\
-  'min:max' a STATE_OK will be returned if the result is within the indicated\n\
-  range or is equal to the upper or lower bound. A non-OK state will be\n\
-  returned if the result is outside the specified range.\n"));
-
-	printf (_("\
-- If specified in the order 'max:min' a non-OK state will be returned if the\n\
-  result is within the (inclusive) range.\n"));
-
-	printf (_("\
-- Upper or lower bounds may be omitted to skip checking the respective limit.\n\
-- Bare integers are interpreted as upper limits.\n\
-- When checking multiple OIDs, separate ranges by commas like '-w 1:10,1:,:20'\n\
-- Note that only one string and one regex may be checked at present\n\
-- All evaluation methods other than PR, STR, and SUBSTR expect that the value\n\
-  returned from the SNMP query is an unsigned integer.\n"));
-
-	printf (_(UT_SUPPORT));
-}
-
 
 #define mark(a) ((a)!=0?"*":"")
 
@@ -187,16 +60,16 @@ Check status of remote machines and obtain sustem information via SNMP\n\n"));
 #define MAX_OIDS 8
 #define MAX_DELIM_LENGTH 8
 
-void print_usage (void);
-void print_help (void);
 int process_arguments (int, char **);
 int validate_arguments (void);
-int check_num (int);
 char *clarify_message (char *);
+int check_num (int);
 int lu_getll (unsigned long *, char *);
 int lu_getul (unsigned long *, char *);
 char *thisarg (char *str);
 char *nextarg (char *str);
+void print_usage (void);
+void print_help (void);
 
 #ifdef HAVE_REGEX_H
 #include <regex.h>
@@ -244,6 +117,10 @@ char *output_delim = DEFAULT_OUTPUT_DELIMITER;
 char *miblist = DEFAULT_MIBLIST;
 
 
+
+
+
+
 int
 main (int argc, char **argv)
 {
@@ -427,10 +304,10 @@ main (int argc, char **argv)
 	}															/* end while (ptr) */
 
 	if (found == 0)
-		die
-			(STATE_UNKNOWN,
-			 _("%s problem - No data recieved from host\nCMD: %s\n"),
-			 label, command_line);
+		die (STATE_UNKNOWN,
+		     _("%s problem - No data recieved from host\nCMD: %s\n"),
+		     label,
+		     command_line);
 
 	/* WARNING if output found on stderr */
 	if (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
@@ -451,6 +328,11 @@ main (int argc, char **argv)
 	return result;
 }
 
+
+
+
+
+
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -708,6 +590,9 @@ process_arguments (int argc, char **argv)
 	return validate_arguments ();
 }
 
+
+
+
 /******************************************************************************
 
 @@-
@@ -783,9 +668,12 @@ validate_arguments ()
 
 	return OK;
 }
+
+
+
+
+
 
-
-
 char *
 clarify_message (char *msg)
 {
@@ -820,6 +708,8 @@ clarify_message (char *msg)
 	}
 	return (msg);
 }
+
+
 
 
 int
@@ -865,6 +755,8 @@ check_num (int i)
 }
 
 
+
+
 int
 lu_getll (unsigned long *ll, char *str)
 {
@@ -877,6 +769,9 @@ lu_getll (unsigned long *ll, char *str)
 		return 1;
 	return 0;
 }
+
+
+
 
 int
 lu_getul (unsigned long *ul, char *str)
@@ -894,8 +789,6 @@ lu_getul (unsigned long *ul, char *str)
 
 
 
-
-
 /* trim leading whitespace
 	 if there is a leading quote, make sure it balances */
 
@@ -909,6 +802,8 @@ thisarg (char *str)
 	}
 	return str;
 }
+
+
 
 
 /* if there's a leading quote, advance to the trailing quote
@@ -944,4 +839,128 @@ nextarg (char *str)
 		return (++str);
 	}
 	return NULL;
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("\
+Check status of remote machines and obtain sustem information via SNMP\n\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_HOST_PORT), 'p', DEFAULT_PORT);
+
+	/* SNMP and Authentication Protocol */
+	printf (_("\
+ -P, --protocol=[1|3]\n\
+    SNMP protocol version\n\
+ -L, --seclevel=[noAuthNoPriv|authNoPriv|authPriv]\n\
+    SNMPv3 securityLevel\n\
+ -a, --authproto=[MD5|SHA]\n\
+    SNMPv3 auth proto\n"));
+
+	/* Authentication Tokens*/
+	printf (_("\
+ -C, --community=STRING\n\
+    Optional community string for SNMP communication\n\
+    (default is \"%s\")\n\
+ -U, --secname=USERNAME\n\
+    SNMPv3 username\n\
+ -A, --authpassword=PASSWORD\n\
+    SNMPv3 authentication password\n\
+ -X, --privpasswd=PASSWORD\n\
+    SNMPv3 crypt passwd (DES)\n"), DEFAULT_COMMUNITY);
+
+	/* OID Stuff */
+	printf (_("\
+ -o, --oid=OID(s)\n\
+    Object identifier(s) whose value you wish to query\n\
+ -m, --miblist=STRING\n\
+    List of MIBS to be loaded (default = ALL)\n -d, --delimiter=STRING\n\
+    Delimiter to use when parsing returned data. Default is \"%s\"\n\
+    Any data on the right hand side of the delimiter is considered\n\
+    to be the data that should be used in the evaluation.\n"), DEFAULT_DELIMITER);
+
+	/* Tests Against Integers */
+	printf (_("\
+ -w, --warning=INTEGER_RANGE(s)\n\
+    Range(s) which will not result in a WARNING status\n\
+ -c, --critical=INTEGER_RANGE(s)\n\
+    Range(s) which will not result in a CRITICAL status\n"));
+
+	/* Tests Against Strings */
+	printf (_("\
+ -s, --string=STRING\n\
+    Return OK state (for that OID) if STRING is an exact match\n\
+ -r, --ereg=REGEX\n\
+    Return OK state (for that OID) if extended regular expression REGEX matches\n\
+ -R, --eregi=REGEX\n\
+    Return OK state (for that OID) if case-insensitive extended REGEX matches\n\
+ -l, --label=STRING\n\
+    Prefix label for output from plugin (default -s 'SNMP')\n"));
+
+	/* Output Formatting */
+	printf (_("\
+ -u, --units=STRING\n\
+    Units label(s) for output data (e.g., 'sec.').\n\
+ -D, --output-delimiter=STRING\n\
+    Separates output on multiple OID requests\n"));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(UT_VERBOSE));
+
+	printf (_("\n\
+- This plugin uses the 'snmpget' command included with the NET-SNMP package.\n\
+  If you don't have the package installed, you will need to download it from\n\
+  http://net-snmp.sourceforge.net before you can use this plugin.\n"));
+
+	printf (_("\
+- Multiple OIDs may be indicated by a comma- or space-delimited list (lists with\n\
+  internal spaces must be quoted) [max 8 OIDs]\n"));
+
+	printf (_("\
+- Ranges are inclusive and are indicated with colons. When specified as\n\
+  'min:max' a STATE_OK will be returned if the result is within the indicated\n\
+  range or is equal to the upper or lower bound. A non-OK state will be\n\
+  returned if the result is outside the specified range.\n"));
+
+	printf (_("\
+- If specified in the order 'max:min' a non-OK state will be returned if the\n\
+  result is within the (inclusive) range.\n"));
+
+	printf (_("\
+- Upper or lower bounds may be omitted to skip checking the respective limit.\n\
+- Bare integers are interpreted as upper limits.\n\
+- When checking multiple OIDs, separate ranges by commas like '-w 1:10,1:,:20'\n\
+- Note that only one string and one regex may be checked at present\n\
+- All evaluation methods other than PR, STR, and SUBSTR expect that the value\n\
+  returned from the SNMP query is an unsigned integer.\n"));
+
+	printf (_(UT_SUPPORT));
+}
+
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -H <ip_address> -o <OID> [-w warn_range] [-c crit_range] \n\
+  [-C community] [-s string] [-r regex] [-R regexi] [-t timeout]\n\
+  [-l label] [-u units] [-p port-number] [-d delimiter]\n\
+  [-D output-delimiter] [-m miblist] [-P snmp version]\n\
+  [-L seclevel] [-U secname] [-a authproto] [-A authpasswd]\n\
+  [-X privpasswd]\n"), progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }
