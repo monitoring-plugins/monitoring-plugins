@@ -55,17 +55,16 @@
 #define URL	""
 
 int process_arguments (int, char **);
-int call_getopt (int, char **);
 int validate_arguments (void);
 int check_disk (int usp, int free_disk);
 void print_help (void);
 void print_usage (void);
 
 int server_port = PORT;
-char *server_address = NULL;
+char *server_address = "";
 char *host_name = NULL;
 char *server_url = NULL;
-char *server_expect = NULL;
+char *server_expect = EXPECT;
 int warning_time = 0;
 int check_warning_time = FALSE;
 int critical_time = 0;
@@ -117,7 +116,7 @@ main (int argc, char **argv)
 		terminate (STATE_CRITICAL, "No data received from %s\n", host_name);
 
 	/* make sure we find the response we are looking for */
-	if (!strstr (buffer, EXPECT)) {
+	if (!strstr (buffer, server_expect)) {
 		if (server_port == PORT)
 			printf ("Invalid REAL response received from host\n");
 		else
@@ -190,7 +189,7 @@ main (int argc, char **argv)
 		}
 		else {
 			/* make sure we find the response we are looking for */
-			if (!strstr (buffer, EXPECT)) {
+			if (!strstr (buffer, server_expect)) {
 				if (server_port == PORT)
 					printf ("Invalid REAL response received from host\n");
 				else
@@ -275,52 +274,6 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	if (argc < 2)
-		return ERROR;
-
-	for (c = 1; c < argc; c++) {
-		if (strcmp ("-to", argv[c]) == 0)
-			strcpy (argv[c], "-t");
-		else if (strcmp ("-wt", argv[c]) == 0)
-			strcpy (argv[c], "-w");
-		else if (strcmp ("-ct", argv[c]) == 0)
-			strcpy (argv[c], "-c");
-	}
-
-
-
-	c = 0;
-	while ((c += (call_getopt (argc - c, &argv[c]))) < argc) {
-
-		if (is_option (argv[c]))
-			continue;
-
-		if (server_address == NULL) {
-			if (is_host (argv[c])) {
-				server_address = argv[c];
-			}
-			else {
-				usage ("Invalid host name");
-			}
-		}
-	}
-
-	if (server_expect == NULL)
-		server_expect = strscpy (NULL, EXPECT);
-
-	return validate_arguments ();
-}
-
-
-
-
-
-
-int
-call_getopt (int argc, char **argv)
-{
-	int c, i = 0;
-
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -339,6 +292,18 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+	if (argc < 2)
+		return ERROR;
+
+	for (c = 1; c < argc; c++) {
+		if (strcmp ("-to", argv[c]) == 0)
+			strcpy (argv[c], "-t");
+		else if (strcmp ("-wt", argv[c]) == 0)
+			strcpy (argv[c], "-w");
+		else if (strcmp ("-ct", argv[c]) == 0)
+			strcpy (argv[c], "-c");
+	}
+
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
@@ -348,32 +313,11 @@ call_getopt (int argc, char **argv)
 		c = getopt (argc, argv, "+?hVI:H:e:u:p:w:c:t");
 #endif
 
-		i++;
-
-		if (c == -1 || c == EOF || c == 1)
+		if (c == -1 || c == EOF)
 			break;
-
-		switch (c) {
-		case 'I':
-		case 'H':
-		case 'e':
-		case 'u':
-		case 'p':
-		case 'w':
-		case 'c':
-		case 't':
-			i++;
-		}
 
 		switch (c) {
 		case 'I':									/* hostname */
-			if (is_host (optarg)) {
-				server_address = optarg;
-			}
-			else {
-				usage ("Invalid host name\n");
-			}
-			break;
 		case 'H':									/* hostname */
 			if (is_host (optarg)) {
 				server_address = optarg;
@@ -385,7 +329,7 @@ call_getopt (int argc, char **argv)
 		case 'e':									/* string to expect in response header */
 			server_expect = optarg;
 			break;
-		case 'u':									/* string to expect in response header */
+		case 'u':									/* server URL */
 			server_url = optarg;
 			break;
 		case 'p':									/* port */
@@ -435,7 +379,18 @@ call_getopt (int argc, char **argv)
 			usage ("Invalid argument\n");
 		}
 	}
-	return i;
+
+	c = optind;
+	if (strlen(server_address) == 0 && argc > c) {
+		if (is_host (argv[c])) {
+			server_address = argv[c++];
+		}
+		else {
+			usage ("Invalid host name");
+		}
+	}
+
+	return validate_arguments ();
 }
 
 

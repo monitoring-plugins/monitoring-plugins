@@ -82,7 +82,7 @@
 #define UPSSTATUS_UNKOWN	32
 
 int server_port = PORT;
-char *server_address = NULL;
+char *server_address = "127.0.0.1";
 char *ups_name = NULL;
 double warning_value = 0.0L;
 double critical_value = 0.0L;
@@ -103,7 +103,6 @@ int determine_supported_vars (void);
 int get_ups_variable (const char *, char *, int);
 
 int process_arguments (int, char **);
-int call_getopt (int, char **);
 int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
@@ -547,17 +546,13 @@ process_arguments (int argc, char **argv)
 	}
 
 
-	if (server_address == NULL) {
-		if (optind >= argc) {
-			server_address = strscpy (NULL, "127.0.0.1");
-		}
-		else if (is_host (argv[optind])) {
+	if (server_address == NULL && argc > optind) {
+		if (is_host (argv[optind]))
 			server_address = argv[optind++];
-		}
-		else {
+		else
 			usage ("Invalid host name");
-		}
 	}
+
 	return validate_arguments();
 }
 

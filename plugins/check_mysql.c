@@ -15,6 +15,8 @@
 ******************************************************************************/
 
 #define PROGNAME "check_mysql"
+#define REVISION "$Revision$"
+#define COPYRIGHT "1999-2002"
 
 #include "common.h"
 #include "utils.h"
@@ -22,14 +24,13 @@
 #include <mysql/mysql.h>
 #include <mysql/errmsg.h>
 
-char *db_user = NULL;
-char *db_host = NULL;
-char *db_pass = NULL;
-char *db = NULL;
+char *db_user = "";
+char *db_host = "";
+char *db_pass = "";
+char *db = "";
 unsigned int db_port = MYSQL_PORT;
 
 int process_arguments (int, char **);
-int call_getopt (int, char **);
 int validate_arguments (void);
 int check_disk (int usp, int free_disk);
 void print_help (void);
@@ -126,48 +127,6 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 
-	if (argc < 1)
-		return ERROR;
-
-	c = 0;
-	while ((c += (call_getopt (argc - c, &argv[c]))) < argc) {
-
-		if (is_option (argv[c]))
-			continue;
-
-		if (db_host == NULL)
-			if (is_host (argv[c])) {
-				db_host = argv[c];
-			}
-			else {
-				usage ("Invalid host name");
-			}
-		else if (db_user == NULL)
-			db_user = argv[c];
-		else if (db_pass == NULL)
-			db_pass = argv[c];
-		else if (db == NULL)
-			db = argv[c];
-		else if (is_intnonneg (argv[c]))
-			db_port = atoi (argv[c]);
-	}
-
-	if (db_host == NULL)
-		db_host = strscpy (db_host, "127.0.0.1");
-
-	return validate_arguments ();
-}
-
-
-
-
-
-
-int
-call_getopt (int argc, char **argv)
-{
-	int c, i = 0;
-
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -183,27 +142,19 @@ call_getopt (int argc, char **argv)
 	};
 #endif
 
+	if (argc < 1)
+		return ERROR;
+
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
-			getopt_long (argc, argv, "+hVP:p:u:d:H:", long_options, &option_index);
+			getopt_long (argc, argv, "hVP:p:u:d:H:", long_options, &option_index);
 #else
-		c = getopt (argc, argv, "+?hVP:p:u:d:H:");
+		c = getopt (argc, argv, "hVP:p:u:d:H:");
 #endif
 
-		i++;
-
-		if (c == -1 || c == EOF || c == 1)
+		if (c == -1 || c == EOF)
 			break;
-
-		switch (c) {
-		case 'P':
-		case 'p':
-		case 'u':
-		case 'd':
-		case 'H':
-			i++;
-		}
 
 		switch (c) {
 		case 'H':									/* hostname */
@@ -227,7 +178,7 @@ call_getopt (int argc, char **argv)
 			db_port = atoi (optarg);
 			break;
 		case 'V':									/* version */
-			print_revision (my_basename (argv[0]), "$Revision$");
+			print_revision (PROGNAME, REVISION);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -236,7 +187,30 @@ call_getopt (int argc, char **argv)
 			usage ("Invalid argument\n");
 		}
 	}
-	return i;
+
+	c = optind;
+
+	if (strlen(db_host) == 0 && argc > c)
+		if (is_host (argv[c])) {
+			db_host = argv[c++];
+		}
+		else {
+			usage ("Invalid host name");
+		}
+
+	if (strlen(db_user) == 0 && argc > c)
+		db_user = argv[c++];
+
+	if (strlen(db_pass) == 0 && argc > c)
+		db_pass = argv[c++];
+
+	if (strlen(db) == 0 && argc > c)
+		db = argv[c++];
+
+	if (is_intnonneg (argv[c]))
+		db_port = atoi (argv[c++]);
+
+	return validate_arguments ();
 }
 
 
@@ -256,7 +230,7 @@ validate_arguments (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, "$Revision$");
+	print_revision (PROGNAME, REVISION);
 	printf
 		("Copyright (c) 2000 Didi Rieder/Karl DeBisschop\n\n"
 		 "This plugin is for testing a mysql server.\n");
