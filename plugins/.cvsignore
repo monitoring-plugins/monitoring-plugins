@@ -2,6 +2,7 @@ check_disk
 check_dns
 check_dummy
 check_ftp
+check_fping
 check_http
 check_imap
 check_load
