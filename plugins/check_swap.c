@@ -52,7 +52,7 @@ main (int argc, char **argv)
 {
 	int percent_used, percent;
 	unsigned long long total_swap = 0, used_swap = 0, free_swap = 0;
-	unsigned long long dsktotal, dskused, dskfree, tmp;
+	unsigned long long dsktotal = 0, dskused = 0, dskfree = 0, tmp = 0;
 	int result = STATE_OK;
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *perf;
@@ -64,6 +64,11 @@ main (int argc, char **argv)
 	char *temp_buffer;
 	char *swap_command;
 	char *swap_format;
+# else
+#  ifdef HAVE_DECL_SWAPCTL
+	int i=0, nswaps=0;
+	swaptbl_t tbl;
+#  endif /* HAVE_DECL_SWAPCTL */
 # endif
 #endif
 	char str[32];
@@ -230,6 +235,43 @@ main (int argc, char **argv)
 	/* close the pipe */
 	if (spclose (child_process))
 		result = max_state (result, STATE_WARNING);
+# else
+#  ifdef HAVE_DECL_SWAPCTL
+
+	/* initialize swap table entries */
+	memset(&tbl, 0, sizeof(swaptbl_t));
+	tbl.swt_ent[0].ste_path=(char*)malloc(sizeof(char)*(MAXPATHLEN+1));
+	memset(tbl.swt_ent[0].ste_path, 0, sizeof(char)*(MAXPATHLEN+1));
+	tbl.swt_n=1;
+
+	/* get the number of active swap devices */
+	nswaps=swapctl(SC_GETNSWP, NULL);
+
+	/* and now, tally 'em up */
+	for(i=0;i<nswaps;i++){
+		swapctl(SC_LIST, &tbl);
+		/* on tru64, swap is stored in 8k pages.  i'd
+		   use conv_factor or SWAP_CONVERSION, but they're
+		   both buried under a bunch of ifdef's.  ideally
+		   all functions could call getpagesize(2)...  */
+		dsktotal = tbl.swt_ent[0].ste_pages / 128;
+		dskfree = tbl.swt_ent[0].ste_free / 128;
+		dskused = ( total_swap - free_swap );
+
+		if(allswaps && dsktotal > 0){
+			percent = 100 * (((double) dskused) / ((double) dsktotal));
+			result = max_state (result, check_swap (percent, dskfree));
+		}
+
+		total_swap += dsktotal;
+		free_swap += dskfree;
+		used_swap += dskused;
+	}
+
+	/* and clean up after ourselves */
+	free(tbl.swt_ent[0].ste_path);
+
+#  endif /* HAVE_DECL_SWAPCTL */
 # endif /* HAVE_SWAP */
 #endif /* HAVE_PROC_MEMINFO */
 

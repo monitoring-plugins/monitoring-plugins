@@ -4,7 +4,7 @@ AC_PREREQ(2.50)
 AC_INIT(nagios-plugins,1.4.0alpha2)
 AC_CONFIG_SRCDIR(Helper.pm)
 AM_INIT_AUTOMAKE
-AC_CONFIG_HEADER(config.h)
+AM_CONFIG_HEADER(config.h)
 AC_CANONICAL_HOST
 
 RELEASE=1
@@ -1387,6 +1387,23 @@ then
 fi
 dnl end if for PATH_TO_SWAPCTL
 fi
+
+dnl
+dnl test for swapctl system call, as found in tru64 and solaris
+dnl note: the way the ifdef logic in check_swap is right now,
+dnl this will only affect systems that don't pass one of the
+dnl earlier tests.
+dnl
+AC_CHECK_HEADERS([sys/swap.h sys/stat.h sys/param.h])
+AC_CHECK_DECLS([swapctl],,,[
+	#include <sys/types.h>
+	#include <sys/stat.h>
+	#include <sys/swap.h>
+	])
+dnl
+dnl end test for swapctl system call
+dnl
+
 
 if test "x$ac_cv_have_swap" != "x" 
 then
