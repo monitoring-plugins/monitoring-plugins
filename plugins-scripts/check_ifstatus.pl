@@ -199,6 +199,7 @@ foreach $key (keys %ifStatus) {
 		}
 	}
    
+}
 
    if ($ifdown > 0) {
       $state = 'CRITICAL';
