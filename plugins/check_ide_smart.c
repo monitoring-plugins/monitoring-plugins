@@ -45,6 +45,9 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "common.h"
 #include "utils.h"
 
+void print_help (void);
+void print_usage (void);
+
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
@@ -145,6 +148,8 @@ enum SmartCommand
 		SMART_CMD_AUTO_OFFLINE 
 	};
 
+void print_values (values_t * p, thresholds_t * t);
+int smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0, char show_error); 
 
 int
 main (int argc, char *argv[]) 
@@ -249,7 +254,7 @@ main (int argc, char *argv[])
 		case 4:
 			smart_read_values (fd, &values);
 			smart_read_thresholds (fd, &thresholds);
-			retval = net_saint (&values, &thresholds);
+			retval = nagios (&values, &thresholds);
 			break;
 		default:
 			smart_read_values (fd, &values);
@@ -324,7 +329,7 @@ values_not_passed (values_t * p, thresholds_t * t)
 
 
 int
-net_saint (values_t * p, thresholds_t * t) 
+nagios (values_t * p, thresholds_t * t) 
 {
 	value_t * value = p->values;
 	threshold_t * threshold = t->thresholds;
@@ -397,7 +402,7 @@ print_value (value_t * p, threshold_t * t)
 
 
 void
-print_values (values_t * p, thresholds_t * t) 
+print_values (values_t * p, thresholds_t * t)
 {
 	value_t * value = p->values;
 	threshold_t * threshold = t->thresholds;
@@ -506,13 +511,15 @@ Usage: %s [DEVICE] [OPTION]\n\
     Turn on automatic offline tests\n\
  -0, --auto-off\n\
     Turn off automatic offline tests\n\
- -n, --net-saint\n\
-    Output suitable for Net Saint\n", progname);
+ -n, --nagios\n\
+    Output suitable for Nagios\n", progname);
 }
 
 
 void
 print_usage (void)
 {
-	printf ("Usage: %s \n", progname);
+	printf ("\
+Usage: %s [-d <device>] [-i <immediate>] [-q quiet] [-1 <auto-on>]\n\
+                        [-O <auto-off>] [-n <nagios>]\n", progname);
 }
