@@ -8,6 +8,7 @@ $pkgmk = "/usr/bin/pkgmk";
 $pkgtrans = "/usr/bin/pkgtrans";
 $prototype = "prototype";
 $pkginfo = "pkginfo";
+$egrep = "/usr/bin/egrep";
 
 # Sanity check
 
