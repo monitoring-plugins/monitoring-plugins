@@ -3,6 +3,12 @@
 # This scipt assumes that you have anonCVS for nagios and nagiosplug
 # in ${IN}
 
+# cvs -d:pserver:anonymous@cvs.nagiosplug.sourceforge.net:/cvsroot/nagiosplug login
+# cvs -z3 -d:pserver:anonymous@cvs.nagiosplug.sourceforge.net:/cvsroot/nagiosplug co nagiosplug
+#
+# cvs -d:pserver:anonymous@cvs.nagios.sourceforge.net:/cvsroot/nagios login
+# cvs -z3 -d:pserver:anonymous@cvs.nagios.sourceforge.net:/cvsroot/nagios co nagios
+
 # Set directories
 IN=${HOME}/sf
 OUT=/col/htdocs/src/nagios
@@ -31,8 +37,8 @@ cp -fv *.gz ${OUT}
 
 # Make the Nagiosplug custom RPM
 echo "%_topdir ${RPM_TOPDIR}" > ./.rpmrc
-rpm --rcfile "/usr/lib/rpm/rpmrc:/etc/rpmrc:~/.rpmrc:./.rpmrc" \
-  --define 'custom 1' -ta *.gz
+mkdir -p ${RPM_TOPDIR}/RPMS/i386 ${RPM_TOPDIR}/SRPMS ${RPM_TOPDIR}/SOURCES ${RPM_TOPDIR}/BUILD ${RPM_TOPDIR}/SPECS
+rpm --rcfile "/usr/lib/rpm/rpmrc:${IN}/rpmrc" --define 'custom 1' -ta *.gz
 cp -fv ~/redhat/RPMS/i386/nagios-plugins-custom-*.i386.rpm /col/htdocs/src/nagios
 
 # Copy the new snapshot and delete the old ones
