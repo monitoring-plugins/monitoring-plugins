@@ -497,15 +497,23 @@
 	Coding standards</ulink> for general guidelines.</para>
 	<section><title>Comments</title>
 	<para>You should use /* */ for comments and not // as some compilers
-	do not handle the latter form</para>
+	do not handle the latter form.</para>
 	</section>
 
 	<section><title>CVS comments</title>
 	<para>When adding CVS comments at commit time, you can use the following prefixes:
-	<unorderedlist>
-	  <listitem>"-" for a comment that can be removed from the Changelog</listitem>
-	  <listitem>"*" for an important amendment to be included into a features list
-	</unorderedlist>
+	<variablelist>
+	  <varlistentry><term>- comment</term>
+	  <listitem>
+	    <para>for a comment that can be removed from the Changelog</para>
+	  </listitem>
+	  </varlistentry>
+	  <varlistentry><term>* comment</term>
+	  <listitem>
+	    <para>for an important amendment to be included into a features list</para>
+	  </listitem>
+	  </varlistentry>
+	</variablelist>
 	</para>
 	</section>
 </section>
