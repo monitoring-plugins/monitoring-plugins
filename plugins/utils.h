@@ -59,6 +59,7 @@ int gettimeofday(struct timeval *tv, struct timezone *tz);
 #endif
 
 double delta_time (struct timeval tv);
+long deltime (struct timeval tv);
 
 /* Handle strings safely */
 

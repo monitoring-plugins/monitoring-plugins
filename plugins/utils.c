@@ -287,6 +287,16 @@ delta_time (struct timeval tv)
 
 
 
+long
+deltime (struct timeval tv)
+{
+	struct timeval now;
+	gettimeofday (&now, NULL);
+	return (now.tv_sec - tv.tv_sec)*1000000 + now.tv_usec - tv.tv_usec;
+}
+
+
+
 
 void
 strip (char *buffer)
