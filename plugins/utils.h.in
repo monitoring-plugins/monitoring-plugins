@@ -86,6 +86,12 @@ int max_state(int, int);
  exit(STATE_UNKNOWN);\
 }
 
+#define usage3(msg,arg) {\
+ printf("%s: %s - %c\n",PROGNAME,msg,arg);\
+ print_usage();\
+ exit(STATE_UNKNOWN);\
+}
+
 #define state_text(a) \
 (a)==0?"OK":\
 (a)==1?"WARNING":\

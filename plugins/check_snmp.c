@@ -418,10 +418,10 @@ process_arguments (int argc, char **argv)
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
-			getopt_long (argc, argv, "+?hVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:",
+			getopt_long (argc, argv, "hVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:",
 									 long_options, &option_index);
 #else
-		c = getopt (argc, argv, "+?hVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:");
+		c = getopt (argc, argv, "hVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:");
 #endif
 
 		if (c == -1 || c == EOF)
@@ -429,7 +429,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':	/* usage */
-			usage2 ("Unknown argument", optarg);
+			usage3 ("Unknown argument", optopt);
 		case 'h':	/* help */
 			print_help ();
 			exit (STATE_OK);

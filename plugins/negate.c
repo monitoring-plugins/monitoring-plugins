@@ -234,17 +234,17 @@ process_arguments (int argc, char **argv)
 
 	while (1) {
 #ifdef HAVE_GETOPT_H
-		c = getopt_long (argc, argv, "+?hVt:",
+		c = getopt_long (argc, argv, "hVt:",
 		                 long_options, &option_index);
 #else
-		c = getopt (argc, argv, "+?hVt:");
+		c = getopt (argc, argv, "hVt:");
 #endif
 		if (c == -1 || c == EOF)
 			break;
 
 		switch (c) {
 		case '?':     /* help */
-			usage2 ("Unknown argument", optarg);
+			usage3 ("Unknown argument", optopt);
 		case 'h':     /* help */
 			print_help ();
 			exit (EXIT_SUCCESS);

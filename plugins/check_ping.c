@@ -187,7 +187,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':	/* usage */
-			usage2 ("Unknown argument", optarg);
+			usage3 ("Unknown argument", optopt);
 		case 'h':	/* help */
 			print_help ();
 			exit (STATE_OK);
