@@ -81,7 +81,7 @@ check_ide_smart_LDADD = $(BASEOBJS)
 negate_LDADD = $(BASEOBJS) popen.o
 urlize_LDADD = $(BASEOBJS) popen.o
 
-check_dhcp_DEPENDENCIES = check_dhcp.c $(DEPLIBS)
+check_dhcp_DEPENDENCIES = check_dhcp.c $(BASEOBJS) $(DEPLIBS) 
 check_dig_DEPENDENCIES = check_dig.c $(NETOBJS) popen.o $(DEPLIBS)
 check_disk_DEPENDENCIES = check_disk.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_dns_DEPENDENCIES = check_dns.c $(NETOBJS) popen.o $(DEPLIBS)
