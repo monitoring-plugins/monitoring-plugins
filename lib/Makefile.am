@@ -27,6 +27,7 @@ other_coreutils_files = \
   malloc.c \
   mountlist.c \
   realloc.c \
+  stdbool_.h \
   strtod.c
 
 libcoreutils_a_LIBADD = $(LIBOBJS)
