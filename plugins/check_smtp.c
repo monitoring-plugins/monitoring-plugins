@@ -37,6 +37,18 @@ int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
 
+#ifdef HAVE_REGEX_H
+#include <regex.h>
+char regex_expect[MAX_INPUT_BUFFER] = "";
+regex_t preg;
+regmatch_t pmatch[10];
+char timestamp[10] = "";
+char errbuf[MAX_INPUT_BUFFER];
+int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
+int eflags = 0;
+int errcode, excode;
+#endif
+
 int server_port = SMTP_PORT;
 char *server_address = NULL;
 char *server_expect = NULL;
@@ -160,9 +172,36 @@ main (int argc, char **argv)
 			if (verbose) 
 				printf("%s", buffer);
 			strip (buffer);
-			if (n < nresponses && strstr(buffer, responses[n])!=buffer) {
-				result = STATE_WARNING;
-				printf (_("SMTP %s - Invalid response '%s' to command '%s'\n"), state_text (result), buffer, commands[n]);
+			if (n < nresponses) {
+#ifdef HAVE_REGEX_H
+				cflags |= REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
+				//strncpy (regex_expect, responses[n], sizeof (regex_expect) - 1);
+				//regex_expect[sizeof (regex_expect) - 1] = '\0';
+				errcode = regcomp (&preg, responses[n], cflags);
+				if (errcode != 0) {
+					regerror (errcode, &preg, errbuf, MAX_INPUT_BUFFER);
+					printf (_("Could Not Compile Regular Expression"));
+					return ERROR;
+				}
+				excode = regexec (&preg, buffer, 10, pmatch, eflags);
+				if (excode == 0) {
+					result = STATE_OK;
+				}
+				else if (excode == REG_NOMATCH) {
+					result = STATE_WARNING;
+					printf (_("SMTP %s - Invalid response '%s' to command '%s'\n"), state_text (result), buffer, commands[n]);
+				}
+				else {
+					regerror (excode, &preg, errbuf, MAX_INPUT_BUFFER);
+					printf (_("Execute Error: %s\n"), errbuf);
+					result = STATE_UNKNOWN;
+				}
+#else
+				if (strstr(buffer, responses[n])!=buffer) {
+					result = STATE_WARNING;
+					printf (_("SMTP %s - Invalid response '%s' to command '%s'\n"), state_text (result), buffer, commands[n]);
+				}
+#endif
 			}
 			n++;
 		}
