@@ -40,10 +40,13 @@ main (int argc, char **argv)
 	int users = -1;
 	int result = STATE_OK;
 	char input_buffer[MAX_INPUT_BUFFER];
+	char *perf;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
+
+	perf = strdup("");
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage (_("Could not parse arguments\n"));
@@ -94,9 +97,15 @@ main (int argc, char **argv)
 
 	if (result == STATE_UNKNOWN)
 		printf (_("Unable to read output\n"));
-	else
-		printf (_("USERS %s - %d users currently logged in\n"), state_text (result),
-						users);
+	else {
+		asprintf(&perf, "%s", perfdata ("users", users, "",
+		  TRUE, wusers,
+		  TRUE, cusers,
+		  TRUE, 0,
+		  FALSE, 0));
+		printf (_("USERS %s - %d users currently logged in |%s\n"), state_text (result),
+		  users, perf);
+	}
 
 	return result;
 }
