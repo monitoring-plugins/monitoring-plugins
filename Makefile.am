@@ -15,6 +15,9 @@ test:
 	cd plugins; $(MAKE) test
 	cd plugins-scripts; $(MAKE) test
 
+nagios-plugins.spec: nagios-plugins.spec.in
+	sed "s/%%{VER}/@VER@/;s/%%{REL}/@REL@/;" $? > $@
+
 # Solaris pkgmk
 PACKDIR=build-pkg
 VERSION=@PACKAGE_VERSION@
