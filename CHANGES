@@ -7,3 +7,4 @@ This file documents the major additions and syntax changes between releases.
 	check_vsz and check_rss deprecated - functionality moved into check_procs
 	check_swap % thresholds changed to measure amount free, instead of amount used
 	check_disk syntax changes for -p
+	check_procs -C expects no path for the command name
