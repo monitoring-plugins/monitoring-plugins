@@ -223,7 +223,7 @@ process_arguments (int argc, char **argv)
 		{"no-body", no_argument, 0, 'N'},
 		{"max-age", required_argument, 0, 'M'},
 		{"content-type", required_argument, 0, 'T'},
-		{"minmax", required_argument, 0, 'm'},
+		{"pagesize", required_argument, 0, 'm'},
 		{"use-ipv4", no_argument, 0, '4'},
 		{"use-ipv6", no_argument, 0, '6'},
 		{0, 0, 0, 0}
@@ -1516,7 +1516,7 @@ certificate expiration times.\n\n"));
    Wrap output in HTML link (obsoleted by urlize)\n\
  -f, --onredirect=<ok|warning|critical|follow>\n\
    How to handle redirected pages\n\
- -m, --minmax=INTEGER<:INTEGER>\n\
+ -m, --pagesize=INTEGER<:INTEGER>\n\
    Minimum page size required (bytes) : Maximum page size required (bytes)\n"));
 
 	printf (_(UT_WARN_CRIT));
