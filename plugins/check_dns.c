@@ -78,6 +78,7 @@ main (int argc, char **argv)
 	char *temp_buffer = NULL;
 	int result = STATE_UNKNOWN;
 	double elapsed_time;
+	long microsec;
 	struct timeval tv;
 	int multi_address;
 
@@ -197,8 +198,9 @@ main (int argc, char **argv)
 		result = STATE_CRITICAL;
 		asprintf(&output, _("expected %s but got %s"), expected_address, address);
 	}
-	
-	elapsed_time = delta_time (tv);
+
+	microsec = deltime (tv);
+	elapsed_time = (double)microsec / 1.0e6;
 
 	if (result == STATE_OK) {
 		if (strchr (address, ',') == NULL)
@@ -206,8 +208,8 @@ main (int argc, char **argv)
 		else
 			multi_address = TRUE;
 
-		printf (_("DNS ok - %.3f seconds response time, address%s %s|time=%.3f\n"),
-						elapsed_time, (multi_address==TRUE ? "es are" : " is"), address, elapsed_time);
+		printf (_("DNS ok - %.3f seconds response time, address%s %s|time=%ldus\n"),
+						elapsed_time, (multi_address==TRUE ? "es are" : " is"), address, microsec);
 	}
 	else if (result == STATE_WARNING)
 		printf (_("DNS WARNING - %s\n"),

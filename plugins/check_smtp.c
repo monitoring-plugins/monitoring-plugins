@@ -59,6 +59,7 @@ main (int argc, char **argv)
 {
 	int sd;
 	double elapsed_time;
+	long microsec;
 	int result = STATE_UNKNOWN;
 	char buffer[MAX_INPUT_BUFFER];
 	char *from_str = NULL;
@@ -155,7 +156,8 @@ main (int argc, char **argv)
 	/* reset the alarm */
 	alarm (0);
 
-	elapsed_time = delta_time (tv);
+	microsec = deltime (tv);
+	elapsed_time = (double)microsec / 1.0e6;
 
 	if (check_critical_time && elapsed_time > (double) critical_time)
 		result = STATE_CRITICAL;
@@ -163,11 +165,11 @@ main (int argc, char **argv)
 		result = STATE_WARNING;
 
 	if (verbose)
-		printf (_("SMTP %s - %.3f sec. response time, %s|time=%.3f\n"),
-		        state_text (result), elapsed_time, buffer, elapsed_time);
+		printf (_("SMTP %s - %.3f sec. response time, %s|time=%ldus\n"),
+		        state_text (result), elapsed_time, buffer, microsec);
 	else
-		printf (_("SMTP %s - %.3f second response time|time=%.3f\n"),
-		        state_text (result), elapsed_time, elapsed_time);
+		printf (_("SMTP %s - %.3f second response time|time=%ldus\n"),
+		        state_text (result), elapsed_time, microsec);
 
 	return result;
 }
