@@ -97,6 +97,7 @@ char *community = NULL;
 char oid[MAX_INPUT_BUFFER] = "";
 char *label = NULL;
 char *units = NULL;
+char *port = NULL;
 char string_value[MAX_INPUT_BUFFER] = "";
 char **labels = NULL;
 char **unitv = NULL;
@@ -259,7 +260,7 @@ main (int argc, char **argv)
 				iresult = STATE_WARNING;
 		}
 
-		result = max (result, iresult);
+		result = max_state (result, iresult);
 
 		if (nlabels > 1 && i < nlabels && labels[i] != NULL)
 			outbuff = ssprintf
@@ -290,14 +291,14 @@ main (int argc, char **argv)
 
 	/* WARNING if output found on stderr */
 	if (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
-		result = max (result, STATE_WARNING);
+		result = max_state (result, STATE_WARNING);
 
 	/* close stderr */
 	(void) fclose (child_stderr);
 
 	/* close the pipe */
 	if (spclose (child_process))
-		result = max (result, STATE_WARNING);
+		result = max_state (result, STATE_WARNING);
 
 	if (nunits > 0)
 		printf ("%s %s -%s\n", label, state_text (result), outbuff);
@@ -347,6 +348,12 @@ process_arguments (int argc, char **argv)
 
 	if (units == NULL)
 		units = strscpy (NULL, "");
+
+	if (port == NULL)
+		port = strscpy(NULL,"161");
+
+	if (port == NULL)
+		port = strscpy(NULL,"161");
 
 	return c;
 }
@@ -409,6 +416,7 @@ call_getopt (int argc, char **argv)
 		case 'r':
 		case 'l':
 		case 'u':
+		case 'p':
 			i++;
 		}
 
@@ -608,6 +616,8 @@ print_help (char *cmd)
 		 "    (default is \"public\")\n"
 		 " -u, --units=STRING\n"
 		 "    Units label(s) for output data (e.g., 'sec.').\n"
+		 " -p, --port=STRING\n"
+		 "    TCP port number target is listening on.\n"
 		 " -d, --delimiter=STRING\n"
 		 "    Delimiter to use when parsing returned data. Default is \"%s\"\n"
 		 "    Any data on the right hand side of the delimiter is considered\n"

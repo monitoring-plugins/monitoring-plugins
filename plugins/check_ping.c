@@ -483,7 +483,7 @@ run_ping (char *command_line)
 
 	/* close the pipe - WARNING if status is set */
 	if (spclose (child_process))
-		result = max (result, STATE_WARNING);
+		result = max_state (result, STATE_WARNING);
 
 	return result;
 }

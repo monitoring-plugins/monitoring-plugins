@@ -93,7 +93,7 @@ main (int argc, char **argv)
 						terminate (STATE_UNKNOWN,
 											 "check_vsz: could not malloc message (1)");
 					sprintf (message, "%s %s(%d)", message, proc_name, proc_size);
-					result = max (result, STATE_WARNING);
+					result = max_state (result, STATE_WARNING);
 				}
 				if (proc_size > crit) {
 					result = STATE_CRITICAL;
@@ -107,7 +107,7 @@ main (int argc, char **argv)
 										 "check_vsz: could not malloc message (2)");
 				sprintf (message, "%s %d", message, proc_size);
 				if (proc_size > warn) {
-					result = max (result, STATE_WARNING);
+					result = max_state (result, STATE_WARNING);
 				}
 				if (proc_size > crit) {
 					result = STATE_CRITICAL;
@@ -118,13 +118,13 @@ main (int argc, char **argv)
 
 	/* If we get anything on STDERR, at least set warning */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
-		result = max (result, STATE_WARNING);
+		result = max_state (result, STATE_WARNING);
 
 	(void) fclose (child_stderr);
 
 	/* close the pipe */
 	if (spclose (child_process))
-		result = max (result, STATE_WARNING);
+		result = max_state (result, STATE_WARNING);
 
 	if (result == STATE_OK)
 		printf ("ok (all VSZ<%d): %s\n", warn, message);

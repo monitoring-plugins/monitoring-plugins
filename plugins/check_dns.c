@@ -150,7 +150,7 @@ main (int argc, char **argv)
 	/* scan stderr */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
 		if (error_scan (input_buffer) != STATE_OK) {
-			result = max (result, error_scan (input_buffer));
+			result = max_state (result, error_scan (input_buffer));
 			output = strscpy (output, 1 + index (input_buffer, ':'));
 		}
 	}
@@ -160,7 +160,7 @@ main (int argc, char **argv)
 
 	/* close stdout */
 	if (spclose (child_process)) {
-		result = max (result, STATE_WARNING);
+		result = max_state (result, STATE_WARNING);
 		if (!strcmp (output, ""))
 			output = strscpy (output, "nslookup returned error status");
 	}

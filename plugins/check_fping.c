@@ -93,21 +93,22 @@ main (int argc, char **argv)
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
 		if (verbose)
 			printf ("%s", input_buffer);
-		status = max (status, textscan (input_buffer));
+		status = max_state (status, textscan (input_buffer));
 	}
 
 	/* If we get anything on STDERR, at least set warning */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
-		status = max (status, STATE_WARNING);
+		status = max_state (status, STATE_WARNING);
 		if (verbose)
 			printf ("%s", input_buffer);
-		status = max (status, textscan (input_buffer));
+		status = max_state (status, textscan (input_buffer));
 	}
 	(void) fclose (child_stderr);
 
 	/* close the pipe */
 	if (spclose (child_process))
-		status = max (status, STATE_WARNING);
+		/* need to use max_state not max */
+		status = max_state (status, STATE_WARNING);
 
 	printf ("FPING %s - %s\n", state_text (status), server_name);
 
@@ -166,8 +167,27 @@ textscan (char *buf)
 							 state_text (status), server_name, loss, rta);
 
 	}
+	else if(strstr (buf, "xmt/rcv/%loss") ) {
+		/* no min/max/avg if host was unreachable in fping v2.2.b1 */
+		losstr = strstr (buf, "=");
+		losstr = 1 + strstr (losstr, "/");
+		losstr = 1 + strstr (losstr, "/");
+		loss = strtod (losstr, NULL);
+		if (loss == 100)
+			status = STATE_CRITICAL;
+		else if (cpl != UNKNOWN_PACKET_LOSS && loss > cpl)
+			status = STATE_CRITICAL;
+		else if (wpl != UNKNOWN_PACKET_LOSS && loss > wpl)
+			status = STATE_WARNING;
+		else
+			status = STATE_OK;
+		
+		terminate (status, "FPING %s - %s (loss=%f%% )\n",
+							 state_text (status), server_name, loss );		
+	
+	}
 	else {
-		status = max (status, STATE_WARNING);
+		status = max_state (status, STATE_WARNING);
 	}
 
 	return status;

@@ -98,7 +98,7 @@ main (int argc, char **argv)
 
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
 		/* If we get anything on STDERR, at least set warning */
-		result = max (result, STATE_WARNING);
+		result = max_state (result, STATE_WARNING);
 		printf ("%s", input_buffer);
 		if (!strcmp (output, ""))
 			strcpy (output, 1 + index (input_buffer, ':'));
@@ -108,7 +108,7 @@ main (int argc, char **argv)
 
 	/* close the pipe */
 	if (spclose (child_process)) {
-		result = max (result, STATE_WARNING);
+		result = max_state (result, STATE_WARNING);
 		if (!strcmp (output, ""))
 			strcpy (output, "nslookup returned error status");
 	}

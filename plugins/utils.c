@@ -58,6 +58,44 @@ char *strpcat (char *dest, const char *src, const char *str);
 
 #define max(a,b) ((a)>(b))?(a):(b)
 
+/* **************************************************************************
+ * max_state(result, STATE_x)
+ * compares STATE_x to result and returns result if STATE_x is less than a based on the following
+ * STATE_UNKNOWN < STATE_OK < STATE_WARNING < STATE_CRITICAL
+ *
+ * Note that numerically the above does not hold
+ ****************************************************************************/
+
+int
+max_state(int a, int b)
+{
+	if(a == STATE_CRITICAL){
+		return a;
+	}
+	else if (a == STATE_WARNING) {
+
+		if (b == STATE_CRITICAL){
+			return b;
+		}else {
+			return a;
+		}
+	} 
+	else if (a == STATE_OK) {
+		
+		if ( b== STATE_CRITICAL || b == STATE_WARNING) {
+			return b;
+		}else{
+			return a;
+		}
+	}
+	else {
+		/* a == UNKNOWN */
+		return b;
+	}
+		
+
+}
+
 char *
 my_basename (char *path)
 {

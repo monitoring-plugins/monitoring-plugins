@@ -285,14 +285,14 @@ main (int argc, char **argv)
 
 	/* WARNING if output found on stderr */
 	if (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
-		result = max (result, STATE_WARNING);
+		result = max_state (result, STATE_WARNING);
 
 	/* close stderr */
 	(void) fclose (child_stderr);
 
 	/* close the pipe */
 	if (spclose (child_process))
-		result = max (result, STATE_WARNING);
+		result = max_state (result, STATE_WARNING);
 
 	/* if there wasn't any output, display an error */
 	if (line == 0) {

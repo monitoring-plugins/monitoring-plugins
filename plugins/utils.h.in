@@ -1,4 +1,4 @@
-/* header file for nagios plugins uitls.c */
+/* header file for nagios plugins utils.c */
 
 /* this file should be included in all plugins */
 
@@ -55,6 +55,9 @@ char *ssprintf (char *str, const char *fmt, ...);
 char *strpcpy (char *dest, const char *src, const char *str);
 char *strpcat (char *dest, const char *src, const char *str);
 
+/* Handle comparisions for STATE_* */
+int max_state(int, int);
+
 #define max(a,b) ((a)>(b))?(a):(b)
 
 #define usage(msg) {\
@@ -73,7 +76,8 @@ exit(STATE_UNKNOWN);\
 (a)==0?"OK":\
 (a)==1?"WARNING":\
 (a)==2?"CRITICAL":\
-(a)==-2?"DEPENDENT":\
+(a)==3?"UNKNOWN":\
+(a)==4?"DEPENDENT":\
 "UNKNOWN"
 
 /* The idea here is that, although not every plugin will use all of these, 
