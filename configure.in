@@ -675,7 +675,8 @@ then
 
 dnl SunOS 4.1.3:
 dnl  F  UID  PID  PPID  CP  PRI  NI  SZ  RSS  WCHAN  STAT  TT  TIME  COMMAND
-elif ps -laxnwww 2>/dev/null | \
+dnl Need the head -1 otherwise test will work because arguments are found
+elif ps -laxnwww 2>/dev/null | head -1 | \
 	egrep -i ["^ *F(LAGS)? +UID +PID +PPID +CP +PRI +NI +(SZ)|(VSZ)|(SIZE) +RSS +WCHAN +STAT? +TTY? +TIME +COMMAND"] >/dev/null
 then
 	ac_cv_ps_varlist="[&procuid,&procppid,&procvsz,&procrss,procstat,&pos,procprog]"
@@ -843,7 +844,7 @@ else
 	AC_MSG_WARN([unable to find usable ps syntax - check_procs and check_nagios will not be compiled])
 fi
 
-if test -n $ac_cv_ps_varlist ; then
+if test -n "$ac_cv_ps_varlist" ; then
 	AC_DEFINE_UNQUOTED(PS_VARLIST,$ac_cv_ps_varlist,
 		[Variable list for sscanf of 'ps' output])
 	AC_DEFINE_UNQUOTED(PS_COMMAND,"$ac_cv_ps_command",
