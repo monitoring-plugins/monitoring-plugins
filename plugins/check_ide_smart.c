@@ -447,8 +447,7 @@ print_thresholds (thresholds_t * p)
 }
 
 int
-smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0,
-									char show_error) 
+smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0, char show_error) 
 {
 	int e = 0;
 	__u8 args[4];
@@ -487,7 +486,7 @@ smart_read_thresholds (int fd, thresholds_t * thresholds)
 
 
 void
-print_help () 
+print_help (void)
 {
 	print_revision (progname, revision);
 
@@ -515,5 +514,5 @@ Usage: %s [DEVICE] [OPTION]\n\
 void
 print_usage (void)
 {
-	printf ("Usage: %s \n"), progname);
+	printf ("Usage: %s \n", progname);
 }
