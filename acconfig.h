@@ -1,7 +1,0 @@
-#undef PS_COMMAND
-#undef PS_RAW_COMMAND
-#undef PS_VARLIST
-#undef RSS_COMMAND
-#undef RSS_FORMAT
-#undef VSZ_COMMAND
-#undef VSZ_FORMAT

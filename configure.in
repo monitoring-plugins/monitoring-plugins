@@ -446,7 +446,7 @@ AC_HEADER_STDC
 AC_HEADER_TIME
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(signal.h strings.h string.h syslog.h unistd.h uio.h errno.h regex.h sys/types.h sys/time.h sys/socket.h sys/loadavg.h)
-AC_CHECK_HEADERS(stdarg.h sys/unistd.h unistd.h ctype.h sys/wait.h stdlib.h)
+AC_CHECK_HEADERS(stdarg.h sys/unistd.h unistd.h ctype.h stdlib.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -531,15 +531,18 @@ AC_TRY_COMPILE([#include <sys/time.h>],
 dnl Checks for library functions.
 AC_CHECK_FUNCS(memmove select socket strdup strstr strtod strtol strtoul)
 
-AC_MSG_CHECKING(for type of socket size)
+AC_MSG_CHECKING(return type of socket size)
 AC_TRY_COMPILE([#include <stdlib.h>
                 #include <sys/types.h>
                 #include <sys/socket.h>],
                [int a = send(1, (const void *) buffer, (size_t *) 0, (int *) 0);],
-               [AC_DEFINE(SOCKET_SIZE_TYPE, size_t, [Define type of socket size])
-                AC_MSG_RESULT(size_t)],
-               [AC_DEFINE(SOCKET_SIZE_TYPE, int, [Define type of socket size])
-                AC_MSG_RESULT(int)])
+               ac_cv_socket_size_type=["size_t"]
+                AC_MSG_RESULT(size_t),
+               ac_cv_socket_size_type=["int"]
+                AC_MSG_RESULT(int))
+
+AC_DEFINE_UNQUOTED(SOCKET_SIZE_TYPE, $ac_cv_socket_size_type ,
+	[Define type of socket size])
 
 if test -f "/proc/loadavg"
 then
@@ -552,6 +555,7 @@ dnl #### Process table test
 AC_PATH_PROG(PATH_TO_PS,ps)
 ac_cv_use_ps_vars=no
 
+AC_MSG_CHECKING(for ps syntax)
 dnl  STAT UCOMM              VSZ   RSS USER       UID  PPID COMMAND
 if ps -weo 'stat comm vsz rss user uid ppid args' 2>/dev/null | \
 	egrep -i ["^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ +U[ID]+ \
@@ -567,7 +571,7 @@ then
 	ac_cv_rss_command="$PATH_TO_PS -weo 'rss comm'"
 	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-  	echo "      ps syntax... $PATH_TO_PS -weo 'stat comm vsz rss user ppid args'"
+	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl FreeBSD
 elif ps waxco 'state command vsz rss uid user ppid' 2>/dev/null | \
@@ -583,7 +587,7 @@ then
 	ac_cv_rss_command="$PATH_TO_PS waxco 'rss command'"
 	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	echo "      ps syntax... $PATH_TO_PS -Ao 'state command vsz rss'"
+	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl BSD-like mode in RH 6.1
 elif ps waxno 'state comm vsz rss uid user ppid args' 2>/dev/null | \
@@ -600,7 +604,7 @@ then
 	ac_cv_rss_command="$PATH_TO_PS waxno 'rss comm'"
 	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	echo "      ps syntax... $PATH_TO_PS -waxco 'state comm vsz rss'"
+	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl SunOS 4.1.3:
 dnl  F  UID  PID  PPID  CP  PRI  NI  SZ  RSS  WCHAN  STAT  TT  TIME  COMMAND
@@ -618,7 +622,7 @@ then
 	ac_cv_rss_command="$PATH_TO_PS laxnwww"
 	ac_cv_rss_format="%*s %*s %*s %*s %*s %*s %*s %*s %d"
 	EXTRAS="$EXTRAS check_nagios"
-	echo "      ps syntax... $PATH_TO_PS laxnwww"
+	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl Debian Linux / procps v1.2.9:
 dnl  FLAGS   UID   PID  PPID PRI  NI   SIZE   RSS WCHAN       STA TTY TIME COMMAND
@@ -637,7 +641,7 @@ then
 	ac_cv_rss_command="$PATH_TO_PS laxnwww"
 	ac_cv_rss_format="%*s %*s %*s %*s %*s %*s %*s %d"
 	EXTRAS="$EXTRAS check_nagios"
-	echo "      ps syntax... $PATH_TO_PS laxnwww"
+	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl OpenBSD (needs to come early because -exo appears to work, but does not give all procs)
 elif ps -axo 'stat comm vsz rss user uid ppid args' 2>/dev/null | \
@@ -654,7 +658,7 @@ then
 	ac_cv_rss_command="$PATH_TO_PS -axo 'rss comm'"
 	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	echo "      ps syntax... $PATH_TO_PS -axo 'stat comm vsz rss user ppid args'"
+	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl AIX 4.3.3 - needs verification. This works for Tru64 - needs %*[ +] in PS_FORMAT
 elif ps -ao 'stat comm vsz rss user uid ppid args' 2>/dev/null | \
@@ -671,7 +675,7 @@ then
 	ac_cv_rss_command="$PATH_TO_PS -ao 'rss comm'"
 	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	echo "      ps syntax... $PATH_TO_PS -ao 'stat comm vsz rss user ppid args'"
+	AC_MSG_RESULT([$ac_cv_ps_command])
 
 elif ps -eo 's comm vsz rss user uid ppid args' 2>/dev/null | \
 	egrep -i ["^S[TAUES]* +C[OMDNA]+ +[VSIZE]+ +U[SER]+ +U[ID]+ \
@@ -687,7 +691,7 @@ then
 	ac_cv_rss_command="$PATH_TO_PS -eo 'rss comm'"
 	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-        echo "      ps syntax... $PATH_TO_PS -eo 's  comm vsz rss user ppid args'"
+	AC_MSG_RESULT([$ac_cv_ps_command])
 
 elif ps -Ao 's comm vsz rss uid user ppid args' 2>/dev/null | \
 	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER \
@@ -703,7 +707,7 @@ then
 	ac_cv_rss_command="$PATH_TO_PS -Ao 'rss comm'"
 	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	echo "      ps syntax... $PATH_TO_PS -Ao 's comm vsz rss'"
+	AC_MSG_RESULT([$ac_cv_ps_command])
 
 elif ps -Ao 'status comm vsz rss uid user ppid args' 2>/dev/null | \
 	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER \
@@ -719,7 +723,7 @@ then
 	ac_cv_rss_command="$PATH_TO_PS -Ao 'rss comm'"
 	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	echo "      ps syntax... $PATH_TO_PS -Ao 'status comm vsz rss'"
+	AC_MSG_RESULT([$ac_cv_ps_command])
 
 elif ps -Ao 'state comm vsz rss uid user ppid args' 2>/dev/null | \
 	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER \
@@ -735,7 +739,7 @@ then
 	ac_cv_rss_command="$PATH_TO_PS -Ao 'rss comm'"
 	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	echo "      ps syntax... $PATH_TO_PS -Ao 'state comm vsz rss'"
+	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl wonder who takes state instead of stat
 elif ps -ao 'state command vsz rss user ppid args' 2>/dev/null | \
@@ -752,7 +756,7 @@ then
 	ac_cv_rss_command="$PATH_TO_PS -ao 'rss command'"
 	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	echo "      ps syntax... $PATH_TO_PS -ao 'state command vsz rss'"
+	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl IRIX 53
 elif ps -el 2>/dev/null | egrep -i ["^ *F +S +UID +PID +PPID +C +PRI \
@@ -766,7 +770,7 @@ then
 	ac_cv_vsz_format="%*s %*s %*s %*s %d"
 	ac_cv_rss_command="$PATH_TO_PS -el"
 	ac_cv_rss_format="%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %d"
-	echo "      ps syntax... $PATH_TO_PS -el"
+	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl IRIX 63
 elif ps -el 2>/dev/null | egrep -i ["^ *F +S +UID +PID +PPID +C +PRI \
@@ -780,7 +784,7 @@ then
 	ac_cv_vsz_format="%*s %*s %*s %*s %d"
 	ac_cv_rss_command="$PATH_TO_PS -el"
 	ac_cv_rss_format="%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %d"
-	echo "      ps syntax... $PATH_TO_PS -el"
+	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl AIX 4.1:
 dnl     F S      UID   PID  PPID   C PRI NI ADDR  SZ  RSS   WCHAN    TTY  TIME CMD
@@ -796,7 +800,7 @@ then
 	ac_cv_vsz_format="%*s %*s %*s %*s %*s %*s %*s %*s %*s %d"
 	ac_cv_rss_command="$PATH_TO_PS -el"
 	ac_cv_rss_format="%*s %*s %*s %*s %*s %*s %*s %*s %*s %d"
-	echo "      ps syntax... $PATH_TO_PS -el"
+	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl AIX?
 elif ps glaxen 2>/dev/null | egrep -i ["^ *F +UID +PID +PPID +PRI +NI \
@@ -810,7 +814,7 @@ then
 	ac_cv_vsz_format="%*s %*s %*s %*s %*s %*s %d"
 	ac_cv_rss_command="$PATH_TO_PS glaxen"
 	ac_cv_rss_format="%*s %*s %*s %*s %*s %*s %*s %d"
-	echo "      ps syntax... $PATH_TO_PS glaxen"
+	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl MacOSX / Darwin
 dnl TODO: MacOSX has commands with spaces which will cause problems to PS_FORMAT
@@ -829,7 +833,7 @@ then
 	ac_cv_rss_command="$PATH_TO_PS waxco 'rss command'"
 	ac_cv_rss_format="%d %s"
 	EXTRAS="$EXTRAS check_nagios"
-	echo "      ps syntax... $PATH_TO_PS waxo 'state vsz rss command'"
+	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl UnixWare 
 elif ps -Al 2>/dev/null | egrep -i ["^ *F +S +UID +PID +PPID +CLS +PRI \
@@ -845,7 +849,7 @@ then
 		ac_cv_vsz_command="$PATH_TO_PS -Ao 'vsz comm'"
 		ac_cv_vsz_format="%*s %d"
 	fi
-	echo "      ps syntax... $PATH_TO_PS -Al"
+	AC_MSG_RESULT([$ac_cv_ps_command])
 
 else
 	AC_MSG_WARN([unable to find usable ps syntax])
@@ -857,56 +861,59 @@ then
 fi
 AC_DEFINE_UNQUOTED(PS_VARLIST,$ac_cv_ps_varlist,
 	[Variable list for sscanf of 'ps' output])
-AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,$ac_cv_ps_raw_command,
+AC_DEFINE_UNQUOTED(PS_RAW_COMMAND,"$ac_cv_ps_raw_command",
 	[Verbatim command to execute for ps in check_netsaint])
-AC_DEFINE_UNQUOTED(PS_COMMAND,$ac_cv_ps_command,
+AC_DEFINE_UNQUOTED(PS_COMMAND,"$ac_cv_ps_command",
 	[Verbatim command to execute for ps in check_procs])
-AC_DEFINE_UNQUOTED(PS_FORMAT,$ac_cv_ps_format,
+AC_DEFINE_UNQUOTED(PS_FORMAT,"$ac_cv_ps_format",
 	[Format string for scanning ps output in check_procs])
-AC_DEFINE_UNQUOTED(VSZ_COMMAND,$ac_cv_vsz_command,
+AC_DEFINE_UNQUOTED(VSZ_COMMAND,"$ac_cv_vsz_command",
 	[Verbatim command to execute for ps in check_vsz])
-AC_DEFINE_UNQUOTED(VSZ_FORMAT,$ac_cv_vsz_format,
+AC_DEFINE_UNQUOTED(VSZ_FORMAT,"$ac_cv_vsz_format",
 	[Format string for scanning ps output in check_vsz])
-AC_DEFINE_UNQUOTED(RSS_COMMAND,$ac_cv_rss_command,
+AC_DEFINE_UNQUOTED(RSS_COMMAND,"$ac_cv_rss_command",
 	[Verbatim command to execute for ps in check_rss])
-AC_DEFINE_UNQUOTED(RSS_FORMAT,$ac_cv_rss_format,
+AC_DEFINE_UNQUOTED(RSS_FORMAT,"$ac_cv_rss_format",
 	[Format string for scanning ps output in check_rss])
+
+AC_PATH_PROG(PATH_TO_DF,df)
+AC_PATH_PROG(PATH_TO_BDF,bdf)
 
 AC_ARG_WITH(df_command,
 	ACX_HELP_STRING([--with-df-command=SYNTAX],
 		[sets syntax for df]),
-	DF_COMMAND=$withval,)
-if test -n "$DF_COMMAND"
+	ac_cv_df_command=$withval,)
+
+AC_MSG_CHECKING(for df syntax)
+if test -n "$ac_cv_df_command"
 then
-	AC_DEFINE_UNQUOTED(DF_COMMAND,"$DF_COMMAND",[path and args for df command])
+	AC_MSG_RESULT([$ac_cv_df_command])
 
 elif df -Pk 2>/dev/null | egrep -i ["^(/dev/|[a-zA-Z]:)[a-z0-9/\\]+ +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+% +/[a-z0-9/\\]*"] >/dev/null
 then
-	AC_PATH_PROG(PATH_TO_DF,df)
-	AC_MSG_RESULT([      df syntax... $PATH_TO_DF -Pk])
-	AC_DEFINE_UNQUOTED(DF_COMMAND,"$PATH_TO_DF -Pk",[path and args for df command])
+	ac_cv_df_command="$PATH_TO_DF -Pk"
+	AC_MSG_RESULT([$ac_cv_df_command])
 
 elif df -k 2>/dev/null | egrep -i ["^/dev/[a-z0-9/]+ +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+% +/[a-z0-9/]*"] >/dev/null
 then
-	AC_PATH_PROG(PATH_TO_DF,df)
-	AC_MSG_RESULT([      df syntax... $PATH_TO_DF -k])
-	AC_DEFINE_UNQUOTED(DF_COMMAND,"$PATH_TO_DF -k",[path and args for df command])
+	ac_cv_df_command="$PATH_TO_DF -k"
+	AC_MSG_RESULT([$ac_cv_df_command])
 
 elif df 2>/dev/null | egrep -i ["^/dev/[a-z0-9/]+ +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+% +/[a-z0-9/]*"] >/dev/null
 then
-	AC_PATH_PROG(PATH_TO_DF,df)
-	AC_MSG_RESULT([      df syntax... $PATH_TO_DF])
-	AC_DEFINE_UNQUOTED(DF_COMMAND,"$PATH_TO_DF",[path and args for df command])
+	ac_cv_df_command="$PATH_TO_DF"
+	AC_MSG_RESULT([$ac_cv_df_command])
 
 elif bdf 2>/dev/null | egrep -i ["^/dev/[a-z0-9/]+ +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+% +/[a-z0-9/]*"] >/dev/null
 then
-	AC_PATH_PROG(PATH_TO_DF,bdf)
-	AC_MSG_RESULT([      df syntax... $PATH_TO_DF])
-	AC_DEFINE_UNQUOTED(DF_COMMAND,"$PATH_TO_DF",[path and args for df command])
+	ac_cv_df_command="$PATH_TO_BDF"
+	AC_MSG_RESULT([$ac_cv_df_command])
 
 else
 	AC_MSG_WARN([unable to find usable df syntax])
 fi
+
+AC_DEFINE_UNQUOTED(DF_COMMAND,"$ac_cv_df_command",[path and args for df command])
 
 AC_PATH_PROG(PATH_TO_PING,ping)
 AC_PATH_PROG(PATH_TO_PING6,ping6)
@@ -916,13 +923,15 @@ AC_ARG_WITH(ping_command,
 		[sets syntax for ICMP ping]),
 	ac_cv_ping_command=$withval,)
 
+AC_MSG_CHECKING(for ping syntax)
 if test -n "$ac_cv_ping_command"
 then
-	echo "      ping syntax... (command-line) $ac_cv_ping_command"
+	AC_MSG_RESULT([(command-line) $ac_cv_ping_command])
 	if test -n "$PING_PACKETS_FIRST"
 	then
-		AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$ac_cv_ping_command",
-			[Define if packet count must precede host])
+		ac_cv_ping_packets_first=yes
+		dnl AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$ac_cv_ping_command",
+		dnl	[Define if packet count must precede host])
 	fi
 
 elif [[ "z$ac_cv_uname_s" = "zUnixWare" ]] && \
@@ -930,65 +939,60 @@ elif [[ "z$ac_cv_uname_s" = "zUnixWare" ]] && \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
         ac_cv_ping_command="$PATH_TO_PING -n -U -c %d %s"
-        dnl AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$ac_cv_ping_command",
-	dnl	[Define if packet count must precede host])
-        echo "      ping syntax... ping -n -U -c <count> <host>"
+	ac_cv_ping_packets_first=yes
+	AC_MSG_RESULT([$ac_cv_ping_command])
 
 elif $PATH_TO_PING -n -U -c 1 127.0.0.1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
         ac_cv_ping_command="$PATH_TO_PING -n -U -c %d %s"
-        dnl AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$ac_cv_ping_command",
-	dnl	[Define if packet count must precede host])
-        echo "      ping syntax... ping -n -U -c <count> <host>"
+	ac_cv_ping_packets_first=yes
+	AC_MSG_RESULT([$ac_cv_ping_command])
 
 elif $PATH_TO_PING -n -c 1 127.0.0.1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
 	ac_cv_ping_command="$PATH_TO_PING -n -c %d %s"
-	dnl AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$ac_cv_ping_command",
-	dnl	[Define if packet count must precede host])
-	echo "      ping syntax... $PATH_TO_PING -n -c <count> <host>"
+	ac_cv_ping_packets_first=yes
+	AC_MSG_RESULT([$ac_cv_ping_command])
 
 elif $PATH_TO_PING -n 127.0.0.1 -c 1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
 	ac_cv_ping_command="$PATH_TO_PING -n %s -c %d"
-	echo "      ping syntax... $PATH_TO_PING -n <host> -c <count>"
+	AC_MSG_RESULT([$ac_cv_ping_command])
 
 elif $PATH_TO_PING 127.0.0.1 -n 1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
 	ac_cv_ping_command="$PATH_TO_PING %s -n %d"
-	echo "      ping syntax... $PATH_TO_PING <host> -n <count>"
+	AC_MSG_RESULT([$ac_cv_ping_command])
 
 elif $PATH_TO_PING -n -s 127.0.0.1 56 1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
 	ac_cv_ping_command="$PATH_TO_PING -n -s %s 56 %d"
-	echo "      ping syntax... $PATH_TO_PING -n -s <host> 56 <count>"
+	AC_MSG_RESULT([$ac_cv_ping_command])
 
 elif $PATH_TO_PING -n -h 127.0.0.1 -s 56 -c 1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
 	ac_cv_ping_command="$PATH_TO_PING -n -h %s -s 56 -c %d"
-	echo "      ping syntax... $PATH_TO_PING -n -h <host> -s 56 -c <count>"
+	AC_MSG_RESULT([$ac_cv_ping_command])
 
 elif $PATH_TO_PING -n -s 56 -c 1 127.0.0.1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
 	ac_cv_ping_command="$PATH_TO_PING -n -s 56 -c %d %s"
-	dnl AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$ac_cv_ping_command",
-	dnl	[Define if packet count must precede host])
-	echo "      ping syntax... $PATH_TO_PING -n -s 56 -c <count> <host>"
+	ac_cv_ping_packets_first=yes
+	AC_MSG_RESULT([$ac_cv_ping_command])
 
 elif $PATH_TO_PING -n -c 1 127.0.0.1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
 	ac_cv_ping_command="$PATH_TO_PING -n -c %d %s"
-	dnl AC_DEFINE_UNQUOTED(PING_PACKETS_FIRST,"$ac_cv_ping_command",
-	dnl	[Define if packet count must precede host])
-	echo "      ping syntax... $PATH_TO_PING -n -c <count> <host>"
+	ac_cv_ping_packets_first=yes
+	AC_MSG_RESULT([$ac_cv_ping_command])
 
 else
 	AC_MSG_WARN([unable to find usable ping syntax])
@@ -997,26 +1001,40 @@ fi
 AC_DEFINE_UNQUOTED(PING_COMMAND,"$ac_cv_ping_command",
 	[path and args for ICMP ping command])
 
+if test x$ac_cv_ping_packets_first != xno
+then
+	AC_DEFINE(PING_PACKETS_FIRST,1,
+		[Define if packet count must precede host])
+fi
+
 AC_ARG_WITH(ping6_command,
 	ACX_HELP_STRING([--with-ping6-command=SYNTAX],
 		[sets syntax for ICMPv6 ping]),
 	PING6_COMMAND=$withval,)
 
 AC_PATH_PROG(PATH_TO_NSLOOKUP,nslookup)
-if test -n "$ac_cv_path_PATH_TO_NSLOOKUP"
+
+AC_MSG_CHECKING(for nslookup syntax)
+if test -n "$PATH_TO_NSLOOKUP"
 then
-	if nslookup -sil 127.0.0.1 2>&1 | grep ["Invalid option: sil"] >/dev/null
+	if $PATH_TO_NSLOOKUP -sil 127.0.0.1 2>&1 | grep ["Invalid option: sil"] >/dev/null
 	then
-		AC_MSG_RESULT([      nslookup syntax... $PATH_TO_NSLOOKUP])
-		AC_DEFINE_UNQUOTED(NSLOOKUP_COMMAND,"$PATH_TO_NSLOOKUP",[path and args for nslookup])
+		ac_cv_nslookup_command="$PATH_TO_NSLOOKUP"
+		AC_MSG_RESULT([$ac_cv_nslookup_command])
+
 	else
-		AC_MSG_RESULT([      nslookup syntax... $PATH_TO_NSLOOKUP -sil])
-		AC_DEFINE_UNQUOTED(NSLOOKUP_COMMAND,"$PATH_TO_NSLOOKUP -sil",[path and args for nslookup])
+		ac_cv_nslookup_command="$PATH_TO_NSLOOKUP -sil"
+		AC_MSG_RESULT([$ac_cv_nslookup_command])
+
 	fi
 	EXTRAS="$EXTRAS check_dns"
+
 else
 	AC_MSG_WARN([nslookup command not found])
 fi
+
+AC_DEFINE_UNQUOTED(NSLOOKUP_COMMAND,"$ac_cv_nslookup_command",
+	[path and args for nslookup])
 
 AC_PATH_PROG(PATH_TO_HOST,host)
 if test -n "$ac_cv_path_PATH_TO_HOST"
@@ -1030,7 +1048,6 @@ AC_DEFINE_UNQUOTED(PATH_TO_UPTIME,"$PATH_TO_UPTIME",[path to uptime binary])
 AC_PATH_PROG(PATH_TO_RPCINFO,rpcinfo)
 AC_DEFINE_UNQUOTED(PATH_TO_RPCINFO,"$PATH_TO_RPCINFO",[path to rpcinfo binary])
 
-M
 AC_PATH_PROG(PATH_TO_NTPDATE,ntpdate)
 AC_PATH_PROGS(PATH_TO_NTPDC,ntpdc xntpdc)
 AC_PATH_PROGS(PATH_TO_NTPQ,ntpq)
@@ -1039,7 +1056,6 @@ then
 	AC_DEFINE_UNQUOTED(PATH_TO_NTPQ,"$PATH_TO_NTPQ",[path to ntpq binary])
 	AC_DEFINE_UNQUOTED(PATH_TO_NTPDATE,"$PATH_TO_NTPDATE",[path to ntpdate binary])
 else
-	dnl echo "** Install NTP programs (http://www.ntp.org) if you want to monitor time synchronization"
 	AC_MSG_WARN([Install NTP programs (http://www.ntp.org) if you want to monitor time synchronization])
 fi
 
@@ -1048,7 +1064,6 @@ if test -x "$PATH_TO_LMSTAT"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_LMSTAT,"$PATH_TO_LMSTAT",[path to lmstat])
 else
-	dnl echo "** Get lmstat from Globetrotter Software to monitor flexlm licenses"
 	AC_MSG_WARN([Get lmstat from Globetrotter Software to monitor flexlm licenses])
 fi
 
@@ -1057,18 +1072,21 @@ if test -x "$PATH_TO_SMBCLIENT"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_SMBCLIENT,"$PATH_TO_SMBCLIENT",[path to smbclient binary])
 else
-	dnl echo "** Get smbclient from Samba.org to monitor SMB shares"
 	AC_MSG_WARN([Get smbclient from Samba.org to monitor SMB shares])
 fi
 
 
 AC_PATH_PROG(PATH_TO_WHO,who)
-if [who -q 2>/dev/null | egrep -i "^# users=[0-9]+$" >/dev/null]
+
+if [$PATH_TO_WHO -q 2>/dev/null | egrep -i "^# users=[0-9]+$" >/dev/null]
 then
-	AC_DEFINE_UNQUOTED(WHO_COMMAND,"$PATH_TO_WHO -q",[path and arguments for invoking 'who'])
+	ac_cv_path_to_who="$PATH_TO_WHO -q"
 else
-	AC_DEFINE_UNQUOTED(WHO_COMMAND,"$PATH_TO_WHO",[path and arguments for invoking 'who'])
+	ac_cv_path_to_who="$PATH_TO_WHO"
 fi
+
+AC_DEFINE_UNQUOTED(WHO_COMMAND,"$ac_cv_path_to_who",
+	[path and arguments for invoking 'who'])
 
 AC_PATH_PROG(PATH_TO_SNMPGET,snmpget)
 if test -x "$PATH_TO_SNMPGET"
@@ -1076,7 +1094,6 @@ then
 	AC_DEFINE_UNQUOTED(PATH_TO_SNMPGET,"$PATH_TO_SNMPGET",[path to snmpget binary])
 	EXTRAS="$EXTRAS check_hpjd check_snmp"
 else
-	dnl echo "** Get snmpget from http://net-snmp.sourceforge.net to make check_hpjd and check_snmp plugins"
 	AC_MSG_WARN([Get snmpget from http://net-snmp.sourceforge.net to make check_hpjd and check_snmp plugins])
 fi
 
@@ -1088,26 +1105,32 @@ fi
 
 if ( $PERL -M"Net::SNMP 3.6" -e 'exit' 2>/dev/null  )
 then
-	echo "Found Net::SNMP perl module"
+	AC_MSG_CHECKING(for Net::SNMP perl module)
+	AC_MSG_RESULT([found])
 else
-	dnl echo "** Tried $PERL - install Net::SNMP perl module if you want to"
-	dnl echo "        use the perl snmp plugins"
 	AC_MSG_WARN([Tried $PERL - install Net::SNMP perl module if you want to use the perl snmp plugins])
 fi
 
 AC_PATH_PROG(PATH_TO_QUAKESTAT,quakestat)
 AC_PATH_PROG(PATH_TO_QSTAT,qstat)
+
 if test -x "$PATH_TO_QUAKESTAT"
 then
-	AC_DEFINE_UNQUOTED(PATH_TO_QSTAT,"$PATH_TO_QUAKESTAT",[path to qstat/quakestat])
+	ac_cv_path_to_qstat="$PATH_TO_QUAKESTAT"
 	EXTRAS="$EXTRAS check_game"
+
 elif test -x "$PATH_TO_QSTAT"
 then
-	AC_DEFINE_UNQUOTED(PATH_TO_QSTAT,"$PATH_TO_QSTAT",[path to qstat/quakestat])
+	ac_cv_path_to_qstat="$PATH_TO_QSTAT"
 	EXTRAS="$EXTRAS check_game"
 else
-	dnl echo "** Get qstat from http://www.activesw.com/people/steve/qstat.html in order to make check_game plugin"
 	AC_MSG_WARN([Get qstat from http://www.activesw.com/people/steve/qstat.html in order to make check_game plugin])
+fi
+
+if test x$ac_cv_path_to_qstat != x
+then
+	AC_DEFINE_UNQUOTED(PATH_TO_QSTAT,"$ac_cv_path_to_qstat",
+		[path to qstat/quakestat])
 fi
 
 AC_PATH_PROG(PATH_TO_FPING,fping)
@@ -1116,17 +1139,16 @@ then
 	AC_DEFINE_UNQUOTED(PATH_TO_FPING,"$PATH_TO_FPING",[path to fping])
 	EXTRAS="$EXTRAS check_fping"
 else
-	dnl echo "** Get fping from http://www.fping.com in order to make check_fping plugin"
 	AC_MSG_WARN([Get fping from http://www.fping.com in order to make check_fping plugin])
 fi
 
 AC_PATH_PROG(PATH_TO_SSH,ssh)
+
 if test -x "$PATH_TO_SSH"
 then
 	AC_DEFINE_UNQUOTED(SSH_COMMAND,"$PATH_TO_SSH",[path to ssh binary])
 	EXTRAS="$EXTRAS check_by_ssh"
 else
-	dnl echo "** Get ssh in order to make check_by_ssh plugin"
 	AC_MSG_WARN([Get ssh in order to make check_by_ssh plugin])
 fi
 
@@ -1136,7 +1158,6 @@ if test -x "$PATH_TO_MAILQ"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_MAILQ,"$PATH_TO_MAILQ",[path to mailq])
 else
-	dnl echo "** Could not find mailq or eqivalent"
 	AC_MSG_WARN([Could not find mailq or eqivalent])
 fi
 
@@ -1148,51 +1169,74 @@ dnl dunno why this does not work below - use hack (kbd)
 dnl fine on linux, broken on solaris
 dnl if /bin/test -e "/proc/meminfo"
 
+AC_PATH_PROG(PATH_TO_SWAP,swap)
+AC_PATH_PROG(PATH_TO_SWAPINFO,swapinfo)
+
+AC_MSG_CHECKING(for how to check memory)
 if [cat /proc/meminfo > /dev/null 2>&1]
 then
-	echo "found /proc/meminfo"
+	AC_MSG_RESULT([found /proc/meminfo])
 	AC_DEFINE(HAVE_PROC_MEMINFO,1,[Define if we have /proc/meminfo])
 	AC_DEFINE_UNQUOTED(PROC_MEMINFO,"/proc/meminfo",[path to /proc/meminfo if name changes])
 	EXTRAS="$EXTRAS check_swap"
-elif [swap -l 2>&1 >/dev/null]
+
+elif [$PATH_TO_SWAP -l 2>&1 >/dev/null]
 then
-	echo "found swap command"
-	AC_DEFINE(HAVE_SWAP,1,[Define if swap/swapinfo command is found])
-	AC_PATH_PROG(PATH_TO_SWAP,swap)
-	AC_DEFINE_UNQUOTED(SWAP_COMMAND,"$PATH_TO_SWAP -l",[Path to swap/swapinfo binary, with any args])
-	if [swap -l 2>/dev/null | egrep -i "^lswap +path +pri +swaplo +blocks +free +maxswap" >/dev/null]
+	ac_cv_have_swap=yes
+	ac_cv_swap_command="$PATH_TO_SWAP -l"
+	if [$PATH_TO_SWAP -l 2>/dev/null | \
+		egrep -i "^lswap +path +pri +swaplo +blocks +free +maxswap" \
+		>/dev/null]
 	then
-		AC_DEFINE_UNQUOTED(SWAP_FORMAT,[" %*d %*s %*d,%*d %*d %*d %d %d"],[Format string for parsing swap output])
-		echo "      using IRIX format"
-	elif [swap -l 2>/dev/null | egrep -i "^swapfile +dev +swaplo +blocks +free" >/dev/null]
+		ac_cv_swap_format=[" %*d %*s %*d,%*d %*d %*d %d %d"]
+		AC_MSG_RESULT([using IRIX format swap])
+
+	elif [$PATH_TO_SWAP -l 2>/dev/null | egrep -i "^swapfile +dev +swaplo +blocks +free" >/dev/null]
 	then
-		AC_DEFINE_UNQUOTED(SWAP_FORMAT,["%*s %*[[0-9,-]] %*d %d %d"],[Format string for parsing swap output])
-		echo "      using Solaris format"
-	elif [swap -l 2>/dev/null | egrep -i "^path +dev +swaplo +blocks +free" >/dev/null]
+		ac_cv_swap_format=["%*s %*[[0-9,-]] %*d %d %d"]
+		AC_MSG_RESULT([using Solaris format swap])
+
+	elif [$PATH_TO_SWAP -l 2>/dev/null | egrep -i "^path +dev +swaplo +blocks +free" >/dev/null]
 	then
-		AC_DEFINE_UNQUOTED(SWAP_FORMAT,["%*s %*[[0-9,-]] %*d %d %d"],[Format string for parsing swap output])
-		echo "      using Unixware format"
+		ac_cv_swap_format=["%*s %*[[0-9,-]] %*d %d %d"]
+		AC_MSG_RESULT([using Unixware format swap])
+
 	fi
 	EXTRAS="$EXTRAS check_swap"
-elif [swapinfo -k 2>&1 | egrep -i "^Device" >/dev/null]
+
+elif [$PATH_TO_SWAPINFO -k 2>&1 | egrep -i "^Device" >/dev/null]
 then
-	echo "found swapinfo command"
-	AC_DEFINE(HAVE_SWAP,1,[Define if swap/swapinfo command is found])
-	AC_PATH_PROG(PATH_TO_SWAP,swapinfo)
-	AC_DEFINE_UNQUOTED(SWAP_COMMAND,"$PATH_TO_SWAP -k",[Path to swap/swapinfo binary, with any args])
-	if [swapinfo -k 2>/dev/null | egrep -i "^Device +1K-blocks +Used +Avail" >/dev/null]
+	ac_cv_have_swap=yes
+	ac_cv_swap_command="$PATH_TO_SWAPINFO -k"
+
+	if [$PATH_TO_SWAPINFO -k 2>/dev/null | egrep -i "^Device +1K-blocks +Used +Avail" >/dev/null]
 	then
-		AC_DEFINE_UNQUOTED(SWAP_FORMAT,["%*s %d %*d %d"],[Format string for parsing swap output])
-		echo "      using FreeBSD format"
+		ac_cv_swap_format=["%*s %d %*d %d"]
+		AC_MSG_RESULT([using FreeBSD format swapinfo])
 	fi
 	EXTRAS="$EXTRAS check_swap"
-elif [swapinfo -dfM 2>/dev/null | egrep -i "^TYPE +AVAIL +USED +FREE" >/dev/null]
+
+elif [$PATH_TO_SWAPINFO -dfM 2>/dev/null | egrep -i "^TYPE +AVAIL +USED +FREE" >/dev/null]
+then
+	ac_cv_have_swap=yes
+	ac_cv_swap_command="$PATH_TO_SWAPINFO -dfM",
+	ac_cv_swap_format=["%*s %d %*d %d"]
+	AC_MSG_RESULT([using HP-UX format swapinfo])
+fi
+
+if test x$ac_cv_have_swap != x
 then
 	AC_DEFINE(HAVE_SWAP,1,[Define if swap/swapinfo command is found])
-	AC_PATH_PROG(PATH_TO_SWAP,swapinfo)
-	AC_DEFINE_UNQUOTED(SWAP_COMMAND,"$PATH_TO_SWAP -dfM",[Path to swap/swapinfo binary, with any args])
-	AC_DEFINE_UNQUOTED(SWAP_FORMAT,["%*s %d %*d %d"],[Format string for parsing swap output ])
-	echo "        using HP-UX format HP-UX"
+fi
+if test x$ac_cv_swap_format != x
+then
+	AC_DEFINE_UNQUOTED(SWAP_FORMAT,"$ac_cv_swap_format",
+		[Format string for parsing swap output])
+fi
+if test x$ac_cv_swap_command != x
+then
+	AC_DEFINE_UNQUOTED(SWAP_COMMAND,"$ac_cv_swap_command",
+		[Path to swap/swapinfo binary, with any args])
 fi
 
 AC_PATH_PROG(PATH_TO_DIG,dig)
@@ -1207,18 +1251,19 @@ elif test -f ../plugins/check_nt.c ; then
   EXTRAS="$EXTRAS check_nt"
 fi
 
+AC_MSG_CHECKING(for va_list)
 AC_TRY_COMPILE([#ifdef __STDC__
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#else
-#include <sys/types.h>
-#include <stdio.h>
-#include <varargs.h>
-#endif],
-[va_list args;],
-[AC_MSG_RESULT(yes)],
-[NEED_VA_LIST=-DNEED_VA_LIST AC_SUBST(NEED_VA_LIST) AC_MSG_RESULT(no)])
+		#include <stdio.h>
+		#include <stdlib.h>
+		#include <stdarg.h>
+		#else
+		#include <sys/types.h>
+		#include <stdio.h>
+		#include <varargs.h>
+		#endif],
+		[va_list args;],
+		[AC_MSG_RESULT(yes)],
+		[NEED_VA_LIST=-DNEED_VA_LIST AC_SUBST(NEED_VA_LIST) AC_MSG_RESULT(no)])
 
 AC_SUBST(EXTRAS)
 AC_SUBST(DEPLIBS)
