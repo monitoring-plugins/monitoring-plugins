@@ -216,7 +216,9 @@ while (<NTPDATE>) {
 
 		# An offset of 0.000000 with an error is probably bogus. Actually,
 		# it's probably always bogus, but let's be paranoid here.
-		if ($offset == 0) { undef $offset;}
+		# Has been reported that 0.0000 happens in a production environment
+		# so this check should be taken out - SF tracker 1150777
+		#if ($offset == 0) { undef $offset;}
 
 		$ntpdate_error = defined ($offset) ? $ERRORS{"OK"} : $ERRORS{"CRITICAL"};
 		print "ntperr = $ntpdate_error \n" if $verbose;
