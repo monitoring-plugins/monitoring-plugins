@@ -522,15 +522,15 @@ int
 check_http (void)
 {
 	char *msg = NULL;
-	char *status_line = NULL;
+	char *status_line = "";
 	char *header = NULL;
-	char *page = NULL;
+	char *page = "";
 	char *auth = NULL;
 	int i = 0;
-	size_t pagesize = 0;
-	char *full_page = NULL;
+	size_t pagesize = 1;
+	char *full_page = "";
 	char *buf = NULL;
-	char *pos = NULL;
+	char *pos = "";
 	char *x = NULL;
 	char *orig_url = NULL;
 	double elapsed_time;
@@ -657,8 +657,6 @@ check_http (void)
 #endif
 
 	/* fetch the page */
-	pagesize = (size_t) 1;
-	asprintf (&full_page, "");
 	while ((i = my_recv ()) > 0) {
 		buffer[i] = '\0';
 		asprintf (&full_page, "%s%s", full_page, buffer);
@@ -689,7 +687,7 @@ check_http (void)
 	page += (size_t) strcspn (page, "\r\n");
 	pos = page;
 	page += (size_t) strspn (page, "\r\n");
-	status_line[pos - status_line] = 0;
+	status_line[strcspn(status_line, "\r\n")] = 0;
 	strip (status_line);
 	if (verbose)
 		printf ("STATUS: %s\n", status_line);
