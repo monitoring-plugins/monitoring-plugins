@@ -2,55 +2,79 @@
 
 # Butchered version of snapshot
 # Can only run on the shell compile farm server
+# Will always create a snapshot of HEAD
+# If want multiple snapshots, just run with "sfsnapshot {branch} [branch2 ...]"
 # Assumes:
 #  ssh setup to send to shell.sf.net and $CF without password prompt
 #  autconf and automake installed on shell cf at v 2.57 & 1.72 and in PATH
 
 function die { echo $1; exit 1; }
 
+# This makes the distribution. Expects $1 as CVS tag, otherwise uses HEAD
+function make_dist {
+	if [[ -n $1 ]] ; then
+		cvs_rel=$1
+		v="$1-"
+	else
+		cvs_rel="HEAD"
+		v=""
+	fi
+	
+	# Get compile server to do the work
+	# Variables will be expanded locally before being run on $CF
+	ssh $CF <<-EOF
+	set -x
+	PATH=$PATH
+	[[ ! -d $IN/$cvs_rel ]] && mkdir -p $IN/$cvs_rel
+	cd $IN/$cvs_rel
+	if [[ -d $PROJECT ]] ; then
+		cd $PROJECT 
+		cvs update -r $cvs_rel
+	else
+		cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/nagiosplug co -r $cvs_rel nagiosplug
+		cd $PROJECT
+		aclocal
+		autoheader
+		autoconf
+		automake
+		autoreconf
+		./configure
+	fi
+
+	# Make the Nagiosplug dist tarball
+	VER=$v$DS VERSION=$v$DS REL=snapshot make -e dist
+
+	# End ssh
+	EOF
+}
+
 # Set working variables
 PROJECT=nagiosplug
 IN=${HOME}/tmp_snapshot
 OUT_SERVER="shell.sf.net"
-OUT="/home/groups/n/na/nagiosplug/htdocs/snapshot"
+#OUT="/home/groups/n/na/nagiosplug/htdocs/snapshot"
+OUT="~/test"
 CF="usf-cf-x86-linux-2"
 DS=`date -u +%Y%m%d%H%M`
 
-# Get compile server to do the work
-# Variables will be expanded locally before being run on $CF
-ssh $CF <<EOF
-PATH=$PATH
-[[ ! -d $IN ]] && mkdir -p $IN
-cd ${IN}
-if [[ -d $PROJECT ]] ; then
-	cd $PROJECT 
-	rm -f configure.in
-	cvs update
-else
-	cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/nagiosplug co nagiosplug
-	cd $PROJECT
-fi
-
-sed 's/^VER=.*/VER=${DS}/;s/^REL=.*/REL=snapshot/' configure.in > configure.tmp
-mv configure.tmp configure.in
-aclocal
-autoheader
-autoconf
-automake
-autoreconf
-
-# Make the Nagiosplug dist tarball
-./configure
-make dist
-
-# End ssh
-EOF
+# Make dists for HEAD and any others in command parameters
+make_dist
+for i in $* ; do
+	make_dist $i
+done
 
 # Check for *.gz files locally (expect NFS between cf shell server and $CF)
 set -x
-cd $IN/$PROJECT
-ls *.gz > /dev/null 2>&1 || die "No file created"
+files=$(ls $IN/*/$PROJECT/*.gz 2>/dev/null)
+[[ -z $files ]] && die "No files created"
 ssh $OUT_SERVER "rm -f $OUT/*.gz"
-scp *.gz $OUT_SERVER:$OUT
-rm -f *.gz
+scp $files $OUT_SERVER:$OUT
+
+# Create MD5 sum
+ssh $OUT_SERVER << EOF
+cd $OUT
+md5sum *.gz > MD5SUM
+EOF
+
+rm -f $files
 
