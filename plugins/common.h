@@ -149,3 +149,14 @@ enum {
 	MAX_INPUT_BUFFER = 1024,	     /* max size of most buffers we use */
 	MAX_HOST_ADDRESS_LENGTH = 256	 /* max size of a host address */
 };
+
+/*
+ *
+ * Internationalization
+ *
+ */
+
+#define _(String) (String)
+#define N_(String) String
+#define textdomain(Domain)
+#define bindtextdomain(Package, Directory)
