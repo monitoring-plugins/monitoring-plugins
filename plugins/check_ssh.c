@@ -110,7 +110,11 @@ process_arguments (int argc, char **argv)
 			address_family = AF_INET;
 			break;
 		case '6':
+#ifdef USE_IPV6
 			address_family = AF_INET6;
+#else
+			usage ("IPv6 support not available\n");
+#endif
 			break;
 		case 'H':									/* host */
 			if (is_host (optarg) == FALSE)

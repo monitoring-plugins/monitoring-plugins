@@ -326,7 +326,11 @@ is_host (char *address)
 int
 is_addr (char *address)
 {
+#ifdef USE_IPV6
 	if (is_inet_addr (address) && address_family != AF_INET6)
+#else
+	if (is_inet_addr (address))
+#endif
 		return (TRUE);
 
 #ifdef USE_IPV6
