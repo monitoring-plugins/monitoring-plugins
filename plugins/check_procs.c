@@ -1,114 +1,36 @@
 /******************************************************************************
-*
-* CHECK_PROCS.C
-*
-* Program: Process plugin for Nagios
-* License: GPL
-* Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
-*
-* $Id$
-*
-* Description:
-*
-* This plugin checks the number of currently running processes and
-* generates WARNING or CRITICAL states if the process count is outside
-* the specified threshold ranges. The process count can be filtered by
-* process owner, parent process PID, current state (e.g., 'Z'), or may
-* be the total number of running processes
-*
-* License Information:
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-* General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
 ******************************************************************************/
 
 const char *progname = "check_procs";
-#define REVISION "$Revision$"
-#define COPYRIGHT "1999-2002"
-#define AUTHOR "Ethan Galstad"
-#define EMAIL "nagios@nagios.org"
-#define SUMMARY "\
-Checks all processes and generates WARNING or CRITICAL states if the specified\n\
-metric is outside the required threshold ranges. The metric defaults to number\n\
-of processes.  Search filters can be applied to limit the processes to check.\n"
+const char *revision = "$Revision$";
+const char *copyright = "2000-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
-#define OPTIONS "\
--w <range> -c <range> [-m metric]\n\
-            [-s state] [-p ppid] [-u user] [-r rss] [-z vsz] [-P %cpu]\n\
-            [-a argument-array] [-C command] [-v]"
-
-#define LONGOPTIONS "\
-Required Arguments:\n\
- -w, --warning=RANGE\n\
-   Generate warning state if metric is outside this range\n\
- -c, --critical=RANGE\n\
-   Generate critical state if metric is outside this range\n\
-Optional Arguments:\n\
- -m, --metric=TYPE\n\
-   Check thresholds against metric. Valid types:\n\
-   PROCS - number of processes (default)\n\
-   VSZ  - virtual memory size\n\
-   RSS  - resident set memory size\n\
-   CPU  - percentage cpu\n\
- -v, --verbose\n\
-   Extra information. Up to 3 verbosity levels\n\
-Optional Filters:\n\
- -s, --state=STATUSFLAGS\n\
-   Only scan for processes that have, in the output of `ps`, one or\n\
-   more of the status flags you specify (for example R, Z, S, RS,\n\
-   RSZDT, plus others based on the output of your 'ps' command).\n\
- -p, --ppid=PPID\n\
-   Only scan for children of the parent process ID indicated.\n\
- -z, --vsz=VSZ\n\
-   Only scan for processes with vsz higher than indicated.\n\
- -r, --rss=RSS\n\
-   Only scan for processes with rss higher than indicated.\n\
- -P, --pcpu=PCPU\n\
-   Only scan for processes with pcpu higher than indicated.\n\
- -u, --user=USER\n\
-   Only scan for processes with user name or ID indicated.\n\
- -a, --argument-array=STRING\n\
-   Only scan for processes with args that contain STRING.\n\
- -C, --command=COMMAND\n\
-   Only scan for exact matches to the named COMMAND.\n\
-\n\
-RANGEs are specified 'min:max' or 'min:' or ':max' (or 'max'). If\n\
-specified 'max:min', a warning status will be generated if the\n\
-count is inside the specified range\n"
-
-#define EXAMPLES "\
- check_procs -w 2:2 -c 2:1024 -C portsentry\n\
-   Warning if not two processes with command name portsentry. Critical\n\
-   if < 2 or > 1024 processes\n\
- check_procs -w 10 -a '/usr/local/bin/perl' -u root\n\
-   Warning alert if > 10 processes with command arguments containing \n\
-   '/usr/local/bin/perl' and owned by root\n\
- check_procs -w 50000 -c 100000 --metric=VSZ\n\
-   Alert if vsz of any processes over 50K or 100K\n"
-
-#include "config.h"
-#include <pwd.h>
 #include "common.h"
 #include "popen.h"
 #include "utils.h"
+#include <pwd.h>
 
 int process_arguments (int, char **);
 int validate_arguments (void);
-void print_usage (void);
-void print_help (void);
 int check_thresholds (int);
+void print_help (void);
+void print_usage (void);
 
 int wmax = -1;
 int cmax = -1;
@@ -147,6 +69,11 @@ char *fmt = "";
 char *fails = "";
 char tmp[MAX_INPUT_BUFFER];
 
+
+
+
+
+
 int
 main (int argc, char **argv)
 {
@@ -170,7 +97,7 @@ main (int argc, char **argv)
 	int cols; /* number of columns in ps output */
 	int warn = 0; /* number of processes in warn state */
 	int crit = 0; /* number of processes in crit state */
-	int i;
+	int i = 0;
 
 	int result = STATE_UNKNOWN;
 
@@ -178,26 +105,26 @@ main (int argc, char **argv)
 	metric = METRIC_PROCS;
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage ("Unable to parse command line\n");
+		usage (_("Unable to parse command line\n"));
 
 	if (verbose >= 2)
-		printf ("CMD: %s\n", PS_COMMAND);
+		printf (_("CMD: %s\n"), PS_COMMAND);
 
 	child_process = spopen (PS_COMMAND);
 	if (child_process == NULL) {
-		printf ("Could not open pipe: %s\n", PS_COMMAND);
+		printf (_("Could not open pipe: %s\n"), PS_COMMAND);
 		return STATE_UNKNOWN;
 	}
 
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL)
-		printf ("Could not open stderr for %s\n", PS_COMMAND);
+		printf (_("Could not open stderr for %s\n"), PS_COMMAND);
 
 	fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process);
 
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
-		strcpy(procprog,"");
-		asprintf(&procargs,"");
+		strcpy (procprog, "");
+		asprintf (&procargs, "%s", "");
 
 		cols = sscanf (input_buffer, PS_FORMAT, PS_VARLIST);
 
@@ -270,28 +197,28 @@ main (int argc, char **argv)
 		} 
 		/* This should not happen */
 		else if (verbose) {
-			printf("Not parseable: %s", input_buffer);
+			printf(_("Not parseable: %s"), input_buffer);
 		}
 	}
 
 	/* If we get anything on STDERR, at least set warning */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
 		if (verbose)
-			printf ("STDERR: %s", input_buffer);
+			printf (_("STDERR: %s"), input_buffer);
 		result = max_state (result, STATE_WARNING);
-		printf ("System call sent warnings to stderr\n");
+		printf (_("System call sent warnings to stderr\n"));
 	}
 	
 	(void) fclose (child_stderr);
 
 	/* close the pipe */
 	if (spclose (child_process)) {
-		printf ("System call returned nonzero status\n");
+		printf (_("System call returned nonzero status\n"));
 		result = max_state (result, STATE_WARNING);
 	}
 
 	if (found == 0) {							/* no process lines parsed so return STATE_UNKNOWN */
-		printf ("Unable to read output\n");
+		printf (_("Unable to read output\n"));
 		return result;
 	}
 
@@ -304,23 +231,23 @@ main (int argc, char **argv)
 	}
 
 	if ( result == STATE_OK ) {
-		printf ("%s OK: %d process%s", 
+		printf (_("%s OK: %d process%s"), 
 			metric_name, procs, ( procs != 1 ? "es" : "") );
 	} else if (result == STATE_WARNING) {
 		if ( metric == METRIC_PROCS ) {
-			printf ("PROCS WARNING: %d process%s", procs, 
+			printf (_("PROCS WARNING: %d process%s"), procs, 
 				( procs != 1 ? "es" : ""));
 		} else {
-			printf ("%s WARNING: %d warn out of %d process%s", 
+			printf (_("%s WARNING: %d warn out of %d process%s"), 
 				metric_name, warn, procs, 
 				( procs != 1 ? "es" : ""));
 		}
 	} else if (result == STATE_CRITICAL) {
 		if (metric == METRIC_PROCS) {
-			printf ("PROCS CRITICAL: %d process%s", procs, 
+			printf (_("PROCS CRITICAL: %d process%s"), procs, 
 				( procs != 1 ? "es" : ""));
 		} else {
-			printf ("%s CRITICAL: %d crit, %d warn out of %d process%s", 
+			printf (_("%s CRITICAL: %d crit, %d warn out of %d process%s"), 
 				metric_name, crit, warn, procs, 
 				( procs != 1 ? "es" : ""));
 		}
@@ -337,38 +264,11 @@ main (int argc, char **argv)
 	return result;
 }
 
-/* Check thresholds against value */
-int
-check_thresholds (int value)
-{
- 	if (wmax == -1 && cmax == -1 && wmin == -1 && cmin == -1) {
-		return OK;
- 	}
-	else if (cmax >= 0 && cmin >= 0 && cmax < cmin) {
-		if (value > cmax && value < cmin)
-			return STATE_CRITICAL;
-	}
-	else if (cmax >= 0 && value > cmax) {
-		return STATE_CRITICAL;
-	}
-	else if (cmin >= 0 && value < cmin) {
-		return STATE_CRITICAL;
-	}
 
-	if (wmax >= 0 && wmin >= 0 && wmax < wmin) {
-		if (value > wmax && value < wmin) {
-			return STATE_WARNING;
-		}
-	}
-	else if (wmax >= 0 && value > wmax) {
-		return STATE_WARNING;
-	}
-	else if (wmin >= 0 && value < wmin) {
-		return STATE_WARNING;
-	}
-	return STATE_OK;
-}
 
+
+
+
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -414,11 +314,11 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (progname, REVISION);
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 't':									/* timeout period */
 			if (!is_integer (optarg)) {
-				printf ("%s: Timeout Interval must be an integer!\n\n",
+				printf (_("%s: Timeout Interval must be an integer!\n\n"),
 				        progname);
 				print_usage ();
 				exit (STATE_UNKNOWN);
@@ -440,7 +340,7 @@ process_arguments (int argc, char **argv)
 				break;
 			}
 			else {
-				printf ("%s: Critical Process Count must be an integer!\n\n",
+				printf (_("%s: Critical Process Count must be an integer!\n\n"),
 				        progname);
 				print_usage ();
 				exit (STATE_UNKNOWN);
@@ -460,7 +360,7 @@ process_arguments (int argc, char **argv)
 				break;
 			}
 			else {
-				printf ("%s: Warning Process Count must be an integer!\n\n",
+				printf (_("%s: Warning Process Count must be an integer!\n\n"),
 				        progname);
 				print_usage ();
 				exit (STATE_UNKNOWN);
@@ -471,13 +371,13 @@ process_arguments (int argc, char **argv)
 				options |= PPID;
 				break;
 			}
-			printf ("%s: Parent Process ID must be an integer!\n\n",
+			printf (_("%s: Parent Process ID must be an integer!\n\n"),
 			        progname);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 's':									/* status */
 			asprintf (&statopts, "%s", optarg);
-			asprintf (&fmt, "%s%sSTATE = %s", fmt, (options ? ", " : ""), statopts);
+			asprintf (&fmt, _("%s%sSTATE = %s"), fmt, (options ? ", " : ""), statopts);
 			options |= STAT;
 			break;
 		case 'u':									/* user or user id */
@@ -486,7 +386,7 @@ process_arguments (int argc, char **argv)
 				pw = getpwuid ((uid_t) uid);
 				/*  check to be sure user exists */
 				if (pw == NULL) {
-					printf ("UID %d was not found\n", uid);
+					printf (_("UID %d was not found\n"), uid);
 					print_usage ();
 					exit (STATE_UNKNOWN);
 				}
@@ -495,7 +395,7 @@ process_arguments (int argc, char **argv)
 				pw = getpwnam (optarg);
 				/*  check to be sure user exists */
 				if (pw == NULL) {
-					printf ("User name %s was not found\n", optarg);
+					printf (_("User name %s was not found\n"), optarg);
 					print_usage ();
 					exit (STATE_UNKNOWN);
 				}
@@ -503,49 +403,49 @@ process_arguments (int argc, char **argv)
 				uid = pw->pw_uid;
 			}
 			user = pw->pw_name;
-			asprintf (&fmt, "%s%sUID = %d (%s)", fmt, (options ? ", " : ""),
+			asprintf (&fmt, _("%s%sUID = %d (%s)"), fmt, (options ? ", " : ""),
 			          uid, user);
 			options |= USER;
 			break;
 		case 'C':									/* command */
 			asprintf (&prog, "%s", optarg);
-			asprintf (&fmt, "%s%scommand name '%s'", fmt, (options ? ", " : ""),
+			asprintf (&fmt, _("%s%scommand name '%s'"), fmt, (options ? ", " : ""),
 			          prog);
 			options |= PROG;
 			break;
 		case 'a':									/* args (full path name with args) */
 			asprintf (&args, "%s", optarg);
-			asprintf (&fmt, "%s%sargs '%s'", fmt, (options ? ", " : ""), args);
+			asprintf (&fmt, _("%s%sargs '%s'"), fmt, (options ? ", " : ""), args);
 			options |= ARGS;
 			break;
 		case 'r': 					/* RSS */
 			if (sscanf (optarg, "%d%[^0-9]", &rss, tmp) == 1) {
-				asprintf (&fmt, "%s%sRSS >= %d", fmt, (options ? ", " : ""), rss);
+				asprintf (&fmt, _("%s%sRSS >= %d"), fmt, (options ? ", " : ""), rss);
 				options |= RSS;
 				break;
 			}
-			printf ("%s: RSS must be an integer!\n\n",
+			printf (_("%s: RSS must be an integer!\n\n"),
 			        progname);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'z':					/* VSZ */
 			if (sscanf (optarg, "%d%[^0-9]", &vsz, tmp) == 1) {
-				asprintf (&fmt, "%s%sVSZ >= %d", fmt, (options ? ", " : ""), vsz);
+				asprintf (&fmt, _("%s%sVSZ >= %d"), fmt, (options ? ", " : ""), vsz);
 				options |= VSZ;
 				break;
 			}
-			printf ("%s: VSZ must be an integer!\n\n",
+			printf (_("%s: VSZ must be an integer!\n\n"),
 			        progname);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'P':					/* PCPU */
 			/* TODO: -P 1.5.5 is accepted */
 			if (sscanf (optarg, "%f%[^0-9.]", &pcpu, tmp) == 1) {
-				asprintf (&fmt, "%s%sPCPU >= %.2f", fmt, (options ? ", " : ""), pcpu);
+				asprintf (&fmt, _("%s%sPCPU >= %.2f"), fmt, (options ? ", " : ""), pcpu);
 				options |= PCPU;
 				break;
 			}
-			printf ("%s: PCPU must be a float!\n\n",
+			printf (_("%s: PCPU must be a float!\n\n"),
 			        progname);
 			print_usage ();
 			exit (STATE_UNKNOWN);
@@ -567,7 +467,7 @@ process_arguments (int argc, char **argv)
 				metric = METRIC_CPU;
 				break;
 			}
-			printf ("%s: metric must be one of PROCS, VSZ, RSS, CPU!\n\n",
+			printf (_("%s: metric must be one of PROCS, VSZ, RSS, CPU!\n\n"),
 				progname);
 			print_usage ();
 			exit (STATE_UNKNOWN);
@@ -584,12 +484,14 @@ process_arguments (int argc, char **argv)
 		cmax = atoi (argv[c++]);
 	if (statopts == NULL && argv[c]) {
 		asprintf (&statopts, "%s", argv[c++]);
-		asprintf (&fmt, "%s%sSTATE = %s", fmt, (options ? ", " : ""), statopts);
+		asprintf (&fmt, _("%s%sSTATE = %s"), fmt, (options ? ", " : ""), statopts);
 		options |= STAT;
 	}
 
 	return validate_arguments ();
 }
+
+
 
 
 int
@@ -602,11 +504,11 @@ validate_arguments ()
 		cmin = 0;
 	if (wmax >= wmin && cmax >= cmin) {	/* standard ranges */
 		if (wmax > cmax && cmax != -1) {
-			printf ("wmax (%d) cannot be greater than cmax (%d)\n", wmax, cmax);
+			printf (_("wmax (%d) cannot be greater than cmax (%d)\n"), wmax, cmax);
 			return ERROR;
 		}
 		if (cmin > wmin && wmin != -1) {
-			printf ("wmin (%d) cannot be less than cmin (%d)\n", wmin, cmin);
+			printf (_("wmin (%d) cannot be less than cmin (%d)\n"), wmin, cmin);
 			return ERROR;
 		}
 	}
@@ -623,22 +525,136 @@ validate_arguments ()
 }
 
 
+
+
+
+
+/* Check thresholds against value */
+int
+check_thresholds (int value)
+{
+ 	if (wmax == -1 && cmax == -1 && wmin == -1 && cmin == -1) {
+		return OK;
+ 	}
+	else if (cmax >= 0 && cmin >= 0 && cmax < cmin) {
+		if (value > cmax && value < cmin)
+			return STATE_CRITICAL;
+	}
+	else if (cmax >= 0 && value > cmax) {
+		return STATE_CRITICAL;
+	}
+	else if (cmin >= 0 && value < cmin) {
+		return STATE_CRITICAL;
+	}
+
+	if (wmax >= 0 && wmin >= 0 && wmax < wmin) {
+		if (value > wmax && value < wmin) {
+			return STATE_WARNING;
+		}
+	}
+	else if (wmax >= 0 && value > wmax) {
+		return STATE_WARNING;
+	}
+	else if (wmin >= 0 && value < wmin) {
+		return STATE_WARNING;
+	}
+	return STATE_OK;
+}
+
+
+
+
+
+
 void
 print_help (void)
 {
-	print_revision (progname, REVISION);
-	printf
-		("Copyright (c) %s %s <%s>\n\n%s\n",
-		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf(_("\
+Checks all processes and generates WARNING or CRITICAL states if the specified\n\
+metric is outside the required threshold ranges. The metric defaults to number\n\
+of processes.  Search filters can be applied to limit the processes to check.\n\n"));
+
 	print_usage ();
-	printf ("\nOptions:\n" LONGOPTIONS "\nExamples:\n" EXAMPLES "\n");
+
+	printf(_("\n\
+Required Arguments:\n\
+ -w, --warning=RANGE\n\
+   Generate warning state if metric is outside this range\n\
+ -c, --critical=RANGE\n\
+   Generate critical state if metric is outside this range\n"));
+
+	printf(_("\n\
+Optional Arguments:\n\
+ -m, --metric=TYPE\n\
+   Check thresholds against metric. Valid types:\n\
+   PROCS - number of processes (default)\n\
+   VSZ  - virtual memory size\n\
+   RSS  - resident set memory size\n\
+   CPU  - percentage cpu\n\
+ -v, --verbose\n\
+   Extra information. Up to 3 verbosity levels\n"));
+
+	printf(_("\n\
+Optional Filters:\n\
+ -s, --state=STATUSFLAGS\n\
+   Only scan for processes that have, in the output of `ps`, one or\n\
+   more of the status flags you specify (for example R, Z, S, RS,\n\
+   RSZDT, plus others based on the output of your 'ps' command).\n\
+ -p, --ppid=PPID\n\
+   Only scan for children of the parent process ID indicated.\n\
+ -z, --vsz=VSZ\n\
+   Only scan for processes with vsz higher than indicated.\n\
+ -r, --rss=RSS\n\
+   Only scan for processes with rss higher than indicated.\n"));
+
+	printf(_("\
+ -P, --pcpu=PCPU\n\
+   Only scan for processes with pcpu higher than indicated.\n\
+ -u, --user=USER\n\
+   Only scan for processes with user name or ID indicated.\n\
+ -a, --argument-array=STRING\n\
+   Only scan for processes with args that contain STRING.\n\
+ -C, --command=COMMAND\n\
+   Only scan for exact matches to the named COMMAND.\n"));
+
+	printf(_("\n\
+RANGEs are specified 'min:max' or 'min:' or ':max' (or 'max'). If\n\
+specified 'max:min', a warning status will be generated if the\n\
+count is inside the specified range\n\n"));
+
+	printf(_("\
+This plugin checks the number of currently running processes and\n\
+generates WARNING or CRITICAL states if the process count is outside\n\
+the specified threshold ranges. The process count can be filtered by\n\
+process owner, parent process PID, current state (e.g., 'Z'), or may\n\
+be the total number of running processes\n\n"));
+
+	printf(_("\
+Examples:\n\
+ check_procs -w 2:2 -c 2:1024 -C portsentry\n\
+   Warning if not two processes with command name portsentry. Critical\n\
+   if < 2 or > 1024 processes\n\n\
+ check_procs -w 10 -a '/usr/local/bin/perl' -u root\n\
+   Warning alert if > 10 processes with command arguments containing \n\
+   '/usr/local/bin/perl' and owned by root\n\n\
+ check_procs -w 50000 -c 100000 --metric=VSZ\n\
+   Alert if vsz of any processes over 50K or 100K\n\n"));
+
+	printf (_(UT_SUPPORT));
 }
 
 void
 print_usage (void)
 {
-	printf ("Usage:\n" " %s %s\n"
-		 " %s (-h | --help) for detailed help\n"
-		 " %s (-V | --version) for version information\n",
-	progname, OPTIONS, progname, progname);	
+	printf ("\
+Usage: %s -w <range> -c <range> [-m metric] [-s state] [-p ppid]\n\
+  [-u user] [-r rss] [-z vsz] [-P %%cpu] [-a argument-array]\n\
+  [-C command] [-v]\n", progname);	
+	printf (_(UT_HLP_VRS), progname, progname);
 }
+
