@@ -992,7 +992,7 @@ check_certificate (X509 ** certificate)
 
 	days_left = (mktime (&stamp) - time (NULL)) / 86400;
 	snprintf
-		(timestamp, 16, "%02d/%02d/%04d %02d:%02d",
+		(timestamp, 17, "%02d/%02d/%04d %02d:%02d",
 		 stamp.tm_mon + 1,
 		 stamp.tm_mday, stamp.tm_year + 1900, stamp.tm_hour, stamp.tm_min);
 
