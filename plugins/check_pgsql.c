@@ -441,12 +441,9 @@ a password, but no effort is made to obsure or encrypt the password.\n"));
 void
 print_usage (void)
 {
-	printf (S_("\
-Usage:\n %s [-H <host>] [-P <port>] [-c <critical time>] [-w <warning time>]\n\
-            [-t <timeout>]"), progname);
-	printf (S_("[-d <database>] [-l <logname>] [-p <password>]\n"));
-	printf (S_("\
-         %s (-h | --help) for detailed help\n\
-         %s (-V | --version) for version information\n"),
-					progname, progname);
+	printf ("\
+Usage: %s [-H <host>] [-P <port>] [-c <critical time>] [-w <warning time>]\n\
+            [-t <timeout>] [-d <database>] [-l <logname>] [-p <password>]\n", progname);
+						
+	printf (UT_HLP_VRS, progname, progname);
 }

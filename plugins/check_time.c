@@ -357,8 +357,9 @@ This plugin will check the time on the specified host.\n\n"));
 void
 print_usage (void)
 {
-	printf (_("\
+	printf ("\
 Usage: %s -H <host_address> [-p port] [-u] [-w variance] [-c variance]\n\
-    [-W connect_time] [-C connect_time] [-t timeout]\n"), progname);
+    [-W connect_time] [-C connect_time] [-t timeout]\n", progname);
+		
 	printf (_(UT_HLP_VRS), progname, progname);
 }

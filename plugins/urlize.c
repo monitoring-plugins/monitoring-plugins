@@ -162,5 +162,7 @@ You probably want:\n\
 void
 print_usage (void)
 {
-	printf (_("Usage:\n %s <url> <plugin> <arg1> ... <argN>\n"), progname);
+	printf ("Usage:\n %s <url> <plugin> <arg1> ... <argN>\n", progname);
+	
+	printf (UT_HLP_VRS, progname, progname);
 }

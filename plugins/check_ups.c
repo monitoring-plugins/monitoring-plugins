@@ -647,8 +647,8 @@ http://www.networkupstools.org\n\n"));
 void
 print_usage (void)
 {
-	printf (_("\
+	printf ("\
 Usage: %s -H host -u ups [-p port] [-v variable]\n\
-  [-wv warn_value] [-cv crit_value] [-to to_sec] [-T]\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
+  [-wv warn_value] [-cv crit_value] [-to to_sec] [-T]\n", progname);
+	printf (UT_HLP_VRS, progname, progname);
 }

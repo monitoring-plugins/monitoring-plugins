@@ -469,5 +469,5 @@ print_usage (void)
 	printf ("\
 Usage: %s -H host [-p port] [-e expect] [-C command] [-f from addr]\n\
   [-w warn] [-c crit] [-t timeout] [-n] [-v] [-4|-6]\n", progname);
-	printf (_(UT_HLP_VRS), progname, progname);
+	printf (UT_HLP_VRS, progname, progname);
 }

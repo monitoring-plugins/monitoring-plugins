@@ -948,12 +948,13 @@ Check status of remote machines and obtain sustem information via SNMP\n\n"));
 void
 print_usage (void)
 {
-	printf (_("\
+	printf ("\
 Usage: %s -H <ip_address> -o <OID> [-w warn_range] [-c crit_range] \n\
   [-C community] [-s string] [-r regex] [-R regexi] [-t timeout]\n\
   [-l label] [-u units] [-p port-number] [-d delimiter]\n\
   [-D output-delimiter] [-m miblist] [-P snmp version]\n\
   [-L seclevel] [-U secname] [-a authproto] [-A authpasswd]\n\
-  [-X privpasswd]\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
+  [-X privpasswd]\n", progname);
+	
+	printf (UT_HLP_VRS, progname, progname);
 }

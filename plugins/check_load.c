@@ -321,5 +321,6 @@ print_usage (void)
 {
 	printf ("Usage: %s -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15\n"),
 	        progname);
+					
 	printf (UT_HLP_VRS, progname, progname);
 }

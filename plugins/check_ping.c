@@ -485,17 +485,6 @@ error_scan (char buf[MAX_INPUT_BUFFER], const char *addr)
 
 
 void
-print_usage (void)
-{
-	printf (\
-"Usage: %s -H <host_address> -w <wrta>,<wpl>%% -c <crta>,<cpl>%%\n\
-  [-p packets] [-t timeout] [-L] [-4|-6]\n", progname);
-	printf (_(UT_HLP_VRS), progname, progname);
-}
-
-
-
-void
 print_help (void)
 {
 	print_revision (progname, revision);
@@ -538,4 +527,13 @@ linking to a traceroute CGI contributed by Ian Cass. The CGI can be found in\n\
 the contrib area of the downloads section at http://www.nagios.org\n\n"));
 
 	printf (_(UT_SUPPORT));
+}
+
+void
+print_usage (void)
+{
+	printf ("Usage: %s -H <host_address> -w <wrta>,<wpl>%% -c <crta>,<cpl>%%\n\
+  [-p packets] [-t timeout] [-L] [-4|-6]\n", progname);
+	
+	printf (UT_HLP_VRS, progname, progname);
 }

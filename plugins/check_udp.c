@@ -225,7 +225,7 @@ print_help (void)
 	printf (COPYRIGHT, copyright, email);
 
 	printf (_("\
-This plugin tests an UDP connection with the specified host.\n\n"));
+	This plugin tests an UDP connection with the specified host.\n\n"));
 
 	print_usage ();
 
@@ -262,8 +262,9 @@ STATE_CRITICAL, other errors return STATE_UNKNOWN.\n\n"));
 void
 print_usage (void)
 {
-	printf (_("\
+	printf ("\
 Usage: %s -H <host_address> [-p port] [-w warn_time] [-c crit_time]\n\
-    [-e expect] [-s send] [-t to_sec] [-v]\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
+    [-e expect] [-s send] [-t to_sec] [-v]\n", progname);
+		
+	printf (UT_HLP_VRS, progname, progname);
 }

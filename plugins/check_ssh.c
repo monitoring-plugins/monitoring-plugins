@@ -287,9 +287,9 @@ print_help (void)
 void
 print_usage (void)
 {
-	printf (_("\
+	printf ("\
 Usage: %s [-46] [-t <timeout>] [-r <remote version>] [-p <port>] <host>\n"), progname);
-	printf (_(UT_HLP_VRS), progname, progname);
+
+	printf (UT_HLP_VRS, progname, progname);
 }
 
-/* end of check_ssh.c */

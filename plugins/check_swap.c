@@ -514,10 +514,9 @@ On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s.\n"));
 void
 print_usage (void)
 {
-	printf (_("Usage:\n\
+	printf ("Usage:\n\
  %s [-av] -w <percent_free>%% -c <percent_free>%%\n\
- %s [-av] -w <bytes_free> -c <bytes_free>\n\
- %s (-h | --help) for detailed help\n\
- %s (-V | --version) for version information\n"),
-	        progname, progname, progname, progname);
+ %s [-av] -w <bytes_free> -c <bytes_free>\n", progname, progname);
+ 
+ printf (UT_HLP_VRS, progname, progname);
 }

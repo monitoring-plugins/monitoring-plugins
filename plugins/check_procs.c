@@ -589,6 +589,71 @@ check_thresholds (int value)
 
 
 
+
+/* convert the elapsed time to seconds */
+int
+convert_to_seconds(char *etime) {
+
+	char *ptr;
+	int total;
+
+	int hyphcnt;
+	int coloncnt;
+	int days;
+	int hours;
+	int minutes;
+	int seconds;
+
+	hyphcnt = 0;
+	coloncnt = 0;
+	days = 0;
+	hours = 0;
+	minutes = 0;
+	seconds = 0;
+
+	for (ptr = etime; *ptr != '\0'; ptr++) {
+	
+		if (*ptr == '-') {
+			hyphcnt++;
+			continue;
+		}
+		if (*ptr == ':') {
+			coloncnt++;
+			continue;
+		}
+	}
+
+	if (hyphcnt > 0) {
+		sscanf(etime, "%d-%d:%d:%d",
+				&days, &hours, &minutes, &seconds);
+		/* linux 2.6.5/2.6.6 reporting some processes with infinite
+		 * elapsed times for some reason */
+		if (days == 49710) {
+			return 0;
+		}
+	} else {
+		if (coloncnt == 2) {
+			sscanf(etime, "%d:%d:%d",
+				&hours, &minutes, &seconds);
+		} else if (coloncnt == 1) {
+			sscanf(etime, "%d:%d",
+				&minutes, &seconds);
+		}
+	}
+
+	total = (days * 86400) +
+		(hours * 3600) +
+		(minutes * 60) +
+		seconds;
+
+	if (verbose >= 3) {
+		printf("seconds: %d\n", total);
+	}
+	return total;
+}
+
+
+
 void
 print_help (void)
 {
@@ -681,78 +746,13 @@ Examples:\n\
 	printf (_(UT_SUPPORT));
 }
 
-
-
-/* convert the elapsed time to seconds */
-int
-convert_to_seconds(char *etime) {
-
-	char *ptr;
-	int total;
-
-	int hyphcnt;
-	int coloncnt;
-	int days;
-	int hours;
-	int minutes;
-	int seconds;
-
-	hyphcnt = 0;
-	coloncnt = 0;
-	days = 0;
-	hours = 0;
-	minutes = 0;
-	seconds = 0;
-
-	for (ptr = etime; *ptr != '\0'; ptr++) {
-	
-		if (*ptr == '-') {
-			hyphcnt++;
-			continue;
-		}
-		if (*ptr == ':') {
-			coloncnt++;
-			continue;
-		}
-	}
-
-	if (hyphcnt > 0) {
-		sscanf(etime, "%d-%d:%d:%d",
-				&days, &hours, &minutes, &seconds);
-		/* linux 2.6.5/2.6.6 reporting some processes with infinite
-		 * elapsed times for some reason */
-		if (days == 49710) {
-			return 0;
-		}
-	} else {
-		if (coloncnt == 2) {
-			sscanf(etime, "%d:%d:%d",
-				&hours, &minutes, &seconds);
-		} else if (coloncnt == 1) {
-			sscanf(etime, "%d:%d",
-				&minutes, &seconds);
-		}
-	}
-
-	total = (days * 86400) +
-		(hours * 3600) +
-		(minutes * 60) +
-		seconds;
-
-	if (verbose >= 3) {
-		printf("seconds: %d\n", total);
-	}
-	return total;
-}
-
 void
 print_usage (void)
 {
 	printf ("\
 Usage: %s -w <range> -c <range> [-m metric] [-s state] [-p ppid]\n\
   [-u user] [-r rss] [-z vsz] [-P %%cpu] [-a argument-array]\n\
-  [-C command] [-t timeout] [-v]\n", progname);	
-	printf (_(UT_HLP_VRS), progname, progname);
+  [-C command] [-t timeout] [-v]\n", progname);
+	
+	printf (UT_HLP_VRS, progname, progname);
 }
-
-
