@@ -67,7 +67,7 @@ void usage2(char *msg, char *arg)
 }
 
 void
-usage3 (char *msg, char arg)
+usage3 (char *msg, int arg)
 {
 	printf ("%s: %s - %c\n", progname, msg, arg);
 	print_usage();
@@ -111,7 +111,7 @@ For more information about these matters, see the file named COPYING.\n"));
 
 }
 
-char *
+const char *
 state_text (int result)
 {
 	switch (result) {
@@ -328,40 +328,6 @@ strscpy (char *dest, const char *src)
 		return NULL;
 
 	asprintf (&dest, "%s", src);
-
-	return dest;
-}
-
-
-
-
-
-/******************************************************************************
- *
- * Concatenates one string to the end of another
- *
- * Given a pointer destination string, which may or may not already
- * hold some text, and a source string with additional text (possibly
- * NULL or empty), returns a pointer to a string that is the first
- * string with the second concatenated to it. Uses realloc to free 
- * memory held by the dest argument if new storage space is required.
- *
- * Example:
- *
- * char *str=NULL;
- * str = strscpy("This is a line of text with no trailing newline");
- * str = strscat(str,"\n");
- *
- *****************************************************************************/
-
-char *
-strscat (char *dest, const char *src)
-{
-
-	if (dest == NULL)
-		return src;
-	if (src != NULL)
-		asprintf (&dest, "%s%s", dest, src);
 
 	return dest;
 }

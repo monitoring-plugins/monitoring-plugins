@@ -201,7 +201,7 @@ main (int argc, char **argv)
 				ptr = strpbrk (ptr, "\n");
 			}
 			if (ptr && strstr (ptr, delimiter) == NULL) {
-				response = strscat (response, ptr);
+				asprintf (&response, "%s%s", response, ptr);
 				ptr = NULL;
 			}
 		}

@@ -22,10 +22,10 @@ void die (int result, const char *fmt, ...) __attribute__((noreturn));
 
 #ifdef LOCAL_TIMEOUT_ALARM_HANDLER
 extern unsigned int timeout_interval;
-RETSIGTYPE timeout_alarm_handler (int) __attribute__((noreturn));
+RETSIGTYPE timeout_alarm_handler (int);
 #else
 unsigned int timeout_interval = DEFAULT_SOCKET_TIMEOUT;
-extern RETSIGTYPE timeout_alarm_handler (int) __attribute__((noreturn));
+extern RETSIGTYPE timeout_alarm_handler (int);
 #endif
 
 time_t start_time, end_time;
@@ -64,9 +64,7 @@ double delta_time (struct timeval tv);
 
 void strip (char *buffer);
 char *strscpy (char *dest, const char *src);
-char *strscat (char *dest, const char *src);
 char *strnl (char *str);
-char *ssprintf (char *str, const char *fmt, ...); /* deprecate for asprintf */
 char *strpcpy (char *dest, const char *src, const char *str);
 char *strpcat (char *dest, const char *src, const char *str);
 
@@ -74,9 +72,9 @@ int max_state (int a, int b);
 
 void usage (char *msg) __attribute__((noreturn));
 void usage2(char *msg, char *arg) __attribute__((noreturn));
-void usage3(char *msg, char arg) __attribute__((noreturn));
+void usage3(char *msg, int arg) __attribute__((noreturn));
 
-char *state_text (int result);
+const char *state_text (int result);
 
 #define max(a,b) (((a)>(b))?(a):(b))
 

@@ -1,22 +1,21 @@
 /*****************************************************************************
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
 *****************************************************************************/
 
-#include "config.h"
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
@@ -36,50 +35,6 @@ enum {
 	DEFAULT_PORT = 53
 };
 
-void
-print_usage (void)
-{
-	printf (_("\
-Usage: %s -H host -l lookup [-p <server port>] [-w <warning interval>]\n\
-         [-c <critical interval>] [-t <timeout>] [-v]\n"),
-	        progname);
-	printf ("       %s (-h|--help)\n", progname);
-	printf ("       %s (-V|--version)\n", progname);
-}
-
-void
-print_help (void)
-{
-	char *myport;
-
-	asprintf (&myport, "%d", DEFAULT_PORT);
-
-	print_revision (progname, revision);
-
-	printf (_(COPYRIGHT), copyright, email);
-
-	printf (_("Test the DNS service on the specified host using dig\n\n"));
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_(UT_HOST_PORT), 'P', myport);
-
-	printf (_("\
- -l, --lookup=STRING\n\
-   machine name to lookup\n"));
-
-	printf (_(UT_WARN_CRIT));
-
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-
-	printf (_(UT_VERBOSE));
-
-	support ();
-}
-
-
 char *query_address = NULL;
 char *dns_server = NULL;
 int verbose = FALSE;
@@ -88,13 +43,19 @@ int warning_interval = -1;
 int critical_interval = -1;
 
 
+
+
+
+
 int
 main (int argc, char **argv)
 {
 	char input_buffer[MAX_INPUT_BUFFER];
-	char *command_line = NULL;
-	char *output = "";
+	char *command_line;
+	char *output;
 	int result = STATE_UNKNOWN;
+
+	output = strdup ("");
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR)
@@ -188,6 +149,11 @@ main (int argc, char **argv)
 	return result;
 }
 
+
+
+
+
+
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -298,4 +264,55 @@ validate_arguments (void)
 {
 	return OK;
 }
+
+
+
+
+
+
 
+void
+print_help (void)
+{
+	char *myport;
+
+	asprintf (&myport, "%d", DEFAULT_PORT);
+
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("Test the DNS service on the specified host using dig\n\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_HOST_PORT), 'P', myport);
+
+	printf (_("\
+ -l, --lookup=STRING\n\
+   machine name to lookup\n"));
+
+	printf (_(UT_WARN_CRIT));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(UT_VERBOSE));
+
+	support ();
+}
+
+
+
+
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -H host -l lookup [-p <server port>] [-w <warning interval>]\n\
+         [-c <critical interval>] [-t <timeout>] [-v]\n"),
+	        progname);
+	printf ("       %s (-h|--help)\n", progname);
+	printf ("       %s (-V|--version)\n", progname);
+}

@@ -1,19 +1,19 @@
 /******************************************************************************
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
 *****************************************************************************/
 
 const char *progname = "check_disk";
@@ -111,7 +111,7 @@ enum
 int process_arguments (int, char **);
 void print_path (char *mypath);
 int validate_arguments (uintmax_t, uintmax_t, double, double, char *);
-int check_disk (int usp, uintmax_t free_disk);
+int check_disk (double usp, uintmax_t free_disk);
 int walk_name_list (struct name_list *list, const char *name);
 void print_help (void);
 void print_usage (void);
@@ -120,9 +120,9 @@ uintmax_t w_df = 0;
 uintmax_t c_df = 0;
 double w_dfp = -1.0;
 double c_dfp = -1.0;
-char *path = "";
-char *exclude_device = "";
-char *units = NULL;
+char *path;
+char *exclude_device;
+char *units;
 uintmax_t mult = 1024 * 1024;
 int verbose = 0;
 int erronly = FALSE;
@@ -140,13 +140,16 @@ main (int argc, char **argv)
 	int result = STATE_UNKNOWN;
 	int disk_result = STATE_UNKNOWN;
 	char file_system[MAX_INPUT_BUFFER];
-	char *output = "";
-	char *details = "";
+	char *output;
+	char *details;
 	float free_space, free_space_pct, total_space;
 
 	struct mount_entry *me;
 	struct fs_usage fsp;
 	struct name_list *temp_list;
+
+	output = strdup ("");
+	details = strdup ("");
 
 	mount_list = read_filesystem_list (0);
 
@@ -414,7 +417,7 @@ process_arguments (int argc, char **argv)
 	if (c_dfp < 0 && argc > c && is_intnonneg (argv[c]))
 		c_dfp = (100.0 - atof (argv[c++]));
 
-	if (argc > c && strlen (path) == 0) {
+	if (argc > c && path == NULL) {
 		se = (struct name_list *) malloc (sizeof (struct name_list));
 		se->name = strdup (argv[c++]);
 		se->name_next = NULL;
@@ -482,7 +485,7 @@ INPUT ERROR: C_DF (%lu) should be less than W_DF (%lu) and both should be greate
 
 
 int
-check_disk (int usp, uintmax_t free_disk)
+check_disk (double usp, uintmax_t free_disk)
 {
 	int result = STATE_UNKNOWN;
 	/* check the percent used space against thresholds */

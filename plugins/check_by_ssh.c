@@ -291,7 +291,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	if (commands > 1)
-		remotecmd = strscat (remotecmd, ";echo STATUS CODE: $?;");
+		asprintf (&remotecmd, "%s;echo STATUS CODE: $?;", remotecmd);
 
 	if (remotecmd == NULL || strlen (remotecmd) <= 1)
 		usage (_("No remotecmd\n"));
