@@ -44,7 +44,7 @@ certificate expiration times.\n"
 \(-H <vhost> | -I <IP-address>) [-u <uri>] [-p <port>]\n\
             [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L]\n\
             [-a auth] [-f <ok | warn | critcal | follow>] [-e <expect>]\n\
-            [-s string] [-r <regex> | -R <case-insensitive regex>]\n\
+            [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n\
             [-P string]"
 
 #define LONGOPTIONS "\
@@ -74,7 +74,7 @@ certificate expiration times.\n"
  -L, --link=URL\n\
    Wrap output in HTML link (obsoleted by urlize)\n\
  -f, --onredirect=<ok|warning|critical|follow>\n\
-   How to handle redirected pages\n%s\
+   How to handle redirected pages\n%s%s\
  -v, --verbose\n\
     Show details for command-line debugging (do not use with nagios server)\n\
  -h, --help\n\
@@ -91,6 +91,18 @@ certificate expiration times.\n"
     (when this option is used the url is not checked.)\n"
 #else
 #define SSLOPTIONS ""
+#endif
+
+#ifdef HAVE_REGEX_H
+#define REGOPTIONS "\
+ -l, --linespan\n\
+    Allow regex to span newlines (must precede -r or -R)\n\
+ -r, --regex, --ereg=STRING\n\
+    Search page for regex STRING\n\
+ -R, --eregi=STRING\n\
+    Search page for case-insensitive regex STRING\n"
+#else
+#define REGOPTIONS ""
 #endif
 
 #define DESCRIPTION "\
@@ -286,6 +298,7 @@ process_arguments (int argc, char **argv)
 		{"regex", required_argument, 0, 'r'},
 		{"ereg", required_argument, 0, 'r'},
 		{"eregi", required_argument, 0, 'R'},
+ 		{"linespan", no_argument, 0, 'l'},
 		{"onredirect", required_argument, 0, 'f'},
 		{"certificate", required_argument, 0, 'C'},
 		{0, 0, 0, 0}
@@ -308,7 +321,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-n");
 	}
 
-#define OPTCHARS "Vvht:c:w:H:P:I:a:e:p:s:R:r:u:f:C:nLS"
+#define OPTCHARS "Vvht:c:w:H:P:I:a:e:p:s:R:r:u:f:C:nlLS"
 
 	while (1) {
 #ifdef HAVE_GETOPT_H
@@ -420,15 +433,19 @@ process_arguments (int argc, char **argv)
 			server_expect[MAX_INPUT_BUFFER - 1] = 0;
 			server_expect_yn = 1;
 			break;
-		case 'R': /* regex */
-#ifdef HAVE_REGEX_H
-			cflags = REG_ICASE;
-#else
+#ifndef HAVE_REGEX_H
+ 		case 'l': /* linespan */
+ 		case 'r': /* linespan */
+ 		case 'R': /* linespan */
 			usage ("check_http: call for regex which was not a compiled option\n");
-#endif
+			break;
+#else
+ 		case 'l': /* linespan */
+ 			cflags &= ~REG_NEWLINE;
+ 			break;
+		case 'R': /* regex */
+			cflags |= REG_ICASE;
 		case 'r': /* regex */
-#ifdef HAVE_REGEX_H
-			cflags |= REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
 			strncpy (regexp, optarg, MAX_RE_SIZE - 1);
 			regexp[MAX_RE_SIZE - 1] = 0;
 			errcode = regcomp (&preg, regexp, cflags);
@@ -437,10 +454,8 @@ process_arguments (int argc, char **argv)
 				printf ("Could Not Compile Regular Expression: %s", errbuf);
 				return ERROR;
 			}
-#else
-			usage ("check_http: call for regex which was not a compiled option\n");
-#endif
 			break;
+#endif
 		case 'v': /* verbose */
 			verbose = TRUE;
 			break;
@@ -449,8 +464,7 @@ process_arguments (int argc, char **argv)
 
 	c = optind;
 
-	if (server_address == NULL && host_name == NULL) {
-		server_address = strscpy (NULL, argv[c]);
+	if (server_address == NULL && host_name == NULL) {		server_address = strscpy (NULL, argv[c]);
 		host_name = strscpy (NULL, argv[c++]);
 	}
 
@@ -1065,7 +1079,7 @@ print_help (void)
 	print_usage ();
 	printf ("NOTE: One or both of -H and -I must be specified\n");
 	printf ("\nOptions:\n" LONGOPTIONS "\n", HTTP_EXPECT, HTTP_PORT,
-	        DEFAULT_SOCKET_TIMEOUT, SSLOPTIONS);
+	        DEFAULT_SOCKET_TIMEOUT, SSLOPTIONS, REGOPTIONS);
 #ifdef HAVE_SSL
 	printf (SSLDESCRIPTION);
 #endif
