@@ -4,15 +4,15 @@ cvs update in main area
 . tools/devmode, if feeling adventurous
 check compilation
 
-Run cvs2cl
+Run cvs2cl.pl
 commit new ChangeLog
 
-cvs tag r1_4_0-alpha2
+cvs tag r1_4-alpha2
 
-checkout new version
+checkout new version:
 cd /tmp
 rm -fr nagiosplug
-cvs -z3 -d:ext:tonvoon@cvs.sourceforge.net:/cvsroot/nagiosplug co -r 1_4_0-alpha2 nagiosplug
+cvs -z3 -d:ext:tonvoon@cvs.sourceforge.net:/cvsroot/nagiosplug co -r 1_4-alpha2 nagiosplug
 cd nagiosplug
 tools/setup
 ./configure
@@ -29,7 +29,7 @@ Get URL to news item
 
 SF -> Admin -> File Release System
 Edit nagiosplug and create a file release
-name: 1.4.0alpha2. Commit
+name: 1.4-alpha2. Commit
 Step 1: Add release notes pointing to news item
 Step 2: add file
 Step 3: *.tar.gz, Platform Independent, Source .gz
