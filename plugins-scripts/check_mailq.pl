@@ -462,11 +462,46 @@ elsif ( $mailq eq "qmail" ) {
 
 
 } # end of ($mailq eq "qmail")
+elsif ( $mailq eq "exim" ) {
+	## open mailq 
+	if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
+		if (! open (MAILQ, "$utils::PATH_TO_MAILQ | " ) ) {
+			print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
+			exit $ERRORS{'UNKNOWN'};
+		}
+	}elsif( defined $utils::PATH_TO_MAILQ){
+		unless (-x $utils::PATH_TO_MAILQ) {
+			print "ERROR: $utils::PATH_TO_MAILQ is not executable by (uid $>:gid($)))\n";
+			exit $ERRORS{'UNKNOWN'};
+		}
+	} else {
+		print "ERROR: \$utils::PATH_TO_MAILQ is not defined\n";
+		exit $ERRORS{'UNKNOWN'};
+	}
 
+	while (<MAILQ>) {
+	    #22m  1.7K 19aEEr-0007hx-Dy <> *** frozen ***
+            #root@exlixams.glups.fr
 
+	    if (/\s[\w\d]{6}-[\w\d]{6}-[\w\d]{2}\s/) { # message id 19aEEr-0007hx-Dy
+		$msg_q++ ;
+	    }
+	}
+	close(MAILQ) ;
+	if ($msg_q < $opt_w) {
+		$msg = "OK: mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
+		$state = $ERRORS{'OK'};
+	}elsif ($msg_q >= $opt_w  && $msg_q < $opt_c) {
+		$msg = "WARNING: mailq is $msg_q (threshold w = $opt_w)";
+		$state = $ERRORS{'WARNING'};
+	}else {
+		$msg = "CRITICAL: mailq is $msg_q (threshold c = $opt_c)";
+		$state = $ERRORS{'CRITICAL'};
+	}
+} # end of ($mailq eq "exim")
 
 # Perfdata support
-print "$msg |mailq=$msg_q\n";
+print "$msg|unsent=$msg_q;$opt_w;$opt_c;0\n";
 exit $state;
 
 
@@ -526,7 +561,7 @@ sub process_arguments(){
 	}
 
 	if (defined $opt_M) {
-		if ($opt_M =~ /sendmail/ || $opt_M =~ /qmail/ || $opt_M =~ /postfix/ ) {
+		if ($opt_M =~ /^(sendmail|qmail|postfix|exim)$/) {
 			$mailq = $opt_M ;
 		}elsif( $opt_M eq ''){
 			$mailq = 'sendmail';
@@ -542,7 +577,7 @@ sub process_arguments(){
 }
 
 sub print_usage () {
-	print "Usage: $PROGNAME [-w <warn>] [-c <crit>] [-W <warn>] [-C <crit>] [-M <MTA>] [-t <timeout>] [-v verbose]\n";
+	print "Usage: $PROGNAME -w <warn> -c <crit> [-W <warn>] [-C <crit>] [-M <MTA>] [-t <timeout>] [-v verbose]\n";
 }
 
 sub print_help () {
@@ -558,7 +593,7 @@ sub print_help () {
 	print "-W (--Warning)   = Min. number of messages for same domain in queue to generate warning\n";
 	print "-C (--Critical)  = Min. number of messages for same domain in queue to generate critical alert ( W < C )\n";
 	print "-t (--timeout)   = Plugin timeout in seconds (default = $utils::TIMEOUT)\n";
-	print "-M (--mailserver) = [ sendmail | qmail | postfix ] (default = sendmail)\n";
+	print "-M (--mailserver) = [ sendmail | qmail | postfix | exim ] (default = sendmail)\n";
 	print "-h (--help)\n";
 	print "-V (--version)\n";
 	print "-v (--verbose)   = debugging output\n";
