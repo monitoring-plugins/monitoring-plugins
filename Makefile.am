@@ -35,7 +35,7 @@ solpkg:
 	cd $(BUILDDIR) && $(PERL) ../$(PKGSCRIPT) ../$(PACKDIR)
 
 THANKS: THANKS.in AUTHORS
-	perl -e ' @a=<>; print sort by_last_field @a; sub by_last_field { ($$a1) = $$a =~ /\s(\w+)$$/; ($$b1) = $$b =~ /\s(\w+)$$/; $$a1 cmp $$b1}' AUTHORS | cat THANKS.in - > $@
+	perl -e ' while (<>) { print STDERR "Duplicate: $$_",$$/ if ($$a{$$_}) ; $$a{$$_}++}; print sort by_last_field (keys %a); sub by_last_field { ($$a1) = $$a =~ /\s(\w+)$$/; ($$b1) = $$b =~ /\s(\w+)$$/; $$a1 cmp $$b1}' AUTHORS | cat THANKS.in - > $@
 
 pkgclean:
 	rm -rf $(BUILDDIR) $(PACKDIR)
