@@ -54,7 +54,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) != OK)
-		usage (_("Incorrect arguments supplied\n"));
+		usage (_("check_mysql: could not parse arguments\n"));
 
 	/* initialize mysql  */
 	mysql_init (&mysql);
@@ -146,8 +146,6 @@ main (int argc, char **argv)
 
 
 
-
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -183,7 +181,7 @@ process_arguments (int argc, char **argv)
 				db_host = optarg;
 			}
 			else {
-				usage2 (_("Invalid host name"), optarg);
+				usage2 (_("Invalid hostname/address"), optarg);
 			}
 			break;
 		case 'd':									/* hostname */
@@ -208,7 +206,9 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* help */
-			usage (_("Invalid argument\n"));
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 		}
 	}
 
@@ -221,7 +221,7 @@ process_arguments (int argc, char **argv)
 				db_host = argv[c++];
 			}
 			else {
-				usage2 (_("Invalid host name"), optarg);
+				usage2 (_("Invalid hostname/address"), optarg);
 			}
 		else if (strlen(db_user) == 0)
 			db_user = argv[c++];
@@ -237,8 +237,6 @@ process_arguments (int argc, char **argv)
 
 	return validate_arguments ();
 }
-
-
 
 
 
@@ -262,9 +260,6 @@ validate_arguments (void)
 
 
 
-
-
-
 void
 print_help (void)
 {
@@ -301,7 +296,6 @@ a server listening on MySQL standard port %d will be checked\n"), MYSQL_PORT);
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 

@@ -22,6 +22,8 @@
  */
 
 /* An emulation of the RFC 2553 / Posix getaddrinfo resolver interface.
+ *
+ * $Id$
  */
 
 #ifdef HAVE_CONFIG_H

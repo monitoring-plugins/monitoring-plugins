@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
 ******************************************************************************/
 
 const char *progname = "check_snmp";
@@ -118,9 +120,6 @@ char *miblist;
 
 
 
-
-
-
 int
 main (int argc, char **argv)
 {
@@ -158,7 +157,7 @@ main (int argc, char **argv)
 	miblist = strdup (DEFAULT_MIBLIST);
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage (_("Incorrect arguments supplied\n"));
+		usage (_("check_snmp: could not parse arguments\n"));
 
 	/* create the command line to execute */
 	asprintf (&command_line, "%s -t 1 -r %d -m %s -v %s %s %s:%s %s",
@@ -344,9 +343,6 @@ main (int argc, char **argv)
 
 
 
-
-
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -402,7 +398,9 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':	/* usage */
-			usage3 ("Unknown argument", optopt);
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 		case 'h':	/* help */
 			print_help ();
 			exit (STATE_OK); 
@@ -601,8 +599,6 @@ process_arguments (int argc, char **argv)
 }
 
 
-
-
 /******************************************************************************
 
 @@-
@@ -622,6 +618,8 @@ first character cannot be a number, however.</para>
 </sect3>
 -@@
 ******************************************************************************/
+
+
 
 int
 validate_arguments ()
@@ -665,7 +663,6 @@ validate_arguments ()
 			asprintf(&authpriv, "-l authPriv -a %s -u %s -A %s -x DES -X %s ", authproto, secname, authpasswd, privpasswd);
 		}
 		
-									
 	}
 	else {
 		printf (_("Invalid SNMP version: %s\n"), proto);
@@ -673,17 +670,11 @@ validate_arguments ()
 		exit (STATE_UNKNOWN);				
 	}
 			
-	
-	
-
 	return OK;
 }
 
 
 
-
-
-
 char *
 clarify_message (char *msg)
 {
@@ -718,7 +709,6 @@ clarify_message (char *msg)
 	}
 	return (msg);
 }
-
 
 
 
@@ -766,7 +756,6 @@ check_num (int i)
 
 
 
-
 int
 lu_getll (unsigned long *ll, char *str)
 {
@@ -779,7 +768,6 @@ lu_getll (unsigned long *ll, char *str)
 		return 1;
 	return 0;
 }
-
 
 
 
@@ -798,7 +786,6 @@ lu_getul (unsigned long *ul, char *str)
 
 
 
-
 /* trim leading whitespace
 	 if there is a leading quote, make sure it balances */
 
@@ -812,7 +799,6 @@ thisarg (char *str)
 	}
 	return str;
 }
-
 
 
 
@@ -851,9 +837,6 @@ nextarg (char *str)
 
 
 
-
-
-
 void
 print_help (void)
 {
@@ -959,6 +942,8 @@ Check status of remote machines and obtain sustem information via SNMP\n\n"));
 
 	printf (_(UT_SUPPORT));
 }
+
+
 
 void
 print_usage (void)

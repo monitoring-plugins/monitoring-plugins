@@ -26,6 +26,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
+ * $Id$
+ *
  *****************************************************************************/
 
 #include "common.h"
@@ -109,7 +111,7 @@ int main(int argc, char **argv){
 	textdomain (PACKAGE);
 
 	if(process_arguments(argc,argv)==ERROR)
-		usage(_("Could not parse arguments\n"));
+		usage(_("check_nt: could not parse arguments\n"));
 
 	/* initialize alarm signal handling */
 	signal(SIGALRM,socket_timeout_alarm_handler);
@@ -188,7 +190,7 @@ int main(int argc, char **argv){
 		updays = uptime / 86400; 			
 		uphours = (uptime % 86400) / 3600;
 		upminutes = ((uptime % 86400) % 3600) / 60;
-		asprintf(&output_message,_("System Uptime : %u day(s) %u hour(s) %u minute(s)"),updays,uphours, upminutes);
+		asprintf(&output_message,_("System Uptime - %u day(s) %u hour(s) %u minute(s)"),updays,uphours, upminutes);
 		return_code=STATE_OK;
 		break;
 
@@ -427,9 +429,6 @@ int main(int argc, char **argv){
 
 
 
-
-
-
 /* process command-line arguments */
 int process_arguments(int argc, char **argv){
 	int c;
@@ -557,9 +556,6 @@ int process_arguments(int argc, char **argv){
 
 
 
-
-
-
 void fetch_data (const char *address, int port, const char *sendb) {
 	int result;
 
@@ -603,9 +599,6 @@ void preparelist(char *string) {
 
 
 
-
-
-
 void print_help(void)
 {
 	print_revision(progname,"$Revision$");
@@ -678,7 +671,6 @@ Windows NT/2000/XP server.\n\n"));
    (http://nsclient.ready2run.nl).\n\
  - Critical thresholds should be lower than warning thresholds\n"));
 }
-
 
 
 

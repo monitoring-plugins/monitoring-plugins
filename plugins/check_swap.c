@@ -326,7 +326,6 @@ main (int argc, char **argv)
 
 
 
-
 int
 check_swap (int usp, long unsigned int free_swap)
 {
@@ -344,6 +343,7 @@ check_swap (int usp, long unsigned int free_swap)
 		result = STATE_OK;
 	return result;
 }
+
 
 
 /* process command-line arguments */
@@ -420,7 +420,9 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* error */
-			usage (_("Invalid argument\n"));
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 		}
 	}
 
@@ -450,8 +452,6 @@ process_arguments (int argc, char **argv)
 
 
 
-
-
 int
 validate_arguments (void)
 {
@@ -472,9 +472,6 @@ validate_arguments (void)
 
 
 
-
-
-
 void
 print_help (void)
 {
@@ -511,7 +508,6 @@ On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s.\n"));
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 

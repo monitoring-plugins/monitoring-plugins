@@ -16,6 +16,8 @@
 
  LIMITATION: nslookup on Solaris 7 can return output over 2 lines, which will not 
  be picked up by this plugin
+ 
+ $Id$
 
 ******************************************************************************/
 
@@ -71,7 +73,7 @@ main (int argc, char **argv)
 	}
 
 	if (process_arguments (argc, argv) != OK) {
-		print_usage ();
+		usage (_("check_dns: could not parse arguments\n"));
 		return STATE_UNKNOWN;
 	}
 
@@ -213,6 +215,8 @@ main (int argc, char **argv)
 	return result;
 }
 
+
+
 int
 error_scan (char *input_buffer)
 {
@@ -260,6 +264,8 @@ error_scan (char *input_buffer)
 	return STATE_OK;
 
 }
+
+
 
 /* process command-line arguments */
 int
@@ -320,7 +326,7 @@ process_arguments (int argc, char **argv)
 			/* TODO: this is_host check is probably unnecessary. */
 			/* Better to confirm nslookup response matches */
 			if (is_host (optarg) == FALSE) {
-				printf (_("Invalid server name/address\n\n"));
+				printf (_("Invalid hostname/address\n\n"));
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
@@ -370,6 +376,8 @@ process_arguments (int argc, char **argv)
 	return validate_arguments ();
 }
 
+
+
 int
 validate_arguments ()
 {
@@ -381,9 +389,6 @@ validate_arguments ()
 
 
 
-
-
-
 void
 print_help (void)
 {
@@ -416,7 +421,6 @@ specified in /etc/resolv.conf will be used.\n"));
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 

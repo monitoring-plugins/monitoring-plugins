@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
 ******************************************************************************/
 
 const char *progname = "check_ping";
@@ -60,8 +62,6 @@ char *warn_text;
 
 
 
-
-
 int
 main (int argc, char **argv)
 {
@@ -79,7 +79,7 @@ main (int argc, char **argv)
 	addresses[0] = NULL;
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage (_("Could not parse arguments"));
+		usage (_("check_ping: could not parse arguments\n"));
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
@@ -159,9 +159,6 @@ main (int argc, char **argv)
 
 
 
-
-
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -198,8 +195,9 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':	/* usage */
-			usage3 (_("Unknown argument"), optopt);
-			break;
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 		case 'h':	/* help */
 			print_help ();
 			exit (STATE_OK);
@@ -270,7 +268,7 @@ process_arguments (int argc, char **argv)
 
 	if (addresses[0] == NULL) {
 		if (is_host (argv[c]) == FALSE) {
-			usage2 (_("Invalid host name/address"), argv[c]);
+			usage2 (_("Invalid hostname/address"), argv[c]);
 		} else {
 			addresses[0] = argv[c++];
 			n_addresses++;
@@ -335,6 +333,8 @@ process_arguments (int argc, char **argv)
 	return validate_arguments ();
 }
 
+
+
 int
 get_threshold (char *arg, float *trta, int *tpl)
 {
@@ -348,6 +348,8 @@ get_threshold (char *arg, float *trta, int *tpl)
 	usage2 (_("%s: Warning threshold must be integer or percentage!\n\n"), arg);
 	return STATE_UNKNOWN;
 }
+
+
 
 int
 validate_arguments ()
@@ -389,7 +391,7 @@ validate_arguments ()
 
 	for (i=0; i<n_addresses; i++) {
 		if (is_host(addresses[i]) == FALSE)
-			usage2 (_("Invalid host name/address"), addresses[i]);
+			usage2 (_("Invalid hostname/address"), addresses[i]);
 	}
 
 	return OK;
@@ -397,9 +399,6 @@ validate_arguments ()
 
 
 
-
-
-
 int
 run_ping (const char *cmd, const char *addr)
 {
@@ -444,7 +443,7 @@ run_ping (const char *cmd, const char *addr)
 
 	/* check stderr, setting at least WARNING if there is output here */
 	while (fgets (buf, MAX_INPUT_BUFFER - 1, child_stderr))
-		if (! strstr(buf,"Warning: no SO_TIMESTAMP support, falling back to SIOCGSTAMP"))
+		if (! strstr(buf,"WARNING - no SO_TIMESTAMP support, falling back to SIOCGSTAMP"))
 			result = max_state (STATE_WARNING, error_scan (buf, addr));
 
 	(void) fclose (child_stderr);
@@ -462,17 +461,15 @@ run_ping (const char *cmd, const char *addr)
 
 
 
-
-
 int
 error_scan (char buf[MAX_INPUT_BUFFER], const char *addr)
 {
 	if (strstr (buf, "Network is unreachable"))
-		die (STATE_CRITICAL, _("PING CRITICAL - Network unreachable (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Network unreachable (%s)"), addr);
 	else if (strstr (buf, "Destination Host Unreachable"))
-		die (STATE_CRITICAL, _("PING CRITICAL - Host Unreachable (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Host Unreachable (%s)"), addr);
 	else if (strstr (buf, "unknown host" ))
-		die (STATE_CRITICAL, _("PING CRITICAL - Host not found (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Host not found (%s)"), addr);
 
 	if (strstr (buf, "(DUP!)") || strstr (buf, "DUPLICATES FOUND")) {
 		if (warn_text == NULL)
@@ -488,9 +485,6 @@ error_scan (char buf[MAX_INPUT_BUFFER], const char *addr)
 
 
 
-
-
-
 void
 print_usage (void)
 {
@@ -499,6 +493,8 @@ print_usage (void)
   [-p packets] [-t timeout] [-L] [-4|-6]\n", progname);
 	printf (_(UT_HLP_VRS), progname, progname);
 }
+
+
 
 void
 print_help (void)

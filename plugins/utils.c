@@ -315,9 +315,6 @@ strip (char *buffer)
 }
 
 
-
-
-
 /******************************************************************************
  *
  * Copies one string to another. Any previously existing data in
@@ -340,8 +337,6 @@ strscpy (char *dest, const char *src)
 
 	return dest;
 }
-
-
 
 
 
@@ -414,9 +409,6 @@ strnl (char *str)
 }
 
 
-
-
-
 /******************************************************************************
  *
  * Like strscpy, except only the portion of the source string up to
@@ -453,8 +445,6 @@ strpcpy (char *dest, const char *src, const char *str)
 
 	return dest;
 }
-
-
 
 
 
@@ -497,8 +487,6 @@ strpcat (char *dest, const char *src, const char *str)
 
 	return dest;
 }
-
-
 
 
 /******************************************************************************

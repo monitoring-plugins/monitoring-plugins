@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
 ******************************************************************************/
 
 #include "common.h"
@@ -61,7 +63,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) != OK)
-		usage (_("Incorrect arguments supplied\n"));
+		usage (_("check_time: could not parse arguments\n"));
 
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
@@ -168,9 +170,6 @@ main (int argc, char **argv)
 
 
 
-
-
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -217,7 +216,9 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			usage3 (_("Unknown argument"), optopt);
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
@@ -226,7 +227,7 @@ process_arguments (int argc, char **argv)
 			exit (STATE_OK);
 		case 'H':									/* hostname */
 			if (is_host (optarg) == FALSE)
-				usage2 (_("Invalid host name/address"), optarg);
+				usage2 (_("Invalid hostname/address"), optarg);
 			server_address = optarg;
 			break;
 		case 'w':									/* warning-variance */
@@ -240,11 +241,11 @@ process_arguments (int argc, char **argv)
 					check_warning_time = TRUE;
 				}
 				else {
-					usage (_("Warning thresholds must be a nonnegative integer\n"));
+					usage (_("Warning thresholds must be a positive integer\n"));
 				}
 			}
 			else {
-				usage (_("Warning threshold must be a nonnegative integer\n"));
+				usage (_("Warning threshold must be a positive integer\n"));
 			}
 			break;
 		case 'c':									/* critical-variance */
@@ -259,30 +260,30 @@ process_arguments (int argc, char **argv)
 					check_critical_time = TRUE;
 				}
 				else {
-					usage (_("Critical thresholds must be a nonnegative integer\n"));
+					usage (_("Critical thresholds must be a positive integer\n"));
 				}
 			}
 			else {
-				usage (_("Critical threshold must be a nonnegative integer\n"));
+				usage (_("Critical threshold must be a positive integer\n"));
 			}
 			break;
 		case 'W':									/* warning-connect */
 			if (!is_intnonneg (optarg))
-				usage (_("Warning threshold must be a nonnegative integer\n"));
+				usage (_("Warning threshold must be a positive integer\n"));
 			else
 				warning_time = atoi (optarg);
 			check_warning_time = TRUE;
 			break;
 		case 'C':									/* critical-connect */
 			if (!is_intnonneg (optarg))
-				usage (_("Critical threshold must be a nonnegative integer\n"));
+				usage (_("Critical threshold must be a positive integer\n"));
 			else
 				critical_time = atoi (optarg);
 			check_critical_time = TRUE;
 			break;
 		case 'p':									/* port */
 			if (!is_intnonneg (optarg))
-				usage (_("Server port must be a nonnegative integer\n"));
+				usage (_("Port must be a positive integer\n"));
 			else
 				server_port = atoi (optarg);
 			break;
@@ -301,11 +302,11 @@ process_arguments (int argc, char **argv)
 	if (server_address == NULL) {
 		if (argc > c) {
 			if (is_host (argv[c]) == FALSE)
-				usage2 (_("Invalid host name/address"), optarg);
+				usage2 (_("Invalid hostname/address"), optarg);
 			server_address = argv[c];
 		}
 		else {
-			usage (_("Host name was not supplied\n"));
+			usage (_("Hostname was not supplied\n"));
 		}
 	}
 
@@ -314,9 +315,6 @@ process_arguments (int argc, char **argv)
 
 
 
-
-
-
 void
 print_help (void)
 {
@@ -353,7 +351,6 @@ This plugin will check the time on the specified host.\n\n"));
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 

@@ -16,6 +16,8 @@ int spclose(FILE *);
  * path passed to the exec'd program are esstially empty. (popen create a shell
  * and passes the environment to it).
  *
+ * $Id$
+ *
  ******************************************************************************/
 
 #include "common.h"

@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
  ******************************************************************************/
 
 const char *progname = "check_radius";
@@ -94,6 +96,8 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 -@@
 ******************************************************************************/
 
+
+
 int
 main (int argc, char **argv)
 {
@@ -109,7 +113,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage (_("Could not parse arguments\n"));
+		usage (_("check_radius: could not parse arguments\n"));
 
 	str = strdup ("dictionary");
 	if ((config_file && rc_read_config (config_file)) ||
@@ -199,7 +203,7 @@ process_arguments (int argc, char **argv)
 		if (is_intpos (argv[7]))
 			port = atoi (argv[7]);
 		else
-			usage (_("Server port must be a positive integer"));
+			usage (_("Port must be a positive integer"));
 		expect = argv[8];
 		return OK;
 	}
@@ -227,7 +231,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H':									/* hostname */
 			if (is_host (optarg) == FALSE) {
-				usage2 (_("Invalid host name/address"), optarg);
+				usage2 (_("Invalid hostname/address"), optarg);
 			}
 			server = optarg;
 			break;
@@ -235,7 +239,7 @@ process_arguments (int argc, char **argv)
 			if (is_intnonneg (optarg))
 				port = atoi (optarg);
 			else
-				usage (_("Server port must be a positive integer"));
+				usage (_("Port must be a positive integer"));
 			break;
 		case 'u':									/* username */
 			username = optarg;
@@ -271,9 +275,6 @@ process_arguments (int argc, char **argv)
 
 
 
-
-
-
 void
 print_help (void)
 {
@@ -326,7 +327,6 @@ otherwise compormise could occur.\n"));
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 

@@ -13,6 +13,8 @@
  You should have received a copy of the GNU General Public License
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ 
+ $Id$
 
 ******************************************************************************/
 
@@ -75,7 +77,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage ("failed processing arguments\n");
+		usage (_("check_load: could not parse arguments\n"));
 
 #if HAVE_GETLOADAVG==1
 	result = getloadavg (la, 3);
@@ -227,7 +229,9 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* help */
-			usage (_("Invalid argument\n"));
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 		}
 	}
 

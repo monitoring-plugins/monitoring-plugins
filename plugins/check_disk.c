@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
 *****************************************************************************/
 
 const char *progname = "check_disk";
@@ -133,7 +135,7 @@ int display_mntp = FALSE;
 static struct mount_entry *mount_list;
 
 
-
+
 int
 main (int argc, char **argv)
 {
@@ -162,7 +164,7 @@ main (int argc, char **argv)
 	mount_list = read_filesystem_list (0);
 
 	if (process_arguments (argc, argv) != OK)
-		usage (_("Could not parse arguments\n"));
+		usage (_("check_disk: could not parse arguments\n"));
 
 	for (me = mount_list; me; me = me->me_next) {
 
@@ -240,7 +242,6 @@ main (int argc, char **argv)
 
 
 
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -437,8 +438,9 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* help */
-			usage (_("Unknow argument\n"));
-			break;
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 		}
 	}
 
@@ -479,6 +481,7 @@ process_arguments (int argc, char **argv)
 }
 
 
+
 void
 print_path (const char *mypath) 
 {
@@ -489,6 +492,8 @@ print_path (const char *mypath)
 
 	return;
 }
+
+
 
 int
 validate_arguments (uintmax_t w, uintmax_t c, double wp, double cp, char *mypath)
@@ -523,7 +528,6 @@ INPUT ERROR: C_DF (%lu) should be less than W_DF (%lu) and both should be greate
 
 
 
-
 int
 check_disk (double usp, double free_disk)
 {
@@ -561,8 +565,6 @@ walk_name_list (struct name_list *list, const char *name)
 	}
 	return FALSE;
 }
-
-
 
 
 
@@ -628,7 +630,6 @@ and generates an alert if free space is less than one of the threshold values.")
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 

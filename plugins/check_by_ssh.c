@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
  *****************************************************************************/
  
 const char *progname = "check_by_ssh";
@@ -67,7 +69,7 @@ main (int argc, char **argv)
 
 	/* process arguments */
 	if (process_arguments (argc, argv) == ERROR)
-		usage (_("Could not parse arguments\n"));
+		usage (_("check_by_ssh: could not parse arguments\n"));
 
 
 	/* Set signal handling and alarm timeout */
@@ -214,10 +216,11 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* help */
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'V':									/* version */
-			print_revision (progname, "$Revision$");
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -233,12 +236,12 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H':									/* host */
 			if (!is_host (optarg))
-				usage2 (_("Invalid hostname/adress"), optarg);
+				usage2 (_("Invalid hostname/address"), optarg);
 			hostname = optarg;
 			break;
 		case 'p': /* port number */
 			if (!is_integer (optarg))
-				usage2 (_("port must be a positive integer"), optarg);
+				usage2 (_("Port must be a positive integer"), optarg);
 			asprintf (&comm,"%s -p %s", comm, optarg);
 			break;
 		case 'O':									/* output file */
@@ -292,7 +295,7 @@ process_arguments (int argc, char **argv)
 		if (c <= argc) {
 			die (STATE_UNKNOWN, _("%s: You must provide a host name\n"), progname);
 		} else if (!is_host (argv[c]))
-			die (STATE_UNKNOWN, "%s: %s %s\n", progname, _("Invalid host name"), argv[c]);
+			die (STATE_UNKNOWN, "%s: %s %s\n", progname, _("Invalid hostname/address"), argv[c]);
 		hostname = argv[c++];
 	}
 
@@ -314,8 +317,6 @@ process_arguments (int argc, char **argv)
 
 	return validate_arguments ();
 }
-
-
 
 
 
@@ -405,8 +406,6 @@ $ cat /tmp/foo\n\
 
 	printf (_(UT_SUPPORT));
 }
-
-
 
 
 

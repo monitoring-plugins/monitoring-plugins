@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
 ******************************************************************************/
 
 const char *progname = "check_overcr";
@@ -84,7 +86,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage ("Could not parse arguments\n");
+		usage (_("check_overcr: could not parse arguments\n"));
 
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
@@ -281,8 +283,6 @@ main (int argc, char **argv)
 
 
 
-
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -401,7 +401,9 @@ process_arguments (int argc, char **argv)
 	}
 	return OK;
 }
-
+
+
+
 void
 print_usage (void)
 {
@@ -411,6 +413,8 @@ Usage: %s -H host [-p port] [-v variable] [-w warning] [-c critical]\n\
 	        progname);
 	printf (_(UT_HLP_VRS), progname, progname);
 }
+
+
 
 void
 print_help (void)

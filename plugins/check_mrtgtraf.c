@@ -13,6 +13,8 @@
  You should have received a copy of the GNU General Public License
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ 
+ $Id$
 
 ******************************************************************************/
 
@@ -38,9 +40,6 @@ unsigned long outgoing_warning_threshold = 0L;
 unsigned long outgoing_critical_threshold = 0L;
 
 
-
-
-
 int
 main (int argc, char **argv)
 {
@@ -64,7 +63,7 @@ main (int argc, char **argv)
 	char outgoing_speed_rating[8];
 
 	if (process_arguments (argc, argv) != OK)
-		usage (_("Incorrect arguments supplied\n"));
+		usage (_("check_ldap: could not parse arguments\n"));
 
 	/* open the MRTG log file for reading */
 	fp = fopen (log_file, "r");
@@ -259,7 +258,9 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* help */
-			usage (_("Invalid argument\n"));
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 		}
 	}
 
@@ -314,7 +315,6 @@ validate_arguments (void)
 
 
 
-
 void
 print_help (void)
 {

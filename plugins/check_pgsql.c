@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
  *****************************************************************************/
 
 #define DEFAULT_DB "template1"
@@ -55,7 +57,7 @@ const char *progname = "check_pgsql";
 const char *revision = "$Revision$";
 const char *copyright = "1999-2003";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
-
+
 
 /******************************************************************************
 
@@ -110,8 +112,6 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 <title>Functions</title>
 -@@
 ******************************************************************************/
-
-
 
 
 
@@ -133,7 +133,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage ("Could not parse arguments");
+		usage (_("check_pgsql: could not parse arguments\n"));
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR) {
@@ -151,7 +151,7 @@ main (int argc, char **argv)
 
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus (conn) == CONNECTION_BAD) {
-		printf (_("PGSQL: CRITICAL - no connection to '%s' (%s).\n"),
+		printf (_("CRITICAL - no connection to '%s' (%s).\n"),
 		        dbName,	PQerrorMessage (conn));
 		PQfinish (conn);
 		return STATE_CRITICAL;
@@ -166,13 +166,13 @@ main (int argc, char **argv)
 		status = STATE_OK;
 	}
 	PQfinish (conn);
-	printf (_("PGSQL: %s - database %s (%d sec.)|%s\n"), 
+	printf (_(" %s - database %s (%d sec.)|%s\n"), 
 	        state_text(status), dbName, elapsed_time,
 	        fperfdata("time", elapsed_time, "s",
 	                 (int)twarn, twarn, (int)tcrit, tcrit, TRUE, 0, FALSE,0));
 	return status;
 }
-
+
 
 
 /* process command-line arguments */
@@ -206,8 +206,9 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':     /* usage */
-			usage3 (_("Unknown argument"), optopt);
-			break;
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 		case 'h':     /* help */
 			print_help ();
 			exit (STATE_OK);
@@ -222,25 +223,25 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'c':     /* critical time threshold */
 			if (!is_nonnegative (optarg))
-				usage2 (_("Invalid critical threshold"), optarg);
+				usage2 (_("Critical threshold must be a positive integer"), optarg);
 			else
 				tcrit = strtod (optarg, NULL);
 			break;
 		case 'w':     /* warning time threshold */
 			if (!is_nonnegative (optarg))
-				usage2 (_("Invalid critical threshold"), optarg);
+				usage2 (_("Critical threshold must be a positive integer"), optarg);
 			else
 				twarn = strtod (optarg, NULL);
 			break;
 		case 'H':     /* host */
 			if (!is_host (optarg))
-				usage2 (_("Invalid host name"), optarg);
+				usage2 (_("Invalid hostname/address"), optarg);
 			else
 				pghost = optarg;
 			break;
 		case 'P':     /* port */
 			if (!is_integer (optarg))
-				usage2 (_("Port must be an integer"), optarg);
+				usage2 (_("Port must be a positive integer"), optarg);
 			else
 				pgport = optarg;
 			break;
@@ -287,12 +288,13 @@ first character cannot be a number, however.</para>
 -@@
 ******************************************************************************/
 
+
+
 int
 validate_arguments ()
 {
 	return OK;
 }
-
 
 
 /******************************************************************************
@@ -314,6 +316,8 @@ first character cannot be a number, however.</para>
 </sect3>
 -@@
 ******************************************************************************/
+
+
 
 int
 is_pg_dbname (char *dbname)
@@ -355,6 +359,8 @@ should be added.</para>
 -@@
 ******************************************************************************/
 
+
+
 int
 is_pg_logname (char *username)
 {
@@ -370,8 +376,6 @@ is_pg_logname (char *username)
 </article>
 -@@
 ******************************************************************************/
-
-
 
 
 
@@ -386,7 +390,7 @@ print_help (void)
 
 	printf (_(COPYRIGHT), copyright, email);
 
-	printf (_("Test whether a PostgreSQL DBMS is accepting connections.\n\n"));
+	printf (_("Test whether a PostgreSQL Database is accepting connections.\n\n"));
 
 	print_usage ();
 
@@ -431,7 +435,6 @@ a password, but no effort is made to obsure or encrypt the password.\n"));
 
 
 
-
 void
 print_usage (void)
 {
@@ -444,4 +447,3 @@ Usage:\n %s [-H <host>] [-P <port>] [-c <critical time>] [-w <warning time>]\n\
          %s (-V | --version) for version information\n"),
 					progname, progname);
 }
-

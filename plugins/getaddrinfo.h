@@ -23,7 +23,10 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* Structure and prototypes aken from RFC 2553 */
+/* Structure and prototypes aken from RFC 2553
+ *
+ * $Id$
+ */
 
 struct addrinfo
   {

@@ -2,7 +2,7 @@
  *  check_ide-smart v.1 - hacked version of ide-smart for Nagios
  *  Copyright (C) 2000 Robert Dale <rdale@digital-mission.com>
  *
- *  Net Saint - http://www.nagios.org
+ *  Nagios - http://www.nagios.org
  *
  *  Notes:
  *	   ide-smart has the same functionality as before. Some return
@@ -33,6 +33,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ * $Id$
  */
 	
 #include "common.h"
@@ -137,6 +139,8 @@ enum SmartCommand
 		SMART_CMD_AUTO_OFFLINE 
 	};
 
+
+
 char *
 get_offline_text (int status) 
 {
@@ -146,8 +150,10 @@ get_offline_text (int status)
 			return offline_status_text[i].text;
 		}
 	}
-	return "unknown";
+	return "UNKNOW";
 }
+
+
 
 int
 smart_read_values (int fd, values_t * values) 
@@ -160,12 +166,14 @@ smart_read_values (int fd, values_t * values)
 	args[3] = 1;
 	if (ioctl (fd, HDIO_DRIVE_CMD, &args)) {
 		e = errno;
-		printf (_("CRITICAL: SMART_READ_VALUES: %s\n"), strerror (errno));
+		printf (_("CRITICAL - SMART_READ_VALUES: %s\n"), strerror (errno));
 		return e;
 	}
 	memcpy (values, args + 4, 512);
 	return 0;
 }
+
+
 
 int
 values_not_passed (values_t * p, thresholds_t * t) 
@@ -189,6 +197,8 @@ values_not_passed (values_t * p, thresholds_t * t)
 	}
 	return (passed ? -failed : 2);
 }
+
+
 
 int
 net_saint (values_t * p, thresholds_t * t) 
@@ -225,30 +235,32 @@ net_saint (values_t * p, thresholds_t * t)
 	}
 	switch (status) {
 	case PREFAILURE:
-		printf (_("CRITICAL: %d Harddrive PreFailure%cDetected! %d/%d tests failed.\n"),
+		printf (_("CRITICAL - %d Harddrive PreFailure%cDetected! %d/%d tests failed.\n"),
 		        prefailure,
 		        prefailure > 1 ? 's' : ' ',
 		        failed,
 	          total);
 		break;
 	case ADVISORY:
-		printf (_("WARNING: %d Harddrive Advisor%s Detected. %d/%d tests failed.\n"),
+		printf (_("WARNING - %d Harddrive Advisor%s Detected. %d/%d tests failed.\n"),
 		        advisory,
 		        advisory > 1 ? "ies" : "y",
 		        failed,
 		        total);
 		break;
 	case OPERATIONAL:
-		printf (_("Status: Operational (%d/%d tests passed)\n"), passed, total);
+		printf (_("STATUS - Operational (%d/%d tests passed)\n"), passed, total);
 		break;
 	default:
-		printf (_("Error: Status '%d' uknown. %d/%d tests passed\n"), status,
+		printf (_("ERROR - Status '%d' uknown. %d/%d tests passed\n"), status,
 						passed, total);
 		status = -1;
 		break;
 	}
 	return status;
 }
+
+
 
 void
 print_value (value_t * p, threshold_t * t) 
@@ -258,6 +270,8 @@ print_value (value_t * p, threshold_t * t)
 					p->status & 2 ? "OnLine " : "OffLine", p->value, t->threshold,
 					p->value > t->threshold ? "Passed" : "Failed");
 }
+
+
 
 void
 print_values (values_t * p, thresholds_t * t) 
@@ -291,6 +305,8 @@ print_values (values_t * p, thresholds_t * t)
 		 p->smart_capability & 2 ? "AutoSave" : "");
 }
 
+
+
 void
 print_thresholds (thresholds_t * p) 
 {
@@ -320,11 +336,13 @@ smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0,
 	if (ioctl (fd, HDIO_DRIVE_CMD, &args)) {
 		e = errno;
 		if (show_error) {
-			printf (_("CRITICAL: %s: %s\n"), smart_command[command].text, strerror (errno));
+			printf (_("CRITICAL - %s: %s\n"), smart_command[command].text, strerror (errno));
 		}
 	}
 	return e;
 }
+
+
 
 int
 smart_read_thresholds (int fd, thresholds_t * thresholds) 
@@ -337,12 +355,14 @@ smart_read_thresholds (int fd, thresholds_t * thresholds)
   args[3] = 1;
 	if (ioctl (fd, HDIO_DRIVE_CMD, &args)) {
 		e = errno;
-		printf (_("CRITICAL: SMART_READ_THRESHOLDS: %s\n"), strerror (errno));
+		printf (_("CRITICAL - SMART_READ_THRESHOLDS: %s\n"), strerror (errno));
 		return e;
 	}
 	memcpy (thresholds, args + 4, 512);
 	return 0;
 }
+
+
 
 void
 show_version () 
@@ -351,6 +371,8 @@ show_version ()
 	printf ("Nagios feature - Robert Dale <rdale@digital-mission.com>\n");
 	printf ("(C) 1999 Ragnar Hojland Espinosa <ragnar@lightside.dhis.org>\n");
 }
+
+
 
 void
 show_help () 
@@ -372,6 +394,8 @@ Usage: check_ide-smart [DEVICE] [OPTION]\n\
  -h, --help\n\
  -V, --version\n"));
 }
+
+
 
 int
 main (int argc, char *argv[]) 
@@ -433,8 +457,9 @@ main (int argc, char *argv[])
 			show_version ();
 			return 0;
 		default:
-			printf (_("Try `%s --help' for more information.\n"), argv[0]);
-			return 1;
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 		}
 
 		if (optind < argc) {
@@ -450,12 +475,12 @@ main (int argc, char *argv[])
 		fd = open (device, O_RDONLY);
 
 		if (fd < 0) {
-			printf (_("CRITICAL: Couldn't open device: %s\n"), strerror (errno));
+			printf (_("CRITICAL - Couldn't open device: %s\n"), strerror (errno));
 			return 2;
 		}
 
 		if (smart_cmd_simple (fd, SMART_CMD_ENABLE, 0, TRUE)) {
-			printf (_("CRITICAL: SMART_CMD_ENABLE\n"));
+			printf (_("CRITICAL - SMART_CMD_ENABLE\n"));
 			return 2;
 		}
 
@@ -489,4 +514,3 @@ main (int argc, char *argv[])
 	}
 	return retval;
 }
-	

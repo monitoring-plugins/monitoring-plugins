@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
 ******************************************************************************/
 
 const char *progname = "check_ups";
@@ -90,7 +92,7 @@ main (int argc, char **argv)
 	data = strdup ("");
 
 	if (process_arguments (argc, argv) != OK)
-		usage ("Invalid command arguments supplied\n");
+		usage (_("check_ups: could not parse arguments\n"));
 
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
@@ -287,7 +289,7 @@ determine_status (void)
 
 	if (get_ups_variable ("STATUS", recv_buffer, sizeof (recv_buffer)) !=
 			STATE_OK) {
-		printf ("Invalid response received from hostn");
+		printf ("Invalid response received from host\n");
 		return ERROR;
 	}
 
@@ -419,8 +421,6 @@ get_ups_variable (const char *varname, char *buf, size_t buflen)
 
 
 
-
-
 /* Command line: CHECK_UPS <host_address> [-u ups] [-p port] [-v variable] 
 			   [-wv warn_value] [-cv crit_value] [-to to_sec] */
 
@@ -466,13 +466,15 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* help */
-			usage3 ("Unknown option", optopt);
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 		case 'H':									/* hostname */
 			if (is_host (optarg)) {
 				server_address = optarg;
 			}
 			else {
-				usage2 (_("Invalid host name"), optarg);
+				usage2 (_("Invalid hostname/address"), optarg);
 			}
 			break;
 		case 'u':									/* ups name */
@@ -483,7 +485,7 @@ process_arguments (int argc, char **argv)
 				server_port = atoi (optarg);
 			}
 			else {
-				usage2 ("Server port must be a positive integer", optarg);
+				usage2 ("Port must be a positive integer", optarg);
 			}
 			break;
 		case 'c':									/* critical time threshold */
@@ -492,7 +494,7 @@ process_arguments (int argc, char **argv)
 				check_crit = TRUE;
 			}
 			else {
-				usage2 ("Critical time must be a nonnegative integer", optarg);
+				usage2 ("Critical time must be a positive integer", optarg);
 			}
 			break;
 		case 'w':									/* warning time threshold */
@@ -501,7 +503,7 @@ process_arguments (int argc, char **argv)
 				check_warn = TRUE;
 			}
 			else {
-				usage2 ("Warning time must be a nonnegative integer", optarg);
+				usage2 ("Warning time must be a positive integer", optarg);
 			}
 			break;
 		case 'v':									/* variable */
@@ -521,11 +523,11 @@ process_arguments (int argc, char **argv)
 				socket_timeout = atoi (optarg);
 			}
 			else {
-				usage ("Time interval must be a nonnegative integer\n");
+				usage ("Time interval must be a positive integer\n");
 			}
 			break;
 		case 'V':									/* version */
-			print_revision (progname, "$Revision$");
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -538,7 +540,7 @@ process_arguments (int argc, char **argv)
 		if (is_host (argv[optind]))
 			server_address = argv[optind++];
 		else
-			usage2 (_("Invalid host name"), optarg);
+			usage2 (_("Invalid hostname/address"), optarg);
 	}
 
 	if (server_address == NULL)
@@ -546,8 +548,6 @@ process_arguments (int argc, char **argv)
 
 	return validate_arguments();
 }
-
-
 
 
 
@@ -559,9 +559,6 @@ validate_arguments (void)
 
 
 
-
-
-
 void
 print_help (void)
 {
@@ -614,7 +611,6 @@ http://www.exploits.org/nut\n\n"));
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 

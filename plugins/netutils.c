@@ -27,6 +27,8 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
+* $Id$
+*
 ****************************************************************************/
 
 #include "common.h"
@@ -104,7 +106,7 @@ process_tcp_request2 (const char *server_address, int server_port,
 
 	send_result = send (sd, send_buffer, strlen (send_buffer), 0);
 	if (send_result<0 || (size_t)send_result!=strlen(send_buffer)) {
-		printf ("send() failed\n");
+		printf ("Send failed\n");
 		result = STATE_WARNING;
 	}
 
@@ -313,7 +315,7 @@ send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int
 
 	send_result = send (sd, send_buffer, strlen (send_buffer), 0);
 	if (send_result<0 || (size_t)send_result!=strlen(send_buffer)) {
-		printf ("send() failed\n");
+		printf ("Send failed\n");
 		result = STATE_WARNING;
 	}
 
@@ -337,7 +339,7 @@ send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int
 		if (recv_result == -1) {
 			strcpy (recv_buffer, "");
 			if (proto != IPPROTO_TCP)
-				printf ("recv() failed\n");
+				printf ("Receive failed\n");
 			result = STATE_WARNING;
 		}
 		else

@@ -13,6 +13,8 @@
  You should have received a copy of the GNU General Public License
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ 
+ $Id$
 
 @@-<article>
 
@@ -69,6 +71,8 @@ int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
 
+
+
 int
 main (int argc, char **argv)
 {
@@ -80,7 +84,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage (_("Could not parse arguments\n"));
+		usage (_("negate: could not parse arguments\n"));
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR)
@@ -125,8 +129,6 @@ main (int argc, char **argv)
 	else
 		exit (result);
 }
-
-
 
 /******************************************************************************
 @@-
@@ -145,6 +147,8 @@ is a only a 'timeout' option.</para>
 </sect3>
 -@@
 ******************************************************************************/
+
+
 
 /* process command-line arguments */
 int
@@ -169,7 +173,9 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':     /* help */
-			usage3 (_("Unknown argument"), optopt);
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 			break;
 		case 'h':     /* help */
 			print_help ();
@@ -207,6 +213,8 @@ process_arguments (int argc, char **argv)
 -@@
 ******************************************************************************/
 
+
+
 int
 validate_arguments ()
 {
@@ -225,9 +233,6 @@ validate_arguments ()
 
 
 
-
-
-
 void
 print_help (void)
 {
@@ -262,8 +267,6 @@ Otherwise, the output state of the wrapped plugin is unchanged.\n"));
 
 	printf (_(UT_SUPPORT));
 }
-
-
 
 
 

@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
 ******************************************************************************/
 
 const char *progname = "check_nwstat";
@@ -80,9 +82,6 @@ void print_usage(void);
 
 
 
-
-
-
 int
 main(int argc, char **argv) {
 	int result;
@@ -123,7 +122,7 @@ main(int argc, char **argv) {
 	textdomain (PACKAGE);
 
 	if (process_arguments(argc,argv)==ERROR)
-		usage(_("Could not parse arguments\n"));
+		usage(_("check_nwstat: could not parse arguments\n"));
 
 	/* initialize alarm signal handling */
 	signal(SIGALRM,socket_timeout_alarm_handler);
@@ -609,10 +608,10 @@ main(int argc, char **argv) {
 
 		if (time_sync_status==0) {
 			result=STATE_CRITICAL;
-			asprintf (&output_message,_("Critical: Time not in sync with network!"));
+			asprintf (&output_message,_("CRITICAL - Time not in sync with network!"));
 		}
 		else {
-			asprintf (&output_message,_("OK! Time in sync with network!"));
+			asprintf (&output_message,_("OK - Time in sync with network!"));
 		}
 
 		/* check LRU sitting time in secondss */
@@ -710,7 +709,9 @@ main(int argc, char **argv) {
 
 	return result;
 }
-
+
+
+
 /* process command-line arguments */
 int process_arguments(int argc, char **argv) {
 	int c;
@@ -896,9 +897,6 @@ int process_arguments(int argc, char **argv) {
 
 
 
-
-
-
 void print_help(void)
 {
 	char *myport;
@@ -984,7 +982,6 @@ Notes:\n\
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 

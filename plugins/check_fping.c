@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
 ******************************************************************************/
 
 const char *progname = "check_fping";
@@ -66,7 +68,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage (_("Could not parse arguments\n"));
+		usage (_("check_fping: could not parse arguments\n"));
 
 	server = strscpy (server, server_name);
 
@@ -113,7 +115,6 @@ main (int argc, char **argv)
 
 	return status;
 }
-
 
 
 
@@ -195,7 +196,6 @@ textscan (char *buf)
 
 	return status;
 }
-
 
 
 
@@ -308,8 +308,6 @@ process_arguments (int argc, char **argv)
 
 
 
-
-
 int
 get_threshold (char *arg, char *rv[2])
 {
@@ -352,8 +350,6 @@ get_threshold (char *arg, char *rv[2])
 
 
 
-
-
 void
 print_help (void)
 {
@@ -395,7 +391,6 @@ percentage of packet loss to trigger an alarm state.\n"));
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 

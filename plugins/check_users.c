@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
 *****************************************************************************/
 
 const char *progname = "check_users";
@@ -49,7 +51,7 @@ main (int argc, char **argv)
 	perf = strdup("");
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage (_("Could not parse arguments\n"));
+		usage (_("check_users: could not parse arguments\n"));
 
 	/* run the command */
 	child_process = spopen (WHO_COMMAND);
@@ -112,8 +114,6 @@ main (int argc, char **argv)
 
 
 
-
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -151,13 +151,13 @@ process_arguments (int argc, char **argv)
 			exit (STATE_OK);
 		case 'c':									/* critical */
 			if (!is_intnonneg (optarg))
-				usage (_("Critical threshold must be a nonnegative integer\n"));
+				usage (_("Critical threshold must be a positive integer\n"));
 			else
 				cusers = atoi (optarg);
 			break;
 		case 'w':									/* warning */
 			if (!is_intnonneg (optarg))
-				usage (_("Warning threshold must be a nonnegative integer\n"));
+				usage (_("Warning threshold must be a positive integer\n"));
 			else
 				wusers = atoi (optarg);
 			break;
@@ -167,14 +167,14 @@ process_arguments (int argc, char **argv)
 	c = optind;
 	if (wusers == -1 && argc > c) {
 		if (is_intnonneg (argv[c]) == FALSE)
-			usage (_("Warning threshold must be a nonnegative integer\n"));
+			usage (_("Warning threshold must be a positive integer\n"));
 		else
 			wusers = atoi (argv[c++]);
 	}
 
 	if (cusers == -1 && argc > c) {
 		if (is_intnonneg (argv[c]) == FALSE)
-			usage (_("Warning threshold must be a nonnegative integer\n"));
+			usage (_("Warning threshold must be a positive integer\n"));
 		else
 			cusers = atoi (argv[c]);
 	}
@@ -184,9 +184,6 @@ process_arguments (int argc, char **argv)
 
 
 
-
-
-
 void
 print_help (void)
 {
@@ -211,7 +208,6 @@ system and generates an error if the number exceeds the thresholds specified.\n"
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 

@@ -14,6 +14,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
+* $Id$
 *****************************************************************************/
 
 #include "common.h"
@@ -84,7 +85,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) != OK)
-		usage (_("Incorrect arguments supplied\n"));
+		usage (_("check_hpjd: could not parse arguments\n"));
 
 	/* removed ' 2>1' at end of command 10/27/1999 - EG */
 	/* create the query string */
@@ -285,8 +286,6 @@ main (int argc, char **argv)
 
 
 
-
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -321,7 +320,7 @@ process_arguments (int argc, char **argv)
 				address = strscpy(address, optarg) ;
 			}
 			else {
-				usage2 (_("Invalid host name"), optarg);
+				usage2 (_("Invalid hostname/address"), optarg);
 			}
 			break;
 		case 'C':									/* community */
@@ -334,7 +333,9 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* help */
-			usage (_("Invalid argument\n"));
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 		}
 	}
 
@@ -344,7 +345,7 @@ process_arguments (int argc, char **argv)
 			address = argv[c++];
 		}
 		else {
-			usage2 (_("Invalid host name"), argv[c]);
+			usage2 (_("Invalid hostname/address"), argv[c]);
 		}
 	}
 	
@@ -360,8 +361,6 @@ process_arguments (int argc, char **argv)
 
 
 
-
-
 int
 validate_arguments (void)
 {
@@ -370,9 +369,6 @@ validate_arguments (void)
 
 
 
-
-
-
 void
 print_help (void)
 {
@@ -395,7 +391,6 @@ Net-snmp must be installed on the computer running the plugin.\n\n"));
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 

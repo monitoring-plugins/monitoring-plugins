@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
 *****************************************************************************/
 
 const char *progname = "check_udp";
@@ -50,7 +52,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage ("\n");
+		usage (_("check_udp: could not parse arguments\n"));
 
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
@@ -99,7 +101,6 @@ main (int argc, char **argv)
 
 	return result;
 }
-
 
 
 
@@ -158,19 +159,19 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H':									/* hostname */
 			if (is_host (optarg) == FALSE)
-				usage2 (_("Invalid host name/address"), optarg);
+				usage2 (_("Invalid hostname/address"), optarg);
 			server_address = optarg;
 			break;
 		case 'c':									/* critical */
 			if (!is_intnonneg (optarg))
-				usage (_("Critical threshold must be a nonnegative integer\n"));
+				usage (_("Critical threshold must be a positive integer\n"));
 			else
 				critical_time = atoi (optarg);
 			check_critical_time = TRUE;
 			break;
 		case 'w':									/* warning */
 			if (!is_intnonneg (optarg))
-				usage (_("Warning threshold must be a nonnegative integer\n"));
+				usage (_("Warning threshold must be a positive integer\n"));
 			else
 				warning_time = atoi (optarg);
 			check_warning_time = TRUE;
@@ -183,7 +184,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'p':									/* port */
 			if (!is_intnonneg (optarg))
-				usage (_("Server port must be a nonnegative integer\n"));
+				usage (_("Port must be a positive integer\n"));
 			else
 				server_port = atoi (optarg);
 			break;
@@ -199,7 +200,7 @@ process_arguments (int argc, char **argv)
 	c = optind;
 	if (server_address == NULL && c < argc && argv[c]) {
 		if (is_host (argv[c]) == FALSE)
-			usage2 (_("Invalid host name/address"), optarg);
+			usage2 (_("Invalid hostname/address"), optarg);
 		server_address = argv[c++];
 	}
 
@@ -214,9 +215,6 @@ process_arguments (int argc, char **argv)
 
 
 
-
-
-
 void
 print_help (void)
 {

@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
 ******************************************************************************/
 
 const char *progname = "check_smtp";
@@ -69,9 +71,6 @@ int verbose = 0;
 
 
 
-
-
-
 int
 main (int argc, char **argv)
 {
@@ -90,7 +89,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) != OK)
-		usage (_("Incorrect arguments supplied\n"));
+		usage (_("check_smtp: could not parse arguments\n"));
 
 	/* initialize the HELO command with the localhostname */
 #ifndef HOST_MAX_BYTES
@@ -238,9 +237,6 @@ main (int argc, char **argv)
 
 
 
-
-
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -292,14 +288,14 @@ process_arguments (int argc, char **argv)
 				server_address = optarg;
 			}
 			else {
-				usage2 (_("Invalid host name"), optarg);
+				usage2 (_("Invalid hostname/address"), optarg);
 			}
 			break;
 		case 'p':									/* port */
 			if (is_intpos (optarg))
 				server_port = atoi (optarg);
 			else
-				usage (_("Server port must be a positive integer\n"));
+				usage (_("Port must be a positive integer\n"));
 			break;
 		case 'f':									/* from argument */
 			from_arg = optarg;
@@ -334,7 +330,7 @@ process_arguments (int argc, char **argv)
 				check_critical_time = TRUE;
 			}
 			else {
-				usage (_("Critical time must be a nonnegative integer\n"));
+				usage (_("Critical time must be a positive integer\n"));
 			}
 			break;
 		case 'w':									/* warning time threshold */
@@ -343,7 +339,7 @@ process_arguments (int argc, char **argv)
 				check_warning_time = TRUE;
 			}
 			else {
-				usage (_("Warning time must be a nonnegative integer\n"));
+				usage (_("Warning time must be a positive integer\n"));
 			}
 			break;
 		case 'v':									/* verbose */
@@ -354,7 +350,7 @@ process_arguments (int argc, char **argv)
 				socket_timeout = atoi (optarg);
 			}
 			else {
-				usage (_("Time interval must be a nonnegative integer\n"));
+				usage (_("Time interval must be a positive integer\n"));
 			}
 			break;
 		case '4':
@@ -374,7 +370,9 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* help */
-			usage (_("Invalid argument\n"));
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 		}
 	}
 
@@ -384,7 +382,7 @@ process_arguments (int argc, char **argv)
 			if (is_host (argv[c]))
 				server_address = argv[c];
 			else
-				usage2 (_("Invalid host name"), argv[c]);
+				usage2 (_("Invalid hostname/address"), argv[c]);
 		}
 		else {
 			asprintf (&server_address, "127.0.0.1");
@@ -405,8 +403,6 @@ process_arguments (int argc, char **argv)
 
 
 
-
-
 int
 validate_arguments (void)
 {
@@ -415,9 +411,6 @@ validate_arguments (void)
 
 
 
-
-
-
 void
 print_help (void)
 {
@@ -470,8 +463,6 @@ STATE_WARNING return values.\n"));
 
 
 
-
-
 void
 print_usage (void)
 {
@@ -480,6 +471,3 @@ Usage: %s -H host [-p port] [-e expect] [-C command] [-f from addr]\n\
   [-w warn] [-c crit] [-t timeout] [-n] [-v] [-4|-6]\n", progname);
 	printf (_(UT_HLP_VRS), progname, progname);
 }
-
- 
-

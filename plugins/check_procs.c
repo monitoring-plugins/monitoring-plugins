@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
 ******************************************************************************/
 
 const char *progname = "check_procs";
@@ -73,9 +75,6 @@ char tmp[MAX_INPUT_BUFFER];
 
 
 
-
-
-
 int
 main (int argc, char **argv)
 {
@@ -117,8 +116,7 @@ main (int argc, char **argv)
 	metric = METRIC_PROCS;
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage (_("Unable to parse command line\n"));
-
+		usage (_("check_procs: could not parse arguments\n"));
 
 	/* Set signal handling and alarm timeout */
 	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
@@ -126,7 +124,6 @@ main (int argc, char **argv)
 		return STATE_UNKNOWN;
 	}
 	alarm (timeout_interval);
-
 
 	if (verbose >= 2)
 		printf (_("CMD: %s\n"), PS_COMMAND);
@@ -296,9 +293,6 @@ main (int argc, char **argv)
 
 
 
-
-
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -338,6 +332,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* help */
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
@@ -495,7 +490,6 @@ process_arguments (int argc, char **argv)
 
 
 
-
 int
 validate_arguments ()
 {
@@ -543,9 +537,6 @@ validate_arguments ()
 
 
 
-
-
-
 /* Check thresholds against value */
 int
 check_thresholds (int value)
@@ -580,9 +571,6 @@ check_thresholds (int value)
 
 
 
-
-
-
 void
 print_help (void)
 {
@@ -671,6 +659,8 @@ Examples:\n\
 	printf (_(UT_SUPPORT));
 }
 
+
+
 void
 print_usage (void)
 {
@@ -680,4 +670,5 @@ Usage: %s -w <range> -c <range> [-m metric] [-s state] [-p ppid]\n\
   [-C command] [-t timeout] [-v]\n", progname);	
 	printf (_(UT_HLP_VRS), progname, progname);
 }
+
 

@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
 ******************************************************************************/
 
 const char *progname = "check_ldap";
@@ -242,8 +244,9 @@ process_arguments (int argc, char **argv)
 #endif
 			break;
 		default:
-			usage (_("check_ldap: could not parse unknown arguments\n"));
-			break;
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 		}
 	}
 
@@ -274,7 +277,6 @@ validate_arguments ()
 
 
 
-
 void
 print_help (void)
 {

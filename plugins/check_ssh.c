@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
 ******************************************************************************/
 
 #include "common.h"
@@ -44,6 +46,8 @@ void print_usage (void);
 
 int ssh_connect (char *haddr, int hport, char *remote_version);
 
+
+
 int
 main (int argc, char **argv)
 {
@@ -54,7 +58,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage (_("Could not parse arguments\n"));
+		usage (_("check_ssh: could not parse arguments\n"));
 
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
@@ -67,6 +71,7 @@ main (int argc, char **argv)
 
 	return (result);
 }
+
 
 
 /* process command-line arguments */
@@ -104,8 +109,9 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* help */
-			usage (_("Unknow argument\n"));
-			break;
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 		case 'V':									/* version */
 			print_revision (progname, revision);
 			exit (STATE_OK);
@@ -188,6 +194,7 @@ validate_arguments (void)
 *
 *-----------------------------------------------------------------------*/
 
+
 int
 ssh_connect (char *haddr, int hport, char *remote_version)
 {
@@ -240,6 +247,8 @@ ssh_connect (char *haddr, int hport, char *remote_version)
 	}
 }
 
+
+
 void
 print_help (void)
 {
@@ -271,6 +280,8 @@ print_help (void)
 
 	printf (_(UT_SUPPORT));
 }
+
+
 
 void
 print_usage (void)

@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
 *****************************************************************************/
 
 #include "common.h"
@@ -128,7 +130,6 @@ main (int argc, char **argv)
 		        	asprintf (&output, _("Server not found in ANSWER SECTION"));
 	                        result = STATE_WARNING;
                         }
-
 		}
 
 	}
@@ -181,8 +182,6 @@ main (int argc, char **argv)
 
 
 
-
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -215,7 +214,9 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* help */
-			usage3 (_("Unknown argument"), optopt);
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
@@ -227,7 +228,7 @@ process_arguments (int argc, char **argv)
 				dns_server = optarg;
 			}
 			else {
-				usage2 (_("Invalid hostname/adress"), optarg);
+				usage2 (_("Invalid hostname/address"), optarg);
 			}
 			break;
 		case 'p':                 /* server port */
@@ -235,7 +236,7 @@ process_arguments (int argc, char **argv)
 				server_port = atoi (optarg);
 			}
 			else {
-				usage2 (_("port must be a positive integer"), optarg);
+				usage2 (_("Port must be a positive integer"), optarg);
 			}
 			break;
 		case 'l':									/* address to lookup */
@@ -284,7 +285,7 @@ process_arguments (int argc, char **argv)
 				dns_server = argv[c];
 			}
 			else {
-				usage2 (_("Invalid hostname/adress"), argv[c]);
+				usage2 (_("Invalid hostname/address"), argv[c]);
 			}
 		}
 		else {
@@ -297,16 +298,11 @@ process_arguments (int argc, char **argv)
 
 
 
-
-
 int
 validate_arguments (void)
 {
 	return OK;
 }
-
-
-
 
 
 
@@ -351,7 +347,6 @@ print_help (void)
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 

@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
 ******************************************************************************/
 
 const char *progname = "check_real";
@@ -50,9 +52,6 @@ int verbose = FALSE;
 
 
 
-
-
-
 int
 main (int argc, char **argv)
 {
@@ -66,7 +65,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) != OK)
-		usage (_("Incorrect arguments supplied\n"));
+		usage (_("check_real: could not parse arguments\n"));
 
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
@@ -251,9 +250,6 @@ main (int argc, char **argv)
 
 
 
-
-
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -303,7 +299,7 @@ process_arguments (int argc, char **argv)
 			else if (is_host (optarg))
 				server_address = optarg;
 			else
-				usage2 (_("Invalid host name"), optarg);
+				usage2 (_("Invalid hostname/address"), optarg);
 			break;
 		case 'e':									/* string to expect in response header */
 			server_expect = optarg;
@@ -316,7 +312,7 @@ process_arguments (int argc, char **argv)
 				server_port = atoi (optarg);
 			}
 			else {
-				usage (_("Server port must be a positive integer\n"));
+				usage (_("Port must be a positive integer\n"));
 			}
 			break;
 		case 'w':									/* warning time threshold */
@@ -325,7 +321,7 @@ process_arguments (int argc, char **argv)
 				check_warning_time = TRUE;
 			}
 			else {
-				usage (_("Warning time must be a nonnegative integer\n"));
+				usage (_("Warning time must be a positive integer\n"));
 			}
 			break;
 		case 'c':									/* critical time threshold */
@@ -355,7 +351,9 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* usage */
-			usage (_("Invalid argument\n"));
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 		}
 	}
 
@@ -365,7 +363,7 @@ process_arguments (int argc, char **argv)
 			server_address = argv[c++];
 		}
 		else {
-			usage2 (_("Invalid host name"), argv[c]);
+			usage2 (_("Invalid hostname/address"), argv[c]);
 		}
 	}
 
@@ -383,8 +381,6 @@ process_arguments (int argc, char **argv)
 
 
 
-
-
 int
 validate_arguments (void)
 {
@@ -393,8 +389,6 @@ validate_arguments (void)
 
 
 
-
-
 void
 print_help (void)
 {
@@ -436,8 +430,6 @@ values."));
 
 	printf (_(UT_SUPPORT));
 }
-
-
 
 
 

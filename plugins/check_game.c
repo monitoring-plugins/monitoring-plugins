@@ -14,6 +14,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
+* $Id$
 *****************************************************************************/
 
 const char *progname = "check_game";
@@ -64,9 +65,12 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
-	result = process_arguments (argc, argv);
+//	result = process_arguments (argc, argv);
+	
+	if (process_arguments (argc, argv) == ERROR)
+		usage (_("check_game: could not parse arguments\n"));
 
-	if (result != OK) {
+/*	if (result != OK) {
 		printf (_("Incorrect arguments supplied\n"));
 		printf ("\n");
 		print_revision (progname, revision);
@@ -75,6 +79,7 @@ main (int argc, char **argv)
 		printf ("\n");
 		return STATE_UNKNOWN;
 	}
+*/
 
 	result = STATE_OK;
 
@@ -302,7 +307,6 @@ validate_arguments (void)
 
 
 
-
 void
 print_help (void)
 {

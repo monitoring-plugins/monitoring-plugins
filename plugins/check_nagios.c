@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
 ******************************************************************************/
 
 const char *progname = "check_nagios";
@@ -64,7 +66,7 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage (_("Could not parse arguments\n"));
+		usage (_("check_nagios: could not parse arguments\n"));
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR) {
@@ -78,7 +80,7 @@ main (int argc, char **argv)
 	/* open the status log */
 	fp = fopen (status_log, "r");
 	if (fp == NULL) {
-		printf (_("Error: Cannot open status log for reading!\n"));
+		printf (_("ERROR - Cannot open status log for reading!\n"));
 		return STATE_CRITICAL;
 	}
 
@@ -178,8 +180,6 @@ main (int argc, char **argv)
 
 
 
-
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -264,9 +264,6 @@ process_arguments (int argc, char **argv)
 
 
 
-
-
-
 void
 print_help (void)
 {
@@ -299,7 +296,6 @@ Example:\n\
    -F /usr/local/nagios/var/status.log \\\
    -C /usr/local/nagios/bin/nagios\n"));
 }
-
 
 
 

@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
 *****************************************************************************/
 
 /* progname "check_tcp" changes depending on symlink called */
@@ -100,9 +102,6 @@ char *buffer;
 
 
 
-
-
-
 int
 main (int argc, char **argv)
 {
@@ -241,7 +240,7 @@ main (int argc, char **argv)
 	status = strdup ("");
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage (_("Could not parse arguments\n"));
+		usage (_("check_tcp: could not parse arguments\n"));
 
 	/* use default expect if none listed in process_arguments() */
 	if (EXPECT && server_expect_count == 0) {
@@ -389,7 +388,6 @@ main (int argc, char **argv)
 
 	return result;
 }
-
 
 
 
@@ -481,12 +479,12 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H':                 /* hostname */
 			if (is_host (optarg) == FALSE)
-				usage2 (_("invalid host name or address"), optarg);
+				usage2 (_("invalid hostname/address"), optarg);
 			server_address = optarg;
 			break;
 		case 'c':                 /* critical */
 			if (!is_intnonneg (optarg))
-				usage (_("Critical threshold must be a nonnegative integer\n"));
+				usage (_("Critical threshold must be a positive integer\n"));
 			else
 				critical_time = strtod (optarg, NULL);
 			check_critical_time = TRUE;
@@ -496,7 +494,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'w':                 /* warning */
 			if (!is_intnonneg (optarg))
-				usage (_("Warning threshold must be a nonnegative integer\n"));
+				usage (_("Warning threshold must be a positive integer\n"));
 			else
 				warning_time = strtod (optarg, NULL);
 			check_warning_time = TRUE;
@@ -517,7 +515,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'p':                 /* port */
 			if (!is_intpos (optarg))
-				usage (_("Server port must be a positive integer\n"));
+				usage (_("Port must be a positive integer\n"));
 			else
 				server_port = atoi (optarg);
 			break;
@@ -548,7 +546,7 @@ process_arguments (int argc, char **argv)
 			else if (!strncmp(optarg,"crit",4))
 				econn_refuse_state = STATE_CRITICAL;
 			else
-				usage (_("Refuse mut be one of ok, warn, crit\n"));
+				usage (_("Refuse must be one of ok, warn, crit\n"));
 			break;
 		case 'd':
 			if (is_intpos (optarg))
@@ -578,7 +576,8 @@ process_arguments (int argc, char **argv)
 
 	return OK;
 }
-
+
+
 
 #ifdef HAVE_SSL
 int
@@ -633,6 +632,8 @@ connect_SSL (void)
   return STATE_CRITICAL;
 }
 #endif
+
+
 
 #ifdef HAVE_SSL
 int
@@ -710,6 +711,8 @@ check_certificate (X509 ** certificate)
 }
 #endif
 
+
+
 int
 my_recv (void)
 {
@@ -731,9 +734,6 @@ my_recv (void)
 
 
 
-
-
-
 void
 print_help (void)
 {
@@ -787,7 +787,6 @@ print_help (void)
 
 	printf (_(UT_SUPPORT));
 }
-
 
 
 

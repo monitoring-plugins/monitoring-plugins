@@ -14,6 +14,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ $Id$
+ 
 ******************************************************************************/
 /* splint -I. -I../../plugins -I../../lib/ -I/usr/kerberos/include/ ../../plugins/check_http.c */
 
@@ -188,7 +190,7 @@ main (int argc, char **argv)
 #endif
 	return result;
 }
-
+
 
 
 /* process command-line arguments */
@@ -249,7 +251,9 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?': /* usage */
-			usage3 (_("unknown argument"), optopt);
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 			break;
 		case 'h': /* help */
 			print_help ();
@@ -267,7 +271,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'c': /* critical time threshold */
 			if (!is_nonnegative (optarg))
-				usage2 (_("invalid critical threshold"), optarg);
+				usage2 (_("Critical threshold must be integer"), optarg);
 			else {
 				critical_time = strtod (optarg, NULL);
 				check_critical_time = TRUE;
@@ -275,7 +279,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'w': /* warning time threshold */
 			if (!is_nonnegative (optarg))
-				usage2 (_("invalid warning threshold"), optarg);
+				usage2 (_("Warning threshold must be integer"), optarg);
 			else {
 				warning_time = strtod (optarg, NULL);
 				check_warning_time = TRUE;
@@ -304,13 +308,13 @@ process_arguments (int argc, char **argv)
 		case 'C': /* Check SSL cert validity */
 #ifdef HAVE_SSL
 			if (!is_intnonneg (optarg))
-				usage2 (_("invalid certificate expiration period"), optarg);
+				usage2 (_("Invalid certificate expiration period"), optarg);
 			else {
 				days_till_exp = atoi (optarg);
 				check_cert = TRUE;
 			}
 #else
-			usage (_("check_http: invalid option - SSL is not available\n"));
+			usage (_("Invalid option - SSL is not available\n"));
 #endif
 			break;
 		case 'f': /* onredirect */
@@ -455,7 +459,7 @@ process_arguments (int argc, char **argv)
 
 	return TRUE;
 }
-
+
 
 
 /* written by lauri alanko */
@@ -498,8 +502,6 @@ base64 (const char *bin, size_t len)
 	buf[i] = '\0';
 	return buf;
 }
-
-
 
 
 
@@ -611,6 +613,7 @@ parse_time_string (const char *string)
 		return 0;
 	}
 }
+
 
 
 static void
@@ -818,12 +821,12 @@ check_http (void)
 			if ( sslerr == SSL_ERROR_SSL ) {
 				die (STATE_WARNING, _("Client Certificate Required\n"));
 			} else {
-				die (STATE_CRITICAL, _("Error in recv()\n"));
+				die (STATE_CRITICAL, _("Error on receive\n"));
 			}
 		}
 		else {
 #endif
-			die (STATE_CRITICAL, _("Error in recv()\n"));
+			die (STATE_CRITICAL, _("Error on receive\n"));
 #ifdef HAVE_SSL
 		}
 #endif
@@ -950,7 +953,7 @@ check_http (void)
 	microsec = deltime (tv);
 	elapsed_time = (double)microsec / 1.0e6;
 	asprintf (&msg,
-	          _("HTTP problem: %s - %.3f second response time %s%s|%s %s\n"),
+	          _("HTTP WARNING: %s - %.3f second response time %s%s|%s %s\n"),
 	          status_line, elapsed_time, timestamp,
 	          (display_html ? "</A>" : ""),
 						perfd_time (elapsed_time), perfd_size (pagesize));
@@ -1018,7 +1021,6 @@ check_http (void)
 	die (STATE_OK, "%s", msg);
 	return STATE_UNKNOWN;
 }
-
 
 
 
@@ -1223,6 +1225,8 @@ int connect_SSL (void)
 }
 #endif
 
+
+
 #ifdef HAVE_SSL
 int
 check_certificate (X509 ** certificate)
@@ -1298,7 +1302,7 @@ check_certificate (X509 ** certificate)
 	return STATE_OK;
 }
 #endif
-
+
 
 
 char *perfd_time (double elapsed_time)
@@ -1310,6 +1314,7 @@ char *perfd_time (double elapsed_time)
 }
 
 
+
 char *perfd_size (int page_len)
 {
 	return perfdata ("size", page_len, "B",
@@ -1317,6 +1322,7 @@ char *perfd_size (int page_len)
 	          (min_page_len>0?TRUE:FALSE), 0,
 	          TRUE, 0, FALSE, 0);
 }
+
 
 
 int
@@ -1335,6 +1341,7 @@ my_recv (void)
 #endif
 	return i;
 }
+
 
 
 int
@@ -1357,9 +1364,6 @@ my_close (void)
 
 
 
-
-
-
 void
 print_help (void)
 {
@@ -1480,7 +1484,6 @@ the certificate is expired.\n"));
 	printf (_(UT_SUPPORT));
 
 }
-
 
 
 
