@@ -128,11 +128,12 @@ libsnprintf.a: snprintf.o
 all-local: $(check_tcp_programs)
 
 $(check_tcp_programs): check_tcp
-	ln -s -f check_tcp $@
+	rm -f $@
+	ln -s check_tcp $@
 
 install-exec-hook:
 	cd $(DESTDIR)$(libexecdir) && \
-	for i in $(check_tcp_programs) ; do rm -f $$i; ln -s -f check_tcp $$i ; done
+	for i in $(check_tcp_programs) ; do rm -f $$i; ln -s check_tcp $$i ; done
 
 clean-local:
 	rm -f $(check_tcp_programs)
