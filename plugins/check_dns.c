@@ -324,9 +324,7 @@ process_arguments (int argc, char **argv)
 			/* TODO: this is_host check is probably unnecessary. */
 			/* Better to confirm nslookup response matches */
 			if (is_host (optarg) == FALSE) {
-				printf (_("Invalid hostname/address\n\n"));
-				print_usage ();
-				exit (STATE_UNKNOWN);
+				usage2 (_("Invalid hostname/address"), optarg);
 			}
 			if (strlen (optarg) >= ADDRESS_LENGTH)
 				die (STATE_UNKNOWN, _("Input buffer overflow\n"));

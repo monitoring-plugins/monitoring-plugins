@@ -338,8 +338,8 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
-	printf (_("Copyright (c) 1999 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 1999 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n");
+	printf (COPYRIGHT, copyright, email);
 
 	printf (_("This plugin uses SSH to execute commands on a remote host\n\n"));
 
