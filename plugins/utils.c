@@ -65,6 +65,8 @@ char *strpcat (char *dest, const char *src, const char *str);
  * Note that numerically the above does not hold
  ****************************************************************************/
 
+#define max(a,b) (((a)>(b))?(a):(b))
+
 int
 max_state (int a, int b)
 {
