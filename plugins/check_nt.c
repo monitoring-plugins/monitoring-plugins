@@ -608,11 +608,15 @@ void preparelist(char *string) {
 void print_help(void)
 {
 	print_revision(progname,revision);
-	printf (_("\
-Copyright (c) 2000 Yves Rubin (rubiyz@yahoo.com)\n\n\
-This plugin collects data from the NSClient service running on a\n\
-Windows NT/2000/XP server.\n\n"));
+	
+	printf (_("Copyright (c) 2000 Yves Rubin (rubiyz@yahoo.com)\n"));
+	printf (COPYRIGHT, copyright, email);
+	
+	printf (_("This plugin collects data from the NSClient service running on a\n\
+Windows NT/2000/XP/2003 server.\n\n"));
+
 	print_usage();
+	
   printf (_("\nOptions:\n\
 -H, --hostname=HOST\n\
   Name of the host to check\n\
@@ -629,8 +633,8 @@ Windows NT/2000/XP server.\n\n"));
 -h, --help\n\
   Print this help screen\n\
 -V, --version\n\
-  Print version information\n"),
-	        PORT, DEFAULT_SOCKET_TIMEOUT);
+  Print version information\n"), PORT, DEFAULT_SOCKET_TIMEOUT);
+	
   printf (_("\
 -v, --variable=STRING\n\
   Variable to check.  Valid variables are:\n"));
@@ -684,5 +688,5 @@ void print_usage(void)
 {
 	printf("\
 Usage: %s -H host -v variable [-p port] [-w warning] [-c critical]\n\
-          [-l params] [-d SHOWALL] [-t timeout]\n", progname);
+                  [-l params] [-d SHOWALL] [-t timeout]\n", progname);
 }

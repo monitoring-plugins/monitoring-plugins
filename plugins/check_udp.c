@@ -264,5 +264,5 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -H <host_address> [-p port] [-w warn_time] [-c crit_time]\n\
-          [-e expect] [-s send] [-t to_sec] [-v]\n", progname);
+                  [-e expect] [-s send] [-t to_sec] [-v]\n", progname);
 }

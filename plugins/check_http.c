@@ -21,7 +21,7 @@
 
 const char *progname = "check_http";
 const char *revision = "$Revision$";
-const char *copyright = "1999-2001";
+const char *copyright = "1999-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -1376,7 +1376,7 @@ print_help (void)
 This plugin tests the HTTP service on the specified host. It can test\n\
 normal (http) and secure (https) servers, follow redirects, search for\n\
 strings and regular expressions, check connection times, and report on\n\
-certificate expiration times.\n"));
+certificate expiration times.\n\n"));
 
 	print_usage ();
 
@@ -1492,9 +1492,9 @@ print_usage (void)
 {
 	printf (_("\
 Usage: %s -H <vhost> | -I <IP-address>) [-u <uri>] [-p <port>]\n\
-          [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L]\n\
-          [-a auth] [-f <ok | warn | critcal | follow>] [-e <expect>]\n\
-          [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n\
-          [-P string] [-m min_pg_size] [-4|-6] [-N] [-M <age>] [-A string]\n\
-          [-k string]\n"), progname);
+                  [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L]\n\
+                  [-a auth] [-f <ok | warn | critcal | follow>] [-e <expect>]\n\
+                  [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n\
+                  [-P string] [-m min_pg_size] [-4|-6] [-N] [-M <age>]\n\
+									[-A string] [-k string]\n"), progname);
 }

@@ -739,8 +739,8 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
-	printf (_("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n"));
-	printf (_(COPYRIGHT), copyright, email);
+	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n"));
+	printf (COPYRIGHT, copyright, email);
 
 	printf (_("This plugin tests %s connections with the specified host.\n\n"),
 	        SERVICE);
@@ -795,8 +795,8 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -H host -p port [-w <warning time>] [-c <critical time>]\n\
-          [-s <send string>] [-e <expect string>] [-q <quit string>]\n\
-          [-m <maximum bytes>] [-d <delay>] [-t <timeout seconds>]\n\
-          [-r <refuse state>] [-v] [-4|-6] [-j] [-D <days to cert expiry>]\n\
-          [-S <use SSL>]\n", progname);
+                  [-s <send string>] [-e <expect string>] [-q <quit string>]\n\
+                  [-m <maximum bytes>] [-d <delay>] [-t <timeout seconds>]\n\
+                  [-r <refuse state>] [-v] [-4|-6] [-j] [-D <days to cert expiry>]\n\
+                  [-S <use SSL>]\n", progname);
 }

@@ -398,6 +398,5 @@ Net-snmp must be installed on the computer running the plugin.\n\n"));
 void
 print_usage (void)
 {
-	printf (_("\
-Usage: %s -H host [-C community]\n"), progname);
+	printf ("Usage: %s -H host [-C community]\n"), progname);
 }

@@ -321,6 +321,14 @@ print_help (void)
 	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf (COPYRIGHT, copyright, email);
 
+	printf (_("\n\
+This plugin will check the incoming/outgoing transfer rates of a router,\n\
+switch, etc recorded in an MRTG log.  If the newest log entry is older\n\
+than <expire_minutes>, a WARNING status is returned. If either the\n\
+incoming or outgoing rates exceed the <icl> or <ocl> thresholds (in\n\
+Bytes/sec), a CRITICAL status results.  If either of the rates exceed\n\
+the <iwl> or <owl> thresholds (in Bytes/sec), a WARNING status results.\n\n"));
+
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
@@ -336,14 +344,6 @@ print_help (void)
    Warning threshold pair \"<incoming>,<outgoing>\"\n\
  -c, --critical\n\
    Critical threshold pair \"<incoming>,<outgoing>\"\n"));
-
-	printf (_("\n\
-This plugin will check the incoming/outgoing transfer rates of a router,\n\
-switch, etc recorded in an MRTG log.  If the newest log entry is older\n\
-than <expire_minutes>, a WARNING status is returned. If either the\n\
-incoming or outgoing rates exceed the <icl> or <ocl> thresholds (in\n\
-Bytes/sec), a CRITICAL status results.  If either of the rates exceed\n\
-the <iwl> or <owl> thresholds (in Bytes/sec), a WARNING status results.\n\n"));
 
 	printf (_("Notes:\n\
 - MRTG stands for Multi Router Traffic Grapher. It can be downloaded from\n\
@@ -363,6 +363,6 @@ void
 print_usage (void)
 {
 	printf ("\
-Usage: %s -F <log_file> -a <AVG | MAX> -v <variable> -w <warning_pair> -c <critical_pair>\n\
-          [-e expire_minutes] [-t timeout] [-v]\n", progname);
+Usage: %s -F <log_file> -a <AVG | MAX> -v <variable> -w <warning_pair>\n\
+                      -c <critical_pair> [-e expire_minutes] [-t timeout] [-v]\n", progname);
 }

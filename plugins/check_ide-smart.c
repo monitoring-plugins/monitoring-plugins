@@ -146,6 +146,125 @@ enum SmartCommand
 	};
 
 
+int
+main (int argc, char *argv[]) 
+{
+	char *device = NULL;
+	int command = -1;
+	int o, longindex;
+	int retval = 0;
+
+	thresholds_t thresholds;
+	values_t values;
+	int fd;
+
+	static struct option longopts[] = { 
+		{"device", required_argument, 0, 'd'}, 
+		{"immediate", no_argument, 0, 'i'}, 
+		{"quiet-check", no_argument, 0, 'q'}, 
+		{"auto-on", no_argument, 0, '1'}, 
+		{"auto-off", no_argument, 0, '0'}, 
+		{"net-saint", no_argument, 0, 'n'}, 
+		{"help", no_argument, 0, 'h'}, 
+		{"version", no_argument, 0, 'V'}, {0, 0, 0, 0} 
+	};
+
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
+	while (1) {
+		
+		o = getopt_long (argc, argv, "+d:iq10nhV", longopts, &longindex);
+		
+		if (o == -1 || o == EOF)
+			break;
+
+		switch (o) {
+		case 'd':
+			device = optarg;
+			break;
+		case 'q':
+			command = 3;
+			break;
+		case 'i':
+			command = 2;
+			break;
+		case '1':
+			command = 1;
+			break;
+		case '0':
+			command = 0;
+			break;
+		case 'n':
+			command = 4;
+			break;
+		case 'h':
+			print_help ();
+			return STATE_OK;
+		case 'V':
+			print_revision (progname, revision);
+			return STATE_OK;
+		default:
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
+		}
+
+		if (optind < argc) {
+			device = argv[optind];
+		}
+
+		if (!device) {
+			show_help ();
+			show_version ();
+			return -1;
+		}
+
+		fd = open (device, O_RDONLY);
+
+		if (fd < 0) {
+			printf (_("CRITICAL - Couldn't open device: %s\n"), strerror (errno));
+			return 2;
+		}
+
+		if (smart_cmd_simple (fd, SMART_CMD_ENABLE, 0, TRUE)) {
+			printf (_("CRITICAL - SMART_CMD_ENABLE\n"));
+			return 2;
+		}
+
+		switch (command) {
+		case 0:
+			retval = smart_cmd_simple (fd, SMART_CMD_AUTO_OFFLINE, 0, TRUE);
+			break;
+		case 1:
+			retval = smart_cmd_simple (fd, SMART_CMD_AUTO_OFFLINE, 0xF8, TRUE);
+			break;
+		case 2:
+			retval = smart_cmd_simple (fd, SMART_CMD_IMMEDIATE_OFFLINE, 0, TRUE);
+			break;
+		case 3:
+			smart_read_values (fd, &values);
+			smart_read_thresholds (fd, &thresholds);
+			retval = values_not_passed (&values, &thresholds);
+			break;
+		case 4:
+			smart_read_values (fd, &values);
+			smart_read_thresholds (fd, &thresholds);
+			retval = net_saint (&values, &thresholds);
+			break;
+		default:
+			smart_read_values (fd, &values);
+			smart_read_thresholds (fd, &thresholds);
+			print_values (&values, &thresholds);
+			break;
+		}
+		close (fd);
+	}
+	return retval;
+}
+
+
 
 char *
 get_offline_text (int status) 
@@ -371,19 +490,14 @@ smart_read_thresholds (int fd, thresholds_t * thresholds)
 
 
 void
-show_version () 
+print_help () 
 {
-	printf ("check_ide-smart v.1 - FREE Software with NO WARRANTY\n");
-	printf ("Nagios feature - Robert Dale <rdale@digital-mission.com>\n");
+	print_revision (progname, revision);
+
+	printf ("Nagios feature - 1999 Robert Dale <rdale@digital-mission.com>\n");
 	printf ("(C) 1999 Ragnar Hojland Espinosa <ragnar@lightside.dhis.org>\n");
 	printf (COPYRIGHT, copyright, email);
-}
-
-
-
-void
-show_help () 
-{
+	
 	printf (_("\
 Usage: %s [DEVICE] [OPTION]\n\
  -d, --device=DEVICE\n\
@@ -402,120 +516,8 @@ Usage: %s [DEVICE] [OPTION]\n\
 
 
 
-int
-main (int argc, char *argv[]) 
+void
+print_usage (void)
 {
-	char *device = NULL;
-	int command = -1;
-	int o, longindex;
-	int retval = 0;
-
-	thresholds_t thresholds;
-	values_t values;
-	int fd;
-
-	static struct option longopts[] = { 
-		{"device", required_argument, 0, 'd'}, 
-		{"immediate", no_argument, 0, 'i'}, 
-		{"quiet-check", no_argument, 0, 'q'}, 
-		{"auto-on", no_argument, 0, '1'}, 
-		{"auto-off", no_argument, 0, '0'}, 
-		{"net-saint", no_argument, 0, 'n'}, 
-		{"help", no_argument, 0, 'h'}, 
-		{"version", no_argument, 0, 'V'}, {0, 0, 0, 0} 
-	};
-
-	setlocale (LC_ALL, "");
-	bindtextdomain (PACKAGE, LOCALEDIR);
-	textdomain (PACKAGE);
-
-	while (1) {
-		
-		o = getopt_long (argc, argv, "+d:iq10nhV", longopts, &longindex);
-		
-		if (o == -1 || o == EOF)
-			break;
-
-		switch (o) {
-		case 'd':
-			device = optarg;
-			break;
-		case 'q':
-			command = 3;
-			break;
-		case 'i':
-			command = 2;
-			break;
-		case '1':
-			command = 1;
-			break;
-		case '0':
-			command = 0;
-			break;
-		case 'n':
-			command = 4;
-			break;
-		case 'h':
-			show_help ();
-			return 0;
-		case 'V':
-			show_version ();
-			return 0;
-		default:
-			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
-			print_usage ();
-			exit (STATE_UNKNOWN);
-		}
-
-		if (optind < argc) {
-			device = argv[optind];
-		}
-
-		if (!device) {
-			show_help ();
-			show_version ();
-			return -1;
-		}
-
-		fd = open (device, O_RDONLY);
-
-		if (fd < 0) {
-			printf (_("CRITICAL - Couldn't open device: %s\n"), strerror (errno));
-			return 2;
-		}
-
-		if (smart_cmd_simple (fd, SMART_CMD_ENABLE, 0, TRUE)) {
-			printf (_("CRITICAL - SMART_CMD_ENABLE\n"));
-			return 2;
-		}
-
-		switch (command) {
-		case 0:
-			retval = smart_cmd_simple (fd, SMART_CMD_AUTO_OFFLINE, 0, TRUE);
-			break;
-		case 1:
-			retval = smart_cmd_simple (fd, SMART_CMD_AUTO_OFFLINE, 0xF8, TRUE);
-			break;
-		case 2:
-			retval = smart_cmd_simple (fd, SMART_CMD_IMMEDIATE_OFFLINE, 0, TRUE);
-			break;
-		case 3:
-			smart_read_values (fd, &values);
-			smart_read_thresholds (fd, &thresholds);
-			retval = values_not_passed (&values, &thresholds);
-			break;
-		case 4:
-			smart_read_values (fd, &values);
-			smart_read_thresholds (fd, &thresholds);
-			retval = net_saint (&values, &thresholds);
-			break;
-		default:
-			smart_read_values (fd, &values);
-			smart_read_thresholds (fd, &thresholds);
-			print_values (&values, &thresholds);
-			break;
-		}
-		close (fd);
-	}
-	return retval;
+	printf ("Usage: %s \n"), progname);
 }

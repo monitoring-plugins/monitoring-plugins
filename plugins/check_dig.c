@@ -20,7 +20,7 @@
 
 const char *progname = "check_dig";
 const char *revision = "$Revision$";
-const char *copyright = "2002-2003";
+const char *copyright = "2002-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -221,7 +221,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (progname, "$Revision$");
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'H':									/* hostname */
 			if (is_host (optarg)) {
@@ -318,7 +318,7 @@ print_help (void)
 	printf ("Copyright (c) 2000 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("Test the DNS service on the specified host using dig\n"));
+	printf (_("Test the DNS service on the specified host using dig\n\n"));
 
 	print_usage ();
 

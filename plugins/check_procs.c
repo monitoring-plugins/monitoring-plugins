@@ -751,6 +751,6 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -w <range> -c <range> [-m metric] [-s state] [-p ppid]\n\
-          [-u user] [-r rss] [-z vsz] [-P %%cpu] [-a argument-array]\n\
-          [-C command] [-t timeout] [-v]\n", progname);
+                  [-u user] [-r rss] [-z vsz] [-P %%cpu] [-a argument-array]\n\
+                  [-C command] [-t timeout] [-v]\n", progname);
 }

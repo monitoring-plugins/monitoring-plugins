@@ -316,7 +316,7 @@ print_help (void)
 
 	printf(_("\
 This plugin will check either the average or maximum value of one of the\n\
-two variables recorded in an MRTG log file.\n"));
+two variables recorded in an MRTG log file.\n\n"));
 
 	print_usage ();
 
@@ -377,5 +377,6 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -F log_file -a <AVG | MAX> -v variable -w warning -c critical\n\
-         [-l label] [-u units] [-e expire_minutes] [-t timeout] [-v]\n", progname);
+                  [-l label] [-u units] [-e expire_minutes] [-t timeout]\n\
+									[-v]\n", progname);
 }

@@ -391,7 +391,7 @@ print_help (void)
 
 	print_revision (progname, revision);
 
-	printf (_(COPYRIGHT), copyright, email);
+	printf (COPYRIGHT, copyright, email);
 
 	printf (_("Test whether a PostgreSQL Database is accepting connections.\n\n"));
 
@@ -443,5 +443,5 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s [-H <host>] [-P <port>] [-c <critical time>] [-w <warning time>]\n\
-          [-t <timeout>] [-d <database>] [-l <logname>] [-p <password>]\n", progname);
+                  [-t <timeout>] [-d <database>] [-l <logname>] [-p <password>]\n", progname);
 }

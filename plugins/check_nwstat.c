@@ -908,8 +908,8 @@ void print_help(void)
 	printf (COPYRIGHT, copyright, email);
 
 	printf (_("\
-Usage: %s This plugin attempts to contact the MRTGEXT NLM running\n\
-on a Novell server to gather the requested system information.\n\n"),
+This plugin attempts to contact the MRTGEXT NLM running on a\n\
+Novell server to gather the requested system information.\n\n"),
 	        progname);
 
 	print_usage();
@@ -989,5 +989,5 @@ void print_usage(void)
 {
 	printf ("\
 Usage: %s -H host [-p port] [-v variable] [-w warning] [-c critical]\n\
-          [-t timeout].\n", progname);
+                  [-t timeout].\n", progname);
 }

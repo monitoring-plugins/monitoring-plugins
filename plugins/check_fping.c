@@ -356,15 +356,15 @@ void
 print_help (void)
 {
 
-	print_revision (progname, "$Revision$");
+	print_revision (progname, revision);
 
 	printf ("Copyright (c) 1999 Didi Rieder <adrieder@sbox.tu-graz.ac.at>\n");
 	printf (COPYRIGHT, copyright, email);
 
 	printf (_("\
-This plugin will use the /bin/fping command (from saint) to ping the\n\
-specified host for a fast check if the host is alive. Note that it is\n\
-necessary to set the suid flag on fping.\n\n"));
+This plugin will use the /bin/fping command to ping the specified host\n\
+for a fast check if the host is alive.\n\
+Note that it is necessary to set the suid flag on fping.\n\n"));
 
 	print_usage ();
 

@@ -592,7 +592,6 @@ print_help (void)
 	printf ("Copyright (c) 2000 Tom Shields");
 	printf ("Copyright (c) 2004 Alain Richard <alain.richard@equation.fr>\n");
 	printf ("Copyright (c) 2004 Arnaud Quette <arnaud.quette@mgeups.com>\n");
-
 	printf (COPYRIGHT, copyright, email);
 
 	printf (_("This plugin tests the UPS service on the specified host.\n\
@@ -648,5 +647,5 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -H host -u ups [-p port] [-v variable]\n\
-          [-wv warn_value] [-cv crit_value] [-to to_sec] [-T]\n", progname);
+                  [-wv warn_value] [-cv crit_value] [-to to_sec] [-T]\n", progname);
 }

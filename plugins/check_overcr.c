@@ -465,5 +465,5 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -H host [-p port] [-v variable] [-w warning] [-c critical]\n\
-          [-t timeout]\n", progname);
+                  [-t timeout]\n", progname);
 }

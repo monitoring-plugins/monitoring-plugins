@@ -277,8 +277,6 @@ validate_arguments ()
 
 
 
-
-
 void
 print_help (void)
 {
@@ -334,7 +332,8 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -H <host> -b <base_dn> [-p <port>] [-a <attr>] [-D <binddn>]\n\
-         [-P <password>] [-w <warn_time>] [-c <crit_time>] [-t timeout]%s\n",
+                  [-P <password>] [-w <warn_time>] [-c <crit_time>]\n\
+									[-t timeout]%s\n",
 //(Note: all times are in seconds.)\n",
 	        progname,
 #ifdef HAVE_LDAP_SET_OPTION

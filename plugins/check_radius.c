@@ -26,6 +26,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "common.h"
 #include "utils.h"
 #include "netutils.h"
+
 #include <radiusclient.h>
 
 int process_arguments (int, char **);
@@ -335,5 +336,5 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -H host -F config_file -u username -p password [-n nas-id] [-P port]\n\
-          [-t timeout] [-r retries] [-e expect]\n", progname);
+                  [-t timeout] [-r retries] [-e expect]\n", progname);
 }

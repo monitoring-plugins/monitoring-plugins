@@ -302,7 +302,7 @@ print_help (void)
 	printf ("Copyright (c) 1999 Ian Cass, Knowledge Matters Limited\n");
 	printf (_(COPYRIGHT), copyright, email);
 
-	printf (_("This plugin tests %s connections with the specified host."), progname);
+	printf (_("This plugin tests game server connections with the specified host."), progname);
 
 	print_usage ();
 
@@ -334,7 +334,7 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s <game> <ip_address> [-p port] [-gf game_field] [-mf map_field]\n\
-          [-pf ping_field]\n", progname);
+                  [-pf ping_field]\n", progname);
 }
 
 /******************************************************************************

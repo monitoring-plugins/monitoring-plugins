@@ -395,6 +395,12 @@ print_help (void)
 	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf (COPYRIGHT, copyright, email);
 
+	printf (_("\
+This plugin uses the nslookup program to obtain the IP address\n\
+for the given host/domain query.  A optional DNS server to use may\n\
+be specified.  If no DNS server is specified, the default server(s)\n\
+specified in /etc/resolv.conf will be used.\n\n"));
+
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
@@ -410,12 +416,6 @@ print_help (void)
    Optionally expect the DNS server to be authoritative for the lookup\n"));
 
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-
-	printf (_("\n\
-This plugin uses the nslookup program to obtain the IP address\n\
-for the given host/domain query.  A optional DNS server to use may\n\
-be specified.  If no DNS server is specified, the default server(s)\n\
-specified in /etc/resolv.conf will be used.\n"));
 
 	printf (_(UT_SUPPORT));
 }

@@ -276,7 +276,7 @@ This plugin attempts to check the status of the Nagios process on the local\n\
 machine. The plugin will check to make sure the Nagios status log is no older\n\
 than the number of minutes specified by the <expire_minutes> option.  It also\n\
 uses the /bin/ps command to check for a process matching whatever you specify\n\
-by the <process_string> argument.\n"));
+by the <process_string> argument.\n\n"));
 
 	print_usage ();
 

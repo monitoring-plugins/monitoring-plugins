@@ -842,7 +842,7 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
-	printf (_(COPYRIGHT), copyright, email);
+	printf (COPYRIGHT, copyright, email);
 
 	printf (_("\
 Check status of remote machines and obtain sustem information via SNMP\n\n"));
@@ -950,9 +950,9 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -H <ip_address> -o <OID> [-w warn_range] [-c crit_range] \n\
-          [-C community] [-s string] [-r regex] [-R regexi] [-t timeout]\n\
-          [-l label] [-u units] [-p port-number] [-d delimiter]\n\
-          [-D output-delimiter] [-m miblist] [-P snmp version]\n\
-          [-L seclevel] [-U secname] [-a authproto] [-A authpasswd]\n\
-          [-X privpasswd]\n", progname);
+                  [-C community] [-s string] [-r regex] [-R regexi] [-t timeout]\n\
+                  [-l label] [-u units] [-p port-number] [-d delimiter]\n\
+                  [-D output-delimiter] [-m miblist] [-P snmp version]\n\
+                  [-L seclevel] [-U secname] [-a authproto] [-A authpasswd]\n\
+                  [-X privpasswd]\n", progname);
 }

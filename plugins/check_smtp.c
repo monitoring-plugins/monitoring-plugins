@@ -422,8 +422,7 @@ print_help (void)
 	printf ("Copyright (c) 1999-2001 Ethan Galstad <nagios@nagios.org>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf(_("\
-This plugin will attempt to open an SMTP connection with the host.\n\n"));
+	printf(_("This plugin will attempt to open an SMTP connection with the host.\n\n"));
 
 	print_usage ();
 
@@ -468,5 +467,5 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -H host [-p port] [-e expect] [-C command] [-f from addr]\n\
-          [-w warn] [-c crit] [-t timeout] [-n] [-v] [-4|-6]\n", progname);
+                  [-w warn] [-c crit] [-t timeout] [-n] [-v] [-4|-6]\n", progname);
 }

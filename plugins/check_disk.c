@@ -21,7 +21,7 @@
 const char *progname = "check_disk";
 const char *program_name = "check_disk";	// Required for coreutils libs
 const char *revision = "$Revision$";
-const char *copyright = "1999-2003";
+const char *copyright = "1999-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -578,7 +578,7 @@ print_help (void)
 
 	printf (_("\
 This plugin checks the amount of used disk space on a mounted file system\n\
-and generates an alert if free space is less than one of the threshold values."));
+and generates an alert if free space is less than one of the threshold values.\n\n"));
 
 	print_usage ();
 
@@ -638,5 +638,5 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -w limit -c limit [-p path | -x device] [-t timeout] [-m] [-e]\n\
-          [-v] [-q]\n", progname);
+                  [-v] [-q]\n", progname);
 }

@@ -326,8 +326,7 @@ print_help (void)
 	printf ("Copyright (c) 1999 Ethan Galstad\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("\
-This plugin will check the time on the specified host.\n\n"));
+	printf (_("This plugin will check the time on the specified host.\n\n"));
 
 	print_usage ();
 
@@ -359,5 +358,5 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -H <host_address> [-p port] [-u] [-w variance] [-c variance]\n\
-          [-W connect_time] [-C connect_time] [-t timeout]\n", progname);
+                  [-W connect_time] [-C connect_time] [-t timeout]\n", progname);
 }

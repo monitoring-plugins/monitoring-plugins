@@ -479,7 +479,7 @@ print_help (void)
 
 	printf (_(COPYRIGHT), copyright, email);
 
-	printf (_("Check swap space on local server.\n\n"));
+	printf (_("Check swap space on local machine.\n\n"));
 
 	print_usage ();
 
@@ -514,7 +514,7 @@ On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s.\n"));
 void
 print_usage (void)
 {
-	printf ("Usage:\n\
- %s [-av] -w <percent_free>%% -c <percent_free>%%\n\
- %s [-av] -w <bytes_free> -c <bytes_free>\n", progname, progname);
+	printf ("\
+	Usage: %s [-av] -w <percent_free>%% -c <percent_free>%%\n\
+         %s [-av] -w <bytes_free> -c <bytes_free>\n", progname, progname);
 }

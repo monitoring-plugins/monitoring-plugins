@@ -91,13 +91,13 @@ print_help (void)
 	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf (COPYRIGHT, copyright, email);
 
+	printf (_("\
+This plugin will simply return the state corresponding to the numeric value\n\
+of the <state> argument with optional text.\n\n"));
+
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
-
-	printf (_("\n\
-This plugin will simply return the state corresponding to the numeric value\n\
-of the <state> argument with optional text.\n"));
 
 	printf (_(UT_SUPPORT));
 }
