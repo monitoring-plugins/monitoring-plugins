@@ -10,13 +10,13 @@
 
 %define version PACKAGE_VERSION
 %define release PACKAGE_RELEASE
-%define source %{archive}-%{version}-%{release}.tar.gz
+%define source %{archive}-%{version}-%{release}
 
 Name: %{name}
 Version: %{version}
 Release: %{release}
 Copyright: GPL
-Source: %{source}
+Source: %{source}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-buildroot
 Prefix: %{_prefix}/lib/nagios/plugins
 Packager: Karl DeBisschop <kdebisschop@users.sourceforge.net>
@@ -64,7 +64,7 @@ will need to install the '--nodeps' option when invoking `rpm`
 
 
 %prep
-%setup -q -n %{archive}-%{version}-%{release}
+%setup -q -n %{source}
 
 
 %build
