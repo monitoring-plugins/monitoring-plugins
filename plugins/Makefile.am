@@ -36,10 +36,10 @@ AM_INSTALL_PROGRAM_FLAGS = @INSTALL_OPTS@
 ##############################################################################
 # the actual targets
 
-check_ftp_SOURCES = check_tcp.c
-check_imap_SOURCES = check_tcp.c
-check_nntp_SOURCES = check_tcp.c
-check_pop_SOURCES = check_tcp.c
+#check_ftp_SOURCES = check_tcp.c
+#check_imap_SOURCES = check_tcp.c
+#check_nntp_SOURCES = check_tcp.c
+#check_pop_SOURCES = check_tcp.c
 
 check_dig_LDADD = $(BASEOBJS) popen.o
 check_disk_LDADD = $(BASEOBJS) popen.o
@@ -75,10 +75,11 @@ check_vsz_LDADD = $(BASEOBJS) popen.o
 check_by_ssh_LDADD = $(BASEOBJS) popen.o
 negate_LDADD = $(BASEOBJS) popen.o
 urlize_LDADD = $(BASEOBJS) popen.o
-check_ftp_LDADD = $(NETLIBS) $(SSLLIBS)
-check_imap_LDADD = $(NETLIBS) $(SSLLIBS)
-check_nntp_LDADD = $(NETLIBS) $(SSLLIBS)
-check_pop_LDADD = $(NETLIBS) $(SSLLIBS)
+
+#check_ftp_LDADD = $(NETLIBS) $(SSLLIBS)
+#check_imap_LDADD = $(NETLIBS) $(SSLLIBS)
+#check_nntp_LDADD = $(NETLIBS) $(SSLLIBS)
+#check_pop_LDADD = $(NETLIBS) $(SSLLIBS)
 
 check_dig_DEPENDENCIES = check_dig.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_disk_DEPENDENCIES = check_disk.c $(BASEOBJS) popen.o $(DEPLIBS)
@@ -114,10 +115,11 @@ check_vsz_DEPENDENCIES = check_vsz.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_by_ssh_DEPENDENCIES = check_by_ssh.c $(BASEOBJS) popen.o $(DEPLIBS)
 negate_DEPENDENCIES = negate.c $(BASEOBJS) popen.o $(DEPLIBS)
 urlize_DEPENDENCIES = urlize.c $(BASEOBJS) popen.o $(DEPLIBS)
-check_ftp_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
-check_imap_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
-check_nntp_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
-check_pop_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
+
+#check_ftp_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
+#check_imap_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
+#check_nntp_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
+#check_pop_DEPENDENCIES = check_tcp.c $(NETOBJS) $(DEPLIBS)
 
 ##############################################################################
 # secondary dependencies
@@ -135,7 +137,7 @@ getopt1.o: getopt1.c getopt.h
 	$(COMPILE) -c $(srcdir)/getopt1.c -o $@
 
 snprintf.o: snprintf.c
-	$(COMPILE) @NEED_VA_LIST@ -c $? -o $@
+	$(COMPILE) @NEED_VA_LIST@ -c $(srcdir)/getopt1.c -o $@
 
 libgetopt.a: getopt.o getopt1.o
 	$(AR) -r $@ getopt.o getopt1.o
@@ -143,5 +145,5 @@ libgetopt.a: getopt.o getopt1.o
 libsnprintf.a: snprintf.o
 	$(AR) -r $@ snprintf.o
 
-check_ftp check_imap check_nntp check_pop:
+check_ftp check_imap check_nntp check_pop: check_tcp
 	ln -sf check_tcp $@
