@@ -404,6 +404,14 @@ To use passive mode, provide multiple '-C' options, and provide\n\
 all of -O, -s, and -n options (servicelist order must match '-C'\n\
 options)\n"));
 
+	printf (_("\n\
+$ check_by_ssh -H localhost -n lh -s c1:c2:c3 \\\n\
+    -C uptime -C uptime -C uptime -O /tmp/foo\n\
+$ cat /tmp/foo\n\
+[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c1;0; up 2 days...\n\
+[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c2;0; up 2 days...\n\
+[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c3;0; up 2 days...\n"));
+
 	printf (_(UT_SUPPORT));
 }
 
