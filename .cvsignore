@@ -9,7 +9,7 @@ command.cfg
 Cache.pm
 build-*
 aclocal.m4
-autom4te-*.cache
+autom4te*.cache
 install-sh
 mkinstalldirs
 missing

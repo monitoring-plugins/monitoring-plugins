@@ -21,13 +21,14 @@ nagios-plugins.spec: nagios-plugins.spec.in
 BUILDDIR := $(shell pwd)/build-solaris
 PACKDIR := $(shell pwd)/build-pkg
 PKGSCRIPT := $(shell pwd)/pkg/solaris/solpkg
+PKGPFX := $(shell echo ${prefix} |sed -e 's@^/usr/local@@')
 VERSION=@PACKAGE_VERSION@
 
 solpkg:
 	if [ ! -d $(BUILDDIR) ] ; then mkdir $(BUILDDIR); fi
 	if [ ! -d $(PACKDIR) ] ; then mkdir $(PACKDIR); fi
 	$(MAKE) all
-	$(MAKE) DESTDIR=$(BUILDDIR) prefix=/ install
+	$(MAKE) DESTDIR=$(BUILDDIR) prefix=$(PKGPFX) install
 	$(INSTALL) pkg/solaris/pkginfo $(BUILDDIR)
 	cd $(BUILDDIR) && $(PERL) $(PKGSCRIPT) $(PACKDIR)
 
