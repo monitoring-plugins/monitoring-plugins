@@ -68,19 +68,23 @@
  -R, --eregi=REGEX\n\
     Return OK state (for that OID) if case-insensitive extended REGEX matches\n\
  -l, --label=STRING\n\
-    Prefix label for output from plugin (default -s 'SNMP')\n"
+    Prefix label for output from plugin (default -s 'SNMP')\n\
+ -v, --verbose\n\
+    Debugging the output\n\ 
+		
+		"
 
 #define NOTES "\
-- This plugin uses the 'snmpget' command included with the UCD-SNMP package.\n\
+- This plugin uses the 'snmpget' command included with the NET-SNMP package.\n\
   If you don't have the package installed, you will need to download it from\n\
-  http://ucd-snmp.ucdavis.edu before you can use this plugin.\n\
+  http://net-snmp.sourceforge.net before you can use this plugin.\n\
 - Multiple OIDs may be indicated by a comma- or space-delimited list (lists with\n\
-  internal spaces must be quoted)\n\
+  internal spaces must be quoted) [max 8 OIDs]\n\
 - Ranges are inclusive and are indicated with colons. When specified as\n\
   'min:max' a STATE_OK will be returned if the result is within the indicated\n\
   range or is equal to the upper or lower bound. A non-OK state will be\n\
   returned if the result is outside the specified range.\n\
-- If spcified in the order 'max:min' a non-OK state will be returned if the\n\
+- If specified in the order 'max:min' a non-OK state will be returned if the\n\
   result is within the (inclusive) range.\n\
 - Upper or lower bounds may be omitted to skip checking the respective limit.\n\
 - Bare integers are interpreted as upper limits.\n\
@@ -418,10 +422,10 @@ process_arguments (int argc, char **argv)
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
-			getopt_long (argc, argv, "hVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:",
+			getopt_long (argc, argv, "hvVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:",
 									 long_options, &option_index);
 #else
-		c = getopt (argc, argv, "hVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:");
+		c = getopt (argc, argv, "hvVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:");
 #endif
 
 		if (c == -1 || c == EOF)
