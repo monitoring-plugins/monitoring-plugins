@@ -68,6 +68,8 @@ process_arguments (int argc, char **argv)
 	static struct option long_options[] = {
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
+		{"use-ipv4", no_argument, 0, '4'},
+		{"use-ipv6", no_argument, 0, '6'},
 		{"verbose", no_argument, 0, 'v'},
 		{"timeout", required_argument, 0, 't'},
 		{"host", required_argument, 0, 'H'},
@@ -82,7 +84,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "+Vhvt:H:p:", long_options, &option_index);
+		c = getopt_long (argc, argv, "+Vhv46t:H:p:", long_options, &option_index);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -103,6 +105,12 @@ process_arguments (int argc, char **argv)
 			if (!is_integer (optarg))
 				usage ("Timeout Interval must be an integer!\n\n");
 			socket_timeout = atoi (optarg);
+			break;
+		case '4':
+			address_family = AF_INET;
+			break;
+		case '6':
+			address_family = AF_INET6;
 			break;
 		case 'H':									/* host */
 			if (is_host (optarg) == FALSE)
@@ -217,7 +225,10 @@ print_usage (void)
 		("Usage:\n"
 		 " %s -t [timeout] -p [port] <host>\n"
 		 " %s -V prints version info\n"
-		 " %s -h prints more detailed help\n", progname, progname, progname);
+		 " %s -4 use IPv4 connection\n"
+		 " %s -6 use IPv6 connection\n"
+		 " %s -h prints more detailed help\n", 
+		 progname, progname, progname, progname, progname);
 }
 
 /* end of check_ssh.c */

@@ -61,3 +61,4 @@ int is_hostname (char *);
 extern int socket_timeout;
 extern int econn_refuse_state;
 extern int was_refused;
+extern int address_family;

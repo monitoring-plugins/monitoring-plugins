@@ -35,6 +35,7 @@
 int socket_timeout = DEFAULT_SOCKET_TIMEOUT; 
 int econn_refuse_state = STATE_CRITICAL;
 int was_refused = FALSE;
+int address_family = AF_UNSPEC;
 
 /* handles socket timeouts */
 void
@@ -254,7 +255,7 @@ my_connect (char *host_name, int port, int *sd, int proto)
 	int result;
 
 	memset (&hints, 0, sizeof (hints));
-	hints.ai_family = PF_UNSPEC;
+	hints.ai_family = address_family;
 	hints.ai_protocol = proto;
 	hints.ai_socktype = (proto == IPPROTO_UDP) ? SOCK_DGRAM : SOCK_STREAM;
 

@@ -29,7 +29,7 @@ This plugin tests %s connections with the specified host.\n";
 const char *option_summary = "\
 -H host -p port [-w warn_time] [-c crit_time] [-s send_string]\n\
 	[-e expect_string] [-q quit_string] [-m maxbytes] [-d delay]\n\
-  [-t to_sec] [-r refuse_state] [-v]\n";
+	[-t to_sec] [-r refuse_state] [-v] [-4] [-6]\n";
 
 const char *options = "\
  -H, --hostname=ADDRESS\n\
@@ -37,6 +37,10 @@ const char *options = "\
     address if possible to bypass DNS lookup).\n\
  -p, --port=INTEGER\n\
     Port number\n\
+ -4, --use-ipv4\n\
+    Use IPv4 connection\n\
+ -6, --use-ipv6\n\
+    Use IPv6 connection\n\
  -s, --send=STRING\n\
     String to send to the server\n\
  -e, --expect=STRING\n\
@@ -392,6 +396,8 @@ process_arguments (int argc, char **argv)
 		{"quit", required_argument, 0, 'q'},
 		{"delay", required_argument, 0, 'd'},
 		{"refuse", required_argument, 0, 'r'},
+		{"use-ipv4", no_argument, 0, '4'},
+		{"use-ipv6", no_argument, 0, '6'},
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
@@ -419,7 +425,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVvH:s:e:q:m:c:w:t:p:C:W:d:Sr:",
+		c = getopt_long (argc, argv, "+hVv46H:s:e:q:m:c:w:t:p:C:W:d:Sr:",
 		                 long_options, &option_index);
 
 		if (c == -1 || c == EOF || c == 1)
@@ -438,6 +444,12 @@ process_arguments (int argc, char **argv)
 			exit (STATE_OK);
 		case 'v':                 /* verbose mode */
 			verbose = TRUE;
+			break;
+		case '4':
+			address_family = AF_INET;
+			break;
+		case '6':
+			address_family = AF_INET6;
 			break;
 		case 'H':                 /* hostname */
 			if (is_host (optarg) == FALSE)
