@@ -1,28 +1,20 @@
 /******************************************************************************
- *
- * CHECK_LOAD.C
- *
- * Written by Felipe Gustavo de Almeida <galmeida@linux.ime.usp.br>
- * License: GPL
- * Command line: CHECK_LOAD <wload1> <cload1> <wload5> <cload5> <wload15> <cload15>
- * First Written: 04/17/99 
- *
- * Modifications:
- * 
- * 05/18/1999 - Modified to work getloadavg where available, and use uptime
- *		where neither proc or getloadavg are found.  Also use autoconf.
- *                 mods by Karl DeBisschop (kdebiss@alum.mit.edu)
- * 07/01/1999 - Added some #DEFINEs to allow compilation under NetBSD, as
- *		suggested by Andy Doran.
- *	           mods by Ethan Galstad (nagios@nagios.org)
- * 07/17/1999 - Initialized la[] array to prevent NetBSD from complaining
- *		   mods by Ethan Galstad (nagios@nagios.org)
- * 08/18/1999 - Integrated some code with common plugin utilities
- *		   mods by Ethan Galstad (nagios@nagios.org)
- * $Date$
- * Note: The load format is the same used by "uptime" and "w"
- *
- *****************************************************************************/
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+******************************************************************************/
 
 const char *progname = "check_load";
 const char *revision = "$Revision$";
@@ -32,38 +24,6 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "common.h"
 #include "utils.h"
 #include "popen.h"
-
-void
-print_usage (void)
-{
-	printf (_("Usage: %s -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15\n"),
-	        progname);
-	printf (_(UT_HLP_VRS), progname, progname);
-}
-
-void
-print_help (void)
-{
-	print_revision (progname, revision);
-
-	printf (_("Copyright (c) 1999 Felipe Gustavo de Almeida <galmeida@linux.ime.usp.br>\n"));
-	printf (_(COPYRIGHT), copyright, email);
-
-	printf (_("This plugin tests the current system load average.\n\n"));
-
-	print_usage ();
-
-	printf (_(UT_HELP_VRSN));
-
-	printf (_("\
- -w, --warning=WLOAD1,WLOAD5,WLOAD15\n\
-   Exit with WARNING status if load average exceeds WLOADn\n\
- -c, --critical=CLOAD1,CLOAD5,CLOAD15\n\
-   Exit with CRITICAL status if load average exceed CLOADn\n\n\
-the load average format is the same used by \"uptime\" and \"w\"\n\n"));
-
-	printf (_(UT_SUPPORT));
-}
 
 #ifdef HAVE_SYS_LOADAVG_H
 #include <sys/loadavg.h>
@@ -79,25 +39,34 @@ the load average format is the same used by \"uptime\" and \"w\"\n\n"));
 
 int process_arguments (int argc, char **argv);
 int validate_arguments (void);
+void print_help (void);
+void print_usage (void);
 
 float wload1 = -1, wload5 = -1, wload15 = -1;
 float cload1 = -1, cload5 = -1, cload15 = -1;
 
 char *status_line = "";
 
+
+
+
+
+
 int
 main (int argc, char **argv)
 {
 #if HAVE_GETLOADAVG==1
 	int result;
 	double la[3] = { 0.0, 0.0, 0.0 };	/* NetBSD complains about unitialized arrays */
-#elif HAVE_PROC_LOADAVG==1
+#else
+# if HAVE_PROC_LOADAVG==1
 	FILE *fp;
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *tmp_ptr;
-#else
+# else
 	int result;
 	char input_buffer[MAX_INPUT_BUFFER];
+# endif
 #endif
 
 	float la1, la5, la15;
@@ -112,7 +81,8 @@ main (int argc, char **argv)
 	la1 = la[LOADAVG_1MIN];
 	la5 = la[LOADAVG_5MIN];
 	la15 = la[LOADAVG_15MIN];
-#elif HAVE_PROC_LOADAVG==1
+#else
+# if HAVE_PROC_LOADAVG==1
 	fp = fopen (PROC_LOADAVG, "r");
 	if (fp == NULL) {
 		printf (_("Error opening %s\n"), PROC_LOADAVG);
@@ -131,7 +101,7 @@ main (int argc, char **argv)
 	}
 
 	fclose (fp);
-#else
+# else
 	child_process = spopen (PATH_TO_UPTIME);
 	if (child_process == NULL) {
 		printf (_("Error opening %s\n"), PATH_TO_UPTIME);
@@ -149,15 +119,18 @@ main (int argc, char **argv)
 		printf (_("Error code %d returned in %s\n"), result, PATH_TO_UPTIME);
 		return STATE_UNKNOWN;
 	}
+# endif
 #endif
 
 	if ((la1 == -1) || (la5 == -1) || (la15 == -1)) {
 #if HAVE_GETLOADAVG==1
 		printf (_("Error in getloadavg()\n"));
-#elif HAVE_PROC_LOADAVG==1
-		printf (_("Error processing %s\n"), PROC_LOADAVG);
 #else
+# if HAVE_PROC_LOADAVG==1
+		printf (_("Error processing %s\n"), PROC_LOADAVG);
+# else
 		printf (_("Error processing %s\n"), PATH_TO_UPTIME);
+# endif
 #endif
 		return STATE_UNKNOWN;
 	}
@@ -178,6 +151,7 @@ main (int argc, char **argv)
 
 
 
+
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -306,4 +280,41 @@ validate_arguments (void)
 	if (wload15 > cload15)
 		usage (_("Parameter inconsistency: 15-minute \"warning load\" greater than \"critical load\".\n"));
 	return OK;
+}
+
+
+
+
+
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 1999 Felipe Gustavo de Almeida <galmeida@linux.ime.usp.br>\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("This plugin tests the current system load average.\n\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_("\
+ -w, --warning=WLOAD1,WLOAD5,WLOAD15\n\
+   Exit with WARNING status if load average exceeds WLOADn\n\
+ -c, --critical=CLOAD1,CLOAD5,CLOAD15\n\
+   Exit with CRITICAL status if load average exceed CLOADn\n\n\
+the load average format is the same used by \"uptime\" and \"w\"\n\n"));
+
+	printf (_(UT_SUPPORT));
+}
+
+void
+print_usage (void)
+{
+	printf (_("Usage: %s -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15\n"),
+	        progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }
