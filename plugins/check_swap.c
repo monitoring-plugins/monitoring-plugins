@@ -99,23 +99,27 @@ main (int argc, char **argv)
 	fclose(fp);
 #else
 # ifdef HAVE_SWAP
+	asprintf(&swap_command, "%s", SWAP_COMMAND);
+	asprintf(&swap_format, "%s", SWAP_FORMAT);
+	conv_factor = SWAP_CONVERSION;
+
+/* These override the command used if a summary (and thus ! allswaps) is required */
+/* The summary flag returns more accurate information about swap usage on these OSes */
+#  ifdef _AIX
 	if (!allswaps) {
-#ifdef _AIX
 		asprintf(&swap_command, "%s", "/usr/sbin/lsps -s");
 		asprintf(&swap_format, "%s", "%d%*s %d");
 		conv_factor = 1;
-#else
-# ifdef sun
+	}
+#  else
+#   ifdef sun
+	if (!allswaps) {
 		asprintf(&swap_command, "%s", "/usr/sbin/swap -s");
 		asprintf(&swap_format, "%s", "%*s %*dk %*s %*s + %*dk %*s = %dk %*s %dk %*s");
 		conv_factor = 2048;
-# endif
-#endif
-	} else {
-		asprintf(&swap_command, "%s", SWAP_COMMAND);
-		asprintf(&swap_format, "%s", SWAP_FORMAT);
-		conv_factor = SWAP_CONVERSION;
 	}
+#   endif
+#  endif
 
 	if (verbose >= 2)
 		printf (_("Command: %s\n"), swap_command);
@@ -148,33 +152,36 @@ main (int argc, char **argv)
 		}
 	}
 
+/* If different swap command is used for summary switch, need to read format differently */
+#  ifdef _AIX
 	if (!allswaps) {
-#ifdef _AIX
 		fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_process);	/* Ignore first line */
 		sscanf (input_buffer, swap_format, &total_swap, &used_swap);
 		free_swap = total_swap * (100 - used_swap) /100;
 		used_swap = total_swap - free_swap;
 		if (verbose >= 3)
 			printf (_("total=%d, used=%d, free=%d\n"), total_swap, used_swap, free_swap);
-#else
-# ifdef sun
+	} else {
+#  else
+#   ifdef sun
+	if (!allswaps) {
 		sscanf (input_buffer, swap_format, &used_swap, &free_swap);
 		used_swap = used_swap / 1024;
 		free_swap = free_swap / 1024;
 		total_swap = used_swap + free_swap;
-# endif
-#endif
 	} else {
+#   endif
+#  endif
 		while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
 			sscanf (input_buffer, swap_format, &dsktotal, &dskfree);
 
 			dsktotal = dsktotal / conv_factor;
 			/* AIX lists percent used, so this converts to dskfree in MBs */
-#ifdef _AIX
+#  ifdef _AIX
 			dskfree = dsktotal * (100 - dskfree) / 100;
-#else
+#  else
 			dskfree = dskfree / conv_factor;
-#endif
+#  endif
 			if (verbose >= 3)
 				printf (_("total=%d, free=%d\n"), dsktotal, dskfree);
 
@@ -189,7 +196,14 @@ main (int argc, char **argv)
 					asprintf (&status, "%s [%lu (%d%%)]", status, dskfree, 100 - percent);
 			}
 		}
+#  ifdef _AIX
 	}
+#  else
+#   ifdef sun
+	}
+#   endif
+#  endif
+
 	/* If we get anything on STDERR, at least set warning */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
 		result = max_state (result, STATE_WARNING);
@@ -200,8 +214,8 @@ main (int argc, char **argv)
 	/* close the pipe */
 	if (spclose (child_process))
 		result = max_state (result, STATE_WARNING);
-# endif
-#endif
+# endif /* HAVE_SWAP */
+#endif /* HAVE_PROC_MEMINFO */
 
 	percent_used = 100 * ((double) used_swap) / ((double) total_swap);
 	result = max_state (result, check_swap (percent_used, free_swap));
@@ -387,16 +401,12 @@ print_help (void)
  -a, --allswaps\n\
     Conduct comparisons for all swap partitions, one by one\n"));
 
-#ifdef sun
 	printf (_("\n\
 On Solaris, if -a specified, uses swap -l, otherwise uses swap -s.\n\
 Will be discrepencies because swap -s counts allocated swap and includes\n\
 real memory\n"));
-#endif
-#ifdef _AIX
 	printf (_("\n\
 On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s.\n"));
-#endif
 
 	printf (_(UT_SUPPORT));
 }
