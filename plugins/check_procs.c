@@ -202,9 +202,8 @@ main (int argc, char **argv)
 		cols = sscanf (input_buffer, PS_FORMAT, PS_VARLIST);
 
 		/* Zombie processes do not give a procprog command */
-		/* - would they give other columns? */
-		if ( cols == 3 && strstr(procstat, zombie) ) {
-			cols = 4;
+		if ( cols == 6 && strstr(procstat, zombie) ) {
+			cols = 7;
 		}
 		if ( cols >= 7 ) {
 			found++;
