@@ -293,12 +293,12 @@ else
   dnl Check usual areas for openssl
   if test "$PKGTEST" = "yes"; then
     AC_PATH_PROG(OPENSSL,openssl)
-    # Don't think 2 tests below are necessary because /usr is always included
-    # if test "$OPENSSL" = "/usr/bin/openssl"; then
-    #  OPENSSL=/usr
-    #elif test "$OPENSSL" = "/usr/sbin/openssl"; then
-    #  OPENSSL=/usr
-    if test "$OPENSSL" = "/opt/bin/openssl"; then
+    dnl The /usr checks need to be done so that the right area is include'd
+    if test "$OPENSSL" = "/usr/bin/openssl"; then
+      OPENSSL=/usr
+    elif test "$OPENSSL" = "/usr/sbin/openssl"; then
+      OPENSSL=/usr
+    elif test "$OPENSSL" = "/opt/bin/openssl"; then
       OPENSSL=/opt
     elif test "$OPENSSL" = "/opt/openssl/bin/openssl"; then
       OPENSSL=/opt/openssl
@@ -386,7 +386,11 @@ else
   fi
 
   if test "$OPENSSL_ENABLED" != "1"; then
-    AC_MSG_WARN([OpenSSL libs and/or directories were not found where specified!])
+    if test "$PKGTEST" ="yes"; then
+      AC_MSG_WARN([OpenSSL libs could not be found])
+    else
+      AC_MSG_WARN([OpenSSL libs and/or directories were not found where specified!])
+    fi
     with_openssl="no"
   else
     check_tcp_ssl="check_simap check_spop check_jabber check_nntps"
