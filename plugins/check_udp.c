@@ -161,6 +161,9 @@ process_arguments (int argc, char **argv)
 		c = getopt (argc, argv, "+hVvH:e:s:c:w:t:p:");
 #endif
 
+		if (c == -1 || c == EOF || c == 1)
+			break;
+
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
 			printf ("%s: Unknown argument: %s\n\n", progname, optarg);
@@ -212,7 +215,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	c = optind;
-	if (server_address == NULL && argv[c]) {
+	if (server_address == NULL && c < argc && argv[c]) {
 		if (is_host (argv[c]) == FALSE)
 			usage ("Invalid host name/address\n");
 		server_address = argv[c++];
