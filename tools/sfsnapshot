@@ -24,7 +24,7 @@ function make_dist {
 	
 	# Get compile server to do the work
 	# Variables will be expanded locally before being run on $CF
-	ssh $CF <<-EOF
+	ssh $CF <<EOF
 	set -x
 	PATH=$PATH
 	[[ ! -d $IN/$cvs_rel ]] && mkdir -p $IN/$cvs_rel
@@ -41,7 +41,7 @@ function make_dist {
 	make dist
 
 	# End ssh
-	EOF
+EOF
 }
 
 # Set working variables
