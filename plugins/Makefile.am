@@ -8,12 +8,13 @@ libexec_PROGRAMS = check_disk check_dummy check_http check_load \
 	check_mrtg check_mrtgtraf check_nwstat check_overcr check_ping \
 	check_procs check_real check_smtp check_ssh check_tcp check_time \
 	check_udp check_ups check_users check_vsz negate urlize \
-	check_ftp check_imap check_nntp check_pop \
 	@EXTRAS@
 
 EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 	check_swap check_fping check_ldap check_game check_dig \
 	check_nagios check_by_ssh check_dns
+
+check_tcp_programs = check_ftp check_imap check_nntp check_pop
 
 EXTRA_DIST = t utils.c netutils.c popen.c getopt.h getopt.c getopt1.c \
 	snprintf.c getloadavg.c
@@ -35,11 +36,6 @@ AM_INSTALL_PROGRAM_FLAGS = @INSTALL_OPTS@
 
 ##############################################################################
 # the actual targets
-
-check_ftp_SOURCES = check_tcp.c
-check_imap_SOURCES = check_tcp.c
-check_nntp_SOURCES = check_tcp.c
-check_pop_SOURCES = check_tcp.c
 
 check_dig_LDADD = $(BASEOBJS) popen.o
 check_disk_LDADD = $(BASEOBJS) popen.o
@@ -145,5 +141,18 @@ libgetopt.a: getopt.o getopt1.o
 libsnprintf.a: snprintf.o
 	$(AR) -r $@ snprintf.o
 
-check_ftp check_imap check_nntp check_pop: check_tcp
+all-local: $(check_tcp_programs)
+
+$(check_tcp_programs): check_tcp
 	ln -sf check_tcp $@
+
+install-exec-hook:
+	for i in $(check_tcp_programs) ; do \
+		ln -sf $(DESTDIR)$(libexecdir)/check_tcp $$i; \
+	done
+
+clean-local:
+	rm -f $(check_tcp_programs)
+
+uninstall-local:
+	cd $(DESTDIR)$(libexecdir) && rm -f $(check_tcp_programs)
