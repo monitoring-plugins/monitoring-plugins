@@ -5,6 +5,8 @@
 #
 # Copyright (C) 2000 Christoph Kron
 # Modified 5/2002 to conform to updated Nagios Plugin Guidelines (S. Ghosh)
+#  Added -x option (4/2003)
+#  Added -u option (4/2003)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -70,14 +72,17 @@ my %ifStatus;
 my $ifup =0 ;
 my $ifdown =0;
 my $ifdormant = 0;
-my $ifexclude =0 ;
+my $ifexclude = 0 ;
+my $ifunused = 0;
 my $ifmessage = "";
 my $snmp_version = 1;
 my $ifXTable;
 my $opt_h ;
 my $opt_V ;
+my $opt_u;
 my $opt_x ;
 my %excluded ;
+my @unused_ports ;
 
 
 
@@ -101,7 +106,8 @@ $status = GetOptions(
 		"p=i" =>\$port, "port=i" => \$port,
 		"H=s" => \$hostname, "hostname=s" => \$hostname,
 		"I"	  => \$ifXTable, "ifmib" => \$ifXTable,
-		"x:s"		=>	\$opt_x,   "exclude:s" => \$opt_x);
+		"x:s"		=>	\$opt_x,   "exclude:s" => \$opt_x,
+		"u=s" => \$opt_u,  "unused_ports=s" => \$opt_u);
 		
 if ($status == 0)
 {
@@ -122,11 +128,10 @@ if ($opt_h) {
 
 
 if (defined $opt_x) {
-	my @x = split(",", $opt_x);
-	my $x;
+	my @x = split(/,/, $opt_x);
 	if ( @x) {
-		foreach $x (@x){
-			$excluded{$x} = 1;
+		foreach $key (@x){
+			$excluded{$key} = 1;
 		}
 	}else{
 		$excluded{23} = 1; # default PPP(23) if empty list - note (AIX seems to think PPP is 22 according to a post)
@@ -134,6 +139,13 @@ if (defined $opt_x) {
 	#debugging
 	#foreach $x (keys %excluded) 
 	#	{ print "key = $x  val = $excluded{$x}\n";}
+}
+
+if ($opt_u) {
+	@unused_ports = split(/,/,$opt_u);
+	foreach $key (@unused_ports) { 
+		$ifStatus{$key}{'notInUse'}++ ;
+	}
 }
 
 if (! utils::is_hostname($hostname)){
@@ -210,53 +222,58 @@ $session->close;
 
 foreach $key (keys %ifStatus) {
 
-	# check only if interface is administratively up
+	# skip unused interfaces
+	if (!defined($ifStatus{$key}{'notInUse'})) {
+		# check only if interface is administratively up
     if ($ifStatus{$key}{$snmpIfAdminStatus} == 1 ) {
     
-		# check only if interface type is not listed in %excluded
-		
-		if (!defined $excluded{$ifStatus{$key}{$snmpIfType}} ) {
-			if ($ifStatus{$key}{$snmpIfOperStatus} == 1 ) { $ifup++ ;}
-        	if ($ifStatus{$key}{$snmpIfOperStatus} == 2 ) {
-            	$ifdown++ ;
-							if (defined $ifXTable) {
-								$ifmessage .= sprintf("%s: down -> %s<BR>",
+			# check only if interface type is not listed in %excluded
+			if (!defined $excluded{$ifStatus{$key}{$snmpIfType}} ) {
+				if ($ifStatus{$key}{$snmpIfOperStatus} == 1 ) { $ifup++ ;}
+     		if ($ifStatus{$key}{$snmpIfOperStatus} == 2 ) {
+          	  	$ifdown++ ;
+								if (defined $ifXTable) {
+									$ifmessage .= sprintf("%s: down -> %s<BR>",
                                 $ifStatus{$key}{$snmpIfName},
 								 								$ifStatus{$key}{$snmpIfAlias});
-							}else{
-								$ifmessage .= sprintf("%s: down <BR>",
+								}else{
+									$ifmessage .= sprintf("%s: down <BR>",
 																$ifStatus{$key}{$snmpIfDescr});
-							}
+								}
+				}
+       	if ($ifStatus{$key}{$snmpIfOperStatus} == 5 ) { $ifdormant++ ;}
+			}else{
+				$ifexclude++;
 			}
-         	if ($ifStatus{$key}{$snmpIfOperStatus} == 5 ) { $ifdormant++ ;}
-		}else{
-			$ifexclude++;
-		}
 		
+		}
+	}else{
+		$ifunused++;
 	}
-   
 }
 
    if ($ifdown > 0) {
       $state = 'CRITICAL';
-      $answer = sprintf("host '%s', interfaces up: %d, down: %d, dormant: %d, excluded: %d<BR>",
+      $answer = sprintf("host '%s', interfaces up: %d, down: %d, dormant: %d, excluded: %d, unused: %d<BR>",
                         $hostname,
 			$ifup,
 			$ifdown,
 			$ifdormant,
-			$ifexclude);
+			$ifexclude,
+			$ifunused);
       $answer = $answer . $ifmessage . "\n";
    }
    else {
       $state = 'OK';
-      $answer = sprintf("host '%s', interfaces up: %d, down: %d, dormant: %d, excluded: %d",
+      $answer = sprintf("host '%s', interfaces up: %d, down: %d, dormant: %d, excluded: %d, unused: %d",
                         $hostname,
 			$ifup,
 			$ifdown,
 			$ifdormant,
-			$ifexclude);
+			$ifexclude,
+			$ifunused);
    }
-my $perfdata = sprintf("up:%d,down:%d,dormant:%d,excluded:%d",$ifup,$ifdown,$ifdormant,$ifexclude);
+my $perfdata = sprintf("up:%d,down:%d,dormant:%d,excluded:%d,unused:%d",$ifup,$ifdown,$ifdormant,$ifexclude,$ifunused);
 print ("$state: $answer |$perfdata\n");
 exit $ERRORS{$state};
 
