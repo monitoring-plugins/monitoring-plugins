@@ -159,6 +159,8 @@ process_arguments (int argc, char **argv)
 		{"ver2", no_argument, 0, '2'},
 		{"ver3", no_argument, 0, '3'},
 #endif
+		{"use-ipv4", no_argument, 0, '4'},
+		{"use-ipv6", no_argument, 0, '6'},
 		{"port", required_argument, 0, 'p'},
 		{"warn", required_argument, 0, 'w'},
 		{"crit", required_argument, 0, 'c'},
@@ -174,7 +176,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "hV23t:c:w:H:b:p:a:D:P:", longopts, &option_index);
+		c = getopt_long (argc, argv, "hV2346t:c:w:H:b:p:a:D:P:", longopts, &option_index);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -223,14 +225,28 @@ process_arguments (int argc, char **argv)
 			ld_protocol = 3;
 			break;
 #endif
+		case '4':
+			address_family = AF_INET;
+			break;
+		case '6':
+#ifdef USE_IPV6
+			address_family = AF_INET6;
+#else
+			usage ("IPv6 support not available\n");
+#endif
+			break;
 		default:
 			usage ("check_ldap: could not parse unknown arguments\n");
 			break;
 		}
 	}
 
-	if (ld_host[0] == 0) {
-		asprintf (&ld_host, "%s", argv[c]);
+	c = optind;
+	if (strlen(ld_host) == 0 && is_host(argv[c])) {
+		asprintf (&ld_host, "%s", argv[c++]);
+	}
+	if (strlen(ld_base) == 0 && argv[c]) {
+		asprintf (&ld_base, "%s", argv[c++]);
 	}
 
 	return validate_arguments ();
@@ -271,8 +287,10 @@ print_help ()
 		 "\t-P [--pass] ... ldap password (if required)\n"
 		 "\t-p [--port] ... ldap port (default: %d)\n"
 #ifdef HAVE_LDAP_SET_OPTION
-		 "\t-2 [--ver2] ... use ldap porotocol version 2\n"
-		 "\t-3 [--ver3] ... use ldap porotocol version 3\n"
+		 "\t-2 [--ver2] ... use ldap protocol version 2\n"
+		 "\t-3 [--ver3] ... use ldap protocol version 3\n"
+		 "\t-4 [--use-ipv4] ... use IPv4 protocol\n"
+		 "\t-6 [--use-ipv6] ... use IPv6 protocol\n"
 		 "\t\t(default protocol version: %d)\n"
 #endif
 		 "\t-w [--warn] ... time in secs. - if the exceeds <warn> the STATE_WARNING will be returned\n"
@@ -292,7 +310,7 @@ print_usage ()
 		("Usage: %s -H <host> -b <base_dn> [-p <port>] [-a <attr>] [-D <binddn>]\n"
 		 "         [-P <password>] [-w <warn_time>] [-c <crit_time>] [-t timeout]\n"
 #ifdef HAVE_LDAP_SET_OPTION
-		 "         [-2|-3]\n"
+		 "         [-2|-3] [-4|-6]\n"
 #endif
 		 "(Note: all times are in seconds.)\n", progname);
 }

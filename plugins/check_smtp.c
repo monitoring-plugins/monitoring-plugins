@@ -33,11 +33,15 @@ STATE_WARNING return values.\n";
 
 const char *option_summary = "\
 -H host [-p port] [-e expect] [-C command] [-f from addr]\n\
-         [-w warn] [-c crit] [-t timeout] [-n] [-v]";
+         [-w warn] [-c crit] [-t timeout] [-n] [-v] [-4|-6]";
 
 const char *options = "\
  -H, --hostname=STRING or IPADDRESS\n\
    Check server on the indicated host\n\
+ -4, --use-ipv4\n\
+   Use IPv4 protocol\n\
+ -6, --use-ipv6\n\
+   Use IPv6 protocol\n\
  -p, --port=INTEGER\n\
    Make connection on the indicated port (default: %d)\n\
  -e, --expect=STRING\n\
@@ -233,6 +237,8 @@ process_arguments (int argc, char **argv)
 		{"nocommand", required_argument, 0, 'n'},
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
+		{"use-ipv4", no_argument, 0, '4'},
+		{"use-ipv6", no_argument, 0, '6'},
 		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
 	};
@@ -250,7 +256,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVvt:p:f:e:c:w:H:C:",
+		c = getopt_long (argc, argv, "+hVv46t:p:f:e:c:w:H:C:",
 		                 long_options, &option_index);
 
 		if (c == -1 || c == EOF)
@@ -314,6 +320,16 @@ process_arguments (int argc, char **argv)
 			else {
 				usage ("Time interval must be a nonnegative integer\n");
 			}
+			break;
+		case '4':
+			address_family = AF_INET;
+			break;
+		case '6':
+#ifdef USE_IPV6
+			address_family = AF_INET6;
+#else
+			usage ("IPv6 support not available\n");
+#endif
 			break;
 		case 'V':									/* version */
 			print_revision (progname, revision);

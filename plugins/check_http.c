@@ -45,13 +45,17 @@ certificate expiration times.\n"
             [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L]\n\
             [-a auth] [-f <ok | warn | critcal | follow>] [-e <expect>]\n\
             [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n\
-            [-P string] [-m min_pg_size]"
+            [-P string] [-m min_pg_size] [-4|-6]"
 
 #define LONGOPTIONS "\
  -H, --hostname=ADDRESS\n\
     Host name argument for servers using host headers (virtual host)\n\
  -I, --IP-address=ADDRESS\n\
    IP address or name (use numeric address if possible to bypass DNS lookup).\n\
+ -4, --use-ipv4\n\
+   Use IPv4 protocol\n\
+ -6, --use-ipv6\n\
+   Use IPv6 protocol\n\
  -e, --expect=STRING\n\
    String to expect in first (status) line of server response (default: %s)\n\
    If specified skips all other status line logic (ex: 3xx, 4xx, 5xx processing)\n\
@@ -316,6 +320,8 @@ process_arguments (int argc, char **argv)
 		{"onredirect", required_argument, 0, 'f'},
 		{"certificate", required_argument, 0, 'C'},
 		{"min", required_argument, 0, 'm'},
+		{"use-ipv4", no_argument, 0, '4'},
+		{"use-ipv6", no_argument, 0, '6'},
 		{0, 0, 0, 0}
 	};
 
@@ -336,7 +342,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvht:c:w:H:P:I:a:e:p:s:R:r:u:f:C:nlLSm:", long_options, &option_index);
+		c = getopt_long (argc, argv, "Vvh46t:c:w:H:P:I:a:e:p:s:R:r:u:f:C:nlLSm:", long_options, &option_index);
 		if (c == -1 || c == EOF)
 			break;
 
@@ -464,6 +470,16 @@ process_arguments (int argc, char **argv)
 			}
 			break;
 #endif
+		case '4':
+			address_family = AF_INET;
+			break;
+		case '6':
+#ifdef USE_IPV6
+			address_family = AF_INET6;
+#else
+			usage ("IPv6 support not available\n");
+#endif
+			break;
 		case 'v': /* verbose */
 			verbose = TRUE;
 			break;
