@@ -1,31 +1,11 @@
 #!/bin/sh
 #
-# autogen.sh glue for CMU Cyrus IMAP
 # $Id$
 #
 # Requires: automake, autoconf, dpkg-dev
 # set -e
 
-MAKE=$(which gnumake)
-if test ! -x "$MAKE" ; then MAKE=$(which gmake) ; fi
-if test ! -x "$MAKE" ; then MAKE=$(which make) ; fi
-HAVE_GNU_MAKE=$($MAKE --version|grep -c "Free Software Foundation")
-
-if test "$HAVE_GNU_MAKE" != "1"; then 
-	echo Could not find GNU make on this system, can not proceed with build.
-	exit 1
-else
-	echo Found GNU Make at $MAKE ... good.
-fi
-
-# Refresh GNU autotools toolchain.
-for i in config.guess config.sub missing install-sh mkinstalldirs depcomp; do
-	test -r /usr/share/automake/${i} && {
-		rm -f ${i}
-	}
-done
-
-tools/setup
+./tools/setup
 
 # For the Debian build
 test -d debian && {
