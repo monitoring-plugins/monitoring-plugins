@@ -920,7 +920,7 @@ int connect_SSL (void)
 {
 	SSL_METHOD *meth;
 
-	asprintf (randbuff, "%s", "qwertyuiopasdfghjkl");
+	asprintf (&randbuff, "%s", "qwertyuiopasdfghjkl");
 	RAND_seed (randbuff, strlen (randbuff));
 	/* Initialize SSL context */
 	SSLeay_add_ssl_algorithms ();
