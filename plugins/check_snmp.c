@@ -321,6 +321,8 @@ main (int argc, char **argv)
 		    eval_method[i] & WARN_EQ ||
 		    eval_method[i] & WARN_NE) {
 			p2 = strpbrk (p2, "0123456789");
+			if (p2 == NULL) 
+				terminate (STATE_UNKNOWN,"No valid data returned");
 			response_value[i] = strtoul (p2, NULL, 10);
 			iresult = check_num (i);
 			asprintf (&show, "%lu", response_value[i]);
