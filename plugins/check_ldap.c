@@ -66,7 +66,7 @@ main (int argc, char *argv[])
 
 	/* should be 	int result = STATE_UNKNOWN; */
 	
-	int status = STATE_UNKNOW;
+	int status = STATE_UNKNOWN;
 	long microsec;
 	double elapsed_time;
 
