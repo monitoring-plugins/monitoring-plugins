@@ -770,12 +770,21 @@ int add_dhcp_offer(struct in_addr source,dhcp_packet *offer_packet){
 			printf("Option: %d (0x%02X)\n",option_type,option_length);
 
 		/* get option data */
-		if(option_type==DHCP_OPTION_LEASE_TIME)
-			dhcp_lease_time=ntohl(*((u_int32_t *)&offer_packet->options[x]));
-		if(option_type==DHCP_OPTION_RENEWAL_TIME)
-			dhcp_renewal_time=ntohl(*((u_int32_t *)&offer_packet->options[x]));
-		if(option_type==DHCP_OPTION_REBINDING_TIME)
-			dhcp_rebinding_time=ntohl(*((u_int32_t *)&offer_packet->options[x]));
+        if(option_type==DHCP_OPTION_LEASE_TIME) {
+            memcpy(&dhcp_lease_time, &offer_packet->options[x],
+                sizeof(dhcp_lease_time));
+            dhcp_lease_time = ntohl(dhcp_lease_time);
+        }
+        if(option_type==DHCP_OPTION_RENEWAL_TIME) {
+            memcpy(&dhcp_renewal_time, &offer_packet->options[x],
+                sizeof(dhcp_renewal_time));
+            dhcp_renewal_time = ntohl(dhcp_renewal_time);
+        }
+        if(option_type==DHCP_OPTION_REBINDING_TIME) {
+            memcpy(&dhcp_rebinding_time, &offer_packet->options[x],
+                sizeof(dhcp_rebinding_time));
+            dhcp_rebinding_time = ntohl(dhcp_rebinding_time);
+        }
 
 		/* skip option data we're ignoring */
 		else
