@@ -18,20 +18,11 @@ else
 	echo Found GNU Make at $MAKE ... good.
 fi
 
-# Refresh GNU autotools toolchain.
-for i in config.guess config.sub missing install-sh mkinstalldirs ; do
-	test -r /usr/share/automake/${i} && {
-		rm -f ${i}
-		cp /usr/share/automake/${i} .
-	}
-	chmod 755 ${i}
-done
-
+autopoint --force
 aclocal -I lib
 autoheader
-automake --add-missing --copy
+automake --add-missing --force-missing
 autoconf
-autopoint --force
 
 if [ -f debian/rules ] ; then
   chmod +x debian/rules
