@@ -114,6 +114,7 @@ int use_ssl = FALSE;
 int verbose = FALSE;
 int sd;
 int min_page_len = 0;
+int max_page_len = 0;
 int redir_depth = 0;
 int max_depth = 15;
 char *http_method;
@@ -222,7 +223,7 @@ process_arguments (int argc, char **argv)
 		{"no-body", no_argument, 0, 'N'},
 		{"max-age", required_argument, 0, 'M'},
 		{"content-type", required_argument, 0, 'T'},
-		{"min", required_argument, 0, 'm'},
+		{"minmax", required_argument, 0, 'm'},
 		{"use-ipv4", no_argument, 0, '4'},
 		{"use-ipv6", no_argument, 0, '6'},
 		{0, 0, 0, 0}
@@ -408,8 +409,27 @@ process_arguments (int argc, char **argv)
 			verbose = TRUE;
 			break;
 		case 'm': /* min_page_length */
-			min_page_len = atoi (optarg);
+			{
+			char *tmp;
+			if (strchr(optarg, ':') != (char *)NULL) {
+				/* range, so get two values, min:max */
+				tmp = strtok(optarg, ":");
+				if (tmp == NULL) {
+					printf("Bad format: try \"-m min:max\"\n");
+					exit (STATE_WARNING);
+				} else
+					min_page_len = atoi(tmp);
+
+				tmp = strtok(NULL, ":");
+				if (tmp == NULL) {
+					printf("Bad format: try \"-m min:max\"\n");
+					exit (STATE_WARNING);
+				} else
+					max_page_len = atoi(tmp);
+			} else 
+				min_page_len = atoi (optarg);
 			break;
+			}
 		case 'N': /* no-body */
 			no_body = TRUE;
 			break;
@@ -427,7 +447,7 @@ process_arguments (int argc, char **argv)
                       maximum_age = atoi (optarg);
                     else {
                       fprintf (stderr, "unparsable max-age: %s\n", optarg);
-                      exit (1);
+                      exit (STATE_WARNING);
                     }
                   }
                   break;
@@ -700,7 +720,55 @@ check_document_dates (const char *headers)
   }
 }
 
+int
+get_content_length (const char *headers)
+{
+	const char *s;
+	int content_length = 0;
 
+	s = headers;
+	while (*s) {
+		const char *field = s;
+		const char *value = 0;
+
+		/* Find the end of the header field */
+		while (*s && !isspace(*s) && *s != ':')
+			s++;
+
+		/* Remember the header value, if any. */
+		if (*s == ':')
+			value = ++s;
+
+		/* Skip to the end of the header, including continuation lines. */
+		while (*s && !(*s == '\n' && (s[1] != ' ' && s[1] != '\t')))
+			s++;
+		s++;
+
+		/* Process this header. */
+		if (value && value > field+2) {
+			char *ff = (char *) malloc (value-field);
+			char *ss = ff;
+			while (field < value-1)
+				*ss++ = tolower(*field++);
+			*ss++ = 0;
+
+			if (!strcmp (ff, "content-length")) {
+				const char *e;
+				while (*value && isspace (*value))
+					value++;
+				for (e = value; *e && *e != '\r' && *e != '\n'; e++)
+					;
+				ss = (char *) malloc (e - value + 1);
+				strncpy (ss, value, e - value);
+				ss[e - value] = 0;
+				content_length = atoi(ss);
+				free (ss);
+			}
+			free (ff);
+		}
+	}
+	return (content_length);
+}
 
 int
 check_http (void)
@@ -774,6 +842,7 @@ check_http (void)
 		} else {
 			asprintf (&buf, "%sContent-Type: application/x-www-form-urlencoded\r\n", buf);
 		}
+		
 		asprintf (&buf, "%sContent-Length: %i\r\n\r\n", buf, strlen (http_post_data));
 		asprintf (&buf, "%s%s%s", buf, http_post_data, CRLF);
 	}
@@ -1005,8 +1074,13 @@ check_http (void)
 #endif
 
 	/* make sure the page is of an appropriate size */
-	page_len = strlen (page);
-	if ((min_page_len > 0) && (page_len < min_page_len)) {
+	/* page_len = get_content_length(header); */
+	page_len = pagesize;
+	if ((max_page_len > 0) && (page_len > max_page_len)) {
+		printf (_("HTTP WARNING: page size %d too large%s|%s\n"),
+			page_len, (display_html ? "</A>" : ""), perfd_size (page_len) );
+		exit (STATE_WARNING);
+	} else if ((min_page_len > 0) && (page_len < min_page_len)) {
 		printf (_("HTTP WARNING: page size %d too small%s|%s\n"),
 			page_len, (display_html ? "</A>" : ""), perfd_size (page_len) );
 		exit (STATE_WARNING);
@@ -1442,8 +1516,8 @@ certificate expiration times.\n\n"));
    Wrap output in HTML link (obsoleted by urlize)\n\
  -f, --onredirect=<ok|warning|critical|follow>\n\
    How to handle redirected pages\n\
- -m, --min=INTEGER\n\
-   Minimum page size required (bytes)\n"));
+ -m, --minmax=INTEGER<:INTEGER>\n\
+   Minimum page size required (bytes) : Maximum page size required (bytes)\n"));
 
 	printf (_(UT_WARN_CRIT));
 
@@ -1489,10 +1563,10 @@ void
 print_usage (void)
 {
 	printf ("\
-Usage: %s -H <vhost> | -I <IP-address>) [-u <uri>] [-p <port>]\n\
+Usage: %s -H <vhost> | -I <IP-address> [-u <uri>] [-p <port>]\n\
                   [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L]\n\
                   [-a auth] [-f <ok | warn | critcal | follow>] [-e <expect>]\n\
                   [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n\
-                  [-P string] [-m min_pg_size] [-4|-6] [-N] [-M <age>]\n\
-                  [-A string] [-k string]\n", progname);
+                  [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] \n\
+                  [-M <age>] [-A string] [-k string]\n", progname);
 }
