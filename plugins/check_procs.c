@@ -249,7 +249,7 @@ main (int argc, char **argv)
 	/* If we get anything on STDERR, at least set warning */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
 		if (verbose)
-			printf (_("STDERR: %s"), input_buffer);
+			printf ("STDERR: %s", input_buffer);
 		result = max_state (result, STATE_WARNING);
 		printf (_("System call sent warnings to stderr\n"));
 	}
@@ -412,7 +412,7 @@ process_arguments (int argc, char **argv)
 				uid = pw->pw_uid;
 			}
 			user = pw->pw_name;
-			asprintf (&fmt, _("%s%sUID = %d (%s)"), (fmt ? fmt : ""), (options ? ", " : ""),
+			asprintf (&fmt, "%s%sUID = %d (%s)", (fmt ? fmt : ""), (options ? ", " : ""),
 			          uid, user);
 			options |= USER;
 			break;
@@ -432,19 +432,19 @@ process_arguments (int argc, char **argv)
 				break;
 			else
 				args = optarg;
-			asprintf (&fmt, _("%s%sargs '%s'"), (fmt ? fmt : ""), (options ? ", " : ""), args);
+			asprintf (&fmt, "%s%sargs '%s'", (fmt ? fmt : ""), (options ? ", " : ""), args);
 			options |= ARGS;
 			break;
 		case 'r': 					/* RSS */
 			if (sscanf (optarg, "%d%[^0-9]", &rss, tmp) == 1) {
-				asprintf (&fmt, _("%s%sRSS >= %d"), (fmt ? fmt : ""), (options ? ", " : ""), rss);
+				asprintf (&fmt, "%s%sRSS >= %d", (fmt ? fmt : ""), (options ? ", " : ""), rss);
 				options |= RSS;
 				break;
 			}
 			usage4 (_("RSS must be an integer!"));
 		case 'z':					/* VSZ */
 			if (sscanf (optarg, "%d%[^0-9]", &vsz, tmp) == 1) {
-				asprintf (&fmt, _("%s%sVSZ >= %d"), (fmt ? fmt : ""), (options ? ", " : ""), vsz);
+				asprintf (&fmt, "%s%sVSZ >= %d", (fmt ? fmt : ""), (options ? ", " : ""), vsz);
 				options |= VSZ;
 				break;
 			}
@@ -452,7 +452,7 @@ process_arguments (int argc, char **argv)
 		case 'P':					/* PCPU */
 			/* TODO: -P 1.5.5 is accepted */
 			if (sscanf (optarg, "%f%[^0-9.]", &pcpu, tmp) == 1) {
-				asprintf (&fmt, _("%s%sPCPU >= %.2f"), (fmt ? fmt : ""), (options ? ", " : ""), pcpu);
+				asprintf (&fmt, "%s%sPCPU >= %.2f", (fmt ? fmt : ""), (options ? ", " : ""), pcpu);
 				options |= PCPU;
 				break;
 			}

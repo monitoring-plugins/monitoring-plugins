@@ -224,9 +224,9 @@ error_scan (char *input_buffer)
 {
 
 	/* the DNS lookup timed out */
-	if (strstr (input_buffer, "Note: nslookup is deprecated and may be removed from future releases.") ||
-	    strstr (input_buffer, "Consider using the `dig' or `host' programs instead.  Run nslookup with") ||
-	    strstr (input_buffer, "the `-sil[ent]' option to prevent this message from appearing."))
+	if (strstr (input_buffer, _("Note: nslookup is deprecated and may be removed from future releases.")) ||
+	    strstr (input_buffer, _("Consider using the `dig' or `host' programs instead.  Run nslookup with")) ||
+	    strstr (input_buffer, _("the `-sil[ent]' option to prevent this message from appearing.")))
 		return STATE_OK;
 
 	/* DNS server is not running... */

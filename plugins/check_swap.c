@@ -405,7 +405,7 @@ process_arguments (int argc, char **argv)
 				break;
 			}
 			else {
-				usage (_("Critical threshold must be integer or percentage!\n"));
+				usage4 (_("Critical threshold must be integer or percentage!"));
 			}
 		case 'a':									/* all swap */
 			allswaps = TRUE;
@@ -458,12 +458,12 @@ validate_arguments (void)
 		return ERROR;
 	}
 	else if (warn_percent < crit_percent) {
-		usage
-			(_("Warning percentage should be more than critical percentage\n"));
+		usage4 
+			(_("Warning percentage should be more than critical percentage"));
 	}
 	else if (warn_size < crit_size) {
-		usage
-			(_("Warning free space should be more than critical free space\n"));
+		usage4
+			(_("Warning free space should be more than critical free space"));
 	}
 	return OK;
 }

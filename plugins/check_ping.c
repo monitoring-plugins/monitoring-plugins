@@ -403,7 +403,7 @@ run_ping (const char *cmd, const char *addr)
 	int result = STATE_UNKNOWN;
 
 	if ((child_process = spopen (cmd)) == NULL)
-		die (STATE_UNKNOWN, _("Cannot open pipe: %s"), cmd);
+		die (STATE_UNKNOWN, _("Could not open pipe: %s\n"), cmd);
 
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL)

@@ -927,7 +927,7 @@ int get_results(void){
 		printf(_(", %s%d of %d requested servers responded"),((requested_responses<requested_servers) && requested_responses>0)?"only ":"",requested_responses,requested_servers);
 
 	if(request_specific_address==TRUE)
-		printf(_(", requested address (%s) was %soffered"),inet_ntoa(requested_address),(received_requested_address==TRUE)?"":"not ");
+		printf(_(", requested address (%s) was %soffered"),inet_ntoa(requested_address),(received_requested_address==TRUE)?"":_("not "));
 
 	printf(_(", max lease time = "));
 	if(max_lease_time==DHCP_INFINITE_TIME)
@@ -1048,23 +1048,19 @@ int call_getopt(int argc, char **argv){
 			break;
 
 		case 'V': /* version */
-
-			/*print_revision(progname,"$Revision$");*/
+			print_revision(progname,revision);
 			exit(STATE_OK);
 
 		case 'h': /* help */
-
 			print_help();
 			exit(STATE_OK);
 
 		case 'v': /* verbose */
-
 			verbose=1;
 			break;
 
 		case '?': /* help */
-
-			/*usage("Invalid argument\n");*/
+			usage2 (_("Unknown argument"), optarg);
 			break;
 
 		default:
@@ -1074,7 +1070,6 @@ int call_getopt(int argc, char **argv){
 
 	return i;
         }
-
 
 
 int validate_arguments(void){

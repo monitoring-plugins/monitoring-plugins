@@ -581,7 +581,7 @@ process_arguments (int argc, char **argv)
 		case 'S':
 			use_ssl = TRUE;
 #else
-			die (STATE_UNKNOWN, _("SSL support not available.  Install OpenSSL and recompile."));
+			die (STATE_UNKNOWN, _("Invalid option - SSL is not available"));
 #endif
 			break;
 		}

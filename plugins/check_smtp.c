@@ -188,7 +188,7 @@ main (int argc, char **argv)
 		    return STATE_UNKNOWN;
 		  }
 		  if(connect_STARTTLS() != OK) {
-		    printf (_("ERROR: Cannot create SSL context.\n"));
+		    printf (_("CRITICAL - Cannot create SSL context.\n"));
 		    return STATE_CRITICAL;
 		  }
 		  if ( check_cert ) {
@@ -197,7 +197,7 @@ main (int argc, char **argv)
 		      X509_free(server_cert);
 		    }
 		    else {
-		      printf (_("ERROR: Cannot retrieve server certificate.\n"));
+		      printf (_("CRITICAL - Cannot retrieve server certificate.\n"));
 		      result = STATE_CRITICAL;
 			      
 		    }
@@ -591,7 +591,7 @@ connect_STARTTLS (void)
   SSL_load_error_strings ();
   if ((ctx = SSL_CTX_new (meth)) == NULL)
     {
-      printf(_("ERROR: Cannot create SSL context.\n"));
+      printf(_("CRITICAL - Cannot create SSL context.\n"));
       return STATE_CRITICAL;
     }
   /* do the SSL handshake */
@@ -606,7 +606,7 @@ connect_STARTTLS (void)
     }
   else
     {
-      printf (_("ERROR: Cannot initiate SSL handshake.\n"));
+      printf (_("CRITICAL - Cannot initiate SSL handshake.\n"));
     }
   /* this causes a seg faul
      not sure why, being sloppy
@@ -632,7 +632,7 @@ check_certificate (X509 ** certificate)
   /* Generate tm structure to process timestamp */
   if (tm->type == V_ASN1_UTCTIME) {
     if (tm->length < 10) {
-      printf (_("ERROR: Wrong time format in certificate.\n"));
+      printf (_("CRITICAL - Wrong time format in certificate.\n"));
       return STATE_CRITICAL;
     }
     else {
@@ -644,7 +644,7 @@ check_certificate (X509 ** certificate)
   }
   else {
     if (tm->length < 12) {
-      printf (_("ERROR: Wrong time format in certificate.\n"));
+      printf (_("CRITICAL - Wrong time format in certificate.\n"));
       return STATE_CRITICAL;
     }
     else {

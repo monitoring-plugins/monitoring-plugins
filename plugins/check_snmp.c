@@ -281,7 +281,7 @@ main (int argc, char **argv)
 				iresult = STATE_CRITICAL;
 			}
 #else
-			printf (_("%s UNKNOWN: call for regex which was not a compiled option"), label);
+			printf (_("Call for regex which was not a compiled option"));
 			exit (STATE_UNKNOWN);
 #endif
 		}
@@ -511,7 +511,7 @@ process_arguments (int argc, char **argv)
 			eval_method[jj++] = CRIT_REGEX;
 			ii++;
 #else
-			printf (_("%s UNKNOWN: call for regex which was not a compiled option"), label);
+			printf (_("call for regex which was not a compiled option"));
 			exit (STATE_UNKNOWN);
 #endif
 			break;
@@ -530,8 +530,7 @@ process_arguments (int argc, char **argv)
 				labels_size += 8;
 				labels = realloc (labels, labels_size);
 				if (labels == NULL)
-					die (STATE_UNKNOWN,
-										 _("Could not realloc() labels[%d]"), nlabels);
+					die (STATE_UNKNOWN, _("Could not reallocate labels[%d]"), nlabels);
 			}
 			labels[nlabels - 1] = optarg;
 			ptr = thisarg (optarg);
@@ -543,7 +542,7 @@ process_arguments (int argc, char **argv)
 					labels_size += 8;
 					labels = realloc (labels, labels_size);
 					if (labels == NULL)
-						die (STATE_UNKNOWN, _("Could not realloc() labels\n"));
+						die (STATE_UNKNOWN, _("Could not reallocate labels\n"));
 				}
 				labels++;
 				ptr = thisarg (ptr);
@@ -560,8 +559,7 @@ process_arguments (int argc, char **argv)
 				unitv_size += 8;
 				unitv = realloc (unitv, unitv_size);
 				if (unitv == NULL)
-					die (STATE_UNKNOWN,
-										 _("Could not realloc() units [%d]\n"), nunits);
+					die (STATE_UNKNOWN, _("Could not reallocate units [%d]\n"), nunits);
 			}
 			unitv[nunits - 1] = optarg;
 			ptr = thisarg (optarg);
@@ -646,7 +644,7 @@ validate_arguments ()
 		}
 		else if ( strcmp(seclevel, "authNoPriv") == 0 ) {
 			if ( secname == NULL || authpasswd == NULL) {
-				printf (_("Missing secname (%s) or authpassword (%s) ! \n)"),secname, authpasswd );
+				printf (_("Missing secname (%s) or authpassword (%s) ! \n"),secname, authpasswd );
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
@@ -663,9 +661,7 @@ validate_arguments ()
 		
 	}
 	else {
-		printf (_("Invalid SNMP version: %s\n"), proto);
-		print_usage ();
-		exit (STATE_UNKNOWN);				
+		usage2 (_("Invalid SNMP version"), proto);
 	}
 			
 	return OK;
