@@ -33,6 +33,7 @@ void print_usage (void);
 char *server = NULL;
 char *username = NULL;
 char *password = NULL;
+char *nasid = NULL;
 char *expect = NULL;
 char *config_file = NULL;
 unsigned short port = PW_AUTH_UDP_PORT;
@@ -119,7 +120,8 @@ main (int argc, char **argv)
 
 	if (!(rc_avpair_add (&data.send_pairs, PW_SERVICE_TYPE, &service, 0) &&
 				rc_avpair_add (&data.send_pairs, PW_USER_NAME, username, 0) &&
-				rc_avpair_add (&data.send_pairs, PW_USER_PASSWORD, password, 0)))
+				rc_avpair_add (&data.send_pairs, PW_USER_PASSWORD, password, 0) &&
+				(nasid==NULL || rc_avpair_add (&data.send_pairs, PW_NAS_IDENTIFIER, nasid, 0))))
 		die (STATE_UNKNOWN, _("Out of Memory?"));
 
 	/* 
@@ -167,6 +169,7 @@ process_arguments (int argc, char **argv)
 		{"port", required_argument, 0, 'P'},
 		{"username", required_argument, 0, 'u'},
 		{"password", required_argument, 0, 'p'},
+		{"nas-id", required_argument, 0, 'n'},
 		{"filename", required_argument, 0, 'F'},
 		{"expect", required_argument, 0, 'e'},
 		{"retries", required_argument, 0, 'r'},
@@ -202,7 +205,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVvH:P:F:u:p:t:r:e:", longopts,
+		c = getopt_long (argc, argv, "+hVvH:P:F:u:p:n:t:r:e:", longopts,
 									 &option);
 
 		if (c == -1 || c == EOF || c == 1)
@@ -241,6 +244,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'p':									/* password */
 			password = optarg;
+			break;
+		case 'n':									/* nas id */
+			nasid = optarg;
 			break;
 		case 'F':									/* configuration file */
 			config_file = optarg;
@@ -294,6 +300,8 @@ print_help (void)
     The user to authenticate\n\
  -p, --password=STRING\n\
     Password for autentication (SECURITY RISK)\n\
+ -n, --nas-id=STRING\n\
+    NAS identifier\n\
  -F, --filename=STRING\n\
     Configuration file\n\
  -e, --expect=STRING\n\
@@ -328,7 +336,7 @@ void
 print_usage (void)
 {
 	printf ("\
-Usage: %s -H host -F config_file -u username -p password [-P port]\n\
+Usage: %s -H host -F config_file -u username -p password [-n nas-id] [-P port]\n\
   [-t timeout] [-r retries] [-e expect]\n", progname);
 	printf (_(UT_HLP_VRS), progname, progname);
 }
