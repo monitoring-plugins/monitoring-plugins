@@ -88,6 +88,8 @@ print_help ()
 #endif
 
 	printf (_(UT_WARN_CRIT));
+
+	printf (_(UT_SUPPORT));
 }
 
 int process_arguments (int, char **);
