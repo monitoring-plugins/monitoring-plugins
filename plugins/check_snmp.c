@@ -297,6 +297,8 @@ main (int argc, char **argv)
 			show = strstr (response, "Gauge: ") + 7;
 		else if (strstr (response, "Gauge32: "))
 			show = strstr (response, "Gauge32: ") + 9;
+		else if (strstr (response, "Counter32: "))
+			show = strstr (response, "Counter32: ") + 11;
 		else if (strstr (response, "INTEGER: "))
 			show = strstr (response, "INTEGER: ") + 9;
 		else
