@@ -30,7 +30,7 @@
 # (in accordance with the plugin coding guidelines)
 ####################################
 
-use Net::SNMP;
+#use Net::SNMP;
 use Getopt::Long;
 &Getopt::Long::config('auto_abbrev');
 
@@ -81,16 +81,19 @@ unless (defined($hostname)) {
 }
 
 if (defined($critical_vals)) {
-    die "Cannot Parse Critical Thresholds\n"
-	unless (split(/:/,$critical_vals)>=2);
-    ($inlet_thresh,$outlet_thresh) = @_
+    if ($critical_vals =~ m/^([0-9]+)[,:]([0-9]+)$/) {
+        ($inlet_thresh,$outlet_thresh) = ($1, $2);
+    } else {
+        die "Cannot Parse Critical Thresholds\n";
+    }
 }
-die unless(defined($inlet_thresh) && defined($outlet_thresh));
 
 if (defined($warning_vals)) {
-    die "Cannot Parse Critical Thresholds\n"
-	unless (split(/:/,$warning_vals)>=2);
-    ($inlet_warn,$outlet_warn) = @_;
+    if ($warning_vals =~ m/^([0-9]+)[:,]([0-9]+)$/) {
+        ($inlet_warn,$outlet_warn) = ($1, $2);
+    } else {
+        die "Cannot Parse Warning Thresholds\n";
+    }
 }else{
     $inlet_warn=$inlet_thresh;
     $outlet_warn=$outlet_thresh;
