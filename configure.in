@@ -1,10 +1,12 @@
 dnl Process this file with autoconf to produce a configure script.
 include(`aclocal.m4')
 AC_REVISION ($Revision$)
-AC_INIT(package.def)
-VERSION=`cat $srcdir/package.def|sed -e 's/PACKAGE_RELEASE= *"//;s/"//'`
-PACKAGE=nagios-plugins
-dnl AM_INIT_AUTOMAKE(nagios-plugins,$VERSION)
+AC_INIT(Helper.pm)
+PACKAGE_VERSION="1.3.0"
+AC_SUBST(PACKAGE_VERSION)
+PACKAGE_RELEASE="alpha1"
+AC_SUBST(PACKAGE_RELEASE)
+AM_INIT_AUTOMAKE(nagios-plugins,${PACKAGE_VERSION}-${PACKAGE_RELEASE})
 AM_CONFIG_HEADER(plugins/config.h plugins/common.h plugins/version.h plugins/netutils.h plugins/utils.h plugins/popen.h)
 
 AC_PREFIX_DEFAULT(/usr/local/nagios)
@@ -814,10 +816,6 @@ AC_TRY_COMPILE([#ifdef __STDC__
 AC_SUBST(EXTRAS)
 AC_SUBST(DEPLIBS)
 
-AC_SUBST(PACKAGE)
-AC_SUBST(VERSION)
-AC_DEFINE_UNQUOTED(PACKAGE,"${PACKAGE}")
-AC_DEFINE_UNQUOTED(VERSION,"${VERSION}")
 AC_DEFINE_UNQUOTED(PACKAGE_VERSION,"${VERSION}")
 
 AC_OUTPUT(Makefile subst plugins/Makefile plugins-scripts/Makefile plugins-scripts/subst plugins-scripts/utils.pm plugins-scripts/utils.sh command.cfg test.pl,echo timestamp > plugins/stamp-h1;echo timestamp > plugins/stamp-h2;echo timestamp > plugins/stamp-h3;echo timestamp > plugins/stamp-h4;echo timestamp > plugins/stamp-h5;echo timestamp > plugins/stamp-h6;PATH=.:..:$PATH subst.sh command.cfg)
