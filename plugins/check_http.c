@@ -663,6 +663,7 @@ check_http (void)
 	/* fetch the page */
 	pagesize = (size_t) 0;
 	while ((i = my_recv ()) > 0) {
+		buffer[i] = "\0"; 
 		full_page = strscat (full_page, buffer);
 		pagesize += i;
 	}
