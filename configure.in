@@ -160,7 +160,7 @@ _SAVEDLIBS="$LIBS"
 _SAVEDCPPFLAGS="$CPPFLAGS"
 CPPFLAGS="-I/usr/include"
 AC_ARG_WITH(mysqllibdir,--with-mysqllibdir=<dir> sets path to mysql libraries,[MYSQLLIBDIR=$withval])
-if test -n "$MYSQLLIBS"; then
+if test -n "$MYSQLLIBDIR"; then
   AC_CHECK_LIB(mysqlclient,mysql_init,MYSQLLIBS="-lmysqlclient -lz" check_mysql_LDFLAGS="-L$MYSQLLIBDIR",,-L$MYSQLLIBDIR -lz)
 elif test -f /usr/lib/libmysqlclient.so; then
   AC_CHECK_LIB(mysqlclient,mysql_init,MYSQLLIBS="-lmysqlclient -lz",,-lz)
