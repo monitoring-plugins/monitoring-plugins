@@ -2,7 +2,7 @@
  *
  * CHECK_NT.C
  *
- * Program: Windows NT plugin for NetSaint
+ * Program: Windows NT plugin for Nagios
  * License: GPL
  * Copyright (c) 2000-2002 Yves Rubin (rubiyz@yahoo.com)
  *
@@ -78,12 +78,16 @@ int main(int argc, char **argv){
 	int return_code = STATE_UNKNOWN;
 	char *send_buffer=NULL;
 	char *output_message=NULL;
+	char *perfdata=NULL;
 	char *temp_string=NULL;
+	char *temp_string_perf=NULL;
 	char *description=NULL;
 
 	double total_disk_space=0;
 	double free_disk_space=0;
 	double percent_used_space=0;
+	double warning_used_space=0;
+	double critical_used_space=0;
 	double mem_commitLimit=0;
 	double mem_commitByte=0;
 	unsigned long utilization;
@@ -133,6 +137,8 @@ int main(int argc, char **argv){
 			/* -l parameters is present with only integers */
 			return_code=STATE_OK;
 			temp_string = strdup (_("CPU Load"));
+			temp_string_perf = strdup (_(" "));
+      
 			/* loop until one of the parameters is wrong or not present */
 			while (lvalue_list[0+offset]> (unsigned long)0 &&
 						 lvalue_list[0+offset]<=(unsigned long)17280 && 
@@ -155,11 +161,16 @@ int main(int argc, char **argv){
 
 				asprintf(&output_message,_(" %lu%% (%lu min average)"), utilization, lvalue_list[0+offset]);
 				asprintf(&temp_string,"%s%s",temp_string,output_message);
+				asprintf(&perfdata,_(" '%lu min avg Load'=%lu%%;%lu;%lu;0;100"), lvalue_list[0+offset], utilization,
+				  lvalue_list[1+offset], lvalue_list[2+offset]);
+				asprintf(&temp_string_perf,"%s%s",temp_string_perf,perfdata);
 				offset+=3;	/* move across the array */
 			}
-			if (strlen(temp_string)>10)  /* we had at least one loop */
+      
+			if (strlen(temp_string)>10) {  /* we had at least one loop */
 				output_message = strdup (temp_string);
-			else
+				perfdata = temp_string_perf;
+			} else
 				output_message = strdup (_("not enough values for -l parameters"));
 		}	
 		break;
@@ -188,12 +199,16 @@ int main(int argc, char **argv){
 			free_disk_space=atof(strtok(recv_buffer,"&"));
 			total_disk_space=atof(strtok(NULL,"&"));
 			percent_used_space = ((total_disk_space - free_disk_space) / total_disk_space) * 100;
+			warning_used_space = ((float)warning_value / 100) * total_disk_space;
+			critical_used_space = ((float)critical_value / 100) * total_disk_space;
 
 			if (free_disk_space>=0) {
 				asprintf(&temp_string,_("%s:\\ - total: %.2f Gb - used: %.2f Gb (%.0f%%) - free %.2f Gb (%.0f%%)"),
-								 value_list, total_disk_space / 1073741824, (total_disk_space - free_disk_space) / 1073741824, percent_used_space,
-								 free_disk_space / 1073741824, (free_disk_space / total_disk_space)*100); 
-
+				  value_list, total_disk_space / 1073741824, (total_disk_space - free_disk_space) / 1073741824,
+				  percent_used_space, free_disk_space / 1073741824, (free_disk_space / total_disk_space)*100);
+				asprintf(&temp_string_perf,_("'%s:\\ Used Space'=%.2fGb;%.2f;%.2f;0.00;%.2f"), value_list,
+				  (total_disk_space - free_disk_space) / 1073741824, warning_used_space / 1073741824,
+				  critical_used_space / 1073741824, total_disk_space / 1073741824);
 
 				if(check_critical_value==TRUE && percent_used_space >= critical_value)
 					return_code=STATE_CRITICAL;
@@ -203,8 +218,8 @@ int main(int argc, char **argv){
 					return_code=STATE_OK;	
 
 				output_message = strdup (temp_string);
-			}
-			else {
+				perfdata = temp_string_perf;
+			} else {
 				output_message = strdup (_("Free disk space : Invalid drive "));
 				return_code=STATE_UNKNOWN;
 			}
@@ -234,9 +249,15 @@ int main(int argc, char **argv){
 		mem_commitLimit=atof(strtok(recv_buffer,"&"));
 		mem_commitByte=atof(strtok(NULL,"&"));
 		percent_used_space = (mem_commitByte / mem_commitLimit) * 100;
+		warning_used_space = ((float)warning_value / 100) * mem_commitLimit;
+		critical_used_space = ((float)critical_value / 100) * mem_commitLimit;
+
+		// Changed divisor in following line from 1048567 to 3044515 to accurately reflect memory size
 		asprintf(&output_message,_("Memory usage: total:%.2f Mb - used: %.2f Mb (%.0f%%) - free: %.2f Mb (%.0f%%)"), 
-			mem_commitLimit / 1048576, mem_commitByte / 1048567, percent_used_space,  
-			(mem_commitLimit - mem_commitByte) / 1048576, (mem_commitLimit - mem_commitByte) / mem_commitLimit * 100);
+		  mem_commitLimit / 3044515, mem_commitByte / 3044515, percent_used_space,  
+		  (mem_commitLimit - mem_commitByte) / 3044515, (mem_commitLimit - mem_commitByte) / mem_commitLimit * 100);
+		asprintf(&perfdata,_("'Memory usage'=%.2fMb;%.2f;%.2f;0.00;%.2f"), mem_commitByte / 3044515,
+		  warning_used_space / 3044515, critical_used_space / 3044515, mem_commitLimit / 3044515);
 	
 		return_code=STATE_OK;
 		if(check_critical_value==TRUE && percent_used_space >= critical_value)
@@ -262,6 +283,7 @@ int main(int argc, char **argv){
 				asprintf(&output_message, "%.f", counter_value);
 			else
 				asprintf(&output_message,"%s = %.f",  description, counter_value);
+			asprintf(&perfdata,"'%s'=%.f",  description, counter_value);
 	
 			if (critical_value > warning_value) {        /* Normal thresholds */
 				if(check_critical_value==TRUE && counter_value >= critical_value)
@@ -322,8 +344,10 @@ int main(int argc, char **argv){
 	/* reset timeout */
 	alarm(0);
 
-	printf("%s\n",output_message);
-
+	if (perfdata==NULL)
+		printf("%s\n",output_message);
+	else
+		printf("%s | %s\n",output_message,perfdata);
 	return return_code;
 }
 
@@ -575,7 +599,7 @@ Windows NT/2000/XP server.\n\n"));
      Some examples:\n\
        \"Paging file usage is %%.2f %%%%\"\n\
        \"%%.f %%%% paging file used.\"\n"));
-	printf (_("Notes:\n\
+  printf (_("Notes:\n\
  - The NSClient service should be running on the server to get any information\n\
    (http://nsclient.ready2run.nl).\n\
  - Critical thresholds should be lower than warning thresholds\n"));
