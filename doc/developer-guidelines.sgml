@@ -91,8 +91,9 @@
 <article>
 <section id="DevRequirements"><title>Development platform requirements</title>
 	<para>
-	While the requirements for compiling the Nagios plugins release is very small,
-	to develop from CVS needs additional software to be installed. These are the 
+	Nagios plugins are developed to the GNU standard, so any OS which is supported by GNU
+	should run the plugins. While the requirements for compiling the Nagios plugins release 
+	is very small, to develop from CVS needs additional software to be installed. These are the 
 	minimum levels of software required:
 
 	<literallayout>
