@@ -515,6 +515,7 @@ int receive_dhcp_packet(void *buffer, int buffer_size, int sock, int timeout, st
 /* creates a socket for DHCP communication */
 int create_dhcp_socket(void){
         struct sockaddr_in myname;
+	struct ifreq interface;
         int sock;
         int flag=1;
 
@@ -546,6 +547,13 @@ int create_dhcp_socket(void){
         /* set the broadcast option - we need this to listen to DHCP broadcast messages */
         if(setsockopt(sock,SOL_SOCKET,SO_BROADCAST,(char *)&flag,sizeof flag)<0){
 		printf("Error: Could not set broadcast option on DHCP socket!\n");
+		exit(STATE_UNKNOWN);
+	        }
+
+	/* bind socket to interface */
+	strncpy(interface.ifr_ifrn.ifrn_name,network_interface_name,IFNAMSIZ);
+	if(setsockopt(sock,SOL_SOCKET,SO_BINDTODEVICE,(char *)&interface,sizeof(interface))<0){
+		printf("Error: Could not bind socket to interface %s.  Check your privileges...\n",network_interface_name);
 		exit(STATE_UNKNOWN);
 	        }
 
