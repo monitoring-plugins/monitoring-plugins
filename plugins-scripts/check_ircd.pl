@@ -52,8 +52,7 @@ use strict;
 use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_t $opt_p $opt_H $opt_w $opt_c $verbose);
 use vars qw($PROGNAME);
-use FindBin;
-use lib "$FindBin::Bin";
+use lib utils.pm;
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
 
 # ----------------------------------------------------[ Function Prototypes ]--
@@ -71,6 +70,7 @@ $ENV{BASH_ENV} = "";
 
 # -----------------------------------------------------------------[ Global ]--
 
+$PROGNAME = "check_ircd";
 my $NICK="ircd$$";
 my $USER_INFO="monitor localhost localhost : ";
 	

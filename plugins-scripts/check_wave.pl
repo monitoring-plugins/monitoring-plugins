@@ -4,8 +4,7 @@
 
 
 use strict;
-use FindBin;
-use lib "$Findbin::Bin";
+use lib utils.pm;
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 use vars qw($PROGNAME);
 use Getopt::Long;
@@ -13,6 +12,7 @@ use vars qw($opt_V $opt_h $verbose $opt_w $opt_c $opt_H);
 my (@test, $low1, $med1, $high1, $snr, $low2, $med2, $high2);
 my ($low, $med, $high, $lowavg, $medavg, $highavg, $tot, $ss);
 
+$PROGNAME = "check_wave";
 sub print_help ();
 sub print_usage ();
 

@@ -4,9 +4,10 @@
 use strict;
 use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_H $opt_w $opt_c $PROGNAME);
-use FindBin;
-use lib "$FindBin::Bin" ;
+use lib utils.pm ;
 use utils qw(%ERRORS &print_revision &support &usage);
+
+$PROGNAME = "check_breeze";
 
 sub print_help ();
 sub print_usage ();

@@ -6,6 +6,9 @@
 # Copyright 2000, virCIO, LLP
 #
 # $Log$
+# Revision 1.3  2002/05/07 05:35:49  sghosh
+# 2nd fix for ePN
+#
 # Revision 1.2  2002/05/02 16:43:29  sghosh
 # fix for embedded perl
 #
@@ -25,9 +28,10 @@
 
 use Getopt::Long;
 use Net::DNS;
-use Findbin;
-use lib "$FindBin::Bin";
+use lib utils.pm;
 use utils ;
+
+my $PROGNAME = "check_netdns";
 
 Getopt::Long::Configure(`bundling`);
 GetOptions("V" => $opt_V,         "version" => $opt_V,

@@ -33,9 +33,10 @@
 use strict;
 use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_F $verbose $PROGNAME);
-use FindBin ;
-use lib "$FindBin::Bin";
+use lib utils.pm;
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
+
+$PROGNAME="check_flexlm";
 
 sub print_help ();
 sub print_usage ();

@@ -47,7 +47,7 @@
 #           source. This happens while starting up and if contact
 #           with master has been lost.
 #
-# Modifed to run under Embedded Perl - patch from Douglas Warner
+# Modifed to run under Embedded Perl 
 #
 
 
@@ -56,9 +56,10 @@ use POSIX;
 use strict;
 use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_H $opt_w $opt_c $verbose $PROGNAME);
-use FindBin;
-use lib "$FindBin::Bin";
+use lib utils.pm ;
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
+
+$PROGNAME="check_ntp";
 
 sub print_help ();
 sub print_usage ();
