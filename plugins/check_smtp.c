@@ -219,10 +219,11 @@ main (int argc, char **argv)
 	microsec = deltime (tv);
 	elapsed_time = (double)microsec / 1.0e6;
 
-	if (check_critical_time && elapsed_time > (double) critical_time)
-		result = STATE_CRITICAL;
-	else if (check_warning_time && elapsed_time > (double) warning_time)
-		result = STATE_WARNING;
+	if (result == STATE_OK)
+		if (check_critical_time && elapsed_time > (double) critical_time)
+			result = STATE_CRITICAL;
+		else if (check_warning_time && elapsed_time > (double) warning_time)
+			result = STATE_WARNING;
 
 	printf (_("SMTP %s - %.3f sec. response time%s%s|%s\n"),
 	        state_text (result), elapsed_time,
