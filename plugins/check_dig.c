@@ -1,36 +1,48 @@
-/******************************************************************************
- *
- * Program: SNMP plugin for Nagios
- * License: GPL
- *
- * License Information:
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *****************************************************************************/
+/*****************************************************************************
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+*****************************************************************************/
+
+const char *progname = "check_dig";
+const char *revision = "$Revision$";
+const char *copyright = "2002-2003";
+const char *authors = "Nagios Plugin Development Team";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *summary = "Test the DNS service on the specified host using dig\n";
+
+const char *option_summary = "-H host -l lookup [-t timeout] [-v]";
+
+const char *options = "\
+ -H, --hostname=STRING or IPADDRESS\n\
+   Check server on the indicated host\n\
+ -l, --lookup=STRING\n\
+   machine name to lookup\n\
+ -t, --timeout=INTEGER\n\
+   Seconds before connection attempt times out (default: %d)\n\
+ -v, --verbose\n\
+   Print extra information (command-line use only)\n\
+ -h, --help\n\
+   Print detailed help screen\n\
+ -V, --version\n\
+   Print version information\n\n";
 
 #include "config.h"
 #include "common.h"
 #include "utils.h"
 #include "popen.h"
-
-const char *progname = "check_dig";
-#define REVISION "$Revision$"
-#define COPYRIGHT "2000-2002"
-#define AUTHOR "Karl DeBisschop"
-#define EMAIL "karl@debisschop.net"
-#define SUMMARY "Test the DNS service on the specified host using dig\n"
 
 int process_arguments (int, char **);
 int validate_arguments (void);
@@ -210,7 +222,7 @@ process_arguments (int argc, char **argv)
 			}
 		}
 		else {
-			asprintf (&dns_server, "127.0.0.1");
+			dns_server = strdup ("127.0.0.1");
 		}
 	}
 
@@ -234,25 +246,13 @@ validate_arguments (void)
 void
 print_help (void)
 {
-	print_revision (progname, "$Revision$");
+	print_revision (progname, revision);
 	printf
 		("Copyright (c) %s %s <%s>\n\n%s\n",
-		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
+		 copyright, authors, email, summary);
 	print_usage ();
-	printf
-		("\nOptions:\n"
-		 " -H, --hostname=STRING or IPADDRESS\n"
-		 "   Check server on the indicated host\n"
-		 " -l, --lookup=STRING\n"
-		 "   machine name to lookup\n"
-		 " -t, --timeout=INTEGER\n"
-		 "   Seconds before connection attempt times out (default: %d)\n"
-		 " -v, --verbose\n"
-		 "   Print extra information (command-line use only)\n"
-		 " -h, --help\n"
-		 "   Print detailed help screen\n"
-		 " -V, --version\n"
-		 "   Print version information\n\n", DEFAULT_SOCKET_TIMEOUT);
+	printf ("\nOptions:\n");
+	printf (options, DEFAULT_SOCKET_TIMEOUT);
 	support ();
 }
 
@@ -263,8 +263,7 @@ print_help (void)
 void
 print_usage (void)
 {
-	printf
-		("Usage: %s -H host -l lookup [-t timeout] [-v]\n"
-		 "       %s --help\n"
-		 "       %s --version\n", progname, progname, progname);
+	printf ("Usage: %s %s\n", progname, option_summary);
+	printf ("       %s (-h|--help)\n", progname);
+	printf ("       %s (-V|--version)\n", progname);
 }

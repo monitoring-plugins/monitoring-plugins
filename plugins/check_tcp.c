@@ -1,4 +1,4 @@
-/******************************************************************************
+/*****************************************************************************
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -51,7 +51,9 @@ const char *options = "\
  -r, --refuse=ok|warn|crit\n\
     Accept tcp refusals with states ok, warn, crit (default: crit)\n\
  -v\n\
-    Show details for command-line debugging (do not use with nagios server)\n\
+    Show details for command-line debugging (do not use with nagios server)\n";
+
+const char *standard_options = "\
  -h, --help\n\
     Print detailed help screen\n\
  -V, --version\n\
@@ -63,21 +65,21 @@ const char *options = "\
 #include "utils.h"
 
 #ifdef HAVE_SSL_H
-#include <rsa.h>
-#include <crypto.h>
-#include <x509.h>
-#include <pem.h>
-#include <ssl.h>
-#include <err.h>
-#endif
-
-#ifdef HAVE_OPENSSL_SSL_H
-#include <openssl/rsa.h>
-#include <openssl/crypto.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
+#  include <rsa.h>
+#  include <crypto.h>
+#  include <x509.h>
+#  include <pem.h>
+#  include <ssl.h>
+#  include <err.h>
+#else
+#  ifdef HAVE_OPENSSL_SSL_H
+#    include <openssl/rsa.h>
+#    include <openssl/crypto.h>
+#    include <openssl/x509.h>
+#    include <openssl/pem.h>
+#    include <openssl/ssl.h>
+#    include <openssl/err.h>
+#  endif
 #endif
 
 #ifdef HAVE_SSL
@@ -134,8 +136,8 @@ main (int argc, char **argv)
 	struct timeval tv;
 
 	if (strstr (argv[0], "check_udp")) {
-		asprintf (&progname, "check_udp");
-		asprintf (&SERVICE, "UDP");
+		progname = strdup ("check_udp");
+		SERVICE = strdup ("UDP");
 		SEND = NULL;
 		EXPECT = NULL;
 		QUIT = NULL;
@@ -143,8 +145,8 @@ main (int argc, char **argv)
 		PORT = 0;
 	}
 	else if (strstr (argv[0], "check_tcp")) {
-		asprintf (&progname, "check_tcp");
-		asprintf (&SERVICE, "TCP");
+		progname = strdup ("check_tcp");
+		SERVICE = strdup ("TCP");
 		SEND = NULL;
 		EXPECT = NULL;
 		QUIT = NULL;
@@ -152,66 +154,66 @@ main (int argc, char **argv)
 		PORT = 0;
 	}
 	else if (strstr (argv[0], "check_ftp")) {
-		asprintf (&progname, "check_ftp");
-		asprintf (&SERVICE, "FTP");
+		progname = strdup ("check_ftp");
+		SERVICE = strdup ("FTP");
 		SEND = NULL;
-		asprintf (&EXPECT, "220");
-		asprintf (&QUIT, "QUIT\r\n");
+		EXPECT = strdup ("220");
+		QUIT = strdup ("QUIT\r\n");
 		PROTOCOL = TCP_PROTOCOL;
 		PORT = 21;
 	}
 	else if (strstr (argv[0], "check_smtp")) {
-		asprintf (&progname, "check_smtp");
-		asprintf (&SERVICE, "SMTP");
+		progname = strdup ("check_smtp");
+		SERVICE = strdup ("SMTP");
 		SEND = NULL;
-		asprintf (&EXPECT, "220");
-		asprintf (&QUIT, "QUIT\r\n");
+		EXPECT = strdup ("220");
+		QUIT = strdup ("QUIT\r\n");
 		PROTOCOL = TCP_PROTOCOL;
 		PORT = 25;
 	}
 	else if (strstr (argv[0], "check_pop")) {
-		asprintf (&progname, "check_pop");
-		asprintf (&SERVICE, "POP");
+		progname = strdup ("check_pop");
+		SERVICE = strdup ("POP");
 		SEND = NULL;
-		asprintf (&EXPECT, "+OK");
-		asprintf (&QUIT, "QUIT\r\n");
+		EXPECT = strdup ("+OK");
+		QUIT = strdup ("QUIT\r\n");
 		PROTOCOL = TCP_PROTOCOL;
 		PORT = 110;
 	}
 	else if (strstr (argv[0], "check_imap")) {
-		asprintf (&progname, "check_imap");
-		asprintf (&SERVICE, "IMAP");
+		progname = strdup ("check_imap");
+		SERVICE = strdup ("IMAP");
 		SEND = NULL;
-		asprintf (&EXPECT, "* OK");
-		asprintf (&QUIT, "a1 LOGOUT\r\n");
+		EXPECT = strdup ("* OK");
+		QUIT = strdup ("a1 LOGOUT\r\n");
 		PROTOCOL = TCP_PROTOCOL;
 		PORT = 143;
 	}
 #ifdef HAVE_SSL
 	else if (strstr(argv[0],"check_simap")) {
-		asprintf (&progname, "check_simap");
-		asprintf (&SERVICE, "SIMAP");
+		progname = strdup ("check_simap");
+		SERVICE = strdup ("SIMAP");
 		SEND=NULL;
-		asprintf (&EXPECT, "* OK");
-		asprintf (&QUIT, "a1 LOGOUT\r\n");
+		EXPECT = strdup ("* OK");
+		QUIT = strdup ("a1 LOGOUT\r\n");
 		PROTOCOL=TCP_PROTOCOL;
 		use_ssl=TRUE;
 		PORT=993;
 	}
 	else if (strstr(argv[0],"check_spop")) {
-		asprintf (&progname, "check_spop");
-		asprintf (&SERVICE, "SPOP");
+		progname = strdup ("check_spop");
+		SERVICE = strdup ("SPOP");
 		SEND=NULL;
-		asprintf (&EXPECT, "+OK");
-		asprintf (&QUIT, "QUIT\r\n");
+		EXPECT = strdup ("+OK");
+		QUIT = strdup ("QUIT\r\n");
 		PROTOCOL=TCP_PROTOCOL;
 		use_ssl=TRUE;
 		PORT=995;
 	}
 #endif
 	else if (strstr (argv[0], "check_nntp")) {
-		asprintf (&progname, "check_nntp");
-		asprintf (&SERVICE, "NNTP");
+		progname = strdup ("check_nntp");
+		SERVICE = strdup ("NNTP");
 		SEND = NULL;
 		EXPECT = NULL;
 		server_expect = realloc (server_expect, ++server_expect_count);
@@ -226,7 +228,7 @@ main (int argc, char **argv)
 		usage ("ERROR: Generic check_tcp called with unknown service\n");
 	}
 
-	asprintf (&server_address, "127.0.0.1");
+	server_address = strdup ("127.0.0.1");
 	server_port = PORT;
 	server_send = SEND;
 	server_quit = QUIT;
@@ -312,17 +314,21 @@ main (int argc, char **argv)
 		}
 	}
 
-	if (server_quit != NULL)
+	if (server_quit != NULL) {
 #ifdef HAVE_SSL
 		if (use_ssl) {
-			SSL_write (ssl, QUIT, strlen (QUIT));
+			SSL_write (ssl, server_quit, strlen (server_quit));
 			SSL_shutdown (ssl);
  			SSL_free (ssl);
  			SSL_CTX_free (ctx);
 		}
-		else
+		else {
 #endif
-  		send (sd, server_quit, strlen (server_quit), 0);
+			send (sd, server_quit, strlen (server_quit), 0);
+#ifdef HAVE_SSL
+		}
+#endif
+	}
 
 	/* close the connection */
 	if (sd)
@@ -511,23 +517,23 @@ process_arguments (int argc, char **argv)
 void
 print_help (void)
 {
-        print_revision (progname, revision);
-        printf ("Copyright (c) %s %s\n\t<%s>\n\n",
-                 copyright, authors, email);
+	print_revision (progname, revision);
+	printf ("Copyright (c) %s %s\n\t<%s>\n\n",
+	        copyright, authors, email);
 	printf (summary, SERVICE);
-        print_usage ();
-        printf ("\nOptions:\n");
-        printf (options, DEFAULT_SOCKET_TIMEOUT);
-        support ();
+	print_usage ();
+	printf ("\nOptions:\n");
+	printf (options, DEFAULT_SOCKET_TIMEOUT);
+	printf (standard_options);
+	support ();
 }
 
 void
 print_usage (void)
 {
-        printf
-                ("Usage: %s %s\n"
-                 "       %s (-h|--help)\n"
-                 "       %s (-V|--version)\n", progname, option_summary, progname, progname);
+	printf ("Usage: %s %s\n", progname, option_summary);
+	printf ("       %s (-h|--help)\n", progname);
+	printf ("       %s (-V|--version)\n", progname);
 }
 
 #ifdef HAVE_SSL

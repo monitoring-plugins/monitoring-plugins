@@ -40,8 +40,10 @@ int was_refused = FALSE;
 void
 socket_timeout_alarm_handler (int sig)
 {
-
-	printf ("CRITICAL - Socket timeout after %d seconds\n", socket_timeout);
+	if (sig == SIGALRM)
+		printf ("CRITICAL - Socket timeout after %d seconds\n", socket_timeout);
+	else
+		printf ("CRITICAL - Abnormal timeout after %d seconds\n", socket_timeout);
 
 	exit (STATE_CRITICAL);
 }
@@ -99,7 +101,7 @@ process_tcp_request2 (char *server_address, int server_port,
 		return STATE_CRITICAL;
 
 	send_result = send (sd, send_buffer, strlen (send_buffer), 0);
-	if (send_result != strlen (send_buffer)) {
+	if (send_result<0 || (size_t)send_result!=strlen(send_buffer)) {
 		printf ("send() failed\n");
 		result = STATE_WARNING;
 	}
@@ -177,7 +179,7 @@ process_request (char *server_address, int server_port, int proto,
 		return STATE_CRITICAL;
 
 	send_result = send (sd, send_buffer, strlen (send_buffer), 0);
-	if (send_result != strlen (send_buffer)) {
+	if (send_result<0 || (size_t)send_result!=strlen(send_buffer)) {
 		printf ("send() failed\n");
 		result = STATE_WARNING;
 	}
@@ -248,7 +250,6 @@ my_connect (char *host_name, int port, int *sd, int proto)
 {
 	struct addrinfo hints;
 	struct addrinfo *res;
-	struct addrinfo *ptrp;
 	char port_str[6];
 	int result;
 
@@ -267,7 +268,7 @@ my_connect (char *host_name, int port, int *sd, int proto)
 		while (res) {
 			/* attempt to create a socket */
 			*sd = socket (res->ai_family, (proto == IPPROTO_UDP) ?
-				SOCK_DGRAM : SOCK_STREAM, res->ai_protocol);
+			              SOCK_DGRAM : SOCK_STREAM, res->ai_protocol);
 
 			if (*sd < 0) {
 				printf ("Socket creation failed\n");
@@ -285,13 +286,13 @@ my_connect (char *host_name, int port, int *sd, int proto)
 
 			if (result < 0) {
 				switch (errno) {
-					case ECONNREFUSED:
-						switch (econn_refuse_state) {
-							case STATE_OK:
-							case STATE_WARNING:
-								was_refused = TRUE;
-						}
-						break;
+				case ECONNREFUSED:
+					switch (econn_refuse_state) {
+					case STATE_OK:
+					case STATE_WARNING:
+						was_refused = TRUE;
+					}
+					break;
 				}
 			}
 
@@ -314,55 +315,56 @@ my_connect (char *host_name, int port, int *sd, int proto)
 int
 is_host (char *address)
 {
-        if (is_addr (address) || is_hostname (address))
-                return (TRUE);
+	if (is_addr (address) || is_hostname (address))
+		return (TRUE);
 
-        return (FALSE);
+	return (FALSE);
 }
 
 int
 is_addr (char *address)
 {
-#ifdef USE_IPV6
-        if (is_inet_addr (address) || is_inet6_addr (address))
-#else
-        if (is_inet_addr (address))
-#endif
-                return (TRUE);
+	if (is_inet_addr (address))
+		return (TRUE);
 
-        return (FALSE);
+#ifdef USE_IPV6
+	if (is_inet6_addr (address))
+		return (TRUE);
+#endif
+
+	return (FALSE);
 }
 
 int
 resolve_host_or_addr (char *address, int family)
 {
-        struct addrinfo hints;
-        struct addrinfo *res;
-        int retval;
+	struct addrinfo hints;
+	struct addrinfo *res;
+	int retval;
 
-        memset (&hints, 0, sizeof (hints));
-        hints.ai_family = family;
-        retval = getaddrinfo (address, NULL, &hints, &res);
+	memset (&hints, 0, sizeof (hints));
+	hints.ai_family = family;
+	retval = getaddrinfo (address, NULL, &hints, &res);
 
-        if (retval != 0)
-                return FALSE;
-        else {
-                freeaddrinfo (res);
-                return TRUE;
-        }
+	if (retval != 0)
+		return FALSE;
+	else {
+		freeaddrinfo (res);
+		return TRUE;
+	}
 }
 
 int
 is_inet_addr (char *address)
 {
-        return resolve_host_or_addr (address, AF_INET);
+	return resolve_host_or_addr (address, AF_INET);
 }
 
 #ifdef USE_IPV6
 int
 is_inet6_addr (char *address)
 {
-        return resolve_host_or_addr (address, AF_INET6);
+	return resolve_host_or_addr (address, AF_INET6);
 }
 #endif
 
@@ -370,9 +372,9 @@ int
 is_hostname (char *s1)
 {
 #ifdef USE_IPV6
-        return resolve_host_or_addr (s1, AF_UNSPEC);
+	return resolve_host_or_addr (s1, AF_UNSPEC);
 #else
-        return resolve_host_or_addr (s1, AF_INET);
+	return resolve_host_or_addr (s1, AF_INET);
 #endif
 }
 
