@@ -93,7 +93,7 @@ AC_ARG_WITH(pgsql,--with-pgsql=<dir> sets path to pgsql installation,[PGSQL=$wit
 AC_CHECK_LIB(crypt,main)
 if test "$ac_cv_lib_crypt_main" = "yes"; then
   if test -n "$PGSQL"; then
-    LIBS="$LIBS -L$PGSQL/lib"
+    LDFLAGS="$LDFLAGS -L$PGSQL/lib"
     CPPFLAGS="$CPPFLAGS -I$PGSQL/include"
   fi
   AC_CHECK_LIB(pq,PQsetdbLogin,,,-lcrypt)
