@@ -406,10 +406,12 @@ This plugin will attempt to open an SMTP connection with the host.\n\n"));
  -n, nocommand\n\
    Suppress SMTP command\n\
  -C, --command=STRING\n\
-   SMTP command (default: '%s')\n\
+   SMTP command (may be used repeatedly)\n\
+ -R, --command=STRING\n\
+   Expected response to command (may be used repeatedly)\n\
  -f, --from=STRING\n\
-   FROM-address to include in MAIL command, required by Exchange 2000\n\
-   (default: '%s')\n"), SMTP_EXPECT, mail_command, from_arg);
+   FROM-address to include in MAIL command, required by Exchange 2000\n"),
+	        SMTP_EXPECT);
 
 	printf (_(UT_WARN_CRIT));
 
