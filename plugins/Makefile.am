@@ -137,7 +137,7 @@ getopt1.o: getopt1.c getopt.h
 	$(COMPILE) -c $(srcdir)/getopt1.c -o $@
 
 snprintf.o: snprintf.c
-	$(COMPILE) @NEED_VA_LIST@ -c $(srcdir)/getopt1.c -o $@
+	$(COMPILE) @NEED_VA_LIST@ -c $(srcdir)/snprintf.c -o $@
 
 libgetopt.a: getopt.o getopt1.o
 	$(AR) -r $@ getopt.o getopt1.o
