@@ -263,7 +263,7 @@ process_arguments (int argc, char **argv)
 		case 'c':
 			get_threshold (optarg, rv);
 			if (rv[RTA]) {
-				crta = 1e-3 * strtod (rv[RTA], NULL);
+				crta = strtod (rv[RTA], NULL);
 				crta_p = TRUE;
 				rv[RTA] = NULL;
 			}
@@ -276,7 +276,7 @@ process_arguments (int argc, char **argv)
 		case 'w':
 			get_threshold (optarg, rv);
 			if (rv[RTA]) {
-				wrta = 1e-3 * strtod (rv[RTA], NULL);
+				wrta = strtod (rv[RTA], NULL);
 				wrta_p = TRUE;
 				rv[RTA] = NULL;
 			}
