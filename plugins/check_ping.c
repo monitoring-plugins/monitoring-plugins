@@ -85,6 +85,7 @@ main (int argc, char **argv)
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage ("Could not parse arguments");
+	exit;
 
 	/* does the host address of number of packets argument come first? */
 #ifdef PING_PACKETS_FIRST
@@ -150,7 +151,20 @@ main (int argc, char **argv)
 int
 process_arguments (int argc, char **argv)
 {
-	int c;
+	int c, i = 1;
+
+#ifdef HAVE_GETOPT_H
+	int option_index = 0;
+	static struct option long_options[] = {
+		STD_LONG_OPTS,
+		{"packets", required_argument, 0, 'p'},
+		{"nohtml", no_argument, 0, 'n'},
+		{"link", no_argument, 0, 'L'},
+		{0, 0, 0, 0}
+	};
+#endif
+
+#define OPTCHARS "Vvht:c:w:H:p:nL"
 
 	if (argc < 2)
 		return ERROR;
@@ -162,138 +176,45 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-n");
 	}
 
-	c = 0;
-	while ((c += call_getopt (argc - c, &argv[c])) < argc) {
-
-		if (is_option (argv[c]))
-			continue;
-
-		if (server_address == NULL) {
-			if (is_host (argv[c]) == FALSE) {
-				printf ("Invalid host name/address: %s\n\n", argv[c]);
-				return ERROR;
-			}
-			server_address = argv[c];
-		}
-		else if (wpl == UNKNOWN_PACKET_LOSS) {
-			if (is_intpercent (argv[c]) == FALSE) {
-				printf ("<wpl> (%s) must be an integer percentage\n", argv[c]);
-				return ERROR;
-			}
-			wpl = atoi (argv[c]);
-		}
-		else if (cpl == UNKNOWN_PACKET_LOSS) {
-			if (is_intpercent (argv[c]) == FALSE) {
-				printf ("<cpl> (%s) must be an integer percentage\n", argv[c]);
-				return ERROR;
-			}
-			cpl = atoi (argv[c]);
-		}
-		else if (wrta == UNKNOWN_TRIP_TIME) {
-			if (is_negative (argv[c])) {
-				printf ("<wrta> (%s) must be a non-negative number\n", argv[c]);
-				return ERROR;
-			}
-			wrta = atof (argv[c]);
-		}
-		else if (crta == UNKNOWN_TRIP_TIME) {
-			if (is_negative (argv[c])) {
-				printf ("<crta> (%s) must be a non-negative number\n", argv[c]);
-				return ERROR;
-			}
-			crta = atof (argv[c]);
-		}
-		else if (max_packets == -1) {
-			if (is_intnonneg (argv[c])) {
-				max_packets = atoi (argv[c]);
-			}
-			else {
-				printf ("<max_packets> (%s) must be a non-negative number\n",
-								argv[c]);
-				return ERROR;
-			}
-		}
-
-	}
-
-	return validate_arguments ();
-}
-
-int
-call_getopt (int argc, char **argv)
-{
-	int c, i = 0;
-
-#ifdef HAVE_GETOPT_H
-	int option_index = 0;
-	static struct option long_options[] = {
-		{"help", no_argument, 0, 'h'},
-		{"version", no_argument, 0, 'V'},
-		{"verbose", no_argument, 0, 'v'},
-		{"nohtml", no_argument, 0, 'n'},
-		{"link", no_argument, 0, 'L'},
-		{"timeout", required_argument, 0, 't'},
-		{"critical", required_argument, 0, 'c'},
-		{"warning", required_argument, 0, 'w'},
-		{"hostname", required_argument, 0, 'H'},
-		{"packets", required_argument, 0, 'p'},
-		{0, 0, 0, 0}
-	};
-#endif
-
 	while (1) {
 #ifdef HAVE_GETOPT_H
-		c =
-			getopt_long (argc, argv, "+hVvt:c:w:H:p:nL", long_options,
-									 &option_index);
+		c = getopt_long (argc, argv, OPTCHARS, long_options, &option_index);
 #else
-		c = getopt (argc, argv, "+hVvt:c:w:H:p:nL");
+		c = getopt (argc, argv, OPTCHARS);
 #endif
-
-		i++;
-
-		if (c == -1 || c == EOF || c == 1)
+		if (c == -1 || c == EOF)
 			break;
 
 		switch (c) {
-		case 't':
-		case 'c':
-		case 'w':
-		case 'H':
-		case 'p':
-			i++;
-		}
-
-		switch (c) {
-		case '?':									/* print short usage statement if args not parsable */
+		case '?':	/* usage */
 			usage2 ("Unknown argument", optarg);
-		case 'h':									/* help */
+		case 'h':	/* help */
 			print_help ();
 			exit (STATE_OK);
-		case 'V':									/* version */
+		case 'V':	/* version */
 			print_revision (PROGNAME, REVISION);
 			exit (STATE_OK);
-		case 't':									/* timeout period */
+		case 't':	/* timeout period */
 			timeout_interval = atoi (optarg);
 			break;
-		case 'v':									/* verbose mode */
+		case 'v':	/* verbose mode */
 			verbose = TRUE;
 			break;
-		case 'H':									/* hostname */
+		case 'H':	/* hostname */
 			if (is_host (optarg) == FALSE)
 				usage2 ("Invalid host name/address", optarg);
 			server_address = optarg;
 			break;
-		case 'p':									/* number of packets to send */
+		case 'p':	/* number of packets to send */
 			if (is_intnonneg (optarg))
 				max_packets = atoi (optarg);
 			else
 				usage2 ("<max_packets> (%s) must be a non-negative number\n", optarg);
 			break;
-		case 'n':									/* no HTML */
+		case 'n':	/* no HTML */
 			display_html = FALSE;
 			break;
-		case 'L':									/* show HTML */
+		case 'L':	/* show HTML */
 			display_html = TRUE;
 			break;
 		case 'c':
@@ -305,7 +226,75 @@ call_getopt (int argc, char **argv)
 		}
 	}
 
-	return i;
+	c = optind;
+	if (c == argc)
+		return validate_arguments ();
+
+	if (server_address == NULL) {
+		if (is_host (argv[c]) == FALSE) {
+			printf ("Invalid host name/address: %s\n\n", argv[c]);
+			return ERROR;
+		} else {
+			server_address = argv[c++];
+			if (c == argc)
+				return validate_arguments ();
+		}
+	}
+
+	if (wpl == UNKNOWN_PACKET_LOSS) {
+		if (is_intpercent (argv[c]) == FALSE) {
+			printf ("<wpl> (%s) must be an integer percentage\n", argv[c]);
+			return ERROR;
+		} else {
+			wpl = atoi (argv[c++]);
+			if (c == argc)
+				return validate_arguments ();
+		}
+	}
+
+	if (cpl == UNKNOWN_PACKET_LOSS) {
+		if (is_intpercent (argv[c]) == FALSE) {
+			printf ("<cpl> (%s) must be an integer percentage\n", argv[c]);
+			return ERROR;
+		} else {
+			cpl = atoi (argv[c++]);
+			if (c == argc)
+				return validate_arguments ();
+		}
+	}
+
+	if (wrta == UNKNOWN_TRIP_TIME) {
+		if (is_negative (argv[c])) {
+			printf ("<wrta> (%s) must be a non-negative number\n", argv[c]);
+			return ERROR;
+		} else {
+			wrta = atof (argv[c++]);
+			if (c == argc)
+				return validate_arguments ();
+		}
+	}
+
+	if (crta == UNKNOWN_TRIP_TIME) {
+		if (is_negative (argv[c])) {
+			printf ("<crta> (%s) must be a non-negative number\n", argv[c]);
+			return ERROR;
+		} else {
+			crta = atof (argv[c++]);
+			if (c == argc)
+				return validate_arguments ();
+		}
+	}
+
+	if (max_packets == -1) {
+		if (is_intnonneg (argv[c])) {
+			max_packets = atoi (argv[c++]);
+		}	else {
+			printf ("<max_packets> (%s) must be a non-negative number\n", argv[c]);
+			return ERROR;
+		}
+	}
+
+	return validate_arguments ();
 }
 
 int
@@ -319,7 +308,6 @@ get_threshold (char *arg, float *trta, int *tpl)
 		return OK;
 	else
 		usage2 ("%s: Warning threshold must be integer or percentage!\n\n", arg);
-
 }
 
 int
