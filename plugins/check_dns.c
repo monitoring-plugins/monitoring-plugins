@@ -47,15 +47,53 @@
 #include "common.h"
 #include "popen.h"
 #include "utils.h"
+#include "netutils.h"
 
 const char *progname = "check_dns";
-#define REVISION "$Revision$"
-#define COPYRIGHT "2000-2002"
+const char *revision = "$Revision$";
+const char *copyright = "2000-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -H host [-s server] [-a expected-address] [-t timeout]\n\
+       %s --help\n\
+       %s --version\n"),
+					progname, progname, progname);
+}
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	print_usage ();
+
+	printf (_(HELP_VRSN));
+
+	printf (_("\
+-H, --hostname=HOST\n\
+   The name or address you want to query\n\
+-s, --server=HOST\n\
+   Optional DNS server you want to use for the lookup\n\
+-a, --expected-address=IP-ADDRESS\n\
+   Optional IP address you expect the DNS server to return\n"));
+
+	printf (_(TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_("\n\
+This plugin uses the nslookup program to obtain the IP address\n\
+for the given host/domain query.  A optional DNS server to use may\n\
+be specified.  If no DNS server is specified, the default server(s)\n\
+specified in /etc/resolv.conf will be used.\n"));
+}
 
 int process_arguments (int, char **);
 int validate_arguments (void);
-void print_usage (void);
-void print_help (void);
 int error_scan (char *);
 
 #define ADDRESS_LENGTH 256
@@ -81,7 +119,7 @@ main (int argc, char **argv)
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
-		printf ("Cannot catch SIGALRM");
+		printf (_("Cannot catch SIGALRM"));
 		return STATE_UNKNOWN;
 	}
 
@@ -101,13 +139,13 @@ main (int argc, char **argv)
 	/* run the command */
 	child_process = spopen (command_line);
 	if (child_process == NULL) {
-		printf ("Could not open pipe: %s\n", command_line);
+		printf (_("Could not open pipe: %s\n"), command_line);
 		return STATE_UNKNOWN;
 	}
 
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL)
-		printf ("Could not open stderr for %s\n", command_line);
+		printf (_("Could not open stderr for %s\n"), command_line);
 
 	/* scan stdout */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
@@ -119,7 +157,7 @@ main (int argc, char **argv)
 			if ((temp_buffer = strstr (input_buffer, "name = ")))
 				address = strscpy (address, temp_buffer + 7);
 			else {
-				output = strscpy (output, "Unknown error (plugin)");
+				output = strscpy (output, _("Unknown error (plugin)"));
 				result = STATE_WARNING;
 			}
 		}
@@ -143,12 +181,12 @@ main (int argc, char **argv)
 				strip (address);
 				if (address==NULL || strlen(address)==0)
 					terminate (STATE_CRITICAL,
-					           "DNS CRITICAL - '%s' returned empty host name string\n",
-					           NSLOOKUP_COMMAND);
+										 _("DNS CRITICAL - '%s' returned empty host name string\n"),
+										 NSLOOKUP_COMMAND);
 				result = STATE_OK;
 			}
 			else {
-				output = strdup ("Unknown error (plugin)");
+				output = strdup (_("Unknown error (plugin)"));
 				result = STATE_WARNING;
 			}
 
@@ -180,20 +218,20 @@ main (int argc, char **argv)
 	if (spclose (child_process)) {
 		result = max_state (result, STATE_WARNING);
 		if (!strcmp (output, ""))
-			output = strscpy (output, "nslookup returned error status");
+			output = strscpy (output, _("nslookup returned error status"));
 	}
 
 	/* If we got here, we should have an address string, 
-	   and we can segfault if we do not */
+		 and we can segfault if we do not */
 	if (address==NULL || strlen(address)==0)
 		terminate (STATE_CRITICAL,
-		           "DNS CRITICAL - '%s' output parsing exited with no address\n",
-		           NSLOOKUP_COMMAND);
+							 _("DNS CRITICAL - '%s' output parsing exited with no address\n"),
+							 NSLOOKUP_COMMAND);
 
 	/* compare to expected address */
 	if (result == STATE_OK && match_expected_address && strcmp(address, expected_address)) {
 		result = STATE_CRITICAL;
-		asprintf(&output, "expected %s but got %s", expected_address, address);
+		asprintf(&output, _("expected %s but got %s"), expected_address, address);
 	}
 	
 	elapsed_time = delta_time (tv);
@@ -204,18 +242,18 @@ main (int argc, char **argv)
 		else
 			multi_address = TRUE;
 
-		printf ("DNS ok - %.3f seconds response time, address%s %s|time=%.3f\n",
-		  elapsed_time, (multi_address==TRUE ? "es are" : " is"), address, elapsed_time);
+		printf (_("DNS ok - %.3f seconds response time, address%s %s|time=%.3f\n"),
+						elapsed_time, (multi_address==TRUE ? "es are" : " is"), address, elapsed_time);
 	}
 	else if (result == STATE_WARNING)
-		printf ("DNS WARNING - %s\n",
-			!strcmp (output, "") ? " Probably a non-existent host/domain" : output);
+		printf (_("DNS WARNING - %s\n"),
+						!strcmp (output, "") ? _(" Probably a non-existent host/domain") : output);
 	else if (result == STATE_CRITICAL)
-		printf ("DNS CRITICAL - %s\n",
-			!strcmp (output, "") ? " Probably a non-existent host/domain" : output);
+		printf (_("DNS CRITICAL - %s\n"),
+						!strcmp (output, "") ? _(" Probably a non-existent host/domain") : output);
 	else
-		printf ("DNS problem - %s\n",
-			!strcmp (output, "") ? " Probably a non-existent host/domain" : output);
+		printf (_("DNS problem - %s\n"),
+						!strcmp (output, "") ? _(" Probably a non-existent host/domain") : output);
 
 	return result;
 }
@@ -225,52 +263,49 @@ error_scan (char *input_buffer)
 {
 
 	/* the DNS lookup timed out */
-	if (strstr (input_buffer,
-	     "Note:  nslookup is deprecated and may be removed from future releases.")
-	    || strstr (input_buffer,
-	     "Consider using the `dig' or `host' programs instead.  Run nslookup with")
-	    || strstr (input_buffer,
-	     "the `-sil[ent]' option to prevent this message from appearing."))
+	if (strstr (input_buffer,	_("Note:  nslookup is deprecated and may be removed from future releases.")) ||
+	    strstr (input_buffer, _("Consider using the `dig' or `host' programs instead.  Run nslookup with")) ||
+	    strstr (input_buffer, _("the `-sil[ent]' option to prevent this message from appearing.")))
 		return STATE_OK;
 
 	/* the DNS lookup timed out */
-	else if (strstr (input_buffer, "Timed out"))
+	else if (strstr (input_buffer, _("Timed out")))
 		return STATE_WARNING;
 
 	/* DNS server is not running... */
-	else if (strstr (input_buffer, "No response from server"))
+	else if (strstr (input_buffer, _("No response from server")))
 		return STATE_CRITICAL;
 
 	/* Host name is valid, but server doesn't have records... */
-	else if (strstr (input_buffer, "No records"))
+	else if (strstr (input_buffer, _("No records")))
 		return STATE_WARNING;
 
 	/* Host or domain name does not exist */
-	else if (strstr (input_buffer, "Non-existent"))
+	else if (strstr (input_buffer, _("Non-existent")))
 		return STATE_CRITICAL;
-	else if (strstr (input_buffer, "** server can't find"))
+	else if (strstr (input_buffer, _("** server can't find")))
 		return STATE_CRITICAL;
 	else if(strstr(input_buffer,"NXDOMAIN")) /* 9.x */
 		return STATE_CRITICAL;
 
 	/* Connection was refused */
-	else if (strstr (input_buffer, "Connection refused"))
+	else if (strstr (input_buffer, _("Connection refused")))
 		return STATE_CRITICAL;
 
 	/* Network is unreachable */
-	else if (strstr (input_buffer, "Network is unreachable"))
+	else if (strstr (input_buffer, _("Network is unreachable")))
 		return STATE_CRITICAL;
 
 	/* Internal server failure */
-	else if (strstr (input_buffer, "Server failure"))
+	else if (strstr (input_buffer, _("Server failure")))
 		return STATE_CRITICAL;
 
 	/* DNS server refused to service request */
-	else if (strstr (input_buffer, "Refused"))
+	else if (strstr (input_buffer, _("Refused")))
 		return STATE_CRITICAL;
 
 	/* Request error */
-	else if (strstr (input_buffer, "Format error"))
+	else if (strstr (input_buffer, _("Format error")))
 		return STATE_WARNING;
 
 	else
@@ -312,14 +347,14 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?': /* args not parsable */
-			printf ("%s: Unknown argument: %s\n\n", progname, optarg);
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h': /* help */
 			print_help ();
 			exit (STATE_OK);
 		case 'V': /* version */
-			print_revision (progname, REVISION);
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'v': /* version */
 			verbose = TRUE;
@@ -329,35 +364,35 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H': /* hostname */
 			if (strlen (optarg) >= ADDRESS_LENGTH)
-				terminate (STATE_UNKNOWN, "Input buffer overflow\n");
+				terminate (STATE_UNKNOWN, _("Input buffer overflow\n"));
 			strcpy (query_address, optarg);
 			break;
 		case 's': /* server name */
 			/* TODO: this is_host check is probably unnecessary. Better to confirm nslookup
 			   response matches */
 			if (is_host (optarg) == FALSE) {
-				printf ("Invalid server name/address\n\n");
+				printf (_("Invalid server name/address\n\n"));
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
 			if (strlen (optarg) >= ADDRESS_LENGTH)
-				terminate (STATE_UNKNOWN, "Input buffer overflow\n");
+				terminate (STATE_UNKNOWN, _("Input buffer overflow\n"));
 			strcpy (dns_server, optarg);
 			break;
 		case 'r': /* reverse server name */
 			/* TODO: Is this is_host necessary? */
 			if (is_host (optarg) == FALSE) {
-				printf ("Invalid host name/address\n\n");
+				printf (_("Invalid host name/address\n\n"));
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
 			if (strlen (optarg) >= ADDRESS_LENGTH)
-				terminate (STATE_UNKNOWN, "Input buffer overflow\n");
+				terminate (STATE_UNKNOWN, _("Input buffer overflow\n"));
 			strcpy (ptr_server, optarg);
 			break;
 		case 'a': /* expected address */
 			if (strlen (optarg) >= ADDRESS_LENGTH)
-				terminate (STATE_UNKNOWN, "Input buffer overflow\n");
+				terminate (STATE_UNKNOWN, _("Input buffer overflow\n"));
 			strcpy (expected_address, optarg);
 			match_expected_address = TRUE;
 			break;
@@ -367,18 +402,18 @@ process_arguments (int argc, char **argv)
 	c = optind;
 	if (strlen(query_address)==0 && c<argc) {
 		if (strlen(argv[c])>=ADDRESS_LENGTH)
-			terminate (STATE_UNKNOWN, "Input buffer overflow\n");
+			terminate (STATE_UNKNOWN, _("Input buffer overflow\n"));
 		strcpy (query_address, argv[c++]);
 	}
 
 	if (strlen(dns_server)==0 && c<argc) {
 		/* TODO: See -s option */
 		if (is_host(argv[c]) == FALSE) {
-			printf ("Invalid name/address: %s\n\n", argv[c]);
+			printf (_("Invalid name/address: %s\n\n"), argv[c]);
 			return ERROR;
 		}
 		if (strlen(argv[c]) >= ADDRESS_LENGTH)
-			terminate (STATE_UNKNOWN, "Input buffer overflow\n");
+			terminate (STATE_UNKNOWN, _("Input buffer overflow\n"));
 		strcpy (dns_server, argv[c++]);
 	}
 
@@ -392,38 +427,4 @@ validate_arguments ()
 		return ERROR;
 	else
 		return OK;
-}
-
-void
-print_usage (void)
-{
-	printf ("Usage: %s -H host [-s server] [-a expected-address] [-t timeout]\n" "       %s --help\n"
-					"       %s --version\n", progname, progname, progname);
-}
-
-void
-print_help (void)
-{
-	print_revision (progname, REVISION);
-	printf ("Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)\n\n");
-	print_usage ();
-	printf
-		("\nOptions:\n"
-		 "-H, --hostname=HOST\n"
-		 "   The name or address you want to query\n"
-		 "-s, --server=HOST\n"
-		 "   Optional DNS server you want to use for the lookup\n"
-		 "-a, --expected-address=IP-ADDRESS\n"
-		 "   Optional IP address you expect the DNS server to return\n"
-		 "-t, --timeout=INTEGER\n"
-		 "   Seconds before connection times out (default: %d)\n"
-		 "-h, --help\n"
-		 "   Print detailed help\n"
-		 "-V, --version\n"
-		 "   Print version numbers and license information\n"
-		 "\n"
-		 "This plugin uses the nslookup program to obtain the IP address\n"
-		 "for the given host/domain query.  A optional DNS server to use may\n"
-		 "be specified.  If no DNS server is specified, the default server(s)\n"
-		 "specified in /etc/resolv.conf will be used.\n", DEFAULT_SOCKET_TIMEOUT);
 }
