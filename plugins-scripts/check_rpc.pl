@@ -51,16 +51,16 @@ $proto[10007]='u';
 use Getopt::Long;
 Getopt::Long::Configure('bundling');
 GetOptions(
-       "V"   => \$opt_V, "version"    => \$opt_V,
-	   "h"   => \$opt_h, "help"       => \$opt_h,
-	   "C=s" => \$opt_C, "command=s"  => \$opt_C,
-	   "p=i" => \$opt_p, "port=i"     => \$opt_p,
-	   "H=s" => \$opt_H, "hostname=s" => \$opt_H,
-	   "c=s" => \$opt_c, "progver=s"  => \$opt_c,
-	   "v+"   => \$verbose, "verbose+"  => \$verbose,
-	   "u"   => \$opt_u,  "udp"       => \$opt_u,
-	   "t"   => \$opt_t,  "tcp"       => \$opt_t
-	   );
+	"V"   => \$opt_V,   "version"    => \$opt_V,
+	"h"   => \$opt_h,   "help"       => \$opt_h,
+	"C=s" => \$opt_C,   "command=s"  => \$opt_C,
+	"p=i" => \$opt_p,   "port=i"     => \$opt_p,
+ 	"H=s" => \$opt_H,   "hostname=s" => \$opt_H,
+ 	"c=s" => \$opt_c,   "progver=s"  => \$opt_c,
+ 	"v+"  => \$verbose, "verbose+"   => \$verbose,
+ 	"u"   => \$opt_u,   "udp"        => \$opt_u,
+ 	"t"   => \$opt_t,   "tcp"        => \$opt_t
+);
 
 # -h means display verbose help screen
 if ($opt_h) { print_help(); exit $ERRORS{'OK'}; }
@@ -313,7 +313,7 @@ sub get_rpcinfo {
 	
     	if ( $line =~ /program $prognum version ([0-9]*) ready and waiting/ ) {
 			$response .= " version $1";
-			$state = 'OK' unless $state ne 'OK';
+			$state = 'OK' unless $state ne 'UNKNOWN';
 			print "1:$response \n" if $verbose;
     	}
 
