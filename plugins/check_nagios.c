@@ -134,7 +134,7 @@ main (int argc, char **argv)
                         }
 
 			/* May get empty procargs */
-			if (!strstr(procargs, argv[0]) && strstr(procprog, process_string) && strcmp(procargs,"")) {
+			if (!strstr(procargs, argv[0]) && strstr(procargs, process_string) && strcmp(procargs,"")) {
 				proc_entries++;
 				if (verbose >= 2) {
 					printf (_("Found process: %s %s\n"), procprog, procargs);
@@ -274,7 +274,7 @@ print_help (void)
 	printf (_("\
 This plugin checks the status of the Nagios process on the local\n\
 machine. The plugin will check to make sure the Nagios status log is no older\n\
-than the number of seconds specified by the expires option. It also\n\
+than the number of minutes specified by the expires option. It also\n\
 checks the process table for a process matching the command argument.\n\n"));
 
 	print_usage ();
@@ -285,13 +285,13 @@ checks the process table for a process matching the command argument.\n\n"));
  -F, --filename=FILE\n\
    Name of the log file to check\n\
  -e, --expires=INTEGER\n\
-   Seconds aging after which logfile is considered stale\n\
+   Minutes aging after which logfile is considered stale\n\
  -C, --command=STRING\n\
-   Command to search for in process table\n"));
+   Substring to search for in process arguments\n"));
 
 	printf (_("\
 Example:\n\
-   ./check_nagios -e 5 -F /usr/local/nagios/var/status.log -C nagios\n"));
+   ./check_nagios -e 5 -F /usr/local/nagios/var/status.log -C /usr/local/nagios/bin/nagios\n"));
 }
 
 
@@ -300,5 +300,5 @@ void
 print_usage (void)
 {
 	printf ("\
-Usage: %s -F <status log file> -e <expire_minutes> -C <process_name>\n", progname);
+Usage: %s -F <status log file> -e <expire_minutes> -C <process_string>\n", progname);
 }
