@@ -415,26 +415,9 @@ strscpy (char *dest, const char *src)
 char *
 strscat (char *dest, const char *src)
 {
-	size_t len, l2;
 
-	if (src == NULL)
-		return dest;
-	else
-		l2 = strlen (src);
-
-	if (dest == NULL) {
-		len = 0;
-		dest = malloc (l2 + 1);
-	} else {
-		len = strlen (dest);
-		dest = realloc (dest, len + l2 + 1);
-	}
-
-	if (dest == NULL)
-		terminate (STATE_UNKNOWN, "failed malloc in strscat\n");
-
-	strncpy (dest + len, src, l2);
-	dest[len + l2] = '\0';
+	if (src != NULL)
+		asprintf (&dest, "%s%s", dest, src);
 
 	return dest;
 }
