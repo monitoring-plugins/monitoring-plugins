@@ -99,8 +99,8 @@ int verbose = FALSE;
 int use_ssl = FALSE;
 int sd = 0;
 char *buffer;
-
-
+int expect_mismatch_state = STATE_WARNING;
+int exact_matching = TRUE;
 
 int
 main (int argc, char **argv)
@@ -332,9 +332,15 @@ main (int argc, char **argv)
 				if (verbose)
 					printf ("%d %d\n", i, (int)server_expect_count);
 				if (i >= (int)server_expect_count)
-					die (STATE_WARNING, _("Invalid response from host\n"));
-				if (strstr (status, server_expect[i]))
-					break;
+					die (expect_mismatch_state, _("Unexpected response from host: %s\n"), status);
+				/* default expect gets exact matching */
+				if (exact_matching) {
+					if (strncmp(status, server_expect[i], strlen(server_expect[i])) == 0)
+						break;
+				} else {
+					if (strstr (status, server_expect[i]))
+						break;
+				}
 			}
 		}
 	}
@@ -414,6 +420,7 @@ process_arguments (int argc, char **argv)
 		{"jail", required_argument, 0, 'j'},
 		{"delay", required_argument, 0, 'd'},
 		{"refuse", required_argument, 0, 'r'},
+		{"mismatch", required_argument, 0, 'M'},
 		{"use-ipv4", no_argument, 0, '4'},
 		{"use-ipv6", no_argument, 0, '6'},
 		{"verbose", no_argument, 0, 'v'},
@@ -447,7 +454,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVv46H:s:e:q:m:c:w:t:p:C:W:d:Sr:jD:",
+		c = getopt_long (argc, argv, "+hVv46H:s:e:q:m:c:w:t:p:C:W:d:Sr:jD:M:",
 		                 longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)
@@ -524,6 +531,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'e': /* expect string (may be repeated) */
 			EXPECT = NULL;
+			exact_matching = FALSE;
 			if (server_expect_count == 0)
 				server_expect = malloc (sizeof (char *) * (++server_expect_count));
 			else
@@ -547,6 +555,16 @@ process_arguments (int argc, char **argv)
 				econn_refuse_state = STATE_CRITICAL;
 			else
 				usage4 (_("Refuse must be one of ok, warn, crit"));
+			break;
+		case 'M':
+			if (!strncmp(optarg,"ok",2))
+				expect_mismatch_state = STATE_OK;
+			else if (!strncmp(optarg,"warn",4))
+				expect_mismatch_state = STATE_WARNING;
+			else if (!strncmp(optarg,"crit",4))
+				expect_mismatch_state = STATE_CRITICAL;
+			else
+				usage4 (_("Mismatch must be one of ok, warn, crit"));
 			break;
 		case 'd':
 			if (is_intpos (optarg))
@@ -764,6 +782,8 @@ print_help (void)
 	printf (_("\
  -r, --refuse=ok|warn|crit\n\
     Accept tcp refusals with states ok, warn, crit (default: crit)\n\
+ -M, --mismatch=ok|warn|crit\n\
+    Accept expected string mismatches with states ok, warn, crit (default: warn)\n\
  -j, --jail\n\
     Hide output from TCP socket\n\
  -m, --maxbytes=INTEGER\n\
@@ -797,6 +817,6 @@ print_usage (void)
 Usage: %s -H host -p port [-w <warning time>] [-c <critical time>]\n\
                   [-s <send string>] [-e <expect string>] [-q <quit string>]\n\
                   [-m <maximum bytes>] [-d <delay>] [-t <timeout seconds>]\n\
-                  [-r <refuse state>] [-v] [-4|-6] [-j] [-D <days to cert expiry>]\n\
-                  [-S <use SSL>]\n", progname);
+                  [-r <refuse state>] [-M <mismatch state>] [-v] [-4|-6] [-j]\n\
+                  [-D <days to cert expiry>] [-S <use SSL>]\n", progname);		  
 }
