@@ -1,33 +1,58 @@
 /******************************************************************************
-*
-* CHECK_SWAP.C
-*
-* Program: Process plugin for Nagios
-* License: GPL
-* Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
-*
-* $Id$
-*
-******************************************************************************/
+ *
+ * Program: Swap space plugin for Nagios
+ * License: GPL
+ *
+ * License Information:
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ * Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
+ *
+ * $Id$
+ *
+ *****************************************************************************/
 
 #include "common.h"
 #include "popen.h"
 #include "utils.h"
 
 #define PROGNAME "check_swap"
+#define REVISION "$Revision$"
+#define COPYRIGHT "2000-2002"
+#define AUTHOR "Karl DeBisschop"
+#define EMAIL "kdebisschop@users.sourceforge.net"
+#define SUMMARY "Check swap space on local server.\n"
 
 int process_arguments (int argc, char **argv);
 int validate_arguments (void);
 void print_usage (void);
 void print_help (void);
 
-int warn_percent = 200, crit_percent = 200, warn_size = -1, crit_size = -1;
+int warn_percent = 200;
+int crit_percent = 200;
+int warn_size = -1;
+int crit_size = -1;
+int verbose;
+int allswaps;
 
 int
 main (int argc, char **argv)
 {
 	int total_swap = 0, used_swap = 0, free_swap = 0, percent_used;
-	int total, used, free;
+	int total, used, free, percent;
 	int result = STATE_OK;
 	char input_buffer[MAX_INPUT_BUFFER];
 #ifdef HAVE_SWAP
@@ -48,17 +73,25 @@ main (int argc, char **argv)
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, fp)) {
 		if (sscanf (input_buffer, " %s %d %d %d", str, &total, &used, &free) == 4 &&
 		    strstr (str, "Swap")) {
-/* 			asprintf (&status, "%s [%d/%d]", status, used, total); */
 			total_swap += total;
 			used_swap += used;
 			free_swap += free;
+			if (allswaps) {
+				percent = 100 * (((float) used) / ((float) total));
+				if (percent >= crit_percent || free <= crit_size)
+					result = max_state (STATE_CRITICAL, result);
+				else if (percent >= warn_percent || free <= warn_size)
+					result = max_state (STATE_WARNING, result);
+				if (verbose)
+					asprintf (&status, "%s [%d/%d]", status, used, total);
+			}
 		}
 	}
 	percent_used = 100 * (((float) used_swap) / ((float) total_swap));
 	if (percent_used >= crit_percent || free_swap <= crit_size)
-		result = STATE_CRITICAL;
+		result = max_state (STATE_CRITICAL, result);
 	else if (percent_used >= warn_percent || free_swap <= warn_size)
-		result = STATE_WARNING;
+		result = max_state (STATE_WARNING, result);
 	asprintf (&status, "%s %2d%% (%d out of %d)", status, percent_used,
 	          used_swap, total_swap);
 	fclose (fp);
@@ -94,29 +127,37 @@ main (int argc, char **argv)
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
 		sscanf (input_buffer, SWAP_FORMAT, &total, &free);
 		used = total - free;
-/* 		asprintf (&status, "%s [%d/%d]", status, used, total); */
 		total_swap += total;
 		used_swap += used;
 		free_swap += free;
+		if (allswaps) {
+			percent = 100 * (((float) used) / ((float) total));
+			if (percent >= crit_percent || free <= crit_size)
+				result = max_state (STATE_CRITICAL, result);
+			else if (percent >= warn_percent || free <= warn_size)
+				result = max_state (STATE_WARNING, result);
+			if (verbose)
+				asprintf (&status, "%s [%d/%d]", status, used, total);
+		}
 	}
 	percent_used = 100 * ((float) used_swap) / ((float) total_swap);
 	asprintf (&status, "%s %2d%% (%d out of %d)",
 						status, percent_used, used_swap, total_swap);
 	if (percent_used >= crit_percent || free_swap <= crit_size)
-		result = STATE_CRITICAL;
+		result = max_state (STATE_CRITICAL, result);
 	else if (percent_used >= warn_percent || free_swap <= warn_size)
-		result = STATE_WARNING;
+		result = max_state (STATE_WARNING, result);
 
 	/* If we get anything on STDERR, at least set warning */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
-		result = max (result, STATE_WARNING);
+		result = max_state (result, STATE_WARNING);
 
 	/* close stderr */
 	(void) fclose (child_stderr);
 
 	/* close the pipe */
 	if (spclose (child_process))
-		result = max (result, STATE_WARNING);
+		result = max_state (result, STATE_WARNING);
 #endif
 #endif
 
@@ -152,13 +193,16 @@ main (int argc, char **argv)
 int
 process_arguments (int argc, char **argv)
 {
-	int c, i = 0;
+	int c = 0;  /* option character */
+	int wc = 0; /* warning counter  */
+	int cc = 0; /* critical counter */
 
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] = {
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
+		{"all", no_argument, 0, 'a'},
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
@@ -171,9 +215,9 @@ process_arguments (int argc, char **argv)
 
 	while (1) {
 #ifdef HAVE_GETOPT_H
-		c = getopt_long (argc, argv, "+?Vhc:w:", long_options, &option_index);
+		c = getopt_long (argc, argv, "+?Vvhac:w:", long_options, &option_index);
 #else
-		c = getopt (argc, argv, "+?Vhc:w:");
+		c = getopt (argc, argv, "+?Vvhac:w:");
 #endif
 
 		if (c == -1 || c == EOF)
@@ -197,6 +241,7 @@ process_arguments (int argc, char **argv)
 			else {
 				usage ("Warning threshold must be integer or percentage!\n");
 			}
+			wc++;
 		case 'c':									/* critical time threshold */
 			if (is_intnonneg (optarg)) {
 				crit_size = atoi (optarg);
@@ -214,6 +259,13 @@ process_arguments (int argc, char **argv)
 			else {
 				usage ("Critical threshold must be integer or percentage!\n");
 			}
+			cc++;
+		case 'a':									/* verbose */
+			allswaps = TRUE;
+			break;
+		case 'v':									/* verbose */
+			verbose = TRUE;
+			break;
 		case 'V':									/* version */
 			print_revision (my_basename (argv[0]), "$Revision$");
 			exit (STATE_OK);
@@ -279,9 +331,12 @@ void
 print_usage (void)
 {
 	printf
-		("Usage: check_swap -w <used_percentage>%% -c <used_percentage>%%\n"
-		 "       check_swap -w <bytes_free> -c <bytes_free>\n"
-		 "       check_swap (-V|--version)\n" "       check_swap (-h|--help)\n");
+		("Usage:\n"
+		 " %s [-a] -w <used_percentage>%% -c <used_percentage>%%\n"
+		 " %s [-a] -w <bytes_free> -c <bytes_free>\n"
+		 " %s (-h | --help) for detailed help\n"
+		 " %s (-V | --version) for version information\n",
+		 PROGNAME, PROGNAME, PROGNAME, PROGNAME);
 }
 
 
@@ -291,11 +346,9 @@ print_usage (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, "$Revision$");
+	print_revision (PROGNAME, REVISION);
 	printf
-		("Copyright (c) 2000 Karl DeBisschop\n\n"
-		 "This plugin will check all of the swap partitions and return an\n"
-		 "error if the the avalable swap space is less than specified.\n\n");
+		("Copyright (c) %s %s <%s>\n\n%s\n", COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
 	print_usage ();
 	printf
 		("\nOptions:\n"
@@ -307,6 +360,8 @@ print_help (void)
 		 "   Exit with CRITICAL status if less than INTEGER bytes of swap space are free\n"
 		 " -c, --critical=PERCENT%%\n"
 		 "   Exit with CRITCAL status if more than PERCENT of swap space has been used\n"
+		 " -a, --allswaps\n"
+		 "    Conduct comparisons for all swap partitions, one by one\n"
 		 " -h, --help\n"
 		 "    Print detailed help screen\n"
 		 " -V, --version\n" "    Print version information\n\n");
