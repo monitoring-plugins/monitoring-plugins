@@ -75,3 +75,7 @@ OS Specific Issues
 HP-UX 11.11
 You need to use the version of gcc provided by HP at version 3.3.3. 
 Also, you need GNU make 3.8
+
+Mandrake 10.0
+If you have procps 3.1.15, you will need to run configure and then change 
+the PS_COMMAND in config.h to remove the "-" from the ps command
