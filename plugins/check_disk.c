@@ -69,7 +69,7 @@ main (int argc, char **argv)
 	char file_system[MAX_INPUT_BUFFER] = "";
 	char mntp[MAX_INPUT_BUFFER] = "";
 	char outbuf[MAX_INPUT_BUFFER] = "";
-	char *output = NULL;
+	char *output = "";
 
 	if (process_arguments (argc, argv) != OK)
 		usage ("Could not parse arguments\n");
@@ -100,48 +100,15 @@ main (int argc, char **argv)
 				 &used_disk, &free_disk, &usp, &mntp) == 6
 				|| sscanf (input_buffer, "%s %*s %d %d %d %d%% %s", file_system,
 				 &total_disk, &used_disk, &free_disk, &usp, &mntp) == 6) {
-
-			/* cannot use max now that STATE_UNKNOWN is greater than STATE_CRITICAL
-			result = max (result, check_disk (usp, free_disk)); */
-			temp_result = check_disk (usp, free_disk) ;
-
-					
-			if ( temp_result == STATE_CRITICAL ) {
-				result = STATE_CRITICAL;
-			}
-			else if (temp_result == STATE_WARNING) {
-				if ( !( result == STATE_CRITICAL) ) {
-					result = STATE_WARNING;
-				}
-			}
-			else if (temp_result == STATE_OK) {
-				if ( ! ( result == STATE_CRITICAL || result == STATE_WARNING) ){
-					result = STATE_OK;
-				}
-			}
-			else if (temp_result == STATE_UNKNOWN) {
-				if ( ! ( result == STATE_CRITICAL || result == STATE_WARNING || result == STATE_OK) ){
-					result = STATE_UNKNOWN;
-				}
-			}
-			else {
-				/* don't have a match with the return value from check_disk() */
-				result = STATE_UNKNOWN;
-			}
-				
-
-				
-			len =
-				snprintf (outbuf, MAX_INPUT_BUFFER - 1,
-									" [%d kB (%d%%) free on %s]", free_disk, 100 - usp,
-									display_mntp ? mntp : file_system);
-			outbuf[len] = 0;
-			output = strscat (output, outbuf);
+			asprintf (&output, "%s [%d kB (%d%%) free on %s]", output, free_disk,
+			          100 - usp, display_mntp ? mntp : file_system);
+			result = max_state (result, check_disk (usp, free_disk));
 		}
 		else {
 			printf ("Unable to read output:\n%s\n%s\n", command_line, input_buffer);
 			return result;
 		}
+
 	}
 
 	/* If we get anything on stderr, at least set warning */
