@@ -119,6 +119,12 @@ my $ntpdate_error = $ERRORS{'UNKNOWN'};
 my $dispersion_error = $ERRORS{'UNKNOWN'};
 
 my $key = undef;
+# some systems don't have a proper ntpdc/xntpdc
+if ($utils::PATH_TO_NTPDC && -x $utils::PATH_TO_NTPDC ) {
+	my $have_ntpdc = 1;  
+}else{
+	my $have_ntpdc = 0;
+}
 
 # Just in case of problems, let's not hang Nagios
 $SIG{'ALRM'} = sub {
@@ -176,22 +182,25 @@ if ( $? ) {
 ### and look in the 8th column for dispersion (ntpd v4) or jitter (ntpd v3)
 ###
 
-if ( open(NTPDC,"$utils::PATH_TO_NTPDC -s $host 2>&1 |") ) {
-	while (<NTPDC>) {
-		print $_ if ($verbose);
-		if (/([^\s]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)/) {
-			if ($8>15) {
-				print "Dispersion = $8 \n" if ($verbose);
-				$dispersion_error = $ERRORS{'CRITICAL'};
-			} elsif ($8>5 && $dispersion_error<$ERRORS{'CRITICAL'}) {
-				print "Dispersion = $8 \n" if ($verbose);
-				$dispersion_error = $ERRORS{'WARNING'};
-			} else {
-				$dispersion_error = $ERRORS{'OK'};
+if ($have_ntpdc) {
+
+	if ( open(NTPDC,"$utils::PATH_TO_NTPDC -s $host 2>&1 |") ) {
+		while (<NTPDC>) {
+			print $_ if ($verbose);
+			if (/([^\s]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)/) {
+				if ($8>15) {
+					print "Dispersion = $8 \n" if ($verbose);
+					$dispersion_error = $ERRORS{'CRITICAL'};
+				} elsif ($8>5 && $dispersion_error<$ERRORS{'CRITICAL'}) {
+					print "Dispersion = $8 \n" if ($verbose);
+					$dispersion_error = $ERRORS{'WARNING'};
+				} else {
+					$dispersion_error = $ERRORS{'OK'};
+				}
 			}
 		}
+		close NTPDC;
 	}
-	close NTPDC;
 }
 
 
@@ -205,7 +214,7 @@ if ($ntpdate_error != $ERRORS{'OK'}) {
 		$answer = "Server error and time difference $offset seconds greater than +/- $warning sec\n";
 	}
 
-} elsif ($dispersion_error != $ERRORS{'OK'}) {
+} elsif ($have_ntpdc && $dispersion_error != $ERRORS{'OK'}) {
 	$state = $dispersion_error;
 	$answer = "Dispersion too high\n";
 	if (defined($offset) && abs($offset) > $critical) {
