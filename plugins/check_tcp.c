@@ -529,8 +529,9 @@ connect_SSL (void)
 
   /* Initialize SSL context */
   SSLeay_add_ssl_algorithms ();
-  meth = SSLv2_client_method ();
+  meth = SSLv23_client_method ();
   SSL_load_error_strings ();
+  OpenSSL_add_all_algorithms();
   if ((ctx = SSL_CTX_new (meth)) == NULL)
     {
       printf (_("ERROR: Cannot create SSL context.\n"));
@@ -553,7 +554,7 @@ connect_SSL (void)
       if ((ssl = SSL_new (ctx)) != NULL)
       {
         SSL_set_fd (ssl, sd);
-        if (SSL_connect (ssl) != -1)
+        if (SSL_connect(ssl) == 1)
           return OK;
         ERR_print_errors_fp (stderr);
       }
