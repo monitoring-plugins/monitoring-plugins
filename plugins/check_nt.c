@@ -355,19 +355,18 @@ int main(int argc, char **argv){
 	  		if (allRight)
 	    		{
 	      			/* Let's format the output string, finally... */
-
 					if (strstr(description, "%") == NULL) {
-						asprintf (&output_message, "%s = %.2f %s", description, counter_value, counter_unit);
+						asprintf (&output_message, "%s = %.2f %s", 											description, counter_value, counter_unit);
 					} else {
 						/* has formatting, will segv if wrong */
 	      				asprintf (&output_message, description, counter_value);
 					}
-	      			output_message = strcat (output_message, "|");
-	      			output_message = strcat (output_message,
-							fperfdata (description, counter_value, counter_unit,
-				   				   1, warning_value, 1, critical_value,
-				   				   (!(isPercent) && (minval != NULL)), fminval,
-				   				   (!(isPercent) && (minval != NULL)), fmaxval));
+					asprintf (&output_message, "%s |", output_message);
+	      			asprintf (&output_message,"%s %s", output_message, 
+						fperfdata (description, counter_value, 
+							counter_unit, 1, warning_value, 1, critical_value,
+				   			(!(isPercent) && (minval != NULL)), fminval,
+				   			(!(isPercent) && (minval != NULL)), fmaxval));
 	    		}
 		}
 
