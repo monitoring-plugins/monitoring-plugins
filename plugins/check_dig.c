@@ -54,6 +54,7 @@ main (int argc, char **argv)
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *command_line;
 	char *output;
+	char *t;
 	long microsec;
 	double elapsed_time;
 	int result = STATE_UNKNOWN;
@@ -123,6 +124,11 @@ main (int argc, char **argv)
 					output = strdup(input_buffer);
                         	        result = STATE_OK;
 				}
+
+				/* Translate output TAB -> SPACE */
+				t = output;
+				while ((t = index(t, '\t')) != NULL) 
+					*t = ' ';
 
 			} while (!strstr (input_buffer, ";; "));
 
@@ -334,7 +340,7 @@ print_help (void)
 
         printf (_("\
  -a, --expected_address=STRING\n\
-   an address expected to be in the asnwer section.\n\
+   an address expected to be in the answer section.\n\
    if not set, uses whatever was in -l\n"));
 
 	printf (_(UT_WARN_CRIT));
