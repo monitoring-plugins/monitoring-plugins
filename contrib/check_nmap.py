@@ -8,7 +8,7 @@
 # License: GPL
 # Copyright (c)  2000 Jacob Lundqvist (jaclu@galdrion.com)
 #
-_version_ = '1.20'
+_version_ = '1.21'
 #
 #
 # Description:
@@ -25,6 +25,7 @@ _version_ = '1.20'
 #
 # History
 # -------
+# 1.21	 2004-07-23 rippeld@hillsboroughcounty.org Updated parsing of nmap output to correctly identify closed ports
 # 1.20   2000-07-15 jaclu Updated params to correctly comply to plugin-standard
 #                         moved support classes to utils.py
 # 1.16   2000-07-14 jaclu made options and return codes more compatible with 
@@ -276,7 +277,8 @@ class CheckNmap:
 		if string.find(s,'/')<1:
 		    continue
 		p=string.split(s,'/')[0]
-		self.active_ports.append(int(p))
+		if string.find(l,'open')>1:
+		    self.active_ports.append(int(p))
 	except:
 	    # failure due to strange output...
 	    pass
