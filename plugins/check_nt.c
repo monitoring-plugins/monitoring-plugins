@@ -58,7 +58,6 @@ char *req_password=NULL;
 unsigned long lvalue_list[MAX_VALUE_LIST];
 unsigned long warning_value=0L;
 unsigned long critical_value=0L;
-int check_value_list=FALSE;
 int check_warning_value=FALSE;
 int check_critical_value=FALSE;
 enum checkvars vars_to_check = CHECK_NONE;
@@ -115,8 +114,13 @@ int main(int argc, char **argv){
 
 		asprintf(&send_buffer, "%s&1", req_password);
 		fetch_data (server_address, server_port, send_buffer);
-		output_message = strdup (recv_buffer);
-		return_code=STATE_OK;
+		if (value_list != NULL && strcmp(recv_buffer, value_list) != 0) {
+			asprintf (&output_message, _("Wrong client version - running: %s, required: %s"), recv_buffer, value_list);
+			return_code = STATE_WARNING;
+		} else {
+			asprintf (&output_message, recv_buffer);
+			return_code = STATE_OK;
+		}
 		break;
 
 	case CHECK_CPULOAD:
@@ -536,7 +540,8 @@ Windows NT/2000/XP server.\n\n"));
 -v, --variable=STRING\n\
   Variable to check.  Valid variables are:\n"));
   printf (_("\
-   CLIENTVERSION = Get the NSClient version\n"));
+   CLIENTVERSION = Get the NSClient version\n\
+     If -l <version> is specified, will return warning if versions differ.\n"));
   printf (_("\
    CPULOAD = Average CPU load on last x minutes.\n\
      Request a -l parameter with the following syntax:\n\
