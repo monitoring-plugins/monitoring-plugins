@@ -54,10 +54,14 @@ check_snmp:
 	  http://net-snmp.sourceforge.net
 
 check_ifstatus/check_ifoperstatus
-    - Requires Net::SNMP perl module
+	- Requires Net::SNMP perl module
 	   http://www.perl.com/CPAN/modules/by-authors/id/D/DT/DTOWN/
 
 check_nwstat:
 	- Requires MRTGEXT NLM for Novell Servers
 	  http://www.engr.wisc.edu/~drews/mrtg/
+
+check_nt:
+	- Requires NSClient to run on the NT server to monitor
+	  http://nsclient.ready2run.nl/
 
