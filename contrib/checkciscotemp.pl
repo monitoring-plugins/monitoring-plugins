@@ -30,7 +30,7 @@
 # (in accordance with the plugin coding guidelines)
 ####################################
 
-#use Net::SNMP;
+use Net::SNMP;
 use Getopt::Long;
 &Getopt::Long::config('auto_abbrev');
 
