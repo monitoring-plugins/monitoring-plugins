@@ -594,6 +594,18 @@ then
 	ac_cv_ps_cols=8
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
+dnl Some *BSDs have different format for ps. This is mainly to catch FreeBSD 4. 
+dnl Limitation: Only first 16 chars returned for ucomm field
+dnl Must come before ps -weo
+elif ps -axwo 'stat uid ppid vsz rss pcpu ucomm command' 2>/dev/null | \
+	egrep -i ["^ *STAT +UID +PPID +VSZ +RSS +%CPU +UCOMM +COMMAND"] > /dev/null
+then
+	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
+	ac_cv_ps_command="$PATH_TO_PS -axwo 'stat uid ppid vsz rss pcpu ucomm command'"
+	ac_cv_ps_format="%s %d %d %d %d %f %s %n"
+	ac_cv_ps_cols=8
+	AC_MSG_RESULT([$ac_cv_ps_command])
+
 dnl  STAT UCOMM              VSZ   RSS USER       UID  PPID COMMAND
 elif ps -weo 'stat comm vsz rss user uid ppid etime args' 2>/dev/null | \
 	egrep -i ["^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ +U[ID]+ +P[PID]+ +[ELAPSD]+ +[RGSCOMDNA]+"] >/dev/null
