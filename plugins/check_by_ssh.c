@@ -209,10 +209,10 @@ process_arguments (int argc, char **argv)
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
-			getopt_long (argc, argv, "+?Vvhft46H:O:p:i:u:l:C:n:s:", long_options,
+			getopt_long (argc, argv, "Vvh46ft:H:O:p:i:u:l:C:n:s:", long_options,
 									 &option_index);
 #else
-		c = getopt (argc, argv, "+?Vvhft46H:O:p:i:u:l:C:n:s:");
+		c = getopt (argc, argv, "Vvh46ft:H:O:p:i:u:l:C:n:s:");
 #endif
 
 		if (c == -1 || c == EOF)
