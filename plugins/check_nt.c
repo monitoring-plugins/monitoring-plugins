@@ -142,7 +142,7 @@ int main(int argc, char **argv){
 			/* -l parameters is present with only integers */
 			return_code=STATE_OK;
 			temp_string = strdup (_("CPU Load"));
-			temp_string_perf = strdup (_(" "));
+			temp_string_perf = strdup (" ");
       
 			/* loop until one of the parameters is wrong or not present */
 			while (lvalue_list[0+offset]> (unsigned long)0 &&
@@ -239,7 +239,7 @@ int main(int argc, char **argv){
 		else {
 			preparelist(value_list);		/* replace , between services with & to send the request */
 			asprintf(&send_buffer,"%s&%u&%s&%s", req_password,(vars_to_check==CHECK_SERVICESTATE)?5:6,
-							 (show_all==TRUE)?_("ShowAll"):_("ShowFail"),value_list);
+							 (show_all==TRUE) ? "ShowAll" : "ShowFail",value_list);
 			fetch_data (server_address, server_port, send_buffer);
 			return_code=atoi(strtok(recv_buffer,"&"));
 			temp_string=strtok(NULL,"&");
@@ -316,7 +316,7 @@ int main(int argc, char **argv){
 	    		asprintf (&output_message, "%.f", counter_value);
 	  		else if (isPercent)
 	    		     {	
-	      			counter_unit = strdup (_("%"));
+	      			counter_unit = strdup ("%");
 	      			allRight = TRUE;
 	    		     }
 
