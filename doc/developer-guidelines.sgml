@@ -243,7 +243,7 @@
 		This is the expected format:</para>
 
 		<literallayout>
-		'label'=value[UOM];[crit];[warn][;[max];[min]]
+		'label'=value[UOM];[warn];[crit];[min];[max]
 		</literallayout>
 
 		<para>Notes:</para>
@@ -261,10 +261,11 @@
 			</listitem>
 		<listitem><para>to specify a quote character, use two single quotes</para>
 			</listitem>
-		<listitem><para>crit or warn may be null (if the threshold is not defined)</para>
+		<listitem><para>warn, crit, min or max may be null (for example, if the threshold is 
+			not defined or min and max do not apply). Trailing unfilled semicolons can be
+			dropped</para>
 			</listitem>
-		<listitem><para>max and min are optional. Holds maximum values for the
-			particular UOM (not required if UOM=%)</para>
+		<listitem><para>min and max are not required if UOM=%</para>
 			</listitem>
 		<listitem><para>value, crit, warn, max and min in class [-0-9.]. Must all be the
 			same UOM</para>
