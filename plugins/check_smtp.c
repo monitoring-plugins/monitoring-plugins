@@ -168,12 +168,13 @@ main (int argc, char **argv)
 	else if (check_warning_time && elapsed_time > (double) warning_time)
 		result = STATE_WARNING;
 
-	if (verbose)
-		printf (_("SMTP %s - %.3f sec. response time, %s|time=%ldus\n"),
-		        state_text (result), elapsed_time, buffer, microsec);
-	else
-		printf (_("SMTP %s - %.3f second response time|time=%ldus\n"),
-		        state_text (result), elapsed_time, microsec);
+	printf (_("SMTP %s - %.3f sec. response time%s%s|%s\n"),
+	        state_text (result), elapsed_time,
+          verbose?", ":"", verbose?buffer:"",
+	        perfdata ("time", microsec, "us",
+	                  check_warning_time, (long)(1000000*warning_time),
+	                  check_critical_time, (long)(1000000*critical_time),
+	                  TRUE, 0, FALSE, 0));
 
 	return result;
 }
