@@ -37,7 +37,8 @@ enum {
 int process_arguments (int, char **);
 int get_threshold (char *, float *, int *);
 int validate_arguments (void);
-int run_ping (char *, char *);
+int run_ping (const char *cmd, const char *addr);
+int error_scan (char buf[MAX_INPUT_BUFFER], const char *addr);
 void print_usage (void);
 void print_help (void);
 
@@ -394,7 +395,7 @@ validate_arguments ()
 
 
 int
-run_ping (char *cmd, char *server_address)
+run_ping (const char *cmd, const char *addr)
 {
 	char buf[MAX_INPUT_BUFFER];
 	int result = STATE_UNKNOWN;
@@ -408,12 +409,7 @@ run_ping (char *cmd, char *server_address)
 
 	while (fgets (buf, MAX_INPUT_BUFFER - 1, child_process)) {
 
-		if (strstr (buf, _("(DUP!)"))) {
-			result = max_state (result, STATE_WARNING);
-			warn_text = strdup (WARN_DUPLICATES);
-			if (!warn_text)
-				die (STATE_UNKNOWN, _("unable to realloc warn_text"));
-		}
+		result = max_state (result, error_scan (buf, addr));
 
 		/* get the percent loss statistics */
 		if(sscanf(buf,"%*d packets transmitted, %*d packets received, +%*d errors, %d%% packet loss",&pl)==1 ||
@@ -438,34 +434,11 @@ run_ping (char *cmd, char *server_address)
 	if (pl == 100)
 		rta = crta;
 
-	/* check stderr */
-	while (fgets (buf, MAX_INPUT_BUFFER - 1, child_stderr)) {
-		if (strstr(buf,"Warning: no SO_TIMESTAMP support, falling back to SIOCGSTAMP"))
-				continue;
+	/* check stderr, setting at least WARNING if there is output here */
+	while (fgets (buf, MAX_INPUT_BUFFER - 1, child_stderr))
+		if (! strstr(buf,"Warning: no SO_TIMESTAMP support, falling back to SIOCGSTAMP"))
+			result = max_state (STATE_WARNING, error_scan (buf, addr));
 
-		if (strstr (buf, "Network is unreachable"))
-			die (STATE_CRITICAL,
-			           _("PING CRITICAL - Network unreachable (%s)"),
-			           server_address);
-		else if (strstr (buf, "Destination Host Unreachable"))
-			die (STATE_CRITICAL,
-			           _("PING CRITICAL - Host Unreachable (%s)"),
-			           server_address);
-		else if (strstr (buf, "unknown host" ))
-			die (STATE_CRITICAL,
-			           _("PING CRITICAL - Host not found (%s)"),
-			           server_address);
-
-		if (warn_text == NULL)
-			warn_text = strdup (buf);
-		else if (asprintf (&warn_text, "%s %s", warn_text, buf) == -1)
-			die (STATE_UNKNOWN, _("unable to realloc warn_text"));
-
-		if (strstr (buf, "DUPLICATES FOUND"))
-			result = max_state (result, STATE_WARNING);
-		else
-			result = STATE_CRITICAL ;
-	}
 	(void) fclose (child_stderr);
 
 
@@ -477,6 +450,32 @@ run_ping (char *cmd, char *server_address)
 		warn_text = strdup("");
 
 	return result;
+}
+
+
+
+
+
+int
+error_scan (char buf[MAX_INPUT_BUFFER], const char *addr)
+{
+	if (strstr (buf, "Network is unreachable"))
+		die (STATE_CRITICAL, _("PING CRITICAL - Network unreachable (%s)"), addr);
+	else if (strstr (buf, "Destination Host Unreachable"))
+		die (STATE_CRITICAL, _("PING CRITICAL - Host Unreachable (%s)"), addr);
+	else if (strstr (buf, "unknown host" ))
+		die (STATE_CRITICAL, _("PING CRITICAL - Host not found (%s)"), addr);
+
+	if (strstr (buf, "(DUP!)") || strstr (buf, "DUPLICATES FOUND")) {
+		if (warn_text == NULL)
+			warn_text = strdup (_(WARN_DUPLICATES));
+		else if (! strstr (warn_text, _(WARN_DUPLICATES)) &&
+		         asprintf (&warn_text, "%s %s", warn_text, _(WARN_DUPLICATES)) == -1)
+			die (STATE_UNKNOWN, _("unable to realloc warn_text"));
+		return (STATE_WARNING);
+	}
+
+	return (STATE_OK);
 }
 
 
