@@ -163,8 +163,8 @@ state_text (int result)
 void
 die (int result, const char *fmt, ...)
 {
-	printf ("%s %s: ", sizeof (char) + index(progname, '_'), state_text(result));
 	va_list ap;
+	printf ("%s %s: ", sizeof (char) + index(progname, '_'), state_text(result));
 	va_start (ap, fmt);
 	vprintf (fmt, ap);
 	va_end (ap);
