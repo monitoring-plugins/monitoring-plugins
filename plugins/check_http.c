@@ -15,6 +15,7 @@
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 ******************************************************************************/
+/* splint -I. -I../../plugins -I../../lib/ -I/usr/kerberos/include/ ../../plugins/check_http.c */
 
 const char *progname = "check_http";
 const char *revision = "$Revision$";
@@ -115,9 +116,10 @@ char buffer[MAX_INPUT_BUFFER];
 int process_arguments (int, char **);
 static char *base64 (const char *bin, size_t len);
 int check_http (void);
-int redir (char *pos, char *status_line);
+void redir (char *pos, char *status_line);
 int server_type_check(const char *type);
 int server_port_check(int ssl_flag);
+char *perfd_time (long microsec);
 int my_recv (void);
 int my_close (void);
 void print_help (void);
@@ -669,10 +671,11 @@ check_http (void)
 				printf (_("CRITICAL"));
 			microsec = deltime (tv);
 			elapsed_time = (double)microsec / 1.0e6;
-			asprintf (&msg, _(" - %s - %.3f second response time %s%s|time=%ldus size=%dB\n"),
-		                 status_line, elapsed_time, timestamp,
-	                   (display_html ? "</A>" : ""), microsec, pagesize);
-			die (onredirect, "%s", msg);
+			die (onredirect,
+			     _(" - %s - %.3f second response time %s%s|%s size=%dB\n"),
+			     status_line, elapsed_time, timestamp,
+			     (display_html ? "</A>" : ""),
+					 perfd_time (microsec), pagesize);
 		} /* end if (strstr (status_line, "30[0-4]") */
 
 
@@ -682,9 +685,11 @@ check_http (void)
 	/* check elapsed time */
 	microsec = deltime (tv);
 	elapsed_time = (double)microsec / 1.0e6;
-	asprintf (&msg, _("HTTP problem: %s - %.3f second response time %s%s|time=%ldus size=%dB\n"),
-	               status_line, elapsed_time, timestamp,
-	               (display_html ? "</A>" : ""), microsec, pagesize);
+	asprintf (&msg,
+	          _("HTTP problem: %s - %.3f second response time %s%s|%s size=%dB\n"),
+	          status_line, elapsed_time, timestamp,
+	          (display_html ? "</A>" : ""),
+						perfd_time (microsec), pagesize);
 	if (check_critical_time == TRUE && elapsed_time > critical_time)
 		die (STATE_CRITICAL, "%s", msg);
 	if (check_warning_time == TRUE && elapsed_time > warning_time)
@@ -695,14 +700,16 @@ check_http (void)
 
 	if (strlen (string_expect)) {
 		if (strstr (page, string_expect)) {
-			printf (_("HTTP OK %s - %.3f second response time %s%s|time=%ldus size=%dB\n"),
+			printf (_("HTTP OK %s - %.3f second response time %s%s|%s size=%dB\n"),
 			        status_line, elapsed_time,
-			        timestamp, (display_html ? "</A>" : ""), microsec, pagesize);
+			        timestamp, (display_html ? "</A>" : ""),
+			        perfd_time (microsec), pagesize);
 			exit (STATE_OK);
 		}
 		else {
-			printf (_("CRITICAL - string not found%s|time=%ldus\n size=%dB"),
-			        (display_html ? "</A>" : ""), microsec, pagesize);
+			printf (_("CRITICAL - string not found%s|%s size=%dB\n"),
+			        (display_html ? "</A>" : ""),
+			        perfd_time (microsec), pagesize);
 			exit (STATE_CRITICAL);
 		}
 	}
@@ -710,15 +717,17 @@ check_http (void)
 	if (strlen (regexp)) {
 		errcode = regexec (&preg, page, REGS, pmatch, 0);
 		if (errcode == 0) {
-			printf (_("HTTP OK %s - %.3f second response time %s%s|time=%ldus size=%dB\n"),
+			printf (_("HTTP OK %s - %.3f second response time %s%s|%s size=%dB\n"),
 			        status_line, elapsed_time,
-			        timestamp, (display_html ? "</A>" : ""), microsec, pagesize);
+			        timestamp, (display_html ? "</A>" : ""),
+			        perfd_time (microsec), pagesize);
 			exit (STATE_OK);
 		}
 		else {
 			if (errcode == REG_NOMATCH) {
-				printf (_("CRITICAL - pattern not found%s|time=%ldus size=%dB\n"),
-				        (display_html ? "</A>" : ""), microsec, pagesize);
+				printf (_("CRITICAL - pattern not found%s|%s size=%dB\n"),
+				        (display_html ? "</A>" : ""),
+				        perfd_time (microsec), pagesize);
 				exit (STATE_CRITICAL);
 			}
 			else {
@@ -738,9 +747,10 @@ check_http (void)
 		exit (STATE_WARNING);
 	}
 	/* We only get here if all tests have been passed */
-	asprintf (&msg, _("HTTP OK %s - %.3f second response time %s%s|time=%ldus size=%dB\n"),
-	                status_line, elapsed_time,
-	                timestamp, (display_html ? "</A>" : ""), microsec, pagesize);
+	asprintf (&msg, _("HTTP OK %s - %.3f second response time %s%s|%s size=%dB\n"),
+	          status_line, elapsed_time,
+	          timestamp, (display_html ? "</A>" : ""),
+						perfd_time (microsec), pagesize);
 	die (STATE_OK, "%s", msg);
 	return STATE_UNKNOWN;
 }
@@ -760,7 +770,7 @@ check_http (void)
 #define HD4 URI_HTTP URI_HOST
 #define HD5 URI_PATH
 
-int
+void
 redir (char *pos, char *status_line)
 {
 	int i = 0;
@@ -873,7 +883,7 @@ redir (char *pos, char *status_line)
 	free (server_url);
 	server_url = strdup (url);
 
-	return check_http ();
+	check_http ();
 }
 
 
@@ -1026,6 +1036,14 @@ check_certificate (X509 ** certificate)
 #endif
 
 
+
+char *perfd_time (long microsec)
+{
+	perfdata ("time", microsec, "us",
+	          check_warning_time, (int)(1e6*warning_time),
+	          check_critical_time, (int)(1e6*critical_time),
+	          TRUE, 0, FALSE, 0);
+}
 
 int
 my_recv (void)
