@@ -129,7 +129,7 @@ if test -z "$ac_list_mounted_fs"; then
     AC_DEFINE(MOUNTED_VMOUNT, 1,
 	[Define if there is a function named mntctl that can be used to read
    the list of mounted filesystems, and there is a system header file
-   that declares `struct vmount.'  (AIX)])
+   that declares struct vmount.  (AIX)])
   fi
 fi
 
