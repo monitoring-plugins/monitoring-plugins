@@ -15,6 +15,8 @@ Nagios Plugins README
   that are dependent on other programs/libraries that are missing are
   usually not compiled. Read the REQUIREMENTS file for more information.
 
+* For a list of outstanding bugs for this release, see the BUGS file.
+
 * Individual plugins are self documenting.  All plugins that comply with
   the basic guidelines for development will provide detailed help when
   invoked with the '-h' or '--help' options.
@@ -26,12 +28,11 @@ Nagios Plugins README
   These are scripts or binaries.
 
 You can check for the latest plugins at:
-  ftp://download.sourceforge.net/pub/sourceforge/nagiosplug
   http://sourceforge.net/projects/nagiosplug/
 
 Send mail to nagiosplug-help@lists.sourceforge.net for assistance.  Please
 include the OS type and version that you are using.  Also, run the plugin with
-the '-v' option and provide the resulting version information.  Of course, 
+the '-vvv' option and provide the resulting version information.  Of course, 
 there may be additional diagnostic information required as well.  Use good
 judgment.
 
@@ -50,13 +51,11 @@ patching/reporting.
 Nagios Plugins Quick-and-Dirty Installation Instructions
 --------------------------------------------------------
 
-0) If using the CVS tree, you need m4, gettext, automake, and autoconf. To
-   start out, run ./tools/setup
+0) If you are using the CVS tree, you will need m4, gettext, automake, and autoconf. 
+   To start out, run ./tools/setup
 
-   For development, we generally use the most recent stable tools from
-   the FSF. Currently we use gettext 0.11.5, autoconf 2.58, and
-   automake 1.7.9. You may see warnings or errors with other versions,
-   particularly with autoconf < 2.54.
+   For more detail, see the developer guidelines at 
+   http://nagiosplug.sourceforge.net/developer-guidelines.html.
 
 
 1) Run the configure script to initialize variables and create a Makefile, etc.
@@ -93,7 +92,7 @@ Nagios Plugins Quick-and-Dirty Installation Instructions
 
 
 That's it.  If you have any problems or questions, feel free send mail
-to nagios-users@lists.sourceforge.net or nagiosplug-help@lists.sourceforge.net
+to nagiosplug-help@lists.sourceforge.net
 
 
 
