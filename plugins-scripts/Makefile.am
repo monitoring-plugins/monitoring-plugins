@@ -6,11 +6,11 @@ VPATH=$(top_srcdir) $(top_srcdir)/plugins-scripts $(top_srcdir)/plugins-scripts/
 
 libexec_SCRIPTS = check_breeze check_disk_smb check_flexlm check_ircd \
 	check_log check_ntp check_oracle check_rpc check_sensors check_wave \
-	check_ifstatus utils.sh utils.pm
+	check_ifstatus check_ifoperstatus utils.sh utils.pm
 
 EXTRA_DIST=check_breeze.pl check_disk_smb.pl check_flexlm.pl check_ircd.pl \
 	check_log.sh check_ntp.pl check_oracle.sh check_rpc.pl check_sensors.sh \
-	check_ifstatus.pl check_wave.pl utils.sh.in utils.pm.in t
+	check_ifstatus.pl check_ifoperstatus.pl check_wave.pl utils.sh.in utils.pm.in t
 
 TESTS_ENVIRONMENT=perl -I $(top_builddir) -I $(top_srcdir)
 
