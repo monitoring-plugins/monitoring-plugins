@@ -203,8 +203,8 @@ char server_port_text[6] = "";
 char server_type[6] = "http";
 char *server_address = ""; 
 char *host_name = "";
-char *server_url = HTTP_URL;
-int server_url_length = 1;
+char *server_url = "";
+int server_url_length;
 int server_expect_yn = 0;
 char server_expect[MAX_INPUT_BUFFER] = HTTP_EXPECT;
 char string_expect[MAX_INPUT_BUFFER] = "";
@@ -234,6 +234,10 @@ int
 main (int argc, char **argv)
 {
 	int result = STATE_UNKNOWN;
+
+	/* Set default URL. Must be malloced for subsequent realloc if --onredirect=follow */
+	asprintf (&server_url, "%s", HTTP_URL);
+	server_url_length = strlen(server_url);
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage ("check_http: could not parse arguments\n");
