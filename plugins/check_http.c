@@ -541,6 +541,9 @@ check_http (void)
 	char *x = NULL;
 	char *orig_url = NULL;
 	double elapsed_time;
+#ifdef HAVE_SSL
+	int sslerr;
+#endif
 
 	/* try to connect to the host at the given port number */
 #ifdef HAVE_SSL
@@ -674,8 +677,18 @@ check_http (void)
 		pagesize += i;
 	}
 
-	if (i < 0)
+	if (i < 0) {
+#ifdef HAVE_SSL
+		sslerr=SSL_get_error(ssl, i);
+		if ( sslerr == SSL_ERROR_SSL ) {
+			terminate (STATE_WARNING, "Client Certificate Required\n");
+		} else {
+			terminate (STATE_CRITICAL, "Error in recv()");
+		}
+#else
 		terminate (STATE_CRITICAL, "Error in recv()");
+#endif
+	}
 
 	/* return a CRITICAL status if we couldn't read any data */
 	if (pagesize == (size_t) 0)
