@@ -91,6 +91,7 @@ main (int argc, char **argv)
 	int door_open = 0;
 	int paper_output = 0;
 	char display_message[MAX_INPUT_BUFFER];
+	char *temp ;
 
 	if (process_arguments (argc, argv) != OK)
 		usage ("Invalid command arguments supplied\n");
@@ -280,14 +281,8 @@ main (int argc, char **argv)
 	/* if there wasn't any output, display an error */
 	if (line == 0) {
 
-		/*
-		   result=STATE_UNKNOWN;
-		   strcpy(error_message,"Error: Could not read plugin output\n");
-		 */
-
-		/* might not be the problem, but most likely is.. */
-		result = STATE_UNKNOWN;
-		char *temp ;
+		/* might not be the problem, but most likely is. */
+		result = STATE_UNKNOWN ;
 		asprintf (&temp, error_message);
 		sprintf (error_message, "%s : Timeout from host %s\n", temp, address );
 		 
@@ -472,24 +467,4 @@ Usage:\n\
 }
 
 
-/*
-	if(argc<2||argc>3){
-	printf("Incorrect number of arguments supplied\n");
-	print_revision(argv[0],"$Revision$");
-	printf("Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)\n");
-	printf("License: GPL\n");
-	printf("Usage: %s <ip_address> [community]\n",argv[0]);
-	printf("Note:\n");
-	printf(" <ip_address>     = The IP address of the JetDirect card\n");
-	printf(" [community]      = An optional community string used for SNMP communication\n");
-	printf("                    with the JetDirect card.  The default is 'public'.\n");
-	return STATE_UNKNOWN;
-	}
-	// get the IP address of the JetDirect device
-	strcpy(address,argv[1]);
-	// get the community name to use for SNMP communication
-	if(argc>=3)
-	strcpy(community,argv[2]);
-	else
-	strcpy(community,"public");
-*/
+
