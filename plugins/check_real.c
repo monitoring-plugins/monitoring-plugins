@@ -62,8 +62,8 @@ void print_usage (void);
 
 int server_port = PORT;
 char *server_address = "";
-char *host_name = NULL;
-char *server_url = NULL;
+char *host_name = "";
+char *server_url = "/";
 char *server_expect = EXPECT;
 int warning_time = 0;
 int check_warning_time = FALSE;
@@ -162,7 +162,7 @@ main (int argc, char **argv)
 	}
 
 	/* Part II - Check stream exists and is ok */
-	if ((result == STATE_OK) && (server_url != NULL)) {
+	if (result == STATE_OK) {
 
 		/* Part I - Server Check */
 
@@ -381,7 +381,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	c = optind;
-	if (strlen(server_address) == 0 && argc > c) {
+	if (strlen(server_address)==0 && argc>c) {
 		if (is_host (argv[c])) {
 			server_address = argv[c++];
 		}
@@ -389,6 +389,12 @@ process_arguments (int argc, char **argv)
 			usage ("Invalid host name");
 		}
 	}
+
+	if (strlen(server_address) == 0)
+		usage ("You must provide a server to check\n");
+
+	if (strlen(host_name) == 0)
+		asprintf (&host_name, "%s", server_address);
 
 	return validate_arguments ();
 }
@@ -456,161 +462,3 @@ print_usage (void)
 		 "       %s --help\n"
 		 "       %s --version\n", progname, progname, progname);
 }
-
-
-
-
-/*
-// process command-line arguments 
-int
-process_arguments (int argc, char **argv)
-{
-  int x;
-
-  // no options were supplied 
-  if (argc < 2)
-    return ERROR;
-
-  // first option is always the server name/address 
-  strncpy (server_address, argv[1], sizeof (server_address) - 1);
-  server_address[sizeof (server_address) - 1] = 0;
-
-  // set the host name to the server address (until its overridden) 
-  strcpy (host_name, server_address);
-
-  // process all remaining arguments 
-  for (x = 3; x <= argc; x++)
-    {
-
-      // we got the string to expect from the server 
-      if (!strcmp (argv[x - 1], "-e"))
-	{
-	  if (x < argc)
-	    {
-	      strncpy (server_expect, argv[x], sizeof (server_expect) - 1);
-	      server_expect[sizeof (server_expect) - 1] = 0;
-	      x++;
-	    }
-	  else
-	    return ERROR;
-	}
-
-      // we got the URL to check 
-      else if (!strcmp (argv[x - 1], "-u"))
-	{
-	  if (x < argc)
-	    {
-	      strncpy (server_url, argv[x], sizeof (server_url) - 1);
-	      server_url[sizeof (server_url) - 1] = 0;
-	      x++;
-	    }
-	  else
-	    return ERROR;
-	}
-
-      // we go the host name to use in the host header 
-      else if (!strcmp (argv[x - 1], "-hn"))
-	{
-	  if (x < argc)
-	    {
-	      strncpy (host_name, argv[x], sizeof (host_name) - 1);
-	      host_name[sizeof (host_name) - 1] = 0;
-	      x++;
-	    }
-	  else
-	    return ERROR;
-	}
-
-      // we got the port number to use 
-      else if (!strcmp (argv[x - 1], "-p"))
-	{
-	  if (x < argc)
-	    {
-	      server_port = atoi (argv[x]);
-	      x++;
-	    }
-	  else
-	    return ERROR;
-	}
-
-      // we got the socket timeout 
-      else if (!strcmp (argv[x - 1], "-to"))
-	{
-	  if (x < argc)
-	    {
-	      socket_timeout = atoi (argv[x]);
-	      if (socket_timeout <= 0)
-		return ERROR;
-	      x++;
-	    }
-	  else
-	    return ERROR;
-	}
-
-      // we got the warning threshold time 
-      else if (!strcmp (argv[x - 1], "-wt"))
-	{
-	  if (x < argc)
-	    {
-	      warning_time = atoi (argv[x]);
-	      check_warning_time = TRUE;
-	      x++;
-	    }
-	  else
-	    return ERROR;
-	}
-
-      // we got the critical threshold time 
-      else if (!strcmp (argv[x - 1], "-ct"))
-	{
-	  if (x < argc)
-	    {
-	      critical_time = atoi (argv[x]);
-	      check_critical_time = TRUE;
-	      x++;
-	    }
-	  else
-	    return ERROR;
-	}
-
-      // else we got something else... 
-      else
-	return ERROR;
-    }
-
-  return OK;
-}
-
-  result = process_arguments (argc, argv);
-
-  if (result != OK)
-    {
-
-      printf ("Incorrect number of arguments supplied\n");
-      printf ("\n");
-      print_revision(argv[0],"$Revision$");
-      printf ("Copyright (c) 1999 Pedro Leite (leite@cic.ua.pt)\n");
-      printf ("Last Modified: 30-10-1999\n");
-      printf ("License: GPL\n");
-      printf ("\n");
-      printf ("Usage: %s <host_address> [-e expect] [-u url] [-p port] [-hn host_name] [-wt warn_time]\n",argv[0]);
-      printf("        [-ct crit_time] [-to to_sec] [-a auth]\n");
-      printf ("\n");
-      printf ("Options:\n");
-      printf (" [expect]    = String to expect in first line of server response - default is \"%s\"\n", EXPECT);
-      printf (" [url]       = Optional URL to GET - default is root document\n");
-      printf (" [port]      = Optional port number to use - default is %d\n", PORT);
-      printf (" [host_name] = Optional host name argument to GET command - used for servers using host headers\n");
-      printf (" [warn_time] = Response time in seconds necessary to result in a warning status\n");
-      printf (" [crit_time] = Response time in seconds necessary to result in a critical status\n");
-      printf (" [to_sec]    = Number of seconds before connection attempt times out - default is %d seconds\n", DEFAULT_SOCKET_TIMEOUT);
-      printf (" [auth]      = Optional username:password for sites requiring basic authentication\n");
-      printf ("\n");
-      printf ("This plugin attempts to contact the REAL service on the specified host.\n");
-      printf ("If possible, supply an IP address for the host address, as this will bypass the DNS lookup.\n");
-      printf ("\n");
-
-      return STATE_UNKNOWN;
-    }
-
-*/
