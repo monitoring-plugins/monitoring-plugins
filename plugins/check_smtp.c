@@ -453,8 +453,7 @@ process_arguments (int argc, char **argv)
 				days_till_exp = atoi (optarg);
 				check_cert = TRUE;
 #else
-				terminate (STATE_UNKNOWN,
-						"SSL support not available.  Install OpenSSL and recompile.");
+				usage (_("SSL support not available - install OpenSSL and recompile"));
 #endif
 			break;
 		case '4':
