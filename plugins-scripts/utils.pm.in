@@ -2,6 +2,9 @@
 # $Id$
 #
 # $Log$
+# Revision 1.4  2002/05/27 02:01:09  sghosh
+#  new var - smbclient
+#
 # Revision 1.3  2002/05/10 03:49:22  sghosh
 # added programs to autoconf
 #
@@ -27,6 +30,7 @@ $PATH_TO_RPCINFO = "@PATH_TO_RPCINFO@" ;
 $PATH_TO_NTPDATE = "@PATH_TO_NTPDATE@" ;
 $PATH_TO_NTPDC   = "@PATH_TO_NTPDC@" ;
 $PATH_TO_LMSTAT  = "@PATH_TO_LMSTAT@" ;
+$PATH_TO_SMBCLIENT = "@PATH_TO_SMBCLIENT@" ;
 
 ## common variables
 $TIMEOUT = 15;
