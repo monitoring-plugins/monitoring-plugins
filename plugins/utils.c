@@ -165,6 +165,9 @@ is_dotted_quad (char *address)
 	int o1, o2, o3, o4;
 	char c[1];
 
+	if (!address)
+		return FALSE;
+
 	if (sscanf (address, "%d.%d.%d.%d%c", &o1, &o2, &o3, &o4, c) != 4)
 		return FALSE;
 	else if (o1 > 255 || o2 > 255 || o3 > 255 || o4 > 255)
@@ -185,18 +188,18 @@ is_dotted_quad (char *address)
 int
 is_hostname (char *s1)
 {
-	if (strlen (s1) > 63)
+	if (!s1 || strlen (s1) > 63) {
 		return FALSE;
-	if (strcspn
-			(s1,
-			 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUWVXYZ0123456789-.") !=
-			0) return FALSE;
-	if (strspn (s1, "0123456789-.") == 1)
+	}
+	if (strcspn (s1, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUWVXYZ0123456789-.") !=	0) {
 		return FALSE;
+	}
+	if (strspn (s1, "0123456789-.") == 1) {
+		return FALSE;
+	}
 	while ((s1 = index (s1, '.'))) {
 		s1++;
 		if (strspn (s1, "0123456789-.") == 1) {
-			printf ("%s\n", s1);
 			return FALSE;
 		}
 	}
@@ -208,33 +211,40 @@ is_numeric (char *number)
 {
 	char tmp[1];
 	float x;
-	if (sscanf (number, "%f%c", &x, tmp) == 1)
-		return (TRUE);
-	return (FALSE);
+
+	if (!number)
+		return FALSE;
+	else if (sscanf (number, "%f%c", &x, tmp) == 1)
+		return TRUE;
+	else
+		return FALSE;
 }
 
 int
 is_positive (char *number)
 {
 	if (is_numeric (number) && atof (number) > 0.0)
-		return (TRUE);
-	return (FALSE);
+		return TRUE;
+	else
+		return FALSE;
 }
 
 int
 is_negative (char *number)
 {
 	if (is_numeric (number) && atof (number) < 0.0)
-		return (TRUE);
-	return (FALSE);
+		return TRUE;
+	else
+		return FALSE;
 }
 
 int
 is_nonnegative (char *number)
 {
 	if (is_numeric (number) && atof (number) >= 0.0)
-		return (TRUE);
-	return (FALSE);
+		return TRUE;
+	else
+		return FALSE;
 }
 
 int
@@ -242,8 +252,9 @@ is_percentage (char *number)
 {
 	int x;
 	if (is_numeric (number) && (x = atof (number)) >= 0 && x <= 100)
-		return (TRUE);
-	return (FALSE);
+		return TRUE;
+	else
+		return FALSE;
 }
 
 int
@@ -251,37 +262,42 @@ is_integer (char *number)
 {
 	long int n;
 
-	if (strspn (number, "-0123456789 ") != strlen (number))
-		return (FALSE);
+	if (!number || (strspn (number, "-0123456789 ") != strlen (number)))
+		return FALSE;
 
 	n = strtol (number, NULL, 10);
+
 	if (errno != ERANGE && n >= INT_MIN && n <= INT_MAX)
-		return (TRUE);
-	return (FALSE);
+		return TRUE;
+	else
+		return FALSE;
 }
 
 int
 is_intpos (char *number)
 {
 	if (is_integer (number) && atoi (number) > 0)
-		return (TRUE);
-	return (FALSE);
+		return TRUE;
+	else
+		return FALSE;
 }
 
 int
 is_intneg (char *number)
 {
 	if (is_integer (number) && atoi (number) < 0)
-		return (TRUE);
-	return (FALSE);
+		return TRUE;
+	else
+		return FALSE;
 }
 
 int
 is_intnonneg (char *number)
 {
 	if (is_integer (number) && atoi (number) >= 0)
-		return (TRUE);
-	return (FALSE);
+		return TRUE;
+	else
+		return FALSE;
 }
 
 int
@@ -289,16 +305,20 @@ is_intpercent (char *number)
 {
 	int i;
 	if (is_integer (number) && (i = atoi (number)) >= 0 && i <= 100)
-		return (TRUE);
-	return (FALSE);
+		return TRUE;
+	else
+		return FALSE;
 }
 
 int
 is_option (char *str)
 {
-	if (strspn (str, "-") == 1 || strspn (str, "-") == 2)
+	if (!str)
+		return FALSE;
+	else if (strspn (str, "-") == 1 || strspn (str, "-") == 2)
 		return TRUE;
-	return FALSE;
+	else
+		return FALSE;
 }
 
 
