@@ -1,4 +1,4 @@
-#! /usr/bin/perl -wT
+#! /usr/bin/perl -w
 
 # (c)1999 Ian Cass, Knowledge Matters Ltd.
 # Read the GNU copyright stuff for all the legalese
@@ -47,7 +47,10 @@
 #           source. This happens while starting up and if contact
 #           with master has been lost.
 #
-# Modifed to run under Embedded Perl 
+# Modifed to run under Embedded Perl  (sghosh@users.sf.net)
+#   - combined logic some blocks together..
+# 
+# Todo - non-hardcoded dispersion values...
 #
 
 
@@ -73,8 +76,8 @@ GetOptions
 	("V"   => \$opt_V, "version"    => \$opt_V,
 	 "h"   => \$opt_h, "help"       => \$opt_h,
 	 "v" => \$verbose, "verbose"  => \$verbose,
-	 "w=s" => \$opt_w, "warning=s"  => \$opt_w,
-	 "c=s" => \$opt_c, "critical=s" => \$opt_c,
+	 "w=s" => \$opt_w, "warning=s"  => \$opt_w,   # offset|adjust warning if above this number
+	 "c=s" => \$opt_c, "critical=s" => \$opt_c,   # offset|adjust critical if above this number
 	 "H=s" => \$opt_H, "hostname=s" => \$opt_H);
 
 if ($opt_V) {
@@ -90,6 +93,7 @@ if ($opt_h) {
 $opt_H = shift unless ($opt_H);
 my $host = $1 if ($opt_H && $opt_H =~ m/^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|[a-zA-Z][-a-zA-Z0-9]+(\.[a-zA-Z][-a-zA-Z0-9]+)*)$/);
 unless ($host) {
+	print "No target host specified\n";
 	print_usage();
 	exit $ERRORS{'UNKNOWN'};
 }
@@ -99,6 +103,12 @@ my $warning = $1 if ($opt_w =~ /([0-9]+)/);
 
 ($opt_c) || ($opt_c = shift) || ($opt_c = 120);
 my $critical = $1 if ($opt_c =~ /([0-9]+)/);
+
+if ($opt_c < $opt_w) {
+	print "Critical offset should be larger than warning offset\n";
+	print_usage();
+	exit $ERRORS{"UNKNOWN"};
+}
 
 my $answer = undef;
 my $offset = undef;
@@ -115,16 +125,16 @@ $SIG{'ALRM'} = sub {
 	print ("ERROR: No response from ntp server (alarm)\n");
 	exit $ERRORS{"UNKNOWN"};
 };
-alarm($TIMEOUT);
+#alarm($TIMEOUT);
 
 
 ###
-###
+###$dispersion_error = $ERRORS{'
 ### First, check ntpdate
 ###
 ###
 
-if (!open (NTPDATE, "/usr/local/sbin/ntpdate -q $host 2>&1 |")) {
+if (!open (NTPDATE, "$utils::PATH_TO_NTPDATE -q $host 2>&1 |")) {
 	print "Could not open ntpdate\n";
 	exit $ERRORS{"UNKNOWN"};
 }
@@ -134,50 +144,60 @@ while (<NTPDATE>) {
 	$msg = $_ unless ($msg);
 	if (/(offset|adjust)\s+([-.\d]+)/i) {
 		$offset = $2;
-		last;
-	}
-}
 
-# soak up remaining output; check for error
-while (<NTPDATE>) {
+		# An offset of 0.000000 with an error is probably bogus. Actually,
+		# it's probably always bogus, but let's be paranoid here.
+		if ($offset == 0) { undef $offset;}
+
+		$ntpdate_error = defined ($offset) ? $ERRORS{"OK"} : $ERRORS{"CRITICAL"};
+		print "ntperr = $ntpdate_error \n" if $verbose;
+	
+	}
+
 	if (/no server suitable for synchronization found/) {
 		$ntpdate_error = $ERRORS{"CRITICAL"};
+		$msg = "No suitable peer server found - ";
 	}
+
 }
 
-close(NTPDATE);
+close (NTPDATE); 
+# declare an error if we also get a non-zero return code from ntpdate
+# unless already set to critical
+if ( $? ) {
+	print "stderr = $? : $! \n" if $verbose;
+	$ntpdate_error = $ntpdate_error == $ERRORS{"CRITICAL"} ? $ERRORS{"CRITICAL"} : $ERRORS{"UNKNOWN"}  ;
+	print "ntperr = $ntpdate_error : $!\n" if $verbose;
+}
 
-# only declare an error if we also get a non-zero return code from ntpdate
-$ntpdate_error = ($? >> 8) || $ntpdate_error;
-
 ###
 ###
-### Then scan xntpdc if it exists
-###
+### Then scan xntpdc/ntpdc if it exists
+### and look in the 8th column for dispersion (ntpd v4) or jitter (ntpd v3)
 ###
 
-if (#open(NTPDC,"/usr/sbin/ntpdc -c $host 2>&1 |") ||
-    open(NTPDC,"/usr/sbin/xntpdc -c $host 2>&1 |") ) {
+if ( open(NTPDC,"$utils::PATH_TO_NTPDC -s $host 2>&1 |") ) {
 	while (<NTPDC>) {
-		print if ($verbose);
+		print $_ if ($verbose);
 		if (/([^\s]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)/) {
 			if ($8>15) {
+				print "Dispersion = $8 \n" if ($verbose);
 				$dispersion_error = $ERRORS{'CRITICAL'};
 			} elsif ($8>5 && $dispersion_error<$ERRORS{'CRITICAL'}) {
+				print "Dispersion = $8 \n" if ($verbose);
 				$dispersion_error = $ERRORS{'WARNING'};
+			} else {
+				$dispersion_error = $ERRORS{'OK'};
 			}
 		}
 	}
 	close NTPDC;
 }
 
-# An offset of 0.000000 with an error is probably bogus. Actually,
-# it's probably always bogus, but let's be paranoid here.
-if ($ntpdate_error && $offset && ($offset == 0)) { undef $offset;}
 
-if ($ntpdate_error > $ERRORS{'OK'}) {
+if ($ntpdate_error != $ERRORS{'OK'}) {
 	$state = $ntpdate_error;
-	$answer = "Server for ntp probably down\n";
+	$answer = $msg . "Server for ntp probably down\n";
 	if (defined($offset) && abs($offset) > $critical) {
 		$state = $ERRORS{'CRITICAL'};
 		$answer = "Server Error and time difference $offset seconds greater than +/- $critical sec\n";
@@ -185,7 +205,7 @@ if ($ntpdate_error > $ERRORS{'OK'}) {
 		$answer = "Server error and time difference $offset seconds greater than +/- $warning sec\n";
 	}
 
-} elsif ($dispersion_error > $ERRORS{'OK'}) {
+} elsif ($dispersion_error != $ERRORS{'OK'}) {
 	$state = $dispersion_error;
 	$answer = "Dispersion too high\n";
 	if (defined($offset) && abs($offset) > $critical) {
