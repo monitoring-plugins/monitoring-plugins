@@ -150,6 +150,10 @@ main (int argc, char **argv)
 
 	/* scan stderr */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
+
+		if (verbose)
+			printf ("%s", input_buffer);
+
 		if (error_scan (input_buffer) != STATE_OK) {
 			result = max_state (result, error_scan (input_buffer));
 			output = strdup (1 + index (input_buffer, ':'));
@@ -163,7 +167,7 @@ main (int argc, char **argv)
 	/* close stdout */
 	if (spclose (child_process)) {
 		result = max_state (result, STATE_WARNING);
-		if (!strcmp (output, ""))
+		if (output == NULL || !strcmp (output, ""))
 			output = strdup (_("nslookup returned error status"));
 	}
 
@@ -239,6 +243,14 @@ error_scan (char *input_buffer)
 	         (strstr (input_buffer, "** server can't find") &&
 	          strstr (input_buffer, ": REFUSED")))
 		die (STATE_CRITICAL, _("Connection to DNS %s was refused\n"), dns_server);
+
+	/* Query refused (usually by an ACL in the namserver) */ 
+	else if (strstr (input_buffer, "Query refused"))
+		die (STATE_CRITICAL, _("Query was refused by DNS server at %s\n"), dns_server);
+
+	/* No information (e.g. nameserver IP has two PTR records) */
+	else if (strstr (input_buffer, "No information"))
+		die (STATE_CRITICAL, _("No information returned by DNS server at %s\n"), dns_server);
 
 	/* Host or domain name does not exist */
 	else if (strstr (input_buffer, "Non-existent") ||
