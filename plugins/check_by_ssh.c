@@ -283,14 +283,19 @@ process_arguments (int argc, char **argv)
 
 	c = optind;
 	if (hostname == NULL) {
-		if (!is_host (argv[c]))
+		if (c <= argc) {
+			terminate (STATE_UNKNOWN, "%s: You must provide a host name\n", progname);
+		} else if (!is_host (argv[c]))
 			terminate (STATE_UNKNOWN, "%s: Invalid host name %s\n", progname, argv[c]);
 		hostname = argv[c++];
 	}
 
 	if (strlen(remotecmd) == 0) {
 		for (; c < argc; c++)
-			asprintf (&remotecmd, "%s %s", remotecmd, argv[c]);
+			if (strlen(remotecmd) > 0)
+				asprintf (&remotecmd, "%s %s", remotecmd, argv[c]);
+			else
+				asprintf (&remotecmd, "%s", argv[c]);
 	}
 
 	if (commands > 1)
