@@ -53,8 +53,8 @@ socket_timeout_alarm_handler (int sig)
 /* connects to a host on a specified TCP port, sends a string,
    and gets a response */
 int
-process_tcp_request (char *server_address, int server_port,
-	char *send_buffer, char *recv_buffer, int recv_size)
+process_tcp_request (const char *server_address, int server_port,
+	const char *send_buffer, char *recv_buffer, int recv_size)
 {
 	int result;
 
@@ -68,8 +68,8 @@ process_tcp_request (char *server_address, int server_port,
 /* connects to a host on a specified UDP port, sends a string, and gets a
     response */
 int
-process_udp_request (char *server_address, int server_port,
-	char *send_buffer, char *recv_buffer, int recv_size)
+process_udp_request (const char *server_address, int server_port,
+	const char *send_buffer, char *recv_buffer, int recv_size)
 {
 	int result;
 
@@ -85,8 +85,8 @@ process_udp_request (char *server_address, int server_port,
 	 response. loops on select-recv until timeout or eof to get all of a 
 	 multi-packet answer */
 int
-process_tcp_request2 (char *server_address, int server_port,
-	char *send_buffer, char *recv_buffer, int recv_size)
+process_tcp_request2 (const char *server_address, int server_port,
+	const char *send_buffer, char *recv_buffer, int recv_size)
 {
 
 	int result;
@@ -163,8 +163,8 @@ process_tcp_request2 (char *server_address, int server_port,
 /* connects to a host on a specified port, sends a string, and gets a 
    response */
 int
-process_request (char *server_address, int server_port, int proto,
-	char *send_buffer, char *recv_buffer, int recv_size)
+process_request (const char *server_address, int server_port, int proto,
+	const char *send_buffer, char *recv_buffer, int recv_size)
 {
 	int result;
 	int send_result;
@@ -223,7 +223,7 @@ process_request (char *server_address, int server_port, int proto,
 
 /* opens a connection to a remote host/tcp port */
 int
-my_tcp_connect (char *host_name, int port, int *sd)
+my_tcp_connect (const char *host_name, int port, int *sd)
 {
 	int result;
 
@@ -235,7 +235,7 @@ my_tcp_connect (char *host_name, int port, int *sd)
 
 /* opens a connection to a remote host/udp port */
 int
-my_udp_connect (char *host_name, int port, int *sd)
+my_udp_connect (const char *host_name, int port, int *sd)
 {
 	int result;
 
@@ -247,7 +247,7 @@ my_udp_connect (char *host_name, int port, int *sd)
 
 /* opens a tcp or udp connection to a remote host */
 int
-my_connect (char *host_name, int port, int *sd, int proto)
+my_connect (const char *host_name, int port, int *sd, int proto)
 {
 	struct addrinfo hints;
 	struct addrinfo *res;
@@ -315,7 +315,7 @@ my_connect (char *host_name, int port, int *sd, int proto)
 }
 
 int
-is_host (char *address)
+is_host (const char *address)
 {
 	if (is_addr (address) || is_hostname (address))
 		return (TRUE);
@@ -324,7 +324,7 @@ is_host (char *address)
 }
 
 int
-is_addr (char *address)
+is_addr (const char *address)
 {
 #ifdef USE_IPV6
 	if (is_inet_addr (address) && address_family != AF_INET6)
@@ -342,7 +342,7 @@ is_addr (char *address)
 }
 
 int
-resolve_host_or_addr (char *address, int family)
+resolve_host_or_addr (const char *address, int family)
 {
 	struct addrinfo hints;
 	struct addrinfo *res;
@@ -361,21 +361,21 @@ resolve_host_or_addr (char *address, int family)
 }
 
 int
-is_inet_addr (char *address)
+is_inet_addr (const char *address)
 {
 	return resolve_host_or_addr (address, AF_INET);
 }
 
 #ifdef USE_IPV6
 int
-is_inet6_addr (char *address)
+is_inet6_addr (const char *address)
 {
 	return resolve_host_or_addr (address, AF_INET6);
 }
 #endif
 
 int
-is_hostname (char *s1)
+is_hostname (const char *s1)
 {
 #ifdef USE_IPV6
 	return resolve_host_or_addr (s1, address_family);

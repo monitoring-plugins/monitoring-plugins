@@ -233,8 +233,9 @@ process_arguments (int argc, char **argv)
 	struct name_list **fstail = &fs_exclude_list;
 	struct name_list **dptail = &dp_exclude_list;
 	struct name_list *temp_list;
-	unsigned long l;
 	int result = OK;
+
+	unsigned long l;
 
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -322,6 +323,8 @@ process_arguments (int argc, char **argv)
 				usage (_("Critical threshold must be integer or percentage!\n"));
 			}
 		case 'u':
+			if (units)
+				free(units);
 			if (! strcmp (optarg, "bytes")) {
 				mult = (uintmax_t)1;
 				units = strdup ("B");
@@ -340,13 +343,19 @@ process_arguments (int argc, char **argv)
 			} else {
 				die (STATE_UNKNOWN, _("unit type %s not known\n"), optarg);
 			}
+			if (units == NULL)
+				die (STATE_UNKNOWN, _("failed allocating storage for '%s'\n"), "units");
 			break;
 		case 'k': /* display mountpoint */
 			mult = 1024;
+			if (units)
+				free(units);
 			units = strdup ("kB");
 			break;
 		case 'm': /* display mountpoint */
 			mult = 1024 * 1024;
+			if (units)
+				free(units);
 			units = strdup ("kB");
 			break;
 		case 'l':
@@ -475,8 +484,10 @@ INPUT ERROR: C_DF (%lu) should be less than W_DF (%lu) and both should be greate
 		return ERROR;
 	}
 	
-	if (units == NULL)
+	if (units == NULL) {
 		units = strdup ("MB");
+		mult = (uintmax_t)1024 * 1024;
+	}
 	return OK;
 }
 

@@ -36,27 +36,27 @@
 
 RETSIGTYPE socket_timeout_alarm_handler (int) __attribute__((noreturn));
 
-int process_tcp_request2 (char *address, int port, char *sbuffer,
-	char *rbuffer, int rsize);
-int process_tcp_request (char *address, int port, char *sbuffer,
-	char *rbuffer, int rsize);
-int process_udp_request (char *address, int port, char *sbuffer,
-	char *rbuffer, int rsize);
-int process_request (char *address, int port, int proto, char *sbuffer,
-	char *rbuffer, int rsize);
+int process_tcp_request2 (const char *address, int port,
+  const char *sbuffer, char *rbuffer, int rsize);
+int process_tcp_request (const char *address, int port,
+  const char *sbuffer, char *rbuffer, int rsize);
+int process_udp_request (const char *address, int port,
+  const char *sbuffer, char *rbuffer, int rsize);
+int process_request (const char *address, int port, int proto,
+  const char *sbuffer, char *rbuffer, int rsize);
 
-int my_tcp_connect (char *address, int port, int *sd);
-int my_udp_connect (char *address, int port, int *sd);
-int my_connect (char *address, int port, int *sd, int proto);
+int my_tcp_connect (const char *address, int port, int *sd);
+int my_udp_connect (const char *address, int port, int *sd);
+int my_connect (const char *address, int port, int *sd, int proto);
 
-int is_host (char *);
-int is_addr (char *);
-int resolve_host_or_addr (char *, int);
-int is_inet_addr (char *);
+int is_host (const char *);
+int is_addr (const char *);
+int resolve_host_or_addr (const char *, int);
+int is_inet_addr (const char *);
 #ifdef USE_IPV6
-int is_inet6_addr (char *);
+int is_inet6_addr (const char *);
 #endif
-int is_hostname (char *);
+int is_hostname (const char *);
 
 extern unsigned int socket_timeout;
 extern int econn_refuse_state;
