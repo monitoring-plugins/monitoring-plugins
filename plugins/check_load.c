@@ -24,9 +24,46 @@
  *
  *****************************************************************************/
 
-#include "config.h"
+const char *progname = "check_load";
+const char *revision = "$Revision$";
+const char *copyright = "1999-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
 #include "common.h"
 #include "utils.h"
+#include "popen.h"
+
+void
+print_usage (void)
+{
+	printf (_("Usage: %s -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15\n"),
+	        progname);
+	printf (_(UT_HLP_VRS), progname, progname);
+}
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 1999 Felipe Gustavo de Almeida <galmeida@linux.ime.usp.br>\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("This plugin tests the current system load average.\n\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_("\
+ -w, --warning=WLOAD1,WLOAD5,WLOAD15\n\
+   Exit with WARNING status if load average exceeds WLOADn\n\
+ -c, --critical=CLOAD1,CLOAD5,CLOAD15\n\
+   Exit with CRITICAL status if load average exceed CLOADn\n\n\
+the load average format is the same used by \"uptime\" and \"w\"\n\n"));
+
+	printf (_(UT_SUPPORT));
+}
 
 #ifdef HAVE_SYS_LOADAVG_H
 #include <sys/loadavg.h>
@@ -39,17 +76,9 @@
 #define LOADAVG_15MIN	2
 #endif /* !defined LOADAVG_1MIN */
 
-#include "popen.h"
-#ifdef HAVE_PROC_LOADAVG
-
-#endif
-
-const char *progname = "check_load";
 
 int process_arguments (int argc, char **argv);
 int validate_arguments (void);
-void print_usage (void);
-void print_help (void);
 
 float wload1 = -1, wload5 = -1, wload15 = -1;
 float cload1 = -1, cload5 = -1, cload15 = -1;
@@ -86,7 +115,7 @@ main (int argc, char **argv)
 #elif HAVE_PROC_LOADAVG==1
 	fp = fopen (PROC_LOADAVG, "r");
 	if (fp == NULL) {
-		printf ("Error opening %s\n", PROC_LOADAVG);
+		printf (_("Error opening %s\n"), PROC_LOADAVG);
 		return STATE_UNKNOWN;
 	}
 
@@ -105,43 +134,43 @@ main (int argc, char **argv)
 #else
 	child_process = spopen (PATH_TO_UPTIME);
 	if (child_process == NULL) {
-		printf ("Error opening %s\n", PATH_TO_UPTIME);
+		printf (_("Error opening %s\n"), PATH_TO_UPTIME);
 		return STATE_UNKNOWN;
 	}
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL) {
-		printf ("Could not open stderr for %s\n", PATH_TO_UPTIME);
+		printf (_("Could not open stderr for %s\n"), PATH_TO_UPTIME);
 	}
 	fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process);
-	sscanf (input_buffer, "%*[^l]load average: %f, %f, %f", &la1, &la5, &la15);
+	sscanf (input_buffer, "%*[^l]load average: %f, %f, %f"), &la1, &la5, &la15);
 
 	result = spclose (child_process);
 	if (result) {
-		printf ("Error code %d returned in %s\n", result, PATH_TO_UPTIME);
+		printf (_("Error code %d returned in %s\n"), result, PATH_TO_UPTIME);
 		return STATE_UNKNOWN;
 	}
 #endif
 
 	if ((la1 == -1) || (la5 == -1) || (la15 == -1)) {
 #if HAVE_GETLOADAVG==1
-		printf ("Error in getloadavg()\n");
+		printf (_("Error in getloadavg()\n"));
 #elif HAVE_PROC_LOADAVG==1
-		printf ("Error processing %s\n", PROC_LOADAVG);
+		printf (_("Error processing %s\n"), PROC_LOADAVG);
 #else
-		printf ("Error processing %s\n", PATH_TO_UPTIME);
+		printf (_("Error processing %s\n"), PATH_TO_UPTIME);
 #endif
 		return STATE_UNKNOWN;
 	}
-	asprintf(&status_line, "load average: %.2f, %.2f, %.2f", la1, la5, la15);
+	asprintf(&status_line, _("load average: %.2f, %.2f, %.2f"), la1, la5, la15);
 	if ((la1 >= cload1) || (la5 >= cload5) || (la15 >= cload15)) {
-		printf("CRITICAL - %s\n", status_line);
+		printf(_("CRITICAL - %s\n"), status_line);
 		return STATE_CRITICAL;
 	}
 	if ((la1 >= wload1) || (la5 >= wload5) || (la15 >= wload15)) {
-		printf ("WARNING - %s\n", status_line);
+		printf (_("WARNING - %s\n"), status_line);
 		return STATE_WARNING;
 	}
-	printf ("OK - %s\n", status_line);
+	printf (_("OK - %s\n"), status_line);
 	return STATE_OK;
 }
 
@@ -188,7 +217,7 @@ process_arguments (int argc, char **argv)
 							 sscanf (optarg, "%f:%f:%f", &wload1, &wload5, &wload15) == 3)
 				break;
 			else
-				usage ("Warning threshold must be float or float triplet!\n");
+				usage (_("Warning threshold must be float or float triplet!\n"));
 			break;
 		case 'c':									/* critical time threshold */
 			if (is_intnonneg (optarg)) {
@@ -204,7 +233,7 @@ process_arguments (int argc, char **argv)
 							 sscanf (optarg, "%f:%f:%f", &cload1, &cload5, &cload15) == 3)
 				break;
 			else
-				usage ("Critical threshold must be float or float triplet!\n");
+				usage (_("Critical threshold must be float or float triplet!\n"));
 			break;
 		case 'V':									/* version */
 			print_revision (progname, "$Revision$");
@@ -213,7 +242,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* help */
-			usage ("Invalid argument\n");
+			usage (_("Invalid argument\n"));
 		}
 	}
 
@@ -259,61 +288,22 @@ int
 validate_arguments (void)
 {
 	if (wload1 < 0)
-		usage ("Warning threshold for 1-minute load average is not specified\n");
+		usage (_("Warning threshold for 1-minute load average is not specified\n"));
 	if (wload5 < 0)
-		usage ("Warning threshold for 5-minute load average is not specified\n");
+		usage (_("Warning threshold for 5-minute load average is not specified\n"));
 	if (wload15 < 0)
-		usage ("Warning threshold for 15-minute load average is not specified\n");
+		usage (_("Warning threshold for 15-minute load average is not specified\n"));
 	if (cload1 < 0)
-		usage ("Critical threshold for 1-minute load average is not specified\n");
+		usage (_("Critical threshold for 1-minute load average is not specified\n"));
 	if (cload5 < 0)
-		usage ("Critical threshold for 5-minute load average is not specified\n");
+		usage (_("Critical threshold for 5-minute load average is not specified\n"));
 	if (cload15 < 0)
-		usage ("Critical threshold for 15-minute load average is not specified\n");
+		usage (_("Critical threshold for 15-minute load average is not specified\n"));
 	if (wload1 > cload1)
-		usage ("Parameter inconsistency: 1-minute \"warning load\" greater than \"critical load\".\n");
+		usage (_("Parameter inconsistency: 1-minute \"warning load\" greater than \"critical load\".\n"));
 	if (wload5 > cload5)
-		usage ("Parameter inconsistency: 5-minute \"warning load\" greater than \"critical load\".\n");
+		usage (_("Parameter inconsistency: 5-minute \"warning load\" greater than \"critical load\".\n"));
 	if (wload15 > cload15)
-		usage ("Parameter inconsistency: 15-minute \"warning load\" greater than \"critical load\".\n");
+		usage (_("Parameter inconsistency: 15-minute \"warning load\" greater than \"critical load\".\n"));
 	return OK;
-}
-
-
-
-
-
-void
-print_usage (void)
-{
-	printf
-		("Usage: check_load -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15\n"
-		 "       check_load --version\n" "       check_load --help\n");
-}
-
-
-
-
-
-void
-print_help (void)
-{
-	print_revision (progname, "$Revision$");
-	printf
-		("Copyright (c) 1999 Felipe Gustavo de Almeida <galmeida@linux.ime.usp.br>\n"
-		 "Copyright (c) 2000 Karl DeBisschop\n\n"
-		 "This plugin tests the current system load average.\n\n");
-	print_usage ();
-	printf
-		("\nOptions:\n"
-		 " -w, --warning=WLOAD1,WLOAD5,WLOAD15\n"
-		 "   Exit with WARNING status if load average exceeds WLOADn\n"
-		 " -c, --critical=CLOAD1,CLOAD5,CLOAD15\n"
-		 "   Exit with CRITICAL status if load average exceed CLOADn\n"
-		 " -h, --help\n"
-		 "    Print detailed help screen\n"
-		 " -V, --version\n"
-		 "    Print version information\n\n"
-		 "the load average format is the same used by \"uptime\" and \"w\"\n\n");
-	support ();
 }
