@@ -1,53 +1,80 @@
 /******************************************************************************
-*
-* CHECK_TIME.C
-*
-* Program: Network time server plugin for Nagios
-* License: GPL
-* Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
-* Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
-*
-* $Id$
-*
-* Description:
-*
-* This plugin will attempt to connect to the specified port
-* on the host.  Successul connects return STATE_OK, refusals
-* and timeouts return STATE_CRITICAL, other errors return
-* STATE_UNKNOWN.
-*
-* License Information:
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*
-*****************************************************************************/
 
-#include "config.h"
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+******************************************************************************/
+
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
 
 const char *progname = "check_time";
-#define REVISION "$Revision$"
-#define COPYRIGHT "1999-2002"
-#define AUTHOR "Ethan Galstad"
-#define EMAIL "nagios@nagios.org"
-#define SUMMARY "Check time on the specified host.\n"
+const char *revision = "$Revision$";
+const char *copyright = "1999-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
-#define TIME_PORT	37
-#define UNIX_EPOCH	2208988800UL
+enum {
+	TIME_PORT = 37
+};
+
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -H <host_address> [-p port] [-w variance] [-c variance]\n\
+    [-W connect_time] [-C connect_time] [-t timeout]\n"), progname);
+	printf (_(UT_HLP_VRS), progname, progname);
+}
+
+void
+print_help (void)
+{
+	char *myport;
+	asprintf (&myport, "%d", TIME_PORT);
+
+	print_revision (progname, revision);
+
+	printf (_("Copyright (c) 1999 Ethan Galstad\n"));
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("\
+This plugin will check the time on the specified host.\n\n"));
+
+	print_usage ();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_HOST_PORT), 'p', myport);
+
+	printf (_("\
+ -w, --warning-variance=INTEGER\n\
+    Time difference (sec.) necessary to result in a warning status\n\
+ -c, --critical-variance=INTEGER\n\
+    Time difference (sec.) necessary to result in a critical status\n\
+ -W, --warning-connect=INTEGER\n\
+    Response time (sec.) necessary to result in warning status\n\
+ -C, --critical-connect=INTEGER\n\
+    Response time (sec.) necessary to result in critical status\n"));
+
+	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+	support ();
+}
+
+
+#define	UNIX_EPOCH 2208988800UL
 
 unsigned long server_time, raw_server_time;
 time_t diff_time;
@@ -75,7 +102,7 @@ main (int argc, char **argv)
 	int result;
 
 	if (process_arguments (argc, argv) != OK)
-		usage ("Invalid command arguments supplied\n");
+		usage (_("Invalid command arguments supplied\n"));
 
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
@@ -93,7 +120,7 @@ main (int argc, char **argv)
 		else
 			result = STATE_UNKNOWN;
 		terminate (result,
-		           "TIME UNKNOWN - could not connect to server %s, port %d\n",
+		           _("TIME UNKNOWN - could not connect to server %s, port %d\n"),
 		           server_address, server_port);
 	}
 
@@ -116,7 +143,7 @@ main (int argc, char **argv)
 		else
 			result = STATE_UNKNOWN;
 		terminate (result,
-							 "TIME UNKNOWN - no data on recv() from server %s, port %d\n",
+							 _("TIME UNKNOWN - no data on recv() from server %s, port %d\n"),
 							 server_address, server_port);
 	}
 
@@ -128,21 +155,21 @@ main (int argc, char **argv)
 					 && (end_time - start_time) > warning_time) result = STATE_WARNING;
 
 	if (result != STATE_OK)
-		terminate (result, "TIME %s - %d second response time\n",
+		terminate (result, _("TIME %s - %d second response time\n"),
 							 state_text (result), (int) (end_time - start_time));
 
 	server_time = ntohl (raw_server_time) - UNIX_EPOCH;
-	if (server_time > end_time)
-		diff_time = server_time - end_time;
+	if (server_time > (unsigned long)end_time)
+		diff_time = server_time - (unsigned long)end_time;
 	else
-		diff_time = end_time - server_time;
+		diff_time = (unsigned long)end_time - server_time;
 
-	if (check_critical_diff == TRUE && diff_time > critical_diff)
+	if (check_critical_diff == TRUE && diff_time > (time_t)critical_diff)
 		result = STATE_CRITICAL;
-	else if (check_warning_diff == TRUE && diff_time > warning_diff)
+	else if (check_warning_diff == TRUE && diff_time > (time_t)warning_diff)
 		result = STATE_WARNING;
 
-	printf ("TIME %s - %lu second time difference\n", state_text (result),
+	printf (_("TIME %s - %lu second time difference\n"), state_text (result),
 					diff_time);
 	return result;
 }
@@ -197,16 +224,16 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			usage3 ("Unknown argument", optopt);
+			usage3 (_("Unknown argument"), optopt);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (progname, REVISION);
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'H':									/* hostname */
 			if (is_host (optarg) == FALSE)
-				usage ("Invalid host name/address\n");
+				usage (_("Invalid host name/address\n"));
 			server_address = optarg;
 			break;
 		case 'w':									/* warning-variance */
@@ -220,11 +247,11 @@ process_arguments (int argc, char **argv)
 					check_warning_time = TRUE;
 				}
 				else {
-					usage ("Warning thresholds must be a nonnegative integer\n");
+					usage (_("Warning thresholds must be a nonnegative integer\n"));
 				}
 			}
 			else {
-				usage ("Warning threshold must be a nonnegative integer\n");
+				usage (_("Warning threshold must be a nonnegative integer\n"));
 			}
 			break;
 		case 'c':									/* critical-variance */
@@ -239,33 +266,33 @@ process_arguments (int argc, char **argv)
 					check_critical_time = TRUE;
 				}
 				else {
-					usage ("Critical thresholds must be a nonnegative integer\n");
+					usage (_("Critical thresholds must be a nonnegative integer\n"));
 				}
 			}
 			else {
-				usage ("Critical threshold must be a nonnegative integer\n");
+				usage (_("Critical threshold must be a nonnegative integer\n"));
 			}
 			break;
 		case 'W':									/* warning-connect */
 			if (!is_intnonneg (optarg))
-				usage ("Warning threshold must be a nonnegative integer\n");
+				usage (_("Warning threshold must be a nonnegative integer\n"));
 			warning_time = atoi (optarg);
 			check_warning_time = TRUE;
 			break;
 		case 'C':									/* critical-connect */
 			if (!is_intnonneg (optarg))
-				usage ("Critical threshold must be a nonnegative integer\n");
+				usage (_("Critical threshold must be a nonnegative integer\n"));
 			critical_time = atoi (optarg);
 			check_critical_time = TRUE;
 			break;
 		case 'p':									/* port */
 			if (!is_intnonneg (optarg))
-				usage ("Serevr port must be a nonnegative integer\n");
+				usage (_("Server port must be a nonnegative integer\n"));
 			server_port = atoi (optarg);
 			break;
 		case 't':									/* timeout */
 			if (!is_intnonneg (optarg))
-				usage ("Timeout interval must be a nonnegative integer\n");
+				usage (_("Timeout interval must be a nonnegative integer\n"));
 			socket_timeout = atoi (optarg);
 			break;
 		}
@@ -275,65 +302,13 @@ process_arguments (int argc, char **argv)
 	if (server_address == NULL) {
 		if (argc > c) {
 			if (is_host (argv[c]) == FALSE)
-				usage ("Invalid host name/address\n");
+				usage (_("Invalid host name/address\n"));
 			server_address = argv[c];
 		}
 		else {
-			usage ("Host name was not supplied\n");
+			usage (_("Host name was not supplied\n"));
 		}
 	}
 
 	return OK;
-}
-
-
-
-
-
-void
-print_usage (void)
-{
-	printf
-		("Usage:\n"
-		 " %s -H <host_address> [-p port] [-w variance] [-c variance]\n"
-		 "           [-W connect_time] [-C connect_time] [-t timeout]\n"
-		 " %s (-h | --help) for detailed help\n"
-		 " %s (-V | --version) for version information\n",
-		 progname, progname, progname);
-}
-
-
-
-
-
-void
-print_help (void)
-{
-	print_revision (progname, REVISION);
-	printf
-		("Copyright (c) %s %s <%s>\n\n%s\n",
-		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
-	print_usage ();
-	printf
-		("Options:\n"
-		 " -H, --hostname=ADDRESS\n"
-		 "    Host name argument for servers using host headers (use numeric\n"
-		 "    address if possible to bypass DNS lookup).\n"
-		 " -w, --warning-variance=INTEGER\n"
-		 "    Time difference (sec.) necessary to result in a warning status\n"
-		 " -c, --critical-variance=INTEGER\n"
-		 "    Time difference (sec.) necessary to result in a critical status\n"
-		 " -W, --warning-connect=INTEGER\n"
-		 "    Response time (sec.) necessary to result in warning status\n"
-		 " -C, --critical-connect=INTEGER\n"
-		 "    Response time (sec.) necessary to result in critical status\n"
-		 " -t, --timeout=INTEGER\n"
-		 "    Seconds before connection times out (default: %d)\n"
-		 " -p, --port=INTEGER\n"
-		 "    Port number (default: %d)\n"
-		 " -h, --help\n"
-		 "    Print detailed help screen\n"
-		 " -V, --version\n"
-		 "    Print version information\n\n", DEFAULT_SOCKET_TIMEOUT, TIME_PORT);
-	support ();
 }

@@ -34,6 +34,7 @@ print_usage (void)
 	printf (_("\
 Usage: %s -H <host_address> [-p port] [-w warn_time] [-c crit_time]\n\
     [-e expect] [-s send] [-t to_sec] [-v]\n"), progname);
+	printf (_(UT_HLP_VRS), progname, progname);
 }
 
 void
