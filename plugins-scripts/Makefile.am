@@ -21,6 +21,8 @@ test:
 
 CLEANFILES=$(libexec_SCRIPTS)
 
+AM_INSTALL_PROGRAM_FLAGS=@INSTALL_OPTS@
+
 .pl :
 	$(AWK) -f ./subst $< > $@
 	chmod +x $@
