@@ -1,4 +1,4 @@
-#! /usr/bin/perl -wT
+#! /usr/bin/perl -w
 #
 #
 # check_disk.pl <host> <share> <user> <pass> [warn] [critical] [port]
@@ -25,12 +25,13 @@ use strict;
 use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_H $opt_s $opt_W $opt_u $opt_p $opt_w $opt_c $verbose);
 use vars qw($PROGNAME);
-use FindBin;
-use lib "$FindBin::Bin";
+use lib utils.pm ;
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
 
 sub print_help ();
 sub print_usage ();
+
+$PROGNAME = "check_disk_smb";
 
 $ENV{'PATH'}='';
 $ENV{'BASH_ENV'}=''; 
@@ -56,8 +57,9 @@ if ($opt_V) {
 
 if ($opt_h) {print_help(); exit $ERRORS{'OK'};}
 
-my $smbclient="/usr/bin/smbclient";
+my $smbclient= "$utils::PATH_TO_SMBCLIENT " ;
 my $smbclientoptions="";
+
 
 ($opt_H) || ($opt_H = shift) || usage("Host name not specified\n");
 my $host = $1 if ($opt_H =~ /([-_.A-Za-z0-9]+)/);
@@ -101,6 +103,7 @@ alarm($TIMEOUT);
 if (defined($workgroup)) {
 	$res = qx/$smbclient \/\/$host\/$share $pass -W $workgroup -U $user $smbclientoptions -c ls/;
 } else {
+	print "$smbclient " . "\/\/$host\/$share" ." $pass -U $user $smbclientoptions -c ls\n" if ($verbose);
 	$res = qx/$smbclient \/\/$host\/$share $pass -U $user $smbclientoptions -c ls/;
 }
 #Turn off alarm
