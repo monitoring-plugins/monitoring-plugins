@@ -154,7 +154,8 @@ my $answer = undef;
 my $offset = undef;
 my $jitter = undef;
 my $syspeer = undef;
-my $candidates = 0;
+my $candidate = 0;
+my @candidates;
 my $msg; # first line of output to print if format is invalid
 
 my $state = $ERRORS{'UNKNOWN'};
@@ -252,6 +253,9 @@ if ( $? && !$ignoreret ) {
 # Field 10: offset
 # Field 11: dispersion/jitter
 # 
+# According to bug 773588 Some solaris xntpd implementations seemto match on
+# "#" even though the docs say it exceeds maximum distance. Providing patch
+# here which will generate a warining.
 
 if ($have_ntpq) {
 
@@ -264,12 +268,13 @@ if ($have_ntpq) {
 			}
 			# number of candidates on <host> for sys.peer
 			if (/^(\*|\+|\#|o])/) {
-				++$candidates;
-				print "Candiate count= $candidates\n" if ($verbose);
+				++$candidate;
+				push (@candidates, $_);
+				print "Candiate count= $candidate\n" if ($verbose);
 			}
-
+			
 			# match sys.peer or pps.peer
-			if (/^(\*|o)([-0-9.\s]+)\s+([-0-9A-Za-z.]+)\s+([-0-9.]+)\s+([lumb]+)\s+([-0-9m.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)/) {
+			if (/^(\*|o)([-0-9.\s]+)\s+([-0-9A-Za-z.]+)\s+([-0-9.]+)\s+([lumb-]+)\s+([-0-9m.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)/) {
 				$syspeer = $2;
 				$stratum = $4;
 				$jitter = $11;
@@ -284,8 +289,34 @@ if ($have_ntpq) {
 					$jitter_error = $ERRORS{'OK'};
 				}
 			}
+			
 		}
 		close NTPQ;
+
+		# if we did not match sys.peer or pps.peer but matched # candidates only
+		# generate a warning 
+		# based on bug id 773588
+		unless (defined $syspeer) {
+			if ($#candidates >0) {
+				foreach my $c (@candidates) {
+					$c =~ /^(#)([-0-9.\s]+)\s+([-0-9A-Za-z.]+)\s+([-0-9.]+)\s+([lumb-]+)\s+([-0-9m.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)/;
+					$syspeer = $2;
+					$stratum = $4;
+					$jitter = $11;
+					print "candidate match $c \n" if $verbose;
+					if ($jitter > $jcrit) {
+						print "Candidate match - Jitter_crit = $11 :$jcrit\n" if ($verbose);
+						$jitter_error = $ERRORS{'CRITICAL'};
+					}elsif ($jitter > $jwarn ) {
+						print "Candidate match - Jitter_warn = $11 :$jwarn \n" if ($verbose);
+						$jitter_error = $ERRORS{'WARNING'};
+					} else {
+						$jitter_error = $ERRORS{'WARNING'};
+					}
+				}
+
+			}
+		}
 	}
 }
 
