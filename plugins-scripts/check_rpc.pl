@@ -68,7 +68,7 @@ if ($opt_h) { print_help(); exit $ERRORS{'OK'}; }
 # -V means display version number
 if ($opt_V) { 
 	print_revision($PROGNAME,'$Revision$ '); 
-	exit $ERRORS{'Ok'}; 
+	exit $ERRORS{'OK'}; 
 }
 
 # Hash containing all RPC program names and numbers
