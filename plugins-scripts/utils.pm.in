@@ -2,6 +2,9 @@
 # $Id$
 #
 # $Log$
+# Revision 1.5  2002/10/30 05:07:29  sghosh
+# monitor mailq
+#
 # Revision 1.4  2002/05/27 02:01:09  sghosh
 #  new var - smbclient
 #
@@ -31,6 +34,7 @@ $PATH_TO_NTPDATE = "@PATH_TO_NTPDATE@" ;
 $PATH_TO_NTPDC   = "@PATH_TO_NTPDC@" ;
 $PATH_TO_LMSTAT  = "@PATH_TO_LMSTAT@" ;
 $PATH_TO_SMBCLIENT = "@PATH_TO_SMBCLIENT@" ;
+$PATH_TO_MAILQ   = "@PATH_TO_MAILQ@";
 
 ## common variables
 $TIMEOUT = 15;

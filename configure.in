@@ -784,6 +784,15 @@ else
 	echo "** Get ssh in order to make check_by_ssh plugin"
 fi
 
+
+AC_PATH_PROG(PATH_TO_MAILQ,mailq)
+if test -x "$PATH_TO_MAILQ"
+then
+	AC_DEFINE_UNQUOTED(PATH_TO_MAILQ,"$PATH_TO_MAILQ",[path to mailq])
+else
+	echo "** Could not find mailq or eqivalent"
+fi
+
 dnl dunno why this does not work below - use hack (kbd)
 dnl fine on linux, broken on solaris
 dnl if /bin/test -e "/proc/meminfo"
