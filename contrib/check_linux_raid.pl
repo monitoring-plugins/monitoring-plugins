@@ -26,6 +26,12 @@ use strict;
 
 my %ERRORS=('DEPENDENT'=>4,'UNKNOWN'=>3,'OK'=>0,'WARNING'=>1,'CRITICAL'=>2);
 
+# die with an error if we're not on Linux
+if ($^O ne 'linux') {
+    print "This plugin only applicable on Linux.\n";
+    exit $ERRORS{'UNKNOWN'};
+}
+
 open (MDSTAT, "</proc/mdstat") or die "Failed to open /proc/mdstat";
 my $found = 0;
 my $status = "";
@@ -43,7 +49,7 @@ while(<MDSTAT>) {
 	    last;
         }
     } else {
-        if (/$ARGV[0]/) {
+        if (/^$ARGV[0]\s*:/) {
             $found = 1;
             if (/active/) {
                 $active = 1;
