@@ -67,10 +67,10 @@ dnl PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/etc:/usr/local/bin:/usr/local/sbin:$
 
 LDFLAGS="$LDFLAGS -L."
 
-$ac_cv_uname_m=`uname -m`
-$ac_cv_uname_s=`uname -s`
-$ac_cv_uname_r=`uname -r`
-$ac_cv_uname_v=`uname -v`
+ac_cv_uname_m=`uname -m`
+ac_cv_uname_s=`uname -s`
+ac_cv_uname_r=`uname -r`
+ac_cv_uname_v=`uname -v`
 
 dnl Checks for programs.
 AC_PATH_PROG(PYTHON,python)
