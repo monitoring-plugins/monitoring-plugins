@@ -21,7 +21,7 @@ fi
 autopoint --force
 aclocal -I lib
 autoheader
-automake --add-missing --force-missing
+automake --add-missing --force-missing --copy
 autoconf
 
 if [ -f debian/rules ] ; then
