@@ -48,16 +48,23 @@ long unsigned int crit_size = 0;
 int verbose;
 int allswaps;
 
+#if !defined(sun)
+int sun = 0;	/* defined by compiler if it is a sun solaris system */
+#endif
+
 int
 main (int argc, char **argv)
 {
 	int percent_used, percent;
 	long unsigned int total_swap = 0, used_swap = 0, free_swap = 0;
 	long unsigned int total, used, free;
+	int conv_factor;		/* Convert to MBs */
 	int result = STATE_OK;
 	char input_buffer[MAX_INPUT_BUFFER];
 #ifdef HAVE_SWAP
 	char *temp_buffer;
+	char *swap_command;
+	char *swap_format;
 #endif
 #ifdef HAVE_PROC_MEMINFO
 	FILE *fp;
@@ -70,48 +77,40 @@ main (int argc, char **argv)
 
 #ifdef HAVE_PROC_MEMINFO
 	fp = fopen (PROC_MEMINFO, "r");
-	asprintf (&status, "%s", "Swap used:");
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, fp)) {
 		if (sscanf (input_buffer, " %s %lu %lu %lu", str, &total, &used, &free) == 4 &&
 		    strstr (str, "Swap")) {
-			total_swap += total;
-			used_swap += used;
-			free_swap += free;
-			if (allswaps) {
-				percent = 100 * (((double) used) / ((double) total));
-				if (percent >= crit_percent || free <= crit_size)
-					result = max_state (STATE_CRITICAL, result);
-				else if (percent >= warn_percent || free <= warn_size)
-					result = max_state (STATE_WARNING, result);
-				if (verbose)
-					asprintf (&status, "%s [%lu/%lu]", status, used, total);
-			}
-		}
-	}
-	percent_used = 100 * (((double) used_swap) / ((double) total_swap));
-	if (percent_used >= crit_percent || free_swap <= crit_size)
-		result = max_state (STATE_CRITICAL, result);
-	else if (percent_used >= warn_percent || free_swap <= warn_size)
-		result = max_state (STATE_WARNING, result);
-	asprintf (&status, "%s %2d%% (%lu out of %lu)", status, percent_used,
-	          used_swap, total_swap);
-	fclose (fp);
-#else
+#endif
 #ifdef HAVE_SWAP
-	child_process = spopen (SWAP_COMMAND);
+	if (!allswaps && sun) {
+		asprintf(&swap_command, "%s", "/usr/sbin/swap -s");
+		asprintf(&swap_format, "%s", "%*s %*dk %*s %*s + %*dk %*s = %dk %*s %dk %*s");
+		conv_factor = 2048;
+	} else {
+		asprintf(&swap_command, "%s", SWAP_COMMAND);
+		asprintf(&swap_format, "%s", SWAP_FORMAT);
+		conv_factor = SWAP_CONVERSION;
+	}
+
+	if (verbose >= 2)
+		printf ("Command: %s\n", swap_command);
+	if (verbose >= 3)
+		printf ("Format: %s\n", swap_format);
+
+	child_process = spopen (swap_command);
 	if (child_process == NULL) {
-		printf ("Could not open pipe: %s\n", SWAP_COMMAND);
+		printf ("Could not open pipe: %s\n", swap_command);
 		return STATE_UNKNOWN;
 	}
 
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL)
-		printf ("Could not open stderr for %s\n", SWAP_COMMAND);
+		printf ("Could not open stderr for %s\n", swap_command);
 
 	sprintf (str, "%s", "");
 	/* read 1st line */
 	fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process);
-	if (strcmp (SWAP_FORMAT, "") == 0) {
+	if (strcmp (swap_format, "") == 0) {
 		temp_buffer = strtok (input_buffer, " \n");
 		while (temp_buffer) {
 			if (strstr (temp_buffer, "blocks"))
@@ -124,31 +123,42 @@ main (int argc, char **argv)
 		}
 	}
 
-	asprintf (&status, "%s", "Swap used:");
-	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
-		sscanf (input_buffer, SWAP_FORMAT, &total, &free);
-		used = total - free;
-		total_swap += total;
-		used_swap += used;
-		free_swap += free;
-		if (allswaps) {
-			percent = 100 * (((double) used) / ((double) total));
-			if (percent >= crit_percent || free <= crit_size)
-				result = max_state (STATE_CRITICAL, result);
-			else if (percent >= warn_percent || free <= warn_size)
-				result = max_state (STATE_WARNING, result);
-			if (verbose)
-				asprintf (&status, "%s [%lu/%lu]", status, used, total);
+	if (!allswaps && sun) {
+		sscanf (input_buffer, swap_format, &used_swap, &free_swap);
+		used_swap = used_swap / 1024;
+		free_swap = free_swap / 1024;
+		total_swap = used_swap + free_swap;
+	} else {
+		while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
+			sscanf (input_buffer, swap_format, &total, &free);
+
+			total = total / conv_factor;
+			free = free / conv_factor;
+			if (verbose >= 3)
+				printf ("total=%d, free=%d\n", total, free);
+
+			used = total - free;
+#endif
+			total_swap += total;
+			used_swap += used;
+			free_swap += free;
+			if (allswaps) {
+				percent = 100 * (((double) used) / ((double) total));
+				result = max_state (result, check_swap (percent, free));
+				if (verbose)
+					asprintf (&status, "%s [%lu (%d%%)]", status, free, 100 - percent);
+			}
 		}
 	}
 	percent_used = 100 * ((double) used_swap) / ((double) total_swap);
-	if (percent_used >= crit_percent || free_swap <= crit_size)
-		result = max_state (STATE_CRITICAL, result);
-	else if (percent_used >= warn_percent || free_swap <= warn_size)
-		result = max_state (STATE_WARNING, result);
-	asprintf (&status, "%s %2d%% (%lu out of %lu)",
-						status, percent_used, used_swap, total_swap);
+	result = max_state (result, check_swap (percent_used, free_swap));
+	asprintf (&status, " %d%% free (%lu MB out of %lu MB)%s",
+						(100 - percent_used), free_swap, total_swap, status);
 
+#ifdef HAVE_PROC_MEMINFO
+	fclose(fp);
+#endif
+#ifdef HAVE_SWAP
 	/* If we get anything on STDERR, at least set warning */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
 		result = max_state (result, STATE_WARNING);
@@ -160,34 +170,29 @@ main (int argc, char **argv)
 	if (spclose (child_process))
 		result = max_state (result, STATE_WARNING);
 #endif
-#endif
 
-#ifndef SWAP_COMMAND
-#ifndef SWAP_FILE
-#ifndef HAVE_PROC_MEMINFO
-	return STATE_UNKNOWN;
-#endif
-#endif
-#endif
-
-	if (result == STATE_OK)
-		printf ("Swap ok - %s\n", status);
-	else if (result == STATE_CRITICAL)
-		printf ("CRITICAL - %s\n", status);
-	else if (result == STATE_WARNING)
-		printf ("WARNING - %s\n", status);
-	else if (result == STATE_UNKNOWN)
-		printf ("Unable to read output\n");
-	else {
-		result = STATE_UNKNOWN;
-		printf ("UNKNOWN - %s\n", status);
-	}
-
-	return result;
+	terminate (result, "SWAP %s:%s\n", state_text (result), status);
 }
 
 
 
+
+int
+check_swap (int usp, int free_swap)
+{
+	int result = STATE_UNKNOWN;
+	if (usp >= 0 && usp >= (100.0 - crit_percent))
+		result = STATE_CRITICAL;
+	else if (crit_size >= 0 && free_swap <= crit_size)
+		result = STATE_CRITICAL;
+	else if (usp >= 0 && usp >= (100.0 - warn_percent))
+		result = STATE_WARNING;
+	else if (warn_size >= 0 && free_swap <= warn_size)
+		result = STATE_WARNING;
+	else if (usp >= 0.0)
+		result = STATE_OK;
+	return result;
+}
 
 
 /* process command-line arguments */
@@ -255,11 +260,11 @@ process_arguments (int argc, char **argv)
 				usage ("Critical threshold must be integer or percentage!\n");
 			}
 			cc++;
-		case 'a':									/* verbose */
+		case 'a':									/* all swap */
 			allswaps = TRUE;
 			break;
 		case 'v':									/* verbose */
-			verbose = TRUE;
+			verbose++;
 			break;
 		case 'V':									/* version */
 			print_revision (progname, "$Revision$");
@@ -307,13 +312,13 @@ validate_arguments (void)
 			&& crit_size < 0) {
 		return ERROR;
 	}
-	else if (warn_percent > crit_percent) {
+	else if (warn_percent < crit_percent) {
 		usage
-			("Warning percentage should not be less than critical percentage\n");
+			("Warning percentage should be more than critical percentage\n");
 	}
 	else if (warn_size < crit_size) {
 		usage
-			("Warning free space should not be more than critical free space\n");
+			("Warning free space should be more than critical free space\n");
 	}
 	return OK;
 }
@@ -350,15 +355,21 @@ print_help (void)
 		 " -w, --warning=INTEGER\n"
 		 "   Exit with WARNING status if less than INTEGER bytes of swap space are free\n"
 		 " -w, --warning=PERCENT%%\n"
-		 "   Exit with WARNING status if more than PERCENT of swap space has been used\n"
+		 "   Exit with WARNING status if less than PERCENT of swap space has been used\n"
 		 " -c, --critical=INTEGER\n"
 		 "   Exit with CRITICAL status if less than INTEGER bytes of swap space are free\n"
 		 " -c, --critical=PERCENT%%\n"
-		 "   Exit with CRITCAL status if more than PERCENT of swap space has been used\n"
+		 "   Exit with CRITCAL status if less than PERCENT of swap space has been used\n"
 		 " -a, --allswaps\n"
 		 "    Conduct comparisons for all swap partitions, one by one\n"
 		 " -h, --help\n"
 		 "    Print detailed help screen\n"
-		 " -V, --version\n" "    Print version information\n\n");
+		 " -V, --version\n" "    Print version information\n"
+#ifdef sun
+		 "\nOn Solaris, if -a specified, uses swap -l, otherwise uses swap -s.\n"
+		 "Will be discrepencies because swap -s counts allocated swap and includes real memory\n"
+#endif
+		 "\n"
+		 );
 	support ();
 }

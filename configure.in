@@ -1305,16 +1305,19 @@ then
 		>/dev/null]
 	then
 		ac_cv_swap_format=[" %*d %*s %*d,%*d %*d %*d %d %d"]
+		ac_cv_swap_conv=2048
 		AC_MSG_RESULT([using IRIX format swap])
 
 	elif [$PATH_TO_SWAP -l 2>/dev/null | egrep -i "^swapfile +dev +swaplo +blocks +free" >/dev/null]
 	then
 		ac_cv_swap_format=["%*s %*[0-9,-] %*d %d %d"]
+		ac_cv_swap_conv=2048
 		AC_MSG_RESULT([using Solaris format swap])
 
 	elif [$PATH_TO_SWAP -l 2>/dev/null | egrep -i "^path +dev +swaplo +blocks +free" >/dev/null]
 	then
 		ac_cv_swap_format=["%*s %*[0-9,-] %*d %d %d"]
+		ac_cv_swap_conv=2048
 		AC_MSG_RESULT([using Unixware format swap])
 
 	fi
@@ -1328,6 +1331,7 @@ then
 	if [$PATH_TO_SWAPINFO -k 2>/dev/null | egrep -i "^Device +1K-blocks +Used +Avail" >/dev/null]
 	then
 		ac_cv_swap_format=["%*s %d %*d %d"]
+		ac_cv_swap_conv=1024
 		AC_MSG_RESULT([using FreeBSD format swapinfo])
 	fi
 	EXTRAS="$EXTRAS check_swap"
@@ -1337,19 +1341,22 @@ then
 	ac_cv_have_swap=yes
 	ac_cv_swap_command="$PATH_TO_SWAPINFO -dfM",
 	ac_cv_swap_format=["%*s %d %*d %d"]
+	ac_cv_swap_conv=1024
 	AC_MSG_RESULT([using HP-UX format swapinfo])
 fi
 
-if test x$ac_cv_have_swap != x 
+if test "x$ac_cv_have_swap" != "x" 
 then
 	AC_DEFINE(HAVE_SWAP,1,[Define if swap/swapinfo command is found])
 fi
-AC_DEFINE_UNQUOTED(SWAP_FORMAT,"$ac_cv_swap_format",
-	[Format string for parsing swap output])
 if test "x$ac_cv_swap_command" != "x" 
 then
 	AC_DEFINE_UNQUOTED(SWAP_COMMAND,"$ac_cv_swap_command",
 		[Path to swap/swapinfo binary, with any args])
+	AC_DEFINE_UNQUOTED(SWAP_FORMAT,"$ac_cv_swap_format",
+		[Format string for parsing swap output])
+	AC_DEFINE_UNQUOTED(SWAP_CONVERSION,$ac_cv_swap_conv,
+		[Conversion factor to MB])
 fi
 
 AC_PATH_PROG(PATH_TO_DIG,dig)
