@@ -160,7 +160,7 @@ smart_read_values (int fd, values_t * values)
 	args[3] = 1;
 	if (ioctl (fd, HDIO_DRIVE_CMD, &args)) {
 		e = errno;
-		printf (_("Critical: SMART_READ_VALUES: %s\n"), strerror (errno));
+		printf (_("CRITICAL: SMART_READ_VALUES: %s\n"), strerror (errno));
 		return e;
 	}
 	memcpy (values, args + 4, 512);
@@ -225,14 +225,14 @@ net_saint (values_t * p, thresholds_t * t)
 	}
 	switch (status) {
 	case PREFAILURE:
-		printf (_("Critical: %d Harddrive PreFailure%cDetected! %d/%d tests failed.\n"),
+		printf (_("CRITICAL: %d Harddrive PreFailure%cDetected! %d/%d tests failed.\n"),
 		        prefailure,
 		        prefailure > 1 ? 's' : ' ',
 		        failed,
 	          total);
 		break;
 	case ADVISORY:
-		printf (_("Warning: %d Harddrive Advisor%s Detected. %d/%d tests failed.\n"),
+		printf (_("WARNING: %d Harddrive Advisor%s Detected. %d/%d tests failed.\n"),
 		        advisory,
 		        advisory > 1 ? "ies" : "y",
 		        failed,
@@ -320,7 +320,7 @@ smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0,
 	if (ioctl (fd, HDIO_DRIVE_CMD, &args)) {
 		e = errno;
 		if (show_error) {
-			printf (_("Critical: %s: %s\n"), smart_command[command].text, strerror (errno));
+			printf (_("CRITICAL: %s: %s\n"), smart_command[command].text, strerror (errno));
 		}
 	}
 	return e;
@@ -337,7 +337,7 @@ smart_read_thresholds (int fd, thresholds_t * thresholds)
   args[3] = 1;
 	if (ioctl (fd, HDIO_DRIVE_CMD, &args)) {
 		e = errno;
-		printf (_("Critical: SMART_READ_THRESHOLDS: %s\n"), strerror (errno));
+		printf (_("CRITICAL: SMART_READ_THRESHOLDS: %s\n"), strerror (errno));
 		return e;
 	}
 	memcpy (thresholds, args + 4, 512);
@@ -450,12 +450,12 @@ main (int argc, char *argv[])
 		fd = open (device, O_RDONLY);
 
 		if (fd < 0) {
-			printf (_("Critical: Couldn't open device: %s\n"), strerror (errno));
+			printf (_("CRITICAL: Couldn't open device: %s\n"), strerror (errno));
 			return 2;
 		}
 
 		if (smart_cmd_simple (fd, SMART_CMD_ENABLE, 0, TRUE)) {
-			printf (_("Critical: SMART_CMD_ENABLE\n"));
+			printf (_("CRITICAL: SMART_CMD_ENABLE\n"));
 			return 2;
 		}
 
