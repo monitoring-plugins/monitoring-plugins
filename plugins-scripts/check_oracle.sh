@@ -158,7 +158,7 @@ case "$cmd" in
     }'
     ;;
 --db)
-    pmonchk=`ps -ef | grep -v grep | grep ${2}$ | grep -c pmon`
+    pmonchk=`ps -ef | grep -v grep | grep "^${2}$" | grep -c pmon`
     if [ ${pmonchk} -ge 1 ] ; then
 	echo "${2} OK - ${pmonchk} PMON process(es) running"
 	exit $STATE_OK
