@@ -44,7 +44,7 @@ AM_INSTALL_PROGRAM_FLAGS = @INSTALL_OPTS@
 ##############################################################################
 # the actual targets
 
-check_dhcp_LDADD = $(BASEOBJS) $(NETLIBS)
+check_dhcp_LDADD = $(NETLIBS)
 check_dig_LDADD = $(NETLIBS) popen.o 
 check_disk_LDADD = $(BASEOBJS) popen.o
 check_dns_LDADD = $(NETLIBS) popen.o
@@ -81,7 +81,7 @@ check_ide_smart_LDADD = $(BASEOBJS)
 negate_LDADD = $(BASEOBJS) popen.o
 urlize_LDADD = $(BASEOBJS) popen.o
 
-check_dhcp_DEPENDENCIES = check_dhcp.c $(BASEOBJS) $(NETOBJS) $(DEPLIBS) 
+check_dhcp_DEPENDENCIES = check_dhcp.c $(NETOBJS) $(DEPLIBS) 
 check_dig_DEPENDENCIES = check_dig.c $(NETOBJS) popen.o $(DEPLIBS)
 check_disk_DEPENDENCIES = check_disk.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_dns_DEPENDENCIES = check_dns.c $(NETOBJS) popen.o $(DEPLIBS)
