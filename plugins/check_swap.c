@@ -44,16 +44,14 @@ main (int argc, char **argv)
 
 #ifdef HAVE_PROC_MEMINFO
 	fp = fopen (PROC_MEMINFO, "r");
-	status = ssprintf (status, "%s", "Swap used:");
+	asprintf (&status, "%s", "Swap used:");
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, fp)) {
 		sscanf (input_buffer, " %s %d %d %d", str, &total_swap, &used_swap,
 						&free_swap);
 		if (strstr (str, "Swap")) {
 			percent_used = 100 * (((float) used_swap) / ((float) total_swap));
-			status = ssprintf
-				(status,
-				 "%s %2d%% (%d bytes out of %d)",
-				 status, percent_used, used_swap, total_swap);
+			asprintf (&status, "%s %2d%% (%d bytes out of %d)",
+			          status, percent_used, used_swap, total_swap);
 			if (percent_used >= crit_percent || free_swap <= crit_size)
 				result = STATE_CRITICAL;
 			else if (percent_used >= warn_percent || free_swap <= warn_size)
@@ -90,15 +88,13 @@ main (int argc, char **argv)
 		}
 	}
 
-	status = ssprintf (status, "%s", "Swap used:");
+	asprintf (&status, "%s", "Swap used:");
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
 		sscanf (input_buffer, SWAP_FORMAT, &total_swap, &free_swap);
 		used_swap = total_swap - free_swap;
 		percent_used = 100 * ((float) used_swap) / ((float) total_swap);
-		status = ssprintf
-			(status,
-			 "%s %2d%% (%d bytes out of %d)",
-			 status, percent_used, used_swap, total_swap);
+		asprintf (&status, "%s %2d%% (%d bytes out of %d)",
+		          status, percent_used, used_swap, total_swap);
 		if (percent_used >= crit_percent || free_swap <= crit_size)
 			result = STATE_CRITICAL;
 		else if (percent_used >= warn_percent || free_swap <= warn_size)
