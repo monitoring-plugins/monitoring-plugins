@@ -81,16 +81,6 @@ usage4 (const char *msg)
 	exit (STATE_UNKNOWN);
 }
 
-void
-support (void)
-{
-	printf (_("\n\
-Send email to nagios-users@lists.sourceforge.net if you have questions\n\
-regarding use of this software. To submit patches or suggest improvements,\n\
-send email to nagiosplug-devel@lists.sourceforge.net\n"));
-}
-
-
 char *
 clean_revstring (const char *revstring)
 {
@@ -110,11 +100,6 @@ print_revision (const char *command_name, const char *revision_string)
 		strncpy (plugin_revision, "N/A", STRLEN);
 	printf ("%s (%s %s) %s\n",
 					command_name, PACKAGE, VERSION, plugin_revision);
-	printf (_("\
-The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\
-copies of the plugins under the terms of the GNU General Public License.\n\
-For more information about these matters, see the file named COPYING.\n"));
-
 }
 
 const char *
