@@ -204,11 +204,15 @@ main (int argc, char **argv)
 		/* Zombie processes do not give a procprog command */
 		if ( cols == 6 && strstr(procstat, zombie) ) {
 			cols = 7;
+			/* Set some value for procargs for the strip command further below 
+			Seen to be a problem on some Solaris 7 and 8 systems */
+			input_buffer[pos] = '\n';
+			input_buffer[pos+1] = 0x0;
 		}
 		if ( cols >= 7 ) {
 			resultsum = 0;
 			asprintf (&procargs, "%s", input_buffer + pos);
- 			strip (procargs);
+			strip (procargs);
 
 			if ((options & STAT) && (strstr (statopts, procstat)))
 				resultsum |= STAT;
