@@ -65,7 +65,7 @@
 #include "popen.h"
 #include "utils.h"
 
-#define PROGNAME "check_hpjd"
+const char *progname = "check_hpjd"
 #define REVISION "$Revision$"
 #define COPYRIGHT "2000-2002"
 
@@ -438,7 +438,7 @@ process_arguments (int argc, char **argv)
 			community = optarg;
 			break;
 		case 'V':									/* version */
-			print_revision (PROGNAME, REVISION);
+			print_revision (progname, REVISION);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -482,7 +482,7 @@ validate_arguments (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, REVISION);
+	print_revision (progname, REVISION);
 	printf
 		("Copyright (c) 2000 Ethan Galstad/Karl DeBisschop\n\n"
 		 "This plugin tests the STATUS of an HP printer with a JetDirect card.\n"
@@ -510,7 +510,7 @@ print_usage (void)
 	printf
 		("Usage: %s -H host [-C community]\n"
 		 "       %s --help\n"
-		 "       %s --version\n", PROGNAME, PROGNAME, PROGNAME);
+		 "       %s --version\n", progname, progname, progname);
 }
 
 

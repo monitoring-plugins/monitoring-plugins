@@ -23,7 +23,7 @@
  *
  *****************************************************************************/
 
-#define PROGNAME "check_radius"
+const char *progname = "check_radius"
 #define REVISION "$Revision$"
 #define COPYRIGHT "1999-2001"
 #define AUTHORS "Robert August Vincent II/Karl DeBisschop"
@@ -112,7 +112,7 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 <manvolnum>5<manvolnum>
 </refmeta>
 <refnamdiv>
-<refname>&PROGNAME;</refname>
+<refname>&progname;</refname>
 <refpurpose>&SUMMARY;</refpurpose>
 </refnamdiv>
 </refentry>
@@ -264,14 +264,14 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf ("%s: Unknown argument: %s\n\n", my_basename (argv[0]), optarg);
+			printf ("%s: Unknown argument: %s\n\n", progname, optarg);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
 			exit (OK);
 		case 'V':									/* version */
-			print_revision (my_basename (argv[0]), "$Revision$");
+			print_revision (progname, "$Revision$");
 			exit (OK);
 		case 'v':									/* verbose mode */
 			verbose = TRUE;
@@ -324,7 +324,7 @@ process_arguments (int argc, char **argv)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, REVISION);
+	print_revision (progname, REVISION);
 	printf
 		("Copyright (c) %s %s <%s>\n\n%s\n",
 		 COPYRIGHT, AUTHORS, EMAIL, SUMMARY);
@@ -347,5 +347,5 @@ print_usage (void)
 					" %s -h for detailed help\n"
 					" %s -V for version information\n",
 #endif
-					PROGNAME, OPTIONS, PROGNAME, PROGNAME);
+					progname, OPTIONS, progname, progname);
 }

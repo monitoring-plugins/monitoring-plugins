@@ -39,7 +39,7 @@
 #include "netutils.h"
 #include "utils.h"
 
-#define PROGNAME "check_time"
+const char *progname = "check_time";
 #define REVISION "$Revision$"
 #define COPYRIGHT "1999-2002"
 #define AUTHOR "Ethan Galstad"
@@ -209,7 +209,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (PROGNAME, REVISION);
+			print_revision (progname, REVISION);
 			exit (STATE_OK);
 		case 'H':									/* hostname */
 			if (is_host (optarg) == FALSE)
@@ -306,7 +306,7 @@ print_usage (void)
 		 "           [-W connect_time] [-C connect_time] [-t timeout]\n"
 		 " %s (-h | --help) for detailed help\n"
 		 " %s (-V | --version) for version information\n",
-		 PROGNAME, PROGNAME, PROGNAME);
+		 progname, progname, progname);
 }
 
 
@@ -316,7 +316,7 @@ print_usage (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, REVISION);
+	print_revision (progname, REVISION);
 	printf
 		("Copyright (c) %s %s <%s>\n\n%s\n",
 		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);

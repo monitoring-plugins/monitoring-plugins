@@ -48,7 +48,7 @@
 #include "netutils.h"
 #include "utils.h"
 
-#define PROGNAME "check_real"
+const char *progname = "check_real";
 
 #define PORT	554
 #define EXPECT	"RTSP/1."
@@ -370,7 +370,7 @@ process_arguments (int argc, char **argv)
 			}
 			break;
 		case 'V':									/* version */
-			print_revision (PROGNAME, "$Revision$");
+			print_revision (progname, "$Revision$");
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -410,7 +410,7 @@ validate_arguments (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, "$Revision$");
+	print_revision (progname, "$Revision$");
 	printf
 		("Copyright (c) 2000 Pedro Leite (leite@cic.ua.pt)/Karl DeBisschop\n\n"
 		 "This plugin tests the REAL service on the specified host.\n\n");
@@ -454,7 +454,7 @@ print_usage (void)
 		("Usage: %s -H host [-e expect] [-p port] [-w warn] [-c crit]\n"
 		 "            [-t timeout] [-v]\n"
 		 "       %s --help\n"
-		 "       %s --version\n", PROGNAME, PROGNAME, PROGNAME);
+		 "       %s --version\n", progname, progname, progname);
 }
 
 

@@ -10,7 +10,7 @@
 *
 *****************************************************************************/
 
-#define PROGNAME "check_ping"
+const char *progname = "check_ping";
 #define REVISION "$Revision$"
 #define COPYRIGHT "1999-2001"
 #define AUTHOR "Ethan Galstad/Karl DeBisschop"
@@ -189,7 +189,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case 'V':	/* version */
-			print_revision (PROGNAME, REVISION);
+			print_revision (progname, REVISION);
 			exit (STATE_OK);
 		case 't':	/* timeout period */
 			timeout_interval = atoi (optarg);
@@ -482,13 +482,13 @@ print_usage (void)
 					" %s -h for detailed help\n"
 					" %s -V for version information\n",
 #endif
-					PROGNAME, OPTIONS, PROGNAME, PROGNAME);
+					progname, OPTIONS, progname, progname);
 }
 
 void
 print_help (void)
 {
-	print_revision (PROGNAME, REVISION);
+	print_revision (progname, REVISION);
 	printf
 		("Copyright (c) %s %s <%s>\n\n%s\n",
 		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);

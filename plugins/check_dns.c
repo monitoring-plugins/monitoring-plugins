@@ -48,7 +48,7 @@
 #include "popen.h"
 #include "utils.h"
 
-#define PROGNAME "check_dns"
+const char *progname = "check_dns";
 #define REVISION "$Revision$"
 #define COPYRIGHT "2000-2002"
 
@@ -292,14 +292,14 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?': /* args not parsable */
-			printf ("%s: Unknown argument: %s\n\n", PROGNAME, optarg);
+			printf ("%s: Unknown argument: %s\n\n", progname, optarg);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h': /* help */
 			print_help ();
 			exit (STATE_OK);
 		case 'V': /* version */
-			print_revision (PROGNAME, REVISION);
+			print_revision (progname, REVISION);
 			exit (STATE_OK);
 		case 'v': /* version */
 			verbose = TRUE;
@@ -388,13 +388,13 @@ void
 print_usage (void)
 {
 	printf ("Usage: %s -H host [-s server] [-a expected-address] [-t timeout]\n" "       %s --help\n"
-					"       %s --version\n", PROGNAME, PROGNAME, PROGNAME);
+					"       %s --version\n", progname, progname, progname);
 }
 
 void
 print_help (void)
 {
-	print_revision (PROGNAME, REVISION);
+	print_revision (progname, REVISION);
 	printf ("Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)\n\n");
 	print_usage ();
 	printf

@@ -23,7 +23,7 @@
  *
  *****************************************************************************/
 
-#define PROGNAME "check_nwstat"
+const char *progname = "check_nwstat";
 #define REVISION "$Revision$"
 #define COPYRIGHT "Copyright (c) 1999-2001 Ethan Galstad"
 
@@ -127,8 +127,6 @@ int check_critical_value=FALSE;
 int check_netware_version=FALSE;
 unsigned long vars_to_check=CHECK_NONE;
 int sap_number=-1;
-
-#define PROGNAME "check_nwstat"
 
 int process_arguments(int, char **);
 void print_usage(void);
@@ -674,14 +672,14 @@ int process_arguments(int argc, char **argv){
 		switch (c)
 			{
 			case '?': /* print short usage statement if args not parsable */
-				printf("%s: Unknown argument: %s\n\n",my_basename(argv[0]),optarg);
+				printf ("%s: Unknown argument: %s\n\n", progname, optarg);
 				print_usage();
 				exit(STATE_UNKNOWN);
 			case 'h': /* help */
 				print_help();
 				exit(STATE_OK);
 			case 'V': /* version */
-				print_revision(my_basename(argv[0]),"$Revision$");
+				print_revision(progname,"$Revision$");
 				exit(STATE_OK);
 			case 'H': /* hostname */
 				server_address=optarg;
@@ -693,7 +691,7 @@ int process_arguments(int argc, char **argv){
 				if (is_intnonneg(optarg))
 					server_port=atoi(optarg);
 				else
-					terminate(STATE_UNKNOWN,"Server port an integer (seconds)\nType '%s -h' for additional help\n",PROGNAME);
+					terminate(STATE_UNKNOWN,"Server port an integer (seconds)\nType '%s -h' for additional help\n",progname);
 				break;
 			case 'v':
 				if(strlen(optarg)<3)
@@ -806,12 +804,12 @@ void print_usage(void)
 		 " %s -h for detailed help\n"
 		 " %s -V for version information\n",
 #endif
-		 PROGNAME, OPTIONS, PROGNAME, PROGNAME);
+		 progname, OPTIONS, progname, progname);
 }
 
 void print_help(void)
 {
-	print_revision (PROGNAME, REVISION);
+	print_revision (progname, REVISION);
 	printf ("%s\n\n%s\n", COPYRIGHT, SUMMARY);
 	print_usage();
 	printf

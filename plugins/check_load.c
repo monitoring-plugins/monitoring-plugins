@@ -44,7 +44,7 @@
 
 #endif
 
-#define PROGNAME "check_load"
+const char *progname = "check_load";
 
 int process_arguments (int argc, char **argv);
 int validate_arguments (void);
@@ -212,7 +212,7 @@ process_arguments (int argc, char **argv)
 				usage ("Critical threshold must be float or float triplet!\n");
 			break;
 		case 'V':									/* version */
-			print_revision (my_basename (argv[0]), "$Revision$");
+			print_revision (progname, "$Revision$");
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -303,7 +303,7 @@ print_usage (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, "$Revision$");
+	print_revision (progname, "$Revision$");
 	printf
 		("Copyright (c) 1999 Felipe Gustavo de Almeida <galmeida@linux.ime.usp.br>\n"
 		 "Copyright (c) 2000 Karl DeBisschop\n\n"

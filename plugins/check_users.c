@@ -48,7 +48,7 @@
 #include "popen.h"
 #include "utils.h"
 
-#define PROGNAME "check_users"
+const char *progname = "check_users";
 #define REVISION "$Revision$"
 #define COPYRIGHT "1999-2002"
 #define AUTHOR "Ethan Galstad"
@@ -162,14 +162,14 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf ("%s: Unknown argument: %s\n\n", PROGNAME, optarg);
+			printf ("%s: Unknown argument: %s\n\n", progname, optarg);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (PROGNAME, REVISION);
+			print_revision (progname, REVISION);
 			exit (STATE_OK);
 		case 'c':									/* critical */
 			if (!is_intnonneg (optarg))
@@ -207,7 +207,7 @@ process_arguments (int argc, char **argv)
 void
 print_usage (void)
 {
-	printf ("Usage: %s -w <users> -c <users>\n", PROGNAME);
+	printf ("Usage: %s -w <users> -c <users>\n", progname);
 }
 
 
@@ -217,7 +217,7 @@ print_usage (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, REVISION);
+	print_revision (progname, REVISION);
 	printf
 		("Copyright (c) " COPYRIGHT " " AUTHOR "(" EMAIL ")\n\n"
 		 "This plugin checks the number of users currently logged in on the local\n"

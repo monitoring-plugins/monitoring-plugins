@@ -39,7 +39,7 @@
 #include "netutils.h"
 #include "utils.h"
 
-#define PROGNAME "check_smtp"
+const char *progname = "check_smtp";
 
 #define SMTP_PORT	25
 #define SMTP_EXPECT     "220"
@@ -294,7 +294,7 @@ process_arguments (int argc, char **argv)
 			}
 			break;
 		case 'V':									/* version */
-			print_revision (PROGNAME, "$Revision$");
+			print_revision (progname, "$Revision$");
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -340,7 +340,7 @@ validate_arguments (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, "$Revision$");
+	print_revision (progname, "$Revision$");
 	printf
 		("Copyright (c) 2000 Ethan Galstad/Karl DeBisschop\n\n"
 		 "This plugin test the SMTP service on the specified host.\n\n");
@@ -381,5 +381,5 @@ print_usage (void)
 	printf
 		("Usage: %s -H host [-e expect] [-p port] [-f from addr] [-w warn] [-c crit] [-t timeout] [-v]\n"
 		 "       %s --help\n"
-		 "       %s --version\n", PROGNAME, PROGNAME, PROGNAME);
+		 "       %s --version\n", progname, progname, progname);
 }

@@ -41,7 +41,7 @@
 #include "netutils.h"
 #include "utils.h"
 
-#define PROGNAME "check_udp"
+const char *progname = "check_udp";
 
 int warning_time = 0;
 int check_warning_time = FALSE;
@@ -163,14 +163,14 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf ("%s: Unknown argument: %s\n\n", my_basename (argv[0]), optarg);
+			printf ("%s: Unknown argument: %s\n\n", progname, optarg);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (my_basename (argv[0]), "$Revision$");
+			print_revision (progname, "$Revision$");
 			exit (STATE_OK);
 		case 'v':									/* verbose mode */
 			verbose = TRUE;
@@ -233,7 +233,7 @@ print_usage (void)
 {
 	printf
 		("Usage: %s -H <host_address> [-p port] [-w warn_time] [-c crit_time]\n"
-		 "         [-e expect] [-s send] [-t to_sec] [-v]\n", PROGNAME);
+		 "         [-e expect] [-s send] [-t to_sec] [-v]\n", progname);
 }
 
 
@@ -243,7 +243,7 @@ print_usage (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, "$Revision$");
+	print_revision (progname, "$Revision$");
 	printf
 		("Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)\n\n"
 		 "This plugin tests an UDP connection with the specified host.\n\n");

@@ -23,7 +23,7 @@
  *
  *****************************************************************************/
 
-#define PROGNAME "check_snmp"
+const char *progname = "check_snmp";
 #define REVISION "$Revision$"
 #define COPYRIGHT "1999-2002"
 #define AUTHOR "Ethan Galstad"
@@ -475,7 +475,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK); 
 		case 'V':	/* version */
-			print_revision (PROGNAME, REVISION);
+			print_revision (progname, REVISION);
 			exit (STATE_OK);
 		case 'v': /* verbose */
 			verbose = TRUE;
@@ -753,10 +753,9 @@ validate_arguments ()
 void
 print_help (void)
 {
-	print_revision (PROGNAME, REVISION);
+	print_revision (progname, REVISION);
 	printf
-		("Copyright (c) %s %s <%s>\n\n%s\n",
-		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
+		("Copyright (c) %s %s <%s>\n\n%s\n", COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
 	print_usage ();
 	printf
 		("\nOptions:\n" LONGOPTIONS "\n" DESCRIPTION "\n" NOTES "\n", 
@@ -771,7 +770,7 @@ print_usage (void)
 		("Usage:\n" " %s %s\n"
 		 " %s (-h | --help) for detailed help\n"
 		 " %s (-V | --version) for version information\n",
-		 PROGNAME, OPTIONS, PROGNAME, PROGNAME);
+		 progname, OPTIONS, progname, progname);
 }
 
 

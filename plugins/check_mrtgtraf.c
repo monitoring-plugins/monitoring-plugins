@@ -52,7 +52,7 @@
 #include "common.h"
 #include "utils.h"
 
-#define PROGNAME "check_mrtgtraf"
+const char *progname = "check_mrtgtraf";
 
 int process_arguments (int, char **);
 int validate_arguments (void);
@@ -292,7 +292,7 @@ process_arguments (int argc, char **argv)
 							&outgoing_warning_threshold);
 			break;
 		case 'V':									/* version */
-			print_revision (PROGNAME, "$Revision$");
+			print_revision (progname, "$Revision$");
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -356,7 +356,7 @@ validate_arguments (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, "$Revision$");
+	print_revision (progname, "$Revision$");
 	printf
 		("Copyright (c) 2000 Tom Shields/Karl DeBisschop\n\n"
 		 "This plugin tests the UPS service on the specified host.\n\n");
@@ -390,5 +390,5 @@ print_usage (void)
 		("Usage: %s  -F <log_file> -a <AVG | MAX> -v <variable> -w <warning_pair> -c <critical_pair>\n"
 		 "            [-e expire_minutes] [-t timeout] [-v]\n"
 		 "       %s --help\n"
-		 "       %s --version\n", PROGNAME, PROGNAME, PROGNAME);
+		 "       %s --version\n", progname, progname, progname);
 }

@@ -23,7 +23,7 @@
  *
  *****************************************************************************/
 
-#define PROGNAME "negate"
+const char *progname = "negate";
 #define REVISION "$Revision$"
 #define COPYRIGHT "2002"
 #define AUTHOR "Karl DeBisschop"
@@ -52,10 +52,10 @@ Otherwise, the output state of the wrapped plugin is unchanged.\n"
 
 char *command_line;
 
-static int process_arguments (int, char **);
-static int validate_arguments (void);
-static void print_usage (void);
-static void print_help (void);
+int process_arguments (int, char **);
+int validate_arguments (void);
+void print_usage (void);
+void print_help (void);
 
 /******************************************************************************
 
@@ -76,7 +76,7 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 <manvolnum>5<manvolnum>
 </refmeta>
 <refnamdiv>
-<refname>&PROGNAME;</refname>
+<refname>&progname;</refname>
 <refpurpose>&SUMMARY;</refpurpose>
 </refnamdiv>
 </refentry>
@@ -174,7 +174,7 @@ main (int argc, char **argv)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, REVISION);
+	print_revision (progname, REVISION);
 	printf
 		("Copyright (c) %s %s <%s>\n\n%s\n",
 		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
@@ -196,7 +196,7 @@ print_usage (void)
 					" %s -h for detailed help\n"
 					" %s -V for version information\n",
 #endif
-					PROGNAME, OPTIONS, PROGNAME, PROGNAME);
+					progname, OPTIONS, progname, progname);
 }
 
 
@@ -249,7 +249,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (EXIT_SUCCESS);
 		case 'V':     /* version */
-			print_revision (PROGNAME, REVISION);
+			print_revision (progname, REVISION);
 			exit (EXIT_SUCCESS);
 		case 't':     /* timeout period */
 			if (!is_integer (optarg))

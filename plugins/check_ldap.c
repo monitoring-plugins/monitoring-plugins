@@ -20,7 +20,7 @@
  *
  *****************************************************************************/
 
-#define PROGNAME "check_ldap"
+const char *progname = "check_ldap";
 #define REVISION "$Revision$"
 
 #include "config.h"
@@ -35,8 +35,8 @@
 
 int process_arguments (int, char **);
 int validate_arguments (void);
-static void print_help (void);
-static void print_usage (void);
+void print_help (void);
+void print_usage (void);
 
 char ld_defattr[] = "(objectclass=*)";
 char *ld_attr = ld_defattr;
@@ -165,7 +165,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (PROGNAME, REVISION);
+			print_revision (progname, REVISION);
 			exit (STATE_OK);
 		case 't':									/* timeout period */
 			if (!is_intnonneg (optarg))
@@ -225,10 +225,10 @@ validate_arguments ()
 
 
 /* function print_help */
-static void
+void
 print_help ()
 {
-	print_revision (PROGNAME, REVISION);
+	print_revision (progname, REVISION);
 	printf
 		("Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)\n"
 		 "License: GPL\n" "\n");
@@ -248,11 +248,11 @@ print_help ()
 }
 
 
-static void
+void
 print_usage ()
 {
 	printf
 		("Usage: %s -H <host> -b <base_dn> -p <port> [-a <attr>] [-D <binddn>]\n"
 		 "         [-P <password>] [-w <warn_time>] [-c <crit_time>] [-t timeout]\n"
-		 "(Note: all times are in seconds.)\n", PROGNAME);
+		 "(Note: all times are in seconds.)\n", progname);
 }

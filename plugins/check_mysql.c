@@ -14,7 +14,7 @@
 * This plugin is for testing a mysql server.
 ******************************************************************************/
 
-#define PROGNAME "check_mysql"
+const char *progname = "check_mysql"
 #define REVISION "$Revision$"
 #define COPYRIGHT "1999-2002"
 
@@ -178,7 +178,7 @@ process_arguments (int argc, char **argv)
 			db_port = atoi (optarg);
 			break;
 		case 'V':									/* version */
-			print_revision (PROGNAME, REVISION);
+			print_revision (progname, REVISION);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -230,7 +230,7 @@ validate_arguments (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, REVISION);
+	print_revision (progname, REVISION);
 	printf
 		("Copyright (c) 2000 Didi Rieder/Karl DeBisschop\n\n"
 		 "This plugin is for testing a mysql server.\n");
@@ -267,5 +267,5 @@ print_usage (void)
 	printf
 		("Usage: %s [-d database] [-H host] [-P port] [-u user] [-p password]\n"
 		 "       %s --help\n"
-		 "       %s --version\n", PROGNAME, PROGNAME, PROGNAME);
+		 "       %s --version\n", progname, progname, progname);
 }

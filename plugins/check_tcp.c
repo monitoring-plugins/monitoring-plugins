@@ -22,7 +22,7 @@
  *
  *****************************************************************************/
 
-#define PROGRAM check_tcp
+/* const char *progname = "check_tcp"; */
 #define REVISION "$Revision$"
 #define DESCRIPTION "Check a TCP port"
 #define AUTHOR "Ethan Galstad"
@@ -65,7 +65,7 @@ int process_arguments (int, char **);
 void print_usage (void);
 void print_help (void);
 
-char *PROGNAME = NULL;
+char *progname = NULL;
 char *SERVICE = NULL;
 char *SEND = NULL;
 char *EXPECT = NULL;
@@ -103,7 +103,7 @@ main (int argc, char **argv)
 	struct timeval tv;
 
 	if (strstr (argv[0], "check_udp")) {
-		asprintf (&PROGNAME, "check_udp");
+		asprintf (&progname, "check_udp");
 		asprintf (&SERVICE, "UDP");
 		SEND = NULL;
 		EXPECT = NULL;
@@ -112,7 +112,7 @@ main (int argc, char **argv)
 		PORT = 0;
 	}
 	else if (strstr (argv[0], "check_tcp")) {
-		asprintf (&PROGNAME, "check_tcp");
+		asprintf (&progname, "check_tcp");
 		asprintf (&SERVICE, "TCP");
 		SEND = NULL;
 		EXPECT = NULL;
@@ -121,7 +121,7 @@ main (int argc, char **argv)
 		PORT = 0;
 	}
 	else if (strstr (argv[0], "check_ftp")) {
-		asprintf (&PROGNAME, "check_ftp");
+		asprintf (&progname, "check_ftp");
 		asprintf (&SERVICE, "FTP");
 		SEND = NULL;
 		asprintf (&EXPECT, "220");
@@ -130,7 +130,7 @@ main (int argc, char **argv)
 		PORT = 21;
 	}
 	else if (strstr (argv[0], "check_smtp")) {
-		asprintf (&PROGNAME, "check_smtp");
+		asprintf (&progname, "check_smtp");
 		asprintf (&SERVICE, "SMTP");
 		SEND = NULL;
 		asprintf (&EXPECT, "220");
@@ -139,7 +139,7 @@ main (int argc, char **argv)
 		PORT = 25;
 	}
 	else if (strstr (argv[0], "check_pop")) {
-		asprintf (&PROGNAME, "check_pop");
+		asprintf (&progname, "check_pop");
 		asprintf (&SERVICE, "POP");
 		SEND = NULL;
 		asprintf (&EXPECT, "+OK");
@@ -148,7 +148,7 @@ main (int argc, char **argv)
 		PORT = 110;
 	}
 	else if (strstr (argv[0], "check_imap")) {
-		asprintf (&PROGNAME, "check_imap");
+		asprintf (&progname, "check_imap");
 		asprintf (&SERVICE, "IMAP");
 		SEND = NULL;
 		asprintf (&EXPECT, "* OK");
@@ -158,7 +158,7 @@ main (int argc, char **argv)
 	}
 #ifdef HAVE_SSL
 	else if (strstr(argv[0],"check_simap")) {
-		asprintf (&PROGNAME, "check_simap");
+		asprintf (&progname, "check_simap");
 		asprintf (&SERVICE, "SIMAP");
 		SEND=NULL;
 		asprintf (&EXPECT, "* OK");
@@ -168,7 +168,7 @@ main (int argc, char **argv)
 		PORT=993;
 	}
 	else if (strstr(argv[0],"check_spop")) {
-		asprintf (&PROGNAME, "check_spop");
+		asprintf (&progname, "check_spop");
 		asprintf (&SERVICE, "SPOP");
 		SEND=NULL;
 		asprintf (&EXPECT, "+OK");
@@ -179,7 +179,7 @@ main (int argc, char **argv)
 	}
 #endif
 	else if (strstr (argv[0], "check_nntp")) {
-		asprintf (&PROGNAME, "check_nntp");
+		asprintf (&progname, "check_nntp");
 		asprintf (&SERVICE, "NNTP");
 		SEND = NULL;
 		EXPECT = NULL;
@@ -387,21 +387,21 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':                 /* print short usage statement if args not parsable */
-			printf ("%s: Unknown argument: %s\n\n", my_basename (argv[0]), optarg);
+			printf ("%s: Unknown argument: %s\n\n", progname, optarg);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h':                 /* help */
 			print_help ();
 			exit (STATE_OK);
 		case 'V':                 /* version */
-			print_revision (PROGNAME, "$Revision$");
+			print_revision (progname, "$Revision$");
 			exit (STATE_OK);
 		case 'v':                 /* verbose mode */
 			verbose = TRUE;
 			break;
 		case 'H':                 /* hostname */
 			if (is_host (optarg) == FALSE)
-				usage ("Invalid host name/address\n");
+				usage2 ("invalid host name or address", optarg);
 			server_address = optarg;
 			break;
 		case 'c':                 /* critical */
@@ -479,7 +479,7 @@ print_usage (void)
 {
 	printf
 		("Usage: %s -H host -p port [-w warn_time] [-c crit_time] [-s send]\n"
-		 "         [-e expect] [-W wait] [-t to_sec] [-v]\n", PROGNAME);
+		 "         [-e expect] [-W wait] [-t to_sec] [-v]\n", progname);
 }
 
 
@@ -489,7 +489,7 @@ print_usage (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, "$Revision$");
+	print_revision (progname, "$Revision$");
 	printf
 		("Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)\n\n"
 		 "This plugin tests %s connections with the specified host.\n\n",

@@ -33,7 +33,7 @@
  *
  *****************************************************************************/
 
-#define PROGNAME "check_vsz"
+const char *progname = "check_vsz";
 #define REVISION "$Revision$"
 #define COPYRIGHT "1999-2002"
 #define AUTHOR "Karl DeBisschop"
@@ -45,8 +45,8 @@
 #include "utils.h"
 
 int process_arguments (int argc, char **argv);
-void print_help (char *cmd);
-void print_usage (char *cmd);
+void print_help (const char *cmd);
+void print_usage (const char *cmd);
 
 int warn = -1;
 int crit = -1;
@@ -64,8 +64,8 @@ main (int argc, char **argv)
 	char *message = "";
 
 	if (!process_arguments (argc, argv)) {
-		printf ("%s: failure parsing arguments\n", my_basename (argv[0]));
-		print_help (my_basename (argv[0]));
+		printf ("%s: failure parsing arguments\n", progname);
+		print_help (progname);
 		return STATE_UNKNOWN;
 	}
 
@@ -166,20 +166,20 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* help */
-			printf ("%s: Unknown argument: %s\n\n", my_basename (argv[0]), optarg);
-			print_usage (my_basename (argv[0]));
+			printf ("%s: Unknown argument: %s\n\n", progname, optarg);
+			print_usage (progname);
 			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
-			print_help (my_basename (argv[0]));
+			print_help (progname);
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (my_basename (argv[0]), "$Revision$");
+			print_revision (progname, "$Revision$");
 			exit (STATE_OK);
 		case 'c':									/* critical threshold */
 			if (!is_intnonneg (optarg)) {
 				printf ("%s: critical threshold must be an integer: %s\n",
-								my_basename (argv[0]), optarg);
-				print_usage (my_basename (argv[0]));
+								progname, optarg);
+				print_usage (progname);
 				exit (STATE_UNKNOWN);
 			}
 			crit = atoi (optarg);
@@ -187,8 +187,8 @@ process_arguments (int argc, char **argv)
 		case 'w':									/* warning threshold */
 			if (!is_intnonneg (optarg)) {
 				printf ("%s: warning threshold must be an integer: %s\n",
-								my_basename (argv[0]), optarg);
-				print_usage (my_basename (argv[0]));
+								progname, optarg);
+				print_usage (progname);
 				exit (STATE_UNKNOWN);
 			}
 			warn = atoi (optarg);
@@ -203,8 +203,8 @@ process_arguments (int argc, char **argv)
 	if (warn == -1) {
 		if (!is_intnonneg (argv[c])) {
 			printf ("%s: critical threshold must be an integer: %s\n",
-							PROGNAME, argv[c]);
-			print_usage (PROGNAME);
+							progname, argv[c]);
+			print_usage (progname);
 			exit (STATE_UNKNOWN);
 		}
 		warn = atoi (argv[c++]);
@@ -213,8 +213,8 @@ process_arguments (int argc, char **argv)
 	if (crit == -1) {
 		if (!is_intnonneg (argv[c])) {
 			printf ("%s: critical threshold must be an integer: %s\n",
-							PROGNAME, argv[c]);
-			print_usage (PROGNAME);
+							progname, argv[c]);
+			print_usage (progname);
 			exit (STATE_UNKNOWN);
 		}
 		crit = atoi (argv[c++]);
@@ -227,14 +227,14 @@ process_arguments (int argc, char **argv)
 }
 
 void
-print_usage (char *cmd)
+print_usage (const char *cmd)
 {
 	printf ("Usage: %s -w <wsize> -c <csize> [-C command]\n"
 					"       %s --help\n" "       %s --version\n", cmd, cmd, cmd);
 }
 
 void
-print_help (char *cmd)
+print_help (const char *cmd)
 {
 	print_revision ("check_vsz", "$Revision$");
 	printf

@@ -18,11 +18,11 @@
 #include <limits.h>
 
 extern int timeout_interval;
+extern const char *progname;
 
-char *my_basename (char *);
 void support (void);
 char *clean_revstring (const char *);
-void print_revision (char *, const char *);
+void print_revision (const char *, const char *);
 void terminate (int, const char *fmt, ...);
 RETSIGTYPE timeout_alarm_handler (int);
 
@@ -57,8 +57,6 @@ char *strpcat (char *dest, const char *src, const char *str);
 #define STRLEN 64
 #define TXTBLK 128
 
-#define max(a,b) ((a)>(b))?(a):(b)
-
 /* **************************************************************************
  * max_state(STATE_x, STATE_y)
  * compares STATE_x to  STATE_y and returns result based on the following
@@ -68,7 +66,7 @@ char *strpcat (char *dest, const char *src, const char *str);
  ****************************************************************************/
 
 int
-max_state(int a, int b)
+max_state (int a, int b)
 {
 	if (a == STATE_CRITICAL || b == STATE_CRITICAL)
 		return STATE_CRITICAL;
@@ -84,13 +82,26 @@ max_state(int a, int b)
 		return max (a, b);
 }
 
-char *
-my_basename (char *path)
+void usage (char *msg)
 {
-	if (!strstr (path, "/"))
-		return path;
-	else
-		return 1 + strrchr (path, '/');
+	printf (msg);
+	print_usage ();
+	exit (STATE_UNKNOWN);
+}
+
+void usage2(char *msg, char *arg)
+{
+	printf ("%s: %s - %s\n",progname,msg,arg);
+	print_usage ();
+	exit (STATE_UNKNOWN);
+}
+
+void
+usage3 (char *msg, char arg)
+{
+	printf ("%s: %s - %c\n", progname, msg, arg);
+	print_usage();
+	exit (STATE_UNKNOWN);
 }
 
 
@@ -115,14 +126,14 @@ clean_revstring (const char *revstring)
 }
 
 void
-print_revision (char *command_name, const char *revision_string)
+print_revision (const char *command_name, const char *revision_string)
 {
 	char plugin_revision[STRLEN];
 
 	if (sscanf (revision_string, "$Revision: %[0-9.]", plugin_revision) != 1)
 		strncpy (plugin_revision, "N/A", STRLEN);
 	printf ("%s (nagios-plugins %s) %s\n",
-					my_basename (command_name), VERSION, plugin_revision);
+					progname, VERSION, plugin_revision);
 	printf
 		("The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n"
 		 "copies of the plugins under the terms of the GNU General Public License.\n"

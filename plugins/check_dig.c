@@ -25,7 +25,7 @@
 #include "utils.h"
 #include "popen.h"
 
-#define PROGNAME "check_dig"
+const char *progname = "check_dig";
 #define REVISION "$Revision$"
 #define COPYRIGHT "2000-2002"
 #define AUTHOR "Karl DeBisschop"
@@ -197,7 +197,7 @@ process_arguments (int argc, char **argv)
 			}
 			break;
 		case 'V':									/* version */
-			print_revision (PROGNAME, "$Revision$");
+			print_revision (progname, "$Revision$");
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -240,7 +240,7 @@ validate_arguments (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, "$Revision$");
+	print_revision (progname, "$Revision$");
 	printf
 		("Copyright (c) %s %s <%s>\n\n%s\n",
 		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
@@ -272,5 +272,5 @@ print_usage (void)
 	printf
 		("Usage: %s -H host -l lookup [-t timeout] [-v]\n"
 		 "       %s --help\n"
-		 "       %s --version\n", PROGNAME, PROGNAME, PROGNAME);
+		 "       %s --version\n", progname, progname, progname);
 }

@@ -15,7 +15,7 @@
 #include "netutils.h"
 #include "utils.h"
 
-#define PROGNAME "check_ssh"
+const char *progname = "check_ssh";
 #define REVISION "$Revision$"
 
 #ifndef MSG_DONTWAIT
@@ -95,7 +95,7 @@ process_arguments (int argc, char **argv)
 		case '?':									/* help */
 			usage ("");
 		case 'V':									/* version */
-			print_revision (PROGNAME, REVISION);
+			print_revision (progname, REVISION);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -238,7 +238,7 @@ ssh_connect (char *haddr, short hport)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, REVISION);
+	print_revision (progname, REVISION);
 	printf ("Copyright (c) 1999 Remi Paulmier (remi@sinfomic.fr)\n\n");
 	print_usage ();
 	printf ("by default, port is %d\n", SSH_DFL_PORT);
@@ -251,7 +251,7 @@ print_usage (void)
 		("Usage:\n"
 		 " %s -t [timeout] -p [port] <host>\n"
 		 " %s -V prints version info\n"
-		 " %s -h prints more detailed help\n", PROGNAME, PROGNAME, PROGNAME);
+		 " %s -h prints more detailed help\n", progname, progname, progname);
 }
 
 /* end of check_ssh.c */

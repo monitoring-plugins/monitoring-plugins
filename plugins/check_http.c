@@ -23,7 +23,7 @@
  *
  *****************************************************************************/
 
-#define PROGNAME "check_http"
+const char *progname = "check_http";
 #define REVISION "$Revision$"
 #define COPYRIGHT "1999-2001"
 #define AUTHORS "Ethan Galstad/Karl DeBisschop"
@@ -328,7 +328,7 @@ process_arguments (int argc, char **argv)
 			exit (STATE_OK);
 			break;
 		case 'V': /* version */
-			print_revision (PROGNAME, REVISION);
+			print_revision (progname, REVISION);
 			exit (STATE_OK);
 			break;
 		case 't': /* timeout period */
@@ -1058,7 +1058,7 @@ my_close (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, REVISION);
+	print_revision (progname, REVISION);
 	printf
 		("Copyright (c) %s %s <%s>\n\n%s\n",
 		 COPYRIGHT, AUTHORS, EMAIL, SUMMARY);
@@ -1083,5 +1083,5 @@ print_usage (void)
 	        " %s -h for detailed help\n"
 	        " %s -V for version information\n",
 #endif
-	PROGNAME, OPTIONS, PROGNAME, PROGNAME);
+	progname, OPTIONS, progname, progname);
 }

@@ -56,7 +56,7 @@
 #include "netutils.h"
 #include "utils.h"
 
-#define PROGNAME "check_ups"
+const char *progname = "check_ups";
 #define REVISION "$Revision$"
 #define COPYRIGHT "1999-2002"
 #define AUTHOR "Ethan Galstad"
@@ -64,7 +64,7 @@
 
 #define CHECK_NONE	0
 
-#define PORT	3305
+#define PORT     3493
 
 #define UPS_NONE     0   /* no supported options */
 #define UPS_UTILITY  1   /* supports utility line voltage */
@@ -535,7 +535,7 @@ process_arguments (int argc, char **argv)
 			}
 			break;
 		case 'V':									/* version */
-			print_revision (PROGNAME, "$Revision$");
+			print_revision (progname, "$Revision$");
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -571,7 +571,7 @@ validate_arguments (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, "$Revision$");
+	print_revision (progname, "$Revision$");
 	printf
 		("Copyright (c) 2000 Tom Shields/Karl DeBisschop\n\n"
 		 "This plugin tests the UPS service on the specified host.\n"
@@ -611,5 +611,5 @@ print_usage (void)
 		("Usage: %s -H host [-e expect] [-p port] [-w warn] [-c crit]\n"
 		 "            [-t timeout] [-v]\n"
 		 "       %s --help\n"
-		 "       %s --version\n", PROGNAME, PROGNAME, PROGNAME);
+		 "       %s --version\n", progname, progname, progname);
 }

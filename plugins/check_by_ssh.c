@@ -22,7 +22,7 @@
  *
  *****************************************************************************/
  
-#define PROGRAM check_by_ssh
+const char *progname = "check_by_ssh";
 #define DESCRIPTION "Run checks on a remote system using ssh, wrapping the proper timeout around the ssh invocation."
 #define AUTHOR "Karl DeBisschop"
 #define EMAIL "karl@debisschop.net"
@@ -34,11 +34,9 @@
 #include "utils.h"
 #include <time.h>
 
-#define PROGNAME "check_by_ssh"
-
 int process_arguments (int, char **);
 int validate_arguments (void);
-void print_help (char *command_name);
+void print_help (const char *command_name);
 void print_usage (void);
 
 
@@ -223,10 +221,10 @@ process_arguments (int argc, char **argv)
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'V':									/* version */
-			print_revision (PROGNAME, "$Revision$");
+			print_revision (progname, "$Revision$");
 			exit (STATE_OK);
 		case 'h':									/* help */
-			print_help (PROGNAME);
+			print_help (progname);
 			exit (STATE_OK);
 		case 'v':									/* help */
 			verbose = TRUE;
@@ -286,7 +284,7 @@ process_arguments (int argc, char **argv)
 	c = optind;
 	if (hostname == NULL) {
 		if (!is_host (argv[c]))
-			terminate (STATE_UNKNOWN, "%s: Invalid host name %s\n", PROGNAME, argv[c]);
+			terminate (STATE_UNKNOWN, "%s: Invalid host name %s\n", progname, argv[c]);
 		hostname = argv[c++];
 	}
 
@@ -317,10 +315,10 @@ validate_arguments (void)
 		return ERROR;
 
 	if (passive && commands != services)
-		terminate (STATE_UNKNOWN, "%s: In passive mode, you must provide a service name for each command.\n", PROGNAME);
+		terminate (STATE_UNKNOWN, "%s: In passive mode, you must provide a service name for each command.\n", progname);
 
 	if (passive && host_shortname == NULL)
-		terminate (STATE_UNKNOWN, "%s: In passive mode, you must provide the host short name from the nagios configs.\n", PROGNAME);
+		terminate (STATE_UNKNOWN, "%s: In passive mode, you must provide the host short name from the nagios configs.\n", progname);
 
 	return OK;
 }
@@ -330,7 +328,7 @@ validate_arguments (void)
 
 
 void
-print_help (char *cmd)
+print_help (const char *cmd)
 {
 	print_revision (cmd, "$Revision$");
 

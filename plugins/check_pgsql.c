@@ -23,7 +23,7 @@
  *
  *****************************************************************************/
 
-#define PROGNAME "check_pgsql"
+const char *progname = "check_pgsql"
 #define REVISION "$Revision$"
 #define COPYRIGHT "1999-2001"
 #define AUTHOR "Karl DeBisschop"
@@ -122,7 +122,7 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 <manvolnum>5<manvolnum>
 </refmeta>
 <refnamdiv>
-<refname>&PROGNAME;</refname>
+<refname>&progname;</refname>
 <refpurpose>&SUMMARY;</refpurpose>
 </refnamdiv>
 </refentry>
@@ -218,7 +218,7 @@ main (int argc, char **argv)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, REVISION);
+	print_revision (progname, REVISION);
 	printf
 		("Copyright (c) %s %s <%s>\n\n%s\n",
 		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
@@ -235,7 +235,7 @@ print_usage (void)
 	printf ("Usage:\n" " %s %s\n"
 					" %s (-h | --help) for detailed help\n"
 					" %s (-V | --version) for version information\n",
-					PROGNAME, OPTIONS, PROGNAME, PROGNAME);
+					progname, OPTIONS, progname, progname);
 }
 
 
@@ -281,7 +281,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case 'V':     /* version */
-			print_revision (PROGNAME, REVISION);
+			print_revision (progname, REVISION);
 			exit (STATE_OK);
 		case 't':     /* timeout period */
 			if (!is_integer (optarg))

@@ -58,7 +58,7 @@
 
 #define PORT	2000
 
-#define PROGNAME "check_overcr"
+const char *progname = "check_overcr";
 
 char *server_address = NULL;
 int server_port = PORT;
@@ -367,14 +367,14 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf ("%s: Unknown argument: %s\n\n", my_basename (argv[0]), optarg);
+			printf ("%s: Unknown argument: %s\n\n", progname, optarg);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (my_basename (argv[0]), "$Revision$");
+			print_revision (progname, "$Revision$");
 			exit (STATE_OK);
 		case 'H':									/* hostname */
 			server_address = optarg;
@@ -385,7 +385,7 @@ process_arguments (int argc, char **argv)
 			else
 				terminate (STATE_UNKNOWN,
 									 "Server port an integer (seconds)\nType '%s -h' for additional help\n",
-									 PROGNAME);
+									 progname);
 			break;
 		case 'v':									/* variable */
 			if (strcmp (optarg, "LOAD1") == 0)
@@ -438,7 +438,7 @@ print_usage (void)
 {
 	printf
 		("Usage: %s -H host [-p port] [-v variable] [-w warning] [-c critical] [-t timeout]\n",
-		 PROGNAME);
+		 progname);
 }
 
 
@@ -448,7 +448,7 @@ print_usage (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, "$Revision$");
+	print_revision (progname, "$Revision$");
 	printf
 		("Copyright (c) 2000 Ethan Galstad/Karl DeBisschop\n\n"
 		 "This plugin attempts to contact the Over-CR collector daemon running on the\n"

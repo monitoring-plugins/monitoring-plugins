@@ -16,7 +16,7 @@ suite of plugins. */
 char *my_basename (char *);
 void support (void);
 char *clean_revstring (const char *revstring);
-void print_revision (char *, const char *);
+void print_revision (const char *, const char *);
 void terminate (int result, char *msg, ...);
 extern RETSIGTYPE timeout_alarm_handler (int);
 
@@ -69,28 +69,14 @@ char *ssprintf (char *str, const char *fmt, ...); /* deprecate for asprintf */
 char *strpcpy (char *dest, const char *src, const char *str);
 char *strpcat (char *dest, const char *src, const char *str);
 
-/* Handle comparisions for STATE_* */
-int max_state(int, int);
+int max_state (int a, int b);
 
-#define max(a,b) ((a)>(b))?(a):(b)
+void usage (char *msg);
+void usage2(char *msg, char *arg);
+void usage3(char *msg, char arg);
 
-#define usage(msg) {\
- printf(msg);\
- print_usage();\
- exit(STATE_UNKNOWN);\
-}
 
-#define usage2(msg,arg) {\
- printf("%s: %s - %s\n",PROGNAME,msg,arg);\
- print_usage();\
- exit(STATE_UNKNOWN);\
-}
-
-#define usage3(msg,arg) {\
- printf("%s: %s - %c\n",PROGNAME,msg,arg);\
- print_usage();\
- exit(STATE_UNKNOWN);\
-}
+#define max(a,b) (((a)>(b))?(a):(b))
 
 #define state_text(a) \
 (a)==0?"OK":\

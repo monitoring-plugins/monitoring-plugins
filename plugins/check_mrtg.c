@@ -23,7 +23,7 @@
  *
  *****************************************************************************/
 
-#define PROGNAME "check_mrtg"
+const char *progname = "check_mrtg";
 #define REVISION "$Revision$"
 #define COPYRIGHT "Copyright (c) 1999-2001 Ethan Galstad"
 
@@ -287,7 +287,7 @@ process_arguments (int argc, char **argv)
 			units_label = optarg;
 			break;
 		case 'V':									/* version */
-			print_revision (PROGNAME, REVISION);
+			print_revision (progname, REVISION);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -308,7 +308,7 @@ process_arguments (int argc, char **argv)
 		else
 			terminate (STATE_UNKNOWN,
 			           "%s is not a valid expiration time\nUse '%s -h' for additional help\n",
-			           argv[c], PROGNAME);
+			           argv[c], progname);
 	}
 
 	if (argc > c && strcmp (argv[c], "MAX") == 0) {
@@ -359,7 +359,7 @@ validate_arguments (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, REVISION);
+	print_revision (progname, REVISION);
 	printf ("%s\n\n%s\n", COPYRIGHT, SUMMARY);
 	print_usage ();
 	printf ("\nOptions:\n" LONGOPTIONS "\n" DESCRIPTION "\n");
@@ -377,5 +377,5 @@ print_usage (void)
 					" %s -h for detailed help\n"
 					" %s -V for version information\n",
 #endif
-					PROGNAME, OPTIONS, PROGNAME, PROGNAME);
+					progname, OPTIONS, progname, progname);
 }

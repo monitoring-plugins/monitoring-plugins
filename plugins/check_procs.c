@@ -34,7 +34,7 @@
 *
 ******************************************************************************/
 
-#define PROGNAME "check_snmp"
+const char *progname = "check_snmp";
 #define REVISION "$Revision$"
 #define COPYRIGHT "1999-2002"
 #define AUTHOR "Ethan Galstad"
@@ -298,12 +298,12 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (PROGNAME, REVISION);
+			print_revision (progname, REVISION);
 			exit (STATE_OK);
 		case 't':									/* timeout period */
 			if (!is_integer (optarg)) {
 				printf ("%s: Timeout Interval must be an integer!\n\n",
-				        my_basename (argv[0]));
+				        progname);
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
@@ -325,7 +325,7 @@ process_arguments (int argc, char **argv)
 			}
 			else {
 				printf ("%s: Critical Process Count must be an integer!\n\n",
-				        my_basename (argv[0]));
+				        progname);
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
@@ -345,7 +345,7 @@ process_arguments (int argc, char **argv)
 			}
 			else {
 				printf ("%s: Warning Process Count must be an integer!\n\n",
-				        my_basename (argv[0]));
+				        progname);
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
@@ -356,7 +356,7 @@ process_arguments (int argc, char **argv)
 				break;
 			}
 			printf ("%s: Parent Process ID must be an integer!\n\n",
-			        my_basename (argv[0]));
+			        progname);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 's':									/* status */
@@ -462,7 +462,7 @@ if (wmax >= 0 && wmin == -1)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, REVISION);
+	print_revision (progname, REVISION);
 	printf
 		("Copyright (c) %s %s <%s>\n\n%s\n",
 		 COPYRIGHT, AUTHOR, EMAIL, SUMMARY);

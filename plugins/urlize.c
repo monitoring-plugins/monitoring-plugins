@@ -37,12 +37,14 @@
  *
  *****************************************************************************/
 
+const char *progname = "urlize";
+
 #include "common.h"
 #include "utils.h"
 #include "popen.h"
 
-void print_usage (char *);
-void print_help (char *);
+void print_usage (const char *);
+void print_help (const char *);
 
 int
 main (int argc, char **argv)
@@ -52,7 +54,7 @@ main (int argc, char **argv)
 	char input_buffer[MAX_INPUT_BUFFER];
 
 	if (argc < 2) {
-		print_usage (my_basename (argv[0]));
+		print_usage (progname);
 		exit (STATE_UNKNOWN);
 	}
 
@@ -62,12 +64,12 @@ main (int argc, char **argv)
 	}
 
 	if (!strcmp (argv[1], "-V") || !strcmp (argv[1], "--version")) {
-		print_revision (my_basename (argv[0]), "$Revision$");
+		print_revision (progname, "$Revision$");
 		exit (STATE_OK);
 	}
 
 	if (argc < 2) {
-		print_usage (my_basename (argv[0]));
+		print_usage (progname);
 		exit (STATE_UNKNOWN);
 	}
 
@@ -120,16 +122,15 @@ main (int argc, char **argv)
 }
 
 void
-print_usage (char *cmd)
+print_usage (const char *cmd)
 {
-	printf ("Usage:\n %s <url> <plugin> <arg1> ... <argN>\n",
-					my_basename (cmd));
+	printf ("Usage:\n %s <url> <plugin> <arg1> ... <argN>\n",	cmd);
 }
 
 void
-print_help (char *cmd)
+print_help (const char *cmd)
 {
-	print_revision ("urlize", "$Revision$");
+	print_revision (progname, "$Revision$");
 	printf
 		("Copyright (c) 2000 Karl DeBisschop (kdebiss@alum.mit.edu)\n\n"
 		 "\nThis plugin wraps the text output of another command (plugin) in HTML\n"

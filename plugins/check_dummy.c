@@ -37,8 +37,10 @@
 #include "common.h"
 #include "utils.h"
 
-void print_help (char *);
-void print_usage (char *);
+const char *progname = "check_dummy";
+
+void print_help (const char *);
+void print_usage (const char *);
 
 int
 main (int argc, char **argv)
@@ -82,7 +84,7 @@ main (int argc, char **argv)
 }
 
 void
-print_help (char *cmd)
+print_help (const char *cmd)
 {
 	print_revision (cmd, "$Revision$");
 	printf ("Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)\n"
@@ -94,7 +96,7 @@ print_help (char *cmd)
 }
 
 void
-print_usage (char *cmd)
+print_usage (const char *cmd)
 {
 	printf ("Usage: %s <integer state>\n", cmd);
 }

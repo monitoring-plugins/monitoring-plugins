@@ -45,7 +45,7 @@ int check_disk (int usp, int free_disk);
 void print_help (void);
 void print_usage (void);
 
-const char *PROGNAME = "check_disk";
+const char *progname = "check_disk";
 
 int w_df = -1;
 int c_df = -1;
@@ -252,7 +252,7 @@ process_arguments (int argc, char **argv)
  			exclude_device = optarg;
  			break;
 		case 'V':									/* version */
-			print_revision (PROGNAME, REVISION);
+			print_revision (progname, REVISION);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -323,7 +323,7 @@ check_disk (usp, free_disk)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, REVISION);
+	print_revision (progname, REVISION);
 	printf
 		("Copyright (c) 2000 Ethan Galstad/Karl DeBisschop\n\n"
 		 "This plugin will check the percent of used disk space on a mounted\n"
@@ -362,5 +362,5 @@ print_usage (void)
 	printf
 		("Usage: %s -w limit -c limit [-p path | -x device] [-t timeout] [-m] [-e] [--verbose]\n"
 		 "       %s (-h|--help)\n"
-		 "       %s (-V|--version)\n", PROGNAME, PROGNAME, PROGNAME);
+		 "       %s (-V|--version)\n", progname, progname, progname);
 }

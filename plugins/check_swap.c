@@ -29,7 +29,7 @@
 #include "popen.h"
 #include "utils.h"
 
-#define PROGNAME "check_swap"
+const char *progname = "check_swap";
 #define REVISION "$Revision$"
 #define COPYRIGHT "2000-2002"
 #define AUTHOR "Karl DeBisschop"
@@ -267,7 +267,7 @@ process_arguments (int argc, char **argv)
 			verbose = TRUE;
 			break;
 		case 'V':									/* version */
-			print_revision (my_basename (argv[0]), "$Revision$");
+			print_revision (progname, "$Revision$");
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -336,7 +336,7 @@ print_usage (void)
 		 " %s [-a] -w <bytes_free> -c <bytes_free>\n"
 		 " %s (-h | --help) for detailed help\n"
 		 " %s (-V | --version) for version information\n",
-		 PROGNAME, PROGNAME, PROGNAME, PROGNAME);
+		 progname, progname, progname, progname);
 }
 
 
@@ -346,7 +346,7 @@ print_usage (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, REVISION);
+	print_revision (progname, REVISION);
 	printf
 		("Copyright (c) %s %s <%s>\n\n%s\n", COPYRIGHT, AUTHOR, EMAIL, SUMMARY);
 	print_usage ();

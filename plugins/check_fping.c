@@ -32,7 +32,7 @@
 #include "popen.h"
 #include "utils.h"
 
-#define PROGNAME "check_fping"
+const char *progname = "check_fping";
 #define PACKET_COUNT 1
 #define PACKET_SIZE 56
 #define UNKNOWN_PACKET_LOSS 200	/* 200% */
@@ -243,14 +243,14 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf ("%s: Unknown argument: %s\n\n", my_basename (argv[0]), optarg);
+			printf ("%s: Unknown argument: %s\n\n", progname, optarg);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (my_basename (argv[0]), "$Revision$");
+			print_revision (progname, "$Revision$");
 			exit (STATE_OK);
 		case 'v':									/* verbose mode */
 			verbose = TRUE;
@@ -325,12 +325,12 @@ get_threshold (char *arg, char *rv[2])
 		arg1[strcspn (arg1, ",:")] = 0;
 		if (strstr (arg1, "%") && strstr (arg2, "%"))
 			terminate (STATE_UNKNOWN,
-								 "%s: Only one threshold may be packet loss (%s)\n", PROGNAME,
+								 "%s: Only one threshold may be packet loss (%s)\n", progname,
 								 arg);
 		if (!strstr (arg1, "%") && !strstr (arg2, "%"))
 			terminate (STATE_UNKNOWN,
 								 "%s: Only one threshold must be packet loss (%s)\n",
-								 PROGNAME, arg);
+								 progname, arg);
 	}
 
 	if (arg2 && strstr (arg2, "%")) {
@@ -358,7 +358,7 @@ get_threshold (char *arg, char *rv[2])
 void
 print_usage (void)
 {
-	printf ("Usage: %s <host_address>\n", PROGNAME);
+	printf ("Usage: %s <host_address>\n", progname);
 }
 
 
@@ -369,7 +369,7 @@ void
 print_help (void)
 {
 
-	print_revision (PROGNAME, "$Revision$");
+	print_revision (progname, "$Revision$");
 
 	printf
 		("Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)\n\n"

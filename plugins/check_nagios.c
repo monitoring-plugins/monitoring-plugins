@@ -30,7 +30,7 @@
 #include "popen.h"
 #include "utils.h"
 
-const char *PROGNAME = "check_nagios";
+const char *progname = "check_nagios";
 
 int process_arguments (int, char **);
 void print_usage (void);
@@ -166,7 +166,7 @@ process_arguments (int argc, char **argv)
 		else
 			terminate (STATE_UNKNOWN,
 								 "Expiration time must be an integer (seconds)\nType '%s -h' for additional help\n",
-								 PROGNAME);
+								 progname);
 		process_string = argv[3];
 		return OK;
 	}
@@ -183,14 +183,14 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			printf ("%s: Unknown argument: %c\n\n", PROGNAME, optopt);
+			printf ("%s: Unknown argument: %c\n\n", progname, optopt);
 			print_usage ();
 			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (PROGNAME, "$Revision$");
+			print_revision (progname, "$Revision$");
 			exit (STATE_OK);
 		case 'F':									/* hostname */
 			status_log = optarg;
@@ -204,7 +204,7 @@ process_arguments (int argc, char **argv)
 			else
 				terminate (STATE_UNKNOWN,
 									 "Expiration time must be an integer (seconds)\nType '%s -h' for additional help\n",
-									 PROGNAME);
+									 progname);
 			break;
 		}
 	}
@@ -213,11 +213,11 @@ process_arguments (int argc, char **argv)
 	if (status_log == NULL)
 		terminate (STATE_UNKNOWN,
 							 "You must provide the status_log\nType '%s -h' for additional help\n",
-							 PROGNAME);
+							 progname);
 	else if (process_string == NULL)
 		terminate (STATE_UNKNOWN,
 							 "You must provide a process string\nType '%s -h' for additional help\n",
-							 PROGNAME);
+							 progname);
 
 	return OK;
 }
@@ -231,7 +231,7 @@ print_usage (void)
 {
 	printf
 		("Usage: %s -F <status log file> -e <expire_minutes> -C <process_string>\n",
-		 PROGNAME);
+		 progname);
 }
 
 
@@ -241,7 +241,7 @@ print_usage (void)
 void
 print_help (void)
 {
-	print_revision (PROGNAME, "$Revision$");
+	print_revision (progname, "$Revision$");
 	printf
 		("Copyright (c) 2000 Ethan Galstad/Karl DeBisschop\n\n"
 		 "This plugin attempts to check the status of the Nagios process on the local\n"
