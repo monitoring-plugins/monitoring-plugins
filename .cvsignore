@@ -13,3 +13,4 @@ autom4te-*.cache
 install-sh
 mkinstalldirs
 missing
+depcomp
