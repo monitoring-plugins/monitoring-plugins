@@ -385,18 +385,18 @@ else
 
   fi
 
-  if test X"$OPT_OPENSSL" != "Xno" &&
-     test "$OPENSSL_ENABLED" != "1"; then
+  if test "$OPENSSL_ENABLED" != "1"; then
     AC_MSG_WARN([OpenSSL libs and/or directories were not found where specified!])
     with_openssl="no"
-  elif test "$OPENSSL_ENABLED" = "1"; then
+  else
     check_tcp_ssl="check_simap check_spop check_jabber check_nntps"
     AC_SUBST(check_tcp_ssl)
     AC_DEFINE(HAVE_SSL,1,[Define if SSL libraries are found])
     with_openssl="yes"
 
     # Needed for subsequent compiled programs
-    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$OPENSSL/lib"
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$OPENSSL/lib"
+    export LD_LIBRARY_PATH
   fi
 fi
 
