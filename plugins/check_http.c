@@ -475,9 +475,6 @@ check_http (void)
 	int sslerr;
 #endif
 
-	if (verbose)
-		printf ("%s://%s:%d%s [%s]\n", server_type, server_address, server_port, server_url, host_name);
-
 	/* try to connect to the host at the given port number */
 #ifdef HAVE_SSL
 	if (use_ssl == TRUE) {
@@ -514,9 +511,6 @@ check_http (void)
 		auth = base64 (user_auth, strlen (user_auth));
 		asprintf (&buf, "%sAuthorization: Basic %s\r\n", buf, auth);
 	}
-
-	if (verbose)
-		printf ("%s://%s:%d%s\n", server_type, server_address, server_port, server_url);
 
 	/* either send http POST data */
 	if (http_post_data) {
@@ -787,59 +781,7 @@ redir (char *pos, char *status_line)
 
 	while (pos) {
 
-		if (sscanf (pos, "%[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]:%n", xx, &i) > 0) {
-
-			pos += i;
-			pos += strspn (pos, " \t\r\n");
-
-			/* URI_HTTP, URI_HOST, URI_PORT, URI_PATH */
-			if (sscanf (pos, HD1, type, addr, port, url) == 4) {
-				use_ssl = server_type_check (type);
-				i = atoi (port);
-			}
-
-			/* URI_HTTP URI_HOST URI_PATH */
-			else if (sscanf (pos, HD2, type, addr, url) == 3 ) { 
-				use_ssl = server_type_check (type);
-				i = server_port_check (use_ssl);
-			}
-
-			/* URI_HTTP URI_HOST URI_PORT */
-			else if(sscanf (pos, HD3, type, addr, port) == 3) {
-				strcpy (url, HTTP_URL);
-				use_ssl = server_type_check (type);
-				i = atoi (port);
-			}
-
-			/* URI_HTTP URI_HOST */
-			else if(sscanf (pos, HD4, type, addr) == 2) {
-				strcpy (url, HTTP_URL);
-				use_ssl = server_type_check (type);
-				i = server_port_check (use_ssl);
-			}
-
-			/* URI_PATH */
-			else if (sscanf (pos, HD5, url) == 1) {
-				/* relative url */
-				if ((url[0] != '/')) {
-					if ((x = strrchr(url, '/')))
-						*x = '\0';
-					asprintf (&server_url, "%s/%s", server_url, url);
-				}
-				i = server_port;
-				strcpy (type, server_type);
-				strcpy (addr, host_name);
-			} 					
-
-			else {
-				die (STATE_UNKNOWN,
-						 _("UNKNOWN - Could not parse redirect location - %s%s\n"),
-						 pos, (display_html ? "</A>" : ""));
-			}
-
-			break;
-
-		} else {
+		if (sscanf (pos, "%[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]:%n", xx, &i) < 1) {
 
 			pos += (size_t) strcspn (pos, "\r\n");
 			pos += (size_t) strspn (pos, "\r\n");
@@ -847,8 +789,62 @@ redir (char *pos, char *status_line)
 				die (STATE_UNKNOWN,
 						 _("UNKNOWN - Could not find redirect location - %s%s\n"),
 						 status_line, (display_html ? "</A>" : ""));
-
+			continue;
 		}
+
+		pos += i;
+		pos += strspn (pos, " \t\r\n");
+
+		url = realloc (url, strcspn (pos, "\r\n"));
+		if (url == NULL)
+			die (STATE_UNKNOWN, _("ERROR: could not allocate url\n"));
+
+		/* URI_HTTP, URI_HOST, URI_PORT, URI_PATH */
+		if (sscanf (pos, HD1, type, addr, port, url) == 4) {
+			use_ssl = server_type_check (type);
+			i = atoi (port);
+		}
+
+		/* URI_HTTP URI_HOST URI_PATH */
+		else if (sscanf (pos, HD2, type, addr, url) == 3 ) { 
+			use_ssl = server_type_check (type);
+			i = server_port_check (use_ssl);
+		}
+
+		/* URI_HTTP URI_HOST URI_PORT */
+		else if(sscanf (pos, HD3, type, addr, port) == 3) {
+			strcpy (url, HTTP_URL);
+			use_ssl = server_type_check (type);
+			i = atoi (port);
+		}
+
+		/* URI_HTTP URI_HOST */
+		else if(sscanf (pos, HD4, type, addr) == 2) {
+			strcpy (url, HTTP_URL);
+			use_ssl = server_type_check (type);
+			i = server_port_check (use_ssl);
+		}
+
+		/* URI_PATH */
+		else if (sscanf (pos, HD5, url) == 1) {
+			/* relative url */
+			if ((url[0] != '/')) {
+				if ((x = strrchr(url, '/')))
+					*x = '\0';
+				asprintf (&server_url, "%s/%s", server_url, url);
+			}
+			i = server_port;
+			strcpy (type, server_type);
+			strcpy (addr, host_name);
+		} 					
+
+		else {
+			die (STATE_UNKNOWN,
+					 _("UNKNOWN - Could not parse redirect location - %s%s\n"),
+					 pos, (display_html ? "</A>" : ""));
+		}
+
+		break;
 
 	} /* end while (pos) */
 
