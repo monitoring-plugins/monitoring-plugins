@@ -1,0 +1,71 @@
+Using the mailing lists and tracker databases at SourceForge are the
+best ways to obtain direct support for the Nagios Plugins. There may
+also be commercial support options available to you -- check
+http://www.nagios.org/ to track the current status of commercial
+support offerings.
+
+There are two mailing lits associated wth Nagios Plugin development:
+'help' (mailto:nagiosplug-help@lists.sourceforge.net), and 'devel'
+(mailto:nagiosplug-devel@lists.sourceforge.net). Unless you are fairly
+certain you have found a bug or thet you are requesting a new feature,
+please direct support requests to 'help'.
+
+Becuase these lists are handled entirely by voluteers, and because
+these same volunteers are often plugin developers who can also use
+their time to fix bug and provide feature requests, it is genrally in
+you interest to do a modest amount of legwork bfore posting to either
+of these lists.
+
+In brief, always provide the version of the software that you are
+using, and when requsting features or reporting bugs, first check to
+see that the issue has not already been addressed in the CVS tree.
+
+GETTING HELP
+
+Requests to 'help' require posting the version number of the
+plugin. The best place to include the version information is in the
+subject. A good post would have a subject like:
+
+  Can I use SSL with check_imap (nagios-plugins 1.3.0-beta2) 1.12
+
+If you do not include the verion of the plugin, you risk having your
+post silently ignored.
+
+Be advised that the core plugins (and in fact many of the contributed
+plugins) will provide a description of their use when invoked with the
+'--help' option. Please read the help carefully and in it's entirety
+before asking for support.
+
+There is also a support database on the SourceForge-hosted development
+site. Feel free to use either the mailing list or the web interface,
+but follow the guideline above for both.
+
+REPORTING BUGS AND SUBMITTING PATCHES
+
+Bug reports, investigations of possible bugs, feature requests, and
+patch submissions should be submitted to the development list at
+(mailto:nagiosplug-devel@lists.sourceforge.net). 
+
+As with the support list, you should identify the version, prefrably
+in the subject line. However, to best use developer resources, it is
+suggested that you reference your report one of the following sources:
+
+  1) The most recent release, including beta's
+
+  2) The twice-daily snapshots (there's a link provided on
+     http://nagiosplug.sourceforge.net)
+
+  3) The current CVS tree from sourceforge
+
+(This does not mean you should run any of these sources in a
+production environment - the latter two you clearly should
+not. However, if you find a bug, you should determine whether it is
+still present in one of these sources, preferably either (2) or (3)
+which are most recent>)
+
+From experince, I know that most bugs can be fixed with only a few
+more moments work than it takes to determine if the bug is still
+present in the CVS tree. If you can save a developer the expense of
+that time, you ensure that bugs are fixed more rapidly, and thus you
+ensure your problem resolution is reflected in a stable release more
+quickly.
