@@ -53,6 +53,7 @@ function make_dist {
 }
 
 # Set working variables
+PATH=$HOME/local/bin:$PATH
 PROJECT=nagiosplug
 IN=${HOME}/tmp_snapshot
 OUT_SERVER="shell.sf.net"

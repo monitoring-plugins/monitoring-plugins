@@ -13,10 +13,9 @@ while getopts "o:m:" c; do
 	esac
 done
 shift $(($OPTIND-1))
-echo "output_file=$output_file email=$email"
 
 [[ -z $1 ]] && die "Must specify command"
 
 if ! "$@" > $output_file 2>&1 ; then
-	mail -s "mail_error fail: $@" $email < $output_file
+	mail -s "mail_error fail: $1" $email < $output_file
 fi
