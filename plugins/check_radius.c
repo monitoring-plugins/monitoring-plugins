@@ -23,7 +23,7 @@
  *
  *****************************************************************************/
 
-const char *progname = "check_radius"
+const char *progname = "check_radius";
 #define REVISION "$Revision$"
 #define COPYRIGHT "1999-2001"
 #define AUTHORS "Robert August Vincent II/Karl DeBisschop"
