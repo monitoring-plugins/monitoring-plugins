@@ -39,6 +39,7 @@ int ssh_connect (char *haddr, short hport);
 int
 main (int argc, char **argv)
 {
+	int result;
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage ("Could not parse arguments\n");
@@ -48,11 +49,11 @@ main (int argc, char **argv)
 	alarm (socket_timeout);
 
 	/* ssh_connect exits if error is found */
-	ssh_connect (server_name, port);
+	result = ssh_connect (server_name, port);
 
 	alarm (0);
 
-	return (STATE_OK);
+	return (result);
 }
 
 
@@ -126,13 +127,13 @@ process_arguments (int argc, char **argv)
 	}
 
 	c = optind;
-	if (server_name == NULL && argv[c]) {
+	if (server_name == NULL && c < argc) {
 		if (is_host (argv[c])) {
 			server_name = argv[c++];
 		}
 	}
 
-	if (port == -1 && argv[c]) {
+	if (port == -1 && c < argc) {
 		if (is_intpos (argv[c])) {
 			port = atoi (argv[c++]);
 		}
@@ -195,7 +196,7 @@ ssh_connect (char *haddr, short hport)
 		ssh_server = ssh_proto + strspn (ssh_proto, "-0123456789. ");
 		ssh_proto[strspn (ssh_proto, "0123456789. ")] = 0;
 		printf
-			("SSH ok - %s (protocol %s)\n",
+			("SSH OK - %s (protocol %s)\n",
 			 ssh_server, ssh_proto);
 		asprintf (&buffer, "SSH-%s-check_ssh_%s\r\n", ssh_proto, revision);
 		send (sd, buffer, strlen (buffer), MSG_DONTWAIT);
