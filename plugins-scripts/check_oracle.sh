@@ -31,8 +31,8 @@ print_usage() {
   echo "  $PROGNAME --tns <Oracle Sid or Hostname/IP address>"
   echo "  $PROGNAME --db <ORACLE_SID>"
   echo "  $PROGNAME --login <ORACLE_SID>"
-  echo "  $PROGNAME --cache <USER> <PASS> <INST> <CRITICAL> <WARNING>"
-  echo "  $PROGNAME --tablespace <USER> <PASS> <INST> <TABLESPACE> <CRITICAL> <WARNING>"
+  echo "  $PROGNAME --cache <ORACLE_SID> <USER> <PASS> <CRITICAL> <WARNING>"
+  echo "  $PROGNAME --tablespace <ORACLE_SID> <USER> <PASS> <TABLESPACE> <CRITICAL> <WARNING>"
   echo "  $PROGNAME --oranames <Hostname>"
   echo "  $PROGNAME --help"
   echo "  $PROGNAME --version"
@@ -48,13 +48,13 @@ print_help() {
   echo "--tns=SID/IP Address"
   echo "   Check remote TNS server"
   echo "--db=SID"
-  echo "   Check local database (search /bin/ps for PMON process and check"
+  echo "   Check local database (search /bin/ps for PMON process) and check"
   echo "   filesystem for sgadefORACLE_SID.dbf"
   echo "--login=SID"
   echo "   Attempt a dummy login and alert if not ORA-01017: invalid username/password"
   echo "--cache"
   echo "   Check local database for library and buffer cache hit ratios"
-  echo "       --->  Requires Oracle user/password and SID  specified."
+  echo "       --->  Requires Oracle user/password and SID specified."
   echo "       		--->  Requires select on v_$sysstat and v_$librarycache"
   echo "--tablespace"
   echo "   Check local database for tablespace capacity in ORACLE_SID"
@@ -203,33 +203,33 @@ case "$cmd" in
 	echo "UNKNOWN - Warning level is less then Crit"
 	exit $STATE_UNKNOWN
     fi
-    result=`sqlplus -s ${2}/${3}@${4} << EOF
-      set pagesize 0
-     
-select (1-(pr.value/(dbg.value+cg.value)))*100 \
-from v\\$sysstat pr, v\\$sysstat dbg, v\\$sysstat cg \
-where pr.name = 'physical reads'  \
-        and dbg.name='db block gets' \
-        and cg.name='consistent gets'; `
+    result=`sqlplus -s ${3}/${4}@${2} << EOF
+set pagesize 0
+select (1-(pr.value/(dbg.value+cg.value)))*100
+from v\\$sysstat pr, v\\$sysstat dbg, v\\$sysstat cg
+where pr.name='physical reads'
+and dbg.name='db block gets'
+and cg.name='consistent gets';
+EOF`
 
     buf_hr=`echo $result | awk '{print int($1)}'` 
-    result=`sqlplus -s ${2}/${3}@${4} << EOF
-      set pagesize 0
-
-select sum(lc.pins)/(sum(lc.pins)+sum(lc.reloads))*100 \
-from v\\$librarycache lc ; `
+    result=`sqlplus -s ${3}/${4}@${2} << EOF
+set pagesize 0
+select sum(lc.pins)/(sum(lc.pins)+sum(lc.reloads))*100
+from v\\$librarycache lc;
+EOF`
 	
     lib_hr=`echo $result | awk '{print int($1)}'`
 
     if [ $buf_hr -le ${5} -o $lib_hr -le ${5} ] ; then
-  	echo "${3} : ${4} CRITICAL - Cache Hit Rates: $lib_hr % Lib -- $buf_hr % Buff"
+  	echo "${4} : ${2} CRITICAL - Cache Hit Rates: $lib_hr % Lib -- $buf_hr % Buff"
 	exit $STATE_CRITICAL
     fi
     if [ $buf_hr -le ${6} -o $lib_hr -le ${6} ] ; then
-  	echo "${3} : ${4} WARNING  - Cache Hit Rates: $lib_hr % Lib -- $buf_hr % Buff"
+  	echo "${4} : ${2} WARNING  - Cache Hit Rates: $lib_hr % Lib -- $buf_hr % Buff"
 	exit $STATE_WARNING
     fi
-    echo "${3} : ${4} OK - Cache Hit Rates: $lib_hr % Lib -- $buf_hr % Buff"
+    echo "${4} : ${2} OK - Cache Hit Rates: $lib_hr % Lib -- $buf_hr % Buff"
 
     exit $STATE_OK
     ;;
@@ -238,29 +238,33 @@ from v\\$librarycache lc ; `
 	echo "UNKNOWN - Warning level is more then Crit"
 	exit $STATE_UNKNOWN
     fi
-    result=`sqlplus -s ${2}/${3}@${4} << EOF
-      set pagesize 0
-     
-select b.free,a.total,100 - trunc(b.free/a.total * 1000) / 10 prc \
-from ( \
-select tablespace_name,sum(bytes)/1024/1024 total \
-from dba_data_files group by tablespace_name) A, \
-( select tablespace_name,sum(bytes)/1024/1024 free \
-from dba_Free_space group by tablespace_name) B \
-where a.tablespace_name=b.tablespace_name and a.tablespace_name='${5}';  ` 
+    result=`sqlplus -s ${3}/${4}@${2} << EOF
+set pagesize 0
+select b.free,a.total,100 - trunc(b.free/a.total * 1000) / 10 prc
+from (
+select tablespace_name,sum(bytes)/1024/1024 total
+from dba_data_files group by tablespace_name) A,
+( select tablespace_name,sum(bytes)/1024/1024 free
+from dba_free_space group by tablespace_name) B
+where a.tablespace_name=b.tablespace_name and a.tablespace_name='${5}';
+EOF`
 
     ts_free=`echo $result | awk '{print int($1)}'` 
     ts_total=`echo $result | awk '{print int($2)}'` 
     ts_pct=`echo $result | awk '{print int($3)}'` 
+    if [ $ts_free -eq 0 -a $ts_total -eq 0 -a $ts_pct -eq 0 ] ; then
+        echo "No data returned by Oracle - tablespace $5 not found?"
+        exit $STATE_UNKNOWN
+    fi
     if [ $ts_pct -ge ${6} ] ; then
-  	echo "${4} : ${5} CRITICAL - $ts_pct% used [ $ts_free / $ts_total MB available ]"
+  	echo "${2} : ${5} CRITICAL - $ts_pct% used [ $ts_free / $ts_total MB available ]"
 	exit $STATE_CRITICAL
     fi
     if [ $ts_pct -ge ${7} ] ; then
-  	echo "${4} : ${5} WARNING  - $ts_pct% used [ $ts_free / $ts_total MB available ]"
+  	echo "${2} : ${5} WARNING  - $ts_pct% used [ $ts_free / $ts_total MB available ]"
 	exit $STATE_WARNING
     fi
-    echo "${4} : ${5} OK - $ts_pct% used [ $ts_free / $ts_total MB available ]"
+    echo "${2} : ${5} OK - $ts_pct% used [ $ts_free / $ts_total MB available ]"
     exit $STATE_OK
     ;;
 *)
