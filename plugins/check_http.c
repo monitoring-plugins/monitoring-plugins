@@ -54,7 +54,8 @@ certificate expiration times.\n"
  -I, --IP-address=ADDRESS\n\
    IP address or name (use numeric address if possible to bypass DNS lookup).\n\
  -e, --expect=STRING\n\
-   String to expect in first line of server response (default: %s)\n\
+   String to expect in first (status) line of server response (default: %s)\n\
+   If specified skips all other status line logic (ex: 3xx, 4xx, 5xx processing)\n\
  -s, --string=STRING\n\
    String to expect in the content\n\
  -u, --url=PATH\n\
@@ -186,6 +187,7 @@ char *server_address = NULL;
 char *host_name = NULL;
 char *server_url = NULL;
 int server_url_length = 0;
+int server_expect_yn = 0;
 char server_expect[MAX_INPUT_BUFFER] = HTTP_EXPECT;
 char string_expect[MAX_INPUT_BUFFER] = "";
 int warning_time = 0;
@@ -383,6 +385,8 @@ process_arguments (int argc, char **argv)
 				onredirect = STATE_WARNING;
 			if (!strcmp (optarg, "critical"))
 				onredirect = STATE_CRITICAL;
+			if (verbose)
+				printf("option f:%d \n", onredirect);  
 			break;
 		/* Note: H, I, and u must be malloc'd or will fail on redirects */
 		case 'H': /* Host Name (virtual host) */
@@ -416,6 +420,7 @@ process_arguments (int argc, char **argv)
 		case 'e': /* string or substring */
 			strncpy (server_expect, optarg, MAX_INPUT_BUFFER - 1);
 			server_expect[MAX_INPUT_BUFFER - 1] = 0;
+			server_expect_yn = 1;
 			break;
 		case 'R': /* regex */
 #ifdef HAVE_REGEX_H
@@ -615,6 +620,8 @@ check_http (void)
 		}
 		sprintf (buffer, "%s %s HTTP/1.0\r\n", http_method, server_url);
 		send (sd, buffer, strlen (buffer), 0);
+		
+
 
 		/* optionally send the host header info */
 		if (strcmp (host_name, "")) {
@@ -716,103 +723,119 @@ check_http (void)
 		terminate (STATE_CRITICAL, msg);
 	}
 
-	/* check the return code */
-	/* server errors result in a critical state */
-	if (strstr (status_line, "500") ||
-	    strstr (status_line, "501") ||
-	    strstr (status_line, "502") ||
-	    strstr (status_line, "503")) {
-		msg = ssprintf (msg, "HTTP CRITICAL: %s\n", status_line);
-		terminate (STATE_CRITICAL, msg);
-	}
 
-	/* client errors result in a warning state */
-	if (strstr (status_line, "400") ||
-	    strstr (status_line, "401") ||
-	    strstr (status_line, "402") ||
-	    strstr (status_line, "403") ||
-	    strstr (status_line, "404")) {
-		msg = ssprintf (msg, "HTTP WARNING: %s\n", status_line);
-		terminate (STATE_WARNING, msg);
-	}
+	/* Exit here if server_expect was set by user and not default */
+	if ( server_expect_yn  )  {
+		msg = ssprintf (msg, "HTTP OK: Status line output matched \"%s\"\n",server_expect);
+		if (verbose)
+			printf ("%s\n",msg);
 
-	/* check redirected page if specified */
-	if (strstr (status_line, "300") ||
-	    strstr (status_line, "301") ||
-	    strstr (status_line, "302") ||
-	    strstr (status_line, "303") ||
-	    strstr (status_line, "304")) {
-		if (onredirect == STATE_DEPENDENT) {
+	}
+	else {
+	
+
+		/* check the return code */
+		/* server errors result in a critical state */
+		if (strstr (status_line, "500") ||
+	  	  strstr (status_line, "501") ||
+	    	strstr (status_line, "502") ||
+		    strstr (status_line, "503")) {
+			msg = ssprintf (msg, "HTTP CRITICAL: %s\n", status_line);
+			terminate (STATE_CRITICAL, msg);
+		}
+
+		/* client errors result in a warning state */
+		if (strstr (status_line, "400") ||
+	  	  strstr (status_line, "401") ||
+	    	strstr (status_line, "402") ||
+		    strstr (status_line, "403") ||
+		    strstr (status_line, "404")) {
+			msg = ssprintf (msg, "HTTP WARNING: %s\n", status_line);
+			terminate (STATE_WARNING, msg);
+		}
+
+		/* check redirected page if specified */
+		if (strstr (status_line, "300") ||
+	  	  strstr (status_line, "301") ||
+	    	strstr (status_line, "302") ||
+		    strstr (status_line, "303") ||
+		    strstr (status_line, "304")) {
+			if (onredirect == STATE_DEPENDENT) {
 			
-			pos = header;
-			while (pos) {
-				server_address = realloc (server_address, MAX_IPV4_HOSTLENGTH);
-				if (server_address == NULL)
-					terminate (STATE_UNKNOWN,
-										 "HTTP UNKNOWN: could not allocate server_address");
-				if (strspn (pos, "\r\n") > server_url_length) {
-					server_url = realloc (server_url, strspn (pos, "\r\n"));
-					if (server_url == NULL)
+				pos = header;
+				while (pos) {
+					server_address = realloc (server_address, MAX_IPV4_HOSTLENGTH);
+					if (server_address == NULL)
 						terminate (STATE_UNKNOWN,
+										 "HTTP UNKNOWN: could not allocate server_address");
+					if (strspn (pos, "\r\n") > server_url_length) {
+						server_url = realloc (server_url, strspn (pos, "\r\n"));
+						if (server_url == NULL)
+							terminate (STATE_UNKNOWN,
 											 "HTTP UNKNOWN: could not allocate server_url");
-					server_url_length = strspn (pos, "\r\n");
-				}
-				if (sscanf (pos, HDR_LOCATION URI_HTTP URI_HOST URI_PORT URI_PATH, server_type, server_address, server_port_text, server_url) == 4) {
-					host_name = strscpy (host_name, server_address);
-					use_ssl = server_type_check (server_type);
-					server_port = atoi (server_port_text);
-					check_http ();
-				}
-				else if (sscanf (pos, HDR_LOCATION URI_HTTP URI_HOST URI_PATH, server_type, server_address, server_url) == 3) {
-					host_name = strscpy (host_name, server_address);
-					use_ssl = server_type_check (server_type);
-					server_port = server_port_check (use_ssl);
-					check_http ();
-				}
-				else if (sscanf (pos, HDR_LOCATION URI_HTTP URI_HOST URI_PORT, server_type, server_address, server_port_text) == 3) {
-					host_name = strscpy (host_name, server_address);
-					strcpy (server_url, "/");
-					use_ssl = server_type_check (server_type);
-					server_port = atoi (server_port_text);
-					check_http ();
-				}
-				else if (sscanf (pos, HDR_LOCATION URI_HTTP URI_HOST, server_type, server_address) == 2) {
-					host_name = strscpy (host_name, server_address);
-					strcpy (server_url, "/");
-					use_ssl = server_type_check (server_type);
-					server_port = server_port_check (use_ssl);
-					check_http ();
-				}
-				else if	(sscanf (pos, HDR_LOCATION URI_PATH, server_url) == 1) {
-					check_http ();
-				}
-				pos += (size_t) strcspn (pos, "\r\n");
-				pos += (size_t) strspn (pos, "\r\n");
-			} /* end while (pos) */
-			printf ("HTTP UNKNOWN: Could not find redirect location - %s%s",
-			        status_line, (display_html ? "</A>" : ""));
-			exit (STATE_UNKNOWN);
-		} /* end if (onredirect == STATE_DEPENDENT) */
-		else if (onredirect == STATE_UNKNOWN)
-			printf ("HTTP UNKNOWN");
-		else if (onredirect == STATE_OK)
-			printf ("HTTP ok");
-		else if (onredirect == STATE_WARNING)
-			printf ("HTTP WARNING");
-		else if (onredirect == STATE_CRITICAL)
-			printf ("HTTP CRITICAL");
-		time (&end_time);
-		msg = ssprintf (msg, ": %s - %d second response time %s%s\n",
+						server_url_length = strspn (pos, "\r\n");
+					}
+					if (sscanf (pos, HDR_LOCATION URI_HTTP URI_HOST URI_PORT URI_PATH, server_type, server_address, server_port_text, server_url) == 4) {
+						host_name = strscpy (host_name, server_address);
+						use_ssl = server_type_check (server_type);
+						server_port = atoi (server_port_text);
+						check_http ();
+					}
+					else if (sscanf (pos, HDR_LOCATION URI_HTTP URI_HOST URI_PATH, server_type, server_address, server_url) == 3 ) { 
+						host_name = strscpy (host_name, server_address);
+						use_ssl = server_type_check (server_type);
+						server_port = server_port_check (use_ssl);
+						check_http ();
+					}
+					else if (sscanf (pos, HDR_LOCATION URI_HTTP URI_HOST URI_PORT, server_type, server_address, server_port_text) == 3) {
+						host_name = strscpy (host_name, server_address);
+						strcpy (server_url, "/");
+						use_ssl = server_type_check (server_type);
+						server_port = atoi (server_port_text);
+						check_http ();
+					}
+					else if (sscanf (pos, HDR_LOCATION URI_HTTP URI_HOST, server_type, server_address) == 2) {
+						host_name = strscpy (host_name, server_address);
+						strcpy (server_url, "/");
+						use_ssl = server_type_check (server_type);
+						server_port = server_port_check (use_ssl);
+						check_http ();
+					}
+					else if	(sscanf (pos, HDR_LOCATION URI_PATH, server_url) == 1) {
+						check_http ();
+					}	
+					pos += (size_t) strcspn (pos, "\r\n");
+					pos += (size_t) strspn (pos, "\r\n");
+				} /* end while (pos) */
+				printf ("HTTP UNKNOWN: Could not find redirect location - %s%s",
+				        status_line, (display_html ? "</A>" : ""));
+				exit (STATE_UNKNOWN);
+			} /* end if (onredirect == STATE_DEPENDENT) */
+			
+			else if (onredirect == STATE_UNKNOWN)
+				printf ("HTTP UNKNOWN");
+			else if (onredirect == STATE_OK)
+				printf ("HTTP ok");
+			else if (onredirect == STATE_WARNING)
+				printf ("HTTP WARNING");
+			else if (onredirect == STATE_CRITICAL)
+				printf ("HTTP CRITICAL");
+			time (&end_time);
+			msg = ssprintf (msg, ": %s - %d second response time %s%s\n",
 		                status_line, (int) (end_time - start_time),
 		                timestamp, (display_html ? "</A>" : ""));
-		terminate (onredirect, msg);
-	} /* end if (strstr (status_line, "30[0-4]") */
+			terminate (onredirect, msg);
+		} /* end if (strstr (status_line, "30[0-4]") */
 
+
+	} /* end else (server_expect_yn)  */
+
+		
 	/* check elapsed time */
 	time (&end_time);
 	msg = ssprintf (msg, "HTTP problem: %s - %d second response time %s%s\n",
-	                status_line, (int) (end_time - start_time),
-	                timestamp, (display_html ? "</A>" : ""));
+	               status_line, (int) (end_time - start_time),
+	               timestamp, (display_html ? "</A>" : ""));
 	if (check_critical_time == TRUE && (end_time - start_time) > critical_time)
 		terminate (STATE_CRITICAL, msg);
 	if (check_warning_time == TRUE && (end_time - start_time) > warning_time)
@@ -865,12 +888,11 @@ check_http (void)
 	terminate (STATE_OK, msg);
 	return STATE_UNKNOWN;
 }
-
+
 
 
 #ifdef HAVE_SSL
-int
-connect_SSL (void)
+int connect_SSL (void)
 {
 	SSL_METHOD *meth;
 
