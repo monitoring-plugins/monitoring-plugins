@@ -52,6 +52,18 @@
     Units label(s) for output data (e.g., 'sec.').\n\
  -p, --port=STRING\n\
     UDP port number target is listening on. Default is \"%s\"\n\
+ -P, --protocol=[1|3]\n\
+    SNMP protocol version\n\
+ -L, --seclevel=[noAuthNoPriv|authNoPriv|authPriv]\n\
+    SNMPv3 securityLevel\n\
+ -U, --secname=USERNAME\n\
+    SNMPv3 username\n\
+ -a, --authproto=[MD5|SHA]\n\
+    SNMPv3 auth proto\n\
+ -A, --authpassword=PASSWORD\n\
+    SNMPv3 authentication password\n\
+ -X, --privpasswd=PASSWORD\n\
+    SNMPv3 crypt passwd (DES)\n\
  -d, --delimiter=STRING\n\
     Delimiter to use when parsing returned data. Default is \"%s\"\n\
     Any data on the right hand side of the delimiter is considered\n\
@@ -100,6 +112,8 @@ This plugin gets system information on a remote server via snmp.\n"
 #define DEFAULT_PORT "161"
 #define DEFAULT_TIMEOUT 10
 #define DEFAULT_MIBLIST "ALL"
+#define DEFAULT_PROTOCOL "1"
+#define DEFAULT_AUTH_PROTOCOL "MD5"
 
 #include "common.h"
 #include "utils.h"
@@ -160,6 +174,13 @@ int errcode, excode;
 
 char *server_address = NULL;
 char *community = NULL;
+char *authpriv = NULL;
+char *proto = NULL;
+char *seclevel = NULL;
+char *secname = NULL;
+char *authproto = NULL;
+char *authpasswd = NULL;
+char *privpasswd = NULL;
 char *oid = "";
 char *label = NULL;
 char *units = NULL;
@@ -211,8 +232,8 @@ main (int argc, char **argv)
 		usage ("Incorrect arguments supplied\n");
 
 	/* create the command line to execute */
-	asprintf (&command_line, "%s -m %s -v 1 -c %s %s:%s %s",
-	          PATH_TO_SNMPGET, miblist, community, server_address, port, oid);
+	asprintf (&command_line, "%s -m %s -v %s %s %s:%s %s",
+	          PATH_TO_SNMPGET, miblist, proto, authpriv, server_address, port, oid);
 	if (verbose)
 		printf ("%s\n", command_line);
 
@@ -404,6 +425,13 @@ process_arguments (int argc, char **argv)
 		{"label", required_argument, 0, 'l'},
 		{"units", required_argument, 0, 'u'},
 		{"port", required_argument, 0, 'p'},
+		{"miblist", required_argument, 0, 'm'},
+		{"protocol", required_argument, 0, 'P'},
+		{"seclevel", required_argument, 0, 'L'},
+		{"secname", required_argument, 0, 'U'},
+		{"authproto", required_argument, 0, 'a'},
+		{"authpasswd", required_argument, 0, 'A'},
+		{"privpasswd", required_argument, 0, 'X'},
 		{0, 0, 0, 0}
 	};
 #endif
@@ -424,10 +452,10 @@ process_arguments (int argc, char **argv)
 	while (1) {
 #ifdef HAVE_GETOPT_H
 		c =
-			getopt_long (argc, argv, "hvVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:m:",
+			getopt_long (argc, argv, "hvVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:m:P:L:U:a:A:X:",
 									 long_options, &option_index);
 #else
-		c = getopt (argc, argv, "hvVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:m:");
+		c = getopt (argc, argv, "hvVt:c:w:H:C:o:e:E:d:D:s:R:r:l:u:p:m:P:L:U:a:A:X:");
 #endif
 
 		if (c == -1 || c == EOF)
@@ -438,7 +466,7 @@ process_arguments (int argc, char **argv)
 			usage3 ("Unknown argument", optopt);
 		case 'h':	/* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_OK); 
 		case 'V':	/* version */
 			print_revision (PROGNAME, REVISION);
 			exit (STATE_OK);
@@ -607,6 +635,24 @@ process_arguments (int argc, char **argv)
 		case 'm':      /* List of MIBS  */
 			miblist = strscpy(miblist, optarg);
 			break;
+		case 'P':     /* SNMP protocol version */
+			proto = strscpy(proto, optarg);
+			break;
+		case 'L':     /* security level */
+			seclevel = strscpy(seclevel,optarg);
+			break;
+		case 'U':     /* security username */
+			secname = strscpy(secname, optarg);
+			break;
+		case 'a':     /* auth protocol */
+			authproto = strscpy(authproto, optarg);
+			break;
+		case 'A':     /* auth passwd */
+			authpasswd = strscpy(authpasswd, optarg);
+			break;
+		case 'X':     /* priv passwd */
+			privpasswd = strscpy(privpasswd, optarg);
+			break;
 
 		}
 	}
@@ -659,9 +705,70 @@ validate_arguments ()
 	if (units == NULL)
 		asprintf (&units, "");
 
+	if ( strcmp(seclevel, "noAuthNoPriv") && strcmp(seclevel, "authNoPriv") && strcmp(seclevel, "authPriv") ) {
+		if (seclevel == NULL) 
+			asprintf (&seclevel, "noAuthNoPriv");
+		else {
+			printf ("Invalid seclevel: %s! \n", seclevel);
+			print_usage ();
+			exit (STATE_UNKNOWN);	
+		}
+	}
+
+
+	if ( strcmp (authproto, "SHA") && strcmp(authproto, "MD5") ) {
+		if (authproto == NULL ) 
+			asprintf(&authproto, DEFAULT_AUTH_PROTOCOL);
+		else{
+			printf ("Invalid authproto: %s! \n", authproto);
+			print_usage ();
+			exit (STATE_UNKNOWN);
+		}
+	}
+
+	 
+	
+	if (proto == NULL || !strcmp(proto,DEFAULT_PROTOCOL) ) {        /* default protocol version */
+		asprintf(&proto, DEFAULT_PROTOCOL);
+		asprintf(&authpriv, "%s%s", "-c ", community);
+	}
+	else if ( strcmp (proto, "3") == 0 ) {                 /* snmpv3 args */
+		asprintf(&proto, "%s", "3");
+		
+		if ( (strcmp(seclevel, "noAuthNoPriv") == 0) || seclevel == NULL ) {
+			authpriv = ssprintf(authpriv, "%s", "-l noAuthNoPriv" );
+		}
+		else if ( strcmp(seclevel, "authNoPriv") == 0 ) {
+			if ( secname == NULL || authpasswd == NULL) {
+				printf ("Missing secname (%s) or authpassword (%s) ! \n",secname, authpasswd );
+				print_usage ();
+				exit (STATE_UNKNOWN);
+			}
+			authpriv = ssprintf(authpriv, "-l authNoPriv -a %s -u %s -A %s ", authproto, secname, authpasswd);
+		}
+		else if ( strcmp(seclevel, "authPriv") == 0 ) {
+			if ( secname == NULL || authpasswd == NULL || privpasswd == NULL ) {
+				printf ("Missing secname (%s), authpassword (%s), or privpasswd (%s)! \n",secname, authpasswd,privpasswd );
+				print_usage ();
+				exit (STATE_UNKNOWN);
+			}
+			authpriv = ssprintf(authpriv, "-l authPriv -a %s -u %s -A %s -X %s ", authproto, secname, authpasswd, privpasswd);
+		}
+		
+									
+	}
+	else {
+		printf ("Invalid SNMP version: %s\n", proto);
+		print_usage ();
+		exit (STATE_UNKNOWN);				
+	}
+			
+	
+	
+
 	return OK;
 }
-
+
 
 
 void
