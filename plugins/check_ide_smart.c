@@ -216,56 +216,56 @@ main (int argc, char *argv[])
 		default:
 			usage2 (_("Unknown argument"), optarg);
 		}
-
-		if (optind < argc) {
-			device = argv[optind];
-		}
-
-		if (!device) {
-			print_help ();
-			return -1;
-		}
-
-		fd = open (device, O_RDONLY);
-
-		if (fd < 0) {
-			printf (_("CRITICAL - Couldn't open device %s: %s\n"), device, strerror (errno));
-			return 2;
-		}
-
-		if (smart_cmd_simple (fd, SMART_CMD_ENABLE, 0, TRUE)) {
-			printf (_("CRITICAL - SMART_CMD_ENABLE\n"));
-			return 2;
-		}
-
-		switch (command) {
-		case 0:
-			retval = smart_cmd_simple (fd, SMART_CMD_AUTO_OFFLINE, 0, TRUE);
-			break;
-		case 1:
-			retval = smart_cmd_simple (fd, SMART_CMD_AUTO_OFFLINE, 0xF8, TRUE);
-			break;
-		case 2:
-			retval = smart_cmd_simple (fd, SMART_CMD_IMMEDIATE_OFFLINE, 0, TRUE);
-			break;
-		case 3:
-			smart_read_values (fd, &values);
-			smart_read_thresholds (fd, &thresholds);
-			retval = values_not_passed (&values, &thresholds);
-			break;
-		case 4:
-			smart_read_values (fd, &values);
-			smart_read_thresholds (fd, &thresholds);
-			retval = nagios (&values, &thresholds);
-			break;
-		default:
-			smart_read_values (fd, &values);
-			smart_read_thresholds (fd, &thresholds);
-			print_values (&values, &thresholds);
-			break;
-		}
-		close (fd);
 	}
+
+	if (optind < argc) {
+		device = argv[optind];
+	}
+
+	if (!device) {
+		print_help ();
+		return STATE_OK;
+	}
+
+	fd = open (device, O_RDONLY);
+
+	if (fd < 0) {
+		printf (_("CRITICAL - Couldn't open device %s: %s\n"), device, strerror (errno));
+		return STATE_CRITICAL;
+	}
+
+	if (smart_cmd_simple (fd, SMART_CMD_ENABLE, 0, TRUE)) {
+		printf (_("CRITICAL - SMART_CMD_ENABLE\n"));
+		return STATE_CRITICAL;
+	}
+
+	switch (command) {
+	case 0:
+		retval = smart_cmd_simple (fd, SMART_CMD_AUTO_OFFLINE, 0, TRUE);
+		break;
+	case 1:
+		retval = smart_cmd_simple (fd, SMART_CMD_AUTO_OFFLINE, 0xF8, TRUE);
+		break;
+	case 2:
+		retval = smart_cmd_simple (fd, SMART_CMD_IMMEDIATE_OFFLINE, 0, TRUE);
+		break;
+	case 3:
+		smart_read_values (fd, &values);
+		smart_read_thresholds (fd, &thresholds);
+		retval = values_not_passed (&values, &thresholds);
+		break;
+	case 4:
+		smart_read_values (fd, &values);
+		smart_read_thresholds (fd, &thresholds);
+		retval = nagios (&values, &thresholds);
+		break;
+	default:
+		smart_read_values (fd, &values);
+		smart_read_thresholds (fd, &thresholds);
+		print_values (&values, &thresholds);
+		break;
+	}
+	close (fd);
 	return retval;
 }
 
@@ -370,6 +370,7 @@ nagios (values_t * p, thresholds_t * t)
 		        prefailure > 1 ? 's' : ' ',
 		        failed,
 	          total);
+		status=STATE_CRITICAL;
 		break;
 	case ADVISORY:
 		printf (_("WARNING - %d Harddrive Advisor%s Detected. %d/%d tests failed.\n"),
@@ -377,14 +378,16 @@ nagios (values_t * p, thresholds_t * t)
 		        advisory > 1 ? "ies" : "y",
 		        failed,
 		        total);
+		status=STATE_WARNING;
 		break;
 	case OPERATIONAL:
 		printf (_("OK - Operational (%d/%d tests passed)\n"), passed, total);
+		status=STATE_OK;
 		break;
 	default:
-		printf (_("ERROR - Status '%d' uknown. %d/%d tests passed\n"), status,
+		printf (_("ERROR - Status '%d' unkown. %d/%d tests passed\n"), status,
 						passed, total);
-		status = -1;
+		status = STATE_UNKNOWN;
 		break;
 	}
 	return status;
