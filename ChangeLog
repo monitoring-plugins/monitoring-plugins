@@ -1,3 +1,9 @@
+2003-07-02  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* Makefile.am (SUBDIRS): Add intl.
+	(EXTRA_DIST): Add config.rpath.
+	* configure.in (AC_OUTPUT): Add intl/Makefile,
+
 2003-03-02  kdebisschop@alert.infoplease.com  <kdebisschop>
 
 	* configure.in, nagios-plugins.spec.in:

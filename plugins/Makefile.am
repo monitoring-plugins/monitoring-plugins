@@ -2,7 +2,13 @@
 
 VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t 
 
-INCLUDES = -I.. -I$(top_srcdir)/lib @LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@ 
+INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/intl \
+@LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@ 
+
+datadir = @datadir@
+localedir = $(datadir)/locale
+DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
+LIBS = @LIBINTL@ @LIBS@
 
 libexec_PROGRAMS = check_disk check_dummy check_http check_load \
 	check_mrtg check_mrtgtraf check_nwstat check_overcr check_ping \

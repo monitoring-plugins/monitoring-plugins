@@ -1,0 +1,79 @@
+# German Language Translation File.
+# Copyright (C) YEAR Nagios Plugin Development Group
+# This file is distributed under the same license as the nagios-plugins package.
+# Karl DeBisschop <kdebisschop@users.sourceforge.net>, 2003.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: nagios-plugins 1.3.99\n"
+"POT-Creation-Date: 2003-07-25 23:10-0400\n"
+"PO-Revision-Date: 2003-07-20 22:24-0400\n"
+"Last-Translator: Michael Wirtgen <Michael.Wirtgen@miwi-dv.com>\n"
+"Language-Team: de <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: plugins/check_tcp.c:516
+#, c-format
+msgid "This plugin tests %s connections with the specified host.\n"
+msgstr ""
+
+#: plugins/check_tcp.c:523
+msgid ""
+" -H, --hostname=ADDRESS\n"
+"    Host name argument for servers using host headers (use numeric\n"
+"    address if possible to bypass DNS lookup).\n"
+" -p, --port=INTEGER\n"
+"    Port number\n"
+" -4, --use-ipv4\n"
+"    Use IPv4 connection\n"
+" -6, --use-ipv6\n"
+"    Use IPv6 connection\n"
+msgstr ""
+
+#: plugins/check_tcp.c:534
+msgid ""
+" -s, --send=STRING\n"
+"    String to send to the server\n"
+" -e, --expect=STRING\n"
+"    String to expect in server response\n"
+" -q, --quit=STRING\n"
+"    String to send server to initiate a clean close of the connection\n"
+msgstr ""
+
+#: plugins/check_tcp.c:542
+msgid ""
+" -r, --refuse=ok|warn|crit\n"
+"    Accept tcp refusals with states ok, warn, crit (default: crit)\n"
+" -m, --maxbytes=INTEGER\n"
+"    Close connection once more than this number of bytes are received\n"
+" -d, --delay=INTEGER\n"
+"    Seconds to wait between sending string and polling for response\n"
+" -w, --warning=DOUBLE\n"
+"    Response time to result in warning status (seconds)\n"
+" -c, --critical=DOUBLE\n"
+"    Response time to result in critical status (seconds)\n"
+msgstr ""
+
+#: plugins/check_tcp.c:554
+#, c-format
+msgid ""
+" -t, --timeout=INTEGER\n"
+"    Seconds before connection times out (default: %d)\n"
+" -v, --verbose\n"
+"    Show details for command-line debugging (Nagios may truncate output)\n"
+" -h, --help\n"
+"    Print detailed help screen\n"
+" -V, --version\n"
+"    Print version information\n"
+"\n"
+msgstr ""
+
+#: plugins/check_tcp.c:571
+msgid ""
+"-H host -p port [-w warn_time] [-c crit_time] [-s send_string]\n"
+"\t[-e expect_string] [-q quit_string] [-m maxbytes] [-d delay]\n"
+"\t[-t to_sec] [-r refuse_state] [-v] [-4|-6]\n"
+msgstr ""

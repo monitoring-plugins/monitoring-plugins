@@ -1,21 +1,25 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = lib plugins plugins-scripts
+SUBDIRS = intl lib plugins plugins-scripts po
 
-EXTRA_DIST = CODING FAQ LEGAL REQUIREMENTS SUPPORT \
+EXTRA_DIST = config.rpath \
+	ABOUT-NLS CODING FAQ LEGAL REQUIREMENTS SUPPORT \
 	Helper.pm contrib pkg nagios-plugins.spec.in
 
 ACLOCAL_AMFLAGS = -I lib
 
+localedir = $(datadir)/locale
+DEFS = -DLOCALEDIR=\"$(localedir)\"
+
 dist-hook:
-	sed "s/%%{VER}/${VER}/;s/%%{REL}/${REL}/;" $(srcdir)/nagios-plugins.spec.in > $(distdir)/nagios-plugins.spec
+	sed "s/%%{VERSION}/${VERSION}/;s/%%{RELEASE}/${RELEASE}/;" $(srcdir)/nagios-plugins.spec.in > $(distdir)/nagios-plugins.spec
 
 test:
 	cd plugins; $(MAKE) test
 	cd plugins-scripts; $(MAKE) test
 
 nagios-plugins.spec: nagios-plugins.spec.in
-	sed "s/%%{VER}/${VER}/;s/%%{REL}/${REL}/;" $? > $@
+	sed "s/%%{VERSION}/${VERSION}/;s/%%{RELEASE}/${RELEASE}/;" $? > $@
 
 # Solaris pkgmk
 BUILDDIR = build-solaris

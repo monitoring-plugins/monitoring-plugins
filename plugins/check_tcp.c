@@ -15,59 +15,6 @@
 * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
 *****************************************************************************/
-
-/* progname changes depending on symlink called */
-char *progname = "check_tcp";
-const char *revision = "$Revision$";
-const char *copyright = "2002-2003";
-const char *authors = "Nagios Plugin Development Team";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
-
-const char *summary = "\
-This plugin tests %s connections with the specified host.\n";
-
-const char *option_summary = "\
--H host -p port [-w warn_time] [-c crit_time] [-s send_string]\n\
-	[-e expect_string] [-q quit_string] [-m maxbytes] [-d delay]\n\
-	[-t to_sec] [-r refuse_state] [-v] [-4|-6]\n";
-
-const char *options = "\
- -H, --hostname=ADDRESS\n\
-    Host name argument for servers using host headers (use numeric\n\
-    address if possible to bypass DNS lookup).\n\
- -p, --port=INTEGER\n\
-    Port number\n\
- -4, --use-ipv4\n\
-    Use IPv4 connection\n\
- -6, --use-ipv6\n\
-    Use IPv6 connection\n\
- -s, --send=STRING\n\
-    String to send to the server\n\
- -e, --expect=STRING\n\
-    String to expect in server response\n\
- -q, --quit=STRING\n\
-    String to send server to initiate a clean close of the connection\n\
- -m, --maxbytes=INTEGER\n\
-    Close connection once more than this number of bytes are received\n\
- -d, --delay=INTEGER\n\
-    Seconds to wait between sending string and polling for response\n\
- -w, --warning=DOUBLE\n\
-    Response time to result in warning status (seconds)\n\
- -c, --critical=DOUBLE\n\
-    Response time to result in critical status (seconds)\n\
- -t, --timeout=INTEGER\n\
-    Seconds before connection times out (default: %d)\n\
- -r, --refuse=ok|warn|crit\n\
-    Accept tcp refusals with states ok, warn, crit (default: crit)\n\
- -v, --verbose\n\
-    Show details for command-line debugging (Nagios may truncate output)\n";
-
-const char *standard_options = "\
- -h, --help\n\
-    Print detailed help screen\n\
- -V, --version\n\
-    Print version information\n\n";
-
 #include "config.h"
 #include "common.h"
 #include "netutils.h"
@@ -137,6 +84,13 @@ int use_ssl = FALSE;
 int sd = 0;
 char *buffer = "";
 
+/* progname changes depending on symlink called */
+char *progname = "check_tcp";
+const char *revision = "$Revision$";
+const char *copyright = "2002-2003";
+const char *authors = "Nagios Plugin Development Team";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
 int
 main (int argc, char **argv)
 {
@@ -144,6 +98,10 @@ main (int argc, char **argv)
 	int i;
 	char *status = "";
 	struct timeval tv;
+
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
 
 	if (strstr (argv[0], "check_udp")) {
 		progname = strdup ("check_udp");
@@ -301,7 +259,7 @@ main (int argc, char **argv)
 			asprintf (&status, "%s%s", status, buffer);
 			if (buffer[i-2] == '\r' && buffer[i-1] == '\n')
 				break;
-			if (maxbytes>0 && strlen(status)>=maxbytes)
+			if (maxbytes>0 && strlen(status) >= (unsigned)maxbytes)
 				break;
 		}
 
@@ -547,19 +505,68 @@ void
 print_help (void)
 {
 	print_revision (progname, revision);
+
 	printf ("Copyright (c) %s %s\n\t<%s>\n\n", copyright, authors, email);
-	printf (summary, SERVICE);
+
+	printf (_("\
+This plugin tests %s connections with the specified host.\n"), SERVICE);
+
 	print_usage ();
+
 	printf ("\nOptions:\n");
-	printf (options, DEFAULT_SOCKET_TIMEOUT);
-	printf (standard_options);
+
+	printf (_("\
+ -H, --hostname=ADDRESS\n\
+    Host name argument for servers using host headers (use numeric\n\
+    address if possible to bypass DNS lookup).\n\
+ -p, --port=INTEGER\n\
+    Port number\n\
+ -4, --use-ipv4\n\
+    Use IPv4 connection\n\
+ -6, --use-ipv6\n\
+    Use IPv6 connection\n"));
+
+	printf (_("\
+ -s, --send=STRING\n\
+    String to send to the server\n\
+ -e, --expect=STRING\n\
+    String to expect in server response\n\
+ -q, --quit=STRING\n\
+    String to send server to initiate a clean close of the connection\n"));
+
+	printf (_("\
+ -r, --refuse=ok|warn|crit\n\
+    Accept tcp refusals with states ok, warn, crit (default: crit)\n\
+ -m, --maxbytes=INTEGER\n\
+    Close connection once more than this number of bytes are received\n\
+ -d, --delay=INTEGER\n\
+    Seconds to wait between sending string and polling for response\n\
+ -w, --warning=DOUBLE\n\
+    Response time to result in warning status (seconds)\n\
+ -c, --critical=DOUBLE\n\
+    Response time to result in critical status (seconds)\n"));
+
+	printf (_("\
+ -t, --timeout=INTEGER\n\
+    Seconds before connection times out (default: %d)\n\
+ -v, --verbose\n\
+    Show details for command-line debugging (Nagios may truncate output)\n\
+ -h, --help\n\
+    Print detailed help screen\n\
+ -V, --version\n\
+    Print version information\n\n"),
+					DEFAULT_SOCKET_TIMEOUT);
+
 	support ();
 }
 
 void
 print_usage (void)
 {
-	printf ("Usage: %s %s\n", progname, option_summary);
+	printf ("Usage: %s %s\n", progname, _("\
+-H host -p port [-w warn_time] [-c crit_time] [-s send_string]\n\
+	[-e expect_string] [-q quit_string] [-m maxbytes] [-d delay]\n\
+	[-t to_sec] [-r refuse_state] [-v] [-4|-6]\n"));
 	printf ("       %s (-h|--help)\n", progname);
 	printf ("       %s (-V|--version)\n", progname);
 }

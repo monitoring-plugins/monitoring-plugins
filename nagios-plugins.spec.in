@@ -8,8 +8,8 @@
 %define name %{archive}
 %endif
 
-%define version %%{VER}
-%define release %%{REL}
+%define version %%{VERSION}
+%define release %%{RELEASE}
 %define source %{archive}-%{version}
 
 Name: %{name}
@@ -69,8 +69,11 @@ will need to install the '--nodeps' option when invoking `rpm`
 
 %build
 CFLAGS="$RPM_OPT_FLAGS" CXXFLAGS="$RPM_OPT_FLAGS" ./configure \
---prefix=%{_prefix}/lib/nagios/plugins \
---libexecdir=%{_prefix}/lib/nagios/plugins \
+--prefix=%{_prefix} \
+--exec-prefix=%{_exec_prefix} \
+--libexecdir=%{_exec_prefix}/lib/nagios/plugins \
+--sysconfdir=%{_sysconfdir}/nagios \
+--datadir=%{_datadir} \
 --with-cgiurl=/nagios/cgi-bin
 make
 
@@ -90,68 +93,71 @@ rm -rf $RPM_BUILD_ROOT
 %doc CODING COPYING FAQ INSTALL LEGAL README REQUIREMENTS SUPPORT
 %doc ChangeLog command.cfg
 %defattr(775,root,root)
-%dir %{_prefix}/lib/nagios/plugins
+%dir %{_exec_prefix}/lib/nagios/plugins
+%{_datadir}/locale/de/LC_MESSAGES/nagios-plugins.mo
+%{_datadir}/locale/fr/LC_MESSAGES/nagios-plugins.mo
 %if %custom
-%{_prefix}/lib/nagios/plugins/*
+%{_exec_prefix}/lib/nagios/plugins/*
 %else
-%{_prefix}/lib/nagios/plugins/check_by_ssh
-%{_prefix}/lib/nagios/plugins/check_breeze
-%{_prefix}/lib/nagios/plugins/check_dig
-%{_prefix}/lib/nagios/plugins/check_disk
-%{_prefix}/lib/nagios/plugins/check_disk_smb
-%{_prefix}/lib/nagios/plugins/check_dns
-%{_prefix}/lib/nagios/plugins/check_dummy
-%{_prefix}/lib/nagios/plugins/check_flexlm
-%{_prefix}/lib/nagios/plugins/check_ftp
-%{_prefix}/lib/nagios/plugins/check_http
-%{_prefix}/lib/nagios/plugins/check_ifoperstatus
-%{_prefix}/lib/nagios/plugins/check_ifstatus
-%{_prefix}/lib/nagios/plugins/check_imap
-%{_prefix}/lib/nagios/plugins/check_ircd
-%{_prefix}/lib/nagios/plugins/check_load
-%{_prefix}/lib/nagios/plugins/check_log
-%{_prefix}/lib/nagios/plugins/check_mailq
-%{_prefix}/lib/nagios/plugins/check_mrtg
-%{_prefix}/lib/nagios/plugins/check_mrtgtraf
-%{_prefix}/lib/nagios/plugins/check_nagios
-%{_prefix}/lib/nagios/plugins/check_nntp
-%{_prefix}/lib/nagios/plugins/check_nt
-%{_prefix}/lib/nagios/plugins/check_ntp
-%{_prefix}/lib/nagios/plugins/check_nwstat
-%{_prefix}/lib/nagios/plugins/check_oracle
-%{_prefix}/lib/nagios/plugins/check_overcr
-%{_prefix}/lib/nagios/plugins/check_ping
-%{_prefix}/lib/nagios/plugins/check_pop
-%{_prefix}/lib/nagios/plugins/check_procs
-%{_prefix}/lib/nagios/plugins/check_real
-%{_prefix}/lib/nagios/plugins/check_rpc
-%{_prefix}/lib/nagios/plugins/check_sensors
-%{_prefix}/lib/nagios/plugins/check_smtp
-%{_prefix}/lib/nagios/plugins/check_ssh
-%{_prefix}/lib/nagios/plugins/check_swap
-%{_prefix}/lib/nagios/plugins/check_tcp
-%{_prefix}/lib/nagios/plugins/check_time
-%{_prefix}/lib/nagios/plugins/check_udp
-%{_prefix}/lib/nagios/plugins/check_ups
-%{_prefix}/lib/nagios/plugins/check_users
-%{_prefix}/lib/nagios/plugins/check_wave
-%{_prefix}/lib/nagios/plugins/negate
-%{_prefix}/lib/nagios/plugins/utils.pm
-%{_prefix}/lib/nagios/plugins/utils.sh
-%{_prefix}/lib/nagios/plugins/urlize
+%{_exec_prefix}/lib/nagios/plugins/check_by_ssh
+%{_exec_prefix}/lib/nagios/plugins/check_breeze
+%{_exec_prefix}/lib/nagios/plugins/check_dig
+%{_exec_prefix}/lib/nagios/plugins/check_disk
+%{_exec_prefix}/lib/nagios/plugins/check_disk_smb
+%{_exec_prefix}/lib/nagios/plugins/check_dns
+%{_exec_prefix}/lib/nagios/plugins/check_dummy
+%{_exec_prefix}/lib/nagios/plugins/check_flexlm
+%{_exec_prefix}/lib/nagios/plugins/check_ftp
+%{_exec_prefix}/lib/nagios/plugins/check_http
+%{_exec_prefix}/lib/nagios/plugins/check_ifoperstatus
+%{_exec_prefix}/lib/nagios/plugins/check_ifstatus
+%{_exec_prefix}/lib/nagios/plugins/check_imap
+%{_exec_prefix}/lib/nagios/plugins/check_ircd
+%{_exec_prefix}/lib/nagios/plugins/check_load
+%{_exec_prefix}/lib/nagios/plugins/check_log
+%{_exec_prefix}/lib/nagios/plugins/check_mailq
+%{_exec_prefix}/lib/nagios/plugins/check_mrtg
+%{_exec_prefix}/lib/nagios/plugins/check_mrtgtraf
+%{_exec_prefix}/lib/nagios/plugins/check_nagios
+%{_exec_prefix}/lib/nagios/plugins/check_nntp
+%{_exec_prefix}/lib/nagios/plugins/check_nt
+%{_exec_prefix}/lib/nagios/plugins/check_ntp
+%{_exec_prefix}/lib/nagios/plugins/check_nwstat
+%{_exec_prefix}/lib/nagios/plugins/check_oracle
+%{_exec_prefix}/lib/nagios/plugins/check_overcr
+%{_exec_prefix}/lib/nagios/plugins/check_ping
+%{_exec_prefix}/lib/nagios/plugins/check_pop
+%{_exec_prefix}/lib/nagios/plugins/check_procs
+%{_exec_prefix}/lib/nagios/plugins/check_real
+%{_exec_prefix}/lib/nagios/plugins/check_rpc
+%{_exec_prefix}/lib/nagios/plugins/check_sensors
+%{_exec_prefix}/lib/nagios/plugins/check_smtp
+%{_exec_prefix}/lib/nagios/plugins/check_ssh
+%{_exec_prefix}/lib/nagios/plugins/check_swap
+%{_exec_prefix}/lib/nagios/plugins/check_tcp
+%{_exec_prefix}/lib/nagios/plugins/check_time
+%{_exec_prefix}/lib/nagios/plugins/check_udp
+%{_exec_prefix}/lib/nagios/plugins/check_ups
+%{_exec_prefix}/lib/nagios/plugins/check_users
+%{_exec_prefix}/lib/nagios/plugins/check_wave
+%{_exec_prefix}/lib/nagios/plugins/negate
+%{_exec_prefix}/lib/nagios/plugins/utils.pm
+%{_exec_prefix}/lib/nagios/plugins/utils.sh
+%{_exec_prefix}/lib/nagios/plugins/urlize
+%{_exec_prefix}/lib/nagios/plugins/check_file_age
 %endif
 
 %if ! %custom
 %files extras
 %defattr(775,root,root)
-%{_prefix}/lib/nagios/plugins/check_fping
-%{_prefix}/lib/nagios/plugins/check_game
-%{_prefix}/lib/nagios/plugins/check_ldap
-%{_prefix}/lib/nagios/plugins/check_mysql
-%{_prefix}/lib/nagios/plugins/check_pgsql
-%{_prefix}/lib/nagios/plugins/check_radius
-%{_prefix}/lib/nagios/plugins/check_snmp
-%{_prefix}/lib/nagios/plugins/check_hpjd
+%{_exec_prefix}/lib/nagios/plugins/check_fping
+%{_exec_prefix}/lib/nagios/plugins/check_game
+%{_exec_prefix}/lib/nagios/plugins/check_ldap
+%{_exec_prefix}/lib/nagios/plugins/check_mysql
+%{_exec_prefix}/lib/nagios/plugins/check_pgsql
+%{_exec_prefix}/lib/nagios/plugins/check_radius
+%{_exec_prefix}/lib/nagios/plugins/check_snmp
+%{_exec_prefix}/lib/nagios/plugins/check_hpjd
 
 %endif
 

@@ -133,8 +133,8 @@ print_revision (const char *command_name, const char *revision_string)
 
 	if (sscanf (revision_string, "$Revision: %[0-9.]", plugin_revision) != 1)
 		strncpy (plugin_revision, "N/A", STRLEN);
-	printf ("%s (nagios-plugins %s) %s\n",
-					progname, VERSION, plugin_revision);
+	printf ("%s (%s %s) %s\n",
+					progname, PACKAGE, VERSION, plugin_revision);
 	printf
 		("The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n"
 		 "copies of the plugins under the terms of the GNU General Public License.\n"
