@@ -1,12 +1,12 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = intl lib plugins plugins-scripts po
+SUBDIRS = intl lib plugins plugins-scripts m4 po
 
 EXTRA_DIST = config.rpath \
 	ABOUT-NLS CHANGES CODING FAQ LEGAL REQUIREMENTS SUPPORT THANKS \
 	Helper.pm contrib pkg nagios-plugins.spec
 
-ACLOCAL_AMFLAGS = -I lib
+ACLOCAL_AMFLAGS = -I m4
 
 localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\"

@@ -28,7 +28,7 @@ EXTRA_DIST = t utils.c netutils.c popen.c utils.h netutils.h popen.h common.h \
 
 PLUGINHDRS = common.h
 
-BASEOBJS = utils.o ../lib/libnagiosplug.a
+BASEOBJS = utils.o ../lib/libnagiosplug.a ../lib/libcoreutils.a
 NETOBJS = netutils.o $(BASEOBJS) $(EXTRA_NETOBJS)
 NETLIBS = $(NETOBJS) $(SOCKETLIBS)
 

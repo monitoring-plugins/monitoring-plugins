@@ -19,7 +19,7 @@ else
 fi
 
 autopoint --force
-aclocal -I lib
+aclocal -I m4
 autoheader
 automake --add-missing --force-missing --copy
 autoconf
