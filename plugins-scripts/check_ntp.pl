@@ -132,10 +132,12 @@ if ($ocrit < $owarn ) {
 	print_usage();
 	exit $ERRORS{"UNKNOWN"};
 }
-if ($opt_k < $opt_j) {
-	print "Critical jitter should be larger than warning jitter\n";
-	print_usage();
-	exit $ERRORS{'UNKNOWN'};
+if ($def_jitter) {
+	if ($opt_k < $opt_j) {
+		print "Critical jitter should be larger than warning jitter\n";
+		print_usage();
+		exit $ERRORS{'UNKNOWN'};
+	}
 }
 
 
