@@ -43,6 +43,8 @@ function make_dist {
 	tools/setup
 	./configure
 
+  make
+
 	# Make the Nagiosplug dist tarball
 	make dist
 
