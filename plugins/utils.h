@@ -13,18 +13,23 @@ suite of plugins. */
 
 /* Standardize version information, termination */
 
-char *my_basename (char *);
 void support (void);
 char *clean_revstring (const char *revstring);
 void print_revision (const char *, const char *);
 void die (int result, const char *fmt, ...);
-void terminate (int result, char *msg, ...);
-extern RETSIGTYPE timeout_alarm_handler (int);
+void terminate (int result, const char *msg, ...);
 
 /* Handle timeouts */
 
-time_t start_time, end_time;
+#ifdef LOCAL_TIMEOUT_ALARM_HANDLER
+extern int timeout_interval;
+RETSIGTYPE timeout_alarm_handler (int);
+#else
 int timeout_interval = DEFAULT_SOCKET_TIMEOUT;
+extern RETSIGTYPE timeout_alarm_handler (int);
+#endif
+
+time_t start_time, end_time;
 
 /* Test input types */
 
@@ -59,8 +64,8 @@ double delta_time (struct timeval tv);
 /* Handle strings safely */
 
 void strip (char *buffer);
-char *strscpy (char *dest, char *src);
-char *strscat (char *dest, char *src);
+char *strscpy (char *dest, const char *src);
+char *strscat (char *dest, const char *src);
 char *strnl (char *str);
 char *ssprintf (char *str, const char *fmt, ...); /* deprecate for asprintf */
 char *strpcpy (char *dest, const char *src, const char *str);
@@ -124,3 +129,13 @@ char *state_text (int result);
 #define UT_TIMEOUT "\
  -t, --timeout=INTEGER\n\
     Seconds before connection times out (default: %d)\n"
+
+#define UT_SUPPORT "\n\
+Send email to nagios-users@lists.sourceforge.net if you have questions\n\
+regarding use of this software. To submit patches or suggest improvements,\n\
+send email to nagiosplug-devel@lists.sourceforge.net\n"
+
+#define UT_NOWARRANTY "\
+The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\
+copies of the plugins under the terms of the GNU General Public License.\n\
+For more information about these matters, see the file named COPYING.\n"

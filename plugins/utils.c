@@ -11,48 +11,18 @@
  * $Date$
  ****************************************************************************/
 
+#define LOCAL_TIMEOUT_ALARM_HANDLER
+
 #include "config.h"
 #include "common.h"
+#include "utils.h"
 #include <stdarg.h>
 #include <limits.h>
 
 #include <arpa/inet.h>
 
 extern void print_usage (void);
-extern int timeout_interval;
 extern const char *progname;
-
-void support (void);
-char *clean_revstring (const char *);
-void print_revision (const char *, const char *);
-void die (int result, const char *fmt, ...);
-void terminate (int result, const char *fmt, ...);
-RETSIGTYPE timeout_alarm_handler (int);
-
-int is_integer (char *);
-int is_intpos (char *);
-int is_intneg (char *);
-int is_intnonneg (char *);
-int is_intpercent (char *);
-
-int is_numeric (char *);
-int is_positive (char *);
-int is_negative (char *);
-int is_nonnegative (char *);
-int is_percentage (char *);
-
-int is_option (char *str);
-
-double delta_time (struct timeval tv);
-
-void strip (char *);
-char *strscpy (char *dest, const char *src);
-char *strscat (char *dest, char *src);
-char *strnl (char *str);
-char *strpcpy (char *dest, const char *src, const char *str);
-char *strpcat (char *dest, const char *src, const char *str);
-
-char *state_text (int result);
 
 #define STRLEN 64
 #define TXTBLK 128
@@ -64,8 +34,6 @@ char *state_text (int result);
  *
  * Note that numerically the above does not hold
  ****************************************************************************/
-
-#define max(a,b) (((a)>(b))?(a):(b))
 
 int
 max_state (int a, int b)
@@ -398,7 +366,7 @@ strscpy (char *dest, const char *src)
  *****************************************************************************/
 
 char *
-strscat (char *dest, char *src)
+strscat (char *dest, const char *src)
 {
 
 	if (dest == NULL)
