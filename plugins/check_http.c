@@ -820,7 +820,7 @@ check_http (void)
 
 	if (strlen (string_expect)) {
 		if (strstr (page, string_expect)) {
-			printf ("HTTP ok: %s - %7.3f second response time %s%s|time=%7.3f\n",
+			printf ("HTTP OK %s - %7.3f second response time %s%s|time=%7.3f\n",
 			        status_line, elapsed_time,
 			        timestamp, (display_html ? "</A>" : ""), elapsed_time);
 			exit (STATE_OK);
@@ -835,7 +835,7 @@ check_http (void)
 	if (strlen (regexp)) {
 		errcode = regexec (&preg, page, REGS, pmatch, 0);
 		if (errcode == 0) {
-			printf ("HTTP ok: %s - %7.3f second response time %s%s|time=%7.3f\n",
+			printf ("HTTP OK %s - %7.3f second response time %s%s|time=%7.3f\n",
 			        status_line, elapsed_time,
 			        timestamp, (display_html ? "</A>" : ""), elapsed_time);
 			exit (STATE_OK);
@@ -863,7 +863,7 @@ check_http (void)
 		exit (STATE_WARNING);
 	}
 	/* We only get here if all tests have been passed */
-	asprintf (&msg, "HTTP ok: %s - %7.3f second response time %s%s|time=%7.3f\n",
+	asprintf (&msg, "HTTP OK %s - %7.3f second response time %s%s|time=%7.3f\n",
 	                status_line, (float)elapsed_time,
 	                timestamp, (display_html ? "</A>" : ""), elapsed_time);
 	terminate (STATE_OK, msg);

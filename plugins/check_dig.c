@@ -128,7 +128,7 @@ main (int argc, char **argv)
 		asprintf (&output, " Probably a non-existent host/domain");
 
 	if (result == STATE_OK)
-		printf ("DNS ok - %d seconds response time (%s)\n",
+		printf ("DNS OK - %d seconds response time (%s)\n",
 						(int) (end_time - start_time), output);
 	else if (result == STATE_WARNING)
 		printf ("DNS WARNING - %s\n", output);

@@ -74,9 +74,8 @@ main (int argc, char **argv)
 	alarm (socket_timeout);
 
 	time (&start_time);
-	result =
-		process_udp_request (server_address, server_port, server_send,
-												 recv_buffer, MAX_INPUT_BUFFER - 1);
+	result = process_udp_request (server_address, server_port, server_send,
+			recv_buffer, MAX_INPUT_BUFFER - 1);
 	time (&end_time);
 
 	if (result != STATE_OK) {

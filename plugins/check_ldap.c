@@ -7,7 +7,7 @@
  * 
  * Last Modified: $Date$
  *
- * Command line: check_ldap -h <host> -b <base_dn> -p <port> -w <warn_time> -w <crit_time>
+ * Command line: check_ldap -H <host> -b <base_dn> -p <port> -w <warn_time> -w <crit_time>
  *
  * Description:
  *
@@ -109,17 +109,17 @@ main (int argc, char *argv[])
 	t_diff = time1 - time0;
 
 	if (crit_time!=UNDEFINED && t_diff>=crit_time) {
-		printf ("LDAP critical - %i seconds response time\n", t_diff);
+		printf ("LDAP CRITICAL - %i seconds response time\n", t_diff);
 		return STATE_CRITICAL;
 	}
 
 	if (warn_time!=UNDEFINED && t_diff>=warn_time) {
-		printf ("LDAP warning - %i seconds response time\n", t_diff);
+		printf ("LDAP WARNING - %i seconds response time\n", t_diff);
 		return STATE_WARNING;
 	}
 
 	/* print out the result */
-	printf ("LDAP ok - %i seconds response time\n", t_diff);
+	printf ("LDAP OK - %i seconds response time\n", t_diff);
 
 	return STATE_OK;
 }
@@ -198,7 +198,7 @@ process_arguments (int argc, char **argv)
 			crit_time = atoi (optarg);
 			break;
 		default:
-			usage ("check_ldap: could not parse arguments\n");
+			usage ("check_ldap: could not parse unknown arguments\n");
 			break;
 		}
 	}
