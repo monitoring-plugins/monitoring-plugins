@@ -8,3 +8,5 @@ automake --add-missing --copy
 if [ -f debian/rules ] ; then
   chmod +x debian/rules
 fi
+
+cd doc && make
