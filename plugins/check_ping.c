@@ -66,6 +66,7 @@ int
 main (int argc, char **argv)
 {
 	char *cmd = NULL;
+	char *rawcmd = NULL;
 	int result = STATE_UNKNOWN;
 	int this_result = STATE_UNKNOWN;
 	int i;
@@ -90,27 +91,26 @@ main (int argc, char **argv)
 	alarm (timeout_interval);
 
 	for (i = 0 ; i < n_addresses ; i++) {
+		
+#ifdef PING6_COMMAND
+		if (is_inet6_addr(addresses[i]) && address_family != AF_INET)
+			rawcmd = strdup(PING6_COMMAND);
+		else
+			rawcmd = strdup(PING_COMMAND);
+#else
+		rawcmd = strdup(PING_COMMAND);
+#endif
 
 		/* does the host address of number of packets argument come first? */
-#ifdef PING6_COMMAND
-# ifdef PING_PACKETS_FIRST
-	if (is_inet6_addr(addresses[i]) && address_family != AF_INET)
-		asprintf (&cmd, PING6_COMMAND, max_packets, addresses[i]);
-	else
-		asprintf (&cmd, PING_COMMAND, max_packets, addresses[i]);
+#ifdef PING_PACKETS_FIRST
+# ifdef PING_HAS_TIMEOUT
+		asprintf (&cmd, rawcmd, timeout_interval, max_packets, addresses[i]);
 # else
-	if (is_inet6_addr(addresses[i]) && address_family != AF_INET) 
-		asprintf (&cmd, PING6_COMMAND, addresses[i], max_packets);
-	else
-		asprintf (&cmd, PING_COMMAND, addresses[i], max_packets);
+		asprintf (&cmd, rawcmd, max_packets, addresses[i]);
 # endif
-#else /* USE_IPV6 */
-# ifdef PING_PACKETS_FIRST
-		asprintf (&cmd, PING_COMMAND, max_packets, addresses[i]);
-# else
-		asprintf (&cmd, PING_COMMAND, addresses[i], max_packets);
-# endif
-#endif /* USE_IPV6 */
+#else
+		asprintf (&cmd, rawcmd, addresses[i], max_packets);
+#endif
 
 		if (verbose)
 			printf ("%s ==> ", cmd);
@@ -150,7 +150,8 @@ main (int argc, char **argv)
 			printf ("%f:%d%% %f:%d%%\n", wrta, wpl, crta, cpl);
 
 		result = max_state (result, this_result);
-
+		free (rawcmd);
+		free (cmd);
 	}
 
 	return result;
