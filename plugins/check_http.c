@@ -90,6 +90,7 @@ char server_type[6] = "http";
 char *server_address;
 char *host_name;
 char *server_url;
+char *user_agent;
 int server_url_length;
 int server_expect_yn = 0;
 char server_expect[MAX_INPUT_BUFFER] = HTTP_EXPECT;
@@ -130,6 +131,8 @@ main (int argc, char **argv)
 	/* Set default URL. Must be malloced for subsequent realloc if --onredirect=follow */
 	server_url = strdup(HTTP_URL);
 	server_url_length = strlen(server_url);
+	asprintf (&user_agent, "User-Agent: check_http/%s (nagios-plugins %s)",
+	          clean_revstring (revision), VERSION);
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage (_("check_http: could not parse arguments\n"));
@@ -472,6 +475,9 @@ check_http (void)
 	int sslerr;
 #endif
 
+	if (verbose)
+		printf ("%s://%s:%d%s [%s]\n", server_type, server_address, server_port, server_url, host_name);
+
 	/* try to connect to the host at the given port number */
 #ifdef HAVE_SSL
 	if (use_ssl == TRUE) {
@@ -497,21 +503,20 @@ check_http (void)
 	}
 #endif
 
-	asprintf (&buf, "%s %s HTTP/1.0\r\n", http_method, server_url);
+	asprintf (&buf, "%s %s HTTP/1.0\r\n%s\r\n", http_method, server_url, user_agent);
 
-	/* optionally send the host header info (not clear if it's usable) */
+	/* optionally send the host header info */
 	if (host_name)
 		asprintf (&buf, "%sHost: %s\r\n", buf, host_name);
-
-	/* send user agent */
-	asprintf (&buf, "%sUser-Agent: check_http/%s (nagios-plugins %s)\r\n",
-	          buf, clean_revstring (revision), VERSION);
 
 	/* optionally send the authentication info */
 	if (strlen(user_auth)) {
 		auth = base64 (user_auth, strlen (user_auth));
 		asprintf (&buf, "%sAuthorization: Basic %s\r\n", buf, auth);
 	}
+
+	if (verbose)
+		printf ("%s://%s:%d%s\n", server_type, server_address, server_port, server_url);
 
 	/* either send http POST data */
 	if (http_post_data) {
@@ -523,6 +528,9 @@ check_http (void)
 		/* or just a newline so the server knows we're done with the request */
 		asprintf (&buf, "%s%s", buf, CRLF);
 	}
+
+	if (verbose)
+		printf ("%s\n", buf);
 
 #ifdef HAVE_SSL
 	if (use_ssl == TRUE) {
@@ -616,7 +624,6 @@ check_http (void)
 			                server_port);
 		die (STATE_CRITICAL, "%s", msg);
 	}
-
 
 	/* Exit here if server_expect was set by user and not default */
 	if ( server_expect_yn  )  {
@@ -860,9 +867,15 @@ redir (char *pos, char *status_line)
 
 	server_port = i;
 	strcpy (server_type, type);
-	asprintf (&host_name, "%s", addr);
-	asprintf (&server_address, "%s", addr);
-	asprintf (&server_url, "%s", url);
+
+	free (host_name);
+	host_name = strdup (addr);
+
+	free (server_address);
+	server_address = strdup (addr);
+
+	free (server_url);
+	server_url = strdup (url);
 
 	return check_http ();
 }
