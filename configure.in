@@ -373,24 +373,6 @@ if test x"$ac_cv_HAVE_SNPRINTF" = x"no" -o x"$ac_cv_HAVE_VSNPRINTF" = x"no" -o x
   LIBS="$LIBS -lsnprintf" DEPLIBS="$DEPLIBS libsnprintf.a"
 fi
 
-dnl We used to not do long options unless a compatible lib was found
-dnl Now we provide code and make libgetopt if native is not suitable
-AC_MSG_CHECKING(for getopt_long)
-AC_TRY_COMPILE([#include <getopt.h>
-                #include <stdlib.h>],
-               [int option_index=0;
-                static struct option *long_options;
-                getopt_long(0,NULL,"+h",long_options,&option_index);],
-               [AC_DEFINE(HAVE_GETOPT_H,1,[Define if getopt headers are found])
-                AC_DEFINE(HAVE_GETOPT_LONG,1,[Define if getopt_long is found])
-                AC_MSG_RESULT(yes)],
-               [AC_DEFINE(HAVE_GETOPT_H,1,[Define if getopt headers are found])
-                AC_DEFINE(HAVE_GETOPT_LONG,1,[Define if getopt_long is found])
-                AC_MSG_RESULT(no)
-                import_sources=getopt
-                LIBS="$LIBS -lgetopt"
-                DEPLIBS="$DEPLIBS libgetopt.a"])
-
 AC_TRY_COMPILE([#include <sys/time.h>],
                [struct timeval *tv;
                 struct timezone *tz;],
@@ -956,4 +938,4 @@ AC_SUBST(DEPLIBS)
 
 AC_DEFINE_UNQUOTED(PACKAGE_VERSION,"${VERSION}",[package version])
 
-AC_OUTPUT(Makefile subst plugins/Makefile plugins-scripts/Makefile plugins-scripts/subst plugins-scripts/utils.pm plugins-scripts/utils.sh command.cfg test.pl,echo timestamp > plugins/stamp-h1;echo timestamp > plugins/stamp-h2;echo timestamp > plugins/stamp-h3;echo timestamp > plugins/stamp-h4;echo timestamp > plugins/stamp-h5;echo timestamp > plugins/stamp-h6;PATH=.:..:$PATH subst.sh command.cfg)
+AC_OUTPUT(Makefile subst lib/Makefile plugins/Makefile plugins-scripts/Makefile plugins-scripts/subst plugins-scripts/utils.pm plugins-scripts/utils.sh command.cfg test.pl,echo timestamp > plugins/stamp-h1;echo timestamp > plugins/stamp-h2;echo timestamp > plugins/stamp-h3;echo timestamp > plugins/stamp-h4;echo timestamp > plugins/stamp-h5;echo timestamp > plugins/stamp-h6;PATH=.:..:$PATH subst.sh command.cfg)
