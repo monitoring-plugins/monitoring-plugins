@@ -1,3 +1,5 @@
+SUPPORT
+
 Using the mailing lists and tracker databases at SourceForge are the
 best ways to obtain direct support for the Nagios Plugins. There may
 also be commercial support options available to you -- check
@@ -15,6 +17,11 @@ these same volunteers are often plugin developers who can also use
 their time to fix bug and provide feature requests, it is generally in
 you interest to do a modest amount of legwork before posting to either
 of these lists.
+
+Plugins that are in the contrib directories are provided as-is. We will 
+try to help, but sometimes the plugins have dependencies that the nagios-plugin
+developers do not have access to. You may be able to try the authors
+directly.
 
 In brief, always provide the version of the software that you are
 using, and when requesting features or reporting bugs, first check to
@@ -36,19 +43,16 @@ plugins) will provide a description of their use when invoked with the
 '--help' option. Please read the help carefully and in it's entirety
 before asking for support.
 
-There is also a support database on the SourceForge-hosted development
-site. Feel free to use either the mailing list or the web interface,
-but follow the guideline above for both.
-
 REPORTING BUGS AND SUBMITTING PATCHES
 
 Bug reports, investigations of possible bugs, feature requests, and
 patch submissions should be submitted to the development list at
-(mailto:nagiosplug-devel@lists.sourceforge.net). 
+mailto:nagiosplug-devel@lists.sourceforge.net. Please raise a tracker first 
+in Sourceforge, otherwise your email is likely to be missed over time.
 
-As with the support list, you should identify the version, preferably
-in the subject line. However, to best use developer resources, it is
-suggested that you reference your report one of the following sources:
+You should identify the version, preferably in the subject line. 
+However, to best use developer resources, it is suggested that you 
+reference your report to one of the following sources:
 
   1) The most recent release, including beta's
 
@@ -61,7 +65,7 @@ suggested that you reference your report one of the following sources:
 production environment - the latter two you clearly should
 not. However, if you find a bug, you should determine whether it is
 still present in one of these sources, preferably either (2) or (3)
-which are most recent>)
+which are most recent.)
 
 From experience, I know that most bugs can be fixed with only a few
 more moments work than it takes to determine if the bug is still
