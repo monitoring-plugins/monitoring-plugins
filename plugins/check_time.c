@@ -54,6 +54,7 @@ main (int argc, char **argv)
 {
 	int sd;
 	int result;
+	time_t conntime;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -127,14 +128,19 @@ main (int argc, char **argv)
 
 	result = STATE_OK;
 
-	if (check_critical_time == TRUE && (end_time - start_time) > critical_time)
+	conntime = (end_time - start_time);
+	if (check_critical_time == TRUE && conntime > critical_time)
 		result = STATE_CRITICAL;
-	else if (check_warning_time == TRUE
-					 && (end_time - start_time) > warning_time) result = STATE_WARNING;
+	else if (check_warning_time == TRUE && conntime > warning_time)
+		result = STATE_WARNING;
 
 	if (result != STATE_OK)
-		die (result, _("TIME %s - %d second response time\n"),
-							 state_text (result), (int) (end_time - start_time));
+		die (result, _("TIME %s - %d second response time|%s\n"),
+		     state_text (result), (int)conntime,
+		     perfdata ("time", (long)conntime, "s",
+		               check_warning_time, (long)warning_time,
+		               check_critical_time, (long)critical_time,
+		               TRUE, 0, FALSE, 0));
 
 	server_time = ntohl (raw_server_time) - UNIX_EPOCH;
 	if (server_time > (unsigned long)end_time)
@@ -147,8 +153,16 @@ main (int argc, char **argv)
 	else if (check_warning_diff == TRUE && diff_time > (time_t)warning_diff)
 		result = STATE_WARNING;
 
-	printf (_("TIME %s - %lu second time difference\n"), state_text (result),
-					diff_time);
+	printf (_("TIME %s - %lu second time difference|%s %s\n"),
+	        state_text (result), diff_time,
+	        perfdata ("time", (long)conntime, "s",
+	                  check_warning_time, (long)warning_time,
+	                  check_critical_time, (long)critical_time,
+	                  TRUE, 0, FALSE, 0),
+	        perfdata ("offset", (long)diff_time, "s",
+	                  check_warning_diff, (long)warning_diff,
+	                  check_critical_diff, (long)critical_diff,
+	                  TRUE, 0, FALSE, 0));
 	return result;
 }
 
