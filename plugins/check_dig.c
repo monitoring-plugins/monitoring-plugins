@@ -21,6 +21,7 @@ const char *revision = "$Revision$";
 const char *copyright = "2002-2003";
 const char *authors = "Nagios Plugin Development Team";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
 const char *summary = "Test the DNS service on the specified host using dig\n";
 
 const char *option_summary = "-H host -l lookup [-t timeout] [-v]";
@@ -33,11 +34,13 @@ const char *options = "\
  -t, --timeout=INTEGER\n\
    Seconds before connection attempt times out (default: %d)\n\
  -v, --verbose\n\
-   Print extra information (command-line use only)\n\
+   Print extra information (command-line use only)\n";
+
+const char *standard_options = "\
  -h, --help\n\
-   Print detailed help screen\n\
+    Print detailed help screen\n\
  -V, --version\n\
-   Print version information\n\n";
+    Print version information\n\n";
 
 #include "config.h"
 #include "common.h"
@@ -238,7 +241,7 @@ validate_arguments (void)
 {
 	return OK;
 }
-
+
 
 
 
@@ -247,12 +250,12 @@ void
 print_help (void)
 {
 	print_revision (progname, revision);
-	printf
-		("Copyright (c) %s %s <%s>\n\n%s\n",
-		 copyright, authors, email, summary);
+	printf ("Copyright (c) %s %s\n\t<%s>\n\n", copyright, authors, email);
+	printf (summary);
 	print_usage ();
 	printf ("\nOptions:\n");
 	printf (options, DEFAULT_SOCKET_TIMEOUT);
+	printf (standard_options);
 	support ();
 }
 

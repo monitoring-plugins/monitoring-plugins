@@ -1,58 +1,48 @@
-/******************************************************************************
- *
- * CHECK_USERS.C
- *
- * Program: Current users plugin for Nagios
- * License: GPL
- * Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
- *
- * Last Modified: $Date$
- * Modifications: 
- *
- * 1999-11-17 Karl DeBisschop
- *  - check stderr and status from spoen/spclose
- *  - reformat commenst to fit 80-cahr screen
- *  - set default result to STATE_UNKNOWN
- *  - initialize users at -1, eliminate 'found' variable
- *
- * Command line: CHECK_USERS <wusers> <cusers>
- *
- * Description:
- *
- * This plugin will use the /usr/bin/who command to check the number
- * of users currently logged into the system.  If number of logged in
- * user exceeds the number specified by the <cusers> option, a
- * STATE_CRITICAL is return.  It it exceeds <wusers>, a STATE_WARNING
- * is returned.  Errors reading the output from the who command result
- * in a STATE_UNKNOWN error.
- *
- * License Information:
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- *****************************************************************************/
+/*****************************************************************************
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+*****************************************************************************/
 
 #include "common.h"
 #include "popen.h"
 #include "utils.h"
 
 const char *progname = "check_users";
-#define REVISION "$Revision$"
-#define COPYRIGHT "1999-2002"
-#define AUTHOR "Ethan Galstad"
-#define EMAIL "nagios@nagios.org"
+const char *revision = "$Revision$";
+const char *copyright = "2002-2003";
+const char *authors = "Nagios Plugin Development Team";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
+const char *summary = "\
+This plugin checks the number of users currently logged in on the local\n\
+system and generates an error if the number exceeds the thresholds specified.\n";
+
+const char *option_summary = "-w <users> -c <users>";
+
+const char *options = "\
+ -w, --warning=INTEGER\n\
+    Set WARNING status if more than INTEGER users are logged in\n\
+ -c, --critical=INTEGER\n\
+    Set CRITICAL status if more than INTEGER users are logged in\n";
+
+const char *standard_options = "\
+ -h, --help\n\
+    Print detailed help screen\n\
+ -V, --version\n\
+    Print version information\n\n";
 
 #define possibly_set(a,b) ((a) == 0 ? (b) : 0)
 
@@ -163,7 +153,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (progname, REVISION);
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'c':									/* critical */
 			if (!is_intnonneg (optarg))
@@ -193,6 +183,23 @@ process_arguments (int argc, char **argv)
 
 	return OK;
 }
+
+
+
+
+
+void
+print_help (void)
+{
+	print_revision (progname, revision);
+	printf ("Copyright (c) %s %s\n\t<%s>\n\n", copyright, authors, email);
+	printf (summary);
+	print_usage ();
+	printf ("\nOptions:\n");
+	printf (options);
+	printf (standard_options);
+	support ();
+}
 
 
 
@@ -201,29 +208,7 @@ process_arguments (int argc, char **argv)
 void
 print_usage (void)
 {
-	printf ("Usage: %s -w <users> -c <users>\n", progname);
-}
-
-
-
-
-
-void
-print_help (void)
-{
-	print_revision (progname, REVISION);
-	printf
-		("Copyright (c) " COPYRIGHT " " AUTHOR "(" EMAIL ")\n\n"
-		 "This plugin checks the number of users currently logged in on the local\n"
-		 "system and generates an error if the number exceeds the thresholds specified.\n");
-	print_usage ();
-	printf
-		("Options:\n"
-		 " -w, --warning=INTEGER\n"
-		 "    Set WARNING status if more than INTEGER users are logged in\n"
-		 " -c, --critical=INTEGER\n"
-		 "    Set CRITICAL status if more than INTEGER users are logged in\n"
-		 " -h, --help\n"
-		 "    Print detailed help screen\n"
-		 " -V, --version\n" "    Print version information\n");
+	printf ("Usage: %s %s\n", progname, option_summary);
+	printf ("       %s (-h|--help)\n", progname);
+	printf ("       %s (-V|--version)\n", progname);
 }

@@ -57,7 +57,7 @@ const char *standard_options = "\
  -h, --help\n\
     Print detailed help screen\n\
  -V, --version\n\
-    Print version information";
+    Print version information\n\n";
 
 #include "config.h"
 #include "common.h"
@@ -358,10 +358,7 @@ main (int argc, char **argv)
 
 	return result;
 }
-
-
-
-
+
 
 
 
@@ -513,13 +510,15 @@ process_arguments (int argc, char **argv)
 
 	return OK;
 }
+
+
+
 
 void
 print_help (void)
 {
 	print_revision (progname, revision);
-	printf ("Copyright (c) %s %s\n\t<%s>\n\n",
-	        copyright, authors, email);
+	printf ("Copyright (c) %s %s\n\t<%s>\n\n", copyright, authors, email);
 	printf (summary, SERVICE);
 	print_usage ();
 	printf ("\nOptions:\n");
@@ -535,6 +534,9 @@ print_usage (void)
 	printf ("       %s (-h|--help)\n", progname);
 	printf ("       %s (-V|--version)\n", progname);
 }
+
+
+
 
 #ifdef HAVE_SSL
 int
