@@ -184,20 +184,8 @@ enum {
  * Internationalization
  *
  */
-
-#ifdef ENABLE_NLS
-#  include "gettext.h"
-#  define _(String) gettext (String)
-#  define S_(String) gettext (String)
-#  define gettext_noop(String) String
-#  define N_(String) gettext_noop String
-#else
-#  define _(String) (String)
-#  define S_(String) (String)
-#  define N_(String) String
-#  define textdomain(Domain)
-#  define bindtextdomain(Package, Directory)
-#endif
+#include "gettext.h"
+#define _(String) gettext (String)
 
 /* For non-GNU compilers to ignore __attribute__ */
 #ifndef __GNUC__
