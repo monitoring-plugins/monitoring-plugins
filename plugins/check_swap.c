@@ -47,10 +47,6 @@ long unsigned int crit_size = 0;
 int verbose;
 int allswaps;
 
-#if !defined(sun)
-int sun = 0;	/* defined by compiler if it is a sun solaris system */
-#endif
-
 int
 main (int argc, char **argv)
 {
@@ -103,10 +99,18 @@ main (int argc, char **argv)
 	fclose(fp);
 #else
 # ifdef HAVE_SWAP
-	if (!allswaps && sun) {
+	if (!allswaps) {
+#ifdef _AIX
+		asprintf(&swap_command, "%s", "/usr/sbin/lsps -s");
+		asprintf(&swap_format, "%s", "%d%*s %d");
+		conv_factor = 1;
+#else
+# ifdef sun
 		asprintf(&swap_command, "%s", "/usr/sbin/swap -s");
 		asprintf(&swap_format, "%s", "%*s %*dk %*s %*s + %*dk %*s = %dk %*s %dk %*s");
 		conv_factor = 2048;
+# endif
+#endif
 	} else {
 		asprintf(&swap_command, "%s", SWAP_COMMAND);
 		asprintf(&swap_format, "%s", SWAP_FORMAT);
@@ -144,17 +148,33 @@ main (int argc, char **argv)
 		}
 	}
 
-	if (!allswaps && sun) {
+	if (!allswaps) {
+#ifdef _AIX
+		fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_process);	/* Ignore first line */
+		sscanf (input_buffer, swap_format, &total_swap, &used_swap);
+		free_swap = total_swap * (100 - used_swap) /100;
+		used_swap = total_swap - free_swap;
+		if (verbose >= 3)
+			printf (_("total=%d, used=%d, free=%d\n"), total_swap, used_swap, free_swap);
+#else
+# ifdef sun
 		sscanf (input_buffer, swap_format, &used_swap, &free_swap);
 		used_swap = used_swap / 1024;
 		free_swap = free_swap / 1024;
 		total_swap = used_swap + free_swap;
+# endif
+#endif
 	} else {
 		while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
 			sscanf (input_buffer, swap_format, &dsktotal, &dskfree);
 
 			dsktotal = dsktotal / conv_factor;
+			/* AIX lists percent used, so this converts to dskfree in MBs */
+#ifdef _AIX
+			dskfree = dsktotal * (100 - dskfree) / 100;
+#else
 			dskfree = dskfree / conv_factor;
+#endif
 			if (verbose >= 3)
 				printf (_("total=%d, free=%d\n"), dsktotal, dskfree);
 
@@ -372,6 +392,10 @@ print_help (void)
 On Solaris, if -a specified, uses swap -l, otherwise uses swap -s.\n\
 Will be discrepencies because swap -s counts allocated swap and includes\n\
 real memory\n"));
+#endif
+#ifdef _AIX
+	printf (_("\n\
+On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s.\n"));
 #endif
 
 	printf (_(UT_SUPPORT));
