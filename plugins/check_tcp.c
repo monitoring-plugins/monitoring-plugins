@@ -490,7 +490,7 @@ print_usage (void)
 {
 	printf
 		("Usage: %s -H host -p port [-w warn_time] [-c crit_time] [-s send_string]\n"
-		 "         [-e expect_string] [-q quit_string] [-m maxbytes] [-W wait]\n"
+		 "         [-e expect_string] [-q quit_string] [-m maxbytes] [-d delay]\n"
 		 "         [-t to_sec] [-v]\n", progname);
 }
 
@@ -530,7 +530,7 @@ print_help (void)
 		 "    Response time to result in critical status (seconds)\n"
 		 " -t, --timeout=INTEGER\n"
 		 "    Seconds before connection times out (default: %d)\n"
-		 " -v"
+		 " -v, --verbose"
 		 "    Show details for command-line debugging (do not use with nagios server)\n"
 		 " -h, --help\n"
 		 "    Print detailed help screen\n"
