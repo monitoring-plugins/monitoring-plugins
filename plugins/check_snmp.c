@@ -175,7 +175,7 @@ int errcode, excode;
 #endif
 
 char *server_address = NULL;
-char *community = NULL;
+char *community = DEFAULT_COMMUNITY;
 char *authpriv = NULL;
 char *proto = NULL;
 char *seclevel = NULL;
@@ -184,8 +184,8 @@ char *authproto = NULL;
 char *authpasswd = NULL;
 char *privpasswd = NULL;
 char *oid = "";
-char *label = NULL;
-char *units = NULL;
+char *label = "SNMP";
+char *units = "";
 char *port = DEFAULT_PORT;
 char string_value[MAX_INPUT_BUFFER] = "";
 char **labels = NULL;
@@ -203,9 +203,9 @@ unsigned long response_value[MAX_OIDS];
 int check_warning_value = FALSE;
 int check_critical_value = FALSE;
 int eval_method[MAX_OIDS];
-char *delimiter = NULL;
-char *output_delim = NULL;
-char *miblist = NULL;
+char *delimiter = DEFAULT_DELIMITER;
+char *output_delim = DEFAULT_OUTPUT_DELIMITER;
+char *miblist = DEFAULT_MIBLIST;
 
 
 int
@@ -219,7 +219,7 @@ main (int argc, char **argv)
 	char *command_line = NULL;
 	char *response = NULL;
 	char *outbuff = "";
-	char *output = NULL;
+	char *output = "";
 	char *ptr = NULL;
 	char *p2 = NULL;
 	char *show = NULL;
@@ -251,7 +251,6 @@ main (int argc, char **argv)
 		printf ("Could not open stderr for %s\n", command_line);
 	}
 
-	asprintf (&output, "");
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process))
 		asprintf (&output, "%s%s", output, input_buffer);
 
@@ -293,6 +292,7 @@ main (int argc, char **argv)
 			}
 		}
 
+		/* We strip out the datatype indicator for PHBs */
 		if (strstr (response, "Gauge: "))
 			show = strstr (response, "Gauge: ") + 7;
 		else if (strstr (response, "Gauge32: "))
@@ -305,12 +305,7 @@ main (int argc, char **argv)
 
 		iresult = STATE_DEPENDENT;
 
-		if (eval_method[i] & CRIT_PRESENT) {
-			iresult = STATE_CRITICAL;
-		} else if (eval_method[i] & WARN_PRESENT) {
-			iresult = STATE_WARNING;
-		}
-
+		/* Process this block for integer comparisons */
 		if (eval_method[i] & CRIT_GT ||
 		    eval_method[i] & CRIT_LT ||
 		    eval_method[i] & CRIT_GE ||
@@ -327,9 +322,9 @@ main (int argc, char **argv)
 			response_value[i] = strtoul (p2, NULL, 10);
 			iresult = check_num (i);
 			asprintf (&show, "%lu", response_value[i]);
-			/*asprintf (&show, "%s", response); */
 		}
 
+		/* Process this block for string matching */
 		else if (eval_method[i] & CRIT_STRING) {
 			if (strcmp (response, string_value))
 				iresult = STATE_CRITICAL;
@@ -337,6 +332,7 @@ main (int argc, char **argv)
 				iresult = STATE_OK;
 		}
 
+		/* Process this block for regex matching */
 		else if (eval_method[i] & CRIT_REGEX) {
 #ifdef HAVE_REGEX_H
 			excode = regexec (&preg, response, 10, pmatch, eflags);
@@ -352,21 +348,25 @@ main (int argc, char **argv)
 				iresult = STATE_CRITICAL;
 			}
 #else
-			printf ("SNMP UNKNOWN: call for regex which was not a compiled option");
+			printf ("%s UNKNOWN: call for regex which was not a compiled option", label);
 			exit (STATE_UNKNOWN);
 #endif
 		}
+
+		/* Process this block for existence-nonexistence checks */
 		else {
-			if (response && iresult == STATE_DEPENDENT) 
-				iresult = STATE_OK;
-			else if (eval_method[i] & CRIT_PRESENT)
+			if (eval_method[i] & CRIT_PRESENT)
 				iresult = STATE_CRITICAL;
 			else if (eval_method[i] & WARN_PRESENT)
 				iresult = STATE_WARNING;
+			else if (response && iresult == STATE_DEPENDENT) 
+				iresult = STATE_OK;
 		}
 
+		/* Result is the worst outcome of all the OIDs tested */
 		result = max_state (result, iresult);
 
+		/* Prepend a label for this OID if there is one */
 		if (nlabels > 1 && i < nlabels && labels[i] != NULL)
 			asprintf (&outbuff, "%s%s%s %s%s%s", outbuff,
 			          (i == 0) ? " " : output_delim,
@@ -375,7 +375,8 @@ main (int argc, char **argv)
 			asprintf (&outbuff, "%s%s%s%s%s", outbuff, (i == 0) ? " " : output_delim,
 			          mark (iresult), show, mark (iresult));
 
-		if (nunits > 0 && i < nunits)
+		/* Append a unit string for this OID if there is one */
+		if (nunits > 0 && i < nunits && unitv[i] != NULL)
 			asprintf (&outbuff, "%s %s", outbuff, unitv[i]);
 
 		i++;
@@ -413,7 +414,7 @@ process_arguments (int argc, char **argv)
 {
 	char *ptr;
 	int c = 1;
-	int j = 0, jj = 0;
+	int j = 0, jj = 0, ii = 0;
 
 #ifdef HAVE_GETOPT_H
 	int option_index = 0;
@@ -479,34 +480,52 @@ process_arguments (int argc, char **argv)
 		case 'v': /* verbose */
 			verbose = TRUE;
 			break;
+
+	/* Connection info */
+		case 'C':									/* group or community */
+			community = strscpy (community, optarg);
+			break;
+		case 'H':									/* Host or server */
+			server_address = strscpy (server_address, optarg);
+			break;
+		case 'p':       /* TCP port number */
+			port = strscpy(port, optarg);
+			break;
+		case 'm':      /* List of MIBS  */
+			miblist = strscpy(miblist, optarg);
+			break;
+		case 'P':     /* SNMP protocol version */
+			proto = strscpy(proto, optarg);
+			break;
+		case 'L':     /* security level */
+			seclevel = strscpy(seclevel,optarg);
+			break;
+		case 'U':     /* security username */
+			secname = strscpy(secname, optarg);
+			break;
+		case 'a':     /* auth protocol */
+			asprintf (&authproto, optarg);
+			break;
+		case 'A':     /* auth passwd */
+			authpasswd = strscpy(authpasswd, optarg);
+			break;
+		case 'X':     /* priv passwd */
+			privpasswd = strscpy(privpasswd, optarg);
+			break;
 		case 't':	/* timeout period */
 			if (!is_integer (optarg))
 				usage2 ("Timeout Interval must be an integer", optarg);
 			timeout_interval = atoi (optarg);
 			break;
-		case 'e': /* PRELIMINARY - may change */
-			eval_method[j] |= WARN_PRESENT;
-			for (ptr = optarg; (ptr = index (ptr, ',')); ptr++)
-				ptr[0] = ' '; /* relpace comma with space */
-			for (ptr = optarg; (ptr = index (ptr, ' ')); ptr++)
-				eval_method[++j] |= WARN_PRESENT;
-			asprintf (&oid, "%s %s", (oid?oid:""), optarg);
-			break;
-		case 'E': /* PRELIMINARY - may change */
-			eval_method[j] |= WARN_PRESENT;
-			for (ptr = optarg; (ptr = index (ptr, ',')); ptr++)
-				ptr[0] = ' '; /* relpace comma with space */
-			for (ptr = optarg; (ptr = index (ptr, ' ')); ptr++)
-				eval_method[++j] |= CRIT_PRESENT;
-			asprintf (&oid, "%s %s", (oid?oid:""), optarg);
-			break;
+
+	/* Test parameters */
 		case 'c':									/* critical time threshold */
 			if (strspn (optarg, "0123456789:,") < strlen (optarg)) {
 				printf ("Invalid critical threshold: %s\n", optarg);
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
-			for (ptr = optarg, jj = 0; ptr && jj < MAX_OIDS; jj++) {
+			for (ptr = optarg; ptr && jj < MAX_OIDS; jj++) {
 				if (lu_getll (&lower_crit_lim[jj], ptr) == 1)
 					eval_method[jj] |= CRIT_LT;
 				if (lu_getul (&upper_crit_lim[jj], ptr) == 1)
@@ -520,37 +539,36 @@ process_arguments (int argc, char **argv)
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
-			for (ptr = optarg, jj = 0; ptr && jj < MAX_OIDS; jj++) {
-				if (lu_getll (&lower_warn_lim[jj], ptr) == 1)
-					eval_method[jj] |= WARN_LT;
-				if (lu_getul (&upper_warn_lim[jj], ptr) == 1)
-					eval_method[jj] |= WARN_GT;
+			for (ptr = optarg; ptr && ii < MAX_OIDS; ii++) {
+				if (lu_getll (&lower_warn_lim[ii], ptr) == 1)
+					eval_method[ii] |= WARN_LT;
+				if (lu_getul (&upper_warn_lim[ii], ptr) == 1)
+					eval_method[ii] |= WARN_GT;
 				(ptr = index (ptr, ',')) ? ptr++ : ptr;
 			}
 			break;
-		case 'H':									/* Host or server */
-			server_address = strscpy (server_address, optarg);
-			break;
-		case 'C':									/* group or community */
-			community = strscpy (community, optarg);
-			break;
 		case 'o':									/* object identifier */
+		case 'e': /* PRELIMINARY - may change */
+		case 'E': /* PRELIMINARY - may change */
 			for (ptr = optarg; (ptr = index (ptr, ',')); ptr++)
 				ptr[0] = ' '; /* relpace comma with space */
 			for (ptr = optarg; (ptr = index (ptr, ' ')); ptr++)
 				j++; /* count OIDs */
 			asprintf (&oid, "%s %s", (oid?oid:""), optarg);
-			break;
-		case 'd':									/* delimiter */
-			delimiter = strscpy (delimiter, optarg);
-			break;
-		case 'D':									/* output-delimiter */
-			output_delim = strscpy (output_delim, optarg);
+			if (c == 'E' || c == 'e') {
+				jj++;
+				ii++;
+			}
+			if (c == 'E') 
+				eval_method[j+1] |= WARN_PRESENT;
+			else if (c == 'e')
+				eval_method[j+1] |= CRIT_PRESENT;
 			break;
 		case 's':									/* string or substring */
 			strncpy (string_value, optarg, sizeof (string_value) - 1);
 			string_value[sizeof (string_value) - 1] = 0;
-			eval_method[jj] = CRIT_STRING;
+			eval_method[jj++] = CRIT_STRING;
+			ii++;
 			break;
 		case 'R':									/* regex */
 #ifdef HAVE_REGEX_H
@@ -567,11 +585,20 @@ process_arguments (int argc, char **argv)
 				printf ("Could Not Compile Regular Expression");
 				return ERROR;
 			}
-			eval_method[jj] = CRIT_REGEX;
+			eval_method[jj++] = CRIT_REGEX;
+			ii++;
 #else
-			printf ("SNMP UNKNOWN: call for regex which was not a compiled option");
+			printf ("%s UNKNOWN: call for regex which was not a compiled option", label);
 			exit (STATE_UNKNOWN);
 #endif
+			break;
+
+	/* Format */
+		case 'd':									/* delimiter */
+			delimiter = strscpy (delimiter, optarg);
+			break;
+		case 'D':									/* output-delimiter */
+			output_delim = strscpy (output_delim, optarg);
 			break;
 		case 'l':									/* label */
 			label = optarg;
@@ -635,30 +662,6 @@ process_arguments (int argc, char **argv)
 					unitv[nunits - 1] = ptr;
 			}
 			break;
-		case 'p':       /* TCP port number */
-			port = strscpy(port, optarg);
-			break;
-		case 'm':      /* List of MIBS  */
-			miblist = strscpy(miblist, optarg);
-			break;
-		case 'P':     /* SNMP protocol version */
-			proto = strscpy(proto, optarg);
-			break;
-		case 'L':     /* security level */
-			seclevel = strscpy(seclevel,optarg);
-			break;
-		case 'U':     /* security username */
-			secname = strscpy(secname, optarg);
-			break;
-		case 'a':     /* auth protocol */
-			asprintf (&authproto, optarg);
-			break;
-		case 'A':     /* auth passwd */
-			authpasswd = strscpy(authpasswd, optarg);
-			break;
-		case 'X':     /* priv passwd */
-			privpasswd = strscpy(privpasswd, optarg);
-			break;
 
 		}
 	}
@@ -692,24 +695,6 @@ first character cannot be a number, however.</para>
 int
 validate_arguments ()
 {
-
-	if (community == NULL)
-		asprintf (&community, DEFAULT_COMMUNITY);
-
-	if (delimiter == NULL)
-		asprintf (&delimiter, DEFAULT_DELIMITER);
-
-	if (output_delim == NULL)
-		asprintf (&output_delim, DEFAULT_OUTPUT_DELIMITER);
-
-	if (miblist == NULL)
-		asprintf (&miblist, DEFAULT_MIBLIST);
-
-	if (label == NULL)
-		asprintf (&label, "SNMP");
-
-	if (units == NULL)
-		asprintf (&units, "");
 
 	/* Need better checks to verify seclevel and authproto choices */
 	
