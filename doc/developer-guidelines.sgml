@@ -268,7 +268,7 @@
 	
 		<para>Notes:</para>
 		<orderedlist>
-		<listitem><para>start &gt; end></para>
+		<listitem><para>start &gt; end</para>
 			</listitem>
 		<listitem><para>start and ":" is not required if start=0</para>
 			</listitem>
@@ -327,7 +327,7 @@
 			same UOM</para>
 			</listitem>
 		<listitem><para>warn and crit are in the range format (see 
-			<xref linkend="thresholdformat">)</para>
+			<xref linkend="thresholdformat">). Must be the same UOM</para>
 			</listitem>
 		<listitem><para>UOM (unit of measurement) is one of:</para>
 			<orderedlist>
