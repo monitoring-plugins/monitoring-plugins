@@ -1,0 +1,69 @@
+#!/usr/bin/perl
+# Multi-RBL Query tool, developer Vikram <vr@udel.edu>
+use strict;
+use Socket;
+my $suspect = $ARGV[1];
+
+die "Syntax: $0 -H <ip address>\n" unless $suspect;
+
+my @rblservers=qw[
+	3y.spam.mrs.kithrup.com
+	block.blars.org
+	bl.redhatgate.com
+	blackholes.five-ten-sg.com
+	blackholes.intersil.net
+	blackholes.mail-abuse.org
+	blackholes.wirehub.net
+	blacklist.spambag.org
+	dev.null.dk
+	dews.qmail.org	
+	dialup.blacklist.jippg.org
+	dialups.mail-abuse.org
+	dnsbl.njabl.org
+	dul.maps.vix.com
+	dul.orca.bc.ca
+	dynablock.wirehub.net
+	formmail.relays.monkeys.com
+	ipwhois.rfc-ignorant.org
+	list.dsbl.org
+	multihop.dsbl.org
+	okrelays.nthelp.com	
+	pm0-no-more.compu.net
+	proxies.relays.monkeys.com
+	rbl-plus.mail-abuse.org
+	rbl.maps.vix.com
+	rbl.spam.org.tr
+	relays.mail-abuse.org
+	relays.nthelp.com
+	relays.ordb.org
+	relays.radparker.com
+	relays.visi.com
+	sbl.spamhaus.org
+	spamguard.leadmon.net
+	spammers.v6net.org
+	spamsources.fabel.dk
+	spews.org
+	unconfirmed.dsbl.org
+	xbl.selwerd.cx
+];
+
+
+my $spam = 0;
+foreach ( @rblservers ) {
+	my @s = split('\.',$suspect);
+	my $req = "$s[3].$s[2].$s[1].$s[0].".$_;
+
+	my ($name,$aliases,$addrtype,$length,@addrs) = gethostbyname($req);
+	next unless (@addrs);
+
+        my $result = inet_ntoa($addrs[0]);
+	#next unless (substr($result, 7) eq '127.0.0');
+
+	print "$suspect is listed in the following RBLS: " if ( $spam == 0 );
+	print $_, " ";
+	$spam = 1;
+}
+
+print "$suspect is not listed in any RBLS" if ( $spam == 0 );
+print "\n";
+exit( $spam );

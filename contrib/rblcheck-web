@@ -1,0 +1,37 @@
+#!/usr/bin/perl
+# Multi-RBL Query tool, developer Vikram <vr@udel.edu>
+use IO::Socket::INET;
+
+die "Syntax: $0 -H <ip address>\n" unless $ARGV[1];
+
+$soc = new IO::Socket::INET->new(PeerPort=>80,
+Proto=>'tcp',
+PeerAddr=>"rbls.org") or die("Cannot connect to CERT");
+                                                                                                    
+$ip = $ARGV[1];	
+$uri = '/?q='.$ip;
+
+$soc->send("GET $uri HTTP/1.1\nHost: rbls.org\n\n");
+@buff = <$soc>;
+delete @buff[0..7];	
+$len = @buff;
+
+$alert = 0;
+
+
+for( $i=0;$i<$len;$i++ ) {
+	next unless( defined $buff[$i] );
+	chomp($buff[$i]);
+	#print "$buff[$i]\n";
+
+	if ( $buff[$i] eq "<tr bgcolor=#ffc0c0>" ) {
+		$rbl = substr($buff[$i+1], 5, index($buff[$i], "</tr>") - 5);
+		next if ( index($rbl, '.') == -1 );
+		print "$ip is listed in the following RBLS: " if ( $alert == 0 );
+		print "$rbl ";
+		$alert = 1;
+	} 	
+}
+print "$ip is not listed in any RBLS" if ( $alert == 0 );
+print "\n";
+exit($alert);

@@ -55,3 +55,5 @@ fetchlog-0.94.tar.gz   - C program: The fetchlog utility displays the last new m
                          remote logfiles. The README shows how to setup fetchlog for Nagios.
                          (Alexander Haderer)
 
+check_icmp-0.8.tar.gz	- C program: check_icmp is an alternative to check_ping that doesn't require the ping
+			utility or any other executable.
