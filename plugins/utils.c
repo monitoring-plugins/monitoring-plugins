@@ -404,17 +404,19 @@ strscat (char *dest, const char *src)
 {
 	size_t len, l2;
 
-	if (src)
-		l2 = strlen (src);
-	else
+	if (src == NULL)
 		return dest;
-
-	if (dest)
-		len = strlen (dest);
 	else
-		len = 0;
+		l2 = strlen (src);
 
-	dest = realloc (dest, len + l2 + 1);
+	if (dest == NULL) {
+		len = 0;
+		dest = malloc (l2 + 1);
+	} else {
+		len = strlen (dest);
+		dest = realloc (dest, len + l2 + 1);
+	}
+
 	if (dest == NULL)
 		terminate (STATE_UNKNOWN, "failed malloc in strscat\n");
 
