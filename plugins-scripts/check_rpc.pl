@@ -18,15 +18,11 @@
 #
 # Copyright Notice: GPL
 #
-BEGIN {
-	if ($0 =~ m/^(.*?)[\/\\]([^\/\\]+)$/) {
-		$runtimedir = $1;
-		$PROGNAME = $2;
-	}
-}
+
 
 use strict;
-use lib $main::runtimedir;
+use FindBin;
+use lib "$FindBin::Bin";
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 use vars qw($PROGNAME);
 my ($verbose,@proto,%prognum,$host,$response,$prognum,$port,$cmd);

@@ -7,6 +7,8 @@
 # be installed on the system, however since it's part of the ntp suite, you 
 # should already have it installed.
 #
+# $Id$
+# 
 # Nothing clever done in this program - its a very simple bare basics hack to
 # get the job done.
 #
@@ -45,19 +47,17 @@
 #           source. This happens while starting up and if contact
 #           with master has been lost.
 #
-BEGIN {
-	if ($0 =~ m/^(.*?)[\/\\]([^\/\\]+)$/) {
-		$runtimedir = $1;
-		$PROGNAME = $2;
-	}
-}
+# Modifed to run under Embedded Perl - patch from Douglas Warner
+#
+
 
 require 5.004;
 use POSIX;
 use strict;
 use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_H $opt_w $opt_c $verbose $PROGNAME);
-use lib $main::runtimedir;
+use FindBin;
+use lib "$FindBin::Bin";
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 
 sub print_help ();

@@ -38,15 +38,8 @@
 #				with perl -wT and 'use strict'
 #
 # test using check_ircd.pl (irc-2.mit.edu|irc.erols.com|irc.core.com)
+# 2002/05/02    SG		Fixed for Embedded Perl
 #
-# ------------------------------------------------------------------[ Begin ]--
-
-BEGIN {
-	if ($0 =~ m/^(.*?)[\/\\]([^\/\\]+)$/) {
-		$runtimedir = $1;
-		$PROGNAME = $2;
-	}
-}
 
 # ----------------------------------------------------------------[ Require ]--
 
@@ -59,7 +52,8 @@ use strict;
 use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_t $opt_p $opt_H $opt_w $opt_c $verbose);
 use vars qw($PROGNAME);
-use lib $main::runtimedir;
+use FindBin;
+use lib "$FindBin::Bin";
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
 
 # ----------------------------------------------------[ Function Prototypes ]--

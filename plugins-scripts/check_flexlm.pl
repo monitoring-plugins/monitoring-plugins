@@ -26,19 +26,15 @@
 # initial version: 9-10-99 Ernst-Dieter Martin edmt@infineon.com
 #
 # License: GPL
+# $Id$
 #
 
-BEGIN {
-	if ($0 =~ m/^(.*?)[\/\\]([^\/\\]+)$/) {
-		$runtimedir = $1;
-		$PROGNAME = $2;
-	}
-}
 
 use strict;
 use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_F $verbose $PROGNAME);
-use lib $main::runtimedir;
+use FindBin ;
+use lib "$FindBin::Bin";
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
 
 sub print_help ();

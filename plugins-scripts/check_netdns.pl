@@ -6,8 +6,11 @@
 # Copyright 2000, virCIO, LLP
 #
 # $Log$
-# Revision 1.1  2002/02/28 06:43:00  egalstad
-# Initial revision
+# Revision 1.2  2002/05/02 16:43:29  sghosh
+# fix for embedded perl
+#
+# Revision 1.1.1.1  2002/02/28 06:43:00  egalstad
+# Initial import of existing plugin code
 #
 # Revision 1.1  2000/08/03 20:41:12  karldebisschop
 # rename to avoid conflict when installing
@@ -18,11 +21,15 @@
 # Revision 1.1  2000/07/20 19:09:13  cwg
 # All the pieces needed to use my version of check_dns.
 #
+# 
 
 use Getopt::Long;
 use Net::DNS;
+use Findbin;
+use lib "$FindBin::Bin";
+use utils ;
 
- Getopt::Long::Configure(`bundling`);
+Getopt::Long::Configure(`bundling`);
 GetOptions("V" => $opt_V,         "version" => $opt_V,
 					 "h" => $opt_h,         "help" => $opt_h,
 					 "t=i" => $opt_t,       "timeout=i" => $opt_t,

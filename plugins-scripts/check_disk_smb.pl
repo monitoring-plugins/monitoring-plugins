@@ -14,13 +14,10 @@
 #  Modified [warn] and [critical] parameters to accept format of nnn[M|G] to
 #  allow setting of limits in MBytes or GBytes.  Percentage settings for large
 #  drives is a pain in the butt
-
-BEGIN {
-	if ($0 =~ m/^(.*?)[\/\\]([^\/\\]+)$/) {
-		$runtimedir = $1;
-		$PROGNAME = $2;
-	}
-}
+# 2-May-2002 - SGhosh fix for embedded perl
+#
+# $Id$
+#
 
 require 5.004;
 use POSIX;
@@ -28,7 +25,8 @@ use strict;
 use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_H $opt_s $opt_W $opt_u $opt_p $opt_w $opt_c $verbose);
 use vars qw($PROGNAME);
-use lib $main::runtimedir;
+use FindBin;
+use lib "$FindBin::Bin";
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
 
 sub print_help ();

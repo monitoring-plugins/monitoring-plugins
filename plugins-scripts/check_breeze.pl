@@ -1,16 +1,11 @@
 #! /usr/bin/perl -wT
 
-BEGIN {
-	if ($0 =~ m/^(.*?)[\/\\]([^\/\\]+)$/) {
-		$runtimedir = $1;
-		$PROGNAME = $2;
-	}
-}
 
 use strict;
 use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_H $opt_w $opt_c $PROGNAME);
-use lib $main::runtimedir;
+use FindBin;
+use lib "$FindBin::Bin" ;
 use utils qw(%ERRORS &print_revision &support &usage);
 
 sub print_help ();
@@ -26,7 +21,8 @@ GetOptions
 	 "h"   => \$opt_h, "help"       => \$opt_h,
 	 "w=s" => \$opt_w, "warning=s"  => \$opt_w,
 	 "c=s" => \$opt_c, "critical=s" => \$opt_c,
-	 "H=s" => \$opt_H, "hostname=s" => \$opt_H);
+	 "H=s" => \$opt_H, "hostname=s" => \$opt_H,
+	 "C=s" => \$opt_C, "community=s" => \$opt_C);
 
 if ($opt_V) {
 	print_revision($PROGNAME,'$Revision$');
@@ -35,20 +31,22 @@ if ($opt_V) {
 
 if ($opt_h) {print_help(); exit $ERRORS{'OK'};}
 
-($opt_H) || ($opt_H = shift) || usage("Host name/address not specified\n");
+($opt_H) || usage("Host name/address not specified\n");
 my $host = $1 if ($opt_H =~ /([-.A-Za-z0-9]+)/);
 ($host) || usage("Invalid host: $opt_H\n");
 
-($opt_w) || ($opt_w = shift) || usage("Warning threshold not specified\n");
+($opt_w) || usage("Warning threshold not specified\n");
 my $warning = $1 if ($opt_w =~ /([0-9]{1,2}|100)+/);
 ($warning) || usage("Invalid warning threshold: $opt_w\n");
 
-($opt_c) || ($opt_c = shift) || usage("Critical threshold not specified\n");
+($opt_c) || usage("Critical threshold not specified\n");
 my $critical = $1 if ($opt_c =~ /([0-9]{1,2}|100)/);
 ($critical) || usage("Invalid critical threshold: $opt_c\n");
 
+($opt_C) || ($opt_C = "public") ;
+
 my $sig=0;
-$sig = `/usr/bin/snmpget $host public .1.3.6.1.4.1.710.3.2.3.1.3.0`;
+$sig = `/usr/bin/snmpget $host $opt_C .1.3.6.1.4.1.710.3.2.3.1.3.0`;
 my @test=split(/ /,$sig);
 $sig=$test[2];
 $sig=int($sig);
@@ -62,7 +60,7 @@ exit $ERRORS{'OK'};
 
 
 sub print_usage () {
-	print "Usage: $PROGNAME -H <host> -w <warn> -c <crit>\n";
+	print "Usage: $PROGNAME -H <host> [-C community] -w <warn> -c <crit>\n";
 }
 
 sub print_help () {
@@ -76,6 +74,8 @@ This plugin reports the signal strength of a Breezecom wireless equipment
 	print "
 -H, --hostname=HOST
    Name or IP address of host to check
+-C, --community=community
+   SNMPv1 community (default public)
 -w, --warning=INTEGER
    Percentage strength below which a WARNING status will result
 -c, --critical=INTEGER

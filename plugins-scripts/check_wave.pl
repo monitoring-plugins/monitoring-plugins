@@ -3,15 +3,9 @@
 # $Id$
 
 
-BEGIN {
-	if ($0 =~ m/^(.*?)[\/\\]([^\/\\]+)$/) {
-		$runtimedir = $1;
-		$PROGNAME = $2;
-	}
-}
-
 use strict;
-use lib $main::runtimedir;
+use FindBin;
+use lib "$Findbin::Bin";
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 use vars qw($PROGNAME);
 use Getopt::Long;
