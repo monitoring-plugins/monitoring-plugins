@@ -118,7 +118,9 @@ print_help (void)
 
 	printf (_(HELP_VRSN));
 
-	printf (_(HOST_PORT_46), 'p', "none");
+	printf (_(HOST_PORT), 'p', "none");
+
+	printf (_(IPv46));
 
 	printf (_("\
  -s, --send=STRING\n\

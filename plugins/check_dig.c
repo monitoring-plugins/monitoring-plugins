@@ -16,34 +16,9 @@
 *
 *****************************************************************************/
 
-const char *progname = "check_dig";
-const char *revision = "$Revision$";
-const char *copyright = "2002-2003";
-const char *authors = "Nagios Plugin Development Team";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
-
-const char *summary = "Test the DNS service on the specified host using dig\n";
-
-const char *option_summary = "-H host -l lookup [-t timeout] [-v]";
-
-const char *options = "\
- -H, --hostname=STRING or IPADDRESS\n\
-   Check server on the indicated host\n\
- -l, --lookup=STRING\n\
-   machine name to lookup\n\
- -t, --timeout=INTEGER\n\
-   Seconds before connection attempt times out (default: %d)\n\
- -v, --verbose\n\
-   Print extra information (command-line use only)\n";
-
-const char *standard_options = "\
- -h, --help\n\
-    Print detailed help screen\n\
- -V, --version\n\
-    Print version information\n\n";
-
 #include "config.h"
 #include "common.h"
+#include "netutils.h"
 #include "utils.h"
 #include "popen.h"
 
@@ -52,9 +27,64 @@ int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
 
+const char *progname = "check_dig";
+const char *revision = "$Revision$";
+const char *copyright = "2002-2003";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
+enum {
+	DEFAULT_PORT = 53
+};
+
+void
+print_usage (void)
+{
+	printf (_("\
+Usage: %s -H host -l lookup [-p <server port>] [-w <warning interval>]\n\
+         [-c <critical interval>] [-t <timeout>] [-v]\n"),
+	        progname);
+	printf ("       %s (-h|--help)\n", progname);
+	printf ("       %s (-V|--version)\n", progname);
+}
+
+void
+print_help (void)
+{
+	char *myport;
+
+	asprintf (&myport, "%d", DEFAULT_PORT);
+
+	print_revision (progname, revision);
+
+	printf (_(COPYRIGHT), copyright, email);
+
+	printf (_("Test the DNS service on the specified host using dig\n\n"));
+
+	print_usage ();
+
+	printf (_(HELP_VRSN));
+
+	printf (_(HOST_PORT), 'P', myport);
+
+	printf (_("\
+ -l, --lookup=STRING\n\
+   machine name to lookup\n"));
+
+	printf (_(WARN_CRIT_TO), DEFAULT_SOCKET_TIMEOUT);
+
+	printf (_(VRBS));
+
+	support ();
+}
+
+
 char *query_address = NULL;
 char *dns_server = NULL;
 int verbose = FALSE;
+int server_port = DEFAULT_PORT;
+int warning_interval = -1;
+int critical_interval = -1;
+
 
 int
 main (int argc, char **argv)
@@ -66,13 +96,14 @@ main (int argc, char **argv)
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR)
-		usage ("Cannot catch SIGALRM\n");
+		usage (_("Cannot catch SIGALRM\n"));
 
 	if (process_arguments (argc, argv) != OK)
-		usage ("Could not parse arguments\n");
+		usage (_("Could not parse arguments\n"));
 
 	/* get the command to run */
-	asprintf (&command_line, "%s @%s %s", PATH_TO_DIG, dns_server, query_address);
+	asprintf (&command_line, "%s @%s -p %d %s",
+	          PATH_TO_DIG, dns_server, server_port, query_address);
 
 	alarm (timeout_interval);
 	time (&start_time);
@@ -82,13 +113,13 @@ main (int argc, char **argv)
 	/* run the command */
 	child_process = spopen (command_line);
 	if (child_process == NULL) {
-		printf ("Could not open pipe: %s\n", command_line);
+		printf (_("Could not open pipe: %s\n"), command_line);
 		return STATE_UNKNOWN;
 	}
 
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL)
-		printf ("Could not open stderr for %s\n", command_line);
+		printf (_("Could not open stderr for %s\n"), command_line);
 
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
 
@@ -107,7 +138,7 @@ main (int argc, char **argv)
 				result = STATE_OK;
 			}
 			else {
-				asprintf (&output, "Server not found in ANSWER SECTION");
+				asprintf (&output, _("Server not found in ANSWER SECTION"));
 				result = STATE_WARNING;
 			}
 
@@ -117,7 +148,7 @@ main (int argc, char **argv)
 	}
 
 	if (result != STATE_OK) {
-		asprintf (&output, "No ANSWER SECTION found");
+		asprintf (&output, _("No ANSWER SECTION found"));
 	}
 
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
@@ -134,23 +165,23 @@ main (int argc, char **argv)
 	if (spclose (child_process)) {
 		result = max_state (result, STATE_WARNING);
 		if (strlen (output) == 0)
-			asprintf (&output, "dig returned error status");
+			asprintf (&output, _("dig returned error status"));
 	}
 
 	(void) time (&end_time);
 
 	if (output == NULL || strlen (output) == 0)
-		asprintf (&output, " Probably a non-existent host/domain");
+		asprintf (&output, _(" Probably a non-existent host/domain"));
 
 	if (result == STATE_OK)
-		printf ("DNS OK - %d seconds response time (%s)\n",
+		printf (_("DNS OK - %d seconds response time (%s)\n"),
 						(int) (end_time - start_time), output);
 	else if (result == STATE_WARNING)
-		printf ("DNS WARNING - %s\n", output);
+		printf (_("DNS WARNING - %s\n"), output);
 	else if (result == STATE_CRITICAL)
-		printf ("DNS CRITICAL - %s\n", output);
+		printf (_("DNS CRITICAL - %s\n"), output);
 	else
-		printf ("DNS problem - %s\n", output);
+		printf (_("DNS problem - %s\n"), output);
 
 	return result;
 }
@@ -182,35 +213,59 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* help */
-			usage3 ("Unknown argument", optopt);
+			usage3 (_("Unknown argument"), optopt);
+		case 'h':									/* help */
+			print_help ();
+			exit (STATE_OK);
+		case 'V':									/* version */
+			print_revision (progname, "$Revision$");
+			exit (STATE_OK);
 		case 'H':									/* hostname */
 			if (is_host (optarg)) {
 				dns_server = optarg;
 			}
 			else {
-				usage ("Invalid host name\n");
+				usage2 (_("Invalid host name"), optarg);
+			}
+			break;
+		case 'p':
+			if (is_intpos (optarg)) {
+				server_port = atoi (optarg);
+			}
+			else {
+				usage2 (_("Server port must be a nonnegative integer\n"), optarg);
 			}
 			break;
 		case 'l':									/* username */
 			query_address = optarg;
 			break;
-		case 'v':									/* verbose */
-			verbose = TRUE;
+		case 'w':									/* timeout */
+			if (is_intnonneg (optarg)) {
+				warning_interval = atoi (optarg);
+			}
+			else {
+				usage2 (_("Warning interval must be a nonnegative integer\n"), optarg);
+			}
+			break;
+		case 'c':									/* timeout */
+			if (is_intnonneg (optarg)) {
+				critical_interval = atoi (optarg);
+			}
+			else {
+				usage2 (_("Critical interval must be a nonnegative integer\n"), optarg);
+			}
 			break;
 		case 't':									/* timeout */
 			if (is_intnonneg (optarg)) {
 				timeout_interval = atoi (optarg);
 			}
 			else {
-				usage ("Time interval must be a nonnegative integer\n");
+				usage2 (_("Time interval must be a nonnegative integer\n"), optarg);
 			}
 			break;
-		case 'V':									/* version */
-			print_revision (progname, "$Revision$");
-			exit (STATE_OK);
-		case 'h':									/* help */
-			print_help ();
-			exit (STATE_OK);
+		case 'v':									/* verbose */
+			verbose = TRUE;
+			break;
 		}
 	}
 
@@ -221,7 +276,7 @@ process_arguments (int argc, char **argv)
 				dns_server = argv[c];
 			}
 			else {
-				usage ("Invalid host name");
+				usage2 (_("Invalid host name"), argv[c]);
 			}
 		}
 		else {
@@ -242,31 +297,3 @@ validate_arguments (void)
 	return OK;
 }
 
-
-
-
-
-void
-print_help (void)
-{
-	print_revision (progname, revision);
-	printf ("Copyright (c) %s %s\n\t<%s>\n\n", copyright, authors, email);
-	printf (summary);
-	print_usage ();
-	printf ("\nOptions:\n");
-	printf (options, DEFAULT_SOCKET_TIMEOUT);
-	printf (standard_options);
-	support ();
-}
-
-
-
-
-
-void
-print_usage (void)
-{
-	printf ("Usage: %s %s\n", progname, option_summary);
-	printf ("       %s (-h|--help)\n", progname);
-	printf ("       %s (-V|--version)\n", progname);
-}

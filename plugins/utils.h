@@ -99,11 +99,13 @@ char *state_text (int result);
  -V, --version\n\
     Print version information\n"
 
-#define HOST_PORT_46 "\
+#define HOST_PORT "\
  -H, --hostname=ADDRESS\n\
-    Host name or IP Address%s\n\
+    Host name or IP Address\n\
  -%c, --port=INTEGER\n\
-    Port number (default: %s)\n\
+    Port number (default: %s)\n"
+
+#define IPv46 "\
  -4, --use-ipv4\n\
     Use IPv4 connection\n\
  -6, --use-ipv6\n\
@@ -119,4 +121,4 @@ char *state_text (int result);
  -c, --critical=DOUBLE\n\
     Response time to result in critical status (seconds)\n\
  -t, --timeout=INTEGER\n\
-    Seconds before connection times out (default: %s)\n"
+    Seconds before connection times out (default: %d)\n"

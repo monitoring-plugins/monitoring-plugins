@@ -29,8 +29,7 @@
 enum {
 	DEFAULT_PORT = 5432,
 	DEFAULT_WARN = 2,
-	DEFAULT_CRIT = 8,
-	DEFAULT_TIMEOUT = 30
+	DEFAULT_CRIT = 8
 };
 
 #include "config.h"
@@ -125,6 +124,10 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 void
 print_help (void)
 {
+	char *myport;
+
+	asprintf (&myport, "%d", DEFAULT_PORT);
+
 	print_revision (progname, revision);
 
 	printf (_(COPYRIGHT), copyright, email);
@@ -135,7 +138,9 @@ print_help (void)
 
 	printf (_(HELP_VRSN));
 
-	printf (_(HOST_PORT_46), 'P', "5432");
+	printf (_(HOST_PORT), 'P', myport);
+
+	printf (_(IPv46));
 
 	printf (S_("\
   -d, --database=STRING\n\
@@ -143,7 +148,7 @@ print_help (void)
   -l, --logname = STRING\n\
     Login name of user\n\
   -p, --password = STRING\n\
-    Password (BIG SECURITY ISSUE)\n\n"), DEFAULT_DB);
+    Password (BIG SECURITY ISSUE)\n"), DEFAULT_DB);
 
 	printf (_(WARN_CRIT_TO), DEFAULT_SOCKET_TIMEOUT);
 

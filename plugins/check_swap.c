@@ -124,7 +124,7 @@ main (int argc, char **argv)
 	char *status = "";
 
 	if (process_arguments (argc, argv) != OK)
-		usage ("Invalid command arguments supplied\n");
+		usage (_("Invalid command arguments supplied\n"));
 
 #ifdef HAVE_PROC_MEMINFO
 	fp = fopen (PROC_MEMINFO, "r");
@@ -147,19 +147,19 @@ main (int argc, char **argv)
 	}
 
 	if (verbose >= 2)
-		printf ("Command: %s\n", swap_command);
+		printf (_("Command: %s\n"), swap_command);
 	if (verbose >= 3)
-		printf ("Format: %s\n", swap_format);
+		printf ("_(Format: %s\n"), swap_format);
 
 	child_process = spopen (swap_command);
 	if (child_process == NULL) {
-		printf ("Could not open pipe: %s\n", swap_command);
+		printf (_("Could not open pipe: %s\n"), swap_command);
 		return STATE_UNKNOWN;
 	}
 
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL)
-		printf ("Could not open stderr for %s\n", swap_command);
+		printf (_("Could not open stderr for %s\n"), swap_command);
 
 	sprintf (str, "%s", "");
 	/* read 1st line */
@@ -189,7 +189,7 @@ main (int argc, char **argv)
 			dsktotal = dsktotal / conv_factor;
 			dskfree = dskfree / conv_factor;
 			if (verbose >= 3)
-				printf ("total=%d, free=%d\n", dsktotal, dskfree);
+				printf (_("total=%d, free=%d\n"), dsktotal, dskfree);
 
 			dskused = dsktotal - dskfree;
 #endif
@@ -206,7 +206,7 @@ main (int argc, char **argv)
 	}
 	percent_used = 100 * ((double) used_swap) / ((double) total_swap);
 	result = max_state (result, check_swap (percent_used, free_swap));
-	asprintf (&status, " %d%% free (%lu MB out of %lu MB)%s",
+	asprintf (&status, _(" %d%% free (%lu MB out of %lu MB)%s"),
 						(100 - percent_used), free_swap, total_swap, status);
 
 #ifdef HAVE_PROC_MEMINFO
@@ -294,7 +294,7 @@ process_arguments (int argc, char **argv)
 				break;
 			}
 			else {
-				usage ("Warning threshold must be integer or percentage!\n");
+				usage (_("Warning threshold must be integer or percentage!\n"));
 			}
 			wc++;
 		case 'c':									/* critical time threshold */
@@ -312,7 +312,7 @@ process_arguments (int argc, char **argv)
 				break;
 			}
 			else {
-				usage ("Critical threshold must be integer or percentage!\n");
+				usage (_("Critical threshold must be integer or percentage!\n"));
 			}
 			cc++;
 		case 'a':									/* all swap */
@@ -328,7 +328,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* help */
-			usage ("Invalid argument\n");
+			usage (_("Invalid argument\n"));
 		}
 	}
 
@@ -369,11 +369,11 @@ validate_arguments (void)
 	}
 	else if (warn_percent < crit_percent) {
 		usage
-			("Warning percentage should be more than critical percentage\n");
+			(_("Warning percentage should be more than critical percentage\n"));
 	}
 	else if (warn_size < crit_size) {
 		usage
-			("Warning free space should be more than critical free space\n");
+			(_("Warning free space should be more than critical free space\n"));
 	}
 	return OK;
 }
