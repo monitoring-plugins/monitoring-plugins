@@ -222,9 +222,9 @@ main (int argc, char **argv)
 
 	if (strstr (timestamp, ":")) {
 		if (strstr (server_url, "?"))
-			server_url = ssprintf (server_url, "%s&%s", server_url, timestamp);
+			asprintf (&server_url, "%s&%s", server_url, timestamp);
 		else
-			server_url = ssprintf (server_url, "%s?%s", server_url, timestamp);
+			asprintf (&server_url, "%s?%s", server_url, timestamp);
 	}
 
 	if (display_html == TRUE)
@@ -539,10 +539,8 @@ check_http (void)
 #ifdef HAVE_SSL
 	if (use_ssl == TRUE) {
 
-		if (connect_SSL () != OK) {
-			msg = ssprintf (msg, "Unable to open TCP socket");
-			terminate (STATE_CRITICAL, msg);
-		}
+		if (connect_SSL () != OK)
+			terminate (STATE_CRITICAL, "Unable to open TCP socket");
 
 		if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
 			X509_free (server_cert);
@@ -552,7 +550,7 @@ check_http (void)
 			return STATE_CRITICAL;
 		}
 
-		buf = ssprintf (buf, "%s %s HTTP/1.0\r\n", http_method, server_url);
+		asprintf (&buf, "%s %s HTTP/1.0\r\n", http_method, server_url);
 		if (SSL_write (ssl, buf, strlen (buf)) == -1) {
 			ERR_print_errors_fp (stderr);
 			return STATE_CRITICAL;
@@ -560,7 +558,7 @@ check_http (void)
 
 		/* optionally send the host header info (not clear if it's usable) */
 		if (strcmp (host_name, "")) {
-			buf = ssprintf (buf, "Host: %s\r\n", host_name);
+			asprintf (&buf, "Host: %s\r\n", host_name);
 			if (SSL_write (ssl, buf, strlen (buf)) == -1) {
 				ERR_print_errors_fp (stderr);
 				return STATE_CRITICAL;
@@ -568,7 +566,7 @@ check_http (void)
 		}
 
 		/* send user agent */
-		buf = ssprintf (buf, "User-Agent: check_http/%s (nagios-plugins %s)\r\n",
+		asprintf (&buf, "User-Agent: check_http/%s (nagios-plugins %s)\r\n",
 		         clean_revstring (REVISION), PACKAGE_VERSION);
 		if (SSL_write (ssl, buf, strlen (buf)) == -1) {
 			ERR_print_errors_fp (stderr);
@@ -578,7 +576,7 @@ check_http (void)
 		/* optionally send the authentication info */
 		if (strcmp (user_auth, "")) {
 			auth = base64 (user_auth, strlen (user_auth));
-			buf = ssprintf (buf, "Authorization: Basic %s\r\n", auth);
+			asprintf (&buf, "Authorization: Basic %s\r\n", auth);
 			if (SSL_write (ssl, buf, strlen (buf)) == -1) {
 				ERR_print_errors_fp (stderr);
 				return STATE_CRITICAL;
@@ -587,12 +585,12 @@ check_http (void)
 
 		/* optionally send http POST data */
 		if (http_post_data) {
-			buf = ssprintf (buf, "Content-Type: application/x-www-form-urlencoded\r\n");
+			asprintf (&buf, "Content-Type: application/x-www-form-urlencoded\r\n");
 			if (SSL_write (ssl, buf, strlen (buf)) == -1) {
 				ERR_print_errors_fp (stderr);
 				return STATE_CRITICAL;
 			}
-			buf = ssprintf (buf, "Content-Length: %i\r\n\r\n", strlen (http_post_data));
+			asprintf (&buf, "Content-Length: %i\r\n\r\n", strlen (http_post_data));
 			if (SSL_write (ssl, buf, strlen (buf)) == -1) {
 				ERR_print_errors_fp (stderr);
 				return STATE_CRITICAL;
@@ -605,7 +603,7 @@ check_http (void)
 		}
 
 		/* send a newline so the server knows we're done with the request */
-		buf = ssprintf (buf, "\r\n\r\n");
+		asprintf (&buf, "\r\n\r\n");
 		if (SSL_write (ssl, buf, strlen (buf)) == -1) {
 			ERR_print_errors_fp (stderr);
 			return STATE_CRITICAL;
@@ -614,23 +612,21 @@ check_http (void)
 	}
 	else {
 #endif
-		if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK) {
-			msg = ssprintf (msg, "Unable to open TCP socket");
-			terminate (STATE_CRITICAL, msg);
-		}
-		buf = ssprintf (buf, "%s %s HTTP/1.0\r\n", http_method, server_url);
+		if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK)
+			terminate (STATE_CRITICAL, "Unable to open TCP socket");
+		asprintf (&buf, "%s %s HTTP/1.0\r\n", http_method, server_url);
 		send (sd, buf, strlen (buf), 0);
 		
 
 
 		/* optionally send the host header info */
 		if (strcmp (host_name, "")) {
-			buf = ssprintf (buf, "Host: %s\r\n", host_name);
+			asprintf (&buf, "Host: %s\r\n", host_name);
 			send (sd, buf, strlen (buf), 0);
 		}
 
 		/* send user agent */
-		buf = ssprintf (buf,
+		asprintf (&buf,
 		         "User-Agent: check_http/%s (nagios-plugins %s)\r\n",
 		         clean_revstring (REVISION), PACKAGE_VERSION);
 		send (sd, buf, strlen (buf), 0);
@@ -638,23 +634,23 @@ check_http (void)
 		/* optionally send the authentication info */
 		if (strcmp (user_auth, "")) {
 			auth = base64 (user_auth, strlen (user_auth));
-			buf = ssprintf (buf, "Authorization: Basic %s\r\n", auth);
+			asprintf (&buf, "Authorization: Basic %s\r\n", auth);
 			send (sd, buf, strlen (buf), 0);
 		}
 
 		/* optionally send http POST data */
 		/* written by Chris Henesy <lurker@shadowtech.org> */
 		if (http_post_data) {
-			buf = ssprintf (buf, "Content-Type: application/x-www-form-urlencoded\r\n");
+			asprintf (&buf, "Content-Type: application/x-www-form-urlencoded\r\n");
 			send (sd, buf, strlen (buf), 0);
-			buf = ssprintf (buf, "Content-Length: %i\r\n\r\n", strlen (http_post_data));
+			asprintf (&buf, "Content-Length: %i\r\n\r\n", strlen (http_post_data));
 			send (sd, buf, strlen (buf), 0);
 			http_post_data = strscat (http_post_data, "\r\n");
 			send (sd, http_post_data, strlen (http_post_data), 0);
 		}
 
 		/* send a newline so the server knows we're done with the request */
-		buf = ssprintf (buf, "\r\n\r\n");
+		asprintf (&buf, "\r\n\r\n");
 		send (sd, buf, strlen (buf), 0);
 #ifdef HAVE_SSL
 	}
@@ -663,7 +659,7 @@ check_http (void)
 	/* fetch the page */
 	pagesize = (size_t) 0;
 	while ((i = my_recv ()) > 0) {
-		buffer[i] = "\0"; 
+		buffer[i] = '\0'; 
 		full_page = strscat (full_page, buffer);
 		pagesize += i;
 	}
@@ -716,9 +712,9 @@ check_http (void)
 	/* make sure the status line matches the response we are looking for */
 	if (!strstr (status_line, server_expect)) {
 		if (server_port == HTTP_PORT)
-			msg = ssprintf (msg, "Invalid HTTP response received from host\n");
+			asprintf (&msg, "Invalid HTTP response received from host\n");
 		else
-			msg = ssprintf (msg,
+			asprintf (&msg,
 			                "Invalid HTTP response received from host on port %d\n",
 			                server_port);
 		terminate (STATE_CRITICAL, msg);
@@ -727,7 +723,7 @@ check_http (void)
 
 	/* Exit here if server_expect was set by user and not default */
 	if ( server_expect_yn  )  {
-		msg = ssprintf (msg, "HTTP OK: Status line output matched \"%s\"\n",
+		asprintf (&msg, "HTTP OK: Status line output matched \"%s\"\n",
 	                  server_expect);
 		if (verbose)
 			printf ("%s\n",msg);
@@ -742,8 +738,7 @@ check_http (void)
 	  	  strstr (status_line, "501") ||
 	    	strstr (status_line, "502") ||
 		    strstr (status_line, "503")) {
-			msg = ssprintf (msg, "HTTP CRITICAL: %s\n", status_line);
-			terminate (STATE_CRITICAL, msg);
+			terminate (STATE_CRITICAL, "HTTP CRITICAL: %s\n", status_line);
 		}
 
 		/* client errors result in a warning state */
@@ -752,8 +747,7 @@ check_http (void)
 	    	strstr (status_line, "402") ||
 		    strstr (status_line, "403") ||
 		    strstr (status_line, "404")) {
-			msg = ssprintf (msg, "HTTP WARNING: %s\n", status_line);
-			terminate (STATE_WARNING, msg);
+			terminate (STATE_WARNING, "HTTP WARNING: %s\n", status_line);
 		}
 
 		/* check redirected page if specified */
@@ -807,7 +801,7 @@ check_http (void)
 					else if (sscanf (pos, HDR_LOCATION URI_PATH, server_url) == 1) {
 						if ((server_url[0] != '/') && (x = strrchr(orig_url, '/'))) {
 							*x = '\0';
-							server_url = ssprintf (server_url, "%s/%s", orig_url, server_url);
+							asprintf (&server_url, "%s/%s", orig_url, server_url);
 						}
 						check_http ();
 					} 					
@@ -828,7 +822,7 @@ check_http (void)
 			else if (onredirect == STATE_CRITICAL)
 				printf ("HTTP CRITICAL");
 			time (&end_time);
-			msg = ssprintf (msg, ": %s - %d second response time %s%s|time=%d\n",
+			asprintf (&msg, ": %s - %d second response time %s%s|time=%d\n",
 		                 status_line, (int) (end_time - start_time), timestamp,
 	                   (display_html ? "</A>" : ""), (int) (end_time - start_time));
 			terminate (onredirect, msg);
@@ -840,7 +834,7 @@ check_http (void)
 		
 	/* check elapsed time */
 	time (&end_time);
-	msg = ssprintf (msg, "HTTP problem: %s - %d second response time %s%s|time=%d\n",
+	asprintf (&msg, "HTTP problem: %s - %d second response time %s%s|time=%d\n",
 	               status_line, (int) (end_time - start_time), timestamp,
 	               (display_html ? "</A>" : ""), (int) (end_time - start_time));
 	if (check_critical_time == TRUE && (end_time - start_time) > critical_time)
@@ -889,7 +883,7 @@ check_http (void)
 #endif
 
 	/* We only get here if all tests have been passed */
-	msg = ssprintf (msg, "HTTP ok: %s - %d second response time %s%s|time=%d\n",
+	asprintf (&msg, "HTTP ok: %s - %d second response time %s%s|time=%d\n",
 	                status_line, (int) (end_time - start_time),
 	                timestamp, (display_html ? "</A>" : ""), (int) (end_time - start_time));
 	terminate (STATE_OK, msg);

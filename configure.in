@@ -17,6 +17,13 @@ dnl Figure out how to invoke "install" and what install options to use.
 AC_PROG_INSTALL
 AC_SUBST(INSTALL)
 
+AC_PROG_CC
+AC_PROG_MAKE_SET
+AC_PROG_AWK
+
+AC_FUNC_GETLOADAVG
+AM_FUNC_STRTOD
+AM_WITH_REGEX
 AC_PROG_RANLIB
 
 AC_PATH_PROG(ACLOCAL,aclocal)
@@ -61,10 +68,6 @@ dnl PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/etc:/usr/local/bin:/usr/local/sbin:$
 LDFLAGS="$LDFLAGS -L."
 
 dnl Checks for programs.
-AC_PROG_CC
-AC_PROG_MAKE_SET
-AC_PROG_AWK
-
 AC_PATH_PROG(PYTHON,python)
 AC_PATH_PROG(PERL,perl)
 AC_PATH_PROG(SH,sh)
@@ -261,6 +264,7 @@ AC_HEADER_STDC
 AC_HEADER_TIME
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(signal.h strings.h string.h syslog.h unistd.h uio.h errno.h regex.h sys/types.h sys/time.h sys/socket.h sys/loadavg.h)
+AC_CHECK_HEADERS(stdarg.h sys/unistd.h unistd.h ctype.h sys/wait.h stdlib.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -269,17 +273,65 @@ AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_TYPE_SIGNAL
 
-dnl AC_CHECK_MEMBER(struct timeb.millitm,[AC_DEFINE(HAVE_STRUCT_TIMEB_MILLITM)],,[#include <sys/timeb.h>])
+AC_CHECK_SIZEOF(int,cross)
+AC_CHECK_SIZEOF(long,cross)
+AC_CHECK_SIZEOF(short,cross)
 
-dnl EXTRA_LIBRARIES="libgetopt.a libsnprintf.a"
-dnl noinst_LIBRARIES="libgetopt.a libsnprintf.a"
-dnl libgetopt_a_SOURCES="getopt.c getopt1.c"
-dnl libgetopt_a_DEPENDENCIES=getopt.h
-dnl libsnprintf_a_SOURCES=snprintf.c
-dnl AC_SUBST(noinst_LIBRARIES)
-dnl AC_SUBST(libgetopt_a_SOURCES)
-dnl AC_SUBST(libgetopt_a_DEPENDENCIES)
-dnl AC_SUBST(libsnprintf_a_SOURCES)
+AC_CACHE_CHECK([for long long],ac_cv_have_longlong,[
+AC_TRY_RUN([#include <stdio.h>
+main() { long long x = 1000000; x *= x; exit(((x/1000000) == 1000000)? 0: 1); }],
+ac_cv_have_longlong=yes,ac_cv_have_longlong=no,ac_cv_have_longlong=cross)])
+if test x"$ac_cv_have_longlong" = x"yes"; then
+    AC_DEFINE(HAVE_LONGLONG)
+fi
+
+#
+# Check if the compiler supports the LL prefix on long long integers.
+# AIX needs this.
+
+AC_CACHE_CHECK([for LL suffix on long long integers],ac_cv_compiler_supports_ll, [
+    AC_TRY_COMPILE([#include <stdio.h>],[long long i = 0x8000000000LL],
+        ac_cv_compiler_supports_ll=yes,ac_cv_compiler_supports_ll=no)])
+if test x"$ac_cv_compiler_supports_ll" = x"yes"; then
+   AC_DEFINE(COMPILER_SUPPORTS_LL)
+fi
+AC_CACHE_CHECK([for __va_copy],ac_cv_HAVE_VA_COPY,[
+AC_TRY_LINK([#include <stdarg.h>
+va_list ap1,ap2;], [__va_copy(ap1,ap2);],
+ac_cv_HAVE_VA_COPY=yes,ac_cv_HAVE_VA_COPY=no)])
+if test x"$ac_cv_HAVE_VA_COPY" = x"yes"; then
+    AC_DEFINE(HAVE_VA_COPY)
+fi
+
+AC_CACHE_CHECK([for C99 vsnprintf],ac_cv_HAVE_C99_VSNPRINTF,[
+AC_TRY_RUN([
+#include <sys/types.h>
+#include <stdarg.h>
+void foo(const char *format, ...) { 
+       va_list ap;
+       int len;
+       char buf[5];
+
+       va_start(ap, format);
+       len = vsnprintf(buf, 0, format, ap);
+       va_end(ap);
+       if (len != 5) exit(1);
+
+       va_start(ap, format);
+       len = vsnprintf(0, 0, format, ap);
+       va_end(ap);
+       if (len != 5) exit(1);
+
+       if (snprintf(buf, 3, "hello") != 5 || strcmp(buf, "he") != 0) exit(1);
+
+       exit(0);
+}
+main() { foo("hello"); }
+],
+ac_cv_HAVE_C99_VSNPRINTF=yes,ac_cv_HAVE_C99_VSNPRINTF=no,ac_cv_HAVE_C99_VSNPRINTF=cross)])
+if test x"$ac_cv_HAVE_C99_VSNPRINTF" = x"yes"; then
+    AC_DEFINE(HAVE_C99_VSNPRINTF)
+fi
 
 dnl We used to not do long options unless a compatible lib was found
 dnl Now we provide code and make libgetopt if native is not suitable
@@ -302,7 +354,7 @@ AC_CHECK_FUNCS(getopt_long_only,,LIBS="$LIBS -lgetopt" DEPLIBS="$DEPLIBS libgeto
 AC_CHECK_FUNC(asprintf,,LIBS="$LIBS -lsnprintf" DEPLIBS="$DEPLIBS libsnprintf.a")
 
 dnl Checks for library functions.
-AC_CHECK_FUNCS(select socket strdup strstr strtod strtol strtoul gettimeofday)
+AC_CHECK_FUNCS(memmove select socket strdup strstr strtod strtol strtoul gettimeofday)
 
 AC_MSG_CHECKING(for type of socket size)
 AC_TRY_COMPILE([#include <stdlib.h>
