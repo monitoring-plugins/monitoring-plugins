@@ -23,7 +23,7 @@ $ENV{'BASH_ENV'}="";
 if (-e "/usr/bin/snmpwalk") {
   $snmpwalk = "/usr/bin/snmpwalk";
 } elsif (-e "/usr/local/bin/snmpwalk") {
-  $snmpwalk = "/usr/local/snmpwalk";
+  $snmpwalk = "/usr/local/bin/snmpwalk";
 }
 
 
@@ -45,41 +45,47 @@ GetOptions( "check-filesystem"   => \$chk_fs,
 	    "community=s"        => \$target_community,
 	    "filesystemID1=i"    => \$fsid1_opt,
 	    "filesystem=s"       => \$fs_opt,
+	    "protocol:s"          => \$proto_opt,
 	    "warning=i"          => \$warning_opt,
             "critical=i"         => \$critical_opt);
 
+$proto_opt = 1
+  unless $proto_opt == 1	||
+         $proto_opt == '2c'	||
+         $proto_opt == 3;
+
 if ($chk_fs) {
-    walk_data($snmpwalk, $target_host, $target_community, $mounted_OID );
-    walk_data($snmpwalk, $target_host, $target_community, $totalspace_OID );
-    walk_data($snmpwalk, $target_host, $target_community, $freespace_OID );    check_filesystem($fs_opt, $warning_opt, $critical_opt);
+    walk_data($snmpwalk, $target_host, $target_community, $mounted_OID,$proto_opt );
+    walk_data($snmpwalk, $target_host, $target_community, $totalspace_OID,$proto_opt );
+    walk_data($snmpwalk, $target_host, $target_community, $freespace_OID,$proto_opt );    check_filesystem($fs_opt, $warning_opt, $critical_opt);
 } elsif ($show_fs) {
-    walk_data($snmpwalk, $target_host, $target_community, $filesystemID1_OID);
-    walk_data($snmpwalk, $target_host, $target_community, $mounted_OID );
-    walk_data($snmpwalk, $target_host, $target_community, $path_OID);
+    walk_data($snmpwalk, $target_host, $target_community, $filesystemID1_OID,$proto_opt);
+    walk_data($snmpwalk, $target_host, $target_community, $mounted_OID,$proto_opt );
+    walk_data($snmpwalk, $target_host, $target_community, $path_OID,$proto_opt);
     show_filesystem();
 } elsif ($chk_fsid){
     $totalspace_fsID_OID = "$totalspace_OID.$fsid1_opt";
     $freespace_fsID_OID = "$freespace_OID.$fsid1_opt";
-    walk_data($snmpwalk, $target_host, $target_community, $totalspace_fsID_OID);
-    walk_data($snmpwalk, $target_host, $target_community, $freespace_fsID_OID);
+    walk_data($snmpwalk, $target_host, $target_community, $totalspace_fsID_OID,$proto_opt);
+    walk_data($snmpwalk, $target_host, $target_community, $freespace_fsID_OID,$proto_opt);
     check_filesystemID1($fsid1_opt, $warning_opt, $critical_opt);
 } elsif ($chk_cpu) {
-    get_cpu_load($snmpwalk, $target_host, $target_community, $cpu_5min_OID);
+    get_cpu_load($snmpwalk, $target_host, $target_community, $cpu_5min_OID,$proto_opt);
     check_cpu_5min($cpu, $warning_opt, $critical_opt);
 } else {
     print "\n\nUsage:\n";
     print "Checking 5-min CPU Load:\n";
-    print "     $0 --check-cpu -warning <threshold> --critical <threshold> --host <yourhost> --community <SNMP community>\n\n";
+    print "     $0 --check-cpu -warning <threshold> --critical <threshold> --host <yourhost> --community <SNMP community> --protocol <SNMP version [1|2c|3]>\n\n";
     print "Checking local filesystem mounted on a host:\n";
-    print "     $0 --show-filesystems --host <hostname> --community <SNMP community>\n\n";
+    print "     $0 --show-filesystems --host <hostname> --community <SNMP community> --protocol <SNMP version [1|2c|3]>\n\n";
     print "Checking by filesystem name:\n";
-    print "     $0 --check-filesystem --filesystem </dev/vg00/lvol1> --warning <% used space> --critical <% used space> --host <hostname> --community <SNMP community>\n\n";
+    print "     $0 --check-filesystem --filesystem </dev/vg00/lvol1> --warning <% used space> --critical <% used space> --host <hostname> --community <SNMP community> --protocol <SNMP version [1|2c|3]>\n\n";
     print "Checking by filesystem ID:\n";
-    print "     $0 --check-filesystemID --filesystemID <filesystemID1> --warning <% used space> --critical <% used space> --host <hostname> --community <SNMP community>\n\n";
+    print "     $0 --check-filesystemID --filesystemID <filesystemID1> --warning <% used space> --critical <% used space> --host <hostname> --community <SNMP community> --protocol <SNMP version [1|2c|3]>\n\n";
 }
 
 sub get_cpu_load {
-    my ($snmpwalk, $target_host, $target_community, $OID) = @_;
+    my ($snmpwalk, $target_host, $target_community, $OID,$vers) = @_;
     die "cannot fork: $!" unless defined($pid = open(SNMPWALK, "-|"));
 
     if ($pid) {   # parent
@@ -89,13 +95,13 @@ sub get_cpu_load {
 	}
 	close(SNMPWALK) or warn "kid exited $?";
     } else {      # child
-	exec($snmpwalk,$target_host,$target_community,$OID)  or die "can't exec program: $!";
+	exec($snmpwalk,'-c',$target_community,'-v',$vers,$target_host,$OID)  or die "can't exec program: $!";
     }
 }
 
 sub walk_data {
 #This function queries the SNMP daemon for the specific OID
-    my ($snmpwalk, $target_host, $target_community, $OID) = @_;
+    my ($snmpwalk, $target_host, $target_community, $OID,$vers) = @_;
 
     die "cannot fork: $!" unless defined($pid = open(SNMPWALK, "-|"));
 
@@ -106,7 +112,7 @@ sub walk_data {
 	}
 	close(SNMPWALK) or warn "kid exited $?";
     } else {      # child
-	exec($snmpwalk,$target_host,$target_community,$OID)  or die "can't exec program: $!";
+	exec($snmpwalk,'-c',$target_community,'-v',$vers,$target_host,$OID)  or die "can't exec program: $!";
     }
 }
 
