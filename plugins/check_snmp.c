@@ -144,8 +144,8 @@ main (int argc, char **argv)
 		usage ("Incorrect arguments supplied\n");
 
 	/* create the command line to execute */
-	command_line = ssprintf
-		(command_line,
+	asprintf
+		(&command_line,
 		 "%s -p %s -m ALL -v 1 %s -c %s %s",
 		 PATH_TO_SNMPGET, port, server_address, community, oid);
 
@@ -221,8 +221,8 @@ main (int argc, char **argv)
 			p2 = strpbrk (p2, "0123456789");
 			response_value[i] = strtoul (p2, NULL, 10);
 			iresult = check_num (i);
-			/*For consistency- full SNMP response every time */
-			show = ssprintf (show, "%d", response);
+			asprintf (&show, "%lu", response_value[i]);
+			/*asprintf (&show, "%s", response); */
 		}
 
 		else if (eval_method[i] & CRIT_STRING) {
@@ -264,21 +264,18 @@ main (int argc, char **argv)
 		result = max_state (result, iresult);
 
 		if (nlabels > 1 && i < nlabels && labels[i] != NULL)
-			outbuff = ssprintf
-				(outbuff,
+			asprintf
+				(&outbuff,
 				 "%s%s%s %s%s%s",
 				 outbuff,
 				 (i == 0) ? " " : output_delim,
 				 labels[i], mark (iresult), show, mark (iresult));
 		else
-			outbuff = ssprintf
-				(outbuff,
-				 "%s%s%s%s%s",
-				 outbuff,
+			asprintf (&outbuff, "%s%s%s%s%s", outbuff,
 				 (i == 0) ? " " : output_delim, mark (iresult), show, mark (iresult));
 
 		if (nunits > 0 && i < nunits)
-			outbuff = ssprintf (outbuff, "%s %s", outbuff, unitv[i]);
+			asprintf (&outbuff, "%s %s", outbuff, unitv[i]);
 
 		i++;
 
