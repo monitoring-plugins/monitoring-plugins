@@ -1,0 +1,21 @@
+This file contains the origin of code copied verbatim into some or all of the Nagios plugins.
+
+The NagiosPlugin team thanks the original authors.
+
+Copied code is cited in the source by indented commnents of the form
+
+	.. indent level ..	/* Author YYYY sub-citation	see ACKNOWLEDGEMENTS */
+
+.. copied code
+				/* Author YYYY sub-citation */
+
+King, Alecs 2004
+getmac.c posted at http://lists.freebsd.org/pipermail/freebsd-hackers/2004-June/007415.html
+The sysctl interface to the *BSD kernel is used to get the host MAC address in check_dhcp.c
+
+Kompf, Martin 200-2003 Copyright the author
+http://cplus.kompf.de/macaddr.html
+Using the DLPI support on SysV systems to get the host MAC address in check_dhcp.c
+
+
+
