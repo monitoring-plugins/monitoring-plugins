@@ -102,7 +102,7 @@ main (int argc, char **argv)
 	}
 
 	if (!found) {
-		printf ("%s problem - No data recieved from host\nCMD: %s\n", argv[0],
+		printf ("%s problem - No data recieved from host\nCMD: %s</A>\n", argv[0],
 						cmd);
 		exit (STATE_UNKNOWN);
 	}
@@ -131,12 +131,25 @@ void
 print_help (const char *cmd)
 {
 	print_revision (progname, "$Revision$");
-	printf
-		("Copyright (c) 2000 Karl DeBisschop (kdebiss@alum.mit.edu)\n\n"
-		 "\nThis plugin wraps the text output of another command (plugin) in HTML\n"
-		 "<A> tags, thus displaying the plugin output in as a clickable link in\n"
-		 "the Nagios status screen.  The return status is the same as the invoked\n"
-		 "plugin.\n\n");
+	printf ("\
+Copyright (c) 2000 Karl DeBisschop (kdebiss@alum.mit.edu)\n\n\
+\nThis plugin wraps the text output of another command (plugin) in HTML\n\
+<A> tags, thus displaying the plugin output in as a clickable link in\n\
+the Nagios status screen.  The return status is the same as the invoked\n\
+plugin.\n\n");
 	print_usage (cmd);
+	printf ("\n\
+Pay close attention to quoting to ensure that the shell passes the expected\n\
+data to the plugin. For example, in:\n\
+\n\
+    urlize http://example.com/ check_http -H example.com -r 'two words'\n\
+\n\
+the shell will remove the single quotes and urlize will see:\n\
+\n\
+    urlize http://example.com/ check_http -H example.com -r two words\n\
+\n\
+You probably want:\n\
+\n\
+    urlize http://example.com/ \"check_http -H example.com -r 'two words'\"\n");
 	exit (STATE_OK);
 }
