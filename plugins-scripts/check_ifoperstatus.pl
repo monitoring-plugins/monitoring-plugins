@@ -86,6 +86,7 @@ my $ifdescr;
 my $key;
 my $lastc;
 my $dormantWarn;
+my $adminWarn;
 my $name;
 
 ### Validate Arguments
@@ -168,9 +169,16 @@ push(@snmpoids,$snmpIfAlias) if (defined $ifXTable) ;
    ## if AdminStatus is down - some one made a consious effort to change config
    ##
    if ( not ($response->{$snmpIfAdminStatus} == 1) ) {
-      $state = 'WARNING';
-      $answer = "Interface $name (index $snmpkey) is administratively down.";
-
+     $answer = "Interface $name (index $snmpkey) is administratively down.";
+     if ( not defined $adminWarn or $adminWarn eq "w" ) {
+        $state = 'WARNING';
+     } elsif ( $adminWarn eq "i" ) {
+        $state = 'OK';
+     } elsif ( $adminWarn eq "c" ) {
+        $state = 'CRITICAL';
+     } else { # If wrong value for -a, say warning
+        $state = 'WARNING';
+     }
    } 
    ## Check operational status
    elsif ( $response->{$snmpIfOperStatus} == 2 ) {
@@ -179,7 +187,7 @@ push(@snmpoids,$snmpIfAlias) if (defined $ifXTable) ;
    } elsif ( $response->{$snmpIfOperStatus} == 5 ) {
       if (defined $dormantWarn ) {
 				if ($dormantWarn eq "w") {
-		  	  $state = 'WARNNG';
+		  	  $state = 'WARNING';
 				  $answer = "Interface $name (index $snmpkey) is dormant.";
 	  	  }elsif($dormantWarn eq "c") {
 	  	  	$state = 'CRITICAL';
@@ -286,6 +294,7 @@ sub print_help() {
 	printf "   -n (--name)       the value should match the returned ifName\n";
 	printf "                     (Implies the use of -I)\n";
 	printf "   -w (--warn =i|w|c) ignore|warn|crit if the interface is dormant (default critical)\n";
+	printf "   -D (--admin-down =i|w|c) same for administratively down interfaces (default warning)\n";
 	printf "   -M (--maxmsgsize) Max message size - usefull only for v1 or v2c\n";
 	printf "   -t (--timeout)    seconds before the plugin times out (default=$TIMEOUT)\n";
 	printf "   -V (--version)    Plugin version\n";
@@ -316,9 +325,10 @@ sub process_arguments() {
 			"l=s" => \$lastc,  "lastchange=s" => \$lastc,
 			"p=i" => \$port,  "port=i" =>\$port,
 			"H=s" => \$hostname, "hostname=s" => \$hostname,
-			"I"	  => \$ifXTable, "ifmib" => \$ifXTable,
+			"I"   => \$ifXTable, "ifmib" => \$ifXTable,
 			"n=s" => \$ifName, "name=s" => \$ifName,
 			"w=s" => \$dormantWarn, "warn=s" => \$dormantWarn,
+			"D=s" => \$adminWarn, "admin-down=s" => \$adminWarn,
 			"M=i" => \$maxmsgsize, "maxmsgsize=i" => \$maxmsgsize,
 			"t=i" => \$timeout,    "timeout=i" => \$timeout,
 			);
