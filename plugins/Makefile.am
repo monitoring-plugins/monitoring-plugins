@@ -13,7 +13,7 @@ LIBS = @LIBINTL@ @LIBS@
 libexec_PROGRAMS = check_disk check_dummy check_http check_load \
 	check_mrtg check_mrtgtraf check_nwstat check_overcr check_ping \
 	check_real check_smtp check_ssh check_tcp check_time \
-	check_udp check_ups check_users negate urlize \
+	check_udp check_ups check_users negate urlize check_icmp \
 	@EXTRAS@
 
 check_tcp_programs = check_ftp check_imap check_nntp check_pop check_udp2 \
@@ -113,6 +113,7 @@ check_users_DEPENDENCIES = check_users.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_by_ssh_DEPENDENCIES = check_by_ssh.c $(NETOBJS) popen.o $(DEPLIBS)
 negate_DEPENDENCIES = negate.c $(BASEOBJS) popen.o $(DEPLIBS)
 urlize_DEPENDENCIES = urlize.c $(BASEOBJS) popen.o $(DEPLIBS)
+check_icmp_DEPENDENCIES = check_icmp.c $(DEPLIBS)
 
 ##############################################################################
 # secondary dependencies
