@@ -302,8 +302,9 @@ char *
 rtrim (char *str, const char *tok)
 {
 	int i = 0;
+	int j = sizeof (str);
 
-	while (str != NULL) {
+	while (str != NULL && i < j) {
 		if (*(str + i) == *tok) {
 			sprintf (str + i, "%s", "\0");
 			return str;
