@@ -4,7 +4,7 @@ SUBDIRS = intl lib plugins plugins-scripts po
 
 EXTRA_DIST = config.rpath \
 	ABOUT-NLS CODING FAQ LEGAL REQUIREMENTS SUPPORT THANKS \
-	Helper.pm contrib pkg nagios-plugins.spec.in
+	Helper.pm contrib pkg nagios-plugins.spec
 
 ACLOCAL_AMFLAGS = -I lib
 
@@ -12,7 +12,7 @@ localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\"
 
 dist-hook:
-	sed "s/%%{VERSION}/${VERSION}/;s/%%{RELEASE}/${RELEASE}/;" $(srcdir)/nagios-plugins.spec.in > $(distdir)/nagios-plugins.spec
+	make THANKS nagios-plugins.spec
 
 test:
 	cd plugins; $(MAKE) test
@@ -34,8 +34,12 @@ solpkg:
 	$(INSTALL) pkg/solaris/pkginfo $(BUILDDIR)
 	cd $(BUILDDIR) && $(PERL) ../$(PKGSCRIPT) ../$(PACKDIR)
 
-THANKS: THANKS.in AUTHORS
-	perl -e ' while (<>) { print STDERR "Duplicate: $$_",$$/ if ($$a{$$_}) ; $$a{$$_}++}; print sort by_last_field (keys %a); sub by_last_field { ($$a1) = $$a =~ /\s(\w+)$$/; ($$b1) = $$b =~ /\s(\w+)$$/; $$a1 cmp $$b1}' AUTHORS | cat THANKS.in - > $@
+THANKS: AUTHORS
+	@echo "This software is brought to you by the Nagios Plugins Development Team. However," > $@
+	@echo "there have been many contributors to this project. Everyone below has helped in " >> $@
+	@echo "raising bug reports, creating patches or contributing new plugins." >> $@
+	@echo "" >> $@
+	perl -e ' while (<>) { print STDERR "Duplicate: $$_",$$/ if ($$a{$$_}) ; $$a{$$_}++}; print sort by_last_field (keys %a); sub by_last_field { ($$a1) = $$a =~ /\s(\w+)$$/; ($$b1) = $$b =~ /\s(\w+)$$/; $$a1 cmp $$b1}' $? >> $@
 
 pkgclean:
 	rm -rf $(BUILDDIR) $(PACKDIR)
