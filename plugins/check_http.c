@@ -795,7 +795,7 @@ check_http (void)
 			else if (onredirect == STATE_CRITICAL)
 				printf ("CRITICAL");
 			elapsed_time = delta_time (tv);
-			asprintf (&msg, " - %s - %7.3f second response time %s%s|time=%7.3f\n",
+			asprintf (&msg, " - %s - %.3f second response time %s%s|time=%.3f\n",
 		                 status_line, elapsed_time, timestamp,
 	                   (display_html ? "</A>" : ""), elapsed_time);
 			terminate (onredirect, msg);
@@ -807,7 +807,7 @@ check_http (void)
 		
 	/* check elapsed time */
 	elapsed_time = delta_time (tv);
-	asprintf (&msg, "HTTP problem: %s - %7.3f second response time %s%s|time=%7.3f\n",
+	asprintf (&msg, "HTTP problem: %s - %.3f second response time %s%s|time=%.3f\n",
 	               status_line, elapsed_time, timestamp,
 	               (display_html ? "</A>" : ""), elapsed_time);
 	if (check_critical_time == TRUE && elapsed_time > critical_time)
@@ -820,13 +820,13 @@ check_http (void)
 
 	if (strlen (string_expect)) {
 		if (strstr (page, string_expect)) {
-			printf ("HTTP OK %s - %7.3f second response time %s%s|time=%7.3f\n",
+			printf ("HTTP OK %s - %.3f second response time %s%s|time=%.3f\n",
 			        status_line, elapsed_time,
 			        timestamp, (display_html ? "</A>" : ""), elapsed_time);
 			exit (STATE_OK);
 		}
 		else {
-			printf ("CRITICAL - string not found%s|time=%7.3f\n",
+			printf ("CRITICAL - string not found%s|time=%.3f\n",
 			        (display_html ? "</A>" : ""), elapsed_time);
 			exit (STATE_CRITICAL);
 		}
@@ -835,14 +835,14 @@ check_http (void)
 	if (strlen (regexp)) {
 		errcode = regexec (&preg, page, REGS, pmatch, 0);
 		if (errcode == 0) {
-			printf ("HTTP OK %s - %7.3f second response time %s%s|time=%7.3f\n",
+			printf ("HTTP OK %s - %.3f second response time %s%s|time=%.3f\n",
 			        status_line, elapsed_time,
 			        timestamp, (display_html ? "</A>" : ""), elapsed_time);
 			exit (STATE_OK);
 		}
 		else {
 			if (errcode == REG_NOMATCH) {
-				printf ("CRITICAL - pattern not found%s|time=%7.3f\n",
+				printf ("CRITICAL - pattern not found%s|time=%.3f\n",
 				        (display_html ? "</A>" : ""), elapsed_time);
 				exit (STATE_CRITICAL);
 			}
@@ -863,7 +863,7 @@ check_http (void)
 		exit (STATE_WARNING);
 	}
 	/* We only get here if all tests have been passed */
-	asprintf (&msg, "HTTP OK %s - %7.3f second response time %s%s|time=%7.3f\n",
+	asprintf (&msg, "HTTP OK %s - %.3f second response time %s%s|time=%.3f\n",
 	                status_line, (float)elapsed_time,
 	                timestamp, (display_html ? "</A>" : ""), elapsed_time);
 	terminate (STATE_OK, msg);

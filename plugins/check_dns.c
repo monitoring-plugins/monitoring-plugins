@@ -193,7 +193,7 @@ main (int argc, char **argv)
 		else
 			multi_address = TRUE;
 
-		printf ("DNS ok - %-5.3f seconds response time, address%s %s|time=%-5.3f\n",
+		printf ("DNS ok - %.3f seconds response time, address%s %s|time=%.3f\n",
 		  elapsed_time, (multi_address==TRUE ? "es are" : " is"), address, elapsed_time);
 	}
 	else if (result == STATE_WARNING)

@@ -337,14 +337,14 @@ main (int argc, char **argv)
 	alarm (0);
 
 	printf
-		("%s %s - %7.3f second response time on port %d",
+		("%s %s - %.3f second response time on port %d",
 		 SERVICE,
 		 state_text (result), elapsed_time, server_port);
 
 	if (status && strlen(status) > 0)
 		printf (" [%s]", status);
 
-	printf ("|time=%7.3f\n", elapsed_time);
+	printf ("|time=%.3f\n", elapsed_time);
 
 	return result;
 }
