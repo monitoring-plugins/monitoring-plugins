@@ -4,7 +4,7 @@
 *
 * Program: DHCP plugin for Nagios
 * License: GPL
-* Copyright (c) 2001 Ethan Galstad (nagios@nagios.org)
+* Copyright (c) 2001-2002 Ethan Galstad (nagios@nagios.org)
 *
 * License Information:
 *
@@ -437,7 +437,7 @@ int send_dhcp_packet(void *buffer, int buffer_size, int sock, struct sockaddr_in
 	struct sockaddr_in myname;
 	int result;
 
-	result=sendto(sock,(char *)buffer,buffer_size,0,(struct sockaddr_in *)dest,sizeof(*dest));
+	result=sendto(sock,(char *)buffer,buffer_size,0,(struct sockaddr *)dest,sizeof(*dest));
 
 #ifdef DEBUG
 	printf("send_dhcp_packet result: %d\n",result);
@@ -480,11 +480,11 @@ int receive_dhcp_packet(void *buffer, int buffer_size, int sock, int timeout, st
 		/* why do we need to peek first?  i don't know, its a hack.  without it, the source address of the first packet received was
 		   not being interpreted correctly.  sigh... */
 		bzero(&source_address,sizeof(source_address));
-                recv_result=recvfrom(sock,(char *)buffer,buffer_size,MSG_PEEK,(struct sockaddr_in *)&source_address,&address_size);
+                recv_result=recvfrom(sock,(char *)buffer,buffer_size,MSG_PEEK,(struct sockaddr *)&source_address,&address_size);
 #ifdef DEBUG
 		printf("recv_result_1: %d\n",recv_result);
 #endif
-                recv_result=recvfrom(sock,(char *)buffer,buffer_size,0,(struct sockaddr_in *)&source_address,&address_size);
+                recv_result=recvfrom(sock,(char *)buffer,buffer_size,0,(struct sockaddr *)&source_address,&address_size);
 #ifdef DEBUG
 		printf("recv_result_2: %d\n",recv_result);
 #endif
@@ -812,7 +812,7 @@ void print_help(void){
 
 	/*print_revision(PROGNAME,"$Revision$");*/
 
-	printf("Copyright (c) 2001 Ethan Galstad (nagios@nagios.org)\n\n");
+	printf("Copyright (c) 2001-2002 Ethan Galstad (nagios@nagios.org)\n\n");
 	printf("This plugin tests the availability of DHCP servers on a network.\n\n");
 
 	print_usage();

@@ -21,10 +21,10 @@
  *
  *****************************************************************************/
 
-#include "common/config.h"
-#include "common/common.h"
-#include "common/utils.h"
-#include "common/popen.h"
+#include "config.h"
+#include "common.h"
+#include "utils.h"
+#include "popen.h"
 
 int main(int argc, char **argv)
 {

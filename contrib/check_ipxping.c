@@ -27,9 +27,10 @@
  *
  *****************************************************************************************/
 
-#include "../common/config.h"
-#include "../common/common.h"
+#include "config.h"
+#include "common.h"
 #include "netutils.h"
+#include "popen.h"
 
 /* this should be moved out to the configure script! */
 #define IPXPING_COMMAND	"/tmp/ipxping/ipxping"

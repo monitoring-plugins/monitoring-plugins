@@ -30,8 +30,8 @@
  *   		 
  *******************************************************************/
 
-#include "../common/config.h"
-#include "../common/common.h"
+#include "config.h"
+#include "common.h"
 #include "mysql.h"
 
 MYSQL mysql;
