@@ -1,4 +1,5 @@
 plugins/check_by_ssh.c
+plugins/check_dhcp.c
 plugins/check_dig.c
 plugins/check_disk.c
 plugins/check_dns.c
