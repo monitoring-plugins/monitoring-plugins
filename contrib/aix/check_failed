@@ -1,0 +1,48 @@
+#!/usr/bin/perl
+#======================
+# Created May 25, 2000
+#======================
+
+# This scripts is for checking for failed root login attempts on
+# any machine running AIX which has a failedlogin file in /etc/security
+# The purpose is to thwart (good word) any unauthorised people from
+# even trying to log in as root. This plugin has been developed for Nagios
+# running on AIX.  
+# Lonny Selinger SpEnTBoY lonny@abyss.za.org
+# May
+
+
+my $server = $ARGV[0];
+
+if (!$ARGV[0]) {
+	print "You must specify a server to check\n";
+	print "usage: ./check_failed <Server Name>\n";
+	exit (-1);
+	} else {
+		open (DATE, "/bin/date '+%b %d' |");
+ 		while (<DATE>) {
+			$dline = $_;
+			@dresults = $dline;
+			chop $dresults[0];
+		}	
+		open (SULOG, "rsh $server -l root who /etc/security/failedlogin | grep root |");
+ 		while (<SULOG>) {
+			$line = $_;
+			@results = split (/\s+/,$line);
+			if ($line =~ /^root/) {
+			if (join(' ', @results[2,3]) eq $dresults[0]) {	
+				print "FAILED root login on $dresults[0], node: $ARGV[0] from $results[5]\n";
+				exit(2);
+			}
+		}
+	}
+}	
+if (join(' ', @results[2,3]) ne $dresults[0]) {
+	print "No Failed Root Logins on This Node\n";
+	exit(0);
+}
+exit(0);
+close(SULOG);
+close(DATE);
+
+

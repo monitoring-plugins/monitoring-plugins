@@ -1,0 +1,13 @@
+check_swap
+
+[normal]
+100 100
+^Swap ok - Swap used\: +[0-9]{1,2}\% \([0-9]+ bytes out of [0-9]+\)$
+
+[critical]
+0 0
+^CRITICAL - Swap used\: +[0-9]{1,2}\% \([0-9]+ bytes out of [0-9]+\)$
+
+[critical]
+100 100 1000000000 10000000000
+^CRITICAL - Swap used\: +[0-9]{1,2}\% \([0-9]+ bytes out of [0-9]+\)$

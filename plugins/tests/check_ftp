@@ -1,0 +1,9 @@
+check_ftp
+
+[normal]
+$hostname -wt 300 -ct 600
+FTP ok - [0-9]+ second response time
+
+[critical]
+$noserver -wt 0 -ct 0
+(Invalid FTP response received from host|Connection refused by host)

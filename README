@@ -1,0 +1,42 @@
+Nagios Plugins README
+---------------------
+
+* For instructions on installing these plugins for use with Nagios, read
+  the INSTALL file.
+
+* For information on what chages have been made or plugin have been added,
+  read the Changelog file.
+
+* Some plugins require that you have additional programs and/or
+  libraries installed on your system before they can be used.  Plugins
+  that are dependent on other programs/libraries that are missing are
+  usually not compiled. Read the REQUIREMENTS file for more information.
+
+* Individual plugins are self documenting.  All plugins that comply with
+  the basic guidleines for development will provide detailed help when
+  invoked with the '-h' option ('--help' also, if long options are enabled).
+
+* The file command.cfg contains xample configurations for many of the
+  plugins
+
+You can check for the latest plugins at:
+  ftp://download.sourceforge.net/pub/sourceforge/nagiosplug
+  http://sourceforge.net/projects/nagiosplug/
+
+Send mail to nagiosplug-help@lists.sourceforge.net for assistance.  Please
+include the OS type and version that you are using.  Also, run the plugin with
+the '-v' option and provide the resulting version information.  Of course, 
+there may be additional diagnostic information required as well.  Use good
+judgement.
+
+Send mail to nagiosplug-devel@lists.sourceforge.net for developer discussions.
+
+For patch submissions and bug reports, please use the appropriate resources at
+http://sourceforge.net/projects/nagiosplug/ (navigate to the bug tool and/or
+patch tool from the summary page).  Patches should be relative to the current
+CVS head (development), or to the head of the current stable branch. Also, 
+please include version information for your OS and the plugin(s) your are 
+patching/reporting.
+ 
+--
+Karl DeBisschop (kdebisschop@users.sourceforge.net)

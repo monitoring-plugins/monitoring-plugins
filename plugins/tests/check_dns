@@ -1,0 +1,9 @@
+check_dns
+
+[normal]
+127.0.0.1
+DNS ok - +[\.0-9]+ seconds response time, Address\(es\) is\/are 127\.0\.0\.1
+
+[critical]
+$nullhost
+DNS (problem - Probably a non-existent host/domain|CRITICAL - Non-existent host/domain|CRITICAL - Connection timed out after [0-9]+ seconds)

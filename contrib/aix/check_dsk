@@ -1,0 +1,62 @@
+#! /bin/sh
+
+#======================================================================
+#  Disk Checker utility
+#
+#  Simple little script that checks the status of all partitions
+#  on a node's hard disks.  It will produce a warning alert and list
+#  the offending filesystems in nagios.
+#
+#    Authors:  SpEnTBoY
+#              TheRocker
+#
+#    Email:    lonny@abyss.za.org
+#              therocker@pawprints.2y.net
+#=====================================================================
+
+NUMBER=`rsh $1 -l root df -kP | grep -v ":" | grep -E "9[0-9]%" | tr -s ' '| cut -d' ' -f5 | cut -c1-2 | line`
+TMPFILE=/tmp/tmp.hndl
+TMPTOO=/tmp/two.hndl
+
+if [ "$NUMBER" -gt 90 ]
+then
+
+ `rsh $1 -l root df -kP |grep -v ":" | grep -E "9[0-9]%" | tr -s ' '| cut -d' ' -f6,5 >> $TMPFILE`
+
+     LINES=`wc -l /tmp/tmp.hndl | cut -c8`
+     LINESCTL=`wc -l /tmp/tmp.hndl | cut -c8 `
+     echo "Filesystems over 90% --> \c" 
+
+#======================================================================
+#  You'll see this one in a few our shell scripts.  Just chcecking for
+#  multiple occurances of the warnign condition.  We gotta list 'em all
+#======================================================================
+
+     while [ $LINESCTL != 0 ]
+      do
+
+       cat $TMPFILE | tail -$LINESCTL > $TMPTOO
+       cat $TMPTOO > $TMPFILE
+       LINESCTL=$(( $LINESCTL -1 ))
+       LINES=$(( $LINES -1 ))
+       DATA=`head -1 /tmp/tmp.hndl`
+       echo "( $DATA ) \c"
+       
+     
+     done
+     echo "\n"
+
+#===============================================================
+#  Clean up all those nasty tmp files that suck up valuable
+#  disk realestate.
+#===============================================================
+
+     rm -f $TMPFILE
+     rm -f $TMPTOO
+     exit 1
+
+else
+
+    echo "No Filesystems over 90%... OK"
+    exit 0
+fi

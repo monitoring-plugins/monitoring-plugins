@@ -1,0 +1,49 @@
+#! /bin/sh
+
+#=========================================================================
+#  Kerberos Ticket Checker
+#
+#  This script is handy if you allow kerberos tickets to expire
+#  on your nodes.  The script will simply warn you when a node has 
+#  kerberos tickets expiring on the current date.  This will allow to
+#  re-initialize the tickets if you wish to do so.
+#
+#  Nothing fancy here, all Nagios will show is the number of tickets
+#  that are going to (or already have) expired.  
+#
+#    An item of note:
+#
+#      We made no provisions for the weekend.  If tickets expire on the 
+#      weekend and nobody is around, you won't see a warning on the 
+#      Nagios console because we look for expired on the current day
+#      only.  It's a good idea to have this warning emailed to the 
+#      appropriate admin and if there is something critical that relies
+#      on Kerberos, you might want to send a page.
+#
+#    Authors:  TheRocker
+#              SpEnTBoY
+#
+#    Email:    therocker@pawprints.2y.net
+#              lonny@abyss.za.org
+#=========================================================================
+
+TMPFILE=/tmp/kerbtmp.hndl
+DATE=`date +%b' '%d`
+
+rsh $1 -l root /usr/lpp/ssp/kerberos/bin/klist | tr -s ' ' | cut -d' ' -f4,5,6 | grep -e "$DATE" > $TMPFILE
+
+
+if [ -s $TMPFILE ]
+then
+     
+     LINES=`wc -l /tmp/kerbtmp.hndl | cut -c7-8`
+     echo "Kerberos Tickets set to expire --> \c" 
+     echo "$LINES \c"
+     echo "\n"
+
+    rm -f $TMPFILE
+     exit 1
+
+fi
+    echo "Kerberos Tickets are valid"
+    exit 0

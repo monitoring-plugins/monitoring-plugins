@@ -1,0 +1,9 @@
+check_http
+
+[normal]
+www.infoplease.com -wt 300 -ct 600
+HTTP/1.1 200 OK - [0-9]+ second response time
+
+[critical]
+$nullhost -wt 1 -ct 2
+(Connection refused by host|Network is unreachable|Connection refused or timed out|Socket timeout after [0-9]+ seconds)$

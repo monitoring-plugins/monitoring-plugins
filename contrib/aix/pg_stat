@@ -1,0 +1,45 @@
+#!/bin/ksh
+
+#==============================================================================
+# Script was originally created to collect stats and dump then to a log file
+# every five minutes.  But we like this better (the log file thing is still
+# good if you want to track availability).
+#
+#      Authors:  SpEnTBoY
+#                TheRocker
+#
+#      Email:    lonny@abyss.za.org
+#                therocker@pawprints.2y.net
+#==============================================================================
+
+#=========================================================================================
+#
+#  The best way to do this is to use Kerberos but we use rsh here because our monitoring
+#  workstation doesn't have Kerberos installed.  In order for this to work, the remote
+#  host ($1) must have a .rhosts file that contains a line like:
+#
+#	monitorhost nagiosuser
+#
+#=========================================================================================
+
+PAGING2=`rsh $1 -l root lsps -a -s | grep -v Paging | tr -s ' '|  cut -d' ' -f3 | cut -d'%' -f1` 
+
+                                                        
+if [ "$PAGING2" -gt "35" ] && [ "$PAGING2" -lt "50" ]                             
+then                                                    
+	echo "Paging Space is over 35% ("$PAGING2")%"
+exit 1
+fi
+
+if [ "$PAGING2" -gt "49" ]                              
+then                                                    
+	echo "WARNING! Paging Space is over 50% ("$PAGING2")%"
+exit 2
+fi
+
+if [ "$PAGING2" -lt "34" ]                              
+then                                                    
+	echo "Paging Space is less than 34% ("$PAGING2")%"
+exit 0
+fi
+

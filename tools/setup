@@ -1,0 +1,5 @@
+#! /bin/sh
+autoconf
+autoheader
+automake
+chmod +x debian/rules

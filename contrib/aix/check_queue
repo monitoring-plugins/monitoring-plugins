@@ -1,0 +1,67 @@
+#! /bin/sh
+
+#===============================================================
+#  Print Queue Checker
+#
+#  The print queue checker simply looks for an occurance of a 
+#  DOWN queue.  A note of warning, if you use remote queues in
+#  AIX to redirect print jobs from the AIX queue to an NT print
+#  server that print through DLC rather than IP, it will be very
+#  s - l - o - w. But it will work.
+#
+#    Author: TheRocker
+#    Email:  therocker@pawprints.2y.net
+#===============================================================
+
+TMPFILE=/tmp/qtmp.hndl
+TMPTOO=/tmp/qtwo.hndl
+
+#=======================================================================
+#
+#  This script will also work on AIX 4.2.1 BUT you have to change
+#  the following line.  AIX 4.2.1 does not support the -W option
+#  with lpstat.  For AIX 4.2.1 just remove the -W option and it should
+#  work just fine.
+#
+#=======================================================================
+
+`rsh $1 -l root lpstat -W | grep -e "DOWN" | tr -s ' ' | cut -d' ' -f1,3  > /tmp/qtmp.hndl 2> /tmp/q_err`
+
+if [ -s $TMPFILE ]
+then
+
+#=======================================================
+# 
+#  If you've seen the other AIX scripts I wrote you may
+#  notice that I use this bit of code a lot.  Well it 
+#  works and appears to be all purpose.
+#
+#=======================================================
+
+     LINES=`wc -l /tmp/qtmp.hndl | cut -c8`
+     LINESCTL=`wc -l /tmp/qtmp.hndl | cut -c8`
+
+     echo "Print Queue DOWN --> \c" 
+     
+     while [ $LINESCTL != 0 ]
+      do
+
+       cat $TMPFILE | tail -$LINESCTL > $TMPTOO
+       cat $TMPTOO > $TMPFILE
+       LINESCTL=$(( $LINESCTL -1 ))
+       LINES=$(( $LINES -1 ))
+       DATA=`head -1 /tmp/qtmp.hndl`
+       echo "( $DATA ) \c"
+       
+     
+     done
+
+     echo "\n"
+
+    rm -f $TMPFILE
+    rm -f $TMPTOO
+     exit 2
+
+fi
+    echo "Print Queues Running... OK"
+    exit 0

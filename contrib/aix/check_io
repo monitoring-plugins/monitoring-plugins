@@ -1,0 +1,69 @@
+#! /bin/sh
+
+#=================================================================
+#
+#  I/O Checker (KBPS)
+#  This Script uses iostat to monitor disk io
+#  Useful for notifications of disk thrashing.
+#
+#    Authors:  TheRocker
+#              SpEnTBoY
+#
+#    Email:    therocker@pawprints.2y.net
+#              lonny@abyss.za.org
+#
+#================================================================
+
+NUMBER1=`rsh $1 -l root iostat -d | grep -e "hdisk" | tr -s ' ' | cut -d' ' -f2 | sort -2 -r | cut -c1 | line`
+NUMBER2=`rsh $1 -l root iostat -d | grep -e "hdisk" | tr -s ' ' | cut -d' ' -f2 | sort -2 -r | cut -c2 | line`
+TMPFILE=/tmp/iotest.hndl
+TMPTOO=/tmp/iotwo.hndl
+
+#===========================================================
+#
+#  We do an evaluation on $NUMBER1 and $NUMBER2 to see if
+#  disk io is exceeding 40%.
+#
+#===========================================================
+
+if [ "$NUMBER1" -gt 4 ] && [ "$NUMBER2" -gt 0 ]
+then
+
+ `rsh $1 -l root iostat -d | grep -v cd0 | tr -s ' '| cut -d' ' -f1,2 | grep -e "4[0-9]." >> $TMPFILE`
+
+#====================================================================
+#
+#  Of course, there may be more than one hard disk on the node
+#  so we use this bit of code to report on more than one instance
+#  of excessive disk IO.
+#
+#====================================================================
+
+     LINES=`wc -l /tmp/iotest.hndl | cut -c8`
+     LINESCTL=`wc -l /tmp/iotest.hndl | cut -c8 `
+     echo "WARNING!!! Disk I/O Exceeding 40% on --> \c" 
+     
+     while [ $LINESCTL != 0 ]
+      do
+
+       cat $TMPFILE | tail -$LINESCTL > $TMPTOO
+       cat $TMPTOO > $TMPFILE
+       LINESCTL=$(( $LINESCTL -1 ))
+       LINES=$(( $LINES -1 ))
+       DATA=`head -1 /tmp/iotest.hndl`
+       echo "( $DATA ) "
+       
+     
+     done
+     echo "\n"
+
+     rm -f $TMPFILE
+     rm -f $TMPTOO
+     exit 1 
+
+else   
+
+   print "No Disk I/O Exceeding 40%...OK"
+   exit 0
+
+fi

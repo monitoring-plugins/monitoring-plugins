@@ -1,0 +1,22 @@
+#! /bin/sh
+
+STATE_DEPENDENT=-2
+STATE_UNKNOWN=-1
+STATE_OK=0
+STATE_WARNING=1
+STATE_CRITICAL=2
+
+if test -x /usr/bin/printf; then
+	ECHO=/usr/bin/printf
+else
+	ECHO=echo
+fi
+
+print_revision() {
+	echo "$1 (@PACKAGE@ @VERSION@) $2"
+	$ECHO "@WARRANTY@" | /bin/sed -e 's/\n/ /g'
+}
+
+support() {
+	$ECHO "@SUPPORT@" | /bin/sed -e 's/\n/ /g'
+}

@@ -1,0 +1,52 @@
+Nagios Plugin Requirements
+--------------------------
+
+Some plugins require that you have additional programs and/or
+libraries installed on your system before they can be used.  Plugins
+that are dependent on other programs/libraries that are missing are
+usually not compiled.  Requirements for various plugins are listed
+below...
+
+check_fping:
+	- Requires the fping utility distributed with SATAN.  Either
+	  download and install SATAN or grab the fping program from
+	  http://www.stanford.edu/~schemers/docs/fping/fping.html
+		ftp://ftp.redhat.com/pub/contrib/libc6/SRPMS/fping-2.2b1-1.src.rpm 
+		ftp://ftp.redhat.com/pub/contrib/libc6/RPMS/fping-2.2b1-1.i386.rpm 
+	  Note that the fping command must be setuid root to function.
+
+check_game:
+	- Requires the qstat utility available from
+	  http://www.activesw.com/people/steve/qstat.html
+	  Last tested on qstat 2.3d BETA
+
+check_hpjd:
+	- Requires the UCD-SNMP package available from 
+	  http://ucd-snmp.ucdavis.edu
+	  The snmpget binary is all that is required.
+
+check_ldap:
+	- Requires the LDAP libraries available from
+	  http://www.openldap.org
+		Lib: libldap, liblber
+		Redhat Source: openldap-1.2.9-6.i386.rpm, openldap-devel-1.2.9-6.i386.rpm
+
+check_mysql:
+	- Requires the MySQL libraries available from
+	  http://www.mysql.org
+		Lib: libmysql, libmysqlclient
+		Redhat Powertools Source: mysql-3.20.32a-3.i386.rpm, mysql-devel-3.20.32a-3.i386.rpm (these seem to be broken, however)
+		RPMS from www.mysql.org work better
+
+check_pqsql:
+	- Requires the PostgreSQL libraries available from
+	  http://www.postgresql.org
+
+check_radius:
+	- Requires the radiusclient library available from 
+	  http://www.cityline.net/~lf/radius/
+		RPM (rpmfind): radiusclient-0.3.1-1, radiusclient-devel-0.3.1-1
+
+check_snmp:
+	- Requires the UCD-SNMP package available from 
+	  http://ucd-snmp.ucdavis.edu

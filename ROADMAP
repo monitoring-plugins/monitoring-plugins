@@ -1,0 +1,117 @@
+
+Releases in the 1.3 series will be for development. Version 1.4.0 will
+be the next full production release. I am not planning on dates right now, 
+but you can expect maintennence releases for 1.2.9 as well.
+
+With that done, it's time to figure out what we are doing for release 
+1.3 development. I have a few ideas. Maybe others do as well.
+
+DOCUMENTATION:
+  We pretty much have decieded that we will doing something along 
+  the lines of a literate programming model. So far, we have site 
+  documentation in DocBook. I have some ideas here, which I will
+  discuss in a separate thread.
+
+
+
+OPTION PROCESSING:
+  I believe we can remove reverse compatibility for non-Getopt
+  option specifications. For example, 'check_ping 1 2 3 4 -p 2'
+  would not be supported anymore. Support for this is a hack, 
+  and making it portable is bug-prone. We should also review
+  standardization of our options -- the current list is a little
+  ad hoc, it should be nailed down. Details in a separate thread.
+
+Also, 
+
+  check_http -p 443 --ssl www.infoplease.com
+
+should be fine, but if the getopt in use does not natively support it,
+things like
+
+  check_http www.infoplease.com -p 443 --ssl
+
+should be trapped and result in a call to one of the usage macros
+(which print a message and then exit STATE_UNKNOWN).
+
+This means that the call_getopt() function can go away. It's an
+inconsistent mess and I'd love to ditch it. I only created it to
+satisfy people that wanted reverse compatibility and did not have
+GNU getopt.
+
+Bu I would like to urge that all standard plugins contain
+validate_arguments(). I think this will help convey the idea that
+validations hould be done, even if we don't insist on the specific
+extent that each plugin must do that validation.
+
+This is the set of standard options I envision:
+
+Reserved:
+
+-h, --help (REQUIRED!!!!!)
+-V, --version (REQUIRED!!!!!)
+-v, --verbose
+-q, --quiet
+-t, --timeout = INTEGER (senonds)
+-c, --critical = (INT|FLOAT|RANGE|LIST) 
+-w, --warning = (INT|FLOAT|RANGE|LIST)
+-H, --hostname = STRING
+-F, --file = STRING (usually input) 
+-O, --output = STRING (output file) 
+
+Recommended, but not reserverd: 
+
+-I, --ipaddress = STRING
+-C, --community = STRING
+-a, --auth(info) = STRING (authentication or password) 
+-l, --logname = STRING
+-p, --password = STRING
+-P, --port = INT
+-u, --url = STRING (also --username if --url is not needed)
+
+I am suggesting that port alway be '-P' (uppercase) -- we are
+currently inconsistent in that regard.
+
+I am also adding '-q' for silent running. This is totally self
+centered--I am planning to use a plugin in a cron script, and I
+don't want nightly emails.
+
+As has been the case, ranges are specified with colons, like 'i:j'
+and list are specified with commas like 'i,k' and may contain ranges
+if it makes sense to do so. Perhaps it would be good to build a
+standard list/range processing function for this task.
+
+
+Programming:
+  I would like to follow the GNU guidelines and remove all fixed
+  length character assignments, at least to the extent possible,
+  from the C-based plugins. To that end, I have made strscpy and
+  friends in utils.c -- I'd like to deploy them. I have comments 
+  that there is alot of duplicated code, and techniques used that
+  should be cleaned up. Details in a separate thread.
+
+Remote checks:
+  I have a proposal in hand to incorporate ssh check into spopen()
+  so that remote machine checks can be seemless. A nice idea, but 
+  complex enough to require discussion. Another thread.
+
+I also have a wish list, and I'm sure I've forgot some items. I'll 
+list mine, please respond with other items that can be put into the 
+sourceforge task manager:
+
+  Indent all code in a GNU-compatible manner (indent -ts 2 -br)
+  Add RAND_seed to check_http for --ssl on systems without /dev/random
+  Add regex filtering to check_procs --args option
+  Add working procs syntax for AIX check_procs
+  Allow check_disk to exclude non-local disks
+  Add md5 checksumming to check_http
+  Complete unification of check_tcp and friends
+  Add SSL in a general way to check_tcp and friends
+  Patches to check_log from Joonas
+  Add calculator engine and snmpwalk to check_snmp
+  Is there a bug in check_oracle
+  Are there outstanding bugs in check_snmp
+  Change check_http --onredirect to default as STATE_UNKNOWN
+  Create plugin to check tftp servers
+  Create plugin wrapper to invert error status
+

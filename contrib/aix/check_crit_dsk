@@ -1,0 +1,66 @@
+#!/bin/sh
+
+#=========================================================================
+#  Critical Disk Checker utility
+#
+#  This is the same as the disk checker utility but we use it as
+#  a seperate service in Nagios to report on partitions that
+#  have reached 100% capacity.
+#
+#  We have excluded /dev/cd0 because the cdrom drive will always
+#  report 100% capacity if a CD is in the drive.
+#
+#    Authors:  TheRocker
+#              SpEnTBoY
+#
+#    Email:    therocker@pawprints.2y.net
+#              lonny@abyss.za.org
+#
+#=======================================================================
+
+NUMBER=`rsh $1 -l root df -kP | grep -vE ":|/dev/cd0" | grep -E "100%" | tr -s ' '| cut -d' ' -f5 | cut -c1-3 | line`
+TMPFILE=/tmp/tmpcrit.hndl
+TMPTOO=/tmp/twocrit.hndl
+
+if [ "$NUMBER" -eq 100 ]
+then
+
+ `rsh $1 -l root df -kP |grep -vE ":|/dev/cd0" | grep -E "100%" | tr -s ' '| cut -d' ' -f6,5 >> $TMPFILE`
+
+     LINES=`wc -l /tmp/tmpcrit.hndl | cut -c8`
+     LINESCTL=`wc -l /tmp/tmpcrit.hndl | cut -c8 `
+     echo "Filesystems over 99% --> \c" 
+
+#===============================================================
+#  Just a little bit to check for multiple occurances of the
+#  condition.
+#===============================================================
+
+     while [ $LINESCTL != 0 ]
+      do
+
+       cat $TMPFILE | tail -$LINESCTL > $TMPTOO
+       cat $TMPTOO > $TMPFILE
+       LINESCTL=$(( $LINESCTL -1 ))
+       LINES=$(( $LINES -1 ))
+       DATA=`head -1 /tmp/tmpcrit.hndl`
+       echo "( $DATA ) \c"
+       
+     
+     done
+     echo "\n"
+
+#===============================================================
+#  File clean up.  Always pick up after yourself.  Disk space 
+#  doesn't grow on trees you know.
+#===============================================================
+
+     rm -f $TMPFILE
+     rm -f $TMPTOO
+     exit 2 
+
+else
+
+    echo "No Filesystems over 99%... OK"
+    exit 0
+fi

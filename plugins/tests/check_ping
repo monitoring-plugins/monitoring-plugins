@@ -1,0 +1,13 @@
+check_ping
+
+[normal]
+127.0.0.1 100 100 1000 1000 -p 1
+PING ok - Packet loss = +[0-9]{1,2}\%, +RTA = [\.0-9]+ ms
+
+[critical]
+127.0.0.1 0 0 0 0 -p 1
+Packet loss = +[0-9]{1,2}\%, +RTA = [\.0-9]+ ms
+
+[critical]
+$nullhost 0 0 0 0 -p 1 -to 1
+CRITICAL - Plugin timed out after 1 seconds

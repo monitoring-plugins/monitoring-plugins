@@ -1,0 +1,92 @@
+/* header file for nagios plugins uitls.c */
+
+/* this file should be included in all plugins */
+
+/* The purpose of this package is to provide safer alternantives to C
+functions that might otherwise be vulnerable to hacking. This
+currently includes a standard suite of validation routines to be sure
+that an string argument acually converts to its intended type and a
+suite of string handling routine that do their own memory management
+in order to resist overflow attacks. In addition, a few functions are
+provided to standardize version and error reporting accross the entire
+suite of plugins. */
+
+/* Standardize version information, termination */
+
+char *my_basename (char *);
+void support (void);
+char *clean_revstring (const char *revstring);
+void print_revision (char *, const char *);
+void terminate (int result, char *msg, ...);
+extern RETSIGTYPE timeout_alarm_handler (int);
+
+/* Handle timeouts */
+
+time_t start_time, end_time;
+int timeout_interval = DEFAULT_SOCKET_TIMEOUT;
+
+/* Test input types */
+
+int is_host (char *);
+int is_dotted_quad (char *);
+int is_hostname (char *);
+
+int is_integer (char *);
+int is_intpos (char *);
+int is_intneg (char *);
+int is_intnonneg (char *);
+int is_intpercent (char *);
+
+int is_numeric (char *);
+int is_positive (char *);
+int is_negative (char *);
+int is_nonnegative (char *);
+int is_percentage (char *);
+
+int is_option (char *);
+
+/* Handle strings safely */
+
+void strip (char *buffer);
+char *strscpy (char *dest, char *src);
+char *strscat (char *dest, char *src);
+char *strnl (char *str);
+char *ssprintf (char *str, const char *fmt, ...);
+char *strpcpy (char *dest, const char *src, const char *str);
+char *strpcat (char *dest, const char *src, const char *str);
+
+#define max(a,b) ((a)>(b))?(a):(b)
+
+#define usage(msg) {\
+  printf(msg);\
+  print_usage();\
+exit(STATE_UNKNOWN);\
+}
+
+#define usage2(msg,arg) {\
+  printf("%s: %s - %s\n",PROGNAME,msg,arg);\
+  print_usage();\
+  exit(STATE_UNKNOWN);\
+}
+
+#define state_text(a) \
+(a)==0?"OK":\
+(a)==1?"WARNING":\
+(a)==2?"CRITICAL":\
+(a)==-2?"DEPENDENT":\
+"UNKNOWN"
+
+/* The idea here is that, although not every plugin will use all of these, 
+   most will or should.  Therefore, for consistency, these very common 
+   options should have only these meanings throughout the overall suite */
+
+#define STD_OPTS "Vvht:c:w:H:F:"
+#define STD_OPTS_LONG \
+{"version",no_argument,0,'V'},\
+{"verbose",no_argument,0,'v'},\
+{"help",no_argument,0,'h'},\
+{"timeout",required_argument,0,'t'},\
+{"critical",required_argument,0,'c'},\
+{"warning",required_argument,0,'w'},\
+{"hostname",required_argument,0,'H'},\
+{"file",required_argument,0,'F'}

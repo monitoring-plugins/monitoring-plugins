@@ -1,0 +1,184 @@
+###############################################################################
+# COMMAND CONFIGURATION
+#
+# $Id$
+#
+# SYNTAX:
+# command[<command_name>]=<command_line>
+#
+# <command_name> = A short name used to identify the command
+# <command_line> = The actual command line.  The command line doesn't have to
+#    be surrounded in quotes, but may contain quotes as needed within
+#    the command line.  Take care to use single quotes at the
+#    outer edges of commands or you will have command line
+#    expansion problems when the command is executed by the shell.
+#    Any valid shell command can be used.  Multiple commands can
+#    be separated with semicolons, piping is allowed.  The 
+#    command line can contain macros, but not are macros are valid
+#    at all time (notifications, service checks, etc).  See the
+#    HTML documentaion for more informationon on using macros in
+#    commands.
+#                  
+# Note: Service check, service notification, host check, host notification,
+#    service event handler, and host event handler functions are all defined
+#    here.
+###############################################################################
+
+# Service notification command - send email with problem summary
+
+command[notify-by-email]=/bin/printf "$OUTPUT$" | /bin/mail -s '$SERVICESTATE$ alert for $HOSTALIAS$/$SERVICEDESC$' $CONTACTEMAIL$
+
+# Service notification command - send email to alphanumeric pager
+# gateway The notify-by-epager command assumes that each contact has a
+# pager email gateway, and that the address has been entered into the
+# appropriate contact field instead of an actual pager number.
+# (i.e. 'pagejoe@nowhere.com' routes mail to Joe's alphanumeric pager)
+
+command[notify-by-epager]=/bin/echo "$OUTPUT$" | /bin/mail -s '$HOSTALIAS$/$SERVICEDESC$ is $SERVICESTATE$' $CONTACTPAGER$
+
+# Host notification commands (one for email, one for alphanumeric
+# pager with email gateway)
+
+command[host-notify-by-email]=/bin/echo -e "***** Nagios *****\n\nHost "$HOSTALIAS$" is $HOSTSTATE$!\n\nDate/Time: $DATETIME$\n" | /bin/mail -s 'Host $HOSTNAME$ is $HOSTSTATE$!' $CONTACTEMAIL$
+
+command[host-notify-by-epager]=/bin/echo '$HOSTALIAS$ is $HOSTSTATE$!' | /bin/mail -s 'Host $HOSTNAME$ is $HOSTSTATE$!' $CONTACTPAGER$
+
+# These are some example service check commands.  See the HTML
+# documentation on the plugins for examples of how to configure
+# command definitions.
+
+command[check_tcp]=@libexecdir@/check_tcp -H $HOSTADDRESS$ -p $ARG1$
+command[check_udp]=@libexecdir@/check_udp -H $HOSTADDRESS$ -p $ARG1$
+command[check_ftp]=@libexecdir@/check_ftp -H $HOSTADDRESS$
+command[check_pop]=@libexecdir@/check_pop $HOSTADDRESS$
+command[check_smtp]=@libexecdir@/check_smtp $HOSTADDRESS$
+command[check_nntp]=@libexecdir@/check_nntp $HOSTADDRESS$
+command[check_telnet]=@libexecdir@/check_tcp -H $HOSTADDRESS$ -p 23
+command[check_users]=@libexecdir@/check_users $ARG1$ $ARG2$
+command[check_hpjd]=@libexecdir@/check_hpjd $HOSTADDRESS$ public
+command[check_mrtg]=@libexecdir@/check_mrtg $ARG1$ 10 AVG $ARG2$ $ARG3$ $ARG4$ $ARG5$ $ARG6$
+command[traffic_average]=@libexecdir@/check_mrtgtraf $ARG1$ 10 AVG $ARG2$ $ARG3$ $ARG4$ $ARG5$
+command[check_load]=@libexecdir@/check_load $ARG1$ $ARG2$ $ARG3$ $ARG4$ $ARG5$ $ARG6$
+
+command[check_disk]=@libexecdir@/check_disk -w 85% -c 95% -p $ARG1$
+command[check_dns]=@libexecdir@/check_dns -H www.yahoo.com -s $HOSTADDRESS$
+command[check_http]=@libexecdir@/check_http -H $HOSTADDRESS$ -I $HOSTADDRESS$
+command[check_http2]=@libexecdir@/check_http -H $ARG1$ -I $HOSTADDRESS$ -w $ARG2$ -c $ARG3$
+command[check_pgsql]=@libexecdir@/check_pgsql -H $HOSTADDRESS$ 
+command[check_ping]=@libexecdir@/check_ping -H $HOSTADDRESS$ -w 10:20% -c 60:100%
+command[check_procs]=@libexecdir@/check_procs -w $ARG1$ -c $ARG2$
+command[check_procs_zombie]=@libexecdir@/check_procs -w $ARG1$ -c $ARG2$ -s Z
+command[check_procs_httpd]=@libexecdir@/check_procs -w 5:$ARG1$ -c 1:$ARG2$ -C httpd
+command[check_vsz]=@libexecdir@/check_vsz -w 8096 -c 16182 -C httpd
+
+# An example of using check_by_ssh as an active service check
+command[ssh_disk]=@libexecdir@/check_by_ssh -H $HOSTADDRESS$ -C '@libexecdir@/check_disk -w 85% -c 95% -p $ARG1$'
+
+#
+# UCD_SNMP equivalents for some of the commands above
+#
+
+command[snmp_load]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o .1.3.6.1.4.1.2021.10.1.5.1,.1.3.6.1.4.1.2021.10.1.5.2,.1.3.6.1.4.1.2021.10.1.5.3 -w :$ARG2$,:$ARG3$,:$ARG4$ -w :$ARG5$,:$ARG6$,:$ARG7$ -l load
+
+command[snmp_cpustats]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o .1.3.6.1.4.1.2021.11.9.0,.1.3.6.1.4.1.2021.11.10.0,.1.3.6.1.4.1.2021.11.11.0 -l 'CPU usage (user system idle)' -u '%'
+
+command[snmp_procname]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o 1.3.6.1.4.1.2021.2.1.5.$ARG2$ -w $ARG3$:$ARG4$ -c $ARG5$:$ARG6$
+
+command[snmp_disk]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o 1.3.6.1.4.1.2021.9.1.7.$ARG1$,1.3.6.1.4.1.2021.9.1.9.$ARG1$ -w $ARG2$:,:$ARG3$ -c $ARG4$:,:$ARG5$ -u 'kB free (','% used)' -l 'disk space'
+
+command[snmp_mem]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o .1.3.6.1.4.1.2021.4.6.0,.1.3.6.1.4.1.2021.4.5.0 -w $ARG2$: -c $ARG3$:
+
+command[snmp_swap]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o .1.3.6.1.4.1.2021.4.4.0,.1.3.6.1.4.1.2021.4.3.0 -w $ARG2$: -c $ARG3$:
+
+#
+# Slightly more generic SNMP OIDs
+#
+
+command[snmp_procs]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o host.hrSystem.hrSystemProcesses -w :$ARG2$ -c :$ARG3$ -l processes
+
+command[snmp_users]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o host.hrSystem.hrSystemNumUsers -w :$ARG2$ -c :$ARG3$ -l users
+
+command[snmp_mem2]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageUsed.101,host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageSize.101 -w $ARG2$ -c $ARG3$
+
+command[snmp_swap2]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageUsed.102,host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageSize.102 -w $ARG2$ -c $ARG3$
+
+command[snmp_mem]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageUsed.101,host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageSize.101 -w $ARG2$ -c $ARG3$
+
+command[snmp_swap]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageUsed.102,host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageSize.102 -w $ARG2$ -c $ARG3$
+
+command[snmp_disk2]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o host.hrStorage.hrStorageTable.hrStorageEntry.hrStorageUsed.$ARG2$ -w $ARG3$ -c $ARG4$ 
+
+command[snmp_tcpopen]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o tcp.tcpCurrEstab.0 -w $ARG2$ -c $ARG3$
+
+command[snmp_tcpstats]=@libexecdir@/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o tcp.tcpActiveOpens.0,tcp.tcpPassiveOpens.0,tcp.tcpInSegs.0,tcp.tcpOutSegs.0,tcp.tcpRetransSegs.0 -l 'TCP stats'
+
+# This command checks to see if a host is "alive" by pinging it.  The
+# check must result in a 100% packet loss or 5 second (5000ms) round
+# trip average to produce an error.
+
+# This command checks to see if a host is "alive" by pinging it.
+command[check-host-alive]=@libexecdir@/check_ping -H $HOSTADDRESS$ -w 5000,100% -c 5000,100% -p 1
+
+# This command checks to see if a printer is "alive" by pinging it.
+command[check-printer-alive]=@libexecdir@/check_ping -H $HOSTADDRESS$ -w 5000,100% -c 5000,100% -p 1
+
+# This command checks to see if a switch is "alive" by pinging it.
+command[check-switch-alive]=@libexecdir@/check_ping $HOSTADDRESS$ -w 5000,100% -c 5000,100% -p 1
+
+# This command checks to see if a router is "alive" by pinging it.
+command[check-router-alive]=@libexecdir@/check_ping -H $HOSTADDRESS$ -w 5000,100% -c 5000,100% -p 1
+
+# Check if a host is alive by doing a fast ping instead of a regular ping
+command[check-fast-alive]=@libexecdir@/check_fping -H $HOSTADDRESS$
+
+# Check if the IMAP service is alive (default port=143)
+command[check-imap]=@libexecdir@/check_imap $HOSTADDRESS$
+
+# Check RPC services
+command[check-rpc]=@libexecdir@/check_rpc -H $HOSTADDRESS$ $ARG1$
+
+# Check if the NFS server is running
+command[check-nfs]=@libexecdir@/check_rpc -H $HOSTADDRESS$ nfs
+
+# Check game servers
+command[check_quake]=@libexecdir@/check_game qs $HOSTADDRESS$
+command[check_unreal]=@libexecdir@/check_game uns $HOSTADDRESS$ -p $ARG1$ -pf 8
+
+# Check a port that should be open
+command[check_nmap]=@libexecdir@/check_nmap -H $HOSTADDRESS$ -t 30 -p $ARG1$
+
+# Check a port that should be open and another that *could* be open,
+# but no warning is given if optional port is closed.
+
+command[check_nmap_optional]=@libexecdir@/check_nmap -H $HOSTADDRESS$ -t 60 -p $ARG1$ -o $ARG2$
+
+# Specify range to nmap
+command[check_nmap_range]=@libexecdir@/check_nmap -H $HOSTADDRESS$ -t 60 -p $ARG1$ -r $ARG2$
+
+# Specify both optional and range
+command[check_nmap_opt_range]=@libexecdir@/check_nmap -H $HOSTADDRESS$ -t 60 -p $ARG1$ -o $ARG2$ -r$ARG3$
+
+# Check Radius
+command[check_radius]=@libexecdir@/check_radius $ARG1$ $ARG2$ $HOSTADDRESS$ 1812 $ARG3$
+
+
+# Check Reply
+# This is a command for checking squid proxy servers which uses check
+# reply to ensure an HTTP 200 comes back ..... i.e. squid actually
+# serves the page and not an error message.
+
+command[check_squid]=@libexecdir@/check_reply $HOSTADDRESS$ -p $ARG1$  -s 'GET $ARG2$ HTTP/1.0\n\n' -e 'HTTP/1.0 200 OK'
+
+
+## Check RealAudio url
+command[check_real_url]=@libexecdir@/check_real $HOSTADDRESS$ -p $ARG1$ -wt $ARG2$ -ct $ARG3$ -to 5 -u $ARG4$
+
+## Check RealAudio server response
+command[check_real]=@libexecdir@/check_real $HOSTADDRESS$ -p $ARG1$ -wt $ARG2$ -ct $ARG3$ -to 5
+
+
+# Still have to write sample entries for the following:
+#
+# check_ldap
+# check_nwstat
+# check_overcr

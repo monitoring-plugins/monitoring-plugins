@@ -1,0 +1,38 @@
+package utils;
+
+require Exporter;
+@ISA = qw(Exporter);
+@EXPORT_OK = qw($TIMEOUT %ERRORS &print_revision &support &usage);
+
+#use strict;
+#use vars($TIMEOUT %ERRORS);
+sub print_revision ($$);
+sub usage;
+sub support();
+
+$TIMEOUT = 15;
+%ERRORS=('UNKNOWN'=>-1,'OK'=>0,'WARNING'=>1,'CRITICAL'=>2);
+
+sub print_revision ($$) {
+	my $commandName = shift;
+	my $pluginRevision = shift;
+	$pluginRevision =~ s/^\$Revision: //;
+	$pluginRevision =~ s/ \$\s*$//;
+	print "$commandName (@PACKAGE@ @VERSION@) $pluginRevision\n";
+	print "@WARRANTY@";
+}
+
+sub support () {
+	my $support='@SUPPORT@';
+	$support =~ s/@/\@/g;
+	$support =~ s/\\n/\n/g;
+	print $support;
+}
+
+sub usage {
+	my $format=shift;
+	printf($format,@_);
+	exit $ERRORS{'UNKNOWN'};
+}
+
+1;

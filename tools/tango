@@ -1,0 +1,218 @@
+#!/usr/bin/perl
+
+use strict;
+#use vars qw(\$version \$help \$verbose \$lang \@includes \%ents);
+use Getopt::Long;
+
+sub print_revision ($$);
+sub print_usage ($$);
+sub print_help ($$);
+sub slurp ($$$@);
+
+my $PROGNAME = "tango";
+my $REVISION = '$Revision$ ';
+$REVISION =~ s/^\$Revision: //;
+$REVISION =~ s/ \$ $//;
+
+my $PACKAGE = 'Nagios Plugins';
+my $RELEASE = '1.3';
+my $WARRANTY = "The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\ncopies of the plugins under the terms of the GNU General Public License.\nFor more information about these matters, see the file named COPYING.\n";
+
+my $version = undef;
+my $help = undef;
+my $verbose = undef;
+my $lang = undef;
+my $follow = undef;
+my @INCLUDE = undef;
+
+Getopt::Long::Configure('bundling');
+GetOptions
+	("V"   => \$version,  "version"    => \$version,
+	 "h"   => \$help,     "help"       => \$help,
+	 "v"   => \$verbose,  "verbose"    => \$verbose,
+	 "f"   => \$follow,  "follow!"     => \$follow,
+	 "l=s" => \$lang,     "language=s" => \$lang,
+	 "I=s" => \@INCLUDE);
+
+if ($help) {
+	print_help ($PROGNAME,$REVISION);
+	exit 0;
+}
+
+if ($version) {
+	print_revision ($PROGNAME,$REVISION);
+	exit 0;
+}
+
+if (!defined($lang)) {
+	print_usage ($PROGNAME,$REVISION);
+	exit 1;
+}
+
+my $t;
+my @files;
+my $file;
+my $key;
+my $ent;
+my $cmd;
+my $dir;
+
+# first step is to get a set of defines in effect
+# we do this with gcc preprocessor
+#
+# first, assemble the command
+my $cmd = "/usr/bin/gcc -E -dM";
+foreach $dir (@INCLUDE) {
+	$cmd .= " -I $dir" if ($dir) ;
+}
+
+# add the file(s) to process
+while ($file = shift) {
+	push @files, $file;
+	$cmd .= " $file";
+}
+
+# then execute the command, storing defines in %main::ents
+open T, "$cmd |"; 
+while (<T>) {
+	next if (m|\#define\s+[^\s\(]+\(|);
+	if (m|\#define\s+(\S+)\s+(\"?)(.*?)\2$|) {
+		$key = $1;
+		$ent = $3;
+		$ent =~ s|\\n\\n|</para>\n\n<para>|msg;
+		$ent =~ s|\\n|\n|msg;
+		$main::ents{$key} = $ent;
+	}
+}
+
+# then we slurp the file to fetch the XML
+my $xml = "";
+foreach $file (@files) {
+	$xml .= slurp ($lang, $follow, $file, @INCLUDE);
+}
+
+# finally substitute the defines as XML entities
+foreach $key (keys %main::ents) {
+	$xml =~ s/\&$key\;/$main::ents{$key}/msg;
+}
+
+# and print the result
+print $xml;
+
+exit 0;
+
+sub print_revision ($$) {
+	my $PROGNAME = shift;
+	my $REVISION = shift;
+	print "$PROGNAME ($PACKAGE $RELEASE) $REVISION\n";
+	print "$WARRANTY";
+}
+
+sub print_usage ($$) {
+	my $PROGNAME = shift;
+	my $REVISION = shift;
+	print qq"\n$PROGNAME -l <language> [options] file [...]\n"
+}
+
+sub print_help ($$) {
+	my $PROGNAME = shift;
+	my $REVISION = shift;
+	print_usage ($PROGNAME, $REVISION);
+	print qq"
+Options:
+  -l, --language=STRING
+     Currently supported languages are C and perl
+";
+}
+
+sub slurp ($$$@) {
+	no strict 'refs';
+	my ($lang, $follow, $file, @INCLUDE) = @_;
+	my $xml = "";
+	my $block;
+	my $dir = "";
+	my $ostat;
+	my $descriptor = 'T' . int(rand 100000000);
+
+	if ($file !~ m|^[\.\/\\]|) {
+		foreach $dir (@INCLUDE) {
+			if ($ostat = open $descriptor, "<$dir/$file") {
+				push @main::includes, $file;
+				last;
+			}
+		}
+	} else {
+		$ostat = open $descriptor, "<$file";
+		push @main::includes, $file if $ostat;
+	}
+	return "" unless $ostat;
+
+	if ($lang eq 'C') {
+		while (<$descriptor>) {
+			$block = $_;
+			if ($follow && m|^\s*\#\s*include\s+[<"]([^\">]+)[">]|) {
+				$xml .= slurp ($lang, $follow, $1, @INCLUDE) unless (in (@main::includes, $1));
+			}
+			if ($block =~ m|(\S+)\s+(\S+)\s*(\([^\)]*\));|) {
+				$main::ents{"PROTO_$2"} = "$1 $2 $3";
+			}
+			if ($block =~ m|//|) { # C++ style one-line comment
+				if (m|//\@\@-(.*)-\@\@|) {
+					$xml .= $1;
+				}
+			}
+			if ($block =~ m|/\*|) { # normal C comments
+				while ($block !~ m|/\*(.*)\*/|ms) {
+					$block .= <$descriptor>;
+				}
+				if ($block =~ m|\@\@-(.*)-\@\@|ms) {
+					$xml .= $1;
+				} elsif ($block =~ m|\@s*-(.*)\s*-\@|ms) {
+					$key = $1;
+					while ($block !~ m|\*/\s*([^\;]+);|ms) {
+						$block .= <$descriptor>;
+					}
+					if ($block =~ m|\*/\s*([^\;]+);|ms) {
+						$main::ents{$key} = $1;
+					}
+				}
+			}
+		}
+	}
+	close $descriptor;
+	return $xml;
+}
+
+sub in () {
+	my $el = pop;
+	foreach $key (@_) {
+		return 1 if ($key eq $el);
+	}
+	return 0;
+}
+
+sub CommentStart ($) {
+	my $lang = shift;
+	if ($lang eq 'C') {
+		return '/*';
+	} elsif ($lang == 'perl') {
+		return '#';
+	} else {
+		return undef;
+	}
+}
+
+#			if ($_ =~ m/^\s*\#\s*define\s+([-_a-zA-Z0-9]+)\s+(.*)\s*$/) {
+#				$key = $1;
+#				$main::ents{$key} = "$2";
+#				while (($main::ents{$key} =~ s/\\\s*$//s) && ($block = <$descriptor>)) {
+#					$main::ents{$key} .= $block;
+#				}
+#				$main::ents{$key} =~ s/"(.*)"$/$1/s;
+#				$main::ents{$key} =~ s/\s+\/[\/\*].*$//s;
+#			}
+
+### Local Variables: ;;;
+### tab-width: 2 ;;;
+### perl-indent-level: 2 ;;;
+### End: ;;;
