@@ -194,7 +194,7 @@ main (int argc, char **argv)
 			dskfree = dskfree / conv_factor;
 #  endif
 			if (verbose >= 3)
-				printf (_("total=%d, free=%d\n"), dsktotal, dskfree);
+				printf (_("total=%llu, free=%llu\n"), dsktotal, dskfree);
 
 			dskused = dsktotal - dskfree;
 			total_swap += dsktotal;
