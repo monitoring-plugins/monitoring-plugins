@@ -27,17 +27,49 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "netutils.h"
 #include "utils.h"
 
+#ifdef HAVE_SSL_H
+#  include <rsa.h>
+#  include <crypto.h>
+#  include <x509.h>
+#  include <pem.h>
+#  include <ssl.h>
+#  include <err.h>
+#else
+#  ifdef HAVE_OPENSSL_SSL_H
+#    include <openssl/rsa.h>
+#    include <openssl/crypto.h>
+#    include <openssl/x509.h>
+#    include <openssl/pem.h>
+#    include <openssl/ssl.h>
+#    include <openssl/err.h>
+#  endif
+#endif
+
+#ifdef HAVE_SSL
+
+int check_cert = FALSE;
+int days_till_exp;
+SSL_CTX *ctx;
+SSL *ssl;
+X509 *server_cert;
+int connect_STARTTLS (void);
+int check_certificate (X509 **);
+#endif
+
 enum {
 	SMTP_PORT	= 25
 };
 const char *SMTP_EXPECT = "220";
 const char *SMTP_HELO = "HELO ";
 const char *SMTP_QUIT	= "QUIT\r\n";
+const char *SMTP_STARTTLS = "STARTTLS\r\n";
 
 int process_arguments (int, char **);
 int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
+int myrecv(void);
+int my_close(void);
 
 #ifdef HAVE_REGEX_H
 #include <regex.h>
@@ -68,18 +100,23 @@ int check_warning_time = FALSE;
 int critical_time = 0;
 int check_critical_time = FALSE;
 int verbose = 0;
-
-
+int use_ssl = FALSE;
+int sd;
+char buffer[MAX_INPUT_BUFFER];
+enum {
+  TCP_PROTOCOL = 1,
+  UDP_PROTOCOL = 2,
+  MAXBUF = 1024
+};
 
 int
 main (int argc, char **argv)
 {
-	int sd;
+
 	int n = 0;
 	double elapsed_time;
 	long microsec;
 	int result = STATE_UNKNOWN;
-	char buffer[MAX_INPUT_BUFFER];
 	char *cmd_str = NULL;
 	char *helocmd = NULL;
 	struct timeval tv;
@@ -140,12 +177,45 @@ main (int argc, char **argv)
 				result = STATE_WARNING;
 			}
 		}
+#ifdef HAVE_SSL
+		if(use_ssl) {
+		  /* send the STARTTLS command */
+		  send(sd, SMTP_STARTTLS, strlen(SMTP_STARTTLS), 0);
 
+		  recv(sd,buffer, MAX_INPUT_BUFFER-1, 0); // wait for it
+		  if (!strstr (buffer, server_expect)) {
+		    printf (_("Server does not support STARTTLS\n"));
+		    return STATE_UNKNOWN;
+		  }
+		  if(connect_STARTTLS() != OK) {
+		    printf (_("ERROR: Cannot create SSL context.\n"));
+		    return STATE_CRITICAL;
+		  }
+		  if ( check_cert ) {
+		    if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
+		      result = check_certificate (&server_cert);
+		      X509_free(server_cert);
+		    }
+		    else {
+		      printf (_("ERROR: Cannot retrieve server certificate.\n"));
+		      result = STATE_CRITICAL;
+			      
+		    }
+		    my_close();
+		    return result;
+		  }
+		}
+#endif
 		/* send the HELO command */
+#ifdef HAVE_SSL
+		if (use_ssl)
+		  SSL_write(ssl, helocmd, strlen(helocmd));
+		else
+#endif
 		send(sd, helocmd, strlen(helocmd), 0);
 
 		/* allow for response to helo command to reach us */
-		recv(sd, buffer, MAX_INPUT_BUFFER-1, 0);
+		myrecv();
 				
 		/* sendmail will syslog a "NOQUEUE" error if session does not attempt
 		 * to do something useful. This can be prevented by giving a command
@@ -158,16 +228,26 @@ main (int argc, char **argv)
 		 * Use the -f option to provide a FROM address
 		 */
 		if (smtp_use_dummycmd) {
-			send(sd, cmd_str, strlen(cmd_str), 0);
-			recv(sd, buffer, MAX_INPUT_BUFFER-1, 0);
-			if (verbose) 
-				printf("%s", buffer);
+#ifdef HAVE_SSL
+		  if (use_ssl)
+		    SSL_write(ssl, cmd_str, strlen(cmd_str));
+		  else
+#endif
+		  send(sd, cmd_str, strlen(cmd_str), 0);
+		  myrecv();
+		  if (verbose) 
+		    printf("%s", buffer);
 		}
 
 		while (n < ncommands) {
 			asprintf (&cmd_str, "%s%s", commands[n], "\r\n");
+#ifdef HAVE_SSL
+			if (use_ssl)
+			  SSL_write(ssl,cmd_str, strlen(cmd_str));
+			else
+#endif
 			send(sd, cmd_str, strlen(cmd_str), 0);
-			recv(sd, buffer, MAX_INPUT_BUFFER-1, 0);
+			myrecv();
 			if (verbose) 
 				printf("%s", buffer);
 			strip (buffer);
@@ -206,6 +286,11 @@ main (int argc, char **argv)
 		}
 
 		/* tell the server we're done */
+#ifdef HAVE_SSL
+		if (use_ssl)
+		  SSL_write(ssl,SMTP_QUIT, strlen (SMTP_QUIT));
+		else
+#endif
 		send (sd, SMTP_QUIT, strlen (SMTP_QUIT), 0);
 
 		/* finally close the connection */
@@ -261,6 +346,8 @@ process_arguments (int argc, char **argv)
 		{"use-ipv4", no_argument, 0, '4'},
 		{"use-ipv6", no_argument, 0, '6'},
 		{"help", no_argument, 0, 'h'},
+		{"starttls",no_argument,0,'S'},
+		{"certificate",required_argument,0,'D'},
 		{0, 0, 0, 0}
 	};
 
@@ -277,7 +364,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVv46t:p:f:e:c:w:H:C:R:",
+		c = getopt_long (argc, argv, "+hVv46t:p:f:e:c:w:H:C:R:SD:",
 		                 longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -353,6 +440,22 @@ process_arguments (int argc, char **argv)
 			else {
 				usage4 (_("Timeout interval must be a positive integer"));
 			}
+			break;
+		case 'S':
+		/* starttls */
+			use_ssl = TRUE;
+			break;
+		case 'D':
+		/* Check SSL cert validity */
+#ifdef HAVE_SSL
+			if (!is_intnonneg (optarg))
+				usage2 ("Invalid certificate expiration period",optarg);
+				days_till_exp = atoi (optarg);
+				check_cert = TRUE;
+#else
+				terminate (STATE_UNKNOWN,
+						"SSL support not available.  Install OpenSSL and recompile.");
+#endif
 			break;
 		case '4':
 			address_family = AF_INET;
@@ -443,6 +546,13 @@ print_help (void)
  -f, --from=STRING\n\
    FROM-address to include in MAIL command, required by Exchange 2000\n"),
 	        SMTP_EXPECT);
+#ifdef HAVE_SSL
+        printf (_("\
+ -D, --certificate=INTEGER\n\
+    Minimum number of days a certificate has to be valid.\n\
+ -S, --starttls\n\
+    Use STARTTLS for the connection.\n"));
+#endif
 
 	printf (_(UT_WARN_CRIT));
 
@@ -466,5 +576,154 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -H host [-p port] [-e expect] [-C command] [-f from addr]\n\
-                  [-w warn] [-c crit] [-t timeout] [-n] [-v] [-4|-6]\n", progname);
+                  [-w warn] [-c crit] [-t timeout] [-S] [-D days] [-n] [-v] [-4|-6]\n", progname);
+}
+
+#ifdef HAVE_SSL
+int
+connect_STARTTLS (void)
+{
+  SSL_METHOD *meth;
+
+  /* Initialize SSL context */
+  SSLeay_add_ssl_algorithms ();
+  meth = SSLv2_client_method ();
+  SSL_load_error_strings ();
+  if ((ctx = SSL_CTX_new (meth)) == NULL)
+    {
+      printf(_("ERROR: Cannot create SSL context.\n"));
+      return STATE_CRITICAL;
+    }
+  /* do the SSL handshake */
+  if ((ssl = SSL_new (ctx)) != NULL)
+    {
+      SSL_set_fd (ssl, sd);
+      /* original version checked for -1
+	 I look for success instead (1) */
+      if (SSL_connect (ssl) == 1)
+	return OK;
+      ERR_print_errors_fp (stderr);
+    }
+  else
+    {
+      printf (_("ERROR: Cannot initiate SSL handshake.\n"));
+    }
+  /* this causes a seg faul
+     not sure why, being sloppy
+     and commenting it out */
+  //  SSL_free (ssl);
+  SSL_CTX_free(ctx);
+  my_close();
+  
+  return STATE_CRITICAL;
+}
+
+int
+check_certificate (X509 ** certificate)
+{
+  ASN1_STRING *tm;
+  int offset;
+  struct tm stamp;
+  int days_left;
+
+  /* Retrieve timestamp of certificate */
+  tm = X509_get_notAfter (*certificate);
+  
+  /* Generate tm structure to process timestamp */
+  if (tm->type == V_ASN1_UTCTIME) {
+    if (tm->length < 10) {
+      printf (_("ERROR: Wrong time format in certificate.\n"));
+      return STATE_CRITICAL;
+    }
+    else {
+      stamp.tm_year = (tm->data[0] - '0') * 10 + (tm->data[1] - '0');
+      if (stamp.tm_year < 50)
+	stamp.tm_year += 100;
+      offset = 0;
+    }
+  }
+  else {
+    if (tm->length < 12) {
+      printf (_("ERROR: Wrong time format in certificate.\n"));
+      return STATE_CRITICAL;
+    }
+    else {
+      stamp.tm_year =
+	(tm->data[0] - '0') * 1000 + (tm->data[1] - '0') * 100 +
+	(tm->data[2] - '0') * 10 + (tm->data[3] - '0');
+      stamp.tm_year -= 1900;
+      offset = 2;
+    }
+  }
+  stamp.tm_mon =
+    (tm->data[2 + offset] - '0') * 10 + (tm->data[3 + offset] - '0') - 1;
+  stamp.tm_mday =
+    (tm->data[4 + offset] - '0') * 10 + (tm->data[5 + offset] - '0');
+  stamp.tm_hour =
+    (tm->data[6 + offset] - '0') * 10 + (tm->data[7 + offset] - '0');
+  stamp.tm_min =
+    (tm->data[8 + offset] - '0') * 10 + (tm->data[9 + offset] - '0');
+  stamp.tm_sec = 0;
+  stamp.tm_isdst = -1;
+  
+  days_left = (mktime (&stamp) - time (NULL)) / 86400;
+  snprintf
+    (timestamp, 16, "%02d/%02d/%04d %02d:%02d",
+     stamp.tm_mon + 1,
+     stamp.tm_mday, stamp.tm_year + 1900, stamp.tm_hour, stamp.tm_min);
+  
+  if (days_left > 0 && days_left <= days_till_exp) {
+    printf ("Certificate expires in %d day(s) (%s).\n", days_left, timestamp);
+    return STATE_WARNING;
+  }
+  if (days_left < 0) {
+    printf ("Certificate expired on %s.\n", timestamp);
+    return STATE_CRITICAL;
+  }
+  
+  if (days_left == 0) {
+    printf ("Certificate expires today (%s).\n", timestamp);
+    return STATE_WARNING;
+  }
+  
+  printf ("Certificate will expire on %s.\n", timestamp);
+  
+  return STATE_OK;  
+}
+#endif
+
+int
+myrecv (void)
+{
+  int i;
+
+#ifdef HAVE_SSL
+  if (use_ssl) {
+    i = SSL_read (ssl, buffer, MAXBUF - 1);
+  }
+  else {
+#endif
+    i = read (sd, buffer, MAXBUF - 1);
+#ifdef HAVE_SSL
+  }
+#endif
+  return i;
+}
+
+int 
+my_close (void)
+{
+#ifdef HAVE_SSL
+  if (use_ssl == TRUE) {
+    SSL_shutdown (ssl);
+    SSL_free (ssl);
+    SSL_CTX_free (ctx);
+    return 0;
+  }
+  else {
+#endif
+    return close(sd);
+#ifdef HAVE_SSL
+  }
+#endif
 }

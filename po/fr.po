@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-12-26 00:06+0100\n"
-"PO-Revision-Date: 2004-12-27 23:43+0100\n"
+"PO-Revision-Date: 2004-12-29 00:09+0100\n"
 "Last-Translator: Benoit Mortier <benoit.mortier@opensides.be>\n"
 "Language-Team: Français <fr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -324,81 +324,87 @@ msgstr "DHCPOFFER XID (%lu) ne correspond pas à DHCPDISCOVER XID (%lu) - paquet
 #, c-format
 msgid "DHCPOFFER hardware address did not match our own - ignoring packet\n"
 msgstr ""
+" l'addresse matérielleh du DHCPOFFER ne correspond pas à la notre\n"
+"paquet ignoré\n"
 
 #: plugins/check_dhcp.c:568
 #, c-format
 msgid "Total responses seen on the wire: %d\n"
-msgstr ""
+msgstr "Nombre total de réponses: %d\n"
 
 #: plugins/check_dhcp.c:569
-#, fuzzy, c-format
+#, c-format
 msgid "Valid responses for this machine: %d\n"
-msgstr "Réponse invalide du serveur après load 1\n"
+msgstr "Nombre de réponse valides pour cette machine: %d\n"
 
 #: plugins/check_dhcp.c:585
 #, c-format
 msgid "send_dhcp_packet result: %d\n"
-msgstr ""
+msgstr "résultat de send_dchp_packet: %d\n"
 
 #: plugins/check_dhcp.c:614
-#, fuzzy, c-format
+#, c-format
 msgid "No (more) data received\n"
-msgstr "Pas de données reçues %s\n"
+msgstr "Plus de données reçues\n"
 
 #: plugins/check_dhcp.c:633
-#, fuzzy, c-format
+#, c-format
 msgid "recvfrom() failed, "
 msgstr "La réception à échoué\n"
 
 #: plugins/check_dhcp.c:640
 #, c-format
 msgid "receive_dhcp_packet() result: %d\n"
-msgstr ""
+msgstr "résultat de receive_dchp_packet: %d\n"
 
 #: plugins/check_dhcp.c:641
 #, c-format
 msgid "receive_dhcp_packet() source: %s\n"
-msgstr ""
+msgstr "source de receive_dchp_packet: %s\n"
 
 #: plugins/check_dhcp.c:670
 #, c-format
 msgid "Error: Could not create socket!\n"
-msgstr ""
+msgstr "Erreur: Impossible de créer un socket!\n"
 
 #: plugins/check_dhcp.c:680
 #, c-format
 msgid "Error: Could not set reuse address option on DHCP socket!\n"
 msgstr ""
+"Erreur: Impossible de configurer l'option de réutilisation de l'adresse sur\n"
+"le socket DHCP!\n"
 
 #: plugins/check_dhcp.c:686
 #, c-format
 msgid "Error: Could not set broadcast option on DHCP socket!\n"
-msgstr ""
+msgstr "Erreur: Impossible de configurer l'option broadcast sur le socket DHCP!\n"
 
 #: plugins/check_dhcp.c:694
 #, c-format
 msgid "Error: Could not bind socket to interface %s.  Check your privileges...\n"
 msgstr ""
+"Erreur: Impossible de connecter le socket à l'interface %s.\n"
+"Verifiez vos droits...\n"
 
 #: plugins/check_dhcp.c:704
 #, c-format
 msgid "Error: Could not bind to DHCP socket (port %d)!  Check your privileges...\n"
-msgstr ""
+msgstr "Erreur: Impossible de se connecter au socket (port %d)!  Verifiez vos droits..\n"
 
 #: plugins/check_dhcp.c:737
-#, fuzzy, c-format
+#, c-format
 msgid "Requested server address: %s\n"
-msgstr "Vous devez fournir une adresse serveur\n"
+msgstr "Adresse serveur demandée: %s\n"
 
 #: plugins/check_dhcp.c:787
 #, c-format
 msgid "Lease Time: Infinite\n"
-msgstr ""
+msgstr "Durée du Bail: Infini\n"
 
 #: plugins/check_dhcp.c:789
-#, fuzzy, c-format
+#, c-format
 msgid "Lease Time: %lu seconds\n"
-msgstr "LRU temps d'attente = %lu secondes"
+msgstr "Durée du Bai: %lu secondes\n"
 
 #: plugins/check_dhcp.c:791
 #, c-format
