@@ -1,0 +1,80 @@
+#!/usr/bin/perl
+
+$pkgdevice = $ARGV[0] || die "Unable to determine device ($!)\n";
+
+$find = "/usr/bin/find";
+$pkgproto = "/usr/bin/pkgproto";
+$pkgmk = "/usr/bin/pkgmk";
+$pkgtrans = "/usr/bin/pkgtrans";
+$prototype = "prototype";
+$pkginfo = "pkginfo";
+
+# Sanity check
+
+$pwd = `pwd`;
+if ($pwd =~ '\/usr\/local') {
+        $pwd = $`;
+}            
+die  "Wrong location, please cd to <PKGBASE>/usr/local/ and run again.\n"
+        if ($pwd eq "");
+
+open (PREPROTO,"$find . -print |$pkgproto |") ||
+	die "Unable to read prototype information ($!)\n";
+open (PROTO,">$prototype") ||
+	die "Unable to write file prototype ($!)\n";
+print PROTO "i pkginfo=./$pkginfo\n";
+while (<PREPROTO>) {
+	# Read in the prototype information
+	chomp;
+	$thisline = $_;
+	if ($thisline =~ " prototype "
+	  or $thisline =~ " pkginfo ") {
+	    # Don't do anything as they aren't important
+	} elsif ($thisline =~ "^[fd] ") {
+	  # Change the ownership of files and directories
+	  ($dir, $none, $file, $mode, $user, $group) = split / /,$thisline;
+	  print PROTO "$dir $none $file $mode bin bin\n";
+	} else {
+	  # Symlinks and other stuff should be printed also
+	  print PROTO "$thisline\n";
+	}
+}
+close PROTO;
+close PREPROTO;
+
+# Now we can start building the package
+
+$os = `uname -r`;
+$os =~ '\.'; 
+$os = "sol$'";
+chomp $os;   
+
+open (PKGINFO,"<$pkginfo") ||
+	die "Unable to read package information ($!)\n";
+while (<PKGINFO>) {
+	# Read in the package information
+	chomp;
+	$thisline = $_;
+	($var,$value) = split /=/,$thisline;
+	if ("$var" eq "NAME" 
+	  or "$var" eq "VERSION"
+	  or "$var" eq "ARCH") {
+		$tmp = lc($var);
+		$value =~ s/\"//g;
+		if ("$tmp" eq "version"
+		  and $value =~ ",REV") {
+			($value,$var) = split /\,/,$value;
+			$$tmp = $value;
+		} else {
+			$$tmp = $value;
+		}
+	}
+}	
+close PKGINFO;
+
+$packagename = "$name-$version-$os-$arch-local";
+
+print "Building package\n";
+system ("$pkgmk -o -r `pwd` -d $pkgdevice");
+system ("(cd $pkgdevice && $pkgtrans -s `pwd` ../$packagename)");
+print "Done. ($packagename)\n";

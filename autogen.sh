@@ -19,18 +19,13 @@ else
 fi
 
 # Refresh GNU autotools toolchain.
-for i in config.guess config.sub missing install-sh mkinstalldirs ; do
+for i in config.guess config.sub missing install-sh mkinstalldirs depcomp; do
 	test -r /usr/share/automake/${i} && {
 		rm -f ${i}
-		cp /usr/share/automake/${i} .
 	}
-	chmod 755 ${i}
 done
 
-aclocal -I lib
-autoheader
-automake -c -a
-autoconf
+tools/setup
 
 # For the Debian build
 test -d debian && {
