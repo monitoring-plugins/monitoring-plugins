@@ -180,3 +180,8 @@ enum {
 #  define textdomain(Domain)
 #  define bindtextdomain(Package, Directory)
 #endif
+
+/* For non-GNU compilers to ignore __attribute__ */
+#ifndef __GNUC__
+# define __attribute__(x) /* do nothing */
+#endif
