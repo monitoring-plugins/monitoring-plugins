@@ -120,6 +120,7 @@ void redir (char *pos, char *status_line);
 int server_type_check(const char *type);
 int server_port_check(int ssl_flag);
 char *perfd_time (long microsec);
+char *perfd_size (int page_len);
 int my_recv (void);
 int my_close (void);
 void print_help (void);
@@ -672,10 +673,10 @@ check_http (void)
 			microsec = deltime (tv);
 			elapsed_time = (double)microsec / 1.0e6;
 			die (onredirect,
-			     _(" - %s - %.3f second response time %s%s|%s size=%dB\n"),
+			     _(" - %s - %.3f second response time %s%s|%s %s\n"),
 			     status_line, elapsed_time, timestamp,
 			     (display_html ? "</A>" : ""),
-					 perfd_time (microsec), pagesize);
+					 perfd_time (microsec), perfd_size (pagesize));
 		} /* end if (strstr (status_line, "30[0-4]") */
 
 
@@ -686,10 +687,10 @@ check_http (void)
 	microsec = deltime (tv);
 	elapsed_time = (double)microsec / 1.0e6;
 	asprintf (&msg,
-	          _("HTTP problem: %s - %.3f second response time %s%s|%s size=%dB\n"),
+	          _("HTTP problem: %s - %.3f second response time %s%s|%s %s\n"),
 	          status_line, elapsed_time, timestamp,
 	          (display_html ? "</A>" : ""),
-						perfd_time (microsec), pagesize);
+						perfd_time (microsec), perfd_size (pagesize));
 	if (check_critical_time == TRUE && elapsed_time > critical_time)
 		die (STATE_CRITICAL, "%s", msg);
 	if (check_warning_time == TRUE && elapsed_time > warning_time)
@@ -700,16 +701,16 @@ check_http (void)
 
 	if (strlen (string_expect)) {
 		if (strstr (page, string_expect)) {
-			printf (_("HTTP OK %s - %.3f second response time %s%s|%s size=%dB\n"),
+			printf (_("HTTP OK %s - %.3f second response time %s%s|%s %s\n"),
 			        status_line, elapsed_time,
 			        timestamp, (display_html ? "</A>" : ""),
-			        perfd_time (microsec), pagesize);
+			        perfd_time (microsec), perfd_size (pagesize));
 			exit (STATE_OK);
 		}
 		else {
-			printf (_("CRITICAL - string not found%s|%s size=%dB\n"),
+			printf (_("CRITICAL - string not found%s|%s %s\n"),
 			        (display_html ? "</A>" : ""),
-			        perfd_time (microsec), pagesize);
+			        perfd_time (microsec), perfd_size (pagesize));
 			exit (STATE_CRITICAL);
 		}
 	}
@@ -717,17 +718,17 @@ check_http (void)
 	if (strlen (regexp)) {
 		errcode = regexec (&preg, page, REGS, pmatch, 0);
 		if (errcode == 0) {
-			printf (_("HTTP OK %s - %.3f second response time %s%s|%s size=%dB\n"),
+			printf (_("HTTP OK %s - %.3f second response time %s%s|%s %s\n"),
 			        status_line, elapsed_time,
 			        timestamp, (display_html ? "</A>" : ""),
-			        perfd_time (microsec), pagesize);
+			        perfd_time (microsec), perfd_size (pagesize));
 			exit (STATE_OK);
 		}
 		else {
 			if (errcode == REG_NOMATCH) {
-				printf (_("CRITICAL - pattern not found%s|%s size=%dB\n"),
+				printf (_("CRITICAL - pattern not found%s|%s %s\n"),
 				        (display_html ? "</A>" : ""),
-				        perfd_time (microsec), pagesize);
+				        perfd_time (microsec), perfd_size (pagesize));
 				exit (STATE_CRITICAL);
 			}
 			else {
@@ -742,15 +743,15 @@ check_http (void)
 	/* make sure the page is of an appropriate size */
 	page_len = strlen (page);
 	if ((min_page_len > 0) && (page_len < min_page_len)) {
-		printf (_("HTTP WARNING: page size too small%s|size=%i\n"),
-			(display_html ? "</A>" : ""), page_len );
+		printf (_("HTTP WARNING: page size %d too small%s|%s\n"),
+			page_len, (display_html ? "</A>" : ""), perfd_size (page_len) );
 		exit (STATE_WARNING);
 	}
 	/* We only get here if all tests have been passed */
-	asprintf (&msg, _("HTTP OK %s - %.3f second response time %s%s|%s size=%dB\n"),
-	          status_line, elapsed_time,
+	asprintf (&msg, _("HTTP OK %s - %d bytes in %.3f seconds %s%s|%s %s\n"),
+	          status_line, page_len, elapsed_time,
 	          timestamp, (display_html ? "</A>" : ""),
-						perfd_time (microsec), pagesize);
+						perfd_time (microsec), perfd_size (page_len));
 	die (STATE_OK, "%s", msg);
 	return STATE_UNKNOWN;
 }
@@ -1039,11 +1040,21 @@ check_certificate (X509 ** certificate)
 
 char *perfd_time (long microsec)
 {
-	perfdata ("time", microsec, "us",
+	return perfdata ("time", microsec, "us",
 	          check_warning_time, (int)(1e6*warning_time),
 	          check_critical_time, (int)(1e6*critical_time),
 	          TRUE, 0, FALSE, 0);
 }
+
+
+char *perfd_size (int page_len)
+{
+	return perfdata ("size", page_len, "B",
+	          (min_page_len>0?TRUE:FALSE), min_page_len,
+	          (min_page_len>0?TRUE:FALSE), 0,
+	          TRUE, 0, FALSE, 0);
+}
+
 
 int
 my_recv (void)
