@@ -40,6 +40,8 @@ char *status_log = NULL;
 char *process_string = NULL;
 int expire_minutes = 0;
 
+int verbose = 0;
+
 int
 main (int argc, char **argv)
 {
@@ -51,6 +53,12 @@ main (int argc, char **argv)
 	time_t current_time;
 	char *temp_ptr;
 	FILE *fp;
+	int procuid = 0;
+	int procppid = 0;
+	char procstat[8];
+	char procprog[MAX_INPUT_BUFFER];
+	char *procargs;
+	int pos, cols;
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage ("Could not parse arguments\n");
@@ -82,21 +90,32 @@ main (int argc, char **argv)
 	fclose (fp);
 
 	/* run the command to check for the Nagios process.. */
-	child_process = spopen (PS_RAW_COMMAND);
+	child_process = spopen (PS_COMMAND);
 	if (child_process == NULL) {
-		printf ("Could not open pipe: %s\n", PS_RAW_COMMAND);
+		printf ("Could not open pipe: %s\n", PS_COMMAND);
 		return STATE_UNKNOWN;
 	}
 
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL) {
-		printf ("Could not open stderr for %s\n", PS_RAW_COMMAND);
+		printf ("Could not open stderr for %s\n", PS_COMMAND);
 	}
+
+	fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process);
 
 	/* count the number of matching Nagios processes... */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
-		if (!strstr(input_buffer, argv[0]) && strstr(input_buffer, process_string))
-			proc_entries++;
+		cols = sscanf (input_buffer, PS_FORMAT, PS_VARLIST);
+		if ( cols >= 4 ) {
+			asprintf (&procargs, "%s", input_buffer + pos);
+			strip (procargs);
+			
+			if (!strstr(procargs, argv[0]) && strstr(procargs, process_string)) {
+				proc_entries++;
+				if (verbose)
+					printf ("Found process: %s\n", procargs);
+			}
+		}
 	}
 
 	/* If we get anything on stderr, at least set warning */
@@ -151,6 +170,7 @@ process_arguments (int argc, char **argv)
 		{"command", required_argument, 0, 'C'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
+		{"verbose", no_argument, 0, 'v'},
 		{0, 0, 0, 0}
 	};
 
@@ -170,7 +190,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVF:C:e:", long_options, &option_index);
+		c = getopt_long (argc, argv, "+hVvF:C:e:", long_options, &option_index);
 
 		if (c == -1 || c == EOF || c == 1)
 			break;
@@ -186,19 +206,22 @@ process_arguments (int argc, char **argv)
 		case 'V':									/* version */
 			print_revision (progname, "$Revision$");
 			exit (STATE_OK);
-		case 'F':									/* hostname */
+		case 'F':									/* status log */
 			status_log = optarg;
 			break;
-		case 'C':									/* hostname */
+		case 'C':									/* command */
 			process_string = optarg;
 			break;
-		case 'e':									/* hostname */
+		case 'e':									/* expiry time */
 			if (is_intnonneg (optarg))
 				expire_minutes = atoi (optarg);
 			else
 				terminate (STATE_UNKNOWN,
 									 "Expiration time must be an integer (seconds)\nType '%s -h' for additional help\n",
 									 progname);
+			break;
+		case 'v':
+			verbose++;
 			break;
 		}
 	}
