@@ -14,6 +14,9 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+ LIMITATION: nslookup on Solaris 7 can return output over 2 lines, which will not 
+ be picked up by this plugin
+
 ******************************************************************************/
 
 #include "common.h"
@@ -108,7 +111,7 @@ main (int argc, char **argv)
 		/* the server is responding, we just got the host name... */
 		if (strstr (input_buffer, "Name:"))
 			parse_address = TRUE;
-		else if (strstr (input_buffer, "Address:") && parse_address == TRUE) {
+		else if (parse_address == TRUE && (strstr (input_buffer, "Address:") || strstr (input_buffer, "Addresses:"))) {
 			temp_buffer = index (input_buffer, ':');
 			temp_buffer++;
 
