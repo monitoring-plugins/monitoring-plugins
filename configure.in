@@ -792,7 +792,7 @@ if [cat /proc/meminfo > /dev/null 2>&1]
 then
 	echo "found /proc/meminfo"
 	AC_DEFINE(HAVE_PROC_MEMINFO,1,[Define if we have /proc/meminfo])
-	AC_DEFINE_UNQUOTED(PROC_MEMINFO,"/proc/meminfo",[path to /proc/meminfo (if name changes or something)])
+	AC_DEFINE_UNQUOTED(PROC_MEMINFO,"/proc/meminfo",[path to /proc/meminfo if name changes])
 	EXTRAS="$EXTRAS check_swap"
 elif [swap -l 2>&1 | egrep -i "swapfile" >/dev/null]
 then
