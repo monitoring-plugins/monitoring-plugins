@@ -293,6 +293,90 @@ if ($mailq eq "sendmail") {
 	}
 
 } # end of ($mailq eq "sendmail")
+elsif ( $mailq eq "postfix" ) {
+
+     ## open mailq
+        if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
+                if (! open (MAILQ, "$utils::PATH_TO_MAILQ | " ) ) {
+                        print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
+                        exit $ERRORS{'UNKNOWN'};
+                }
+        }elsif( defined $utils::PATH_TO_MAILQ){
+                unless (-x $utils::PATH_TO_MAILQ) {
+                        print "ERROR: $utils::PATH_TO_MAILQ is not executable by (uid $>:gid($)))\n";
+                        exit $ERRORS{'UNKNOWN'};
+                }
+        } else {
+                print "ERROR: \$utils::PATH_TO_MAILQ is not defined\n";
+                exit $ERRORS{'UNKNOWN'};
+        }
+
+
+        @lines = reverse <MAILQ>;
+
+        # close qmail-qstat
+        close MAILQ;
+        # declare an error if we also get a non-zero return code from mailq
+        # unless already set to critical
+        if ( $? ) {
+                $state = $state == $ERRORS{"CRITICAL"} ? $ERRORS{"CRITICAL"} : $ERRORS{"WARNING"}  ;
+                print "STDERR $?: $!\n" if $verbose;
+                $msg = "$state: (stderr)\n";
+        }
+
+        ## shut off the alarm
+        alarm(0);
+
+        # check queue length
+        if ($lines[0]=~/Kbytes in (\d+)/) {
+                $msg_q = $1 ;
+	}elsif ($lines[0]=~/Mail queue is empty/) {
+		$msg_q = 0;
+        }else{
+                print "Couldn't match $utils::PATH_TO_QMAIL_QSTAT output\n";
+                exit   $ERRORS{'UNKNOWN'};
+        }
+
+        # check messages not processed
+        #if ($lines[1]=~/^messages in queue but not yet preprocessed: (\d+)/) {
+        #        my $msg_p = $1;
+        #}else{
+        #        print "Couldn't match $utils::PATH_TO_QMAIL_QSTAT output\n";
+        #        exit  $ERRORS{'UNKNOWN'};
+        #}
+
+        # check queue length(s)
+        if ($msg_q == 0){
+                $msg = "OK: mailq reports queue is empty";
+                $state = $ERRORS{'OK'};
+        } else {
+                print "msg_q = $msg_q warn=$opt_w crit=$opt_c\n" if $verbose;
+
+                # overall queue length
+                if ($msg_q < $opt_w) {
+                        $msg = "OK: mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
+                        $state = $ERRORS{'OK'};
+                }elsif  ($msg_q >= $opt_w  && $msg_q < $opt_c) {
+                        $msg = "WARNING: mailq is $msg_q (threshold w = $opt_w)";
+                        $state = $ERRORS{'WARNING'};
+                }else {
+                        $msg = "CRITICAL: mailq is $msg_q (threshold c = $opt_c)";
+                        $state = $ERRORS{'CRITICAL'};
+                }
+
+                # check messages not yet preprocessed (only compare is $opt_W and $opt_C
+                # are defined)
+
+                #if (defined $opt_W) {
+                #        $msg .= "[Preprocessed = $msg_p]";
+                #        if ($msg_p >= $opt_W && $msg_p < $opt_C ) {
+                #                $state = $state == $ERRORS{"CRITICAL"} ? $ERRORS{"CRITICAL"} : $ERRORS{"WARNING"}  ;
+                #        }elsif ($msg_p >= $opt_C ) {
+                #                $state = $ERRORS{"CRITICAL"} ;
+                #        }
+                #}
+        }
+} # end of ($mailq eq "postfixl")
 elsif ( $mailq eq "qmail" ) {
 
 	# open qmail-qstat 
@@ -442,7 +526,7 @@ sub process_arguments(){
 	}
 
 	if (defined $opt_M) {
-		if ($opt_M =~ /sendmail/ || $opt_M =~ /qmail/ ) {
+		if ($opt_M =~ /sendmail/ || $opt_M =~ /qmail/ || $opt_M =~ /postfix/ ) {
 			$mailq = $opt_M ;
 		}elsif( $opt_M eq ''){
 			$mailq = 'sendmail';
@@ -474,7 +558,7 @@ sub print_help () {
 	print "-W (--Warning)   = Min. number of messages for same domain in queue to generate warning\n";
 	print "-C (--Critical)  = Min. number of messages for same domain in queue to generate critical alert ( W < C )\n";
 	print "-t (--timeout)   = Plugin timeout in seconds (default = $utils::TIMEOUT)\n";
-	print "-M (--mailserver) = [ sendmail | qmail ] (default = sendmail)\n";
+	print "-M (--mailserver) = [ sendmail | qmail | postfix ] (default = sendmail)\n";
 	print "-h (--help)\n";
 	print "-V (--version)\n";
 	print "-v (--verbose)   = debugging output\n";
