@@ -1,0 +1,332 @@
+#!/usr/bin/perl -w
+# check_sybase
+# A nagios plugin that connects to a Sybase database and checks free space.
+#
+# Copyright 2004 Simon Bellwood, NetMan Network Management and IT Services GmbH
+# Portions Copyright 2001 Michael Peppler.
+# License: GPL
+#
+# Bugs and feedback to simon.bellwood@nospam.net-man.at
+# Latest version available from:
+# 	http://www.net-man.at/software/check_sybase-LATEST.zip
+#
+# Revision history:
+# 0.1	01-OCT-2004	Initial version.
+# 0.2	08-NOV-2004	Initial release.
+my $VERSION = "0.2";
+
+use strict;
+use DBI;
+use Getopt::Long;
+use lib "/usr/local/nagios/libexec";
+use utils qw(%ERRORS &print_revision &support &usage $TIMEOUT);
+
+
+my $PROGNAME = "check_sybase";
+my $DEFAULT_CHECKTYPE = "FREESPACE";
+my $DEFAULT_WARNING   = "25";
+my $DEFAULT_CRITICAL  = "10";
+
+my ($user, $pass, $dbsvr, $dbname, $config, $checktype, $warn, $crit, $timeout,
+    $help, $version);
+
+my $options_okay = GetOptions(
+	"U|user=s"	=> \$user,
+	"P|pass:s"	=> \$pass, # ":" means optional
+	"S|dbsvr=s"	=> \$dbsvr,
+	"D|dbname=s"	=> \$dbname,
+	"config=s"	=> \$config,
+	"checktype=s"	=> \$checktype,
+	"w|warning=i"	=> \$warn,
+	"c|critical=i"	=> \$crit,
+	"t|timeout=i"	=> \$timeout,
+	"h|help"	=> \$help,
+	"V|version"	=> \$version
+);
+
+
+if (! $options_okay) # Bad option passed
+{
+	&help;
+	&nunk("Bad command line option passed!");
+}
+
+# Use defaults, if needed
+$warn = $warn || $DEFAULT_WARNING;
+$crit = $crit || $DEFAULT_CRITICAL;
+$checktype = $checktype || $DEFAULT_CHECKTYPE;
+$timeout = $timeout || $TIMEOUT;
+
+if ($help)
+{
+	&help;
+	&nok;
+}
+
+if ($version)
+{
+	print_revision($PROGNAME,"\$Revision$VERSION \$");
+	&nok;
+}
+
+if ($config) # Read any of "user", "pass", "dbsvr", "dbname" from config file
+{
+	&read_config;
+}
+
+# Some more descriptive syntax checks
+my $syntax_error;
+$syntax_error .= "No dbsvr given! " unless $dbsvr;
+$syntax_error .= "No dbname given! " unless $dbname;
+$syntax_error .= "No user given! " unless $user;
+$syntax_error .= "Bad checktype given!"
+	unless $checktype =~ m/^CONNECT|FREESPACE$/;
+&nunk($syntax_error) if $syntax_error;
+
+
+# Just in case of problems, let's not hang Nagios
+$SIG{'ALRM'} = sub {
+	&nunk("Timeout: no response from dbsvr $dbsvr within $timeout seconds");
+};
+alarm($timeout);
+
+
+# Decide on what we are checking
+if ($checktype eq "CONNECT")
+{
+	&connect;
+}
+elsif ($checktype eq "FREESPACE")
+{
+	&check_space;
+}
+
+my $dbh;
+my $is_connected;
+sub connect
+{
+	$dbh = DBI->connect("dbi:Sybase:server=$dbsvr;database=$dbname",
+	                    $user, $pass)
+		or &ncrit("Could not connect to '$dbname' on '$dbsvr'");
+
+	# Report success for a check of type CONNECT
+	&nok("Connect okay") if $checktype ne "FREESPACE";
+}
+
+sub disconnect
+{
+	$dbh->disconnect if $is_connected;
+	$is_connected = 0;
+}
+
+sub check_space
+{
+	&connect;
+
+	# Most of this sub based on Michael Peppler's check-space.pl
+
+	$dbh->{syb_do_proc_status} = 1;
+
+	my $dbinfo;
+
+	# First check space in the database
+	my $sth = $dbh->prepare("sp_spaceused")
+		or &nunk("Failed to call sp_spaceused on '$dbsvr'");
+	$sth->execute
+		or &nunk("Failed to call sp_spaceused on '$dbsvr'");
+	do {
+		while(my $d = $sth->fetch)
+		{
+			if($d->[0] =~ /$dbname/)
+			{
+				# Grab "database_size"
+				$d->[1] =~ s/[^\d.]//g;
+				$dbinfo->{size} = $d->[1];
+			}
+			else
+			{
+				foreach (@$d)
+				{
+					s/\D//g;
+				}
+
+				# Grab "reserved", "data", "index"
+				$dbinfo->{reserved} = $d->[0] / 1024;
+				$dbinfo->{data} = $d->[1] / 1024;
+				$dbinfo->{index} = $d->[2] / 1024;
+			}
+		}
+	} while($sth->{syb_more_results});
+
+	# Get the actual device usage from sp_helpdb to get the free log space
+	$sth = $dbh->prepare("sp_helpdb $dbname")
+		or &nunk("Failed to call sp_helpdb $dbname on '$dbsvr'");
+	$sth->execute
+		or &nunk("Failed to call sp_helpdb $dbname on '$dbsvr'");
+	do {
+		while(my $d = $sth->fetch)
+		{
+			# Look for "usage" column with value "log only"
+			if($d->[2] && $d->[2] =~ /log only/)
+			{
+				# Grab "size", add it to our log size
+				$d->[1] =~ s/[^\d\.]//g;
+				$dbinfo->{log} += $d->[1];
+			}
+
+			# Look for "device fragments" column with "log only"
+			# followed by a number.
+			if($d->[0] =~ /log only .* (\d+)/)
+			{
+				$dbinfo->{logfree} = $1 / 1024;
+			}
+		}
+	} while($sth->{syb_more_results});
+
+	# Subtract the log size from the database size
+	$dbinfo->{size} -= $dbinfo->{log};
+
+	# The "reserved" space is free for use by the table that freed it, so 
+	# it is not truly free space. To be safe, our calculation ignores it.
+	my $free = ($dbinfo->{size} - $dbinfo->{reserved}) / $dbinfo->{size};
+	$free = sprintf("%.2f", $free*100);
+
+
+	if ($free < $crit)
+	{
+		&ncrit("Free space is $free%! (critical threshold is $crit%)");
+	}
+
+	if ($free < $warn)
+	{
+		&nwarn("Free space is $free%! (warning threshold is $warn%)");
+	}
+
+
+	&nok("Free space within thresholds ($free% free)");
+}
+
+sub read_config
+{
+	open (CONFIG, "<$config")
+		or &nunk("Failed to open config file '$config': $!");
+	while (<CONFIG>)
+	{
+		chomp;
+		next if m/^#/; # skip comments
+		next if m/^$/; # skip blanks
+
+		# Each case-insensitive argument can be followed by an optional
+		# colon, then must be followed by whitespace and the value.
+		# Options in the config file override those given on the 
+		# command line, but don't rely on this!
+
+		if    (m/USER:?\s+(\S+)/i)
+		{
+			$user = $1;
+		}
+		elsif (m/PASS:?\s+(\S+)/i)
+		{
+			$pass = $1;
+		}
+		elsif (m/DBSVR:?\s+(\S+)/i)
+		{
+			$dbsvr = $1;
+		}
+		elsif (m/DBNAME:?\s+(\S+)/i)
+		{
+			$dbname = $1;
+		}
+		else
+		{
+			&nunk("Invalid line $. in config file '$config'");
+		}
+	}
+	close (CONFIG);
+}
+
+sub help
+{
+	print <<_HELP_;
+Usage: $PROGNAME OPTIONS
+A nagios plugin that connects to a Sybase database and checks free space.
+
+Mandatory arguments to long options are mandatory for short options too.
+  -U, --user		Username to connect to database.
+  -P, --pass		Password to connect to database.
+  -S, --dbsvr		Database server (as in the interfaces file).
+  -D, --dbname		Database name to check.
+  --config=FILE		Config file (see SECURITY below)
+  --checktype=TYPE	Type of check to run (see TYPEs below)
+  -w, --warning		Warning threshold, in percent (default 25)
+  -c, --critical	Critical threshold, in percent (default 10)
+  -t, --timeout		Timeout value, in seconds (default 30)
+  -h, --help		This help message
+  -V, --version		Version information
+
+Examples:
+	$PROGNAME -U sa -P secret -S bigbox -D orders
+	$PROGNAME --config=/secure/nagios-sybase.cfg --checktype=CONNECT
+
+TYPEs
+ There are two types of checks you can run:
+ --checktype=CONNECT
+    Checks just the connection to the database.
+ --checktype=FREESPACE
+    (Default) Checks both the connection to the database and the free space.
+
+SECURITY - Using a config file
+ Since a "ps ax" will reveal your database username and password, you can 
+ instead specify them in a config file. Pass the config file with --config.
+ The format of the file is:
+   USER     value
+   PASS     value
+ You can also specify a DBSVR and DBNAME in the file. Comments (#) and blank
+ lines are ignored. Use whitespace to separate argument and value.
+_HELP_
+
+}
+
+
+
+# Some wrappers..
+
+# Returns code 0, OK
+sub nok
+{
+	my $msg = shift;
+	print "OK: $msg\n" if $msg;
+
+	&disconnect;
+	exit $ERRORS{OK};
+}
+
+# Returns code 1, Warning
+sub nwarn
+{
+	my $msg = shift;
+	print "WARNING: $msg\n";
+
+	&disconnect;
+	exit $ERRORS{WARNING};
+}
+
+# Returns code 2, Critical
+sub ncrit
+{
+	my $msg = shift;
+	print "CRITICAL: $msg\n";
+
+	&disconnect;
+	exit $ERRORS{CRITICAL};
+}
+
+# Returns code 3, Unknown
+sub nunk
+{
+	my $msg = shift;
+	print "ERROR: $msg\n";
+
+	&disconnect;
+	exit $ERRORS{UNKNOWN};
+}
