@@ -1,3 +1,213 @@
+2004-12-30 14:23  tonvoon
+
+	* CHANGES: Note some syntax changes to check_disk
+
+2004-12-30 14:22  tonvoon
+
+	* doc/RELEASING: Update package files for version
+
+2004-12-30 14:21  tonvoon
+
+	* AUTHORS: For help with ps on FreeBSD 4
+
+2004-12-30 14:19  tonvoon
+
+	* configure.in: Get ps command for FreeBSD 4 (Tomasz Pilat)
+
+2004-12-30 00:41  opensides
+
+	* plugins/check_dhcp.c, plugins/check_dns.c, plugins/check_ping.c,
+	  plugins/check_procs.c, plugins/check_smtp.c,
+	  plugins/check_snmp.c, plugins/check_swap.c, plugins/check_tcp.c,
+	  po/de.po, po/fr.po, po/nagios-plugins.pot:
+	  more internationalization fixes internationalization freeze for
+	  beta1
+
+2004-12-28 23:40  opensides
+
+	* AUTHORS, po/fr.po:
+	  more internationalization
+
+2004-12-28 23:18  opensides
+
+	* plugins/Makefile.am, plugins/check_smtp.c, po/fr.po:
+	  starttls support for check_smtp #1041576
+
+2004-12-28 22:34  opensides
+
+	* AUTHORS, plugins/check_ping.c:
+	  String match in check_ping for Solaris 10 #1091043
+
+2004-12-28 20:40  tonvoon
+
+	* configure.in: sys/param.h needed for sys/swap.h on openbsd 3.6
+	  (Julien Touche)
+
+2004-12-27 22:44  opensides
+
+	* po/fr.po:
+	  more internationalization
+
+2004-12-25 23:17  opensides
+
+	* plugins/check_dig.c, plugins/check_disk.c, plugins/check_dns.c,
+	  plugins/check_dummy.c, plugins/check_fping.c,
+	  plugins/check_game.c, plugins/check_hpjd.c, plugins/check_icmp.c,
+	  plugins/check_ide_smart.c, plugins/check_ldap.c,
+	  plugins/check_load.c, plugins/check_mrtg.c,
+	  plugins/check_mrtgtraf.c, plugins/check_mysql.c,
+	  plugins/check_nagios.c, plugins/check_nt.c,
+	  plugins/check_nwstat.c, plugins/check_overcr.c,
+	  plugins/check_pgsql.c, plugins/check_ping.c,
+	  plugins/check_procs.c, plugins/check_radius.c,
+	  plugins/check_real.c, plugins/check_smtp.c, plugins/check_snmp.c,
+	  plugins/check_ssh.c, plugins/check_swap.c, plugins/check_tcp.c,
+	  plugins/check_time.c, plugins/check_udp.c, plugins/check_ups.c,
+	  plugins/check_users.c, plugins/negate.c, plugins/netutils.c,
+	  plugins/popen.c, plugins/popen.h, plugins/urlize.c,
+	  plugins/utils.c, po/de.po, po/fr.po, po/nagios-plugins.pot:
+	  various fixes for localization
+
+2004-12-25 16:18  opensides
+
+	* po/: de.po, fr.po, nagios-plugins.pot:
+	  new version of po files and pot file
+
+2004-12-25 12:25  opensides
+
+	* package.def, po/POTFILES.in:
+	  change realase name on package.def adding check_dhcp.c to
+	  potfiles.in
+
+2004-12-25 12:09  opensides
+
+	* plugins/: check_by_ssh.c, check_dhcp.c:
+	  internationalization of check_dhcp internationalization fixes of
+	  check_ssh
+
+2004-12-24 18:06  opensides
+
+	* plugins/check_icmp.c, po/POTFILES.in, po/fr.po:
+	  first pass at adapting to plugin guidelines and start of
+	  localization
+
+2004-12-23 18:54  opensides
+
+	* plugins/check_http.c, po/fr.po:
+	  internationalization fixes
+
+2004-12-23 16:47  mwirtgen
+
+	* po/de.po: german translations 391 to go
+
+2004-12-23 09:30  tonvoon
+
+	* ACKNOWLEDGEMENTS, configure.in, m4/np_curl.m4,
+	  plugins/Makefile.am: Another attempt at fixing check_http compile
+	  on Redhat EL3. Fixed check_icmp compile (Lynne Lawrence -
+	  1087171) - still some code changes to check_icmp outstanding.
+	  Fixed compile of check_dhcp (complaining about socklen_t).  Added
+	  acknowledgements for Coreutils and curl
+
+2004-12-22 23:02  harpermann
+
+	* plugins/check_nt.c: Added check for "%" in COUNTER <description>.
+	  If it exists, <description> is used as an arg to asprintf.  If
+	  it doesn't exist, <description> is used as a label.  If the
+	  formatting is wrong, the program will segv.
+
+2004-12-22 07:24  tonvoon
+
+	* lib/: Makefile.am, stdbool_.h: File required from coreutils
+
+2004-12-21 22:52  tonvoon
+
+	* configure.in, plugins/Makefile.am: Revert back to previous
+	  openssl checks (the ones from curl kept having problems with
+	  later Redhat versions)
+
+2004-12-21 22:36  tonvoon
+
+	* m4/stdbool.m4: Another m4 from coreutils
+
+2004-12-21 15:45  tonvoon
+
+	* AUTHORS: For their bug reports
+
+2004-12-21 12:47  tonvoon
+
+	* configure.in: Fix for FreeBSD ps command (reported by Michael
+	  Bakker)
+
+2004-12-21 09:32  tonvoon
+
+	* lib/Makefile.am, m4/Makefile.am, m4/np_coreutils.m4: Fixed
+	  compile problem on Sol2.6 with stdbool.h
+
+2004-12-21 08:56  stanleyhopcroft
+
+	* plugins/check_dhcp.c: Commentary changes only: cite origin of
+	  copied code with reference to ACK file
+
+2004-12-21 08:55  stanleyhopcroft
+
+	* ACKNOWLEDGEMENTS: ACK file contains the details of the authors of
+	  code copied by the plugins
+
+2004-12-21 05:00  mattkent
+
+	* plugins/check_dns.c: Add another error string match from Pasi
+	  Tiittanen
+
+2004-12-20 22:20  tonvoon
+
+	* plugins/check_nagios.c: Corrected help for expiry units. Restored
+	  functionality of searching for process arguments
+
+2004-12-20 22:01  tonvoon
+
+	* plugins/check_nagios.c: Updating help text to reflect using
+	  shortname instead of full path for command
+
+2004-12-20 21:38  tonvoon
+
+	* configure.in: - stupid typo
+
+2004-12-20 21:26  tonvoon
+
+	* configure.in: Fix compile errors when looking for openssl
+
+2004-12-20 09:04  stanleyhopcroft
+
+	* COPYING, plugins/check_dhcp.c, po/de.po, po/fr.po: Compilation
+	  fixes for check_dhcp.c HP-UX 11. Still fails on HP-UX 10. Unknown
+	  if check_dhcp works on UX.
+
+2004-12-18 18:28  mwirtgen
+
+	* po/de.po: Initial commit on german translation - 428 to go
+
+2004-12-17 18:14  tonvoon
+
+	* configure.in: Support for FreeBSD 5.2.1 and 5.3 in check_procs
+
+2004-12-15 23:12  tonvoon
+
+	* configure.in: Bump version to next release
+
+2004-12-15 23:11  tonvoon
+
+	* doc/developer-guidelines.sgml: Mistake in automake version - back
+	  to 1.8
+
+2004-12-15 23:10  tonvoon
+
+	* doc/RELEASING: Clarified notes
+
+2004-12-15 21:56  tonvoon
+
+	* ChangeLog: Updated for r1_4_0-alpha3
+
 2004-12-15 21:27  tonvoon
 
 	* doc/developer-guidelines.sgml: Updated requirements for GNU tools
