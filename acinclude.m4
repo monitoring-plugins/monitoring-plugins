@@ -1,0 +1,1 @@
+ifdef(AC_FUNC_STRTOD,,`define([AC_FUNC_STRTOD],[AM_FUNC_STRTOD]')
