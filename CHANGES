@@ -4,6 +4,7 @@ This file documents the major additions and syntax changes between releases.
 	IPv6 support in check_ping, check_by_ssh, check_http, check_ldap, check_smtp, check_tcp
 	Internationalisation support
 	Performance data added to most plugins
+	check_disk now using GNU coreutils code
 	New plugins - check_dhcp, check_icmp
 	contrib/check_citrix has been replaced by contrib/check_ica* (requires packet_utils.pm in libexec)
 	check_http --min changed to --pagesize, added max so min:max in check
