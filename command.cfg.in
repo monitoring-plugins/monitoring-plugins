@@ -74,6 +74,7 @@ command[check_nntp]=@libexecdir@/check_nntp -H $HOSTADDRESS$
 command[check_telnet]=@libexecdir@/check_tcp -H $HOSTADDRESS$ -p 23
 command[check_users]=@libexecdir@/check_users -w $ARG1$ -c $ARG2$
 command[check_ntp]=@libexecdir@/check_ntp -H $HOSTADDRESS$
+command[check_ntp_ntpq]=@libexecdir@/check_ntp -H $HOSTADDRESS$ -j 10 -k 15
 command[check_flexlm]=@libexecdir@/check_flexlm -F $ARG1$
 command[check_hpjd]=@libexecdir@/check_hpjd -H $HOSTADDRESS$ -C public
 command[check_mrtg]=@libexecdir@/check_mrtg $ARG1$ 10 AVG $ARG2$ $ARG3$ $ARG4$ $ARG5$ $ARG6$
