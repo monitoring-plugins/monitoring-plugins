@@ -426,7 +426,6 @@ process_arguments (int argc, char **argv)
 			*dptail = se;
 			dptail = &se->name_next;
 			break;
- 			break;
 		case 'X':									/* exclude file system type */
 			se = (struct name_list *) malloc (sizeof (struct name_list));
 			se->name = strdup (optarg);
@@ -464,6 +463,7 @@ process_arguments (int argc, char **argv)
 		}
 	}
 
+	/* Support for "check_disk warn crit [fs]" with thresholds at used level */
 	c = optind;
 	if (w_dfp == -1 && argc > c && is_intnonneg (argv[c]))
 		w_dfp = (100.0 - atof (argv[c++]));
@@ -471,8 +471,16 @@ process_arguments (int argc, char **argv)
 	if (c_dfp == -1 && argc > c && is_intnonneg (argv[c]))
 		c_dfp = (100.0 - atof (argv[c++]));
 
-	if (argc > c && strlen (path) == 0)
-		path = argv[c++];
+	if (argc > c && strlen (path) == 0) {
+		se = (struct name_list *) malloc (sizeof (struct name_list));
+		se->name = strdup (argv[c++]);
+		se->name_next = NULL;
+		se->w_df = w_df;
+		se->c_df = c_df;
+		se->w_dfp = w_dfp;
+		se->c_dfp = c_dfp;
+		*pathtail = se;
+	}
 
 	if (path_select_list) {
 		temp_list = path_select_list;
