@@ -51,6 +51,7 @@ to gather the requested system information.\n"
      CDBUFF   = current number of dirty cache buffers\n\
      LRUM     = LRU sitting time in minutes\n\
      DSDB     = check to see if DS Database is open\n\
+     DSVER    = NDS version\n\
      LOGINS   = check to see if logins are enabled\n\
      UPRB     = used packet receive buffers\n\
      PUPRB    = percent (of max) used packet receive buffers\n\
@@ -67,6 +68,7 @@ to gather the requested system information.\n"
      LRUS     = LRU sitting time in seconds\n\
      DCB      = dirty cache buffers as a percentage of the total\n\
      TCB      = dirty cache buffers as a percentage of the original\n\
+     UPTIME   = server uptime\n\
 -w, --warning=INTEGER\n\
   Threshold which will result in a warning status\n\
 -c, --critical=INTEGER\n\
@@ -123,6 +125,8 @@ Notes:\n\
 #define CHECK_LRUS          24 /* check LRU sitting time in seconds */
 #define CHECK_DCB           25 /* check dirty cache buffers as a percentage of the total */
 #define CHECK_TCB           26 /* check total cache buffers as a percentage of the original */
+#define CHECK_DSVER         27 /* check NDS version */
+#define CHECK_UPTIME        28 /* check server uptime */
 
 #define PORT 9999
 
@@ -664,7 +668,7 @@ int main(int argc, char **argv){
 		asprintf(&output_message,"dirty cache buffers = %d%% of the total",dirty_cache_buffers);
 
 	/* check % total cache buffers as a percentage of the original*/
-	} else if (vars_to_check==CHECK_TCB) {
+        } else if (vars_to_check==CHECK_TCB) {
 
 		send_buffer = strscpy(send_buffer,"S7\r\n");
 		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
@@ -678,6 +682,26 @@ int main(int argc, char **argv){
 			result=STATE_WARNING;
 		asprintf(&output_message,"total cache buffers = %d%% of the original",total_cache_buffers);
 		
+        } else if (vars_to_check==CHECK_DSVER) {
+		asprintf(&send_buffer,"S13\r\n");
+          	result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+          	if(result!=STATE_OK)
+          		return result;
+
+          	recv_buffer[strlen(recv_buffer)-1]=0;
+
+         	asprintf(&output_message,"NDS Version %s",recv_buffer);
+
+        } else if (vars_to_check==CHECK_UPTIME) {
+	  	asprintf(&send_buffer,"UPTIME\r\n");
+	  	result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
+	  	if(result!=STATE_OK)
+	 		return result;
+
+	  	recv_buffer[strlen(recv_buffer)-1]=0;
+
+	  	asprintf(&output_message,"Up %s",recv_buffer);
+
 	} else {
 
 		output_message = strscpy(output_message,"Nothing to check!\n");
@@ -847,6 +871,10 @@ int process_arguments(int argc, char **argv){
 					vars_to_check=CHECK_CSPROCS;
 				else if(!strcmp(optarg,"TSYNC"))
 					vars_to_check=CHECK_TSYNC;
+				else if(!strcmp(optarg,"DSVER"))
+					vars_to_check=CHECK_DSVER;
+				else if(!strcmp(optarg,"UPTIME"))
+					vars_to_check=CHECK_UPTIME;
 				else
 					return ERROR;
 				break;
