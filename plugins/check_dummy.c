@@ -38,7 +38,7 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
-	if (argc != 2)
+	if (argc < 2)
 		usage (_("Incorrect number of arguments supplied\n"));
 	else if (strcmp (argv[1], "-V") == 0 || strcmp (argv[1], "--version") == 0) {
 		print_revision (progname, revision);
@@ -55,21 +55,26 @@ main (int argc, char **argv)
 
 	switch (result) {
 	case STATE_OK:
-		printf ("Status is OK\n");
+		printf (_("OK"));
 		break;
 	case STATE_WARNING:
-		printf ("Status is at WARNING level\n");
+		printf (_("WARNING"));
 		break;
 	case STATE_CRITICAL:
-		printf ("Status is CRITICAL\n");
+		printf (_("CRITICAL"));
 		break;
 	case STATE_UNKNOWN:
-		printf ("Status is UNKNOWN\n");
+		printf (_("UNKNOWN"));
 		break;
 	default:
-		printf ("Status %d is not a supported error state\n", result);
+		printf (_("Status %d is not a supported error state\n"), result);
 		break;
 	}
+
+	if (argc >= 3) 
+		printf (": %s", argv[2]);
+
+	printf("\n");
 
 	return result;
 }
@@ -90,7 +95,7 @@ print_help (void)
 
 	printf (_("\n\
 This plugin will simply return the state corresponding to the numeric value\n\
-of the <state> argument.\n"));
+of the <state> argument with optional text.\n"));
 
 	printf (_(UT_SUPPORT));
 }
@@ -100,5 +105,5 @@ of the <state> argument.\n"));
 void
 print_usage (void)
 {
-	printf (_("Usage: %s <integer state>\n"), progname);
+	printf (_("Usage: %s <integer state> [optional text]\n"), progname);
 }
