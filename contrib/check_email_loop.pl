@@ -47,10 +47,11 @@ my %ERRORS = ('UNKNOWN' , '-1',
 my $state = "UNKNOWN";
 my ($sender,$receiver, $pophost, $popuser, $poppasswd, $smtphost,$keeporphaned);
 my ($poptimeout,$smtptimeout,$pinginterval,$maxmsg)=(60,60,5,50);
-my ($lostwarn, $lostcrit,$pendwarn, $pendcrit);
+my ($lostwarn, $lostcrit,$pendwarn, $pendcrit,$debug);
 
 # Internal Vars
 my ($pop,$msgcount,@msglines,$statinfo,@messageids,$newestid);
+my (%other_smtp_opts);
 my ($matchcount,$statfile) = (0,"check_email_loop.stat");
 
 # Subs declaration
@@ -70,6 +71,7 @@ alarm($TIMEOUT);
 my $status = GetOptions(
 		        "from=s",\$sender,
 			"to=s",\$receiver,
+                        "debug", \$debug,
                         "pophost=s",\$pophost,
                         "popuser=s",\$popuser,
 			"passwd=s",\$poppasswd,
@@ -108,8 +110,14 @@ if (!open STATF, ">$statfile") {
 my $serial = time();
 $serial = "ID#" . $serial . "#$$";
 
+
 # sending new ping email
-my $smtp = Net::SMTP->new($smtphost,Timeout=>$smtptimeout) 
+%other_smtp_opts={};
+if ( $debug == 1  ) {
+    $other_smtp_opts{'Debug'} = 1;
+}
+
+my $smtp = Net::SMTP->new($smtphost,Timeout=>$smtptimeout, %other_smtp_opts) 
   || nsexit("SMTP connect timeout ($smtptimeout s)",'CRITICAL');
 ($smtp->mail($sender) &&
  $smtp->to($receiver) &&
@@ -233,7 +241,8 @@ sub usage {
   print "   -pendwarn=num      WARNING-state if more than num pending emails\n";
   print "   -pendcrit=num      CRITICAL \n";
   print "   -maxmsg=num        WARNING if more than num emails on POP3 (default 50)\n";
-  print "   -keeporphaned      Set this to NOT delete orphaned E-Mail Ping msg from POP3\n\n";
+  print "   -keeporphaned      Set this to NOT delete orphaned E-Mail Ping msg from POP3\n";
+  print "   -debug             send SMTP tranaction info to stderr\n\n";
   print " Options may abbreviated!\n";
   print " LOST mails are mails, being sent before the last mail arrived back.\n";
   print " PENDING mails are those, which are not. (supposed to be on the way)\n";
