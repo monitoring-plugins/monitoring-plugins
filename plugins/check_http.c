@@ -285,7 +285,7 @@ main (int argc, char **argv)
 #ifdef HAVE_SSL
 	if (use_ssl && check_cert == TRUE) {
 		if (connect_SSL () != OK)
-			terminate (STATE_CRITICAL,
+			die (STATE_CRITICAL,
 			           _("HTTP CRITICAL - Could not make SSL connection\n"));
 		if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
 			result = check_certificate (&server_cert);
@@ -596,7 +596,7 @@ check_http (void)
 	if (use_ssl == TRUE) {
 
 		if (connect_SSL () != OK) {
-			terminate (STATE_CRITICAL, _("Unable to open TCP socket"));
+			die (STATE_CRITICAL, _("Unable to open TCP socket"));
 		}
 
 		if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
@@ -611,7 +611,7 @@ check_http (void)
 	else {
 #endif
 		if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK)
-			terminate (STATE_CRITICAL, _("Unable to open TCP socket"));
+			die (STATE_CRITICAL, _("Unable to open TCP socket"));
 #ifdef HAVE_SSL
 	}
 #endif
@@ -669,14 +669,14 @@ check_http (void)
 		if (use_ssl) {
 			sslerr=SSL_get_error(ssl, i);
 			if ( sslerr == SSL_ERROR_SSL ) {
-				terminate (STATE_WARNING, _("Client Certificate Required\n"));
+				die (STATE_WARNING, _("Client Certificate Required\n"));
 			} else {
-				terminate (STATE_CRITICAL, _("Error in recv()"));
+				die (STATE_CRITICAL, _("Error in recv()"));
 			}
 		}
 		else {
 #endif
-			terminate (STATE_CRITICAL, _("Error in recv()"));
+			die (STATE_CRITICAL, _("Error in recv()"));
 #ifdef HAVE_SSL
 		}
 #endif
@@ -684,7 +684,7 @@ check_http (void)
 
 	/* return a CRITICAL status if we couldn't read any data */
 	if (pagesize == (size_t) 0)
-		terminate (STATE_CRITICAL, _("No data received %s"), timestamp);
+		die (STATE_CRITICAL, _("No data received %s"), timestamp);
 
 	/* close the connection */
 	my_close ();
@@ -708,7 +708,7 @@ check_http (void)
 	if (verbose)
 		printf ("STATUS: %s\n", status_line);
 
-	/* find header info and null terminate it */
+	/* find header info and null-terminate it */
 	header = page;
 	while (strcspn (page, "\r\n") > 0) {
 		page += (size_t) strcspn (page, "\r\n");
@@ -732,7 +732,7 @@ check_http (void)
 			asprintf (&msg,
 			                _("Invalid HTTP response received from host on port %d\n"),
 			                server_port);
-		terminate (STATE_CRITICAL, msg);
+		die (STATE_CRITICAL, msg);
 	}
 
 
@@ -753,7 +753,7 @@ check_http (void)
 	  	  strstr (status_line, "501") ||
 	    	strstr (status_line, "502") ||
 		    strstr (status_line, "503")) {
-			terminate (STATE_CRITICAL, _("HTTP CRITICAL: %s\n"), status_line);
+			die (STATE_CRITICAL, _("HTTP CRITICAL: %s\n"), status_line);
 		}
 
 		/* client errors result in a warning state */
@@ -762,7 +762,7 @@ check_http (void)
 	    	strstr (status_line, "402") ||
 		    strstr (status_line, "403") ||
 		    strstr (status_line, "404")) {
-			terminate (STATE_WARNING, _("HTTP WARNING: %s\n"), status_line);
+			die (STATE_WARNING, _("HTTP WARNING: %s\n"), status_line);
 		}
 
 		/* check redirected page if specified */
@@ -778,12 +778,12 @@ check_http (void)
 				while (pos) {
 					server_address = realloc (server_address, MAX_IPV4_HOSTLENGTH + 1);
 					if (server_address == NULL)
-						terminate (STATE_UNKNOWN,
+						die (STATE_UNKNOWN,
 										 _("HTTP UNKNOWN: could not allocate server_address"));
 					if (strcspn (pos, "\r\n") > (size_t)server_url_length) {
 						server_url = realloc (server_url, strcspn (pos, "\r\n"));
 						if (server_url == NULL)
-							terminate (STATE_UNKNOWN,
+							die (STATE_UNKNOWN,
 							           _("HTTP UNKNOWN: could not allocate server_url"));
 						server_url_length = strcspn (pos, "\r\n");
 					}
@@ -840,7 +840,7 @@ check_http (void)
 			asprintf (&msg, _(" - %s - %.3f second response time %s%s|time=%.3f\n"),
 		                 status_line, elapsed_time, timestamp,
 	                   (display_html ? "</A>" : ""), elapsed_time);
-			terminate (onredirect, msg);
+			die (onredirect, msg);
 		} /* end if (strstr (status_line, "30[0-4]") */
 
 
@@ -853,9 +853,9 @@ check_http (void)
 	               status_line, elapsed_time, timestamp,
 	               (display_html ? "</A>" : ""), elapsed_time);
 	if (check_critical_time == TRUE && elapsed_time > critical_time)
-		terminate (STATE_CRITICAL, msg);
+		die (STATE_CRITICAL, msg);
 	if (check_warning_time == TRUE && elapsed_time > warning_time)
-		terminate (STATE_WARNING, msg);
+		die (STATE_WARNING, msg);
 
 	/* Page and Header content checks go here */
 	/* these checks should be last */
@@ -908,7 +908,7 @@ check_http (void)
 	asprintf (&msg, _("HTTP OK %s - %.3f second response time %s%s|time=%.3f\n"),
 	                status_line, (float)elapsed_time,
 	                timestamp, (display_html ? "</A>" : ""), elapsed_time);
-	terminate (STATE_OK, msg);
+	die (STATE_OK, msg);
 	return STATE_UNKNOWN;
 }
 

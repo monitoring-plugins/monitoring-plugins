@@ -349,9 +349,9 @@ process_arguments (int argc, char **argv)
 	c = optind;
 	if (hostname == NULL) {
 		if (c <= argc) {
-			terminate (STATE_UNKNOWN, _("%s: You must provide a host name\n"), progname);
+			die (STATE_UNKNOWN, _("%s: You must provide a host name\n"), progname);
 		} else if (!is_host (argv[c]))
-			terminate (STATE_UNKNOWN, _("%s: Invalid host name %s\n"), progname, argv[c]);
+			die (STATE_UNKNOWN, _("%s: Invalid host name %s\n"), progname, argv[c]);
 		hostname = argv[c++];
 	}
 
@@ -385,10 +385,10 @@ validate_arguments (void)
 		return ERROR;
 
 	if (passive && commands != services)
-		terminate (STATE_UNKNOWN, _("%s: In passive mode, you must provide a service name for each command.\n"), progname);
+		die (STATE_UNKNOWN, _("%s: In passive mode, you must provide a service name for each command.\n"), progname);
 
 	if (passive && host_shortname == NULL)
-		terminate (STATE_UNKNOWN, _("%s: In passive mode, you must provide the host short name from the nagios configs.\n"), progname);
+		die (STATE_UNKNOWN, _("%s: In passive mode, you must provide the host short name from the nagios configs.\n"), progname);
 
 	return OK;
 }

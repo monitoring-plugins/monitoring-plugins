@@ -217,7 +217,7 @@ process_arguments (int argc, char **argv)
 		if (is_intnonneg (argv[2]))
 			expire_minutes = atoi (argv[2]);
 		else
-			terminate (STATE_UNKNOWN,
+			die (STATE_UNKNOWN,
 								 _("Expiration time must be an integer (seconds)\nType '%s -h' for additional help\n"),
 								 progname);
 		process_string = argv[3];
@@ -251,7 +251,7 @@ process_arguments (int argc, char **argv)
 			if (is_intnonneg (optarg))
 				expire_minutes = atoi (optarg);
 			else
-				terminate (STATE_UNKNOWN,
+				die (STATE_UNKNOWN,
 									 _("Expiration time must be an integer (seconds)\nType '%s -h' for additional help\n"),
 									 progname);
 			break;
@@ -263,11 +263,11 @@ process_arguments (int argc, char **argv)
 
 
 	if (status_log == NULL)
-		terminate (STATE_UNKNOWN,
+		die (STATE_UNKNOWN,
 							 _("You must provide the status_log\nType '%s -h' for additional help\n"),
 							 progname);
 	else if (process_string == NULL)
-		terminate (STATE_UNKNOWN,
+		die (STATE_UNKNOWN,
 							 _("You must provide a process string\nType '%s -h' for additional help\n"),
 							 progname);
 

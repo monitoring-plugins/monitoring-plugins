@@ -225,7 +225,7 @@ main (int argc, char **argv)
 		result = max_state (result, STATE_WARNING);
 #endif
 
-	terminate (result, "SWAP %s:%s\n", state_text (result), status);
+	die (result, "SWAP %s:%s\n", state_text (result), status);
 	return STATE_UNKNOWN;
 }
 

@@ -180,7 +180,7 @@ main (int argc, char **argv)
 				address = strdup (temp_buffer);
 				strip (address);
 				if (address==NULL || strlen(address)==0)
-					terminate (STATE_CRITICAL,
+					die (STATE_CRITICAL,
 										 _("DNS CRITICAL - '%s' returned empty host name string\n"),
 										 NSLOOKUP_COMMAND);
 				result = STATE_OK;
@@ -224,7 +224,7 @@ main (int argc, char **argv)
 	/* If we got here, we should have an address string, 
 		 and we can segfault if we do not */
 	if (address==NULL || strlen(address)==0)
-		terminate (STATE_CRITICAL,
+		die (STATE_CRITICAL,
 							 _("DNS CRITICAL - '%s' output parsing exited with no address\n"),
 							 NSLOOKUP_COMMAND);
 
@@ -270,32 +270,32 @@ error_scan (char *input_buffer)
 
 	/* DNS server is not running... */
 	else if (strstr (input_buffer, "No response from server"))
-		terminate (STATE_CRITICAL, _("No response from name server %s\n"), dns_server);
+		die (STATE_CRITICAL, _("No response from name server %s\n"), dns_server);
 
 	/* Host name is valid, but server doesn't have records... */
 	else if (strstr (input_buffer, "No records"))
-		terminate (STATE_CRITICAL, _("Name server %s has no records\n"), dns_server);
+		die (STATE_CRITICAL, _("Name server %s has no records\n"), dns_server);
 
 	/* Connection was refused */
 	else if (strstr (input_buffer, "Connection refused") ||
 	         (strstr (input_buffer, "** server can't find") &&
 	          strstr (input_buffer, ": REFUSED")) ||
 	         (strstr (input_buffer, "Refused")))
-		terminate (STATE_CRITICAL, _("Connection to name server %s was refused\n"), dns_server);
+		die (STATE_CRITICAL, _("Connection to name server %s was refused\n"), dns_server);
 
 	/* Host or domain name does not exist */
 	else if (strstr (input_buffer, "Non-existent") ||
 	         strstr (input_buffer, "** server can't find") ||
 	         strstr (input_buffer,"NXDOMAIN"))
-		terminate (STATE_CRITICAL, _("Domain %s was not found by the server\n"), query_address);
+		die (STATE_CRITICAL, _("Domain %s was not found by the server\n"), query_address);
 
 	/* Network is unreachable */
 	else if (strstr (input_buffer, "Network is unreachable"))
-		terminate (STATE_CRITICAL, _("Network is unreachable\n"));
+		die (STATE_CRITICAL, _("Network is unreachable\n"));
 
 	/* Internal server failure */
 	else if (strstr (input_buffer, "Server failure"))
-		terminate (STATE_CRITICAL, _("Server failure for %s\n"), dns_server);
+		die (STATE_CRITICAL, _("Server failure for %s\n"), dns_server);
 
 	/* Request error or the DNS lookup timed out */
 	else if (strstr (input_buffer, "Format error") ||
@@ -357,7 +357,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H': /* hostname */
 			if (strlen (optarg) >= ADDRESS_LENGTH)
-				terminate (STATE_UNKNOWN, _("Input buffer overflow\n"));
+				die (STATE_UNKNOWN, _("Input buffer overflow\n"));
 			strcpy (query_address, optarg);
 			break;
 		case 's': /* server name */
@@ -369,7 +369,7 @@ process_arguments (int argc, char **argv)
 				exit (STATE_UNKNOWN);
 			}
 			if (strlen (optarg) >= ADDRESS_LENGTH)
-				terminate (STATE_UNKNOWN, _("Input buffer overflow\n"));
+				die (STATE_UNKNOWN, _("Input buffer overflow\n"));
 			strcpy (dns_server, optarg);
 			break;
 		case 'r': /* reverse server name */
@@ -380,12 +380,12 @@ process_arguments (int argc, char **argv)
 				exit (STATE_UNKNOWN);
 			}
 			if (strlen (optarg) >= ADDRESS_LENGTH)
-				terminate (STATE_UNKNOWN, _("Input buffer overflow\n"));
+				die (STATE_UNKNOWN, _("Input buffer overflow\n"));
 			strcpy (ptr_server, optarg);
 			break;
 		case 'a': /* expected address */
 			if (strlen (optarg) >= ADDRESS_LENGTH)
-				terminate (STATE_UNKNOWN, _("Input buffer overflow\n"));
+				die (STATE_UNKNOWN, _("Input buffer overflow\n"));
 			strcpy (expected_address, optarg);
 			match_expected_address = TRUE;
 			break;
@@ -395,7 +395,7 @@ process_arguments (int argc, char **argv)
 	c = optind;
 	if (strlen(query_address)==0 && c<argc) {
 		if (strlen(argv[c])>=ADDRESS_LENGTH)
-			terminate (STATE_UNKNOWN, _("Input buffer overflow\n"));
+			die (STATE_UNKNOWN, _("Input buffer overflow\n"));
 		strcpy (query_address, argv[c++]);
 	}
 
@@ -406,7 +406,7 @@ process_arguments (int argc, char **argv)
 			return ERROR;
 		}
 		if (strlen(argv[c]) >= ADDRESS_LENGTH)
-			terminate (STATE_UNKNOWN, _("Input buffer overflow\n"));
+			die (STATE_UNKNOWN, _("Input buffer overflow\n"));
 		strcpy (dns_server, argv[c++]);
 	}
 

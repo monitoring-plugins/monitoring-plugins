@@ -91,7 +91,7 @@ main (int argc, char **argv)
 
 	/* try to connect to the host at the given port number */
 	if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK)
-		terminate (STATE_CRITICAL, "Unable to connect to %s on port %d\n",
+		die (STATE_CRITICAL, "Unable to connect to %s on port %d\n",
 							 server_address, server_port);
 
 	/* Part I - Server Check */
@@ -113,7 +113,7 @@ main (int argc, char **argv)
 
 	/* return a CRITICAL status if we couldn't read any data */
 	if (result == -1)
-		terminate (STATE_CRITICAL, "No data received from %s\n", host_name);
+		die (STATE_CRITICAL, "No data received from %s\n", host_name);
 
 	/* make sure we find the response we are looking for */
 	if (!strstr (buffer, server_expect)) {

@@ -211,7 +211,7 @@ process_request (char *server_address, int server_port, int proto,
 		else
 			recv_buffer[recv_result] = 0;
 
-		/* terminate returned string */
+		/* die returned string */
 		recv_buffer[recv_size - 1] = 0;
 	}
 

@@ -163,7 +163,7 @@ main (int argc, char **argv)
 	time (&current_time);
 	if (expire_minutes > 0
 			&& (current_time - timestamp) >
-			(expire_minutes * 60)) terminate (STATE_WARNING,
+			(expire_minutes * 60)) die (STATE_WARNING,
 																				_("MRTG data has expired (%d minutes old)\n"),
 																				(int) ((current_time - timestamp) /
 																							 60));

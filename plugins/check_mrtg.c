@@ -304,7 +304,7 @@ process_arguments (int argc, char **argv)
 		if (is_intpos (argv[c]))
 			expire_minutes = atoi (argv[c++]);
 		else
-			terminate (STATE_UNKNOWN,
+			die (STATE_UNKNOWN,
 			           _("%s is not a valid expiration time\nUse '%s -h' for additional help\n"),
 			           argv[c], progname);
 	}

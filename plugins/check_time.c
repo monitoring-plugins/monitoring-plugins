@@ -119,7 +119,7 @@ main (int argc, char **argv)
 			result = STATE_WARNING;
 		else
 			result = STATE_UNKNOWN;
-		terminate (result,
+		die (result,
 		           _("TIME UNKNOWN - could not connect to server %s, port %d\n"),
 		           server_address, server_port);
 	}
@@ -142,7 +142,7 @@ main (int argc, char **argv)
 			result = STATE_WARNING;
 		else
 			result = STATE_UNKNOWN;
-		terminate (result,
+		die (result,
 							 _("TIME UNKNOWN - no data on recv() from server %s, port %d\n"),
 							 server_address, server_port);
 	}
@@ -155,7 +155,7 @@ main (int argc, char **argv)
 					 && (end_time - start_time) > warning_time) result = STATE_WARNING;
 
 	if (result != STATE_OK)
-		terminate (result, _("TIME %s - %d second response time\n"),
+		die (result, _("TIME %s - %d second response time\n"),
 							 state_text (result), (int) (end_time - start_time));
 
 	server_time = ntohl (raw_server_time) - UNIX_EPOCH;

@@ -165,14 +165,14 @@ main (int argc, char **argv)
 
 	if ((config_file && rc_read_config (config_file)) ||
 			rc_read_dictionary (rc_conf_str ("dictionary")))
-		terminate (STATE_UNKNOWN, _("Config file error"));
+		die (STATE_UNKNOWN, _("Config file error"));
 
 	service = PW_AUTHENTICATE_ONLY;
 
 	if (!(rc_avpair_add (&data.send_pairs, PW_SERVICE_TYPE, &service, 0) &&
 				rc_avpair_add (&data.send_pairs, PW_USER_NAME, username, 0) &&
 				rc_avpair_add (&data.send_pairs, PW_USER_PASSWORD, password, 0)))
-		terminate (STATE_UNKNOWN, _("Out of Memory?"));
+		die (STATE_UNKNOWN, _("Out of Memory?"));
 
 	/* 
 	 * Fill in NAS-IP-Address 
@@ -193,15 +193,15 @@ main (int argc, char **argv)
 		rc_avpair_free (data.receive_pairs);
 
 	if (result == TIMEOUT_RC)
-		terminate (STATE_CRITICAL, _("Timeout"));
+		die (STATE_CRITICAL, _("Timeout"));
 	if (result == ERROR_RC)
-		terminate (STATE_CRITICAL, _("Auth Error"));
+		die (STATE_CRITICAL, _("Auth Error"));
 	if (result == BADRESP_RC)
-		terminate (STATE_WARNING, _("Auth Failed"));
+		die (STATE_WARNING, _("Auth Failed"));
 	if (expect && !strstr (msg, expect))
-		terminate (STATE_WARNING, msg);
+		die (STATE_WARNING, msg);
 	if (result == OK_RC)
-		terminate (STATE_OK, _("Auth OK"));
+		die (STATE_OK, _("Auth OK"));
 	return (0);
 }
 

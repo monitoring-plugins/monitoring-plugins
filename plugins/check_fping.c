@@ -173,16 +173,16 @@ textscan (char *buf)
 	int status = STATE_UNKNOWN;
 
 	if (strstr (buf, "not found")) {
-		terminate (STATE_CRITICAL, _("FPING unknown - %s not found\n"), server_name);
+		die (STATE_CRITICAL, _("FPING unknown - %s not found\n"), server_name);
 
 	}
 	else if (strstr (buf, "is unreachable") || strstr (buf, "Unreachable")) {
-		terminate (STATE_CRITICAL, _("FPING critical - %s is unreachable\n"),
+		die (STATE_CRITICAL, _("FPING critical - %s is unreachable\n"),
 							 "host");
 
 	}
 	else if (strstr (buf, "is down")) {
-		terminate (STATE_CRITICAL, _("FPING critical - %s is down\n"), server_name);
+		die (STATE_CRITICAL, _("FPING critical - %s is down\n"), server_name);
 
 	}
 	else if (strstr (buf, "is alive")) {
@@ -208,7 +208,7 @@ textscan (char *buf)
 			status = STATE_WARNING;
 		else
 			status = STATE_OK;
-		terminate (status, _("FPING %s - %s (loss=%f%%, rta=%f ms)\n"),
+		die (status, _("FPING %s - %s (loss=%f%%, rta=%f ms)\n"),
 							 state_text (status), server_name, loss, rta);
 
 	}
@@ -227,7 +227,7 @@ textscan (char *buf)
 		else
 			status = STATE_OK;
 		
-		terminate (status, _("FPING %s - %s (loss=%f%% )\n"),
+		die (status, _("FPING %s - %s (loss=%f%% )\n"),
 							 state_text (status), server_name, loss );		
 	
 	}
@@ -363,11 +363,11 @@ get_threshold (char *arg, char *rv[2])
 	if (arg2) {
 		arg1[strcspn (arg1, ",:")] = 0;
 		if (strstr (arg1, "%") && strstr (arg2, "%"))
-			terminate (STATE_UNKNOWN,
+			die (STATE_UNKNOWN,
 								 _("%s: Only one threshold may be packet loss (%s)\n"), progname,
 								 arg);
 		if (!strstr (arg1, "%") && !strstr (arg2, "%"))
-			terminate (STATE_UNKNOWN,
+			die (STATE_UNKNOWN,
 								 _("%s: Only one threshold must be packet loss (%s)\n"),
 								 progname, arg);
 	}

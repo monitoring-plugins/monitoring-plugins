@@ -323,7 +323,7 @@ main (int argc, char **argv)
 
 		/* return a CRITICAL status if we couldn't read any data */
 		if (status == NULL)
-			terminate (STATE_CRITICAL, _("No data received from host\n"));
+			die (STATE_CRITICAL, _("No data received from host\n"));
 
 		strip (status);
 
@@ -335,7 +335,7 @@ main (int argc, char **argv)
 				if (verbose)
 					printf ("%d %d\n", i, server_expect_count);
 				if (i >= server_expect_count)
-					terminate (STATE_WARNING, _("Invalid response from host\n"));
+					die (STATE_WARNING, _("Invalid response from host\n"));
 				if (strstr (status, server_expect[i]))
 					break;
 			}
@@ -542,7 +542,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'S':
 #ifndef HAVE_SSL
-			terminate (STATE_UNKNOWN,
+			die (STATE_UNKNOWN,
 				_("SSL support not available. Install OpenSSL and recompile."));
 #endif
 			use_ssl = TRUE;

@@ -252,7 +252,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H': /* hostname */
 			if (strlen (optarg) >= MAX_HOST_ADDRESS_LENGTH)
-				terminate (STATE_UNKNOWN, _("Input buffer overflow\n"));
+				die (STATE_UNKNOWN, _("Input buffer overflow\n"));
 			server_ip = strdup (optarg);
 			break;
 		case 'P': /* port */
@@ -260,7 +260,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'G': /* hostname */
 			if (strlen (optarg) >= MAX_INPUT_BUFFER)
-				terminate (STATE_UNKNOWN, _("Input buffer overflow\n"));
+				die (STATE_UNKNOWN, _("Input buffer overflow\n"));
 			game_type = strdup (optarg);
 			break;
 		case 'p': /* index of ping field */

@@ -132,17 +132,6 @@ void
 die (int result, const char *fmt, ...)
 {
 	va_list ap;
-	printf ("%s %s: ", sizeof (char) + index(progname, '_'), state_text(result));
-	va_start (ap, fmt);
-	vprintf (fmt, ap);
-	va_end (ap);
-	exit (result);
-}
-
-void
-terminate (int result, const char *fmt, ...)
-{
-	va_list ap;
 	va_start (ap, fmt);
 	vprintf (fmt, ap);
 	va_end (ap);
@@ -482,7 +471,7 @@ strpcpy (char *dest, const char *src, const char *str)
 	if (dest == NULL || strlen (dest) < len)
 		dest = realloc (dest, len + 1);
 	if (dest == NULL)
-		terminate (STATE_UNKNOWN, "failed realloc in strpcpy\n");
+		die (STATE_UNKNOWN, "failed realloc in strpcpy\n");
 
 	strncpy (dest, src, len);
 	dest[len] = '\0';
@@ -526,7 +515,7 @@ strpcat (char *dest, const char *src, const char *str)
 
 	dest = realloc (dest, len + l2 + 1);
 	if (dest == NULL)
-		terminate (STATE_UNKNOWN, "failed malloc in strscat\n");
+		die (STATE_UNKNOWN, "failed malloc in strscat\n");
 
 	strncpy (dest + len, src, l2);
 	dest[len + l2] = '\0';

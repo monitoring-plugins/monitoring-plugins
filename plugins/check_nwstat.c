@@ -763,7 +763,7 @@ int process_arguments(int argc, char **argv) {
 				if (is_intnonneg(optarg))
 					server_port=atoi(optarg);
 				else
-					terminate(STATE_UNKNOWN,_("Server port an integer (seconds)\nType '%s -h' for additional help\n"),progname);
+					die(STATE_UNKNOWN,_("Server port an integer (seconds)\nType '%s -h' for additional help\n"),progname);
 				break;
 			case 'v':
 				if (strlen(optarg)<3)

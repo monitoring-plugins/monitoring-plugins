@@ -264,7 +264,7 @@ static void err_doit (int, const char *, va_list);
 char *pname = NULL;							/* caller can set this from argv[0] */
 
 /* Fatal error related to a system call.
- * Print a message and terminate. */
+ * Print a message and die. */
 
 void
 err_sys (const char *fmt, ...)

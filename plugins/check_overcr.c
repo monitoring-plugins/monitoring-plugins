@@ -101,21 +101,21 @@ main (int argc, char **argv)
 	case LOAD15:
 	
 		if (result != STATE_OK)
-			terminate (result, _("Unknown error fetching load data\n"));
+			die (result, _("Unknown error fetching load data\n"));
 
 		temp_ptr = (char *) strtok (recv_buffer, "\r\n");
 		if (temp_ptr == NULL)
-			terminate (STATE_CRITICAL, _("Invalid response from server - no load information\n"));
+			die (STATE_CRITICAL, _("Invalid response from server - no load information\n"));
 		load_1min = strtod (temp_ptr, NULL);
 
 		temp_ptr = (char *) strtok (NULL, "\r\n");
 		if (temp_ptr == NULL)
-			terminate (STATE_CRITICAL, _("Invalid response from server after load 1\n"));
+			die (STATE_CRITICAL, _("Invalid response from server after load 1\n"));
 		load_5min = strtod (temp_ptr, NULL);
 
 		temp_ptr = (char *) strtok (NULL, "\r\n");
 		if (temp_ptr == NULL)
-			terminate (STATE_CRITICAL, _("Invalid response from server after load 5\n"));
+			die (STATE_CRITICAL, _("Invalid response from server after load 5\n"));
 		load_15min = strtod (temp_ptr, NULL);
 
 		switch (vars_to_check) {
@@ -138,7 +138,7 @@ main (int argc, char **argv)
 		else if (check_warning_value == TRUE && (load >= warning_value))
 			result = STATE_WARNING;
 
-		terminate (result,
+		die (result,
 		          _("Load %s - %s-min load average = %0.2f"),
 							 state_text(result),
 		          temp_buffer,
@@ -149,7 +149,7 @@ main (int argc, char **argv)
 	case DPU:
 
 		if (result != STATE_OK)
-			terminate (result, _("Unknown error fetching disk data\n"));
+			die (result, _("Unknown error fetching disk data\n"));
 
 		for (temp_ptr = (char *) strtok (recv_buffer, " ");
 		     temp_ptr != NULL;
@@ -159,7 +159,7 @@ main (int argc, char **argv)
 				found_disk = TRUE;
 				temp_ptr = (char *) strtok (NULL, "%");
 				if (temp_ptr == NULL)
-					terminate (STATE_CRITICAL, _("Invalid response from server\n"));
+					die (STATE_CRITICAL, _("Invalid response from server\n"));
 				percent_used_disk_space = strtoul (temp_ptr, NULL, 10);
 				break;
 			}
@@ -169,7 +169,7 @@ main (int argc, char **argv)
 
 		/* error if we couldn't find the info for the disk */
 		if (found_disk == FALSE)
-			terminate (STATE_CRITICAL,
+			die (STATE_CRITICAL,
 			           "Error: Disk '%s' non-existent or not mounted",
 			           disk_name);
 
@@ -178,14 +178,14 @@ main (int argc, char **argv)
 		else if (check_warning_value == TRUE && (percent_used_disk_space >= warning_value))
 			result = STATE_WARNING;
 
-		terminate (result, "Disk %s - %lu%% used on %s", state_text(result), percent_used_disk_space, disk_name);
+		die (result, "Disk %s - %lu%% used on %s", state_text(result), percent_used_disk_space, disk_name);
 
 		break;
 
 	case NETSTAT:
 
 		if (result != STATE_OK)
-			terminate (result, _("Unknown error fetching network status\n"));
+			die (result, _("Unknown error fetching network status\n"));
 
 		port_connections = strtod (recv_buffer, NULL);
 
@@ -194,7 +194,7 @@ main (int argc, char **argv)
 		else if (check_warning_value == TRUE && (port_connections >= warning_value))
 			result = STATE_WARNING;
 
-		terminate (result,
+		die (result,
 		           _("Net %s - %d connection%s on port %d"),
 		           state_text(result),
 		           port_connections,
@@ -206,15 +206,15 @@ main (int argc, char **argv)
 	case PROCS:
 
 		if (result != STATE_OK)
-			terminate (result, _("Unknown error fetching process status\n"));
+			die (result, _("Unknown error fetching process status\n"));
 
 		temp_ptr = (char *) strtok (recv_buffer, "(");
 		if (temp_ptr == NULL)
-			terminate (STATE_CRITICAL, _("Invalid response from server\n"));
+			die (STATE_CRITICAL, _("Invalid response from server\n"));
 
 		temp_ptr = (char *) strtok (NULL, ")");
 		if (temp_ptr == NULL)
-			terminate (STATE_CRITICAL, _("Invalid response from server\n"));
+			die (STATE_CRITICAL, _("Invalid response from server\n"));
 
 		processes = strtod (temp_ptr, NULL);
 
@@ -223,7 +223,7 @@ main (int argc, char **argv)
 		else if (check_warning_value == TRUE && (processes >= warning_value))
 			result = STATE_WARNING;
 
-		terminate (result,
+		die (result,
 		           _("Process %s - %d instance%s of %s running"),
 		           state_text(result),
 		           processes,
@@ -250,7 +250,7 @@ main (int argc, char **argv)
 		uptime_raw_minutes %= 60;
 		uptime_minutes = uptime_raw_minutes;
 
-		terminate (result,
+		die (result,
 		           _("Uptime %s - Up %d days %d hours %d minutes"),
 		           state_text(result),
 		           uptime_days,
@@ -259,7 +259,7 @@ main (int argc, char **argv)
 		break;
 
 	default:
-		terminate (STATE_UNKNOWN, _("Nothing to check!\n"));
+		die (STATE_UNKNOWN, _("Nothing to check!\n"));
 		break;
 	}
 
@@ -340,7 +340,7 @@ process_arguments (int argc, char **argv)
 			if (is_intnonneg (optarg))
 				server_port = atoi (optarg);
 			else
-				terminate (STATE_UNKNOWN,
+				die (STATE_UNKNOWN,
 									 _("Server port an integer (seconds)\nType '%s -h' for additional help\n"),
 									 progname);
 			break;

@@ -287,7 +287,7 @@ main (int argc, char **argv)
 		temp_list = temp_list->name_next;
 	}
 
-	terminate (result, "DISK %s%s\n", state_text (result), output, details);
+	die (result, "DISK %s%s\n", state_text (result), output, details);
 	return STATE_UNKNOWN;
 }
 
@@ -406,7 +406,7 @@ process_arguments (int argc, char **argv)
 				mult = (unsigned long)1024 * 1024 * 1024 * 1024;
 				units = "TB";
 			} else {
-				terminate (STATE_UNKNOWN, _("unit type %s not known\n"), optarg);
+				die (STATE_UNKNOWN, _("unit type %s not known\n"), optarg);
 			}
 			break;
 		case 'k': /* display mountpoint */

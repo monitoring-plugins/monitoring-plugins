@@ -17,7 +17,6 @@ void support (void);
 char *clean_revstring (const char *revstring);
 void print_revision (const char *, const char *);
 void die (int result, const char *fmt, ...);
-void terminate (int result, const char *msg, ...);
 
 /* Handle timeouts */
 

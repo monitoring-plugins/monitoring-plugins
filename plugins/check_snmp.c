@@ -361,7 +361,7 @@ main (int argc, char **argv)
 		    eval_method[i] & WARN_NE) {
 			p2 = strpbrk (p2, "0123456789");
 			if (p2 == NULL) 
-				terminate (STATE_UNKNOWN,"No valid data returned");
+				die (STATE_UNKNOWN,"No valid data returned");
 			response_value[i] = strtoul (p2, NULL, 10);
 			iresult = check_num (i);
 			asprintf (&show, "%lu", response_value[i]);
@@ -427,7 +427,7 @@ main (int argc, char **argv)
 	}															/* end while (ptr) */
 
 	if (found == 0)
-		terminate
+		die
 			(STATE_UNKNOWN,
 			 _("%s problem - No data recieved from host\nCMD: %s\n"),
 			 label, command_line);
@@ -643,7 +643,7 @@ process_arguments (int argc, char **argv)
 				labels_size += 8;
 				labels = realloc (labels, labels_size);
 				if (labels == NULL)
-					terminate (STATE_UNKNOWN,
+					die (STATE_UNKNOWN,
 										 _("Could not realloc() labels[%d]"), nlabels);
 			}
 			labels[nlabels - 1] = optarg;
@@ -657,7 +657,7 @@ process_arguments (int argc, char **argv)
 					labels_size += 8;
 					labels = realloc (labels, labels_size);
 					if (labels == NULL)
-						terminate (STATE_UNKNOWN, _("Could not realloc() labels\n"));
+						die (STATE_UNKNOWN, _("Could not realloc() labels\n"));
 				}
 				labels++;
 				ptr = thisarg (ptr);
@@ -674,7 +674,7 @@ process_arguments (int argc, char **argv)
 				unitv_size += 8;
 				unitv = realloc (unitv, unitv_size);
 				if (unitv == NULL)
-					terminate (STATE_UNKNOWN,
+					die (STATE_UNKNOWN,
 										 _("Could not realloc() units [%d]\n"), nunits);
 			}
 			unitv[nunits - 1] = optarg;
@@ -688,7 +688,7 @@ process_arguments (int argc, char **argv)
 					unitv_size += 8;
 					unitv = realloc (unitv, unitv_size);
 					if (units == NULL)
-						terminate (STATE_UNKNOWN, _("Could not realloc() units\n"));
+						die (STATE_UNKNOWN, _("Could not realloc() units\n"));
 				}
 				nunits++;
 				ptr = thisarg (ptr);
@@ -905,7 +905,7 @@ thisarg (char *str)
 	str += strspn (str, " \t\r\n");	/* trim any leading whitespace */
 	if (strstr (str, "'") == str) {	/* handle SIMPLE quoted strings */
 		if (strlen (str) == 1 || !strstr (str + 1, "'"))
-			terminate (STATE_UNKNOWN, "Unbalanced quotes\n");
+			die (STATE_UNKNOWN, "Unbalanced quotes\n");
 	}
 	return str;
 }

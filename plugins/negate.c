@@ -138,13 +138,13 @@ main (int argc, char **argv)
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR)
-		terminate (STATE_UNKNOWN, _("Cannot catch SIGALRM"));
+		die (STATE_UNKNOWN, _("Cannot catch SIGALRM"));
 
 	(void) alarm ((unsigned) timeout_interval);
 
 	child_process = spopen (command_line);
 	if (child_process == NULL)
-		terminate (STATE_UNKNOWN, _("Could not open pipe: %s\n"), command_line);
+		die (STATE_UNKNOWN, _("Could not open pipe: %s\n"), command_line);
 
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL) {
@@ -163,7 +163,7 @@ main (int argc, char **argv)
 	}
 
 	if (!found)
-		terminate (STATE_UNKNOWN,\
+		die (STATE_UNKNOWN,\
 		           _("%s problem - No data recieved from host\nCMD: %s\n"),\
 		           argv[0],	command_line);
 
