@@ -1,3 +1,426 @@
+2004-12-15 21:27  tonvoon
+
+	* doc/developer-guidelines.sgml: Updated requirements for GNU tools
+
+2004-12-15 21:01  tonvoon
+
+	* m4/Makefile.am: Makefile for m4 files
+
+2004-12-15 20:54  tonvoon
+
+	* Makefile.am, configure.in, plugins/Makefile.am, tools/setup:
+	  Support for coreutils lib. Configure tests via m4 scripts from
+	  coreutils
+
+2004-12-15 20:51  tonvoon
+
+	* m4/: Makefile.am.in, afs.m4, codeset.m4, error.m4, exitfail.m4,
+	  extensions.m4, fstypename.m4, fsusage.m4, getopt.m4, gettext.m4,
+	  glibc21.m4, iconv.m4, intdiv0.m4, inttypes-pri.m4, inttypes.m4,
+	  inttypes_h.m4, isc-posix.m4, lcmessage.m4, lib-ld.m4,
+	  lib-link.m4, lib-prefix.m4, ls-mntd-fs.m4, malloc.m4,
+	  mountlist.m4, np_coreutils.m4, onceonly.m4, progtest.m4,
+	  realloc.m4, stdint_h.m4, uintmax_t.m4, ulonglong.m4,
+	  unlocked-io.m4, xalloc.m4: Moving m4 files from lib/
+
+2004-12-15 20:47  tonvoon
+
+	* lib/: Makefile.am, afs.m4, error.m4, exitfail.m4, fstypename.m4,
+	  fsusage.m4, full-read.c, full-write.c, full-write.h, getopt.m4,
+	  ls-mntd-fs.m4, onceonly.m4, safe-read.c, safe-read.h,
+	  safe-write.c, safe-write.h, unlocked-io.m4, xalloc.m4: Moving m4
+	  files into m4/. Added extra coreutils files required from
+	  autoconf tests. Updated Makefile.am to have nagiosplug lib and a
+	  separate coreutils lib
+
+2004-12-15 00:10  opensides
+
+	* po/: de.po, fr.po:
+	  fr.po work in progress still 88 to translate ;-)
+
+2004-12-11 06:25  mattkent
+
+	* plugins/check_tcp.c: Patch from Ollie Cook to define return code
+	  when expected value not received (#1082275).	Also included
+	  another change from Ollie Cook to do stricter matching of
+	  expected values from the beginning of the line. When a user
+	  defines an expected string this is changed to the old style
+	  strstr matching.
+
+2004-12-10 21:18  tonvoon
+
+	* plugins/check_ldap.c: Fixed compile warning
+
+2004-12-10 06:10  mattkent
+
+	* plugins/Makefile.am: Compile broken - fixing link flags.
+
+2004-12-10 05:57  mattkent
+
+	* plugins/check_dns.c: Error catching improvements from Ollie Cook
+
+2004-12-10 05:54  mattkent
+
+	* plugins/check_pgsql.c: Fixing broken compile
+
+2004-12-10 05:39  mattkent
+
+	* AUTHORS: More contributers
+
+2004-12-10 00:54  stanleyhopcroft
+
+	* plugins/Makefile.am: Changes to link flags for check_dhcp.c
+
+2004-12-10 00:52  stanleyhopcroft
+
+	* plugins/check_dhcp.c: Extensive changes to get MAC address from
+	  Solaris via DLPI
+
+2004-12-10 00:20  tonvoon
+
+	* plugins/: check_dns.c, check_procs.c: Reverting back ngettext
+	  calls
+
+2004-12-10 00:13  tonvoon
+
+	* plugins/common.h: Fix includes for gettext
+
+2004-12-09 22:33  tonvoon
+
+	* configure.in: Include $libsuff for systems that define this
+	  (based on advice from Daniel Stenberg)
+
+2004-12-08 23:14  tonvoon
+
+	* configure.in: Removed redundant check and make export
+	  LD_LIBRARY_PATH more sh friendly
+
+2004-12-08 00:36  opensides
+
+	* configure.in, plugins/Makefile.am, plugins/check_by_ssh.c,
+	  plugins/check_game.c, plugins/check_http.c,
+	  plugins/check_ide_smart.c, plugins/check_ldap.c,
+	  plugins/check_snmp.c, plugins/check_tcp.c:
+	  patch 1028033
+
+	  minor internationalization fixes
+
+2004-12-08 00:22  tonvoon
+
+	* configure.in: Fixed output info for openssl and LD_LIBRARY_PATH
+	  for subsequent compiles (otherwise get ld.so.1: ./conftest:
+	  fatal: libssl.so.0.9.7: open failed)
+
+2004-12-07 06:51  tonvoon
+
+	* configure.in, plugins/Makefile.am: Better SSL checking (inspired
+	  by curl 7.12.2's configure.ac)
+
+2004-12-07 03:13  mattkent
+
+	* plugins-scripts/check_ifoperstatus.pl: Option to check for admin
+	  down (#1012191) from Raúl Pedroche.
+
+2004-12-07 02:45  stanleyhopcroft
+
+	* plugins/Makefile.am: Correct dependencies for check_dhcp.c.
+
+2004-12-07 02:31  stanleyhopcroft
+
+	* plugins/: Makefile.am, check_dhcp.c: New plugin: check_dhcp.c.
+	  Attempt to port to non Linux platform.
+
+2004-12-06 18:49  opensides
+
+	* po/fr.po:
+	  new version of fr.po
+
+2004-12-05 22:07  mattkent
+
+	* plugins/check_snmp.c: Fix for -s string matching (#756567, Tony
+	  Missana)
+
+2004-12-05 12:59  opensides
+
+	* plugins/check_nt.c, po/fr.po, po/nagios-plugins.pot:
+	  cleaned fr.po nagios-plugins.pot
+
+2004-12-05 00:54  opensides
+
+	* plugins/: check_http.c, check_icmp.c, check_nwstat.c,
+	  check_ping.c, check_smtp.c, check_swap.c, utils.h:
+	  fix patch 998291 fix patch 1078934 expect check_ssh fix and
+	  check_nt perfdata should stay on one word like in nagios
+
+2004-12-04 12:34  opensides
+
+	* po/nagios-plugins.pot:
+	  new version of pot file
+
+2004-12-04 12:31  opensides
+
+	* plugins/check_by_ssh.c, plugins/check_dns.c, po/POTFILES.in:
+	  various internationalization fixes
+
+2004-12-04 12:12  opensides
+
+	* plugins/Makefile.am, plugins/check_by_ssh.c, plugins/check_dig.c,
+	  plugins/check_http.c, plugins/check_ide-smart.c,
+	  plugins/check_ide_smart.c, plugins/check_mrtg.c,
+	  plugins/check_nt.c, plugins/check_nwstat.c,
+	  plugins/check_overcr.c, plugins/check_real.c,
+	  plugins/check_smtp.c, plugins/check_swap.c, plugins/check_tcp.c,
+	  plugins/check_time.c, plugins/check_udp.c, po/POTFILES.in:
+	  internationalization fixes bugfixes
+
+2004-12-04 10:57  opensides
+
+	* plugins/: check_dns.c, check_hpjd.c:
+	  check_dns needs a space between 'time' and the hostname
+	  check_hpjd needs a parenthesis removed in print_usage()
+
+2004-12-04 00:23  opensides
+
+	* plugins/check_swap.c:
+	  Bug Fix [ 1024735 ] check_swap providing inaccurate swap
+	  information on Sol6
+
+2004-12-03 23:55  opensides
+
+	* plugins/: check_by_ssh.c, check_dig.c, check_disk.c, check_dns.c,
+	  check_fping.c, check_game.c, check_hpjd.c, check_http.c,
+	  check_ldap.c, check_load.c, check_mrtg.c, check_mrtgtraf.c,
+	  check_mysql.c, check_nagios.c, check_nt.c, check_nwstat.c,
+	  check_overcr.c, check_pgsql.c, check_ping.c, check_procs.c,
+	  check_radius.c, check_real.c, check_smtp.c, check_snmp.c,
+	  check_ssh.c, check_swap.c, check_tcp.c, check_time.c,
+	  check_udp.c, check_ups.c, check_users.c, negate.c:
+	  reverting my changes from !=TRUE to == ERROR, that's not good ;-(
+	  sorry
+
+2004-12-03 23:23  opensides
+
+	* plugins/check_tcp.c, po/de.po, po/fr.po, po/nagios-plugins.pot:
+	  check_tcp parenthesis bug, header fix for po files
+
+2004-12-03 23:01  opensides
+
+	* plugins/: check_dig.c, check_disk.c, check_dns.c, check_dummy.c,
+	  check_fping.c, check_game.c, check_hpjd.c, check_http.c,
+	  check_ide-smart.c, check_ldap.c, check_mrtg.c, check_mrtgtraf.c,
+	  check_nagios.c, check_nt.c, check_nwstat.c, check_overcr.c,
+	  check_pgsql.c, check_procs.c, check_radius.c, check_real.c,
+	  check_smtp.c, check_snmp.c, check_swap.c, check_tcp.c,
+	  check_time.c, check_udp.c, check_ups.c:
+	  print_help and print_usage() cleanup
+
+	  other misc cleanups
+
+2004-12-03 21:56  stanleyhopcroft
+
+	* plugins/check_tcp.c: 1041571: -D option processing corrected
+	  (Eric Chen). Changed process_arguments() to return TRUE. Dont
+	  know why this was necessary.
+
+2004-12-03 20:28  opensides
+
+	* plugins/: check_by_ssh.c, check_dig.c, check_disk.c, check_dns.c,
+	  check_dummy.c, check_fping.c, check_game.c, check_hpjd.c,
+	  check_http.c, check_ide-smart.c, check_ldap.c, check_load.c,
+	  check_mrtg.c, check_mrtgtraf.c, check_mysql.c, check_nagios.c,
+	  check_nt.c, check_nwstat.c, check_overcr.c, check_pgsql.c,
+	  check_ping.c, check_procs.c, check_radius.c, check_real.c,
+	  check_smtp.c, check_snmp.c, check_ssh.c, check_swap.c,
+	  check_tcp.c, check_time.c, check_udp.c, check_ups.c,
+	  check_users.c, negate.c, urlize.c: remove UT_HLP_VRS from
+	  print_usage this was not a good idea ;-)
+
+2004-12-03 19:20  opensides
+
+	* plugins/utils.c:
+	  removing support fonction removing warranty from print_revision
+
+2004-12-03 17:48  opensides
+
+	* ROADMAP, package.def, plugins/negate.c, plugins/utils.h:
+	  some minor fixes
+
+2004-12-03 17:15  opensides
+
+	* plugins/: check_load.c, check_ssh.c:
+	  correcting parenthesis error
+
+2004-12-03 16:56  opensides
+
+	* AUTHORS, plugins/check_load.c, plugins/check_pgsql.c,
+	  plugins/check_ping.c, plugins/check_procs.c,
+	  plugins/check_radius.c, plugins/check_real.c,
+	  plugins/check_smtp.c, plugins/check_snmp.c, plugins/check_ssh.c,
+	  plugins/check_swap.c, plugins/check_tcp.c, plugins/check_time.c,
+	  plugins/check_udp.c, plugins/check_ups.c, plugins/check_users.c,
+	  plugins/urlize.c:
+	  fixes for internationalization
+
+2004-12-03 11:45  opensides
+
+	* plugins/: check_by_ssh.c, check_dig.c, check_disk.c, check_dns.c,
+	  check_dummy.c, check_fping.c, check_game.c, check_hpjd.c,
+	  check_http.c, check_ide-smart.c, check_ldap.c, check_load.c,
+	  check_mrtg.c, check_mrtgtraf.c, check_mysql.c, check_nagios.c,
+	  check_nt.c, check_nwstat.c:
+	  internationalization fixes and help fixes
+
+2004-12-03 09:19  opensides
+
+	* plugins/check_by_ssh.c, plugins/check_dig.c,
+	  plugins/check_http.c, plugins/check_nwstat.c,
+	  plugins/check_pgsql.c, plugins/check_ping.c, plugins/check_udp.c,
+	  po/.cvsignore:
+	  Localization fixes
+
+2004-12-03 08:45  opensides
+
+	* plugins/: check_ide-smart.c, check_pgsql.c:
+	  correcting copyright and remaning int result = STATE_UNKNOWN;
+
+2004-12-03 04:37  mattkent
+
+	* plugins/check_nagios.c: Affected by elapsed time patch.
+
+2004-12-03 04:16  mattkent
+
+	* AUTHORS: Another contributer.
+
+2004-12-03 04:10  mattkent
+
+	* configure.in, plugins/check_procs.c: Patch from Russell Miller
+	  which adds elapsed time as a metric. Only for linux so far.
+	  (991359)
+
+2004-12-03 02:21  mattkent
+
+	* plugins/check_ldap.c: Fix typo breaking compile.
+
+2004-12-03 00:55  opensides
+
+	* plugins/: check_by_ssh.c, check_dig.c, check_dns.c,
+	  check_dummy.c, check_fping.c, check_game.c, check_hpjd.c,
+	  check_ide-smart.c, check_ldap.c, check_load.c, check_mrtg.c,
+	  check_mrtgtraf.c, check_mysql.c, check_nagios.c, check_nt.c,
+	  check_nwstat.c, check_overcr.c, check_pgsql.c, check_ping.c,
+	  check_procs.c, check_radius.c, check_real.c, check_smtp.c,
+	  check_snmp.c, check_ssh.c, check_swap.c, check_tcp.c,
+	  check_time.c, check_udp.c, check_ups.c, check_users.c, negate.c,
+	  urlize.c:
+	  bump copyright year initialize result to STATE_UNKNOW in place of
+	  STATE_OK
+
+2004-12-02 21:23  opensides
+
+	* plugins/: check_dns.c, check_ldap.c, check_procs.c:
+	  --disable-nls throws an error on check_dns, check_procs and
+	  check_ldap without this patch.
+
+2004-12-02 21:03  stanleyhopcroft
+
+	* plugins/check_tcp.c: Tracker 1041571: appended :D to
+	  getopt_long() args (for cert expiry check). Eric Chen.
+
+2004-12-02 16:51  opensides
+
+	* plugins/: check_by_ssh.c, check_dig.c, check_disk.c, check_dns.c,
+	  check_fping.c, check_game.c, check_hpjd.c, check_http.c,
+	  check_ldap.c, check_load.c, check_mrtg.c, check_mrtgtraf.c,
+	  check_mysql.c, check_nagios.c, check_nt.c, check_nwstat.c,
+	  check_overcr.c, check_pgsql.c, check_ping.c, check_procs.c,
+	  check_radius.c, check_real.c, check_smtp.c, check_snmp.c,
+	  check_ssh.c, check_swap.c, check_tcp.c, check_time.c,
+	  check_udp.c, check_ups.c, check_users.c, negate.c, popen.c,
+	  utils.c:
+	  More internationalization work new usage4 function to permit
+	  localisation of think like check_ssh: xxxxx
+
+2004-12-02 14:54  opensides
+
+	* plugins/: check_by_ssh.c, check_dig.c, check_disk.c, check_dns.c,
+	  check_fping.c, check_game.c, check_hpjd.c, check_ldap.c,
+	  check_load.c, check_mrtg.c, check_mrtgtraf.c, check_mysql.c,
+	  check_nagios.c, check_nt.c, check_nwstat.c, check_overcr.c,
+	  check_pgsql.c, check_ping.c, check_procs.c, check_radius.c,
+	  check_real.c, check_smtp.c, check_snmp.c, check_ssh.c,
+	  check_swap.c, check_tcp.c, check_time.c, check_udp.c,
+	  check_ups.c, check_users.c, negate.c:
+	  return of process_arguments() is TRUE not OK !
+
+2004-12-02 14:35  opensides
+
+	* plugins/check_http.c: return of process_arguments() is TRUE not
+	  OK !
+
+2004-12-02 08:45  stanleyhopcroft
+
+	* plugins/Makefile.am: Add check_icmp plugin
+
+2004-12-02 08:44  stanleyhopcroft
+
+	* plugins/check_icmp.c: check_icmp plugin from A Ericsson
+
+2004-12-02 08:44  stanleyhopcroft
+
+	* plugins/linux.h: For check_icmp plugin from A Ericsson
+
+2004-12-02 04:48  mattkent
+
+	* command.cfg.in: Fix typo.
+
+2004-12-02 04:36  mattkent
+
+	* AUTHORS, REQUIREMENTS, command.cfg.in, plugins/check_ups.c: Patch
+	  from Arnaud Quette to bring support to NUT 2.0 plus couple
+	  improvements and fixes (1038413 which includes 1032009, 815785).
+
+2004-12-02 01:11  opensides
+
+	* plugins/: check_dns.c, check_game.c, check_http.c,
+	  check_ide-smart.c, check_load.c, check_mrtgtraf.c, check_mysql.c,
+	  check_nagios.c, check_nt.c, check_nwstat.c, check_overcr.c,
+	  check_pgsql.c, check_ping.c, check_procs.c, check_radius.c,
+	  check_real.c, check_snmp.c, check_ssh.c, check_tcp.c,
+	  check_time.c, check_udp.c, check_ups.c, negate.c, popen.c:
+	  changed Error: by CRITICAL - more localization fixes
+
+2004-12-02 00:30  opensides
+
+	* contrib/check_rbl.c:
+	  adapted for localization
+
+2004-12-01 23:54  opensides
+
+	* plugins/: check_by_ssh.c, check_dig.c, check_disk.c, check_dns.c,
+	  check_dummy.c, check_fping.c, check_game.c, check_hpjd.c,
+	  check_http.c, check_ide-smart.c, check_ldap.c, check_load.c,
+	  check_mrtg.c, check_mrtgtraf.c, check_mysql.c, check_nagios.c,
+	  check_nt.c, check_nwstat.c, check_overcr.c, check_pgsql.c,
+	  check_ping.c, check_procs.c, check_radius.c, check_real.c,
+	  check_smtp.c, check_snmp.c, check_ssh.c, check_swap.c,
+	  check_tcp.c, check_time.c, check_udp.c, check_ups.c,
+	  check_users.c, common.h, getaddrinfo.c, getaddrinfo.h,
+	  gethostbyname.c, gethostbyname.h, negate.c, netutils.c,
+	  netutils.h, popen.c, urlize.c, utils.c, utils.h:
+	  standardize localization string standardize unknow arguments
+
+2004-12-01 22:02  tonvoon
+
+	* doc/RELEASING: Notes on releasing
+
+2004-12-01 21:55  tonvoon
+
+	* configure.in: Next version number
+
+2004-12-01 21:01  tonvoon
+
+	* ChangeLog: Updated for r1_4_0-alpha2
+
 2004-12-01 20:43  tonvoon
 
 	* tools/devmode: eval not working - instructions now in comments
