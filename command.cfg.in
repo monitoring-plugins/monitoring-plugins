@@ -22,6 +22,10 @@
 # Note: Service check, service notification, host check, host notification,
 #    service event handler, and host event handler functions are all defined
 #    here.
+#
+# Note: Use the convertcfg program in the contrib directory of the Nagios 
+#   distribution to convert this file into a object file format.
+#
 ###############################################################################
 
 # Service notification command - send email with problem summary
@@ -69,6 +73,8 @@ command[check_smtp]=@libexecdir@/check_smtp -H $HOSTADDRESS$
 command[check_nntp]=@libexecdir@/check_nntp -H $HOSTADDRESS$
 command[check_telnet]=@libexecdir@/check_tcp -H $HOSTADDRESS$ -p 23
 command[check_users]=@libexecdir@/check_users -w $ARG1$ -c $ARG2$
+command[check_ntp]=@libexecdir@/check_ntp -H $HOSTADDRESS$
+command[check_flexlm]=@libexecdir@/check_flexlm -F $ARG1$
 command[check_hpjd]=@libexecdir@/check_hpjd -H $HOSTADDRESS$ -C public
 command[check_mrtg]=@libexecdir@/check_mrtg $ARG1$ 10 AVG $ARG2$ $ARG3$ $ARG4$ $ARG5$ $ARG6$
 command[traffic_average]=@libexecdir@/check_mrtgtraf $ARG1$ 10 AVG $ARG2$ $ARG3$ $ARG4$ $ARG5$
@@ -231,13 +237,34 @@ command[check_real_url]=@libexecdir@/check_real $HOSTADDRESS$ -p $ARG1$ -wt $ARG
 ## Check RealAudio server response
 command[check_real]=@libexecdir@/check_real $HOSTADDRESS$ -p $ARG1$ -wt $ARG2$ -ct $ARG3$ -to 5
 
-# NetWare checks via check_nwstat
+# NetWare checks via check_nwstat ( see "check_nwstat -h" for more options)
 # how many current logins
-command[check_netware_logins]=@libexecdir@/check_nwstat -H $HOSTADDRESS$ -v "CONNS" -w $ARG1$ -c $ARG2$
+command[check_netware_logins]=@libexecdir@/check_nwstat -H $HOSTADDRESS$ -v "LOGINS" -w $ARG1$ -c $ARG2$
+# how many current connections
+command[check_nwstat_conns]=@libexecdir@/check_nwstat -H $HOSTADDRESS$ -v CONNS -w $ARG1$ -c $ARG2$
+# 1 minute avg cpu load
+command[check_netware_1load]=@libexecdir@/check_nwstat -H $HOSTADDRESS$ -v "LOAD1" -w 70 -c 90
 # 5 minute avg cpu load
 command[check_netware_5load]=@libexecdir@/check_nwstat -H $HOSTADDRESS$ -v "LOAD5" -w 70 -c 90
+# 15 minute avg cpu load
+command[check_netware_15load]=@libexecdir@/check_nwstat -H $HOSTADDRESS$ -v "LOAD15" -w 70 -c 90
+# Disk volume (% free)
+command[check_nwstat_vol_p]=@libexecdir@/check_nwstat -H $HOSTADDRESS$ -v VPF$ARG1$ -w $ARG2$ -c $ARG3$
+# Disk volume (KB free)
+command[check_nwstat_vol_k]=@libexecdir@/check_nwstat -H $HOSTADDRESS$ -v VKF$ARG1$ -w $ARG2$ -c $ARG3$
+# % Long term cache hits
+command[check_nwstat_ltch]=@libexecdir@/check_nwstat -H $HOSTADDRESS$ -v LTCH -w $ARG1$ -c $ARG2$
+# % (of max) used packet receive buffers
+command[check_nwstat_puprb]=@libexecdir@/check_nwstat -H $HOSTADDRESS$ -v PUPRB -w $ARG1$ -c $ARG2$
+# Check to see if the DS database is open
+command[check_nwstat_dsdb]=@libexecdir@/check_nwstat -H $HOSTADDRESS$ -v DSDB
+
+
+
 # Netware 5 abends
 command[check_netware_abend]=@libexecdir@/check_nwstat -H $HOSTADDRESS$ -v "ABENDS" -w 10 -c 30
+# Netware 5 number of current service procs
+command[check_nwstat_csprocs]=@libexecdir@/check_nwstat -H $HOSTADDRESS$ -v CSPROCS -w $ARG1$ -c $ARG2$
 
 
 # Still have to write sample entries for the following:
