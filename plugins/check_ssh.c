@@ -288,7 +288,7 @@ void
 print_usage (void)
 {
 	printf ("\
-Usage: %s [-46] [-t <timeout>] [-r <remote version>] [-p <port>] <host>\n"), progname);
+Usage: %s [-46] [-t <timeout>] [-r <remote version>] [-p <port>] <host>\n", progname);
 
 	printf (UT_HLP_VRS, progname, progname);
 }
