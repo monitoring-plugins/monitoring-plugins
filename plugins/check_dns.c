@@ -239,6 +239,7 @@ error_scan (char *input_buffer)
 
 	/* Connection was refused */
 	else if (strstr (input_buffer, "Connection refused") ||
+		 strstr (input_buffer, "Couldn't find server") ||
 	         strstr (input_buffer, "Refused") ||
 	         (strstr (input_buffer, "** server can't find") &&
 	          strstr (input_buffer, ": REFUSED")))
@@ -255,7 +256,7 @@ error_scan (char *input_buffer)
 	/* Host or domain name does not exist */
 	else if (strstr (input_buffer, "Non-existent") ||
 	         strstr (input_buffer, "** server can't find") ||
-	         strstr (input_buffer,"NXDOMAIN"))
+		 strstr (input_buffer,"NXDOMAIN"))
 		die (STATE_CRITICAL, _("Domain %s was not found by the server\n"), query_address);
 
 	/* Network is unreachable */
