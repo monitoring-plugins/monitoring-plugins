@@ -21,7 +21,7 @@
 #include "popen.h"
 #include "string.h"
 
-#define PROGNAME "check_rbl"
+const char progname = "check_rbl";
 
 int process_arguments(int, char **);
 int call_getopt(int, char **);
@@ -260,7 +260,7 @@ int call_getopt(int argc, char **argv)
 				}
 				break;
       case 'V': /* version */
-				print_revision(PROGNAME,"$Revision$");
+				print_revision(progname,"$Revision$");
 				exit(STATE_OK);
       case 'h': /* help */
 				print_help();
@@ -290,7 +290,7 @@ int validate_arguments(void)
 
 void print_help(void)
 {
-	print_revision(PROGNAME,"$Revision$");
+	print_revision(progname,"$Revision$");
 	printf
 		("Copyright (c) 2000 Karl DeBisschop\n\n"
 		 "This plugin uses dig to test whether the specified host is on any RBL lists.\n\n");
@@ -325,5 +325,5 @@ void print_usage(void)
 		("Usage: %s -H hostip -r rblname [-s server] [-t timeout] [-v]\n"
 		 "       %s --help\n"
 		 "       %s --version\n",
-		 PROGNAME,PROGNAME,PROGNAME);
+		 progname, progname, progname);
 }

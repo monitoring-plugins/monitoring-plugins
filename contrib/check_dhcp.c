@@ -42,7 +42,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#define PROGNAME "check_dhcp"
+const char *progname = "check_dhcp";
 
 /*#define DEBUG*/
 #define HAVE_GETOPT_H
@@ -810,7 +810,7 @@ int get_results(void){
 /* print usage help */
 void print_help(void){
 
-	/*print_revision(PROGNAME,"$Revision$");*/
+	/*print_revision(progname,"$Revision$");*/
 
 	printf("Copyright (c) 2001-2002 Ethan Galstad (nagios@nagios.org)\n\n");
 	printf("This plugin tests the availability of DHCP servers on a network.\n\n");
@@ -844,9 +844,9 @@ void print_help(void){
 /* prints usage information */
 void print_usage(void){
 
-	printf("Usage: %s [-s serverip] [-r requestedip] [-t timeout] [-i interface]\n",PROGNAME);
-	printf("       %s --help\n",PROGNAME);
-	printf("       %s --version\n",PROGNAME);
+	printf("Usage: %s [-s serverip] [-r requestedip] [-t timeout] [-i interface]\n",progname);
+	printf("       %s --help\n",progname);
+	printf("       %s --version\n",progname);
 
 	return;
         }
@@ -962,7 +962,7 @@ int call_getopt(int argc, char **argv){
 
 		case 'V': /* version */
 
-			/*print_revision(PROGNAME,"$Revision$");*/
+			/*print_revision(progname,"$Revision$");*/
 			exit(STATE_OK);
 
 		case 'h': /* help */

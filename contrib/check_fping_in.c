@@ -35,7 +35,7 @@
 #include "popen.h"
 #include "utils.h"
 
-#define PROGNAME "check_fping"
+const char *progname = "check_fping_in";
 #define PACKET_COUNT 15
 #define PACKET_SIZE 56
 #define CRITICAL_COUNT 2
@@ -379,7 +379,7 @@ int process_arguments(int argc, char **argv)
 
 void print_usage(void)
 {
-	printf("Usage: %s <host_address> <host_address> [<host_address>] ...\n",PROGNAME);
+	printf("Usage: %s <host_address> <host_address> [<host_address>] ...\n",progname);
 }
 
 
@@ -389,7 +389,7 @@ void print_usage(void)
 void print_help(void)
 {
 
-	print_revision(PROGNAME,"$Revision$");
+	print_revision(progname,"$Revision$");
 
 	printf
 		("Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)\n"
