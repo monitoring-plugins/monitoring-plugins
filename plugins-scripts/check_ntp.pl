@@ -125,7 +125,7 @@ $SIG{'ALRM'} = sub {
 	print ("ERROR: No response from ntp server (alarm)\n");
 	exit $ERRORS{"UNKNOWN"};
 };
-#alarm($TIMEOUT);
+alarm($TIMEOUT);
 
 
 ###
