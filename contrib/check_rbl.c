@@ -22,6 +22,9 @@
 #include "string.h"
 
 const char progname = "check_rbl";
+const char *revision = "$Revision$";
+//const char *copyright = "2000-2003";
+//const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 int process_arguments(int, char **);
 int call_getopt(int, char **);
@@ -48,7 +51,7 @@ int main(int argc, char **argv){
 		usage("Cannot catch SIGALRM\n");
 
 	if (process_arguments(argc,argv)!=OK)
-		usage("Could not parse arguments\n");
+		usage	(_("check_rbl: could not parse arguments\n"));
 
 	/* reverse the octets in the IP address */
 	query_address_rev = reverse_ipaddr(query_address);
@@ -127,7 +130,7 @@ int main(int argc, char **argv){
 	if (spclose(child_process)) {
 		result=error_set(result,STATE_WARNING);
 		if (!strcmp(output,""))
-			strcpy(output,"nslookup returned error status");
+			strcpy(output,"nslookup returned an error status");
 	}
 	
 	(void)time(&end_time);
@@ -144,6 +147,8 @@ int main(int argc, char **argv){
 	return result;
 }
 
+
+
 /* reverse the ipaddr */
 char *reverse_ipaddr(char *ipaddr)
 {
@@ -158,6 +163,7 @@ char *reverse_ipaddr(char *ipaddr)
 
   return revip;
 }
+
 
 
 /* process command-line arguments */
@@ -186,9 +192,6 @@ int process_arguments(int argc, char **argv)
 
   return validate_arguments();
 }
-
-
-
 
 
 
@@ -266,13 +269,13 @@ int call_getopt(int argc, char **argv)
 				print_help();
 				exit(STATE_OK);
       case '?': /* help */
-				usage("Invalid argument\n");
+			printf (_("%s: Unknown argument: %s\n\n"), progname, optarg);
+			print_usage ();
+			exit (STATE_UNKNOWN);
 			}
   }
   return i;
 }
-
-
 
 
 
@@ -283,8 +286,6 @@ int validate_arguments(void)
   else
     return OK;
 }
-
-
 
 
 
@@ -314,8 +315,6 @@ void print_help(void)
 		 DEFAULT_SOCKET_TIMEOUT);
 		support();
 }
-
-
 
 
 
