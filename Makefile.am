@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = plugins plugins-scripts
+SUBDIRS = lib plugins plugins-scripts
 
 EXTRA_DIST = REQUIREMENTS acconfig.h subst.in subst.sh Helper.pm	\
 contrib nagios-plugins.spec.in getloadavg.m4
