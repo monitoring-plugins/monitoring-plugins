@@ -154,8 +154,9 @@ main (int argc, char **argv)
 	}
 
 	if (display_html == TRUE)
-		printf ("<A HREF=\"http://%s:%d%s\" target=\"_blank\">",
-		        host_name, server_port, server_url);
+		printf ("<A HREF=\"%s%s:%d%s\" target=\"_blank\">", 
+			use_ssl ? "https://" : "http://", host_name,
+			server_port, server_url);
 
 	/* initialize alarm signal handling, set socket timeout, start timer */
 	(void) signal (SIGALRM, socket_timeout_alarm_handler);
