@@ -61,7 +61,7 @@ int cmax = -1;
 int wmin = -1;
 int cmin = -1;
 
-int options = 0;
+int options = 0; /* bitmask of filter criteria to test against */
 #define ALL 1
 #define STAT 2
 #define PPID 4
@@ -89,14 +89,12 @@ main (int argc, char **argv)
 	char procprog[MAX_INPUT_BUFFER];
 	char *procargs;
 
-	int resultsum = 0;
-	int found = 0;
-	int procs = 0;
-	int pos;
+	int resultsum = 0; /* bitmask of the filter criteria met by a process */
+	int found = 0; /* counter for number of lines returned in `ps` output */
+	int procs = 0; /* counter for number of processes meeting filter criteria */
+	int pos; /* number of spaces before 'args' in `ps` output */
 
 	int result = STATE_UNKNOWN;
-
-	procargs = malloc (MAX_INPUT_BUFFER);
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage ("Unable to parse command line\n");
@@ -127,13 +125,13 @@ main (int argc, char **argv)
 			) {
 			found++;
 			resultsum = 0;
-			procargs = strcpy (procargs, &input_buffer[pos]);
-			strip (procargs);
+			asprintf (&procargs, "%s", input_buffer + pos);
+ 			strip (procargs);
 			if ((options & STAT) && (strstr (statopts, procstat)))
 				resultsum |= STAT;
-			if ((options & ARGS) && (strstr (procargs, args) == procargs))
+			if ((options & ARGS) && procargs && (strstr (procargs, args) == procargs))
 				resultsum |= ARGS;
-			if ((options & PROG) && (strcmp (prog, procprog) == 0))
+			if ((options & PROG) && procprog && (strcmp (prog, procprog) == 0))
 				resultsum |= PROG;
 			if ((options & PPID) && (procppid == ppid))
 				resultsum |= PPID;
