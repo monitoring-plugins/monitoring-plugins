@@ -180,7 +180,7 @@ int main(int argc, char **argv){
 
 		if (value_list==NULL)
 			output_message = strdup (_("missing -l parameters"));
-		else if (strlen(value_list)==1)
+		else if (strlen(value_list)!=1)
 			output_message = strdup (_("wrong -l argument"));
 		else {
 			asprintf(&send_buffer,"%s&4&%s", req_password, value_list);
