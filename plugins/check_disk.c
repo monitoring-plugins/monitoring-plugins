@@ -1,35 +1,58 @@
 /******************************************************************************
- *
- * CHECK_DISK.C
- *
- * Program: Disk space plugin for Nagios
- * License: GPL
- * Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
- * Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
- *
- * $Id$
- *
- * Description:
- *
- * This plugin will use the /bin/df command to check the free space on
- * currently mounted filesystems.  If the percent used disk space is
- * above <c_dfp>, a STATE_CRITICAL is returned.  If the percent used
- * disk space is above <w_dfp>, a STATE_WARNING is returned.  If the
- * specified filesystem cannot be read, a STATE_CRITICAL is returned,
- * other errors with reading the output result in a STATE_UNKNOWN
- * error.
- *
- * Notes:
- *  - IRIX support added by Charlie Cook 4-16-1999
- *  - Modifications by Karl DeBisschop 1999-11-24
- *     reformat code to 80 char screen width
- *     set STATE_WARNING if stderr is written or spclose status set
- *     set default result to STAT_UNKNOWN
- *     initailize usp to -1, eliminate 'found' variable
- *     accept any filename/filesystem
- *     use sscanf, drop while loop
- *
- *****************************************************************************/
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+*****************************************************************************/
+
+const char *progname = "check_disk";
+const char *revision = "$Revision$";
+const char *copyright = "1999-2003";
+const char *authors = "Nagios Plugin Development Team";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
+
+const char *summary = "\
+This plugin checks the amount of used disk space on a mounted file system\n\
+and generates an alert if free space is less than one of the threshold values.";
+
+const char *option_summary = "\
+-w limit -c limit [-p path | -x device] [-t timeout] [-m] [-e]\n\
+        [-v] [-q]";
+
+const char *options = "\
+ -w, --warning=INTEGER\n\
+   Exit with WARNING status if less than INTEGER kilobytes of disk are free\n\
+ -w, --warning=PERCENT%%\n\
+   Exit with WARNING status if less than PERCENT of disk space is free\n\
+ -c, --critical=INTEGER\n\
+   Exit with CRITICAL status if less than INTEGER kilobytes of disk are free\n\
+ -c, --critical=PERCENT%%\n\
+   Exit with CRITCAL status if less than PERCENT of disk space is free\n\
+ -p, --path=PATH, --partition=PARTTION\n\
+    Path or partition (checks all mounted partitions if unspecified)\n\
+ -m, --mountpoint\n\
+    Display the mountpoint instead of the partition\n\
+ -x, --exclude_device=PATH\n\
+    Ignore device (only works if -p unspecified)\n\
+ -e, --errors-only\n\
+    Display only devices/mountpoints with errors\n\
+ -v, --verbose\n\
+    Show details for command-line debugging (do not use with nagios server)\n\
+ -h, --help\n\
+    Print detailed help screen\n\
+ -V, --version\n\
+    Print version information\n";
 
 #include "common.h"
 #include "popen.h"
@@ -44,16 +67,11 @@
 # include <inttypes.h>
 #endif
 
-#define REVISION "$Revision$"
-#define COPYRIGHT "2000-2002"
-
 int process_arguments (int, char **);
 int validate_arguments (void);
 int check_disk (int usp, int free_disk);
 void print_help (void);
 void print_usage (void);
-
-const char *progname = "check_disk";
 
 int w_df = -1;
 int c_df = -1;
@@ -327,7 +345,7 @@ process_arguments (int argc, char **argv)
  			exclude_device = optarg;
  			break;
 		case 'V':									/* version */
-			print_revision (progname, REVISION);
+			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -398,36 +416,12 @@ check_disk (usp, free_disk)
 void
 print_help (void)
 {
-	print_revision (progname, REVISION);
-	printf
-		("Copyright (c) 2000 Ethan Galstad/Karl DeBisschop\n\n"
-		 "This plugin will check the percent of used disk space on a mounted\n"
-		 "file system and generate an alert if percentage is above one of the\n"
-		 "threshold values.\n\n");
+	print_revision (progname, revision);
+	printf ("Copyright (c) %s %s\n\t<%s>\n\n%s\n",
+	         copyright, authors, email, summary);
 	print_usage ();
-	printf
-		("\nOptions:\n"
-		 " -w, --warning=INTEGER\n"
-		 "   Exit with WARNING status if less than INTEGER kilobytes of disk are free\n"
-		 " -w, --warning=PERCENT%%\n"
-		 "   Exit with WARNING status if less than PERCENT of disk space is free\n"
-		 " -c, --critical=INTEGER\n"
-		 "   Exit with CRITICAL status if less than INTEGER kilobytes of disk are free\n"
-		 " -c, --critical=PERCENT%%\n"
-		 "   Exit with CRITCAL status if less than PERCENT of disk space is free\n"
-		 " -p, --path=PATH, --partition=PARTTION\n"
-		 "    Path or partition (checks all mounted partitions if unspecified)\n"
-		 " -m, --mountpoint\n"
-		 "    Display the mountpoint instead of the partition\n"
-		 " -x, --exclude_device=PATH\n"
-		 "    Ignore device (only works if -p unspecified)\n"
-		 " -e, --errors-only\n"
-		 "    Display only devices/mountpoints with errors\n"
-		 " -v, --verbose\n"
-		 "    Show details for command-line debugging (do not use with nagios server)\n"
-		 " -h, --help\n"
-		 "    Print detailed help screen\n"
-		 " -V, --version\n" "    Print version information\n\n");
+	printf ("\nOptions:\n");
+	printf (options);
 	support ();
 }
 
@@ -435,7 +429,7 @@ void
 print_usage (void)
 {
 	printf
-		("Usage: %s -w limit -c limit [-p path | -x device] [-t timeout] [-m] [-e] [--verbose]\n"
+		("Usage: %s %s\n"
 		 "       %s (-h|--help)\n"
-		 "       %s (-V|--version)\n", progname, progname, progname);
+		 "       %s (-V|--version)\n", progname, option_summary, progname, progname);
 }
