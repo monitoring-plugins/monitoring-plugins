@@ -251,7 +251,7 @@ else
   AC_MSG_WARN([Skipping mysql plugin])
   AC_MSG_WARN([install mysql client libs to compile this plugin (see REQUIREMENTS).])
 fi
-CPPFLAGS="$_SAVEDCPPFLAGS"
+CPPFLAGS="$_SAVEDCPPFLAGS $MYSQLINCLUDE"
 LIBS="$_SAVEDLIBS"
 
 dnl Check for OpenSSL location
