@@ -46,16 +46,15 @@ int is_percentage (char *);
 int is_option (char *);
 
 /* generalized timer that will do milliseconds if available */
-#ifndef HAVE_GETTIMEOFDAY
+#ifndef HAVE_STRUCT_TIMEVAL
 struct timeval {
 	long tv_sec;        /* seconds */
 	long tv_usec;  /* microseconds */
 };
+#endif
 
-#define gettimeofday (tvp,tz) {\
- tvp->tv_usec=0;\
- tvp->tv_sec=(long)time();\
-}
+#ifndef HAVE_GETTIMEOFDAY
+int gettimeofday(struct timeval *tv, struct timezone *tz);
 #endif
 
 double delta_time (struct timeval tv);

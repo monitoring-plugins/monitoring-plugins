@@ -12,17 +12,6 @@ AM_CONFIG_HEADER(plugins/config.h plugins/common.h plugins/version.h plugins/net
 
 AC_PREFIX_DEFAULT(/usr/local/nagios)
 
-#AC_DEFUN(AC_HAVE_DECL,
-#[
-# AC_CACHE_CHECK([for $1 declaration],ac_cv_have_$1_decl,[
-#    AC_TRY_COMPILE([$2],[int i = (int)$1],
-#        ac_cv_have_$1_decl=yes,ac_cv_have_$1_decl=no)])
-# if test x"$ac_cv_have_$1_decl" = x"yes"; then
-#    AC_DEFINE([HAVE_]translit([$1], [a-z], [A-Z])[_DECL],1,[Whether $1() is available])
-# fi
-#])
-
-
 dnl Figure out how to invoke "install" and what install options to use.
 
 AC_PROG_INSTALL
@@ -338,6 +327,28 @@ if test x"$ac_cv_HAVE_C99_VSNPRINTF" = x"yes"; then
     AC_DEFINE(HAVE_C99_VSNPRINTF,1,[Define if system has C99 compatible vsnprintf])
 fi
 
+#AC_HAVE_DECL(asprintf, [#include <stdio.h>])
+#AC_HAVE_DECL(vasprintf, [#include <stdio.h>])
+#AC_HAVE_DECL(vsnprintf, [#include <stdio.h>])
+#AC_HAVE_DECL(snprintf, [#include <stdio.h>])
+
+AC_CHECK_FUNC(snprintf,
+              AC_DEFINE(HAVE_SNPRINTF,1,[Define if snprintf is present]),
+              LIBS="$LIBS -lsnprintf" DEPLIBS="$DEPLIBS libsnprintf.a")
+AC_CHECK_FUNC(vsnprintf,
+              AC_DEFINE(HAVE_VSNPRINTF,1,[Define if vsnprintf is present]),
+              LIBS="$LIBS -lsnprintf" DEPLIBS="$DEPLIBS libsnprintf.a")
+AC_CHECK_FUNC(vasprintf,
+              AC_DEFINE(HAVE_VASPRINTF,1,[Define if vasprintf is present]),
+              LIBS="$LIBS -lsnprintf" DEPLIBS="$DEPLIBS libsnprintf.a")
+AC_CHECK_FUNC(asprintf,
+              AC_DEFINE(HAVE_ASPRINTF,1,[Define if asprintf is present]),
+              LIBS="$LIBS -lsnprintf" DEPLIBS="$DEPLIBS libsnprintf.a")
+
+if test x"$ac_cv_HAVE_SNPRINTF" = x"no" -o x"$ac_cv_HAVE_VSNPRINTF" = x"no" -o x"$ac_cv_HAVE_VASPRINTF" = x"no" -o x"$ac_cv_HAVE_ASPRINTF" = x"no"; then
+  LIBS="$LIBS -lsnprintf" DEPLIBS="$DEPLIBS libsnprintf.a"
+fi
+
 dnl We used to not do long options unless a compatible lib was found
 dnl Now we provide code and make libgetopt if native is not suitable
 AC_MSG_CHECKING(for getopt_long)
@@ -356,23 +367,16 @@ AC_TRY_COMPILE([#include <getopt.h>
 
 AC_CHECK_FUNCS(getopt_long_only,,LIBS="$LIBS -lgetopt" DEPLIBS="$DEPLIBS libgetopt.a")
 
-#AC_HAVE_DECL(asprintf, [#include <stdio.h>])
-#AC_HAVE_DECL(vasprintf, [#include <stdio.h>])
-#AC_HAVE_DECL(vsnprintf, [#include <stdio.h>])
-#AC_HAVE_DECL(snprintf, [#include <stdio.h>])
+AC_TRY_COMPILE([#include <sys/time.h>],
+               [struct timeval *foo;],
+               [AC_DEFINE(HAVE_STRUCT_TIMEVAL,1,[Define if we have a timeval structure])])
 
-AC_CHECK_FUNC(snprintf,AC_DEFINE(HAVE_SNPRINTF,1,[Define if snprintf is present]))
-AC_CHECK_FUNC(vsnprintf,AC_DEFINE(HAVE_VSNPRINTF,1,[Define if vsnprintf is present]))
-AC_CHECK_FUNC(vasprintf,AC_DEFINE(HAVE_VASPRINTF,1,[Define if vasprintf is present]))
-AC_CHECK_FUNC(asprintf,AC_DEFINE(HAVE_ASPRINTF,1,[Define if asprintf is present]))
-
-if test x"$ac_cv_HAVE_SNPRINTF" = x"no" -o x"$ac_cv_HAVE_VSNPRINTF" = x"no" -o x"$ac_cv_HAVE_VASPRINTF" = x"no" -o x"$ac_cv_HAVE_ASPRINTF" = x"no"; then
-  LIBS="$LIBS -lsnprintf" DEPLIBS="$DEPLIBS libsnprintf.a"
-fi
-
+AC_TRY_COMPILE([#include <sys/time.h>],
+               [gettimeofday(NULL, NULL);],
+               AC_DEFINE(HAVE_GETTIMEOFDAY,1,[Define if gettimeofday is found]))
 
 dnl Checks for library functions.
-AC_CHECK_FUNCS(memmove select socket strdup strstr strtod strtol strtoul gettimeofday)
+AC_CHECK_FUNCS(memmove select socket strdup strstr strtod strtol strtoul)
 
 AC_MSG_CHECKING(for type of socket size)
 AC_TRY_COMPILE([#include <stdlib.h>

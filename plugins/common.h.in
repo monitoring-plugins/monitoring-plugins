@@ -87,6 +87,22 @@
 # define strtoul(a,b,c) (unsigned long)atol((a))
 #endif
 
+#ifndef HAVE_ASPRINTF
+int asprintf(char **strp, const char *fmt, ...);
+#endif
+
+#ifndef HAVE_VASPRINTF
+/* int vasprintf(char **strp, const char *fmt, va_list ap); */
+#endif
+
+#ifndef HAVE_SNPRINTF
+int snprintf(char *str, size_t size, const  char  *format, ...);
+#endif
+
+#ifndef HAVE_VSNPRINTF
+int vsnprintf(char *str, size_t size, const char  *format, va_list ap);
+#endif
+
 /*
  *
  * Standard Values

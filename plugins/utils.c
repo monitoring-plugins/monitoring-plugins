@@ -44,6 +44,8 @@ int is_percentage (char *);
 
 int is_option (char *str);
 
+double delta_time (struct timeval tv);
+
 void strip (char *);
 char *strscpy (char *dest, const char *src);
 char *strscat (char *dest, const char *src);
@@ -315,13 +317,21 @@ is_option (char *str)
 
 
 
+#ifndef HAVE_GETTIMEOFDAY
+int
+gettimeofday (struct timeval *tv, struct timezone *tz)
+{
+	tv->tv_usec = 0;
+	tv->tv_sec = (long) time ((time_t) 0);
+}
+#endif
+
+
 
 double
 delta_time (struct timeval tv)
 {
 	struct timeval now;
-	struct timezone tz;
-	double et;
 
 	gettimeofday (&now, NULL);
 	return ((double)(now.tv_sec - tv.tv_sec) + (double)(now.tv_usec - tv.tv_usec) / (double)1000000);
@@ -366,8 +376,6 @@ strip (char *buffer)
 char *
 strscpy (char *dest, const char *src)
 {
-	size_t len;
-
 	if (src == NULL)
 		return NULL;
 
