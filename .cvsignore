@@ -4,7 +4,6 @@ Makefile
 Makefile.in
 config.*
 test.pl
-subst
 command.cfg
 Cache.pm
 build-*
