@@ -154,8 +154,8 @@ main (int argc, char **argv)
 	}
 
 	if (display_html == TRUE)
-		printf ("<A HREF=\"%s%s:%d%s\" target=\"_blank\">", 
-			use_ssl ? "https://" : "http://", host_name,
+		printf ("<A HREF=\"%s://%s:%d%s\" target=\"_blank\">", 
+			use_ssl ? "https" : "http", host_name,
 			server_port, server_url);
 
 	/* initialize alarm signal handling, set socket timeout, start timer */
@@ -505,8 +505,7 @@ base64 (const char *bin, size_t len)
 static int
 document_headers_done (char *full_page)
 {
-	const char *body, *s;
-	const char *end;
+	const char *body;
 
 	for (body = full_page; *body; body++) {
 		if (!strncmp (body, "\n\n", 2) || !strncmp (body, "\n\r\n", 3))
@@ -842,7 +841,9 @@ check_http (void)
 	page = full_page;
 
 	if (verbose)
-		printf ("%s://%s:%d%s is %d characters\n", server_type, server_address, server_port, server_url, pagesize);
+		printf ("%s://%s:%d%s is %d characters\n",
+			use_ssl ? "https" : "http", server_address,
+			server_port, server_url, pagesize);
 
 	/* find status line and null-terminate it */
 	status_line = page;
