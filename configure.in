@@ -469,7 +469,13 @@ AC_HEADER_TIME
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(signal.h strings.h string.h syslog.h uio.h errno.h regex.h sys/types.h sys/time.h sys/socket.h sys/loadavg.h)
 AC_CHECK_HEADERS(features.h stdarg.h sys/unistd.h ctype.h stdlib.h)
-AC_CHECK_HEADERS(limits.h sys/param.h sys/mount.h sys/vfs.h sys/fs/s5param.h sys/filsys.h fcntl.h sys/statfs.h sys/dustat.h sys/statvfs.h)
+AC_CHECK_HEADERS(limits.h sys/param.h)
+AC_CHECK_HEADERS([sys/mount.h],[],[],[
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+])
+AC_CHECK_HEADERS(sys/vfs.h sys/fs/s5param.h sys/filsys.h fcntl.h sys/statfs.h sys/dustat.h sys/statvfs.h)
 
 # glibc 2.3.2 stdlib.h does not define HUGE_VAL (see man strtod)
 AC_MSG_CHECKING([for HUGE_VAL in <stdlib.h>])
@@ -1378,21 +1384,29 @@ dnl fwict, the 2-arg is an SVR4 standard, whereas the 3-arg is shared
 dnl in the various BSD's
 dnl
 
-AC_CHECK_HEADERS([sys/swap.h sys/stat.h sys/param.h])
+AC_CHECK_HEADERS([sys/swap.h], [], [], [
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+])
+AC_CHECK_HEADERS([sys/stat.h sys/param.h])
 AC_CHECK_DECLS([swapctl],,,[
                #include <unistd.h>
                #include <sys/types.h>
+	       #include <sys/param.h>
                #include <sys/stat.h>
                #include <sys/swap.h>
                ])
 AC_CHECK_TYPES([swaptbl_t, swapent_t],,,[
                #include <sys/types.h>
+	       #include <sys/param.h>
                #include <sys/stat.h>
                #include <sys/swap.h>
                ])
 AC_CHECK_MEMBERS([struct swapent.se_nblks],,,[
                #include <unistd.h>
                #include <sys/types.h>
+	       #include <sys/param.h>
                #include <sys/stat.h>
                #include <sys/swap.h>
                ])
