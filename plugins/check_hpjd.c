@@ -65,7 +65,7 @@
 #include "popen.h"
 #include "utils.h"
 
-const char *progname = "check_hpjd"
+const char *progname = "check_hpjd";
 #define REVISION "$Revision$"
 #define COPYRIGHT "2000-2002"
 
