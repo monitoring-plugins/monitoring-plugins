@@ -3,7 +3,9 @@
 SUBDIRS = lib plugins plugins-scripts
 
 EXTRA_DIST = REQUIREMENTS SUPPORT acconfig.h subst.in subst.sh Helper.pm	\
-contrib nagios-plugins.spec.in getloadavg.m4
+contrib nagios-plugins.spec.in
+
+ACLOCAL_AMFLAGS = -I lib
 
 dist-hook:
 	sed "s/%%{VER}/@VER@/;s/%%{REL}/@REL@/;" $(srcdir)/nagios-plugins.spec.in > $(distdir)/nagios-plugins.spec
