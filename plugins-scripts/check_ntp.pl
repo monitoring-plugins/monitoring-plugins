@@ -55,12 +55,13 @@
 # ntpdate - offset is in seconds
 # changed ntpdc to ntpq - jitter/dispersion is in milliseconds
 #
+# Patch for for regex for stratum1 refid.
 
 require 5.004;
 use POSIX;
 use strict;
 use Getopt::Long;
-use vars qw($opt_V $opt_h $opt_H $opt_w $opt_c $opt_j $opt_k $verbose $PROGNAME);
+use vars qw($opt_V $opt_h $opt_H $opt_w $opt_c $opt_j $opt_k $verbose $PROGNAME $def_jitter);
 use lib utils.pm; 
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 
@@ -101,6 +102,11 @@ if ($opt_h) {
 	exit $ERRORS{'OK'};
 }
 
+# jitter test params specified
+if (defined $opt_j || defined $opt_k ) {
+	$def_jitter = 1;
+}
+
 $opt_H = shift unless ($opt_H);
 my $host = $1 if ($opt_H && $opt_H =~ m/^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|[a-zA-Z][-a-zA-Z0-9]+(\.[a-zA-Z][-a-zA-Z0-9]+)*)$/);
 unless ($host) {
@@ -131,6 +137,7 @@ if ($opt_k < $opt_j) {
 	print_usage();
 	exit $ERRORS{'UNKNOWN'};
 }
+
 
 my $stratum = -1;
 my $ignoreret = 0;
@@ -225,7 +232,7 @@ if ( $? && !$ignoreret ) {
 #           or 'o' which implies pps.peer
 #           If both exist, the last one is picked. 
 # Field 2: address of the remote peer
-# Field 3: Refid of the clock (0.0.0.0 if unknown)
+# Field 3: Refid of the clock (0.0.0.0 if unknown, WWWV/PPS/GPS if Stratum1)
 # Field 4: stratum (0-15)
 # Field 5: Type of the peer: local (l), unicast (u), multicast (m) 
 #          broadcast (b); not sure about multicast/broadcast
@@ -242,6 +249,10 @@ if ($have_ntpq) {
 	if ( open(NTPQ,"$utils::PATH_TO_NTPQ -np $host 2>&1 |") ) {
 		while (<NTPQ>) {
 			print $_ if ($verbose);
+			if ( /timed out/ ){
+				$have_ntpq = 0 ;
+				last ;
+			}
 			# number of candidates on <host> for sys.peer
 			if (/^(\*|\+|\#|o])/) {
 				++$candidates;
@@ -249,8 +260,9 @@ if ($have_ntpq) {
 			}
 
 			# match sys.peer or pps.peer
-			if (/^(\*|o)([-0-9.\s]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([lumb]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)/) {
-				$syspeer = $2;				
+			if (/^(\*|o)([-0-9.\s]+)\s+([-0-9WwVvGgPpSs.]+)\s+([-0-9.]+)\s+([lumb]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)/) {
+				$syspeer = $2;
+				$stratum = $4;
 				$jitter = $11;
 				print "match $_ \n" if $verbose;
 				if ($jitter > $jcrit) {
@@ -303,6 +315,26 @@ if ($ntpdate_error != $ERRORS{'OK'}) {
 		$answer = "Jitter error and jitter $jitter msec > +/- $jwarn msec\n";
 	}
 
+} elsif( !$have_ntpq ) { # no errors from ntpdate and no ntpq or ntpq timed out
+	if (abs($offset) > $ocrit) {
+		$state = $ERRORS{'CRITICAL'};
+		$answer = "Offset $offset msec > +/- $ocrit sec\n";
+	} elsif (abs($offset) > $owarn) {
+		$state = $ERRORS{'WARNING'};
+		$answer = "Offset $offset msec > +/- $owarn sec\n";
+	} elsif (( abs($offset) > $owarn) && $def_jitter ) {
+		$state = $ERRORS{'WARNING'};
+		$answer = "Offset $offset msec > +/- $owarn sec, ntpq timed out\n";
+	} elsif ( $def_jitter ) {
+		$state = $ERRORS{'WARNING'};
+		$answer = "Offset $offset secs, ntpq timed out\n";
+	} else{
+		$state = $ERRORS{'OK'};
+		$answer = "Offset $offset secs \n";
+	}
+
+
+
 } else { # no errors from ntpdate or ntpq
 	if (abs($offset) > $ocrit) {
 		$state = $ERRORS{'CRITICAL'};
@@ -319,19 +351,14 @@ if ($ntpdate_error != $ERRORS{'OK'}) {
 
 	} else {
 		$state = $ERRORS{'OK'};
-		$answer = "Offset $offset secs, jitter $jitter msec\n";
+		$answer = "Offset $offset secs, jitter $jitter msec, peer is stratum $stratum\n";
 	}
 	
-#	 else { # no offset defined
-#		$state = $ERRORS{'UNKNOWN'};
-#		$answer = "Invalid format returned from ntpdate ($msg)\n";
-#	}
-
 }
 
 foreach my $key (keys %ERRORS) {
 	if ($state==$ERRORS{$key}) {
-		print ("$key: $answer");
+		print ("NTP $key: $answer");
 		last;
 	}
 }
@@ -347,7 +374,7 @@ sub print_usage () {
 
 sub print_help () {
 	print_revision($PROGNAME,'$Revision$');
-	print "Copyright (c) 2000 Bo Kersey/Karl DeBisschop\n";
+	print "Copyright (c) 2003 Bo Kersey/Karl DeBisschop\n";
 	print "\n";
 	print_usage();
 	print "
@@ -360,6 +387,10 @@ Checks the jitter/dispersion of clock signal between <host> and its sys.peer wit
 -j (--jwarn)
      Clock jitter in milliseconds at which a warning message will be generated.\n	Defaults to $DEFAULT_JITTER_WARN.
 -k (--jcrit)
-    Clock jitter in milliseconds at which a warning message will be generated.\n	Defaults to $DEFAULT_JITTER_CRIT.\n";
-	support();
+    Clock jitter in milliseconds at which a warning message will be generated.\n	Defaults to $DEFAULT_JITTER_CRIT.\n
+    
+    If jitter/dispersion is specified with -j or -k and ntpq times out, then a
+    warning is returned.
+";	
+support();
 }
