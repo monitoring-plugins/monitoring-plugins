@@ -33,19 +33,23 @@
 #include "netutils.h"
 #include "utils.h"
 
-#define CHECK_NONE	0
-#define CHECK_CLIENTVERSION  	1
-#define CHECK_CPULOAD  	2
-#define CHECK_UPTIME	3
-#define CHECK_USEDDISKSPACE	4
-#define CHECK_SERVICESTATE	5
-#define CHECK_PROCSTATE	6
-#define CHECK_MEMUSE	7
-#define CHECK_COUNTER	8
-#define CHECK_FILEAGE	9
-#define MAX_VALUE_LIST 30
+enum checkvars {
+	CHECK_NONE,
+	CHECK_CLIENTVERSION,
+	CHECK_CPULOAD,
+	CHECK_UPTIME,
+	CHECK_USEDDISKSPACE,
+	CHECK_SERVICESTATE,
+	CHECK_PROCSTATE,
+	CHECK_MEMUSE,
+	CHECK_COUNTER,
+	CHECK_FILEAGE
+};
 
-#define PORT	1248	
+enum {
+	MAX_VALUE_LIST = 30,
+	PORT = 1248
+};
 
 char *server_address=NULL;
 char *volume_name=NULL;
@@ -58,11 +62,14 @@ unsigned long critical_value=0L;
 int check_value_list=FALSE;
 int check_warning_value=FALSE;
 int check_critical_value=FALSE;
-int vars_to_check=CHECK_NONE;
+enum checkvars vars_to_check = CHECK_NONE;
 int show_all=FALSE;
 
 const char *progname = "check_nt";
 
+char recv_buffer[MAX_INPUT_BUFFER];
+
+void fetch_data (const char* address, int port, const char* sendb);
 int process_arguments(int, char **);
 void preparelist(char *string);
 int strtoularray(unsigned long *array, char *string, const char *delim);
@@ -70,10 +77,8 @@ void print_help(void);
 void print_usage(void);
 
 int main(int argc, char **argv){
-	int result;
 	int return_code = STATE_UNKNOWN;
 	char *send_buffer=NULL;
-	char recv_buffer[MAX_INPUT_BUFFER];
 	char *output_message=NULL;
 	char *temp_string=NULL;
 	char *description=NULL;
@@ -92,8 +97,6 @@ int main(int argc, char **argv){
 	int uphours=0;
 	int upminutes=0;
 
-	asprintf(&req_password, _("None"));
-
 	if(process_arguments(argc,argv)==ERROR)
 		usage(_("Could not parse arguments\n"));
 
@@ -103,170 +106,124 @@ int main(int argc, char **argv){
 	/* set socket timeout */
 	alarm(socket_timeout);
 
-	if (vars_to_check==CHECK_CLIENTVERSION) {
+	switch (vars_to_check) {
 
-		asprintf(&send_buffer,strcat(req_password,"&1"));
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
-		if(result!=STATE_OK)
-			return result;
-		asprintf(&output_message,recv_buffer);
+	case CHECK_CLIENTVERSION:
+
+		asprintf(&send_buffer, "%s&1", req_password);
+		fetch_data (server_address, server_port, send_buffer);
+		output_message = strdup (recv_buffer);
 		return_code=STATE_OK;
+		break;
 
-	}
+	case CHECK_CPULOAD:
 
-	else if(vars_to_check==CHECK_CPULOAD){
+		if (value_list==NULL)
+			output_message = strdup (_("missing -l parameters"));
+		else if (strtoularray(lvalue_list,value_list,",")==FALSE)
+			output_message = strdup (_("wrong -l parameter."));
+		else {
+			/* -l parameters is present with only integers */
+			return_code=STATE_OK;
+			temp_string = strdup (_("CPU Load"));
+			/* loop until one of the parameters is wrong or not present */
+			while (lvalue_list[0+offset]> (unsigned long)0 &&
+						 lvalue_list[0+offset]<=(unsigned long)17280 && 
+						 lvalue_list[1+offset]> (unsigned long)0 &&
+						 lvalue_list[1+offset]<=(unsigned long)100 && 
+						 lvalue_list[2+offset]> (unsigned long)0 &&
+						 lvalue_list[2+offset]<=(unsigned long)100) {
 
-		if (check_value_list==TRUE) {																			
-			if (strtoularray(lvalue_list,value_list,",")==TRUE) {
-				/* -l parameters is present with only integers */
-				return_code=STATE_OK;
-				asprintf(&temp_string,_("CPU Load"));
-				while (lvalue_list[0+offset]> (unsigned long)0 &&
-				       lvalue_list[0+offset]<=(unsigned long)17280 && 
-				       lvalue_list[1+offset]> (unsigned long)0 &&
-				       lvalue_list[1+offset]<=(unsigned long)100 && 
-				       lvalue_list[2+offset]> (unsigned long)0 &&
-				       lvalue_list[2+offset]<=(unsigned long)100) {
-					/* loop until one of the parameters is wrong or not present */
+				/* Send request and retrieve data */
+				asprintf(&send_buffer,"%s&2&%lu",req_password,lvalue_list[0+offset]);
+				fetch_data (server_address, server_port, send_buffer);
 
-					/* Send request and retrieve data */
-					asprintf(&send_buffer,"%s&2&%lu",req_password,lvalue_list[0+offset]);
-					result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
-					if(result!=STATE_OK)
-						return result;
+				utilization=strtoul(recv_buffer,NULL,10);
+				
+				/* Check if any of the request is in a warning or critical state */
+				if(utilization >= lvalue_list[2+offset])
+					return_code=STATE_CRITICAL;
+				else if(utilization >= lvalue_list[1+offset] && return_code<STATE_WARNING)
+					return_code=STATE_WARNING;
 
-					if (!strncmp(recv_buffer,"ERROR",5)) {
-						printf("NSClient - %s\n",recv_buffer);
-						exit(STATE_UNKNOWN);
-					}
+				asprintf(&output_message,_(" %lu%% (%lu min average)"), utilization, lvalue_list[0+offset]);
+				asprintf(&temp_string,"%s%s",temp_string,output_message);
+				offset+=3;	/* move across the array */
+			}
+			if (strlen(temp_string)>10)  /* we had at least one loop */
+				output_message = strdup (temp_string);
+			else
+				output_message = strdup (_("not enough values for -l parameters"));
+		}	
+		break;
 
-					utilization=strtoul(recv_buffer,NULL,10);
+	case CHECK_UPTIME:
 
-					/* Check if any of the request is in a warning or critical state */
-					if(utilization >= lvalue_list[2+offset])
-						return_code=STATE_CRITICAL;
-					else if(utilization >= lvalue_list[1+offset] && return_code<STATE_WARNING)
-						return_code=STATE_WARNING;
-
-					asprintf(&output_message,_(" %lu%% (%lu min average)"), utilization, lvalue_list[0+offset]);
-					asprintf(&temp_string,"%s%s",temp_string,output_message);
-					offset+=3;	/* move across the array */
-				}		
-				if (strlen(temp_string)>10) {
-					/* we had at least on loop */
-					asprintf(&output_message,"%s",temp_string);
-				}	
-				else
-					asprintf(&output_message,"%s",_("not enough values for -l parameters"));
-					
-			} else 
-				asprintf(&output_message,_("wrong -l parameter."));
-
-		} else
-			asprintf(&output_message,_("missing -l parameters"));
-	}
-
-	else if(vars_to_check==CHECK_UPTIME){
-
-		asprintf(&send_buffer,strcat(req_password,"&3"));
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
-		if(result!=STATE_OK)
-			return result;
-
-		if (!strncmp(recv_buffer,"ERROR",5)) {
-			printf("NSClient - %s\n",recv_buffer);
-			exit(STATE_UNKNOWN);
-		}
-
+		asprintf(&send_buffer, "%s&3", req_password);
+		fetch_data (server_address, server_port, send_buffer);
 		uptime=strtoul(recv_buffer,NULL,10);
 		updays = uptime / 86400; 			
 		uphours = (uptime % 86400) / 3600;
 		upminutes = ((uptime % 86400) % 3600) / 60;
 		asprintf(&output_message,_("System Uptime : %u day(s) %u hour(s) %u minute(s)"),updays,uphours, upminutes);
 		return_code=STATE_OK;
-	}
+		break;
 
-	else if(vars_to_check==CHECK_USEDDISKSPACE){
+	case CHECK_USEDDISKSPACE:
 
-		return_code=STATE_UNKNOWN;	
-		if (check_value_list==TRUE) {
-			if (strlen(value_list)==1) {
-				asprintf(&send_buffer,"%s&4&%s", req_password, value_list);
-				result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
-				if(result!=STATE_OK)
-					return result;
-		
-				if (!strncmp(recv_buffer,"ERROR",5)) {
-					printf("NSClient - %s\n",recv_buffer);
-					exit(STATE_UNKNOWN);
-				}
+		if (value_list==NULL)
+			output_message = strdup (_("missing -l parameters"));
+		else if (strlen(value_list)==1)
+			output_message = strdup (_("wrong -l argument"));
+		else {
+			asprintf(&send_buffer,"%s&4&%s", req_password, value_list);
+			fetch_data (server_address, server_port, send_buffer);
+			free_disk_space=atof(strtok(recv_buffer,"&"));
+			total_disk_space=atof(strtok(NULL,"&"));
+			percent_used_space = ((total_disk_space - free_disk_space) / total_disk_space) * 100;
 
-				free_disk_space=atof(strtok(recv_buffer,"&"));
-				total_disk_space=atof(strtok(NULL,"&"));
-				percent_used_space = ((total_disk_space - free_disk_space) / total_disk_space) * 100;
-
-				if (free_disk_space>=0) {
-					asprintf(&temp_string,_("%s:\\ - total: %.2f Gb - used: %.2f Gb (%.0f%%) - free %.2f Gb (%.0f%%)"),
-							value_list, total_disk_space / 1073741824, (total_disk_space - free_disk_space) / 1073741824, percent_used_space,
-							 free_disk_space / 1073741824, (free_disk_space / total_disk_space)*100); 
+			if (free_disk_space>=0) {
+				asprintf(&temp_string,_("%s:\\ - total: %.2f Gb - used: %.2f Gb (%.0f%%) - free %.2f Gb (%.0f%%)"),
+								 value_list, total_disk_space / 1073741824, (total_disk_space - free_disk_space) / 1073741824, percent_used_space,
+								 free_disk_space / 1073741824, (free_disk_space / total_disk_space)*100); 
 
 
-					if(check_critical_value==TRUE && percent_used_space >= critical_value)
-						return_code=STATE_CRITICAL;
-					else if (check_warning_value==TRUE && percent_used_space >= warning_value)
-						return_code=STATE_WARNING;	
-					else
-						return_code=STATE_OK;	
+				if(check_critical_value==TRUE && percent_used_space >= critical_value)
+					return_code=STATE_CRITICAL;
+				else if (check_warning_value==TRUE && percent_used_space >= warning_value)
+					return_code=STATE_WARNING;	
+				else
+					return_code=STATE_OK;	
 
-					asprintf(&output_message,"%s",temp_string);
-
-				}
-				else {
-					asprintf(&output_message,_("Free disk space : Invalid drive "));
-					return_code=STATE_UNKNOWN;
-				}		
+				output_message = strdup (temp_string);
 			}
-			else 
-				asprintf(&output_message,_("wrong -l argument"));
-		} else 
-			asprintf(&output_message,_("missing -l parameters"));
-			
-	}
+			else {
+				output_message = strdup (_("Free disk space : Invalid drive "));
+				return_code=STATE_UNKNOWN;
+			}
+		}
+		break;
 
-	else if(vars_to_check==CHECK_SERVICESTATE || vars_to_check==CHECK_PROCSTATE){
+	case CHECK_SERVICESTATE:
+	case CHECK_PROCSTATE:
 
-		if (check_value_list==TRUE) {
+		if (value_list==NULL)
+			output_message = strdup (_("No service/process specified"));
+		else {
 			preparelist(value_list);		/* replace , between services with & to send the request */
 			asprintf(&send_buffer,"%s&%u&%s&%s", req_password,(vars_to_check==CHECK_SERVICESTATE)?5:6,
-				(show_all==TRUE)?_("ShowAll"):_("ShowFail"),value_list);
-			result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
-			if(result!=STATE_OK)
-				return result;
-	
-			if (!strncmp(recv_buffer,"ERROR",5)) {
-				printf("NSClient - %s\n",recv_buffer);
-				exit(STATE_UNKNOWN);
-			}
+							 (show_all==TRUE)?_("ShowAll"):_("ShowFail"),value_list);
+			fetch_data (server_address, server_port, send_buffer);
 			return_code=atoi(strtok(recv_buffer,"&"));
 			temp_string=strtok(NULL,"&");
-			asprintf(&output_message, "%s",temp_string);
+			output_message = strdup (temp_string);
 		}
-		else 
-			asprintf(&output_message,_("No service/process specified"));
-	}
+		break;
 
-	else if(vars_to_check==CHECK_MEMUSE) {
+	case CHECK_MEMUSE:
 		
 		asprintf(&send_buffer,"%s&7", req_password);
-		result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
-		if (result!=STATE_OK)
-			return result;
-
-		if (!strncmp(recv_buffer,"ERROR",5)) {
-			printf("NSClient - %s\n",recv_buffer);
-			exit(STATE_UNKNOWN);
-		}
-
+		fetch_data (server_address, server_port, send_buffer);
 		mem_commitLimit=atof(strtok(recv_buffer,"&"));
 		mem_commitByte=atof(strtok(NULL,"&"));
 		percent_used_space = (mem_commitByte / mem_commitLimit) * 100;
@@ -280,33 +237,27 @@ int main(int argc, char **argv){
 			return_code=STATE_WARNING;	
 		else
 			return_code=STATE_OK;	
-		
-	}
 
-	else if(vars_to_check==CHECK_COUNTER) {
+		break;
 
-		if (check_value_list==TRUE) {																			
+	case CHECK_COUNTER:
+
+		if (value_list==NULL)
+			output_message = strdup (_("No counter specified"));
+		else {
 			preparelist(value_list);		/* replace , between services with & to send the request */
 			asprintf(&send_buffer,"%s&8&%s", req_password,value_list);
-			result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
-			if (result!=STATE_OK)
-				return result;
-	
-			if (!strncmp(recv_buffer,"ERROR",5)) {
-				printf("NSClient - %s\n",recv_buffer);
-				exit(STATE_UNKNOWN);
-			}
-
+			fetch_data (server_address, server_port, send_buffer);
 			strtok(value_list,"&");			/* burn the first parameters */
 			description = strtok(NULL,"&");
 			counter_value = atof(recv_buffer);
+
 			if (description == NULL) 
 				asprintf(&output_message, "%.f", counter_value);
 			else
-				asprintf(&output_message, description, counter_value);
+				asprintf(&output_message,"%s = %.f",  description, counter_value);
 	
-			if (critical_value > warning_value) {
-				/* Normal thresholds */
+			if (critical_value > warning_value) {        /* Normal thresholds */
 				if(check_critical_value==TRUE && counter_value >= critical_value)
 					return_code=STATE_CRITICAL;
 				else if (check_warning_value==TRUE && counter_value >= warning_value)
@@ -314,8 +265,7 @@ int main(int argc, char **argv){
 				else
 					return_code=STATE_OK;	
 			} 
-			else {
-				/* inverse thresholds */
+			else {                                       /* inverse thresholds */
 				if(check_critical_value==TRUE && counter_value <= critical_value)
 					return_code=STATE_CRITICAL;
 				else if (check_warning_value==TRUE && counter_value <= warning_value)
@@ -323,33 +273,22 @@ int main(int argc, char **argv){
 				else
 					return_code=STATE_OK;	
 			}	
-		
 		}
-		else {
-			asprintf(&output_message,_("No counter specified"));
-			result=STATE_UNKNOWN;
-		}
-	}
-	else if(vars_to_check==CHECK_FILEAGE) {
+		break;
 
-		if (check_value_list==TRUE) {																			
+	case CHECK_FILEAGE:
+
+		if (value_list==NULL)
+			output_message = strdup (_("No counter specified"));
+		else {
 			preparelist(value_list);		/* replace , between services with & to send the request */
 			asprintf(&send_buffer,"%s&9&%s", req_password,value_list);
-			result=process_tcp_request(server_address,server_port,send_buffer,recv_buffer,sizeof(recv_buffer));
-			if (result!=STATE_OK)
-				return result;
-	
-			if (!strncmp(recv_buffer,"ERROR",5)) {
-				printf("NSClient - %s\n",recv_buffer);
-				exit(STATE_UNKNOWN);
-			}
-
+			fetch_data (server_address, server_port, send_buffer);
 			age_in_minutes = atoi(strtok(recv_buffer,"&"));
 			description = strtok(NULL,"&");
-			asprintf(&output_message, description);
+			output_message = strdup (description);
 	
-			if (critical_value > warning_value) {
-				/* Normal thresholds */
+			if (critical_value > warning_value) {        /* Normal thresholds */
 				if(check_critical_value==TRUE && age_in_minutes >= critical_value)
 					return_code=STATE_CRITICAL;
 				else if (check_warning_value==TRUE && age_in_minutes >= warning_value)
@@ -357,21 +296,22 @@ int main(int argc, char **argv){
 				else
 					return_code=STATE_OK;	
 			} 
-			else {
-				/* inverse thresholds */
+			else {                                       /* inverse thresholds */
 				if(check_critical_value==TRUE && age_in_minutes <= critical_value)
 					return_code=STATE_CRITICAL;
 				else if (check_warning_value==TRUE && age_in_minutes <= warning_value)
 					return_code=STATE_WARNING;	
 				else
 					return_code=STATE_OK;	
-			}	
-		
+			}
 		}
-		else {
-			asprintf(&output_message,_("No file specified"));
-			result=STATE_UNKNOWN;
-		}
+		break;
+
+	case CHECK_NONE:
+	default:
+		usage (_(""));
+		break;
+
 	}
 
 	/* reset timeout */
@@ -410,7 +350,7 @@ int process_arguments(int argc, char **argv){
 
 	/* backwards compatibility */
 	if (! is_option(argv[1])) {
-		server_address=argv[1];
+		server_address = strdup(argv[1]);
 		argv[1]=argv[0];
 		argv=&argv[1];
 		argc--;
@@ -444,10 +384,11 @@ int process_arguments(int argc, char **argv){
 				print_revision(progname,"$Revision$");
 				exit(STATE_OK);
 			case 'H': /* hostname */
-				server_address=optarg;
+				if (server_address)	free(server_address);
+				server_address = strdup(optarg);
 				break;
 			case 's': /* password */
-				asprintf(&req_password,optarg);
+				req_password = strdup (optarg);
 				break;
 			case 'p': /* port */
 				if (is_intnonneg(optarg))
@@ -480,8 +421,7 @@ int process_arguments(int argc, char **argv){
 					return ERROR;
 				break;
 			case 'l': /* value list */
-				asprintf(&value_list,"%s",optarg);
-				check_value_list=TRUE;
+				value_list = strdup (optarg);
 				break;
 			case 'w': /* warning threshold */
 				warning_value=strtoul(optarg,NULL,10);
@@ -506,6 +446,9 @@ int process_arguments(int argc, char **argv){
 	if (vars_to_check==CHECK_NONE)
 		return ERROR;
 
+	if (req_password == NULL)
+		req_password = strdup (_("None"));
+
 	return OK;
 }
 
@@ -514,6 +457,18 @@ int process_arguments(int argc, char **argv){
 
 
 
+void fetch_data (const char *address, int port, const char *sendb) {
+	int result;
+
+	result=process_tcp_request(address, port, sendb, recv_buffer,sizeof(recv_buffer));
+
+	if(result!=STATE_OK)
+		die (result, "could not fetch information from server\n");
+		
+	if (!strncmp(recv_buffer,"ERROR",5))
+		die (STATE_UNKNOWN, "NSClient - %s\n",recv_buffer);
+}
+
 int strtoularray(unsigned long *array, char *string, const char *delim) {
 	/* split a <delim> delimited string into a long array */
 	int idx=0;
