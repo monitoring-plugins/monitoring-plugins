@@ -182,11 +182,13 @@ struct timeval tv;
 
 #define server_port_check(use_ssl) (use_ssl ? HTTPS_PORT : HTTP_PORT)
 
+/* per RFC 2396 */
+ 
 #define HDR_LOCATION "%*[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]: "
 #define URI_HTTP "%[HTPShtps]://"
 #define URI_HOST "%[-.abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
-#define URI_PORT ":%[-0123456789]"
-#define URI_PATH "%[-_=@,?&#;/.abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
+#define URI_PORT ":%[0123456789]"
+#define URI_PATH "%[-_.!~*'();/?:@&=+$,%#abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
 
 enum {
 	MAX_IPV4_HOSTLENGTH = 255,
