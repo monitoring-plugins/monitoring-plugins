@@ -177,6 +177,13 @@ main (int argc, char **argv)
 				result = STATE_WARNING;
 			}
 		}
+
+		/* send the HELO command */
+		send(sd, helocmd, strlen(helocmd), 0);
+
+		/* allow for response to helo command to reach us */
+		read (sd, buffer, MAXBUF - 1);
+
 #ifdef HAVE_SSL
 		if(use_ssl) {
 		  /* send the STARTTLS command */
@@ -206,16 +213,6 @@ main (int argc, char **argv)
 		  }
 		}
 #endif
-		/* send the HELO command */
-#ifdef HAVE_SSL
-		if (use_ssl)
-		  SSL_write(ssl, helocmd, strlen(helocmd));
-		else
-#endif
-		send(sd, helocmd, strlen(helocmd), 0);
-
-		/* allow for response to helo command to reach us */
-		myrecv();
 				
 		/* sendmail will syslog a "NOQUEUE" error if session does not attempt
 		 * to do something useful. This can be prevented by giving a command
