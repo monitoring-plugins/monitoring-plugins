@@ -240,6 +240,7 @@ ssh_connect (char *haddr, int hport, char *remote_version)
 		printf
 			(_("SSH OK - %s (protocol %s)\n"),
 			 ssh_server, ssh_proto);
+		close(sd);
 		exit (STATE_OK);
 	}
 }
