@@ -189,6 +189,16 @@ main (int argc, char **argv)
 		use_ssl=TRUE;
 		PORT=995;
 	}
+	else if (strstr(argv[0],"check_ssmtp")) {
+		progname = strdup ("check_ssmtp");
+		SERVICE = strdup ("SSMTP");
+		SEND=NULL;
+		EXPECT = strdup ("220");
+		QUIT = strdup ("QUIT\r\n");
+		PROTOCOL=TCP_PROTOCOL;
+		use_ssl=TRUE;
+		PORT=465;
+	}
 	else if (strstr(argv[0],"check_jabber")) {
 		progname = strdup("check_jabber");
 		SERVICE = strdup("JABBER");

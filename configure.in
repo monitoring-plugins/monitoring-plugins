@@ -467,7 +467,7 @@ else
 fi
 
 if test "$FOUNDSSL" = "yes"; then
-  check_tcp_ssl="check_simap check_spop check_jabber check_nntps"
+  check_tcp_ssl="check_simap check_spop check_jabber check_nntps check_ssmtp"
   AC_SUBST(check_tcp_ssl)
   AC_SUBST(SSLLIBS)
   AC_DEFINE(HAVE_SSL,1,[Define if SSL libraries are found])
