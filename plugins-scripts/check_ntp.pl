@@ -443,7 +443,7 @@ Checks the jitter/dispersion of clock signal between <host> and its sys.peer wit
 -j (--jwarn)
      Clock jitter in milliseconds at which a warning message will be generated.\n	Defaults to $DEFAULT_JITTER_WARN.
 -k (--jcrit)
-    Clock jitter in milliseconds at which a warning message will be generated.\n	Defaults to $DEFAULT_JITTER_CRIT.
+    Clock jitter in milliseconds at which a critical message will be generated.\n	Defaults to $DEFAULT_JITTER_CRIT.
     
     If jitter/dispersion is specified with -j or -k and ntpq times out, then a
     warning is returned.\n
