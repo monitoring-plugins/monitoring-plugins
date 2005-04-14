@@ -173,7 +173,7 @@ if ($mailq eq "sendmail") {
 		    # multi queue: one for each queue. overwrite on multi queue below
 	  	  $msg_q = $1 ;
 			}
-		} elsif (/^\s+Total\sRequests:\s(\d+)$/) {
+		} elsif (/^\s+Total\sRequests:\s(\d+)$/i) {
 			print "$utils::PATH_TO_MAILQ = $_ \n" if $verbose ;
 			#
 			# multi queue: last line
