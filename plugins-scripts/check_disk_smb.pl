@@ -76,7 +76,7 @@ my $share = $1 if ($opt_s =~ /^([-_.A-Za-z0-9]+\$?)$/);
 my $user = $1 if ($opt_u =~ /^([-_.A-Za-z0-9\\]+)$/);
 ($user) || usage("Invalid user: $opt_u\n");
 
-($opt_p) || ($opt_p = shift) || ($opt_p = "guest");
+($opt_p) || ($opt_p = shift) || ($opt_p = "");
 my $pass = $1 if ($opt_p =~ /(.*)/);
 
 ($opt_w) || ($opt_w = shift) || ($opt_w = 85);
@@ -123,10 +123,10 @@ alarm($TIMEOUT);
 # Execute an "ls" on the share using smbclient program
 # get the results into $res
 if (defined($workgroup)) {
-	$res = qx/$smbclient \/\/$host\/$share $pass -W $workgroup -U $user $smbclientoptions -c ls/;
+	$res = qx/$smbclient \/\/$host\/$share -W $workgroup -U $user%$pass $smbclientoptions -c ls/;
 } else {
 	print "$smbclient " . "\/\/$host\/$share" ." $pass -U $user $smbclientoptions -c ls\n" if ($verbose);
-	$res = qx/$smbclient \/\/$host\/$share $pass -U $user $smbclientoptions -c ls/;
+	$res = qx/$smbclient \/\/$host\/$share -U $user%$pass $smbclientoptions -c ls/;
 }
 #Turn off alarm
 alarm(0);
