@@ -252,7 +252,7 @@ Perl Check SMB Disk plugin for Nagios
 -u, --user=STRING
    Username to log in to server. (Defaults to \"guest\")
 -p, --password=STRING
-   Password to log in to server. (Defaults to \"guest\")
+   Password to log in to server. (Defaults to an empty password)
 -w, --warning=INTEGER or INTEGER[kMG]
    Percent of used space at which a warning will be generated (Default: 85%)
       
