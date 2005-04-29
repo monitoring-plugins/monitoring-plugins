@@ -1,22 +1,27 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 # check_sybase
 # A nagios plugin that connects to a Sybase database and checks free space.
 #
-# Copyright 2004 Simon Bellwood, NetMan Network Management and IT Services GmbH
+# Copyright 2004-2005 Simon Bellwood, NetMan Network Management and IT 
+# 								Services GmbH
 # Portions Copyright 2001 Michael Peppler.
 # License: GPL
 #
-# Bugs and feedback to simon.bellwood@nospam.net-man.at
+# Bugs and feedback to simon.bellwood@NOSPAM.net-man.at
 # Latest version available from:
 # 	http://www.net-man.at/software/check_sybase-LATEST.zip
 #
 # Revision history:
 # 0.1	01-OCT-2004	Initial version.
 # 0.2	08-NOV-2004	Initial release.
-# 0.3	13-JAN-2004	Fixed lib path, improved timeouts.
-# 0.4	26-JAN-2004	Added loginTimeout.
-my $VERSION = "0.4";
+# 0.3	13-JAN-2005	Fixed lib path, improved timeouts.
+# 0.4	26-JAN-2005	Added loginTimeout.
+# 0.5	04-FEB-2005	Fixed dates in history. Oops.
+# 0.6	29-MAR-2005	Added --explain option.
+# 0.7	08-APR-2005	Added initial performance data support.
+my $VERSION = "0.7";
 
+#use warnings;
 use strict;
 use DBI;
 use Getopt::Long;
@@ -30,8 +35,8 @@ my $DEFAULT_WARNING   = "25";
 my $DEFAULT_CRITICAL  = "10";
 my $DEFAULT_TIMEOUT   = "30";
 
-my ($user, $pass, $dbsvr, $dbname, $config, $checktype, $warn, $crit, $timeout,
-    $help, $version);
+my ($user, $pass, $dbsvr, $dbname, $config, $checktype, $explain,
+    $warn, $crit, $timeout, $help, $version);
 
 my $options_okay = GetOptions(
 	"U|user=s"	=> \$user,
@@ -40,6 +45,7 @@ my $options_okay = GetOptions(
 	"D|dbname=s"	=> \$dbname,
 	"config=s"	=> \$config,
 	"checktype=s"	=> \$checktype,
+	"explain"	=> \$explain,
 	"w|warning=i"	=> \$warn,
 	"c|critical=i"	=> \$crit,
 	"t|timeout=i"	=> \$timeout,
@@ -127,6 +133,7 @@ sub check_space
 	&connect;
 
 	# Most of this sub based on Michael Peppler's check-space.pl
+	# For debugging purposes, more values are collected than needed.
 
 	$dbh->{syb_do_proc_status} = 1;
 
@@ -148,6 +155,7 @@ sub check_space
 			}
 			else
 			{
+				# Reserved, data, index, unused
 				foreach (@$d)
 				{
 					s/\D//g;
@@ -157,9 +165,16 @@ sub check_space
 				$dbinfo->{reserved} = $d->[0] / 1024;
 				$dbinfo->{data} = $d->[1] / 1024;
 				$dbinfo->{index} = $d->[2] / 1024;
+				$dbinfo->{unused} = $d->[3] / 1024;
 			}
 		}
 	} while($sth->{syb_more_results});
+
+	&explain("db size:  ".$dbinfo->{size});
+	&explain("reserved: ".$dbinfo->{reserved});
+	&explain(" data:    ".$dbinfo->{data});
+	&explain(" index:   ".$dbinfo->{index});
+	&explain(" unused:  ".$dbinfo->{unused});
 
 	# Get the actual device usage from sp_helpdb to get the free log space
 	$sth = $dbh->prepare("sp_helpdb $dbname")
@@ -186,27 +201,38 @@ sub check_space
 		}
 	} while($sth->{syb_more_results});
 
+	&explain("log: ".$dbinfo->{log});
+	&explain("logfree: ".$dbinfo->{logfree});
+
 	# Subtract the log size from the database size
-	$dbinfo->{size} -= $dbinfo->{log};
+	$dbinfo->{realsize} = $dbinfo->{size} - $dbinfo->{log};
+	&explain("realsize (i.e. size - log) = ".$dbinfo->{realsize});
 
 	# The "reserved" space is free for use by the table that freed it, so 
 	# it is not truly free space. To be safe, our calculation ignores it.
-	my $free = ($dbinfo->{size} - $dbinfo->{reserved}) / $dbinfo->{size};
+	my $free = ($dbinfo->{realsize} - $dbinfo->{reserved})/$dbinfo->{realsize};
 	$free = sprintf("%.2f", $free*100);
+
+	&explain("(realsize-reserved)/realsize = $free%");
+	&explain("For safety, this calculation assumes no log space reuse. ".
+	"Because of this, you may get negative values.");
 
 
 	if ($free < $crit)
 	{
-		&ncrit("Free space is $free%! (critical threshold is $crit%)");
+		&ncrit("Free space is $free%! (critical threshold is $crit%)".
+			"|free_space=$free%");
 	}
 
 	if ($free < $warn)
 	{
-		&nwarn("Free space is $free%! (warning threshold is $warn%)");
+		&nwarn("Free space is $free%! (warning threshold is $warn%)".
+			"|free_space=$free%");
 	}
 
 
-	&nok("Free space within thresholds ($free% free)");
+	&nok("Free space within thresholds ($free% free)".
+		"|free_space=$free%");
 }
 
 sub read_config
@@ -261,6 +287,7 @@ Mandatory arguments to long options are mandatory for short options too.
   -D, --dbname		Database name to check.
   --config=FILE		Config file (see SECURITY below)
   --checktype=TYPE	Type of check to run (see TYPEs below)
+  --explain		Explains how we calculated the free space.
   -w, --warning		Warning threshold, in percent (default 25)
   -c, --critical	Critical threshold, in percent (default 10)
   -t, --timeout		Timeout value, in seconds (default 30)
@@ -288,6 +315,14 @@ SECURITY - Using a config file
  lines are ignored. Use whitespace to separate argument and value.
 _HELP_
 
+}
+
+sub explain
+{
+	return unless $explain;
+
+	my $msg = shift;
+	print "$msg\n";
 }
 
 
