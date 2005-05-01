@@ -243,8 +243,12 @@ static int openmax = 0;
 void
 popen_timeout_alarm_handler (int signo)
 {
+	int fh;
 	if (signo == SIGALRM) {
-		kill (childpid[fileno (child_process)], SIGKILL);
+		fh=fileno (child_process);
+		if(fh >= 0){
+			kill (childpid[fh], SIGKILL);
+		}
 		printf (_("CRITICAL - Plugin timed out after %d seconds\n"),
 						timeout_interval);
 		exit (STATE_CRITICAL);
