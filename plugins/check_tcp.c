@@ -322,8 +322,10 @@ main (int argc, char **argv)
 		while ((i = my_recv ()) > 0) {
 			buffer[i] = '\0';
 			asprintf (&status, "%s%s", status, buffer);
-			if (buffer[i-2] == '\r' && buffer[i-1] == '\n')
-				break;
+			if (buffer[i-1] == '\n') {
+				if (buffer[i-2] == '\r' || i < MAXBUF-1)
+					break;
+			}
 			if (maxbytes>0 && strlen(status) >= (unsigned)maxbytes)
 				break;
 		}
