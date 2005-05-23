@@ -68,70 +68,14 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{_exec_prefix}/lib/nagios/plugins
 %{_datadir}/locale/de/LC_MESSAGES/nagios-plugins.mo
 %{_datadir}/locale/fr/LC_MESSAGES/nagios-plugins.mo
-
-%if %custom
-
-%{_exec_prefix}/lib/nagios/plugins/*
-
-%else
-
-%{_exec_prefix}/lib/nagios/plugins/check_by_ssh
-%{_exec_prefix}/lib/nagios/plugins/check_breeze
-%{_exec_prefix}/lib/nagios/plugins/check_dig
-%{_exec_prefix}/lib/nagios/plugins/check_disk
-%{_exec_prefix}/lib/nagios/plugins/check_disk_smb
-%{_exec_prefix}/lib/nagios/plugins/check_dns
-%{_exec_prefix}/lib/nagios/plugins/check_dummy
-%{_exec_prefix}/lib/nagios/plugins/check_flexlm
-%{_exec_prefix}/lib/nagios/plugins/check_ftp
-%{_exec_prefix}/lib/nagios/plugins/check_http
-%{_exec_prefix}/lib/nagios/plugins/check_ifoperstatus
-%{_exec_prefix}/lib/nagios/plugins/check_ifstatus
-%{_exec_prefix}/lib/nagios/plugins/check_imap
-%{_exec_prefix}/lib/nagios/plugins/check_ircd
-%{_exec_prefix}/lib/nagios/plugins/check_load
-%{_exec_prefix}/lib/nagios/plugins/check_log
-%{_exec_prefix}/lib/nagios/plugins/check_mailq
-%{_exec_prefix}/lib/nagios/plugins/check_mrtg
-%{_exec_prefix}/lib/nagios/plugins/check_mrtgtraf
-%{_exec_prefix}/lib/nagios/plugins/check_nagios
-%{_exec_prefix}/lib/nagios/plugins/check_nntp
-%{_exec_prefix}/lib/nagios/plugins/check_nt
-%{_exec_prefix}/lib/nagios/plugins/check_ntp
-%{_exec_prefix}/lib/nagios/plugins/check_nwstat
-%{_exec_prefix}/lib/nagios/plugins/check_oracle
-%{_exec_prefix}/lib/nagios/plugins/check_overcr
-%{_exec_prefix}/lib/nagios/plugins/check_ping
-%{_exec_prefix}/lib/nagios/plugins/check_pop
-%{_exec_prefix}/lib/nagios/plugins/check_procs
-%{_exec_prefix}/lib/nagios/plugins/check_real
-%{_exec_prefix}/lib/nagios/plugins/check_rpc
-%{_exec_prefix}/lib/nagios/plugins/check_sensors
-%{_exec_prefix}/lib/nagios/plugins/check_smtp
-%{_exec_prefix}/lib/nagios/plugins/check_ssh
-%{_exec_prefix}/lib/nagios/plugins/check_swap
-%{_exec_prefix}/lib/nagios/plugins/check_tcp
-%{_exec_prefix}/lib/nagios/plugins/check_time
-%{_exec_prefix}/lib/nagios/plugins/check_udp
-%{_exec_prefix}/lib/nagios/plugins/check_ups
-%{_exec_prefix}/lib/nagios/plugins/check_users
-%{_exec_prefix}/lib/nagios/plugins/check_wave
-%{_exec_prefix}/lib/nagios/plugins/negate
-%{_exec_prefix}/lib/nagios/plugins/utils.pm
-%{_exec_prefix}/lib/nagios/plugins/utils.sh
-%{_exec_prefix}/lib/nagios/plugins/urlize
-%{_exec_prefix}/lib/nagios/plugins/check_file_age
-%{_exec_prefix}/lib/nagios/plugins/check_fping
-%{_exec_prefix}/lib/nagios/plugins/check_game
-%{_exec_prefix}/lib/nagios/plugins/check_ldap
-%{_exec_prefix}/lib/nagios/plugins/check_mysql
-%{_exec_prefix}/lib/nagios/plugins/check_pgsql
-%{_exec_prefix}/lib/nagios/plugins/check_radius
-%{_exec_prefix}/lib/nagios/plugins/check_snmp
-%{_exec_prefix}/lib/nagios/plugins/check_hpjd
-
-%endif
+%{_exec_prefix}/lib/nagios/plugins
 
 %changelog
+* Mon May 23 2005 Sean Finney <seanius@seanius.net> - cvs head
+- just include the nagios plugins directory, which will automatically include
+  all generated plugins (which keeps the build from failing on systems that
+  don't have all build-dependencies for every plugin)
+* Tue Mar 04 2004 Karl DeBisschop <karl[AT]debisschop.net> - 1.4.0alpha1
+- extensive rewrite to facilitate processing into various distro-compatible specs
 * Tue Mar 04 2004 Karl DeBisschop <karl[AT]debisschop.net> - 1.4.0alpha1
 - extensive rewrite to facilitate processing into various distro-compatible specs
