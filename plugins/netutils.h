@@ -38,30 +38,40 @@
 
 RETSIGTYPE socket_timeout_alarm_handler (int) __attribute__((noreturn));
 
+/* process_request and wrapper macros */
+#define process_tcp_request(addr, port, sbuf, rbuf, rsize) \
+	process_request(addr, port, IPPROTO_TCP, sbuf, rbuf, rsize)
+#define process_udp_request(addr, port, sbuf, rbuf, rsize) \
+	process_request(addr, port, IPPROTO_UDP, sbuf, rbuf, rsize)
 int process_tcp_request2 (const char *address, int port,
-  const char *sbuffer, char *rbuffer, int rsize);
-int process_tcp_request (const char *address, int port,
-  const char *sbuffer, char *rbuffer, int rsize);
-int process_udp_request (const char *address, int port,
   const char *sbuffer, char *rbuffer, int rsize);
 int process_request (const char *address, int port, int proto,
   const char *sbuffer, char *rbuffer, int rsize);
 
-int my_tcp_connect (const char *address, int port, int *sd);
-int my_udp_connect (const char *address, int port, int *sd);
+/* my_connect and wrapper macros */
+#define my_tcp_connect(addr, port, s) my_connect(addr, port, s, IPPROTO_TCP)
+#define my_udp_connect(addr, port, s) my_connect(addr, port, s, IPPROTO_UDP)
+int my_connect(const char *address, int port, int *sd, int proto);
 
-int send_tcp_request (int sd, const char *send_buffer, char *recv_buffer, int recv_size);
-int send_udp_request (int sd, const char *send_buffer, char *recv_buffer, int recv_size);
+/* send_request and wrapper macros */
+#define send_tcp_request(s, sbuf, rbuf, rsize) \
+	send_request(s, IPPROTO_TCP, sbuf, rbuf, rsize)
+#define send_udp_request(s, sbuf, rbuf, rsize) \
+	send_request(s, IPPROTO_UDP, sbuf, rbuf, rsize)
 int send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int recv_size);
 
+
+/* "is_*" wrapper macros and functions */
 int is_host (const char *);
 int is_addr (const char *);
 int resolve_host_or_addr (const char *, int);
-int is_inet_addr (const char *);
+#define is_inet_addr(addr) resolve_host_or_addr(addr, AF_INET)
 #ifdef USE_IPV6
-int is_inet6_addr (const char *);
+#  define is_inet6_addr(addr) resolve_host_or_addr(addr, AF_INET6)
+#  define is_hostname(addr) resolve_host_or_addr(addr, address_family)
+#else
+#  define is_hostname(addr) resolve_host_or_addr(addr, AF_INET)
 #endif
-int is_hostname (const char *);
 
 extern unsigned int socket_timeout;
 extern int econn_refuse_state;

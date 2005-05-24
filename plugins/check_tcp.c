@@ -57,11 +57,7 @@ int connect_SSL (void);
 int check_certificate (X509 **);
 #endif
 
-enum {
-	TCP_PROTOCOL = 1,
-	UDP_PROTOCOL = 2,
-	MAXBUF = 1024
-};
+#define MAXBUF 1024
 
 int process_arguments (int, char **);
 int my_recv (void);
@@ -120,7 +116,7 @@ main (int argc, char **argv)
 		SEND = NULL;
 		EXPECT = NULL;
 		QUIT = NULL;
-		PROTOCOL = UDP_PROTOCOL;
+		PROTOCOL = IPPROTO_UDP;
 		PORT = 0;
 	}
 	else if (strstr (argv[0], "check_tcp")) {
@@ -129,7 +125,7 @@ main (int argc, char **argv)
 		SEND = NULL;
 		EXPECT = NULL;
 		QUIT = NULL;
-		PROTOCOL = TCP_PROTOCOL;
+		PROTOCOL = IPPROTO_TCP;
 		PORT = 0;
 	}
 	else if (strstr (argv[0], "check_ftp")) {
@@ -138,7 +134,7 @@ main (int argc, char **argv)
 		SEND = NULL;
 		EXPECT = strdup ("220");
 		QUIT = strdup ("QUIT\r\n");
-		PROTOCOL = TCP_PROTOCOL;
+		PROTOCOL = IPPROTO_TCP;
 		PORT = 21;
 	}
 	else if (strstr (argv[0], "check_smtp")) {
@@ -147,7 +143,7 @@ main (int argc, char **argv)
 		SEND = NULL;
 		EXPECT = strdup ("220");
 		QUIT = strdup ("QUIT\r\n");
-		PROTOCOL = TCP_PROTOCOL;
+		PROTOCOL = IPPROTO_TCP;
 		PORT = 25;
 	}
 	else if (strstr (argv[0], "check_pop")) {
@@ -156,7 +152,7 @@ main (int argc, char **argv)
 		SEND = NULL;
 		EXPECT = strdup ("+OK");
 		QUIT = strdup ("QUIT\r\n");
-		PROTOCOL = TCP_PROTOCOL;
+		PROTOCOL = IPPROTO_TCP;
 		PORT = 110;
 	}
 	else if (strstr (argv[0], "check_imap")) {
@@ -165,7 +161,7 @@ main (int argc, char **argv)
 		SEND = NULL;
 		EXPECT = strdup ("* OK");
 		QUIT = strdup ("a1 LOGOUT\r\n");
-		PROTOCOL = TCP_PROTOCOL;
+		PROTOCOL = IPPROTO_TCP;
 		PORT = 143;
 	}
 #ifdef HAVE_SSL
@@ -175,7 +171,7 @@ main (int argc, char **argv)
 		SEND=NULL;
 		EXPECT = strdup ("* OK");
 		QUIT = strdup ("a1 LOGOUT\r\n");
-		PROTOCOL=TCP_PROTOCOL;
+		PROTOCOL=IPPROTO_TCP;
 		use_ssl=TRUE;
 		PORT=993;
 	}
@@ -185,7 +181,7 @@ main (int argc, char **argv)
 		SEND=NULL;
 		EXPECT = strdup ("+OK");
 		QUIT = strdup ("QUIT\r\n");
-		PROTOCOL=TCP_PROTOCOL;
+		PROTOCOL=IPPROTO_TCP;
 		use_ssl=TRUE;
 		PORT=995;
 	}
@@ -195,7 +191,7 @@ main (int argc, char **argv)
 		SEND=NULL;
 		EXPECT = strdup ("220");
 		QUIT = strdup ("QUIT\r\n");
-		PROTOCOL=TCP_PROTOCOL;
+		PROTOCOL=IPPROTO_TCP;
 		use_ssl=TRUE;
 		PORT=465;
 	}
@@ -205,7 +201,7 @@ main (int argc, char **argv)
 		SEND = strdup("<stream:stream to=\'host\' xmlns=\'jabber:client\' xmlns:stream=\'http://etherx.jabber.org/streams\'>\n");
 		EXPECT = strdup("<?xml version=\'1.0\'?><stream:stream xmlns:stream=\'http://etherx.jabber.org/streams\'");
 		QUIT = strdup("</stream:stream>\n");
-		PROTOCOL=TCP_PROTOCOL;
+		PROTOCOL=IPPROTO_TCP;
 		use_ssl=TRUE;
 		PORT = 5222;
 	}
@@ -219,7 +215,7 @@ main (int argc, char **argv)
 		server_expect = realloc (server_expect, ++server_expect_count);
 		asprintf (&server_expect[server_expect_count - 1], "201");
 		QUIT = strdup("QUIT\r\n");
-		PROTOCOL = TCP_PROTOCOL;
+		PROTOCOL = IPPROTO_TCP;
 		use_ssl=TRUE;
 		PORT = 563;
 }
@@ -235,7 +231,7 @@ main (int argc, char **argv)
 		server_expect = realloc (server_expect, sizeof (char *) * (++server_expect_count));
 		asprintf (&server_expect[server_expect_count - 1], "201");
 		asprintf (&QUIT, "QUIT\r\n");
-		PROTOCOL = TCP_PROTOCOL;
+		PROTOCOL = IPPROTO_TCP;
 		PORT = 119;
 	}
 	else {
@@ -288,13 +284,7 @@ main (int argc, char **argv)
 		result = connect_SSL ();
 	else
 #endif
-		{
-			if (PROTOCOL == UDP_PROTOCOL)
-				result = my_udp_connect (server_address, server_port, &sd);
-			else
-				/* default is TCP */
-				result = my_tcp_connect (server_address, server_port, &sd);
-		}
+		result = my_connect (server_address, server_port, &sd, PROTOCOL);
 
 	if (result == STATE_CRITICAL)
 		return STATE_CRITICAL;

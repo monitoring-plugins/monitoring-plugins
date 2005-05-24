@@ -39,7 +39,6 @@ int econn_refuse_state = STATE_CRITICAL;
 int was_refused = FALSE;
 int address_family = AF_UNSPEC;
 
-static int my_connect(const char *address, int port, int *sd, int proto);
 /* handles socket timeouts */
 void
 socket_timeout_alarm_handler (int sig)
@@ -51,37 +50,6 @@ socket_timeout_alarm_handler (int sig)
 
 	exit (STATE_CRITICAL);
 }
-
-
-/* connects to a host on a specified TCP port, sends a string,
-   and gets a response */
-int
-process_tcp_request (const char *server_address, int server_port,
-	const char *send_buffer, char *recv_buffer, int recv_size)
-{
-	int result;
-
-	result = process_request (server_address, server_port,
-			IPPROTO_TCP, send_buffer, recv_buffer, recv_size);
-
-	return result;
-}
-
-
-/* connects to a host on a specified UDP port, sends a string, and gets a
-    response */
-int
-process_udp_request (const char *server_address, int server_port,
-	const char *send_buffer, char *recv_buffer, int recv_size)
-{
-	int result;
-
-	result = process_request (server_address, server_port,
-			IPPROTO_UDP, send_buffer, recv_buffer, recv_size);
-
-	return result;
-}
-
 
 
 /* connects to a host on a specified tcp port, sends a string, and gets a 
@@ -163,6 +131,7 @@ process_tcp_request2 (const char *server_address, int server_port,
 	return result;
 }
 
+
 /* connects to a host on a specified port, sends a string, and gets a 
    response */
 int
@@ -186,32 +155,8 @@ process_request (const char *server_address, int server_port, int proto,
 }
 
 
-/* opens a connection to a remote host/tcp port */
-int
-my_tcp_connect (const char *host_name, int port, int *sd)
-{
-	int result;
-
-	result = my_connect (host_name, port, sd, IPPROTO_TCP);
-
-	return result;
-}
-
-
-/* opens a connection to a remote host/udp port */
-int
-my_udp_connect (const char *host_name, int port, int *sd)
-{
-	int result;
-
-	result = my_connect (host_name, port, sd, IPPROTO_UDP);
-
-	return result;
-}
-
-
 /* opens a tcp or udp connection to a remote host */
-static int
+int
 my_connect (const char *host_name, int port, int *sd, int proto)
 {
 	struct addrinfo hints;
@@ -287,20 +232,6 @@ my_connect (const char *host_name, int port, int *sd, int proto)
 		printf ("%s\n", strerror(errno));
 		return STATE_CRITICAL;
 	}
-}
-
-
-int
-send_tcp_request (int sd, const char *send_buffer, char *recv_buffer, int recv_size)
-{
-	return send_request (sd, IPPROTO_TCP, send_buffer, recv_buffer, recv_size);
-}
-
-
-int
-send_udp_request (int sd, const char *send_buffer, char *recv_buffer, int recv_size)
-{
-	return send_request (sd, IPPROTO_UDP, send_buffer, recv_buffer, recv_size);
 }
 
 
@@ -397,28 +328,3 @@ resolve_host_or_addr (const char *address, int family)
 		return TRUE;
 	}
 }
-
-int
-is_inet_addr (const char *address)
-{
-	return resolve_host_or_addr (address, AF_INET);
-}
-
-#ifdef USE_IPV6
-int
-is_inet6_addr (const char *address)
-{
-	return resolve_host_or_addr (address, AF_INET6);
-}
-#endif
-
-int
-is_hostname (const char *s1)
-{
-#ifdef USE_IPV6
-	return resolve_host_or_addr (s1, address_family);
-#else
-	return resolve_host_or_addr (s1, AF_INET);
-#endif
-}
-
