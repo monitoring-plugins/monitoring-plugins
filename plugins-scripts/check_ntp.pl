@@ -204,7 +204,7 @@ if (!open (NTPDATE, $ntpdate . " -q $host 2>&1 |")) {
 }
 
 while (<NTPDATE>) {
-	print if ($verbose);
+	#print if ($verbose);  # noop
 	$msg = $_ unless ($msg);
 	
 	if (/stratum\s(\d+)/) {
@@ -313,7 +313,7 @@ if ($have_ntpq) {
 		# generate a warning 
 		# based on bug id 773588
 		unless (defined $syspeer) {
-			if ($#candidates >0) {
+			if ($#candidates >=0) {
 				foreach my $c (@candidates) {
 					$c =~ /^(#)([-0-9.\s]+)\s+([-0-9A-Za-z.]+)\s+([-0-9.]+)\s+([lumb-]+)\s+([-0-9m.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)/;
 					$syspeer = $2;
