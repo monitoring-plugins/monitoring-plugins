@@ -49,6 +49,7 @@ main (int argc, char **argv)
 	char *temp_ptr;
 	FILE *fp;
 	int procuid = 0;
+	int procpid = 0;
 	int procppid = 0;
 	int procvsz = 0;
 	int procrss = 0;

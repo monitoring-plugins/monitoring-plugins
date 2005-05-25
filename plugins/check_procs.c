@@ -85,7 +85,9 @@ main (int argc, char **argv)
 	char *input_line;
 	char *procprog;
 
+	pid_t mypid = 0;
 	int procuid = 0;
+	int procpid = 0;
 	int procppid = 0;
 	int procvsz = 0;
 	int procrss = 0;
@@ -106,11 +108,12 @@ main (int argc, char **argv)
 	int expected_cols = PS_COLS - 1;
 	int warn = 0; /* number of processes in warn state */
 	int crit = 0; /* number of processes in crit state */
+	procetime[0]='\0'; /* keep this clean because -vvv always prints it */
 	int i = 0;
 
 	int result = STATE_UNKNOWN;
 
-	setlocale (LC_ALL, "");
+	//setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
@@ -122,6 +125,9 @@ main (int argc, char **argv)
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
+
+	/* get our pid */
+	mypid = getpid();
 
 	/* Set signal handling and alarm timeout */
 	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
@@ -182,15 +188,13 @@ main (int argc, char **argv)
 			procseconds = convert_to_seconds(procetime);
 
 			if (verbose >= 3)
-				printf ("%d %d %d %d %d %.2f %s %s %s %s\n", 
+				printf ("%d %d %d %d %d %d %.2f %s %s %s %s\n", 
 					procs, procuid, procvsz, procrss,
-					procppid, procpcpu, procstat, 
+					procpid, procppid, procpcpu, procstat, 
 					procetime, procprog, procargs);
 
 			/* Ignore self */
-			if (strcmp (procprog, progname) == 0) {
-				continue;
-			}
+			if (mypid == procpid) continue;
 
 			if ((options & STAT) && (strstr (statopts, procstat)))
 				resultsum |= STAT;
@@ -639,9 +643,6 @@ convert_to_seconds(char *etime) {
 		(minutes * 60) +
 		seconds;
 
-	if (verbose >= 3) {
-		printf("seconds: %d\n", total);
-	}
 	return total;
 }
 
