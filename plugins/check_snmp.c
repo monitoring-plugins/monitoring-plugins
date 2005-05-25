@@ -109,6 +109,7 @@ size_t labels_size = 8;
 size_t nunits = 0;
 size_t unitv_size = 8;
 int verbose = FALSE;
+int usesnmpgetnext = FALSE;
 unsigned long lower_warn_lim[MAX_OIDS];
 unsigned long upper_warn_lim[MAX_OIDS];
 unsigned long lower_crit_lim[MAX_OIDS];
@@ -165,11 +166,20 @@ main (int argc, char **argv)
 		usage4 (_("Could not parse arguments"));
 
 	/* create the command line to execute */
-	asprintf (&command_line, "%s -t %d -r %d -m %s -v %s %s %s:%s %s",
+		if(usesnmpgetnext == TRUE) {
+		asprintf(&command_line, "%s -t %d -r %d -m %s -v %s %s %s:%s %s",
+				    PATH_TO_SNMPGETNEXT, timeout_interval, retries, miblist, proto,
+						authpriv, server_address, port, oid);
+	}else{
+
+		asprintf (&command_line, "%s -t %d -r %d -m %s -v %s %s %s:%s %s",
 	          PATH_TO_SNMPGET, timeout_interval, retries, miblist, proto,
 	          authpriv, server_address, port, oid);
+	}
+	
 	if (verbose)
 		printf ("%s\n", command_line);
+	
 
 	/* run the command */
 	child_process = spopen (command_line);
@@ -391,6 +401,7 @@ process_arguments (int argc, char **argv)
 		{"authproto", required_argument, 0, 'a'},
 		{"authpasswd", required_argument, 0, 'A'},
 		{"privpasswd", required_argument, 0, 'X'},
+		{"next", no_argument, 0, 'n'},
 		{0, 0, 0, 0}
 	};
 
@@ -408,7 +419,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "hvVt:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:L:U:a:A:X:",
+		c = getopt_long (argc, argv, "nhvVt:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:L:U:a:A:X:",
 									 longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -439,6 +450,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'm':      /* List of MIBS  */
 			miblist = optarg;
+			break;
+		case 'n':     /* usesnmpgetnext */
+			usesnmpgetnext = TRUE;
 			break;
 		case 'P':     /* SNMP protocol version */
 			proto = optarg;
@@ -875,6 +889,8 @@ Check status of remote machines and obtain sustem information via SNMP\n\n"));
 
 	/* SNMP and Authentication Protocol */
 	printf (_("\
+ -n, --next\n\
+    Use SNMP GETNEXT instead of SNMP GET\n\
  -P, --protocol=[1|2c|3]\n\
     SNMP protocol version\n\
  -L, --seclevel=[noAuthNoPriv|authNoPriv|authPriv]\n\
