@@ -289,7 +289,7 @@ if ($have_ntpq) {
 			if (/^(\*|\+|\#|o])/) {
 				++$candidate;
 				push (@candidates, $_);
-				print "Candiate count= $candidate\n" if ($verbose);
+				print "Candidate count= $candidate\n" if ($verbose);
 			}
 			
 			# match sys.peer or pps.peer
@@ -302,11 +302,14 @@ if ($have_ntpq) {
 					print "Jitter_crit = $11 :$jcrit\n" if ($verbose);
 					$jitter_error = $ERRORS{'CRITICAL'};
 				} elsif ($jitter > $jwarn ) {
-					print "Jitter_warn = $11 :$jwarn \n" if ($verbose);
+					print "Jitter_warn = $11 :$jwarn\n" if ($verbose);
 					$jitter_error = $ERRORS{'WARNING'};
 				} else {
 					$jitter_error = $ERRORS{'OK'};
 				}
+			} else {
+				print "No match!\n" if $verbose;
+				$jitter = '(not parsed)';
 			}
 			
 		}
@@ -343,53 +346,53 @@ if ($have_ntpq) {
 if ($ntpdate_error != $ERRORS{'OK'}) {
 	$state = $ntpdate_error;
 	if ($ntpdate_error == $ERRORS{'WARNING'} ) {
-		$answer = $msg . "\n";
+		$answer = $msg;
 	}
 	else {
-		$answer = $msg . "Server for ntp probably down\n";
+		$answer = $msg . "Server for ntp probably down";
 	}
 
 	if (defined($offset) && abs($offset) > $ocrit) {
 		$state = $ERRORS{'CRITICAL'};
-		$answer = "Server Error and offset $offset sec > +/- $ocrit sec\n";
+		$answer = "Server Error and offset $offset sec > +/- $ocrit sec";
 	} elsif (defined($offset) && abs($offset) > $owarn) {
-		$answer = "Server error and offset $offset sec > +/- $owarn sec\n";
+		$answer = "Server error and offset $offset sec > +/- $owarn sec";
 	} elsif (defined($jitter) && abs($jitter) > $jcrit) {
-		$answer = "Server error and jitter $jitter msec > +/- $jcrit msec\n";
+		$answer = "Server error and jitter $jitter msec > +/- $jcrit msec";
 	} elsif (defined($jitter) && abs($jitter) > $jwarn) {
-		$answer = "Server error and jitter $jitter msec > +/- $jwarn msec\n";
+		$answer = "Server error and jitter $jitter msec > +/- $jwarn msec";
 	}
 
 } elsif ($have_ntpq && $jitter_error != $ERRORS{'OK'}) {
 	$state = $jitter_error;
-	$answer = "Jitter $jitter too high\n";
+	$answer = "Jitter $jitter too high";
 	if (defined($offset) && abs($offset) > $ocrit) {
 		$state = $ERRORS{'CRITICAL'};
-		$answer = "Jitter error and offset $offset sec > +/- $ocrit sec\n";
+		$answer = "Jitter error and offset $offset sec > +/- $ocrit sec";
 	} elsif (defined($offset) && abs($offset) > $owarn) {
-		$answer = "Jitter error and offset $offset sec > +/- $owarn sec\n";
+		$answer = "Jitter error and offset $offset sec > +/- $owarn sec";
 	} elsif (defined($jitter) && abs($jitter) > $jcrit) {
-		$answer = "Jitter error and jitter $jitter msec > +/- $jcrit msec\n";
+		$answer = "Jitter error and jitter $jitter msec > +/- $jcrit msec";
 	} elsif (defined($jitter) && abs($jitter) > $jwarn) {
-		$answer = "Jitter error and jitter $jitter msec > +/- $jwarn msec\n";
+		$answer = "Jitter error and jitter $jitter msec > +/- $jwarn msec";
 	}
 
 } elsif( !$have_ntpq ) { # no errors from ntpdate and no ntpq or ntpq timed out
 	if (abs($offset) > $ocrit) {
 		$state = $ERRORS{'CRITICAL'};
-		$answer = "Offset $offset sec > +/- $ocrit sec\n";
+		$answer = "Offset $offset sec > +/- $ocrit sec";
 	} elsif (abs($offset) > $owarn) {
 		$state = $ERRORS{'WARNING'};
-		$answer = "Offset $offset sec > +/- $owarn sec\n";
+		$answer = "Offset $offset sec > +/- $owarn sec";
 	} elsif (( abs($offset) > $owarn) && $def_jitter ) {
 		$state = $ERRORS{'WARNING'};
-		$answer = "Offset $offset sec > +/- $owarn sec, ntpq timed out\n";
+		$answer = "Offset $offset sec > +/- $owarn sec, ntpq timed out";
 	} elsif ( $def_jitter ) {
 		$state = $ERRORS{'WARNING'};
-		$answer = "Offset $offset secs, ntpq timed out\n";
+		$answer = "Offset $offset secs, ntpq timed out";
 	} else{
 		$state = $ERRORS{'OK'};
-		$answer = "Offset $offset secs \n";
+		$answer = "Offset $offset secs";
 	}
 
 
@@ -397,27 +400,28 @@ if ($ntpdate_error != $ERRORS{'OK'}) {
 } else { # no errors from ntpdate or ntpq
 	if (abs($offset) > $ocrit) {
 		$state = $ERRORS{'CRITICAL'};
-		$answer = "Offset $offset sec > +/- $ocrit sec, jitter $jitter msec\n";
+		$answer = "Offset $offset sec > +/- $ocrit sec, jitter $jitter msec";
 	} elsif (abs($jitter) > $jcrit ) {
 		$state = $ERRORS{'CRITICAL'};
-		$answer = "Jitter $jitter msec> +/- $jcrit msec, offset $offset sec \n";
+		$answer = "Jitter $jitter msec> +/- $jcrit msec, offset $offset sec";
 	} elsif (abs($offset) > $owarn) {
 		$state = $ERRORS{'WARNING'};
-		$answer = "Offset $offset sec > +/- $owarn sec, jitter $jitter msec\n";
+		$answer = "Offset $offset sec > +/- $owarn sec, jitter $jitter msec";
 	} elsif (abs($jitter) > $jwarn ) {
 		$state = $ERRORS{'WARNING'};
-		$answer = "Jitter $jitter msec> +/- $jwarn msec, offset $offset sec \n";
+		$answer = "Jitter $jitter msec> +/- $jwarn msec, offset $offset sec";
 
 	} else {
 		$state = $ERRORS{'OK'};
-		$answer = "Offset $offset secs, jitter $jitter msec, peer is stratum $stratum\n";
+		$answer = "Offset $offset secs, jitter $jitter msec, peer is stratum $stratum";
 	}
 	
 }
 
 foreach my $key (keys %ERRORS) {
 	if ($state==$ERRORS{$key}) {
-		print ("NTP $key: $answer");
+#		print ("NTP $key: $answer");
+		print ("NTP $key: $answer|offset=$offset, jitter=" . $jitter/1000 .	",peer_stratum=$stratum\n");
 		last;
 	}
 }
