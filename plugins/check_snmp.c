@@ -659,6 +659,9 @@ validate_arguments ()
 		asprintf(&proto, DEFAULT_PROTOCOL);
 		asprintf(&authpriv, "%s%s", "-c ", community);
 	}
+	else if ( strcmp (proto, "2c") == 0 ) {                 /* snmpv2c args */
+		asprintf(&authpriv, "%s%s", "-c ", community);
+	}
 	else if ( strcmp (proto, "3") == 0 ) {                 /* snmpv3 args */
 		asprintf(&proto, "%s", "3");
 		
@@ -872,7 +875,7 @@ Check status of remote machines and obtain sustem information via SNMP\n\n"));
 
 	/* SNMP and Authentication Protocol */
 	printf (_("\
- -P, --protocol=[1|3]\n\
+ -P, --protocol=[1|2c|3]\n\
     SNMP protocol version\n\
  -L, --seclevel=[noAuthNoPriv|authNoPriv|authPriv]\n\
     SNMPv3 securityLevel\n\
