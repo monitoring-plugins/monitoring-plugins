@@ -49,9 +49,9 @@ int process_request (const char *address, int port, int proto,
   const char *sbuffer, char *rbuffer, int rsize);
 
 /* my_connect and wrapper macros */
-#define my_tcp_connect(addr, port, s) my_connect(addr, port, s, IPPROTO_TCP)
-#define my_udp_connect(addr, port, s) my_connect(addr, port, s, IPPROTO_UDP)
-int my_connect(const char *address, int port, int *sd, int proto);
+#define my_tcp_connect(addr, port, s) np_net_connect(addr, port, s, IPPROTO_TCP)
+#define my_udp_connect(addr, port, s) np_net_connect(addr, port, s, IPPROTO_UDP)
+int np_net_connect(const char *address, int port, int *sd, int proto);
 
 /* send_request and wrapper macros */
 #define send_tcp_request(s, sbuf, rbuf, rsize) \

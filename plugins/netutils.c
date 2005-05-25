@@ -68,7 +68,7 @@ process_tcp_request2 (const char *server_address, int server_port,
 	fd_set readfds;
 	int recv_length = 0;
 
-	result = my_connect (server_address, server_port, &sd, IPPROTO_TCP);
+	result = np_net_connect (server_address, server_port, &sd, IPPROTO_TCP);
 	if (result != STATE_OK)
 		return STATE_CRITICAL;
 
@@ -143,7 +143,7 @@ process_request (const char *server_address, int server_port, int proto,
 
 	result = STATE_OK;
 
-	result = my_connect (server_address, server_port, &sd, proto);
+	result = np_net_connect (server_address, server_port, &sd, proto);
 	if (result != STATE_OK)
 		return STATE_CRITICAL;
 
@@ -157,7 +157,7 @@ process_request (const char *server_address, int server_port, int proto,
 
 /* opens a tcp or udp connection to a remote host */
 int
-my_connect (const char *host_name, int port, int *sd, int proto)
+np_net_connect (const char *host_name, int port, int *sd, int proto)
 {
 	struct addrinfo hints;
 	struct addrinfo *res, *res0;

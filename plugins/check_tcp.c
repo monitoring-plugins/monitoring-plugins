@@ -284,7 +284,7 @@ main (int argc, char **argv)
 		result = connect_SSL ();
 	else
 #endif
-		result = my_connect (server_address, server_port, &sd, PROTOCOL);
+		result = np_net_connect (server_address, server_port, &sd, PROTOCOL);
 
 	if (result == STATE_CRITICAL)
 		return STATE_CRITICAL;
