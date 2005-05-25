@@ -61,7 +61,7 @@ require 5.004;
 use POSIX;
 use strict;
 use Getopt::Long;
-use vars qw($opt_V $opt_h $opt_H $opt_t $opt_w $opt_c $opt_j $opt_k $verbose $PROGNAME $def_jitter $ipv4 $ipv6);
+use vars qw($opt_V $opt_h $opt_H $opt_t $opt_w $opt_c $opt_O $opt_j $opt_k $verbose $PROGNAME $def_jitter $ipv4 $ipv6);
 use lib utils.pm;
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 
@@ -90,6 +90,7 @@ GetOptions
 	 "6"   => \$ipv6, "use-ipv6"	=> \$ipv6,
 	 "w=f" => \$opt_w, "warning=f"  => \$opt_w,   # offset|adjust warning if above this number
 	 "c=f" => \$opt_c, "critical=f" => \$opt_c,   # offset|adjust critical if above this number
+	 "O"   => \$opt_O, "zero-offset" => \$opt_O,  # zero-offset  bad
 	 "j=s" => \$opt_j, "jwarn=i"    => \$opt_j,   # jitter warning if above this number
 	 "k=s" => \$opt_k, "jcrit=i"    => \$opt_k,   # jitter critical if above this number
 	 "t=s" => \$opt_t, "timeout=i"  => \$opt_t,
@@ -218,7 +219,9 @@ while (<NTPDATE>) {
 		# it's probably always bogus, but let's be paranoid here.
 		# Has been reported that 0.0000 happens in a production environment
 		# on Solaris 8 so this check should be taken out - SF tracker 1150777
-		#if ($offset == 0) { undef $offset;}
+		if (defined $opt_O ) {
+			if ($offset == 0) { undef $offset;}
+		}
 
 		$ntpdate_error = defined ($offset) ? $ERRORS{"OK"} : $ERRORS{"CRITICAL"};
 		print "ntperr = $ntpdate_error \n" if $verbose;
@@ -425,7 +428,7 @@ exit $state;
 #### subs
 
 sub print_usage () {
-	print "Usage: $PROGNAME -H <host> [-46] [-w <warn>] [-c <crit>] [-j <warn>] [-k <crit>] [-v verbose]\n";
+	print "Usage: $PROGNAME -H <host> [-46] [-O] [-w <warn>] [-c <crit>] [-j <warn>] [-k <crit>] [-v verbose]\n";
 }
 
 sub print_help () {
@@ -436,7 +439,9 @@ sub print_help () {
 	print "
 Checks the local timestamp offset versus <host> with ntpdate
 Checks the jitter/dispersion of clock signal between <host> and its sys.peer with ntpq\n
--w ( --warning)
+-O (--zero-offset)
+     A zero offset on \"ntpdate\" will generate a CRITICAL.\n
+-w (--warning)
      Clock offset in seconds at which a warning message will be generated.\n	Defaults to $DEFAULT_OFFSET_WARN.
 -c (--critical) 
      Clock offset in seconds at which a critical message will be generated.\n	Defaults to $DEFAULT_OFFSET_CRIT.
