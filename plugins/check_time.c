@@ -33,7 +33,7 @@ enum {
 
 #define	UNIX_EPOCH 2208988800UL
 
-unsigned long server_time, raw_server_time;
+uint32_t server_time, raw_server_time;
 time_t diff_time;
 int warning_time = 0;
 int check_warning_time = FALSE;
