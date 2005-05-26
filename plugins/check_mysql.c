@@ -123,18 +123,35 @@ main (int argc, char **argv)
 				die (STATE_CRITICAL, "%s\n", slaveresult);
 			}
 
-		} else if (mysql_field_count (&mysql) == 33) {
-			/* mysql >= 4.1.1 */
-			snprintf (slaveresult, SLAVERESULTSIZE, "Slave IO: %s Slave SQL: %s", row[10], row[11]);
-			if (strcmp (row[10], "Yes") != 0 || strcmp (row[11], "Yes") != 0) {
+		} else {
+			/* mysql 4.x.x */
+			int slave_io_field = -1 , slave_sql_field = -1, i, num_fields;
+			MYSQL_FIELD* fields;
+
+			num_fields = mysql_num_fields(res);
+			fields = mysql_fetch_fields(res);
+			for(i = 0; i < num_fields; i++)
+			{
+				if (0 == strcmp(fields[i].name, "Slave_IO_Running"))
+				{
+					slave_io_field = i;
+					continue;
+				}
+				if (0 == strcmp(fields[i].name, "Slave_SQL_Running"))
+				{
+					slave_sql_field = i;
+					continue;
+				}
+			}
+			if ((slave_io_field < 0) || (slave_sql_field < 0) || (num_fields == 0))
+			{
 				mysql_free_result (res);
 				mysql_close (&mysql);
-				die (STATE_CRITICAL, "%s\n", slaveresult);
+				die (STATE_CRITICAL, "Slave status unavailable\n");
 			}
-		} else {
-			/* mysql 4.0.x or 4.1.0 */
-			snprintf (slaveresult, SLAVERESULTSIZE, "Slave IO: %s Slave SQL: %s", row[9], row[10]);
-			if (strcmp (row[9], "Yes") != 0 || strcmp (row[10], "Yes") != 0) {
+			 
+			snprintf (slaveresult, SLAVERESULTSIZE, "Slave IO: %s Slave SQL: %s", row[slave_io_field], row[slave_sql_field]);
+			if (strcmp (row[slave_io_field], "Yes") != 0 || strcmp (row[slave_sql_field], "Yes") != 0) {
 				mysql_free_result (res);
 				mysql_close (&mysql);
 				die (STATE_CRITICAL, "%s\n", slaveresult);
