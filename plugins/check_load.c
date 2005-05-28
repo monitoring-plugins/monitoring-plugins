@@ -39,36 +39,63 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #endif /* !defined LOADAVG_1MIN */
 
 
-int process_arguments (int argc, char **argv);
-int validate_arguments (void);
+static int process_arguments (int argc, char **argv);
+static int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
 
-float wload1 = -1, wload5 = -1, wload15 = -1;
-float cload1 = -1, cload5 = -1, cload15 = -1;
+/* strictly for pretty-print usage in loops */
+static const int nums[3] = { 1, 5, 15 };
+
+/* provide some fairly sane defaults */
+double wload[3] = { 0.0, 0.0, 0.0 };
+double cload[3] = { 0.0, 0.0, 0.0 };
+#define la1 la[0]
+#define la5 la[1]
+#define la15 la[2]
 
 char *status_line;
 
+static void
+get_threshold(char *arg, double *th)
+{
+	size_t i, n;
+	char *str = arg, *p;
+
+	n = strlen(arg);
+	for(i = 0; i < 3; i++) {
+		th[i] = strtod(str, &p);
+		if(p == str) break;
+
+		str = p + 1;
+		if(n <= (size_t)(str - arg)) break;
+	}
+
+	/* empty argument or non-floatish, so warn about it and die */
+	if(!i) usage (_("Warning threshold must be float or float triplet!\n"));
+
+	if(i != 2) {
+		/* one or more numbers were given, so fill array with last
+		 * we got (most likely to NOT produce the least expected result) */
+		for(n = i; n < 3; n++) th[n] = th[i];
+	}
+}
 
 
 int
 main (int argc, char **argv)
 {
-	int result = STATE_UNKNOWN;
-	
-#if HAVE_GETLOADAVG==1
+	int result;
+	int i;
+
 	double la[3] = { 0.0, 0.0, 0.0 };	/* NetBSD complains about unitialized arrays */
-#else
-# if HAVE_PROC_LOADAVG==1
+#ifndef HAVE_GETLOADAVG
+	char input_buffer[MAX_INPUT_BUFFER];
+# ifdef HAVE_PROC_LOADAVG
 	FILE *fp;
-	char input_buffer[MAX_INPUT_BUFFER];
-	char *tmp_ptr;
-# else
-	char input_buffer[MAX_INPUT_BUFFER];
+	char *str, *next;
 # endif
 #endif
-
-	float la1, la5, la15;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -77,30 +104,24 @@ main (int argc, char **argv)
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
-#if HAVE_GETLOADAVG==1
+#ifdef HAVE_GETLOADAVG
 	result = getloadavg (la, 3);
-	if (result == -1)
+	if (result != 3)
 		return STATE_UNKNOWN;
-	la1 = la[LOADAVG_1MIN];
-	la5 = la[LOADAVG_5MIN];
-	la15 = la[LOADAVG_15MIN];
 #else
-# if HAVE_PROC_LOADAVG==1
+# ifdef HAVE_PROC_LOADAVG
 	fp = fopen (PROC_LOADAVG, "r");
 	if (fp == NULL) {
 		printf (_("Error opening %s\n"), PROC_LOADAVG);
 		return STATE_UNKNOWN;
 	}
 
-	la1 = la5 = la15 = -1;
-
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, fp)) {
-		tmp_ptr = strtok (input_buffer, " ");
-		la1 = atof (tmp_ptr);
-		tmp_ptr = strtok (NULL, " ");
-		la5 = atof (tmp_ptr);
-		tmp_ptr = strtok (NULL, " ");
-		la15 = atof (tmp_ptr);
+		str = (char *)input_buffer;
+		for(i = 0; i < 3; i++) {
+			la[i] = strtod(str, &next);
+			str = next;
+		}
 	}
 
 	fclose (fp);
@@ -125,12 +146,11 @@ main (int argc, char **argv)
 # endif
 #endif
 
-
-	if ((la1 < 0.0) || (la5 < 0.0) || (la15 < 0.0)) {
-#if HAVE_GETLOADAVG==1
+	if ((la[0] < 0.0) || (la[1] < 0.0) || (la[2] < 0.0)) {
+#ifdef HAVE_GETLOADAVG
 		printf (_("Error in getloadavg()\n"));
 #else
-# if HAVE_PROC_LOADAVG==1
+# ifdef HAVE_PROC_LOADAVG
 		printf (_("Error processing %s\n"), PROC_LOADAVG);
 # else
 		printf (_("Error processing %s\n"), PATH_TO_UPTIME);
@@ -139,29 +159,30 @@ main (int argc, char **argv)
 		return STATE_UNKNOWN;
 	}
 
+	/* we got this far, so assume OK until we've measured */
+	result = STATE_OK;
+
 	asprintf(&status_line, _("load average: %.2f, %.2f, %.2f"), la1, la5, la15);
 
-	if ((la1 >= cload1) || (la5 >= cload5) || (la15 >= cload15))
-		result = STATE_CRITICAL;
-	else if ((la1 >= wload1) || (la5 >= wload5) || (la15 >= wload15))
-		result = STATE_WARNING;
-	else
-		result = STATE_OK;
+	for(i = 0; i < 3; i++) {
+		if(la[i] > cload[i]) {
+			result = STATE_CRITICAL;
+			break;
+		}
+		else if(la[i] > wload[i]) result = STATE_WARNING;
+	}
 
-	die (result,
-	     "%s - %s|%s %s %s\n",
-	     state_text (result),
-	     status_line,
-	     fperfdata ("load1", la1, "", (int)wload1, wload1, (int)cload1, cload1, TRUE, 0, FALSE, 0),
-	     fperfdata ("load5", la5, "", (int)wload5, wload5, (int)cload5, cload5, TRUE, 0, FALSE, 0),
-	     fperfdata ("load15", la15, "", (int)wload15, wload15, (int)cload15, cload15, TRUE, 0, FALSE, 0));
-	return STATE_OK;
+	printf("%s - %s|", state_text(result), status_line);
+	for(i = 0; i < 3; i++)
+		printf("load%d=%.3f;%.3f;%.3f;0; ", nums[i], la[i], wload[i], cload[i]);
+
+	putchar('\n');
+	return result;
 }
 
 
-
 /* process command-line arguments */
-int
+static int
 process_arguments (int argc, char **argv)
 {
 	int c = 0;
@@ -185,37 +206,11 @@ process_arguments (int argc, char **argv)
 			break;
 
 		switch (c) {
-		case 'w':									/* warning time threshold */
-			if (is_intnonneg (optarg)) {
-				wload1 = atof (optarg);
-				wload5 = atof (optarg);
-				wload15 = atof (optarg);
-				break;
-			}
-			else if (strstr (optarg, ",") &&
-								 sscanf (optarg, "%f,%f,%f", &wload1, &wload5, &wload15) == 3)
-				break;
-			else if (strstr (optarg, ":") &&
-							 sscanf (optarg, "%f:%f:%f", &wload1, &wload5, &wload15) == 3)
-				break;
-			else
-				usage (_("Warning threshold must be float or float triplet!\n"));
+		case 'w': /* warning time threshold */
+			get_threshold(optarg, wload);
 			break;
-		case 'c':									/* critical time threshold */
-			if (is_intnonneg (optarg)) {
-				cload1 = atof (optarg);
-				cload5 = atof (optarg);
-				cload15 = atof (optarg);
-				break;
-			}
-			else if (strstr (optarg, ",") &&
-							 sscanf (optarg, "%f,%f,%f", &cload1, &cload5, &cload15) == 3)
-				break;
-			else if (strstr (optarg, ":") &&
-							 sscanf (optarg, "%f:%f:%f", &cload1, &cload5, &cload15) == 3)
-				break;
-			else
-				usage (_("Critical threshold must be float or float triplet!\n"));
+		case 'c': /* critical time threshold */
+			get_threshold(optarg, cload);
 			break;
 		case 'V':									/* version */
 			print_revision (progname, revision);
@@ -231,60 +226,38 @@ process_arguments (int argc, char **argv)
 	c = optind;
 	if (c == argc)
 		return validate_arguments ();
-	if (wload1 < 0 && is_nonnegative (argv[c]))
-		wload1 = atof (argv[c++]);
 
-	if (c == argc)
-		return validate_arguments ();
-	if (cload1 < 0 && is_nonnegative (argv[c]))
-		cload1 = atof (argv[c++]);
-
-	if (c == argc)
-		return validate_arguments ();
-	if (wload5 < 0 && is_nonnegative (argv[c]))
-		wload5 = atof (argv[c++]);
-
-	if (c == argc)
-		return validate_arguments ();
-	if (cload5 < 0 && is_nonnegative (argv[c]))
-		cload5 = atof (argv[c++]);
-
-	if (c == argc)
-		return validate_arguments ();
-	if (wload15 < 0 && is_nonnegative (argv[c]))
-		wload15 = atof (argv[c++]);
-
-	if (c == argc)
-		return validate_arguments ();
-	if (cload15 < 0 && is_nonnegative (argv[c]))
-		cload15 = atof (argv[c++]);
+	/* handle the case if both arguments are missing,
+	 * but not if only one is given without -c or -w flag */
+	if(c - argc == 2) {
+		get_threshold(argv[c++], wload);
+		get_threshold(argv[c++], cload);
+	}
+	else if(c - argc == 1) {
+		get_threshold(argv[c++], cload);
+	}
 
 	return validate_arguments ();
 }
 
 
 
-int
+static int
 validate_arguments (void)
 {
-	if (wload1 < 0)
-		usage (_("Warning threshold for 1-minute load average is not specified\n"));
-	if (wload5 < 0)
-		usage (_("Warning threshold for 5-minute load average is not specified\n"));
-	if (wload15 < 0)
-		usage (_("Warning threshold for 15-minute load average is not specified\n"));
-	if (cload1 < 0)
-		usage (_("Critical threshold for 1-minute load average is not specified\n"));
-	if (cload5 < 0)
-		usage (_("Critical threshold for 5-minute load average is not specified\n"));
-	if (cload15 < 0)
-		usage (_("Critical threshold for 15-minute load average is not specified\n"));
-	if (wload1 > cload1)
-		usage (_("Parameter inconsistency: 1-minute \"warning load\" greater than \"critical load\".\n"));
-	if (wload5 > cload5)
-		usage (_("Parameter inconsistency: 5-minute \"warning load\" greater than \"critical load\".\n"));
-	if (wload15 > cload15)
-		usage (_("Parameter inconsistency: 15-minute \"warning load\" greater than \"critical load\".\n"));
+	int i = 0;
+
+	/* match cload first, as it will give the most friendly error message
+	 * if user hasn't given the -c switch properly */
+	for(i = 0; i < 3; i++) {
+		if(cload[i] < 0)
+			die (STATE_UNKNOWN, _("Critical threshold for %d-minute load average is not specified\n"), nums[i]);
+		if(wload[i] < 0)
+			die (STATE_UNKNOWN, _("Warning threshold for %d-minute load average is not specified\n"), nums[i]);
+		if(wload[i] > cload[i])
+			die (STATE_UNKNOWN, _("Parameter inconsistency: %d-minute \"warning load\" is greater than \"critical load\"\n"), nums[i]);
+	}
+
 	return OK;
 }
 
