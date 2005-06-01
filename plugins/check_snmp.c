@@ -121,7 +121,9 @@ int retries = 0;
 unsigned long eval_method[MAX_OIDS];
 char *delimiter;
 char *output_delim;
-char *miblist;
+char *miblist = NULL;
+int needmibs = FALSE;
+
 
 int
 main (int argc, char **argv)
@@ -158,7 +160,7 @@ main (int argc, char **argv)
 	output = strdup ("");
 	delimiter = strdup (" = ");
 	output_delim = strdup (DEFAULT_OUTPUT_DELIMITER);
-	miblist = strdup (DEFAULT_MIBLIST);
+	/* miblist = strdup (DEFAULT_MIBLIST); */
 	timeout_interval = DEFAULT_TIMEOUT;
 	retries = DEFAULT_RETRIES;
 
@@ -510,6 +512,15 @@ process_arguments (int argc, char **argv)
 				retries = atoi(optarg);
 			break;
 		case 'o':									/* object identifier */
+			if ( strspn( optarg, "0123456789." ) != strlen( optarg ) ) {
+					/*
+					 * we have something other than digits and periods, so we
+					 * have a mib variable, rather than just an SNMP OID, so
+					 * we have to actually read the mib files
+					 */
+					needmibs = TRUE;
+			}
+
 			for (ptr = optarg; (ptr = index (ptr, ',')); ptr++)
 				ptr[0] = ' '; /* relpace comma with space */
 			for (ptr = optarg; (ptr = index (ptr, ' ')); ptr++)
@@ -627,6 +638,8 @@ process_arguments (int argc, char **argv)
 
 	if (community == NULL)
 		community = strdup (DEFAULT_COMMUNITY);
+	
+
 
 	return validate_arguments ();
 }
@@ -640,13 +653,11 @@ process_arguments (int argc, char **argv)
 
 <para>&PROTO_validate_arguments;</para>
 
-<para>Given a database name, this function returns TRUE if the string
-is a valid PostgreSQL database name, and returns false if it is
-not.</para>
+<para>Checks to see if the default miblist needs to be loaded. Also verifies 
+the authentication and authorization combinations based on protocol version 
+selected.</para>
 
-<para>Valid PostgreSQL database names are less than &NAMEDATALEN;
-characters long and consist of letters, numbers, and underscores. The
-first character cannot be a number, however.</para>
+<para></para>
 
 </sect3>
 -@@
@@ -657,6 +668,15 @@ first character cannot be a number, however.</para>
 int
 validate_arguments ()
 {
+	/* check whether to load locally installed MIBS (CPU/disk intensive) */
+	if (miblist == NULL) {
+		if ( needmibs  == TRUE ) {
+			miblist = strdup (DEFAULT_MIBLIST);
+		}else{
+			miblist = "''";			/* don't read any mib files for numeric oids */
+		}
+	}
+
 
 	/* Need better checks to verify seclevel and authproto choices */
 	
@@ -913,9 +933,11 @@ Check status of remote machines and obtain sustem information via SNMP\n\n"));
 	/* OID Stuff */
 	printf (_("\
  -o, --oid=OID(s)\n\
-    Object identifier(s) whose value you wish to query\n\
+    Object identifier(s) or SNMP variables whose value you wish to query\n\
  -m, --miblist=STRING\n\
-    List of MIBS to be loaded (default = ALL)\n -d, --delimiter=STRING\n\
+    List of MIBS to be loaded (default = none if using numeric oids or 'ALL'\n\
+		for symbolic oids.)\n\
+ -d, --delimiter=STRING\n\
     Delimiter to use when parsing returned data. Default is \"%s\"\n\
     Any data on the right hand side of the delimiter is considered\n\
     to be the data that should be used in the evaluation.\n"), DEFAULT_DELIMITER);
