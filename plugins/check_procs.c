@@ -94,7 +94,7 @@ main (int argc, char **argv)
 	int procseconds = 0;
 	float procpcpu = 0;
 	char procstat[8];
-	char procetime[MAX_INPUT_BUFFER];
+	char procetime[MAX_INPUT_BUFFER] = { '\0' };
 	char *procargs;
 	char *temp_string;
 
@@ -108,12 +108,10 @@ main (int argc, char **argv)
 	int expected_cols = PS_COLS - 1;
 	int warn = 0; /* number of processes in warn state */
 	int crit = 0; /* number of processes in crit state */
-	procetime[0]='\0'; /* keep this clean because -vvv always prints it */
 	int i = 0;
-
 	int result = STATE_UNKNOWN;
 
-	//setlocale (LC_ALL, "");
+	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
@@ -178,11 +176,10 @@ main (int argc, char **argv)
 			strip (procargs);
 
 			/* Some ps return full pathname for command. This removes path */
-			temp_string = strtok ((char *)procprog, "/");
-			while (temp_string) {
-				strcpy(procprog, temp_string);
-				temp_string = strtok (NULL, "/");
-			}
+#ifdef HAVE_BASENAME
+			temp_string = strdup(procprog);
+			procprog = basename(temp_string);
+#endif /* HAVE_BASENAME */
 
 			/* we need to convert the elapsed time to seconds */
 			procseconds = convert_to_seconds(procetime);
@@ -643,6 +640,9 @@ convert_to_seconds(char *etime) {
 		(minutes * 60) +
 		seconds;
 
+	if (verbose >= 3 && metric == METRIC_ELAPSED) {
+			printf("seconds: %d\n", total);
+	}
 	return total;
 }
 
