@@ -47,240 +47,206 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #endif
 
 #ifdef HAVE_SSL
-int check_cert = FALSE;
-int days_till_exp;
-char *randbuff = "";
-SSL_CTX *ctx;
-SSL *ssl;
-X509 *server_cert;
-int connect_SSL (void);
-int check_certificate (X509 **);
+static int check_cert = FALSE;
+static int days_till_exp;
+static char *randbuff = "";
+static SSL_CTX *ctx;
+static SSL *ssl;
+static X509 *server_cert;
+static int connect_SSL (void);
+static int check_certificate (X509 **);
+# define my_recv(buf, len) ((flags & FLAG_SSL) ? SSL_read(ssl, buf, len) : read(sd, buf, len))
+#else
+# define my_recv(buf, len) read(sd, buf, len)
 #endif
 
-#define MAXBUF 1024
 
-int process_arguments (int, char **);
-int my_recv (void);
+/* int my_recv(char *, size_t); */
+static int process_arguments (int, char **);
 void print_help (void);
 void print_usage (void);
 
-char *SERVICE = NULL;
-char *SEND = NULL;
-char *EXPECT = NULL;
-char *QUIT = NULL;
-int PROTOCOL = 0;
-int PORT = 0;
+#define EXPECT server_expect[0]
+static char *SERVICE = "TCP";
+static char *SEND = NULL;
+static char *QUIT = NULL;
+static int PROTOCOL = IPPROTO_TCP; /* most common is default */
+static int PORT = 0;
 
-char timestamp[17] = "";
-int server_port = 0;
-char *server_address = NULL;
-char *server_send = NULL;
-char *server_quit = NULL;
-char **server_expect = NULL;
-size_t server_expect_count = 0;
-int maxbytes = 0;
-char **warn_codes = NULL;
-size_t warn_codes_count = 0;
-char **crit_codes = NULL;
-size_t crit_codes_count = 0;
-unsigned int delay = 0;
-double warning_time = 0;
-int check_warning_time = FALSE;
-double critical_time = 0;
-int check_critical_time = FALSE;
-int hide_output = FALSE;
-double elapsed_time = 0;
-long microsec;
-int verbose = FALSE;
-int use_ssl = FALSE;
-int sd = 0;
-char *buffer;
-int expect_mismatch_state = STATE_WARNING;
-int exact_matching = TRUE;
+static char timestamp[17] = "";
+static int server_port = 0;
+static char *server_address = NULL;
+static char *server_send = NULL;
+static char *server_quit = NULL;
+static char **server_expect;
+static size_t server_expect_count = 0;
+static size_t maxbytes = 0;
+static char **warn_codes = NULL;
+static size_t warn_codes_count = 0;
+static char **crit_codes = NULL;
+static size_t crit_codes_count = 0;
+static unsigned int delay = 0;
+static double warning_time = 0;
+static double critical_time = 0;
+static double elapsed_time = 0;
+static long microsec;
+static int sd = 0;
+#define MAXBUF 1024
+static char buffer[MAXBUF];
+static int expect_mismatch_state = STATE_WARNING;
+
+#define FLAG_SSL 0x01
+#define FLAG_VERBOSE 0x02
+#define FLAG_EXACT_MATCH 0x04
+#define FLAG_TIME_WARN 0x08
+#define FLAG_TIME_CRIT 0x10
+#define FLAG_HIDE_OUTPUT 0x20
+static size_t flags = FLAG_EXACT_MATCH;
 
 int
 main (int argc, char **argv)
 {
 	int result = STATE_UNKNOWN;
 	int i;
-	char *status;
+	char *status = NULL;
 	struct timeval tv;
+	size_t len, match = -1;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
-	if (strstr (argv[0], "check_udp")) {
-		progname = strdup ("check_udp");
-		SERVICE = strdup ("UDP");
-		SEND = NULL;
-		EXPECT = NULL;
-		QUIT = NULL;
+	/* determine program- and service-name quickly */
+	progname = strrchr(argv[0], '/');
+	if(progname != NULL) progname++;
+	else progname = argv[0];
+
+	len = strlen(progname);
+	if(len > 6 && !memcmp(progname, "check_", 6)) {
+		SERVICE = progname + 6;
+		for(i = 0; i < len - 6; i++)
+			SERVICE[i] = toupper(SERVICE[i]);
+	}
+
+	/* set up a resonable buffer at first (will be realloc()'ed if
+	 * user specifies other options) */
+	server_expect = calloc(sizeof(char *), 2);
+
+	/* determine defaults for this service's protocol */
+	if (!strncmp(SERVICE, "UDP", 3)) {
 		PROTOCOL = IPPROTO_UDP;
-		PORT = 0;
 	}
-	else if (strstr (argv[0], "check_tcp")) {
-		progname = strdup ("check_tcp");
-		SERVICE = strdup ("TCP");
-		SEND = NULL;
-		EXPECT = NULL;
-		QUIT = NULL;
-		PROTOCOL = IPPROTO_TCP;
-		PORT = 0;
-	}
-	else if (strstr (argv[0], "check_ftp")) {
-		progname = strdup ("check_ftp");
-		SERVICE = strdup ("FTP");
-		SEND = NULL;
-		EXPECT = strdup ("220");
-		QUIT = strdup ("QUIT\r\n");
-		PROTOCOL = IPPROTO_TCP;
+	else if (!strncmp(SERVICE, "FTP", 3)) {
+		EXPECT = "220";
+		QUIT = "QUIT\r\n";
 		PORT = 21;
 	}
-	else if (strstr (argv[0], "check_smtp")) {
-		progname = strdup ("check_smtp");
-		SERVICE = strdup ("SMTP");
-		SEND = NULL;
-		EXPECT = strdup ("220");
-		QUIT = strdup ("QUIT\r\n");
-		PROTOCOL = IPPROTO_TCP;
-		PORT = 25;
-	}
-	else if (strstr (argv[0], "check_pop")) {
-		progname = strdup ("check_pop");
-		SERVICE = strdup ("POP");
-		SEND = NULL;
-		EXPECT = strdup ("+OK");
-		QUIT = strdup ("QUIT\r\n");
-		PROTOCOL = IPPROTO_TCP;
+	else if (!strncmp(SERVICE, "POP", 3) || !strncmp(SERVICE, "POP3", 4)) {
+		EXPECT = "+OK";
+		QUIT = "QUIT\r\n";
 		PORT = 110;
 	}
-	else if (strstr (argv[0], "check_imap")) {
-		progname = strdup ("check_imap");
-		SERVICE = strdup ("IMAP");
-		SEND = NULL;
-		EXPECT = strdup ("* OK");
-		QUIT = strdup ("a1 LOGOUT\r\n");
-		PROTOCOL = IPPROTO_TCP;
+	else if (!strncmp(SERVICE, "SMTP", 4)) {
+		EXPECT = "220";
+		QUIT = "QUIT\r\n";
+		PORT = 25;
+	}
+	else if (!strncmp(SERVICE, "IMAP", 4)) {
+		EXPECT = "* OK";
+		QUIT = "a1 LOGOUT\r\n";
 		PORT = 143;
 	}
 #ifdef HAVE_SSL
-	else if (strstr(argv[0],"check_simap")) {
-		progname = strdup ("check_simap");
-		SERVICE = strdup ("SIMAP");
-		SEND=NULL;
-		EXPECT = strdup ("* OK");
-		QUIT = strdup ("a1 LOGOUT\r\n");
-		PROTOCOL=IPPROTO_TCP;
-		use_ssl=TRUE;
-		PORT=993;
+	else if (!strncmp(SERVICE, "SIMAP", 5)) {
+		EXPECT = "* OK";
+		QUIT = "a1 LOGOUT\r\n";
+		flags |= FLAG_SSL;
+		PORT = 993;
 	}
-	else if (strstr(argv[0],"check_spop")) {
-		progname = strdup ("check_spop");
-		SERVICE = strdup ("SPOP");
-		SEND=NULL;
-		EXPECT = strdup ("+OK");
-		QUIT = strdup ("QUIT\r\n");
-		PROTOCOL=IPPROTO_TCP;
-		use_ssl=TRUE;
-		PORT=995;
+	else if (!strncmp(SERVICE, "SPOP", 4)) {
+		EXPECT = "+OK";
+		QUIT = "QUIT\r\n";
+		flags |= FLAG_SSL;
+		PORT = 995;
 	}
-	else if (strstr(argv[0],"check_ssmtp")) {
-		progname = strdup ("check_ssmtp");
-		SERVICE = strdup ("SSMTP");
-		SEND=NULL;
-		EXPECT = strdup ("220");
-		QUIT = strdup ("QUIT\r\n");
-		PROTOCOL=IPPROTO_TCP;
-		use_ssl=TRUE;
-		PORT=465;
+	else if (!strncmp(SERVICE, "SSMTP", 5)) {
+		EXPECT = "220";
+		QUIT = "QUIT\r\n";
+		flags |= FLAG_SSL;
+		PORT = 465;
 	}
-	else if (strstr(argv[0],"check_jabber")) {
-		progname = strdup("check_jabber");
-		SERVICE = strdup("JABBER");
-		SEND = strdup("<stream:stream to=\'host\' xmlns=\'jabber:client\' xmlns:stream=\'http://etherx.jabber.org/streams\'>\n");
-		EXPECT = strdup("<?xml version=\'1.0\'?><stream:stream xmlns:stream=\'http://etherx.jabber.org/streams\'");
-		QUIT = strdup("</stream:stream>\n");
-		PROTOCOL=IPPROTO_TCP;
-		use_ssl=TRUE;
+	else if (!strncmp(SERVICE, "JABBER", 6)) {
+		SEND = "<stream:stream to=\'host\' xmlns=\'jabber:client\' xmlns:stream=\'http://etherx.jabber.org/streams\'>\n";
+		EXPECT = "<?xml version=\'1.0\'?><stream:stream xmlns:stream=\'http://etherx.jabber.org/streams\'";
+		QUIT = "</stream:stream>\n";
+		flags |= FLAG_SSL | FLAG_HIDE_OUTPUT;
 		PORT = 5222;
 	}
-       else if (strstr (argv[0], "check_nntps")) {
-		progname = strdup("check_nntps");
-		SERVICE = strdup("NNTPS");
-		SEND = NULL;
-		EXPECT = NULL;
-		server_expect = realloc (server_expect, ++server_expect_count);
-		asprintf (&server_expect[server_expect_count - 1], "200");
-		server_expect = realloc (server_expect, ++server_expect_count);
-		asprintf (&server_expect[server_expect_count - 1], "201");
-		QUIT = strdup("QUIT\r\n");
-		PROTOCOL = IPPROTO_TCP;
-		use_ssl=TRUE;
+	else if (!strncmp (SERVICE, "NNTPS", 5)) {
+		server_expect_count = 2;
+		server_expect[0] = "200";
+		server_expect[1] = "201";
+		QUIT = "QUIT\r\n";
+		flags |= FLAG_SSL;
 		PORT = 563;
-}
-
+	}
 #endif
-	else if (strstr (argv[0], "check_nntp")) {
-		progname = strdup ("check_nntp");
-		SERVICE = strdup ("NNTP");
-		SEND = NULL;
-		EXPECT = NULL;
-		server_expect = realloc (server_expect, sizeof (char *) * (++server_expect_count));
-		asprintf (&server_expect[server_expect_count - 1], "200");
-		server_expect = realloc (server_expect, sizeof (char *) * (++server_expect_count));
-		asprintf (&server_expect[server_expect_count - 1], "201");
-		asprintf (&QUIT, "QUIT\r\n");
-		PROTOCOL = IPPROTO_TCP;
+	else if (!strncmp (SERVICE, "NNTP", 4)) {
+		server_expect_count = 2;
+		server_expect = malloc(sizeof(char *) * server_expect_count);
+		server_expect[0] = strdup("200");
+		server_expect[1] = strdup("201");
+		QUIT = "QUIT\r\n";
 		PORT = 119;
 	}
-	else {
-		progname = strdup ("check_tcp");
+	/* fallthrough check, so it's supposed to use reverse matching */
+	else if (strcmp (SERVICE, "TCP"))
 		usage (_("CRITICAL - Generic check_tcp called with unknown service\n"));
-	}
 
-	server_address = strdup ("127.0.0.1");
+	server_address = "127.0.0.1";
 	server_port = PORT;
 	server_send = SEND;
 	server_quit = QUIT;
-	status = strdup ("");
+	status = NULL;
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
-	/* use default expect if none listed in process_arguments() */
-	if (EXPECT && server_expect_count == 0) {
-		server_expect = malloc (sizeof (char *) * (++server_expect_count));
-		server_expect[server_expect_count - 1] = EXPECT;
+	if(flags & FLAG_VERBOSE) {
+		printf("Using service %s\n", SERVICE);
+		printf("Port: %d\n", PORT);
+		printf("flags: 0x%x\n", flags);
 	}
 
-	/* initialize alarm signal handling */
-	signal (SIGALRM, socket_timeout_alarm_handler);
+	if(EXPECT && !server_expect_count)
+		server_expect_count++;
 
-	/* set socket timeout */
+	/* set up the timer */
+	signal (SIGALRM, socket_timeout_alarm_handler);
 	alarm (socket_timeout);
 
 	/* try to connect to the host at the given port number */
 	gettimeofday (&tv, NULL);
 #ifdef HAVE_SSL
-	if (use_ssl && check_cert == TRUE) {
-	  if (connect_SSL () != OK)
-	    die (STATE_CRITICAL,_("CRITICAL - Could not make SSL connection\n"));
-	  if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
-	    result = check_certificate (&server_cert);
-	    X509_free(server_cert);
-	  }
-	  else {
-	    printf(_("CRITICAL - Cannot retrieve server certificate.\n"));
-	    result = STATE_CRITICAL;
-	  }
-	  SSL_shutdown (ssl);
-	  SSL_free (ssl);
-	  SSL_CTX_free (ctx);
-	  close (sd);
-	  return result;
+	if (flags & FLAG_SSL && check_cert == TRUE) {
+		if (connect_SSL () != OK)
+			die (STATE_CRITICAL,_("CRITICAL - Could not make SSL connection\n"));
+		if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
+			result = check_certificate (&server_cert);
+			X509_free(server_cert);
+		}
+		else {
+			printf(_("CRITICAL - Cannot retrieve server certificate.\n"));
+			result = STATE_CRITICAL;
+		}
+
+		SSL_shutdown (ssl);
+		SSL_free (ssl);
+		SSL_CTX_free (ctx);
+		close (sd);
+		return result;
 	}
-	else if (use_ssl)
+	else if (flags & FLAG_SSL)
 		result = connect_SSL ();
 	else
 #endif
@@ -290,9 +256,8 @@ main (int argc, char **argv)
 		return STATE_CRITICAL;
 
 	if (server_send != NULL) {		/* Something to send? */
-		asprintf (&server_send, "%s\r\n", server_send);
 #ifdef HAVE_SSL
-		if (use_ssl)
+		if (flags & FLAG_SSL)
 			SSL_write(ssl, server_send, (int)strlen(server_send));
 		else
 #endif
@@ -304,63 +269,71 @@ main (int argc, char **argv)
 		sleep (delay);
 	}
 
-	if (server_send || server_expect_count > 0) {
+	if(flags & FLAG_VERBOSE) {
+		printf("server_expect_count: %d\n", server_expect_count);
+		for(i = 0; i < server_expect_count; i++)
+			printf("\t%d: %s\n", i, server_expect[i]);
+	}
 
-		buffer = malloc (MAXBUF);
-		memset (buffer, '\0', MAXBUF);
+	/* if(len) later on, we know we have a non-NULL response */
+	len = 0;
+	if (server_expect_count) {
+
 		/* watch for the expect string */
-		while ((i = my_recv ()) > 0) {
-			buffer[i] = '\0';
-			asprintf (&status, "%s%s", status, buffer);
-			if (buffer[i-1] == '\n') {
-				if (buffer[i-2] == '\r' || i < MAXBUF-1)
-					break;
-			}
-			if (maxbytes>0 && strlen(status) >= (unsigned)maxbytes)
+		while ((i = my_recv(buffer, sizeof(buffer))) > 0) {
+			status = realloc(status, len + i + 1);
+			memcpy(&status[len], buffer, i);
+			len += i;
+
+			/* stop reading if user-forced or data-starved */
+			if(i < sizeof(buffer) || (maxbytes && len >= maxbytes))
+				break;
+
+			if (maxbytes && len >= maxbytes)
 				break;
 		}
 
-		/* return a CRITICAL status if we couldn't read any data */
-		if (strlen(status) == 0)
+		/* no data when expected, so return critical */
+		if (len == 0)
 			die (STATE_CRITICAL, _("No data received from host\n"));
 
-		strip (status);
+		/* force null-termination and strip whitespace from end of output */
+		status[len--] = '\0';
+		/* print raw output if we're debugging */
+		if(flags & FLAG_VERBOSE)
+			printf("received %d bytes from host\n#-raw-recv-------#\n%s\n#-raw-recv-------#\n",
+			       len + 1, status);
+		while(isspace(status[len])) status[len--] = '\0';
 
-		if (status && verbose)
-			printf ("%s\n", status);
+		for (i = 0; i < server_expect_count; i++) {
+			match = -2;		/* tag it so we know if we tried and failed */
+			if (flags & FLAG_VERBOSE)
+				printf ("looking for [%s] %s [%s]\n", server_expect[i],
+				        (flags & FLAG_EXACT_MATCH) ? "in beginning of" : "anywhere in",
+				        status);
 
-		if (server_expect_count > 0) {
-			for (i = 0;; i++) {
-				if (verbose)
-					printf ("%d %d\n", i, (int)server_expect_count);
-				if (i >= (int)server_expect_count)
-					die (expect_mismatch_state, _("Unexpected response from host: %s\n"), status);
-				/* default expect gets exact matching */
-				if (exact_matching) {
-					if (strncmp(status, server_expect[i], strlen(server_expect[i])) == 0)
-						break;
-				} else {
-					if (strstr (status, server_expect[i]))
-						break;
-				}
+			/* match it. math first in short-circuit */
+			if ((flags & FLAG_EXACT_MATCH && !strncmp(status, server_expect[i], strlen(server_expect[i]))) ||
+			    (!(flags & FLAG_EXACT_MATCH) && strstr(status, server_expect[i])))
+			{
+				if(flags & FLAG_VERBOSE) puts("found it");
+				match = i;
+				break;
 			}
 		}
 	}
 
 	if (server_quit != NULL) {
 #ifdef HAVE_SSL
-		if (use_ssl) {
+		if (flags & FLAG_SSL) {
 			SSL_write (ssl, server_quit, (int)strlen(server_quit));
 			SSL_shutdown (ssl);
  			SSL_free (ssl);
  			SSL_CTX_free (ctx);
 		}
-		else {
+		else
 #endif
 			send (sd, server_quit, strlen (server_quit), 0);
-#ifdef HAVE_SSL
-		}
-#endif
 	}
 
 	/* close the connection */
@@ -370,37 +343,53 @@ main (int argc, char **argv)
 	microsec = deltime (tv);
 	elapsed_time = (double)microsec / 1.0e6;
 
-	if (check_critical_time == TRUE && elapsed_time > critical_time)
+	if (flags & FLAG_TIME_CRIT && elapsed_time > critical_time)
 		result = STATE_CRITICAL;
-	else if (check_warning_time == TRUE && elapsed_time > warning_time)
+	else if (flags & FLAG_TIME_WARN && elapsed_time > warning_time)
+		result = STATE_WARNING;
+
+	/* did we get the response we hoped? */
+	if(match == -2 && result != STATE_CRITICAL)
 		result = STATE_WARNING;
 
 	/* reset the alarm */
 	alarm (0);
 
-	printf
-		(_("%s %s%s - %.3f second response time on port %d"),
-		 SERVICE,
-		 state_text (result),
-		 (was_refused) ? " (refused)" : "",
-		 elapsed_time, server_port);
+	/* this is a bit stupid, because we don't want to print the
+	 * response time (which can look ok to the user) if we didn't get
+	 * the response we were looking for. if-else */
+	printf(_("%s %s - "), SERVICE, state_text(result));
 
-	if (hide_output == FALSE && status && strlen(status) > 0)
+	if(match == -2 && len && !(flags & FLAG_HIDE_OUTPUT))
+		printf("Unexpected response from host: %s", status);
+	else
+		printf("%.3f second response time on port %d",
+		       elapsed_time, server_port);
+
+	if (match != -2 && !(flags & FLAG_HIDE_OUTPUT) && len)
 		printf (" [%s]", status);
 
-	printf (" |%s\n", fperfdata ("time", elapsed_time, "s",
-		TRUE, warning_time,
-		TRUE, critical_time,
-		TRUE, 0,
-		TRUE, socket_timeout));
+	/* perf-data doesn't apply when server doesn't talk properly,
+	 * so print all zeroes on warn and crit */
+	if(match == -2)
+		printf ("|time=%fs;0.0;0.0;0.0;0.0", elapsed_time);
+	else
+		printf("|%s",
+				fperfdata ("time", elapsed_time, "s",
+		                   TRUE, warning_time,
+		                   TRUE, critical_time,
+		                   TRUE, 0,
+		                   TRUE, socket_timeout)
+		      );
 
+	putchar('\n');
 	return result;
 }
 
 
 
 /* process command-line arguments */
-int
+static int
 process_arguments (int argc, char **argv)
 {
 	int c;
@@ -472,7 +461,7 @@ process_arguments (int argc, char **argv)
 			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'v':                 /* verbose mode */
-			verbose = TRUE;
+			flags |= FLAG_VERBOSE;
 			break;
 		case '4':
 			address_family = AF_INET;
@@ -494,17 +483,17 @@ process_arguments (int argc, char **argv)
 				usage4 (_("Critical threshold must be a positive integer"));
 			else
 				critical_time = strtod (optarg, NULL);
-			check_critical_time = TRUE;
+			flags |= FLAG_TIME_CRIT;
 			break;
 		case 'j':		  /* hide output */
-			hide_output = TRUE;
+			flags |= FLAG_HIDE_OUTPUT;
 			break;
 		case 'w':                 /* warning */
 			if (!is_intnonneg (optarg))
 				usage4 (_("Warning threshold must be a positive integer"));
 			else
 				warning_time = strtod (optarg, NULL);
-			check_warning_time = TRUE;
+			flags |= FLAG_TIME_WARN;
 			break;
 		case 'C':
 			crit_codes = realloc (crit_codes, ++crit_codes_count);
@@ -531,7 +520,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'e': /* expect string (may be repeated) */
 			EXPECT = NULL;
-			exact_matching = FALSE;
+			flags &= ~FLAG_EXACT_MATCH;
 			if (server_expect_count == 0)
 				server_expect = malloc (sizeof (char *) * (++server_expect_count));
 			else
@@ -542,7 +531,7 @@ process_arguments (int argc, char **argv)
 			if (!is_intpos (optarg))
 				usage4 (_("Maxbytes must be a positive integer"));
 			else
-				maxbytes = atoi (optarg);
+				maxbytes = strtol (optarg, NULL, 0);
 		case 'q':
 			asprintf(&server_quit, "%s\r\n", optarg);
 			break;
@@ -572,16 +561,19 @@ process_arguments (int argc, char **argv)
 			else
 				usage4 (_("Delay must be a positive integer"));
 			break;
-                 case 'D': /* Check SSL cert validity - days 'til certificate expiration */
+		case 'D': /* Check SSL cert validity - days 'til certificate expiration */
 #ifdef HAVE_SSL
 			if (!is_intnonneg (optarg))
 				usage2 (_("Invalid certificate expiration period"), optarg);
 			days_till_exp = atoi (optarg);
 			check_cert = TRUE;
-			use_ssl = TRUE;
+			flags |= FLAG_SSL;
 			break;
+#endif
+			/* fallthrough if we don't have ssl */
 		case 'S':
-			use_ssl = TRUE;
+#ifdef HAVE_SSL
+			flags |= FLAG_SSL;
 #else
 			die (STATE_UNKNOWN, _("Invalid option - SSL is not available"));
 #endif
@@ -596,9 +588,9 @@ process_arguments (int argc, char **argv)
 }
 
 
-
+/* SSL-specific functions */
 #ifdef HAVE_SSL
-int
+static int
 connect_SSL (void)
 {
   SSL_METHOD *meth;
@@ -649,12 +641,8 @@ connect_SSL (void)
 
   return STATE_CRITICAL;
 }
-#endif
 
-
-
-#ifdef HAVE_SSL
-int
+static int
 check_certificate (X509 ** certificate)
 {
   ASN1_STRING *tm;
@@ -727,29 +715,7 @@ check_certificate (X509 ** certificate)
 
         return STATE_OK;
 }
-#endif
-
-
-
-int
-my_recv (void)
-{
-	int i;
-
-#ifdef HAVE_SSL
-	if (use_ssl) {
-		i = SSL_read (ssl, buffer, MAXBUF - 1);
-	}
-	else {
-#endif
-		i = read (sd, buffer, MAXBUF - 1);
-#ifdef HAVE_SSL
-	}
-#endif
-
-	return i;
-}
-
+#endif /* HAVE_SSL */
 
 
 void
@@ -809,7 +775,6 @@ print_help (void)
 }
 
 
-
 void
 print_usage (void)
 {
@@ -818,5 +783,6 @@ Usage: %s -H host -p port [-w <warning time>] [-c <critical time>]\n\
                   [-s <send string>] [-e <expect string>] [-q <quit string>]\n\
                   [-m <maximum bytes>] [-d <delay>] [-t <timeout seconds>]\n\
                   [-r <refuse state>] [-M <mismatch state>] [-v] [-4|-6] [-j]\n\
-                  [-D <days to cert expiry>] [-S <use SSL>]\n", progname);		  
+                  [-D <days to cert expiry>] [-S <use SSL>]\n", progname);
 }
+
