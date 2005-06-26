@@ -79,14 +79,13 @@ main (int argc, char **argv)
 # endif
 #endif
 	char str[32];
-	char *status, *tmp_status;
+	char *status;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
 	status = strdup ("");
-	tmp_status = strdup ("");
 	perf = strdup ("");
 
 	if (process_arguments (argc, argv) == ERROR)
@@ -313,17 +312,16 @@ main (int argc, char **argv)
 
 	percent_used = 100 * ((double) used_swap) / ((double) total_swap);
 	result = max_state (result, check_swap (percent_used, free_swap));
-	/* broken into two steps because of funkiness with builtin asprintf */
-	asprintf (&tmp_status, _(" %d%% free (%.0f MB out of %.0f MB)"),
-						(100 - percent_used), free_swap, total_swap);
-	asprintf (&status, "%s%s", tmp_status, status);
+	printf (_("SWAP %s - %d%% free (%.0f MB out of %.0f MB) %s|"),
+			state_text (result),
+			(100 - percent_used), free_swap, total_swap, status);
 
-	asprintf (&perf, "%s", perfdata ("swap", (long) free_swap, "MB",
-		TRUE, (long) max (warn_size/1024, warn_percent/100.0*total_swap),
-		TRUE, (long) max (crit_size/1024, crit_percent/100.0*total_swap),
-		TRUE, 0,
-		TRUE, (long) total_swap));
-	printf ("SWAP %s:%s |%s\n", state_text (result), status, perf);
+	puts (perfdata ("swap", (long) free_swap, "MB",
+	                TRUE, (long) max (warn_size/1024, warn_percent/100.0*total_swap),
+	                TRUE, (long) max (crit_size/1024, crit_percent/100.0*total_swap),
+	                TRUE, 0,
+	                TRUE, (long) total_swap));
+
 	return result;
 }
 
