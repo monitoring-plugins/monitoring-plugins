@@ -42,8 +42,8 @@ void print_help (void);
 
 int warn_percent = 0;
 int crit_percent = 0;
-float warn_size = 0;
-float crit_size = 0;
+double warn_size = 0;
+double crit_size = 0;
 int verbose;
 int allswaps;
 
@@ -376,12 +376,13 @@ process_arguments (int argc, char **argv)
 		switch (c) {
 		case 'w':									/* warning size threshold */
 			if (is_intnonneg (optarg)) {
-				warn_size = (float) atoi (optarg);
+				warn_size = (double) atoi (optarg);
 				break;
 			}
 			else if (strstr (optarg, ",") &&
 							 strstr (optarg, "%") &&
-							 sscanf (optarg, "%.0f,%d%%", &warn_size, &warn_percent) == 2) {
+							 sscanf (optarg, "%g,%d%%", &warn_size, &warn_percent) == 2) {
+				warn_size = floor(warn_size);
 				break;
 			}
 			else if (strstr (optarg, "%") &&
@@ -393,12 +394,13 @@ process_arguments (int argc, char **argv)
 			}
 		case 'c':									/* critical size threshold */
 			if (is_intnonneg (optarg)) {
-				crit_size = (float) atoi (optarg);
+				crit_size = (double) atoi (optarg);
 				break;
 			}
 			else if (strstr (optarg, ",") &&
 							 strstr (optarg, "%") &&
-							 sscanf (optarg, "%.0f,%d%%", &crit_size, &crit_percent) == 2) {
+							 sscanf (optarg, "%g,%d%%", &crit_size, &crit_percent) == 2) {
+				crit_size = floor(crit_size);
 				break;
 			}
 			else if (strstr (optarg, "%") &&
@@ -439,12 +441,12 @@ process_arguments (int argc, char **argv)
 	if (c == argc)
 		return validate_arguments ();
 	if (warn_size == 0 && is_intnonneg (argv[c]))
-		warn_size = (float) atoi (argv[c++]);
+		warn_size = (double) atoi (argv[c++]);
 
 	if (c == argc)
 		return validate_arguments ();
 	if (crit_size == 0 && is_intnonneg (argv[c]))
-		crit_size = atoi (argv[c++]);
+		crit_size = (double) atoi (argv[c++]);
 
 	return validate_arguments ();
 }

@@ -9,6 +9,7 @@ datadir = @datadir@
 localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
 LIBS = @LIBINTL@ @LIBS@ @SSLINCLUDE@
+MATHLIBS = @MATHLIBS@
 
 libexec_PROGRAMS = check_dhcp check_disk check_dummy check_http check_load \
 	check_mrtg check_mrtgtraf check_nwstat check_overcr check_ping \
@@ -72,7 +73,7 @@ check_real_LDADD = $(NETLIBS)
 check_snmp_LDADD = $(BASEOBJS) popen.o
 check_smtp_LDADD = $(NETLIBS) $(SSLLIBS)
 check_ssh_LDADD = $(NETLIBS)
-check_swap_LDADD = $(BASEOBJS) popen.o
+check_swap_LDADD = $(MATHLIBS) $(BASEOBJS) popen.o
 check_tcp_LDADD = $(NETLIBS) $(SSLLIBS)
 check_time_LDADD = $(NETLIBS)
 check_udp_LDADD = $(NETLIBS)
