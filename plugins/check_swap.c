@@ -310,7 +310,13 @@ main (int argc, char **argv)
 # endif /* HAVE_SWAP */
 #endif /* HAVE_PROC_MEMINFO */
 
-	percent_used = 100 * ((double) used_swap) / ((double) total_swap);
+	/* if total_swap == 0, let's not divide by 0 */
+	if(total_swap) {
+		percent_used = 100 * ((double) used_swap) / ((double) total_swap);
+	} else {
+		percent_used = 0;
+	}
+
 	result = max_state (result, check_swap (percent_used, free_swap));
 	printf (_("SWAP %s - %d%% free (%.0f MB out of %.0f MB) %s|"),
 			state_text (result),
