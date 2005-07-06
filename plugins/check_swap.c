@@ -507,10 +507,6 @@ print_help (void)
     Verbose output. Up to 3 levels\n"));
 
 	printf (_("\n\
-On Solaris, if -a specified, uses swap -l, otherwise uses swap -s.\n\
-Will be discrepencies because swap -s counts allocated swap and includes\n\
-real memory\n"));
-	printf (_("\n\
 On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s.\n"));
 
 	printf (_(UT_SUPPORT));
