@@ -169,6 +169,10 @@ main(int argc, char **argv) {
 		if (result!=STATE_OK)
 			return result;
 		utilization=strtoul(recv_buffer,NULL,10);
+
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		send_buffer = strdup ("UPTIME\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -325,20 +329,24 @@ main(int argc, char **argv) {
 
 			free_disk_space=strtoul(recv_buffer,NULL,10);
 
+			close(sd);
+			my_tcp_connect (server_address, server_port, &sd);
+
 			asprintf (&send_buffer,"VKS%s\r\n",volume_name);
 			result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 			if (result!=STATE_OK)
 				return result;
 			total_disk_space=strtoul(recv_buffer,NULL,10);
 
-			percent_free_space=(int)(((double)free_disk_space/(double)total_disk_space)*100.0);
+			percent_free_space=(unsigned long)(((double)free_disk_space/(double)total_disk_space)*100.0);
 
 			if (check_critical_value==TRUE && percent_free_space <= critical_value)
 				result=STATE_CRITICAL;
 			else if (check_warning_value==TRUE && percent_free_space <= warning_value)
 				result=STATE_WARNING;
 			free_disk_space/=1024;
-			asprintf (&output_message,_("%lu MB (%lu%%) free on volume %s"),free_disk_space,percent_free_space,volume_name);
+			total_disk_space/=1024;
+			asprintf (&output_message,_("%lu MB (%lu%%) free on volume %s - total %lu MB"),free_disk_space,percent_free_space,volume_name,total_disk_space);
 		}
 
 		/* check to see if DS Database is open or closed */
@@ -353,6 +361,9 @@ main(int argc, char **argv) {
 		else
 			result=STATE_WARNING;
  
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		send_buffer = strdup ("S13\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		temp_buffer=strtok(recv_buffer,"\r\n");
@@ -472,7 +483,7 @@ main(int argc, char **argv) {
 				return result;
 			total_disk_space=strtoul(recv_buffer,NULL,10);
 
-			percent_purgeable_space=(int)(((double)purgeable_disk_space/(double)total_disk_space)*100.0);
+			percent_purgeable_space=(unsigned long)(((double)purgeable_disk_space/(double)total_disk_space)*100.0);
 
 			if (check_critical_value==TRUE && percent_purgeable_space >= critical_value)
 				result=STATE_CRITICAL;
@@ -525,7 +536,7 @@ main(int argc, char **argv) {
 				return result;
 			total_disk_space=strtoul(recv_buffer,NULL,10);
 
-			percent_non_purgeable_space=(int)(((double)non_purgeable_disk_space/(double)total_disk_space)*100.0);
+			percent_non_purgeable_space=(unsigned long)(((double)non_purgeable_disk_space/(double)total_disk_space)*100.0);
 
 			if (check_critical_value==TRUE && percent_non_purgeable_space >= critical_value)
 				result=STATE_CRITICAL;
@@ -579,6 +590,9 @@ main(int argc, char **argv) {
  
 		max_service_processes=atoi(recv_buffer);
  
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		asprintf (&send_buffer,"S21\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -671,12 +685,15 @@ main(int argc, char **argv) {
 		asprintf (&output_message,_("NDS Version %s"),recv_buffer);
 
 	} else if (vars_to_check==UPTIME) {
+		asprintf (&send_buffer,"UPTIME\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 	 		return result;
 
-		recv_buffer[strlen(recv_buffer)-1]=0;
 
+		recv_buffer[sizeof(recv_buffer)-1]=0;
+		recv_buffer[strlen(recv_buffer)-1]=0;
+	
 		asprintf (&output_message,_("Up %s"),recv_buffer);
 
 	} else if (vars_to_check==NLM) {
@@ -865,8 +882,9 @@ int process_arguments(int argc, char **argv) {
 					vars_to_check=TSYNC;
 				else if (!strcmp(optarg,"DSVER"))
 					vars_to_check=DSVER;
-				else if (!strcmp(optarg,"UPTIME"))
+				else if (!strcmp(optarg,"UPTIME")) {
 					vars_to_check=UPTIME;
+				}
 				else if (strncmp(optarg,"NLM:",4)==0) {
 					vars_to_check=NLM;
 					nlm_name=strdup (optarg+4);
