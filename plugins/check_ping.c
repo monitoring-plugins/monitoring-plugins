@@ -415,11 +415,13 @@ run_ping (const char *cmd, const char *addr)
 
 		/* get the percent loss statistics */
 		if(sscanf(buf,"%*d packets transmitted, %*d packets received, +%*d errors, %d%% packet loss",&pl)==1 ||
-			 sscanf(buf,"%*d packets transmitted, %*d packets received, %d%% packet loss",&pl)==1	||
+			 sscanf(buf,"%*d packets transmitted, %*d packets received, +%*d duplicates, %d%% packet loss", &pl) == 1 ||
+			 sscanf(buf,"%*d packets transmitted, %*d received, +%*d duplicates, %d%% packet loss", &pl) == 1 ||
+			 sscanf(buf,"%*d packets transmitted, %*d packets received, %d%% packet loss",&pl)==1 ||
 			 sscanf(buf,"%*d packets transmitted, %*d packets received, %d%% loss, time",&pl)==1 ||
 			 sscanf(buf,"%*d packets transmitted, %*d received, %d%% loss, time", &pl)==1 ||
 			 sscanf(buf,"%*d packets transmitted, %*d received, %d%% packet loss, time", &pl)==1 ||
-		   sscanf(buf,"%*d packets transmitted, %*d received, +%*d errors, %d%% packet loss", &pl) == 1 ||
+			 sscanf(buf,"%*d packets transmitted, %*d received, +%*d errors, %d%% packet loss", &pl) == 1 ||
 			 sscanf(buf,"%*d packets transmitted %*d received, +%*d errors, %d%% packet loss", &pl) == 1
 			 )
 			continue;
