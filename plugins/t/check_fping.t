@@ -1,37 +1,43 @@
-#! /usr/bin/perl -w
+#! /usr/bin/perl -w -I ..
+#
+# FPing Tests via check_fping
+#
 # $Id$
+#
 
 use strict;
-use Cache;
 use Test;
+use NPTest;
+
 use vars qw($tests);
 
-BEGIN {$tests = 3; plan tests => $tests}
+BEGIN {$tests = 4; plan tests => $tests}
 
-exit(0) unless (-x "./check_fping");
+my $successOutput = '/^FPING OK - /';
+my $failureOutput = '/^FPING CRITICAL - /';
 
-#`fping 127.0.0.1 > /dev/null 2>&1` || exit(77);
+my $host_responsive    = getTestParameter( "host_responsive",    "NP_HOST_RESPONSIVE",    "localhost",
+					   "The hostname of system responsive to network requests" );
 
-my $null = '';
-my $cmd;
-my $str;
+my $host_nonresponsive = getTestParameter( "host_nonresponsive", "NP_HOST_NONRESPONSIVE", "10.0.0.1",
+					   "The hostname of system not responsive to network requests" );
+
+my $hostname_invalid   = getTestParameter( "hostname_invalid",   "NP_HOSTNAME_INVALID",   "nosuchhost",
+                                           "An invalid (not known to DNS) hostname" );
+
+
 my $t;
-my $stat;
 
-
-$cmd = "./check_fping 127.0.0.1";
-$str = `$cmd`;
-$t += ok $?>>8,0;
-print "Test was: $cmd\n" if ($?);
-$t += ok $str, '/^FPING OK - 127.0.0.1/';
-
-$cmd = "./check_fping $Cache::nullhost";
-$str = `$cmd`;
-if ($?>>8 == 1 or $?>>8 == 2) {
-	$stat = 2;
+if ( -x "./check_fping" )
+{
+  $t += checkCmd( "./check_fping $host_responsive",    0,       $successOutput );
+  $t += checkCmd( "./check_fping $host_nonresponsive", [ 1, 2 ] );
+  $t += checkCmd( "./check_fping $hostname_invalid",   [ 1, 2 ] );
 }
-$t += ok $stat,2;
-print "Test was: $cmd\n" if (($?>>8) < 1);
+else
+{
+  $t += skipMissingCmd( "./check_fping", $tests );
+}
 
 exit(0) if defined($Test::Harness::VERSION);
 exit($tests - $t);

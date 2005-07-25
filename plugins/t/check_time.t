@@ -1,52 +1,40 @@
-#! /usr/bin/perl -w
+#! /usr/bin/perl -w -I ..
+#
+# System Time Tests via check_time
+#
+# $Id$
+#
 
 use strict;
-use Cache;
-use Helper;
 use Test;
+use NPTest;
+
 use vars qw($tests);
+BEGIN {$tests = 8; plan tests => $tests}
 
-BEGIN {$tests = 6; plan tests => $tests}
+my $host_udp_time      = getTestParameter( "host_udp_time",      "NP_HOST_UDP_TIME",      "localhost",
+					   "A host providing the UDP Time Service" );
 
-my $null = '';
-my $cmd;
-my $str;
+my $host_nonresponsive = getTestParameter( "host_nonresponsive", "NP_HOST_NONRESPONSIVE", "10.0.0.1",
+                                           "The hostname of system not responsive to network requests" );
+
+my $hostname_invalid   = getTestParameter( "hostname_invalid",   "NP_HOSTNAME_INVALID",   "nosuchhost",
+                                           "An invalid (not known to DNS) hostname" );
+
+my $successOutput = '/^TIME OK - [0-9]+ second time difference/';
+
 my $t;
-my $udp_hostname=get_option("udp_hostname","UDP host name");
 
 # standard mode
-
-$cmd = "./check_time -H $udp_hostname -w 999999,59 -c 999999,59 -t 60";
-$str = `$cmd`;
-$t += ok $?>>8,0;
-print "Test was: $cmd\n" if ($?);
-$t += ok $str, '/^TIME OK - [0-9]+ second time difference$/';
-
-$cmd = "./check_time -H $udp_hostname -w 999999 -W 59 -c 999999 -C 59 -t 60";
-$str = `$cmd`;
-$t += ok $?>>8,0;
-print "Test was: $cmd\n" if ($?);
-$t += ok $str, '/^TIME OK - [0-9]+ second time difference$/';
+$t += checkCmd( "./check_time -H $host_udp_time -w 999999,59       -c 999999,59       -t 60", 0, $successOutput );
+$t += checkCmd( "./check_time -H $host_udp_time -w 999999    -W 59 -c 999999    -C 59 -t 60", 0, $successOutput );
 
 # reverse compatibility mode
-
-$cmd = "./check_time $udp_hostname -wt 59 -ct 59 -cd 999999 -wd 999999 -to 60";
-$str = `$cmd`;
-$t += ok $?>>8,0;
-print "Test was: $cmd\n" if ($?);
-$t += ok $str, '/^TIME OK - [0-9]+ second time difference$/';
+$t += checkCmd( "./check_time    $host_udp_time -wt 59 -ct 59 -cd 999999 -wd 999999 -to 60",  0, $successOutput );
 
 # failure mode
-
-#$cmd = "./check_time -H $Cache::nullhost -t 1";
-#$str = `$cmd`;
-#$t += ok $?>>8,255;
-#print "Test was: $cmd\n" unless ($?);
-
-#$cmd = "./check_time -H $Cache::noserver -t 1";
-#$str = `$cmd`;
-#$t += ok $?>>8,255;
-#print "$cmd\n" unless ($?);
+$t += checkCmd( "./check_time -H $host_nonresponsive -t 1", 2 );
+$t += checkCmd( "./check_time -H $hostname_invalid   -t 1", 3 );
 
 exit(0) if defined($Test::Harness::VERSION);
 exit($tests - $t);

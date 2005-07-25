@@ -1,28 +1,42 @@
-#! /usr/bin/perl -w
+#! /usr/bin/perl -w -I ..
+#
+# Domain Name Server (DNS) Tests via check_dns
+#
+# $Id$
+#
 
 use strict;
-use Cache;
 use Test;
+use NPTest;
+
 use vars qw($tests);
+BEGIN {$tests = 6; plan tests => $tests}
 
-BEGIN {$tests = 3; plan tests => $tests}
+my $successOutput = '/DNS OK: [\.0-9]+ seconds response time/';
 
-#`nslookup localhost > /dev/null 2>&1` || exit(77);
+my $hostname_valid   = getTestParameter( "hostname_valid",   "NP_HOSTNAME_VALID",   "localhost",
+					 "A valid (known to DNS) hostname" );
 
-my $null = '';
-my $cmd;
-my $str;
+my $hostname_invalid = getTestParameter( "hostname_invalid", "NP_HOSTNAME_INVALID", "nosuchhost",
+					 "An invalid (not known to DNS) hostname" );
+
+my $dns_server       = getTestParameter( "dns_server",       "NP_DNS_SERVER",       undef,
+					 "A non default (remote) DNS server" );
+
 my $t;
 
-$str = `./check_dns $Cache::dnshost -to 5`;
-$t += ok $?>>8,0;
-print "Test was: $cmd\n" if ($?);
-$t += ok $str, '/DNS OK: +[\.0-9]+ seconds response time, /';
+#
+# Default DNS Server
+#
+$t += checkCmd( "./check_dns -H $hostname_valid   -t 5", 0, $successOutput );
+$t += checkCmd( "./check_dns -H $hostname_invalid -t 1", 2 );
 
-$cmd = "./check_dns $Cache::nullhost -to 1";
-$str = `$cmd`;
-$t += ok $?>>8,2;
-print "Test was: $cmd\n" unless ($?);
+#
+# Specified DNS Server
+#
+$t += checkCmd( "./check_dns -H $hostname_valid   -s $dns_server -t 5", 0, $successOutput );
+$t += checkCmd( "./check_dns -H $hostname_invalid -s $dns_server -t 1", 2 );
 
 exit(0) if defined($Test::Harness::VERSION);
 exit($tests - $t);
+

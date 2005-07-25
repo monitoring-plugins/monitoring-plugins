@@ -1,91 +1,51 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl -w -I .. -I ../..
+#
+# Wrapper for running the test harnesses
+#
+# $Id$
+#
+
 use strict;
 
-my $file = '../Cache';
-unless (-f "$file.pm") {
-	open(CACHE,">$file.pm") or die "Cannot open cache";
-	print CACHE "package Cache;
-require Exporter;
-\@ISA=qw(Exporter);
-\@EXPORT=qw();
-1;
-";
-	close CACHE;
-}
-
-use Helper;
-my ($tstdir,$spath,$hostname,$httphost,$mailhost,$dnshost,$noserver,$nullhost,$quickcheck);
-
 use Getopt::Long;
-GetOptions
-	("tstdir:s"=>\$tstdir,
-	 "spath:s"=>\$spath,
-	 "hostname:s"=>\$hostname,
-	 "httpname:s"=>\$httphost,
-	 "mailhost:s"=>\$mailhost,
-	 "dnshost:s"=>\$dnshost,
-	 "noserver:s"=>\$noserver,
-	 "nullhost:s"=>\$nullhost,
-	 "quickcheck"=>\$quickcheck);
 
-$spath = "." unless ($spath);
+use NPTest qw(DetermineTestHarnessDirectory TestsFrom);
 
-unless ($quickcheck) {
-    
-	$hostname = get_option("hostname","host for FTP/UDP tests")		unless ($hostname);
-	$httphost = get_option("httphost","host for HTTP tests")		unless ($httphost);
-	$mailhost = get_option("mailhost","host for SMTP/IMAP/POP tests")	unless ($mailhost);
-	$dnshost  = get_option("dnshost","hostname to lookup for DNS tests")	unless ($dnshost);
-	$noserver = get_option("noserver","host that rejects above services")	unless ($noserver);
-	# This machine should not be locatable from your network.  Use IP
-	# private addresses like 10.x.x.x and pick one that does not exist
-	# on your LAN/WAN
-	$nullhost = get_option("nullhost","nonexistent IP address (e.g., 10.0.0.0)")	unless ($nullhost);
+my $tstdir;
+
+if ( ! GetOptions( "testdir:s" => \$tstdir ) )
+{
+  print "Usage: ${0} [--testdir=<directory>] [<test_harness.t> ...]\n";
+  exit 1;
 }
 
-my @dots;
-if (@ARGV) {
-	@dots = @ARGV;
-} else {
-	unless ($tstdir) {
-		if (-d './t') {
-			$tstdir = './t';
-		} else {
-			$tstdir = $ENV{PWD};
-			$tstdir = `/bin/pwd` unless defined($tstdir);
-			chomp $tstdir;
-			if (defined($tstdir)) {
-				$tstdir =~ s|^(.*)/([^/]+)/?$|$1/$2|;
-				if (-d "../../$2/t") {
-					$tstdir = "../../$2/t";
-				} elsif (-d "$tstdir/t") {
-					$tstdir = "$tstdir/t";
-				}
-			} else {
-				die "Could not get PWD from environment\n";
-			}
-		}
-	}
-	$tstdir = './t' unless ($tstdir);
-	opendir(DIR, $tstdir) || die "can't opendir $tstdir: $!";
-	while ($file = readdir(DIR)) {
-		push @dots, "$tstdir/$file" if ($file =~ m/^[^\.]+\.t$/);
-	}
-	closedir DIR;
+my @tests;
+
+if ( scalar( @ARGV ) )
+{
+  @tests = @ARGV;
 }
-my $prog;
-my $test;
-my @progs;
-foreach $test (@dots) {
-	$prog=`basename $test .t`;
-	chomp $prog;
-	if ( -e "$prog" ){
-		push @progs, "$test";
-	}else{
-		print "No binary found for $prog\n";
-	}
+else
+{
+  my $directory = DetermineTestHarnessDirectory( $tstdir );
+
+  if ( !defined( $directory ) )
+  {
+    print STDERR "$0: Unable to determine the test harness directory - ABORTING\n";
+    exit 2;
+  }
+
+  @tests = TestsFrom( $directory, 1 );
+}
+
+if ( ! scalar( @tests ) )
+{
+  print STDERR "$0: Unable to determine the test harnesses to run - ABORTING\n";
+  exit 3;
 }
 
 use Test::Harness;
+
 #$Test::Harness::verbose=1;
-runtests(@progs);
+
+runtests( @tests );

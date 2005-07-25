@@ -1,34 +1,25 @@
-#! /usr/bin/perl -w
+#! /usr/bin/perl -w -I ..
+#
+# Swap Space Tests via check_swap
+#
+# $Id$
+#
 
 use strict;
-use Cache;
 use Test;
-use vars qw($tests);
+use NPTest;
 
+use vars qw($tests);
 BEGIN {$tests = 6; plan tests => $tests}
 
-my $null = '';
-my $cmd;
-my $str;
 my $t;
 
-$cmd = "./check_swap 100 100";
-$str = `$cmd`;
-$t += ok $?>>8,0;
-print "Test was: $cmd\n" if ($?);
-$t += ok $str, '/^Swap ok - Swap used\: +[0-9]{1,2}\% \([0-9]+ bytes out of [0-9]+\)$/';
+my $successOutput = '/^SWAP OK - [0-9]+\% free \([0-9]+ MB out of [0-9]+ MB\)/';
+my $failureOutput = '/^SWAP CRITICAL - [0-9]+\% free \([0-9]+ MB out of [0-9]+ MB\)/';
 
-$cmd = "./check_swap 0 0";
-$str = `$cmd`;
-$t += ok $?>>8,2;
-print "Test was: $cmd\n" unless ($?);
-$t += ok $str, '/^CRITICAL - Swap used\: +[0-9]{1,2}\% \([0-9]+ bytes out of [0-9]+\)$/';
-
-$cmd = "./check_swap 100 100 1000000000 1000000000";
-$str = `$cmd`;
-$t += ok $?>>8,2;
-print "Test was: $cmd\n" unless ($?);
-$t += ok $str, '/^CRITICAL - Swap used\: +[0-9]{1,2}\% \([0-9]+ bytes out of [0-9]+\)$/';
+$t += checkCmd( "./check_swap -w 1048576 -c 1048576", 0, $successOutput ); # 1MB  free
+$t += checkCmd( "./check_swap -w   1\%   -c     1\%", 0, $successOutput ); # 1%   free
+$t += checkCmd( "./check_swap -w 100\%   -c   100\%", 2, $failureOutput ); # 100% free (always fails)
 
 exit(0) if defined($Test::Harness::VERSION);
 exit($tests - $t);

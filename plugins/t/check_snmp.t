@@ -1,52 +1,57 @@
-#! /usr/bin/perl -w
+#! /usr/bin/perl -w -I ..
+#
+# Simple Network Management Protocol (SNMP) Test via check_snmp
+#
+# $Id$
+#
 
 use strict;
-use Helper;
-use Cache;
 use Test;
+use NPTest;
+
 use vars qw($tests);
+BEGIN {$tests = 12; plan tests => $tests}
 
-BEGIN {$tests = 8; plan tests => $tests}
-
-my $null = '';
-my $cmd;
-my $str;
 my $t;
-my $community=get_option("snmp_community","SNMP community name");
 
-exit(0) unless (-x "./check_snmp");
+if ( -x "./check_snmp" )
+{
+  my $host_snmp          = getTestParameter( "host_snmp",          "NP_HOST_SNMP",      "localhost",
+					     "A host providing an SNMP Service");
 
-$cmd = "./check_snmp -H 127.0.0.1 -C $community -o system.sysUpTime.0 -w 1: -c 1:";
-$str = `$cmd`;
-$t += ok $?>>8,0;
-print "Test was: $cmd\n" if ($?);
-chomp $str;
-$t += ok $str, '/^SNMP OK - \d+/';
+  my $snmp_community     = getTestParameter( "snmp_community",     "NP_SNMP_COMMUNITY", "public",
+					     "The SNMP Community string for SNMP Testing" );
 
-$cmd = "./check_snmp -H 127.0.0.1 -C $community -o host.hrSWRun.hrSWRunTable.hrSWRunEntry.hrSWRunIndex.1 -w 1:1 -c 1:1";
-$str = `$cmd`;
-$t += ok $?>>8,0;
-print "Test was: $cmd\n" if ($?);
-chomp $str;
-$t += ok $str, '/^SNMP OK - 1\s*$/';
+  my $host_nonresponsive = getTestParameter( "host_nonresponsive", "NP_HOST_NONRESPONSIVE", "10.0.0.1",
+					     "The hostname of system not responsive to network requests" );
 
-$cmd = "./check_snmp -H 127.0.0.1 -C $community -o host.hrSWRun.hrSWRunTable.hrSWRunEntry.hrSWRunIndex.1 -w 0 -c 1:";
-$str = `$cmd`;
-$t += ok $?>>8,1;
-print "Test was: $cmd\n" unless ($?);
-chomp $str;
-$t += ok $str, '/^SNMP WARNING - \*1\*\s*$/';
+  my $hostname_invalid   = getTestParameter( "hostname_invalid",   "NP_HOSTNAME_INVALID",   "nosuchhost",
+					     "An invalid (not known to DNS) hostname" );
 
-$cmd = "./check_snmp -H 127.0.0.1 -C $community -o host.hrSWRun.hrSWRunTable.hrSWRunEntry.hrSWRunIndex.1 -w :0 -c 0";
-$str = `$cmd`;
-$t += ok $?>>8,2;
-print "Test was: $cmd\n" unless ($?);
-chomp $str;
-$t += ok $str, '/^SNMP CRITICAL - \*1\*\s*$/';
+  my %exceptions = ( 3 => "No SNMP Server present?" );
 
-#host.hrSWRun.hrSWRunTable.hrSWRunEntry.hrSWRunIndex.1 = 1
-#enterprises.ucdavis.memory.memAvailSwap.0
-#./check_snmp 127.0.0.1 -C staff -o enterprises.ucdavis.diskTable.dskEntry.dskAvail.1,enterprises.ucdavis.diskTable.dskEntry.dskPercent.1 -w 100000: -c 50000: -l Space on root -u 'bytes free (','% used)'
+
+  $t += checkCmd( "./check_snmp -H $host_snmp -C $snmp_community -o system.sysUpTime.0 -w 1: -c 1:",
+		  { 0 => 'continue',  3 => 'skip' }, '/^SNMP OK - \d+/',		%exceptions );
+
+  $t += checkCmd( "./check_snmp -H $host_snmp -C $snmp_community -o host.hrSWRun.hrSWRunTable.hrSWRunEntry.hrSWRunIndex.1 -w 1:1 -c 1:1",
+		  { 0 => 'continue',  3 => 'skip' }, '/^SNMP OK - 1\s*$/',		%exceptions );
+
+  $t += checkCmd( "./check_snmp -H $host_snmp -C $snmp_community -o host.hrSWRun.hrSWRunTable.hrSWRunEntry.hrSWRunIndex.1 -w 0   -c 1:",
+		  { 1 => 'continue',  3 => 'skip' }, '/^SNMP WARNING - \*1\*\s*$/',	%exceptions );
+
+  $t += checkCmd( "./check_snmp -H $host_snmp -C $snmp_community -o host.hrSWRun.hrSWRunTable.hrSWRunEntry.hrSWRunIndex.1 -w  :0 -c 0",
+		  { 2 => 'continue',  3 => 'skip' }, '/^SNMP CRITICAL - \*1\*\s*$/',	%exceptions );
+
+  $t += checkCmd( "./check_snmp -H $host_nonresponsive -C $snmp_community -o system.sysUpTime.0 -w 1: -c 1:", 3, '/SNMP problem - /' );
+
+  $t += checkCmd( "./check_snmp -H $hostname_invalid   -C $snmp_community -o system.sysUpTime.0 -w 1: -c 1:", 3, '/SNMP problem - /' );
+
+}
+else
+{
+  $t += skipMissingCmd( "./check_snmp", $tests );
+}
 
 exit(0) if defined($Test::Harness::VERSION);
 exit($tests - $t);
