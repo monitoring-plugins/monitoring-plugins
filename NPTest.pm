@@ -202,8 +202,8 @@ my( %CACHE ) = ();
 
 # I'm not really sure wether to house a site-specific cache inside
 # or outside of the extracted source / build tree - lets default to outside
-my( $CACHEFILENAME ) = ( exists( $ENV{'NPTESTCACHE'} ) && $ENV{'NPTESTCACHE'} )
-                       ? $ENV{'NPTESTCACHE'} : "/var/tmp/NPTest.cache"; # "../Cache.pdd";
+my( $CACHEFILENAME ) = ( exists( $ENV{'NPTEST_CACHE'} ) && $ENV{'NPTEST_CACHE'} )
+                       ? $ENV{'NPTEST_CACHE'} : "/var/tmp/NPTest.cache"; # "../Cache.pdd";
 
 #
 # Testing Functions
