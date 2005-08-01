@@ -3,12 +3,12 @@ Plugins page on Sourceforge at http://sourceforge.net/tracker/?group_id=29880&at
 
 For the 1.4 release:
 
-1107524 - check_ping can segfault if DNS lookups exceed timeout
+1225470 - check_swap perf data incorrect
+1218438 - check_radius linking to wrong header
+1210958 - check_nwstat incorrectly reporting free disk space
+1144727 - check_disk fails on solaris with large available space
 1108499 - check_ping with -U on Debian fails
-1106849 - check_procs returns WARNING with procps 3.1.15
-1105015 - nagios.spec.in problems
 1094326 - check_ide_smart usage errors
 1090549 - check_dhcp ignores DHCP replies
-1081520 - check_snmp only works for version 1 and 3 of SNMP protocol
  990948 - check_disk_smb doesn't allow spaces in share names
 

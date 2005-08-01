@@ -1,3 +1,343 @@
+2005-07-25 15:17  illumino
+
+	* NPTest.pm: Change the environment variable NPTESTCACHE to
+	  NPTEST_CACHE for consistancy
+
+2005-07-25 02:47  illumino
+
+	* Helper.pm, Makefile.am, NPTest.pm, configure.in, test.pl.in,
+	  plugins/t/check_disk.t, plugins/t/check_dns.t,
+	  plugins/t/check_fping.t, plugins/t/check_ftp.t,
+	  plugins/t/check_hpjd.t, plugins/t/check_http.t,
+	  plugins/t/check_imap.t, plugins/t/check_load.t,
+	  plugins/t/check_mysql.t, plugins/t/check_ping.t,
+	  plugins/t/check_pop.t, plugins/t/check_procs.t,
+	  plugins/t/check_smtp.t, plugins/t/check_snmp.t,
+	  plugins/t/check_swap.t, plugins/t/check_tcp.t,
+	  plugins/t/check_time.t, plugins/t/check_udp.t,
+	  plugins/t/check_users.t, plugins/t/check_vsz.t,
+	  plugins-scripts/t/check_rpc.t: [1185704] New Testing
+	  Infrastructure.  Complete rewrite of the original testing
+	  infrastructure and all test cases (to use the new infrastructure)
+	  See NPTest.pm and issue 1185704 for more details.
+
+2005-07-20 23:39  tonvoon
+
+	* THANKS.in: More contributors
+
+2005-07-20 23:38  tonvoon
+
+	* plugins/check_ping.c: Fix parsing for netkit-ping and
+	  iputils-ping (Christian G Warden)
+
+2005-07-11 23:15  tonvoon
+
+	* plugins/check_nwstat.c: Miscelleneous bug fixes (Gerd Mueller -
+	  1235879)
+
+2005-07-09 05:44  tonvoon
+
+	* BRANCHES: Changed format (already!) for awk simplicity
+
+2005-07-09 05:03  tonvoon
+
+	* BRANCHES: Master file to describe the current branches in CVS.
+	  Will be used by sfsnapshot to create the snapshot tarballs
+
+2005-07-06 23:21  tonvoon
+
+	* configure.in: Removed ",", causing problems with MacOSX compile
+
+2005-07-06 23:10  tonvoon
+
+	* plugins/check_swap.c: Updated help file to remove swap -s
+	  reference (Sivakumar Nellurandi)
+
+2005-07-06 22:00  tonvoon
+
+	* AUTHORS, THANKS.in: Sean Finney moved to main list of plugin
+	  developers
+
+2005-07-04 10:52  opensides
+
+	* contrib/tarballs/check_traffic-0.90b.tar.gz:
+	  replace the version of check_traffic who was missing the plugin
+	  by a good one
+
+2005-06-29 05:11  seanius
+
+	* plugins/: runcmd.c, runcmd.h: initial versions of the runcmd
+	  framework by andreas
+
+2005-06-29 02:04  seanius
+
+	* plugins/check_swap.c: divide by 0 fix for check_swap
+
+2005-06-28 03:26  seanius
+
+	* plugins/check_load.c: set LC_NUMERIC to POSIX in check_load
+	  (1164325)
+
+2005-06-28 01:26  seanius
+
+	* configure.in, plugins/Makefile.am, plugins/check_swap.c: scanf
+	  parsing fix for check_swap from tracker id 1123292.  now use
+	  floor(3) to round down floating point numbers.  requires -lm on
+	  many systems, so support for testing for this was added to the
+	  configure.in and automake template
+
+2005-06-27 14:07  seanius
+
+	* plugins/check_hpjd.c: fixes from richard brodie (tracker id
+	  1216576)
+
+2005-06-26 17:27  seanius
+
+	* contrib/: check_dl_size.pl, check_ftpget.pl, check_logins.c,
+	  check_mysql.c, check_mysql.pl, check_mysqlslave.pl,
+	  check_nwstat.pl, check_pop3.pl, check_procl.sh, check_procr.sh:
+	  spring cleaning of contrib directory from andreas
+
+2005-06-26 17:18  seanius
+
+	* contrib/tarballs/: berger-ping.tar.gz, check_memory.tgz,
+	  check_spread.tar, radius.tar.gz: removal of obsolete tarballs
+
+2005-06-26 02:23  seanius
+
+	* plugins/check_swap.c: "asprintf madness" fix from andreas' patch
+	  to np-d, minus the comments.
+
+2005-06-05 18:43  seanius
+
+	* plugins/check_tcp.c: check_tcp code cleanup from andreas plus fix
+	  to andreas' patch from sean
+
+2005-06-03 14:53  seanius
+
+	* plugins/check_procs.c: gcc 2.x fixes from edward
+
+2005-06-01 20:41  sghosh
+
+	* plugins/check_snmp.c: only load mibs if needed or specified -
+	  patch 1212395
+
+2005-05-28 02:21  seanius
+
+	* plugins/check_load.c: bugfixes to check_load thanks to andreas
+
+2005-05-26 03:13  seanius
+
+	* plugins/check_mysql.c: fix for check_msyql so that it doesn't use
+	  column numbers but the names instead for determining slave
+	  status.  thanks to james kingston.
+
+2005-05-25 18:42  sghosh
+
+	* plugins/check_time.c:  64bit sys support - 1185713
+
+2005-05-25 16:40  sghosh
+
+	* plugins/check_snmp.c: support for getnext - 1106430
+
+2005-05-25 15:25  sghosh
+
+	* plugins/check_ping.c: RH9 pattern
+
+2005-05-25 15:05  sghosh
+
+	* plugins-scripts/check_ntp.pl: perfdata patch - 1172539
+
+2005-05-25 04:37  sghosh
+
+	* plugins-scripts/check_ntp.pl: new option for zero offset -
+	  1159317
+
+2005-05-25 04:23  sghosh
+
+	* plugins/check_snmp.c: v2c support - 1155754
+
+2005-05-25 01:43  seanius
+
+	* configure.in, plugins/check_nagios.c, plugins/check_procs.c:
+	  fixes for check_procs: - added support for printing the pid in
+	  all the ps outputs - don't use the proc name to ignore self, use
+	  the pid vs getpid().	- initialize procetime to null string
+	  otherwise -vvv can have funny results
+
+2005-05-25 01:30  seanius
+
+	* plugins/: check_tcp.c, netutils.c, netutils.h: bah, my_connect is
+	  taken by mysql.  now calling it np_net_connect.
+
+2005-05-24 23:33  sghosh
+
+	* plugins-scripts/check_ntp.pl: patched bug id 1200030 - regex
+	  update
+
+2005-05-24 23:10  sghosh
+
+	* plugins-scripts/check_ntp.pl: patched bug id 1204636
+
+2005-05-24 21:25  seanius
+
+	* plugins/: check_tcp.c, netutils.c, netutils.h: optimizations and
+	  cleanup from andreas
+
+2005-05-23 06:09  seanius
+
+	* nagios-plugins.spec.in: build fix
+
+2005-05-03 03:00  seanius
+
+	* plugins/check_ping.c: setlocale(LC_ALL, "") should be
+	  setlocale(LC_NUMERIC, "C") to properly parse the output of ping.
+
+2005-05-03 02:52  seanius
+
+	* plugins/check_tcp.c: if check_tcp was called with -e but not -s,
+	  it would hang in a call to my_recv.  the fix committed here adds
+	  on more piece of logic to the check to see if more data needs to
+	  be read, avoiding the deadlock call.	a better fix would be to
+	  not use these "voodoo" heuristics and instead use poll() or
+	  select(), but that's quite a bit more complicated.
+
+2005-05-01 21:12  seanius
+
+	* plugins/: popen.c, popen.h: better error checking in spopen
+	  signal handler (see 1107524)
+
+2005-05-01 20:50  seanius
+
+	* configure.in: provide a --with-perl option
+
+2005-04-29 01:27  stanleyhopcroft
+
+	* contrib/check_sybase: check_sybase 0.7 from Simon Bellman. Thx
+
+2005-04-19 01:16  seanius
+
+	* plugins-scripts/check_ntp.pl: regexp fix for check_ntp
+
+2005-04-19 01:09  seanius
+
+	* configure.in: check for the -w flag for ping6 as well as ping
+
+2005-04-17 23:22  seanius
+
+	* plugins-scripts/check_disk_smb.pl: also change the --help output
+	  to reflect that check_disk_smb defaults to empty passwords
+
+2005-04-16 07:09  seanius
+
+	* plugins-scripts/check_disk_smb.pl: patch to check_disk_smb to
+	  allow empty passwords
+
+2005-04-14 05:13  seanius
+
+	* plugins-scripts/check_mailq.pl: check_mailq fix, don't be case
+	  sensitive matching /^\s+Total\sRequests:\s(\d+)$/
+
+2005-04-14 05:07  seanius
+
+	* plugins-scripts/check_ntp.pl: typographical fix in check_ntp
+
+2005-04-11 19:02  seanius
+
+	* plugins/check_ssh.c: properly call close() on the ssh connection
+	  before exiting.
+
+2005-04-11 04:07  seanius
+
+	* configure.in, plugins/check_tcp.c: this should add support for
+	  check_ssmtp, based on the 1.3.x patch in 1155562, but fixed to
+	  follow how things are done in 1.4 (using strdup instead of
+	  asprintf) and patching configure.in instead of configure.
+
+2005-04-07 05:33  seanius
+
+	* plugins/check_smtp.c: in honor of joining up, my first bugfix.
+	  this should resolve 1174070.
+
+	  note i don't have an exchange server to test this against, but it
+	  does what the requester mentioned (slightly cleaner than the
+	  patch attached in the tracker).
+
+	  it does, however, still work against my own postfix server :)
+
+		  sean
+
+2005-04-05 22:26  harpermann
+
+	* plugins/check_snmp.c: This is a first cut at adding performance
+	  data to check_snmp.  I wasn't sure how to handle UOM so only
+	  values that return SNMP type Counter32: are labled with "c".	All
+	  other values have a blank UOM.  I also left off warn, crit, max
+	  and min values in the performance data until we come up with a
+	  way to handle them.
+
+2005-04-04 19:25  tonvoon
+
+	* THANKS.in: More contributors
+
+2005-04-04 19:23  tonvoon
+
+	* plugins/: check_smtp.c: Fix static buffer (Nikolay Sturm)
+
+2005-03-18 03:14  mattkent
+
+	* plugins/check_mysql.c: Replication check support for 4.1.x from
+	  Gerrit Beine
+
+2005-03-08 06:19  tonvoon
+
+	* plugins-scripts/check_ntp.pl: Added OS info for offset issue
+
+2005-03-04 22:20  tonvoon
+
+	* plugins-scripts/check_ntp.pl: Ignore extra check on offset
+	  0.00000 (John Warburton - 1150777)
+
+2005-03-04 22:10  tonvoon
+
+	* plugins/: check_disk.c, check_smtp.c, check_ups.c: Fixed //
+	  comments
+
+2005-03-04 21:58  tonvoon
+
+	* plugins/: check_disk.c, check_smtp.c, check_ups.c: Fixed //
+	  comments (Steve Greenland - 1143836)
+
+2005-03-04 21:50  tonvoon
+
+	* plugins-scripts/check_ntp.pl: Support for IPv6 (Merijn Evertse -
+	  1119917)
+
+2005-03-04 21:04  tonvoon
+
+	* configure.in, package.def: Changed to next version number
+
+2005-03-04 21:03  tonvoon
+
+	* doc/RELEASING: Notes on branching
+
+2005-03-04 20:43  tonvoon
+
+	* CHANGES: Missed check_disk addition to 1.4
+
+2005-02-11 11:49  stanleyhopcroft
+
+	* plugins/Makefile.am: Fix for check_icmp build on Solaris from
+	  Andreas Ericsson <ae@op5.se>
+
+2005-02-04 00:44  tonvoon
+
+	* configure.in: For 1.4 release
+
+2005-02-04 00:43  tonvoon
+
+	* ChangeLog: Updated for 1.4 release
+
 2005-02-04 00:29  tonvoon
 
 	* BUGS: New file to note known bugs for major releases
