@@ -58,12 +58,12 @@ BEGIN {
 	sub(/\=.*$/,"='@with_trusted_path@' # autoconf-derived");
 }
 
-# Specific programs
-
+# If a script contains a reference to a fully qualified command, 
+# subst will replace the fully qualified command with whatever is
+# returned from the which subroutine
 #
 /^[^#]/ && /(\/.*)?\/(bin|sbin|lib|libexec)\// {
 	match($0,/(\/.*)?\/(bin|sbin|lib|libexec)\/[-_a-zA-Z0-9]+/);
-	start=RSTART+RLENGTH;
 	c=substr($0,RSTART,RLENGTH);
 	sub(c,which(c,path));
 }
