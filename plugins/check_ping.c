@@ -71,6 +71,7 @@ main (int argc, char **argv)
 	int this_result = STATE_UNKNOWN;
 	int i;
 
+	setlocale (LC_ALL, "");
 	setlocale (LC_NUMERIC, "C");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
