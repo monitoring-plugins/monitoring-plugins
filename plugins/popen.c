@@ -30,6 +30,9 @@ extern FILE *child_process;
 
 FILE *spopen (const char *);
 int spclose (FILE *);
+#ifdef REDHAT_SPOPEN_ERROR
+RETSIGTYPE popen_sigchld_handler (int);
+#endif
 RETSIGTYPE popen_timeout_alarm_handler (int);
 
 #include <stdarg.h>							/* ANSI C header file */
@@ -66,6 +69,10 @@ char *pname = NULL;							/* caller can set this from argv[0] */
 /*int *childerr = NULL;*//* ptr to array allocated at run-time */
 /*extern pid_t *childpid = NULL; *//* ptr to array allocated at run-time */
 static int maxfd;								/* from our open_max(), {Prog openmax} */
+
+#ifdef REDHAT_SPOPEN_ERROR
+static volatile int childtermd = 0;
+#endif
 
 FILE *
 spopen (const char *cmdstring)
@@ -171,6 +178,12 @@ spopen (const char *cmdstring)
 	if (pipe (pfderr) < 0)
 		return (NULL);							/* errno set by pipe() */
 
+#ifdef REDHAT_SPOPEN_ERROR
+	if (signal (SIGCHLD, popen_sigchld_handler) == SIG_ERR) {
+		usage4 (_("Cannot catch SIGCHLD"));
+	}
+#endif
+
 	if ((pid = fork ()) < 0)
 		return (NULL);							/* errno set by fork() */
 	else if (pid == 0) {					/* child */
@@ -220,6 +233,10 @@ spclose (FILE * fp)
 	if (fclose (fp) == EOF)
 		return (1);
 
+#ifdef REDHAT_SPOPEN_ERROR
+	while (!childtermd);								/* wait until SIGCHLD */
+#endif
+
 	while (waitpid (pid, &status, 0) < 0)
 		if (errno != EINTR)
 			return (1);							/* error other than EINTR from waitpid() */
@@ -239,8 +256,16 @@ static int openmax = 0;
 #define	OPEN_MAX_GUESS	256			/* if OPEN_MAX is indeterminate */
 				/* no guarantee this is adequate */
 
+#ifdef REDHAT_SPOPEN_ERROR
+RETSIGTYPE
+popen_sigchld_handler (int signo)
+{
+	if (signo == SIGCHLD)
+		childtermd = 1;
+}
+#endif
 
-void
+RETSIGTYPE
 popen_timeout_alarm_handler (int signo)
 {
 	int fh;

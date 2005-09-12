@@ -5,7 +5,8 @@ SUBDIRS = intl lib plugins plugins-scripts m4 po
 EXTRA_DIST = config.rpath \
 	ABOUT-NLS ACKNOWLEDGEMENTS AUTHORS BUGS CHANGES CODING FAQ LEGAL \
 	REQUIREMENTS SUPPORT THANKS \
-	NPTest.pm contrib pkg nagios-plugins.spec
+	NPTest.pm contrib pkg nagios-plugins.spec \
+	config_test/Makefile config_test/run_tests config_test/child_test.c
 
 ACLOCAL_AMFLAGS = -I m4
 

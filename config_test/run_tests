@@ -1,0 +1,16 @@
+#!/bin/ksh
+
+i=0
+success=0
+fail=0
+while [[ $i -lt $1 ]] ; do
+	./child_test
+	if [[ $? -eq 0 ]] ; then
+		success=$(($success+1))
+	else
+		fail=$((fail+1))
+	fi
+	i=$(($i+1))
+done
+print "Success=$success Fail=$fail"
+[[ $fail -gt 0 ]] && exit 1

@@ -1520,6 +1520,22 @@ AC_SUBST(DEPLIBS)
 AM_GNU_GETTEXT([no-libtool], [need-ngettext])
 AM_GNU_GETTEXT_VERSION(0.11.5)
 
+dnl Check for Redhat spopen problem
+dnl Wierd problem where ECHILD is returned from a wait call in error
+dnl Only appears to affect nslookup and dig calls. Only affects redhat around
+dnl 2.6.9-11 (okay in 2.6.9-5). Redhat investigating root cause
+dnl We patch plugins/popen.c
+if echo $ac_cv_uname_r | egrep "\.EL$" >/dev/null 2>&1 ; then
+	AC_MSG_CHECKING(for redhat spopen problem)
+	( cd config_test && make && make test ) > /dev/null 2>&1
+	if test $? -eq 0 ; then
+		AC_MSG_RESULT(okay)
+	else
+		AC_MSG_RESULT(error)
+		AC_DEFINE(REDHAT_SPOPEN_ERROR, 1, "Problem on redhat with spopen")
+	fi
+fi
+
 dnl External libraries - see ACKNOWLEDGEMENTS
 np_COREUTILS
 np_CURL
