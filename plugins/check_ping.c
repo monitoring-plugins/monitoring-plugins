@@ -53,7 +53,7 @@ char **addresses = NULL;
 int n_addresses;
 int max_addr = 1;
 int max_packets = -1;
-int verbose = FALSE;
+int verbose = 0;
 
 float rta = UNKNOWN_TRIP_TIME;
 int pl = UNKNOWN_PACKET_LOSS;
@@ -112,8 +112,8 @@ main (int argc, char **argv)
 		asprintf (&cmd, rawcmd, addresses[i], max_packets);
 #endif
 
-		if (verbose)
-			printf ("%s ==> ", cmd);
+		if (verbose >= 2)
+			printf ("CMD: %s\n", cmd);
 
 		/* run the command */
 		this_result = run_ping (cmd, addresses[i]);
@@ -146,7 +146,7 @@ main (int argc, char **argv)
 			printf ("</A>");
 		printf ("\n");
 
-		if (verbose)
+		if (verbose >= 2)
 			printf ("%f:%d%% %f:%d%%\n", wrta, wpl, crta, cpl);
 
 		result = max_state (result, this_result);
@@ -208,7 +208,7 @@ process_arguments (int argc, char **argv)
 			timeout_interval = atoi (optarg);
 			break;
 		case 'v':	/* verbose mode */
-			verbose = TRUE;
+			verbose++;
 			break;
 		case '4':	/* IPv4 only */
 			address_family = AF_INET;
@@ -411,6 +411,9 @@ run_ping (const char *cmd, const char *addr)
 		printf (_("Cannot open stderr for %s\n"), cmd);
 
 	while (fgets (buf, MAX_INPUT_BUFFER - 1, child_process)) {
+
+		if (verbose >= 3)
+			printf("Output: %s", buf);
 
 		result = max_state (result, error_scan (buf, addr));
 
