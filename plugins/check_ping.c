@@ -50,7 +50,7 @@ int cpl = UNKNOWN_PACKET_LOSS;
 float wrta = UNKNOWN_TRIP_TIME;
 float crta = UNKNOWN_TRIP_TIME;
 char **addresses = NULL;
-int n_addresses;
+int n_addresses = 0;
 int max_addr = 1;
 int max_packets = -1;
 int verbose = 0;
@@ -390,6 +390,11 @@ validate_arguments ()
 	for (i=0; i<n_addresses; i++) {
 		if (is_host(addresses[i]) == FALSE)
 			usage2 (_("Invalid hostname/address"), addresses[i]);
+	}
+
+	if (n_addresses == 0) {
+		printf(_("You must specify a server address or host name\n"));
+		return ERROR;
 	}
 
 	return OK;
