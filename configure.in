@@ -708,7 +708,6 @@ then
 	ac_cv_ps_cols=9
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
-XXX
 elif ps -eo 's comm vsz rss user uid pid ppid args' 2>/dev/null | \
 	egrep -i ["^S[TAUES]* +C[OMDNA]+ +[VSIZE]+ +U[SER]+ +U[ID]+ +P[PID]+ +P[PID]+ +[RGSCOMDNA]+"] >/dev/null
 then
@@ -833,7 +832,6 @@ then
 	ac_cv_ps_format="%*s %s %d %d %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %n%s"
 	ac_cv_ps_cols=8
 	AC_MSG_RESULT([$ac_cv_ps_command])
-XXX
 
 else
 	AC_MSG_WARN([unable to find usable ps syntax - check_procs and check_nagios will not be compiled])
