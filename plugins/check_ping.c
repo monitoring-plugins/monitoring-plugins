@@ -393,8 +393,7 @@ validate_arguments ()
 	}
 
 	if (n_addresses == 0) {
-		printf(_("You must specify a server address or host name\n"));
-		return ERROR;
+		usage (_("You must specify a server address or host name"));
 	}
 
 	return OK;
