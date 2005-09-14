@@ -2,8 +2,7 @@
 
 VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t 
 
-INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/intl \
-@LDAPINCLUDE@ @PGINCLUDE@ 
+INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/intl @LDAPINCLUDE@ @PGINCLUDE@ 
 
 datadir = @datadir@
 localedir = $(datadir)/locale
@@ -14,11 +13,11 @@ MATHLIBS = @MATHLIBS@
 libexec_PROGRAMS = check_dhcp check_disk check_dummy check_http check_load \
 	check_mrtg check_mrtgtraf check_nwstat check_overcr check_ping \
 	check_real check_smtp check_ssh check_tcp check_time \
-	check_udp check_ups check_users negate urlize check_icmp\
-	@EXTRAS@
+	check_udp check_ups check_users negate urlize \
+	check_icmp @EXTRAS@
 
-check_tcp_programs = check_ftp check_imap check_nntp check_pop check_udp2 \
-	@check_tcp_ssl@
+check_tcp_programs = check_ftp check_imap check_nntp check_pop \
+	check_udp2 @check_tcp_ssl@
 
 EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 	check_swap check_fping check_ldap check_game check_dig \
@@ -144,7 +143,7 @@ $(check_tcp_programs): check_tcp
 install-exec-hook:
 	cd $(DESTDIR)$(libexecdir) && \
 	for i in $(check_tcp_programs) ; do rm -f $$i; ln -s check_tcp $$i ; done ;\
-	rm -f check_ldaps ; ln -s -f check_ldap check_ldaps
+	if [ -x check_ldaps ] ; then rm -f check_ldaps ; ln -s check_ldap check_ldaps ; fi
 	
 clean-local:
 	rm -f $(check_tcp_programs)
