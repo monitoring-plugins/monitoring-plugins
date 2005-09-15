@@ -55,7 +55,6 @@ main (int argc, char **argv)
 	float dsktotal = 0, dskused = 0, dskfree = 0, tmp = 0;
 	int result = STATE_UNKNOWN;
 	char input_buffer[MAX_INPUT_BUFFER];
-	char *perf;
 #ifdef HAVE_PROC_MEMINFO
 	FILE *fp;
 #else
@@ -86,7 +85,6 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	status = strdup ("");
-	perf = strdup ("");
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));

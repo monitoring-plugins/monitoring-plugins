@@ -96,7 +96,9 @@ main (int argc, char **argv)
 	char procstat[8];
 	char procetime[MAX_INPUT_BUFFER] = { '\0' };
 	char *procargs;
+#ifdef HAVE_BASENAME
 	char *temp_string;
+#endif
 
 	const char *zombie = "Z";
 
