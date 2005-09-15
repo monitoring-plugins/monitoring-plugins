@@ -11,7 +11,7 @@ use NPTest;
 
 use vars qw($tests);
 
-BEGIN {$tests = 6; plan tests => $tests}
+BEGIN {$tests = 8; plan tests => $tests}
 
 my $successOutput = '/PING (ok|OK) - Packet loss = +[0-9]{1,2}\%, +RTA = [\.0-9]+ ms/';
 my $failureOutput = '/Packet loss = +[0-9]{1,2}\%, +RTA = [\.0-9]+ ms/';
@@ -31,6 +31,7 @@ $t += checkCmd( "./check_ping $host_responsive    100 100 1000 1000 -p 1",      
 $t += checkCmd( "./check_ping $host_responsive      0   0    0    0 -p 1",       2, $failureOutput );
 $t += checkCmd( "./check_ping $host_nonresponsive   0   0    0    0 -p 1 -to 1", 2 );
 $t += checkCmd( "./check_ping $hostname_invalid     0   0    0    0 -p 1 -to 1", 3 );
+$t += checkCmd( "./check_ping -w 100,10% -c 200,20%"                           , 3 , "/You must specify a server address or host name.*/");
 
 exit(0) if defined($Test::Harness::VERSION);
 exit($tests - $t);
