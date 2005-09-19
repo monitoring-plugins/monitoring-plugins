@@ -4,12 +4,12 @@ cvs update in main area
 . tools/devmode, if feeling adventurous
 check compilation
 
-Update BUGS file, if this is a major release
+Update BUGS file
+Update configure.in and package.def with version and commit
 
 Run cvs2cl.pl
 commit new ChangeLog
 
-Check configure.in and package.def with right version
 cvs tag r1_4_1
 
 checkout new version:
@@ -27,7 +27,7 @@ bin
 cd /incoming
 put file
 
-SF -> Submit News about release.
+SF -> Submit News about release. Make sure it is called "Nagios Plugins" (with those caps)
 List major changes. 
 List all people on team involved. 
 Add acknowledgement to contributors
