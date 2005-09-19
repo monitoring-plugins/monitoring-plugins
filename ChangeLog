@@ -1,3 +1,86 @@
+2005-09-19 14:46  tonvoon
+
+	* doc/RELEASING: Reminders for news item and tag format
+
+2005-09-19 14:42  tonvoon
+
+	* BUGS: Updated BUGS for 1.4.2 release
+
+2005-09-19 11:58  tonvoon
+
+	* THANKS.in: More contributors
+
+2005-09-15 09:39  tonvoon
+
+	* plugins/t/check_ping.t: Added test to make sure hostname has to
+	  be specified
+
+2005-09-15 09:27  tonvoon
+
+	* plugins/: check_procs.c, check_swap.c: - Cleanup minor compile
+	  errors on Irix
+
+2005-09-14 15:40  tonvoon
+
+	* plugins/check_ping.c: Using common message
+
+2005-09-14 15:36  tonvoon
+
+	* plugins/check_ping.c: Required hostname not flagging as an error
+
+2005-09-14 13:40  tonvoon
+
+	* plugins/Makefile.am: Some makes do not like blank lines after
+	  "\". Fixed check_ldaps to only generate if check_ldap was created
+	  (Chester Hosey)
+
+2005-09-14 10:53  tonvoon
+
+	* plugins/check_load.c: Fix to parsing of uptime (Ronald Tin -
+	  1254656)
+
+2005-09-14 10:49  tonvoon
+
+	* configure.in: - Removing typos
+
+2005-09-13 16:48  tonvoon
+
+	* plugins/check_ping.c: More diagnostic messages from check_ping
+
+2005-09-12 12:20  seanius
+
+	* plugins/check_ping.c: re-add a call to setlocale(LC_ALL, "") in
+	  check_ping.c
+
+2005-09-12 11:37  tonvoon
+
+	* THANKS.in: For help in fixing Red Hat problem with ECHILD and
+	  waitpid
+
+2005-09-12 11:31  tonvoon
+
+	* plugins/popen.c, Makefile.am, configure.in, config_test/Makefile,
+	  config_test/child_test.c, config_test/run_tests: ECHILD error at
+	  waitpid on Red Hat systems (Peter Pramberger and Sascha Runschke
+	  - 1250191)
+
+2005-08-30 23:11  tonvoon
+
+	* plugins-scripts/subst.in: Better comments for what the
+	  substitutions are doing
+
+2005-08-01 22:30  tonvoon
+
+	* doc/BRANCHING: Move notes on branching away from RELEASING
+
+2005-08-01 22:28  tonvoon
+
+	* package.def: For 1.4.1 release
+
+2005-08-01 22:23  tonvoon
+
+	* ChangeLog, configure.in, BUGS, REQUIREMENTS: For 1.4.1 release
+
 2005-07-25 15:17  illumino
 
 	* NPTest.pm: Change the environment variable NPTESTCACHE to
@@ -1908,6 +1991,10 @@
 	* plugins/check_disk.c: check_disk was getting blocks instead of
 	  bytes (Michael Musikhin -
 	  http://sourceforge.net/tracker/index.php?func=detail&aid=900215&group_id=29880&atid=397599)
+
+2004-03-02 17:44  kdebisschop
+
+	* pkg/redhat/requires: attempt to prune requires
 
 2004-03-02 06:17  kdebisschop
 
