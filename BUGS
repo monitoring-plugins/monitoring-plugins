@@ -3,6 +3,12 @@ Plugins page on Sourceforge at http://sourceforge.net/tracker/?group_id=29880&at
 
 For the 1.4 release:
 
+1291987 - urlize useragent does not work
+1291115 - Wrong compile options for openSSL
+1284352 - check_dhcp -s not compatible with helpers/relays
+1283131 - check_load gives incorrect data on AIX
+1267741 - check_ntp logic incorrect with > 1 peers
+1252285 - check_ssh reports critical for some SSH servers
 1225470 - check_swap perf data incorrect
 1218438 - check_radius linking to wrong header
 1210958 - check_nwstat incorrectly reporting free disk space
