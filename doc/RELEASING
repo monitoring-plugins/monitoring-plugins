@@ -9,11 +9,8 @@ Update BUGS file, if this is a major release
 Run cvs2cl.pl
 commit new ChangeLog
 
-Check configure.in with right version
-cvs tag r1_4-alpha2
-If a main release (eg, non alpha/beta), branch here:
-cvs tab -b r1_4-patches
-Consider the SF snapshot branches - should you remove any other branches?
+Check configure.in and package.def with right version
+cvs tag r1_4_1
 
 checkout new version:
 cd /tmp
@@ -31,17 +28,18 @@ cd /incoming
 put file
 
 SF -> Submit News about release.
+List major changes. 
+List all people on team involved. 
+Add acknowledgement to contributors
 Get URL to news item
 
 SF -> Admin -> File Releases
 Add a release to nagiosplug and create a file release
-name: 1.4-alpha2. Commit
+Name: 1.4-alpha2. Create release
 Step 1: Add release notes pointing to news item
 Step 2: add file
 Step 3: *.tar.gz, Platform Independent, Source .gz
 Step 4: Send notice
 
-Send email to nagiosplug-help, nagios-announce
-
-Change to next version number in configure.in and package.def
+Send email to nagiosplug-help, nagios-announce with the news text
 
