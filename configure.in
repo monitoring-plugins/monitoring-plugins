@@ -714,7 +714,7 @@ then
 elif ps -eo 's comm vsz rss user uid pid ppid args' 2>/dev/null | \
 	egrep -i ["^S[TAUES]* +C[OMDNA]+ +[VSIZE]+ +U[SER]+ +U[ID]+ +P[PID]+ +P[PID]+ +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procpid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
+	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -eo 's uid pid ppid vsz rss pcpu comm args'"
 	ac_cv_ps_format="%s %d %d %d %d %d %f %s %n"
 	ac_cv_ps_cols=9
@@ -724,7 +724,7 @@ dnl AIX 4.3.3 and 5.1 do not have an rss field
 elif ps -eo 'stat uid pid ppid vsz pcpu comm args' 2>/dev/null | \
 	egrep -i ["^ *S[TAUES]* +UID +PID +PPID +VSZ +%CPU +COMMAND +COMMAND"] >/dev/null
 then
-	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procpid,&procvsz,&procpcpu,procprog,&pos]"
+	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -eo 'stat uid pid ppid vsz pcpu comm args'"
 	ac_cv_ps_format="%s %d %d %d %d %f %s %n"
 	ac_cv_ps_cols=8
@@ -734,7 +734,7 @@ dnl Solaris 2.6
 elif ps -Ao 's comm vsz rss uid user pid ppid args' 2>/dev/null | \
 	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PID +PPID +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procpid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
+	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -Ao 's uid pid ppid vsz rss pcpu comm args'"
 	# There must be no space between the %s and %n due to a wierd problem in sscanf where
 	# it will return %n as longer than the line length
@@ -745,7 +745,7 @@ then
 elif ps -Ao 'status comm vsz rss uid user pid ppid args' 2>/dev/null | \
 	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PID +PPID +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procpid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
+	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -Ao 'status uid pid ppid vsz rss pcpu comm args'"
 	ac_cv_ps_format="%s %d %d %d %d %d %f %s %n"
 	ac_cv_ps_cols=9
@@ -754,7 +754,7 @@ then
 elif ps -Ao 'state comm vsz rss uid user pid ppid args' 2>/dev/null | \
 	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PID +PPID +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procpid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
+	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -Ao 'state uid pid ppid vsz rss pcpu comm args'"
 	ac_cv_ps_format="%s %d %d %d %d %d %f %s %n"
 	ac_cv_ps_cols=9
@@ -764,7 +764,7 @@ dnl wonder who takes state instead of stat
 elif ps -ao 'state command vsz rss user pid ppid args' 2>/dev/null | \
 	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PID +PPID +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procpid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
+	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -ao 'state uid pid ppid vsz rss pcpu command args'"
 	ac_cv_ps_format="%s %d %d %d %d %d %f %s %n"
 	ac_cv_ps_cols=8
@@ -774,7 +774,7 @@ dnl IRIX 53
 elif ps -el 2>/dev/null | \
 	egrep -i ["^ *F +S +UID +PID +PPID +C +PRI +NI +P +SZ +RSS +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procpid,&procvsz,&procrss,&pos,procprog]"
+	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&pos,procprog]"
 	ac_cv_ps_command="$PATH_TO_PS -el (IRIX 53)"
 	ac_cv_ps_format="%*s %s %d %d %d %*s %*s %*s %*s %d %d %*s %*s %*s %n%s"
 	ac_cv_ps_cols=8
@@ -784,7 +784,7 @@ dnl IRIX 63
 elif ps -el 2>/dev/null | \
 	egrep -i ["^ *F +S +UID +PID +PPID +C +PRI +NI +P +ADDR +SZ +RSS +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procpid,&pos,procprog]"
+	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&pos,procprog]"
 	ac_cv_ps_command="$PATH_TO_PS -el (IRIX 63)"
 	ac_cv_ps_format="%*s %s %d %d %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %n%s"
 	ac_cv_ps_cols=6
@@ -796,7 +796,7 @@ dnl    303 A        0     0     0 120  16 -- 1c07  20   24              -  0:45 
 elif ps -el 2>/dev/null | \
 	egrep -i ["^ *F +S +UID +PID +PPID +C +PRI +NI +ADDR +SZ +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
 then
-	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procpid,&pos,procprog]"
+	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&pos,procprog]"
 	ac_cv_ps_command="$PATH_TO_PS -el (AIX 4.1 and HP-UX)"
 	ac_cv_ps_format="%*s %s %d %d %d %*s %*s %*s %*s %*s %*s %*s %*s %n%s"
 	ac_cv_ps_cols=6
@@ -806,7 +806,7 @@ dnl AIX?
 elif ps glaxen 2>/dev/null | \
 	egrep -i ["^ *F +UID +PID +PPID +PRI +NI +VSZ +RSS +WCHAN +STAT +TTY +TIME +COMMAND"] >/dev/null
 then
-	ac_cv_ps_varlist="[&procuid,&procpid,&procpid,&procvsz,&procrss,procstat,&pos,procprog]"
+	ac_cv_ps_varlist="[&procuid,&procpid,&procppid,&procvsz,&procrss,procstat,&pos,procprog]"
 	ac_cv_ps_command="$PATH_TO_PS glaxen"
 	ac_cv_ps_format="%*s %d %d %d %*s %*s %d %d %*s %s %*s %*s %n%s"
 	ac_cv_ps_cols=8
@@ -821,7 +821,7 @@ elif ps wwaxo 'state vsz rss uid pid ppid pcpu ucomm command' 2>/dev/null | \
 	egrep -i ["^STAT +VSZ +RSS +UID +PPID +%CPU +UCOMM +COMMAND"] >/dev/null
 then
 	ac_cv_ps_command="$PATH_TO_PS wwaxo 'state vsz rss uid pid ppid pcpu ucomm command'"
-	ac_cv_ps_varlist="[procstat,&procvsz,&procrss,&procuid,&procpid,&procpid,&procpcpu,procprog,&pos]"
+	ac_cv_ps_varlist="[procstat,&procvsz,&procrss,&procuid,&procpid,&procppid,&procpcpu,procprog,&pos]"
 	ac_cv_ps_format="%s %d %d %d %d %d %f %s %n"
 	ac_cv_ps_cols=8
 	AC_MSG_RESULT([$ac_cv_ps_command])
@@ -830,7 +830,7 @@ dnl UnixWare
 elif ps -Al 2>/dev/null | \
 	egrep -i ["^ *F +S +UID +PID +PPID +CLS +PRI +NI +C +ADDR +SZ +WCHAN +TTY +TIME +COMD"] >/dev/null
 then
-	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procpid,&pos,procprog]"
+	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&pos,procprog]"
 	ac_cv_ps_command="$PATH_TO_PS -Al"
 	ac_cv_ps_format="%*s %s %d %d %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %n%s"
 	ac_cv_ps_cols=8
