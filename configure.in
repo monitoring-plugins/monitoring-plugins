@@ -698,14 +698,17 @@ then
 	ac_cv_ps_cols=9
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
-dnl Tru64 - needs %*[ +] in PS_FORMAT
-elif ps -ao 'stat comm vsz rss user uid pid ppid args' 2>/dev/null | \
-	egrep -i ["^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ +U[ID]+ +P[ID]+ +P[PID]+ +[RGSCOMDNA]+"] >/dev/null
+dnl Tru64 - needs %*[ +<>] in PS_FORMAT. 
+dnl Has /usr/bin/ps and /sbin/ps - force sbin version
+dnl Can't use vsize and rssize because comes back with text (eg, 1.5M instead 
+dnl of 1500). Will need big changes to check_procs to support
+elif /sbin/ps -eo 'stat uid pid ppid pcpu etime comm args' 2>/dev/null | \
+	egrep -i ["^ *S +[UID]+ +[PID]+ +[PID]+ +[%CPU]+ +[ELAPSD]+ +[COMMAND]+ +[COMMAND]+"] > /dev/null
 then
-	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
-	ac_cv_ps_command="$PATH_TO_PS -ao 'stat uid pid ppid vsz rss pcpu comm args'"
-	ac_cv_ps_format=["%s%*[ +] %d %d %d %d %d %f %s %n"]
-	ac_cv_ps_cols=9
+	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procpcpu,procetime,procprog,&pos]"
+	ac_cv_ps_command="/sbin/ps -eo 'stat uid pid ppid pcpu etime comm args'"
+	ac_cv_ps_format=["%s%*[ +<>] %d %d %d %f %s %s %n"]
+	ac_cv_ps_cols=8
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
 elif ps -eo 's comm vsz rss user uid pid ppid args' 2>/dev/null | \
