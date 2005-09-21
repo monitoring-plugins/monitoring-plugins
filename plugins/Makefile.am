@@ -10,11 +10,11 @@ DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
 LIBS = @LIBINTL@ @LIBS@ @SSLINCLUDE@
 MATHLIBS = @MATHLIBS@
 
-libexec_PROGRAMS = check_dhcp check_disk check_dummy check_http check_load \
+libexec_PROGRAMS = check_disk check_dummy check_http check_load \
 	check_mrtg check_mrtgtraf check_nwstat check_overcr check_ping \
 	check_real check_smtp check_ssh check_tcp check_time \
-	check_udp check_ups check_users negate urlize \
-	check_icmp @EXTRAS@
+	check_udp check_ups check_users negate \
+	urlize @EXTRAS@
 
 check_tcp_programs = check_ftp check_imap check_nntp check_pop \
 	check_udp2 @check_tcp_ssl@
@@ -45,7 +45,6 @@ AM_INSTALL_PROGRAM_FLAGS = @INSTALL_OPTS@
 ##############################################################################
 # the actual targets
 
-check_dhcp_LDADD = $(NETLIBS)
 check_dig_LDADD = $(NETLIBS) popen.o 
 check_disk_LDADD = $(BASEOBJS) popen.o
 check_dns_LDADD = $(NETLIBS) popen.o
@@ -54,7 +53,6 @@ check_fping_LDADD = $(NETLIBS) popen.o
 check_game_LDADD = $(BASEOBJS) popen.o
 check_http_LDADD = $(NETLIBS) $(SSLLIBS)
 check_hpjd_LDADD = $(NETLIBS) popen.o
-check_icmp_LDADD = $(SOCKETLIBS)
 check_ldap_LDADD = $(NETLIBS) $(LDAPLIBS)
 check_load_LDADD = $(BASEOBJS) popen.o
 check_mrtg_LDADD = $(BASEOBJS)
@@ -83,7 +81,6 @@ check_ide_smart_LDADD = $(BASEOBJS)
 negate_LDADD = $(BASEOBJS) popen.o
 urlize_LDADD = $(BASEOBJS) popen.o
 
-check_dhcp_DEPENDENCIES = check_dhcp.c $(NETOBJS) $(DEPLIBS) 
 check_dig_DEPENDENCIES = check_dig.c $(NETOBJS) popen.o $(DEPLIBS)
 check_disk_DEPENDENCIES = check_disk.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_dns_DEPENDENCIES = check_dns.c $(NETOBJS) popen.o $(DEPLIBS)
@@ -92,7 +89,6 @@ check_fping_DEPENDENCIES = check_fping.c $(NETOBJS) popen.o $(DEPLIBS)
 check_game_DEPENDENCIES = check_game.c  $(DEPLIBS)
 check_http_DEPENDENCIES = check_http.c $(NETOBJS) $(DEPLIBS)
 check_hpjd_DEPENDENCIES = check_hpjd.c $(NETOBJS) popen.o $(DEPLIBS)
-check_icmp_DEPENDENCIES = check_icmp.c
 check_ide_smart_DEPENDENCIES = check_ide_smart.c $(BASEOBJS) $(DEPLIBS)
 check_ldap_DEPENDENCIES = check_ldap.c $(NETOBJS) $(DEPLIBS)
 check_load_DEPENDENCIES = check_load.c $(BASEOBJS) popen.o $(DEPLIBS)

@@ -25,5 +25,5 @@ Use of duplication of macros in m4/np_curl.m4
 Coreutils team
 Copyright (C) 91, 1995-2004 Free Software Foundation, Inc.
 http://www.gnu.org/software/coreutils/
-Use of macros and lib files in m4/np_coreutils.m4 and lib/
+Use of macros and lib files in m4/np_coreutils.m4 and lib/. Setuid installs in plugins-root
 

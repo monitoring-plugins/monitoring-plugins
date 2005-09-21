@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = intl lib plugins plugins-scripts m4 po
+SUBDIRS = intl lib plugins plugins-scripts plugins-root m4 po
 
 EXTRA_DIST = config.rpath \
 	ABOUT-NLS ACKNOWLEDGEMENTS AUTHORS BUGS CHANGES CODING FAQ LEGAL \
@@ -15,6 +15,9 @@ DEFS = -DLOCALEDIR=\"$(localedir)\"
 
 dist-hook:
 	make THANKS nagios-plugins.spec pkg/fedora/nagios-plugins.spec
+
+install-root:
+	cd plugins-root && $(MAKE) $@
 
 test:
 	cd plugins; $(MAKE) test

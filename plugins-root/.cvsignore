@@ -1,0 +1,5 @@
+.deps
+Makefile.in
+Makefile
+check_dhcp
+check_icmp

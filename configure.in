@@ -1546,6 +1546,7 @@ AC_OUTPUT(
   lib/Makefile 
   m4/Makefile 
   plugins/Makefile 
+  plugins-root/Makefile
   plugins-scripts/Makefile 
   plugins-scripts/subst 
   plugins-scripts/utils.pm 

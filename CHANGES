@@ -1,5 +1,11 @@
 This file documents the major additions and syntax changes between releases.
 
+1.4.3
+	Setuid plugins (check_dhcp, check_icmp) separated into plugins-root/. Run make install as root to install
+
+1.4.2
+	Fix for Redhat ES4 for check_dns and check_dig
+
 1.4
 	IPv6 support in check_ping, check_by_ssh, check_http, check_ldap, check_smtp, check_tcp
 	Internationalisation support

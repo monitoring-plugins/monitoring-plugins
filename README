@@ -85,8 +85,13 @@ Nagios Plugins Quick-and-Dirty Installation Instructions
    'libexec/' subdirectory in the base directory you specified with
    the --prefix argument to the configure script.
 
+4) There are some plugins that require setuid. If you run make install as 
+   a non root user, they will not be installed. To install, switch to root and 
+   run:
 
-4) Verify that your host configuration file (hosts.cfg) for Nagios contains
+	make install-root
+
+5) Verify that your host configuration file (hosts.cfg) for Nagios contains
    the correct paths to the new plugins.
 
 
