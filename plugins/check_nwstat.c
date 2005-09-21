@@ -164,6 +164,9 @@ main(int argc, char **argv) {
 			break;
 		}
 
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		asprintf (&send_buffer,"UTIL%s\r\n",temp_buffer);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -195,6 +198,9 @@ main(int argc, char **argv) {
 		/* check number of user connections */
 	} else if (vars_to_check==CONNS) {
 
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		send_buffer = strdup ("CONNECT\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -213,6 +219,9 @@ main(int argc, char **argv) {
 
 		/* check % long term cache hits */
 	} else if (vars_to_check==LTCH) {
+
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
 
 		send_buffer = strdup ("S1\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
@@ -233,6 +242,9 @@ main(int argc, char **argv) {
 		/* check cache buffers */
 	} else if (vars_to_check==CBUFF) {
 
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		send_buffer = strdup ("S2\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -251,6 +263,9 @@ main(int argc, char **argv) {
 
 		/* check dirty cache buffers */
 	} else if (vars_to_check==CDBUFF) {
+
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
 
 		send_buffer = strdup ("S3\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
@@ -271,6 +286,9 @@ main(int argc, char **argv) {
 		/* check LRU sitting time in minutes */
 	} else if (vars_to_check==LRUM) {
 
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		send_buffer = strdup ("S5\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -290,6 +308,9 @@ main(int argc, char **argv) {
 
 		/* check KB free space on volume */
 	} else if (vars_to_check==VKF) {
+
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
 
 		asprintf (&send_buffer,"VKF%s\r\n",volume_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
@@ -314,6 +335,9 @@ main(int argc, char **argv) {
 
 		/* check % free space on volume */
 	} else if (vars_to_check==VPF) {
+
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
 
 		asprintf (&send_buffer,"VKF%s\r\n",volume_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
@@ -352,6 +376,9 @@ main(int argc, char **argv) {
 		/* check to see if DS Database is open or closed */
 	} else if (vars_to_check==DSDB) {
 
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		send_buffer = strdup ("S11\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -373,6 +400,9 @@ main(int argc, char **argv) {
 		/* check to see if logins are enabled */
 	} else if (vars_to_check==LOGINS) {
 
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		send_buffer = strdup ("S12\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -386,13 +416,19 @@ main(int argc, char **argv) {
 
 		/* check packet receive buffers */
 	} else if (vars_to_check==UPRB || vars_to_check==PUPRB) {
- 
+
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		asprintf (&send_buffer,"S15\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		used_packet_receive_buffers=atoi(recv_buffer);
+
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
 
 		asprintf (&send_buffer,"S16\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
@@ -420,6 +456,9 @@ main(int argc, char **argv) {
 		/* check SAP table entries */
 	} else if (vars_to_check==SAPENTRIES) {
 
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		if (sap_number==-1)
 			asprintf (&send_buffer,"S9\r\n");
 		else
@@ -443,6 +482,9 @@ main(int argc, char **argv) {
 		/* check KB purgeable space on volume */
 	} else if (vars_to_check==VKP) {
 
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		asprintf (&send_buffer,"VKP%s\r\n",volume_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -463,6 +505,9 @@ main(int argc, char **argv) {
 		/* check % purgeable space on volume */
 	} else if (vars_to_check==VPP) {
 
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		asprintf (&send_buffer,"VKP%s\r\n",volume_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -476,6 +521,9 @@ main(int argc, char **argv) {
 		} else {
 
 			purgeable_disk_space=strtoul(recv_buffer,NULL,10);
+
+			close(sd);
+			my_tcp_connect (server_address, server_port, &sd);
 
 			asprintf (&send_buffer,"VKS%s\r\n",volume_name);
 			result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
@@ -495,6 +543,9 @@ main(int argc, char **argv) {
 
 		/* check KB not yet purgeable space on volume */
 	} else if (vars_to_check==VKNP) {
+
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
 
 		asprintf (&send_buffer,"VKNP%s\r\n",volume_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
@@ -516,6 +567,9 @@ main(int argc, char **argv) {
 		/* check % not yet purgeable space on volume */
 	} else if (vars_to_check==VPNP) {
 
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		asprintf (&send_buffer,"VKNP%s\r\n",volume_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -529,6 +583,9 @@ main(int argc, char **argv) {
 		} else {
 
 			non_purgeable_disk_space=strtoul(recv_buffer,NULL,10);
+
+			close(sd);
+			my_tcp_connect (server_address, server_port, &sd);
 
 			asprintf (&send_buffer,"VKS%s\r\n",volume_name);
 			result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
@@ -549,6 +606,9 @@ main(int argc, char **argv) {
 		/* check # of open files */
 	} else if (vars_to_check==OFILES) {
 
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		asprintf (&send_buffer,"S18\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -566,6 +626,9 @@ main(int argc, char **argv) {
 		/* check # of abended threads (Netware 5.x only) */
 	} else if (vars_to_check==ABENDS) {
 
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		asprintf (&send_buffer,"S17\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -582,6 +645,9 @@ main(int argc, char **argv) {
 
 		/* check # of current service processes (Netware 5.x only) */
 	} else if (vars_to_check==CSPROCS) {
+
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
 
 		asprintf (&send_buffer,"S20\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
@@ -613,6 +679,9 @@ main(int argc, char **argv) {
 		/* check # Timesync Status */
 	} else if (vars_to_check==TSYNC) {
 
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		asprintf (&send_buffer,"S22\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -631,6 +700,9 @@ main(int argc, char **argv) {
 		/* check LRU sitting time in secondss */
 	} else if (vars_to_check==LRUS) {
 
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		send_buffer = strdup ("S4\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -647,6 +719,9 @@ main(int argc, char **argv) {
 		/* check % dirty cacheobuffers as a percentage of the total*/
 	} else if (vars_to_check==DCB) {
 
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		send_buffer = strdup ("S6\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -662,6 +737,9 @@ main(int argc, char **argv) {
 		/* check % total cache buffers as a percentage of the original*/
 	} else if (vars_to_check==TCB) {
 
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		send_buffer = strdup ("S7\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -675,6 +753,10 @@ main(int argc, char **argv) {
 		asprintf (&output_message,_("Total cache buffers = %lu%% of the original"),total_cache_buffers);
 		
 	} else if (vars_to_check==DSVER) {
+
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		asprintf (&send_buffer,"S13\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -685,6 +767,10 @@ main(int argc, char **argv) {
 		asprintf (&output_message,_("NDS Version %s"),recv_buffer);
 
 	} else if (vars_to_check==UPTIME) {
+
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		asprintf (&send_buffer,"UPTIME\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -697,6 +783,10 @@ main(int argc, char **argv) {
 		asprintf (&output_message,_("Up %s"),recv_buffer);
 
 	} else if (vars_to_check==NLM) {
+
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
+
 		asprintf (&send_buffer,"S24:%s\r\n",nlm_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
