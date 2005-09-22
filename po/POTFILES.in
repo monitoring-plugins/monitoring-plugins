@@ -1,5 +1,4 @@
 plugins/check_by_ssh.c
-plugins/check_dhcp.c
 plugins/check_dig.c
 plugins/check_disk.c
 plugins/check_dns.c
@@ -8,7 +7,6 @@ plugins/check_fping.c
 plugins/check_game.c
 plugins/check_hpjd.c
 plugins/check_http.c
-plugins/check_icmp.c
 plugins/check_ldap.c
 plugins/check_load.c
 plugins/check_mrtg.c
@@ -40,4 +38,5 @@ plugins/netutils.c
 plugins/popen.c
 plugins/urlize.c
 plugins/utils.c
-
+plugins-root/check_dhcp.c
+plugins-root/check_icmp.c
