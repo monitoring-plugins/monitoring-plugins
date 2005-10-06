@@ -600,6 +600,7 @@ AC_PATH_PROG(PATH_TO_PS,ps)
 AC_MSG_CHECKING(for ps syntax)
 
 dnl Now using the pst3/kmem hack for solaris systems to avoid truncation
+AM_CONDITIONAL(WANT_PST3, false)
 if test "$ac_cv_uname_s" = "SunOS"; then
 	#
 	# this is a very, very ugly hack, to hardcode the location for plugins
@@ -622,6 +623,7 @@ if test "$ac_cv_uname_s" = "SunOS"; then
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_cols=8
 	AC_MSG_RESULT([using nagios-plugins internal ps for solaris])
+	AM_CONDITIONAL(WANT_PST3, true)
 
 dnl Some gnu/linux systems (debian for one) don't like -axwo and need axwo.
 dnl so test for this first...

@@ -9,7 +9,12 @@ localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
 LIBS = @LIBINTL@ @LIBS@ @SSLINCLUDE@
 
-EXTRA_PROGRAMS = check_dhcp check_icmp pst3
+EXTRA_PROGRAMS = check_dhcp check_icmp
+
+if WANT_PST3
+	EXTRA_PROGRAMS += pst3
+	pst3_DEPENDENCIES = pst3.c
+endif
 
 BASEOBJS = ../plugins/utils.o ../lib/libnagiosplug.a ../lib/libcoreutils.a
 NETOBJS = ../plugins/netutils.o $(BASEOBJS) $(EXTRA_NETOBJS)
@@ -71,4 +76,3 @@ check_icmp_LDADD = $(SOCKETLIBS)
 
 check_dhcp_DEPENDENCIES = check_dhcp.c $(NETOBJS) $(DEPLIBS) 
 check_icmp_DEPENDENCIES = check_icmp.c
-pst3_DEPENDENCIES = pst3.c
