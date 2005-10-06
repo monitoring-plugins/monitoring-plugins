@@ -98,6 +98,7 @@ main (int argc, char **argv)
 	int result = STATE_UNKNOWN;
 	char *message;
 	char *data;
+	char *tunits;
 	char temp_buffer[MAX_INPUT_BUFFER];
 	double ups_utility_deviation = 0.0;
 	int res;
@@ -281,10 +282,12 @@ main (int argc, char **argv)
 	else {
  		supported_options |= UPS_TEMP;
 		if (temp_output_c) {
+		  tunits="degC";
 		  ups_temperature = atof (temp_buffer);
 		  asprintf (&message, "%sTemp=%3.1fC", message, ups_temperature);
 		}
 		else {
+		  tunits="degF";
 		  ups_temperature = (atof (temp_buffer) * 1.8) + 32;
 		  asprintf (&message, "%sTemp=%3.1fF", message, ups_temperature);
 		}
@@ -297,13 +300,13 @@ main (int argc, char **argv)
 				result = max_state (result, STATE_WARNING);
 			}
 			asprintf (&data, "%s %s", data,
-			          perfdata ("temp", (long)ups_temperature, "degF",
+			          perfdata ("temp", (long)ups_temperature, tunits,
 			                    check_warn, (long)(1000*warning_value),
 			                    check_crit, (long)(1000*critical_value),
 			                    TRUE, 0, FALSE, 0));
 		} else {
 			asprintf (&data, "%s %s", data,
-			          perfdata ("temp", (long)ups_temperature, "degF",
+			          perfdata ("temp", (long)ups_temperature, tunits,
 			                    FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
 		}
 	}
