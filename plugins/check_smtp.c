@@ -59,10 +59,17 @@ int check_certificate (X509 **);
 enum {
 	SMTP_PORT	= 25
 };
-const char *SMTP_EXPECT = "220";
-const char *SMTP_HELO = "HELO ";
-const char *SMTP_QUIT	= "QUIT\r\n";
-const char *SMTP_STARTTLS = "STARTTLS\r\n";
+#define SMTP_EXPECT "220"
+#define SMTP_HELO "HELO "
+#define SMTP_EHLO "EHLO "
+#define SMTP_QUIT "QUIT\r\n"
+#define SMTP_STARTTLS "STARTTLS\r\n"
+
+#ifndef HOST_MAX_BYTES
+#define HOST_MAX_BYTES 255
+#endif
+
+#define EHLO_SUPPORTS_STARTTLS 1
 
 int process_arguments (int, char **);
 int validate_arguments (void);
@@ -101,6 +108,9 @@ int critical_time = 0;
 int check_critical_time = FALSE;
 int verbose = 0;
 int use_ssl = FALSE;
+short use_ehlo = FALSE;
+short ssl_established = TRUE;
+char *localhostname = NULL;
 int sd;
 char buffer[MAX_INPUT_BUFFER];
 enum {
@@ -112,7 +122,7 @@ enum {
 int
 main (int argc, char **argv)
 {
-
+	short supports_tls=FALSE;
 	int n = 0;
 	double elapsed_time;
 	long microsec;
@@ -120,6 +130,7 @@ main (int argc, char **argv)
 	char *cmd_str = NULL;
 	char *helocmd = NULL;
 	struct timeval tv;
+	struct hostent *hp;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -129,12 +140,26 @@ main (int argc, char **argv)
 		usage4 (_("Could not parse arguments"));
 
 	/* initialize the HELO command with the localhostname */
-#ifndef HOST_MAX_BYTES
-#define HOST_MAX_BYTES 255
-#endif
-	helocmd = malloc (HOST_MAX_BYTES);
-	gethostname(helocmd, HOST_MAX_BYTES);
-	asprintf (&helocmd, "%s%s%s", SMTP_HELO, helocmd, "\r\n");
+	if(! localhostname){
+		localhostname = malloc (HOST_MAX_BYTES);
+		if(!localhostname){
+			printf(_("malloc() failed!\n"));
+			return STATE_CRITICAL;
+		}
+		if(gethostname(localhostname, HOST_MAX_BYTES)){
+			printf(_("gethostname() failed!\n"));
+			return STATE_CRITICAL;
+		}
+		hp = gethostbyname(localhostname);
+		if(!hp) helocmd = localhostname;
+		else helocmd = hp->h_name;
+	} else {
+		helocmd = localhostname;
+	}
+	if(use_ehlo)
+		asprintf (&helocmd, "%s%s%s", SMTP_EHLO, helocmd, "\r\n");
+	else
+		asprintf (&helocmd, "%s%s%s", SMTP_HELO, helocmd, "\r\n");
 
 	/* initialize the MAIL command with optional FROM command  */
 	asprintf (&cmd_str, "%sFROM: %s%s", mail_command, from_arg, "\r\n");
@@ -178,11 +203,26 @@ main (int argc, char **argv)
 			}
 		}
 
-		/* send the HELO command */
+		/* send the HELO/EHLO command */
 		send(sd, helocmd, strlen(helocmd), 0);
 
 		/* allow for response to helo command to reach us */
-		read (sd, buffer, MAXBUF - 1);
+		if(read (sd, buffer, MAXBUF - 1) < 0){
+			printf (_("recv() failed\n"));
+			return STATE_WARNING;
+		} else if(use_ehlo){
+			buffer[MAXBUF-1]='\0';
+			if(strstr(buffer, "250 STARTTLS") != NULL ||
+			   strstr(buffer, "250-STARTTLS") != NULL){
+				supports_tls=TRUE;
+			}
+		}
+
+		if(use_ssl && ! supports_tls){
+			printf(_("WARNING - TLS not supported by server\n"));
+			send (sd, SMTP_QUIT, strlen (SMTP_QUIT), 0);
+			return STATE_WARNING;
+		}
 
 #ifdef HAVE_SSL
 		if(use_ssl) {
@@ -192,11 +232,14 @@ main (int argc, char **argv)
 		  recv(sd,buffer, MAX_INPUT_BUFFER-1, 0); /* wait for it */
 		  if (!strstr (buffer, server_expect)) {
 		    printf (_("Server does not support STARTTLS\n"));
+		    send (sd, SMTP_QUIT, strlen (SMTP_QUIT), 0);
 		    return STATE_UNKNOWN;
 		  }
 		  if(connect_STARTTLS() != OK) {
 		    printf (_("CRITICAL - Cannot create SSL context.\n"));
 		    return STATE_CRITICAL;
+		  } else {
+			ssl_established = TRUE;
 		  }
 		  if ( check_cert ) {
 		    if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
@@ -333,6 +376,7 @@ process_arguments (int argc, char **argv)
 		{"timeout", required_argument, 0, 't'},
 		{"port", required_argument, 0, 'p'},
 		{"from", required_argument, 0, 'f'},
+		{"fqdn", required_argument, 0, 'F'},
 		{"command", required_argument, 0, 'C'},
 		{"response", required_argument, 0, 'R'},
 		{"nocommand", required_argument, 0, 'n'},
@@ -359,7 +403,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVv46t:p:f:e:c:w:H:C:R:SD:",
+		c = getopt_long (argc, argv, "+hVv46t:p:f:e:c:w:H:C:R:SD:F:",
 		                 longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -379,6 +423,10 @@ process_arguments (int argc, char **argv)
 				server_port = atoi (optarg);
 			else
 				usage4 (_("Port must be a positive integer"));
+			break;
+		case 'F':
+		/* localhostname */
+			localhostname = strdup(optarg);
 			break;
 		case 'f':									/* from argument */
 			from_arg = optarg;
@@ -439,6 +487,7 @@ process_arguments (int argc, char **argv)
 		case 'S':
 		/* starttls */
 			use_ssl = TRUE;
+			use_ehlo = TRUE;
 			break;
 		case 'D':
 		/* Check SSL cert validity */
@@ -581,7 +630,7 @@ connect_STARTTLS (void)
 
   /* Initialize SSL context */
   SSLeay_add_ssl_algorithms ();
-  meth = SSLv2_client_method ();
+  meth = SSLv23_client_method ();
   SSL_load_error_strings ();
   if ((ctx = SSL_CTX_new (meth)) == NULL)
     {
@@ -602,11 +651,6 @@ connect_STARTTLS (void)
     {
       printf (_("CRITICAL - Cannot initiate SSL handshake.\n"));
     }
-  /* this causes a seg faul
-     not sure why, being sloppy
-     and commenting it out */
-  /*  SSL_free (ssl); */
-  SSL_CTX_free(ctx);
   my_close();
   
   return STATE_CRITICAL;
@@ -708,7 +752,7 @@ int
 my_close (void)
 {
 #ifdef HAVE_SSL
-  if (use_ssl == TRUE) {
+  if (use_ssl == TRUE && ssl_established == TRUE) {
     SSL_shutdown (ssl);
     SSL_free (ssl);
     SSL_CTX_free (ctx);
