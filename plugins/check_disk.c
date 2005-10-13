@@ -64,6 +64,7 @@ struct name_list
 {
   char *name;
   int found;
+  int found_len;
   uintmax_t w_df;
   uintmax_t c_df;
   double w_dfp;
@@ -166,26 +167,56 @@ main (int argc, char **argv)
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
-	for (me = mount_list; me; me = me->me_next) {
+	/* if a list of paths has been selected, preseed the list with
+	 * the longest matching filesystem name by iterating across
+	 * the mountlist once ahead of time.  this will allow a query on
+	 * "/var/log" to return information about "/var" if no "/var/log"
+	 * filesystem exists, etc.  this is the default behavior already
+	 * with df-based checks, but for systems with their own space
+	 * checking routines, this should make them more consistent.
+	 */
+	if(path_select_list){
+		for (me = mount_list; me; me = me->me_next) {
+			walk_name_list(path_select_list, me->me_mountdir);
+			walk_name_list(path_select_list, me->me_devname);
+		}
+		/* now pretend we never saw anything, but keep found_len.
+		 * thus future searches will only match the best match */
+		for (temp_list = path_select_list; temp_list; temp_list=temp_list->name_next){
+			temp_list->found=0;
+		}
+	}
 
+	/* for every mount entry */
+	for (me = mount_list; me; me = me->me_next) {
+		/* if there's a list of paths to select, the current mount
+		 * entry matches in path or device name, get fs usage */
 		if (path_select_list &&
 		     (walk_name_list (path_select_list, me->me_mountdir) ||
-		      walk_name_list (path_select_list, me->me_devname) ) )
+		      walk_name_list (path_select_list, me->me_devname) ) ) {
 			get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
-		else if (dev_select_list || path_select_list)
+		/* else if there's a list of paths/devices to select (but
+		 * we didn't match above) skip to the next mount entry */
+		} else if (dev_select_list || path_select_list) {
 			continue;
-		else if (me->me_remote && show_local_fs)
+		/* skip remote filesystems if we're not interested in them */
+		} else if (me->me_remote && show_local_fs) {
 			continue;
-		else if (me->me_dummy && !show_all_fs)
+		/* skip pseudo fs's if we haven't asked for all fs's */
+		} else if (me->me_dummy && !show_all_fs) {
 			continue;
-		else if (fs_exclude_list && walk_name_list (fs_exclude_list, me->me_type))
+		/* skip excluded fstypes */
+		} else if (fs_exclude_list && walk_name_list (fs_exclude_list, me->me_type)) {
 			continue;
-		else if (dp_exclude_list && 
+		/* skip excluded fs's */	
+		} else if (dp_exclude_list && 
 		         (walk_name_list (dp_exclude_list, me->me_devname) ||
-		          walk_name_list (dp_exclude_list, me->me_mountdir)))
+		          walk_name_list (dp_exclude_list, me->me_mountdir))) {
 			continue;
-		else
+		/* otherwise, get fs usage */
+		} else {
 			get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
+		}
 
 		if (fsp.fsu_blocks && strcmp ("none", me->me_mountdir)) {
 			usp = (double)(fsp.fsu_blocks - fsp.fsu_bavail) * 100 / fsp.fsu_blocks;
@@ -229,7 +260,7 @@ main (int argc, char **argv)
 	/* Override result if paths specified and not found */
 	temp_list = path_select_list;
 	while (temp_list) {
-		if (temp_list->found != TRUE) {
+		if (!temp_list->found) {
 			asprintf (&output, _("%s [%s not found]"), output, temp_list->name);
 			result = STATE_CRITICAL;
 		}
@@ -285,6 +316,8 @@ process_arguments (int argc, char **argv)
 	se = (struct name_list *) malloc (sizeof (struct name_list));
 	se->name = strdup ("iso9660");
 	se->name_next = NULL;
+	se->found = 0;
+	se->found_len = 0;
 	*fstail = se;
 	fstail = &se->name_next;
 
@@ -388,6 +421,8 @@ process_arguments (int argc, char **argv)
 			se->c_df = c_df;
 			se->w_dfp = w_dfp;
 			se->c_dfp = c_dfp;
+			se->found = 0;
+			se->found_len = 0;
 			*pathtail = se;
 			pathtail = &se->name_next;
 			break;
@@ -399,6 +434,8 @@ process_arguments (int argc, char **argv)
 			se->c_df = 0;
 			se->w_dfp = -1.0;
 			se->c_dfp = -1.0;
+			se->found = 0;
+			se->found_len = 0;
 			*dptail = se;
 			dptail = &se->name_next;
 			break;
@@ -410,6 +447,8 @@ process_arguments (int argc, char **argv)
 			se->c_df = 0;
 			se->w_dfp = -1.0;
 			se->c_dfp = -1.0;
+			se->found = 0;
+			se->found_len = 0;
 			*fstail = se;
 			fstail = &se->name_next;
 			break;
@@ -458,6 +497,8 @@ process_arguments (int argc, char **argv)
 		se->c_df = c_df;
 		se->w_dfp = w_dfp;
 		se->c_dfp = c_dfp;
+		se->found =0;
+		se->found_len = 0;
 		*pathtail = se;
 	}
 
@@ -549,9 +590,16 @@ check_disk (double usp, double free_disk)
 int
 walk_name_list (struct name_list *list, const char *name)
 {
+	int name_len;
+	name_len = strlen(name);
 	while (list) {
-		if (! strcmp(list->name, name)) {
+		/* if the paths match up to the length of the mount path,
+		 * AND if the mount path name is longer than the longest
+		 * found match, we have a new winner */
+		if (name_len >= list->found_len && 
+		    ! strncmp(list->name, name, name_len)) {
 			list->found = 1;
+			list->found_len = name_len;
 			/* if required for name_lists that have not saved w_df, etc (eg exclude lists) */
 			if (list->w_df) w_df = list->w_df;
 			if (list->c_df) c_df = list->c_df;
