@@ -65,6 +65,8 @@ main (int argc, char **argv)
 	/* initialize mysql  */
 	mysql_init (&mysql);
 
+	mysql_options(&mysql,MYSQL_READ_DEFAULT_GROUP,"client");
+
 	/* establish a connection to the server and error checking */
 	if (!mysql_real_connect(&mysql,db_host,db_user,db_pass,db,db_port,NULL,0)) {
 		if (mysql_errno (&mysql) == CR_UNKNOWN_HOST)
