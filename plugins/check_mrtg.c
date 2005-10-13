@@ -49,7 +49,6 @@ main (int argc, char **argv)
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *temp_buffer;
 	time_t current_time;
-	char* message;
 	time_t timestamp = 0L;
 	unsigned long average_value_rate = 0L;
 	unsigned long maximum_value_rate = 0L;
@@ -112,43 +111,37 @@ main (int argc, char **argv)
 
 	/* if we couldn't read enough data, return an unknown error */
 	if (line <= 2) {
-		result = STATE_UNKNOWN;
-		asprintf (&message, _("Unable to process MRTG log file\n"));
+		printf (_("Unable to process MRTG log file\n"));
+		return STATE_UNKNOWN;
 	}
 
 	/* make sure the MRTG data isn't too old */
-	if (result == STATE_OK) {
-		time (&current_time);
-		if (expire_minutes > 0
-				&& (current_time - timestamp) > (expire_minutes * 60)) {
-			result = STATE_WARNING;
-			asprintf (&message, _("MRTG data has expired (%d minutes old)\n"),
-							 (int) ((current_time - timestamp) / 60));
-		}
+	time (&current_time);
+	if (expire_minutes > 0
+			&& (current_time - timestamp) > (expire_minutes * 60)) {
+		printf (_("MRTG data has expired (%d minutes old)\n"),
+		        (int) ((current_time - timestamp) / 60));
+		return STATE_WARNING;
 	}
 
 	/* else check the incoming/outgoing rates */
-	if (result == STATE_OK) {
-		if (use_average == TRUE)
-			rate = average_value_rate;
-		else
-			rate = maximum_value_rate;
+	if (use_average == TRUE)
+		rate = average_value_rate;
+	else
+		rate = maximum_value_rate;
 
-		if (rate > value_critical_threshold)
-			result = STATE_CRITICAL;
-		else if (rate > value_warning_threshold)
-			result = STATE_WARNING;
+	if (rate > value_critical_threshold)
+		result = STATE_CRITICAL;
+	else if (rate > value_warning_threshold)
+		result = STATE_WARNING;
 
-		asprintf (&message, "%s. %s = %lu %s|%s",
-		          (use_average == TRUE) ? _("Avg") : _("Max"),
-		          label, rate, units,
-		          perfdata(label, (long) rate, units,
-		                   (int) value_warning_threshold, (long) value_warning_threshold,
-		                   (int) value_critical_threshold, (long) value_critical_threshold,
-		                   0, 0, 0, 0));
-	}
-
-	printf ("%s\n", message);
+	printf("%s. %s = %lu %s|%s\n",
+	       (use_average == TRUE) ? _("Avg") : _("Max"),
+	       label, rate, units,
+	       perfdata(label, (long) rate, units,
+		        (int) value_warning_threshold, (long) value_warning_threshold,
+		        (int) value_critical_threshold, (long) value_critical_threshold,
+		        0, 0, 0, 0));
 
 	return result;
 }
