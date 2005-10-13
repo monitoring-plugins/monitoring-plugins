@@ -747,7 +747,7 @@ msgstr "Erwartet: %s aber: %s erhalten"
 #: plugins/check_dns.c:190
 #, c-format
 msgid "server %s is not authoritative for %s"
-msgstr "Server %s ist nicht authoritativ  für %s"
+msgstr "Server %s ist nicht autoritativ für %s"
 
 #: plugins/check_dns.c:202 plugins/check_dummy.c:59 plugins/check_http.c:999
 #: plugins/check_http.c:1257 plugins/check_procs.c:279
@@ -937,11 +937,11 @@ msgstr "FPING %s - %s (verloren=%.0f%% )|%s\n"
 
 #: plugins/check_fping.c:291
 msgid "Packet size must be a positive integer"
-msgstr "Packet size muss ein positiver Integer sein"
+msgstr "Paketgröße muss ein positiver Integer sein"
 
 #: plugins/check_fping.c:297
 msgid "Packet count must be a positive integer"
-msgstr "Packet count muss ein positiver Integer sein"
+msgstr "Paketanzahl muss ein positiver Integer sein"
 
 #: plugins/check_fping.c:303 plugins/check_time.c:307 plugins/check_udp.c:207
 msgid "Hostname was not supplied"
@@ -950,12 +950,12 @@ msgstr ""
 #: plugins/check_fping.c:323
 #, c-format
 msgid "%s: Only one threshold may be packet loss (%s)\n"
-msgstr "%s: Nur ein Wert darf für packet loss angegeben werden (%s)\n"
+msgstr "%s: Nur ein Wert darf für paket loss angegeben werden (%s)\n"
 
 #: plugins/check_fping.c:327
 #, c-format
 msgid "%s: Only one threshold must be packet loss (%s)\n"
-msgstr "%s: Nur ein Wert darf für packet loss angegeben werden (%s)\n"
+msgstr "%s: Nur ein Wert darf für paket loss angegeben werden (%s)\n"
 
 #: plugins/check_fping.c:359
 #, c-format
