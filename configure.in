@@ -1553,7 +1553,9 @@ dnl Wierd problem where ECHILD is returned from a wait call in error
 dnl Only appears to affect nslookup and dig calls. Only affects redhat around
 dnl 2.6.9-11 (okay in 2.6.9-5). Redhat investigating root cause
 dnl We patch plugins/popen.c
-if echo $ac_cv_uname_r | egrep "\.EL$" >/dev/null 2>&1 ; then
+dnl Need to add smp because uname different on those. May need to check
+dnl Fedora Core too in future
+if echo $ac_cv_uname_r | egrep "\.EL(smp)?$" >/dev/null 2>&1 ; then
 	AC_MSG_CHECKING(for redhat spopen problem)
 	( cd config_test && make && make test ) > /dev/null 2>&1
 	if test $? -eq 0 ; then
