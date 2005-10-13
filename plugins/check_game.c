@@ -328,8 +328,8 @@ void
 print_usage (void)
 {
 	printf ("\
-Usage: %s <game> <ip_address> [-p port] [-gf game_field] [-mf map_field]\n\
-                  [-pf ping_field]\n", progname);
+Usage: %s [-hvV] [-P port] [-t timeout] [-g game_field] [-m map_field]\n\
+                  [-p ping_field] [-G game-time] [-H hostname] <game> <ip_address>\n", progname);
 }
 
 /******************************************************************************
