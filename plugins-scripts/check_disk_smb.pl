@@ -87,18 +87,55 @@ my $warn = $1 if ($opt_w =~ /^([0-9]{1,2}\%?|100\%?|[0-9]+[kMG])$/);
 my $crit = $1 if ($opt_c =~ /^([0-9]{1,2}\%?|100\%?|[0-9]+[kMG])$/);
 ($crit) || usage("Invalid critical threshold: $opt_c\n");
 
+# split the type from the unit value
+#Check $warn and $crit for type (%/M/G) and set up for tests
+#P = Percent, K = KBytes
+my $warn_type;
+my $crit_type;
+
+if ($opt_w =~ /^([0-9]+)\%?$/) {
+	$warn = "$1";
+	$warn_type = "P";
+} elsif ($opt_w =~ /^([0-9]+)k$/) {
+	$warn_type = "K";
+	$warn = $1;
+} elsif ($opt_w =~ /^([0-9]+)M$/) {
+	$warn_type = "K";
+	$warn = $1 * 1024;
+} elsif ($opt_w =~ /^([0-9]+)G$/) {
+	$warn_type = "K";
+	$warn = $1 * 1048576;
+}
+if ($opt_c =~ /^([0-9]+)\%?$/) {
+	$crit = "$1";
+	$crit_type = "P";
+} elsif ($opt_c =~ /^([0-9]+)k$/) {
+	$crit_type = "K";
+	$crit = $1;
+} elsif ($opt_c =~ /^([0-9]+)M$/) {
+	$crit_type = "K";
+	$crit = $1 * 1024;
+} elsif ($opt_c =~ /^([0-9]+)G$/) {
+	$crit_type = "K";
+	$crit = $1 * 1048576;
+}
+
 # check if both warning and critical are percentage or size
-unless( ( ($opt_w =~ /([0-9]){1,2}$/ ) && ($opt_c =~ /([0-9]){1,2}$/ )  )|| (( $opt_w =~ /[kMG]/ ) && ($opt_c =~ /[kMG]/) )  ){
+unless( ( $warn_type eq "P" && $crit_type eq "P" ) || ( $warn_type ne "P" && $crit_type ne "P" ) ){
+	$opt_w =~ s/\%/\%\%/g;
+	$opt_c =~ s/\%/\%\%/g;
 	usage("Both warning and critical should be same type- warning: $opt_w critical: $opt_c \n");
 }
 
 # verify warning is less than critical
-if ( $opt_w =~ /[kMG]/) {
+if ( $warn_type eq "K") {
 	unless ( $warn > $crit) {
 		usage("Disk size: warning ($opt_w) should be greater than critical ($opt_c) \n");
 	}
 }else{
 	unless ( $warn < $crit) {
+		$opt_w =~ s/\%/\%\%/g;
+		$opt_c =~ s/\%/\%\%/g;
 		usage("Percentage: warning ($opt_w) should be less than critical ($opt_c) \n");
 	}
 }
@@ -147,35 +184,6 @@ if (/\s*(\d*) blocks of size (\d*)\. (\d*) blocks available/) {
 	my ($capper) = int(($3/$1)*100);
 	my ($mountpt) = "\\\\$host\\$share";
 
-	#Check $warn and $crit for type (%/M/G) and set up for tests
-	#P = Percent, K = KBytes
-	my $warn_type;
-	my $crit_type;
-
-	if ($opt_w =~ /^([0-9]+$)/) {
-		$warn_type = "P";
-	} elsif ($opt_w =~ /^([0-9]+)k$/) {
-		$warn_type = "K";
-		$warn = $1;
-	} elsif ($opt_w =~ /^([0-9]+)M$/) {
-		$warn_type = "K";
-		$warn = $1 * 1024;
-	} elsif ($opt_w =~ /^([0-9]+)G$/) {
-		$warn_type = "K";
-		$warn = $1 * 1048576;
-	}
-	if ($opt_c =~ /^([0-9]+$)/) {
-		$crit_type = "P";
-	} elsif ($opt_c =~ /^([0-9]+)k$/) {
-		$crit_type = "K";
-		$crit = $1;
-	} elsif ($opt_c =~ /^([0-9]+)M$/) {
-		$crit_type = "K";
-		$crit = $1 * 1024;
-	} elsif ($opt_c =~ /^([0-9]+)G$/) {
-		$crit_type = "K";
-		$crit = $1 * 1048576;
-	}
 
 	if (int($avail / 1024) > 0) {
 		$avail = int($avail / 1024);
