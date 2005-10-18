@@ -96,11 +96,19 @@ Nagios Plugins Quick-and-Dirty Installation Instructions
 
 
 
-That's it.  If you have any problems or questions, feel free send mail
+That's it! If you have any problems or questions, feel free send mail
 to nagiosplug-help@lists.sourceforge.net
 
 
 
+LICENSE STUFF
+-------------
+
+This software is released under the GNU Public License with the additional
+exemption that compiling, linking and/or using OpenSSL is allowed.
+
+See the COPYING file for the complete GPL text. 
+
 
 --
-Karl DeBisschop (kdebisschop@users.sourceforge.net)
+Nagios Plugins Team
