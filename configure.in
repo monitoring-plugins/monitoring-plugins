@@ -103,6 +103,7 @@ dnl Checks for programs.
 AC_PATH_PROG(PYTHON,python)
 AC_PATH_PROG(SH,sh)
 AC_PATH_PROG(PERL,perl)
+AC_PATH_PROG(LIBGNUTLS_CONFIG,libgnutls-config)
 
 dnl allow them to override the path of perl
 AC_ARG_WITH(perl,
@@ -110,6 +111,12 @@ AC_ARG_WITH(perl,
 	                [sets path to perl executable]),
 			with_perl=$withval,with_perl=$PERL)
 AC_SUBST(PERL, $with_perl)
+
+dnl allow for gnutls, if it exists, instead of openssl
+AC_ARG_WITH(gnutls,
+            ACX_HELP_STRING([--with-gnutls=PATH],
+                            [path to gnutls installation root]),
+            GNUTLS=$withval)
 
 AC_PATH_PROG(HOSTNAME,hostname)
 AC_PATH_PROG(BASENAME,basename)
@@ -409,6 +416,7 @@ if test "$FOUNDINCLUDE" = "no"; then
   CPPFLAGS="$_SAVEDCPPFLAGS"
 fi
 
+
 dnl Check for OpenSSL location
 AC_PATH_PROG(OPENSSL,openssl)
 if test "$OPENSSL" = "/usr/bin/openssl"; then
@@ -478,18 +486,43 @@ else
   fi
 fi
 
+dnl check for gnutls if openssl isn't found (or is disabled)
+FOUNDGNUTLS="no"
+if ! test "$FOUNDSSL" = "yes"; then
+	if test "$GNUTLS" = ""; then
+		CPPFLAGS="$CPPFLAGS -I$GNUTLS"
+	elif ! test "$LIBGNUTLS_CONFIG" = ""; then
+		CPPFLAGS="$CPPFLAGS -I`$LIBGNUTLS_CONFIG --prefix`"
+	fi
+	AC_CHECK_HEADERS([gnutls/openssl.h],FOUNDGNUTLS="yes",)
+	if test "$FOUNDGNUTLS" = "yes"; then
+		AC_CHECK_LIB(gnutls-openssl,main,SSLLIBS="-lgnutls-openssl")
+		FOUNDSSL="yes"
+	fi
+fi
+dnl end check for gnutls
+
 if test "$FOUNDSSL" = "yes"; then
   check_tcp_ssl="check_simap check_spop check_jabber check_nntps check_ssmtp"
   AC_SUBST(check_tcp_ssl)
   AC_SUBST(SSLLIBS)
   AC_DEFINE(HAVE_SSL,1,[Define if SSL libraries are found])
-  with_openssl="yes"
+  if test "$FOUNDGNUTLS" = "no"; then
+  	AC_DEFINE(USE_OPENSSL,1,[Define if using OpenSSL libraries])
+  	with_openssl="yes"
+	with_gnutls="no"
+  else
+  	AC_DEFINE(USE_GNUTLS,1,[Define if using gnutls libraries])
+  	with_gnutls="yes"
+	with_openssl="no"
+  fi
 else
   if test "$FOUNDSSL" = "no"; then
     AC_MSG_WARN([OpenSSL libs could not be found])
   dnl else deliberately disabled
   fi
   with_openssl="no"
+  with_gnutls="no"
   CPPFLAGS="$_SAVEDCPPFLAGS"
   LDFLAGS="$_SAVEDLDFLAGS"
 fi
@@ -1597,4 +1630,5 @@ ACX_FEATURE([with],[ping6-command])
 ACX_FEATURE([with],[lwres])
 ACX_FEATURE([with],[ipv6])
 ACX_FEATURE([with],[openssl])
+ACX_FEATURE([with],[gnutls])
 ACX_FEATURE([enable],[emulate-getaddrinfo])

@@ -28,21 +28,25 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "netutils.h"
 #include "utils.h"
 
-#ifdef HAVE_SSL_H
-#  include <rsa.h>
-#  include <crypto.h>
-#  include <x509.h>
-#  include <pem.h>
-#  include <ssl.h>
-#  include <err.h>
+#ifdef HAVE_GNUTLS_OPENSSL_H
+#  include <gnutls/openssl.h>
 #else
-#  ifdef HAVE_OPENSSL_SSL_H
-#    include <openssl/rsa.h>
-#    include <openssl/crypto.h>
-#    include <openssl/x509.h>
-#    include <openssl/pem.h>
-#    include <openssl/ssl.h>
-#    include <openssl/err.h>
+#  ifdef HAVE_SSL_H
+#    include <rsa.h>
+#    include <crypto.h>
+#    include <x509.h>
+#    include <pem.h>
+#    include <ssl.h>
+#    include <err.h>
+#  else
+#    ifdef HAVE_OPENSSL_SSL_H
+#      include <openssl/rsa.h>
+#      include <openssl/crypto.h>
+#      include <openssl/x509.h>
+#      include <openssl/pem.h>
+#      include <openssl/ssl.h>
+#      include <openssl/err.h>
+#    endif
 #  endif
 #endif
 
@@ -54,7 +58,9 @@ static SSL_CTX *ctx;
 static SSL *ssl;
 static X509 *server_cert;
 static int connect_SSL (void);
+# ifdef USE_OPENSSL
 static int check_certificate (X509 **);
+# endif /* USE_OPENSSL */
 # define my_recv(buf, len) ((flags & FLAG_SSL) ? SSL_read(ssl, buf, len) : read(sd, buf, len))
 #else
 # define my_recv(buf, len) read(sd, buf, len)
@@ -231,6 +237,7 @@ main (int argc, char **argv)
 	if (flags & FLAG_SSL && check_cert == TRUE) {
 		if (connect_SSL () != OK)
 			die (STATE_CRITICAL,_("CRITICAL - Could not make SSL connection\n"));
+#  ifdef USE_OPENSSL /* XXX gnutls does cert checking differently */
 		if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
 			result = check_certificate (&server_cert);
 			X509_free(server_cert);
@@ -239,6 +246,7 @@ main (int argc, char **argv)
 			printf(_("CRITICAL - Cannot retrieve server certificate.\n"));
 			result = STATE_CRITICAL;
 		}
+#  endif /* USE_OPENSSL */
 
 		SSL_shutdown (ssl);
 		SSL_free (ssl);
@@ -563,12 +571,14 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'D': /* Check SSL cert validity - days 'til certificate expiration */
 #ifdef HAVE_SSL
+#  ifdef USE_OPENSSL /* XXX */
 			if (!is_intnonneg (optarg))
 				usage2 (_("Invalid certificate expiration period"), optarg);
 			days_till_exp = atoi (optarg);
 			check_cert = TRUE;
 			flags |= FLAG_SSL;
 			break;
+#  endif /* USE_OPENSSL */
 #endif
 			/* fallthrough if we don't have ssl */
 		case 'S':
@@ -626,7 +636,9 @@ connect_SSL (void)
           return OK;
         /* ERR_print_errors_fp (stderr); */
 	printf (_("CRITICAL - Cannot make  SSL connection "));
+#ifdef USE_OPENSSL /* XXX */
         ERR_print_errors_fp (stdout);
+#endif /* USE_OPENSSL */
 	/* printf("\n"); */
       }
       else
@@ -642,6 +654,7 @@ connect_SSL (void)
   return STATE_CRITICAL;
 }
 
+#ifdef USE_OPENSSL /* XXX */
 static int
 check_certificate (X509 ** certificate)
 {
@@ -715,6 +728,7 @@ check_certificate (X509 ** certificate)
 
         return STATE_OK;
 }
+#  endif /* USE_OPENSSL */
 #endif /* HAVE_SSL */
 
 
