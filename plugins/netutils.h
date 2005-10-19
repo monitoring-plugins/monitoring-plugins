@@ -32,7 +32,11 @@
 *
 ******************************************************************************/
 
+#ifndef _NETUTILS_H_
+#define _NETUTILS_H_
+
 #include "config.h"
+#include "common.h"
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -77,3 +81,14 @@ extern unsigned int socket_timeout;
 extern int econn_refuse_state;
 extern int was_refused;
 extern int address_family;
+
+/* SSL-Related functionality */
+#ifdef HAVE_SSL
+/* maybe this could be merged with the above np_net_connect, via some flags */
+int np_net_ssl_init(int sd);
+void np_net_ssl_cleanup();
+int np_net_ssl_write(const void *buf, int num);
+int np_net_ssl_read(void *buf, int num);
+#endif /* HAVE_SSL */
+
+#endif /* _NETUTILS_H_ */

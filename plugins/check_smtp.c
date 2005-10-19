@@ -53,7 +53,9 @@ SSL_CTX *ctx;
 SSL *ssl;
 X509 *server_cert;
 int connect_STARTTLS (void);
+#  ifdef USE_OPENSSL
 int check_certificate (X509 **);
+#  endif
 #endif
 
 enum {
@@ -241,6 +243,7 @@ main (int argc, char **argv)
 		  } else {
 			ssl_established = TRUE;
 		  }
+#  ifdef USE_OPENSSL
 		  if ( check_cert ) {
 		    if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
 		      result = check_certificate (&server_cert);
@@ -254,6 +257,7 @@ main (int argc, char **argv)
 		    my_close();
 		    return result;
 		  }
+#  endif /* USE_OPENSSL */
 		}
 #endif
 				
@@ -491,7 +495,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'D':
 		/* Check SSL cert validity */
-#ifdef HAVE_SSL
+#ifdef USE_OPENSSL
 			if (!is_intnonneg (optarg))
 				usage2 ("Invalid certificate expiration period",optarg);
 				days_till_exp = atoi (optarg);
@@ -645,7 +649,9 @@ connect_STARTTLS (void)
 	 I look for success instead (1) */
       if (SSL_connect (ssl) == 1)
 	return OK;
+#  ifdef USE_OPENSSL
       ERR_print_errors_fp (stderr);
+#  endif
     }
   else
     {
@@ -656,6 +662,7 @@ connect_STARTTLS (void)
   return STATE_CRITICAL;
 }
 
+#  ifdef USE_OPENSSL
 int
 check_certificate (X509 ** certificate)
 {
@@ -728,6 +735,7 @@ check_certificate (X509 ** certificate)
   
   return STATE_OK;  
 }
+#  endif /* USE_OPENSSL */
 #endif
 
 int

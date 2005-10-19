@@ -234,6 +234,54 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 	}
 }
 
+#ifdef HAVE_SSL
+static SSL_CTX *c=NULL;
+static SSL *s=NULL;
+
+int np_net_ssl_init (int sd){
+		SSL_METHOD *m=NULL;
+		/* Initialize SSL context */
+		SSLeay_add_ssl_algorithms ();
+		m = SSLv23_client_method ();
+		SSL_load_error_strings ();
+		OpenSSL_add_all_algorithms();
+		if ((c = SSL_CTX_new (m)) == NULL) {
+				printf (_("CRITICAL - Cannot create SSL context.\n"));
+				return STATE_CRITICAL;
+		}
+		if ((s = SSL_new (c)) != NULL){
+				SSL_set_fd (s, sd);
+				if (SSL_connect(s) == 1){
+						return OK;
+				} else {
+						printf (_("CRITICAL - Cannot make SSL connection "));
+#ifdef USE_OPENSSL /* XXX look into ERR_error_string */
+						ERR_print_errors_fp (stdout);
+#endif /* USE_OPENSSL */
+				}
+		} else {
+				printf (_("CRITICAL - Cannot initiate SSL handshake.\n"));
+		}
+		return STATE_CRITICAL;
+}
+
+void np_net_ssl_cleanup (){
+		if(s){
+				SSL_shutdown (s);
+				SSL_free (s);
+				if(c) SSL_CTX_free (c);
+		}
+}
+
+int np_net_ssl_write(const void *buf, int num){
+	return SSL_write(s, buf, num);
+}
+
+int np_net_ssl_read(void *buf, int num){
+	return SSL_read(s, buf, num);
+}
+
+#endif /* HAVE_SSL */
 
 int
 send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int recv_size)

@@ -2,12 +2,12 @@
 
 VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t 
 
-INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/intl @LDAPINCLUDE@ @PGINCLUDE@ 
+INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/intl @LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@
 
 datadir = @datadir@
 localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
-LIBS = @LIBINTL@ @LIBS@ @SSLINCLUDE@
+LIBS = @LIBINTL@ @LIBS@ @SSLLIBS@ 
 MATHLIBS = @MATHLIBS@
 
 libexec_PROGRAMS = check_disk check_dummy check_http check_load \
@@ -51,7 +51,7 @@ check_dns_LDADD = $(NETLIBS) popen.o
 check_dummy_LDADD = $(BASEOBJS)
 check_fping_LDADD = $(NETLIBS) popen.o
 check_game_LDADD = $(BASEOBJS) popen.o
-check_http_LDADD = $(NETLIBS) $(SSLLIBS)
+check_http_LDADD = $(NETLIBS)
 check_hpjd_LDADD = $(NETLIBS) popen.o
 check_ldap_LDADD = $(NETLIBS) $(LDAPLIBS)
 check_load_LDADD = $(BASEOBJS) popen.o
@@ -68,10 +68,10 @@ check_procs_LDADD = $(BASEOBJS) popen.o
 check_radius_LDADD = $(NETLIBS) $(RADIUSLIBS)
 check_real_LDADD = $(NETLIBS)
 check_snmp_LDADD = $(BASEOBJS) popen.o
-check_smtp_LDADD = $(NETLIBS) $(SSLLIBS)
+check_smtp_LDADD = $(NETLIBS) 
 check_ssh_LDADD = $(NETLIBS)
 check_swap_LDADD = $(MATHLIBS) $(BASEOBJS) popen.o
-check_tcp_LDADD = $(NETLIBS) $(SSLLIBS)
+check_tcp_LDADD = $(NETLIBS)
 check_time_LDADD = $(NETLIBS)
 check_udp_LDADD = $(NETLIBS)
 check_ups_LDADD = $(NETLIBS)

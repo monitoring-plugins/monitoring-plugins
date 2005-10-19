@@ -2,12 +2,12 @@
 
 VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t 
 
-INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/intl -I$(top_srcdir)/plugins
+INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/intl -I$(top_srcdir)/plugins @SSLINCLUDE@
 
 datadir = @datadir@
 localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
-LIBS = @LIBINTL@ @LIBS@ @SSLINCLUDE@
+LIBS = @LIBINTL@ @LIBS@ @SSLLIBS@
 
 EXTRA_PROGRAMS = check_dhcp check_icmp
 

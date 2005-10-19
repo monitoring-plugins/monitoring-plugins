@@ -28,42 +28,19 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "netutils.h"
 #include "utils.h"
 
-#ifdef HAVE_GNUTLS_OPENSSL_H
-#  include <gnutls/openssl.h>
-#else
-#  ifdef HAVE_SSL_H
-#    include <rsa.h>
-#    include <crypto.h>
-#    include <x509.h>
-#    include <pem.h>
-#    include <ssl.h>
-#    include <err.h>
-#  else
-#    ifdef HAVE_OPENSSL_SSL_H
-#      include <openssl/rsa.h>
-#      include <openssl/crypto.h>
-#      include <openssl/x509.h>
-#      include <openssl/pem.h>
-#      include <openssl/ssl.h>
-#      include <openssl/err.h>
-#    endif
-#  endif
-#endif
-
 #ifdef HAVE_SSL
 static int check_cert = FALSE;
 static int days_till_exp;
 static char *randbuff = "";
-static SSL_CTX *ctx;
-static SSL *ssl;
 static X509 *server_cert;
-static int connect_SSL (void);
 # ifdef USE_OPENSSL
 static int check_certificate (X509 **);
 # endif /* USE_OPENSSL */
-# define my_recv(buf, len) ((flags & FLAG_SSL) ? SSL_read(ssl, buf, len) : read(sd, buf, len))
+# define my_recv(buf, len) ((flags & FLAG_SSL) ? np_net_ssl_read(buf, len) : read(sd, buf, len))
+# define my_send(buf, len) ((flags & FLAG_SSL) ? np_net_ssl_write(buf, len) : send(sd, buf, len, 0))
 #else
 # define my_recv(buf, len) read(sd, buf, len)
+# define my_send(buf, len) send(sd, buf, len, 0)
 #endif
 
 
@@ -233,11 +210,21 @@ main (int argc, char **argv)
 
 	/* try to connect to the host at the given port number */
 	gettimeofday (&tv, NULL);
+
+	result = np_net_connect (server_address, server_port, &sd, PROTOCOL);
+	if (result == STATE_CRITICAL) return STATE_CRITICAL;
+
 #ifdef HAVE_SSL
-	if (flags & FLAG_SSL && check_cert == TRUE) {
-		if (connect_SSL () != OK)
+	if (flags & FLAG_SSL){
+		result = np_net_ssl_init(sd);
+		if(result != STATE_OK) return result;
+		/* XXX does np_net_ssl take care of printing an error?
 			die (STATE_CRITICAL,_("CRITICAL - Could not make SSL connection\n"));
+		*/
+	}
 #  ifdef USE_OPENSSL /* XXX gnutls does cert checking differently */
+	/*
+	if (flags & FLAG_SSL && check_cert == TRUE) {
 		if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
 			result = check_certificate (&server_cert);
 			X509_free(server_cert);
@@ -246,30 +233,21 @@ main (int argc, char **argv)
 			printf(_("CRITICAL - Cannot retrieve server certificate.\n"));
 			result = STATE_CRITICAL;
 		}
+	}
+	*/
 #  endif /* USE_OPENSSL */
+#endif
 
-		SSL_shutdown (ssl);
-		SSL_free (ssl);
-		SSL_CTX_free (ctx);
-		close (sd);
+	if(result != STATE_OK){
+#ifdef HAVE_SSL
+		np_net_ssl_cleanup();
+#endif
+		if(sd) close(sd);
 		return result;
 	}
-	else if (flags & FLAG_SSL)
-		result = connect_SSL ();
-	else
-#endif
-		result = np_net_connect (server_address, server_port, &sd, PROTOCOL);
-
-	if (result == STATE_CRITICAL)
-		return STATE_CRITICAL;
 
 	if (server_send != NULL) {		/* Something to send? */
-#ifdef HAVE_SSL
-		if (flags & FLAG_SSL)
-			SSL_write(ssl, server_send, (int)strlen(server_send));
-		else
-#endif
-			send (sd, server_send, strlen(server_send), 0);
+		my_send(server_send, strlen(server_send));
 	}
 
 	if (delay > 0) {
@@ -332,21 +310,12 @@ main (int argc, char **argv)
 	}
 
 	if (server_quit != NULL) {
-#ifdef HAVE_SSL
-		if (flags & FLAG_SSL) {
-			SSL_write (ssl, server_quit, (int)strlen(server_quit));
-			SSL_shutdown (ssl);
- 			SSL_free (ssl);
- 			SSL_CTX_free (ctx);
-		}
-		else
-#endif
-			send (sd, server_quit, strlen (server_quit), 0);
+		my_send(server_quit, strlen(server_quit));
 	}
-
-	/* close the connection */
-	if (sd)
-		close (sd);
+#ifdef HAVE_SSL
+	np_net_ssl_cleanup();
+#endif 
+	if (sd) close (sd);
 
 	microsec = deltime (tv);
 	elapsed_time = (double)microsec / 1.0e6;
@@ -600,61 +569,7 @@ process_arguments (int argc, char **argv)
 
 /* SSL-specific functions */
 #ifdef HAVE_SSL
-static int
-connect_SSL (void)
-{
-  SSL_METHOD *meth;
-
-  /* Initialize SSL context */
-  SSLeay_add_ssl_algorithms ();
-  meth = SSLv23_client_method ();
-  SSL_load_error_strings ();
-  OpenSSL_add_all_algorithms();
-  if ((ctx = SSL_CTX_new (meth)) == NULL)
-    {
-      printf (_("CRITICAL - Cannot create SSL context.\n"));
-      return STATE_CRITICAL;
-    }
-
-  /* Initialize alarm signal handling */
-  signal (SIGALRM, socket_timeout_alarm_handler);
-
-  /* Set socket timeout */
-  alarm (socket_timeout);
-
-  /* Save start time */
-  time (&start_time);
-
-  /* Make TCP connection */
-  if (my_tcp_connect (server_address, server_port, &sd) == STATE_OK && was_refused == FALSE)
-    {
-    /* Do the SSL handshake */
-      if ((ssl = SSL_new (ctx)) != NULL)
-      {
-        SSL_set_fd (ssl, sd);
-        if (SSL_connect(ssl) == 1)
-          return OK;
-        /* ERR_print_errors_fp (stderr); */
-	printf (_("CRITICAL - Cannot make  SSL connection "));
-#ifdef USE_OPENSSL /* XXX */
-        ERR_print_errors_fp (stdout);
-#endif /* USE_OPENSSL */
-	/* printf("\n"); */
-      }
-      else
-      {
-        printf (_("CRITICAL - Cannot initiate SSL handshake.\n"));
-      }
-      SSL_free (ssl);
-    }
-
-  SSL_CTX_free (ctx);
-  close (sd);
-
-  return STATE_CRITICAL;
-}
-
-#ifdef USE_OPENSSL /* XXX */
+#  ifdef USE_OPENSSL /* XXX */
 static int
 check_certificate (X509 ** certificate)
 {

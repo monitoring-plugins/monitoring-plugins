@@ -65,7 +65,9 @@ SSL_CTX *ctx;
 SSL *ssl;
 X509 *server_cert;
 int connect_SSL (void);
+#  ifdef USE_OPENSSL
 int check_certificate (X509 **);
+#  endif
 #endif
 int no_body = FALSE;
 int maximum_age = -1;
@@ -166,7 +168,7 @@ main (int argc, char **argv)
 	(void) alarm (socket_timeout);
 	gettimeofday (&tv, NULL);
 
-#ifdef HAVE_SSL
+#ifdef USE_OPENSSL
 	if (use_ssl && check_cert == TRUE) {
 		if (connect_SSL () != OK)
 			die (STATE_CRITICAL, _("HTTP CRITICAL - Could not make SSL connection\n"));
@@ -305,7 +307,7 @@ process_arguments (int argc, char **argv)
 				server_port = HTTPS_PORT;
 			break;
 		case 'C': /* Check SSL cert validity */
-#ifdef HAVE_SSL
+#ifdef USE_OPENSSL
 			if (!is_intnonneg (optarg))
 				usage2 (_("Invalid certificate expiration period"), optarg);
 			else {
@@ -799,10 +801,11 @@ check_http (void)
 		if (connect_SSL () != OK) {
 			die (STATE_CRITICAL, _("Unable to open TCP socket\n"));
 		}
-
+#ifdef USE_OPENSSL
 		if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
 			X509_free (server_cert);
 		}
+#endif
 		else {
 			printf (_("CRITICAL - Cannot retrieve server certificate.\n"));
 			return STATE_CRITICAL;
@@ -857,7 +860,9 @@ check_http (void)
 #ifdef HAVE_SSL
 	if (use_ssl == TRUE) {
 		if (SSL_write (ssl, buf, (int)strlen(buf)) == -1) {
+#  ifdef USE_OPENSSL
 			ERR_print_errors_fp (stderr);
+#  endif
 			return STATE_CRITICAL;
 		}
 	}
@@ -1278,11 +1283,15 @@ int connect_SSL (void)
 	if (my_tcp_connect (server_address, server_port, &sd) == STATE_OK) {
 		/* Do the SSL handshake */
 		if ((ssl = SSL_new (ctx)) != NULL) {
+#ifdef USE_OPENSSL
 			SSL_set_cipher_list(ssl, "ALL");
+#endif
 			SSL_set_fd (ssl, sd);
 			if (SSL_connect (ssl) != -1)
 				return OK;
+#ifdef USE_OPENSSL
 			ERR_print_errors_fp (stderr);
+#endif
 		}
 		else {
 			printf (_("CRITICAL - Cannot initiate SSL handshake.\n"));
@@ -1299,7 +1308,7 @@ int connect_SSL (void)
 
 
 
-#ifdef HAVE_SSL
+#ifdef USE_OPENSSL
 int
 check_certificate (X509 ** certificate)
 {

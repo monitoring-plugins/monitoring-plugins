@@ -32,6 +32,9 @@
  *
  *****************************************************************************/
 
+#ifndef _COMMON_H_
+#define _COMMON_H_
+
 #include "config.h"
 
 #ifdef HAVE_FEATURES_H
@@ -146,6 +149,29 @@ int snprintf(char *str, size_t size, const  char  *format, ...);
 int vsnprintf(char *str, size_t size, const char  *format, va_list ap);
 #endif
 
+/* SSL implementations */
+#ifdef HAVE_GNUTLS_OPENSSL_H
+#  include <gnutls/openssl.h>
+#else
+#  ifdef HAVE_SSL_H
+#    include <rsa.h>
+#    include <crypto.h>
+#    include <x509.h>
+#    include <pem.h>
+#    include <ssl.h>
+#    include <err.h>
+#  else
+#    ifdef HAVE_OPENSSL_SSL_H
+#      include <openssl/rsa.h>
+#      include <openssl/crypto.h>
+#      include <openssl/x509.h>
+#      include <openssl/pem.h>
+#      include <openssl/ssl.h>
+#      include <openssl/err.h>
+#    endif
+#  endif
+#endif
+
 /*
  *
  * Standard Values
@@ -191,3 +217,5 @@ enum {
 #ifndef __GNUC__
 # define __attribute__(x) /* do nothing */
 #endif
+
+#endif /* _COMMON_H_ */
