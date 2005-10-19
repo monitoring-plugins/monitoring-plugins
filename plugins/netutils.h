@@ -89,6 +89,7 @@ int np_net_ssl_init(int sd);
 void np_net_ssl_cleanup();
 int np_net_ssl_write(const void *buf, int num);
 int np_net_ssl_read(void *buf, int num);
+int np_net_ssl_check_cert(int days_till_exp);
 #endif /* HAVE_SSL */
 
 #endif /* _NETUTILS_H_ */

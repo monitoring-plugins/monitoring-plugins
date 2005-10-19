@@ -37,38 +37,17 @@ enum {
 	HTTPS_PORT = 443
 };
 
-#ifdef HAVE_SSL_H
-#include <rsa.h>
-#include <crypto.h>
-#include <x509.h>
-#include <pem.h>
-#include <ssl.h>
-#include <err.h>
-#include <rand.h>
-#else
-# ifdef HAVE_OPENSSL_SSL_H
-# include <openssl/rsa.h>
-# include <openssl/crypto.h>
-# include <openssl/x509.h>
-# include <openssl/pem.h>
-# include <openssl/ssl.h>
-# include <openssl/err.h>
-# include <openssl/rand.h>
-# endif
-#endif
-
 #ifdef HAVE_SSL
 int check_cert = FALSE;
 int days_till_exp;
 char *randbuff;
-SSL_CTX *ctx;
-SSL *ssl;
 X509 *server_cert;
-int connect_SSL (void);
-#  ifdef USE_OPENSSL
-int check_certificate (X509 **);
-#  endif
-#endif
+#  define my_recv(buf, len) ((use_ssl) ? np_net_ssl_read(buf, len) : read(sd, buf, len))
+#  define my_send(buf, len) ((use_ssl) ? np_net_ssl_write(buf, len) : send(sd, buf, len, 0))
+#else /* ifndef HAVE_SSL */
+#  define my_recv(buf, len) read(sd, buf, len)
+#  define my_send(buf, len) send(sd, buf, len, 0)
+#endif /* HAVE_SSL */
 int no_body = FALSE;
 int maximum_age = -1;
 
@@ -132,8 +111,6 @@ int server_type_check(const char *type);
 int server_port_check(int ssl_flag);
 char *perfd_time (double microsec);
 char *perfd_size (int page_len);
-int my_recv (void);
-int my_close (void);
 void print_help (void);
 void print_usage (void);
 
@@ -168,29 +145,7 @@ main (int argc, char **argv)
 	(void) alarm (socket_timeout);
 	gettimeofday (&tv, NULL);
 
-#ifdef USE_OPENSSL
-	if (use_ssl && check_cert == TRUE) {
-		if (connect_SSL () != OK)
-			die (STATE_CRITICAL, _("HTTP CRITICAL - Could not make SSL connection\n"));
-		if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
-			result = check_certificate (&server_cert);
-			X509_free (server_cert);
-		}
-		else {
-			printf (_("CRITICAL - Cannot retrieve server certificate.\n"));
-			result = STATE_CRITICAL;
-		}
-		SSL_shutdown (ssl);
-		SSL_free (ssl);
-		SSL_CTX_free (ctx);
-		close (sd);
-	}
-	else {
-		result = check_http ();
-	}
-#else
 	result = check_http ();
-#endif
 	return result;
 }
 
@@ -790,34 +745,27 @@ check_http (void)
 	long microsec;
 	double elapsed_time;
 	int page_len = 0;
+	int result = STATE_UNKNOWN;
 #ifdef HAVE_SSL
 	int sslerr;
 #endif
 
 	/* try to connect to the host at the given port number */
+	if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK)
+		die (STATE_CRITICAL, _("Unable to open TCP socket\n"));
 #ifdef HAVE_SSL
 	if (use_ssl == TRUE) {
-
-		if (connect_SSL () != OK) {
-			die (STATE_CRITICAL, _("Unable to open TCP socket\n"));
+		np_net_ssl_init(sd);
+		if (check_cert == TRUE) {
+			result = np_net_ssl_check_cert(days_till_exp);
+			if(result != STATE_OK){
+				np_net_ssl_cleanup();
+				if(sd) close(sd);
+				return result;
+			}
 		}
-#  ifdef USE_OPENSSL
-		if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
-			X509_free (server_cert);
-		}
-		else {
-			printf (_("CRITICAL - Cannot retrieve server certificate.\n"));
-			return STATE_CRITICAL;
-		}
-#  endif /* USE_OPENSSL */
 	}
-	else {
-#endif
-		if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK)
-			die (STATE_CRITICAL, _("Unable to open TCP socket\n"));
-#ifdef HAVE_SSL
-	}
-#endif
+#endif /* HAVE_SSL */
 
 	asprintf (&buf, "%s %s HTTP/1.0\r\n%s\r\n", http_method, server_url, user_agent);
 
@@ -853,28 +801,12 @@ check_http (void)
 		asprintf (&buf, "%s%s", buf, CRLF);
 	}
 
-	if (verbose)
-		printf ("%s\n", buf);
-
-#ifdef HAVE_SSL
-	if (use_ssl == TRUE) {
-		if (SSL_write (ssl, buf, (int)strlen(buf)) == -1) {
-#  ifdef USE_OPENSSL
-			ERR_print_errors_fp (stderr);
-#  endif
-			return STATE_CRITICAL;
-		}
-	}
-	else {
-#endif
-		send (sd, buf, strlen (buf), 0);
-#ifdef HAVE_SSL
-	}
-#endif
+	if (verbose) printf ("%s\n", buf);
+	my_send (buf, strlen (buf));
 
 	/* fetch the page */
 	full_page = strdup("");
-	while ((i = my_recv ()) > 0) {
+	while ((i = my_recv (buffer, MAX_INPUT_BUFFER-1)) > 0) {
 		buffer[i] = '\0';
 		asprintf (&full_page, "%s%s", full_page, buffer);
 		pagesize += i;
@@ -887,6 +819,7 @@ check_http (void)
 
 	if (i < 0 && errno != ECONNRESET) {
 #ifdef HAVE_SSL
+		/*
 		if (use_ssl) {
 			sslerr=SSL_get_error(ssl, i);
 			if ( sslerr == SSL_ERROR_SSL ) {
@@ -896,10 +829,13 @@ check_http (void)
 			}
 		}
 		else {
+		*/
 #endif
 			die (STATE_CRITICAL, _("Error on receive\n"));
 #ifdef HAVE_SSL
+			/* XXX
 		}
+		*/
 #endif
 	}
 
@@ -908,7 +844,10 @@ check_http (void)
 		die (STATE_CRITICAL, _("No data received %s\n"), timestamp);
 
 	/* close the connection */
-	my_close ();
+#ifdef HAVE_SSL
+	np_net_ssl_cleanup();
+#endif
+	if(sd) close(sd);
 
 	/* reset the alarm */
 	alarm (0);
@@ -1248,143 +1187,6 @@ server_port_check (int ssl_flag)
 		return HTTP_PORT;
 }
 
-
-
-#ifdef HAVE_SSL
-int connect_SSL (void)
-{
-	SSL_METHOD *meth;
-
-	asprintf (&randbuff, "%s", "qwertyuiopasdfghjklqwertyuiopasdfghjkl");
-	RAND_seed (randbuff, (int)strlen(randbuff));
-	if (verbose)
-		printf(_("SSL seeding: %s\n"), (RAND_status()==1 ? _("OK") : _("Failed")) );
-
-	/* Initialize SSL context */
-	SSLeay_add_ssl_algorithms ();
-	meth = SSLv23_client_method ();
-	SSL_load_error_strings ();
-	if ((ctx = SSL_CTX_new (meth)) == NULL) {
-		printf (_("CRITICAL -  Cannot create SSL context.\n"));
-		return STATE_CRITICAL;
-	}
-
-	/* Initialize alarm signal handling */
-	signal (SIGALRM, socket_timeout_alarm_handler);
-
-	/* Set socket timeout */
-	alarm (socket_timeout);
-
-	/* Save start time */
-	gettimeofday (&tv, NULL);
-
-	/* Make TCP connection */
-	if (my_tcp_connect (server_address, server_port, &sd) == STATE_OK) {
-		/* Do the SSL handshake */
-		if ((ssl = SSL_new (ctx)) != NULL) {
-#ifdef USE_OPENSSL
-			SSL_set_cipher_list(ssl, "ALL");
-#endif
-			SSL_set_fd (ssl, sd);
-			if (SSL_connect (ssl) != -1)
-				return OK;
-#ifdef USE_OPENSSL
-			ERR_print_errors_fp (stderr);
-#endif
-		}
-		else {
-			printf (_("CRITICAL - Cannot initiate SSL handshake.\n"));
-		}
-		SSL_free (ssl);
-	}
-
-	SSL_CTX_free (ctx);
-	close (sd);
-
-	return STATE_CRITICAL;
-}
-#endif
-
-
-
-#ifdef USE_OPENSSL
-int
-check_certificate (X509 ** certificate)
-{
-	ASN1_STRING *tm;
-	int offset;
-	struct tm stamp;
-	int days_left;
-
-
-	/* Retrieve timestamp of certificate */
-	tm = X509_get_notAfter (*certificate);
-
-	/* Generate tm structure to process timestamp */
-	if (tm->type == V_ASN1_UTCTIME) {
-		if (tm->length < 10) {
-			printf (_("CRITICAL - Wrong time format in certificate.\n"));
-			return STATE_CRITICAL;
-		}
-		else {
-			stamp.tm_year = (tm->data[0] - '0') * 10 + (tm->data[1] - '0');
-			if (stamp.tm_year < 50)
-				stamp.tm_year += 100;
-			offset = 0;
-		}
-	}
-	else {
-		if (tm->length < 12) {
-			printf (_("CRITICAL - Wrong time format in certificate.\n"));
-			return STATE_CRITICAL;
-		}
-		else {
-			stamp.tm_year =
-				(tm->data[0] - '0') * 1000 + (tm->data[1] - '0') * 100 +
-				(tm->data[2] - '0') * 10 + (tm->data[3] - '0');
-			stamp.tm_year -= 1900;
-			offset = 2;
-		}
-	}
-	stamp.tm_mon =
-		(tm->data[2 + offset] - '0') * 10 + (tm->data[3 + offset] - '0') - 1;
-	stamp.tm_mday =
-		(tm->data[4 + offset] - '0') * 10 + (tm->data[5 + offset] - '0');
-	stamp.tm_hour =
-		(tm->data[6 + offset] - '0') * 10 + (tm->data[7 + offset] - '0');
-	stamp.tm_min =
-		(tm->data[8 + offset] - '0') * 10 + (tm->data[9 + offset] - '0');
-	stamp.tm_sec = 0;
-	stamp.tm_isdst = -1;
-
-	days_left = (mktime (&stamp) - time (NULL)) / 86400;
-	snprintf
-		(timestamp, 17, "%02d/%02d/%04d %02d:%02d",
-		 stamp.tm_mon + 1,
-		 stamp.tm_mday, stamp.tm_year + 1900, stamp.tm_hour, stamp.tm_min);
-
-	if (days_left > 0 && days_left <= days_till_exp) {
-		printf (_("WARNING - Certificate expires in %d day(s) (%s).\n"), days_left, timestamp);
-		return STATE_WARNING;
-	}
-	if (days_left < 0) {
-		printf (_("CRITICAL - Certificate expired on %s.\n"), timestamp);
-		return STATE_CRITICAL;
-	}
-
-	if (days_left == 0) {
-		printf (_("WARNING - Certificate expires today (%s).\n"), timestamp);
-		return STATE_WARNING;
-	}
-
-	printf (_("OK - Certificate will expire on %s.\n"), timestamp);
-
-	return STATE_OK;
-}
-#endif
-
-
-
 char *perfd_time (double elapsed_time)
 {
 	return fperfdata ("time", elapsed_time, "s",
@@ -1402,47 +1204,6 @@ char *perfd_size (int page_len)
 	          (min_page_len>0?TRUE:FALSE), 0,
 	          TRUE, 0, FALSE, 0);
 }
-
-
-
-int
-my_recv (void)
-{
-	int i;
-#ifdef HAVE_SSL
-	if (use_ssl) {
-		i = SSL_read (ssl, buffer, MAX_INPUT_BUFFER - 1);
-	}
-	else {
-		i = recv (sd, buffer, MAX_INPUT_BUFFER - 1, 0);
-	}
-#else
-	i = recv (sd, buffer, MAX_INPUT_BUFFER - 1, 0);
-#endif
-	return i;
-}
-
-
-
-int
-my_close (void)
-{
-#ifdef HAVE_SSL
-	if (use_ssl == TRUE) {
-		SSL_shutdown (ssl);
-		SSL_free (ssl);
-		SSL_CTX_free (ctx);
-		return 0;
-	}
-	else {
-#endif
-		return close (sd);
-#ifdef HAVE_SSL
-	}
-#endif
-}
-
-
 
 void
 print_help (void)

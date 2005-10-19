@@ -32,17 +32,12 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 static int check_cert = FALSE;
 static int days_till_exp;
 static char *randbuff = "";
-static X509 *server_cert;
-# ifdef USE_OPENSSL
-static int check_certificate (X509 **);
-# endif /* USE_OPENSSL */
 # define my_recv(buf, len) ((flags & FLAG_SSL) ? np_net_ssl_read(buf, len) : read(sd, buf, len))
 # define my_send(buf, len) ((flags & FLAG_SSL) ? np_net_ssl_write(buf, len) : send(sd, buf, len, 0))
 #else
 # define my_recv(buf, len) read(sd, buf, len)
 # define my_send(buf, len) send(sd, buf, len, 0)
 #endif
-
 
 /* int my_recv(char *, size_t); */
 static int process_arguments (int, char **);
@@ -217,34 +212,19 @@ main (int argc, char **argv)
 #ifdef HAVE_SSL
 	if (flags & FLAG_SSL){
 		result = np_net_ssl_init(sd);
-		if(result != STATE_OK) return result;
-		/* XXX does np_net_ssl take care of printing an error?
-			die (STATE_CRITICAL,_("CRITICAL - Could not make SSL connection\n"));
-		*/
-	}
-#  ifdef USE_OPENSSL /* XXX gnutls does cert checking differently */
-	/*
-	if (flags & FLAG_SSL && check_cert == TRUE) {
-		if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
-			result = check_certificate (&server_cert);
-			X509_free(server_cert);
-		}
-		else {
-			printf(_("CRITICAL - Cannot retrieve server certificate.\n"));
-			result = STATE_CRITICAL;
+		if (result == STATE_OK && check_cert == TRUE) {
+			result = np_net_ssl_check_cert(days_till_exp);
+			if(result != STATE_OK) {
+				printf(_("CRITICAL - Cannot retrieve server certificate.\n"));
+			}
 		}
 	}
-	*/
-#  endif /* USE_OPENSSL */
-#endif
-
 	if(result != STATE_OK){
-#ifdef HAVE_SSL
 		np_net_ssl_cleanup();
-#endif
 		if(sd) close(sd);
 		return result;
 	}
+#endif /* HAVE_SSL */
 
 	if (server_send != NULL) {		/* Something to send? */
 		my_send(server_send, strlen(server_send));
@@ -565,86 +545,6 @@ process_arguments (int argc, char **argv)
 
 	return TRUE;
 }
-
-
-/* SSL-specific functions */
-#ifdef HAVE_SSL
-#  ifdef USE_OPENSSL /* XXX */
-static int
-check_certificate (X509 ** certificate)
-{
-  ASN1_STRING *tm;
-  int offset;
-  struct tm stamp;
-  int days_left;
-
-
-  /* Retrieve timestamp of certificate */
-  tm = X509_get_notAfter (*certificate);
-
-  /* Generate tm structure to process timestamp */
-  if (tm->type == V_ASN1_UTCTIME) {
-    if (tm->length < 10) {
-      printf (_("CRITICAL - Wrong time format in certificate.\n"));
-      return STATE_CRITICAL;
-    }
-    else {
-      stamp.tm_year = (tm->data[0] - '0') * 10 + (tm->data[1] - '0');
-      if (stamp.tm_year < 50)
-	stamp.tm_year += 100;
-      offset = 0;
-    }
-  }
-  else {
-    if (tm->length < 12) {
-      printf (_("CRITICAL - Wrong time format in certificate.\n"));
-      return STATE_CRITICAL;
-    }
-    else {
-                        stamp.tm_year =
-			  (tm->data[0] - '0') * 1000 + (tm->data[1] - '0') * 100 +
-			  (tm->data[2] - '0') * 10 + (tm->data[3] - '0');
-                        stamp.tm_year -= 1900;
-                        offset = 2;
-    }
-  }
-        stamp.tm_mon =
-	  (tm->data[2 + offset] - '0') * 10 + (tm->data[3 + offset] - '0') - 1;
-        stamp.tm_mday =
-	  (tm->data[4 + offset] - '0') * 10 + (tm->data[5 + offset] - '0');
-        stamp.tm_hour =
-	  (tm->data[6 + offset] - '0') * 10 + (tm->data[7 + offset] - '0');
-        stamp.tm_min =
-	  (tm->data[8 + offset] - '0') * 10 + (tm->data[9 + offset] - '0');
-        stamp.tm_sec = 0;
-        stamp.tm_isdst = -1;
-
-        days_left = (mktime (&stamp) - time (NULL)) / 86400;
-        snprintf
-	  (timestamp, 16, "%02d/%02d/%04d %02d:%02d",
-	   stamp.tm_mon + 1,
-	   stamp.tm_mday, stamp.tm_year + 1900, stamp.tm_hour, stamp.tm_min);
-
-        if (days_left > 0 && days_left <= days_till_exp) {
-	  printf (_("Certificate expires in %d day(s) (%s).\n"), days_left, timestamp);
-	  return STATE_WARNING;
-        }
-        if (days_left < 0) {
-	  printf (_("Certificate expired on %s.\n"), timestamp);
-	  return STATE_CRITICAL;
-        }
-
-        if (days_left == 0) {
-	  printf (_("Certificate expires today (%s).\n"), timestamp);
-	  return STATE_WARNING;
-        }
-
-        printf (_("Certificate will expire on %s.\n"), timestamp);
-
-        return STATE_OK;
-}
-#  endif /* USE_OPENSSL */
-#endif /* HAVE_SSL */
 
 
 void

@@ -27,35 +27,14 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "netutils.h"
 #include "utils.h"
 
-#ifdef HAVE_SSL_H
-#  include <rsa.h>
-#  include <crypto.h>
-#  include <x509.h>
-#  include <pem.h>
-#  include <ssl.h>
-#  include <err.h>
-#else
-#  ifdef HAVE_OPENSSL_SSL_H
-#    include <openssl/rsa.h>
-#    include <openssl/crypto.h>
-#    include <openssl/x509.h>
-#    include <openssl/pem.h>
-#    include <openssl/ssl.h>
-#    include <openssl/err.h>
-#  endif
-#endif
-
 #ifdef HAVE_SSL
-
 int check_cert = FALSE;
 int days_till_exp;
-SSL_CTX *ctx;
-SSL *ssl;
-X509 *server_cert;
-int connect_STARTTLS (void);
-#  ifdef USE_OPENSSL
-int check_certificate (X509 **);
-#  endif
+#  define my_recv(buf, len) ((use_ssl && ssl_established) ? np_net_ssl_read(buf, len) : read(sd, buf, len))
+#  define my_send(buf, len) ((use_ssl && ssl_established) ? np_net_ssl_write(buf, len) : send(sd, buf, len, 0))
+#else /* ifndef HAVE_SSL */
+#  define my_recv(buf, len) read(sd, buf, len)
+#  define my_send(buf, len) send(sd, buf, len, 0)
 #endif
 
 enum {
@@ -77,7 +56,6 @@ int process_arguments (int, char **);
 int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
-int myrecv(void);
 int my_close(void);
 
 #ifdef HAVE_REGEX_H
@@ -111,7 +89,7 @@ int check_critical_time = FALSE;
 int verbose = 0;
 int use_ssl = FALSE;
 short use_ehlo = FALSE;
-short ssl_established = TRUE;
+short ssl_established = 0;
 char *localhostname = NULL;
 int sd;
 char buffer[MAX_INPUT_BUFFER];
@@ -237,22 +215,20 @@ main (int argc, char **argv)
 		    send (sd, SMTP_QUIT, strlen (SMTP_QUIT), 0);
 		    return STATE_UNKNOWN;
 		  }
-		  if(connect_STARTTLS() != OK) {
+		  result = np_net_ssl_init(sd);
+		  if(result != STATE_OK) {
 		    printf (_("CRITICAL - Cannot create SSL context.\n"));
+		    np_net_ssl_cleanup();
+		    close(sd);
 		    return STATE_CRITICAL;
 		  } else {
-			ssl_established = TRUE;
+			ssl_established = 1;
 		  }
 #  ifdef USE_OPENSSL
 		  if ( check_cert ) {
-		    if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
-		      result = check_certificate (&server_cert);
-		      X509_free(server_cert);
-		    }
-		    else {
+		    result = np_net_ssl_check_cert(days_till_exp);
+		    if(result != STATE_OK){
 		      printf (_("CRITICAL - Cannot retrieve server certificate.\n"));
-		      result = STATE_CRITICAL;
-			      
 		    }
 		    my_close();
 		    return result;
@@ -272,26 +248,16 @@ main (int argc, char **argv)
 		 * Use the -f option to provide a FROM address
 		 */
 		if (smtp_use_dummycmd) {
-#ifdef HAVE_SSL
-		  if (use_ssl)
-		    SSL_write(ssl, cmd_str, strlen(cmd_str));
-		  else
-#endif
-		  send(sd, cmd_str, strlen(cmd_str), 0);
-		  myrecv();
+		  my_send(cmd_str, strlen(cmd_str));
+		  my_recv(buffer, MAX_INPUT_BUFFER-1);
 		  if (verbose) 
 		    printf("%s", buffer);
 		}
 
 		while (n < ncommands) {
 			asprintf (&cmd_str, "%s%s", commands[n], "\r\n");
-#ifdef HAVE_SSL
-			if (use_ssl)
-			  SSL_write(ssl,cmd_str, strlen(cmd_str));
-			else
-#endif
-			send(sd, cmd_str, strlen(cmd_str), 0);
-			myrecv();
+			my_send(cmd_str, strlen(cmd_str));
+			my_recv(buffer, MAX_INPUT_BUFFER-1);
 			if (verbose) 
 				printf("%s", buffer);
 			strip (buffer);
@@ -328,12 +294,7 @@ main (int argc, char **argv)
 		}
 
 		/* tell the server we're done */
-#ifdef HAVE_SSL
-		if (use_ssl)
-		  SSL_write(ssl,SMTP_QUIT, strlen (SMTP_QUIT));
-		else
-#endif
-		send (sd, SMTP_QUIT, strlen (SMTP_QUIT), 0);
+		my_send (SMTP_QUIT, strlen (SMTP_QUIT));
 
 		/* finally close the connection */
 		close (sd);
@@ -626,150 +587,11 @@ Usage: %s -H host [-p port] [-e expect] [-C command] [-f from addr]\n\
                   [-w warn] [-c crit] [-t timeout] [-S] [-D days] [-n] [-v] [-4|-6]\n", progname);
 }
 
-#ifdef HAVE_SSL
-int
-connect_STARTTLS (void)
-{
-  SSL_METHOD *meth;
-
-  /* Initialize SSL context */
-  SSLeay_add_ssl_algorithms ();
-  meth = SSLv23_client_method ();
-  SSL_load_error_strings ();
-  if ((ctx = SSL_CTX_new (meth)) == NULL)
-    {
-      printf(_("CRITICAL - Cannot create SSL context.\n"));
-      return STATE_CRITICAL;
-    }
-  /* do the SSL handshake */
-  if ((ssl = SSL_new (ctx)) != NULL)
-    {
-      SSL_set_fd (ssl, sd);
-      /* original version checked for -1
-	 I look for success instead (1) */
-      if (SSL_connect (ssl) == 1)
-	return OK;
-#  ifdef USE_OPENSSL
-      ERR_print_errors_fp (stderr);
-#  endif
-    }
-  else
-    {
-      printf (_("CRITICAL - Cannot initiate SSL handshake.\n"));
-    }
-  my_close();
-  
-  return STATE_CRITICAL;
-}
-
-#  ifdef USE_OPENSSL
-int
-check_certificate (X509 ** certificate)
-{
-  ASN1_STRING *tm;
-  int offset;
-  struct tm stamp;
-  int days_left;
-
-  /* Retrieve timestamp of certificate */
-  tm = X509_get_notAfter (*certificate);
-  
-  /* Generate tm structure to process timestamp */
-  if (tm->type == V_ASN1_UTCTIME) {
-    if (tm->length < 10) {
-      printf (_("CRITICAL - Wrong time format in certificate.\n"));
-      return STATE_CRITICAL;
-    }
-    else {
-      stamp.tm_year = (tm->data[0] - '0') * 10 + (tm->data[1] - '0');
-      if (stamp.tm_year < 50)
-	stamp.tm_year += 100;
-      offset = 0;
-    }
-  }
-  else {
-    if (tm->length < 12) {
-      printf (_("CRITICAL - Wrong time format in certificate.\n"));
-      return STATE_CRITICAL;
-    }
-    else {
-      stamp.tm_year =
-	(tm->data[0] - '0') * 1000 + (tm->data[1] - '0') * 100 +
-	(tm->data[2] - '0') * 10 + (tm->data[3] - '0');
-      stamp.tm_year -= 1900;
-      offset = 2;
-    }
-  }
-  stamp.tm_mon =
-    (tm->data[2 + offset] - '0') * 10 + (tm->data[3 + offset] - '0') - 1;
-  stamp.tm_mday =
-    (tm->data[4 + offset] - '0') * 10 + (tm->data[5 + offset] - '0');
-  stamp.tm_hour =
-    (tm->data[6 + offset] - '0') * 10 + (tm->data[7 + offset] - '0');
-  stamp.tm_min =
-    (tm->data[8 + offset] - '0') * 10 + (tm->data[9 + offset] - '0');
-  stamp.tm_sec = 0;
-  stamp.tm_isdst = -1;
-  
-  days_left = (mktime (&stamp) - time (NULL)) / 86400;
-  snprintf
-    (timestamp, sizeof(timestamp), "%02d/%02d/%04d %02d:%02d",
-     stamp.tm_mon + 1,
-     stamp.tm_mday, stamp.tm_year + 1900, stamp.tm_hour, stamp.tm_min);
-  
-  if (days_left > 0 && days_left <= days_till_exp) {
-    printf ("Certificate expires in %d day(s) (%s).\n", days_left, timestamp);
-    return STATE_WARNING;
-  }
-  if (days_left < 0) {
-    printf ("Certificate expired on %s.\n", timestamp);
-    return STATE_CRITICAL;
-  }
-  
-  if (days_left == 0) {
-    printf ("Certificate expires today (%s).\n", timestamp);
-    return STATE_WARNING;
-  }
-  
-  printf ("Certificate will expire on %s.\n", timestamp);
-  
-  return STATE_OK;  
-}
-#  endif /* USE_OPENSSL */
-#endif
-
-int
-myrecv (void)
-{
-  int i;
-
-#ifdef HAVE_SSL
-  if (use_ssl) {
-    i = SSL_read (ssl, buffer, MAXBUF - 1);
-  }
-  else {
-#endif
-    i = read (sd, buffer, MAXBUF - 1);
-#ifdef HAVE_SSL
-  }
-#endif
-  return i;
-}
-
 int 
 my_close (void)
 {
 #ifdef HAVE_SSL
-  if (use_ssl == TRUE && ssl_established == TRUE) {
-    SSL_shutdown (ssl);
-    SSL_free (ssl);
-    SSL_CTX_free (ctx);
-    return 0;
-  }
-  else {
+	np_net_ssl_cleanup();
 #endif
-    return close(sd);
-#ifdef HAVE_SSL
-  }
-#endif
+	return close(sd);
 }
