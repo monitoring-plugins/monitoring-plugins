@@ -801,16 +801,15 @@ check_http (void)
 		if (connect_SSL () != OK) {
 			die (STATE_CRITICAL, _("Unable to open TCP socket\n"));
 		}
-#ifdef USE_OPENSSL
+#  ifdef USE_OPENSSL
 		if ((server_cert = SSL_get_peer_certificate (ssl)) != NULL) {
 			X509_free (server_cert);
 		}
-#endif
 		else {
 			printf (_("CRITICAL - Cannot retrieve server certificate.\n"));
 			return STATE_CRITICAL;
 		}
-
+#  endif /* USE_OPENSSL */
 	}
 	else {
 #endif
