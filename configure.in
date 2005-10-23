@@ -104,6 +104,8 @@ AC_PATH_PROG(PYTHON,python)
 AC_PATH_PROG(SH,sh)
 AC_PATH_PROG(PERL,perl)
 AC_PATH_PROG(LIBGNUTLS_CONFIG,libgnutls-config)
+AC_PATH_PROG(HOSTNAME,hostname)
+AC_PATH_PROG(BASENAME,basename)
 
 dnl allow them to override the path of perl
 AC_ARG_WITH(perl,
@@ -112,14 +114,28 @@ AC_ARG_WITH(perl,
 			with_perl=$withval,with_perl=$PERL)
 AC_SUBST(PERL, $with_perl)
 
-dnl allow for gnutls, if it exists, instead of openssl
+dnl openssl/gnutls
+AC_ARG_WITH(openssl,
+            AC_HELP_STRING([--with-openssl=DIR], 
+                           [sets path to openssl installation]) AC_HELP_STRING([--without-openssl], [disable openssl]),)
+
 AC_ARG_WITH(gnutls,
             ACX_HELP_STRING([--with-gnutls=PATH],
-                            [path to gnutls installation root]),
-            GNUTLS=$withval)
+                            [path to gnutls installation root]) AC_HELP_STRING([--without-gnutls], [disable gnutls]),)
 
-AC_PATH_PROG(HOSTNAME,hostname)
-AC_PATH_PROG(BASENAME,basename)
+dnl you can only have one or the other
+if test ! "$with_openssl" = "" && test ! "$with_openssl" = "no"; then
+	with_gnutls="no"
+fi
+if test ! "$with_gnutls" = "" && test ! "$with_gnutls" = "no"; then
+	with_openssl="no"
+fi
+
+dnl list of possible dirs to try to autodetect openssl
+dnl if $dir/include exists, we consider it found
+dnl the order should allow locally installed versions to override distros' ones
+OPENSSL_DIRS="/usr /usr/local /usr/slocal /usr/local/openssl /usr/local/ssl \
+              /opt /opt/openssl"
 
 dnl
 dnl Check for miscellaneous stuff
@@ -417,114 +433,97 @@ if test "$FOUNDINCLUDE" = "no"; then
 fi
 
 
-dnl Check for OpenSSL location
-AC_PATH_PROG(OPENSSL,openssl)
-if test "$OPENSSL" = "/usr/bin/openssl"; then
-  OPENSSL=/usr
-elif test "$OPENSSL" = "/usr/sbin/openssl"; then
-  OPENSSL=/usr
-elif test "$OPENSSL" = "/opt/bin/openssl"; then
-  OPENSSL=/opt
-elif test "$OPENSSL" = "/opt/openssl/bin/openssl"; then
-  OPENSSL=/opt/openssl
-elif test "$OPENSSL" = "/usr/slocal/bin/openssl"; then
-  OPENSSL=/usr/slocal
-elif test "$OPENSSL" = "/usr/local/bin/openssl"; then
-  OPENSSL=/usr/local
-elif test "$OPENSSL" = "/usr/local/ssl/bin/openssl"; then
-  OPENSSL=/usr/local/ssl
+dnl openssl detection/configuration
+if ! test "$with_openssl" = "no"; then
+	dnl Check for OpenSSL location if it wasn't already specified
+	if ! test -d "$with_openssl"; then
+		for d in $OPENSSL_DIRS; do
+			if test -x ${d}/bin/openssl || test -x ${d}/sbin/openssl ; then
+				with_openssl=$d
+			fi
+		done
+	fi
+
+	_SAVEDCPPFLAGS="$CPPFLAGS"
+	_SAVEDLDFLAGS="$LDFLAGS"
+	dnl Check for OpenSSL header files
+	unset FOUNDINCLUDE
+	CPPFLAGS="$CPPFLAGS -I$OPENSSL/include"
+	LDFLAGS="$LDFLAGS -R$OPENSSL/lib"
+
+	dnl check for openssl in $dir/include/openssl
+	AC_CHECK_HEADERS(openssl/ssl.h openssl/x509.h openssl/rsa.h openssl/pem.h openssl/crypto.h openssl/err.h,
+	                 SSLINCLUDE="-I$OPENSSL/include"
+	                 FOUNDINCLUDE=yes,
+	                 FOUNDINCLUDE=no)
+	dnl else check to see if $dir/include has it
+	if test "$FOUNDINCLUDE" = "no"; then
+		AC_CHECK_HEADERS(ssl.h x509.h rsa.h pem.h crypto.h err.h,
+		                 SSLINCLUDE="-I$OPENSSL/include"
+		                 FOUNDINCLUDE=yes,
+		                 FOUNDINCLUDE=no)
+	fi
+	AC_SUBST(SSLINCLUDE)
+	dnl if we didn't find it, reset CPPFLAGS
+	if test "$FOUNDINCLUDE" = "no"; then
+		CPPFLAGS="$_SAVEDCPPFLAGS"
+		LDFLAGS="$_SAVEDLDFLAGS"
+	fi
+
+	dnl Check for crypto lib
+	_SAVEDLIBS="$LIBS"
+	LIBS="-L${with_openssl}/lib"
+	AC_CHECK_LIB(crypto,CRYPTO_lock)
+	if test "$ac_cv_lib_crypto_CRYPTO_lock" = "yes"; then
+		dnl Check for SSL lib
+		AC_CHECK_LIB(ssl,main, SSLLIBS="-lssl -lcrypto",,-lcrypto)
+	fi
+	LIBS="$_SAVEDLIBS"
+
+	dnl test headers and libs to decide whether check_http should use SSL
+	if test "$ac_cv_lib_crypto_CRYPTO_lock" = "yes"; then
+		if test "$ac_cv_lib_ssl_main" = "yes"; then
+			if test "$FOUNDINCLUDE" = "yes"; then
+				FOUNDOPENSSL="yes"
+			fi
+		fi
+	fi
 fi
-AC_ARG_WITH(openssl,
-AC_HELP_STRING([--with-openssl=DIR], [sets path to openssl installation])
-AC_HELP_STRING([--without-openssl], [disable openssl]),
-OPENSSL=$withval)
 
-_SAVEDCPPFLAGS="$CPPFLAGS"
-_SAVEDLDFLAGS="$LDFLAGS"
-if test X"$OPENSSL" = "Xno"; then
-  AC_MSG_WARN([openssl disabled, you will not be able to use ssl options in some plugins])
-  FOUNDSSL="dontbother"
-else
-  dnl Check for OpenSSL header files
-  unset FOUNDINCLUDE
-  if test "$OPENSSL" != "/usr"; then
-    CPPFLAGS="$CPPFLAGS -I$OPENSSL/include"
-    LDFLAGS="$LDFLAGS -R$OPENSSL/lib"
-  fi
-  AC_CHECK_HEADERS(openssl/ssl.h openssl/x509.h openssl/rsa.h openssl/pem.h openssl/crypto.h openssl/err.h,
-                 SSLINCLUDE="-I$OPENSSL/include"
-                 FOUNDINCLUDE=yes,
-                 FOUNDINCLUDE=no)
-  if test "$FOUNDINCLUDE" = "no"; then
-    AC_CHECK_HEADERS(ssl.h x509.h rsa.h pem.h crypto.h err.h,
-                   SSLINCLUDE="-I$OPENSSL/include"
-                   FOUNDINCLUDE=yes,
-                   FOUNDINCLUDE=no)
-  fi
-  AC_SUBST(SSLINCLUDE)
-  if test "$FOUNDINCLUDE" = "no"; then
-    CPPFLAGS="$_SAVEDCPPFLAGS"
-  fi
-
-  dnl Check for crypto lib
-  _SAVEDLIBS="$LIBS"
-  AC_CHECK_LIB(crypto,CRYPTO_lock,,,-L$OPENSSL/lib)
-  if test "$ac_cv_lib_crypto_CRYPTO_lock" = "yes"; then
-    dnl Check for SSL lib
-    AC_CHECK_LIB(ssl,main,LDFLAGS="$LDFLAGS -L$OPENSSL/lib" SSLLIBS="-lssl -lcrypto",AC_CHECK_LIB(ssl,main,LDFLAGS="$LDFLAGS -L$OPENSSL/lib" SSLLIBS="-lssl -lcrypto"),-L$OPENSSL/lib -lcrypto)
-  fi
-  LIBS="$_SAVEDLIBS"
-
-  FOUNDSSL="no"
-  dnl test headers and libs to decide whether check_http should use SSL
-  if test "$ac_cv_lib_crypto_CRYPTO_lock" = "yes"; then
-    if test "$ac_cv_lib_ssl_main" = "yes"; then
-      if test "$FOUNDINCLUDE" = "yes"; then
-        FOUNDSSL="yes"
-      fi
-    fi
-  fi
-fi
 
 dnl check for gnutls if openssl isn't found (or is disabled)
-FOUNDGNUTLS="no"
-if ! test "$FOUNDSSL" = "yes" && ! test "$with_gnutls" = "no"; then
-	if test "$GNUTLS" = ""; then
-		CPPFLAGS="$CPPFLAGS -I$GNUTLS"
-	elif ! test "$LIBGNUTLS_CONFIG" = ""; then
+if test ! "$FOUNDOPENSSL" = "yes" && test ! "$with_gnutls" = "no"; then
+	if test ! "$with_gnutls" = ""; then
+		CPPFLAGS="$CPPFLAGS -I${with_gnutls}/include"
+	elif test ! "$LIBGNUTLS_CONFIG" = ""; then
 		CPPFLAGS="$CPPFLAGS -I`$LIBGNUTLS_CONFIG --prefix`"
 	fi
 	AC_CHECK_HEADERS([gnutls/openssl.h],FOUNDGNUTLS="yes",)
 	if test "$FOUNDGNUTLS" = "yes"; then
 		AC_CHECK_LIB(gnutls-openssl,main,SSLLIBS="-lgnutls-openssl")
-		FOUNDSSL="yes"
 	fi
 fi
 dnl end check for gnutls
 
-if test "$FOUNDSSL" = "yes"; then
-  check_tcp_ssl="check_simap check_spop check_jabber check_nntps check_ssmtp"
-  AC_SUBST(check_tcp_ssl)
-  AC_SUBST(SSLLIBS)
-  AC_DEFINE(HAVE_SSL,1,[Define if SSL libraries are found])
-  if test "$FOUNDGNUTLS" = "no"; then
-  	AC_DEFINE(USE_OPENSSL,1,[Define if using OpenSSL libraries])
-  	with_openssl="yes"
-	with_gnutls="no"
-  else
-  	AC_DEFINE(USE_GNUTLS,1,[Define if using gnutls libraries])
-  	with_gnutls="yes"
-	with_openssl="no"
-  fi
+if test "$FOUNDOPENSSL" = "yes" || test "$FOUNDGNUTLS" = "yes"; then
+	check_tcp_ssl="check_simap check_spop check_jabber check_nntps check_ssmtp"
+	AC_SUBST(check_tcp_ssl)
+	AC_SUBST(SSLLIBS)
+	AC_DEFINE(HAVE_SSL,1,[Define if SSL libraries are found])
+	if test "$FOUNDOPENSSL" = "yes"; then
+		AC_DEFINE(USE_OPENSSL,1,[Define if using OpenSSL libraries])
+		with_openssl="yes"
+		with_gnutls="no"
+	else
+		AC_DEFINE(USE_GNUTLS,1,[Define if using gnutls libraries])
+		with_gnutls="yes"
+		with_openssl="no"
+	fi
 else
-  if test "$FOUNDSSL" = "no"; then
-    AC_MSG_WARN([OpenSSL libs could not be found])
-  dnl else deliberately disabled
-  fi
-  with_openssl="no"
-  with_gnutls="no"
-  CPPFLAGS="$_SAVEDCPPFLAGS"
-  LDFLAGS="$_SAVEDLDFLAGS"
+	dnl else deliberately disabled or no ssl support available
+	AC_MSG_WARN([OpenSSL or GnuTLS libs could not be found or were disabled])
+	with_openssl="no"
+	with_gnutls="no"
 fi
 
 dnl
