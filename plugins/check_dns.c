@@ -27,9 +27,9 @@ const char *copyright = "2000-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
-#include "popen.h"
 #include "utils.h"
 #include "netutils.h"
+#include "runcmd.h"
 
 int process_arguments (int, char **);
 int validate_arguments (void);
@@ -51,8 +51,8 @@ main (int argc, char **argv)
 {
 	char *command_line = NULL;
 	char input_buffer[MAX_INPUT_BUFFER];
-	char *output = NULL;
 	char *address = NULL;
+	char *msg = NULL;
 	char *temp_buffer = NULL;
 	int non_authoritative = FALSE;
 	int result = STATE_UNKNOWN;
@@ -61,6 +61,8 @@ main (int argc, char **argv)
 	struct timeval tv;
 	int multi_address;
 	int parse_address = FALSE; /* This flag scans for Address: but only after Name: */
+	output chld_out, chld_err;
+	size_t i;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -68,11 +70,11 @@ main (int argc, char **argv)
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
-		usage4 (_("Cannot catch SIGALRM"));
+		usage_va(_("Cannot catch SIGALRM"));
 	}
 
 	if (process_arguments (argc, argv) == ERROR) {
-		usage4 (_("Could not parse arguments"));
+		usage_va(_("Could not parse arguments"));
 	}
 
 	/* get the command to run */
@@ -85,37 +87,31 @@ main (int argc, char **argv)
 		printf ("%s\n", command_line);
 
 	/* run the command */
-	child_process = spopen (command_line);
-	if (child_process == NULL) {
-		printf (_("Could not open pipe: %s\n"), command_line);
-		return STATE_UNKNOWN;
+	if((np_runcmd(command_line, &chld_out, &chld_err, 0)) != 0) {
+		msg = (char *)_("nslookup returned error status");
+		result = STATE_WARNING;
 	}
 
-	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
-	if (child_stderr == NULL)
-		printf (_("Could not open stderr for %s\n"), command_line);
-
 	/* scan stdout */
-	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
-
+	for(i = 0; i < chld_out.lines; i++) {
 		if (verbose)
-			printf ("%s", input_buffer);
+			puts(chld_out.line[i]);
 
-		if (strstr (input_buffer, ".in-addr.arpa")) {
-			if ((temp_buffer = strstr (input_buffer, "name = ")))
+		if (strstr (chld_out.line[i], ".in-addr.arpa")) {
+			if ((temp_buffer = strstr (chld_out.line[i], "name = ")))
 				address = strdup (temp_buffer + 7);
 			else {
-				output = strdup (_("Warning plugin error"));
+				msg = (char *)_("Warning plugin error");
 				result = STATE_WARNING;
 			}
 		}
 
 		/* the server is responding, we just got the host name... */
-		if (strstr (input_buffer, "Name:"))
+		if (strstr (chld_out.line[i], "Name:"))
 			parse_address = TRUE;
-		else if (parse_address == TRUE && (strstr (input_buffer, "Address:") ||
-		         strstr (input_buffer, "Addresses:"))) {
-			temp_buffer = index (input_buffer, ':');
+		else if (parse_address == TRUE && (strstr (chld_out.line[i], "Address:") ||
+		         strstr (chld_out.line[i], "Addresses:"))) {
+			temp_buffer = index (chld_out.line[i], ':');
 			temp_buffer++;
 
 			/* Strip leading spaces */
@@ -135,59 +131,47 @@ main (int argc, char **argv)
 				asprintf(&address, "%s,%s", address, temp_buffer);
 		}
 
-		else if (strstr (input_buffer, _("Non-authoritative answer:"))) {
+		else if (strstr (chld_out.line[i], _("Non-authoritative answer:"))) {
 			non_authoritative = TRUE;
 		}
 
-		result = error_scan (input_buffer);
+		result = error_scan (chld_out.line[i]);
 		if (result != STATE_OK) {
-			output = strdup (1 + index (input_buffer, ':'));
-			strip (output);
+			msg = strchr (chld_out.line[i], ':');
+			if(msg) msg++;
 			break;
 		}
-
 	}
 
 	/* scan stderr */
-	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
-
+	for(i = 0; i < chld_err.lines; i++) {
 		if (verbose)
-			printf ("%s", input_buffer);
+			puts(chld_err.line[i]);
 
-		if (error_scan (input_buffer) != STATE_OK) {
-			result = max_state (result, error_scan (input_buffer));
-			output = strdup (1 + index (input_buffer, ':'));
-			strip (output);
+		if (error_scan (chld_err.line[i]) != STATE_OK) {
+			result = max_state (result, error_scan (chld_err.line[i]));
+			msg = strchr(input_buffer, ':');
+			if(msg) msg++;
 		}
 	}
 
-	/* close stderr */
-	(void) fclose (child_stderr);
-
-	/* close stdout */
-	if (spclose (child_process)) {
-		result = max_state (result, STATE_WARNING);
-		if (output == NULL || !strcmp (output, ""))
-			output = strdup (_("nslookup returned error status"));
-	}
-
-	/* If we got here, we should have an address string, 
-		 and we can segfault if we do not */
+	/* If we got here, we should have an address string,
+	 * and we can segfault if we do not */
 	if (address==NULL || strlen(address)==0)
 		die (STATE_CRITICAL,
-		     _("DNS CRITICAL - '%s' output parsing exited with no address\n"),
+		     _("DNS CRITICAL - '%s' msg parsing exited with no address\n"),
 		     NSLOOKUP_COMMAND);
 
 	/* compare to expected address */
 	if (result == STATE_OK && match_expected_address && strcmp(address, expected_address)) {
 		result = STATE_CRITICAL;
-		asprintf(&output, _("expected %s but got %s"), expected_address, address);
+		asprintf(&msg, _("expected %s but got %s"), expected_address, address);
 	}
 
 	/* check if authoritative */
 	if (result == STATE_OK && expect_authority && non_authoritative) {
 		result = STATE_CRITICAL;
-		asprintf(&output, _("server %s is not authoritative for %s"), dns_server, query_address);
+		asprintf(&msg, _("server %s is not authoritative for %s"), dns_server, query_address);
 	}
 
 	microsec = deltime (tv);
@@ -200,19 +184,19 @@ main (int argc, char **argv)
 			multi_address = TRUE;
 
 		printf ("DNS %s: ", _("OK"));
-		printf (ngettext("%.3f second response time ", "%.3f seconds response time ", elapsed_time), elapsed_time);
-		printf (_("%s returns %s"), query_address, address);
+		printf (ngettext("%.3f second response time", "%.3f seconds response time", elapsed_time), elapsed_time);
+		printf (_(". %s returns %s"), query_address, address);
 		printf ("|%s\n", fperfdata ("time", elapsed_time, "s", FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
 	}
 	else if (result == STATE_WARNING)
 		printf (_("DNS WARNING - %s\n"),
-		        !strcmp (output, "") ? _(" Probably a non-existent host/domain") : output);
+		        !strcmp (msg, "") ? _(" Probably a non-existent host/domain") : msg);
 	else if (result == STATE_CRITICAL)
 		printf (_("DNS CRITICAL - %s\n"),
-		        !strcmp (output, "") ? _(" Probably a non-existent host/domain") : output);
+		        !strcmp (msg, "") ? _(" Probably a non-existent host/domain") : msg);
 	else
 		printf (_("DNS UNKNOW - %s\n"),
-		        !strcmp (output, "") ? _(" Probably a non-existent host/domain") : output);
+		        !strcmp (msg, "") ? _(" Probably a non-existent host/domain") : msg);
 
 	return result;
 }
@@ -311,8 +295,6 @@ process_arguments (int argc, char **argv)
 			break;
 
 		switch (c) {
-		case '?': /* args not parsable */
-			usage2 (_("Unknown argument"), optarg);
 		case 'h': /* help */
 			print_help ();
 			exit (STATE_OK);
@@ -331,20 +313,16 @@ process_arguments (int argc, char **argv)
 			strcpy (query_address, optarg);
 			break;
 		case 's': /* server name */
-			/* TODO: this is_host check is probably unnecessary. */
-			/* Better to confirm nslookup response matches */
-			if (is_host (optarg) == FALSE) {
-				usage2 (_("Invalid hostname/address"), optarg);
-			}
+			/* TODO: this host_or_die check is probably unnecessary.
+			 * Better to confirm nslookup response matches */
+			host_or_die(optarg);
 			if (strlen (optarg) >= ADDRESS_LENGTH)
 				die (STATE_UNKNOWN, _("Input buffer overflow\n"));
 			strcpy (dns_server, optarg);
 			break;
 		case 'r': /* reverse server name */
-			/* TODO: Is this is_host necessary? */
-			if (is_host (optarg) == FALSE) {
-				usage2 (_("Invalid hostname/address"), optarg);
-			}
+			/* TODO: Is this host_or_die necessary? */
+			host_or_die(optarg);
 			if (strlen (optarg) >= ADDRESS_LENGTH)
 				die (STATE_UNKNOWN, _("Input buffer overflow\n"));
 			strcpy (ptr_server, optarg);
@@ -358,6 +336,8 @@ process_arguments (int argc, char **argv)
 		case 'A': /* expect authority */
 			expect_authority = TRUE;
 			break;
+		default: /* args not parsable */
+			usage_va(_("Unknown argument - %s"), optarg);
 		}
 	}
 
@@ -370,10 +350,7 @@ process_arguments (int argc, char **argv)
 
 	if (strlen(dns_server)==0 && c<argc) {
 		/* TODO: See -s option */
-		if (is_host(argv[c]) == FALSE) {
-			printf (_("Invalid hostname/address: %s\n\n"), argv[c]);
-			return ERROR;
-		}
+		host_or_die(argv[c]);
 		if (strlen(argv[c]) >= ADDRESS_LENGTH)
 			die (STATE_UNKNOWN, _("Input buffer overflow\n"));
 		strcpy (dns_server, argv[c++]);
@@ -388,8 +365,8 @@ validate_arguments ()
 {
 	if (query_address[0] == 0)
 		return ERROR;
-	else
-		return OK;
+
+	return OK;
 }
 
 

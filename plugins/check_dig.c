@@ -18,6 +18,12 @@
  
 *****************************************************************************/
 
+/* Hackers note:
+ *  There are typecasts to (char *) from _("foo bar") in this file.
+ *  They prevent compiler warnings. Never (ever), permute strings obtained
+ *  that are typecast from (const char *) (which happens when --disable-nls)
+ *  because on some architectures those strings are in non-writable memory */
+
 const char *progname = "check_dig";
 const char *revision = "$Revision$";
 const char *copyright = "2002-2004";
@@ -26,17 +32,15 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
-#include "popen.h"
+#include "runcmd.h"
 
 int process_arguments (int, char **);
 int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
 
-enum {
-	UNDEFINED = 0,
-	DEFAULT_PORT = 53
-};
+#define UNDEFINED 0
+#define DEFAULT_PORT 53
 
 char *query_address = NULL;
 char *record_type = "A";
@@ -51,15 +55,14 @@ struct timeval tv;
 int
 main (int argc, char **argv)
 {
-	char input_buffer[MAX_INPUT_BUFFER];
 	char *command_line;
-	char *output;
+	output chld_out, chld_err;
+	char *msg = NULL;
+	size_t i;
 	char *t;
 	long microsec;
 	double elapsed_time;
 	int result = STATE_UNKNOWN;
-
-	output = strdup ("");
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -67,10 +70,10 @@ main (int argc, char **argv)
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR)
-		usage4 (_("Cannot catch SIGALRM"));
+		usage_va(_("Cannot catch SIGALRM"));
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage4 (_("Could not parse arguments"));
+		usage_va(_("Could not parse arguments"));
 
 	/* get the command to run */
 	asprintf (&command_line, "%s @%s -p %d %s -t %s",
@@ -89,83 +92,59 @@ main (int argc, char **argv)
 	}
 
 	/* run the command */
-	child_process = spopen (command_line);
-	if (child_process == NULL) {
-		printf (_("Could not open pipe: %s\n"), command_line);
-		return STATE_UNKNOWN;
+	if(np_runcmd(command_line, &chld_out, &chld_err, 0) != 0) {
+		result = STATE_WARNING;
+		msg = (char *)_("dig returned an error status");
 	}
 
-	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
-	if (child_stderr == NULL)
-		printf (_("Could not open stderr for %s\n"), command_line);
-
-	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
-
+	for(i = 0; i < chld_out.lines; i++) {
 		/* the server is responding, we just got the host name... */
-		if (strstr (input_buffer, ";; ANSWER SECTION:")) {
+		if (strstr (chld_out.line[i], ";; ANSWER SECTION:")) {
 
 			/* loop through the whole 'ANSWER SECTION' */
-			do {
+			for(; i < chld_out.lines; i++) {
 				/* get the host address */
-				if (!fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process))
-					break;
+				if (verbose)
+					printf ("%s\n", chld_out.line[i]);
 
-				if (strpbrk (input_buffer, "\r\n"))
-					input_buffer[strcspn (input_buffer, "\r\n")] = '\0';
-
-				if (verbose && !strstr (input_buffer, ";; ")) 
-					printf ("%s\n", input_buffer); 
-
-				if (expected_address==NULL && strstr (input_buffer, query_address) != NULL) {
-					output = strdup(input_buffer);
+				if (strstr (chld_out.line[i], (expected_address == NULL ? query_address : expected_address)) != NULL) {
+					msg = chld_out.line[i];
 					result = STATE_OK;
-				}
-				else if (expected_address != NULL && strstr (input_buffer, expected_address) != NULL) {
-					output = strdup(input_buffer);
-                        	        result = STATE_OK;
-				}
 
-				/* Translate output TAB -> SPACE */
-				t = output;
-				while ((t = index(t, '\t')) != NULL) 
-					*t = ' ';
-
-			} while (!strstr (input_buffer, ";; "));
+					/* Translate output TAB -> SPACE */
+					t = msg;
+					while ((t = strchr(t, '\t')) != NULL) *t = ' ';
+					break;
+				}
+			}
 
 			if (result == STATE_UNKNOWN) {
-		        	asprintf (&output, _("Server not found in ANSWER SECTION"));
-	                        result = STATE_WARNING;
-                        }
+				msg = (char *)_("Server not found in ANSWER SECTION");
+				result = STATE_WARNING;
+			}
+
+			/* we found the answer section, so break out of the loop */
+			break;
 		}
-
 	}
 
-	if (result == STATE_UNKNOWN) {
-		asprintf (&output, _("No ANSWER SECTION found"));
-	}
+	if (result == STATE_UNKNOWN)
+		msg = (char *)_("No ANSWER SECTION found");
 
-	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
-		/* If we get anything on STDERR, at least set warning */
-		result = max_state (result, STATE_WARNING);
-		printf ("%s", input_buffer);
-		if (strlen (output) == 0)
-			output = strdup (1 + index (input_buffer, ':'));
-	}
-
-	(void) fclose (child_stderr);
-
-	/* close the pipe */
-	if (spclose (child_process)) {
-		result = max_state (result, STATE_WARNING);
-		if (strlen (output) == 0)
-			asprintf (&output, _("dig returned an error status"));
+	/* If we get anything on STDERR, at least set warning */
+	if(chld_err.buflen > 0) {
+		result = max_state(result, STATE_WARNING);
+		if(!msg) for(i = 0; i < chld_err.lines; i++) {
+			msg = strchr(chld_err.line[0], ':');
+			if(msg) {
+				msg++;
+				break;
+			}
+		}
 	}
 
 	microsec = deltime (tv);
 	elapsed_time = (double)microsec / 1.0e6;
-
-	if (output == NULL || strlen (output) == 0)
-		asprintf (&output, _(" Probably a non-existent host/domain"));
 
 	if (critical_interval > UNDEFINED && elapsed_time > critical_interval)
 		result = STATE_CRITICAL;
@@ -173,16 +152,15 @@ main (int argc, char **argv)
 	else if (warning_interval > UNDEFINED && elapsed_time > warning_interval)
 		result = STATE_WARNING;
 
-	asprintf (&output, _("%.3f seconds response time (%s)"), elapsed_time, output);
-
-	printf ("DNS %s - %s|%s\n",
-	        state_text (result), output,
+	printf ("DNS %s - %.3f seconds response time (%s)|%s\n",
+	        state_text (result), elapsed_time,
+	        msg ? msg : _("Probably a non-existent host/domain"),
 	        fperfdata("time", elapsed_time, "s",
-	                 (warning_interval>UNDEFINED?TRUE:FALSE),
-	                 warning_interval,
-	                 (critical_interval>UNDEFINED?TRUE:FALSE),
-	                 critical_interval,
-									 TRUE, 0, FALSE, 0));
+	                  (warning_interval>UNDEFINED?TRUE:FALSE),
+	                  warning_interval,
+	                  (critical_interval>UNDEFINED?TRUE:FALSE),
+					  critical_interval,
+					  TRUE, 0, FALSE, 0));
 	return result;
 }
 
@@ -219,8 +197,6 @@ process_arguments (int argc, char **argv)
 			break;
 
 		switch (c) {
-		case '?':									/* help */
-			usage2 (_("Unknown argument"), optarg);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
@@ -228,19 +204,15 @@ process_arguments (int argc, char **argv)
 			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'H':									/* hostname */
-			if (is_host (optarg)) {
-				dns_server = optarg;
-			}
-			else {
-				usage2 (_("Invalid hostname/address"), optarg);
-			}
+			host_or_die(optarg);
+			dns_server = optarg;
 			break;
 		case 'p':                 /* server port */
 			if (is_intpos (optarg)) {
 				server_port = atoi (optarg);
 			}
 			else {
-				usage2 (_("Port must be a positive integer"), optarg);
+				usage_va(_("Port must be a positive integer - %s"), optarg);
 			}
 			break;
 		case 'l':									/* address to lookup */
@@ -251,7 +223,7 @@ process_arguments (int argc, char **argv)
 				warning_interval = strtod (optarg, NULL);
 			}
 			else {
-				usage2 (_("Warning interval must be a positive integer"), optarg);
+				usage_va(_("Warning interval must be a positive integer - %s"), optarg);
 			}
 			break;
 		case 'c':									/* critical */
@@ -259,7 +231,7 @@ process_arguments (int argc, char **argv)
 				critical_interval = strtod (optarg, NULL);
 			}
 			else {
-				usage2 (_("Critical interval must be a positive integer"), optarg);
+				usage_va(_("Critical interval must be a positive integer - %s"), optarg);
 			}
 			break;
 		case 't':									/* timeout */
@@ -267,7 +239,7 @@ process_arguments (int argc, char **argv)
 				timeout_interval = atoi (optarg);
 			}
 			else {
-				usage2 (_("Timeout interval must be a positive integer"), optarg);
+				usage_va(_("Timeout interval must be a positive integer - %s"), optarg);
 			}
 			break;
 		case 'v':									/* verbose */
@@ -279,18 +251,16 @@ process_arguments (int argc, char **argv)
 		case 'a':
 			expected_address = optarg;
 			break;
+		default:									/* usage_va */
+			usage_va(_("Unknown argument - %s"), optarg);
 		}
 	}
 
 	c = optind;
 	if (dns_server == NULL) {
 		if (c < argc) {
-			if (is_host (argv[c])) {
-				dns_server = argv[c];
-			}
-			else {
-				usage2 (_("Invalid hostname/address"), argv[c]);
-			}
+			host_or_die(argv[c]);
+			dns_server = argv[c];
 		}
 		else {
 			dns_server = strdup ("127.0.0.1");
@@ -359,6 +329,6 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -H host -l lookup [-p <server port>] [-T <query type>]\n\
-                  [-w <warning interval>] [-c <critical interval>] [-t <timeout>]\n\
-                  [-a <expected answer address>] [-v]\n", progname);
+              [-w <warning interval>] [-c <critical interval>] [-t <timeout>]\n\
+              [-a <expected answer address>] [-v]\n", progname);
 }

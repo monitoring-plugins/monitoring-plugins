@@ -16,6 +16,8 @@
  *
  */
 
+#define NAGIOSPLUG_API_C 1
+
 /** includes **/
 #include "runcmd.h"
 #ifdef HAVE_SYS_WAIT_H
@@ -45,20 +47,17 @@
  * occur in any number of threads simultaneously. */
 static pid_t *np_pids = NULL;
 
-/* If OPEN_MAX isn't defined, we try the sysconf syscall first.
- * If that fails, we fall back to an educated guess which is accurate
- * on Linux and some other systems. There's no guarantee that our guess is
- * adequate and the program will die with SIGSEGV if it isn't and the
- * upper boundary is breached. */
-#ifdef OPEN_MAX
+/* Try sysconf(_SC_OPEN_MAX) first, as it can be higher than OPEN_MAX.
+ * If that fails and the macro isn't defined, we fall back to an educated
+ * guess. There's no guarantee that our guess is adequate and the program
+ * will die with SIGSEGV if it isn't and the upper boundary is breached. */
+#ifdef _SC_OPEN_MAX
+static long maxfd = 0;
+#elif defined(OPEN_MAX)
 # define maxfd OPEN_MAX
-#else
-# ifndef _SC_OPEN_MAX /* sysconf macro unavailable, so guess */
-#  define maxfd 256
-# else
-static int maxfd = 0;
-# endif /* _SC_OPEN_MAX */
-#endif /* OPEN_MAX */
+#else /* sysconf macro unavailable, so guess (may be wildly inaccurate) */
+# define maxfd 256
+#endif
 
 
 /** prototypes **/
@@ -70,7 +69,7 @@ static int np_fetch_output(int, output *, int)
 
 static int np_runcmd_close(int);
 
-/* imported from utils.h */
+/* prototype imported from utils.h */
 extern void die (int, const char *, ...)
 	__attribute__((__noreturn__,__format__(__printf__, 2, 3)));
 
@@ -80,13 +79,11 @@ extern void die (int, const char *, ...)
  * through this api and thus achieve async-safeness throughout the api */
 void np_runcmd_init(void)
 {
-#if !defined(OPEN_MAX) && defined(_SC_OPEN_MAX)
-	if(!maxfd) {
-		if((maxfd = sysconf(_SC_OPEN_MAX)) < 0) {
-			/* possibly log or emit a warning here, since there's no
-			 * guarantee that our guess at maxfd will be adequate */
-			maxfd = 256;
-		}
+#ifndef maxfd
+	if(!maxfd && (maxfd = sysconf(_SC_OPEN_MAX)) < 0) {
+		/* possibly log or emit a warning here, since there's no
+		 * guarantee that our guess at maxfd will be adequate */
+		maxfd = 256;
 	}
 #endif
 
@@ -123,9 +120,9 @@ np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
 	/* make copy of command string so strtok() doesn't silently modify it */
 	/* (the calling program may want to access it later) */
 	cmdlen = strlen(cmdstring);
-	cmd = malloc(cmdlen + 1);
-	if (cmd == NULL) return -1;
+	if((cmd = malloc(cmdlen + 1)) == NULL) return -1;
 	memcpy(cmd, cmdstring, cmdlen);
+	cmd[cmdlen] = '\0';
 
 	/* This is not a shell, so we don't handle "???" */
 	if (strstr (cmdstring, "\"")) return -1;
@@ -257,7 +254,7 @@ popen_timeout_alarm_handler (int signo)
 static int
 np_fetch_output(int fd, output *op, int flags)
 {
-	size_t len = 0, i = 0;
+	size_t len = 0, i = 0, lineno = 0;
 	size_t rsf = 6, ary_size = 0; /* rsf = right shift factor, dec'ed uncond once */
 	char *buf = NULL;
 	int ret;
@@ -278,13 +275,12 @@ np_fetch_output(int fd, output *op, int flags)
 		return ret;
 	}
 
-	if(!op->buf || !op->buflen) return 0;
-
-	/* some plugins may want to keep output unbroken */
-	if(flags & RUNCMD_NO_ARRAYS)
+	/* some plugins may want to keep output unbroken, and some commands
+	 * will yield no output, so return here for those */
+	if(flags & RUNCMD_NO_ARRAYS || !op->buf || !op->buflen)
 		return op->buflen;
 
-	/* and some may want both (*sigh*) */
+	/* and some may want both */
 	if(flags & RUNCMD_NO_ASSOC) {
 		buf = malloc(op->buflen);
 		memcpy(buf, op->buf, op->buflen);
@@ -293,30 +289,34 @@ np_fetch_output(int fd, output *op, int flags)
 
 	op->line = NULL;
 	op->lens = NULL;
-	len = i = 0;
+	i = 0;
 	while(i < op->buflen) {
 		/* make sure we have enough memory */
-		if(len >= ary_size) {
-			ary_size = op->buflen >> --rsf;
+		if(lineno >= ary_size) {
+			/* ary_size must never be zero */
+			do {
+				ary_size = op->buflen >> --rsf;
+			} while(!ary_size);
+
 			op->line = realloc(op->line, ary_size * sizeof(char *));
 			op->lens = realloc(op->lens, ary_size * sizeof(size_t));
 		}
 
 		/* set the pointer to the string */
-		op->line[len] = &buf[i];
+		op->line[lineno] = &buf[i];
 
 		/* hop to next newline or end of buffer */
 		while(buf[i] != '\n' && i < op->buflen) i++;
 		buf[i] = '\0';
 
 		/* calculate the string length using pointer difference */
-		op->lens[len] = (size_t)&buf[i] - (size_t)op->line[len];
-		
-		len++;
+		op->lens[lineno] = (size_t)&buf[i] - (size_t)op->line[lineno];
+
+		lineno++;
 		i++;
 	}
 
-	return len;
+	return lineno;
 }
 
 

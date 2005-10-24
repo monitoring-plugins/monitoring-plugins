@@ -26,7 +26,7 @@ EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 
 EXTRA_DIST = t utils.c netutils.c sslutils.c popen.c utils.h netutils.h \
 	popen.h common.h getaddrinfo.c getaddrinfo.h \
-	gethostbyname.c gethostbyname.h
+	gethostbyname.c gethostbyname.h runcmd.c runcmd.h
 
 PLUGINHDRS = common.h
 
@@ -47,12 +47,12 @@ AM_INSTALL_PROGRAM_FLAGS = @INSTALL_OPTS@
 ##############################################################################
 # the actual targets
 
-check_dig_LDADD = $(NETLIBS) popen.o 
+check_dig_LDADD = $(NETLIBS) runcmd.o 
 check_disk_LDADD = $(BASEOBJS) popen.o
-check_dns_LDADD = $(NETLIBS) popen.o
+check_dns_LDADD = $(NETLIBS) runcmd.o
 check_dummy_LDADD = $(BASEOBJS)
 check_fping_LDADD = $(NETLIBS) popen.o
-check_game_LDADD = $(BASEOBJS) popen.o
+check_game_LDADD = $(BASEOBJS) runcmd.o
 check_http_LDADD = $(SSLOBJS) $(NETLIBS)
 check_hpjd_LDADD = $(NETLIBS) popen.o
 check_ldap_LDADD = $(NETLIBS) $(LDAPLIBS)
@@ -60,7 +60,7 @@ check_load_LDADD = $(BASEOBJS) popen.o
 check_mrtg_LDADD = $(BASEOBJS)
 check_mrtgtraf_LDADD = $(BASEOBJS)
 check_mysql_LDADD = $(NETLIBS) $(MYSQLLIBS)
-check_nagios_LDADD = $(BASEOBJS) popen.o
+check_nagios_LDADD = $(BASEOBJS) runcmd.o
 check_nt_LDADD = $(NETLIBS) 
 check_nwstat_LDADD = $(NETLIBS)
 check_overcr_LDADD = $(NETLIBS)
@@ -78,17 +78,17 @@ check_time_LDADD = $(NETLIBS)
 check_udp_LDADD = $(SSLOBJS) $(NETLIBS)
 check_ups_LDADD = $(NETLIBS)
 check_users_LDADD = $(BASEOBJS) popen.o
-check_by_ssh_LDADD = $(NETLIBS) popen.o
+check_by_ssh_LDADD = $(NETLIBS) runcmd.o
 check_ide_smart_LDADD = $(BASEOBJS)
 negate_LDADD = $(BASEOBJS) popen.o
 urlize_LDADD = $(BASEOBJS) popen.o
 
-check_dig_DEPENDENCIES = check_dig.c $(NETOBJS) popen.o $(DEPLIBS)
+check_dig_DEPENDENCIES = check_dig.c $(NETOBJS) runcmd.o $(DEPLIBS)
 check_disk_DEPENDENCIES = check_disk.c $(BASEOBJS) popen.o $(DEPLIBS)
-check_dns_DEPENDENCIES = check_dns.c $(NETOBJS) popen.o $(DEPLIBS)
+check_dns_DEPENDENCIES = check_dns.c $(NETOBJS) runcmd.o $(DEPLIBS)
 check_dummy_DEPENDENCIES = check_dummy.c $(DEPLIBS)
 check_fping_DEPENDENCIES = check_fping.c $(NETOBJS) popen.o $(DEPLIBS)
-check_game_DEPENDENCIES = check_game.c  $(DEPLIBS)
+check_game_DEPENDENCIES = check_game.c  $(DEPLIBS) runcmd.o
 check_http_DEPENDENCIES = check_http.c $(SSLOBJS) $(NETOBJS) $(DEPLIBS)
 check_hpjd_DEPENDENCIES = check_hpjd.c $(NETOBJS) popen.o $(DEPLIBS)
 check_ide_smart_DEPENDENCIES = check_ide_smart.c $(BASEOBJS) $(DEPLIBS)
@@ -97,7 +97,7 @@ check_load_DEPENDENCIES = check_load.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_mrtg_DEPENDENCIES = check_mrtg.c $(DEPLIBS)
 check_mrtgtraf_DEPENDENCIES = check_mrtgtraf.c $(DEPLIBS)
 check_mysql_DEPENDENCIES = check_mysql.c $(NETOBJS) $(DEPLIBS)
-check_nagios_DEPENDENCIES = check_nagios.c $(BASEOBJS) popen.o $(DEPLIBS)
+check_nagios_DEPENDENCIES = check_nagios.c $(BASEOBJS) runcmd.o $(DEPLIBS)
 check_nt_DEPENDENCIES = check_nt.c $(NETOBJS) $(DEPLIBS)
 check_nwstat_DEPENDENCIES = check_nwstat.c $(NETOBJS) $(DEPLIBS)
 check_overcr_DEPENDENCIES = check_overcr.c $(NETOBJS) $(DEPLIBS)
@@ -115,7 +115,7 @@ check_time_DEPENDENCIES = check_time.c $(NETOBJS) $(DEPLIBS)
 check_udp_DEPENDENCIES = check_udp.c $(SSLOBJS) $(NETOBJS) $(DEPLIBS)
 check_ups_DEPENDENCIES = check_ups.c $(NETOBJS) $(DEPLIBS)
 check_users_DEPENDENCIES = check_users.c $(BASEOBJS) popen.o $(DEPLIBS)
-check_by_ssh_DEPENDENCIES = check_by_ssh.c $(NETOBJS) popen.o $(DEPLIBS)
+check_by_ssh_DEPENDENCIES = check_by_ssh.c $(NETOBJS) runcmd.o $(DEPLIBS)
 negate_DEPENDENCIES = negate.c $(BASEOBJS) popen.o $(DEPLIBS)
 urlize_DEPENDENCIES = urlize.c $(BASEOBJS) popen.o $(DEPLIBS)
 
@@ -123,6 +123,8 @@ urlize_DEPENDENCIES = urlize.c $(BASEOBJS) popen.o $(DEPLIBS)
 # secondary dependencies
 
 popen.o: popen.c popen.h $(PLUGINHDRS)
+
+runcmd.o: runcmd.c runcmd.h $(PLUGINHDRS)
 
 utils.o: utils.c utils.h $(PLUGINHDRS)
 

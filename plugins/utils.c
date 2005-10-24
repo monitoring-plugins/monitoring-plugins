@@ -58,6 +58,17 @@ void usage (const char *msg)
 	exit (STATE_UNKNOWN);
 }
 
+void usage_va (const char *fmt, ...)
+{
+	va_list ap;
+	printf("%s: ", progname);
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+	printf("\n");
+	exit (STATE_UNKNOWN);
+}
+
 void usage2(const char *msg, const char *arg)
 {
 	printf ("%s: %s - %s\n",progname,msg,arg);

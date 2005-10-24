@@ -23,8 +23,8 @@ const char *copyright = "2002-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
-#include "popen.h"
 #include "utils.h"
+#include "runcmd.h"
 
 int process_arguments (int, char **);
 int validate_arguments (void);
@@ -57,16 +57,16 @@ main (int argc, char **argv)
 	char *command_line;
 	int result = STATE_UNKNOWN;
 	FILE *fp;
-	char input_buffer[MAX_INPUT_BUFFER];
 	char *p, *ret[QSTAT_MAX_RETURN_ARGS];
-	int i;
+	size_t i = 0;
+	output chld_out;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 	
 	if (process_arguments (argc, argv) == ERROR)
-		usage4 (_("Could not parse arguments"));
+		usage_va(_("Could not parse arguments"));
 
 	result = STATE_OK;
 
@@ -80,17 +80,9 @@ main (int argc, char **argv)
 	if (verbose > 0)
 		printf ("%s\n", command_line);
 
-	/* run the command */
-	fp = spopen (command_line);
-	if (fp == NULL) {
-		printf (_("Could not open pipe: %s\n"), command_line);
-		return STATE_UNKNOWN;
-	}
-
-	fgets (input_buffer, MAX_INPUT_BUFFER - 1, fp);	/* Only interested in the first line */
-
-	/* strip the newline character from the end of the input */
-	input_buffer[strlen (input_buffer) - 1] = 0;
+	/* run the command. historically, this plugin ignores output on stderr,
+	 * as well as return status of the qstat program */
+	(void)np_runcmd(command_line, &chld_out, NULL, 0);
 
 	/* sanity check */
 	/* was thinking about running qstat without any options, capturing the
@@ -102,18 +94,13 @@ main (int argc, char **argv)
 	   In the end, I figured I'd simply let an error occur & then trap it
 	 */
 
-	if (!strncmp (input_buffer, "unknown option", 14)) {
+	if (!strncmp (chld_out.line[0], "unknown option", 14)) {
 		printf (_("CRITICAL - Host type parameter incorrect!\n"));
 		result = STATE_CRITICAL;
 		return result;
 	}
 
-	/* initialize the returned data buffer */
-	for (i = 0; i < QSTAT_MAX_RETURN_ARGS; i++)
-		ret[i] = strdup("");
-
-	i = 0;
-	p = (char *) strtok (input_buffer, QSTAT_DATA_DELIMITER);
+	p = (char *) strtok (chld_out.line[0], QSTAT_DATA_DELIMITER);
 	while (p != NULL) {
 		ret[i] = p;
 		p = (char *) strtok (NULL, QSTAT_DATA_DELIMITER);
@@ -141,16 +128,13 @@ main (int argc, char **argv)
 		        ret[qstat_game_field], 
 		        ret[qstat_map_field],
 		        ret[qstat_ping_field],
-						perfdata ("players", atol(ret[qstat_game_players]), "",
+		        perfdata ("players", atol(ret[qstat_game_players]), "",
 		                  FALSE, 0, FALSE, 0,
 		                  TRUE, 0, TRUE, atol(ret[qstat_game_players_max])),
-						fperfdata ("ping", strtod(ret[qstat_ping_field], NULL), "",
+		        fperfdata ("ping", strtod(ret[qstat_ping_field], NULL), "",
 		                  FALSE, 0, FALSE, 0,
 		                  TRUE, 0, FALSE, 0));
 	}
-
-	/* close the pipe */
-	spclose (fp);
 
 	return result;
 }
@@ -197,8 +181,6 @@ process_arguments (int argc, char **argv)
 			break;
 
 		switch (c) {
-		case '?': /* args not parsable */
-			usage2 (_("Unknown argument"), optarg);
 		case 'h': /* help */
 			print_help ();
 			exit (STATE_OK);
@@ -251,6 +233,8 @@ process_arguments (int argc, char **argv)
 			if (qstat_game_players_max < 0 || qstat_game_players_max > QSTAT_MAX_RETURN_ARGS)
 				return ERROR;
 			break;
+		default: /* args not parsable */
+			usage_va(_("Unknown argument - %s"), optarg);
 		}
 	}
 
@@ -328,8 +312,8 @@ void
 print_usage (void)
 {
 	printf ("\
-Usage: %s [-hvV] [-P port] [-t timeout] [-g game_field] [-m map_field]\n\
-                  [-p ping_field] [-G game-time] [-H hostname] <game> <ip_address>\n", progname);
+Usage: %s <game> <ip_address> [-p port] [-gf game_field] [-mf map_field]\n\
+                  [-pf ping_field]\n", progname);
 }
 
 /******************************************************************************

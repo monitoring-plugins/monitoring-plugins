@@ -24,7 +24,7 @@ const char *copyright = "1999-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
-#include "popen.h"
+#include "runcmd.h"
 #include "utils.h"
 
 int process_arguments (int, char **);
@@ -55,6 +55,8 @@ main (int argc, char **argv)
 	int procrss = 0;
 	float procpcpu = 0;
 	char procstat[8];
+	/* procetime is unused in most configurations, but may be in PS_VAR_LIST
+	 * so it must be here in spite of it producing compiler warnings */
 	char procetime[MAX_INPUT_BUFFER];
 	char procprog[MAX_INPUT_BUFFER];
 	char *procargs;
@@ -62,17 +64,19 @@ main (int argc, char **argv)
 	int expected_cols = PS_COLS - 1;
 	const char *zombie = "Z";
 	char *temp_string;
+	output chld_out, chld_err;
+	size_t i;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage4 (_("Could not parse arguments"));
+		usage_va(_("Could not parse arguments"));
 
 	/* Set signal handling and alarm timeout */
 	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR) {
-		usage4 (_("Cannot catch SIGALRM"));
+		usage_va(_("Cannot catch SIGALRM"));
 	}
 
 	/* handle timeouts gracefully... */
@@ -99,40 +103,30 @@ main (int argc, char **argv)
 		printf(_("command: %s\n"), PS_COMMAND);
 
 	/* run the command to check for the Nagios process.. */
-	child_process = spopen (PS_COMMAND);
-	if (child_process == NULL) {
-		printf (_("Could not open pipe: %s\n"), PS_COMMAND);
-		return STATE_UNKNOWN;
-	}
-
-	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
-	if (child_stderr == NULL) {
-		printf (_("Could not open stderr for %s\n"), PS_COMMAND);
-	}
-
-	fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process);
+	if((result = np_runcmd(PS_COMMAND, &chld_out, &chld_err, 0)) != 0)
+		result = STATE_WARNING;
 
 	/* count the number of matching Nagios processes... */
-	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
-		cols = sscanf (input_buffer, PS_FORMAT, PS_VARLIST);
-                /* Zombie processes do not give a procprog command */
-                if ( cols == (expected_cols - 1) && strstr(procstat, zombie) ) {
-                        cols = expected_cols;
-                        /* Set some value for procargs for the strip command further below
-                        Seen to be a problem on some Solaris 7 and 8 systems */
-                        input_buffer[pos] = '\n';
-                        input_buffer[pos+1] = 0x0;
-                }
+	for(i = 0; i < chld_out.lines; i++) {
+		cols = sscanf (chld_out.line[i], PS_FORMAT, PS_VARLIST);
+		/* Zombie processes do not give a procprog command */
+		if ( cols == (expected_cols - 1) && strstr(procstat, zombie) ) {
+			cols = expected_cols;
+			/* Set some value for procargs for the strip command further below
+			 * Seen to be a problem on some Solaris 7 and 8 systems */
+			chld_out.line[i][pos] = '\n';
+			chld_out.line[i][pos+1] = 0x0;
+		}
 		if ( cols >= expected_cols ) {
-			asprintf (&procargs, "%s", input_buffer + pos);
+			asprintf (&procargs, "%s", chld_out.line[i] + pos);
 			strip (procargs);
-			
+
 			/* Some ps return full pathname for command. This removes path */
-                        temp_string = strtok ((char *)procprog, "/");
-                        while (temp_string) {
-                                strcpy(procprog, temp_string);
-                                temp_string = strtok (NULL, "/");
-                        }
+			temp_string = strtok ((char *)procprog, "/");
+			while (temp_string) {
+				strcpy(procprog, temp_string);
+				temp_string = strtok (NULL, "/");
+			}
 
 			/* May get empty procargs */
 			if (!strstr(procargs, argv[0]) && strstr(procargs, process_string) && strcmp(procargs,"")) {
@@ -145,14 +139,7 @@ main (int argc, char **argv)
 	}
 
 	/* If we get anything on stderr, at least set warning */
-	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
-		result = max_state (result, STATE_WARNING);
-
-	/* close stderr */
-	(void) fclose (child_stderr);
-
-	/* close the pipe */
-	if (spclose (child_process))
+	if(chld_err.buflen)
 		result = max_state (result, STATE_WARNING);
 
 	/* reset the alarm handler */
@@ -219,8 +206,6 @@ process_arguments (int argc, char **argv)
 			break;
 
 		switch (c) {
-		case '?':									/* print short usage statement if args not parsable */
-			usage2 (_("Unknown argument"), optarg);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
@@ -243,16 +228,17 @@ process_arguments (int argc, char **argv)
 		case 'v':
 			verbose++;
 			break;
+		default:									/* print short usage_va statement if args not parsable */
+			usage_va(_("Unknown argument - %s"), optarg);
 		}
 	}
 
 
 	if (status_log == NULL)
-		die (STATE_UNKNOWN,
-		     _("You must provide the status_log\n"));
-	else if (process_string == NULL)
-		die (STATE_UNKNOWN,
-							 _("You must provide a process string\n"));
+		die (STATE_UNKNOWN, _("You must provide the status_log\n"));
+
+	if (process_string == NULL)
+		die (STATE_UNKNOWN, _("You must provide a process string\n"));
 
 	return OK;
 }

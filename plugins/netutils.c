@@ -291,6 +291,13 @@ is_host (const char *address)
 	return (FALSE);
 }
 
+void
+host_or_die(const char *str)
+{
+	if(!str || (!is_addr(str) && !is_hostname(str)))
+		usage_va(_("Invalid hostname/address - %s"), str);
+}
+
 int
 is_addr (const char *address)
 {

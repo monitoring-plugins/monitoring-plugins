@@ -1,3 +1,5 @@
+#ifndef NP_UTILS_H
+#define NP_UTILS_H
 /* Header file for nagios plugins utils.c */
 
 /* This file should be included in all plugins */
@@ -77,6 +79,7 @@ void usage (const char *) __attribute__((noreturn));
 void usage2(const char *, const char *) __attribute__((noreturn));
 void usage3(const char *, int) __attribute__((noreturn));
 void usage4(const char *);
+void usage_va(const char *fmt, ...);
 
 const char *state_text (int);
 
@@ -169,3 +172,5 @@ send email to nagiosplug-devel@lists.sourceforge.net\n"
 The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\
 copies of the plugins under the terms of the GNU General Public License.\n\
 For more information about these matters, see the file named COPYING.\n"
+
+#endif /* NP_UTILS_H */
