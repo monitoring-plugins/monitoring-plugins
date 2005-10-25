@@ -533,7 +533,7 @@ dnl
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS(signal.h strings.h string.h syslog.h uio.h errno.h regex.h sys/types.h sys/time.h sys/socket.h sys/loadavg.h)
+AC_CHECK_HEADERS(signal.h strings.h string.h syslog.h uio.h errno.h regex.h sys/types.h sys/time.h sys/socket.h sys/loadavg.h sys/un.h)
 AC_CHECK_HEADERS(features.h stdarg.h sys/unistd.h ctype.h stdlib.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.

@@ -177,6 +177,12 @@ main (int argc, char **argv)
 		QUIT = "QUIT\r\n";
 		PORT = 119;
 	}
+	else if (strncmp(SERVICE, "CLAMD", 5)) {
+		SEND = "PING";
+		EXPECT = "PONG";
+		QUIT = NULL;
+		PORT = 3310;
+	}
 	/* fallthrough check, so it's supposed to use reverse matching */
 	else if (strcmp (SERVICE, "TCP"))
 		usage (_("CRITICAL - Generic check_tcp called with unknown service\n"));
@@ -318,10 +324,14 @@ main (int argc, char **argv)
 	printf(_("%s %s - "), SERVICE, state_text(result));
 
 	if(match == -2 && len && !(flags & FLAG_HIDE_OUTPUT))
-		printf("Unexpected response from host: %s", status);
-	else
-		printf("%.3f second response time on port %d",
-		       elapsed_time, server_port);
+		printf("Unexpected response from host/socket: %s", status);
+	else {
+		printf("%.3f second response time on ", elapsed_time);
+		if(server_address[0] != '/')
+			printf("port %d", server_port);
+		else
+			printf("socket %s", server_address);
+	}
 
 	if (match != -2 && !(flags & FLAG_HIDE_OUTPUT) && len)
 		printf (" [%s]", status);
@@ -431,8 +441,6 @@ process_arguments (int argc, char **argv)
 #endif
 			break;
 		case 'H':                 /* hostname */
-			if (is_host (optarg) == FALSE)
-				usage2 (_("Invalid hostname/address"), optarg);
 			server_address = optarg;
 			break;
 		case 'c':                 /* critical */
@@ -542,6 +550,8 @@ process_arguments (int argc, char **argv)
 
 	if (server_address == NULL)
 		usage4 (_("You must provide a server address"));
+	else if (is_host (optarg) == FALSE && optarg[0] != '/')
+		usage2 (_("Invalid hostname, address, or socket"), optarg);
 
 	return TRUE;
 }
@@ -555,7 +565,7 @@ print_help (void)
 	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("This plugin tests %s connections with the specified host.\n\n"),
+	printf (_("This plugin tests %s connections with the specified host (or unix socket).\n\n"),
 	        SERVICE);
 
 	print_usage ();

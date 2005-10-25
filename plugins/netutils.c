@@ -155,42 +155,46 @@ process_request (const char *server_address, int server_port, int proto,
 }
 
 
-/* opens a tcp or udp connection to a remote host */
+/* opens a tcp or udp connection to a remote host or local socket */
 int
 np_net_connect (const char *host_name, int port, int *sd, int proto)
 {
 	struct addrinfo hints;
-	struct addrinfo *res, *res0;
+	struct addrinfo *r, *res;
+	struct sockaddr_un su;
 	char port_str[6];
-	int result;
+	int socktype, result;
 
-	memset (&hints, 0, sizeof (hints));
-	hints.ai_family = address_family;
-	hints.ai_protocol = proto;
-	hints.ai_socktype = (proto == IPPROTO_UDP) ? SOCK_DGRAM : SOCK_STREAM;
+	socktype = (proto == IPPROTO_UDP) ? SOCK_DGRAM : SOCK_STREAM;
 
-	snprintf (port_str, sizeof (port_str), "%d", port);
-	result = getaddrinfo (host_name, port_str, &hints, &res0);
+	/* as long as it doesn't start with a '/', it's assumed a host or ip */
+	if(host_name[0] != '/'){
+		memset (&hints, 0, sizeof (hints));
+		hints.ai_family = address_family;
+		hints.ai_protocol = proto;
+		hints.ai_socktype = socktype;
 
-	if (result != 0) {
-		printf ("%s\n", gai_strerror (result));
-		return STATE_UNKNOWN;
-	}
-	else {
-		res = res0;
-		while (res) {
+		snprintf (port_str, sizeof (port_str), "%d", port);
+		result = getaddrinfo (host_name, port_str, &hints, &res);
+
+		if (result != 0) {
+			printf ("%s\n", gai_strerror (result));
+			return STATE_UNKNOWN;
+		}
+
+		r = res;
+		while (r) {
 			/* attempt to create a socket */
-			*sd = socket (res->ai_family, (proto == IPPROTO_UDP) ?
-			              SOCK_DGRAM : SOCK_STREAM, res->ai_protocol);
+			*sd = socket (r->ai_family, socktype, r->ai_protocol);
 
 			if (*sd < 0) {
 				printf (_("Socket creation failed\n"));
-				freeaddrinfo (res);
+				freeaddrinfo (r);
 				return STATE_UNKNOWN;
 			}
 
 			/* attempt to open a connection */
-			result = connect (*sd, res->ai_addr, res->ai_addrlen);
+			result = connect (*sd, r->ai_addr, r->ai_addrlen);
 
 			if (result == 0) {
 				was_refused = FALSE;
@@ -206,9 +210,25 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 			}
 
 			close (*sd);
-			res = res->ai_next;
+			r = r->ai_next;
 		}
-		freeaddrinfo (res0);
+		freeaddrinfo (res);
+	} 
+	/* else the hostname is interpreted as a path to a unix socket */
+	else {
+		if(strlen(host_name) >= UNIX_PATH_MAX){
+			die(_("Supplied path too long unix domain socket"));
+		}
+		memset(&su, 0, sizeof(su));
+		su.sun_family = AF_UNIX;
+		strncpy(su.sun_path, host_name, UNIX_PATH_MAX);
+		*sd = socket(PF_UNIX, SOCK_STREAM, 0);
+		if(sd < 0){
+			die(_("Socket creation failed"));
+		}
+		result = connect(*sd, (struct sockaddr *)&su, sizeof(su));
+		if (result < 0 && errno == ECONNREFUSED)
+			was_refused = TRUE;
 	}
 
 	if (result == 0)

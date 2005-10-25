@@ -40,6 +40,14 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#ifdef HAVE_SYS_UN_H
+# include <sys/un.h>
+# ifndef UNIX_PATH_MAX
+   /* linux uses this, on sun it's hard-coded at 108 without a define */
+#  define UNIX_PATH_MAX 108
+# endif /* UNIX_PATH_MAX */
+#endif /* HAVE_SYS_UN_H */
+
 RETSIGTYPE socket_timeout_alarm_handler (int) __attribute__((noreturn));
 
 /* process_request and wrapper macros */

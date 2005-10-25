@@ -139,7 +139,7 @@ char *fperfdata (const char *,
 
 #define UT_HOST_PORT "\
  -H, --hostname=ADDRESS\n\
-    Host name or IP Address\n\
+    Host name, IP Address, or unix socket (must be an absolute path)\n\
  -%c, --port=INTEGER\n\
     Port number (default: %s)\n"
 
