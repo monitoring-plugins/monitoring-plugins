@@ -61,11 +61,13 @@
 PATH=""
 
 ECHO="/bin/echo"
-GREP="/bin/grep"
+GREP="/bin/egrep"
 DIFF="/bin/diff"
 TAIL="/bin/tail"
 CAT="/bin/cat"
 RM="/bin/rm"
+CHMOD="/bin/chmod"
+TOUCH="/bin/touch"
 
 PROGNAME=`/bin/basename $0`
 PROGPATH=`echo $0 | /bin/sed -e 's,[\\/][^\\/][^\\/]*$,,'`
@@ -191,8 +193,8 @@ if [ -x /bin/mktemp ]; then
 else
     tempdiff=`/bin/date '+%H%M%S'`
     tempdiff="/tmp/check_log.${tempdiff}"
-    /bin/touch $tempdiff
-    chmod 600 $tempdiff
+    $TOUCH $tempdiff
+    $CHMOD 600 $tempdiff
 fi
 
 $DIFF $logfile $oldlog > $tempdiff
@@ -201,7 +203,7 @@ $DIFF $logfile $oldlog > $tempdiff
 count=`$GREP -c "$query" $tempdiff`
 
 # Get the last matching entry in the diff file
-lastentry=`$GREP "$query" $tempdiff | $TAIL --lines=1`
+lastentry=`$GREP "$query" $tempdiff | $TAIL -1`
 
 $RM -f $tempdiff
 $CAT $logfile > $oldlog
