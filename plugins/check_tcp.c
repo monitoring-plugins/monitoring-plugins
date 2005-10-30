@@ -550,7 +550,7 @@ process_arguments (int argc, char **argv)
 
 	if (server_address == NULL)
 		usage4 (_("You must provide a server address"));
-	else if (is_host (server_address) == FALSE && server_address[0] != '/')
+	else if (server_address[0] != '/' && is_host (server_address) == FALSE)
 		usage2 (_("Invalid hostname, address, or socket"), server_address);
 
 	return TRUE;
