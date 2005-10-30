@@ -177,7 +177,7 @@ main (int argc, char **argv)
 		QUIT = "QUIT\r\n";
 		PORT = 119;
 	}
-	else if (strncmp(SERVICE, "CLAMD", 5)) {
+	else if (!strncmp(SERVICE, "CLAMD", 5)) {
 		SEND = "PING";
 		EXPECT = "PONG";
 		QUIT = NULL;
@@ -550,8 +550,8 @@ process_arguments (int argc, char **argv)
 
 	if (server_address == NULL)
 		usage4 (_("You must provide a server address"));
-	else if (is_host (optarg) == FALSE && optarg[0] != '/')
-		usage2 (_("Invalid hostname, address, or socket"), optarg);
+	else if (is_host (server_address) == FALSE && server_address[0] != '/')
+		usage2 (_("Invalid hostname, address, or socket"), server_address);
 
 	return TRUE;
 }
