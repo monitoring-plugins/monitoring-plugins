@@ -55,9 +55,9 @@ main (int argc, char **argv)
 	int procrss = 0;
 	float procpcpu = 0;
 	char procstat[8];
-	/* procetime is unused in most configurations, but may be in PS_VAR_LIST
-	 * so it must be here in spite of it producing compiler warnings */
+#ifdef PS_USES_PROCETIME
 	char procetime[MAX_INPUT_BUFFER];
+#endif /* PS_USES_PROCETIME */
 	char procprog[MAX_INPUT_BUFFER];
 	char *procargs;
 	int pos, cols;

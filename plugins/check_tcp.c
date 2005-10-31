@@ -31,7 +31,6 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #ifdef HAVE_SSL
 static int check_cert = FALSE;
 static int days_till_exp;
-static char *randbuff = "";
 # define my_recv(buf, len) ((flags & FLAG_SSL) ? np_net_ssl_read(buf, len) : read(sd, buf, len))
 # define my_send(buf, len) ((flags & FLAG_SSL) ? np_net_ssl_write(buf, len) : send(sd, buf, len, 0))
 #else
@@ -51,7 +50,6 @@ static char *QUIT = NULL;
 static int PROTOCOL = IPPROTO_TCP; /* most common is default */
 static int PORT = 0;
 
-static char timestamp[17] = "";
 static int server_port = 0;
 static char *server_address = NULL;
 static char *server_send = NULL;
@@ -199,7 +197,7 @@ main (int argc, char **argv)
 	if(flags & FLAG_VERBOSE) {
 		printf("Using service %s\n", SERVICE);
 		printf("Port: %d\n", PORT);
-		printf("flags: 0x%x\n", flags);
+		printf("flags: 0x%x\n", (int)flags);
 	}
 
 	if(EXPECT && !server_expect_count)
@@ -242,7 +240,7 @@ main (int argc, char **argv)
 	}
 
 	if(flags & FLAG_VERBOSE) {
-		printf("server_expect_count: %d\n", server_expect_count);
+		printf("server_expect_count: %d\n", (int)server_expect_count);
 		for(i = 0; i < server_expect_count; i++)
 			printf("\t%d: %s\n", i, server_expect[i]);
 	}
@@ -274,7 +272,7 @@ main (int argc, char **argv)
 		/* print raw output if we're debugging */
 		if(flags & FLAG_VERBOSE)
 			printf("received %d bytes from host\n#-raw-recv-------#\n%s\n#-raw-recv-------#\n",
-			       len + 1, status);
+			       (int)len + 1, status);
 		while(isspace(status[len])) status[len--] = '\0';
 
 		for (i = 0; i < server_expect_count; i++) {

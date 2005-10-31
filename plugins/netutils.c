@@ -31,6 +31,8 @@
 *
 ****************************************************************************/
 
+#define LOCAL_TIMEOUT_ALARM_HANDLER
+
 #include "common.h"
 #include "netutils.h"
 
@@ -217,14 +219,14 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 	/* else the hostname is interpreted as a path to a unix socket */
 	else {
 		if(strlen(host_name) >= UNIX_PATH_MAX){
-			die(_("Supplied path too long unix domain socket"));
+			die(STATE_UNKNOWN, _("Supplied path too long unix domain socket"));
 		}
 		memset(&su, 0, sizeof(su));
 		su.sun_family = AF_UNIX;
 		strncpy(su.sun_path, host_name, UNIX_PATH_MAX);
 		*sd = socket(PF_UNIX, SOCK_STREAM, 0);
 		if(sd < 0){
-			die(_("Socket creation failed"));
+			die(STATE_UNKNOWN, _("Socket creation failed"));
 		}
 		result = connect(*sd, (struct sockaddr *)&su, sizeof(su));
 		if (result < 0 && errno == ECONNREFUSED)

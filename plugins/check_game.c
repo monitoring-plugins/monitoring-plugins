@@ -56,7 +56,6 @@ main (int argc, char **argv)
 {
 	char *command_line;
 	int result = STATE_UNKNOWN;
-	FILE *fp;
 	char *p, *ret[QSTAT_MAX_RETURN_ARGS];
 	size_t i = 0;
 	output chld_out;

@@ -45,7 +45,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#ifdef HUGE_VAL_NEEDS_MATH_H
+#ifdef HAVE_MATH_H
 #include <math.h>
 #endif
 

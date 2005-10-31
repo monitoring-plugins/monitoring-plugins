@@ -162,6 +162,7 @@ AC_SUBST(SOCKETLIBS)
 
 dnl
 dnl check for math-related functions needing -lm
+AC_CHECK_HEADERS(math.h)
 AC_CHECK_LIB(m,floor,MATHLIBS="-lm")
 AC_SUBST(MATHLIBS)
 
@@ -909,6 +910,10 @@ if test -n "$ac_cv_ps_varlist" ; then
 	AC_DEFINE_UNQUOTED(PS_COLS,$ac_cv_ps_cols,
 		[Number of columns in ps command])
 	EXTRAS="$EXTRAS check_procs check_nagios"
+	if echo "$ac_cv_ps_varlist" | grep -q "procetime"; then
+		AC_DEFINE(PS_USES_PROCETIME,"yes",
+		          [Whether the ps utility uses the "procetime" field])
+	fi
 fi
 
 AC_PATH_PROG(PATH_TO_PING,ping)

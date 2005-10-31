@@ -746,9 +746,6 @@ check_http (void)
 	double elapsed_time;
 	int page_len = 0;
 	int result = STATE_UNKNOWN;
-#ifdef HAVE_SSL
-	int sslerr;
-#endif
 
 	/* try to connect to the host at the given port number */
 	if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK)
@@ -793,7 +790,7 @@ check_http (void)
 			asprintf (&buf, "%sContent-Type: application/x-www-form-urlencoded\r\n", buf);
 		}
 		
-		asprintf (&buf, "%sContent-Length: %i\r\n\r\n", buf, strlen (http_post_data));
+		asprintf (&buf, "%sContent-Length: %i\r\n\r\n", buf, (int)strlen (http_post_data));
 		asprintf (&buf, "%s%s%s", buf, http_post_data, CRLF);
 	}
 	else {
@@ -858,7 +855,7 @@ check_http (void)
 	if (verbose)
 		printf ("%s://%s:%d%s is %d characters\n",
 			use_ssl ? "https" : "http", server_address,
-			server_port, server_url, pagesize);
+			server_port, server_url, (int)pagesize);
 
 	/* find status line and null-terminate it */
 	status_line = page;

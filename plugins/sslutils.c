@@ -31,6 +31,7 @@
 *
 ****************************************************************************/
 
+#define LOCAL_TIMEOUT_ALARM_HANDLER
 #include "common.h"
 #include "netutils.h"
 

@@ -578,7 +578,7 @@ process_arguments (int argc, char **argv)
 				labels_size += 8;
 				labels = realloc (labels, labels_size);
 				if (labels == NULL)
-					die (STATE_UNKNOWN, _("Could not reallocate labels[%d]"), nlabels);
+					die (STATE_UNKNOWN, _("Could not reallocate labels[%d]"), (int)nlabels);
 			}
 			labels[nlabels - 1] = optarg;
 			ptr = thisarg (optarg);
@@ -607,7 +607,7 @@ process_arguments (int argc, char **argv)
 				unitv_size += 8;
 				unitv = realloc (unitv, unitv_size);
 				if (unitv == NULL)
-					die (STATE_UNKNOWN, _("Could not reallocate units [%d]\n"), nunits);
+					die (STATE_UNKNOWN, _("Could not reallocate units [%d]\n"), (int)nunits);
 			}
 			unitv[nunits - 1] = optarg;
 			ptr = thisarg (optarg);

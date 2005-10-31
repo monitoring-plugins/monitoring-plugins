@@ -385,7 +385,7 @@ process_arguments (int argc, char **argv)
 			}
 			else if (strstr (optarg, ",") &&
 							 strstr (optarg, "%") &&
-							 sscanf (optarg, "%g,%d%%", &warn_size, &warn_percent) == 2) {
+							 sscanf (optarg, "%lf,%d%%", &warn_size, &warn_percent) == 2) {
 				warn_size = floor(warn_size);
 				break;
 			}
@@ -403,7 +403,7 @@ process_arguments (int argc, char **argv)
 			}
 			else if (strstr (optarg, ",") &&
 							 strstr (optarg, "%") &&
-							 sscanf (optarg, "%g,%d%%", &crit_size, &crit_percent) == 2) {
+							 sscanf (optarg, "%lf,%d%%", &crit_size, &crit_percent) == 2) {
 				crit_size = floor(crit_size);
 				break;
 			}

@@ -37,6 +37,7 @@
 
 #include "config.h"
 #include "common.h"
+#include "utils.h"
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -77,6 +78,7 @@ int send_request (int sd, int proto, const char *send_buffer, char *recv_buffer,
 int is_host (const char *);
 int is_addr (const char *);
 int resolve_host_or_addr (const char *, int);
+void host_or_die(const char *str);
 #define is_inet_addr(addr) resolve_host_or_addr(addr, AF_INET)
 #ifdef USE_IPV6
 #  define is_inet6_addr(addr) resolve_host_or_addr(addr, AF_INET6)
