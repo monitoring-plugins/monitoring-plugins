@@ -24,6 +24,11 @@ const char *revision = "$Revision$";
 const char *copyright = "1999-2004";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
+ /*
+  * Additional inode code by Jorgen Lundman <lundman@lundman.net>
+  */
+
+
 #include "common.h"
 #if HAVE_INTTYPES_H
 # include <inttypes.h>
@@ -39,7 +44,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #endif
 
 /* If nonzero, show inode information. */
-/* static int inode_format; */
+static int inode_format;
 
 /* If nonzero, show even filesystems with zero size or
    uninteresting types. */
@@ -69,6 +74,8 @@ struct name_list
   uintmax_t c_df;
   double w_dfp;
   double c_dfp;
+  double w_idfp;
+  double c_idfp;
   struct name_list *name_next;
 };
 
@@ -114,8 +121,8 @@ enum
 
 int process_arguments (int, char **);
 void print_path (const char *mypath);
-int validate_arguments (uintmax_t, uintmax_t, double, double, char *);
-int check_disk (double usp, double free_disk);
+int validate_arguments (uintmax_t, uintmax_t, double, double, double, double, char *);
+int check_disk (double usp, uintmax_t free_disk, double uisp);
 int walk_name_list (struct name_list *list, const char *name);
 void print_help (void);
 void print_usage (void);
@@ -124,6 +131,8 @@ uintmax_t w_df = 0;
 uintmax_t c_df = 0;
 double w_dfp = -1.0;
 double c_dfp = -1.0;
+double w_idfp = -1.0;
+double c_idfp = -1.0;
 char *path;
 char *exclude_device;
 char *units;
@@ -140,7 +149,7 @@ static struct mount_entry *mount_list;
 int
 main (int argc, char **argv)
 {
-	double usp = -1.0;
+	double usp = -1.0, uisp = -1.0;
 	int result = STATE_UNKNOWN;
 	int disk_result = STATE_UNKNOWN;
 	char file_system[MAX_INPUT_BUFFER];
@@ -148,7 +157,7 @@ main (int argc, char **argv)
 	char *details;
 	char *perf;
 	uintmax_t psize;
-	float free_space, free_space_pct, total_space;
+	float free_space, free_space_pct, total_space, inode_space_pct;
 
 	struct mount_entry *me;
 	struct fs_usage fsp;
@@ -220,15 +229,26 @@ main (int argc, char **argv)
 
 		if (fsp.fsu_blocks && strcmp ("none", me->me_mountdir)) {
 			usp = (double)(fsp.fsu_blocks - fsp.fsu_bavail) * 100 / fsp.fsu_blocks;
-			disk_result = check_disk (usp, (double)(fsp.fsu_bavail * fsp.fsu_blocksize / mult));
+                        uisp = (double)(fsp.fsu_files - fsp.fsu_ffree) * 100 / fsp.fsu_files;
+			disk_result = check_disk (usp, fsp.fsu_bavail, uisp);
+
+
 			result = max_state (disk_result, result);
 			psize = fsp.fsu_blocks*fsp.fsu_blocksize/mult;
+
+
+                        /* Moved this computation up here so we can add it
+                         * to perf */
+                        inode_space_pct = (float)fsp.fsu_ffree*100/fsp.fsu_files;
+
+
 			asprintf (&perf, "%s %s", perf,
 			          perfdata ((!strcmp(file_system, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
 			                    psize-(fsp.fsu_bavail*fsp.fsu_blocksize/mult), units,
 			                    TRUE, min ((uintmax_t)psize-(uintmax_t)w_df, (uintmax_t)((1.0-w_dfp/100.0)*psize)),
 			                    TRUE, min ((uintmax_t)psize-(uintmax_t)c_df, (uintmax_t)((1.0-c_dfp/100.0)*psize)),
-			                    TRUE, 0,
+                                            TRUE, inode_space_pct,
+
 			                    TRUE, psize));
 			if (disk_result==STATE_OK && erronly && !verbose)
 				continue;
@@ -237,17 +257,20 @@ main (int argc, char **argv)
 			free_space_pct = (float)fsp.fsu_bavail*100/fsp.fsu_blocks;
 			total_space = (float)fsp.fsu_blocks*fsp.fsu_blocksize/mult;
 			if (disk_result!=STATE_OK || verbose>=0)
-				asprintf (&output, ("%s %s %.0f %s (%.0f%%);"),
+				asprintf (&output, ("%s %s %.0f %s (%.0f%% inode=%.0f%%);"),
 				          output,
 				          (!strcmp(file_system, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
 				          free_space,
 				          units,
-									free_space_pct);
+					  free_space_pct,
+					  inode_space_pct);
+
 			asprintf (&details, _("%s\n\
-%.0f of %.0f %s (%.0f%%) free on %s (type %s mounted on %s) warn:%lu crit:%lu warn%%:%.0f%% crit%%:%.0f%%"),
-			          details, free_space, total_space, units, free_space_pct,
+%.0f of %.0f %s (%.0f%% inode=%.0f%%) free on %s (type %s mounted on %s) warn:%lu crit:%lu warn%%:%.0f%% crit%%:%.0f%%"),
+			          details, free_space, total_space, units, free_space_pct, inode_space_pct,
 			          me->me_devname, me->me_type, me->me_mountdir,
 			          (unsigned long)w_df, (unsigned long)c_df, w_dfp, c_dfp);
+
 		}
 
 	}
@@ -292,6 +315,9 @@ process_arguments (int argc, char **argv)
 		{"timeout", required_argument, 0, 't'},
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
+		{"iwarning", required_argument, 0, 'W'},
+		/* Dang, -C is taken. We might want to reshuffle this. */
+		{"icritical", required_argument, 0, 'K'},
 		{"local", required_argument, 0, 'l'},
 		{"kilobytes", required_argument, 0, 'k'},
 		{"megabytes", required_argument, 0, 'm'},
@@ -326,7 +352,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "+?VqhveCt:c:w:u:p:x:X:mklM", longopts, &option);
+		c = getopt_long (argc, argv, "+?VqhveCt:c:w:K:W:u:p:x:X:mklM", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -374,6 +400,22 @@ process_arguments (int argc, char **argv)
 			else {
 				usage4 (_("Critical threshold must be integer or percentage!"));
 			}
+
+
+                case 'W':                                                                       /* warning inode threshold */
+                        if (strstr (optarg, "%") && sscanf (optarg, "%lf%%", &w_idfp) == 1) {
+                        break;
+                        }
+                        else {
+                   		usage (_("Warning inode threshold must be percentage!\n"));
+                 	}
+                case 'K':                                                                       /* kritical inode threshold */
+                        if (strstr (optarg, "%") && sscanf (optarg, "%lf%%", &c_idfp) == 1) {
+                        break;
+                        }
+                        else {
+                   		usage (_("Critical inode threshold must be percentage!\n"));
+                       }
 		case 'u':
 			if (units)
 				free(units);
@@ -430,10 +472,15 @@ process_arguments (int argc, char **argv)
 			se = (struct name_list *) malloc (sizeof (struct name_list));
 			se->name = optarg;
 			se->name_next = NULL;
-			se->w_df = 0;
-			se->c_df = 0;
-			se->w_dfp = -1.0;
-			se->c_dfp = -1.0;
+
+                        /* If you don't clear the w_fd etc values here, they
+                         * get processed when you walk the list and assigned
+                         * to the global w_df!
+                         */
+                        se->w_df = 0;
+                        se->c_df = 0;
+                        se->w_dfp = 0;
+                        se->c_dfp = 0;
 			se->found = 0;
 			se->found_len = 0;
 			*dptail = se;
@@ -443,10 +490,14 @@ process_arguments (int argc, char **argv)
 			se = (struct name_list *) malloc (sizeof (struct name_list));
 			se->name = optarg;
 			se->name_next = NULL;
-			se->w_df = 0;
-			se->c_df = 0;
-			se->w_dfp = -1.0;
-			se->c_dfp = -1.0;
+                        /* If you don't clear the w_fd etc values here, they
+                         * get processed when you walk the list and assigned
+                         * to the global w_df!
+                         */
+                        se->w_df = 0;
+                        se->c_df = 0;
+                        se->w_dfp = 0;
+                        se->c_dfp = 0;
 			se->found = 0;
 			se->found_len = 0;
 			*fstail = se;
@@ -509,13 +560,15 @@ process_arguments (int argc, char **argv)
 				                      temp_list->c_df,
 				                      temp_list->w_dfp,
 				                      temp_list->c_dfp,
+				                      temp_list->w_idfp,
+				                      temp_list->c_idfp,
 				                      temp_list->name) == ERROR)
 				result = ERROR;
 			temp_list = temp_list->name_next;
 		}
 		return result;
 	} else {
-		return validate_arguments (w_df, c_df, w_dfp, c_dfp, NULL);
+		return validate_arguments (w_df, c_df, w_dfp, c_dfp, w_idfp, c_idfp, NULL);
 	}
 }
 
@@ -535,7 +588,7 @@ print_path (const char *mypath)
 
 
 int
-validate_arguments (uintmax_t w, uintmax_t c, double wp, double cp, char *mypath)
+validate_arguments (uintmax_t w, uintmax_t c, double wp, double cp, double iwp, double icp, char *mypath)
 {
 	if (w < 0 && c < 0 && wp < 0.0 && cp < 0.0) {
 		printf (_("INPUT ERROR: No thresholds specified"));
@@ -547,6 +600,14 @@ validate_arguments (uintmax_t w, uintmax_t c, double wp, double cp, char *mypath
 		printf (_("\
 INPUT ERROR: C_DFP (%f) should be less than W_DFP (%.1f) and both should be between zero and 100 percent, inclusive"),
 		        cp, wp);
+		print_path (mypath);
+		return ERROR;
+	}
+	else if ((iwp >= 0.0 || icp >= 0.0) &&
+	         (iwp < 0.0 || icp < 0.0 || iwp > 100.0 || icp > 100.0 || icp > iwp)) {
+		printf (_("\
+INPUT ERROR: C_IDFP (%f) should be less than W_IDFP (%.1f) and both should be between zero and 100 percent, inclusive"),
+		        icp, iwp);
 		print_path (mypath);
 		return ERROR;
 	}
@@ -568,19 +629,24 @@ INPUT ERROR: C_DF (%lu) should be less than W_DF (%lu) and both should be greate
 
 
 int
-check_disk (double usp, double free_disk)
+
+check_disk (double usp, uintmax_t free_disk, double uisp)
 {
-	int result = STATE_UNKNOWN;
-	/* check the percent used space against thresholds */
-	if (usp >= 0.0 && c_dfp >=0.0 && usp >= (100.0 - c_dfp))
-		result = STATE_CRITICAL;
-	else if (c_df > 0 && free_disk <= c_df)
-		result = STATE_CRITICAL;
-	else if (usp >= 0.0 && w_dfp >=0.0 && usp >= (100.0 - w_dfp))
-		result = STATE_WARNING;
-	else if (w_df > 0 && free_disk <= w_df)
-		result = STATE_WARNING;
-	else if (usp >= 0.0)
+       int result = STATE_UNKNOWN;
+       /* check the percent used space against thresholds */
+       if (usp >= 0.0 && c_dfp >=0.0 && usp >= (100.0 - c_dfp))
+               result = STATE_CRITICAL;
+       else if (uisp >= 0.0 && c_idfp >=0.0 && uisp >= (100.0 - c_idfp))
+               result = STATE_CRITICAL;
+       else if (c_df > 0 && free_disk <= c_df)
+               result = STATE_CRITICAL;
+       else if (usp >= 0.0 && w_dfp >=0.0 && usp >= (100.0 - w_dfp))
+               result = STATE_WARNING;
+       else if (uisp >= 0.0 && w_idfp >=0.0 && uisp >= (100.0 - w_idfp))
+               result = STATE_WARNING;
+       else if (w_df > 0 && free_disk <= w_df)
+               result = STATE_WARNING;
+       else if (usp >= 0.0)
 		result = STATE_OK;
 	return result;
 }
@@ -635,6 +701,10 @@ and generates an alert if free space is less than one of the threshold values.\n
    Exit with WARNING status if less than INTEGER --units of disk are free\n\
  -w, --warning=PERCENT%%\n\
    Exit with WARNING status if less than PERCENT of disk space is free\n\
+ -W, --iwarning=PERCENT%%\n\
+   Exit with WARNING status if less than PERCENT of inode space is free\n\
+ -K, --icritical=PERCENT%%\n\
+   Exit with CRITICAL status if less than PERCENT of inode space is free\n\
  -c, --critical=INTEGER\n\
    Exit with CRITICAL status if less than INTEGER --units of disk are free\n\
  -c, --critical=PERCENT%%\n\
@@ -683,6 +753,6 @@ void
 print_usage (void)
 {
 	printf ("\
-Usage: %s -w limit -c limit [-p path | -x device] [-t timeout] [-m] [-e]\n\
+Usage: %s -w limit -c limit [-p path | -x device] [-t timeout] [-m] [-e] [-W limit] [-K limit]\n\
                   [-v] [-q]\n", progname);
 }
