@@ -45,6 +45,7 @@ enum {
 #define SMTP_EHLO "EHLO "
 #define SMTP_QUIT "QUIT\r\n"
 #define SMTP_STARTTLS "STARTTLS\r\n"
+#define SMTP_AUTH_LOGIN "AUTH LOGIN\r\n"
 
 #ifndef HOST_MAX_BYTES
 #define HOST_MAX_BYTES 255
@@ -82,6 +83,9 @@ int nresponses=0;
 int response_size=0;
 char **commands = NULL;
 char **responses = NULL;
+char *authtype = NULL;
+char *authuser = NULL;
+char *authpass = NULL;
 int warning_time = 0;
 int check_warning_time = FALSE;
 int critical_time = 0;
@@ -99,6 +103,47 @@ enum {
   MAXBUF = 1024
 };
 
+/* written by lauri alanko */
+static char *
+base64 (const char *bin, size_t len)
+{
+
+	char *buf = (char *) malloc ((len + 2) / 3 * 4 + 1);
+	size_t i = 0, j = 0;
+
+	char BASE64_END = '=';
+	char base64_table[64];
+	strncpy (base64_table, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", 64);
+
+	while (j < len - 2) {
+		buf[i++] = base64_table[bin[j] >> 2];
+		buf[i++] = base64_table[((bin[j] & 3) << 4) | (bin[j + 1] >> 4)];
+		buf[i++] = base64_table[((bin[j + 1] & 15) << 2) | (bin[j + 2] >> 6)];
+		buf[i++] = base64_table[bin[j + 2] & 63];
+		j += 3;
+	}
+
+	switch (len - j) {
+	case 1:
+		buf[i++] = base64_table[bin[j] >> 2];
+		buf[i++] = base64_table[(bin[j] & 3) << 4];
+		buf[i++] = BASE64_END;
+		buf[i++] = BASE64_END;
+		break;
+	case 2:
+		buf[i++] = base64_table[bin[j] >> 2];
+		buf[i++] = base64_table[((bin[j] & 3) << 4) | (bin[j + 1] >> 4)];
+		buf[i++] = base64_table[(bin[j + 1] & 15) << 2];
+		buf[i++] = BASE64_END;
+		break;
+	case 0:
+		break;
+	}
+
+	buf[i] = '\0';
+	return buf;
+}
+
 int
 main (int argc, char **argv)
 {
@@ -109,6 +154,7 @@ main (int argc, char **argv)
 	int result = STATE_UNKNOWN;
 	char *cmd_str = NULL;
 	char *helocmd = NULL;
+	char *error_msg = NULL;
 	struct timeval tv;
 	struct hostent *hp;
 
@@ -293,6 +339,92 @@ main (int argc, char **argv)
 			n++;
 		}
 
+		if (authtype != NULL) {
+			if (strcmp (authtype, "LOGIN") == 0) {
+				char *abuf;
+				int ret;
+				do {
+					if (authuser == NULL) {
+						result = STATE_CRITICAL;
+						error_msg = _("no authuser specified, ");
+						break;
+					}
+					if (authpass == NULL) {
+						result = STATE_CRITICAL;
+						error_msg = _("no authpass specified, ");
+						break;
+					}
+
+					/* send AUTH LOGIN */
+					my_send(SMTP_AUTH_LOGIN, strlen(SMTP_AUTH_LOGIN));
+					if (verbose)
+						printf (_("sent %s\n"), "AUTH LOGIN");
+
+					if((ret = my_recv(buffer, MAXBUF - 1)) < 0){
+						error_msg = _("recv() failed after AUTH LOGIN, \n");
+						result = STATE_WARNING;
+						break;
+					}
+					buffer[ret] = 0;
+					if (verbose)
+						printf (_("received %s\n"), buffer);
+
+					if (strncmp (buffer, "334", 3) != 0) {
+						result = STATE_CRITICAL;
+						error_msg = _("invalid response received after AUTH LOGIN, ");
+						break;
+					}
+
+					/* encode authuser with base64 */
+					abuf = base64 (authuser, strlen(authuser));
+					strcat (abuf, "\r\n");
+					my_send(abuf, strlen(abuf));
+					if (verbose)
+						printf (_("sent %s\n"), abuf);
+
+					if ((ret = my_recv(buffer, MAX_INPUT_BUFFER-1)) == -1) {
+						result = STATE_CRITICAL;
+						error_msg = _("recv() failed after sending authuser, ");
+						break;
+					}
+					buffer[ret] = 0;
+					if (verbose) {
+						printf (_("received %s\n"), buffer);
+					}
+					if (strncmp (buffer, "334", 3) != 0) {
+						result = STATE_CRITICAL;
+						error_msg = _("invalid response received after authuser, ");
+						break;
+					}
+					/* encode authpass with base64 */
+					abuf = base64 (authpass, strlen(authpass));
+					strcat (abuf, "\r\n");
+					my_send(abuf, strlen(abuf));
+					if (verbose) {
+						printf (_("sent %s\n"), abuf);
+					}
+					if ((ret = my_recv(buffer, MAX_INPUT_BUFFER-1)) == -1) {
+						result = STATE_CRITICAL;
+						error_msg = _("recv() failed after sending authpass, ");
+						break;
+					}
+					buffer[ret] = 0;
+					if (verbose) {
+						printf (_("received %s\n"), buffer);
+					}
+					if (strncmp (buffer, "235", 3) != 0) {
+						result = STATE_CRITICAL;
+						error_msg = _("invalid response received after authpass, ");
+						break;
+					}
+					break;
+				} while (0);
+			} else {
+				result = STATE_CRITICAL;
+				error_msg = _("only authtype LOGIN is supported, ");
+			}
+		}
+
 		/* tell the server we're done */
 		my_send (SMTP_QUIT, strlen (SMTP_QUIT));
 
@@ -313,13 +445,15 @@ main (int argc, char **argv)
 			result = STATE_WARNING;
 	}
 
-	printf (_("SMTP %s - %.3f sec. response time%s%s|%s\n"),
-	        state_text (result), elapsed_time,
-          verbose?", ":"", verbose?buffer:"",
-	        fperfdata ("time", elapsed_time, "s",
-	                  (int)check_warning_time, warning_time,
-	                  (int)check_critical_time, critical_time,
-	                  TRUE, 0, FALSE, 0));
+	printf (_("SMTP %s - %s%.3f sec. response time%s%s|%s\n"),
+			state_text (result),
+			(error_msg == NULL ? "" : error_msg),
+			elapsed_time,
+			verbose?", ":"", verbose?buffer:"",
+			fperfdata ("time", elapsed_time, "s",
+				(int)check_warning_time, warning_time,
+				(int)check_critical_time, critical_time,
+				TRUE, 0, FALSE, 0));
 
 	return result;
 }
@@ -342,6 +476,9 @@ process_arguments (int argc, char **argv)
 		{"port", required_argument, 0, 'p'},
 		{"from", required_argument, 0, 'f'},
 		{"fqdn", required_argument, 0, 'F'},
+		{"authtype", required_argument, 0, 'A'},
+		{"authuser", required_argument, 0, 'U'},
+		{"authpass", required_argument, 0, 'P'},
 		{"command", required_argument, 0, 'C'},
 		{"response", required_argument, 0, 'R'},
 		{"nocommand", required_argument, 0, 'n'},
@@ -368,7 +505,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVv46t:p:f:e:c:w:H:C:R:SD:F:",
+		c = getopt_long (argc, argv, "+hVv46t:p:f:e:c:w:H:C:R:SD:F:A:U:P:",
 		                 longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -396,6 +533,15 @@ process_arguments (int argc, char **argv)
 		case 'f':									/* from argument */
 			from_arg = optarg;
 			smtp_use_dummycmd = 1;
+			break;
+		case 'A':
+			authtype = optarg;
+			break;
+		case 'U':
+			authuser = optarg;
+			break;
+		case 'P':
+			authpass = optarg;
 			break;
 		case 'e':									/* server expect string on 220  */
 			server_expect = optarg;
@@ -562,6 +708,15 @@ print_help (void)
     Use STARTTLS for the connection.\n"));
 #endif
 
+	printf("\
+ -A, --authtype=STRING\n\
+   SMTP AUTH type to check (default none, only LOGIN supported)\n\
+ -U, --authuser=STRING\n\
+   SMTP AUTH username\n\
+ -P, --authpass=STRING\n\
+   SMTP AUTH password\n\
+			");
+
 	printf (_(UT_WARN_CRIT));
 
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
@@ -584,6 +739,7 @@ print_usage (void)
 {
 	printf ("\
 Usage: %s -H host [-p port] [-e expect] [-C command] [-f from addr]\n\
+                  [-A authtype -U authuser -P authpass]\n\
                   [-w warn] [-c crit] [-t timeout] [-S] [-D days] [-n] [-v] [-4|-6]\n", progname);
 }
 
