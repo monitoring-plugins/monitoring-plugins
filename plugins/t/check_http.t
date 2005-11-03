@@ -21,7 +21,7 @@ my $host_nonresponsive = getTestParameter( "host_nonresponsive", "NP_HOST_NONRES
 my $hostname_invalid   = getTestParameter( "hostname_invalid",   "NP_HOSTNAME_INVALID",   "nosuchhost",
                                            "An invalid (not known to DNS) hostname" );
 
-my $successOutput = '/(HTTP\s[o|O][k|K]\s)?\s?HTTP\/1.[01]\s[0-9]{3}\s(OK|Found)\s-\s+[0-9]+\sbytes\sin\s+([0-9]+|[0-9]+\.[0-9]+)\sseconds/';
+my $successOutput = '/OK.*HTTP.*second/';
 
 my %exceptions = ( 2 => "No Web Server present?" );
 

@@ -88,7 +88,7 @@ typical tests we wish to perform are against the exit status of the
 command and the output (if any) it generated. Simplifying these tests
 into a single function call, makes the test harness easier to read and
 maintain and allows additional functionality (such as debugging) to be
-provided withoutadditional effort on the part of the test harness
+provided without additional effort on the part of the test harness
 developer.
 
 It is possible to enable debugging via the environment variable
@@ -264,6 +264,7 @@ sub checkCmd
     if ( %exceptions && exists( $exceptions{$exitStatus} ) )
     {
       $testStatus += skip( $exceptions{$exitStatus}, $exitStatus, $desiredExitStatus );
+      $testOutput = "skip";
     }
     else
     {
@@ -312,7 +313,7 @@ sub getTestParameter
 
   if ( defined( $envvar ) &&  exists( $ENV{$envvar} ) && $ENV{$envvar} )
   {
-    return $ENV{$envvar}
+    return $ENV{$envvar};
   }
 
   my $cachedValue = SearchCache( $param, $testharness );

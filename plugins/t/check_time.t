@@ -23,14 +23,16 @@ my $hostname_invalid   = getTestParameter( "hostname_invalid",   "NP_HOSTNAME_IN
 
 my $successOutput = '/^TIME OK - [0-9]+ second time difference/';
 
+my %exceptions = ( 3 => "No time server present?");
+
 my $t;
 
 # standard mode
-$t += checkCmd( "./check_time -H $host_udp_time -w 999999,59       -c 999999,59       -t 60", 0, $successOutput );
-$t += checkCmd( "./check_time -H $host_udp_time -w 999999    -W 59 -c 999999    -C 59 -t 60", 0, $successOutput );
+$t += checkCmd( "./check_time -H $host_udp_time -w 999999,59       -c 999999,59       -t 60", 0, $successOutput, %exceptions );
+$t += checkCmd( "./check_time -H $host_udp_time -w 999999    -W 59 -c 999999    -C 59 -t 60", 0, $successOutput, %exceptions );
 
 # reverse compatibility mode
-$t += checkCmd( "./check_time    $host_udp_time -wt 59 -ct 59 -cd 999999 -wd 999999 -to 60",  0, $successOutput );
+$t += checkCmd( "./check_time    $host_udp_time -wt 59 -ct 59 -cd 999999 -wd 999999 -to 60",  0, $successOutput, %exceptions );
 
 # failure mode
 $t += checkCmd( "./check_time -H $host_nonresponsive -t 1", 2 );
