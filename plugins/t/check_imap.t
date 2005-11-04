@@ -10,7 +10,7 @@ use Test;
 use NPTest;
 
 use vars qw($tests);
-BEGIN {$tests = 5; plan tests => $tests}
+BEGIN {$tests = 7; plan tests => $tests}
 
 my $host_tcp_smtp      = getTestParameter( "host_tcp_smtp",      "NP_HOST_TCP_SMTP",      "mailhost",
 					   "A host providing an STMP Service (a mail server)");
@@ -33,6 +33,8 @@ $t += checkCmd( "./check_imap -H $host_tcp_imap -p 143 -w  9 -c  9 -t  10 -e '* 
 $t += checkCmd( "./check_imap    $host_tcp_imap -p 143 -wt 9 -ct 9 -to 10 -e '* OK'", 0, undef, %exceptions );
 $t += checkCmd( "./check_imap    $host_nonresponsive", 2 );
 $t += checkCmd( "./check_imap    $hostname_invalid",   2 );
+$t += checkCmd( "./check_imap -H $host_tcp_imap -e unlikely_string",                  1);
+$t += checkCmd( "./check_imap -H $host_tcp_imap -e unlikely_string -M crit",          2);
 
 
 exit(0) if defined($Test::Harness::VERSION);

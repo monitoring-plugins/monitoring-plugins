@@ -311,7 +311,7 @@ main (int argc, char **argv)
 
 	/* did we get the response we hoped? */
 	if(match == -2 && result != STATE_CRITICAL)
-		result = STATE_WARNING;
+		result = expect_mismatch_state;
 
 	/* reset the alarm */
 	alarm (0);
