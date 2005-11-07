@@ -117,11 +117,11 @@ AC_SUBST(PERL, $with_perl)
 dnl openssl/gnutls
 AC_ARG_WITH(openssl,
             AC_HELP_STRING([--with-openssl=DIR], 
-                           [sets path to openssl installation]) AC_HELP_STRING([--without-openssl], [disable openssl]),)
+                           [path to openssl installation]),)
 
 AC_ARG_WITH(gnutls,
             ACX_HELP_STRING([--with-gnutls=PATH],
-                            [path to gnutls installation root]) AC_HELP_STRING([--without-gnutls], [disable gnutls]),)
+                            [path to gnutls installation root]),)
 
 dnl you can only have one or the other
 if test ! "$with_openssl" = "" && test ! "$with_openssl" = "no"; then
@@ -620,8 +620,21 @@ AC_TRY_COMPILE([#include <stdlib.h>
 AC_DEFINE_UNQUOTED(SOCKET_SIZE_TYPE, $ac_cv_socket_size_type ,
 	[Define type of socket size])
 
-if test -f "/proc/loadavg"
-then
+AC_ARG_WITH(proc-loadavg,
+            ACX_HELP_STRING([--with-proc-loadavg=PATH],
+                            [path to /proc/loadavg or equivalent]),
+            ac_cv_proc_loadavg=$withval)
+AC_MSG_CHECKING([for /proc/loadavg])
+if test -n "$ac_cv_proc_loadavg"; then
+  AC_MSG_RESULT([(command line) $ac_cv_proc_loadavg])
+elif test -f "/proc/loadavg"; then
+  AC_MSG_RESULT([found /proc/loadavg])
+  ac_cv_proc_meminfo="/proc/loadavg"
+else
+  AC_MSG_RESULT([no])
+fi
+
+if test -n "$ac_cv_proc_loadavg"; then
   AC_DEFINE(HAVE_PROC_LOADAVG,1,[Define if /proc/loadavg or similar exists])
   AC_DEFINE_UNQUOTED(PROC_LOADAVG,"/proc/loadavg",[Location of /proc/loadavg])
 fi
@@ -631,10 +644,34 @@ dnl #### Process table test
 AC_PATH_PROG(PATH_TO_PS,ps)
 
 AC_MSG_CHECKING(for ps syntax)
+AC_ARG_WITH(ps_command,
+            ACX_HELP_STRING([--with-ps-command=PATH], 
+                            [Verbatim command to execute for ps]),
+            PS_COMMAND=$withval)
+AC_ARG_WITH(ps_format,
+            ACX_HELP_STRING([--with-ps-format=FORMAT],
+                            [Format string for scanning ps output]),
+            PS_FORMAT=$withval)
+AC_ARG_WITH(ps_cols,
+            ACX_HELP_STRING([--with-ps-cols=NUM], 
+                            [Number of columns in ps command]),
+            PS_COLS=$withval)
+AC_ARG_WITH(ps_varlist,
+            ACX_HELP_STRING([--with-ps-varlist=LIST],
+                            [Variable list for sscanf of 'ps' output]),
+            PS_VARLIST=$withval)
+
+AM_CONDITIONAL(WANT_PST3, false)
+
+if test -n "$PS_COMMAND" && test -n "$PS_FORMAT" && test -n "$PS_COLS" && test -n "$PS_VARLIST"; then 
+	ac_cv_ps_command="$PS_COMMAND"
+	ac_cv_ps_format="$PS_FORMAT"
+	ac_cv_ps_varlist="$PS_VARLIST"
+	ac_cv_ps_cols="$PS_COLS"
+	AC_MSG_RESULT([(command-line) $ac_cv_ps_command])
 
 dnl Now using the pst3/kmem hack for solaris systems to avoid truncation
-AM_CONDITIONAL(WANT_PST3, false)
-if test "$ac_cv_uname_s" = "SunOS"; then
+elif test "$ac_cv_uname_s" = "SunOS"; then
 	#
 	# this is a very, very ugly hack, to hardcode the location for plugins
 	#
@@ -933,6 +970,7 @@ then
 	if test -n "$ac_cv_ping_packets_first"
 	then
 		ac_cv_ping_packets_first=yes
+		ac_cv_ping_has_timeout=yes
 	fi
 
 elif [[ "z$ac_cv_uname_s" = "zUnixWare" ]] && \
@@ -1187,29 +1225,37 @@ if test "x$ac_cv_ping6_packets_first" != "xno"; then
 fi
 fi
 
-AC_PATH_PROG(PATH_TO_NSLOOKUP,nslookup)
 
 AC_MSG_CHECKING(for nslookup syntax)
-if test -n "$PATH_TO_NSLOOKUP"
-then
-	if $PATH_TO_NSLOOKUP -sil 127.0.0.1 2>&1 | grep ["Invalid option: sil"] >/dev/null
-	then
-		ac_cv_nslookup_command="$PATH_TO_NSLOOKUP"
-		AC_MSG_RESULT([$ac_cv_nslookup_command])
-
-	else
-		ac_cv_nslookup_command="$PATH_TO_NSLOOKUP -sil"
-		AC_MSG_RESULT([$ac_cv_nslookup_command])
-
-	fi
-	EXTRAS="$EXTRAS check_dns"
-
+AC_ARG_WITH(nslookup_command,
+            ACX_HELP_STRING([--with-nslookup-command=PATH],
+                            [sets path to nslookup executable]),
+            ac_cv_nslookup_command=$withval)
+if test -n "$ac_cv_nslookup_command"; then
+	AC_MSG_RESULT([(command line) $ac_cv_nslookup_command])
 else
-	AC_MSG_WARN([nslookup command not found])
+	AC_PATH_PROG(PATH_TO_NSLOOKUP,nslookup)
+	if test -n "$PATH_TO_NSLOOKUP"
+	then
+		if $PATH_TO_NSLOOKUP -sil 127.0.0.1 2>&1 | grep ["Invalid option: sil"] >/dev/null
+		then
+			ac_cv_nslookup_command="$PATH_TO_NSLOOKUP"
+			AC_MSG_RESULT([$ac_cv_nslookup_command])
+
+		else
+			ac_cv_nslookup_command="$PATH_TO_NSLOOKUP -sil"
+			AC_MSG_RESULT([$ac_cv_nslookup_command])
+
+		fi
+	else
+		AC_MSG_WARN([nslookup command not found])
+	fi
 fi
 
-AC_DEFINE_UNQUOTED(NSLOOKUP_COMMAND,"$ac_cv_nslookup_command",
-	[path and args for nslookup])
+if test -n "$ac_cv_nslookup_command"; then
+	EXTRAS="$EXTRAS check_dns"
+	AC_DEFINE_UNQUOTED(NSLOOKUP_COMMAND,"$ac_cv_nslookup_command", [path and args for nslookup])
+fi
 
 AC_PATH_PROG(PATH_TO_HOST,host)
 if test -n "$ac_cv_path_PATH_TO_HOST"
@@ -1218,15 +1264,24 @@ then
 fi
 
 AC_PATH_PROG(PATH_TO_UPTIME,uptime)
+AC_ARG_WITH(uptime_command,
+            ACX_HELP_STRING([--with-uptime-command=PATH],
+                            [sets path to uptime]), PATH_TO_UPTIME=$withval)
 AC_DEFINE_UNQUOTED(PATH_TO_UPTIME,"$PATH_TO_UPTIME",[path to uptime binary])
 
 AC_PATH_PROG(PATH_TO_RPCINFO,rpcinfo)
+AC_ARG_WITH(rpcinfo_command,
+            ACX_HELP_STRING([--with-rpcinfo-command=PATH],
+                            [sets path to rpcinfo]), PATH_TO_RPCINFO=$withval)
 AC_DEFINE_UNQUOTED(PATH_TO_RPCINFO,"$PATH_TO_RPCINFO",[path to rpcinfo binary])
 
 AC_PATH_PROG(PATH_TO_NTPDATE,ntpdate)
+AC_ARG_WITH(ntpdate_command,
+            ACX_HELP_STRING([--with-ntpdate-command=PATH],
+                            [sets path to ntpdate]), PATH_TO_NTPDATE=$withval)
 AC_PATH_PROGS(PATH_TO_NTPDC,ntpdc xntpdc)
 AC_PATH_PROGS(PATH_TO_NTPQ,ntpq)
-if (test -x "$PATH_TO_NTPDATE" || test -x "$PATH_TO_NTPQ")
+if (test -n "$PATH_TO_NTPDATE" || test -n "$PATH_TO_NTPQ")
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_NTPQ,"$PATH_TO_NTPQ",[path to ntpq binary])
 	AC_DEFINE_UNQUOTED(PATH_TO_NTPDATE,"$PATH_TO_NTPDATE",[path to ntpdate binary])
@@ -1243,7 +1298,11 @@ else
 fi
 
 AC_PATH_PROG(PATH_TO_SMBCLIENT,smbclient)
-if test -x "$PATH_TO_SMBCLIENT"
+AC_ARG_WITH(smbclient_command,
+            ACX_HELP_STRING([--with-smbclient-command=PATH],
+                            [sets path to smbclient]), 
+            PATH_TO_SMBCLIENT=$withval)
+if test -n "$PATH_TO_SMBCLIENT"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_SMBCLIENT,"$PATH_TO_SMBCLIENT",[path to smbclient binary])
 else
@@ -1264,7 +1323,11 @@ AC_DEFINE_UNQUOTED(WHO_COMMAND,"$ac_cv_path_to_who",
 	[path and arguments for invoking 'who'])
 
 AC_PATH_PROG(PATH_TO_SNMPGET,snmpget)
-if test -x "$PATH_TO_SNMPGET"
+AC_ARG_WITH(snmpget_command,
+            ACX_HELP_STRING([--with-snmpget-command=PATH],
+                            [Path to snmpget command]),
+            PATH_TO_SNMPGET=$withval)
+if test -n "$PATH_TO_SNMPGET"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_SNMPGET,"$PATH_TO_SNMPGET",[path to snmpget binary])
 	EXTRAS="$EXTRAS check_hpjd check_snmp"
@@ -1273,7 +1336,11 @@ else
 fi
 
 AC_PATH_PROG(PATH_TO_SNMPGETNEXT,snmpgetnext)
-if test -x "$PATH_TO_SNMPGETNEXT"
+AC_ARG_WITH(snmpgetnext_command,
+            ACX_HELP_STRING([--with-snmpgetnext-command=PATH],
+                            [Path to snmpgetnext command]),
+            PATH_TO_SNMPGETNEXT=$withval)
+if test -n "$PATH_TO_SNMPGETNEXT"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_SNMPGETNEXT,"$PATH_TO_SNMPGETNEXT",[path to snmpgetnext binary])
 fi
@@ -1288,13 +1355,16 @@ fi
 
 AC_PATH_PROG(PATH_TO_QUAKESTAT,quakestat)
 AC_PATH_PROG(PATH_TO_QSTAT,qstat)
+AC_ARG_WITH(qstat_command,
+            ACX_HELP_STRING([--with-qstat-command=PATH], 
+                            [Path to qstat command]), PATH_TO_QSTAT=$withval)
 
 if test -x "$PATH_TO_QUAKESTAT"
 then
 	ac_cv_path_to_qstat="$PATH_TO_QUAKESTAT"
 	EXTRAS="$EXTRAS check_game"
 
-elif test -x "$PATH_TO_QSTAT"
+elif test -n "$PATH_TO_QSTAT"
 then
 	ac_cv_path_to_qstat="$PATH_TO_QSTAT"
 	EXTRAS="$EXTRAS check_game"
@@ -1309,7 +1379,10 @@ then
 fi
 
 AC_PATH_PROG(PATH_TO_FPING,fping)
-if test -x "$PATH_TO_FPING"
+AC_ARG_WITH(fping_command,
+            ACX_HELP_STRING([--with-fping-command=PATH],
+                            [Path to fping command]), PATH_TO_FPING=$withval)
+if test -n "$PATH_TO_FPING"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_FPING,"$PATH_TO_FPING",[path to fping])
 	EXTRAS="$EXTRAS check_fping"
@@ -1318,8 +1391,10 @@ else
 fi
 
 AC_PATH_PROG(PATH_TO_SSH,ssh)
-
-if test -x "$PATH_TO_SSH"
+AC_ARG_WITH(ssh_command,
+            ACX_HELP_STRING([--with-ssh-command=PATH],
+                            [sets path for ssh]), PATH_TO_SSH=$withval)
+if test -n "$PATH_TO_SSH"
 then
 	AC_DEFINE_UNQUOTED(SSH_COMMAND,"$PATH_TO_SSH",[path to ssh binary])
 	EXTRAS="$EXTRAS check_by_ssh"
@@ -1329,7 +1404,10 @@ fi
 
 
 AC_PATH_PROG(PATH_TO_MAILQ,mailq)
-if test -x "$PATH_TO_MAILQ"
+AC_ARG_WITH(mailq_command,
+            ACX_HELP_STRING([--with-mailq-command=PATH],
+                            [sets path to mailq]), PATH_TO_MAILQ=$withval)
+if test -n "$PATH_TO_MAILQ"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_MAILQ,"$PATH_TO_MAILQ",[path to mailq])
 else
@@ -1523,24 +1601,36 @@ then
 		[Conversion factor to MB])
 fi
 
+AC_ARG_WITH(proc-meminfo,
+            ACX_HELP_STRING([--with-proc-meminfo=PATH],
+                            [path to /proc/meminfo or equivalent]),
+                            ac_cv_proc_meminfo=$withval)
 dnl dunno why this does not work below - use hack (kbd)
 dnl fine on linux, broken on solaris
 dnl if /bin/test -e "/proc/meminfo"
 AC_MSG_CHECKING([for /proc/meminfo])
-if [cat /proc/meminfo > /dev/null 2>&1]
-then
+if test -n "$ac_cv_proc_meminfo"; then
+	AC_MSG_RESULT([(command line) $ac_cv_proc_meminfo])
+elif [cat /proc/meminfo > /dev/null 2>&1]; then
 	AC_MSG_RESULT([found /proc/meminfo])
-	AC_DEFINE(HAVE_PROC_MEMINFO,1,[Define if we have /proc/meminfo])
-	AC_DEFINE_UNQUOTED(PROC_MEMINFO,"/proc/meminfo",[path to /proc/meminfo if name changes])
-	EXTRAS="$EXTRAS check_swap"
+	ac_cv_proc_meminfo="/proc/meminfo"
 else
 	AC_MSG_RESULT([no])
 fi
 
+if test -n "$ac_cv_proc_meminfo"; then
+	AC_DEFINE(HAVE_PROC_MEMINFO,1,[Define if we have /proc/meminfo])
+	AC_DEFINE_UNQUOTED(PROC_MEMINFO,"$ac_cv_proc_meminfo",[path to /proc/meminfo if name changes])
+	EXTRAS="$EXTRAS check_swap"
+fi
+
 AC_PATH_PROG(PATH_TO_DIG,dig)
-AC_DEFINE_UNQUOTED(PATH_TO_DIG,"$PATH_TO_DIG",[Path to dig command, if present])
+AC_ARG_WITH(dig_command,
+            ACX_HELP_STRING([--with-dig-command=PATH],
+                            [Path to dig command]), PATH_TO_DIG=$withval)
 if test -n "$PATH_TO_DIG"; then
 	EXTRAS="$EXTRAS check_dig"
+	AC_DEFINE_UNQUOTED(PATH_TO_DIG,"$PATH_TO_DIG",[Path to dig command, if present])
 fi
 
 if test -f plugins/check_nt.c ; then
@@ -1624,15 +1714,42 @@ AC_OUTPUT(
   po/Makefile.in 
 )
 
-ACX_FEATURE([with],[perl])
-ACX_FEATURE([with],[cgiurl])
-ACX_FEATURE([with],[nagios-user])
-ACX_FEATURE([with],[nagios-group])
-ACX_FEATURE([with],[trusted-path])
-ACX_FEATURE([with],[ping-command])
+
+dnl the ones below that are commented out need to be cleaned up 
+dnl in the configure code above to use with_foo instead of ac_cv_foo
+dnl if we want them to show up here.  it'd also make the code cleaner.
+dnl i'll get to that on another rainy day :) -sf
+dnl ACX_FEATURE([with],[dig-command])
+dnl ACX_FEATURE([with],[fping-command])
+dnl ACX_FEATURE([with],[mailq-command])
+dnl ACX_FEATURE([with],[nslookup-command])
+dnl ACX_FEATURE([with],[ntpdate-command])
 ACX_FEATURE([with],[ping6-command])
+ACX_FEATURE([with],[ping-command])
+dnl ACX_FEATURE([with],[qstat-command])
+dnl ACX_FEATURE([with],[rpcinfo-command])
+dnl ACX_FEATURE([with],[smbclient-command])
+dnl ACX_FEATURE([with],[snmpget-command])
+dnl ACX_FEATURE([with],[snmpgetnext-command])
+dnl ACX_FEATURE([with],[ssh-command])
+dnl ACX_FEATURE([with],[uptime-command])
+
+dnl ACX_FEATURE([with],[proc-loadavg])
+dnl ACX_FEATURE([with],[proc-meminfo])
+dnl ACX_FEATURE([with],[ps-command])
+dnl ACX_FEATURE([with],[ps-format])
+dnl ACX_FEATURE([with],[ps-cols])
+dnl ACX_FEATURE([with],[ps-varlist])
+
 ACX_FEATURE([with],[lwres])
 ACX_FEATURE([with],[ipv6])
 ACX_FEATURE([with],[openssl])
 ACX_FEATURE([with],[gnutls])
 ACX_FEATURE([enable],[emulate-getaddrinfo])
+ACX_FEATURE([with],[perl])
+ACX_FEATURE([with],[cgiurl])
+ACX_FEATURE([with],[nagios-user])
+ACX_FEATURE([with],[nagios-group])
+ACX_FEATURE([with],[trusted-path])
+
+
