@@ -650,6 +650,9 @@ update the THANKS.in file.</para>
 
       <orderedlist>
 	<listitem>
+	  <para>Include copyright and license information in all files</para>
+	</listitem>
+	<listitem>
 	  <para>The standard command options are supported (--help, --version,
 	  --timeout, --warning, --critical)</para>
 	</listitem>
