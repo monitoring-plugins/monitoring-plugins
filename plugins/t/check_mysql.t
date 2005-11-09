@@ -6,28 +6,27 @@
 #
 
 use strict;
-use Test;
+use Test::More;
 use NPTest;
 
 use vars qw($tests);
 
-BEGIN {$tests = 2; plan tests => $tests}
+plan skip_all => "check_mysql not compiled" unless (-x "check_mysql");
 
-my $t;
+plan tests => 3;
 
-my $failureOutput = '/Access denied for user: /';
+my $failureOutput = '/Access denied for user /';
+my $mysqlserver = getTestParameter( "mysql_server", "NP_MYSQL_SERVER", undef,
+		"A MySQL Server");
+my $mysql_login_details = getTestParameter( "mysql_login_details", "MYSQL_LOGIN_DETAILS", undef, 
+		"Command line parameters to specify login access");
 
-if ( -x "./check_mysql" )
-{
-  my $mysqlserver = getTestParameter( "mysql_server", "NP_MYSQL_SERVER", undef,
-				      "A MySQL Server");
+my $result;
 
-  $t += checkCmd( "./check_mysql -H $mysqlserver -P 3306", 2, $failureOutput );
-}
-else
-{
-  $t += skipMissingCmd( "./check_mysql", $tests );
-}
+$result = NPTest->testCmd("./check_mysql -H $mysqlserver $mysql_login_details");
+cmp_ok( $result->return_code, '==', 0, "Login okay");
 
-exit(0) if defined($Test::Harness::VERSION);
-exit($tests - $t);
+$result = NPTest->testCmd("./check_mysql -H $mysqlserver -u dummy");
+cmp_ok( $result->return_code, '==', 2, "Login expected failure");
+like( $result->output, $failureOutput, "Error string as expected");
+
