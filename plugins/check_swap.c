@@ -34,7 +34,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "popen.h"
 #include "utils.h"
 
-int check_swap (int usp, float free_swap);
+int check_swap (int usp, float free_swap_mb);
 int process_arguments (int argc, char **argv);
 int validate_arguments (void);
 void print_usage (void);
@@ -42,8 +42,8 @@ void print_help (void);
 
 int warn_percent = 0;
 int crit_percent = 0;
-double warn_size = 0;
-double crit_size = 0;
+float warn_size_bytes = 0;
+float crit_size_bytes= 0;
 int verbose;
 int allswaps;
 
@@ -51,8 +51,8 @@ int
 main (int argc, char **argv)
 {
 	int percent_used, percent;
-	float total_swap = 0, used_swap = 0, free_swap = 0;
-	float dsktotal = 0, dskused = 0, dskfree = 0, tmp = 0;
+	float total_swap_mb = 0, used_swap_mb = 0, free_swap_mb = 0;
+	float dsktotal_mb = 0, dskused_mb = 0, dskfree_mb = 0, tmp_mb = 0;
 	int result = STATE_UNKNOWN;
 	char input_buffer[MAX_INPUT_BUFFER];
 #ifdef HAVE_PROC_MEMINFO
@@ -90,39 +90,46 @@ main (int argc, char **argv)
 		usage4 (_("Could not parse arguments"));
 
 #ifdef HAVE_PROC_MEMINFO
+	if (verbose >= 3) {
+		printf("Reading PROC_MEMINFO at %s\n", PROC_MEMINFO);
+	}
 	fp = fopen (PROC_MEMINFO, "r");
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, fp)) {
-		if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%*[:] %f %f %f", &dsktotal, &dskused, &dskfree) == 3) {
-			dsktotal = dsktotal / 1048576;
-			dskused = dskused / 1048576;
-			dskfree = dskfree / 1048576;
-			total_swap += dsktotal;
-			used_swap += dskused;
-			free_swap += dskfree;
+		if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%*[:] %f %f %f", &dsktotal_mb, &dskused_mb, &dskfree_mb) == 3) {
+			dsktotal_mb = dsktotal_mb / 1048576;	/* Apply conversion */
+			dskused_mb = dskused_mb / 1048576;
+			dskfree_mb = dskfree_mb / 1048576;
+			total_swap_mb += dsktotal_mb;
+			used_swap_mb += dskused_mb;
+			free_swap_mb += dskfree_mb;
 			if (allswaps) {
-				if (dsktotal == 0)
+				if (dsktotal_mb == 0)
 					percent=100.0;
 				else
-					percent = 100 * (((double) dskused) / ((double) dsktotal));
-				result = max_state (result, check_swap (percent, dskfree));
+					percent = 100 * (((double) dskused_mb) / ((double) dsktotal_mb));
+				result = max_state (result, check_swap (percent, dskfree_mb));
 				if (verbose)
-					asprintf (&status, "%s [%.0f (%d%%)]", status, dskfree, 100 - percent);
+					asprintf (&status, "%s [%.0f (%d%%)]", status, dskfree_mb, 100 - percent);
 			}
 		}
-		else if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%[TotalFre]%*[:] %f %*[k]%*[B]", str, &tmp)) {
+		else if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%[TotalFre]%*[:] %f %*[k]%*[B]", str, &tmp_mb)) {
+			if (verbose >= 3) {
+				printf("Got %s with %f\n", str, tmp_mb);
+			}
+			/* I think this part is always in Kb, so convert to mb */
 			if (strcmp ("Total", str) == 0) {
-				dsktotal = tmp / 1024;
+				dsktotal_mb = tmp_mb / 1024;
 			}
 			else if (strcmp ("Free", str) == 0) {
-				dskfree = tmp / 1024;
+				dskfree_mb = tmp_mb / 1024;
 			}
 		}
 	}
 	fclose(fp);
-	dskused = dsktotal - dskfree;
-	total_swap = dsktotal;
-	used_swap = dskused;
-	free_swap = dskfree;
+	dskused_mb = dsktotal_mb - dskfree_mb;
+	total_swap_mb = dsktotal_mb;
+	used_swap_mb = dskused_mb;
+	free_swap_mb = dskfree_mb;
 #else
 # ifdef HAVE_SWAP
 	asprintf(&swap_command, "%s", SWAP_COMMAND);
@@ -173,35 +180,35 @@ main (int argc, char **argv)
 #  ifdef _AIX
 	if (!allswaps) {
 		fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_process);	/* Ignore first line */
-		sscanf (input_buffer, swap_format, &total_swap, &used_swap);
-		free_swap = total_swap * (100 - used_swap) /100;
-		used_swap = total_swap - free_swap;
+		sscanf (input_buffer, swap_format, &total_swap_mb, &used_swap_mb);
+		free_swap_mb = total_swap_mb * (100 - used_swap_mb) /100;
+		used_swap_mb = total_swap_mb - free_swap_mb;
 		if (verbose >= 3)
-			printf (_("total=%.0f, used=%.0f, free=%.0f\n"), total_swap, used_swap, free_swap);
+			printf (_("total=%.0f, used=%.0f, free=%.0f\n"), total_swap_mb, used_swap_mb, free_swap_mb);
 	} else {
 #  endif
 		while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
-			sscanf (input_buffer, swap_format, &dsktotal, &dskfree);
+			sscanf (input_buffer, swap_format, &dsktotal_mb, &dskfree_mb);
 
-			dsktotal = dsktotal / conv_factor;
+			dsktotal_mb = dsktotal_mb / conv_factor;
 			/* AIX lists percent used, so this converts to dskfree in MBs */
 #  ifdef _AIX
-			dskfree = dsktotal * (100 - dskfree) / 100;
+			dskfree_mb = dsktotal_mb * (100 - dskfree_mb) / 100;
 #  else
-			dskfree = dskfree / conv_factor;
+			dskfree_mb = dskfree_mb / conv_factor;
 #  endif
 			if (verbose >= 3)
-				printf (_("total=%.0f, free=%.0f\n"), dsktotal, dskfree);
+				printf (_("total=%.0f, free=%.0f\n"), dsktotal_mb, dskfree_mb);
 
-			dskused = dsktotal - dskfree;
-			total_swap += dsktotal;
-			used_swap += dskused;
-			free_swap += dskfree;
+			dskused_mb = dsktotal_mb - dskfree_mb;
+			total_swap_mb += dsktotal_mb;
+			used_swap_mb += dskused_mb;
+			free_swap_mb += dskfree_mb;
 			if (allswaps) {
-				percent = 100 * (((double) dskused) / ((double) dsktotal));
-				result = max_state (result, check_swap (percent, dskfree));
+				percent = 100 * (((double) dskused_mb) / ((double) dsktotal_mb));
+				result = max_state (result, check_swap (percent, dskfree_mb));
 				if (verbose)
-					asprintf (&status, "%s [%.0f (%d%%)]", status, dskfree, 100 - percent);
+					asprintf (&status, "%s [%.0f (%d%%)]", status, dskfree_mb, 100 - percent);
 			}
 		}
 #  ifdef _AIX
@@ -241,24 +248,24 @@ main (int argc, char **argv)
 	}
 
 	for(i=0;i<nswaps;i++){
-		dsktotal = (float) tbl->swt_ent[i].ste_pages / SWAP_CONVERSION;
-		dskfree = (float) tbl->swt_ent[i].ste_free /  SWAP_CONVERSION;
-		dskused = ( dsktotal - dskfree );
+		dsktotal_mb = (float) tbl->swt_ent[i].ste_pages / SWAP_CONVERSION;
+		dskfree_mb = (float) tbl->swt_ent[i].ste_free /  SWAP_CONVERSION;
+		dskused_mb = ( dsktotal_mb - dskfree_mb );
 
 		if (verbose >= 3)
-			printf ("dsktotal=%.0f dskfree=%.0f dskused=%.0f\n", dsktotal, dskfree, dskused);
+			printf ("dsktotal_mb=%.0f dskfree_mb=%.0f dskused_mb=%.0f\n", dsktotal_mb, dskfree_mb, dskused_mb);
 
-		if(allswaps && dsktotal > 0){
-			percent = 100 * (((double) dskused) / ((double) dsktotal));
-			result = max_state (result, check_swap (percent, dskfree));
+		if(allswaps && dsktotal_mb > 0){
+			percent = 100 * (((double) dskused_mb) / ((double) dsktotal_mb));
+			result = max_state (result, check_swap (percent, dskfree_mb));
 			if (verbose) {
-				asprintf (&status, "%s [%.0f (%d%%)]", status, dskfree, 100 - percent);
+				asprintf (&status, "%s [%.0f (%d%%)]", status, dskfree_mb, 100 - percent);
 			}
 		}
 
-		total_swap += dsktotal;
-		free_swap += dskfree;
-		used_swap += dskused;
+		total_swap_mb += dsktotal_mb;
+		free_swap_mb += dskfree_mb;
+		used_swap_mb += dskused_mb;
 	}
 
 	/* and clean up after ourselves */
@@ -283,21 +290,21 @@ main (int argc, char **argv)
 	}
 
 	for(i=0;i<nswaps;i++){
-		dsktotal = (float) ent->se_nblks / conv_factor;
-		dskused = (float) ent->se_inuse / conv_factor;
-		dskfree = ( dsktotal - dskused );
+		dsktotal_mb = (float) ent->se_nblks / conv_factor;
+		dskused_mb = (float) ent->se_inuse / conv_factor;
+		dskfree_mb = ( dsktotal_mb - dskused_mb );
 
-		if(allswaps && dsktotal > 0){
-			percent = 100 * (((double) dskused) / ((double) dsktotal));
-			result = max_state (result, check_swap (percent, dskfree));
+		if(allswaps && dsktotal_mb > 0){
+			percent = 100 * (((double) dskused_mb) / ((double) dsktotal_mb));
+			result = max_state (result, check_swap (percent, dskfree_mb));
 			if (verbose) {
-				asprintf (&status, "%s [%.0f (%d%%)]", status, dskfree, 100 - percent);
+				asprintf (&status, "%s [%.0f (%d%%)]", status, dskfree_mb, 100 - percent);
 			}
 		}
 
-		total_swap += dsktotal;
-		free_swap += dskfree;
-		used_swap += dskused;
+		total_swap_mb += dsktotal_mb;
+		free_swap_mb += dskfree_mb;
+		used_swap_mb += dskused_mb;
 	}
 
 	/* and clean up after ourselves */
@@ -308,23 +315,23 @@ main (int argc, char **argv)
 # endif /* HAVE_SWAP */
 #endif /* HAVE_PROC_MEMINFO */
 
-	/* if total_swap == 0, let's not divide by 0 */
-	if(total_swap) {
-		percent_used = 100 * ((double) used_swap) / ((double) total_swap);
+	/* if total_swap_mb == 0, let's not divide by 0 */
+	if(total_swap_mb) {
+		percent_used = 100 * ((double) used_swap_mb) / ((double) total_swap_mb);
 	} else {
 		percent_used = 0;
 	}
 
-	result = max_state (result, check_swap (percent_used, free_swap));
-	printf (_("SWAP %s - %d%% free (%.0f MB out of %.0f MB) %s|"),
+	result = max_state (result, check_swap (percent_used, free_swap_mb));
+	printf (_("SWAP %s - %d%% free (%d MB out of %d MB) %s|"),
 			state_text (result),
-			(100 - percent_used), free_swap, total_swap, status);
+			(100 - percent_used), (int) free_swap_mb, (int) total_swap_mb, status);
 
-	puts (perfdata ("swap", (long) free_swap, "MB",
-	                TRUE, (long) max (warn_size/1024, warn_percent/100.0*total_swap),
-	                TRUE, (long) max (crit_size/1024, crit_percent/100.0*total_swap),
+	puts (perfdata ("swap", (long) free_swap_mb, "MB",
+	                TRUE, (long) max (warn_size_bytes/(1024 * 1024), warn_percent/100.0*total_swap_mb),
+	                TRUE, (long) max (crit_size_bytes/(1024 * 1024), crit_percent/100.0*total_swap_mb),
 	                TRUE, 0,
-	                TRUE, (long) total_swap));
+	                TRUE, (long) total_swap_mb));
 
 	return result;
 }
@@ -332,17 +339,17 @@ main (int argc, char **argv)
 
 
 int
-check_swap (int usp, float free_swap)
+check_swap (int usp, float free_swap_mb)
 {
 	int result = STATE_UNKNOWN;
-	free_swap = free_swap * 1024;		/* Convert back to bytes as warn and crit specified in bytes */
+	float free_swap = free_swap_mb * (1024 * 1024);		/* Convert back to bytes as warn and crit specified in bytes */
 	if (usp >= 0 && crit_percent != 0 && usp >= (100.0 - crit_percent))
 		result = STATE_CRITICAL;
-	else if (crit_size > 0 && free_swap <= crit_size)
+	else if (crit_size_bytes > 0 && free_swap <= crit_size_bytes)
 		result = STATE_CRITICAL;
 	else if (usp >= 0 && warn_percent != 0 && usp >= (100.0 - warn_percent))
 		result = STATE_WARNING;
-	else if (warn_size > 0 && free_swap <= warn_size)
+	else if (warn_size_bytes > 0 && free_swap <= warn_size_bytes)
 		result = STATE_WARNING;
 	else if (usp >= 0.0)
 		result = STATE_OK;
@@ -380,13 +387,13 @@ process_arguments (int argc, char **argv)
 		switch (c) {
 		case 'w':									/* warning size threshold */
 			if (is_intnonneg (optarg)) {
-				warn_size = (double) atoi (optarg);
+				warn_size_bytes = (float) atoi (optarg);
 				break;
 			}
 			else if (strstr (optarg, ",") &&
 							 strstr (optarg, "%") &&
-							 sscanf (optarg, "%lf,%d%%", &warn_size, &warn_percent) == 2) {
-				warn_size = floor(warn_size);
+							 sscanf (optarg, "%f,%d%%", &warn_size_bytes, &warn_percent) == 2) {
+				warn_size_bytes = floorf(warn_size_bytes);
 				break;
 			}
 			else if (strstr (optarg, "%") &&
@@ -398,13 +405,13 @@ process_arguments (int argc, char **argv)
 			}
 		case 'c':									/* critical size threshold */
 			if (is_intnonneg (optarg)) {
-				crit_size = (double) atoi (optarg);
+				crit_size_bytes = (float) atoi (optarg);
 				break;
 			}
 			else if (strstr (optarg, ",") &&
 							 strstr (optarg, "%") &&
-							 sscanf (optarg, "%lf,%d%%", &crit_size, &crit_percent) == 2) {
-				crit_size = floor(crit_size);
+							 sscanf (optarg, "%f,%d%%", &crit_size_bytes, &crit_percent) == 2) {
+				crit_size_bytes = floorf(crit_size_bytes);
 				break;
 			}
 			else if (strstr (optarg, "%") &&
@@ -444,13 +451,13 @@ process_arguments (int argc, char **argv)
 
 	if (c == argc)
 		return validate_arguments ();
-	if (warn_size == 0 && is_intnonneg (argv[c]))
-		warn_size = (double) atoi (argv[c++]);
+	if (warn_size_bytes == 0 && is_intnonneg (argv[c]))
+		warn_size_bytes = (float) atoi (argv[c++]);
 
 	if (c == argc)
 		return validate_arguments ();
-	if (crit_size == 0 && is_intnonneg (argv[c]))
-		crit_size = (double) atoi (argv[c++]);
+	if (crit_size_bytes == 0 && is_intnonneg (argv[c]))
+		crit_size_bytes = (float) atoi (argv[c++]);
 
 	return validate_arguments ();
 }
@@ -460,15 +467,15 @@ process_arguments (int argc, char **argv)
 int
 validate_arguments (void)
 {
-	if (warn_percent == 0 && crit_percent == 0 && warn_size == 0
-			&& crit_size == 0) {
+	if (warn_percent == 0 && crit_percent == 0 && warn_size_bytes == 0
+			&& crit_size_bytes == 0) {
 		return ERROR;
 	}
 	else if (warn_percent < crit_percent) {
 		usage4 
 			(_("Warning percentage should be more than critical percentage"));
 	}
-	else if (warn_size < crit_size) {
+	else if (warn_size_bytes < crit_size_bytes) {
 		usage4
 			(_("Warning free space should be more than critical free space"));
 	}
