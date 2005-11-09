@@ -629,7 +629,7 @@ if test -n "$ac_cv_proc_loadavg"; then
   AC_MSG_RESULT([(command line) $ac_cv_proc_loadavg])
 elif test -f "/proc/loadavg"; then
   AC_MSG_RESULT([found /proc/loadavg])
-  ac_cv_proc_meminfo="/proc/loadavg"
+  ac_cv_proc_loadavg="/proc/loadavg"
 else
   AC_MSG_RESULT([no])
 fi
