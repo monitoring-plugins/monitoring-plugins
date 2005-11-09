@@ -31,7 +31,7 @@ NPTest - Simplify the testing of Nagios Plugins
 
 This modules provides convenience functions to assist in the testing
 of Nagios Plugins, making the testing code easier to read and write;
-hopefully encouraging the development of more complete test suite for
+hopefully encouraging the development of a more complete test suite for
 the Nagios Plugins. It is based on the patterns of testing seen in the
 1.4.0 release, and continues to use the L<Test> module as the basis of
 testing.
@@ -80,7 +80,16 @@ that, such defaults are not stored in the cache, as there is currently
 no mechanism to edit existing cache entries, save the use of text
 editor or removing the cache file completely.
 
+=item C<testCmd($command)>
+
+Call with NPTest->testCmd("./check_disk ...."). This returns a NPTest object
+which you can then run $object->return_code or $object->output against.
+
+Testing of results would be done in your test script, not in this module.
+
 =item C<checkCmd(...)>
+
+This function is obsolete. Use C<testCmd()> instead.
 
 This function attempts to encompass the majority of test styles used
 in testing Nagios Plugins. As each plug-in is a separate command, the
@@ -213,20 +222,13 @@ sub checkCmd
 {
   my( $command, $desiredExitStatus, $desiredOutput, %exceptions ) = @_;
 
-  my $output     = `${command}`;
-  my $exitStatus = $? >> 8;
+  my $result = NPTest->testCmd($command);
+
+  my $output     = $result->output;
+  my $exitStatus = $result->return_code;
 
   $output = "" unless defined( $output );
   chomp( $output );
-
-  if ( exists( $ENV{'NPTEST_DEBUG'} ) && $ENV{'NPTEST_DEBUG'} )
-  {
-    my( $pkg, $file, $line ) = caller(0);
-
-    print "checkCmd: Called from line $line in $file\n";
-    print "Testing : ${command}\n";
-    print "Result  : ${exitStatus} AND '${output}'\n";
-  }
 
   my $testStatus;
 
@@ -547,7 +549,53 @@ sub TestsFrom
   return @tests;
 }
 
+# All the new object oriented stuff below
 
+sub new { 
+	my $type = shift;
+	my $self = {};
+	return bless $self, $type;
+}
+
+# Accessors
+sub return_code {
+	my $self = shift;
+	if (@_) {
+		return $self->{return_code} = shift;
+	} else {
+		return $self->{return_code};
+	}
+}
+sub output {
+	my $self = shift;
+	if (@_) {
+		return $self->{output} = shift;
+	} else {
+		return $self->{output};
+	}
+}
+
+sub testCmd {
+	my $class = shift;
+	my $command = shift or die "No command passed to testCmd";
+	my $object = $class->new;
+	
+	my $output = `$command`;
+	chomp $output;
+	
+	$object->output($output);
+	$object->return_code($? >> 8);
+
+	if ($ENV{'NPTEST_DEBUG'}) {
+		my ($pkg, $file, $line) = caller(0);
+		print "testCmd: Called from line $line in $file", $/;
+		print "Testing: $command", $/;
+		print "Output:  ", $object->output, $/;
+		print "Return code: ", $object->return_code, $/;
+	}
+
+	return $object;
+}
 
 1;
 #

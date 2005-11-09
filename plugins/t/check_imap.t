@@ -6,11 +6,8 @@
 #
 
 use strict;
-use Test;
+use Test::More tests => 7;
 use NPTest;
-
-use vars qw($tests);
-BEGIN {$tests = 7; plan tests => $tests}
 
 my $host_tcp_smtp      = getTestParameter( "host_tcp_smtp",      "NP_HOST_TCP_SMTP",      "mailhost",
 					   "A host providing an STMP Service (a mail server)");
@@ -24,18 +21,26 @@ my $host_nonresponsive = getTestParameter( "host_nonresponsive", "NP_HOST_NONRES
 my $hostname_invalid   = getTestParameter( "hostname_invalid",   "NP_HOSTNAME_INVALID",   "nosuchhost",
                                            "An invalid (not known to DNS) hostname" );
 
-my %exceptions = ( 2 => "No IMAP Server present?" );
-
 my $t;
 
-$t += checkCmd( "./check_imap    $host_tcp_imap",                                     0, undef, %exceptions );
-$t += checkCmd( "./check_imap -H $host_tcp_imap -p 143 -w  9 -c  9 -t  10 -e '* OK'", 0, undef, %exceptions );
-$t += checkCmd( "./check_imap    $host_tcp_imap -p 143 -wt 9 -ct 9 -to 10 -e '* OK'", 0, undef, %exceptions );
-$t += checkCmd( "./check_imap    $host_nonresponsive", 2 );
-$t += checkCmd( "./check_imap    $hostname_invalid",   2 );
-$t += checkCmd( "./check_imap -H $host_tcp_imap -e unlikely_string",                  1);
-$t += checkCmd( "./check_imap -H $host_tcp_imap -e unlikely_string -M crit",          2);
+$t = NPTest->testCmd( "./check_imap $host_tcp_imap" );
+cmp_ok( $t->return_code, '==', 0, "Contacted imap" );
 
+$t = NPTest->testCmd( "./check_imap -H $host_tcp_imap -p 143 -w 9 -c 9 -to 10 -e '* OK'" );
+cmp_ok( $t->return_code, '==', 0, "Got right response" );
 
-exit(0) if defined($Test::Harness::VERSION);
-exit($tests - $t);
+$t = NPTest->testCmd( "./check_imap $host_tcp_imap -p 143 -wt 9 -ct 9 -to 10 -e '* OK'" );
+cmp_ok( $t->return_code, '==', 0, "Check old parameter options" );
+
+$t = NPTest->testCmd( "./check_imap $host_nonresponsive" );
+cmp_ok( $t->return_code, '==', 2, "Get error with non reponsive host" );
+
+$t = NPTest->testCmd( "./check_imap $hostname_invalid" );
+cmp_ok( $t->return_code, '==', 2, "Invalid hostname" );
+
+$t = NPTest->testCmd( "./check_imap -H $host_tcp_imap -e unlikely_string");
+cmp_ok( $t->return_code, '==', 1, "Got warning with bad response" );
+
+$t = NPTest->testCmd( "./check_imap -H $host_tcp_imap -e unlikely_string -M crit");
+cmp_ok( $t->return_code, '==', 2, "Got critical error with bad response" );
+
