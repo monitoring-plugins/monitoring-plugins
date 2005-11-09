@@ -1,0 +1,20 @@
+NEW STARTERS
+
+These are the steps for adding someone to the team.
+
+Need to know:
+  - Name
+  - Sourceforge id
+  - Type of member (translator, developer, release manager, project administrator)
+
+1. Add member to nagiosplug-team mailing list and to the nagiosplug-checkins
+   mailing list (via Privacy Options)
+2. Add Sourceforge access:
+  - Translator: CVS access, Shell access, Release Tech (no)
+  - Developer: CVS access, Shell access, Release Tech (no), Task Manager (A&T),
+               Forums (Moderator), Doc Manager (Editor). Need to set tracker
+               access individually
+3. Add to CVS avail file:
+  - Translator: Add member to translation files
+  - Developer: Add member to CVSROOT/avail for all files
+

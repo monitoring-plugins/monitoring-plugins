@@ -637,14 +637,16 @@ update the THANKS.in file.</para>
 	</section>
 
 	<section id="Newplugins"><title>New plugins</title>
-	<para>If you would like others to use your plugins and have it included in
-	the standard distribution, please include patches for the relevant
-	configuration files, in particular "configure.in". Otherwise submitted 
-	plugins will be included in the contrib directory.</para>
-	
-	<para>Plugins in the contrib directory are going to be migrated to the
-	standard plugins/plugin-scripts directory as time permits and per user
-	requests. The minimum requirements are:</para>
+
+	<para>If you would like others to use your plugins, please add it to
+	the official 3rd party plugin repository, 
+	<ulink url="http://www.nagiosexchange.org">NagiosExchange</ulink>.
+	</para>
+
+	<para>We are not accepting requests for inclusion of plugins into 
+	our distribution at the moment, but when we do, these are the minimum
+	requirements:
+	</para>
 
       <orderedlist>
 	<listitem>
@@ -663,74 +665,20 @@ update the THANKS.in file.</para>
 	</listitem>
 	<listitem>
 	  <para>It should also follow code format guidelines, and use functions from
-utils (perl or c or sh) rather than cooking it's own</para>
+utils (perl or c or sh) rather than using its own</para>
+	</listitem>
+	<listitem>
+	  <para>Includes patches to configure.in if required (via the EXTRAS list if 
+	  it will only work on some platforms)</para>
+	</listitem>
+	<listitem>
+	  <para>If possible, please submit a test harness. Documentation on sample
+	  tests coming soon</para>
 	</listitem>
       </orderedlist>
 
-	<para>New plugins should be submitted via 
-	<ulink url="http://sourceforge.net/tracker/?group_id=29880&amp;atid=541465">SourceForge's
-	tracker system for Nagiosplug new plugins</ulink> 
-	and be announced to the nagiosplug-devel mailing list.</para>
-	
-	<para>For new plugins, provide a diff to add to the EXTRAS list (configure.in) 
-	unless you are fairly sure that the plugin will work for all platforms with 
-	no non-standard	software added.</para>
-
-	<para>If possible please submit a test harness. Documentation on sample
-	tests coming soon.</para>
 	</section>
 
-</section>
-
-<section id="UsingSourceforge"><title>Using Sourceforge</title>
-<table id="Projectmemberaccess"><title>Project Member Access</title>
-	<tgroup cols="9">
-		<thead>
-			<row>
-				<entry><para>Member type</para></entry>
-				<entry><para>CVS Access</para></entry>
-				<entry><para>Shell Access</para></entry>
-				<entry><para>Release Tech</para></entry>
-				<entry><para>Tracker Manager</para></entry>
-				<entry><para>Task Manager</para></entry>
-				<entry><para>Forums</para></entry>
-				<entry><para>Doc Manager</para></entry>
-				<entry><para>News</para></entry>
-				<entry><para>Screenshots</para></entry>
-				<entry><para>Notes</para></entry>
-			</row>
-		</thead>
-		<tbody>
-			<row>
-				<entry><para>Translator</para></entry>
-				<entry><para>Yes</para></entry>
-				<entry><para>Yes</para></entry>
-				<entry><para>No</para></entry>
-				<entry><para>-</para></entry>
-				<entry><para>-</para></entry>
-				<entry><para>-</para></entry>
-				<entry><para>-</para></entry>
-				<entry><para>-</para></entry>
-				<entry><para>-</para></entry>
-				<entry><para>Add developer to CVSROOT/avail for translation files</para></entry>
-			</row>
-			<row>
-				<entry><para>Developer</para></entry>
-				<entry><para>Yes</para></entry>
-				<entry><para>Yes</para></entry>
-				<entry><para>No</para></entry>
-				<entry><para>-</para></entry>
-				<entry><para>A&amp;T</para></entry>
-				<entry><para>Moderator</para></entry>
-				<entry><para>Editor</para></entry>
-				<entry><para>-</para></entry>
-				<entry><para>-</para></entry>
-				<entry><para>Need to set tracker access individually. Add developer to CVSROOT/avail for all files</para></entry>
-			</row>
-		</tbody>
-	</tgroup>
-</table>
-<para>Add all members to the nagiosplug-team mailing list</para>
 </section>
 </article>
   
