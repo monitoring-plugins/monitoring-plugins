@@ -614,6 +614,25 @@
 	and, if applicable, add the SourceForge Tracker number. Don't forget to 
 update the THANKS.in file.</para>
 	</section>
+
+	<section><title>Translations for developers</title>
+	<para>To make the job easier for translators please follow these guidelines:</para>
+	<orderedlist>
+	  <listitem><para>
+	    before creating new strings, check the po/de.po file to see if a similar string
+	    already exists
+	  </para></listitem>
+	  <listitem><para>
+	    for help texts, break into individual options so that these can be reused
+	    between plugins
+	  </para></listitem>
+	</orderedlist>
+	</section>
+
+	<section><title>Translations for translators</title>
+	<para>To create an up to date list of translatable strings, run: tools/gen_locale.sh</para>
+	</section>
+
 </section>
 
 <section id="SubmittingChanges"><title>Submission of new plugins and patches</title>
