@@ -20,7 +20,7 @@
 
 const char *progname = "check_dummy";
 const char *revision = "$Revision$";
-const char *copyright = "1999-2004";
+const char *copyright = "1999-2005";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -33,51 +33,51 @@ void print_usage (void);
 int
 main (int argc, char **argv)
 {
-	int result = STATE_UNKNOWN;
+  int result = STATE_UNKNOWN;
 
-	setlocale (LC_ALL, "");
-	bindtextdomain (PACKAGE, LOCALEDIR);
-	textdomain (PACKAGE);
+  setlocale (LC_ALL, "");
+  bindtextdomain (PACKAGE, LOCALEDIR);
+  textdomain (PACKAGE);
 
-	if (argc < 2)
-		usage4 (_("Could not parse arguments"));
-	else if (strcmp (argv[1], "-V") == 0 || strcmp (argv[1], "--version") == 0) {
-		print_revision (progname, revision);
-		exit (STATE_OK);
-	}
-	else if (strcmp (argv[1], "-h") == 0 || strcmp (argv[1], "--help") == 0) {
-		print_help ();
-		exit (STATE_OK);
-	}
-	else if (!is_integer (argv[1]))
-		usage4 (_("Arguments to check_dummy must be an integer"));
-	else
-		result = atoi (argv[1]);
+  if (argc < 2)
+    usage4 (_("Could not parse arguments"));
+  else if (strcmp (argv[1], "-V") == 0 || strcmp (argv[1], "--version") == 0) {
+    print_revision (progname, revision);
+    exit (STATE_OK);
+  }
+  else if (strcmp (argv[1], "-h") == 0 || strcmp (argv[1], "--help") == 0) {
+    print_help ();
+    exit (STATE_OK);
+  }
+  else if (!is_integer (argv[1]))
+    usage4 (_("Arguments to check_dummy must be an integer"));
+  else
+    result = atoi (argv[1]);
 
-	switch (result) {
-	case STATE_OK:
-		printf (_("OK"));
-		break;
-	case STATE_WARNING:
-		printf (_("WARNING"));
-		break;
-	case STATE_CRITICAL:
-		printf (_("CRITICAL"));
-		break;
-	case STATE_UNKNOWN:
-		printf (_("UNKNOWN"));
-		break;
-	default:
-		printf (_("Status %d is not a supported error state\n"), result);
-		break;
-	}
+  switch (result) {
+  case STATE_OK:
+    printf (_("OK"));
+    break;
+  case STATE_WARNING:
+    printf (_("WARNING"));
+    break;
+  case STATE_CRITICAL:
+    printf (_("CRITICAL"));
+    break;
+  case STATE_UNKNOWN:
+    printf (_("UNKNOWN"));
+    break;
+  default:
+    printf (_("Status %d is not a supported error state\n"), result);
+    break;
+  }
 
-	if (argc >= 3) 
-		printf (": %s", argv[2]);
+  if (argc >= 3) 
+    printf (": %s", argv[2]);
 
-	printf("\n");
+  printf("\n");
 
-	return result;
+  return result;
 }
 
 
@@ -85,20 +85,24 @@ main (int argc, char **argv)
 void
 print_help (void)
 {
-	print_revision (progname, revision);
+  print_revision (progname, revision);
 
-	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
-	printf (COPYRIGHT, copyright, email);
+  printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
+  printf (COPYRIGHT, copyright, email);
 
-	printf (_("\
-This plugin will simply return the state corresponding to the numeric value\n\
-of the <state> argument with optional text.\n\n"));
+  printf (_("This plugin will simply return the state corresponding to the numeric value"));
+ 
+  printf ("\n");
+ 
+  printf (_("of the <state> argument with optional text"));
 
-	print_usage ();
+  printf ("\n\n");
+  
+  print_usage ();
 
-	printf (_(UT_HELP_VRSN));
+  printf (_(UT_HELP_VRSN));
 
-	printf (_(UT_SUPPORT));
+  printf (_(UT_SUPPORT));
 }
 
 
@@ -106,5 +110,6 @@ of the <state> argument with optional text.\n\n"));
 void
 print_usage (void)
 {
-	printf ("Usage: %s <integer state> [optional text]\n", progname);
+  printf (_("Usage:"));
+  printf (" %s <integer state> [optional text]\n", progname);
 }
