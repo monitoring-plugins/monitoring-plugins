@@ -6,7 +6,7 @@
 #
 
 use strict;
-use Test::More tests => 24;
+use Test::More tests => 26;
 use NPTest;
 use POSIX qw(ceil floor);
 
@@ -22,61 +22,98 @@ my $mountpoint_valid   = getTestParameter( "mountpoint_valid",   "NP_MOUNTPOINT_
 my $mountpoint2_valid   = getTestParameter( "mountpoint2_valid",   "NP_MOUNTPOINT2_VALID",   "/var",
 					   "The path to another valid mountpoint. Must be different from 1st one." );
 
-my $free_regex    = '^DISK OK - free space: '.$mountpoint_valid.' .* MB \((\d+)%[\)]*\); '.$mountpoint2_valid.' .* MB \((\d+)%[\)]*\);|';
 
-$result = NPTest->testCmd( "./check_disk 100 100 ".${mountpoint_valid} );              # 100 free
-cmp_ok( $result->return_code, "==", 0, "At least 100 free" );
-like( $result->output, $successOutput, "Right output" );
+$result = NPTest->testCmd( 
+	"./check_disk -w 1% -c 1% -p $mountpoint_valid -w 1% -c 1% -p $mountpoint2_valid" 
+	);
+cmp_ok( $result->return_code, "==", 0, "Checking two mountpoints (must have at least 1% free)");
+my $c = 0;
+$_ = $result->output;
+$c++ while /\(/g;	# counts number of "(" - should be two
+cmp_ok( $c, '==', 2, "Got two mountpoints in output");
 
-$result = NPTest->testCmd( "./check_disk -w 0 -c 0 ".${mountpoint_valid} );            # 0 free
-cmp_ok( $result->return_code, "==", 0, "At least 0 free" );
-like( $result->output, $successOutput, "Right output" );
-
-$result = NPTest->testCmd( "./check_disk -w 1% -c 1% ".${mountpoint_valid} );          # 1% free
-cmp_ok( $result->return_code, "==", 0, "At least 1% free" );
-like( $result->output, $successOutput, "Right output" );
-
-$result = NPTest->testCmd( "./check_disk -w 1% -c 1% -p ".${mountpoint_valid}." -w 1% -c 1% -p ".$mountpoint2_valid );  # MP1 1% free MP2 100% free
-cmp_ok( $result->return_code, "==", 0, "At least 1% free on mountpoint_1, 1% free on mountpoint_2" );
-like( $result->output, $successOutput, "Right output" );
-
-# Get free diskspace on NP_MOUNTPOINT_VALID and NP_MOUNTPOINT2_VALID
-my $free_space_output = $result->output;
-#$free_space_output =~ m/$free_regex/;
-my ($free_on_mp1, $free_on_mp2) = ($free_space_output =~ m/\((\d+)%.*\((\d+)%/);
-die "Cannot read free_on_mp1" unless $free_on_mp1;
-die "Cannot read free_on_mp2" unless $free_on_mp2;
-my $average = ceil(($free_on_mp1+$free_on_mp2)/2);
-my ($larger, $smaller);
+# Calculate avg_free free on mountpoint1 and mountpoint2
+# because if you check in the middle, you should get different errors
+$_ = $result->output;
+my ($free_on_mp1, $free_on_mp2) = (m/\((\d+)%.*\((\d+)%/);
+die "Cannot parse output: $_" unless ($free_on_mp1 && $free_on_mp2);
+my $avg_free = ceil(($free_on_mp1+$free_on_mp2)/2);
+my ($more_free, $less_free);
 if ($free_on_mp1 > $free_on_mp2) {
-	$larger = $mountpoint_valid;
-	$smaller = $mountpoint2_valid;
+	$more_free = $mountpoint_valid;
+	$less_free = $mountpoint2_valid;
+} elsif ($free_on_mp1 < $free_on_mp2) {
+	$more_free = $mountpoint2_valid;
+	$less_free = $mountpoint_valid;
 } else {
-	$larger = $mountpoint2_valid;
-	$smaller = $mountpoint_valid;
+	die "Two mountpoints are the same - cannot do rest of test";
 }
 
-$result = NPTest->testCmd( "./check_disk -w 1% -c 1% -p ".${larger}." -w 100% -c 100% -p ".$smaller );  # MP1 1% free MP2 100% free
-cmp_ok( $result->return_code, "==", 2, "At least 1% free on $larger, 100% free on $smaller" );
+
+$result = NPTest->testCmd( "./check_disk -w 100 -c 100 -p $more_free" );
+cmp_ok( $result->return_code, '==', 0, "At least 100 bytes available on $more_free");
+like  ( $result->output, $successOutput, "OK output" );
+
+$result = NPTest->testCmd( "./check_disk 100 100 $more_free" );
+cmp_ok( $result->return_code, '==', 0, "Old syntax okay" );
+
+$result = NPTest->testCmd( "./check_disk -w 1% -c 1% -p $more_free" );
+cmp_ok( $result->return_code, "==", 0, "At least 1% free" );
+
+$result = NPTest->testCmd( 
+	"./check_disk -w 1% -c 1% -p $more_free -w 100% -c 100% -p $less_free" 
+	);
+cmp_ok( $result->return_code, "==", 2, "Get critical on less_free mountpoint $less_free" );
 like( $result->output, $failureOutput, "Right output" );
 
-$result = NPTest->testCmd( "./check_disk -w ".$average."% -c 0% -p ".${larger}." -w ".$average."% -c ".$average."% -p ".${smaller} );          # Average free
-cmp_ok( $result->return_code, "==", 2, "At least ".$average."% free on $larger" );
-like( $result->output, $failureOutput, "Right output" );
 
-$result = NPTest->testCmd( "./check_disk -w ".$average."% -c ".$average."% -p ".${larger}." -w ".$average."% -c 0% -p ".${smaller} );          # Average free
-cmp_ok( $result->return_code, "==", 1, "At least ".$average."% free on $smaller" );
-like( $result->output, $warningOutput, "Right output" );
+
+
+$result = NPTest->testCmd(
+	"./check_disk -w $avg_free% -c 0% -p $less_free"
+	);
+cmp_ok( $result->return_code, '==', 1, "Get warning on less_free mountpoint, when checking avg_free");
+
+$result = NPTest->testCmd(
+	"./check_disk -w $avg_free% -c $avg_free% -p $more_free"
+	);
+cmp_ok( $result->return_code, '==', 0, "Get ok on more_free mountpoint, when checking avg_free");
+
+$result = NPTest->testCmd( 
+	"./check_disk -w $avg_free% -c 0% -p $less_free -w $avg_free% -c $avg_free% -p $more_free" 
+	);
+cmp_ok( $result->return_code, "==", 1, "Combining above two tests, get warning");
+
+
+
+$result = NPTest->testCmd(
+	"./check_disk -w $avg_free% -c 0% -p $more_free"
+	);
+cmp_ok( $result->return_code, '==', 0, "Get ok on more_free mountpoint, checking avg_free");
+
+$result = NPTest->testCmd(
+	"./check_disk -w $avg_free% -c $avg_free% -p $less_free"
+	);
+cmp_ok( $result->return_code, '==', 2, "Get critical on less_free, checking avg_free");
+
+$result = NPTest->testCmd(
+	"./check_disk -w $avg_free% -c 0% -p $more_free -w $avg_free% -c $avg_free% -p $less_free"
+	);
+cmp_ok( $result->return_code, '==', 2, "Combining above two tests, get critical");
+
+
+
+$result = NPTest->testCmd(
+	"./check_disk -w 10% -c 15% -p $mountpoint_valid"
+	);
+cmp_ok( $result->return_code, '==', 3, "Invalid command line options" );
 
 TODO: {
-    local $TODO = "We have a bug in check_disk - -p must come after -w and -c";
-    $result = NPTest->testCmd( "./check_disk -p ".${mountpoint_valid}." -w ".$average."% -c 0% -p ".${mountpoint_valid}." -w ".$average."% -c ".$average."%" );          # Average free
-    cmp_ok( $result->return_code, "==", 2, "At least ".$average."% free on mountpoint_1" );
-    like( $result->output, $failureOutput, "Right output" );
-
-    $result = NPTest->testCmd( "./check_disk -p ".${mountpoint_valid}." -w ".$average."% -c ".$average."% -p ".${mountpoint_valid}." -w ".$average."% -c 0%" );          # Average free
-    cmp_ok( $result->return_code, "==", 1, "At least ".$average."% free on mountpoint_2" );
-    like( $result->output, $warningOutput, "Right output" );
+    local $TODO = "-p must come after -w and -c";
+    $result = NPTest->testCmd( 
+	"./check_disk -p $mountpoint_valid -w 10% -c 15%"
+	);
+    cmp_ok( $result->return_code, "==", 3, "Invalid options - order unimportant" );
 }
 
 $result = NPTest->testCmd( "./check_disk -w 100% -c 100% ".${mountpoint_valid} );      # 100% empty
@@ -84,12 +121,37 @@ cmp_ok( $result->return_code, "==", 2, "100% empty" );
 like( $result->output, $failureOutput, "Right output" );
 
 TODO: {
-    local $TODO = "-u GB sometimes does not work?";
-    $result = NPTest->testCmd( "./check_disk -w 100 -c 100 -u GB ".${mountpoint_valid} );      # 100 GB empty
-    cmp_ok( $result->return_code, "==", 2, "100 GB empty" );
-    like( $result->output, $failureOutput, "Right output" );
+	local $TODO = "Requesting 100GB free is should be critical";
+	$result = NPTest->testCmd( "./check_disk -w 100000 -c 100000 $mountpoint_valid" );
+	cmp_ok( $result->return_code, '==', 2, "Check for 100GB free" );
 }
 
-$result = NPTest->testCmd( "./check_disk 0 0 ".${mountpoint_valid} );                  # 0 critical
-cmp_ok( $result->return_code, "==", 2, "No empty space" );
-like( $result->output, $failureOutput, "Right output" );
+TODO: {
+    local $TODO = "-u GB does not work";
+    $result = NPTest->testCmd( "./check_disk -w 100 -c 100 -u GB ".${mountpoint_valid} );      # 100 GB empty
+    cmp_ok( $result->return_code, "==", 2, "100 GB empty" );
+}
+
+
+# Checking old syntax of check_disk warn crit [fs], with warn/crit at USED% thresholds
+$result = NPTest->testCmd( "./check_disk 0 0 ".${mountpoint_valid} );
+cmp_ok( $result->return_code, "==", 2, "Old syntax: 0% used");
+
+$result = NPTest->testCmd( "./check_disk 100 100 $mountpoint_valid" );
+cmp_ok( $result->return_code, '==', 0, "Old syntax: 100% used" );
+
+$result = NPTest->testCmd( "./check_disk 0 100 $mountpoint_valid" );
+cmp_ok( $result->return_code, '==', 1, "Old syntax: warn 0% used" );
+
+$result = NPTest->testCmd( "./check_disk 0 200 $mountpoint_valid" );
+cmp_ok( $result->return_code, '==', 3, "Old syntax: Error with values outside percent range" );
+
+TODO: {
+	local $TODO = "Need to properly check input";
+	$result = NPTest->testCmd( "./check_disk 200 200 $mountpoint_valid" );
+	cmp_ok( $result->return_code, '==', 3, "Old syntax: Error with values outside percent range" );
+}
+
+$result = NPTest->testCmd( "./check_disk 200 0 $mountpoint_valid" );
+cmp_ok( $result->return_code, '==', 3, "Old syntax: Error with values outside percent range" );
+
