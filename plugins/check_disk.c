@@ -697,148 +697,44 @@ print_help (void)
 
   printf (_(UT_HELP_VRSN));
 
-  printf ("  -w, --warning=INTEGER");
-  
-  printf ("\n");
-  
-  printf (_("exit with WARNING status if less than INTEGER units of disk are free"));
-  
-  printf ("  -w, --warning=PERCENT%%");
-  
-  printf ("\n");
-
-  printf (_("exit with WARNING status if less than PERCENT of disk space is free"));
-  
-  printf ("\n");
-
-  printf ("  -W, --iwarning=PERCENT%%");
-  
-  printf ("\n");
-
-  printf (_("exit with WARNING status if less than PERCENT of inode space is free"));
-  
-  printf ("\n");
-
-  printf ("  -K, --icritical=PERCENT%%");
-  
-  printf ("\n");
-
-  printf (_("exit with CRITICAL status if less than PERCENT of inode space is free"));
-  
-  printf ("\n");
-
-  printf ("  -c, --critical=INTEGER");
-  
-  printf ("\n");
-
-  printf (_("exit with CRITICAL status if less than INTEGER --units of disk are free"));
-  
-  printf ("\n");
-
-  printf ("  -c, --critical=PERCENT%%");
-  
-  printf ("\n");
-
-  printf (_("exit with CRITCAL status if less than PERCENT of disk space is free"));
-  
-  printf ("\n");
-
-  printf ("  -C, --clear");
-  
-  printf ("\n");
-
-  printf (_("clear thresholds"));
-
-  printf ("\n");
-
-  printf ("  -u, --units=STRING");
-  
-  printf ("\n");
-
-  printf (_("choose bytes, kB, MB, GB, TB (default: MB)"));
-  
-  printf ("\n");
-
-  printf ("  -k, --kilobytes");
-  
-  printf ("\n");
-
-  printf (_("same as '--units kB'"));
-  
-  printf ("\n");
-
-  printf ("  -m, --megabytes");
-  
-  printf ("\n");
-
-  printf (_("same as '--units MB'\n"));
-
-  printf ("  -l, --local");
-  
-  printf ("\n");
-
-  printf (_("only check local filesystems"));
-  
-  printf ("\n");
-
-  printf ("  -p, --path=PATH, --partition=PARTITION");
-  
-  printf ("\n");
-
-  printf (_("path or partition (may be repeated)"));
-  
-  printf ("\n");
-
-  printf ("  -x, --exclude_device=PATH <STRING>");
-  
-  printf ("\n");
-
-  printf (_("ignore device (only works if -p unspecified)"));
-  
-  printf ("\n");
-
-  printf ("  -X, --exclude-type=TYPE <STRING>");
-  
-  printf ("\n");
-
-  printf (_("ignore all filesystems of indicated type (may be repeated)"));
-  
-  printf ("\n");
-
-  printf ("-m, --mountpoint");
-  
-  printf ("\n");
-
-  printf (_("display the mountpoint instead of the partition"));
-  
-  printf ("\n");
-
-  printf ("-e, --errors-only");
-  
-  printf ("\n");
-
-  printf (_("display only devices/mountpoints with errors"));
-
-  printf ("\n");
-
-  printf (_(UT_WARN_CRIT));
-
+  printf (" %s\n", "-w, --warning=INTEGER");
+  printf ("    %s\n", _("Exit with WARNING status if less than INTEGER units of disk are free"));
+  printf (" %s\n", "-w, --warning=PERCENT%");
+  printf ("    %s\n", _("Exit with WARNING status if less than PERCENT of disk space is free"));
+  printf (" %s\n", "-W, --iwarning=PERCENT%");
+  printf ("    %s\n", _("Exit with WARNING status if less than PERCENT of inode space is free"));
+  printf (" %s\n", "-K, --icritical=PERCENT%");
+  printf ("    %s\n", _("Exit with CRITICAL status if less than PERCENT of inode space is free"));
+  printf (" %s\n", "-c, --critical=INTEGER");
+  printf ("    %s\n", _("Exit with CRITICAL status if less than INTEGER units of disk are free"));
+  printf (" %s\n", "-c, --critical=PERCENT%");
+  printf ("    %s\n", _("Exit with CRITCAL status if less than PERCENT of disk space is free"));
+  printf (" %s\n", "-C, --clear");
+  printf ("    %s\n", _("Clear thresholds"));
+  printf (" %s\n", "-u, --units=STRING");
+  printf ("    %s\n", _("Choose bytes, kB, MB, GB, TB (default: MB)"));
+  printf (" %s\n", "-k, --kilobytes");
+  printf ("    %s\n", _("Same as '--units kB'"));
+  printf (" %s\n", "-m, --megabytes");
+  printf ("    %s\n", _("Same as '--units MB'"));
+  printf (" %s\n", "-l, --local");
+  printf ("    %s\n", _("Only check local filesystems"));
+  printf (" %s\n", "-p, --path=PATH, --partition=PARTITION");
+  printf ("    %s\n", _("Path or partition (may be repeated)"));
+  printf (" %s\n", "-x, --exclude_device=PATH <STRING>");
+  printf ("    %s\n", _("Ignore device (only works if -p unspecified)"));
+  printf (" %s\n", _("-X, --exclude-type=TYPE <STRING>"));
+  printf ("    %s\n", _("Ignore all filesystems of indicated type (may be repeated)"));
+  printf (" %s\n", "-m, --mountpoint");
+  printf ("    %s\n", _("Display the mountpoint instead of the partition"));
+  printf (" %s\n", "-e, --errors-only");
+  printf ("    %s\n", _("Display only devices/mountpoints with errors"));
   printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-
   printf (_(UT_VERBOSE));
-
-  printf (_("examples:"));
-  
   printf ("\n");
-
-  printf ("check_disk -w 10% -c 5% -p /tmp -p /var -C -w 100000 -c 50000 -p /");
-  
-  printf ("\n");
-
-  printf (_("checks /tmp and /var at 10% and 5% and / at 100MB, 50MB"));
-  
-  printf ("\n");
-
+  printf ("%s\n", _("Examples:"));
+  printf (" %s\n", "check_disk -w 10% -c 5% -p /tmp -p /var -C -w 100000 -c 50000 -p /");
+  printf ("    %s\n", _("Checks /tmp and /var at 10% and 5%, and / at 100MB and 50MB"));
   printf (_(UT_SUPPORT));
 }
 
