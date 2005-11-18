@@ -136,14 +136,6 @@
 		crt (remember when fixing stuff in the server room!)</para>
 		</section>
 		
-	    <section><title>Return the proper status code</title>
-		<para>See <xref linkend="ReturnCodes"> below
-		for the numeric values of status codes and their
-		description. Remember to return an UNKNOWN state if bogus or
-		invalid command line arguments are supplied or it you are unable
-		to check the service.</para>
-		</section>
-		
 		<section><title>Plugin Return Codes</title>
 		<para>The return codes below are based on the POSIX spec of returning
 		a positive value.  Netsaint prior to v0.0.7 supported non-POSIX
@@ -190,8 +182,12 @@
 						<entry align="center"><para>3</para></entry>
 						<entry valign="middle"><para>Unknown</para></entry>
 						<entry><para>Invalid command line arguments were supplied to the 
-						plugin or the plugin was unable to check the status of the given 
-						hosts/service</para></entry>
+						plugin or low-level failures internal to the plugin (such as unable to fork,
+						or open a tcp socket) that prevent it from performing the specified
+						operation. Higher-level errors (such as name resolution errors,
+						socket timeouts, etc) are outside of the control of plugins and should
+						generally NOT be reported as UNKNOWN states.
+						</para></entry>
 					</row>
 				</tbody>
 			</tgroup>
