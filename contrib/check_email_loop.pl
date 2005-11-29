@@ -1,4 +1,6 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl -w
+#
+# $Id$
 #
 # (c)2000 Benjamin Schmid, blueshift@gmx.net (emergency use only ;-)
 # Copyleft by GNU GPL
@@ -48,6 +50,7 @@ my $state = "UNKNOWN";
 my ($sender,$receiver, $pophost, $popuser, $poppasswd, $smtphost,$keeporphaned);
 my ($poptimeout,$smtptimeout,$pinginterval,$maxmsg)=(60,60,5,50);
 my ($lostwarn, $lostcrit,$pendwarn, $pendcrit,$debug);
+$debug = 0;
 
 # Internal Vars
 my ($pop,$msgcount,@msglines,$statinfo,@messageids,$newestid);
@@ -112,7 +115,7 @@ $serial = "ID#" . $serial . "#$$";
 
 
 # sending new ping email
-%other_smtp_opts={};
+%other_smtp_opts=();
 if ( $debug == 1  ) {
     $other_smtp_opts{'Debug'} = 1;
 }
@@ -123,8 +126,8 @@ my $smtp = Net::SMTP->new($smtphost,Timeout=>$smtptimeout, %other_smtp_opts)
  $smtp->to($receiver) &&
  $smtp->data() &&
  $smtp->datasend("To: $receiver\nSubject: E-Mail Ping [$serial]\n\n".
-		 "This is a automatically sended E-Mail.\n".
-		 "It ist not intended for human reader.\n\n".
+		 "This is an automatically sent E-Mail.\n".
+		 "It is not intended for a human reader.\n\n".
 		 "Serial No: $serial\n") &&
  $smtp->dataend() &&
  $smtp->quit
@@ -145,6 +148,7 @@ nsexit("POP3 login failed (user:$popuser)",'CRITICAL') if (!defined($msgcount));
 # Check if more than maxmsg mails in pop3-box
 nsexit(">$maxmsg Mails ($msgcount Mails on POP3); Please delete !",'WARNING') if ($msgcount > $maxmsg);
 
+my ($mid, $nid);
 # Count messages, that we are looking 4:
 while ($msgcount > 0) {
   @msglines = @{$pop->top($msgcount,1)};
@@ -152,7 +156,17 @@ while ($msgcount > 0) {
     if (messagematchsid(\@msglines,$messageids[$i])) { 
       $matchcount++;
       # newest received mail than the others, ok remeber id.
-      $newestid = $messageids[$i] if ($messageids[$i] > $newestid || !defined $newestid);
+      if (!defined $newestid) { 
+        $newestid = $messageids[$i];
+      } else {
+	    $messageids[$i] =~ /\#(\d+)\#/;
+        $mid = $1;
+	    $newestid =~ /\#(\d+)\#/;
+        $nid = $1;
+        if ($mid > $nid) { 
+          $newestid = $messageids[$i]; 
+        }
+      }
       $pop->delete($msgcount);  # remove E-Mail from POP3 server
       splice @messageids, $i, 1;# remove id from List
 	  last;                     # stop looking in list
