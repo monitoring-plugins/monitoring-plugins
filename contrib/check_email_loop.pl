@@ -41,10 +41,10 @@ use Getopt::Long;
 # ----------------------------------------
 
 my $TIMEOUT = 120;
-my %ERRORS = ('UNKNOWN' , '-1',
-              'OK' , '0',
+my %ERRORS = ('OK' , '0',
               'WARNING', '1',
               'CRITICAL', '2');
+              'UNKNOWN' , '3');
 
 my $state = "UNKNOWN";
 my ($sender,$receiver, $pophost, $popuser, $poppasswd, $smtphost,$keeporphaned);
