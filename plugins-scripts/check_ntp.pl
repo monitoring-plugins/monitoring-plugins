@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-
+#
 # (c)1999 Ian Cass, Knowledge Matters Ltd.
 # Read the GNU copyright stuff for all the legalese
 #
@@ -200,13 +200,15 @@ elsif ($ipv6) {
 ###
 
 if (!open (NTPDATE, $ntpdate . " -q $host 2>&1 |")) {
-	print "Could not open ntpdate\n";
+	print "Could not open $ntpdate: $!\n";
 	exit $ERRORS{"UNKNOWN"};
 }
 
+my $out;
 while (<NTPDATE>) {
 	#print if ($verbose);  # noop
 	$msg = $_ unless ($msg);
+	$out .= "$_ ";
 	
 	if (/stratum\s(\d+)/) {
 		$stratum = $1;
@@ -241,8 +243,11 @@ while (<NTPDATE>) {
 	}
 
 }
+$out =~ s/\n//g;
+close (NTPDATE) || 
+    die $! ? "$out - Error closing $ntpdate pipe: $!"
+           : "$out - Exit status: $? from $ntpdate\n";
 
-close (NTPDATE); 
 # declare an error if we also get a non-zero return code from ntpdate
 # unless already set to critical
 if ( $? && !$ignoreret ) {
@@ -313,7 +318,9 @@ if ($have_ntpq) {
 			}
 			
 		}
-		close NTPQ;
+		close NTPQ ||
+            die $! ? "Error closing $ntpq pipe: $!"
+                   : "Exit status: $? from $ntpq\n";
 
 		# if we did not match sys.peer or pps.peer but matched # candidates only
 		# generate a warning 
