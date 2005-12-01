@@ -1,16 +1,30 @@
 #!/bin/ksh
+# $1 is the number of iterations to run
+# If $2 is specified, this is the number of times you run each iteration
+# If there is a fail at run, exit 1
+# Prints to stdout # of successes and passes
+# Prints to stderr a dot for each run
 
-i=0
-success=0
-fail=0
-while [[ $i -lt $1 ]] ; do
-	./child_test
-	if [[ $? -eq 0 ]] ; then
-		success=$(($success+1))
-	else
-		fail=$((fail+1))
-	fi
-	i=$(($i+1))
+total_runs=$2
+[[ -z $total_runs ]] && total_runs=1
+run=1
+while [[ $run -le $total_runs ]] ; do
+	i=0
+	success=0
+	fail=0
+	while [[ $i -lt $1 ]] ; do
+		./child_test
+		if [[ $? -eq 0 ]] ; then
+			success=$(($success+1))
+		else
+			fail=$((fail+1))
+		fi
+		i=$(($i+1))
+	done
+	print "Success=$success Fail=$fail"
+	[[ $fail -gt 0 ]] && exit 1
+	run=$(($run+1))
+	[[ $total_runs -gt 1 ]] && print -u2 -n "."
 done
-print "Success=$success Fail=$fail"
-[[ $fail -gt 0 ]] && exit 1
+[[ $total_runs -gt 1 ]] && print -u2 
+exit 0

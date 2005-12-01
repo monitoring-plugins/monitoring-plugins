@@ -1680,17 +1680,26 @@ dnl Wierd problem where ECHILD is returned from a wait call in error
 dnl Only appears to affect nslookup and dig calls. Only affects redhat around
 dnl 2.6.9-11 (okay in 2.6.9-5). Redhat investigating root cause
 dnl We patch plugins/popen.c
-dnl Need to add smp because uname different on those. May need to check
-dnl Fedora Core too in future
-if echo $ac_cv_uname_r | egrep "\.EL(smp)?$" >/dev/null 2>&1 ; then
-	AC_MSG_CHECKING(for redhat spopen problem)
-	( cd config_test && make && make test ) > /dev/null 2>&1
-	if test $? -eq 0 ; then
-		AC_MSG_RESULT(okay)
-	else
-		AC_MSG_RESULT(error)
-		AC_DEFINE(REDHAT_SPOPEN_ERROR, 1, "Problem on redhat with spopen")
+dnl Need to add smp because uname different on those
+dnl Can force patch to be applied with --enable-redhat-pthread-workaround
+AC_ARG_ENABLE(redhat-pthread-workaround, 
+	AC_HELP_STRING([--enable-redhat-pthread-workaround], 
+		[force Redhat patch to be applied (default: test system)]),
+	[ac_cv_enable_redhat_pthread_workaround=$enableval],
+	[ac_cv_enable_redhat_pthread_workaround=test])
+if test "$ac_cv_enable_redhat_pthread_workaround" = "test" ; then
+	if echo $ac_cv_uname_r | egrep "\.EL(smp)?$" >/dev/null 2>&1 ; then
+		AC_MSG_CHECKING(for redhat spopen problem)
+		( cd config_test && make && make test ) > /dev/null 2>&1
+		if test $? -eq 0 ; then
+			AC_MSG_RESULT(okay)
+		else
+			AC_MSG_RESULT(error)
+			AC_DEFINE(REDHAT_SPOPEN_ERROR, 1, [Workaround on redhat in spopen])
+		fi
 	fi
+elif test "$ac_cv_enable_redhat_pthread_workaround" = "yes" ; then
+	AC_DEFINE(REDHAT_SPOPEN_ERROR, 1, [Forced workaround on redhat in spopen])
 fi
 
 dnl External libraries - see ACKNOWLEDGEMENTS
