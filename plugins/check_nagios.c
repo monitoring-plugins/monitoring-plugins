@@ -85,22 +85,25 @@ main (int argc, char **argv)
 	/* open the status log */
 	fp = fopen (status_log, "r");
 	if (fp == NULL) {
-		printf (_("CRITICAL - Cannot open status log for reading!\n"));
-		return STATE_CRITICAL;
+		die (STATE_CRITICAL, "NAGIOS %s: %s\n", _("CRITICAL"), _("Cannot open status log for reading!"));
 	}
 
 	/* get the date/time of the last item updated in the log */
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, fp)) {
-		temp_ptr = strtok (input_buffer, "]");
-		temp_entry_time =
-			(temp_ptr == NULL) ? 0L : strtoul (temp_ptr + 1, NULL, 10);
-		if (temp_entry_time > latest_entry_time)
+		if ((temp_ptr = strstr (input_buffer, "created=")) != NULL) {
+			temp_entry_time = strtoul (temp_ptr + 8, NULL, 10);
 			latest_entry_time = temp_entry_time;
+			break;
+		} else if ((temp_ptr = strtok (input_buffer, "]")) != NULL) {
+			temp_entry_time = strtoul (temp_ptr + 1, NULL, 10);
+			if (temp_entry_time > latest_entry_time)
+				latest_entry_time = temp_entry_time;
+		}
 	}
 	fclose (fp);
 
 	if (verbose >= 2)
-		printf(_("command: %s\n"), PS_COMMAND);
+		printf("command: %s\n", PS_COMMAND);
 
 	/* run the command to check for the Nagios process.. */
 	if((result = np_runcmd(PS_COMMAND, &chld_out, &chld_err, 0)) != 0)
@@ -146,22 +149,29 @@ main (int argc, char **argv)
 	alarm (0);
 
 	if (proc_entries == 0) {
-		printf (_("Could not locate a running Nagios process!\n"));
-		return STATE_CRITICAL;
+		die (STATE_CRITICAL, "NAGIOS %s: %s\n", _("CRITICAL"), _("Could not locate a running Nagios process!"));
 	}
 
-	result = STATE_OK;
+	if (latest_entry_time == 0L) {
+		die (STATE_CRITICAL, "NAGIOS %s: %s\n", _("CRITICAL"), _("Cannot parse Nagios log file for valid time"));
+	}
 
 	time (&current_time);
-	if ((int)(current_time - latest_entry_time) > (expire_minutes * 60))
+	if ((int)(current_time - latest_entry_time) > (expire_minutes * 60)) {
 		result = STATE_WARNING;
+	} else {
+		result = STATE_OK;
+	}
 
-	printf
-		(_("Nagios %s: located %d process%s, status log updated %d second%s ago\n"),
-		 (result == STATE_OK) ? "ok" : "problem", proc_entries,
-		 (proc_entries == 1) ? "" : "es",
-		 (int) (current_time - latest_entry_time),
-		 ((int) (current_time - latest_entry_time) == 1) ? "" : "s");
+	printf ("NAGIOS %s: ", (result == STATE_OK) ? _("OK") : _("WARNING"));
+	printf (ngettext ("%d process", "%d processes", proc_entries), proc_entries);
+	printf (", ");
+	printf (
+	  ngettext ("status log updated %d second ago", 
+	    "status log updated %d seconds ago", 
+	    (int) (current_time - latest_entry_time) ),
+	    (int) (current_time - latest_entry_time) );
+	printf ("\n");
 
 	return result;
 }

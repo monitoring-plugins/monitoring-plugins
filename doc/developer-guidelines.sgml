@@ -86,7 +86,7 @@
 
 		<para>Output should be in the format:</para>
 		<literallayout>
-		METRIC STATUS: Information text
+		SERVICE STATUS: Information text
 		</literallayout>
 		<para>However, note that this is not a requirement of the API, so you cannot depend on this
 		being an accurate reflection of the status of the service - the status should always 
@@ -289,15 +289,10 @@
 		</section>
 
 	<section><title>Translations</title>
-	<para>If possible, use translation tools for all output. Currently, most of the core C plugins 
-	use gettext for translation. General guidelines are:</para>
-
-	<orderedlist>
-	<listitem><para>short help is not translated</para></listitem>
-	<listitem><para>long help has options in English language, but text translated</para></listitem>
-	<listitem><para>"Copyright" kept in English</para></listitem>
-	<listitem><para>copyright holder names kept in original text</para></listitem>
-	</orderedlist>
+	<para>If possible, use translation tools for all output to respect the user's language 
+		settings. See <xref linkend="translations_developers"> for guidelines 
+		for the core plugins. 
+	</para>
 	</section>
 </section>
 
@@ -611,17 +606,24 @@
 update the THANKS.in file.</para>
 	</section>
 
-	<section><title>Translations for developers</title>
-	<para>To make the job easier for translators please follow these guidelines:</para>
+	<section id="translations_developers"><title>Translations for developers</title>
+	<para>To make the job easier for translators, please follow these guidelines:</para>
 	<orderedlist>
 	  <listitem><para>
-	    before creating new strings, check the po/de.po file to see if a similar string
+	    Before creating new strings, check the po/nagios-plugins.pot file to 
+	    see if a similar string
 	    already exists
 	  </para></listitem>
 	  <listitem><para>
-	    for help texts, break into individual options so that these can be reused
+	    For help texts, break into individual options so that these can be reused
 	    between plugins
 	  </para></listitem>
+	  <listitem><para>Try to avoid linefeeds unless you are working on a block of text</para></listitem>
+	  <listitem><para>Short help is not translated</para></listitem>
+	  <listitem><para>Long help has options in English language, but text translated</para></listitem>
+	  <listitem><para>"Copyright" kept in English</para></listitem>
+	  <listitem><para>Copyright holder names kept in original text</para></listitem>
+	  <listitem><para>Debugging output does not need to be translated</para></listitem>
 	</orderedlist>
 	</section>
 
