@@ -191,6 +191,11 @@ enum {
 };
 #endif
 
+/* Solaris does not have floorf, but floor works. Should probably be in configure */
+#if defined(__sun) || defined(__sun__)
+static inline float floorf (float x) { return floor(x); }
+#endif
+
 enum {
 	STATE_OK,
 	STATE_WARNING,
