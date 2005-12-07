@@ -27,6 +27,9 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "utils.h"
 #include "popen.h"
 
+#define PERF_CHARACTER "|"
+#define NEWLINE_CHARACTER '\n'
+
 void print_help (void);
 void print_usage (void);
 
@@ -37,6 +40,8 @@ main (int argc, char **argv)
 	char *url = NULL;
 	char *cmd;
 	char *buf;
+	char *nstr;
+	char tstr[MAX_INPUT_BUFFER];
 
 	int c;
 	int option = 0;
@@ -53,7 +58,7 @@ main (int argc, char **argv)
 
 	while (1) {
 		c = getopt_long (argc, argv, "+hVu:", longopts, &option);
-
+		
 		if (c == -1 || c == EOF)
 			break;
 
@@ -94,17 +99,32 @@ main (int argc, char **argv)
 		printf (_("Could not open stderr for %s\n"), cmd);
 	}
 
+	bzero(tstr, sizeof(tstr));
 	buf = malloc(MAX_INPUT_BUFFER);
 	printf ("<A href=\"%s\">", argv[1]);
 	while (fgets (buf, MAX_INPUT_BUFFER - 1, child_process)) {
 		found++;
-		printf ("%s", buf);
+		/* Collect the string in temp str so we can tokenize */
+		strcat(tstr, buf);
 	}
 
 	if (!found)
 		die (STATE_UNKNOWN,
 		     _("%s UNKNOWN - No data received from host\nCMD: %s</A>\n"),
 		     argv[0], cmd);
+
+
+	/* chop the newline character */
+	if ((nstr = strchr(tstr, NEWLINE_CHARACTER)) != NULL)
+		*nstr = '\0';
+
+	/* tokenize the string for Perfdata if there is some */
+	nstr = strtok(tstr, PERF_CHARACTER);
+	printf ("%s", nstr);
+	printf ("</A>");
+	nstr = strtok(NULL, PERF_CHARACTER);
+	if (nstr != NULL) 
+		printf (" | %s", nstr);
 
 	/* close the pipe */
 	result = spclose (child_process);
@@ -116,7 +136,6 @@ main (int argc, char **argv)
 	/* close stderr */
 	(void) fclose (child_stderr);
 
-	printf ("</A>\n");
 	return result;
 }
 
