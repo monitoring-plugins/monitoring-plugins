@@ -6,7 +6,7 @@
 #
 
 use strict;
-use Test::More tests => 26;
+use Test::More;
 use NPTest;
 use POSIX qw(ceil floor);
 
@@ -16,12 +16,14 @@ my $warningOutput = '/^DISK WARNING - /';
 
 my $result;
 
-my $mountpoint_valid   = getTestParameter( "mountpoint_valid",   "NP_MOUNTPOINT_VALID",   "/",
-					   "The path to a valid mountpoint" );
+my $mountpoint_valid  = getTestParameter( "NP_MOUNTPOINT_VALID", "Path to valid mountpoint",  "/");
+my $mountpoint2_valid = getTestParameter( "NP_MOUNTPOINT2_VALID", "Path to another valid mountpoint. Must be different from 1st one", "/var");
 
-my $mountpoint2_valid   = getTestParameter( "mountpoint2_valid",   "NP_MOUNTPOINT2_VALID",   "/var",
-					   "The path to another valid mountpoint. Must be different from 1st one." );
-
+if ($mountpoint_valid eq "" or $mountpoint2_valid eq "") {
+	plan skip_all => "Need 2 mountpoints to test";
+} else {
+	plan tests => 26;
+}
 
 $result = NPTest->testCmd( 
 	"./check_disk -w 1% -c 1% -p $mountpoint_valid -w 1% -c 1% -p $mountpoint2_valid" 

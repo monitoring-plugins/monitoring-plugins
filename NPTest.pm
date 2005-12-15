@@ -44,23 +44,17 @@ default via the C<use NPTest;> statement.
 
 =over
 
-=item C<getTestParameter(...)>
+=item getTestParameter( "ENV_VARIABLE", $brief_description, $default )
 
-A flexible and user override-able method of collecting, storing and
-retrieving test parameters. This function allows the test harness
+This function allows the test harness
 developer to interactively request test parameter information from the
-user, when the no means of obtaining the information automatically has
-been successful. The user is provided with the option of accepting
-test harness developer's default value for the parameter, if a suggested
-default is provided.
+user. The user can accept the developer's default value or reply "none"
+which will then be returned as "" for the test to skip if appropriate.
 
-User supplied responses are stored in an external (file-based)
-cache. These values are retrieved on subsequent runs alleviating the
-user of reconfirming the previous entered responses. The user is able
-to override the value of a parameter on any given run by setting the
-associated environment variable. These environment variable based
-overrides are not stored in the cache, allowing one-time and what-if
-based tests on the command line without polluting the cache.
+Responses are stored in an external, file-based
+cache so subsequent test runs will use these values. The user is able
+to change the values by amending the values in the file /var/tmp/NPTest.pm,
+or by setting the appropriate environment variable before running the test.
 
 The option exists to store parameters in a scoped means, allowing a
 test harness to a localise a parameter should the need arise. This
@@ -73,7 +67,7 @@ called "check_disk.t" requesting the parameter "mountpoint_valid", the
 cache is first searched for "check_disk"/"mountpoint_valid", if this
 fails, then a search is conducted for "mountpoint_valid".
 
-The facilitate quick testing setup, it is possible to accept all the
+To facilitate quick testing setup, it is possible to accept all the
 developer provided defaults by setting the environment variable
 "NPTEST_ACCEPTDEFAULT" to "1" (or any other perl truth value). Note
 that, such defaults are not stored in the cache, as there is currently
@@ -306,7 +300,16 @@ sub skipMissingCmd
 
 sub getTestParameter
 {
-  my( $param, $envvar, $default, $brief, $scoped ) = @_;
+  my( $param, $envvar, $default, $brief, $scoped );
+  my $new_style;
+  if (scalar @_ == 3) {
+	($param, $brief, $default) = @_;
+	$envvar = $param;
+	$new_style = 1;
+  } else {
+	( $param, $envvar, $default, $brief, $scoped ) = @_;
+	$new_style = 0;
+  }
 
   # Apply default values for optional arguments
   $scoped = ( defined( $scoped ) && $scoped );
@@ -319,8 +322,13 @@ sub getTestParameter
   }
 
   my $cachedValue = SearchCache( $param, $testharness );
-  if ( defined( $cachedValue ) && $cachedValue )
+  if ( defined( $cachedValue ) )
   {
+    # This save required to convert to new style because the key required is
+    # changing to the environment variable
+    if ($new_style == 0) {
+      SetCacheParameter( $envvar, undef, $cachedValue );
+    }
     return $cachedValue;
   }
 
@@ -339,9 +347,9 @@ sub getTestParameter
     print STDERR "\n";
     print STDERR "Test Harness         : $testharness\n";
     print STDERR "Test Parameter       : $param\n";
-    print STDERR "Environment Variable : $envvar\n";
+    print STDERR "Environment Variable : $envvar\n" if ($param ne $envvar);
     print STDERR "Brief Description    : $brief\n";
-    print STDERR "Enter value ", ($defaultValid ? "[${default}]" : "[]"), " => ";
+    print STDERR "Enter value (or 'none') ", ($defaultValid ? "[${default}]" : "[]"), " => ";
     $userResponse = <STDIN>;
     $userResponse = "" if ! defined( $userResponse ); # Handle EOF
     chomp( $userResponse );
@@ -352,6 +360,10 @@ sub getTestParameter
   }
 
   print STDERR "\n";
+
+  if ($userResponse =~ /^(na|none)$/) {
+	$userResponse = "";
+  }
 
   # define all user responses at global scope
   SetCacheParameter( $param, ( $scoped ? $testharness : undef ), $userResponse );
@@ -378,6 +390,7 @@ sub SearchCache
   {
     return $CACHE{$param};
   }
+  return undef;	# Need this to say "nothing found"
 }
 
 sub SetCacheParameter

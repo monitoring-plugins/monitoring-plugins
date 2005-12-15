@@ -572,6 +572,53 @@
     </section>
 </section>
 
+<section id="Testcases"><title>Test cases</title>
+<para>
+Tests are the best way of knowing if the plugins work as expected. Please
+create and update test cases where possible.
+</para>
+
+<para>
+To run a test, from the top level directory, run "make test". This will run 
+all the current tests and report an overall success rate.
+</para>
+
+<para>
+See the <ulink url="http://tinderbox.altinity.org">Nagios Plugins Tinderbox server</ulink>
+for the daily test results.
+</para>
+
+<section><title>Test cases for plugins</title>
+<para>These use perl's Test::More. To do a one time test, run "cd plugins && perl t/check_disk.t".
+</para>
+
+<para>There will somtimes be failures seen in this output which are known failures that
+need to be fixed. As long as the return code is 0, it will be reported as "test pass".
+(If you have a fix so that the specific test passes, that will be gratefully received!)
+</para>
+
+<para>
+If you want a summary test, run: "cd plugins && perl -MTest::Harness -e 'runtests(@ARGV)' t/check_disk.t".
+This runs the test in a summary format.
+</para>
+
+<para>
+For a good and amusing tutorial on using Test::More, see this 
+<ulink url="http://search.cpan.org/~mschwern/Test-Simple-0.62/lib/Test/Tutorial.pod">
+link</ulink>
+</para>
+
+</section>
+
+<section><title>Testing the C library functions</title>
+<para>
+Will be looking at using libtap, which is utilised by the FreeBSD team. The output is
+based on perl's TAP (Test Anything Protocol) format, so that Test::Harness will understand 
+results. This is still in planning stages.
+</para>
+</section>
+
+</section>
 <section id="CodingGuidelines"><title>Coding guidelines</title>
 	<para>See <ulink url="http://www.gnu.org/prep/standards_toc.html">GNU
 	Coding standards</ulink> for general guidelines.</para>
