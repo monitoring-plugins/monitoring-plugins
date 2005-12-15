@@ -53,6 +53,7 @@ main (int argc, char **argv)
 	/* should be status */
 	
 	char *result = NULL;
+	char *error = NULL;
 	char slaveresult[SLAVERESULTSIZE];
 
 	setlocale (LC_ALL, "");
@@ -99,21 +100,30 @@ main (int argc, char **argv)
 	if(check_slave) {
 		/* check the slave status */
 		if (mysql_query (&mysql, "show slave status") != 0) {
+			error = strdup(mysql_error(&mysql));
 			mysql_close (&mysql);
-			die (STATE_CRITICAL, _("slave query error: %s\n"), mysql_error (&mysql));
+			die (STATE_CRITICAL, _("slave query error: %s\n"), error);
 		}
 
 		/* store the result */
 		if ( (res = mysql_store_result (&mysql)) == NULL) {
+			error = strdup(mysql_error(&mysql));
 			mysql_close (&mysql);
-			die (STATE_CRITICAL, _("slave store_result error: %s\n"), mysql_error (&mysql));
+			die (STATE_CRITICAL, _("slave store_result error: %s\n"), error);
+		}
+
+		/* Check there is some data */
+		if (mysql_num_rows(res) == 0) {
+			mysql_close(&mysql);
+			die (STATE_WARNING, "%s\n", _("No slaves defined"));
 		}
 
 		/* fetch the first row */
 		if ( (row = mysql_fetch_row (res)) == NULL) {
+			error = strdup(mysql_error(&mysql));
 			mysql_free_result (res);
 			mysql_close (&mysql);
-			die (STATE_CRITICAL, _("slave fetch row error: %s\n"), mysql_error (&mysql));
+			die (STATE_CRITICAL, _("slave fetch row error: %s\n"), error);
 		}
 
 		if (mysql_field_count (&mysql) == 12) {

@@ -46,6 +46,8 @@ default via the C<use NPTest;> statement.
 
 =item getTestParameter( "ENV_VARIABLE", $brief_description, $default )
 
+$default is optional.
+
 This function allows the test harness
 developer to interactively request test parameter information from the
 user. The user can accept the developer's default value or reply "none"
@@ -302,7 +304,7 @@ sub getTestParameter
 {
   my( $param, $envvar, $default, $brief, $scoped );
   my $new_style;
-  if (scalar @_ == 3) {
+  if (scalar @_ <= 3) {
 	($param, $brief, $default) = @_;
 	$envvar = $param;
 	$new_style = 1;
