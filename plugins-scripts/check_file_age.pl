@@ -67,14 +67,14 @@ if ($opt_h) {
 $opt_f = shift unless ($opt_f);
 
 if (! $opt_f) {
-	print "No file specified\n";
+	print "FILE_AGE UNKNOWN: No file specified\n";
 	exit $ERRORS{'UNKNOWN'};
 }
 
-# Examine the file.
-unless (-f $opt_f) {
-	print "$opt_f: File not found\n";
-	exit $ERRORS{'UNKNOWN'};
+# Check that file exists (can be directory or link)
+unless (-e $opt_f) {
+	print "FILE_AGE CRITICAL: File not found - $opt_f\n";
+	exit $ERRORS{'CRITICAL'};
 }
 
 $st = File::stat::stat($opt_f);
@@ -91,7 +91,7 @@ elsif (($opt_w and $age > $opt_w) or ($opt_W and $size < $opt_W)) {
 	$result = 'WARNING';
 }
 
-print "$result - $opt_f is $age seconds old and $size bytes\n";
+print "FILE_AGE $result: $opt_f is $age seconds old and $size bytes\n";
 exit $ERRORS{$result};
 
 sub print_usage () {
@@ -106,8 +106,8 @@ sub print_help () {
 	print "Copyright (c) 2003 Steven Grimm\n\n";
 	print_usage();
 	print "\n";
-	print "  <secs>  File must be no more than this many seconds old\n";
-	print "  <size>  File must be at least this many bytes long\n";
+	print "  <secs>  File must be no more than this many seconds old (default: warn 240 secs, crit 600)\n";
+	print "  <size>  File must be at least this many bytes long (default: crit 0 bytes)\n";
 	print "\n";
 	support();
 }
