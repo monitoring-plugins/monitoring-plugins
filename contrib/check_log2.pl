@@ -1,4 +1,6 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
+#
+# $Id$
 #
 # Log file regular expression detector for Nagios.
 # Written by Aaron Bostick (abostick@mydoconline.com)
@@ -61,6 +63,7 @@ require 5.004;
 use lib $main::prog_dir;
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
 use Getopt::Long;
+my  ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks);
 
 sub print_usage ();
 sub print_version ();
@@ -69,6 +72,7 @@ sub print_help ();
     # Initialize strings
     $log_file = '';
     $seek_file = '';
+    $critical = '';
     $re_pattern = '';
     $neg_re_pattern = '';
     $pattern_count = 0;
@@ -79,6 +83,7 @@ sub print_help ();
     GetOptions
     ("l|logfile=s"      => \$log_file,
      "s|seekfile=s"     => \$seek_file,
+     "c|critical"       => \$critical,
      "p|pattern=s"      => \$re_pattern,
      "n|negpattern:s"   => \$neg_re_pattern,
      "v|version"        => \$version,
@@ -95,7 +100,7 @@ sub print_help ();
     ($re_pattern) || usage("Regular expression not specified.\n");
 
     # Open log file
-    open LOG_FILE, $log_file || die "Unable to open log file $log_file: $!";
+    open (LOG_FILE, $log_file) || die "Unable to open log file $log_file: $!";
 
     # Try to open log seek file.  If open fails, we seek from beginning of
     # file by default.
@@ -106,7 +111,8 @@ sub print_help ();
         #  If file is empty, no need to seek...
         if ($seek_pos[0] != 0) {
             
-            # Compare seek position to actual file size.  If file size is smaller
+            # Compare seek position to actual file size.  
+			# If file size is smaller
             # then we just start from beginning i.e. file was rotated, etc.
             ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks) = stat(LOG_FILE);
 
@@ -142,8 +148,17 @@ sub print_help ();
 
     # Print result and return exit code.
     if ($pattern_count) {
+		if ($critical) { 
+			print "CRITICAL: ";
+		} else {
+			print "WARNING: ";
+		}
         print "($pattern_count): $pattern_line";
-        exit $ERRORS{'WARNING'};
+		if ($critical) { 
+			exit $ERRORS{'CRITICAL'}; 
+		} else {
+			exit $ERRORS{'WARNING'}; 
+		}
     } else {
         print "OK - No matches found.\n";
         exit $ERRORS{'OK'};
@@ -154,7 +169,7 @@ sub print_help ();
 #
 
 sub print_usage () {
-    print "Usage: $prog_name -l <log_file> -s <log_seek_file> -p <pattern> [-n <negpattern>]\n";
+    print "Usage: $prog_name -l <log_file> -s <log_seek_file> -p <pattern> [-n <negpattern>] -c | --critical\n";
     print "Usage: $prog_name [ -v | --version ]\n";
     print "Usage: $prog_name [ -h | --help ]\n";
 }
@@ -179,6 +194,8 @@ sub print_help () {
     print "    The regular expression to scan for in the log file\n";
     print "-n, --negpattern=<negpattern>\n";
     print "    The regular expression to skip in the log file\n";
+    print "-c, --critical\n";
+    print "    Return critical instead of warning on error\n";
     print "\n";
     support();
     exit $ERRORS{'OK'};
