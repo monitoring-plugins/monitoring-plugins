@@ -53,6 +53,10 @@ developer to interactively request test parameter information from the
 user. The user can accept the developer's default value or reply "none"
 which will then be returned as "" for the test to skip if appropriate.
 
+If a parameter needs to be entered and the test is run without a tty 
+attached (such as a cronjob), this routine will die causing the test to 
+fail.
+
 Responses are stored in an external, file-based
 cache so subsequent test runs will use these values. The user is able
 to change the values by amending the values in the file /var/tmp/NPTest.pm,
@@ -341,6 +345,8 @@ sub getTestParameter
   {
     return $default;
   }
+
+  die "Need to manually enter test parameter $param" unless (-t STDERR);
 
   my $userResponse = "";
 
