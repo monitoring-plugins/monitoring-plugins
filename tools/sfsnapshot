@@ -31,7 +31,7 @@ function make_dist {
 	cd $COMPILE_DIR/$cvs_rel
 
 	# Cannot use cvs export due to conflicts on second run - think this is better for cvs server
-	cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/nagiosplug co -r $cvs_rel nagiosplug
+	CVS_RSH=ssh cvs -z3 -d:ext:tonvoon@cvs.sourceforge.net:/cvsroot/nagiosplug co -r $cvs_rel nagiosplug
 
 	cd $PROJECT
 
@@ -64,7 +64,7 @@ OUT_SERVER="shell.sf.net"
 OUT="/home/groups/n/na/nagiosplug/htdocs/snapshot"
 
 # Make sure prereqs are satisfied on server!
-CF="x86-linux2"
+CF="amd64-linux2"
 DS=`date -u +%Y%m%d%H%M`
 
 # Setup home directory area
