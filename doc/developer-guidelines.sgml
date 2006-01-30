@@ -196,12 +196,18 @@
       
 		</section>
 
-		<section id="thresholdformat"><title>Threshold range format</title>
-		<para>Thresholds ranges define the warning and critical levels for plugins to 
-		alert on. The theory is that the plugin will do some sort of check which returns
+		<section id="thresholdformat"><title>Threshold and ranges</title>
+		<para>A range is defined as a start and end point (inclusive) on a numeric scale (possibly
+		negative or positive infinity).
+		</para>
+		<para>A threshold is a range with an alert level (either warning or critical). Use the
+		set_thresholds(thresholds *, char *, char *) function to set the thresholds.
+		</para>
+		<para>The theory is that the plugin will do some sort of check which returns
 		back a numerical value, or metric, which is then compared to the warning and 
-		critical thresholds.
-		This is the generalised format for threshold ranges:</para>
+		critical thresholds. Use the get_status(double, thresholds *) function to
+		compare the value against the thresholds.</para>
+		<para>This is the generalised format for ranges:</para>
 
 		<literallayout>
 		[@]start:end
@@ -226,10 +232,8 @@
 			</listitem>
 		</orderedlist>
 		
-		<para>Note: Not all plugins are coded to expect ranges in this format. It is
-		planned for a future release to
-		provide standard libraries to parse and compare metrics against ranges. There
-		will also be some work in providing multiple metrics.</para>
+		<para>Note: Not all plugins are coded to expect ranges in this format yet.
+		There will be some work in providing multiple metrics.</para>
 		</section>
 
 		<section><title>Performance data</title>

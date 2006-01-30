@@ -61,15 +61,24 @@ struct timeval {
 #define OUTSIDE 0
 #define INSIDE  1
 
-typedef struct threshold_struct {
+typedef struct range_struct {
 	double	start;
 	int	start_infinity;		/* FALSE (default) or TRUE */
 	double	end;
 	int	end_infinity;
 	int	alert_on;		/* OUTSIDE (default) or INSIDE */
-	} threshold;
+	} range;
 
-threshold *parse_threshold (char *);
+typedef struct thresholds_struct {
+	range	*warning;
+	range	*critical;
+	} thresholds;
+
+range *parse_range_string (char *);
+int _set_thresholds(thresholds **, char *, char *);
+void set_thresholds(thresholds **, char *, char *);
+int check_range(double, range *);
+int get_status(double, thresholds *);
 
 #ifndef HAVE_GETTIMEOFDAY
 int gettimeofday(struct timeval *, struct timezone *);
