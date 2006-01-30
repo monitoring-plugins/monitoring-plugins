@@ -1,9 +1,0 @@
-check_hpjd
-
-[normal]
-$printer
-^Printer ok - 
-
-[critical]
-$noserver
-Timeout: No response from ns

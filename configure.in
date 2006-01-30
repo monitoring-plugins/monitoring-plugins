@@ -74,6 +74,15 @@ AC_SUBST(with_nagios_group)
 INSTALL_OPTS="-o $with_nagios_user -g $with_nagios_group"
 AC_SUBST(INSTALL_OPTS)
 
+AC_ARG_WITH(libtap-object,
+	ACX_HELP_STRING([--with-libtap-object=path],
+		[full path to tap.o]),
+	EXTRA_TEST=test_utils
+	EXTRA_TAPOBJ=$withval
+	AC_SUBST(EXTRA_TEST)
+	AC_SUBST(EXTRA_TAPOBJ)
+	)
+
 AC_ARG_WITH(trusted_path,
 	ACX_HELP_STRING([--with-trusted-path=PATH],
 		[sets trusted path for executables called by scripts (default=/bin:/sbin:/usr/bin:/usr/sbin)]),
@@ -1711,6 +1720,7 @@ AC_OUTPUT(
   lib/Makefile 
   m4/Makefile 
   plugins/Makefile 
+  plugins/tests/Makefile
   plugins-root/Makefile
   plugins-scripts/Makefile 
   plugins-scripts/subst 

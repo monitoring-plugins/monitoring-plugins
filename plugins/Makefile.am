@@ -1,5 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
+SUBDIRS = tests
+
 VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t 
 
 INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/intl @LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@
@@ -41,6 +43,7 @@ TESTS_ENVIRONMENT = perl -I $(top_builddir) -I $(top_srcdir)
 TESTS = @PLUGIN_TEST@
 
 test:
+	cd tests && make test
 	perl -I $(top_builddir) -I $(top_srcdir) ../test.pl
 
 AM_INSTALL_PROGRAM_FLAGS = @INSTALL_OPTS@

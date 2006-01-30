@@ -58,6 +58,19 @@ struct timeval {
 };
 #endif
 
+#define OUTSIDE 0
+#define INSIDE  1
+
+typedef struct threshold_struct {
+	double	start;
+	int	start_infinity;		/* FALSE (default) or TRUE */
+	double	end;
+	int	end_infinity;
+	int	alert_on;		/* OUTSIDE (default) or INSIDE */
+	} threshold;
+
+threshold *parse_threshold (char *);
+
 #ifndef HAVE_GETTIMEOFDAY
 int gettimeofday(struct timeval *, struct timezone *);
 #endif

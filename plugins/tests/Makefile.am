@@ -1,0 +1,21 @@
+
+noinst_PROGRAMS = @EXTRA_TEST@
+
+# These two lines support "make check", but we use "make test"
+TESTS = @EXTRA_TEST@
+check_PROGRAMS = @EXTRA_TEST@
+
+INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/intl 
+
+EXTRA_PROGRAMS = test_utils
+
+LIBS = @LIBINTL@
+
+test_utils_SOURCES = test_utils.c
+test_utils_CFLAGS = -g -I..
+test_utils_LDFLAGS = -L..
+test_utils_LDADD = ../utils.o @EXTRA_TAPOBJ@
+
+test: ${noinst_PROGRAMS}
+	perl -MTest::Harness -e '$$Test::Harness::switches=""; runtests(map {$$_ .= ".t"} @ARGV)' $(EXTRA_PROGRAMS)
+

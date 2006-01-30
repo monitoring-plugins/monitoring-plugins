@@ -209,7 +209,7 @@
 	
 		<para>Notes:</para>
 		<orderedlist>
-		<listitem><para>start &gt; end</para>
+		<listitem><para>start &le; end</para>
 			</listitem>
 		<listitem><para>start and ":" is not required if start=0</para>
 			</listitem>
@@ -598,7 +598,7 @@ need to be fixed. As long as the return code is 0, it will be reported as "test 
 </para>
 
 <para>
-If you want a summary test, run: "cd plugins && perl -MTest::Harness -e 'runtests(@ARGV)' t/check_disk.t".
+If you want a summary test, run: "cd plugins && prove t/check_disk.t".
 This runs the test in a summary format.
 </para>
 
@@ -612,9 +612,23 @@ link</ulink>
 
 <section><title>Testing the C library functions</title>
 <para>
-Will be looking at using libtap, which is utilised by the FreeBSD team. The output is
-based on perl's TAP (Test Anything Protocol) format, so that Test::Harness will understand 
-results. This is still in planning stages.
+Uses <ulink url="http://jc.ngo.org.uk/trac-bin/trac.cgi/wiki/LibTap">the libtap library</ulink>, which gives 
+perl's TAP
+(Test Anything Protocol) output. This is used by the FreeBSD team for their regression testing.
+</para>
+
+<para>
+To run tests using the libtap library, download from http://people.freebsd.org/~nik/public_distfiles/
+and compile. There is a problem with tap-1.01 
+where <ulink url="http://jc.ngo.org.uk/trac-bin/trac.cgi/ticket/25">pthread support doesn't appear to work</ulink>
+properly on non-FreeBSD systems. Compile with 'CPPFLAGS="-UHAVE_LIBPTHREAD" ./configure'. You do not need 
+to install.
+</para>
+
+<para>
+You then have to run the Nagios Plugins' configure with the --with-libtap-object=full_path to the compiled 
+tap.o file.
+Then run "make" and "make test" to run all tests.
 </para>
 </section>
 

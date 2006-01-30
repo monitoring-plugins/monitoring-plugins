@@ -1,0 +1,5 @@
+The tests in here use the libtap library functions 
+(http://jc.ngo.org.uk/trac-bin/trac.cgi/wiki/LibTap), so are
+more for unit testing the utils.c library functions. 
+
+However, it probably should be merged into the plugins/t subdirectory. 

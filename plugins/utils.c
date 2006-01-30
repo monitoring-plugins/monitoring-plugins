@@ -265,7 +265,62 @@ is_option (char *str)
 		return FALSE;
 }
 
+void set_threshold_start (threshold *this, double value) {
+	this->start = value;
+	this->start_infinity = FALSE;
+}
 
+void set_threshold_end (threshold *this, double value) {
+	this->end = value;
+	this->end_infinity = FALSE;
+}
+
+threshold
+*parse_threshold (char *str) {
+	threshold *temp_threshold;
+	double start;
+	double end;
+	char *end_str;
+
+	temp_threshold = (threshold *) malloc(sizeof(threshold));
+
+	/* Set defaults */
+	temp_threshold->start = 0;
+	temp_threshold->start_infinity = FALSE;
+	temp_threshold->end = 0;
+	temp_threshold->end_infinity = TRUE;
+	temp_threshold->alert_on = OUTSIDE;
+
+	if (str[0] == '@') {
+		temp_threshold->alert_on = INSIDE;
+		str++;
+	}
+
+	end_str = index(str, ':');
+	if (end_str != NULL) {
+		if (str[0] == '~') {
+			temp_threshold->start_infinity = TRUE;
+		} else {
+			start = strtod(str, NULL);	/* Will stop at the ':' */
+			set_threshold_start(temp_threshold, start);
+		}
+		end_str++;		/* Move past the ':' */
+	} else {
+		end_str = str;
+	}
+	end = strtod(end_str, NULL);
+	if (strcmp(end_str, "") != 0) {
+		set_threshold_end(temp_threshold, end);
+	}
+
+	if (temp_threshold->start_infinity == TRUE || 
+		temp_threshold->end_infinity == TRUE ||
+		temp_threshold->start <= temp_threshold->end) {
+		return temp_threshold;
+	}
+	free(temp_threshold);
+	return NULL;
+}
 
 #ifdef NEED_GETTIMEOFDAY
 int
