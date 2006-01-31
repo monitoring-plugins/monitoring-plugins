@@ -567,7 +567,7 @@ sub TestsFrom
 
   closedir( DIR );
 
-  return @tests;
+  return sort @tests;
 }
 
 # All the new object oriented stuff below
