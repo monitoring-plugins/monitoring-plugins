@@ -287,7 +287,7 @@ fi
 if test "$ac_cv_lib_mysqlclient_mysql_init" = "yes" -o "$ac_cv_lib_mysqlclient_mysql_close" = "yes"; then
   AC_CHECK_HEADERS(mysql/mysql.h mysql/errmsg.h, MYSQLINCLUDE="-I$MYSQL/include" )
   if test "$ac_cv_header_mysql_mysql_h" = "yes" -a "$ac_cv_header_mysql_errmsg_h" = "yes"; then
-    EXTRAS="$EXTRAS check_mysql"
+    EXTRAS="$EXTRAS check_mysql check_mysql_query"
     AC_SUBST(MYSQLINCLUDE)
     AC_SUBST(MYSQLLIBS)
     AC_SUBST(check_mysql_LDFLAGS)

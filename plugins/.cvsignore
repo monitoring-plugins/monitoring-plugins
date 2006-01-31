@@ -31,6 +31,7 @@ check_pgsql
 check_radius
 check_ldap
 check_mysql
+check_mysql_query
 check_netsaint
 check_hpjd
 check_snmp

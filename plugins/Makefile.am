@@ -25,7 +25,7 @@ check_tcp_programs = check_ftp check_imap check_nntp check_pop \
 EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 	check_swap check_fping check_ldap check_game check_dig \
 	check_nagios check_by_ssh check_dns check_nt check_ide_smart	\
-	check_procs
+	check_procs check_mysql_query
 
 EXTRA_DIST = t utils.c netutils.c sslutils.c popen.c utils.h netutils.h \
 	popen.h common.h getaddrinfo.c getaddrinfo.h \
@@ -64,6 +64,7 @@ check_load_LDADD = $(BASEOBJS) popen.o
 check_mrtg_LDADD = $(BASEOBJS)
 check_mrtgtraf_LDADD = $(BASEOBJS)
 check_mysql_LDADD = $(NETLIBS) $(MYSQLLIBS)
+check_mysql_query_LDADD = $(NETLIBS) $(MYSQLLIBS)
 check_nagios_LDADD = $(BASEOBJS) runcmd.o
 check_nt_LDADD = $(NETLIBS) 
 check_nwstat_LDADD = $(NETLIBS)
@@ -101,6 +102,7 @@ check_load_DEPENDENCIES = check_load.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_mrtg_DEPENDENCIES = check_mrtg.c $(DEPLIBS)
 check_mrtgtraf_DEPENDENCIES = check_mrtgtraf.c $(DEPLIBS)
 check_mysql_DEPENDENCIES = check_mysql.c $(NETOBJS) $(DEPLIBS)
+check_mysql_query_DEPENDENCIES = check_mysql.c $(NETOBJS) $(DEPLIBS)
 check_nagios_DEPENDENCIES = check_nagios.c $(BASEOBJS) runcmd.o $(DEPLIBS)
 check_nt_DEPENDENCIES = check_nt.c $(NETOBJS) $(DEPLIBS)
 check_nwstat_DEPENDENCIES = check_nwstat.c $(NETOBJS) $(DEPLIBS)

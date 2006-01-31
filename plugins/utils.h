@@ -181,6 +181,12 @@ char *fperfdata (const char *,
  -c, --critical=DOUBLE\n\
     Response time to result in critical status (seconds)\n"
 
+#define UT_WARN_CRIT_RANGE "\
+ -w, --warning=RANGE\n\
+    Warning range (format: start:end). Alert if outside this range\n\
+ -c, --critical=RANGE\n\
+    Critical range\n"
+
 #define UT_TIMEOUT "\
  -t, --timeout=INTEGER\n\
     Seconds before connection times out (default: %d)\n"
