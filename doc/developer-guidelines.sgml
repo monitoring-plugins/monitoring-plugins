@@ -294,7 +294,7 @@
 
 	<section><title>Translations</title>
 	<para>If possible, use translation tools for all output to respect the user's language 
-		settings. See <xref linkend="translations_developers"> for guidelines 
+		settings. See <xref linkend="translationsdevelopers"> for guidelines 
 		for the core plugins. 
 	</para>
 	</section>
@@ -616,22 +616,22 @@ link</ulink>
 
 <section><title>Testing the C library functions</title>
 <para>
-Uses <ulink url="http://jc.ngo.org.uk/trac-bin/trac.cgi/wiki/LibTap">the libtap library</ulink>, which gives 
+We use <ulink url="http://jc.ngo.org.uk/trac-bin/trac.cgi/wiki/LibTap">the libtap library</ulink>, which gives 
 perl's TAP
 (Test Anything Protocol) output. This is used by the FreeBSD team for their regression testing.
 </para>
 
 <para>
-To run tests using the libtap library, download from http://people.freebsd.org/~nik/public_distfiles/
-and compile. There is a problem with tap-1.01 
-where <ulink url="http://jc.ngo.org.uk/trac-bin/trac.cgi/ticket/25">pthread support doesn't appear to work</ulink>
-properly on non-FreeBSD systems. Compile with 'CPPFLAGS="-UHAVE_LIBPTHREAD" ./configure'. You do not need 
-to install.
+To run tests using the libtap library, download the latest tar ball and extract. 
+There is a problem with tap-1.01 where 
+<ulink url="http://jc.ngo.org.uk/trac-bin/trac.cgi/ticket/25">pthread support doesn't appear to work</ulink>
+properly on non-FreeBSD systems. Compile with 'CPPFLAGS="-UHAVE_LIBPTHREAD" ./configure && make && make check'. 
+You do not need to install.
 </para>
 
 <para>
-You then have to run the Nagios Plugins' configure with the --with-libtap-object=full_path to the compiled 
-tap.o file.
+You then have to run the Nagios Plugins' configure with the --with-libtap-srcdir=path, where path is the
+full path to the tap.h and compiled tap.o file.
 Then run "make" and "make test" to run all tests.
 </para>
 </section>
@@ -671,7 +671,7 @@ Then run "make" and "make test" to run all tests.
 update the THANKS.in file.</para>
 	</section>
 
-	<section id="translations_developers"><title>Translations for developers</title>
+	<section id="translationsdevelopers"><title>Translations for developers</title>
 	<para>To make the job easier for translators, please follow these guidelines:</para>
 	<orderedlist>
 	  <listitem><para>
