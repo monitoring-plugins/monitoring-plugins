@@ -31,7 +31,7 @@ main (int argc, char **argv)
 {
 	range	*range;
 	double	temp;
-	thresholds *thresholds;
+	thresholds *thresholds = NULL;
 	int	rc;
 
 	plan_tests(66);
