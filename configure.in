@@ -269,7 +269,7 @@ AC_ARG_WITH(mysql,
 if test -n "$MYSQL"; then
   MYSQLLIBDIR=$MYSQL/lib/mysql
   CPPFLAGS="-I$MYSQL/include"
-  AC_CHECK_LIB(mysqlclient,mysql_init,MYSQLLIBS="-lmysqlclient -lz" check_mysql_LDFLAGS="-L$MYSQLLIBDIR ",,-L$MYSQLLIBDIR -lz)
+  AC_CHECK_LIB(mysqlclient,mysql_init,MYSQLLIBS="-lmysqlclient -lz" check_mysql_LDFLAGS="-L$MYSQLLIBDIR " check_mysql_query_LDFLAGS="-L$MYSQLLIBDIR ",,-L$MYSQLLIBDIR -lz)
   AC_CHECK_LIB(mysqlclient,mysql_close,MYSQLLIBS="-lmysqlclient")
 elif test -f /usr/lib/libmysqlclient.so; then
   AC_CHECK_LIB(mysqlclient,mysql_init,MYSQLLIBS="-lmysqlclient -lz",,-lz)
@@ -278,11 +278,11 @@ elif test -f /usr/lib/libmysqlclient.a; then
   AC_CHECK_LIB(mysqlclient,mysql_init,MYSQLLIBS="-lmysqlclient -lz",,-lz)
   AC_CHECK_LIB(mysqlclient,mysql_close,MYSQLLIBS="-lmysqlclient")
 elif test -f /usr/lib/mysql/libmysqlclient.so; then
-  AC_CHECK_LIB(mysqlclient,mysql_init,MYSQLLIBS="-lmysqlclient -lz" check_mysql_LDFLAGS="-L/usr/lib/mysql",,-L/usr/lib/mysql -lz)
-  AC_CHECK_LIB(mysqlclient,mysql_close,MYSQLLIBS="-lmysqlclient" check_mysql_LDFLAGS="-L/usr/lib/mysql",,-L/usr/lib/mysql)
+  AC_CHECK_LIB(mysqlclient,mysql_init,MYSQLLIBS="-lmysqlclient -lz" check_mysql_LDFLAGS="-L/usr/lib/mysql" check_mysql_query_LDFLAGS="-L/usr/lib/mysql",,-L/usr/lib/mysql -lz)
+  AC_CHECK_LIB(mysqlclient,mysql_close,MYSQLLIBS="-lmysqlclient" check_mysql_LDFLAGS="-L/usr/lib/mysql" check_mysql_query_LDFLAGS="-L/usr/lib/mysql",,-L/usr/lib/mysql)
 elif test -f /usr/lib/mysql/libmysqlclient.a; then
-  AC_CHECK_LIB(mysqlclient,mysql_init,MYSQLLIBS="-lmysqlclient -lz" check_mysql_LDFLAGS="-L/usr/lib/mysql",,-L/usr/lib/mysql -lz)
-  AC_CHECK_LIB(mysqlclient,mysql_close,MYSQLLIBS="-lmysqlclient" check_mysql_LDFLAGS="-L/usr/lib/mysql",,-L/usr/lib/mysql)
+  AC_CHECK_LIB(mysqlclient,mysql_init,MYSQLLIBS="-lmysqlclient -lz" check_mysql_LDFLAGS="-L/usr/lib/mysql" check_mysql_query_LDFLAGS="-L/usr/lib/mysql",,-L/usr/lib/mysql -lz)
+  AC_CHECK_LIB(mysqlclient,mysql_close,MYSQLLIBS="-lmysqlclient" check_mysql_LDFLAGS="-L/usr/lib/mysql" check_mysql_query_LDFLAGS="-L/usr/lib/mysql",,-L/usr/lib/mysql)
 fi
 if test "$ac_cv_lib_mysqlclient_mysql_init" = "yes" -o "$ac_cv_lib_mysqlclient_mysql_close" = "yes"; then
   AC_CHECK_HEADERS(mysql/mysql.h mysql/errmsg.h, MYSQLINCLUDE="-I$MYSQL/include" )
@@ -291,6 +291,7 @@ if test "$ac_cv_lib_mysqlclient_mysql_init" = "yes" -o "$ac_cv_lib_mysqlclient_m
     AC_SUBST(MYSQLINCLUDE)
     AC_SUBST(MYSQLLIBS)
     AC_SUBST(check_mysql_LDFLAGS)
+    AC_SUBST(check_mysql_query_LDFLAGS)
   else
     AC_MSG_WARN([Skipping mysql plugin])
     AC_MSG_WARN([install mysql client headers to compile this plugin (see REQUIREMENTS).])
