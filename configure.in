@@ -74,13 +74,15 @@ AC_SUBST(with_nagios_group)
 INSTALL_OPTS="-o $with_nagios_user -g $with_nagios_group"
 AC_SUBST(INSTALL_OPTS)
 
-AC_ARG_WITH(libtap-object,
-	ACX_HELP_STRING([--with-libtap-object=path],
-		[full path to tap.o]),
+AC_ARG_WITH(libtap-srcdir,
+	ACX_HELP_STRING([--with-libtap-srcdir=path],
+		[full path to a compiled libtap srcdir]),
 	EXTRA_TEST=test_utils
-	EXTRA_TAPOBJ=$withval
+	EXTRA_TAPOBJ=$withval/tap.o
 	AC_SUBST(EXTRA_TEST)
 	AC_SUBST(EXTRA_TAPOBJ)
+	LDFLAGS="$LDFLAGS -L$withval"
+	CPPFLAGS="$CPPFLAGS -I$withval"
 	)
 
 AC_ARG_WITH(trusted_path,
