@@ -4,6 +4,12 @@
 #
 # $Id$
 #
+#
+# These are the database permissions required for this test:
+#  GRANT SELECT ON $db.* TO $user@$host INDENTIFIED BY '$password';
+#  GRANT SUPER, REPLICATION CLIENT ON *.* TO $user@$host;
+# Check with:
+#  mysql -u$user -p$password -h$host $db
 
 use strict;
 use Test::More;
@@ -23,7 +29,7 @@ my $mysqlserver = getTestParameter(
 my $mysql_login_details = getTestParameter( 
 		"MYSQL_LOGIN_DETAILS", 
 		"Command line parameters to specify login access",
-		"-u user -ppw",
+		"-u user -ppw -d db",
 		);
 my $with_slave = getTestParameter( 
 		"NP_MYSQL_WITH_SLAVE", 
