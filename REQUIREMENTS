@@ -33,12 +33,17 @@ check_ldap:
 		Lib: libldap, liblber
 		Redhat Source: openldap-1.2.9-6.i386.rpm, openldap-devel-1.2.9-6.i386.rpm
 
-check_mysql:
+check_mysql, check_mysql_query:
 	- Requires the MySQL libraries available from
 	  http://www.mysql.org
 		Lib: libmysql, libmysqlclient
 		Redhat Powertools Source: mysql-3.20.32a-3.i386.rpm, mysql-devel-3.20.32a-3.i386.rpm (these seem to be broken, however)
 		RPMS from www.mysql.org work better
+
+	  If you use the Mac OS X package from mysql.org, you need to add two soft links for ./configure
+	  to find the mysql libraries correctly:
+		cd /usr/local/mysql/lib && ln -s . mysql
+		cd /usr/local/mysql/include && ln -s . mysql
 
 check_pqsql:
 	- Requires the PostgreSQL libraries available from
