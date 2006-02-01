@@ -9,6 +9,8 @@ INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/intl
 
 EXTRA_PROGRAMS = test_utils
 
+EXTRA_DIST = test_utils.t
+
 LIBS = @LIBINTL@
 
 test_utils_SOURCES = test_utils.c
