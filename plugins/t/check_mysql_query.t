@@ -6,7 +6,7 @@
 #
 #
 # These are the database permissions required for this test:
-#  GRANT SELECT ON $db.* TO $user@$host INDENTIFIED BY '$password';
+#  GRANT SELECT ON $db.* TO $user@$host IDENTIFIED BY '$password';
 # Check with:
 #  mysql -u$user -p$password -h$host $db
 
@@ -42,7 +42,7 @@ $result = NPTest->testCmd("./check_mysql_query -H $mysqlserver $mysql_login_deta
 cmp_ok( $result->return_code, '==', 3, "Missing query parmeter");
 like( $result->output, "/Must specify a SQL query to run/", "Missing query error message");
 
-$result = NPTest->testCmd("./check_mysql_query -q 'SELECT 1+1' -H $mysqlserver -u dummy");
+$result = NPTest->testCmd("./check_mysql_query -q 'SELECT 1+1' -H $mysqlserver -u dummy -d mysql");
 cmp_ok( $result->return_code, '==', 2, "Login failure");
 like( $result->output, "/Access denied for user /", "Expected login failure message");
 
