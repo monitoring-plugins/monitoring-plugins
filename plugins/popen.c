@@ -270,12 +270,16 @@ popen_timeout_alarm_handler (int signo)
 {
 	int fh;
 	if (signo == SIGALRM) {
-		fh=fileno (child_process);
-		if(fh >= 0){
-			kill (childpid[fh], SIGKILL);
-		}
-		printf (_("CRITICAL - Plugin timed out after %d seconds\n"),
+		if (child_process != NULL) {
+			fh=fileno (child_process);
+			if(fh >= 0){
+				kill (childpid[fh], SIGKILL);
+			}
+			printf (_("CRITICAL - Plugin timed out after %d seconds\n"),
 						timeout_interval);
+		} else {
+			printf (_("CRITICAL - popen timeout received, but no child process\n"));
+		}
 		exit (STATE_CRITICAL);
 	}
 }
