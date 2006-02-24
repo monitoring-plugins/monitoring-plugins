@@ -625,14 +625,12 @@ perl's TAP
 To run tests using the libtap library, download the latest tar ball and extract. 
 There is a problem with tap-1.01 where 
 <ulink url="http://jc.ngo.org.uk/trac-bin/trac.cgi/ticket/25">pthread support doesn't appear to work</ulink>
-properly on non-FreeBSD systems. Compile with 'CPPFLAGS="-UHAVE_LIBPTHREAD" ./configure && make && make check'. 
-You do not need to install.
+properly on non-FreeBSD systems. Install with 'CPPFLAGS="-UHAVE_LIBPTHREAD" ./configure && make && make check && make install'. 
 </para>
 
 <para>
-You then have to run the Nagios Plugins' configure with the --with-libtap-srcdir=path, where path is the
-full path to the tap.h and compiled tap.o file.
-Then run "make" and "make test" to run all tests.
+When you run Nagios Plugins' configure, it will look for the tap library and will automatically
+setup the tests. Run "make test" to run all the tests.
 </para>
 </section>
 
