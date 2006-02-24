@@ -74,17 +74,6 @@ AC_SUBST(with_nagios_group)
 INSTALL_OPTS="-o $with_nagios_user -g $with_nagios_group"
 AC_SUBST(INSTALL_OPTS)
 
-AC_ARG_WITH(libtap-srcdir,
-	ACX_HELP_STRING([--with-libtap-srcdir=path],
-		[full path to a compiled libtap srcdir]),
-	EXTRA_TEST=test_utils
-	EXTRA_TAPOBJ=$withval/tap.o
-	AC_SUBST(EXTRA_TEST)
-	AC_SUBST(EXTRA_TAPOBJ)
-	LDFLAGS="$LDFLAGS -L$withval"
-	CPPFLAGS="$CPPFLAGS -I$withval"
-	)
-
 AC_ARG_WITH(trusted_path,
 	ACX_HELP_STRING([--with-trusted-path=PATH],
 		[sets trusted path for executables called by scripts (default=/bin:/sbin:/usr/bin:/usr/sbin)]),
@@ -176,6 +165,14 @@ dnl check for math-related functions needing -lm
 AC_CHECK_HEADERS(math.h)
 AC_CHECK_LIB(m,floor,MATHLIBS="-lm")
 AC_SUBST(MATHLIBS)
+
+dnl Check for libtap, to run perl-like tests
+AC_CHECK_LIB(tap, plan_tests, 
+	TAPLIBS="-ltap"
+	EXTRA_TEST=test_utils
+	AC_SUBST(EXTRA_TEST)
+	AC_SUBST(TAPLIBS)
+	)
 
 dnl Check for PostgreSQL libraries
 _SAVEDLIBS="$LIBS"
