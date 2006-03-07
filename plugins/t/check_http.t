@@ -6,31 +6,43 @@
 #
 
 use strict;
-use Test;
+use Test::More;
 use NPTest;
-
-use vars qw($tests);
-BEGIN {$tests = 4; plan tests => $tests}
-
-my $host_tcp_http      = getTestParameter( "host_tcp_http",      "NP_HOST_TCP_HTTP",      "localhost",
-					   "A host providing the HTTP Service (a web server)" );
-
-my $host_nonresponsive = getTestParameter( "host_nonresponsive", "NP_HOST_NONRESPONSIVE", "10.0.0.1",
-					   "The hostname of system not responsive to network requests" );
-
-my $hostname_invalid   = getTestParameter( "hostname_invalid",   "NP_HOSTNAME_INVALID",   "nosuchhost",
-                                           "An invalid (not known to DNS) hostname" );
 
 my $successOutput = '/OK.*HTTP.*second/';
 
-my %exceptions = ( 2 => "No Web Server present?" );
+my $res;
 
-my $t;
+my $host_tcp_http      = getTestParameter( "NP_HOST_TCP_HTTP", 
+		"A host providing the HTTP Service (a web server)", 
+		"localhost" );
 
-$t += checkCmd( "./check_http $host_tcp_http      -wt 300 -ct 600", { 0 => 'continue',  2 => 'skip' }, $successOutput, %exceptions );
-$t += checkCmd( "./check_http $host_nonresponsive -wt   1 -ct   2", 2 );
-$t += checkCmd( "./check_http $hostname_invalid   -wt   1 -ct   2", 2 );
+my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE", 
+		"The hostname of system not responsive to network requests",
+		"10.0.0.1" );
 
-exit(0) if defined($Test::Harness::VERSION);
-exit($tests - $t);
+my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID", 
+		"An invalid (not known to DNS) hostname",  
+		"nosuchhost");
+
+plan tests => 6;
+
+
+$res = NPTest->testCmd(
+	"./check_http $host_tcp_http -wt 300 -ct 600"
+	);
+cmp_ok( $res->return_code, '==', 0, "Webserver $host_tcp_http responded" );
+like( $res->output, $successOutput, "Output OK" );
+
+$res = NPTest->testCmd(
+	"./check_http $host_nonresponsive -wt 1 -ct 2"
+	);
+cmp_ok( $res->return_code, '==', 2, "Webserver $host_nonresponsive not responding" );
+cmp_ok( $res->output, 'eq', "CRITICAL - Socket timeout after 10 seconds", "Output OK");
+
+$res = NPTest->testCmd(
+	"./check_http $hostname_invalid -wt 1 -ct 2"
+	);
+cmp_ok( $res->return_code, '==', 2, "Webserver $hostname_invalid not valid" );
+like( $res->output, "/Name or service not known.*/", "Output OK");
 
