@@ -25,7 +25,7 @@ my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
 		"An invalid (not known to DNS) hostname",  
 		"nosuchhost");
 
-plan tests => 6;
+plan tests => 8;
 
 
 $res = NPTest->testCmd(
@@ -46,3 +46,12 @@ $res = NPTest->testCmd(
 cmp_ok( $res->return_code, '==', 2, "Webserver $hostname_invalid not valid" );
 like( $res->output, "/Name or service not known.*/", "Output OK");
 
+$res = NPTest->testCmd(
+	"./check_http --ssl www.verisign.com"
+	);
+cmp_ok( $res->return_code, '==', 0, "Can read https for www.verisign.com" );
+
+$res = NPTest->testCmd(
+	"./check_http --ssl www.e-paycobalt.com"
+	);
+cmp_ok( $res->return_code, "==", 0, "Can read https for www.e-paycobalt.com (uses AES certificate)" );
