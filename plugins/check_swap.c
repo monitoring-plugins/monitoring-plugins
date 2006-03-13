@@ -290,8 +290,8 @@ main (int argc, char **argv)
 	}
 
 	for(i=0;i<nswaps;i++){
-		dsktotal_mb = (float) ent->se_nblks / conv_factor;
-		dskused_mb = (float) ent->se_inuse / conv_factor;
+		dsktotal_mb = (float) ent[i].se_nblks / conv_factor;
+		dskused_mb = (float) ent[i].se_inuse / conv_factor;
 		dskfree_mb = ( dsktotal_mb - dskused_mb );
 
 		if(allswaps && dsktotal_mb > 0){
