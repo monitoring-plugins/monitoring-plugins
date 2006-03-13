@@ -452,9 +452,22 @@ run_ping (const char *cmd, const char *addr)
 		rta = crta;
 
 	/* check stderr, setting at least WARNING if there is output here */
-	while (fgets (buf, MAX_INPUT_BUFFER - 1, child_stderr))
-		if (! strstr(buf,"WARNING - no SO_TIMESTAMP support, falling back to SIOCGSTAMP"))
-			result = max_state (STATE_WARNING, error_scan (buf, addr));
+	/* Add warning into warn_text */
+	while (fgets (buf, MAX_INPUT_BUFFER - 1, child_stderr)) {
+		if (! strstr(buf,"WARNING - no SO_TIMESTAMP support, falling back to SIOCGSTAMP")) {
+			if (verbose >= 3) {
+				printf("Got stderr: %s", buf);
+			}
+			if ((result=error_scan(buf, addr)) == STATE_OK) {
+				result = STATE_WARNING;
+				if (warn_text == NULL) {
+					warn_text = strdup(_("System call sent warnings to stderr "));
+				} else {
+					asprintf(&warn_text, "%s %s", warn_text, _("System call sent warnings to stderr "));
+				}
+			}
+		}
+	}
 
 	(void) fclose (child_stderr);
 
