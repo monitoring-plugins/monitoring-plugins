@@ -6,7 +6,7 @@
 * License: GPL
 * Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)
 *  portions (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
-* 
+*
 * $Id$
 *
 * Description:
@@ -16,10 +16,10 @@
 
 const char *progname = "check_mysql";
 const char *revision = "$Revision$";
-const char *copyright = "1999-2004";
+const char *copyright = "1999-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
-#define SLAVERESULTSIZE 40
+#define SLAVERESULTSIZE 70
 
 #include "common.h"
 #include "utils.h"
@@ -33,14 +33,15 @@ char *db_host = NULL;
 char *db_pass = NULL;
 char *db = NULL;
 unsigned int db_port = MYSQL_PORT;
-int check_slave = 0;
+int check_slave = 0, warn_sec = 0, crit_sec = 0;
+int verbose = 0;
+
+thresholds *my_threshold = NULL;
 
 int process_arguments (int, char **);
 int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
-
-
 
 int
 main (int argc, char **argv)
@@ -137,36 +138,59 @@ main (int argc, char **argv)
 
 		} else {
 			/* mysql 4.x.x */
-			int slave_io_field = -1 , slave_sql_field = -1, i, num_fields;
+			int slave_io_field = -1 , slave_sql_field = -1, seconds_behind_field = -1, i, num_fields;
 			MYSQL_FIELD* fields;
 
 			num_fields = mysql_num_fields(res);
 			fields = mysql_fetch_fields(res);
-			for(i = 0; i < num_fields; i++)
-			{
-				if (0 == strcmp(fields[i].name, "Slave_IO_Running"))
-				{
+			for(i = 0; i < num_fields; i++) {
+				if (strcmp(fields[i].name, "Slave_IO_Running") == 0) {
 					slave_io_field = i;
 					continue;
 				}
-				if (0 == strcmp(fields[i].name, "Slave_SQL_Running"))
-				{
+				if (strcmp(fields[i].name, "Slave_SQL_Running") == 0) {
 					slave_sql_field = i;
 					continue;
 				}
+				if (strcmp(fields[i].name, "Seconds_Behind_Master") == 0) {
+					seconds_behind_field = i;
+					continue;
+				}
 			}
-			if ((slave_io_field < 0) || (slave_sql_field < 0) || (num_fields == 0))
-			{
+			if ((slave_io_field < 0) || (slave_sql_field < 0) || (num_fields == 0)) {
 				mysql_free_result (res);
 				mysql_close (&mysql);
 				die (STATE_CRITICAL, "Slave status unavailable\n");
 			}
-			 
-			snprintf (slaveresult, SLAVERESULTSIZE, "Slave IO: %s Slave SQL: %s", row[slave_io_field], row[slave_sql_field]);
+			
+			snprintf (slaveresult, SLAVERESULTSIZE, "Slave IO: %s Slave SQL: %s Seconds Behind Master: %s", row[slave_io_field], row[slave_sql_field], row[seconds_behind_field]);
 			if (strcmp (row[slave_io_field], "Yes") != 0 || strcmp (row[slave_sql_field], "Yes") != 0) {
 				mysql_free_result (res);
 				mysql_close (&mysql);
 				die (STATE_CRITICAL, "%s\n", slaveresult);
+			}
+
+			if (verbose >=3) {
+				if (seconds_behind_field == -1) {
+					printf("seconds_behind_field not found\n");
+				} else {
+					printf ("seconds_behind_field(index %d)=%s\n", seconds_behind_field, row[seconds_behind_field]);
+				}
+			}
+
+			if ((seconds_behind_field != -1) && (strcmp (row[seconds_behind_field], "NULL") != 0)) {
+				double value = atof(row[seconds_behind_field]);
+				int status;
+
+				status = get_status(value, my_threshold);
+
+				if (status == STATE_WARNING) {
+					printf("SLOW_SLAVE %s: %s\n", _("WARNING"), slaveresult);
+					exit(STATE_WARNING);
+				} else if (status == STATE_CRITICAL) {
+					printf("SLOW_SLAVE %s: %s\n", _("CRITICAL"), slaveresult);
+					exit(STATE_CRITICAL);
+				}
 			}
 		}
 
@@ -193,6 +217,8 @@ int
 process_arguments (int argc, char **argv)
 {
 	int c;
+	char *warning = NULL;
+	char *critical = NULL;
 
 	int option = 0;
 	static struct option longopts[] = {
@@ -201,6 +227,8 @@ process_arguments (int argc, char **argv)
 		{"username", required_argument, 0, 'u'},
 		{"password", required_argument, 0, 'p'},
 		{"port", required_argument, 0, 'P'},
+		{"critical", required_argument, 0, 'c'},
+		{"warning", required_argument, 0, 'w'},
 		{"check-slave", no_argument, 0, 'S'},
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
@@ -212,7 +240,7 @@ process_arguments (int argc, char **argv)
 		return ERROR;
 
 	while (1) {
-		c = getopt_long (argc, argv, "hVSP:p:u:d:H:", longopts, &option);
+		c = getopt_long (argc, argv, "hvVSP:p:u:d:H:c:w:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -241,18 +269,29 @@ process_arguments (int argc, char **argv)
 		case 'S':
 			check_slave = 1;							/* check-slave */
 			break;
+		case 'w':
+			warning = optarg;
+			break;
+		case 'c':
+			critical = optarg;
+			break;
 		case 'V':									/* version */
 			print_revision (progname, revision);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
+		case 'v':
+			verbose++;
+			break;
 		case '?':									/* help */
 			usage2 (_("Unknown argument"), optarg);
 		}
 	}
 
 	c = optind;
+
+	set_thresholds(&my_threshold, warning, critical);
 
 	while ( argc > c ) {
 
@@ -326,7 +365,11 @@ print_help (void)
    ==> IMPORTANT: THIS FORM OF AUTHENTICATION IS NOT SECURE!!! <==\n\
    Your clear-text password will be visible as a process table entry\n\
  -S, --check-slave\n\
-   Check if the slave thread is running properly.\n"));
+   Check if the slave thread is running properly.\n\
+ -w, --warning\n\
+   Exit with WARNING status if slave server is more then INTEGER seconds behind master\n\
+ -c, --critical\n\
+   Exit with CRITICAL status if slave server is more then INTEGER seconds behind master\n"));
 
 	printf (_("\n\
 There are no required arguments. By default, the local database with\n\

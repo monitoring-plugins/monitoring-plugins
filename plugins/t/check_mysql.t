@@ -19,7 +19,7 @@ use vars qw($tests);
 
 plan skip_all => "check_mysql not compiled" unless (-x "check_mysql");
 
-plan tests => 7;
+plan tests => 10;
 
 my $bad_login_output = '/Access denied for user /';
 my $mysqlserver = getTestParameter( 
@@ -58,10 +58,17 @@ SKIP: {
 }
 
 SKIP: {
-	skip "No mysql server with slaves defined", 2 unless $with_slave;
+	skip "No mysql server with slaves defined", 5 unless $with_slave;
 	$result = NPTest->testCmd("./check_mysql -H $with_slave $with_slave_login");
 	cmp_ok( $result->return_code, '==', 0, "Login okay");
 
 	$result = NPTest->testCmd("./check_mysql -S -H $with_slave $with_slave_login");
 	cmp_ok( $result->return_code, "==", 0, "Slaves okay" );
+
+	$result = NPTest->testCmd("./check_mysql -S -H $with_slave $with_slave_login -w 60");
+	cmp_ok( $result->return_code, '==', 0, 'Slaves are not > 60 seconds behind');
+
+	$result = NPTest->testCmd("./check_mysql -S -H $with_slave $with_slave_login -w 60:");
+	cmp_ok( $result->return_code, '==', 1, 'Alert warning if < 60 seconds behind');
+	like( $result->output, "/^SLOW_SLAVE WARNING:/", "Output okay");
 }
