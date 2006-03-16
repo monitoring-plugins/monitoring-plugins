@@ -15,8 +15,8 @@ LIBS = @LIBINTL@
 
 test_utils_SOURCES = test_utils.c
 test_utils_CFLAGS = -g -I..
-test_utils_LDFLAGS = -L..
-test_utils_LDADD = ../utils.o $(TAPLIBS)
+test_utils_LDFLAGS = -rpath /usr/local/lib -ltap
+test_utils_LDADD = ../utils.o
 
 test: ${noinst_PROGRAMS}
 	perl -MTest::Harness -e '$$Test::Harness::switches=""; runtests(map {$$_ .= ".t"} @ARGV)' $(EXTRA_PROGRAMS)

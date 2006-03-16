@@ -20,6 +20,7 @@ fi
 
 autopoint --force
 aclocal -I m4
+libtoolize --force --copy
 autoheader
 automake --add-missing --force-missing --copy
 autoconf

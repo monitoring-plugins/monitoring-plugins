@@ -23,7 +23,7 @@ gl_USE_SYSTEM_EXTENSIONS
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_GCC_TRADITIONAL
-AC_PROG_RANLIB
+AC_PROG_LIBTOOL
 
 AC_PROG_MAKE_SET
 AC_PROG_AWK
@@ -168,10 +168,8 @@ AC_SUBST(MATHLIBS)
 
 dnl Check for libtap, to run perl-like tests
 AC_CHECK_LIB(tap, plan_tests, 
-	TAPLIBS="-ltap"
 	EXTRA_TEST=test_utils
 	AC_SUBST(EXTRA_TEST)
-	AC_SUBST(TAPLIBS)
 	)
 
 dnl Check for PostgreSQL libraries
