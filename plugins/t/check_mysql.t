@@ -48,7 +48,7 @@ SKIP: {
 	$result = NPTest->testCmd("./check_mysql -H $mysqlserver $mysql_login_details");
 	cmp_ok( $result->return_code, '==', 0, "Login okay");
 
-	$result = NPTest->testCmd("./check_mysql -H $mysqlserver -u dummy");
+	$result = NPTest->testCmd("./check_mysql -H $mysqlserver -u dummy -pdummy");
 	cmp_ok( $result->return_code, '==', 2, "Login failure");
 	like( $result->output, $bad_login_output, "Expected login failure message");
 

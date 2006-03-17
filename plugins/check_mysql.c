@@ -25,8 +25,8 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "utils.h"
 #include "netutils.h"
 
-#include <mysql/mysql.h>
-#include <mysql/errmsg.h>
+#include <mysql.h>
+#include <errmsg.h>
 
 char *db_user = NULL;
 char *db_host = NULL;

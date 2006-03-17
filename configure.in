@@ -253,49 +253,72 @@ else
 fi
 LIBS="$_SAVEDLIBS"
 
-
 dnl Check for mysql libraries
 _SAVEDLIBS="$LIBS"
 _SAVEDCPPFLAGS="$CPPFLAGS"
+FOUNDMYSQL="no"
 AC_ARG_WITH(mysql,
 	ACX_HELP_STRING([--with-mysql=DIR],
-		[sets path to mysql installation (assumes lib/mysql and include subdirs]),
+		[sets path to mysql installation (assumes lib/lib64 and include subdirs)]),
 	MYSQL=$withval,)
+# Find the mysql client libs
 if test -n "$MYSQL"; then
+  MYSQLLIBDIR=$MYSQL/lib
+  MYSQLLIB64DIR=$MYSQL/lib64
+elif test -f /usr/lib/libmysqlclient.so -o -f /usr/lib/libmysqlclient.a ; then
+  MYSQL="/usr"
+  MYSQLLIBDIR=$MYSQL/lib
+  MYSQLLIB64DIR=$MYSQL/lib64
+elif test -f /usr/lib/mysql/libmysqlclient.so -o -f /usr/lib/mysql/libmysqlclient.a ; then
+  MYSQL="/usr"
   MYSQLLIBDIR=$MYSQL/lib/mysql
-  CPPFLAGS="-I$MYSQL/include"
-  AC_CHECK_LIB(mysqlclient,mysql_init,MYSQLLIBS="-lmysqlclient -lz" check_mysql_LDFLAGS="-L$MYSQLLIBDIR " check_mysql_query_LDFLAGS="-L$MYSQLLIBDIR ",,-L$MYSQLLIBDIR -lz)
-  AC_CHECK_LIB(mysqlclient,mysql_close,MYSQLLIBS="-lmysqlclient")
-elif test -f /usr/lib/libmysqlclient.so; then
-  AC_CHECK_LIB(mysqlclient,mysql_init,MYSQLLIBS="-lmysqlclient -lz",,-lz)
-  AC_CHECK_LIB(mysqlclient,mysql_close,MYSQLLIBS="-lmysqlclient")
-elif test -f /usr/lib/libmysqlclient.a; then
-  AC_CHECK_LIB(mysqlclient,mysql_init,MYSQLLIBS="-lmysqlclient -lz",,-lz)
-  AC_CHECK_LIB(mysqlclient,mysql_close,MYSQLLIBS="-lmysqlclient")
-elif test -f /usr/lib/mysql/libmysqlclient.so; then
-  AC_CHECK_LIB(mysqlclient,mysql_init,MYSQLLIBS="-lmysqlclient -lz" check_mysql_LDFLAGS="-L/usr/lib/mysql" check_mysql_query_LDFLAGS="-L/usr/lib/mysql",,-L/usr/lib/mysql -lz)
-  AC_CHECK_LIB(mysqlclient,mysql_close,MYSQLLIBS="-lmysqlclient" check_mysql_LDFLAGS="-L/usr/lib/mysql" check_mysql_query_LDFLAGS="-L/usr/lib/mysql",,-L/usr/lib/mysql)
-elif test -f /usr/lib/mysql/libmysqlclient.a; then
-  AC_CHECK_LIB(mysqlclient,mysql_init,MYSQLLIBS="-lmysqlclient -lz" check_mysql_LDFLAGS="-L/usr/lib/mysql" check_mysql_query_LDFLAGS="-L/usr/lib/mysql",,-L/usr/lib/mysql -lz)
-  AC_CHECK_LIB(mysqlclient,mysql_close,MYSQLLIBS="-lmysqlclient" check_mysql_LDFLAGS="-L/usr/lib/mysql" check_mysql_query_LDFLAGS="-L/usr/lib/mysql",,-L/usr/lib/mysql)
+  MYSQLLIB64DIR=$MYSQL/lib64/mysql
+elif test -f /usr/local/lib/libmysqlclient.so -o -f /usr/local/lib/libmysqlclient.a ; then
+  MYSQL="/usr/local"
+  MYSQLLIBDIR=$MYSQL/lib
+  MYSQLLIB64DIR=$MYSQL/lib64
+elif test -f /usr/local/lib/mysql/libmysqlclient.so -o -f /usr/local/lib/mysql/libmysqlclient.a ; then
+  MYSQL="/usr/local"
+  MYSQLLIBDIR=$MYSQL/lib/mysql
+  MYSQLLIB64DIR=$MYSQL/lib64/mysql
+elif test -f /usr/local/mysql/lib/libmysqlclient.so -o -f /usr/local/mysql/lib/libmysqlclient.a ; then
+  MYSQL="/usr/local/mysql"
+  MYSQLLIBDIR=$MYSQL/lib
+  MYSQLLIB64DIR=$MYSQL/lib64
 fi
+
+# Check libs okay
+if test -n "$MYSQL" ; then
+  CPPFLAGS="-L$MYSQLLIBDIR -L$MYSQLLIB64DIR"
+  AC_CHECK_LIB(mysqlclient,mysql_init,MYSQLLIBS="-lmysqlclient -lz",,-lz)
+  AC_CHECK_LIB(mysqlclient,mysql_close,MYSQLLIBS="-lmysqlclient")
+fi
+
+# Check headers okay
 if test "$ac_cv_lib_mysqlclient_mysql_init" = "yes" -o "$ac_cv_lib_mysqlclient_mysql_close" = "yes"; then
-  AC_CHECK_HEADERS(mysql/mysql.h mysql/errmsg.h, MYSQLINCLUDE="-I$MYSQL/include" )
-  if test "$ac_cv_header_mysql_mysql_h" = "yes" -a "$ac_cv_header_mysql_errmsg_h" = "yes"; then
-    EXTRAS="$EXTRAS check_mysql check_mysql_query"
-    AC_SUBST(MYSQLINCLUDE)
-    AC_SUBST(MYSQLLIBS)
-    AC_SUBST(check_mysql_LDFLAGS)
-    AC_SUBST(check_mysql_query_LDFLAGS)
-  else
-    AC_MSG_WARN([Skipping mysql plugin])
-    AC_MSG_WARN([install mysql client headers to compile this plugin (see REQUIREMENTS).])
+  CPPFLAGS="-I$MYSQL/include"
+  AC_CHECK_HEADERS(mysql.h errmsg.h, FOUNDMYSQL="yes" MYSQLINCLUDE="-I$MYSQL/include")
+  if test x"$FOUNDMYSQL" != x"yes" ; then
+	  AC_CHECK_HEADERS(mysql/mysql.h mysql/errmsg.h, FOUNDMYSQL="yes" MYSQLINCLUDE="-I$MYSQL/include/mysql")
   fi
+fi
+
+# Setup mysql plugins
+if test $FOUNDMYSQL = "yes" ; then
+  EXTRAS="$EXTRAS check_mysql check_mysql_query"
+  if test -d $MYSQLLIB64DIR ; then
+    MYSQLLIBS="-L$MYSQLLIB64DIR -rpath $MYSQLLIB64DIR $MYSQLLIBS"
+  fi
+  if test -d $MYSQLLIBDIR ; then
+    MYSQLLIBS="-L$MYSQLLIBDIR -rpath $MYSQLLIBDIR $MYSQLLIBS"
+  fi
+  AC_SUBST(MYSQLINCLUDE)
+  AC_SUBST(MYSQLLIBS)
 else
   AC_MSG_WARN([Skipping mysql plugin])
   AC_MSG_WARN([install mysql client libs to compile this plugin (see REQUIREMENTS).])
 fi
-CPPFLAGS="$_SAVEDCPPFLAGS $MYSQLINCLUDE"
+CPPFLAGS="$_SAVEDCPPFLAGS"
 LIBS="$_SAVEDLIBS"
 
 AC_CHECK_HEADERS(unistd.h)
@@ -442,7 +465,7 @@ fi
 
 
 dnl openssl detection/configuration
-if ! test "$with_openssl" = "no"; then
+if ! test x"$with_openssl" = x"no"; then
 	dnl Check for OpenSSL location if it wasn't already specified
 	if ! test -d "$with_openssl"; then
 		for d in $OPENSSL_DIRS; do
@@ -456,18 +479,20 @@ if ! test "$with_openssl" = "no"; then
 	_SAVEDLDFLAGS="$LDFLAGS"
 	dnl Check for OpenSSL header files
 	unset FOUNDINCLUDE
-	CPPFLAGS="$CPPFLAGS -I$OPENSSL/include"
-	LDFLAGS="$LDFLAGS -R$OPENSSL/lib"
+	if test x"$with_openssl" != x"/usr" ; then
+		CPPFLAGS="$CPPFLAGS -I$with_openssl/include"
+		LDFLAGS="$LDFLAGS -R$with_openssl/lib"
+	fi
 
 	dnl check for openssl in $dir/include/openssl
 	AC_CHECK_HEADERS(openssl/ssl.h openssl/x509.h openssl/rsa.h openssl/pem.h openssl/crypto.h openssl/err.h,
-	                 SSLINCLUDE="-I$OPENSSL/include"
+	                 SSLINCLUDE="-I$with_openssl/include"
 	                 FOUNDINCLUDE=yes,
 	                 FOUNDINCLUDE=no)
 	dnl else check to see if $dir/include has it
 	if test "$FOUNDINCLUDE" = "no"; then
 		AC_CHECK_HEADERS(ssl.h x509.h rsa.h pem.h crypto.h err.h,
-		                 SSLINCLUDE="-I$OPENSSL/include"
+		                 SSLINCLUDE="-I$with_openssl/include"
 		                 FOUNDINCLUDE=yes,
 		                 FOUNDINCLUDE=no)
 	fi
