@@ -58,6 +58,7 @@
 	automake 1.8
 	autoconf 2.58
 	gettext 0.11.5
+	gnu libtool 1.5.6
 	</literallayout>
 
 	To compile from CVS, after you have checked out the code, run:
