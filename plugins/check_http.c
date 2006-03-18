@@ -755,11 +755,9 @@ check_http (void)
     np_net_ssl_init(sd);
     if (check_cert == TRUE) {
       result = np_net_ssl_check_cert(days_till_exp);
-      if(result != STATE_OK){
-        np_net_ssl_cleanup();
-        if(sd) close(sd);
-        return result;
-      }
+      np_net_ssl_cleanup();
+      if(sd) close(sd);
+      return result;
     }
   }
 #endif /* HAVE_SSL */
