@@ -183,6 +183,32 @@ void setup_request(ntp_message *p){
 	TVtoNTP64(t,p->txts);
 }
 
+double offset_request(const char *host){
+	int i=0, conn=-1;
+	ntp_message req;
+	double next_offset=0., avg_offset=0.;
+	struct timeval recv_time;
+
+	for(i=0; i<4; i++){
+		setup_request(&req);
+		my_udp_connect(server_address, 123, &conn);
+		write(conn, &req, sizeof(ntp_message));
+		read(conn, &req, sizeof(ntp_message));
+		gettimeofday(&recv_time, NULL);
+		/* if(verbose) print_packet(&req); */
+		close(conn);
+		next_offset=calc_offset(&req, &recv_time);
+		if(verbose) printf("offset: %g\n", next_offset);
+		avg_offset+=next_offset;
+	}
+	return avg_offset/4.;
+}
+
+/* not yet implemented yet */
+double jitter_request(const char *host){
+	return 0.;
+}
+
 int process_arguments(int argc, char **argv){
 	int c;
 	int option=0;
@@ -282,9 +308,6 @@ int process_arguments(int argc, char **argv){
 
 int main(int argc, char *argv[]){
 	int result = STATE_UNKNOWN;
-	int conn;
-	ntp_message m;
-	struct timeval recv_time;
 	double offset=0, jitter=0;
 
 	if (process_arguments (argc, argv) == ERROR)
@@ -296,18 +319,7 @@ int main(int argc, char *argv[]){
 	/* set socket timeout */
 	alarm (socket_timeout);
 
-	setup_request(&m);
-	if(verbose) print_packet(&m);
-	my_udp_connect(server_address, 123, &conn);
-	write(conn, &m, sizeof(ntp_message));
-	read(conn, &m, sizeof(ntp_message));
-	gettimeofday(&recv_time, NULL);
-	if(verbose) print_packet(&m);
-	close(conn);
-
-	offset=calc_offset(&m, &recv_time);
-	printf("total offset: %g\n", offset);
-
+	offset = offset_request(server_address);
 	if(offset > ocrit){
 		printf("NTP CRITICAL: ");
 		result = STATE_CRITICAL;
@@ -319,14 +331,15 @@ int main(int argc, char *argv[]){
 		result = STATE_OK;
 	}
 
-	/* not implemented yet:
-	jitter=calc_jitter(&m, &recv_time);
+	/* not implemented yet: */
+	jitter=jitter_request(server_address);
 
+	/* not implemented yet:
 	if(do_jitter){
-		if(offset > ocrit){
+		if(jitter > jcrit){
 			printf("NTP CRITICAL: ");
 			result = STATE_CRITICAL;
-		} else if(offset > owarn) {
+		} else if(jitter > jwarn) {
 			printf("NTP WARNING: ");
 			result = STATE_WARNING;
 		} else {
