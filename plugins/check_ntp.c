@@ -191,7 +191,7 @@ int process_arguments(int argc, char **argv){
 		{"help", no_argument, 0, 'h'},
 		{"verbose", no_argument, 0, 'v'},
 		{"use-ipv4", no_argument, 0, '4'},
-/*		{"use-ipv6", no_argument, 0, '6'}, */
+		{"use-ipv6", no_argument, 0, '6'},
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
 		{"zero-offset", no_argument, 0, 'O'},
@@ -207,7 +207,7 @@ int process_arguments(int argc, char **argv){
 		usage ("\n");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vhv4w:c:Oj:k:t:H:", longopts, &option);
+		c = getopt_long (argc, argv, "Vhv46w:c:Oj:k:t:H:", longopts, &option);
 		if (c == -1 || c == EOF || c == 1)
 			break;
 
@@ -247,6 +247,16 @@ int process_arguments(int argc, char **argv){
 			break;
 		case 'O':
 			zero_offset_bad=1;
+			break;
+		case '4':
+			address_family = AF_INET;
+			break;
+		case '6':
+#ifdef USE_IPV6
+			address_family = AF_INET6;
+#else
+			usage4 (_("IPv6 support not available"));
+#endif
 			break;
 		case '?':
 			/* print short usage statement if args not parsable */
