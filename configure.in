@@ -261,6 +261,10 @@ if test -z "$MYSQLCONFIG"; then
 else
   EXTRAS="$EXTRAS check_mysql check_mysql_query"
   MYSQLINCLUDE=`$MYSQLCONFIG --include`
+  if test $? != 0 ; then
+    # mysql_config for 3.x does not support --include
+    MYSQLINCLUDE=""
+  fi
   MYSQLLIBS=`$MYSQLCONFIG --libs`
   MYSQLCFLAGS=`$MYSQLCONFIG --cflags`
   AC_SUBST(MYSQLINCLUDE)
