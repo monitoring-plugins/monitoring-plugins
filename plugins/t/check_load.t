@@ -6,20 +6,21 @@
 #
 
 use strict;
-use Test;
+use Test::More;
 use NPTest;
 
-use vars qw($tests);
-BEGIN {$tests = 4; plan tests => $tests}
+my $res;
 
 my $successOutput = '/^OK - load average: [0-9]\.?[0-9]+, [0-9]\.?[0-9]+, [0-9]\.?[0-9]+/';
 my $failureOutput = '/^CRITICAL - load average: [0-9]\.?[0-9]+, [0-9]\.?[0-9]+, [0-9]\.?[0-9]+/';
 
-my $t;
+plan tests => 4;
 
-$t += checkCmd( "./check_load -w 100,100,100 -c 100,100,100", 0, $successOutput );
-$t += checkCmd( "./check_load -w 0,0,0       -c 0,0,0",       2, $failureOutput );
+$res = NPTest->testCmd( "./check_load -w 100,100,100 -c 100,100,100" );
+cmp_ok( $res->return_code, 'eq', 0, "load not over 100");
+like( $res->output, $successOutput, "Output OK");
 
-exit(0) if defined($Test::Harness::VERSION);
-exit($tests - $t);
+$res = NPTest->testCmd( "./check_load -w 0,0,0 -c 0,0,0" );
+cmp_ok( $res->return_code, 'eq', 2, "Load over 0");
+like( $res->output, $failureOutput, "Output OK");
 
