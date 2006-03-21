@@ -3,6 +3,8 @@ This file documents the major additions and syntax changes between releases.
 1.4.3
 	Setuid plugins (check_dhcp, check_icmp) separated into plugins-root/. Run make install as root to install
 	check_mysql_query added to run arbitrary SQL commands, with threshold checking
+	./configure --with-mysql option deprecated. To get mysql compiling, must have mysql_config in PATH
+	libtool now required for development systems
 
 1.4.2
 	Fix for Redhat ES4 for check_dns and check_dig
