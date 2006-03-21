@@ -18,8 +18,14 @@ else
 	echo Found GNU Make at $MAKE ... good.
 fi
 
+# This bit is to fix SF's compile server as libtool not installed by default
+extra=""
+if test -d $HOME/share/aclocal ; then
+	extra="-I $HOME/share/aclocal"
+fi
+
 autopoint --force
-aclocal -I m4
+aclocal -I m4 $extra
 libtoolize --force --copy
 autoheader
 automake --add-missing --force-missing --copy
