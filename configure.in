@@ -1209,17 +1209,17 @@ fi
 fi
 
 
-AC_MSG_CHECKING(for nslookup syntax)
 AC_ARG_WITH(nslookup_command,
             ACX_HELP_STRING([--with-nslookup-command=PATH],
                             [sets path to nslookup executable]),
             ac_cv_nslookup_command=$withval)
 if test -n "$ac_cv_nslookup_command"; then
-	AC_MSG_RESULT([(command line) $ac_cv_nslookup_command])
+	AC_MSG_NOTICE([Using specific nslookup at $ac_cv_nslookup_command])
 else
 	AC_PATH_PROG(PATH_TO_NSLOOKUP,nslookup)
 	if test -n "$PATH_TO_NSLOOKUP"
 	then
+		AC_MSG_CHECKING(for nslookup syntax)
 		if $PATH_TO_NSLOOKUP -sil 127.0.0.1 2>&1 | grep ["Invalid option: sil"] >/dev/null
 		then
 			ac_cv_nslookup_command="$PATH_TO_NSLOOKUP"
@@ -1238,12 +1238,6 @@ fi
 if test -n "$ac_cv_nslookup_command"; then
 	EXTRAS="$EXTRAS check_dns"
 	AC_DEFINE_UNQUOTED(NSLOOKUP_COMMAND,"$ac_cv_nslookup_command", [path and args for nslookup])
-fi
-
-AC_PATH_PROG(PATH_TO_HOST,host)
-if test -n "$ac_cv_path_PATH_TO_HOST"
-then
-	EXTRAS="$EXTRAS check_dns"
 fi
 
 AC_PATH_PROG(PATH_TO_UPTIME,uptime)
