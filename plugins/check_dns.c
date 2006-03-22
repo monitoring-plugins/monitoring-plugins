@@ -165,7 +165,7 @@ main (int argc, char **argv)
   /* compare to expected address */
   if (result == STATE_OK && match_expected_address && strcmp(address, expected_address)) {
     result = STATE_CRITICAL;
-    asprintf(&msg, _("expected %s but got %s"), expected_address, address);
+    asprintf(&msg, _("expected '%s' but got '%s'"), expected_address, address);
   }
 
   /* check if authoritative */
@@ -379,55 +379,24 @@ print_help (void)
   printf (COPYRIGHT, copyright, email);
 
   printf (_("This plugin uses the nslookup program to obtain the IP address for the given host/domain query."));
-  
   printf ("\n");
-  
   printf (_("An optional DNS server to use may be specified."));
-  
   printf ("\n");
-
-  printf (_("If no DNS server is specified, the default server(s)specified in /etc/resolv.conf will be used."));
-
+  printf (_("If no DNS server is specified, the default server(s) specified in /etc/resolv.conf will be used."));
   printf ("\n\n");
 
   print_usage ();
-
   printf (_(UT_HELP_VRSN));
-
-  printf ("  -H, --hostname=HOST");
- 
-  printf ("\n");
-
-  printf (_("the name or address you want to query"));
-  
-  printf ("\n");
-
-  printf ("  -s, --server=HOST");
-  
-  printf ("\n");
-
-  printf (_("optional DNS server you want to use for the lookup"));
-  
-  printf ("\n");
-
-  printf ("  -a, --expected-address=IP-ADDRESS");
-  
-  printf ("\n");
-
-  printf (_("optional IP address you expect the DNS server to return"));
-  
-  printf ("\n");
-
-  printf ("  -A, --expect-authority");
-  
-  printf ("\n");
-
-  printf (_("optionally expect the DNS server to be authoritative for the lookup"));
-
-  printf ("\n");
+  printf (" -H, --hostname=HOST\n");
+  printf ("    %s\n", _("The name or address you want to query"));
+  printf (" -s, --server=HOST\n");
+  printf ("    %s\n", _("Optional DNS server you want to use for the lookup"));
+  printf (" -a, --expected-address=IP-ADDRESS|HOST\n");
+  printf ("    %s\n", _("Optional IP-ADDRESS you expect the DNS server to return. HOST must end with ."));
+  printf (" -A, --expect-authority\n");
+  printf ("    %s\n", _("Optionally expect the DNS server to be authoritative for the lookup"));
 
   printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-
   printf (_(UT_SUPPORT));
 }
 

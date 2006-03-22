@@ -6,37 +6,68 @@
 #
 
 use strict;
-use Test;
+use Test::More;
 use NPTest;
 
-use vars qw($tests);
-BEGIN {$tests = 6; plan tests => $tests}
+plan skip_all => "check_dns not compiled" unless (-x "check_dns");
+
+plan tests => 11;
 
 my $successOutput = '/DNS OK: [\.0-9]+ seconds response time/';
 
-my $hostname_valid   = getTestParameter( "hostname_valid",   "NP_HOSTNAME_VALID",   "localhost",
-					 "A valid (known to DNS) hostname" );
+my $hostname_valid = getTestParameter( 
+			"NP_HOSTNAME_VALID",
+			"A valid (known to DNS) hostname",
+			"www.apple.com"
+			);
 
-my $hostname_invalid = getTestParameter( "hostname_invalid", "NP_HOSTNAME_INVALID", "nosuchhost",
-					 "An invalid (not known to DNS) hostname" );
+my $hostname_valid_ip = getTestParameter(
+			"NP_HOSTNAME_VALID_IP",
+			"The IP address of the valid hostname $hostname_valid",
+			"17.112.152.32"
+			);
 
-my $dns_server       = getTestParameter( "dns_server",       "NP_DNS_SERVER",       undef,
-					 "A non default (remote) DNS server" );
+my $hostname_valid_reverse = getTestParameter(
+			"NP_HOSTNAME_VALID_REVERSE",
+			"The hostname of $hostname_valid_ip",
+			$hostname_valid
+			);
 
-my $t;
+my $hostname_invalid = getTestParameter( 
+			"NP_HOSTNAME_INVALID", 
+			"An invalid (not known to DNS) hostname",
+			"nosuchhost.altinity.com",
+			);
 
-#
-# Default DNS Server
-#
-$t += checkCmd( "./check_dns -H $hostname_valid   -t 5", 0, $successOutput );
-$t += checkCmd( "./check_dns -H $hostname_invalid -t 1", 2 );
+my $dns_server       = getTestParameter(
+			"NP_DNS_SERVER",
+			"A non default (remote) DNS server",
+			);
 
-#
-# Specified DNS Server
-#
-$t += checkCmd( "./check_dns -H $hostname_valid   -s $dns_server -t 5", 0, $successOutput );
-$t += checkCmd( "./check_dns -H $hostname_invalid -s $dns_server -t 1", 2 );
+my $res;
 
-exit(0) if defined($Test::Harness::VERSION);
-exit($tests - $t);
+$res = NPTest->testCmd("./check_dns -H $hostname_valid -t 5");
+cmp_ok( $res->return_code, '==', 0, "Found $hostname_valid");
+like  ( $res->output, $successOutput, "Output OK" );
+
+$res = NPTest->testCmd("./check_dns -H $hostname_invalid -t 1");
+cmp_ok( $res->return_code, '==', 2, "Invalid $hostname_invalid");
+
+$res = NPTest->testCmd("./check_dns -H $hostname_valid -s $dns_server -t 5");
+cmp_ok( $res->return_code, '==', 0, "Found $hostname_valid on $dns_server");
+like  ( $res->output, $successOutput, "Output OK" );
+
+$res = NPTest->testCmd("./check_dns -H $hostname_invalid -s $dns_server -t 1");
+cmp_ok( $res->return_code, '==', 2, "Invalid $hostname_invalid on $dns_server");
+
+$res = NPTest->testCmd("./check_dns -H $hostname_valid -a $hostname_valid_ip -t 5");
+cmp_ok( $res->return_code, '==', 0, "Got expected address");
+
+$res = NPTest->testCmd("./check_dns -H $hostname_valid -a 10.10.10.10 -t 5");
+cmp_ok( $res->return_code, '==', 2, "Got wrong address");
+like  ( $res->output, "/^DNS CRITICAL.*expected '10.10.10.10' but got '$hostname_valid_ip'".'$/', "Output OK");
+
+$res = NPTest->testCmd("./check_dns -H $hostname_valid_ip -a $hostname_valid_reverse -t 5");
+cmp_ok( $res->return_code, '==', 0, "Got expected fqdn");
+like  ( $res->output, $successOutput, "Output OK");
 
