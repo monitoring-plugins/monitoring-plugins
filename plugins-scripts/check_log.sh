@@ -70,8 +70,8 @@ CHMOD="/bin/chmod"
 TOUCH="/bin/touch"
 
 PROGNAME=`/bin/basename $0`
-PROGPATH=`echo $0 | /bin/sed -e 's,[\\/][^\\/][^\\/]*$,,'`
-REVISION=`echo '$Revision$' | /bin/sed -e 's/[^0-9.]//g'`
+PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
+REVISION=`echo '$Revision$' | sed -e 's/[^0-9.]//g'`
 
 . $PROGPATH/utils.sh
 

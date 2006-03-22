@@ -14,10 +14,10 @@ fi
 
 print_revision() {
 	echo "$1 (@PACKAGE@ @VERSION@) $2"
-	$ECHO "@WARRANTY@" | /bin/sed -e 's/\n/ /g'
+	$ECHO "@WARRANTY@" | sed -e 's/\n/ /g'
 }
 
 support() {
-	$ECHO "@SUPPORT@" | /bin/sed -e 's/\n/ /g'
+	$ECHO "@SUPPORT@" | sed -e 's/\n/ /g'
 }
 
