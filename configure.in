@@ -12,6 +12,8 @@ AC_SUBST(RELEASE)
 
 AC_PREFIX_DEFAULT(/usr/local/nagios)
 
+dnl Deprecated configure options
+
 dnl Figure out how to invoke "install" and what install options to use.
 AC_PROG_INSTALL
 AC_SUBST(INSTALL)
@@ -254,22 +256,31 @@ fi
 LIBS="$_SAVEDLIBS"
 
 dnl Check for mysql libraries
-AC_PATH_PROG(MYSQLCONFIG, mysql_config)
-if test -z "$MYSQLCONFIG"; then
-  AC_MSG_WARN([Skipping mysql plugin])
-  AC_MSG_WARN([install mysql client libs to compile this plugin (see REQUIREMENTS).])
-else
-  EXTRAS="$EXTRAS check_mysql check_mysql_query"
-  MYSQLINCLUDE=`$MYSQLCONFIG --include`
-  if test $? != 0 ; then
-    # mysql_config for 3.x does not support --include
-    MYSQLINCLUDE=""
+AC_ARG_WITH(mysql,
+	ACX_HELP_STRING([--with-mysql=DIR],
+		[Compiles mysql plugins. Expects DIR/bin/mysql_config]),
+	with_mysql=$withval,
+	with_mysql=no)
+if test $with_mysql != "no" ; then
+  if test -x $with_mysql/bin/mysql_config ; then
+    MYSQLCONFIG="$with_mysql/bin/mysql_config"
+  else
+    AC_PATH_PROG(MYSQLCONFIG, mysql_config)
   fi
-  MYSQLLIBS=`$MYSQLCONFIG --libs`
-  MYSQLCFLAGS=`$MYSQLCONFIG --cflags`
-  AC_SUBST(MYSQLINCLUDE)
-  AC_SUBST(MYSQLLIBS)
-  AC_SUBST(MYSQLCFLAGS)
+  if test -z "$MYSQLCONFIG"; then
+    with_mysql="not found"
+    AC_MSG_WARN([Skipping mysql plugin])
+    AC_MSG_WARN([install mysql client libs to compile this plugin (see REQUIREMENTS).])
+  else
+    with_mysql=$MYSQLCONFIG
+    EXTRAS="$EXTRAS check_mysql check_mysql_query"
+    MYSQLINCLUDE=`$MYSQLCONFIG --include`
+    MYSQLLIBS=`$MYSQLCONFIG --libs`
+    MYSQLCFLAGS=`$MYSQLCONFIG --cflags`
+    AC_SUBST(MYSQLINCLUDE)
+    AC_SUBST(MYSQLLIBS)
+    AC_SUBST(MYSQLCFLAGS)
+  fi
 fi
 
 AC_CHECK_HEADERS(unistd.h)
@@ -1730,6 +1741,7 @@ dnl ACX_FEATURE([with],[ps-varlist])
 
 ACX_FEATURE([with],[lwres])
 ACX_FEATURE([with],[ipv6])
+ACX_FEATURE([with],[mysql])
 ACX_FEATURE([with],[openssl])
 ACX_FEATURE([with],[gnutls])
 ACX_FEATURE([enable],[emulate-getaddrinfo])
