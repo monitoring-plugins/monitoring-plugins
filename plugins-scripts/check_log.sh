@@ -57,8 +57,8 @@
 
 # Paths to commands used in this script.  These
 # may have to be modified to match your system setup.
-
-PATH=""
+# TV: removed PATH restriction. Need to think more about what this means overall
+#PATH=""
 
 ECHO="/bin/echo"
 GREP="/bin/egrep"
