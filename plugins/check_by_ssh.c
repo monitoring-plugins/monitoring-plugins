@@ -343,7 +343,7 @@ the '-i' option. In this mode, the identity pair should have a null\n\
 passphrase and the public key should be listed in the authorized_keys\n\
 file of the remote host. Usually the key will be restricted to running\n\
 only one command on the remote server. If the remote SSH server tracks\n\
-invocation agruments, the one remote program may be an agent that can\n\
+invocation arguments, the one remote program may be an agent that can\n\
 execute additional commands as proxy\n"));
 
 	printf (_("\n\
