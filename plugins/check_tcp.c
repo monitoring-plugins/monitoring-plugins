@@ -54,6 +54,8 @@ static int server_port = 0;
 static char *server_address = NULL;
 static char *server_send = NULL;
 static char *server_quit = NULL;
+char *lineend = "";
+char *lineendquit = "\r\n";
 static char **server_expect;
 static size_t server_expect_count = 0;
 static size_t maxbytes = 0;
@@ -369,6 +371,7 @@ process_arguments (int argc, char **argv)
 		{"timeout", required_argument, 0, 't'},
 		{"protocol", required_argument, 0, 'P'},
 		{"port", required_argument, 0, 'p'},
+		{"lineend", required_argument, 0, 'l'},
 		{"send", required_argument, 0, 's'},
 		{"expect", required_argument, 0, 'e'},
 		{"maxbytes", required_argument, 0, 'm'},
@@ -410,7 +413,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVv46H:s:e:q:m:c:w:t:p:C:W:d:Sr:jD:M:",
+		c = getopt_long (argc, argv, "+hVv46H:l:s:e:q:m:c:w:t:p:C:W:d:Sr:jD:M:",
 		                 longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)
@@ -478,8 +481,30 @@ process_arguments (int argc, char **argv)
 			else
 				server_port = atoi (optarg);
 			break;
+		case 'l':
+			switch (*optarg) {
+				case 'n':
+				  lineend = strdup("\n");
+				  lineendquit = lineend;
+				  break;
+				case 'r':
+				  lineend = strdup("\r");
+				  lineendquit = lineend;
+				  break;
+				case 'b':
+				  lineend = strdup("\r\n");
+				  lineendquit = lineend;
+				  break;
+				case 'e':
+				  lineend = strdup("");
+				  lineendquit = lineend;
+				  break;
+				default:
+				  usage4 (_("Unrecognized option to -l, must be r, n, b or e"));
+                        }
+			break;
 		case 's':
-			server_send = optarg;
+		        asprintf(&server_send, "%s%s", optarg, lineend);
 			break;
 		case 'e': /* expect string (may be repeated) */
 			EXPECT = NULL;
@@ -496,7 +521,7 @@ process_arguments (int argc, char **argv)
 			else
 				maxbytes = strtol (optarg, NULL, 0);
 		case 'q':
-			asprintf(&server_quit, "%s\r\n", optarg);
+			asprintf(&server_quit, "%s%s", optarg, lineendquit);
 			break;
 		case 'r':
 			if (!strncmp(optarg,"ok",2))
@@ -575,6 +600,10 @@ print_help (void)
 	printf (_(UT_IPv46));
 
 	printf (_("\
+ -l, --lineend=b|e|n|r\n\
+    Ending on -s and -q strings. b - both: <cr><lf> style, e - empty no\n\
+    end, n - newline: newline end, r - return: carriage return end\n\
+    Default is \"-l e -s <send> -l b -q <quit>\".\n\
  -s, --send=STRING\n\
     String to send to the server\n\
  -e, --expect=STRING\n\
@@ -620,6 +649,6 @@ Usage: %s -H host -p port [-w <warning time>] [-c <critical time>]\n\
                   [-s <send string>] [-e <expect string>] [-q <quit string>]\n\
                   [-m <maximum bytes>] [-d <delay>] [-t <timeout seconds>]\n\
                   [-r <refuse state>] [-M <mismatch state>] [-v] [-4|-6] [-j]\n\
-                  [-D <days to cert expiry>] [-S <use SSL>]\n", progname);
+                  [-D <days to cert expiry>] [-S <use SSL>] [-l <n|r|b|e>]\n", progname);
 }
 
