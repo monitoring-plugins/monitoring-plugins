@@ -45,6 +45,7 @@ int verbose = FALSE;
 char expected_address[ADDRESS_LENGTH] = "";
 int match_expected_address = FALSE;
 int expect_authority = FALSE;
+thresholds *time_thresholds = NULL;
 
 int
 main (int argc, char **argv)
@@ -183,7 +184,14 @@ main (int argc, char **argv)
     else
       multi_address = TRUE;
 
-    printf ("DNS %s: ", _("OK"));
+    result = get_status(elapsed_time, time_thresholds);
+    if (result == STATE_OK) {
+      printf ("DNS %s: ", _("OK"));
+    } else if (result == STATE_WARNING) {
+      printf ("DNS %s: ", _("WARNING"));
+    } else if (result == STATE_CRITICAL) {
+      printf ("DNS %s: ", _("CRITICAL"));
+    }
     printf (ngettext("%.3f second response time", "%.3f seconds response time", elapsed_time), elapsed_time);
     printf (_(". %s returns %s"), query_address, address);
     printf ("|%s\n", fperfdata ("time", elapsed_time, "s", FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
@@ -266,6 +274,8 @@ int
 process_arguments (int argc, char **argv)
 {
   int c;
+  char *warning = NULL;
+  char *critical = NULL;
 
   int opt_index = 0;
   static struct option long_opts[] = {
@@ -278,6 +288,8 @@ process_arguments (int argc, char **argv)
     {"reverse-server", required_argument, 0, 'r'},
     {"expected-address", required_argument, 0, 'a'},
     {"expect-authority", no_argument, 0, 'A'},
+    {"warning", no_argument, 0, 'w'},
+    {"critical", no_argument, 0, 'c'},
     {0, 0, 0, 0}
   };
 
@@ -289,7 +301,7 @@ process_arguments (int argc, char **argv)
       strcpy (argv[c], "-t");
 
   while (1) {
-    c = getopt_long (argc, argv, "hVvAt:H:s:r:a:", long_opts, &opt_index);
+    c = getopt_long (argc, argv, "hVvAt:H:s:r:a:w:c:", long_opts, &opt_index);
 
     if (c == -1 || c == EOF)
       break;
@@ -336,6 +348,12 @@ process_arguments (int argc, char **argv)
     case 'A': /* expect authority */
       expect_authority = TRUE;
       break;
+    case 'w':
+      warning = optarg;
+      break;
+    case 'c':
+      critical = optarg;
+      break;
     default: /* args not parsable */
       usage_va(_("Unknown argument - %s"), optarg);
     }
@@ -355,6 +373,8 @@ process_arguments (int argc, char **argv)
       die (STATE_UNKNOWN, _("Input buffer overflow\n"));
     strcpy (dns_server, argv[c++]);
   }
+
+  set_thresholds(&time_thresholds, warning, critical);
 
   return validate_arguments ();
 }
@@ -395,6 +415,10 @@ print_help (void)
   printf ("    %s\n", _("Optional IP-ADDRESS you expect the DNS server to return. HOST must end with ."));
   printf (" -A, --expect-authority\n");
   printf ("    %s\n", _("Optionally expect the DNS server to be authoritative for the lookup"));
+  printf (" -w, --warning=seconds\n");
+  printf ("    %s\n", _("Return warning if elapsed time exceeds value. Default off"));
+  printf (" -c, --critical=seconds\n");
+  printf ("    %s\n", _("Return critical if elapsed time exceeds value. Default off"));
 
   printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
   printf (_(UT_SUPPORT));
@@ -406,5 +430,5 @@ print_usage (void)
 {
   printf (_("Usage:"));
   
-  printf ("%s -H host [-s server] [-a expected-address] [-A] [-t timeout]\n", progname);
+  printf ("%s -H host [-s server] [-a expected-address] [-A] [-t timeout] [-w warn] [-c crit]\n", progname);
 }
