@@ -596,6 +596,13 @@ sub output {
 	}
 }
 
+sub perf_output {
+	my $self = shift;
+	$_ = $self->{output};
+	s/[^|]*\|//;
+	return $_;
+}
+
 sub testCmd {
 	my $class = shift;
 	my $command = shift or die "No command passed to testCmd";

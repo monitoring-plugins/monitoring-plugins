@@ -275,8 +275,6 @@ main (int argc, char **argv)
 
   }
 
-  asprintf (&output, "%s|%s", output, perf);
-
   if (verbose > 2)
     asprintf (&output, "%s%s", output, details);
 
@@ -290,7 +288,7 @@ main (int argc, char **argv)
     temp_list = temp_list->name_next;
   }
 
-  printf ("DISK %s%s\n", state_text (result), output);
+  printf ("DISK %s%s|%s\n", state_text (result), output, perf);
   return result;
 }
 

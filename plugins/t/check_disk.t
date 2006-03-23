@@ -22,7 +22,7 @@ my $mountpoint2_valid = getTestParameter( "NP_MOUNTPOINT2_VALID", "Path to anoth
 if ($mountpoint_valid eq "" or $mountpoint2_valid eq "") {
 	plan skip_all => "Need 2 mountpoints to test";
 } else {
-	plan tests => 26;
+	plan tests => 31;
 }
 
 $result = NPTest->testCmd( 
@@ -157,3 +157,19 @@ TODO: {
 $result = NPTest->testCmd( "./check_disk 200 0 $mountpoint_valid" );
 cmp_ok( $result->return_code, '==', 3, "Old syntax: Error with values outside percent range" );
 
+TODO: {
+	local $TODO = "Check existence of each filesystem as a directory";
+	$result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p /bob" );
+	cmp_ok( $result->return_code, '==', 2, "Checking /bob - return error because /bob does not exist" );
+}
+
+$result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p /" );
+my $root_output = $result->output;
+
+$result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p /etc" );
+cmp_ok( $result->return_code, '==', 0, "Checking /etc - should return info for /" );
+cmp_ok( $result->output, 'eq', $root_output, "check_disk /etc gives same as check_disk /");
+
+$result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p / -p /bob" );
+cmp_ok( $result->return_code, '==', 2, "Checking / and /bob gives critical");
+unlike( $result->perf_output, 'm#/bob#', "perf data does not have /bob in it");
