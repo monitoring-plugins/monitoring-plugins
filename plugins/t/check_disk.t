@@ -172,4 +172,4 @@ cmp_ok( $result->output, 'eq', $root_output, "check_disk /etc gives same as chec
 
 $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p / -p /bob" );
 cmp_ok( $result->return_code, '==', 2, "Checking / and /bob gives critical");
-unlike( $result->perf_output, 'm#/bob#', "perf data does not have /bob in it");
+unlike( $result->perf_output, '/\/bob/', "perf data does not have /bob in it");
