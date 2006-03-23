@@ -22,7 +22,7 @@ my $mountpoint2_valid = getTestParameter( "NP_MOUNTPOINT2_VALID", "Path to anoth
 if ($mountpoint_valid eq "" or $mountpoint2_valid eq "") {
 	plan skip_all => "Need 2 mountpoints to test";
 } else {
-	plan tests => 31;
+	plan tests => 32;
 }
 
 $result = NPTest->testCmd( 
@@ -157,11 +157,9 @@ TODO: {
 $result = NPTest->testCmd( "./check_disk 200 0 $mountpoint_valid" );
 cmp_ok( $result->return_code, '==', 3, "Old syntax: Error with values outside percent range" );
 
-TODO: {
-	local $TODO = "Check existence of each filesystem as a directory";
-	$result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p /bob" );
-	cmp_ok( $result->return_code, '==', 2, "Checking /bob - return error because /bob does not exist" );
-}
+$result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p /bob" );
+cmp_ok( $result->return_code, '==', 2, "Checking /bob - return error because /bob does not exist" );
+cmp_ok( $result->output, 'eq', 'DISK CRITICAL - /bob does not exist', 'Output OK');
 
 $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p /" );
 my $root_output = $result->output;

@@ -599,8 +599,8 @@ sub output {
 sub perf_output {
 	my $self = shift;
 	$_ = $self->{output};
-	s/[^|]*\|//;
-	return $_;
+	/\|(.*)$/;
+	return $1 || "";
 }
 
 sub testCmd {

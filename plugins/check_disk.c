@@ -305,6 +305,7 @@ process_arguments (int argc, char **argv)
   struct name_list **dptail = &dp_exclude_list;
   struct name_list *temp_list;
   int result = OK;
+  struct stat *stat_buf;
 
   unsigned long l;
 
@@ -553,7 +554,13 @@ process_arguments (int argc, char **argv)
 
   if (path_select_list) {
     temp_list = path_select_list;
+    stat_buf = malloc(sizeof stat_buf);
     while (temp_list) {
+      /* Stat each entry to check that dir exists */
+      if (stat (temp_list->name, &stat_buf[0])) {
+	printf("DISK %s - ", _("CRITICAL"));
+        die (STATE_CRITICAL, _("%s does not exist\n"), temp_list->name);
+      }
       if (validate_arguments (temp_list->w_df,
                               temp_list->c_df,
                               temp_list->w_dfp,
@@ -564,6 +571,7 @@ process_arguments (int argc, char **argv)
         result = ERROR;
       temp_list = temp_list->name_next;
     }
+    free(stat_buf);
     return result;
   } else {
     return validate_arguments (w_df, c_df, w_dfp, c_dfp, w_idfp, c_idfp, NULL);
