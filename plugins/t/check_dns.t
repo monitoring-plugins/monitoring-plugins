@@ -18,19 +18,19 @@ my $successOutput = '/DNS OK: [\.0-9]+ seconds response time/';
 my $hostname_valid = getTestParameter( 
 			"NP_HOSTNAME_VALID",
 			"A valid (known to DNS) hostname",
-			"www.apple.com"
+			"apple.com"
 			);
 
 my $hostname_valid_ip = getTestParameter(
 			"NP_HOSTNAME_VALID_IP",
 			"The IP address of the valid hostname $hostname_valid",
-			"17.112.152.32"
+			"17.254.3.183"
 			);
 
 my $hostname_valid_reverse = getTestParameter(
 			"NP_HOSTNAME_VALID_REVERSE",
 			"The hostname of $hostname_valid_ip",
-			$hostname_valid
+			$hostname_valid."."
 			);
 
 my $hostname_invalid = getTestParameter( 
