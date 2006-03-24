@@ -198,12 +198,16 @@ main (int argc, char **argv)
 
 	if(flags & FLAG_VERBOSE) {
 		printf("Using service %s\n", SERVICE);
-		printf("Port: %d\n", PORT);
+		printf("Port: %d\n", server_port);
 		printf("flags: 0x%x\n", (int)flags);
 	}
 
 	if(EXPECT && !server_expect_count)
 		server_expect_count++;
+
+	if(PROTOCOL==IPPROTO_UDP && !(server_expect_count && server_send)){
+		usage(_("With UDP checks, a send/expect string must be specified."));
+	}
 
 	/* set up the timer */
 	signal (SIGALRM, socket_timeout_alarm_handler);

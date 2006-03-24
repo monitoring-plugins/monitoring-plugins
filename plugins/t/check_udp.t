@@ -6,28 +6,51 @@
 #
 
 use strict;
-use Test;
+use Test::More;
 use NPTest;
 
-use vars qw($tests);
-BEGIN {$tests = 3; plan tests => $tests} #TODO# Update to 4 when the commented out test is fixed
+my $res;
 
-my $host_udp_time      = getTestParameter( "host_udp_time",      "NP_HOST_UDP_TIME",      "localhost",
-                                           "A host providing the UDP Time Service" );
+plan tests => 14;
 
-my $host_nonresponsive = getTestParameter( "host_nonresponsive", "NP_HOST_NONRESPONSIVE", "10.0.0.1",
-                                           "The hostname of system not responsive to network requests" );
+$res = NPTest->testCmd( "./check_udp2 -H localhost -p 3333" );
+cmp_ok( $res->return_code, '==', 3, "Need send/expect string");
+like  ( $res->output, '/With UDP checks, a send/expect string must be specified./', "Output OK");
 
-my $hostname_invalid   = getTestParameter( "hostname_invalid",   "NP_HOSTNAME_INVALID",   "nosuchhost",
-                                           "An invalid (not known to DNS) hostname" );
+$res = NPTest->testCmd( "./check_udp2 -H localhost -p 3333 -s send" );
+cmp_ok( $res->return_code, '==', 3, "Need expect string");
+like  ( $res->output, '/With UDP checks, a send/expect string must be specified./', "Output OK");
 
-my $successOutput = '/^Connection accepted on port [0-9]+ - [0-9]+ second response time$/';
+$res = NPTest->testCmd( "./check_udp2 -H localhost -p 3333 -e expect" );
+cmp_ok( $res->return_code, '==', 3, "Need send string");
+like  ( $res->output, '/With UDP checks, a send/expect string must be specified./', "Output OK");
 
-my $t;
+$res = NPTest->testCmd( "./check_udp2 -H localhost -p 3333 -s foo -e bar" );
+cmp_ok( $res->return_code, '==', 2, "Errors correctly because no udp service running" );
+like  ( $res->output, '/No data received from host/', "Output OK");
 
-$t += checkCmd( "./check_udp -H $host_udp_time      -p 37 -wt 300 -ct 600",       0, $successOutput );
-$t += checkCmd( "./check_udp    $host_nonresponsive -p 37 -wt 0   -ct   0 -to 1", 2 );
-#TODO# $t += checkCmd( "./check_udp    $hostname_invalid   -p 37 -wt 0   -ct   0 -to 1", 2 ); # Currently returns 0 (ie success)
+SKIP: {
+	skip "No netcat available", 6 unless (system("which nc > /dev/null") == 0);
+	open (NC, "echo 'barbar' | nc -l -p 3333 -u |");
+	sleep 1;
+	$res = NPTest->testCmd( "./check_udp2 -H localhost -p 3333 -s '' -e barbar -4" );
+	cmp_ok( $res->return_code, '==', 0, "Got barbar response back" );
+	like  ( $res->output, '/\[barbar\]/', "Output OK");
+	close NC;
 
-exit(0) if defined($Test::Harness::VERSION);
-exit($tests - $t);
+	my $pid = open(NC, "nc -l -p 3333 -u |");	# Start up a udp server listening on port 3333
+	alarm(7);
+	sleep 1;
+	$SIG{ALRM} = sub { kill 'INT', $pid };
+	my $start = time;
+	$res = NPTest->testCmd( "./check_udp2 -H localhost -p 3333 -s foofoo -e barbar -t 5 -4" );
+	my $duration = time - $start;
+	cmp_ok( $res->return_code, '==', '2', "Hung waiting for response");
+	like  ( $res->output, '/Socket timeout after 5 seconds/', "Timeout message");
+	cmp_ok( $duration, '==', 5, "Timeout exactly right");
+	my $read_nc = <NC>;
+	# nc gets killed here - I think expects a linefeed from stdin, so doesn't exit itself
+	close NC;
+	cmp_ok( $read_nc, 'eq', "foofoo", "Data received correctly" );
+}
+
