@@ -6,37 +6,46 @@
 #
 
 use strict;
-use Test;
+use Test::More;
 use NPTest;
 
-use vars qw($tests);
-BEGIN {$tests = 5; plan tests => $tests}
+plan skip_all => "check_hpjd not compiled" unless (-x "check_hpjd");
+
+plan tests => 5;
 
 my $successOutput = '/^Printer ok - /';
 my $failureOutput = '/Timeout: No [Rr]esponse from /';
 
-my $host_tcp_hpjd      = getTestParameter( "host_tcp_hpjd",      "NP_HOST_TCP_HPJD",      undef,
-					   "A host (usually a printer) providing the HP-JetDirect Services" );
+my $host_tcp_hpjd = getTestParameter( 
+			"NP_HOST_TCP_HPJD",
+			"A host (usually a printer) providing the HP-JetDirect Services"
+			);
 
-my $host_nonresponsive = getTestParameter( "host_nonresponsive", "NP_HOST_NONRESPONSIVE", "10.0.0.1",
-					   "The hostname of system not responsive to network requests" );
+my $host_nonresponsive = getTestParameter( 
+			"NP_HOST_NONRESPONSIVE",
+			"The hostname of system not responsive to network requests",
+			"10.0.0.1",
+			);
 
-my $hostname_invalid   = getTestParameter( "hostname_invalid",   "NP_HOSTNAME_INVALID",   "nosuchhost",
-                                           "An invalid (not known to DNS) hostname" );
+my $hostname_invalid = getTestParameter( 
+			"NP_HOSTNAME_INVALID",
+			"An invalid (not known to DNS) hostname",
+			"nosuchhost",
+			);
 
-my $t;
+my $res;
 
-if ( -x "./check_hpjd" )
-{
-  $t += checkCmd( "./check_hpjd $host_tcp_hpjd",      0, $successOutput );
-  $t += checkCmd( "./check_hpjd $host_nonresponsive", 2, $failureOutput );
-  $t += checkCmd( "./check_hpjd $hostname_invalid",   3 );
+SKIP: {
+	skip "No HP JetDirect defined", 2 unless $host_tcp_hpjd;
+	$res = NPTest->testCmd("./check_hpjd $host_tcp_hpjd");
+	cmp_ok( $res->return_code, '==', 0, "Jetdirect responding" );
+	like  ( $res->output, $successOutput, "Output correct" );
 }
-else
-{
-  $t += skipMissingCmd( "./check_hpjd", $tests );
-}
 
-exit(0) if defined($Test::Harness::VERSION);
-exit($tests - $t);
+$res = NPTest->testCmd("./check_hpjd $host_nonresponsive");
+cmp_ok( $res->return_code, 'eq', 2, "Host not responding");
+like  ( $res->output, $failureOutput, "Output OK" );
+
+$res = NPTest->testCmd("./check_hpjd $hostname_invalid");
+cmp_ok( $res->return_code, 'eq', 3, "Hostname invalid");
 
