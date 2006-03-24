@@ -253,6 +253,16 @@ process_arguments (int argc, char **argv)
     case 'n': /* do not show html link */
       display_html = FALSE;
       break;
+    case 'C': /* Check SSL cert validity */
+#ifdef HAVE_SSL
+      if (!is_intnonneg (optarg))
+        usage2 (_("Invalid certificate expiration period"), optarg);
+      else {
+        days_till_exp = atoi (optarg);
+        check_cert = TRUE;
+      }
+     /* Fall through to -S option */
+#endif
     case 'S': /* use SSL */
 #ifndef HAVE_SSL
       usage4 (_("Invalid option - SSL is not available"));
@@ -260,18 +270,6 @@ process_arguments (int argc, char **argv)
       use_ssl = TRUE;
       if (specify_port == FALSE)
         server_port = HTTPS_PORT;
-      break;
-    case 'C': /* Check SSL cert validity */
-#ifdef USE_OPENSSL
-      if (!is_intnonneg (optarg))
-        usage2 (_("Invalid certificate expiration period"), optarg);
-      else {
-        days_till_exp = atoi (optarg);
-        check_cert = TRUE;
-      }
-#else
-      usage4 (_("Invalid option - SSL is not available"));
-#endif
       break;
     case 'f': /* onredirect */
       if (!strcmp (optarg, "follow"))
