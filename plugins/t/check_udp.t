@@ -38,10 +38,11 @@ SKIP: {
 	like  ( $res->output, '/\[barbar\]/', "Output OK");
 	close NC;
 
-	my $pid = open(NC, "nc -l -p 3333 -u |");	# Start up a udp server listening on port 3333
-	alarm(7);
-	sleep 1;
-	$SIG{ALRM} = sub { kill 'INT', $pid };
+	# Start up a udp server listening on port 3333, quit after 3 seconds
+	# Otherwise will hang at close
+	my $pid = open(NC, "nc -l -p 3333 -u -w 3 </dev/null |");
+	sleep 1;	# Allow nc to startup
+
 	my $start = time;
 	$res = NPTest->testCmd( "./check_udp2 -H localhost -p 3333 -s foofoo -e barbar -t 5 -4" );
 	my $duration = time - $start;
@@ -49,7 +50,6 @@ SKIP: {
 	like  ( $res->output, '/Socket timeout after 5 seconds/', "Timeout message");
 	cmp_ok( $duration, '==', 5, "Timeout exactly right");
 	my $read_nc = <NC>;
-	# nc gets killed here - I think expects a linefeed from stdin, so doesn't exit itself
 	close NC;
 	cmp_ok( $read_nc, 'eq', "foofoo", "Data received correctly" );
 }
