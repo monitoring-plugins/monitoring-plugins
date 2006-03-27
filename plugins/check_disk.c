@@ -554,7 +554,7 @@ process_arguments (int argc, char **argv)
 
   if (path_select_list) {
     temp_list = path_select_list;
-    stat_buf = malloc(sizeof stat_buf);
+    stat_buf = malloc(sizeof *stat_buf);
     while (temp_list) {
       /* Stat each entry to check that dir exists */
       if (stat (temp_list->name, &stat_buf[0])) {
