@@ -38,6 +38,8 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #define APTGET_DISTUPGRADE "/usr/bin/apt-get -o 'Debug::NoLocking=true' -s -qq dist-upgrade"
 #define APTGET_UPDATE "/usr/bin/apt-get -q update"
 
+#define SECURITY_RE "^[^\\(]*\\([^ ]* (Debian-Security:|Ubuntu:[^/]*/[^-]*-security)"
+
 /* some standard functions */
 int process_arguments(int, char **);
 void print_help(void);
@@ -46,7 +48,7 @@ void print_usage(void);
 /* run an apt-get update */
 int run_update(void);
 /* run an apt-get upgrade */
-int run_upgrade(int *pkgcount);
+int run_upgrade(int *pkgcount, int *secpkgcount);
 /* add another clause to a regexp */
 char* add_to_regexp(char *expr, const char *next);
 
@@ -62,7 +64,7 @@ static int stderr_warning = 0;   /* if a cmd issued output on stderr */
 static int exec_warning = 0;     /* if a cmd exited non-zero */
 
 int main (int argc, char **argv) {
-	int result=STATE_UNKNOWN, packages_available=0;
+	int result=STATE_UNKNOWN, packages_available=0, sec_count=0;
 
 	if (process_arguments(argc, argv) == ERROR)
 		usage_va(_("Could not parse arguments"));
@@ -79,18 +81,21 @@ int main (int argc, char **argv) {
 	if(do_update) result = run_update();
 
 	/* apt-get upgrade */
-	result = max_state(result, run_upgrade(&packages_available));
+	result = max_state(result, run_upgrade(&packages_available, &sec_count));
 
-	if(packages_available > 0){
+	if(sec_count > 0){
+		result = max_state(result, STATE_CRITICAL);
+	} else if(packages_available > 0){
 		result = max_state(result, STATE_WARNING);
 	} else {
 		result = max_state(result, STATE_OK);
 	}
 
-	printf("APT %s: %d packages available for %s.%s%s%s%s\n", 
+	printf("APT %s: %d packages available for %s (%d critical updates). %s%s%s%s\n", 
 	       state_text(result),
 	       packages_available,
 	       (dist_upgrade)?"dist-upgrade":"upgrade",
+		   sec_count,
 	       (stderr_warning)?" warnings detected":"",
 	       (stderr_warning && exec_warning)?",":"",
 	       (exec_warning)?" errors detected":"",
@@ -193,10 +198,10 @@ void print_usage(void){
 }
 
 /* run an apt-get upgrade */
-int run_upgrade(int *pkgcount){
-	int i=0, result=STATE_UNKNOWN, regres=0, pc=0;
+int run_upgrade(int *pkgcount, int *secpkgcount){
+	int i=0, result=STATE_UNKNOWN, regres=0, pc=0, spc=0;
 	struct output chld_out, chld_err;
-	regex_t ireg, ereg;
+	regex_t ireg, ereg, sreg;
 	char rerrbuf[64];
 	const char *default_include_expr="^Inst";
 
@@ -224,6 +229,13 @@ int run_upgrade(int *pkgcount){
 			    progname, rerrbuf);
 		}
 	}
+	regres=regcomp(&sreg, SECURITY_RE, REG_EXTENDED);
+	if(regres!=0) {
+		regerror(regres, &ereg, rerrbuf, 64);
+		die(STATE_UNKNOWN, "%s: Error compiling regexp: %s",
+		    progname, rerrbuf);
+	}
+
 
 
 	/* run the upgrade */
@@ -262,6 +274,9 @@ int run_upgrade(int *pkgcount){
 			if(do_exclude==NULL ||
 			   regexec(&ereg, chld_out.line[i], 0, NULL, 0)!=0){
 				pc++;
+				if(regexec(&sreg, chld_out.line[i], 0, NULL, 0)==0){
+					spc++;
+				}
 				if(verbose){
 					printf("*%s\n", chld_out.line[i]);
 				}
@@ -269,6 +284,7 @@ int run_upgrade(int *pkgcount){
 		}
 	}
 	*pkgcount=pc;
+	*secpkgcount=spc;
 
 	/* If we get anything on stderr, at least set warning */
 	if(chld_err.buflen){
