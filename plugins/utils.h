@@ -132,6 +132,8 @@ char *fperfdata (const char *,
  int,
  double);
 
+char *np_escaped_string (const char *);
+
 /* The idea here is that, although not every plugin will use all of these, 
    most will or should.  Therefore, for consistency, these very common 
    options should have only these meanings throughout the overall suite */

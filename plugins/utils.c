@@ -727,3 +727,33 @@ char *fperfdata (const char *label,
 
 	return data;
 }
+
+char *np_escaped_string (const char *string) {
+	char *data;
+	int i, j=0;
+	data = strdup(string);
+	for (i=0; data[i]; i++) {
+		if (data[i] == '\\') {
+			switch(data[++i]) {
+				case 'n':
+					data[j++] = '\n';
+					break;
+				case 'r':
+					data[j++] = '\r';
+					break;
+				case 't':
+					data[j++] = '\t';
+					break;
+				case '\\':
+					data[j++] = '\\';
+					break;
+				default:
+					data[j++] = data[i];
+			}
+		} else {
+			data[j++] = data[i];
+		}
+	}
+	data[j] = '\0';
+	return data;
+}

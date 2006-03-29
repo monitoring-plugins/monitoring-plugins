@@ -34,7 +34,7 @@ main (int argc, char **argv)
 	thresholds *thresholds = NULL;
 	int	rc;
 
-	plan_tests(66);
+	plan_tests(73);
 
 	range = parse_range_string("6");
 	ok( range != NULL, "'6' is valid range");
@@ -135,6 +135,35 @@ main (int argc, char **argv)
 	ok( get_status(15.3, thresholds) == STATE_OK, "15.3 - ok");
 	ok( get_status(30.0001, thresholds) == STATE_WARNING, "30.0001 - warning");
 	ok( get_status(69, thresholds) == STATE_CRITICAL, "69 - critical");
+
+	char *test;
+	test = np_escaped_string("bob\\n");
+	ok( strcmp(test, "bob\n") == 0, "bob\\n ok");
+	free(test);
+
+	test = np_escaped_string("rhuba\\rb");
+	ok( strcmp(test, "rhuba\rb") == 0, "rhuba\\rb okay");
+	free(test);
+
+	test = np_escaped_string("ba\\nge\\r");
+	ok( strcmp(test, "ba\nge\r") == 0, "ba\\nge\\r okay");
+	free(test);
+
+	test = np_escaped_string("\\rabbi\\t");
+	ok( strcmp(test, "\rabbi\t") == 0, "\\rabbi\\t okay");
+	free(test);
+
+	test = np_escaped_string("and\\\\or");
+	ok( strcmp(test, "and\\or") == 0, "and\\\\or okay");
+	free(test);
+
+	test = np_escaped_string("bo\\gus");
+	ok( strcmp(test, "bogus") == 0, "bo\\gus okay");
+	free(test);
+
+	test = np_escaped_string("everything");
+	ok( strcmp(test, "everything") == 0, "everything okay");
+	free(test);
 
 	return exit_status();
 }

@@ -54,8 +54,6 @@ static int server_port = 0;
 static char *server_address = NULL;
 static char *server_send = NULL;
 static char *server_quit = NULL;
-char *lineend = "";
-char *lineendquit = "\r\n";
 static char **server_expect;
 static size_t server_expect_count = 0;
 static size_t maxbytes = 0;
@@ -246,6 +244,12 @@ main (int argc, char **argv)
 	}
 
 	if(flags & FLAG_VERBOSE) {
+		if (server_send) {
+			printf("Send string: %s\n", server_send);
+		}
+		if (server_quit) {
+			printf("Quit string: %s\n", server_quit);
+		}
 		printf("server_expect_count: %d\n", (int)server_expect_count);
 		for(i = 0; i < server_expect_count; i++)
 			printf("\t%d: %s\n", i, server_expect[i]);
@@ -364,6 +368,7 @@ static int
 process_arguments (int argc, char **argv)
 {
 	int c;
+	int escape = 0;
 
 	int option = 0;
 	static struct option longopts[] = {
@@ -375,7 +380,7 @@ process_arguments (int argc, char **argv)
 		{"timeout", required_argument, 0, 't'},
 		{"protocol", required_argument, 0, 'P'},
 		{"port", required_argument, 0, 'p'},
-		{"lineend", required_argument, 0, 'l'},
+		{"escape", required_argument, 0, 'E'},
 		{"send", required_argument, 0, 's'},
 		{"expect", required_argument, 0, 'e'},
 		{"maxbytes", required_argument, 0, 'm'},
@@ -417,7 +422,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVv46H:l:s:e:q:m:c:w:t:p:C:W:d:Sr:jD:M:",
+		c = getopt_long (argc, argv, "+hVv46EH:s:e:q:m:c:w:t:p:C:W:d:Sr:jD:M:",
 		                 longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)
@@ -485,30 +490,14 @@ process_arguments (int argc, char **argv)
 			else
 				server_port = atoi (optarg);
 			break;
-		case 'l':
-			switch (*optarg) {
-				case 'n':
-				  lineend = strdup("\n");
-				  lineendquit = lineend;
-				  break;
-				case 'r':
-				  lineend = strdup("\r");
-				  lineendquit = lineend;
-				  break;
-				case 'b':
-				  lineend = strdup("\r\n");
-				  lineendquit = lineend;
-				  break;
-				case 'e':
-				  lineend = strdup("");
-				  lineendquit = lineend;
-				  break;
-				default:
-				  usage4 (_("Unrecognized option to -l, must be r, n, b or e"));
-                        }
+		case 'E':
+			escape = 1;
 			break;
 		case 's':
-		        asprintf(&server_send, "%s%s", optarg, lineend);
+			if (escape)
+				server_send = np_escaped_string(optarg);
+			else
+				asprintf(&server_send, "%s", optarg);
 			break;
 		case 'e': /* expect string (may be repeated) */
 			EXPECT = NULL;
@@ -525,7 +514,10 @@ process_arguments (int argc, char **argv)
 			else
 				maxbytes = strtol (optarg, NULL, 0);
 		case 'q':
-			asprintf(&server_quit, "%s%s", optarg, lineendquit);
+			if (escape)
+				server_quit = np_escaped_string(optarg);
+			else
+				asprintf(&server_quit, "%s\r\n", optarg);
 			break;
 		case 'r':
 			if (!strncmp(optarg,"ok",2))
@@ -604,10 +596,9 @@ print_help (void)
 	printf (_(UT_IPv46));
 
 	printf (_("\
- -l, --lineend=b|e|n|r\n\
-    Ending on -s and -q strings. b - both: <cr><lf> style, e - empty no\n\
-    end, n - newline: newline end, r - return: carriage return end\n\
-    Default is \"-l e -s <send> -l b -q <quit>\".\n\
+ -E, --escape\n\
+    Can use \\n, \\r, \\t or \\ in send or quit string.\n\
+    Default: nothing added to send, \\r\\n added to end of quit\n\
  -s, --send=STRING\n\
     String to send to the server\n\
  -e, --expect=STRING\n\
@@ -653,6 +644,6 @@ Usage: %s -H host -p port [-w <warning time>] [-c <critical time>]\n\
                   [-s <send string>] [-e <expect string>] [-q <quit string>]\n\
                   [-m <maximum bytes>] [-d <delay>] [-t <timeout seconds>]\n\
                   [-r <refuse state>] [-M <mismatch state>] [-v] [-4|-6] [-j]\n\
-                  [-D <days to cert expiry>] [-S <use SSL>] [-l <n|r|b|e>]\n", progname);
+                  [-D <days to cert expiry>] [-S <use SSL>] [-E]\n", progname);
 }
 
