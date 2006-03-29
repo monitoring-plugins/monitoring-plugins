@@ -13,7 +13,7 @@ plan skip_all => "check_dns not compiled" unless (-x "check_dns");
 
 plan tests => 13;
 
-my $successOutput = '/DNS OK: [\.0-9]+ seconds response time/';
+my $successOutput = '/DNS OK: [\.0-9]+ seconds? response time/';
 
 my $hostname_valid = getTestParameter( 
 			"NP_HOSTNAME_VALID",
