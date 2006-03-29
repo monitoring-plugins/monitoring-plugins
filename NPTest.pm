@@ -609,10 +609,13 @@ sub testCmd {
 	my $object = $class->new;
 	
 	my $output = `$command`;
-	chomp $output;
-	
-	$object->output($output);
 	$object->return_code($? >> 8);
+	$_ = $? & 127;
+	if ($_) {
+		die "Got signal $_ for command $command";
+	}
+	chomp $output;
+	$object->output($output);
 
 	if ($ENV{'NPTEST_DEBUG'}) {
 		my ($pkg, $file, $line) = caller(0);
