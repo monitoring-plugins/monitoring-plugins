@@ -45,7 +45,8 @@ $res = NPTest->testCmd(
 cmp_ok( $res->return_code, '==', 2, "Webserver $hostname_invalid not valid" );
 # The first part of the message comes from the OS catalogue, so cannot check this.
 # On Debian, it is Name or service not known, on Darwin, it is No address associated with nodename
-like( $res->output, "/Unable to open TCP socket/", "Output OK");
+# Is also possible to get a socket timeout if DNS is not responding fast enough
+like( $res->output, "/Unable to open TCP socket|Socket timeout after/", "Output OK");
 
 $res = NPTest->testCmd(
 	"./check_http --ssl www.verisign.com"
