@@ -65,7 +65,7 @@ enum metric metric = METRIC_PROCS;
 
 int verbose = 0;
 int uid;
-int ppid;
+pid_t ppid;
 int vsz;
 int rss;
 float pcpu;
@@ -87,8 +87,8 @@ main (int argc, char **argv)
 
 	pid_t mypid = 0;
 	int procuid = 0;
-	int procpid = 0;
-	int procppid = 0;
+	pid_t procpid = 0;
+	pid_t procppid = 0;
 	int procvsz = 0;
 	int procrss = 0;
 	int procseconds = 0;
