@@ -5,6 +5,8 @@ This file documents the major additions and syntax changes between releases.
 	SSL plugins work with gnutls as well as OpenSSL
 	check_mysql_query added to run arbitrary SQL commands, with threshold checking
 	libtool now required for development systems
+	Notice: check_udp (compiled from check_udp.c) will be deprecated in the next release. 
+	  check_udp2 should be used instead and will be renamed to check_udp
 
 1.4.2
 	Fix for Redhat ES4 for check_dns and check_dig
