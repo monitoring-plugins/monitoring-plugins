@@ -89,7 +89,8 @@ double critical_time = 0;
 int check_critical_time = FALSE;
 char user_auth[MAX_INPUT_BUFFER] = "";
 int display_html = FALSE;
-char *http_opt_headers;
+char **http_opt_headers;
+int http_opt_headers_count = 0;
 int onredirect = STATE_OK;
 int use_ssl = FALSE;
 int verbose = FALSE;
@@ -245,7 +246,12 @@ process_arguments (int argc, char **argv)
       asprintf (&user_agent, "User-Agent: %s", optarg);
       break;
     case 'k': /* Additional headers */
-      asprintf (&http_opt_headers, "%s", optarg);
+      if (http_opt_headers_count == 0)
+        http_opt_headers = malloc (sizeof (char *) * (++http_opt_headers_count));
+      else
+        http_opt_headers = realloc (http_opt_headers, sizeof (char *) * (++http_opt_headers_count));
+      http_opt_headers[http_opt_headers_count - 1] = optarg;
+      //asprintf (&http_opt_headers, "%s", optarg);
       break;
     case 'L': /* show html link */
       display_html = TRUE;
@@ -767,9 +773,12 @@ check_http (void)
     asprintf (&buf, "%sHost: %s\r\n", buf, host_name);
 
   /* optionally send any other header tag */
-  if (http_opt_headers) {
-    for ((pos = strtok(http_opt_headers, INPUT_DELIMITER)); pos; (pos = strtok(NULL, INPUT_DELIMITER)))
-      asprintf (&buf, "%s%s\r\n", buf, pos);
+  if (http_opt_headers_count) {
+    for (i = 0; i < http_opt_headers_count ; i++) {
+      for ((pos = strtok(http_opt_headers[i], INPUT_DELIMITER)); pos; (pos = strtok(NULL, INPUT_DELIMITER)))
+        asprintf (&buf, "%s%s\r\n", buf, pos);
+    }
+    free(http_opt_headers);
   }
 
   /* optionally send the authentication info */
@@ -1277,7 +1286,7 @@ certificate expiration times."));
  -A, --useragent=STRING\n\
    String to be sent in http header as \"User Agent\"\n\
  -k, --header=STRING\n\
-   Any other tags to be sent in http header, separated by semicolon\n\
+   Any other tags to be sent in http header. Use multiple times for additional headers\n\
  -L, --link=URL\n\
    Wrap output in HTML link (obsoleted by urlize)\n\
  -f, --onredirect=<ok|warning|critical|follow>\n\

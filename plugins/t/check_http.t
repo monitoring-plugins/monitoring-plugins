@@ -9,7 +9,7 @@ use strict;
 use Test::More;
 use NPTest;
 
-plan tests => 12;
+plan tests => 14;
 
 my $successOutput = '/OK.*HTTP.*second/';
 
@@ -32,6 +32,16 @@ $res = NPTest->testCmd(
 	);
 cmp_ok( $res->return_code, '==', 0, "Webserver $host_tcp_http responded" );
 like( $res->output, $successOutput, "Output OK" );
+
+$res = NPTest->testCmd(
+	"./check_http $host_tcp_http -wt 300 -ct 600 -v -v -v -k 'bob:there;fred:here'"
+	);
+like( $res->output, '/bob:there\r\nfred:here\r\n/', "Got headers, delimited with ';'" );
+
+$res = NPTest->testCmd(
+	"./check_http $host_tcp_http -wt 300 -ct 600 -v -v -v -k 'bob:there;fred:here' -k 'carl:frown'"
+	);
+like( $res->output, '/bob:there\r\nfred:here\r\ncarl:frown\r\n/', "Got headers with multiple -k options" );
 
 $res = NPTest->testCmd(
 	"./check_http $host_nonresponsive -wt 1 -ct 2"
