@@ -32,12 +32,18 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "utils.h"
 #include <regex.h>
 
-/* for now define the various apt calls as constants.  this may need
- * to change later. */
-#define APTGET_UPGRADE "/usr/bin/apt-get -o 'Debug::NoLocking=true' -s -qq upgrade"
-#define APTGET_DISTUPGRADE "/usr/bin/apt-get -o 'Debug::NoLocking=true' -s -qq dist-upgrade"
-#define APTGET_UPDATE "/usr/bin/apt-get -q update"
+/* some constants */
+typedef enum { UPGRADE, DIST_UPGRADE, NO_UPGRADE } upgrade_type;
 
+/* the default opts can be overridden via the cmdline */
+#define UPGRADE_DEFAULT_OPTS "-o 'Debug::NoLocking=true' -s -qq"
+#define UPDATE_DEFAULT_OPTS "-q"
+/* until i commit the configure.in patch which gets this, i'll define
+ * it here as well */
+#ifndef PATH_TO_APTGET
+# define PATH_TO_APTGET "/usr/bin/apt-get"
+#endif /* PATH_TO_APTGET */
+/* the RE that catches security updates */
 #define SECURITY_RE "^[^\\(]*\\([^ ]* (Debian-Security:|Ubuntu:[^/]*/[^-]*-security)"
 
 /* some standard functions */
@@ -45,6 +51,8 @@ int process_arguments(int, char **);
 void print_help(void);
 void print_usage(void);
 
+/* construct the appropriate apt-get cmdline */
+char* construct_cmdline(upgrade_type u, const char *opts);
 /* run an apt-get update */
 int run_update(void);
 /* run an apt-get upgrade */
@@ -55,9 +63,12 @@ char* add_to_regexp(char *expr, const char *next);
 /* configuration variables */
 static int verbose = 0;      /* -v */
 static int do_update = 0;    /* whether to call apt-get update */
-static int dist_upgrade = 0; /* whether to call apt-get dist-upgrade */
-static char* do_include = NULL;  /* regexp to only include certain packages */
-static char* do_exclude = NULL;  /* regexp to only exclude certain packages */
+static upgrade_type upgrade = UPGRADE; /* which type of upgrade to do */
+static char *upgrade_opts = NULL; /* options to override defaults for upgrade */
+static char *update_opts = NULL; /* options to override defaults for update */
+static char *do_include = NULL;  /* regexp to only include certain packages */
+static char *do_exclude = NULL;  /* regexp to only exclude certain packages */
+static char *do_critical = NULL;  /* regexp specifying critical packages */
 
 /* other global variables */
 static int stderr_warning = 0;   /* if a cmd issued output on stderr */
@@ -94,7 +105,7 @@ int main (int argc, char **argv) {
 	printf("APT %s: %d packages available for %s (%d critical updates). %s%s%s%s\n", 
 	       state_text(result),
 	       packages_available,
-	       (dist_upgrade)?"dist-upgrade":"upgrade",
+	       (upgrade==DIST_UPGRADE)?"dist-upgrade":"upgrade",
 		   sec_count,
 	       (stderr_warning)?" warnings detected":"",
 	       (stderr_warning && exec_warning)?",":"",
@@ -114,15 +125,18 @@ int process_arguments (int argc, char **argv) {
 		{"help", no_argument, 0, 'h'},
 		{"verbose", no_argument, 0, 'v'},
 		{"timeout", required_argument, 0, 't'},
-		{"update", no_argument, 0, 'u'},
-		{"dist-upgrade", no_argument, 0, 'd'},
-		{"include", no_argument, 0, 'i'},
-		{"exclude", no_argument, 0, 'e'},
+		{"update", optional_argument, 0, 'u'},
+		{"upgrade", optional_argument, 0, 'U'},
+		{"no-upgrade", no_argument, 0, 'n'},
+		{"dist-upgrade", optional_argument, 0, 'd'},
+		{"include", required_argument, 0, 'i'},
+		{"exclude", required_argument, 0, 'e'},
+		{"critical", required_argument, 0, 'c'},
 		{0, 0, 0, 0}
 	};
 
 	while(1) {
-		c = getopt_long(argc, argv, "hVvt:udi:e:", longopts, NULL);
+		c = getopt_long(argc, argv, "hVvt:u::U::d::ni:e:c:", longopts, NULL);
 
 		if(c == -1 || c == EOF || c == 1) break;
 
@@ -140,16 +154,37 @@ int process_arguments (int argc, char **argv) {
 			timeout_interval=atoi(optarg);
 			break;
 		case 'd':
-			dist_upgrade=1;
+			upgrade=DIST_UPGRADE;
+			if(optarg!=NULL){
+				upgrade_opts=strdup(optarg);
+				if(upgrade_opts==NULL) die(STATE_UNKNOWN, "strdup failed");
+			}
+			break;
+		case 'U':
+			upgrade=UPGRADE;
+			if(optarg!=NULL){
+				upgrade_opts=strdup(optarg);
+				if(upgrade_opts==NULL) die(STATE_UNKNOWN, "strdup failed");
+			}
+			break;
+		case 'n':
+			upgrade=NO_UPGRADE;
 			break;
 		case 'u':
 			do_update=1;
+			if(optarg!=NULL){
+				update_opts=strdup(optarg);
+				if(update_opts==NULL) die(STATE_UNKNOWN, "strdup failed");
+			}
 			break;
 		case 'i':
 			do_include=add_to_regexp(do_include, optarg);
 			break;
 		case 'e':
 			do_exclude=add_to_regexp(do_exclude, optarg);
+			break;
+		case 'c':
+			do_critical=add_to_regexp(do_critical, optarg);
 			break;
 		default:
 			/* print short usage statement if args not parsable */
@@ -174,27 +209,51 @@ found in Debian GNU/Linux\n\
 	printf(_(UT_HELP_VRSN));
 	printf(_(UT_TIMEOUT), timeout_interval);
    	printf(_("\n\
- -d, --dist-upgrade\n\
-   Perform a dist-upgrade instead of normal upgrade.\n\
+ -U, --upgrade=OPTS\n\
+   [Default] Perform an upgrade.  If an optional OPTS argument is provided,\n\
+   apt-get will be run with these command line options instead of the\n\
+   default (%s).\n\
+   Note that you may be required to have root privileges if you do not use\n\
+   the default options.\n\
+ -d, --dist-upgrade=OPTS\n\
+   Perform a dist-upgrade instead of normal upgrade. Like with -U OPTS\n\
+   can be provided to override the default options.\n\
+ -n, --no-upgrade\n\
+   Do not run the upgrade.  Probably not useful (without -u at least).\n\
  -i, --include=REGEXP\n\
    Include only packages matching REGEXP.  Can be specified multiple times;\n\
-   the values will be combined together.  Default is to include all packages.\n\
+   the values will be combined together.  Any patches matching this list\n\
+   cause the plugin to return WARNING status.  Others will be ignored.\n\
+   Default is to include all packages.\n\
  -e, --exclude=REGEXP\n\
    Exclude packages matching REGEXP from the list of packages that would\n\
-   otherwise be excluded.  Can be specified multiple times; the values\n\
-   will be combined together.  Default is to exclude no packages.\n\n"));
+   otherwise be included.  Can be specified multiple times; the values\n\
+   will be combined together.  Default is to exclude no packages.\n\
+ -c, --critical=REGEXP\n\
+   If the full package information of any of the upgradable packages match\n\
+   this REGEXP, the plugin will return CRITICAL status.  Can be specified\n\
+   multiple times like above.  Default is a regexp matching security\n\
+   upgrades for Debian and Ubuntu:\n\
+   \t%s\n\
+   Note that the package must first match the include list before its\n\
+   information is compared against the critical list.\n\
+   \n\n"),
+	       UPGRADE_DEFAULT_OPTS, SECURITY_RE);
    	printf(_("\
 The following options require root privileges and should be used with care: \
 \n\n"));
    	printf(_("\
- -u, --update\n\
-   First perform an 'apt-get update' (note: you may also need to use -t)\
+ -u, --update=OPTS\n\
+   First perform an 'apt-get update'.  An optional OPTS parameter overrides\n\
+   the default options.  Note: you may also need to adjust the global \n\
+   timeout (with -t) to prevent the plugin from timing out if apt-get\n\
+   upgrade is expected to take longer than the default timeout.\n\
 \n\n"));
 }
 
 /* simple usage heading */
 void print_usage(void){
-	printf ("Usage: %s [-du] [-t timeout]\n", progname);
+	printf ("Usage: %s [[-d|-u|-U]opts] [-n] [-t timeout]\n", progname);
 }
 
 /* run an apt-get upgrade */
@@ -202,25 +261,23 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 	int i=0, result=STATE_UNKNOWN, regres=0, pc=0, spc=0;
 	struct output chld_out, chld_err;
 	regex_t ireg, ereg, sreg;
-	char rerrbuf[64];
-	const char *default_include_expr="^Inst";
+	char *cmdline=NULL, rerrbuf[64];
+	const char *include_ptr=NULL, *crit_ptr=NULL;
+
+	if(upgrade==NO_UPGRADE) return STATE_OK;
 
 	/* compile the regexps */
-	if(do_include!=NULL){
-		regres=regcomp(&ireg, do_include, REG_EXTENDED);
-		if(regres!=0) {
-			regerror(regres, &ireg, rerrbuf, 64);
-			die(STATE_UNKNOWN, "%s: Error compiling regexp: %s",
-			    progname, rerrbuf);
-		}
-	} else {
-		regres=regcomp(&ireg, default_include_expr, REG_EXTENDED);
-		if(regres!=0) {
-			regerror(regres, &ireg, rerrbuf, 64);
-			die(STATE_UNKNOWN, "%s: Error compiling regexp: %s",
-			    progname, rerrbuf);
-		}
+	if(do_include!=NULL) include_ptr=do_include;
+	else include_ptr="^Inst";
+	if(do_critical!=NULL) crit_ptr=do_critical;
+	else crit_ptr=SECURITY_RE;
+
+	regres=regcomp(&ireg, include_ptr, REG_EXTENDED);
+	if(regres!=0) {
+		regerror(regres, &ireg, rerrbuf, 64);
+		die(STATE_UNKNOWN, "%s: Error compiling regexp: %s", progname, rerrbuf);
 	}
+
 	if(do_exclude!=NULL){
 		regres=regcomp(&ereg, do_exclude, REG_EXTENDED);
 		if(regres!=0) {
@@ -229,21 +286,16 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 			    progname, rerrbuf);
 		}
 	}
-	regres=regcomp(&sreg, SECURITY_RE, REG_EXTENDED);
+	regres=regcomp(&sreg, crit_ptr, REG_EXTENDED);
 	if(regres!=0) {
 		regerror(regres, &ereg, rerrbuf, 64);
 		die(STATE_UNKNOWN, "%s: Error compiling regexp: %s",
 		    progname, rerrbuf);
 	}
 
-
-
+	cmdline=construct_cmdline(upgrade, upgrade_opts);
 	/* run the upgrade */
-	if(dist_upgrade==0){
-		result = np_runcmd(APTGET_UPGRADE, &chld_out, &chld_err, 0);
-	} else {
-		result = np_runcmd(APTGET_DISTUPGRADE, &chld_out, &chld_err, 0);
-	}
+	result = np_runcmd(cmdline, &chld_out, &chld_err, 0);
 	/* apt-get upgrade only changes exit status if there is an
 	 * internal error when run in dry-run mode.  therefore we will
 	 * treat such an error as UNKNOWN */
@@ -251,7 +303,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 		exec_warning=1;
 		result = STATE_UNKNOWN;
 		fprintf(stderr, "'%s' exited with non-zero status.\n",
-		    APTGET_UPGRADE);
+		    cmdline);
 	}
 
 	/* parse the output, which should only consist of lines like
@@ -276,6 +328,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 				pc++;
 				if(regexec(&sreg, chld_out.line[i], 0, NULL, 0)==0){
 					spc++;
+					if(verbose) printf("*");
 				}
 				if(verbose){
 					printf("*%s\n", chld_out.line[i]);
@@ -296,6 +349,10 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 			}
 		}
 	}
+	regfree(&ireg);
+	regfree(&sreg);
+	if(do_exclude!=NULL) regfree(&ereg); 
+	free(cmdline);
 	return result;
 }
 
@@ -303,9 +360,11 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 int run_update(void){
 	int i=0, result=STATE_UNKNOWN;
 	struct output chld_out, chld_err;
+	char *cmdline;
 
 	/* run the upgrade */
-	result = np_runcmd(APTGET_UPDATE, &chld_out, &chld_err, 0);
+	cmdline = construct_cmdline(NO_UPGRADE, update_opts);
+	result = np_runcmd(cmdline, &chld_out, &chld_err, 0);
 	/* apt-get update changes exit status if it can't fetch packages.
 	 * since we were explicitly asked to do so, this is treated as
 	 * a critical error. */
@@ -313,7 +372,7 @@ int run_update(void){
 		exec_warning=1;
 		result = STATE_CRITICAL;
 		fprintf(stderr, "'%s' exited with non-zero status.\n",
-		        APTGET_UPDATE);
+		        cmdline);
 	}
 
 	if(verbose){
@@ -332,6 +391,7 @@ int run_update(void){
 			}
 		}
 	}
+	free(cmdline);
 	return result;
 }
 
@@ -351,4 +411,37 @@ char* add_to_regexp(char *expr, const char *next){
 	}
 
 	return re;	
+}
+
+char* construct_cmdline(upgrade_type u, const char *opts){
+	int len=0;
+	const char *opts_ptr=NULL, *aptcmd=NULL;
+	char *cmd=NULL;
+
+	switch(u){
+	case UPGRADE:
+		if(opts==NULL) opts_ptr=UPGRADE_DEFAULT_OPTS;
+		else opts_ptr=opts;
+		aptcmd="upgrade";
+		break;
+	case DIST_UPGRADE:
+		if(opts==NULL) opts_ptr=UPGRADE_DEFAULT_OPTS;
+		else opts_ptr=opts;
+		aptcmd="dist-upgrade";
+		break;
+	case NO_UPGRADE:
+		if(opts==NULL) opts_ptr=UPDATE_DEFAULT_OPTS;
+		else opts_ptr=opts;
+		aptcmd="update";
+		break;
+	}
+
+	len+=strlen(PATH_TO_APTGET)+1; /* "/usr/bin/apt-get " */
+	len+=strlen(opts_ptr)+1;       /* "opts " */
+	len+=strlen(aptcmd)+1;         /* "upgrade\0" */
+
+	cmd=(char*)malloc(sizeof(char)*len);
+	if(cmd==NULL) die(STATE_UNKNOWN, "malloc failed");
+	sprintf(cmd, "%s %s %s", PATH_TO_APTGET, opts_ptr, aptcmd);
+	return cmd;
 }
