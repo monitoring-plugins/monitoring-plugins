@@ -71,7 +71,7 @@ void usage_va (const char *fmt, ...)
 
 void usage2(const char *msg, const char *arg)
 {
-	printf ("%s: %s - %s\n",progname,msg,arg);
+	printf ("%s: %s - %s\n", progname, msg, arg?arg:"(null)" );
 	print_usage ();
 	exit (STATE_UNKNOWN);
 }
