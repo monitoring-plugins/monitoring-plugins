@@ -43,6 +43,12 @@ int process_arguments (int, char **);
 void print_help (void);
 void print_usage (void);
 
+/* number of times to perform each request to get a good average. */
+#define AVG_NUM 4
+
+/* max size of control message data */
+#define MAX_CM_SIZE 468
+
 /* this structure holds everything in an ntp request/response as per rfc1305 */
 typedef struct {
 	uint8_t flags;       /* byte with leapindicator,vers,mode. see macros */
@@ -58,6 +64,25 @@ typedef struct {
 	uint64_t txts;       /* time at which request departed server */
 } ntp_message;
 
+/* this structure holds everything in an ntp control message as per rfc1305 */
+typedef struct {
+	uint8_t flags;       /* byte with leapindicator,vers,mode. see macros */
+	uint8_t op;          /* R,E,M bits and Opcode */
+	uint16_t seq;        /* Packet sequence */
+	uint16_t status;     /* Clock status */
+	uint16_t assoc;      /* Association */
+	uint16_t offset;     /* Similar to TCP sequence # */
+	uint16_t count;      /* # bytes of data */
+	char data[MAX_CM_SIZE]; /* ASCII data of the request */
+	                        /* NB: not necessarily NULL terminated! */
+} ntp_control_message;
+
+/* this is an association/status-word pair found in control packet reponses */
+typedef struct {
+	uint16_t assoc;
+	uint16_t status;
+} ntp_assoc_status_pair;
+
 /* bits 1,2 are the leap indicator */
 #define LI_MASK 0xc0
 #define LI(x) ((x&LI_MASK)>>6)
@@ -71,12 +96,28 @@ typedef struct {
 #define VN_MASK 0x38
 #define VN(x)	((x&VN_MASK)>>3)
 #define VN_SET(x,y)	do{ x |= ((y<<3)&VN_MASK); }while(0)
+#define VN_RESERVED 0x02
 /* bits 6,7,8 are the ntp mode */
 #define MODE_MASK 0x07
 #define MODE(x) (x&MODE_MASK)
 #define MODE_SET(x,y)	do{ x |= (y&MODE_MASK); }while(0)
 /* here are some values */
 #define MODE_CLIENT 0x03
+#define MODE_CONTROLMSG 0x06
+/* In control message, bits 8-10 are R,E,M bits */
+#define REM_MASK 0xe0
+#define REM_RESP 0x80
+#define REM_ERROR 0x40
+#define REM_MORE 0x20
+/* In control message, bits 11 - 15 are opcode */
+#define OP_MASK 0x1f
+#define OP_SET(x,y)   do{ x |= (y&OP_MASK); }while(0)
+#define OP_READSTAT 0x01
+#define OP_READVAR  0x02
+/* In peer status bytes, bytes 6,7,8 determine clock selection status */
+#define PEER_SEL(x) (x&0x07)
+#define PEER_INCLUDED 0x04
+#define PEER_SYNCSOURCE 0x06
 
 /**
  ** a note about the 32-bit "fixed point" numbers:
@@ -116,7 +157,7 @@ typedef struct {
 	do{ if(!n) t.tv_sec = t.tv_usec = 0; \
 	    else { \
 			t.tv_sec=ntohl(L32(n))-EPOCHDIFF; \
-        	t.tv_usec=(int)(0.5+(double)(ntohl(R32(n))/4294.967296)); \
+			t.tv_usec=(int)(0.5+(double)(ntohl(R32(n))/4294.967296)); \
 		} \
 	}while(0)
 
@@ -129,6 +170,17 @@ typedef struct {
 		} \
 	} while(0)
 
+/* NTP control message header is 12 bytes, plus any data in the data
+ * field, plus null padding to the nearest 32-bit boundary per rfc.
+ */
+#define SIZEOF_NTPCM(m) (12+ntohs(m.count)+((m.count)?4-(ntohs(m.count)%4):0))
+
+/* finally, a little helper or two for debugging: */
+#define DBG(x) do{if(verbose>1){ x; }}while(0);
+#define PRINTSOCKADDR(x) \
+	do{ \
+		printf("%u.%u.%u.%u", (x>>24)&0xff, (x>>16)&0xff, (x>>8)&0xff, x&0xff);\
+	}while(0);
 
 /* calculate the offset of the local clock */
 static inline double calc_offset(const ntp_message *m, const struct timeval *t){
@@ -142,7 +194,7 @@ static inline double calc_offset(const ntp_message *m, const struct timeval *t){
 }
 
 /* print out a ntp packet in human readable/debuggable format */
-void print_packet(const ntp_message *p){
+void print_ntp_message(const ntp_message *p){
 	struct timeval ref, orig, rx, tx;
 
 	NTP64toTV(p->refts,ref);
@@ -167,6 +219,42 @@ void print_packet(const ntp_message *p){
 	printf("\ttxts = %-.16g\n", NTP64asDOUBLE(p->txts));
 }
 
+void print_ntp_control_message(const ntp_control_message *p){
+	int i=0, numpeers=0;
+	const ntp_assoc_status_pair *peer=NULL;
+
+	printf("control packet contents:\n");
+	printf("\tflags: 0x%.2x , 0x%.2x\n", p->flags, p->op);
+	printf("\t  li=%d (0x%.2x)\n", LI(p->flags), p->flags&LI_MASK);
+	printf("\t  vn=%d (0x%.2x)\n", VN(p->flags), p->flags&VN_MASK);
+	printf("\t  mode=%d (0x%.2x)\n", MODE(p->flags), p->flags&MODE_MASK);
+	printf("\t  response=%d (0x%.2x)\n", (p->op&REM_RESP)>0, p->op&REM_RESP);
+	printf("\t  more=%d (0x%.2x)\n", (p->op&REM_MORE)>0, p->op&REM_MORE);
+	printf("\t  error=%d (0x%.2x)\n", (p->op&REM_ERROR)>0, p->op&REM_ERROR);
+	printf("\t  op=%d (0x%.2x)\n", p->op&OP_MASK, p->op&OP_MASK);
+	printf("\tsequence: %d (0x%.2x)\n", ntohs(p->seq), ntohs(p->seq));
+	printf("\tstatus: %d (0x%.2x)\n", ntohs(p->status), ntohs(p->status));
+	printf("\tassoc: %d (0x%.2x)\n", ntohs(p->assoc), ntohs(p->assoc));
+	printf("\toffset: %d (0x%.2x)\n", ntohs(p->offset), ntohs(p->offset));
+	printf("\tcount: %d (0x%.2x)\n", ntohs(p->count), ntohs(p->count));
+	numpeers=ntohs(p->count)/(sizeof(ntp_assoc_status_pair));
+	if(p->op&REM_RESP && p->op&OP_READSTAT){
+		peer=(ntp_assoc_status_pair*)p->data;
+		for(i=0;i<numpeers;i++){
+			printf("\tpeer id %.2x status %.2x", 
+			       ntohs(peer[i].assoc), ntohs(peer[i].status));
+			if (PEER_SEL(peer[i].status) >= PEER_INCLUDED){
+				if(PEER_SEL(peer[i].status) >= PEER_SYNCSOURCE){
+					printf(" <-- current sync source");
+				} else {
+					printf(" <-- current sync candidate");
+				}
+			}
+			printf("\n");
+		}
+	}
+}
+
 void setup_request(ntp_message *p){
 	struct timeval t;
 
@@ -189,7 +277,8 @@ double offset_request(const char *host){
 	double next_offset=0., avg_offset=0.;
 	struct timeval recv_time;
 
-	for(i=0; i<4; i++){
+	for(i=0; i<AVG_NUM; i++){
+		if(verbose) printf("offset run: %d/%d\n", i+1, AVG_NUM);
 		setup_request(&req);
 		my_udp_connect(server_address, 123, &conn);
 		write(conn, &req, sizeof(ntp_message));
@@ -201,12 +290,134 @@ double offset_request(const char *host){
 		if(verbose) printf("offset: %g\n", next_offset);
 		avg_offset+=next_offset;
 	}
-	return avg_offset/4.;
+	avg_offset/=AVG_NUM;
+	if(verbose) printf("average offset: %g\n", avg_offset);
+	return avg_offset;
 }
 
-/* not yet implemented yet */
+void
+setup_control_request(ntp_control_message *p, uint8_t opcode, uint16_t seq){
+	memset(p, 0, sizeof(ntp_control_message));
+	LI_SET(p->flags, LI_NOWARNING);
+	VN_SET(p->flags, VN_RESERVED);
+	MODE_SET(p->flags, MODE_CONTROLMSG);
+	OP_SET(p->op, opcode);
+	p->seq = htons(seq);
+	/* Remaining fields are zero for requests */
+}
+
+/* XXX handle responses with the error bit set */
 double jitter_request(const char *host){
-	return 0.;
+	int conn=-1, i, npeers=0, num_candidates=0, syncsource_found=0;
+	int run=0, min_peer_sel=PEER_INCLUDED, num_selected=0, num_valid=0;
+	ntp_assoc_status_pair *peers;
+	ntp_control_message req;
+	double rval = 0.0, jitter = -1.0;
+	char *startofvalue=NULL, *nptr=NULL;
+
+	/* Long-winded explanation:
+	 * Getting the jitter requires a number of steps:
+	 * 1) Send a READSTAT request.
+	 * 2) Interpret the READSTAT reply
+	 *  a) The data section contains a list of peer identifiers (16 bits)
+	 *     and associated status words (16 bits)
+	 *  b) We want the value of 0x06 in the SEL (peer selection) value,
+	 *     which means "current synchronizatin source".  If that's missing,
+	 *     we take anything better than 0x04 (see the rfc for details) but
+	 *     set a minimum of warning.
+	 * 3) Send a READVAR request for information on each peer identified
+	 *    in 2b greater than the minimum selection value.
+	 * 4) Extract the jitter value from the data[] (it's ASCII)
+	 */
+	my_udp_connect(server_address, 123, &conn);
+	setup_control_request(&req, OP_READSTAT, 1);
+
+	DBG(printf("sending READSTAT request"));
+	write(conn, &req, SIZEOF_NTPCM(req));
+	DBG(print_ntp_control_message(&req));
+	/* Attempt to read the largest size packet possible
+	 * Is it possible for an NTP server to have more than 117 synchronization
+	 * sources?  If so, we will receive a second datagram with additional
+	 * peers listed, since 117 is the maximum number that can fit in a
+	 * single NTP control datagram.  This code doesn't handle that case */
+	/* XXX check the REM_MORE bit */
+	req.count=htons(MAX_CM_SIZE);
+	DBG(printf("recieving READSTAT response"))
+	read(conn, &req, SIZEOF_NTPCM(req));
+	DBG(print_ntp_control_message(&req));
+	/* Each peer identifier is 4 bytes in the data section, which
+	 * we represent as a ntp_assoc_status_pair datatype.
+	 */
+	npeers=ntohs(req.count)/sizeof(ntp_assoc_status_pair);
+	peers=(ntp_assoc_status_pair*)malloc(sizeof(ntp_assoc_status_pair)*npeers);
+	memcpy((void*)peers, (void*)req.data, sizeof(ntp_assoc_status_pair)*npeers);
+	/* first, let's find out if we have a sync source, or if there are
+	 * at least some candidates.  in the case of the latter we'll issue
+	 * a warning but go ahead with the check on them. */
+	for (i = 0; i < npeers; i++){
+		if (PEER_SEL(peers[i].status) >= PEER_INCLUDED){
+			num_candidates++;
+			if(PEER_SEL(peers[i].status) >= PEER_SYNCSOURCE){
+				syncsource_found=1;
+				min_peer_sel=PEER_SYNCSOURCE;
+			}
+		}
+	}
+	if(verbose) printf("%d candiate peers available\n", num_candidates);
+	if(verbose && syncsource_found) printf("synchronization source found\n");
+	/* XXX if ! syncsource_found set status to warning */
+
+	for (run=0; run<AVG_NUM; run++){
+		if(verbose) printf("jitter run %d of %d\n", run+1, AVG_NUM);
+		for (i = 0; i < npeers; i++){
+			/* Only query this server if it is the current sync source */
+			if (PEER_SEL(peers[i].status) >= min_peer_sel){
+				setup_control_request(&req, OP_READVAR, 2);
+				req.assoc = peers[i].assoc;
+				/* By spec, putting the variable name "jitter"  in the request
+				 * should cause the server to provide _only_ the jitter value.
+				 * thus reducing net traffic, guaranteeing us only a single
+				 * datagram in reply, and making intepretation much simpler
+				 */
+				strncpy(req.data, "jitter", 6);
+				req.count = htons(6);
+				DBG(printf("sending READVAR request...\n"));
+				write(conn, &req, SIZEOF_NTPCM(req));
+				DBG(print_ntp_control_message(&req));
+
+				req.count = htons(MAX_CM_SIZE);
+				DBG(printf("recieving READVAR response...\n"));
+				read(conn, &req, SIZEOF_NTPCM(req));
+				DBG(print_ntp_control_message(&req));
+
+				/* get to the float value */
+				if(verbose) {
+					printf("parsing jitter from peer %.2x: ", peers[i].assoc);
+				}
+				startofvalue = strchr(req.data, '=') + 1;
+				jitter = strtod(startofvalue, &nptr);
+				num_selected++;
+				if(jitter == 0 && startofvalue==nptr){
+					printf("warning: unable to parse server response.\n");
+					/* XXX errors value ... */
+				} else {
+					if(verbose) printf("%g\n", jitter);
+					num_valid++;
+					rval += jitter;
+				}
+			}
+		}
+		if(verbose){
+			printf("jitter parsed from %d/%d peers\n", num_selected, num_valid);
+		}
+	}
+
+	rval /= num_valid;
+
+	close(conn);
+	free(peers);
+	/* If we return -1.0, it means no synchronization source was found */
+	return rval;
 }
 
 int process_arguments(int argc, char **argv){
@@ -247,7 +458,7 @@ int process_arguments(int argc, char **argv){
 			exit(STATE_OK);
 			break;
 		case 'v':
-			verbose = 1;
+			verbose++;
 			break;
 		case 'w':
 			owarn = atof(optarg);
@@ -321,35 +532,49 @@ int main(int argc, char *argv[]){
 
 	offset = offset_request(server_address);
 	if(offset > ocrit){
-		printf("NTP CRITICAL: ");
 		result = STATE_CRITICAL;
 	} else if(offset > owarn) {
-		printf("NTP WARNING: ");
 		result = STATE_WARNING;
 	} else {
-		printf("NTP OK: ");
 		result = STATE_OK;
 	}
 
-	/* not implemented yet: */
-	jitter=jitter_request(server_address);
-
-	/* not implemented yet:
+	/* If not told to check the jitter, we don't even send packets.
+	 * jitter is checked using NTP control packets, which not all
+	 * servers recognize.  Trying to check the jitter on OpenNTPD
+	 * (for example) will result in an error
+	 */
 	if(do_jitter){
+		jitter=jitter_request(server_address);
 		if(jitter > jcrit){
-			printf("NTP CRITICAL: ");
-			result = STATE_CRITICAL;
+			result = max_state(result, STATE_CRITICAL);
 		} else if(jitter > jwarn) {
-			printf("NTP WARNING: ");
-			result = STATE_WARNING;
-		} else {
-			printf("NTP OK: ");
-			result = STATE_OK;
+			result = max_state(result, STATE_WARNING);
+		} else if(jitter == -1.0 && result == STATE_OK){
+			/* -1 indicates that we couldn't calculate the jitter
+			 * Only overrides STATE_OK from the offset */
+			result = STATE_UNKNOWN;
 		}
 	}
-	*/
 
-	printf("Offset %g secs|offset=%g\n", offset, offset);
+	switch (result) {
+		case STATE_CRITICAL :
+			printf("NTP CRITICAL: ");
+			break;
+		case STATE_WARNING :
+			printf("NTP WARNING: ");
+			break;
+		case STATE_OK :
+			printf("NTP OK: ");
+			break;
+		default :
+			printf("NTP UNKNOWN: ");
+			break;
+	}
+
+	printf("Offset %g secs|offset=%g", offset, offset);
+	if (do_jitter) printf("|jitter=%f", jitter);
+	printf("\n");
 
 	if(server_address!=NULL) free(server_address);
 	return result;
