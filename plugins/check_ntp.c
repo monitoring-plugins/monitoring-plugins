@@ -29,6 +29,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
+#include <sys/poll.h>
 
 static char *server_address=NULL;
 static int verbose=0;
@@ -63,6 +64,13 @@ typedef struct {
 	uint64_t rxts;       /* time at which request arrived at server */
 	uint64_t txts;       /* time at which request departed server */
 } ntp_message;
+
+/* this structure holds data about results from querying offset from a peer */
+typedef struct {
+	int waiting;            /* we set to 1 to signal waiting for a response */  
+	int num_responses;      /* number of successfully recieved responses */
+	double offset[AVG_NUM]; /* offsets from each response */
+} ntp_server_results;
 
 /* this structure holds everything in an ntp control message as per rfc1305 */
 typedef struct {
@@ -271,38 +279,20 @@ void setup_request(ntp_message *p){
 	TVtoNTP64(t,p->txts);
 }
 
+/* do everything we need to get the total average offset
+ * - we use a certain amount of parallelization with poll() to ensure
+ *   we don't waste time sitting around waiting for single packets. 
+ * - we also "manually" handle resolving host names and connecting, because
+ *   we have to do it in a way that our lazy macros don't handle currently :( */
 double offset_request(const char *host){
-	int i=0, conn=-1;
-	ntp_message req;
-	double next_offset=0., avg_offset=0.;
-	struct timeval recv_time;
-
-	for(i=0; i<AVG_NUM; i++){
-		if(verbose) printf("offset run: %d/%d\n", i+1, AVG_NUM);
-		setup_request(&req);
-		my_udp_connect(server_address, 123, &conn);
-		write(conn, &req, sizeof(ntp_message));
-		read(conn, &req, sizeof(ntp_message));
-		gettimeofday(&recv_time, NULL);
-		/* if(verbose) print_packet(&req); */
-		close(conn);
-		next_offset=calc_offset(&req, &recv_time);
-		if(verbose) printf("offset: %g\n", next_offset);
-		avg_offset+=next_offset;
-	}
-	avg_offset/=AVG_NUM;
-	if(verbose) printf("average offset: %g\n", avg_offset);
-	return avg_offset;
-}
-
-
-/* this should behave more like ntpdate, but needs optomisations... */
-double offset_request_ntpdate(const char *host){
-	int i=0, j=0, ga_result=0, num_hosts=0, *socklist=NULL;
-	ntp_message req;
-	double offset=0., avg_offset=0.;
+	int i=0, j=0, ga_result=0, num_hosts=0, *socklist=NULL, respnum=0;
+	int servers_completed=0, one_written=0, servers_readable=0, offsets_recvd=0;
+	ntp_message *req=NULL;
+	double avg_offset=0.;
 	struct timeval recv_time;
 	struct addrinfo *ai=NULL, *ai_tmp=NULL, hints;
+	struct pollfd *ufds=NULL;
+	ntp_server_results *servers=NULL;
 
 	/* setup hints to only return results from getaddrinfo that we'd like */
 	memset(&hints, 0, sizeof(struct addrinfo));
@@ -310,24 +300,26 @@ double offset_request_ntpdate(const char *host){
 	hints.ai_protocol = IPPROTO_UDP;
 	hints.ai_socktype = SOCK_DGRAM;
 
-	/* XXX better error handling here... */
+	/* fill in ai with the list of hosts resolved by the host name */
 	ga_result = getaddrinfo(host, "123", &hints, &ai);
 	if(ga_result!=0){
-		fprintf(stderr, "error getting address for %s: %s\n",
-				host, gai_strerror(ga_result));
-		return -1.0;
+		die(STATE_UNKNOWN, "error getting address for %s: %s\n",
+		    host, gai_strerror(ga_result));
 	}
 
-	/* count te number of returned hosts, and allocate an array of sockets */
-	ai_tmp=ai;
-	while(ai_tmp){
-		ai_tmp = ai_tmp->ai_next;
-		num_hosts++;
-	}
+	/* count the number of returned hosts, and allocate stuff accordingly */
+	for(ai_tmp=ai; ai_tmp!=NULL; ai_tmp=ai_tmp->ai_next){ num_hosts++; }
+	req=(ntp_message*)malloc(sizeof(ntp_message)*num_hosts);
+	if(req==NULL) die(STATE_UNKNOWN, "can not allocate ntp message array");
 	socklist=(int*)malloc(sizeof(int)*num_hosts);
 	if(socklist==NULL) die(STATE_UNKNOWN, "can not allocate socket array");
+	ufds=(struct pollfd*)malloc(sizeof(struct pollfd)*num_hosts);
+	if(ufds==NULL) die(STATE_UNKNOWN, "can not allocate socket array");
+	servers=(ntp_server_results*)malloc(sizeof(ntp_server_results)*num_hosts);
+	if(servers==NULL) die(STATE_UNKNOWN, "can not allocate server array");
+	memset(servers, 0, sizeof(ntp_server_results)*num_hosts);
 
-	/* setup each socket for writing */
+	/* setup each socket for writing, and the corresponding struct pollfd */
 	ai_tmp=ai;
 	for(i=0;ai_tmp;i++){
 		socklist[i]=socket(ai_tmp->ai_family, SOCK_DGRAM, IPPROTO_UDP);
@@ -337,37 +329,88 @@ double offset_request_ntpdate(const char *host){
 		}
 		if(connect(socklist[i], ai_tmp->ai_addr, ai_tmp->ai_addrlen)){
 			die(STATE_UNKNOWN, "can't create socket connection");
+		} else {
+			ufds[i].fd=socklist[i];
+			ufds[i].events=POLLIN;
+			ufds[i].revents=0;
 		}
 		ai_tmp = ai_tmp->ai_next;
 	}
 
-	/* now do AVG_NUM checks to each host. this needs to be optimized
-	 * two ways:
-	 *  - use some parellization w/poll for much faster results.  currently
-	 *    we do send/recv, send/recv, etc, whereas we could use poll(), to
-	 *    determine when to read and just do a bunch of writing when we
-	 *    have free time.
-	 *  - behave like ntpdate and only take the 5 best responses.
-	 */
-	for(i=0; i<AVG_NUM; i++){
-		if(verbose) printf("offset calculation run %d/%d\n", i+1, AVG_NUM);
-		for(j=0; j<num_hosts; j++){
-			if(verbose) printf("peer %d: ", j);
-			setup_request(&req);
-			write(socklist[j], &req, sizeof(ntp_message));
-			read(socklist[j], &req, sizeof(ntp_message));
-			gettimeofday(&recv_time, NULL);
-			offset=calc_offset(&req, &recv_time);
-			if(verbose) printf("offset: %g\n", offset);
-			avg_offset+=offset;
-		}
-		avg_offset/=num_hosts;
-	}
-	avg_offset/=AVG_NUM;
-	if(verbose) printf("overall average offset: %g\n", avg_offset);
+	/* now do AVG_NUM checks to each host. */
+	while(servers_completed<num_hosts){
 
+		/* write to any servers that are free and have done < AVG_NUM reqs */
+		/* XXX we need some kind of ability to retransmit lost packets.
+		 * XXX one way would be replace "waiting" with a timestamp and
+		 * XXX if the timestamp is old enough the request is re-transmitted.
+		 * XXX then a certain number of failures could mark a server as
+		 * XXX bad, which is what i imagine that ntpdate does though
+		 * XXX i can't confirm it (i think it still only sends a max
+		 * XXX of AVG_NUM requests, but what does it do if one fails
+		 * XXX but the others succeed? */
+		/* XXX also we need the ability to cut out failed/unresponsive
+		 * XXX servers.  currently after doing all other servers we
+		 * XXX still wait for them until the bitter end/timeout. */
+		one_written=0;
+		for(i=0; i<num_hosts; i++){
+			if(!servers[i].waiting && servers[i].num_responses<AVG_NUM){
+				if(verbose) printf("sending request to peer %d\n", i);
+				setup_request(&req[i]);
+				write(socklist[i], &req[i], sizeof(ntp_message));
+				servers[i].waiting=1;
+				one_written=1;
+				break;
+			}
+		}
+
+		/* quickly poll for any sockets with pending data */
+		servers_readable=poll(ufds, num_hosts, 100);
+		if(servers_readable==-1){
+			perror("polling ntp sockets");
+			die(STATE_UNKNOWN, "communication errors");
+		}
+
+		/* read from any sockets with pending data */
+		for(i=0; servers_readable && i<num_hosts; i++){
+			if(ufds[i].revents&POLLIN){
+				if(verbose) {
+					printf("response from peer %d: ", i);
+				}
+				read(ufds[i].fd, &req[i], sizeof(ntp_message));
+				gettimeofday(&recv_time, NULL);
+				respnum=servers[i].num_responses++;
+				servers[i].offset[respnum]=calc_offset(&req[i], &recv_time);
+				if(verbose) {
+					printf("offset %g\n", servers[i].offset[respnum]);
+				}
+				servers[i].waiting=0;
+				servers_readable--;
+				if(servers[i].num_responses==AVG_NUM) servers_completed++;
+			}
+		}
+		/* lather, rinse, repeat. */
+	}
+
+	/* finally, calculate the average offset */
+	/* XXX still something about the "top 5" */
+	for(i=0;i<num_hosts;i++){
+		for(j=0;j<servers[i].num_responses;j++){
+			offsets_recvd++;
+			avg_offset+=servers[i].offset[j];
+		}
+	}
+	avg_offset/=offsets_recvd;
+
+	/* cleanup */
 	for(j=0; j<num_hosts; j++){ close(socklist[j]); }
+	free(socklist);
+	free(ufds);
+	free(servers);
+	free(req);
 	freeaddrinfo(ai);
+
+	if(verbose) printf("overall average offset: %g\n", avg_offset);
 	return avg_offset;
 }
 
