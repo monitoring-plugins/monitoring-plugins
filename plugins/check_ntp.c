@@ -295,6 +295,82 @@ double offset_request(const char *host){
 	return avg_offset;
 }
 
+
+/* this should behave more like ntpdate, but needs optomisations... */
+double offset_request_ntpdate(const char *host){
+	int i=0, j=0, ga_result=0, num_hosts=0, *socklist=NULL;
+	ntp_message req;
+	double offset=0., avg_offset=0.;
+	struct timeval recv_time;
+	struct addrinfo *ai=NULL, *ai_tmp=NULL, hints;
+
+	/* setup hints to only return results from getaddrinfo that we'd like */
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = address_family;
+	hints.ai_protocol = IPPROTO_UDP;
+	hints.ai_socktype = SOCK_DGRAM;
+
+	/* XXX better error handling here... */
+	ga_result = getaddrinfo(host, "123", &hints, &ai);
+	if(ga_result!=0){
+		fprintf(stderr, "error getting address for %s: %s\n",
+				host, gai_strerror(ga_result));
+		return -1.0;
+	}
+
+	/* count te number of returned hosts, and allocate an array of sockets */
+	ai_tmp=ai;
+	while(ai_tmp){
+		ai_tmp = ai_tmp->ai_next;
+		num_hosts++;
+	}
+	socklist=(int*)malloc(sizeof(int)*num_hosts);
+	if(socklist==NULL) die(STATE_UNKNOWN, "can not allocate socket array");
+
+	/* setup each socket for writing */
+	ai_tmp=ai;
+	for(i=0;ai_tmp;i++){
+		socklist[i]=socket(ai_tmp->ai_family, SOCK_DGRAM, IPPROTO_UDP);
+		if(socklist[i] == -1) {
+			perror(NULL);
+			die(STATE_UNKNOWN, "can not create new socket");
+		}
+		if(connect(socklist[i], ai_tmp->ai_addr, ai_tmp->ai_addrlen)){
+			die(STATE_UNKNOWN, "can't create socket connection");
+		}
+		ai_tmp = ai_tmp->ai_next;
+	}
+
+	/* now do AVG_NUM checks to each host. this needs to be optimized
+	 * two ways:
+	 *  - use some parellization w/poll for much faster results.  currently
+	 *    we do send/recv, send/recv, etc, whereas we could use poll(), to
+	 *    determine when to read and just do a bunch of writing when we
+	 *    have free time.
+	 *  - behave like ntpdate and only take the 5 best responses.
+	 */
+	for(i=0; i<AVG_NUM; i++){
+		if(verbose) printf("offset calculation run %d/%d\n", i+1, AVG_NUM);
+		for(j=0; j<num_hosts; j++){
+			if(verbose) printf("peer %d: ", j);
+			setup_request(&req);
+			write(socklist[j], &req, sizeof(ntp_message));
+			read(socklist[j], &req, sizeof(ntp_message));
+			gettimeofday(&recv_time, NULL);
+			offset=calc_offset(&req, &recv_time);
+			if(verbose) printf("offset: %g\n", offset);
+			avg_offset+=offset;
+		}
+		avg_offset/=num_hosts;
+	}
+	avg_offset/=AVG_NUM;
+	if(verbose) printf("overall average offset: %g\n", avg_offset);
+
+	for(j=0; j<num_hosts; j++){ close(socklist[j]); }
+	freeaddrinfo(ai);
+	return avg_offset;
+}
+
 void
 setup_control_request(ntp_control_message *p, uint8_t opcode, uint16_t seq){
 	memset(p, 0, sizeof(ntp_control_message));
