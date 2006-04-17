@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-04-15 00:41+0200\n"
-"PO-Revision-Date: 2006-04-16 16:22+0200\n"
+"PO-Revision-Date: 2006-04-17 15:53+0200\n"
 "Last-Translator: Benoit Mortier <benoit.mortier@opensides.be>\n"
 "Language-Team: Français <fr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1221,6 +1221,13 @@ msgid ""
 " -R, --eregi=STRING\n"
 "    Search page for case-insensitive regex STRING\n"
 msgstr ""
+" -l, --linespan\n"
+"    Permettre à l'expression régulière d'être sur plusieurs lignes (doit précéder -r or -R)\n"
+" -r, --regex, --ereg=STRING\n"
+"    Chercher la page pour l'expression régulière STRING\n"
+" -R, --eregi=STRING\n"
+"    Chercher la page pour l'expression régulière STRING sans faire attention au\n"
+"    majuscules/minuscules\n"
 
 #: plugins/check_http.c:1283
 #, c-format
@@ -2818,6 +2825,10 @@ msgid ""
 "the contrib area of the downloads section at http://www.nagios.org\n"
 "\n"
 msgstr ""
+"Ce plugin utilise la commande ping afin de tester l'hôte spécifié pour les pertes\n"
+"de paquets (pourcentage) et le temps d'aller/retour (millisecondes). Il peut\n produire une sortie en HTML avec un lien vers un traceroute en CGI contribué\n"
+"par Ian Cass. Ce CGI peut être téléchargé dans le section contrib sur http://www.nagios.org\n"
+"\n"
 
 #: plugins/check_procs.c:140
 #, c-format
@@ -2826,7 +2837,6 @@ msgstr "Commande: %s\n"
 
 #: plugins/check_procs.c:249
 #, c-format
-#, fuzzy
 msgid "Not parseable: %s"
 msgstr "Impossible de parcourir les arguments: %s"
 
@@ -2905,9 +2915,8 @@ msgid "PCPU must be a float!"
 msgstr "PCPU doit être un nombre en virgule flottante!"
 
 #: plugins/check_procs.c:487
-#, fuzzy
 msgid "Metric must be one of PROCS, VSZ, RSS, CPU, ELAPSED!"
-msgstr "Metric doivent être l'un de PROCS, VSZ, RSS, CPU, ELAPSED!"
+msgstr "Metric doit être l'un des PROCS, VSZ, RSS, CPU, ELAPSED!"
 
 #: plugins/check_procs.c:520
 #, c-format
@@ -2945,9 +2954,16 @@ msgid ""
 " -c, --critical=RANGE\n"
 "   Generate critical state if metric is outside this range\n"
 msgstr ""
+"\n"
+"Arguments Obligatoires:\n"
+" -w, --warning=RANGE\n"
+"   Résultat AVERTISSEMENT si cette valeur est dépassée\n"
+" -c, --critical=RANGE\n"
+"   Résultat CRITIQUE si cette valeur est dépassée\n"
 
 #: plugins/check_procs.c:675
 #, c-format
+#, fuzzy
 msgid ""
 "\n"
 "Optional Arguments:\n"
@@ -2958,6 +2974,14 @@ msgid ""
 "   RSS     - resident set memory size\n"
 "   CPU     - percentage cpu\n"
 msgstr ""
+"\n"
+"Arguments Optionnels:\n"
+" -m, --metric=TYPE\n"
+"   Vérifier le seuil d'après le type. Types valides:\n"
+"   PROCS   - Nombre de processus (défaut)\n"
+"   VSZ     - Taille de la mémoire virtuelle\n"
+"   RSS     - resident set memory size\n"
+"   CPU     - Pourcentage du cpu\n"
 
 #: plugins/check_procs.c:685
 #, c-format
@@ -2989,6 +3013,18 @@ msgid ""
 " -r, --rss=RSS\n"
 "   Only scan for processes with rss higher than indicated.\n"
 msgstr ""
+"\n"
+"Filtres Optionnels:\n"
+" -s, --state=STATUSFLAGS\n"
+"   Seulement regarder les processus qui ont dans la sortie de la commande 'ps'\n"
+"   un ou plusieurs de flags spécifiés (par exemple R, Z, S, RSZDT, plus d'autres \n"
+"   basés sur la sortie de votre commande 'ps').\n"
+" -p, --ppid=PPID\n"
+"   Seulement regarder les processus fils du processus parent ID indiqués.\n"
+" -z, --vsz=VSZ\n"
+"   Seulement regarder les processus avec vsz plus grand qu'indiqué.\n"
+" -r, --rss=RSS\n"
+"   Seulement regarder les processus avec rss plus grand qu'indiqua.\n"
 
 #: plugins/check_procs.c:707
 #, c-format
@@ -3002,6 +3038,16 @@ msgid ""
 " -C, --command=COMMAND\n"
 "   Only scan for exact matches of COMMAND (without path).\n"
 msgstr ""
+" -P, --pcpu=PCPU\n"
+"   Seulement regarder les processus avec pcpu plus grand qu'indiqué.\n"
+" -u, --user=USER\n"
+"   Seulement regarder les processus avec le nom de l'utilisateur ou ID indiqué.\n"
+" -a, --argument-array=STRING\n"
+"   Seulement regarder les processus avec les arguments qui contiennent certaines\n"
+"   chaînes.\n"
+" -C, --command=COMMAND\n"
+"   Seulement regarder pour la correspondance exacte avec la commande\n"
+"   (sans le chemin).\n"
 
 #: plugins/check_procs.c:717
 #, c-format
@@ -3012,6 +3058,11 @@ msgid ""
 "count is inside the specified range\n"
 "\n"
 msgstr ""
+"\n"
+"Les seuils sont spécifiés 'min:max' or 'min:' or ':max' (or 'max').\n"
+"Si spécifié 'max:min', un avertissement sera généré si le nombre\n"
+"est à l'intérieur du seuil\n"
+"\n"
 
 #: plugins/check_procs.c:722
 #, c-format
@@ -3023,6 +3074,11 @@ msgid ""
 "be the total number of running processes\n"
 "\n"
 msgstr ""
+"Ce plugin vérifie le nombre de processus actifs et génère un résultat \n"
+"AVERTISSEMENT ou CRITIQUE si le nombre de processus est au dessus du seuil\n"
+"spécifié. Le total des processus peut être filtré par propriétaire, processus parent,\n"
+"état actuel (ex: 'Z'), ou par le nombre de processus en cours d'exécution\n"
+"\n"
 
 #: plugins/check_procs.c:729
 #, c-format
@@ -3111,6 +3167,18 @@ msgid ""
 " -r, --retries=INTEGER\n"
 "    Number of times to retry a failed connection\n"
 msgstr ""
+" -u, --username=STRING\n"
+"    Le nom de l'utilisateur qui doit se connecter\n"
+" -p, --password=STRING\n"
+"    Le mot de passe pour la connection (RISQUE DE SECURITE)\n"
+" -n, --nas-id=STRING\n"
+"    Identifiant NAS\n"
+" -F, --filename=STRING\n"
+"    Fichier de configuration\n"
+" -e, --expect=STRING\n"
+"    Le réponse attendue du serveur \n"
+" -r, --retries=INTEGER\n"
+"    Nombre de fois que l'on doit essayer de se connecter après un échec\n"
 
 #: plugins/check_radius.c:312
 #, c-format
@@ -3126,11 +3194,9 @@ msgstr ""
 "\n"
 "Ce plugin teste un serveur radius pour voir si il accepte des connections.\n"
 "\n"
-"Le serveur à tester doit être spécifié ainsi que l'utilisateur et son mot de "
-"passe\n"
+"Le serveur à tester doit être spécifié ainsi que l'utilisateur et son mot de passe\n"
 "Un fichier de configuration peut être utilisé. Le format du fichier de\n"
-" configuration est décrit dans la documentation de la librairies du client "
-"radius.\n"
+"configuration est décrit dans la documentation de la librairies du client radius.\n"
 "\n"
 
 #: plugins/check_radius.c:319
@@ -3143,6 +3209,12 @@ msgid ""
 "the password used does not allow access to sensitive system resources,\n"
 "otherwise compormise could occur.\n"
 msgstr ""
+"Le mot de passe représente un risque de sécurité assez important car il peut\n"
+"être déterminé en regardant la ligne de commande dans un listing des processus\n"
+"Ce risque est accru parce que Nagios vas exécuter le plugin a des intervalles\n"
+"prévisibles. Assurez vous que le mot de passe ne permet pas d'accéder à des\n"
+"ressources importantes, autrement une brèche pourrait être ouverte dans votre\n"
+"sécurité.\n"
 
 #: plugins/check_real.c:79
 #, c-format
@@ -3175,14 +3247,12 @@ msgid "REAL %s - %d second response time\n"
 msgstr "REAL %s - %d secondes de temps de réponse\n"
 
 #: plugins/check_real.c:324 plugins/check_smtp.c:584 plugins/check_ups.c:525
-#, fuzzy
 msgid "Warning time must be a positive integer"
-msgstr "Le temps d'alerte doit être un entier positif"
+msgstr "Le seuil d'avertissement doit être un entier positif"
 
 #: plugins/check_real.c:333 plugins/check_smtp.c:575 plugins/check_ups.c:516
-#, fuzzy
 msgid "Critical time must be a positive integer"
-msgstr "Critique le temps doit être un entier positif"
+msgstr "Le seuil critique doit être un entier positif"
 
 #: plugins/check_real.c:369
 msgid "You must provide a server to check"
@@ -3208,8 +3278,7 @@ msgstr ""
 " -u, --url=STRING\n"
 "   Connexion à cette url\n"
 " -e, --expect=STRING\n"
-"   Texte attendu dans la première ligne de réponse venant du serveur "
-"(défaut: %s)\n"
+"   Texte attendu dans la première ligne de réponse du serveur (défaut: %s)\n"
 
 #: plugins/check_real.c:422
 #, c-format
@@ -3220,6 +3289,11 @@ msgid ""
 "but incorrect reponse messages from the host result in STATE_WARNING return\n"
 "values."
 msgstr ""
+"Ce plugin vas essayer d'ouvrir une connexion RTSP avec l'hôte.\n"
+"Une connexion réussie va renvoyer un résultat STATE_OK, les refus et les délais\n"
+"d'attente dépassé vont renvoyer STATE_CRITICAL, les autres erreurs retournent\n"
+"STATE_UNKNOWN. Les connexion réussies, mais avec une réponse incorrecte \n"
+"depuis l'hôte donnent un résultat STATE_WARNING."
 
 #: plugins/check_smtp.c:172
 #, c-format
@@ -3364,6 +3438,17 @@ msgid ""
 " -f, --from=STRING\n"
 "   FROM-address to include in MAIL command, required by Exchange 2000\n"
 msgstr ""
+" -e, --expect=STRING\n"
+"   La chaîne de caractères se trouvant dans la 1ere ligne de réponse (défaut: '%s')\n"
+" -n, nocommand\n"
+"   Supprimer la commande SMTP\n"
+" -C, --command=STRING\n"
+"   Commande SMTP (peut être utilisée de manière répétée)\n"
+" -R, --command=STRING\n"
+"   Réponse attendue à la commande (peut être utilisée de manière répétée)\n"
+" -f, --from=STRING\n"
+"   Adresse FROM-à inclure dans la commande MAIL , nécessaire pour\n"
+"   Exchange 2000\n"
 
 #: plugins/check_smtp.c:704
 #, c-format
@@ -3387,6 +3472,11 @@ msgid ""
 "connects, but incorrect reponse messages from the host result in\n"
 "STATE_WARNING return values.\n"
 msgstr ""
+"\n"
+"Un connexion réussie renvoie STATE_OK, les refus et délias d'attente dépassé \n"
+"renvoient STATE_CRITICAL, les autres erreurs renvoient STATE_INCONNU.\n"
+"Les connexions réussies, mais avec une réponse incorrecte de l'hôte renvoient\n"
+"STATE_WARNING.\n"
 
 #: plugins/check_snmp.c:278
 msgid "No valid data returned"
@@ -3497,6 +3587,15 @@ msgid ""
 " -X, --privpasswd=PASSWORD\n"
 "    SNMPv3 crypt passwd (DES)\n"
 msgstr ""
+" -C, --community=STRING\n"
+"    nom de la communauté SNMP pour la communication\n"
+"    (défaut est \"%s\")\n"
+" -U, --secname=USERNAME\n"
+"    nom d'utilisateur pour SNMPv3\n"
+" -A, --authpassword=PASSWORD\n"
+"    mot de passe pour SNMPv3\n"
+" -X, --privpasswd=PASSWORD\n"
+"    mot de passe crypté pour SNMPv3 (DES)\n"
 
 #: plugins/check_snmp.c:934
 #, c-format
@@ -3512,6 +3611,16 @@ msgid ""
 "    Any data on the right hand side of the delimiter is considered\n"
 "    to be the data that should be used in the evaluation.\n"
 msgstr ""
+" -o, --oid=OID(s)\n"
+"    Identifiant des objets ou variables SNMP que vous voulez interroger\n"
+" -m, --miblist=STRING\n"
+"    Liste de MIBS à charger (défaut = aucune si on utilise des oids numériques ou "
+"'ALL'\n"
+"\t\tpour les oids symboliques.)\n"
+" -d, --delimiter=STRING\n"
+"    Délimiteur à utiliser quand on lit les données reçues. Défaut est \"%s\"\n"
+"    N'importe quel données à la droite du délimiteur est considère comme \n"
+"    une donnée qui doit être utilisée dans l'évaluation.\n"
 
 #: plugins/check_snmp.c:946
 #, c-format
@@ -3521,6 +3630,10 @@ msgid ""
 " -c, --critical=INTEGER_RANGE(s)\n"
 "    Range(s) which will not result in a CRITICAL status\n"
 msgstr ""
+" -w, --warning=INTEGER_RANGE(s)\n"
+"    Seuil qui ne donnera pas un résultat AVERTISSEMENT\n"
+" -c, --critical=INTEGER_RANGE(s)\n"
+"    Seuil qui ne donnera pas un résultat CRITIQUE\n"
 
 #: plugins/check_snmp.c:953
 #, c-format
@@ -3536,6 +3649,14 @@ msgid ""
 " -l, --label=STRING\n"
 "    Prefix label for output from plugin (default -s 'SNMP')\n"
 msgstr ""
+" -s, --string=STRING\n"
+"    Résultat OK (pour cet OID) si la chaîne de caractère correspond exactement\n"
+" -r, --ereg=REGEX\n"
+"    Résultat OK (pour cet OID) si l'expression régulière étendue correspond\n"
+" -R, --eregi=REGEX\n"
+"    Résultat OK (pour cet OID) si l'expression régulière étendue sans différencier les majuscules des minuscules correspond\n"
+" -l, --label=STRING\n"
+"    titre pour la sortie du plugin (défaut -s 'SNMP')\n"
 
 #: plugins/check_snmp.c:964
 #, c-format
@@ -3545,6 +3666,10 @@ msgid ""
 " -D, --output-delimiter=STRING\n"
 "    Separates output on multiple OID requests\n"
 msgstr ""
+" -u, --units=STRING\n"
+"    TItre des champs pour les données reçues (ex: 'sec.').\n"
+" -D, --output-delimiter=STRING\n"
+"    Séparation des données reçues lors de l'interrogation d'OID multiples\n"
 
 #: plugins/check_snmp.c:974
 #, c-format
@@ -3569,6 +3694,9 @@ msgid ""
 "with\n"
 "  internal spaces must be quoted) [max 8 OIDs]\n"
 msgstr ""
+"- Des OIDs multiples peuvent être indiquées par une virgule ou par des listes\n"
+"séparées par des espaces (des listes avec des espaces intérieurs doivent êtres\n"
+"mise entre guillemets) [max 8 OIDs]\n"
 
 #: plugins/check_snmp.c:983
 #, c-format
@@ -3579,6 +3707,11 @@ msgid ""
 "  range or is equal to the upper or lower bound. A non-OK state will be\n"
 "  returned if the result is outside the specified range.\n"
 msgstr ""
+"- Les écarts sont inclusif et indiqués avec des points virgules . Quand il sont \n"
+"  indiqués comme 'min:max' un résultat STATE_OK sera retourné si le résultat \n"
+"  est dans l'écart, ou sil il est égal à la limite supérieure ou inférieure. \n"
+"- Un résultat autre que STATE_OK sera retourné si le résultat est à l'extérieur \n"
+"  de l'écart indiqué.\n"
 
 #: plugins/check_snmp.c:989
 #, c-format
@@ -3587,6 +3720,8 @@ msgid ""
 "the\n"
 "  result is within the (inclusive) range.\n"
 msgstr ""
+"- Si l'écart est indiqué comme 'max:min' un résultat autre que STATE_OK sera\n"
+"  retourné si le résultat est dans l'écart spécifié.\n"
 
 #: plugins/check_snmp.c:993
 #, c-format
@@ -3601,6 +3736,13 @@ msgid ""
 "value\n"
 "  returned from the SNMP query is an unsigned integer.\n"
 msgstr ""
+"- Les limites supérieure et inférieures peuvent être omises pour ne pas les vérifier.\n"
+"- Les entiers sont interprétés comme des limites supérieures.\n"
+"- Quand vous vérifiez de multiple OIDs, séparer les écarts par des , comme '-w "
+"1:10,1:,:20'\n"
+"- Notez que seulement une chaîne et un regex peut être évalué actuellement\n"
+"- Toutes les méthodes d'évaluations autres que PR, STR, and SUBSTR attendent\n"
+"que la valeur retourné par la requête SNMP est un entier non signé.\n"
 
 #: plugins/check_ssh.c:152
 msgid "Port number must be a positive integer"
@@ -3708,6 +3850,19 @@ msgid ""
 " -v, --verbose\n"
 "    Verbose output. Up to 3 levels\n"
 msgstr ""
+"\n"
+" -w, --warning=INTEGER\n"
+"   Sortie avec un résultat AVERTISSEMENT si moins de INTEGER bytes de place swap sont libres\n"
+" -w, --warning=PERCENT%%\n"
+"   Sortie avec un résultat AVERTISSEMENT si moins de PERCENT de place swap sont libres\n"
+" -c, --critical=INTEGER\n"
+"   Sortie avec un résultat CRITIQUE si moins de INTEGER bytes de place swap sont libres\n"
+" -c, --critical=PERCENT%%\n"
+"   Sortie avec un résultat CRITIQUE si moins de PERCENT de place swap sont libres\n"
+" -a, --allswaps\n"
+"    Effectuer des comparaisons pour toutes les partitions de swap, un par une\n"
+" -v, --verbose\n"
+"    Verbosité du plugin. 3 niveaux sont disponibles\n"
 
 #: plugins/check_swap.c:514
 #, c-format
@@ -3781,6 +3936,15 @@ msgid ""
 " -q, --quit=STRING\n"
 "    String to send server to initiate a clean close of the connection\n"
 msgstr ""
+" -E, --escape\n"
+"    Peut utiliser \\n, \\r, \\t or \\ dans l'envoie ou la chaîne de fin.\n"
+"    Défaut: rien ajouté à l'envoi, \\r\\n ajouté à la chaîne de fin\n"
+" -s, --send=STRING\n"
+"    Chaîne de caractères à envoyer au serveur\n"
+" -e, --expect=STRING\n"
+"    Chaîne de réponse à recevoir du serveur\n"
+" -q, --quit=STRING\n"
+"    Chaîne de caractères à envoyer au serveur pour fermer la connexion proprement\n"
 
 #: plugins/check_tcp.c:609
 #, c-format
@@ -3797,6 +3961,16 @@ msgid ""
 " -d, --delay=INTEGER\n"
 "    Seconds to wait between sending string and polling for response\n"
 msgstr ""
+" -r, --refuse=ok|warn|crit\n"
+"    Accepter les refus tcp avec un résultat ok, warn, crit (défaut: crit)\n"
+" -M, --mismatch=ok|warn|crit\n"
+"    Accepter des erreur de chaînes avec ok, warn, crit (défaut: warn)\n"
+" -j, --jail\n"
+"    Cacher la sortie du socket TCP\n"
+" -m, --maxbytes=INTEGER\n"
+"    Fermer la connexion une fois que ce nombre de bytes on été reçus\n"
+" -d, --delay=INTEGER\n"
+"    Secondes à attendre entre l'envoi de la demande et la réception de la réponse\n"
 
 #: plugins/check_tcp.c:622
 #, c-format
@@ -3867,6 +4041,16 @@ msgid ""
 " -C, --critical-connect=INTEGER\n"
 "    Response time (sec.) necessary to result in critical status\n"
 msgstr ""
+" -u, --udp\n"
+"    Utiliser UDP pour se connecter, pas TCP\n"
+" -w, --warning-variance=INTEGER\n"
+"    Différence de temps (sec.) nécessaire pour avoir un résultat AVERTISSEMENT\n"
+" -c, --critical-variance=INTEGER\n"
+"    Différence de temps (sec.) nécessaire pour avoir un résultat CRITIQUE\n"
+" -W, --warning-connect=INTEGER\n"
+"    Temps de réponse (sec.) nécessaire pour avoir un résultat AVERTISSEMENT\n"
+" -C, --critical-connect=INTEGER\n"
+"    Temps de réponse (sec.) nécessaire pour avoir un résultat CRITIQUE\n"
 
 #: plugins/check_udp.c:70
 #, c-format
@@ -3908,6 +4092,10 @@ msgid ""
 " -s, --send=STRING <optional>\n"
 "    String to send to the server when initiating the connection\n"
 msgstr ""
+" -e, --expect=STRING <optional>\n"
+"    Chaîne attendue dans la première ligne de réponse du serveur\n"
+" -s, --send=STRING <optional>\n"
+"    Chaîne à envoyer au serveur lors de l'initialisation de la connexion\n"
 
 #: plugins/check_udp.c:246
 #, c-format
@@ -3917,6 +4105,9 @@ msgid ""
 "STATE_CRITICAL, other errors return STATE_UNKNOWN.\n"
 "\n"
 msgstr ""
+"Ce plugin vas essayer de se connecter au port spécifié sur l'hôte spécifié.\n"
+"Un connexion réussie donnera un résultat STATE_OK, les refus et les délai de \n"
+"connexion dépassés donneront un résultat STATE_CRITICAL, les autres erreurs donneront un STATE_UNKNOWN.\n"
 
 #: plugins/check_ups.c:137
 msgid "On Battery, Low Battery"
@@ -3944,7 +4135,7 @@ msgstr ", Remplacer la batterie"
 
 #: plugins/check_ups.c:160
 msgid ", On Bypass"
-msgstr ""
+msgstr ", Sur Secteur"
 
 #: plugins/check_ups.c:163
 msgid ", Overload"
@@ -3952,7 +4143,7 @@ msgstr ", Surcharge"
 
 #: plugins/check_ups.c:166
 msgid ", Trimming"
-msgstr ""
+msgstr ", En Test"
 
 #: plugins/check_ups.c:169
 msgid ", Boosting"
@@ -4052,6 +4243,12 @@ msgid ""
 "state.\n"
 "\n"
 msgstr ""
+"Ce plugin essaie de déterminer l'état d'un UPS (Uninterruptible Power Supply)\n"
+"sur une hôte local ou distant. Si l'UPS est en ligne ou en recalibration, le plugin\n"
+"donnera un résultat STATE_OK. Si la batterie est en cours d'utilisation il\n"
+"retournera un résultat STATE_WARNING. Si l'UPS est hors-ligne ou à une batterie\n"
+"basse le plugin retournera un résultat STATE_CRITICAL.\n"
+"\n"
 
 #: plugins/check_ups.c:627
 #, c-format
@@ -4065,6 +4262,12 @@ msgid ""
 "will have to use the [ups] option to specify which UPS to check.\n"
 "\n"
 msgstr ""
+"Vous pouvez aussi spécifier une variable à vérifier [comme la température, \n"
+"le voltage, l'utilisation de la batterie, etc ] ainsi que des seuils critiques\n"
+"ou d'avertissements pour cette variable. Si l'hôte distant à plusieurs UPS\n"
+"qui sont surveillés vous devrez utiliser l'option ups pour spécifier quel UPS\n"
+"surveiller.\n"
+"\n"
 
 #: plugins/check_ups.c:633
 #, c-format
@@ -4077,6 +4280,13 @@ msgid ""
 "http://www.networkupstools.org\n"
 "\n"
 msgstr ""
+"Notes:\n"
+"\n"
+"Ce plugin nécessite que service UPSD distribué avec les Smart UPS Tools\n"
+"de Russel Kroll' soit installé sur votre hôte distant. Si vous ne les avez pas,\n"
+"vous pouvez les télécharger depuis\n"
+"http://www.networkupstools.org\n"
+"\n"
 
 #: plugins/check_users.c:78
 #, c-format
@@ -4107,6 +4317,10 @@ msgid ""
 " -c, --critical=INTEGER\n"
 "    Set CRITICAL status if more than INTEGER users are logged in\n"
 msgstr ""
+" -w, --warning=INTEGER\n"
+"    Résultat AVERTISSEMENT si plus de INTEGER utilisateurs sont connectés\n"
+" -c, --critical=INTEGER\n"
+"    Résultat CRITIQUE si plus de INTEGER utilisateurs sont connectés\n"
 
 #: plugins/check_ide_smart.c:230
 #, c-format
@@ -4144,14 +4358,14 @@ msgid "ERROR - Status '%d' unkown. %d/%d tests passed\n"
 msgstr "ERREUR - État '%d' inconnu. %d/%d les tests on réussi\n"
 
 #: plugins/check_ide_smart.c:418
-#, fuzzy, c-format
+#, c-format
 msgid "OffLineStatus=%d {%s}, AutoOffLine=%s, OffLineTimeout=%d minutes\n"
-msgstr "Etat Hors Ligne=%d {%s}, Hors Ligne Auto=%s, OffLineTimeout=%d minutes\n"
+msgstr "Etat Hors Ligne=%d {%s}, Hors Ligne Auto=%s, Temps avant arrêt=%d minutes\n"
 
 #: plugins/check_ide_smart.c:424
 #, c-format
 msgid "OffLineCapability=%d {%s %s %s}\n"
-msgstr ""
+msgstr "Capacité Hors Ligne=%d {%s %s %s}\n"
 
 #: plugins/check_ide_smart.c:430
 #, c-format
@@ -4175,6 +4389,8 @@ msgid ""
 "interface [http://smartlinux.sourceforge.net/smart/index.php].\n"
 "\n"
 msgstr ""
+"Ce plugin vérifie un disque dur local à l'aide de l'interface SMART (pour Linux) [http://smartlinux.sourceforge.net/smart/index.php].\n"
+"\n"
 
 #: plugins/negate.c:242
 #, c-format
@@ -4188,7 +4404,7 @@ msgstr ""
 #: plugins/negate.c:251
 #, c-format
 msgid "     [keep timeout than the plugin timeout to retain CRITICAL status]\n"
-msgstr ""
+msgstr "     [conserver le délai de réponse dépassé du plugin original afin de conserver le résultat CRITIQUE]\n"
 
 #: plugins/negate.c:254
 #, c-format
@@ -4198,6 +4414,11 @@ msgid ""
 "  negate \"/usr/local/nagios/libexec/check_procs -a 'vi negate.c'\"\n"
 "    Use single quotes if you need to retain spaces\n"
 msgstr ""
+"  negate \"/usr/local/nagios/libexec/check_ping -H host\"\n"
+"    Executer check_ping et inverser le résultat. Il faut utiliser le chemin\n"
+"    complet vers le plugin\n"
+"  negate \"/usr/local/nagios/libexec/check_procs -a 'vi negate.c'\"\n"
+"    Utilisez des guillemets simples pour conserver les espaces\n"
 
 #: plugins/negate.c:260
 #, c-format
@@ -4210,6 +4431,10 @@ msgid ""
 "STATE_OK.\n"
 "Otherwise, the output state of the wrapped plugin is unchanged.\n"
 msgstr ""
+"Ce plugin prend le résultat d'un plugin en entrée et l'inverse.\n"
+"Si le résultat du plugin est STATE_OK, ce plugin donnera STATE_CRITICAL.\n"
+"Si le résultat du plugin est STATE_CRITICAL, ce plugin donnera STATE_OK.\n"
+"Dans les autres cas le résultat du plugin n'est pas changé.\n"
 
 #: plugins/netutils.c:49
 #, c-format
@@ -4237,8 +4462,9 @@ msgid "Socket creation failed\n"
 msgstr "La création du socket à échoué\n"
 
 #: plugins/netutils.c:222
+#, fuzzy
 msgid "Supplied path too long unix domain socket"
-msgstr ""
+msgstr "Le chemin fourni est trop long pour un socket unix"
 
 #: plugins/netutils.c:229
 msgid "Socket creation failed"
@@ -4257,7 +4483,7 @@ msgstr "Adresse/Nom invalide - %s"
 #: plugins/popen.c:124
 #, c-format
 msgid "Could not malloc argv array in popen()\n"
-msgstr ""
+msgstr "Impossible de réallouer un tableau pour les paramètres dans popen()\n"
 
 #: plugins/popen.c:134
 #, c-format
@@ -4276,7 +4502,7 @@ msgstr "CRITIQUE - Le plugin n'as pas répondu dans les %d secondes\n"
 #: plugins/popen.c:281
 #, c-format
 msgid "CRITICAL - popen timeout received, but no child process\n"
-msgstr ""
+msgstr "CRITIQUE - le temps d'attente à été dépassé dans la fonction popen, mais il n'y a pas de processus fils\n"
 
 #: plugins/popen.c:297
 msgid "sysconf error for _SC_OPEN_MAX"
@@ -4301,6 +4527,12 @@ msgid ""
 "plugin.\n"
 "\n"
 msgstr ""
+"\n"
+"Ce plugin encapsule la sortie d'une autre commande (plugin) dans des tags HTML\n"
+"<a>, permettant d'afficher la sortie du plugin comme un lien clickable dans\n"
+"l'écran de statuts de Nagios.  Le résultat est le même que celui dans le plugin\n"
+"encapsulé.\n"
+"\n"
 
 #: plugins/urlize.c:160
 #, c-format
@@ -4319,14 +4551,27 @@ msgid ""
 "\n"
 "    urlize http://example.com/ \"check_http -H example.com -r 'two words'\"\n"
 msgstr ""
+"\n"
+"Veuillez faire attention au guillemets simples et doubles pour que le shell passe\n"
+"les données correctement au plugin. Par exemple:\n"
+"\n"
+"    urlize http://exemple.com/ check_http -H exemple.com -r 'deux mots'\n"
+"\n"
+"le shell enlèvera les guillemets simples et urlize verra:\n"
+"\n"
+"    urlize http://exemple.com/ check_http -H exemple.com -r deux mots\n"
+"\n"
+"Vous voulez probablement:\n"
+"\n"
+"    urlize http://exemple.com/ \"check_http -H exemple.com -r 'deux mots'\"\n"
 
 #: plugins/utils.c:592
 msgid "failed realloc in strpcpy\n"
-msgstr ""
+msgstr "La fonction realloc à échoué dans strpcpy\n"
 
 #: plugins/utils.c:634
 msgid "failed malloc in strscat\n"
-msgstr ""
+msgstr "La fonction malloc à échoué dans strscat\n"
 
 #: plugins-root/check_dhcp.c:293
 #, c-format
@@ -4620,4 +4865,18 @@ msgid ""
 " -V, --version\n"
 "   Print version information\n"
 msgstr ""
+" -s, --serverip=IPADDRESS\n"
+"   Adresse IP du serveur DHCP qui doit nous donner la réponse\n"
+" -r, --requestedip=IPADDRESS\n"
+"   Adresse IP qui doit être donnée par un serveur DHCP au minimum\n"
+" -t, --timeout=INTEGER\n"
+"   Secondes à attendre avant que le délai d'attente dépassé du DHCPOFFER se produise\n"
+" -i, --interface=STRING\n"
+"   Interface à utiliser pour l'écoute (ex. eth0)\n"
+" -v, --verbose\n"
+"   Donner des informations supplémentaires (ligne de commande seulement)\n"
+" -h, --help\n"
+"   Afficher l'aide détaillée\n"
+" -V, --version\n"
+"   Afficher le numéro de version\n"
 
