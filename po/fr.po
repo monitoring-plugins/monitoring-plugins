@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-04-15 00:41+0200\n"
-"PO-Revision-Date: 2006-04-17 15:53+0200\n"
+"PO-Revision-Date: 2006-04-17 23:07+0200\n"
 "Last-Translator: Benoit Mortier <benoit.mortier@opensides.be>\n"
 "Language-Team: Français <fr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1210,6 +1210,22 @@ msgid ""
 " -T, --content-type=STRING\n"
 "   specify Content-Type header media type when POSTing\n"
 msgstr ""
+" -e, --expect=STRING\n"
+"   Chaîne attendue dans la 1ère ligne (statut) de réponse du serveur (défaut: %s)\n"
+"   Si spécifié, ne lit aucune des autres lignes de statut (ex: 3xx, 4xx, 5xx )\n"
+" -s, --string=STRING\n"
+"   Chaîne attendu dans le contenu\n"
+" -u, --url=PATH\n"
+"   URL à envoyer pour le GET ou le POST (défaut: /)\n"
+" -P, --post=STRING\n"
+"   URL encodée pour les données http POST\n"
+" -N, --no-body\n"
+"   Ne pas attendre pour le corps du document: s'arrêter après l'entête.\n"
+"   (Notez que ceci exécute quand même un GET ou POST pas un HEAD.)\n"
+" -M, --max-age=SECONDS\n"
+"   Prévient si le document est plus vieux que SECONDS. le nombre peut aussi être de la forme \"10m\" pour minutes, \"10h\" pour heures, ou \"10d\" pour jours.\n"
+" -T, --content-type=STRING\n"
+"   spécifie le Content-Type type lors d'un POST\n"
 
 #: plugins/check_http.c:1274
 #, c-format
@@ -1246,6 +1262,18 @@ msgid ""
 " -m, --pagesize=INTEGER<:INTEGER>\n"
 "   Minimum page size required (bytes) : Maximum page size required (bytes)\n"
 msgstr ""
+" -a, --authorization=AUTH_PAIR\n"
+"   Nom d'utilisateur:mot de passe pour les sites avec un authentification basique\n"
+" -A, --useragent=STRING\n"
+"   Chaîne à envoyer dans l'entête String http comme \"User Agent\"\n"
+" -k, --header=STRING\n"
+"   N'importe quel autre tags à envoyer dans l'entête http. Utiliser le plusieurs fois pour rajouter de multiples entêtes\n"
+" -L, --link=URL\n"
+"   Encapsuler la sortie dans du HTML (rendu obsolète par urlize)\n"
+" -f, --onredirect=<ok|warning|critical|follow>\n"
+"   Comment gèrer les pages redirigées\n"
+" -m, --pagesize=INTEGER<:INTEGER>\n"
+"   Taille minimum exigée pour la page (bytes) : Taille maximum page exigée pour la page (bytes)\n"
 
 #: plugins/check_http.c:1303
 #, c-format
@@ -2040,6 +2068,24 @@ msgid ""
 "-V, --version\n"
 "  Print version information\n"
 msgstr ""
+"\n"
+"Options:\n"
+"-H, --hostname=HOST\n"
+"  Nom de l'hôte à vérifier\n"
+"-p, --port=INTEGER\n"
+"  Numéro de port optionnel (défaut: %d)\n"
+"-s <password>\n"
+"  Mot de passe nécessaire pour la requête\n"
+"-w, --warning=INTEGER\n"
+"  Seuil qui donnera un résultat AVERTISSEMENT\n"
+"-c, --critical=INTEGER\n"
+"  Seuil qui donnera un résultat CRITIQUE\n"
+"-t, --timeout=INTEGER\n"
+"  Nombre de secondes avant le délai d'expiration de la connexion (défaut: %d)\n"
+"-h, --help\n"
+"  Afficher l'aide\n"
+"-V, --version\n"
+"  Afficher le numéro de version\n"
 
 #: plugins/check_nt.c:640
 #, c-format
@@ -2071,6 +2117,12 @@ msgid ""
 "shot.\n"
 "     ie: -l 60,90,95,120,90,95\n"
 msgstr ""
+"   CPULOAD = Charge CPU sur les x minutes.\n"
+"     Un paramètre -l est nécessaire avec la syntaxe suivante:\n"
+"     -l <écarts en minutes>,<seuil d'avertissement>,<seuil critique>.\n"
+"     <> doit être plus petit que 24*60.\n"
+"     Les seuils sont des pourcentages et jusqu'à 10 requêtes peuvent être faites en une fois.\n"
+"     ex: -l 60,90,95,120,90,95\n"
 
 #: plugins/check_nt.c:653
 #, c-format
@@ -2088,6 +2140,9 @@ msgid ""
 "     Request a -l parameter containing the drive letter only.\n"
 "     Warning and critical thresholds can be specified with -w and -c.\n"
 msgstr ""
+"   USEDDISKSPACE = Taille et pourcentage du disque utilisé.\n"
+"     Nécessite un paramètres -l contenant la lettre du lecteur seulement.\n"
+"     Les seuils d'avertissements et critiques peuvent être spécifiés avec -w et -c.\n"
 
 #: plugins/check_nt.c:660
 #, c-format
@@ -2107,6 +2162,11 @@ msgid ""
 "     You can specify -d SHOWALL in case you want to see working services\n"
 "\t\t in the returned string.\n"
 msgstr ""
+"   SERVICESTATE = Vérifié l'état d'un ou de plusieurs services.\n"
+"     Nécessite un paramètre -l avec la syntaxe suivante:\n"
+"     -l <service1>,<service2>,<service3>,...\n"
+"     Vous pouvez spécifier -d SHOWALL pour voir les services qui fonctionnent\n"
+"\t\t dans la réponse.\n"
 
 #: plugins/check_nt.c:669
 #, c-format
@@ -2130,6 +2190,15 @@ msgid ""
 "       \"Paging file usage is %%.2f %%%%\"\n"
 "       \"%%.f %%%% paging file used.\"\n"
 msgstr ""
+"   COUNTER =  Vérifie les compteurs de performance de Windows NT/2000.\n"
+"     Nécessite un paramètre -l avec la syntaxe suivante:\n"
+"\t\t -l \"\\\\<performance object>\\\\counter\",\"<description>\n"
+"     Le paramètre <description> est optionnel et \n"
+"     le résultat est donné a une commande printf  qui à besoin d'un nombre flottant.\n"
+"     Si <description> n'inclus pas \"%%\", il est utilisé comme un titre.\n"
+"     Des exemples:\n"
+"       \"Paging file usage is %%.2f %%%%\"\n"
+"       \"%%.f %%%% paging file used.\"\n"
 
 #: plugins/check_nt.c:682
 #, c-format
@@ -2169,7 +2238,7 @@ msgstr "Conns %s - %lu connections actuelles"
 #: plugins/check_nwstat.c:238
 #, c-format
 msgid "%s: Long term cache hits = %lu%%"
-msgstr ""
+msgstr "%s: Accès cache longue durée = %lu%%"
 
 #: plugins/check_nwstat.c:260
 #, c-format
@@ -2405,6 +2474,14 @@ msgid ""
 "      SAPENTRIES = number of entries in the SAP table\n"
 "      SAPENTRIES<n> = number of entries in the SAP table for SAP type <n>\n"
 msgstr ""
+"      LRUM      = LRU sitting time in minutes\n"
+"      LRUS      = LRU sitting time in seconds\n"
+"      DSDB      = Vérifie si la base de données DS est ouverte\n"
+"      DSVER     = version NDS\n"
+"      UPRB      = paquets du tampon de réception utilisé\n"
+"      PUPRB     = pourcentage (max) des paquets du tampon de réception utilisés\n"
+"      SAPENTRIES = nombres d'entrées dans la table SAP\n"
+"      SAPENTRIES<n> = nombres d'entrées dans la table SAP de type SAP <n>\n"
 
 #: plugins/check_nwstat.c:1062
 #, c-format
@@ -2415,6 +2492,11 @@ msgid ""
 "      NLM:<nlm> = check if NLM is loaded and report version\n"
 "                  (e.g. \"NLM:TSANDS.NLM\")\n"
 msgstr ""
+"      TSYNC     = statut de la synchronisation du temps \n"
+"      LOGINS    = vérifier si les logins sont activés\n"
+"      CONNS     = nombre de connexion ayant actuellement une licence\n"
+"      NLM:<nlm> = vérifier si le NLM est chargé et donner la version\n"
+"                  (ex. \"NLM:TSANDS.NLM\")\n"
 
 #: plugins/check_nwstat.c:1069
 #, c-format
@@ -2426,6 +2508,12 @@ msgid ""
 " -o, --osversion\n"
 "    Include server version string in results\n"
 msgstr ""
+" -w, --warning=INTEGER\n"
+"   Seuil qui donnera un résultat AVERTISSEMENT\n"
+" -c, --critical=INTEGER\n"
+"   Seuil qui donnera un résultat CRITIQUE\n"
+" -o, --osversion\n"
+"    Inclure la version du serveur dans les résultats\n"
 
 #: plugins/check_nwstat.c:1079
 #, c-format
@@ -2525,6 +2613,15 @@ msgid ""
 "     NET<port>     = number of active connections on TCP port <port>\n"
 "     UPTIME        = system uptime in seconds\n"
 msgstr ""
+"-v, --variable=STRING\n"
+"   Variable à  vérifier. Les variables correctes sont:\n"
+"     LOAD1         = Charge CPU après 1 minute\n"
+"     LOAD5         = Charge CPU après 5 minutes\n"
+"     LOAD15        = Charge CPU après 15 minutes\n"
+"     DPU<filesys>  = pourcentage de place utilisée sur le système de fichier <filesys>\n"
+"     PROC<process> = nombre de processus actifs avec le nom <process>\n"
+"     NET<port>     = nombre de connections TCP actives sur le port <port>\n"
+"     UPTIME        = durée de fonctionnement du système en secondes\n"
 
 #: plugins/check_overcr.c:427
 #, c-format
@@ -2534,6 +2631,10 @@ msgid ""
 " -c, --critical=INTEGER\n"
 "   Threshold which will result in a critical status\n"
 msgstr ""
+" -w, --warning=INTEGER\n"
+"   Seuil qui donnera un résultat AVERTISSEMENT\n"
+" -c, --critical=INTEGER\n"
+"   Seuil qui donnera un résultat CRITIQUE\n"
 
 #: plugins/check_overcr.c:435
 #, c-format
@@ -2803,6 +2904,16 @@ msgid ""
 "-L, --link\n"
 "   show HTML in the plugin output (obsoleted by urlize)\n"
 msgstr ""
+"-H, --hostname=HOST\n"
+"   hôte à pinger\n"
+"-w, --warning=THRESHOLD\n"
+"   Valeurs pour le seuil d'avertissement\n"
+"-c, --critical=THRESHOLD\n"
+"   Valeurs pour le seuil critique\n"
+"-p, --packets=INTEGER\n"
+"   nombre de paquets ICMP ECHO à envoyer (Défaut: %d)\n"
+"-L, --link\n"
+"   montrer de l'HTML dans la sortie du plugin (obsolète a cause de urlize)\n"
 
 #: plugins/check_ping.c:544
 #, c-format
@@ -2812,6 +2923,9 @@ msgid ""
 "percentage of packet loss to trigger an alarm state.\n"
 "\n"
 msgstr ""
+"Le seuil est <rta>,<pl>%% ou <rta> est le temps d'aller/retour (ms) qui donne\n comme résultat un STATE_WARNING ou unSTATE_CRITICAL, et <pl> est \n"
+"un pourcentage de paquets perdus déclenchant un avertissement.\n"
+"\n"
 
 #: plugins/check_ping.c:549
 #, c-format
