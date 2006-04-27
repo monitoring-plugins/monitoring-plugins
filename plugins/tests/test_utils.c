@@ -34,7 +34,7 @@ main (int argc, char **argv)
 	thresholds *thresholds = NULL;
 	int	rc;
 
-	plan_tests(73);
+	plan_tests(74);
 
 	range = parse_range_string("6");
 	ok( range != NULL, "'6' is valid range");
@@ -164,6 +164,9 @@ main (int argc, char **argv)
 	test = np_escaped_string("everything");
 	ok( strcmp(test, "everything") == 0, "everything okay");
 	free(test);
+
+	test = basename("/here/is/a/path");
+	ok( strcmp(test, "path") == 0, "basename okay");
 
 	return exit_status();
 }

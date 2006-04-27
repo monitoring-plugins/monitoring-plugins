@@ -96,9 +96,6 @@ main (int argc, char **argv)
 	char procstat[8];
 	char procetime[MAX_INPUT_BUFFER] = { '\0' };
 	char *procargs;
-#ifdef HAVE_BASENAME
-	char *temp_string;
-#endif
 
 	const char *zombie = "Z";
 
@@ -179,10 +176,7 @@ main (int argc, char **argv)
 			strip (procargs);
 
 			/* Some ps return full pathname for command. This removes path */
-#ifdef HAVE_BASENAME
-			temp_string = strdup(procprog);
-			procprog = basename(temp_string);
-#endif /* HAVE_BASENAME */
+			procprog = basename(procprog);
 
 			/* we need to convert the elapsed time to seconds */
 			procseconds = convert_to_seconds(procetime);
