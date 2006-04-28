@@ -84,7 +84,7 @@ AC_ARG_WITH(trusted_path,
 AC_SUBST(with_trusted_path)
 
 EXTRAS=
-EXTRAS_ROOT=pst3
+EXTRAS_ROOT=
 dnl PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/etc:/usr/local/bin:/usr/local/sbin:$PATH
 
 LDFLAGS="$LDFLAGS -L."
