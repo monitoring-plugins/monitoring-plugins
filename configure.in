@@ -84,6 +84,7 @@ AC_ARG_WITH(trusted_path,
 AC_SUBST(with_trusted_path)
 
 EXTRAS=
+EXTRAS_ROOT=pst3
 dnl PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/etc:/usr/local/bin:/usr/local/sbin:$PATH
 
 LDFLAGS="$LDFLAGS -L."
@@ -656,8 +657,6 @@ AC_ARG_WITH(ps_varlist,
                             [Variable list for sscanf of 'ps' output]),
             PS_VARLIST=$withval)
 
-AM_CONDITIONAL(WANT_PST3, false)
-
 if test -n "$PS_COMMAND" && test -n "$PS_FORMAT" && test -n "$PS_COLS" && test -n "$PS_VARLIST"; then 
 	ac_cv_ps_command="$PS_COMMAND"
 	ac_cv_ps_format="$PS_FORMAT"
@@ -688,7 +687,7 @@ elif test "$ac_cv_uname_s" = "SunOS"; then
 	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_cols=8
 	AC_MSG_RESULT([using nagios-plugins internal ps for solaris])
-	AM_CONDITIONAL(WANT_PST3, true)
+	EXTRAS_ROOT="$EXTRAS_ROOT pst3"
 
 dnl Some gnu/linux systems (debian for one) don't like -axwo and need axwo.
 dnl so test for this first...
@@ -1658,6 +1657,7 @@ case $host in
 esac
 
 AC_SUBST(EXTRAS)
+AC_SUBST(EXTRAS_ROOT)
 AC_SUBST(EXTRA_NETOBJS)
 AC_SUBST(DEPLIBS)
 

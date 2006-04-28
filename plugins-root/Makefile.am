@@ -9,12 +9,11 @@ localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
 LIBS = @LIBINTL@ @LIBS@ @SSLLIBS@
 
-EXTRA_PROGRAMS = check_dhcp check_icmp
+libexec_PROGRAMS = check_dhcp check_icmp @EXTRAS_ROOT@
 
-if WANT_PST3
-	EXTRA_PROGRAMS += pst3
-	pst3_DEPENDENCIES = pst3.c
-endif
+EXTRA_PROGRAMS = pst3
+
+EXTRA_DIST = pst3.c
 
 BASEOBJS = ../plugins/utils.o ../lib/libnagiosplug.a ../lib/libcoreutils.a
 NETOBJS = ../plugins/netutils.o $(BASEOBJS) $(EXTRA_NETOBJS)
@@ -26,8 +25,6 @@ TESTS = @PLUGIN_TEST@
 
 test:
 	perl -I $(top_builddir) -I $(top_srcdir) ../test.pl
-
-all-local: $(EXTRA_PROGRAMS)
 
 setuid_root_mode = 4550
 
