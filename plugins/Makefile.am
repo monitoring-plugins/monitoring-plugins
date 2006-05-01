@@ -13,8 +13,8 @@ LIBS = @LIBINTL@ @LIBS@ @SSLLIBS@
 MATHLIBS = @MATHLIBS@
 AM_CFLAGS = -Wall
 
-libexec_PROGRAMS = check_disk check_dummy check_http check_load \
-	check_mrtg check_mrtgtraf check_nwstat check_overcr check_ping \
+libexec_PROGRAMS = check_apt check_disk check_dummy check_http check_load \
+	check_mrtg check_mrtgtraf check_ntp check_nwstat check_overcr check_ping \
 	check_real check_smtp check_ssh check_tcp check_time \
 	check_udp check_ups check_users negate \
 	urlize @EXTRAS@
@@ -25,7 +25,7 @@ check_tcp_programs = check_ftp check_imap check_nntp check_pop \
 EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 	check_swap check_fping check_ldap check_game check_dig \
 	check_nagios check_by_ssh check_dns check_nt check_ide_smart	\
-	check_procs check_mysql_query
+	check_procs check_mysql_query check_apt
 
 EXTRA_DIST = t utils.c netutils.c sslutils.c popen.c utils.h netutils.h \
 	popen.h common.h getaddrinfo.c getaddrinfo.h \
@@ -51,6 +51,7 @@ AM_INSTALL_PROGRAM_FLAGS = @INSTALL_OPTS@
 ##############################################################################
 # the actual targets
 
+check_apt_LDADD = $(BASEOBJS) runcmd.o
 check_dig_LDADD = $(NETLIBS) runcmd.o 
 check_disk_LDADD = $(BASEOBJS) popen.o
 check_dns_LDADD = $(NETLIBS) runcmd.o
@@ -71,6 +72,7 @@ check_mysql_query_CPPFLAGS = $(MYSQLINCLUDE)
 check_mysql_query_LDADD = $(NETLIBS) $(MYSQLLIBS)
 check_nagios_LDADD = $(BASEOBJS) runcmd.o
 check_nt_LDADD = $(NETLIBS) 
+check_ntp_LDADD = $(NETLIBS) $(MATHLIBS)
 check_nwstat_LDADD = $(NETLIBS)
 check_overcr_LDADD = $(NETLIBS)
 check_pgsql_LDADD = $(NETLIBS) $(PGLIBS)
@@ -92,6 +94,7 @@ check_ide_smart_LDADD = $(BASEOBJS)
 negate_LDADD = $(BASEOBJS) popen.o
 urlize_LDADD = $(BASEOBJS) popen.o
 
+check_apt_DEPENDENCIES = check_apt.c $(BASEOBJS) runcmd.o $(DEPLIBS)
 check_dig_DEPENDENCIES = check_dig.c $(NETOBJS) runcmd.o $(DEPLIBS)
 check_disk_DEPENDENCIES = check_disk.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_dns_DEPENDENCIES = check_dns.c $(NETOBJS) runcmd.o $(DEPLIBS)
@@ -109,6 +112,7 @@ check_mysql_DEPENDENCIES = check_mysql.c $(NETOBJS) $(DEPLIBS)
 check_mysql_query_DEPENDENCIES = check_mysql_query.c $(NETOBJS) $(DEPLIBS)
 check_nagios_DEPENDENCIES = check_nagios.c $(BASEOBJS) runcmd.o $(DEPLIBS)
 check_nt_DEPENDENCIES = check_nt.c $(NETOBJS) $(DEPLIBS)
+check_ntp_DEPENDENCIES = check_ntp.c $(NETOBJS) $(DEPLIBS)
 check_nwstat_DEPENDENCIES = check_nwstat.c $(NETOBJS) $(DEPLIBS)
 check_overcr_DEPENDENCIES = check_overcr.c $(NETOBJS) $(DEPLIBS)
 check_pgsql_DEPENDENCIES = check_pgsql.c $(NETOBJS)  $(DEPLIBS)

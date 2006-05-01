@@ -198,7 +198,7 @@ np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
 				close (i);
 
 		execve (argv[0], argv, env);
-		_exit (0);
+		_exit (STATE_UNKNOWN);
 	}
 
 	/* parent picks up execution here */

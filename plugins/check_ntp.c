@@ -29,16 +29,15 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
-#include <sys/poll.h>
 
 static char *server_address=NULL;
 static int verbose=0;
 static int zero_offset_bad=0;
-static double owarn=0;
-static double ocrit=0;
+static double owarn=60;
+static double ocrit=120;
 static short do_jitter=0;
-static double jwarn=0;
-static double jcrit=0;
+static double jwarn=5000;
+static double jcrit=10000;
 
 int process_arguments (int, char **);
 void print_help (void);
@@ -67,8 +66,11 @@ typedef struct {
 
 /* this structure holds data about results from querying offset from a peer */
 typedef struct {
-	int waiting;            /* we set to 1 to signal waiting for a response */  
+	time_t waiting;         /* ts set when we started waiting for a response */ 
 	int num_responses;      /* number of successfully recieved responses */
+	uint8_t stratum;        /* copied verbatim from the ntp_message */
+	double rtdelay;         /* converted from the ntp_message */
+	double rtdisp;          /* converted from the ntp_message */
 	double offset[AVG_NUM]; /* offsets from each response */
 } ntp_server_results;
 
@@ -192,13 +194,12 @@ typedef struct {
 
 /* calculate the offset of the local clock */
 static inline double calc_offset(const ntp_message *m, const struct timeval *t){
-	double client_tx, peer_rx, peer_tx, client_rx, rtdelay;
+	double client_tx, peer_rx, peer_tx, client_rx;
 	client_tx = NTP64asDOUBLE(m->origts);
 	peer_rx = NTP64asDOUBLE(m->rxts);
 	peer_tx = NTP64asDOUBLE(m->txts);
 	client_rx=TVasDOUBLE((*t));
-	rtdelay=NTP32asDOUBLE(m->rtdelay);
-	return (.5*((peer_tx-client_rx)+(peer_rx-client_tx)))-rtdelay;
+	return (.5*((peer_tx-client_rx)+(peer_rx-client_tx)));
 }
 
 /* print out a ntp packet in human readable/debuggable format */
@@ -279,14 +280,63 @@ void setup_request(ntp_message *p){
 	TVtoNTP64(t,p->txts);
 }
 
+/* select the "best" server from a list of servers, and return its index.
+ * this is done by filtering servers based on stratum, dispersion, and
+ * finally round-trip delay. */
+int best_offset_server(const ntp_server_results *slist, int nservers){
+	int i=0, j=0, cserver=0, candidates[5], csize=0;
+
+	/* for each server */
+	for(cserver=0; cserver<nservers; cserver++){
+		/* compare it to each of the servers already in the candidate list */
+		for(i=0; i<csize; i++){
+			/* does it have an equal or better stratum? */
+			if(slist[cserver].stratum <= slist[i].stratum){
+				/* does it have an equal or better dispersion? */
+				if(slist[cserver].rtdisp <= slist[i].rtdisp){
+					/* does it have a better rtdelay? */
+					if(slist[cserver].rtdelay < slist[i].rtdelay){
+						break;
+					}
+				}
+			}
+		}
+
+		/* if we haven't reached the current list's end, move everyone
+		 * over one to the right, and insert the new candidate */
+		if(i<csize){
+			for(j=5; j>i; j--){
+				candidates[j]=candidates[j-1];
+			}
+		}
+		/* regardless, if they should be on the list... */
+		if(i<5) {
+			candidates[i]=cserver;
+			if(csize<5) csize++;
+		/* otherwise discard the server */
+		} else {
+			DBG(printf("discarding peer id %d\n", cserver));
+		}
+	}
+
+	if(csize>0) {
+		DBG(printf("best server selected: peer %d\n", candidates[0]));
+		return candidates[0];
+	} else {
+		DBG(printf("no peers meeting synchronization criteria :(\n"));
+		return -1;
+	}
+}
+
 /* do everything we need to get the total average offset
  * - we use a certain amount of parallelization with poll() to ensure
  *   we don't waste time sitting around waiting for single packets. 
  * - we also "manually" handle resolving host names and connecting, because
  *   we have to do it in a way that our lazy macros don't handle currently :( */
-double offset_request(const char *host){
+double offset_request(const char *host, int *status){
 	int i=0, j=0, ga_result=0, num_hosts=0, *socklist=NULL, respnum=0;
-	int servers_completed=0, one_written=0, servers_readable=0, offsets_recvd=0;
+	int servers_completed=0, one_written=0, servers_readable=0, best_index=-1;
+	time_t now_time=0, start_ts=0;
 	ntp_message *req=NULL;
 	double avg_offset=0.;
 	struct timeval recv_time;
@@ -337,28 +387,24 @@ double offset_request(const char *host){
 		ai_tmp = ai_tmp->ai_next;
 	}
 
-	/* now do AVG_NUM checks to each host. */
-	while(servers_completed<num_hosts){
-
-		/* write to any servers that are free and have done < AVG_NUM reqs */
-		/* XXX we need some kind of ability to retransmit lost packets.
-		 * XXX one way would be replace "waiting" with a timestamp and
-		 * XXX if the timestamp is old enough the request is re-transmitted.
-		 * XXX then a certain number of failures could mark a server as
-		 * XXX bad, which is what i imagine that ntpdate does though
-		 * XXX i can't confirm it (i think it still only sends a max
-		 * XXX of AVG_NUM requests, but what does it do if one fails
-		 * XXX but the others succeed? */
-		/* XXX also we need the ability to cut out failed/unresponsive
-		 * XXX servers.  currently after doing all other servers we
-		 * XXX still wait for them until the bitter end/timeout. */
+	/* now do AVG_NUM checks to each host.  we stop before timeout/2 seconds
+	 * have passed in order to ensure post-processing and jitter time. */
+	now_time=start_ts=time(NULL);
+	while(servers_completed<num_hosts && now_time-start_ts <= socket_timeout/2){
+		/* loop through each server and find each one which hasn't
+		 * been touched in the past second or so and is still lacking
+		 * some responses.  for each of these servers, send a new request,
+		 * and update the "waiting" timestamp with the current time. */
 		one_written=0;
+		now_time=time(NULL);
+
 		for(i=0; i<num_hosts; i++){
-			if(!servers[i].waiting && servers[i].num_responses<AVG_NUM){
+			if(servers[i].waiting<now_time && servers[i].num_responses<AVG_NUM){
+				if(verbose && servers[i].waiting != 0) printf("re-");
 				if(verbose) printf("sending request to peer %d\n", i);
 				setup_request(&req[i]);
 				write(socklist[i], &req[i], sizeof(ntp_message));
-				servers[i].waiting=1;
+				servers[i].waiting=now_time;
 				one_written=1;
 				break;
 			}
@@ -373,17 +419,22 @@ double offset_request(const char *host){
 
 		/* read from any sockets with pending data */
 		for(i=0; servers_readable && i<num_hosts; i++){
-			if(ufds[i].revents&POLLIN){
+			if(ufds[i].revents&POLLIN && servers[i].num_responses < AVG_NUM){
 				if(verbose) {
 					printf("response from peer %d: ", i);
 				}
+
 				read(ufds[i].fd, &req[i], sizeof(ntp_message));
 				gettimeofday(&recv_time, NULL);
+				DBG(print_ntp_message(&req[i]));
 				respnum=servers[i].num_responses++;
 				servers[i].offset[respnum]=calc_offset(&req[i], &recv_time);
 				if(verbose) {
-					printf("offset %g\n", servers[i].offset[respnum]);
+					printf("offset %.10g\n", servers[i].offset[respnum]);
 				}
+				servers[i].stratum=req[i].stratum;
+				servers[i].rtdisp=NTP32asDOUBLE(req[i].rtdisp);
+				servers[i].rtdelay=NTP32asDOUBLE(req[i].rtdelay);
 				servers[i].waiting=0;
 				servers_readable--;
 				if(servers[i].num_responses==AVG_NUM) servers_completed++;
@@ -392,15 +443,17 @@ double offset_request(const char *host){
 		/* lather, rinse, repeat. */
 	}
 
-	/* finally, calculate the average offset */
-	/* XXX still something about the "top 5" */
-	for(i=0;i<num_hosts;i++){
-		for(j=0;j<servers[i].num_responses;j++){
-			offsets_recvd++;
-			avg_offset+=servers[i].offset[j];
+	/* now, pick the best server from the list */
+	best_index=best_offset_server(servers, num_hosts);
+	if(best_index < 0){
+		*status=STATE_CRITICAL;
+	} else {
+		/* finally, calculate the average offset */
+		for(i=0; i<servers[best_index].num_responses;i++){
+			avg_offset+=servers[best_index].offset[j];
 		}
+		avg_offset/=servers[best_index].num_responses;
 	}
-	avg_offset/=offsets_recvd;
 
 	/* cleanup */
 	for(j=0; j<num_hosts; j++){ close(socklist[j]); }
@@ -410,7 +463,7 @@ double offset_request(const char *host){
 	free(req);
 	freeaddrinfo(ai);
 
-	if(verbose) printf("overall average offset: %g\n", avg_offset);
+	if(verbose) printf("overall average offset: %.10g\n", avg_offset);
 	return avg_offset;
 }
 
@@ -426,10 +479,11 @@ setup_control_request(ntp_control_message *p, uint8_t opcode, uint16_t seq){
 }
 
 /* XXX handle responses with the error bit set */
-double jitter_request(const char *host){
+double jitter_request(const char *host, int *status){
 	int conn=-1, i, npeers=0, num_candidates=0, syncsource_found=0;
 	int run=0, min_peer_sel=PEER_INCLUDED, num_selected=0, num_valid=0;
-	ntp_assoc_status_pair *peers;
+	int peer_offset=0;
+	ntp_assoc_status_pair *peers=NULL;
 	ntp_control_message req;
 	double rval = 0.0, jitter = -1.0;
 	char *startofvalue=NULL, *nptr=NULL;
@@ -449,27 +503,28 @@ double jitter_request(const char *host){
 	 * 4) Extract the jitter value from the data[] (it's ASCII)
 	 */
 	my_udp_connect(server_address, 123, &conn);
-	setup_control_request(&req, OP_READSTAT, 1);
 
-	DBG(printf("sending READSTAT request"));
-	write(conn, &req, SIZEOF_NTPCM(req));
-	DBG(print_ntp_control_message(&req));
-	/* Attempt to read the largest size packet possible
-	 * Is it possible for an NTP server to have more than 117 synchronization
-	 * sources?  If so, we will receive a second datagram with additional
-	 * peers listed, since 117 is the maximum number that can fit in a
-	 * single NTP control datagram.  This code doesn't handle that case */
-	/* XXX check the REM_MORE bit */
-	req.count=htons(MAX_CM_SIZE);
-	DBG(printf("recieving READSTAT response"))
-	read(conn, &req, SIZEOF_NTPCM(req));
-	DBG(print_ntp_control_message(&req));
-	/* Each peer identifier is 4 bytes in the data section, which
-	 * we represent as a ntp_assoc_status_pair datatype.
-	 */
-	npeers=ntohs(req.count)/sizeof(ntp_assoc_status_pair);
-	peers=(ntp_assoc_status_pair*)malloc(sizeof(ntp_assoc_status_pair)*npeers);
-	memcpy((void*)peers, (void*)req.data, sizeof(ntp_assoc_status_pair)*npeers);
+	/* keep sending requests until the server stops setting the
+	 * REM_MORE bit, though usually this is only 1 packet. */
+	do{
+		setup_control_request(&req, OP_READSTAT, 1);
+		DBG(printf("sending READSTAT request"));
+		write(conn, &req, SIZEOF_NTPCM(req));
+		DBG(print_ntp_control_message(&req));
+		/* Attempt to read the largest size packet possible */
+		req.count=htons(MAX_CM_SIZE);
+		DBG(printf("recieving READSTAT response"))
+		read(conn, &req, SIZEOF_NTPCM(req));
+		DBG(print_ntp_control_message(&req));
+		/* Each peer identifier is 4 bytes in the data section, which
+	 	 * we represent as a ntp_assoc_status_pair datatype.
+	 	 */
+		npeers+=(ntohs(req.count)/sizeof(ntp_assoc_status_pair));
+		peers=(ntp_assoc_status_pair*)realloc(peers, sizeof(ntp_assoc_status_pair)*npeers);
+		memcpy((void*)peers+peer_offset, (void*)req.data, sizeof(ntp_assoc_status_pair)*npeers);
+		peer_offset+=ntohs(req.count);
+	} while(req.op&REM_MORE);
+
 	/* first, let's find out if we have a sync source, or if there are
 	 * at least some candidates.  in the case of the latter we'll issue
 	 * a warning but go ahead with the check on them. */
@@ -484,13 +539,15 @@ double jitter_request(const char *host){
 	}
 	if(verbose) printf("%d candiate peers available\n", num_candidates);
 	if(verbose && syncsource_found) printf("synchronization source found\n");
-	/* XXX if ! syncsource_found set status to warning */
+	if(! syncsource_found) *status = STATE_WARNING;
+
 
 	for (run=0; run<AVG_NUM; run++){
 		if(verbose) printf("jitter run %d of %d\n", run+1, AVG_NUM);
 		for (i = 0; i < npeers; i++){
 			/* Only query this server if it is the current sync source */
 			if (PEER_SEL(peers[i].status) >= min_peer_sel){
+				num_selected++;
 				setup_control_request(&req, OP_READVAR, 2);
 				req.assoc = peers[i].assoc;
 				/* By spec, putting the variable name "jitter"  in the request
@@ -514,11 +571,12 @@ double jitter_request(const char *host){
 					printf("parsing jitter from peer %.2x: ", peers[i].assoc);
 				}
 				startofvalue = strchr(req.data, '=') + 1;
-				jitter = strtod(startofvalue, &nptr);
-				num_selected++;
-				if(jitter == 0 && startofvalue==nptr){
-					printf("warning: unable to parse server response.\n");
-					/* XXX errors value ... */
+				if(startofvalue != NULL) {
+					jitter = strtod(startofvalue, &nptr);
+				}
+				if(startofvalue == NULL || startofvalue==nptr){
+					printf("warning: unable to read server jitter response.\n");
+					*status = STATE_WARNING;
 				} else {
 					if(verbose) printf("%g\n", jitter);
 					num_valid++;
@@ -527,7 +585,7 @@ double jitter_request(const char *host){
 			}
 		}
 		if(verbose){
-			printf("jitter parsed from %d/%d peers\n", num_selected, num_valid);
+			printf("jitter parsed from %d/%d peers\n", num_valid, num_selected);
 		}
 	}
 
@@ -637,8 +695,10 @@ int process_arguments(int argc, char **argv){
 }
 
 int main(int argc, char *argv[]){
-	int result = STATE_UNKNOWN;
+	int result, offset_result, jitter_result;
 	double offset=0, jitter=0;
+
+	result=offset_result=jitter_result=STATE_UNKNOWN;
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
@@ -649,14 +709,15 @@ int main(int argc, char *argv[]){
 	/* set socket timeout */
 	alarm (socket_timeout);
 
-	offset = offset_request(server_address);
-	if(offset > ocrit){
+	offset = offset_request(server_address, &offset_result);
+	if(fabs(offset) > ocrit){
 		result = STATE_CRITICAL;
-	} else if(offset > owarn) {
+	} else if(fabs(offset) > owarn) {
 		result = STATE_WARNING;
 	} else {
 		result = STATE_OK;
 	}
+	result=max_state(result, offset_result);
 
 	/* If not told to check the jitter, we don't even send packets.
 	 * jitter is checked using NTP control packets, which not all
@@ -664,7 +725,7 @@ int main(int argc, char *argv[]){
 	 * (for example) will result in an error
 	 */
 	if(do_jitter){
-		jitter=jitter_request(server_address);
+		jitter=jitter_request(server_address, &jitter_result);
 		if(jitter > jcrit){
 			result = max_state(result, STATE_CRITICAL);
 		} else if(jitter > jwarn) {
@@ -675,6 +736,7 @@ int main(int argc, char *argv[]){
 			result = STATE_UNKNOWN;
 		}
 	}
+	result=max_state(result, jitter_result);
 
 	switch (result) {
 		case STATE_CRITICAL :
@@ -690,9 +752,15 @@ int main(int argc, char *argv[]){
 			printf("NTP UNKNOWN: ");
 			break;
 	}
-
-	printf("Offset %g secs|offset=%g", offset, offset);
-	if (do_jitter) printf("|jitter=%f", jitter);
+	if(offset_result==STATE_CRITICAL){
+		printf("Offset unknown|offset=unknown");
+	} else {
+		if(offset_result==STATE_WARNING){
+			printf("Unable to fully sample sync server. ");
+		}
+		printf("Offset %.10g secs|offset=%.10g", offset, offset);
+	}
+	if (do_jitter) printf(", jitter=%f", jitter);
 	printf("\n");
 
 	if(server_address!=NULL) free(server_address);

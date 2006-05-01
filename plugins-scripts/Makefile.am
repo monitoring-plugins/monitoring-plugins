@@ -5,7 +5,7 @@ SUFFIXES = .pl .sh
 VPATH=$(top_srcdir) $(top_srcdir)/plugins-scripts $(top_srcdir)/plugins-scripts/t
 
 libexec_SCRIPTS = check_breeze check_disk_smb check_flexlm check_ircd \
-	check_log check_ntp check_oracle check_rpc check_sensors check_wave \
+	check_log check_oracle check_rpc check_sensors check_wave \
 	check_ifstatus check_ifoperstatus check_mailq check_file_age \
 	utils.sh utils.pm
 

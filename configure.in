@@ -529,8 +529,9 @@ dnl
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS(signal.h strings.h string.h syslog.h uio.h errno.h regex.h sys/types.h sys/time.h sys/socket.h sys/loadavg.h sys/un.h)
+AC_CHECK_HEADERS(signal.h strings.h string.h syslog.h uio.h errno.h sys/types.h sys/time.h sys/socket.h sys/loadavg.h sys/un.h sys/poll.h)
 AC_CHECK_HEADERS(features.h stdarg.h sys/unistd.h ctype.h stdlib.h)
+AC_CHECK_HEADERS(regex.h,FOUNDREGEX=yes,FOUNDREGEX=no)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -601,7 +602,7 @@ AC_TRY_COMPILE([#include <sys/time.h>],
 
 dnl Checks for library functions.
 AC_CHECK_FUNCS(memmove select socket strdup strstr strtod strtol strtoul floor)
-AC_CHECK_FUNCS(basename)
+AC_CHECK_FUNCS(basename poll)
 
 AC_MSG_CHECKING(return type of socket size)
 AC_TRY_COMPILE([#include <stdlib.h>
@@ -1263,20 +1264,6 @@ AC_ARG_WITH(rpcinfo_command,
                             [sets path to rpcinfo]), PATH_TO_RPCINFO=$withval)
 AC_DEFINE_UNQUOTED(PATH_TO_RPCINFO,"$PATH_TO_RPCINFO",[path to rpcinfo binary])
 
-AC_PATH_PROG(PATH_TO_NTPDATE,ntpdate)
-AC_ARG_WITH(ntpdate_command,
-            ACX_HELP_STRING([--with-ntpdate-command=PATH],
-                            [sets path to ntpdate]), PATH_TO_NTPDATE=$withval)
-AC_PATH_PROGS(PATH_TO_NTPDC,ntpdc xntpdc)
-AC_PATH_PROGS(PATH_TO_NTPQ,ntpq)
-if (test -n "$PATH_TO_NTPDATE" || test -n "$PATH_TO_NTPQ")
-then
-	AC_DEFINE_UNQUOTED(PATH_TO_NTPQ,"$PATH_TO_NTPQ",[path to ntpq binary])
-	AC_DEFINE_UNQUOTED(PATH_TO_NTPDATE,"$PATH_TO_NTPDATE",[path to ntpdate binary])
-else
-	AC_MSG_WARN([Install NTP programs (http://www.ntp.org) if you want to monitor time synchronization])
-fi
-
 AC_PATH_PROG(PATH_TO_LMSTAT,lmstat)
 if test -x "$PATH_TO_LMSTAT"
 then
@@ -1621,6 +1608,19 @@ if test -n "$PATH_TO_DIG"; then
 	AC_DEFINE_UNQUOTED(PATH_TO_DIG,"$PATH_TO_DIG",[Path to dig command, if present])
 fi
 
+AC_PATH_PROG(PATH_TO_APTGET,apt-get)
+AC_ARG_WITH(apt-get_command,
+            ACX_HELP_STRING([--with-apt-get-command=PATH],
+                            [Path to apt-get command]), 
+                            with_apt_get_command=$withval,
+                            with_apt_get_command=$PATH_TO_APTGET)
+AC_DEFINE_UNQUOTED(PATH_TO_APTGET,"$PATH_TO_APTGET",[Path to apt-get command, if present])
+# check_apt needs regex support
+if test -n "$PATH_TO_APTGET" && test "$FOUNDREGEX" = "yes"; then
+	EXTRAS="$EXTRAS check_apt"
+fi
+
+
 if test -f plugins/check_nt.c ; then
   EXTRAS="$EXTRAS check_nt"
 elif test -f ../plugins/check_nt.c ; then
@@ -1718,11 +1718,11 @@ dnl the ones below that are commented out need to be cleaned up
 dnl in the configure code above to use with_foo instead of ac_cv_foo
 dnl if we want them to show up here.  it'd also make the code cleaner.
 dnl i'll get to that on another rainy day :) -sf
+ACX_FEATURE([with],[apt-get-command])
 dnl ACX_FEATURE([with],[dig-command])
 dnl ACX_FEATURE([with],[fping-command])
 dnl ACX_FEATURE([with],[mailq-command])
 dnl ACX_FEATURE([with],[nslookup-command])
-dnl ACX_FEATURE([with],[ntpdate-command])
 ACX_FEATURE([with],[ping6-command])
 ACX_FEATURE([with],[ping-command])
 dnl ACX_FEATURE([with],[qstat-command])

@@ -119,6 +119,10 @@
 # define SWAP_CONVERSION 1
 #endif
 
+#ifdef HAVE_SYS_POLL_H
+# include "sys/poll.h"
+#endif
+
 /*
  *
  * Missing Functions
