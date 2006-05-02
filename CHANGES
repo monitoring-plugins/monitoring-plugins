@@ -1,5 +1,9 @@
 This file documents the major additions and syntax changes between releases.
 
+1.4.4
+	New C based check_ntp. The perl version is now deprecated.
+	New check_apt plugin
+
 1.4.3
 	Setuid plugins (check_dhcp, check_icmp) separated into plugins-root/. Run make install as root to install
 	SSL plugins work with gnutls as well as OpenSSL
