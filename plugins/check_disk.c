@@ -462,6 +462,8 @@ process_arguments (int argc, char **argv)
       se->c_df = c_df;
       se->w_dfp = w_dfp;
       se->c_dfp = c_dfp;
+      se->w_idfp = w_idfp;
+      se->c_idfp = c_idfp;
       se->found = 0;
       se->found_len = 0;
       *pathtail = se;
@@ -480,6 +482,8 @@ process_arguments (int argc, char **argv)
                         se->c_df = 0;
                         se->w_dfp = 0;
                         se->c_dfp = 0;
+			se->w_idfp = 0;
+			se->c_idfp = 0;
       se->found = 0;
       se->found_len = 0;
       *dptail = se;
@@ -497,6 +501,8 @@ process_arguments (int argc, char **argv)
                         se->c_df = 0;
                         se->w_dfp = 0;
                         se->c_dfp = 0;
+			se->w_idfp = 0;
+			se->c_idfp = 0;
       se->found = 0;
       se->found_len = 0;
       *fstail = se;
@@ -519,6 +525,8 @@ process_arguments (int argc, char **argv)
       c_df = 0;
       w_dfp = -1.0;
       c_dfp = -1.0;
+      w_idfp = -1.0;
+      c_idfp = -1.0;
       break;
     case 'V':                 /* version */
       print_revision (progname, revision);
@@ -547,6 +555,8 @@ process_arguments (int argc, char **argv)
     se->c_df = c_df;
     se->w_dfp = w_dfp;
     se->c_dfp = c_dfp;
+    se->w_idfp = w_idfp;
+    se->c_idfp = c_idfp;
     se->found =0;
     se->found_len = 0;
     *pathtail = se;
