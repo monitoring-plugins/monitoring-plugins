@@ -3,6 +3,8 @@ This file documents the major additions and syntax changes between releases.
 1.4.4
 	New C based check_ntp. The perl version is now deprecated.
 	New check_apt plugin
+	Notice: plugins in contrib/ will start to be removed from this distribution.
+	  Please check at http://www.nagiosexchange.org for contributed plugins
 
 1.4.3
 	Setuid plugins (check_dhcp, check_icmp) separated into plugins-root/. Run make install as root to install
