@@ -70,6 +70,7 @@ install-exec-local: $(EXTRA_PROGRAMS)
 # the actual targets
 check_dhcp_LDADD = $(NETLIBS)
 check_icmp_LDADD = $(SOCKETLIBS)
+pst3_LDADD = -lkvm
 
 check_dhcp_DEPENDENCIES = check_dhcp.c $(NETOBJS) $(DEPLIBS) 
 check_icmp_DEPENDENCIES = check_icmp.c

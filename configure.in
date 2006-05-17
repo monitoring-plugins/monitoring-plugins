@@ -444,7 +444,7 @@ if ! test x"$with_openssl" = x"no"; then
 	unset FOUNDINCLUDE
 	if test x"$with_openssl" != x"/usr" ; then
 		CPPFLAGS="$CPPFLAGS -I$with_openssl/include"
-		LDFLAGS="$LDFLAGS -R$with_openssl/lib"
+		LDFLAGS="$LDFLAGS -L$with_openssl/lib"
 	fi
 
 	dnl check for openssl in $dir/include/openssl
