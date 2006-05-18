@@ -10,3 +10,6 @@ Makefile.am: Makefile.am.in
 	sed -n '/^Makefile\.am:/,$$p' $@.in >> $@t
 	chmod a-w $@t
 	mv $@t $@
+
+print_coreutil_files:
+	@echo $(EXTRA_DIST)
