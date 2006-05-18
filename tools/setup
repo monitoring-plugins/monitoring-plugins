@@ -18,7 +18,7 @@ else
 	echo Found GNU Make at $MAKE ... good.
 fi
 
-( cd m4 && $MAKE -f Makefile.am Makefile.am.in )
+( cd m4 && $MAKE -f Makefile.am.in Makefile.am )
 
 # This bit is to fix SF's compile server as libtool not installed by default
 extra=""
