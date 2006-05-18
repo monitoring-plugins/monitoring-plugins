@@ -1,7 +1,7 @@
 /* Get the system load averages.
 
    Copyright (C) 1985, 1986, 1987, 1988, 1989, 1991, 1992, 1993, 1994,
-   1995, 1997, 1999, 2000, 2003, 2004 Free Software Foundation, Inc.
+   1995, 1997, 1999, 2000, 2003, 2004, 2005 Free Software Foundation, Inc.
 
    NOTE: The canonical source of this file is maintained with gnulib.
    Bugs can be reported to bug-gnulib@gnu.org.
@@ -18,7 +18,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
    USA.  */
 
 /* Compile-time symbols that this file uses:
@@ -32,7 +32,7 @@
 				AC_CHECK_FUNCS(pstat_getdynamic) in your
 				configure.in file.
    FIXUP_KERNEL_SYMBOL_ADDR()	Adjust address in returned struct nlist.
-   KERNEL_FILE			Pathname of the kernel to nlist.
+   KERNEL_FILE			Name of the kernel file to nlist.
    LDAV_CVT()			Scale the load average from the kernel.
 				Returns a double.
    LDAV_SYMBOL			Name of kernel symbol giving load average.
@@ -47,9 +47,8 @@
 				the nlist n_name element is a pointer,
 				not an array.
    HAVE_STRUCT_NLIST_N_UN_N_NAME `n_un.n_name' is member of `struct nlist'.
-   LINUX_LDAV_FILE		[__linux__]: File containing load averages.
-   HAVE_LOCALE_H                locale.h is available.
-   HAVE_SETLOCALE               The `setlocale' function is available.
+   LINUX_LDAV_FILE		[__linux__, __CYGWIN__]: File containing
+				load averages.
 
    Specific system predefines this file uses, aside from setting
    default values if not emacs:
@@ -70,9 +69,10 @@
    UMAX4_3
    VMS
    WINDOWS32			No-op for Windows95/NT.
-   __linux__			Linux: assumes /proc filesystem mounted.
+   __linux__			Linux: assumes /proc file system mounted.
 				Support from Michael K. Johnson.
-   __NetBSD__			NetBSD: assumes /kern filesystem mounted.
+   __CYGWIN__			Cygwin emulates linux /proc/loadavg.
+   __NetBSD__			NetBSD: assumes /kern file system mounted.
 
    In addition, to avoid nesting many #ifdefs, we internally set
    LDAV_DONE to indicate that the load average has been computed.
@@ -85,38 +85,29 @@
 # include <config.h>
 #endif
 
-#include <sys/types.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+/* Exclude all the code except the test program at the end
+   if the system has its own `getloadavg' function.  */
+
+#ifndef HAVE_GETLOADAVG
+
+# include <sys/types.h>
 
 /* Both the Emacs and non-Emacs sections want this.  Some
    configuration files' definitions for the LOAD_AVE_CVT macro (like
    sparc.h's) use macros like FSCALE, defined here.  */
-#if defined (unix) || defined (__unix)
-# include <sys/param.h>
-#endif
+# if defined (unix) || defined (__unix)
+#  include <sys/param.h>
+# endif
 
-
-/* Exclude all the code except the test program at the end
-   if the system has its own `getloadavg' function.
-
-   The declaration of `errno' is needed by the test program
-   as well as the function itself, so it comes first.  */
-
-#include <errno.h>
-
-#ifndef errno
-extern int errno;
-#endif
-
-#ifdef HAVE_LOCALE_H
-# include <locale.h>
-#endif
-#ifndef HAVE_SETLOCALE
-# define setlocale(Category, Locale) /* empty */
-#endif
-
-#include "cloexec.h"
-
-#ifndef HAVE_GETLOADAVG
+# include "c-strtod.h"
+# include "cloexec.h"
+# include "intprops.h"
+# include "xalloc.h"
 
 /* The existing Emacs configuration files define a macro called
    LOAD_AVE_CVT, which accepts a value of type LOAD_AVE_TYPE, and
@@ -357,11 +348,7 @@ extern int errno;
 #  define LDAV_SYMBOL "avenrun"
 # endif
 
-# ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-# endif
-
-# include <stdio.h>
+# include <unistd.h>
 
 /* LOAD_AVE_TYPE should only get defined if we're going to use the
    nlist method.  */
@@ -435,7 +422,6 @@ extern int errno;
 # endif /* sgi */
 
 # ifdef UMAX
-#  include <stdio.h>
 #  include <signal.h>
 #  include <sys/time.h>
 #  include <sys/wait.h>
@@ -461,17 +447,13 @@ extern int errno;
 #  include <sys/dg_sys_info.h>
 # endif
 
-# if defined (HAVE_FCNTL_H) || defined (_POSIX_VERSION)
-#  include <fcntl.h>
-# else
-#  include <sys/file.h>
-# endif
+# include "fcntl--.h"
 
 /* Avoid static vars inside a function since in HPUX they dump as pure.  */
 
 # ifdef NeXT
 static processor_set_t default_set;
-static int getloadavg_initialized;
+static bool getloadavg_initialized;
 # endif /* NeXT */
 
 # ifdef UMAX
@@ -486,8 +468,8 @@ static struct dg_sys_info_load_info load_info;	/* what-a-mouthful! */
 # if !defined (HAVE_LIBKSTAT) && defined (LOAD_AVE_TYPE)
 /* File descriptor open to /dev/kmem or VMS load ave driver.  */
 static int channel;
-/* Nonzero iff channel is valid.  */
-static int getloadavg_initialized;
+/* True iff channel is valid.  */
+static bool getloadavg_initialized;
 /* Offset in kmem to seek to read load average, or 0 means invalid.  */
 static long offset;
 
@@ -583,7 +565,7 @@ getloadavg (double loadavg[], int nelem)
 
 # endif /* hpux && HAVE_PSTAT_GETDYNAMIC */
 
-# if !defined (LDAV_DONE) && defined (__linux__)
+# if !defined (LDAV_DONE) && (defined (__linux__) || defined (__CYGWIN__))
 #  define LDAV_DONE
 #  undef LOAD_AVE_TYPE
 
@@ -591,32 +573,36 @@ getloadavg (double loadavg[], int nelem)
 #   define LINUX_LDAV_FILE "/proc/loadavg"
 #  endif
 
-  char ldavgbuf[40];
-  double load_ave[3];
+  char ldavgbuf[3 * (INT_STRLEN_BOUND (int) + sizeof ".00 ")];
+  char const *ptr = ldavgbuf;
   int fd, count;
 
   fd = open (LINUX_LDAV_FILE, O_RDONLY);
   if (fd == -1)
     return -1;
-  count = read (fd, ldavgbuf, 40);
+  count = read (fd, ldavgbuf, sizeof ldavgbuf - 1);
   (void) close (fd);
   if (count <= 0)
     return -1;
+  ldavgbuf[count] = '\0';
 
-  /* The following sscanf must use the C locale.  */
-  setlocale (LC_NUMERIC, "C");
-  count = sscanf (ldavgbuf, "%lf %lf %lf",
-		  &load_ave[0], &load_ave[1], &load_ave[2]);
-  setlocale (LC_NUMERIC, "");
-  if (count < 1)
-    return -1;
-
-  for (elem = 0; elem < nelem && elem < count; elem++)
-    loadavg[elem] = load_ave[elem];
+  for (elem = 0; elem < nelem; elem++)
+    {
+      char *endptr;
+      double d = c_strtod (ptr, &endptr);
+      if (ptr == endptr)
+	{
+	  if (elem == 0)
+	    return -1;
+	  break;
+	}
+      loadavg[elem] = d;
+      ptr = endptr;
+    }
 
   return elem;
 
-# endif /* __linux__ */
+# endif /* __linux__ || __CYGWIN__ */
 
 # if !defined (LDAV_DONE) && defined (__NetBSD__)
 #  define LDAV_DONE
@@ -653,7 +639,7 @@ getloadavg (double loadavg[], int nelem)
 
   host_t host;
   struct processor_set_basic_info info;
-  unsigned info_count;
+  unsigned int info_count;
 
   /* We only know how to get the 1-minute average for this system,
      so even if the caller asks for more than 1, we only return 1.  */
@@ -661,7 +647,7 @@ getloadavg (double loadavg[], int nelem)
   if (!getloadavg_initialized)
     {
       if (processor_set_default (host_self (), &default_set) == KERN_SUCCESS)
-	getloadavg_initialized = 1;
+	getloadavg_initialized = true;
     }
 
   if (getloadavg_initialized)
@@ -670,7 +656,7 @@ getloadavg (double loadavg[], int nelem)
       if (processor_set_info (default_set, PROCESSOR_SET_BASIC_INFO, &host,
 			      (processor_set_info_t) &info, &info_count)
 	  != KERN_SUCCESS)
-	getloadavg_initialized = 0;
+	getloadavg_initialized = false;
       else
 	{
 	  if (nelem > 0)
@@ -831,7 +817,7 @@ getloadavg (double loadavg[], int nelem)
   /* VMS specific code -- read from the Load Ave driver.  */
 
   LOAD_AVE_TYPE load_ave[3];
-  static int getloadavg_initialized = 0;
+  static bool getloadavg_initialized;
 #  ifdef eunice
   struct
   {
@@ -851,7 +837,7 @@ getloadavg (double loadavg[], int nelem)
       $DESCRIPTOR (descriptor, "LAV0:");
 #  endif
       if (sys$assign (&descriptor, &channel, 0, 0) & 1)
-	getloadavg_initialized = 1;
+	getloadavg_initialized = true;
     }
 
   /* Read the load average vector.  */
@@ -860,7 +846,7 @@ getloadavg (double loadavg[], int nelem)
 		     load_ave, 12, 0, 0, 0, 0) & 1))
     {
       sys$dassgn (channel);
-      getloadavg_initialized = 0;
+      getloadavg_initialized = false;
     }
 
   if (!getloadavg_initialized)
@@ -913,7 +899,7 @@ getloadavg (double loadavg[], int nelem)
 
       ldav_off = sysmp (MP_KERNADDR, MPKA_AVENRUN);
       if (ldav_off != -1)
-	offset = (long) ldav_off & 0x7fffffff;
+	offset = (long int) ldav_off & 0x7fffffff;
 #  endif /* sgi */
     }
 
@@ -921,13 +907,13 @@ getloadavg (double loadavg[], int nelem)
   if (!getloadavg_initialized)
     {
 #  ifndef SUNOS_5
-      channel = open ("/dev/kmem", 0);
+      channel = open ("/dev/kmem", O_RDONLY);
       if (channel >= 0)
 	{
 	  /* Set the channel to close on exec, so it does not
 	     litter any child's descriptor table.  */
 	  set_cloexec_flag (channel, true);
-	  getloadavg_initialized = 1;
+	  getloadavg_initialized = true;
 	}
 #  else /* SUNOS_5 */
       /* We pass 0 for the kernel, corefile, and swapfile names
@@ -938,7 +924,7 @@ getloadavg (double loadavg[], int nelem)
 	  /* nlist the currently running kernel.  */
 	  kvm_nlist (kd, nl);
 	  offset = nl[0].n_value;
-	  getloadavg_initialized = 1;
+	  getloadavg_initialized = true;
 	}
 #  endif /* SUNOS_5 */
     }
@@ -953,14 +939,14 @@ getloadavg (double loadavg[], int nelem)
 	  != sizeof (load_ave))
 	{
 	  close (channel);
-	  getloadavg_initialized = 0;
+	  getloadavg_initialized = false;
 	}
 #  else  /* SUNOS_5 */
       if (kvm_read (kd, offset, (char *) load_ave, sizeof (load_ave))
 	  != sizeof (load_ave))
 	{
 	  kvm_close (kd);
-	  getloadavg_initialized = 0;
+	  getloadavg_initialized = false;
 	}
 #  endif /* SUNOS_5 */
     }
@@ -980,20 +966,19 @@ getloadavg (double loadavg[], int nelem)
 #  define LDAV_DONE
 # endif /* !LDAV_DONE && LOAD_AVE_TYPE */
 
-# ifdef LDAV_DONE
-  return elem;
-# else
+# if !defined LDAV_DONE
   /* Set errno to zero to indicate that there was no particular error;
      this function just can't work at all on this system.  */
   errno = 0;
-  return -1;
+  elem = -1;
 # endif
+  return elem;
 }
 
 #endif /* ! HAVE_GETLOADAVG */
 
 #ifdef TEST
-void
+int
 main (int argc, char **argv)
 {
   int naptime = 0;
@@ -1011,7 +996,7 @@ main (int argc, char **argv)
       if (loads == -1)
 	{
 	  perror ("Error getting load average");
-	  exit (1);
+	  return EXIT_FAILURE;
 	}
       if (loads > 0)
 	printf ("1-minute: %f  ", avg[0]);
@@ -1027,6 +1012,6 @@ main (int argc, char **argv)
       sleep (naptime);
     }
 
-  exit (0);
+  return EXIT_SUCCESS;
 }
 #endif /* TEST */

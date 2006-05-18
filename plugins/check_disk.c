@@ -171,7 +171,7 @@ main (int argc, char **argv)
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
-  mount_list = read_filesystem_list (0);
+  mount_list = read_file_system_list (0);
 
   if (process_arguments (argc, argv) == ERROR)
     usage4 (_("Could not parse arguments"));

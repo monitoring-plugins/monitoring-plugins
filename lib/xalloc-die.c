@@ -1,5 +1,7 @@
-/* malloc() function that is glibc compatible.
-   Copyright (C) 1997, 1998 Free Software Foundation, Inc.
+/* Report a memory allocation failure and exit.
+
+   Copyright (C) 1997, 1998, 1999, 2000, 2002, 2003, 2004 Free
+   Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,22 +17,29 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
-/* written by Jim Meyering */
-
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
-#undef malloc
+
+#include "xalloc.h"
 
 #include <stdlib.h>
 
-/* Allocate an N-byte block of memory from the heap.
-   If N is zero, allocate a 1-byte block.  */
+#include "error.h"
+#include "exitfail.h"
 
-void *
-rpl_malloc (size_t n)
+#include "gettext.h"
+#define _(msgid) gettext (msgid)
+#define N_(msgid) msgid
+
+void
+xalloc_die (void)
 {
-  if (n == 0)
-    n = 1;
-  return malloc (n);
+  error (exit_failure, 0, "%s", _("memory exhausted"));
+
+  /* The `noreturn' cannot be given to error, since it may return if
+     its first argument is 0.  To help compilers understand the
+     xalloc_die does not return, call abort.  Also, the abort is a
+     safety feature if exit_failure is 0 (which shouldn't happen).  */
+  abort ();
 }

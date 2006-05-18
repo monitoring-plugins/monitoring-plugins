@@ -145,9 +145,6 @@ dnl Check for miscellaneous stuff
 dnl 
 
 case $host_vender-$host_os in
-sun*)
-	AC_DEFINE(__EXTENSIONS__,1,[Sun's netdb.h needs this for getaddrinfo])
-	;;
 osf*)
 	AC_DEFINE(_OSF_SOURCE,1,[OSF needs this for getaddrinfo])
 	;;
@@ -1662,7 +1659,7 @@ AC_SUBST(EXTRAS_ROOT)
 AC_SUBST(EXTRA_NETOBJS)
 AC_SUBST(DEPLIBS)
 
-AM_GNU_GETTEXT([no-libtool], [need-ngettext])
+AM_GNU_GETTEXT([external], [need-ngettext])
 AM_GNU_GETTEXT_VERSION(0.11.5)
 
 dnl Check for Redhat spopen problem
@@ -1710,7 +1707,6 @@ AC_OUTPUT(
   command.cfg 
   test.pl 
   pkg/solaris/pkginfo 
-  intl/Makefile
   po/Makefile.in 
 )
 

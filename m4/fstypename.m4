@@ -1,4 +1,4 @@
-#serial 3
+#serial 5
 
 dnl From Jim Meyering.
 dnl
@@ -6,7 +6,12 @@ dnl See if struct statfs has the f_fstypename member.
 dnl If so, define HAVE_F_FSTYPENAME_IN_STATFS.
 dnl
 
-AC_DEFUN([jm_FSTYPENAME],
+# Copyright (C) 1998, 1999, 2001, 2004 Free Software Foundation, Inc.
+# This file is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+AC_DEFUN([gl_FSTYPENAME],
   [
     AC_CACHE_CHECK([for f_fstypename in struct statfs],
 		   fu_cv_sys_f_fstypename_in_statfs,

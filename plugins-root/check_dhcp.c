@@ -101,7 +101,6 @@ long mac_addr_dlpi( const char *, int, u_char *);
 
 #endif
 
-#define HAVE_GETOPT_H
 
 
 /**** Common definitions ****/
@@ -976,7 +975,6 @@ int call_getopt(int argc, char **argv){
 	int i=0;
 	struct in_addr ipaddress;
 
-#ifdef HAVE_GETOPT_H
 	int option_index = 0;
 	static struct option long_options[] =
 	{ 
@@ -989,14 +987,9 @@ int call_getopt(int argc, char **argv){
 		{"help",           no_argument,      0,'h'},
 		{0,0,0,0}
 	};
-#endif
 
 	while(1){
-#ifdef HAVE_GETOPT_H
 		c=getopt_long(argc,argv,"+hVvt:s:r:t:i:",long_options,&option_index);
-#else
-		c=getopt(argc,argv,"+?hVvt:s:r:t:i:");
-#endif
 
 		i++;
 

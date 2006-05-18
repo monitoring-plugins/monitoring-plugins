@@ -1,7 +1,7 @@
-/* fsusage.c -- return space usage of mounted filesystems
+/* fsusage.c -- return space usage of mounted file systems
 
-   Copyright (C) 1991, 1992, 1996, 1998, 1999, 2002, 2003 Free
-   Software Foundation, Inc.
+   Copyright (C) 1991, 1992, 1996, 1998, 1999, 2002, 2003, 2004, 2005
+   Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,19 +15,19 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
-#if HAVE_CONFIG_H
+#ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
 
 #if HAVE_INTTYPES_H
 # include <inttypes.h>
-#else
-# if HAVE_STDINT_H
-#  include <stdint.h>
-# endif
 #endif
+#if HAVE_STDINT_H
+# include <stdint.h>
+#endif
+#include <unistd.h>
 #ifndef UINTMAX_MAX
 # define UINTMAX_MAX ((uintmax_t) -1)
 #endif
@@ -58,9 +58,7 @@
 # include <sys/filsys.h>	/* SVR2 */
 #endif
 
-#if HAVE_FCNTL_H
-# include <fcntl.h>
-#endif
+#include <fcntl.h>
 
 #if HAVE_SYS_STATFS_H
 # include <sys/statfs.h>
@@ -72,7 +70,6 @@
 
 #if HAVE_SYS_STATVFS_H		/* SVR4 */
 # include <sys/statvfs.h>
-int statvfs ();
 #endif
 
 #include "full-read.h"
@@ -102,20 +99,20 @@ int statvfs ();
 #define PROPAGATE_TOP_BIT(x) ((x) | ~ (EXTRACT_TOP_BIT (x) - 1))
 
 /* Fill in the fields of FSP with information about space usage for
-   the filesystem on which PATH resides.
-   DISK is the device on which PATH is mounted, for space-getting
+   the file system on which FILE resides.
+   DISK is the device on which FILE is mounted, for space-getting
    methods that need to know it.
    Return 0 if successful, -1 if not.  When returning -1, ensure that
    ERRNO is either a system error value, or zero if DISK is NULL
    on a system that requires a non-NULL value.  */
 int
-get_fs_usage (const char *path, const char *disk, struct fs_usage *fsp)
+get_fs_usage (char const *file, char const *disk, struct fs_usage *fsp)
 {
 #ifdef STAT_STATFS3_OSF1
 
   struct statfs fsd;
 
-  if (statfs (path, &fsd, sizeof (struct statfs)) != 0)
+  if (statfs (file, &fsd, sizeof (struct statfs)) != 0)
     return -1;
 
   fsp->fsu_blocksize = PROPAGATE_ALL_ONES (fsd.f_fsize);
@@ -126,7 +123,7 @@ get_fs_usage (const char *path, const char *disk, struct fs_usage *fsp)
 
   struct fs_data fsd;
 
-  if (statfs (path, &fsd) != 1)
+  if (statfs (file, &fsd) != 1)
     return -1;
 
   fsp->fsu_blocksize = 1024;
@@ -180,7 +177,7 @@ get_fs_usage (const char *path, const char *disk, struct fs_usage *fsp)
 
   struct statfs fsd;
 
-  if (statfs (path, &fsd) < 0)
+  if (statfs (file, &fsd) < 0)
     return -1;
 
   fsp->fsu_blocksize = PROPAGATE_ALL_ONES (fsd.f_bsize);
@@ -206,7 +203,7 @@ get_fs_usage (const char *path, const char *disk, struct fs_usage *fsp)
 
   struct statfs fsd;
 
-  if (statfs (path, &fsd) < 0)
+  if (statfs (file, &fsd) < 0)
     return -1;
 
   fsp->fsu_blocksize = PROPAGATE_ALL_ONES (fsd.f_fsize);
@@ -221,7 +218,7 @@ get_fs_usage (const char *path, const char *disk, struct fs_usage *fsp)
 
   struct statfs fsd;
 
-  if (statfs (path, &fsd, sizeof fsd, 0) < 0)
+  if (statfs (file, &fsd, sizeof fsd, 0) < 0)
     return -1;
 
   /* Empirically, the block counts on most SVR3 and SVR3-derived
@@ -239,7 +236,7 @@ get_fs_usage (const char *path, const char *disk, struct fs_usage *fsp)
 
   struct statvfs fsd;
 
-  if (statvfs (path, &fsd) < 0)
+  if (statvfs (file, &fsd) < 0)
     return -1;
 
   /* f_frsize isn't guaranteed to be supported.  */
@@ -268,12 +265,12 @@ get_fs_usage (const char *path, const char *disk, struct fs_usage *fsp)
 /* AIX PS/2 does not supply statfs.  */
 
 int
-statfs (char *path, struct statfs *fsb)
+statfs (char *file, struct statfs *fsb)
 {
   struct stat stats;
   struct dustat fsd;
 
-  if (stat (path, &stats))
+  if (stat (file, &stats) != 0)
     return -1;
   if (dustat (stats.st_dev, 0, &fsd, sizeof (fsd)))
     return -1;

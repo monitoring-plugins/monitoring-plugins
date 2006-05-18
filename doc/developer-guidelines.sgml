@@ -11,7 +11,7 @@
       </author>
     </authorgroup>
 
-    <pubdate>2005</pubdate>
+    <pubdate>2006</pubdate>
     <title>Nagios plug-in development guidelines</title>
 	
     <revhistory>
@@ -22,7 +22,7 @@
     </revhistory>
 
 	<copyright>
-		<year>2000 - 2005</year> 
+		<year>2000 - 2006</year> 
 		<holder>Nagios Plugins Development Team</holder>
 	</copyright>
 
@@ -34,7 +34,7 @@
     the plug-in developers and encourage the standarization of the
     different kind of plug-ins: C, shell, perl, python, etc.</para>
 
-        <para>Nagios Plug-in Development Guidelines Copyright (C) 2000-2005
+        <para>Nagios Plug-in Development Guidelines Copyright (C) 2000-2006
         (Nagios Plugins Team)</para>
 
         <para>Permission is granted to make and distribute verbatim
@@ -57,7 +57,6 @@
 	gnu make 3.79
 	automake 1.8
 	autoconf 2.58
-	gettext 0.11.5
 	gnu libtool 1.5.6
 	</literallayout>
 
@@ -68,6 +67,11 @@
 	make
 	make install
 	</literallayout>
+	</para>
+
+	<para>Note: gettext is no longer a developer platform requirement. A lot of the files in lib/ and m4/
+	are synced with the coreutils project and we use the same levels of gettext that they
+	distribute.
 	</para>
 </section>
 

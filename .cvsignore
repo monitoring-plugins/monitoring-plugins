@@ -16,3 +16,7 @@ mkinstalldirs
 missing
 depcomp
 THANKS
+libtool
+ltmain.sh
+compile
+INSTALL

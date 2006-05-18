@@ -1,28 +1,43 @@
-#serial 11
+#serial 16
+# Obtaining file system usage information.
 
-# From fileutils/configure.in
+# Copyright (C) 1997, 1998, 2000, 2001, 2003, 2004, 2005 Free Software
+# Foundation, Inc.
+#
+# This file is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+# Written by Jim Meyering.
 
 AC_DEFUN([gl_FSUSAGE],
 [
+  AC_LIBSOURCES([fsusage.c, fsusage.h])
+
   AC_CHECK_HEADERS_ONCE(sys/param.h)
-  AC_CHECK_HEADERS(sys/mount.h sys/vfs.h sys/fs_types.h)
-  jm_FILE_SYSTEM_USAGE([gl_cv_fs_space=yes], [gl_cv_fs_space=no])
+  AC_CHECK_HEADERS_ONCE(sys/vfs.h sys/fs_types.h)
+  AC_CHECK_HEADERS(sys/mount.h, [], [],
+    [AC_INCLUDES_DEFAULT
+     [#if HAVE_SYS_PARAM_H
+       #include <sys/param.h>
+      #endif]])
+  gl_FILE_SYSTEM_USAGE([gl_cv_fs_space=yes], [gl_cv_fs_space=no])
   if test $gl_cv_fs_space = yes; then
     AC_LIBOBJ(fsusage)
     gl_PREREQ_FSUSAGE_EXTRA
   fi
 ])
 
-# Try to determine how a program can obtain filesystem usage information.
+# Try to determine how a program can obtain file system usage information.
 # If successful, define the appropriate symbol (see fsusage.c) and
 # execute ACTION-IF-FOUND.  Otherwise, execute ACTION-IF-NOT-FOUND.
 #
-# jm_FILE_SYSTEM_USAGE([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])
+# gl_FILE_SYSTEM_USAGE([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])
 
-AC_DEFUN([jm_FILE_SYSTEM_USAGE],
+AC_DEFUN([gl_FILE_SYSTEM_USAGE],
 [
 
-echo "checking how to get filesystem space usage..."
+echo "checking how to get file system space usage..."
 ac_fsusage_space=no
 
 # Perform only the link test since it seems there are no variants of the
@@ -199,7 +214,7 @@ if test $ac_fsusage_space = no; then
   AC_TRY_CPP([#include <sys/filsys.h>
     ],
     AC_DEFINE(STAT_READ_FILSYS, 1,
-      [Define if there is no specific function for reading filesystems usage
+      [Define if there is no specific function for reading file systems usage
        information and you have the <sys/filsys.h> header file.  (SVR2)])
     ac_fsusage_space=yes)
 fi
@@ -212,7 +227,7 @@ AS_IF([test $ac_fsusage_space = yes], [$1], [$2])
 # Check for SunOS statfs brokenness wrt partitions 2GB and larger.
 # If <sys/vfs.h> exists and struct statfs has a member named f_spare,
 # enable the work-around code in fsusage.c.
-AC_DEFUN([jm_STATFS_TRUNCATES],
+AC_DEFUN([gl_STATFS_TRUNCATES],
 [
   AC_MSG_CHECKING([for statfs that truncates block counts])
   AC_CACHE_VAL(fu_cv_sys_truncating_statfs,
@@ -236,11 +251,10 @@ choke -- this is a workaround for a Sun-specific problem
 ])
 
 
-# Prerequisites of lib/fsusage.c not done by jm_FILE_SYSTEM_USAGE.
+# Prerequisites of lib/fsusage.c not done by gl_FILE_SYSTEM_USAGE.
 AC_DEFUN([gl_PREREQ_FSUSAGE_EXTRA],
 [
-  AC_REQUIRE([jm_AC_TYPE_UINTMAX_T])
-  AC_CHECK_HEADERS_ONCE(fcntl.h)
+  AC_REQUIRE([gl_AC_TYPE_UINTMAX_T])
   AC_CHECK_HEADERS(dustat.h sys/fs/s5param.h sys/filsys.h sys/statfs.h sys/statvfs.h)
-  jm_STATFS_TRUNCATES
+  gl_STATFS_TRUNCATES
 ])

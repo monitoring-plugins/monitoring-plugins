@@ -1,5 +1,7 @@
-/* mountlist.c -- return a list of mounted filesystems
-   Copyright (C) 1991, 1992, 1997-2004 Free Software Foundation, Inc.
+/* mountlist.c -- return a list of mounted file systems
+
+   Copyright (C) 1991, 1992, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
+   2004, 2005 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,39 +15,29 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
-#if HAVE_CONFIG_H
+#ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
 
+#include "mountlist.h"
+
 #include <stdio.h>
-#include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "xalloc.h"
-
-#ifndef SIZE_MAX
-# define SIZE_MAX ((size_t) -1)
-#endif
 
 #ifndef strstr
 char *strstr ();
 #endif
 
 #include <errno.h>
-#ifndef errno
-extern int errno;
-#endif
 
-#ifdef HAVE_FCNTL_H
-# include <fcntl.h>
-#endif
+#include <fcntl.h>
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
+#include <unistd.h>
 
 #if HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -140,42 +132,39 @@ extern int errno;
 # define MNT_IGNORE(M) 0
 #endif
 
-#include "mountlist.h"
-#include "unlocked-io.h"
+#if USE_UNLOCKED_IO
+# include "unlocked-io.h"
+#endif
 
-#ifdef MOUNTED_GETMNTENT1	/* 4.3BSD, SunOS, HP-UX, Dynix, Irix.  */
-/* Return the value of the hexadecimal number represented by CP.
-   No prefix (like '0x') or suffix (like 'h') is expected to be
-   part of CP. */
-/* FIXME: this can overflow */
+#ifndef SIZE_MAX
+# define SIZE_MAX ((size_t) -1)
+#endif
 
-static int
-xatoi (char *cp)
-{
-  int val;
+#ifndef ME_DUMMY
+# define ME_DUMMY(Fs_name, Fs_type)		\
+    (strcmp (Fs_type, "autofs") == 0		\
+     || strcmp (Fs_type, "none") == 0		\
+     || strcmp (Fs_type, "proc") == 0		\
+     || strcmp (Fs_type, "subfs") == 0		\
+     /* for Irix 6.5 */				\
+     || strcmp (Fs_type, "ignore") == 0)
+#endif
 
-  val = 0;
-  while (*cp)
-    {
-      if (*cp >= 'a' && *cp <= 'f')
-	val = val * 16 + *cp - 'a' + 10;
-      else if (*cp >= 'A' && *cp <= 'F')
-	val = val * 16 + *cp - 'A' + 10;
-      else if (*cp >= '0' && *cp <= '9')
-	val = val * 16 + *cp - '0';
-      else
-	break;
-      cp++;
-    }
-  return val;
-}
-#endif /* MOUNTED_GETMNTENT1.  */
+#ifndef ME_REMOTE
+/* A file system is `remote' if its Fs_name contains a `:'
+   or if (it is of type smbfs and its Fs_name starts with `//').  */
+# define ME_REMOTE(Fs_name, Fs_type)		\
+    (strchr (Fs_name, ':') != 0			\
+     || ((Fs_name)[0] == '/'			\
+	 && (Fs_name)[1] == '/'			\
+	 && strcmp (Fs_type, "smbfs") == 0))
+#endif
 
 #if MOUNTED_GETMNTINFO
 
 # if ! HAVE_F_FSTYPENAME_IN_STATFS
 static char *
-fstype_to_string (short t)
+fstype_to_string (short int t)
 {
   switch (t)
     {
@@ -296,13 +285,13 @@ fstype_to_string (int t)
 }
 #endif /* MOUNTED_VMOUNT */
 
-/* Return a list of the currently mounted filesystems, or NULL on error.
+/* Return a list of the currently mounted file systems, or NULL on error.
    Add each entry to the tail of the list so that they stay in order.
-   If NEED_FS_TYPE is nonzero, ensure that the filesystem type fields in
+   If NEED_FS_TYPE is true, ensure that the file system type fields in
    the returned list are valid.  Otherwise, they might not be.  */
 
 struct mount_entry *
-read_filesystem_list (int need_fs_type)
+read_file_system_list (bool need_fs_type)
 {
   struct mount_entry *mount_list;
   struct mount_entry *me;
@@ -360,12 +349,7 @@ read_filesystem_list (int need_fs_type)
 	me->me_remote = ME_REMOTE (me->me_devname, me->me_type);
 	devopt = strstr (mnt->mnt_opts, "dev=");
 	if (devopt)
-	  {
-	    if (devopt[4] == '0' && (devopt[5] == 'x' || devopt[5] == 'X'))
-	      me->me_dev = xatoi (devopt + 6);
-	    else
-	      me->me_dev = xatoi (devopt + 4);
-	  }
+	  me->me_dev = strtoul (devopt + 4, NULL, 16);
 	else
 	  me->me_dev = (dev_t) -1;	/* Magic; means not known yet. */
 
@@ -438,14 +422,14 @@ read_filesystem_list (int need_fs_type)
 #if defined MOUNTED_FS_STAT_DEV /* BeOS */
   {
     /* The next_dev() and fs_stat_dev() system calls give the list of
-       all filesystems, including the information returned by statvfs()
+       all file systems, including the information returned by statvfs()
        (fs type, total blocks, free blocks etc.), but without the mount
-       point. But on BeOS all filesystems except / are mounted in the
+       point. But on BeOS all file systems except / are mounted in the
        rootfs, directly under /.
        The directory name of the mount point is often, but not always,
        identical to the volume name of the device.
        We therefore get the list of subdirectories of /, and the list
-       of all filesystems, and match the two lists.  */
+       of all file systems, and match the two lists.  */
 
     DIR *dirp;
     struct rootdir_entry
@@ -744,12 +728,12 @@ read_filesystem_list (int need_fs_type)
     int n_entries;
     int i;
 
-    /* Ask how many bytes to allocate for the mounted filesystem info.  */
+    /* Ask how many bytes to allocate for the mounted file system info.  */
     if (mntctl (MCTL_QUERY, sizeof bufsize, (struct vmount *) &bufsize) != 0)
       return NULL;
     entries = xmalloc (bufsize);
 
-    /* Get the list of mounted filesystems.  */
+    /* Get the list of mounted file systems.  */
     n_entries = mntctl (MCTL_QUERY, bufsize, (struct vmount *) entries);
     if (n_entries < 0)
       {
@@ -769,16 +753,16 @@ read_filesystem_list (int need_fs_type)
 	me = xmalloc (sizeof *me);
 	if (vmp->vmt_flags & MNT_REMOTE)
 	  {
-	    char *host, *path;
+	    char *host, *dir;
 
 	    me->me_remote = 1;
-	    /* Prepend the remote pathname.  */
+	    /* Prepend the remote dirname.  */
 	    host = thisent + vmp->vmt_data[VMT_HOSTNAME].vmt_off;
-	    path = thisent + vmp->vmt_data[VMT_OBJECT].vmt_off;
-	    me->me_devname = xmalloc (strlen (host) + strlen (path) + 2);
+	    dir = thisent + vmp->vmt_data[VMT_OBJECT].vmt_off;
+	    me->me_devname = xmalloc (strlen (host) + strlen (dir) + 2);
 	    strcpy (me->me_devname, host);
 	    strcat (me->me_devname, ":");
-	    strcat (me->me_devname, path);
+	    strcat (me->me_devname, dir);
 	  }
 	else
 	  {

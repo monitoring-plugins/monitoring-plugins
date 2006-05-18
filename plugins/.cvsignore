@@ -1,3 +1,4 @@
+check_apt
 check_disk
 check_dns
 check_dummy
@@ -5,11 +6,13 @@ check_ftp
 check_fping
 check_http
 check_imap
+check_jabber
 check_load
 check_mrtg
 check_mrtgtraf
 check_nagios
 check_nntp
+check_ntp
 check_nwstat
 check_overcr
 check_ping
@@ -46,3 +49,4 @@ Makefile
 Makefile.in
 config.h.in
 .deps
+.libs

@@ -83,10 +83,7 @@
 #include <signal.h>
 #endif
 
-/* TODO: define can be removed when all ifdef in each plugin has been removed */
-#define HAVE_GETOPT_H
 #include <getopt.h>
-
 #include <ctype.h>
 
 #ifdef HAVE_LWRES_NETDB_H

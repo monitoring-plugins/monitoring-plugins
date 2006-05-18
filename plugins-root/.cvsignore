@@ -1,5 +1,7 @@
 .deps
+.libs
 Makefile.in
 Makefile
 check_dhcp
 check_icmp
+pst3
