@@ -8,6 +8,5 @@ en@quot.header
 fr.gmo
 insert-header.sin
 quot.sed
-remove-potcdate.sin
 POTFILES
 stamp-po
