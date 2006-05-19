@@ -55,7 +55,7 @@
 
 	<literallayout>
 	gnu make 3.79
-	automake 1.8
+	automake 1.8.3
 	autoconf 2.58
 	gnu libtool 1.5.6
 	</literallayout>
