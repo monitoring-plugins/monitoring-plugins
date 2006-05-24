@@ -141,6 +141,7 @@ main (int argc, char **argv)
 	char *p2 = NULL;
 	char *show = NULL;
 	char type[8];
+	char *str[MAX_INPUT_BUFFER];
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -338,7 +339,6 @@ main (int argc, char **argv)
 
 		i++;
 
-		char *str[MAX_INPUT_BUFFER];
 		asprintf(str, "=%s%s;;;; ", show, type ? type : "");
 		strcat(perfstr, *str);
 
