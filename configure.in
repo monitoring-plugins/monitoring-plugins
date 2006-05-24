@@ -273,6 +273,10 @@ if test $with_mysql != "no" ; then
     with_mysql=$MYSQLCONFIG
     EXTRAS="$EXTRAS check_mysql check_mysql_query"
     MYSQLINCLUDE=`$MYSQLCONFIG --include`
+    # Mysql 3 does not support --include. --cflags should be sufficient
+    if test $? -ne 0 ; then
+      MYSQLINCLUDE=""
+    fi
     MYSQLLIBS=`$MYSQLCONFIG --libs`
     MYSQLCFLAGS=`$MYSQLCONFIG --cflags`
     AC_SUBST(MYSQLINCLUDE)
