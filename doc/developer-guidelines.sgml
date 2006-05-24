@@ -643,9 +643,16 @@ setup the tests. Run "make test" to run all the tests.
 <section id="CodingGuidelines"><title>Coding guidelines</title>
 	<para>See <ulink url="http://www.gnu.org/prep/standards_toc.html">GNU
 	Coding standards</ulink> for general guidelines.</para>
-	<section><title>Comments</title>
+	<section><title>C coding</title>
+	
+	<para>Variables should be declared at the beginning of code blocks and 
+	not inline because of portability with older compilers.</para>
+
 	<para>You should use /* */ for comments and not // as some compilers
 	do not handle the latter form.</para>
+	</section>
+
+	<section><title>Crediting sources</title>
 	<para>If you have copied a routine from another source, make sure the licence
 	from your source allows this. Add a comment referencing the ACKNOWLEDGEMENTS
 	file, where you can put more detail about the source.</para>
