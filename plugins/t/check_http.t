@@ -9,7 +9,7 @@ use strict;
 use Test::More;
 use NPTest;
 
-plan tests => 14;
+plan tests => 21;
 
 my $successOutput = '/OK.*HTTP.*second/';
 
@@ -79,4 +79,19 @@ $res = NPTest->testCmd(
 	);
 cmp_ok( $res->return_code, "==", 0, "Can read https for www.e-paycobalt.com (uses AES certificate)" );
 
-	
+$res = NPTest->testCmd( "./check_http -H altinity.com -r 'nagios'" );
+cmp_ok( $res->return_code, "==", 0, "Got a reference to 'nagios'");
+
+$res = NPTest->testCmd( "./check_http -H altinity.com -r 'nAGiOs'" );
+cmp_ok( $res->return_code, "==", 2, "Not got 'nAGiOs'");
+like ( $res->output, "/pattern not found/", "Error message says 'pattern not found'");
+
+$res = NPTest->testCmd( "./check_http -H altinity.com -R 'nAGiOs'" );
+cmp_ok( $res->return_code, "==", 0, "But case insensitive doesn't mind 'nAGiOs'");
+
+$res = NPTest->testCmd( "./check_http -H altinity.com -r 'nagios' --invert-regex" );
+cmp_ok( $res->return_code, "==", 2, "Invert results work when found");
+like ( $res->output, "/pattern found/", "Error message says 'pattern found'");
+
+$res = NPTest->testCmd( "./check_http -H altinity.com -r 'nAGiOs' --invert-regex" );
+cmp_ok( $res->return_code, "==", 0, "And also when not found");

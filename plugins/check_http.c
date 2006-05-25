@@ -62,6 +62,7 @@ char regexp[MAX_RE_SIZE];
 char errbuf[MAX_INPUT_BUFFER];
 int cflags = REG_NOSUB | REG_EXTENDED | REG_NEWLINE;
 int errcode;
+int invert_regex = 0;
 
 struct timeval tv;
 
@@ -156,6 +157,10 @@ process_arguments (int argc, char **argv)
 {
   int c = 1;
 
+  enum {
+    INVERT_REGEX = CHAR_MAX + 1
+  };
+
   int option = 0;
   static struct option longopts[] = {
     STD_LONG_OPTS,
@@ -180,6 +185,7 @@ process_arguments (int argc, char **argv)
     {"max-age", required_argument, 0, 'M'},
     {"content-type", required_argument, 0, 'T'},
     {"pagesize", required_argument, 0, 'm'},
+    {"invert-regex", no_argument, NULL, INVERT_REGEX},
     {"use-ipv4", no_argument, 0, '4'},
     {"use-ipv6", no_argument, 0, '6'},
     {0, 0, 0, 0}
@@ -345,6 +351,9 @@ process_arguments (int argc, char **argv)
         printf (_("Could Not Compile Regular Expression: %s"), errbuf);
         return ERROR;
       }
+      break;
+    case INVERT_REGEX:
+      invert_regex = 1;
       break;
     case '4':
       address_family = AF_INET;
@@ -985,25 +994,29 @@ check_http (void)
 
   if (strlen (regexp)) {
     errcode = regexec (&preg, page, REGS, pmatch, 0);
-    if (errcode == 0) {
+    if ((errcode == 0 && invert_regex == 0) || (errcode == REG_NOMATCH && invert_regex == 1)) {
       printf (_("HTTP OK %s - %.3f second response time %s%s|%s %s\n"),
               status_line, elapsed_time,
               timestamp, (display_html ? "</A>" : ""),
               perfd_time (elapsed_time), perfd_size (pagesize));
       exit (STATE_OK);
     }
+    else if ((errcode == REG_NOMATCH && invert_regex == 0) || (errcode == 0 && invert_regex == 1)) {
+      if (invert_regex == 0) 
+        msg = strdup(_("pattern not found"));
+      else 
+        msg = strdup(_("pattern found"));
+      printf (_("%s - %s%s|%s %s\n"),
+        _("CRITICAL"),
+        msg,
+        (display_html ? "</A>" : ""),
+        perfd_time (elapsed_time), perfd_size (pagesize));
+      exit (STATE_CRITICAL);
+    }
     else {
-      if (errcode == REG_NOMATCH) {
-        printf (_("CRITICAL - pattern not found%s|%s %s\n"),
-                (display_html ? "</A>" : ""),
-                perfd_time (elapsed_time), perfd_size (pagesize));
-        exit (STATE_CRITICAL);
-      }
-      else {
-        regerror (errcode, &preg, errbuf, MAX_INPUT_BUFFER);
-        printf (_("CRITICAL - Execute Error: %s\n"), errbuf);
-        exit (STATE_CRITICAL);
-      }
+      regerror (errcode, &preg, errbuf, MAX_INPUT_BUFFER);
+      printf (_("CRITICAL - Execute Error: %s\n"), errbuf);
+      exit (STATE_CRITICAL);
     }
   }
 
@@ -1265,7 +1278,9 @@ certificate expiration times."));
  -r, --regex, --ereg=STRING\n\
     Search page for regex STRING\n\
  -R, --eregi=STRING\n\
-    Search page for case-insensitive regex STRING\n"));
+    Search page for case-insensitive regex STRING\n\
+     --invert-regex\n\
+    Return CRITICAL if found, OK if not\n"));
 
   printf (_("\
  -a, --authorization=AUTH_PAIR\n\
