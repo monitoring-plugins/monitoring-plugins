@@ -30,7 +30,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "common.h"
 #include "runcmd.h"
 #include "utils.h"
-#include <regex.h>
+#include "regex.h"
 
 /* some constants */
 typedef enum { UPGRADE, DIST_UPGRADE, NO_UPGRADE } upgrade_type;

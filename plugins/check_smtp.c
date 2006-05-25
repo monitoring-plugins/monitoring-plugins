@@ -59,8 +59,7 @@ void print_help (void);
 void print_usage (void);
 int my_close(void);
 
-#ifdef HAVE_REGEX_H
-#include <regex.h>
+#include "regex.h"
 char regex_expect[MAX_INPUT_BUFFER] = "";
 regex_t preg;
 regmatch_t pmatch[10];
@@ -69,7 +68,6 @@ char errbuf[MAX_INPUT_BUFFER];
 int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
 int eflags = 0;
 int errcode, excode;
-#endif
 
 int server_port = SMTP_PORT;
 char *server_address = NULL;
@@ -308,7 +306,6 @@ main (int argc, char **argv)
 				printf("%s", buffer);
 			strip (buffer);
 			if (n < nresponses) {
-#ifdef HAVE_REGEX_H
 				cflags |= REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
 				errcode = regcomp (&preg, responses[n], cflags);
 				if (errcode != 0) {
@@ -329,12 +326,6 @@ main (int argc, char **argv)
 					printf (_("Execute Error: %s\n"), errbuf);
 					result = STATE_UNKNOWN;
 				}
-#else
-				if (strstr(buffer, responses[n])!=buffer) {
-					result = STATE_WARNING;
-					printf (_("SMTP %s - Invalid response '%s' to command '%s'\n"), state_text (result), buffer, commands[n]);
-				}
-#endif
 			}
 			n++;
 		}

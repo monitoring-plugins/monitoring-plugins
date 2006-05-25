@@ -38,7 +38,6 @@ AC_CONFIG_LIBOBJ_DIR(lib)
 AC_FUNC_GETLOADAVG([lib])
 
 ifdef([AC_FUNC_STRTOD],[AC_FUNC_STRTOD],[AM_FUNC_STRTOD])
-dnl AM_WITH_REGEX
 
 PLUGIN_TEST=`echo $srcdir/plugins/t/*.t|sed -e 's,\.*/plugins/,,g'`
 AC_SUBST(PLUGIN_TEST)dnl
@@ -533,7 +532,6 @@ AC_HEADER_TIME
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(signal.h strings.h string.h syslog.h uio.h errno.h sys/types.h sys/time.h sys/socket.h sys/loadavg.h sys/un.h sys/poll.h)
 AC_CHECK_HEADERS(features.h stdarg.h sys/unistd.h ctype.h stdlib.h)
-AC_CHECK_HEADERS(regex.h,FOUNDREGEX=yes,FOUNDREGEX=no)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -1617,8 +1615,7 @@ AC_ARG_WITH(apt-get_command,
                             with_apt_get_command=$withval,
                             with_apt_get_command=$PATH_TO_APTGET)
 AC_DEFINE_UNQUOTED(PATH_TO_APTGET,"$PATH_TO_APTGET",[Path to apt-get command, if present])
-# check_apt needs regex support
-if test -n "$PATH_TO_APTGET" && test "$FOUNDREGEX" = "yes"; then
+if test -n "$PATH_TO_APTGET" ; then
 	EXTRAS="$EXTRAS check_apt"
 fi
 

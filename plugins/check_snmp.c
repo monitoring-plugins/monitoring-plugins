@@ -75,8 +75,7 @@ char *nextarg (char *str);
 void print_usage (void);
 void print_help (void);
 
-#ifdef HAVE_REGEX_H
-#include <regex.h>
+#include "regex.h"
 char regex_expect[MAX_INPUT_BUFFER] = "";
 regex_t preg;
 regmatch_t pmatch[10];
@@ -86,7 +85,6 @@ char perfstr[MAX_INPUT_BUFFER];
 int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
 int eflags = 0;
 int errcode, excode;
-#endif
 
 char *server_address = NULL;
 char *community = NULL;
@@ -292,7 +290,6 @@ main (int argc, char **argv)
 
 		/* Process this block for regex matching */
 		else if (eval_method[i] & CRIT_REGEX) {
-#ifdef HAVE_REGEX_H
 			excode = regexec (&preg, response, 10, pmatch, eflags);
 			if (excode == 0) {
 				iresult = STATE_OK;
@@ -305,10 +302,6 @@ main (int argc, char **argv)
 			else {
 				iresult = STATE_CRITICAL;
 			}
-#else
-			printf (_("Call for regex which was not a compiled option"));
-			exit (STATE_UNKNOWN);
-#endif
 		}
 
 		/* Process this block for existence-nonexistence checks */
@@ -542,11 +535,8 @@ process_arguments (int argc, char **argv)
 			ii++;
 			break;
 		case 'R':									/* regex */
-#ifdef HAVE_REGEX_H
 			cflags = REG_ICASE;
-#endif
 		case 'r':									/* regex */
-#ifdef HAVE_REGEX_H
 			cflags |= REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
 			strncpy (regex_expect, optarg, sizeof (regex_expect) - 1);
 			regex_expect[sizeof (regex_expect) - 1] = 0;
@@ -558,10 +548,6 @@ process_arguments (int argc, char **argv)
 			}
 			eval_method[jj++] = CRIT_REGEX;
 			ii++;
-#else
-			printf (_("call for regex which was not a compiled option"));
-			exit (STATE_UNKNOWN);
-#endif
 			break;
 
 	/* Format */

@@ -51,19 +51,17 @@ X509 *server_cert;
 int no_body = FALSE;
 int maximum_age = -1;
 
-#ifdef HAVE_REGEX_H
 enum {
   REGS = 2,
   MAX_RE_SIZE = 256
 };
-#include <regex.h>
+#include "regex.h"
 regex_t preg;
 regmatch_t pmatch[REGS];
 char regexp[MAX_RE_SIZE];
 char errbuf[MAX_INPUT_BUFFER];
 int cflags = REG_NOSUB | REG_EXTENDED | REG_NEWLINE;
 int errcode;
-#endif
 
 struct timeval tv;
 
@@ -333,13 +331,6 @@ process_arguments (int argc, char **argv)
     case 'T': /* Content-type */
       asprintf (&http_content_type, "%s", optarg);
       break;
-#ifndef HAVE_REGEX_H
-    case 'l': /* linespan */
-    case 'r': /* linespan */
-    case 'R': /* linespan */
-      usage4 (_("Call for regex which was not a compiled option"));
-      break;
-#else
     case 'l': /* linespan */
       cflags &= ~REG_NEWLINE;
       break;
@@ -355,7 +346,6 @@ process_arguments (int argc, char **argv)
         return ERROR;
       }
       break;
-#endif
     case '4':
       address_family = AF_INET;
       break;
@@ -992,7 +982,7 @@ check_http (void)
       exit (STATE_CRITICAL);
     }
   }
-#ifdef HAVE_REGEX_H
+
   if (strlen (regexp)) {
     errcode = regexec (&preg, page, REGS, pmatch, 0);
     if (errcode == 0) {
@@ -1016,7 +1006,6 @@ check_http (void)
       }
     }
   }
-#endif
 
   /* make sure the page is of an appropriate size */
   /* page_len = get_content_length(header); */
@@ -1270,7 +1259,6 @@ certificate expiration times."));
  -T, --content-type=STRING\n\
    specify Content-Type header media type when POSTing\n"), HTTP_EXPECT);
 
-#ifdef HAVE_REGEX_H
   printf (_("\
  -l, --linespan\n\
     Allow regex to span newlines (must precede -r or -R)\n\
@@ -1278,7 +1266,6 @@ certificate expiration times."));
     Search page for regex STRING\n\
  -R, --eregi=STRING\n\
     Search page for case-insensitive regex STRING\n"));
-#endif
 
   printf (_("\
  -a, --authorization=AUTH_PAIR\n\
