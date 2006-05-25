@@ -1661,7 +1661,7 @@ AC_SUBST(EXTRA_NETOBJS)
 AC_SUBST(DEPLIBS)
 
 AM_GNU_GETTEXT([external], [need-ngettext])
-AM_GNU_GETTEXT_VERSION(0.11.5)
+AM_GNU_GETTEXT_VERSION(0.13.1)
 
 dnl Check for Redhat spopen problem
 dnl Wierd problem where ECHILD is returned from a wait call in error

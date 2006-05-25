@@ -218,6 +218,12 @@ enum {
  */
 #include "gettext.h"
 #define _(String) gettext (String)
+#if ! ENABLE_NLS
+# undef textdomain
+# define textdomain(Domainname) /* empty */
+# undef bindtextdomain
+# define bindtextdomain(Domainname, Dirname) /* empty */
+#endif
 
 /* For non-GNU compilers to ignore __attribute__ */
 #ifndef __GNUC__

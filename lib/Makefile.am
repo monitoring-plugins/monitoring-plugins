@@ -10,7 +10,7 @@ libcoreutils_a_SOURCES = \
   full-write.c full-write.h \
   gettext.h \
   safe-read.c safe-read.h \
-  safe-write.c safe-write.h xalloc-die.c
+  safe-write.c safe-write.h strcase.h xalloc-die.c
 
 other_coreutils_files = \
   error.c error.h \
