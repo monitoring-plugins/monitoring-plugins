@@ -5,6 +5,7 @@
 * Program: DHCP plugin for Nagios
 * License: GPL
 * Copyright (c) 2001-2004 Ethan Galstad (nagios@nagios.org)
+* Copyright (c) 2001-2006 Nagios Plugin Development Team
 *
 * License Information:
 *
@@ -28,7 +29,7 @@
 
 const char *progname = "check_dhcp";
 const char *revision = "$Revision$";
-const char *copyright = "2001-2004";
+const char *copyright = "2001-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -104,11 +105,6 @@ long mac_addr_dlpi( const char *, int, u_char *);
 
 
 /**** Common definitions ****/
-
-#define STATE_OK          0
-#define STATE_WARNING     1
-#define STATE_CRITICAL    2
-#define STATE_UNKNOWN     -1
 
 #define OK                0
 #define ERROR             -1
@@ -191,7 +187,7 @@ typedef struct requested_server_struct{
 
 unsigned char client_hardware_address[MAX_DHCP_CHADDR_LENGTH]="";
 
-char network_interface_name[8]="eth0";
+char network_interface_name[IFNAMSIZ]="eth0";
 
 u_int32_t packet_xid=0;
 
@@ -240,7 +236,7 @@ int receive_dhcp_packet(void *,int,int,int,struct sockaddr_in *);
 
 int main(int argc, char **argv){
 	int dhcp_socket;
-	int result;
+	int result = STATE_UNKNOWN;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -920,8 +916,14 @@ int get_results(void){
 	else if(request_specific_address==TRUE && received_requested_address==FALSE)
 		result=STATE_WARNING;
 
-
-	printf("DHCP %s: ",(result==STATE_OK)?"ok":"problem");
+    if(result==0)               /* garrett honeycutt 2005 */
+        printf("OK: ");
+    else if(result==1)
+        printf("WARNING: ");
+    else if(result==2)
+        printf("CRITICAL: ");
+    else if(result==3)
+        printf("UNKNOWN: ");
 
 	/* we didn't receive any DHCPOFFERs */
 	if(dhcp_offer_list==NULL){
@@ -1218,12 +1220,16 @@ void print_help(void){
 
 	print_revision(progname,revision);
 
-	printf("Copyright (c) 2001-2004 Ethan Galstad (nagios@nagios.org)\n\n");
+	printf("Copyright (c) 2001-2004 Ethan Galstad (nagios@nagios.org)\n");
 	printf (COPYRIGHT, copyright, email);
 	
 	printf(_("This plugin tests the availability of DHCP servers on a network.\n\n"));
 
 	print_usage();
+
+	printf (_(UT_HELP_VRSN));
+
+	printf (_(UT_VERBOSE));
 
 	printf(_("\
  -s, --serverip=IPADDRESS\n\
@@ -1233,21 +1239,14 @@ void print_help(void){
  -t, --timeout=INTEGER\n\
    Seconds to wait for DHCPOFFER before timeout occurs\n\
  -i, --interface=STRING\n\
-   Interface to to use for listening (i.e. eth0)\n\
- -v, --verbose\n\
-   Print extra information (command-line use only)\n\
- -h, --help\n\
-   Print detailed help screen\n\
- -V, --version\n\
-   Print version information\n"));
+   Interface to to use for listening (i.e. eth0)\n"));
 }
 
 
 void print_usage(void)
 {
 	printf("\
-Usage: %s [-s serverip] [-r requestedip] [-t timeout] [-i interface]\n\
-                  [-v]",progname);
+Usage: %s [-s serverip] [-r requestedip] [-t timeout] [-i interface] [-v]\n",progname);
 }
 
 
