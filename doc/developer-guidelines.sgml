@@ -57,7 +57,6 @@
 	gnu make 3.79
 	automake 1.8.3
 	autoconf 2.58
-	gnu libtool 1.5.6
 	</literallayout>
 
 	To compile from CVS, after you have checked out the code, run:
@@ -72,6 +71,9 @@
 	<para>Note: gettext is no longer a developer platform requirement. A lot of the files in lib/ and m4/
 	are synced with the coreutils project and we use the same levels of gettext that they
 	distribute.
+	</para>
+	<para>Note: gnu libtool, which must be at version 1.5.22 or above, has files installed into CVS, so is not 
+	a development platform requirement.
 	</para>
 </section>
 
