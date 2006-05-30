@@ -253,11 +253,12 @@ fi
 LIBS="$_SAVEDLIBS"
 
 dnl Check for mysql libraries
+dnl Default is to search path for mysql_config
 AC_ARG_WITH(mysql,
 	ACX_HELP_STRING([--with-mysql=DIR],
 		[Compiles mysql plugins. Expects DIR/bin/mysql_config]),
 	with_mysql=$withval,
-	with_mysql=no)
+	with_mysql=yes)
 if test $with_mysql != "no" ; then
   if test -x $with_mysql/bin/mysql_config ; then
     MYSQLCONFIG="$with_mysql/bin/mysql_config"
