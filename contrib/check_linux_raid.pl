@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
 
 # Copyright (c) 2002 ISOMEDIA, Inc.
-# Written by Steve Milton
-# Released under the GNU Public License
+# originally written by Steve Milton
+# later updates by sean finney <seanius@seanius.net>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,13 +18,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
-# Usage:   check_raid <raid-name>
+# Usage:   check_raid [raid-name]
 # Example: check_raid md0
 #          WARNING md0 status=[UUU_U], recovery=46.4%, finish=123.0min
 
 use strict;
-
-my %ERRORS=('DEPENDENT'=>4,'UNKNOWN'=>3,'OK'=>0,'WARNING'=>1,'CRITICAL'=>2);
+use lib utils.pm;
+use utils qw(%ERRORS);
 
 # die with an error if we're not on Linux
 if ($^O ne 'linux') {
@@ -32,57 +32,79 @@ if ($^O ne 'linux') {
     exit $ERRORS{'UNKNOWN'};
 }
 
-open (MDSTAT, "</proc/mdstat") or die "Failed to open /proc/mdstat";
-my $found = 0;
-my $status = "";
-my $recovery = "";
-my $finish = "";
-my $active = "";
-while(<MDSTAT>) {
-    if ($found) {
-        if (/(\[[_U]+\])/) {
-            $status = $1;
-            last;
-    } elsif (/recovery = (.*?)\s/) {  
-            $recovery = $1;
-            ($finish) = /finish=(.*?min)/;
-	    last;
-        }
-    } else {
-        if (/^$ARGV[0]\s*:/) {
-            $found = 1;
-            if (/active/) {
-                $active = 1;
-            }
-        }
-    }
+sub max_state($$){
+	my ($a, $b) = @_;
+	if ($a eq "CRITICAL" || $b eq "CRITICAL") { return "CRITICAL"; } 
+	elsif ($a eq "WARNING" || $b eq "WARNING") { return "WARNING"; }
+	elsif ($a eq "OK" || $b eq "OK") { return "OK"; }
+	elsif ($a eq "UNKNOWN" || $b eq "UNKNOWN") { return "UNKNOWN"; }
+	elsif ($a eq "DEPENDENT" || $b eq "DEPENDENT") { return "DEPENDENT"; }
+	return "UNKNOWN";
 }
 
-my $msg = "FAILURE";
+my $nextdev;
+if(defined $ARGV[0]) { $nextdev = shift; }
+else { $nextdev = "md[0-9]"; }
+
 my $code = "UNKNOWN";
-if ($status =~ /_/) {
-    if ($recovery) {
-        $msg = sprintf "%s status=%s, recovery=%s, finish=%s\n",
-        $ARGV[0], $status, $recovery, $finish;
-        $code = "WARNING";
-    } else {
-        $msg = sprintf "%s status=%s\n", $ARGV[0], $status;
-        $code = "CRITICAL";
-    }
-} elsif ($status =~ /U+/) {
-    $msg = sprintf "%s status=%s\n", $ARGV[0], $status;
-    $code = "OK";
-} else {
-    if ($active) {
-        $msg = sprintf "%s active with no status information.\n",
-        $ARGV[0];
-        $code = "OK";
-    } else {
-        $msg = sprintf "%s does not exist.\n", $ARGV[0];
-        $code = "CRITICAL";
-    }
+my $msg = "";
+my %status;
+my %recovery;
+my %finish;
+my %active;
+my %devices;
+
+while(defined $nextdev){
+	open (MDSTAT, "< /proc/mdstat") or die "Failed to open /proc/mdstat";
+	my $device = undef;
+	while(<MDSTAT>) {
+		if (defined $device) {
+			if (/(\[[_U]+\])/) {
+				$status{$device} = $1;
+				$device = undef;
+			} elsif (/recovery = (.*?)\s/) {  
+				$recovery{$device} = $1;
+				($finish{$device}) = /finish=(.*?min)/;
+				$device = undef;
+			}
+		} else {
+			if (/^($nextdev)\s*:/) {
+				$device=$1;
+				$devices{$device}=$device;
+				if (/active/) {
+					$active{$device} = 1;
+				}
+			}
+		}
+	}
+	$nextdev = shift;
 }
 
-print $code, " ", $msg;
+foreach my $k (sort keys %devices){
+	if ($status{$k} =~ /_/) {
+		if ($recovery{$k}) {
+			$msg .= sprintf " %s status=%s, recovery=%s, finish=%s.",
+				$devices{$k}, $status{$k}, $recovery{$k}, $finish{$k};
+			$code = max_state($code, "WARNING");
+		} else {
+			$msg .= sprintf " %s status=%s.", $devices{$k}, $status{$k};
+			$code = max_state($code, "CRITICAL");
+		}
+	} elsif ($status{$k} =~ /U+/) {
+		$msg .= sprintf " %s status=%s.", $devices{$k}, $status{$k};
+		$code = max_state($code, "OK");
+	} else {
+		if ($active{$k}) {
+			$msg .= sprintf " %s active with no status information.\n",
+				$devices{$k};
+			$code = max_state($code, "OK");
+		} else {
+			$msg .= sprintf " %s does not exist.\n", $devices{$k};
+			$code = max_state($code, "CRITICAL");
+		}
+	}
+}
+
+print $code, $msg, "\n";
 exit ($ERRORS{$code});
 
