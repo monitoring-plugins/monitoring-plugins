@@ -329,9 +329,9 @@ is_pg_dbname (char *dbname)
 		return (FALSE);
 	strncpy (txt, dbname, NAMEDATALEN - 1);
 	txt[NAMEDATALEN - 1] = 0;
-	if (sscanf (txt, "%[_a-zA-Z]%[^_a-zA-Z0-9]", tmp, tmp) == 1)
+	if (sscanf (txt, "%[_a-zA-Z]%[^_a-zA-Z0-9-]", tmp, tmp) == 1)
 		return (TRUE);
-	if (sscanf (txt, "%[_a-zA-Z]%[_a-zA-Z0-9]%[^_a-zA-Z0-9]", tmp, tmp, tmp) ==
+	if (sscanf (txt, "%[_a-zA-Z]%[_a-zA-Z0-9-]%[^_a-zA-Z0-9-]", tmp, tmp, tmp) ==
 			2) return (TRUE);
 	return (FALSE);
 }
