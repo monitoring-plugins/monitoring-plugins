@@ -2,6 +2,9 @@
 # $Id$
 #
 # $Log$
+# Revision 1.8  2006/06/07 14:23:12  seanius
+# removed stale references to PATH_TO_NTPFOO, as it's no longer used.
+#
 # Revision 1.7  2003/04/13 04:25:36  sghosh
 # update for check_mailq - qmail support
 #
@@ -36,9 +39,6 @@ sub is_hostname;
 
 ## updated by autoconf
 $PATH_TO_RPCINFO = "@PATH_TO_RPCINFO@" ;
-$PATH_TO_NTPDATE = "@PATH_TO_NTPDATE@" ;
-$PATH_TO_NTPDC   = "@PATH_TO_NTPDC@" ;
-$PATH_TO_NTPQ    = "@PATH_TO_NTPQ@" ;
 $PATH_TO_LMSTAT  = "@PATH_TO_LMSTAT@" ;
 $PATH_TO_SMBCLIENT = "@PATH_TO_SMBCLIENT@" ;
 $PATH_TO_MAILQ   = "@PATH_TO_MAILQ@";
