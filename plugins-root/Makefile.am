@@ -9,7 +9,7 @@ localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
 LIBS = @LIBINTL@ @LIBS@ @SSLLIBS@
 
-libexec_PROGRAMS = check_dhcp check_icmp @EXTRAS_ROOT@
+noinst_PROGRAMS = check_dhcp check_icmp @EXTRAS_ROOT@
 
 EXTRA_PROGRAMS = pst3
 
@@ -28,12 +28,10 @@ test:
 
 setuid_root_mode = 4550
 
-group = nagios
-
 # /* Author Coreutils team - see ACKNOWLEDGEMENTS */
 
 INSTALL_SUID = \
-	for f in $(libexec_PROGRAMS) ; do \
+	for f in $(noinst_PROGRAMS) ; do \
 	p=$$f; \
 	echo " $(INSTALL_PROGRAM) $$p $(DESTDIR)$(libexecdir)/$$p"; \
 	$(INSTALL_PROGRAM) $$p $(DESTDIR)$(libexecdir)/$$p; \
@@ -43,10 +41,10 @@ INSTALL_SUID = \
 	chmod $(setuid_root_mode) $(DESTDIR)$(libexecdir)/$$p; \
 	done
 
-install-root: $(libexec_PROGRAMS)
+install-root: $(noinst_PROGRAMS)
 	@$(INSTALL_SUID)
 
-install-exec-local: $(libexec_PROGRAMS)
+install-exec-local: $(noinst_PROGRAMS)
 	@TMPFILE=$(DESTDIR)$(libexecdir)/.setuid-$$$$; \
 	rm -f $$TMPFILE; \
 	echo > $$TMPFILE; \
