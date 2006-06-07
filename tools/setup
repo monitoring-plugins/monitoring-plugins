@@ -29,7 +29,7 @@ fi
 # I think gettext no longer necessary, as all necessary files imported from coreutils
 #autopoint --force
 aclocal -I m4 $extra
-libtoolize --force --copy
+#libtoolize --force --copy
 autoheader
 automake --add-missing --force-missing --copy
 autoconf

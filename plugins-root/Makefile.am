@@ -33,7 +33,7 @@ group = nagios
 # /* Author Coreutils team - see ACKNOWLEDGEMENTS */
 
 INSTALL_SUID = \
-	for f in $(EXTRA_PROGRAMS) ; do \
+	for f in $(libexec_PROGRAMS) ; do \
 	p=$$f; \
 	echo " $(INSTALL_PROGRAM) $$p $(DESTDIR)$(libexecdir)/$$p"; \
 	$(INSTALL_PROGRAM) $$p $(DESTDIR)$(libexecdir)/$$p; \
@@ -43,10 +43,10 @@ INSTALL_SUID = \
 	chmod $(setuid_root_mode) $(DESTDIR)$(libexecdir)/$$p; \
 	done
 
-install-root: $(EXTRA_PROGRAMS)
+install-root: $(libexec_PROGRAMS)
 	@$(INSTALL_SUID)
 
-install-exec-local: $(EXTRA_PROGRAMS)
+install-exec-local: $(libexec_PROGRAMS)
 	@TMPFILE=$(DESTDIR)$(libexecdir)/.setuid-$$$$; \
 	rm -f $$TMPFILE; \
 	echo > $$TMPFILE; \
