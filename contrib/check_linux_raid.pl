@@ -20,7 +20,7 @@
 #
 # Usage:   check_raid [raid-name]
 # Example: check_raid md0
-#          WARNING md0 status=[UUU_U], recovery=46.4%, finish=123.0min
+#	  WARNING md0 status=[UUU_U], recovery=46.4%, finish=123.0min
 
 use strict;
 use lib utils.pm;
@@ -61,19 +61,17 @@ while(defined $nextdev){
 		if (defined $device) {
 			if (/(\[[_U]+\])/) {
 				$status{$device} = $1;
-				$device = undef;
 			} elsif (/recovery = (.*?)\s/) {  
 				$recovery{$device} = $1;
 				($finish{$device}) = /finish=(.*?min)/;
-				$device = undef;
+			} elsif (/^\s*$/) {
+				$device=undef;
 			}
-		} else {
-			if (/^($nextdev)\s*:/) {
-				$device=$1;
-				$devices{$device}=$device;
-				if (/active/) {
-					$active{$device} = 1;
-				}
+		} elsif (/^($nextdev)\s*:/) {
+			$device=$1;
+			$devices{$device}=$device;
+			if (/active/) {
+				$active{$device} = 1;
 			}
 		}
 	}
@@ -82,7 +80,7 @@ while(defined $nextdev){
 
 foreach my $k (sort keys %devices){
 	if ($status{$k} =~ /_/) {
-		if ($recovery{$k}) {
+		if (defined $recovery{$k}) {
 			$msg .= sprintf " %s status=%s, recovery=%s, finish=%s.",
 				$devices{$k}, $status{$k}, $recovery{$k}, $finish{$k};
 			$code = max_state($code, "WARNING");
