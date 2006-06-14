@@ -20,7 +20,7 @@
  
 const char *progname = "check_by_ssh";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2004";
+const char *copyright = "2000-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -299,8 +299,10 @@ print_help (void)
 	printf ("Copyright (c) 1999 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("This plugin uses SSH to execute commands on a remote host\n\n"));
+	printf (_("This plugin uses SSH to execute commands on a remote host"));
 
+  printf ("\n\n");
+  
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
@@ -309,56 +311,44 @@ print_help (void)
 
 	printf (_(UT_IPv46));
 
-	printf (_("\
- -1, --proto1\n\
-    tell ssh to use Protocol 1\n\
- -2, --proto2\n\
-    tell ssh to use Protocol 2\n\
- -S, --skiplines=n\n\
-    Ignore first n lines on STDERR (to suppress a logon banner)\n\
- -f\n\
-    tells ssh to fork rather than create a tty\n"));
-
-	printf (_("\
- -C, --command='COMMAND STRING'\n\
-    command to execute on the remote machine\n\
- -l, --logname=USERNAME\n\
-    SSH user name on remote host [optional]\n\
- -i, --identity=KEYFILE\n\
-    identity of an authorized key [optional]\n\
- -O, --output=FILE\n\
-    external command file for nagios [optional]\n\
- -s, --services=LIST\n\
-    list of nagios service names, separated by ':' [optional]\n\
- -n, --name=NAME\n\
-    short name of host in nagios configuration [optional]\n"));
-
+  printf (" %s\n", "-1, --proto1");
+  printf ("    %s\n", _("tell ssh to use Protocol 1"));
+  printf (" %s\n", "-2, --proto2");
+  printf ("    %s\n", _("tell ssh to use Protocol 2"));
+  printf (" %s\n", "-S, --skiplines=n");
+  printf ("    %s\n", _("Ignore first n lines on STDERR (to suppress a logon banner)"));
+  printf (" %s\n", "-f");
+  printf ("    %s\n", _("tells ssh to fork rather than create a tty"));
+  printf (" %s\n","-C, --command='COMMAND STRING'");
+  printf ("    %s\n", _("command to execute on the remote machine"));
+  printf (" %s\n","-l, --logname=USERNAME");
+  printf ("    %s\n", _("SSH user name on remote host [optional]"));
+  printf (" %s\n","-i, --identity=KEYFILE");
+  printf ("    %s\n", _("identity of an authorized key [optional]"));
+  printf (" %s\n","-O, --output=FILE");
+  printf ("    %s\n", _("external command file for nagios [optional]"));
+  printf (" %s\n","-s, --services=LIST");
+  printf ("    %s\n", _("list of nagios service names, separated by ':' [optional]"));
+  printf (" %s\n","-n, --name=NAME");
+  printf ("    %s\n", _("short name of host in nagios configuration [optional]"));
 	printf (_(UT_WARN_CRIT));
-
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-
-	printf (_("\n\
-The most common mode of use is to refer to a local identity file with\n\
-the '-i' option. In this mode, the identity pair should have a null\n\
-passphrase and the public key should be listed in the authorized_keys\n\
-file of the remote host. Usually the key will be restricted to running\n\
-only one command on the remote server. If the remote SSH server tracks\n\
-invocation arguments, the one remote program may be an agent that can\n\
-execute additional commands as proxy\n"));
-
-	printf (_("\n\
-To use passive mode, provide multiple '-C' options, and provide\n\
-all of -O, -s, and -n options (servicelist order must match '-C'\n\
-options)\n"));
-
-	printf ("\n\
-$ check_by_ssh -H localhost -n lh -s c1:c2:c3 \\\n\
-    -C uptime -C uptime -C uptime -O /tmp/foo\n\
-$ cat /tmp/foo\n\
-[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c1;0; up 2 days...\n\
-[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c2;0; up 2 days...\n\
-[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c3;0; up 2 days...\n");
-
+  printf (" %s\n", _("The most common mode of use is to refer to a local identity file with"));
+  printf (" %s\n", _("the '-i' option. In this mode, the identity pair should have a null"));
+  printf (" %s\n", _("passphrase and the public key should be listed in the authorized_keys"));
+  printf (" %s\n", _("file of the remote host. Usually the key will be restricted to running"));
+  printf (" %s\n", _("only one command on the remote server. If the remote SSH server tracks"));
+  printf (" %s\n", _("invocation arguments, the one remote program may be an agent that can"));
+  printf (" %s\n", _("execute additional commands as proxy"));
+  printf (" %s\n", _("To use passive mode, provide multiple '-C' options, and provide"));
+  printf (" %s\n", _("all of -O, -s, and -n options (servicelist order must match '-C'options)"));
+  printf ("\n");
+  printf ("%s\n", _("Examples:"));
+  printf (" %s\n", "$ check_by_ssh -H localhost -n lh -s c1:c2:c3 -C uptime -C uptime -C uptime -O /tmp/foo");
+  printf (" %s\n", "$ cat /tmp/foo");
+  printf (" %s\n", "[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c1;0; up 2 days");
+  printf (" %s\n", "[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c2;0; up 2 days");
+  printf (" %s\n", "[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c3;0; up 2 days");
 	printf (_(UT_SUPPORT));
 }
 
@@ -367,7 +357,7 @@ $ cat /tmp/foo\n\
 void
 print_usage (void)
 {
-	printf ("\n\
-Usage: %s [-f46] [-t timeout] [-i identity] [-l user] -H <host> -C <command>\n\
-                  [-n name] [-s servicelist] [-O outputfile] [-p port]\n", progname);
+	printf (_("Usage:"));
+  printf(" %s [-f46] [-t timeout] [-i identity] [-l user] -H <host> -C <command>",progname);
+  printf(" [-n name] [-s servicelist] [-O outputfile] [-p port]\n");
 }

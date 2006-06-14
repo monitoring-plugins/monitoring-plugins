@@ -302,36 +302,15 @@ print_help (void)
 
   printf (_(UT_HOST_PORT), 'P', myport);
 
-  printf ("-l, --lookup=STRING");
-    
-  printf ("\n");
-
-  printf (_("machine name to lookup"));
-
-  printf ("\n");
-
-  printf ("-T, --record_type=STRING");
-
-  printf ("\n");
-
-  printf (_("record type to lookup (default: A)"));
-
-  printf ("\n");
-
-  printf ("-a, --expected_address=STRING");
-
-  printf ("\n");
-
-  printf (_("an address expected to be in the answer section.if not set, uses whatever was in -l"));
-
-  printf ("\n");
-
+  printf (" %s\n","-l, --lookup=STRING");
+  printf ("    %s\n",_("machine name to lookup"));
+  printf (" %s\n","-T, --record_type=STRING");
+  printf ("    %s\n",_("record type to lookup (default: A)"));
+  printf (" %s\n","-a, --expected_address=STRING");
+  printf ("    %s\n",_("an address expected to be in the answer section.if not set, uses whatever was in -l"));
   printf (_(UT_WARN_CRIT));
-
   printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-
   printf (_(UT_VERBOSE));
-
   printf (_(UT_SUPPORT));
 }
 
@@ -342,6 +321,6 @@ print_usage (void)
 {
   printf (_("Usage:"));
   printf ("%s -H host -l lookup [-p <server port>] [-T <query type>]", progname);
-  printf ("          [-w <warning interval>] [-c <critical interval>] [-t <timeout>]");
-  printf ("          [-a <expected answer address>] [-v]\n");
+  printf (" [-w <warning interval>] [-c <critical interval>] [-t <timeout>]");
+  printf (" [-a <expected answer address>] [-v]\n");
 }
