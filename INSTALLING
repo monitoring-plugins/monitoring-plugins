@@ -1,23 +1,15 @@
 Nagios Plugins Quick-and-Dirty Installation Instructions
 --------------------------------------------------------
 
-0) If using the CVS tree, you need m4, automake, and autoconf. To
-   start out, run:
+0) If using the CVS tree, you need:
+	gnu make 3.79
+	automake 1.9.2
+	autoconf 2.58
 
-	# aclocal
-	# autoconf
-	# autoheader
-	# automake
-
-   or you can run ./tools/setup
-
-   For best results, please use the most recent versions of autoconf
-   and automake. Older versions may also work, but are not
-   specifically supprted.
-
+   To start out, run:
+	tools/setup
 
 1) Run the configure script to initialize variables and create a Makefile, etc.
-
 	./configure --prefix=BASEDIRECTORY --with-nagios-user=SOMEUSER --with-nagios-group=SOMEGROUP --with-cgiurl=SOMEURL
 
    a) Replace BASEDIRECTORY with the path of the directory under which Nagios
@@ -31,12 +23,17 @@ Nagios Plugins Quick-and-Dirty Installation Instructions
 
 
 2) Compile the plugins with the following command:
-
 	make all
 
 
-3) Install the compiled plugins and plugin scripts with the following command:
+3) Test the plugins:
+	make test
 
+   You will need to answer questions on servers that can be used for testing. If
+   you need to edit any values, edit the file /var/tmp/NPTest.cache
+
+
+4) Install the compiled plugins and plugin scripts with the following command:
 	make install
 
    NOTE: 
@@ -45,7 +42,7 @@ Nagios Plugins Quick-and-Dirty Installation Instructions
    the --prefix argument to the configure script.
 
 
-4) Verify that your host configuration file (hosts.cfg) for Nagios contains
+5) Verify that your host configuration file (hosts.cfg) for Nagios contains
    the correct paths to the new plugins.
 
 
