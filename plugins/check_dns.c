@@ -398,15 +398,16 @@ print_help (void)
   printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
   printf (COPYRIGHT, copyright, email);
 
-  printf (_("This plugin uses the nslookup program to obtain the IP address for the given host/domain query."));
-  printf ("\n");
-  printf (_("An optional DNS server to use may be specified."));
-  printf ("\n");
-  printf (_("If no DNS server is specified, the default server(s) specified in /etc/resolv.conf will be used."));
+  printf ("%s\n", _("This plugin uses the nslookup program to obtain the IP address for the given host/domain query."));
+  printf ("%s\n", _("An optional DNS server to use may be specified."));
+  printf ("%s\n", _("If no DNS server is specified, the default server(s) specified in /etc/resolv.conf will be used."));
+  
   printf ("\n\n");
 
   print_usage ();
+  
   printf (_(UT_HELP_VRSN));
+  
   printf (" -H, --hostname=HOST\n");
   printf ("    %s\n", _("The name or address you want to query"));
   printf (" -s, --server=HOST\n");
@@ -429,6 +430,5 @@ void
 print_usage (void)
 {
   printf (_("Usage:"));
-  
   printf ("%s -H host [-s server] [-a expected-address] [-A] [-t timeout] [-w warn] [-c crit]\n", progname);
 }

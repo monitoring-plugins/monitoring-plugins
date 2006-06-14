@@ -282,37 +282,30 @@ print_help (void)
 
   printf (_("This plugin tests game server connections with the specified host."));
 
- printf ("\n\n");
+  printf ("\n\n");
  
   print_usage ();
 
   printf (_(UT_HELP_VRSN));
-
-  printf (_("\
-<game>        = Game type that is recognised by qstat (without the leading dash)\n\
-<ip_address>  = The IP address of the device you wish to query\n\
- [port]        = Optional port of which to connect\n\
- [game_field]  = Field number in raw qstat output that contains game name\n\
- [map_field]   = Field number in raw qstat output that contains map name\n\
- [ping_field]  = Field number in raw qstat output that contains ping time\n"));
+  
+  printf (" %s\n", "-p");
+  printf ("    %s\n", _("Optional port of which to connect"));
+  printf (" %s\n", "gf");
+  printf ("    %s\n", _("Field number in raw qstat output that contains game name"));
+  printf (" %s\n", "-mf");
+  printf ("    %s\n", _("Field number in raw qstat output that contains map name"));
+  printf (" %s\n", "-pf");
+  printf ("    %s\n", _("Field number in raw qstat output that contains ping time"));
 
   printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
-  printf (_("Notes:"));
-  
-  printf ("\n");
+  printf ("%s\n", _("Notes:"));
 
-  printf (_("This plugin uses the 'qstat' command, the popular game server status query tool ."));
-  
-  printf ("\n");
+  printf ("%s\n", _("This plugin uses the 'qstat' command, the popular game server status query tool ."));
 
-  printf (_("If you don't have the package installed, you will need to download it from"));
-  
-  printf ("\n");
+  printf ("%s\n", _("If you don't have the package installed, you will need to download it from"));
 
-  printf (_("http://www.activesw.com/people/steve/qstat.html before you can use this plugin."));
-
-  printf ("\n");
+  printf ("%s\n", _("http://www.activesw.com/people/steve/qstat.html before you can use this plugin."));
 
   printf (_(UT_SUPPORT));
 }

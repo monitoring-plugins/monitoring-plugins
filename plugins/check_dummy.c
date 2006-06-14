@@ -90,11 +90,9 @@ print_help (void)
   printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
   printf (COPYRIGHT, copyright, email);
 
-  printf (_("This plugin will simply return the state corresponding to the numeric value"));
+  printf ("%s\n", _("This plugin will simply return the state corresponding to the numeric value"));
  
-  printf ("\n");
- 
-  printf (_("of the <state> argument with optional text"));
+  printf ("%s\n", _("of the <state> argument with optional text"));
 
   printf ("\n\n");
   

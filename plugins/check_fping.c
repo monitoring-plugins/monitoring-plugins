@@ -356,11 +356,9 @@ print_help (void)
   printf ("Copyright (c) 1999 Didi Rieder <adrieder@sbox.tu-graz.ac.at>\n");
   printf (COPYRIGHT, copyright, email);
 
-  printf (_("This plugin will use the fping command to ping the specified host for a fast check"));
+  printf ("%s\n", _("This plugin will use the fping command to ping the specified host for a fast check"));
   
-  printf ("\n");
-  
-  printf (_("Note that it is necessary to set the suid flag on fping."));
+  printf ("%s\n", _("Note that it is necessary to set the suid flag on fping."));
 
   printf ("\n\n");
   
@@ -368,58 +366,21 @@ print_help (void)
 
   printf (_(UT_HELP_VRSN));
 
-  printf ("  -H, --hostname=HOST");
-  
-  printf (_("name or IP Address of host to ping (IP Address bypasses name lookup, reducing system load)"));
-  
-  printf ("\n");
-  
-  printf ("-w, --warning=THRESHOLD");
-  
-  printf ("\n");
-  
-  printf (_("warning threshold pair"));
-  
-  printf ("\n");
-
-  printf ("  -c, --critical=THRESHOLD");
-  
-  printf ("\n");
-
-  printf (_("critical threshold pair"));
-  
-  printf ("\n");
-
-  printf ("  -b, --bytes=INTEGER");
-  
-  printf (_("size of ICMP packet (default: %d)"),PACKET_SIZE);
-  
-  printf ("\n");
-
-  printf ("  -n, --number=INTEGER");
-  
-  printf ("\n");
-
-  printf (_("number of ICMP packets to send (default: %d)"),PACKET_COUNT);
-
-  printf ("\n");
-
+  printf (" %s\n", "-H, --hostname=HOST");
+  printf ("    %s\n", _("name or IP Address of host to ping (IP Address bypasses name lookup, reducing system load)"));
+  printf (" %s\n", "-w, --warning=THRESHOLD");
+  printf ("    %s\n", _("warning threshold pair"));
+  printf (" %s\n", "-c, --critical=THRESHOLD");
+  printf ("    %s\n", _("critical threshold pair"));
+  printf (" %s\n", "-b, --bytes=INTEGER");
+  printf ("    %s\n", _("size of ICMP packet (default: %d)"),PACKET_SIZE);
+  printf (" %s\n", "-n, --number=INTEGER");
+  printf ("    %s\n", _("number of ICMP packets to send (default: %d)"),PACKET_COUNT);
   printf (_(UT_VERBOSE));
-
   printf ("\n");
-
-  printf (_("THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel time (ms)"));
-  
-  printf ("\n");
-
-  printf (_("which triggers a WARNING or CRITICAL state, and <pl> is the percentage of"));
-  
-  printf ("\n");
-
-  printf (_("packet loss to trigger an alarm state."));
-
-  printf ("\n");
-  
+  printf ("    %s\n", _("THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel time (ms)"));
+  printf ("    %s\n", _("which triggers a WARNING or CRITICAL state, and <pl> is the percentage of"));
+  printf ("    %s\n", _("packet loss to trigger an alarm state."));
   printf (_(UT_SUPPORT));
 }
 
@@ -428,5 +389,5 @@ void
 print_usage (void)
 {
   printf (_("Usage:"));
-  printf (" %s <host_address>\n", progname);
+  printf (" %s <host_address> -w limit -c limit [-b size] [-n number]\n", progname);
 }
