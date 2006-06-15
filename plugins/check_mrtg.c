@@ -305,10 +305,11 @@ print_help (void)
 	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf(_("\
-This plugin will check either the average or maximum value of one of the\n\
-two variables recorded in an MRTG log file.\n\n"));
+	printf ("%s\n", _("This plugin will check either the average or maximum value of one of the"));
+  printf ("%s\n", _("two variables recorded in an MRTG log file."));
 
+  printf ("\n\n");
+  
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
@@ -366,8 +367,7 @@ this plugin works well for monitoring that kind of data as well.\n\n"));
 void
 print_usage (void)
 {
-	printf ("\
-Usage: %s -F log_file -a <AVG | MAX> -v variable -w warning -c critical\n\
-                  [-l label] [-u units] [-e expire_minutes] [-t timeout]\n\
-                  [-v]\n", progname);
+  printf (_("Usage:"));
+	printf ("%s -F log_file -a <AVG | MAX> -v variable -w warning -c critical\n",progname);
+  printf ("[-l label] [-u units] [-e expire_minutes] [-t timeout] [-v]\n");
 }

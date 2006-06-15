@@ -20,7 +20,7 @@
 
 const char *progname = "check_load";
 const char *revision = "$Revision$";
-const char *copyright = "1999-2004";
+const char *copyright = "1999-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -272,18 +272,19 @@ print_help (void)
 	printf ("Copyright (c) 1999 Felipe Gustavo de Almeida <galmeida@linux.ime.usp.br>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("This plugin tests the current system load average.\n\n"));
+	printf (_("This plugin tests the current system load average."));
 
+  printf ("\n\n");
+  
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
 
-	printf (_("\
- -w, --warning=WLOAD1,WLOAD5,WLOAD15\n\
-   Exit with WARNING status if load average exceeds WLOADn\n\
- -c, --critical=CLOAD1,CLOAD5,CLOAD15\n\
-   Exit with CRITICAL status if load average exceed CLOADn\n\n\
-the load average format is the same used by \"uptime\" and \"w\"\n\n"));
+	printf (" %s\n", "-w, --warning=WLOAD1,WLOAD5,WLOAD15");
+  printf ("    %s\n", _("Exit with WARNING status if load average exceeds WLOADn"));
+  printf (" %s\n", "-c, --critical=CLOAD1,CLOAD5,CLOAD15");
+  printf ("    %s\n", _("Exit with CRITICAL status if load average exceed CLOADn"));
+  printf ("    %s\n", _("the load average format is the same used by \"uptime\" and \"w\""));
 
 	printf (_(UT_SUPPORT));
 }
@@ -291,5 +292,6 @@ the load average format is the same used by \"uptime\" and \"w\"\n\n"));
 void
 print_usage (void)
 {
-	printf ("Usage: %s -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15\n", progname);
+  printf (_("Usage:"));
+	printf ("%s -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15\n", progname);
 }

@@ -264,8 +264,9 @@ print_help (void)
 
 	printf ("%s\n", _("This program checks a query result against threshold levels"));
 
-	print_usage ();
+  printf ("\n\n");
 
+	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
 	printf (" -q, --query=STRING\n");
@@ -292,8 +293,7 @@ print_help (void)
 void
 print_usage (void)
 {
-	printf ("\
-Usage: %s -q SQL_query [-w warn] [-c crit]\n\
-      [-d database] [-H host] [-P port] [-u user] [-p password]\n",
-	        progname);
+  printf (_("Usage:"));
+	printf ("%s -q SQL_query [-w warn] [-c crit]\n",progname);
+  printf ("[-d database] [-H host] [-P port] [-u user] [-p password]\n");
 }

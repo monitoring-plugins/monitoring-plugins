@@ -21,7 +21,7 @@
 /* progname may be check_ldaps */
 char *progname = "check_ldap";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2004";
+const char *copyright = "2000-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -392,8 +392,8 @@ print_help (void)
 void
 print_usage (void)
 {
-	printf ("\
-Usage: %s -H <host> -b <base_dn> [-p <port>] [-a <attr>] [-D <binddn>]\n\
+  printf (_("Usage:"));
+	printf ("\%s -H <host> -b <base_dn> [-p <port>] [-a <attr>] [-D <binddn>]\n\
                   [-P <password>] [-w <warn_time>] [-c <crit_time>]\n\
 									[-t timeout]%s\n",
 //(Note: all times are in seconds.)\n",

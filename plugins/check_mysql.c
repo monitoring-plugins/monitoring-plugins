@@ -347,33 +347,32 @@ print_help (void)
 
 	printf (_(COPYRIGHT), copyright, email);
 
-	printf (_("This program tests connections to a mysql server\n"));
+	printf ("%s\n", _("This program tests connections to a mysql server"));
 
+  printf ("\n\n");
+  
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
 
 	printf (_(UT_HOST_PORT), 'P', myport);
 
-	printf (_("\
- -d, --database=STRING\n\
-   Check database with indicated name\n\
- -u, --username=STRING\n\
-   Connect using the indicated username\n\
- -p, --password=STRING\n\
-   Use the indicated password to authenticate the connection\n\
-   ==> IMPORTANT: THIS FORM OF AUTHENTICATION IS NOT SECURE!!! <==\n\
-   Your clear-text password will be visible as a process table entry\n\
- -S, --check-slave\n\
-   Check if the slave thread is running properly.\n\
- -w, --warning\n\
-   Exit with WARNING status if slave server is more then INTEGER seconds behind master\n\
- -c, --critical\n\
-   Exit with CRITICAL status if slave server is more then INTEGER seconds behind master\n"));
-
-	printf (_("\n\
-There are no required arguments. By default, the local database with\n\
-a server listening on MySQL standard port %d will be checked\n"), MYSQL_PORT);
+	printf (" %s\n", "-d, --database=STRING");
+  printf ("    %s\n", _("Check database with indicated name"));
+  printf (" %s\n", "-u, --username=STRING");
+  printf ("    %s\n", _("Connect using the indicated username"));
+  printf (" %s\n", "-p, --password=STRING");
+  printf ("    %s\n", _("Use the indicated password to authenticate the connection"));
+  printf ("    %s\n", _("==> IMPORTANT: THIS FORM OF AUTHENTICATION IS NOT SECURE!!! <=="));
+  printf ("    %s\n", _("Your clear-text password will be visible as a process table entry"));
+  printf (" %s\n", "-S, --check-slave");
+  printf ("    %s\n", _("Check if the slave thread is running properly."));
+  printf (" %s\n", "-w, --warning");
+  printf ("    %s\n", _("Exit with WARNING status if slave server is more then INTEGER seconds behind master"));
+  printf (" %s\n", "-c, --critical");
+  printf ("    %s\n", _("Exit with CRITICAL status if slave server is more then INTEGER seconds behind master"));
+  printf (" %s\n", _("There are no required arguments. By default, the local database with"));
+  printf (_("a server listening on MySQL standard port %d will be checked\n"), MYSQL_PORT);
 
 	printf (_(UT_SUPPORT));
 }
@@ -382,7 +381,6 @@ a server listening on MySQL standard port %d will be checked\n"), MYSQL_PORT);
 void
 print_usage (void)
 {
-	printf ("\
-Usage: %s [-d database] [-H host] [-P port] [-u user] [-p password] [-S]\n",
-	        progname);
+	printf (_("Usage:"));
+  printf ("%s [-d database] [-H host] [-P port] [-u user] [-p password] [-S]\n",progname);
 }
