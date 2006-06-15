@@ -39,7 +39,7 @@
 
 const char *progname = "check_ide_smart";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2004";
+const char *copyright = "2000-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 	
 #include "common.h"
@@ -501,30 +501,35 @@ print_help (void)
 	printf ("(C) 1999 Ragnar Hojland Espinosa <ragnar@lightside.dhis.org>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf(_("This plugin checks a local hard drive with the (Linux specific) SMART interface [http://smartlinux.sourceforge.net/smart/index.php].\n\n"));
+	printf (_("This plugin checks a local hard drive with the (Linux specific) SMART interface [http://smartlinux.sourceforge.net/smart/index.php]."));
+ 
+  printf ("\n\n");
+  
+  print_usage ();
+
+  printf (_(UT_HELP_VRSN));
 	
-	printf ("\
-Usage: %s [OPTION] [DEVICE]\n\
- -d, --device=DEVICE\n\
-    Select device DEVICE\n\
-    Note: if the device is selected with this option, _no_ other options are accepted\n\
- -i, --immediate\n\
-    Perform immediately offline tests\n\
- -q, --quiet-check\n\
-    Returns the number of failed tests\n\
- -1, --auto-on\n\
-    Turn on automatic offline tests\n\
- -0, --auto-off\n\
-    Turn off automatic offline tests\n\
- -n, --nagios\n\
-    Output suitable for Nagios\n", progname);
+  printf (" %s\n", "-d, --device=DEVICE");
+  printf ("    %s\n", _("Select device DEVICE"));
+  printf ("    %s\n", _("Note: if the device is selected with this option, _no_ other options are accepted"));
+  printf (" %s\n", "-i, --immediate");
+  printf ("    %s\n", _("Perform immediately offline tests"));
+  printf (" %s\n", "-q, --quiet-check");
+  printf ("    %s\n", _("Returns the number of failed tests"));
+  printf (" %s\n", "-1, --auto-on");
+  printf ("    %s\n", _("Turn on automatic offline tests"));
+  printf (" %s\n", "-0, --auto-off");
+  printf ("    %s\n", _("Turn off automatic offline tests"));
+  printf (" %s\n", "-n, --nagios");
+  printf ("    %s\n", _("Output suitable for Nagios\n"));
+  printf (_(UT_SUPPORT));
 }
 
 
 void
 print_usage (void)
 {
-	printf ("\
-Usage: %s [-d <device>] [-i <immediate>] [-q quiet] [-1 <auto-on>]\n\
-                        [-O <auto-off>] [-n <nagios>]\n", progname);
+	printf (_("Usage:");
+  printf ("%s [-d <device>] [-i <immediate>] [-q quiet] [-1 <auto-on>]",progname);
+  pritnf (" [-O <auto-off>] [-n <nagios>]\n");
 }
