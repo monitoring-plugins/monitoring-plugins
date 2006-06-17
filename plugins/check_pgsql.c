@@ -20,7 +20,7 @@
 
 const char *progname = "check_pgsql";
 const char *revision = "$Revision$";
-const char *copyright = "1999-2004";
+const char *copyright = "1999-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -391,7 +391,9 @@ print_help (void)
 
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("Test whether a PostgreSQL Database is accepting connections.\n\n"));
+	printf (_("Test whether a PostgreSQL Database is accepting connections."));
+
+  printf ("\n\n");
 
 	print_usage ();
 
@@ -401,13 +403,13 @@ print_help (void)
 
 	printf (_(UT_IPv46));
 
-	printf (_("\
-  -d, --database=STRING\n\
-    Database to check (default: %s)\n\
-  -l, --logname = STRING\n\
-    Login name of user\n\
-  -p, --password = STRING\n\
-    Password (BIG SECURITY ISSUE)\n"), DEFAULT_DB);
+	printf (" %s\n", "-d, --database=STRING");
+  printf ("    %s", _("Database to check "));
+  printf (_("(default: %s)"), DEFAULT_DB);
+  printf (" %s\n", "-l, --logname = STRING");
+  printf ("    %s\n", _("Login name of user"));
+  printf (" %s\n", "-p, --password = STRING");
+  printf ("    %s\n", _("Password (BIG SECURITY ISSUE)"));
 
 	printf (_(UT_WARN_CRIT));
 
@@ -415,21 +417,19 @@ print_help (void)
 
 	printf (_(UT_VERBOSE));
 
-	printf (_("\nAll parameters are optional.\n\
-\n\
-This plugin tests a PostgreSQL DBMS to determine whether it is active and\n\
-accepting queries. In its current operation, it simply connects to the\n\
-specified database, and then disconnects. If no database is specified, it\n\
-connects to the template1 database, which is present in every functioning \n\
-PostgreSQL DBMS.\n"));
-	printf (_("\n\
-The plugin will connect to a local postmaster if no host is specified. To\n\
-connect to a remote host, be sure that the remote postmaster accepts TCP/IP\n\
-connections (start the postmaster with the -i option).\n"));
-	printf (_("\n\
-Typically, the nagios user (unless the --logname option is used) should be\n\
-able to connect to the database without a password. The plugin can also send\n\
-a password, but no effort is made to obsure or encrypt the password.\n"));
+  printf ("\n");
+	printf (" %s\n", _("All parameters are optional."));
+  printf (" %s\n", _("This plugin tests a PostgreSQL DBMS to determine whether it is active and"));
+  printf (" %s\n", _("accepting queries. In its current operation, it simply connects to the"));
+  printf (" %s\n", _("specified database, and then disconnects. If no database is specified, it"));
+  printf (" %s\n", _("connects to the template1 database, which is present in every functioning"));
+  printf (" %s\n\n", _("PostgreSQL DBMS."));
+	printf (" %s\n", _("The plugin will connect to a local postmaster if no host is specified. To"));
+  printf (" %s\n", _("connect to a remote host, be sure that the remote postmaster accepts TCP/IP"));
+  printf (" %s\n\n", _("connections (start the postmaster with the -i option)."));
+	printf (" %s\n", _("Typically, the nagios user (unless the --logname option is used) should be"));
+  printf (" %s\n", _("able to connect to the database without a password. The plugin can also send"));
+  printf (" %s\n", _("a password, but no effort is made to obsure or encrypt the password."));
 
 	printf (_(UT_SUPPORT));
 }
@@ -439,7 +439,7 @@ a password, but no effort is made to obsure or encrypt the password.\n"));
 void
 print_usage (void)
 {
-	printf ("\
-Usage: %s [-H <host>] [-P <port>] [-c <critical time>] [-w <warning time>]\n\
-                  [-t <timeout>] [-d <database>] [-l <logname>] [-p <password>]\n", progname);
+  printf (_("Usage:"));
+	printf ("%s [-H <host>] [-P <port>] [-c <critical time>] [-w <warning time>]\n", progname);
+  printf (" [-t <timeout>] [-d <database>] [-l <logname>] [-p <password>]\n");
 }

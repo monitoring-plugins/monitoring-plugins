@@ -768,23 +768,29 @@ int main(int argc, char *argv[]){
 }
 
 
-void print_usage(void){
-	printf("\
-Usage: %s -H <host> [-O] [-w <warn>] [-c <crit>] [-j <warn>] [-k <crit>] [-v verbose]\
-\n", progname);
-}
 
 void print_help(void){
 	print_revision(progname, revision);
 
 	printf ("Copyright (c) 1999 Ethan Galstad\n");
 	printf (COPYRIGHT, copyright, email);
+  
+  printf ("%s\n", _("This plugin checks the selected ntp server"));
 
+  printf ("\n\n");
+  
 	print_usage();
 	printf (_(UT_HELP_VRSN));
 	printf (_(UT_HOST_PORT), 'p', "123");
 	printf (_(UT_WARN_CRIT));
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 	printf (_(UT_VERBOSE));
-	printf(_(UT_SUPPORT));
+	printf (_(UT_SUPPORT));
+}
+
+void
+print_usage(void)
+{
+  printf (_("Usage:"));
+  printf("%s -H <host> [-O] [-w <warn>] [-c <crit>] [-j <warn>] [-k <crit>] [-v verbose]\n", progname);
 }

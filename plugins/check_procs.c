@@ -20,7 +20,7 @@
 
 const char *progname = "check_procs";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2004";
+const char *copyright = "2000-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -739,8 +739,8 @@ Examples:\n\
 void
 print_usage (void)
 {
-	printf ("\
-Usage: %s -w <range> -c <range> [-m metric] [-s state] [-p ppid]\n\
-                  [-u user] [-r rss] [-z vsz] [-P %%cpu] [-a argument-array]\n\
-                  [-C command] [-t timeout] [-v]\n", progname);
+  printf (_("Usage:"));
+	printf ("%s -w <range> -c <range> [-m metric] [-s state] [-p ppid]\n", progname);
+  printf (" [-u user] [-r rss] [-z vsz] [-P %%cpu] [-a argument-array]\n");
+  printf (" [-C command] [-t timeout] [-v]\n");
 }

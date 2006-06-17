@@ -20,7 +20,7 @@
 
 const char *progname = "check_ping";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2004";
+const char *copyright = "2000-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -518,7 +518,9 @@ print_help (void)
 	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>");
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("Use ping to check connection statistics for a remote host.\n\n"));
+	printf (_("Use ping to check connection statistics for a remote host."));
+
+  printf ("\n\n");
 
 	print_usage ();
 
@@ -526,31 +528,32 @@ print_help (void)
 
 	printf (_(UT_IPv46));
 
-	printf (_("\
--H, --hostname=HOST\n\
-   host to ping\n\
--w, --warning=THRESHOLD\n\
-   warning threshold pair\n\
--c, --critical=THRESHOLD\n\
-   critical threshold pair\n\
--p, --packets=INTEGER\n\
-   number of ICMP ECHO packets to send (Default: %d)\n\
--L, --link\n\
-   show HTML in the plugin output (obsoleted by urlize)\n"),
-	        DEFAULT_MAX_PACKETS);
+	printf (" %s\n", "-H, --hostname=HOST");
+  printf ("    %s\n", _("host to ping"));
+  printf (" %s\n", "-w, --warning=THRESHOLD");
+  printf ("    %s\n", _("warning threshold pair"));
+  printf (" %s\n", "-c, --critical=THRESHOLD");
+  printf ("    %s\n", _("critical threshold pair"));
+  printf (" %s\n", "-p, --packets=INTEGER");
+  printf ("    %s\n", _("number of ICMP ECHO packets to send"));
+  printf (_("(Default: %d)"), DEFAULT_MAX_PACKETS);
+  printf (" %s\n", "-L, --link");
+  printf ("    %s\n", _("show HTML in the plugin output (obsoleted by urlize)"));
 
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
-	printf (_("\
-THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel\n\
-time (ms) which triggers a WARNING or CRITICAL state, and <pl> is the\n\
-percentage of packet loss to trigger an alarm state.\n\n"));
+	printf ("%s\n", _("THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel"));
+  printf ("%s\n", _("time (ms) which triggers a WARNING or CRITICAL state, and <pl> is the"));
+  printf ("%s\n", _("percentage of packet loss to trigger an alarm state."));
 
-	printf (_("\
-This plugin uses the ping command to probe the specified host for packet loss\n\
-(percentage) and round trip average (milliseconds). It can produce HTML output\n\
-linking to a traceroute CGI contributed by Ian Cass. The CGI can be found in\n\
-the contrib area of the downloads section at http://www.nagios.org\n\n"));
+  printf ("\n\n");
+
+	printf ("%s\n", _("This plugin uses the ping command to probe the specified host for packet loss"));
+  printf ("%s\n", _("(percentage) and round trip average (milliseconds). It can produce HTML output"));
+  printf ("%s\n", _("linking to a traceroute CGI contributed by Ian Cass. The CGI can be found in"));
+  printf ("%s\n", _("the contrib area of the downloads section at http://www.nagios.org/"));
+
+  printf ("\n\n");
 
 	printf (_(UT_SUPPORT));
 }
@@ -558,6 +561,7 @@ the contrib area of the downloads section at http://www.nagios.org\n\n"));
 void
 print_usage (void)
 {
-	printf ("Usage: %s -H <host_address> -w <wrta>,<wpl>%% -c <crta>,<cpl>%%\n\
-                     [-p packets] [-t timeout] [-L] [-4|-6]\n", progname);
+  printf (_("Usage:"));
+	printf ("%s -H <host_address> -w <wrta>,<wpl>%% -c <crta>,<cpl>%%\n", progname);
+  printf (" [-p packets] [-t timeout] [-L] [-4|-6]\n");
 }

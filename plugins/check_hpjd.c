@@ -19,7 +19,7 @@
 
 const char *progname = "check_hpjd";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2004";
+const char *copyright = "2000-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -374,17 +374,18 @@ print_help (void)
 	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("\
-This plugin tests the STATUS of an HP printer with a JetDirect card.\n\
-Net-snmp must be installed on the computer running the plugin.\n\n"));
+	printf ("%s\n", _("This plugin tests the STATUS of an HP printer with a JetDirect card."));
+  printf ("%s\n", _("Net-snmp must be installed on the computer running the plugin."));
 
+  printf ("\n\n");
+  
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
 
-	printf (_("\
- -C, --community=STRING\n\
-    The SNMP community name (default=%s)\n"), DEFAULT_COMMUNITY);
+	printf (" %s\n", "-C, --community=STRING");
+  printf ("    %s", _("The SNMP community name "));
+  printf (_("(default=%s)"), DEFAULT_COMMUNITY);
 
 	printf (_(UT_SUPPORT));
 }
@@ -394,5 +395,6 @@ Net-snmp must be installed on the computer running the plugin.\n\n"));
 void
 print_usage (void)
 {
-	printf ("Usage: %s -H host [-C community]\n", progname);
+  printf (_("Usage:"));
+	printf ("%s -H host [-C community]\n", progname);
 }

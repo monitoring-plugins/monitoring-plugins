@@ -20,7 +20,7 @@
 
 const char *progname = "check_overcr";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2004";
+const char *copyright = "2000-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -403,9 +403,10 @@ print_help (void)
 	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("\
-This plugin attempts to contact the Over-CR collector daemon running on the\n\
-remote UNIX server in order to gather the requested system information.\n\n"));
+	printf ("%s\n", _("This plugin attempts to contact the Over-CR collector daemon running on the"));
+  printf ("%s\n", _("remote UNIX server in order to gather the requested system information."));
+
+  printf ("\n\n");
 
 	print_usage ();
 
@@ -413,35 +414,33 @@ remote UNIX server in order to gather the requested system information.\n\n"));
 
 	printf (_(UT_HOST_PORT), 'p', myport);
 
-	printf (_("\
--v, --variable=STRING\n\
-   Variable to check.  Valid variables include:\n\
-     LOAD1         = 1 minute average CPU load\n\
-     LOAD5         = 5 minute average CPU load\n\
-     LOAD15        = 15 minute average CPU load\n\
-     DPU<filesys>  = percent used disk space on filesystem <filesys>\n\
-     PROC<process> = number of running processes with name <process>\n\
-     NET<port>     = number of active connections on TCP port <port>\n\
-     UPTIME        = system uptime in seconds\n"));
-
-	printf (_("\
- -w, --warning=INTEGER\n\
-   Threshold which will result in a warning status\n\
- -c, --critical=INTEGER\n\
-   Threshold which will result in a critical status\n"));
+  printf (" %s\n", "-w, --warning=INTEGER");
+  printf ("    %s\n", _("Threshold which will result in a warning status"));
+  printf (" %s\n", "-c, --critical=INTEGER");
+  printf ("    %s\n", _("Threshold which will result in a critical status"));
+  printf (" %s\n", "-v, --variable=STRING");
+  printf ("    %s\n", _("Variable to check.  Valid variables include:"));
+  printf ("    %s\n", _("LOAD1         = 1 minute average CPU load"));
+  printf ("    %s\n", _("LOAD5         = 5 minute average CPU load"));
+  printf ("    %s\n", _("LOAD15        = 15 minute average CPU load"));
+  printf ("    %s\n", _("DPU<filesys>  = percent used disk space on filesystem <filesys>"));
+  printf ("    %s\n", _("PROC<process> = number of running processes with name <process>"));
+  printf ("    %s\n", _("NET<port>     = number of active connections on TCP port <port>"));
+  printf ("    %s\n", _("UPTIME        = system uptime in seconds"));
 
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
-	printf (_("\
-Notes:\n\
- - For the available options, the critical threshold value should always be\n\
-   higher than the warning threshold value, EXCEPT with the uptime variable\n\n"));
+  printf (_(UT_VERBOSE));
+  printf ("\n");
+  printf ("%s\n", _("Notes:"));
+  
+	printf ("%s\n", _("For the available options, the critical threshold value should always be"));
+  printf ("%s\n\n", _("higher than the warning threshold value, EXCEPT with the uptime variable"));
 
-	printf (_("\
- - This plugin requres that Eric Molitors' Over-CR collector daemon be\n\
-   running on the remote server. Over-CR can be downloaded from\n\
-   http://www.molitor.org/overcr (This plugin was tested with version\n\
-   0.99.53 of the Over-CR collector)\n\n"));
+	printf ("%s\n", _("This plugin requres that Eric Molitors' Over-CR collector daemon be"));
+  printf ("%s\n", _("running on the remote server. Over-CR can be downloaded from"));
+  printf ("%s\n", _("http://www.molitor.org/overcr (This plugin was tested with version 0.99.53"));
+  printf ("%s\n", _("of the Over-CR collector)"));
 
 	printf (_(UT_SUPPORT));
 }
@@ -450,7 +449,6 @@ Notes:\n\
 void
 print_usage (void)
 {
-	printf ("\
-Usage: %s -H host [-p port] [-v variable] [-w warning] [-c critical]\n\
-                    [-t timeout]\n", progname);
+  printf (_("Usage:"));
+	printf ("%s -H host [-p port] [-v variable] [-w warning] [-c critical] [-t timeout]\n", progname);
 }

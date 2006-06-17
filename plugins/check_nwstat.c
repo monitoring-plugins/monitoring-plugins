@@ -20,7 +20,7 @@
 
 const char *progname = "check_nwstat";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2004";
+const char *copyright = "2000-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -1013,9 +1013,10 @@ void print_help(void)
 	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("\
-This plugin attempts to contact the MRTGEXT NLM running on a\n\
-Novell server to gather the requested system information.\n\n"));
+	printf ("%s\n", _("This plugin attempts to contact the MRTGEXT NLM running on a"));
+  printf ("%s\n", _("Novell server to gather the requested system information."));
+
+  printf ("\n\n");
 
 	print_usage();
 
@@ -1076,8 +1077,9 @@ Novell server to gather the requested system information.\n\n"));
 
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
-	printf (_("\n\
-Notes:\n\
+  printf ("\n");
+  printf ("%s\n", _("Notes:"));
+	printf (_("\
 - This plugin requres that the MRTGEXT.NLM file from James Drews' MRTG\n\
   extension for NetWare be loaded on the Novell servers you wish to check.\n\
   (available from http://www.engr.wisc.edu/~drews/mrtg/)\n\
@@ -1092,7 +1094,6 @@ Notes:\n\
 
 void print_usage(void)
 {
-	printf ("\
-Usage: %s -H host [-p port] [-v variable] [-w warning] [-c critical]\n\
-                    [-t timeout].\n", progname);
+  printf (_("Usage:"));
+	printf ("%s -H host [-p port] [-v variable] [-w warning] [-c critical] [-t timeout]\n",progname);
 }

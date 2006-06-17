@@ -32,7 +32,7 @@
 
 const char *progname = "check_nt";
 const char *revision = "$Revision$";
-const char *copyright = "2003-2004";
+const char *copyright = "2003-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -614,11 +614,15 @@ void print_help(void)
 	printf ("Copyright (c) 2000 Yves Rubin (rubiyz@yahoo.com)\n");
 	printf (COPYRIGHT, copyright, email);
 	
-	printf (_("This plugin collects data from the NSClient service running on a\n\
-Windows NT/2000/XP/2003 server.\n\n"));
+	printf ("%s\n", _("This plugin collects data from the NSClient service running on a"));
+  printf ("%s\n", _("Windows NT/2000/XP/2003 server."));
 
+  printf ("\n\n");
+  
 	print_usage();
 	
+  printf (_(UT_HELP_VRSN));
+
   printf (_("\nOptions:\n\
 -H, --hostname=HOST\n\
   Name of the host to check\n\
@@ -689,7 +693,7 @@ Windows NT/2000/XP/2003 server.\n\n"));
 
 void print_usage(void)
 {
-	printf("\
-Usage: %s -H host -v variable [-p port] [-w warning] [-c critical]\n\
-                [-l params] [-d SHOWALL] [-t timeout]\n", progname);
+  printf (_("Usage:"));
+	printf ("%s -H host -v variable [-p port] [-w warning] [-c critical]",progname);
+  printf ("[-l params] [-d SHOWALL] [-t timeout]\n");
 }
