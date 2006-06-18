@@ -76,7 +76,7 @@ process_tcp_request2 (const char *server_address, int server_port,
 
 	send_result = send (sd, send_buffer, strlen (send_buffer), 0);
 	if (send_result<0 || (size_t)send_result!=strlen(send_buffer)) {
-		printf (_("Send failed\n"));
+		printf ("%s\n", _("Send failed"));
 		result = STATE_WARNING;
 	}
 
@@ -93,7 +93,7 @@ process_tcp_request2 (const char *server_address, int server_port,
 		if (!FD_ISSET (sd, &readfds)) {	/* it hasn't */
 			if (!recv_length) {
 				strcpy (recv_buffer, "");
-				printf (_("No data was received from host!\n"));
+				printf ("%s\n", _("No data was received from host!"));
 				result = STATE_WARNING;
 			}
 			else {										/* this one failed, but previous ones worked */
@@ -190,7 +190,7 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 			*sd = socket (r->ai_family, socktype, r->ai_protocol);
 
 			if (*sd < 0) {
-				printf (_("Socket creation failed\n"));
+				printf ("%s\n", _("Socket creation failed"));
 				freeaddrinfo (r);
 				return STATE_UNKNOWN;
 			}
@@ -267,7 +267,7 @@ send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int
 
 	send_result = send (sd, send_buffer, strlen (send_buffer), 0);
 	if (send_result<0 || (size_t)send_result!=strlen(send_buffer)) {
-		printf (_("Send failed\n"));
+		printf ("%s\n", _("Send failed"));
 		result = STATE_WARNING;
 	}
 
@@ -282,7 +282,7 @@ send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int
 	/* make sure some data has arrived */
 	if (!FD_ISSET (sd, &readfds)) {
 		strcpy (recv_buffer, "");
-		printf (_("No data was received from host!\n"));
+		printf ("%s\n", _("No data was received from host!"));
 		result = STATE_WARNING;
 	}
 
@@ -291,7 +291,7 @@ send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int
 		if (recv_result == -1) {
 			strcpy (recv_buffer, "");
 			if (proto != IPPROTO_TCP)
-				printf (_("Receive failed\n"));
+				printf ("%s\n", _("Receive failed"));
 			result = STATE_WARNING;
 		}
 		else

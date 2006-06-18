@@ -1,26 +1,39 @@
-/*****************************************************************************
-
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
- $Id$
- 
+/******************************************************************************
+*
+* Nagios check_users plugin
+*
+* License: GPL
+* Copyright (c) 2002-2006 nagios-plugins team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_users plugin
+*
+* License Information:
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+*  $Id$
+*
 *****************************************************************************/
 
 const char *progname = "check_users";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2004";
+const char *copyright = "2000-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -98,7 +111,7 @@ main (int argc, char **argv)
 		result = STATE_OK;
 
 	if (result == STATE_UNKNOWN)
-		printf (_("Unable to read output\n"));
+		printf ("%s\n", _("Unable to read output"));
 	else {
 		asprintf(&perf, "%s", perfdata ("users", users, "",
 		  TRUE, wusers,
@@ -190,19 +203,19 @@ print_help (void)
 	printf ("Copyright (c) 1999 Ethan Galstad\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("\
-This plugin checks the number of users currently logged in on the local\n\
-system and generates an error if the number exceeds the thresholds specified.\n"));
+	printf ("%s\n", _("This plugin checks the number of users currently logged in on the local"));
+  printf ("%s\n", _("system and generates an error if the number exceeds the thresholds specified."));
+
+  printf ("\n\n");
 
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
 
-	printf (_("\
- -w, --warning=INTEGER\n\
-    Set WARNING status if more than INTEGER users are logged in\n\
- -c, --critical=INTEGER\n\
-    Set CRITICAL status if more than INTEGER users are logged in\n"));
+	printf (" %s\n", "-w, --warning=INTEGER");
+  printf ("    %s\n", _("Set WARNING status if more than INTEGER users are logged in"));
+  printf (" %s\n", "-c, --critical=INTEGER");
+  printf ("    %s\n", _("Set CRITICAL status if more than INTEGER users are logged in"));
 
 	printf (_(UT_SUPPORT));
 }
@@ -211,5 +224,6 @@ system and generates an error if the number exceeds the thresholds specified.\n"
 void
 print_usage (void)
 {
-	printf ("Usage: %s -w <users> -c <users>\n", progname);
+  printf (_("Usage:"));
+	printf ("%s -w <users> -c <users>\n", progname);
 }

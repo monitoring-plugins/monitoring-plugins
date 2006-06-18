@@ -1,13 +1,21 @@
-/******************************************************************************
- * popen.c
+/****************************************************************************
+ *
+ * Nagios plugins popen
+ *
+ * License: GPL
+ * Copyright (c) 2005 nagios-plugins team
+ *
+ * Last Modified: $Date$
+ *
+ * Description:
  *
  * A safe alternative to popen
  * 
  * Provides spopen and spclose
-
-FILE * spopen(const char *);
-int spclose(FILE *);
-
+ *
+ * FILE * spopen(const char *);
+ * int spclose(FILE *);
+ *
  *
  * Code taken with liitle modification from "Advanced Programming for the Unix
  * Environment" by W. Richard Stevens
@@ -15,6 +23,22 @@ int spclose(FILE *);
  * This is considered safe in that no shell is spawned, and the environment and
  * path passed to the exec'd program are esstially empty. (popen create a shell
  * and passes the environment to it).
+ *
+ * License Information:
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. 
  *
  * $Id$
  *
@@ -121,7 +145,7 @@ spopen (const char *cmdstring)
 	argv = malloc (sizeof(char*)*argc);
 	
 	if (argv == NULL) {
-		printf (_("Could not malloc argv array in popen()\n"));
+		printf ("%s\n", _("Could not malloc argv array in popen()"));
 		return NULL;
 	}
 
@@ -131,7 +155,7 @@ spopen (const char *cmdstring)
 		str += strspn (str, " \t\r\n");	/* trim any leading whitespace */
 
 		if (i >= argc - 2) {
-			printf (_("CRITICAL - You need more args!!!\n"));
+			printf ("%s\n",_("CRITICAL - You need more args!!!"));
 			return (NULL);
 		}
 
@@ -278,7 +302,7 @@ popen_timeout_alarm_handler (int signo)
 			printf (_("CRITICAL - Plugin timed out after %d seconds\n"),
 						timeout_interval);
 		} else {
-			printf (_("CRITICAL - popen timeout received, but no child process\n"));
+			printf ("%s\n", _("CRITICAL - popen timeout received, but no child process"));
 		}
 		exit (STATE_CRITICAL);
 	}

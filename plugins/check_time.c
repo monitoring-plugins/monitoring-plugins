@@ -1,26 +1,40 @@
 /******************************************************************************
-
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
- $Id$
- 
+*
+* Nagios check_time plugin
+*
+* License: GPL
+* Copyright (c) 1999-2006 nagios-plugins team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_time plugin
+*
+* License Information:
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+*
+* $Id$
+* 
 ******************************************************************************/
 
 const char *progname = "check_time";
 const char *revision = "$Revision$";
-const char *copyright = "1999-2004";
+const char *copyright = "1999-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -324,7 +338,9 @@ print_help (void)
 	printf ("Copyright (c) 1999 Ethan Galstad\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("This plugin will check the time on the specified host.\n\n"));
+	printf ("%s\n", _("This plugin will check the time on the specified host."));
+
+  printf ("\n\n");
 
 	print_usage ();
 
@@ -332,20 +348,18 @@ print_help (void)
 
 	printf (_(UT_HOST_PORT), 'p', myport);
 
-	printf (_("\
- -u, --udp\n\
-    Use UDP to connect, not TCP\n\
- -w, --warning-variance=INTEGER\n\
-    Time difference (sec.) necessary to result in a warning status\n\
- -c, --critical-variance=INTEGER\n\
-    Time difference (sec.) necessary to result in a critical status\n\
- -W, --warning-connect=INTEGER\n\
-    Response time (sec.) necessary to result in warning status\n\
- -C, --critical-connect=INTEGER\n\
-    Response time (sec.) necessary to result in critical status\n"));
+	printf (" %s\n", "-u, --udp");
+  printf ("   %s\n", _("Use UDP to connect, not TCP"));
+  printf (" %s\n", "-w, --warning-variance=INTEGER");
+  printf ("   %s\n", _("Time difference (sec.) necessary to result in a warning status"));
+  printf (" %s\n", "-c, --critical-variance=INTEGER");
+  printf ("   %s\n", _("Time difference (sec.) necessary to result in a critical status"));
+  printf (" %s\n", "-W, --warning-connect=INTEGER");
+  printf ("   %s\n", _("Response time (sec.) necessary to result in warning status"));
+  printf (" %s\n", "-C, --critical-connect=INTEGER");
+  printf ("   %s\n", _("Response time (sec.) necessary to result in critical status"));
 
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-
 	printf (_(UT_SUPPORT));
 }
 
@@ -354,7 +368,7 @@ print_help (void)
 void
 print_usage (void)
 {
-	printf ("\
-Usage: %s -H <host_address> [-p port] [-u] [-w variance] [-c variance]\n\
-                  [-W connect_time] [-C connect_time] [-t timeout]\n", progname);
+  printf (_("Usage:"));
+	printf ("%s -H <host_address> [-p port] [-u] [-w variance] [-c variance]\n",progname);
+  printf (" [-W connect_time] [-C connect_time] [-t timeout]\n");
 }

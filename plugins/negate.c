@@ -1,20 +1,33 @@
 /******************************************************************************
-
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- 
- $Id$
+*
+* Nagios negate plugin
+*
+* License: GPL
+* Copyright (c) 2002-2006 nagios-plugins team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the negate plugin
+*
+* License Information:
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+* $Id$
 
 @@-<article>
 
@@ -55,7 +68,7 @@
 
 const char *progname = "negate";
 const char *revision = "$Revision$";
-const char *copyright = "2002-2004";
+const char *copyright = "2002-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #define DEFAULT_TIMEOUT 9
@@ -239,8 +252,9 @@ print_help (void)
 
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("\
-Negates the status of a plugin (returns OK for CRITICAL, and vice-versa).\n\n"));
+	printf ("%s\n", _("Negates the status of a plugin (returns OK for CRITICAL, and vice-versa)."));
+
+  printf ("\n\n");
 
 	print_usage ();
 
@@ -248,20 +262,20 @@ Negates the status of a plugin (returns OK for CRITICAL, and vice-versa).\n\n"))
 
 	printf (_(UT_TIMEOUT), DEFAULT_TIMEOUT);
 
-	printf (_("\
-     [keep timeout than the plugin timeout to retain CRITICAL status]\n"));
-
-	printf (_("\
-  negate \"/usr/local/nagios/libexec/check_ping -H host\"\n\
-    Run check_ping and invert result. Must use full path to plugin\n\
-  negate \"/usr/local/nagios/libexec/check_procs -a 'vi negate.c'\"\n\
-    Use single quotes if you need to retain spaces\n"));
-
-	printf (_("\
-This plugin is a wrapper to take the output of another plugin and invert it.\n\
-If the wrapped plugin returns STATE_OK, the wrapper will return STATE_CRITICAL.\n\
-If the wrapped plugin returns STATE_CRITICAL, the wrapper will return STATE_OK.\n\
-Otherwise, the output state of the wrapped plugin is unchanged.\n"));
+	printf ("    %s\n", _("[keep timeout than the plugin timeout to retain CRITICAL status]"));
+  printf ("\n");
+  printf ("%s\n", _("Examples:"));
+	printf (" %s\n", "negate \"/usr/local/nagios/libexec/check_ping -H host\"");
+  printf ("    %s\n", _("Run check_ping and invert result. Must use full path to plugin"));
+  printf (" %s\n", "negate \"/usr/local/nagios/libexec/check_procs -a 'vi negate.c'\"");
+  printf ("    %s\n", _("Use single quotes if you need to retain spaces"));
+  printf (_(UT_VERBOSE));
+  printf ("\n");
+  printf ("%s\n", _("Notes:"));
+	printf ("%s\n", _("This plugin is a wrapper to take the output of another plugin and invert it."));
+  printf ("%s\n", _("If the wrapped plugin returns STATE_OK, the wrapper will return STATE_CRITICAL."));
+  printf ("%s\n", _("If the wrapped plugin returns STATE_CRITICAL, the wrapper will return STATE_OK."));
+  printf ("%s\n", _("Otherwise, the output state of the wrapped plugin is unchanged."));
 
 	printf (_(UT_SUPPORT));
 }
@@ -271,5 +285,6 @@ Otherwise, the output state of the wrapped plugin is unchanged.\n"));
 void
 print_usage (void)
 {
-	printf ("Usage: %s [-t timeout] <definition of wrapped plugin>\n",progname);
+  printf (_("Usage:"));
+	printf ("%s [-t timeout] <definition of wrapped plugin>\n",progname);
 }

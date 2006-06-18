@@ -1,5 +1,12 @@
-/*
+/****************************************************************************
+ * Nagios run command utilities
+ *
+ * License: GPL
+ * Copyright (c) 2005 nagios-plugins team
+ *
  * $Id$
+ *
+ * Description :
  *
  * A simple interface to executing programs from other programs, using an
  * optimized and safe popen()-like implementation. It is considered safe
@@ -14,6 +21,21 @@
  * function which isn't is np_runcmd_init() which it doesn't make sense to
  * call twice anyway, so the api as a whole should be considered async-safe.
  *
+ * License Information:
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
 #define NAGIOSPLUG_API_C 1
@@ -137,7 +159,7 @@ np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
 	argv = calloc(sizeof(char *), argc);
 
 	if (argv == NULL) {
-		printf (_("Could not malloc argv array in popen()\n"));
+		printf ("%s\n", _("Could not malloc argv array in popen()"));
 		return -1;
 	}
 

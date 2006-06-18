@@ -47,7 +47,7 @@ int np_net_ssl_init (int sd){
 		SSL_load_error_strings ();
 		OpenSSL_add_all_algorithms();
 		if ((c = SSL_CTX_new (m)) == NULL) {
-				printf (_("CRITICAL - Cannot create SSL context.\n"));
+				printf ("%s\n", _("CRITICAL - Cannot create SSL context."));
 				return STATE_CRITICAL;
 		}
 		if ((s = SSL_new (c)) != NULL){
@@ -55,13 +55,13 @@ int np_net_ssl_init (int sd){
 				if (SSL_connect(s) == 1){
 						return OK;
 				} else {
-						printf (_("CRITICAL - Cannot make SSL connection "));
+						printf ("%s\n", _("CRITICAL - Cannot make SSL connection "));
 #  ifdef USE_OPENSSL /* XXX look into ERR_error_string */
 						ERR_print_errors_fp (stdout);
 #  endif /* USE_OPENSSL */
 				}
 		} else {
-				printf (_("CRITICAL - Cannot initiate SSL handshake.\n"));
+				printf ("%s\n", _("CRITICAL - Cannot initiate SSL handshake."));
 		}
 		return STATE_CRITICAL;
 }
@@ -93,7 +93,7 @@ int np_net_ssl_check_cert(int days_till_exp){
 
 	certificate=SSL_get_peer_certificate(s);
 	if(! certificate){
-		printf (_("CRITICAL - Cannot retrieve server certificate.\n"));
+		printf ("%s\n",_("CRITICAL - Cannot retrieve server certificate."));
 		return STATE_CRITICAL;
 	}
 
@@ -103,7 +103,7 @@ int np_net_ssl_check_cert(int days_till_exp){
 	/* Generate tm structure to process timestamp */
 	if (tm->type == V_ASN1_UTCTIME) {
 		if (tm->length < 10) {
-			printf (_("CRITICAL - Wrong time format in certificate.\n"));
+			printf ("%s\n", _("CRITICAL - Wrong time format in certificate."));
 			return STATE_CRITICAL;
 		} else {
 			stamp.tm_year = (tm->data[0] - '0') * 10 + (tm->data[1] - '0');
@@ -113,7 +113,7 @@ int np_net_ssl_check_cert(int days_till_exp){
 		}
 	} else {
 		if (tm->length < 12) {
-			printf (_("CRITICAL - Wrong time format in certificate.\n"));
+			printf ("%s\n", _("CRITICAL - Wrong time format in certificate."));
 			return STATE_CRITICAL;
 		} else {
 			stamp.tm_year =
@@ -155,7 +155,7 @@ int np_net_ssl_check_cert(int days_till_exp){
 	X509_free (certificate);
 	return STATE_OK;
 #  else /* ifndef USE_OPENSSL */
-	printf (_("WARNING - Plugin does not support checking certificates.\n"));
+	printf ("%s\n", _("WARNING - Plugin does not support checking certificates."));
 	return STATE_WARNING;
 #  endif /* USE_OPENSSL */
 }

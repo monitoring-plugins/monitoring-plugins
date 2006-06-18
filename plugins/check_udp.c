@@ -1,26 +1,39 @@
 /******************************************************************************
-
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
- $Id$
- 
+*
+* Nagios check_udp plugin
+*
+* License: GPL
+* Copyright (c) 1999-2006 nagios-plugins team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_udp plugin
+*
+* License Information:
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+* $Id$
+* 
 *****************************************************************************/
 
 const char *progname = "check_udp";
 const char *revision = "$Revision$";
-const char *copyright = "1999-2004";
+const char *copyright = "1999-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -222,8 +235,9 @@ print_help (void)
 	printf ("Copyright (c) 1999 Ethan Galstad\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("\
-	This plugin tests an UDP connection with the specified host.\n\n"));
+	printf ("%s\n", _("This plugin tests an UDP connection with the specified host."));
+
+  printf ("\n\n");
 
 	print_usage ();
 
@@ -231,11 +245,10 @@ print_help (void)
 
 	printf (_(UT_HOST_PORT), 'p', "none");
 
-	printf (_("\
- -e, --expect=STRING <optional>\n\
-    String to expect in first line of server response\n\
- -s, --send=STRING <optional>\n\
-    String to send to the server when initiating the connection\n"));
+	printf (" %s\n", "-e, --expect=STRING <optional>");
+  printf ("    %s\n", _("String to expect in first line of server response"));
+  printf (" %s\n", "-s, --send=STRING <optional>");
+  printf ("    %s\n", _("String to send to the server when initiating the connection"));
 
 	printf (_(UT_WARN_CRIT));
 
@@ -243,11 +256,10 @@ print_help (void)
 
 	printf (_(UT_VERBOSE));
 
-	printf (_("\
-This plugin will attempt to connect to the specified port on the host.\n\
-Successful connects return STATE_OK, refusals and timeouts return\n\
-STATE_CRITICAL, other errors return STATE_UNKNOWN.\n\n"));
-
+	printf ("%s\n", _("This plugin will attempt to connect to the specified port on the host."));
+  printf ("   %s\n", _("Successful connects return STATE_OK, refusals and timeouts return"));
+  printf ("   %s\n", _("STATE_CRITICAL, other errors return STATE_UNKNOWN."));
+  
 	printf(_(UT_SUPPORT));
 }
 
@@ -258,7 +270,7 @@ STATE_CRITICAL, other errors return STATE_UNKNOWN.\n\n"));
 void
 print_usage (void)
 {
-	printf ("\
-Usage: %s -H <host_address> [-p port] [-w warn_time] [-c crit_time]\n\
-                  [-e expect] [-s send] [-t to_sec] [-v]\n", progname);
+  printf (_("Usage:"));
+	printf ("%s -H <host_address> [-p port] [-w warn_time] [-c crit_time]\n", progname);
+  printf (" [-e expect] [-s send] [-t to_sec] [-v]\n");
 }

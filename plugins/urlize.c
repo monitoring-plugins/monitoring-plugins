@@ -20,7 +20,7 @@
 
 const char *progname = "urlize";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2004";
+const char *copyright = "2000-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -149,27 +149,25 @@ print_help (void)
 	printf ("Copyright (c) 2000 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("\n\
-This plugin wraps the text output of another command (plugin) in HTML\n\
-<A> tags, thus displaying the plugin output in as a clickable link in\n\
-the Nagios status screen.  The return status is the same as the invoked\n\
-plugin.\n\n"));
+	printf ("%s\n", _("This plugin wraps the text output of another command (plugin)"));
+  printf ("%s\n", _("in HTML <A> tags, thus displaying the plugin output in as a clickable link in"));
+  printf ("%s\n", _("the Nagios status screen.  The return status is the same as the invoked plugin."));
+
+  printf ("\n\n");
 
 	print_usage ();
 
-	printf (_("\n\
-Pay close attention to quoting to ensure that the shell passes the expected\n\
-data to the plugin. For example, in:\n\
-\n\
-    urlize http://example.com/ check_http -H example.com -r 'two words'\n\
-\n\
-the shell will remove the single quotes and urlize will see:\n\
-\n\
-    urlize http://example.com/ check_http -H example.com -r two words\n\
-\n\
-You probably want:\n\
-\n\
-    urlize http://example.com/ \"check_http -H example.com -r 'two words'\"\n"));
+  printf (_(UT_HELP_VRSN));
+
+  printf ("\n");
+  printf ("%s\n", _("Examples:"));
+	printf ("%s\n", _("Pay close attention to quoting to ensure that the shell passes the expected"));
+  printf ("%s\n\n", _("data to the plugin. For example, in:"));
+  printf (" %s\n\n", _("urlize http://example.com/ check_http -H example.com -r 'two words'"));
+  printf ("    %s\n", _("the shell will remove the single quotes and urlize will see:"));
+  printf (" %s\n\n", _("urlize http://example.com/ check_http -H example.com -r two words"));
+  printf ("    %s\n\n", _("You probably want:"));
+  printf (" %s\n", _("urlize http://example.com/ \"check_http -H example.com -r 'two words'\""));
 
 	printf (_(UT_SUPPORT));
 }
@@ -179,5 +177,6 @@ You probably want:\n\
 void
 print_usage (void)
 {
-	printf ("Usage:\n %s <url> <plugin> <arg1> ... <argN>\n", progname);
+  printf (_("Usage:"));
+	printf ("%s <url> <plugin> <arg1> ... <argN>\n", progname);
 }

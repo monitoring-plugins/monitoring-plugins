@@ -360,7 +360,7 @@ set_thresholds(thresholds **my_thresholds, char *warn_string, char *critical_str
 	if (_set_thresholds(my_thresholds, warn_string, critical_string) == 0) {
 		return;
 	} else {
-		usage("Range format incorrect");
+		usage(_("Range format incorrect"));
 	}
 }
 

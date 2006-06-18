@@ -1,27 +1,40 @@
 /******************************************************************************
-
- The Nagios Plugins are free software; you can redistribute them
- and/or modify them under the terms of the GNU General Public
- License as published by the Free Software Foundation; either
- version 2 of the License, or (at your option) any later version.
- 
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
- $Id$
- 
+*
+* Nagios check_disk plugin
+*
+* License: GPL
+* Copyright (c) 1999-2006 nagios-plugins team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_disk plugin
+*
+* License Information:
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+* $Id$
+* 
 *****************************************************************************/
 
 const char *progname = "check_disk";
 const char *program_name = "check_disk";  /* Required for coreutils libs */
 const char *revision = "$Revision$";
-const char *copyright = "1999-2005";
+const char *copyright = "1999-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
  /*
@@ -704,8 +717,8 @@ print_help (void)
   printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
   printf (COPYRIGHT, copyright, email);
 
-  printf (_("This plugin checks the amount of used disk space on a mounted file system"));
-  printf (_("and generates an alert if free space is less than one of the threshold values"));
+  printf ("%s\n", _("This plugin checks the amount of used disk space on a mounted file system"));
+  printf ("%s\n", _("and generates an alert if free space is less than one of the threshold values"));
 
   printf ("\n\n");
 
