@@ -1,26 +1,40 @@
 /******************************************************************************
-
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
- $Id$
- 
+*
+* Nagios check_smtp plugin
+*
+* License: GPL
+* Copyright (c) 1999-2006 nagios-plugins team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_smtp plugin
+*
+* License Information:
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+*
+* $Id$
+* 
 ******************************************************************************/
 
 const char *progname = "check_smtp";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2004";
+const char *copyright = "2000-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -657,6 +671,15 @@ validate_arguments (void)
 }
 
 
+int 
+my_close (void)
+{
+#ifdef HAVE_SSL
+  np_net_ssl_cleanup();
+#endif
+  return close(sd);
+}
+
 
 void
 print_help (void)
@@ -669,7 +692,9 @@ print_help (void)
 	printf ("Copyright (c) 1999-2001 Ethan Galstad <nagios@nagios.org>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf(_("This plugin will attempt to open an SMTP connection with the host.\n\n"));
+	printf("%s\n", _("This plugin will attempt to open an SMTP connection with the host."));
+
+  printf ("\n\n");
 
 	print_usage ();
 
@@ -679,34 +704,29 @@ print_help (void)
 
 	printf (_(UT_IPv46));
 
-	printf (_("\
- -e, --expect=STRING\n\
-   String to expect in first line of server response (default: '%s')\n\
- -n, nocommand\n\
-   Suppress SMTP command\n\
- -C, --command=STRING\n\
-   SMTP command (may be used repeatedly)\n\
- -R, --command=STRING\n\
-   Expected response to command (may be used repeatedly)\n\
- -f, --from=STRING\n\
-   FROM-address to include in MAIL command, required by Exchange 2000\n"),
-	        SMTP_EXPECT);
+	printf (" %s\n", "-e, --expect=STRING");
+  printf (_("String to expect in first line of server response (default: '%s')"),SMTP_EXPECT);
+  printf (" %s\n\n", "-n, nocommand\n");
+  printf ("    %s\n", _("Suppress SMTP command"));
+  printf (" %s\n", "-C, --command=STRING");
+  printf ("    %s\n", _("SMTP command (may be used repeatedly)"));
+  printf (" %s\n", "-R, --command=STRING");
+  printf ("    %s\n", _("Expected response to command (may be used repeatedly)"));
+  printf (" %s\n", "-f, --from=STRING");
+  printf ("    %s\n", _("FROM-address to include in MAIL command, required by Exchange 2000")),
 #ifdef HAVE_SSL
-        printf (_("\
- -D, --certificate=INTEGER\n\
-    Minimum number of days a certificate has to be valid.\n\
- -S, --starttls\n\
-    Use STARTTLS for the connection.\n"));
+  printf (" %s\n", "-D, --certificate=INTEGER");
+  printf ("    %s\n", _("Minimum number of days a certificate has to be valid."));
+  printf (" %s\n", "-S, --starttls");
+  printf ("    %s\n", _("Use STARTTLS for the connection."));
 #endif
 
-	printf("\
- -A, --authtype=STRING\n\
-   SMTP AUTH type to check (default none, only LOGIN supported)\n\
- -U, --authuser=STRING\n\
-   SMTP AUTH username\n\
- -P, --authpass=STRING\n\
-   SMTP AUTH password\n\
-			");
+	printf (" %s\n", "-A, --authtype=STRING");
+  printf ("    %s\n", _("SMTP AUTH type to check (default none, only LOGIN supported)"));
+  printf (" %s\n", "-U, --authuser=STRING");
+  printf ("    %s\n", _("SMTP AUTH username"));
+  printf (" %s\n", "-P, --authpass=STRING");
+  printf ("    %s\n", _("SMTP AUTH password"));
 
 	printf (_(UT_WARN_CRIT));
 
@@ -714,11 +734,10 @@ print_help (void)
 
 	printf (_(UT_VERBOSE));
 
-	printf(_("\n\
-Successul connects return STATE_OK, refusals and timeouts return\n\
-STATE_CRITICAL, other errors return STATE_UNKNOWN.  Successful\n\
-connects, but incorrect reponse messages from the host result in\n\
-STATE_WARNING return values.\n"));
+	printf ("%s\n", _("Successul connects return STATE_OK, refusals and timeouts return"));
+  printf ("%s\n", _("STATE_CRITICAL, other errors return STATE_UNKNOWN.  Successful"));
+  printf ("%s\n", _("connects, but incorrect reponse messages from the host result in"));
+  printf ("%s\n", _("STATE_WARNING return values."));
 
 	printf (_(UT_SUPPORT));
 }
@@ -728,17 +747,9 @@ STATE_WARNING return values.\n"));
 void
 print_usage (void)
 {
-	printf ("\
-Usage: %s -H host [-p port] [-e expect] [-C command] [-f from addr]\n\
+  printf (_("Usage:"));
+	printf ("%s -H host [-p port] [-e expect] [-C command] [-f from addr]\n\
                   [-A authtype -U authuser -P authpass]\n\
                   [-w warn] [-c crit] [-t timeout] [-S] [-D days] [-n] [-v] [-4|-6]\n", progname);
 }
 
-int 
-my_close (void)
-{
-#ifdef HAVE_SSL
-	np_net_ssl_cleanup();
-#endif
-	return close(sd);
-}

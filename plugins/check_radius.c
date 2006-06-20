@@ -1,26 +1,39 @@
 /******************************************************************************
-
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
- $Id$
- 
- ******************************************************************************/
+*
+* Nagios check_radius plugin
+*
+* License: GPL
+* Copyright (c) 1999-2006 nagios-plugins team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_radius plugin
+*
+* License Information:
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+* $Id$
+* 
+*******************************************************************************/
 
 const char *progname = "check_radius";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2003";
+const char *copyright = "2000-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -285,7 +298,9 @@ print_help (void)
 	printf ("Copyright (c) 1999 Robert August Vincent II\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf(_("Tests to see if a radius server is accepting connections.\n\n"));
+	printf("%s\n", _("Tests to see if a radius server is accepting connections."));
+
+  printf ("\n\n");
 
 	print_usage ();
 
@@ -293,36 +308,31 @@ print_help (void)
 
 	printf (_(UT_HOST_PORT), 'P', myport);
 
-	printf (_("\
- -u, --username=STRING\n\
-    The user to authenticate\n\
- -p, --password=STRING\n\
-    Password for autentication (SECURITY RISK)\n\
- -n, --nas-id=STRING\n\
-    NAS identifier\n\
- -F, --filename=STRING\n\
-    Configuration file\n\
- -e, --expect=STRING\n\
-    Response string to expect from the server\n\
- -r, --retries=INTEGER\n\
-    Number of times to retry a failed connection\n"));
+	printf (" %s\n", "-u, --username=STRING");
+  printf ("    %s\n", _("The user to authenticate"));
+  printf (" %s\n", "-p, --password=STRING");
+  printf ("    %s\n", _("Password for autentication (SECURITY RISK)"));
+  printf (" %s\n", "-n, --nas-id=STRING");
+  printf ("    %s\n", _("NAS identifier"));
+  printf (" %s\n", "-F, --filename=STRING");
+  printf ("    %s\n", _("Configuration file"));
+  printf (" %s\n", "-e, --expect=STRING");
+  printf ("    %s\n", _("Response string to expect from the server"));
+  printf (" %s\n", "-r, --retries=INTEGER");
+  printf ("    %s\n", _("Number of times to retry a failed connection"));
 
 	printf (_(UT_TIMEOUT), timeout_interval);
 
-	printf (_("\n\
-This plugin tests a radius server to see if it is accepting connections.\n\
-\n\
-The server to test must be specified in the invocation, as well as a user\n\
-name and password. A configuration file may also be present. The format of\n\
-the configuration file is described in the radiusclient library sources.\n\n"));
-
-	printf (_("\
-The password option presents a substantial security issue because the\n\
-password can be determined by careful watching of the command line in\n\
-a process listing.  This risk is exacerbated because nagios will\n\
-run the plugin at regular prdictable intervals.  Please be sure that\n\
-the password used does not allow access to sensitive system resources,\n\
-otherwise compormise could occur.\n"));
+	printf ("%s\n", _("This plugin tests a radius server to see if it is accepting connections."));
+  printf ("%s\n", _("The server to test must be specified in the invocation, as well as a user"));
+  printf ("%s\n", _("name and password. A configuration file may also be present. The format of"));
+  printf ("%s\n", _("the configuration file is described in the radiusclient library sources."));
+	printf ("%s\n", _("The password option presents a substantial security issue because the"));
+  printf ("%s\n", _("password can be determined by careful watching of the command line in"));
+  printf ("%s\n", _("a process listing.  This risk is exacerbated because nagios will"));
+  printf ("%s\n", _("run the plugin at regular prdictable intervals.  Please be sure that"));
+  printf ("%s\n", _("the password used does not allow access to sensitive system resources,"));
+  printf ("%s\n", _("otherwise compormise could occur."));
 
 	printf (_(UT_SUPPORT));
 }
@@ -332,7 +342,7 @@ otherwise compormise could occur.\n"));
 void
 print_usage (void)
 {
-	printf ("\
-Usage: %s -H host -F config_file -u username -p password [-n nas-id] [-P port]\n\
+  printf (_("Usage:"));
+	printf ("%s -H host -F config_file -u username -p password [-n nas-id] [-P port]\n\
                   [-t timeout] [-r retries] [-e expect]\n", progname);
 }

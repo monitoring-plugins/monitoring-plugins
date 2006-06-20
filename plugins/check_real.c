@@ -1,26 +1,40 @@
 /******************************************************************************
-
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
- $Id$
- 
+*
+* Nagios check_real plugin
+*
+* License: GPL
+* Copyright (c) 1999-2006 nagios-plugins team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_real plugin
+*
+* License Information:
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+*
+* $Id$
+* 
 ******************************************************************************/
 
 const char *progname = "check_real";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2004";
+const char *copyright = "2000-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -103,7 +117,7 @@ main (int argc, char **argv)
 	/* make sure we find the response we are looking for */
 	if (!strstr (buffer, server_expect)) {
 		if (server_port == PORT)
-			printf (_("Invalid REAL response received from host\n"));
+			printf ("%s\n", _("Invalid REAL response received from host"));
 		else
 			printf (_("Invalid REAL response received from host on port %d\n"),
 							server_port);
@@ -176,7 +190,7 @@ main (int argc, char **argv)
 			/* make sure we find the response we are looking for */
 			if (!strstr (buffer, server_expect)) {
 				if (server_port == PORT)
-					printf (_("Invalid REAL response received from host\n"));
+					printf ("%s\n", _("Invalid REAL response received from host"));
 				else
 					printf (_("Invalid REAL response received from host on port %d\n"),
 									server_port);
@@ -398,7 +412,9 @@ print_help (void)
 	printf ("Copyright (c) 1999 Pedro Leite <leite@cic.ua.pt>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("This plugin tests the REAL service on the specified host.\n\n"));
+	printf ("%s\n", _("This plugin tests the REAL service on the specified host."));
+
+  printf ("\n\n");
 
 	print_usage ();
 
@@ -406,11 +422,10 @@ print_help (void)
 
 	printf (_(UT_HOST_PORT), 'p', myport);
 
-	printf (_("\
- -u, --url=STRING\n\
-   Connect to this url\n\
- -e, --expect=STRING\n\
-   String to expect in first line of server response (default: %s)\n"),
+	printf (" %s\n", "-u, --url=STRING");
+  printf ("    %s\n", _("Connect to this url"));
+  printf (" %s\n", "-e, --expect=STRING");
+  printf (_("String to expect in first line of server response (default: %s)\n"),
 	       EXPECT);
 
 	printf (_(UT_WARN_CRIT));
@@ -419,12 +434,11 @@ print_help (void)
 
 	printf (_(UT_VERBOSE));
 
-	printf(_("\
-This plugin will attempt to open an RTSP connection with the host.\n\
-Successul connects return STATE_OK, refusals and timeouts return\n\
-STATE_CRITICAL, other errors return STATE_UNKNOWN.  Successful connects,\n\
-but incorrect reponse messages from the host result in STATE_WARNING return\n\
-values."));
+	printf ("%s\n", _("This plugin will attempt to open an RTSP connection with the host."));
+  printf ("%s\n", _("Successul connects return STATE_OK, refusals and timeouts return"));
+  printf ("%s\n", _("STATE_CRITICAL, other errors return STATE_UNKNOWN.  Successful connects,"));
+  printf ("%s\n", _("but incorrect reponse messages from the host result in STATE_WARNING return"));
+  printf ("%s\n", _("values."));
 
 	printf (_(UT_SUPPORT));
 }
@@ -434,7 +448,6 @@ values."));
 void
 print_usage (void)
 {
-	printf ("\
-Usage: %s -H host [-e expect] [-p port] [-w warn] [-c crit]\n\
-                  [-t timeout] [-v]\n", progname);
+  printf (_("Usage:"));
+	printf ("%s -H host [-e expect] [-p port] [-w warn] [-c crit] [-t timeout] [-v]\n", progname);
 }

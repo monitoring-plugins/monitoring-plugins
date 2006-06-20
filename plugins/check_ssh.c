@@ -1,26 +1,39 @@
 /******************************************************************************
-
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
- $Id$
- 
+*
+* Nagios check_ssh plugin
+*
+* License: GPL
+* Copyright (c) 1999-2006 nagios-plugins team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_ssh plugin
+*
+* License Information:
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+* $Id$
+* 
 ******************************************************************************/
 
 const char *progname = "check_ssh";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2004";
+const char *copyright = "2000-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -258,7 +271,9 @@ print_help (void)
 	printf ("Copyright (c) 1999 Remi Paulmier <remi@sinfomic.fr>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("Try to connect to an SSH server at specified server and port\n\n"));
+	printf ("%s\n", _("Try to connect to an SSH server at specified server and port"));
+
+  printf ("\n\n");
 
 	print_usage ();
 
@@ -270,9 +285,8 @@ print_help (void)
 
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
-	printf (_("\
- -r, --remote-version=STRING\n\
-    Warn if string doesn't match expected server version (ex: OpenSSH_3.9p1)\n"));
+	printf (" %s\n" "-r, --remote-version=STRING");
+  printf ("    %s\n", _("Warn if string doesn't match expected server version (ex: OpenSSH_3.9p1)"));
 	
 	printf (_(UT_VERBOSE));
 
@@ -284,7 +298,7 @@ print_help (void)
 void
 print_usage (void)
 {
-	printf ("\
-Usage: %s [-46] [-t <timeout>] [-r <remote version>] [-p <port>] <host>\n", progname);
+  printf (_("Usage:"));
+	printf ("%s [-46] [-t <timeout>] [-r <remote version>] [-p <port>] <host>\n", progname);
 }
 
