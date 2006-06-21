@@ -285,7 +285,7 @@ print_help (void)
 
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
-	printf (" %s\n" "-r, --remote-version=STRING");
+	printf (" %s\n", "-r, --remote-version=STRING");
   printf ("    %s\n", _("Warn if string doesn't match expected server version (ex: OpenSSH_3.9p1)"));
 	
 	printf (_(UT_VERBOSE));

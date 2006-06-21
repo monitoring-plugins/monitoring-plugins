@@ -908,95 +908,84 @@ print_help (void)
 	printf (_(UT_HOST_PORT), 'p', DEFAULT_PORT);
 
 	/* SNMP and Authentication Protocol */
-	printf (_("\
- -n, --next\n\
-    Use SNMP GETNEXT instead of SNMP GET\n\
- -P, --protocol=[1|2c|3]\n\
-    SNMP protocol version\n\
- -L, --seclevel=[noAuthNoPriv|authNoPriv|authPriv]\n\
-    SNMPv3 securityLevel\n\
- -a, --authproto=[MD5|SHA]\n\
-    SNMPv3 auth proto\n"));
+	printf (" %s\n", "-n, --next");
+  printf ("    %s\n", _("Use SNMP GETNEXT instead of SNMP GET"));
+  printf (" %s\n", "-P, --protocol=[1|2c|3]");
+  printf ("    %s\n", _("SNMP protocol version"));
+  printf (" %s\n", "-L, --seclevel=[noAuthNoPriv|authNoPriv|authPriv]");
+  printf ("    %s\n", _("SNMPv3 securityLevel"));
+  printf (" %s\n", "-a, --authproto=[MD5|SHA]");
+  printf ("    %s\n", _("SNMPv3 auth proto"));
 
 	/* Authentication Tokens*/
-	printf (_("\
- -C, --community=STRING\n\
-    Optional community string for SNMP communication\n\
-    (default is \"%s\")\n\
- -U, --secname=USERNAME\n\
-    SNMPv3 username\n\
- -A, --authpassword=PASSWORD\n\
-    SNMPv3 authentication password\n\
- -X, --privpasswd=PASSWORD\n\
-    SNMPv3 crypt passwd (DES)\n"), DEFAULT_COMMUNITY);
+	printf (" %s\n", "-C, --community=STRING");
+  printf ("    %s\n", _("Optional community string for SNMP communication"));
+  printf (_("(default is \"%s\")"),DEFAULT_COMMUNITY);
+  printf (" %s\n", "-U, --secname=USERNAME");
+  printf ("    %s\n", _("SNMPv3 username"));
+  printf (" %s\n", "-A, --authpassword=PASSWORD");
+  printf ("    %s\n", _("SNMPv3 authentication password"));
+  printf (" %s\n", "-X, --privpasswd=PASSWORD");
+  printf ("    %s\n", _("SNMPv3 crypt passwd (DES)"));
 
 	/* OID Stuff */
-	printf (_("\
- -o, --oid=OID(s)\n\
-    Object identifier(s) or SNMP variables whose value you wish to query\n\
- -m, --miblist=STRING\n\
-    List of MIBS to be loaded (default = none if using numeric oids or 'ALL'\n\
-		for symbolic oids.)\n\
- -d, --delimiter=STRING\n\
-    Delimiter to use when parsing returned data. Default is \"%s\"\n\
-    Any data on the right hand side of the delimiter is considered\n\
-    to be the data that should be used in the evaluation.\n"), DEFAULT_DELIMITER);
+	printf (" %s\n", "-o, --oid=OID(s)");
+  printf ("    %s\n", _("Object identifier(s) or SNMP variables whose value you wish to query"));
+  printf (" %s\n", "-m, --miblist=STRING");
+  printf ("    %s\n", _("List of MIBS to be loaded (default = none if using numeric oids or 'ALL'"));
+  printf ("    %s\n", _("for symbolic oids.)"));
+  printf (" %s\n", "-d, --delimiter=STRING");
+  printf (_("    Delimiter to use when parsing returned data. Default is \"%s\""), DEFAULT_DELIMITER);
+  printf ("    %s\n", _("Any data on the right hand side of the delimiter is considered"));
+  printf ("    %s\n", _("to be the data that should be used in the evaluation."));
 
 	/* Tests Against Integers */
-	printf (_("\
- -w, --warning=INTEGER_RANGE(s)\n\
-    Range(s) which will not result in a WARNING status\n\
- -c, --critical=INTEGER_RANGE(s)\n\
-    Range(s) which will not result in a CRITICAL status\n"));
+	printf (" %s\n", "-w, --warning=INTEGER_RANGE(s)");
+  printf ("    %s\n", _("Range(s) which will not result in a WARNING status"));
+  printf (" %s\n", "-c, --critical=INTEGER_RANGE(s)");
+  printf ("    %s\n", _("Range(s) which will not result in a CRITICAL status"));
 
 	/* Tests Against Strings */
-	printf (_("\
- -s, --string=STRING\n\
-    Return OK state (for that OID) if STRING is an exact match\n\
- -r, --ereg=REGEX\n\
-    Return OK state (for that OID) if extended regular expression REGEX matches\n\
- -R, --eregi=REGEX\n\
-    Return OK state (for that OID) if case-insensitive extended REGEX matches\n\
- -l, --label=STRING\n\
-    Prefix label for output from plugin (default -s 'SNMP')\n"));
+	printf (" %s\n", "-s, --string=STRING");
+  printf ("    %s\n", _("Return OK state (for that OID) if STRING is an exact match"));
+  printf (" %s\n", "-r, --ereg=REGEX");
+  printf ("    %s\n", _("Return OK state (for that OID) if extended regular expression REGEX matches"));
+  printf (" %s\n", "-R, --eregi=REGEX");
+  printf ("    %s\n", _("Return OK state (for that OID) if case-insensitive extended REGEX matches"));
+  printf (" %s\n", "-l, --label=STRING");
+  printf ("    %s\n", _("Prefix label for output from plugin (default -s 'SNMP')"));
 
 	/* Output Formatting */
-	printf (_("\
- -u, --units=STRING\n\
-    Units label(s) for output data (e.g., 'sec.').\n\
- -D, --output-delimiter=STRING\n\
-    Separates output on multiple OID requests\n"));
+	printf (" %s\n", "-u, --units=STRING");
+  printf ("    %s\n", _("Units label(s) for output data (e.g., 'sec.')."));
+  printf (" %s\n", "-D, --output-delimiter=STRING");
+  printf ("    %s\n", _("Separates output on multiple OID requests"));
 
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
 	printf (_(UT_VERBOSE));
 
-	printf (_("\n\
-- This plugin uses the 'snmpget' command included with the NET-SNMP package.\n\
-  If you don't have the package installed, you will need to download it from\n\
-  http://net-snmp.sourceforge.net before you can use this plugin.\n"));
+	printf ("%s\n", _("This plugin uses the 'snmpget' command included with the NET-SNMP package."));
+  printf ("%s\n", _("if you don't have the package installed, you will need to download it from"));
+  printf ("%s\n", _("http://net-snmp.sourceforge.net before you can use this plugin."));
 
-	printf (_("\
-- Multiple OIDs may be indicated by a comma- or space-delimited list (lists with\n\
-  internal spaces must be quoted) [max 8 OIDs]\n"));
+	printf ("%s\n", _("- Multiple OIDs may be indicated by a comma- or space-delimited list (lists with"));
+  printf ("%s\n", _(" internal spaces must be quoted) [max 8 OIDs]"));
 
-	printf (_("\
-- Ranges are inclusive and are indicated with colons. When specified as\n\
-  'min:max' a STATE_OK will be returned if the result is within the indicated\n\
-  range or is equal to the upper or lower bound. A non-OK state will be\n\
-  returned if the result is outside the specified range.\n"));
+	printf ("%s\n", _("- Ranges are inclusive and are indicated with colons. When specified as"));
+  printf ("%s\n", _(" 'min:max' a STATE_OK will be returned if the result is within the indicated"));
+  printf ("%s\n", _(" range or is equal to the upper or lower bound. A non-OK state will be"));
+  printf ("%s\n", _(" returned if the result is outside the specified range."));
 
-	printf (_("\
-- If specified in the order 'max:min' a non-OK state will be returned if the\n\
-  result is within the (inclusive) range.\n"));
+	printf ("%s\n", _("- If specified in the order 'max:min' a non-OK state will be returned if the"));
+  printf ("%s\n", _(" result is within the (inclusive) range."));
 
-	printf (_("\
-- Upper or lower bounds may be omitted to skip checking the respective limit.\n\
-- Bare integers are interpreted as upper limits.\n\
-- When checking multiple OIDs, separate ranges by commas like '-w 1:10,1:,:20'\n\
-- Note that only one string and one regex may be checked at present\n\
-- All evaluation methods other than PR, STR, and SUBSTR expect that the value\n\
-  returned from the SNMP query is an unsigned integer.\n"));
+	printf ("%s\n", _("- Upper or lower bounds may be omitted to skip checking the respective limit."));
+  printf ("%s\n", _("- Bare integers are interpreted as upper limits."));
+  printf ("%s\n", _("- When checking multiple OIDs, separate ranges by commas like '-w 1:10,1:,:20'"));
+  printf ("%s\n", _("- Note that only one string and one regex may be checked at present"));
+  printf ("%s\n", _("- All evaluation methods other than PR, STR, and SUBSTR expect that the value"));
+  printf ("%s\n", _(" returned from the SNMP query is an unsigned integer."));
 
 	printf (_(UT_SUPPORT));
 }
