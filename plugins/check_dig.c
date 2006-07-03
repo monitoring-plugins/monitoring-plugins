@@ -184,6 +184,7 @@ process_arguments (int argc, char **argv)
     {"help", no_argument, 0, 'h'},
     {"record_type", required_argument, 0, 'T'},
     {"expected_address", required_argument, 0, 'a'},
+    {"port", required_argument, 0, 'p'},
     {0, 0, 0, 0}
   };
 
@@ -191,7 +192,7 @@ process_arguments (int argc, char **argv)
     return ERROR;
 
   while (1) {
-    c = getopt_long (argc, argv, "hVvt:l:H:w:c:T:a:", longopts, &option);
+    c = getopt_long (argc, argv, "hVvt:l:H:w:c:T:p:a:", longopts, &option);
 
     if (c == -1 || c == EOF)
       break;
@@ -300,7 +301,7 @@ print_help (void)
 
   printf (_(UT_HELP_VRSN));
 
-  printf (_(UT_HOST_PORT), 'P', myport);
+  printf (_(UT_HOST_PORT), 'p', myport);
 
   printf (" %s\n","-l, --lookup=STRING");
   printf ("    %s\n",_("machine name to lookup"));
