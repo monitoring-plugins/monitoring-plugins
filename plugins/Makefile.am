@@ -11,7 +11,9 @@ localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
 LIBS = @LIBINTL@ @LIBS@ @SSLLIBS@ 
 MATHLIBS = @MATHLIBS@
-AM_CFLAGS = -Wall
+
+# This is not portable. Run ". tools/devmode" to get development compile flags
+#AM_CFLAGS = -Wall
 
 libexec_PROGRAMS = check_apt check_disk check_dummy check_http check_load \
 	check_mrtg check_mrtgtraf check_ntp check_nwstat check_overcr check_ping \

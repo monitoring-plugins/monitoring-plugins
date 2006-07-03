@@ -11,6 +11,7 @@ dnl Usually in coreutils' prereq.m4, but this is a subset that we need
 AC_DEFUN([np_COREUTILS],
 [
   AC_REQUIRE([AM_STDBOOL_H])
+  AC_REQUIRE([gl_C_STRTOLD])
   AC_REQUIRE([gl_GETOPT])
   AC_REQUIRE([gl_AFS])
   AC_REQUIRE([gl_EXITFAIL])
