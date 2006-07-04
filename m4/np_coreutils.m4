@@ -12,12 +12,15 @@ AC_DEFUN([np_COREUTILS],
 [
   AC_REQUIRE([AM_STDBOOL_H])
   AC_REQUIRE([gl_C_STRTOLD])
-  AC_REQUIRE([gl_GETOPT])
-  AC_REQUIRE([gl_AFS])
   AC_REQUIRE([gl_EXITFAIL])
-  AC_REQUIRE([gl_XALLOC])
-  AC_REQUIRE([gl_MOUNTLIST])
   AC_REQUIRE([gl_FSUSAGE])
-  AC_REQUIRE([gl_FUNC_GLIBC_UNLOCKED_IO])
+  AC_REQUIRE([gl_FUNC_ALLOCA])
+  AC_REQUIRE([gl_GETOPT])
+  AC_REQUIRE([gl_MOUNTLIST])
   AC_REQUIRE([gl_REGEX])
+  AC_REQUIRE([gl_XALLOC])
+  AC_REQUIRE([gl_FUNC_GLIBC_UNLOCKED_IO])
+
+dnl This is in jm-macros.m4, which calls prereq.m4, and then calls this afterwards
+  AC_REQUIRE([gl_AFS])
 ])
