@@ -175,7 +175,11 @@ sub BuildIt {
 	if ($ReportStatus) {
 		system( "ssh $Tinderbox_server tinderbox_receive < ${logfile}.last" )
 	} else {
-		print "Not sending logs to tinderbox",$/;
+		print <<"EOF"
+Not sending logs to http://tinderbox.altinity.org
+If you have SSH keys setup on the tinderbox server, you can manually send
+with 'ssh $Tinderbox_server tinderbox_receive < ${logfile}.last'
+EOF
 	}
 	
 	unlink("$logfile");
