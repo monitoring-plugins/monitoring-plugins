@@ -12,10 +12,12 @@ libcoreutils_a_SOURCES = \
   safe-read.c safe-read.h \
   safe-write.c safe-write.h strcase.h xalloc-die.c
 
+# intprops.h required for getloadavg.c
 other_coreutils_files = \
   error.c error.h \
   fsusage.c \
   getloadavg.c \
+  intprops.h \
   malloc.c \
   mountlist.c \
   realloc.c \
