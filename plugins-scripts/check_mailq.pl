@@ -186,12 +186,10 @@ if ($mailq eq "sendmail") {
 	## close mailq
 
 	close (MAILQ); 
-	# declare an error if we also get a non-zero return code from mailq
-	# unless already set to critical
+
 	if ( $? ) {
-		$state = $state == $ERRORS{"CRITICAL"} ? $ERRORS{"CRITICAL"} : $ERRORS{"WARNING"}  ;
-		print "STDERR $?: $!\n" if $verbose;
-		$msg = "$state: (stderr)\n";
+		print "CRITICAL: Error code ".($?>>8)." returned from $utils::PATH_TO_MAILQ",$/;
+		exit $ERRORS{CRITICAL};
 	}
 
 	## shut off the alarm
@@ -318,12 +316,10 @@ elsif ( $mailq eq "postfix" ) {
 
         # close qmail-qstat
         close MAILQ;
-        # declare an error if we also get a non-zero return code from mailq
-        # unless already set to critical
+
         if ( $? ) {
-                $state = $state == $ERRORS{"CRITICAL"} ? $ERRORS{"CRITICAL"} : $ERRORS{"WARNING"}  ;
-                print "STDERR $?: $!\n" if $verbose;
-                $msg = "$state: (stderr)\n";
+		print "CRITICAL: Error code ".($?>>8)." returned from $utils::PATH_TO_MAILQ",$/;
+		exit $ERRORS{CRITICAL};
         }
 
         ## shut off the alarm
@@ -401,12 +397,10 @@ elsif ( $mailq eq "qmail" ) {
 
 	# close qmail-qstat
 	close MAILQ;
-	# declare an error if we also get a non-zero return code from mailq
-	# unless already set to critical
+
 	if ( $? ) {
-		$state = $state == $ERRORS{"CRITICAL"} ? $ERRORS{"CRITICAL"} : $ERRORS{"WARNING"}  ;
-		print "STDERR $?: $!\n" if $verbose;
-		$msg = "$state: (stderr)\n";
+		print "CRITICAL: Error code ".($?>>8)." returned from $utils::PATH_TO_MAILQ",$/;
+		exit $ERRORS{CRITICAL};
 	}
 
 	## shut off the alarm
@@ -490,6 +484,11 @@ elsif ( $mailq eq "exim" ) {
 	    }
 	}
 	close(MAILQ) ;
+
+	if ( $? ) {
+		print "CRITICAL: Error code ".($?>>8)." returned from $utils::PATH_TO_MAILQ",$/;
+		exit $ERRORS{CRITICAL};
+	}
 	if ($msg_q < $opt_w) {
 		$msg = "OK: mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
 		$state = $ERRORS{'OK'};
