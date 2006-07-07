@@ -56,6 +56,12 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
+	/* Need at least 2 args */
+	if (argc < 3) {
+		print_help();
+		exit (STATE_UNKNOWN);
+	}
+
 	while (1) {
 		c = getopt_long (argc, argv, "+hVu:", longopts, &option);
 		
