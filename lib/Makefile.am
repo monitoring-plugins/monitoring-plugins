@@ -13,11 +13,16 @@ libcoreutils_a_SOURCES = \
   safe-write.c safe-write.h strcase.h xalloc-die.c
 
 # intprops.h required for getloadavg.c
+# This needs to be an EXTRA_DIST because the m4s
+# that have AC_LIBSOURCES for intprops.h are not necessary and
+# the getloadavg m4 is an autoconf one, so doesn't
+# know about intprops.h. Confused? You will be!
+EXTRA_DIST = intprops.h
+
 other_coreutils_files = \
   error.c error.h \
   fsusage.c \
   getloadavg.c \
-  intprops.h \
   malloc.c \
   mountlist.c \
   realloc.c \
@@ -43,7 +48,7 @@ print_coreutil_files:
 
 # Below are from coreutil's lib/Makefile.am
 BUILT_SOURCES = $(STDBOOL_H)
-EXTRA_DIST = stdbool_.h
+EXTRA_DIST += stdbool_.h
 MOSTLYCLEANFILES = stdbool.h stdbool.ht
 # Create stdbool.h on systems that lack a working one.
 stdbool.h: stdbool_.h
