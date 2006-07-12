@@ -1,4 +1,5 @@
 Makefile
 Makefile.in
 test_utils
+test_disk
 .deps

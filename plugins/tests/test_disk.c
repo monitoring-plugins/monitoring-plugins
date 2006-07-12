@@ -27,16 +27,24 @@ main (int argc, char **argv)
 {
 	struct name_list *exclude_filesystem=NULL;
 	struct name_list *exclude_fstype=NULL;
+	struct name_list *dummy_mountlist = NULL;
+	struct name_list *temp_name;
+	struct parameter_list *paths = NULL;
+	struct parameter_list *p;
 
-	plan_tests(8);
+	struct mount_entry *dummy_mount_list;
+	struct mount_entry *me;
+	struct mount_entry **mtail = &dummy_mount_list;
 
-	ok( np_find_name(exclude_filesystem, "/var") == FALSE, "/var not in list");
-	np_add_name(&exclude_filesystem, "/var");
-	ok( np_find_name(exclude_filesystem, "/var") == TRUE, "is in list now");
+	plan_tests(17);
+
+	ok( np_find_name(exclude_filesystem, "/var/log") == FALSE, "/var/log not in list");
+	np_add_name(&exclude_filesystem, "/var/log");
+	ok( np_find_name(exclude_filesystem, "/var/log") == TRUE, "is in list now");
 	ok( np_find_name(exclude_filesystem, "/home") == FALSE, "/home not in list");
 	np_add_name(&exclude_filesystem, "/home");
 	ok( np_find_name(exclude_filesystem, "/home") == TRUE, "is in list now");
-	ok( np_find_name(exclude_filesystem, "/var") == TRUE, "/var still in list");
+	ok( np_find_name(exclude_filesystem, "/var/log") == TRUE, "/var/log still in list");
 
 	ok( np_find_name(exclude_fstype, "iso9660") == FALSE, "iso9660 not in list");
 	np_add_name(&exclude_fstype, "iso9660");
@@ -44,41 +52,72 @@ main (int argc, char **argv)
 
 	ok( np_find_name(exclude_filesystem, "iso9660") == FALSE, "Make sure no clashing in variables");
 
-
-	
-	
 	/*
-	range = parse_range_string("6");
-	ok( range != NULL, "'6' is valid range");
-	ok( range->start == 0, "Start correct");
-	ok( range->start_infinity == FALSE, "Not using negative infinity");
-	ok( range->end == 6, "End correct");
-	ok( range->end_infinity == FALSE, "Not using infinity");
-	free(range);
-
-	range = parse_range_string("-7:23");
-	ok( range != NULL, "'-7:23' is valid range");
-	ok( range->start == -7, "Start correct");
-	ok( range->start_infinity == FALSE, "Not using negative infinity");
-	ok( range->end == 23, "End correct");
-	ok( range->end_infinity == FALSE, "Not using infinity");
-	free(range);
-
-	range = parse_range_string(":5.75");
-	ok( range != NULL, "':5.75' is valid range");
-	ok( range->start == 0, "Start correct");
-	ok( range->start_infinity == FALSE, "Not using negative infinity");
-	ok( range->end == 5.75, "End correct");
-	ok( range->end_infinity == FALSE, "Not using infinity");
-	free(range);
-
-	range = parse_range_string("~:-95.99");
-	ok( range != NULL, "~:-95.99' is valid range");
-	ok( range->start_infinity == TRUE, "Using negative infinity");
-	ok( range->end == -95.99, "End correct (with rounding errors)");
-	ok( range->end_infinity == FALSE, "Not using infinity");
-	free(range);
+	for (temp_name = exclude_filesystem; temp_name; temp_name = temp_name->next) {
+		printf("Name: %s\n", temp_name->name);
+	}
 	*/
+
+	me = (struct mount_entry *) malloc(sizeof *me);
+	me->me_devname = strdup("/dev/c0t0d0s0");
+	me->me_mountdir = strdup("/");
+	*mtail = me;
+	mtail = &me->me_next;
+
+	me = (struct mount_entry *) malloc(sizeof *me);
+	me->me_devname = strdup("/dev/c1t0d1s0");
+	me->me_mountdir = strdup("/var");
+	*mtail = me;
+	mtail = &me->me_next;
+
+	me = (struct mount_entry *) malloc(sizeof *me);
+	me->me_devname = strdup("/dev/c2t0d0s0");
+	me->me_mountdir = strdup("/home");
+	*mtail = me;
+	mtail = &me->me_next;
+
+
+	np_add_parameter(&paths, "/home/groups");
+	np_add_parameter(&paths, "/var");
+	np_add_parameter(&paths, "/tmp");
+	np_add_parameter(&paths, "/home/tonvoon");
+	np_add_parameter(&paths, "/dev/c2t0d0s0");
+
+	np_set_best_match(paths, dummy_mount_list, FALSE);
+	for (p = paths; p; p = p->name_next) {
+		struct mount_entry *temp_me;
+		temp_me = p->best_match;
+		if (! strcmp(p->name, "/home/groups")) {
+			ok( temp_me && !strcmp(temp_me->me_mountdir, "/home"), "/home/groups got right best match: /home");
+		} else if (! strcmp(p->name, "/var")) {
+			ok( temp_me && !strcmp(temp_me->me_mountdir, "/var"), "/var got right best match: /var");
+		} else if (! strcmp(p->name, "/tmp")) {
+			ok( temp_me && !strcmp(temp_me->me_mountdir, "/"), "/tmp got right best match: /");
+		} else if (! strcmp(p->name, "/home/tonvoon")) {
+			ok( temp_me && !strcmp(temp_me->me_mountdir, "/home"), "/home/tonvoon got right best match: /home");
+		} else if (! strcmp(p->name, "/dev/c2t0d0s0")) {
+			ok( temp_me && !strcmp(temp_me->me_devname, "/dev/c2t0d0s0"), "/dev/c2t0d0s0 got right best match: /dev/c2t0d0s0");
+		}
+	}
+
+	paths = NULL;	/* Bad boy - should free, but this is a test suite */
+	np_add_parameter(&paths, "/home/groups");
+	np_add_parameter(&paths, "/var");
+	np_add_parameter(&paths, "/tmp");
+	np_add_parameter(&paths, "/home/tonvoon");
+
+	np_set_best_match(paths, dummy_mount_list, TRUE);
+	for (p = paths; p; p = p->name_next) {
+		if (! strcmp(p->name, "/home/groups")) {
+			ok( p->found == 0, "/home/groups correctly not found");
+		} else if (! strcmp(p->name, "/var")) {
+			ok( p->found == 1, "/var found");
+		} else if (! strcmp(p->name, "/tmp")) {
+			ok( p->found == 0, "/tmp correctly not found");
+		} else if (! strcmp(p->name, "/home/tonvoon")) {
+			ok( p->found == 0, "/home/tonvoon not found");
+		}
+	}
 
 	return exit_status();
 }

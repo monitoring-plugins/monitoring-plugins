@@ -74,21 +74,6 @@ static int show_local_fs = 0;
    SunOs4.1.3, for one.  It is *not* necessary on Linux.  */
 /* static int require_sync = 0; */
 
-/* A filesystem type to display. */
-struct parameter_list
-{
-  char *name;
-  int found;
-  int found_len;
-  uintmax_t w_df;
-  uintmax_t c_df;
-  double w_dfp;
-  double c_dfp;
-  double w_idfp;
-  double c_idfp;
-  struct parameter_list *name_next;
-};
-
 /* Linked list of filesystem types to display.
    If `fs_select_list' is NULL, list all types.
    This table is generated dynamically from command-line options,
