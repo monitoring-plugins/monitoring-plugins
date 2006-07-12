@@ -37,10 +37,6 @@ const char *revision = "$Revision$";
 const char *copyright = "1999-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
- /*
-  * Additional inode code by Jorgen Lundman <lundman@lundman.net>
-  */
-
 
 #include "common.h"
 #if HAVE_INTTYPES_H
@@ -50,11 +46,13 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "popen.h"
 #include "utils.h"
 #include <stdarg.h>
-#include "../lib/fsusage.h"
-#include "../lib/mountlist.h"
+#include "fsusage.h"
+#include "mountlist.h"
 #if HAVE_LIMITS_H
 # include <limits.h>
 #endif
+
+#include "utils_disk.h"
 
 /* If nonzero, show inode information. */
 static int inode_format;
@@ -77,8 +75,7 @@ static int show_local_fs = 0;
 /* static int require_sync = 0; */
 
 /* A filesystem type to display. */
-
-struct name_list
+struct parameter_list
 {
   char *name;
   int found;
@@ -89,7 +86,7 @@ struct name_list
   double c_dfp;
   double w_idfp;
   double c_idfp;
-  struct name_list *name_next;
+  struct parameter_list *name_next;
 };
 
 /* Linked list of filesystem types to display.
@@ -103,7 +100,7 @@ struct name_list
    Some filesystem types:
    4.2 4.3 ufs nfs swap ignore io vm efs dbg */
 
-/* static struct name_list *fs_select_list; */
+/* static struct parameter_list *fs_select_list; */
 
 /* Linked list of filesystem types to omit.
    If the list is empty, don't exclude any types.  */
@@ -112,9 +109,7 @@ static struct name_list *fs_exclude_list;
 
 static struct name_list *dp_exclude_list;
 
-static struct name_list *path_select_list;
-
-static struct name_list *dev_select_list;
+static struct parameter_list *path_select_list;
 
 /* Linked list of mounted filesystems. */
 static struct mount_entry *mount_list;
@@ -132,11 +127,14 @@ enum
  #pragma alloca
 #endif
 
+/* Linked list of mounted filesystems. */
+static struct mount_entry *mount_list;
+
 int process_arguments (int, char **);
 void print_path (const char *mypath);
 int validate_arguments (uintmax_t, uintmax_t, double, double, double, double, char *);
 int check_disk (double usp, uintmax_t free_disk, double uisp);
-int walk_name_list (struct name_list *list, const char *name);
+int walk_parameter_list (struct parameter_list *list, const char *name);
 void print_help (void);
 void print_usage (void);
 
@@ -153,9 +151,6 @@ uintmax_t mult = 1024 * 1024;
 int verbose = 0;
 int erronly = FALSE;
 int display_mntp = FALSE;
-
-/* Linked list of mounted filesystems. */
-static struct mount_entry *mount_list;
 
 
 
@@ -174,7 +169,7 @@ main (int argc, char **argv)
 
   struct mount_entry *me;
   struct fs_usage fsp;
-  struct name_list *temp_list;
+  struct parameter_list *temp_list;
 
   output = strdup (" - free space:");
   details = strdup ("");
@@ -199,8 +194,8 @@ main (int argc, char **argv)
    */
   if(path_select_list){
     for (me = mount_list; me; me = me->me_next) {
-      walk_name_list(path_select_list, me->me_mountdir);
-      walk_name_list(path_select_list, me->me_devname);
+      walk_parameter_list(path_select_list, me->me_mountdir);
+      walk_parameter_list(path_select_list, me->me_devname);
     }
     /* now pretend we never saw anything, but keep found_len.
      * thus future searches will only match the best match */
@@ -214,12 +209,12 @@ main (int argc, char **argv)
     /* if there's a list of paths to select, the current mount
      * entry matches in path or device name, get fs usage */
     if (path_select_list &&
-         (walk_name_list (path_select_list, me->me_mountdir) ||
-          walk_name_list (path_select_list, me->me_devname) ) ) {
+         (walk_parameter_list (path_select_list, me->me_mountdir) ||
+          walk_parameter_list (path_select_list, me->me_devname) ) ) {
       get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
     /* else if there's a list of paths/devices to select (but
      * we didn't match above) skip to the next mount entry */
-    } else if (dev_select_list || path_select_list) {
+    } else if (path_select_list) {
       continue;
     /* skip remote filesystems if we're not interested in them */
     } else if (me->me_remote && show_local_fs) {
@@ -228,12 +223,12 @@ main (int argc, char **argv)
     } else if (me->me_dummy && !show_all_fs) {
       continue;
     /* skip excluded fstypes */
-    } else if (fs_exclude_list && walk_name_list (fs_exclude_list, me->me_type)) {
+    } else if (fs_exclude_list && np_find_name (fs_exclude_list, me->me_type)) {
       continue;
     /* skip excluded fs's */  
     } else if (dp_exclude_list && 
-             (walk_name_list (dp_exclude_list, me->me_devname) ||
-              walk_name_list (dp_exclude_list, me->me_mountdir))) {
+             (np_find_name (dp_exclude_list, me->me_devname) ||
+              np_find_name (dp_exclude_list, me->me_mountdir))) {
       continue;
     /* otherwise, get fs usage */
     } else {
@@ -312,11 +307,9 @@ int
 process_arguments (int argc, char **argv)
 {
   int c;
-  struct name_list *se;
-  struct name_list **pathtail = &path_select_list;
-  struct name_list **fstail = &fs_exclude_list;
-  struct name_list **dptail = &dp_exclude_list;
-  struct name_list *temp_list;
+  struct parameter_list *se;
+  struct parameter_list **pathtail = &path_select_list;
+  struct parameter_list *temp_list;
   int result = OK;
   struct stat *stat_buf;
 
@@ -351,13 +344,7 @@ process_arguments (int argc, char **argv)
   if (argc < 2)
     return ERROR;
 
-  se = (struct name_list *) malloc (sizeof (struct name_list));
-  se->name = strdup ("iso9660");
-  se->name_next = NULL;
-  se->found = 0;
-  se->found_len = 0;
-  *fstail = se;
-  fstail = &se->name_next;
+  np_add_name(&fs_exclude_list, "iso9660");
 
   for (c = 1; c < argc; c++)
     if (strcmp ("-to", argv[c]) == 0)
@@ -468,7 +455,7 @@ process_arguments (int argc, char **argv)
       show_local_fs = 1;      
       break;
     case 'p':                 /* select path */
-      se = (struct name_list *) malloc (sizeof (struct name_list));
+      se = (struct parameter_list *) malloc (sizeof (struct parameter_list));
       se->name = optarg;
       se->name_next = NULL;
       se->w_df = w_df;
@@ -483,43 +470,10 @@ process_arguments (int argc, char **argv)
       pathtail = &se->name_next;
       break;
     case 'x':                 /* exclude path or partition */
-      se = (struct name_list *) malloc (sizeof (struct name_list));
-      se->name = optarg;
-      se->name_next = NULL;
-
-                        /* If you don't clear the w_fd etc values here, they
-                         * get processed when you walk the list and assigned
-                         * to the global w_df!
-                         */
-                        se->w_df = 0;
-                        se->c_df = 0;
-                        se->w_dfp = 0;
-                        se->c_dfp = 0;
-			se->w_idfp = 0;
-			se->c_idfp = 0;
-      se->found = 0;
-      se->found_len = 0;
-      *dptail = se;
-      dptail = &se->name_next;
+      np_add_name(&dp_exclude_list, optarg);
       break;
     case 'X':                 /* exclude file system type */
-      se = (struct name_list *) malloc (sizeof (struct name_list));
-      se->name = optarg;
-      se->name_next = NULL;
-                        /* If you don't clear the w_fd etc values here, they
-                         * get processed when you walk the list and assigned
-                         * to the global w_df!
-                         */
-                        se->w_df = 0;
-                        se->c_df = 0;
-                        se->w_dfp = 0;
-                        se->c_dfp = 0;
-			se->w_idfp = 0;
-			se->c_idfp = 0;
-      se->found = 0;
-      se->found_len = 0;
-      *fstail = se;
-      fstail = &se->name_next;
+      np_add_name(&fs_exclude_list, optarg);
       break;
     case 'v':                 /* verbose */
       verbose++;
@@ -561,7 +515,7 @@ process_arguments (int argc, char **argv)
     c_dfp = (100.0 - atof (argv[c++]));
 
   if (argc > c && path == NULL) {
-    se = (struct name_list *) malloc (sizeof (struct name_list));
+    se = (struct parameter_list *) malloc (sizeof (struct parameter_list));
     se->name = strdup (argv[c++]);
     se->name_next = NULL;
     se->w_df = w_df;
@@ -683,7 +637,7 @@ check_disk (double usp, uintmax_t free_disk, double uisp)
 
 
 int
-walk_name_list (struct name_list *list, const char *name)
+walk_parameter_list (struct parameter_list *list, const char *name)
 {
   int name_len;
   name_len = strlen(name);
@@ -695,7 +649,7 @@ walk_name_list (struct name_list *list, const char *name)
         ! strncmp(list->name, name, name_len)) {
       list->found = 1;
       list->found_len = name_len;
-      /* if required for name_lists that have not saved w_df, etc (eg exclude lists) */
+      /* if required for parameter_lists that have not saved w_df, etc (eg exclude lists) */
       if (list->w_df) w_df = list->w_df;
       if (list->c_df) c_df = list->c_df;
       if (list->w_dfp>=0.0) w_dfp = list->w_dfp;
