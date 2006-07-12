@@ -43,9 +43,11 @@ np_add_name (struct name_list **list, const char *name)
   *list = new_entry;
 }
 
-void
+/* Initialises a new parameter at the end of list */
+struct parameter_list *
 np_add_parameter(struct parameter_list **list, const char *name)
 {
+  struct parameter_list *current = *list;
   struct parameter_list *new_path;
   new_path = (struct parameter_list *) malloc (sizeof *new_path);
   new_path->name = (char *) name;
@@ -57,8 +59,17 @@ np_add_parameter(struct parameter_list **list, const char *name)
   new_path->c_dfp = -1.0;
   new_path->w_idfp = -1.0;
   new_path->c_idfp = -1.0;
-  new_path->name_next = *list;
-  *list = new_path;
+  new_path->best_match = NULL;
+
+  if (current == NULL) {
+    *list = new_path;
+  } else {
+    while (current->name_next) {
+      current = current->name_next;
+    }
+    current->name_next = new_path;
+  }
+  return new_path;
 }
 
 void
@@ -93,6 +104,8 @@ np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list
     if (best_match) {
       d->best_match = best_match;
       d->found = TRUE;
+    } else {
+      d->best_match = NULL;	/* Not sure why this is needed as it should be null on initialisation */
     }
   }
 }
@@ -108,6 +121,18 @@ np_find_name (struct name_list *list, const char *name)
   }
   for (n = list; n; n = n->next) {
     if (!strcmp(name, n->name)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+int
+np_seen_name(struct name_list *list, const char *name)
+{
+  const struct name_list *s;
+  for (s = list; s; s=s->next) {
+    if (!strcmp(s->name, name)) {
       return TRUE;
     }
   }

@@ -22,7 +22,7 @@ my $mountpoint2_valid = getTestParameter( "NP_MOUNTPOINT2_VALID", "Path to anoth
 if ($mountpoint_valid eq "" or $mountpoint2_valid eq "") {
 	plan skip_all => "Need 2 mountpoints to test";
 } else {
-	plan tests => 32;
+	plan tests => 35;
 }
 
 $result = NPTest->testCmd( 
@@ -103,6 +103,12 @@ $result = NPTest->testCmd(
 	);
 cmp_ok( $result->return_code, '==', 2, "Combining above two tests, get critical");
 
+$result = NPTest->testCmd(
+	"./check_disk -w $avg_free% -c $avg_free% -p $less_free -w $avg_free% -c 0% -p $more_free"
+	);
+cmp_ok( $result->return_code, '==', 2, "And reversing arguments should not make a difference");
+
+
 
 
 $result = NPTest->testCmd(
@@ -168,6 +174,12 @@ $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p /etc" );
 cmp_ok( $result->return_code, '==', 0, "Checking /etc - should return info for /" );
 cmp_ok( $result->output, 'eq', $root_output, "check_disk /etc gives same as check_disk /");
 
+$result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p /etc -E" );
+cmp_ok( $result->return_code, '==', 2, "... unless -E/--exact-match is specified");
+
 $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p / -p /bob" );
 cmp_ok( $result->return_code, '==', 2, "Checking / and /bob gives critical");
 unlike( $result->perf_output, '/\/bob/', "perf data does not have /bob in it");
+
+$result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p / -p /" );
+unlike( $result->output, '/ \/ .* \/ /', "Should not show same filesystem twice");

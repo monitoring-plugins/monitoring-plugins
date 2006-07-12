@@ -119,7 +119,6 @@ int process_arguments (int, char **);
 void print_path (const char *mypath);
 int validate_arguments (uintmax_t, uintmax_t, double, double, double, double, char *);
 int check_disk (double usp, uintmax_t free_disk, double uisp);
-int walk_parameter_list (struct parameter_list *list, const char *name);
 void print_help (void);
 void print_usage (void);
 
@@ -136,7 +135,7 @@ uintmax_t mult = 1024 * 1024;
 int verbose = 0;
 int erronly = FALSE;
 int display_mntp = FALSE;
-
+int exact_match = FALSE;
 
 
 int
@@ -154,7 +153,8 @@ main (int argc, char **argv)
 
   struct mount_entry *me;
   struct fs_usage fsp;
-  struct parameter_list *temp_list;
+  struct parameter_list *temp_list, *path;
+  struct name_list *seen = NULL;
 
   output = strdup (" - free space:");
   details = strdup ("");
@@ -169,56 +169,68 @@ main (int argc, char **argv)
   if (process_arguments (argc, argv) == ERROR)
     usage4 (_("Could not parse arguments"));
 
-  /* if a list of paths has been selected, preseed the list with
-   * the longest matching filesystem name by iterating across
-   * the mountlist once ahead of time.  this will allow a query on
-   * "/var/log" to return information about "/var" if no "/var/log"
-   * filesystem exists, etc.  this is the default behavior already
-   * with df-based checks, but for systems with their own space
-   * checking routines, this should make them more consistent.
+  /* If a list of paths has not been selected, find entire
+     mount list and create list of paths
    */
-  if(path_select_list){
+  if (! path_select_list) {
     for (me = mount_list; me; me = me->me_next) {
-      walk_parameter_list(path_select_list, me->me_mountdir);
-      walk_parameter_list(path_select_list, me->me_devname);
+      path = np_add_parameter(&path_select_list, me->me_mountdir);
+      path->w_df = w_df;
+      path->c_df = c_df;
+      path->w_dfp = w_dfp;
+      path->c_dfp = c_dfp;
+      path->w_idfp = w_idfp;
+      path->c_idfp = c_idfp;
+      path->best_match = me;
     }
-    /* now pretend we never saw anything, but keep found_len.
-     * thus future searches will only match the best match */
-    for (temp_list = path_select_list; temp_list; temp_list=temp_list->name_next){
-      temp_list->found=0;
+  } else {
+    np_set_best_match(path_select_list, mount_list, exact_match);
+
+    /* Error if no match found for specified paths */
+    temp_list = path_select_list;
+    while (temp_list) {
+      if (! temp_list->best_match) {
+        die (STATE_CRITICAL, _("DISK %s: %s not found\n"), _("CRITICAL"), temp_list->name);
+      }
+      temp_list = temp_list->name_next;
     }
   }
 
-  /* for every mount entry */
-  for (me = mount_list; me; me = me->me_next) {
-    /* if there's a list of paths to select, the current mount
-     * entry matches in path or device name, get fs usage */
-    if (path_select_list &&
-         (walk_parameter_list (path_select_list, me->me_mountdir) ||
-          walk_parameter_list (path_select_list, me->me_devname) ) ) {
-      get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
-    /* else if there's a list of paths/devices to select (but
-     * we didn't match above) skip to the next mount entry */
-    } else if (path_select_list) {
+  /* Process for every path in list */
+  for (path = path_select_list; path; path=path->name_next) {
+    me = path->best_match;
+    w_df = path->w_df;
+    c_df = path->c_df;
+    w_dfp = path->w_dfp;
+    c_dfp = path->c_dfp;
+    w_idfp = path->w_idfp;
+    c_idfp = path->c_idfp;
+
+    /* Filters */
+
+    /* Remove filesystems already seen */
+    if (np_seen_name(seen, me->me_mountdir)) {
       continue;
-    /* skip remote filesystems if we're not interested in them */
-    } else if (me->me_remote && show_local_fs) {
+    } else {
+      np_add_name(&seen, me->me_mountdir);
+    }
+    /* Skip remote filesystems if we're not interested in them */
+    if (me->me_remote && show_local_fs) {
       continue;
-    /* skip pseudo fs's if we haven't asked for all fs's */
+    /* Skip pseudo fs's if we haven't asked for all fs's */
     } else if (me->me_dummy && !show_all_fs) {
       continue;
-    /* skip excluded fstypes */
+    /* Skip excluded fstypes */
     } else if (fs_exclude_list && np_find_name (fs_exclude_list, me->me_type)) {
       continue;
-    /* skip excluded fs's */  
+    /* Skip excluded fs's */  
     } else if (dp_exclude_list && 
              (np_find_name (dp_exclude_list, me->me_devname) ||
               np_find_name (dp_exclude_list, me->me_mountdir))) {
       continue;
-    /* otherwise, get fs usage */
-    } else {
-      get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
     }
+
+    get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
 
     if (fsp.fsu_blocks && strcmp ("none", me->me_mountdir)) {
       usp = (double)(fsp.fsu_blocks - fsp.fsu_bavail) * 100 / fsp.fsu_blocks;
@@ -271,15 +283,6 @@ main (int argc, char **argv)
   if (verbose > 2)
     asprintf (&output, "%s%s", output, details);
 
-  /* Override result if paths specified and not found */
-  temp_list = path_select_list;
-  while (temp_list) {
-    if (!temp_list->found) {
-      asprintf (&output, _("%s [%s not found]"), output, temp_list->name);
-      result = STATE_CRITICAL;
-    }
-    temp_list = temp_list->name_next;
-  }
 
   printf ("DISK %s%s|%s\n", state_text (result), output, perf);
   return result;
@@ -318,6 +321,7 @@ process_arguments (int argc, char **argv)
     {"exclude-type", required_argument, 0, 'X'},
     {"mountpoint", no_argument, 0, 'M'},
     {"errors-only", no_argument, 0, 'e'},
+    {"exact-match", no_argument, 0, 'E'},
     {"verbose", no_argument, 0, 'v'},
     {"quiet", no_argument, 0, 'q'},
     {"clear", no_argument, 0, 'C'},
@@ -336,7 +340,7 @@ process_arguments (int argc, char **argv)
       strcpy (argv[c], "-t");
 
   while (1) {
-    c = getopt_long (argc, argv, "+?VqhveCt:c:w:K:W:u:p:x:X:mklM", longopts, &option);
+    c = getopt_long (argc, argv, "+?VqhveCt:c:w:K:W:u:p:x:X:mklME", longopts, &option);
 
     if (c == -1 || c == EOF)
       break;
@@ -468,6 +472,9 @@ process_arguments (int argc, char **argv)
       break;
     case 'e':
       erronly = TRUE;
+      break;
+    case 'E':
+      exact_match = TRUE;
       break;
     case 'M': /* display mountpoint */
       display_mntp = TRUE;
@@ -621,30 +628,6 @@ check_disk (double usp, uintmax_t free_disk, double uisp)
 
 
 
-int
-walk_parameter_list (struct parameter_list *list, const char *name)
-{
-  int name_len;
-  name_len = strlen(name);
-  while (list) {
-    /* if the paths match up to the length of the mount path,
-     * AND if the mount path name is longer than the longest
-     * found match, we have a new winner */
-    if (name_len >= list->found_len && 
-        ! strncmp(list->name, name, name_len)) {
-      list->found = 1;
-      list->found_len = name_len;
-      /* if required for parameter_lists that have not saved w_df, etc (eg exclude lists) */
-      if (list->w_df) w_df = list->w_df;
-      if (list->c_df) c_df = list->c_df;
-      if (list->w_dfp>=0.0) w_dfp = list->w_dfp;
-      if (list->c_dfp>=0.0) c_dfp = list->c_dfp;
-      return TRUE;
-    }
-    list = list->name_next;
-  }
-  return FALSE;
-}
 
 
 
@@ -695,6 +678,8 @@ print_help (void)
   printf ("    %s\n", _("Ignore all filesystems of indicated type (may be repeated)"));
   printf (" %s\n", "-m, --mountpoint");
   printf ("    %s\n", _("Display the mountpoint instead of the partition"));
+  printf (" %s\n", "-E, --exact-match");
+  printf ("    %s\n", _("For paths or partitions specified with -p, only check for exact paths"));
   printf (" %s\n", "-e, --errors-only");
   printf ("    %s\n", _("Display only devices/mountpoints with errors"));
   printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
@@ -713,5 +698,5 @@ print_usage (void)
 {
   printf (_("Usage:"));
   printf (" %s -w limit -c limit [-p path | -x device] [-t timeout]", progname);
-  printf ("[-m] [-e] [-W limit] [-K limit] [-v] [-q]\n");
+  printf ("[-m] [-e] [-W limit] [-K limit] [-v] [-q] [-E]\n");
 }
