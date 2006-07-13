@@ -49,13 +49,14 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include <stdarg.h>
 #include "fsusage.h"
 #include "mountlist.h"
+#include "intprops.h"	/* necessary for TYPE_MAXIMUM */
 #if HAVE_LIMITS_H
 # include <limits.h>
 #endif
 
 
 /* If nonzero, show inode information. */
-static int inode_format;
+static int inode_format = 1;
 
 /* If nonzero, show even filesystems with zero size or
    uninteresting types. */
@@ -118,16 +119,11 @@ static struct mount_entry *mount_list;
 int process_arguments (int, char **);
 void print_path (const char *mypath);
 int validate_arguments (uintmax_t, uintmax_t, double, double, double, double, char *);
-int check_disk (double usp, uintmax_t free_disk, double uisp);
 void print_help (void);
 void print_usage (void);
 
-uintmax_t w_df = 0;
-uintmax_t c_df = 0;
 double w_dfp = -1.0;
 double c_dfp = -1.0;
-double w_idfp = -1.0;
-double c_idfp = -1.0;
 char *path;
 char *exclude_device;
 char *units;
@@ -136,20 +132,32 @@ int verbose = 0;
 int erronly = FALSE;
 int display_mntp = FALSE;
 int exact_match = FALSE;
+char *warn_freespace_units = NULL;
+char *crit_freespace_units = NULL;
+char *warn_freespace_percent = NULL;
+char *crit_freespace_percent = NULL;
+char *warn_usedspace_units = NULL;
+char *crit_usedspace_units = NULL;
+char *warn_usedspace_percent = NULL;
+char *crit_usedspace_percent = NULL;
+char *warn_usedinodes_percent = NULL;
+char *crit_usedinodes_percent = NULL;
 
 
 int
 main (int argc, char **argv)
 {
-  double usp = -1.0, uisp = -1.0;
   int result = STATE_UNKNOWN;
   int disk_result = STATE_UNKNOWN;
-  char file_system[MAX_INPUT_BUFFER];
   char *output;
   char *details;
   char *perf;
-  uintmax_t psize;
-  float free_space, free_space_pct, total_space, inode_space_pct;
+  float inode_space_pct;
+  uintmax_t total, available, available_to_root, used;
+  double dfree_pct = -1, dused_pct = -1;
+  double dused_units, dfree_units, dtotal_units;
+  double dused_inodes_percent;
+  int temp_result;
 
   struct mount_entry *me;
   struct fs_usage fsp;
@@ -175,13 +183,12 @@ main (int argc, char **argv)
   if (! path_select_list) {
     for (me = mount_list; me; me = me->me_next) {
       path = np_add_parameter(&path_select_list, me->me_mountdir);
-      path->w_df = w_df;
-      path->c_df = c_df;
-      path->w_dfp = w_dfp;
-      path->c_dfp = c_dfp;
-      path->w_idfp = w_idfp;
-      path->c_idfp = c_idfp;
       path->best_match = me;
+      set_thresholds(&path->freespace_units, warn_freespace_units, crit_freespace_units);
+      set_thresholds(&path->freespace_percent, warn_freespace_percent, crit_freespace_percent);
+      set_thresholds(&path->usedspace_units, warn_usedspace_units, crit_usedspace_units);
+      set_thresholds(&path->usedspace_percent, warn_usedspace_percent, crit_usedspace_percent);
+      set_thresholds(&path->usedinodes_percent, warn_usedinodes_percent, crit_usedinodes_percent);
     }
   } else {
     np_set_best_match(path_select_list, mount_list, exact_match);
@@ -199,12 +206,6 @@ main (int argc, char **argv)
   /* Process for every path in list */
   for (path = path_select_list; path; path=path->name_next) {
     me = path->best_match;
-    w_df = path->w_df;
-    c_df = path->c_df;
-    w_dfp = path->w_dfp;
-    c_dfp = path->c_dfp;
-    w_idfp = path->w_idfp;
-    c_idfp = path->c_idfp;
 
     /* Filters */
 
@@ -233,13 +234,67 @@ main (int argc, char **argv)
     get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
 
     if (fsp.fsu_blocks && strcmp ("none", me->me_mountdir)) {
-      usp = (double)(fsp.fsu_blocks - fsp.fsu_bavail) * 100 / fsp.fsu_blocks;
-                        uisp = (double)(fsp.fsu_files - fsp.fsu_ffree) * 100 / fsp.fsu_files;
-      disk_result = check_disk (usp, fsp.fsu_bavail, uisp);
+      total = fsp.fsu_blocks;
+      available = fsp.fsu_bavail;
+      available_to_root = fsp.fsu_bfree;
+      used = total - available_to_root;
 
+      /* I don't understand the below, but it is taken from coreutils' df */
+      /* Is setting dused_pct, in the best possible way */
+      if (used <= TYPE_MAXIMUM(uintmax_t) / 100) {
+        uintmax_t u100 = used * 100;
+        uintmax_t nonroot_total = used + available;
+        dused_pct = u100 / nonroot_total + (u100 % nonroot_total != 0);
+      } else {
+        /* Possible rounding errors - see coreutils' df for more explanation */
+        double u = used;
+        double a = available;
+        double nonroot_total = u + a;
+        if (nonroot_total) {
+          long int lipct = dused_pct = u * 100 / nonroot_total;
+          double ipct = lipct;
 
-      result = max_state (disk_result, result);
-      psize = fsp.fsu_blocks*fsp.fsu_blocksize/mult;
+          /* Like 'pct = ceil (dpct);', but without ceil - from coreutils again */
+          if (ipct - 1 < dused_pct && dused_pct <= ipct + 1)
+            dused_pct = ipct + (ipct < dused_pct);
+        }
+      }
+
+      dfree_pct = 100 - dused_pct;
+      dused_units = used*fsp.fsu_blocksize/mult;
+      dfree_units = available*fsp.fsu_blocksize/mult;
+      dtotal_units = total*fsp.fsu_blocksize/mult;
+      dused_inodes_percent = (fsp.fsu_files - fsp.fsu_ffree) * 100 / fsp.fsu_files;
+
+      if (verbose >= 3) {
+        printf ("For %s, used_pct=%g free_pct=%g used_units=%g free_units=%g total_units=%g used_inodes_pct=%g\n", 
+          me->me_mountdir, dused_pct, dfree_pct, dused_units, dfree_units, dtotal_units, dused_inodes_percent);
+      }
+
+      /* Threshold comparisons */
+
+      temp_result = get_status(dfree_units, path->freespace_units);
+      if (verbose >=3) printf("Freespace_units result=%d\n", temp_result);
+      result = max_state( result, temp_result );
+
+      temp_result = get_status(dfree_pct, path->freespace_percent);
+      if (verbose >=3) printf("Freespace%% result=%d\n", temp_result);
+      result = max_state( result, temp_result );
+
+      temp_result = get_status(dused_units, path->usedspace_units);
+      if (verbose >=3) printf("Usedspace_units result=%d\n", temp_result);
+      result = max_state( result, temp_result );
+
+      temp_result = get_status(dused_pct, path->usedspace_percent);
+      if (verbose >=3) printf("Usedspace_percent result=%d\n", temp_result);
+      result = max_state( result, temp_result );
+
+      temp_result = get_status(dused_inodes_percent, path->usedinodes_percent);
+      if (verbose >=3) printf("Usedinodes_percent result=%d\n", temp_result);
+      result = max_state( result, temp_result );
+
+      
+
 
 
                         /* Moved this computation up here so we can add it
@@ -248,33 +303,33 @@ main (int argc, char **argv)
 
 
       asprintf (&perf, "%s %s", perf,
-                perfdata ((!strcmp(file_system, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
-                          psize-(fsp.fsu_bavail*fsp.fsu_blocksize/mult), units,
-                          TRUE, min ((uintmax_t)psize-(uintmax_t)w_df, (uintmax_t)((1.0-w_dfp/100.0)*psize)),
-                          TRUE, min ((uintmax_t)psize-(uintmax_t)c_df, (uintmax_t)((1.0-c_dfp/100.0)*psize)),
-                                            TRUE, inode_space_pct,
+                perfdata ((!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
+                          dused_units, units,
+                          FALSE, 0, /* min ((uintmax_t)dtotal_units-(uintmax_t)w_df, (uintmax_t)((1.0-w_dfp/100.0)*dtotal_units)), */
+                          FALSE, 0, /* min ((uintmax_t)dtotal_units-(uintmax_t)c_df, (uintmax_t)((1.0-c_dfp/100.0)*dtotal_units)), */
+                          FALSE, 0, /* inode_space_pct, */
+                          FALSE, 0));; /* dtotal_units)); */
 
-                          TRUE, psize));
       if (disk_result==STATE_OK && erronly && !verbose)
         continue;
 
-      free_space = (float)fsp.fsu_bavail*fsp.fsu_blocksize/mult;
-      free_space_pct = (float)fsp.fsu_bavail*100/fsp.fsu_blocks;
-      total_space = (float)fsp.fsu_blocks*fsp.fsu_blocksize/mult;
-      if (disk_result!=STATE_OK || verbose>=0)
+      if (disk_result!=STATE_OK || verbose>=0) {
         asprintf (&output, ("%s %s %.0f %s (%.0f%% inode=%.0f%%);"),
                   output,
-                  (!strcmp(file_system, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
-                  free_space,
+                  (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
+                  dfree_units,
                   units,
-            free_space_pct,
+            dfree_pct,
             inode_space_pct);
+      }
 
+      /* Need to do a similar one
       asprintf (&details, _("%s\n\
 %.0f of %.0f %s (%.0f%% inode=%.0f%%) free on %s (type %s mounted on %s) warn:%lu crit:%lu warn%%:%.0f%% crit%%:%.0f%%"),
-                details, free_space, total_space, units, free_space_pct, inode_space_pct,
+                details, dfree_units, dtotal_units, units, dfree_pct, inode_space_pct,
                 me->me_devname, me->me_type, me->me_mountdir,
                 (unsigned long)w_df, (unsigned long)c_df, w_dfp, c_dfp);
+      */
 
     }
 
@@ -299,14 +354,6 @@ process_arguments (int argc, char **argv)
   struct parameter_list *temp_list;
   int result = OK;
   struct stat *stat_buf;
-  char *warn_freespace = NULL;
-  char *crit_freespace = NULL;
-  char *warn_freespace_percent = NULL;
-  char *crit_freespace_percent = NULL;
-  char temp_string[MAX_INPUT_BUFFER];
-
-  unsigned long l;
-  double f;
 
   int option = 0;
   static struct option longopts[] = {
@@ -359,65 +406,51 @@ process_arguments (int argc, char **argv)
       else {
         usage2 (_("Timeout interval must be a positive integer"), optarg);
       }
+
+    /* See comments for 'c' */
     case 'w':                 /* warning threshold */
-      /*
       if (strstr(optarg, "%")) {
-        printf("Got percent with optarg=%s\n", optarg);
-        warn_freespace_percent = optarg;
+        if (*optarg == '@') {
+          warn_freespace_percent = optarg;
+        } else {
+          asprintf(&warn_freespace_percent, "@%s", optarg);
+        }
       } else {
-	warn_freespace = optarg;
+        if (*optarg == '@') {
+	  warn_freespace_units = optarg;
+        } else {
+          asprintf(&warn_freespace_units, "@%s", optarg);
+        }
       }
       break;
-      */
-      if (is_intnonneg (optarg)) {
-        w_df = atoi (optarg);
-        break;
-      }
-      else if (strpbrk (optarg, ",:") &&
-               strstr (optarg, "%") &&
-               sscanf (optarg, "%lu%*[:,]%lf%%", &l, &w_dfp) == 2) {
-        w_df = (uintmax_t)l;
-        break;
-      }
-      else if (strstr (optarg, "%") && sscanf (optarg, "%lf%%", &w_dfp) == 1) {
-        break;
-      }
-      else {
-        usage4 (_("Warning threshold must be integer or percentage!"));
-      }
+
+    /* Awful mistake where the range values do not make sense. Normally, 
+       you alert if the value is within the range, but since we are using
+       freespace, we have to alert if outside the range. Thus we artifically
+       force @ at the beginning of the range, so that it is backwards compatible
+    */
     case 'c':                 /* critical threshold */
-      if (is_intnonneg (optarg)) {
-        c_df = atoi (optarg);
-        break;
+      if (strstr(optarg, "%")) {
+        if (*optarg == '@') {
+          crit_freespace_percent = optarg;
+        } else {
+          asprintf(&crit_freespace_percent, "@%s", optarg);
+        }
+      } else {
+        if (*optarg == '@') {
+          crit_freespace_units = optarg;
+        } else {
+          asprintf(&crit_freespace_units, "@%s", optarg);
+        }
       }
-      else if (strpbrk (optarg, ",:") &&
-               strstr (optarg, "%") &&
-               sscanf (optarg, "%lu%*[,:]%lf%%", &l, &c_dfp) == 2) {
-        c_df = (uintmax_t)l;
-        break;
-      }
-      else if (strstr (optarg, "%") && sscanf (optarg, "%lf%%", &c_dfp) == 1) {
-        break;
-      }
-      else {
-        usage4 (_("Critical threshold must be integer or percentage!"));
-      }
+      break;
 
-
-                case 'W':                                                                       /* warning inode threshold */
-                        if (strstr (optarg, "%") && sscanf (optarg, "%lf%%", &w_idfp) == 1) {
-                        break;
-                        }
-                        else {
-                      usage (_("Warning inode threshold must be percentage!\n"));
-                  }
-                case 'K':                                                                       /* kritical inode threshold */
-                        if (strstr (optarg, "%") && sscanf (optarg, "%lf%%", &c_idfp) == 1) {
-                        break;
-                        }
-                        else {
-                      usage (_("Critical inode threshold must be percentage!\n"));
-                       }
+    case 'W':			/* warning inode threshold */
+      warn_usedinodes_percent = optarg;
+      break;
+    case 'K':			/* critical inode threshold */
+      crit_usedinodes_percent = optarg;
+      break;
     case 'u':
       if (units)
         free(units);
@@ -458,13 +491,18 @@ process_arguments (int argc, char **argv)
       show_local_fs = 1;      
       break;
     case 'p':                 /* select path */
+      if (! (warn_freespace_units || crit_freespace_units || warn_freespace_percent || 
+             crit_freespace_percent || warn_usedspace_units || crit_usedspace_units ||
+             warn_usedspace_percent || crit_usedspace_percent || warn_usedinodes_percent ||
+             crit_usedinodes_percent)) {
+        die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set a threshold value before using -p\n"));
+      }
       se = np_add_parameter(&path_select_list, optarg);
-      se->w_df = w_df;
-      se->c_df = c_df;
-      se->w_dfp = w_dfp;
-      se->c_dfp = c_dfp;
-      se->w_idfp = w_idfp;
-      se->c_idfp = c_idfp;
+      set_thresholds(&se->freespace_units, warn_freespace_units, crit_freespace_units);
+      set_thresholds(&se->freespace_percent, warn_freespace_percent, crit_freespace_percent);
+      set_thresholds(&se->usedspace_units, warn_usedspace_units, crit_usedspace_units);
+      set_thresholds(&se->usedspace_percent, warn_usedspace_percent, crit_usedspace_percent);
+      set_thresholds(&se->usedinodes_percent, warn_usedinodes_percent, crit_usedinodes_percent);
       break;
     case 'x':                 /* exclude path or partition */
       np_add_name(&dp_exclude_list, optarg);
@@ -488,12 +526,16 @@ process_arguments (int argc, char **argv)
       display_mntp = TRUE;
       break;
     case 'C':
-      w_df = 0;
-      c_df = 0;
-      w_dfp = -1.0;
-      c_dfp = -1.0;
-      w_idfp = -1.0;
-      c_idfp = -1.0;
+      warn_freespace_units = NULL;
+      crit_freespace_units = NULL;
+      warn_usedspace_units = NULL;
+      crit_usedspace_units = NULL;
+      warn_freespace_percent = NULL;
+      crit_freespace_percent = NULL;
+      warn_usedspace_percent = NULL;
+      crit_usedspace_percent = NULL;
+      warn_usedinodes_percent = NULL;
+      crit_usedinodes_percent = NULL;
       break;
     case 'V':                 /* version */
       print_revision (progname, revision);
@@ -506,22 +548,26 @@ process_arguments (int argc, char **argv)
     }
   }
 
-  /* Support for "check_disk warn crit [fs]" with thresholds at used level */
+  /* Support for "check_disk warn crit [fs]" with thresholds at used% level */
   c = optind;
-  if (w_dfp < 0 && argc > c && is_intnonneg (argv[c]))
-    w_dfp = (100.0 - atof (argv[c++]));
+  if (warn_usedspace_percent == NULL && argc > c && is_intnonneg (argv[c]))
+    warn_usedspace_percent = argv[c++];
 
-  if (c_dfp < 0 && argc > c && is_intnonneg (argv[c]))
-    c_dfp = (100.0 - atof (argv[c++]));
+  if (crit_usedspace_percent == NULL && argc > c && is_intnonneg (argv[c]))
+    crit_usedspace_percent = argv[c++];
 
   if (argc > c && path == NULL) {
     se = np_add_parameter(&path_select_list, strdup(argv[c++]));
-    se->w_df = w_df;
-    se->c_df = c_df;
-    se->w_dfp = w_dfp;
-    se->c_dfp = c_dfp;
-    se->w_idfp = w_idfp;
-    se->c_idfp = c_idfp;
+    set_thresholds(&se->freespace_units, warn_freespace_units, crit_freespace_units);
+    set_thresholds(&se->freespace_percent, warn_freespace_percent, crit_freespace_percent);
+    set_thresholds(&se->usedspace_units, warn_usedspace_units, crit_usedspace_units);
+    set_thresholds(&se->usedspace_percent, warn_usedspace_percent, crit_usedspace_percent);
+    set_thresholds(&se->usedinodes_percent, warn_usedinodes_percent, crit_usedinodes_percent);
+  }
+
+  if (units == NULL) {
+    units = strdup ("MB");
+    mult = (uintmax_t)1024 * 1024;
   }
 
   if (path_select_list) {
@@ -533,7 +579,7 @@ process_arguments (int argc, char **argv)
 	printf("DISK %s - ", _("CRITICAL"));
         die (STATE_CRITICAL, _("%s does not exist\n"), temp_list->name);
       }
-      if (validate_arguments (temp_list->w_df,
+      /* if (validate_arguments (temp_list->w_df,
                               temp_list->c_df,
                               temp_list->w_dfp,
                               temp_list->c_dfp,
@@ -541,12 +587,14 @@ process_arguments (int argc, char **argv)
                               temp_list->c_idfp,
                               temp_list->name) == ERROR)
         result = ERROR;
+      */
       temp_list = temp_list->name_next;
     }
     free(stat_buf);
     return result;
   } else {
-    return validate_arguments (w_df, c_df, w_dfp, c_dfp, w_idfp, c_idfp, NULL);
+    return TRUE;
+    /* return validate_arguments (w_df, c_df, w_dfp, c_dfp, w_idfp, c_idfp, NULL); */
   }
 }
 
@@ -560,10 +608,12 @@ print_path (const char *mypath)
   else
     printf (_(" for %s\n"), mypath);
 
-  return;
+  //return;
 }
 
 
+
+/* TODO: Remove?
 
 int
 validate_arguments (uintmax_t w, uintmax_t c, double wp, double cp, double iwp, double icp, char *mypath)
@@ -597,36 +647,11 @@ INPUT ERROR: C_DF (%lu) should be less than W_DF (%lu) and both should be greate
     return ERROR;
   }
   
-  if (units == NULL) {
-    units = strdup ("MB");
-    mult = (uintmax_t)1024 * 1024;
-  }
   return OK;
 }
 
+*/
 
-
-int
-check_disk (double usp, uintmax_t free_disk, double uisp)
-{
-       int result = STATE_UNKNOWN;
-       /* check the percent used space against thresholds */
-       if (usp >= 0.0 && c_dfp >=0.0 && usp >= (100.0 - c_dfp))
-               result = STATE_CRITICAL;
-       else if (uisp >= 0.0 && c_idfp >=0.0 && uisp >= (100.0 - c_idfp))
-               result = STATE_CRITICAL;
-       else if (c_df > 0 && free_disk <= c_df)
-               result = STATE_CRITICAL;
-       else if (usp >= 0.0 && w_dfp >=0.0 && usp >= (100.0 - w_dfp))
-               result = STATE_WARNING;
-       else if (uisp >= 0.0 && w_idfp >=0.0 && uisp >= (100.0 - w_idfp))
-               result = STATE_WARNING;
-       else if (w_df > 0 && free_disk <= w_df)
-               result = STATE_WARNING;
-       else if (usp >= 0.0)
-    result = STATE_OK;
-  return result;
-}
 
 
 

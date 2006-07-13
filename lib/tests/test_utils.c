@@ -31,13 +31,21 @@ main (int argc, char **argv)
 	thresholds *thresholds = NULL;
 	int	rc;
 
-	plan_tests(74);
+	plan_tests(82);
 
 	range = parse_range_string("6");
 	ok( range != NULL, "'6' is valid range");
 	ok( range->start == 0, "Start correct");
 	ok( range->start_infinity == FALSE, "Not using negative infinity");
 	ok( range->end == 6, "End correct");
+	ok( range->end_infinity == FALSE, "Not using infinity");
+	free(range);
+
+	range = parse_range_string("1:12%%");
+	ok( range != NULL, "'1:12%%' is valid - percentages are ignored");
+	ok( range->start == 1, "Start correct");
+	ok( range->start_infinity == FALSE, "Not using negative infinity");
+	ok( range->end == 12, "End correct");
 	ok( range->end_infinity == FALSE, "Not using infinity");
 	free(range);
 
@@ -113,6 +121,11 @@ main (int argc, char **argv)
 
 	range = parse_range_string("2:1");
 	ok( range == NULL, "'2:1' rejected");
+
+	rc = _set_thresholds(&thresholds, NULL, NULL);
+	ok( rc == 0, "Thresholds (NULL, NULL) set");
+	ok( thresholds->warning == NULL, "Warning not set");
+	ok( thresholds->critical == NULL, "Critical not set");
 
 	rc = _set_thresholds(&thresholds, NULL, "80");
 	ok( rc == 0, "Thresholds (NULL, '80') set");

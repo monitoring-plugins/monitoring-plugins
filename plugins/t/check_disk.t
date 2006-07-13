@@ -52,8 +52,8 @@ if ($free_on_mp1 > $free_on_mp2) {
 }
 
 
-$result = NPTest->testCmd( "./check_disk -w 100 -c 100 -p $more_free" );
-cmp_ok( $result->return_code, '==', 0, "At least 100 bytes available on $more_free");
+$result = NPTest->testCmd( "./check_disk -w 1 -c 1 -p $more_free" );
+cmp_ok( $result->return_code, '==', 0, "At least 1 MB available on $more_free");
 like  ( $result->output, $successOutput, "OK output" );
 
 $result = NPTest->testCmd( "./check_disk 100 100 $more_free" );
@@ -110,35 +110,28 @@ cmp_ok( $result->return_code, '==', 2, "And reversing arguments should not make 
 
 
 
-
-$result = NPTest->testCmd(
-	"./check_disk -w 10% -c 15% -p $mountpoint_valid"
-	);
-cmp_ok( $result->return_code, '==', 3, "Invalid command line options" );
-
 TODO: {
-    local $TODO = "-p must come after -w and -c";
-    $result = NPTest->testCmd( 
+	local $TODO = "Invalid percent figures";
+	$result = NPTest->testCmd(
+		"./check_disk -w 10% -c 15% -p $mountpoint_valid"
+		);
+	cmp_ok( $result->return_code, '==', 3, "Invalid command line options" );
+}
+
+$result = NPTest->testCmd( 
 	"./check_disk -p $mountpoint_valid -w 10% -c 15%"
 	);
-    cmp_ok( $result->return_code, "==", 3, "Invalid options - order unimportant" );
-}
+cmp_ok( $result->return_code, "==", 3, "Invalid options: -p must come after thresholds" );
 
 $result = NPTest->testCmd( "./check_disk -w 100% -c 100% ".${mountpoint_valid} );      # 100% empty
 cmp_ok( $result->return_code, "==", 2, "100% empty" );
 like( $result->output, $failureOutput, "Right output" );
 
-TODO: {
-	local $TODO = "Requesting 100GB free is should be critical";
-	$result = NPTest->testCmd( "./check_disk -w 100000 -c 100000 $mountpoint_valid" );
-	cmp_ok( $result->return_code, '==', 2, "Check for 100GB free" );
-}
+$result = NPTest->testCmd( "./check_disk -w 100000 -c 100000 $mountpoint_valid" );
+cmp_ok( $result->return_code, '==', 2, "Check for 100GB free" );
 
-TODO: {
-    local $TODO = "-u GB does not work";
-    $result = NPTest->testCmd( "./check_disk -w 100 -c 100 -u GB ".${mountpoint_valid} );      # 100 GB empty
-    cmp_ok( $result->return_code, "==", 2, "100 GB empty" );
-}
+$result = NPTest->testCmd( "./check_disk -w 100 -c 100 -u GB ".${mountpoint_valid} );      # 100 GB empty
+cmp_ok( $result->return_code, "==", 2, "100 GB empty" );
 
 
 # Checking old syntax of check_disk warn crit [fs], with warn/crit at USED% thresholds
@@ -151,17 +144,17 @@ cmp_ok( $result->return_code, '==', 0, "Old syntax: 100% used" );
 $result = NPTest->testCmd( "./check_disk 0 100 $mountpoint_valid" );
 cmp_ok( $result->return_code, '==', 1, "Old syntax: warn 0% used" );
 
-$result = NPTest->testCmd( "./check_disk 0 200 $mountpoint_valid" );
-cmp_ok( $result->return_code, '==', 3, "Old syntax: Error with values outside percent range" );
-
 TODO: {
-	local $TODO = "Need to properly check input";
+	local $TODO = "Invalid values";
+	$result = NPTest->testCmd( "./check_disk 0 200 $mountpoint_valid" );
+	cmp_ok( $result->return_code, '==', 3, "Old syntax: Error with values outside percent range" );
+
 	$result = NPTest->testCmd( "./check_disk 200 200 $mountpoint_valid" );
 	cmp_ok( $result->return_code, '==', 3, "Old syntax: Error with values outside percent range" );
-}
 
-$result = NPTest->testCmd( "./check_disk 200 0 $mountpoint_valid" );
-cmp_ok( $result->return_code, '==', 3, "Old syntax: Error with values outside percent range" );
+	$result = NPTest->testCmd( "./check_disk 200 0 $mountpoint_valid" );
+	cmp_ok( $result->return_code, '==', 3, "Old syntax: Error with values outside percent range" );
+}
 
 $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p /bob" );
 cmp_ok( $result->return_code, '==', 2, "Checking /bob - return error because /bob does not exist" );

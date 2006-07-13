@@ -5,6 +5,8 @@ This file documents the major additions and syntax changes between releases.
 	New check_apt plugin
 	Notice: plugins in contrib/ will start to be removed from this distribution.
 	  Please check at http://www.nagiosexchange.org for contributed plugins
+	Major bug fixes to check_disk where values were incorrectly calculated and alerted on.
+          Perf data for warn/crit/max/min have been removed, to be readded soon.
 
 1.4.3
 	Setuid plugins (check_dhcp, check_icmp) separated into plugins-root/. Run make install as root to install
