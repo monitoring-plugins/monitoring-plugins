@@ -80,9 +80,6 @@ void set_thresholds(thresholds **, char *, char *);
 int check_range(double, range *);
 int get_status(double, thresholds *);
 
-/* I think this needs to be defined even if you use the system version */
-char *basename(const char *path);
-
 #ifndef HAVE_GETTIMEOFDAY
 int gettimeofday(struct timeval *, struct timezone *);
 #endif

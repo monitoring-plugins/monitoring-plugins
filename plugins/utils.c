@@ -640,33 +640,6 @@ strpcat (char *dest, const char *src, const char *str)
 	return dest;
 }
 
-#ifndef HAVE_BASENAME
-/* function modified from coreutils base_name function - see ACKNOWLEDGEMENTS */
-char *basename(const char *path) {
-	char const *base = path;
-	char const *p;
-	for (p = base; *p; p++) {
-		if (*p == '/') {
-			/* Treat multiple adjacent slashes like single slash */
-			do p++;
-			while (*p == '/');
-
-			/* If filename ends in slash, use trailing slash
-			   as basename if no non-slashes found */
-			if (! *p) {
-				if (*base == '/')
-					base = p - 1;
-				break;
-			}
-
-			/* *p is non-slash preceded by slash */
-			base = p;
-		}
-	}
-	return (char *) base;
-}
-#endif
-
 /******************************************************************************
  *
  * Print perfdata in a standard format
