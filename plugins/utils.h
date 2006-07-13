@@ -20,7 +20,6 @@ suite of plugins. */
 void support (void);
 char *clean_revstring (const char *);
 void print_revision (const char *, const char *);
-void die (int, const char *, ...) __attribute__((noreturn,format(printf, 2, 3)));
 
 /* Handle timeouts */
 
@@ -57,28 +56,6 @@ struct timeval {
 	long tv_usec;  /* microseconds */
 };
 #endif
-
-#define OUTSIDE 0
-#define INSIDE  1
-
-typedef struct range_struct {
-	double	start;
-	int	start_infinity;		/* FALSE (default) or TRUE */
-	double	end;
-	int	end_infinity;
-	int	alert_on;		/* OUTSIDE (default) or INSIDE */
-	} range;
-
-typedef struct thresholds_struct {
-	range	*warning;
-	range	*critical;
-	} thresholds;
-
-range *parse_range_string (char *);
-int _set_thresholds(thresholds **, char *, char *);
-void set_thresholds(thresholds **, char *, char *);
-int check_range(double, range *);
-int get_status(double, thresholds *);
 
 #ifndef HAVE_GETTIMEOFDAY
 int gettimeofday(struct timeval *, struct timezone *);
@@ -131,8 +108,6 @@ char *fperfdata (const char *,
  double,
  int,
  double);
-
-char *np_escaped_string (const char *);
 
 /* The idea here is that, although not every plugin will use all of these, 
    most will or should.  Therefore, for consistency, these very common 

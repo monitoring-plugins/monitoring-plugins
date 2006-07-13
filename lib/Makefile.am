@@ -1,5 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
+SUBDIRS = tests
+
 noinst_LIBRARIES = libcoreutils.a libnagiosplug.a
 
 # Will auto pick up fsusage.c mountlist.c
@@ -39,12 +41,15 @@ other_coreutils_files = \
 libcoreutils_a_LIBADD = $(LIBOBJS)
 libcoreutils_a_DEPENDENCIES = $(libcoreutils_a_LIBADD)
 
-libnagiosplug_a_SOURCES = snprintf.c
+libnagiosplug_a_SOURCES = snprintf.c utils_base.c utils_disk.c
 
-INCLUDES = -I$(srcdir) -I$(top_srcdir)/intl
+INCLUDES = -I$(srcdir) -I$(top_srcdir)/intl -I$(top_srcdir)/plugins
 
 print_coreutil_files:
 	@echo $(libcoreutils_a_SOURCES) $(other_coreutils_files) $(EXTRA_DIST)
+
+test:
+	cd tests && make test
 
 # Below are from coreutil's lib/Makefile.am
 BUILT_SOURCES = $(STDBOOL_H)

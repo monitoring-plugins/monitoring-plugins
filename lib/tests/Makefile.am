@@ -5,7 +5,7 @@ noinst_PROGRAMS = @EXTRA_TEST@
 TESTS = @EXTRA_TEST@
 check_PROGRAMS = @EXTRA_TEST@
 
-INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/intl 
+INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/intl -I$(top_srcdir)/plugins
 
 EXTRA_PROGRAMS = test_utils test_disk
 
@@ -16,7 +16,7 @@ LIBS = @LIBINTL@
 test_utils_SOURCES = test_utils.c
 test_utils_CFLAGS = -g -I..
 test_utils_LDFLAGS = -L/usr/local/lib -ltap
-test_utils_LDADD = ../utils.o
+test_utils_LDADD = ../utils_base.o
 
 test_disk_SOURCES = test_disk.c
 test_disk_CFLAGS = -g -I..

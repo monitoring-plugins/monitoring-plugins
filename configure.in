@@ -1699,7 +1699,7 @@ AC_OUTPUT(
   lib/Makefile 
   m4/Makefile 
   plugins/Makefile 
-  plugins/tests/Makefile
+  lib/tests/Makefile
   plugins-root/Makefile
   plugins-scripts/Makefile 
   plugins-scripts/subst 

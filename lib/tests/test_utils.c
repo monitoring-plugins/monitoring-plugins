@@ -18,11 +18,8 @@
  
 ******************************************************************************/
 
-const char *progname = "utils";
-
 #include "common.h"
-#include "utils.h"
-#include "popen.h"
+#include "utils_base.h"
 
 #include "tap.h"
 
@@ -169,8 +166,4 @@ main (int argc, char **argv)
 	ok( strcmp(test, "path") == 0, "basename okay");
 
 	return exit_status();
-}
-
-void print_usage() {
-	printf("Dummy");
 }

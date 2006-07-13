@@ -1,7 +1,5 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = tests
-
 VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t 
 
 INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/intl @LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@
@@ -45,7 +43,6 @@ TESTS_ENVIRONMENT = perl -I $(top_builddir) -I $(top_srcdir)
 TESTS = @PLUGIN_TEST@
 
 test:
-	cd tests && make test
 	perl -I $(top_builddir) -I $(top_srcdir) ../test.pl
 
 AM_INSTALL_PROGRAM_FLAGS = @INSTALL_OPTS@
@@ -55,7 +52,7 @@ AM_INSTALL_PROGRAM_FLAGS = @INSTALL_OPTS@
 
 check_apt_LDADD = $(BASEOBJS) runcmd.o
 check_dig_LDADD = $(NETLIBS) runcmd.o 
-check_disk_LDADD = $(BASEOBJS) popen.o utils_disk.o
+check_disk_LDADD = $(BASEOBJS) popen.o
 check_dns_LDADD = $(NETLIBS) runcmd.o
 check_dummy_LDADD = $(BASEOBJS)
 check_fping_LDADD = $(NETLIBS) popen.o
@@ -98,7 +95,7 @@ urlize_LDADD = $(BASEOBJS) popen.o
 
 check_apt_DEPENDENCIES = check_apt.c $(BASEOBJS) runcmd.o $(DEPLIBS)
 check_dig_DEPENDENCIES = check_dig.c $(NETOBJS) runcmd.o $(DEPLIBS)
-check_disk_DEPENDENCIES = check_disk.c $(BASEOBJS) popen.o utils_disk.o $(DEPLIBS) 
+check_disk_DEPENDENCIES = check_disk.c $(BASEOBJS) popen.o $(DEPLIBS) 
 check_dns_DEPENDENCIES = check_dns.c $(NETOBJS) runcmd.o $(DEPLIBS)
 check_dummy_DEPENDENCIES = check_dummy.c $(DEPLIBS)
 check_fping_DEPENDENCIES = check_fping.c $(NETOBJS) popen.o $(DEPLIBS)

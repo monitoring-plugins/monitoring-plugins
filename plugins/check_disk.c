@@ -45,6 +45,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include <assert.h>
 #include "popen.h"
 #include "utils.h"
+#include "utils_disk.h"
 #include <stdarg.h>
 #include "fsusage.h"
 #include "mountlist.h"
@@ -52,7 +53,6 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 # include <limits.h>
 #endif
 
-#include "utils_disk.h"
 
 /* If nonzero, show inode information. */
 static int inode_format;
@@ -94,7 +94,7 @@ static struct name_list *fs_exclude_list;
 
 static struct name_list *dp_exclude_list;
 
-static struct parameter_list *path_select_list;
+static struct parameter_list *path_select_list = NULL;
 
 /* Linked list of mounted filesystems. */
 static struct mount_entry *mount_list;
@@ -296,12 +296,17 @@ process_arguments (int argc, char **argv)
 {
   int c;
   struct parameter_list *se;
-  struct parameter_list **pathtail = &path_select_list;
   struct parameter_list *temp_list;
   int result = OK;
   struct stat *stat_buf;
+  char *warn_freespace = NULL;
+  char *crit_freespace = NULL;
+  char *warn_freespace_percent = NULL;
+  char *crit_freespace_percent = NULL;
+  char temp_string[MAX_INPUT_BUFFER];
 
   unsigned long l;
+  double f;
 
   int option = 0;
   static struct option longopts[] = {
@@ -355,6 +360,15 @@ process_arguments (int argc, char **argv)
         usage2 (_("Timeout interval must be a positive integer"), optarg);
       }
     case 'w':                 /* warning threshold */
+      /*
+      if (strstr(optarg, "%")) {
+        printf("Got percent with optarg=%s\n", optarg);
+        warn_freespace_percent = optarg;
+      } else {
+	warn_freespace = optarg;
+      }
+      break;
+      */
       if (is_intnonneg (optarg)) {
         w_df = atoi (optarg);
         break;
@@ -444,19 +458,13 @@ process_arguments (int argc, char **argv)
       show_local_fs = 1;      
       break;
     case 'p':                 /* select path */
-      se = (struct parameter_list *) malloc (sizeof (struct parameter_list));
-      se->name = optarg;
-      se->name_next = NULL;
+      se = np_add_parameter(&path_select_list, optarg);
       se->w_df = w_df;
       se->c_df = c_df;
       se->w_dfp = w_dfp;
       se->c_dfp = c_dfp;
       se->w_idfp = w_idfp;
       se->c_idfp = c_idfp;
-      se->found = 0;
-      se->found_len = 0;
-      *pathtail = se;
-      pathtail = &se->name_next;
       break;
     case 'x':                 /* exclude path or partition */
       np_add_name(&dp_exclude_list, optarg);
@@ -507,18 +515,13 @@ process_arguments (int argc, char **argv)
     c_dfp = (100.0 - atof (argv[c++]));
 
   if (argc > c && path == NULL) {
-    se = (struct parameter_list *) malloc (sizeof (struct parameter_list));
-    se->name = strdup (argv[c++]);
-    se->name_next = NULL;
+    se = np_add_parameter(&path_select_list, strdup(argv[c++]));
     se->w_df = w_df;
     se->c_df = c_df;
     se->w_dfp = w_dfp;
     se->c_dfp = c_dfp;
     se->w_idfp = w_idfp;
     se->c_idfp = c_idfp;
-    se->found =0;
-    se->found_len = 0;
-    *pathtail = se;
   }
 
   if (path_select_list) {
@@ -604,7 +607,6 @@ INPUT ERROR: C_DF (%lu) should be less than W_DF (%lu) and both should be greate
 
 
 int
-
 check_disk (double usp, uintmax_t free_disk, double uisp)
 {
        int result = STATE_UNKNOWN;

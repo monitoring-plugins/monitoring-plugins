@@ -21,6 +21,7 @@ install-root:
 	cd plugins-root && $(MAKE) $@
 
 test:
+	cd lib && $(MAKE) test
 	cd plugins; $(MAKE) test
 	cd plugins-scripts; $(MAKE) test
 

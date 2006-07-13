@@ -20,6 +20,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
 #include "utils.h"
+#include "utils_base.h"
 #include "netutils.h"
 
 #include <mysql.h>
