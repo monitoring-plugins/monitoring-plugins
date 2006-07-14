@@ -121,6 +121,7 @@ void print_path (const char *mypath);
 int validate_arguments (uintmax_t, uintmax_t, double, double, double, double, char *);
 void print_help (void);
 void print_usage (void);
+double calculate_percent(uintmax_t, uintmax_t);
 
 double w_dfp = -1.0;
 double c_dfp = -1.0;
@@ -152,7 +153,7 @@ main (int argc, char **argv)
   char *output;
   char *details;
   char *perf;
-  float inode_space_pct;
+  double inode_space_pct;
   uintmax_t total, available, available_to_root, used;
   double dfree_pct = -1, dused_pct = -1;
   double dused_units, dfree_units, dtotal_units;
@@ -239,32 +240,13 @@ main (int argc, char **argv)
       available_to_root = fsp.fsu_bfree;
       used = total - available_to_root;
 
-      /* I don't understand the below, but it is taken from coreutils' df */
-      /* Is setting dused_pct, in the best possible way */
-      if (used <= TYPE_MAXIMUM(uintmax_t) / 100) {
-        uintmax_t u100 = used * 100;
-        uintmax_t nonroot_total = used + available;
-        dused_pct = u100 / nonroot_total + (u100 % nonroot_total != 0);
-      } else {
-        /* Possible rounding errors - see coreutils' df for more explanation */
-        double u = used;
-        double a = available;
-        double nonroot_total = u + a;
-        if (nonroot_total) {
-          long int lipct = dused_pct = u * 100 / nonroot_total;
-          double ipct = lipct;
-
-          /* Like 'pct = ceil (dpct);', but without ceil - from coreutils again */
-          if (ipct - 1 < dused_pct && dused_pct <= ipct + 1)
-            dused_pct = ipct + (ipct < dused_pct);
-        }
-      }
-
+      dused_pct = calculate_percent( used, used + available );	/* used + available can never be > uintmax */
+     
       dfree_pct = 100 - dused_pct;
       dused_units = used*fsp.fsu_blocksize/mult;
       dfree_units = available*fsp.fsu_blocksize/mult;
       dtotal_units = total*fsp.fsu_blocksize/mult;
-      dused_inodes_percent = (fsp.fsu_files - fsp.fsu_ffree) * 100 / fsp.fsu_files;
+      dused_inodes_percent = calculate_percent(fsp.fsu_files - fsp.fsu_ffree, fsp.fsu_files);
 
       if (verbose >= 3) {
         printf ("For %s, used_pct=%g free_pct=%g used_units=%g free_units=%g total_units=%g used_inodes_pct=%g\n", 
@@ -297,9 +279,9 @@ main (int argc, char **argv)
 
 
 
-                        /* Moved this computation up here so we can add it
-                         * to perf */
-                        inode_space_pct = (float)fsp.fsu_ffree*100/fsp.fsu_files;
+      /* Moved this computation up here so we can add it
+       * to perf */
+      inode_space_pct = (1 - dused_inodes_percent) * 100;
 
 
       asprintf (&perf, "%s %s", perf,
@@ -307,23 +289,27 @@ main (int argc, char **argv)
                           dused_units, units,
                           FALSE, 0, /* min ((uintmax_t)dtotal_units-(uintmax_t)w_df, (uintmax_t)((1.0-w_dfp/100.0)*dtotal_units)), */
                           FALSE, 0, /* min ((uintmax_t)dtotal_units-(uintmax_t)c_df, (uintmax_t)((1.0-c_dfp/100.0)*dtotal_units)), */
-                          FALSE, 0, /* inode_space_pct, */
+                          FALSE, 0, /* inode_space_pct - this is not meant to be here???, */
                           FALSE, 0));; /* dtotal_units)); */
 
       if (disk_result==STATE_OK && erronly && !verbose)
         continue;
 
       if (disk_result!=STATE_OK || verbose>=0) {
-        asprintf (&output, ("%s %s %.0f %s (%.0f%% inode=%.0f%%);"),
+        asprintf (&output, "%s %s %.0f %s (%.0f%%",
                   output,
                   (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
                   dfree_units,
                   units,
-            dfree_pct,
-            inode_space_pct);
+                  dfree_pct);
+        if (dused_inodes_percent < 0) {
+          asprintf(&output, "%s inode=-);", output);
+        } else {
+          asprintf(&output, "%s inode=%.0f%%);", output, (1 - dused_inodes_percent) * 100);
+        }
       }
 
-      /* Need to do a similar one
+      /* TODO: Need to do a similar debug line
       asprintf (&details, _("%s\n\
 %.0f of %.0f %s (%.0f%% inode=%.0f%%) free on %s (type %s mounted on %s) warn:%lu crit:%lu warn%%:%.0f%% crit%%:%.0f%%"),
                 details, dfree_units, dtotal_units, units, dfree_pct, inode_space_pct,
@@ -344,6 +330,29 @@ main (int argc, char **argv)
 }
 
 
+double calculate_percent(uintmax_t value, uintmax_t total) {
+  double pct = -1;
+  /* I don't understand the below, but it is taken from coreutils' df */
+  /* Seems to be calculating pct, in the best possible way */
+  if (value <= TYPE_MAXIMUM(uintmax_t) / 100 
+    && total != 0) {
+    uintmax_t u100 = value * 100;
+    pct = u100 / total + (u100 % total != 0);
+  } else {
+    /* Possible rounding errors - see coreutils' df for more explanation */
+    double u = value;
+    double t = total;
+    if (t) {
+      long int lipct = pct = u * 100 / t;
+      double ipct = lipct;
+
+      /* Like 'pct = ceil (dpct);', but without ceil - from coreutils again */
+      if (ipct - 1 < pct && pct <= ipct + 1)
+        pct = ipct + (ipct < pct);
+    }
+  }
+  return pct;
+}
 
 /* process command-line arguments */
 int
