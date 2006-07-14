@@ -42,6 +42,7 @@ libcoreutils_a_LIBADD = $(LIBOBJS)
 libcoreutils_a_DEPENDENCIES = $(libcoreutils_a_LIBADD)
 
 libnagiosplug_a_SOURCES = snprintf.c utils_base.c utils_disk.c
+EXTRA_DIST += utils_base.h utils_disk.h
 
 INCLUDES = -I$(srcdir) -I$(top_srcdir)/intl -I$(top_srcdir)/plugins
 

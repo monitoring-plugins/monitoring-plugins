@@ -12,6 +12,7 @@
  * $Date$
  ****************************************************************************/
 
+#include <stdarg.h>
 #include "common.h"
 #include "utils_base.h"
 
