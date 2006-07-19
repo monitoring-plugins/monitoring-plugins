@@ -44,6 +44,7 @@
 #include <stdio.h>							/* obligatory includes */
 #include <stdlib.h>
 #include <errno.h>
+#include <limits.h>	/* This is assumed true, because coreutils assume it too */
 
 #ifdef HAVE_MATH_H
 #include <math.h>
