@@ -1638,7 +1638,9 @@ AC_TRY_COMPILE([#ifdef __STDC__
 		#endif],
 		[va_list args;],
 		[AC_MSG_RESULT(yes)],
-		[NEED_VA_LIST=-DNEED_VA_LIST AC_SUBST(NEED_VA_LIST) AC_MSG_RESULT(no)])
+		[NEED_VA_LIST=-DNEED_VA_LIST 
+		 AC_SUBST(NEED_VA_LIST) 
+		 AC_MSG_RESULT(no)])
 
 case $host in
 	*bsd*)
