@@ -44,6 +44,19 @@
 #include <stdio.h>							/* obligatory includes */
 #include <stdlib.h>
 #include <errno.h>
+
+/* This block provides uintmax_t - should be reported to coreutils that this should be added to fsuage.h */
+#if HAVE_INTTYPES_H
+# include <inttypes.h>
+#endif
+#if HAVE_STDINT_H
+# include <stdint.h>
+#endif
+#include <unistd.h>
+#ifndef UINTMAX_MAX
+# define UINTMAX_MAX ((uintmax_t) -1)
+#endif
+
 #include <limits.h>	/* This is assumed true, because coreutils assume it too */
 
 #ifdef HAVE_MATH_H
