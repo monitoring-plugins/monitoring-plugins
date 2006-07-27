@@ -241,6 +241,83 @@
 		
 		<para>Note: Not all plugins are coded to expect ranges in this format yet.
 		There will be some work in providing multiple metrics.</para>
+
+		<table id="ExampleRanges"><title>Example ranges</title>
+			<tgroup cols="2">
+				<thead>
+					<row>
+						<entry><para>Range definition</para></entry>
+						<entry><para>Generate an alert if x...</para></entry>
+					</row>
+				</thead>
+				<tbody>
+					<row>
+						<entry>10</entry>
+						<entry>&lt; 0 or &gt; 10, (outside the range of {0 .. 10})</entry>
+					</row>
+					<row>
+						<entry>10:</entry>
+						<entry>&lt; 10, (outside {10 .. &infin;})</entry>
+					</row>
+					<row>
+						<entry>~:10</entry>
+						<entry>&gt; 10, (outside the range of {-&infin; .. 10})</entry>
+					</row>
+					<row>
+						<entry>10:20</entry>
+						<entry>&lt; 10 or &gt; 20, (outside the range of {10 .. 20})</entry>
+					</row>
+					<row>
+						<entry>@10:20</entry>
+						<entry>&ge; 10 and &le; 20, (inside the range of {10 .. 20})</entry>
+					</row>
+					<row>
+						<entry>10</entry>
+						<entry>&lt; 0 or &gt; 10, (outside the range of {0 .. 10})</entry>
+					</row>
+				</tbody>
+			</tgroup>
+		</table>
+		<table id="CommandLineExamples"><title>Command line examples</title>
+			<tgroup cols="2">
+				<thead>
+					<row>
+						<entry><para>Command line</para></entry>
+						<entry><para>Meaning</para></entry>
+					</row>
+				</thead>
+				<tbody>
+					<row>
+						<entry>check_stuff -w10 -c20</entry>
+						<entry>Critical if "stuff" is over 20, else warn if over 10 (will be critical if "stuff" is less than 0)</entry>
+					</row>
+					<row>
+						<entry>check_stuff -w~:10 -c~:20</entry>
+						<entry>Same as above. Negative "stuff" is OK</entry>
+					</row>
+					<row>
+						<entry>check_stuff -w10: -c20</entry>
+						<entry>Critical if "stuff" is over 20, else warn if "stuff" is below 10 (will be critical if "stuff" is less than 0)</entry>
+					</row>
+					<row>
+						<entry>check_stuff -c1:</entry>
+						<entry>Critical if "stuff" is less than 1</entry>
+					</row>
+					<row>
+						<entry>check_stuff -w~:0 -c10</entry>
+						<entry>Critical if "stuff" is above 10; Warn if "stuff" is above zero</entry>
+					</row>
+					<row>
+						<entry>check_stuff -c5:6</entry>
+						<entry>The only noncritical range is 5:6</entry>
+					</row>
+					<row>
+						<entry>check_stuff -c10:20</entry>
+						<entry>Critical if "stuff" is 10 to 20</entry>
+					</row>
+				</tbody>
+			</tgroup>
+		</table>
 		</section>
 
 		<section><title>Performance data</title>
