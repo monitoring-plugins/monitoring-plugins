@@ -13,6 +13,10 @@ AC_SUBST(RELEASE)
 AC_PREFIX_DEFAULT(/usr/local/nagios)
 
 dnl Deprecated configure options
+AC_ARG_WITH(nagios_user,,
+ 	AC_MSG_ERROR([--with-nagios-user is a deprecated option]))
+AC_ARG_WITH(nagios_group,,
+ 	AC_MSG_ERROR([--with-nagios-group is a deprecated option]))
 
 dnl Figure out how to invoke "install" and what install options to use.
 AC_PROG_INSTALL
@@ -59,21 +63,6 @@ AC_ARG_WITH(cgiurl,
 	with_cgiurl=/nagios/cgi-bin)
 CGIURL="$with_cgiurl"
 AC_DEFINE_UNQUOTED(CGIURL,"$CGIURL",[URL of CGI programs])
-
-AC_ARG_WITH(nagios_user,
-	ACX_HELP_STRING([--with-nagios-user=USER],
-		[set user name to run nagios]),
-	with_nagios_user=$withval,
-	with_nagios_user=nagios)
-AC_ARG_WITH(nagios_group,
-	ACX_HELP_STRING([--with-nagios-group=GROUP],
-		[set group name to run nagios]),
-	with_nagios_group=$withval,
-	with_nagios_group=nagios)
-AC_SUBST(with_nagios_user)
-AC_SUBST(with_nagios_group)
-INSTALL_OPTS="-o $with_nagios_user -g $with_nagios_group"
-AC_SUBST(INSTALL_OPTS)
 
 AC_ARG_WITH(trusted_path,
 	ACX_HELP_STRING([--with-trusted-path=PATH],
@@ -1748,8 +1737,6 @@ ACX_FEATURE([with],[gnutls])
 ACX_FEATURE([enable],[emulate-getaddrinfo])
 ACX_FEATURE([with],[perl])
 ACX_FEATURE([with],[cgiurl])
-ACX_FEATURE([with],[nagios-user])
-ACX_FEATURE([with],[nagios-group])
 ACX_FEATURE([with],[trusted-path])
 
 

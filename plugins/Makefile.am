@@ -16,7 +16,7 @@ MATHLIBS = @MATHLIBS@
 libexec_PROGRAMS = check_apt check_disk check_dummy check_http check_load \
 	check_mrtg check_mrtgtraf check_ntp check_nwstat check_overcr check_ping \
 	check_real check_smtp check_ssh check_tcp check_time \
-	check_udp check_ups check_users negate \
+	check_ups check_users negate \
 	urlize @EXTRAS@
 
 check_tcp_programs = check_ftp check_imap check_nntp check_pop \
@@ -44,8 +44,6 @@ TESTS = @PLUGIN_TEST@
 
 test:
 	perl -I $(top_builddir) -I $(top_srcdir) ../test.pl
-
-AM_INSTALL_PROGRAM_FLAGS = @INSTALL_OPTS@
 
 ##############################################################################
 # the actual targets
@@ -85,7 +83,6 @@ check_ssh_LDADD = $(NETLIBS)
 check_swap_LDADD = $(MATHLIBS) $(BASEOBJS) popen.o
 check_tcp_LDADD = $(SSLOBJS) $(NETLIBS)
 check_time_LDADD = $(NETLIBS)
-check_udp_LDADD = $(SSLOBJS) $(NETLIBS)
 check_ups_LDADD = $(NETLIBS)
 check_users_LDADD = $(BASEOBJS) popen.o
 check_by_ssh_LDADD = $(NETLIBS) runcmd.o
@@ -125,7 +122,6 @@ check_ssh_DEPENDENCIES = check_ssh.c $(NETOBJS) $(DEPLIBS)
 check_swap_DEPENDENCIES = check_swap.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_tcp_DEPENDENCIES = check_tcp.c $(SSLOBJS) $(NETOBJS) $(DEPLIBS)
 check_time_DEPENDENCIES = check_time.c $(NETOBJS) $(DEPLIBS)
-check_udp_DEPENDENCIES = check_udp.c $(SSLOBJS) $(NETOBJS) $(DEPLIBS)
 check_ups_DEPENDENCIES = check_ups.c $(NETOBJS) $(DEPLIBS)
 check_users_DEPENDENCIES = check_users.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_by_ssh_DEPENDENCIES = check_by_ssh.c $(NETOBJS) runcmd.o $(DEPLIBS)
