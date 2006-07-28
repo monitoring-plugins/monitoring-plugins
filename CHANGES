@@ -7,6 +7,7 @@ This file documents the major additions and syntax changes between releases.
 	  Please check at http://www.nagiosexchange.org for contributed plugins
 	Major bug fixes to check_disk where values were incorrectly calculated and alerted on.
           Perf data for warn/crit/max/min have been removed, to be readded soon.
+	check_udp2 removed. check_udp is now linked to check_tcp.c
 
 1.4.3
 	Setuid plugins (check_dhcp, check_icmp) separated into plugins-root/. Run make install as root to install
