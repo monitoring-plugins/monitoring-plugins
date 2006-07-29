@@ -27,7 +27,6 @@ plugins/check_ssh.c
 plugins/check_swap.c
 plugins/check_tcp.c
 plugins/check_time.c
-plugins/check_udp.c
 plugins/check_ups.c
 plugins/check_users.c
 plugins/check_ide_smart.c
