@@ -1196,7 +1196,7 @@ static int dl_bind(int fd, int sap, u_char *addr){
 	bind_req->dl_xidtest_flg = 0;
 	put_ctrl(fd, sizeof(dl_bind_req_t), 0);
 	get_msg(fd);
-	if GOT_ERR == check_ctrl(DL_BIND_ACK)){
+	if (GOT_ERR == check_ctrl(DL_BIND_ACK)){
 		printf(_("Error: DLPI stream API failed to get MAC in dl_bind/check_ctrl(): %s.\n"), strerror(errno));
 		exit(STATE_UNKNOWN);
 		}

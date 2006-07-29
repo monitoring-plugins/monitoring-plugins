@@ -114,6 +114,11 @@
 #include <locale.h>
 #endif
 
+/* Fixes "Cannot use swapctl in the large files compilation environment" error on Solaris */
+#ifdef _FILE_OFFSET_BITS
+#undef _FILE_OFFSET_BITS
+#endif
+
 #ifdef HAVE_DECL_SWAPCTL
 # ifdef HAVE_SYS_SWAP_H
 #  include <sys/swap.h>
