@@ -686,7 +686,11 @@ void print_help(void)
   printf (_("Notes:\n\
  - The NSClient service should be running on the server to get any information\n\
    (http://nsclient.ready2run.nl).\n\
- - Critical thresholds should be lower than warning thresholds\n"));
+ - Critical thresholds should be lower than warning thresholds\n\
+ - Default port 1248 is sometimes in use by other services. The error \n\
+   output when this happens contains \"Cannot map xxxxx to protocol number\". \n\
+   One fix for this is to change the port to something else on check_nt \n\
+   and on the client service it\'s connecting to. \n"));
 }
 
 
