@@ -335,7 +335,7 @@ int best_offset_server(const ntp_server_results *slist, int nservers){
  *   we have to do it in a way that our lazy macros don't handle currently :( */
 double offset_request(const char *host, int *status){
 	int i=0, j=0, ga_result=0, num_hosts=0, *socklist=NULL, respnum=0;
-	int servers_completed=0, one_written=0, servers_readable=0, best_index=-1;
+	int servers_completed=0, one_written=0, one_read=0, servers_readable=0, best_index=-1;
 	time_t now_time=0, start_ts=0;
 	ntp_message *req=NULL;
 	double avg_offset=0.;
@@ -437,10 +437,15 @@ double offset_request(const char *host, int *status){
 				servers[i].rtdelay=NTP32asDOUBLE(req[i].rtdelay);
 				servers[i].waiting=0;
 				servers_readable--;
+				one_read = 1;
 				if(servers[i].num_responses==AVG_NUM) servers_completed++;
 			}
 		}
 		/* lather, rinse, repeat. */
+	}
+
+	if (one_read == 0) {
+		die(STATE_CRITICAL, "NTP CRITICAL: No response from NTP server\n");
 	}
 
 	/* now, pick the best server from the list */
