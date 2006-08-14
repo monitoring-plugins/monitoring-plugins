@@ -157,7 +157,7 @@ main (int argc, char **argv)
   uintmax_t total, available, available_to_root, used;
   double dfree_pct = -1, dused_pct = -1;
   double dused_units, dfree_units, dtotal_units;
-  double dused_inodes_percent;
+  double dused_inodes_percent, dfree_inodes_percent;
   int temp_result;
 
   struct mount_entry *me;
@@ -247,6 +247,7 @@ main (int argc, char **argv)
       dfree_units = available*fsp.fsu_blocksize/mult;
       dtotal_units = total*fsp.fsu_blocksize/mult;
       dused_inodes_percent = calculate_percent(fsp.fsu_files - fsp.fsu_ffree, fsp.fsu_files);
+      dfree_inodes_percent = 100 - dused_inodes_percent;
 
       if (verbose >= 3) {
         printf ("For %s, used_pct=%g free_pct=%g used_units=%g free_units=%g total_units=%g used_inodes_pct=%g\n", 
@@ -275,15 +276,6 @@ main (int argc, char **argv)
       if (verbose >=3) printf("Usedinodes_percent result=%d\n", temp_result);
       result = max_state( result, temp_result );
 
-      
-
-
-
-      /* Moved this computation up here so we can add it
-       * to perf */
-      inode_space_pct = (1 - dused_inodes_percent) * 100;
-
-
       asprintf (&perf, "%s %s", perf,
                 perfdata ((!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
                           dused_units, units,
@@ -305,7 +297,7 @@ main (int argc, char **argv)
         if (dused_inodes_percent < 0) {
           asprintf(&output, "%s inode=-);", output);
         } else {
-          asprintf(&output, "%s inode=%.0f%%);", output, (1 - dused_inodes_percent) * 100);
+          asprintf(&output, "%s inode=%.0f%%);", output, dfree_inodes_percent );
         }
       }
 
