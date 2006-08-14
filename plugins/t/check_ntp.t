@@ -38,7 +38,7 @@ SKIP: {
 }
 
 SKIP: {
-	skip "No bad NTP server defined", 1 unless $ntp_service;
+	skip "No bad NTP server defined", 1 unless $no_ntp_service;
 	$res = NPTest->testCmd(
 		"./check_ntp -H $no_ntp_service"
 		);
