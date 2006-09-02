@@ -373,8 +373,8 @@ process_arguments (int argc, char **argv)
 	int option = 0;
 	static struct option longopts[] = {
 		{"hostname", required_argument, 0, 'H'},
-		{"critical-time", required_argument, 0, 'c'},
-		{"warning-time", required_argument, 0, 'w'},
+		{"critical", required_argument, 0, 'c'},
+		{"warning", required_argument, 0, 'w'},
 		{"critical-codes", required_argument, 0, 'C'},
 		{"warning-codes", required_argument, 0, 'W'},
 		{"timeout", required_argument, 0, 't'},
@@ -454,20 +454,14 @@ process_arguments (int argc, char **argv)
 			server_address = optarg;
 			break;
 		case 'c':                 /* critical */
-			if (!is_intnonneg (optarg))
-				usage4 (_("Critical threshold must be a positive integer"));
-			else
-				critical_time = strtod (optarg, NULL);
+			critical_time = strtod (optarg, NULL);
 			flags |= FLAG_TIME_CRIT;
 			break;
 		case 'j':		  /* hide output */
 			flags |= FLAG_HIDE_OUTPUT;
 			break;
 		case 'w':                 /* warning */
-			if (!is_intnonneg (optarg))
-				usage4 (_("Warning threshold must be a positive integer"));
-			else
-				warning_time = strtod (optarg, NULL);
+			warning_time = strtod (optarg, NULL);
 			flags |= FLAG_TIME_WARN;
 			break;
 		case 'C':
