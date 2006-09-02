@@ -1,3 +1,5 @@
+#ifndef _UTILS_BASE_
+#define _UTILS_BASE_
 /* Header file for nagios plugins utils_base.c */
 
 /* This file holds header information for thresholds - use this in preference to 
@@ -35,3 +37,5 @@ int get_status(double, thresholds *);
 char *np_escaped_string (const char *);
 
 void die (int, const char *, ...) __attribute__((noreturn,format(printf, 2, 3)));
+
+#endif /* _UTILS_BASE_ */

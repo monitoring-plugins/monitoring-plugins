@@ -13,6 +13,9 @@ in order to resist overflow attacks. In addition, a few functions are
 provided to standardize version and error reporting across the entire
 suite of plugins. */
 
+/* now some functions etc are being defined in ../lib/utils_base.c */
+#include "utils_base.h"
+
 /* Standardize version information, termination */
 
 /* $Id$ */
