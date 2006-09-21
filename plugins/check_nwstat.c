@@ -34,6 +34,9 @@ enum checkvar {
 	LOAD15,     /* check 15 minute CPU load */
 	CONNS,      /* check number of connections */
 	VPF,        /* check % free space on volume */
+	VMF,	    /* check MB free space on volume */
+	VMU,	    /* check MB used space on volume */
+	VMP,	    /* check MB purgeable space on volume */
 	VKF,        /* check KB free space on volume */
 	LTCH,       /* check long-term cache hit percentage */
 	CBUFF,      /* check total cache buffers */
@@ -41,6 +44,7 @@ enum checkvar {
 	LRUM,       /* check LRU sitting time in minutes */
 	DSDB,       /* check to see if DS Database is open */
 	LOGINS,     /* check to see if logins are enabled */
+	NRMH,	    /* check to see NRM Health Status */
 	PUPRB,      /* check % of used packet receive buffers */
 	UPRB,       /* check used packet receive buffers */
 	SAPENTRIES, /* check SAP entries */
@@ -57,7 +61,17 @@ enum checkvar {
 	TCB,        /* check total cache buffers as a percentage of the original */
 	DSVER,      /* check NDS version */
 	UPTIME,     /* check server uptime */
-	NLM         /* check NLM loaded */
+	NLM,        /* check NLM loaded */
+	NRMP,	    /* check NRM Process Values */
+	NRMM,	    /* check NRM Memory Values */
+	NRMS,       /* check NRM Values */
+	NSS1,       /* check Statistics from _Admin:Manage_NSS\GeneralStats.xml */
+	NSS2,       /* check Statistics from _Admin:Manage_NSS\BufferCache.xml */
+	NSS3,       /* check statistics from _Admin:Manage_NSS\NameCache.xml */
+	NSS4,       /* check statistics from _Admin:Manage_NSS\FileStats.xml */
+	NSS5,       /* check statistics from _Admin:Manage_NSS\ObjectCache.xml */
+	NSS6,       /* check statistics from _Admin:Manage_NSS\Thread.xml */
+	NSS7        /* check statistics from _Admin:Manage_NSS\AuthorizationCache.xml */
 };
 
 enum {
@@ -67,6 +81,16 @@ enum {
 char *server_address=NULL;
 char *volume_name=NULL;
 char *nlm_name=NULL;
+char *nrmp_name=NULL;
+char *nrmm_name=NULL;
+char *nrms_name=NULL;
+char *nss1_name=NULL;
+char *nss2_name=NULL;
+char *nss3_name=NULL;
+char *nss4_name=NULL;
+char *nss5_name=NULL;
+char *nss6_name=NULL;
+char *nss7_name=NULL;
 int server_port=PORT;
 unsigned long warning_value=0L;
 unsigned long critical_value=0L;
@@ -93,6 +117,7 @@ main(int argc, char **argv) {
 	char *netware_version=NULL;
 
 	int time_sync_status=0;
+	int nrm_health_status=0;
 	unsigned long total_cache_buffers=0;
 	unsigned long dirty_cache_buffers=0;
 	unsigned long open_files=0;
@@ -100,6 +125,16 @@ main(int argc, char **argv) {
 	unsigned long max_service_processes=0;
 	unsigned long current_service_processes=0;
 	unsigned long free_disk_space=0L;
+	unsigned long nrmp_value=0L;
+	unsigned long nrmm_value=0L;
+	unsigned long nrms_value=0L;
+	unsigned long nss1_value=0L;
+	unsigned long nss2_value=0L;
+	unsigned long nss3_value=0L;
+	unsigned long nss4_value=0L;
+	unsigned long nss5_value=0L;
+	unsigned long nss6_value=0L;
+	unsigned long nss7_value=0L;
 	unsigned long total_disk_space=0L;
 	unsigned long purgeable_disk_space=0L;
 	unsigned long non_purgeable_disk_space=0L;
@@ -189,11 +224,15 @@ main(int argc, char **argv) {
 			result=STATE_WARNING;
 
 		asprintf (&output_message,
-		          _("Load %s - %s %s-min load average = %lu%%"),
+		          _("Load %s - %s %s-min load average = %lu%%|load%s=%lu;%lu;%lu;0;100"),
 		          state_text(result),
 		          uptime,
 		          temp_buffer,
-		          utilization);
+		          utilization,
+			  temp_buffer,
+			  utilization,
+			  warning_value,
+			  critical_value);	
 
 		/* check number of user connections */
 	} else if (vars_to_check==CONNS) {
@@ -213,9 +252,12 @@ main(int argc, char **argv) {
 			result=STATE_WARNING;
 
 		asprintf (&output_message,
-							_("Conns %s - %lu current connections"),
+			_("Conns %s - %lu current connections|Conns=%lu;%lu;%lu;;"),
 		          state_text(result),
-		          current_connections);
+		          current_connections,
+		          current_connections,
+			  warning_value,
+			  critical_value);
 
 		/* check % long term cache hits */
 	} else if (vars_to_check==LTCH) {
@@ -257,9 +299,12 @@ main(int argc, char **argv) {
 			result=STATE_WARNING;
 
 		asprintf (&output_message,
-		          _("%s: Total cache buffers = %lu"),
+		          _("%s: Total cache buffers = %lu|Cachebuffers=%lu;%lu;%lu;;"),
 		          state_text(result),
-		          cache_buffers);
+		          cache_buffers,
+			  cache_buffers,
+			  warning_value,
+		  	  critical_value);
 
 		/* check dirty cache buffers */
 	} else if (vars_to_check==CDBUFF) {
@@ -279,9 +324,12 @@ main(int argc, char **argv) {
 			result=STATE_WARNING;
 
 		asprintf (&output_message,
-		          _("%s: Dirty cache buffers = %lu"),
+		          _("%s: Dirty cache buffers = %lu|Dirty-Cache-Buffers=%lu;%lu;%lu;;"),
 		          state_text(result),
-		          cache_buffers);
+		          cache_buffers,
+			  cache_buffers,
+			  warning_value,
+			  critical_value);
 
 		/* check LRU sitting time in minutes */
 	} else if (vars_to_check==LRUM) {
@@ -327,12 +375,72 @@ main(int argc, char **argv) {
 			else if (check_warning_value==TRUE && free_disk_space <= warning_value)
 				result=STATE_WARNING;
 			asprintf (&output_message,
-			          _("%s%lu KB free on volume %s"),
+			          _("%s%lu KB free on volume %s|KBFree%s=%lu;%lu;%lu;;"),
 			         (result==STATE_OK)?"":_("Only "),
 			         free_disk_space,
-			         volume_name);
+			         volume_name,
+				 volume_name,
+				 free_disk_space,
+				 warning_value,
+				 critical_value);
 		}
 
+		/* check MB free space on volume */
+	} else if (vars_to_check==VMF) {
+
+		asprintf (&send_buffer,"VMF%s\r\n",volume_name);
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
+		if (result!=STATE_OK)
+			return result;
+
+		if (!strcmp(recv_buffer,"-1\n")) {
+			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
+			result=STATE_CRITICAL;
+		}	else {
+			free_disk_space=strtoul(recv_buffer,NULL,10);
+			if (check_critical_value==TRUE && free_disk_space <= critical_value)
+				result=STATE_CRITICAL;
+			else if (check_warning_value==TRUE && free_disk_space <= warning_value)
+				result=STATE_WARNING;
+			asprintf (&output_message,
+			          _("%s%lu MB free on volume %s|MBFree%s=%lu;%lu;%lu;;"),
+			         (result==STATE_OK)?"":_("Only "),
+			         free_disk_space,
+			         volume_name,
+				 volume_name,
+				 free_disk_space,
+				 warning_value,
+				 critical_value);
+		}
+		/* check MB used space on volume */
+	} else if (vars_to_check==VMU) {
+
+		asprintf (&send_buffer,"VMU%s\r\n",volume_name);
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
+		if (result!=STATE_OK)
+			return result;
+
+		if (!strcmp(recv_buffer,"-1\n")) {
+			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
+			result=STATE_CRITICAL;
+		}	else {
+			free_disk_space=strtoul(recv_buffer,NULL,10);
+			if (check_critical_value==TRUE && free_disk_space <= critical_value)
+				result=STATE_CRITICAL;
+			else if (check_warning_value==TRUE && free_disk_space <= warning_value)
+				result=STATE_WARNING;
+			asprintf (&output_message,
+			          _("%s%lu MB used on volume %s|MBUsed%s=%lu;%lu;%lu;;"),
+			         (result==STATE_OK)?"":_("Only "),
+			         free_disk_space,
+			         volume_name,
+				 volume_name,
+				 free_disk_space,
+				 warning_value,
+				 critical_value);
+		}
+
+		
 		/* check % free space on volume */
 	} else if (vars_to_check==VPF) {
 
@@ -370,7 +478,16 @@ main(int argc, char **argv) {
 				result=STATE_WARNING;
 			free_disk_space/=1024;
 			total_disk_space/=1024;
-			asprintf (&output_message,_("%lu MB (%lu%%) free on volume %s - total %lu MB"),free_disk_space,percent_free_space,volume_name,total_disk_space);
+			asprintf (&output_message,_("%lu MB (%lu%%) free on volume %s - total %lu MB|FreeMB%s=%lu;%lu;%lu;0;100"),
+				free_disk_space,
+				percent_free_space,
+				volume_name,
+				total_disk_space,
+				volume_name,
+                                percent_free_space,
+                                warning_value,
+                                critical_value
+                                );
 		}
 
 		/* check to see if DS Database is open or closed */
@@ -411,8 +528,34 @@ main(int argc, char **argv) {
 			result=STATE_OK;
 		else
 			result=STATE_WARNING;
- 
+
 		asprintf (&output_message,_("Logins are %s"),(result==STATE_OK)?_("enabled"):_("disabled"));
+
+
+		/* check NRM Health Status Summary*/
+	} else if (vars_to_check==NRMH) {
+
+		asprintf (&send_buffer,"NRMH\r\n");
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
+		if (result!=STATE_OK)
+			return result;
+
+		nrm_health_status=atoi(recv_buffer);
+
+		if (nrm_health_status==2) {
+			result=STATE_OK;
+			asprintf (&output_message,_("CRITICAL - NRM Status is bad!"));
+		}
+		else {
+			if (nrm_health_status==1) {
+				result=STATE_WARNING;
+				asprintf (&output_message,_("Warning - NRM Status is suspect!"));
+			}
+			
+			asprintf (&output_message,_("OK - NRM Status is good!"));
+		}
+
+		
 
 		/* check packet receive buffers */
 	} else if (vars_to_check==UPRB || vars_to_check==PUPRB) {
@@ -499,7 +642,40 @@ main(int argc, char **argv) {
 				result=STATE_CRITICAL;
 			else if (check_warning_value==TRUE && purgeable_disk_space >= warning_value)
 				result=STATE_WARNING;
-			asprintf (&output_message,_("%s%lu KB purgeable on volume %s"),(result==STATE_OK)?"":_("Only "),purgeable_disk_space,volume_name);
+			asprintf (&output_message,_("%s%lu KB purgeable on volume %s|Purge%s=%lu;%lu;%lu;;"),
+				 (result==STATE_OK)?"":_("Only "),
+				 purgeable_disk_space,
+				 volume_name,
+				 volume_name,
+				 purgeable_disk_space,
+				 warning_value,
+				 critical_value);
+		}
+		/* check MB purgeable space on volume */
+	} else if (vars_to_check==VMP) {
+
+		asprintf (&send_buffer,"VMP%s\r\n",volume_name);
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
+		if (result!=STATE_OK)
+			return result;
+
+		if (!strcmp(recv_buffer,"-1\n")) {
+			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
+			result=STATE_CRITICAL;
+		} else {
+			purgeable_disk_space=strtoul(recv_buffer,NULL,10);
+			if (check_critical_value==TRUE && purgeable_disk_space >= critical_value)
+				result=STATE_CRITICAL;
+			else if (check_warning_value==TRUE && purgeable_disk_space >= warning_value)
+				result=STATE_WARNING;
+			asprintf (&output_message,_("%s%lu MB purgeable on volume %s|Purge%s=%lu;%lu;%lu;;"),
+				 (result==STATE_OK)?"":_("Only "),
+				 purgeable_disk_space,
+				 volume_name,
+				 volume_name,
+				 purgeable_disk_space,
+				 warning_value,
+				 critical_value);
 		}
 
 		/* check % purgeable space on volume */
@@ -538,7 +714,15 @@ main(int argc, char **argv) {
 			else if (check_warning_value==TRUE && percent_purgeable_space >= warning_value)
 				result=STATE_WARNING;
 			purgeable_disk_space/=1024;
-			asprintf (&output_message,_("%lu MB (%lu%%) purgeable on volume %s"),purgeable_disk_space,percent_purgeable_space,volume_name);
+			asprintf (&output_message,_("%lu MB (%lu%%) purgeable on volume %s|Purgeable%s=%lu;%lu;%lu;0;100"),
+					purgeable_disk_space,
+					percent_purgeable_space,
+					volume_name,
+					volume_name,
+					percent_purgeable_space,
+					warning_value,
+					critical_value
+					);
 		}
 
 		/* check KB not yet purgeable space on volume */
@@ -621,9 +805,14 @@ main(int argc, char **argv) {
 		else if (check_warning_value==TRUE && open_files >= warning_value)
 			result=STATE_WARNING;
 
-		asprintf (&output_message,_("%lu open files"),open_files);
+		asprintf (&output_message,_("%lu open files|Openfiles=%lu;%lu;%lu;0,0"),
+				open_files,
+				open_files,
+				warning_value,
+				critical_value);
+			
 
-		/* check # of abended threads (Netware 5.x only) */
+		/* check # of abended threads (Netware > 5.x only) */
 	} else if (vars_to_check==ABENDS) {
 
 		close(sd);
@@ -641,7 +830,11 @@ main(int argc, char **argv) {
 		else if (check_warning_value==TRUE && abended_threads >= warning_value)
 			result=STATE_WARNING;
 
-		asprintf (&output_message,_("%lu abended threads"),abended_threads);
+		asprintf (&output_message,_("%lu abended threads|Abends=%lu;%lu;%lu;;"),
+				abended_threads,
+				abended_threads,
+				warning_value,
+				critical_value);
 
 		/* check # of current service processes (Netware 5.x only) */
 	} else if (vars_to_check==CSPROCS) {
@@ -672,9 +865,13 @@ main(int argc, char **argv) {
 			result=STATE_WARNING;
 
 		asprintf (&output_message,
-		          _("%lu current service processes (%lu max)"),
+		          _("%lu current service processes (%lu max)|Processes=%lu;%lu;%lu;0;%lu"),
 		          current_service_processes,
-		          max_service_processes);
+		          max_service_processes,
+			  current_service_processes,
+			  warning_value,
+			  critical_value,
+			  max_service_processes);
 
 		/* check # Timesync Status */
 	} else if (vars_to_check==TSYNC) {
@@ -697,6 +894,10 @@ main(int argc, char **argv) {
 			asprintf (&output_message,_("OK - Time in sync with network!"));
 		}
 
+
+
+
+		
 		/* check LRU sitting time in secondss */
 	} else if (vars_to_check==LRUS) {
 
@@ -732,7 +933,11 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		else if (check_warning_value==TRUE && dirty_cache_buffers <= warning_value)
 			result=STATE_WARNING;
-		asprintf (&output_message,_("Dirty cache buffers = %lu%% of the total"),dirty_cache_buffers);
+		asprintf (&output_message,_("Dirty cache buffers = %lu%% of the total|DCB=%lu;%lu;%lu;0;100"),
+				dirty_cache_buffers,
+				dirty_cache_buffers,
+				warning_value,
+				critical_value);
 
 		/* check % total cache buffers as a percentage of the original*/
 	} else if (vars_to_check==TCB) {
@@ -750,7 +955,11 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		else if (check_warning_value==TRUE && total_cache_buffers <= warning_value)
 			result=STATE_WARNING;
-		asprintf (&output_message,_("Total cache buffers = %lu%% of the original"),total_cache_buffers);
+		asprintf (&output_message,_("Total cache buffers = %lu%% of the original|TCB=%lu;%lu;%lu;0;100"),
+				total_cache_buffers,
+				total_cache_buffers,
+				warning_value,
+				critical_value);
 		
 	} else if (vars_to_check==DSVER) {
 
@@ -798,9 +1007,271 @@ main(int argc, char **argv) {
 		} else {
 			result=STATE_CRITICAL;
 			asprintf (&output_message,_("Module %s is not loaded"),nlm_name);
+		
+			}
+	} else if (vars_to_check==NRMP) {
+
+		asprintf (&send_buffer,"NRMP:%s\r\n",nrmp_name);
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
+		if (result!=STATE_OK)
+			return result;
+
+		if (!strcmp(recv_buffer,"-1\n")) {
+			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nrmp_name);
+			result=STATE_CRITICAL;
+		}	else {
+			nrmp_value=strtoul(recv_buffer,NULL,10);
+			if (check_critical_value==TRUE && nrmp_value <= critical_value)
+				result=STATE_CRITICAL;
+			else if (check_warning_value==TRUE && nrmp_value <= warning_value)
+				result=STATE_WARNING;
+			asprintf (&output_message,
+			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
+			         nrmp_name,
+			         nrmp_value,
+				 nrmp_name,
+				 nrmp_value,
+				 warning_value,
+				 critical_value);
 		}
 
-	} else {
+	} else if (vars_to_check==NRMM) {
+
+		asprintf (&send_buffer,"NRMM:%s\r\n",nrmm_name);
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
+		if (result!=STATE_OK)
+			return result;
+
+		if (!strcmp(recv_buffer,"-1\n")) {
+			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nrmm_name);
+			result=STATE_CRITICAL;
+		}	else {
+			nrmm_value=strtoul(recv_buffer,NULL,10);
+			if (check_critical_value==TRUE && nrmm_value <= critical_value)
+				result=STATE_CRITICAL;
+			else if (check_warning_value==TRUE && nrmm_value <= warning_value)
+				result=STATE_WARNING;
+			asprintf (&output_message,
+			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
+			         nrmm_name,
+			         nrmm_value,
+				 nrmm_name,
+				 nrmm_value,
+				 warning_value,
+				 critical_value);
+		}
+
+	} else if (vars_to_check==NRMS) {
+
+		asprintf (&send_buffer,"NRMS:%s\r\n",nrms_name);
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
+		if (result!=STATE_OK)
+			return result;
+
+		if (!strcmp(recv_buffer,"-1\n")) {
+			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nrms_name);
+			result=STATE_CRITICAL;
+		}	else {
+			nrms_value=strtoul(recv_buffer,NULL,10);
+			if (check_critical_value==TRUE && nrms_value >= critical_value)
+				result=STATE_CRITICAL;
+			else if (check_warning_value==TRUE && nrms_value >= warning_value)
+				result=STATE_WARNING;
+			asprintf (&output_message,
+			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
+			         nrms_name,
+			         nrms_value,
+				 nrms_name,
+				 nrms_value,
+				 warning_value,
+				 critical_value);
+		}
+
+	} else if (vars_to_check==NSS1) {
+
+		asprintf (&send_buffer,"NSS1:%s\r\n",nss1_name);
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
+		if (result!=STATE_OK)
+			return result;
+
+		if (!strcmp(recv_buffer,"-1\n")) {
+			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss1_name);
+			result=STATE_CRITICAL;
+		}	else {
+			nss1_value=strtoul(recv_buffer,NULL,10);
+			if (check_critical_value==TRUE && nss1_value >= critical_value)
+				result=STATE_CRITICAL;
+			else if (check_warning_value==TRUE && nss1_value >= warning_value)
+				result=STATE_WARNING;
+			asprintf (&output_message,
+			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
+			         nss1_name,
+			         nss1_value,
+				 nss1_name,
+				 nss1_value,
+				 warning_value,
+				 critical_value);
+		}
+
+	} else if (vars_to_check==NSS2) {
+
+		asprintf (&send_buffer,"NSS2:%s\r\n",nss2_name);
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
+		if (result!=STATE_OK)
+			return result;
+
+		if (!strcmp(recv_buffer,"-1\n")) {
+			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss2_name);
+			result=STATE_CRITICAL;
+		}	else {
+			nss2_value=strtoul(recv_buffer,NULL,10);
+			if (check_critical_value==TRUE && nss2_value >= critical_value)
+				result=STATE_CRITICAL;
+			else if (check_warning_value==TRUE && nss2_value >= warning_value)
+				result=STATE_WARNING;
+			asprintf (&output_message,
+			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
+			         nss2_name,
+			         nss2_value,
+				 nss2_name,
+				 nss2_value,
+				 warning_value,
+				 critical_value);
+		}
+
+	} else if (vars_to_check==NSS3) {
+
+		asprintf (&send_buffer,"NSS3:%s\r\n",nss3_name);
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
+		if (result!=STATE_OK)
+			return result;
+
+		if (!strcmp(recv_buffer,"-1\n")) {
+			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss3_name);
+			result=STATE_CRITICAL;
+		}	else {
+			nss3_value=strtoul(recv_buffer,NULL,10);
+			if (check_critical_value==TRUE && nss3_value >= critical_value)
+				result=STATE_CRITICAL;
+			else if (check_warning_value==TRUE && nss3_value >= warning_value)
+				result=STATE_WARNING;
+			asprintf (&output_message,
+			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
+			         nss3_name,
+			         nss3_value,
+				 nss3_name,
+				 nss3_value,
+				 warning_value,
+				 critical_value);
+		}
+
+	} else if (vars_to_check==NSS4) {
+
+		asprintf (&send_buffer,"NSS4:%s\r\n",nss4_name);
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
+		if (result!=STATE_OK)
+			return result;
+
+		if (!strcmp(recv_buffer,"-1\n")) {
+			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss4_name);
+			result=STATE_CRITICAL;
+		}	else {
+			nss4_value=strtoul(recv_buffer,NULL,10);
+			if (check_critical_value==TRUE && nss4_value >= critical_value)
+				result=STATE_CRITICAL;
+			else if (check_warning_value==TRUE && nss4_value >= warning_value)
+				result=STATE_WARNING;
+			asprintf (&output_message,
+			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
+			         nss4_name,
+			         nss4_value,
+				 nss4_name,
+				 nss4_value,
+				 warning_value,
+				 critical_value);
+		}
+
+	} else if (vars_to_check==NSS5) {
+
+		asprintf (&send_buffer,"NSS5:%s\r\n",nss5_name);
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
+		if (result!=STATE_OK)
+			return result;
+
+		if (!strcmp(recv_buffer,"-1\n")) {
+			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss5_name);
+			result=STATE_CRITICAL;
+		}	else {
+			nss5_value=strtoul(recv_buffer,NULL,10);
+			if (check_critical_value==TRUE && nss5_value >= critical_value)
+				result=STATE_CRITICAL;
+			else if (check_warning_value==TRUE && nss5_value >= warning_value)
+				result=STATE_WARNING;
+			asprintf (&output_message,
+			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
+			         nss5_name,
+			         nss5_value,
+				 nss5_name,
+				 nss5_value,
+				 warning_value,
+				 critical_value);
+		}
+
+	} else if (vars_to_check==NSS6) {
+
+		asprintf (&send_buffer,"NSS6:%s\r\n",nss6_name);
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
+		if (result!=STATE_OK)
+			return result;
+
+		if (!strcmp(recv_buffer,"-1\n")) {
+			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss6_name);
+			result=STATE_CRITICAL;
+		}	else {
+			nss6_value=strtoul(recv_buffer,NULL,10);
+			if (check_critical_value==TRUE && nss6_value >= critical_value)
+				result=STATE_CRITICAL;
+			else if (check_warning_value==TRUE && nss6_value >= warning_value)
+				result=STATE_WARNING;
+			asprintf (&output_message,
+			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
+			         nss6_name,
+			         nss6_value,
+				 nss6_name,
+				 nss6_value,
+				 warning_value,
+				 critical_value);
+		}
+
+	} else if (vars_to_check==NSS7) {
+
+		asprintf (&send_buffer,"NSS7:%s\r\n",nss7_name);
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
+		if (result!=STATE_OK)
+			return result;
+
+		if (!strcmp(recv_buffer,"-1\n")) {
+			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss7_name);
+			result=STATE_CRITICAL;
+		}	else {
+			nss7_value=strtoul(recv_buffer,NULL,10);
+			if (check_critical_value==TRUE && nss7_value >= critical_value)
+				result=STATE_CRITICAL;
+			else if (check_warning_value==TRUE && nss7_value >= warning_value)
+				result=STATE_WARNING;
+			asprintf (&output_message,
+			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
+			         nss7_name,
+			         nss7_value,
+				 nss7_name,
+				 nss7_value,
+				 warning_value,
+				 critical_value);
+		}
+
+
+}
+	else {
 
 		output_message = strdup (_("Nothing to check!\n"));
 		result=STATE_UNKNOWN;
@@ -923,10 +1394,18 @@ int process_arguments(int argc, char **argv) {
 					if (!strcmp(volume_name,""))
 						volume_name = strdup ("SYS");
 				}
+				else if (strncmp(optarg,"VMF",3)==0) {
+					vars_to_check=VMF;
+					volume_name = strdup (optarg+3);
+					if (!strcmp(volume_name,""))
+						volume_name = strdup ("SYS");
+				}
 				else if (!strcmp(optarg,"DSDB"))
 					vars_to_check=DSDB;
 				else if (!strcmp(optarg,"LOGINS"))
 					vars_to_check=LOGINS;
+				else if (!strcmp(optarg,"NRMH"))
+					vars_to_check=NRMH;
 				else if (!strcmp(optarg,"UPRB"))
 					vars_to_check=UPRB;
 				else if (!strcmp(optarg,"PUPRB"))
@@ -942,6 +1421,18 @@ int process_arguments(int argc, char **argv) {
 					vars_to_check=OFILES;
 				else if (strncmp(optarg,"VKP",3)==0) {
 					vars_to_check=VKP;
+					volume_name = strdup (optarg+3);
+					if (!strcmp(volume_name,""))
+						volume_name = strdup ("SYS");
+				}
+				else if (strncmp(optarg,"VMP",3)==0) {
+					vars_to_check=VMP;
+					volume_name = strdup (optarg+3);
+					if (!strcmp(volume_name,""))
+						volume_name = strdup ("SYS");
+				}
+				else if (strncmp(optarg,"VMU",3)==0) {
+					vars_to_check=VMU;
 					volume_name = strdup (optarg+3);
 					if (!strcmp(volume_name,""))
 						volume_name = strdup ("SYS");
@@ -979,6 +1470,87 @@ int process_arguments(int argc, char **argv) {
 					vars_to_check=NLM;
 					nlm_name=strdup (optarg+4);
 				}
+				else if (strncmp(optarg,"NRMP",4)==0) {
+					vars_to_check=NRMP;
+					nrmp_name = strdup (optarg+4);
+					if (!strcmp(nrmp_name,""))
+						nrmp_name = strdup ("AVAILABLE_MEMORY");
+				}
+				else if (strncmp(optarg,"NRMM",4)==0) {
+					vars_to_check=NRMM;
+					nrmm_name = strdup (optarg+4);
+					if (!strcmp(nrmm_name,""))
+						nrmm_name = strdup ("AVAILABLE_CACHE_MEMORY");
+	
+				}
+
+				else if (strncmp(optarg,"NRMS",4)==0) {
+					vars_to_check=NRMS;
+					nrms_name = strdup (optarg+4);
+					if (!strcmp(nrms_name,""))
+						nrms_name = strdup ("USED_SWAP_SPACE");
+	
+				}
+
+				else if (strncmp(optarg,"NSS1",4)==0) {
+					vars_to_check=NSS1;
+					nss1_name = strdup (optarg+4);
+					if (!strcmp(nss1_name,""))
+						nss1_name = strdup ("CURRENTBUFFERCACHESIZE");
+	
+				}
+
+				else if (strncmp(optarg,"NSS2",4)==0) {
+					vars_to_check=NSS2;
+					nss2_name = strdup (optarg+4);
+					if (!strcmp(nss2_name,""))
+						nss2_name = strdup ("CACHEHITS");
+	
+				}
+
+				else if (strncmp(optarg,"NSS3",4)==0) {
+					vars_to_check=NSS3;
+					nss3_name = strdup (optarg+4);
+					if (!strcmp(nss3_name,""))
+						nss3_name = strdup ("CACHEGITPERCENT");
+	
+				}
+
+				else if (strncmp(optarg,"NSS4",4)==0) {
+					vars_to_check=NSS4;
+					nss4_name = strdup (optarg+4);
+					if (!strcmp(nss4_name,""))
+						nss4_name = strdup ("CURRENTOPENCOUNT");
+	
+				}
+
+				else if (strncmp(optarg,"NSS5",4)==0) {
+					vars_to_check=NSS5;
+					nss5_name = strdup (optarg+4);
+					if (!strcmp(nss5_name,""))
+						nss5_name = strdup ("CACHEMISSES");
+	
+				}
+
+
+				else if (strncmp(optarg,"NSS6",4)==0) {
+					vars_to_check=NSS6;
+					nss6_name = strdup (optarg+4);
+					if (!strcmp(nss6_name,""))
+						nss6_name = strdup ("PENDINGWORKSCOUNT");
+	
+				}
+
+
+				else if (strncmp(optarg,"NSS7",4)==0) {
+					vars_to_check=NSS7;
+					nss7_name = strdup (optarg+4);
+					if (!strcmp(nss7_name,""))
+						nss7_name = strdup ("CACHESIZE");
+	
+				}
+
+
 				else
 					return ERROR;
 				break;
@@ -1043,6 +1615,9 @@ void print_help(void)
 
 	printf (_("\
       OFILES    = number of open files\n\
+      VMF<vol>  = MB of free space on Volume <vol>\n\
+      VMU<vol>  = MB used space on Volume <vol>\n\
+      VMP<vol>  = MB of purgeable space on Volume <vol>\n\
       VPF<vol>  = percent free space on volume <vol>\n\
       VKF<vol>  = KB of free space on volume <vol>\n\
       VPP<vol>  = percent purgeable space on volume <vol>\n\
@@ -1061,9 +1636,20 @@ void print_help(void)
       SAPENTRIES<n> = number of entries in the SAP table for SAP type <n>\n"));
 
 	printf (_("\
-      TSYNC     = timesync status \n\
+      TSYNC     = timesync status\n\
       LOGINS    = check to see if logins are enabled\n\
       CONNS     = number of currently licensed connections\n\
+      NRMH	= NRM Summary Status\n\
+      NRMP<stat> = Returns the current value for a NRM health item\n\
+      NRMM<stat> = Returns the current memory stats from NRM\n\
+      NRMS<stat> = Returns the current Swapfile stats from NRM\n\
+      NSS1<stat> = Statistics from _Admin:Manage_NSS\\GeneralStats.xml\n\
+      NSS2<stat> = Statistics from _Admin:Manage_NSS\\BufferCache.xml\n\
+      NSS3<stat> = Statistics from _Admin:Manage_NSS\\NameCache.xml\n\
+      NSS4<stat> = Statistics from _Admin:Manage_NSS\\FileStats.xml\n\
+      NSS5<stat> = Statistics from _Admin:Manage_NSS\\ObjectCache.xml\n\
+      NSS6<stat> = Statistics from _Admin:Manage_NSS\\Thread.xml\n\
+      NSS7<stat> = Statistics from _Admin:Manage_NSS\\AuthorizationCache.xml\n\
       NLM:<nlm> = check if NLM is loaded and report version\n\
                   (e.g. \"NLM:TSANDS.NLM\")\n"));
 
