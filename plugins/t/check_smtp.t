@@ -6,29 +6,48 @@
 #
 
 use strict;
-use Test;
+use Test::More;
 use NPTest;
 
-use vars qw($tests);
-BEGIN {$tests = 5; plan tests => $tests}
+my $host_tcp_smtp      = getTestParameter( "NP_HOST_TCP_SMTP", 
+					   "A host providing an SMTP Service (a mail server)", "mailhost");
 
-my $host_tcp_smtp      = getTestParameter( "host_tcp_smtp",      "NP_HOST_TCP_SMTP",      "mailhost",
-					   "A host providing an STMP Service (a mail server)");
+my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE", 
+					   "The hostname of system not responsive to network requests", "10.0.0.1" );
 
-my $host_nonresponsive = getTestParameter( "host_nonresponsive", "NP_HOST_NONRESPONSIVE", "10.0.0.1",
-					   "The hostname of system not responsive to network requests" );
+my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",   
+                                           "An invalid (not known to DNS) hostname", "nosuchhost" );
+my $res;
 
-my $hostname_invalid   = getTestParameter( "hostname_invalid",   "NP_HOSTNAME_INVALID",   "nosuchhost",
-                                           "An invalid (not known to DNS) hostname" );
-my %exceptions = ( 2 => "No SMTP Server present?" );
+plan tests => 8;
 
-my $t;
+SKIP: {
+	skip "No SMTP server defined", 3 unless $host_tcp_smtp;
+	$res = NPTest->testCmd( "./check_smtp $host_tcp_smtp" );
+	is ($res->return_code, 0, "OK");
+	
+	$res = NPTest->testCmd( "./check_smtp -H $host_tcp_smtp -p 25 -w 9 -c 9 -t 10 -e 220" );
+	is ($res->return_code, 0, "OK, within 9 second response");
 
-$t += checkCmd( "./check_smtp    $host_tcp_smtp",                                   0, undef, %exceptions );
-$t += checkCmd( "./check_smtp -H $host_tcp_smtp -p 25 -t 1 -w 9 -c 9 -t 10 -e 220", 0, undef, %exceptions );
-$t += checkCmd( "./check_smtp -H $host_tcp_smtp -p 25 -wt 9 -ct 9 -to 10 -e 220",   0, undef, %exceptions );
-$t += checkCmd( "./check_smtp    $host_nonresponsive", 2 );
-$t += checkCmd( "./check_smtp    $hostname_invalid",   3 );
+	$res = NPTest->testCmd( "./check_smtp -H $host_tcp_smtp -p 25 -wt 9 -ct 9 -to 10 -e 220" );
+	is ($res->return_code, 0, "OK, old syntax");
 
-exit(0) if defined($Test::Harness::VERSION);
-exit($tests - $t);
+	$res = NPTest->testCmd( "./check_smtp -H $host_tcp_smtp -e 221" );
+	is ($res->return_code, 1, "WARNING - got correct error when expecting 221 instead of 220" );
+
+	TODO: {
+		local $TODO = "Output is over two lines";
+		like ( $res->output, qr/^SMTP WARNING/, "Correct error message" );
+	}
+
+	# SSL connection
+	$res = NPTest->testCmd( "./check_smtp -H $host_tcp_smtp -p 25 -S" );
+	is ($res->return_code, 0, "OK, with STARTTLS" );
+}
+
+$res = NPTest->testCmd( "./check_smtp $host_nonresponsive" );
+is ($res->return_code, 2, "CRITICAL - host non responding" );
+
+$res = NPTest->testCmd( "./check_smtp $hostname_invalid" );
+is ($res->return_code, 3, "UNKNOWN - hostname invalid" );
+

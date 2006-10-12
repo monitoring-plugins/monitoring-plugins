@@ -282,6 +282,35 @@ main (int argc, char **argv)
 		  } else {
 			ssl_established = 1;
 		  }
+
+		/*
+		 * Resend the EHLO command.
+		 *
+		 * RFC 3207 (4.2) says: ``The client MUST discard any knowledge
+		 * obtained from the server, such as the list of SMTP service
+		 * extensions, which was not obtained from the TLS negotiation
+		 * itself.  The client SHOULD send an EHLO command as the first
+		 * command after a successful TLS negotiation.''  For this
+		 * reason, some MTAs will not allow an AUTH LOGIN command before
+		 * we resent EHLO via TLS.
+		 */
+		if (my_send(helocmd, strlen(helocmd)) <= 0) {
+			printf(_("SMTP UNKNOWN - Cannot send EHLO command via TLS.\n"));
+			my_close();
+			return STATE_UNKNOWN;
+		}
+		if (verbose)
+			printf(_("sent %s"), helocmd);
+		if ((n = my_recv(buffer, MAX_INPUT_BUFFER - 1)) <= 0) {
+			printf(_("SMTP UNKNOWN - Cannot read EHLO response via TLS.\n"));
+			my_close();
+			return STATE_UNKNOWN;
+		}
+		if (verbose) {
+			buffer[n] = '\0';
+			printf("%s", buffer);
+		}
+
 #  ifdef USE_OPENSSL
 		  if ( check_cert ) {
 		    result = np_net_ssl_check_cert(days_till_exp);
@@ -705,8 +734,8 @@ print_help (void)
 	printf (_(UT_IPv46));
 
 	printf (" %s\n", "-e, --expect=STRING");
-  printf (_("String to expect in first line of server response (default: '%s')"),SMTP_EXPECT);
-  printf (" %s\n\n", "-n, nocommand\n");
+  printf (_("    String to expect in first line of server response (default: '%s')\n"), SMTP_EXPECT);
+  printf (" %s\n", "-n, nocommand");
   printf ("    %s\n", _("Suppress SMTP command"));
   printf (" %s\n", "-C, --command=STRING");
   printf ("    %s\n", _("SMTP command (may be used repeatedly)"));
@@ -734,6 +763,7 @@ print_help (void)
 
 	printf (_(UT_VERBOSE));
 
+	printf("\n");
 	printf ("%s\n", _("Successul connects return STATE_OK, refusals and timeouts return"));
   printf ("%s\n", _("STATE_CRITICAL, other errors return STATE_UNKNOWN.  Successful"));
   printf ("%s\n", _("connects, but incorrect reponse messages from the host result in"));
