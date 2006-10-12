@@ -765,7 +765,7 @@ int main(int argc, char *argv[]){
 		}
 		printf("Offset %.10g secs|offset=%.10g", offset, offset);
 	}
-	if (do_jitter) printf(", jitter=%f", jitter);
+	if (do_jitter) printf(" jitter=%f", jitter);
 	printf("\n");
 
 	if(server_address!=NULL) free(server_address);
