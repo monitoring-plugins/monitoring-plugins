@@ -206,6 +206,10 @@ main (int argc, char **argv)
 
   /* Process for every path in list */
   for (path = path_select_list; path; path=path->name_next) {
+
+    /* reset disk result */
+    disk_result = STATE_UNKNOWN;
+
     me = path->best_match;
 
     /* Filters */
@@ -258,23 +262,25 @@ main (int argc, char **argv)
 
       temp_result = get_status(dfree_units, path->freespace_units);
       if (verbose >=3) printf("Freespace_units result=%d\n", temp_result);
-      result = max_state( result, temp_result );
+      disk_result = max_state( disk_result, temp_result );
 
       temp_result = get_status(dfree_pct, path->freespace_percent);
       if (verbose >=3) printf("Freespace%% result=%d\n", temp_result);
-      result = max_state( result, temp_result );
+      disk_result = max_state( disk_result, temp_result );
 
       temp_result = get_status(dused_units, path->usedspace_units);
       if (verbose >=3) printf("Usedspace_units result=%d\n", temp_result);
-      result = max_state( result, temp_result );
+      disk_result = max_state( disk_result, temp_result );
 
       temp_result = get_status(dused_pct, path->usedspace_percent);
       if (verbose >=3) printf("Usedspace_percent result=%d\n", temp_result);
-      result = max_state( result, temp_result );
+      disk_result = max_state( disk_result, temp_result );
 
       temp_result = get_status(dused_inodes_percent, path->usedinodes_percent);
       if (verbose >=3) printf("Usedinodes_percent result=%d\n", temp_result);
-      result = max_state( result, temp_result );
+      disk_result = max_state( disk_result, temp_result );
+
+      result = max_state(result, disk_result);
 
       asprintf (&perf, "%s %s", perf,
                 perfdata ((!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,

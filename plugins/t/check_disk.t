@@ -22,7 +22,7 @@ my $mountpoint2_valid = getTestParameter( "NP_MOUNTPOINT2_VALID", "Path to anoth
 if ($mountpoint_valid eq "" or $mountpoint2_valid eq "") {
 	plan skip_all => "Need 2 mountpoints to test";
 } else {
-	plan tests => 35;
+	plan tests => 39;
 }
 
 $result = NPTest->testCmd( 
@@ -85,6 +85,16 @@ $result = NPTest->testCmd(
 	"./check_disk -w $avg_free% -c 0% -p $less_free -w $avg_free% -c $avg_free% -p $more_free" 
 	);
 cmp_ok( $result->return_code, "==", 1, "Combining above two tests, get warning");
+my $all_disks = $result->output;
+
+$result = NPTest->testCmd(
+	"./check_disk -e -w $avg_free% -c 0% -p $less_free -w $avg_free% -c $avg_free% -p $more_free" 
+	);
+isnt( $result->output, $all_disks, "-e gives different output");
+like( $result->output, qr/$less_free/, "Found problem $less_free");
+unlike( $result->only_output, qr/$more_free/, "Has ignored $more_free as not a problem");
+like( $result->perf_output, qr/$more_free/, "But $more_free is still in perf data");
+
 
 
 
@@ -97,7 +107,6 @@ $result = NPTest->testCmd(
 	"./check_disk -w $avg_free% -c $avg_free% -p $less_free"
 	);
 cmp_ok( $result->return_code, '==', 2, "Get critical on less_free, checking avg_free");
-
 $result = NPTest->testCmd(
 	"./check_disk -w $avg_free% -c 0% -p $more_free -w $avg_free% -c $avg_free% -p $less_free"
 	);

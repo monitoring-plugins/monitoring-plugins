@@ -603,6 +603,13 @@ sub perf_output {
 	return $1 || "";
 }
 
+sub only_output {
+	my $self = shift;
+	$_ = $self->{output};
+	/(.*?)\|/;
+	return $1 || "";
+}
+
 sub testCmd {
 	my $class = shift;
 	my $command = shift or die "No command passed to testCmd";
