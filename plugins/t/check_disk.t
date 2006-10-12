@@ -10,9 +10,9 @@ use Test::More;
 use NPTest;
 use POSIX qw(ceil floor);
 
-my $successOutput = '/^DISK OK - /';
-my $failureOutput = '/^DISK CRITICAL - /';
-my $warningOutput = '/^DISK WARNING - /';
+my $successOutput = '/^DISK OK/';
+my $failureOutput = '/^DISK CRITICAL/';
+my $warningOutput = '/^DISK WARNING/';
 
 my $result;
 
@@ -22,7 +22,7 @@ my $mountpoint2_valid = getTestParameter( "NP_MOUNTPOINT2_VALID", "Path to anoth
 if ($mountpoint_valid eq "" or $mountpoint2_valid eq "") {
 	plan skip_all => "Need 2 mountpoints to test";
 } else {
-	plan tests => 39;
+	plan tests => 42;
 }
 
 $result = NPTest->testCmd( 
@@ -55,6 +55,11 @@ if ($free_on_mp1 > $free_on_mp2) {
 $result = NPTest->testCmd( "./check_disk -w 1 -c 1 -p $more_free" );
 cmp_ok( $result->return_code, '==', 0, "At least 1 MB available on $more_free");
 like  ( $result->output, $successOutput, "OK output" );
+like  ( $result->only_output, qr/free space/, "Have free space text");
+like  ( $result->only_output, qr/$more_free/, "Have disk name in text");
+
+$result = NPTest->testCmd( "./check_disk -e -w 1 -c 1 -p $more_free" );
+is( $result->only_output, "DISK OK", "No print out of disks with -e for OKs");
 
 $result = NPTest->testCmd( "./check_disk 100 100 $more_free" );
 cmp_ok( $result->return_code, '==', 0, "Old syntax okay" );

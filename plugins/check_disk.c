@@ -153,6 +153,7 @@ main (int argc, char **argv)
   char *output;
   char *details;
   char *perf;
+  char *preamble;
   double inode_space_pct;
   uintmax_t total, available, available_to_root, used;
   double dfree_pct = -1, dused_pct = -1;
@@ -165,7 +166,8 @@ main (int argc, char **argv)
   struct parameter_list *temp_list, *path;
   struct name_list *seen = NULL;
 
-  output = strdup (" - free space:");
+  preamble = strdup (" - free space:");
+  output = strdup ("");
   details = strdup ("");
   perf = strdup ("");
 
@@ -323,7 +325,7 @@ main (int argc, char **argv)
     asprintf (&output, "%s%s", output, details);
 
 
-  printf ("DISK %s%s|%s\n", state_text (result), output, perf);
+  printf ("DISK %s%s%s|%s\n", state_text (result), (erronly && result==STATE_OK) ? "" : preamble, output, perf);
   return result;
 }
 
