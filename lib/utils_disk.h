@@ -12,7 +12,6 @@ struct name_list
 struct parameter_list
 {
   char *name;
-  int found;
   thresholds *freespace_bytes;
   thresholds *freespace_units;
   thresholds *freespace_percent;

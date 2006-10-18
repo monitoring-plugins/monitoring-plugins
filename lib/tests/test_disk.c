@@ -36,7 +36,7 @@ main (int argc, char **argv)
 	struct mount_entry *me;
 	struct mount_entry **mtail = &dummy_mount_list;
 
-	plan_tests(17);
+	plan_tests(18);
 
 	ok( np_find_name(exclude_filesystem, "/var/log") == FALSE, "/var/log not in list");
 	np_add_name(&exclude_filesystem, "/var/log");
@@ -105,17 +105,20 @@ main (int argc, char **argv)
 	np_add_parameter(&paths, "/var");
 	np_add_parameter(&paths, "/tmp");
 	np_add_parameter(&paths, "/home/tonvoon");
+	np_add_parameter(&paths, "/home");
 
 	np_set_best_match(paths, dummy_mount_list, TRUE);
 	for (p = paths; p; p = p->name_next) {
 		if (! strcmp(p->name, "/home/groups")) {
-			ok( p->found == 0, "/home/groups correctly not found");
+			ok( ! p->best_match , "/home/groups correctly not found");
 		} else if (! strcmp(p->name, "/var")) {
-			ok( p->found == 1, "/var found");
+			ok( p->best_match, "/var found");
 		} else if (! strcmp(p->name, "/tmp")) {
-			ok( p->found == 0, "/tmp correctly not found");
+			ok(! p->best_match, "/tmp correctly not found");
 		} else if (! strcmp(p->name, "/home/tonvoon")) {
-			ok( p->found == 0, "/home/tonvoon not found");
+			ok(! p->best_match, "/home/tonvoon not found");
+		} else if (! strcmp(p->name, "/home")) {
+			ok( p->best_match, "/home found");
 		}
 	}
 
