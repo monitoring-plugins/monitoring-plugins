@@ -159,6 +159,8 @@ main (int argc, char **argv)
   double dfree_pct = -1, dused_pct = -1;
   double dused_units, dfree_units, dtotal_units;
   double dused_inodes_percent, dfree_inodes_percent;
+  double warning_high_tide = UINT_MAX;
+  double critical_high_tide = UINT_MAX;
   int temp_result;
 
   struct mount_entry *me;
@@ -284,13 +286,30 @@ main (int argc, char **argv)
 
       result = max_state(result, disk_result);
 
+      /* What a mess of units. The output shows free space, the perf data shows used space. Yikes!
+         Hack here. Trying to get warn/crit levels from freespace_(units|percent) for perf
+         data. Assumption that start=0. Roll on new syntax...
+      */
+      if (path->freespace_units->warning != NULL) {
+        warning_high_tide = dtotal_units - path->freespace_units->warning->end;
+      }
+      if (path->freespace_percent->warning != NULL) {
+        warning_high_tide = abs( min( (double) warning_high_tide, (double) (1.0 - path->freespace_percent->warning->end/100)*dtotal_units ));
+      }
+      if (path->freespace_units->critical != NULL) {
+        critical_high_tide = dtotal_units - path->freespace_units->critical->end;
+      }
+      if (path->freespace_percent->critical != NULL) {
+        critical_high_tide = abs( min( (double) critical_high_tide, (double) (1.0 - path->freespace_percent->critical->end/100)*dtotal_units ));
+      }
+
       asprintf (&perf, "%s %s", perf,
                 perfdata ((!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
                           dused_units, units,
-                          FALSE, 0, /* min ((uintmax_t)dtotal_units-(uintmax_t)w_df, (uintmax_t)((1.0-w_dfp/100.0)*dtotal_units)), */
-                          FALSE, 0, /* min ((uintmax_t)dtotal_units-(uintmax_t)c_df, (uintmax_t)((1.0-c_dfp/100.0)*dtotal_units)), */
-                          FALSE, 0, /* inode_space_pct - this is not meant to be here???, */
-                          FALSE, 0));; /* dtotal_units)); */
+			  TRUE, warning_high_tide,
+			  TRUE, critical_high_tide,
+			  TRUE, 0,
+			  TRUE, dtotal_units));
 
       if (disk_result==STATE_OK && erronly && !verbose)
         continue;

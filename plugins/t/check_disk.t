@@ -5,6 +5,8 @@
 # $Id$
 #
 
+# TODO: Add in tests for perf data. Need to beef up Nagios::Plugin::Performance to cater for max, min, etc
+
 use strict;
 use Test::More;
 use NPTest;
