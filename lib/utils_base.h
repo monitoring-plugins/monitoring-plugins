@@ -38,4 +38,8 @@ char *np_escaped_string (const char *);
 
 void die (int, const char *, ...) __attribute__((noreturn,format(printf, 2, 3)));
 
+/* Return codes for _set_thresholds */
+#define NP_RANGE_UNPARSEABLE 1
+#define NP_WARN_WITHIN_CRIT 2
+
 #endif /* _UTILS_BASE_ */
