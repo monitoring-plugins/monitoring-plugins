@@ -2,6 +2,9 @@
 # $Id$
 #
 # $Log$
+# Revision 1.9  2006/10/19 18:44:53  tonvoon
+# Allow hostnames beginning with digits (O'Shaughnessy Evans - 1567390)
+#
 # Revision 1.8  2006/06/07 14:23:12  seanius
 # removed stale references to PATH_TO_NTPFOO, as it's no longer used.
 #
@@ -73,7 +76,7 @@ sub usage {
 
 sub is_hostname {
 	my $host1 = shift;
-	if ($host1 && $host1 =~ m/^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|[a-zA-Z][-a-zA-Z0-9]+(\.[a-zA-Z][-a-zA-Z0-9]+)*)$/) {
+	if ($host1 && $host1 =~ m/^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*)$/) {
 		return 1;
 	}else{
 		return 0;
