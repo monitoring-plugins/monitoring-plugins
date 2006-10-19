@@ -6,8 +6,10 @@ This file documents the major additions and syntax changes between releases.
 	Notice: plugins in contrib/ will start to be removed from this distribution.
 	  Please check at http://www.nagiosexchange.org for contributed plugins
 	Major bug fixes to check_disk where values were incorrectly calculated and alerted on.
-          Perf data for warn/crit/max/min have been removed, to be readded soon.
 	check_udp2 removed. check_udp is now linked to check_tcp.c
+	check_mailq now errors if the sub-program run returns non-zero return code. This would appear
+	  as if mailqs were okay when the nagios user could not query the mail-queues
+	Compile problems with check_snmp fixed
 
 1.4.3
 	Setuid plugins (check_dhcp, check_icmp) separated into plugins-root/. Run make install as root to install
