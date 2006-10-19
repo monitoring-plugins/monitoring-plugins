@@ -11,6 +11,10 @@
 *
 * This file contains the check_ssh plugin
 *
+*
+*  Try to connect to an SSH server at specified server and port
+*
+*
 * License Information:
 *
 * This program is free software; you can redistribute it and/or modify

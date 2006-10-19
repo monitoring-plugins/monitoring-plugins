@@ -14,6 +14,9 @@
 *
 * This file contains Network UPS Tools plugin for Nagios
 *
+*  This plugin tests the UPS service on the specified host.Network UPS Tools
+*  from www.networkupstools.org must be running for thisplugin to work.
+*
 * License Information:
 *
 * This program is free software; you can redistribute it and/or modify
@@ -36,7 +39,7 @@
 
 const char *progname = "check_ups";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2006";
+const char *copyright = "2002-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"

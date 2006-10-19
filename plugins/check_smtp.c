@@ -11,6 +11,9 @@
 *
 * This file contains the check_smtp plugin
 *
+*  This plugin will attempt to open an SMTP connection with the host.
+*
+*
 * License Information:
 *
 * This program is free software; you can redistribute it and/or modify
@@ -778,8 +781,8 @@ void
 print_usage (void)
 {
   printf (_("Usage:"));
-	printf ("%s -H host [-p port] [-e expect] [-C command] [-f from addr]\n\
-                  [-A authtype -U authuser -P authpass]\n\
-                  [-w warn] [-c crit] [-t timeout] [-S] [-D days] [-n] [-v] [-4|-6]\n", progname);
+	printf ("%s -H host [-p port] [-e expect] [-C command] [-f from addr]", progname);
+  printf ("[-A authtype -U authuser -P authpass] [-w warn] [-c crit] [-t timeout]\n");
+  printf ("[-S] [-D days] [-n] [-v] [-4|-6]\n");
 }
 

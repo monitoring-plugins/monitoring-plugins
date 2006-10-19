@@ -1,27 +1,40 @@
 /*****************************************************************************
-
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
- $Id$
- 
+*
+* Nagios check_tcp plugin
+*
+* License: GPL
+* Copyright (c) 1999-2006 nagios-plugins team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_tcp plugin
+*
+* License Information:
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+* $Id$
+* 
 *****************************************************************************/
 
 /* progname "check_tcp" changes depending on symlink called */
 char *progname;
 const char *revision = "$Revision$";
-const char *copyright = "1999-2004";
+const char *copyright = "1999-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -589,35 +602,31 @@ print_help (void)
 
 	printf (_(UT_IPv46));
 
-	printf (_("\
- -E, --escape\n\
-    Can use \\n, \\r, \\t or \\ in send or quit string.\n\
-    Default: nothing added to send, \\r\\n added to end of quit\n\
- -s, --send=STRING\n\
-    String to send to the server\n\
- -e, --expect=STRING\n\
-    String to expect in server response\n\
- -q, --quit=STRING\n\
-    String to send server to initiate a clean close of the connection\n"));
-
-	printf (_("\
- -r, --refuse=ok|warn|crit\n\
-    Accept tcp refusals with states ok, warn, crit (default: crit)\n\
- -M, --mismatch=ok|warn|crit\n\
-    Accept expected string mismatches with states ok, warn, crit (default: warn)\n\
- -j, --jail\n\
-    Hide output from TCP socket\n\
- -m, --maxbytes=INTEGER\n\
-    Close connection once more than this number of bytes are received\n\
- -d, --delay=INTEGER\n\
-    Seconds to wait between sending string and polling for response\n"));
+	printf (" %s\n", "-E, --escape");
+  printf ("    %s\n", _("Can use \\n, \\r, \\t or \\ in send or quit string."));
+  printf ("    %s\n", _("Default: nothing added to send, \\r\\n added to end of quit"));
+  printf (" %s\n", "-s, --send=STRING");
+  printf ("    %s\n", _("String to send to the server"));
+  printf (" %s\n", "-e, --expect=STRING");
+  printf ("    %s\n", _("String to expect in server response"));
+  printf (" %s\n", "-q, --quit=STRING");
+  printf ("    %s\n", _("String to send server to initiate a clean close of the connection"));
+	printf (" %s\n", "-r, --refuse=ok|warn|crit");
+  printf ("    %s\n", _("Accept tcp refusals with states ok, warn, crit (default: crit)"));
+  printf (" %s\n", "-M, --mismatch=ok|warn|crit");
+  printf ("    %s\n", _("Accept expected string mismatches with states ok, warn, crit (default: warn)"));
+  printf (" %s\n", "-j, --jail");
+  printf ("    %s\n", _("Hide output from TCP socket"));
+  printf (" %s\n", "-m, --maxbytes=INTEGER");
+  printf ("    %s\n", _("Close connection once more than this number of bytes are received"));
+  printf (" %s\n", "-d, --delay=INTEGER");
+  printf ("    %s\n", _("Seconds to wait between sending string and polling for response"));
 
 #ifdef HAVE_SSL
-	printf (_("\
- -D, --certificate=INTEGER\n\
-    Minimum number of days a certificate has to be valid.\n\
- -S, --ssl\n\
-    Use SSL for the connection.\n"));
+	printf (" %s\n", "-D, --certificate=INTEGER");
+  printf ("    %s\n", _("Minimum number of days a certificate has to be valid."));
+  printf (" %s\n", "-S, --ssl");
+  printf ("    %s\n", _("Use SSL for the connection."));
 #endif
 
 	printf (_(UT_WARN_CRIT));
@@ -633,11 +642,10 @@ print_help (void)
 void
 print_usage (void)
 {
-	printf ("\
-Usage: %s -H host -p port [-w <warning time>] [-c <critical time>]\n\
-                  [-s <send string>] [-e <expect string>] [-q <quit string>]\n\
-                  [-m <maximum bytes>] [-d <delay>] [-t <timeout seconds>]\n\
-                  [-r <refuse state>] [-M <mismatch state>] [-v] [-4|-6] [-j]\n\
-                  [-D <days to cert expiry>] [-S <use SSL>] [-E]\n", progname);
+	printf (_("Usage:"));
+  printf ("%s -H host -p port [-w <warning time>] [-c <critical time>] [-s <send string>]\n",progname);
+  printf ("[-e <expect string>] [-q <quit string>][-m <maximum bytes>] [-d <delay>]\n");
+  printf ("[-t <timeout seconds>] [-r <refuse state>] [-M <mismatch state>] [-v] [-4|-6] [-j]\n");
+  printf ("[-D <days to cert expiry>] [-S <use SSL>] [-E]\n");
 }
 

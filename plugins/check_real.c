@@ -11,6 +11,9 @@
 *
 * This file contains the check_real plugin
 *
+*  This plugin tests the REAL service on the specified host.
+*
+*
 * License Information:
 *
 * This program is free software; you can redistribute it and/or modify

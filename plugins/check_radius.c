@@ -11,6 +11,9 @@
 *
 * This file contains the check_radius plugin
 *
+*  Tests to see if a radius server is accepting connections.
+*
+*
 * License Information:
 *
 * This program is free software; you can redistribute it and/or modify

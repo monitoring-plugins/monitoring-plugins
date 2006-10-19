@@ -1,33 +1,40 @@
 /******************************************************************************
- *
- * Program: Swap space plugin for Nagios
- * License: GPL
- *
- * License Information:
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- * Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
- *
- * $Id$
- *
- *****************************************************************************/
+*
+* Nagios check_disk plugin
+*
+* License: GPL
+* Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
+* Copyright (c) 2000-2006 nagios-plugins team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_disk plugin
+*
+* License Information:
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+* $Id$
+*
+*****************************************************************************/
 
 const char *progname = "check_swap";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2004";
+const char *copyright = "2000-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -491,28 +498,29 @@ print_help (void)
 
 	printf (_(COPYRIGHT), copyright, email);
 
-	printf (_("Check swap space on local machine.\n\n"));
+	printf ("%s\n", _("Check swap space on local machine."));
 
+  printf ("\n\n");
+  
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
 
-	printf (_("\n\
- -w, --warning=INTEGER\n\
-   Exit with WARNING status if less than INTEGER bytes of swap space are free\n\
- -w, --warning=PERCENT%%\n\
-   Exit with WARNING status if less than PERCENT of swap space is free\n\
- -c, --critical=INTEGER\n\
-   Exit with CRITICAL status if less than INTEGER bytes of swap space are free\n\
- -c, --critical=PERCENT%%\n\
-   Exit with CRITCAL status if less than PERCENT of swap space is free\n\
- -a, --allswaps\n\
-    Conduct comparisons for all swap partitions, one by one\n\
- -v, --verbose\n\
-    Verbose output. Up to 3 levels\n"));
-
-	printf (_("\n\
-On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s.\n"));
+	printf (" %s\n", "-w, --warning=INTEGER");
+  printf ("    %s\n", _("Exit with WARNING status if less than INTEGER bytes of swap space are free"));
+  printf (" %s\n", "-w, --warning=PERCENT%%");
+  printf ("    %s\n", _("Exit with WARNING status if less than PERCENT of swap space is free"));
+  printf (" %s\n", "-c, --critical=INTEGER");
+  printf ("    %s\n", _("Exit with CRITICAL status if less than INTEGER bytes of swap space are free"));
+  printf (" %s\n", "-c, --critical=PERCENT%%");
+  printf ("    %s\n", _("Exit with CRITCAL status if less than PERCENT of swap space is free"));
+  printf (" %s\n", "-a, --allswaps");
+  printf ("    %s\n", _("Conduct comparisons for all swap partitions, one by one"));
+  printf (" %s\n", "-v, --verbose");
+  printf ("    %s\n", _("Verbose output. Up to 3 levels"));
+	printf ("\n");
+  printf ("%s\n", _("Notes:"));
+  printf (" %s\n", _("On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s.\n"));
 
 	printf (_(UT_SUPPORT));
 }
@@ -522,7 +530,7 @@ On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s.\n"));
 void
 print_usage (void)
 {
-	printf ("\
-Usage: %s [-av] -w <percent_free>%% -c <percent_free>%%\n\
-       %s [-av] -w <bytes_free> -c <bytes_free>\n", progname, progname);
+	printf (_("Usage:"));
+  printf ("%s [-av] -w <percent_free>%% -c <percent_free>%%\n",progname);
+  printf ("%s [-av] -w <bytes_free> -c <bytes_free>\n", progname);
 }

@@ -11,6 +11,8 @@
 *
 * This file contains the check_time plugin
 *
+*  This plugin will check the time on the specified host.
+*
 * License Information:
 *
 * This program is free software; you can redistribute it and/or modify

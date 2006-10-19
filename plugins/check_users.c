@@ -3,13 +3,16 @@
 * Nagios check_users plugin
 *
 * License: GPL
-* Copyright (c) 2002-2006 nagios-plugins team
+* Copyright (c) 2000-2006 nagios-plugins team
 *
 * Last Modified: $Date$
 *
 * Description:
 *
 * This file contains the check_users plugin
+*
+*  This plugin checks the number of users currently logged in on the local
+*  system and generates an error if the number exceeds the thresholds specified.
 *
 * License Information:
 *

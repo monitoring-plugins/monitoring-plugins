@@ -11,6 +11,8 @@
 *
 * This file contains the negate plugin
 *
+*  Negates the status of a plugin (returns OK for CRITICAL, and vice-versa)
+*
 * License Information:
 *
 * This program is free software; you can redistribute it and/or modify
