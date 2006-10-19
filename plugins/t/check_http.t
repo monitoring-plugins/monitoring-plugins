@@ -9,7 +9,7 @@ use strict;
 use Test::More;
 use NPTest;
 
-plan tests => 21;
+plan tests => 22;
 
 my $successOutput = '/OK.*HTTP.*second/';
 
@@ -95,3 +95,7 @@ like ( $res->output, "/pattern found/", "Error message says 'pattern found'");
 
 $res = NPTest->testCmd( "./check_http -H altinity.com -r 'nAGiOs' --invert-regex" );
 cmp_ok( $res->return_code, "==", 0, "And also when not found");
+
+$res = NPTest->testCmd( "./check_http -H www.worldfirefoxday.com -f follow" );
+is( $res->return_code, 0, "Redirection based on location is okay");
+

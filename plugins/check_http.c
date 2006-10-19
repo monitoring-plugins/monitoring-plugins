@@ -1094,9 +1094,8 @@ redir (char *pos, char *status_line)
     die (STATE_UNKNOWN, _("Could not allocate url\n"));
 
   while (pos) {
-
-    if (sscanf (pos, "%[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]:%n", xx, &i) < 1) {
-
+    sscanf (pos, "%[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]:%n", xx, &i);
+    if (i == 0) {
       pos += (size_t) strcspn (pos, "\r\n");
       pos += (size_t) strspn (pos, "\r\n");
       if (strlen(pos) == 0) 
