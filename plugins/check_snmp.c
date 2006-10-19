@@ -11,6 +11,9 @@
 *
 * This file contains the check_snmp plugin
 *
+*  Check status of remote machines and obtain sustem information via SNMP
+*
+*
 * License Information:
 *
 * This program is free software; you can redistribute it and/or modify
@@ -93,8 +96,8 @@ char regex_expect[MAX_INPUT_BUFFER] = "";
 regex_t preg;
 regmatch_t pmatch[10];
 char timestamp[10] = "";
-char errbuf[MAX_INPUT_BUFFER] = "";
-char perfstr[MAX_INPUT_BUFFER] = "";
+char errbuf[MAX_INPUT_BUFFER];
+char perfstr[MAX_INPUT_BUFFER];
 int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
 int eflags = 0;
 int errcode, excode;
@@ -151,7 +154,8 @@ main (int argc, char **argv)
 	char *ptr = NULL;
 	char *p2 = NULL;
 	char *show = NULL;
-	char type[8] = "";
+	char type[8];
+	char *str[MAX_INPUT_BUFFER];
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -253,10 +257,6 @@ main (int argc, char **argv)
 		}
 
 		/* We strip out the datatype indicator for PHBs */
-
-		/* Clean up type array - Sol10 does not necessarily zero it out */
-		bzero(type, sizeof(type));
-
 		if (strstr (response, "Gauge: "))
 			show = strstr (response, "Gauge: ") + 7;
 		else if (strstr (response, "Gauge32: "))
@@ -348,11 +348,8 @@ main (int argc, char **argv)
 
 		i++;
 
-		strcat(perfstr, "=");
-		strcat(perfstr, show);
-		if (type)
-			strcat(perfstr, type);
-		strcat(perfstr, " ");
+		asprintf(str, "=%s%s;;;; ", show, type ? type : "");
+		strcat(perfstr, *str);
 
 	}	/* end while (ptr) */
 
@@ -1002,11 +999,9 @@ void
 print_usage (void)
 {
   printf (_("Usage:"));
-	printf ("%s -H <ip_address> -o <OID> [-w warn_range] [-c crit_range] \n\
-                  [-C community] [-s string] [-r regex] [-R regexi]\n\
-                  [-t timeout] [-e retries]\n\
-                  [-l label] [-u units] [-p port-number] [-d delimiter]\n\
-                  [-D output-delimiter] [-m miblist] [-P snmp version]\n\
-                  [-L seclevel] [-U secname] [-a authproto] [-A authpasswd]\n\
-                  [-X privpasswd]\n", progname);
+	printf ("%s -H <ip_address> -o <OID> [-w warn_range] [-c crit_range]\n",progname);
+  printf ("[-C community] [-s string] [-r regex] [-R regexi] [-t timeout] [-e retries]\n");
+  printf ("[-l label] [-u units] [-p port-number] [-d delimiter] [-D output-delimiter]\n");
+  printf ("[-m miblist] [-P snmp version] [-L seclevel] [-U secname] [-a authproto]\n");
+  printf ("[-A authpasswd] [-X privpasswd]\n");
 }
