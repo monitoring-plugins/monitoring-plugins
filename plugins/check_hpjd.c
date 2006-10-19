@@ -1,5 +1,22 @@
 /******************************************************************************
 *
+* Nagios check_hpjd plugin
+*
+* License: GPL
+* Copyright (c) 1999-2006 nagios-plugins team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_hpjd plugin
+*
+*  This plugin tests the STATUS of an HP printer with a JetDirect card.
+*  Net-snmp must be installed on the computer running the plugin.
+*
+*
+* License Information:
+*
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation; either version 2 of the License, or

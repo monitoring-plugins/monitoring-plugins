@@ -1,18 +1,37 @@
 /******************************************************************************
-
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+* Nagios check_http plugin
+*
+* License: GPL
+* Copyright (c) 1999-2006 nagios-plugins team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_http plugin
+*
+*  This plugin tests the HTTP service on the specified host. It can test
+*  normal (http) and secure (https) servers, follow redirects, search for
+*  strings and regular expressions, check connection times, and report on
+*  certificate expiration times.
+*
+*
+* License Information:
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
  $Id$
  
@@ -21,7 +40,7 @@
 
 const char *progname = "check_http";
 const char *revision = "$Revision$";
-const char *copyright = "1999-2005";
+const char *copyright = "1999-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -1217,11 +1236,10 @@ print_help (void)
   printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
   printf (COPYRIGHT, copyright, email);
 
-  printf (_("\
-This plugin tests the HTTP service on the specified host. It can test\n\
-normal (http) and secure (https) servers, follow redirects, search for\n\
-strings and regular expressions, check connection times, and report on\n\
-certificate expiration times."));
+  printf ("%s\n", _("This plugin tests the HTTP service on the specified host. It can test"));
+  printf ("%s\n", _("normal (http) and secure (https) servers, follow redirects, search for"));
+  printf ("%s\n", _("strings and regular expressions, check connection times, and report on"));
+  printf ("%s\n", _("certificate expiration times."));
 
   printf ("\n\n");
 
@@ -1302,7 +1320,7 @@ certificate expiration times."));
 
   printf (_(UT_VERBOSE));
 
-          printf (_("\
+  printf (_("\
 This plugin will attempt to open an HTTP connection with the host. Successful\n\
 connects return STATE_OK, refusals and timeouts return STATE_CRITICAL, other\n\
 errors return STATE_UNKNOWN.  Successful connects, but incorrect reponse\n\

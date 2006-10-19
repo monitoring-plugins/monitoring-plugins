@@ -1,38 +1,39 @@
-/*
- *  check_ide-smart v.1 - hacked version of ide-smart for Nagios
- *  Copyright (C) 2000 Robert Dale <rdale@digital-mission.com>
- *
- *  Nagios - http://www.nagios.org
- *
- *  Notes:
- *	   ide-smart has the same functionality as before. Some return
- *	   values were changed, otherwise the --nagios option was added.
- *
- *	   Run with:  check_ide-smart --nagios [-d] <DRIVE>
- *	   Where DRIVE is an IDE drive, ie. /dev/hda, /dev/hdb, /dev/hdc
- *
- *	     - Returns 0 on no errors
- *	     - Returns 1 on advisories
- *	     - Returns 2 on prefailure
- *	     - Returns -1 not too often
- *
- *  ide-smart 1.3 - IDE S.M.A.R.T. checking tool
- *  Copyright (C) 1998-1999 Ragnar Hojland Espinosa <ragnar@lightside.dhis.org>
- *		  1998	    Gadi Oxman <gadio@netvision.net.il>
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+/******************************************************************************
+* Nagios check_ide_smart plugin
+*
+* License: GPL
+*
+*  ide-smart 1.3 - IDE S.M.A.R.T. checking tool
+*  Copyright (C)  1998-1999 Ragnar Hojland Espinosa <ragnar@lightside.dhis.org>
+*                 1998      Gadi Oxman <gadio@netvision.net.il>
+* 
+* Copyright (c) 2000 Robert Dale <rdale@digital-mission.com>
+* Copyright (c) 2000-2006 nagios-plugins team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_ide_smart plugin
+*
+*  This plugin checks a local hard drive with the (Linux specific) SMART interface
+*
+*
+* License Information:
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Id$
  */
@@ -524,6 +525,17 @@ print_help (void)
   printf ("    %s\n", _("Output suitable for Nagios\n"));
   printf (_(UT_SUPPORT));
 }
+
+ /* todo : add to the long nanual as example
+ *
+ *     Run with:  check_ide-smart --nagios [-d] <DRIVE>
+ *     Where DRIVE is an IDE drive, ie. /dev/hda, /dev/hdb, /dev/hdc
+ *
+ *       - Returns 0 on no errors
+ *       - Returns 1 on advisories
+ *       - Returns 2 on prefailure
+ *       - Returns -1 not too often
+ */
 
 
 void

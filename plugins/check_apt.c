@@ -1,22 +1,35 @@
 /******************************************************************************
- * check_apt.c: check for available updates in apt package management systems
- * original author: sean finney <seanius@seanius.net> 
- *                  (with some common bits stolen from check_nagios.c)
- ******************************************************************************
-
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+* Nagios check_apt plugin
+*
+* License: GPL
+* Copyright (c) 1999-2006 nagios-plugins team
+*
+* Original author: sean finney
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_apt plugin
+* 
+* check for available updates in apt package management systems
+*
+* License Information:
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
  $Id$
  
@@ -195,66 +208,6 @@ int process_arguments (int argc, char **argv) {
 	return OK;
 }
 
-
-/* informative help message */
-void print_help(void){
-	print_revision(progname, revision);
-	printf(_(COPYRIGHT), copyright, email);
-	printf(_("\
-This plugin checks for software updates on systems that use\n\
-package management systems based on the apt-get(8) command\n\
-found in Debian GNU/Linux\n\
-\n\n"));
-	print_usage();
-	printf(_(UT_HELP_VRSN));
-	printf(_(UT_TIMEOUT), timeout_interval);
-   	printf(_("\n\
- -U, --upgrade=OPTS\n\
-   [Default] Perform an upgrade.  If an optional OPTS argument is provided,\n\
-   apt-get will be run with these command line options instead of the\n\
-   default (%s).\n\
-   Note that you may be required to have root privileges if you do not use\n\
-   the default options.\n\
- -d, --dist-upgrade=OPTS\n\
-   Perform a dist-upgrade instead of normal upgrade. Like with -U OPTS\n\
-   can be provided to override the default options.\n\
- -n, --no-upgrade\n\
-   Do not run the upgrade.  Probably not useful (without -u at least).\n\
- -i, --include=REGEXP\n\
-   Include only packages matching REGEXP.  Can be specified multiple times;\n\
-   the values will be combined together.  Any patches matching this list\n\
-   cause the plugin to return WARNING status.  Others will be ignored.\n\
-   Default is to include all packages.\n\
- -e, --exclude=REGEXP\n\
-   Exclude packages matching REGEXP from the list of packages that would\n\
-   otherwise be included.  Can be specified multiple times; the values\n\
-   will be combined together.  Default is to exclude no packages.\n\
- -c, --critical=REGEXP\n\
-   If the full package information of any of the upgradable packages match\n\
-   this REGEXP, the plugin will return CRITICAL status.  Can be specified\n\
-   multiple times like above.  Default is a regexp matching security\n\
-   upgrades for Debian and Ubuntu:\n\
-   \t%s\n\
-   Note that the package must first match the include list before its\n\
-   information is compared against the critical list.\n\
-   \n\n"),
-	       UPGRADE_DEFAULT_OPTS, SECURITY_RE);
-   	printf(_("\
-The following options require root privileges and should be used with care: \
-\n\n"));
-   	printf(_("\
- -u, --update=OPTS\n\
-   First perform an 'apt-get update'.  An optional OPTS parameter overrides\n\
-   the default options.  Note: you may also need to adjust the global \n\
-   timeout (with -t) to prevent the plugin from timing out if apt-get\n\
-   upgrade is expected to take longer than the default timeout.\n\
-\n\n"));
-}
-
-/* simple usage heading */
-void print_usage(void){
-	printf ("Usage: %s [[-d|-u|-U]opts] [-n] [-t timeout]\n", progname);
-}
 
 /* run an apt-get upgrade */
 int run_upgrade(int *pkgcount, int *secpkgcount){
@@ -444,4 +397,70 @@ char* construct_cmdline(upgrade_type u, const char *opts){
 	if(cmd==NULL) die(STATE_UNKNOWN, "malloc failed");
 	sprintf(cmd, "%s %s %s", PATH_TO_APTGET, opts_ptr, aptcmd);
 	return cmd;
+}
+
+/* informative help message */
+void
+print_help (void)
+{
+  print_revision(progname, revision);
+  
+  printf(_(COPYRIGHT), copyright, email);
+  
+  printf("%s\n", _("This plugin checks for software updates on systems that use"));
+  printf("%s\n", _("package management systems based on the apt-get(8) command"));
+  printf("%s\n", _("found in Debian GNU/Linux"));
+
+  print_usage();
+  
+  printf(_(UT_HELP_VRSN));
+  
+  printf(_(UT_TIMEOUT), timeout_interval);
+  
+  printf(_("\n\
+ -U, --upgrade=OPTS\n\
+   [Default] Perform an upgrade.  If an optional OPTS argument is provided,\n\
+   apt-get will be run with these command line options instead of the\n\
+   default (%s).\n\
+   Note that you may be required to have root privileges if you do not use\n\
+   the default options.\n\
+ -d, --dist-upgrade=OPTS\n\
+   Perform a dist-upgrade instead of normal upgrade. Like with -U OPTS\n\
+   can be provided to override the default options.\n\
+ -n, --no-upgrade\n\
+   Do not run the upgrade.  Probably not useful (without -u at least).\n\
+ -i, --include=REGEXP\n\
+   Include only packages matching REGEXP.  Can be specified multiple times;\n\
+   the values will be combined together.  Any patches matching this list\n\
+   cause the plugin to return WARNING status.  Others will be ignored.\n\
+   Default is to include all packages.\n\
+ -e, --exclude=REGEXP\n\
+   Exclude packages matching REGEXP from the list of packages that would\n\
+   otherwise be included.  Can be specified multiple times; the values\n\
+   will be combined together.  Default is to exclude no packages.\n\
+ -c, --critical=REGEXP\n\
+   If the full package information of any of the upgradable packages match\n\
+   this REGEXP, the plugin will return CRITICAL status.  Can be specified\n\
+   multiple times like above.  Default is a regexp matching security\n\
+   upgrades for Debian and Ubuntu:\n\
+   \t%s\n\
+   Note that the package must first match the include list before its\n\
+   information is compared against the critical list.\n\
+   \n\n"),
+         UPGRADE_DEFAULT_OPTS, SECURITY_RE);
+         
+  printf ("%s\n\n", _("The following options require root privileges and should be used with care:"));
+  printf (" %s\n", "-u, --update=OPTS");
+  printf ("    %s\n", _("First perform an 'apt-get update'.  An optional OPTS parameter overrides"));
+  printf ("    %s\n", _("the default options.  Note: you may also need to adjust the global"));
+  printf ("    %s\n", _("timeout (with -t) to prevent the plugin from timing out if apt-get"));
+  printf ("    %s\n", _("upgrade is expected to take longer than the default timeout."));
+}
+
+  
+/* simple usage heading */
+void
+print_usage(void)
+{
+  printf ("Usage: %s [[-d|-u|-U]opts] [-n] [-t timeout]\n", progname);
 }

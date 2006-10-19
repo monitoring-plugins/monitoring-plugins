@@ -1,5 +1,21 @@
 /******************************************************************************
 *
+* Nagios check_game plugin
+*
+* License: GPL
+* Copyright (c) 1999-2006 nagios-plugins team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_game plugin
+*
+* This plugin tests game server connections with the specified host.
+* using the qstat program
+*
+* License Information:
+*
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation; either version 2 of the License, or
@@ -19,7 +35,7 @@
 
 const char *progname = "check_game";
 const char *revision = "$Revision$";
-const char *copyright = "2002-2005";
+const char *copyright = "2002-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"

@@ -1,18 +1,35 @@
 /******************************************************************************
-
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+* Nagios check_mrtgtraf plugin
+*
+* License: GPL
+* Copyright (c) 1999-2006 nagios-plugins team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_mtrgtraf plugin
+*
+*  This plugin will check the incoming/outgoing transfer rates of a router
+*  switch, etc recorded in an MRTG log.
+*
+*
+* License Information:
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  
  $Id$
 
@@ -23,7 +40,7 @@
 
 const char *progname = "check_mrtgtraf";
 const char *revision = "$Revision$";
-const char *copyright = "1999-2004";
+const char *copyright = "1999-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 int process_arguments (int, char **);
@@ -317,38 +334,38 @@ print_help (void)
 	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("\n\
-This plugin will check the incoming/outgoing transfer rates of a router,\n\
-switch, etc recorded in an MRTG log.  If the newest log entry is older\n\
-than <expire_minutes>, a WARNING status is returned. If either the\n\
-incoming or outgoing rates exceed the <icl> or <ocl> thresholds (in\n\
-Bytes/sec), a CRITICAL status results.  If either of the rates exceed\n\
-the <iwl> or <owl> thresholds (in Bytes/sec), a WARNING status results.\n\n"));
+	printf ("%s\n", _("This plugin will check the incoming/outgoing transfer rates of a router,"));
+  printf ("%s\n", _("switch, etc recorded in an MRTG log.  If the newest log entry is older"));
+  printf ("%s\n", _("than <expire_minutes>, a WARNING status is returned. If either the"));
+  printf ("%s\n", _("incoming or outgoing rates exceed the <icl> or <ocl> thresholds (in"));
+  printf ("%s\n", _("Bytes/sec), a CRITICAL status results.  If either of the rates exceed"));
+  printf ("%s\n", _("the <iwl> or <owl> thresholds (in Bytes/sec), a WARNING status results."));
+
+  printf ("\n\n");
 
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
 
-	printf (_("\
- -F, --filename=STRING\n\
-   File to read log from\n\
- -e, --expires=INTEGER\n\
-   Minutes after which log expires\n\
- -a, --aggregation=(AVG|MAX)\n\
-   Test average or maximum\n\
- -w, --warning\n\
-   Warning threshold pair \"<incoming>,<outgoing>\"\n\
- -c, --critical\n\
-   Critical threshold pair \"<incoming>,<outgoing>\"\n"));
+	printf (" %s\n", "-F, --filename=STRING");
+  printf ("    %s\n", _("File to read log from"));
+  printf (" %s\n", "-e, --expires=INTEGER");
+  printf ("    %s\n", _("Minutes after which log expires"));
+  printf (" %s\n", "-a, --aggregation=(AVG|MAX)");
+  printf ("    %s\n", _("Test average or maximum"));
+  printf (" %s\n", "-w, --warning");
+  printf ("    %s\n", _("Warning threshold pair <incoming>,<outgoing>"));
+  printf (" %s\n", "-c, --critical");
+  printf ("    %s\n", _("Critical threshold pair <incoming>,<outgoing>"));
 
-	printf (_("Notes:\n\
-- MRTG stands for Multi Router Traffic Grapher. It can be downloaded from\n\
-  http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html\n\
-- While MRTG can monitor things other than traffic rates, this\n\
-  plugin probably won't work with much else without modification.\n\
-- The calculated i/o rates are a little off from what MRTG actually\n\
-  reports.  I'm not sure why this is right now, but will look into it\n\
-  for future enhancements of this plugin.\n"));
+	printf ("%s\n", _("Notes:"));
+  printf (" %s\n", _("- MRTG stands for Multi Router Traffic Grapher. It can be downloaded from"));
+  printf (" %s\n", _("  http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html"));
+  printf (" %s\n", _("- While MRTG can monitor things other than traffic rates, this"));
+  printf (" %s\n", _("  plugin probably won't work with much else without modification."));
+  printf (" %s\n", _("- The calculated i/o rates are a little off from what MRTG actually"));
+  printf (" %s\n", _("  reports.  I'm not sure why this is right now, but will look into it"));
+  printf (" %s\n", _("  for future enhancements of this plugin."));
 
 	printf (_(UT_SUPPORT));
 }
@@ -358,7 +375,7 @@ the <iwl> or <owl> thresholds (in Bytes/sec), a WARNING status results.\n\n"));
 void
 print_usage (void)
 {
-	printf ("\
-Usage: %s -F <log_file> -a <AVG | MAX> -v <variable> -w <warning_pair>\n\
-                      -c <critical_pair> [-e expire_minutes] [-t timeout] [-v]\n", progname);
+	printf (_("Usage"));
+  printf (" %s -F <log_file> -a <AVG | MAX> -v <variable> -w <warning_pair>",progname);
+  printf ("-c <critical_pair> [-e expire_minutes] [-t timeout] [-v]\n");
 }

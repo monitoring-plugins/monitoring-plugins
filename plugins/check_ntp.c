@@ -1,21 +1,36 @@
 /******************************************************************************
- check_ntp.c: utility to check ntp servers independant of any commandline
-              programs or external libraries.
- original author: sean finney <seanius@seanius.net>
- ******************************************************************************
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+* Nagios check_ntp plugin
+*
+* License: GPL
+* Copyright (c) 2006 sean finney <seanius@seanius.net>
+* Copyright (c) 2006 nagios-plugins team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_ntp plugin
+*
+*  This plugin to check ntp servers independant of any commandline
+*  programs or external libraries.
+*
+*
+* License Information:
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
  $Id$
  
@@ -777,7 +792,7 @@ int main(int argc, char *argv[]){
 void print_help(void){
 	print_revision(progname, revision);
 
-	printf ("Copyright (c) 1999 Ethan Galstad\n");
+	printf ("Copyright (c) 2006 Sean Finney\n");
 	printf (COPYRIGHT, copyright, email);
   
   printf ("%s\n", _("This plugin checks the selected ntp server"));

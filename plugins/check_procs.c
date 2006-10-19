@@ -11,6 +11,10 @@
 *
 * This file contains the check_procs plugin
 *
+*  Checks all processes and generates WARNING or CRITICAL states if the specified
+*  metric is outside the required threshold ranges. The metric defaults to number
+*  of processes.  Search filters can be applied to limit the processes to check.
+*
 * License Information:
 *
 * This program is free software; you can redistribute it and/or modify
@@ -665,11 +669,12 @@ print_help (void)
 	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>");
 	printf (COPYRIGHT, copyright, email);
 
-	printf(_("\
-Checks all processes and generates WARNING or CRITICAL states if the specified\n\
-metric is outside the required threshold ranges. The metric defaults to number\n\
-of processes.  Search filters can be applied to limit the processes to check.\n\n"));
+	printf ("%s\n", _("Checks all processes and generates WARNING or CRITICAL states if the specified"));
+  printf ("%s\n", _("metric is outside the required threshold ranges. The metric defaults to number"));
+  printf ("%s\n", _("of processes.  Search filters can be applied to limit the processes to check."));
 
+  printf ("\n\n");
+  
 	print_usage ();
 
 	printf(_("\n\

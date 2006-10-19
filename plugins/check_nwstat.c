@@ -1,18 +1,35 @@
 /******************************************************************************
-
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+* Nagios check_nwstat plugin
+*
+* License: GPL
+* Copyright (c) 2000-2006 nagios-plugins team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_nwstat plugin
+*
+*  This plugin attempts to contact the MRTGEXT NLM running on a
+*  Novell server to gather the requested system information.
+* 
+*
+* License Information:
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
  $Id$
  
@@ -1596,82 +1613,70 @@ void print_help(void)
 
 	printf (_(UT_HOST_PORT), 'p', myport);
 
-	printf (_("\
- -v, --variable=STRING\n\
-    Variable to check.  Valid variables include:\n\
-      LOAD1     = 1 minute average CPU load\n\
-      LOAD5     = 5 minute average CPU load\n\
-      LOAD15    = 15 minute average CPU load\n\
-      CSPROCS   = number of current service processes (NW 5.x only)\n\
-      ABENDS    = number of abended threads (NW 5.x only)\n\
-      UPTIME    = server uptime\n"));
-
-	printf (_("\
-      LTCH      = percent long term cache hits\n\
-      CBUFF     = current number of cache buffers\n\
-      CDBUFF    = current number of dirty cache buffers\n\
-      DCB       = dirty cache buffers as a percentage of the total\n\
-      TCB       = dirty cache buffers as a percentage of the original\n"));
-
-	printf (_("\
-      OFILES    = number of open files\n\
-      VMF<vol>  = MB of free space on Volume <vol>\n\
-      VMU<vol>  = MB used space on Volume <vol>\n\
-      VMP<vol>  = MB of purgeable space on Volume <vol>\n\
-      VPF<vol>  = percent free space on volume <vol>\n\
-      VKF<vol>  = KB of free space on volume <vol>\n\
-      VPP<vol>  = percent purgeable space on volume <vol>\n\
-      VKP<vol>  = KB of purgeable space on volume <vol>\n\
-      VPNP<vol> = percent not yet purgeable space on volume <vol>\n\
-      VKNP<vol> = KB of not yet purgeable space on volume <vol>\n"));
-
-	printf (_("\
-      LRUM      = LRU sitting time in minutes\n\
-      LRUS      = LRU sitting time in seconds\n\
-      DSDB      = check to see if DS Database is open\n\
-      DSVER     = NDS version\n\
-      UPRB      = used packet receive buffers\n\
-      PUPRB     = percent (of max) used packet receive buffers\n\
-      SAPENTRIES = number of entries in the SAP table\n\
-      SAPENTRIES<n> = number of entries in the SAP table for SAP type <n>\n"));
-
-	printf (_("\
-      TSYNC     = timesync status\n\
-      LOGINS    = check to see if logins are enabled\n\
-      CONNS     = number of currently licensed connections\n\
-      NRMH	= NRM Summary Status\n\
-      NRMP<stat> = Returns the current value for a NRM health item\n\
-      NRMM<stat> = Returns the current memory stats from NRM\n\
-      NRMS<stat> = Returns the current Swapfile stats from NRM\n\
-      NSS1<stat> = Statistics from _Admin:Manage_NSS\\GeneralStats.xml\n\
-      NSS2<stat> = Statistics from _Admin:Manage_NSS\\BufferCache.xml\n\
-      NSS3<stat> = Statistics from _Admin:Manage_NSS\\NameCache.xml\n\
-      NSS4<stat> = Statistics from _Admin:Manage_NSS\\FileStats.xml\n\
-      NSS5<stat> = Statistics from _Admin:Manage_NSS\\ObjectCache.xml\n\
-      NSS6<stat> = Statistics from _Admin:Manage_NSS\\Thread.xml\n\
-      NSS7<stat> = Statistics from _Admin:Manage_NSS\\AuthorizationCache.xml\n\
-      NLM:<nlm> = check if NLM is loaded and report version\n\
-                  (e.g. \"NLM:TSANDS.NLM\")\n"));
-
-	printf (_("\
- -w, --warning=INTEGER\n\
-    Threshold which will result in a warning status\n\
- -c, --critical=INTEGER\n\
-    Threshold which will result in a critical status\n\
- -o, --osversion\n\
-    Include server version string in results\n"));
+	printf (" %s\n", "-v, --variable=STRING");
+  printf ("   %s\n", _("Variable to check.  Valid variables include:"));
+  printf ("    %s\n", _("LOAD1     = 1 minute average CPU load"));
+  printf ("    %s\n", _("LOAD5     = 5 minute average CPU load"));
+  printf ("    %s\n", _("LOAD15    = 15 minute average CPU load"));
+  printf ("    %s\n", _("CSPROCS   = number of current service processes (NW 5.x only)"));
+  printf ("    %s\n", _("ABENDS    = number of abended threads (NW 5.x only)"));
+  printf ("    %s\n", _("UPTIME    = server uptime"));
+	printf ("    %s\n", _("LTCH      = percent long term cache hits"));
+  printf ("    %s\n", _("CBUFF     = current number of cache buffers"));
+  printf ("    %s\n", _("CDBUFF    = current number of dirty cache buffers"));
+  printf ("    %s\n", _("DCB       = dirty cache buffers as a percentage of the total"));
+  printf ("    %s\n", _("TCB       = dirty cache buffers as a percentage of the original"));
+	printf ("    %s\n", _("OFILES    = number of open files"));
+  printf ("    %s\n", _("    VMF<vol>  = MB of free space on Volume <vol>"));
+  printf ("    %s\n", _("    VMU<vol>  = MB used space on Volume <vol>"));
+  printf ("    %s\n", _("    VMP<vol>  = MB of purgeable space on Volume <vol>"));
+  printf ("    %s\n", _("    VPF<vol>  = percent free space on volume <vol>"));
+  printf ("    %s\n", _("    VKF<vol>  = KB of free space on volume <vol>"));
+  printf ("    %s\n", _("    VPP<vol>  = percent purgeable space on volume <vol>"));
+  printf ("    %s\n", _("    VKP<vol>  = KB of purgeable space on volume <vol>"));
+  printf ("    %s\n", _("    VPNP<vol> = percent not yet purgeable space on volume <vol>"));
+  printf ("    %s\n", _("    VKNP<vol> = KB of not yet purgeable space on volume <vol>"));
+  printf ("    %s\n", _("    LRUM      = LRU sitting time in minutes"));
+  printf ("    %s\n", _("    LRUS      = LRU sitting time in seconds"));
+  printf ("    %s\n", _("    DSDB      = check to see if DS Database is open"));
+  printf ("    %s\n", _("    DSVER     = NDS version"));
+  printf ("    %s\n", _("    UPRB      = used packet receive buffers"));
+  printf ("    %s\n", _("    PUPRB     = percent (of max) used packet receive buffers"));
+  printf ("    %s\n", _("    SAPENTRIES = number of entries in the SAP table"));
+  printf ("    %s\n", _("    SAPENTRIES<n> = number of entries in the SAP table for SAP type <n>"));
+  printf ("    %s\n", _("    TSYNC     = timesync status"));
+  printf ("    %s\n", _("    LOGINS    = check to see if logins are enabled"));
+  printf ("    %s\n", _("    CONNS     = number of currently licensed connections"));
+  printf ("    %s\n", _("    NRMH	= NRM Summary Status"));
+  printf ("    %s\n", _("    NRMP<stat> = Returns the current value for a NRM health item"));
+  printf ("    %s\n", _("    NRMM<stat> = Returns the current memory stats from NRM"));
+  printf ("    %s\n", _("    NRMS<stat> = Returns the current Swapfile stats from NRM"));
+  printf ("    %s\n", _("    NSS1<stat> = Statistics from _Admin:Manage_NSS\\GeneralStats.xml"));
+  printf ("    %s\n", _("    NSS3<stat> = Statistics from _Admin:Manage_NSS\\NameCache.xml"));
+  printf ("    %s\n", _("    NSS4<stat> = Statistics from _Admin:Manage_NSS\\FileStats.xml"));
+  printf ("    %s\n", _("    NSS5<stat> = Statistics from _Admin:Manage_NSS\\ObjectCache.xml"));
+  printf ("    %s\n", _("    NSS6<stat> = Statistics from _Admin:Manage_NSS\\Thread.xml"));
+  printf ("    %s\n", _("    NSS7<stat> = Statistics from _Admin:Manage_NSS\\AuthorizationCache.xml"));
+  printf ("    %s\n", _("    NLM:<nlm> = check if NLM is loaded and report version"));
+  printf ("    %s\n", _("                (e.g. NLM:TSANDS.NLM)"));
+  printf ("\n");
+	printf (" %s\n", "-w, --warning=INTEGER");
+  printf ("    %s\n", _("Threshold which will result in a warning status"));
+  printf (" %s\n", "-c, --critical=INTEGER");
+  printf ("    %s\n", _("Threshold which will result in a critical status"));
+  printf (" %s\n", "-o, --osversion");
+  printf ("    %s\n", _("Include server version string in results"));
 
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
   printf ("\n");
   printf ("%s\n", _("Notes:"));
-	printf (_("\
-- This plugin requres that the MRTGEXT.NLM file from James Drews' MRTG\n\
-  extension for NetWare be loaded on the Novell servers you wish to check.\n\
-  (available from http://www.engr.wisc.edu/~drews/mrtg/)\n\
-- Values for critical thresholds should be lower than warning thresholds\n\
-  when the following variables are checked: VPF, VKF, LTCH, CBUFF, DCB, \n\
-  TCB, LRUS and LRUM.\n"));
+	printf (" %s\n", _("- This plugin requres that the MRTGEXT.NLM file from James Drews' MRTG"));
+  printf (" %s\n", _("  extension for NetWare be loaded on the Novell servers you wish to check."));
+  printf (" %s\n", _("  (available from http://www.engr.wisc.edu/~drews/mrtg/)"));
+  printf (" %s\n", _("- Values for critical thresholds should be lower than warning thresholds"));
+  printf (" %s\n", _("  when the following variables are checked: VPF, VKF, LTCH, CBUFF, DCB, "));
+  printf (" %S\n", _("  TCB, LRUS and LRUM.\n"));
 
 	printf (_(UT_SUPPORT));
 }

@@ -1,18 +1,31 @@
 /******************************************************************************
-
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+* Nagios check_ldap plugin
+*
+* License: GPL
+* Copyright (c) 1999-2006 nagios-plugins team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_ldap plugin
+*
+* License Information:
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
  $Id$
  
@@ -388,16 +401,17 @@ print_help (void)
 	printf (_(UT_SUPPORT));
 }
 
+/* todo
+* add option -4 and -6 to the long manual
+*
+*/
 
 void
 print_usage (void)
 {
   printf (_("Usage:"));
-	printf ("\%s -H <host> -b <base_dn> [-p <port>] [-a <attr>] [-D <binddn>]\n\
-                  [-P <password>] [-w <warn_time>] [-c <crit_time>]\n\
-									[-t timeout]%s\n",
-//(Note: all times are in seconds.)\n",
-	        progname,
+	printf (" %s -H <host> -b <base_dn> [-p <port>] [-a <attr>] [-D <binddn>]",progname);
+  printf ("[-P <password>] [-w <warn_time>] [-c <crit_time>] [-t timeout]\n",
 #ifdef HAVE_LDAP_SET_OPTION
 			" [-2|-3] [-4|-6]"
 #else
