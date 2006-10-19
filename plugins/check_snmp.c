@@ -93,8 +93,8 @@ char regex_expect[MAX_INPUT_BUFFER] = "";
 regex_t preg;
 regmatch_t pmatch[10];
 char timestamp[10] = "";
-char errbuf[MAX_INPUT_BUFFER];
-char perfstr[MAX_INPUT_BUFFER];
+char errbuf[MAX_INPUT_BUFFER] = "";
+char perfstr[MAX_INPUT_BUFFER] = "";
 int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
 int eflags = 0;
 int errcode, excode;
@@ -151,7 +151,7 @@ main (int argc, char **argv)
 	char *ptr = NULL;
 	char *p2 = NULL;
 	char *show = NULL;
-	char type[8];
+	char type[8] = "";
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
