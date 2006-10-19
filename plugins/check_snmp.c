@@ -254,6 +254,10 @@ main (int argc, char **argv)
 		}
 
 		/* We strip out the datatype indicator for PHBs */
+
+		/* Clean up type array - Sol10 does not necessarily zero it out */
+		bzero(type, sizeof(type));
+
 		if (strstr (response, "Gauge: "))
 			show = strstr (response, "Gauge: ") + 7;
 		else if (strstr (response, "Gauge32: "))
