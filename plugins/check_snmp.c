@@ -96,8 +96,8 @@ char regex_expect[MAX_INPUT_BUFFER] = "";
 regex_t preg;
 regmatch_t pmatch[10];
 char timestamp[10] = "";
-char errbuf[MAX_INPUT_BUFFER];
-char perfstr[MAX_INPUT_BUFFER];
+char errbuf[MAX_INPUT_BUFFER] = "";
+char perfstr[MAX_INPUT_BUFFER] = "";
 int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
 int eflags = 0;
 int errcode, excode;
@@ -154,8 +154,7 @@ main (int argc, char **argv)
 	char *ptr = NULL;
 	char *p2 = NULL;
 	char *show = NULL;
-	char type[8];
-	char *str[MAX_INPUT_BUFFER];
+	char type[8] = "";
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -257,6 +256,10 @@ main (int argc, char **argv)
 		}
 
 		/* We strip out the datatype indicator for PHBs */
+
+		/* Clean up type array - Sol10 does not necessarily zero it out */
+		bzero(type, sizeof(type));
+
 		if (strstr (response, "Gauge: "))
 			show = strstr (response, "Gauge: ") + 7;
 		else if (strstr (response, "Gauge32: "))
@@ -348,8 +351,11 @@ main (int argc, char **argv)
 
 		i++;
 
-		asprintf(str, "=%s%s;;;; ", show, type ? type : "");
-		strcat(perfstr, *str);
+		strcat(perfstr, "=");
+		strcat(perfstr, show);
+		if (type)
+			strcat(perfstr, type);
+		strcat(perfstr, " ");
 
 	}	/* end while (ptr) */
 
