@@ -331,47 +331,43 @@ print_help (void)
 
 	printf (_(UT_HELP_VRSN));
 
-	printf (_("\
- -F, --logfile=FILE\n\
-   The MRTG log file containing the data you want to monitor\n\
- -e, --expires=MINUTES\n\
-   Minutes before MRTG data is considered to be too old\n\
- -a, --aggregation=AVG|MAX\n\
-   Should we check average or maximum values?\n\
- -v, --variable=INTEGER\n\
-   Which variable set should we inspect? (1 or 2)\n\
- -w, --warning=INTEGER\n\
-   Threshold value for data to result in WARNING status\n\
- -c, --critical=INTEGER\n\
-   Threshold value for data to result in CRITICAL status\n"));
+	printf (" %s\n", "-F, --logfile=FILE");
+  printf ("   %s\n", _("The MRTG log file containing the data you want to monitor"));
+  printf ("-e, --expires=MINUTES");
+  printf ("   %s\n", _("Minutes before MRTG data is considered to be too old"));
+  printf (" %s\n", "-a, --aggregation=AVG|MAX");
+  printf ("   %s\n", _("Should we check average or maximum values?"));
+  printf (" %s\n", "-v, --variable=INTEGER");
+  printf ("   %s\n", _("Which variable set should we inspect? (1 or 2)"));
+  printf (" %s\n", "-w, --warning=INTEGER");
+  printf ("   %s\n", _("Threshold value for data to result in WARNING status"));
+  printf (" %s\n", "-c, --critical=INTEGER");
+  printf ("   %s\n", _("Threshold value for data to result in CRITICAL status"));
+	printf (" %s\n", "-l, --label=STRING");
+  printf ("   %s\n", _("Type label for data (Examples: Conns, \"Processor Load\", In, Out)"));
+  printf (" %s\n", "-u, --units=STRING");
+  printf ("   %s\n", _("Option units label for data (Example: Packets/Sec, Errors/Sec,"));
+  printf ("   %s\n", _("\"Bytes Per Second\", \"%% Utilization\")"));
 
-	printf (_("\
- -l, --label=STRING\n\
-   Type label for data (Examples: Conns, \"Processor Load\", In, Out)\n\
- -u, --units=STRING\n\
-   Option units label for data (Example: Packets/Sec, Errors/Sec, \n\
-   \"Bytes Per Second\", \"%% Utilization\")\n"));
+	printf ("%s\n", _("If the value exceeds the <vwl> threshold, a WARNING status is returned. If"));
+  printf ("%s\n", _("the value exceeds the <vcl> threshold, a CRITICAL status is returned.  If"));
+  printf ("%s\n", _("the data in the log file is older than <expire_minutes> old, a WARNING"));
+  printf ("%s\n", _("status is returned and a warning message is printed."));
 
-	printf (_("\
-If the value exceeds the <vwl> threshold, a WARNING status is returned.  If\n\
-the value exceeds the <vcl> threshold, a CRITICAL status is returned.  If\n\
-the data in the log file is older than <expire_minutes> old, a WARNING\n\
-status is returned and a warning message is printed.\n\n"));
+	printf ("%s\n", _("This plugin is useful for monitoring MRTG data that does not correspond to"));
+  printf ("%s\n", _("bandwidth usage.  (Use the check_mrtgtraf plugin for monitoring bandwidth)."));
+  printf ("%s\n", _("It can be used to monitor any kind of data that MRTG is monitoring - errors,"));
+  printf ("%s\n", _("packets/sec, etc.  I use MRTG in conjuction with the Novell NLM that allows"));
+  printf ("%s\n", _("me to track processor utilization, user connections, drive space, etc and"));
+  printf ("%s\n\n", _("this plugin works well for monitoring that kind of data as well."));
 
-	printf(_("This plugin is useful for monitoring MRTG data that does not correspond to\n\
-bandwidth usage.  (Use the check_mrtgtraf plugin for monitoring bandwidth).\n\
-It can be used to monitor any kind of data that MRTG is monitoring - errors,\n\
-packets/sec, etc.  I use MRTG in conjuction with the Novell NLM that allows\n\
-me to track processor utilization, user connections, drive space, etc and\n\
-this plugin works well for monitoring that kind of data as well.\n\n"));
-
-	printf (_("Notes:\n\
-- This plugin only monitors one of the two variables stored in the MRTG log\n\
-  file.  If you want to monitor both values you will have to define two\n\
-  commands with different values for the <variable> argument.  Of course,\n\
-  you can always hack the code to make this plugin work for you...\n\
-- MRTG stands for the Multi Router Traffic Grapher.  It can be downloaded from\n\
-  http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html\n"));
+	printf ("%s\n", _("Notes:"));
+  printf (" %s\n", _("- This plugin only monitors one of the two variables stored in the MRTG log"));
+  printf (" %s\n", _("  file.  If you want to monitor both values you will have to define two"));
+  printf (" %s\n", _("  commands with different values for the <variable> argument.  Of course,"));
+  printf (" %s\n", _("you can always hack the code to make this plugin work for you..."));
+  printf (" %s\n", _("- MRTG stands for the Multi Router Traffic Grapher.  It can be downloaded from"));
+  printf (" %s\n", _("http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html"));
 
 	printf (_(UT_SUPPORT));
 }
