@@ -1,11 +1,19 @@
 /******************************************************************************
 *
-* CHECK_DHCP.C
+* Nagios check_dhcp plugin
 *
-* Program: DHCP plugin for Nagios
 * License: GPL
 * Copyright (c) 2001-2004 Ethan Galstad (nagios@nagios.org)
 * Copyright (c) 2001-2006 Nagios Plugin Development Team
+*
+* Last Modified: $Date$
+*
+* Description:
+*
+* This file contains the check_dhcp plugin
+*
+*  This plugin tests the availability of DHCP servers on a network.
+*
 *
 * License Information:
 *
@@ -1245,7 +1253,9 @@ void print_help(void){
 	printf("Copyright (c) 2001-2004 Ethan Galstad (nagios@nagios.org)\n");
 	printf (COPYRIGHT, copyright, email);
 	
-	printf(_("This plugin tests the availability of DHCP servers on a network.\n\n"));
+	printf("%s\n", _("This plugin tests the availability of DHCP servers on a network."));
+
+  printf ("\n\n");
 
 	print_usage();
 
@@ -1253,24 +1263,25 @@ void print_help(void){
 
 	printf (_(UT_VERBOSE));
 
-	printf(_("\
- -s, --serverip=IPADDRESS\n\
-   IP address of DHCP server that we must hear from\n\
- -r, --requestedip=IPADDRESS\n\
-   IP address that should be offered by at least one DHCP server\n\
- -t, --timeout=INTEGER\n\
-   Seconds to wait for DHCPOFFER before timeout occurs\n\
- -i, --interface=STRING\n\
-   Interface to to use for listening (i.e. eth0)\n"));
+	printf (" %s\n", "-s, --serverip=IPADDRESS");
+  printf ("    %s\n", _("IP address of DHCP server that we must hear from"));
+  printf (" %s\n", "-r, --requestedip=IPADDRESS");
+  printf ("    %s\n", _("IP address that should be offered by at least one DHCP server"));
+  printf (" %s\n", "-t, --timeout=INTEGER");
+  printf ("    %s\n", _("Seconds to wait for DHCPOFFER before timeout occurs"));
+  printf (" %s\n", "-i, --interface=STRING");
+  printf ("    %s\n", _("Interface to to use for listening (i.e. eth0)"));
 
 	return;
 	}
 
 
-void print_usage(void){
-	printf("\
-Usage: %s [-s serverip] [-r requestedip] [-t timeout] [-i interface] [-v]\n",progname);
-
+void
+print_usage(void){
+	
+  printf (_("Usage:"));
+  printf ("%s [-s serverip] [-r requestedip] [-t timeout] [-i interface] [-v]\n",progname);
+  
 	return;
 	}
 

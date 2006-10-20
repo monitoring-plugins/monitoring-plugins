@@ -411,6 +411,8 @@ print_help (void)
   printf("%s\n", _("package management systems based on the apt-get(8) command"));
   printf("%s\n", _("found in Debian GNU/Linux"));
 
+  printf ("\n\n");
+
   print_usage();
   
   printf(_(UT_HELP_VRSN));
@@ -462,5 +464,6 @@ print_help (void)
 void
 print_usage(void)
 {
-  printf ("Usage: %s [[-d|-u|-U]opts] [-n] [-t timeout]\n", progname);
+  printf (_("Usage:"));
+  printf ("%s [[-d|-u|-U]opts] [-n] [-t timeout]\n", progname);
 }
