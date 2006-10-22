@@ -629,27 +629,27 @@ void print_help(void)
 	
   printf (_(UT_HELP_VRSN));
 
-  printf (_("\nOptions:\n\
--H, --hostname=HOST\n\
-  Name of the host to check\n\
--p, --port=INTEGER\n\
-  Optional port number (default: %d)\n\
--s <password>\n\
-  Password needed for the request\n\
--w, --warning=INTEGER\n\
-  Threshold which will result in a warning status\n\
--c, --critical=INTEGER\n\
-  Threshold which will result in a critical status\n\
--t, --timeout=INTEGER\n\
-  Seconds before connection attempt times out (default: %d)\n\
--h, --help\n\
-  Print this help screen\n\
--V, --version\n\
-  Print version information\n"), PORT, DEFAULT_SOCKET_TIMEOUT);
-	
-  printf (_("\
--v, --variable=STRING\n\
-  Variable to check.  Valid variables are:\n"));
+  printf ("%s\n", _("Options:"));
+  printf (" %s\n", "-H, --hostname=HOST");
+  printf ("   %s\n", _("Name of the host to check"));
+  printf (" %s\n", "-p, --port=INTEGER");
+  printf ("   %s", _("Optional port number (default: "));
+  printf ("%d)\n", PORT);
+  printf (" %s\n", "-s <password>");
+  printf ("   %s\n", _("Password needed for the request"));
+  printf (" %s\n", "-w, --warning=INTEGER");
+  printf ("   %s\n", _("Threshold which will result in a warning status"));
+  printf (" %s\n", "-c, --critical=INTEGER");
+  printf ("   %s\n", _("Threshold which will result in a critical status"));
+  printf (" %s\n", "-t, --timeout=INTEGER");
+  printf ("   %s", _("Seconds before connection attempt times out (default: "));
+  printf ("%d)\n", DEFAULT_SOCKET_TIMEOUT);
+  printf (" %s\n", "-h, --help");
+  printf ("   %s\n", _("Print this help screen"));
+  printf (" %s\n", "-V, --version");
+  printf ("   %s\n", _("Print version information"));
+  printf (" %s\n", "-v, --variable=STRING");
+  printf ("   %s\n", _("Variable to check.  Valid variables are:"));
   printf (_("\
    CLIENTVERSION = Get the NSClient version\n\
      If -l <version> is specified, will return warning if versions differ.\n"));
