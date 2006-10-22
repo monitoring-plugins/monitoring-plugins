@@ -35,11 +35,6 @@
 #include <arpa/inet.h>
 #include <signal.h>
 
-#include "common.h"
-#include "runcmd.h"
-#include "utils.h"
-#include "regex.h"
-
 /** sometimes undefined system macros (quite a few, actually) **/
 #ifndef MAXTTL
 # define MAXTTL	255
