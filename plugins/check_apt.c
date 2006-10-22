@@ -30,9 +30,9 @@
 * You should have received a copy of the GNU General Public License
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
- $Id$
- 
+*
+* $Id$
+* 
 ******************************************************************************/
 
 const char *progname = "check_apt";
@@ -115,7 +115,7 @@ int main (int argc, char **argv) {
 		result = max_state(result, STATE_OK);
 	}
 
-	printf("APT %s: %d packages available for %s (%d critical updates). %s%s%s%s\n", 
+	printf(_("APT %s: %d packages available for %s (%d critical updates). %s%s%s%s\n"), 
 	       state_text(result),
 	       packages_available,
 	       (upgrade==DIST_UPGRADE)?"dist-upgrade":"upgrade",
@@ -228,21 +228,21 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 	regres=regcomp(&ireg, include_ptr, REG_EXTENDED);
 	if(regres!=0) {
 		regerror(regres, &ireg, rerrbuf, 64);
-		die(STATE_UNKNOWN, "%s: Error compiling regexp: %s", progname, rerrbuf);
+		die(STATE_UNKNOWN, _("%s: Error compiling regexp: %s"), progname, rerrbuf);
 	}
 
 	if(do_exclude!=NULL){
 		regres=regcomp(&ereg, do_exclude, REG_EXTENDED);
 		if(regres!=0) {
 			regerror(regres, &ereg, rerrbuf, 64);
-			die(STATE_UNKNOWN, "%s: Error compiling regexp: %s",
+			die(STATE_UNKNOWN, _("%s: Error compiling regexp: %s"),
 			    progname, rerrbuf);
 		}
 	}
 	regres=regcomp(&sreg, crit_ptr, REG_EXTENDED);
 	if(regres!=0) {
 		regerror(regres, &ereg, rerrbuf, 64);
-		die(STATE_UNKNOWN, "%s: Error compiling regexp: %s",
+		die(STATE_UNKNOWN, _("%s: Error compiling regexp: %s"),
 		    progname, rerrbuf);
 	}
 
@@ -255,7 +255,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 	if(result != 0){
 		exec_warning=1;
 		result = STATE_UNKNOWN;
-		fprintf(stderr, "'%s' exited with non-zero status.\n",
+		fprintf(stderr, _("'%s' exited with non-zero status.\n"),
 		    cmdline);
 	}
 
@@ -324,7 +324,7 @@ int run_update(void){
 	if(result != 0){
 		exec_warning=1;
 		result = STATE_CRITICAL;
-		fprintf(stderr, "'%s' exited with non-zero status.\n",
+		fprintf(stderr, _("'%s' exited with non-zero status.\n"),
 		        cmdline);
 	}
 
@@ -419,38 +419,36 @@ print_help (void)
   
   printf(_(UT_TIMEOUT), timeout_interval);
   
-  printf(_("\n\
- -U, --upgrade=OPTS\n\
-   [Default] Perform an upgrade.  If an optional OPTS argument is provided,\n\
-   apt-get will be run with these command line options instead of the\n\
-   default (%s).\n\
-   Note that you may be required to have root privileges if you do not use\n\
-   the default options.\n\
- -d, --dist-upgrade=OPTS\n\
-   Perform a dist-upgrade instead of normal upgrade. Like with -U OPTS\n\
-   can be provided to override the default options.\n\
- -n, --no-upgrade\n\
-   Do not run the upgrade.  Probably not useful (without -u at least).\n\
- -i, --include=REGEXP\n\
-   Include only packages matching REGEXP.  Can be specified multiple times;\n\
-   the values will be combined together.  Any patches matching this list\n\
-   cause the plugin to return WARNING status.  Others will be ignored.\n\
-   Default is to include all packages.\n\
- -e, --exclude=REGEXP\n\
-   Exclude packages matching REGEXP from the list of packages that would\n\
-   otherwise be included.  Can be specified multiple times; the values\n\
-   will be combined together.  Default is to exclude no packages.\n\
- -c, --critical=REGEXP\n\
-   If the full package information of any of the upgradable packages match\n\
-   this REGEXP, the plugin will return CRITICAL status.  Can be specified\n\
-   multiple times like above.  Default is a regexp matching security\n\
-   upgrades for Debian and Ubuntu:\n\
-   \t%s\n\
-   Note that the package must first match the include list before its\n\
-   information is compared against the critical list.\n\
-   \n\n"),
-         UPGRADE_DEFAULT_OPTS, SECURITY_RE);
-         
+  printf (" %s\n", "-U, --upgrade=OPTS");
+  printf ("    %s\n", _("[Default] Perform an upgrade.  If an optional OPTS argument is provided,"));
+  printf ("    %s\n", _("apt-get will be run with these command line options instead of the"));
+  printf ("    %s", _("default "));
+  printf ("(%s).\n", UPGRADE_DEFAULT_OPTS);
+  printf ("    %s\n", _("Note that you may be required to have root privileges if you do not use"));
+  printf ("    %s\n", _("the default options."));
+  printf (" %s\n", "-d, --dist-upgrade=OPTS");
+  printf ("    %s\n", _("Perform a dist-upgrade instead of normal upgrade. Like with -U OPTS"));
+  printf ("    %s\n", _("can be provided to override the default options."));
+  printf (" %s\n", " -n, --no-upgrade");
+  printf ("    %s\n", _("Do not run the upgrade.  Probably not useful (without -u at least)."));
+  printf (" %s\n", "-i, --include=REGEXP");
+  printf ("    %s\n", _("Include only packages matching REGEXP.  Can be specified multiple times"));
+  printf ("    %s\n", _("the values will be combined together.  Any patches matching this list"));
+  printf ("    %s\n", _("cause the plugin to return WARNING status.  Others will be ignored."));
+  printf ("    %s\n", _("Default is to include all packages."));
+  printf (" %s\n", "-e, --exclude=REGEXP");
+  printf ("    %s\n", _("Exclude packages matching REGEXP from the list of packages that would"));
+  printf ("    %s\n", _("otherwise be included.  Can be specified multiple times; the values"));
+  printf ("    %s\n", _("will be combined together.  Default is to exclude no packages."));
+  printf (" %s\n", "-c, --critical=REGEXP");
+  printf ("    %s\n", _("If the full package information of any of the upgradable packages match"));
+  printf ("    %s\n", _("this REGEXP, the plugin will return CRITICAL status.  Can be specified"));
+  printf ("    %s\n", _("multiple times like above.  Default is a regexp matching security"));
+  printf ("    %s\n", _("upgrades for Debian and Ubuntu:"));
+  printf ("    \t\%s\n", SECURITY_RE);
+  printf ("    %s\n", _("Note that the package must first match the include list before its"));
+  printf ("    %s\n\n\n", _("information is compared against the critical list."));
+  
   printf ("%s\n\n", _("The following options require root privileges and should be used with care:"));
   printf (" %s\n", "-u, --update=OPTS");
   printf ("    %s\n", _("First perform an 'apt-get update'.  An optional OPTS parameter overrides"));

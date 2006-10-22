@@ -677,54 +677,47 @@ print_help (void)
   
 	print_usage ();
 
-	printf(_("\n\
-Required Arguments:\n\
- -w, --warning=RANGE\n\
-   Generate warning state if metric is outside this range\n\
- -c, --critical=RANGE\n\
-   Generate critical state if metric is outside this range\n"));
+	printf ("%s\n", _("Required Arguments:"));
+  printf (" %s\n", "-w, --warning=RANGE");
+  printf ("   %s\n", _("Generate warning state if metric is outside this range"));
+  printf (" %s\n", "-c, --critical=RANGE");
+  printf ("   %s\n", _("Generate critical state if metric is outside this range"));
 
-	printf(_("\n\
-Optional Arguments:\n\
- -m, --metric=TYPE\n\
-   Check thresholds against metric. Valid types:\n\
-   PROCS   - number of processes (default)\n\
-   VSZ     - virtual memory size\n\
-   RSS     - resident set memory size\n\
-   CPU     - percentage cpu\n"));
+	printf ("%s\n", _("Optional Arguments:"));
+  printf (" %s\n", "-m, --metric=TYPE");
+  printf ("  %s\n", _("Check thresholds against metric. Valid types:"));
+  printf ("  %s\n", _("PROCS   - number of processes (default)"));
+  printf ("  %s\n", _("VSZ     - virtual memory size"));
+  printf ("  %s\n", _("RSS     - resident set memory size"));
+  printf ("  %s\n", _("CPU     - percentage cpu"));
 /* only linux etime is support currently */
 #if defined( __linux__ )
-	printf(_("\
-   ELAPSED - time elapsed in seconds\n"));
+	printf ("  %s\n", _("ELAPSED - time elapsed in seconds"));
 #endif /* defined(__linux__) */
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
-	printf(_("\
- -v, --verbose\n\
-   Extra information. Up to 3 verbosity levels\n"));
+	printf (" %s\n", "-v, --verbose");
+  printf ("    %s\n", _("Extra information. Up to 3 verbosity levels"));
 
-	printf(_("\n\
-Optional Filters:\n\
- -s, --state=STATUSFLAGS\n\
-   Only scan for processes that have, in the output of `ps`, one or\n\
-   more of the status flags you specify (for example R, Z, S, RS,\n\
-   RSZDT, plus others based on the output of your 'ps' command).\n\
- -p, --ppid=PPID\n\
-   Only scan for children of the parent process ID indicated.\n\
- -z, --vsz=VSZ\n\
-   Only scan for processes with vsz higher than indicated.\n\
- -r, --rss=RSS\n\
-   Only scan for processes with rss higher than indicated.\n"));
-
-	printf(_("\
- -P, --pcpu=PCPU\n\
-   Only scan for processes with pcpu higher than indicated.\n\
- -u, --user=USER\n\
-   Only scan for processes with user name or ID indicated.\n\
- -a, --argument-array=STRING\n\
-   Only scan for processes with args that contain STRING.\n\
- -C, --command=COMMAND\n\
-   Only scan for exact matches of COMMAND (without path).\n"));
+	printf ("%s\n", "Optional Filters:");
+  printf (" %s\n", "-s, --state=STATUSFLAGS");
+  printf ("   %s\n", _("Only scan for processes that have, in the output of `ps`, one or"));
+  printf ("   %s\n", _("more of the status flags you specify (for example R, Z, S, RS,"));
+  printf ("   %s\n", _("RSZDT, plus others based on the output of your 'ps' command)."));
+  printf (" %s\n", "-p, --ppid=PPID");
+  printf ("   %s\n", _("Only scan for children of the parent process ID indicated."));
+  printf (" %s\n", "-z, --vsz=VSZ");
+  printf ("   %s\n", _("Only scan for processes with vsz higher than indicated."));
+  printf (" %s\n", "-r, --rss=RSS");
+  printf ("   %s\n", _("Only scan for processes with rss higher than indicated."));
+	printf (" %s\n", "-P, --pcpu=PCPU");
+  printf ("   %s\n", _("Only scan for processes with pcpu higher than indicated."));
+  printf (" %s\n", "-u, --user=USER");
+  printf ("   %s\n", _("Only scan for processes with user name or ID indicated."));
+  printf (" %s\n", "-a, --argument-array=STRING");
+  printf ("   %s\n", _("Only scan for processes with args that contain STRING."));
+  printf (" %s\n", "-C, --command=COMMAND");
+  printf ("   %s\n", _("Only scan for exact matches of COMMAND (without path)."));
 
 	printf(_("\n\
 RANGEs are specified 'min:max' or 'min:' or ':max' (or 'max'). If\n\
@@ -738,18 +731,17 @@ the specified threshold ranges. The process count can be filtered by\n\
 process owner, parent process PID, current state (e.g., 'Z'), or may\n\
 be the total number of running processes\n\n"));
 
-	printf(_("\
-Examples:\n\
- check_procs -w 2:2 -c 2:1024 -C portsentry\n\
-   Warning if not two processes with command name portsentry. Critical\n\
-   if < 2 or > 1024 processes\n\n\
- check_procs -w 10 -a '/usr/local/bin/perl' -u root\n\
-   Warning alert if > 10 processes with command arguments containing \n\
-   '/usr/local/bin/perl' and owned by root\n\n\
- check_procs -w 50000 -c 100000 --metric=VSZ\n\
-   Alert if vsz of any processes over 50K or 100K\n\
- check_procs -w 10 -c 20 --metric=CPU\n\
-   Alert if cpu of any processes over 10%% or 20%%\n\n"));
+	printf ("%s\n", _("Examples:"));
+  printf (" %s\n", "check_procs -w 2:2 -c 2:1024 -C portsentry");
+  printf ("  %s\n", _("Warning if not two processes with command name portsentry."));
+  printf ("  %s\n\n", _("Critical if < 2 or > 1024 processes"));
+  printf (" %s\n", "check_procs -w 10 -a '/usr/local/bin/perl' -u root");
+  printf ("  %s\n", _("Warning alert if > 10 processes with command arguments containing"));
+  printf ("  %s\n\n", _("'/usr/local/bin/perl' and owned by root"));
+  printf (" %s\n", "check_procs -w 50000 -c 100000 --metric=VSZ");
+  printf ("  %s\n\n", _("Alert if vsz of any processes over 50K or 100K"));
+  printf (" %s\n", "check_procs -w 10 -c 20 --metric=CPU");
+  printf ("  %s\n\n", _("Alert if cpu of any processes over 10%% or 20%%"));
 
 	printf (_(UT_SUPPORT));
 }
