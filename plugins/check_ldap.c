@@ -3,7 +3,7 @@
 * Nagios check_ldap plugin
 *
 * License: GPL
-* Copyright (c) 1999-2006 nagios-plugins team
+* Copyright (c) 2000-2006 nagios-plugins team
 *
 * Last Modified: $Date$
 *
@@ -364,6 +364,8 @@ print_help (void)
 	printf ("Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)\n");
 	printf (COPYRIGHT, copyright, email);
 
+  printf ("\n\n");
+  
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
@@ -372,24 +374,21 @@ print_help (void)
 
 	printf (_(UT_IPv46));
 
-	printf (_("\
- -a [--attr]\n\
-    ldap attribute to search (default: \"(objectclass=*)\"\n\
- -b [--base]\n\
-    ldap base (eg. ou=my unit, o=my org, c=at)\n\
- -D [--bind]\n\
-    ldap bind DN (if required)\n\
- -P [--pass]\n\
-    ldap password (if required)\n"));
+	printf (" %s\n", "-a [--attr]");
+  printf ("    %s\n", _("ldap attribute to search (default: \"(objectclass=*)\""));
+  printf (" %s\n", "-b [--base]");
+  printf ("    %s\n", _("ldap base (eg. ou=my unit, o=my org, c=at"));
+  printf (" %s\n," "-D [--bind]");
+  printf ("    %s\n", _("ldap bind DN (if required)"));
+  printf (" %s\n," "-P [--pass]");
+  printf ("    %s\n", _("ldap password (if required)"));
 
 #ifdef HAVE_LDAP_SET_OPTION
-	printf (_("\
- -2 [--ver2]\n\
-     use ldap protocol version 2\n\
- -3 [--ver3]\n\
-    use ldap protocol version 3\n\
-    (default protocol version: %d)\n"),
-	        DEFAULT_PROTOCOL);
+	printf (" %s\n", "-2 [--ver2]");
+  printf ("    %s\n", _("use ldap protocol version 2"));
+  printf (" %s\n", "-3 [--ver3]");
+  printf ("    %s\n", _("use ldap protocol version 3"));
+  printf ("(default protocol version: %d)", DEFAULT_PROTOCOL);
 #endif
 
 	printf (_(UT_WARN_CRIT));
