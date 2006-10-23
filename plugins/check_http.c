@@ -1094,8 +1094,9 @@ redir (char *pos, char *status_line)
     die (STATE_UNKNOWN, _("Could not allocate url\n"));
 
   while (pos) {
-    sscanf (pos, "%[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]:%n", xx, &i);
-    if (i == 0) {
+
+    if (sscanf (pos, "%[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]:%n", xx, &i) < 1) {
+
       pos += (size_t) strcspn (pos, "\r\n");
       pos += (size_t) strspn (pos, "\r\n");
       if (strlen(pos) == 0) 
@@ -1250,68 +1251,65 @@ print_help (void)
 
   printf (_(UT_HELP_VRSN));
 
-  printf (_("\
- -H, --hostname=ADDRESS\n\
-    Host name argument for servers using host headers (virtual host)\n\
-    Append a port to include it in the header (eg: example.com:5000)\n\
- -I, --IP-address=ADDRESS\n\
-   IP address or name (use numeric address if possible to bypass DNS lookup).\n\
- -p, --port=INTEGER\n\
-   Port number (default: %d)\n"), HTTP_PORT);
+  printf (" %s\n", "-H, --hostname=ADDRESS");
+  printf ("    %s\n", _("Host name argument for servers using host headers (virtual host)"));
+  printf ("    %s\n", _("Append a port to include it in the header (eg: example.com:5000)"));
+  printf (" %s\n", "-I, --IP-address=ADDRESS");
+  printf ("    %s\n", _("IP address or name (use numeric address if possible to bypass DNS lookup)."));
+  printf (" %s\n", "-p, --port=INTEGER");
+  printf (" %s", _("Port number (default: "));
+  printf ("%d)\n", HTTP_PORT);
 
   printf (_(UT_IPv46));
 
 #ifdef HAVE_SSL
-  printf (_("\
- -S, --ssl\n\
-    Connect via SSL\n\
- -C, --certificate=INTEGER\n\
-    Minimum number of days a certificate has to be valid.\n\
-    (when this option is used the url is not checked.)\n"));
+  printf (" %s\n", "-S, --ssl");
+  printf ("   %s\n", _("Connect via SSL"));
+  printf (" %s\n", "-C, --certificate=INTEGER");
+  printf ("   %s\n", _("Minimum number of days a certificate has to be valid."));
+  printf ("   %s\n", _("(when this option is used the url is not checked.)\n"));
 #endif
 
-  printf (_("\
- -e, --expect=STRING\n\
-   String to expect in first (status) line of server response (default: %s)\n\
-   If specified skips all other status line logic (ex: 3xx, 4xx, 5xx processing)\n\
- -s, --string=STRING\n\
-   String to expect in the content\n\
- -u, --url=PATH\n\
-   URL to GET or POST (default: /)\n\
- -P, --post=STRING\n\
-   URL encoded http POST data\n\
- -N, --no-body\n\
-   Don't wait for document body: stop reading after headers.\n\
-   (Note that this still does an HTTP GET or POST, not a HEAD.)\n\
- -M, --max-age=SECONDS\n\
-   Warn if document is more than SECONDS old. the number can also be of \n\
-   the form \"10m\" for minutes, \"10h\" for hours, or \"10d\" for days.\n\
- -T, --content-type=STRING\n\
-   specify Content-Type header media type when POSTing\n"), HTTP_EXPECT);
+  printf (" %s\n", "-e, --expect=STRING");
+  printf ("    %s\n", _("String to expect in first (status) line of server response (default: "));
+  printf ("%s\n", HTTP_EXPECT);
+  printf ("    %s\n", _("If specified skips all other status line logic (ex: 3xx, 4xx, 5xx processing)"));
+  printf (" %s\n", "-s, --string=STRING");
+  printf ("    %s\n", _("String to expect in the content"));
+  printf (" %s\n", "-u, --url=PATH");
+  printf ("    %s\n", _("URL to GET or POST (default: /)"));
+  printf (" %s\n," "-P, --post=STRING");
+  printf ("    %s\n", _("URL encoded http POST data"));
+  printf (" %s\n", "-N, --no-body");
+  printf ("    %s\n", _("Don't wait for document body: stop reading after headers."));
+  printf ("    %s\n", _("(Note that this still does an HTTP GET or POST, not a HEAD.)"));
+  printf (" %s\n", "-M, --max-age=SECONDS");
+  printf ("    %s\n", _("Warn if document is more than SECONDS old. the number can also be of"));
+  printf ("    %s\n", _("the form \"10m\" for minutes, \"10h\" for hours, or \"10d\" for days."));
+  printf (" %s\n", "-T, --content-type=STRING");
+  printf ("    %s\n", _("specify Content-Type header media type when POSTing\n"));
 
-  printf (_("\
- -l, --linespan\n\
-    Allow regex to span newlines (must precede -r or -R)\n\
- -r, --regex, --ereg=STRING\n\
-    Search page for regex STRING\n\
- -R, --eregi=STRING\n\
-    Search page for case-insensitive regex STRING\n\
-     --invert-regex\n\
-    Return CRITICAL if found, OK if not\n"));
+  printf (" %s\n", "-l, --linespan");
+  printf ("    %s\n", _("Allow regex to span newlines (must precede -r or -R)"));
+  printf (" %s\n", "-r, --regex, --ereg=STRING");
+  printf ("    %s\n", _("Search page for regex STRING"));
+  printf (" %s\n", "-R, --eregi=STRING");
+  printf ("    %s\n", _("Search page for case-insensitive regex STRING"));
+  printf (" %s\n", "--invert-regex");
+  printf ("    %s\n", _("Return CRITICAL if found, OK if not\n"));
 
-  printf (_("\
- -a, --authorization=AUTH_PAIR\n\
-   Username:password on sites with basic authentication\n\
- -A, --useragent=STRING\n\
-   String to be sent in http header as \"User Agent\"\n\
- -k, --header=STRING\n\
-   Any other tags to be sent in http header. Use multiple times for additional headers\n\
- -L, --link=URL\n\
-   Wrap output in HTML link (obsoleted by urlize)\n\
- -f, --onredirect=<ok|warning|critical|follow>\n\
-   How to handle redirected pages\n\
- -m, --pagesize=INTEGER<:INTEGER>\n\
-   Minimum page size required (bytes) : Maximum page size required (bytes)\n"));
+  printf (" %s\n", "-a, --authorization=AUTH_PAIR");
+  printf ("    %s\n", _("Username:password on sites with basic authentication"));
+  printf (" %s\n", "-A, --useragent=STRING");
+  printf ("    %s\n", _("String to be sent in http header as \"User Agent\""));
+  printf (" %s\n", "-k, --header=STRING");
+  printf ("    %s\n", _(" Any other tags to be sent in http header. Use multiple times for additional headers"));
+  printf (" %s\n", "-L, --link=URL");
+  printf ("    %s\n", _("Wrap output in HTML link (obsoleted by urlize)"));
+  printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow>");
+  printf ("    %s\n", _("How to handle redirected pages"));
+  printf (" %s\n", "-m, --pagesize=INTEGER<:INTEGER>");
+  printf ("    %s\n", _("Minimum page size required (bytes) : Maximum page size required (bytes)"));
 
   printf (_(UT_WARN_CRIT));
 
@@ -1319,32 +1317,30 @@ print_help (void)
 
   printf (_(UT_VERBOSE));
 
-  printf (_("\
-This plugin will attempt to open an HTTP connection with the host. Successful\n\
-connects return STATE_OK, refusals and timeouts return STATE_CRITICAL, other\n\
-errors return STATE_UNKNOWN.  Successful connects, but incorrect reponse\n\
-messages from the host result in STATE_WARNING return values.  If you are\n\
-checking a virtual server that uses 'host headers' you must supply the FQDN\n\
-(fully qualified domain name) as the [host_name] argument.\n"));
+  printf (_("Notes:"));
+  printf (" %s\n", _("This plugin will attempt to open an HTTP connection with the host."));
+  printf (" %s\n", _("Successful connects return STATE_OK, refusals and timeouts return STATE_CRITICAL"));
+  printf (" %s\n", _("other errors return STATE_UNKNOWN.  Successful connects, but incorrect reponse"));
+  printf (" %s\n", _("messages from the host result in STATE_WARNING return values.  If you are"));
+  printf (" %s\n", _("checking a virtual server that uses 'host headers' you must supply the FQDN"));
+  printf (" %s\n", _("(fully qualified domain name) as the [host_name] argument."));
 
 #ifdef HAVE_SSL
-  printf (_("\n\
-This plugin can also check whether an SSL enabled web server is able to\n\
-serve content (optionally within a specified time) or whether the X509 \n\
-certificate is still valid for the specified number of days.\n"));
-  printf (_("\n\
-CHECK CONTENT: check_http -w 5 -c 10 --ssl www.verisign.com\n\n\
-When the 'www.verisign.com' server returns its content within 5 seconds, a\n\
-STATE_OK will be returned. When the server returns its content but exceeds\n\
-the 5-second threshold, a STATE_WARNING will be returned. When an error occurs,\n\
-a STATE_CRITICAL will be returned.\n\n"));
+  printf (" %s\n", _("This plugin can also check whether an SSL enabled web server is able to"));
+  printf (" %s\n", _("serve content (optionally within a specified time) or whether the X509 "));
+  printf (" %s\n", _("certificate is still valid for the specified number of days."));
+  printf (_("Examples:"));
+  printf (" %s\n\n", "CHECK CONTENT: check_http -w 5 -c 10 --ssl www.verisign.com");
+  printf (" %s\n", _("When the 'www.verisign.com' server returns its content within 5 seconds,"));
+  printf (" %s\n", _("a STATE_OK will be returned. When the server returns its content but exceeds"));
+  printf (" %s\n", _("the 5-second threshold, a STATE_WARNING will be returned. When an error occurs,"));
+  printf (" %s\n\n", _("a STATE_CRITICAL will be returned."));
 
-  printf (_("\
-CHECK CERTIFICATE: check_http www.verisign.com -C 14\n\n\
-When the certificate of 'www.verisign.com' is valid for more than 14 days, a\n\
-STATE_OK is returned. When the certificate is still valid, but for less than\n\
-14 days, a STATE_WARNING is returned. A STATE_CRITICAL will be returned when\n\
-the certificate is expired.\n"));
+  printf (" %s\n\n", "CHECK CERTIFICATE: check_http www.verisign.com -C 14");
+  printf (" %s\n", _("When the certificate of 'www.verisign.com' is valid for more than 14 days,"));
+  printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
+  printf (" %s\n", _("14 days, a STATE_WARNING is returned. A STATE_CRITICAL will be returned when"));
+  printf (" %s\n\n", _("the certificate is expired."));
 #endif
 
   printf (_(UT_SUPPORT));
