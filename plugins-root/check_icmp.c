@@ -42,8 +42,16 @@
 * 
 *****************************************************************************/
 
- 
+/* progname may be check_ldaps */
+//char *progname = "check_ldap";
+const char *revision = "$Revision$";
+const char *copyright = "2005-2006";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
+/** nagios plugins basic includes */
+#include "common.h"
+#include "netutils.h"
+#include "utils.h"
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -63,6 +71,7 @@
 #include <netinet/ip_icmp.h>
 #include <arpa/inet.h>
 #include <signal.h>
+
 
 /** sometimes undefined system macros (quite a few, actually) **/
 #ifndef MAXTTL
@@ -94,16 +103,6 @@
 # define ICMP_UNREACH_PRECEDENCE_CUTOFF 15
 #endif
 
-
-/** typedefs and such **/
-enum states {
-	STATE_OK = 0,
-	STATE_WARNING,
-	STATE_CRITICAL,
-	STATE_UNKNOWN,
-	STATE_DEPENDENT,
-	STATE_OOB
-};
 
 typedef unsigned short range_t;  /* type for get_range() -- unimplemented */
 
@@ -174,7 +173,8 @@ typedef struct icmp_ping_data {
 #define TSTATE_UNREACH 0x08
 
 /** prototypes **/
-static void usage(unsigned char, char *);
+void print_help (void);
+void print_usage (void);
 static u_int get_timevar(const char *);
 static u_int get_timevaldiff(struct timeval *, struct timeval *);
 static int wait_for_reply(int, u_int);
@@ -477,9 +477,12 @@ main(int argc, char **argv)
 					crit_down = (unsigned char)strtoul(ptr + 1, NULL, 0);
 				}
 				break;
-			case 'h': case 'V': default:
-				usage(arg, NULL);
-				break;
+      case 'V':                 /* version */
+        //print_revision (progname, revision);
+        exit (STATE_OK);
+      case 'h':                 /* help */
+        print_help ();
+        exit (STATE_OK);
 			}
 		}
 	}
@@ -1177,20 +1180,21 @@ icmp_checksum(unsigned short *p, int n)
 }
 
 /* make core plugin developers happy (silly, really) */
-static void
-usage(unsigned char arg, char *msg)
+void
+print_help(void)
 {
-	if(msg) printf("%s: %s\n", progname, msg);
 
-	if(arg == 'V') {
-		printf("$Id$\n");
-		exit(STATE_UNKNOWN);
-	}
-
-	printf("Usage: %s [options] [-H] host1 host2 hostn\n\n", progname);
-
-	if(arg != 'h') exit(3);
-
+  //print_revision (progname, revision);
+  
+  printf ("Copyright (c) 2005 Andreas Ericsson <ae@op5.se>\n");
+  printf (COPYRIGHT, copyright, email);
+  
+  printf ("\n\n");
+  
+  print_usage ();
+  
+  printf (_(UT_HELP_VRSN));
+   
 	printf("Where options are any combination of:\n"
 		   " * -H | --host        specify a target\n"
 		   " * -w | --warn        warning threshold (currently %0.3fms,%u%%)\n"
@@ -1208,7 +1212,7 @@ usage(unsigned char arg, char *msg)
 		   (float)pkt_interval / 1000, (float)target_interval / 1000,
 		   ttl, timeout);
 
-	puts("\nThe -H switch is optional. Naming a host (or several) to check is not.\n\n"
+	printf("\nThe -H switch is optional. Naming a host (or several) to check is not.\n\n"
 		 "Threshold format for -w and -c is 200.25,60% for 200.25 msec RTA and 60%\n"
 		 "packet loss.  The default values should work well for most users.\n"
 		 "You can specify different RTA factors using the standardized abbreviations\n"
@@ -1220,9 +1224,23 @@ usage(unsigned char arg, char *msg)
 		 "Long options are currently unsupported.\n\n"
 		 "Options marked with * require an argument\n");
 
-	puts("The latest version of this plugin can be found at http://oss.op5.se/nagios\n"
+/*	printf("The latest version of this plugin can be found at http://oss.op5.se/nagios\n"
 		 "or https://devel.op5.se/oss until the day it is included in the official\n"
 		 "plugin distribution.\n");
+*/
+  
+  printf (_(UT_SUPPORT));
+  
+  printf (_(UT_NOWARRANTY));
+  
+//	exit(3);
+}
 
-	exit(3);
+
+
+void
+print_usage (void)
+{
+  printf (_("Usage:"));
+  printf("Usage: %s [options] [-H] host1 host2 hostn\n\n", progname);
 }
