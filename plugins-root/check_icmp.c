@@ -42,8 +42,9 @@
 * 
 *****************************************************************************/
 
-/* progname may be check_ldaps */
-//char *progname = "check_ldap";
+/* progname may change */
+/* char *progname = "check_icmp"; */
+char *progname;
 const char *revision = "$Revision$";
 const char *copyright = "2005-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
@@ -195,7 +196,6 @@ extern char *optarg;
 extern char **environ;
 
 /** global variables **/
-static char *progname;
 static struct rta_host **table, *cursor, *list;
 static threshold crit = {80, 500000}, warn = {40, 200000};
 static int mode, protocols, sockets, debug = 0, timeout = 10;
