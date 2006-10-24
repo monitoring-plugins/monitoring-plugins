@@ -654,7 +654,7 @@ void print_help(void)
   printf (" %s", "CLIENTVERSION =");
   printf (" %s\n", _("Get the NSClient version"));
   printf ("  %s\n", _("If -l <version> is specified, will return warning if versions differ."));
-  printf (" %s\n", "CPULOAD ="
+  printf (" %s\n", "CPULOAD =");
   printf ("  %s\n", _("Average CPU load on last x minutes."));
   printf ("  %s\n", _("Request a -l parameter with the following syntax:"));
   printf ("  %s\n", _("-l <minutes range>,<warning threshold>,<critical threshold>."));
@@ -689,7 +689,7 @@ void print_help(void)
   printf ("  %s\n\n", _("If <description> does not include \"%%\", it is used as a label."));
   printf ("  %s\n", _("Some examples:"));
   printf ("  %s\n", "\"Paging file usage is %%.2f %%%%\"");
-  printf ("  %s\n\n", "\"%%.f %%%% paging file used.\""));
+  printf ("  %s\n\n", "\"%%.f %%%% paging file used.\"");
   printf (_("Notes:"));
   printf (" %s\n", _("- The NSClient service should be running on the server to get any information"));
   printf (" %s\n", "(http://nsclient.ready2run.nl).");

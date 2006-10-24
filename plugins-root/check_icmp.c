@@ -1179,7 +1179,6 @@ icmp_checksum(unsigned short *p, int n)
 	return cksum;
 }
 
-/* make core plugin developers happy (silly, really) */
 void
 print_help(void)
 {
@@ -1194,46 +1193,51 @@ print_help(void)
   print_usage ();
   
   printf (_(UT_HELP_VRSN));
-   
-	printf("Where options are any combination of:\n"
-		   " * -H | --host        specify a target\n"
-		   " * -w | --warn        warning threshold (currently %0.3fms,%u%%)\n"
-		   " * -c | --crit        critical threshold (currently %0.3fms,%u%%)\n"
-		   " * -n | --packets     number of packets to send (currently %u)\n"
-		   " * -i | --interval    max packet interval (currently %0.3fms)\n"
-		   " * -I | --hostint     max target interval (currently %0.3fms)\n"
-		   " * -l | --ttl         TTL on outgoing packets (currently %u)\n"
-		   " * -t | --timeout     timeout value (seconds, currently  %u)\n"
-		   " * -b | --bytes       icmp packet size (currenly ignored)\n"
-		   "   -v | --verbose     verbosity++\n"
-		   "   -h | --help        this cruft\n",
-		   (float)warn.rta / 1000, warn.pl, (float)crit.rta / 1000, crit.pl,
-		   packets,
-		   (float)pkt_interval / 1000, (float)target_interval / 1000,
-		   ttl, timeout);
-
-	printf("\nThe -H switch is optional. Naming a host (or several) to check is not.\n\n"
-		 "Threshold format for -w and -c is 200.25,60% for 200.25 msec RTA and 60%\n"
-		 "packet loss.  The default values should work well for most users.\n"
-		 "You can specify different RTA factors using the standardized abbreviations\n"
-		 "us (microseconds), ms (milliseconds, default) or just plain s for seconds.\n\n"
-		 "Threshold format for -d is warn,crit.  12,14 means WARNING if >= 12 hops\n"
-		 "are spent and CRITICAL if >= 14 hops are spent.\n"
-		 "NOTE: Some systems decrease TTL when forming ICMP_ECHOREPLY, others do not.\n\n"
-		 "The -v switch can be specified several times for increased verbosity.\n\n"
-		 "Long options are currently unsupported.\n\n"
-		 "Options marked with * require an argument\n");
-
-/*	printf("The latest version of this plugin can be found at http://oss.op5.se/nagios\n"
-		 "or https://devel.op5.se/oss until the day it is included in the official\n"
-		 "plugin distribution.\n");
-*/
   
+  printf (" %s\n", "-H");
+  printf ("    %s\n", _("specify a target"));
+  printf (" %s\n", "-w");
+  printf ("    %s", _("warning threshold (currently "));
+  printf ("%0.3fms,%u%%)\n", (float)warn.rta / 1000 , warn.pl / 1000);
+  printf (" %s\n", "-c");
+  printf ("    %s", _("critical threshold (currently "));
+  printf ("%0.3fms,%u%%)\n", (float)crit.rta), crit.pl;
+  printf (" %s\n", "-n");
+  printf ("    %s", _("number of packets to send (currently "));
+  printf ("%u)\n",packets);
+  printf (" %s\n", "-i");
+  printf ("    %s", _("max packet interval (currently "));
+  printf ("%0.3fms)\n",(float)pkt_interval / 1000);
+  printf (" %s\n", "-I");
+  printf ("    %s\n", _("max target interval (currently "));
+  printf ("%0.3fms)\n", (float)target_interval / 1000);
+  printf (" %s\n", "-l");
+  printf ("    %s\n", _("TTL on outgoing packets (currently "));
+  printf ("%u)", ttl);
+  printf (" %s\n", "-t");
+  printf ("    %s\n",_("timeout value (seconds, currently  "));
+  printf ("%u)\n", timeout);
+  printf (" %s\n", "-b");
+  printf ("    %s\n", _("icmp packet size (currenly ignored)"));
+  printf (" %s\n", "-v");
+  printf ("    %s\n", _("verbose"));
+
+  printf ("\n");
+	printf ("%s\n\n", _("The -H switch is optional. Naming a host (or several) to check is not."));
+  printf ("%s\n", _("Threshold format for -w and -c is 200.25,60% for 200.25 msec RTA and 60%"));
+  printf ("%s\n", _("packet loss.  The default values should work well for most users."));
+  printf ("%s\n", _("You can specify different RTA factors using the standardized abbreviations"));
+  printf ("%s\n\n", _("us (microseconds), ms (milliseconds, default) or just plain s for seconds."));
+  printf ("%s\n", _("Threshold format for -d is warn,crit.  12,14 means WARNING if >= 12 hops"));
+  printf ("%s\n", _("are spent and CRITICAL if >= 14 hops are spent."));
+  printf ("%s\n\n", _("NOTE: Some systems decrease TTL when forming ICMP_ECHOREPLY, others do not."));
+  printf ("%s\n\n", _("The -v switch can be specified several times for increased verbosity."));
+  printf ("%s\n", _("Long options are currently unsupported."));
+  printf ("%s\n", _("Options marked with * require an argument"));
+
   printf (_(UT_SUPPORT));
   
   printf (_(UT_NOWARRANTY));
-  
-//	exit(3);
 }
 
 
@@ -1242,5 +1246,5 @@ void
 print_usage (void)
 {
   printf (_("Usage:"));
-  printf("Usage: %s [options] [-H] host1 host2 hostn\n\n", progname);
+  printf("Usage: %s [options] [-H] host1 host2 hostn\n", progname);
 }
