@@ -629,7 +629,7 @@ void print_help(void)
 	
   printf (_(UT_HELP_VRSN));
 
-  printf ("%s\n", _("Options:"));
+    printf ("%s\n", _("Options:"));
   printf (" %s\n", "-H, --hostname=HOST");
   printf ("   %s\n", _("Name of the host to check"));
   printf (" %s\n", "-p, --port=INTEGER");
@@ -649,54 +649,55 @@ void print_help(void)
   printf (" %s\n", "-V, --version");
   printf ("   %s\n", _("Print version information"));
   printf (" %s\n", "-v, --variable=STRING");
-  printf ("   %s\n", _("Variable to check.  Valid variables are:"));
-  printf (_("\
-   CLIENTVERSION = Get the NSClient version\n\
-     If -l <version> is specified, will return warning if versions differ.\n"));
-  printf (_("\
-   CPULOAD = Average CPU load on last x minutes.\n\
-     Request a -l parameter with the following syntax:\n\
-     -l <minutes range>,<warning threshold>,<critical threshold>.\n\
-     <minute range> should be less than 24*60.\n\
-     Thresholds are percentage and up to 10 requests can be done in one shot.\n\
-     ie: -l 60,90,95,120,90,95\n"));
-  printf (_("\
-   UPTIME = Get the uptime of the machine.\n\
-     No specific parameters. No warning or critical threshold\n"));
-  printf (_("\
-   USEDDISKSPACE = Size and percentage of disk use.\n\
-     Request a -l parameter containing the drive letter only.\n\
-     Warning and critical thresholds can be specified with -w and -c.\n"));
-  printf (_("\
-   MEMUSE = Memory use.\n\
-     Warning and critical thresholds can be specified with -w and -c.\n"));
-  printf (_("\
-   SERVICESTATE = Check the state of one or several services.\n\
-     Request a -l parameters with the following syntax:\n\
-     -l <service1>,<service2>,<service3>,...\n\
-     You can specify -d SHOWALL in case you want to see working services\n\
-		 in the returned string.\n"));
-  printf (_("\
-   PROCSTATE = Check if one or several process are running.\n\
-     Same syntax as SERVICESTATE.\n"));
-  printf (_("\
-   COUNTER = Check any performance counter of Windows NT/2000.\n\
-     Request a -l parameters with the following syntax:\n\
-		 -l \"\\\\<performance object>\\\\counter\",\"<description>\n\
-     The <description> parameter is optional and \n\
-     is given to a printf output command which requires a float parameter.\n\
-     If <description> does not include \"%%\", it is used as a label.\n\
-     Some examples:\n\
-       \"Paging file usage is %%.2f %%%%\"\n\
-       \"%%.f %%%% paging file used.\"\n"));
-  printf (_("Notes:\n\
- - The NSClient service should be running on the server to get any information\n\
-   (http://nsclient.ready2run.nl).\n\
- - Critical thresholds should be lower than warning thresholds\n\
- - Default port 1248 is sometimes in use by other services. The error \n\
-   output when this happens contains \"Cannot map xxxxx to protocol number\". \n\
-   One fix for this is to change the port to something else on check_nt \n\
-   and on the client service it\'s connecting to. \n"));
+  printf ("   %s\n\n", _("Variable to check"));
+  printf ("%s\n", _("Valid variables are:"));
+  printf (" %s", "CLIENTVERSION =");
+  printf (" %s\n", _("Get the NSClient version"));
+  printf ("  %s\n", _("If -l <version> is specified, will return warning if versions differ."));
+  printf (" %s\n", "CPULOAD ="
+  printf ("  %s\n", _("Average CPU load on last x minutes."));
+  printf ("  %s\n", _("Request a -l parameter with the following syntax:"));
+  printf ("  %s\n", _("-l <minutes range>,<warning threshold>,<critical threshold>."));
+  printf ("  %s\n", _("<minute range> should be less than 24*60."));
+  printf ("  %s\n", _("Thresholds are percentage and up to 10 requests can be done in one shot."));
+  printf ("  %s\n", "ie: -l 60,90,95,120,90,95");
+  printf (" %s\n", "UPTIME =");
+  printf ("  %s\n", _("Get the uptime of the machine."));
+  printf ("  %s\n", _("No specific parameters. No warning or critical threshold"));
+  printf (" %s\n", "USEDDISKSPACE =");
+  printf ("  %s\n", _("Size and percentage of disk use."));
+  printf ("  %s\n", _("Request a -l parameter containing the drive letter only."));
+  printf ("  %s\n", _("Warning and critical thresholds can be specified with -w and -c."));
+  printf (" %s\n", "MEMUSE =");
+  printf ("  %s\n", _("Memory use."));
+  printf ("  %s\n", _("Warning and critical thresholds can be specified with -w and -c."));
+  printf (" %s\n,", "SERVICESTATE =");
+  printf ("  %s\n", _("Check the state of one or several services."));
+  printf ("  %s\n", _("Request a -l parameters with the following syntax:"));
+  printf ("  %s\n", _("-l <service1>,<service2>,<service3>,..."));
+  printf ("  %s\n", _("You can specify -d SHOWALL in case you want to see working services"));
+  printf ("  %s\n", _("in the returned string."));
+  printf (" %s\n", "PROCSTATE =");
+  printf ("  %s\n", _("Check if one or several process are running."));
+  printf ("  %s\n", _("Same syntax as SERVICESTATE."));
+  printf (" %s\n", "COUNTER =");
+  printf ("  %s\n", _("Check any performance counter of Windows NT/2000."));
+  printf ("  %s\n", _("Request a -l parameters with the following syntax:"));
+  printf ("  %s\n", _("-l \"\\\\<performance object>\\\\counter\",\"<description>"));
+  printf ("  %s\n", _("The <description> parameter is optional and is given to a printf "));
+  printf ("  %s\n", _("output command which requires a float parameter."));
+  printf ("  %s\n\n", _("If <description> does not include \"%%\", it is used as a label."));
+  printf ("  %s\n", _("Some examples:"));
+  printf ("  %s\n", "\"Paging file usage is %%.2f %%%%\"");
+  printf ("  %s\n\n", "\"%%.f %%%% paging file used.\""));
+  printf (_("Notes:"));
+  printf (" %s\n", _("- The NSClient service should be running on the server to get any information"));
+  printf (" %s\n", "(http://nsclient.ready2run.nl).");
+  printf (" %s\n", _("- Critical thresholds should be lower than warning thresholds"));
+  printf (" %s\n", _("- Default port 1248 is sometimes in use by other services. The error"));
+  printf (" %s\n", _("output when this happens contains \"Cannot map xxxxx to protocol number\"."));
+  printf (" %s\n", _("One fix for this is to change the port to something else on check_nt "));
+  printf (" %s\n", _("and on the client service it\'s connecting to."));
 }
 
 
