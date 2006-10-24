@@ -1209,13 +1209,13 @@ print_help(void)
   printf ("    %s", _("max packet interval (currently "));
   printf ("%0.3fms)\n",(float)pkt_interval / 1000);
   printf (" %s\n", "-I");
-  printf ("    %s\n", _("max target interval (currently "));
+  printf ("    %s", _("max target interval (currently "));
   printf ("%0.3fms)\n", (float)target_interval / 1000);
   printf (" %s\n", "-l");
-  printf ("    %s\n", _("TTL on outgoing packets (currently "));
+  printf ("    %s", _("TTL on outgoing packets (currently "));
   printf ("%u)", ttl);
   printf (" %s\n", "-t");
-  printf ("    %s\n",_("timeout value (seconds, currently  "));
+  printf ("    %s",_("timeout value (seconds, currently  "));
   printf ("%u)\n", timeout);
   printf (" %s\n", "-b");
   printf ("    %s\n", _("icmp packet size (currenly ignored)"));
@@ -1232,9 +1232,9 @@ print_help(void)
   printf ("%s\n", _("are spent and CRITICAL if >= 14 hops are spent."));
   printf ("%s\n\n", _("NOTE: Some systems decrease TTL when forming ICMP_ECHOREPLY, others do not."));
   printf ("%s\n\n", _("The -v switch can be specified several times for increased verbosity."));
-  printf ("%s\n", _("Long options are currently unsupported."));
+/*  printf ("%s\n", _("Long options are currently unsupported."));
   printf ("%s\n", _("Options marked with * require an argument"));
-
+*/
   printf (_(UT_SUPPORT));
   
   printf (_(UT_NOWARRANTY));
@@ -1246,5 +1246,5 @@ void
 print_usage (void)
 {
   printf (_("Usage:"));
-  printf("Usage: %s [options] [-H] host1 host2 hostn\n", progname);
+  printf(" %s [options] [-H] host1 host2 hostn\n", progname);
 }
