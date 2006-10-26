@@ -54,8 +54,8 @@ user. The user can accept the developer's default value or reply "none"
 which will then be returned as "" for the test to skip if appropriate.
 
 If a parameter needs to be entered and the test is run without a tty 
-attached (such as a cronjob), this routine will die causing the test to 
-fail.
+attached (such as a cronjob), the parameter will be assigned as if it 
+was "none". Tests can check for the parameter and skip if not set.
 
 Responses are stored in an external, file-based
 cache so subsequent test runs will use these values. The user is able
@@ -346,7 +346,8 @@ sub getTestParameter
     return $default;
   }
 
-  die "Need to manually enter test parameter $param" unless (-t STDERR);
+  # Set "none" if no terminal attached (eg, tinderbox build servers when new variables set)
+  return "" unless (-t STDERR);
 
   my $userResponse = "";
 
