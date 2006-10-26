@@ -635,8 +635,6 @@ print_path (const char *mypath)
     printf ("\n");
   else
     printf (_(" for %s\n"), mypath);
-
-  //return;
 }
 
 

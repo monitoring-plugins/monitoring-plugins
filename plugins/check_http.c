@@ -274,7 +274,7 @@ process_arguments (int argc, char **argv)
       else
         http_opt_headers = realloc (http_opt_headers, sizeof (char *) * (++http_opt_headers_count));
       http_opt_headers[http_opt_headers_count - 1] = optarg;
-      //asprintf (&http_opt_headers, "%s", optarg);
+      /* asprintf (&http_opt_headers, "%s", optarg); */
       break;
     case 'L': /* show html link */
       display_html = TRUE;
