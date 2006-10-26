@@ -20,6 +20,7 @@ TESTS = @SCRIPT_TEST@
 
 test:
 	perl -I $(top_builddir) -I $(top_srcdir) ../test.pl
+	perl -I $(top_builddir) -I $(top_srcdir) ../test.pl t/utils.t	# utils.t is excluded from above, so manually ask to test
 
 CLEANFILES=$(libexec_SCRIPTS)
 

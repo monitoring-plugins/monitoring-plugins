@@ -1,32 +1,9 @@
 # Utility drawer for Nagios plugins.
 # $Id$
 #
-# $Log$
-# Revision 1.9  2006/10/19 18:44:53  tonvoon
-# Allow hostnames beginning with digits (O'Shaughnessy Evans - 1567390)
-#
-# Revision 1.8  2006/06/07 14:23:12  seanius
-# removed stale references to PATH_TO_NTPFOO, as it's no longer used.
-#
-# Revision 1.7  2003/04/13 04:25:36  sghosh
-# update for check_mailq - qmail support
-#
-# Revision 1.6  2003/02/03 20:29:55  sghosh
-# change ntpdc to ntpq (Jonathan Rozes,Thomas Schimpke, bug-656237 )
-#
-# Revision 1.5  2002/10/30 05:07:29  sghosh
-# monitor mailq
-#
-# Revision 1.4  2002/05/27 02:01:09  sghosh
-#  new var - smbclient
-#
-# Revision 1.3  2002/05/10 03:49:22  sghosh
-# added programs to autoconf
-#
-# Revision 1.2  2002/05/08 05:10:35  sghosh
-#  is_hostname added, update CODES to POSIX
-#
-# 
+# This will be deprecated soon. Please use Nagios::Plugin from CPAN
+# for new plugins
+
 package utils;
 
 require Exporter;
@@ -76,7 +53,7 @@ sub usage {
 
 sub is_hostname {
 	my $host1 = shift;
-	if ($host1 && $host1 =~ m/^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*)$/) {
+	if ($host1 && $host1 =~ m/^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|[a-zA-Z0-9][-a-zA-Z0-9]+(\.[a-zA-Z0-9][-a-zA-Z0-9]+)*)$/) {
 		return 1;
 	}else{
 		return 0;
