@@ -244,13 +244,14 @@ EOF`
     result=`sqlplus -s ${3}/${4}@${2} << EOF
 set pagesize 0
 set numf '9999999.99'
-select b.free,a.total,100 - trunc(b.free/a.total * 1000) / 10 prc
+select NVL(b.free,0.0),a.total,100 - trunc(NVL(b.free,0.0)/a.total * 1000) / 10 prc
 from (
 select tablespace_name,sum(bytes)/1024/1024 total
-from dba_data_files group by tablespace_name) A,
+from dba_data_files group by tablespace_name) A
+LEFT OUTER JOIN
 ( select tablespace_name,sum(bytes)/1024/1024 free
 from dba_free_space group by tablespace_name) B
-where a.tablespace_name=b.tablespace_name and a.tablespace_name='${5}';
+ON a.tablespace_name=b.tablespace_name WHERE a.tablespace_name='${5}';
 EOF`
 
     if [ -n "`echo $result | grep ORA-`" ] ; then
