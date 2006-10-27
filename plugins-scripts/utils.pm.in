@@ -53,9 +53,16 @@ sub usage {
 
 sub is_hostname {
 	my $host1 = shift;
-	if ($host1 && $host1 =~ m/^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|[a-zA-Z0-9][-a-zA-Z0-9]+(\.[a-zA-Z0-9][-a-zA-Z0-9]+)*)$/) {
+	return 0 unless defined $host1;
+	if ($host1 =~ m/^[\d\.]+$/ && $host1 !~ /\.$/) {
+		if ($host1 =~ m/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} elsif ($host1 =~ m/^[a-zA-Z0-9][-a-zA-Z0-9]+(\.[a-zA-Z0-9][-a-zA-Z0-9]+)*\.?$/) {
 		return 1;
-	}else{
+	} else {
 		return 0;
 	}
 }
