@@ -1,3 +1,124 @@
+2006-10-27 16:37  tonvoon
+
+	* plugins-scripts/: utils.pm.in, t/utils.t: More edge testcases.
+	  Allow anything if ends with a . as long as correct characters
+
+2006-10-26 22:32  tonvoon
+
+	* NPTest.pm: New test variables default to "none", so no changes
+	  required to tinderbox satelites
+
+2006-10-26 22:10  tonvoon
+
+	* THANKS.in, plugins-scripts/check_oracle.sh: Fixed error if
+	  dba_free_space has no free segments (Florian Gleixner)
+
+2006-10-26 22:02  tonvoon
+
+	* plugins-scripts/: Makefile.am, utils.pm.in, t/utils.t: Fixed
+	  regression where hostnames with hyphens were rejected (1581402 -
+	  Holger Weiss)
+
+2006-10-26 21:56  tonvoon
+
+	* contrib/tarballs/check_traffic-0.90b.tar.gz: Removing unnecessary
+	  tarball
+
+2006-10-26 21:51  tonvoon
+
+	* THANKS.in, plugins/check_disk.c, plugins/check_http.c: Remove C
+	  style comments (1583467 - Markus Baertschi)
+
+2006-10-24 22:54  opensides
+
+	* plugins-root/check_icmp.c:
+	  more fixes and removal of certain sentences not needed
+
+2006-10-24 22:48  opensides
+
+	* plugins/check_nt.c, plugins-root/check_icmp.c:
+	  last localization fixes for core plugins in c
+
+2006-10-24 22:01  opensides
+
+	* plugins/check_nt.c:
+	  next round of localization fixes
+
+2006-10-24 10:48  tonvoon
+
+	* plugins-root/: Makefile.am, check_icmp.c: Fixed compile on
+	  non-glibc platforms
+
+2006-10-24 09:34  tonvoon
+
+	* plugins/check_http.c: Restored accidently regressed fix
+
+2006-10-23 22:47  opensides
+
+	* plugins/check_http.c:
+	  localization fixes
+
+2006-10-23 01:02  opensides
+
+	* plugins-root/check_icmp.c:
+	  first pass a making check icmp respecting nagiosplugins rules
+
+2006-10-22 23:34  opensides
+
+	* plugins/check_nt.c:
+	  latest localization fixes for tonight ;-)
+
+2006-10-22 23:24  opensides
+
+	* plugins/check_ldap.c:
+	   localization fixes
+
+2006-10-22 23:14  opensides
+
+	* plugins-root/check_icmp.c:
+	  putting default template for copyright and explanations
+
+2006-10-22 23:07  opensides
+
+	* plugins-root/check_icmp.c:
+	  revert mistake when commiting fixes
+
+2006-10-22 23:03  opensides
+
+	* plugins/check_apt.c, plugins/check_procs.c,
+	  plugins-root/check_icmp.c:
+	  more localization fixes
+
+2006-10-20 08:53  tonvoon
+
+	* plugins/check_snmp.c: Reverting back accidently regressed code
+
+2006-10-20 08:39  opensides
+
+	* plugins/check_mrtg.c:
+	  more localization fixes
+
+2006-10-20 07:24  opensides
+
+	* plugins/check_apt.c, plugins-root/check_dhcp.c:
+	  localization updates
+
+2006-10-20 00:56  opensides
+
+	* plugins/check_snmp.c:
+	  adding missing check_snmp
+
+2006-10-20 00:53  opensides
+
+	* plugins/: check_radius.c, check_real.c, check_smtp.c,
+	  check_ssh.c, check_swap.c, check_tcp.c, check_time.c,
+	  check_ups.c, check_users.c, negate.c, urlize.c:
+	  another round of localization cleaning
+
+2006-10-19 21:04  tonvoon
+
+	* BUGS, ChangeLog, configure.in, package.def: For 1.4.4 release
+
 2006-10-19 20:52  tonvoon
 
 	* CHANGES: Added info re: 1.4.4 in prep for release
