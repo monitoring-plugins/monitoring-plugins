@@ -324,14 +324,12 @@ int
 is_addr (const char *address)
 {
 #ifdef USE_IPV6
-	if (is_inet_addr (address) && address_family != AF_INET6)
+	if (address_family == AF_INET && is_inet_addr (address))
+		return TRUE;
+	else if (address_family == AF_INET6 && is_inet6_addr (address)) 
+		return TRUE;
 #else
 	if (is_inet_addr (address))
-#endif
-		return (TRUE);
-
-#ifdef USE_IPV6
-	if (is_inet6_addr (address) && address_family != AF_INET)
 		return (TRUE);
 #endif
 

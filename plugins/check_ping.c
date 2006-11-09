@@ -109,7 +109,7 @@ main (int argc, char **argv)
 	for (i = 0 ; i < n_addresses ; i++) {
 		
 #ifdef PING6_COMMAND
-		if (is_inet6_addr(addresses[i]) && address_family != AF_INET)
+		if (address_family != AF_INET && is_inet6_addr(addresses[i]))
 			rawcmd = strdup(PING6_COMMAND);
 		else
 			rawcmd = strdup(PING_COMMAND);

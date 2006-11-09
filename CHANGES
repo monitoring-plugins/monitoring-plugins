@@ -1,5 +1,14 @@
 This file documents the major additions and syntax changes between releases.
 
+??
+	Reduced number of DNS lookups in check_ping and netutils.c for IPv6 configurations
+
+1.4.6
+	Fixed compile problems with *BSD re: alloca.h
+
+1.4.5
+	Fixed bug in perl's is_hostname routine
+
 1.4.4
 	New C based check_ntp. The perl version is now deprecated.
 	New check_apt plugin
