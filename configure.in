@@ -1685,6 +1685,11 @@ dnl External libraries - see ACKNOWLEDGEMENTS
 np_COREUTILS
 np_CURL
 
+dnl Some helpful common compile errors checked here
+if test "$ac_cv_uname_s" = 'SunOS' -a "$ac_cv_prog_ac_ct_AR" = 'false' ; then
+	AC_MSG_ERROR(No ar found for Solaris - is /usr/ccs/bin in PATH?)
+fi
+
 AC_OUTPUT(
   Makefile 
   lib/Makefile 
