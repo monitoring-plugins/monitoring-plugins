@@ -58,6 +58,7 @@
 	automake 1.9.2
 	autoconf 2.58
 	gnu m4 1.4.2
+	gnu libtool 1.5
 	</literallayout>
 
 	To compile from CVS, after you have checked out the code, run:
