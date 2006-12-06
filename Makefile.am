@@ -16,6 +16,7 @@ DEFS = -DLOCALEDIR=\"$(localedir)\"
 
 dist-hook:
 	make THANKS nagios-plugins.spec pkg/fedora/nagios-plugins.spec
+	rm -rf `find $(distdir) -name CVS`
 
 install-root:
 	cd plugins-root && $(MAKE) $@
