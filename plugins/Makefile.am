@@ -7,7 +7,7 @@ INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/intl @LDAPINCLUDE@ @PGINCLUD
 datadir = @datadir@
 localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
-LIBS = @LIBINTL@ @LIBS@ @SSLLIBS@ 
+LIBS = @LIBINTL@ @LIBS@
 MATHLIBS = @MATHLIBS@
 
 # This is not portable. Run ". tools/devmode" to get development compile flags
@@ -35,7 +35,7 @@ PLUGINHDRS = common.h
 
 BASEOBJS = utils.o ../lib/libnagiosplug.a ../lib/libcoreutils.a
 NETOBJS = netutils.o $(BASEOBJS) $(EXTRA_NETOBJS)
-SSLOBJS = sslutils.o
+SSLOBJS = sslutils.o @SSLLIBS@
 NETLIBS = $(NETOBJS) $(SOCKETLIBS)
 
 TESTS_ENVIRONMENT = perl -I $(top_builddir) -I $(top_srcdir)
