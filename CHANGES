@@ -1,10 +1,10 @@
 This file documents the major additions and syntax changes between releases.
 
-??
+?? ??
 	Reduced number of DNS lookups in check_ping and netutils.c for IPv6 configurations
-
-1.4.6
 	Fixed compile problems with *BSD re: alloca.h
+	Fixed Solaris problems with check_swap (tested on Solaris 9)
+	Fixed check_swap for HP/UX where swapinfo command was incorrect
 
 1.4.5
 	Fixed bug in perl's is_hostname routine

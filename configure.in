@@ -1439,7 +1439,7 @@ then
 elif [$PATH_TO_SWAPINFO -dfM 2>/dev/null | egrep -i "^TYPE +AVAIL +USED +FREE" >/dev/null]
 then
 	ac_cv_have_swap=yes
-	ac_cv_swap_command="$PATH_TO_SWAPINFO -dfM",
+	ac_cv_swap_command="$PATH_TO_SWAPINFO -dfM"
 	ac_cv_swap_format=["%*s %f %*d %f"]
 	ac_cv_swap_conv=1024
 	AC_MSG_RESULT([using HP-UX format swapinfo])
