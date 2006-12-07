@@ -36,6 +36,12 @@
 #define _COMMON_H_
 
 #include "config.h"
+/* This needs to be removed for Solaris servers, where 64 bit files, but 32 bit architecture
+   This needs to be done early on because subsequent system includes use _FILE_OFFSET_BITS
+   Cannot remove from config.h because is included by regex.c from lib/ */
+#if __sun__ && !defined(_LP64) && _FILE_OFFSET_BITS == 64
+#undef _FILE_OFFSET_BITS
+#endif
 
 #ifdef HAVE_FEATURES_H
 #include <features.h>
@@ -112,27 +118,6 @@
 
 #ifdef HAVE_LOCALE_H
 #include <locale.h>
-#endif
-
-/* Fixes "Cannot use swapctl in the large files compilation environment" error on Solaris */
-#ifdef _FILE_OFFSET_BITS
-#undef _FILE_OFFSET_BITS
-#endif
-
-#ifdef HAVE_DECL_SWAPCTL
-# ifdef HAVE_SYS_SWAP_H
-#  include <sys/swap.h>
-# endif
-# ifdef HAVE_SYS_STAT_H
-#  include <sys/stat.h>
-# endif
-# ifdef HAVE_SYS_PARAM_H
-#  include <sys/param.h>
-# endif
-#endif
-
-#ifndef SWAP_CONVERSION
-# define SWAP_CONVERSION 1
 #endif
 
 #ifdef HAVE_SYS_POLL_H

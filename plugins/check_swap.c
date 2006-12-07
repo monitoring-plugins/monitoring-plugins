@@ -41,6 +41,22 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "popen.h"
 #include "utils.h"
 
+#ifdef HAVE_DECL_SWAPCTL
+# ifdef HAVE_SYS_SWAP_H
+#  include <sys/swap.h>
+# endif
+# ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+# endif
+# ifdef HAVE_SYS_PARAM_H
+#  include <sys/param.h>
+# endif
+#endif
+
+#ifndef SWAP_CONVERSION
+# define SWAP_CONVERSION 1
+#endif
+
 int check_swap (int usp, float free_swap_mb);
 int process_arguments (int argc, char **argv);
 int validate_arguments (void);
@@ -236,22 +252,33 @@ main (int argc, char **argv)
 #  ifdef CHECK_SWAP_SWAPCTL_SVR4
 
 	/* get the number of active swap devices */
-	nswaps=swapctl(SC_GETNSWP, NULL);
+	if((nswaps=swapctl(SC_GETNSWP, NULL))== -1)
+		die(STATE_UNKNOWN, _("Error getting swap devices\n") );
+
+	if(nswaps == 0)
+		die(STATE_OK, _("SWAP OK: No swap devices defined\n"));
+
+	if(verbose >= 3)
+		printf("Found %d swap device(s)\n", nswaps);
 
 	/* initialize swap table + entries */
 	tbl=(swaptbl_t*)malloc(sizeof(swaptbl_t)+(sizeof(swapent_t)*nswaps));
+
+	if(tbl==NULL)
+		die(STATE_UNKNOWN, _("malloc() failed!\n"));
+
 	memset(tbl, 0, sizeof(swaptbl_t)+(sizeof(swapent_t)*nswaps));
 	tbl->swt_n=nswaps;
 	for(i=0;i<nswaps;i++){
-		ent=&tbl->swt_ent[i];
-		ent->ste_path=(char*)malloc(sizeof(char)*MAXPATHLEN);
+		if((tbl->swt_ent[i].ste_path=(char*)malloc(sizeof(char)*MAXPATHLEN)) == NULL)
+			die(STATE_UNKNOWN, _("malloc() failed!\n"));
 	}
 
 	/* and now, tally 'em up */
 	swapctl_res=swapctl(SC_LIST, tbl);
 	if(swapctl_res < 0){
 		perror(_("swapctl failed: "));
-		result = STATE_WARNING;
+		die(STATE_UNKNOWN, _("Error in swapctl call\n"));
 	}
 
 	for(i=0;i<nswaps;i++){
@@ -293,7 +320,7 @@ main (int argc, char **argv)
 	swapctl_res=swapctl(SWAP_STATS, ent, nswaps);
 	if(swapctl_res < 0){
 		perror(_("swapctl failed: "));
-		result = STATE_WARNING;
+		die(STATE_UNKNOWN, _("Error in swapctl call\n"));
 	}
 
 	for(i=0;i<nswaps;i++){

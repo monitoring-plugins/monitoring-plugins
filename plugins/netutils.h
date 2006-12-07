@@ -35,7 +35,6 @@
 #ifndef _NETUTILS_H_
 #define _NETUTILS_H_
 
-#include "config.h"
 #include "common.h"
 #include "utils.h"
 #include <netinet/in.h>
