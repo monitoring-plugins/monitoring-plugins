@@ -60,7 +60,7 @@ sub is_hostname {
 		} else {
 			return 0;
 		}
-	} elsif ($host1 =~ m/^[a-zA-Z0-9][-a-zA-Z0-9]+(\.[a-zA-Z0-9][-a-zA-Z0-9]+)*\.?$/) {
+	} elsif ($host1 =~ m/^[a-zA-Z0-9][-a-zA-Z0-9]*(\.[a-zA-Z0-9][-a-zA-Z0-9]*)*\.?$/) {
 		return 1;
 	} else {
 		return 0;
