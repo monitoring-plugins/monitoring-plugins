@@ -35,6 +35,8 @@ my $hostname_checks = {
 	"host.888." => 1,
 	"where.did.that.!.come.from." => 0,
 	"no.underscores_.com" => 0,
+	"a.somecompany.com" => 1,
+	"host.a.com" => 1,
 	};
 
 plan tests => ((scalar keys %$hostname_checks) + 4);
