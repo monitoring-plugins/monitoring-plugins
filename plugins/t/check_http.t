@@ -9,7 +9,7 @@ use strict;
 use Test::More;
 use NPTest;
 
-plan tests => 22;
+plan tests => 26;
 
 my $successOutput = '/OK.*HTTP.*second/';
 
@@ -68,6 +68,14 @@ cmp_ok( $res->return_code, '==', 0, "Checking certificate for www.verisign.com")
 like  ( $res->output, '/Certificate will expire on/', "Output OK" );
 my $saved_cert_output = $res->output;
 
+$res = NPTest->testCmd( "./check_http www.verisign.com -C 1" );
+is( $res->return_code, 0, "Old syntax for cert checking okay" );
+is( $res->output, $saved_cert_output, "Same output as new syntax" );
+
+$res = NPTest->testCmd( "./check_http -H www.verisign.com -C 1" );
+is( $res->return_code, 0, "Updated syntax for cert checking okay" );
+is( $res->output, $saved_cert_output, "Same output as new syntax" );
+
 $res = NPTest->testCmd( "./check_http -C 1 www.verisign.com" );
 cmp_ok( $res->output, 'eq', $saved_cert_output, "--ssl option automatically added");
 
@@ -96,6 +104,6 @@ like ( $res->output, "/pattern found/", "Error message says 'pattern found'");
 $res = NPTest->testCmd( "./check_http -H altinity.com -r 'nAGiOs' --invert-regex" );
 cmp_ok( $res->return_code, "==", 0, "And also when not found");
 
-$res = NPTest->testCmd( "./check_http -H www.worldfirefoxday.com -f follow" );
+$res = NPTest->testCmd( "./check_http -H www.mozilla.com -u /firefox -f follow" );
 is( $res->return_code, 0, "Redirection based on location is okay");
 

@@ -5,6 +5,7 @@ This file documents the major additions and syntax changes between releases.
 	Fixed compile problems with *BSD re: alloca.h
 	Fixed Solaris problems with check_swap (tested on Solaris 9)
 	Fixed check_swap for HP/UX where swapinfo command was incorrect
+	Fixed check_disk inode threshold checks, regressed at r1.4.4.
 
 1.4.5
 	Fixed bug in perl's is_hostname routine

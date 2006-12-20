@@ -88,7 +88,6 @@ struct timeval tv;
 #define HTTP_URL "/"
 #define CRLF "\r\n"
 
-char timestamp[17] = "";
 int specify_port = FALSE;
 int server_port = HTTP_PORT;
 char server_port_text[6] = "";
@@ -146,13 +145,6 @@ main (int argc, char **argv)
 
   if (process_arguments (argc, argv) == ERROR)
     usage4 (_("Could not parse arguments"));
-
-  if (strstr (timestamp, ":")) {
-    if (strstr (server_url, "?"))
-      asprintf (&server_url, "%s&%s", server_url, timestamp);
-    else
-      asprintf (&server_url, "%s?%s", server_url, timestamp);
-  }
 
   if (display_html == TRUE)
     printf ("<A HREF=\"%s://%s:%d%s\" target=\"_blank\">", 
@@ -861,7 +853,7 @@ check_http (void)
 
   /* return a CRITICAL status if we couldn't read any data */
   if (pagesize == (size_t) 0)
-    die (STATE_CRITICAL, _("No data received %s\n"), timestamp);
+    die (STATE_CRITICAL, _("No data received from host\n"));
 
   /* close the connection */
 #ifdef HAVE_SSL
@@ -967,8 +959,8 @@ check_http (void)
       microsec = deltime (tv);
       elapsed_time = (double)microsec / 1.0e6;
       die (onredirect,
-           _(" - %s - %.3f second response time %s%s|%s %s\n"),
-           status_line, elapsed_time, timestamp,
+           _(" - %s - %.3f second response time %s|%s %s\n"),
+           status_line, elapsed_time, 
            (display_html ? "</A>" : ""),
            perfd_time (elapsed_time), perfd_size (pagesize));
     } /* end if (http_status >= 300) */
@@ -983,8 +975,8 @@ check_http (void)
   microsec = deltime (tv);
   elapsed_time = (double)microsec / 1.0e6;
   asprintf (&msg,
-            _("HTTP WARNING: %s - %.3f second response time %s%s|%s %s\n"),
-            status_line, elapsed_time, timestamp,
+            _("HTTP WARNING: %s - %.3f second response time %s|%s %s\n"),
+            status_line, elapsed_time, 
             (display_html ? "</A>" : ""),
             perfd_time (elapsed_time), perfd_size (pagesize));
   if (check_critical_time == TRUE && elapsed_time > critical_time)
@@ -997,9 +989,9 @@ check_http (void)
 
   if (strlen (string_expect)) {
     if (strstr (page, string_expect)) {
-      printf (_("HTTP OK %s - %.3f second response time %s%s|%s %s\n"),
+      printf (_("HTTP OK %s - %.3f second response time %s|%s %s\n"),
               status_line, elapsed_time,
-              timestamp, (display_html ? "</A>" : ""),
+              (display_html ? "</A>" : ""),
               perfd_time (elapsed_time), perfd_size (pagesize));
       exit (STATE_OK);
     }
@@ -1014,9 +1006,9 @@ check_http (void)
   if (strlen (regexp)) {
     errcode = regexec (&preg, page, REGS, pmatch, 0);
     if ((errcode == 0 && invert_regex == 0) || (errcode == REG_NOMATCH && invert_regex == 1)) {
-      printf (_("HTTP OK %s - %.3f second response time %s%s|%s %s\n"),
+      printf (_("HTTP OK %s - %.3f second response time %s|%s %s\n"),
               status_line, elapsed_time,
-              timestamp, (display_html ? "</A>" : ""),
+              (display_html ? "</A>" : ""),
               perfd_time (elapsed_time), perfd_size (pagesize));
       exit (STATE_OK);
     }
@@ -1052,9 +1044,9 @@ check_http (void)
     exit (STATE_WARNING);
   }
   /* We only get here if all tests have been passed */
-  asprintf (&msg, _("HTTP OK %s - %d bytes in %.3f seconds %s%s|%s %s\n"),
+  asprintf (&msg, _("HTTP OK %s - %d bytes in %.3f seconds %s|%s %s\n"),
             status_line, page_len, elapsed_time,
-            timestamp, (display_html ? "</A>" : ""),
+            (display_html ? "</A>" : ""),
             perfd_time (elapsed_time), perfd_size (page_len));
   die (STATE_OK, "%s", msg);
   return STATE_UNKNOWN;
@@ -1263,9 +1255,9 @@ print_help (void)
 
 #ifdef HAVE_SSL
   printf (" %s\n", "-S, --ssl");
-  printf ("   %s\n", _("Connect via SSL"));
+  printf ("   %s\n", _("Connect via SSL. Port defaults to 443"));
   printf (" %s\n", "-C, --certificate=INTEGER");
-  printf ("   %s\n", _("Minimum number of days a certificate has to be valid."));
+  printf ("   %s\n", _("Minimum number of days a certificate has to be valid. Port defaults to 443"));
   printf ("   %s\n", _("(when this option is used the url is not checked.)\n"));
 #endif
 
@@ -1329,13 +1321,13 @@ print_help (void)
   printf (" %s\n", _("serve content (optionally within a specified time) or whether the X509 "));
   printf (" %s\n", _("certificate is still valid for the specified number of days."));
   printf (_("Examples:"));
-  printf (" %s\n\n", "CHECK CONTENT: check_http -w 5 -c 10 --ssl www.verisign.com");
+  printf (" %s\n\n", "CHECK CONTENT: check_http -w 5 -c 10 --ssl -H www.verisign.com");
   printf (" %s\n", _("When the 'www.verisign.com' server returns its content within 5 seconds,"));
   printf (" %s\n", _("a STATE_OK will be returned. When the server returns its content but exceeds"));
   printf (" %s\n", _("the 5-second threshold, a STATE_WARNING will be returned. When an error occurs,"));
   printf (" %s\n\n", _("a STATE_CRITICAL will be returned."));
 
-  printf (" %s\n\n", "CHECK CERTIFICATE: check_http www.verisign.com -C 14");
+  printf (" %s\n\n", "CHECK CERTIFICATE: check_http -H www.verisign.com -C 14");
   printf (" %s\n", _("When the certificate of 'www.verisign.com' is valid for more than 14 days,"));
   printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
   printf (" %s\n", _("14 days, a STATE_WARNING is returned. A STATE_CRITICAL will be returned when"));
