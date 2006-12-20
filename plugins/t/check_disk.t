@@ -24,13 +24,13 @@ my $mountpoint2_valid = getTestParameter( "NP_MOUNTPOINT2_VALID", "Path to anoth
 if ($mountpoint_valid eq "" or $mountpoint2_valid eq "") {
 	plan skip_all => "Need 2 mountpoints to test";
 } else {
-	plan tests => 42;
+	plan tests => 56;
 }
 
 $result = NPTest->testCmd( 
 	"./check_disk -w 1% -c 1% -p $mountpoint_valid -w 1% -c 1% -p $mountpoint2_valid" 
 	);
-cmp_ok( $result->return_code, "==", 0, "Checking two mountpoints (must have at least 1% free)");
+cmp_ok( $result->return_code, "==", 0, "Checking two mountpoints (must have at least 1% free in space and inodes)");
 my $c = 0;
 $_ = $result->output;
 $c++ while /\(/g;	# counts number of "(" - should be two
@@ -54,6 +54,26 @@ if ($free_on_mp1 > $free_on_mp2) {
 }
 
 
+# Do same for inodes
+$_ = $result->output;
+my ($free_inode_on_mp1, $free_inode_on_mp2) = (m/inode=(\d+)%.*inode=(\d+)%/);
+die "Cannot parse free inodes: $_" unless ($free_inode_on_mp1 && $free_inode_on_mp2);
+my $avg_inode_free = ceil(($free_inode_on_mp1 + $free_inode_on_mp2)/2);
+my ($more_inode_free, $less_inode_free);
+if ($free_inode_on_mp1 > $free_inode_on_mp2) {
+	$more_inode_free = $mountpoint_valid;
+	$less_inode_free = $mountpoint2_valid;
+} elsif ($free_on_mp1 < $free_on_mp2) {
+	$more_inode_free = $mountpoint2_valid;
+	$less_inode_free = $mountpoint_valid;
+} else {
+	die "Two mountpoints with same inodes free - cannot do rest of test";
+}
+
+
+
+# Basic filesystem checks for sizes
+
 $result = NPTest->testCmd( "./check_disk -w 1 -c 1 -p $more_free" );
 cmp_ok( $result->return_code, '==', 0, "At least 1 MB available on $more_free");
 like  ( $result->output, $successOutput, "OK output" );
@@ -74,8 +94,6 @@ $result = NPTest->testCmd(
 	);
 cmp_ok( $result->return_code, "==", 2, "Get critical on less_free mountpoint $less_free" );
 like( $result->output, $failureOutput, "Right output" );
-
-
 
 
 $result = NPTest->testCmd(
@@ -102,9 +120,6 @@ like( $result->output, qr/$less_free/, "Found problem $less_free");
 unlike( $result->only_output, qr/$more_free/, "Has ignored $more_free as not a problem");
 like( $result->perf_output, qr/$more_free/, "But $more_free is still in perf data");
 
-
-
-
 $result = NPTest->testCmd(
 	"./check_disk -w $avg_free% -c 0% -p $more_free"
 	);
@@ -123,6 +138,50 @@ $result = NPTest->testCmd(
 	"./check_disk -w $avg_free% -c $avg_free% -p $less_free -w $avg_free% -c 0% -p $more_free"
 	);
 cmp_ok( $result->return_code, '==', 2, "And reversing arguments should not make a difference");
+
+
+
+# Basic inode checks for sizes
+
+$result = NPTest->testCmd( "./check_disk --icritical 1% --iwarning 1% -p $more_inode_free" );
+is( $result->return_code, 0, "At least 1% free on inodes for both mountpoints");
+
+$result = NPTest->testCmd( "./check_disk -K 100% -W 100% -p $less_inode_free" );
+is( $result->return_code, 2, "Critical requesting 100% free inodes for both mountpoints");
+
+$result = NPTest->testCmd( "./check_disk --iwarning 1% --icritical 1% -p $more_inode_free -K 100% -W 100% -p $less_inode_free" );
+is( $result->return_code, 2, "Get critical on less_inode_free mountpoint $less_inode_free");
+
+$result = NPTest->testCmd( "./check_disk -W $avg_inode_free% -K 0% -p $less_inode_free" );
+is( $result->return_code, 1, "Get warning on less_inode_free, when checking average");
+
+$result = NPTest->testCmd( "./check_disk -W $avg_inode_free% -K $avg_inode_free% -p $more_inode_free ");
+is( $result->return_code, 0, "Get ok on more_inode_free when checking average");
+
+$result = NPTest->testCmd( "./check_disk -W $avg_inode_free% -K 0% -p $less_inode_free -W $avg_inode_free% -K $avg_inode_free% -p $more_inode_free" );
+is ($result->return_code, 1, "Combine above two tests, get warning");
+$all_disks = $result->output;
+
+$result = NPTest->testCmd( "./check_disk -e -W $avg_inode_free% -K 0% -p $less_inode_free -W $avg_inode_free% -K $avg_inode_free% -p $more_inode_free" );
+isnt( $result->output, $all_disks, "-e gives different output");
+like( $result->output, qr/$less_inode_free/, "Found problem $less_inode_free");
+unlike( $result->only_output, qr/$more_inode_free/, "Has ignored $more_inode_free as not a problem");
+like( $result->perf_output, qr/$more_inode_free/, "But $more_inode_free is still in perf data");
+
+$result = NPTest->testCmd( "./check_disk -W $avg_inode_free% -K 0% -p $more_inode_free" );
+is( $result->return_code, 0, "Get ok on more_inode_free mountpoint, checking average");
+
+$result = NPTest->testCmd( "./check_disk -W $avg_inode_free% -K $avg_inode_free% -p $less_inode_free" );
+is( $result->return_code, 2, "Get critical on less_inode_free, checking average");
+
+$result = NPTest->testCmd( "./check_disk -W $avg_inode_free% -K 0% -p $more_inode_free -W $avg_inode_free% -K $avg_inode_free% -p $less_inode_free" );
+is( $result->return_code, 2, "Combining above two tests, get critical");
+
+$result = NPTest->testCmd( "./check_disk -W $avg_inode_free% -K $avg_inode_free% -p $less_inode_free -W $avg_inode_free% -K 0% -p $more_inode_free" );
+cmp_ok( $result->return_code, '==', 2, "And reversing arguments should not make a difference");
+
+
+
 
 
 

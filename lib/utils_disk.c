@@ -60,6 +60,7 @@ np_add_parameter(struct parameter_list **list, const char *name)
   new_path->usedspace_units = NULL;
   new_path->usedspace_percent = NULL;
   new_path->usedinodes_percent = NULL;
+  new_path->freeinodes_percent = NULL;
 
   if (current == NULL) {
     *list = new_path;

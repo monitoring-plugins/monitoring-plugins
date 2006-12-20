@@ -146,6 +146,8 @@ char *warn_usedspace_percent = NULL;
 char *crit_usedspace_percent = NULL;
 char *warn_usedinodes_percent = NULL;
 char *crit_usedinodes_percent = NULL;
+char *warn_freeinodes_percent = NULL;
+char *crit_freeinodes_percent = NULL;
 
 
 int
@@ -197,6 +199,7 @@ main (int argc, char **argv)
       set_thresholds(&path->usedspace_units, warn_usedspace_units, crit_usedspace_units);
       set_thresholds(&path->usedspace_percent, warn_usedspace_percent, crit_usedspace_percent);
       set_thresholds(&path->usedinodes_percent, warn_usedinodes_percent, crit_usedinodes_percent);
+      set_thresholds(&path->freeinodes_percent, warn_freeinodes_percent, crit_freeinodes_percent);
     }
   } else {
     np_set_best_match(path_select_list, mount_list, exact_match);
@@ -261,8 +264,8 @@ main (int argc, char **argv)
       dfree_inodes_percent = 100 - dused_inodes_percent;
 
       if (verbose >= 3) {
-        printf ("For %s, used_pct=%g free_pct=%g used_units=%g free_units=%g total_units=%g used_inodes_pct=%g\n", 
-          me->me_mountdir, dused_pct, dfree_pct, dused_units, dfree_units, dtotal_units, dused_inodes_percent);
+        printf ("For %s, used_pct=%g free_pct=%g used_units=%g free_units=%g total_units=%g used_inodes_pct=%g free_inodes_pct=%g\n", 
+          me->me_mountdir, dused_pct, dfree_pct, dused_units, dfree_units, dtotal_units, dused_inodes_percent, dfree_inodes_percent);
       }
 
       /* Threshold comparisons */
@@ -287,6 +290,10 @@ main (int argc, char **argv)
       if (verbose >=3) printf("Usedinodes_percent result=%d\n", temp_result);
       disk_result = max_state( disk_result, temp_result );
 
+      temp_result = get_status(dfree_inodes_percent, path->freeinodes_percent);
+      if (verbose >=3) printf("Freeinodes_percent result=%d\n", temp_result);
+      disk_result = max_state( disk_result, temp_result );
+
       result = max_state(result, disk_result);
 
       /* What a mess of units. The output shows free space, the perf data shows used space. Yikes!
@@ -309,8 +316,8 @@ main (int argc, char **argv)
       asprintf (&perf, "%s %s", perf,
                 perfdata ((!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
                           dused_units, units,
-			  TRUE, warning_high_tide,
-			  TRUE, critical_high_tide,
+			  (warning_high_tide != UINT_MAX ? TRUE : FALSE), warning_high_tide,
+			  (critical_high_tide != UINT_MAX ? TRUE : FALSE), critical_high_tide,
 			  TRUE, 0,
 			  TRUE, dtotal_units));
 
@@ -477,10 +484,18 @@ process_arguments (int argc, char **argv)
       break;
 
     case 'W':			/* warning inode threshold */
-      warn_usedinodes_percent = optarg;
+      if (*optarg == '@') {
+        warn_freeinodes_percent = optarg;
+      } else {
+        asprintf(&warn_freeinodes_percent, "@%s", optarg);
+      }
       break;
     case 'K':			/* critical inode threshold */
-      crit_usedinodes_percent = optarg;
+      if (*optarg == '@') {
+        crit_freeinodes_percent = optarg;
+      } else {
+        asprintf(&crit_freeinodes_percent, "@%s", optarg);
+      }
       break;
     case 'u':
       if (units)
@@ -525,7 +540,7 @@ process_arguments (int argc, char **argv)
       if (! (warn_freespace_units || crit_freespace_units || warn_freespace_percent || 
              crit_freespace_percent || warn_usedspace_units || crit_usedspace_units ||
              warn_usedspace_percent || crit_usedspace_percent || warn_usedinodes_percent ||
-             crit_usedinodes_percent)) {
+             crit_usedinodes_percent || warn_freeinodes_percent || crit_freeinodes_percent )) {
         die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set a threshold value before using -p\n"));
       }
       se = np_add_parameter(&path_select_list, optarg);
@@ -534,6 +549,7 @@ process_arguments (int argc, char **argv)
       set_thresholds(&se->usedspace_units, warn_usedspace_units, crit_usedspace_units);
       set_thresholds(&se->usedspace_percent, warn_usedspace_percent, crit_usedspace_percent);
       set_thresholds(&se->usedinodes_percent, warn_usedinodes_percent, crit_usedinodes_percent);
+      set_thresholds(&se->freeinodes_percent, warn_freeinodes_percent, crit_freeinodes_percent);
       break;
     case 'x':                 /* exclude path or partition */
       np_add_name(&dp_exclude_list, optarg);
@@ -567,6 +583,8 @@ process_arguments (int argc, char **argv)
       crit_usedspace_percent = NULL;
       warn_usedinodes_percent = NULL;
       crit_usedinodes_percent = NULL;
+      warn_freeinodes_percent = NULL;
+      crit_freeinodes_percent = NULL;
       break;
     case 'V':                 /* version */
       print_revision (progname, revision);
@@ -594,6 +612,7 @@ process_arguments (int argc, char **argv)
     set_thresholds(&se->usedspace_units, warn_usedspace_units, crit_usedspace_units);
     set_thresholds(&se->usedspace_percent, warn_usedspace_percent, crit_usedspace_percent);
     set_thresholds(&se->usedinodes_percent, warn_usedinodes_percent, crit_usedinodes_percent);
+    set_thresholds(&se->freeinodes_percent, warn_freeinodes_percent, crit_freeinodes_percent);
   }
 
   if (units == NULL) {
