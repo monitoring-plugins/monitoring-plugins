@@ -104,7 +104,7 @@ main (int argc, char **argv)
 	}
 
 	/* handle timeouts gracefully */
-	alarm (timeout_interval);
+	alarm (timeout_interval + 1);
 
 	for (i = 0 ; i < n_addresses ; i++) {
 		
