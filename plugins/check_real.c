@@ -302,7 +302,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVI:H:e:u:p:w:c:t:", longopts,
+		c = getopt_long (argc, argv, "+hvVI:H:e:u:p:w:c:t:", longopts,
 									 &option);
 
 		if (c == -1 || c == EOF)
