@@ -1,0 +1,35 @@
+#!/bin/sh
+
+# This script cleans up all auto*-generated files. If Makefiles are present
+# it will run 'make distclean' first.
+#
+# Please run this script from the top-level directory.
+
+if [ ! -f tools/distclean ]; then
+  echo "Please run this script from the top-level directory of Nagios-plugins."
+  exit 1
+fi
+
+if [ -f Makefile ]; then
+  echo "$0: Makefile present. Cleaning up with 'make distclean'..."
+  make distclean
+  if [ $? -ne 0 ]; then
+    echo "Uh-oh! Make distclean failed."
+    echo "Please run './config.status' and try again."
+    exit 1
+  fi
+fi
+
+echo "$0: Removing auto* files..."
+rm -rf autom4te.cache
+find . -type f -name Makefile.in -print0| xargs -0 rm -f
+rm -f aclocal.m4 compile config.guess config.h.in config.sub configure depcomp
+rm -f m4/Makefile.am
+
+echo "$0: Removing miscelanious files..."
+rm -f po/*.gmo po/stamp-po
+rm -f doc/developer-guidelines.html
+rm -f INSTALL install-sh missing
+rm -f plugins/t/check_nagios.nagios?.status.???.tmp
+
+echo "$0: Cleanup complete! Have a nice day..."

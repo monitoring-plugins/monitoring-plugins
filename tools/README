@@ -6,3 +6,4 @@ or test the plugins.
 2. tango -
 3. mini_epn/p1.pl - used to test perl plugins for functionality under embedded
    perl
+4. distclean - used to clean the sources leaving only original CVS files
