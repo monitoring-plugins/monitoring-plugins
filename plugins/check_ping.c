@@ -503,10 +503,22 @@ run_ping (const char *cmd, const char *addr)
 int
 error_scan (char buf[MAX_INPUT_BUFFER], const char *addr)
 {
-	if (strstr (buf, "Network is unreachable"))
-		die (STATE_CRITICAL, _("CRITICAL - Network unreachable (%s)"), addr);
+	if (strstr (buf, "Network is unreachable") ||
+		strstr (buf, "Destination Net Unreachable")
+		)
+		die (STATE_CRITICAL, _("CRITICAL - Network Unreachable (%s)"), addr);
 	else if (strstr (buf, "Destination Host Unreachable"))
 		die (STATE_CRITICAL, _("CRITICAL - Host Unreachable (%s)"), addr);
+	else if (strstr (buf, "Destination Port Unreachable"))
+		die (STATE_CRITICAL, _("CRITICAL - Bogus ICMP: Port Unreachable (%s)"), addr);
+	else if (strstr (buf, "Destination Protocol Unreachable"))
+		die (STATE_CRITICAL, _("CRITICAL - Bogus ICMP: Protocol Unreachable (%s)"), addr);
+	else if (strstr (buf, "Destination Net Prohibited"))
+		die (STATE_CRITICAL, _("CRITICAL - Network Prohibited (%s)"), addr);
+	else if (strstr (buf, "Destination Host Prohibited"))
+		die (STATE_CRITICAL, _("CRITICAL - Host Prohibited (%s)"), addr);
+	else if (strstr (buf, "Packet filtered"))
+		die (STATE_CRITICAL, _("CRITICAL - Packet Filtered (%s)"), addr);
 	else if (strstr (buf, "unknown host" ))
 		die (STATE_CRITICAL, _("CRITICAL - Host not found (%s)"), addr);
 	else if (strstr (buf, "Time to live exceeded"))
