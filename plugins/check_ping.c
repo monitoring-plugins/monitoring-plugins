@@ -399,11 +399,7 @@ validate_arguments ()
 	if (max_packets == -1)
 		max_packets = DEFAULT_MAX_PACKETS;
 
-	max_seconds = crta * max_packets;
-	/* Round up max_seconds because we use only the int part */
-	if (max_seconds != (int)max_seconds)
-		max_seconds = (int)max_seconds + 1;
-
+	max_seconds = crta / 1000.0 * max_packets + max_packets;
 	if (max_seconds > timeout_interval)
 		timeout_interval = (int)max_seconds;
 
