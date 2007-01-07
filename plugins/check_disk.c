@@ -164,8 +164,8 @@ main (int argc, char **argv)
   double dfree_pct = -1, dused_pct = -1;
   double dused_units, dfree_units, dtotal_units;
   double dused_inodes_percent, dfree_inodes_percent;
-  double warning_high_tide = UINT_MAX;
-  double critical_high_tide = UINT_MAX;
+  double warning_high_tide;
+  double critical_high_tide;
   int temp_result;
 
   struct mount_entry *me;
@@ -300,6 +300,11 @@ main (int argc, char **argv)
          Hack here. Trying to get warn/crit levels from freespace_(units|percent) for perf
          data. Assumption that start=0. Roll on new syntax...
       */
+
+      /* *_high_tide must be reinitialized at each run */
+      warning_high_tide = UINT_MAX;
+      critical_high_tide = UINT_MAX;
+
       if (path->freespace_units->warning != NULL) {
         warning_high_tide = dtotal_units - path->freespace_units->warning->end;
       }
