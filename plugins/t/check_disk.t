@@ -24,7 +24,7 @@ my $mountpoint2_valid = getTestParameter( "NP_MOUNTPOINT2_VALID", "Path to anoth
 if ($mountpoint_valid eq "" or $mountpoint2_valid eq "") {
 	plan skip_all => "Need 2 mountpoints to test";
 } else {
-	plan tests => 56;
+	plan tests => 57;
 }
 
 $result = NPTest->testCmd( 
@@ -35,6 +35,12 @@ my $c = 0;
 $_ = $result->output;
 $c++ while /\(/g;	# counts number of "(" - should be two
 cmp_ok( $c, '==', 2, "Got two mountpoints in output");
+
+
+# Get perf data
+# Should use Nagios::Plugin
+my @perf_data = sort(split(/ /, $result->perf_output));
+
 
 # Calculate avg_free free on mountpoint1 and mountpoint2
 # because if you check in the middle, you should get different errors
@@ -63,7 +69,7 @@ my ($more_inode_free, $less_inode_free);
 if ($free_inode_on_mp1 > $free_inode_on_mp2) {
 	$more_inode_free = $mountpoint_valid;
 	$less_inode_free = $mountpoint2_valid;
-} elsif ($free_on_mp1 < $free_on_mp2) {
+} elsif ($free_inode_on_mp1 < $free_inode_on_mp2) {
 	$more_inode_free = $mountpoint2_valid;
 	$less_inode_free = $mountpoint_valid;
 } else {
@@ -72,8 +78,15 @@ if ($free_inode_on_mp1 > $free_inode_on_mp2) {
 
 
 
-# Basic filesystem checks for sizes
+# Check when order of mount points are reversed, that perf data remains same
+$result = NPTest->testCmd( 
+	"./check_disk -w 1% -c 1% -p $mountpoint2_valid -w 1% -c 1% -p $mountpoint_valid" 
+	);
+@_ = sort(split(/ /, $result->perf_output));
+is_deeply( \@perf_data, \@_, "perf data for both filesystems same when reversed");
 
+
+# Basic filesystem checks for sizes
 $result = NPTest->testCmd( "./check_disk -w 1 -c 1 -p $more_free" );
 cmp_ok( $result->return_code, '==', 0, "At least 1 MB available on $more_free");
 like  ( $result->output, $successOutput, "OK output" );
@@ -116,9 +129,11 @@ $result = NPTest->testCmd(
 	"./check_disk -e -w $avg_free% -c 0% -p $less_free -w $avg_free% -c $avg_free% -p $more_free" 
 	);
 isnt( $result->output, $all_disks, "-e gives different output");
-like( $result->output, qr/$less_free/, "Found problem $less_free");
-unlike( $result->only_output, qr/$more_free/, "Has ignored $more_free as not a problem");
-like( $result->perf_output, qr/$more_free/, "But $more_free is still in perf data");
+
+# Need spaces around filesystem name in case less_free and more_free are nested
+like( $result->output, qr/ $less_free /, "Found problem $less_free");
+unlike( $result->only_output, qr/ $more_free /, "Has ignored $more_free as not a problem");
+like( $result->perf_output, qr/ $more_free=/, "But $more_free is still in perf data");
 
 $result = NPTest->testCmd(
 	"./check_disk -w $avg_free% -c 0% -p $more_free"
