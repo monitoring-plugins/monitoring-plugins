@@ -193,7 +193,7 @@ main (int argc, char **argv)
 			strip (procargs);
 
 			/* Some ps return full pathname for command. This removes path */
-			procprog = base_name(procprog);
+			strcpy(procprog, base_name(procprog));
 
 			/* we need to convert the elapsed time to seconds */
 			procseconds = convert_to_seconds(procetime);
