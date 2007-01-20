@@ -9,5 +9,6 @@ Administration tasks:
   - Reassign leaver's tracker items to project lead
   - Remove from Sourceforge's list of developers. This will include CVS access. Do not
     need to remove from CVS avail file
+  - If applicable, remove from mailing list administrators
   - Keep on nagiosplug-team mailing list, unless specifically requested to be removed
 
