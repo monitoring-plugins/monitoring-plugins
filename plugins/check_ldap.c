@@ -378,9 +378,9 @@ print_help (void)
   printf ("    %s\n", _("ldap attribute to search (default: \"(objectclass=*)\""));
   printf (" %s\n", "-b [--base]");
   printf ("    %s\n", _("ldap base (eg. ou=my unit, o=my org, c=at"));
-  printf (" %s\n," "-D [--bind]");
+  printf (" %s\n", "-D [--bind]");
   printf ("    %s\n", _("ldap bind DN (if required)"));
-  printf (" %s\n," "-P [--pass]");
+  printf (" %s\n", "-P [--pass]");
   printf ("    %s\n", _("ldap password (if required)"));
 
 #ifdef HAVE_LDAP_SET_OPTION
@@ -410,9 +410,9 @@ print_usage (void)
 {
   printf (_("Usage:"));
 	printf (" %s -H <host> -b <base_dn> [-p <port>] [-a <attr>] [-D <binddn>]",progname);
-  printf ("[-P <password>] [-w <warn_time>] [-c <crit_time>] [-t timeout]\n",
+  printf ("\n       [-P <password>] [-w <warn_time>] [-c <crit_time>] [-t timeout]%s\n",
 #ifdef HAVE_LDAP_SET_OPTION
-			" [-2|-3] [-4|-6]"
+			"\n       [-2|-3] [-4|-6]"
 #else
 			""
 #endif

@@ -1263,13 +1263,13 @@ print_help (void)
 
   printf (" %s\n", "-e, --expect=STRING");
   printf ("    %s\n", _("String to expect in first (status) line of server response (default: "));
-  printf ("%s\n", HTTP_EXPECT);
+  printf ("%s)\n", HTTP_EXPECT);
   printf ("    %s\n", _("If specified skips all other status line logic (ex: 3xx, 4xx, 5xx processing)"));
   printf (" %s\n", "-s, --string=STRING");
   printf ("    %s\n", _("String to expect in the content"));
   printf (" %s\n", "-u, --url=PATH");
   printf ("    %s\n", _("URL to GET or POST (default: /)"));
-  printf (" %s\n," "-P, --post=STRING");
+  printf (" %s\n", "-P, --post=STRING");
   printf ("    %s\n", _("URL encoded http POST data"));
   printf (" %s\n", "-N, --no-body");
   printf ("    %s\n", _("Don't wait for document body: stop reading after headers."));
