@@ -225,7 +225,7 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 		su.sun_family = AF_UNIX;
 		strncpy(su.sun_path, host_name, UNIX_PATH_MAX);
 		*sd = socket(PF_UNIX, SOCK_STREAM, 0);
-		if(sd < 0){
+		if(*sd < 0){
 			die(STATE_UNKNOWN, _("Socket creation failed"));
 		}
 		result = connect(*sd, (struct sockaddr *)&su, sizeof(su));
