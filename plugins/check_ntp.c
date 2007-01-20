@@ -191,7 +191,7 @@ typedef struct {
 	do{ if(!t.tv_usec && !t.tv_sec) n=0x0UL; \
 		else { \
 			L32(n)=htonl(t.tv_sec + EPOCHDIFF); \
-			R32(n)=htonl((4294.967296*t.tv_usec)+.5); \
+			R32(n)=htonl((uint64_t)((4294.967296*t.tv_usec)+.5)); \
 		} \
 	} while(0)
 
@@ -287,7 +287,7 @@ void setup_request(ntp_message *p){
 	VN_SET(p->flags, 4);
 	MODE_SET(p->flags, MODE_CLIENT);
 	p->poll=4;
-	p->precision=0xfa;
+	p->precision=(int8_t)0xfa;
 	L16(p->rtdelay)=htons(1);
 	L16(p->rtdisp)=htons(1);
 
@@ -541,7 +541,7 @@ double jitter_request(const char *host, int *status){
 	 	 */
 		npeers+=(ntohs(req.count)/sizeof(ntp_assoc_status_pair));
 		peers=(ntp_assoc_status_pair*)realloc(peers, sizeof(ntp_assoc_status_pair)*npeers);
-		memcpy((void*)peers+peer_offset, (void*)req.data, sizeof(ntp_assoc_status_pair)*npeers);
+		memcpy((void*)((ptrdiff_t)peers+peer_offset), (void*)req.data, sizeof(ntp_assoc_status_pair)*npeers);
 		peer_offset+=ntohs(req.count);
 	} while(req.op&REM_MORE);
 
