@@ -809,8 +809,22 @@ update the THANKS.in file.</para>
 	Credit will always be given for any patches through a THANKS file in the distribution.</para>
 	</section>
 
-	<section id="Newplugins"><title>New plugins</title>
 
+	<section id="Contributedplugins"><title>Contributed plugins</title>
+	<para>Plugins that have been contributed to the project and 
+	distributed with the Nagios Plugin files are held in the contrib/ directory and are not installed
+	by default. These plugins are not officially supported by the team. 
+	The current policy is that these plugins should be owned and maintained by the original 
+	contributor, preferably hosted on <ulink url="http://www.nagiosexchange.org">NagiosExchange</ulink>.
+	</para>
+	<para>If patches or bugs are raised to an contributed plugin, we will start communications with the
+	original contributor, but seek to remove the plugin from our distribution.
+	</para>
+	<para>The aim is to distribute only code that the Nagios Plugin team are responsible for.
+	</para>
+	</section>
+
+	<section id="Newplugins"><title>New plugins</title>
 	<para>If you would like others to use your plugins, please add it to
 	the official 3rd party plugin repository, 
 	<ulink url="http://www.nagiosexchange.org">NagiosExchange</ulink>.
@@ -823,7 +837,8 @@ update the THANKS.in file.</para>
 
       <orderedlist>
 	<listitem>
-	  <para>Include copyright and license information in all files</para>
+	  <para>Include copyright and license information in all files. Copyright must be solely
+		granted to the Nagios Plugin Development Team</para>
 	</listitem>
 	<listitem>
 	  <para>The standard command options are supported (--help, --version,
