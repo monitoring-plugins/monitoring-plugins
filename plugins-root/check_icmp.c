@@ -1201,7 +1201,7 @@ print_help(void)
   printf ("%0.3fms,%u%%)\n", (float)warn.rta / 1000 , warn.pl / 1000);
   printf (" %s\n", "-c");
   printf ("    %s", _("critical threshold (currently "));
-  printf ("%0.3fms,%u%%)\n", (float)crit.rta), crit.pl;
+  printf ("%0.3fms,%u%%)\n", (float)crit.rta, crit.pl);
   printf (" %s\n", "-n");
   printf ("    %s", _("number of packets to send (currently "));
   printf ("%u)\n",packets);
