@@ -166,6 +166,8 @@ process_arguments (int argc, char **argv)
 		{"proto2", no_argument, 0, '2'},
 		{"use-ipv4", no_argument, 0, '4'},
 		{"use-ipv6", no_argument, 0, '6'},
+		{"ssh-option", required_argument, 0, 'o'},
+		{"quiet", no_argument, 0, 'q'},
 		{0, 0, 0, 0}
 	};
 
@@ -177,7 +179,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvh1246ft:H:O:p:i:u:l:C:S:n:s:", longopts,
+		c = getopt_long (argc, argv, "Vvh1246fqt:H:O:p:i:u:l:C:S:n:s:o:", longopts,
 		                 &option);
 
 		if (c == -1 || c == EOF)
@@ -252,6 +254,12 @@ process_arguments (int argc, char **argv)
 				usage_va(_("skip lines must be an integer"));
 			else
 				skip = atoi (optarg);
+			break;
+		case 'o':									/* Extra options for the ssh command */
+			asprintf (&comm, "%s -%c '%s'", comm, c, optarg);
+			break;
+		case 'q':									/* Tell the ssh command to be quiet */
+			asprintf (&comm, "%s -%c", comm, c);
 			break;
 		default:									/* help */
 			usage_va(_("Unknown argument - %s"), optarg);
@@ -344,6 +352,10 @@ print_help (void)
   printf ("    %s\n", _("list of nagios service names, separated by ':' [optional]"));
   printf (" %s\n","-n, --name=NAME");
   printf ("    %s\n", _("short name of host in nagios configuration [optional]"));
+  printf (" %s\n","-o, --ssh-option=OPTION");
+  printf ("    %s\n", _("Call ssh with '-o OPTION' (may be used multiple times) [optional]"));
+  printf (" %s\n","-q, --quiet");
+  printf ("    %s\n", _("Tell ssh to suppress warning and diagnostic messages [optional]"));
 	printf (_(UT_WARN_CRIT));
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
   printf (" %s\n", _("The most common mode of use is to refer to a local identity file with"));
@@ -371,6 +383,6 @@ void
 print_usage (void)
 {
 	printf (_("Usage:"));
-  printf(" %s [-f46] [-t timeout] [-i identity] [-l user] -H <host> -C <command>",progname);
-  printf(" [-n name] [-s servicelist] [-O outputfile] [-p port]\n");
+  printf(" %s [-fq46] [-t timeout] [-i identity] [-l user] -H <host> -C <command>",progname);
+  printf(" [-n name] [-s servicelist] [-O outputfile] [-p port] [-o ssh-option]\n");
 }
