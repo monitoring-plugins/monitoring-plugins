@@ -139,6 +139,7 @@ main (int argc, char **argv)
 
 	service = PW_AUTHENTICATE_ONLY;
 
+	memset (&data, 0, sizeof(data));
 	if (!(rc_avpair_add (&data.send_pairs, PW_SERVICE_TYPE, &service, 0) &&
 				rc_avpair_add (&data.send_pairs, PW_USER_NAME, username, 0) &&
 				rc_avpair_add (&data.send_pairs, PW_USER_PASSWORD, password, 0) &&
