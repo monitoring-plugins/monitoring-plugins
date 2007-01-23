@@ -102,7 +102,8 @@ process_arguments (int argc, char **argv)
 	static struct option longopts[] = {
 		{"help", no_argument, 0, 'h'},
 		{"version", no_argument, 0, 'V'},
-		{"host", required_argument, 0, 'H'},
+		{"host", required_argument, 0, 'H'},	/* backward compatibility */
+		{"hostname", required_argument, 0, 'H'},
 		{"port", required_argument, 0, 'p'},
 		{"use-ipv4", no_argument, 0, '4'},
 		{"use-ipv6", no_argument, 0, '6'},
