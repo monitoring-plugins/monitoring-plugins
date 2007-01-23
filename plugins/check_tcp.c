@@ -520,6 +520,7 @@ process_arguments (int argc, char **argv)
 				usage4 (_("Maxbytes must be a positive integer"));
 			else
 				maxbytes = strtol (optarg, NULL, 0);
+			break;
 		case 'q':
 			if (escape)
 				server_quit = np_escaped_string(optarg);
