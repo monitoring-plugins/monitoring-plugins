@@ -101,6 +101,11 @@ char *strstr ();
 # include <sys/statfs.h>
 #endif
 
+#ifdef STAT_STATVFS
+# include <sys/statvfs.h>
+# define statfs statvfs
+#endif
+
 #ifdef MOUNTED_LISTMNTENT
 # include <mntent.h>
 #endif
@@ -162,7 +167,7 @@ char *strstr ();
 
 #if MOUNTED_GETMNTINFO
 
-# if ! HAVE_F_FSTYPENAME_IN_STATFS
+# if ! HAVE_F_FSTYPENAME_IN_STATFS && ! STAT_STATVFS
 static char *
 fstype_to_string (short int t)
 {
@@ -262,7 +267,7 @@ fstype_to_string (short int t)
 static char *
 fsp_to_string (const struct statfs *fsp)
 {
-# if defined HAVE_F_FSTYPENAME_IN_STATFS
+# if defined HAVE_F_FSTYPENAME_IN_STATFS || defined STAT_STATVFS
   return (char *) (fsp->f_fstypename);
 # else
   return fstype_to_string (fsp->f_type);
