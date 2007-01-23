@@ -10,32 +10,29 @@ below...
 check_fping:
 	- Requires the fping utility distributed with SATAN.  Either
 	  download and install SATAN or grab the fping program from
-	  http://www.fping.com
-	  http://www.stanford.edu/~schemers/docs/fping/fping.html
-		ftp://ftp.redhat.com/pub/contrib/libc6/SRPMS/fping-2.2b1-1.src.rpm 
-		ftp://ftp.redhat.com/pub/contrib/libc6/RPMS/fping-2.2b1-1.i386.rpm 
+	  http://www.fping.com/
+		RPM: http://rpmfind.net/linux/rpm2html/search.php?query=fping
 	  Note that the fping command must be setuid root to function.
 
 check_game:
 	- Requires the qstat utility available from
-	  http://www.qstat.org
-	  http://www.activesw.com/people/steve/qstat.html
+	  http://sourceforge.net/projects/qstat/
 	  Last tested on qstat 2.3d BETA
 
 check_hpjd:
-	- Requires the NET-SNMP package available from 
-	  http://net-snmp.sourceforge.net
+	- Requires the NET-SNMP package available from
+	  http://net-snmp.sourceforge.net/
 	  The snmpget binary is all that is required.
 
 check_ldap:
 	- Requires the LDAP libraries available from
-	  http://www.openldap.org
+	  http://www.openldap.org/
 		Lib: libldap, liblber
 		Redhat Source: openldap-1.2.9-6.i386.rpm, openldap-devel-1.2.9-6.i386.rpm
 
 check_mysql, check_mysql_query:
 	- Requires the MySQL libraries available from
-	  http://www.mysql.org
+	  http://www.mysql.org/
 		Lib: libmysql, libmysqlclient
 		Redhat Powertools Source: mysql-3.20.32a-3.i386.rpm, mysql-devel-3.20.32a-3.i386.rpm (these seem to be broken, however)
 		RPMS from www.mysql.org work better
@@ -43,37 +40,37 @@ check_mysql, check_mysql_query:
 
 check_pqsql:
 	- Requires the PostgreSQL libraries available from
-	  http://www.postgresql.org
+	  http://www.postgresql.org/
 
 check_radius:
-	- Requires the radiusclient library available from 
-	  http://www.cityline.net/~lf/radius/
-		RPM (rpmfind): radiusclient-0.3.1-1, radiusclient-devel-0.3.1-1
+	- Requires the radiusclient library available from
+	  ftp://ftp.cityline.net/pub/radiusclient/
+		RPM (rpmfind): radiusclient 0.3.2, radiusclient-devel-0.3.2
 
 check_snmp:
-	- Requires the NET-SNMP package available from 
-	  http://net-snmp.sourceforge.net
+	- Requires the NET-SNMP package available from
+	  http://net-snmp.sourceforge.net/
 
 check_ifstatus/check_ifoperstatus
 	- Requires Net::SNMP perl module
-	   http://www.perl.com/CPAN/modules/by-authors/id/D/DT/DTOWN/
+	  http://www.perl.com/CPAN/modules/by-authors/id/D/DT/DTOWN/
 
 check_nwstat:
 	- Requires MRTGEXT NLM for Novell Servers
-	  http://www.engr.wisc.edu/~drews/mrtg/
+	  http://forge.novell.com/modules/xfmod/project/?mrtgext
 
 check_nt:
 	- Requires NSClient to run on the NT server to monitor
 	  http://nsclient.ready2run.nl/
 
 check_ups:
-       - Requires Network UPS Tools (>= 1.4) to run on the server to monitor
-         http://www.networkupstools.org/
+	- Requires Network UPS Tools (>= 1.4) to run on the server to monitor
+	  http://www.networkupstools.org/
 
 OS Specific Issues
 ------------------
 
 HP-UX 11.11
-You need to use the version of gcc provided by HP at version 3.3.3. 
+You need to use the version of gcc provided by HP at version 3.3.3.
 Also, you need GNU make 3.8
 
