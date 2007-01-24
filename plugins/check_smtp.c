@@ -171,7 +171,6 @@ main (int argc, char **argv)
 	char *helocmd = NULL;
 	char *error_msg = NULL;
 	struct timeval tv;
-	struct hostent *hp;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -191,9 +190,6 @@ main (int argc, char **argv)
 			printf(_("gethostname() failed!\n"));
 			return STATE_CRITICAL;
 		}
-		hp = gethostbyname(localhostname);
-		if(!hp) helocmd = localhostname;
-		else helocmd = hp->h_name;
 	} else {
 		helocmd = localhostname;
 	}
@@ -201,6 +197,9 @@ main (int argc, char **argv)
 		asprintf (&helocmd, "%s%s%s", SMTP_EHLO, helocmd, "\r\n");
 	else
 		asprintf (&helocmd, "%s%s%s", SMTP_HELO, helocmd, "\r\n");
+
+	if (verbose)
+		printf("HELOCMD: %s", helocmd);
 
 	/* initialize the MAIL command with optional FROM command  */
 	asprintf (&cmd_str, "%sFROM: %s%s", mail_command, from_arg, "\r\n");

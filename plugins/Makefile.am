@@ -2,7 +2,7 @@
 
 VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t 
 
-INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/intl @LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@
+INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl @LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@
 
 datadir = @datadir@
 localedir = $(datadir)/locale
@@ -33,7 +33,7 @@ EXTRA_DIST = t utils.c netutils.c sslutils.c popen.c utils.h netutils.h \
 
 PLUGINHDRS = common.h
 
-BASEOBJS = utils.o ../lib/libnagiosplug.a ../lib/libcoreutils.a
+BASEOBJS = utils.o ../lib/libnagiosplug.a ../gl/libgnu.a
 NETOBJS = netutils.o $(BASEOBJS) $(EXTRA_NETOBJS)
 SSLOBJS = sslutils.o
 NETLIBS = $(NETOBJS) $(SOCKETLIBS)

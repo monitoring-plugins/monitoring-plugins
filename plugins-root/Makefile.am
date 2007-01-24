@@ -2,7 +2,7 @@
 
 VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t 
 
-INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/intl -I$(top_srcdir)/plugins @SSLINCLUDE@
+INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl -I$(top_srcdir)/plugins @SSLINCLUDE@
 
 datadir = @datadir@
 localedir = $(datadir)/locale
@@ -15,7 +15,7 @@ EXTRA_PROGRAMS = pst3
 
 EXTRA_DIST = pst3.c
 
-BASEOBJS = ../plugins/utils.o ../lib/libnagiosplug.a ../lib/libcoreutils.a
+BASEOBJS = ../plugins/utils.o ../lib/libnagiosplug.a ../gl/libgnu.a
 NETOBJS = ../plugins/netutils.o $(BASEOBJS) $(EXTRA_NETOBJS)
 NETLIBS = $(NETOBJS) $(SOCKETLIBS)
 

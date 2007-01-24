@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = lib plugins plugins-scripts plugins-root m4 po
+SUBDIRS = gl lib plugins plugins-scripts plugins-root po
 
 EXTRA_DIST = config.rpath \
 	ABOUT-NLS ACKNOWLEDGEMENTS AUTHORS BUGS CHANGES CODING FAQ LEGAL \
@@ -9,7 +9,7 @@ EXTRA_DIST = config.rpath \
 	config_test/Makefile config_test/run_tests config_test/child_test.c \
 	tools/tinderbox_build
 
-ACLOCAL_AMFLAGS = -I m4
+ACLOCAL_AMFLAGS = -I gl/m4 -I m4
 
 localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\"

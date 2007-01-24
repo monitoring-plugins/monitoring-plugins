@@ -5,7 +5,7 @@ noinst_PROGRAMS = @EXTRA_TEST@
 TESTS = @EXTRA_TEST@
 check_PROGRAMS = @EXTRA_TEST@
 
-INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/intl -I$(top_srcdir)/plugins
+INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl -I$(top_srcdir)/plugins
 
 EXTRA_PROGRAMS = test_utils test_disk
 

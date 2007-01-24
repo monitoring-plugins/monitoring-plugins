@@ -103,18 +103,11 @@
 #include <signal.h>
 #endif
 
+/* GNU Libraries */
 #include <getopt.h>
-#include <ctype.h>
-
-#ifdef HAVE_LWRES_NETDB_H
-#include <lwres/netdb.h>
-#else
-# if !HAVE_GETADDRINFO
-#  include "getaddrinfo.h"
-# else
-#  include <netdb.h>
-# endif
-#endif
+#include "vasprintf.h"
+#include "snprintf.h"
+#include "vsnprintf.h"
 
 #ifdef HAVE_LOCALE_H
 #include <locale.h>
@@ -136,22 +129,6 @@
 
 #ifndef HAVE_STRTOUL
 # define strtoul(a,b,c) (unsigned long)atol((a))
-#endif
-
-#ifndef HAVE_ASPRINTF
-int asprintf(char **strp, const char *fmt, ...);
-#endif
-
-#ifndef HAVE_VASPRINTF
-/* int vasprintf(char **strp, const char *fmt, va_list ap); */
-#endif
-
-#ifndef HAVE_SNPRINTF
-int snprintf(char *str, size_t size, const  char  *format, ...);
-#endif
-
-#ifndef HAVE_VSNPRINTF
-int vsnprintf(char *str, size_t size, const char  *format, va_list ap);
 #endif
 
 /* SSL implementations */

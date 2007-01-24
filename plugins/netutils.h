@@ -39,6 +39,7 @@
 #include "utils.h"
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "getaddrinfo.h"
 
 #ifdef HAVE_SYS_UN_H
 # include <sys/un.h>

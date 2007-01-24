@@ -1,10 +1,12 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_REVISION ($Revision$)
-AC_PREREQ(2.58)
+AC_PREREQ(2.59)
 AC_INIT(nagios-plugins,1.4.5)
 AC_CONFIG_SRCDIR(NPTest.pm)
+AC_CONFIG_FILES(gl/Makefile)
 AM_INIT_AUTOMAKE([1.8.3])
 AM_CONFIG_HEADER(config.h)
+dnl Not yet - AC_CONFIG_AUX_DIR(build-aux)
 AC_CANONICAL_HOST
 
 RELEASE=1
@@ -22,11 +24,8 @@ dnl Figure out how to invoke "install" and what install options to use.
 AC_PROG_INSTALL
 AC_SUBST(INSTALL)
 
-dnl Must come very early on due to coreutils requirement
-dnl Takes care of AC_GNU_SOURCE, AC_AIX and AC_MINIX
-gl_USE_SYSTEM_EXTENSIONS
-
 AC_PROG_CC
+gl_EARLY
 AC_PROG_CPP
 AC_PROG_GCC_TRADITIONAL
 AC_PROG_LIBTOOL
@@ -37,9 +36,6 @@ AC_PROG_AWK
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_FUNC_ERROR_AT_LINE
-
-AC_CONFIG_LIBOBJ_DIR(lib)
-AC_FUNC_GETLOADAVG([lib])
 
 ifdef([AC_FUNC_STRTOD],[AC_FUNC_STRTOD],[AM_FUNC_STRTOD])
 
@@ -128,15 +124,6 @@ dnl the order should allow locally installed versions to override distros' ones
 OPENSSL_DIRS="/usr /usr/local /usr/slocal /usr/local/openssl /usr/local/ssl \
               /opt /opt/openssl"
 
-dnl
-dnl Check for miscellaneous stuff
-dnl 
-
-case $host_vender-$host_os in
-osf*)
-	AC_DEFINE(_OSF_SOURCE,1,[OSF needs this for getaddrinfo])
-	;;
-esac
 
 dnl
 dnl Checks for libraries.
@@ -297,108 +284,6 @@ if test x"$with_ipv6" != xno ; then
 	AC_DEFINE(USE_IPV6,1,[Enable IPv6 support])
 fi
 
-dnl #########################################################################
-dnl Check if Posix getaddrinfo() is available.  It is also possible to use
-dnl the version from the lwres library distributed with BIND.
-dnl #########################################################################
-AC_ARG_ENABLE([emulate-getaddrinfo],
-              ACX_HELP_STRING([--enable-emulate-getaddrinfo],
-                             [enable getaddrinfo emulation (default=no)]),
-              ,
-              enable_emulate_getaddrinfo=no)
-
-AC_ARG_WITH(lwres,
-            ACX_HELP_STRING([--with-lwres=DIR],
-                           [use lwres library for getaddrinfo (default=no)]),
-            ,
-            with_lwres=no)
-
-dnl ## enable force to test getaddrinfo.c
-if test x$enable_emulate_getaddrinfo = xforce ; then
-        enable_emulate_getaddrinfo=yes
-        have_getaddrinfo=no
-else
-
-have_getaddrinfo=no
-if test x$with_lwres != xno ; then
-        if test "$with_lwres" != yes ; then
-                   CPPFLAGS="-I${with_lwres}/include $CPPFLAGS"
-                   LDFLAGS="-L${with_lwres}/lib $LDFLAGS"
-        fi
-        AC_CHECK_HEADERS(lwres/netdb.h, ,
-                        [AC_MSG_ERROR([cannot find <lwres/netdb.h>])])
-        AC_CHECK_LIB(lwres, lwres_getaddrinfo, ,
-                     [AC_MSG_ERROR([cannot find the lwres library])],
-                     -lnsl -lpthread)
-        have_getaddrinfo=yes
-fi
-
-if test x$have_getaddrinfo != xyes ; then
-        AC_SEARCH_LIBS(getaddrinfo, socket resolv bind nsl c_r cr, have_getaddrinfo=yes)
-fi
-
-dnl # Special nonsense for systems that actually have getaddrinfo but
-dnl # redefine the name to something else, e.g. OSF
-if test x$have_getaddrinfo != xyes ; then
-        AC_MSG_CHECKING(if getaddrinfo is redefined in netdb.h)
-        AC_TRY_LINK([
-#               include <netdb.h>
-        ], [
-                struct addrinfo hints, *res;
-                int err;
-
-                err = getaddrinfo ("host", "service", &hints, &res);
-        ], [
-                have_getaddrinfo=yes
-                AC_MSG_RESULT(yes)
-        ], [AC_MSG_RESULT(no)])
-fi
-
-fi
-
-if test x$have_getaddrinfo != xno ; then
-        if test x$enable_emulate_getaddrinfo != xno ; then
-                AC_MSG_ERROR([getaddrinfo found but emulate-getaddrinfo was enabled])
-        fi
-        AC_DEFINE(HAVE_GETADDRINFO, 1,
-                  [Does system provide RFC 2553/Posix getaddrinfo?])
-else
-        if test x$enable_emulate_getaddrinfo != xyes ; then
-dnl                AC_MSG_ERROR([getaddrinfo not found: try --with-lwres or --enable-emulate-getaddrinfo])
-               enable_emulate_getaddrinfo=yes
-               AC_MSG_WARN([enabling getaddrinfo emulation])
-        fi
-	EXTRA_NETOBJS="$EXTRA_NETOBJS getaddrinfo.o"
-fi
-
-if test x"$enable_emulate_getaddrinfo" != xno ; then
-    have_resolver=no
-
-  dnl  Try for getipnodebyname
-    AC_SEARCH_LIBS(getipnodebyname, resolv bind nsl c_r cr, have_resolver=yes)
-    if test x"$have_resolver" != xno ; then
-         AC_DEFINE(HAVE_GETIPNODEBYNAME, 1,
-                   [Set when getipnodebyname is available])
-    fi
-
-  dnl  Try for gethostbyname_r
-    if test x"$have_resolver" = xno ; then
-        AC_SEARCH_LIBS(gethostbyname_r, resolv bind nsl c_r cr,
-                       [have_resolver=yes
-                        ACX_WHICH_GETHOSTBYNAME_R])
-    fi
-
-  dnl  Try for gethostbyname
-    if test x"$have_resolver" = xno ; then
-        if test x"$enable_pthreads" != xno ; then
-            AC_MSG_WARN([using threads but cannot find gethostbyname_r or getipnodebyname])
-        fi
-        AC_SEARCH_LIBS(gethostbyname, resolv bind nsl, ,
-                       [AC_MSG_ERROR([cannot find gethostbyname])])
-    fi
-    EXTRA_NETOBJS="$EXTRA_NETOBJS gethostbyname.o"
-
-fi
 
 dnl Checks for Kerberos. Must come before openssl checks for Redhat EL 3
 AC_CHECK_HEADERS(krb5.h,FOUNDINCLUDE=yes,FOUNDINCLUDE=no)
@@ -519,7 +404,7 @@ dnl
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS(signal.h strings.h string.h syslog.h uio.h errno.h sys/types.h sys/time.h sys/socket.h sys/loadavg.h sys/un.h sys/poll.h)
+AC_CHECK_HEADERS(signal.h strings.h string.h syslog.h uio.h errno.h sys/types.h sys/time.h sys/socket.h sys/un.h sys/poll.h)
 AC_CHECK_HEADERS(features.h stdarg.h sys/unistd.h ctype.h stdlib.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -545,37 +430,6 @@ else
     if test x"$ac_cv_HAVE___VA_COPY" = x"yes"; then
         AC_DEFINE(HAVE___VA_COPY,1,[Whether __va_copy() is available])
     fi
-fi
-
-AC_CHECK_FUNCS(vsnprintf snprintf asprintf vasprintf)
-AC_CACHE_CHECK([for C99 vsnprintf],ac_cv_HAVE_C99_VSNPRINTF,[
-AC_TRY_RUN([
-#include <sys/types.h>
-#include <stdarg.h>
-void foo(const char *format, ...) { 
-       va_list ap;
-       int len;
-       char buf[5];
-
-       va_start(ap, format);
-       len = vsnprintf(buf, 0, format, ap);
-       va_end(ap);
-       if (len != 5) exit(1);
-
-       va_start(ap, format);
-       len = vsnprintf(0, 0, format, ap);
-       va_end(ap);
-       if (len != 5) exit(1);
-
-       if (snprintf(buf, 3, "hello") != 5 || strcmp(buf, "he") != 0) exit(1);
-
-       exit(0);
-}
-main() { foo("hello"); }
-],
-ac_cv_HAVE_C99_VSNPRINTF=yes,ac_cv_HAVE_C99_VSNPRINTF=no,ac_cv_HAVE_C99_VSNPRINTF=cross)])
-if test x"$ac_cv_HAVE_C99_VSNPRINTF" = x"yes"; then
-    AC_DEFINE(HAVE_C99_VSNPRINTF,1,[Define if system has C99 compatible vsnprintf])
 fi
 
 AC_TRY_COMPILE([#include <sys/time.h>],
@@ -606,24 +460,6 @@ AC_TRY_COMPILE([#include <stdlib.h>
 AC_DEFINE_UNQUOTED(SOCKET_SIZE_TYPE, $ac_cv_socket_size_type ,
 	[Define type of socket size])
 
-AC_ARG_WITH(proc-loadavg,
-            ACX_HELP_STRING([--with-proc-loadavg=PATH],
-                            [path to /proc/loadavg or equivalent]),
-            ac_cv_proc_loadavg=$withval)
-AC_MSG_CHECKING([for /proc/loadavg])
-if test -n "$ac_cv_proc_loadavg"; then
-  AC_MSG_RESULT([(command line) $ac_cv_proc_loadavg])
-elif test -f "/proc/loadavg"; then
-  AC_MSG_RESULT([found /proc/loadavg])
-  ac_cv_proc_loadavg="/proc/loadavg"
-else
-  AC_MSG_RESULT([no])
-fi
-
-if test -n "$ac_cv_proc_loadavg"; then
-  AC_DEFINE(HAVE_PROC_LOADAVG,1,[Define if /proc/loadavg or similar exists])
-  AC_DEFINE_UNQUOTED(PROC_LOADAVG,"/proc/loadavg",[Location of /proc/loadavg])
-fi
 
 dnl #### Process table test
 
@@ -1615,21 +1451,6 @@ elif test -f ../plugins/check_nt.c ; then
   EXTRAS="$EXTRAS check_nt"
 fi
 
-AC_MSG_CHECKING(for va_list)
-AC_TRY_COMPILE([#ifdef __STDC__
-		#include <stdio.h>
-		#include <stdlib.h>
-		#include <stdarg.h>
-		#else
-		#include <sys/types.h>
-		#include <stdio.h>
-		#include <varargs.h>
-		#endif],
-		[va_list args;],
-		[AC_MSG_RESULT(yes)],
-		[NEED_VA_LIST=-DNEED_VA_LIST 
-		 AC_SUBST(NEED_VA_LIST) 
-		 AC_MSG_RESULT(no)])
 
 case $host in
 	*bsd*)
@@ -1682,8 +1503,7 @@ elif test "$ac_cv_enable_redhat_pthread_workaround" = "yes" ; then
 fi
 
 dnl External libraries - see ACKNOWLEDGEMENTS
-np_COREUTILS
-np_CURL
+gl_INIT
 
 dnl Some helpful common compile errors checked here
 if test "$ac_cv_uname_s" = 'SunOS' -a "$ac_cv_prog_ac_ct_AR" = 'false' ; then
@@ -1693,7 +1513,6 @@ fi
 AC_OUTPUT(
   Makefile 
   lib/Makefile 
-  m4/Makefile 
   plugins/Makefile 
   lib/tests/Makefile
   plugins-root/Makefile
@@ -1727,7 +1546,6 @@ dnl ACX_FEATURE([with],[snmpgetnext-command])
 dnl ACX_FEATURE([with],[ssh-command])
 dnl ACX_FEATURE([with],[uptime-command])
 
-dnl ACX_FEATURE([with],[proc-loadavg])
 dnl ACX_FEATURE([with],[proc-meminfo])
 dnl ACX_FEATURE([with],[ps-command])
 dnl ACX_FEATURE([with],[ps-format])
@@ -1739,7 +1557,6 @@ ACX_FEATURE([with],[ipv6])
 ACX_FEATURE([with],[mysql])
 ACX_FEATURE([with],[openssl])
 ACX_FEATURE([with],[gnutls])
-ACX_FEATURE([enable],[emulate-getaddrinfo])
 ACX_FEATURE([with],[perl])
 ACX_FEATURE([with],[cgiurl])
 ACX_FEATURE([with],[trusted-path])
