@@ -28,8 +28,7 @@ EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 	check_procs check_mysql_query check_apt
 
 EXTRA_DIST = t utils.c netutils.c sslutils.c popen.c utils.h netutils.h \
-	popen.h common.h getaddrinfo.c getaddrinfo.h \
-	gethostbyname.c gethostbyname.h runcmd.c runcmd.h
+	popen.h common.h runcmd.c runcmd.h
 
 PLUGINHDRS = common.h
 

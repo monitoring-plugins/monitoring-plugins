@@ -30,8 +30,6 @@ plugins/check_time.c
 plugins/check_ups.c
 plugins/check_users.c
 plugins/check_ide_smart.c
-plugins/getaddrinfo.c
-plugins/gethostbyname.c
 plugins/negate.c
 plugins/netutils.c
 plugins/popen.c

@@ -27,3 +27,7 @@ Copyright (C) 91, 1995-2004 Free Software Foundation, Inc.
 http://www.gnu.org/software/coreutils/
 Use of macros and lib files in m4/np_coreutils.m4 and lib/. Setuid installs in plugins-root
 
+Gnulib team
+Copyright (C) 2201, 2003, 2004, 2006 Free Software Foundation, Inc
+http://www.gnu.org/software/gnulib/
+Use of lib files that originally were used from coreutils

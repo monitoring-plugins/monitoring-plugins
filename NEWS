@@ -9,6 +9,7 @@ This file documents the major additions and syntax changes between releases.
 	Fixed crit/warn for check_disk perf data
 	Fixed buffer overflow in check_procs
 	Fixed error handling for UNIX sockets in netutils.c
+	Synced with latest GNUlib
 
 1.4.5
 	Fixed bug in perl's is_hostname routine

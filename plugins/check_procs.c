@@ -36,6 +36,7 @@
 ******************************************************************************/
 
 const char *progname = "check_procs";
+const char *program_name = "check_procs";  /* Required for coreutils libs */
 const char *revision = "$Revision$";
 const char *copyright = "2000-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";

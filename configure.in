@@ -1552,7 +1552,6 @@ dnl ACX_FEATURE([with],[ps-format])
 dnl ACX_FEATURE([with],[ps-cols])
 dnl ACX_FEATURE([with],[ps-varlist])
 
-ACX_FEATURE([with],[lwres])
 ACX_FEATURE([with],[ipv6])
 ACX_FEATURE([with],[mysql])
 ACX_FEATURE([with],[openssl])
