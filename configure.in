@@ -137,7 +137,7 @@ AC_SUBST(MATHLIBS)
 
 dnl Check for libtap, to run perl-like tests
 AC_CHECK_LIB(tap, plan_tests, 
-	EXTRA_TEST=test_utils
+	EXTRA_TEST="test_utils test_disk"
 	AC_SUBST(EXTRA_TEST)
 	)
 

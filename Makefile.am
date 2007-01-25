@@ -3,7 +3,7 @@
 SUBDIRS = gl lib plugins plugins-scripts plugins-root po
 
 EXTRA_DIST = config.rpath \
-	ABOUT-NLS ACKNOWLEDGEMENTS AUTHORS BUGS CHANGES CODING FAQ LEGAL \
+	ABOUT-NLS ACKNOWLEDGEMENTS AUTHORS BUGS CODING FAQ LEGAL NEWS \
 	REQUIREMENTS SUPPORT THANKS \
 	NPTest.pm contrib pkg nagios-plugins.spec \
 	config_test/Makefile config_test/run_tests config_test/child_test.c \

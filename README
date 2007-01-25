@@ -5,7 +5,7 @@ Nagios Plugins README
   see below. In addition, generic instructions for the GNU toolchain
   can be found in the INSTALL file.
 
-* For major changes between releases, read the CHANGES file.
+* For major changes between releases, read the NEWS file.
 
 * For information on detailed changes that have been made or plugins 
   that have been added, read the Changelog file.
