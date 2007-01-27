@@ -105,6 +105,7 @@
 
 /* GNU Libraries */
 #include <getopt.h>
+#include "dirname.h"
 #include "vasprintf.h"
 #include "snprintf.h"
 #include "vsnprintf.h"
