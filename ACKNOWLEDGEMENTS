@@ -2,7 +2,7 @@ This file contains the origin of code copied verbatim into some or all of the Na
 
 The NagiosPlugin team thanks the original authors.
 
-Copied code is cited in the source by indented commnents of the form
+Copied code is cited in the source by indented comments of the form
 
 	.. indent level ..	/* Author YYYY sub-citation	see ACKNOWLEDGEMENTS */
 
@@ -28,6 +28,6 @@ http://www.gnu.org/software/coreutils/
 Use of macros and lib files in m4/np_coreutils.m4 and lib/. Setuid installs in plugins-root
 
 Gnulib team
-Copyright (C) 2201, 2003, 2004, 2006 Free Software Foundation, Inc
+Copyright (C) 2001, 2003, 2004, 2006 Free Software Foundation, Inc
 http://www.gnu.org/software/gnulib/
 Use of lib files that originally were used from coreutils
