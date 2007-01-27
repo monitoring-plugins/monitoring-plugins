@@ -24,7 +24,7 @@ my $mountpoint2_valid = getTestParameter( "NP_MOUNTPOINT2_VALID", "Path to anoth
 if ($mountpoint_valid eq "" or $mountpoint2_valid eq "") {
 	plan skip_all => "Need 2 mountpoints to test";
 } else {
-	plan tests => 57;
+	plan tests => 61;
 }
 
 $result = NPTest->testCmd( 
@@ -76,6 +76,24 @@ if ($free_inode_on_mp1 > $free_inode_on_mp2) {
 	die "Two mountpoints with same inodes free - cannot do rest of test";
 }
 
+# Verify performance data
+# First check absolute thresholds...
+$result = NPTest->testCmd(
+        "./check_disk -w 20 -c 10 -p $mountpoint_valid"
+        );
+$_ = $result->perf_output;
+my ($warn_absth_data, $crit_absth_data) = (m/=.[^;]*;(\d+);(\d+);\d+;\d+/);
+is ($warn_absth_data, 20, "Wrong warning in perf data using absolute thresholds");
+is ($crit_absth_data, 10, "Wrong critical in perf data using absolute thresholds");
+
+# Then check percent thresholds.
+$result = NPTest->testCmd(
+        "./check_disk -w 20% -c 10% -p $mountpoint_valid"
+        );
+$_ = $result->perf_output;
+my ($warn_percth_data, $crit_percth_data, $total_percth_data) = (m/=.[^;]*;(\d+);(\d+);\d+;(\d+)/);
+is ($warn_percth_data, int($total_percth_data/100*20), "Wrong warning in perf data using percent thresholds");
+is ($crit_percth_data, int($total_percth_data/100*10), "Wrong critical in perf data using percent thresholds");
 
 
 # Check when order of mount points are reversed, that perf data remains same
