@@ -151,34 +151,34 @@ void print_thresholds(const char *threshold_name, thresholds *my_threshold) {
 int
 check_range(double value, range *my_range)
 {
-	int false = FALSE;
-	int true = TRUE;
+	int no = FALSE;
+	int yes = TRUE;
 	
 	if (my_range->alert_on == INSIDE) {
-		false = TRUE;
-		true = FALSE;
+		no = TRUE;
+		yes = FALSE;
 	}
 
 	if (my_range->end_infinity == FALSE && my_range->start_infinity == FALSE) {
 		if ((my_range->start <= value) && (value <= my_range->end)) {
-			return false;
+			return no;
 		} else {
-			return true;
+			return yes;
 		}
 	} else if (my_range->start_infinity == FALSE && my_range->end_infinity == TRUE) {
 		if (my_range->start <= value) {
-			return false;
+			return no;
 		} else {
-			return true;
+			return yes;
 		}
 	} else if (my_range->start_infinity == TRUE && my_range->end_infinity == FALSE) {
 		if (value <= my_range->end) {
-			return false;
+			return no;
 		} else {
-			return true;
+			return yes;
 		}
 	} else {
-		return false;
+		return no;
 	}
 }
 
