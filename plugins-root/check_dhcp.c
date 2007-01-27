@@ -68,6 +68,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #elif defined (__bsd__)
 
 #include <netinet/if_ether.h>
+#include <sys/param.h>
 #include <sys/sysctl.h>
 #include <net/if_dl.h>
 
