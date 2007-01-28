@@ -325,7 +325,7 @@ process_arguments (int argc, char **argv)
 #endif
 			break;
 		default:
-			usage2 (_("Unknown argument"), optarg);
+			usage5 ();
 		}
 	}
 

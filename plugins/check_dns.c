@@ -370,7 +370,7 @@ process_arguments (int argc, char **argv)
       critical = optarg;
       break;
     default: /* args not parsable */
-      usage_va(_("Unknown argument - %s"), optarg);
+      usage5();
     }
   }
 

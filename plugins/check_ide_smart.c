@@ -212,7 +212,7 @@ main (int argc, char *argv[])
 			print_revision (progname, revision);
 			return STATE_OK;
 		default:
-			usage2 (_("Unknown argument"), optarg);
+			usage5 ();
 		}
 	}
 

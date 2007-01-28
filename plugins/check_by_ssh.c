@@ -262,7 +262,7 @@ process_arguments (int argc, char **argv)
 			asprintf (&comm, "%s -%c", comm, c);
 			break;
 		default:									/* help */
-			usage_va(_("Unknown argument - %s"), optarg);
+			usage5();
 		}
 	}
 

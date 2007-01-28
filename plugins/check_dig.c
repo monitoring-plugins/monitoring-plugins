@@ -265,8 +265,8 @@ process_arguments (int argc, char **argv)
     case 'a':
       expected_address = optarg;
       break;
-    default:                  /* usage_va */
-      usage_va(_("Unknown argument - %s"), optarg);
+    default:                  /* usage5 */
+      usage5();
     }
   }
 

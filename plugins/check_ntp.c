@@ -694,7 +694,7 @@ int process_arguments(int argc, char **argv){
 			break;
 		case '?':
 			/* print short usage statement if args not parsable */
-			usage2 (_("Unknown argument"), optarg);
+			usage5 ();
 			break;
 		}
 	}

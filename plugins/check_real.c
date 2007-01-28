@@ -368,7 +368,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case '?':									/* usage */
-			usage2 (_("Unknown argument"), optarg);
+			usage5 ();
 		}
 	}
 

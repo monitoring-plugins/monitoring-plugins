@@ -189,7 +189,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':     /* help */
-			usage2 (_("Unknown argument"), optarg);
+			usage5 ();
 			break;
 		case 'h':     /* help */
 			print_help ();

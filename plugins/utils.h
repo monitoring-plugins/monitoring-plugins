@@ -80,8 +80,9 @@ int max_state (int a, int b);
 void usage (const char *) __attribute__((noreturn));
 void usage2(const char *, const char *) __attribute__((noreturn));
 void usage3(const char *, int) __attribute__((noreturn));
-void usage4(const char *);
-void usage_va(const char *fmt, ...);
+void usage4(const char *) __attribute__((noreturn));
+void usage5(void) __attribute__((noreturn));
+void usage_va(const char *fmt, ...) __attribute__((noreturn));
 
 const char *state_text (int);
 

@@ -232,7 +232,7 @@ process_arguments (int argc, char **argv)
 
 		switch (c) {
 		case '?':									/* print short usage statement if args not parsable */
-			usage2 (_("Unknown argument"), optarg);
+			usage5 ();
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);

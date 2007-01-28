@@ -201,7 +201,7 @@ int process_arguments (int argc, char **argv) {
 			break;
 		default:
 			/* print short usage statement if args not parsable */
-			usage_va(_("Unknown argument - %s"), optarg);
+			usage5();
 		}
 	}
 

@@ -1091,7 +1091,7 @@ int call_getopt(int argc, char **argv){
 			break;
 
 		case '?': /* help */
-			usage2 (_("Unknown argument"), optarg);
+			usage5 ();
 			break;
 
 		default:

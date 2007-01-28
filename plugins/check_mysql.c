@@ -308,7 +308,7 @@ process_arguments (int argc, char **argv)
 			verbose++;
 			break;
 		case '?':									/* help */
-			usage2 (_("Unknown argument"), optarg);
+			usage5 ();
 		}
 	}
 

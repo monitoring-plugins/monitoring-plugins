@@ -94,6 +94,13 @@ usage4 (const char *msg)
 	exit (STATE_UNKNOWN);
 }
 
+void
+usage5 (void)
+{
+	print_usage();
+	exit (STATE_UNKNOWN);
+}
+
 char *
 clean_revstring (const char *revstring)
 {

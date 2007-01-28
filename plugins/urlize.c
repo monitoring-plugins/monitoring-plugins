@@ -100,7 +100,7 @@ main (int argc, char **argv)
 			break;
 		case '?':
 		default:
-			usage2 (_("Unknown argument"), optarg);
+			usage5 ();
 		}
 	}
 
