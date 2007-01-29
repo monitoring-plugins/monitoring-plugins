@@ -306,16 +306,16 @@ main (int argc, char **argv)
       critical_high_tide = UINT_MAX;
 
       if (path->freespace_units->warning != NULL) {
-        warning_high_tide = path->freespace_units->warning->end;
+        warning_high_tide = dtotal_units - path->freespace_units->warning->end;
       }
       if (path->freespace_percent->warning != NULL) {
-        warning_high_tide = abs( min( (double) warning_high_tide, (double) path->freespace_percent->warning->end/100*dtotal_units ));
+        warning_high_tide = abs( min( (double) warning_high_tide, (double) (1.0 - path->freespace_percent->warning->end/100)*dtotal_units ));
       }
       if (path->freespace_units->critical != NULL) {
-        critical_high_tide = path->freespace_units->critical->end;
+        critical_high_tide = dtotal_units - path->freespace_units->critical->end;
       }
       if (path->freespace_percent->critical != NULL) {
-        critical_high_tide = abs( min( (double) critical_high_tide, (double) path->freespace_percent->critical->end/100*dtotal_units ));
+        critical_high_tide = abs( min( (double) critical_high_tide, (double) (1.0 - path->freespace_percent->critical->end/100)*dtotal_units ));
       }
 
       asprintf (&perf, "%s %s", perf,

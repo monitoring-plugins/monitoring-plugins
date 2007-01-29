@@ -82,9 +82,9 @@ $result = NPTest->testCmd(
         "./check_disk -w 20 -c 10 -p $mountpoint_valid"
         );
 $_ = $result->perf_output;
-my ($warn_absth_data, $crit_absth_data) = (m/=.[^;]*;(\d+);(\d+);\d+;\d+/);
-is ($warn_absth_data, 20, "Wrong warning in perf data using absolute thresholds");
-is ($crit_absth_data, 10, "Wrong critical in perf data using absolute thresholds");
+my ($warn_absth_data, $crit_absth_data, $total_absth_data) = (m/=.[^;]*;(\d+);(\d+);\d+;(\d+)/);
+is ($warn_absth_data, $total_absth_data - 20, "Wrong warning in perf data using absolute thresholds");
+is ($crit_absth_data, $total_absth_data - 10, "Wrong critical in perf data using absolute thresholds");
 
 # Then check percent thresholds.
 $result = NPTest->testCmd(
@@ -92,8 +92,8 @@ $result = NPTest->testCmd(
         );
 $_ = $result->perf_output;
 my ($warn_percth_data, $crit_percth_data, $total_percth_data) = (m/=.[^;]*;(\d+);(\d+);\d+;(\d+)/);
-is ($warn_percth_data, int($total_percth_data/100*20), "Wrong warning in perf data using percent thresholds");
-is ($crit_percth_data, int($total_percth_data/100*10), "Wrong critical in perf data using percent thresholds");
+is ($warn_percth_data, int((1-20/100)*$total_percth_data), "Wrong warning in perf data using percent thresholds");
+is ($crit_percth_data, int((1-10/100)*$total_percth_data), "Wrong critical in perf data using percent thresholds");
 
 
 # Check when order of mount points are reversed, that perf data remains same
