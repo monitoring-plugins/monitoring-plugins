@@ -10,7 +10,7 @@ use Test;
 use NPTest;
 
 use vars qw($tests);
-BEGIN {$tests = 5; plan tests => $tests}
+BEGIN {$tests = 7; plan tests => $tests}
 
 my $host_tcp_http      = getTestParameter( "host_tcp_http",      "NP_HOST_TCP_HTTP",      "localhost",
 					   "A host providing the HTTP Service (a web server)" );
@@ -23,12 +23,15 @@ my $hostname_invalid   = getTestParameter( "hostname_invalid",   "NP_HOSTNAME_IN
 
 my $successOutput = '/^TCP OK\s-\s+[0-9]?\.?[0-9]+ second response time on port [0-9]+/';
 
+my $failedExpect = '/^TCP WARNING\s-\sUnexpected response from host/socket on port [0-9]+/';
+
 my $t;
 
 $t += checkCmd( "./check_tcp $host_tcp_http      -p 80 -wt 300 -ct 600",       0, $successOutput );
 $t += checkCmd( "./check_tcp $host_tcp_http      -p 81 -wt   0 -ct   0 -to 1", 2 ); # use invalid port for this test
 $t += checkCmd( "./check_tcp $host_nonresponsive -p 80 -wt   0 -ct   0 -to 1", 2 );
 $t += checkCmd( "./check_tcp $hostname_invalid   -p 80 -wt   0 -ct   0 -to 1", 2 );
+$t += checkCmd( "./check_tcp $host_tcp_http      -p 80 -s 'GET /\n' -e 'ThisShouldntMatch' -j", 1, $failedExpect );
 
 exit(0) if defined($Test::Harness::VERSION);
 exit($tests - $t);

@@ -347,7 +347,10 @@ main (int argc, char **argv)
 	if(match == -2 && len && !(flags & FLAG_HIDE_OUTPUT))
 		printf("Unexpected response from host/socket: %s", status);
 	else {
-		printf("%.3f second response time on ", elapsed_time);
+		if(match == -2)
+			printf("Unexpected response from host/socket on ");
+		else
+			printf("%.3f second response time on ", elapsed_time);
 		if(server_address[0] != '/')
 			printf("port %d", server_port);
 		else
@@ -358,17 +361,24 @@ main (int argc, char **argv)
 		printf (" [%s]", status);
 
 	/* perf-data doesn't apply when server doesn't talk properly,
-	 * so print all zeroes on warn and crit */
+	 * so print all zeroes on warn and criti. Use fperfdata since
+	 * localisation settings can make different outputs */
 	if(match == -2)
-		printf ("|time=%fs;0.0;0.0;0.0;0.0", elapsed_time);
+		printf ("|%s",
+				fperfdata ("time", elapsed_time, "s",
+				TRUE, 0,
+				TRUE, 0,
+				TRUE, 0,
+				TRUE, socket_timeout)
+			);
 	else
 		printf("|%s",
 				fperfdata ("time", elapsed_time, "s",
-		                   TRUE, warning_time,
-		                   TRUE, critical_time,
-		                   TRUE, 0,
-		                   TRUE, socket_timeout)
-		      );
+				TRUE, warning_time,
+				TRUE, critical_time,
+				TRUE, 0,
+				TRUE, socket_timeout)
+			);
 
 	putchar('\n');
 	return result;
