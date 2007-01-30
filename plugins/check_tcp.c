@@ -408,7 +408,7 @@ process_arguments (int argc, char **argv)
 		{"expect", required_argument, 0, 'e'},
 		{"maxbytes", required_argument, 0, 'm'},
 		{"quit", required_argument, 0, 'q'},
-		{"jail", required_argument, 0, 'j'},
+		{"jail", no_argument, 0, 'j'},
 		{"delay", required_argument, 0, 'd'},
 		{"refuse", required_argument, 0, 'r'},
 		{"mismatch", required_argument, 0, 'M'},
