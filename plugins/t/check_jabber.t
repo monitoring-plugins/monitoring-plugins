@@ -6,11 +6,10 @@
 #
 
 use strict;
-use Test;
+use Test::More;
 use NPTest;
 
-use vars qw($tests);
-BEGIN {$tests = 10; plan tests => $tests}
+plan tests => 10;
 
 my $host_tcp_jabber = getTestParameter( 
 			"NP_HOST_TCP_JABBER",
@@ -30,7 +29,6 @@ my $hostname_invalid   = getTestParameter(
 			"nosuchhost",
 			);
 
-my %exceptions = ( 2 => "No Jabber Server present?" );
 
 my $jabberOK = '/JABBER OK\s-\s\d+\.\d+\ssecond response time on port 5222/';
 
@@ -38,18 +36,30 @@ my $jabberUnresponsive = '/CRITICAL\s-\sSocket timeout after\s\d+\sseconds/';
 
 my $jabberInvalid = '/check_JABBER: Invalid hostname, address or socket\s-\s.+/';
 
-my $t;
+my $r;
 
-$t += checkCmd( "./check_jabber $host_tcp_jabber", 0, $jabberOK );
+SKIP: {
+	skip "No jabber server defined", 6 unless $host_tcp_jabber;
 
-$t += checkCmd( "./check_jabber -H $host_tcp_jabber -w 9 -c 9 -t 10", 0, $jabberOK );
+	$r = NPTest->testCmd( "./check_jabber $host_tcp_jabber" );
+	is( $r->return_code, 0, "Connected okay");
+	like( $r->output, $jabberOK, "Output as expected" );
 
-$t += checkCmd( "./check_jabber $host_tcp_jabber -wt 9 -ct 9 -to 10", 0, $jabberOK );
+	$r = NPTest->testCmd( "./check_jabber -H $host_tcp_jabber -w 9 -c 9 -t 10" );
+	is( $r->return_code, 0, "Connected okay, within limits" );
+	like( $r->output, $jabberOK, "Output as expected" );
+	
+	$r = NPTest->testCmd( "./check_jabber $host_tcp_jabber -wt 9 -ct 9 -to 10" );
+	is( $r->return_code, 0, "Old syntax okay" );
+	like( $r->output, $jabberOK, "Output as expected" );
 
-$t += checkCmd( "./check_jabber $host_nonresponsive", 2, $jabberUnresponsive );
+}
 
-$t += checkCmd( "./check_jabber $hostname_invalid", 2, $jabberInvalid );
+$r = NPTest->testCmd( "./check_jabber $host_nonresponsive" );
+is( $r->return_code, 2, "Unresponsive host gives critical" );
+like( $r->output, $jabberUnresponsive );
 
-exit(0) if defined($Test::Harness::VERSION);
-exit($tests - $t);
+$r = NPTest->testCmd( "./check_jabber $hostname_invalid" );
+is( $r->return_code, 2, "Invalid hostname gives critical" );
+like( $r->output, $jabberInvalid );
 
