@@ -166,9 +166,9 @@ main (int argc, char **argv)
 	}
 	else if (!strncmp(SERVICE, "JABBER", 6)) {
 		SEND = "<stream:stream to=\'host\' xmlns=\'jabber:client\' xmlns:stream=\'http://etherx.jabber.org/streams\'>\n";
-		EXPECT = "<?xml version=\'1.0\'?><stream:stream xmlns:stream=\'http://etherx.jabber.org/streams\'";
+		EXPECT = "<?xml version=\'1.0\'?><stream:stream xmlns=\'jabber:client\' xmlns:stream=\'http://etherx.jabber.org/streams\'";
 		QUIT = "</stream:stream>\n";
-		flags |= FLAG_SSL | FLAG_HIDE_OUTPUT;
+		flags |= FLAG_HIDE_OUTPUT;
 		PORT = 5222;
 	}
 	else if (!strncmp (SERVICE, "NNTPS", 5)) {
