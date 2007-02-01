@@ -197,7 +197,7 @@ else
     $CHMOD 600 $tempdiff
 fi
 
-$DIFF $logfile $oldlog > $tempdiff
+$DIFF $logfile $oldlog | $GREP -v "^>" > $tempdiff
 
 # Count the number of matching log entries we have
 count=`$GREP -c "$query" $tempdiff`
