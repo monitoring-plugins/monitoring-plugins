@@ -112,7 +112,7 @@ main (int argc, char **argv)
 
 	len = strlen(progname);
 	if(len > 6 && !memcmp(progname, "check_", 6)) {
-		SERVICE = progname + 6;
+		SERVICE = strdup(progname + 6);
 		for(i = 0; i < len - 6; i++)
 			SERVICE[i] = toupper(SERVICE[i]);
 	}
@@ -588,7 +588,7 @@ process_arguments (int argc, char **argv)
 	if (server_address == NULL)
 		usage4 (_("You must provide a server address"));
 	else if (server_address[0] != '/' && is_host (server_address) == FALSE)
-		die (STATE_CRITICAL, "%s: %s - %s\n", progname, _("Invalid hostname, address or socket"), server_address);
+		die (STATE_CRITICAL, "%s %s - %s: %s\n", SERVICE, state_text(STATE_CRITICAL), _("Invalid hostname, address or socket"), server_address);
 
 	return TRUE;
 }

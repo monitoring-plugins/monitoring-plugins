@@ -34,7 +34,7 @@ my $jabberOK = '/JABBER OK\s-\s\d+\.\d+\ssecond response time on port 5222/';
 
 my $jabberUnresponsive = '/CRITICAL\s-\sSocket timeout after\s\d+\sseconds/';
 
-my $jabberInvalid = '/check_JABBER: Invalid hostname, address or socket\s-\s.+/';
+my $jabberInvalid = '/JABBER CRITICAL - Invalid hostname, address or socket:\s.+/';
 
 my $r;
 
