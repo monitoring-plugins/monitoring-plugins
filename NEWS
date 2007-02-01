@@ -11,6 +11,7 @@ This file documents the major additions and syntax changes between releases.
 	Fixed error handling for UNIX sockets in netutils.c
 	New -q and -o options for check_by_ssh which are handed over to ssh(1) as is
 	Synced with latest GNUlib
+	Fixed check_jabber always returns warning
 
 1.4.5
 	Fixed bug in perl's is_hostname routine
