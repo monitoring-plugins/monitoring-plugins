@@ -527,11 +527,11 @@ process_arguments (int argc, char **argv)
 				retries = atoi(optarg);
 			break;
 		case 'o':									/* object identifier */
-			if ( strspn( optarg, "0123456789." ) != strlen( optarg ) ) {
+			if ( strspn( optarg, "0123456789.," ) != strlen( optarg ) ) {
 					/*
-					 * we have something other than digits and periods, so we
-					 * have a mib variable, rather than just an SNMP OID, so
-					 * we have to actually read the mib files
+					 * we have something other than digits, periods and comas,
+					 * so we have a mib variable, rather than just an SNMP OID,
+					 * so we have to actually read the mib files
 					 */
 					needmibs = TRUE;
 			}
