@@ -1,3 +1,450 @@
+2007-02-02 09:10  dermoth
+
+	* plugins/check_snmp.c: Fix parsing of multiple OIDs sets needmibs
+	  = TRUE
+
+2007-02-01 06:53  dermoth
+
+	* plugins/: check_tcp.c, t/check_jabber.t: Fix progname being
+	  partly set to upper case Change formating of invalid hostname
+	  output
+
+2007-02-01 05:37  dermoth
+
+	* NEWS: Adding NEWS entry for check_jabber
+
+2007-02-01 05:33  dermoth
+
+	* plugins-scripts/check_log.sh: Fix bug #1593073 Check_Log problem
+	  with log rotation
+
+2007-01-31 22:50  tonvoon
+
+	* plugins/t/check_jabber.t: Converted to new style object and
+	  Test::More testing. Skipped jabber server tests if not defined
+
+2007-01-31 06:18  dermoth
+
+	* plugins/t/check_jabber.t: Add check_jabber test. Will ask for a
+	  jabber host (default should be OK)
+
+2007-01-31 04:47  dermoth
+
+	* plugins/check_tcp.c: Fix Debian Bug #392610: check_jabber always
+	  return warning
+
+2007-01-30 14:24  dermoth
+
+	* plugins/check_tcp.c: Jail does not requires any arguments
+
+2007-01-30 09:56  tonvoon
+
+	* config.rpath: make dist failing without config.rpath in top
+	  level. File copied from build-aux/
+
+2007-01-30 05:01  dermoth
+
+	* plugins/: check_tcp.c, t/check_tcp.t: Fix reporting bug using
+	  expect, affecting (not fixing) Debian bug #392610: check_jabber
+	  always return warning
+
+2007-01-30 02:22  hweiss
+
+	* configure.in: grep(1) "-q" isn't portable (e.g., it won't work on
+	  Solaris 8), redirect output to /dev/null instead.
+
+2007-01-29 14:14  dermoth
+
+	* plugins/: check_disk.c, t/check_disk.t: Revert 1643463 (reversed
+	  disk thresholds) keeping the thresholds checks.
+
+2007-01-29 12:13  hweiss
+
+	* configure.in: Automake 1.10 says: "compiling `test_disk.c' with
+	  per-target flags requires `AM_PROG_CC_C_O' in `configure.in'".
+
+2007-01-29 10:06  tonvoon
+
+	* config.rpath, build-aux/config.rpath: Move config.rpath into
+	  build-aux for automake 1.10
+
+2007-01-28 22:00  hweiss
+
+	* INSTALLING: Remove description of deprecated ./configure
+	  --with-nagios-{user,group} options.
+
+2007-01-28 21:46  hweiss
+
+	* plugins/check_apt.c, plugins/check_by_ssh.c, plugins/check_dig.c,
+	  plugins/check_dns.c, plugins/check_fping.c, plugins/check_game.c,
+	  plugins/check_hpjd.c, plugins/check_http.c,
+	  plugins/check_ide_smart.c, plugins/check_ldap.c,
+	  plugins/check_load.c, plugins/check_mrtg.c,
+	  plugins/check_mrtgtraf.c, plugins/check_mysql.c,
+	  plugins/check_mysql_query.c, plugins/check_nagios.c,
+	  plugins/check_nt.c, plugins/check_ntp.c, plugins/check_nwstat.c,
+	  plugins/check_overcr.c, plugins/check_pgsql.c,
+	  plugins/check_ping.c, plugins/check_procs.c,
+	  plugins/check_radius.c, plugins/check_real.c,
+	  plugins/check_smtp.c, plugins/check_snmp.c, plugins/check_ssh.c,
+	  plugins/check_swap.c, plugins/check_tcp.c, plugins/check_time.c,
+	  plugins/check_ups.c, plugins/check_users.c, plugins/negate.c,
+	  plugins/urlize.c, plugins/utils.c, plugins/utils.h,
+	  plugins-root/check_dhcp.c: Don't try to print `optarg' (which
+	  will be a NULL pointer) if an unknown command line option was
+	  used, as this leads to a segfault on some systems.  The unknown
+	  option will be printed by getopt(3) anyway.  So, simply call
+	  print_usage() and exit UNKNOWN via the new usage5() instead.
+
+2007-01-27 21:49  dermoth
+
+	* plugins/: check_disk.c, t/check_disk.t: Fix #1643463:
+	  Miscalculating thresholds check_disk
+
+2007-01-27 17:49  hweiss
+
+	* lib/utils_base.c: Change the variable names `true' and `false'
+	  (which are keywords in C99) to `yes' and `no'.  Fixes compilation
+	  when using SGI's MIPSpro c99(1).
+
+2007-01-27 17:42  hweiss
+
+	* plugins/common.h: Include GNULib's "dirname.h" in order to pull
+	  in the base_name() prototype, fixes compilation of check_procs
+	  using SGI's MIPSpro C.
+
+2007-01-27 16:56  hweiss
+
+	* ACKNOWLEDGEMENTS, NEWS: Fix typos.
+
+2007-01-27 16:51  hweiss
+
+	* NEWS: Added "-o,--ssh-option=OPTION" which hands "-o OPTION" over
+	  to ssh(1) and "-q,--quiet" which tells ssh(1) to suppress
+	  warnings (Gerhard Lausser - 1472491)
+
+2007-01-27 16:37  hweiss
+
+	* plugins-root/check_dhcp.c: Include <sys/param.h> which is a
+	  prerequisite for <sys/sysctl.h> on NetBSD and OpenBSD (at least).
+
+2007-01-25 00:58  tonvoon
+
+	* Makefile.am, README, configure.in, doc/RELEASING: Update
+	  references to NEWS instead of CHANGES. Fix compile of libtap test
+	  programs
+
+2007-01-25 00:26  tonvoon
+
+	* config.guess, config.sub, configure.in, ltmain.sh,
+	  build-aux/.cvsignore, build-aux/ltmain.sh: Use build-aux
+	  directory. Removed unnecessary checks in configure.in.  Keeping
+	  libtool to link to libtap - can't find a suitable replacement
+	  method
+
+2007-01-24 23:18  tonvoon
+
+	* ACKNOWLEDGEMENTS, CHANGES, NEWS, config.rpath, configure.in,
+	  doc/developer-guidelines.sgml, gl/.cvsignore,
+	  plugins/Makefile.am, plugins/check_procs.c, po/POTFILES.in:
+	  Various cleanups in the syncing with gnulib
+
+2007-01-24 22:46  tonvoon
+
+	* Makefile.am, NEWS, config.rpath, configure.in,
+	  doc/developer-guidelines.sgml, gl/Makefile.am, gl/alloca.c,
+	  gl/alloca_.h, gl/asnprintf.c, gl/asprintf.c, gl/basename.c,
+	  gl/c-strtod.c, gl/c-strtod.h, gl/cloexec.c, gl/cloexec.h,
+	  gl/creat-safer.c, gl/dirname.c, gl/dirname.h, gl/dup-safer.c,
+	  gl/error.c, gl/error.h, gl/exit.h, gl/exitfail.c, gl/exitfail.h,
+	  gl/fcntl--.h, gl/fcntl-safer.h, gl/fd-safer.c, gl/fsusage.c,
+	  gl/fsusage.h, gl/full-read.c, gl/full-read.h, gl/full-write.c,
+	  gl/full-write.h, gl/gai_strerror.c, gl/getaddrinfo.c,
+	  gl/getaddrinfo.h, gl/gethostname.c, gl/getloadavg.c, gl/getopt.c,
+	  gl/getopt1.c, gl/getopt_.h, gl/getopt_int.h, gl/gettext.h,
+	  gl/inet_ntop.c, gl/inet_ntop.h, gl/intprops.h, gl/malloc.c,
+	  gl/mbchar.c, gl/mbchar.h, gl/mbuiter.h, gl/memchr.c, gl/minmax.h,
+	  gl/mountlist.c, gl/mountlist.h, gl/open-safer.c, gl/pipe-safer.c,
+	  gl/printf-args.c, gl/printf-args.h, gl/printf-parse.c,
+	  gl/printf-parse.h, gl/regcomp.c, gl/regex.c, gl/regex.h,
+	  gl/regex_internal.c, gl/regex_internal.h, gl/regexec.c,
+	  gl/safe-read.c, gl/safe-read.h, gl/safe-write.c, gl/safe-write.h,
+	  gl/size_max.h, gl/snprintf.c, gl/snprintf.h, gl/socket_.h,
+	  gl/stdbool_.h, gl/stdint_.h, gl/strcase.h, gl/strcasecmp.c,
+	  gl/strdup.c, gl/strdup.h, gl/stripslash.c, gl/strncasecmp.c,
+	  gl/strndup.c, gl/strndup.h, gl/strnlen.c, gl/strnlen.h,
+	  gl/strnlen1.c, gl/strnlen1.h, gl/unistd--.h, gl/unistd-safer.h,
+	  gl/unistd_.h, gl/vasnprintf.c, gl/vasnprintf.h, gl/vasprintf.c,
+	  gl/vasprintf.h, gl/vsnprintf.c, gl/vsnprintf.h, gl/wchar_.h,
+	  gl/wctype_.h, gl/wcwidth.h, gl/xalloc-die.c, gl/xalloc.h,
+	  gl/xmalloc.c, gl/xsize.h, gl/xstrndup.c, gl/xstrndup.h,
+	  gl/m4/absolute-header.m4, gl/m4/alloca.m4, gl/m4/arpa_inet_h.m4,
+	  gl/m4/c-strtod.m4, gl/m4/cloexec.m4, gl/m4/codeset.m4,
+	  gl/m4/dirname.m4, gl/m4/dos.m4, gl/m4/double-slash-root.m4,
+	  gl/m4/eoverflow.m4, gl/m4/error.m4, gl/m4/exitfail.m4,
+	  gl/m4/extensions.m4, gl/m4/fcntl-safer.m4, gl/m4/fstypename.m4,
+	  gl/m4/fsusage.m4, gl/m4/getaddrinfo.m4, gl/m4/gethostname.m4,
+	  gl/m4/getloadavg.m4, gl/m4/getopt.m4, gl/m4/gettext.m4,
+	  gl/m4/glibc2.m4, gl/m4/glibc21.m4, gl/m4/gnulib-cache.m4,
+	  gl/m4/gnulib-common.m4, gl/m4/gnulib-comp.m4,
+	  gl/m4/gnulib-tool.m4, gl/m4/iconv.m4, gl/m4/inet_ntop.m4,
+	  gl/m4/inline.m4, gl/m4/intdiv0.m4, gl/m4/intl.m4,
+	  gl/m4/intldir.m4, gl/m4/intmax.m4, gl/m4/intmax_t.m4,
+	  gl/m4/inttypes-pri.m4, gl/m4/inttypes_h.m4, gl/m4/lcmessage.m4,
+	  gl/m4/lib-ld.m4, gl/m4/lib-link.m4, gl/m4/lib-prefix.m4,
+	  gl/m4/lock.m4, gl/m4/longdouble.m4, gl/m4/longlong.m4,
+	  gl/m4/ls-mntd-fs.m4, gl/m4/mbchar.m4, gl/m4/mbiter.m4,
+	  gl/m4/mbrtowc.m4, gl/m4/memchr.m4, gl/m4/minmax.m4,
+	  gl/m4/mountlist.m4, gl/m4/netinet_in_h.m4, gl/m4/nls.m4,
+	  gl/m4/onceonly_2_57.m4, gl/m4/po.m4, gl/m4/printf-posix.m4,
+	  gl/m4/progtest.m4, gl/m4/regex.m4, gl/m4/safe-read.m4,
+	  gl/m4/safe-write.m4, gl/m4/size_max.m4, gl/m4/snprintf.m4,
+	  gl/m4/socklen.m4, gl/m4/sockpfaf.m4, gl/m4/ssize_t.m4,
+	  gl/m4/stdbool.m4, gl/m4/stdint.m4, gl/m4/stdint_h.m4,
+	  gl/m4/strcase.m4, gl/m4/strdup.m4, gl/m4/strndup.m4,
+	  gl/m4/strnlen.m4, gl/m4/sys_socket_h.m4, gl/m4/uintmax_t.m4,
+	  gl/m4/ulonglong.m4, gl/m4/unistd-safer.m4, gl/m4/unistd_h.m4,
+	  gl/m4/vasnprintf.m4, gl/m4/vasprintf.m4, gl/m4/visibility.m4,
+	  gl/m4/vsnprintf.m4, gl/m4/wchar.m4, gl/m4/wchar_t.m4,
+	  gl/m4/wctype.m4, gl/m4/wcwidth.m4, gl/m4/wint_t.m4,
+	  gl/m4/xalloc.m4, gl/m4/xsize.m4, gl/m4/xstrndup.m4,
+	  lib/Makefile.am, lib/alloca.c, lib/alloca_.h, lib/basename.c,
+	  lib/c-strtod.c, lib/c-strtod.h, lib/c-strtold.c, lib/cloexec.c,
+	  lib/cloexec.h, lib/creat-safer.c, lib/dirname.h, lib/dup-safer.c,
+	  lib/error.c, lib/error.h, lib/exit.h, lib/exitfail.c,
+	  lib/exitfail.h, lib/fcntl--.h, lib/fcntl-safer.h, lib/fd-safer.c,
+	  lib/fsusage.c, lib/fsusage.h, lib/full-read.c, lib/full-read.h,
+	  lib/full-write.c, lib/full-write.h, lib/getloadavg.c,
+	  lib/getopt.c, lib/getopt1.c, lib/getopt_.h, lib/getopt_int.h,
+	  lib/gettext.h, lib/intprops.h, lib/malloc.c, lib/mountlist.c,
+	  lib/mountlist.h, lib/open-safer.c, lib/pipe-safer.c,
+	  lib/realloc.c, lib/regcomp.c, lib/regex.c, lib/regex.h,
+	  lib/regex_internal.c, lib/regex_internal.h, lib/regexec.c,
+	  lib/safe-read.c, lib/safe-read.h, lib/safe-write.c,
+	  lib/safe-write.h, lib/snprintf.c, lib/stdbool_.h, lib/strcase.h,
+	  lib/strtod.c, lib/unistd--.h, lib/unistd-safer.h,
+	  lib/unlocked-io.h, lib/xalloc-die.c, lib/xalloc.h, lib/xmalloc.c,
+	  lib/xstrdup.c, lib/tests/Makefile.am, m4/Makefile.am.in,
+	  m4/afs.m4, m4/alloca.m4, m4/basename.m4, m4/c-strtod.m4,
+	  m4/codeset.m4, m4/dos.m4, m4/error.m4, m4/exitfail.m4,
+	  m4/extensions.m4, m4/fcntl-safer.m4, m4/fstypename.m4,
+	  m4/fsusage.m4, m4/getopt.m4, m4/gettext.m4, m4/glibc21.m4,
+	  m4/iconv.m4, m4/inttypes-pri.m4, m4/inttypes.m4,
+	  m4/inttypes_h.m4, m4/lib-ld.m4, m4/lib-link.m4, m4/lib-prefix.m4,
+	  m4/longdouble.m4, m4/longlong.m4, m4/ls-mntd-fs.m4,
+	  m4/mountlist.m4, m4/nls.m4, m4/np_coreutils.m4, m4/np_curl.m4,
+	  m4/onceonly_2_57.m4, m4/po.m4, m4/progtest.m4, m4/regex.m4,
+	  m4/restrict.m4, m4/signed.m4, m4/stdbool.m4, m4/stdint_h.m4,
+	  m4/uintmax_t.m4, m4/ulonglong.m4, m4/unistd-safer.m4,
+	  m4/unlocked-io.m4, m4/wchar_t.m4, m4/wint_t.m4, m4/xalloc.m4,
+	  plugins/Makefile.am, plugins/check_smtp.c, plugins/common.h,
+	  plugins/getaddrinfo.c, plugins/getaddrinfo.h,
+	  plugins/gethostbyname.c, plugins/gethostbyname.h,
+	  plugins/netutils.h, plugins-root/Makefile.am, tools/setup,
+	  tools/update_coreutils: Sync with gnulib - lots of extraneous
+	  code removed in preference to GNU code
+
+2007-01-23 18:34  hweiss
+
+	* THANKS.in, plugins/check_ssh.c: Support `check_ssh
+	  --hostname=ADDRESS' (but keep `--host=ADDRESS' for backward
+	  compatibility) (Ville Mattila - 1642780)
+
+2007-01-23 18:20  hweiss
+
+	* REQUIREMENTS: Location updates
+
+2007-01-23 17:20  hweiss
+
+	* plugins/check_tcp.c: Add missing `break' to the switch-case block
+	  that handles the `-m' option (Nobuhiro Ban - 1642682)
+
+2007-01-23 16:42  hweiss
+
+	* THANKS.in, plugins/check_radius.c: Initialize `data' to zero,
+	  fixes potential segfault (Nobuhiro Ban - 1642658)
+
+2007-01-23 14:39  hweiss
+
+	* lib/mountlist.c: Add support for statvfs(2) which is needed in
+	  order to compile the plugins on NetBSD 3.0 and newer.  The
+	  current coreutils release supports statvfs(2), so this patch
+	  won't be needed anymore when updating the coreutils files.
+
+2007-01-22 04:05  hweiss
+
+	* plugins/check_by_ssh.c: Added "-o,--ssh-option=OPTION" which
+	  hands "-o OPTION" over to ssh(1) and "-q,--quiet" which tells
+	  ssh(1) to suppress warnings (Gerhard Lausser - 1472491)
+
+2007-01-20 20:45  tonvoon
+
+	* doc/developer-guidelines.sgml: Updated policy on contributed
+	  plugins
+
+2007-01-20 20:06  tonvoon
+
+	* doc/: LEAVERS, NEW_STARTERS, RELEASING: Administrative notes
+
+2007-01-20 10:59  seanius
+
+	* plugins/check_ntp.c: compilation fixes for check_ntp.c: -
+	  check_ntp.c:290: warning: overflow in implicit constant
+	  conversion   fixed with an explicit cast to int8_t.  -
+	  check_ntp.c:544: warning: pointer of type ‘void *’ used in
+	  arithmetic   fixed by casting to ptrdiff_t before arithmetic and
+	  (void*) afterwards - in TVtoNTP64, cast arithmetic result passed
+	  to R32 as uint64_t.
+
+2007-01-20 07:18  dermoth
+
+	* plugins/: check_http.c, check_ldap.c: Fix bug #1632091: printf
+	  format string typos. Add some more cosmetic changes.
+
+2007-01-20 06:27  dermoth
+
+	* plugins-root/check_icmp.c: Fix bug #1632078: critical threshold %
+	  incorrectly displayed by check_icmp
+
+2007-01-20 06:07  dermoth
+
+	* CHANGES, THANKS.in, plugins/netutils.c: Fix bug #1632072 pointer
+	  error in plugins/netutils.c. Add changelog entry for previous
+	  commit.
+
+2007-01-17 05:28  dermoth
+
+	* THANKS.in, plugins/check_procs.c: Fix bug #1630970 Fix for buffer
+	  overflow of check_procs procprog string
+
+2007-01-08 11:05  tonvoon
+
+	* CHANGES, THANKS.in, plugins/t/check_disk.t: Added notes about
+	  check_disk perf data fix. Added test to check perf data is same
+	  when mount points reversed
+
+2007-01-07 07:14  dermoth
+
+	* plugins/check_disk.c: Fix bug #1627970: check_disk performance
+	  output for more then one partition
+
+2007-01-06 06:41  dermoth
+
+	* plugins/check_ping.c: Fix bug #1629008: check_ping fails to
+	  handle Packet filtered error
+
+2007-01-06 06:33  dermoth
+
+	* plugins/check_ping.c: Revert last patch: it works but not really
+	  for the reason I though.
+
+2007-01-06 04:52  dermoth
+
+	* plugins/check_ping.c: Fix the way check_ping calculate the
+	  maximum run time
+
+2007-01-04 11:51  dermoth
+
+	* plugins/check_real.c: Fix bug #1574863: check_real does not
+	  accept the '-v' option
+
+2007-01-04 11:35  dermoth
+
+	* plugins/check_ping.c: Fix bug #1592605: check_ping times out
+
+2007-01-04 11:18  dermoth
+
+	* tools/: README, distclean: Adding my distclean script
+
+2006-12-23 18:59  dermoth
+
+	* plugins/t/check_snmp.t: Regexps in check_snmp tests fails where
+	  they shouldn't.
+
+2006-12-21 05:25  dermoth
+
+	* NPTest.pm: - Fixing small error (wrong file name) in NPTest.pm
+	  documentation.
+
+2006-12-20 22:33  tonvoon
+
+	* CHANGES, THANKS.in, plugins/check_http.c, plugins/t/check_http.t:
+	  Removed unused timestamp variable (Matthias Eble) Fixed
+	  redirection test. Added extra tests for funny syntax when
+	  checking certificates, updated help for more common syntax
+
+2006-12-20 19:25  tonvoon
+
+	* lib/utils_disk.c, lib/utils_disk.h, plugins/check_disk.c,
+	  plugins/t/check_disk.t: Fixed inode thresholds, regressed from
+	  previous release
+
+2006-12-20 11:32  opensides
+
+	* po/: de.po, fr.po, nagios-plugins.pot:
+	  updated the nagios-pulgins.pot files now that localization is
+	  clean first pass at updating the french locale
+
+2006-12-12 12:59  tonvoon
+
+	* plugins-scripts/t/utils.t: Enhanced test for single letters in
+	  fqdn
+
+2006-12-12 08:56  tonvoon
+
+	* plugins-scripts/utils.pm.in: Allow single characters in fqdn
+	  (Dave Alden)
+
+2006-12-07 22:38  tonvoon
+
+	* CHANGES, THANKS.in, configure.in: Fixed HP/UX's swapinfo command
+	  for check_procs (Dick van den Burg - 1573700)
+
+2006-12-07 16:07  tonvoon
+
+	* THANKS.in, plugins/check_disk.c, plugins/check_swap.c,
+	  plugins/common.h, plugins/netutils.h: Fix coredump on 64bit
+	  Solaris. Also adds more error conditions and moves swap specific
+	  includes out of common.h (Duncan Ferguson - 1588031)
+
+2006-12-06 20:34  tonvoon
+
+	* plugins/Makefile.am: Move SSL libs to correct order per plugin
+
+2006-12-06 17:36  tonvoon
+
+	* plugins/Makefile.am: Only include -lssl for plugins that require
+	  it
+
+2006-12-06 17:00  tonvoon
+
+	* configure.in: Flag common compile error because of no ar on
+	  Solaris
+
+2006-12-06 15:58  tonvoon
+
+	* Makefile.am: Remove CVS files from distribution
+
+2006-12-06 15:53  tonvoon
+
+	* doc/developer-guidelines.sgml: Add libtool requirement for
+	  development
+
+2006-11-09 11:44  tonvoon
+
+	* CHANGES, THANKS.in, plugins/check_ping.c, plugins/netutils.c:
+	  Reduced DNS lookups in check_ping and netutils.c in IPv6
+	  configurations (Pawel Malachowski)
+
+2006-11-03 15:40  tonvoon
+
+	* lib/: Makefile.am, alloca.c, alloca_.h: Add alloca files,
+	  required for *BSD
+
+2006-11-01 21:15  tonvoon
+
+	* ChangeLog, configure.in, package.def: For 1.4.5 release
+
 2006-10-27 16:37  tonvoon
 
 	* plugins-scripts/: utils.pm.in, t/utils.t: More edge testcases.
