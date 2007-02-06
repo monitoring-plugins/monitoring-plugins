@@ -23,3 +23,7 @@ COPYRIGHT_HOLDER = Nagios Plugin Development Group
 # This is the list of locale categories, beyond LC_MESSAGES, for which the
 # message catalogs shall be used.  It is usually empty.
 EXTRA_LOCALE_CATEGORIES =
+
+# Email address were to send bug report for the .po translation files
+PACKAGE_BUGREPORT = nagiosplug-devel@lists.sourceforge.net
+
