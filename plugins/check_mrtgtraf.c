@@ -360,7 +360,7 @@ print_help (void)
 
 	printf ("%s\n", _("Notes:"));
   printf (" %s\n", _("- MRTG stands for Multi Router Traffic Grapher. It can be downloaded from"));
-  printf (" %s\n", _("  http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html"));
+  printf (" %s\n", "  http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html");
   printf (" %s\n", _("- While MRTG can monitor things other than traffic rates, this"));
   printf (" %s\n", _("  plugin probably won't work with much else without modification."));
   printf (" %s\n", _("- The calculated i/o rates are a little off from what MRTG actually"));

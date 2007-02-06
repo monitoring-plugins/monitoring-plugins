@@ -522,7 +522,7 @@ print_help (void)
   printf (" %s\n", "-0, --auto-off");
   printf ("    %s\n", _("Turn off automatic offline tests"));
   printf (" %s\n", "-n, --nagios");
-  printf ("    %s\n", _("Output suitable for Nagios\n"));
+  printf ("    %s\n\n", _("Output suitable for Nagios"));
   printf (_(UT_SUPPORT));
 }
 

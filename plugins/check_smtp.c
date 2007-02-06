@@ -297,14 +297,14 @@ main (int argc, char **argv)
 		 * we resent EHLO via TLS.
 		 */
 		if (my_send(helocmd, strlen(helocmd)) <= 0) {
-			printf(_("SMTP UNKNOWN - Cannot send EHLO command via TLS.\n"));
+			printf("%s\n", _("SMTP UNKNOWN - Cannot send EHLO command via TLS."));
 			my_close();
 			return STATE_UNKNOWN;
 		}
 		if (verbose)
 			printf(_("sent %s"), helocmd);
 		if ((n = my_recv(buffer, MAX_INPUT_BUFFER - 1)) <= 0) {
-			printf(_("SMTP UNKNOWN - Cannot read EHLO response via TLS.\n"));
+			printf("%s\n", _("SMTP UNKNOWN - Cannot read EHLO response via TLS."));
 			my_close();
 			return STATE_UNKNOWN;
 		}
@@ -317,7 +317,7 @@ main (int argc, char **argv)
 		  if ( check_cert ) {
 		    result = np_net_ssl_check_cert(days_till_exp);
 		    if(result != STATE_OK){
-		      printf (_("CRITICAL - Cannot retrieve server certificate.\n"));
+		      printf ("%s\n", _("CRITICAL - Cannot retrieve server certificate."));
 		    }
 		    my_close();
 		    return result;

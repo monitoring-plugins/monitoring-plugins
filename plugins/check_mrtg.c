@@ -367,7 +367,7 @@ print_help (void)
   printf (" %s\n", _("  commands with different values for the <variable> argument.  Of course,"));
   printf (" %s\n", _("you can always hack the code to make this plugin work for you..."));
   printf (" %s\n", _("- MRTG stands for the Multi Router Traffic Grapher.  It can be downloaded from"));
-  printf (" %s\n", _("http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html"));
+  printf (" %s\n", "http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html");
 
 	printf (_(UT_SUPPORT));
 }

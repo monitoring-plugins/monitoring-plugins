@@ -1017,7 +1017,7 @@ check_http (void)
         msg = strdup(_("pattern not found"));
       else 
         msg = strdup(_("pattern found"));
-      printf (_("%s - %s%s|%s %s\n"),
+      printf (("%s - %s%s|%s %s\n"),
         _("CRITICAL"),
         msg,
         (display_html ? "</A>" : ""),

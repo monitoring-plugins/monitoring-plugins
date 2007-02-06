@@ -754,7 +754,7 @@ print_help (void)
   printf ("    %s\n", _("Path or partition (may be repeated)"));
   printf (" %s\n", "-x, --exclude_device=PATH <STRING>");
   printf ("    %s\n", _("Ignore device (only works if -p unspecified)"));
-  printf (" %s\n", _("-X, --exclude-type=TYPE <STRING>"));
+  printf (" %s\n", "-X, --exclude-type=TYPE <STRING>");
   printf ("    %s\n", _("Ignore all filesystems of indicated type (may be repeated)"));
   printf (" %s\n", "-m, --mountpoint");
   printf ("    %s\n", _("Display the mountpoint instead of the partition"));

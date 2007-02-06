@@ -342,7 +342,7 @@ main (int argc, char **argv)
 	/* this is a bit stupid, because we don't want to print the
 	 * response time (which can look ok to the user) if we didn't get
 	 * the response we were looking for. if-else */
-	printf(_("%s %s - "), SERVICE, state_text(result));
+	printf("%s %s - ", SERVICE, state_text(result));
 
 	if(match == -2 && len && !(flags & FLAG_HIDE_OUTPUT))
 		printf("Unexpected response from host/socket: %s", status);
