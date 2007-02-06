@@ -361,7 +361,7 @@ main (int argc, char **argv)
 		printf (" [%s]", status);
 
 	/* perf-data doesn't apply when server doesn't talk properly,
-	 * so print all zeroes on warn and criti. Use fperfdata since
+	 * so print all zeroes on warn and crit. Use fperfdata since
 	 * localisation settings can make different outputs */
 	if(match == -2)
 		printf ("|%s",
