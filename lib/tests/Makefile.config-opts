@@ -1,0 +1,6 @@
+
+test_ini: test_ini.o ../parse_ini.o
+	gcc -g -o test_ini test_ini.o ../parse_ini.o ../utils_base.o -L/usr/local/lib /usr/local/lib/libtap.so -Wl,--rpath -Wl,/usr/local/lib
+
+test_ini.o: test_ini.c 
+	gcc -g test_ini.c -I ../../plugins -I ../../gl -I ../.. -I .. -c -o test_ini.o

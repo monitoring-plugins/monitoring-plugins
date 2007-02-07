@@ -1,0 +1,2 @@
+parse_ini.o: parse_ini.c
+	gcc  -I ../plugins -I ../gl -I .. -g -c -o parse_ini.o parse_ini.c

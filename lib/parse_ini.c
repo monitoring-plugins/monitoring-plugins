@@ -236,12 +236,3 @@ static int add_option(FILE *f, char **optbuf, size_t *bufsize){
 	return 0;
 }
 
-int main(){
-	char *optstr=NULL;
-	optstr=np_get_defaults("check_foo@./foo.ini", "check_bar");
-	if(optstr!=NULL) {
-		printf("optstr:\n\t%s\n", optstr);
-		free(optstr);
-	}
-	return 0;
-}
