@@ -42,14 +42,14 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "utils.h"
 
 #ifdef HAVE_DECL_SWAPCTL
+# ifdef HAVE_SYS_PARAM_H
+#  include <sys/param.h>
+# endif
 # ifdef HAVE_SYS_SWAP_H
 #  include <sys/swap.h>
 # endif
 # ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
-# endif
-# ifdef HAVE_SYS_PARAM_H
-#  include <sys/param.h>
 # endif
 #endif
 
