@@ -1,5 +1,8 @@
 This file documents the major additions and syntax changes between releases.
 
+??    ??
+	Fixed MKINSTALLDIRS problem in po/
+
 1.4.6 5th February 2007
 	Reduced number of DNS lookups in check_ping and netutils.c for IPv6 configurations
 	Fixed compile problems with *BSD re: alloca.h
