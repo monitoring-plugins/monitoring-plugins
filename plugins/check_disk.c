@@ -756,7 +756,7 @@ print_help (void)
   printf ("    %s\n", _("Ignore device (only works if -p unspecified)"));
   printf (" %s\n", "-X, --exclude-type=TYPE <STRING>");
   printf ("    %s\n", _("Ignore all filesystems of indicated type (may be repeated)"));
-  printf (" %s\n", "-m, --mountpoint");
+  printf (" %s\n", "-M, --mountpoint");
   printf ("    %s\n", _("Display the mountpoint instead of the partition"));
   printf (" %s\n", "-E, --exact-match");
   printf ("    %s\n", _("For paths or partitions specified with -p, only check for exact paths"));
