@@ -175,15 +175,16 @@ process_arguments (int argc, char **argv)
   int option = 0;
   static struct option longopts[] = {
     STD_LONG_OPTS,
-    {"file",required_argument,0,'F'},
     {"link", no_argument, 0, 'L'},
     {"nohtml", no_argument, 0, 'n'},
     {"ssl", no_argument, 0, 'S'},
-    {"verbose", no_argument, 0, 'v'},
     {"post", required_argument, 0, 'P'},
     {"IP-address", required_argument, 0, 'I'},
     {"url", required_argument, 0, 'u'},
+    {"port", required_argument, 0, 'p'},
+    {"authorization", required_argument, 0, 'a'},
     {"string", required_argument, 0, 's'},
+    {"expect", required_argument, 0, 'e'},
     {"regex", required_argument, 0, 'r'},
     {"ereg", required_argument, 0, 'r'},
     {"eregi", required_argument, 0, 'R'},
@@ -1295,7 +1296,7 @@ print_help (void)
   printf ("    %s\n", _("String to be sent in http header as \"User Agent\""));
   printf (" %s\n", "-k, --header=STRING");
   printf ("    %s\n", _(" Any other tags to be sent in http header. Use multiple times for additional headers"));
-  printf (" %s\n", "-L, --link=URL");
+  printf (" %s\n", "-L, --link");
   printf ("    %s\n", _("Wrap output in HTML link (obsoleted by urlize)"));
   printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow>");
   printf ("    %s\n", _("How to handle redirected pages"));
