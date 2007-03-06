@@ -3,6 +3,7 @@ This file documents the major additions and syntax changes between releases.
 ??    ??
 	Fixed MKINSTALLDIRS problem in po/
 	Root plugins installed with world executable
+	./configure now detects if possible to compile check_mysql
 	check_sybase from contrib now maintained in NagiosExchange
 
 1.4.6 5th February 2007
