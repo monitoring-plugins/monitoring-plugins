@@ -16,9 +16,9 @@ AC_PREFIX_DEFAULT(/usr/local/nagios)
 
 dnl Deprecated configure options
 AC_ARG_WITH(nagios_user,,
- 	AC_MSG_ERROR([--with-nagios-user is a deprecated option]))
+ 	AC_MSG_ERROR([--with-nagios-user is a deprecated option. Rerun ./configure without this option]))
 AC_ARG_WITH(nagios_group,,
- 	AC_MSG_ERROR([--with-nagios-group is a deprecated option]))
+ 	AC_MSG_ERROR([--with-nagios-group is a deprecated option. Rerun ./configure without this option]))
 
 dnl Figure out how to invoke "install" and what install options to use.
 AC_PROG_INSTALL
