@@ -198,7 +198,7 @@ $all_disks = $result->output;
 $result = NPTest->testCmd( "./check_disk -e -W $avg_inode_free% -K 0% -p $less_inode_free -W $avg_inode_free% -K $avg_inode_free% -p $more_inode_free" );
 isnt( $result->output, $all_disks, "-e gives different output");
 like( $result->output, qr/$less_inode_free/, "Found problem $less_inode_free");
-unlike( $result->only_output, qr/$more_inode_free/, "Has ignored $more_inode_free as not a problem");
+unlike( $result->only_output, qr/$more_inode_free\s/, "Has ignored $more_inode_free as not a problem");
 like( $result->perf_output, qr/$more_inode_free/, "But $more_inode_free is still in perf data");
 
 $result = NPTest->testCmd( "./check_disk -W $avg_inode_free% -K 0% -p $more_inode_free" );
