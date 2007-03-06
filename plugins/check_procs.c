@@ -200,7 +200,7 @@ main (int argc, char **argv)
 			procseconds = convert_to_seconds(procetime);
 
 			if (verbose >= 3)
-				printf ("%d %d %d %d %d %d %.2f %s %s %s %s\n", 
+				printf ("proc#=%d uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s\n", 
 					procs, procuid, procvsz, procrss,
 					procpid, procppid, procpcpu, procstat, 
 					procetime, procprog, procargs);

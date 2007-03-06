@@ -493,30 +493,16 @@ if test -n "$PS_COMMAND" && test -n "$PS_FORMAT" && test -n "$PS_COLS" && test -
 	ac_cv_ps_cols="$PS_COLS"
 	AC_MSG_RESULT([(command-line) $ac_cv_ps_command])
 
-dnl Now using the pst3/kmem hack for solaris systems to avoid truncation
-elif test "$ac_cv_uname_s" = "SunOS"; then
-	#
-	# this is a very, very ugly hack, to hardcode the location for plugins
-	#
-	if test "$libexecdir" = '${exec_prefix}/libexec'; then
-		if test "$exec_prefix" = "NONE"; then
-			if test "$prefix" = "NONE"; then
-				pst3="$ac_default_prefix/libexec/pst3"
-			else
-				pst3="$prefix/libexec/pst3"
-			fi
-		else
-			pst3="$exec_prefix/libexec/pst3"
-		fi
-	else
-		pst3="$libexecdir/pst3"
-	fi
-	ac_cv_ps_command="$pst3"
-	ac_cv_ps_format="%s %d %d %d %d %f %s %n"
-	ac_cv_ps_varlist="[procstat,&procuid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
+dnl Using /usr/ucb/ps on Solaris systems, to avoid truncation
+dnl Limitation that command name is not available
+elif test "$ac_cv_uname_s" = "SunOS" && /usr/ucb/ps -alxwwn 2>/dev/null | \
+	egrep -i ["^ *F +UID +PID +PPID +%C +PRI +NI +SZ +RSS +WCHAN +S +TT +TIME +COMMAND"] > /dev/null
+then
+	ac_cv_ps_varlist="[&procuid,&procpid,&procppid,&procpcpu,&procvsz,&procrss,procstat,&pos]"
+	ac_cv_ps_command="/usr/ucb/ps -alxwwn"
+	ac_cv_ps_format=["%*s %d %d %d %d %*d %*d %d %d%*[ 0123456789abcdef]%[OSRZT]%*s %*s %n"]
 	ac_cv_ps_cols=8
-	AC_MSG_RESULT([using nagios-plugins internal ps for solaris])
-	EXTRAS_ROOT="$EXTRAS_ROOT pst3"
+	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl Some gnu/linux systems (debian for one) don't like -axwo and need axwo.
 dnl so test for this first...
