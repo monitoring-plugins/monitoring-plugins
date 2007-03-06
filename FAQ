@@ -1,87 +1,93 @@
 Frequently Asked Questions
 **************************
 
-1.  Q: Where can I find documentation for <insert name> plugin?
+Q: Where can I find documentation for <insert name> plugin?
 
-    A: All plugins that comply with minimal development guideline for
-    this project include internal documentation.  The documentation
-    can be read executing plugin with the '-h' option ('--help' if
-    long options are enabled).  If the '-h' option does not work, that
-    is a bug.
+A: All plugins that comply with minimal development guideline for
+   this project include internal documentation.  The documentation
+   can be read executing plugin with the -h or --help option. If 
+   the '-h' option does not work, that is a bug.
 
-2.  Q: What version of <insert name> plugin am I running?
 
-    A: All plugins that comply with minimal development guideline for
-    this project include detailed version information.  When executed
-    with the '-V' option, a version string will be printed:
+Q: What version of <insert name> plugin am I running?
 
-    check_radius (nagios-plugins 1.3.0-alpha1) 1.11
+A: All plugins that comply with minimal development guideline for
+   this project include detailed version information.  When executed
+   with the '-V' option, a version string will be printed:
 
-    Note that this string include both the assigned package release
-    name and the CVS-generated revision for the individual plugin.
-    Authors should strictly adhere to this format.  All bug reports
-    and help requests should reference this information.
+   check_radius (nagios-plugins 1.3.0-alpha1) 1.11
 
-3.  Q: What information do I need to include when asking for help or
-    submitting a bug report?
+   Note that this string include both the assigned package release
+   name and the CVS-generated revision for the individual plugin.
+   Authors should strictly adhere to this format.  All bug reports
+   and help requests should reference this information.
 
-    A: At a minimum, the output from 'uname -a' and the version string
-    from '<plugin_name> -V' and, of course, a description of the
-    problem and any solution/patch.
 
-4.  Q: I'm using Redhat Linux (or some other RPM-based distribution).
-    Which packages should I install?
+Q: What information do I need to include when asking for help or
+   submitting a bug report?
 
-    A: The package nagios-plugins-<version>.<arch>.rpm contains only
-    those plugins that should work on any POSIX compliant system.  In
-    other words, you should be able to install this package on your
-    system, no matter what else is or in not installed.
+A: At a minimum, the output from 'uname -a' and the version string
+   from '<plugin_name> -V' and, of course, a description of the
+   problem and any solution/patch.
 
-    However, most of us have more complex systems than barebones
-    POSIX.  We tried creating a variety of separate packages so
-    each dependency could be installed cleanly, but many people
-    found that this resulted in too many packages.  So in the end,
-    all the non-POSIX plugins were folded into one RPM 
-    (nagios-plugins-<version>.<arch>.rpm).  Most people will need to
-    use RPM's '--nodeps' option to install this package.
 
-5.  Q: My system uses the .deb package format. What packages should I
-    install?
+Q: I'm using Redhat Linux (or some other RPM-based distribution).
+   Which packages should I install?
 
-    A: We strive for cooperation between all packagers and developers.
-    The answers for .deb are the same as for RPM, after changing the
-    package name suffixes accordingly.
+A: The package nagios-plugins-<version>.<arch>.rpm contains only
+   those plugins that should work on any POSIX compliant system.  In
+   other words, you should be able to install this package on your
+   system, no matter what else is or in not installed.
 
-6.  Q: I prefer to build my own RPMs. Do I need to install all of the
-    various dependencies?
+   However, most of us have more complex systems than barebones
+   POSIX.  We tried creating a variety of separate packages so
+   each dependency could be installed cleanly, but many people
+   found that this resulted in too many packages.  So in the end,
+   all the non-POSIX plugins were folded into one RPM 
+   (nagios-plugins-<version>.<arch>.rpm).  Most people will need to
+   use RPM's '--nodeps' option to install this package.
 
-    A: Beginning with the 1.2.9-1 release, you may run
 
-      rpm --define 'custom 1' -ta nagios-plugins-<release>.tar.gz
+Q: My system uses the .deb package format. What packages should I
+   install?
 
-    In prior releases, you must unpack the tarball and build the
-    RPM using nagios-custom.spec with 'rpm -ba'.
+A: We strive for cooperation between all packagers and developers.
+   The answers for .deb are the same as for RPM, after changing the
+   package name suffixes accordingly.
 
-7.  Q: I get an error like
 
-      Warning: Return code of 127 for check of service 'PING' on host 'anyhost' was out of bounds.
+Q: I prefer to build my own RPMs. Do I need to install all of the
+   various dependencies?
 
-    when I run Nagios. (Often check_ping runs just fine on the
-    command line).
+A: Beginning with the 1.2.9-1 release, you may run
 
-    A: Commonly, system administrators will make security as tight as
-    possible on the monitoring system. Sometimes this includes OS
-    options or hardening scripts that prevent unprivileged users from
-    running the ping command. Nagios runs with no more privileges
-    than 'nobody' -- check to be sure that the nagios user can
-    actually run check ping.  (This can also happen with other binaries
-    executed by nagios, but ping seems to be far and away the biggest
-    offender.)
+   rpm --define 'custom 1' -ta nagios-plugins-<release>.tar.gz
 
-8.  Q: I have a plugin to offer. What do I do to get it accepted?
+   In prior releases, you must unpack the tarball and build the
+   RPM using nagios-custom.spec with 'rpm -ba'.
 
-    A: Send it to nagiosplug-devel@lists.sourceforge.net. Usually, we
-    just drop it into contrib until we have a chance to check if the
-    standard options are used, etc.
 
-    You can also get feedback on improving the plugin via the mailing list.
+Q: I get an error like
+
+   Warning: Return code of 127 for check of service 'PING' on host 'anyhost' was out of bounds.
+
+   when I run Nagios. (Often check_ping runs just fine on the
+   command line).
+
+A: Commonly, system administrators will make security as tight as
+   possible on the monitoring system. Sometimes this includes OS
+   options or hardening scripts that prevent unprivileged users from
+   running the ping command. Nagios runs with no more privileges
+   than 'nobody' -- check to be sure that the nagios user can
+   actually run check ping.  (This can also happen with other binaries
+   executed by nagios, but ping seems to be far and away the biggest
+   offender.)
+
+
+Q: I have a plugin to offer. What can I do?
+
+A: You can make it available on NagiosExchange (http://nagiosexchange.org)
+   where other people can find it for use.
+
+   You can also get feedback on improving the plugin via the 
+   nagiosplug-devel@lists.sourceforge.net mailing list.

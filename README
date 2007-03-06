@@ -60,15 +60,11 @@ Nagios Plugins Quick-and-Dirty Installation Instructions
 
 1) Run the configure script to initialize variables and create a Makefile, etc.
 
-	./configure --prefix=BASEDIRECTORY --with-nagios-user=SOMEUSER --with-nagios-group=SOMEGROUP --with-cgiurl=SOMEURL
+	./configure --prefix=BASEDIRECTORY --with-cgiurl=SOMEURL
 
    a) Replace BASEDIRECTORY with the path of the directory under which Nagios
       is installed (default is '/usr/local/nagios')
-   b) Replace SOMEUSER with the name of a user on your system that will be
-      assigned permissions to the installed plugins (default is 'nagios')
-   c) Replace SOMEGRP with the name of a group on your system that will be
-      assigned permissions to the installed plugins (default is 'nagios')
-   d) Replace CGIURL with the path used to access the Nagios CGIs with
+   b) Replace CGIURL with the path used to access the Nagios CGIs with
       a web browser (default is '/nagios/cgi-bin')
 
 

@@ -26,7 +26,7 @@ TESTS = @PLUGIN_TEST@
 test:
 	perl -I $(top_builddir) -I $(top_srcdir) ../test.pl
 
-setuid_root_mode = 4550
+setuid_root_mode = a=rx,u+s
 
 # /* Author Coreutils team - see ACKNOWLEDGEMENTS */
 
