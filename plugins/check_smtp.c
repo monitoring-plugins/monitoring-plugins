@@ -179,7 +179,7 @@ main (int argc, char **argv)
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
-	/* initialize the HELO command with the localhostname */
+	/* If localhostname not set on command line, use gethostname to set */
 	if(! localhostname){
 		localhostname = malloc (HOST_MAX_BYTES);
 		if(!localhostname){
@@ -190,13 +190,11 @@ main (int argc, char **argv)
 			printf(_("gethostname() failed!\n"));
 			return STATE_CRITICAL;
 		}
-	} else {
-		helocmd = localhostname;
 	}
 	if(use_ehlo)
-		asprintf (&helocmd, "%s%s%s", SMTP_EHLO, helocmd, "\r\n");
+		asprintf (&helocmd, "%s%s%s", SMTP_EHLO, localhostname, "\r\n");
 	else
-		asprintf (&helocmd, "%s%s%s", SMTP_HELO, helocmd, "\r\n");
+		asprintf (&helocmd, "%s%s%s", SMTP_HELO, localhostname, "\r\n");
 
 	if (verbose)
 		printf("HELOCMD: %s", helocmd);

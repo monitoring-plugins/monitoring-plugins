@@ -3,6 +3,7 @@ This file documents the major additions and syntax changes between releases.
 1.4.7 ??
 	check_procs uses /usr/ucb/ps if available - fixes pst3 problems on Solaris
 	Fixed MKINSTALLDIRS problem in po/
+	Fixed broken HELO in check_smtp
 	Root plugins installed with world executable
 	./configure now detects if possible to compile check_mysql
 	check_sybase from contrib now maintained in NagiosExchange
