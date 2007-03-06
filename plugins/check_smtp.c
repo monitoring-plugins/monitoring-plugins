@@ -169,7 +169,7 @@ main (int argc, char **argv)
 	int result = STATE_UNKNOWN;
 	char *cmd_str = NULL;
 	char *helocmd = NULL;
-	char *error_msg = NULL;
+	char *error_msg = "";
 	struct timeval tv;
 
 	setlocale (LC_ALL, "");
@@ -380,12 +380,12 @@ main (int argc, char **argv)
 				do {
 					if (authuser == NULL) {
 						result = STATE_CRITICAL;
-						error_msg = _("no authuser specified, ");
+						asprintf(&error_msg, _("no authuser specified, "));
 						break;
 					}
 					if (authpass == NULL) {
 						result = STATE_CRITICAL;
-						error_msg = _("no authpass specified, ");
+						asprintf(&error_msg, _("no authpass specified, "));
 						break;
 					}
 
@@ -395,7 +395,7 @@ main (int argc, char **argv)
 						printf (_("sent %s\n"), "AUTH LOGIN");
 
 					if((ret = my_recv(buffer, MAXBUF - 1)) < 0){
-						error_msg = _("recv() failed after AUTH LOGIN, \n");
+						asprintf(&error_msg, _("recv() failed after AUTH LOGIN, "));
 						result = STATE_WARNING;
 						break;
 					}
@@ -405,7 +405,7 @@ main (int argc, char **argv)
 
 					if (strncmp (buffer, "334", 3) != 0) {
 						result = STATE_CRITICAL;
-						error_msg = _("invalid response received after AUTH LOGIN, ");
+						asprintf(&error_msg, _("invalid response received after AUTH LOGIN, "));
 						break;
 					}
 
@@ -418,7 +418,7 @@ main (int argc, char **argv)
 
 					if ((ret = my_recv(buffer, MAX_INPUT_BUFFER-1)) == -1) {
 						result = STATE_CRITICAL;
-						error_msg = _("recv() failed after sending authuser, ");
+						asprintf(&error_msg, _("recv() failed after sending authuser, "));
 						break;
 					}
 					buffer[ret] = 0;
@@ -427,7 +427,7 @@ main (int argc, char **argv)
 					}
 					if (strncmp (buffer, "334", 3) != 0) {
 						result = STATE_CRITICAL;
-						error_msg = _("invalid response received after authuser, ");
+						asprintf(&error_msg, _("invalid response received after authuser, "));
 						break;
 					}
 					/* encode authpass with base64 */
@@ -439,7 +439,7 @@ main (int argc, char **argv)
 					}
 					if ((ret = my_recv(buffer, MAX_INPUT_BUFFER-1)) == -1) {
 						result = STATE_CRITICAL;
-						error_msg = _("recv() failed after sending authpass, ");
+						asprintf(&error_msg, _("recv() failed after sending authpass, "));
 						break;
 					}
 					buffer[ret] = 0;
@@ -448,14 +448,14 @@ main (int argc, char **argv)
 					}
 					if (strncmp (buffer, "235", 3) != 0) {
 						result = STATE_CRITICAL;
-						error_msg = _("invalid response received after authpass, ");
+						asprintf(&error_msg, _("invalid response received after authpass, "));
 						break;
 					}
 					break;
 				} while (0);
 			} else {
 				result = STATE_CRITICAL;
-				error_msg = _("only authtype LOGIN is supported, ");
+				asprintf(&error_msg, _("only authtype LOGIN is supported, "));
 			}
 		}
 
@@ -481,7 +481,7 @@ main (int argc, char **argv)
 
 	printf (_("SMTP %s - %s%.3f sec. response time%s%s|%s\n"),
 			state_text (result),
-			(error_msg == NULL ? "" : error_msg),
+			error_msg,
 			elapsed_time,
 			verbose?", ":"", verbose?buffer:"",
 			fperfdata ("time", elapsed_time, "s",
