@@ -478,7 +478,7 @@ main(int argc, char **argv)
 				}
 				break;
       case 'V':                 /* version */
-        //print_revision (progname, revision);
+        /*print_revision (progname, revision);*/ /* FIXME: Why? */
         exit (STATE_OK);
       case 'h':                 /* help */
         print_help ();
@@ -1183,7 +1183,7 @@ void
 print_help(void)
 {
 
-  //print_revision (progname, revision);
+  /*print_revision (progname, revision);*/ /* FIXME: Why? */
   
   printf ("Copyright (c) 2005 Andreas Ericsson <ae@op5.se>\n");
   printf (COPYRIGHT, copyright, email);
