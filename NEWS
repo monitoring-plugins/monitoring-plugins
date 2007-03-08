@@ -7,6 +7,7 @@ This file documents the major additions and syntax changes between releases.
 	Root plugins installed with world executable
 	./configure now detects if possible to compile check_mysql
 	check_sybase from contrib now maintained in NagiosExchange
+	check_icmp now allows to set a minimum number of hosts required for successs (-m)
 
 1.4.6 5th February 2007
 	Reduced number of DNS lookups in check_ping and netutils.c for IPv6 configurations
