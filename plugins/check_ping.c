@@ -563,14 +563,14 @@ print_help (void)
   printf (" %s\n", "-c, --critical=THRESHOLD");
   printf ("    %s\n", _("critical threshold pair"));
   printf (" %s\n", "-p, --packets=INTEGER");
-  printf ("    %s\n", _("number of ICMP ECHO packets to send"));
-  printf (_("(Default: %d)"), DEFAULT_MAX_PACKETS);
+  printf ("    %s ", _("number of ICMP ECHO packets to send"));
+  printf (_("(Default: %d)\n"), DEFAULT_MAX_PACKETS);
   printf (" %s\n", "-L, --link");
   printf ("    %s\n", _("show HTML in the plugin output (obsoleted by urlize)"));
 
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
-	printf ("%s\n", _("THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel"));
+	printf ("%s\n", _("THRESHOLD is <rta>,<pl>% where <rta> is the round trip average travel"));
   printf ("%s\n", _("time (ms) which triggers a WARNING or CRITICAL state, and <pl> is the"));
   printf ("%s\n", _("percentage of packet loss to trigger an alarm state."));
 
@@ -591,5 +591,5 @@ print_usage (void)
 {
   printf (_("Usage:"));
 	printf ("%s -H <host_address> -w <wrta>,<wpl>%% -c <crta>,<cpl>%%\n", progname);
-  printf (" [-p packets] [-t timeout] [-L] [-4|-6]\n");
+  printf (" [-p packets] [-t timeout] [-4|-6]\n");
 }
