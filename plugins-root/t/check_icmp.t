@@ -14,12 +14,12 @@ my $allow_sudo = getTestParameter( "NP_ALLOW_SUDO",
 	"no" );
 
 if ($allow_sudo eq "yes") {
-	plan tests => 10;
+	plan tests => 16;
 } else {
 	plan skip_all => "Need sudo to test check_icmp";
 }
 
-my $successOutput = '/OK - .*?: rta [\d\.]+ms, lost \d%/';
+my $successOutput = '/OK - .*?: rta (?:[\d\.]+ms)|(?:nan), lost \d+%/';
 my $failureOutput = '/(WARNING|CRITICAL) - .*?: rta [\d\.]+ms, lost \d%/';
 
 my $host_responsive    = getTestParameter( "NP_HOST_RESPONSIVE",
@@ -65,4 +65,22 @@ $res = NPTest->testCmd(
 	);
 is( $res->return_code, 3, "No hostname" );
 like( $res->output, '/No hosts to check/', "Output with appropriate error message");
+
+$res = NPTest->testCmd(
+	"sudo ./check_icmp -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -n 1 -m 0"
+	);
+is( $res->return_code, 0, "One host nonresponsive - zero required" );
+like( $res->output, $successOutput, "Output OK" );
+
+$res = NPTest->testCmd(
+	"sudo ./check_icmp -H $host_responsive -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -n 1 -m 1"
+	);
+is( $res->return_code, 0, "One of two host nonresponsive - one required" );
+like( $res->output, $successOutput, "Output OK" );
+
+$res = NPTest->testCmd(
+	"sudo ./check_icmp -H $host_responsive -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -n 1 -m 2"
+	);
+is( $res->return_code, 2, "One of two host nonresponsive - two required" );
+like( $res->output, $failureOutput, "Output OK" );
 
