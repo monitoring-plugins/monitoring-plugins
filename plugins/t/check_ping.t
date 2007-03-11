@@ -6,32 +6,79 @@
 #
 
 use strict;
-use Test;
+use Test::More;
 use NPTest;
 
-use vars qw($tests);
-
-BEGIN {$tests = 8; plan tests => $tests}
+plan tests => 18;
 
 my $successOutput = '/PING (ok|OK) - Packet loss = +[0-9]{1,2}\%, +RTA = [\.0-9]+ ms/';
 my $failureOutput = '/Packet loss = +[0-9]{1,2}\%, +RTA = [\.0-9]+ ms/';
 
-my $host_responsive    = getTestParameter( "host_responsive",   "NP_HOST_RESPONSIVE",     "localhost",
-					   "The hostname of system responsive to network requests" );
+my $host_responsive    = getTestParameter( "NP_HOST_RESPONSIVE",
+				"The hostname of system responsive to network requests",
+				"localhost" );
 
-my $host_nonresponsive = getTestParameter( "host_nonresponsive", "NP_HOST_NONRESPONSIVE", "10.0.0.1",
-					   "The hostname of system not responsive to network requests" );
+my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE",
+				"The hostname of system not responsive to network requests",
+				"10.0.0.1" );
 
-my $hostname_invalid   = getTestParameter( "hostname_invalid",   "NP_HOSTNAME_INVALID",   "nosuchhost",
-                                           "An invalid (not known to DNS) hostname" );
+my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
+                                "An invalid (not known to DNS) hostname",
+				"nosuchhost" );
 
-my $t;
+my $res;
 
-$t += checkCmd( "./check_ping $host_responsive    100 100 1000 1000 -p 1",       0, $successOutput );
-$t += checkCmd( "./check_ping $host_responsive      0   0    0    0 -p 1",       2, $failureOutput );
-$t += checkCmd( "./check_ping $host_nonresponsive   0   0    0    0 -p 1 -to 1", 2 );
-$t += checkCmd( "./check_ping $hostname_invalid     0   0    0    0 -p 1 -to 1", 3 );
-$t += checkCmd( "./check_ping -w 100,10% -c 200,20%"                           , 3 , "/You must specify a server address or host name.*/");
+$res = NPTest->testCmd(
+	"./check_ping -H $host_responsive -w 10,100% -c 10,100% -p 1"
+	);
+is( $res->return_code, 0, "Syntax ok" );
+like( $res->output, $successOutput, "Output OK" );
 
-exit(0) if defined($Test::Harness::VERSION);
-exit($tests - $t);
+$res = NPTest->testCmd(
+	"./check_ping -H $host_responsive -w 0,0% -c 10,100% -p 1"
+	);
+is( $res->return_code, 1, "Syntax ok, with forced warning" );
+like( $res->output, $failureOutput, "Output OK" );
+
+$res = NPTest->testCmd(
+	"./check_ping -H $host_responsive -w 0,0% -c 0,0% -p 1"
+	);
+is( $res->return_code, 2, "Syntax ok, with forced critical" );
+like( $res->output, $failureOutput, "Output OK" );
+
+$res = NPTest->testCmd(
+	"./check_ping $host_responsive 100 100 1000 1000 -p 1"
+	);
+is( $res->return_code, 0, "Old syntax ok" );
+like( $res->output, $successOutput, "Output OK" );
+
+$res = NPTest->testCmd(
+	"./check_ping $host_responsive 0 0 0 0 -p 1"
+	);
+is( $res->return_code, 2, "Old syntax, with forced critical" );
+like( $res->output, $failureOutput, "Output OK" );
+
+$res = NPTest->testCmd(
+	"./check_ping -H $host_nonresponsive -w 10,100% -c 10,100% -p 1 -t 1"
+	);
+is( $res->return_code, 2, "Timeout - host nonresponsive" );
+like( $res->output, '/100%/', "Error contains '100%' string (for 100% packet loss)" );
+
+$res = NPTest->testCmd(
+	"./check_ping $host_nonresponsive -p 1 -t 1 100 100 1000 10000"
+	);
+is( $res->return_code, 2, "Old syntax: Timeout - host nonresponsive" );
+like( $res->output, '/100%/', "Error contains '100%' string (for 100% packet loss)" );
+
+$res = NPTest->testCmd(
+	"./check_ping $hostname_invalid 0 0 0 0 -p 1 -t 1"
+	);
+is( $res->return_code, 3, "Invalid hostname" );
+like( $res->output, '/invalid hostname/i', "Error contains 'invalid hostname' string");
+
+$res = NPTest->testCmd(
+	"./check_ping -w 100,10% -c 200,20%"
+	);
+is( $res->return_code, 3, "No hostname" );
+like( $res->output, '/You must specify a server address or host name/', "Output with appropriate error message");
+
