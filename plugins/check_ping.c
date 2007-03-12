@@ -103,8 +103,13 @@ main (int argc, char **argv)
 		usage4 (_("Cannot catch SIGALRM"));
 	}
 
-	/* handle timeouts gracefully */
+	/* If ./configure finds ping has timeout values, set plugin alarm slightly
+	 * higher so that we can use response from command line ping */
+#ifdef PING_PACKETS_FIRST && PING_HAS_TIMEOUT
 	alarm (timeout_interval + 1);
+#else
+	alarm (timeout_interval);
+#endif
 
 	for (i = 0 ; i < n_addresses ; i++) {
 		

@@ -9,7 +9,7 @@ use strict;
 use Test::More;
 use NPTest;
 
-plan tests => 18;
+plan tests => 20;
 
 my $successOutput = '/PING (ok|OK) - Packet loss = +[0-9]{1,2}\%, +RTA = [\.0-9]+ ms/';
 my $failureOutput = '/Packet loss = +[0-9]{1,2}\%, +RTA = [\.0-9]+ ms/';
@@ -58,11 +58,37 @@ $res = NPTest->testCmd(
 is( $res->return_code, 2, "Old syntax, with forced critical" );
 like( $res->output, $failureOutput, "Output OK" );
 
+
+# check_ping results will depend on whether the ping command discovered by 
+# ./configure has a timeout option. If it does, then the timeout will
+# be set, so check_ping will always get a response. If it doesn't
+# then check_ping will timeout. We do 2 tests for check_ping's timeout
+#  - 1 second
+#  - 15 seconds 
+# The latter should be higher than normal ping timeouts, so should always give a packet loss result
+open(F, "../config.h") or die "Cannot open ../config.h";
+@_ = grep /define PING_HAS_TIMEOUT 1|define PING_PACKETS_FIRST 1/, <F>;
+my $has_timeout;
+$has_timeout = 1 if (scalar @_ == 2);	# Need both defined
+close F;
 $res = NPTest->testCmd(
 	"./check_ping -H $host_nonresponsive -w 10,100% -c 10,100% -p 1 -t 1"
 	);
-is( $res->return_code, 2, "Timeout - host nonresponsive" );
+is( $res->return_code, 2, "Timeout 1 second - host nonresponsive" );
+if ($has_timeout) {
+	like( $res->output, '/100%/', "Error contains '100%' string (for 100% packet loss)" );
+} else {
+	like( $res->output, '/timed out/', "Error contains 'timed out' string" );
+}
+
+$res = NPTest->testCmd(
+	"./check_ping -H $host_nonresponsive -w 10,100% -c 10,100% -p 1 -t 15"
+	);
+is( $res->return_code, 2, "Timeout 15 seconds - host nonresponsive" );
 like( $res->output, '/100%/', "Error contains '100%' string (for 100% packet loss)" );
+
+
+
 
 $res = NPTest->testCmd(
 	"./check_ping $host_nonresponsive -p 1 -t 1 100 100 1000 10000"
