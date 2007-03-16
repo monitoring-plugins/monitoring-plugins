@@ -384,15 +384,15 @@ sub process_arguments() {
 		if (defined $seclevel  && defined $secname) {
 		
 			# Must define a security level even though defualt is noAuthNoPriv
-			unless ($seclevel eq ('noAuthNoPriv' || 'authNoPriv' || 'authPriv' ) ) {
+			unless ( grep /^$seclevel$/, qw(noAuthNoPriv authNoPriv authPriv) ) {
 				usage();
 				exit $ERRORS{"UNKNOWN"};
 			}
 			
 			# Authentication wanted
-			if ($seclevel eq ('authNoPriv' || 'authPriv') ) {
+			if ( $seclevel eq 'authNoPriv' || $seclevel eq 'authPriv' ) {
 		
-				unless ($authproto eq ('MD5' || 'SHA1') ) {
+				unless ( $authproto eq 'MD5' || $authproto eq 'SHA1' ) {
 					usage();
 					exit $ERRORS{"UNKNOWN"};
 				}
