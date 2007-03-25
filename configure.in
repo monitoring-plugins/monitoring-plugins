@@ -15,13 +15,29 @@ AC_SUBST(RELEASE)
 AC_PREFIX_DEFAULT(/usr/local/nagios)
 
 dnl Deprecated configure options
-AC_ARG_WITH(nagios_user,,
- 	AC_MSG_ERROR([--with-nagios-user is a deprecated option. Rerun ./configure without this option]))
-AC_ARG_WITH(nagios_group,,
- 	AC_MSG_ERROR([--with-nagios-group is a deprecated option. Rerun ./configure without this option]))
 
-dnl Figure out how to invoke "install" and what install options to use.
-AC_PROG_INSTALL
+
+dnl Append user (-o), group (-g), mode (-m) to install command
+dnl There is an assumption that this is possible with ./configure's chosen install command
+extra_install_args=""
+AC_ARG_WITH(nagios_user,
+	ACX_HELP_STRING([--with-nagios-user=USER],
+		[Installs executables with this user. Defaults to install user]),
+	extra_install_args="-o $withval")
+AC_ARG_WITH(nagios_group,
+	ACX_HELP_STRING([--with-nagios-group=GROUP],
+		[Installs executables with this group. Defaults to install user]),
+	extra_install_args="$extra_install_args -g $withval")
+AC_ARG_WITH(world_permissions,
+	ACX_HELP_STRING([--without-world-permissions],
+		[Installs executables without world permissions]))
+
+if test "x$with_world_permissions" = xno ; then
+	extra_install_args="$extra_install_args -m 0550"
+fi
+
+INSTALL="$INSTALL $extra_install_args"
+INSTALL_STRIP_PROGRAM="$INSTALL_STRIP_PROGRAM $extra_install_args"
 AC_SUBST(INSTALL)
 
 AC_PROG_CC

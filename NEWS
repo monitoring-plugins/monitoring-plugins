@@ -9,6 +9,8 @@ This file documents the major additions and syntax changes between releases.
 	check_ping times out 1 second quicker if host is unreachable
 	Root plugins installed with world executable
 	check_sybase from contrib now maintained in NagiosExchange
+	--with-nagios-user/group reinstated ./configure option
+	New --without-world-permissions ./configure option
 
 1.4.6 5th February 2007
 	Reduced number of DNS lookups in check_ping and netutils.c for IPv6 configurations
