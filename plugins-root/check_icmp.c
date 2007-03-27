@@ -395,7 +395,8 @@ main(int argc, char **argv)
 	environ = NULL;
 
 	/* use the pid to mark packets as ours */
-	pid = getpid();
+	/* Some systems have 32-bit pid_t so mask off only 16 bits */
+	pid = getpid() & 0xffff;
 	/* printf("pid = %u\n", pid); */
 
 	/* get calling name the old-fashioned way for portability instead
