@@ -1,3 +1,174 @@
+2007-03-29 11:25  tonvoon
+
+	* plugins/check_ntp.c: Adding help text for jitter flags
+
+2007-03-27 07:53  dermoth
+
+	* THANKS.in, plugins-root/check_icmp.c: Fix bug #1494629 -
+	  check_icmp fails after some time on FreeBSD
+
+2007-03-25 14:55  tonvoon
+
+	* configure.in, NEWS: Reinstate --with-nagios-user/group and new
+	  --without-group-permissions ./configure options
+
+2007-03-22 17:54  hweiss
+
+	* THANKS.in, plugins/common.h: Increase MAX_INPUT_BUFFER from 1k to
+	  8k in order to increase I/O performance (Stefan Meier)
+
+2007-03-16 12:11  gonzai
+
+	* plugins-scripts/check_ifoperstatus.pl: Fix bogus 'eq (  ||  )'
+	  constructions in check_ifoperstatus.pl.
+
+2007-03-12 10:51  tonvoon
+
+	* NEWS, plugins/check_ping.c, plugins/t/check_ping.t: check_ping's
+	  timeout interval is only +1 if ping command has a timeout value.
+	  Tests updated to check for 100% packet loss (always if ping has
+	  timeout), otherwise will check for "timed out" string
+
+2007-03-11 02:27  tonvoon
+
+	* plugins/t/check_ping.t: Converted check_ping.t to new-style
+	  testcases. Added test case for check_icmp - requires sudo access
+
+2007-03-11 01:57  tonvoon
+
+	* plugins/check_ping.c: Fixed some help display. Removed -L from
+	  usage as deprecated option
+
+2007-03-08 09:09  dermoth
+
+	* NEWS, THANKS.in, plugins-root/check_icmp.c: New switch to
+	  check_icmp to set the minimum required hosts for success.
+
+2007-03-08 06:12  dermoth
+
+	* config_test/child_test.c: Ficing C++ style comments
+
+2007-03-08 06:09  dermoth
+
+	* plugins-root/check_icmp.c: Fixed C++ style comments, but I don't
+	  get why those lines were originally commented out.
+
+2007-03-06 22:45  tonvoon
+
+	* plugins/check_http.c: Fix option handling (Nobuhiro Ban -
+	  1657280)
+
+2007-03-06 22:29  tonvoon
+
+	* plugins/check_smtp.c: Fixed compile errors in check_smtp.c
+
+2007-03-06 22:17  tonvoon
+
+	* NEWS, THANKS.in, plugins/check_smtp.c: Fixed broken HELO cmd
+	  (Enrico Scholz - 1675279)
+
+2007-03-06 17:29  tonvoon
+
+	* NEWS, configure.in, plugins/check_procs.c: Use /usr/ucb/ps on
+	  Solaris in preference to pst3 (problems in 64bit mode)
+
+2007-03-06 17:26  tonvoon
+
+	* plugins/t/check_disk.t: Test failure if a filesystem which is a
+	  subset of another fails the inode check (Matthias Elbe - 1660953)
+
+2007-03-06 14:18  tonvoon
+
+	* NEWS, configure.in: Detect if check_mysql compile will work at
+	  ./configure time, due to some Redhat systems distributing
+	  mysql_config, but not the include files
+
+2007-03-06 11:03  tonvoon
+
+	* configure.in: Clearer message when --with-nagios-user is used for
+	  ./configure
+
+2007-03-06 10:48  tonvoon
+
+	* FAQ, INSTALLING, NEWS, README, plugins-root/Makefile.am: Root
+	  plugins installed with world executable permissions. Removed
+	  references to --with-nagios-user and --with-nagios-group in
+	  README
+
+2007-03-02 01:38  egalstad
+
+	* plugins/check_mrtgtraf.c: Fix for broken check_mrtgtraf
+
+2007-02-24 01:03  dermoth
+
+	* doc/makefile: Fix the makefile ('[[' is bash-specific, 'rm -f'
+	  don't remove directories)
+
+2007-02-14 20:56  tonvoon
+
+	* NEWS, contrib/check_sybase: check_sybase now maintained in
+	  NagiosExchange
+
+2007-02-14 20:52  tonvoon
+
+	* plugins/check_disk.c: Fixed typo in help for -M
+
+2007-02-14 10:11  tonvoon
+
+	* plugins/: check_tcp.c, t/check_tcp.t: Documentation fix re:
+	  --escape flag. Fix of ./check_tcp test to webservers to make it
+	  more standards compliant
+
+2007-02-09 14:35  tonvoon
+
+	* NEWS, THANKS.in, po/.cvsignore, po/Makefile.in.in: Fixed
+	  MKINSTALLDIRS problem on some systems - Lars Stavholm
+
+2007-02-07 14:46  tonvoon
+
+	* lib/: Makefile.config-opts, parse_ini.c,
+	  tests/Makefile.config-opts, tests/config-tiny.ini,
+	  tests/plugin.ini, tests/test_ini.c: Added test files to test the
+	  parse_ini.c routines. Requires libtap
+
+2007-02-07 14:06  hweiss
+
+	* plugins/check_swap.c: Include <sys/param.h> before <sys/swap.h>
+	  in order to fix compilation on OpenBSD (nsturm - 1653934)
+
+2007-02-06 23:30  dermoth
+
+	* plugins/check_tcp.c: Correct vim typo in comment block :P
+
+2007-02-06 21:03  opensides
+
+	* plugins/check_disk.c, plugins/check_http.c,
+	  plugins/check_ide_smart.c, plugins/check_mrtg.c,
+	  plugins/check_mrtgtraf.c, plugins/check_overcr.c,
+	  plugins/check_smtp.c, plugins/check_tcp.c, po/de.po, po/fr.po,
+	  po/nagios-plugins.pot:
+	  correcting some translation problems
+
+2007-02-06 19:33  seanius
+
+	* lib/: parse_ini.c, parse_ini.h: initial version of ini file
+	  parsing routines in C
+
+2007-02-06 18:34  opensides
+
+	* po/Makevars:
+	  adding PACKAGE_BUGREPORT to fix Report-Msgid-Bugs-To:
+
+2007-02-05 13:51  tonvoon
+
+	* AUTHORS, doc/RELEASING: Update list of team members. More notes
+	  on new releases
+
+2007-02-05 13:13  tonvoon
+
+	* BUGS, NEWS, ChangeLog, configure.in, package.def: For 1.4.6
+	  release
+
 2007-02-02 09:10  dermoth
 
 	* plugins/check_snmp.c: Fix parsing of multiple OIDs sets needmibs

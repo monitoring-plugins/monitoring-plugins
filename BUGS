@@ -4,13 +4,16 @@ necessarily verified as errors.
 
 For the 1.4.6 release:
 
+1687867 - check_http: buffer overflow vulnerability
+1675306 - check_dhcp: does not add mandatory 'end' option
+1675286 - check_ssh: -S flag not working
+1652471 - check_http: missing Accept header
 1648570 - check_dhcp error by asking 2 dhcp servers
 1637767 - check_ping on FreeBSD 5.4 fails
 1614168 - not compatible with OpenSSL 0.9.8d
 1595449 - check_procs bus error on Solaris 8,9,10
 1573700 - check_swap on HP-UX incorrect
 1573638 - check_swap SEGVs on Sol 10
-1556886 - check_ntp has memory fault when using jitter flag
 1541340 - check_procs won't execute on Solaris 9 x86
 1523748 - check_disk should error if warn range is subset of critical
 1506121 - check_http problem with protocol change in redirect

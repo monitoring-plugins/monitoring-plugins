@@ -1,11 +1,12 @@
 This file documents the major additions and syntax changes between releases.
 
-1.4.7 ??
+1.4.7 29th March 2007
 	check_procs uses /usr/ucb/ps if available - fixes pst3 problems on Solaris
 	Fixed MKINSTALLDIRS problem in po/
 	./configure now detects if possible to compile check_mysql
 	Fixed broken HELO in check_smtp
 	check_icmp now allows to set a minimum number of hosts required for successs (-m)
+	check_icmp fix for *BSD when running for long time
 	check_ping times out 1 second quicker if host is unreachable
 	Root plugins installed with world executable
 	check_sybase from contrib now maintained in NagiosExchange
