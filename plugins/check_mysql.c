@@ -318,18 +318,18 @@ process_arguments (int argc, char **argv)
 
 	while ( argc > c ) {
 
-		if (strlen(db_host) == 0)
+		if (db_host == NULL)
 			if (is_host (argv[c])) {
 				db_host = argv[c++];
 			}
 			else {
-				usage2 (_("Invalid hostname/address"), optarg);
+				usage2 (_("Invalid hostname/address"), argv[c]);
 			}
-		else if (strlen(db_user) == 0)
+		else if (db_user == NULL)
 			db_user = argv[c++];
-		else if (strlen(db_pass) == 0)
+		else if (db_pass == NULL)
 			db_pass = argv[c++];
-		else if (strlen(db) == 0)
+		else if (db == NULL)
 			db = argv[c++];
 		else if (is_intnonneg (argv[c]))
 			db_port = atoi (argv[c++]);
