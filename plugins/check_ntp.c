@@ -803,6 +803,10 @@ void print_help(void){
 	printf (_(UT_HELP_VRSN));
 	printf (_(UT_HOST_PORT), 'p', "123");
 	printf (_(UT_WARN_CRIT));
+	printf (" %s\n", "-j, --warning=DOUBLE");
+	printf ("    %s\n", _("warning value for jitter"));
+	printf (" %s\n", "-k, --critical=DOUBLE");
+	printf ("    %s\n", _("critical value for jitter"));
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 	printf (_(UT_VERBOSE));
 	printf (_(UT_SUPPORT));
