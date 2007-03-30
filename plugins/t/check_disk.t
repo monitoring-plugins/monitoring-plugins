@@ -24,7 +24,7 @@ my $mountpoint2_valid = getTestParameter( "NP_MOUNTPOINT2_VALID", "Path to anoth
 if ($mountpoint_valid eq "" or $mountpoint2_valid eq "") {
 	plan skip_all => "Need 2 mountpoints to test";
 } else {
-	plan tests => 61;
+	plan tests => 68;
 }
 
 $result = NPTest->testCmd( 
@@ -110,6 +110,16 @@ cmp_ok( $result->return_code, '==', 0, "At least 1 MB available on $more_free");
 like  ( $result->output, $successOutput, "OK output" );
 like  ( $result->only_output, qr/free space/, "Have free space text");
 like  ( $result->only_output, qr/$more_free/, "Have disk name in text");
+
+$result = NPTest->testCmd( "./check_disk -w 1 -c 1 -p $more_free -p $less_free" );
+cmp_ok( $result->return_code, '==', 0, "At least 1 MB available on $more_free and $less_free");
+$_ = $result->output;
+print $result->output."\n";
+my ($free_mb_on_mp1, $free_mb_on_mp2) = (m/(\d+) MB .* (\d+) MB /g);
+my $free_mb_on_all = $free_mb_on_mp1 + $free_mb_on_mp2;
+print "$free_mb_on_all = $free_mb_on_mp1 + $free_mb_on_mp2\n";
+
+
 
 $result = NPTest->testCmd( "./check_disk -e -w 1 -c 1 -p $more_free" );
 is( $result->only_output, "DISK OK", "No print out of disks with -e for OKs");
@@ -284,3 +294,28 @@ unlike( $result->perf_output, '/\/bob/', "perf data does not have /bob in it");
 
 $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p / -p /" );
 unlike( $result->output, '/ \/ .* \/ /', "Should not show same filesystem twice");
+
+# are partitions added if -C is given without path selection -p ?
+$result = NPTest->testCmd( "./check_disk -w 0% -c 0% -C -w 0% -c 0% -p $mountpoint_valid" );
+like( $result->output, '/;.*;\|/', "-C selects partitions if -p is not given");
+
+# grouping: exit crit if the sum of free megs on mp1+mp2 is less than warn/crit
+$result = NPTest->testCmd( "./check_disk -w ". ($free_mb_on_all + 1) ." -c ". ($free_mb_on_all + 1) ."-g group -p $mountpoint_valid -p $mountpoint2_valid" );
+cmp_ok( $result->return_code, '==', 2, "grouping: exit crit if the sum of free megs on mp1+mp2 is less than warn/crit");
+
+# grouping: exit warning if the sum of free megs on mp1+mp2 is between -w and -c
+$result = NPTest->testCmd( "./check_disk -w ". ($free_mb_on_all + 1) ." -c ". ($free_mb_on_all - 1) ." -g group -p $mountpoint_valid -p $mountpoint2_valid" );
+cmp_ok( $result->return_code, '==', 1, "grouping: exit warning if the sum of free megs on mp1+mp2 is between -w and -c ");
+
+# grouping: exit ok if the sum of free megs on mp1+mp2 is more than warn/crit
+$result = NPTest->testCmd( "./check_disk -w ". ($free_mb_on_all - 1) ." -c ". ($free_mb_on_all - 1) ." -g group -p $mountpoint_valid -p $mountpoint2_valid" );
+cmp_ok( $result->return_code, '==', 0, "grouping: exit ok if the sum of free megs on mp1+mp2 is more than warn/crit");
+
+# grouping: exit unknown if group name is given after -p 
+$result = NPTest->testCmd( "./check_disk -w ". ($free_mb_on_all - 1) ." -c ". ($free_mb_on_all - 1) ." -p $mountpoint_valid -g group -p $mountpoint2_valid" );
+cmp_ok( $result->return_code, '==', 3, "Invalid options: -p must come after groupname");
+
+# regex: exit unknown if given regex is not compileable
+$result = NPTest->testCmd( "./check_disk -w 1 -c 1 -r '('" );
+cmp_ok( $result->return_code, '==', 3, "Exit UNKNOWN if regex is not compileable");
+
