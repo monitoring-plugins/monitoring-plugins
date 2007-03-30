@@ -150,6 +150,7 @@ char *crit_usedinodes_percent = NULL;
 char *warn_freeinodes_percent = NULL;
 char *crit_freeinodes_percent = NULL;
 bool path_selected = false;
+char *group = NULL;
 
 
 int
@@ -171,7 +172,7 @@ main (int argc, char **argv)
   int temp_result;
 
   struct mount_entry *me;
-  struct fs_usage fsp;
+  struct fs_usage fsp, tmpfsp;
   struct parameter_list *temp_list, *path;
   struct name_list *seen = NULL;
 
@@ -198,6 +199,7 @@ main (int argc, char **argv)
         path = np_add_parameter(&path_select_list, me->me_mountdir);
       }
       path->best_match = me;
+      path->group = group;
       set_all_thresholds(path);
     }
   }
@@ -220,6 +222,9 @@ main (int argc, char **argv)
       printf("Thresholds(pct) for %s warn: %f crit %f\n",path->name, path->freespace_percent->warning->end,
                                                          path->freespace_percent->critical->end);
 
+    if (verbose > 3 && path->group != NULL)
+      printf("Group of %s: %s\n",path->name,path->group);
+
     /* reset disk result */
     disk_result = STATE_UNKNOWN;
 
@@ -231,25 +236,62 @@ main (int argc, char **argv)
     if (np_seen_name(seen, me->me_mountdir)) {
       continue;
     } else {
-      np_add_name(&seen, me->me_mountdir);
-    }
-    /* Skip remote filesystems if we're not interested in them */
-    if (me->me_remote && show_local_fs) {
-      continue;
-    /* Skip pseudo fs's if we haven't asked for all fs's */
-    } else if (me->me_dummy && !show_all_fs) {
-      continue;
-    /* Skip excluded fstypes */
-    } else if (fs_exclude_list && np_find_name (fs_exclude_list, me->me_type)) {
-      continue;
-    /* Skip excluded fs's */  
-    } else if (dp_exclude_list && 
-             (np_find_name (dp_exclude_list, me->me_devname) ||
-              np_find_name (dp_exclude_list, me->me_mountdir))) {
-      continue;
+      if (path->group != NULL) {
+        /* find all group members */
+        fsp.fsu_blocksize = 0;
+        fsp.fsu_blocks    = 0;
+        fsp.fsu_bfree     = 0;
+        fsp.fsu_bavail    = 0;
+        fsp.fsu_files     = 0;
+        fsp.fsu_ffree     = 0;
+
+
+        for (temp_list = path_select_list; temp_list; temp_list=temp_list->name_next) {
+          if (temp_list->group && ! (strcmp(temp_list->group, path->group))) {
+            
+            get_fs_usage (temp_list->best_match->me_mountdir, temp_list->best_match->me_devname, &tmpfsp);
+
+            /* possibly differing blocksizes if disks are grouped. Calculating average */
+            fsp.fsu_blocksize = (fsp.fsu_blocksize * fsp.fsu_blocks + tmpfsp.fsu_blocksize * tmpfsp.fsu_blocks) / \
+                                (fsp.fsu_blocks + tmpfsp.fsu_blocks);  /* Size of a block.  */
+            fsp.fsu_blocks    += tmpfsp.fsu_blocks;     /* Total blocks. */
+            fsp.fsu_bfree     += tmpfsp.fsu_bfree;      /* Free blocks available to superuser. */
+            fsp.fsu_bavail    += tmpfsp.fsu_bavail;     /* Free blocks available to non-superuser. */
+            fsp.fsu_files     += tmpfsp.fsu_files;      /* Total file nodes. */
+            fsp.fsu_ffree     += tmpfsp.fsu_ffree;      /* Free file nodes. */
+            
+            if (verbose > 3)
+              printf("Group %s: add %llu blocks (%s) \n", path->group, tmpfsp.fsu_bavail, temp_list->name);
+             // printf("Group %s: add %u blocks (%s)\n", temp_list->name); // path->group, tmpfsp.fsu_bavail, temp_list->name);
+
+            np_add_name(&seen, temp_list->best_match->me_mountdir);
+          }
+        }
+        /* modify devname and mountdir for output */
+        me->me_mountdir = me->me_devname = path->group;
+      } else
+        np_add_name(&seen, me->me_mountdir);
     }
 
-    get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
+    if (path->group == NULL) {
+      /* Skip remote filesystems if we're not interested in them */
+      if (me->me_remote && show_local_fs) {
+        continue;
+      /* Skip pseudo fs's if we haven't asked for all fs's */
+      } else if (me->me_dummy && !show_all_fs) {
+        continue;
+      /* Skip excluded fstypes */
+      } else if (fs_exclude_list && np_find_name (fs_exclude_list, me->me_type)) {
+        continue;
+      /* Skip excluded fs's */  
+      } else if (dp_exclude_list && 
+               (np_find_name (dp_exclude_list, me->me_devname) ||
+                np_find_name (dp_exclude_list, me->me_mountdir))) {
+        continue;
+      }
+
+      get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
+    }
 
     if (fsp.fsu_blocks && strcmp ("none", me->me_mountdir)) {
       total = fsp.fsu_blocks;
@@ -417,6 +459,7 @@ process_arguments (int argc, char **argv)
     {"partition", required_argument, 0, 'p'},
     {"exclude_device", required_argument, 0, 'x'},
     {"exclude-type", required_argument, 0, 'X'},
+    {"group", required_argument, 0, 'g'},
     {"mountpoint", no_argument, 0, 'M'},
     {"errors-only", no_argument, 0, 'e'},
     {"exact-match", no_argument, 0, 'E'},
@@ -438,7 +481,7 @@ process_arguments (int argc, char **argv)
       strcpy (argv[c], "-t");
 
   while (1) {
-    c = getopt_long (argc, argv, "+?VqhveCt:c:w:K:W:u:p:x:X:mklME", longopts, &option);
+    c = getopt_long (argc, argv, "+?VqhveCt:c:w:K:W:u:p:x:X:mklg:ME", longopts, &option);
 
     if (c == -1 || c == EOF)
       break;
@@ -556,7 +599,7 @@ process_arguments (int argc, char **argv)
       if (! (se = np_find_parameter(path_select_list, optarg))) {
           se = np_add_parameter(&path_select_list, optarg);
       }
-
+      se->group = group;
       set_all_thresholds(se);
       path_selected = true;
       break;
@@ -578,6 +621,11 @@ process_arguments (int argc, char **argv)
     case 'E':
       exact_match = TRUE;
       break;
+    case 'g':
+      if (path_selected)
+        die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set group value before using -p\n"));
+      group = optarg;
+      break;
     case 'M': /* display mountpoint */
       display_mntp = TRUE;
       break;
@@ -590,6 +638,7 @@ process_arguments (int argc, char **argv)
            if (! (path = np_find_parameter(path_select_list, me->me_mountdir))) 
              path = np_add_parameter(&path_select_list, me->me_mountdir);
            path->best_match = me;
+           path->group = group;
            set_all_thresholds(path);
          }
       }
@@ -607,6 +656,7 @@ process_arguments (int argc, char **argv)
       crit_freeinodes_percent = NULL;
     
       path_selected = false;
+      group = NULL;
       break;
     case 'V':                 /* version */
       print_revision (progname, revision);
@@ -774,6 +824,8 @@ print_help (void)
   printf ("    %s\n", _("Only check local filesystems"));
   printf (" %s\n", "-p, --path=PATH, --partition=PARTITION");
   printf ("    %s\n", _("Path or partition (may be repeated)"));
+  printf (" %s\n", "-g, --group=NAME");
+  printf ("    %s\n", _("Group pathes. Thresholds apply to (free-)space of all partitions together"));
   printf (" %s\n", "-x, --exclude_device=PATH <STRING>");
   printf ("    %s\n", _("Ignore device (only works if -p unspecified)"));
   printf (" %s\n", "-X, --exclude-type=TYPE <STRING>");

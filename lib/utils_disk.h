@@ -20,6 +20,7 @@ struct parameter_list
   thresholds *usedspace_percent;
   thresholds *usedinodes_percent;
   thresholds *freeinodes_percent;
+  char *group;
   struct mount_entry *best_match;
   struct parameter_list *name_next;
 };
