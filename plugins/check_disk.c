@@ -439,8 +439,9 @@ int
 process_arguments (int argc, char **argv)
 {
   int c, err;
-  struct parameter_list *se;
+  struct parameter_list *se, *se2;
   struct parameter_list *temp_list;
+  struct parameter_list *temp_path_select_list = NULL;
   struct mount_entry *me;
   int result = OK;
   struct stat *stat_buf;
@@ -604,6 +605,12 @@ process_arguments (int argc, char **argv)
              crit_usedinodes_percent || warn_freeinodes_percent || crit_freeinodes_percent )) {
         die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set a threshold value before using -p\n"));
       }
+
+      /* get the real mountdir of the specified path. np_find_parameter won't find an entry if -p is not
+       * exactly the same string as the mountdir */
+      se2 = np_add_parameter(&temp_path_select_list, optarg);
+      np_set_best_match(se2, mount_list, FALSE);
+
 
       /* add parameter if not found. overwrite thresholds if path has already been added  */
       if (! (se = np_find_parameter(path_select_list, optarg))) {
