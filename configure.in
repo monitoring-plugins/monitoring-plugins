@@ -241,46 +241,18 @@ fi
 LIBS="$_SAVEDLIBS"
 
 dnl Check for mysql libraries
-dnl Default is to search path for mysql_config
-AC_ARG_WITH(mysql,
-	ACX_HELP_STRING([--with-mysql=DIR],
-		[Compiles mysql plugins. Expects DIR/bin/mysql_config]),
-	with_mysql=$withval,
-	with_mysql=yes)
-if test $with_mysql != "no" ; then
-  if test -x $with_mysql/bin/mysql_config ; then
-    MYSQLCONFIG="$with_mysql/bin/mysql_config"
-  else
-    AC_PATH_PROG(MYSQLCONFIG, mysql_config)
-  fi
-  if test -z "$MYSQLCONFIG"; then
-    with_mysql="not found"
-    AC_MSG_WARN([Skipping mysql plugin])
-    AC_MSG_WARN([install mysql client libs to compile this plugin (see REQUIREMENTS).])
-  else
-    MYSQLINCLUDE=`$MYSQLCONFIG --include`
-    # Mysql 3 does not support --include. --cflags should be sufficient
-    if test $? -ne 0 ; then
-      MYSQLINCLUDE=""
-      TEMP_INCLUDE="-I$with_mysql/include"	# Guessed location
-    else
-      TEMP_INCLUDE=$MYSQLINCLUDE
-    fi
-    MYSQLLIBS=`$MYSQLCONFIG --libs`
-    MYSQLCFLAGS=`$MYSQLCONFIG --cflags`
-    AC_SUBST(MYSQLINCLUDE)
-    AC_SUBST(MYSQLLIBS)
-    AC_SUBST(MYSQLCFLAGS)
-    dnl Test for mysqlclient. Some redhat systems have mysql_config, but no headers
-    _SAVEDCPPFLAGS=$CPPFLAGS
-    _SAVEDLDFLAGS="$LDFLAGS"
-    CPPFLAGS="$CPPFLAGS $TEMP_INCLUDE"
-    LDFLAGS="$LDFLAGS $MYSQLLIBS"
-    AC_CHECK_LIB([mysqlclient], [mysql_init], [with_mysql=$MYSQLCONFIG
-EXTRAS="$EXTRA check_mysql check_mysql_query"], [with_mysql="not found"])
-    CPPFLAGS=$_SAVEDCPPFLAGS
-    LDFLAGS=$_SAVEDLDFLAGS
-  fi
+np_mysqlclient
+if test $with_mysql = "no" ; then
+  AC_MSG_WARN([Skipping mysql plugin])
+  AC_MSG_WARN([install mysql client libs to compile this plugin (see REQUIREMENTS).])
+else
+  EXTRAS="$EXTRA check_mysql check_mysql_query"
+  MYSQLINCLUDE="$np_mysql_include"
+  MYSQLLIBS="$np_mysql_libs"
+  MYSQLCFLAGS="$np_mysql_cflags"
+  AC_SUBST(MYSQLINCLUDE)
+  AC_SUBST(MYSQLLIBS)
+  AC_SUBST(MYSQLCFLAGS)
 fi
 
 dnl Check for AF_INET6 support - unistd.h required for Darwin
