@@ -19,7 +19,7 @@ dnl   $(CC) $(np_mysql_include) code.c $(np_mysql_libs)
 AC_DEFUN([np_mysqlclient],
 [
   AC_ARG_WITH(mysql,
-    ACX_HELP_STRING([--with-mysql=DIR],
+    AS_HELP_STRING([--with-mysql=DIR],
       [Locates mysql libraries. Expects DIR/bin/mysql_config. Default to search for mysql_config in PATH]),
     with_mysql=$withval,
     with_mysql=yes)
