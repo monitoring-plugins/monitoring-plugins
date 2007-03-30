@@ -56,6 +56,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #if HAVE_LIMITS_H
 # include <limits.h>
 #endif
+#include "regex.h"
 
 
 /* If nonzero, show inode information. */
@@ -437,11 +438,16 @@ double calculate_percent(uintmax_t value, uintmax_t total) {
 int
 process_arguments (int argc, char **argv)
 {
-  int c;
+  int c, err;
   struct parameter_list *se;
   struct parameter_list *temp_list;
+  struct mount_entry *me;
   int result = OK;
   struct stat *stat_buf;
+  regex_t re;
+  int cflags = REG_NOSUB | REG_EXTENDED;
+  char errbuf[MAX_INPUT_BUFFER];
+  bool fnd = false;
 
   int option = 0;
   static struct option longopts[] = {
@@ -460,6 +466,10 @@ process_arguments (int argc, char **argv)
     {"exclude_device", required_argument, 0, 'x'},
     {"exclude-type", required_argument, 0, 'X'},
     {"group", required_argument, 0, 'g'},
+    {"eregi-path", required_argument, 0, 'R'},
+    {"eregi-partition", required_argument, 0, 'R'},
+    {"ereg-path", required_argument, 0, 'r'},
+    {"ereg-partition", required_argument, 0, 'r'},
     {"mountpoint", no_argument, 0, 'M'},
     {"errors-only", no_argument, 0, 'e'},
     {"exact-match", no_argument, 0, 'E'},
@@ -481,7 +491,7 @@ process_arguments (int argc, char **argv)
       strcpy (argv[c], "-t");
 
   while (1) {
-    c = getopt_long (argc, argv, "+?VqhveCt:c:w:K:W:u:p:x:X:mklg:ME", longopts, &option);
+    c = getopt_long (argc, argv, "+?VqhveCt:c:w:K:W:u:p:x:X:mklg:R:r:ME", longopts, &option);
 
     if (c == -1 || c == EOF)
       break;
@@ -625,6 +635,44 @@ process_arguments (int argc, char **argv)
       if (path_selected)
         die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set group value before using -p\n"));
       group = optarg;
+      break;
+    case 'R':
+      cflags |= REG_ICASE;
+    case 'r':
+      if (! (warn_freespace_units || crit_freespace_units || warn_freespace_percent || 
+             crit_freespace_percent || warn_usedspace_units || crit_usedspace_units ||
+             warn_usedspace_percent || crit_usedspace_percent || warn_usedinodes_percent ||
+             crit_usedinodes_percent || warn_freeinodes_percent || crit_freeinodes_percent )) {
+        die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set a threshold value before using -r/-R\n"));
+      }
+
+      err = regcomp(&re, optarg, cflags);
+      if (err != 0) {
+        regerror (err, &re, errbuf, MAX_INPUT_BUFFER);
+        die (STATE_UNKNOWN, "DISK %s: %s - %s\n",_("UNKNOWN"), _("Could not compile regular expression"), errbuf);
+      }
+          
+      for (me = mount_list; me; me = me->me_next) {
+        if (np_regex_match_mount_entry(me, &re)) {
+	  fnd = true;
+          if (verbose > 3)
+	    printf("%s %s matching expression %s\n", me->me_devname, me->me_mountdir, optarg);
+
+          /* add parameter if not found. overwrite thresholds if path has already been added  */
+          if (! (se = np_find_parameter(path_select_list, me->me_mountdir))) {
+            se = np_add_parameter(&path_select_list, me->me_mountdir);
+          }
+          se->group = group;
+          set_all_thresholds(se);
+        }
+      }
+
+      if (!fnd)
+        die (STATE_UNKNOWN, "DISK %s: %s - %s\n",_("UNKNOWN"),
+            _("Regular expression did not match any path or disk"), optarg);
+
+      fnd = false;
+      path_selected = true;
       break;
     case 'M': /* display mountpoint */
       display_mntp = TRUE;
@@ -824,6 +872,10 @@ print_help (void)
   printf ("    %s\n", _("Only check local filesystems"));
   printf (" %s\n", "-p, --path=PATH, --partition=PARTITION");
   printf ("    %s\n", _("Path or partition (may be repeated)"));
+  printf (" %s\n", "-r, --ereg-path=PATH, --ereg-partition=PARTITION");
+  printf ("    %s\n", _("Regular expression for path or partition (may be repeated)"));
+  printf (" %s\n", "-R, --eregi-path=PATH, --eregi-partition=PARTITION");
+  printf ("    %s\n", _("Case insensitive regular expression for path/partition (may be repeated)"));
   printf (" %s\n", "-g, --group=NAME");
   printf ("    %s\n", _("Group pathes. Thresholds apply to (free-)space of all partitions together"));
   printf (" %s\n", "-x, --exclude_device=PATH <STRING>");
