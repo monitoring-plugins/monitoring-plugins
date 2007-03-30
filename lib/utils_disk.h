@@ -28,5 +28,6 @@ void np_add_name (struct name_list **list, const char *name);
 int np_find_name (struct name_list *list, const char *name);
 int np_seen_name (struct name_list *list, const char *name);
 struct parameter_list *np_add_parameter(struct parameter_list **list, const char *name);
+struct parameter_list *np_find_parameter(struct parameter_list *list, const char *name);
 int search_parameter_list (struct parameter_list *list, const char *name);
 void np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list, int exact);

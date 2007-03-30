@@ -73,39 +73,54 @@ np_add_parameter(struct parameter_list **list, const char *name)
   return new_path;
 }
 
+/* returns a pointer to the struct found in the list */
+struct parameter_list *
+np_find_parameter(struct parameter_list *list, const char *name)
+{
+  struct parameter_list *temp_list;
+  for (temp_list = list; temp_list; temp_list = temp_list->name_next) {
+    if (! strcmp(temp_list->name, name))
+        return temp_list;
+  }
+        
+  return NULL;
+}
+
 void
 np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list, int exact)
 {
   struct parameter_list *d;
   for (d = desired; d; d= d->name_next) {
-    struct mount_entry *me;
-    size_t name_len = strlen(d->name);
-    size_t best_match_len = 0;
-    struct mount_entry *best_match = NULL;
+    if (! d->best_match) {
+      struct mount_entry *me;
+      size_t name_len = strlen(d->name);
+      size_t best_match_len = 0;
+      struct mount_entry *best_match = NULL;
 
-    for (me = mount_list; me; me = me->me_next) {
-      size_t len = strlen (me->me_mountdir);
-      if ((exact == FALSE && (best_match_len <= len && len <= name_len && 
-        (len == 1 || strncmp (me->me_mountdir, d->name, len) == 0)))
-	|| (exact == TRUE && strcmp(me->me_mountdir, d->name)==0))
-      {
-        best_match = me;
-        best_match_len = len;
-      } else {
-        len = strlen (me->me_devname);
-        if ((exact == FALSE && (best_match_len <= len && len <= name_len &&
-          (len == 1 || strncmp (me->me_devname, d->name, len) == 0)))
-          || (exact == TRUE && strcmp(me->me_devname, d->name)==0))
+      for (me = mount_list; me; me = me->me_next) {
+        size_t len = strlen (me->me_mountdir);
+        if ((exact == FALSE && (best_match_len <= len && len <= name_len && 
+          (len == 1 || strncmp (me->me_mountdir, d->name, len) == 0)))
+      || (exact == TRUE && strcmp(me->me_mountdir, d->name)==0))
         {
           best_match = me;
           best_match_len = len;
+        } else {
+          len = strlen (me->me_devname);
+          if ((exact == FALSE && (best_match_len <= len && len <= name_len &&
+            (len == 1 || strncmp (me->me_devname, d->name, len) == 0)))
+            || (exact == TRUE && strcmp(me->me_devname, d->name)==0))
+          {
+            best_match = me;
+            best_match_len = len;
+          }
         }
       }
-    }
-    if (best_match) {
-      d->best_match = best_match;
-    } else {
-      d->best_match = NULL;	/* Not sure why this is needed as it should be null on initialisation */
+      if (best_match) {
+        d->best_match = best_match;
+      } else {
+        d->best_match = NULL;	/* Not sure why this is needed as it should be null on initialisation */
+      }
     }
   }
 }

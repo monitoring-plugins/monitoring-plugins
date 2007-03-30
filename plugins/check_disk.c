@@ -121,6 +121,7 @@ static struct mount_entry *mount_list;
 
 int process_arguments (int, char **);
 void print_path (const char *mypath);
+void set_all_thresholds (struct parameter_list *path);
 int validate_arguments (uintmax_t, uintmax_t, double, double, double, double, char *);
 void print_help (void);
 void print_usage (void);
@@ -148,6 +149,7 @@ char *warn_usedinodes_percent = NULL;
 char *crit_usedinodes_percent = NULL;
 char *warn_freeinodes_percent = NULL;
 char *crit_freeinodes_percent = NULL;
+bool path_selected = false;
 
 
 int
@@ -190,32 +192,33 @@ main (int argc, char **argv)
   /* If a list of paths has not been selected, find entire
      mount list and create list of paths
    */
-  if (! path_select_list) {
+  if (path_selected == false) { 
     for (me = mount_list; me; me = me->me_next) {
-      path = np_add_parameter(&path_select_list, me->me_mountdir);
-      path->best_match = me;
-      set_thresholds(&path->freespace_units, warn_freespace_units, crit_freespace_units);
-      set_thresholds(&path->freespace_percent, warn_freespace_percent, crit_freespace_percent);
-      set_thresholds(&path->usedspace_units, warn_usedspace_units, crit_usedspace_units);
-      set_thresholds(&path->usedspace_percent, warn_usedspace_percent, crit_usedspace_percent);
-      set_thresholds(&path->usedinodes_percent, warn_usedinodes_percent, crit_usedinodes_percent);
-      set_thresholds(&path->freeinodes_percent, warn_freeinodes_percent, crit_freeinodes_percent);
-    }
-  } else {
-    np_set_best_match(path_select_list, mount_list, exact_match);
-
-    /* Error if no match found for specified paths */
-    temp_list = path_select_list;
-    while (temp_list) {
-      if (! temp_list->best_match) {
-        die (STATE_CRITICAL, _("DISK %s: %s not found\n"), _("CRITICAL"), temp_list->name);
+      if (! (path = np_find_parameter(path_select_list, me->me_mountdir))) {
+        path = np_add_parameter(&path_select_list, me->me_mountdir);
       }
-      temp_list = temp_list->name_next;
+      path->best_match = me;
+      set_all_thresholds(path);
     }
   }
+  np_set_best_match(path_select_list, mount_list, exact_match);
+
+  /* Error if no match found for specified paths */
+  temp_list = path_select_list;
+  while (temp_list) {
+    if (! temp_list->best_match) {
+      die (STATE_CRITICAL, _("DISK %s: %s not found\n"), _("CRITICAL"), temp_list->name);
+    }
+    temp_list = temp_list->name_next;
+  }
+  
 
   /* Process for every path in list */
   for (path = path_select_list; path; path=path->name_next) {
+
+    if (verbose > 3 && path->freespace_percent->warning != NULL && path->freespace_percent->critical != NULL)
+      printf("Thresholds(pct) for %s warn: %f crit %f\n",path->name, path->freespace_percent->warning->end,
+                                                         path->freespace_percent->critical->end);
 
     /* reset disk result */
     disk_result = STATE_UNKNOWN;
@@ -548,13 +551,14 @@ process_arguments (int argc, char **argv)
              crit_usedinodes_percent || warn_freeinodes_percent || crit_freeinodes_percent )) {
         die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set a threshold value before using -p\n"));
       }
-      se = np_add_parameter(&path_select_list, optarg);
-      set_thresholds(&se->freespace_units, warn_freespace_units, crit_freespace_units);
-      set_thresholds(&se->freespace_percent, warn_freespace_percent, crit_freespace_percent);
-      set_thresholds(&se->usedspace_units, warn_usedspace_units, crit_usedspace_units);
-      set_thresholds(&se->usedspace_percent, warn_usedspace_percent, crit_usedspace_percent);
-      set_thresholds(&se->usedinodes_percent, warn_usedinodes_percent, crit_usedinodes_percent);
-      set_thresholds(&se->freeinodes_percent, warn_freeinodes_percent, crit_freeinodes_percent);
+
+      /* add parameter if not found. overwrite thresholds if path has already been added  */
+      if (! (se = np_find_parameter(path_select_list, optarg))) {
+          se = np_add_parameter(&path_select_list, optarg);
+      }
+
+      set_all_thresholds(se);
+      path_selected = true;
       break;
     case 'x':                 /* exclude path or partition */
       np_add_name(&dp_exclude_list, optarg);
@@ -578,6 +582,17 @@ process_arguments (int argc, char **argv)
       display_mntp = TRUE;
       break;
     case 'C':
+       /* add all mount entries to path_select list if no partitions have been explicitly defined using -p */
+       if (path_selected == false) {
+         struct mount_entry *me;
+         struct parameter_list *path;
+         for (me = mount_list; me; me = me->me_next) {
+           if (! (path = np_find_parameter(path_select_list, me->me_mountdir))) 
+             path = np_add_parameter(&path_select_list, me->me_mountdir);
+           path->best_match = me;
+           set_all_thresholds(path);
+         }
+      }
       warn_freespace_units = NULL;
       crit_freespace_units = NULL;
       warn_usedspace_units = NULL;
@@ -590,6 +605,8 @@ process_arguments (int argc, char **argv)
       crit_usedinodes_percent = NULL;
       warn_freeinodes_percent = NULL;
       crit_freeinodes_percent = NULL;
+    
+      path_selected = false;
       break;
     case 'V':                 /* version */
       print_revision (progname, revision);
@@ -612,12 +629,7 @@ process_arguments (int argc, char **argv)
 
   if (argc > c && path == NULL) {
     se = np_add_parameter(&path_select_list, strdup(argv[c++]));
-    set_thresholds(&se->freespace_units, warn_freespace_units, crit_freespace_units);
-    set_thresholds(&se->freespace_percent, warn_freespace_percent, crit_freespace_percent);
-    set_thresholds(&se->usedspace_units, warn_usedspace_units, crit_usedspace_units);
-    set_thresholds(&se->usedspace_percent, warn_usedspace_percent, crit_usedspace_percent);
-    set_thresholds(&se->usedinodes_percent, warn_usedinodes_percent, crit_usedinodes_percent);
-    set_thresholds(&se->freeinodes_percent, warn_freeinodes_percent, crit_freeinodes_percent);
+    set_all_thresholds(se);
   }
 
   if (units == NULL) {
@@ -665,6 +677,16 @@ print_path (const char *mypath)
 }
 
 
+void
+set_all_thresholds (struct parameter_list *path) 
+{
+    set_thresholds(&path->freespace_units, warn_freespace_units, crit_freespace_units);
+    set_thresholds(&path->freespace_percent, warn_freespace_percent, crit_freespace_percent);
+    set_thresholds(&path->usedspace_units, warn_usedspace_units, crit_usedspace_units);
+    set_thresholds(&path->usedspace_percent, warn_usedspace_percent, crit_usedspace_percent);
+    set_thresholds(&path->usedinodes_percent, warn_usedinodes_percent, crit_usedinodes_percent);
+    set_thresholds(&path->freeinodes_percent, warn_freeinodes_percent, crit_freeinodes_percent);
+}
 
 /* TODO: Remove?
 
