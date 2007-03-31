@@ -506,6 +506,7 @@ double jitter_request(const char *host, int *status){
 	ntp_control_message req;
 	double rval = 0.0, jitter = -1.0;
 	char *startofvalue=NULL, *nptr=NULL;
+	void *tmp;
 
 	/* Long-winded explanation:
 	 * Getting the jitter requires a number of steps:
@@ -539,8 +540,10 @@ double jitter_request(const char *host, int *status){
 	 	 * we represent as a ntp_assoc_status_pair datatype.
 	 	 */
 		npeers+=(ntohs(req.count)/sizeof(ntp_assoc_status_pair));
-		peers=(ntp_assoc_status_pair*)realloc(peers, sizeof(ntp_assoc_status_pair)*npeers);
-		memcpy((void*)((ptrdiff_t)peers+peer_offset), (void*)req.data, sizeof(ntp_assoc_status_pair)*npeers);
+		if((tmp=realloc(peers, sizeof(ntp_assoc_status_pair)*npeers)) == NULL)
+			free(peers), die(STATE_UNKNOWN, "can not (re)allocate 'peers' buffer\n");
+		peers=tmp;
+		memcpy((void*)((ptrdiff_t)peers+peer_offset), (void*)req.data, ntohs(req.count));
 		peer_offset+=ntohs(req.count);
 	} while(req.op&REM_MORE);
 
