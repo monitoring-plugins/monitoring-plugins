@@ -47,7 +47,6 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 static char *server_address=NULL;
 static int verbose=0;
-static int zero_offset_bad=0;
 static double owarn=60;
 static double ocrit=120;
 static short do_jitter=0;
@@ -628,7 +627,6 @@ int process_arguments(int argc, char **argv){
 		{"use-ipv6", no_argument, 0, '6'},
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
-		{"zero-offset", no_argument, 0, 'O'},
 		{"jwarn", required_argument, 0, 'j'},
 		{"jcrit", required_argument, 0, 'k'},
 		{"timeout", required_argument, 0, 't'},
@@ -641,7 +639,7 @@ int process_arguments(int argc, char **argv){
 		usage ("\n");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vhv46w:c:Oj:k:t:H:", longopts, &option);
+		c = getopt_long (argc, argv, "Vhv46w:c:j:k:t:H:", longopts, &option);
 		if (c == -1 || c == EOF || c == 1)
 			break;
 
@@ -678,9 +676,6 @@ int process_arguments(int argc, char **argv){
 			break;
 		case 't':
 			socket_timeout=atoi(optarg);
-			break;
-		case 'O':
-			zero_offset_bad=1;
 			break;
 		case '4':
 			address_family = AF_INET;
@@ -816,5 +811,5 @@ void
 print_usage(void)
 {
   printf (_("Usage:"));
-  printf("%s -H <host> [-O] [-w <warn>] [-c <crit>] [-j <warn>] [-k <crit>] [-v verbose]\n", progname);
+  printf("%s -H <host> [-w <warn>] [-c <crit>] [-j <warn>] [-k <crit>] [-v verbose]\n", progname);
 }
