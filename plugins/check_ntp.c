@@ -608,7 +608,7 @@ double jitter_request(const char *host, int *status){
 		}
 	}
 
-	rval /= num_valid;
+	rval = num_valid ? rval / num_valid : -1.0;
 
 	close(conn);
 	free(peers);
