@@ -558,7 +558,10 @@ double jitter_request(const char *host, int *status){
 	}
 	if(verbose) printf("%d candiate peers available\n", num_candidates);
 	if(verbose && syncsource_found) printf("synchronization source found\n");
-	if(! syncsource_found) *status = STATE_WARNING;
+	if(! syncsource_found){
+		*status = STATE_WARNING;
+		if(verbose) printf("warning: no synchronization source found\n");
+	}
 
 
 	for (run=0; run<AVG_NUM; run++){
