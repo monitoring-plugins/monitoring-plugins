@@ -5,6 +5,7 @@ This file documents the major additions and syntax changes between releases.
 	check_disk extra options for regex matching of filesystems and grouping of filesystems
 	for collective thresholds
 	Better configure test for mysqlclient availability
+	Various check_ntp fixes
 
 1.4.7 29th March 2007
 	check_procs uses /usr/ucb/ps if available - fixes pst3 problems on Solaris
