@@ -98,25 +98,26 @@ np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list
       size_t best_match_len = 0;
       struct mount_entry *best_match = NULL;
 
+      /* set best match if path name exactly matches a mounted device name */
       for (me = mount_list; me; me = me->me_next) {
-        size_t len = strlen (me->me_mountdir);
-        if ((exact == FALSE && (best_match_len <= len && len <= name_len && 
-          (len == 1 || strncmp (me->me_mountdir, d->name, len) == 0)))
-      || (exact == TRUE && strcmp(me->me_mountdir, d->name)==0))
-        {
+        if (strcmp(me->me_devname, d->name)==0)
           best_match = me;
-          best_match_len = len;
-        } else {
-          len = strlen (me->me_devname);
-          if ((exact == FALSE && (best_match_len <= len && len <= name_len &&
-            (len == 1 || strncmp (me->me_devname, d->name, len) == 0)))
-            || (exact == TRUE && strcmp(me->me_devname, d->name)==0))
+      }
+
+      /* set best match by directory name if no match was found by devname */
+      if (! best_match) {
+        for (me = mount_list; me; me = me->me_next) {
+          size_t len = strlen (me->me_mountdir);
+          if ((exact == FALSE && (best_match_len <= len && len <= name_len && 
+             (len == 1 || strncmp (me->me_mountdir, d->name, len) == 0)))
+             || (exact == TRUE && strcmp(me->me_mountdir, d->name)==0))
           {
             best_match = me;
             best_match_len = len;
           }
         }
       }
+
       if (best_match) {
         d->best_match = best_match;
       } else {
