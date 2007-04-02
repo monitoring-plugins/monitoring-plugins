@@ -501,7 +501,7 @@ setup_control_request(ntp_control_message *p, uint8_t opcode, uint16_t seq){
 double jitter_request(const char *host, int *status){
 	int conn=-1, i, npeers=0, num_candidates=0, syncsource_found=0;
 	int run=0, min_peer_sel=PEER_INCLUDED, num_selected=0, num_valid=0;
-	int peer_offset=0;
+	int peers_size=0, peer_offset=0;
 	ntp_assoc_status_pair *peers=NULL;
 	ntp_control_message req;
 	double rval = 0.0, jitter = -1.0;
@@ -539,11 +539,12 @@ double jitter_request(const char *host, int *status){
 		/* Each peer identifier is 4 bytes in the data section, which
 	 	 * we represent as a ntp_assoc_status_pair datatype.
 	 	 */
-		npeers+=(ntohs(req.count)/sizeof(ntp_assoc_status_pair));
-		if((tmp=realloc(peers, sizeof(ntp_assoc_status_pair)*npeers)) == NULL)
+		peers_size+=ntohs(req.count);
+		if((tmp=realloc(peers, peers_size)) == NULL)
 			free(peers), die(STATE_UNKNOWN, "can not (re)allocate 'peers' buffer\n");
 		peers=tmp;
 		memcpy((void*)((ptrdiff_t)peers+peer_offset), (void*)req.data, ntohs(req.count));
+		npeers=peers_size/sizeof(ntp_assoc_status_pair);
 		peer_offset+=ntohs(req.count);
 	} while(req.op&REM_MORE);
 
@@ -596,8 +597,8 @@ double jitter_request(const char *host, int *status){
 					printf("parsing jitter from peer %.2x: ", ntohs(peers[i].assoc));
 				}
 				startofvalue = strchr(req.data, '=');
-				if(startofvalue != NULL) startofvalue++;
 				if(startofvalue != NULL) {
+					startofvalue++;
 					jitter = strtod(startofvalue, &nptr);
 				}
 				if(startofvalue == NULL || startofvalue==nptr){
@@ -618,7 +619,7 @@ double jitter_request(const char *host, int *status){
 	rval = num_valid ? rval / num_valid : -1.0;
 
 	close(conn);
-	free(peers);
+	if(peers!=NULL) free(peers);
 	/* If we return -1.0, it means no synchronization source was found */
 	return rval;
 }
