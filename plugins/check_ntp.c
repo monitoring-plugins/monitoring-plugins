@@ -593,7 +593,7 @@ double jitter_request(const char *host, int *status){
 
 				/* get to the float value */
 				if(verbose) {
-					printf("parsing jitter from peer %.2x: ", peers[i].assoc);
+					printf("parsing jitter from peer %.2x: ", ntohs(peers[i].assoc));
 				}
 				startofvalue = strchr(req.data, '=');
 				if(startofvalue != NULL) startofvalue++;
