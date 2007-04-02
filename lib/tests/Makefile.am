@@ -21,7 +21,7 @@ test_utils_LDADD = ../utils_base.o
 test_disk_SOURCES = test_disk.c
 test_disk_CFLAGS = -g -I..
 test_disk_LDFLAGS = -L/usr/local/lib -ltap
-test_disk_LDADD = ../utils_disk.o
+test_disk_LDADD = ../utils_disk.o $(top_srcdir)/gl/libgnu.a
 
 test: ${noinst_PROGRAMS}
 	perl -MTest::Harness -e '$$Test::Harness::switches=""; runtests(map {$$_ .= ".t"} @ARGV)' $(EXTRA_PROGRAMS)
