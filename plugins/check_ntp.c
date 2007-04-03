@@ -138,8 +138,8 @@ typedef struct {
 #define OP_SET(x,y)   do{ x |= (y&OP_MASK); }while(0)
 #define OP_READSTAT 0x01
 #define OP_READVAR  0x02
-/* In peer status bytes, bytes 6,7,8 determine clock selection status */
-#define PEER_SEL(x) (x&0x07)
+/* In peer status bytes, bits 6,7,8 determine clock selection status */
+#define PEER_SEL(x) ((ntohs(x)>>8)&0x07)
 #define PEER_INCLUDED 0x04
 #define PEER_SYNCSOURCE 0x06
 
