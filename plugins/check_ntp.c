@@ -507,6 +507,7 @@ double jitter_request(const char *host, int *status){
 	int peers_size=0, peer_offset=0;
 	ntp_assoc_status_pair *peers=NULL;
 	ntp_control_message req;
+	const char *getvar = "jitter";
 	double rval = 0.0, jitter = -1.0;
 	char *startofvalue=NULL, *nptr=NULL;
 	void *tmp;
@@ -584,8 +585,10 @@ double jitter_request(const char *host, int *status){
 				 * thus reducing net traffic, guaranteeing us only a single
 				 * datagram in reply, and making intepretation much simpler
 				 */
-				strncpy(req.data, "jitter", 6);
-				req.count = htons(6);
+				/* Older servers doesn't know what jitter is, so if we get an
+				 * error on the first pass we redo it with "dispersion" */
+				strncpy(req.data, getvar, MAX_CM_SIZE-1);
+				req.count = htons(strlen(getvar));
 				DBG(printf("sending READVAR request...\n"));
 				write(conn, &req, SIZEOF_NTPCM(req));
 				DBG(print_ntp_control_message(&req));
@@ -594,6 +597,14 @@ double jitter_request(const char *host, int *status){
 				DBG(printf("recieving READVAR response...\n"));
 				read(conn, &req, SIZEOF_NTPCM(req));
 				DBG(print_ntp_control_message(&req));
+
+				if(req.op&REM_ERROR && strstr(getvar, "jitter")) {
+					if(verbose) printf("The 'jitter' command failed (old ntp server?)\nRestarting with 'dispersion'...\n");
+					getvar = "dispersion";
+					num_selected--;
+					i--;
+					continue;
+				}
 
 				/* get to the float value */
 				if(verbose) {
