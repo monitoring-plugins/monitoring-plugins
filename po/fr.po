@@ -9,9 +9,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: nagiosplug-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-03-08 03:12-0500\n"
-"PO-Revision-Date: 2007-02-06 20:47+0100\n"
-"Last-Translator: Benoit Mortier <benoit.mortier@opensides.be>\n"
+"POT-Creation-Date: 2007-04-10 03:05-0400\n"
+"PO-Revision-Date: 2007-04-10 02:46-0400\n"
+"Last-Translator: Thomas Guyot-Sionnest <dermoth@aei.ca>\n"
 "Language-Team: Français <fr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -19,14 +19,14 @@ msgstr ""
 "Plural-Forms:  nplurals=2; plural=(n > 1);\n"
 "X-Generator: KBabel 1.11.1\n"
 
-#: plugins/check_by_ssh.c:82 plugins/check_dig.c:89 plugins/check_disk.c:188
+#: plugins/check_by_ssh.c:82 plugins/check_dig.c:89 plugins/check_disk.c:192
 #: plugins/check_dns.c:93 plugins/check_dummy.c:59 plugins/check_fping.c:89
 #: plugins/check_game.c:84 plugins/check_hpjd.c:106 plugins/check_http.c:147
 #: plugins/check_ldap.c:105 plugins/check_load.c:122
 #: plugins/check_mrtgtraf.c:83 plugins/check_mysql.c:88
-#: plugins/check_nagios.c:94 plugins/check_nt.c:126 plugins/check_nwstat.c:177
-#: plugins/check_overcr.c:106 plugins/check_pgsql.c:156
-#: plugins/check_ping.c:99 plugins/check_procs.c:143
+#: plugins/check_nagios.c:94 plugins/check_nt.c:126 plugins/check_ntp.c:758
+#: plugins/check_nwstat.c:177 plugins/check_overcr.c:106
+#: plugins/check_pgsql.c:156 plugins/check_ping.c:99 plugins/check_procs.c:143
 #: plugins/check_radius.c:133 plugins/check_real.c:85 plugins/check_smtp.c:180
 #: plugins/check_snmp.c:182 plugins/check_ssh.c:78 plugins/check_swap.c:113
 #: plugins/check_tcp.c:208 plugins/check_time.c:82 plugins/check_ups.c:125
@@ -54,7 +54,7 @@ msgstr "Erreur inconnue"
 msgid "SSH WARNING: could not open %s\n"
 msgstr "SSH AVERTISSEMENT: impossible d'ouvrir %s\n"
 
-#: plugins/check_by_ssh.c:200 plugins/check_disk.c:450
+#: plugins/check_by_ssh.c:200 plugins/check_disk.c:507
 #: plugins/check_http.c:241 plugins/check_ldap.c:281 plugins/check_pgsql.c:237
 #: plugins/check_procs.c:371 plugins/check_radius.c:215
 #: plugins/check_radius.c:285 plugins/check_real.c:361
@@ -196,26 +196,27 @@ msgstr ""
 "et les options -O, -s, n (l'ordre des services doit correspondre aux "
 "multiples options '-C)"
 
-#: plugins/check_by_ssh.c:371 plugins/check_disk.c:768
+#: plugins/check_by_ssh.c:371 plugins/check_disk.c:901
 #: plugins/check_http.c:1324 plugins/check_nagios.c:303
 #: plugins/check_procs.c:735 plugins/negate.c:269 plugins/urlize.c:187
 #, c-format
 msgid "Examples:"
 msgstr "Exemples:"
 
-#: plugins/check_by_ssh.c:385 plugins/check_dig.c:336 plugins/check_disk.c:779
+#: plugins/check_by_ssh.c:385 plugins/check_dig.c:336 plugins/check_disk.c:912
 #: plugins/check_dns.c:447 plugins/check_dummy.c:127 plugins/check_fping.c:407
 #: plugins/check_game.c:334 plugins/check_hpjd.c:415 plugins/check_http.c:1347
 #: plugins/check_ldap.c:411 plugins/check_load.c:311 plugins/check_mrtg.c:383
 #: plugins/check_mysql.c:407 plugins/check_nagios.c:313 plugins/check_nt.c:707
-#: plugins/check_nwstat.c:1688 plugins/check_overcr.c:469
-#: plugins/check_pgsql.c:458 plugins/check_ping.c:592
-#: plugins/check_procs.c:753 plugins/check_radius.c:349
-#: plugins/check_real.c:454 plugins/check_smtp.c:780 plugins/check_snmp.c:1007
-#: plugins/check_ssh.c:306 plugins/check_swap.c:560 plugins/check_tcp.c:656
-#: plugins/check_time.c:373 plugins/check_ups.c:653 plugins/check_users.c:230
+#: plugins/check_ntp.c:859 plugins/check_nwstat.c:1688
+#: plugins/check_overcr.c:469 plugins/check_pgsql.c:458
+#: plugins/check_ping.c:597 plugins/check_procs.c:753
+#: plugins/check_radius.c:349 plugins/check_real.c:454
+#: plugins/check_smtp.c:780 plugins/check_snmp.c:1007 plugins/check_ssh.c:306
+#: plugins/check_swap.c:560 plugins/check_tcp.c:656 plugins/check_time.c:373
+#: plugins/check_ups.c:653 plugins/check_users.c:230
 #: plugins/check_ide_smart.c:544 plugins/negate.c:290 plugins/urlize.c:204
-#: plugins-root/check_dhcp.c:1283 plugins-root/check_icmp.c:1280
+#: plugins-root/check_dhcp.c:1283 plugins-root/check_icmp.c:1282
 #, c-format
 msgid "Usage:"
 msgstr "Utilisation:"
@@ -282,12 +283,12 @@ msgstr ""
 "une adresse qui devrait se trouver dans l'ANSWER SECTION. Si elle ne si "
 "trouve pas, utilise ce qui a été précisé avec -l"
 
-#: plugins/check_disk.c:211
+#: plugins/check_disk.c:213
 #, c-format
 msgid "DISK %s: %s not found\n"
 msgstr "DISK %s: %s non trouvé\n"
 
-#: plugins/check_disk.c:211 plugins/check_disk.c:634 plugins/check_dns.c:208
+#: plugins/check_disk.c:213 plugins/check_disk.c:751 plugins/check_dns.c:208
 #: plugins/check_dummy.c:81 plugins/check_http.c:959 plugins/check_http.c:1022
 #: plugins/check_mysql.c:214 plugins/check_nagios.c:107
 #: plugins/check_nagios.c:171 plugins/check_nagios.c:175
@@ -296,132 +297,167 @@ msgstr "DISK %s: %s non trouvé\n"
 msgid "CRITICAL"
 msgstr "CRITIQUE"
 
-#: plugins/check_disk.c:524
+#: plugins/check_disk.c:581
 #, c-format
 msgid "unit type %s not known\n"
 msgstr "unité de type %s inconnue\n"
 
-#: plugins/check_disk.c:527
+#: plugins/check_disk.c:584
 #, c-format
 msgid "failed allocating storage for '%s'\n"
 msgstr "Impossible d'allouer de l'espace pour '%s'\n"
 
-#: plugins/check_disk.c:549 plugins/check_dummy.c:84 plugins/check_http.c:953
+#: plugins/check_disk.c:606 plugins/check_disk.c:643 plugins/check_disk.c:653
+#: plugins/check_disk.c:659 plugins/check_disk.c:678 plugins/check_dummy.c:84
+#: plugins/check_http.c:953
 #, c-format
 msgid "UNKNOWN"
 msgstr "INCONNU"
 
-#: plugins/check_disk.c:549
+#: plugins/check_disk.c:606
 msgid "Must set a threshold value before using -p\n"
 msgstr ""
 
-#: plugins/check_disk.c:601
+#: plugins/check_disk.c:643
+msgid "Must set group value before using -p\n"
+msgstr ""
+
+#: plugins/check_disk.c:653
+msgid "Must set a threshold value before using -r/-R\n"
+msgstr ""
+
+#: plugins/check_disk.c:659
+#, fuzzy
+msgid "Could not compile regular expression"
+msgstr "Impossible de compiler l'expression régulière"
+
+#: plugins/check_disk.c:679
+msgid "Regular expression did not match any path or disk"
+msgstr ""
+
+#: plugins/check_disk.c:723
 msgid "Unknown argument"
 msgstr "Argument inconnu"
 
-#: plugins/check_disk.c:635
+#: plugins/check_disk.c:752
 #, c-format
 msgid "%s does not exist\n"
 msgstr "%s n'existe pas\n"
 
-#: plugins/check_disk.c:664
+#: plugins/check_disk.c:781
 #, c-format
 msgid " for %s\n"
 msgstr " pour %s\n"
 
-#: plugins/check_disk.c:722
+#: plugins/check_disk.c:849
 msgid ""
 "This plugin checks the amount of used disk space on a mounted file system"
 msgstr "Ce plugin vérifie la place utilisé sur un système de fichier monté"
 
-#: plugins/check_disk.c:723
+#: plugins/check_disk.c:850
 msgid ""
 "and generates an alert if free space is less than one of the threshold values"
 msgstr ""
 "et génère une alerte si la place disponible est plus petite qu'une des "
 "valeurs fournies"
 
-#: plugins/check_disk.c:732
+#: plugins/check_disk.c:859
 msgid "Exit with WARNING status if less than INTEGER units of disk are free"
 msgstr ""
 "Sortir avec un résultat AVERTISSEMENT si moins de x unités de disques sont "
 "libres"
 
-#: plugins/check_disk.c:734
+#: plugins/check_disk.c:861
 msgid "Exit with WARNING status if less than PERCENT of disk space is free"
 msgstr ""
 "Sortir avec un résultat AVERTISSEMENT si moins de x pour-cent du disque est "
 "libre"
 
-#: plugins/check_disk.c:736
+#: plugins/check_disk.c:863
 msgid "Exit with WARNING status if less than PERCENT of inode space is free"
 msgstr ""
 "Sortir avec un résultat AVERTISSEMENT si moins de x pour-cent des inodes "
 "sont libres"
 
-#: plugins/check_disk.c:738
+#: plugins/check_disk.c:865
 msgid "Exit with CRITICAL status if less than PERCENT of inode space is free"
 msgstr ""
 "Sortir avec un résultat CRITIQUE si moins de x pour-cent des inodes sont "
 "libres"
 
-#: plugins/check_disk.c:740
+#: plugins/check_disk.c:867
 msgid "Exit with CRITICAL status if less than INTEGER units of disk are free"
 msgstr ""
 "Sortir avec un résultat CRITIQUE si moins de x unités du disque sont libres"
 
-#: plugins/check_disk.c:742
+#: plugins/check_disk.c:869
 msgid "Exit with CRITCAL status if less than PERCENT of disk space is free"
 msgstr ""
 "Sortir avec un résultat CRITIQUE si moins de x pour-cent du disque est libre"
 
-#: plugins/check_disk.c:744
+#: plugins/check_disk.c:871
 msgid "Clear thresholds"
 msgstr "Effacer les seuils"
 
-#: plugins/check_disk.c:746
+#: plugins/check_disk.c:873
 msgid "Choose bytes, kB, MB, GB, TB (default: MB)"
 msgstr "Choisissez octets, kb, MB, GB, TB (par défaut: MB)"
 
-#: plugins/check_disk.c:748
+#: plugins/check_disk.c:875
 msgid "Same as '--units kB'"
 msgstr "Pareil à '--units kB'"
 
-#: plugins/check_disk.c:750
+#: plugins/check_disk.c:877
 msgid "Same as '--units MB'"
 msgstr "Pareil à '--units MB'"
 
-#: plugins/check_disk.c:752
+#: plugins/check_disk.c:879
 msgid "Only check local filesystems"
 msgstr "Vérifier seulement les systèmes de fichiers locaux"
 
-#: plugins/check_disk.c:754
+#: plugins/check_disk.c:881
 msgid "Path or partition (may be repeated)"
 msgstr "Répertoire ou partition (peut être utilisé plusieurs fois)"
 
-#: plugins/check_disk.c:756
+#: plugins/check_disk.c:883
+#, fuzzy
+msgid "Regular expression for path or partition (may be repeated)"
+msgstr "Répertoire ou partition (peut être utilisé plusieurs fois)"
+
+#: plugins/check_disk.c:885
+#, fuzzy
+msgid ""
+"Case insensitive regular expression for path/partition (may be repeated)"
+msgstr "Répertoire ou partition (peut être utilisé plusieurs fois)"
+
+#: plugins/check_disk.c:887
+msgid ""
+"Group pathes. Thresholds apply to (free-)space of all partitions together"
+msgstr ""
+
+#: plugins/check_disk.c:889
 msgid "Ignore device (only works if -p unspecified)"
 msgstr "Ignorer le périphérique (marche seulement lorsque -p est utilisé)"
 
-#: plugins/check_disk.c:758
+#: plugins/check_disk.c:891
 msgid "Ignore all filesystems of indicated type (may be repeated)"
 msgstr ""
 "Ignorer tout les systèmes de fichiers qui correspondent au type indiqué "
 "(peut être utilisé plusieurs fois)"
 
-#: plugins/check_disk.c:760
+#: plugins/check_disk.c:893
 msgid "Display the mountpoint instead of the partition"
 msgstr "Afficher le point de montage au lieu de la partition"
 
-#: plugins/check_disk.c:762
+#: plugins/check_disk.c:895
 msgid "For paths or partitions specified with -p, only check for exact paths"
 msgstr ""
 
-#: plugins/check_disk.c:764
+#: plugins/check_disk.c:897
 msgid "Display only devices/mountpoints with errors"
 msgstr "Afficher seulement les périphériques/point de montage avec des erreurs"
 
-#: plugins/check_disk.c:770
+#: plugins/check_disk.c:903
 msgid "Checks /tmp and /var at 10% and 5%, and / at 100MB and 50MB"
 msgstr "Vérifie /tmp à 10% et /var à 5% et / à 100MB et 50MB"
 
@@ -632,7 +668,7 @@ msgstr ""
 msgid "of the <state> argument with optional text"
 msgstr "du paramètre <state> avec un texte optionnel"
 
-#: plugins/check_fping.c:103 plugins/check_hpjd.c:131 plugins/check_ping.c:427
+#: plugins/check_fping.c:103 plugins/check_hpjd.c:131 plugins/check_ping.c:432
 #: plugins/check_procs.c:159 plugins/check_snmp.c:203 plugins/check_swap.c:178
 #: plugins/check_users.c:75 plugins/negate.c:112 plugins/urlize.c:117
 #, c-format
@@ -672,8 +708,8 @@ msgid "FPING %s - %s (loss=%.0f%% )|%s\n"
 msgstr "FPING %s - %s (perte=%.0f%% )|%s\n"
 
 #: plugins/check_fping.c:273 plugins/check_hpjd.c:341 plugins/check_hpjd.c:364
-#: plugins/check_mysql.c:277 plugins/check_mysql.c:326
-#: plugins/check_pgsql.c:255 plugins/check_ping.c:285 plugins/check_ping.c:408
+#: plugins/check_mysql.c:277 plugins/check_mysql.c:326 plugins/check_ntp.c:696
+#: plugins/check_pgsql.c:255 plugins/check_ping.c:290 plugins/check_ping.c:413
 #: plugins/check_radius.c:250 plugins/check_real.c:319
 #: plugins/check_real.c:381 plugins/check_smtp.c:554 plugins/check_smtp.c:675
 #: plugins/check_ssh.c:162 plugins/check_time.c:244 plugins/check_time.c:319
@@ -689,7 +725,7 @@ msgstr "La taille du paquet doit être un entier positif"
 msgid "Packet count must be a positive integer"
 msgstr "Le nombre de paquets doit être un entier positif"
 
-#: plugins/check_fping.c:319 plugins/check_time.c:323
+#: plugins/check_fping.c:319 plugins/check_ntp.c:728 plugins/check_time.c:323
 msgid "Hostname was not supplied"
 msgstr "Le nom de l'hôte n'a pas été spécifié"
 
@@ -726,11 +762,11 @@ msgstr ""
 "nom ou adresse IP des hôtes à pinger (l'indication d'un adresse IP évite une "
 "recherche sur le nom, ce qui réduit la charge système)"
 
-#: plugins/check_fping.c:388 plugins/check_ping.c:562
+#: plugins/check_fping.c:388 plugins/check_ping.c:567
 msgid "warning threshold pair"
 msgstr "Valeurs pour le seuil d'avertissement"
 
-#: plugins/check_fping.c:390 plugins/check_ping.c:564
+#: plugins/check_fping.c:390 plugins/check_ping.c:569
 msgid "critical threshold pair"
 msgstr "Valeurs pour le seuil critique"
 
@@ -931,12 +967,12 @@ msgstr "Numéro de port invalide"
 msgid "Could Not Compile Regular Expression: %s"
 msgstr "Impossible de compiler l'expression régulière: %s"
 
-#: plugins/check_http.c:377 plugins/check_smtp.c:655 plugins/check_ssh.c:154
-#: plugins/check_tcp.c:473
+#: plugins/check_http.c:377 plugins/check_ntp.c:709 plugins/check_smtp.c:655
+#: plugins/check_ssh.c:154 plugins/check_tcp.c:473
 msgid "IPv6 support not available"
 msgstr "Support IPv6 non disponible"
 
-#: plugins/check_http.c:439 plugins/check_ping.c:412
+#: plugins/check_http.c:439 plugins/check_ping.c:417
 msgid "You must specify a server address or host name"
 msgstr "Vous devez spécifier une adresse ou un nom d'hôte"
 
@@ -1368,7 +1404,7 @@ msgstr "Impossible de chercher/trouver les objectclasses dans %s\n"
 msgid "LDAP %s - %.3f seconds response time|%s\n"
 msgstr "LDAP %s - %.3f secondes de temps de réponse|%s\n"
 
-#: plugins/check_ldap.c:324 plugins/check_ping.c:236
+#: plugins/check_ldap.c:324 plugins/check_ping.c:241
 msgid "IPv6 support not available\n"
 msgstr "Support IPv6 non disponible\n"
 
@@ -2193,6 +2229,45 @@ msgstr ""
 msgid "and on the client service it's connecting to."
 msgstr "et dans le service auquel il se connecte."
 
+#: plugins/check_ntp.c:720
+msgid "Critical offset should be larger than warning offset"
+msgstr ""
+"Le décalage critique devrait être plus large que le décalage d'avertissement"
+
+#: plugins/check_ntp.c:724
+msgid "Critical jitter should be larger than warning jitter"
+msgstr ""
+"La variation critique devrait être plus large que la variation "
+"d'avertissement"
+
+#: plugins/check_ntp.c:810
+msgid "Offset unknown"
+msgstr "Décalage inconnu"
+
+#: plugins/check_ntp.c:813
+msgid "Unable to fully sample sync server"
+msgstr "Échantionage incomplet"
+
+#: plugins/check_ntp.c:836
+msgid "This plugin checks the selected ntp server"
+msgstr "Ce plugin vérifie le service ntp sur l'hôte"
+
+#: plugins/check_ntp.c:844
+msgid "Offset to result in warning status (seconds)"
+msgstr "Décalage résultant un avertissement (secondes)"
+
+#: plugins/check_ntp.c:846
+msgid "Offset to result in critical status (seconds)"
+msgstr "Décalage résultant un état critique (secondes)"
+
+#: plugins/check_ntp.c:848
+msgid "Warning value for jitter"
+msgstr "Valeur d'avertissement pour la variation (jitter)"
+
+#: plugins/check_ntp.c:850
+msgid "Critical value for jitter"
+msgstr "Valeur critique pour la variation (jitter)"
+
 #: plugins/check_nwstat.c:198
 #, c-format
 msgid "NetWare %s: "
@@ -2873,205 +2948,205 @@ msgstr ""
 msgid "a password, but no effort is made to obsure or encrypt the password."
 msgstr ""
 
-#: plugins/check_ping.c:140
+#: plugins/check_ping.c:145
 msgid "CRITICAL - Could not interpret output from ping command\n"
 msgstr "CRITIQUE - Impossible d'interpréter le réponse de la commande ping\n"
 
-#: plugins/check_ping.c:156
+#: plugins/check_ping.c:161
 #, c-format
 msgid "PING %s - %sPacket loss = %d%%"
 msgstr "PING %s - %s Paquets perdus = %d%%"
 
-#: plugins/check_ping.c:159
+#: plugins/check_ping.c:164
 #, c-format
 msgid "PING %s - %sPacket loss = %d%%, RTA = %2.2f ms"
 msgstr "PING %s - %s Paquets perdus = %d%%, RTA = %2.2f ms"
 
-#: plugins/check_ping.c:247
+#: plugins/check_ping.c:252
 msgid "Could not realloc() addresses\n"
 msgstr "Impossible de réallouer les adresses\n"
 
-#: plugins/check_ping.c:262 plugins/check_ping.c:342
+#: plugins/check_ping.c:267 plugins/check_ping.c:347
 #, c-format
 msgid "<max_packets> (%s) must be a non-negative number\n"
 msgstr "<max_packets> (%s) doit être un nombre positif\n"
 
-#: plugins/check_ping.c:296
+#: plugins/check_ping.c:301
 #, c-format
 msgid "<wpl> (%s) must be an integer percentage\n"
 msgstr "<wpl> (%s) doit être un pourcentage entier\n"
 
-#: plugins/check_ping.c:307
+#: plugins/check_ping.c:312
 #, c-format
 msgid "<cpl> (%s) must be an integer percentage\n"
 msgstr "<cpl> (%s) doit être un pourcentage entier\n"
 
-#: plugins/check_ping.c:318
+#: plugins/check_ping.c:323
 #, c-format
 msgid "<wrta> (%s) must be a non-negative number\n"
 msgstr "<wrta> (%s) doit être un nombre positif\n"
 
-#: plugins/check_ping.c:329
+#: plugins/check_ping.c:334
 #, c-format
 msgid "<crta> (%s) must be a non-negative number\n"
 msgstr "<crta> (%s) doit être un nombre positif\n"
 
-#: plugins/check_ping.c:362
+#: plugins/check_ping.c:367
 #, c-format
 msgid ""
 "%s: Warning threshold must be integer or percentage!\n"
 "\n"
 msgstr "%s: Le seuil d'avertissement doit être un entier ou un pourcentage!\n"
 
-#: plugins/check_ping.c:375
+#: plugins/check_ping.c:380
 #, c-format
 msgid "<wrta> was not set\n"
 msgstr "<wrta> n'a pas été indiqué\n"
 
-#: plugins/check_ping.c:379
+#: plugins/check_ping.c:384
 #, c-format
 msgid "<crta> was not set\n"
 msgstr "<crta> n'a pas été indiqué\n"
 
-#: plugins/check_ping.c:383
+#: plugins/check_ping.c:388
 #, c-format
 msgid "<wpl> was not set\n"
 msgstr " <wpl> n'a pas été indiqué\n"
 
-#: plugins/check_ping.c:387
+#: plugins/check_ping.c:392
 #, c-format
 msgid "<cpl> was not set\n"
 msgstr "<cpl> n'a pas été indiqué\n"
 
-#: plugins/check_ping.c:391
+#: plugins/check_ping.c:396
 #, c-format
 msgid "<wrta> (%f) cannot be larger than <crta> (%f)\n"
 msgstr "<wrta> (%f) ne peut pas être plus large que <crta> (%f)\n"
 
-#: plugins/check_ping.c:395
+#: plugins/check_ping.c:400
 #, c-format
 msgid "<wpl> (%d) cannot be larger than <cpl> (%d)\n"
 msgstr "<wpl> (%d) ne peut pas être plus large que <cpl> (%d)\n"
 
-#: plugins/check_ping.c:431
+#: plugins/check_ping.c:436
 #, c-format
 msgid "Cannot open stderr for %s\n"
 msgstr "Impossible d'ouvrir le canal d'erreur standard pour %s\n"
 
-#: plugins/check_ping.c:480 plugins/check_ping.c:482
+#: plugins/check_ping.c:485 plugins/check_ping.c:487
 msgid "System call sent warnings to stderr "
 msgstr ""
 "Les appel système enverront leurs messages d'avertissement vers le canal "
 "d'erreur standard"
 
-#: plugins/check_ping.c:509
+#: plugins/check_ping.c:514
 #, fuzzy, c-format
 msgid "CRITICAL - Network Unreachable (%s)"
 msgstr "CRITIQUE - Le réseau est injoignable (%s)"
 
-#: plugins/check_ping.c:511
+#: plugins/check_ping.c:516
 #, c-format
 msgid "CRITICAL - Host Unreachable (%s)"
 msgstr "CRITIQUE - Hôte injoignable (%s)"
 
-#: plugins/check_ping.c:513
+#: plugins/check_ping.c:518
 #, c-format
 msgid "CRITICAL - Bogus ICMP: Port Unreachable (%s)"
 msgstr "CRITIQUE - Paquet ICMP incorrect: Port injoignable (%s)"
 
-#: plugins/check_ping.c:515
+#: plugins/check_ping.c:520
 #, c-format
 msgid "CRITICAL - Bogus ICMP: Protocol Unreachable (%s)"
 msgstr "CRITIQUE - Paquet ICMP incorrect: Protocole injoignable (%s)"
 
-#: plugins/check_ping.c:517
+#: plugins/check_ping.c:522
 #, c-format
 msgid "CRITICAL - Network Prohibited (%s)"
 msgstr "CRITIQUE - L'accès au réseau est interdit (%s)"
 
-#: plugins/check_ping.c:519
+#: plugins/check_ping.c:524
 #, c-format
 msgid "CRITICAL - Host Prohibited (%s)"
 msgstr "CRITIQUE - L'accès a l'hôte est interdit (%s)"
 
-#: plugins/check_ping.c:521
+#: plugins/check_ping.c:526
 #, c-format
 msgid "CRITICAL - Packet Filtered (%s)"
 msgstr "CRITIQUE - Paquet filtré (%s)"
 
-#: plugins/check_ping.c:523
+#: plugins/check_ping.c:528
 #, c-format
 msgid "CRITICAL - Host not found (%s)"
 msgstr "CRITIQUE - Hôte non trouvé (%s)"
 
-#: plugins/check_ping.c:525
+#: plugins/check_ping.c:530
 #, c-format
 msgid "CRITICAL - Time to live exceeded (%s)"
 msgstr "CRITIQUE - La durée de vie du paquet est dépassée (%s)"
 
-#: plugins/check_ping.c:532
+#: plugins/check_ping.c:537
 msgid "Unable to realloc warn_text"
 msgstr "Impossible de réattribuer le texte d'avertissement"
 
-#: plugins/check_ping.c:549
+#: plugins/check_ping.c:554
 #, c-format
 msgid "Use ping to check connection statistics for a remote host."
 msgstr ""
 "Utilise ping pour vérifier les statistiques de connections d'un hôte distant."
 
-#: plugins/check_ping.c:560
+#: plugins/check_ping.c:565
 msgid "host to ping"
 msgstr "hôte à tester"
 
-#: plugins/check_ping.c:566
+#: plugins/check_ping.c:571
 msgid "number of ICMP ECHO packets to send"
 msgstr "nombre de paquets ICMP à envoyer"
 
-#: plugins/check_ping.c:567
-#, c-format
-msgid "(Default: %d)"
+#: plugins/check_ping.c:572
+#, fuzzy, c-format
+msgid "(Default: %d)\n"
 msgstr "(Défaut: %d)"
 
-#: plugins/check_ping.c:569
+#: plugins/check_ping.c:574
 msgid "show HTML in the plugin output (obsoleted by urlize)"
 msgstr ""
 
-#: plugins/check_ping.c:573
-#, c-format
-msgid "THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel"
+#: plugins/check_ping.c:578
+#, fuzzy
+msgid "THRESHOLD is <rta>,<pl>% where <rta> is the round trip average travel"
 msgstr ""
 "Le seuil est <rta>,<pl>%% ou <rta> est le temps moyen pour l'aller retour "
 "(ms)"
 
-#: plugins/check_ping.c:574
+#: plugins/check_ping.c:579
 msgid "time (ms) which triggers a WARNING or CRITICAL state, and <pl> is the"
 msgstr ""
 "temps (ms) qui déclenche un résultat AVERTISSEMENT ou CRITIQUE, et <pl> est "
 "le "
 
-#: plugins/check_ping.c:575
+#: plugins/check_ping.c:580
 msgid "percentage of packet loss to trigger an alarm state."
 msgstr "pourcentage de paquets perdus pour déclencher une alarme."
 
-#: plugins/check_ping.c:579
+#: plugins/check_ping.c:584
 msgid ""
 "This plugin uses the ping command to probe the specified host for packet loss"
 msgstr ""
 "Ce plugin utilise la commande ping pour vérifier l'hôte spécifié pour les "
 "pertes de paquets"
 
-#: plugins/check_ping.c:580
+#: plugins/check_ping.c:585
 msgid ""
 "(percentage) and round trip average (milliseconds). It can produce HTML "
 "output"
 msgstr ""
 
-#: plugins/check_ping.c:581
+#: plugins/check_ping.c:586
 msgid ""
 "linking to a traceroute CGI contributed by Ian Cass. The CGI can be found in"
 msgstr ""
 
-#: plugins/check_ping.c:582
+#: plugins/check_ping.c:587
 msgid "the contrib area of the downloads section at http://www.nagios.org/"
 msgstr ""
 
@@ -5044,87 +5119,73 @@ msgstr ""
 msgid "Interface to to use for listening (i.e. eth0)"
 msgstr ""
 
-#: plugins-root/check_icmp.c:1226
+#: plugins-root/check_icmp.c:1227
 msgid "specify a target"
 msgstr ""
 
-#: plugins-root/check_icmp.c:1228
+#: plugins-root/check_icmp.c:1229
 msgid "warning threshold (currently "
 msgstr "Valeurs pour le seuil d'avertissement (actuellement "
 
-#: plugins-root/check_icmp.c:1231
+#: plugins-root/check_icmp.c:1232
 msgid "critical threshold (currently "
 msgstr "Valeurs pour le seuil critique (actuellement "
 
-#: plugins-root/check_icmp.c:1234
+#: plugins-root/check_icmp.c:1235
 msgid "number of packets to send (currently "
 msgstr "nombre de paquets à envoyer (actuellement "
 
-#: plugins-root/check_icmp.c:1237
+#: plugins-root/check_icmp.c:1238
 msgid "max packet interval (currently "
 msgstr ""
 
-#: plugins-root/check_icmp.c:1240
+#: plugins-root/check_icmp.c:1241
 msgid "max target interval (currently "
 msgstr ""
 
-#: plugins-root/check_icmp.c:1243
+#: plugins-root/check_icmp.c:1244
 msgid "number of alive hosts required for success"
 msgstr "nombre d'hôtes vivants requis pour réussite"
 
-#: plugins-root/check_icmp.c:1246
+#: plugins-root/check_icmp.c:1247
 msgid "TTL on outgoing packets (currently "
 msgstr ""
 
-#: plugins-root/check_icmp.c:1249
+#: plugins-root/check_icmp.c:1250
 msgid "timeout value (seconds, currently  "
 msgstr ""
 
-#: plugins-root/check_icmp.c:1252
+#: plugins-root/check_icmp.c:1253
 msgid "icmp packet size (currenly ignored)"
 msgstr ""
 
-#: plugins-root/check_icmp.c:1254
+#: plugins-root/check_icmp.c:1255
 msgid "verbose"
 msgstr ""
 
-#: plugins-root/check_icmp.c:1257
+#: plugins-root/check_icmp.c:1258
 msgid "The -H switch is optional. Naming a host (or several) to check is not."
 msgstr ""
 
-#: plugins-root/check_icmp.c:1258
+#: plugins-root/check_icmp.c:1259
 msgid ""
 "Threshold format for -w and -c is 200.25,60% for 200.25 msec RTA and 60%"
 msgstr ""
 
-#: plugins-root/check_icmp.c:1259
-msgid "packet loss.  The default values should work well for most users."
-msgstr ""
-
 #: plugins-root/check_icmp.c:1260
-msgid ""
-"You can specify different RTA factors using the standardized abbreviations"
+msgid "packet loss.  The default values should work well for most users."
 msgstr ""
 
 #: plugins-root/check_icmp.c:1261
 msgid ""
+"You can specify different RTA factors using the standardized abbreviations"
+msgstr ""
+
+#: plugins-root/check_icmp.c:1262
+msgid ""
 "us (microseconds), ms (milliseconds, default) or just plain s for seconds."
 msgstr ""
 
-#: plugins-root/check_icmp.c:1263
-msgid ""
-"Threshold format for -d is warn,crit.  12,14 means WARNING if >= 12 hops"
-msgstr ""
-
-#: plugins-root/check_icmp.c:1264
-msgid "are spent and CRITICAL if >= 14 hops are spent."
-msgstr ""
-
-#: plugins-root/check_icmp.c:1265
-msgid ""
-"NOTE: Some systems decrease TTL when forming ICMP_ECHOREPLY, others do not."
-msgstr ""
-
-#: plugins-root/check_icmp.c:1266
+#: plugins-root/check_icmp.c:1267
 msgid "The -v switch can be specified several times for increased verbosity."
 msgstr ""
