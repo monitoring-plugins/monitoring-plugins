@@ -731,9 +731,26 @@ int process_arguments(int argc, char **argv){
 	return 0;
 }
 
+char *perfd_offset (double offset)
+{
+	return fperfdata ("offset", offset, "s",
+		TRUE, owarn,
+		TRUE, ocrit,
+		FALSE, 0, FALSE, 0);
+}
+
+char *perfd_jitter (double jitter)
+{
+	return fperfdata ("jitter", jitter, "s",
+		do_jitter, jwarn,
+		do_jitter, jcrit,
+		TRUE, 0, FALSE, 0);
+}
+
 int main(int argc, char *argv[]){
 	int result, offset_result, jitter_result;
 	double offset=0, jitter=0;
+	char *result_line, *perfdata_line;
 
 	result=offset_result=jitter_result=STATE_UNKNOWN;
 
@@ -777,28 +794,32 @@ int main(int argc, char *argv[]){
 
 	switch (result) {
 		case STATE_CRITICAL :
-			printf("NTP CRITICAL: ");
+			asprintf(&result_line, "NTP CRITICAL:");
 			break;
 		case STATE_WARNING :
-			printf("NTP WARNING: ");
+			asprintf(&result_line, "NTP WARNING:");
 			break;
 		case STATE_OK :
-			printf("NTP OK: ");
+			asprintf(&result_line, "NTP OK:");
 			break;
 		default :
-			printf("NTP UNKNOWN: ");
+			asprintf(&result_line, "NTP UNKNOWN:");
 			break;
 	}
 	if(offset_result==STATE_CRITICAL){
-		printf("Offset unknown|offset=unknown");
+		asprintf(&result_line, "%s %s", result_line, _("Offset unknown"));
 	} else {
 		if(offset_result==STATE_WARNING){
-			printf("Unable to fully sample sync server. ");
+			asprintf(&result_line, "%s %s", result_line, _("Unable to fully sample sync server"));
 		}
-		printf("Offset %.10g secs|offset=%.10g", offset, offset);
+		asprintf(&result_line, "%s Offset %.10g secs", result_line, offset);
+		asprintf(&perfdata_line, "%s", perfd_offset(offset));
 	}
-	if (do_jitter) printf(" jitter=%f", jitter);
-	printf("\n");
+	if (do_jitter) {
+		asprintf(&result_line, "%s, jitter=%f", result_line, jitter);
+		asprintf(&perfdata_line, "%s %s", perfdata_line,  perfd_jitter(jitter));
+	}
+	printf("%s|%s\n", result_line, perfdata_line);
 
 	if(server_address!=NULL) free(server_address);
 	return result;
@@ -819,11 +840,14 @@ void print_help(void){
 	print_usage();
 	printf (_(UT_HELP_VRSN));
 	printf (_(UT_HOST_PORT), 'p', "123");
-	printf (_(UT_WARN_CRIT));
+	printf (" %s\n", "-w, --warning=DOUBLE");
+	printf ("    %s\n", _("Offset to result in warning status (seconds)"));
+	printf (" %s\n", "-c, --critical=DOUBLE");
+	printf ("    %s\n", _("Offset to result in critical status (seconds)"));
 	printf (" %s\n", "-j, --warning=DOUBLE");
-	printf ("    %s\n", _("warning value for jitter"));
+	printf ("    %s\n", _("Warning value for jitter"));
 	printf (" %s\n", "-k, --critical=DOUBLE");
-	printf ("    %s\n", _("critical value for jitter"));
+	printf ("    %s\n", _("Critical value for jitter"));
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 	printf (_(UT_VERBOSE));
 	printf (_(UT_SUPPORT));
