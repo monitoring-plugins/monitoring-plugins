@@ -1,6 +1,6 @@
 This file documents the major additions and syntax changes between releases.
 
-1.4.8 ??
+1.4.8 11th April 2007
 	Respects --without-world-permissions for setuid plugins
 	check_disk extra options for regex matching of filesystems and grouping of filesystems
 	for collective thresholds

@@ -2,7 +2,7 @@ This file lists the major bugs from the Nagios Plugins page on Sourceforge
 at http://sourceforge.net/tracker/?group_id=29880&atid=397597. These are not
 necessarily verified as errors.
 
-For the 1.4.6 release:
+For the 1.4.8 release:
 
 1687867 - check_http: buffer overflow vulnerability
 1675306 - check_dhcp: does not add mandatory 'end' option

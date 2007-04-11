@@ -1,3 +1,143 @@
+2007-04-10 08:17  dermoth
+
+	* po/: POTFILES.in, de.po, fr.po, nagios-plugins.pot: Add some
+	  check_ntp translations
+
+2007-04-10 08:17  dermoth
+
+	* plugins/check_ntp.c: - Fix possibility of printing scientific
+	  numbers in perfdata - Use fperfdata function for perfdata
+	  formatting - Make the printing part a bit more flexible (similar
+	  to check_disk)
+
+2007-04-10 06:58  dermoth
+
+	* po/: de.po, fr.po, nagios-plugins.pot: Hopefully this is correct.
+	  Need to make more changes so I'm commiting these.
+
+2007-04-04 21:08  dermoth
+
+	* plugins/check_ntp.c: Fix for getting dispersion instead of jitter
+	  on older servers (like xntpd on Solaris).
+
+2007-04-03 18:19  hweiss
+
+	* plugins/check_ntp.c: Fix the synchronization source selection on
+	  big-endian systems.
+
+2007-04-03 02:31  dermoth
+
+	* plugins/check_ntp.c: Temporary fix for jitter calculation
+
+2007-04-02 13:39  hweiss
+
+	* plugins/check_ntp.c: Don't rely on the assumption that the size
+	  of a READSTAT response is a multiple of
+	  sizeof(ntp_assoc_status_pair).
+
+2007-04-02 10:28  tonvoon
+
+	* lib/tests/Makefile.am: Add libgnu.a as regex functions required
+
+2007-04-02 08:32  dermoth
+
+	* plugins/check_ntp.c: Fix byte order in verbose logging
+
+2007-04-02 07:00  dermoth
+
+	* plugins/check_ntp.c: Seems like we don't get any jitter
+	  sometimes. While this needs to be fixed we should at least handle
+	  it gracefully.
+
+2007-04-01 15:21  psychotrahe
+
+	* plugins/t/check_http.t: check_http.t: - added internet_access
+	  variable to skip tests where internet access is required.
+		 - added host_tcp_http2 variable for a webserver serving
+	  the string 'nagios' in index		      - no tests are
+	  skipped if the new vars are not defined (existing installations)
+
+2007-04-01 12:17  psychotrahe
+
+	* lib/utils_disk.c: utils_disk: fixed handling if check_disk -p is
+	  a device (np_set_best_match())
+
+2007-03-31 19:49  hweiss
+
+	* NEWS: Various check_ntp fixes
+
+2007-03-31 19:48  hweiss
+
+	* plugins/check_ntp.c: Fix an out-of-bounds memcpy(3) and add a
+	  realloc(3) error check in jitter_request().
+
+2007-03-31 18:35  hweiss
+
+	* plugins/check_ntp.c: Add a warning to the verbose output if
+	  jitter_request() found no synchronization source.
+
+2007-03-31 18:29  hweiss
+
+	* plugins/check_ntp.c: Avoid division by zero.
+
+2007-03-31 18:25  hweiss
+
+	* plugins/check_ntp.c: Remove the '-O' option, as it's ignored.
+
+2007-03-30 16:45  tonvoon
+
+	* m4/np_mysqlclient.m4: Use AS_HELP_STRING instead of
+	  ACX_HELP_STRING
+
+2007-03-30 15:08  tonvoon
+
+	* NEWS, configure.in, m4/np_mysqlclient.m4: Fix AC_CHECK_LIB for
+	  mysql_init - add dependent libraries. mysql detection separated
+	  into external m4 file
+
+2007-03-30 10:00  psychotrahe
+
+	* lib/tests/test_disk.c, plugins/t/check_disk.t: Test Cases for
+	  check_disk's -r, -R, -C and -g
+
+2007-03-30 09:56  psychotrahe
+
+	* plugins/check_disk.c: check_disk: minor fix for -C if bestmatch
+	  != -p
+
+2007-03-30 09:53  psychotrahe
+
+	* lib/utils_disk.c, lib/utils_disk.h, plugins/check_disk.c:
+	  check_disk: added regex functionality -r and -R. see np-devel
+	  mail (2007-02-10)
+
+2007-03-30 09:52  psychotrahe
+
+	* lib/utils_disk.c, lib/utils_disk.h, plugins/check_disk.c:
+	  check_disk: added grouping functionality. see np-devel mail
+	  (2007-02-10)
+
+2007-03-30 09:48  psychotrahe
+
+	* lib/utils_disk.c, lib/utils_disk.h, plugins/check_disk.c:
+	  check_disk -C is more flexible now. See np-devel post
+	  (2007-02-10)
+
+2007-03-29 18:58  hweiss
+
+	* THANKS.in, plugins/check_mysql.c: Fix argument processing (Felix
+	  Frank - 1690697)
+
+2007-03-29 18:34  hweiss
+
+	* plugins-root/Makefile.am: Set the "read" and "execute" bits only
+	  for "user" and "group" in order to not overwrite
+	  "--without-world-permissions" for the root plugins.
+
+2007-03-29 11:32  tonvoon
+
+	* BUGS, NEWS, configure.in, package.def, ChangeLog: 1.4.7 release
+
 2007-03-29 11:25  tonvoon
 
 	* plugins/check_ntp.c: Adding help text for jitter flags
@@ -29,10 +169,16 @@
 	  Tests updated to check for 100% packet loss (always if ping has
 	  timeout), otherwise will check for "timed out" string
 
+2007-03-11 06:51  dermoth
+
+	* plugins-root/t/check_icmp.t: Add tests for new check_icmp switch
+	  -m
+
 2007-03-11 02:27  tonvoon
 
-	* plugins/t/check_ping.t: Converted check_ping.t to new-style
-	  testcases. Added test case for check_icmp - requires sudo access
+	* plugins/t/check_ping.t, plugins-root/t/check_icmp.t: Converted
+	  check_ping.t to new-style testcases. Added test case for
+	  check_icmp - requires sudo access
 
 2007-03-11 01:57  tonvoon
 
