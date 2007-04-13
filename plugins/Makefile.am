@@ -13,7 +13,7 @@ MATHLIBS = @MATHLIBS@
 # This is not portable. Run ". tools/devmode" to get development compile flags
 #AM_CFLAGS = -Wall
 
-libexec_PROGRAMS = check_apt check_disk check_dummy check_http check_load \
+libexec_PROGRAMS = check_apt check_cluster check_disk check_dummy check_http check_load \
 	check_mrtg check_mrtgtraf check_ntp check_nwstat check_overcr check_ping \
 	check_real check_smtp check_ssh check_tcp check_time \
 	check_ups check_users negate \
@@ -90,6 +90,7 @@ negate_LDADD = $(BASEOBJS) popen.o
 urlize_LDADD = $(BASEOBJS) popen.o
 
 check_apt_DEPENDENCIES = check_apt.c $(BASEOBJS) runcmd.o $(DEPLIBS)
+check_cluster_DEPENDENCIES = check_cluster.c $(DEPLIBS)
 check_dig_DEPENDENCIES = check_dig.c $(NETOBJS) runcmd.o $(DEPLIBS)
 check_disk_DEPENDENCIES = check_disk.c $(BASEOBJS) popen.o $(DEPLIBS) 
 check_dns_DEPENDENCIES = check_dns.c $(NETOBJS) runcmd.o $(DEPLIBS)

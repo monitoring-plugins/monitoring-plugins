@@ -1,0 +1,2 @@
+check_cluster2 is now part of the core Nagios-Plugins distribution and has
+been renamed check_cluster. It will be installed automatically.
