@@ -1,4 +1,5 @@
 check_apt
+check_cluster
 check_disk
 check_dns
 check_dummy
