@@ -6,7 +6,6 @@ For the 1.4.8 release:
 
 1687867 - check_http: buffer overflow vulnerability
 1675306 - check_dhcp: does not add mandatory 'end' option
-1675286 - check_ssh: -S flag not working
 1652471 - check_http: missing Accept header
 1648570 - check_dhcp error by asking 2 dhcp servers
 1637767 - check_ping on FreeBSD 5.4 fails

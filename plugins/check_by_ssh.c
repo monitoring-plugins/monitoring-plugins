@@ -46,9 +46,9 @@ int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
 
-int commands = 0;
-int services = 0;
-int skip = 0;
+unsigned int commands = 0;
+unsigned int services = 0;
+unsigned int skip = 0;
 char *remotecmd = NULL;
 char *comm = NULL;
 char *hostname = NULL;
@@ -92,12 +92,13 @@ main (int argc, char **argv)
 		printf ("%s\n", comm);
 
 	result = np_runcmd(comm, &chld_out, &chld_err, 0);
-	/* UNKNOWN if output found on stderr */
-	if(chld_err.buflen) {
+	/* UNKNOWN if (non-skipped) output found on stderr */
+	if((signed)chld_err.lines - (signed)skip > 0) {
 		printf(_("Remote command execution failed: %s\n"),
-			   chld_err.buflen ? chld_err.buf : _("Unknown error"));
+		       skip < chld_err.lines ? chld_err.line[skip] : chld_err.buf);
 		return STATE_UNKNOWN;
 	}
+	skip -= chld_err.lines;
 
 	/* this is simple if we're not supposed to be passive.
 	 * Wrap up quickly and keep the tricks below */
@@ -336,7 +337,7 @@ print_help (void)
   printf ("    %s\n", _("tell ssh to use Protocol 1"));
   printf (" %s\n", "-2, --proto2");
   printf ("    %s\n", _("tell ssh to use Protocol 2"));
-  printf (" %s\n", "-S, --skiplines=n");
+  printf (" %s\n", "-S, --skip=n");
   printf ("    %s\n", _("Ignore first n lines on STDERR (to suppress a logon banner)"));
   printf (" %s\n", "-f");
   printf ("    %s\n", _("tells ssh to fork rather than create a tty"));
@@ -383,6 +384,8 @@ void
 print_usage (void)
 {
 	printf (_("Usage:"));
-  printf(" %s [-fq46] [-t timeout] [-i identity] [-l user] -H <host> -C <command>",progname);
-  printf(" [-n name] [-s servicelist] [-O outputfile] [-p port] [-o ssh-option]\n");
+	printf (" %s -H <host> -C <command> [-fq] [-1|-2] [-4|-6]\n"
+	        "       [-S lines] [-t timeout] [-i identity] [-l user] [-n name]\n"
+	        "       [-s servicelist] [-O outputfile] [-p port] [-o ssh-option]\n",
+	        progname);
 }
