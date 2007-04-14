@@ -27,7 +27,6 @@ For the 1.4.8 release:
 1469468 - signal handler in popen.c is broken
 1466426 - check_ldaps doesn't default to port 636
 1447642 - check_ping segfault on Sol 10
-1433179 - check_jabber does not honor --mismatch
 1381604 - Perlsec breaks any perl plugin with perl 5.8.x
 1373801 - check_ping timeout on Mandrake 10.1
 1370031 - check_disk_smb requires DNS agree with NetBIOS names
