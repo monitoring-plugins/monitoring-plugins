@@ -98,8 +98,8 @@ int main(int argc, char **argv){
 				break;
 			default:
 				break;
-			        }
 		        }
+	        }
 		else{
 			switch(data_val){
 			case 0:
@@ -113,9 +113,9 @@ int main(int argc, char **argv){
 				break;
 			default:
 				break;
-			        }
 		        }
 	        }
+        }
 	
 
 	/* return the status of the cluster */
@@ -125,16 +125,16 @@ int main(int argc, char **argv){
 			state_text(return_code), (label==NULL)?"Service cluster":label,
 			total_services_ok,total_services_warning,
 			total_services_unknown,total_services_critical);
-                }
+	}
 	else{
 		return_code=get_status(total_hosts_down+total_hosts_unreachable, thresholds);
 		printf("CLUSTER %s: %s: %d up, %d down, %d unreachable\n",
 			state_text(return_code), (label==NULL)?"Host cluster":label,
 			total_hosts_up,total_hosts_down,total_hosts_unreachable);
-                }
+	}
 
 	return return_code;
-        }
+}
 
 
 
@@ -151,7 +151,7 @@ int process_arguments(int argc, char **argv){
 		{"verbose",  no_argument,      0,'v'},
 		{"help",     no_argument,      0,'H'},
 		{0,0,0,0}
-		};
+	};
 
 	/* no options were supplied */
 	if(argc<2)
@@ -206,8 +206,8 @@ int process_arguments(int argc, char **argv){
 		default:
 			return ERROR;
 			break;
-		        }
-		}
+	        }
+	}
 
 	if(data_vals==NULL)
 		return ERROR;
