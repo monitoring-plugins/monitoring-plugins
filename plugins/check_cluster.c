@@ -29,7 +29,7 @@
 
 const char *progname = "check_cluster";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2007";
+const char *copyright = "2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -219,13 +219,15 @@ void
 print_help(void)
 {
 	print_revision(progname, revision);
+	printf ("Copyright (c) 2000-2004 Ethan Galstad (nagios@nagios.org)\n");
 	printf(COPYRIGHT, copyright, email);
 
-	printf("%s\n", _("Host/Service Cluster Plugin for Nagios 2"));
+	printf(_("Host/Service Cluster Plugin for Nagios 2"));
+	printf("\n\n");
 
 	print_usage();
 
-
+	printf("\n");
 	printf("%s\n", _("Options:"));
 	printf (" %s\n", "-s, --service");
 	printf ("    %s\n", _("Check service cluster status"));
@@ -248,7 +250,7 @@ print_help(void)
 	printf("\n");
 	printf("%s\n", _("Notes:"));
 	printf(" %s\n", _("See:"));
-	printf(" %s\n", _("http://nagiosplug.sourceforge.net/developer-guidelines.html#THRESHOLDFORMAT"));
+	printf(" %s\n", ("http://nagiosplug.sourceforge.net/developer-guidelines.html#THRESHOLDFORMAT"));
 	printf(" %s\n", _("for THRESHOLD format and examples."));
 
 	printf(_(UT_SUPPORT));
@@ -260,14 +262,9 @@ void
 print_usage(void)
 {
 
-	printf("\n");
 	printf(_("Usage:"));
 	printf(" %s (-s | -h) -d val1[,val2,...,valn] [-l label]\n", progname);
 	printf("[-w threshold] [-c threshold] [-v] [--help]\n");
-	printf("\n");
 
 }
-
-#if 0
-#endif
 
