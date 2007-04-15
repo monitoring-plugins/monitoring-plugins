@@ -30,7 +30,6 @@ For the 1.4.8 release:
 1381604 - Perlsec breaks any perl plugin with perl 5.8.x
 1373801 - check_ping timeout on Mandrake 10.1
 1370031 - check_disk_smb requires DNS agree with NetBIOS names
-1344584 - check_snmp counter64 values not handled correctly
 1291987 - urlize useragent does not work
 1225470 - check_swap perf data incorrect
 1218438 - check_radius linking to wrong header

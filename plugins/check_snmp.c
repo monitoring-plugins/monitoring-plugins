@@ -3,7 +3,7 @@
 * Nagios check_snmp plugin
 *
 * License: GPL
-* Copyright (c) 1999-2006 nagios-plugins team
+* Copyright (c) 1999-2007 nagios-plugins team
 *
 * Last Modified: $Date$
 *
@@ -11,7 +11,7 @@
 *
 * This file contains the check_snmp plugin
 *
-*  Check status of remote machines and obtain sustem information via SNMP
+*  Check status of remote machines and obtain system information via SNMP
 *
 *
 * License Information:
@@ -36,7 +36,7 @@
 
 const char *progname = "check_snmp";
 const char *revision = "$Revision$";
-const char *copyright = "1999-2006";
+const char *copyright = "1999-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -84,8 +84,8 @@ int process_arguments (int, char **);
 int validate_arguments (void);
 char *clarify_message (char *);
 int check_num (int);
-int lu_getll (unsigned long *, char *);
-int lu_getul (unsigned long *, char *);
+int llu_getll (unsigned long long *, char *);
+int llu_getul (unsigned long long *, char *);
 char *thisarg (char *str);
 char *nextarg (char *str);
 void print_usage (void);
@@ -124,15 +124,15 @@ size_t nunits = 0;
 size_t unitv_size = 8;
 int verbose = FALSE;
 int usesnmpgetnext = FALSE;
-unsigned long lower_warn_lim[MAX_OIDS];
-unsigned long upper_warn_lim[MAX_OIDS];
-unsigned long lower_crit_lim[MAX_OIDS];
-unsigned long upper_crit_lim[MAX_OIDS];
-unsigned long response_value[MAX_OIDS];
+unsigned long long lower_warn_lim[MAX_OIDS];
+unsigned long long upper_warn_lim[MAX_OIDS];
+unsigned long long lower_crit_lim[MAX_OIDS];
+unsigned long long upper_crit_lim[MAX_OIDS];
+unsigned long long response_value[MAX_OIDS];
 int check_warning_value = FALSE;
 int check_critical_value = FALSE;
 int retries = 0;
-unsigned long eval_method[MAX_OIDS];
+unsigned long long eval_method[MAX_OIDS];
 char *delimiter;
 char *output_delim;
 char *miblist = NULL;
@@ -268,6 +268,10 @@ main (int argc, char **argv)
 			show = strstr (response, "Counter32: ") + 11;
 			strcpy(type, "c");
 		}
+		else if (strstr (response, "Counter64: ")) {
+			show = strstr (response, "Counter64: ") + 11;
+			strcpy(type, "c");
+		}
 		else if (strstr (response, "INTEGER: "))
 			show = strstr (response, "INTEGER: ") + 9;
 		else if (strstr (response, "STRING: "))
@@ -296,7 +300,7 @@ main (int argc, char **argv)
 				die (STATE_UNKNOWN,_("No valid data returned"));
 			response_value[i] = strtoul (p2, NULL, 10);
 			iresult = check_num (i);
-			asprintf (&show, "%lu", response_value[i]);
+			asprintf (&show, "%llu", response_value[i]);
 		}
 
 		/* Process this block for string matching */
@@ -501,9 +505,9 @@ process_arguments (int argc, char **argv)
 			if (strspn (optarg, "0123456789:,") < strlen (optarg))
 				usage2 (_("Invalid critical threshold: %s\n"), optarg);
 			for (ptr = optarg; ptr && jj < MAX_OIDS; jj++) {
-				if (lu_getll (&lower_crit_lim[jj], ptr) == 1)
+				if (llu_getll (&lower_crit_lim[jj], ptr) == 1)
 					eval_method[jj] |= CRIT_LT;
-				if (lu_getul (&upper_crit_lim[jj], ptr) == 1)
+				if (llu_getul (&upper_crit_lim[jj], ptr) == 1)
 					eval_method[jj] |= CRIT_GT;
 				(ptr = index (ptr, ',')) ? ptr++ : ptr;
 			}
@@ -512,9 +516,9 @@ process_arguments (int argc, char **argv)
 			if (strspn (optarg, "0123456789:,") < strlen (optarg))
 				usage2 (_("Invalid warning threshold: %s\n"), optarg);
 			for (ptr = optarg; ptr && ii < MAX_OIDS; ii++) {
-				if (lu_getll (&lower_warn_lim[ii], ptr) == 1)
+				if (llu_getll (&lower_warn_lim[ii], ptr) == 1)
 					eval_method[ii] |= WARN_LT;
-				if (lu_getul (&upper_warn_lim[ii], ptr) == 1)
+				if (llu_getul (&upper_warn_lim[ii], ptr) == 1)
 					eval_method[ii] |= WARN_GT;
 				(ptr = index (ptr, ',')) ? ptr++ : ptr;
 			}
@@ -819,14 +823,14 @@ check_num (int i)
 
 
 int
-lu_getll (unsigned long *ll, char *str)
+llu_getll (unsigned long long *ll, char *str)
 {
 	char tmp[100];
 	if (strchr (str, ':') == NULL)
 		return 0;
 	if (strchr (str, ',') != NULL && (strchr (str, ',') < strchr (str, ':')))
 		return 0;
-	if (sscanf (str, "%lu%[:]", ll, tmp) == 2)
+	if (sscanf (str, "%llu%[:]", ll, tmp) == 2)
 		return 1;
 	return 0;
 }
@@ -834,14 +838,14 @@ lu_getll (unsigned long *ll, char *str)
 
 
 int
-lu_getul (unsigned long *ul, char *str)
+llu_getul (unsigned long long *ul, char *str)
 {
 	char tmp[100];
-	if (sscanf (str, "%lu%[^,]", ul, tmp) == 1)
+	if (sscanf (str, "%llu%[^,]", ul, tmp) == 1)
 		return 1;
-	if (sscanf (str, ":%lu%[^,]", ul, tmp) == 1)
+	if (sscanf (str, ":%llu%[^,]", ul, tmp) == 1)
 		return 1;
-	if (sscanf (str, "%*u:%lu%[^,]", ul, tmp) == 1)
+	if (sscanf (str, "%*u:%llu%[^,]", ul, tmp) == 1)
 		return 1;
 	return 0;
 }
