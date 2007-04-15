@@ -48,6 +48,7 @@ test:
 # the actual targets
 
 check_apt_LDADD = $(BASEOBJS) runcmd.o
+check_cluster_LDADD = $(BASEOBJS)
 check_dig_LDADD = $(NETLIBS) runcmd.o 
 check_disk_LDADD = $(BASEOBJS) popen.o
 check_dns_LDADD = $(NETLIBS) runcmd.o
@@ -90,7 +91,7 @@ negate_LDADD = $(BASEOBJS) popen.o
 urlize_LDADD = $(BASEOBJS) popen.o
 
 check_apt_DEPENDENCIES = check_apt.c $(BASEOBJS) runcmd.o $(DEPLIBS)
-check_cluster_DEPENDENCIES = check_cluster.c $(DEPLIBS)
+check_cluster_DEPENDENCIES = check_cluster.c $(BASEOBJS) $(DEPLIBS)
 check_dig_DEPENDENCIES = check_dig.c $(NETOBJS) runcmd.o $(DEPLIBS)
 check_disk_DEPENDENCIES = check_disk.c $(BASEOBJS) popen.o $(DEPLIBS) 
 check_dns_DEPENDENCIES = check_dns.c $(NETOBJS) runcmd.o $(DEPLIBS)

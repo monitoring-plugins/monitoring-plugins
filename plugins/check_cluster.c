@@ -3,10 +3,11 @@
  * CHECK_CLUSTER2.C - Host and Service Cluster Plugin for Nagios 2.x
  *
  * Copyright (c) 2000-2004 Ethan Galstad (nagios@nagios.org)
+ * Copyright (c) 2007 nagios-plugins team
  * License: GPL
- * Last Modified:   03-11-2004
+ * Last Modified: $Date$
  *
- * License:
+ * License Information:
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,30 +23,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *****************************************************************************/
+ * $Id$
+ * 
+******************************************************************************/
 
+const char *progname = "check_cluster";
+const char *revision = "$Revision$";
+const char *copyright = "2000-2007";
+const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <getopt.h>
-
-#define OK		0
-#define ERROR		-1
-
-#define TRUE		1
-#define FALSE		0
+#include "common.h"
+#include "utils.h"
 
 #define CHECK_SERVICES	1
 #define CHECK_HOSTS	2
-
-#define MAX_INPUT_BUFFER	1024
-
-#define STATE_OK	0
-#define STATE_WARNING	1
-#define STATE_CRITICAL	2
-#define STATE_UNKNOWN	3
 
 int total_services_ok=0;
 int total_services_warning=0;
@@ -56,14 +47,15 @@ int total_hosts_up=0;
 int total_hosts_down=0;
 int total_hosts_unreachable=0;
 
-int warning_threshold=1;
-int critical_threshold=1;
+char *warn_threshold;
+char *crit_threshold;
 
 int check_type=CHECK_SERVICES;
 
 char *data_vals=NULL;
 char *label=NULL;
 
+int verbose=0;
 
 int process_arguments(int,char **);
 
@@ -75,33 +67,15 @@ int main(int argc, char **argv){
 	int data_val;
 	int return_code=STATE_OK;
 	int error=FALSE;
+	thresholds *thresholds;
 
-	if(process_arguments(argc,argv)==ERROR){
+	if(process_arguments(argc,argv)==ERROR)
+		usage(_("Could not parse arguments"));
 
-		printf("Invalid arguments supplied\n");
-		printf("\n");
-
-		printf("Host/Service Cluster Plugin for Nagios 2\n");
-		printf("Copyright (c) 2000-2004 Ethan Galstad (nagios@nagios.org)\n");
-		printf("Last Modified: 03-11-2004\n");
-		printf("License: GPL\n");
-		printf("\n");
-		printf("Usage: %s (-s | -h) [-l label] [-w threshold] [-c threshold] [-d val1,val2,...,valn]\n",argv[0]);
-		printf("\n");
-		printf("Options:\n");
-		printf("   -s, --service  = Check service cluster status\n");
-		printf("   -h, --host     = Check host cluster status\n");
-		printf("   -l, --label    = Optional prepended text output (i.e. \"Host cluster\")\n");
-		printf("   -w, --warning  = Specifies the number of hosts or services in cluster that must be in\n");
-		printf("                    a non-OK state in order to return a WARNING status level\n");
-		printf("   -c, --critical = Specifies the number of hosts or services in cluster that must be in\n");
-		printf("                    a non-OK state in order to return a CRITICAL status level\n");
-		printf("   -d, --data     = The status codes of the hosts or services in the cluster, separated\n");
-		printf("                    by commas\n");
-		printf("\n");
-
-		return STATE_UNKNOWN;
-	        }
+	/* Initialize the thresholds */
+	set_thresholds(&thresholds, warn_threshold, crit_threshold);
+	if(verbose)
+		print_thresholds("check_cluster", thresholds);
 
 	/* check the data values */
 	for(ptr=strtok(data_vals,",");ptr!=NULL;ptr=strtok(NULL,",")){
@@ -146,22 +120,17 @@ int main(int argc, char **argv){
 
 	/* return the status of the cluster */
 	if(check_type==CHECK_SERVICES){
-		if((total_services_warning+total_services_unknown+total_services_critical) >= critical_threshold)
-			return_code=STATE_CRITICAL;
-		else if((total_services_warning+total_services_unknown+total_services_critical) >= warning_threshold)
-			return_code=STATE_WARNING;
-		else
-			return_code=STATE_OK;
-		printf("%s %s: %d ok, %d warning, %d unknown, %d critical\n",(label==NULL)?"Service cluster":label,(return_code==STATE_OK)?"ok":"problem",total_services_ok,total_services_warning,total_services_unknown,total_services_critical);
+		return_code=get_status(total_services_warning+total_services_unknown+total_services_critical, thresholds);
+		printf("CLUSTER %s: %s: %d ok, %d warning, %d unknown, %d critical\n",
+			state_text(return_code), (label==NULL)?"Service cluster":label,
+			total_services_ok,total_services_warning,
+			total_services_unknown,total_services_critical);
                 }
 	else{
-		if((total_hosts_down+total_hosts_unreachable) >= critical_threshold)
-			return_code=STATE_CRITICAL;
-		else if((total_hosts_down+total_hosts_unreachable) >= warning_threshold)
-			return_code=STATE_WARNING;
-		else
-			return_code=STATE_OK;
-		printf("%s %s: %d up, %d down, %d unreachable\n",(label==NULL)?"Host cluster":label,(return_code==STATE_OK)?"ok":"problem",total_hosts_up,total_hosts_down,total_hosts_unreachable);
+		return_code=get_status(total_hosts_down+total_hosts_unreachable, thresholds);
+		printf("CLUSTER %s: %s: %d up, %d down, %d unreachable\n",
+			state_text(return_code), (label==NULL)?"Host cluster":label,
+			total_hosts_up,total_hosts_down,total_hosts_unreachable);
                 }
 
 	return return_code;
@@ -179,6 +148,8 @@ int process_arguments(int argc, char **argv){
 		{"label",    required_argument,0,'l'},
 		{"host",     no_argument,      0,'h'},
 		{"service",  no_argument,      0,'s'},
+		{"verbose",  no_argument,      0,'v'},
+		{"help",     no_argument,      0,'H'},
 		{0,0,0,0}
 		};
 
@@ -188,7 +159,7 @@ int process_arguments(int argc, char **argv){
 
 	while(1){
 
-		c=getopt_long(argc,argv,"hsw:c:d:l:",longopts,&option);
+		c=getopt_long(argc,argv,"hHsvw:c:d:l:",longopts,&option);
 
 		if(c==-1 || c==EOF || c==1)
 			break;
@@ -204,11 +175,15 @@ int process_arguments(int argc, char **argv){
 			break;
 
 		case 'w': /* warning threshold */
-			warning_threshold=atoi(optarg);
+			if (strspn (optarg, "0123456789:,") < strlen (optarg))
+				usage2 (_("Invalid warning threshold: %s\n"), optarg);
+			warn_threshold = strdup(optarg);
 			break;
 
 		case 'c': /* warning threshold */
-			critical_threshold=atoi(optarg);
+			if (strspn (optarg, "0123456789:,") < strlen (optarg))
+				usage2 (_("Invalid critical threshold: %s\n"), optarg);
+			crit_threshold = strdup(optarg);
 			break;
 
 		case 'd': /* data values */
@@ -217,6 +192,15 @@ int process_arguments(int argc, char **argv){
 
 		case 'l': /* text label */
 			label=(char *)strdup(optarg);
+			break;
+
+		case 'v': /* verbose */
+			verbose++;
+			break;
+
+		case 'H': /* help */
+			print_help();
+			exit(STATE_UNKNOWN);
 			break;
 
 		default:
@@ -229,4 +213,61 @@ int process_arguments(int argc, char **argv){
 		return ERROR;
 
 	return OK;
-        }
+}
+
+void
+print_help(void)
+{
+	print_revision(progname, revision);
+	printf(COPYRIGHT, copyright, email);
+
+	printf("%s\n", _("Host/Service Cluster Plugin for Nagios 2"));
+
+	print_usage();
+
+
+	printf("%s\n", _("Options:"));
+	printf (" %s\n", "-s, --service");
+	printf ("    %s\n", _("Check service cluster status"));
+	printf (" %s\n", "-h, --host");
+	printf ("    %s\n", _("Check host cluster status"));
+	printf (" %s\n", "-l, --label=STRING");
+	printf ("    %s\n", _("Optional prepended text output (i.e. \"Host cluster\")"));
+	printf (" %s\n", "-w, --warning=THRESHOLD");
+	printf ("    %s\n", _("Specifies the range of hosts or services in cluster that must be in a"));
+	printf ("    %s\n", _("non-OK state in order to return a WARNING status level"));
+	printf (" %s\n", "-c, --critical=THRESHOLD");
+	printf ("    %s\n", _("Specifies the range of hosts or services in cluster that must be in a"));
+	printf ("    %s\n", _(" non-OK state in order to return a CRITICAL status level"));
+	printf (" %s\n", "-d, --data=LIST");
+	printf ("    %s\n", _("The status codes of the hosts or services in the cluster, separated by"));
+	printf ("    %s\n", _("commas"));
+
+	printf(_(UT_VERBOSE));
+
+	printf("\n");
+	printf("%s\n", _("Notes:"));
+	printf(" %s\n", _("See:"));
+	printf(" %s\n", _("http://nagiosplug.sourceforge.net/developer-guidelines.html#THRESHOLDFORMAT"));
+	printf(" %s\n", _("for THRESHOLD format and examples."));
+
+	printf(_(UT_SUPPORT));
+	printf("\n");
+}
+
+
+void
+print_usage(void)
+{
+
+	printf("\n");
+	printf(_("Usage:"));
+	printf(" %s (-s | -h) -d val1[,val2,...,valn] [-l label]\n", progname);
+	printf("[-w threshold] [-c threshold] [-v] [--help]\n");
+	printf("\n");
+
+}
+
+#if 0
+#endif
+
