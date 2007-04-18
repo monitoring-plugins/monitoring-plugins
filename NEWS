@@ -2,7 +2,7 @@ This file documents the major additions and syntax changes between releases.
 
 1.4.9 ??
 	Inclusion of contrib/check_cluster2 as check_cluster with some improvements
-	Fix the -S option in check_by_ssh
+	New/improved -E/--skip-stderr and -S/--skip-stdout options for check_by_ssh
 	check_snmp now support Counter64
 
 1.4.8 11th April 2007
