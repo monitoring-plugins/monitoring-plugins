@@ -4,6 +4,7 @@ This file documents the major additions and syntax changes between releases.
 	Inclusion of contrib/check_cluster2 as check_cluster with some improvements
 	New/improved -E/--skip-stderr and -S/--skip-stdout options for check_by_ssh
 	check_snmp now support Counter64
+	Fix compilation of check_ldap, check_radius and check_pgsql
 
 1.4.8 11th April 2007
 	Respects --without-world-permissions for setuid plugins
