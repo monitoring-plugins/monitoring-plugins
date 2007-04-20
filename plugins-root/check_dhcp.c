@@ -488,7 +488,6 @@ int get_dhcp_offer(int sock){
 	struct sockaddr_in source;
 	struct sockaddr_in via;
 	int result=OK;
-	int timeout=1;
 	int responses=0;
 	int x;
 	time_t start_time;
@@ -595,7 +594,6 @@ int get_dhcp_offer(int sock){
 
 /* sends a DHCP packet */
 int send_dhcp_packet(void *buffer, int buffer_size, int sock, struct sockaddr_in *dest){
-	struct sockaddr_in myname;
 	int result;
 
 	result=sendto(sock,(char *)buffer,buffer_size,0,(struct sockaddr *)dest,sizeof(*dest));
