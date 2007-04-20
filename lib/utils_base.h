@@ -31,6 +31,7 @@ typedef struct thresholds_struct {
 range *parse_range_string (char *);
 int _set_thresholds(thresholds **, char *, char *);
 void set_thresholds(thresholds **, char *, char *);
+void print_thresholds(const char *, thresholds *);
 int check_range(double, range *);
 int get_status(double, thresholds *);
 
