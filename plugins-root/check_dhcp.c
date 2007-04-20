@@ -182,6 +182,7 @@ typedef struct requested_server_struct{
 #define DHCP_OPTION_BROADCAST_ADDRESS   28
 #define DHCP_OPTION_REQUESTED_ADDRESS   50
 #define DHCP_OPTION_LEASE_TIME          51
+#define DHCP_OPTION_SERVER_IDENTIFIER   54
 #define DHCP_OPTION_RENEWAL_TIME        58
 #define DHCP_OPTION_REBINDING_TIME      59
 
@@ -765,9 +766,9 @@ int add_requested_server(struct in_addr server_address){
 int add_dhcp_offer(struct in_addr source,dhcp_packet *offer_packet){
 	dhcp_offer *new_offer;
 	int x;
-	int y;
 	unsigned option_type;
 	unsigned option_length;
+	struct in_addr serv_ident = {0};
 
 	if(offer_packet==NULL)
 		return ERROR;
@@ -789,23 +790,28 @@ int add_dhcp_offer(struct in_addr source,dhcp_packet *offer_packet){
 			printf("Option: %d (0x%02X)\n",option_type,option_length);
 
 		/* get option data */
-		if(option_type==DHCP_OPTION_LEASE_TIME){
+		switch(option_type){
+		case DHCP_OPTION_LEASE_TIME:
 			memcpy(&dhcp_lease_time, &offer_packet->options[x],sizeof(dhcp_lease_time));
 			dhcp_lease_time = ntohl(dhcp_lease_time);
-			}
-		if(option_type==DHCP_OPTION_RENEWAL_TIME){
+			break;
+		case DHCP_OPTION_RENEWAL_TIME:
 			memcpy(&dhcp_renewal_time, &offer_packet->options[x],sizeof(dhcp_renewal_time));
 			dhcp_renewal_time = ntohl(dhcp_renewal_time);
-			}
-		if(option_type==DHCP_OPTION_REBINDING_TIME){
+			break;
+		case DHCP_OPTION_REBINDING_TIME:
 			memcpy(&dhcp_rebinding_time, &offer_packet->options[x],sizeof(dhcp_rebinding_time));
 			dhcp_rebinding_time = ntohl(dhcp_rebinding_time);
+			break;
+		case DHCP_OPTION_SERVER_IDENTIFIER:
+			memcpy(&serv_ident.s_addr, &offer_packet->options[x],sizeof(serv_ident.s_addr));
+			break;
 			}
 
 		/* skip option data we're ignoring */
-		else
-			for(y=0;y<option_length;y++,x++);
-	        }
+		if(option_type!=DHCP_OPTION_REBINDING_TIME)
+			x+=option_length;
+		}
 
 	if(verbose){
 		if(dhcp_lease_time==DHCP_INFINITE_TIME)
@@ -826,7 +832,19 @@ int add_dhcp_offer(struct in_addr source,dhcp_packet *offer_packet){
 	if(new_offer==NULL)
 		return ERROR;
 
-	new_offer->server_address=source;
+	/*
+	 * RFC 2131 (2.) says: "DHCP clarifies the interpretation of the
+	 * 'siaddr' field as the address of the server to use in the next step
+	 * of the client's bootstrap process.  A DHCP server may return its own
+	 * address in the 'siaddr' field, if the server is prepared to supply
+	 * the next bootstrap service (e.g., delivery of an operating system
+	 * executable image).  A DHCP server always returns its own address in
+	 * the 'server identifier' option."  'serv_ident' is the 'server
+	 * identifier' option, 'source' is the 'siaddr' field or (if 'siaddr'
+	 * wasn't available) the IP address we received the DHCPOFFER from.  If
+	 * 'serv_ident' isn't available for some reason, we use 'source'.
+	 */
+	new_offer->server_address=serv_ident.s_addr?serv_ident:source;
 	new_offer->offered_address=offer_packet->yiaddr;
 	new_offer->lease_time=dhcp_lease_time;
 	new_offer->renewal_time=dhcp_renewal_time;
