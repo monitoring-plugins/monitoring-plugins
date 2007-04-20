@@ -38,6 +38,9 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #define CHECK_SERVICES	1
 #define CHECK_HOSTS	2
 
+void print_help (void);
+void print_usage (void);
+
 int total_services_ok=0;
 int total_services_warning=0;
 int total_services_unknown=0;
@@ -62,11 +65,9 @@ int process_arguments(int,char **);
 
 
 int main(int argc, char **argv){
-	char input_buffer[MAX_INPUT_BUFFER];
 	char *ptr;
 	int data_val;
 	int return_code=STATE_OK;
-	int error=FALSE;
 	thresholds *thresholds;
 
 	if(process_arguments(argc,argv)==ERROR)
