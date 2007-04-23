@@ -105,7 +105,7 @@ main (int argc, char **argv)
 
 	/* If ./configure finds ping has timeout values, set plugin alarm slightly
 	 * higher so that we can use response from command line ping */
-#ifdef PING_PACKETS_FIRST && PING_HAS_TIMEOUT
+#if defined(PING_PACKETS_FIRST) && defined(PING_HAS_TIMEOUT)
 	alarm (timeout_interval + 1);
 #else
 	alarm (timeout_interval);
