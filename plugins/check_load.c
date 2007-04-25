@@ -71,6 +71,7 @@ double cload[3] = { 0.0, 0.0, 0.0 };
 #define la15 la[2]
 
 char *status_line;
+int take_into_account_cpus = 0;
 
 static void
 get_threshold(char *arg, double *th)
@@ -103,6 +104,7 @@ main (int argc, char **argv)
 {
 	int result;
 	int i;
+	long numcpus;
 
 	double la[3] = { 0.0, 0.0, 0.0 };	/* NetBSD complains about unitialized arrays */
 #ifndef HAVE_GETLOADAVG
@@ -163,6 +165,13 @@ main (int argc, char **argv)
 # endif
 #endif
 
+	if (take_into_account_cpus == 1) {
+		if ((numcpus = GET_NUMBER_OF_CPUS()) > 0) {
+			la[0] = la[0] / numcpus;
+			la[1] = la[1] / numcpus;
+			la[2] = la[2] / numcpus;
+		}
+	}
 	if ((la[0] < 0.0) || (la[1] < 0.0) || (la[2] < 0.0)) {
 #ifdef HAVE_GETLOADAVG
 		printf (_("Error in getloadavg()\n"));
@@ -208,6 +217,7 @@ process_arguments (int argc, char **argv)
 	static struct option longopts[] = {
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
+		{"percpu", no_argument, 0, 'r'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
@@ -217,7 +227,7 @@ process_arguments (int argc, char **argv)
 		return ERROR;
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vhc:w:", longopts, &option);
+		c = getopt_long (argc, argv, "Vhrc:w:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -228,6 +238,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'c': /* critical time threshold */
 			get_threshold(optarg, cload);
+			break;
+		case 'r': /* Divide load average by number of CPUs */
+			take_into_account_cpus = 1;
 			break;
 		case 'V':									/* version */
 			print_revision (progname, revision);
@@ -301,6 +314,8 @@ print_help (void)
   printf (" %s\n", "-c, --critical=CLOAD1,CLOAD5,CLOAD15");
   printf ("    %s\n", _("Exit with CRITICAL status if load average exceed CLOADn"));
   printf ("    %s\n", _("the load average format is the same used by \"uptime\" and \"w\""));
+  printf (" %s\n", "-r, --percpu");
+  printf ("    %s\n", _("Divide the load averages by the number of CPUs (when possible)"));
 
 	printf (_(UT_SUPPORT));
 }
@@ -309,5 +324,5 @@ void
 print_usage (void)
 {
   printf (_("Usage:"));
-	printf ("%s -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15\n", progname);
+	printf ("%s [-r] -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15\n", progname);
 }

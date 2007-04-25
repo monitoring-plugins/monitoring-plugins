@@ -80,6 +80,18 @@
 #include <unistd.h>
 #endif
 
+/* GET_NUMBER_OF_CPUS is a macro to return 
+   number of CPUs, if we can get that data.
+   Use configure.in to test for various OS ways of
+   getting that data
+   Will return -1 if cannot get data
+*/
+#ifdef HAVE_SYSCONF__SC_NPROCESSORS_CONF 
+#define GET_NUMBER_OF_CPUS() sysconf(_SC_NPROCESSORS_CONF)
+#else
+#define GET_NUMBER_OF_CPUS() -1
+#endif
+
 #ifdef TIME_WITH_SYS_TIME
 # include <sys/time.h>
 # include <time.h>
