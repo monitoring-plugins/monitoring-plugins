@@ -266,13 +266,15 @@ sub make {
 sub maketest {
         # Tests
         print LOG "LANG=C make test 2>&1\n";
-        open( MAKE, "LANG=C make test 2>&1 |");
+        open( MAKE, "LANG=C make test && make install DESTDIR=/tmp/tinderbox_build.$$ && make install-strip DESTDIR=/tmp/tinderbox_build2.$$ 2>&1 |");
 	while ( <MAKE> ) {
 		print $_;
 		print LOG $_;
 	}
 	close( MAKE);
-	return ! $?;
+	my $rc = $?;
+	system("rm -fr /tmp/tinderbox_build.$$ /tmp/tinderbox_build2.$$");
+	return ! $rc;
 }
 
 # Main function
