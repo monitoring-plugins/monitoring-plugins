@@ -49,8 +49,8 @@ enum {
 
 #define	UNIX_EPOCH 2208988800UL
 
-uint32_t server_time, raw_server_time;
-time_t diff_time;
+uint32_t raw_server_time;
+unsigned long server_time, diff_time;
 int warning_time = 0;
 int check_warning_time = FALSE;
 int critical_time = 0;
@@ -166,9 +166,9 @@ main (int argc, char **argv)
 	else
 		diff_time = (unsigned long)end_time - server_time;
 
-	if (check_critical_diff == TRUE && diff_time > (time_t)critical_diff)
+	if (check_critical_diff == TRUE && diff_time > critical_diff)
 		result = STATE_CRITICAL;
-	else if (check_warning_diff == TRUE && diff_time > (time_t)warning_diff)
+	else if (check_warning_diff == TRUE && diff_time > warning_diff)
 		result = STATE_WARNING;
 
 	printf (_("TIME %s - %lu second time difference|%s %s\n"),
@@ -177,9 +177,9 @@ main (int argc, char **argv)
 	                  check_warning_time, (long)warning_time,
 	                  check_critical_time, (long)critical_time,
 	                  TRUE, 0, FALSE, 0),
-	        perfdata ("offset", (long)diff_time, "s",
-	                  check_warning_diff, (long)warning_diff,
-	                  check_critical_diff, (long)critical_diff,
+	        perfdata ("offset", diff_time, "s",
+	                  check_warning_diff, warning_diff,
+	                  check_critical_diff, critical_diff,
 	                  TRUE, 0, FALSE, 0));
 	return result;
 }
