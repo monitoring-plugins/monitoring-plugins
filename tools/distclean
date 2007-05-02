@@ -22,7 +22,7 @@ fi
 
 echo "$0: Removing auto* files..."
 rm -rf autom4te.cache
-find . -type f -name Makefile.in -print0| xargs -0 rm -f
+find . -type f -name Makefile.in -print| xargs rm -f
 rm -f aclocal.m4 compile config.guess config.h.in config.sub configure depcomp
 rm -f m4/Makefile.am
 
