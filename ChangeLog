@@ -1,3 +1,8 @@
+2007-05-03 22:34  psychotrahe
+
+	* plugins/check_disk.c: - Fix partition selection if if last
+	  argument is a pathname/device without using -p
+
 2007-04-10 08:17  dermoth
 
 	* po/: POTFILES.in, de.po, fr.po, nagios-plugins.pot: Add some

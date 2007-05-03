@@ -734,6 +734,7 @@ process_arguments (int argc, char **argv)
 
   if (argc > c && path == NULL) {
     se = np_add_parameter(&path_select_list, strdup(argv[c++]));
+    path_selected = true;
     set_all_thresholds(se);
   }
 
