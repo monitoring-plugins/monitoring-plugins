@@ -619,7 +619,7 @@ print_help (void)
   printf (" %s\n", "-T, --temperature");
   printf ("    %s\n", _("Output of temperatures in Celsius"));
   printf (" %s\n", "-v, --variable=STRING");
-  printf ("    %s %s\n", _("Valid values for STRING are"), "LINE, TEMP, BATTPCT or LOADPCT,");
+  printf ("    %s %s\n", _("Valid values for STRING are"), "LINE, TEMP, BATTPCT or LOADPCT");
 
 	printf (_(UT_WARN_CRIT));
 
