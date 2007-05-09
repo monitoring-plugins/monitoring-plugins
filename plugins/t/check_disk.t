@@ -24,7 +24,7 @@ my $mountpoint2_valid = getTestParameter( "NP_MOUNTPOINT2_VALID", "Path to anoth
 if ($mountpoint_valid eq "" or $mountpoint2_valid eq "") {
 	plan skip_all => "Need 2 mountpoints to test";
 } else {
-	plan tests => 68;
+	plan tests => 69;
 }
 
 $result = NPTest->testCmd( 
@@ -114,10 +114,8 @@ like  ( $result->only_output, qr/$more_free/, "Have disk name in text");
 $result = NPTest->testCmd( "./check_disk -w 1 -c 1 -p $more_free -p $less_free" );
 cmp_ok( $result->return_code, '==', 0, "At least 1 MB available on $more_free and $less_free");
 $_ = $result->output;
-print $result->output."\n";
 my ($free_mb_on_mp1, $free_mb_on_mp2) = (m/(\d+) MB .* (\d+) MB /g);
 my $free_mb_on_all = $free_mb_on_mp1 + $free_mb_on_mp2;
-print "$free_mb_on_all = $free_mb_on_mp1 + $free_mb_on_mp2\n";
 
 
 
@@ -255,6 +253,7 @@ cmp_ok( $result->return_code, "==", 2, "100 GB empty" );
 # Checking old syntax of check_disk warn crit [fs], with warn/crit at USED% thresholds
 $result = NPTest->testCmd( "./check_disk 0 0 ".${mountpoint_valid} );
 cmp_ok( $result->return_code, "==", 2, "Old syntax: 0% used");
+like ( $result->only_output, qr(^[^;]*;[^;]*$), "Select only one path with positional arguments");
 
 $result = NPTest->testCmd( "./check_disk 100 100 $mountpoint_valid" );
 cmp_ok( $result->return_code, '==', 0, "Old syntax: 100% used" );
