@@ -69,7 +69,7 @@ int main(int argc, char **argv){
 	char *ptr;
 	int data_val;
 	int return_code=STATE_OK;
-	thresholds *thresholds;
+	thresholds *thresholds = NULL;
 
 	if(process_arguments(argc,argv)==ERROR)
 		usage(_("Could not parse arguments"));
