@@ -1349,5 +1349,6 @@ print_usage (void)
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L]\n");
   printf ("       [-a auth] [-f <ok | warn | critcal | follow>] [-e <expect>]\n");
   printf ("       [-s string] [-l] [-r <regex> | -R <case-insensitive regex>] [-P string]\n");
-  printf ("       [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>] [-A string] [-k string]\n");
+  printf ("       [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>] [-A string]\n");
+  printf ("       [-k string] [-S] [-C <age>] [-T <content-type>]\n");
 }
