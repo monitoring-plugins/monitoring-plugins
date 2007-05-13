@@ -185,6 +185,7 @@ typedef struct requested_server_struct{
 #define DHCP_OPTION_SERVER_IDENTIFIER   54
 #define DHCP_OPTION_RENEWAL_TIME        58
 #define DHCP_OPTION_REBINDING_TIME      59
+#define DHCP_OPTION_END                 255
 
 #define DHCP_INFINITE_TIME              0xFFFFFFFF
 
@@ -401,6 +402,7 @@ int get_hardware_address(int sock,char *interface_name){
 int send_dhcp_discover(int sock){
 	dhcp_packet discover_packet;
 	struct sockaddr_in sockaddr_broadcast;
+    unsigned short opts;
 
 
 	/* clear the packet data structure */
@@ -442,17 +444,20 @@ int send_dhcp_discover(int sock){
 	discover_packet.options[2]='\x53';
 	discover_packet.options[3]='\x63';
 
+    opts = 4;
 	/* DHCP message type is embedded in options field */
-	discover_packet.options[4]=DHCP_OPTION_MESSAGE_TYPE;    /* DHCP message type option identifier */
-	discover_packet.options[5]='\x01';               /* DHCP message option length in bytes */
-	discover_packet.options[6]=DHCPDISCOVER;
+	discover_packet.options[opts++]=DHCP_OPTION_MESSAGE_TYPE;    /* DHCP message type option identifier */
+	discover_packet.options[opts++]='\x01';               /* DHCP message option length in bytes */
+	discover_packet.options[opts++]=DHCPDISCOVER;
 
 	/* the IP address we're requesting */
 	if(request_specific_address==TRUE){
-		discover_packet.options[7]=DHCP_OPTION_REQUESTED_ADDRESS;
-		discover_packet.options[8]='\x04';
-		memcpy(&discover_packet.options[9],&requested_address,sizeof(requested_address));
+		discover_packet.options[opts++]=DHCP_OPTION_REQUESTED_ADDRESS;
+		discover_packet.options[opts++]='\x04';
+		memcpy(&discover_packet.options[opts],&requested_address,sizeof(requested_address));
+		opts += sizeof(requested_address);
 	        }
+	discover_packet.options[opts++]=DHCP_OPTION_END;
 	
 	/* send the DHCPDISCOVER packet to broadcast address */
         sockaddr_broadcast.sin_family=AF_INET;
