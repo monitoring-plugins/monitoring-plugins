@@ -34,7 +34,7 @@ $t += checkCmd( "./check_tcp $hostname_invalid   -p 80 -wt   0 -ct   0 -to 1", 2
 
 # Need the \r\n to make it more standards compliant with web servers. Need the various quotes
 # so that perl doesn't interpret the \r\n and is passed onto command line correctly
-$t += checkCmd( "./check_tcp $host_tcp_http      -p 80 -E -s ".'"GET /\r\n\r\n"'." -e 'ThisShouldntMatch' -j", 1, $failedExpect );
+$t += checkCmd( "./check_tcp $host_tcp_http      -p 80 -E -s ".'"GET / HTTP/1.1\r\n\r\n"'." -e 'ThisShouldntMatch' -j", 1, $failedExpect );
 
 exit(0) if defined($Test::Harness::VERSION);
 exit($tests - $t);
