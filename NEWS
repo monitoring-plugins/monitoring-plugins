@@ -7,6 +7,7 @@ This file documents the major additions and syntax changes between releases.
 	Fix compilation of check_ldap, check_radius and check_pgsql
 	check_load can optionally divide by number of cpus
 	Fix check_time returning wrong OK when time is before the epoch on some arch
+	Make check_http output more consistent
 
 1.4.8 11th April 2007
 	Respects --without-world-permissions for setuid plugins
