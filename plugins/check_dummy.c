@@ -84,8 +84,10 @@ main (int argc, char **argv)
     printf (_("UNKNOWN"));
     break;
   default:
+    printf (_("UNKNOWN"));
+    printf (": ");
     printf (_("Status %d is not a supported error state\n"), result);
-    break;
+    return STATE_UNKNOWN;
   }
 
   if (argc >= 3) 
