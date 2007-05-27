@@ -372,6 +372,9 @@ main(int argc, char **argv)
 	int result;
 	struct rta_host *host;
 	
+	/* print a helpful error message if geteuid != 0 */
+	np_warn_if_not_root();
+
 	/* we only need to be setsuid when we get the sockets, so do
 	 * that before pointer magic (esp. on network data) */
 	icmp_sockerrno = udp_sockerrno = tcp_sockerrno = sockets = 0;

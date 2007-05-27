@@ -250,10 +250,13 @@ int main(int argc, char **argv){
 	int dhcp_socket;
 	int result = STATE_UNKNOWN;
 
+	/* this plugin almost certainly needs root permissions. */
+	np_warn_if_not_root();
+	
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
-	
+
 	if(process_arguments(argc,argv)!=OK){
 		usage4 (_("Could not parse arguments"));
 		}

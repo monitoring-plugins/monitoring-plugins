@@ -43,4 +43,11 @@ void die (int, const char *, ...) __attribute__((noreturn,format(printf, 2, 3)))
 #define NP_RANGE_UNPARSEABLE 1
 #define NP_WARN_WITHIN_CRIT 2
 
+/* a simple check to see if we're running as root.  
+ * returns zero on failure, nonzero on success */
+int np_check_if_root(void);
+/* and a helpful wrapper around that.  it returns the same status
+ * code from the above function, in case it's helpful for testing */
+int np_warn_if_not_root(void);
+
 #endif /* _UTILS_BASE_ */
