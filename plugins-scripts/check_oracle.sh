@@ -118,9 +118,11 @@ fi
 # Last resort
 [ -z "$ORACLE_HOME" -a -d $PROGPATH/oracle ] && ORACLE_HOME=$PROGPATH/oracle
 
-if [ -z "$ORACLE_HOME" -o ! -d "$ORACLE_HOME" ] ; then
-	echo "Cannot determine ORACLE_HOME for sid $2"
-	exit $STATE_UNKNOWN
+if [ "$cmd" != "--db" ]; then
+	if [ -z "$ORACLE_HOME" -o ! -d "$ORACLE_HOME" ] ; then
+		echo "Cannot determine ORACLE_HOME for sid $2"
+		exit $STATE_UNKNOWN
+	fi
 fi
 PATH=$PATH:$ORACLE_HOME/bin
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ORACLE_HOME/lib
