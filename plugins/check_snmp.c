@@ -184,13 +184,13 @@ main (int argc, char **argv)
 	/* create the command line to execute */
 		if(usesnmpgetnext == TRUE) {
 		asprintf(&command_line, "%s -t %d -r %d -m %s -v %s %s %s:%s %s",
-				    PATH_TO_SNMPGETNEXT, timeout_interval, retries, miblist, proto,
-						authpriv, server_address, port, oid);
+			PATH_TO_SNMPGETNEXT, timeout_interval, retries, miblist, proto,
+			authpriv, server_address, port, oid);
 	}else{
 
 		asprintf (&command_line, "%s -t %d -r %d -m %s -v %s %s %s:%s %s",
-	          PATH_TO_SNMPGET, timeout_interval, retries, miblist, proto,
-	          authpriv, server_address, port, oid);
+			PATH_TO_SNMPGET, timeout_interval, retries, miblist, proto,
+			authpriv, server_address, port, oid);
 	}
 	
 	if (verbose)
@@ -343,11 +343,11 @@ main (int argc, char **argv)
 		/* Prepend a label for this OID if there is one */
 		if (nlabels > (size_t)1 && (size_t)i < nlabels && labels[i] != NULL)
 			asprintf (&outbuff, "%s%s%s %s%s%s", outbuff,
-			          (i == 0) ? " " : output_delim,
-			          labels[i], mark (iresult), show, mark (iresult));
+				(i == 0) ? " " : output_delim,
+				labels[i], mark (iresult), show, mark (iresult));
 		else
 			asprintf (&outbuff, "%s%s%s%s%s", outbuff, (i == 0) ? " " : output_delim,
-			          mark (iresult), show, mark (iresult));
+				mark (iresult), show, mark (iresult));
 
 		/* Append a unit string for this OID if there is one */
 		if (nunits > (size_t)0 && (size_t)i < nunits && unitv[i] != NULL)
@@ -365,9 +365,9 @@ main (int argc, char **argv)
 
 	if (found == 0)
 		die (STATE_UNKNOWN,
-		     _("%s problem - No data received from host\nCMD: %s\n"),
-		     label,
-		     command_line);
+			_("%s problem - No data received from host\nCMD: %s\n"),
+			label,
+			command_line);
 
 	/* WARNING if output found on stderr */
 	if (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
@@ -466,31 +466,31 @@ process_arguments (int argc, char **argv)
 		case 'H':									/* Host or server */
 			server_address = optarg;
 			break;
-		case 'p':       /* TCP port number */
+		case 'p':	/* TCP port number */
 			port = optarg;
 			break;
-		case 'm':      /* List of MIBS  */
+		case 'm':	/* List of MIBS  */
 			miblist = optarg;
 			break;
-		case 'n':     /* usesnmpgetnext */
+		case 'n':	/* usesnmpgetnext */
 			usesnmpgetnext = TRUE;
 			break;
-		case 'P':     /* SNMP protocol version */
+		case 'P':	/* SNMP protocol version */
 			proto = optarg;
 			break;
-		case 'L':     /* security level */
+		case 'L':	/* security level */
 			seclevel = optarg;
 			break;
-		case 'U':     /* security username */
+		case 'U':	/* security username */
 			secname = optarg;
 			break;
-		case 'a':     /* auth protocol */
+		case 'a':	/* auth protocol */
 			authproto = optarg;
 			break;
-		case 'A':     /* auth passwd */
+		case 'A':	/* auth passwd */
 			authpasswd = optarg;
 			break;
-		case 'X':     /* priv passwd */
+		case 'X':	/* priv passwd */
 			privpasswd = optarg;
 			break;
 		case 't':	/* timeout period */
@@ -701,14 +701,14 @@ validate_arguments ()
 	
 	 
 	
-	if (proto == NULL || (strcmp(proto,DEFAULT_PROTOCOL) == 0) ) {        /* default protocol version */
+	if (proto == NULL || (strcmp(proto,DEFAULT_PROTOCOL) == 0) ) {	/* default protocol version */
 		asprintf(&proto, DEFAULT_PROTOCOL);
 		asprintf(&authpriv, "%s%s", "-c ", community);
 	}
-	else if ( strcmp (proto, "2c") == 0 ) {                 /* snmpv2c args */
+	else if ( strcmp (proto, "2c") == 0 ) {		/* snmpv2c args */
 		asprintf(&authpriv, "%s%s", "-c ", community);
 	}
-	else if ( strcmp (proto, "3") == 0 ) {                 /* snmpv3 args */
+	else if ( strcmp (proto, "3") == 0 ) {		/* snmpv3 args */
 		asprintf(&proto, "%s", "3");
 		
 		if ( (strcmp(seclevel, "noAuthNoPriv") == 0) || seclevel == NULL ) {
