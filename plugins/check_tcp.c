@@ -366,16 +366,16 @@ main (int argc, char **argv)
 	if(match == -2)
 		printf ("|%s",
 				fperfdata ("time", elapsed_time, "s",
-				TRUE, 0,
-				TRUE, 0,
+				(flags & FLAG_TIME_WARN ? TRUE : FALSE), 0,
+				(flags & FLAG_TIME_CRIT ? TRUE : FALSE), 0,
 				TRUE, 0,
 				TRUE, socket_timeout)
 			);
 	else
 		printf("|%s",
 				fperfdata ("time", elapsed_time, "s",
-				TRUE, warning_time,
-				TRUE, critical_time,
+				(flags & FLAG_TIME_WARN ? TRUE : FALSE), warning_time,
+				(flags & FLAG_TIME_CRIT ? TRUE : FALSE), critical_time,
 				TRUE, 0,
 				TRUE, socket_timeout)
 			);
