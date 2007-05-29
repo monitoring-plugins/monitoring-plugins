@@ -517,7 +517,6 @@ process_arguments (int argc, char **argv)
 				asprintf(&server_send, "%s", optarg);
 			break;
 		case 'e': /* expect string (may be repeated) */
-			EXPECT = NULL;
 			flags &= ~FLAG_EXACT_MATCH;
 			if (server_expect_count == 0)
 				server_expect = malloc (sizeof (char *) * (++server_expect_count));
@@ -619,7 +618,7 @@ print_help (void)
   printf (" %s\n", "-s, --send=STRING");
   printf ("    %s\n", _("String to send to the server"));
   printf (" %s\n", "-e, --expect=STRING");
-  printf ("    %s\n", _("String to expect in server response"));
+  printf ("    %s %s\n", _("String to expect in server response"), _("(may be repeated)"));
   printf (" %s\n", "-q, --quit=STRING");
   printf ("    %s\n", _("String to send server to initiate a clean close of the connection"));
 	printf (" %s\n", "-r, --refuse=ok|warn|crit");
