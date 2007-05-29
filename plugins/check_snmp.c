@@ -204,10 +204,12 @@ main (int argc, char **argv)
 		exit (STATE_UNKNOWN);
 	}
 
+#if 0		/* Removed May 29, 2007 */
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL) {
 		printf (_("Could not open stderr for %s\n"), command_line);
 	}
+#endif
 
 	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process))
 		asprintf (&output, "%s%s", output, input_buffer);
@@ -369,16 +371,21 @@ main (int argc, char **argv)
 			label,
 			command_line);
 
+#if 0		/* Removed May 29, 2007 */
 	/* WARNING if output found on stderr */
 	if (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
 		result = max_state (result, STATE_WARNING);
 
 	/* close stderr */
 	(void) fclose (child_stderr);
+#endif
 
 	/* close the pipe */
-	if (spclose (child_process))
-		result = max_state (result, STATE_WARNING);
+	if (spclose (child_process)) {
+		if (result == STATE_OK)
+			result = STATE_UNKNOWN;
+		asprintf (&outbuff, "%s (%s)", outbuff, _("snmpget returned an error status"));
+	}
 
 /* 	if (nunits == 1 || i == 1) */
 /* 		printf ("%s %s -%s %s\n", label, state_text (result), outbuff, units); */
