@@ -71,6 +71,8 @@ void np_net_ssl_cleanup (){
 				SSL_shutdown (s);
 				SSL_free (s);
 				if(c) SSL_CTX_free (c);
+				c=NULL;
+				s=NULL;
 		}
 }
 
