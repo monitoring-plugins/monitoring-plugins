@@ -2,7 +2,7 @@ This file lists the major bugs from the Nagios Plugins page on Sourceforge
 at http://sourceforge.net/tracker/?group_id=29880&atid=397597. These are not
 necessarily verified as errors.
 
-For the 1.4.8 release:
+For the 1.4.9 release:
 
 1687867 - check_http: buffer overflow vulnerability
 1675306 - check_dhcp: does not add mandatory 'end' option
@@ -15,7 +15,6 @@ For the 1.4.8 release:
 1573638 - check_swap SEGVs on Sol 10
 1541340 - check_procs won't execute on Solaris 9 x86
 1523748 - check_disk should error if warn range is subset of critical
-1506121 - check_http problem with protocol change in redirect
 1498923 - check_ldap build error on Solaris 9
 1495828 - pst3 failure on solaris 10 x86
 1494629 - check_icmp fails after a time on FreeBSD
