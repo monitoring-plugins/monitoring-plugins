@@ -38,15 +38,17 @@
 #ifdef HAVE_SSL
 static SSL_CTX *c=NULL;
 static SSL *s=NULL;
+static int initialized=0;
 
 int np_net_ssl_init (int sd){
-		SSL_METHOD *m=NULL;
-		/* Initialize SSL context */
-		SSLeay_add_ssl_algorithms ();
-		m = SSLv23_client_method ();
-		SSL_load_error_strings ();
-		OpenSSL_add_all_algorithms();
-		if ((c = SSL_CTX_new (m)) == NULL) {
+		if (!initialized) {
+			/* Initialize SSL context */
+			SSLeay_add_ssl_algorithms ();
+			SSL_load_error_strings ();
+			OpenSSL_add_all_algorithms ();
+			initialized = 1;
+		}
+		if ((c = SSL_CTX_new (SSLv23_client_method ())) == NULL) {
 				printf ("%s\n", _("CRITICAL - Cannot create SSL context."));
 				return STATE_CRITICAL;
 		}
