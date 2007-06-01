@@ -1101,7 +1101,7 @@ redir (char *pos, char *status_line)
     pos += i;
     pos += strspn (pos, " \t\r\n");
 
-    url = realloc (url, strcspn (pos, "\r\n"));
+    url = realloc (url, strcspn (pos, "\r\n") + 1);
     if (url == NULL)
       die (STATE_UNKNOWN, _("HTTP UNKNOWN - could not allocate url\n"));
 
