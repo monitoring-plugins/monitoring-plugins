@@ -40,6 +40,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
+#include "utils_tcp.h"
 
 #ifdef HAVE_SSL
 static int check_cert = FALSE;
@@ -90,6 +91,7 @@ static int expect_mismatch_state = STATE_WARNING;
 #define FLAG_TIME_WARN 0x08
 #define FLAG_TIME_CRIT 0x10
 #define FLAG_HIDE_OUTPUT 0x20
+#define FLAG_MATCH_ALL 0x40
 static size_t flags = FLAG_EXACT_MATCH;
 
 int
@@ -99,7 +101,8 @@ main (int argc, char **argv)
 	int i;
 	char *status = NULL;
 	struct timeval tv;
-	size_t len, match = -1;
+	size_t len;
+	int match = -1;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -298,22 +301,12 @@ main (int argc, char **argv)
 			       (int)len + 1, status);
 		while(isspace(status[len])) status[len--] = '\0';
 
-		for (i = 0; i < server_expect_count; i++) {
-			match = -2;		/* tag it so we know if we tried and failed */
-			if (flags & FLAG_VERBOSE)
-				printf ("looking for [%s] %s [%s]\n", server_expect[i],
-				        (flags & FLAG_EXACT_MATCH) ? "in beginning of" : "anywhere in",
-				        status);
-
-			/* match it. math first in short-circuit */
-			if ((flags & FLAG_EXACT_MATCH && !strncmp(status, server_expect[i], strlen(server_expect[i]))) ||
-			    (!(flags & FLAG_EXACT_MATCH) && strstr(status, server_expect[i])))
-			{
-				if(flags & FLAG_VERBOSE) puts("found it");
-				match = i;
-				break;
-			}
-		}
+		match = np_expect_match(status,
+                                server_expect,
+                                server_expect_count,
+                                (flags & FLAG_MATCH_ALL ? TRUE : FALSE),
+                                (flags & FLAG_EXACT_MATCH ? TRUE : FALSE),
+                                (flags & FLAG_VERBOSE ? TRUE : FALSE));
 	}
 
 	if (server_quit != NULL) {
@@ -333,7 +326,7 @@ main (int argc, char **argv)
 		result = STATE_WARNING;
 
 	/* did we get the response we hoped? */
-	if(match == -2 && result != STATE_CRITICAL)
+	if(match == FALSE && result != STATE_CRITICAL)
 		result = expect_mismatch_state;
 
 	/* reset the alarm */
@@ -344,10 +337,10 @@ main (int argc, char **argv)
 	 * the response we were looking for. if-else */
 	printf("%s %s - ", SERVICE, state_text(result));
 
-	if(match == -2 && len && !(flags & FLAG_HIDE_OUTPUT))
+	if(match == FALSE && len && !(flags & FLAG_HIDE_OUTPUT))
 		printf("Unexpected response from host/socket: %s", status);
 	else {
-		if(match == -2)
+		if(match == FALSE)
 			printf("Unexpected response from host/socket on ");
 		else
 			printf("%.3f second response time on ", elapsed_time);
@@ -357,13 +350,13 @@ main (int argc, char **argv)
 			printf("socket %s", server_address);
 	}
 
-	if (match != -2 && !(flags & FLAG_HIDE_OUTPUT) && len)
+	if (match != FALSE && !(flags & FLAG_HIDE_OUTPUT) && len)
 		printf (" [%s]", status);
 
 	/* perf-data doesn't apply when server doesn't talk properly,
 	 * so print all zeroes on warn and crit. Use fperfdata since
 	 * localisation settings can make different outputs */
-	if(match == -2)
+	if(match == FALSE)
 		printf ("|%s",
 				fperfdata ("time", elapsed_time, "s",
 				(flags & FLAG_TIME_WARN ? TRUE : FALSE), 0,
@@ -404,6 +397,7 @@ process_arguments (int argc, char **argv)
 		{"protocol", required_argument, 0, 'P'},
 		{"port", required_argument, 0, 'p'},
 		{"escape", required_argument, 0, 'E'},
+		{"all", required_argument, 0, 'A'},
 		{"send", required_argument, 0, 's'},
 		{"expect", required_argument, 0, 'e'},
 		{"maxbytes", required_argument, 0, 'm'},
@@ -445,7 +439,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVv46EH:s:e:q:m:c:w:t:p:C:W:d:Sr:jD:M:",
+		c = getopt_long (argc, argv, "+hVv46EAH:s:e:q:m:c:w:t:p:C:W:d:Sr:jD:M:",
 		                 longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)
@@ -581,6 +575,9 @@ process_arguments (int argc, char **argv)
 			die (STATE_UNKNOWN, _("Invalid option - SSL is not available"));
 #endif
 			break;
+		case 'A':
+			flags |= FLAG_MATCH_ALL;
+			break;
 		}
 	}
 
@@ -619,9 +616,11 @@ print_help (void)
   printf ("    %s\n", _("String to send to the server"));
   printf (" %s\n", "-e, --expect=STRING");
   printf ("    %s %s\n", _("String to expect in server response"), _("(may be repeated)"));
+  printf (" %s\n", "-A, --all");
+  printf ("    %s\n", _("All expect strings need to occur in server response. Default is any"));
   printf (" %s\n", "-q, --quit=STRING");
   printf ("    %s\n", _("String to send server to initiate a clean close of the connection"));
-	printf (" %s\n", "-r, --refuse=ok|warn|crit");
+  printf (" %s\n", "-r, --refuse=ok|warn|crit");
   printf ("    %s\n", _("Accept tcp refusals with states ok, warn, crit (default: crit)"));
   printf (" %s\n", "-M, --mismatch=ok|warn|crit");
   printf ("    %s\n", _("Accept expected string mismatches with states ok, warn, crit (default: warn)"));

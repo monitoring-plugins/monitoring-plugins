@@ -10,6 +10,8 @@ This file documents the major additions and syntax changes between releases.
 	Make check_http output more consistent
 	Fix possible check_http segfaults when following HTTP redirects
 	check_snmp don't warn anymore if something is printed on stderr
+	Fix check_tcp segfault when multiple expect strings are given
+	New option for check_tcp: -A/--all to test if all given expect strings match
 
 1.4.8 11th April 2007
 	Respects --without-world-permissions for setuid plugins
