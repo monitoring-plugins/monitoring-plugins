@@ -25,11 +25,7 @@
 int
 main (int argc, char **argv)
 {
-    int i;
 	char** server_expect;
-	char* status;
-	bool verbose;
-	bool exact_match;
 	int server_expect_count = 3;
 	plan_tests(8);
 
@@ -39,21 +35,21 @@ main (int argc, char **argv)
 	server_expect[1] = strdup("bb");
 	server_expect[2] = strdup("CC");
 	
-	ok(np_expect_match("AA bb CC XX", server_expect, server_expect_count, false, true, false) == true,
+	ok(np_expect_match("AA bb CC XX", server_expect, server_expect_count, FALSE, TRUE, FALSE) == TRUE,
 	   "Test matching any string at the beginning (first expect string)");
-	ok(np_expect_match("bb AA CC XX", server_expect, server_expect_count, false, true, false) == true,
+	ok(np_expect_match("bb AA CC XX", server_expect, server_expect_count, FALSE, TRUE, FALSE) == TRUE,
 	   "Test matching any string at the beginning (second expect string)");
-	ok(np_expect_match("XX bb AA CC XX", server_expect, server_expect_count, false, true, false) == false,
+	ok(np_expect_match("XX bb AA CC XX", server_expect, server_expect_count, FALSE, TRUE, FALSE) == FALSE,
 	   "Test with strings not matching at the beginning");
-	ok(np_expect_match("XX CC XX", server_expect, server_expect_count, false, true, false) == false,
+	ok(np_expect_match("XX CC XX", server_expect, server_expect_count, FALSE, TRUE, FALSE) == FALSE,
 	   "Test matching any string");
-	ok(np_expect_match("XX", server_expect, server_expect_count, false, false, false) == false,
+	ok(np_expect_match("XX", server_expect, server_expect_count, FALSE, FALSE, FALSE) == FALSE,
 	   "Test not matching any string");
-	ok(np_expect_match("XX AA bb CC XX", server_expect, server_expect_count, true, false, false) == true,
+	ok(np_expect_match("XX AA bb CC XX", server_expect, server_expect_count, TRUE, FALSE, FALSE) == TRUE,
 	   "Test matching all strings");
-	ok(np_expect_match("XX bb CC XX", server_expect, server_expect_count, true, false, false) == false,
+	ok(np_expect_match("XX bb CC XX", server_expect, server_expect_count, TRUE, FALSE, FALSE) == FALSE,
 	   "Test not matching all strings");
-	ok(np_expect_match("XX XX", server_expect, server_expect_count, true, false, false) == false,
+	ok(np_expect_match("XX XX", server_expect, server_expect_count, TRUE, FALSE, FALSE) == FALSE,
 	   "Test not matching any string (testing all)");
 	 
 
