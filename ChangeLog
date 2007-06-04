@@ -1,7 +1,280 @@
-2007-05-03 22:34  psychotrahe
+2007-06-03 16:58  psychotrahe
 
-	* plugins/check_disk.c: - Fix partition selection if if last
-	  argument is a pathname/device without using -p
+	* lib/tests/test_tcp.c: Minor corrections to test_tcp.c
+
+2007-06-03 16:14  psychotrahe
+
+	* lib/tests/Makefile.am: Makefile.am changes for test_tcp.c
+
+2007-06-03 16:00  psychotrahe
+
+	* configure.in, lib/tests/test_tcp.c, lib/tests/.cvsignore,
+	  lib/tests/test_tcp.t: Added test cases for utils_tcp
+
+2007-06-03 15:40  psychotrahe
+
+	* lib/utils_tcp.c, lib/utils_tcp.h, lib/Makefile.am,
+	  plugins/check_tcp.c, NEWS: Moved check_tcp's expect string
+	  testing into utils_tcp for testing purposes.	Added -A/--all flag
+	  to test for every expect string passed.
+
+2007-06-02 00:11  hweiss
+
+	* BUGS, NEWS: Fix possible check_http segfaults when following HTTP
+	  redirects.
+
+2007-06-02 00:08  hweiss
+
+	* plugins/check_http.c: Fix an off-by-one error where a realloc(3)
+	  call doesn't allocate space for nul-termination (Aravind
+	  Gottipati - 1729692)
+
+2007-06-01 23:57  hweiss
+
+	* plugins/sslutils.c: Call the SSL library initialization functions
+	  only once (not for every SSL connection).
+
+2007-06-01 18:06  hweiss
+
+	* plugins/sslutils.c: Save an entire CPU cycle if c points to NULL
+	  already.
+
+2007-06-01 17:42  hweiss
+
+	* plugins/sslutils.c: Set the pointers to the SSL and SSL_CTX
+	  objects back to NULL after freeing them in np_net_ssl_cleanup().
+	  This fixes a check_http segfault if an SSL site redirects to a
+	  non-SSL one (reported by Aravind Gottipati via IRC).
+
+2007-05-29 21:01  psychotrahe
+
+	* plugins/check_tcp.c: Fix segfault when -e is specified multiple
+	  times. Thanks to John Rouillard and Ralph Roessner (#1475899)
+
+2007-05-29 20:11  psychotrahe
+
+	* plugins/check_tcp.c: No more warn/crit values in performance data
+	  if -w and -c are not specified.  Thanks to Simon Bellwood
+	  (#1181554)
+
+2007-05-29 06:22  dermoth
+
+	* NEWS, plugins/check_snmp.c: check_snmp don't warn anymore if
+	  something is printed on stderr
+
+2007-05-29 05:25  dermoth
+
+	* plugins/check_snmp.c: change a bunch of whitespaces (no code was
+	  harmed)
+
+2007-05-27 15:49  psychotrahe
+
+	* THANKS.in, plugins-scripts/check_oracle.sh: check_oracle does not
+	  need a valid ORACLE_HOME if called with --db. Thanks to Jason
+	  Martin (#1505551)
+
+2007-05-27 14:46  seanius
+
+	* lib/utils_base.c, lib/utils_base.h, plugins-root/check_dhcp.c,
+	  plugins-root/check_icmp.c: added functions to utils_base:
+	  np_check_if_root() - returns nonzero if geteuid()==0
+	  np_warn_if_not_root() - uses the above to print an informative
+	  warning added uses of these functions to check_dhcp and
+	  check_icmp.
+
+2007-05-24 09:53  tonvoon
+
+	* plugins/t/negate.pl: Test for new functionality in negate (not
+	  automatically run in make test)
+
+2007-05-24 09:35  tonvoon
+
+	* plugins/: check_dummy.c, t/check_dummy.t: Tests for check_dummy
+
+2007-05-23 09:22  dermoth
+
+	* plugins/check_http.c, po/de.po, po/fr.po, NEWS,
+	  po/nagios-plugins.pot: Update many strings in check_http to get
+	  more consistent output Update translation files; fix all
+	  check_http changes in French and most changes in German.
+
+2007-05-18 08:17  dermoth
+
+	* plugins/t/check_tcp.t: Make check_tcp.t compatible with picky web
+	  servers.
+
+2007-05-13 21:02  hweiss
+
+	* plugins/check_http.c: Add missing options to the usage output.
+
+2007-05-13 13:28  psychotrahe
+
+	* THANKS.in, plugins-root/check_dhcp.c: check_dhcp now adds
+	  mandatory end option (Thanks to Enrico Scholz - #1675306)
+
+2007-05-12 08:45  psychotrahe
+
+	* plugins/check_cluster.c: Fixed glibc error caused in utils_base.c
+	  due to uninitialized thresholds struct (spotted on ubundu 6.06
+	  LTS).
+
+2007-05-12 01:49  tonvoon
+
+	* ABOUT-NLS, configure.in, build-aux/mkinstalldirs: Updating
+	  gettext files from coreutils-6.9. mkinstalldirs needs to be in
+	  build-aux for some systems without gettext natively. Also have at
+	  top level, though gettext documentation says file not neceesary
+
+2007-05-09 10:16  psychotrahe
+
+	* plugins/check_ups.c: small typo in --help
+
+2007-05-09 10:09  psychotrahe
+
+	* THANKS.in, plugins/check_ups.c: Fixed --help output (Ask Bjoern
+	  Hansen - #1714823)
+
+2007-05-09 09:16  psychotrahe
+
+	* plugins/t/check_disk.t: added testcase to verify that old
+	  positional arguments only select one path
+
+2007-05-03 21:43  psychotrahe
+
+	* ChangeLog, THANKS.in, plugins/check_disk.c: fixed backward
+	  incompatibility introduced in 1.4.8 where all partitions are
+	  selected, if path is specified as last argument (without using
+	  -p).	Thanks to Emil Michles (Emilis) on #nagios
+
+2007-05-02 11:11  dermoth
+
+	* tools/distclean: Making Solaris happy
+
+2007-05-02 06:30  dermoth
+
+	* NEWS: /* Nothing */
+
+2007-05-02 06:22  dermoth
+
+	* plugins/check_time.c, NEWS, THANKS.in: Fix check_time returning
+	  wrong OK when time is before the epoch on some arch
+
+2007-04-28 22:57  psychotrahe
+
+	* plugins/t/check_cluster.t: added test cases for check_cluster
+
+2007-04-25 23:21  tonvoon
+
+	* tools/tinderbox_build: Test installs into temporary directories
+
+2007-04-25 23:10  tonvoon
+
+	* configure.in, NEWS, plugins/check_load.c, plugins/common.h,
+	  plugins/t/check_load.t: check_load can optionally divide by
+	  number of cpus
+
+2007-04-23 08:30  hweiss
+
+	* plugins/check_ping.c: #ifdef can only test a single macro, not an
+	  expression.
+
+2007-04-20 18:55  hweiss
+
+	* plugins-root/check_dhcp.c: Remove unused variables.
+
+2007-04-20 18:46  hweiss
+
+	* plugins/check_cluster.c: Include "utils_base.h".
+
+2007-04-20 18:45  hweiss
+
+	* lib/utils_base.h: Declare print_thresholds().
+
+2007-04-20 18:39  hweiss
+
+	* plugins/check_cluster.c: Predeclare functions and remove unused
+	  variables.
+
+2007-04-20 18:25  hweiss
+
+	* THANKS.in, plugins-root/check_dhcp.c: Use the 'server identifier'
+	  option instead of the 'siaddr' field as the DHCP server address;
+	  see RFC 2131, 2. (Denis Knauf - 1667488)
+
+2007-04-19 04:46  dermoth
+
+	* configure.in, NEWS: Fix compilation of check_ldap, check_radius
+	  and check_pgsql (*ding*)
+
+2007-04-18 20:31  hweiss
+
+	* NEWS, plugins/check_by_ssh.c: Revert my previous change to
+	  "-S/--skip" in favour of the two options "-E/--skip-stderr" and
+	  "-S/--skip-stdout".  Both of them support omitting the number of
+	  lines to skip, in which case all output on the respective file
+	  descriptor is skipped.  "--skip" is kept as an alias for
+	  "--skip-stdout" for backwards compatibility with recent releases.
+
+	  Also, print a message if no (non-skipped) stdout/stderr output is
+	  available.  This fixes a segfault if the remote command prints no
+	  output.
+
+2007-04-15 16:17  dermoth
+
+	* plugins/check_cluster.c: Localization and help fixes (Thanks
+	  Benoit M.)
+
+2007-04-15 10:03  dermoth
+
+	* plugins/check_cluster.c: Cosmetic change
+
+2007-04-15 09:56  dermoth
+
+	* contrib/check_cluster2.README: More details about the changes
+
+2007-04-15 09:50  dermoth
+
+	* plugins/Makefile.am, plugins/check_cluster.c, NEWS: Add
+	  thresholds support for check_cluster + lots of standardization.
+	  Add forgotten items to NEWS.
+
+2007-04-15 07:44  dermoth
+
+	* plugins/check_snmp.c, BUGS: Fix bug #1344584: Counter64 values
+	  not handled correctly
+
+2007-04-14 16:07  dermoth
+
+	* BUGS: Works for me
+
+2007-04-14 04:09  hweiss
+
+	* BUGS, plugins/check_by_ssh.c: Up to revision 1.35, the "-S"
+	  option skipped the specified number of lines written to stderr.
+	  With revision 1.36 and newer, "-S" skipped the specified number
+	  of lines written to stdout.  Now, "-S" skips the specified number
+	  of lines written to stderr; and if the number specified via "-S"
+	  minus the number of lines written to stderr is larger than 0, the
+	  difference is used as the number of lines written to stdout to
+	  skip.  Also, the "--help" output was fixed.  (Hector - 1675286)
+
+2007-04-13 12:38  dermoth
+
+	* plugins/.cvsignore: ... Some CVS magic too
+
+2007-04-13 12:35  dermoth
+
+	* contrib/check_cluster2.README, plugins/Makefile.am,
+	  plugins/check_cluster.c: automake magic for check_cluster
+
+2007-04-11 15:43  tonvoon
+
+	* doc/RELEASING: Add news item to nagiosplugins.org
+
+2007-04-11 13:08  tonvoon
+
+	* BUGS, NEWS, AUTHORS, configure.in, package.def, ChangeLog: 1.4.8
+	  release
 
 2007-04-10 08:17  dermoth
 

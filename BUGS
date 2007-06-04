@@ -4,25 +4,15 @@ necessarily verified as errors.
 
 For the 1.4.9 release:
 
-1687867 - check_http: buffer overflow vulnerability
-1675306 - check_dhcp: does not add mandatory 'end' option
-1652471 - check_http: missing Accept header
-1648570 - check_dhcp error by asking 2 dhcp servers
+1724055 - check_dns: does not sort address data
+1681516 - output too verbose for various checks
 1637767 - check_ping on FreeBSD 5.4 fails
-1614168 - not compatible with OpenSSL 0.9.8d
 1595449 - check_procs bus error on Solaris 8,9,10
-1573700 - check_swap on HP-UX incorrect
-1573638 - check_swap SEGVs on Sol 10
 1541340 - check_procs won't execute on Solaris 9 x86
 1523748 - check_disk should error if warn range is subset of critical
 1498923 - check_ldap build error on Solaris 9
-1495828 - pst3 failure on solaris 10 x86
-1494629 - check_icmp fails after a time on FreeBSD
 1480574 - check_disk missing -lm on Solaris
 1478287 - check_dns fails with CNAMEs
-1475899 - check_tcp segfaults with multiple -s or -e args
-1470013 - check_tcp complains about double values in parameter
-1469472 - check_ping dns lookup problem
 1469468 - signal handler in popen.c is broken
 1466426 - check_ldaps doesn't default to port 636
 1447642 - check_ping segfault on Sol 10

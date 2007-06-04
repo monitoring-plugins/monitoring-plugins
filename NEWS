@@ -1,9 +1,9 @@
 This file documents the major additions and syntax changes between releases.
 
-1.4.9 ??
+1.4.9 4th June 2006
 	Inclusion of contrib/check_cluster2 as check_cluster with some improvements
 	New/improved -E/--skip-stderr and -S/--skip-stdout options for check_by_ssh
-	check_snmp now support Counter64
+	check_snmp now supports Counter64
 	Fix compilation of check_ldap, check_radius and check_pgsql
 	check_load can optionally divide by number of cpus
 	Fix check_time returning wrong OK when time is before the epoch on some arch
