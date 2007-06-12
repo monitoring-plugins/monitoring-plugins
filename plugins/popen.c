@@ -188,7 +188,6 @@ spopen (const char *cmdstring)
 			cmd = NULL;
 
 		argv[i++] = str;
-		printf("arg no.%i: %s\n",i,str);
 
 	}
 	argv[i] = NULL;
