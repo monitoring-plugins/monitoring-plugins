@@ -399,6 +399,7 @@ print_help (void)
   printf (" %s\n", "[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c1;0; up 2 days");
   printf (" %s\n", "[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c2;0; up 2 days");
   printf (" %s\n", "[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c3;0; up 2 days");
+	printf (_(UT_VERBOSE));
 	printf (_(UT_SUPPORT));
 }
 
@@ -408,7 +409,7 @@ void
 print_usage (void)
 {
 	printf (_("Usage:"));
-	printf (" %s -H <host> -C <command> [-fq] [-1|-2] [-4|-6]\n"
+	printf (" %s -H <host> -C <command> [-fqv] [-1|-2] [-4|-6]\n"
 	        "       [-S [lines]] [-E [lines]] [-t timeout] [-i identity]\n"
 	        "       [-l user] [-n name] [-s servicelist] [-O outputfile]\n"
 	        "       [-p port] [-o ssh-option]\n",
