@@ -437,23 +437,6 @@ print_values (values_t * p, thresholds_t * t)
 }
 
 
-
-void
-print_thresholds (thresholds_t * p) 
-{
-	threshold_t * threshold = p->thresholds;
-	int i;
-	printf ("\n");
-	printf ("SmartRevision=%d\n", p->revision);
-	for (i = 0; i < NR_ATTRIBUTES; i++) {
-		if (threshold->id) {
-			printf ("Id=%3d, Threshold=%3d\n", threshold->id,
-							threshold->threshold); }
-		++threshold;
-	}
-	printf ("CheckSum=%d\n", p->checksum);
-}
-
 int
 smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0, char show_error) 
 {
@@ -541,7 +524,7 @@ print_help (void)
 void
 print_usage (void)
 {
-	printf (_("Usage:");
+  printf (_("Usage:"));
   printf ("%s [-d <device>] [-i <immediate>] [-q quiet] [-1 <auto-on>]",progname);
-  pritnf (" [-O <auto-off>] [-n <nagios>]\n");
+  printf (" [-O <auto-off>] [-n <nagios>]\n");
 }
