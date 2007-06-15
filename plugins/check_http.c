@@ -1099,7 +1099,19 @@ redir (char *pos, char *status_line)
     }
 
     pos += i;
-    pos += strspn (pos, " \t\r\n");
+    pos += strspn (pos, " \t");
+
+    /*
+     * RFC 2616 (4.2):  ``Header fields can be extended over multiple lines by
+     * preceding each extra line with at least one SP or HT.''
+     */
+    for (; (i = strspn (pos, "\r\n")); pos += i) {
+      pos += i;
+      if (!(i = strspn (pos, " \t"))) {
+        die (STATE_UNKNOWN, _("HTTP UNKNOWN - Empty redirect location%s\n"),
+             display_html ? "</A>" : "");
+      }
+    }
 
     url = realloc (url, strcspn (pos, "\r\n") + 1);
     if (url == NULL)
