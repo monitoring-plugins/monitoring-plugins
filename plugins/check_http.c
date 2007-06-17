@@ -43,6 +43,8 @@ const char *revision = "$Revision$";
 const char *copyright = "1999-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
+#include <ctype.h>
+
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
@@ -1199,7 +1201,7 @@ redir (char *pos, char *status_line)
          display_html ? "</A>" : "");
 
   if (verbose)
-    printf ("Redirection to %s://%s:%d%s\n", server_type, server_address,
+    printf (_("Redirection to %s://%s:%d%s\n"), server_type, server_address,
             server_port, server_url);
 
   check_http ();
