@@ -53,7 +53,8 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 enum {
   MAX_IPV4_HOSTLENGTH = 255,
   HTTP_PORT = 80,
-  HTTPS_PORT = 443
+  HTTPS_PORT = 443,
+  MAX_PORT = 65535
 };
 
 #ifdef HAVE_SSL
@@ -1057,14 +1058,14 @@ check_http (void)
 
 /* per RFC 2396 */
 #define HDR_LOCATION "%*[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]: "
-#define URI_HTTP "%[HTPShtps]://"
-#define URI_HOST "%[-.abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
-#define URI_PORT ":%[0123456789]"
+#define URI_HTTP "%5[HTPShtps]"
+#define URI_HOST "%255[-.abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
+#define URI_PORT "%6d" /* MAX_PORT's width is 5 chars, 6 to detect overflow */
 #define URI_PATH "%[-_.!~*'();/?:@&=+$,%#abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
-#define HD1 URI_HTTP URI_HOST URI_PORT URI_PATH
-#define HD2 URI_HTTP URI_HOST URI_PATH
-#define HD3 URI_HTTP URI_HOST URI_PORT
-#define HD4 URI_HTTP URI_HOST
+#define HD1 URI_HTTP "://" URI_HOST ":" URI_PORT "/" URI_PATH
+#define HD2 URI_HTTP "://" URI_HOST "/" URI_PATH
+#define HD3 URI_HTTP "://" URI_HOST ":" URI_PORT
+#define HD4 URI_HTTP "://" URI_HOST
 #define HD5 URI_PATH
 
 void
@@ -1075,7 +1076,6 @@ redir (char *pos, char *status_line)
   char xx[2];
   char type[6];
   char *addr;
-  char port[6];
   char *url;
 
   addr = malloc (MAX_IPV4_HOSTLENGTH + 1);
@@ -1118,10 +1118,8 @@ redir (char *pos, char *status_line)
       die (STATE_UNKNOWN, _("HTTP UNKNOWN - could not allocate url\n"));
 
     /* URI_HTTP, URI_HOST, URI_PORT, URI_PATH */
-    if (sscanf (pos, HD1, type, addr, port, url) == 4) {
+    if (sscanf (pos, HD1, type, addr, &i, url) == 4)
       use_ssl = server_type_check (type);
-      i = atoi (port);
-    }
 
     /* URI_HTTP URI_HOST URI_PATH */
     else if (sscanf (pos, HD2, type, addr, url) == 3 ) { 
@@ -1130,10 +1128,9 @@ redir (char *pos, char *status_line)
     }
 
     /* URI_HTTP URI_HOST URI_PORT */
-    else if(sscanf (pos, HD3, type, addr, port) == 3) {
+    else if(sscanf (pos, HD3, type, addr, &i) == 3) {
       strcpy (url, HTTP_URL);
       use_ssl = server_type_check (type);
-      i = atoi (port);
     }
 
     /* URI_HTTP URI_HOST */
@@ -1179,7 +1176,6 @@ redir (char *pos, char *status_line)
          _("HTTP WARNING - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
          type, addr, i, url, (display_html ? "</A>" : ""));
 
-  server_port = i;
   strcpy (server_type, type);
 
   free (host_name);
@@ -1189,7 +1185,22 @@ redir (char *pos, char *status_line)
   server_address = strdup (addr);
 
   free (server_url);
-  server_url = strdup (url);
+  if ((url[0] == '/'))
+    server_url = strdup (url);
+  else if (asprintf(&server_url, "/%s", url) == -1)
+    die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate server_url%s\n"),
+         display_html ? "</A>" : "");
+  free(url);
+
+  if ((server_port = i) > MAX_PORT)
+    die (STATE_UNKNOWN,
+         _("HTTP UNKNOWN - Redirection to port above %d - %s://%s:%d%s%s\n"),
+         MAX_PORT, server_type, server_address, server_port, server_url,
+         display_html ? "</A>" : "");
+
+  if (verbose)
+    printf ("Redirection to %s://%s:%d%s\n", server_type, server_address,
+            server_port, server_url);
 
   check_http ();
 }

@@ -1,5 +1,8 @@
 This file documents the major additions and syntax changes between releases.
 
+1.4.10 or 1.5 ??
+	Fix check_http buffer overflow vulnerability when following HTTP redirects
+
 1.4.9 4th June 2006
 	Inclusion of contrib/check_cluster2 as check_cluster with some improvements
 	New/improved -E/--skip-stderr and -S/--skip-stdout options for check_by_ssh
