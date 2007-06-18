@@ -67,6 +67,9 @@ check_ups:
 	- Requires Network UPS Tools (>= 1.4) to run on the server to monitor
 	  http://www.networkupstools.org/
 
+check_ide_smart:
+	- Uses the Linux specific SMART interface [http://smartlinux.sourceforge.net/smart/index.php]. 
+
 OS Specific Issues
 ------------------
 

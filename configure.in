@@ -240,6 +240,19 @@ else
 fi
 LIBS="$_SAVEDLIBS"
 
+dnl Check for headers used by check_ide_smart
+AC_CHECK_HEADER(linux/hdreg.h, FOUNDINCLUDE=yes, FOUNDINCLUDE=no)
+if test "$FOUNDINCLUDE" = "yes" ; then
+	AC_CHECK_HEADER(linux/types.h, FOUNDINCLUDE=yes, FOUNDINCLUDE=no)
+fi
+
+if test "$FOUNDINCLUDE" = "yes" ; then
+	EXTRAS="$EXTRAS check_ide_smart"
+else
+	AC_MSG_WARN([Skipping check_ide_smart plugin.]) 
+	AC_MSG_WARN([check_ide_smart is linux specific. It requires linux/hdreg.h and linux/types.h.]) 
+fi
+
 dnl Check for mysql libraries
 np_mysqlclient
 if test $with_mysql = "no" ; then

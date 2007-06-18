@@ -6,6 +6,7 @@ check_dummy
 check_ftp
 check_fping
 check_http
+check_ide_smart
 check_imap
 check_jabber
 check_load
