@@ -70,6 +70,8 @@ int ld_protocol = DEFAULT_PROTOCOL;
 double warn_time = UNDEFINED;
 double crit_time = UNDEFINED;
 struct timeval tv;
+int starttls = FALSE;
+int ssl_on_connect = FALSE;
 
 /* for ldap tls */
 
@@ -99,6 +101,7 @@ main (int argc, char *argv[])
 
 	if (strstr(argv[0],"check_ldaps")) {
 		asprintf (&progname, "check_ldaps");
+		starttls = TRUE;
  	}
 	
 	if (process_arguments (argc, argv) == ERROR)
@@ -136,48 +139,45 @@ main (int argc, char *argv[])
 	}
 #endif
 
-	if (strstr(argv[0],"check_ldaps")) {
-	/* with TLS */
-		if ( ld_port == LDAPS_PORT ) {
- 			asprintf (&SERVICE, "LDAPS");
+	if (ld_port == LDAPS_PORT || ssl_on_connect) {
+		asprintf (&SERVICE, "LDAPS");
 #if defined(HAVE_LDAP_SET_OPTION) && defined(LDAP_OPT_X_TLS)
- 			/* ldaps: set option tls */
- 			tls = LDAP_OPT_X_TLS_HARD;
-			
- 			if (ldap_set_option (ld, LDAP_OPT_X_TLS, &tls) != LDAP_SUCCESS)
- 			{
- 				/*ldap_perror(ld, "ldaps_option"); */
- 				printf (_("Could not init TLS at port %i!\n"), ld_port);
-				return STATE_CRITICAL;
-   		}
-#else
-			printf (_("TLS not supported by the libraries!\n"), ld_port);
+		/* ldaps: set option tls */
+		tls = LDAP_OPT_X_TLS_HARD;
+		
+		if (ldap_set_option (ld, LDAP_OPT_X_TLS, &tls) != LDAP_SUCCESS)
+		{
+			/*ldap_perror(ld, "ldaps_option"); */
+			printf (_("Could not init TLS at port %i!\n"), ld_port);
 			return STATE_CRITICAL;
-#endif /* LDAP_OPT_X_TLS */
-		} else {
-			asprintf (&SERVICE, "LDAP-TLS");
-#if defined(HAVE_LDAP_SET_OPTION) && defined(HAVE_LDAP_START_TLS_S)
-			/* ldap with startTLS: set option version */
-			if (ldap_get_option(ld,LDAP_OPT_PROTOCOL_VERSION, &version) == LDAP_OPT_SUCCESS )
-			{
-				if (version < LDAP_VERSION3)
-				{
-					version = LDAP_VERSION3;
-					ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION, &version);
-				}
-			}
-			/* call start_tls */
-			if (ldap_start_tls_s(ld, NULL, NULL) != LDAP_SUCCESS)
-			{
-				/*ldap_perror(ld, "ldap_start_tls"); */
-				printf (_("Could not init startTLS at port %i!\n"), ld_port);
-				return STATE_CRITICAL;
-			}
-#else
-			printf (_("startTLS not supported by the library, needs LDAPv3!\n"));
-			return STATE_CRITICAL;
-#endif /* HAVE_LDAP_START_TLS_S */
 		}
+#else
+		printf (_("TLS not supported by the libraries!\n"));
+		return STATE_CRITICAL;
+#endif /* LDAP_OPT_X_TLS */
+	} else if (starttls) {
+		asprintf (&SERVICE, "LDAP-TLS");
+#if defined(HAVE_LDAP_SET_OPTION) && defined(HAVE_LDAP_START_TLS_S)
+		/* ldap with startTLS: set option version */
+		if (ldap_get_option(ld,LDAP_OPT_PROTOCOL_VERSION, &version) == LDAP_OPT_SUCCESS )
+		{
+			if (version < LDAP_VERSION3)
+			{
+				version = LDAP_VERSION3;
+				ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION, &version);
+			}
+		}
+		/* call start_tls */
+		if (ldap_start_tls_s(ld, NULL, NULL) != LDAP_SUCCESS)
+		{
+			/*ldap_perror(ld, "ldap_start_tls"); */
+			printf (_("Could not init startTLS at port %i!\n"), ld_port);
+			return STATE_CRITICAL;
+		}
+#else
+		printf (_("startTLS not supported by the library, needs LDAPv3!\n"));
+		return STATE_CRITICAL;
+#endif /* HAVE_LDAP_START_TLS_S */
 	}
 	
 	/* bind to the ldap server */
@@ -247,6 +247,8 @@ process_arguments (int argc, char **argv)
 		{"ver2", no_argument, 0, '2'},
 		{"ver3", no_argument, 0, '3'},
 #endif
+		{"starttls", no_argument, 0, 'T'},
+		{"ssl", no_argument, 0, 'S'},
 		{"use-ipv4", no_argument, 0, '4'},
 		{"use-ipv6", no_argument, 0, '6'},
 		{"port", required_argument, 0, 'p'},
@@ -264,7 +266,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "hV2346t:c:w:H:b:p:a:D:P:", longopts, &option);
+		c = getopt_long (argc, argv, "hV234TS6t:c:w:H:b:p:a:D:P:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -316,6 +318,19 @@ process_arguments (int argc, char **argv)
 #endif
 		case '4':
 			address_family = AF_INET;
+			break;
+		case 'T':
+			if (! ssl_on_connect)
+				starttls = TRUE;
+			else
+				usage_va(_("%s cannot be combined with %s"), "-T/--starttls", "-S/--ssl");
+			break;
+		case 'S':
+			if (! starttls) {
+				ssl_on_connect = TRUE;
+				ld_port = LDAPS_PORT;
+			} else
+				usage_va(_("%s cannot be combined with %s"), "-S/--ssl", "-T/--starttls");
 			break;
 		case '6':
 #ifdef USE_IPV6
@@ -382,13 +397,17 @@ print_help (void)
   printf ("    %s\n", _("ldap bind DN (if required)"));
   printf (" %s\n", "-P [--pass]");
   printf ("    %s\n", _("ldap password (if required)"));
+  printf (" %s\n", "-T [--starttls]");
+  printf ("    %s\n", _("use starttls mechanism introduced in protocol version 3"));
+  printf (" %s\n", "-S [--ssl]");
+  printf ("    %s\n", _("use ldaps (ldap v2 ssl method). this also sets the default port to %s"), LDAPS_PORT);
 
 #ifdef HAVE_LDAP_SET_OPTION
 	printf (" %s\n", "-2 [--ver2]");
   printf ("    %s\n", _("use ldap protocol version 2"));
   printf (" %s\n", "-3 [--ver3]");
   printf ("    %s\n", _("use ldap protocol version 3"));
-  printf ("(default protocol version: %d)", DEFAULT_PROTOCOL);
+  printf ("    (default protocol version: %d)\n", DEFAULT_PROTOCOL);
 #endif
 
 	printf (_(UT_WARN_CRIT));
@@ -396,6 +415,13 @@ print_help (void)
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
 	printf (_(UT_VERBOSE));
+
+	printf ("\n%s\n", _("Note:"));
+	printf ("%s\n", _("If this plugin is called via 'check_ldaps', method 'STARTTLS' will be"));
+	printf (_("implied (using default port %i) unless --port=636 is specified. In that case %s"), DEFAULT_PORT, "\n");
+	printf ("%s\n", _("'SSL on connect' will be used no matter how the plugin was called."));
+	printf ("%s\n", _("This detection is deprecated, please use 'check_ldap' with the '--starttls' or '--ssl' flags"));
+	printf ("%s\n", _("to define the behaviour explicitly instead."));
 
 	printf (_(UT_SUPPORT));
 }

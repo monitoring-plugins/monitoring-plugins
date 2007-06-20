@@ -2,6 +2,8 @@ This file documents the major additions and syntax changes between releases.
 
 1.4.10 or 1.5 ??
 	Fix check_http buffer overflow vulnerability when following HTTP redirects
+	Check_ldaps' guessing which secure method to use (starttls vs. ssl on connect)  
+	  is now deprecated. See --help for further information.
 
 1.4.9 4th June 2006
 	Inclusion of contrib/check_cluster2 as check_cluster with some improvements
