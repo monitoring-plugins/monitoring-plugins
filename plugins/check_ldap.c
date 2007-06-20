@@ -101,11 +101,13 @@ main (int argc, char *argv[])
 
 	if (strstr(argv[0],"check_ldaps")) {
 		asprintf (&progname, "check_ldaps");
-		starttls = TRUE;
  	}
 	
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
+
+	if (strstr(argv[0],"check_ldaps") && ! starttls && ! ssl_on_connect)
+		starttls = TRUE;
 
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
