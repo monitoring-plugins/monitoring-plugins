@@ -151,6 +151,7 @@ int process_arguments(int argc, char **argv){
 		{"host",     no_argument,      0,'h'},
 		{"service",  no_argument,      0,'s'},
 		{"verbose",  no_argument,      0,'v'},
+		{"version",  no_argument,      0,'V'},
 		{"help",     no_argument,      0,'H'},
 		{0,0,0,0}
 	};
@@ -161,7 +162,7 @@ int process_arguments(int argc, char **argv){
 
 	while(1){
 
-		c=getopt_long(argc,argv,"hHsvw:c:d:l:",longopts,&option);
+		c=getopt_long(argc,argv,"hHsvVw:c:d:l:",longopts,&option);
 
 		if(c==-1 || c==EOF || c==1)
 			break;
@@ -198,6 +199,11 @@ int process_arguments(int argc, char **argv){
 
 		case 'v': /* verbose */
 			verbose++;
+			break;
+
+		case 'V': /* version */
+			print_revision (progname, revision);
+			exit (STATE_OK);
 			break;
 
 		case 'H': /* help */
