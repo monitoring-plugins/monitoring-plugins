@@ -731,6 +731,10 @@ setup the tests. Run "make test" to run all the tests.
 
 	<para>You should use /* */ for comments and not // as some compilers
 	do not handle the latter form.</para>
+
+	<para>You should also avoid using the type "bool" and its values
+	"true" and "false". Instead use the "int" type and the plugins' own
+	"TRUE"/"FALSE" values to keep the code uniformly.</para>
 	</section>
 
 	<section><title>Crediting sources</title>
