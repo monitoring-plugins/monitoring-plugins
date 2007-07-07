@@ -105,10 +105,11 @@ char *
 clean_revstring (const char *revstring)
 {
 	char plugin_revision[STRLEN];
-	if (sscanf (revstring,"$Revision: %[0-9.]",plugin_revision) == 1)
+	plugin_revision[0] = 'v';
+	if (sscanf (revstring,"$Revision: %[0-9.]", plugin_revision + 1) == 1)
 		return strscpy (NULL, plugin_revision);
 	else
-	  return strscpy (NULL, "N/A");
+		return strscpy (NULL, "N/A");
 }
 
 void
@@ -116,10 +117,8 @@ print_revision (const char *command_name, const char *revision_string)
 {
 	char plugin_revision[STRLEN];
 
-	if (sscanf (revision_string, "$Revision: %[0-9.]", plugin_revision) != 1)
-		strncpy (plugin_revision, "N/A", STRLEN);
-	printf ("%s (%s %s) %s\n",
-					command_name, PACKAGE, VERSION, plugin_revision);
+	printf ("%s %s (%s %s)\n",
+	         command_name, clean_revstring(revision_string), PACKAGE, VERSION);
 }
 
 const char *
