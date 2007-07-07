@@ -34,7 +34,7 @@ sub print_revision ($$) {
 	my $pluginRevision = shift;
 	$pluginRevision =~ s/^\$Revision: //;
 	$pluginRevision =~ s/ \$\s*$//;
-	print "$commandName (@PACKAGE@ @VERSION@) $pluginRevision\n";
+	print "$commandName v$pluginRevision (@PACKAGE@ @VERSION@)\n";
 	print "@WARRANTY@";
 }
 
