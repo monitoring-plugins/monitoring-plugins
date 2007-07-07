@@ -72,6 +72,7 @@ double crit_time = UNDEFINED;
 struct timeval tv;
 int starttls = FALSE;
 int ssl_on_connect = FALSE;
+int verbose = 0;
 
 /* for ldap tls */
 
@@ -126,7 +127,8 @@ main (int argc, char *argv[])
 	}
 #else	
 	if (!(ld = ldap_open (ld_host, ld_port))) {
-		/*ldap_perror(ld, "ldap_open"); */
+		if (verbose)
+			ldap_perror(ld, "ldap_open");
 		printf (_("Could not connect to the server at port %i\n"), ld_port);
 		return STATE_CRITICAL;
 	}
@@ -149,7 +151,8 @@ main (int argc, char *argv[])
 		
 		if (ldap_set_option (ld, LDAP_OPT_X_TLS, &tls) != LDAP_SUCCESS)
 		{
-			/*ldap_perror(ld, "ldaps_option"); */
+			if (verbose)
+				ldap_perror(ld, "ldaps_option");
 			printf (_("Could not init TLS at port %i!\n"), ld_port);
 			return STATE_CRITICAL;
 		}
@@ -172,7 +175,8 @@ main (int argc, char *argv[])
 		/* call start_tls */
 		if (ldap_start_tls_s(ld, NULL, NULL) != LDAP_SUCCESS)
 		{
-			/*ldap_perror(ld, "ldap_start_tls"); */
+			if (verbose) 
+				ldap_perror(ld, "ldap_start_tls");
 			printf (_("Could not init startTLS at port %i!\n"), ld_port);
 			return STATE_CRITICAL;
 		}
@@ -185,7 +189,8 @@ main (int argc, char *argv[])
 	/* bind to the ldap server */
 	if (ldap_bind_s (ld, ld_binddn, ld_passwd, LDAP_AUTH_SIMPLE) !=
 			LDAP_SUCCESS) {
-		/*ldap_perror(ld, "ldap_bind"); */
+		if (verbose)
+			ldap_perror(ld, "ldap_bind");
 		printf (_("Could not bind to the ldap-server\n"));
 		return STATE_CRITICAL;
 	}
@@ -193,7 +198,8 @@ main (int argc, char *argv[])
 	/* do a search of all objectclasses in the base dn */
 	if (ldap_search_s (ld, ld_base, LDAP_SCOPE_BASE, ld_attr, NULL, 0, &result)
 			!= LDAP_SUCCESS) {
-		/*ldap_perror(ld, "ldap_search"); */
+		if (verbose)
+			ldap_perror(ld, "ldap_search");
 		printf (_("Could not search/find objectclasses in %s\n"), ld_base);
 		return STATE_CRITICAL;
 	}
@@ -256,6 +262,7 @@ process_arguments (int argc, char **argv)
 		{"port", required_argument, 0, 'p'},
 		{"warn", required_argument, 0, 'w'},
 		{"crit", required_argument, 0, 'c'},
+		{"verbose", no_argument, 0, 'v'},
 		{0, 0, 0, 0}
 	};
 
@@ -268,7 +275,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "hV234TS6t:c:w:H:b:p:a:D:P:", longopts, &option);
+		c = getopt_long (argc, argv, "hvV234TS6t:c:w:H:b:p:a:D:P:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -320,6 +327,9 @@ process_arguments (int argc, char **argv)
 #endif
 		case '4':
 			address_family = AF_INET;
+			break;
+		case 'v':
+			verbose++;
 			break;
 		case 'T':
 			if (! ssl_on_connect)
