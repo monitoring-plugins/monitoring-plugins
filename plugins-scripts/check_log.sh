@@ -116,11 +116,11 @@ while test -n "$1"; do
             exit $STATE_OK
             ;;
         --version)
-            print_revision $PROGNAME $VERSION
+            print_revision $PROGNAME $REVISION
             exit $STATE_OK
             ;;
         -V)
-            print_revision $PROGNAME $VERSION
+            print_revision $PROGNAME $REVISION
             exit $STATE_OK
             ;;
         --filename)

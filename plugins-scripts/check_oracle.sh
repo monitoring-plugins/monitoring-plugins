@@ -89,11 +89,11 @@ case "$cmd" in
     exit $STATE_OK
     ;;
 --version)
-		print_revision $PLUGIN $REVISION
+		print_revision $PROGNAME $REVISION
     exit $STATE_OK
     ;;
 -V)
-		print_revision $PLUGIN $REVISION
+		print_revision $PROGNAME $REVISION
     exit $STATE_OK
     ;;
 esac

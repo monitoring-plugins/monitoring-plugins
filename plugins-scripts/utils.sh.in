@@ -13,7 +13,7 @@ else
 fi
 
 print_revision() {
-	echo "$1 (@PACKAGE@ @VERSION@) $2"
+	echo "$1 v$2 (@PACKAGE@ @VERSION@)"
 	$ECHO "@WARRANTY@" | sed -e 's/\n/ /g'
 }
 
