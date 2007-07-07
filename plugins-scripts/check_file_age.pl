@@ -55,7 +55,7 @@ GetOptions(
 	"C=f" => \$opt_C, "critical-size=f" => \$opt_C);
 
 if ($opt_V) {
-	print_revision($PROGNAME, '$Id$');
+	print_revision($PROGNAME, '$Revision$');
 	exit $ERRORS{'OK'};
 }
 
@@ -102,7 +102,7 @@ sub print_usage () {
 }
 
 sub print_help () {
-	print_revision($PROGNAME, '$Id$');
+	print_revision($PROGNAME, '$Revision$');
 	print "Copyright (c) 2003 Steven Grimm\n\n";
 	print_usage();
 	print "\n";
