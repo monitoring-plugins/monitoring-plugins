@@ -885,6 +885,11 @@ print_help (void)
   printf ("%s\n", _("Examples:"));
   printf (" %s\n", "check_disk -w 10% -c 5% -p /tmp -p /var -C -w 100000 -c 50000 -p /");
   printf ("    %s\n", _("Checks /tmp and /var at 10% and 5%, and / at 100MB and 50MB"));
+  printf (" %s\n", "check_disk -w 100M -c 50M -C -w 1000M -c 500M -g sidDATA -r '^/oracle/SID/data.*$'");
+  printf ("    %s\n", _("Checks all filesystems not matching -r at 100M and 50M. The fs matching the -r regex"));
+  printf ("    %s\n", _("are grouped which means the freespace thresholds are applied to all disks together"));
+  printf (" %s\n", "check_disk -w 100M -c 50M -C -w 1000M -c 500M -p /foo -C -w 5% -c 3% -p /bar");
+  printf ("    %s\n", _("Checks /foo for 1000M/500M and /bar for 5/3%. All remaining volumes use 100M/50M"));
   printf (_(UT_SUPPORT));
 }
 
