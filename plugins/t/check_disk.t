@@ -275,7 +275,7 @@ TODO: {
 
 $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p /bob" );
 cmp_ok( $result->return_code, '==', 2, "Checking /bob - return error because /bob does not exist" );
-cmp_ok( $result->output, 'eq', 'DISK CRITICAL - /bob does not exist', 'Output OK');
+like( $result->output, '/^DISK CRITICAL - /bob is not accessible:.*$/', 'Output OK');
 
 $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p /" );
 my $root_output = $result->output;

@@ -176,6 +176,7 @@ main (int argc, char **argv)
   struct fs_usage fsp, tmpfsp;
   struct parameter_list *temp_list, *path;
   struct name_list *seen = NULL;
+  struct stat *stat_buf;
 
   preamble = strdup (" - free space:");
   output = strdup ("");
@@ -208,14 +209,22 @@ main (int argc, char **argv)
 
   /* Error if no match found for specified paths */
   temp_list = path_select_list;
+
+  stat_buf = malloc(sizeof *stat_buf);
   while (temp_list) {
     if (! temp_list->best_match) {
       die (STATE_CRITICAL, _("DISK %s: %s not found\n"), _("CRITICAL"), temp_list->name);
     }
+
+    /* Stat each entry to check that dir exists */
+    if (stat (temp_list->name, &stat_buf[0])) {
+      printf("DISK %s - ", _("CRITICAL"));
+      die (STATE_CRITICAL, _("%s %s: %s\n"), temp_list->name, _("is not accessible"), strerror(errno));
+    }
     temp_list = temp_list->name_next;
   }
+  free(stat_buf);
   
-
   /* Process for every path in list */
   for (path = path_select_list; path; path=path->name_next) {
 
@@ -444,7 +453,6 @@ process_arguments (int argc, char **argv)
   struct parameter_list *temp_path_select_list = NULL;
   struct mount_entry *me;
   int result = OK;
-  struct stat *stat_buf;
   regex_t re;
   int cflags = REG_NOSUB | REG_EXTENDED;
   char errbuf[MAX_INPUT_BUFFER];
@@ -743,32 +751,7 @@ process_arguments (int argc, char **argv)
     mult = (uintmax_t)1024 * 1024;
   }
 
-  if (path_select_list) {
-    temp_list = path_select_list;
-    stat_buf = malloc(sizeof *stat_buf);
-    while (temp_list) {
-      /* Stat each entry to check that dir exists */
-      if (stat (temp_list->name, &stat_buf[0])) {
-	printf("DISK %s - ", _("CRITICAL"));
-        die (STATE_CRITICAL, _("%s does not exist\n"), temp_list->name);
-      }
-      /* if (validate_arguments (temp_list->w_df,
-                              temp_list->c_df,
-                              temp_list->w_dfp,
-                              temp_list->c_dfp,
-                              temp_list->w_idfp,
-                              temp_list->c_idfp,
-                              temp_list->name) == ERROR)
-        result = ERROR;
-      */
-      temp_list = temp_list->name_next;
-    }
-    free(stat_buf);
-    return result;
-  } else {
-    return TRUE;
-    /* return validate_arguments (w_df, c_df, w_dfp, c_dfp, w_idfp, c_idfp, NULL); */
-  }
+  return TRUE;
 }
 
 

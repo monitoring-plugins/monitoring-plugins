@@ -4,6 +4,8 @@ This file documents the major additions and syntax changes between releases.
 	Fix check_http buffer overflow vulnerability when following HTTP redirects
 	Check_ldaps' guessing which secure method to use (starttls vs. ssl on connect)  
 	  is now deprecated. See --help for further information.
+	Check_disk now calls stat() on all filesystems to check. (Old: only the ones selected using -p) 
+	  A meaningful error message (eg "Stale NFS Handle") is printed if stat fails.
 
 1.4.9 4th June 2006
 	Inclusion of contrib/check_cluster2 as check_cluster with some improvements
