@@ -720,7 +720,7 @@ int process_arguments(int argc, char **argv){
 		usage4(_("Critical offset should be larger than warning offset"));
 	}
 
-	if (ocrit < owarn){
+	if (jcrit < jwarn){
 		usage4(_("Critical jitter should be larger than warning jitter"));
 	}
 
