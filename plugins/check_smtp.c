@@ -582,22 +582,26 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'C':									/* commands  */
 			if (ncommands >= command_size) {
-				commands = realloc (commands, command_size+8);
+				command_size+=8;
+				commands = realloc (commands, sizeof(char *) * command_size);
 				if (commands == NULL)
 					die (STATE_UNKNOWN,
 					     _("Could not realloc() units [%d]\n"), ncommands);
 			}
-			commands[ncommands] = optarg;
+			commands[ncommands] = (char *) malloc (sizeof(char) * 255);
+			strncpy (commands[ncommands], optarg, 255);
 			ncommands++;
 			break;
 		case 'R':									/* server responses */
 			if (nresponses >= response_size) {
-				responses = realloc (responses, response_size+8);
+				response_size += 8;
+				responses = realloc (responses, sizeof(char *) * response_size);
 				if (responses == NULL)
 					die (STATE_UNKNOWN,
 					     _("Could not realloc() units [%d]\n"), nresponses);
 			}
-			responses[nresponses] = optarg;
+			responses[nresponses] = (char *) malloc (sizeof(char) * 255);
+			strncpy (responses[nresponses], optarg, 255);
 			nresponses++;
 			break;
 		case 'c':									/* critical time threshold */
