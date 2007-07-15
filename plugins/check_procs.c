@@ -185,7 +185,7 @@ main (int argc, char **argv)
 		cols = sscanf (input_line, PS_FORMAT, PS_VARLIST);
 
 		/* Zombie processes do not give a procprog command */
-		if ( cols == (expected_cols - 1) && strstr(procstat, zombie) ) {
+		if ( cols < expected_cols && strstr(procstat, zombie) ) {
 			cols = expected_cols;
 		}
 		if ( cols >= expected_cols ) {
