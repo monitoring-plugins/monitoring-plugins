@@ -782,6 +782,9 @@ check_http (void)
 
   asprintf (&buf, "%s %s HTTP/1.0\r\n%s\r\n", http_method, server_url, user_agent);
 
+  /* tell HTTP/1.1 servers not to keep the connection alive */
+  asprintf (&buf, "%sConnection: close\r\n", buf);
+
   /* optionally send the host header info */
   if (host_name)
     asprintf (&buf, "%sHost: %s\r\n", buf, host_name);

@@ -2,6 +2,8 @@ This file documents the major additions and syntax changes between releases.
 
 1.4.10 or 1.5 ??
 	Fix check_http buffer overflow vulnerability when following HTTP redirects
+	check_http now explicitly asks HTTP/1.1 servers to close the connection
+	  after completion of the response
 	Check_ldaps' guessing which secure method to use (starttls vs. ssl on connect)  
 	  is now deprecated. See --help for further information.
 	Check_disk now calls stat() on all filesystems to check. (Old: only the ones selected using -p) 
