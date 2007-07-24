@@ -12,26 +12,27 @@
 
 function die { echo $1; exit 1; }
 
-# This makes the distribution. Expects $1 as CVS tag, otherwise uses HEAD
+# This makes the distribution. Expects $1 as branches/name, otherwise uses trunk
 function make_dist {
 	if [[ -n $1 ]] ; then
-		cvs_rel=$1
-		v="$1-"
+		svn_url_suffix=$1
+		name=${1##*/}
 	else
-		cvs_rel="HEAD"
-		v="HEAD-"
+		svn_url_suffix="trunk"
+		name="trunk"
 	fi
+	v="$name-"
 	
 	# Get compile server to do the work
 	# Variables will be expanded locally before being run on $CF
 	ssh $CF <<EOF
 	set -x
 	PATH=$PATH:/usr/local/bin
-	[[ ! -d $COMPILE_DIR/$cvs_rel ]] && mkdir -p $COMPILE_DIR/$cvs_rel
-	cd $COMPILE_DIR/$cvs_rel
+	[[ ! -d $COMPILE_DIR/$name ]] && mkdir -p $COMPILE_DIR/$name
+	cd $COMPILE_DIR/$name
 
 	# Cannot use cvs export due to conflicts on second run - think this is better for cvs server
-	CVS_RSH=ssh cvs -z3 -d:ext:tonvoon@nagiosplug.cvs.sourceforge.net:/cvsroot/nagiosplug co -r $cvs_rel nagiosplug
+	svn export https://nagiosplug.svn.sourceforge.net/svnroot/nagiosplug/nagiosplug/$svn_url_suffix $PROJECT
 
 	cd $PROJECT
 
@@ -60,11 +61,11 @@ COMPILE_DIR=/tmp/tonvoon/tmp_snapshot
 IN=${HOME}/tmp_snapshot
 
 # Where to place the generated files
-OUT_SERVER="shell.sf.net"
+OUT_SERVER="tonvoon@shell.sf.net"
 OUT="/home/groups/n/na/nagiosplug/htdocs/snapshot"
 
 # Make sure prereqs are satisfied on server!
-CF="x86-linux2"
+CF="localhost"
 DS=`date -u +%Y%m%d%H%M`
 
 # Setup home directory area
@@ -80,7 +81,7 @@ done
 set -x
 files=$(ls $IN/*.gz 2>/dev/null)
 [[ -z $files ]] && die "No files created"
-head_file=$(cd $IN && ls *HEAD*.gz 2>/dev/null)
+head_file=$(cd $IN && ls *-trunk-*.gz 2>/dev/null)
 ssh -2 $OUT_SERVER "rm -f $OUT/*.gz"
 scp -2 $files $OUT_SERVER:$OUT
 if [[ -n $head_file ]] ; then
@@ -91,10 +92,11 @@ fi
 ssh -2 $OUT_SERVER << EOF
 cd $OUT
 cat <<-END_README > README
-This is the daily CVS snapshot of nagiosplug, consisting of the CVS HEAD
+This is the daily SVN snapshot of nagiosplug, consisting of the SVN trunk
 and any other branches.
 
-The nagios-plugins-HEAD.tar.gz link will always go to the latest HEAD snapshot.
+The nagios-plugins-HEAD.tar.gz link will always go to the latest trunk snapshot
+(name kept for existing tinderbox scripts to link correctly).
 
 The MD5SUM is:
 END_README

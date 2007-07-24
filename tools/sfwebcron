@@ -11,19 +11,25 @@ function die { echo $1; exit 1; }
 # Set working variables
 PROJECT=nagiosplug
 IN=${HOME}/tmp_sfwebcron
+OUT_SERVER="tonvoon@shell.sf.net"
 OUT="/home/groups/n/na/nagiosplug/htdocs"
+
+if [[ ! -e developer-guidelines.html.last ]] ; then
+	touch developer-guidelines.html.last
+fi
 
 # Get latest dev guildelines
 [[ ! -d $IN ]] && mkdir $IN
 cd $IN
-if [[ ! -d $PROJECT ]] ; then
-	cvs -z3 -d:pserver:anonymous@cvs1:/cvsroot/nagiosplug co nagiosplug || die "Cannot cvs"
+if [[ ! -d doc ]] ; then
+	#cvs -z3 -d:pserver:anonymous@cvs1:/cvsroot/nagiosplug co nagiosplug || die "Cannot cvs"
+	svn checkout http://nagiosplug.svn.sourceforge.net/svnroot/nagiosplug/nagiosplug/trunk/doc doc
 fi
-cd nagiosplug/doc
-cvs update
+cd doc
+svn update
 
-# Is the dev guidelines updated?
 make
-if [[ developer-guidelines.html -nt $OUT/developer-guidelines.html ]] ; then
-	cp developer-guidelines.html developer-guidelines.sgml $OUT
+if [[ developer-guidelines.html -nt developer-guidelines.html.last ]] ; then
+	scp developer-guidelines.{html,sgml} $OUT_SERVER:$OUT
+	touch developer-guidelines.html.last
 fi
