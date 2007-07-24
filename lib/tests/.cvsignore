@@ -1,6 +1,0 @@
-Makefile
-Makefile.in
-test_utils
-test_disk
-test_tcp
-.deps
