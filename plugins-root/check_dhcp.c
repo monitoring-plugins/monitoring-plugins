@@ -50,6 +50,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "netutils.h"
 #include "utils.h"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -211,6 +212,7 @@ u_int8_t unicast = 0;        /* unicast mode: mimic a DHCP relay */
 struct in_addr my_ip;        /* our address (required for relay) */
 struct in_addr dhcp_ip;      /* server to query (if in unicast mode) */
 unsigned char client_hardware_address[MAX_DHCP_CHADDR_LENGTH]="";
+unsigned char *user_specified_mac=NULL;
 
 char network_interface_name[IFNAMSIZ]="eth0";
 
@@ -241,6 +243,8 @@ int validate_arguments(void);
 void print_usage(void);
 void print_help(void);
 
+unsigned char *mac_aton(const char *);
+void print_hardware_address(const unsigned char *);
 int get_hardware_address(int,char *);
 int get_ip_address(int,char *);
 
@@ -279,7 +283,10 @@ int main(int argc, char **argv){
 	dhcp_socket=create_dhcp_socket();
 
 	/* get hardware address of client machine */
-	get_hardware_address(dhcp_socket,network_interface_name);
+	if(user_specified_mac!=NULL)
+		memcpy(client_hardware_address,user_specified_mac,6);
+	else
+		get_hardware_address(dhcp_socket,network_interface_name);
 
 	if(unicast) /* get IP address of client machine */
 		get_ip_address(dhcp_socket,network_interface_name);
@@ -307,8 +314,6 @@ int main(int argc, char **argv){
 
 /* determines hardware address on client machine */
 int get_hardware_address(int sock,char *interface_name){
-
-	int i;
 
 #if defined(__linux__)
 	struct ifreq ifr;
@@ -404,16 +409,12 @@ int get_hardware_address(int sock,char *interface_name){
 						/* Kompf 2000-2003 */
 
 #else
-	printf(_("Error: can't get MAC address for this architecture.\n"));
+	printf(_("Error: can't get MAC address for this architecture.  Use the --mac option.\n"));
 	exit(STATE_UNKNOWN);
 #endif
 
-	if(verbose){ 
-		printf(_("Hardware address: "));
-		for (i=0; i<6; ++i)
-			printf("%2.2x", client_hardware_address[i]);
-		printf( "\n");
-		}
+	if(verbose)
+		print_hardware_address(client_hardware_address);
 
 	return OK;
         }
@@ -1097,6 +1098,7 @@ int call_getopt(int argc, char **argv){
 		{"requestedip",    required_argument,0,'r'},
 		{"timeout",        required_argument,0,'t'},
 		{"interface",      required_argument,0,'i'},
+		{"mac",            required_argument,0,'m'},
 		{"unicast",        no_argument,      0,'u'},
 		{"verbose",        no_argument,      0,'v'},
 		{"version",        no_argument,      0,'V'},
@@ -1105,7 +1107,7 @@ int call_getopt(int argc, char **argv){
 	};
 
 	while(1){
-		c=getopt_long(argc,argv,"+hVvt:s:r:t:i:u",long_options,&option_index);
+		c=getopt_long(argc,argv,"+hVvt:s:r:t:i:m:u",long_options,&option_index);
 
 		i++;
 
@@ -1160,6 +1162,15 @@ int call_getopt(int argc, char **argv){
 			else
 				usage("Time interval must be a nonnegative integer\n");
 			*/
+			break;
+
+		case 'm': /* MAC address */
+
+			if((user_specified_mac=mac_aton(optarg)) == NULL)
+				usage("Cannot parse MAC address.\n");
+			if(verbose)
+				print_hardware_address(user_specified_mac);
+
 			break;
 
 		case 'i': /* interface name */
@@ -1341,6 +1352,39 @@ long mac_addr_dlpi( const char *dev, int unit, u_char  *addr){
 #endif
 
 
+/* parse MAC address string, return 6 bytes (unterminated) or NULL */
+unsigned char *mac_aton(const char *string){
+	static unsigned char result[6];
+	char tmp[3];
+	unsigned i, j;
+
+	for(i=0, j=0; string[i] != '\0' && j < sizeof(result); i++){
+		/* ignore ':' and any other non-hex character */
+		if(!isxdigit(string[i]) || !isxdigit(string[i+1]))
+			continue;
+		tmp[0]=string[i];
+		tmp[1]=string[i+1];
+		tmp[2]='\0';
+		result[j]=strtol(tmp,(char **)NULL,16);
+		i++;
+		j++;
+		}
+
+	return (j==6) ? result : NULL;
+	}
+
+
+void print_hardware_address(const unsigned char *address){
+	int i;
+
+	printf(_("Hardware address: "));
+	for (i=0; i<5; i++)
+		printf("%2.2x:", address[i]);
+	printf("%2.2x", address[i]);
+	putchar('\n');
+	}
+
+
 /* print usage help */
 void print_help(void){
 
@@ -1367,6 +1411,8 @@ void print_help(void){
   printf ("    %s\n", _("Seconds to wait for DHCPOFFER before timeout occurs"));
   printf (" %s\n", "-i, --interface=STRING");
   printf ("    %s\n", _("Interface to to use for listening (i.e. eth0)"));
+  printf (" %s\n", "-m, --mac=STRING");
+  printf ("    %s\n", _("MAC address to use in the DHCP request"));
   printf (" %s\n", "-u, --unicast");
   printf ("    %s\n", _("Unicast testing: mimic a DHCP relay, requires -s"));
 
@@ -1379,7 +1425,7 @@ print_usage(void){
 	
   printf (_("Usage:"));
   printf (" %s [-v] [-u] [-s serverip] [-r requestedip] [-t timeout]\n",progname);
-  printf ("                  [-i interface]\n");
+  printf ("                  [-i interface] [-m mac]\n");
   
 	return;
 	}
