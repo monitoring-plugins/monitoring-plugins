@@ -1450,6 +1450,9 @@ elif test -f ../plugins/check_nt.c ; then
 fi
 
 
+dnl used in check_dhcp
+AC_CHECK_HEADERS(sys/sockio.h)
+
 case $host in
 	*bsd*)
 		AC_DEFINE(__bsd__,1,[bsd specific code in check_dhcp.c])

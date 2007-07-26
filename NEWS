@@ -9,6 +9,8 @@ This file documents the major additions and syntax changes between releases.
 	Check_disk now calls stat() on all filesystems to check. (Old: only the ones selected using -p) 
 	  A meaningful error message (eg "Stale NFS Handle") is printed if stat fails.
 	Check_disk's --help now prints some examples for the new features introduced in 1.4.8
+	New check_dhcp -u/--unicast option for emulating a DHCP relay in order
+	  to check DHCP servers on remote networks
 
 1.4.9 4th June 2006
 	Inclusion of contrib/check_cluster2 as check_cluster with some improvements
