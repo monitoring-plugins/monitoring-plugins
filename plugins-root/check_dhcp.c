@@ -243,6 +243,7 @@ int validate_arguments(void);
 void print_usage(void);
 void print_help(void);
 
+void resolve_host(const char *in,struct in_addr *out);
 unsigned char *mac_aton(const char *);
 void print_hardware_address(const unsigned char *);
 int get_hardware_address(int,char *);
@@ -1089,7 +1090,6 @@ int process_arguments(int argc, char **argv){
 int call_getopt(int argc, char **argv){
 	int c=0;
 	int i=0;
-	struct in_addr ipaddress;
 
 	int option_index = 0;
 	static struct option long_options[] =
@@ -1128,27 +1128,13 @@ int call_getopt(int argc, char **argv){
 		switch(c){
 
 		case 's': /* DHCP server address */
-			if(inet_aton(optarg,&ipaddress)){
-				add_requested_server(ipaddress);
-				inet_aton(optarg, &dhcp_ip);
-				if (verbose)
-					printf("querying %s\n",inet_ntoa(dhcp_ip));
-			}
-			/*
-			else
-				usage("Invalid server IP address\n");
-			*/
+			resolve_host(optarg,&dhcp_ip);
+			add_requested_server(dhcp_ip);
 			break;
 
 		case 'r': /* address we are requested from DHCP servers */
-			if(inet_aton(optarg,&ipaddress)){
-				requested_address=ipaddress;
-				request_specific_address=TRUE;
-			        }
-			/*
-			else
-				usage("Invalid requested IP address\n");
-			*/
+			resolve_host(optarg,&requested_address);
+			request_specific_address=TRUE;
 			break;
 
 		case 't': /* timeout */
@@ -1350,6 +1336,20 @@ long mac_addr_dlpi( const char *dev, int unit, u_char  *addr){
 
 /* Kompf 2000-2003 */
 #endif
+
+
+/* resolve host name or die (TODO: move this to netutils.c!) */
+void resolve_host(const char *in,struct in_addr *out){
+	struct addrinfo hints, *ai;
+
+	memset(&hints,0,sizeof(hints));
+	hints.ai_family=PF_INET;
+	if (getaddrinfo(in,NULL,&hints,&ai) != 0)
+		usage_va(_("Invalid hostname/address - %s"),optarg);
+
+	memcpy(out,&((struct sockaddr_in *)ai->ai_addr)->sin_addr,sizeof(*out));
+	freeaddrinfo(ai);
+	}
 
 
 /* parse MAC address string, return 6 bytes (unterminated) or NULL */
