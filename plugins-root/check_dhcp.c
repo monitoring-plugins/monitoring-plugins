@@ -313,7 +313,8 @@ int get_hardware_address(int sock,char *interface_name){
 #if defined(__linux__)
 	struct ifreq ifr;
 
-	strncpy((char *)&ifr.ifr_name,interface_name,sizeof(ifr.ifr_name));
+	strncpy((char *)&ifr.ifr_name,interface_name,sizeof(ifr.ifr_name)-1);
+	ifr.ifr_name[sizeof(ifr.ifr_name)-1]='\0';
 	
 	/* try and grab hardware address of requested interface */
 	if(ioctl(sock,SIOCGIFHWADDR,&ifr)<0){
@@ -773,14 +774,16 @@ int create_dhcp_socket(void){
 
 	/* bind socket to interface */
 #if defined(__linux__)
-	strncpy(interface.ifr_ifrn.ifrn_name,network_interface_name,IFNAMSIZ);
+	strncpy(interface.ifr_ifrn.ifrn_name,network_interface_name,IFNAMSIZ-1);
+	interface.ifr_ifrn.ifrn_name[IFNAMSIZ-1]='\0';
 	if(setsockopt(sock,SOL_SOCKET,SO_BINDTODEVICE,(char *)&interface,sizeof(interface))<0){
 		printf(_("Error: Could not bind socket to interface %s.  Check your privileges...\n"),network_interface_name);
 		exit(STATE_UNKNOWN);
 	        }
 
 #else
-	strncpy(interface.ifr_name,network_interface_name,IFNAMSIZ);
+	strncpy(interface.ifr_name,network_interface_name,IFNAMSIZ-1);
+	interface.ifr_name[IFNAMSIZ-1]='\0';
 #endif
 
         /* bind the socket */
