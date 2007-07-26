@@ -464,7 +464,10 @@ int send_dhcp_discover(int sock){
 	/* length of our hardware address */
 	discover_packet.hlen=ETHERNET_HARDWARE_ADDRESS_LENGTH;
 
-	/* transaction id is supposed to be random */
+	/*
+	 * transaction ID is supposed to be random.  We won't use the address so
+	 * we don't care about high entropy here.  time(2) is good enough.
+	 */
 	srand(time(NULL));
 	packet_xid=random();
 	discover_packet.xid=htonl(packet_xid);
@@ -522,7 +525,7 @@ int send_dhcp_discover(int sock){
 
 	if(verbose){
 		printf(_("DHCPDISCOVER to %s port %d\n"),inet_ntoa(sockaddr_broadcast.sin_addr),ntohs(sockaddr_broadcast.sin_port));
-		printf("DHCPDISCOVER XID: %lu (0x%X)\n",ntohl(discover_packet.xid),ntohl(discover_packet.xid));
+		printf("DHCPDISCOVER XID: %u (0x%X)\n",ntohl(discover_packet.xid),ntohl(discover_packet.xid));
 		printf("DHCDISCOVER ciaddr:  %s\n",inet_ntoa(discover_packet.ciaddr));
 		printf("DHCDISCOVER yiaddr:  %s\n",inet_ntoa(discover_packet.yiaddr));
 		printf("DHCDISCOVER siaddr:  %s\n",inet_ntoa(discover_packet.siaddr));
@@ -596,13 +599,13 @@ int get_dhcp_offer(int sock){
 		if(verbose){
 			printf(_("DHCPOFFER from IP address %s"),inet_ntoa(source.sin_addr));
 			printf(_(" via %s\n"),inet_ntoa(via.sin_addr));
-			printf("DHCPOFFER XID: %lu (0x%X)\n",ntohl(offer_packet.xid),ntohl(offer_packet.xid));
+			printf("DHCPOFFER XID: %u (0x%X)\n",ntohl(offer_packet.xid),ntohl(offer_packet.xid));
 			}
 
 		/* check packet xid to see if its the same as the one we used in the discover packet */
 		if(ntohl(offer_packet.xid)!=packet_xid){
 			if(verbose)
-				printf(_("DHCPOFFER XID (%lu) did not match DHCPDISCOVER XID (%lu) - ignoring packet\n"),ntohl(offer_packet.xid),packet_xid);
+				printf(_("DHCPOFFER XID (%u) did not match DHCPDISCOVER XID (%u) - ignoring packet\n"),ntohl(offer_packet.xid),packet_xid);
 
 			continue;
 		        }
@@ -672,22 +675,26 @@ int send_dhcp_packet(void *buffer, int buffer_size, int sock, struct sockaddr_in
 int receive_dhcp_packet(void *buffer, int buffer_size, int sock, int timeout, struct sockaddr_in *address){
         struct timeval tv;
         fd_set readfds;
+	fd_set oobfds;
 	int recv_result;
 	socklen_t address_size;
 	struct sockaddr_in source_address;
+	int nfound;
 
 
         /* wait for data to arrive (up time timeout) */
         tv.tv_sec=timeout;
         tv.tv_usec=0;
         FD_ZERO(&readfds);
+        FD_ZERO(&oobfds);
         FD_SET(sock,&readfds);
-        select(sock+1,&readfds,NULL,NULL,&tv);
+        FD_SET(sock,&oobfds);
+        nfound = select(sock+1,&readfds,NULL,&oobfds,&tv);
 
         /* make sure some data has arrived */
         if(!FD_ISSET(sock,&readfds)){
 		if(verbose)
-                	printf(_("No (more) data received\n"));
+                	printf(_("No (more) data received (nfound: %d)\n"), nfound);
                 return ERROR;
                 }
 
