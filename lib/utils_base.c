@@ -238,7 +238,7 @@ int np_warn_if_not_root(void) {
 		printf(_("This plugin must be either run as root or setuid root.\n"));
 		printf(_("To run as root, you can use a tool like sudo.\n"));
 		printf(_("To set the setuid permissions, use the command:\n"));
-		// XXX could we use something like progname?
+		/* XXX could we use something like progname? */
 		printf("\tchmod u+s yourpluginfile\n");
 	}
 	return status;
