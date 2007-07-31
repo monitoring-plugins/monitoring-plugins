@@ -74,6 +74,7 @@ int process_arguments (int, char **);
 int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
+void smtp_quit(void);
 int my_close(void);
 
 #include "regex.h"
@@ -258,7 +259,7 @@ main (int argc, char **argv)
 
 		if(use_ssl && ! supports_tls){
 			printf(_("WARNING - TLS not supported by server\n"));
-			send (sd, SMTP_QUIT, strlen (SMTP_QUIT), 0);
+			smtp_quit();
 			return STATE_WARNING;
 		}
 
@@ -270,7 +271,7 @@ main (int argc, char **argv)
 		  recv(sd,buffer, MAX_INPUT_BUFFER-1, 0); /* wait for it */
 		  if (!strstr (buffer, server_expect)) {
 		    printf (_("Server does not support STARTTLS\n"));
-		    send (sd, SMTP_QUIT, strlen (SMTP_QUIT), 0);
+		    smtp_quit();
 		    return STATE_UNKNOWN;
 		  }
 		  result = np_net_ssl_init(sd);
@@ -460,7 +461,7 @@ main (int argc, char **argv)
 		}
 
 		/* tell the server we're done */
-		my_send (SMTP_QUIT, strlen (SMTP_QUIT));
+		smtp_quit();
 
 		/* finally close the connection */
 		close (sd);
@@ -701,6 +702,30 @@ int
 validate_arguments (void)
 {
 	return OK;
+}
+
+
+void
+smtp_quit(void)
+{
+	int bytes;
+
+	my_send(SMTP_QUIT, strlen(SMTP_QUIT));
+	if (verbose)
+		printf(_("sent %s\n"), "QUIT");
+
+	/* read the response but don't care about problems */
+	bytes = my_recv(buffer, MAXBUF - 1);
+	if (verbose) {
+		if (bytes < 0)
+			printf(_("recv() failed after QUIT."));
+		else if (bytes == 0)
+			printf(_("Connection reset by peer."));
+		else {
+			buffer[bytes] = '\0';
+			printf(_("received %s\n"), buffer);
+		}
+	}
 }
 
 
