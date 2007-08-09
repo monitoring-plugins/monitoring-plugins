@@ -272,7 +272,7 @@ main (int argc, char **argv)
             
             if (verbose > 3)
               printf("Group %s: add %llu blocks (%s) \n", path->group, tmpfsp.fsu_bavail, temp_list->name);
-             // printf("Group %s: add %u blocks (%s)\n", temp_list->name); // path->group, tmpfsp.fsu_bavail, temp_list->name);
+             /* printf("Group %s: add %u blocks (%s)\n", temp_list->name); // path->group, tmpfsp.fsu_bavail, temp_list->name); */
 
             np_add_name(&seen, temp_list->best_match->me_mountdir);
           }
