@@ -22,7 +22,7 @@ BEGIN {
 }
 
 use strict;
-use lib utils.pm;
+use lib "/usr/local/nagios/libexec";
 
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 use vars qw($PROGNAME);

@@ -13,7 +13,7 @@ use strict;
 use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_H $opt_T $opt_t $opt_R $opt_r 
   $opt_L $opt_l $PROGNAME);
-use lib utils.pm;
+use lib "/usr/local/nagios/libexec";
 use utils qw(%ERRORS &print_revision &support &usage);
 
 sub print_help ();
