@@ -1,0 +1,86 @@
+#!/usr/bin/perl
+# SYNTAX:
+#	build_perl_modules -d dest_dir [-c] [-m] [-t] [-i] tarball_dir
+#
+# DESCRIPTION:
+#	Installs perl modules found in tarball_dir
+#	Expects a file called install_order, containing one line per distribution name
+#	Will take action against each distribution in turn
+#	-d is a necessary destination directory for the perl mods
+#	If -c is set, will remove the module build directories and exit
+#	If -m is set, will run perl Makefile.PL and make
+#	If -t is set, will run make test
+#	If -i is set, will run make install
+#	Options are discrete. This is because an overall ./configure, make, make test, make install
+#	are run in different invocations. Obviously, you can't run a -t without a -m, but there's no
+#	checking here for that
+
+# Can only use base modules
+use warnings;
+use strict;
+use Config;
+use Getopt::Std;
+use Cwd;
+use File::Path;
+
+my $opts = {};
+getopts('d:cmti', $opts) || die "Invalid options";
+my $moddir = shift @ARGV or die "Must specify a directory where tarballs exist";
+
+my $destdir = $opts->{d};
+die "Must set a destination directory" unless $destdir;
+
+chdir $moddir or die "Cannot change to $moddir";
+open F, "install_order" or die "Cannot open install_order file";
+my @files = grep { ! /^#/ && chop } <F>;
+close F;
+
+my @tarballs;
+foreach my $f (@files) {
+	# Needs to be better. Also, what if there are two with same name?
+	my $tarball;
+	eval '$tarball = <'."$f".'*.tar.gz>';
+	die unless ($tarball);
+	print "Got $f, with file: $tarball",$/;
+	push @tarballs, $tarball;
+	(my $dir = $tarball) =~ s/\.tar.gz//;
+	# Need to do cleaning before doing each module in turn
+	if ($opts->{c}) {
+		print "Cleaning $dir",$/;
+		rmtree($dir);
+	}
+}
+
+if ($opts->{c}) {
+	print "Finished cleaning",$/;
+	exit;
+}
+
+my $topdir = cwd();
+foreach my $tarball (@tarballs) {
+	(my $dir = $tarball) =~ s/\.tar.gz//;
+	if ($opts->{m}) {
+		# Don't compile if already done - this is because of invocating this
+		# script at different stages
+		unless (-e $dir) {
+			system("gunzip -c $tarball | tar -xf -") == 0 or die "Cannot extract $tarball";
+			chdir $dir or die "Can't chdir into $dir";
+			system("perl Makefile.PL PREFIX=$destdir INSTALLDIRS=site LIB=$destdir/lib") == 0 or die "Can't run perl Makefile.PL";
+			system("make") == 0 or die "Can't run make";
+			chdir $topdir or die "Can't chdir to top";;
+		}
+	}
+
+	chdir $dir or die "Can't chdir into $dir";
+
+	# Need to add this so this module is found for subsequent ones
+	$ENV{PERL5LIB}="$topdir/$dir/blib/lib:$ENV{PERL5LIB}";
+
+	if ($opts->{t}) {
+		system("make test") == 0 or die "Can't run make test failed";
+	}
+	if ($opts->{i}) {
+		system("make install SITEPREFIX=$destdir") == 0 or die "Can't run make install";
+	}
+	chdir $topdir or die "Can't go back to $topdir";
+}

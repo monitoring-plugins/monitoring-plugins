@@ -1503,6 +1503,16 @@ elif test "$ac_cv_enable_redhat_pthread_workaround" = "yes" ; then
 	AC_DEFINE(REDHAT_SPOPEN_ERROR, 1, [Forced workaround on redhat in spopen])
 fi
 
+dnl Perl modules
+AC_ARG_ENABLE(perl-modules,
+	AC_HELP_STRING([--enable-perl-modules], 
+		[Enables installation of Nagios::Plugin and its dependencies (default: no)]),
+	[enable_perl_modules=$enableval],
+	[enable_perl_modules=no])
+if test "$enable_perl_modules" = "yes" ; then
+  AC_SUBST(PERLMODS_DIR,perlmods)
+fi
+
 dnl External libraries - see ACKNOWLEDGEMENTS
 gl_INIT
 
@@ -1521,6 +1531,7 @@ AC_OUTPUT(
   plugins-scripts/subst 
   plugins-scripts/utils.pm 
   plugins-scripts/utils.sh 
+  perlmods/Makefile
   command.cfg 
   test.pl 
   pkg/solaris/pkginfo 
@@ -1558,6 +1569,7 @@ ACX_FEATURE([with],[mysql])
 ACX_FEATURE([with],[openssl])
 ACX_FEATURE([with],[gnutls])
 ACX_FEATURE([with],[perl])
+ACX_FEATURE([enable],[perl-modules])
 ACX_FEATURE([with],[cgiurl])
 ACX_FEATURE([with],[trusted-path])
 
