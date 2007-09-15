@@ -40,6 +40,8 @@ const char *revision = "$Revision$";
 const char *copyright = "2000-2006";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
+#include <ctype.h>
+
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
@@ -75,6 +77,8 @@ int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
 void smtp_quit(void);
+int recvline(char *, size_t);
+int recvlines(char *, size_t);
 int my_close(void);
 
 #include "regex.h"
@@ -116,7 +120,6 @@ char buffer[MAX_INPUT_BUFFER];
 enum {
   TCP_PROTOCOL = 1,
   UDP_PROTOCOL = 2,
-  MAXBUF = 1024
 };
 
 /* written by lauri alanko */
@@ -222,7 +225,7 @@ main (int argc, char **argv)
 
 		/* watch for the SMTP connection string and */
 		/* return a WARNING status if we couldn't read any data */
-		if (recv (sd, buffer, MAX_INPUT_BUFFER - 1, 0) == -1) {
+		if (recvlines(buffer, MAX_INPUT_BUFFER) <= 0) {
 			printf (_("recv() failed\n"));
 			result = STATE_WARNING;
 		}
@@ -246,11 +249,10 @@ main (int argc, char **argv)
 		send(sd, helocmd, strlen(helocmd), 0);
 
 		/* allow for response to helo command to reach us */
-		if(read (sd, buffer, MAXBUF - 1) < 0){
+		if (recvlines(buffer, MAX_INPUT_BUFFER) <= 0) {
 			printf (_("recv() failed\n"));
 			return STATE_WARNING;
 		} else if(use_ehlo){
-			buffer[MAXBUF-1]='\0';
 			if(strstr(buffer, "250 STARTTLS") != NULL ||
 			   strstr(buffer, "250-STARTTLS") != NULL){
 				supports_tls=TRUE;
@@ -268,7 +270,7 @@ main (int argc, char **argv)
 		  /* send the STARTTLS command */
 		  send(sd, SMTP_STARTTLS, strlen(SMTP_STARTTLS), 0);
 
-		  recv(sd,buffer, MAX_INPUT_BUFFER-1, 0); /* wait for it */
+		  recvlines(buffer, MAX_INPUT_BUFFER); /* wait for it */
 		  if (!strstr (buffer, server_expect)) {
 		    printf (_("Server does not support STARTTLS\n"));
 		    smtp_quit();
@@ -302,13 +304,12 @@ main (int argc, char **argv)
 		}
 		if (verbose)
 			printf(_("sent %s"), helocmd);
-		if ((n = my_recv(buffer, MAX_INPUT_BUFFER - 1)) <= 0) {
+		if ((n = recvlines(buffer, MAX_INPUT_BUFFER)) <= 0) {
 			printf("%s\n", _("SMTP UNKNOWN - Cannot read EHLO response via TLS."));
 			my_close();
 			return STATE_UNKNOWN;
 		}
 		if (verbose) {
-			buffer[n] = '\0';
 			printf("%s", buffer);
 		}
 
@@ -337,16 +338,14 @@ main (int argc, char **argv)
 		 */
 		if (smtp_use_dummycmd) {
 		  my_send(cmd_str, strlen(cmd_str));
-		  my_recv(buffer, MAX_INPUT_BUFFER-1);
-		  if (verbose) 
+		  if (recvlines(buffer, MAX_INPUT_BUFFER) >= 1 && verbose)
 		    printf("%s", buffer);
 		}
 
 		while (n < ncommands) {
 			asprintf (&cmd_str, "%s%s", commands[n], "\r\n");
 			my_send(cmd_str, strlen(cmd_str));
-			my_recv(buffer, MAX_INPUT_BUFFER-1);
-			if (verbose) 
+			if (recvlines(buffer, MAX_INPUT_BUFFER) >= 1 && verbose)
 				printf("%s", buffer);
 			strip (buffer);
 			if (n < nresponses) {
@@ -395,12 +394,11 @@ main (int argc, char **argv)
 					if (verbose)
 						printf (_("sent %s\n"), "AUTH LOGIN");
 
-					if((ret = my_recv(buffer, MAXBUF - 1)) < 0){
+					if ((ret = recvlines(buffer, MAX_INPUT_BUFFER)) <= 0) {
 						asprintf(&error_msg, _("recv() failed after AUTH LOGIN, "));
 						result = STATE_WARNING;
 						break;
 					}
-					buffer[ret] = 0;
 					if (verbose)
 						printf (_("received %s\n"), buffer);
 
@@ -417,12 +415,11 @@ main (int argc, char **argv)
 					if (verbose)
 						printf (_("sent %s\n"), abuf);
 
-					if ((ret = my_recv(buffer, MAX_INPUT_BUFFER-1)) == -1) {
+					if ((ret = recvlines(buffer, MAX_INPUT_BUFFER)) <= 0) {
 						result = STATE_CRITICAL;
 						asprintf(&error_msg, _("recv() failed after sending authuser, "));
 						break;
 					}
-					buffer[ret] = 0;
 					if (verbose) {
 						printf (_("received %s\n"), buffer);
 					}
@@ -438,12 +435,11 @@ main (int argc, char **argv)
 					if (verbose) {
 						printf (_("sent %s\n"), abuf);
 					}
-					if ((ret = my_recv(buffer, MAX_INPUT_BUFFER-1)) == -1) {
+					if ((ret = recvlines(buffer, MAX_INPUT_BUFFER)) <= 0) {
 						result = STATE_CRITICAL;
 						asprintf(&error_msg, _("recv() failed after sending authpass, "));
 						break;
 					}
-					buffer[ret] = 0;
 					if (verbose) {
 						printf (_("received %s\n"), buffer);
 					}
@@ -715,7 +711,7 @@ smtp_quit(void)
 		printf(_("sent %s\n"), "QUIT");
 
 	/* read the response but don't care about problems */
-	bytes = my_recv(buffer, MAXBUF - 1);
+	bytes = recvlines(buffer, MAX_INPUT_BUFFER);
 	if (verbose) {
 		if (bytes < 0)
 			printf(_("recv() failed after QUIT."));
@@ -726,6 +722,64 @@ smtp_quit(void)
 			printf(_("received %s\n"), buffer);
 		}
 	}
+}
+
+
+/*
+ * Receive one line, copy it into buf and nul-terminate it.  Returns the
+ * number of bytes written to buf (excluding the '\0') or 0 on EOF or <0 on
+ * error.
+ *
+ * TODO: Reading one byte at a time is very inefficient.  Replace this by a
+ * function which buffers the data, move that to netutils.c and change
+ * check_smtp and other plugins to use that.  Also, remove (\r)\n.
+ */
+int
+recvline(char *buf, size_t bufsize)
+{
+	int result;
+	unsigned i;
+
+	for (i = result = 0; i < bufsize - 1; i++) {
+		if ((result = my_recv(&buf[i], 1)) != 1)
+			break;
+		if (buf[i] == '\n') {
+			buf[++i] = '\0';
+			return i;
+		}
+	}
+	return (result == 1 || i == 0) ? -2 : result;	/* -2 if out of space */
+}
+
+
+/*
+ * Receive one or more lines, copy them into buf and nul-terminate it.  Returns
+ * the number of bytes written to buf (excluding the '\0') or 0 on EOF or <0 on
+ * error.  Works for all protocols which format multiline replies as follows:
+ *
+ * ``The format for multiline replies requires that every line, except the last,
+ * begin with the reply code, followed immediately by a hyphen, `-' (also known
+ * as minus), followed by text.  The last line will begin with the reply code,
+ * followed immediately by <SP>, optionally some text, and <CRLF>.  As noted
+ * above, servers SHOULD send the <SP> if subsequent text is not sent, but
+ * clients MUST be prepared for it to be omitted.'' (RFC 2821, 4.2.1)
+ *
+ * TODO: Move this to netutils.c.  Also, remove \r and possibly the final \n.
+ */
+int
+recvlines(char *buf, size_t bufsize)
+{
+	int result, i;
+
+	for (i = 0; /* forever */; i += result)
+		if (!((result = recvline(buf + i, bufsize - i)) > 3 &&
+		    isdigit((int)buf[i]) &&
+		    isdigit((int)buf[i + 1]) &&
+		    isdigit((int)buf[i + 2]) &&
+		    buf[i + 3] == '-'))
+			break;
+
+	return (result <= 0) ? result : result + i;
 }
 
 

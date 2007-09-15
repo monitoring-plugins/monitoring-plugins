@@ -15,6 +15,7 @@ This file documents the major additions and syntax changes between releases.
 	  address to use in the DHCP request
 	The check_dhcp -r and -s options now accept host names, too
 	Fix possible check_icmp bus errors on some (non-x86/AMD64) platforms
+	Fix check_smtp's handling of multiple-packet server responses
 
 1.4.9 4th June 2006
 	Inclusion of contrib/check_cluster2 as check_cluster with some improvements
