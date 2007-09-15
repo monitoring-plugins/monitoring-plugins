@@ -294,7 +294,7 @@ get_icmp_error_msg(unsigned char icmp_type, unsigned char icmp_code)
 static int
 handle_random_icmp(struct icmp *p, struct sockaddr_in *addr)
 {
-	struct icmp *sent_icmp = NULL;
+	struct icmp sent_icmp;
 	struct rta_host *host = NULL;
 	unsigned char *ptr;
 
@@ -324,16 +324,16 @@ handle_random_icmp(struct icmp *p, struct sockaddr_in *addr)
 
 	/* might be for us. At least it holds the original package (according
 	 * to RFC 792). If it isn't, just ignore it */
-	sent_icmp = (struct icmp *)(ptr + 28);
-	if(sent_icmp->icmp_type != ICMP_ECHO || sent_icmp->icmp_id != pid ||
-	   sent_icmp->icmp_seq >= targets)
+	memcpy(&sent_icmp, ptr + 28, sizeof(sent_icmp));
+	if(sent_icmp.icmp_type != ICMP_ECHO || sent_icmp.icmp_id != pid ||
+	   sent_icmp.icmp_seq >= targets)
 	{
 		if(debug) printf("Packet is no response to a packet we sent\n");
 		return 0;
 	}
 
 	/* it is indeed a response for us */
-	host = table[sent_icmp->icmp_seq];
+	host = table[sent_icmp.icmp_seq];
 	if(debug) {
 		printf("Received \"%s\" from %s for ICMP ECHO sent to %s.\n",
 			   get_icmp_error_msg(p->icmp_type, p->icmp_code),
@@ -677,9 +677,9 @@ wait_for_reply(int sock, u_int t)
 	static char buf[4096];
 	struct sockaddr_in resp_addr;
 	struct ip *ip;
-	struct icmp *icp, *sent_icmp;
+	struct icmp icp;
 	struct rta_host *host;
-	struct icmp_ping_data *data;
+	struct icmp_ping_data data;
 	struct timeval wait_start, now;
 	u_int tdiff, i, per_pkt_wait;
 
@@ -741,32 +741,25 @@ wait_for_reply(int sock, u_int t)
 		/* } */
 
 		/* check the response */
-		icp = (struct icmp *)(buf + hlen);
-		sent_icmp = (struct icmp *)(buf + hlen + ICMP_MINLEN);
-		/* printf("buf: %p, icp: %p, distance: %u (expected %u)\n", */
-		/* 	   buf, icp, */
-		/* 	   (u_int)icp - (u_int)buf, hlen); */
-		/* printf("buf: %p, sent_icmp: %p, distance: %u (expected %u)\n", */
-		/* 	   buf, sent_icmp, */
-		/* 	   (u_int)sent_icmp - (u_int)buf, hlen + ICMP_MINLEN); */
+		memcpy(&icp, buf + hlen, sizeof(icp));
 
-		if(icp->icmp_id != pid) {
-			handle_random_icmp(icp, &resp_addr);
+		if(icp.icmp_id != pid) {
+			handle_random_icmp(&icp, &resp_addr);
 			continue;
 		}
 
-		if(icp->icmp_type != ICMP_ECHOREPLY || icp->icmp_seq >= targets) {
+		if(icp.icmp_type != ICMP_ECHOREPLY || icp.icmp_seq >= targets) {
 			if(debug > 2) printf("not a proper ICMP_ECHOREPLY\n");
-			handle_random_icmp(icp, &resp_addr);
+			handle_random_icmp(&icp, &resp_addr);
 			continue;
 		}
 
 		/* this is indeed a valid response */
-		data = (struct icmp_ping_data *)(icp->icmp_data);
+		memcpy(&data, icp.icmp_data, sizeof(data));
 
-		host = table[icp->icmp_seq];
+		host = table[icp.icmp_seq];
 		gettimeofday(&now, &tz);
-		tdiff = get_timevaldiff(&data->stime, &now);
+		tdiff = get_timevaldiff(&data.stime, &now);
 
 		host->time_waited += tdiff;
 		host->icmp_recv++;
@@ -796,14 +789,16 @@ wait_for_reply(int sock, u_int t)
 static int
 send_icmp_ping(int sock, struct rta_host *host)
 {
-	static char *buf = NULL; /* re-use so we prevent leaks */
+	static union {
+		char *buf; /* re-use so we prevent leaks */
+		struct icmp *icp;
+		u_short *cksum_in;
+	} packet = { NULL };
 	long int len;
-	struct icmp *icp;
-	struct icmp_ping_data *data;
+	struct icmp_ping_data data;
 	struct timeval tv;
 	struct sockaddr *addr;
 
-	
 	if(sock == -1) {
 		errno = 0;
 		crash("Attempt to send on bogus socket");
@@ -811,30 +806,28 @@ send_icmp_ping(int sock, struct rta_host *host)
 	}
 	addr = (struct sockaddr *)&host->saddr_in;
 
-	if(!buf) {
-		buf = (char *)malloc(icmp_pkt_size + sizeof(struct ip));
-		if(!buf) {
+	if(!packet.buf) {
+		if (!(packet.buf = malloc(icmp_pkt_size))) {
 			crash("send_icmp_ping(): failed to malloc %d bytes for send buffer",
 				  icmp_pkt_size);
 			return -1;	/* might be reached if we're in debug mode */
 		}
 	}
-	memset(buf, 0, icmp_pkt_size + sizeof(struct ip));
+	memset(packet.buf, 0, icmp_pkt_size);
 
 	if((gettimeofday(&tv, &tz)) == -1) return -1;
 
-	icp = (struct icmp *)buf;
-	icp->icmp_type = ICMP_ECHO;
-	icp->icmp_code = 0;
-	icp->icmp_cksum = 0;
-	icp->icmp_id = pid;
-	icp->icmp_seq = host->id;
-	data = (struct icmp_ping_data *)icp->icmp_data;
-	data->ping_id = 10; /* host->icmp.icmp_sent; */
-	memcpy(&data->stime, &tv, sizeof(struct timeval));
-	icp->icmp_cksum = icmp_checksum((u_short *)icp, icmp_pkt_size);
+	data.ping_id = 10; /* host->icmp.icmp_sent; */
+	memcpy(&data.stime, &tv, sizeof(tv));
+	memcpy(&packet.icp->icmp_data, &data, sizeof(data));
+	packet.icp->icmp_type = ICMP_ECHO;
+	packet.icp->icmp_code = 0;
+	packet.icp->icmp_cksum = 0;
+	packet.icp->icmp_id = pid;
+	packet.icp->icmp_seq = host->id;
+	packet.icp->icmp_cksum = icmp_checksum(packet.cksum_in, icmp_pkt_size);
 
-	len = sendto(sock, buf, icmp_pkt_size, 0, (struct sockaddr *)addr,
+	len = sendto(sock, packet.buf, icmp_pkt_size, 0, (struct sockaddr *)addr,
 				 sizeof(struct sockaddr));
 
 	if(len < 0 || (unsigned int)len != icmp_pkt_size) {
