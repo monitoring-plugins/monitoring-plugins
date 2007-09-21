@@ -319,8 +319,8 @@ main (int argc, char **argv)
       dfree_inodes_percent = 100 - dused_inodes_percent;
 
       if (verbose >= 3) {
-        printf ("For %s, used_pct=%g free_pct=%g used_units=%g free_units=%g total_units=%g used_inodes_pct=%g free_inodes_pct=%g\n", 
-          me->me_mountdir, dused_pct, dfree_pct, dused_units, dfree_units, dtotal_units, dused_inodes_percent, dfree_inodes_percent);
+        printf ("For %s, used_pct=%g free_pct=%g used_units=%g free_units=%g total_units=%g used_inodes_pct=%g free_inodes_pct=%g fsp.fsu_blocksize=%lu mult=%lu\n", 
+          me->me_mountdir, dused_pct, dfree_pct, dused_units, dfree_units, dtotal_units, dused_inodes_percent, dfree_inodes_percent, fsp.fsu_blocksize, mult);
       }
 
       /* Threshold comparisons */
@@ -373,6 +373,7 @@ main (int argc, char **argv)
         critical_high_tide = abs( min( (double) critical_high_tide, (double) (1.0 - path->freespace_percent->critical->end/100)*dtotal_units ));
       }
 
+      /* Nb: *_high_tide are unset when == UINT_MAX */
       asprintf (&perf, "%s %s", perf,
                 perfdata ((!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
                           dused_units, units,
@@ -384,18 +385,16 @@ main (int argc, char **argv)
       if (disk_result==STATE_OK && erronly && !verbose)
         continue;
 
-      if (disk_result!=STATE_OK || verbose>=0) {
-        asprintf (&output, "%s %s %.0f %s (%.0f%%",
-                  output,
-                  (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
-                  dfree_units,
-                  units,
-                  dfree_pct);
-        if (dused_inodes_percent < 0) {
-          asprintf(&output, "%s inode=-);", output);
-        } else {
-          asprintf(&output, "%s inode=%.0f%%);", output, dfree_inodes_percent );
-        }
+      asprintf (&output, "%s %s %.0f %s (%.0f%%",
+                output,
+                (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
+                dfree_units,
+                units,
+                dfree_pct);
+      if (dused_inodes_percent < 0) {
+        asprintf(&output, "%s inode=-);", output);
+      } else {
+        asprintf(&output, "%s inode=%.0f%%);", output, dfree_inodes_percent );
       }
 
       /* TODO: Need to do a similar debug line
@@ -637,8 +636,9 @@ process_arguments (int argc, char **argv)
     case 'v':                 /* verbose */
       verbose++;
       break;
-    case 'q':                 /* verbose */
-      verbose--;
+    case 'q':                 /* TODO: this function should eventually go away (removed 2007-09-20) */
+      /* verbose--; **replaced by line below**. -q was only a broken way of implementing -e */
+      erronly = TRUE;
       break;
     case 'e':
       erronly = TRUE;
@@ -843,44 +843,44 @@ print_help (void)
   printf ("    %s\n", _("Exit with WARNING status if less than INTEGER units of disk are free"));
   printf (" %s\n", "-w, --warning=PERCENT%");
   printf ("    %s\n", _("Exit with WARNING status if less than PERCENT of disk space is free"));
-  printf (" %s\n", "-W, --iwarning=PERCENT%");
-  printf ("    %s\n", _("Exit with WARNING status if less than PERCENT of inode space is free"));
-  printf (" %s\n", "-K, --icritical=PERCENT%");
-  printf ("    %s\n", _("Exit with CRITICAL status if less than PERCENT of inode space is free"));
   printf (" %s\n", "-c, --critical=INTEGER");
   printf ("    %s\n", _("Exit with CRITICAL status if less than INTEGER units of disk are free"));
   printf (" %s\n", "-c, --critical=PERCENT%");
   printf ("    %s\n", _("Exit with CRITCAL status if less than PERCENT of disk space is free"));
-  printf (" %s\n", "-C, --clear");
-  printf ("    %s\n", _("Clear thresholds"));
-  printf (" %s\n", "-u, --units=STRING");
-  printf ("    %s\n", _("Choose bytes, kB, MB, GB, TB (default: MB)"));
-  printf (" %s\n", "-k, --kilobytes");
-  printf ("    %s\n", _("Same as '--units kB'"));
-  printf (" %s\n", "-m, --megabytes");
-  printf ("    %s\n", _("Same as '--units MB'"));
-  printf (" %s\n", "-l, --local");
-  printf ("    %s\n", _("Only check local filesystems"));
+  printf (" %s\n", "-W, --iwarning=PERCENT%");
+  printf ("    %s\n", _("Exit with WARNING status if less than PERCENT of inode space is free"));
+  printf (" %s\n", "-K, --icritical=PERCENT%");
+  printf ("    %s\n", _("Exit with CRITICAL status if less than PERCENT of inode space is free"));
   printf (" %s\n", "-p, --path=PATH, --partition=PARTITION");
   printf ("    %s\n", _("Path or partition (may be repeated)"));
-  printf (" %s\n", "-r, --ereg-path=PATH, --ereg-partition=PARTITION");
-  printf ("    %s\n", _("Regular expression for path or partition (may be repeated)"));
-  printf (" %s\n", "-R, --eregi-path=PATH, --eregi-partition=PARTITION");
-  printf ("    %s\n", _("Case insensitive regular expression for path/partition (may be repeated)"));
-  printf (" %s\n", "-g, --group=NAME");
-  printf ("    %s\n", _("Group pathes. Thresholds apply to (free-)space of all partitions together"));
   printf (" %s\n", "-x, --exclude_device=PATH <STRING>");
   printf ("    %s\n", _("Ignore device (only works if -p unspecified)"));
-  printf (" %s\n", "-X, --exclude-type=TYPE <STRING>");
-  printf ("    %s\n", _("Ignore all filesystems of indicated type (may be repeated)"));
-  printf (" %s\n", "-M, --mountpoint");
-  printf ("    %s\n", _("Display the mountpoint instead of the partition"));
+  printf (" %s\n", "-C, --clear");
+  printf ("    %s\n", _("Clear thresholds"));
   printf (" %s\n", "-E, --exact-match");
   printf ("    %s\n", _("For paths or partitions specified with -p, only check for exact paths"));
   printf (" %s\n", "-e, --errors-only");
   printf ("    %s\n", _("Display only devices/mountpoints with errors"));
+  printf (" %s\n", "-g, --group=NAME");
+  printf ("    %s\n", _("Group pathes. Thresholds apply to (free-)space of all partitions together"));
+  printf (" %s\n", "-k, --kilobytes");
+  printf ("    %s\n", _("Same as '--units kB'"));
+  printf (" %s\n", "-l, --local");
+  printf ("    %s\n", _("Only check local filesystems"));
+  printf (" %s\n", "-M, --mountpoint");
+  printf ("    %s\n", _("Display the mountpoint instead of the partition"));
+  printf (" %s\n", "-m, --megabytes");
+  printf ("    %s\n", _("Same as '--units MB'"));
+  printf (" %s\n", "-R, --eregi-path=PATH, --eregi-partition=PARTITION");
+  printf ("    %s\n", _("Case insensitive regular expression for path/partition (may be repeated)"));
+  printf (" %s\n", "-r, --ereg-path=PATH, --ereg-partition=PARTITION");
+  printf ("    %s\n", _("Regular expression for path or partition (may be repeated)"));
   printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+  printf (" %s\n", "-u, --units=STRING");
+  printf ("    %s\n", _("Choose bytes, kB, MB, GB, TB (default: MB)"));
   printf (_(UT_VERBOSE));
+  printf (" %s\n", "-X, --exclude-type=TYPE");
+  printf ("    %s\n", _("Ignore all filesystems of indicated type (may be repeated)"));
   printf ("\n");
   printf ("%s\n", _("Examples:"));
   printf (" %s\n", "check_disk -w 10% -c 5% -p /tmp -p /var -C -w 100000 -c 50000 -p /");
@@ -899,6 +899,7 @@ void
 print_usage (void)
 {
   printf (_("Usage:"));
-  printf (" %s -w limit -c limit [-p path | -x device] [-t timeout]", progname);
-  printf ("[-m] [-e] [-W limit] [-K limit] [-v] [-q] [-E]\n");
+  printf (" %s -w limit -c limit [-W limit] [-K limit] {-p path | -x device}\n", progname);
+  printf ("[-C] [-E] [-e] [-g group ] [-k] [-l] [-M] [-m] [-R path ] [-r path ]\n");
+  printf ("[-t timeout] [-u unit] [-v] [-X type]\n");
 }
