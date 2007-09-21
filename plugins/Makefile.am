@@ -87,7 +87,7 @@ check_ups_LDADD = $(NETLIBS)
 check_users_LDADD = $(BASEOBJS) popen.o
 check_by_ssh_LDADD = $(NETLIBS) runcmd.o
 check_ide_smart_LDADD = $(BASEOBJS)
-negate_LDADD = $(BASEOBJS) popen.o
+negate_LDADD = $(BASEOBJS)
 urlize_LDADD = $(BASEOBJS) popen.o
 
 check_apt_DEPENDENCIES = check_apt.c $(BASEOBJS) runcmd.o $(DEPLIBS)
@@ -126,7 +126,7 @@ check_time_DEPENDENCIES = check_time.c $(NETOBJS) $(DEPLIBS)
 check_ups_DEPENDENCIES = check_ups.c $(NETOBJS) $(DEPLIBS)
 check_users_DEPENDENCIES = check_users.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_by_ssh_DEPENDENCIES = check_by_ssh.c $(NETOBJS) runcmd.o $(DEPLIBS)
-negate_DEPENDENCIES = negate.c $(BASEOBJS) popen.o $(DEPLIBS)
+negate_DEPENDENCIES = negate.c $(BASEOBJS) $(DEPLIBS)
 urlize_DEPENDENCIES = urlize.c $(BASEOBJS) popen.o $(DEPLIBS)
 
 ##############################################################################
