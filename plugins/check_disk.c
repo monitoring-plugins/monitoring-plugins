@@ -150,7 +150,7 @@ char *warn_usedinodes_percent = NULL;
 char *crit_usedinodes_percent = NULL;
 char *warn_freeinodes_percent = NULL;
 char *crit_freeinodes_percent = NULL;
-bool path_selected = false;
+int path_selected = FALSE;
 char *group = NULL;
 
 
@@ -195,7 +195,7 @@ main (int argc, char **argv)
   /* If a list of paths has not been selected, find entire
      mount list and create list of paths
    */
-  if (path_selected == false) { 
+  if (path_selected == FALSE) { 
     for (me = mount_list; me; me = me->me_next) {
       if (! (path = np_find_parameter(path_select_list, me->me_mountdir))) {
         path = np_add_parameter(&path_select_list, me->me_mountdir);
@@ -626,7 +626,7 @@ process_arguments (int argc, char **argv)
       se->group = group;
       set_all_thresholds(se);
       np_set_best_match(se, mount_list, exact_match);
-      path_selected = true;
+      path_selected = TRUE;
       break;
     case 'x':                 /* exclude path or partition */
       np_add_name(&dp_exclude_list, optarg);
@@ -713,7 +713,7 @@ process_arguments (int argc, char **argv)
           
       for (me = mount_list; me; me = me->me_next) {
         if (np_regex_match_mount_entry(me, &re)) {
-          fnd = true;
+          fnd = TRUE;
           if (verbose > 3)
             printf("%s %s matching expression %s\n", me->me_devname, me->me_mountdir, optarg);
 
@@ -730,8 +730,8 @@ process_arguments (int argc, char **argv)
         die (STATE_UNKNOWN, "DISK %s: %s - %s\n",_("UNKNOWN"),
             _("Regular expression did not match any path or disk"), optarg);
 
-      fnd = false;
-      path_selected = true;
+      fnd = FALSE;
+      path_selected = TRUE;
       np_set_best_match(path_select_list, mount_list, exact_match);
       cflags = default_cflags;
 
@@ -741,7 +741,7 @@ process_arguments (int argc, char **argv)
       break;
     case 'C':
        /* add all mount entries to path_select list if no partitions have been explicitly defined using -p */
-       if (path_selected == false) {
+       if (path_selected == FALSE) {
          struct mount_entry *me;
          struct parameter_list *path;
          for (me = mount_list; me; me = me->me_next) {
@@ -765,7 +765,7 @@ process_arguments (int argc, char **argv)
       warn_freeinodes_percent = NULL;
       crit_freeinodes_percent = NULL;
     
-      path_selected = false;
+      path_selected = FALSE;
       group = NULL;
       break;
     case 'V':                 /* version */
@@ -789,7 +789,7 @@ process_arguments (int argc, char **argv)
 
   if (argc > c && path == NULL) {
     se = np_add_parameter(&path_select_list, strdup(argv[c++]));
-    path_selected = true;
+    path_selected = TRUE;
     set_all_thresholds(se);
   }
 

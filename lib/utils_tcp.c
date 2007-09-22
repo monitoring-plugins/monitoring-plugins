@@ -52,9 +52,9 @@ np_expect_match(char* status, char** server_expect, int expect_count, int all, i
 		} else
 			if(verbose) puts("couldn't find it");
 	}
-	if ((all == true && match == expect_count) ||
+	if ((all == TRUE && match == expect_count) ||
 		(! all && match >= 1)) {
-		return true;
+		return TRUE;
 	} else
-		return false;
+		return FALSE;
 }

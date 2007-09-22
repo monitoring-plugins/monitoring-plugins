@@ -181,9 +181,9 @@ np_regex_match_mount_entry (struct mount_entry* me, regex_t* re)
 {
   if (regexec(re, me->me_devname, (size_t) 0, NULL, 0) == 0 ||
       regexec(re, me->me_mountdir, (size_t) 0, NULL, 0) == 0 ) {
-    return true;
+    return TRUE;
   } else {
-    return false;
+    return FALSE;
   }
 }
 
