@@ -36,14 +36,15 @@ main (int argc, char **argv)
 	struct name_list *dummy_mountlist = NULL;
 	struct name_list *temp_name;
 	struct parameter_list *paths = NULL;
-	struct parameter_list *p;
+	struct parameter_list *p, *prev, *last;
 
 	struct mount_entry *dummy_mount_list;
 	struct mount_entry *me;
 	struct mount_entry **mtail = &dummy_mount_list;
 	int cflags = REG_NOSUB | REG_EXTENDED;
+	int found = 0, count = 0;
 
-	plan_tests(29);
+	plan_tests(33);
 
 	ok( np_find_name(exclude_filesystem, "/var/log") == FALSE, "/var/log not in list");
 	np_add_name(&exclude_filesystem, "/var/log");
@@ -159,6 +160,46 @@ main (int argc, char **argv)
 			ok( p->best_match, "/home found");
 		}
 	}
+
+	/* test deleting first element in paths */
+	paths = np_del_parameter(paths, NULL);
+	for (p = paths; p; p = p->name_next) {
+		if (! strcmp(p->name, "/home/groups"))
+			found = 1;
+	}
+	ok(found == 0, "first element successfully deleted");
+	found = 0;
+	
+	p=paths;
+	while (p) {
+		if (! strcmp(p->name, "/tmp"))
+			p = np_del_parameter(p, prev);
+		else {
+			prev = p;
+			p = p->name_next;
+		}
+	}
+
+	for (p = paths; p; p = p->name_next) {
+		if (! strcmp(p->name, "/tmp"))
+			found = 1;
+		if (p->name_next)
+			prev = p;
+		else
+			last = p;
+	}
+	ok(found == 0, "/tmp element successfully deleted");
+
+	p = np_del_parameter(last, prev);
+	for (p = paths; p; p = p->name_next) {
+		if (! strcmp(p->name, "/home"))
+			found = 1;
+		last = p;
+		count++;
+	}
+	ok(found == 0, "last (/home) element successfully deleted");
+	ok(count == 2, "two elements remaining");
+
 
 	return exit_status();
 }

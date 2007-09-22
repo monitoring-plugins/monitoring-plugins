@@ -24,7 +24,7 @@ my $mountpoint2_valid = getTestParameter( "NP_MOUNTPOINT2_VALID", "Path to anoth
 if ($mountpoint_valid eq "" or $mountpoint2_valid eq "") {
 	plan skip_all => "Need 2 mountpoints to test";
 } else {
-	plan tests => 69;
+	plan tests => 78;
 }
 
 $result = NPTest->testCmd( 
@@ -284,8 +284,14 @@ $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p /etc" );
 cmp_ok( $result->return_code, '==', 0, "Checking /etc - should return info for /" );
 cmp_ok( $result->output, 'eq', $root_output, "check_disk /etc gives same as check_disk /");
 
-$result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p /etc -E" );
+$result = NPTest->testCmd( "./check_disk -w 0% -c 0% -E -p /etc " );
 cmp_ok( $result->return_code, '==', 2, "... unless -E/--exact-match is specified");
+
+$result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p /etc -E " );
+cmp_ok( $result->return_code, '==', 3, "-E/--exact-match must be specified before -p");
+
+$result = NPTest->testCmd( "./check_disk -w 0% -c 0% -r /etc -E " );
+cmp_ok( $result->return_code, '==', 3, "-E/--exact-match must be specified before -r");
 
 $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p / -p /bob" );
 cmp_ok( $result->return_code, '==', 2, "Checking / and /bob gives critical");
@@ -318,3 +324,24 @@ cmp_ok( $result->return_code, '==', 3, "Invalid options: -p must come after grou
 $result = NPTest->testCmd( "./check_disk -w 1 -c 1 -r '('" );
 cmp_ok( $result->return_code, '==', 3, "Exit UNKNOWN if regex is not compileable");
 
+# ignore: exit unknown, if all pathes are deselected using -i
+$result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p $mountpoint_valid -p $mountpoint2_valid -i '$mountpoint_valid' -i '$mountpoint2_valid'" );
+cmp_ok( $result->return_code, '==', 3, "ignore-ereg: Unknown if all fs are ignored (case sensitive)");
+
+# ignore: exit unknown, if all pathes are deselected using -I
+$result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p $mountpoint_valid -p $mountpoint2_valid -I '".uc($mountpoint_valid)."' -I '".uc($mountpoint2_valid)."'" );
+cmp_ok( $result->return_code, '==', 3, "ignore-ereg: Unknown if all fs are ignored (case insensitive)");
+
+# ignore: exit unknown, if all pathes are deselected using -i
+$result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p $mountpoint_valid -p $mountpoint2_valid -i '.*'" );
+cmp_ok( $result->return_code, '==', 3, "ignore-ereg: Unknown if all fs are ignored using -i '.*'");
+
+# ignore: test if ignored path is actually ignored
+$result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p $mountpoint_valid -p $mountpoint2_valid -i '^$mountpoint2_valid\$'");
+like( $result->output, qr/$mountpoint_valid/, "output data does have $mountpoint_valid in it");
+unlike( $result->output, qr/$mountpoint2_valid/, "output data does not have $mountpoint2_valid in it");
+
+# ignore: test if all pathes are listed when ignore regex doesn't match
+$result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p $mountpoint_valid -p $mountpoint2_valid -i '^barbazJodsf\$'");
+like( $result->output, qr/$mountpoint_valid/, "ignore: output data does have $mountpoint_valid when regex doesn't match");
+like( $result->output, qr/$mountpoint2_valid/,"ignore: output data does have $mountpoint2_valid when regex doesn't match");

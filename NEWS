@@ -20,6 +20,12 @@ This file documents the major additions and syntax changes between releases.
 	  - stop evaluating command line options through shell twice 
 	  - enforce a full path for the command to run
 	The "negate" utility can now remap custom states
+	New check_disk -i/-I option to ignore pathes/partitions based on regular expressions
+	New check_disk -A option to select all filesystems explicitly
+	WARNING: check_disk's -E option must now be passed before -p or -r/-R arguments
+	  Passing -E after -p or -r results in UNKNOWN state, now
+	  This is needed due to the new ignore feature
+	Fix bug when mixing case sensitive and case insensitive regex arguments
 
 1.4.9 4th June 2006
 	Inclusion of contrib/check_cluster2 as check_cluster with some improvements

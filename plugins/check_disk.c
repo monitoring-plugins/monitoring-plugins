@@ -447,15 +447,16 @@ int
 process_arguments (int argc, char **argv)
 {
   int c, err;
-  struct parameter_list *se, *se2;
-  struct parameter_list *temp_list;
+  struct parameter_list *se;
+  struct parameter_list *temp_list = NULL, *previous = NULL;
   struct parameter_list *temp_path_select_list = NULL;
-  struct mount_entry *me;
+  struct mount_entry *me, *temp_me;
   int result = OK;
   regex_t re;
   int cflags = REG_NOSUB | REG_EXTENDED;
+  int default_cflags = cflags;
   char errbuf[MAX_INPUT_BUFFER];
-  bool fnd = false;
+  int fnd = 0;
 
   int option = 0;
   static struct option longopts[] = {
@@ -478,9 +479,14 @@ process_arguments (int argc, char **argv)
     {"eregi-partition", required_argument, 0, 'R'},
     {"ereg-path", required_argument, 0, 'r'},
     {"ereg-partition", required_argument, 0, 'r'},
+    {"ignore-ereg-path", required_argument, 0, 'i'},
+    {"ignore-ereg-partition", required_argument, 0, 'i'},
+    {"ignore-eregi-path", required_argument, 0, 'I'},
+    {"ignore-eregi-partition", required_argument, 0, 'I'},
     {"mountpoint", no_argument, 0, 'M'},
     {"errors-only", no_argument, 0, 'e'},
     {"exact-match", no_argument, 0, 'E'},
+    {"all", no_argument, 0, 'A'},
     {"verbose", no_argument, 0, 'v'},
     {"quiet", no_argument, 0, 'q'},
     {"clear", no_argument, 0, 'C'},
@@ -499,7 +505,7 @@ process_arguments (int argc, char **argv)
       strcpy (argv[c], "-t");
 
   while (1) {
-    c = getopt_long (argc, argv, "+?VqhveCt:c:w:K:W:u:p:x:X:mklg:R:r:ME", longopts, &option);
+    c = getopt_long (argc, argv, "+?VqhveCt:c:w:K:W:u:p:x:X:mklg:R:r:i:I:MEA", longopts, &option);
 
     if (c == -1 || c == EOF)
       break;
@@ -613,18 +619,13 @@ process_arguments (int argc, char **argv)
         die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set a threshold value before using -p\n"));
       }
 
-      /* get the real mountdir of the specified path. np_find_parameter won't find an entry if -p is not
-       * exactly the same string as the mountdir */
-      se2 = np_add_parameter(&temp_path_select_list, optarg);
-      np_set_best_match(se2, mount_list, FALSE);
-
-
       /* add parameter if not found. overwrite thresholds if path has already been added  */
       if (! (se = np_find_parameter(path_select_list, optarg))) {
           se = np_add_parameter(&path_select_list, optarg);
       }
       se->group = group;
       set_all_thresholds(se);
+      np_set_best_match(se, mount_list, exact_match);
       path_selected = true;
       break;
     case 'x':                 /* exclude path or partition */
@@ -644,13 +645,56 @@ process_arguments (int argc, char **argv)
       erronly = TRUE;
       break;
     case 'E':
+      if (path_selected)
+        die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set -E before selecting pathes\n"));
       exact_match = TRUE;
       break;
     case 'g':
       if (path_selected)
-        die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set group value before using -p\n"));
+        die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set group value before selecting pathes \n"));
       group = optarg;
       break;
+    case 'I':
+      cflags |= REG_ICASE;
+    case 'i':
+      if (!path_selected)
+        die (STATE_UNKNOWN, "DISK %s: %s\n", _("UNKNOWN"), _("Pathes need to be selected before using -i/-I. Use -A to select all pathes explicitly"));
+      err = regcomp(&re, optarg, cflags);
+      if (err != 0) {
+        regerror (err, &re, errbuf, MAX_INPUT_BUFFER);
+        die (STATE_UNKNOWN, "DISK %s: %s - %s\n",_("UNKNOWN"), _("Could not compile regular expression"), errbuf);
+      }
+
+      temp_list = path_select_list;
+
+      previous = NULL;
+      while (temp_list) {
+        if (temp_list->best_match) {
+          if (np_regex_match_mount_entry(temp_list->best_match, &re)) {
+        
+              if (verbose >=3)
+   	        printf("ignoring %s matching regex\n", temp_list->name);
+
+              temp_list = np_del_parameter(temp_list, previous);
+              /* pointer to first element needs to be uüdated if first item gets deleted */
+              if (previous == NULL)
+                path_select_list = temp_list;
+          } else {
+            previous = temp_list;
+            temp_list = temp_list->name_next;
+          }
+        } else {
+          previous = temp_list;
+          temp_list = temp_list->name_next;
+        }
+      }
+
+
+      cflags = default_cflags;
+      break;
+
+    case 'A':
+      optarg = strdup(".*");
     case 'R':
       cflags |= REG_ICASE;
     case 'r':
@@ -669,9 +713,9 @@ process_arguments (int argc, char **argv)
           
       for (me = mount_list; me; me = me->me_next) {
         if (np_regex_match_mount_entry(me, &re)) {
-	  fnd = true;
+          fnd = true;
           if (verbose > 3)
-	    printf("%s %s matching expression %s\n", me->me_devname, me->me_mountdir, optarg);
+            printf("%s %s matching expression %s\n", me->me_devname, me->me_mountdir, optarg);
 
           /* add parameter if not found. overwrite thresholds if path has already been added  */
           if (! (se = np_find_parameter(path_select_list, me->me_mountdir))) {
@@ -688,6 +732,9 @@ process_arguments (int argc, char **argv)
 
       fnd = false;
       path_selected = true;
+      np_set_best_match(path_select_list, mount_list, exact_match);
+      cflags = default_cflags;
+
       break;
     case 'M': /* display mountpoint */
       display_mntp = TRUE;
@@ -871,10 +918,16 @@ print_help (void)
   printf ("    %s\n", _("Display the mountpoint instead of the partition"));
   printf (" %s\n", "-m, --megabytes");
   printf ("    %s\n", _("Same as '--units MB'"));
+  printf (" %s\n", "-A, --all");
+  printf ("    %s\n", _("Explicitly select all pathes. This is equivalent to -R '.*'"));
   printf (" %s\n", "-R, --eregi-path=PATH, --eregi-partition=PARTITION");
   printf ("    %s\n", _("Case insensitive regular expression for path/partition (may be repeated)"));
   printf (" %s\n", "-r, --ereg-path=PATH, --ereg-partition=PARTITION");
   printf ("    %s\n", _("Regular expression for path or partition (may be repeated)"));
+  printf (" %s\n", "-I, --ignore-eregi-path=PATH, --ignore-eregi-partition=PARTITION");
+  printf ("    %s\n", _("Regular expression to ignore selected path/partition (case insensitive) (may be repeated)"));
+  printf (" %s\n", "-i, --ignore-ereg-path=PATH, --ignore-ereg-partition=PARTITION");
+  printf ("    %s\n", _("Regular expression to ignore selected path or partition (may be repeated)"));
   printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
   printf (" %s\n", "-u, --units=STRING");
   printf ("    %s\n", _("Choose bytes, kB, MB, GB, TB (default: MB)"));

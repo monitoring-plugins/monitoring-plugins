@@ -74,6 +74,26 @@ np_add_parameter(struct parameter_list **list, const char *name)
   return new_path;
 }
 
+/* Delete a given parameter from list and return pointer to next element*/
+struct parameter_list *
+np_del_parameter(struct parameter_list *item, struct parameter_list *prev)
+{
+	struct parameter_list *next;
+   	if (item->name_next)
+  		next = item->name_next;
+	else
+	  	next = NULL;
+
+	
+	free(item);
+	if (prev)
+	  prev->name_next = next;
+
+	return next;
+
+}
+
+  
 /* returns a pointer to the struct found in the list */
 struct parameter_list *
 np_find_parameter(struct parameter_list *list, const char *name)
@@ -166,3 +186,4 @@ np_regex_match_mount_entry (struct mount_entry* me, regex_t* re)
     return false;
   }
 }
+
