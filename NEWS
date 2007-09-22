@@ -19,6 +19,7 @@ This file documents the major additions and syntax changes between releases.
 	WARNING: Fix for negate which may break existing commands:
 	  - stop evaluating command line options through shell twice 
 	  - enforce a full path for the command to run
+	The "negate" utility can now remap custom states
 
 1.4.9 4th June 2006
 	Inclusion of contrib/check_cluster2 as check_cluster with some improvements

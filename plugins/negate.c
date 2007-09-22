@@ -3,7 +3,7 @@
 * Nagios negate plugin
 *
 * License: GPL
-* Copyright (c) 2002-2006 nagios-plugins team
+* Copyright (c) 2002-2007 nagios-plugins team
 *
 * Last Modified: $Date$
 *
@@ -70,7 +70,7 @@
 
 const char *progname = "negate";
 const char *revision = "$Revision$";
-const char *copyright = "2002-2006";
+const char *copyright = "2002-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #define DEFAULT_TIMEOUT 9
@@ -86,7 +86,12 @@ int validate_arguments (char **);
 void print_help (void);
 void print_usage (void);
 
-
+static int state[4] = {
+	STATE_OK,
+	STATE_WARNING,
+	STATE_CRITICAL,
+	STATE_UNKNOWN,
+};
 
 int
 main (int argc, char **argv)
@@ -130,12 +135,11 @@ main (int argc, char **argv)
 		printf ("%s\n", chld_out.line[i]);
 	}
 
-	if (result == STATE_OK)
-		exit (STATE_CRITICAL);
-	else if (result == STATE_CRITICAL)
-		exit (EXIT_SUCCESS);
-	else
+	if (result >= 0 && result <= 4) {
+		exit (state[result]);
+	} else {
 		exit (result);
+	}
 }
 
 /******************************************************************************
@@ -163,17 +167,22 @@ static const char **
 process_arguments (int argc, char **argv)
 {
 	int c;
+	int permute = TRUE;
 
 	int option = 0;
 	static struct option longopts[] = {
 		{"help", no_argument, 0, 'h'},
 		{"version", no_argument, 0, 'V'},
 		{"timeout", required_argument, 0, 't'},
+		{"ok", required_argument, 0, 'o'},
+		{"warning", required_argument, 0, 'w'},
+		{"critical", required_argument, 0, 'c'},
+		{"unknown", required_argument, 0, 'u'},
 		{0, 0, 0, 0}
 	};
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVt:", longopts, &option);
+		c = getopt_long (argc, argv, "+hVt:o:w:c:u:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -195,10 +204,36 @@ process_arguments (int argc, char **argv)
 			else
 				timeout_interval = atoi (optarg);
 			break;
+		case 'o':     /* replacement for OK */
+			if ((state[STATE_OK] = translate_state(optarg)) == ERROR)
+				usage4 (_("Ok must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-4)."));
+			permute = FALSE;
+			break;
+
+		case 'w':     /* replacement for WARNING */
+			if ((state[STATE_WARNING] = translate_state(optarg)) == ERROR)
+				usage4 (_("Warning must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+			permute = FALSE;
+			break;
+		case 'c':     /* replacement for CRITICAL */
+			if ((state[STATE_CRITICAL] = translate_state(optarg)) == ERROR)
+				usage4 (_("Critical must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+			permute = FALSE;
+			break;
+		case 'u':     /* replacement for UNKNOWN */
+			if ((state[STATE_UNKNOWN] = translate_state(optarg)) == ERROR)
+				usage4 (_("Unknown must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+			permute = FALSE;
+			break;
 		}
 	}
 
 	validate_arguments (&argv[optind]);
+
+	if (permute) { /* No [owcu] switch specified, default to this */
+		state[STATE_OK] = STATE_CRITICAL;
+		state[STATE_CRITICAL] = STATE_OK;
+	}
 
 	return (const char **) &argv[optind];
 }
@@ -235,7 +270,23 @@ validate_arguments (char **command_line)
 -@@
 ******************************************************************************/
 
-
+int
+translate_state (char *state_text)
+{
+	char *temp_ptr;
+	for (temp_ptr = state_text; *temp_ptr; temp_ptr++) {
+		*temp_ptr = toupper(*temp_ptr);
+	}
+	if (!strcmp(state_text,"OK") || !strcmp(state_text,"0"))
+		return STATE_OK;
+	if (!strcmp(state_text,"WARNING") || !strcmp(state_text,"1"))
+		return STATE_WARNING;
+	if (!strcmp(state_text,"CRITICAL") || !strcmp(state_text,"2"))
+		return STATE_CRITICAL;
+	if (!strcmp(state_text,"UNKNOWN") || !strcmp(state_text,"3"))
+		return STATE_UNKNOWN;
+	return ERROR;
+}
 
 void
 print_help (void)
@@ -244,7 +295,8 @@ print_help (void)
 
 	printf (COPYRIGHT, copyright, email);
 
-	printf ("%s\n", _("Negates the status of a plugin (returns OK for CRITICAL, and vice-versa)."));
+	printf ("%s\n", _("Negates the status of a plugin (returns OK for CRITICAL and vice-versa)."));
+	printf ("%s\n", _("Additional switches can be used to control which state becomes what."));
 
 	printf ("\n\n");
 
@@ -253,15 +305,22 @@ print_help (void)
 	printf (_(UT_HELP_VRSN));
 
 	printf (_(UT_TIMEOUT), DEFAULT_TIMEOUT);
+	printf ("    %s\n", _("Keep timeout lower than the plugin timeout to retain CRITICAL status."));
 
-	printf ("    %s\n", _("[keep timeout than the plugin timeout to retain CRITICAL status]"));
+	printf(" -o,--ok=STATUS\n");
+	printf(" -w,--warning=STATUS\n");
+	printf(" -c,--critical=STATUS\n");
+	printf(" -u,--unknown=STATUS\n");
+	printf(_("    STATUS can be 'OK', 'WARNING', 'CRITICAL' or 'UNKNOWN' without single\n"));
+	printf(_("    quotes. Numeric values are accepted. If nothing is specified, permutes\n"));
+	printf(_("    OK and CRITICAL.\n"));
+
 	printf ("\n");
 	printf ("%s\n", _("Examples:"));
 	printf (" %s\n", "negate /usr/local/nagios/libexec/check_ping -H host");
 	printf ("    %s\n", _("Run check_ping and invert result. Must use full path to plugin"));
-	printf (" %s\n", "negate /usr/local/nagios/libexec/check_procs -a 'vi negate.c'");
-	printf ("    %s\n", _("Use single quotes if you need to retain spaces"));
-	printf (_(UT_VERBOSE));
+	printf (" %s\n", "negate -w OK -c UNKNOWN /usr/local/nagios/libexec/check_procs -a 'vi negate.c'");
+	printf ("    %s\n", _("This will return OK instead of WARNING and UNKNOWN instead of CRITICAL"));
 	printf ("\n");
 	printf ("%s\n", _("Notes:"));
 	printf ("%s\n", _("This plugin is a wrapper to take the output of another plugin and invert it."));
@@ -279,5 +338,5 @@ void
 print_usage (void)
 {
 	printf (_("Usage:"));
-	printf ("%s [-t timeout] <definition of wrapped plugin>\n",progname);
+	printf ("%s [-t timeout] [-owcu STATE] <definition of wrapped plugin>\n", progname);
 }

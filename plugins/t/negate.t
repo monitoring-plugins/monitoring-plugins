@@ -10,9 +10,8 @@ use strict;
 use Test::More;
 use NPTest;
 
-# 47 tests if the "map changes to return codes" patch is applied
-#plan tests => 47;
-plan tests => 15;
+# 15 tests in the first part and 32 in the last loop
+plan tests => 47;
 
 my $res;
 
@@ -57,23 +56,17 @@ $res = NPTest->testCmd( './negate $PWD/check_dummy 0 \'$$ a dummy okay\'' );
 is( $res->output, 'OK: $$ a dummy okay', 'Proves that $$ is not being expanded again' );
 
 
-# Remove __DATA__ to run tests with future patch
-__DATA__
-
-TODO: {
-	local $TODO = "Codes can be switched";
-	my %state = (
-		ok => 0,
-		warning => 1,
-		critical => 2,
-		unknown => 3,
-		);
-	foreach my $current_state (qw(ok warning critical unknown)) {
-		foreach my $new_state (qw(ok warning critical unknown)) {
-			$res = NPTest->testCmd( "./negate --$current_state=$new_state ./check_dummy ".$state{$current_state}." 'Fake $new_state'" );
-			is( $res->return_code, $state{$new_state}, "Got fake $new_state" );
-			is( $res->output, uc($current_state).": Fake $new_state" );
-		}
+my %state = (
+	ok => 0,
+	warning => 1,
+	critical => 2,
+	unknown => 3,
+	);
+foreach my $current_state (qw(ok warning critical unknown)) {
+	foreach my $new_state (qw(ok warning critical unknown)) {
+		$res = NPTest->testCmd( "./negate --$current_state=$new_state ./check_dummy ".$state{$current_state}." 'Fake $new_state'" );
+		is( $res->return_code, $state{$new_state}, "Got fake $new_state" );
+		is( $res->output, uc($current_state).": Fake $new_state" );
 	}
 }
 
