@@ -29,6 +29,7 @@ This file documents the major additions and syntax changes between releases.
 	  - enforce a full path for the command to run
 	The "negate" utility can now remap custom states
 	Check_radius now supports radiusclient-ng
+	Check_by_ssh now supports multiline output
 
 1.4.9 4th June 2006
 	Inclusion of contrib/check_cluster2 as check_cluster with some improvements

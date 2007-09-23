@@ -110,7 +110,8 @@ main (int argc, char **argv)
 	 * Wrap up quickly and keep the tricks below */
 	if(!passive) {
 		if (chld_out.lines > skip_stdout)
-			puts (chld_out.line[skip_stdout]);
+			for (i = skip_stdout; i < chld_out.lines; i++)
+				puts (chld_out.line[i]);
 		else
 			printf (_("%s - check_by_ssh: Remote command '%s' returned status %d\n"),
 			        state_text(result), remotecmd, result);
