@@ -46,6 +46,8 @@ check_radius:
 	- Requires the radiusclient library available from
 	  ftp://ftp.cityline.net/pub/radiusclient/
 		RPM (rpmfind): radiusclient 0.3.2, radiusclient-devel-0.3.2
+	- Alternatively radiusclient-ng can be used:
+	  http://developer.berlios.de/projects/radiusclient-ng/
 
 check_snmp:
 	- Requires the NET-SNMP package available from
