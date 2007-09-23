@@ -25,7 +25,8 @@ This file documents the major additions and syntax changes between releases.
 	WARNING: check_disk's -E option must now be passed before -p or -r/-R arguments
 	  Passing -E after -p or -r results in UNKNOWN state, now
 	  This is needed due to the new ignore feature
-	Fix bug when mixing case sensitive and case insensitive regex arguments
+	Fix check_disk bug when mixing case sensitive and case insensitive regex arguments
+	Check_radius now supports radiusclient-ng
 
 1.4.9 4th June 2006
 	Inclusion of contrib/check_cluster2 as check_cluster with some improvements

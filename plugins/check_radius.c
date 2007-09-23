@@ -43,11 +43,34 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "utils.h"
 #include "netutils.h"
 
+#ifdef HAVE_LIBRADIUSCLIENT_NG
+#include <radiusclient-ng.h>
+rc_handle *rch = NULL;
+#else
 #include <radiusclient.h>
+#endif
 
 int process_arguments (int, char **);
 void print_help (void);
 void print_usage (void);
+
+/* libradiusclient(-ng) wrapper functions */
+#ifdef HAVE_LIBRADIUSCLIENT_NG
+#define my_rc_conf_str(a) rc_conf_str(rch,a)
+#define my_rc_send_server(a,b) rc_send_server(rch,a,b)
+#define my_rc_buildreq(a,b,c,d,e,f) rc_buildreq(rch,a,b,c,d,e,f)
+#define my_rc_own_ipaddress() rc_own_ipaddress(rch)
+#define my_rc_avpair_add(a,b,c,d) rc_avpair_add(rch,a,b,c,-1,d)
+#define my_rc_read_dictionary(a) rc_read_dictionary(rch, a)
+#else
+#define my_rc_conf_str(a) rc_conf_str(a)
+#define my_rc_send_server(a,b) rc_send_server(a, b)
+#define my_rc_buildreq(a,b,c,d,e,f) rc_buildreq(a,b,c,d,e,f)
+#define my_rc_own_ipaddress() rc_own_ipaddress()
+#define my_rc_avpair_add(a,b,c,d) rc_avpair_add(a, b, c, d)
+#define my_rc_read_dictionary(a) rc_read_dictionary(a)
+#endif
+int my_rc_read_config(char *);
 
 char *server = NULL;
 char *username = NULL;
@@ -133,33 +156,33 @@ main (int argc, char **argv)
 		usage4 (_("Could not parse arguments"));
 
 	str = strdup ("dictionary");
-	if ((config_file && rc_read_config (config_file)) ||
-			rc_read_dictionary (rc_conf_str (str)))
+	if ((config_file && my_rc_read_config (config_file)) ||
+			my_rc_read_dictionary (my_rc_conf_str (str)))
 		die (STATE_UNKNOWN, _("Config file error"));
 
 	service = PW_AUTHENTICATE_ONLY;
 
 	memset (&data, 0, sizeof(data));
-	if (!(rc_avpair_add (&data.send_pairs, PW_SERVICE_TYPE, &service, 0) &&
-				rc_avpair_add (&data.send_pairs, PW_USER_NAME, username, 0) &&
-				rc_avpair_add (&data.send_pairs, PW_USER_PASSWORD, password, 0) &&
-				(nasid==NULL || rc_avpair_add (&data.send_pairs, PW_NAS_IDENTIFIER, nasid, 0))))
+	if (!(my_rc_avpair_add (&data.send_pairs, PW_SERVICE_TYPE, &service, 0) &&
+				my_rc_avpair_add (&data.send_pairs, PW_USER_NAME, username, 0) &&
+				my_rc_avpair_add (&data.send_pairs, PW_USER_PASSWORD, password, 0) &&
+				(nasid==NULL || my_rc_avpair_add (&data.send_pairs, PW_NAS_IDENTIFIER, nasid, 0))))
 		die (STATE_UNKNOWN, _("Out of Memory?"));
 
 	/* 
 	 * Fill in NAS-IP-Address 
 	 */
 
-	if ((client_id = rc_own_ipaddress ()) == 0)
+	if ((client_id = my_rc_own_ipaddress ()) == 0)
 		return (ERROR_RC);
 
-	if (rc_avpair_add (&(data.send_pairs), PW_NAS_IP_ADDRESS, &client_id, 0) ==
+	if (my_rc_avpair_add (&(data.send_pairs), PW_NAS_IP_ADDRESS, &client_id, 0) ==
 			NULL) return (ERROR_RC);
 
-	rc_buildreq (&data, PW_ACCESS_REQUEST, server, port, (int)timeout_interval,
+	my_rc_buildreq (&data, PW_ACCESS_REQUEST, server, port, (int)timeout_interval,
 	             retries);
 
-	result = rc_send_server (&data, msg);
+	result = my_rc_send_server (&data, msg);
 	rc_avpair_free (data.send_pairs);
 	if (data.receive_pairs)
 		rc_avpair_free (data.receive_pairs);
@@ -349,4 +372,16 @@ print_usage (void)
   printf (_("Usage:"));
 	printf ("%s -H host -F config_file -u username -p password [-n nas-id] [-P port]\n\
                   [-t timeout] [-r retries] [-e expect]\n", progname);
+}
+
+
+
+int my_rc_read_config(char * a)
+{
+#ifdef HAVE_LIBRADIUSCLIENT_NG
+	rch = rc_read_config(a);
+	return (rch == NULL) ? 1 : 0;
+#else
+	return rc_read_config(a);
+#endif
 }
