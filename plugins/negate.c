@@ -79,7 +79,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "utils.h"
 #include "utils_cmd.h"
 
-//char *command_line;
+/* char *command_line; */
 
 static const char **process_arguments (int, char **);
 int validate_arguments (char **);
