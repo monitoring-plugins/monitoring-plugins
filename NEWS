@@ -8,7 +8,15 @@ This file documents the major additions and syntax changes between releases.
 	  is now deprecated. See --help for further information.
 	Check_disk now calls stat() on all filesystems to check. (Old: only the ones selected using -p) 
 	  A meaningful error message (eg "Stale NFS Handle") is printed if stat fails.
+	New check_disk option -L: Only check local filesystems, but call stat() on remote ones, too.
+	  Thus accessibility of remote filesystems can be checked without any threshold comparison.
 	Check_disk's --help now prints some examples for the new features introduced in 1.4.8
+	New check_disk -i/-I option to ignore pathes/partitions based on regular expressions
+	New check_disk -A option to select all filesystems explicitly
+	WARNING: check_disk's -E option must now be passed before -p or -r/-R arguments
+	  Passing -E after -p or -r results in UNKNOWN state, now
+	  This is needed due to the new ignore feature
+	Fix check_disk bug when mixing case sensitive and case insensitive regex arguments
 	New check_dhcp -u/--unicast option for emulating a DHCP relay in order
 	  to check DHCP servers on remote networks
 	New check_dhcp -m/--mac option which allows for specifying the MAC
@@ -20,12 +28,6 @@ This file documents the major additions and syntax changes between releases.
 	  - stop evaluating command line options through shell twice 
 	  - enforce a full path for the command to run
 	The "negate" utility can now remap custom states
-	New check_disk -i/-I option to ignore pathes/partitions based on regular expressions
-	New check_disk -A option to select all filesystems explicitly
-	WARNING: check_disk's -E option must now be passed before -p or -r/-R arguments
-	  Passing -E after -p or -r results in UNKNOWN state, now
-	  This is needed due to the new ignore feature
-	Fix check_disk bug when mixing case sensitive and case insensitive regex arguments
 	Check_radius now supports radiusclient-ng
 
 1.4.9 4th June 2006

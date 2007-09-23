@@ -69,6 +69,9 @@ static int show_all_fs = 1;
 /* If nonzero, show only local filesystems.  */
 static int show_local_fs = 0;
 
+/* If nonzero, show only local filesystems but call stat() on remote ones. */
+static int stat_remote_fs = 0;
+
 /* If positive, the units to use when printing sizes;
    if negative, the human-readable base.  */
 /* static int output_block_size; */
@@ -127,6 +130,7 @@ int validate_arguments (uintmax_t, uintmax_t, double, double, double, double, ch
 void print_help (void);
 void print_usage (void);
 double calculate_percent(uintmax_t, uintmax_t);
+void stat_path (struct parameter_list *p);
 
 double w_dfp = -1.0;
 double c_dfp = -1.0;
@@ -152,6 +156,7 @@ char *warn_freeinodes_percent = NULL;
 char *crit_freeinodes_percent = NULL;
 int path_selected = FALSE;
 char *group = NULL;
+struct stat *stat_buf;
 
 
 int
@@ -176,12 +181,12 @@ main (int argc, char **argv)
   struct fs_usage fsp, tmpfsp;
   struct parameter_list *temp_list, *path;
   struct name_list *seen = NULL;
-  struct stat *stat_buf;
 
   preamble = strdup (" - free space:");
   output = strdup ("");
   details = strdup ("");
   perf = strdup ("");
+  stat_buf = malloc(sizeof *stat_buf);
 
   setlocale (LC_ALL, "");
   bindtextdomain (PACKAGE, LOCALEDIR);
@@ -210,20 +215,13 @@ main (int argc, char **argv)
   /* Error if no match found for specified paths */
   temp_list = path_select_list;
 
-  stat_buf = malloc(sizeof *stat_buf);
   while (temp_list) {
     if (! temp_list->best_match) {
       die (STATE_CRITICAL, _("DISK %s: %s not found\n"), _("CRITICAL"), temp_list->name);
     }
 
-    /* Stat each entry to check that dir exists */
-    if (stat (temp_list->name, &stat_buf[0])) {
-      printf("DISK %s - ", _("CRITICAL"));
-      die (STATE_CRITICAL, _("%s %s: %s\n"), temp_list->name, _("is not accessible"), strerror(errno));
-    }
     temp_list = temp_list->name_next;
   }
-  free(stat_buf);
   
   /* Process for every path in list */
   for (path = path_select_list; path; path=path->name_next) {
@@ -259,6 +257,7 @@ main (int argc, char **argv)
         for (temp_list = path_select_list; temp_list; temp_list=temp_list->name_next) {
           if (temp_list->group && ! (strcmp(temp_list->group, path->group))) {
             
+            stat_path(path);
             get_fs_usage (temp_list->best_match->me_mountdir, temp_list->best_match->me_devname, &tmpfsp);
 
             /* possibly differing blocksizes if disks are grouped. Calculating average */
@@ -286,6 +285,8 @@ main (int argc, char **argv)
     if (path->group == NULL) {
       /* Skip remote filesystems if we're not interested in them */
       if (me->me_remote && show_local_fs) {
+        if (stat_remote_fs)
+          stat_path(path);
         continue;
       /* Skip pseudo fs's if we haven't asked for all fs's */
       } else if (me->me_dummy && !show_all_fs) {
@@ -300,6 +301,7 @@ main (int argc, char **argv)
         continue;
       }
 
+      stat_path(path);
       get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
     }
 
@@ -467,6 +469,7 @@ process_arguments (int argc, char **argv)
     /* Dang, -C is taken. We might want to reshuffle this. */
     {"icritical", required_argument, 0, 'K'},
     {"local", required_argument, 0, 'l'},
+    {"stat-remote-fs", required_argument, 0, 'L'},
     {"kilobytes", required_argument, 0, 'k'},
     {"megabytes", required_argument, 0, 'm'},
     {"units", required_argument, 0, 'u'},
@@ -505,7 +508,7 @@ process_arguments (int argc, char **argv)
       strcpy (argv[c], "-t");
 
   while (1) {
-    c = getopt_long (argc, argv, "+?VqhveCt:c:w:K:W:u:p:x:X:mklg:R:r:i:I:MEA", longopts, &option);
+    c = getopt_long (argc, argv, "+?VqhveCt:c:w:K:W:u:p:x:X:mklLg:R:r:i:I:MEA", longopts, &option);
 
     if (c == -1 || c == EOF)
       break;
@@ -608,6 +611,8 @@ process_arguments (int argc, char **argv)
         free(units);
       units = strdup ("MB");
       break;
+    case 'L':
+      stat_remote_fs = 1;
     case 'l':
       show_local_fs = 1;      
       break;
@@ -626,6 +631,7 @@ process_arguments (int argc, char **argv)
       se->group = group;
       set_all_thresholds(se);
       np_set_best_match(se, mount_list, exact_match);
+      stat_path(se);
       path_selected = TRUE;
       break;
     case 'x':                 /* exclude path or partition */
@@ -914,6 +920,9 @@ print_help (void)
   printf ("    %s\n", _("Same as '--units kB'"));
   printf (" %s\n", "-l, --local");
   printf ("    %s\n", _("Only check local filesystems"));
+  printf (" %s\n", "-L, --stat-remote-fs");
+  printf ("    %s\n", _("Only check local filesystems against thresholds. Yet call stat on remote filesystems"));
+  printf ("    %s\n", _("to test if they are accessible (e.g. to detect Stale NFS Handles)"));
   printf (" %s\n", "-M, --mountpoint");
   printf ("    %s\n", _("Display the mountpoint instead of the partition"));
   printf (" %s\n", "-m, --megabytes");
@@ -955,4 +964,18 @@ print_usage (void)
   printf (" %s -w limit -c limit [-W limit] [-K limit] {-p path | -x device}\n", progname);
   printf ("[-C] [-E] [-e] [-g group ] [-k] [-l] [-M] [-m] [-R path ] [-r path ]\n");
   printf ("[-t timeout] [-u unit] [-v] [-X type]\n");
+}
+
+void
+stat_path (struct parameter_list *p)
+{
+  /* Stat entry to check that dir exists and is accessible */
+  if (verbose > 3)
+    printf("calling stat on %s\n", p->name);
+  if (stat (p->name, &stat_buf[0])) {
+    if (verbose > 3)
+      printf("stat failed on %s\n", p->name);
+    printf("DISK %s - ", _("CRITICAL"));
+    die (STATE_CRITICAL, _("%s %s: %s\n"), p->name, _("is not accessible"), strerror(errno));
+  }
 }
