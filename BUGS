@@ -21,9 +21,7 @@ For the 1.4.9 release:
 1370031 - check_disk_smb requires DNS agree with NetBIOS names
 1291987 - urlize useragent does not work
 1225470 - check_swap perf data incorrect
-1218438 - check_radius linking to wrong header
 1108499 - check_ping with -U on Debian fails
-1094326 - check_ide_smart usage errors
 1090549 - check_dhcp ignores DHCP replies
  990948 - check_disk_smb doesn't allow spaces in share names
 
