@@ -87,11 +87,14 @@
 		the entire output to appear in a pager message, which will get chopped
 		off after a certain length.</para>
 
+		<para>As Nagios does not capture stderr output, you should only output to 
+		STDOUT and not print to STDERR.</para>
+
 		<section><title>Print only one line of text</title>
 		<para>Nagios will only grab the first line of text from STDOUT
 		when it notifies contacts about potential problems. If you print
-		multiple lines, you're out of luck. Remember, keep it short and
-		to the point.</para>
+		multiple lines, you're out of luck (though this will be a feature of 
+		Nagios 3). Remember, keep your output short and to the point.</para>
 
 		<para>Output should be in the format:</para>
 		<literallayout>
@@ -139,8 +142,9 @@
 
 		<section><title>Screen Output</title>
 		<para>The plug-in should print the diagnostic and just the
-		synopsis part of the help message.  A well written plugin would
+		usage part of the help message.  A well written plugin would
 		then have --help as a way to get the verbose help.</para>
+
 		<para>Code and output should try to respect the 80x25 size of a
 		crt (remember when fixing stuff in the server room!)</para>
 		</section>
