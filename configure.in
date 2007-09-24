@@ -275,9 +275,15 @@ else
   AC_SUBST(MYSQLCFLAGS)
 fi
 
+AC_ARG_WITH([ipv6],
+	[AS_HELP_STRING([--with-ipv6], [support IPv6 @<:@default=check@:>@])],
+	[], [with_ipv6=check])
+
 dnl Check for AF_INET6 support - unistd.h required for Darwin
-AC_CACHE_CHECK([for IPv6 support], with_ipv6, [
-	AC_TRY_COMPILE([#ifdef HAVE_UNISTD_H
+if test "$with_ipv6" != "no"; then
+	AC_CACHE_CHECK([for IPv6 support], np_cv_sys_ipv6, [
+		AC_TRY_COMPILE(
+			[#ifdef HAVE_UNISTD_H
 			#include <unistd.h>
 			#endif
 			#include <netinet/in.h>
@@ -288,12 +294,16 @@ AC_CACHE_CHECK([for IPv6 support], with_ipv6, [
 			sin6.sin6_family = AF_INET6;
 			sin6.sin6_port = 587;
 			p = &sin6.sin6_addr;],
-			[with_ipv6=yes], 
-			[with_ipv6=no])
-	])
-
-if test x"$with_ipv6" != xno ; then
-	AC_DEFINE(USE_IPV6,1,[Enable IPv6 support])
+			[np_cv_sys_ipv6=yes],
+			[np_cv_sys_ipv6=no])
+		])
+	if test "$np_cv_sys_ipv6" = "no" -a "$with_ipv6" != "check"; then
+		AC_MSG_FAILURE([--with-ipv6 was given, but test for IPv6 support failed])
+	fi
+	if test "$np_cv_sys_ipv6" = "yes"; then
+		AC_DEFINE(USE_IPV6,1,[Enable IPv6 support])
+	fi
+	with_ipv6="$np_cv_sys_ipv6"
 fi
 
 

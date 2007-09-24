@@ -39,7 +39,11 @@
 unsigned int socket_timeout = DEFAULT_SOCKET_TIMEOUT; 
 int econn_refuse_state = STATE_CRITICAL;
 int was_refused = FALSE;
+#if USE_IPV6
 int address_family = AF_UNSPEC;
+#else
+int address_family = AF_INET;
+#endif
 
 /* handles socket timeouts */
 void
