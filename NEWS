@@ -29,6 +29,8 @@ This file documents the major additions and syntax changes between releases.
 	  - enforce a full path for the command to run
 	The "negate" utility can now remap custom states
 	Check_radius now supports radiusclient-ng
+	The (undocumented) positional parameter parsing which check_radius used
+	  instead of getopt(3) if 8 arguments were given is no longer available
 	Check_by_ssh now supports multiline output
 	IPv6 support can now be disabled using ./configure --without-ipv6
 	Fix check_ntp now honor ntp flags

@@ -225,30 +225,6 @@ process_arguments (int argc, char **argv)
 		{0, 0, 0, 0}
 	};
 
-	if (argc < 2)
-		return ERROR;
-
-	if (argc == 9) {
-		config_file = argv[1];
-		username = argv[2];
-		password = argv[3];
-		if (is_intpos (argv[4]))
-			timeout_interval = atoi (argv[4]);
-		else
-			usage2 (_("Timeout interval must be a positive integer"), optarg);
-		if (is_intpos (argv[5]))
-			retries = atoi (argv[5]);
-		else
-			usage4 (_("Number of retries must be a positive integer"));
-		server = argv[6];
-		if (is_intpos (argv[7]))
-			port = atoi (argv[7]);
-		else
-			usage4 (_("Port must be a positive integer"));
-		expect = argv[8];
-		return OK;
-	}
-
 	while (1) {
 		c = getopt_long (argc, argv, "+hVvH:P:F:u:p:n:t:r:e:", longopts,
 									 &option);
@@ -309,6 +285,16 @@ process_arguments (int argc, char **argv)
 			break;
 		}
 	}
+
+	if (server == NULL)
+		usage4 (_("Host not specified"));
+	if (username == NULL)
+		usage4 (_("User not specified"));
+	if (password == NULL)
+		usage4 (_("Password not specified"));
+	if (config_file == NULL)
+		usage4 (_("Configuration file not specified"));
+
 	return OK;
 }
 
