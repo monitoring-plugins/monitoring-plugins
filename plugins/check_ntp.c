@@ -86,6 +86,7 @@ typedef struct {
 	double rtdelay;         /* converted from the ntp_message */
 	double rtdisp;          /* converted from the ntp_message */
 	double offset[AVG_NUM]; /* offsets from each response */
+	uint8_t flags;       /* byte with leapindicator,vers,mode. see macros */
 } ntp_server_results;
 
 /* this structure holds everything in an ntp control message as per rfc1305 */
@@ -302,6 +303,12 @@ int best_offset_server(const ntp_server_results *slist, int nservers){
 
 	/* for each server */
 	for(cserver=0; cserver<nservers; cserver++){
+		/* sort out servers with error flags */
+		if ( LI(slist[cserver].flags) != LI_NOWARNING ){
+			if (verbose) printf("discarding peer id %d: flags=%d\n", cserver, LI(slist[cserver].flags));
+			break;
+		}
+
 		/* compare it to each of the servers already in the candidate list */
 		for(i=0; i<csize; i++){
 			/* does it have an equal or better stratum? */
@@ -450,6 +457,7 @@ double offset_request(const char *host, int *status){
 				servers[i].rtdisp=NTP32asDOUBLE(req[i].rtdisp);
 				servers[i].rtdelay=NTP32asDOUBLE(req[i].rtdelay);
 				servers[i].waiting=0;
+				servers[i].flags=req[i].flags;
 				servers_readable--;
 				one_read = 1;
 				if(servers[i].num_responses==AVG_NUM) servers_completed++;
@@ -808,6 +816,7 @@ int main(int argc, char *argv[]){
 	}
 	if(offset_result==STATE_CRITICAL){
 		asprintf(&result_line, "%s %s", result_line, _("Offset unknown"));
+		asprintf(&perfdata_line, "");
 	} else {
 		if(offset_result==STATE_WARNING){
 			asprintf(&result_line, "%s %s", result_line, _("Unable to fully sample sync server"));

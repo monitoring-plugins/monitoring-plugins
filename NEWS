@@ -31,6 +31,7 @@ This file documents the major additions and syntax changes between releases.
 	Check_radius now supports radiusclient-ng
 	Check_by_ssh now supports multiline output
 	IPv6 support can now be disabled using ./configure --without-ipv6
+	Fix check_ntp now honor ntp flags
 
 1.4.9 4th June 2006
 	Inclusion of contrib/check_cluster2 as check_cluster with some improvements
