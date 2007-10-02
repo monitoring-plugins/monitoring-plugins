@@ -151,7 +151,7 @@ main (int argc, char **argv)
 
   if (display_html == TRUE)
     printf ("<A HREF=\"%s://%s:%d%s\" target=\"_blank\">", 
-      use_ssl ? "https" : "http", server_address,
+      use_ssl ? "https" : "http", host_name ? host_name : server_address,
       server_port, server_url);
 
   /* initialize alarm signal handling, set socket timeout, start timer */
@@ -1155,7 +1155,7 @@ redir (char *pos, char *status_line)
       }
       i = server_port;
       strcpy (type, server_type);
-      strcpy (addr, server_address);
+      strcpy (addr, host_name ? host_name : server_address);
     }           
 
     else {
@@ -1204,8 +1204,8 @@ redir (char *pos, char *status_line)
          display_html ? "</A>" : "");
 
   if (verbose)
-    printf (_("Redirection to %s://%s:%d%s\n"), server_type, server_address,
-            server_port, server_url);
+    printf (_("Redirection to %s://%s:%d%s\n"), server_type,
+            host_name ? host_name : server_address, server_port, server_url);
 
   check_http ();
 }
