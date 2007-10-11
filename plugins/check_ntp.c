@@ -4,7 +4,7 @@
 *
 * License: GPL
 * Copyright (c) 2006 sean finney <seanius@seanius.net>
-* Copyright (c) 2006 nagios-plugins team
+* Copyright (c) 2007 nagios-plugins team
 *
 * Last Modified: $Date$
 *
@@ -38,7 +38,7 @@
 
 const char *progname = "check_ntp";
 const char *revision = "$Revision$";
-const char *copyright = "2006";
+const char *copyright = "2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -47,9 +47,11 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 static char *server_address=NULL;
 static int verbose=0;
-static int stratum=-1;
 static char *owarn="60";
 static char *ocrit="120";
+static short do_stratum=0;
+static char *swarn="16";
+static char *scrit="16";
 static short do_jitter=0;
 static char *jwarn="5000";
 static char *jcrit="10000";
@@ -57,6 +59,7 @@ static char *jcrit="10000";
 int process_arguments (int, char **);
 thresholds *offset_thresholds = NULL;
 thresholds *jitter_thresholds = NULL;
+thresholds *stratum_thresholds = NULL;
 void print_help (void);
 void print_usage (void);
 
@@ -357,7 +360,7 @@ int best_offset_server(const ntp_server_results *slist, int nservers){
  *   we don't waste time sitting around waiting for single packets. 
  * - we also "manually" handle resolving host names and connecting, because
  *   we have to do it in a way that our lazy macros don't handle currently :( */
-double offset_request(const char *host, int *status){
+double offset_request(const char *host, int *stratum, int *status){
 	int i=0, j=0, ga_result=0, num_hosts=0, *socklist=NULL, respnum=0;
 	int servers_completed=0, one_written=0, one_read=0, servers_readable=0, best_index=-1;
 	time_t now_time=0, start_ts=0;
@@ -454,7 +457,7 @@ double offset_request(const char *host, int *status){
 				respnum=servers[i].num_responses++;
 				servers[i].offset[respnum]=calc_offset(&req[i], &recv_time);
 				if(verbose) {
-					printf("offset %.10g\n", servers[i].offset[respnum]);
+					printf("offset %.10g, stratum %i\n", servers[i].offset[respnum], req[i].stratum);
 				}
 				servers[i].stratum=req[i].stratum;
 				servers[i].rtdisp=NTP32asDOUBLE(req[i].rtdisp);
@@ -483,6 +486,7 @@ double offset_request(const char *host, int *status){
 			avg_offset+=servers[best_index].offset[j];
 		}
 		avg_offset/=servers[best_index].num_responses;
+		*stratum = servers[best_index].stratum;
 	}
 
 	/* cleanup */
@@ -660,6 +664,8 @@ int process_arguments(int argc, char **argv){
 		{"use-ipv6", no_argument, 0, '6'},
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
+		{"swarn", required_argument, 0, 'W'},
+		{"scrit", required_argument, 0, 'C'},
 		{"jwarn", required_argument, 0, 'j'},
 		{"jcrit", required_argument, 0, 'k'},
 		{"timeout", required_argument, 0, 't'},
@@ -672,7 +678,7 @@ int process_arguments(int argc, char **argv){
 		usage ("\n");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vhv46w:c:j:k:t:H:", longopts, &option);
+		c = getopt_long (argc, argv, "Vhv46w:c:W:C:j:k:t:H:", longopts, &option);
 		if (c == -1 || c == EOF || c == 1)
 			break;
 
@@ -693,6 +699,14 @@ int process_arguments(int argc, char **argv){
 			break;
 		case 'c':
 			ocrit = optarg;
+			break;
+		case 'W':
+			do_stratum=1;
+			swarn = optarg;
+			break;
+		case 'C':
+			do_stratum=1;
+			scrit = optarg;
 			break;
 		case 'j':
 			do_jitter=1;
@@ -750,8 +764,16 @@ char *perfd_jitter (double jitter)
 		TRUE, 0, FALSE, 0);
 }
 
+char *perfd_stratum (int stratum)
+{
+	return perfdata ("stratum", stratum, "",
+		do_stratum, (int)stratum_thresholds->warning->end,
+		do_stratum, (int)stratum_thresholds->critical->end,
+		TRUE, 0, TRUE, 16);
+}
+
 int main(int argc, char *argv[]){
-	int result, offset_result, jitter_result;
+	int result, offset_result, jitter_result, stratum;
 	double offset=0, jitter=0;
 	char *result_line, *perfdata_line;
 
@@ -762,6 +784,7 @@ int main(int argc, char *argv[]){
 
 	set_thresholds(&offset_thresholds, owarn, ocrit);
 	set_thresholds(&jitter_thresholds, jwarn, jcrit);
+	set_thresholds(&stratum_thresholds, swarn, scrit);
 
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
@@ -769,9 +792,11 @@ int main(int argc, char *argv[]){
 	/* set socket timeout */
 	alarm (socket_timeout);
 
-	offset = offset_request(server_address, &offset_result);
+	offset = offset_request(server_address, &stratum, &offset_result);
 	result = get_status(fabs(offset), offset_thresholds);
 	result = max_state(result, offset_result);
+	if(do_stratum)
+		result = max_state(result, get_status(stratum, stratum_thresholds));
 
 	/* If not told to check the jitter, we don't even send packets.
 	 * jitter is checked using NTP control packets, which not all
@@ -816,6 +841,10 @@ int main(int argc, char *argv[]){
 		asprintf(&result_line, "%s, jitter=%f", result_line, jitter);
 		asprintf(&perfdata_line, "%s %s", perfdata_line,  perfd_jitter(jitter));
 	}
+	if (do_stratum) {
+		asprintf(&result_line, "%s, stratum=%i", result_line, stratum);
+		asprintf(&perfdata_line, "%s %s", perfdata_line,  perfd_stratum(stratum));
+	}
 	printf("%s|%s\n", result_line, perfdata_line);
 
 	if(server_address!=NULL) free(server_address);
@@ -837,16 +866,27 @@ void print_help(void){
 	print_usage();
 	printf (_(UT_HELP_VRSN));
 	printf (_(UT_HOST_PORT), 'p', "123");
-	printf (" %s\n", "-w, --warning=DOUBLE");
+	printf (" %s\n", "-w, --warning=THRESHOLD");
 	printf ("    %s\n", _("Offset to result in warning status (seconds)"));
-	printf (" %s\n", "-c, --critical=DOUBLE");
+	printf (" %s\n", "-c, --critical=THRESHOLD");
 	printf ("    %s\n", _("Offset to result in critical status (seconds)"));
-	printf (" %s\n", "-j, --warning=DOUBLE");
-	printf ("    %s\n", _("Warning value for jitter"));
-	printf (" %s\n", "-k, --critical=DOUBLE");
-	printf ("    %s\n", _("Critical value for jitter"));
+	printf (" %s\n", "-W, --warning=THRESHOLD");
+	printf ("    %s\n", _("Warning threshold for stratum"));
+	printf (" %s\n", "-W, --critical=THRESHOLD");
+	printf ("    %s\n", _("Critical threshold for stratum"));
+	printf (" %s\n", "-j, --warning=THRESHOLD");
+	printf ("    %s\n", _("Warning threshold for jitter"));
+	printf (" %s\n", "-k, --critical=THRESHOLD");
+	printf ("    %s\n", _("Critical threshold for jitter"));
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 	printf (_(UT_VERBOSE));
+
+	printf("\n");
+	printf("%s\n", _("Notes:"));
+	printf(" %s\n", _("See:"));
+	printf(" %s\n", ("http://nagiosplug.sourceforge.net/developer-guidelines.html#THRESHOLDFORMAT"));
+	printf(" %s\n", _("for THRESHOLD format and examples."));
+
 	printf (_(UT_SUPPORT));
 }
 
@@ -854,5 +894,6 @@ void
 print_usage(void)
 {
   printf (_("Usage:"));
-  printf("%s -H <host> [-w <warn>] [-c <crit>] [-j <warn>] [-k <crit>] [-v verbose]\n", progname);
+  printf(" %s -H <host> [-w <warn>] [-c <crit>] [-W <warn>] [-C <crit>]\n", progname);
+  printf("       [-j <warn>] [-k <crit>] [-v verbose]\n");
 }

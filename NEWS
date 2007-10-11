@@ -3,6 +3,7 @@ This file documents the major additions and syntax changes between releases.
 1.4.11 or 1.5 ??
 	Fix check_http regression in 1.4.10 where following redirects to
 	  relative URLs on virtual hosts failed if both "-H" and "-I" were used
+	Add stratum thresholds support to check_ntp (feature request #1703823)
 
 1.4.10 28th September 2007
 	Fix check_http buffer overflow vulnerability when following HTTP redirects
