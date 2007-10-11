@@ -47,13 +47,16 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 static char *server_address=NULL;
 static int verbose=0;
-static double owarn=60;
-static double ocrit=120;
+static int stratum=-1;
+static char *owarn="60";
+static char *ocrit="120";
 static short do_jitter=0;
-static double jwarn=5000;
-static double jcrit=10000;
+static char *jwarn="5000";
+static char *jcrit="10000";
 
 int process_arguments (int, char **);
+thresholds *offset_thresholds = NULL;
+thresholds *jitter_thresholds = NULL;
 void print_help (void);
 void print_usage (void);
 
@@ -686,18 +689,18 @@ int process_arguments(int argc, char **argv){
 			verbose++;
 			break;
 		case 'w':
-			owarn = atof(optarg);
+			owarn = optarg;
 			break;
 		case 'c':
-			ocrit = atof(optarg);
+			ocrit = optarg;
 			break;
 		case 'j':
 			do_jitter=1;
-			jwarn = atof(optarg);
+			jwarn = optarg;
 			break;
 		case 'k':
 			do_jitter=1;
-			jcrit = atof(optarg);
+			jcrit = optarg;
 			break;
 		case 'H':
 			if(is_host(optarg) == FALSE)
@@ -724,14 +727,6 @@ int process_arguments(int argc, char **argv){
 		}
 	}
 
-	if (ocrit < owarn){
-		usage4(_("Critical offset should be larger than warning offset"));
-	}
-
-	if (jcrit < jwarn){
-		usage4(_("Critical jitter should be larger than warning jitter"));
-	}
-
 	if(server_address == NULL){
 		usage4(_("Hostname was not supplied"));
 	}
@@ -742,16 +737,16 @@ int process_arguments(int argc, char **argv){
 char *perfd_offset (double offset)
 {
 	return fperfdata ("offset", offset, "s",
-		TRUE, owarn,
-		TRUE, ocrit,
+		TRUE, offset_thresholds->warning->end,
+		TRUE, offset_thresholds->critical->end,
 		FALSE, 0, FALSE, 0);
 }
 
 char *perfd_jitter (double jitter)
 {
 	return fperfdata ("jitter", jitter, "s",
-		do_jitter, jwarn,
-		do_jitter, jcrit,
+		do_jitter, jitter_thresholds->warning->end,
+		do_jitter, jitter_thresholds->critical->end,
 		TRUE, 0, FALSE, 0);
 }
 
@@ -760,10 +755,13 @@ int main(int argc, char *argv[]){
 	double offset=0, jitter=0;
 	char *result_line, *perfdata_line;
 
-	result=offset_result=jitter_result=STATE_UNKNOWN;
+	result = offset_result = jitter_result= STATE_UNKNOWN;
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
+
+	set_thresholds(&offset_thresholds, owarn, ocrit);
+	set_thresholds(&jitter_thresholds, jwarn, jcrit);
 
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
@@ -772,14 +770,8 @@ int main(int argc, char *argv[]){
 	alarm (socket_timeout);
 
 	offset = offset_request(server_address, &offset_result);
-	if(fabs(offset) > ocrit){
-		result = STATE_CRITICAL;
-	} else if(fabs(offset) > owarn) {
-		result = STATE_WARNING;
-	} else {
-		result = STATE_OK;
-	}
-	result=max_state(result, offset_result);
+	result = get_status(fabs(offset), offset_thresholds);
+	result = max_state(result, offset_result);
 
 	/* If not told to check the jitter, we don't even send packets.
 	 * jitter is checked using NTP control packets, which not all
@@ -788,17 +780,13 @@ int main(int argc, char *argv[]){
 	 */
 	if(do_jitter){
 		jitter=jitter_request(server_address, &jitter_result);
-		if(jitter > jcrit){
-			result = max_state(result, STATE_CRITICAL);
-		} else if(jitter > jwarn) {
-			result = max_state(result, STATE_WARNING);
-		} else if(jitter == -1.0 && result == STATE_OK){
-			/* -1 indicates that we couldn't calculate the jitter
-			 * Only overrides STATE_OK from the offset */
+		result = max_state(result, get_status(jitter, jitter_thresholds));
+		/* -1 indicates that we couldn't calculate the jitter
+		 * Only overrides STATE_OK from the offset */
+		if(jitter == -1.0 && result == STATE_OK)
 			result = STATE_UNKNOWN;
-		}
 	}
-	result=max_state(result, jitter_result);
+	result = max_state(result, jitter_result);
 
 	switch (result) {
 		case STATE_CRITICAL :
