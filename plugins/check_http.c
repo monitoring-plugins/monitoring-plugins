@@ -1062,7 +1062,6 @@ check_http (void)
 
 
 /* per RFC 2396 */
-#define HDR_LOCATION "%*[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]: "
 #define URI_HTTP "%5[HTPShtps]"
 #define URI_HOST "%255[-.abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
 #define URI_PORT "%6d" /* MAX_PORT's width is 5 chars, 6 to detect overflow */
@@ -1092,7 +1091,7 @@ redir (char *pos, char *status_line)
     die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate url\n"));
 
   while (pos) {
-    sscanf (pos, "%[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]:%n", xx, &i);
+    sscanf (pos, "%1[Ll]%*1[Oo]%*1[Cc]%*1[Aa]%*1[Tt]%*1[Ii]%*1[Oo]%*1[Nn]:%n", xx, &i);
     if (i == 0) {
       pos += (size_t) strcspn (pos, "\r\n");
       pos += (size_t) strspn (pos, "\r\n");
