@@ -8,7 +8,7 @@ Update BUGS, NEWS file
 Update AUTHORS if new members
 Update configure.in and package.def with version
 Run svn2cl (get from http://ch.tudelft.nl/~arthur/svn2cl):
-svn2cl.sh --break-before-msg -i http://nagiosplug.svn.sourceforge.net/svnroot/nagiosplug/nagiosplug/trunk
+svn2cl.sh --break-before-msg --reparagraph -i http://nagiosplug.svn.sourceforge.net/svnroot/nagiosplug/nagiosplug/trunk
 commit BUGS NEWS configure.in package.def ChangeLog
 
 svn copy http://nagiosplug.svn.sourceforge.net/svnroot/nagiosplug/nagiosplug/trunk 
