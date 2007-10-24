@@ -148,6 +148,7 @@ main (int argc, char **argv)
 	int result = STATE_DEPENDENT;
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *command_line = NULL;
+	char *cl_hidden_auth = NULL;
 	char *response = NULL;
 	char *outbuff;
 	char *output;
@@ -186,11 +187,17 @@ main (int argc, char **argv)
 		asprintf(&command_line, "%s -t %d -r %d -m %s -v %s %s %s:%s %s",
 			PATH_TO_SNMPGETNEXT, timeout_interval, retries, miblist, proto,
 			authpriv, server_address, port, oid);
+		asprintf(&cl_hidden_auth, "%s -t %d -r %d -m %s -v %s %s %s:%s %s",
+			PATH_TO_SNMPGETNEXT, timeout_interval, retries, miblist, proto,
+			"[authpriv]", server_address, port, oid);
 	}else{
 
 		asprintf (&command_line, "%s -t %d -r %d -m %s -v %s %s %s:%s %s",
 			PATH_TO_SNMPGET, timeout_interval, retries, miblist, proto,
 			authpriv, server_address, port, oid);
+		asprintf(&cl_hidden_auth, "%s -t %d -r %d -m %s -v %s %s %s:%s %s",
+			PATH_TO_SNMPGET, timeout_interval, retries, miblist, proto,
+			"[authpriv]", server_address, port, oid);
 	}
 	
 	if (verbose)
@@ -200,14 +207,14 @@ main (int argc, char **argv)
 	/* run the command */
 	child_process = spopen (command_line);
 	if (child_process == NULL) {
-		printf (_("Could not open pipe: %s\n"), command_line);
+		printf (_("Could not open pipe: %s\n"), cl_hidden_auth);
 		exit (STATE_UNKNOWN);
 	}
 
 #if 0		/* Removed May 29, 2007 */
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
 	if (child_stderr == NULL) {
-		printf (_("Could not open stderr for %s\n"), command_line);
+		printf (_("Could not open stderr for %s\n"), cl_hidden_auth);
 	}
 #endif
 
@@ -369,7 +376,7 @@ main (int argc, char **argv)
 		die (STATE_UNKNOWN,
 			_("%s problem - No data received from host\nCMD: %s\n"),
 			label,
-			command_line);
+			cl_hidden_auth);
 
 #if 0		/* Removed May 29, 2007 */
 	/* WARNING if output found on stderr */
