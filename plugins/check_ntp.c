@@ -47,6 +47,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 static char *server_address=NULL;
 static int verbose=0;
+static short do_offset=0;
 static char *owarn="60";
 static char *ocrit="120";
 static short do_stratum=0;
@@ -479,7 +480,7 @@ double offset_request(const char *host, int *stratum, int *status){
 	/* now, pick the best server from the list */
 	best_index=best_offset_server(servers, num_hosts);
 	if(best_index < 0){
-		*status=STATE_CRITICAL;
+		*status=STATE_UNKNOWN;
 	} else {
 		/* finally, calculate the average offset */
 		for(i=0; i<servers[best_index].num_responses;i++){
@@ -582,7 +583,7 @@ double jitter_request(const char *host, int *status){
 	if(verbose) printf("%d candiate peers available\n", num_candidates);
 	if(verbose && syncsource_found) printf("synchronization source found\n");
 	if(! syncsource_found){
-		*status = STATE_WARNING;
+		*status = STATE_UNKNOWN;
 		if(verbose) printf("warning: no synchronization source found\n");
 	}
 
@@ -632,7 +633,7 @@ double jitter_request(const char *host, int *status){
 				}
 				if(startofvalue == NULL || startofvalue==nptr){
 					printf("warning: unable to read server jitter response.\n");
-					*status = STATE_WARNING;
+					*status = STATE_UNKNOWN;
 				} else {
 					if(verbose) printf("%g\n", jitter);
 					num_valid++;
@@ -695,9 +696,11 @@ int process_arguments(int argc, char **argv){
 			verbose++;
 			break;
 		case 'w':
+			do_offset=1;
 			owarn = optarg;
 			break;
 		case 'c':
+			do_offset=1;
 			ocrit = optarg;
 			break;
 		case 'W':
@@ -777,7 +780,7 @@ int main(int argc, char *argv[]){
 	double offset=0, jitter=0;
 	char *result_line, *perfdata_line;
 
-	result = offset_result = jitter_result= STATE_UNKNOWN;
+	result = offset_result = jitter_result = STATE_OK;
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
@@ -793,7 +796,11 @@ int main(int argc, char *argv[]){
 	alarm (socket_timeout);
 
 	offset = offset_request(server_address, &stratum, &offset_result);
-	result = get_status(fabs(offset), offset_thresholds);
+	if (do_offset && offset_result == STATE_UNKNOWN) {
+		result = STATE_CRITICAL;
+	} else {
+		result = get_status(fabs(offset), offset_thresholds);
+	}
 	result = max_state(result, offset_result);
 	if(do_stratum)
 		result = max_state(result, get_status(stratum, stratum_thresholds));
@@ -827,13 +834,15 @@ int main(int argc, char *argv[]){
 			asprintf(&result_line, "NTP UNKNOWN:");
 			break;
 	}
-	if(offset_result==STATE_CRITICAL){
+	if(offset_result == STATE_UNKNOWN){
 		asprintf(&result_line, "%s %s", result_line, _("Offset unknown"));
 		asprintf(&perfdata_line, "");
 	} else {
+#if 0		/* 2007-10-25 This can't happen. Leftovers or uninplemented? */
 		if(offset_result==STATE_WARNING){
 			asprintf(&result_line, "%s %s", result_line, _("Unable to fully sample sync server"));
 		}
+#endif
 		asprintf(&result_line, "%s Offset %.10g secs", result_line, offset);
 		asprintf(&perfdata_line, "%s", perfd_offset(offset));
 	}
@@ -886,6 +895,16 @@ void print_help(void){
 	printf(" %s\n", _("See:"));
 	printf(" %s\n", ("http://nagiosplug.sourceforge.net/developer-guidelines.html#THRESHOLDFORMAT"));
 	printf(" %s\n", _("for THRESHOLD format and examples."));
+
+	printf("\n");
+	printf("%s\n", _("Examples:"));
+	printf(" %s\n", _("Normal offset check:"));
+	printf("  %s\n", ("./check_ntp -H ntpserv -w 0.5 -c 1"));
+	printf(" %s\n", _("Check jitter too, avoiding critical notifications if jitter isn't available"));
+	printf(" %s\n", _("(See Notes above for more details on thresholds formats):"));
+	printf("  %s\n", ("./check_ntp -H ntpserv -w 0.5 -c 1 -j -1:100 -k -1:200"));
+	printf(" %s\n", _("Check only stratum:"));
+	printf("  %s\n", ("./check_ntp -H ntpserv -W 4 -C 6"));
 
 	printf (_(UT_SUPPORT));
 }
