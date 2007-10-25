@@ -598,7 +598,7 @@ print_help (void)
 
 	print_revision (progname, revision);
 
-	printf ("Copyright (c) 2000 Tom Shields");
+	printf ("Copyright (c) 2000 Tom Shields\n");
 	printf ("Copyright (c) 2004 Alain Richard <alain.richard@equation.fr>\n");
 	printf ("Copyright (c) 2004 Arnaud Quette <arnaud.quette@mgeups.com>\n");
 	printf (COPYRIGHT, copyright, email);

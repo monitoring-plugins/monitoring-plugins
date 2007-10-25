@@ -548,7 +548,7 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
-	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>");
+	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf (COPYRIGHT, copyright, email);
 
 	printf (_("Use ping to check connection statistics for a remote host."));
