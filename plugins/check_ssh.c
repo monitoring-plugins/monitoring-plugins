@@ -233,6 +233,7 @@ ssh_connect (char *haddr, int hport, char *remote_version)
 	recv (sd, output, BUFF_SZ, 0);
 	if (strncmp (output, "SSH", 3)) {
 		printf (_("Server answer: %s"), output);
+		close(sd);
 		exit (STATE_CRITICAL);
 	}
 	else {
@@ -252,6 +253,7 @@ ssh_connect (char *haddr, int hport, char *remote_version)
 			printf
 				(_("SSH WARNING - %s (protocol %s) version mismatch, expected '%s'\n"),
 				 ssh_server, ssh_proto, remote_version);
+			close(sd);
 			exit (STATE_WARNING);
 		}
 		
