@@ -28,6 +28,7 @@ rm -f m4/Makefile.am
 
 echo "$0: Removing miscelanious files..."
 rm -f po/*.gmo po/stamp-po
+rm -f lib/tests/*.Po
 rm -f doc/developer-guidelines.html
 rm -f INSTALL install-sh missing
 rm -f plugins/t/check_nagios.nagios?.status.???.tmp
