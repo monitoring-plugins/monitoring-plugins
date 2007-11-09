@@ -946,8 +946,8 @@ print_help (void)
 
 	/* Authentication Tokens*/
 	printf (" %s\n", "-C, --community=STRING");
-  printf ("    %s\n", _("Optional community string for SNMP communication"));
-  printf (_("(default is \"%s\")"),DEFAULT_COMMUNITY);
+  printf ("    %s ", _("Optional community string for SNMP communication"));
+  printf ("(%s \"%s\")\n", _("default is") ,DEFAULT_COMMUNITY);
   printf (" %s\n", "-U, --secname=USERNAME");
   printf ("    %s\n", _("SNMPv3 username"));
   printf (" %s\n", "-A, --authpassword=PASSWORD");
