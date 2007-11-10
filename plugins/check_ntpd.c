@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Nagios check_ntp plugin
+* Nagios check_ntpd plugin
 *
 * License: GPL
 * Copyright (c) 2006 sean finney <seanius@seanius.net>
@@ -593,12 +593,12 @@ void print_help(void){
 	printf("\n");
 	printf("%s\n", _("Examples:"));
 	printf(" %s\n", _("Normal offset check:"));
-	printf("  %s\n", ("./check_ntp -H ntpserv -w 0.5 -c 1"));
+	printf("  %s\n", ("./check_ntpd -H ntpserv -w 0.5 -c 1"));
 	printf(" %s\n", _("Check jitter too, avoiding critical notifications if jitter isn't available"));
 	printf(" %s\n", _("(See Notes above for more details on thresholds formats):"));
-	printf("  %s\n", ("./check_ntp -H ntpserv -w 0.5 -c 1 -j -1:100 -k -1:200"));
+	printf("  %s\n", ("./check_ntpd -H ntpserv -w 0.5 -c 1 -j -1:100 -k -1:200"));
 	printf(" %s\n", _("Check only stratum:"));
-	printf("  %s\n", ("./check_ntp -H ntpserv -W 4 -C 6"));
+	printf("  %s\n", ("./check_ntpd -H ntpserv -W 4 -C 6"));
 
 	printf (_(UT_SUPPORT));
 }
