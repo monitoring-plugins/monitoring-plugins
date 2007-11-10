@@ -487,7 +487,9 @@ double offset_request(const char *host, int *stratum, int *status){
 			avg_offset+=servers[best_index].offset[j];
 		}
 		avg_offset/=servers[best_index].num_responses;
-		*stratum = servers[best_index].stratum;
+		/* Stratum sent in normal packets is ingreased by 1 (i.e. stratum that
+		 * would be displayed if we were a server) so we decrease it */
+		*stratum = servers[best_index].stratum - 1;
 	}
 
 	/* cleanup */
