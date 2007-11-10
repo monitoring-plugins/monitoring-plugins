@@ -1,6 +1,6 @@
 /******************************************************************************
-*
-* Nagios check_ntp plugin
+* TODO: check offset only (remove all NTP control packet stuff)
+* Nagios check_time_ntp plugin
 *
 * License: GPL
 * Copyright (c) 2006 sean finney <seanius@seanius.net>
@@ -10,7 +10,7 @@
 *
 * Description:
 *
-* This file contains the check_ntp plugin
+* This file contains the check_time_ntp plugin
 *
 *  This plugin to check ntp servers independant of any commandline
 *  programs or external libraries.
