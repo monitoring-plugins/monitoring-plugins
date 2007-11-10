@@ -9,7 +9,10 @@ use strict;
 use Test::More;
 use NPTest;
 
-plan tests => 4;
+my @PLUGINS1 = ('check_ntp', 'check_ntpd', 'check_time_ntp');
+my @PLUGINS2 = ('check_ntp', 'check_ntpd');
+
+plan tests => (9 * scalar(@PLUGINS1)) + (6 * scalar(@PLUGINS2));
 
 my $res;
 
@@ -25,33 +28,78 @@ my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE",
 		"The hostname of system not responsive to network requests",
 		"10.0.0.1" );
 
-my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID", 
+my $hostname_invalid = getTestParameter( "NP_HOSTNAME_INVALID", 
 		"An invalid (not known to DNS) hostname",  
 		"nosuchhost");
 
-SKIP: {
-	skip "No NTP server defined", 1 unless $ntp_service;
+my $ntp_okmatch1 = '/^NTP\sOK:\sOffset\s-?[0-9]+(\.[0-9]+)?(e-[0-9]{2})?\ssecs/';
+my $ntp_warnmatch1 = '/^NTP\sWARNING:\sOffset\s-?[0-9]+(\.[0-9]+)?(e-[0-9]{2})?\ssecs/';
+my $ntp_critmatch1 = '/^NTP\sCRITICAL:\sOffset\s-?[0-9]+(\.[0-9]+)?(e-[0-9]{2})?\ssecs/';
+my $ntp_okmatch2 = '/^NTP\sOK:\sOffset\s-?[0-9]+(\.[0-9]+)?(e-[0-9]{2})?\ssecs,\sjitter=[0-9]+\.[0-9]+,\sstratum=[0-9]{1,2}/';
+my $ntp_warnmatch2 = '/^NTP\sWARNING:\sOffset\s-?[0-9]+(\.[0-9]+)?(e-[0-9]{2})?\ssecs,\sjitter=[0-9]+\.[0-9]+,\sstratum=[0-9]{1,2}/';
+my $ntp_critmatch2 = '/^NTP\sCRITICAL:\sOffset\s-?[0-9]+(\.[0-9]+)?(e-[0-9]{2})?\ssecs,\sjitter=[0-9]+\.[0-9]+,\sstratum=[0-9]{1,2}/';
+
+foreach my $plugin (@PLUGINS1) {
+	SKIP: {
+		skip "No NTP server defined", 1 unless $ntp_service;
+		$res = NPTest->testCmd(
+			"./$plugin -H $ntp_service -w 1000 -c 2000"
+			);
+		cmp_ok( $res->return_code, '==', 0, "Got good NTP result");
+		like( $res->output, $ntp_okmatch1, "Output OK" );
+
+		$res = NPTest->testCmd(
+			"./$plugin -H $ntp_service -w 1000: -c 2000"
+			);
+		cmp_ok( $res->return_code, '==', 1, "Got warning NTP result");
+		like( $res->output, $ntp_warnmatch1, "Output WARNING" );
+
+		$res = NPTest->testCmd(
+			"./$plugin -H $ntp_service -w 1000 -c 2000:"
+			);
+		cmp_ok( $res->return_code, '==', 2, "Got critical NTP result");
+		like( $res->output, $ntp_critmatch1, "Output CRITICAL" );
+	}
+
+	SKIP: {
+		skip "No bad NTP server defined", 1 unless $no_ntp_service;
+		$res = NPTest->testCmd(
+			"./$plugin -H $no_ntp_service"
+			);
+		cmp_ok( $res->return_code, '==', 2, "Got bad NTP result");
+	}
+
 	$res = NPTest->testCmd(
-		"./check_ntp -H $ntp_service"
+		"./$plugin -H $host_nonresponsive"
 		);
-	cmp_ok( $res->return_code, '==', 0, "Got good NTP result");
+	cmp_ok( $res->return_code, '==', 2, "Got critical if server not responding");
+
+	$res = NPTest->testCmd(
+		"./$plugin -H $hostname_invalid"
+		);
+	cmp_ok( $res->return_code, '==', 3, "Got critical if server hostname invalid");
+
 }
 
-SKIP: {
-	skip "No bad NTP server defined", 1 unless $no_ntp_service;
-	$res = NPTest->testCmd(
-		"./check_ntp -H $no_ntp_service"
-		);
-	cmp_ok( $res->return_code, '==', 2, "Got bad NTP result");
+foreach my $plugin (@PLUGINS2) {
+	SKIP: {
+		skip "No NTP server defined", 1 unless $ntp_service;
+		$res = NPTest->testCmd(
+			"./$plugin -H $ntp_service -w 1000 -c 2000 -W 20 -C 21 -j 100000 -k 200000"
+			);
+		cmp_ok( $res->return_code, '==', 0, "Got good NTP result");
+		like( $res->output, $ntp_okmatch2, "Output OK" );
+
+		$res = NPTest->testCmd(
+			"./$plugin -H $ntp_service -w 1000 -c 2000 -W ~:-1 -C 21 -j 100000 -k 200000"
+			);
+		cmp_ok( $res->return_code, '==', 1, "Got warning NTP result");
+		like( $res->output, $ntp_warnmatch2, "Output WARNING" );
+
+		$res = NPTest->testCmd(
+			"./$plugin -H $ntp_service -w 1000 -c 2000 -W 20 -C 21 -j 100000 -k ~:-1"
+			);
+		cmp_ok( $res->return_code, '==', 2, "Got critical NTP result");
+		like( $res->output, $ntp_critmatch2, "Output CRITICAL" );
+	}
 }
-
-$res = NPTest->testCmd(
-	"./check_ntp -H $host_nonresponsive"
-	);
-cmp_ok( $res->return_code, '==', 2, "Got critical if server not responding");
-
-$res = NPTest->testCmd(
-	"./check_ntp -H $hostname_invalid"
-	);
-cmp_ok( $res->return_code, '==', 3, "Got critical if server hostname invalid");
-
