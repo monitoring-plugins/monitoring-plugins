@@ -68,21 +68,6 @@ void print_usage (void);
 /* max size of control message data */
 #define MAX_CM_SIZE 468
 
-/* this structure holds everything in an ntp request/response as per rfc1305 */
-typedef struct {
-	uint8_t flags;       /* byte with leapindicator,vers,mode. see macros */
-	uint8_t stratum;     /* clock stratum */
-	int8_t poll;         /* polling interval */
-	int8_t precision;    /* precision of the local clock */
-	int32_t rtdelay;     /* total rt delay, as a fixed point num. see macros */
-	uint32_t rtdisp;     /* like above, but for max err to primary src */
-	uint32_t refid;      /* ref clock identifier */
-	uint64_t refts;      /* reference timestamp.  local time local clock */
-	uint64_t origts;     /* time at which request departed client */
-	uint64_t rxts;       /* time at which request arrived at server */
-	uint64_t txts;       /* time at which request departed server */
-} ntp_message;
-
 /* this structure holds everything in an ntp control message as per rfc1305 */
 typedef struct {
 	uint8_t flags;       /* byte with leapindicator,vers,mode. see macros */
@@ -138,57 +123,6 @@ typedef struct {
 #define PEER_INCLUDED 0x04
 #define PEER_SYNCSOURCE 0x06
 
-/**
- ** a note about the 32-bit "fixed point" numbers:
- **
- they are divided into halves, each being a 16-bit int in network byte order:
- - the first 16 bits are an int on the left side of a decimal point.
- - the second 16 bits represent a fraction n/(2^16)
- likewise for the 64-bit "fixed point" numbers with everything doubled :) 
- **/
-
-/* macros to access the left/right 16 bits of a 32-bit ntp "fixed point"
-   number.  note that these can be used as lvalues too */
-#define L16(x) (((uint16_t*)&x)[0])
-#define R16(x) (((uint16_t*)&x)[1])
-/* macros to access the left/right 32 bits of a 64-bit ntp "fixed point"
-   number.  these too can be used as lvalues */
-#define L32(x) (((uint32_t*)&x)[0])
-#define R32(x) (((uint32_t*)&x)[1])
-
-/* ntp wants seconds since 1/1/00, epoch is 1/1/70.  this is the difference */
-#define EPOCHDIFF 0x83aa7e80UL
-
-/* extract a 32-bit ntp fixed point number into a double */
-#define NTP32asDOUBLE(x) (ntohs(L16(x)) + (double)ntohs(R16(x))/65536.0)
-
-/* likewise for a 64-bit ntp fp number */
-#define NTP64asDOUBLE(n) (double)(((uint64_t)n)?\
-                         (ntohl(L32(n))-EPOCHDIFF) + \
-                         (.00000001*(0.5+(double)(ntohl(R32(n))/42.94967296))):\
-                         0)
-
-/* convert a struct timeval to a double */
-#define TVasDOUBLE(x) (double)(x.tv_sec+(0.000001*x.tv_usec))
-
-/* convert an ntp 64-bit fp number to a struct timeval */
-#define NTP64toTV(n,t) \
-	do{ if(!n) t.tv_sec = t.tv_usec = 0; \
-	    else { \
-			t.tv_sec=ntohl(L32(n))-EPOCHDIFF; \
-			t.tv_usec=(int)(0.5+(double)(ntohl(R32(n))/4294.967296)); \
-		} \
-	}while(0)
-
-/* convert a struct timeval to an ntp 64-bit fp number */
-#define TVtoNTP64(t,n) \
-	do{ if(!t.tv_usec && !t.tv_sec) n=0x0UL; \
-		else { \
-			L32(n)=htonl(t.tv_sec + EPOCHDIFF); \
-			R32(n)=htonl((uint64_t)((4294.967296*t.tv_usec)+.5)); \
-		} \
-	} while(0)
-
 /* NTP control message header is 12 bytes, plus any data in the data
  * field, plus null padding to the nearest 32-bit boundary per rfc.
  */
@@ -200,16 +134,6 @@ typedef struct {
 	do{ \
 		printf("%u.%u.%u.%u", (x>>24)&0xff, (x>>16)&0xff, (x>>8)&0xff, x&0xff);\
 	}while(0);
-
-/* calculate the offset of the local clock */
-static inline double calc_offset(const ntp_message *m, const struct timeval *t){
-	double client_tx, peer_rx, peer_tx, client_rx;
-	client_tx = NTP64asDOUBLE(m->origts);
-	peer_rx = NTP64asDOUBLE(m->rxts);
-	peer_tx = NTP64asDOUBLE(m->txts);
-	client_rx=TVasDOUBLE((*t));
-	return (.5*((peer_tx-client_rx)+(peer_rx-client_tx)));
-}
 
 void print_ntp_control_message(const ntp_control_message *p){
 	int i=0, numpeers=0;
@@ -246,8 +170,8 @@ void print_ntp_control_message(const ntp_control_message *p){
 		}
 	}
 }
-char *
-extract_value(const char *varlist, const char *name){
+
+char *extract_value(const char *varlist, const char *name){
 	char *tmpvarlist=NULL, *tmpkey=NULL, *value=NULL;
 	int last=0;
 
@@ -291,7 +215,8 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 	*jitter = *stratum = -1;
 
 	/* Long-winded explanation:
-	 * Getting the offset, jitter and stratum requires a number of steps:
+	 * Getting the sync peer offset, jitter and stratum requires a number of
+	 * steps:
 	 * 1) Send a READSTAT request.
 	 * 2) Interpret the READSTAT reply
 	 *  a) The data section contains a list of peer identifiers (16 bits)
@@ -378,10 +303,11 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 			if(req.op&REM_ERROR && strstr(getvar, "jitter")) {
 				if(verbose) printf("The 'jitter' command failed (old ntp server?)\nRestarting with 'dispersion'...\n");
 				getvar = "stratum,offset,dispersion";
+				i--;
 				continue;
 			}
 
-			if(verbose)
+			if(verbose > 1)
 				printf("Server responded: >>>%s<<<\n", req.data);
 
 			/* get the offset */
@@ -389,7 +315,6 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 				printf("parsing offset from peer %.2x: ", ntohs(peers[i].assoc));
 
 			value = extract_value(req.data, "offset");
-			//value = extract_value(req.data, "jitter=");
 			if(value != NULL)
 				*offset = strtod(value, &nptr) / 1000;
 			if(value == NULL || value==nptr){
@@ -406,8 +331,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 				if(verbose) {
 					printf("parsing jitter from peer %.2x: ", ntohs(peers[i].assoc));
 				}
-				//*value = extract_value(req.data, strstr(getvar, "dispersion") ? "dispersion=" : "jitter=");
-				value = extract_value(req.data, "jitter");
+				value = extract_value(req.data, strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter");
 				if(value != NULL)
 					*jitter = strtod(value, &nptr);
 				if(value == NULL || value==nptr){
