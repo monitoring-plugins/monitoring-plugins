@@ -178,14 +178,10 @@ int process_arguments(int argc, char **argv){
 			break;
 
 		case 'w': /* warning threshold */
-			if (strspn (optarg, "0123456789:,") < strlen (optarg))
-				usage2 (_("Invalid warning threshold: %s\n"), optarg);
 			warn_threshold = strdup(optarg);
 			break;
 
 		case 'c': /* warning threshold */
-			if (strspn (optarg, "0123456789:,") < strlen (optarg))
-				usage2 (_("Invalid critical threshold: %s\n"), optarg);
 			crit_threshold = strdup(optarg);
 			break;
 

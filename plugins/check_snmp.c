@@ -521,7 +521,7 @@ process_arguments (int argc, char **argv)
 	/* Test parameters */
 		case 'c':									/* critical time threshold */
 			if (strspn (optarg, "0123456789:,") < strlen (optarg))
-				usage2 (_("Invalid critical threshold: %s\n"), optarg);
+				usage2 (_("Invalid critical threshold"), optarg);
 			for (ptr = optarg; ptr && jj < MAX_OIDS; jj++) {
 				if (llu_getll (&lower_crit_lim[jj], ptr) == 1)
 					eval_method[jj] |= CRIT_LT;
@@ -532,7 +532,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'w':									/* warning time threshold */
 			if (strspn (optarg, "0123456789:,") < strlen (optarg))
-				usage2 (_("Invalid warning threshold: %s\n"), optarg);
+				usage2 (_("Invalid warning threshold"), optarg);
 			for (ptr = optarg; ptr && ii < MAX_OIDS; ii++) {
 				if (llu_getll (&lower_warn_lim[ii], ptr) == 1)
 					eval_method[ii] |= WARN_LT;

@@ -9,6 +9,8 @@ This file documents the major additions and syntax changes between releases.
 	  and the offset is unavailable, will return UNKNOWN as well.
 	  NOTE: If jitter thresholds are specified integers it will return CRITICAL if jitter
 	  is "-1" as the default range starts at 0. See Examples in --help output.
+	Fix broken usage2 in check_snmp and check_cluster
+	check_cluster now accept all valid characters in its thresholds ("-", "@", "~")
 
 1.4.10 28th September 2007
 	Fix check_http buffer overflow vulnerability when following HTTP redirects
