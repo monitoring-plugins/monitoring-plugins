@@ -3,7 +3,6 @@ This file documents the major additions and syntax changes between releases.
 1.4.11 or 1.5 ??
 	Fix check_http regression in 1.4.10 where following redirects to
 	  relative URLs on virtual hosts failed if both "-H" and "-I" were used
-	Add stratum thresholds support to check_ntp (feature request #1703823)
 	check_ntp now return UNKNOWN instead of WARNING if jitter is unavailable (jitter=-1.000000)
 	  as long as the thresholds range inculde -1. If no offset threshold is specified
 	  and the offset is unavailable, will return UNKNOWN as well.
