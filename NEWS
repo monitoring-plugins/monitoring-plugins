@@ -9,6 +9,7 @@ This file documents the major additions and syntax changes between releases.
 	  and the offset is unavailable, will return UNKNOWN as well.
 	  NOTE: If jitter thresholds are specified integers it will return CRITICAL if jitter
 	  is "-1" as the default range starts at 0. See Examples in --help output.
+	YADDA YADDA YADDA... stratum thresholds support to check_ntp_peer (feature request #1703823)
 
 1.4.10 28th September 2007
 	Fix check_http buffer overflow vulnerability when following HTTP redirects

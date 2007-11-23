@@ -9,8 +9,8 @@ use strict;
 use Test::More;
 use NPTest;
 
-my @PLUGINS1 = ('check_ntp', 'check_ntpd', 'check_time_ntp');
-my @PLUGINS2 = ('check_ntp', 'check_ntpd');
+my @PLUGINS1 = ('check_ntp', 'check_ntp_peer', 'check_ntp_time');
+my @PLUGINS2 = ('check_ntp_peer');
 
 plan tests => (9 * scalar(@PLUGINS1)) + (6 * scalar(@PLUGINS2));
 
@@ -45,19 +45,19 @@ foreach my $plugin (@PLUGINS1) {
 		$res = NPTest->testCmd(
 			"./$plugin -H $ntp_service -w 1000 -c 2000"
 			);
-		cmp_ok( $res->return_code, '==', 0, "Got good NTP result");
+		cmp_ok( $res->return_code, '==', 0, "$plugin: Got good NTP result");
 		like( $res->output, $ntp_okmatch1, "Output OK" );
 
 		$res = NPTest->testCmd(
 			"./$plugin -H $ntp_service -w 1000: -c 2000"
 			);
-		cmp_ok( $res->return_code, '==', 1, "Got warning NTP result");
+		cmp_ok( $res->return_code, '==', 1, "$plugin: Got warning NTP result");
 		like( $res->output, $ntp_warnmatch1, "Output WARNING" );
 
 		$res = NPTest->testCmd(
 			"./$plugin -H $ntp_service -w 1000 -c 2000:"
 			);
-		cmp_ok( $res->return_code, '==', 2, "Got critical NTP result");
+		cmp_ok( $res->return_code, '==', 2, "$plugin: Got critical NTP result");
 		like( $res->output, $ntp_critmatch1, "Output CRITICAL" );
 	}
 
@@ -66,18 +66,18 @@ foreach my $plugin (@PLUGINS1) {
 		$res = NPTest->testCmd(
 			"./$plugin -H $no_ntp_service"
 			);
-		cmp_ok( $res->return_code, '==', 2, "Got bad NTP result");
+		cmp_ok( $res->return_code, '==', 2, "$plugin: Got bad NTP result");
 	}
 
 	$res = NPTest->testCmd(
 		"./$plugin -H $host_nonresponsive"
 		);
-	cmp_ok( $res->return_code, '==', 2, "Got critical if server not responding");
+	cmp_ok( $res->return_code, '==', 2, "$plugin: Got critical if server not responding");
 
 	$res = NPTest->testCmd(
 		"./$plugin -H $hostname_invalid"
 		);
-	cmp_ok( $res->return_code, '==', 3, "Got critical if server hostname invalid");
+	cmp_ok( $res->return_code, '==', 3, "$plugin: Got critical if server hostname invalid");
 
 }
 
@@ -87,19 +87,19 @@ foreach my $plugin (@PLUGINS2) {
 		$res = NPTest->testCmd(
 			"./$plugin -H $ntp_service -w 1000 -c 2000 -W 20 -C 21 -j 100000 -k 200000"
 			);
-		cmp_ok( $res->return_code, '==', 0, "Got good NTP result");
+		cmp_ok( $res->return_code, '==', 0, "$plugin: Got good NTP result");
 		like( $res->output, $ntp_okmatch2, "Output OK" );
 
 		$res = NPTest->testCmd(
 			"./$plugin -H $ntp_service -w 1000 -c 2000 -W ~:-1 -C 21 -j 100000 -k 200000"
 			);
-		cmp_ok( $res->return_code, '==', 1, "Got warning NTP result");
+		cmp_ok( $res->return_code, '==', 1, "$plugin: Got warning NTP result");
 		like( $res->output, $ntp_warnmatch2, "Output WARNING" );
 
 		$res = NPTest->testCmd(
 			"./$plugin -H $ntp_service -w 1000 -c 2000 -W 20 -C 21 -j 100000 -k ~:-1"
 			);
-		cmp_ok( $res->return_code, '==', 2, "Got critical NTP result");
+		cmp_ok( $res->return_code, '==', 2, "$plugin: Got critical NTP result");
 		like( $res->output, $ntp_critmatch2, "Output CRITICAL" );
 	}
 }

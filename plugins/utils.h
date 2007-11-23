@@ -76,6 +76,7 @@ char *strpcpy (char *, const char *, const char *);
 char *strpcat (char *, const char *, const char *);
 
 int max_state (int a, int b);
+int max_state_alt (int a, int b);
 
 void usage (const char *) __attribute__((noreturn));
 void usage2(const char *, const char *) __attribute__((noreturn));
