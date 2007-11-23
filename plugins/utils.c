@@ -53,6 +53,33 @@ max_state (int a, int b)
 		return max (a, b);
 }
 
+/* **************************************************************************
+ * max_state_alt(STATE_x, STATE_y)
+ * compares STATE_x to  STATE_y and returns result based on the following
+ * STATE_OK < STATE_DEPENDENT < STATE_UNKNOWN < STATE_WARNING < STATE_CRITICAL
+ *
+ * The main difference between max_state_alt and max_state it that it doesn't
+ * allow setting a default to UNKNOWN. It will instead prioritixe any valid
+ * non-OK state.
+ ****************************************************************************/
+
+int
+max_state_alt (int a, int b)
+{
+	if (a == STATE_CRITICAL || b == STATE_CRITICAL)
+		return STATE_CRITICAL;
+	else if (a == STATE_WARNING || b == STATE_WARNING)
+		return STATE_WARNING;
+	else if (a == STATE_UNKNOWN || b == STATE_UNKNOWN)
+		return STATE_UNKNOWN;
+	else if (a == STATE_DEPENDENT || b == STATE_DEPENDENT)
+		return STATE_DEPENDENT;
+	else if (a == STATE_OK || b == STATE_OK)
+		return STATE_OK;
+	else
+		return max (a, b);
+}
+
 void usage (const char *msg)
 {
 	printf ("%s\n", msg);
