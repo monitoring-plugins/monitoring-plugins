@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Nagios check_time_ntp plugin
+* Nagios check_ntp_time plugin
 *
 * License: GPL
 * Copyright (c) 2006 sean finney <seanius@seanius.net>
@@ -10,7 +10,7 @@
 *
 * Description:
 *
-* This file contains the check_time_ntp plugin
+* This file contains the check_ntp_time plugin
 *
 *  This plugin checks the clock offset with an NTP server. It is
 *  independant of any commandline programs or external libraries.
@@ -36,7 +36,7 @@
  
 *****************************************************************************/
 
-const char *progname = "check_time_ntp";
+const char *progname = "check_ntp_time";
 const char *revision = "$Revision$";
 const char *copyright = "2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
@@ -600,7 +600,7 @@ void print_help(void){
 
 	printf("\n");
 	printf("%s\n", _("Examples:"));
-	printf("  %s\n", ("./check_time_ntp -H ntpserv -w 0.5 -c 1"));
+	printf("  %s\n", ("./check_ntp_time -H ntpserv -w 0.5 -c 1"));
 
 	printf (_(UT_SUPPORT));
 }

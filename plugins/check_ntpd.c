@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Nagios check_ntpd plugin
+* Nagios check_ntp_peer plugin
 *
 * License: GPL
 * Copyright (c) 2006 sean finney <seanius@seanius.net>
@@ -10,7 +10,7 @@
 *
 * Description:
 *
-* This file contains the check_ntpd plugin
+* This file contains the check_ntp_peer plugin
 *
 *  This plugin to check ntp servers independant of any commandline
 *  programs or external libraries.
@@ -36,7 +36,7 @@
  
 *****************************************************************************/
 
-const char *progname = "check_ntpd";
+const char *progname = "check_ntp_peer";
 const char *revision = "$Revision$";
 const char *copyright = "2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
@@ -211,6 +211,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 	char *value=NULL, *nptr=NULL;
 	void *tmp;
 
+	status = STATE_OK;
 	*offset_result = STATE_UNKNOWN;
 	*jitter = *stratum = -1;
 
@@ -315,28 +316,33 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 				printf("parsing offset from peer %.2x: ", ntohs(peers[i].assoc));
 
 			value = extract_value(req.data, "offset");
+			/* Convert the value if we have one */
 			if(value != NULL)
 				*offset = strtod(value, &nptr) / 1000;
-			if(value == NULL || value==nptr){
+			/* If value is null or no conversion was performed */
+			if(value == NULL || value==nptr) {
 				printf("warning: unable to read server offset response.\n");
-				status = max_state(status, STATE_CRITICAL);
+				status = max_state_alt(status, STATE_CRITICAL);
 			} else {
 				*offset_result = STATE_OK;
 				if(verbose) printf("%g\n", *offset);
 			}
 
 			if(do_jitter) {
+				/* first reset the pointers */
 				value = NULL, nptr=NULL;
 				/* get the jitter */
 				if(verbose) {
 					printf("parsing jitter from peer %.2x: ", ntohs(peers[i].assoc));
 				}
 				value = extract_value(req.data, strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter");
+				/* Convert the value if we have one */
 				if(value != NULL)
 					*jitter = strtod(value, &nptr);
+				/* If value is null or no conversion was performed */
 				if(value == NULL || value==nptr){
 					printf("warning: unable to read server jitter response.\n");
-					status = max_state(status, STATE_UNKNOWN);
+					status = max_state_alt(status, STATE_UNKNOWN);
 				} else {
 					if(verbose) printf("%g\n", *jitter);
 				}
@@ -351,7 +357,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 				value = extract_value(req.data, "stratum");
 				if(value == NULL){
 					printf("warning: unable to read server stratum response.\n");
-					status = max_state(status, STATE_UNKNOWN);
+					status = max_state_alt(status, STATE_UNKNOWN);
 				} else {
 					*stratum = atoi(value);
 					if(verbose) printf("%i\n", *stratum);
@@ -508,13 +514,13 @@ int main(int argc, char *argv[]){
 	alarm (socket_timeout);
 
 	result = ntp_request(server_address, &offset, &offset_result, &jitter, &stratum);
-	result = get_status(fabs(offset), offset_thresholds);
+	result = max_state_alt(result, get_status(fabs(offset), offset_thresholds));
 
 	if(do_stratum)
-		result = max_state(result, get_status(stratum, stratum_thresholds));
+		result = max_state_alt(result, get_status(stratum, stratum_thresholds));
 
 	if(do_jitter)
-		result = max_state(result, get_status(jitter, jitter_thresholds));
+		result = max_state_alt(result, get_status(jitter, jitter_thresholds));
 
 	switch (result) {
 		case STATE_CRITICAL :
@@ -593,12 +599,12 @@ void print_help(void){
 	printf("\n");
 	printf("%s\n", _("Examples:"));
 	printf(" %s\n", _("Normal offset check:"));
-	printf("  %s\n", ("./check_ntpd -H ntpserv -w 0.5 -c 1"));
+	printf("  %s\n", ("./check_ntp_peer -H ntpserv -w 0.5 -c 1"));
 	printf(" %s\n", _("Check jitter too, avoiding critical notifications if jitter isn't available"));
 	printf(" %s\n", _("(See Notes above for more details on thresholds formats):"));
-	printf("  %s\n", ("./check_ntpd -H ntpserv -w 0.5 -c 1 -j -1:100 -k -1:200"));
+	printf("  %s\n", ("./check_ntp_peer -H ntpserv -w 0.5 -c 1 -j -1:100 -k -1:200"));
 	printf(" %s\n", _("Check only stratum:"));
-	printf("  %s\n", ("./check_ntpd -H ntpserv -W 4 -C 6"));
+	printf("  %s\n", ("./check_ntp_peer -H ntpserv -W 4 -C 6"));
 
 	printf (_(UT_SUPPORT));
 }
