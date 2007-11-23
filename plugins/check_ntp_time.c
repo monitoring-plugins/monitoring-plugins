@@ -12,8 +12,12 @@
 *
 * This file contains the check_ntp_time plugin
 *
-*  This plugin checks the clock offset with an NTP server. It is
-*  independant of any commandline programs or external libraries.
+*  This plugin checks the clock offset between the local host and a
+*  remote NTP server. It is independent of any commandline programs or
+*  external libraries.
+*
+*  If you'd rather want to monitor an NTP server, please use
+*  check_ntp_peer.
 *
 *
 * License Information:
@@ -594,6 +598,12 @@ void print_help(void){
 
 	printf("\n");
 	printf("%s\n", _("Notes:"));
+	printf(" %s\n", _("This plugin checks the clock offset between the local host and a"));
+	printf(" %s\n", _("remote NTP server. It is independent of any commandline programs or"));
+	printf(" %s\n\n", _("external libraries."));
+	printf(" %s\n", _("If you'd rather want to monitor an NTP server, please use"));
+	printf(" %s\n\n", _("check_ntp_peer."));
+
 	printf(" %s\n", _("See:"));
 	printf(" %s\n", ("http://nagiosplug.sourceforge.net/developer-guidelines.html#THRESHOLDFORMAT"));
 	printf(" %s\n", _("for THRESHOLD format and examples."));
