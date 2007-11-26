@@ -180,6 +180,10 @@ char *extract_value(const char *varlist, const char *name){
 	char *tmpvarlist=NULL, *tmpkey=NULL, *value=NULL;
 	int last=0;
 
+  /* The following code require a non-empty varlist */
+	if(strlen(varlist) == 0)
+		return NULL;
+
 	tmpvarlist = strdup(varlist);
 	tmpkey = strtok(tmpvarlist, "=");
 
@@ -204,21 +208,32 @@ setup_control_request(ntp_control_message *p, uint8_t opcode, uint16_t seq){
 	/* Remaining fields are zero for requests */
 }
 
-/* XXX handle responses with the error bit set */
+/* This function does all the actual work; roughly here's what it does
+ * beside setting the offest, jitter and stratum passed as argument:
+ *  - offset can be negative, so if it cannot get the offset, offset_result
+ *    is set to UNKNOWN, otherwise OK.
+ *  - jitter and stratum are set to -1 if they cannot be retrieved so any
+ *    positive value means a success retrieving the value.
+ *  - status is set to WARNING if there's no sync.peer (otherwise OK) and is
+ *    the return value of the function.
+ *  status is pretty much useless as syncsource_found is a global variable
+ *  used later in main to check is the server was synchronized. It works
+ *  so I left it alone, but it can be repurposed if needed */
 int ntp_request(const char *host, double *offset, int *offset_result, double *jitter, int *stratum){
 	int conn=-1, i, npeers=0, num_candidates=0;
+	double tmp_offset = 0;
 	int min_peer_sel=PEER_INCLUDED;
 	int peers_size=0, peer_offset=0;
 	int status;
 	ntp_assoc_status_pair *peers=NULL;
 	ntp_control_message req;
 	const char *getvar = "stratum,offset,jitter";
+	char *data="";
 	char *value=NULL, *nptr=NULL;
 	void *tmp;
 
 	status = STATE_OK;
 	*offset_result = STATE_UNKNOWN;
-	*jitter = *stratum = -1;
 
 	/* Long-winded explanation:
 	 * Getting the sync peer offset, jitter and stratum requires a number of
@@ -284,87 +299,104 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 
 	for (i = 0; i < npeers; i++){
 		/* Only query this server if it is the current sync source */
+		/* If there's no sync.peer, query all candidates and use the best one */
 		if (PEER_SEL(peers[i].status) >= min_peer_sel){
 	    if(verbose) printf("Getting offset, jitter and stratum for peer %.2x\n", ntohs(peers[i].assoc));
-			setup_control_request(&req, OP_READVAR, 2);
-			req.assoc = peers[i].assoc;
-			/* Putting the wanted variable names in the request
-			 * cause the server to provide _only_ the requested values.
-			 * thus reducing net traffic, guaranteeing us only a single
-			 * datagram in reply, and making intepretation much simpler
-			 */
-			/* Older servers doesn't know what jitter is, so if we get an
-			 * error on the first pass we redo it with "dispersion" */
-			strncpy(req.data, getvar, MAX_CM_SIZE-1);
-			req.count = htons(strlen(getvar));
-			DBG(printf("sending READVAR request...\n"));
-			write(conn, &req, SIZEOF_NTPCM(req));
-			DBG(print_ntp_control_message(&req));
+			data = "\0";
+			do{
+				setup_control_request(&req, OP_READVAR, 2);
+				req.assoc = peers[i].assoc;
+				/* Putting the wanted variable names in the request
+				 * cause the server to provide _only_ the requested values.
+				 * thus reducing net traffic, guaranteeing us only a single
+				 * datagram in reply, and making intepretation much simpler
+				 */
+				/* Older servers doesn't know what jitter is, so if we get an
+				 * error on the first pass we redo it with "dispersion" */
+				strncpy(req.data, getvar, MAX_CM_SIZE-1);
+				req.count = htons(strlen(getvar));
+				DBG(printf("sending READVAR request...\n"));
+				write(conn, &req, SIZEOF_NTPCM(req));
+				DBG(print_ntp_control_message(&req));
 
-			req.count = htons(MAX_CM_SIZE);
-			DBG(printf("recieving READVAR response...\n"));
-			read(conn, &req, SIZEOF_NTPCM(req));
-			DBG(print_ntp_control_message(&req));
+				req.count = htons(MAX_CM_SIZE);
+				DBG(printf("receiving READVAR response...\n"));
+				read(conn, &req, SIZEOF_NTPCM(req));
+				DBG(print_ntp_control_message(&req));
 
-			if(req.op&REM_ERROR && strstr(getvar, "jitter")) {
-				if(verbose) printf("The 'jitter' command failed (old ntp server?)\nRestarting with 'dispersion'...\n");
-				getvar = "stratum,offset,dispersion";
-				i--;
-				continue;
+				if(!(req.op&REM_ERROR))
+					asprintf(&data, "%s%s", data, req.data);
+			} while(req.op&REM_MORE);
+
+			if(req.op&REM_ERROR) {
+				if(strstr(getvar, "jitter")) {
+					if(verbose) printf("The command failed. This is usually caused by servers refusing the 'jitter'\nvariable. Restarting with 'dispersion'...\n");
+					getvar = "stratum,offset,dispersion";
+					i--;
+					continue;
+				} else if(strlen(getvar))  {
+					if(verbose) printf("Server didn't like dispersion either; will retrieve everything\n");
+					getvar = "";
+					i--;
+					continue;
+				}
 			}
 
 			if(verbose > 1)
-				printf("Server responded: >>>%s<<<\n", req.data);
+				printf("Server responded: >>>%s<<<\n", data);
 
 			/* get the offset */
 			if(verbose)
 				printf("parsing offset from peer %.2x: ", ntohs(peers[i].assoc));
 
-			value = extract_value(req.data, "offset");
+			value = extract_value(data, "offset");
 			/* Convert the value if we have one */
 			if(value != NULL)
-				*offset = strtod(value, &nptr) / 1000;
+				tmp_offset = strtod(value, &nptr) / 1000;
 			/* If value is null or no conversion was performed */
 			if(value == NULL || value==nptr) {
-				printf("warning: unable to read server offset response.\n");
-				status = max_state_alt(status, STATE_CRITICAL);
+				if(verbose) printf("error: unable to read server offset response.\n");
 			} else {
-				*offset_result = STATE_OK;
 				if(verbose) printf("%g\n", *offset);
+				if(*offset_result == STATE_UNKNOWN || fabs(tmp_offset) < fabs(*offset)) {
+					*offset = tmp_offset;
+					*offset_result = STATE_OK;
+				} else {
+					/* Skip this one; move to the next */
+					continue;
+				}
 			}
 
 			if(do_jitter) {
-				/* first reset the pointers */
-				value = NULL, nptr=NULL;
 				/* get the jitter */
 				if(verbose) {
-					printf("parsing jitter from peer %.2x: ", ntohs(peers[i].assoc));
+					printf("parsing %s from peer %.2x: ", strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter", ntohs(peers[i].assoc));
 				}
-				value = extract_value(req.data, strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter");
+				value = extract_value(data, strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter");
 				/* Convert the value if we have one */
 				if(value != NULL)
 					*jitter = strtod(value, &nptr);
 				/* If value is null or no conversion was performed */
 				if(value == NULL || value==nptr){
-					printf("warning: unable to read server jitter response.\n");
-					status = max_state_alt(status, STATE_UNKNOWN);
+					if(verbose) printf("error: unable to read server jitter response.\n");
+					*jitter = -1;
 				} else {
 					if(verbose) printf("%g\n", *jitter);
 				}
 			}
 
 			if(do_stratum) {
-				value = NULL;
 				/* get the stratum */
 				if(verbose) {
 					printf("parsing stratum from peer %.2x: ", ntohs(peers[i].assoc));
 				}
-				value = extract_value(req.data, "stratum");
-				if(value == NULL){
-					printf("warning: unable to read server stratum response.\n");
-					status = max_state_alt(status, STATE_UNKNOWN);
+				value = extract_value(data, "stratum");
+				if(value != NULL)
+					*stratum = strtol(value, &nptr, 10);
+				if(value == NULL || value==nptr){
+					if(verbose) printf("error: unable to read server stratum response.\n");
+					*stratum = -1;
 				} else {
-					*stratum = atoi(value);
 					if(verbose) printf("%i\n", *stratum);
 				}
 			}
@@ -503,8 +535,6 @@ int main(int argc, char *argv[]){
   double offset=0, jitter=0;
 	char *result_line, *perfdata_line;
 
-	result = offset_result = STATE_OK;
-
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
@@ -518,7 +548,11 @@ int main(int argc, char *argv[]){
 	/* set socket timeout */
 	alarm (socket_timeout);
 
+  /* This returns either OK or WARNING (See comment preceeding ntp_request) */
 	result = ntp_request(server_address, &offset, &offset_result, &jitter, &stratum);
+	if(offset_result == STATE_UNKNOWN)
+		result = STATE_CRITICAL;
+
 	result = max_state_alt(result, get_status(fabs(offset), offset_thresholds));
 
 	if(do_stratum)
@@ -610,7 +644,7 @@ void print_help(void){
 
 	printf("\n");
 	printf("%s\n", _("Examples:"));
-	printf(" %s\n", _("Normal offset check:"));
+	printf(" %s\n", _("Normal NTP server check:"));
 	printf("  %s\n", ("./check_ntp_peer -H ntpserv -w 0.5 -c 1"));
 	printf(" %s\n", _("Check jitter too, avoiding critical notifications if jitter isn't available"));
 	printf(" %s\n", _("(See Notes above for more details on thresholds formats):"));
