@@ -234,6 +234,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 
 	status = STATE_OK;
 	*offset_result = STATE_UNKNOWN;
+	*jitter = *stratum = -1;
 
 	/* Long-winded explanation:
 	 * Getting the sync peer offset, jitter and stratum requires a number of
@@ -576,7 +577,7 @@ int main(int argc, char *argv[]){
 			break;
 	}
 	if(!syncsource_found)
-		asprintf(&result_line, "%s %s, ", result_line, _("Server not synchronized"));
+		asprintf(&result_line, "%s %s,", result_line, _("Server not synchronized"));
 
 	if(offset_result == STATE_UNKNOWN){
 		asprintf(&result_line, "%s %s", result_line, _("Offset unknown"));
