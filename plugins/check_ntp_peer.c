@@ -218,7 +218,7 @@ setup_control_request(ntp_control_message *p, uint8_t opcode, uint16_t seq){
  *    the return value of the function.
  *  status is pretty much useless as syncsource_found is a global variable
  *  used later in main to check is the server was synchronized. It works
- *  so I left it alone, but it can be repurposed if needed */
+ *  so I left it alone */
 int ntp_request(const char *host, double *offset, int *offset_result, double *jitter, int *stratum){
 	int conn=-1, i, npeers=0, num_candidates=0;
 	double tmp_offset = 0;
@@ -228,8 +228,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 	ntp_assoc_status_pair *peers=NULL;
 	ntp_control_message req;
 	const char *getvar = "stratum,offset,jitter";
-	char *data="";
-	char *value=NULL, *nptr=NULL;
+	char *data=NULL, *value=NULL, *nptr=NULL;
 	void *tmp;
 
 	status = STATE_OK;
@@ -303,7 +302,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 		/* If there's no sync.peer, query all candidates and use the best one */
 		if (PEER_SEL(peers[i].status) >= min_peer_sel){
 	    if(verbose) printf("Getting offset, jitter and stratum for peer %.2x\n", ntohs(peers[i].assoc));
-			data = "\0";
+			asprintf(&data, "");
 			do{
 				setup_control_request(&req, OP_READVAR, 2);
 				req.assoc = peers[i].assoc;
