@@ -772,7 +772,7 @@ int main(int argc, char *argv[]){
 	alarm (socket_timeout);
 
 	offset = offset_request(server_address, &offset_result);
-	/* check_ntp used to always return if offset_result == STATE_UNKNOWN.
+	/* check_ntp used to always return CRITICAL if offset_result == STATE_UNKNOWN.
 	 * Now we'll only do that is the offset thresholds were set */
 	if (do_offset && offset_result == STATE_UNKNOWN) {
 		result = STATE_CRITICAL;
