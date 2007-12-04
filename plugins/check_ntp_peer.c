@@ -228,7 +228,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 	ntp_assoc_status_pair *peers=NULL;
 	ntp_control_message req;
 	const char *getvar = "stratum,offset,jitter";
-	char *data=NULL, *value=NULL, *nptr=NULL;
+	char *data, *value, *nptr;
 	void *tmp;
 
 	status = STATE_OK;
@@ -350,6 +350,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 				printf("parsing offset from peer %.2x: ", ntohs(peers[i].assoc));
 
 			value = extract_value(data, "offset");
+			nptr=NULL;
 			/* Convert the value if we have one */
 			if(value != NULL)
 				tmp_offset = strtod(value, &nptr) / 1000;
@@ -373,12 +374,13 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 					printf("parsing %s from peer %.2x: ", strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter", ntohs(peers[i].assoc));
 				}
 				value = extract_value(data, strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter");
+				nptr=NULL;
 				/* Convert the value if we have one */
 				if(value != NULL)
 					*jitter = strtod(value, &nptr);
 				/* If value is null or no conversion was performed */
 				if(value == NULL || value==nptr){
-					if(verbose) printf("error: unable to read server jitter response.\n");
+					if(verbose) printf("error: unable to read server jitter/dispersion response.\n");
 					*jitter = -1;
 				} else {
 					if(verbose) printf("%g\n", *jitter);
@@ -391,6 +393,8 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 					printf("parsing stratum from peer %.2x: ", ntohs(peers[i].assoc));
 				}
 				value = extract_value(data, "stratum");
+				nptr=NULL;
+				/* Convert the value if we have one */
 				if(value != NULL)
 					*stratum = strtol(value, &nptr, 10);
 				if(value == NULL || value==nptr){
