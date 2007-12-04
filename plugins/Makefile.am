@@ -14,8 +14,8 @@ MATHLIBS = @MATHLIBS@
 #AM_CFLAGS = -Wall
 
 libexec_PROGRAMS = check_apt check_cluster check_disk check_dummy check_http check_load \
-	check_mrtg check_mrtgtraf check_ntp check_nwstat check_overcr check_ping \
-	check_real check_smtp check_ssh check_tcp check_time \
+	check_mrtg check_mrtgtraf check_ntp check_ntp_peer check_nwstat check_overcr check_ping \
+	check_real check_smtp check_ssh check_tcp check_time check_ntp_time \
 	check_ups check_users negate \
 	urlize @EXTRAS@
 
@@ -70,6 +70,7 @@ check_mysql_query_LDADD = $(NETLIBS) $(MYSQLLIBS)
 check_nagios_LDADD = $(BASEOBJS) runcmd.o
 check_nt_LDADD = $(NETLIBS) 
 check_ntp_LDADD = $(NETLIBS) $(MATHLIBS)
+check_ntp_peer_LDADD = $(NETLIBS) $(MATHLIBS)
 check_nwstat_LDADD = $(NETLIBS)
 check_overcr_LDADD = $(NETLIBS)
 check_pgsql_LDADD = $(NETLIBS) $(PGLIBS)
@@ -83,6 +84,7 @@ check_ssh_LDADD = $(NETLIBS)
 check_swap_LDADD = $(MATHLIBS) $(BASEOBJS) popen.o
 check_tcp_LDADD = $(SSLOBJS) $(NETLIBS) $(SSLLIBS)
 check_time_LDADD = $(NETLIBS)
+check_ntp_time_LDADD = $(NETLIBS) $(MATHLIBS)
 check_ups_LDADD = $(NETLIBS)
 check_users_LDADD = $(BASEOBJS) popen.o
 check_by_ssh_LDADD = $(NETLIBS) runcmd.o
@@ -110,6 +112,7 @@ check_mysql_query_DEPENDENCIES = check_mysql_query.c $(NETOBJS) $(DEPLIBS)
 check_nagios_DEPENDENCIES = check_nagios.c $(BASEOBJS) runcmd.o $(DEPLIBS)
 check_nt_DEPENDENCIES = check_nt.c $(NETOBJS) $(DEPLIBS)
 check_ntp_DEPENDENCIES = check_ntp.c $(NETOBJS) $(DEPLIBS)
+check_ntp_peer_DEPENDENCIES = check_ntp_peer.c $(NETOBJS) $(DEPLIBS)
 check_nwstat_DEPENDENCIES = check_nwstat.c $(NETOBJS) $(DEPLIBS)
 check_overcr_DEPENDENCIES = check_overcr.c $(NETOBJS) $(DEPLIBS)
 check_pgsql_DEPENDENCIES = check_pgsql.c $(NETOBJS)  $(DEPLIBS)
@@ -123,6 +126,7 @@ check_ssh_DEPENDENCIES = check_ssh.c $(NETOBJS) $(DEPLIBS)
 check_swap_DEPENDENCIES = check_swap.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_tcp_DEPENDENCIES = check_tcp.c $(SSLOBJS) $(NETOBJS) $(DEPLIBS)
 check_time_DEPENDENCIES = check_time.c $(NETOBJS) $(DEPLIBS)
+check_ntp_time_DEPENDENCIES = check_ntp_time.c $(NETOBJS) $(DEPLIBS)
 check_ups_DEPENDENCIES = check_ups.c $(NETOBJS) $(DEPLIBS)
 check_users_DEPENDENCIES = check_users.c $(BASEOBJS) popen.o $(DEPLIBS)
 check_by_ssh_DEPENDENCIES = check_by_ssh.c $(NETOBJS) runcmd.o $(DEPLIBS)
