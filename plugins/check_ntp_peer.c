@@ -181,7 +181,7 @@ char *extract_value(const char *varlist, const char *name){
 	char *tmpvarlist=NULL, *tmpkey=NULL, *value=NULL;
 	int last=0;
 
-  /* The following code require a non-empty varlist */
+	/* The following code require a non-empty varlist */
 	if(strlen(varlist) == 0)
 		return NULL;
 
@@ -279,7 +279,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 	} while(req.op&REM_MORE);
 
 	/* first, let's find out if we have a sync source, or if there are
-	 * at least some candidates.  in the case of the latter we'll issue
+	 * at least some candidates. In the latter case we'll issue
 	 * a warning but go ahead with the check on them. */
 	for (i = 0; i < npeers; i++){
 		if (PEER_SEL(peers[i].status) >= PEER_INCLUDED){
@@ -302,7 +302,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 		/* Only query this server if it is the current sync source */
 		/* If there's no sync.peer, query all candidates and use the best one */
 		if (PEER_SEL(peers[i].status) >= min_peer_sel){
-	    if(verbose) printf("Getting offset, jitter and stratum for peer %.2x\n", ntohs(peers[i].assoc));
+			if(verbose) printf("Getting offset, jitter and stratum for peer %.2x\n", ntohs(peers[i].assoc));
 			asprintf(&data, "");
 			do{
 				setup_control_request(&req, OP_READVAR, 2);
@@ -335,7 +335,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 					getvar = "stratum,offset,dispersion";
 					i--;
 					continue;
-				} else if(strlen(getvar))  {
+				} else if(strlen(getvar)) {
 					if(verbose) printf("Server didn't like dispersion either; will retrieve everything\n");
 					getvar = "";
 					i--;
@@ -541,7 +541,7 @@ char *perfd_stratum (int stratum)
 
 int main(int argc, char *argv[]){
 	int result, offset_result, stratum;
-  double offset=0, jitter=0;
+	double offset=0, jitter=0;
 	char *result_line, *perfdata_line;
 
 	if (process_arguments (argc, argv) == ERROR)
@@ -557,11 +557,11 @@ int main(int argc, char *argv[]){
 	/* set socket timeout */
 	alarm (socket_timeout);
 
-  /* This returns either OK or WARNING (See comment preceeding ntp_request) */
+	/* This returns either OK or WARNING (See comment preceeding ntp_request) */
 	result = ntp_request(server_address, &offset, &offset_result, &jitter, &stratum);
 
 	if(offset_result == STATE_UNKNOWN) {
-    /* if there's no sync peer (this overrides ntp_request output): */
+		/* if there's no sync peer (this overrides ntp_request output): */
 		result = (quiet == 1 ? STATE_UNKNOWN : STATE_CRITICAL);
 	} else {
 		/* Be quiet if there's no candidates either */
@@ -602,11 +602,11 @@ int main(int argc, char *argv[]){
 	}
 	if (do_jitter) {
 		asprintf(&result_line, "%s, jitter=%f", result_line, jitter);
-		asprintf(&perfdata_line, "%s %s", perfdata_line,  perfd_jitter(jitter));
+		asprintf(&perfdata_line, "%s %s", perfdata_line, perfd_jitter(jitter));
 	}
 	if (do_stratum) {
 		asprintf(&result_line, "%s, stratum=%i", result_line, stratum);
-		asprintf(&perfdata_line, "%s %s", perfdata_line,  perfd_stratum(stratum));
+		asprintf(&perfdata_line, "%s %s", perfdata_line, perfd_stratum(stratum));
 	}
 	printf("%s|%s\n", result_line, perfdata_line);
 
@@ -621,11 +621,11 @@ void print_help(void){
 
 	printf ("Copyright (c) 2006 Sean Finney\n");
 	printf (COPYRIGHT, copyright, email);
-  
-  printf ("%s\n", _("This plugin checks the selected ntp server"));
 
-  printf ("\n\n");
-  
+	printf ("%s\n", _("This plugin checks the selected ntp server"));
+
+	printf ("\n\n");
+
 	print_usage();
 	printf (_(UT_HELP_VRSN));
 	printf (_(UT_HOST_PORT), 'p', "123");
@@ -675,7 +675,7 @@ void print_help(void){
 void
 print_usage(void)
 {
-  printf (_("Usage:"));
-  printf(" %s -H <host> [-w <warn>] [-c <crit>] [-W <warn>] [-C <crit>]\n", progname);
-  printf("       [-j <warn>] [-k <crit>] [-v verbose]\n");
+	printf (_("Usage:"));
+	printf(" %s -H <host> [-w <warn>] [-c <crit>] [-W <warn>] [-C <crit>]\n", progname);
+	printf("       [-j <warn>] [-k <crit>] [-v verbose]\n");
 }

@@ -9,7 +9,7 @@ This file documents the major additions and syntax changes between releases.
 	  and the offset is unavailable, will return UNKNOWN as well.
 	  NOTE: If jitter thresholds are specified as integers it will return CRITICAL if jitter
 	  is "-1" as the default range starts at 0. See Examples in --help output.
-  Merge two new checks that deprecates check_ntp: check_ntp_peer and check_ntp_time.
+	Merge two new checks that deprecates check_ntp: check_ntp_peer and check_ntp_time.
 	  You should read the --help output so see which one is suitable for you. check_ntp_peer
 	  implement stratum thresholds support (feature request #1703823).
 
@@ -17,9 +17,9 @@ This file documents the major additions and syntax changes between releases.
 	Fix check_http buffer overflow vulnerability when following HTTP redirects
 	check_http now explicitly asks HTTP/1.1 servers to close the connection
 	  after completion of the response
-	Check_ldaps' guessing which secure method to use (starttls vs. ssl on connect)  
+	Check_ldaps' guessing which secure method to use (starttls vs. ssl on connect)
 	  is now deprecated. See --help for further information.
-	Check_disk now calls stat() on all filesystems to check. (Old: only the ones selected using -p) 
+	Check_disk now calls stat() on all filesystems to check. (Old: only the ones selected using -p)
 	  A meaningful error message (eg "Stale NFS Handle") is printed if stat fails.
 	New check_disk option -L: Only check local filesystems, but call stat() on remote ones, too.
 	  Thus accessibility of remote filesystems can be checked without any threshold comparison.
@@ -38,7 +38,7 @@ This file documents the major additions and syntax changes between releases.
 	Fix possible check_icmp bus errors on some (non-x86/AMD64) platforms
 	Fix check_smtp's handling of multiple-packet server responses
 	WARNING: Fix for negate which may break existing commands:
-	  - stop evaluating command line options through shell twice 
+	  - stop evaluating command line options through shell twice
 	  - enforce a full path for the command to run
 	The "negate" utility can now remap custom states
 	Check_radius now supports radiusclient-ng
@@ -113,7 +113,7 @@ This file documents the major additions and syntax changes between releases.
 	SSL plugins work with gnutls as well as OpenSSL
 	check_mysql_query added to run arbitrary SQL commands, with threshold checking
 	libtool now required for development systems
-	Notice: check_udp (compiled from check_udp.c) will be deprecated in the next release. 
+	Notice: check_udp (compiled from check_udp.c) will be deprecated in the next release.
 	  check_udp2 should be used instead and will be renamed to check_udp
 
 1.4.2

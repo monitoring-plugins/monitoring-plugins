@@ -356,13 +356,13 @@ double offset_request(const char *host, int *status){
 		ai_tmp = ai_tmp->ai_next;
 	}
 
-	/* now do AVG_NUM checks to each host.  we stop before timeout/2 seconds
+	/* now do AVG_NUM checks to each host. We stop before timeout/2 seconds
 	 * have passed in order to ensure post-processing and jitter time. */
 	now_time=start_ts=time(NULL);
 	while(servers_completed<num_hosts && now_time-start_ts <= socket_timeout/2){
 		/* loop through each server and find each one which hasn't
 		 * been touched in the past second or so and is still lacking
-		 * some responses.  for each of these servers, send a new request,
+		 * some responses. For each of these servers, send a new request,
 		 * and update the "waiting" timestamp with the current time. */
 		one_written=0;
 		now_time=time(NULL);
@@ -586,11 +586,11 @@ void print_help(void){
 
 	printf ("Copyright (c) 2006 Sean Finney\n");
 	printf (COPYRIGHT, copyright, email);
-  
-  printf ("%s\n", _("This plugin checks the clock offset with the ntp server"));
 
-  printf ("\n\n");
-  
+	printf ("%s\n", _("This plugin checks the clock offset with the ntp server"));
+
+	printf ("\n\n");
+
 	print_usage();
 	printf (_(UT_HELP_VRSN));
 	printf (_(UT_HOST_PORT), 'p', "123");
@@ -625,8 +625,8 @@ void print_help(void){
 void
 print_usage(void)
 {
-  printf (_("Usage:"));
-  printf(" %s -H <host> [-w <warn>] [-c <crit>] [-W <warn>] [-C <crit>]\n", progname);
-  printf("       [-j <warn>] [-k <crit>] [-v verbose]\n");
+	printf (_("Usage:"));
+	printf(" %s -H <host> [-w <warn>] [-c <crit>] [-W <warn>] [-C <crit>]\n", progname);
+	printf("       [-j <warn>] [-k <crit>] [-v verbose]\n");
 }
 
