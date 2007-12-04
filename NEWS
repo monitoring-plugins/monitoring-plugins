@@ -7,9 +7,11 @@ This file documents the major additions and syntax changes between releases.
 	check_ntp now return UNKNOWN instead of WARNING if jitter is unavailable (jitter=-1.000000)
 	  as long as the thresholds range inculde -1. If no offset threshold is specified
 	  and the offset is unavailable, will return UNKNOWN as well.
-	  NOTE: If jitter thresholds are specified integers it will return CRITICAL if jitter
+	  NOTE: If jitter thresholds are specified as integers it will return CRITICAL if jitter
 	  is "-1" as the default range starts at 0. See Examples in --help output.
-	YADDA YADDA YADDA... stratum thresholds support to check_ntp_peer (feature request #1703823)
+  Merge two new checks that deprecates check_ntp: check_ntp_peer and check_ntp_time.
+	  You should read the --help output so see which one is suitable for you. check_ntp_peer
+	  implement stratum thresholds support (feature request #1703823).
 
 1.4.10 28th September 2007
 	Fix check_http buffer overflow vulnerability when following HTTP redirects
