@@ -3,12 +3,13 @@ This file documents the major additions and syntax changes between releases.
 1.4.11 or 1.5 ??
 	Fix check_http regression in 1.4.10 where following redirects to
 	  relative URLs on virtual hosts failed if both "-H" and "-I" were used
-	Add stratum thresholds support to check_ntp (feature request #1703823)
 	check_ntp now return UNKNOWN instead of WARNING if jitter is unavailable (jitter=-1.000000)
 	  as long as the thresholds range inculde -1. If no offset threshold is specified
 	  and the offset is unavailable, will return UNKNOWN as well.
 	  NOTE: If jitter thresholds are specified as integers it will return CRITICAL if jitter
 	  is "-1" as the default range starts at 0. See Examples in --help output.
+	Fix broken usage2 in check_snmp and check_cluster
+	check_cluster now accept all valid characters in its thresholds ("-", "@", "~")
 	Merge two new checks that deprecates check_ntp: check_ntp_peer and check_ntp_time.
 	  You should read the --help output so see which one is suitable for you. check_ntp_peer
 	  implement stratum thresholds support (feature request #1703823).
