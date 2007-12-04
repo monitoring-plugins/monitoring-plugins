@@ -40,7 +40,7 @@
  
 *****************************************************************************/
 
-const char *progname = "check_ntp";
+const char *progname = "check_ntp_time";
 const char *revision = "$Revision$";
 const char *copyright = "2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
