@@ -51,6 +51,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 static char *server_address=NULL;
 static int verbose=0;
+static int quiet=0;
 static char *owarn="60";
 static char *ocrit="120";
 
@@ -450,6 +451,7 @@ int process_arguments(int argc, char **argv){
 		{"verbose", no_argument, 0, 'v'},
 		{"use-ipv4", no_argument, 0, '4'},
 		{"use-ipv6", no_argument, 0, '6'},
+		{"quiet", no_argument, 0, 'q'},
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
 		{"timeout", required_argument, 0, 't'},
@@ -462,7 +464,7 @@ int process_arguments(int argc, char **argv){
 		usage ("\n");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vhv46w:c:t:H:", longopts, &option);
+		c = getopt_long (argc, argv, "Vhv46qw:c:t:H:", longopts, &option);
 		if (c == -1 || c == EOF || c == 1)
 			break;
 
@@ -477,6 +479,9 @@ int process_arguments(int argc, char **argv){
 			break;
 		case 'v':
 			verbose++;
+			break;
+		case 'q':
+			quiet = 1;
 			break;
 		case 'w':
 			owarn = optarg;
@@ -544,7 +549,7 @@ int main(int argc, char *argv[]){
 
 	offset = offset_request(server_address, &offset_result);
 	if (offset_result == STATE_UNKNOWN) {
-		result = STATE_CRITICAL;
+		result = (quiet == 1 ? STATE_UNKNOWN : STATE_CRITICAL);
 	} else {
 		result = get_status(fabs(offset), offset_thresholds);
 	}
@@ -589,6 +594,8 @@ void print_help(void){
 	print_usage();
 	printf (_(UT_HELP_VRSN));
 	printf (_(UT_HOST_PORT), 'p', "123");
+	printf (" %s\n", "-q, --quiet");
+	printf ("    %s\n", _("Returns UNKNOWN instead of CRITICAL if offset cannot be found"));
 	printf (" %s\n", "-w, --warning=THRESHOLD");
 	printf ("    %s\n", _("Offset to result in warning status (seconds)"));
 	printf (" %s\n", "-c, --critical=THRESHOLD");

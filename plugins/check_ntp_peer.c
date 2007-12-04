@@ -52,15 +52,16 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 static char *server_address=NULL;
 static int verbose=0;
+static int quiet=0;
 static short do_offset=0;
 static char *owarn="60";
 static char *ocrit="120";
 static short do_stratum=0;
-static char *swarn="16";
-static char *scrit="16";
+static char *swarn="-1:16";
+static char *scrit="-1:16";
 static short do_jitter=0;
-static char *jwarn="5000";
-static char *jcrit="10000";
+static char *jwarn="-1:5000";
+static char *jcrit="-1:10000";
 static int syncsource_found=0;
 
 int process_arguments (int, char **);
@@ -358,7 +359,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 			if(value == NULL || value==nptr) {
 				if(verbose) printf("error: unable to read server offset response.\n");
 			} else {
-				if(verbose) printf("%g\n", *offset);
+				if(verbose) printf("%.10g\n", tmp_offset);
 				if(*offset_result == STATE_UNKNOWN || fabs(tmp_offset) < fabs(*offset)) {
 					*offset = tmp_offset;
 					*offset_result = STATE_OK;
@@ -379,11 +380,11 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 				if(value != NULL)
 					*jitter = strtod(value, &nptr);
 				/* If value is null or no conversion was performed */
-				if(value == NULL || value==nptr){
+				if(value == NULL || value==nptr) {
 					if(verbose) printf("error: unable to read server jitter/dispersion response.\n");
 					*jitter = -1;
-				} else {
-					if(verbose) printf("%g\n", *jitter);
+				} else if(verbose) {
+					printf("%.10g\n", *jitter);
 				}
 			}
 
@@ -397,7 +398,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 				/* Convert the value if we have one */
 				if(value != NULL)
 					*stratum = strtol(value, &nptr, 10);
-				if(value == NULL || value==nptr){
+				if(value == NULL || value==nptr) {
 					if(verbose) printf("error: unable to read server stratum response.\n");
 					*stratum = -1;
 				} else {
@@ -422,6 +423,7 @@ int process_arguments(int argc, char **argv){
 		{"verbose", no_argument, 0, 'v'},
 		{"use-ipv4", no_argument, 0, '4'},
 		{"use-ipv6", no_argument, 0, '6'},
+		{"quiet", no_argument, 0, 'q'},
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
 		{"swarn", required_argument, 0, 'W'},
@@ -438,7 +440,7 @@ int process_arguments(int argc, char **argv){
 		usage ("\n");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vhv46w:c:W:C:j:k:t:H:", longopts, &option);
+		c = getopt_long (argc, argv, "Vhv46qw:c:W:C:j:k:t:H:", longopts, &option);
 		if (c == -1 || c == EOF || c == 1)
 			break;
 
@@ -453,6 +455,9 @@ int process_arguments(int argc, char **argv){
 			break;
 		case 'v':
 			verbose++;
+			break;
+		case 'q':
+			quiet = 1;
 			break;
 		case 'w':
 			do_offset=1;
@@ -520,7 +525,7 @@ char *perfd_offset (double offset)
 
 char *perfd_jitter (double jitter)
 {
-	return fperfdata ("jitter", jitter, "s",
+	return fperfdata ("jitter", jitter, "",
 		do_jitter, jitter_thresholds->warning->end,
 		do_jitter, jitter_thresholds->critical->end,
 		TRUE, 0, FALSE, 0);
@@ -554,10 +559,16 @@ int main(int argc, char *argv[]){
 
   /* This returns either OK or WARNING (See comment preceeding ntp_request) */
 	result = ntp_request(server_address, &offset, &offset_result, &jitter, &stratum);
-	if(offset_result == STATE_UNKNOWN)
-		result = STATE_CRITICAL;
 
-	result = max_state_alt(result, get_status(fabs(offset), offset_thresholds));
+	if(offset_result == STATE_UNKNOWN) {
+    /* if there's no sync peer (this overrides ntp_request output): */
+		result = (quiet == 1 ? STATE_UNKNOWN : STATE_CRITICAL);
+	} else {
+		/* Be quiet if there's no candidates either */
+		if (quiet == 1 && result == STATE_WARNING)
+			result = STATE_UNKNOWN;
+		result = max_state_alt(result, get_status(fabs(offset), offset_thresholds));
+	}
 
 	if(do_stratum)
 		result = max_state_alt(result, get_status(stratum, stratum_thresholds));
@@ -618,6 +629,8 @@ void print_help(void){
 	print_usage();
 	printf (_(UT_HELP_VRSN));
 	printf (_(UT_HOST_PORT), 'p', "123");
+	printf (" %s\n", "-q, --quiet");
+	printf ("    %s\n", _("Returns UNKNOWN instead of CRITICAL or WARNING if server isn't synchronized"));
 	printf (" %s\n", "-w, --warning=THRESHOLD");
 	printf ("    %s\n", _("Offset to result in warning status (seconds)"));
 	printf (" %s\n", "-c, --critical=THRESHOLD");
