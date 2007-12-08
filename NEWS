@@ -13,6 +13,8 @@ This file documents the major additions and syntax changes between releases.
 	Merge two new checks that deprecates check_ntp: check_ntp_peer and check_ntp_time.
 	  You should read the --help output so see which one is suitable for you. check_ntp_peer
 	  implement stratum thresholds support (feature request #1703823).
+	Fix check_disk reporting OK if disk usage grows over 100% (bug #1348746).
+	  The problem happens to be in Gnulib but a workaround have been implemented in check_disk.c
 
 1.4.10 28th September 2007
 	Fix check_http buffer overflow vulnerability when following HTTP redirects

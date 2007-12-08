@@ -307,9 +307,16 @@ main (int argc, char **argv)
 
     if (fsp.fsu_blocks && strcmp ("none", me->me_mountdir)) {
       total = fsp.fsu_blocks;
-      available = fsp.fsu_bavail;
+      /* 2007-12-08 - Workaround for Gnulib reporting insanely high available
+       * space on BSD (the actual value should be negative but fsp.fsu_bavail
+       * is unsigned) */
+      available = fsp.fsu_bavail > fsp.fsu_bfree ? 0 : fsp.fsu_bavail;
       available_to_root = fsp.fsu_bfree;
       used = total - available_to_root;
+
+      if (verbose >= 3)
+        printf ("For %s, total=%llu, available=%llu, available_to_root=%llu, used=%llu, fsp.fsu_files=%llu, fsp.fsu_ffree=%llu\n",
+        me->me_mountdir, total, available, available_to_root, used, fsp.fsu_files, fsp.fsu_ffree);
 
       dused_pct = calculate_percent( used, used + available );	/* used + available can never be > uintmax */
      
