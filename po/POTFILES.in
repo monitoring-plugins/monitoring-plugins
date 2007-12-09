@@ -1,4 +1,5 @@
 plugins/check_by_ssh.c
+plugins/check_cluster.c
 plugins/check_dig.c
 plugins/check_disk.c
 plugins/check_dns.c
@@ -15,6 +16,8 @@ plugins/check_mysql.c
 plugins/check_nagios.c
 plugins/check_nt.c
 plugins/check_ntp.c
+plugins/check_ntp_peer.c
+plugins/check_ntp_time.c
 plugins/check_nwstat.c
 plugins/check_overcr.c
 plugins/check_pgsql.c

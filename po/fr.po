@@ -9,21 +9,22 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: nagiosplug-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-12-09 11:15-0500\n"
+"POT-Creation-Date: 2007-12-09 18:35-0500\n"
 "PO-Revision-Date: 2007-12-09 12:13-0500\n"
 "Last-Translator: Thomas Guyot-Sionnest <dermoth@aei.ca>\n"
 "Language-Team: Français <fr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms:  nplurals=2; plural=(n > 1);"
+"Plural-Forms:  nplurals=2; plural=(n > 1);\n"
 
-#: plugins/check_by_ssh.c:83 plugins/check_dig.c:89 plugins/check_disk.c:198
-#: plugins/check_dns.c:93 plugins/check_dummy.c:59 plugins/check_fping.c:89
-#: plugins/check_game.c:84 plugins/check_hpjd.c:106 plugins/check_http.c:150
-#: plugins/check_ldap.c:108 plugins/check_load.c:124
+#: plugins/check_by_ssh.c:83 plugins/check_cluster.c:75 plugins/check_dig.c:89
+#: plugins/check_disk.c:198 plugins/check_dns.c:93 plugins/check_dummy.c:59
+#: plugins/check_fping.c:89 plugins/check_game.c:84 plugins/check_hpjd.c:106
+#: plugins/check_http.c:150 plugins/check_ldap.c:108 plugins/check_load.c:124
 #: plugins/check_mrtgtraf.c:83 plugins/check_mysql.c:88
 #: plugins/check_nagios.c:94 plugins/check_nt.c:126 plugins/check_ntp.c:763
+#: plugins/check_ntp_peer.c:548 plugins/check_ntp_time.c:540
 #: plugins/check_nwstat.c:177 plugins/check_overcr.c:106
 #: plugins/check_pgsql.c:156 plugins/check_ping.c:99 plugins/check_procs.c:143
 #: plugins/check_radius.c:156 plugins/check_real.c:85 plugins/check_smtp.c:145
@@ -203,18 +204,21 @@ msgstr ""
 
 #: plugins/check_by_ssh.c:397 plugins/check_disk.c:954
 #: plugins/check_http.c:1308 plugins/check_nagios.c:303
-#: plugins/check_ntp.c:862 plugins/check_procs.c:735 plugins/negate.c:319
+#: plugins/check_ntp.c:862 plugins/check_ntp_peer.c:663
+#: plugins/check_ntp_time.c:619 plugins/check_procs.c:735 plugins/negate.c:319
 #: plugins/urlize.c:187
 #, c-format
 msgid "Examples:"
 msgstr "Exemples:"
 
-#: plugins/check_by_ssh.c:412 plugins/check_dig.c:336 plugins/check_disk.c:970
-#: plugins/check_dns.c:447 plugins/check_dummy.c:129 plugins/check_fping.c:407
+#: plugins/check_by_ssh.c:412 plugins/check_cluster.c:269
+#: plugins/check_dig.c:336 plugins/check_disk.c:970 plugins/check_dns.c:447
+#: plugins/check_dummy.c:129 plugins/check_fping.c:407
 #: plugins/check_game.c:334 plugins/check_hpjd.c:415 plugins/check_http.c:1331
 #: plugins/check_ldap.c:449 plugins/check_load.c:326 plugins/check_mrtg.c:383
 #: plugins/check_mysql.c:407 plugins/check_nagios.c:313 plugins/check_nt.c:707
-#: plugins/check_ntp.c:875 plugins/check_nwstat.c:1688
+#: plugins/check_ntp.c:875 plugins/check_ntp_peer.c:678
+#: plugins/check_ntp_time.c:628 plugins/check_nwstat.c:1688
 #: plugins/check_overcr.c:469 plugins/check_pgsql.c:458
 #: plugins/check_ping.c:597 plugins/check_procs.c:753
 #: plugins/check_radius.c:358 plugins/check_real.c:454
@@ -226,6 +230,67 @@ msgstr "Exemples:"
 #, c-format
 msgid "Usage:"
 msgstr "Utilisation:"
+
+#: plugins/check_cluster.c:229
+#, c-format
+msgid "Host/Service Cluster Plugin for Nagios 2"
+msgstr ""
+
+#: plugins/check_cluster.c:235 plugins/check_nt.c:632
+msgid "Options:"
+msgstr ""
+
+#: plugins/check_cluster.c:237
+msgid "Check service cluster status"
+msgstr ""
+
+#: plugins/check_cluster.c:239
+msgid "Check host cluster status"
+msgstr ""
+
+#: plugins/check_cluster.c:241
+msgid "Optional prepended text output (i.e. \"Host cluster\")"
+msgstr ""
+
+#: plugins/check_cluster.c:243 plugins/check_cluster.c:246
+msgid "Specifies the range of hosts or services in cluster that must be in a"
+msgstr ""
+
+#: plugins/check_cluster.c:244
+msgid "non-OK state in order to return a WARNING status level"
+msgstr ""
+
+#: plugins/check_cluster.c:247
+msgid " non-OK state in order to return a CRITICAL status level"
+msgstr ""
+
+#: plugins/check_cluster.c:249
+msgid "The status codes of the hosts or services in the cluster, separated by"
+msgstr ""
+
+#: plugins/check_cluster.c:250
+msgid "commas"
+msgstr ""
+
+#: plugins/check_cluster.c:255 plugins/check_game.c:318
+#: plugins/check_http.c:1296 plugins/check_mrtg.c:364
+#: plugins/check_mrtgtraf.c:361 plugins/check_nt.c:693 plugins/check_ntp.c:856
+#: plugins/check_ntp_peer.c:650 plugins/check_ntp_time.c:607
+#: plugins/check_nwstat.c:1673 plugins/check_overcr.c:452
+#: plugins/check_swap.c:549 plugins/check_ups.c:633 plugins/negate.c:325
+#, c-format
+msgid "Notes:"
+msgstr "Notes:"
+
+#: plugins/check_cluster.c:256 plugins/check_ntp.c:857
+#: plugins/check_ntp_peer.c:658 plugins/check_ntp_time.c:614
+msgid "See:"
+msgstr ""
+
+#: plugins/check_cluster.c:258 plugins/check_ntp.c:859
+#: plugins/check_ntp_peer.c:660 plugins/check_ntp_time.c:616
+msgid "for THRESHOLD format and examples."
+msgstr ""
 
 #: plugins/check_dig.c:101 plugins/check_dig.c:103
 #, c-format
@@ -463,22 +528,30 @@ msgstr ""
 #: plugins/check_disk.c:940
 msgid ""
 "Case insensitive regular expression for path/partition (may be repeated)"
-msgstr "Expression rationnelle indépendante de la case pour un répertoire ou une partition (peut être utilisé plusieurs fois)"
+msgstr ""
+"Expression rationnelle indépendante de la case pour un répertoire ou une "
+"partition (peut être utilisé plusieurs fois)"
 
 #: plugins/check_disk.c:942
 msgid "Regular expression for path or partition (may be repeated)"
-msgstr "Expression rationnelle pour un répertoire ou une partition (peut être utilisé plusieurs fois)"
+msgstr ""
+"Expression rationnelle pour un répertoire ou une partition (peut être "
+"utilisé plusieurs fois)"
 
 #: plugins/check_disk.c:944
 msgid ""
 "Regular expression to ignore selected path/partition (case insensitive) (may "
 "be repeated)"
-msgstr "Expression rationnelle pour ignorer un répertoire ou une partition (peut être utilisé plusieurs fois)"
+msgstr ""
+"Expression rationnelle pour ignorer un répertoire ou une partition (peut "
+"être utilisé plusieurs fois)"
 
 #: plugins/check_disk.c:946
 msgid ""
 "Regular expression to ignore selected path or partition (may be repeated)"
-msgstr "Expression rationnelle pour ignorer un répertoire ou une partition (peut être utilisé plusieurs fois)"
+msgstr ""
+"Expression rationnelle pour ignorer un répertoire ou une partition (peut "
+"être utilisé plusieurs fois)"
 
 #: plugins/check_disk.c:949
 msgid "Choose bytes, kB, MB, GB, TB (default: MB)"
@@ -768,6 +841,7 @@ msgstr "FPING %s - %s (perte=%.0f%% )|%s\n"
 
 #: plugins/check_fping.c:273 plugins/check_hpjd.c:341 plugins/check_hpjd.c:364
 #: plugins/check_mysql.c:277 plugins/check_mysql.c:326 plugins/check_ntp.c:709
+#: plugins/check_ntp_peer.c:488 plugins/check_ntp_time.c:494
 #: plugins/check_pgsql.c:255 plugins/check_ping.c:290 plugins/check_ping.c:413
 #: plugins/check_radius.c:249 plugins/check_real.c:319
 #: plugins/check_real.c:381 plugins/check_smtp.c:512 plugins/check_smtp.c:638
@@ -784,7 +858,9 @@ msgstr "La taille du paquet doit être un entier positif"
 msgid "Packet count must be a positive integer"
 msgstr "Le nombre de paquets doit être un entier positif"
 
-#: plugins/check_fping.c:319 plugins/check_ntp.c:733 plugins/check_time.c:323
+#: plugins/check_fping.c:319 plugins/check_ntp.c:733
+#: plugins/check_ntp_peer.c:512 plugins/check_ntp_time.c:518
+#: plugins/check_time.c:323
 msgid "Hostname was not supplied"
 msgstr "Le nom de l'hôte n'a pas été spécifié"
 
@@ -899,14 +975,6 @@ msgstr ""
 #: plugins/check_game.c:314
 msgid "Field number in raw qstat output that contains ping time"
 msgstr ""
-
-#: plugins/check_game.c:318 plugins/check_http.c:1296 plugins/check_mrtg.c:364
-#: plugins/check_mrtgtraf.c:361 plugins/check_nt.c:693 plugins/check_ntp.c:856
-#: plugins/check_nwstat.c:1673 plugins/check_overcr.c:452
-#: plugins/check_swap.c:549 plugins/check_ups.c:633 plugins/negate.c:325
-#, c-format
-msgid "Notes:"
-msgstr "Notes:"
 
 #: plugins/check_game.c:320
 msgid ""
@@ -1026,8 +1094,9 @@ msgstr "Numéro de port invalide"
 msgid "Could Not Compile Regular Expression: %s"
 msgstr "Impossible de compiler l'expression rationnelle: %s"
 
-#: plugins/check_http.c:380 plugins/check_ntp.c:722 plugins/check_smtp.c:618
-#: plugins/check_ssh.c:154 plugins/check_tcp.c:467
+#: plugins/check_http.c:380 plugins/check_ntp.c:722
+#: plugins/check_ntp_peer.c:501 plugins/check_ntp_time.c:507
+#: plugins/check_smtp.c:618 plugins/check_ssh.c:154 plugins/check_tcp.c:467
 msgid "IPv6 support not available"
 msgstr "Support IPv6 non disponible"
 
@@ -2195,10 +2264,6 @@ msgstr ""
 msgid "Windows NT/2000/XP/2003 server."
 msgstr "Serveur Windows NT/2000/XP/2003."
 
-#: plugins/check_nt.c:632
-msgid "Options:"
-msgstr ""
-
 #: plugins/check_nt.c:634
 msgid "Name of the host to check"
 msgstr "Nom de l'hôte à vérifier"
@@ -2381,51 +2446,128 @@ msgstr ""
 msgid "and on the client service it's connecting to."
 msgstr "et dans le service auquel il se connecte."
 
-#: plugins/check_ntp.c:813
+#: plugins/check_ntp.c:813 plugins/check_ntp_peer.c:597
+#: plugins/check_ntp_time.c:572
 msgid "Offset unknown"
 msgstr "Décalage inconnu"
 
-#: plugins/check_ntp.c:837
+#: plugins/check_ntp.c:837 plugins/check_ntp_peer.c:625
 msgid "This plugin checks the selected ntp server"
 msgstr "Ce plugin vérifie le service ntp sur l'hôte"
 
-#: plugins/check_ntp.c:845
+#: plugins/check_ntp.c:845 plugins/check_ntp_peer.c:635
+#: plugins/check_ntp_time.c:600
 msgid "Offset to result in warning status (seconds)"
 msgstr "Décalage résultant un avertissement (secondes)"
 
-#: plugins/check_ntp.c:847
+#: plugins/check_ntp.c:847 plugins/check_ntp_peer.c:637
+#: plugins/check_ntp_time.c:602
 msgid "Offset to result in critical status (seconds)"
 msgstr "Décalage résultant un état critique (secondes)"
 
-#: plugins/check_ntp.c:849
+#: plugins/check_ntp.c:849 plugins/check_ntp_peer.c:643
 #, fuzzy
 msgid "Warning threshold for jitter"
 msgstr "Valeur d'avertissement pour la variation (jitter)"
 
-#: plugins/check_ntp.c:851
+#: plugins/check_ntp.c:851 plugins/check_ntp_peer.c:645
 #, fuzzy
 msgid "Critical threshold for jitter"
 msgstr "Valeur critique pour la variation (jitter)"
-
-#: plugins/check_ntp.c:857
-msgid "See:"
-msgstr ""
-
-#: plugins/check_ntp.c:859
-msgid "for THRESHOLD format and examples."
-msgstr ""
 
 #: plugins/check_ntp.c:863
 msgid "Normal offset check:"
 msgstr ""
 
-#: plugins/check_ntp.c:865
+#: plugins/check_ntp.c:865 plugins/check_ntp_peer.c:666
 msgid ""
 "Check jitter too, avoiding critical notifications if jitter isn't available"
 msgstr ""
 
-#: plugins/check_ntp.c:866
+#: plugins/check_ntp.c:866 plugins/check_ntp_peer.c:667
 msgid "(See Notes above for more details on thresholds formats):"
+msgstr ""
+
+#: plugins/check_ntp_peer.c:594
+msgid "Server not synchronized"
+msgstr ""
+
+#: plugins/check_ntp_peer.c:633
+msgid ""
+"Returns UNKNOWN instead of CRITICAL or WARNING if server isn't synchronized"
+msgstr ""
+
+#: plugins/check_ntp_peer.c:639
+#, fuzzy
+msgid "Warning threshold for stratum"
+msgstr "Valeur d'avertissement pour la variation (jitter)"
+
+#: plugins/check_ntp_peer.c:641
+#, fuzzy
+msgid "Critical threshold for stratum"
+msgstr "Valeur critique pour la variation (jitter)"
+
+#: plugins/check_ntp_peer.c:651
+msgid "This plugin checks an NTP server independent of any commandline"
+msgstr ""
+
+#: plugins/check_ntp_peer.c:652
+msgid "programs or external libraries."
+msgstr ""
+
+#: plugins/check_ntp_peer.c:653
+#, fuzzy
+msgid "Use this plugin to check the health of an NTP server. It supports"
+msgstr "Ce plugin vérifie le service ntp sur l'hôte"
+
+#: plugins/check_ntp_peer.c:654
+msgid "checking the offset with the sync peer, the jitter and stratum. This"
+msgstr ""
+
+#: plugins/check_ntp_peer.c:655
+msgid "plugin will not check the clock offset between the local host and NTP"
+msgstr ""
+
+#: plugins/check_ntp_peer.c:656
+msgid "server; please use check_ntp_time for that purpose."
+msgstr ""
+
+#: plugins/check_ntp_peer.c:664
+msgid "Normal NTP server check:"
+msgstr ""
+
+#: plugins/check_ntp_peer.c:669
+msgid "Check only stratum:"
+msgstr ""
+
+#: plugins/check_ntp_time.c:590
+#, fuzzy
+msgid "This plugin checks the clock offset with the ntp server"
+msgstr "Ce plugin vérifie le service ntp sur l'hôte"
+
+#: plugins/check_ntp_time.c:598
+msgid "Returns UNKNOWN instead of CRITICAL if offset cannot be found"
+msgstr ""
+
+#: plugins/check_ntp_time.c:608
+#, fuzzy
+msgid "This plugin checks the clock offset between the local host and a"
+msgstr "Ce plugin vérifie la place utilisé sur un système de fichier monté"
+
+#: plugins/check_ntp_time.c:609
+msgid "remote NTP server. It is independent of any commandline programs or"
+msgstr ""
+
+#: plugins/check_ntp_time.c:610
+msgid "external libraries."
+msgstr ""
+
+#: plugins/check_ntp_time.c:611
+msgid "If you'd rather want to monitor an NTP server, please use"
+msgstr ""
+
+#: plugins/check_ntp_time.c:612
+msgid "check_ntp_peer."
 msgstr ""
 
 #: plugins/check_nwstat.c:198
