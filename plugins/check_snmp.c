@@ -957,7 +957,7 @@ print_help (void)
   printf (" %s\n", "-A, --authpassword=PASSWORD");
   printf ("    %s\n", _("SNMPv3 authentication password"));
   printf (" %s\n", "-X, --privpasswd=PASSWORD");
-  printf ("    %s\n", _("SNMPv3 crypt passwd (DES)"));
+  printf ("    %s\n", _("SNMPv3 privacy password"));
 
 	/* OID Stuff */
 	printf (" %s\n", "-o, --oid=OID(s)");

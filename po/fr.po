@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: nagiosplug-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-12-09 21:31-0500\n"
-"PO-Revision-Date: 2007-12-09 20:20-0500\n"
+"POT-Creation-Date: 2007-12-10 02:48-0500\n"
+"PO-Revision-Date: 2007-12-10 02:10-0500\n"
 "Last-Translator: Thomas Guyot-Sionnest <dermoth@aei.ca>\n"
 "Language-Team:  <en@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -225,7 +225,7 @@ msgstr "Exemples:"
 #: plugins/check_ping.c:597 plugins/check_procs.c:753
 #: plugins/check_radius.c:358 plugins/check_real.c:454
 #: plugins/check_smtp.c:825 plugins/check_snmp.c:1029 plugins/check_ssh.c:308
-#: plugins/check_swap.c:560 plugins/check_tcp.c:654 plugins/check_time.c:373
+#: plugins/check_swap.c:559 plugins/check_tcp.c:654 plugins/check_time.c:373
 #: plugins/check_ups.c:657 plugins/check_users.c:230
 #: plugins/check_ide_smart.c:527 plugins/negate.c:340 plugins/urlize.c:204
 #: plugins-root/check_dhcp.c:1426 plugins-root/check_icmp.c:1278
@@ -236,50 +236,50 @@ msgstr "Utilisation:"
 #: plugins/check_cluster.c:229
 #, c-format
 msgid "Host/Service Cluster Plugin for Nagios 2"
-msgstr ""
+msgstr "Plugin de Cluster d'Hôte/Service pour Nagios 2"
 
 #: plugins/check_cluster.c:235 plugins/check_nt.c:632
 msgid "Options:"
-msgstr ""
+msgstr "Options:"
 
 #: plugins/check_cluster.c:237
 msgid "Check service cluster status"
-msgstr ""
+msgstr "Vérifie l'état d'un cluster de services"
 
 #: plugins/check_cluster.c:239
 msgid "Check host cluster status"
-msgstr ""
+msgstr "Vérifie l'état d'un cluster d'hôtes"
 
 #: plugins/check_cluster.c:241
 msgid "Optional prepended text output (i.e. \"Host cluster\")"
-msgstr ""
+msgstr "Texte optionnel accolé à la sortie (i.e. \"Cluster d'hôtes\")"
 
 #: plugins/check_cluster.c:243 plugins/check_cluster.c:246
 msgid "Specifies the range of hosts or services in cluster that must be in a"
-msgstr ""
+msgstr "Défini le nombre d'hôtes ou de services du cluster qui doivent être"
 
 #: plugins/check_cluster.c:244
 msgid "non-OK state in order to return a WARNING status level"
-msgstr ""
+msgstr "dans un état non-OK pour retourner un état AVERTISSEMENT"
 
 #: plugins/check_cluster.c:247
-msgid " non-OK state in order to return a CRITICAL status level"
-msgstr ""
+msgid "non-OK state in order to return a CRITICAL status level"
+msgstr "dans un état non-OK pour retourner un état CRITIQUE"
 
 #: plugins/check_cluster.c:249
 msgid "The status codes of the hosts or services in the cluster, separated by"
-msgstr ""
+msgstr "Les codes d'état des hôtes ou des services du cluster, séparés par des"
 
 #: plugins/check_cluster.c:250
 msgid "commas"
-msgstr ""
+msgstr "virgules"
 
 #: plugins/check_cluster.c:255 plugins/check_game.c:318
 #: plugins/check_http.c:1296 plugins/check_mrtg.c:364
 #: plugins/check_mrtgtraf.c:361 plugins/check_nt.c:693 plugins/check_ntp.c:856
 #: plugins/check_ntp_peer.c:650 plugins/check_ntp_time.c:607
 #: plugins/check_nwstat.c:1673 plugins/check_overcr.c:452
-#: plugins/check_swap.c:549 plugins/check_ups.c:633 plugins/negate.c:325
+#: plugins/check_swap.c:548 plugins/check_ups.c:633 plugins/negate.c:325
 #, c-format
 msgid "Notes:"
 msgstr "Notes:"
@@ -441,35 +441,35 @@ msgstr ""
 #: plugins/check_disk.c:903
 msgid "Exit with WARNING status if less than INTEGER units of disk are free"
 msgstr ""
-"Sortir avec un résultat AVERTISSEMENT si moins de x unités de disques sont "
+"Sortir avec un résultat AVERTISSEMENT si moins de X unités de disques sont "
 "libres"
 
 #: plugins/check_disk.c:905
 msgid "Exit with WARNING status if less than PERCENT of disk space is free"
 msgstr ""
-"Sortir avec un résultat AVERTISSEMENT si moins de x pour-cent du disque est "
+"Sortir avec un résultat AVERTISSEMENT si moins de X pour-cent du disque est "
 "libre"
 
 #: plugins/check_disk.c:907
 msgid "Exit with CRITICAL status if less than INTEGER units of disk are free"
 msgstr ""
-"Sortir avec un résultat CRITIQUE si moins de x unités du disque sont libres"
+"Sortir avec un résultat CRITIQUE si moins de X unités du disque sont libres"
 
 #: plugins/check_disk.c:909
 msgid "Exit with CRITCAL status if less than PERCENT of disk space is free"
 msgstr ""
-"Sortir avec un résultat CRITIQUE si moins de x pour-cent du disque est libre"
+"Sortir avec un résultat CRITIQUE si moins de X pour-cent du disque est libre"
 
 #: plugins/check_disk.c:911
 msgid "Exit with WARNING status if less than PERCENT of inode space is free"
 msgstr ""
-"Sortir avec un résultat AVERTISSEMENT si moins de x pour-cent des inodes "
+"Sortir avec un résultat AVERTISSEMENT si moins de X pour-cent des inodes "
 "sont libres"
 
 #: plugins/check_disk.c:913
 msgid "Exit with CRITICAL status if less than PERCENT of inode space is free"
 msgstr ""
-"Sortir avec un résultat CRITIQUE si moins de x pour-cent des inodes sont "
+"Sortir avec un résultat CRITIQUE si moins de X pour-cent des inodes sont "
 "libres"
 
 #: plugins/check_disk.c:915
@@ -863,7 +863,7 @@ msgstr "Le nombre de paquets doit être un entier positif"
 
 #: plugins/check_fping.c:319 plugins/check_ntp.c:733
 #: plugins/check_ntp_peer.c:512 plugins/check_ntp_time.c:518
-#: plugins/check_time.c:323
+#: plugins/check_radius.c:290 plugins/check_time.c:323
 msgid "Hostname was not supplied"
 msgstr "Le nom de l'hôte n'a pas été spécifié"
 
@@ -1293,16 +1293,14 @@ msgstr ""
 "s\n"
 
 #: plugins/check_http.c:1152
-#, fuzzy, c-format
+#, c-format
 msgid "HTTP UNKNOWN - Could not allocate server_url%s\n"
-msgstr "HTTP INCONNU - Impossible d'allouer une URL\n"
+msgstr "HTTP INCONNU - Impossible d'allouer server_url%s\n"
 
 #: plugins/check_http.c:1158
-#, fuzzy, c-format
+#, c-format
 msgid "HTTP UNKNOWN - Redirection to port above %d - %s://%s:%d%s%s\n"
-msgstr ""
-"HTTP AVERTISSEMENT - la redirection crée une boucle infinie - %s://%s:%d%s%"
-"s\n"
+msgstr "HTTP INCONNU - Redirection à un port supérieur à %d - %s://%s:%d%s%s\n"
 
 #: plugins/check_http.c:1163
 #, c-format
@@ -1625,9 +1623,8 @@ msgid "use ldap protocol version 3"
 msgstr "utiliser le protocole ldap version 3"
 
 #: plugins/check_ldap.c:431
-#, fuzzy
 msgid "Note:"
-msgstr "Notes:"
+msgstr "Note:"
 
 #: plugins/check_ldap.c:432
 msgid "If this plugin is called via 'check_ldaps', method 'STARTTLS' will be"
@@ -1954,14 +1951,12 @@ msgid "Test average or maximum"
 msgstr ""
 
 #: plugins/check_mrtgtraf.c:357
-#, fuzzy
 msgid "Warning threshold pair <incoming>,<outgoing>"
-msgstr "Valeurs pour le seuil d'avertissement"
+msgstr "Paire de seuils d'avertissement <entrant>,<sortant>"
 
 #: plugins/check_mrtgtraf.c:359
-#, fuzzy
 msgid "Critical threshold pair <incoming>,<outgoing>"
-msgstr "Valeurs pour le seuil critique"
+msgstr "Paire de seuils critique <entrant>,<sortant>"
 
 #: plugins/check_mrtgtraf.c:362
 msgid ""
@@ -2046,21 +2041,20 @@ msgid "Check if the slave thread is running properly."
 msgstr ""
 
 #: plugins/check_mysql.c:394
-#, fuzzy
 msgid ""
-"Exit with WARNING status if slave server is more then INTEGER seconds behind "
+"Exit with WARNING status if slave server is more than INTEGER seconds behind "
 "master"
 msgstr ""
-"Sortir avec un résultat AVERTISSEMENT si moins de x unités de disques sont "
-"libres"
+"Sortir avec un résultat AVERTISSEMENT si le serveur esclave est plus de X "
+"secondes en retard sur le maître"
 
 #: plugins/check_mysql.c:396
-#, fuzzy
 msgid ""
 "Exit with CRITICAL status if slave server is more then INTEGER seconds "
 "behind master"
 msgstr ""
-"Sortir avec un résultat CRITIQUE si moins de x unités du disque sont libres"
+"Sortir avec un résultat CRITIQUE si le serveur esclave est plus de X "
+"secondes en retard sur le maître"
 
 #: plugins/check_mysql.c:397
 msgid "There are no required arguments. By default, the local database with"
@@ -2117,10 +2111,9 @@ msgid "You must provide a process string\n"
 msgstr "Vous devez fournir un nom de processus\n"
 
 #: plugins/check_nagios.c:284
-#, fuzzy
 msgid ""
 "This plugin checks the status of the Nagios process on the local machine"
-msgstr "Ce plugin vérifie la place utilisé sur un système de fichier monté"
+msgstr "Ce plugin vérifie l'état du processus Nagios sur la machine locale."
 
 #: plugins/check_nagios.c:285
 msgid ""
@@ -2332,7 +2325,9 @@ msgstr "<plage de minutes> devrait être inférieur à 24*60."
 #: plugins/check_nt.c:662
 msgid ""
 "Thresholds are percentage and up to 10 requests can be done in one shot."
-msgstr "Les seuils sonts en pourcentage et un maximum de 10 requêtes peuvent être effectuées à la fois."
+msgstr ""
+"Les seuils sonts en pourcentage et un maximum de 10 requêtes peuvent être "
+"effectuées à la fois."
 
 #: plugins/check_nt.c:665
 msgid "Get the uptime of the machine."
@@ -2391,9 +2386,8 @@ msgid "Check any performance counter of Windows NT/2000."
 msgstr "Vérifier n'importe quel compteur de performance sur Windows NT/2000."
 
 #: plugins/check_nt.c:686
-#, fuzzy
 msgid "-l \"\\\\<performance object>\\\\counter\",\"<description>"
-msgstr "-l \"\\\\<performance object>\\\\compteur\",\"<description>"
+msgstr "-l \"\\\\<catégorie>\\\\compteur\",\"<description>"
 
 #: plugins/check_nt.c:687
 msgid "The <description> parameter is optional and is given to a printf "
@@ -2421,13 +2415,13 @@ msgstr ""
 
 #: plugins/check_nt.c:696
 msgid "- Critical thresholds should be lower than warning thresholds"
-msgstr "- Les seuils critiques doivent être plus bas que les seuils d'avertissement"
+msgstr ""
+"- Les seuils critiques doivent être plus bas que les seuils d'avertissement"
 
 #: plugins/check_nt.c:697
 msgid "- Default port 1248 is sometimes in use by other services. The error"
 msgstr ""
-"- Le port par défaut 1248 est parfois utilisé par d'autres "
-"services. L'erreur"
+"- Le port par défaut 1248 est parfois utilisé par d'autres services. L'erreur"
 
 #: plugins/check_nt.c:698
 msgid ""
@@ -3154,18 +3148,15 @@ msgstr "plus grand que le seuil d'alerte SAUF pour l'option uptime"
 
 #: plugins/check_overcr.c:457
 msgid "This plugin requres that Eric Molitors' Over-CR collector daemon be"
-msgstr ""
+msgstr "Ce plugin requiert que le daemon collecteur Over-CR d'Eric Molitors"
 
 #: plugins/check_overcr.c:458
-#, fuzzy
 msgid "running on the remote server."
-msgstr "Chaîne de caractères à envoyer au serveur"
+msgstr "soit fonctionnel sur le serveur distant"
 
 #: plugins/check_overcr.c:460
-#, fuzzy
 msgid "This plugin was tested with version 0.99.53 of the Over-CR collector"
-msgstr ""
-"Ce plugin essaye de joindre le service Over CR tournant sur le serveur UNIX"
+msgstr "Ce plugin a été testé avec la version 0.99.53 su collecteur Over-CR"
 
 #: plugins/check_pgsql.c:173
 #, c-format
@@ -3367,9 +3358,9 @@ msgstr ""
 "d'erreur standard"
 
 #: plugins/check_ping.c:514
-#, fuzzy, c-format
+#, c-format
 msgid "CRITICAL - Network Unreachable (%s)"
-msgstr "CRITIQUE - Le réseau est injoignable (%s)"
+msgstr "CRITIQUE - Le réseau est inaccessible (%s)"
 
 #: plugins/check_ping.c:516
 #, c-format
@@ -3430,26 +3421,22 @@ msgid "number of ICMP ECHO packets to send"
 msgstr "nombre de paquets ICMP à envoyer"
 
 #: plugins/check_ping.c:572
-#, fuzzy, c-format
+#, c-format
 msgid "(Default: %d)\n"
-msgstr "(Défaut: %d)"
+msgstr "(Défaut: %d)\n"
 
 #: plugins/check_ping.c:574
 msgid "show HTML in the plugin output (obsoleted by urlize)"
 msgstr ""
 
 #: plugins/check_ping.c:578
-#, fuzzy
 msgid "THRESHOLD is <rta>,<pl>% where <rta> is the round trip average travel"
 msgstr ""
-"Le seuil est <rta>,<pl>%% ou <rta> est le temps moyen pour l'aller retour "
-"(ms)"
+"Le seuil est <rta>,<pl>% où <rta> est le temps moyen pour l'aller retour (ms)"
 
 #: plugins/check_ping.c:579
 msgid "time (ms) which triggers a WARNING or CRITICAL state, and <pl> is the"
-msgstr ""
-"temps (ms) qui déclenche un résultat AVERTISSEMENT ou CRITIQUE, et <pl> est "
-"le "
+msgstr "qui déclenche un résultat AVERTISSEMENT ou CRITIQUE, et <pl> est le "
 
 #: plugins/check_ping.c:580
 msgid "percentage of packet loss to trigger an alarm state."
@@ -3762,25 +3749,17 @@ msgstr "L'authentification à réussi"
 msgid "Number of retries must be a positive integer"
 msgstr "Le nombre d'essai doit être un entier positif"
 
-#: plugins/check_radius.c:290
-#, fuzzy
-msgid "Host not specified"
-msgstr "Pas de compteur spécifié"
-
 #: plugins/check_radius.c:292
-#, fuzzy
 msgid "User not specified"
-msgstr "Pas de compteur spécifié"
+msgstr "L'utilisateur n'a pas été spécifié"
 
 #: plugins/check_radius.c:294
-#, fuzzy
 msgid "Password not specified"
-msgstr "Pas de compteur spécifié"
+msgstr "Le mot de passe n'a pas été spécifié"
 
 #: plugins/check_radius.c:296
-#, fuzzy
 msgid "Configuration file not specified"
-msgstr "Fichier de configuration"
+msgstr "Le fichier de configuration n'a pas été spécifié"
 
 #: plugins/check_radius.c:314
 msgid "Tests to see if a radius server is accepting connections."
@@ -3987,9 +3966,8 @@ msgid "SMTP UNKNOWN - Cannot read EHLO response via TLS."
 msgstr ""
 
 #: plugins/check_smtp.c:281
-#, fuzzy
 msgid "CRITICAL - Cannot retrieve server certificate."
-msgstr "CRITIQUE - Impossible d'obtenir le certificat du serveur.\n"
+msgstr "CRITIQUE - Impossible d'obtenir le certificat du serveur"
 
 #: plugins/check_smtp.c:317 plugins/check_snmp.c:590
 #, c-format
@@ -4021,9 +3999,8 @@ msgid "sent %s\n"
 msgstr "envoyé %s\n"
 
 #: plugins/check_smtp.c:359
-#, fuzzy
 msgid "recv() failed after AUTH LOGIN, "
-msgstr "la commande recv() à échoué après AUTH LOGIN, \n"
+msgstr "recv() à échoué après AUTH LOGIN, "
 
 #: plugins/check_smtp.c:364 plugins/check_smtp.c:385 plugins/check_smtp.c:405
 #: plugins/check_smtp.c:684
@@ -4070,9 +4047,9 @@ msgid "SSL support not available - install OpenSSL and recompile"
 msgstr "SSL n'est pas disponible - installer OpenSSL et recompilez"
 
 #: plugins/check_smtp.c:679
-#, fuzzy, c-format
+#, c-format
 msgid "recv() failed after QUIT."
-msgstr "la commande recv() à échoué après AUTH LOGIN, \n"
+msgstr "recv() à échoué après QUIT."
 
 #: plugins/check_smtp.c:681
 #, c-format
@@ -4152,19 +4129,16 @@ msgstr ""
 "Commande: %s\n"
 
 #: plugins/check_snmp.c:398
-#, fuzzy
 msgid "snmpget returned an error status"
-msgstr "dig à renvoyé un message d'erreur"
+msgstr "snmpget à retourné un état d'erreur"
 
 #: plugins/check_snmp.c:524
-#, fuzzy
 msgid "Invalid critical threshold"
-msgstr "Seuil critique invalide: %s\n"
+msgstr "Seuil critique invalide"
 
 #: plugins/check_snmp.c:535
-#, fuzzy
 msgid "Invalid warning threshold"
-msgstr "Seuil d'avertissement invalide: %s\n"
+msgstr "Seuil d'avertissement invalide"
 
 #: plugins/check_snmp.c:547
 msgid "Retries interval must be a positive integer"
@@ -4214,7 +4188,7 @@ msgstr ""
 
 #: plugins/check_snmp.c:943
 msgid "Use SNMP GETNEXT instead of SNMP GET"
-msgstr ""
+msgstr "Utiliser SNMP GETNEXT au lieu de SNMP GET"
 
 #: plugins/check_snmp.c:945
 msgid "SNMP protocol version"
@@ -4222,32 +4196,31 @@ msgstr "Version du protocole SNMP"
 
 #: plugins/check_snmp.c:947
 msgid "SNMPv3 securityLevel"
-msgstr ""
+msgstr "Niveau de sécurité SNMPv3 (securityLevel)"
 
 #: plugins/check_snmp.c:949
 msgid "SNMPv3 auth proto"
-msgstr ""
+msgstr "Protocole d'authentification SNMPv3"
 
 #: plugins/check_snmp.c:953
 msgid "Optional community string for SNMP communication"
-msgstr ""
+msgstr "Communauté optionnelle pour la communication SNMP"
 
 #: plugins/check_snmp.c:954
-#, fuzzy
 msgid "default is"
-msgstr "(défaut \"%s\")"
+msgstr "défaut:"
 
 #: plugins/check_snmp.c:956
 msgid "SNMPv3 username"
-msgstr ""
+msgstr "Nom d'utilisateur SNMPv3"
 
 #: plugins/check_snmp.c:958
 msgid "SNMPv3 authentication password"
-msgstr ""
+msgstr "Mot de passe d'authentification SNMPv3"
 
 #: plugins/check_snmp.c:960
-msgid "SNMPv3 crypt passwd (DES)"
-msgstr ""
+msgid "SNMPv3 privacy password"
+msgstr "Mot de passe de confidentialité SNMPv3"
 
 #: plugins/check_snmp.c:964
 msgid "Object identifier(s) or SNMP variables whose value you wish to query"
@@ -4490,42 +4463,36 @@ msgid "Check swap space on local machine."
 msgstr "Vérifie l'espace swap sur la machine locale."
 
 #: plugins/check_swap.c:537
-#, fuzzy
 msgid ""
 "Exit with WARNING status if less than INTEGER bytes of swap space are free"
 msgstr ""
-"Sortir avec un résultat AVERTISSEMENT si moins de x unités de disques sont "
-"libres"
+"Sortir avec un résultat AVERTISSEMENT si moins de X octets de mémoire "
+"virtuelle sont libres"
 
 #: plugins/check_swap.c:539
-#, fuzzy
 msgid "Exit with WARNING status if less than PERCENT of swap space is free"
 msgstr ""
-"Sortir avec un résultat AVERTISSEMENT si moins de x pour-cent du disque est "
-"libre"
+"Sortir avec un résultat AVERTISSEMENT si moins de X pour cent de mémoire "
+"virtuelle est libre"
 
 #: plugins/check_swap.c:541
-#, fuzzy
 msgid ""
 "Exit with CRITICAL status if less than INTEGER bytes of swap space are free"
 msgstr ""
-"Sortir avec un résultat CRITIQUE si moins de x unités du disque sont libres"
+"Sortir avec un résultat CRITIQUE si moins de X octets de mémoire virtuelle "
+"sont libres"
 
 #: plugins/check_swap.c:543
-#, fuzzy
 msgid "Exit with CRITCAL status if less than PERCENT of swap space is free"
 msgstr ""
-"Sortir avec un résultat CRITIQUE si moins de x pour-cent du disque est libre"
+"Sortir avec un résultat CRITIQUE si moins de X pour cent de mémoire "
+"virtuelle est libre"
 
 #: plugins/check_swap.c:545
 msgid "Conduct comparisons for all swap partitions, one by one"
-msgstr ""
+msgstr "Vérifier chacune des partitions de mémoire virtuelle séparément"
 
-#: plugins/check_swap.c:547
-msgid "Verbose output. Up to 3 levels"
-msgstr ""
-
-#: plugins/check_swap.c:550
+#: plugins/check_swap.c:549
 msgid "On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s.\n"
 msgstr ""
 "Sur AIX, si -a est spécifié, le plugin utilise lsps -a, au sinon il utilise "
@@ -4589,10 +4556,13 @@ msgid ""
 "Can use \\n, \\r, \\t or \\ in send or quit string. Must come before send or "
 "quit option"
 msgstr ""
+"Permet d'utiliser \\n, \\r, \\t ou \\ dans la chaîne de caractères send ou "
+"quit. Doit être placé avant ces dernières."
 
 #: plugins/check_tcp.c:614
 msgid "Default: nothing added to send, \\r\\n added to end of quit"
 msgstr ""
+"Par défaut: Rien n'est ajouté à send, \\r\\n est ajouté à la fin de quit"
 
 #: plugins/check_tcp.c:616
 msgid "String to send to the server"
@@ -4600,22 +4570,21 @@ msgstr "Chaîne de caractères à envoyer au serveur"
 
 #: plugins/check_tcp.c:618
 msgid "String to expect in server response"
-msgstr ""
+msgstr "Chaîne de caractères à attendre en réponse"
 
 #: plugins/check_tcp.c:618
-#, fuzzy
 msgid "(may be repeated)"
-msgstr "Répertoire ou partition (peut être utilisé plusieurs fois)"
+msgstr "(peut être utilisé plusieurs fois)"
 
 #: plugins/check_tcp.c:620
-#, fuzzy
 msgid "All expect strings need to occur in server response. Default is any"
 msgstr ""
-"Texte attendu dans la première ligne de réponse du serveur (défaut: %s)\n"
+"Toutes les chaînes attendus (expect) doivent être repérés dans la réponse. "
+"Par défaut, n'importe laquelle suffit."
 
 #: plugins/check_tcp.c:622
 msgid "String to send server to initiate a clean close of the connection"
-msgstr ""
+msgstr "Chaîne de caractères à envoyer pour fermer gracieusement la connection"
 
 #: plugins/check_tcp.c:624
 msgid "Accept tcp refusals with states ok, warn, crit (default: crit)"
@@ -4627,9 +4596,8 @@ msgid ""
 msgstr ""
 
 #: plugins/check_tcp.c:628
-#, fuzzy
 msgid "Hide output from TCP socket"
-msgstr "Impossible d'ouvrir un socket TCP\n"
+msgstr "Cacher la réponse provenant du socket TCP"
 
 #: plugins/check_tcp.c:630
 msgid "Close connection once more than this number of bytes are received"
@@ -4810,9 +4778,8 @@ msgid "Output of temperatures in Celsius"
 msgstr "Affichage des températures en Celsius"
 
 #: plugins/check_ups.c:622
-#, fuzzy
 msgid "Valid values for STRING are"
-msgstr "Les variables valides sont"
+msgstr "Les variables valides pour STRING sont"
 
 #: plugins/check_ups.c:635
 msgid ""
@@ -5018,105 +4985,115 @@ msgid "Output suitable for Nagios"
 msgstr ""
 
 #: plugins/negate.c:132
-#, fuzzy
 msgid "No data returned from command\n"
-msgstr "Pas de données reçues de l'hôte\n"
+msgstr "Pas de données reçues de la commande\n"
 
 #: plugins/negate.c:209
 msgid ""
 "Ok must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-"
-"4)."
+"3)."
 msgstr ""
+"Ok doit être un nom d'état valide (OK, WARNING, CRITICAL, UNKNOWN) ou un "
+"nombre entier (0-3)."
 
 #: plugins/negate.c:215
 msgid ""
 "Warning must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or "
 "integer (0-3)."
 msgstr ""
+"Warning doit être un nom d'état valide (OK, WARNING, CRITICAL, UNKNOWN) ou "
+"un nombre entier (0-3)."
 
 #: plugins/negate.c:220
 msgid ""
 "Critical must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or "
 "integer (0-3)."
 msgstr ""
+"Critical doit être un nom d'état valide (OK, WARNING, CRITICAL, UNKNOWN) ou "
+"un nombre entier (0-3)."
 
 #: plugins/negate.c:225
 msgid ""
 "Unknown must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or "
 "integer (0-3)."
 msgstr ""
+"Unknown doit être un nom d'état valide (OK, WARNING, CRITICAL, UNKNOWN) ou "
+"un nombre entier (0-3)."
 
 #: plugins/negate.c:262
 msgid "Require path to command"
-msgstr ""
+msgstr "Chemin vers la commande requis"
 
 #: plugins/negate.c:298
-#, fuzzy
 msgid ""
 "Negates the status of a plugin (returns OK for CRITICAL and vice-versa)."
 msgstr ""
-"Inverse le statut d'un plugin (retourne OK pour CRITIQUE, et vice-versa)."
+"Inverse le statut d'un plugin (retourne OK pour CRITIQUE et vice-versa)."
 
 #: plugins/negate.c:299
 msgid "Additional switches can be used to control which state becomes what."
 msgstr ""
+"Des options additionnelles peuvent être utilisées pour contrôler quel état "
+"devient quoi."
 
 #: plugins/negate.c:308
-#, fuzzy
-msgid "Keep timeout lower than the plugin timeout to retain CRITICAL status."
+msgid "Keep timeout longer than the plugin timeout to retain CRITICAL status."
 msgstr ""
-"[conserver le délai de réponse dépassé du plugin original afin de conserver "
-"le résultat CRITIQUE]"
+"Utilisez un délai de réponse plus long que celui du plugin afin de conserver "
+"les résultats CRITIQUE"
 
 #: plugins/negate.c:314
 #, c-format
 msgid ""
 "    STATUS can be 'OK', 'WARNING', 'CRITICAL' or 'UNKNOWN' without single\n"
 msgstr ""
+"    STATUS peut être 'OK', 'WARNING', 'CRITICAL' ou 'UNKNOWN' sans les "
+"simple\n"
 
 #: plugins/negate.c:315
 #, c-format
 msgid ""
 "    quotes. Numeric values are accepted. If nothing is specified, permutes\n"
-msgstr ""
+msgstr "    quotes. Les valeurs numériques sont acceptées. Si rien n'est\n"
 
 #: plugins/negate.c:316
 #, c-format
 msgid "    OK and CRITICAL.\n"
-msgstr ""
+msgstr "    spécifié, inverse OK et CRITIQUE.\n"
 
 #: plugins/negate.c:321
 msgid "Run check_ping and invert result. Must use full path to plugin"
 msgstr ""
+"Execute check_ping et inverse le résultat. Le chemin complet du plug-in doit "
+"être spécifié"
 
 #: plugins/negate.c:323
 msgid "This will return OK instead of WARNING and UNKNOWN instead of CRITICAL"
 msgstr ""
+"Ceci retournera OK au lieu de AVERTISSEMENT et INCONNU au lieu de CRITIQUE"
 
 #: plugins/negate.c:326
 msgid ""
 "This plugin is a wrapper to take the output of another plugin and invert it."
 msgstr ""
+"Ce plugin est un adaptateur qui prends l'état d'un autre plug-in et "
+"l'inverse."
 
 #: plugins/negate.c:327
 msgid "The full path of the plugin must be provided."
-msgstr ""
+msgstr "Le chemin complet du plugin doit être spécifié."
 
 #: plugins/negate.c:328
-msgid ""
-"If the wrapped plugin returns STATE_OK, the wrapper will return "
-"STATE_CRITICAL."
-msgstr ""
+msgid "If the wrapped plugin returns OK, the wrapper will return CRITICAL."
+msgstr "Si le plugin executé retourne OK, l'adaptateur retournera CRITIQUE."
 
 #: plugins/negate.c:329
-msgid ""
-"If the wrapped plugin returns STATE_CRITICAL, the wrapper will return "
-"STATE_OK."
-msgstr ""
+msgid "If the wrapped plugin returns CRITICAL, the wrapper will return OK."
+msgstr "Si le plugin executé retourne CRITIQUE, l'adaptateur retournera OK."
 
 #: plugins/negate.c:330
 msgid "Otherwise, the output state of the wrapped plugin is unchanged."
-msgstr ""
+msgstr "Autrement, l'état du plugin executé reste inchangé."
 
 #: plugins/netutils.c:53
 #, c-format
@@ -5293,21 +5270,22 @@ msgstr ""
 "périphérique %s numéro %d.\n"
 
 #: plugins-root/check_dhcp.c:413
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Error: can't get MAC address for this architecture.  Use the --mac option.\n"
-msgstr "Erreur: impossible d'obtenir l'adresse MAC pour cette architecture.\n"
+msgstr ""
+"Erreur: impossible d'obtenir l'adresse MAC sur cette architecture.  Utilisez "
+"l'option --mac.\n"
 
 #: plugins-root/check_dhcp.c:432
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Cannot determine IP address of interface %s\n"
-msgstr ""
-"Erreur: Impossible d'obtenir l'adresse matérielle pour l'interface '%s'\n"
+msgstr "Erreur: Impossible d'obtenir l'adresse IP de l'interface %s\n"
 
 #: plugins-root/check_dhcp.c:440
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Cannot get interface IP address on this platform.\n"
-msgstr "Erreur: impossible d'obtenir l'adresse MAC pour cette architecture.\n"
+msgstr "Erreur: Impossible d'obtenir l'adresse IP sur cette architecture.\n"
 
 #: plugins-root/check_dhcp.c:445
 #, c-format
@@ -5340,11 +5318,11 @@ msgid " via %s\n"
 msgstr " depuis %s\n"
 
 #: plugins-root/check_dhcp.c:611
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "DHCPOFFER XID (%u) did not match DHCPDISCOVER XID (%u) - ignoring packet\n"
 msgstr ""
-"DHCPOFFER XID (%lu) ne correspond pas à DHCPDISCOVER XID (%lu) - paquet "
+"DHCPOFFER XID (%u) ne correspond pas au DHCPDISCOVER XID (%u) - paquet "
 "ignoré\n"
 
 #: plugins-root/check_dhcp.c:633
@@ -5370,9 +5348,9 @@ msgid "send_dhcp_packet result: %d\n"
 msgstr "résultat de send_dchp_packet: %d\n"
 
 #: plugins-root/check_dhcp.c:700
-#, fuzzy, c-format
+#, c-format
 msgid "No (more) data received (nfound: %d)\n"
-msgstr "Plus de données reçues\n"
+msgstr "Plus de données reçues (nfound: %d)\n"
 
 #: plugins-root/check_dhcp.c:719
 #, c-format
@@ -5659,7 +5637,3 @@ msgstr ""
 #: plugins-root/check_icmp.c:1263
 msgid "The -v switch can be specified several times for increased verbosity."
 msgstr ""
-
-#~ msgid "HTTP WARNING: %s - %.3f second response time %s|%s %s\n"
-#~ msgstr ""
-#~ "HTTP AVERTISSEMENT: %s - %.3f secondes de temps de réponse %s|%s %s\n"

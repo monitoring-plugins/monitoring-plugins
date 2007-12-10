@@ -287,7 +287,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	if (server == NULL)
-		usage4 (_("Host not specified"));
+		usage4 (_("Hostname was not supplied"));
 	if (username == NULL)
 		usage4 (_("User not specified"));
 	if (password == NULL)

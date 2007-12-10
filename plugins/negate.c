@@ -206,7 +206,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'o':     /* replacement for OK */
 			if ((state[STATE_OK] = translate_state(optarg)) == ERROR)
-				usage4 (_("Ok must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-4)."));
+				usage4 (_("Ok must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			permute = FALSE;
 			break;
 
@@ -305,7 +305,7 @@ print_help (void)
 	printf (_(UT_HELP_VRSN));
 
 	printf (_(UT_TIMEOUT), DEFAULT_TIMEOUT);
-	printf ("    %s\n", _("Keep timeout lower than the plugin timeout to retain CRITICAL status."));
+	printf ("    %s\n", _("Keep timeout longer than the plugin timeout to retain CRITICAL status."));
 
 	printf(" -o,--ok=STATUS\n");
 	printf(" -w,--warning=STATUS\n");
@@ -325,8 +325,8 @@ print_help (void)
 	printf ("%s\n", _("Notes:"));
 	printf ("%s\n", _("This plugin is a wrapper to take the output of another plugin and invert it."));
 	printf ("%s\n", _("The full path of the plugin must be provided."));
-	printf ("%s\n", _("If the wrapped plugin returns STATE_OK, the wrapper will return STATE_CRITICAL."));
-	printf ("%s\n", _("If the wrapped plugin returns STATE_CRITICAL, the wrapper will return STATE_OK."));
+	printf ("%s\n", _("If the wrapped plugin returns OK, the wrapper will return CRITICAL."));
+	printf ("%s\n", _("If the wrapped plugin returns CRITICAL, the wrapper will return OK."));
 	printf ("%s\n", _("Otherwise, the output state of the wrapped plugin is unchanged."));
 
 	printf (_(UT_SUPPORT));

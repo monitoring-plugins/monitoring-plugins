@@ -391,7 +391,7 @@ print_help (void)
   printf (" %s\n", "-S, --check-slave");
   printf ("    %s\n", _("Check if the slave thread is running properly."));
   printf (" %s\n", "-w, --warning");
-  printf ("    %s\n", _("Exit with WARNING status if slave server is more then INTEGER seconds behind master"));
+  printf ("    %s\n", _("Exit with WARNING status if slave server is more than INTEGER seconds behind master"));
   printf (" %s\n", "-c, --critical");
   printf ("    %s\n", _("Exit with CRITICAL status if slave server is more then INTEGER seconds behind master"));
   printf (" %s\n", _("There are no required arguments. By default, the local database with"));

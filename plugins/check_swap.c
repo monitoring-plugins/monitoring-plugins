@@ -543,8 +543,7 @@ print_help (void)
   printf ("    %s\n", _("Exit with CRITCAL status if less than PERCENT of swap space is free"));
   printf (" %s\n", "-a, --allswaps");
   printf ("    %s\n", _("Conduct comparisons for all swap partitions, one by one"));
-  printf (" %s\n", "-v, --verbose");
-  printf ("    %s\n", _("Verbose output. Up to 3 levels"));
+	printf (_(UT_VERBOSE));
 	printf ("\n");
   printf ("%s\n", _("Notes:"));
   printf (" %s\n", _("On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s.\n"));

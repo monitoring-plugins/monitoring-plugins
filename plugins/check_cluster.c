@@ -244,7 +244,7 @@ print_help(void)
 	printf ("    %s\n", _("non-OK state in order to return a WARNING status level"));
 	printf (" %s\n", "-c, --critical=THRESHOLD");
 	printf ("    %s\n", _("Specifies the range of hosts or services in cluster that must be in a"));
-	printf ("    %s\n", _(" non-OK state in order to return a CRITICAL status level"));
+	printf ("    %s\n", _("non-OK state in order to return a CRITICAL status level"));
 	printf (" %s\n", "-d, --data=LIST");
 	printf ("    %s\n", _("The status codes of the hosts or services in the cluster, separated by"));
 	printf ("    %s\n", _("commas"));

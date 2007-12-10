@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: nagiosplug-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-12-09 21:31-0500\n"
+"POT-Creation-Date: 2007-12-10 02:48-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -215,7 +215,7 @@ msgstr ""
 #: plugins/check_ping.c:597 plugins/check_procs.c:753
 #: plugins/check_radius.c:358 plugins/check_real.c:454
 #: plugins/check_smtp.c:825 plugins/check_snmp.c:1029 plugins/check_ssh.c:308
-#: plugins/check_swap.c:560 plugins/check_tcp.c:654 plugins/check_time.c:373
+#: plugins/check_swap.c:559 plugins/check_tcp.c:654 plugins/check_time.c:373
 #: plugins/check_ups.c:657 plugins/check_users.c:230
 #: plugins/check_ide_smart.c:527 plugins/negate.c:340 plugins/urlize.c:204
 #: plugins-root/check_dhcp.c:1426 plugins-root/check_icmp.c:1278
@@ -253,7 +253,7 @@ msgid "non-OK state in order to return a WARNING status level"
 msgstr ""
 
 #: plugins/check_cluster.c:247
-msgid " non-OK state in order to return a CRITICAL status level"
+msgid "non-OK state in order to return a CRITICAL status level"
 msgstr ""
 
 #: plugins/check_cluster.c:249
@@ -269,7 +269,7 @@ msgstr ""
 #: plugins/check_mrtgtraf.c:361 plugins/check_nt.c:693 plugins/check_ntp.c:856
 #: plugins/check_ntp_peer.c:650 plugins/check_ntp_time.c:607
 #: plugins/check_nwstat.c:1673 plugins/check_overcr.c:452
-#: plugins/check_swap.c:549 plugins/check_ups.c:633 plugins/negate.c:325
+#: plugins/check_swap.c:548 plugins/check_ups.c:633 plugins/negate.c:325
 #, c-format
 msgid "Notes:"
 msgstr ""
@@ -814,7 +814,7 @@ msgstr ""
 
 #: plugins/check_fping.c:319 plugins/check_ntp.c:733
 #: plugins/check_ntp_peer.c:512 plugins/check_ntp_time.c:518
-#: plugins/check_time.c:323
+#: plugins/check_radius.c:290 plugins/check_time.c:323
 msgid "Hostname was not supplied"
 msgstr ""
 
@@ -1955,7 +1955,7 @@ msgstr ""
 
 #: plugins/check_mysql.c:394
 msgid ""
-"Exit with WARNING status if slave server is more then INTEGER seconds behind "
+"Exit with WARNING status if slave server is more than INTEGER seconds behind "
 "master"
 msgstr ""
 
@@ -3606,10 +3606,6 @@ msgstr ""
 msgid "Number of retries must be a positive integer"
 msgstr ""
 
-#: plugins/check_radius.c:290
-msgid "Host not specified"
-msgstr ""
-
 #: plugins/check_radius.c:292
 msgid "User not specified"
 msgstr ""
@@ -4071,7 +4067,7 @@ msgid "SNMPv3 authentication password"
 msgstr ""
 
 #: plugins/check_snmp.c:960
-msgid "SNMPv3 crypt passwd (DES)"
+msgid "SNMPv3 privacy password"
 msgstr ""
 
 #: plugins/check_snmp.c:964
@@ -4323,11 +4319,7 @@ msgstr ""
 msgid "Conduct comparisons for all swap partitions, one by one"
 msgstr ""
 
-#: plugins/check_swap.c:547
-msgid "Verbose output. Up to 3 levels"
-msgstr ""
-
-#: plugins/check_swap.c:550
+#: plugins/check_swap.c:549
 msgid "On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s.\n"
 msgstr ""
 
@@ -4796,7 +4788,7 @@ msgstr ""
 #: plugins/negate.c:209
 msgid ""
 "Ok must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-"
-"4)."
+"3)."
 msgstr ""
 
 #: plugins/negate.c:215
@@ -4831,7 +4823,7 @@ msgid "Additional switches can be used to control which state becomes what."
 msgstr ""
 
 #: plugins/negate.c:308
-msgid "Keep timeout lower than the plugin timeout to retain CRITICAL status."
+msgid "Keep timeout longer than the plugin timeout to retain CRITICAL status."
 msgstr ""
 
 #: plugins/negate.c:314
@@ -4869,15 +4861,11 @@ msgid "The full path of the plugin must be provided."
 msgstr ""
 
 #: plugins/negate.c:328
-msgid ""
-"If the wrapped plugin returns STATE_OK, the wrapper will return "
-"STATE_CRITICAL."
+msgid "If the wrapped plugin returns OK, the wrapper will return CRITICAL."
 msgstr ""
 
 #: plugins/negate.c:329
-msgid ""
-"If the wrapped plugin returns STATE_CRITICAL, the wrapper will return "
-"STATE_OK."
+msgid "If the wrapped plugin returns CRITICAL, the wrapper will return OK."
 msgstr ""
 
 #: plugins/negate.c:330
