@@ -77,6 +77,7 @@ static void
 get_threshold(char *arg, double *th)
 {
 	size_t i, n;
+	int valid = 0;
 	char *str = arg, *p;
 
 	n = strlen(arg);
@@ -84,12 +85,13 @@ get_threshold(char *arg, double *th)
 		th[i] = strtod(str, &p);
 		if(p == str) break;
 
+		valid = 1;
 		str = p + 1;
 		if(n <= (size_t)(str - arg)) break;
 	}
 
 	/* empty argument or non-floatish, so warn about it and die */
-	if(!i) usage (_("Warning threshold must be float or float triplet!\n"));
+	if(!i && !valid) usage (_("Warning threshold must be float or float triplet!\n"));
 
 	if(i != 2) {
 		/* one or more numbers were given, so fill array with last
