@@ -661,7 +661,7 @@ void print_help(void){
 
 	printf("\n");
 	printf("%s\n", _("Examples:"));
-	printf(" %s\n", _("Normal NTP server check:"));
+	printf(" %s\n", _("Simple NTP server check:"));
 	printf("  %s\n", ("./check_ntp_peer -H ntpserv -w 0.5 -c 1"));
 	printf(" %s\n", _("Check jitter too, avoiding critical notifications if jitter isn't available"));
 	printf(" %s\n", _("(See Notes above for more details on thresholds formats):"));
