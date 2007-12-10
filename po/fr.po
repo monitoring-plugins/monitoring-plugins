@@ -2550,25 +2550,24 @@ msgid "Returns UNKNOWN instead of CRITICAL if offset cannot be found"
 msgstr "Retourne INCONNU au lieu de CRITIQUE si le décalage est inconnu"
 
 #: plugins/check_ntp_time.c:608
-#, fuzzy
 msgid "This plugin checks the clock offset between the local host and a"
-msgstr "Ce plugin vérifie la place utilisé sur un système de fichier monté"
+msgstr "Ce plugin vérifie la variation de l'horloge entre se serveur local et"
 
 #: plugins/check_ntp_time.c:609
 msgid "remote NTP server. It is independent of any commandline programs or"
-msgstr ""
+msgstr "le serveur NTP distant. Il ne fait aucun recours aux programmes de"
 
 #: plugins/check_ntp_time.c:610
 msgid "external libraries."
-msgstr ""
+msgstr "la ligne de commande ou libraries externes."
 
 #: plugins/check_ntp_time.c:611
 msgid "If you'd rather want to monitor an NTP server, please use"
-msgstr ""
+msgstr "Si vous voulez plutôt surveiller un serveur NTP, veuillez"
 
 #: plugins/check_ntp_time.c:612
 msgid "check_ntp_peer."
-msgstr ""
+msgstr "utiliser check_ntp_peer."
 
 #: plugins/check_nwstat.c:198
 #, c-format
