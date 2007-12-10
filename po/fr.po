@@ -301,7 +301,7 @@ msgstr "Recherche de: '%s'\n"
 
 #: plugins/check_dig.c:110
 msgid "dig returned an error status"
-msgstr "dig à renvoyé un message d'erreur"
+msgstr "dig à renvoyé un état d'erreur"
 
 #: plugins/check_dig.c:135
 msgid "Server not found in ANSWER SECTION"
@@ -435,8 +435,8 @@ msgstr "Ce plugin vérifie la place utilisé sur un système de fichier monté"
 msgid ""
 "and generates an alert if free space is less than one of the threshold values"
 msgstr ""
-"et génère une alerte si la place disponible est plus petite qu'une des "
-"valeurs fournies"
+"et génère une alerte si la place disponible est plus petite qu'un des seuils "
+"fourni"
 
 #: plugins/check_disk.c:903
 msgid "Exit with WARNING status if less than INTEGER units of disk are free"
@@ -720,7 +720,7 @@ msgstr "Le domaine %s n'a pas été trouvé par le serveur\n"
 
 #: plugins/check_dns.c:271
 msgid "Network is unreachable\n"
-msgstr "Le réseau est injoignable\n"
+msgstr "Le réseau est inaccessible\n"
 
 #: plugins/check_dns.c:275
 #, c-format
@@ -825,7 +825,7 @@ msgstr "PING INCONNU - Hôte non trouvé (%s)\n"
 #: plugins/check_fping.c:153
 #, c-format
 msgid "FPING CRITICAL - %s is unreachable\n"
-msgstr "PING CRITIQUE - Hôte injoignable (%s)\n"
+msgstr "PING CRITIQUE - Hôte inaccessible (%s)\n"
 
 #: plugins/check_fping.c:158
 #, c-format
@@ -1305,23 +1305,28 @@ msgstr "HTTP INCONNU - Redirection à un port supérieur à %d - %s://%s:%d%s%s\
 #: plugins/check_http.c:1163
 #, c-format
 msgid "Redirection to %s://%s:%d%s\n"
-msgstr ""
+msgstr "Redirection vers %s://%s:%d%s\n"
 
 #: plugins/check_http.c:1215
 msgid "This plugin tests the HTTP service on the specified host. It can test"
-msgstr "Ce plugin teste le service HTTP sur l'hôte spécifié. Il peut tester"
+msgstr ""
+"Ce plugin teste le service HTTP sur l'hôte spécifié. Il peut tester les"
 
 #: plugins/check_http.c:1216
 msgid "normal (http) and secure (https) servers, follow redirects, search for"
 msgstr ""
+"serveurs normaux (http) et sécurisés (https), suivre les redirections, "
+"rechercher des"
 
 #: plugins/check_http.c:1217
 msgid "strings and regular expressions, check connection times, and report on"
 msgstr ""
+"chaînes de caractères et expressions rationnelles, vérifier le temps de "
+"réponse"
 
 #: plugins/check_http.c:1218
 msgid "certificate expiration times."
-msgstr "Période d'expiration du certificat invalide."
+msgstr "et rapporter la date d'expiration du certificat."
 
 #: plugins/check_http.c:1224
 #, c-format
@@ -2347,7 +2352,7 @@ msgstr "Demande un paramètre -l contennant uniquement la lettre du lecteur."
 
 #: plugins/check_nt.c:670 plugins/check_nt.c:673
 msgid "Warning and critical thresholds can be specified with -w and -c."
-msgstr "Les seuil d'alerte et critiques peuvent être spécifiés avec -w et -c."
+msgstr "Les seuils d'alerte et critiques peuvent être spécifiés avec -w et -c."
 
 #: plugins/check_nt.c:672
 msgid "Memory use."
@@ -2541,7 +2546,7 @@ msgstr ""
 #: plugins/check_ntp_peer.c:654
 msgid "checking the offset with the sync peer, the jitter and stratum. This"
 msgstr ""
-"vérification du décalare avec le pair se synchronisation, la variation "
+"vérification du décalage avec le pair se synchronisation, la variation "
 "(jitter) et le stratum."
 
 #: plugins/check_ntp_peer.c:655
@@ -2563,7 +2568,7 @@ msgstr "Vérification du stratum seulement:"
 
 #: plugins/check_ntp_time.c:590
 msgid "This plugin checks the clock offset with the ntp server"
-msgstr "Ce plugin vérifie la variation de l'horloge avec le serveur ntp"
+msgstr "Ce plugin vérifie le décalage de l'horloge avec le serveur ntp"
 
 #: plugins/check_ntp_time.c:598
 msgid "Returns UNKNOWN instead of CRITICAL if offset cannot be found"
@@ -2571,7 +2576,7 @@ msgstr "Retourne INCONNU au lieu de CRITIQUE si le décalage est inconnu"
 
 #: plugins/check_ntp_time.c:608
 msgid "This plugin checks the clock offset between the local host and a"
-msgstr "Ce plugin vérifie la variation de l'horloge entre se serveur local et"
+msgstr "Ce plugin vérifie le décalage de l'horloge entre se serveur local et"
 
 #: plugins/check_ntp_time.c:609
 msgid "remote NTP server. It is independent of any commandline programs or"
@@ -3365,17 +3370,17 @@ msgstr "CRITIQUE - Le réseau est inaccessible (%s)"
 #: plugins/check_ping.c:516
 #, c-format
 msgid "CRITICAL - Host Unreachable (%s)"
-msgstr "CRITIQUE - Hôte injoignable (%s)"
+msgstr "CRITIQUE - Hôte inaccessible (%s)"
 
 #: plugins/check_ping.c:518
 #, c-format
 msgid "CRITICAL - Bogus ICMP: Port Unreachable (%s)"
-msgstr "CRITIQUE - Paquet ICMP incorrect: Port injoignable (%s)"
+msgstr "CRITIQUE - Paquet ICMP incorrect: Port inaccessible (%s)"
 
 #: plugins/check_ping.c:520
 #, c-format
 msgid "CRITICAL - Bogus ICMP: Protocol Unreachable (%s)"
-msgstr "CRITIQUE - Paquet ICMP incorrect: Protocole injoignable (%s)"
+msgstr "CRITIQUE - Paquet ICMP incorrect: Protocole inaccessible (%s)"
 
 #: plugins/check_ping.c:522
 #, c-format
