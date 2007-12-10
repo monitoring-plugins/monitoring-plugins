@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: nagiosplug-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-12-09 18:35-0500\n"
+"POT-Creation-Date: 2007-12-10 02:46+0100\n"
 "PO-Revision-Date: 2007-12-09 12:13-0500\n"
 "Last-Translator: Thomas Guyot-Sionnest <dermoth@aei.ca>\n"
 "Language-Team: Français <fr@li.org>\n"
@@ -21,7 +21,7 @@ msgstr ""
 #: plugins/check_by_ssh.c:83 plugins/check_cluster.c:75 plugins/check_dig.c:89
 #: plugins/check_disk.c:198 plugins/check_dns.c:93 plugins/check_dummy.c:59
 #: plugins/check_fping.c:89 plugins/check_game.c:84 plugins/check_hpjd.c:106
-#: plugins/check_http.c:150 plugins/check_ldap.c:108 plugins/check_load.c:124
+#: plugins/check_http.c:150 plugins/check_ldap.c:108 plugins/check_load.c:126
 #: plugins/check_mrtgtraf.c:83 plugins/check_mysql.c:88
 #: plugins/check_nagios.c:94 plugins/check_nt.c:126 plugins/check_ntp.c:763
 #: plugins/check_ntp_peer.c:548 plugins/check_ntp_time.c:540
@@ -215,7 +215,7 @@ msgstr "Exemples:"
 #: plugins/check_dig.c:336 plugins/check_disk.c:970 plugins/check_dns.c:447
 #: plugins/check_dummy.c:129 plugins/check_fping.c:407
 #: plugins/check_game.c:334 plugins/check_hpjd.c:415 plugins/check_http.c:1331
-#: plugins/check_ldap.c:449 plugins/check_load.c:326 plugins/check_mrtg.c:383
+#: plugins/check_ldap.c:449 plugins/check_load.c:328 plugins/check_mrtg.c:383
 #: plugins/check_mysql.c:407 plugins/check_nagios.c:313 plugins/check_nt.c:707
 #: plugins/check_ntp.c:875 plugins/check_ntp_peer.c:678
 #: plugins/check_ntp_time.c:628 plugins/check_nwstat.c:1688
@@ -360,7 +360,7 @@ msgid "DISK %s: %s not found\n"
 msgstr "DISK %s: %s non trouvé\n"
 
 #: plugins/check_disk.c:220 plugins/check_disk.c:985 plugins/check_dns.c:208
-#: plugins/check_dummy.c:81 plugins/check_mysql.c:214
+#: plugins/check_dummy.c:81 plugins/check_http.c:947 plugins/check_mysql.c:214
 #: plugins/check_nagios.c:107 plugins/check_nagios.c:171
 #: plugins/check_nagios.c:175 plugins/check_procs.c:302
 #, c-format
@@ -632,8 +632,9 @@ msgstr "serveur %s n'est pas autoritaire pour %s"
 msgid "OK"
 msgstr "OK"
 
-#: plugins/check_dns.c:206 plugins/check_dummy.c:78 plugins/check_mysql.c:211
-#: plugins/check_nagios.c:185 plugins/check_procs.c:297
+#: plugins/check_dns.c:206 plugins/check_dummy.c:78 plugins/check_http.c:949
+#: plugins/check_mysql.c:211 plugins/check_nagios.c:185
+#: plugins/check_procs.c:297
 #, c-format
 msgid "WARNING"
 msgstr "AVERTISSEMENT"
@@ -807,7 +808,7 @@ msgstr "du paramètre <state> avec un texte optionnel"
 msgid "Could not open pipe: %s\n"
 msgstr "Impossible d'ouvrir le pipe: %s\n"
 
-#: plugins/check_fping.c:109 plugins/check_hpjd.c:137 plugins/check_load.c:155
+#: plugins/check_fping.c:109 plugins/check_hpjd.c:137 plugins/check_load.c:157
 #: plugins/check_procs.c:165 plugins/check_snmp.c:217 plugins/check_swap.c:184
 #: plugins/check_users.c:81 plugins/urlize.c:123
 #, c-format
@@ -1203,15 +1204,10 @@ msgstr "HTTP AVERTISSEMENT"
 msgid "HTTP CRITICAL"
 msgstr "HTTP CRITIQUE"
 
-#: plugins/check_http.c:926
+#: plugins/check_http.c:926 plugins/check_http.c:942
 #, c-format
 msgid " - %s - %.3f second response time %s|%s %s\n"
 msgstr " - %s - %.3f secondes de temps de réponse %s|%s %s\n"
-
-#: plugins/check_http.c:942
-#, c-format
-msgid "HTTP WARNING: %s - %.3f second response time %s|%s %s\n"
-msgstr "HTTP AVERTISSEMENT: %s - %.3f secondes de temps de réponse %s|%s %s\n"
 
 #: plugins/check_http.c:956 plugins/check_http.c:973
 #, c-format
@@ -1657,50 +1653,50 @@ msgstr ""
 msgid "to define the behaviour explicitly instead."
 msgstr ""
 
-#: plugins/check_load.c:92
+#: plugins/check_load.c:94
 msgid "Warning threshold must be float or float triplet!\n"
 msgstr "Le seuil d'alerte doit être un nombre à virgule flottante!\n"
 
-#: plugins/check_load.c:134 plugins/check_load.c:150
+#: plugins/check_load.c:136 plugins/check_load.c:152
 #, c-format
 msgid "Error opening %s\n"
 msgstr "Erreur à l'ouverture de %s\n"
 
-#: plugins/check_load.c:162
+#: plugins/check_load.c:164
 #, c-format
 msgid "Error code %d returned in %s\n"
 msgstr "Le code erreur %d à été retourné par %s\n"
 
-#: plugins/check_load.c:177
+#: plugins/check_load.c:179
 #, c-format
 msgid "Error in getloadavg()\n"
 msgstr "Erreur dans la fonction getloadavg()\n"
 
-#: plugins/check_load.c:180 plugins/check_load.c:182
+#: plugins/check_load.c:182 plugins/check_load.c:184
 #, c-format
 msgid "Error processing %s\n"
 msgstr "Erreur lors de l'utilisation de %s\n"
 
-#: plugins/check_load.c:191
+#: plugins/check_load.c:193
 #, c-format
 msgid "load average: %.2f, %.2f, %.2f"
 msgstr "Charge moyenne: %.2f, %.2f, %.2f"
 
-#: plugins/check_load.c:284
+#: plugins/check_load.c:286
 #, c-format
 msgid "Critical threshold for %d-minute load average is not specified\n"
 msgstr ""
 "Le seuil critique pour la charge système après %d minutes n'est pas "
 "spécifié\n"
 
-#: plugins/check_load.c:286
+#: plugins/check_load.c:288
 #, c-format
 msgid "Warning threshold for %d-minute load average is not specified\n"
 msgstr ""
 "Le seuil d'avertissement pour la charge système après %d minutes n'est pas "
 "spécifié\n"
 
-#: plugins/check_load.c:288
+#: plugins/check_load.c:290
 #, c-format
 msgid ""
 "Parameter inconsistency: %d-minute \"warning load\" is greater than "
@@ -1709,25 +1705,25 @@ msgstr ""
 "Arguments Incorrects: %d-minute \"alerte charge système\" est plus grand que "
 "\"alerte critique charge système\"\n"
 
-#: plugins/check_load.c:304
+#: plugins/check_load.c:306
 #, c-format
 msgid "This plugin tests the current system load average."
 msgstr "Ce plugin teste la charge système actuelle."
 
-#: plugins/check_load.c:313
+#: plugins/check_load.c:315
 msgid "Exit with WARNING status if load average exceeds WLOADn"
 msgstr ""
 "Sortir avec un résultat AVERTISSEMENT si la charge moyenne dépasse WLOAD"
 
-#: plugins/check_load.c:315
+#: plugins/check_load.c:317
 msgid "Exit with CRITICAL status if load average exceed CLOADn"
 msgstr "Sortir avec un résultat CRITIQUE si la charge moyenne excède CLOAD"
 
-#: plugins/check_load.c:316
+#: plugins/check_load.c:318
 msgid "the load average format is the same used by \"uptime\" and \"w\""
 msgstr ""
 
-#: plugins/check_load.c:318
+#: plugins/check_load.c:320
 msgid "Divide the load averages by the number of CPUs (when possible)"
 msgstr ""
 
@@ -5634,6 +5630,10 @@ msgstr ""
 #: plugins-root/check_icmp.c:1263
 msgid "The -v switch can be specified several times for increased verbosity."
 msgstr ""
+
+#~ msgid "HTTP WARNING: %s - %.3f second response time %s|%s %s\n"
+#~ msgstr ""
+#~ "HTTP AVERTISSEMENT: %s - %.3f secondes de temps de réponse %s|%s %s\n"
 
 #~ msgid "%s does not exist\n"
 #~ msgstr "%s n'existe pas\n"
