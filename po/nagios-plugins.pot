@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: nagiosplug-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-12-09 21:07-0500\n"
+"POT-Creation-Date: 2007-12-09 21:31-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2331,9 +2331,34 @@ msgstr ""
 msgid "and on the client service it's connecting to."
 msgstr ""
 
+#: plugins/check_ntp.c:800 plugins/check_ntp_peer.c:581
+#: plugins/check_ntp_time.c:559
+msgid "NTP CRITICAL:"
+msgstr ""
+
+#: plugins/check_ntp.c:803 plugins/check_ntp_peer.c:584
+#: plugins/check_ntp_time.c:562
+msgid "NTP WARNING:"
+msgstr ""
+
+#: plugins/check_ntp.c:806 plugins/check_ntp_peer.c:587
+#: plugins/check_ntp_time.c:565
+msgid "NTP OK:"
+msgstr ""
+
+#: plugins/check_ntp.c:809 plugins/check_ntp_peer.c:590
+#: plugins/check_ntp_time.c:568
+msgid "NTP UNKNOWN:"
+msgstr ""
+
 #: plugins/check_ntp.c:813 plugins/check_ntp_peer.c:597
 #: plugins/check_ntp_time.c:572
 msgid "Offset unknown"
+msgstr ""
+
+#: plugins/check_ntp.c:816 plugins/check_ntp_peer.c:600
+#: plugins/check_ntp_time.c:575
+msgid "Offset"
 msgstr ""
 
 #: plugins/check_ntp.c:837 plugins/check_ntp_peer.c:625

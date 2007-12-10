@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nagiosplug\n"
 "Report-Msgid-Bugs-To: nagiosplug-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-12-09 21:07-0500\n"
+"POT-Creation-Date: 2007-12-09 21:31-0500\n"
 "PO-Revision-Date: 2004-12-23 17:46+0100\n"
 "Last-Translator:  <>\n"
 "Language-Team: English <en@li.org>\n"
@@ -74,12 +74,12 @@ msgstr "Port muss ein positiver Integer sein"
 #: plugins/check_by_ssh.c:270
 #, fuzzy
 msgid "skip-stdout argument must be an integer"
-msgstr "skip lines muss ein Integer sein"
+msgstr "skip-stdout argument muss ein Integer sein"
 
 #: plugins/check_by_ssh.c:278
 #, fuzzy
 msgid "skip-stderr argument must be an integer"
-msgstr "skip lines muss ein Integer sein"
+msgstr "skip-stderr argument muss ein Integer sein"
 
 #: plugins/check_by_ssh.c:296
 #, c-format
@@ -317,43 +317,37 @@ msgstr "nicht existierender Host/Domain"
 #: plugins/check_dig.c:229
 #, fuzzy, c-format
 msgid "Port must be a positive integer - %s"
-msgstr "Port muss ein positiver Integer sein"
+msgstr "Port muss ein positiver Integer sein - %s"
 
 #: plugins/check_dig.c:240
 #, fuzzy, c-format
 msgid "Warning interval must be a positive integer - %s"
-msgstr "Warning interval muss ein positiver Integer sein"
+msgstr "Warning interval muss ein positiver Integer sein - %s"
 
 #: plugins/check_dig.c:248
 #, fuzzy, c-format
 msgid "Critical interval must be a positive integer - %s"
-msgstr "Critical interval muss ein positiver Integer sein"
+msgstr "Critical interval muss ein positiver Integer sein - %s"
 
 #: plugins/check_dig.c:256
 #, fuzzy, c-format
 msgid "Timeout interval must be a positive integer - %s"
-msgstr "Timeout interval muss ein positiver Integer sein"
+msgstr "Timeout interval muss ein positiver Integer sein - %s"
 
 #: plugins/check_dig.c:309
 #, fuzzy, c-format
 msgid "This plugin test the DNS service on the specified host using dig"
-msgstr ""
-"Testet den DNS Dienst auf dem angegebenen Host mit dig\n"
-"\n"
+msgstr "Testet den DNS Dienst auf dem angegebenen Host mit dig"
 
 #: plugins/check_dig.c:320
 #, fuzzy
 msgid "machine name to lookup"
-msgstr ""
-" -l, --lookup=STRING\n"
-"   zu prüfender Hostname\n"
+msgstr "zu prüfender Hostname"
 
 #: plugins/check_dig.c:322
 #, fuzzy
 msgid "record type to lookup (default: A)"
-msgstr ""
-" -T, --record_type=STRING\n"
-"   abzufragender Datensatztyp (Default: A)\n"
+msgstr "abzufragender Datensatztyp (Default: A)"
 
 #: plugins/check_dig.c:324
 #, fuzzy
@@ -361,9 +355,8 @@ msgid ""
 "an address expected to be in the answer section.if not set, uses whatever "
 "was in -l"
 msgstr ""
-" -a, --expected_address=STRING\n"
-"   Adresse die in der ANSWER SECTION erwartet wird.\n"
-"   wenn nicht gesetzt, ubernommen aus -l\n"
+"Adresse die in der ANSWER SECTION erwartet wird."
+"wenn nicht gesetzt, ubernommen aus -l"
 
 #: plugins/check_disk.c:220
 #, fuzzy, c-format
@@ -429,9 +422,7 @@ msgstr ""
 #: plugins/check_disk.c:791
 #, fuzzy
 msgid "Unknown argument"
-msgstr ""
-"%s: Unbekanntes Argument: %s\n"
-"\n"
+msgstr "Unbekanntes Argument"
 
 #: plugins/check_disk.c:825
 #, c-format
@@ -442,21 +433,15 @@ msgstr ""
 #, fuzzy
 msgid ""
 "This plugin checks the amount of used disk space on a mounted file system"
-msgstr ""
-"Dieses Plugin prüft den freien Speicher auf einem gemounteten Filesystem\n"
-"und erzeugt einen Alarm wenn einer der angegebenen Schwellwerte "
-"unterschritten wird.\n"
-"\n"
+msgstr "Dieses Plugin prüft den freien Speicher auf einem gemounteten Filesystem"
 
 #: plugins/check_disk.c:894
 #, fuzzy
 msgid ""
 "and generates an alert if free space is less than one of the threshold values"
 msgstr ""
-"Dieses Plugin prüft den freien Speicher auf einem gemounteten Filesystem\n"
 "und erzeugt einen Alarm wenn einer der angegebenen Schwellwerte "
-"unterschritten wird.\n"
-"\n"
+"unterschritten wird."
 
 #: plugins/check_disk.c:903
 msgid "Exit with WARNING status if less than INTEGER units of disk are free"
@@ -2402,9 +2387,34 @@ msgstr ""
 msgid "and on the client service it's connecting to."
 msgstr ""
 
+#: plugins/check_ntp.c:800 plugins/check_ntp_peer.c:581
+#: plugins/check_ntp_time.c:559
+msgid "NTP CRITICAL:"
+msgstr "NTP CRITICAL:"
+
+#: plugins/check_ntp.c:803 plugins/check_ntp_peer.c:584
+#: plugins/check_ntp_time.c:562
+msgid "NTP WARNING:"
+msgstr "NTP WARNING:"
+
+#: plugins/check_ntp.c:806 plugins/check_ntp_peer.c:587
+#: plugins/check_ntp_time.c:565
+msgid "NTP OK:"
+msgstr "NTP OK:"
+
+#: plugins/check_ntp.c:809 plugins/check_ntp_peer.c:590
+#: plugins/check_ntp_time.c:568
+msgid "NTP UNKNOWN:"
+msgstr "NTP UNKNOWN:"
+
 #: plugins/check_ntp.c:813 plugins/check_ntp_peer.c:597
 #: plugins/check_ntp_time.c:572
 msgid "Offset unknown"
+msgstr ""
+
+#: plugins/check_ntp.c:816 plugins/check_ntp_peer.c:600
+#: plugins/check_ntp_time.c:575
+msgid "Offset"
 msgstr ""
 
 #: plugins/check_ntp.c:837 plugins/check_ntp_peer.c:625

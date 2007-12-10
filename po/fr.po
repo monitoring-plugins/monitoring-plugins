@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: nagiosplug-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-12-09 21:07-0500\n"
+"POT-Creation-Date: 2007-12-09 21:31-0500\n"
 "PO-Revision-Date: 2007-12-09 20:20-0500\n"
 "Last-Translator: Thomas Guyot-Sionnest <dermoth@aei.ca>\n"
 "Language-Team:  <en@li.org>\n"
@@ -2319,24 +2319,24 @@ msgstr "Moyenne de la charge CPU sur les dernières x minutes."
 
 #: plugins/check_nt.c:659
 msgid "Request a -l parameter with the following syntax:"
-msgstr ""
+msgstr "Demande un paramètre -l avec la syntaxe suivante:"
 
 #: plugins/check_nt.c:660
 msgid "-l <minutes range>,<warning threshold>,<critical threshold>."
-msgstr ""
+msgstr "-l <plage de minutes>,<seuil d'avertissement>,<seuil critique>."
 
 #: plugins/check_nt.c:661
 msgid "<minute range> should be less than 24*60."
-msgstr ""
+msgstr "<plage de minutes> devrait être inférieur à 24*60."
 
 #: plugins/check_nt.c:662
 msgid ""
 "Thresholds are percentage and up to 10 requests can be done in one shot."
-msgstr ""
+msgstr "Les seuils sonts en pourcentage et un maximum de 10 requêtes peuvent être effectuées à la fois."
 
 #: plugins/check_nt.c:665
 msgid "Get the uptime of the machine."
-msgstr ""
+msgstr "Obtenir le temps de service de la machine."
 
 #: plugins/check_nt.c:666
 msgid "No specific parameters. No warning or critical threshold"
@@ -2348,7 +2348,7 @@ msgstr "Taille et pourcentage de l'utilisation disque."
 
 #: plugins/check_nt.c:669
 msgid "Request a -l parameter containing the drive letter only."
-msgstr ""
+msgstr "Demande un paramètre -l contennant uniquement la lettre du lecteur."
 
 #: plugins/check_nt.c:670 plugins/check_nt.c:673
 msgid "Warning and critical thresholds can be specified with -w and -c."
@@ -2364,15 +2364,15 @@ msgstr "Vérifier l'état d'un ou plusieurs services."
 
 #: plugins/check_nt.c:676 plugins/check_nt.c:685
 msgid "Request a -l parameters with the following syntax:"
-msgstr ""
+msgstr "Demande un paramètre -l avec la syntaxe suivante:"
 
 #: plugins/check_nt.c:677
 msgid "-l <service1>,<service2>,<service3>,..."
-msgstr ""
+msgstr "-l <service1>,<service2>,<service3>,..."
 
 #: plugins/check_nt.c:678
 msgid "You can specify -d SHOWALL in case you want to see working services"
-msgstr ""
+msgstr "Vous pouvez spécifier -d SHOWALL pour voir les services fonctionnant"
 
 #: plugins/check_nt.c:679
 msgid "in the returned string."
@@ -2388,24 +2388,25 @@ msgstr "Même syntaxe que SERVICESTATE."
 
 #: plugins/check_nt.c:684
 msgid "Check any performance counter of Windows NT/2000."
-msgstr "Vérifier n'importe quel compteur de performance sur WIndows NT/2000."
+msgstr "Vérifier n'importe quel compteur de performance sur Windows NT/2000."
 
 #: plugins/check_nt.c:686
+#, fuzzy
 msgid "-l \"\\\\<performance object>\\\\counter\",\"<description>"
-msgstr ""
+msgstr "-l \"\\\\<performance object>\\\\compteur\",\"<description>"
 
 #: plugins/check_nt.c:687
 msgid "The <description> parameter is optional and is given to a printf "
-msgstr ""
+msgstr "Le paramètre <description> est optionnel et est passé à la fonction "
 
 #: plugins/check_nt.c:688
 msgid "output command which requires a float parameter."
-msgstr ""
+msgstr "de sortie printf qui demande un paramètre de type float."
 
 #: plugins/check_nt.c:689
 #, c-format
 msgid "If <description> does not include \"%%\", it is used as a label."
-msgstr ""
+msgstr "Si <description> n'inclus pas \"%%\", il est utilisé comme étiquette."
 
 #: plugins/check_nt.c:690
 msgid "Some examples:"
@@ -2415,23 +2416,23 @@ msgstr "Exemples:"
 msgid ""
 "- The NSClient service should be running on the server to get any information"
 msgstr ""
-"- Le service NSClient doit être exécuté sur le serveur pour obtenir les "
+"- Le service NSClient doit rouler sur le serveur pour obtenir les "
 "informations"
 
 #: plugins/check_nt.c:696
 msgid "- Critical thresholds should be lower than warning thresholds"
-msgstr ""
+msgstr "- Les seuils critiques doivent être plus bas que les seuils d'avertissement"
 
 #: plugins/check_nt.c:697
 msgid "- Default port 1248 is sometimes in use by other services. The error"
 msgstr ""
-"- Le port par défaut 1248 est de temps en temps utilisé par d'autres "
+"- Le port par défaut 1248 est parfois utilisé par d'autres "
 "services. L'erreur"
 
 #: plugins/check_nt.c:698
 msgid ""
 "output when this happens contains \"Cannot map xxxxx to protocol number\"."
-msgstr ""
+msgstr "qui en résulte contiens \"Cannot map xxxxx to protocol number\"."
 
 #: plugins/check_nt.c:699
 msgid "One fix for this is to change the port to something else on check_nt "
@@ -2443,10 +2444,35 @@ msgstr ""
 msgid "and on the client service it's connecting to."
 msgstr "et dans le service auquel il se connecte."
 
+#: plugins/check_ntp.c:800 plugins/check_ntp_peer.c:581
+#: plugins/check_ntp_time.c:559
+msgid "NTP CRITICAL:"
+msgstr "NTP CRITIQUE:"
+
+#: plugins/check_ntp.c:803 plugins/check_ntp_peer.c:584
+#: plugins/check_ntp_time.c:562
+msgid "NTP WARNING:"
+msgstr "NTP AVERTISSEMENT:"
+
+#: plugins/check_ntp.c:806 plugins/check_ntp_peer.c:587
+#: plugins/check_ntp_time.c:565
+msgid "NTP OK:"
+msgstr "NTP OK:"
+
+#: plugins/check_ntp.c:809 plugins/check_ntp_peer.c:590
+#: plugins/check_ntp_time.c:568
+msgid "NTP UNKNOWN:"
+msgstr "NTP INCONNU:"
+
 #: plugins/check_ntp.c:813 plugins/check_ntp_peer.c:597
 #: plugins/check_ntp_time.c:572
 msgid "Offset unknown"
 msgstr "Décalage inconnu"
+
+#: plugins/check_ntp.c:816 plugins/check_ntp_peer.c:600
+#: plugins/check_ntp_time.c:575
+msgid "Offset"
+msgstr "Décalage"
 
 #: plugins/check_ntp.c:837 plugins/check_ntp_peer.c:625
 msgid "This plugin checks the selected ntp server"
