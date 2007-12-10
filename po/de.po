@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nagiosplug\n"
 "Report-Msgid-Bugs-To: nagiosplug-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2007-12-10 02:46+0100\n"
+"POT-Creation-Date: 2007-12-09 21:07-0500\n"
 "PO-Revision-Date: 2004-12-23 17:46+0100\n"
 "Last-Translator:  <>\n"
 "Language-Team: English <en@li.org>\n"
@@ -2494,7 +2494,7 @@ msgid "server; please use check_ntp_time for that purpose."
 msgstr ""
 
 #: plugins/check_ntp_peer.c:664
-msgid "Normal NTP server check:"
+msgid "Simple NTP server check:"
 msgstr ""
 
 #: plugins/check_ntp_peer.c:669
