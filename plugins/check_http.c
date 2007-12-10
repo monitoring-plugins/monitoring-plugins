@@ -939,14 +939,14 @@ check_http (void)
   microsec = deltime (tv);
   elapsed_time = (double)microsec / 1.0e6;
   asprintf (&msg,
-            _("HTTP WARNING: %s - %.3f second response time %s|%s %s\n"),
+            _(" - %s - %.3f second response time %s|%s %s\n"),
             status_line, elapsed_time, 
             (display_html ? "</A>" : ""),
             perfd_time (elapsed_time), perfd_size (pagesize));
   if (check_critical_time == TRUE && elapsed_time > critical_time)
-    die (STATE_CRITICAL, "%s", msg);
+    die (STATE_CRITICAL, "HTTP %s: %s", _("CRITICAL"), msg);
   if (check_warning_time == TRUE && elapsed_time > warning_time)
-    die (STATE_WARNING, "%s", msg);
+    die (STATE_WARNING, "HTTP %s: %s", _("WARNING"), msg);
 
   /* Page and Header content checks go here */
   /* these checks should be last */
