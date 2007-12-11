@@ -97,13 +97,13 @@ foreach my $plugin (@PLUGINS2) {
 		like( $res->output, $ntp_okmatch2, "$plugin: Output match OK with jitter and stratum" );
 
 		$res = NPTest->testCmd(
-			"./$plugin -H $ntp_service -w 1000 -c 2000 -W \~:-1 -C 21 -j 100000 -k 200000"
+			"./$plugin -H $ntp_service -w 1000 -c 2000 -W \\~:-1 -C 21 -j 100000 -k 200000"
 			);
 		cmp_ok( $res->return_code, '==', 1, "$plugin: Warning NTP result with jitter and stratum check" );
 		like( $res->output, $ntp_warnmatch2, "$plugin: Output match WARNING with jitter and stratum" );
 
 		$res = NPTest->testCmd(
-			"./$plugin -H $ntp_service -w 1000 -c 2000 -W 20 -C 21 -j 100000 -k \~:-1"
+			"./$plugin -H $ntp_service -w 1000 -c 2000 -W 20 -C 21 -j 100000 -k \\~:-1"
 			);
 		cmp_ok( $res->return_code, '==', 2, "$plugin: Critical NTP result with jitter and stratum check" );
 		like( $res->output, $ntp_critmatch2, "$plugin: Output match CRITICAL with jitter and stratum" );
