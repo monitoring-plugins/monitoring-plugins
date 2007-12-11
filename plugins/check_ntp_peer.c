@@ -264,7 +264,8 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 		/* Attempt to read the largest size packet possible */
 		req.count=htons(MAX_CM_SIZE);
 		DBG(printf("recieving READSTAT response"))
-		read(conn, &req, SIZEOF_NTPCM(req));
+		if(read(conn, &req, SIZEOF_NTPCM(req)) == -1)
+			die(STATE_CRITICAL, "NTP CRITICAL: No response from NTP server\n");
 		DBG(print_ntp_control_message(&req));
 		/* Each peer identifier is 4 bytes in the data section, which
 	 	 * we represent as a ntp_assoc_status_pair datatype.
