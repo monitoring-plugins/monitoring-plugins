@@ -51,7 +51,7 @@ main (int argc, char **argv)
 	int c;
 	int result = UNSET;
 
-	plan_tests(47);
+	plan_tests(50);
 
 	diag ("Running plain echo command, set one");
 
@@ -194,16 +194,31 @@ main (int argc, char **argv)
 	result = UNSET;
 
 	command = (char *)malloc(COMMAND_LINE);
-	strcpy(command, "/bin/grep pattern non-existant-file");
+	strcpy(command, "/bin/sh non-existant-file");
 	result = cmd_run (command, &chld_out, &chld_err, 0);
 
 	ok (chld_out.lines == 0,
-			"Grep returns no stdout when file is missing...");
+			"/bin/sh returns no stdout when file is missing...");
 	ok (chld_err.lines == 1,
 			"...but does give an error line");
 	ok (strstr(chld_err.line[0],"non-existant-file") != NULL, "And missing filename is in error message");
-	ok (result == 2, "Get return code 2 from grep");
+	ok (result == 127, "Get return code 127 from /bin/sh");
 
+
+	/* ensure everything is empty again */
+	memset (&chld_out, 0, sizeof (output));
+	memset (&chld_err, 0, sizeof (output));
+	result = UNSET;
+
+	command = (char *)malloc(COMMAND_LINE);
+	strcpy(command, "/bin/non-existant-command");
+	result = cmd_run (command, &chld_out, &chld_err, 0);
+
+	ok (chld_out.lines == 0,
+			"/bin/non-existant-command returns no stdout...");
+	ok (chld_err.lines == 0,
+			"...and no stderr output either");
+	ok (result == 3, "Get return code 3 = UNKNOWN when command does not exist");
 
 
 	return exit_status ();
