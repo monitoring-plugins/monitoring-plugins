@@ -71,6 +71,10 @@ int main(int argc, char **argv){
 	int return_code=STATE_OK;
 	thresholds *thresholds = NULL;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	if(process_arguments(argc,argv)==ERROR)
 		usage(_("Could not parse arguments"));
 

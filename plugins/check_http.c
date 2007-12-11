@@ -140,6 +140,10 @@ main (int argc, char **argv)
 {
   int result = STATE_UNKNOWN;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
   /* Set default URL. Must be malloced for subsequent realloc if --onredirect=follow */
   server_url = strdup(HTTP_URL);
   server_url_length = strlen(server_url);

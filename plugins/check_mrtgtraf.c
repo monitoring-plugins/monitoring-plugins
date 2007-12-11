@@ -79,6 +79,10 @@ main (int argc, char **argv)
 	char incoming_speed_rating[8];
 	char outgoing_speed_rating[8];
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 

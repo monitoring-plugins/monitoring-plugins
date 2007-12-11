@@ -544,6 +544,10 @@ int main(int argc, char *argv[]){
 	double offset=0, jitter=0;
 	char *result_line, *perfdata_line;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
