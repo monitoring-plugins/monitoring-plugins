@@ -22,11 +22,11 @@ dist-hook:
 install-root:
 	cd plugins-root && $(MAKE) $@
 
-test:
-	cd lib && $(MAKE) test
-	if test "$(PERLMODS_DIR)" != ""; then cd perlmods && $(MAKE) test; fi
-	cd plugins && $(MAKE) test
-	cd plugins-scripts && $(MAKE) test
+test test-debug:
+	cd lib && $(MAKE) $@
+	if test "$(PERLMODS_DIR)" != ""; then cd perlmods && $(MAKE) $@; fi
+	cd plugins && $(MAKE) $@
+	cd plugins-scripts && $(MAKE) $@
 
 nagios-plugins.spec: nagios-plugins.spec.in
 	sed "s/%%{VERSION}/${VERSION}/;s/%%{RELEASE}/${RELEASE}/;s/^%%{requires}$$//" $? > $@

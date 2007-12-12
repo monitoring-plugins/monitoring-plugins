@@ -6,7 +6,8 @@ all-local:
 install-exec-local:
 	$(top_srcdir)/tools/build_perl_modules -d $(perlmoduledir) -i .
 
-test:
+# Don't run test-debug differently here yet
+test test-debug:
 	$(top_srcdir)/tools/build_perl_modules -d $(perlmoduledir) -t .
 
 clean-local:

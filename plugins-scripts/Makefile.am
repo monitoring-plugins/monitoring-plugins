@@ -22,6 +22,10 @@ test:
 	perl -I $(top_builddir) -I $(top_srcdir) ../test.pl
 	perl -I $(top_builddir) -I $(top_srcdir) ../test.pl t/utils.t	# utils.t is excluded from above, so manually ask to test
 
+test-debug:
+	NPTEST_DEBUG=1 HARNESS_VERBOSE=1 perl -I $(top_builddir) -I $(top_srcdir) ../test.pl
+	NPTEST_DEBUG=1 HARNESS_VERBOSE=1 perl -I $(top_builddir) -I $(top_srcdir) ../test.pl t/utils.t	# utils.t is excluded from above, so manually ask to test
+
 CLEANFILES=$(libexec_SCRIPTS)
 
 .pl :

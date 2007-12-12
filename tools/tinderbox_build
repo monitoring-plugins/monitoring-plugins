@@ -266,8 +266,8 @@ sub make {
 
 sub maketest {
         # Tests
-        print LOG "LANG=C make test 2>&1\n";
-        open( MAKE, "LANG=C make test && make install DESTDIR=$TmpDir/tinderbox_build.$$ && make install-strip DESTDIR=$TmpDir/tinderbox_build2.$$ 2>&1 |");
+        print LOG "LANG=C make test-debug 2>&1\n";
+        open( MAKE, "LANG=C make test-debug && make install DESTDIR=$TmpDir/tinderbox_build.$$ && make install-strip DESTDIR=$TmpDir/tinderbox_build2.$$ 2>&1 |");
 	while ( <MAKE> ) {
 		print $_;
 		print LOG $_;

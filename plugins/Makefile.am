@@ -44,6 +44,9 @@ TESTS = @PLUGIN_TEST@
 test:
 	perl -I $(top_builddir) -I $(top_srcdir) ../test.pl
 
+test-debug:
+	NPTEST_DEBUG=1 HARNESS_VERBOSE=1 perl -I $(top_builddir) -I $(top_srcdir) ../test.pl
+
 ##############################################################################
 # the actual targets
 

@@ -39,5 +39,8 @@ test_base64_LDFLAGS = -L/usr/local/lib -ltap
 test_base64_LDADD = ../base64.o 
 
 test: ${noinst_PROGRAMS}
+	perl -MTest::Harness -e '$$Test::Harness::switches=""; runtests(map {$$_ .= ".t"} @ARGV)' $(EXTRA_PROGRAMS)
+
+test-debug: ${noinst_PROGRAMS}
 	perl -MTest::Harness -e '$$Test::Harness::verbose=1; $$Test::Harness::switches=""; runtests(map {$$_ .= ".t"} @ARGV)' $(EXTRA_PROGRAMS)
 
