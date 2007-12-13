@@ -1,23 +1,24 @@
 This file documents the major additions and syntax changes between releases.
 
 1.4.11 13th December 2007
-	Fix check_http regression in 1.4.10 where following redirects to
+	Fixed check_http regression in 1.4.10 where following redirects to
 	  relative URLs on virtual hosts failed if both "-H" and "-I" were used
-	check_ntp now return UNKNOWN instead of WARNING if jitter is unavailable (jitter=-1.000000)
-	  as long as the thresholds range inculde -1. If no offset threshold is specified
+	Merged two new checks that deprecates check_ntp: check_ntp_peer and check_ntp_time.
+	  You should read the --help output so see which one is suitable for you. check_ntp_peer
+	  implement stratum thresholds support (feature request #1703823).
+	check_ntp now returns UNKNOWN instead of WARNING if jitter is unavailable (jitter=-1.000000)
+	  as long as the thresholds range include -1. If no offset threshold is specified
 	  and the offset is unavailable, will return UNKNOWN as well.
 	  NOTE: If jitter thresholds are specified as integers it will return CRITICAL if jitter
 	  is "-1" as the default range starts at 0. See Examples in --help output.
-	Fix broken usage2 in check_snmp and check_cluster
-	check_cluster now accept all valid characters in its thresholds ("-", "@", "~")
-	Merge two new checks that deprecates check_ntp: check_ntp_peer and check_ntp_time.
-	  You should read the --help output so see which one is suitable for you. check_ntp_peer
-	  implement stratum thresholds support (feature request #1703823).
-	Fix check_disk reporting OK if disk usage grows over 100% (bug #1348746).
+	Fixed broken usage2 in check_snmp and check_cluster
+	check_cluster now accepts all valid characters in its thresholds ("-", "@", "~")
+	Fixed check_disk reporting OK if disk usage grows over 100% (bug #1348746).
 	  The problem happens to be in Gnulib but a workaround have been implemented in check_disk.c
-	Fix check_load argument handling when not passing triplets (bug #1831890)
-	Tinderbox builds now run tests in a verbose mode
-	Update to Nagios::Plugin 0.22
+	Fixed check_load argument handling when not passing triplets (bug #1831890)
+	Fixed buffer overflow in check_snmp (CVE-2007-5623)
+	Tinderbox builds now runs tests in a verbose mode
+	Updated Nagios::Plugin to 0.22
 	VPATH problem fixed for compiling plugins-root
 
 1.4.10 28th September 2007
