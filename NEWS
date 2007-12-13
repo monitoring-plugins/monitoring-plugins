@@ -18,6 +18,7 @@ This file documents the major additions and syntax changes between releases.
 	Fix check_load argument handling when not passing triplets (bug #1831890)
 	Tinderbox builds now run tests in a verbose mode
 	Update to Nagios::Plugin 0.22
+	VPATH problem fixed for compiling plugins-root
 
 1.4.10 28th September 2007
 	Fix check_http buffer overflow vulnerability when following HTTP redirects
