@@ -1,6 +1,6 @@
 This file documents the major additions and syntax changes between releases.
 
-1.4.11 or 1.5 ??
+1.4.11 13th December 2007
 	Fix check_http regression in 1.4.10 where following redirects to
 	  relative URLs on virtual hosts failed if both "-H" and "-I" were used
 	check_ntp now return UNKNOWN instead of WARNING if jitter is unavailable (jitter=-1.000000)

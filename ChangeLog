@@ -1,15 +1,308 @@
+2007-12-13 22:22  tonvoon
+
+	* [r1872] NEWS, THANKS.in, plugins-root/Makefile.am:
+	  Fixed VPATH problem in plugins-root (Tom Payerle - 1789000)
+
+2007-12-13 22:09  tonvoon
+
+	* [r1871] NEWS, perlmods/Nagios-Plugin-0.21.tar.gz,
+	  perlmods/Nagios-Plugin-0.22.tar.gz:
+	  Update to latest Nagios::Plugin
+
+2007-12-12 08:52  dermoth
+
+	* [r1867] ., gl, lib, lib/tests, plugins:
+	  Add build files/binaries to the svn:ignore propt
+
+2007-12-12 01:27  tonvoon
+
+	* [r1866] Makefile.am, NEWS, lib/Makefile.am,
+	  lib/tests/Makefile.am, perlmods/Makefile.am,
+	  plugins-scripts/Makefile.am, plugins/Makefile.am,
+	  tools/tinderbox_build:
+	  Run tinderbox builds in a test debug mode using "make test-debug"
+
+2007-12-11 13:54  dermoth
+
+	* [r1865] plugins/t/check_ntp.t:
+	  D'oh! single escape will be handled by Perl....
+
+2007-12-11 13:31  dermoth
+
+	* [r1864] plugins/check_ntp_peer.c, plugins/t/check_ntp.t:
+	  - Fix check_ntp_peer returning misleading information when an
+	  ICMP message came back - Try to fix some servers apparently
+	  exanding the ~ in threshold ranges in t/check_ntp.t
+
+2007-12-11 12:05  tonvoon
+
+	* [r1863] lib/tests/test_cmd.c:
+	  Fixed test so works on MacOSX (use /bin/sh instead of /bin/grep).
+	  Added extra test for missing command - should drop into
+	  STATE_UNKNOWN
+
+2007-12-11 10:58  tonvoon
+
+	* [r1862] lib/tests/Makefile.am:
+	  Add verbose flag so each test result is seen, rather than grouped
+	  by test
+
+2007-12-11 05:57  dermoth
+
+	* [r1861] plugins-root/check_icmp.c, plugins/check_cluster.c,
+	  plugins/check_http.c, plugins/check_mrtgtraf.c,
+	  plugins/check_ntp.c, plugins/check_ntp_peer.c,
+	  plugins/check_ntp_time.c:
+	  Adding missing function calls needed for i18n (only for plugins
+	  already in POTFILES.in)
+
+2007-12-10 08:10  dermoth
+
+	* [r1860] po/fr.po:
+	  Some corrections
+
+2007-12-10 07:52  dermoth
+
+	* [r1859] plugins/check_cluster.c, plugins/check_mysql.c,
+	  plugins/check_radius.c, plugins/check_snmp.c,
+	  plugins/check_swap.c, plugins/negate.c, po/de.po, po/fr.po,
+	  po/nagios-plugins.pot:
+	  Plenty of french translations (and a few fixes BTW) - No more
+	  fuzzy french translations - Only (!) 355 strings to translate
+
+2007-12-10 04:00  dermoth
+
+	* [r1858] plugins/check_ntp.c, plugins/check_ntp_peer.c,
+	  plugins/check_ntp_time.c:
+	  OOPS! Last commit should have included these files.
+
+2007-12-10 03:40  dermoth
+
+	* [r1857] po/de.po, po/fr.po, po/nagios-plugins.pot:
+	  D'autres translations - Err, I mean more translations :)
+
+2007-12-10 02:30  dermoth
+
+	* [r1856] po/fr.po:
+	  More translations
+
+2007-12-10 02:10  dermoth
+
+	* [r1855] po/de.po, po/fr.po, po/nagios-plugins.pot:
+	  re-update the po files
+
+2007-12-10 02:07  dermoth
+
+	* [r1854] plugins/check_ntp_peer.c, po/fr.po:
+	  Some translations
+
+2007-12-10 01:50  psychotrahe
+
+	* [r1853] po/de.po, po/fr.po, po/nagios-plugins.pot:
+	  Localization updates for recent changes
+
+2007-12-10 01:13  psychotrahe
+
+	* [r1852] plugins/check_http.c:
+	  Fix output when response time is critical. Thanks to Nobuhiro Ban
+	  (patch #1817228)
+
+2007-12-10 00:19  psychotrahe
+
+	* [r1851] NEWS, plugins/check_load.c, plugins/t/check_load.t:
+	  Fixed check_load argument handling when passing non triplet
+	  thresholds. Thanks to Jonathan Kamens (bug #1831890)
+
+2007-12-09 23:36  dermoth
+
+	* [r1850] po/POTFILES.in, po/de.po, po/fr.po,
+	  po/nagios-plugins.pot:
+	  Gettin' ready for some translation frenzy :)
+
+2007-12-09 17:15  dermoth
+
+	* [r1849] po/de.po, po/fr.po, po/nagios-plugins.pot:
+	  update po files and fix a few French translations
+
+2007-12-08 16:34  dermoth
+
+	* [r1848] NEWS, plugins/check_disk.c:
+	  Fix check_disk reporting OK if disk usage grows over 100% (bug
+	  #1348746).
+
+2007-12-04 12:57  dermoth
+
+	* [r1847] plugins/check_ntp_time.c:
+	  Interesting... For some reason it did not take this (patch barfed
+	  on it and I thought I had fixed it already)...
+
+2007-12-04 12:38  dermoth
+
+	* [r1846] NEWS, plugins/Makefile.am, plugins/check_ntp_peer.c,
+	  plugins/check_ntp_time.c, plugins/t/check_ntp.t:
+	  Merge changes from branches/dermoth_ntp_rework
+	  (check_ntp_peer/check_ntp_time)
+	  
+	  NEWS | 13 plugins/Makefile.am | 8 plugins/check_ntp_peer.c | 628
+	  ++++++++++++++++-------------------------------
+	  plugins/check_ntp_time.c | 323 ++----------------------
+	  plugins/t/check_ntp.t | 92 +++++-
+
+2007-12-04 12:27  dermoth
+
+	* [r1843] plugins/check_ntp_peer.c, plugins/check_ntp_time.c:
+	  Add the new checks as check_ntp copies to keep full plug-in
+	  history
+
+2007-12-04 11:14  dermoth
+
+	* [r1838] plugins/check_ntp.c:
+	  missing word in comment block.
+
+2007-11-23 04:21  dermoth
+
+	* [r1830] NEWS, plugins/check_ntp.c:
+	  - Use max_state_alt in check_ntp to fix some issues with the
+	  latest commits. - Roll back the stratum check as there were
+	  issues with it and a better one is already implemented in
+	  check_ntp_peer (about to be included)
+
+2007-11-23 04:18  dermoth
+
+	* [r1829] plugins/utils.c, plugins/utils.h:
+	  Add a max_state_alt function that put UNKNOWN and DEPENDENT ahead
+	  of OK.
+
+2007-11-11 16:29  dermoth
+
+	* [r1827] NEWS, plugins/check_cluster.c, plugins/check_snmp.c:
+	  Fix broken usage2 in check_snmp and check_cluster Fix
+	  check_cluster blocking some special characters for thresholds
+	  ("-", "@", "~")
+
+2007-11-10 17:37  dermoth
+
+	* [r1822] plugins/check_ntp.c:
+	  Fix newly added stratum check (has to be decreased by one when
+	  using normal NTP packets versus control packets)
+
+2007-11-09 23:24  dermoth
+
+	* [r1819] lib/tests/test_base64.c:
+	  Adding svn:keywords props
+
+2007-11-09 22:01  dermoth
+
+	* [r1818] configure.in, lib/tests/Makefile.am,
+	  lib/tests/test_base64.c, lib/tests/test_base64.t,
+	  tools/distclean:
+	  Adding test for base64 lib
+
+2007-11-09 21:17  dermoth
+
+	* [r1817] lib/Makefile.am, lib/base64.c, lib/base64.h,
+	  plugins/check_http.c, plugins/check_smtp.c:
+	  Moved base64 function to /lib.
+
+2007-11-09 18:24  dermoth
+
+	* [r1816] lib/utils_tcp.h:
+	  Nothing to see here...
+
+2007-11-09 17:21  dermoth
+
+	* [r1815] THANKS.in:
+	  Credits of check_snmp fix for bug #1815362 (CVE-2007-5623)
+
+2007-11-09 16:05  dermoth
+
+	* [r1814] plugins/check_snmp.c:
+	  Fix check_snmp buffer overflow (CVE-2007-5623)
+	  
+	  This patch comes from the Gentoo Portage tree but I couldn't find
+	  the author. I sent an email and will give credits when I get an
+	  answer.
+
+2007-11-09 13:08  dermoth
+
+	* [r1813] plugins/check_ssh.c:
+	  Close the socket on all exits (not just the OK one)
+
+2007-11-09 13:06  dermoth
+
+	* [r1812] plugins/check_snmp.c:
+	  Fix missing \n in --help output
+
+2007-10-25 21:06  dermoth
+
+	* [r1811] NEWS, plugins/check_ntp.c:
+	  check_ntp now return UNKNOWN instead of WARNING if jitter is
+	  unavailable. If no offset threshold is specified and the offset
+	  is unavailable, will return UNKNOWN as well.
+
+2007-10-25 20:43  tonvoon
+
+	* [r1810] plugins-root/check_dhcp.c, plugins/check_ping.c,
+	  plugins/check_ups.c, tools/sync_website:
+	  Automatically update website with --help output. Cosmetic fixes
+	  for some help output
+
+2007-10-24 15:08  hweiss
+
+	* [r1809] THANKS.in, plugins/check_snmp.c:
+	  Hide the SNMP community string (and v3 passwords) from error
+	  messages (Bernhard Fischer on nagiosplug-devel@)
+
+2007-10-15 06:52  tonvoon
+
+	* [r1808] doc/RELEASING:
+	  Add reparagraph option to make ChangeLog output bit prettier
+
+2007-10-14 22:19  hweiss
+
+	* [r1807] plugins/check_http.c:
+	  Fix a possible segfault if using "-f follow" and the server sends
+	  a forged "LLLLocation" header prefixed with multiple "L"s
+	  (fabiodds - 1813346)
+
+2007-10-11 04:21  dermoth
+
+	* [r1806] NEWS, plugins/check_ntp.c:
+	  Add stratum thresholds support for check_ntp (feature request
+	  #1703823)
+
+2007-10-11 02:56  dermoth
+
+	* [r1805] plugins/check_ntp.c:
+	  Use provided threshold functions (no functionnal change apart the
+	  check for overlaping thresholds)
+
+2007-10-02 13:51  hweiss
+
+	* [r1804] NEWS, plugins/check_http.c:
+	  Fix regression in 1.4.10 where following redirects to relative
+	  URLs on virtual hosts failed if both "-H" and "-I" were specified
+	  (noted by Rodrigo A. G. Schichaschwili on nagiosplug-devel@)
+
+2007-09-29 10:03  tonvoon
+
+	* [r1803] doc/RELEASING:
+	  Updated notes on releasing, mainly for svn
+
+2007-09-29 00:44  tonvoon
+
+	* [r1801] BUGS, ChangeLog, NEWS, configure.in, package.def:
+	  Prep for 1.4.10
+
 2007-09-26 10:57  hweiss
 
 	* [r1800] NEWS, plugins/check_radius.c:
 	  Drop the weird and undocumented behaviour of using positional
-	  argument
-	  parsing instead of getopt(3) if 8 command line arguments were
-	  given (as
-	  suggested by Matthias) and check whether all required arguments
-	  have
-	  been specified in order to spit out proper error messages and to
-	  avoid a
-	  possible segfault (as suggested by Thomas).
+	  argument parsing instead of getopt(3) if 8 command line arguments
+	  were given (as suggested by Matthias) and check whether all
+	  required arguments have been specified in order to spit out
+	  proper error messages and to avoid a possible segfault (as
+	  suggested by Thomas).
 
 2007-09-26 04:16  dermoth
 
@@ -21,8 +314,7 @@
 	* [r1798] perlmods, perlmods/Nagios-Plugin-0.20.tar.gz,
 	  perlmods/Nagios-Plugin-0.21.tar.gz:
 	  Update N::P with new version, redirecting help, version and usage
-	  to
-	  stdout
+	  to stdout
 
 2007-09-24 18:51  tonvoon
 
@@ -33,8 +325,7 @@
 
 	* [r1794] NEWS, configure.in, plugins/netutils.c:
 	  Let ./configure --without-ipv6 suppress non-IPv4 DNS lookups
-	  (noted by
-	  Mark Frost on nagios-users@)
+	  (noted by Mark Frost on nagios-users@)
 
 2007-09-23 12:29  psychotrahe
 
@@ -81,11 +372,10 @@
 	* [r1786] NEWS, lib/tests/test_disk.c, lib/utils_disk.c,
 	  lib/utils_disk.h, plugins/check_disk.c, plugins/t/check_disk.t:
 	  Added -i/-I to ignore pathes/partitions based on regular
-	  expressions
-	  Added check_disk -A selecting all filesystems
-	  -E option must now be passed before -p or -r/-R
-	  Passing -E after -p or -r results in UNKNOWN state
-	  Fixed bug when mixing case sensitive and insensitive regexes
+	  expressions Added check_disk -A selecting all filesystems -E
+	  option must now be passed before -p or -r/-R Passing -E after -p
+	  or -r results in UNKNOWN state Fixed bug when mixing case
+	  sensitive and insensitive regexes
 
 2007-09-22 03:00  dermoth
 
@@ -100,8 +390,8 @@
 	  lib/tests/test_cmd.t, lib/utils_cmd.c, lib/utils_cmd.h,
 	  plugins/Makefile.am, plugins/negate.c, plugins/t/negate.pl,
 	  plugins/t/negate.t:
-	  Stop double expansion of parameters for negate - works like
-	  time command now
+	  Stop double expansion of parameters for negate - works like time
+	  command now
 
 2007-09-21 05:05  dermoth
 
@@ -111,17 +401,14 @@
 2007-09-21 04:59  dermoth
 
 	* [r1782] plugins/check_disk.c:
-	  - Added some variables at verbose==3
-	  - Removed support for verbose<0 (-q). -q was broken and tried to
-	  to the same as -e.
-	  - -q in now an undocumented alias of -e (for
-	  backward-compatibility).
-	  NB: Long help text for -d was already missing.
-	  - Reordered the switches so that:
-	    a. less-important ones are in alphabetical order
-	  b. short and long help orders match.
-	  - Enclosed "-p | -x" inside braces instead of brackets as one or
-	  the other is required.
+	  - Added some variables at verbose==3 - Removed support for
+	  verbose<0 (-q). -q was broken and tried to to the same as -e. -
+	  -q in now an undocumented alias of -e (for
+	  backward-compatibility). NB: Long help text for -d was already
+	  missing. - Reordered the switches so that:   a. less-important
+	  ones are in alphabetical order b. short and long help orders
+	  match. - Enclosed "-p | -x" inside braces instead of brackets as
+	  one or the other is required.
 
 2007-09-17 08:19  tonvoon
 
@@ -132,20 +419,18 @@
 
 	* [r1780] NEWS, plugins/check_smtp.c:
 	  Properly handle SMTP server responses which are split into
-	  multiple
-	  packets (noted by Chris Adams on nagiosplug-help@). TODO: The new
-	  recvline()/recvlines() functions should buffer received data
-	  instead of
-	  reading one byte at a time and they should be moved to netutils.c
-	  so
-	  that other plugins can use them, too.
+	  multiple packets (noted by Chris Adams on nagiosplug-help@).
+	  TODO: The new recvline()/recvlines() functions should buffer
+	  received data instead of reading one byte at a time and they
+	  should be moved to netutils.c so that other plugins can use them,
+	  too.
 
 2007-09-15 11:55  hweiss
 
 	* [r1779] NEWS, plugins-root/check_icmp.c:
 	  Correct all instances of misaligned memory access. This fixes bus
-	  erros
-	  on platforms which require alignment (such as SPARC and MIPS).
+	  erros on platforms which require alignment (such as SPARC and
+	  MIPS).
 
 2007-09-15 11:34  hweiss
 
@@ -163,8 +448,8 @@
 	  perlmods/Params-Validate-0.88.tar.gz,
 	  perlmods/Test-Simple-0.70.tar.gz, perlmods/install_order,
 	  tools/build_perl_modules:
-	  Adding in optional Nagios::Plugin perl module (and
-	  dependencies) compilation and installation
+	  Adding in optional Nagios::Plugin perl module (and dependencies)
+	  compilation and installation
 
 2007-08-28 03:19  dermoth
 
@@ -185,8 +470,7 @@
 
 	* [r1769] plugins/check_smtp.c:
 	  Read the response to an SMTP QUIT command before closing the
-	  socket
-	  (noted by Dieter Hendricks on nagiosplug-help@)
+	  socket (noted by Dieter Hendricks on nagiosplug-help@)
 
 2007-07-29 12:42  hweiss
 
@@ -197,33 +481,27 @@
 
 	* [r1767] tools/tinderbox_build:
 	  If the TMPDIR environment variable is set, use that instead of
-	  "/tmp" as
-	  the installation directory.
+	  "/tmp" as the installation directory.
 
 2007-07-26 17:32  hweiss
 
 	* [r1766] NEWS, plugins-root/check_dhcp.c:
 	  The "--serverip" and "--requestedip" options now accept host
-	  names, too.
-	  This doesn't quite fit the option names and so far I haven't
-	  changed the
-	  "--help" output which currently only talks about IP addresses.
-	  However,
-	  I don't see why resolving host names should not be supported.
+	  names, too. This doesn't quite fit the option names and so far I
+	  haven't changed the "--help" output which currently only talks
+	  about IP addresses. However, I don't see why resolving host names
+	  should not be supported.
 	  
 	  Also note that for the moment, I added a quick'n'dirty
-	  resolve_host()
-	  function which should really go into netutils.c. I just wanted to
-	  think
-	  about its interface a bit more before providing such a function
-	  globally.
+	  resolve_host() function which should really go into netutils.c. I
+	  just wanted to think about its interface a bit more before
+	  providing such a function globally.
 
 2007-07-26 12:38  hweiss
 
 	* [r1765] NEWS, plugins-root/check_dhcp.c:
 	  New "-m, --mac" option which allows for specifying the MAC
-	  address to
-	  use in the DHCP request.
+	  address to use in the DHCP request.
 
 2007-07-26 00:46  hweiss
 
@@ -234,18 +512,15 @@
 
 	* [r1763] plugins-root/check_dhcp.c:
 	  A few minor fixes/improvements which were included with (but
-	  unrelated
-	  to) the "--unicast" patch (Andreas Ericsson and Heiti Ernits -
-	  1218235)
+	  unrelated to) the "--unicast" patch (Andreas Ericsson and Heiti
+	  Ernits - 1218235)
 
 2007-07-26 00:02  hweiss
 
 	* [r1762] NEWS, THANKS.in, configure.in, plugins-root/check_dhcp.c:
 	  New "-u, --unicast" option which gives check_dhcp the ability to
-	  mimic a
-	  DHCP relay server in order to check remote subnets (Heiti Ernits
-	  and
-	  Andreas Ericsson - 1218235)
+	  mimic a DHCP relay server in order to check remote subnets (Heiti
+	  Ernits and Andreas Ericsson - 1218235)
 
 2007-07-24 00:35  tonvoon
 
@@ -265,21 +540,14 @@
 
 	* [r1759] NEWS, plugins/check_http.c:
 	  Add "Connection: close" to the HTTP request header, which tells
-	  HTTP/1.1
-	  servers to close the connection after completion of the response.
-	  This
-	  should be compatible with HTTP/1.0, as HTTP/1.0 allows for custom
-	  header
-	  fields which should be ignored if not recognized by the server.
-	  With
-	  some server configurations, the server would keep the connection
-	  alive
-	  without this header line (despite the plugin requesting
-	  HTTP/1.0),
-	  resulting in the plugin running into either the server's or it's
-	  own
-	  timeout (reported by Roman Schliessmeyer and Jesse Morgan via
-	  IRC).
+	  HTTP/1.1 servers to close the connection after completion of the
+	  response. This should be compatible with HTTP/1.0, as HTTP/1.0
+	  allows for custom header fields which should be ignored if not
+	  recognized by the server. With some server configurations, the
+	  server would keep the connection alive without this header line
+	  (despite the plugin requesting HTTP/1.0), resulting in the plugin
+	  running into either the server's or it's own timeout (reported by
+	  Roman Schliessmeyer and Jesse Morgan via IRC).
 
 2007-07-15 15:21  psychotrahe
 
@@ -320,8 +588,8 @@
 2007-07-07 12:02  psychotrahe
 
 	* [r1752] plugins/utils.c:
-	  Changed output order of print_revision
-	  print_revision now uses clean_revstring
+	  Changed output order of print_revision print_revision now uses
+	  clean_revstring
 
 2007-07-07 11:55  psychotrahe
 
@@ -337,8 +605,8 @@
 
 	* [r1749] plugins-scripts/check_log.sh,
 	  plugins-scripts/check_oracle.sh, plugins-scripts/utils.sh.in:
-	  Changed order in -V/--version output
-	  Fixed -V output for check_log and check_oracle
+	  Changed order in -V/--version output Fixed -V output for
+	  check_log and check_oracle
 
 2007-07-06 23:03  psychotrahe
 
@@ -383,22 +651,18 @@
 
 	* [r1741] plugins/check_http.c:
 	  When following redirects, the plugin supported 'Location:' header
-	  fields
-	  which spanned multiple lines. However, it was not checked whether
-	  extra
-	  lines are preceeded with white space, which could lead to the
-	  following
-	  header field name being interpreted as the value of the
-	  'Location:'
-	  field if the latter was empty for some reason.
+	  fields which spanned multiple lines. However, it was not checked
+	  whether extra lines are preceeded with white space, which could
+	  lead to the following header field name being interpreted as the
+	  value of the 'Location:' field if the latter was empty for some
+	  reason.
 
 2007-06-15 18:31  hweiss
 
 	* [r1740] plugins/check_http.c:
 	  `host_name' is a NULL pointer if the "-I" flag is used instead of
-	  "-H",
-	  so use `server_address' instead. Fixes a possible segfault when
-	  following redirects to relative URLs (reported by Ingo
+	  "-H", so use `server_address' instead. Fixes a possible segfault
+	  when following redirects to relative URLs (reported by Ingo
 	  Lantschner).
 
 2007-06-13 09:43  psychotrahe
@@ -453,8 +717,8 @@
 	* [r1729] NEWS, lib/Makefile.am, lib/utils_tcp.c, lib/utils_tcp.h,
 	  plugins/check_tcp.c:
 	  Moved check_tcp's expect string testing into utils_tcp for
-	  testing purposes.
-	  Added -A/--all flag to test for every expect string passed.
+	  testing purposes. Added -A/--all flag to test for every expect
+	  string passed.
 
 2007-06-01 23:11  hweiss
 
@@ -465,15 +729,13 @@
 
 	* [r1727] plugins/check_http.c:
 	  Fix an off-by-one error where a realloc(3) call doesn't allocate
-	  space
-	  for nul-termination (Aravind Gottipati - 1729692)
+	  space for nul-termination (Aravind Gottipati - 1729692)
 
 2007-06-01 22:57  hweiss
 
 	* [r1726] plugins/sslutils.c:
 	  Call the SSL library initialization functions only once (not for
-	  every
-	  SSL connection).
+	  every SSL connection).
 
 2007-06-01 17:06  hweiss
 
@@ -484,12 +746,9 @@
 
 	* [r1724] plugins/sslutils.c:
 	  Set the pointers to the SSL and SSL_CTX objects back to NULL
-	  after
-	  freeing them in np_net_ssl_cleanup(). This fixes a check_http
-	  segfault
-	  if an SSL site redirects to a non-SSL one (reported by Aravind
-	  Gottipati
-	  via IRC).
+	  after freeing them in np_net_ssl_cleanup(). This fixes a
+	  check_http segfault if an SSL site redirects to a non-SSL one
+	  (reported by Aravind Gottipati via IRC).
 
 2007-05-29 20:01  psychotrahe
 
@@ -501,8 +760,7 @@
 
 	* [r1722] plugins/check_tcp.c:
 	  No more warn/crit values in performance data if -w and -c are not
-	  specified.
-	  Thanks to Simon Bellwood (#1181554)
+	  specified. Thanks to Simon Bellwood (#1181554)
 
 2007-05-29 05:22  dermoth
 
@@ -524,11 +782,10 @@
 
 	* [r1718] lib/utils_base.c, lib/utils_base.h,
 	  plugins-root/check_dhcp.c, plugins-root/check_icmp.c:
-	  added functions to utils_base:
-	  np_check_if_root() - returns nonzero if geteuid()==0
-	  np_warn_if_not_root() - uses the above to print an informative
-	  warning
-	  added uses of these functions to check_dhcp and check_icmp.
+	  added functions to utils_base: np_check_if_root() - returns
+	  nonzero if geteuid()==0 np_warn_if_not_root() - uses the above to
+	  print an informative warning added uses of these functions to
+	  check_dhcp and check_icmp.
 
 2007-05-24 08:53  tonvoon
 
@@ -575,10 +832,9 @@
 
 	* [r1710] ABOUT-NLS, build-aux/mkinstalldirs, configure.in:
 	  Updating gettext files from coreutils-6.9. mkinstalldirs needs to
-	  be in
-	  build-aux for some systems without gettext natively. Also have at
-	  top level,
-	  though gettext documentation says file not neceesary
+	  be in build-aux for some systems without gettext natively. Also
+	  have at top level, though gettext documentation says file not
+	  neceesary
 
 2007-05-09 09:16  psychotrahe
 
@@ -600,9 +856,8 @@
 
 	* [r1706] ChangeLog, THANKS.in, plugins/check_disk.c:
 	  fixed backward incompatibility introduced in 1.4.8 where all
-	  partitions are selected,
-	  if path is specified as last argument (without using -p).
-	  Thanks to Emil Michles (Emilis) on #nagios
+	  partitions are selected, if path is specified as last argument
+	  (without using -p). Thanks to Emil Michles (Emilis) on #nagios
 
 2007-05-02 10:11  dermoth
 
@@ -665,8 +920,8 @@
 
 	* [r1694] THANKS.in, plugins-root/check_dhcp.c:
 	  Use the 'server identifier' option instead of the 'siaddr' field
-	  as the
-	  DHCP server address; see RFC 2131, 2. (Denis Knauf - 1667488)
+	  as the DHCP server address; see RFC 2131, 2. (Denis Knauf -
+	  1667488)
 
 2007-04-19 03:46  dermoth
 
@@ -678,13 +933,11 @@
 
 	* [r1692] NEWS, plugins/check_by_ssh.c:
 	  Revert my previous change to "-S/--skip" in favour of the two
-	  options
-	  "-E/--skip-stderr" and "-S/--skip-stdout". Both of them support
-	  omitting the number of lines to skip, in which case all output on
-	  the
-	  respective file descriptor is skipped. "--skip" is kept as an
-	  alias for
-	  "--skip-stdout" for backwards compatibility with recent releases.
+	  options "-E/--skip-stderr" and "-S/--skip-stdout". Both of them
+	  support omitting the number of lines to skip, in which case all
+	  output on the respective file descriptor is skipped. "--skip" is
+	  kept as an alias for "--skip-stdout" for backwards compatibility
+	  with recent releases.
 	  
 	  Also, print a message if no (non-skipped) stdout/stderr output is
 	  available. This fixes a segfault if the remote command prints no
@@ -709,8 +962,7 @@
 
 	* [r1688] NEWS, plugins/Makefile.am, plugins/check_cluster.c:
 	  Add thresholds support for check_cluster + lots of
-	  standardization.
-	  Add forgotten items to NEWS.
+	  standardization. Add forgotten items to NEWS.
 
 2007-04-15 06:44  dermoth
 
@@ -726,17 +978,13 @@
 
 	* [r1685] BUGS, plugins/check_by_ssh.c:
 	  Up to revision 1.35, the "-S" option skipped the specified number
-	  of
-	  lines written to stderr. With revision 1.36 and newer, "-S"
-	  skipped the
-	  specified number of lines written to stdout. Now, "-S" skips the
-	  specified number of lines written to stderr; and if the number
-	  specified
-	  via "-S" minus the number of lines written to stderr is larger
-	  than 0,
-	  the difference is used as the number of lines written to stdout
-	  to skip.
-	  Also, the "--help" output was fixed. (Hector - 1675286)
+	  of lines written to stderr. With revision 1.36 and newer, "-S"
+	  skipped the specified number of lines written to stdout. Now,
+	  "-S" skips the specified number of lines written to stderr; and
+	  if the number specified via "-S" minus the number of lines
+	  written to stderr is larger than 0, the difference is used as the
+	  number of lines written to stdout to skip. Also, the "--help"
+	  output was fixed. (Hector - 1675286)
 
 2007-04-13 11:38  dermoth
 
@@ -769,10 +1017,9 @@
 2007-04-10 07:17  dermoth
 
 	* [r1678] plugins/check_ntp.c:
-	  - Fix possibility of printing scientific numbers in perfdata
-	  - Use fperfdata function for perfdata formatting
-	  - Make the printing part a bit more flexible (similar to
-	  check_disk)
+	  - Fix possibility of printing scientific numbers in perfdata -
+	  Use fperfdata function for perfdata formatting - Make the
+	  printing part a bit more flexible (similar to check_disk)
 
 2007-04-10 05:58  dermoth
 
@@ -800,8 +1047,7 @@
 
 	* [r1673] plugins/check_ntp.c:
 	  Don't rely on the assumption that the size of a READSTAT response
-	  is a
-	  multiple of sizeof(ntp_assoc_status_pair).
+	  is a multiple of sizeof(ntp_assoc_status_pair).
 
 2007-04-02 09:28  tonvoon
 
@@ -823,10 +1069,9 @@
 
 	* [r1669] plugins/t/check_http.t:
 	  check_http.t: - added internet_access variable to skip tests
-	  where internet access is required.
-	  - added host_tcp_http2 variable for a webserver serving the
-	  string 'nagios' in index
-	  - no tests are skipped if the new vars are not defined (existing
+	  where internet access is required. - added host_tcp_http2
+	  variable for a webserver serving the string 'nagios' in index -
+	  no tests are skipped if the new vars are not defined (existing
 	  installations)
 
 2007-04-01 11:17  psychotrahe
@@ -844,8 +1089,7 @@
 
 	* [r1666] plugins/check_ntp.c:
 	  Fix an out-of-bounds memcpy(3) and add a realloc(3) error check
-	  in
-	  jitter_request().
+	  in jitter_request().
 
 2007-03-31 17:35  hweiss
 
@@ -872,8 +1116,7 @@
 
 	* [r1661] NEWS, configure.in, m4/np_mysqlclient.m4:
 	  Fix AC_CHECK_LIB for mysql_init - add dependent libraries. mysql
-	  detection
-	  separated into external m4 file
+	  detection separated into external m4 file
 
 2007-03-30 09:00  psychotrahe
 
@@ -912,8 +1155,7 @@
 
 	* [r1654] plugins-root/Makefile.am:
 	  Set the "read" and "execute" bits only for "user" and "group" in
-	  order
-	  to not overwrite "--without-world-permissions" for the root
+	  order to not overwrite "--without-world-permissions" for the root
 	  plugins.
 
 2007-03-29 10:32  tonvoon
@@ -952,10 +1194,9 @@
 
 	* [r1639] NEWS, plugins/check_ping.c, plugins/t/check_ping.t:
 	  check_ping's timeout interval is only +1 if ping command has a
-	  timeout value.
-	  Tests updated to check for 100% packet loss (always if ping has
-	  timeout), otherwise
-	  will check for "timed out" string
+	  timeout value. Tests updated to check for 100% packet loss
+	  (always if ping has timeout), otherwise will check for "timed
+	  out" string
 
 2007-03-11 06:51  dermoth
 
@@ -967,8 +1208,7 @@
 	* [r1637] plugins-root/t, plugins-root/t/check_icmp.t,
 	  plugins/t/check_ping.t:
 	  Converted check_ping.t to new-style testcases. Added test case
-	  for check_icmp -
-	  requires sudo access
+	  for check_icmp - requires sudo access
 
 2007-03-11 01:57  tonvoon
 
@@ -1018,16 +1258,14 @@
 
 	* [r1628] plugins/t/check_disk.t:
 	  Test failure if a filesystem which is a subset of another fails
-	  the inode
-	  check (Matthias Elbe - 1660953)
+	  the inode check (Matthias Elbe - 1660953)
 
 2007-03-06 14:18  tonvoon
 
 	* [r1627] NEWS, configure.in:
 	  Detect if check_mysql compile will work at ./configure time, due
-	  to some
-	  Redhat systems distributing mysql_config, but not the include
-	  files
+	  to some Redhat systems distributing mysql_config, but not the
+	  include files
 
 2007-03-06 11:03  tonvoon
 
@@ -1038,8 +1276,8 @@
 
 	* [r1625] FAQ, INSTALLING, NEWS, README, plugins-root/Makefile.am:
 	  Root plugins installed with world executable permissions. Removed
-	  references
-	  to --with-nagios-user and --with-nagios-group in README
+	  references to --with-nagios-user and --with-nagios-group in
+	  README
 
 2007-03-02 01:38  egalstad
 
@@ -1066,8 +1304,7 @@
 
 	* [r1620] plugins/check_tcp.c, plugins/t/check_tcp.t:
 	  Documentation fix re: --escape flag. Fix of ./check_tcp test to
-	  webservers
-	  to make it more standards compliant
+	  webservers to make it more standards compliant
 
 2007-02-09 14:35  tonvoon
 
@@ -1086,8 +1323,7 @@
 
 	* [r1613] plugins/check_swap.c:
 	  Include <sys/param.h> before <sys/swap.h> in order to fix
-	  compilation on
-	  OpenBSD (nsturm - 1653934)
+	  compilation on OpenBSD (nsturm - 1653934)
 
 2007-02-06 23:30  dermoth
 
@@ -1131,8 +1367,8 @@
 2007-02-01 06:53  dermoth
 
 	* [r1604] plugins/check_tcp.c, plugins/t/check_jabber.t:
-	  Fix progname being partly set to upper case
-	  Change formating of invalid hostname output
+	  Fix progname being partly set to upper case Change formating of
+	  invalid hostname output
 
 2007-02-01 05:37  dermoth
 
@@ -1148,8 +1384,7 @@
 
 	* [r1601] plugins/t/check_jabber.t:
 	  Converted to new style object and Test::More testing. Skipped
-	  jabber server
-	  tests if not defined
+	  jabber server tests if not defined
 
 2007-01-31 06:18  dermoth
 
@@ -1183,8 +1418,7 @@
 
 	* [r1595] configure.in:
 	  grep(1) "-q" isn't portable (e.g., it won't work on Solaris 8),
-	  redirect
-	  output to /dev/null instead.
+	  redirect output to /dev/null instead.
 
 2007-01-29 14:14  dermoth
 
@@ -1196,8 +1430,7 @@
 
 	* [r1593] configure.in:
 	  Automake 1.10 says: "compiling `test_disk.c' with per-target
-	  flags
-	  requires `AM_PROG_CC_C_O' in `configure.in'".
+	  flags requires `AM_PROG_CC_C_O' in `configure.in'".
 
 2007-01-29 10:06  tonvoon
 
@@ -1208,8 +1441,7 @@
 
 	* [r1591] INSTALLING:
 	  Remove description of deprecated ./configure
-	  --with-nagios-{user,group}
-	  options.
+	  --with-nagios-{user,group} options.
 
 2007-01-28 21:46  hweiss
 
@@ -1230,12 +1462,10 @@
 	  plugins/check_ups.c, plugins/check_users.c, plugins/negate.c,
 	  plugins/urlize.c, plugins/utils.c, plugins/utils.h:
 	  Don't try to print `optarg' (which will be a NULL pointer) if an
-	  unknown
-	  command line option was used, as this leads to a segfault on some
-	  systems. The unknown option will be printed by getopt(3) anyway.
-	  So,
-	  simply call print_usage() and exit UNKNOWN via the new usage5()
-	  instead.
+	  unknown command line option was used, as this leads to a segfault
+	  on some systems. The unknown option will be printed by getopt(3)
+	  anyway. So, simply call print_usage() and exit UNKNOWN via the
+	  new usage5() instead.
 
 2007-01-27 21:49  dermoth
 
@@ -1246,9 +1476,8 @@
 
 	* [r1588] lib/utils_base.c:
 	  Change the variable names `true' and `false' (which are keywords
-	  in C99)
-	  to `yes' and `no'. Fixes compilation when using SGI's MIPSpro
-	  c99(1).
+	  in C99) to `yes' and `no'. Fixes compilation when using SGI's
+	  MIPSpro c99(1).
 
 2007-01-27 17:42  hweiss
 
@@ -1266,32 +1495,28 @@
 
 	* [r1585] NEWS:
 	  Added "-o,--ssh-option=OPTION" which hands "-o OPTION" over to
-	  ssh(1) and
-	  "-q,--quiet" which tells ssh(1) to suppress warnings (Gerhard
-	  Lausser - 1472491)
+	  ssh(1) and "-q,--quiet" which tells ssh(1) to suppress warnings
+	  (Gerhard Lausser - 1472491)
 
 2007-01-27 16:37  hweiss
 
 	* [r1584] plugins-root/check_dhcp.c:
 	  Include <sys/param.h> which is a prerequisite for <sys/sysctl.h>
-	  on
-	  NetBSD and OpenBSD (at least).
+	  on NetBSD and OpenBSD (at least).
 
 2007-01-25 00:58  tonvoon
 
 	* [r1583] Makefile.am, README, configure.in, doc/RELEASING:
 	  Update references to NEWS instead of CHANGES. Fix compile of
-	  libtap
-	  test programs
+	  libtap test programs
 
 2007-01-25 00:26  tonvoon
 
 	* [r1582] build-aux, build-aux/.cvsignore, build-aux/ltmain.sh,
 	  config.guess, config.sub, configure.in, ltmain.sh:
 	  Use build-aux directory. Removed unnecessary checks in
-	  configure.in.
-	  Keeping libtool to link to libtap - can't find a suitable
-	  replacement method
+	  configure.in. Keeping libtool to link to libtap - can't find a
+	  suitable replacement method
 
 2007-01-24 23:18  tonvoon
 
@@ -1400,8 +1625,7 @@
 
 	* [r1579] THANKS.in, plugins/check_ssh.c:
 	  Support `check_ssh --hostname=ADDRESS' (but keep `--host=ADDRESS'
-	  for backward
-	  compatibility) (Ville Mattila - 1642780)
+	  for backward compatibility) (Ville Mattila - 1642780)
 
 2007-01-23 18:20  hweiss
 
@@ -1412,8 +1636,7 @@
 
 	* [r1577] plugins/check_tcp.c:
 	  Add missing `break' to the switch-case block that handles the
-	  `-m' option
-	  (Nobuhiro Ban - 1642682)
+	  `-m' option (Nobuhiro Ban - 1642682)
 
 2007-01-23 16:42  hweiss
 
@@ -1425,19 +1648,16 @@
 
 	* [r1575] lib/mountlist.c:
 	  Add support for statvfs(2) which is needed in order to compile
-	  the plugins on
-	  NetBSD 3.0 and newer. The current coreutils release supports
-	  statvfs(2), so
-	  this patch won't be needed anymore when updating the coreutils
-	  files.
+	  the plugins on NetBSD 3.0 and newer. The current coreutils
+	  release supports statvfs(2), so this patch won't be needed
+	  anymore when updating the coreutils files.
 
 2007-01-22 04:05  hweiss
 
 	* [r1574] plugins/check_by_ssh.c:
 	  Added "-o,--ssh-option=OPTION" which hands "-o OPTION" over to
-	  ssh(1) and
-	  "-q,--quiet" which tells ssh(1) to suppress warnings (Gerhard
-	  Lausser - 1472491)
+	  ssh(1) and "-q,--quiet" which tells ssh(1) to suppress warnings
+	  (Gerhard Lausser - 1472491)
 
 2007-01-20 20:45  tonvoon
 
@@ -1452,15 +1672,12 @@
 2007-01-20 10:59  seanius
 
 	* [r1571] plugins/check_ntp.c:
-	  compilation fixes for check_ntp.c:
-	  - check_ntp.c:290: warning: overflow in implicit constant
-	  conversion
-	  fixed with an explicit cast to int8_t.
-	  - check_ntp.c:544: warning: pointer of type âvoid *â used in
-	  arithmetic
-	  fixed by casting to ptrdiff_t before arithmetic and (void*)
-	  afterwards
-	  - in TVtoNTP64, cast arithmetic result passed to R32 as uint64_t.
+	  compilation fixes for check_ntp.c: - check_ntp.c:290: warning:
+	  overflow in implicit constant conversion fixed with an explicit
+	  cast to int8_t. - check_ntp.c:544: warning: pointer of type
+	  âvoid *â used in arithmetic fixed by casting to ptrdiff_t
+	  before arithmetic and (void*) afterwards - in TVtoNTP64, cast
+	  arithmetic result passed to R32 as uint64_t.
 
 2007-01-20 07:18  dermoth
 
@@ -1490,8 +1707,7 @@
 
 	* [r1565] CHANGES, THANKS.in, plugins/t/check_disk.t:
 	  Added notes about check_disk perf data fix. Added test to check
-	  perf data is
-	  same when mount points reversed
+	  perf data is same when mount points reversed
 
 2007-01-07 07:14  dermoth
 
@@ -1546,10 +1762,9 @@
 
 	* [r1555] CHANGES, THANKS.in, plugins/check_http.c,
 	  plugins/t/check_http.t:
-	  Removed unused timestamp variable (Matthias Eble)
-	  Fixed redirection test. Added extra tests for funny syntax when
-	  checking
-	  certificates, updated help for more common syntax
+	  Removed unused timestamp variable (Matthias Eble) Fixed
+	  redirection test. Added extra tests for funny syntax when
+	  checking certificates, updated help for more common syntax
 
 2006-12-20 19:25  tonvoon
 
@@ -1561,8 +1776,7 @@
 
 	* [r1553] po/de.po, po/fr.po, po/nagios-plugins.pot:
 	  updated the nagios-pulgins.pot files now that localization is
-	  clean
-	  first pass at updating the french locale
+	  clean first pass at updating the french locale
 
 2006-12-12 12:59  tonvoon
 
@@ -1585,9 +1799,8 @@
 	* [r1546] THANKS.in, plugins/check_disk.c, plugins/check_swap.c,
 	  plugins/common.h, plugins/netutils.h:
 	  Fix coredump on 64bit Solaris. Also adds more error conditions
-	  and moves
-	  swap specific includes out of common.h (Duncan Ferguson -
-	  1588031)
+	  and moves swap specific includes out of common.h (Duncan Ferguson
+	  - 1588031)
 
 2006-12-06 20:34  tonvoon
 
@@ -1619,8 +1832,7 @@
 	* [r1535] CHANGES, THANKS.in, plugins/check_ping.c,
 	  plugins/netutils.c:
 	  Reduced DNS lookups in check_ping and netutils.c in IPv6
-	  configurations
-	  (Pawel Malachowski)
+	  configurations (Pawel Malachowski)
 
 2006-11-03 15:40  tonvoon
 
@@ -1636,8 +1848,7 @@
 
 	* [r1531] plugins-scripts/t/utils.t, plugins-scripts/utils.pm.in:
 	  More edge testcases. Allow anything if ends with a . as long as
-	  correct
-	  characters
+	  correct characters
 
 2006-10-26 21:32  tonvoon
 
@@ -1813,9 +2024,8 @@
 	  plugins/check_nt.c, plugins/check_ntp.c, plugins/check_nwstat.c,
 	  plugins/check_overcr.c, plugins/check_pgsql.c,
 	  plugins/check_ping.c, plugins/check_procs.c:
-	  first pass at cleaning localization for new release
-	  first pass at making all the headre be the same licence, plugin,
-	  etc...
+	  first pass at cleaning localization for new release first pass at
+	  making all the headre be the same licence, plugin, etc...
 
 2006-10-18 12:12  tonvoon
 
@@ -1868,18 +2078,16 @@
 2006-09-02 20:41  seanius
 
 	* [r1474] lib/utils_base.h, plugins/utils.h:
-	  - explicitly include utils_base.h from utils.h
-	  - put utils.h inside of an #ifndef/#endif
+	  - explicitly include utils_base.h from utils.h - put utils.h
+	  inside of an #ifndef/#endif
 
 2006-09-02 20:32  seanius
 
 	* [r1473] plugins/check_tcp.c:
 	  - fix for warning/critical timeouts in check_tcp.c, in which the
-	  plugin
-	  would exit with a usage error if non-int timeouts were passed.
-	  - change --warning-time/--critical-time to just
-	  --warning/--critical,
-	  as it's what --help says.
+	  plugin would exit with a usage error if non-int timeouts were
+	  passed. - change --warning-time/--critical-time to just
+	  --warning/--critical, as it's what --help says.
 
 2006-08-14 09:04  tonvoon
 
@@ -1905,11 +2113,9 @@
 
 	* [r1464] plugins/check_nt.c:
 	  Bug: 694259 fix. After consulting with the target service
-	  authors, we
-	  decided to keep the default port as 1248 and add a note about
-	  other services
-	  sometimes using this port and suggesting to change the port.
-	  Closing bug.
+	  authors, we decided to keep the default port as 1248 and add a
+	  note about other services sometimes using this port and
+	  suggesting to change the port. Closing bug.
 
 2006-07-31 14:09  tonvoon
 
@@ -1999,16 +2205,15 @@
 	  m4/basename.m4, m4/dos.m4, m4/np_coreutils.m4,
 	  plugins/check_procs.c, plugins/utils.c, plugins/utils.h:
 	  Using coreutils' base_name function because of portability issues
-	  with
-	  Tru64
+	  with Tru64
 
 2006-07-12 22:53  tonvoon
 
 	* [r1449] plugins/check_disk.c, plugins/t/check_disk.t,
 	  plugins/utils_disk.c, plugins/utils_disk.h:
 	  Added -E option for exact match of filesystem. Restructured main
-	  filesystem
-	  loop. Added extra tests for possible duplicate filesystems.
+	  filesystem loop. Added extra tests for possible duplicate
+	  filesystems.
 
 2006-07-12 19:30  tonvoon
 
@@ -2016,8 +2221,7 @@
 	  plugins/tests/.cvsignore, plugins/tests/test_disk.c,
 	  plugins/utils_disk.c, plugins/utils_disk.h:
 	  Moving parameter_list into utils_disk.h. Given list of mount
-	  points, can
-	  now work out best match or exact match.
+	  points, can now work out best match or exact match.
 
 2006-07-12 12:15  tonvoon
 
@@ -2045,8 +2249,7 @@
 
 	* [r1444] plugins/urlize.c:
 	  Added check for two arguments. Was segfaulting if no or one arg.
-	  Now returns
-	  help.
+	  Now returns help.
 
 2006-07-05 13:45  tonvoon
 
@@ -2149,8 +2352,7 @@
 
 	* [r1418] contrib/check_linux_raid.pl:
 	  some gratuitous whitespace changes, and a fix to the "recovery ="
-	  detection
-	  logic in check_linux_raid.pl
+	  detection logic in check_linux_raid.pl
 
 2006-06-07 14:23  seanius
 
@@ -2172,19 +2374,16 @@
 
 	* [r1414] plugins/check_pgsql.c:
 	  modify the is_pg_dbname() function to allow databases with '-' in
-	  their name.
-	  reference: sf tracker #1500752
+	  their name. reference: sf tracker #1500752
 
 2006-06-03 23:06  seanius
 
 	* [r1413] configure.in:
 	  removed the -R for openssl, as it should be figured out
-	  automatically by
-	  libtool and also controlled via the
-	  --enable-rpath/--disable-rpath configure
-	  options. furthermore keeping it in forces the rpath option on in
-	  spite of
-	  what's passed on the configure line.
+	  automatically by libtool and also controlled via the
+	  --enable-rpath/--disable-rpath configure options. furthermore
+	  keeping it in forces the rpath option on in spite of what's
+	  passed on the configure line.
 
 2006-06-01 22:30  seanius
 
@@ -2263,8 +2462,7 @@
 
 	* [r1399] plugins/check_snmp.c:
 	  Variables need to be declared at top of code for better
-	  portability
-	  (Gerhard Lausser)
+	  portability (Gerhard Lausser)
 
 2006-05-19 21:41  tonvoon
 
@@ -2319,8 +2517,7 @@
 	  plugins/check_disk.c, plugins/common.h, plugins/tests,
 	  plugins/tests/.cvsignore, po, po/.cvsignore, tools/setup:
 	  Synchronise with coreutils 2.95. Gettext now synced with
-	  coreutils,
-	  so no longer development platform requirement
+	  coreutils, so no longer development platform requirement
 
 2006-05-17 10:10  tonvoon
 
@@ -2363,34 +2560,25 @@
 	* [r1386] configure.in, plugins-scripts/Makefile.am,
 	  plugins/Makefile.am, plugins/check_ntp.c, plugins/common.h,
 	  plugins/runcmd.c:
-	  - check_ntp:
-	  - now roughly feature-complete.
-	  - various bugfixes, esp. offset calculation.
-	  - enhanced the asynchronous offset polling to set requests that
-	  haven't recieved a response in >= 1 second to stale and
-	  retransmit them,
-	  which results in much better performance on unreliable networks.
-	  - we only spend timeout/2 seconds polling offsets, and if we
-	  don't get
-	  everything by that point we work with what we have and set status
-	  to
-	  warning/critical depending on how much data we have.
-	  - set the same defaults as the perl script.
-	  - commit changes to configure.in to support automatic building of
-	  check_apt
-	  (if apt-get is installed and regex libraries available) and
-	  check_ntp
+	  - check_ntp: - now roughly feature-complete. - various bugfixes,
+	  esp. offset calculation. - enhanced the asynchronous offset
+	  polling to set requests that haven't recieved a response in >= 1
+	  second to stale and retransmit them, which results in much better
+	  performance on unreliable networks. - we only spend timeout/2
+	  seconds polling offsets, and if we don't get everything by that
+	  point we work with what we have and set status to
+	  warning/critical depending on how much data we have. - set the
+	  same defaults as the perl script. - commit changes to
+	  configure.in to support automatic building of check_apt (if
+	  apt-get is installed and regex libraries available) and check_ntp
 	  (unconditionally), now defaulting to check_ntp.c instead of the
-	  perl script.
-	  if this is an issue we can back out the commit of course. an eye
-	  should be kept on check_ntp building and running correctly in
-	  different
-	  environments, esp. 64-bit and big-endian platforms, and those
-	  with more
-	  "esoteric" API's (do any of the platforms not have poll()?).
-	  - similar changes to Makefile.am's.
-	  - common.h: add statement to include sys/poll.h
-	  - runcmd.c: exit STATE_UNKNOWN if execve() fails.
+	  perl script. if this is an issue we can back out the commit of
+	  course. an eye should be kept on check_ntp building and running
+	  correctly in different environments, esp. 64-bit and big-endian
+	  platforms, and those with more "esoteric" API's (do any of the
+	  platforms not have poll()?). - similar changes to Makefile.am's.
+	  - common.h: add statement to include sys/poll.h - runcmd.c: exit
+	  STATE_UNKNOWN if execve() fails.
 
 2006-04-28 15:52  tonvoon
 
@@ -2448,35 +2636,30 @@
 2006-04-14 22:44  opensides
 
 	* [r1374] po/de.po, po/fr.po, po/nagios-plugins.pot:
-	  updated pot file
-	  sarted updating fr.po for nagios 1.4.3
+	  updated pot file sarted updating fr.po for nagios 1.4.3
 
 2006-04-12 10:00  seanius
 
 	* [r1373] plugins/check_ntp.c:
 	  the offset_requests are now parallelized. still stuff needs to be
 	  done (conveniently marked with XXX), but on well behaving
-	  networks
-	  the plugin should behave more or less identical to check_ntp.pl
-	  now.
+	  networks the plugin should behave more or less identical to
+	  check_ntp.pl now.
 
 2006-04-12 06:33  seanius
 
 	* [r1372] plugins/check_ntp.c:
 	  added a currently unused but "good for reference" version of
-	  offset_request
-	  which attempts to behave more like ntpdate, but this doesn't yet
-	  and
-	  the code isn't actually used yet.
+	  offset_request which attempts to behave more like ntpdate, but
+	  this doesn't yet and the code isn't actually used yet.
 
 2006-04-11 23:24  seanius
 
 	* [r1371] plugins/check_ntp.c:
 	  another big code-commit to check_ntp. jitter calculations now
-	  work, and
-	  the program is becoming much closer on the packet-for-packet
-	  level to
-	  how check_ntp.pl behaves. i'll send an email in the morning :)
+	  work, and the program is becoming much closer on the
+	  packet-for-packet level to how check_ntp.pl behaves. i'll send an
+	  email in the morning :)
 
 2006-04-06 10:08  tonvoon
 
@@ -2505,29 +2688,23 @@
 	  finally??? cvs works again???? let me dig up my week-old cvs
 	  commit message.....
 	  
-	  i'm becoming very happy with check_apt now :)
-	  - now has support for an externally (configure.in) path to
-	  apt-get,
-	  though i still have that in #ifdefs for the time being.
-	  - support for defining what packages are "critical updates", via
-	  the already-existing security regexp or overridable on the
-	  cmdline
-	  - allow overriding of apt-get cmdline options
-	  - introduce a "no upgrade" in case someone just wants to check
-	  that
-	  they can download the package lists with -u but not check for
-	  upgrades.
-	  might need to change the name of this option to prevent
-	  confusion.
-	  - improved -h documentation
+	  i'm becoming very happy with check_apt now :) - now has support
+	  for an externally (configure.in) path to apt-get, though i still
+	  have that in #ifdefs for the time being. - support for defining
+	  what packages are "critical updates", via the already-existing
+	  security regexp or overridable on the cmdline - allow overriding
+	  of apt-get cmdline options - introduce a "no upgrade" in case
+	  someone just wants to check that they can download the package
+	  lists with -u but not check for upgrades. might need to change
+	  the name of this option to prevent confusion. - improved -h
+	  documentation
 
 2006-03-29 16:33  tonvoon
 
 	* [r1365] THANKS.in, plugins/check_tcp.c,
 	  plugins/tests/test_utils.c, plugins/utils.c, plugins/utils.h:
 	  New function to for escaped strings from command line for
-	  send/quit.
-	  Adapted from Sebastian Wiesinger's patch (1292404)
+	  send/quit. Adapted from Sebastian Wiesinger's patch (1292404)
 
 2006-03-29 15:30  tonvoon
 
@@ -2591,17 +2768,15 @@
 
 	* [r1353] plugins/check_tcp.c, plugins/t/check_udp.t:
 	  udp checks require and send and receive option. Tests updated so
-	  if
-	  nc is available, will check send and receive working correctly
+	  if nc is available, will check send and receive working correctly
 
 2006-03-23 22:58  seanius
 
 	* [r1352] plugins/check_apt.c:
 	  - addition of include/exclude option for package names in
-	  check_apt,
-	  using POSIX regexp support.
-	  - various commenting and tidying of code/logic/output.
-	  - still haven't committed the Makefile.am/configure.in stuff.
+	  check_apt, using POSIX regexp support. - various commenting and
+	  tidying of code/logic/output. - still haven't committed the
+	  Makefile.am/configure.in stuff.
 
 2006-03-23 17:16  tonvoon
 
@@ -2624,9 +2799,8 @@
 
 	* [r1348] plugins/check_apt.c:
 	  more work on check_apt. more graceful error handling and
-	  information
-	  reporting, a couple new cmdline options. still not quite ready
-	  for prime-time, maybe tomorrow :)
+	  information reporting, a couple new cmdline options. still not
+	  quite ready for prime-time, maybe tomorrow :)
 
 2006-03-22 17:32  tonvoon
 
@@ -2676,17 +2850,14 @@
 
 	* [r1339] plugins/check_apt.c:
 	  initial version of a check_apt plugin... not editing
-	  configure/Makefile.am's
-	  until i'm happier with it (better output, better ways to define
-	  warning
-	  vs. critical thresholds... etc).
+	  configure/Makefile.am's until i'm happier with it (better output,
+	  better ways to define warning vs. critical thresholds... etc).
 
 2006-03-21 14:20  tonvoon
 
 	* [r1338] THANKS.in, configure.in:
 	  Stop check_dns from compiling if nslookup does not exist (Sakari
-	  Lehtonen -
-	  1412721)
+	  Lehtonen - 1412721)
 
 2006-03-21 13:42  tonvoon
 
@@ -2717,9 +2888,9 @@
 2006-03-20 22:06  seanius
 
 	* [r1332] plugins/check_ntp.c:
-	  - shuffling some code around to keep things tidy.
-	  - now average the result of 4 queries just as ntpdate does
-	  - put things in place for jitter calculation
+	  - shuffling some code around to keep things tidy. - now average
+	  the result of 4 queries just as ntpdate does - put things in
+	  place for jitter calculation
 
 2006-03-20 17:18  seanius
 
@@ -2730,9 +2901,8 @@
 
 	* [r1330] plugins/check_ntp.c:
 	  initial version of the pure-c check_ntp implementation. jitter
-	  not yet
-	  implemented, and a couple other misc things to do, so i haven't
-	  yet patched Makefile.am
+	  not yet implemented, and a couple other misc things to do, so i
+	  haven't yet patched Makefile.am
 
 2006-03-18 14:47  seanius
 
@@ -2751,8 +2921,7 @@
 	  plugins/check_mysql.c, plugins/check_mysql_query.c,
 	  plugins/t/check_mysql.t:
 	  mysql detection cleanup: fixes runtime linking, autodetection of
-	  main
-	  locations, detection of lib64 and different layouts
+	  main locations, detection of lib64 and different layouts
 
 2006-03-17 10:20  tonvoon
 
@@ -2773,17 +2942,15 @@
 2006-03-13 17:59  seanius
 
 	* [r1323] plugins/check_swap.c:
-	  fix for (tracker id 1420741)
-	  "check_swap: incorrect totals for multiple partitions (BSD)"
-	  thanks to scott thompson
+	  fix for (tracker id 1420741) "check_swap: incorrect totals for
+	  multiple partitions (BSD)" thanks to scott thompson
 
 2006-03-13 11:08  tonvoon
 
 	* [r1322] plugins/check_ping.c:
 	  Change warning message if there is stderr output. This catches a
-	  problem
-	  where time was shifting backwards on a linux VMware guest during
-	  the ping
+	  problem where time was shifting backwards on a linux VMware guest
+	  during the ping
 
 2006-03-07 10:33  tonvoon
 
@@ -2880,8 +3047,8 @@
 	* [r1304] doc/developer-guidelines.sgml,
 	  plugins/tests/test_utils.c, plugins/utils.c, plugins/utils.h:
 	  Clearly defined thresholds & ranges in docs. Added get_status
-	  routine. Added
-	  set_thresholds routine. Tests enhanced to check new routines
+	  routine. Added set_thresholds routine. Tests enhanced to check
+	  new routines
 
 2006-01-30 16:10  tonvoon
 
@@ -2896,15 +3063,13 @@
 	  plugins/tests/check_vsz, plugins/tests/test_utils.c,
 	  plugins/tests/test_utils.t, plugins/utils.c, plugins/utils.h:
 	  Added libtap tests for utils.c library functions. Removed
-	  redundant
-	  test files
+	  redundant test files
 
 2006-01-21 21:46  tonvoon
 
 	* [r1302] tools/sfsnapshot:
 	  Have to use own id for cvs checkout. Change compile server
-	  because
-	  old one not working consistently
+	  because old one not working consistently
 
 2005-12-19 09:25  tonvoon
 
@@ -2930,16 +3095,15 @@
 	* [r1298] NPTest.pm, doc/developer-guidelines.sgml,
 	  plugins/t/check_disk.t:
 	  New 3 parameter version of getTestParameters. Updated
-	  check_disk.t to reflect.
-	  Added notes re: testing in developer guidelines.
+	  check_disk.t to reflect. Added notes re: testing in developer
+	  guidelines.
 
 2005-12-15 15:17  tonvoon
 
 	* [r1297] plugins-scripts/check_file_age.pl,
 	  plugins-scripts/t/check_file_age.t:
 	  Allow directories and links to be tested by check_file_age.
-	  Sanitise output.
-	  Added tests
+	  Sanitise output. Added tests
 
 2005-12-07 19:32  harpermann
 
@@ -2972,18 +3136,16 @@
 	* [r1292] config_test/Makefile, config_test/run_tests,
 	  configure.in:
 	  Run longer test on redhat for spopen/pthread problem. Allow
-	  enable/disable of
-	  pthread fix via configure option
+	  enable/disable of pthread fix via configure option
 
 2005-11-30 00:49  harpermann
 
 	* [r1291] plugins-scripts/check_ntp.pl:
-	  Nagiosplug bug # 1251096
-	  check_ntp wasn't properly handing a bad exit status from the
-	  external programs it calls (ntpdate and ntpq), so jitter wasn't
-	  set. Added check of $? on close and proper error output if status
-	  from the sub program call completion is non-zero. This includes
-	  "host not found".
+	  Nagiosplug bug # 1251096 check_ntp wasn't properly handing a bad
+	  exit status from the external programs it calls (ntpdate and
+	  ntpq), so jitter wasn't set. Added check of $? on close and
+	  proper error output if status from the sub program call
+	  completion is non-zero. This includes "host not found".
 
 2005-11-29 23:21  harpermann
 
@@ -2994,8 +3156,7 @@
 
 	* [r1289] contrib/check_email_loop.pl:
 	  Bug: 1355304 Added patch for ePN and perl warnings. Fixed some
-	  text and
-	  a warning about type comparison.
+	  text and a warning about type comparison.
 
 2005-11-18 12:56  tonvoon
 
@@ -3011,15 +3172,13 @@
 
 	* [r1286] plugins/check_disk.c:
 	  Fixed some compile errors with new translations. Also
-	  reintroduced formatting
-	  after discussion with Benoit
+	  reintroduced formatting after discussion with Benoit
 
 2005-11-15 16:26  tonvoon
 
 	* [r1285] plugins/t/check_disk.t:
 	  Updated tests to minimise false positives. Breaking down so more
-	  obvious
-	  what the tests are doing
+	  obvious what the tests are doing
 
 2005-11-14 14:43  tonvoon
 
@@ -3029,8 +3188,7 @@
 2005-11-14 01:18  opensides
 
 	* [r1283] plugins/check_http.c:
-	  localization cleaning ...
-	  last commit before sleeping
+	  localization cleaning ... last commit before sleeping
 
 2005-11-14 00:51  opensides
 
@@ -3055,8 +3213,7 @@
 	  plugins/t/check_swap.t:
 	  Added new NPTest->testCmd which returns objects back for testing
 	  at the test script level. Updated check_swap and check_imap to
-	  this
-	  new format
+	  this new format
 
 2005-11-09 16:37  tonvoon
 
@@ -3078,15 +3235,14 @@
 
 	* [r1275] doc/NEW_STARTERS, doc/developer-guidelines.sgml:
 	  Updated dev guidelines to link to NagiosExchange. Removed project
-	  admin
-	  notes from guidelines into separate file
+	  admin notes from guidelines into separate file
 
 2005-11-07 12:46  seanius
 
 	* [r1274] configure.in:
 	  incorporated patch from Elan Ruusamäe (ahmake) to override
-	  program autodetection (see Feature Requests-1341528). i would
-	  not call this quite complete just yet (i'll explain more in the
+	  program autodetection (see Feature Requests-1341528). i would not
+	  call this quite complete just yet (i'll explain more in the
 	  tracker), but should be functional and useful enough to commit
 	  now, in any case.
 
@@ -3094,8 +3250,7 @@
 
 	* [r1273] THANKS.in, plugins/check_tcp.c, plugins/t/check_imap.t:
 	  Fixed --mismatch option for check_tcp. Added tests into
-	  check_imap
-	  (Rick Fey - 1339134)
+	  check_imap (Rick Fey - 1339134)
 
 2005-11-03 15:21  tonvoon
 
@@ -3106,9 +3261,8 @@
 
 	* [r1271] plugins/t/check_disk.t, plugins/t/check_procs.t:
 	  Invalid mount point doesn't make sense because most df
-	  implementations
-	  would work out the actual mount point. And fixed typo in
-	  check_procs.t
+	  implementations would work out the actual mount point. And fixed
+	  typo in check_procs.t
 
 2005-11-03 15:04  tonvoon
 
@@ -3123,8 +3277,7 @@
 	  check_disk.c.
 	  
 	  previous commit also had a patch for smtp auth support, but i
-	  accidentally
-	  sent a blank commit message.
+	  accidentally sent a blank commit message.
 
 2005-11-02 08:47  seanius
 
@@ -3145,8 +3298,7 @@
 
 	* [r1266] plugins/Makefile.am:
 	  turned on -Wall in plugins/Makefile.am via AM_CFLAGS. shouldn't
-	  keep
-	  our heads in the sand for potential errors, after all :)
+	  keep our heads in the sand for potential errors, after all :)
 
 2005-10-30 18:05  seanius
 
@@ -3168,10 +3320,8 @@
 
 	* [r1262] plugins/Makefile.am:
 	  patch from nsturm: Makefile.am should have been checking for
-	  check_ldap
-	  instead of check_ldaps. the result was that check_ldaps was not
-	  being
-	  created during the build process.
+	  check_ldap instead of check_ldaps. the result was that
+	  check_ldaps was not being created during the build process.
 
 2005-10-25 10:38  seanius
 
@@ -3179,10 +3329,9 @@
 	  plugins/check_tcp.c, plugins/netutils.c, plugins/netutils.h,
 	  plugins/utils.h, po/de.po, po/fr.po:
 	  - added code to allow check_tcp (via np_net_connect) work with
-	  local
-	  unix sockets. some testing would be welcome. based on idea from
-	  Alex Samorukov.
-	  - also introduced a check_clamd behavior in check_tcp.
+	  local unix sockets. some testing would be welcome. based on idea
+	  from Alex Samorukov. - also introduced a check_clamd behavior in
+	  check_tcp.
 
 2005-10-24 11:10  seanius
 
@@ -3201,10 +3350,9 @@
 
 	* [r1258] plugins/Makefile.am, plugins/netutils.c,
 	  plugins/sslutils.c:
-	  - compartmentalized ssl code into seperate sslutils.c
-	  - ssl-related cleanups in configure.in, and now openssl/gnutls
-	  options
-	  automatically disable each other.
+	  - compartmentalized ssl code into seperate sslutils.c -
+	  ssl-related cleanups in configure.in, and now openssl/gnutls
+	  options automatically disable each other.
 
 2005-10-19 20:22  seanius
 
@@ -3224,30 +3372,22 @@
 	  plugins/check_tcp.c, plugins/common.h, plugins/netutils.c,
 	  plugins/netutils.h:
 	  - initial attempt at consolidating ssl-related code into
-	  netutils.{c,h}
-	  - added some #ifdefs to common.h and netutils.h to prevent
-	  multiple
-	  inclusions (as netlibs now includes common.h)
-	  - all ssl plugins (tcp/http/smtp) compile cleanly against gnutls,
-	  though
-	  certificate checking still needs to be done.
-	  - modified configure script so you can also explicitly say
-	  "without-gnutls"
+	  netutils.{c,h} - added some #ifdefs to common.h and netutils.h to
+	  prevent multiple inclusions (as netlibs now includes common.h) -
+	  all ssl plugins (tcp/http/smtp) compile cleanly against gnutls,
+	  though certificate checking still needs to be done. - modified
+	  configure script so you can also explicitly say "without-gnutls"
 	  too (otherwise if you disable openssl you have no way of
-	  disabling
-	  gnutls too)
+	  disabling gnutls too)
 
 2005-10-18 22:35  seanius
 
 	* [r1254] configure.in, plugins/check_tcp.c:
 	  initial "experimental" support for gnutls. by default openssl is
-	  still
-	  used if available, and gnutls is only used if openssl is not
-	  available
-	  or explicitly disabled (--without-openssl). currently the only
-	  plugin
-	  i've verified to work is check_tcp, but i had to disable cert
-	  checking.
+	  still used if available, and gnutls is only used if openssl is
+	  not available or explicitly disabled (--without-openssl).
+	  currently the only plugin i've verified to work is check_tcp, but
+	  i had to disable cert checking.
 
 2005-10-18 09:26  tonvoon
 
@@ -3263,70 +3403,57 @@
 2005-10-13 10:22  seanius
 
 	* [r1251] po/de.po:
-	  debian bts #313960:
-	  - grammatical german fixes. i'm taking the reporter's word for it
-	  :)
+	  debian bts #313960: - grammatical german fixes. i'm taking the
+	  reporter's word for it :)
 
 2005-10-13 10:20  seanius
 
 	* [r1250] plugins-scripts/check_ntp.pl:
-	  debian bts #268044:
-	  - use a "less beastly" regex for parsing ntpq output. probably
-	  need
-	  some more widespread testing on this one.
+	  debian bts #268044: - use a "less beastly" regex for parsing ntpq
+	  output. probably need some more widespread testing on this one.
 
 2005-10-13 10:18  seanius
 
 	* [r1249] plugins/check_disk.c:
-	  debian bts #296278:
-	  - it seems that when check_disk uses the "df" routines and is
-	  told to
-	  check a non-mountpoint, it would check the filesystem on which
-	  the
-	  directory was mounted (i.e. /var/log -> /var if no /var/log
-	  mount).
-	  the system-call routines now do this too. might need a bit more
-	  widespread testing, but looks good for me and i did it without
-	  modifying any of the system-call-specific codeblocks.
+	  debian bts #296278: - it seems that when check_disk uses the "df"
+	  routines and is told to check a non-mountpoint, it would check
+	  the filesystem on which the directory was mounted (i.e. /var/log
+	  -> /var if no /var/log mount). the system-call routines now do
+	  this too. might need a bit more widespread testing, but looks
+	  good for me and i did it without modifying any of the
+	  system-call-specific codeblocks.
 
 2005-10-13 10:16  seanius
 
 	* [r1248] plugins/check_game.c:
-	  debian bts #307905:
-	  - someone changed the cmdline syntax of check game without also
-	  updating the usage/help function ;p
+	  debian bts #307905: - someone changed the cmdline syntax of check
+	  game without also updating the usage/help function ;p
 
 2005-10-13 10:14  seanius
 
 	* [r1247] plugins-scripts/check_disk_smb.pl:
-	  debian bts #300701:
-	  - check_smb fix for freespace threshold parsing from the cmdline
-	  options.
+	  debian bts #300701: - check_smb fix for freespace threshold
+	  parsing from the cmdline options.
 
 2005-10-13 10:11  seanius
 
 	* [r1246] plugins/check_smtp.c:
-	  multiple fixes in check_smtp from debian (bts #285554):
-	  - fix for double free via SSL_CTX_free. looks like the previous
-	  author
-	  knew this was a problem but didn't care enough to fix it ;p.
-	  - use defines instead of const chars for SMTP strings.
-	  - default to send our fqdn (via gethostbyname lookup on
-	  gethostname)
-	  in the HELO string, as this is an RFC/SMTP requirement.
-	  overridable
-	  via cmdline.
-	  - use EHLO instead of HELO if using STARTTLS, as it is not SMTP
-	  but
-	  ESMTP.
-	  - verify the server supports STARTTLS before initializing it.
-	  - always send QUIT before disconnecting when possible.
+	  multiple fixes in check_smtp from debian (bts #285554): - fix for
+	  double free via SSL_CTX_free. looks like the previous author knew
+	  this was a problem but didn't care enough to fix it ;p. - use
+	  defines instead of const chars for SMTP strings. - default to
+	  send our fqdn (via gethostbyname lookup on gethostname) in the
+	  HELO string, as this is an RFC/SMTP requirement. overridable via
+	  cmdline. - use EHLO instead of HELO if using STARTTLS, as it is
+	  not SMTP but ESMTP. - verify the server supports STARTTLS before
+	  initializing it. - always send QUIT before disconnecting when
+	  possible.
 
 2005-10-13 09:58  seanius
 
 	* [r1245] plugins/check_mrtg.c:
-	  was this plugin even working? i don't think the if/else logic
-	  was doing what was intended.
+	  was this plugin even working? i don't think the if/else logic was
+	  doing what was intended.
 
 2005-10-13 09:55  seanius
 
@@ -3344,8 +3471,7 @@
 
 	* [r1242] configure.in, plugins-root/Makefile.am:
 	  whoops. now using automake conditionals to prevent attempted
-	  compiles
-	  of pst3 on non solaris systems.
+	  compiles of pst3 on non solaris systems.
 
 2005-09-25 16:34  seanius
 
@@ -3356,17 +3482,14 @@
 
 	* [r1240] configure.in:
 	  a final change to hardcode the path for where plugins are
-	  installed.
-	  it's a very, very ugly hack... if anyone can think of a better
-	  way
-	  to do it, i'm all ears.
+	  installed. it's a very, very ugly hack... if anyone can think of
+	  a better way to do it, i'm all ears.
 
 2005-09-22 12:10  seanius
 
 	* [r1239] configure.in:
 	  use test instead of '[ ... ]' in configure.in. the
-	  check_procs/pst3
-	  situation is still not quite fixed.
+	  check_procs/pst3 situation is still not quite fixed.
 
 2005-09-22 09:43  seanius
 
@@ -3374,8 +3497,7 @@
 	  first version of bob ingraham's pst3 to allow checking for longer
 	  cmdline names than otherwise possible, by querying solaris kmem
 	  directly (ps forcibly truncates). added requisite configure.in
-	  voodoo
-	  and updated THANKS.in.
+	  voodoo and updated THANKS.in.
 
 2005-09-22 08:10  tonvoon
 
@@ -3470,8 +3592,7 @@
 
 	* [r1219] plugins/Makefile.am:
 	  Some makes do not like blank lines after "\". Fixed check_ldaps
-	  to only
-	  generate if check_ldap was created (Chester Hosey)
+	  to only generate if check_ldap was created (Chester Hosey)
 
 2005-09-14 09:53  tonvoon
 
@@ -3541,10 +3662,10 @@
 	  plugins/t/check_tcp.t, plugins/t/check_time.t,
 	  plugins/t/check_udp.t, plugins/t/check_users.t,
 	  plugins/t/check_vsz.t, test.pl.in:
-	  [1185704] New Testing Infrastructure.
-	  Complete rewrite of the original testing infrastructure and
-	  all test cases (to use the new infrastructure)
-	  See NPTest.pm and issue 1185704 for more details.
+	  [1185704] New Testing Infrastructure. Complete rewrite of the
+	  original testing infrastructure and all test cases (to use the
+	  new infrastructure) See NPTest.pm and issue 1185704 for more
+	  details.
 
 2005-07-20 22:39  tonvoon
 
@@ -3570,8 +3691,7 @@
 
 	* [r1202] BRANCHES:
 	  Master file to describe the current branches in CVS. Will be used
-	  by
-	  sfsnapshot to create the snapshot tarballs
+	  by sfsnapshot to create the snapshot tarballs
 
 2005-07-06 22:21  tonvoon
 
@@ -3614,11 +3734,9 @@
 
 	* [r1194] configure.in, plugins/Makefile.am, plugins/check_swap.c:
 	  scanf parsing fix for check_swap from tracker id 1123292. now use
-	  floor(3)
-	  to round down floating point numbers. requires -lm on many
-	  systems,
-	  so support for testing for this was added to the configure.in and
-	  automake template
+	  floor(3) to round down floating point numbers. requires -lm on
+	  many systems, so support for testing for this was added to the
+	  configure.in and automake template
 
 2005-06-27 13:07  seanius
 
@@ -3710,12 +3828,10 @@
 
 	* [r1177] configure.in, plugins/check_nagios.c,
 	  plugins/check_procs.c:
-	  fixes for check_procs:
-	  - added support for printing the pid in all the ps outputs
-	  - don't use the proc name to ignore self, use the pid vs
-	  getpid().
-	  - initialize procetime to null string otherwise -vvv can have
-	  funny results
+	  fixes for check_procs: - added support for printing the pid in
+	  all the ps outputs - don't use the proc name to ignore self, use
+	  the pid vs getpid(). - initialize procetime to null string
+	  otherwise -vvv can have funny results
 
 2005-05-25 00:30  seanius
 
@@ -3754,13 +3870,11 @@
 
 	* [r1170] plugins/check_tcp.c:
 	  if check_tcp was called with -e but not -s, it would hang in a
-	  call to my_recv. the
-	  fix committed here adds on more piece of logic to the check to
-	  see if more data needs
-	  to be read, avoiding the deadlock call. a better fix would be to
-	  not use these "voodoo"
-	  heuristics and instead use poll() or select(), but that's quite a
-	  bit more complicated.
+	  call to my_recv. the fix committed here adds on more piece of
+	  logic to the check to see if more data needs to be read, avoiding
+	  the deadlock call. a better fix would be to not use these
+	  "voodoo" heuristics and instead use poll() or select(), but
+	  that's quite a bit more complicated.
 
 2005-05-01 20:12  seanius
 
@@ -3818,10 +3932,9 @@
 
 	* [r1159] configure.in, plugins/check_tcp.c:
 	  this should add support for check_ssmtp, based on the 1.3.x patch
-	  in 1155562,
-	  but fixed to follow how things are done in 1.4 (using strdup
-	  instead of
-	  asprintf) and patching configure.in instead of configure.
+	  in 1155562, but fixed to follow how things are done in 1.4 (using
+	  strdup instead of asprintf) and patching configure.in instead of
+	  configure.
 
 2005-04-07 04:33  seanius
 
@@ -3831,8 +3944,7 @@
 	  
 	  note i don't have an exchange server to test this against, but it
 	  does what the requester mentioned (slightly cleaner than the
-	  patch
-	  attached in the tracker).
+	  patch attached in the tracker).
 	  
 	  it does, however, still work against my own postfix server :)
 	  
@@ -3842,14 +3954,10 @@
 
 	* [r1157] plugins/check_snmp.c:
 	  This is a first cut at adding performance data to check_snmp. I
-	  wasn't sure
-	  how to handle UOM so only values that return SNMP type Counter32:
-	  are labled
-	  with "c". All other values have a blank UOM. I also left off
-	  warn, crit,
-	  max and min values in the performance data until we come up with
-	  a way to
-	  handle them.
+	  wasn't sure how to handle UOM so only values that return SNMP
+	  type Counter32: are labled with "c". All other values have a
+	  blank UOM. I also left off warn, crit, max and min values in the
+	  performance data until we come up with a way to handle them.
 
 2005-04-04 18:25  tonvoon
 
@@ -3858,7 +3966,8 @@
 
 2005-04-04 18:24  tonvoon
 
-	* [r1155] plugins/check_smtp.c:
+	* [r1155] nagiosplug/branches/r1_4-patches/plugins/check_smtp.c,
+	  plugins/check_smtp.c:
 	  Fix static buffer (Nikolay Sturm)
 
 2005-03-18 03:14  mattkent
@@ -4057,8 +4166,7 @@
 
 	* [r1111] CHANGES, THANKS.in, contrib/README.TXT, po/de.po,
 	  po/fr.po:
-	  1 New /contrib plugins
-	  2 Revised check_dhcp.c status in CHANGES
+	  1 New /contrib plugins 2 Revised check_dhcp.c status in CHANGES
 
 2005-01-27 01:38  harpermann
 
@@ -4177,10 +4285,8 @@
 
 	* [r1091] doc/developer-guidelines.sgml:
 	  Changing copyright to the Nagios Plugins Development Team, rather
-	  than
-	  individual names. Also, clarified use of ACKNOWLEDGEMENTS,
-	  THANKS.in and
-	  AUTHORS
+	  than individual names. Also, clarified use of ACKNOWLEDGEMENTS,
+	  THANKS.in and AUTHORS
 
 2005-01-20 23:40  harpermann
 
@@ -4192,8 +4298,7 @@
 
 	* [r1089] AUTHORS, Makefile.am, THANKS.in:
 	  The AUTHORS file now used for the plugin team, with THANKS.in as
-	  the
-	  contributors list.
+	  the contributors list.
 
 2005-01-20 23:37  harpermann
 
@@ -4218,9 +4323,8 @@
 
 	* [r1085] plugins/check_nt.c:
 	  In the CHECK_COUNTER block, there were several strcats writing to
-	  unallocated
-	  memory. Changed to asprintf. We're not freeing since plugin run
-	  is short.
+	  unallocated memory. Changed to asprintf. We're not freeing since
+	  plugin run is short.
 
 2005-01-19 21:14  tonvoon
 
@@ -4241,10 +4345,8 @@
 
 	* [r1080] configure.in, plugins/check_swap.c:
 	  Use floats for holding memory values to avoid different types on
-	  different
-	  OSes. Seems to have a problem with the perf data for check_swap
-	  on Sol 2.6,
-	  but not critical
+	  different OSes. Seems to have a problem with the perf data for
+	  check_swap on Sol 2.6, but not critical
 
 2005-01-05 21:32  tonvoon
 
@@ -4309,8 +4411,8 @@
 	  plugins/check_ping.c, plugins/check_procs.c,
 	  plugins/check_smtp.c, plugins/check_snmp.c, plugins/check_swap.c,
 	  plugins/check_tcp.c, po/de.po, po/fr.po, po/nagios-plugins.pot:
-	  more internationalization fixes
-	  internationalization freeze for beta1
+	  more internationalization fixes internationalization freeze for
+	  beta1
 
 2004-12-28 23:40  opensides
 
@@ -4366,20 +4468,20 @@
 2004-12-25 12:25  opensides
 
 	* [r1059] package.def, po/POTFILES.in:
-	  change realase name on package.def
-	  adding check_dhcp.c to potfiles.in
+	  change realase name on package.def adding check_dhcp.c to
+	  potfiles.in
 
 2004-12-25 12:09  opensides
 
 	* [r1058] plugins/check_by_ssh.c, plugins/check_dhcp.c:
-	  internationalization of check_dhcp
-	  internationalization fixes of check_ssh
+	  internationalization of check_dhcp internationalization fixes of
+	  check_ssh
 
 2004-12-24 18:06  opensides
 
 	* [r1057] plugins/check_icmp.c, po/POTFILES.in, po/fr.po:
-	  first pass at adapting to plugin guidelines
-	  and start of localization
+	  first pass at adapting to plugin guidelines and start of
+	  localization
 
 2004-12-23 18:54  opensides
 
@@ -4396,12 +4498,10 @@
 	* [r1054] ACKNOWLEDGEMENTS, configure.in, m4/np_curl.m4,
 	  plugins/Makefile.am:
 	  Another attempt at fixing check_http compile on Redhat EL3. Fixed
-	  check_icmp
-	  compile (Lynne Lawrence - 1087171) - still some code changes to
-	  check_icmp
-	  outstanding. Fixed compile of check_dhcp (complaining about
-	  socklen_t).
-	  Added acknowledgements for Coreutils and curl
+	  check_icmp compile (Lynne Lawrence - 1087171) - still some code
+	  changes to check_icmp outstanding. Fixed compile of check_dhcp
+	  (complaining about socklen_t). Added acknowledgements for
+	  Coreutils and curl
 
 2004-12-22 23:02  harpermann
 
@@ -4420,8 +4520,7 @@
 
 	* [r1051] configure.in, plugins/Makefile.am:
 	  Revert back to previous openssl checks (the ones from curl kept
-	  having
-	  problems with later Redhat versions)
+	  having problems with later Redhat versions)
 
 2004-12-21 22:36  tonvoon
 
@@ -4459,8 +4558,7 @@
 
 	* [r1043] plugins/check_nagios.c:
 	  Corrected help for expiry units. Restored functionality of
-	  searching for
-	  process arguments
+	  searching for process arguments
 
 2004-12-20 22:01  tonvoon
 
@@ -4553,10 +4651,8 @@
 	  lib/safe-read.c, lib/safe-read.h, lib/safe-write.c,
 	  lib/safe-write.h, lib/unlocked-io.m4, lib/xalloc.m4:
 	  Moving m4 files into m4/. Added extra coreutils files required
-	  from
-	  autoconf tests. Updated Makefile.am to have nagiosplug lib and a
-	  separate
-	  coreutils lib
+	  from autoconf tests. Updated Makefile.am to have nagiosplug lib
+	  and a separate coreutils lib
 
 2004-12-15 00:10  opensides
 
@@ -4567,11 +4663,10 @@
 
 	* [r1025] plugins/check_tcp.c:
 	  Patch from Ollie Cook to define return code when expected value
-	  not received (#1082275).
-	  Also included another change from Ollie Cook to do stricter
-	  matching of expected values from the beginning of the line. When
-	  a user defines an expected string this is changed to the old
-	  style strstr matching.
+	  not received (#1082275). Also included another change from Ollie
+	  Cook to do stricter matching of expected values from the
+	  beginning of the line. When a user defines an expected string
+	  this is changed to the old style strstr matching.
 
 2004-12-10 21:18  tonvoon
 
@@ -4622,8 +4717,7 @@
 
 	* [r1015] configure.in:
 	  Include $libsuff for systems that define this (based on advice
-	  from
-	  Daniel Stenberg)
+	  from Daniel Stenberg)
 
 2004-12-08 23:14  tonvoon
 
@@ -4645,9 +4739,8 @@
 
 	* [r1012] configure.in:
 	  Fixed output info for openssl and LD_LIBRARY_PATH for subsequent
-	  compiles
-	  (otherwise get ld.so.1: ./conftest: fatal: libssl.so.0.9.7: open
-	  failed)
+	  compiles (otherwise get ld.so.1: ./conftest: fatal:
+	  libssl.so.0.9.7: open failed)
 
 2004-12-07 06:51  tonvoon
 
@@ -4689,10 +4782,8 @@
 	* [r1004] plugins/check_http.c, plugins/check_icmp.c,
 	  plugins/check_nwstat.c, plugins/check_ping.c,
 	  plugins/check_smtp.c, plugins/check_swap.c, plugins/utils.h:
-	  fix patch 998291
-	  fix patch 1078934 expect check_ssh fix and check_nt perfdata
-	  should stay
-	  on one word like in nagios
+	  fix patch 998291 fix patch 1078934 expect check_ssh fix and
+	  check_nt perfdata should stay on one word like in nagios
 
 2004-12-04 12:34  opensides
 
@@ -4714,8 +4805,7 @@
 	  plugins/check_overcr.c, plugins/check_real.c,
 	  plugins/check_smtp.c, plugins/check_swap.c, plugins/check_tcp.c,
 	  plugins/check_time.c, plugins/check_udp.c, po/POTFILES.in:
-	  internationalization fixes
-	  bugfixes
+	  internationalization fixes bugfixes
 
 2004-12-04 10:57  opensides
 
@@ -4796,14 +4886,12 @@
 	  plugins/check_ssh.c, plugins/check_swap.c, plugins/check_tcp.c,
 	  plugins/check_time.c, plugins/check_udp.c, plugins/check_ups.c,
 	  plugins/check_users.c, plugins/negate.c, plugins/urlize.c:
-	  remove UT_HLP_VRS from print_usage
-	  this was not a good idea ;-)
+	  remove UT_HLP_VRS from print_usage this was not a good idea ;-)
 
 2004-12-03 19:20  opensides
 
 	* [r993] plugins/utils.c:
-	  removing support fonction
-	  removing warranty from print_revision
+	  removing support fonction removing warranty from print_revision
 
 2004-12-03 17:48  opensides
 
@@ -4889,8 +4977,8 @@
 	  plugins/check_ssh.c, plugins/check_swap.c, plugins/check_tcp.c,
 	  plugins/check_time.c, plugins/check_udp.c, plugins/check_ups.c,
 	  plugins/check_users.c, plugins/negate.c, plugins/urlize.c:
-	  bump copyright year
-	  initialize result to STATE_UNKNOW in place of STATE_OK
+	  bump copyright year initialize result to STATE_UNKNOW in place of
+	  STATE_OK
 
 2004-12-02 21:23  opensides
 
@@ -4921,9 +5009,8 @@
 	  plugins/check_time.c, plugins/check_udp.c, plugins/check_ups.c,
 	  plugins/check_users.c, plugins/negate.c, plugins/popen.c,
 	  plugins/utils.c:
-	  More internationalization work
-	  new usage4 function to permit localisation of think like
-	  check_ssh: xxxxx
+	  More internationalization work new usage4 function to permit
+	  localisation of think like check_ssh: xxxxx
 
 2004-12-02 14:54  opensides
 
@@ -4987,8 +5074,7 @@
 	  plugins/check_snmp.c, plugins/check_ssh.c, plugins/check_tcp.c,
 	  plugins/check_time.c, plugins/check_udp.c, plugins/check_ups.c,
 	  plugins/negate.c, plugins/popen.c:
-	  changed Error: by CRITICAL -
-	  more localization fixes
+	  changed Error: by CRITICAL - more localization fixes
 
 2004-12-02 00:30  opensides
 
@@ -5016,8 +5102,7 @@
 	  plugins/gethostbyname.h, plugins/negate.c, plugins/netutils.c,
 	  plugins/netutils.h, plugins/popen.c, plugins/urlize.c,
 	  plugins/utils.c, plugins/utils.h:
-	  standardize localization string
-	  standardize unknow arguments
+	  standardize localization string standardize unknow arguments
 
 2004-12-01 22:02  tonvoon
 
@@ -5323,8 +5408,7 @@
 
 	* [r911] lib/Makefile.am:
 	  Removed getloadavg.m4 (built-in function in autoconf) and added
-	  cloexec.[hc]
-	  for getloadavg.c
+	  cloexec.[hc] for getloadavg.c
 
 2004-11-19 14:23  tonvoon
 
@@ -5382,8 +5466,7 @@
 
 	* [r900] tools/setup:
 	  Use copy of tools for consistency if building on different
-	  platforms from
-	  shared source
+	  platforms from shared source
 
 2004-11-17 23:35  tonvoon
 
@@ -5433,9 +5516,8 @@
 
 	* [r892] plugins/check_nt.c:
 	  Restore divisor for memory size reported by Windows. Also,
-	  implements warning
-	  and critical levels for performance counters. (Paulo Afonso
-	  Graner Fessel)
+	  implements warning and critical levels for performance counters.
+	  (Paulo Afonso Graner Fessel)
 
 2004-08-23 21:18  tonvoon
 
@@ -5502,8 +5584,7 @@
 
 	* [r879] tools/sfsnapshot:
 	  Remove need to alter configure.in. Using different compile farms
-	  for
-	  SF to do the compiling
+	  for SF to do the compiling
 
 2004-05-24 14:22  tonvoon
 
@@ -5629,7 +5710,8 @@
 
 2004-03-18 20:40  tonvoon
 
-	* [r852] configure.in:
+	* [r852] nagiosplug/branches/release-1.3.0/configure.in,
+	  configure.in:
 	  Mysql include path not added correctly (Arnold Cavazos - 912974)
 
 2004-03-18 20:31  tonvoon
@@ -5669,8 +5751,7 @@
 
 	* [r845] plugins/check_nagios.c:
 	  Incorporate check_proc changes into check_nagios. ps handling
-	  probably should
-	  be moved into utils.c in future
+	  probably should be moved into utils.c in future
 
 2004-03-08 21:03  tonvoon
 
@@ -5791,8 +5872,8 @@
 2004-02-21 05:37  kdebisschop
 
 	* [r823] plugins/check_by_ssh.c:
-	  add option to ignore a specified number of lines on stderr
-	  (to suppress a login banner)
+	  add option to ignore a specified number of lines on stderr (to
+	  suppress a login banner)
 
 2004-02-21 03:44  kdebisschop
 
@@ -5812,8 +5893,14 @@
 
 2004-02-20 05:25  kdebisschop
 
-	* [r818] contrib/check_dhcp.c, plugins/check_snmp.c,
-	  plugins/negate.c, plugins/netutils.c, plugins/urlize.c:
+	* [r818] nagiosplug/branches/release-1.3.0/contrib/check_dhcp.c,
+	  nagiosplug/branches/release-1.3.0/contrib/check_procl.sh,
+	  nagiosplug/branches/release-1.3.0/plugins/check_snmp.c,
+	  nagiosplug/branches/release-1.3.0/plugins/negate.c,
+	  nagiosplug/branches/release-1.3.0/plugins/netutils.c,
+	  nagiosplug/branches/release-1.3.0/plugins/urlize.c,
+	  contrib/check_dhcp.c, plugins/check_snmp.c, plugins/negate.c,
+	  plugins/netutils.c, plugins/urlize.c:
 	  spell fix "received"
 
 2004-02-20 05:21  kdebisschop
@@ -5893,9 +5980,8 @@
 
 	* [r803] plugins/check_dns.c:
 	  Output message includes the query_address, as inspired by
-	  Johannes Herlitz.
-	  Also cleanup of comments and handles multi-line nslookup output
-	  (MacOSX 10.3)
+	  Johannes Herlitz. Also cleanup of comments and handles multi-line
+	  nslookup output (MacOSX 10.3)
 
 2004-02-17 13:24  tonvoon
 
@@ -5925,13 +6011,14 @@
 
 2004-01-21 12:50  kdebisschop
 
-	* [r797] AUTHORS:
+	* [r797] nagiosplug/branches/release-1.3.0/AUTHORS, AUTHORS:
 	  credit David Croft (patch check_tcp formultibyte malloc bug in
 	  server_expect)
 
 2004-01-21 12:49  kdebisschop
 
-	* [r796] plugins/check_tcp.c:
+	* [r796] nagiosplug/branches/release-1.3.0/plugins/check_tcp.c,
+	  plugins/check_tcp.c:
 	  =fix segfault on malloc of server_expect for multibyte chars
 	  (David Croft)
 
@@ -5986,8 +6073,7 @@
 
 	* [r786] configure.in:
 	  Not correctly working out ps command if /usr/ucb before /usr/bin
-	  in PATH for
-	  Solaris (reported by Ben Whaley)
+	  in PATH for Solaris (reported by Ben Whaley)
 
 2003-12-05 16:45  tonvoon
 
@@ -6152,8 +6238,8 @@
 2003-10-31 04:19  kdebisschop
 
 	* [r754] plugins/check_mrtg.c:
-	  add perf data
-	  fix bug where stale data message would get overwritten
+	  add perf data fix bug where stale data message would get
+	  overwritten
 
 2003-10-24 13:28  tonvoon
 
@@ -6208,15 +6294,14 @@
 2003-10-14 02:15  sghosh
 
 	* [r743] plugins-scripts/check_ifstatus.pl:
-	  Added -M for maxmsgsize (v1/v2c)
-	  Added v3 support
+	  Added -M for maxmsgsize (v1/v2c) Added v3 support
 
 2003-09-30 13:54  tonvoon
 
 	* [r742] plugins/check_swap.c:
 	  Fixed logic problem if HAVE_SWAP, but not on AIX or Solaris.
-	  Removed
-	  unnecessary ifdefs for help page. Better indentation for ifdefs
+	  Removed unnecessary ifdefs for help page. Better indentation for
+	  ifdefs
 
 2003-09-29 10:02  tonvoon
 
@@ -6270,8 +6355,7 @@
 
 	* [r732] doc/developer-guidelines.sgml:
 	  Added in threshold range format and updated autoconf to 2.54 for
-	  a problem
-	  on Darwin)
+	  a problem on Darwin)
 
 2003-09-16 14:14  tonvoon
 
@@ -6402,8 +6486,7 @@
 
 	* [r706] ., .cvsignore, AUTHORS, Makefile.am, THANKS.in:
 	  Updated AUTHORS to include all contributors listed in comments in
-	  code and
-	  CVS for plugins and plugins-scripts. Still need to do SF
+	  code and CVS for plugins and plugins-scripts. Still need to do SF
 
 2003-08-31 05:13  tonvoon
 
@@ -6505,7 +6588,8 @@
 
 2003-08-22 04:43  kdebisschop
 
-	* [r689] plugins/check_http.c:
+	* [r689] nagiosplug/branches/release-1.3.0/plugins/check_http.c,
+	  plugins/check_http.c:
 	  * bugfix: snprintf of timestamp truncated '\0'
 
 2003-08-21 18:00  kdebisschop
@@ -6885,7 +6969,8 @@
 
 2003-08-01 02:12  kdebisschop
 
-	* [r624] plugins/Makefile.am:
+	* [r624] nagiosplug/branches/release-1.3.0/plugins/Makefile.am,
+	  plugins/Makefile.am:
 	  'ln -f -s ...' is not reliable/portable. Use 'rm -f ...; ln -s
 	  ...'
 
@@ -6943,19 +7028,21 @@
 2003-07-29 05:03  kdebisschop
 
 	* [r614] tools/setup:
-	  move autopoint to start of gnu toolchain setup
-	  use --force-missing instead on manually copying files
-	  (manual process was broken on RedHat, and we should expect
-	  automake to do its job right anyway)
+	  move autopoint to start of gnu toolchain setup use
+	  --force-missing instead on manually copying files (manual process
+	  was broken on RedHat, and we should expect automake to do its job
+	  right anyway)
 
 2003-07-29 03:06  kdebisschop
 
-	* [r613] configure.in:
+	* [r613] nagiosplug/branches/release-1.3.0/configure.in,
+	  configure.in:
 	  look for getloadavg.c in $topdir/lib, not $srcdir/lib
 
 2003-07-29 03:05  kdebisschop
 
-	* [r612] plugins/check_http.c:
+	* [r612] nagiosplug/branches/release-1.3.0/plugins/check_http.c,
+	  plugins/check_http.c:
 	  patch attempt to reference undefined optarg (credit Paul Farrall)
 
 2003-07-28 11:36  tonvoon
@@ -7039,8 +7126,8 @@
 2003-07-20 14:40  kdebisschop
 
 	* [r595] doc/developer-guidelines.sgml:
-	  must use '&amp;' in attribute values instead of '&'
-	  id tokens (attibute values) must not have embedded spaces
+	  must use '&amp;' in attribute values instead of '&' id tokens
+	  (attibute values) must not have embedded spaces
 
 2003-07-17 12:14  tonvoon
 
@@ -7091,7 +7178,9 @@
 
 2003-07-02 16:21  tonvoon
 
-	* [r581] plugins-scripts/check_oracle.sh:
+	* [r581]
+	  nagiosplug/branches/release-1.3.0/plugins-scripts/check_oracle.sh,
+	  plugins-scripts/check_oracle.sh:
 	  Check for ORA- errors for tablespace and cache (patch 755456 -
 	  Sven Meyer)
 
@@ -7118,8 +7207,7 @@
 	* [r575] plugins/check_http.c, plugins/check_ldap.c,
 	  plugins/check_smtp.c:
 	  Added -4 and -6 command line options into check_http, check_ldap
-	  and
-	  check_smtp
+	  and check_smtp
 
 2003-06-30 18:52  undrgrid
 
@@ -7131,11 +7219,9 @@
 2003-06-30 18:52  undrgrid
 
 	* [r573] plugins/Makefile.am:
-	  Added check_simap & check_spop to check_tcp_programs
-	  If someone knows how to make this conditional in the Makefile
-	  only if
-	  being compiled with SSL I think this is the only way to make it
-	  better
+	  Added check_simap & check_spop to check_tcp_programs If someone
+	  knows how to make this conditional in the Makefile only if being
+	  compiled with SSL I think this is the only way to make it better
 
 2003-06-30 17:02  tonvoon
 
@@ -7152,33 +7238,28 @@
 
 	* [r570] plugins/check_ping.c, plugins/check_tcp.c:
 	  Changed usage output to show -4 and -6 are mutually exclusive.
-	  You can only
-	  use one or the other but not both. The last one used will win
-	  out.
+	  You can only use one or the other but not both. The last one used
+	  will win out.
 
 2003-06-29 19:17  undrgrid
 
 	* [r569] plugins/check_ping.c, plugins/netutils.c:
 	  check_ping is now coded with -4 & -6 options to call PING or
-	  PING6 command
-	  netutils modified to verify hosts based on address_family setting
-	  when used
-	  with -4 or -6 options. is_inet_addr() will not be tested if -6 is
-	  used and is_inet6_addr() will not be tested if -4 is used. Also
-	  the
+	  PING6 command netutils modified to verify hosts based on
+	  address_family setting when used with -4 or -6 options.
+	  is_inet_addr() will not be tested if -6 is used and
+	  is_inet6_addr() will not be tested if -4 is used. Also the
 	  is_hostname() will use the address_family value to resolve
-	  hostnames
-	  only if IPv6 support is available otherwise defaults to AF_INET.
+	  hostnames only if IPv6 support is available otherwise defaults to
+	  AF_INET.
 
 2003-06-29 06:36  undrgrid
 
 	* [r568] plugins/check_ssh.c, plugins/check_tcp.c,
 	  plugins/netutils.c, plugins/netutils.h:
 	  Added address_family extern int variable to netutils to allow for
-	  -4 & -6
-	  options for explicit connection protocol
-	  Added support for -4 & -6 options to check_ssh and check_tcp for
-	  testing
+	  -4 & -6 options for explicit connection protocol Added support
+	  for -4 & -6 options to check_ssh and check_tcp for testing
 
 2003-06-29 02:18  tonvoon
 
@@ -7209,15 +7290,14 @@
 
 	* [r562] plugins/netutils.c:
 	  Modified my_connect to include ai_socktype in the hints to be
-	  compliant with
-	  RFC3493 as pointed out by Janos Mohacsi.
+	  compliant with RFC3493 as pointed out by Janos Mohacsi.
 
 2003-06-27 14:43  tonvoon
 
 	* [r561] configure.in, plugins/check_swap.c:
 	  Support for swap -s for solaris. Also changes size of swap to MBs
-	  through
-	  a conversion amount in configure. Possible breakage on other OSes
+	  through a conversion amount in configure. Possible breakage on
+	  other OSes
 
 2003-06-27 12:04  tonvoon
 
@@ -7253,8 +7333,8 @@
 
 	* [r554] plugins/check_disk.c:
 	  Problems compiling on SunOS 5.6 with gcc 2.8.1. Fixed by
-	  specifying
-	  floating variables, rather than letting asprintf work it out
+	  specifying floating variables, rather than letting asprintf work
+	  it out
 
 2003-06-21 05:49  kdebisschop
 
@@ -7264,25 +7344,27 @@
 2003-06-21 05:23  kdebisschop
 
 	* [r549] plugins/check_http.c:
-	  add remaining URI_PATH chars per RFC 2396
-	  remove '-' from URI_PORT
+	  add remaining URI_PATH chars per RFC 2396 remove '-' from
+	  URI_PORT
 
 2003-06-12 04:46  undrgrid
 
-	* [r548] command.cfg.in:
+	* [r548] nagiosplug/branches/release-1.3.0/command.cfg.in,
+	  command.cfg.in:
 	  Renamed duplicate check_snmp command definitions to be unique
 
 2003-06-12 04:16  undrgrid
 
-	* [r547] command.cfg.in, configure.in:
+	* [r547] nagiosplug/branches/release-1.3.0/command.cfg.in,
+	  command.cfg.in, configure.in:
 	  Made the two check_ifoperstatus commands unique to remove
 	  conflicts
 
 2003-06-11 10:41  kdebisschop
 
 	* [r546] plugins/check_http.c:
-	  fix URI_PATH to allow ?&#: (more still should be allowed)
-	  fix class to be POSIX compliant
+	  fix URI_PATH to allow ?&#: (more still should be allowed) fix
+	  class to be POSIX compliant
 
 2003-06-10 05:04  kdebisschop
 
@@ -7320,19 +7402,19 @@
 
 	* [r532] pkg/solaris/solpkg:
 	  Remove /usr as well. Maybe this is best done by changing BASEDIR
-	  to
-	  configure's prefix?
+	  to configure's prefix?
 
 2003-06-02 14:46  kdebisschop
 
-	* [r531] plugins/check_tcp.c:
+	* [r531] nagiosplug/branches/release-1.3.0/plugins/check_tcp.c,
+	  plugins/check_tcp.c:
 	  finish recv() loop when stream GT or EQ maxbytes (was GT)
 
 2003-06-01 05:38  kdebisschop
 
 	* [r529] plugins/check_tcp.c:
-	  allow user to limit number of bytes fetched
-	  fix some doco (wait is now delay, server_quit was not shown)
+	  allow user to limit number of bytes fetched fix some doco (wait
+	  is now delay, server_quit was not shown)
 
 2003-05-31 14:39  kdebisschop
 
@@ -7353,34 +7435,39 @@
 
 2003-05-17 23:10  tonvoon
 
-	* [r521] plugins/t/check_ftp.t:
+	* [r521] nagiosplug/branches/release-1.3.0/plugins/t/check_ftp.t,
+	  plugins/t/check_ftp.t:
 	  Fixed test (Mathew Ericson - 738609)
 
 2003-05-17 17:59  tonvoon
 
-	* [r520] plugins/t/check_load.t:
+	* [r520] nagiosplug/branches/release-1.3.0/plugins/t/check_load.t,
+	  plugins/t/check_load.t:
 	  Fixed tests (Mathew Ericson - 738607)
 
 2003-05-17 17:50  tonvoon
 
-	* [r519] plugins/t/check_procs.t:
+	* [r519] nagiosplug/branches/release-1.3.0/plugins/t/check_procs.t,
+	  plugins/t/check_procs.t:
 	  Fixed test commands (Mathew Ericson - 738605)
 
 2003-05-17 17:40  tonvoon
 
-	* [r518] plugins/t/check_http.t:
+	* [r518] nagiosplug/branches/release-1.3.0/plugins/t/check_http.t,
+	  plugins/t/check_http.t:
 	  Fixed tests (Mathew Ericson - 738608)
 
 2003-05-17 17:36  tonvoon
 
 	* [r517] plugins/t/check_tcp.t:
-	  Fixed tests (Mathew Ericson - 738604)
-	  CV:
+	  Fixed tests (Mathew Ericson - 738604) CV:
 	  ----------------------------------------------------------------------
 
 2003-05-16 17:33  sghosh
 
-	* [r515] plugins-scripts/check_ntp.pl:
+	* [r515]
+	  nagiosplug/branches/release-1.3.0/plugins-scripts/check_ntp.pl,
+	  plugins-scripts/check_ntp.pl:
 	  bug fix
 
 2003-05-14 23:17  tonvoon
@@ -7428,8 +7515,7 @@
 
 	* [r506] doc/developer-guidelines.html, doc/makefile, tools/setup:
 	  The developer-guidelines.html file is now generated from the sgml
-	  file
-	  by docbook2html at tools/setup time
+	  file by docbook2html at tools/setup time
 
 2003-05-13 12:14  stanleyhopcroft
 
@@ -7446,12 +7532,12 @@
 2003-05-09 03:22  kdebisschop
 
 	* [r503] plugins/check_http.c:
-	  fix error when server closes connection
-	  immediately
+	  fix error when server closes connection immediately
 
 2003-05-09 03:00  kdebisschop
 
-	* [r501] plugins/check_snmp.c:
+	* [r501] nagiosplug/branches/release-1.3.0/plugins/check_snmp.c,
+	  plugins/check_snmp.c:
 	  cause snmpget try try for 1 second less than the timeout
 	  (allowing plugin to force close if needed)
 
@@ -7459,23 +7545,24 @@
 
 	* [r500] plugins/check_ping.c:
 	  Modified check_ping to handle IPv6 as well as IPv4 ICMP checks
-	  using the
-	  PING6_COMMAND determined during the configure script execution.
-	  As
-	  USE_IPV6 may be defined and PING6_COMMAND is not defined if there
-	  is not
-	  IPv6 TCP stack available when configure is run I condition it off
-	  PING6_COMMAND existing to remove build errors for being
-	  undefined.
+	  using the PING6_COMMAND determined during the configure script
+	  execution. As USE_IPV6 may be defined and PING6_COMMAND is not
+	  defined if there is not IPv6 TCP stack available when configure
+	  is run I condition it off PING6_COMMAND existing to remove build
+	  errors for being undefined.
 
 2003-04-25 09:07  sghosh
 
-	* [r499] plugins-scripts/check_ntp.pl:
+	* [r499]
+	  nagiosplug/branches/release-1.3.0/plugins-scripts/check_ntp.pl,
+	  plugins-scripts/check_ntp.pl:
 	  corrected output units
 
 2003-04-23 04:58  kdebisschop
 
-	* [r498] plugins/check_http.c:
+	* [r498] nagiosplug/branches/release-1.3.0/plugins/check_http.c,
+	  nagiosplug/branches/release-1.3.0/plugins/utils.c,
+	  plugins/check_http.c:
 	  update to RFC1123 hostname specs
 
 2003-04-17 05:56  kdebisschop
@@ -7618,9 +7705,7 @@
 2003-03-31 12:49  kdebisschop
 
 	* [r466] plugins/check_disk.c:
-	  checkpoint
-	  supresses iso9660
-	  adds option for checking only local
+	  checkpoint supresses iso9660 adds option for checking only local
 	  adds choice of scale factor
 
 2003-03-27 22:53  tonvoon
@@ -7652,8 +7737,7 @@
 
 	* [r460] ., .cvsignore, Makefile.am:
 	  Better stripping of prefix for Solaris package install needs to
-	  remove
-	  /usr/local as package installs there by default
+	  remove /usr/local as package installs there by default
 
 2003-03-24 17:45  undrgrid
 
@@ -7693,7 +7777,8 @@
 
 2003-03-24 00:42  tonvoon
 
-	* [r452] REQUIREMENTS:
+	* [r452] nagiosplug/branches/release-1.3.0/REQUIREMENTS,
+	  REQUIREMENTS:
 	  Add NSClient requirement for check_nt
 
 2003-03-24 00:26  tonvoon
@@ -7803,7 +7888,9 @@
 
 2003-03-17 22:24  tonvoon
 
-	* [r428] plugins-scripts/check_oracle.sh:
+	* [r428]
+	  nagiosplug/branches/release-1.3.0/plugins-scripts/check_oracle.sh,
+	  plugins-scripts/check_oracle.sh:
 	  Allow default Oracle home from oratab (reported by Walbert
 	  Oberngruber)
 
@@ -7811,8 +7898,7 @@
 
 	* [r427] configure.in:
 	  Modified to automatically enable getaddrinfo emulation if lwres
-	  is not used and
-	  getaddrinfo is not found in the system.
+	  is not used and getaddrinfo is not found in the system.
 
 2003-03-16 23:28  undrgrid
 
@@ -7834,16 +7920,11 @@
 	  plugins/gethostbyname.h, plugins/netutils.c, plugins/netutils.h,
 	  plugins/utils.c, plugins/utils.h:
 	  Spent the day working on backwards compatability using
-	  getaddrinfo()
-	  Moved getaddrinfo.? and gethostbyname.? from lib/ to plugins/ due
-	  to
-	  problems with compiling into the libnagiosplug.a as it required
-	  linking
-	  against socket libraries which are unneeded except for network
-	  based
-	  plugins.
-	  This code should hopefully happily work for all systems and has
-	  been tested
+	  getaddrinfo() Moved getaddrinfo.? and gethostbyname.? from lib/
+	  to plugins/ due to problems with compiling into the
+	  libnagiosplug.a as it required linking against socket libraries
+	  which are unneeded except for network based plugins. This code
+	  should hopefully happily work for all systems and has been tested
 	  prior to commit on Debian GNU/Linux, SPARC Solaris 7 and SPARC
 	  Solaris 9.
 
@@ -7887,9 +7968,9 @@
 	  plugins/netutils.h.in, plugins/popen.h, plugins/popen.h.in,
 	  plugins/utils.c, plugins/utils.h, plugins/utils.h.in,
 	  plugins/version.h.in:
-	  Updated cvs ignore files to reflect changes
-	  Moved header files from being ran through configure to standard
-	  Removed auto-tools scripts that get added by automake
+	  Updated cvs ignore files to reflect changes Moved header files
+	  from being ran through configure to standard Removed auto-tools
+	  scripts that get added by automake
 
 2003-03-13 06:00  kdebisschop
 
@@ -7901,8 +7982,7 @@
 
 	* [r415] configure.in:
 	  Removed --with-ipv6 configure option so it determines IPv6
-	  availablity
-	  completely on it's own per suggestion by Karl
+	  availablity completely on it's own per suggestion by Karl
 
 2003-03-12 22:13  undrgrid
 
@@ -7924,14 +8004,11 @@
 	* [r410] autogen.sh, configure.in, plugins/utils.c,
 	  plugins/utils.h.in:
 	  Added autogen.sh script that rebuilds using autotools and runs
-	  configure
-	  Modified configure.in to include some debug build option info at
-	  the end
-	  of the scripts execution. Can be removed by release time.
-	  Modified configure.in to include a --with-ipv6 option
-	  Default build is without IPv6 support now to enable you need to
-	  use the
-	  --with-ipv6 command line option to configure.
+	  configure Modified configure.in to include some debug build
+	  option info at the end of the scripts execution. Can be removed
+	  by release time. Modified configure.in to include a --with-ipv6
+	  option Default build is without IPv6 support now to enable you
+	  need to use the --with-ipv6 command line option to configure.
 	  Modified plugins/utils.* to use USE_IPV6
 
 2003-03-12 07:05  kdebisschop
@@ -7999,7 +8076,8 @@
 
 2003-03-11 22:34  tonvoon
 
-	* [r397] plugins/negate.c:
+	* [r397] nagiosplug/branches/release-1.3.0/plugins/negate.c,
+	  plugins/negate.c:
 	  Fixed reading too many argv parameters and changed to asprintf
 
 2003-03-11 22:22  tonvoon
@@ -8028,15 +8106,15 @@
 2003-03-11 18:32  undrgrid
 
 	* [r394] configure.in:
-	  Minor change to Karl's statfs check
-	  Inclusion of ICMPv6 ping tests to define PING6_COMMAND
-	  Minor fix to ps syntax checking to fix bug I introduced last nite
+	  Minor change to Karl's statfs check Inclusion of ICMPv6 ping
+	  tests to define PING6_COMMAND Minor fix to ps syntax checking to
+	  fix bug I introduced last nite
 
 2003-03-11 07:04  undrgrid
 
 	* [r393] Makefile.am, configure.in:
-	  Removed acconfig.h from EXTRA_DIST
-	  Fixed problem with test in SWAP_FORMAT and SWAP_COMMAND
+	  Removed acconfig.h from EXTRA_DIST Fixed problem with test in
+	  SWAP_FORMAT and SWAP_COMMAND
 
 2003-03-11 06:44  kdebisschop
 
@@ -8046,8 +8124,8 @@
 2003-03-11 06:03  undrgrid
 
 	* [r391] acconfig.h, configure.in:
-	  Finishing clean-up of configure.in
-	  Removing acconfig.h as it's no longer needed
+	  Finishing clean-up of configure.in Removing acconfig.h as it's no
+	  longer needed
 
 2003-03-10 23:58  undrgrid
 
@@ -8062,12 +8140,14 @@
 
 2003-03-09 10:39  tonvoon
 
-	* [r388] plugins/check_disk.c:
+	* [r388] nagiosplug/branches/release-1.3.0/plugins/check_disk.c,
+	  plugins/check_disk.c:
 	  Implement error-only option for check_disk (Ian Duggan)
 
 2003-03-08 12:08  tonvoon
 
-	* [r387] plugins/check_disk.c:
+	* [r387] nagiosplug/branches/release-1.3.0/plugins/check_disk.c,
+	  plugins/check_disk.c:
 	  Fix AIX /proc filesystem (Ian Duggan)
 
 2003-03-08 11:44  tonvoon
@@ -8079,22 +8159,19 @@
 
 	* [r385] plugins/check_dns.c:
 	  Modified code to call is_addr() rather than is_dotted_quad() with
-	  the
-	  new AF indepdent function routines
+	  the new AF indepdent function routines
 
 2003-03-08 02:26  undrgrid
 
 	* [r384] plugins/netutils.c, plugins/netutils.h.in,
 	  plugins/utils.c, plugins/utils.h.in:
-	  AF indepedent routines introduced.
-	  Modifed process_request() & my_connect() parameters to make
-	  'proto' type
-	  'int' rather than 'char *' and use IPPROTO_* POSIX values.
-	  Removed is_dotted_quad() & my_inet_aton() functions
-	  Added is_addr(), is_inet_addr(), is_inet6_addr() and
-	  resolve_host_or_addr()
-	  functions to check whether it is a valid IP address
-	  Modified is_host() to call is_addr() and is_hostname()
+	  AF indepedent routines introduced. Modifed process_request() &
+	  my_connect() parameters to make 'proto' type 'int' rather than
+	  'char *' and use IPPROTO_* POSIX values. Removed is_dotted_quad()
+	  & my_inet_aton() functions Added is_addr(), is_inet_addr(),
+	  is_inet6_addr() and resolve_host_or_addr() functions to check
+	  whether it is a valid IP address Modified is_host() to call
+	  is_addr() and is_hostname()
 
 2003-03-08 02:02  tonvoon
 
@@ -8131,7 +8208,8 @@
 
 2003-03-08 00:23  tonvoon
 
-	* [r377] Makefile.am:
+	* [r377] nagiosplug/branches/release-1.3.0/Makefile.am,
+	  Makefile.am:
 	  Use Makefile's variables (to support a shortcut in sfsnapshot)
 
 2003-03-07 22:11  undrgrid
@@ -8141,12 +8219,10 @@
 	  plugins/check_pgsql.c, plugins/common.h.in, plugins/netutils.c,
 	  plugins/netutils.h.in, tools/setup:
 	  Added getaddrinfo.[ch] & gethostbyname.[ch] to provide RFC2553
-	  functions
-	  if missing in system libs and lwres not present
-	  Moved all references to netdb.h and sys/socket.h into common.h.in
+	  functions if missing in system libs and lwres not present Moved
+	  all references to netdb.h and sys/socket.h into common.h.in
 	  Modified automake call in tools/setup to include adding missing
-	  files
-	  so config.sub and config.guess will be available
+	  files so config.sub and config.guess will be available
 
 2003-03-07 07:45  kdebisschop
 
@@ -8155,25 +8231,25 @@
 
 2003-03-07 07:17  kdebisschop
 
-	* [r373] plugins/check_smtp.c:
+	* [r373] nagiosplug/branches/release-1.3.0/plugins/check_smtp.c,
+	  plugins/check_smtp.c:
 	  whole timer loop was on the wrong side of connection close code
 
 2003-03-07 06:43  kdebisschop
 
-	* [r372] plugins/check_udp.c:
+	* [r372] nagiosplug/branches/release-1.3.0/plugins/check_udp.c,
+	  plugins/check_udp.c:
 	  fix for -H invocation of hostname
 
 2003-03-06 06:40  undrgrid
 
 	* [r371] acinclude.m4, configure.in:
 	  Adds --with-lwres and --enable-emulate-getaddrinfo but are not
-	  used in any of
-	  the code at this time. Has a check for IPv6 support but only runs
-	  if using the
-	  emulate-getaddrinfo routines, this needs to be modified.
-	  !!! I need input from results of this run on various platforms to
-	  see what
-	  results are seen in plugins/config.h so please help test !!!
+	  used in any of the code at this time. Has a check for IPv6
+	  support but only runs if using the emulate-getaddrinfo routines,
+	  this needs to be modified. !!! I need input from results of this
+	  run on various platforms to see what results are seen in
+	  plugins/config.h so please help test !!!
 
 2003-03-05 07:27  kdebisschop
 
@@ -8492,10 +8568,9 @@
 
 	* [r305] plugins/check_ssh.c:
 	  Revised code to use resolving and connection code in utils.c and
-	  netutils.c rather than its own functions.
-	  Corrected code to properly handle input of server hostname and
-	  port on
-	  commandline without option flags.
+	  netutils.c rather than its own functions. Corrected code to
+	  properly handle input of server hostname and port on commandline
+	  without option flags.
 
 2003-02-10 04:49  kdebisschop
 
@@ -8506,11 +8581,9 @@
 
 	* [r303] tools/setup:
 	  Reordered program calls so autoheader was called before automake
-	  thus
-	  getting rid of errors for header files not being present when
-	  automake
-	  was called. Also puts it inline with documentation in
-	  INSTALL & INSTALLING
+	  thus getting rid of errors for header files not being present
+	  when automake was called. Also puts it inline with documentation
+	  in INSTALL & INSTALLING
 
 2003-02-09 14:20  sghosh
 
@@ -8657,8 +8730,8 @@
 
 	* [r275] plugins/check_nt.c:
 	  Removed all unnecessary asprintf calls. Replaced with original
-	  check_nt.c
-	  to minimise amount of changes (reported by Reuben Farrelly)
+	  check_nt.c to minimise amount of changes (reported by Reuben
+	  Farrelly)
 
 2003-01-30 23:18  tonvoon
 
@@ -8731,8 +8804,8 @@
 2003-01-29 04:11  tonvoon
 
 	* [r261] plugins/check_procs.c:
-	  Fixed NULL status in Solaris (644783 - Fabian Pehla)
-	  Fixed -p options (652082 - Ton Voon)
+	  Fixed NULL status in Solaris (644783 - Fabian Pehla) Fixed -p
+	  options (652082 - Ton Voon)
 
 2003-01-28 07:44  kdebisschop
 
@@ -8906,8 +8979,7 @@
 
 	* [r230] contrib/check_citrix:
 	  New plugin to check the ICA browse service (used by Citrix
-	  Metaframe servers) from
-	  Ed Rolison and Tom De Blende.
+	  Metaframe servers) from Ed Rolison and Tom De Blende.
 
 2002-11-25 12:00  kdebisschop
 
@@ -9373,15 +9445,12 @@
 2002-10-20 18:49  kdebisschop
 
 	* [r143] plugins/check_snmp.c:
-	  change ssprintf to asprintf
-	  back out change at line 225 in r1.4
+	  change ssprintf to asprintf back out change at line 225 in r1.4
 	  (values were mismatched to format string, so output was nonsense)
 	  (I left a comment showing a construct that should work, but it
-	  fails for PHBs:
-	  if my disk gets nearly full, they want 'CRITICAL - 99%' not
-	  'CRITICAL - Gauge32: 99')
-	  (If someine has a rationale for the change, maybe it could be
-	  done as an option? - it seems
+	  fails for PHBs: if my disk gets nearly full, they want 'CRITICAL
+	  - 99%' not 'CRITICAL - Gauge32: 99') (If someine has a rationale
+	  for the change, maybe it could be done as an option? - it seems
 	  fairly clear that the Web display should be sensible to PHBs so
 	  long as there's no real loss)
 
@@ -9699,8 +9768,8 @@
 2002-08-18 18:03  kdebisschop
 
 	* [r81] plugins/check_by_ssh.c:
-	  typo in options passed to ssh for ipv6.
-	  fix by setting a generic hook for 1-char pasthhru options
+	  typo in options passed to ssh for ipv6. fix by setting a generic
+	  hook for 1-char pasthhru options
 
 2002-08-14 19:17  sghosh
 
@@ -9968,8 +10037,7 @@
 
 	* [r30] acconfig.h:
 	  This commit was generated by cvs2svn to compensate for changes in
-	  r29,
-	  which included commits to RCS files with non-trunk default
+	  r29, which included commits to RCS files with non-trunk default
 	  branches.
 
 2002-05-09 19:03  sghosh
@@ -10061,8 +10129,7 @@
 
 	* [r13] acconfig.h:
 	  This commit was generated by cvs2svn to compensate for changes in
-	  r12,
-	  which included commits to RCS files with non-trunk default
+	  r12, which included commits to RCS files with non-trunk default
 	  branches.
 
 2002-04-05 22:19  sghosh
@@ -10204,6 +10271,9 @@
 
 2002-02-28 06:42  
 
-	* [r1] .:
+	* [r1] Nagios-Plugin, Nagios-Plugin/branches, Nagios-Plugin/tags,
+	  Nagios-Plugin/trunk, nagiosmib, nagiosmib/branches,
+	  nagiosmib/tags, nagiosmib/trunk, nagiosplug, nagiosplug/branches,
+	  nagiosplug/tags, .:
 	  New repository initialized by cvs2svn.
 

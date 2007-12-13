@@ -2,7 +2,7 @@ This file lists the major bugs from the Nagios Plugins page on Sourceforge
 at http://sourceforge.net/tracker/?group_id=29880&atid=397597. These are not
 necessarily verified as errors.
 
-For the 1.4.9 release:
+For the 1.4.11 release:
 
 1724055 - check_dns: does not sort address data
 1681516 - output too verbose for various checks
