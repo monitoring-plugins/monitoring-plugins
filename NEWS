@@ -1,5 +1,8 @@
 This file documents the major additions and syntax changes between releases.
 
+1.4.12 or 1.5 ??
+	Added ./check_nt -v INSTANCES to count number of instances (Alessandro Ren)
+
 1.4.11 13th December 2007
 	Fixed check_http regression in 1.4.10 where following redirects to
 	  relative URLs on virtual hosts failed if both "-H" and "-I" were used
