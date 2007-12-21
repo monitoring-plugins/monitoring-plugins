@@ -54,6 +54,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "netutils.h"
 #include "utils.h"
 
+#include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <stdio.h>
@@ -66,6 +67,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include <ctype.h>
 #include <netdb.h>
 #include <sys/socket.h>
+#include <net/if.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -178,11 +180,13 @@ void print_help (void);
 void print_usage (void);
 static u_int get_timevar(const char *);
 static u_int get_timevaldiff(struct timeval *, struct timeval *);
+static in_addr_t get_ip_address(const char *);
 static int wait_for_reply(int, u_int);
 static int recvfrom_wto(int, char *, unsigned int, struct sockaddr *, u_int *);
 static int send_icmp_ping(int, struct rta_host *);
 static int get_threshold(char *str, threshold *th);
 static void run_checks(void);
+static void set_source_ip(char *);
 static int add_target(char *);
 static int add_target_ip(char *, struct in_addr *);
 static int handle_random_icmp(struct icmp *, struct sockaddr_in *);
@@ -446,7 +450,7 @@ main(int argc, char **argv)
 
 	/* parse the arguments */
 	for(i = 1; i < argc; i++) {
-		while((arg = getopt(argc, argv, "vhVw:c:n:p:t:H:i:b:I:l:m:")) != EOF) {
+		while((arg = getopt(argc, argv, "vhVw:c:n:p:t:H:s:i:b:I:l:m:")) != EOF) {
 			switch(arg) {
 			case 'v':
 				debug++;
@@ -488,6 +492,9 @@ main(int argc, char **argv)
 				if(ptr) {
 					crit_down = (unsigned char)strtoul(ptr + 1, NULL, 0);
 				}
+				break;
+			case 's': /* specify source IP address */
+				set_source_ip(optarg);
 				break;
       case 'V':                 /* version */
         /*print_revision (progname, revision);*/ /* FIXME: Why? */
@@ -1109,6 +1116,38 @@ add_target(char *arg)
 
 	return 0;
 }
+
+static void
+set_source_ip(char *arg)
+{
+	struct sockaddr_in src;
+
+	memset(&src, 0, sizeof(src));
+	src.sin_family = AF_INET;
+	if((src.sin_addr.s_addr = inet_addr(arg)) == INADDR_NONE)
+		src.sin_addr.s_addr = get_ip_address(arg);
+	if(bind(icmp_sock, (struct sockaddr *)&src, sizeof(src)) == -1)
+		crash("Cannot bind to IP address %s", arg);
+}
+
+/* TODO: Move this to netutils.c and also change check_dhcp to use that. */
+static in_addr_t
+get_ip_address(const char *ifname)
+{
+#if defined(SIOCGIFADDR)
+	struct ifreq ifr;
+
+	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name) - 1);
+	ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
+	if(ioctl(icmp_sock, SIOCGIFADDR, &ifr) == -1)
+		crash("Cannot determine IP address of interface %s", ifname);
+	return ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr;
+#else
+	errno = 0;
+	crash("Cannot get interface IP address on this platform.");
+#endif
+}
+
 /*
  * u = micro
  * m = milli
@@ -1231,6 +1270,8 @@ print_help(void)
   printf (" %s\n", "-c");
   printf ("    %s", _("critical threshold (currently "));
   printf ("%0.3fms,%u%%)\n", (float)crit.rta, crit.pl);
+  printf (" %s\n", "-s");
+  printf ("    %s\n", _("specify a source IP address or device name"));
   printf (" %s\n", "-n");
   printf ("    %s", _("number of packets to send (currently "));
   printf ("%u)\n",packets);
