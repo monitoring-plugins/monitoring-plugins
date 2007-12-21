@@ -84,7 +84,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 # define MAXTTL	255
 #endif
 #ifndef INADDR_NONE
-# define INADDR_NONE 0xffffffU
+# define INADDR_NONE (in_addr_t)(-1)
 #endif
 
 #ifndef SOL_IP
