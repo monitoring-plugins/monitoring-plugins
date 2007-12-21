@@ -54,6 +54,9 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "netutils.h"
 #include "utils.h"
 
+#if HAVE_SYS_SOCKIO_H
+#include <sys/sockio.h>
+#endif
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/types.h>
