@@ -412,14 +412,14 @@ print_help (void)
   printf (" %s\n", "-T [--starttls]");
   printf ("    %s\n", _("use starttls mechanism introduced in protocol version 3"));
   printf (" %s\n", "-S [--ssl]");
-  printf (_("    use ldaps (ldap v2 ssl method). this also sets the default port to %i\n"), LDAPS_PORT);
+  printf ("    %s %i\n", _("use ldaps (ldap v2 ssl method). this also sets the default port to"), LDAPS_PORT);
 
 #ifdef HAVE_LDAP_SET_OPTION
 	printf (" %s\n", "-2 [--ver2]");
   printf ("    %s\n", _("use ldap protocol version 2"));
   printf (" %s\n", "-3 [--ver3]");
   printf ("    %s\n", _("use ldap protocol version 3"));
-  printf ("    (default protocol version: %d)\n", DEFAULT_PROTOCOL);
+  printf ("    (%s %d)\n", _("default protocol version:"), DEFAULT_PROTOCOL);
 #endif
 
 	printf (_(UT_WARN_CRIT));
