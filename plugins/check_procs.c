@@ -417,13 +417,13 @@ process_arguments (int argc, char **argv)
 				pw = getpwuid ((uid_t) uid);
 				/*  check to be sure user exists */
 				if (pw == NULL)
-					usage2 (_("UID %s was not found"), optarg);
+					usage2 (_("UID was not found"), optarg);
 			}
 			else {
 				pw = getpwnam (optarg);
 				/*  check to be sure user exists */
 				if (pw == NULL)
-					usage2 (_("User name %s was not found"), optarg);
+					usage2 (_("User name was not found"), optarg);
 				/*  then get uid */
 				uid = pw->pw_uid;
 			}
@@ -750,7 +750,7 @@ be the total number of running processes\n\n"));
 void
 print_usage (void)
 {
-  printf (_("Usage:"));
+  printf (_("Usage: "));
 	printf ("%s -w <range> -c <range> [-m metric] [-s state] [-p ppid]\n", progname);
   printf (" [-u user] [-r rss] [-z vsz] [-P %%cpu] [-a argument-array]\n");
   printf (" [-C command] [-t timeout] [-v]\n");
