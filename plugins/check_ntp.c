@@ -329,7 +329,7 @@ int best_offset_server(const ntp_server_results *slist, int nservers){
 		/* if we haven't reached the current list's end, move everyone
 		 * over one to the right, and insert the new candidate */
 		if(i<csize){
-			for(j=5; j>i; j--){
+			for(j=4; j>i; j--){
 				candidates[j]=candidates[j-1];
 			}
 		}
@@ -392,6 +392,7 @@ double offset_request(const char *host, int *status){
 	servers=(ntp_server_results*)malloc(sizeof(ntp_server_results)*num_hosts);
 	if(servers==NULL) die(STATE_UNKNOWN, "can not allocate server array");
 	memset(servers, 0, sizeof(ntp_server_results)*num_hosts);
+	DBG(printf("Found %d peers to check\n", num_hosts));
 
 	/* setup each socket for writing, and the corresponding struct pollfd */
 	ai_tmp=ai;
@@ -837,11 +838,11 @@ void print_help(void){
 
 	printf ("Copyright (c) 2006 Sean Finney\n");
 	printf (COPYRIGHT, copyright, email);
-  
-  printf ("%s\n", _("This plugin checks the selected ntp server"));
 
-  printf ("\n\n");
-  
+	printf ("%s\n", _("This plugin checks the selected ntp server"));
+
+	printf ("\n\n");
+
 	print_usage();
 	printf (_(UT_HELP_VRSN));
 	printf (_(UT_HOST_PORT), 'p', "123");
@@ -871,11 +872,17 @@ void print_help(void){
 	printf("  %s\n", ("./check_ntp -H ntpserv -w 0.5 -c 1 -j -1:100 -k -1:200"));
 
 	printf (_(UT_SUPPORT));
+
+	printf("\n");
+	printf ("%s\n", _("WARNING: check_ntp is deprecated. Please use check_ntp_peer or"));
+	printf ("%s\n\n", _("check_ntp_time istead."));
 }
 
 void
 print_usage(void)
 {
-  printf (_("Usage:"));
-  printf(" %s -H <host> [-w <warn>] [-c <crit>] [-j <warn>] [-k <crit>] [-v verbose]\n", progname);
+	printf ("%s\n", _("WARNING: check_ntp is deprecated. Please use check_ntp_peer or"));
+	printf ("%s\n\n", _("check_ntp_time istead."));
+	printf (_("Usage:"));
+	printf(" %s -H <host> [-w <warn>] [-c <crit>] [-j <warn>] [-k <crit>] [-v verbose]\n", progname);
 }

@@ -274,7 +274,7 @@ int best_offset_server(const ntp_server_results *slist, int nservers){
 		/* if we haven't reached the current list's end, move everyone
 		 * over one to the right, and insert the new candidate */
 		if(i<csize){
-			for(j=5; j>i; j--){
+			for(j=4; j>i; j--){
 				candidates[j]=candidates[j-1];
 			}
 		}
@@ -337,6 +337,7 @@ double offset_request(const char *host, int *status){
 	servers=(ntp_server_results*)malloc(sizeof(ntp_server_results)*num_hosts);
 	if(servers==NULL) die(STATE_UNKNOWN, "can not allocate server array");
 	memset(servers, 0, sizeof(ntp_server_results)*num_hosts);
+	DBG(printf("Found %d peers to check\n", num_hosts));
 
 	/* setup each socket for writing, and the corresponding struct pollfd */
 	ai_tmp=ai;
