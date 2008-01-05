@@ -4,6 +4,7 @@ This file documents the major additions and syntax changes between releases.
 	Added ./check_nt -v INSTANCES to count number of instances (Alessandro Ren)
 	check_tcp now returns UNKNOWN with invalid hostname
 	New check_icmp -s option to specify the source IP address
+	check_dns now sorts addresses for testing results for more than one returned IP (Matthias Urlichs)
 
 1.4.11 13th December 2007
 	Fixed check_http regression in 1.4.10 where following redirects to

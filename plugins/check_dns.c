@@ -62,12 +62,24 @@ int match_expected_address = FALSE;
 int expect_authority = FALSE;
 thresholds *time_thresholds = NULL;
 
+static int
+qstrcmp(const void *p1, const void *p2)
+{
+	/* The actual arguments to this function are "pointers to
+	   pointers to char", but strcmp() arguments are "pointers
+	   to char", hence the following cast plus dereference */
+	return strcmp(* (char * const *) p1, * (char * const *) p2);
+}
+
+
 int
 main (int argc, char **argv)
 {
   char *command_line = NULL;
   char input_buffer[MAX_INPUT_BUFFER];
   char *address = NULL;
+  char **addresses = NULL;
+  int n_addresses = 0;
   char *msg = NULL;
   char *temp_buffer = NULL;
   int non_authoritative = FALSE;
@@ -141,15 +153,16 @@ main (int argc, char **argv)
              NSLOOKUP_COMMAND);
       }
 
-      if (address == NULL)
-        address = strdup (temp_buffer);
-      else
-        asprintf(&address, "%s,%s", address, temp_buffer);
+      if (addresses == NULL) 
+	addresses = malloc(sizeof(*addresses)*10);
+      else if (!(n_addresses % 10))
+	addresses = realloc(addresses,sizeof(*addresses) * (n_addresses + 10));
+      addresses[n_addresses++] = strdup(temp_buffer);
     }
-
     else if (strstr (chld_out.line[i], _("Non-authoritative answer:"))) {
       non_authoritative = TRUE;
     }
+
 
     result = error_scan (chld_out.line[i]);
     if (result != STATE_OK) {
@@ -171,9 +184,21 @@ main (int argc, char **argv)
     }
   }
 
-  /* If we got here, we should have an address string,
-   * and we can segfault if we do not */
-  if (address==NULL || strlen(address)==0)
+  if (addresses) {
+    int i,slen;
+    char *adrp;
+    qsort(addresses, n_addresses, sizeof(*addresses), qstrcmp);
+    for(i=0, slen=1; i < n_addresses; i++) {
+      slen += strlen(addresses[i])+1;
+    }
+    adrp = address = malloc(slen);
+    for(i=0; i < n_addresses; i++) {
+      if (i) *adrp++ = ',';
+      strcpy(adrp, addresses[i]);
+      adrp += strlen(addresses[i]);
+    }
+    *adrp = 0;
+  } else
     die (STATE_CRITICAL,
          _("DNS CRITICAL - '%s' msg parsing exited with no address\n"),
          NSLOOKUP_COMMAND);
@@ -429,6 +454,7 @@ print_help (void)
   printf ("    %s\n", _("Optional DNS server you want to use for the lookup"));
   printf (" -a, --expected-address=IP-ADDRESS|HOST\n");
   printf ("    %s\n", _("Optional IP-ADDRESS you expect the DNS server to return. HOST must end with ."));
+  printf ("    %s\n", _("Multiple addresses can be separated with commas, and need to be sorted."));
   printf (" -A, --expect-authority\n");
   printf ("    %s\n", _("Optionally expect the DNS server to be authoritative for the lookup"));
   printf (" -w, --warning=seconds\n");
