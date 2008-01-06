@@ -67,6 +67,9 @@ int ld_port = DEFAULT_PORT;
 #ifdef HAVE_LDAP_SET_OPTION
 int ld_protocol = DEFAULT_PROTOCOL;
 #endif
+#ifndef LDAP_OPT_SUCCESS
+# define LDAP_OPT_SUCCESS LDAP_SUCCESS
+#endif
 double warn_time = UNDEFINED;
 double crit_time = UNDEFINED;
 struct timeval tv;
