@@ -202,7 +202,7 @@ main (int argc, char **argv)
 	ok (chld_err.lines == 1,
 			"...but does give an error line");
 	ok (strstr(chld_err.line[0],"non-existant-file") != NULL, "And missing filename is in error message");
-	ok (result == 127, "Get return code 127 from /bin/sh");
+	ok (result != 0, "Get non-zero return code from /bin/sh");
 
 
 	/* ensure everything is empty again */
