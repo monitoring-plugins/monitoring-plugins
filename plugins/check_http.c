@@ -174,6 +174,7 @@ int
 process_arguments (int argc, char **argv)
 {
   int c = 1;
+  char *p;
 
   enum {
     INVERT_REGEX = CHAR_MAX + 1
@@ -317,6 +318,12 @@ process_arguments (int argc, char **argv)
     /* Note: H, I, and u must be malloc'd or will fail on redirects */
     case 'H': /* Host Name (virtual host) */
       host_name = strdup (optarg);
+      if (host_name[0] == '[') {
+        if ((p = strstr (host_name, "]:")) != NULL) /* [IPv6]:port */
+          server_port = atoi (p + 2);
+      } else if ((p = strchr (host_name, ':')) != NULL
+                 && strchr (++p, ':') == NULL) /* IPv4:port or host:port */
+          server_port = atoi (p);
       break;
     case 'I': /* Server IP-address */
       server_address = strdup (optarg);
