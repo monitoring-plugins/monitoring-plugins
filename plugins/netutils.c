@@ -168,7 +168,8 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 	struct addrinfo hints;
 	struct addrinfo *r, *res;
 	struct sockaddr_un su;
-	char port_str[6];
+	char port_str[6], host[MAX_HOST_ADDRESS_LENGTH];
+	size_t len;
 	int socktype, result;
 
 	socktype = (proto == IPPROTO_UDP) ? SOCK_DGRAM : SOCK_STREAM;
@@ -180,8 +181,18 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 		hints.ai_protocol = proto;
 		hints.ai_socktype = socktype;
 
+		len = strlen (host_name);
+		/* check for an [IPv6] address (and strip the brackets) */
+		if (len >= 2 && host_name[0] == '[' && host_name[len - 1] == ']') {
+			host_name++;
+			len -= 2;
+		}
+		if (len >= sizeof(host))
+			return STATE_UNKNOWN;
+		memcpy (host, host_name, len);
+		host[len] = '\0';
 		snprintf (port_str, sizeof (port_str), "%d", port);
-		result = getaddrinfo (host_name, port_str, &hints, &res);
+		result = getaddrinfo (host, port_str, &hints, &res);
 
 		if (result != 0) {
 			printf ("%s\n", gai_strerror (result));
