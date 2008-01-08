@@ -2,7 +2,6 @@ This file documents the major additions and syntax changes between releases.
 
 1.4.12 or 1.5 ??
 	Added ./check_nt -v INSTANCES to count number of instances (Alessandro Ren)
-	check_tcp now returns UNKNOWN with invalid hostname
 	New check_icmp -s option to specify the source IP address
 	check_dns now sorts addresses for testing results for more than one returned IP (Matthias Urlichs)
 	Fix segfault in check_ntp_time and (deprecated) check_ntp. (Bug #1862300)

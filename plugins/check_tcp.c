@@ -584,7 +584,7 @@ process_arguments (int argc, char **argv)
 	if (server_address == NULL)
 		usage4 (_("You must provide a server address"));
 	else if (server_address[0] != '/' && is_host (server_address) == FALSE)
-		die (STATE_UNKNOWN, "%s %s - %s: %s\n", SERVICE, state_text(STATE_UNKNOWN), _("Invalid hostname, address or socket"), server_address);
+		die (STATE_CRITICAL, "%s %s - %s: %s\n", SERVICE, state_text(STATE_CRITICAL), _("Invalid hostname, address or socket"), server_address);
 
 	return TRUE;
 }
