@@ -242,10 +242,10 @@ crash(const char *fmt, ...)
 }
 
 
-static char *
+static const char *
 get_icmp_error_msg(unsigned char icmp_type, unsigned char icmp_code)
 {
-	char *msg = "unreachable";
+	const char *msg = "unreachable";
 
 	if(debug > 1) printf("get_icmp_error_msg(%u, %u)\n", icmp_type, icmp_code);
 	switch(icmp_type) {
@@ -897,7 +897,7 @@ finish(int sig)
 	unsigned char pl;
 	double rta;
 	struct rta_host *host;
-	char *status_string[] =
+	const char *status_string[] =
 	{"OK", "WARNING", "CRITICAL", "UNKNOWN", "DEPENDENT"};
 	int hosts_ok = 0;
 	int hosts_warn = 0;
