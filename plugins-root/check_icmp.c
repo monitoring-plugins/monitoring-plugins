@@ -1139,12 +1139,14 @@ get_ip_address(const char *ifname)
 {
 #if defined(SIOCGIFADDR)
 	struct ifreq ifr;
+	struct sockaddr_in ip;
 
 	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name) - 1);
 	ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
 	if(ioctl(icmp_sock, SIOCGIFADDR, &ifr) == -1)
 		crash("Cannot determine IP address of interface %s", ifname);
-	return ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr;
+	memcpy(&ip, &ifr.ifr_addr, sizeof(ip));
+	return ip.sin_addr.s_addr;
 #else
 	errno = 0;
 	crash("Cannot get interface IP address on this platform.");
