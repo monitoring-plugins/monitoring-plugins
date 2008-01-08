@@ -77,7 +77,7 @@ main (int argc, char **argv)
 {
   char *command_line = NULL;
   char input_buffer[MAX_INPUT_BUFFER];
-  char *address = NULL;
+  char *address = NULL; /* comma seperated str with addrs/ptrs (sorted) */
   char **addresses = NULL;
   int n_addresses = 0;
   char *msg = NULL;
@@ -122,12 +122,17 @@ main (int argc, char **argv)
 
   /* scan stdout */
   for(i = 0; i < chld_out.lines; i++) {
+    if (addresses == NULL)  
+      addresses = malloc(sizeof(*addresses)*10);
+    else if (!(n_addresses % 10))
+      addresses = realloc(addresses,sizeof(*addresses) * (n_addresses + 10));
+ 
     if (verbose)
       puts(chld_out.line[i]);
 
     if (strstr (chld_out.line[i], ".in-addr.arpa")) {
       if ((temp_buffer = strstr (chld_out.line[i], "name = ")))
-        address = strdup (temp_buffer + 7);
+        addresses[n_addresses++] = strdup (temp_buffer + 7);
       else {
         msg = (char *)_("Warning plugin error");
         result = STATE_WARNING;
@@ -153,10 +158,6 @@ main (int argc, char **argv)
              NSLOOKUP_COMMAND);
       }
 
-      if (addresses == NULL) 
-	addresses = malloc(sizeof(*addresses)*10);
-      else if (!(n_addresses % 10))
-	addresses = realloc(addresses,sizeof(*addresses) * (n_addresses + 10));
       addresses[n_addresses++] = strdup(temp_buffer);
     }
     else if (strstr (chld_out.line[i], _("Non-authoritative answer:"))) {
