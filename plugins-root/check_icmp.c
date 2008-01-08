@@ -192,7 +192,7 @@ static void run_checks(void);
 static void set_source_ip(char *);
 static int add_target(char *);
 static int add_target_ip(char *, struct in_addr *);
-static int handle_random_icmp(struct icmp *, struct sockaddr_in *);
+static int handle_random_icmp(char *, struct sockaddr_in *);
 static unsigned short icmp_checksum(unsigned short *, int);
 static void finish(int);
 static void crash(const char *, ...);
@@ -299,19 +299,18 @@ get_icmp_error_msg(unsigned char icmp_type, unsigned char icmp_code)
 }
 
 static int
-handle_random_icmp(struct icmp *p, struct sockaddr_in *addr)
+handle_random_icmp(char *packet, struct sockaddr_in *addr)
 {
-	struct icmp sent_icmp;
+	struct icmp p, sent_icmp;
 	struct rta_host *host = NULL;
-	unsigned char *ptr;
 
-	if(p->icmp_type == ICMP_ECHO && p->icmp_id == pid) {
+	memcpy(&p, packet, sizeof(p));
+	if(p.icmp_type == ICMP_ECHO && p.icmp_id == pid) {
 		/* echo request from us to us (pinging localhost) */
 		return 0;
 	}
 
-	ptr = (unsigned char *)p;
-	if(debug) printf("handle_random_icmp(%p, %p)\n", (void *)p, (void *)addr);
+	if(debug) printf("handle_random_icmp(%p, %p)\n", (void *)&p, (void *)addr);
 
 	/* only handle a few types, since others can't possibly be replies to
 	 * us in a sane network (if it is anyway, it will be counted as lost
@@ -323,15 +322,15 @@ handle_random_icmp(struct icmp *p, struct sockaddr_in *addr)
 	 * TIMXCEED actually sends a proper icmp response we will have passed
 	 * too many hops to have a hope of reaching it later, in which case it
 	 * indicates overconfidence in the network, poor routing or both. */
-	if(p->icmp_type != ICMP_UNREACH && p->icmp_type != ICMP_TIMXCEED &&
-	   p->icmp_type != ICMP_SOURCEQUENCH && p->icmp_type != ICMP_PARAMPROB)
+	if(p.icmp_type != ICMP_UNREACH && p.icmp_type != ICMP_TIMXCEED &&
+	   p.icmp_type != ICMP_SOURCEQUENCH && p.icmp_type != ICMP_PARAMPROB)
 	{
 		return 0;
 	}
 
 	/* might be for us. At least it holds the original package (according
 	 * to RFC 792). If it isn't, just ignore it */
-	memcpy(&sent_icmp, ptr + 28, sizeof(sent_icmp));
+	memcpy(&sent_icmp, packet + 28, sizeof(sent_icmp));
 	if(sent_icmp.icmp_type != ICMP_ECHO || sent_icmp.icmp_id != pid ||
 	   sent_icmp.icmp_seq >= targets)
 	{
@@ -343,7 +342,7 @@ handle_random_icmp(struct icmp *p, struct sockaddr_in *addr)
 	host = table[sent_icmp.icmp_seq];
 	if(debug) {
 		printf("Received \"%s\" from %s for ICMP ECHO sent to %s.\n",
-			   get_icmp_error_msg(p->icmp_type, p->icmp_code),
+			   get_icmp_error_msg(p.icmp_type, p.icmp_code),
 			   inet_ntoa(addr->sin_addr), host->name);
 	}
 
@@ -354,7 +353,7 @@ handle_random_icmp(struct icmp *p, struct sockaddr_in *addr)
 
 	/* source quench means we're sending too fast, so increase the
 	 * interval and mark this packet lost */
-	if(p->icmp_type == ICMP_SOURCEQUENCH) {
+	if(p.icmp_type == ICMP_SOURCEQUENCH) {
 		pkt_interval *= pkt_backoff_factor;
 		target_interval *= target_backoff_factor;
 	}
@@ -362,8 +361,8 @@ handle_random_icmp(struct icmp *p, struct sockaddr_in *addr)
 		targets_down++;
 		host->flags |= FLAG_LOST_CAUSE;
 	}
-	host->icmp_type = p->icmp_type;
-	host->icmp_code = p->icmp_code;
+	host->icmp_type = p.icmp_type;
+	host->icmp_code = p.icmp_code;
 	host->error_addr.s_addr = addr->sin_addr.s_addr;
 
 	return 0;
@@ -758,13 +757,13 @@ wait_for_reply(int sock, u_int t)
 		memcpy(&icp, buf + hlen, sizeof(icp));
 
 		if(icp.icmp_id != pid) {
-			handle_random_icmp(&icp, &resp_addr);
+			handle_random_icmp(buf + hlen, &resp_addr);
 			continue;
 		}
 
 		if(icp.icmp_type != ICMP_ECHOREPLY || icp.icmp_seq >= targets) {
 			if(debug > 2) printf("not a proper ICMP_ECHOREPLY\n");
-			handle_random_icmp(&icp, &resp_addr);
+			handle_random_icmp(buf + hlen, &resp_addr);
 			continue;
 		}
 
