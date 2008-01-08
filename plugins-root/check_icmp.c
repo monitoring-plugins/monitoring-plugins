@@ -1110,7 +1110,7 @@ add_target(char *arg)
 
 		/* this is silly, but it works */
 		if(mode == MODE_HOSTCHECK || mode == MODE_ALL) {
-			printf("mode: %d\n", mode);
+			if(debug > 2) printf("mode: %d\n", mode);
 			continue;
 		}
 		break;
