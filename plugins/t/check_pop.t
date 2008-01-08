@@ -53,4 +53,4 @@ $res = NPTest->testCmd( "./check_pop $host_nonresponsive" );
 cmp_ok( $res->return_code, '==', 2, "Non responsive host");
 
 $res = NPTest->testCmd( "./check_pop $hostname_invalid" );
-cmp_ok( $res->return_code, '==', 3, "Invalid host");
+cmp_ok( $res->return_code, '==', 2, "Invalid host");

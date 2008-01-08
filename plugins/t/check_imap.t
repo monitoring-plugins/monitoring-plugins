@@ -36,7 +36,7 @@ $t = NPTest->testCmd( "./check_imap $host_nonresponsive" );
 cmp_ok( $t->return_code, '==', 2, "Get error with non reponsive host" );
 
 $t = NPTest->testCmd( "./check_imap $hostname_invalid" );
-cmp_ok( $t->return_code, '==', 3, "Invalid hostname" );
+cmp_ok( $t->return_code, '==', 2, "Invalid hostname" );
 
 $t = NPTest->testCmd( "./check_imap -H $host_tcp_imap -e unlikely_string");
 cmp_ok( $t->return_code, '==', 1, "Got warning with bad response" );

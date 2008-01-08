@@ -34,7 +34,7 @@ my $jabberOK = '/JABBER OK\s-\s\d+\.\d+\ssecond response time on port 5222/';
 
 my $jabberUnresponsive = '/CRITICAL\s-\sSocket timeout after\s\d+\sseconds/';
 
-my $jabberInvalid = '/JABBER UNKNOWN - Invalid hostname, address or socket:\s.+/';
+my $jabberInvalid = '/JABBER CRITICAL - Invalid hostname, address or socket:\s.+/';
 
 my $r;
 
@@ -60,6 +60,6 @@ is( $r->return_code, 2, "Unresponsive host gives critical" );
 like( $r->output, $jabberUnresponsive );
 
 $r = NPTest->testCmd( "./check_jabber $hostname_invalid" );
-is( $r->return_code, 3, "Invalid hostname gives critical" );
+is( $r->return_code, 2, "Invalid hostname gives critical" );
 like( $r->output, $jabberInvalid );
 
