@@ -51,7 +51,7 @@ main (int argc, char **argv)
 	int c;
 	int result = UNSET;
 
-	plan_tests(50);
+	plan_tests(51);
 
 	diag ("Running plain echo command, set one");
 
@@ -203,6 +203,16 @@ main (int argc, char **argv)
 			"...but does give an error line");
 	ok (strstr(chld_err.line[0],"non-existant-file") != NULL, "And missing filename is in error message");
 	ok (result != 0, "Get non-zero return code from /bin/sh");
+
+
+	/* ensure everything is empty again */
+	result = UNSET;
+
+	command = (char *)malloc(COMMAND_LINE);
+  strcpy(command, "/bin/sh -c 'exit 7'");
+  result = cmd_run (command, NULL, NULL, 0);
+
+  ok (result == 7, "Get return code 7 from /bin/sh");
 
 
 	/* ensure everything is empty again */
