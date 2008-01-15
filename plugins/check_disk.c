@@ -265,7 +265,8 @@ main (int argc, char **argv)
                                 (fsp.fsu_blocks + tmpfsp.fsu_blocks);  /* Size of a block.  */
             fsp.fsu_blocks    += tmpfsp.fsu_blocks;     /* Total blocks. */
             fsp.fsu_bfree     += tmpfsp.fsu_bfree;      /* Free blocks available to superuser. */
-            fsp.fsu_bavail    += tmpfsp.fsu_bavail;     /* Free blocks available to non-superuser. */
+            /* Gnulib workaround - see comment about it a few lines below */
+            fsp.fsu_bavail    += (tmpfsp.fsu_bavail > tmpfsp.fsu_bfree ? 0 : tmpfsp.fsu_bavail); /* Free blocks available to non-superuser. */
             fsp.fsu_files     += tmpfsp.fsu_files;      /* Total file nodes. */
             fsp.fsu_ffree     += tmpfsp.fsu_ffree;      /* Free file nodes. */
             
