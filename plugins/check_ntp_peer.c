@@ -642,7 +642,7 @@ void print_help(void){
 	printf ("    %s\n", _("Offset to result in critical status (seconds)"));
 	printf (" %s\n", "-W, --warning=THRESHOLD");
 	printf ("    %s\n", _("Warning threshold for stratum"));
-	printf (" %s\n", "-W, --critical=THRESHOLD");
+	printf (" %s\n", "-C, --critical=THRESHOLD");
 	printf ("    %s\n", _("Critical threshold for stratum"));
 	printf (" %s\n", "-j, --warning=THRESHOLD");
 	printf ("    %s\n", _("Warning threshold for jitter"));
