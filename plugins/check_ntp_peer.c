@@ -63,6 +63,7 @@ static short do_jitter=0;
 static char *jwarn="-1:5000";
 static char *jcrit="-1:10000";
 static int syncsource_found=0;
+static int li_alarm=0;
 
 int process_arguments (int, char **);
 thresholds *offset_thresholds = NULL;
@@ -267,6 +268,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 		if(read(conn, &req, SIZEOF_NTPCM(req)) == -1)
 			die(STATE_CRITICAL, "NTP CRITICAL: No response from NTP server\n");
 		DBG(print_ntp_control_message(&req));
+		if (LI(req.flags) == LI_ALARM) li_alarm = 1;
 		/* Each peer identifier is 4 bytes in the data section, which
 	 	 * we represent as a ntp_assoc_status_pair datatype.
 	 	 */
@@ -296,6 +298,10 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 	if(! syncsource_found){
 		status = STATE_WARNING;
 		if(verbose) printf("warning: no synchronization source found\n");
+	}
+	if(li_alarm){
+		status = STATE_WARNING;
+		if(verbose) printf("warning: LI_ALARM bit is set\n");
 	}
 
 
@@ -597,7 +603,9 @@ int main(int argc, char *argv[]){
 	}
 	if(!syncsource_found)
 		asprintf(&result_line, "%s %s,", result_line, _("Server not synchronized"));
-
+	else if(li_alarm)
+		asprintf(&result_line, "%s %s,", result_line, _("Server has the LI_ALARM bit set"));
+ 
 	if(offset_result == STATE_UNKNOWN){
 		asprintf(&result_line, "%s %s", result_line, _("Offset unknown"));
 		asprintf(&perfdata_line, "");
