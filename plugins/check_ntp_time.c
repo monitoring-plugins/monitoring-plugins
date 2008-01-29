@@ -247,50 +247,52 @@ void setup_request(ntp_message *p){
  * this is done by filtering servers based on stratum, dispersion, and
  * finally round-trip delay. */
 int best_offset_server(const ntp_server_results *slist, int nservers){
-	int i=0, j=0, cserver=0, candidates[5], csize=0;
+	int i=0, cserver=0, best_server=-1;
 
 	/* for each server */
 	for(cserver=0; cserver<nservers; cserver++){
-		/* sort out servers with error flags */
-		if ( LI(slist[cserver].flags) != LI_NOWARNING ){
-			if (verbose) printf("discarding peer id %d: flags=%d\n", cserver, LI(slist[cserver].flags));
-			break;
+		/* We don't want any servers that fails these tests */
+		/* Sort out servers that didn't respond or responede with a 0 stratum;
+		 * stratum 0 is for reference clocks so no NTP server should ever report
+		 * a stratum 0 */
+		if ( slist[cserver].stratum == 0){
+			if (verbose) printf("discarding peer %d: stratum=%d\n", cserver, slist[cserver].stratum);
+			continue;
+		}
+		/* Sort out servers with error flags */
+		if ( LI(slist[cserver].flags) == LI_ALARM ){
+			if (verbose) printf("discarding peer %d: flags=%d\n", cserver, LI(slist[cserver].flags));
+			continue;
 		}
 
-		/* compare it to each of the servers already in the candidate list */
-		for(i=0; i<csize; i++){
-			/* does it have an equal or better stratum? */
-			if(slist[cserver].stratum <= slist[i].stratum){
-				/* does it have an equal or better dispersion? */
-				if(slist[cserver].rtdisp <= slist[i].rtdisp){
-					/* does it have a better rtdelay? */
-					if(slist[cserver].rtdelay < slist[i].rtdelay){
-						break;
-					}
+		/* If we don't have a server yet, use the first one */
+		if (best_server == -1) {
+			best_server = cserver;
+			DBG(printf("using peer %d as our first candidate\n", best_server));
+			continue;
+		}
+
+		/* compare the server to the best one we've seen so far */
+		/* does it have an equal or better stratum? */
+		DBG(printf("comparing peer %d with peer %d\n", cserver, best_server));
+		if(slist[cserver].stratum <= slist[best_server].stratum){
+			DBG(printf("stratum for peer %d <= peer %d\n", cserver, best_server));
+			/* does it have an equal or better dispersion? */
+			if(slist[cserver].rtdisp <= slist[best_server].rtdisp){
+				DBG(printf("dispersion for peer %d <= peer %d\n", cserver, best_server));
+				/* does it have a better rtdelay? */
+				if(slist[cserver].rtdelay < slist[best_server].rtdelay){
+					DBG(printf("rtdelay for peer %d < peer %d\n", cserver, best_server));
+					best_server = cserver;
+					DBG(printf("peer %d is now our best candidate\n", best_server));
 				}
 			}
 		}
-
-		/* if we haven't reached the current list's end, move everyone
-		 * over one to the right, and insert the new candidate */
-		if(i<csize){
-			for(j=4; j>i; j--){
-				candidates[j]=candidates[j-1];
-			}
-		}
-		/* regardless, if they should be on the list... */
-		if(i<5) {
-			candidates[i]=cserver;
-			if(csize<5) csize++;
-		/* otherwise discard the server */
-		} else {
-			DBG(printf("discarding peer id %d\n", cserver));
-		}
 	}
 
-	if(csize>0) {
-		DBG(printf("best server selected: peer %d\n", candidates[0]));
-		return candidates[0];
+	if(best_server >= 0) {
+		DBG(printf("best server selected: peer %d\n", best_server));
+		return best_server;
 	} else {
 		DBG(printf("no peers meeting synchronization criteria :(\n"));
 		return -1;
