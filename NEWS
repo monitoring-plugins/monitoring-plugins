@@ -7,7 +7,7 @@ This file documents the major additions and syntax changes between releases.
 	Fix segfault in check_ntp_time and (deprecated) check_ntp (Bug #1862300)
 	check_disk should now work with large file systems (2TB+) on all archs that supports it
 	Fixed check_disk disk usage calculation when using --group=NAME (related to bug #1348746)
-	Fix help text of check_ntp_* (Bug #1880095)
+	Fix help text of check_ntp* (Bug #1880095)
 	Fix bugs and flaws in best offset server selection of check_ntp_time and (deprecated) check_ntp
 
 1.4.11 13th December 2007
