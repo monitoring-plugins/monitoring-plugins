@@ -1,44 +1,43 @@
-/******************************************************************************
-*
+/*****************************************************************************
+* 
 * Nagios check_nt plugin
-*
+* 
 * License: GPL
 * Copyright (c) 2000-2002 Yves Rubin (rubiyz@yahoo.com)
-* Copyright (c) 2003-2006 nagios-plugins team
-*
+* Copyright (c) 2003-2007 Nagios Plugins Development Team
+* 
 * Last Modified: $Date$
-*
+* 
 * Description:
-*
+* 
 * This file contains the check_nt plugin
-*
-*  This plugin collects data from the NSClient service running on a
-*  Windows NT/2000/XP/2003 server.
-*  This requires NSClient software to run on NT (http://nsclient.ready2run.nl/)
-*
-* License Information:
-*
-* This program is free software; you can redistribute it and/or modify
+* 
+* This plugin collects data from the NSClient service running on a
+* Windows NT/2000/XP/2003 server.
+* This plugin requires NSClient software to run on NT
+* (http://nsclient.ready2run.nl/)
+* 
+* 
+* This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
+* the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-*
+* 
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-*
+* 
 * You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+* 
 * $Id$
-*
+* 
 *****************************************************************************/
 
 const char *progname = "check_nt";
 const char *revision = "$Revision$";
-const char *copyright = "2003-2006";
+const char *copyright = "2000-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"

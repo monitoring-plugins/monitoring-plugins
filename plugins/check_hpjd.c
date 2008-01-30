@@ -1,42 +1,40 @@
-/******************************************************************************
-*
+/*****************************************************************************
+* 
 * Nagios check_hpjd plugin
-*
+* 
 * License: GPL
-* Copyright (c) 1999-2006 nagios-plugins team
-*
+* Copyright (c) 2000-2007 Nagios Plugins Development Team
+* 
 * Last Modified: $Date$
-*
+* 
 * Description:
-*
+* 
 * This file contains the check_hpjd plugin
-*
-*  This plugin tests the STATUS of an HP printer with a JetDirect card.
-*  Net-snmp must be installed on the computer running the plugin.
-*
-*
-* License Information:
-*
-* This program is free software; you can redistribute it and/or modify
+* 
+* This plugin tests the STATUS of an HP printer with a JetDirect card.
+* Net-SNMP must be installed on the computer running the plugin.
+* 
+* 
+* This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
+* the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-*
+* 
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-*
+* 
 * You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+* 
 * $Id$
+* 
 *****************************************************************************/
 
 const char *progname = "check_hpjd";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2006";
+const char *copyright = "2000-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"

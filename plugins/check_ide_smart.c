@@ -1,46 +1,44 @@
-/******************************************************************************
-* Nagios check_ide_smart plugin
-*
-* License: GPL
-*
-*  ide-smart 1.3 - IDE S.M.A.R.T. checking tool
-*  Copyright (C)  1998-1999 Ragnar Hojland Espinosa <ragnar@lightside.dhis.org>
-*                 1998      Gadi Oxman <gadio@netvision.net.il>
+/*****************************************************************************
 * 
+* Nagios check_ide_smart plugin
+* ide-smart 1.3 - IDE S.M.A.R.T. checking tool
+* 
+* License: GPL
+* Copyright (C) 1998-1999 Ragnar Hojland Espinosa <ragnar@lightside.dhis.org>
+*               1998      Gadi Oxman <gadio@netvision.net.il>
 * Copyright (c) 2000 Robert Dale <rdale@digital-mission.com>
-* Copyright (c) 2000-2006 nagios-plugins team
-*
+* Copyright (c) 2000-2007 Nagios Plugins Development Team
+* 
 * Last Modified: $Date$
-*
+* 
 * Description:
-*
+* 
 * This file contains the check_ide_smart plugin
-*
-*  This plugin checks a local hard drive with the (Linux specific) SMART interface
-*
-*
-* License Information:
-*
-* This program is free software; you can redistribute it and/or modify
+* 
+* This plugin checks a local hard drive with the (Linux specific) SMART
+* interface
+* 
+* 
+* This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
+* the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-*
+* 
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-*
+* 
 * You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- * $Id$
- */
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+* 
+* $Id$
+* 
+*****************************************************************************/
 
 const char *progname = "check_ide_smart";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2006";
+const char *copyright = "1998-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 	
 #include "common.h"

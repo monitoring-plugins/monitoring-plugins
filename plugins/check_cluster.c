@@ -1,35 +1,34 @@
 /*****************************************************************************
- *
- * CHECK_CLUSTER2.C - Host and Service Cluster Plugin for Nagios 2.x
- *
- * Copyright (c) 2000-2004 Ethan Galstad (nagios@nagios.org)
- * Copyright (c) 2007 nagios-plugins team
- * License: GPL
- * Last Modified: $Date$
- *
- * License Information:
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- * $Id$
- * 
-******************************************************************************/
+* 
+* check_cluster.c - Host and Service Cluster Plugin for Nagios 2.x
+* 
+* License: GPL
+* Copyright (c) 2000-2004 Ethan Galstad (nagios@nagios.org)
+* Copyright (c) 2007 Nagios Plugins Development Team
+* 
+* Last Modified: $Date$
+* 
+* 
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+* 
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+* 
+* $Id$
+* 
+*****************************************************************************/
 
 const char *progname = "check_cluster";
 const char *revision = "$Revision$";
-const char *copyright = "2007";
+const char *copyright = "2000-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"

@@ -1,44 +1,41 @@
-/******************************************************************************
-*
+/*****************************************************************************
+* 
 * Nagios check_ntp plugin
-*
+* 
 * License: GPL
-* Copyright (c) 2006 sean finney <seanius@seanius.net>
-* Copyright (c) 2007 nagios-plugins team
-*
+* Copyright (c) 2006 Sean Finney <seanius@seanius.net>
+* Copyright (c) 2006-2008 Nagios Plugins Development Team
+* 
 * Last Modified: $Date$
-*
+* 
 * Description:
-*
+* 
 * This file contains the check_ntp plugin
-*
-*  This plugin to check ntp servers independant of any commandline
-*  programs or external libraries.
-*
-*
-* License Information:
-*
-* This program is free software; you can redistribute it and/or modify
+* 
+* This plugin to check ntp servers independant of any commandline
+* programs or external libraries.
+* 
+* 
+* This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
+* the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-*
+* 
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-*
+* 
 * You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
- $Id$
- 
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+* 
+* $Id$
+* 
 *****************************************************************************/
 
 const char *progname = "check_ntp";
 const char *revision = "$Revision$";
-const char *copyright = "2007";
+const char *copyright = "2006-2008";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
