@@ -1,42 +1,43 @@
-/****************************************************************************
- * Nagios run command utilities
- *
- * License: GPL
- * Copyright (c) 2005 nagios-plugins team
- *
- * $Id: utils_cmd.c 1434 2006-06-18 19:36:48Z opensides $
- *
- * Description :
- *
- * A simple interface to executing programs from other programs, using an
- * optimized and safe popen()-like implementation. It is considered safe
- * in that no shell needs to be spawned and the environment passed to the
- * execve()'d program is essentially empty.
- *
- *
- * The code in this file is a derivative of popen.c which in turn was taken
- * from "Advanced Programming for the Unix Environment" by W. Richard Stevens.
- *
- * Care has been taken to make sure the functions are async-safe. The one
- * function which isn't is cmd_init() which it doesn't make sense to
- * call twice anyway, so the api as a whole should be considered async-safe.
- *
- * License Information:
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
+/*****************************************************************************
+*
+* Nagios run command utilities
+*
+* License: GPL
+* Copyright (c) 2005-2006 Nagios Plugins Development Team
+*
+* Last Modified: $Date$
+*
+* Description :
+*
+* A simple interface to executing programs from other programs, using an
+* optimized and safe popen()-like implementation. It is considered safe
+* in that no shell needs to be spawned and the environment passed to the
+* execve()'d program is essentially empty.
+*
+* The code in this file is a derivative of popen.c which in turn was taken
+* from "Advanced Programming for the Unix Environment" by W. Richard Stevens.
+*
+* Care has been taken to make sure the functions are async-safe. The one
+* function which isn't is cmd_init() which it doesn't make sense to
+* call twice anyway, so the api as a whole should be considered async-safe.
+* 
+* 
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+* 
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+* $Id$
+*
+*****************************************************************************/
 
 #define NAGIOSPLUG_API_C 1
 
