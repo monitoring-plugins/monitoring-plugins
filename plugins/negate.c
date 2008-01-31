@@ -1,72 +1,36 @@
-/******************************************************************************
-*
+/*****************************************************************************
+* 
 * Nagios negate plugin
-*
+* 
 * License: GPL
-* Copyright (c) 2002-2007 nagios-plugins team
-*
+* Copyright (c) 2002-2007 Nagios Plugins Development Team
+* 
 * Last Modified: $Date$
-*
+* 
 * Description:
-*
+* 
 * This file contains the negate plugin
-*
-*  Negates the status of a plugin (returns OK for CRITICAL, and vice-versa)
-*
-* License Information:
-*
-* This program is free software; you can redistribute it and/or modify
+* 
+* Negates the status of a plugin (returns OK for CRITICAL, and vice-versa).
+* Can also perform custom state switching.
+* 
+* 
+* This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
+* the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-*
+* 
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-*
+* 
 * You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+* 
 * $Id$
-
-@@-<article>
-
-<sect1>
-<title>Quick Reference</title>
-<refentry>
-<refmeta><manvolnum>5<manvolnum></refmeta>
-<refnamdiv>
-<refname>&progname;</refname>
-<refpurpose>&SUMMARY;</refpurpose>
-</refnamdiv>
-</refentry>
-</sect1>
-
-<sect1>
-<title>FAQ</title>
-</sect1>
-
-<sect1>
-<title>Theory, Installation, and Operation</title>
-
-<sect2>
-<title>General Description</title>
-<para>
-&DESCRIPTION;
-</para>
-</sect2>
-
-<sect2>
-<title>Future Enhancements</title>
-<para>ToDo List</para>
-<itemizedlist>
-<listitem>Add option to do regex substitution in output text</listitem>
-</itemizedlist>
-</sect2>-@@
-
-******************************************************************************/
+* 
+*****************************************************************************/
 
 const char *progname = "negate";
 const char *revision = "$Revision$";
@@ -141,25 +105,6 @@ main (int argc, char **argv)
 		exit (result);
 	}
 }
-
-/******************************************************************************
-@@-
-<sect2>
-<title>Functions</title>
-
-<sect3>
-<title>process_arguments</title>
-
-<para>This function parses the command line into the needed
-variables.</para>
-
-<para>Aside from the standard 'help' and 'version' options, there
-is a only a 'timeout' option.</para>
-
-</sect3>
--@@
-******************************************************************************/
-
 
 
 /* process command-line arguments */
@@ -239,19 +184,6 @@ process_arguments (int argc, char **argv)
 }
 
 
-/******************************************************************************
-@@-
-<sect3>
-<title>validate_arguments</title>
-
-<para>No validation is currently done.</para>
-
-</sect3>
--@@
-******************************************************************************/
-
-
-
 int
 validate_arguments (char **command_line)
 {
@@ -262,13 +194,6 @@ validate_arguments (char **command_line)
 		usage4 (_("Require path to command"));
 }
 
-/******************************************************************************
-@@-
-</sect2> 
-</sect1>
-</article>
--@@
-******************************************************************************/
 
 int
 translate_state (char *state_text)
