@@ -1,49 +1,44 @@
-/******************************************************************************
-*
+/*****************************************************************************
+* 
 * Nagios check_dhcp plugin
-*
+* 
 * License: GPL
 * Copyright (c) 2001-2004 Ethan Galstad (nagios@nagios.org)
-* Copyright (c) 2001-2006 Nagios Plugin Development Team
-*
+* Copyright (c) 2001-2007 Nagios Plugin Development Team
+* 
 * Last Modified: $Date$
-*
+* 
 * Description:
-*
+* 
 * This file contains the check_dhcp plugin
-*
-*  This plugin tests the availability of DHCP servers on a network.
-*
-*
-* License Information:
-*
-* This program is free software; you can redistribute it and/or modify
+* 
+* This plugin tests the availability of DHCP servers on a network.
+* 
+* Unicast mode was originally implemented by Heiti of Boras Kommun with
+* general improvements as well as usability fixes and "forward"-porting by
+* Andreas Ericsson of OP5 AB.
+* 
+* 
+* This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
+* the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-*
+* 
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-*
+* 
 * You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+* 
 * $Id$
-*
-* ------------------------------------------------------------------------
-* Unicast mode was originally implemented by Heiti of Boras Kommun with
-* general improvements as well as usability fixes and "forward"-porting by
-* Andreas Ericsson of OP5 AB.
-* ------------------------------------------------------------------------
-*
+* 
 *****************************************************************************/
 
 const char *progname = "check_dhcp";
 const char *revision = "$Revision$";
-const char *copyright = "2001-2006";
+const char *copyright = "2001-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"

@@ -1,15 +1,15 @@
 /*	pst3.c
- *
- *  Third version to get process arg info; this time by using
- *  a combination of reading the /proc/<pid>/psinfo structures
- *  and reading the complete arg vector from kernel memory structures.
- *
- *  Developed and tested under Solaris 5.8 (both 32 and 64 bit modes).
- *
- *  NOTE:  This program must be setuid-root (or run by root) to work!
- *
- *	Written: 2005-04-28	R.W.Ingraham
- */
+*
+*  Third version to get process arg info; this time by using
+*  a combination of reading the /proc/<pid>/psinfo structures
+*  and reading the complete arg vector from kernel memory structures.
+*
+*  Developed and tested under Solaris 5.8 (both 32 and 64 bit modes).
+*
+*  NOTE:  This program must be setuid-root (or run by root) to work!
+*
+*	Written: 2005-04-28	R.W.Ingraham
+*/
 
 
 #define _KMEMUSER	1

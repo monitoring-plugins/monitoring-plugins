@@ -1,43 +1,40 @@
- /******************************************************************************
-*
+/*****************************************************************************
+* 
 * Nagios check_icmp plugin
-*
+* 
 * License: GPL
-* Copyright (c) 2005-2007 nagios-plugins team
-*
+* Copyright (c) 2005-2008 Nagios Plugins Development Team
 * Original Author : Andreas Ericsson <ae@op5.se>
-*
+* 
 * Last Modified: $Date$
-*
+* 
 * Description:
-*
+* 
 * This file contains the check_icmp plugin
-*
-*  Relevant RFC's: 792 (ICMP), 791 (IP)
-*
-*  This program was modeled somewhat after the check_icmp program,
-*  which was in turn a hack of fping (www.fping.org) but has been
-*  completely rewritten since to generate higher precision rta values,
-*  and support several different modes as well as setting ttl to control.
-*  redundant routes. The only remainders of fping is currently a few
-*  function names.
-*
-* License Information:
-*
-* This program is free software; you can redistribute it and/or modify
+* 
+* Relevant RFC's: 792 (ICMP), 791 (IP)
+* 
+* This program was modeled somewhat after the check_icmp program,
+* which was in turn a hack of fping (www.fping.org) but has been
+* completely rewritten since to generate higher precision rta values,
+* and support several different modes as well as setting ttl to control.
+* redundant routes. The only remainders of fping is currently a few
+* function names.
+* 
+* 
+* This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
+* the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-*
+* 
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-*
+* 
 * You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+* 
 * $Id$
 * 
 *****************************************************************************/
@@ -46,7 +43,7 @@
 /* char *progname = "check_icmp"; */
 char *progname;
 const char *revision = "$Revision$";
-const char *copyright = "2005-2007";
+const char *copyright = "2005-2008";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 /** nagios plugins basic includes */
