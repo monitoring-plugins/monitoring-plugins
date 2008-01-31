@@ -1,36 +1,35 @@
-/******************************************************************************
- *
- * Nagios plugins common include file
- *
- * License: GPL
- * Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
- *
- * Last Modified: 11-05-1999
- *
- * Description:
- *
- * This file contains common include files and defines used in many of
- * the plugins.
- *
- * License Information:
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- * $Id$
- *
- *****************************************************************************/
+/*****************************************************************************
+* 
+* Nagios plugins common include file
+* 
+* License: GPL
+* Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
+* Copyright (c) 2003-2007 Nagios Plugins Development Team
+* 
+* Last Modified: $Date$
+* 
+* Description:
+* 
+* This file contains common include files and defines used in many of
+* the plugins.
+* 
+* 
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+* 
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+* 
+* $Id$
+* 
+*****************************************************************************/
 
 #ifndef _COMMON_H_
 #define _COMMON_H_
