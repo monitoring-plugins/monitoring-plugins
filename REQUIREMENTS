@@ -7,6 +7,10 @@ that are dependent on other programs/libraries that are missing are
 usually not compiled.  Requirements for various plugins are listed
 below...
 
+check_ldaps, check_http --ssl, check_tcp --ssl, check_smtp --starttls
+	- Requires openssl or gnutls libraries for SSL connections
+	  http://www.openssl.org, http://www.gnu.org/software/gnutls
+
 check_fping:
 	- Requires the fping utility distributed with SATAN.  Either
 	  download and install SATAN or grab the fping program from
