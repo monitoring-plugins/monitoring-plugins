@@ -1508,6 +1508,7 @@ AC_ARG_ENABLE(redhat-pthread-workaround,
 	[ac_cv_enable_redhat_pthread_workaround=test])
 if test "$ac_cv_enable_redhat_pthread_workaround" = "test" ; then
 	if echo $ac_cv_uname_r | egrep "\.EL(smp)?$" >/dev/null 2>&1 ; then
+		AC_MSG_NOTICE([See http://nagiosplugins.org/faq/compile/configure_appears_to_hang if this next part takes a long time])
 		AC_MSG_CHECKING(for redhat spopen problem)
 		( cd config_test && make && make test ) > /dev/null 2>&1
 		if test $? -eq 0 ; then
