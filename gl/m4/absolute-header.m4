@@ -1,5 +1,5 @@
-# absolute-header.m4 serial 6
-dnl Copyright (C) 2006 Free Software Foundation, Inc.
+# absolute-header.m4 serial 7
+dnl Copyright (C) 2006, 2007 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -32,7 +32,12 @@ dnl eval is necessary to expand ac_cpp.
 dnl Ultrix and Pyramid sh refuse to redirect output of eval, so use subshell.
       AS_VAR_SET(gl_absolute_header,
 [`(eval "$ac_cpp conftest.$ac_ext") 2>&AS_MESSAGE_LOG_FD |
-sed -n '\#/]m4_quote(m4_defn([gl_HEADER_NAME]))[#{s#.*"\(.*/]m4_quote(m4_defn([gl_HEADER_NAME]))[\)".*#\1#;s#^/[^/]#//&#;p;q;}'`])
+sed -n '\#/]m4_quote(m4_defn([gl_HEADER_NAME]))[#{
+	s#.*"\(.*/]m4_quote(m4_defn([gl_HEADER_NAME]))[\)".*#\1#
+	s#^/[^/]#//&#
+	p
+	q
+}'`])
     fi
     AS_VAR_POPDEF([ac_header_exists])dnl
     ])dnl

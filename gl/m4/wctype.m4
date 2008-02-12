@@ -10,6 +10,12 @@ dnl Written by Paul Eggert.
 AC_DEFUN([gl_WCTYPE_H],
 [
   AC_CHECK_FUNCS_ONCE([iswcntrl])
+  if test $ac_cv_func_iswcntrl = yes; then
+    HAVE_ISWCNTRL=1
+  else
+    HAVE_ISWCNTRL=0
+  fi
+  AC_SUBST([HAVE_ISWCNTRL])
   AC_CHECK_HEADERS_ONCE([wctype.h])
   AC_REQUIRE([AC_C_INLINE])
 
@@ -23,19 +29,16 @@ AC_DEFUN([gl_WCTYPE_H],
 
   WCTYPE_H=wctype.h
   if test $ac_cv_header_wctype_h = yes; then
-    if test "$ac_cv_func_iswcntrl" = yes; then
+    if test $ac_cv_func_iswcntrl = yes; then
       WCTYPE_H=
     fi
-    dnl Compute ABSOLUTE_WCTYPE_H even if WCTYPE_H is empty,
+    dnl Compute NEXT_WCTYPE_H even if WCTYPE_H is empty,
     dnl for the benefit of builds from non-distclean directories.
-    gl_ABSOLUTE_HEADER([wctype.h])
-    ABSOLUTE_WCTYPE_H=\"$gl_cv_absolute_wctype_h\"
+    gl_CHECK_NEXT_HEADERS([wctype.h])
     HAVE_WCTYPE_H=1
   else
-    ABSOLUTE_WCTYPE_H=\"no/such/file/wctype.h\"
     HAVE_WCTYPE_H=0
   fi
-  AC_SUBST([ABSOLUTE_WCTYPE_H])
   AC_SUBST([HAVE_WCTYPE_H])
   AC_SUBST([WCTYPE_H])
 ])

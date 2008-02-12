@@ -1,11 +1,11 @@
 /* Get address information (partial implementation).
-   Copyright (C) 1997, 2001, 2002, 2004, 2005, 2006 Free Software
+   Copyright (C) 1997, 2001, 2002, 2004, 2005, 2006, 2007 Free Software
    Foundation, Inc.
    Contributed by Simon Josefsson <simon@josefsson.org>.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
+   the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -28,8 +28,11 @@
 /* Get calloc. */
 #include <stdlib.h>
 
-/* Get memcpy. */
+/* Get memcpy, strdup. */
 #include <string.h>
+
+/* Get snprintf. */
+#include <stdio.h>
 
 #include <stdbool.h>
 
@@ -38,8 +41,6 @@
 #define N_(String) String
 
 #include "inet_ntop.h"
-#include "snprintf.h"
-#include "strdup.h"
 
 /* BeOS has AF_INET, but not PF_INET.  */
 #ifndef PF_INET
@@ -178,7 +179,7 @@ getaddrinfo (const char *restrict nodename,
       const char *proto =
 	(hints && hints->ai_socktype == SOCK_DGRAM) ? "udp" : "tcp";
 
-      if (!(hints->ai_flags & AI_NUMERICSERV))
+      if (hints == NULL || !(hints->ai_flags & AI_NUMERICSERV))
 	/* FIXME: Use getservbyname_r if available. */
 	se = getservbyname (servname, proto);
 

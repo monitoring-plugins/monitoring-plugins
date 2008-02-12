@@ -1,16 +1,16 @@
 /* Get the system load averages.
 
    Copyright (C) 1985, 1986, 1987, 1988, 1989, 1991, 1992, 1993, 1994,
-   1995, 1997, 1999, 2000, 2003, 2004, 2005, 2006 Free Software
+   1995, 1997, 1999, 2000, 2003, 2004, 2005, 2006, 2007 Free Software
    Foundation, Inc.
 
    NOTE: The canonical source of this file is maintained with gnulib.
    Bugs can be reported to bug-gnulib@gnu.org.
 
-   This program is free software; you can redistribute it and/or modify
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,9 +18,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
-   USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Compile-time symbols that this file uses:
 
@@ -32,6 +30,8 @@
 				If that isn't an option, then just put
 				AC_CHECK_FUNCS(pstat_getdynamic) in your
 				configure.in file.
+   HAVE_LIBPERFSTAT Define this if your system has the
+				perfstat_cpu_total function in libperfstat (AIX).
    FIXUP_KERNEL_SYMBOL_ADDR()	Adjust address in returned struct nlist.
    KERNEL_FILE			Name of the kernel file to nlist.
    LDAV_CVT()			Scale the load average from the kernel.
@@ -188,6 +188,8 @@
 #  include <sys/socket.h>
 #  include <net/route.h>
 #  include <sys/table.h>
+/* Tru64 4.0D's table.h redefines sys */
+#  undef sys
 # endif
 
 # if defined (__osf__) && (defined (mips) || defined (__mips__))
@@ -254,7 +256,7 @@
 #   define LOAD_AVE_TYPE long
 #  endif
 
-#  ifdef _AIX
+#  if defined _AIX && ! defined HAVE_LIBPERFSTAT
 #   define LOAD_AVE_TYPE long
 #  endif
 
@@ -309,7 +311,7 @@
 #   define FSCALE 100.0
 #  endif
 
-#  ifdef _AIX
+#  if defined _AIX && !defined HAVE_LIBPERFSTAT
 #   define FSCALE 65536.0
 #  endif
 
@@ -347,7 +349,7 @@
 #  define LDAV_SYMBOL "_Loadavg"
 # endif
 
-# if !defined (LDAV_SYMBOL) && ((defined (hpux) && !defined (hp9000s300)) || defined (_SEQUENT_) || defined (SVR4) || defined (ISC) || defined (sgi) || (defined (ardent) && defined (titan)) || defined (_AIX))
+# if !defined (LDAV_SYMBOL) && ((defined (hpux) && !defined (hp9000s300)) || defined (_SEQUENT_) || defined (SVR4) || defined (ISC) || defined (sgi) || (defined (ardent) && defined (titan)) || (defined (_AIX) && !defined(HAVE_LIBPERFSTAT)))
 #  define LDAV_SYMBOL "avenrun"
 # endif
 
@@ -403,6 +405,14 @@
 #  endif /* !LDAV_CVT */
 
 # endif /* LOAD_AVE_TYPE */
+
+# if defined HAVE_LIBPERFSTAT
+#  include <libperfstat.h>
+#  include <sys/proc.h>
+#  ifndef SBITS
+#   define SBITS 16
+#  endif
+# endif
 
 # if defined (__GNU__) && !defined (NeXT)
 /* Note that NeXT Openstep defines __GNU__ even though it should not.  */
@@ -567,6 +577,22 @@ getloadavg (double loadavg[], int nelem)
     loadavg[elem++] = dyn_info.psd_avg_15_min;
 
 # endif /* hpux && HAVE_PSTAT_GETDYNAMIC */
+
+# if ! defined LDAV_DONE && defined HAVE_LIBPERFSTAT
+#  define LDAV_DONE
+#  undef LOAD_AVE_TYPE
+/* Use perfstat_cpu_total because we don't have to be root. */
+  {
+    perfstat_cpu_total_t cpu_stats;
+    int result = perfstat_cpu_total (NULL, &cpu_stats, sizeof cpu_stats, 1);
+    if (result == -1)
+      return result;
+    loadavg[0] = cpu_stats.loadavg[0] / (double)(1 << SBITS);
+    loadavg[1] = cpu_stats.loadavg[1] / (double)(1 << SBITS);
+    loadavg[2] = cpu_stats.loadavg[2] / (double)(1 << SBITS);
+    elem = 3;
+  }
+# endif
 
 # if !defined (LDAV_DONE) && (defined (__linux__) || defined (__CYGWIN__))
 #  define LDAV_DONE

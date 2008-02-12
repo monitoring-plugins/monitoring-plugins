@@ -5,7 +5,7 @@
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
+   the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -27,12 +27,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef _LIBC
-# include "strcase.h"
-#endif
-
-#if defined HAVE_LANGINFO_H || defined HAVE_LANGINFO_CODESET || defined _LIBC
+#ifdef _LIBC
 # include <langinfo.h>
+#else
+# include "localcharset.h"
 #endif
 #if defined HAVE_LOCALE_H || defined _LIBC
 # include <locale.h>
@@ -50,7 +48,7 @@
 #endif
 
 /* In case that the system doesn't have isblank().  */
-#if !defined _LIBC && !HAVE_DECL_ISBLANK && !defined isblank
+#if !defined _LIBC && ! (defined isblank || (HAVE_ISBLANK && HAVE_DECL_ISBLANK))
 # define isblank(ch) ((ch) == ' ' || (ch) == '\t')
 #endif
 
@@ -116,9 +114,6 @@
 # define __wctype wctype
 # define __iswctype iswctype
 # define __btowc btowc
-# ifndef __mempcpy
-#  define __mempcpy mempcpy
-# endif
 # define __wcrtomb wcrtomb
 # define __regfree regfree
 # define attribute_hidden

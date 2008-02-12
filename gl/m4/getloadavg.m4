@@ -31,6 +31,10 @@ AC_CHECK_FUNCS(pstat_getdynamic)
 AC_CHECK_LIB(kstat, kstat_open)
 test $ac_cv_lib_kstat_kstat_open = yes && gl_have_func=yes
 
+# AIX has libperfstat which does not require root
+AC_CHECK_LIB(perfstat, perfstat_cpu_total)
+test $ac_cv_lib_perfstat_perfstat_cpu_total = yes && gl_have_func=yes
+
 # Some systems with -lutil have (and need) -lkvm as well, some do not.
 # On Solaris, -lkvm requires nlist from -lelf, so check that first
 # to get the right answer into the cache.

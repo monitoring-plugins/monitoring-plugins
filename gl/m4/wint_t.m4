@@ -1,4 +1,4 @@
-# wint_t.m4 serial 2 (gettext-0.12)
+# wint_t.m4 serial 2 (gettext-0.17)
 dnl Copyright (C) 2003, 2007 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,

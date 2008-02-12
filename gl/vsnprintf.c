@@ -1,10 +1,10 @@
 /* Formatted output to strings.
-   Copyright (C) 2004, 2006 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2006-2007 Free Software Foundation, Inc.
    Written by Simon Josefsson and Yoann Vandoorselaere <yoann@prelude-ids.org>.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
+   the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -21,12 +21,11 @@
 #endif
 
 /* Specification.  */
-#include "vsnprintf.h"
+#include <stdio.h>
 
 #include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -41,7 +40,7 @@
    additional length SIZE limit how much is written into STR.  Returns
    string length of formatted string (which may be larger than SIZE).
    STR may be NULL, in which case nothing will be written.  On error,
-   return a negative value. */
+   return a negative value.  */
 int
 vsnprintf (char *str, size_t size, const char *format, va_list args)
 {
