@@ -15,11 +15,11 @@
 
 
 # Specification in the form of a command-line invocation:
-#   gnulib-tool --import --dir=. --lib=libgnu --source-base=gl --m4-base=gl/m4 --doc-base=doc --aux-dir=build-aux --no-libtool --macro-prefix=gl dirname fsusage getaddrinfo gethostname getloadavg getopt gettext mountlist regex vasprintf vsnprintf
+#   gnulib-tool --import --dir=. --lib=libgnu --source-base=gl --m4-base=gl/m4 --doc-base=doc --aux-dir=build-aux --no-libtool --macro-prefix=gl base64 dirname floorf fsusage getaddrinfo gethostname getloadavg getopt gettext mountlist regex vasprintf vsnprintf
 
 # Specification in the form of a few gnulib-tool.m4 macro invocations:
 gl_LOCAL_DIR([])
-gl_MODULES([dirname fsusage getaddrinfo gethostname getloadavg getopt gettext mountlist regex vasprintf vsnprintf])
+gl_MODULES([base64 dirname floorf fsusage getaddrinfo gethostname getloadavg getopt gettext mountlist regex vasprintf vsnprintf])
 gl_AVOID([])
 gl_SOURCE_BASE([gl])
 gl_M4_BASE([gl/m4])

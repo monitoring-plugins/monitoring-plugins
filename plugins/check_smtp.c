@@ -366,7 +366,8 @@ main (int argc, char **argv)
 					}
 
 					/* encode authuser with base64 */
-					abuf = base64 (authuser, strlen(authuser));
+					base64_encode_alloc (authuser, strlen(authuser), &abuf);
+					/* FIXME: abuf shouldn't have enough space to strcat a '\r\n' into it. */
 					strcat (abuf, "\r\n");
 					my_send(abuf, strlen(abuf));
 					if (verbose)
@@ -386,7 +387,8 @@ main (int argc, char **argv)
 						break;
 					}
 					/* encode authpass with base64 */
-					abuf = base64 (authpass, strlen(authpass));
+					base64_encode_alloc (authpass, strlen(authpass), &abuf);
+					/* FIXME: abuf shouldn't have enough space to strcat a '\r\n' into it. */
 					strcat (abuf, "\r\n");
 					my_send(abuf, strlen(abuf));
 					if (verbose) {

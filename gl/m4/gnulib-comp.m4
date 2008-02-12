@@ -44,6 +44,7 @@ AC_DEFUN([gl_INIT],
   gl_FUNC_ALLOCA
   gl_HEADER_ARPA_INET
   AC_PROG_MKDIR_P
+  gl_FUNC_BASE64
   gl_C_STRTOD
   gl_CLOEXEC
   gl_DIRNAME
@@ -56,6 +57,8 @@ AC_DEFUN([gl_INIT],
   gl_FCNTL_SAFER
   gl_MODULE_INDICATOR([fcntl-safer])
   gl_FLOAT_H
+  gl_FUNC_FLOORF
+  gl_MATH_MODULE_INDICATOR([floorf])
   gl_FSUSAGE
   gl_GETADDRINFO
   gl_FUNC_GETHOSTNAME
@@ -74,6 +77,7 @@ AC_DEFUN([gl_INIT],
   AC_DEFINE([GNULIB_MALLOC_GNU], 1, [Define to indicate the 'malloc' module.])
   gl_FUNC_MALLOC_POSIX
   gl_STDLIB_MODULE_INDICATOR([malloc-posix])
+  gl_MATH_H
   gl_MOUNTLIST
   gl_HEADER_NETINET_IN
   AC_PROG_MKDIR_P
@@ -240,6 +244,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/alloca.in.h
   lib/asnprintf.c
   lib/asprintf.c
+  lib/base64.c
+  lib/base64.h
   lib/basename.c
   lib/c-strtod.c
   lib/c-strtod.h
@@ -259,6 +265,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/fd-safer.c
   lib/float+.h
   lib/float.in.h
+  lib/floor.c
+  lib/floorf.c
   lib/fsusage.c
   lib/fsusage.h
   lib/full-read.c
@@ -281,6 +289,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/localcharset.c
   lib/localcharset.h
   lib/malloc.c
+  lib/math.in.h
   lib/mountlist.c
   lib/mountlist.h
   lib/netinet_in.in.h
@@ -333,6 +342,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/absolute-header.m4
   m4/alloca.m4
   m4/arpa_inet_h.m4
+  m4/base64.m4
   m4/c-strtod.m4
   m4/cloexec.m4
   m4/codeset.m4
@@ -345,6 +355,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/extensions.m4
   m4/fcntl-safer.m4
   m4/float_h.m4
+  m4/floorf.m4
   m4/fstypename.m4
   m4/fsusage.m4
   m4/getaddrinfo.m4
@@ -376,6 +387,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/longlong.m4
   m4/ls-mntd-fs.m4
   m4/malloc.m4
+  m4/math_h.m4
   m4/mountlist.m4
   m4/netinet_in_h.m4
   m4/nls.m4

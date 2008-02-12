@@ -36,7 +36,7 @@ test_cmd_LDADD = ../utils_cmd.o ../utils_base.o
 test_base64_SOURCES = test_base64.c
 test_base64_CFLAGS = -g -I..
 test_base64_LDFLAGS = -L/usr/local/lib -ltap
-test_base64_LDADD = ../base64.o 
+test_base64_LDADD = $(top_srcdir)/gl/base64.o 
 
 test: ${noinst_PROGRAMS}
 	perl -MTest::Harness -e '$$Test::Harness::switches=""; runtests(map {$$_ .= ".t"} @ARGV)' $(EXTRA_PROGRAMS)

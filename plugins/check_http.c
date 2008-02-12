@@ -764,7 +764,7 @@ check_http (void)
 
   /* optionally send the authentication info */
   if (strlen(user_auth)) {
-    auth = base64 (user_auth, strlen (user_auth));
+    base64_encode_alloc (user_auth, strlen (user_auth), &auth);
     asprintf (&buf, "%sAuthorization: Basic %s\r\n", buf, auth);
   }
 
