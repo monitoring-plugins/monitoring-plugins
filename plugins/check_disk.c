@@ -688,7 +688,7 @@ process_arguments (int argc, char **argv)
    	        printf("ignoring %s matching regex\n", temp_list->name);
 
               temp_list = np_del_parameter(temp_list, previous);
-              /* pointer to first element needs to be uüdated if first item gets deleted */
+              /* pointer to first element needs to be updated if first item gets deleted */
               if (previous == NULL)
                 path_select_list = temp_list;
           } else {
@@ -828,11 +828,17 @@ print_path (const char *mypath)
 void
 set_all_thresholds (struct parameter_list *path) 
 {
+		if (path->freespace_units != NULL) free(path->freespace_units);
     set_thresholds(&path->freespace_units, warn_freespace_units, crit_freespace_units);
+		if (path->freespace_percent != NULL) free (path->freespace_percent);
     set_thresholds(&path->freespace_percent, warn_freespace_percent, crit_freespace_percent);
+		if (path->usedspace_units != NULL) free (path->usedspace_units);
     set_thresholds(&path->usedspace_units, warn_usedspace_units, crit_usedspace_units);
+		if (path->usedspace_percent != NULL) free (path->usedspace_percent);
     set_thresholds(&path->usedspace_percent, warn_usedspace_percent, crit_usedspace_percent);
+		if (path->usedinodes_percent != NULL) free (path->usedinodes_percent);
     set_thresholds(&path->usedinodes_percent, warn_usedinodes_percent, crit_usedinodes_percent);
+		if (path->freeinodes_percent != NULL) free (path->freeinodes_percent);
     set_thresholds(&path->freeinodes_percent, warn_freeinodes_percent, crit_freeinodes_percent);
 }
 

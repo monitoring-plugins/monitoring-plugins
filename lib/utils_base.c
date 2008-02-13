@@ -120,10 +120,6 @@ _set_thresholds(thresholds **my_thresholds, char *warn_string, char *critical_st
 		}
 	}
 
-	if (*my_thresholds > 0) {	/* Not sure why, but sometimes could be -1 */
-		/* printf("Freeing here: %d\n", *my_thresholds); */
-		free(*my_thresholds);
-	}
 	*my_thresholds = temp_thresholds;
 
 	return 0;
