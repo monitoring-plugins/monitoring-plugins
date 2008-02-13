@@ -41,6 +41,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "netutils.h"
 #include <libpq-fe.h>
+#include <pg_config_manual.h>
 
 #define DEFAULT_DB "template1"
 #define DEFAULT_HOST "127.0.0.1"
