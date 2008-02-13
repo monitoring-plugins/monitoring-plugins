@@ -10,6 +10,7 @@ This file documents the major additions and syntax changes between releases.
 	Fix help text of check_ntp* (Bug #1880095)
 	Fix bugs and flaws in best offset server selection of check_ntp_time and (deprecated) check_ntp
 	check_ntp_peer now checks for the LI_ALARM flag
+	Sync to latest Gnulib (includes new floorf function)
 
 1.4.11 13th December 2007
 	Fixed check_http regression in 1.4.10 where following redirects to
