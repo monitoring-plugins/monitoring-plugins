@@ -385,10 +385,10 @@ main (int argc, char **argv)
       asprintf (&perf, "%s %s", perf,
                 perfdata ((!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
                           dused_units, units,
-			  (warning_high_tide != UINT_MAX ? TRUE : FALSE), warning_high_tide,
-			  (critical_high_tide != UINT_MAX ? TRUE : FALSE), critical_high_tide,
-			  TRUE, 0,
-			  TRUE, dtotal_units));
+                          (warning_high_tide != UINT_MAX ? TRUE : FALSE), warning_high_tide,
+                          (critical_high_tide != UINT_MAX ? TRUE : FALSE), critical_high_tide,
+                          TRUE, 0,
+                          TRUE, dtotal_units));
 
       if (disk_result==STATE_OK && erronly && !verbose)
         continue;
@@ -539,7 +539,7 @@ process_arguments (int argc, char **argv)
         }
       } else {
         if (*optarg == '@') {
-	  warn_freespace_units = optarg;
+          warn_freespace_units = optarg;
         } else {
           asprintf(&warn_freespace_units, "@%s", optarg);
         }
@@ -685,7 +685,7 @@ process_arguments (int argc, char **argv)
           if (np_regex_match_mount_entry(temp_list->best_match, &re)) {
         
               if (verbose >=3)
-   	        printf("ignoring %s matching regex\n", temp_list->name);
+                printf("ignoring %s matching regex\n", temp_list->name);
 
               temp_list = np_del_parameter(temp_list, previous);
               /* pointer to first element needs to be updated if first item gets deleted */
@@ -828,17 +828,17 @@ print_path (const char *mypath)
 void
 set_all_thresholds (struct parameter_list *path) 
 {
-		if (path->freespace_units != NULL) free(path->freespace_units);
+    if (path->freespace_units != NULL) free(path->freespace_units);
     set_thresholds(&path->freespace_units, warn_freespace_units, crit_freespace_units);
-		if (path->freespace_percent != NULL) free (path->freespace_percent);
+    if (path->freespace_percent != NULL) free (path->freespace_percent);
     set_thresholds(&path->freespace_percent, warn_freespace_percent, crit_freespace_percent);
-		if (path->usedspace_units != NULL) free (path->usedspace_units);
+    if (path->usedspace_units != NULL) free (path->usedspace_units);
     set_thresholds(&path->usedspace_units, warn_usedspace_units, crit_usedspace_units);
-		if (path->usedspace_percent != NULL) free (path->usedspace_percent);
+    if (path->usedspace_percent != NULL) free (path->usedspace_percent);
     set_thresholds(&path->usedspace_percent, warn_usedspace_percent, crit_usedspace_percent);
-		if (path->usedinodes_percent != NULL) free (path->usedinodes_percent);
+    if (path->usedinodes_percent != NULL) free (path->usedinodes_percent);
     set_thresholds(&path->usedinodes_percent, warn_usedinodes_percent, crit_usedinodes_percent);
-		if (path->freeinodes_percent != NULL) free (path->freeinodes_percent);
+    if (path->freeinodes_percent != NULL) free (path->freeinodes_percent);
     set_thresholds(&path->freeinodes_percent, warn_freeinodes_percent, crit_freeinodes_percent);
 }
 
