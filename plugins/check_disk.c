@@ -474,8 +474,6 @@ process_arguments (int argc, char **argv)
     {"iwarning", required_argument, 0, 'W'},
     /* Dang, -C is taken. We might want to reshuffle this. */
     {"icritical", required_argument, 0, 'K'},
-    {"local", required_argument, 0, 'l'},
-    {"stat-remote-fs", required_argument, 0, 'L'},
     {"kilobytes", required_argument, 0, 'k'},
     {"megabytes", required_argument, 0, 'm'},
     {"units", required_argument, 0, 'u'},
@@ -492,6 +490,8 @@ process_arguments (int argc, char **argv)
     {"ignore-ereg-partition", required_argument, 0, 'i'},
     {"ignore-eregi-path", required_argument, 0, 'I'},
     {"ignore-eregi-partition", required_argument, 0, 'I'},
+    {"local", no_argument, 0, 'l'},
+    {"stat-remote-fs", no_argument, 0, 'L'},
     {"mountpoint", no_argument, 0, 'M'},
     {"errors-only", no_argument, 0, 'e'},
     {"exact-match", no_argument, 0, 'E'},
