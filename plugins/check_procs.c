@@ -43,6 +43,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "common.h"
 #include "popen.h"
 #include "utils.h"
+#include "regex.h"
 
 #include <pwd.h>
 
@@ -69,6 +70,7 @@ int options = 0; /* bitmask of filter criteria to test against */
 #define RSS  128
 #define PCPU 256
 #define ELAPSED 512
+#define EREG_ARGS 1024
 /* Different metrics */
 char *metric_name;
 enum metric {
@@ -89,6 +91,7 @@ float pcpu;
 char *statopts;
 char *prog;
 char *args;
+regex_t re_args;
 char *fmt;
 char *fails;
 char tmp[MAX_INPUT_BUFFER];
@@ -211,6 +214,8 @@ main (int argc, char **argv)
 				resultsum |= STAT;
 			if ((options & ARGS) && procargs && (strstr (procargs, args) != NULL))
 				resultsum |= ARGS;
+			if ((options & EREG_ARGS) && procargs && (regexec(&re_args, procargs, (size_t) 0, NULL, 0) == 0))
+				resultsum |= EREG_ARGS;
 			if ((options & PROG) && procprog && (strcmp (prog, procprog) == 0))
 				resultsum |= PROG;
 			if ((options & PPID) && (procppid == ppid))
@@ -231,6 +236,12 @@ main (int argc, char **argv)
 				continue;
 
 			procs++;
+			if (verbose >= 2) {
+				printf ("Matched: uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s\n", 
+					procuid, procvsz, procrss,
+					procpid, procppid, procpcpu, procstat, 
+					procetime, procprog, procargs);
+			}
 
 			if (metric == METRIC_VSZ)
 				i = check_thresholds (procvsz);
@@ -326,6 +337,9 @@ process_arguments (int argc, char **argv)
 	char *user;
 	struct passwd *pw;
 	int option = 0;
+	int err;
+	int cflags = REG_NOSUB | REG_EXTENDED;
+	char errbuf[MAX_INPUT_BUFFER];
 	static struct option longopts[] = {
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
@@ -342,6 +356,7 @@ process_arguments (int argc, char **argv)
 		{"help", no_argument, 0, 'h'},
 		{"version", no_argument, 0, 'V'},
 		{"verbose", no_argument, 0, 'v'},
+		{"ereg-argument-array", required_argument, 0, CHAR_MAX+1},
 		{0, 0, 0, 0}
 	};
 
@@ -449,6 +464,15 @@ process_arguments (int argc, char **argv)
 				args = optarg;
 			asprintf (&fmt, "%s%sargs '%s'", (fmt ? fmt : ""), (options ? ", " : ""), args);
 			options |= ARGS;
+			break;
+		case CHAR_MAX+1:
+			err = regcomp(&re_args, optarg, cflags);
+			if (err != 0) {
+				regerror (err, &re_args, errbuf, MAX_INPUT_BUFFER);
+				die (STATE_UNKNOWN, "PROCS %s: %s - %s\n", _("UNKNOWN"), _("Could not compile regular expression"), errbuf);
+			}
+			asprintf (&fmt, "%s%sregex args '%s'", (fmt ? fmt : ""), (options ? ", " : ""), optarg);
+			options |= EREG_ARGS;
 			break;
 		case 'r': 					/* RSS */
 			if (sscanf (optarg, "%d%[^0-9]", &rss, tmp) == 1) {
@@ -716,6 +740,8 @@ print_help (void)
   printf ("   %s\n", _("Only scan for processes with user name or ID indicated."));
   printf (" %s\n", "-a, --argument-array=STRING");
   printf ("   %s\n", _("Only scan for processes with args that contain STRING."));
+  printf (" %s\n", "--ereg-argument-array=STRING");
+  printf ("   %s\n", _("Only scan for processes with args that contain the regex STRING."));
   printf (" %s\n", "-C, --command=COMMAND");
   printf ("   %s\n", _("Only scan for exact matches of COMMAND (without path)."));
 

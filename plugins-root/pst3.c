@@ -187,9 +187,10 @@ static int HandlePsInfo (char *szPath, psinfo_t *pPsInfo)
 			thisProg = myArgv[0];
  
 		/* Display the ps columns (except for argv) */
-		printf("%c %5d %5d %6lu %6lu %4.1f %s ",
+		printf("%c %5d %5d %5d %6lu %6lu %4.1f %s ",
 			pPsInfo->pr_lwp.pr_sname,
 			(int)(pPsInfo->pr_euid),
+			(int)(pPsInfo->pr_pid),
 			(int)(pPsInfo->pr_ppid),
 			(unsigned long)(pPsInfo->pr_size),
 			(unsigned long)(pPsInfo->pr_rssize),

@@ -7,7 +7,7 @@ INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl -I$(
 datadir = @datadir@
 localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
-LIBS = @LIBINTL@ @LIBS@ @SSLLIBS@
+LIBS = @LIBINTL@ @LIBS@
 
 noinst_PROGRAMS = check_dhcp check_icmp @EXTRAS_ROOT@
 
@@ -68,6 +68,7 @@ install-exec-local: $(noinst_PROGRAMS)
 # the actual targets
 check_dhcp_LDADD = $(NETLIBS)
 check_icmp_LDADD = $(NETLIBS) $(SOCKETLIBS)
+pst3_CFLAGS = @PST3CFLAGS@
 pst3_LDADD = -lkvm
 
 check_dhcp_DEPENDENCIES = check_dhcp.c $(NETOBJS) $(DEPLIBS) 

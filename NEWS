@@ -12,6 +12,8 @@ This file documents the major additions and syntax changes between releases.
 	check_ntp_peer now checks for the LI_ALARM flag
 	Sync to latest Gnulib (includes new floorf function)
 	check_pgsql now successfully builds with postgres lib v8.3 (Bug #1878972)  
+	check_procs now accepts --ereg-argument-array for a regular expression match to the argument array
+	Reverted back to using pst3 for Solaris systems. Fixed issues re: -m64 needed to compile on 64bit systems
 
 1.4.11 13th December 2007
 	Fixed check_http regression in 1.4.10 where following redirects to
