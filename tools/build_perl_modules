@@ -74,7 +74,9 @@ foreach my $tarball (@tarballs) {
 	chdir $dir or die "Can't chdir into $dir";
 
 	# Need to add this so this module is found for subsequent ones
-	$ENV{PERL5LIB}="$topdir/$dir/blib/lib:$ENV{PERL5LIB}";
+	my @dirs = split(":", $ENV{PERL5LIB} || "");
+	unshift @dirs, "$topdir/$dir/blib/lib";
+	$ENV{PERL5LIB}=join(":", @dirs);
 
 	if ($opts->{t}) {
 		system("make test") == 0 or die "Can't run make test failed";
