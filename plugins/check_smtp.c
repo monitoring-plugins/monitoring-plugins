@@ -36,12 +36,12 @@ const char *revision = "$Revision$";
 const char *copyright = "2000-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
-#include <ctype.h>
-
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
 #include "base64.h"
+
+#include <ctype.h>
 
 #ifdef HAVE_SSL
 int check_cert = FALSE;

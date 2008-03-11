@@ -27,8 +27,8 @@
 *
 *****************************************************************************/
 
-#include <stdarg.h>
 #include "common.h"
+#include <stdarg.h>
 #include "utils_base.h"
 
 void

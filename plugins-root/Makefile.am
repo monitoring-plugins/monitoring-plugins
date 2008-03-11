@@ -68,7 +68,9 @@ install-exec-local: $(noinst_PROGRAMS)
 # the actual targets
 check_dhcp_LDADD = $(NETLIBS)
 check_icmp_LDADD = $(NETLIBS) $(SOCKETLIBS)
+# -m64 needed at compiler and linker phase
 pst3_CFLAGS = @PST3CFLAGS@
+pst3_LDFLAGS = @PST3CFLAGS@
 pst3_LDADD = -lkvm
 
 check_dhcp_DEPENDENCIES = check_dhcp.c $(NETOBJS) $(DEPLIBS) 

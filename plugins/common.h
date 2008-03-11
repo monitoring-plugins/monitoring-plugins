@@ -35,12 +35,6 @@
 #define _COMMON_H_
 
 #include "config.h"
-/* This needs to be removed for Solaris servers, where 64 bit files, but 32 bit architecture
-   This needs to be done early on because subsequent system includes use _FILE_OFFSET_BITS
-   Cannot remove from config.h because is included by regex.c from lib/ */
-#if __sun__ && !defined(_LP64) && _FILE_OFFSET_BITS == 64
-#undef _FILE_OFFSET_BITS
-#endif
 
 #ifdef HAVE_FEATURES_H
 #include <features.h>

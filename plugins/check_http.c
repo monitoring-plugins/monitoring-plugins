@@ -41,12 +41,11 @@ const char *revision = "$Revision$";
 const char *copyright = "1999-2008";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
-#include <ctype.h>
-
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
 #include "base64.h"
+#include <ctype.h>
 
 #define INPUT_DELIMITER ";"
 
