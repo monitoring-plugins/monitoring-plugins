@@ -57,6 +57,7 @@ char *query_address = NULL;
 char *record_type = "A";
 char *expected_address = NULL;
 char *dns_server = NULL;
+char *dig_args = "";
 int verbose = FALSE;
 int server_port = DEFAULT_PORT;
 double warning_interval = UNDEFINED;
@@ -87,8 +88,8 @@ main (int argc, char **argv)
     usage_va(_("Could not parse arguments"));
 
   /* get the command to run */
-  asprintf (&command_line, "%s @%s -p %d %s -t %s",
-            PATH_TO_DIG, dns_server, server_port, query_address, record_type);
+  asprintf (&command_line, "%s @%s -p %d %s -t %s %s",
+            PATH_TO_DIG, dns_server, server_port, query_address, record_type, dig_args);
 
   alarm (timeout_interval);
   gettimeofday (&tv, NULL);
@@ -190,6 +191,7 @@ process_arguments (int argc, char **argv)
     {"warning", required_argument, 0, 'w'},
     {"critical", required_argument, 0, 'c'},
     {"timeout", required_argument, 0, 't'},
+    {"dig-arguments", required_argument, 0, 'A'},
     {"verbose", no_argument, 0, 'v'},
     {"version", no_argument, 0, 'V'},
     {"help", no_argument, 0, 'h'},
@@ -203,7 +205,7 @@ process_arguments (int argc, char **argv)
     return ERROR;
 
   while (1) {
-    c = getopt_long (argc, argv, "hVvt:l:H:w:c:T:p:a:", longopts, &option);
+    c = getopt_long (argc, argv, "hVvt:l:H:w:c:T:p:a:A:", longopts, &option);
 
     if (c == -1 || c == EOF)
       break;
@@ -253,6 +255,9 @@ process_arguments (int argc, char **argv)
       else {
         usage_va(_("Timeout interval must be a positive integer - %s"), optarg);
       }
+      break;
+    case 'A':                 /* dig arguments */
+      dig_args = strdup(optarg);
       break;
     case 'v':                 /* verbose */
       verbose = TRUE;
@@ -320,9 +325,14 @@ print_help (void)
   printf ("    %s\n",_("record type to lookup (default: A)"));
   printf (" %s\n","-a, --expected_address=STRING");
   printf ("    %s\n",_("an address expected to be in the answer section.if not set, uses whatever was in -l"));
+  printf (" %s\n","-A, --dig-arguments=STRING");
+  printf ("    %s\n",_("pass STRING as argument(s) to dig"));
   printf (_(UT_WARN_CRIT));
   printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
   printf (_(UT_VERBOSE));
+  printf ("%s\n", _("Examples:"));
+  printf (" %s\n", "check_dig -H DNSSERVER -l www.example.com -A \"+tcp\"");
+  printf (" %s\n", "This will send a tcp query to DNSSERVER for www.example.com");
   printf (_(UT_SUPPORT));
 }
 

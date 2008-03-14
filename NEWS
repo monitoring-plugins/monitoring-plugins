@@ -15,6 +15,7 @@ This file documents the major additions and syntax changes between releases.
 	check_procs now accepts --ereg-argument-array for a regular expression match to the argument array
 	Reverted back to using pst3 for Solaris systems. Fixed issues re: -m64 needed to compile on 64bit systems
 	If applicable, Gettext linked dynamically instead of statically
+	check_dig can now pass arguments dig by using -A/--dig-arguments (#1874041/#1889453)
 
 1.4.11 13th December 2007
 	Fixed check_http regression in 1.4.10 where following redirects to
