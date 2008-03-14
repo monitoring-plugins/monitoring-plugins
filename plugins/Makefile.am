@@ -4,10 +4,11 @@ VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plug
 
 INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl @LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@
 
-datadir = @datadir@
 localedir = $(datadir)/locale
+# gettext docs say to use AM_CPPFLAGS, but per module_CPPFLAGS override this
 DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
-LIBS = @LIBINTL@ @LIBS@
+# gettext docs say to use LDADD, but per module_LDADD override
+LIBS = @LTLIBINTL@ @LIBS@
 MATHLIBS = @MATHLIBS@
 
 # This is not portable. Run ". tools/devmode" to get development compile flags

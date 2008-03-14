@@ -4,10 +4,10 @@ VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plug
 
 INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl -I$(top_srcdir)/plugins @SSLINCLUDE@
 
-datadir = @datadir@
 localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
-LIBS = @LIBINTL@ @LIBS@
+# Don't add LTLIBINTL to all, as pst3 doesn't need it
+#LIBS = @LTLIBINTL@ @LIBS@
 
 noinst_PROGRAMS = check_dhcp check_icmp @EXTRAS_ROOT@
 
@@ -66,8 +66,8 @@ install-exec-local: $(noinst_PROGRAMS)
 
 ##############################################################################
 # the actual targets
-check_dhcp_LDADD = $(NETLIBS)
-check_icmp_LDADD = $(NETLIBS) $(SOCKETLIBS)
+check_dhcp_LDADD = @LTLIBINTL@ $(NETLIBS)
+check_icmp_LDADD = @LTLIBINTL@ $(NETLIBS) $(SOCKETLIBS)
 # -m64 needed at compiler and linker phase
 pst3_CFLAGS = @PST3CFLAGS@
 pst3_LDFLAGS = @PST3CFLAGS@
