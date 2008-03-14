@@ -194,10 +194,10 @@ main (int argc, char **argv)
 			/* make sure we find the response we are looking for */
 			if (!strstr (buffer, server_expect)) {
 				if (server_port == SMTP_PORT)
-					printf (_("Invalid SMTP response received from host\n"));
+					printf (_("Invalid SMTP response received from host: %s\n"), buffer);
 				else
-					printf (_("Invalid SMTP response received from host on port %d\n"),
-									server_port);
+					printf (_("Invalid SMTP response received from host on port %d: %s\n"),
+									server_port, buffer);
 				result = STATE_WARNING;
 			}
 		}
