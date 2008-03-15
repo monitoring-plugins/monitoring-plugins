@@ -42,9 +42,9 @@ typedef struct {
 #define GOBBLE_TO(f, c, n) do { (c)=fgetc((f)); } while((c)!=EOF && (c)!=(n))
 
 /* internal function that returns the constructed defaults options */
-static char* read_defaults(FILE *f, const char *stanza);
+static np_arg_list* read_defaults(FILE *f, const char *stanza);
 /* internal function that converts a single line into options format */
-static int add_option(FILE *f, char **optbuf, size_t *bufsize);
+static int add_option(FILE *f, np_arg_list **optlst);
 
 /* parse_locator decomposes a string of the form
  * 	[stanza][@filename]
@@ -76,9 +76,9 @@ static void parse_locator(const char *locator, const char *def_stanza, np_ini_in
 }
 
 /* this is the externally visible function used by plugins */
-char* np_get_defaults(const char *locator, const char *default_section){
+np_arg_list* np_get_defaults(const char *locator, const char *default_section){
 	FILE *inifile=NULL;
-	char *defaults=NULL;
+	np_arg_list *defaults=NULL;
 	np_ini_info i;
 
 	parse_locator(locator, default_section, &i);
@@ -104,10 +104,10 @@ char* np_get_defaults(const char *locator, const char *default_section){
  * be extra careful about user-supplied input (i.e. avoiding possible
  * format string vulnerabilities, etc)
  */
-static char* read_defaults(FILE *f, const char *stanza){
+static np_arg_list* read_defaults(FILE *f, const char *stanza){
 	int c;
-	char *opts=NULL;
-	size_t i, stanza_len, opts_buf_size=0;
+	np_arg_list *opts=NULL;
+	size_t i, stanza_len;
 	enum { NOSTANZA, WRONGSTANZA, RIGHTSTANZA } stanzastate=NOSTANZA;
 
 	stanza_len=strlen(stanza);
@@ -154,7 +154,7 @@ static char* read_defaults(FILE *f, const char *stanza){
 					/* okay, this is where we start taking the config */
 					case RIGHTSTANZA:
 						ungetc(c, f);
-						if(add_option(f, &opts, &opts_buf_size)){
+						if(add_option(f, &opts)){
 							die(STATE_UNKNOWN, _("Config file error"));
 						}
 						break;
@@ -170,15 +170,14 @@ static char* read_defaults(FILE *f, const char *stanza){
  * 	^option[[:space:]]*(=[[:space:]]*value)?
  * and creates it as a cmdline argument
  * 	--option[=value]
- * appending it to the string pointed to by optbuf (which will
- * be dynamically grown if needed)
+ * appending it to the linked list optbuf.
  */
-static int add_option(FILE *f, char **optbuf, size_t *bufsize){
-	char *newbuf=*optbuf;
+static int add_option(FILE *f, np_arg_list **optlst){
+	np_arg_list *opttmp=*optlst, *optnew;
 	char *linebuf=NULL, *lineend=NULL, *optptr=NULL, *optend=NULL;
 	char *eqptr=NULL, *valptr=NULL, *spaceptr=NULL, *valend=NULL;
 	short done_reading=0, equals=0, value=0;
-	size_t cfg_len=0, read_sz=8, linebuf_sz=0, read_pos=0, bs=*bufsize;
+	size_t cfg_len=0, read_sz=8, linebuf_sz=0, read_pos=0;
 	size_t opt_len=0, val_len=0;
 
 	/* read one line from the file */
@@ -214,14 +213,13 @@ static int add_option(FILE *f, char **optbuf, size_t *bufsize){
 	if(optptr==eqptr) die(STATE_UNKNOWN, _("Config file error\n"));
 	/* continue from '=' to start of value or EOL */
 	for(valptr=eqptr+1; valptr<lineend && isspace(*valptr); valptr++);
-	/* continue to the end of value, watching for trailing space/comments */
-	for(valend=valptr; valend<lineend; valend++){
-		if(isspace(*valend) && spaceptr==NULL) spaceptr=valend;
-		else if(*valend=='#') break;
-		else spaceptr=NULL;
-	}
-	if(spaceptr!=NULL) valend=spaceptr;
+	/* continue to the end of value (FIXME: watching for trailing comments) */
+	for(valend=valptr; valend<lineend; valend++)
+		/* FIXME: N::P doesn't allow comments. Remove next line and parse_ini won't either */
+		if(*valend=='#') break;
 	--valend;
+	/* Finally trim off trailing spaces */
+	for(valend; isspace(*valend); valend--);
 	/* calculate the length of "--foo" */
 	opt_len=1+optend-optptr;
 	cfg_len=2+(opt_len);
@@ -237,27 +235,31 @@ static int add_option(FILE *f, char **optbuf, size_t *bufsize){
 		cfg_len+=1;
 	}
 
-	/* okay, now we have all the info we need, so we grow the default opts
-	 * buffer if it's necessary, and put everything together.
-	 * (+2 is for a potential space and a null byte)
+	/* okay, now we have all the info we need, so we create a new np_arg_list
+	 * element and set the argument...
 	 */
-	read_pos=(newbuf==NULL)?0:strlen(newbuf);
-	if(newbuf==NULL || read_pos+cfg_len+2 >= bs){
-		bs=(bs>0)?(bs+cfg_len+2)<<1:cfg_len+1;
-		newbuf=realloc(newbuf, bs);
-		if(newbuf==NULL) die(STATE_UNKNOWN, _("malloc() failed!\n"));
-	}
-	if(read_pos>0) newbuf[read_pos++]=' ';
-	strncpy(&newbuf[read_pos], "--", 2); read_pos+=2;
-	strncpy(&newbuf[read_pos], optptr, opt_len); read_pos+=opt_len;
-	if(equals) newbuf[read_pos++]='=';
-	if(value) {
-		strncpy(&newbuf[read_pos], valptr, val_len); read_pos+=val_len;
-	}
-	newbuf[read_pos]='\0';
+	optnew=(np_arg_list *)malloc(sizeof(np_arg_list));
+	optnew->next=NULL;
 
-	*optbuf=newbuf;
-	*bufsize=bs;
+	read_pos=0;
+	optnew->arg=(char *)malloc(cfg_len+1);
+	strncpy(&optnew->arg[read_pos], "--", 2); read_pos+=2;
+	strncpy(&optnew->arg[read_pos], optptr, opt_len); read_pos+=opt_len;
+	if(equals) optnew->arg[read_pos++]='=';
+	if(value) {
+		strncpy(&optnew->arg[read_pos], valptr, val_len); read_pos+=val_len;
+	}
+	optnew->arg[read_pos]='\0';
+
+	/* ...and put that to the end of the list */
+	if (*optlst==NULL) {
+		*optlst=optnew;
+	}	else {
+		while (opttmp->next!=NULL) {
+			opttmp=opttmp->next;
+		}
+		opttmp->next = optnew;
+	}
 
 	free(linebuf);
 	return 0;

@@ -19,6 +19,7 @@
 
 #include "common.h"
 #include "parse_ini.h"
+#include "utils_base.h"
 
 #include "tap.h"
 
@@ -29,6 +30,22 @@ void my_free(char *string) {
 	}
 }
 
+char*
+list2str(np_arg_list *optlst)
+{
+	char *optstr=NULL;
+
+	/* Put everything as a space-separated string */
+	while (optlst) {
+		asprintf(&optstr, "%s%s ", optstr?optstr:"", optlst->arg);
+		optlst=optlst->next;
+	}
+	/* Strip last whitespace */
+	optstr[strlen(optstr)-1]='\0';
+
+	return optstr;
+}
+
 int
 main (int argc, char **argv)
 {
@@ -36,11 +53,11 @@ main (int argc, char **argv)
 
 	plan_tests(4);
 
-	optstr=np_get_defaults("section@./config-tiny.ini", "check_disk");
+	optstr=list2str(np_get_defaults("section@./config-tiny.ini", "check_disk"));
 	ok( !strcmp(optstr, "--one=two --Foo=Bar --this=Your Mother! --blank="), "config-tiny.ini's section as expected");
 	my_free(optstr);
 
-	optstr=np_get_defaults("@./config-tiny.ini", "section");
+	optstr=list2str(np_get_defaults("@./config-tiny.ini", "section"));
 	ok( !strcmp(optstr, "--one=two --Foo=Bar --this=Your Mother! --blank="), "Used default section name, without specific");
 	my_free(optstr);
 
@@ -51,7 +68,7 @@ main (int argc, char **argv)
 	my_free(optstr);
 	*/
 
-	optstr=np_get_defaults("Section Two@./config-tiny.ini", "check_disk");
+	optstr=list2str(np_get_defaults("Section Two@./config-tiny.ini", "check_disk"));
 	ok( !strcmp(optstr, "--something else=blah --remove=whitespace"), "config-tiny.ini's Section Two as expected");
 	my_free(optstr);
 
@@ -70,7 +87,7 @@ main (int argc, char **argv)
 	my_free(optstr);
 	*/
 
-	optstr=np_get_defaults("check_mysql@./plugin.ini", "check_disk");
+	optstr=list2str(np_get_defaults("check_mysql@./plugin.ini", "check_disk"));
 	ok( !strcmp(optstr, "--username=operator --password=secret"), "plugin.ini's check_mysql as expected");
 	my_free(optstr);
 
