@@ -126,6 +126,8 @@ static np_arg_list* read_defaults(FILE *f, const char *stanza){
 				stanzastate=WRONGSTANZA;
 				for(i=0; i<stanza_len; i++){
 					c=fgetc(f);
+					/* Strip leading whitespace */
+					if(i==0) for(c; isspace(c); c=fgetc(f));
 					/* nope, read to the end of the line */
 					if(c!=stanza[i]) {
 						GOBBLE_TO(f, c, '\n');
@@ -135,6 +137,8 @@ static np_arg_list* read_defaults(FILE *f, const char *stanza){
 				/* if it matched up to here and the next char is ']'... */
 				if(i==stanza_len){
 					c=fgetc(f);
+					/* Strip trailing whitespace */
+					for(c; isspace(c); c=fgetc(f));
 					if(c==']') stanzastate=RIGHTSTANZA;
 				}
 				break;
@@ -223,7 +227,7 @@ static int add_option(FILE *f, np_arg_list **optlst){
 	/* calculate the length of "--foo" */
 	opt_len=1+optend-optptr;
 	/* 1-character params needs only one dash */
-	if (opt_len==1)
+	if(opt_len==1)
 		cfg_len=1+(opt_len);
 	else
 		cfg_len=2+(opt_len);
@@ -234,7 +238,7 @@ static int add_option(FILE *f, np_arg_list **optlst){
 		cfg_len+=1+val_len;
 	}
 	/* if valptr==valend then we have "=" but no "bar" */
-	else if (valptr==lineend) {
+	else if(valptr==lineend) {
 		equals=1;
 		cfg_len+=1;
 	}
@@ -248,7 +252,7 @@ static int add_option(FILE *f, np_arg_list **optlst){
 	read_pos=0;
 	optnew->arg=(char *)malloc(cfg_len+1);
 	/* 1-character params needs only one dash */
-	if (opt_len==1) {
+	if(opt_len==1) {
 		strncpy(&optnew->arg[read_pos], "-", 1);
 		read_pos+=1;
 	} else {
@@ -263,10 +267,10 @@ static int add_option(FILE *f, np_arg_list **optlst){
 	optnew->arg[read_pos]='\0';
 
 	/* ...and put that to the end of the list */
-	if (*optlst==NULL) {
+	if(*optlst==NULL) {
 		*optlst=optnew;
 	}	else {
-		while (opttmp->next!=NULL) {
+		while(opttmp->next!=NULL) {
 			opttmp=opttmp->next;
 		}
 		opttmp->next = optnew;
