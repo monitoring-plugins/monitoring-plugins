@@ -212,6 +212,7 @@ static int add_option(FILE *f, np_arg_list **optlst){
 		else optend=NULL;
 	}
 	if(optend==NULL) optend=eqptr;
+//printf("o1: %c\n", *optptr[optend]);
 	--optend;
 	/* ^[[:space:]]*=foo is a syntax error */
 	if(optptr==eqptr) die(STATE_UNKNOWN, _("Config file error\n"));
@@ -242,6 +243,8 @@ static int add_option(FILE *f, np_arg_list **optlst){
 		equals=1;
 		cfg_len+=1;
 	}
+	/* A line with no equal sign isn't valid */
+	if(equals==0) die(STATE_UNKNOWN, _("Config file error\n"));
 
 	/* okay, now we have all the info we need, so we create a new np_arg_list
 	 * element and set the argument...
@@ -260,8 +263,8 @@ static int add_option(FILE *f, np_arg_list **optlst){
 		read_pos+=2;
 	}
 	strncpy(&optnew->arg[read_pos], optptr, opt_len); read_pos+=opt_len;
-	if(equals) optnew->arg[read_pos++]='=';
 	if(value) {
+		optnew->arg[read_pos++]='=';
 		strncpy(&optnew->arg[read_pos], valptr, val_len); read_pos+=val_len;
 	}
 	optnew->arg[read_pos]='\0';

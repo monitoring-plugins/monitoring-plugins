@@ -52,18 +52,18 @@ main (int argc, char **argv)
 {
 	char *optstr=NULL;
 
-	plan_tests(9);
+	plan_tests(10);
 
 	optstr=list2str(np_get_defaults("section@./config-tiny.ini", "check_disk"));
-	ok( !strcmp(optstr, "--one=two --Foo=Bar --this=Your Mother! --blank="), "config-tiny.ini's section as expected");
+	ok( !strcmp(optstr, "--one=two --Foo=Bar --this=Your Mother! --blank"), "config-tiny.ini's section as expected");
 	my_free(optstr);
 
 	optstr=list2str(np_get_defaults("@./config-tiny.ini", "section"));
-	ok( !strcmp(optstr, "--one=two --Foo=Bar --this=Your Mother! --blank="), "Used default section name, without specific");
+	ok( !strcmp(optstr, "--one=two --Foo=Bar --this=Your Mother! --blank"), "Used default section name, without specific");
 	my_free(optstr);
 
 	optstr=list2str(np_get_defaults("section_unknown@./config-tiny.ini", "section"));
-	ok( !strcmp(optstr, "--one=two --Foo=Bar --this=Your Mother! --blank="), "Used default section name over specified one");
+	ok( !strcmp(optstr, "--one=two --Foo=Bar --this=Your Mother! --blank"), "Used default section name over specified one");
 	my_free(optstr);
 
 	optstr=list2str(np_get_defaults("Section Two@./config-tiny.ini", "check_disk"));
@@ -88,6 +88,10 @@ main (int argc, char **argv)
 
 	optstr=list2str(np_get_defaults("check_mysql2@./plugin.ini", "check_disk"));
 	ok( !strcmp(optstr, "-u=admin -p=secret"), "plugin.ini's check_mysql2 as expected");
+	my_free(optstr);
+
+	optstr=list2str(np_get_defaults("check space_and_flags@./plugin.ini", "check_disk"));
+	ok( !strcmp(optstr, "--foo=bar -a -b --bar"), "plugin.ini space in stanza and flag arguments");
 	my_free(optstr);
 
 	return exit_status();
