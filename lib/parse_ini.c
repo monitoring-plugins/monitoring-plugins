@@ -212,7 +212,6 @@ static int add_option(FILE *f, np_arg_list **optlst){
 		else optend=NULL;
 	}
 	if(optend==NULL) optend=eqptr;
-//printf("o1: %c\n", *optptr[optend]);
 	--optend;
 	/* ^[[:space:]]*=foo is a syntax error */
 	if(optptr==eqptr) die(STATE_UNKNOWN, _("Config file error\n"));
