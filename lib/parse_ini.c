@@ -85,14 +85,14 @@ np_arg_list* np_get_defaults(const char *locator, const char *default_section){
 	/* if a file was specified or if we're using the default file */
 	if(i.file != NULL && strlen(i.file) > 0){
 		if(strcmp(i.file, "-")==0){
-			inifile=stdout;
+			inifile=stdout; /* FIXME: Shouldn't it be 'stdin' ??? */
 		} else {
 			inifile=fopen(i.file, "r");
 		}
 		if(inifile==NULL) die(STATE_UNKNOWN, _("Config file error"));
 		defaults=read_defaults(inifile, i.stanza);
 		free(i.file);
-		if(inifile!=stdout) fclose(inifile);
+		if(inifile!=stdout) fclose(inifile); /* FIXME: Shouldn't it be 'stdin' ??? */
 	}
 	free(i.stanza);
 	return defaults;	
@@ -126,9 +126,9 @@ static np_arg_list* read_defaults(FILE *f, const char *stanza){
 				stanzastate=WRONGSTANZA;
 				for(i=0; i<stanza_len; i++){
 					c=fgetc(f);
-					/* nope, read to the end of the stanza header */
+					/* nope, read to the end of the line */
 					if(c!=stanza[i]) {
-						GOBBLE_TO(f, c, ']');
+						GOBBLE_TO(f, c, '\n');
 						break;
 					}
 				}
@@ -215,14 +215,18 @@ static int add_option(FILE *f, np_arg_list **optlst){
 	for(valptr=eqptr+1; valptr<lineend && isspace(*valptr); valptr++);
 	/* continue to the end of value (FIXME: watching for trailing comments) */
 	for(valend=valptr; valend<lineend; valend++)
-		/* FIXME: N::P doesn't allow comments. Remove next line and parse_ini won't either */
+		/* FIXME: N::P doesn't allow comments here. Remove next line and parse_ini won't either */
 		if(*valend=='#') break;
 	--valend;
 	/* Finally trim off trailing spaces */
 	for(valend; isspace(*valend); valend--);
 	/* calculate the length of "--foo" */
 	opt_len=1+optend-optptr;
-	cfg_len=2+(opt_len);
+	/* 1-character params needs only one dash */
+	if (opt_len==1)
+		cfg_len=1+(opt_len);
+	else
+		cfg_len=2+(opt_len);
 	/* if valptr<lineend then we have to also allocate space for "=bar" */
 	if(valptr<lineend) {
 		equals=value=1;
@@ -243,7 +247,14 @@ static int add_option(FILE *f, np_arg_list **optlst){
 
 	read_pos=0;
 	optnew->arg=(char *)malloc(cfg_len+1);
-	strncpy(&optnew->arg[read_pos], "--", 2); read_pos+=2;
+	/* 1-character params needs only one dash */
+	if (opt_len==1) {
+		strncpy(&optnew->arg[read_pos], "-", 1);
+		read_pos+=1;
+	} else {
+		strncpy(&optnew->arg[read_pos], "--", 2);
+		read_pos+=2;
+	}
 	strncpy(&optnew->arg[read_pos], optptr, opt_len); read_pos+=opt_len;
 	if(equals) optnew->arg[read_pos++]='=';
 	if(value) {
