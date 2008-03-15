@@ -42,7 +42,7 @@ typedef struct {
 #define GOBBLE_TO(f, c, n) do { (c)=fgetc((f)); } while((c)!=EOF && (c)!=(n))
 
 /* internal function that returns the constructed defaults options */
-static np_arg_list* read_defaults(FILE *f, const char *stanza);
+static int read_defaults(FILE *f, const char *stanza, np_arg_list **opts);
 /* internal function that converts a single line into options format */
 static int add_option(FILE *f, np_arg_list **optlst);
 
@@ -90,7 +90,12 @@ np_arg_list* np_get_defaults(const char *locator, const char *default_section){
 			inifile=fopen(i.file, "r");
 		}
 		if(inifile==NULL) die(STATE_UNKNOWN, _("Config file error"));
-		defaults=read_defaults(inifile, i.stanza);
+		if(read_defaults(inifile, i.stanza, &defaults)==FALSE && strcmp(i.stanza, default_section) && inifile!=stdout) { /* FIXME: Shouldn't it be 'stdin' ??? */
+			/* We got nothing, try the default section */
+			rewind(inifile);
+			read_defaults(inifile, default_section, &defaults);
+		}
+
 		free(i.file);
 		if(inifile!=stdout) fclose(inifile); /* FIXME: Shouldn't it be 'stdin' ??? */
 	}
@@ -104,9 +109,8 @@ np_arg_list* np_get_defaults(const char *locator, const char *default_section){
  * be extra careful about user-supplied input (i.e. avoiding possible
  * format string vulnerabilities, etc)
  */
-static np_arg_list* read_defaults(FILE *f, const char *stanza){
-	int c;
-	np_arg_list *opts=NULL;
+static int read_defaults(FILE *f, const char *stanza, np_arg_list **opts){
+	int c, status=FALSE;
 	size_t i, stanza_len;
 	enum { NOSTANZA, WRONGSTANZA, RIGHTSTANZA } stanzastate=NOSTANZA;
 
@@ -158,15 +162,16 @@ static np_arg_list* read_defaults(FILE *f, const char *stanza){
 					/* okay, this is where we start taking the config */
 					case RIGHTSTANZA:
 						ungetc(c, f);
-						if(add_option(f, &opts)){
+						if(add_option(f, opts)){
 							die(STATE_UNKNOWN, _("Config file error"));
 						}
+						status=TRUE;
 						break;
 				}
 				break;
 		}
 	}
-	return opts;
+	return status;
 }
 
 /*
