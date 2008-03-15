@@ -750,7 +750,7 @@ check_http (void)
 
   /* optionally send the host header info */
   if (host_name)
-    asprintf (&buf, "%sHost: %s\r\n", buf, host_name);
+    asprintf (&buf, "%sHost: %s:%d\r\n", buf, host_name, server_port);
 
   /* optionally send any other header tag */
   if (http_opt_headers_count) {
