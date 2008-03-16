@@ -34,12 +34,15 @@ char*
 list2str(np_arg_list *optlst)
 {
 	char *optstr=NULL;
+	np_arg_list *optltmp;
 
 	/* Put everything as a space-separated string */
 	asprintf(&optstr, "");
 	while (optlst) {
 		asprintf(&optstr, "%s%s ", optstr, optlst->arg);
+		optltmp=optlst;
 		optlst=optlst->next;
+		free(optltmp);
 	}
 	/* Strip last whitespace */
 	if (strlen(optstr)>1) optstr[strlen(optstr)-1]='\0';
@@ -52,7 +55,7 @@ main (int argc, char **argv)
 {
 	char *optstr=NULL;
 
-	plan_tests(10);
+	plan_tests(12);
 
 	optstr=list2str(np_get_defaults("section@./config-tiny.ini", "check_disk"));
 	ok( !strcmp(optstr, "--one=two --Foo=Bar --this=Your Mother! --blank"), "config-tiny.ini's section as expected");
@@ -92,6 +95,14 @@ main (int argc, char **argv)
 
 	optstr=list2str(np_get_defaults("check space_and_flags@./plugin.ini", "check_disk"));
 	ok( !strcmp(optstr, "--foo=bar -a -b --bar"), "plugin.ini space in stanza and flag arguments");
+	my_free(optstr);
+
+	optstr=list2str(np_get_defaults("Section Two@./config-dos.ini", "check_disk"));
+	ok( !strcmp(optstr, "--something else=blah --remove=whitespace"), "config-dos.ini's Section Two as expected");
+	my_free(optstr);
+
+	optstr=list2str(np_get_defaults("section_twice@./plugin.ini", "check_disk"));
+	ok( !strcmp(optstr, "--foo=bar --bar=foo"), "plugin.ini's section_twice defined twice in the file");
 	my_free(optstr);
 
 	return exit_status();
