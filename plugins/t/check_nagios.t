@@ -6,8 +6,14 @@
 #
 
 use strict;
-use Test::More tests => 13;
+use Test::More;
 use NPTest;
+
+if (`uname -s` eq "SunOS\n") {
+        plan skip_all => "Ignoring tests on solaris because of pst3";
+} else {
+        plan tests => 13;
+}
 
 my $successOutput = '/^NAGIOS OK: /';
 my $warningOutput = '/^NAGIOS WARNING: /';
