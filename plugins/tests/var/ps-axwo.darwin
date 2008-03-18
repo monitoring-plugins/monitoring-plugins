@@ -1,0 +1,96 @@
+STAT   UID   PID  PPID      VSZ    RSS %CPU UCOMM            COMMAND
+Ss       0     1     0   603456    976   0.0 launchd          /sbin/launchd
+Ss       0    10     1   612820   3608   0.0 kextd            /usr/libexec/kextd
+Ss       0    11     1   632980   8680   0.0 DirectoryService /usr/sbin/DirectoryService
+Ss       0    12     1   602832    720   0.0 notifyd          /usr/sbin/notifyd
+Ss       0    13     1   603916   1136   0.0 syslogd          /usr/sbin/syslogd
+Ss       0    14     1   614928   4928   0.0 configd          /usr/sbin/configd
+Ss      65    15     1   615496   5616   0.0 mDNSResponder    /usr/sbin/mDNSResponder -launchd
+Ss       1    16     1   608960   2212   0.0 distnoted        /usr/sbin/distnoted
+Ss      65    18     1   602432    504   0.0 launchd          /sbin/launchd
+Ss       0    20     1   614836   5844   0.3 securityd        /usr/sbin/securityd -i
+Ss       0    24     1   610536   2704   0.0 ntpd             /usr/sbin/ntpd -n -g -p /var/run/ntpd.pid -f /var/db/ntp.drift
+Ss       0    25     1   602228    496   0.0 update           /usr/sbin/update
+Ss       0    26     1   609900   2320   0.0 SystemStarter    /sbin/SystemStarter
+Ss       0    30     1   834352  36264   0.3 mds              /System/Library/Frameworks/CoreServices.framework/Frameworks/Metadata.framework/Support/mds
+Ss     501    31     1  1110572  23948   0.0 loginwindow      /System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow console
+Ss       0    32     1   609448   2616   0.0 KernelEventAgent /usr/sbin/KernelEventAgent
+Ss       0    34     1   609892   2204   0.0 hidd             /usr/libexec/hidd
+Ss       0    35     1   624704   4284   0.0 fseventsd        /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/CarbonCore.framework/Versions/A/Support/fseventsd
+Ss       0    36     1   610256   2876   0.0 dynamic_pager    /sbin/dynamic_pager -F /private/var/vm/swapfile
+Ss       0    39     1   613408   4140   0.0 diskarbitrationd /usr/sbin/diskarbitrationd
+Ss       0    43     1   665708   8024   0.0 blued            /usr/sbin/blued
+Ss       0    44     1   609408   2828   0.0 autofsd          autofsd
+Ss       0    45     1   654084   9600   0.0 socketfilterfw   /usr/libexec/ApplicationFirewall/socketfilterfw
+Ss       0    46     1   704764  12788   0.0 ccc_helper       /Applications/Carbon Copy Cloner.app/Contents/Resources/ccc_helper.app/Contents/MacOS/ccc_helper 3231BC22-F30F-45D8-BDE8-47A098D57ABD
+Ss       0    54     1   667956  19212   0.0 coreservicesd    /System/Library/CoreServices/coreservicesd
+Ss      88    56     1  1205840  85700   1.6 WindowServer     /System/Library/Frameworks/ApplicationServices.framework/Frameworks/CoreGraphics.framework/Resources/WindowServer -daemon
+Ss       0    67     1   602992    612   0.0 llipd            /Library/StartupItems/ParallelsTransporter/llipd
+S        0    83     1   613352   2312   0.0 pvsnatd          /Library/StartupItems/Parallels/pvsnatd
+Ss       0    94     1   712036  15056   0.0 coreaudiod       /usr/sbin/coreaudiod
+Ss     501   102     1   602432   1040   0.0 launchd          /sbin/launchd
+S      501   109   102  1176668  28068   0.0 Spotlight        /System/Library/CoreServices/Spotlight.app/Contents/MacOS/Spotlight
+S      501   110   102   941796  10988   0.0 UserEventAgent   /usr/sbin/UserEventAgent -l Aqua
+S      501   112   102   610028   2056   0.0 pboard           /usr/sbin/pboard
+S      501   114   102  1090056  29196   1.3 Dock             /System/Library/CoreServices/Dock.app/Contents/MacOS/Dock -psn_0_24582
+S      501   115   102   685360  14048   0.0 ATSServer        /System/Library/Frameworks/ApplicationServices.framework/Frameworks/ATS.framework/Support/ATSServer
+S      501   117   102  1121904  94432   0.1 SystemUIServer   /System/Library/CoreServices/SystemUIServer.app/Contents/MacOS/SystemUIServer -psn_0_32776
+S      501   118   102  1110388  42064   1.4 Finder           /System/Library/CoreServices/Finder.app/Contents/MacOS/Finder -psn_0_36873
+S      501   123   102   718264  34752   0.0 FileSyncAgent    /System/Library/CoreServices/FileSyncAgent.app/Contents/MacOS/FileSyncAgent -launchedByLaunchd
+S      501   127   102  1048388  25344   0.0 smcFanControl    /Applications/smcFanControl.app/Contents/MacOS/smcFanControl -psn_0_53261
+S      501   128   102   970912  12924   0.0 iTunesHelper     /Applications/iTunes.app/Contents/Resources/iTunesHelper.app/Contents/MacOS/iTunesHelper -psn_0_57358
+S      501   129   102  1095920  23364   1.4 Activity Monitor /Applications/Utilities/Activity Monitor.app/Contents/MacOS/Activity Monitor -psn_0_61455
+S      501   132   102   657212   8356   0.0 dmnotifyd        /System/Library/PrivateFrameworks/DMNotification.framework/Versions/Current/Resources/dmnotifyd
+Ss      -2   133     1   610464   2328   0.0 usbmuxd          /System/Library/PrivateFrameworks/MobileDevice.framework/Versions/A/Resources/usbmuxd -launchd
+Ss       0   136   129   637456   6340  10.6 pmTool           /Applications/Utilities/Activity Monitor.app/Contents/Resources/pmTool
+Ss     501   142     1   676652   8984   0.1 diskimages-helpe /System/Library/PrivateFrameworks/DiskImages.framework/Resources/diskimages-helper -uuid F2225770-5EFF-467C-91FD-C990F056B22F -post-exec
+Ss       0   147     1   627640   5928   0.0 hdiejectd        /System/Library/PrivateFrameworks/DiskImages.framework/Resources/hdiejectd
+S      501   157   102  1045492  27480   0.0 GrowlHelperApp   /Library/PreferencePanes/Growl.prefPane/Contents/Resources/GrowlHelperApp.app/Contents/MacOS/GrowlHelperApp -psn_0_81940
+U      501   158   102  1878012 388136   0.7 Safari           /Applications/Safari.app/Contents/MacOS/Safari -psn_0_86037
+S      501   172   102   645560  11344   0.0 AppleSpell       /System/Library/Services/AppleSpell.service/Contents/MacOS/AppleSpell -psn_0_98328
+S      501   175   102  1055412  33396   0.0 Terminal         /Applications/Utilities/Terminal.app/Contents/MacOS/Terminal -psn_0_102425
+Z      501   186   158        0      0   0.0 Meeting Manager  (Meeting Manager)
+S      501   214   102   616988   3808   0.0 ssh-agent        /usr/bin/ssh-agent -l
+Ss     502   217     1   602432   1016   0.0 launchd          /sbin/launchd
+S      501   499   102  1313808 130396   0.3 Mail             /Applications/Mail.app/Contents/MacOS/Mail -psn_0_180268
+S      501   502   102  1091652  52168   0.0 NetNewsWire Lite /Applications/NetNewsWire Lite.app/Contents/MacOS/NetNewsWire Lite -psn_0_184365
+Ss     502   572    56   818908  20988   0.0 loginwindow      /System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow
+S      502   585   217   741824  19056   0.0 Spotlight        /System/Library/CoreServices/Spotlight.app/Contents/MacOS/Spotlight
+S      502   586   217   941900  11044   0.0 UserEventAgent   /usr/sbin/UserEventAgent -l Aqua
+S      502   588   217   757320  18080   0.0 Dock             /System/Library/CoreServices/Dock.app/Contents/MacOS/Dock -psn_0_237626
+S      502   590   217   610072   2068   0.0 pboard           /usr/sbin/pboard
+S      502   592   217   794140  25456   0.0 SystemUIServer   /System/Library/CoreServices/SystemUIServer.app/Contents/MacOS/SystemUIServer -psn_0_245820
+S      502   593   217   845552  30596   0.0 Finder           /System/Library/CoreServices/Finder.app/Contents/MacOS/Finder -psn_0_249917
+S      502   594   217   671780   7872   0.0 ATSServer        /System/Library/Frameworks/ApplicationServices.framework/Frameworks/ATS.framework/Support/ATSServer
+U      502   605   217   938844  64964   0.0 Pages            /Applications/iWork '08/Pages.app/Contents/MacOS/Pages -psn_0_266305
+S      502   609   217   644432  10828   0.0 AppleSpell       /System/Library/Services/AppleSpell.service/Contents/MacOS/AppleSpell -psn_0_270402
+S      502   610   217   638552   5216   0.0 AppleSpell       /System/Library/Services/AppleSpell.service/Contents/MacOS/AppleSpell -psn_0_274499
+U      502   710   217  1029148 223312   0.0 Safari           /Applications/Safari.app/Contents/MacOS/Safari -psn_0_331857
+S      502   712   217   904056  62928   0.3 Mail             /Applications/Mail.app/Contents/MacOS/Mail -psn_0_335954
+U      501   998   102  1068272  26532   0.0 Address Book     /Applications/Address Book.app/Contents/MacOS/Address Book -psn_0_417894
+S      502  2228   217   820940  30600   0.0 TextEdit         /Applications/TextEdit.app/Contents/MacOS/TextEdit -psn_0_729266
+S      501  2431   102  1067868  43492   0.0 iCal             /Applications/iCal.app/Contents/MacOS/iCal -psn_0_803012
+S      501  2531   102  1250108  68792   2.4 Skype            /Applications/Skype.app/Contents/MacOS/Skype -psn_0_823497
+Ss      92  3143     1   602432    828   0.0 launchd          /sbin/launchd
+S      501  3491   102  1048620  31256   0.0 TextEdit         /Applications/TextEdit.app/Contents/MacOS/TextEdit -psn_0_962795
+S      501  3536   102  1073340  30524   0.0 Preview          /Applications/Preview.app/Contents/MacOS/Preview -psn_0_983280
+S      501  4045   102  1041544  29168   0.0 PasswordWallet   /Applications/PasswordWallet.app/Contents/MacOS/PasswordWallet -psn_0_1138966
+S      501  4892   114  1064948  43488   0.0 DashboardClient  /System/Library/CoreServices/Dock.app/Contents/Resources/DashboardClient.app/Contents/MacOS/DashboardClient
+S      501  6806   102  1163836  67356   0.0 Colloquy         /Applications/Colloquy.app/Contents/MacOS/Colloquy -psn_0_2220574
+U      501  6969   102  1156804  58764   0.0 Adium            /Applications/Adium.app/Contents/MacOS/Adium -psn_0_2294320
+S      501  7530   102   671612  17440   0.0 helpdatad        /System/Library/PrivateFrameworks/HelpData.framework/Versions/A/Resources/helpdatad
+Ss      -2 38255     1   602432    952   0.0 launchd          /sbin/launchd
+S      501 40569   102  1160664  49484   0.0 Dictionary       /Applications/Dictionary.app/Contents/MacOS/Dictionary -psn_0_4387887
+SNs    501 42683     1   744096  21084   0.0 mdworker         /System/Library/Frameworks/CoreServices.framework/Frameworks/Metadata.framework/Versions/A/Support/mdworker MDSImporterWorker com.apple.Spotlight.ImporterWorker.501
+S      501 62225   102   711004  18040   0.0 SyncServer       /System/Library/Frameworks/SyncServices.framework/Versions/Current/Resources/SyncServer.app/Contents/MacOS/SyncServer
+SNs     -2 62284     1   671812  10880   0.0 mdworker         /System/Library/Frameworks/CoreServices.framework/Frameworks/Metadata.framework/Versions/A/Support/mdworker MDSImporterWorker com.apple.Spotlight.ImporterWorker.-2
+Ss       0 62285     1   617056   5472   0.0 cupsd            /usr/sbin/cupsd -l
+S      502 62287   217   632360  10044   0.0 PubSubAgent      /System/Library/Frameworks/PubSub.framework/Versions/A/Resources/PubSubAgent.app/Contents/MacOS/PubSubAgent
+SNs    502 62288     1   668876  10440   0.0 mdworker         /System/Library/Frameworks/CoreServices.framework/Frameworks/Metadata.framework/Versions/A/Support/mdworker MDSImporterWorker com.apple.Spotlight.ImporterWorker.502
+S      501 62296   102   643688  11980   2.2 PubSubAgent      /System/Library/Frameworks/PubSub.framework/Versions/A/Resources/PubSubAgent.app/Contents/MacOS/PubSubAgent
+Ss       0  4558   175   630816   6960   0.0 login            login -pf tonvoon
+S      501  4559  4558   603600   1736   0.0 bash             -bash
+R+       0 62297  4559   602388    852   0.0 ps               /bin/ps -axwo stat
+Ss       0  7301   175   630816   6960   0.0 login            login -pf tonvoon
+S      501  7302  7301   603600   1584   0.0 bash             -bash
+S+     501 41381  7302   615408   4196   0.0 ssh              ssh dev.net.altinity

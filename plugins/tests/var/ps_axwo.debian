@@ -1,0 +1,84 @@
+STAT   UID   PID  PPID   VSZ  RSS %CPU COMMAND          COMMAND
+S        0     1     0  1504  428  0.0 init             init [2]          
+SN       0     2     1     0    0  0.0 ksoftirqd/0      [ksoftirqd/0]
+S<       0     3     1     0    0  0.0 events/0         [events/0]
+S<       0     4     3     0    0  0.0 khelper          [khelper]
+S<       0     5     3     0    0  0.0 kacpid           [kacpid]
+S<       0    38     3     0    0  0.0 kblockd/0        [kblockd/0]
+S        0    48     3     0    0  0.0 pdflush          [pdflush]
+S<       0    51     3     0    0  0.0 aio/0            [aio/0]
+S        0    50     1     0    0  0.0 kswapd0          [kswapd0]
+S        0   193     1     0    0  0.0 kseriod          [kseriod]
+S        0   214     1     0    0  0.0 scsi_eh_0        [scsi_eh_0]
+S        0   221     1     0    0  0.0 khubd            [khubd]
+S        0   299     1     0    0  0.3 kjournald        [kjournald]
+S        0  1148     1     0    0  0.0 pciehpd_event    [pciehpd_event]
+S        0  1168     1     0    0  0.0 shpchpd_event    [shpchpd_event]
+Ss       1  1795     1  1612  276  0.0 portmap          /sbin/portmap
+Ss       0  2200     1  1652  568  0.0 vmware-guestd    /usr/sbin/vmware-guestd --background /var/run/vmware-guestd.pid
+Ss       0  2209     1  2240  532  0.0 inetd            /usr/sbin/inetd
+Ss       0  2319     1  3468  792  0.0 sshd             /usr/sbin/sshd
+Ss       0  2323     1  2468  676  0.0 rpc.statd        /sbin/rpc.statd
+Ss       1  2332     1  1684  488  0.0 atd              /usr/sbin/atd
+Ss       0  2335     1  1764  636  0.0 cron             /usr/sbin/cron
+Ss+      0  2350     1  1500  348  0.0 getty            /sbin/getty 38400 tty1
+Ss+      0  2351     1  1500  348  0.0 getty            /sbin/getty 38400 tty2
+Ss+      0  2352     1  1500  348  0.0 getty            /sbin/getty 38400 tty3
+Ss+      0  2353     1  1500  348  0.0 getty            /sbin/getty 38400 tty4
+Ss+      0  2354     1  1500  348  0.0 getty            /sbin/getty 38400 tty5
+Ss+      0  2355     1  1500  348  0.0 getty            /sbin/getty 38400 tty6
+S        0  6907     1  2308  892  0.0 mysqld_safe      /bin/sh /usr/bin/mysqld_safe
+S      103  6944  6907 123220 27724  0.0 mysqld         /usr/sbin/mysqld --basedir=/usr --datadir=/var/lib/mysql --user=mysql --pid-file=/var/run/mysqld/mysqld.pid --skip-locking --port=3306 --socket=/var/run/mysqld/mysqld.sock
+S        0  6945  6907  1488  420  0.0 logger           logger -p daemon.err -t mysqld_safe -i -t mysqld
+S     1001 17778     1  6436 1588  0.0 snmpd            /usr/sbin/snmpd -u nagios -Lsd -Lf /dev/null -p/var/run/snmpd.pid
+Ss       0 17789     1  9496 5556  0.0 snmptrapd        /usr/sbin/snmptrapd -t -m ALL -M /usr/share/snmp/mibs:/usr/local/nagios/snmp/load -p /var/run/snmptrapd.pid
+Ss       0   847  2319 14452 1752  0.0 sshd             sshd: tonvoon [priv]
+S     1000   857   847 14616 1832  0.0 sshd             sshd: tonvoon@pts/3
+Ss    1000   860   857  2984 1620  0.0 bash             -bash
+S        0   868   860  2588 1428  0.0 bash             -su
+S+    1001   877   868  2652 1568  0.0 bash             -su
+S        0  6086     3     0    0  0.0 pdflush          [pdflush]
+Ss       0 17832  2319 14452 1752  0.0 sshd             sshd: tonvoon [priv]
+S     1000 18155 17832 14620 1840  0.0 sshd             sshd: tonvoon@pts/0
+Ss    1000 18156 18155  2984 1620  0.0 bash             -bash
+S        0 18518 18156  2588 1428  0.0 bash             -su
+S     1001 18955 18518  2672 1600  0.0 bash             -su
+Ss       0 21683  2319 14452 1756  0.0 sshd             sshd: tonvoon [priv]
+S     1000 21742 21683 14620 1896  0.0 sshd             sshd: tonvoon@pts/1
+Ss    1000 21743 21742  2984 1620  0.0 bash             -bash
+S        0 21748 21743  2592 1432  0.0 bash             -su
+S     1001 21757 21748  2620 1540  0.0 bash             -su
+Ss       0  2334  2319 14452 1756  0.0 sshd             sshd: tonvoon [priv]
+S     1000  2343  2334 14620 1840  0.0 sshd             sshd: tonvoon@pts/2
+Ss    1000  2344  2343  2984 1620  0.0 bash             -bash
+S        0  2349  2344  2592 1432  0.0 bash             -su
+S+    1001  2364  2349  2620 1520  0.0 bash             -su
+T     1001  2454  2364  2096 1032  0.0 vi               vi configure.in.rej
+S+    1001  8500 21757 69604 52576  0.0 opsview_web_ser /usr/bin/perl -w ./script/opsview_web_server.pl -f -d
+Ss       0  7609  2319 14452 1756  0.0 sshd             sshd: tonvoon [priv]
+S     1000  7617  7609 14460 1828  0.0 sshd             sshd: tonvoon@pts/4
+Ss    1000  7618  7617  2984 1620  0.0 bash             -bash
+S        0  7623  7618  2592 1432  0.0 bash             -su
+S+    1001  7632  7623  2620 1528  0.0 bash             -su
+Ss    1001 12678     1 20784 17728  0.0 opsviewd        opsviewd
+Ss       0   832     1 14512 6360  0.0 apache2          /usr/sbin/apache2 -k start -DSSL
+S       33   842   832 14648 6596  0.0 apache2          /usr/sbin/apache2 -k start -DSSL
+S       33   843   832 14512 6504  0.0 apache2          /usr/sbin/apache2 -k start -DSSL
+S       33   844   832 14512 6476  0.0 apache2          /usr/sbin/apache2 -k start -DSSL
+S       33   845   832 14512 6476  0.0 apache2          /usr/sbin/apache2 -k start -DSSL
+S       33   846   832 14512 6476  0.0 apache2          /usr/sbin/apache2 -k start -DSSL
+Ss       7  4081     1  2464  884  0.0 lpd              /usr/sbin/lpd -s
+S       33 26484   832 14512 6476  0.0 apache2          /usr/sbin/apache2 -k start -DSSL
+Ss    1001 22324     1 20252 1612  0.1 nagios           ../../bin/nagios -d /usr/local/nagios/etc/nagios.cfg
+Ss       0 23336  2319 14452 1756  0.0 sshd             sshd: tonvoon [priv]
+S     1000 23339 23336 14620 1840  0.0 sshd             sshd: tonvoon@pts/5
+Ss    1000 23340 23339  2996 1636  0.0 bash             -bash
+S        0 23367 23340  3020 1628  0.0 bash             bash
+S     1001 23370 23367  3064 1748  0.0 bash             bash
+Ss    1001 23783     1  3220  764  0.0 ndo2db           /usr/local/nagios/bin/ndo2db -c /usr/local/nagios/etc/ndo2db.cfg
+Ss    1001 23784     1  6428 4948  0.0 import_ndologsd  import_ndologsd
+S+    1001  9803 18955  4132 1936  0.0 ssh              ssh altinity@cube02.lei.altinity
+S     1001 22505 22324 20256 1616  0.0 nagios           ../../bin/nagios -d /usr/local/nagios/etc/nagios.cfg
+S     1001 22506 22505  1676  608  0.0 check_ping       /usr/local/nagios/libexec/check_ping -H 192.168.10.23 -w 3000.0,80% -c 5000.0,100% -p 1
+S     1001 22507 22506  1660  492  0.0 ping             /bin/ping -n -U -w 10 -c 1 192.168.10.23
+R+    1001 22508 23370  2308  680  0.0 ps               ps axwo stat uid pid ppid vsz rss pcpu comm args

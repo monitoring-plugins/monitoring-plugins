@@ -91,11 +91,13 @@ float pcpu;
 char *statopts;
 char *prog;
 char *args;
+char *input_filename = NULL;
 regex_t re_args;
 char *fmt;
 char *fails;
 char tmp[MAX_INPUT_BUFFER];
 
+FILE *ps_input = NULL;
 
 
 int
@@ -156,25 +158,31 @@ main (int argc, char **argv)
 	if (verbose >= 2)
 		printf (_("CMD: %s\n"), PS_COMMAND);
 
-	child_process = spopen (PS_COMMAND);
-	if (child_process == NULL) {
-		printf (_("Could not open pipe: %s\n"), PS_COMMAND);
-		return STATE_UNKNOWN;
+	if (input_filename == NULL) {
+		ps_input = spopen (PS_COMMAND);
+		if (ps_input == NULL) {
+			printf (_("Could not open pipe: %s\n"), PS_COMMAND);
+			return STATE_UNKNOWN;
+		}
+		child_stderr = fdopen (child_stderr_array[fileno (ps_input)], "r");
+		if (child_stderr == NULL)
+			printf (_("Could not open stderr for %s\n"), PS_COMMAND);
+	} else {
+		ps_input = fopen(input_filename, "r");
+		if (ps_input == NULL) {
+			die( STATE_UNKNOWN, _("Error opening %s\n"), input_filename );
+		}
 	}
 
-	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
-	if (child_stderr == NULL)
-		printf (_("Could not open stderr for %s\n"), PS_COMMAND);
-
 	/* flush first line */
-	fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process);
+	fgets (input_buffer, MAX_INPUT_BUFFER - 1, ps_input);
 	while ( input_buffer[strlen(input_buffer)-1] != '\n' )
-		fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process);
+		fgets (input_buffer, MAX_INPUT_BUFFER - 1, ps_input);
 
-	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
+	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, ps_input)) {
 		asprintf (&input_line, "%s", input_buffer);
 		while ( input_buffer[strlen(input_buffer)-1] != '\n' ) {
-			fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process);
+			fgets (input_buffer, MAX_INPUT_BUFFER - 1, ps_input);
 			asprintf (&input_line, "%s%s", input_line, input_buffer);
 		}
 
@@ -273,19 +281,21 @@ main (int argc, char **argv)
 	}
 
 	/* If we get anything on STDERR, at least set warning */
-	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
-		if (verbose)
-			printf ("STDERR: %s", input_buffer);
-		result = max_state (result, STATE_WARNING);
-		printf (_("System call sent warnings to stderr\n"));
-	}
+	if (input_filename == NULL) {
+		while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
+			if (verbose)
+				printf ("STDERR: %s", input_buffer);
+			result = max_state (result, STATE_WARNING);
+			printf (_("System call sent warnings to stderr\n"));
+		}
 	
-	(void) fclose (child_stderr);
+		(void) fclose (child_stderr);
 
-	/* close the pipe */
-	if (spclose (child_process)) {
-		printf (_("System call returned nonzero status\n"));
-		result = max_state (result, STATE_WARNING);
+		/* close the pipe */
+		if (spclose (ps_input)) {
+			printf (_("System call returned nonzero status\n"));
+			result = max_state (result, STATE_WARNING);
+		}
 	}
 
 	if (found == 0) {							/* no process lines parsed so return STATE_UNKNOWN */
@@ -357,6 +367,7 @@ process_arguments (int argc, char **argv)
 		{"version", no_argument, 0, 'V'},
 		{"verbose", no_argument, 0, 'v'},
 		{"ereg-argument-array", required_argument, 0, CHAR_MAX+1},
+		{"input-file", required_argument, 0, CHAR_MAX+2},
 		{0, 0, 0, 0}
 	};
 
@@ -522,6 +533,9 @@ process_arguments (int argc, char **argv)
 			usage4 (_("Metric must be one of PROCS, VSZ, RSS, CPU, ELAPSED!"));
 		case 'v':									/* command */
 			verbose++;
+			break;
+		case CHAR_MAX+2:
+			input_filename = optarg;
 			break;
 		}
 	}
@@ -690,7 +704,7 @@ print_help (void)
 {
 	print_revision (progname, revision);
 
-	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>");
+	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf (COPYRIGHT, copyright, email);
 
 	printf ("%s\n", _("Checks all processes and generates WARNING or CRITICAL states if the specified"));
