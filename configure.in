@@ -156,7 +156,7 @@ AC_SUBST(MATHLIBS)
 
 dnl Check for libtap, to run perl-like tests
 AC_CHECK_LIB(tap, plan_tests, 
-	EXTRA_TEST="test_utils test_disk test_tcp test_cmd test_base64"
+	EXTRA_TEST="test_utils test_disk test_tcp test_cmd"
 	AC_SUBST(EXTRA_TEST)
 	)
 
@@ -566,6 +566,7 @@ then
 	ac_cv_ps_command="$PATH_TO_PS axwo 'stat uid pid ppid vsz rss pcpu comm args'"
 	ac_cv_ps_format="%s %d %d %d %d %d %f %s %n"
 	ac_cv_ps_cols=9
+	ac_cv_ps_test="ps_axwo.debian"
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl For OpenBSD 3.2 & 3.3. Must come before ps -weo
@@ -578,6 +579,7 @@ then
 	ac_cv_ps_command="$PATH_TO_PS -axwo 'stat uid pid ppid vsz rss pcpu comm args'"
 	ac_cv_ps_format="%s %d %d %d %d %d %f %s %n"
 	ac_cv_ps_cols=9
+	ac_cv_ps_test="ps-axwo.darwin"
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl Some *BSDs have different format for ps. This is mainly to catch FreeBSD 4. 
@@ -808,6 +810,8 @@ if test -n "$ac_cv_ps_varlist" ; then
 		[Format string for scanning ps output in check_procs])
 	AC_DEFINE_UNQUOTED(PS_COLS,$ac_cv_ps_cols,
 		[Number of columns in ps command])
+	AC_DEFINE_UNQUOTED(PS_TEST,$ac_cv_ps_test,
+		[Test file to check parsing])
 	EXTRAS="$EXTRAS check_procs check_nagios"
 	if echo "$ac_cv_ps_varlist" | grep "procetime" >/dev/null; then
 		AC_DEFINE(PS_USES_PROCETIME,"yes",
