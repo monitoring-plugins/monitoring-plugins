@@ -44,6 +44,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "popen.h"
 #include "utils.h"
 #include "regex.h"
+#include "utils_base.h"
 
 #include <pwd.h>
 
@@ -53,6 +54,7 @@ int check_thresholds (int);
 int convert_to_seconds (char *); 
 void print_help (void);
 void print_usage (void);
+void actions_on_failed_state (int, char*);	/* Helper routine */
 
 int wmax = -1;
 int cmax = -1;
@@ -74,13 +76,16 @@ int options = 0; /* bitmask of filter criteria to test against */
 /* Different metrics */
 char *metric_name;
 enum metric {
+	NONE,
+	DEFAULT,
 	METRIC_PROCS,
 	METRIC_VSZ,
 	METRIC_RSS,
 	METRIC_CPU,
 	METRIC_ELAPSED
 };
-enum metric metric = METRIC_PROCS;
+enum metric metric = DEFAULT;
+enum metric default_metric = METRIC_PROCS;
 
 int verbose = 0;
 int uid;
@@ -99,6 +104,14 @@ char tmp[MAX_INPUT_BUFFER];
 
 FILE *ps_input = NULL;
 
+thresholds *number_threshold = NULL;
+thresholds *vsz_threshold = NULL;
+thresholds *rss_threshold = NULL;
+thresholds *cpu_threshold = NULL;
+
+int warn = 0; /* number of processes in warn state */
+int crit = 0; /* number of processes in crit state */
+int result = STATE_UNKNOWN;
 
 int
 main (int argc, char **argv)
@@ -127,10 +140,14 @@ main (int argc, char **argv)
 	int pos; /* number of spaces before 'args' in `ps` output */
 	int cols; /* number of columns in ps output */
 	int expected_cols = PS_COLS - 1;
-	int warn = 0; /* number of processes in warn state */
-	int crit = 0; /* number of processes in crit state */
-	int i = 0;
-	int result = STATE_UNKNOWN;
+	int i = 0;	/* Temporary values */
+	double rss_sum = 0;
+	double vsz_sum = 0;
+	double cpu_sum = 0;
+	double vsz_max = 0;
+	double rss_max = 0;
+	double cpu_max = 0;
+
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -141,7 +158,6 @@ main (int argc, char **argv)
 	procprog = malloc (MAX_INPUT_BUFFER);
 
 	asprintf (&metric_name, "PROCS");
-	metric = METRIC_PROCS;
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
@@ -218,6 +234,7 @@ main (int argc, char **argv)
 			/* Ignore self */
 			if (mypid == procpid) continue;
 
+			/* Filter */
 			if ((options & STAT) && (strstr (statopts, procstat)))
 				resultsum |= STAT;
 			if ((options & ARGS) && procargs && (strstr (procargs, args) != NULL))
@@ -244,35 +261,64 @@ main (int argc, char **argv)
 				continue;
 
 			procs++;
-			if (verbose >= 2) {
+			if (verbose >= 3) {
 				printf ("Matched: uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s\n", 
 					procuid, procvsz, procrss,
 					procpid, procppid, procpcpu, procstat, 
 					procetime, procprog, procargs);
 			}
 
-			if (metric == METRIC_VSZ)
-				i = check_thresholds (procvsz);
-			else if (metric == METRIC_RSS)
-				i = check_thresholds (procrss);
+			/* Check against metric - old style single check */
+			if (metric == METRIC_VSZ) {
+				actions_on_failed_state( check_thresholds (procvsz), procprog );
+			} else if (metric == METRIC_RSS) {
+				actions_on_failed_state( check_thresholds (procrss), procprog );
 			/* TODO? float thresholds for --metric=CPU */
-			else if (metric == METRIC_CPU)
-				i = check_thresholds ((int)procpcpu); 
-			else if (metric == METRIC_ELAPSED)
-				i = check_thresholds (procseconds);
+			} else if (metric == METRIC_CPU) {
+				actions_on_failed_state( check_thresholds ((int)procpcpu), procprog ); 
+			} else if (metric == METRIC_ELAPSED) {
+				actions_on_failed_state( check_thresholds (procseconds), procprog );
+			}
 
-			if (metric != METRIC_PROCS) {
-				if (i == STATE_WARNING) {
-					warn++;
-					asprintf (&fails, "%s%s%s", fails, (strcmp(fails,"") ? ", " : ""), procprog);
-					result = max_state (result, i);
-				}
-				if (i == STATE_CRITICAL) {
-					crit++;
-					asprintf (&fails, "%s%s%s", fails, (strcmp(fails,"") ? ", " : ""), procprog);
-					result = max_state (result, i);
+			/* Check against all new style thresholds */
+			if (vsz_threshold != NULL) {
+				if ((i = get_status( procvsz, vsz_threshold )) != STATE_OK ) {
+					actions_on_failed_state(i, procprog);
+					if (verbose >= 2) {
+						printf("VSZ state %d: proc=%s vsz=%d ", i, procprog, procvsz);
+						print_thresholds( vsz_threshold );
+					}
 				}
 			}
+			if (rss_threshold != NULL) {
+				if ((i = get_status( procrss, rss_threshold )) != STATE_OK ) {
+					actions_on_failed_state(i, procprog);
+					if (verbose >= 2) {
+						printf("RSS: proc=%s rss=%d ", procprog, procrss);
+						print_thresholds( rss_threshold );
+					}
+				}
+			}
+			if (cpu_threshold != NULL) {
+				if (( i = get_status( procpcpu, cpu_threshold )) != STATE_OK ) {
+					actions_on_failed_state(i, procprog);
+					if (verbose >= 2) {
+						printf("CPU: proc=%s cpu=%f ", procprog, procpcpu);
+						print_thresholds( cpu_threshold );
+					}
+				}
+			}
+		
+			/* Summary information */
+			rss_sum += procrss;
+			vsz_sum += procvsz;
+			cpu_sum += procpcpu;
+			if (procrss > rss_max)
+				rss_max = procrss;
+			if (procvsz > vsz_max)
+				vsz_max = procvsz;
+			if (procpcpu > cpu_max)
+				cpu_max = procpcpu;
 		} 
 		/* This should not happen */
 		else if (verbose) {
@@ -308,7 +354,12 @@ main (int argc, char **argv)
 
 	/* Needed if procs found, but none match filter */
 	if ( metric == METRIC_PROCS ) {
-		result = max_state (result, check_thresholds (procs) );
+		result = max_state (result, i = check_thresholds (procs) );
+	}
+
+	if (number_threshold != NULL) {
+		i = get_status( procs, number_threshold );
+		actions_on_failed_state(i, "NUMBER_OF_PROCESSES");
 	}
 
 	if ( result == STATE_OK ) {
@@ -316,12 +367,12 @@ main (int argc, char **argv)
 	} else if (result == STATE_WARNING) {
 		printf ("%s %s: ", metric_name, _("WARNING"));
 		if ( metric != METRIC_PROCS ) {
-			printf (_("%d warn out of "), warn);
+			printf (_("Alerts: %d warn from "), warn);
 		}
 	} else if (result == STATE_CRITICAL) {
 		printf ("%s %s: ", metric_name, _("CRITICAL"));
 		if (metric != METRIC_PROCS) {
-			printf (_("%d crit, %d warn out of "), crit, warn);
+			printf (_("Alerts: %d crit, %d warn from "), crit, warn);
 		}
 	} 
 	printf (ngettext ("%d process", "%d processes", (unsigned long) procs), procs);
@@ -333,6 +384,17 @@ main (int argc, char **argv)
 	if ( verbose >= 1 && strcmp(fails,"") )
 		printf (" [%s]", fails);
 
+	printf(" | ");
+	if( number_threshold != NULL)
+		printf("number=%d ", procs);
+	if (procs > 0) {
+		if( vsz_threshold != NULL)
+			printf("vsz=%.0f ", vsz_sum/procs);
+		if( rss_threshold != NULL)
+			printf("rss=%.0f ", rss_sum/procs);
+		if( cpu_threshold != NULL)
+			printf("cpu=%.2f ", cpu_sum/procs);
+	}
 	printf ("\n");
 	return result;
 }
@@ -368,6 +430,22 @@ process_arguments (int argc, char **argv)
 		{"verbose", no_argument, 0, 'v'},
 		{"ereg-argument-array", required_argument, 0, CHAR_MAX+1},
 		{"input-file", required_argument, 0, CHAR_MAX+2},
+		{"number", optional_argument, 0, CHAR_MAX+3},
+		{"rss-threshold", optional_argument, 0, CHAR_MAX+4},
+		/*
+		{"rss-max", optional_argument, 0, CHAR_MAX+5},
+		{"rss-sum", optional_argument, 0, CHAR_MAX+6},
+		*/
+		{"vsz-threshold", optional_argument, 0, CHAR_MAX+7},
+		/*
+		{"vsz-max", optional_argument, 0, CHAR_MAX+8},
+		{"vsz-sum", optional_argument, 0, CHAR_MAX+9},
+		*/
+		{"cpu-threshold", optional_argument, 0, CHAR_MAX+10},
+		/*
+		{"cpu-max", optional_argument, 0, CHAR_MAX+11},
+		{"cpu-sum", optional_argument, 0, CHAR_MAX+12},
+		*/
 		{0, 0, 0, 0}
 	};
 
@@ -537,6 +615,26 @@ process_arguments (int argc, char **argv)
 		case CHAR_MAX+2:
 			input_filename = optarg;
 			break;
+		case CHAR_MAX+3:
+			number_threshold = parse_thresholds_string(optarg);
+			if (metric == DEFAULT)
+				default_metric=NONE;
+			break;
+		case CHAR_MAX+4:
+			rss_threshold = parse_thresholds_string(optarg);
+			if (metric == DEFAULT)
+				default_metric=NONE;
+			break;
+		case CHAR_MAX+7:
+			vsz_threshold = parse_thresholds_string(optarg);
+			if (metric == DEFAULT)
+				default_metric=NONE;
+			break;
+		case CHAR_MAX+10:
+			cpu_threshold = parse_thresholds_string(optarg);
+			if (metric == DEFAULT)
+				default_metric=NONE;
+			break;
 		}
 	}
 
@@ -598,6 +696,9 @@ validate_arguments ()
 	if (fails==NULL)
 		fails = strdup("");
 
+	if (metric==DEFAULT)
+		metric = default_metric;
+
 	return options;
 }
 
@@ -635,6 +736,21 @@ check_thresholds (int value)
 	return STATE_OK;
 }
 
+
+void
+actions_on_failed_state(int state, char *procprog) {
+	result = max_state (result, state);
+	if (state != STATE_WARNING && state != STATE_CRITICAL)
+		return;
+	if (state == STATE_WARNING) {
+		warn++;
+	}
+	if (state == STATE_CRITICAL) {
+		crit++;
+	}
+	/* TODO: This should be a hash, to remove duplicates */
+	asprintf (&fails, "%s%s%s", fails, (strcmp(fails,"") ? ", " : ""), procprog);
+}
 
 /* convert the elapsed time to seconds */
 int
@@ -707,31 +823,21 @@ print_help (void)
 	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf ("%s\n", _("Checks all processes and generates WARNING or CRITICAL states if the specified"));
-  printf ("%s\n", _("metric is outside the required threshold ranges. The metric defaults to number"));
-  printf ("%s\n", _("of processes.  Search filters can be applied to limit the processes to check."));
-
-  printf ("\n\n");
-  
 	print_usage ();
 
-	printf ("%s\n", _("Required Arguments:"));
-  printf (" %s\n", "-w, --warning=RANGE");
-  printf ("   %s\n", _("Generate warning state if metric is outside this range"));
-  printf (" %s\n", "-c, --critical=RANGE");
-  printf ("   %s\n", _("Generate critical state if metric is outside this range"));
+  printf ("\n\n");
+
+	printf("Checks all processes and, optionally, filters to a subset to check thresholds values against.\n");
+	printf("Can specify any of the following thresholds:\n");
+
+	printf("  --number=THRESHOLD        - Compares the number of matching processes\n");
+	printf("  --vsz-threshold=THRESHOLD - Compares each process' vsz (in kilobytes)\n");
+	printf("  --rss-threshold=THRESHOLD - Compares each process' rss (in kilobytes)\n");
+	printf("  --cpu-threshold=THRESHOLD - Compares each process' cpu (in %%)\n");
+	/* TODO: Add support for etime */
+	printf("\n\n");
 
 	printf ("%s\n", _("Optional Arguments:"));
-  printf (" %s\n", "-m, --metric=TYPE");
-  printf ("  %s\n", _("Check thresholds against metric. Valid types:"));
-  printf ("  %s\n", _("PROCS   - number of processes (default)"));
-  printf ("  %s\n", _("VSZ     - virtual memory size"));
-  printf ("  %s\n", _("RSS     - resident set memory size"));
-  printf ("  %s\n", _("CPU     - percentage cpu"));
-/* only linux etime is support currently */
-#if defined( __linux__ )
-	printf ("  %s\n", _("ELAPSED - time elapsed in seconds"));
-#endif /* defined(__linux__) */
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
 	printf (" %s\n", "-v, --verbose");
@@ -759,29 +865,25 @@ print_help (void)
   printf (" %s\n", "-C, --command=COMMAND");
   printf ("   %s\n", _("Only scan for exact matches of COMMAND (without path)."));
 
-	printf(_("\n\
-RANGEs are specified 'min:max' or 'min:' or ':max' (or 'max'). If\n\
-specified 'max:min', a warning status will be generated if the\n\
-count is inside the specified range\n\n"));
+	printf("\n");
 
-	printf(_("\
-This plugin checks the number of currently running processes and\n\
-generates WARNING or CRITICAL states if the process count is outside\n\
-the specified threshold ranges. The process count can be filtered by\n\
-process owner, parent process PID, current state (e.g., 'Z'), or may\n\
-be the total number of running processes\n\n"));
+	printf("\
+THRESHOLDS are specified as 'critical_range/warning_range' where\n\
+RANGES are defined as 'min:max'. max can be removed if it is infinity.\n\
+Alerts will occur inside this range, unless you specify '^' before\n\
+the range, to mean alert outside this range\n\n");
 
 	printf ("%s\n", _("Examples:"));
-  printf (" %s\n", "check_procs -w 2:2 -c 2:1024 -C portsentry");
-  printf ("  %s\n", _("Warning if not two processes with command name portsentry."));
-  printf ("  %s\n\n", _("Critical if < 2 or > 1024 processes"));
-  printf (" %s\n", "check_procs -w 10 -a '/usr/local/bin/perl' -u root");
-  printf ("  %s\n", _("Warning alert if > 10 processes with command arguments containing"));
-  printf ("  %s\n\n", _("'/usr/local/bin/perl' and owned by root"));
-  printf (" %s\n", "check_procs -w 50000 -c 100000 --metric=VSZ");
-  printf ("  %s\n\n", _("Alert if vsz of any processes over 50K or 100K"));
-  printf (" %s\n", "check_procs -w 10 -c 20 --metric=CPU");
-  printf ("  %s\n\n", _("Alert if cpu of any processes over 10%% or 20%%"));
+  printf (" %s\n", "check_procs --number=:2/5: -C portsentry");
+  printf ("  %s\n", _("Warning if greater than five processes with command name portsentry."));
+  printf ("  %s\n\n", _("Critical if <= 2 processes"));
+  printf (" %s\n", "check_procs --vsz-threshold=100:/50:");
+  printf ("  %s\n\n", _("Warning if vsz of any processes is over 50K or critical if vsz is over 100K"));
+  printf (" %s\n", "check_procs --cpu-threshold=20:/10: --ereg-argument-array='java.*server'");
+  printf ("  %s\n\n", _("For all processes with arguments matching the regular expression, warning if cpu is over 10% or critical if over 20%"));
+  printf (" %s\n", "check_procs --rss-threshold=100: --number=/:10 --cpu-threshold=30:/10: -a '/usr/local/bin/perl' -u root");
+  printf ("  %s\n", _("Critical if rss >= 100K, or warning if total number of process <= 10, or critical if cpu >= 30% or warning if cpu >= 10%."));
+  printf ("  %s\n", _("Filter by arguments containing '/usr/local/bin/perl' and owned by root"));
 
 	printf (_(UT_SUPPORT));
 }

@@ -98,6 +98,138 @@ range
 	return NULL;
 }
 
+/* New range string parsing routines, for the v2 thresholds syntax */
+/* Returns range if OK, otherwise errors. Sets utils_errno if error */
+int utils_errno;
+range *
+_parse_range_string_v2 (char *str) {
+	range *temp_range;
+	double start;
+	double end;
+	char *end_str;
+
+	temp_range = (range *) malloc(sizeof(range));
+
+	/* Initialise */
+	temp_range->start = 0;
+	temp_range->start_infinity = FALSE;
+	temp_range->end = 0;
+	temp_range->end_infinity = FALSE;
+	temp_range->alert_on = INSIDE;
+
+	if (str[0] == '^') {
+		temp_range->alert_on = OUTSIDE;
+		str++;
+	}
+
+	end_str = index(str, ':');
+	if (end_str == NULL) {
+		utils_errno = NP_RANGE_MISSING_COLON;
+		free(temp_range);
+		temp_range = NULL;
+		return NULL;
+	}
+	end_str++;
+	if (str[0] == ':') {
+		temp_range->start_infinity = TRUE;
+	} else {
+		start = strtod(str, NULL);	/* Will stop at ':' */
+		set_range_start(temp_range, start);
+	}
+	if (strcmp(end_str, "") != 0) {
+		end = strtod(end_str, NULL);
+		set_range_end(temp_range, end);
+	} else {
+		temp_range->end_infinity = TRUE;
+	}
+
+	if (temp_range->start_infinity == TRUE || 
+		temp_range->end_infinity == TRUE ||
+		temp_range->start <= temp_range->end) {
+		return temp_range;
+	}
+	free(temp_range);
+	temp_range = NULL;
+	utils_errno = NP_RANGE_UNPARSEABLE;
+	return NULL;
+}
+
+void
+_die_on_parse_error(int errorcode) {
+	switch (errorcode) {
+	case NP_RANGE_UNPARSEABLE:
+		die(STATE_UNKNOWN, _("Range format incorrect\n"));
+	case NP_WARN_WITHIN_CRIT:
+		die(STATE_UNKNOWN, _("Warning level is a subset of critical and will not be alerted\n"));
+	case NP_RANGE_MISSING_COLON:
+		die(STATE_UNKNOWN, _("Range is missing a colon\n"));
+	case NP_MEMORY_ERROR:
+		die(STATE_UNKNOWN, _("Memory error\n"));
+	}
+}
+
+thresholds
+*_parse_thresholds_string(char *string) {
+	thresholds *temp_thresholds = NULL;
+	char *separator = NULL;
+	char *temp_string = NULL;
+	range *temp_range = NULL;
+	int rc;
+
+	temp_thresholds = malloc(sizeof(temp_thresholds));
+	if (temp_thresholds == NULL) {
+		utils_errno = NP_MEMORY_ERROR;
+		return NULL;
+	}
+
+	temp_thresholds->warning = NULL;
+	temp_thresholds->critical = NULL;
+
+	if (string == NULL || strcmp(string, "") == 0)
+		return temp_thresholds;
+
+	if((temp_string = strdup(string)) == NULL) {
+		free(temp_thresholds);
+		utils_errno = NP_MEMORY_ERROR;
+		return NULL;
+	}
+
+	/* Find critical part and parse the range */
+	separator = index(temp_string, '/');
+	if (separator) {
+		*separator = '\0';
+		separator++;
+	}
+	if ((strcmp(temp_string, "") != 0) && (temp_range = _parse_range_string_v2( temp_string )) == NULL) {
+		free(temp_thresholds);
+		free(temp_string);
+		/* utils_errno already set */
+		return NULL;
+	}
+	temp_thresholds->critical = temp_range;
+
+	if (separator == NULL || strcmp(separator, "") == 0) {
+		return temp_thresholds;
+	}
+	/* UOM not processed yet */
+	if(( temp_range = _parse_range_string_v2( separator )) == NULL) {
+		free(temp_thresholds);
+		free(temp_string);
+		return NULL;
+	}
+	temp_thresholds->warning = temp_range;
+	return temp_thresholds;
+}
+
+thresholds
+*parse_thresholds_string(char *string)
+{
+	thresholds *my_threshold;
+	if ((my_threshold = _parse_thresholds_string(string)) == NULL)
+		_die_on_parse_error(utils_errno);
+	return my_threshold;
+}
+
 /* returns 0 if okay, otherwise 1 */
 int
 _set_thresholds(thresholds **my_thresholds, char *warn_string, char *critical_string)
@@ -139,8 +271,7 @@ set_thresholds(thresholds **my_thresholds, char *warn_string, char *critical_str
 	}
 }
 
-void print_thresholds(const char *threshold_name, thresholds *my_threshold) {
-	printf("%s - ", threshold_name);
+void print_thresholds(thresholds *my_threshold) {
 	if (! my_threshold) {
 		printf("Threshold not set");
 	} else {

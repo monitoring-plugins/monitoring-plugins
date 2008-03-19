@@ -80,7 +80,7 @@ int main(int argc, char **argv){
 	/* Initialize the thresholds */
 	set_thresholds(&thresholds, warn_threshold, crit_threshold);
 	if(verbose)
-		print_thresholds("check_cluster", thresholds);
+		print_thresholds(thresholds);
 
 	/* check the data values */
 	for(ptr=strtok(data_vals,",");ptr!=NULL;ptr=strtok(NULL,",")){
