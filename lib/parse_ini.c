@@ -30,6 +30,9 @@
 #include "utils_base.h"
 #include <ctype.h>
 
+/* FIXME: N::P dies if section is not found */
+/* FIXME: N::P dies if config file is not found */
+
 /* np_ini_info contains the result of parsing a "locator" in the format
  * [stanza_name][@config_filename] (check_foo@/etc/foo.ini, for example)
  */
@@ -45,16 +48,21 @@ typedef struct {
 static int read_defaults(FILE *f, const char *stanza, np_arg_list **opts);
 /* internal function that converts a single line into options format */
 static int add_option(FILE *f, np_arg_list **optlst);
+/* internal function to find default file */
+static char* default_file(void);
 
 /* parse_locator decomposes a string of the form
  * 	[stanza][@filename]
  * into its seperate parts
  */
 static void parse_locator(const char *locator, const char *def_stanza, np_ini_info *i){
-	size_t locator_len, stanza_len;
+	size_t locator_len=0, stanza_len=0;
 
-	locator_len=strlen(locator);
-	stanza_len=strcspn(locator, "@");
+	/* if locator is NULL we'll use default values */
+	if(locator){
+		locator_len=strlen(locator);
+		stanza_len=strcspn(locator, "@");
+	}
 	/* if a non-default stanza is provided */
 	if(stanza_len>0){
 		i->stanza=(char*)malloc(sizeof(char)*(stanza_len+1));
@@ -65,7 +73,7 @@ static void parse_locator(const char *locator, const char *def_stanza, np_ini_in
 	}
 	/* if there is no @file part */
 	if(stanza_len==locator_len){
-		i->file=strdup(NP_DEFAULT_INI_PATH);
+		i->file=default_file();
 	} else {
 		i->file=strdup(&(locator[stanza_len+1]));
 	}
@@ -75,7 +83,7 @@ static void parse_locator(const char *locator, const char *def_stanza, np_ini_in
 	}
 }
 
-/* this is the externally visible function used by plugins */
+/* this is the externally visible function used by extra_opts */
 np_arg_list* np_get_defaults(const char *locator, const char *default_section){
 	FILE *inifile=NULL;
 	np_arg_list *defaults=NULL;
@@ -89,7 +97,7 @@ np_arg_list* np_get_defaults(const char *locator, const char *default_section){
 		} else {
 			inifile=fopen(i.file, "r");
 		}
-		if(inifile==NULL) die(STATE_UNKNOWN, _("Config file error"));
+		if(inifile==NULL) die(STATE_UNKNOWN, _("Can't read config file"));
 		if(read_defaults(inifile, i.stanza, &defaults)==FALSE && strcmp(i.stanza, default_section) && inifile!=stdout) { /* FIXME: Shouldn't it be 'stdin' ??? */
 			/* We got nothing, try the default section */
 			rewind(inifile);
@@ -285,5 +293,26 @@ static int add_option(FILE *f, np_arg_list **optlst){
 
 	free(linebuf);
 	return 0;
+}
+
+static char* default_file(void){
+	char *np_env=NULL;
+
+	/* FIXME: STUB */
+	return "";
+#if 0
+	if((np_env=getenv("NAGIOS_CONFIG_PATH"))!=NULL) {
+		/* Look for NP_DEFAULT_INI_FILENAME1 and NP_DEFAULT_INI_FILENAME2 in
+		 * every PATHs defined (colon-separated).
+		 */
+	}
+	if !file_found
+		search NP_DEFAULT_INI_NAGIOS_PATH[1-4] for NP_DEFAULT_INI_FILENAME1;
+	if !file_found
+		search NP_DEFAULT_INI_PATH[1-3] for NP_DEFAULT_INI_FILENAME2;
+	if !file_found
+		return empty string (or null if we want to die);
+	return file name;
+#endif
 }
 

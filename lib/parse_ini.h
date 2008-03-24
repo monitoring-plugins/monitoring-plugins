@@ -13,10 +13,43 @@ typedef struct np_arg_el {
 	struct np_arg_el *next;
 } np_arg_list;
 
-/* NP_DEFAULT_INI_PATH: compile-time default location for ini file */
+/* NP_DEFAULT_INI_PATH: compile-time default location for ini file
 #ifndef NP_DEFAULT_INI_PATH
-# define NP_DEFAULT_INI_PATH "/etc/nagios-plugins/plugins.ini"
-#endif /* NP_DEFAULT_INI_PATH */
+# define NP_DEFAULT_INI_PATH "/etc/nagios-plugins.ini"
+#endif NP_DEFAULT_INI_PATH */
+
+/* Filenames (see below) */
+#ifndef NP_DEFAULT_INI_FILENAME1
+# define NP_DEFAULT_INI_FILENAME1 "plugins.ini"
+#endif /* NP_DEFAULT_INI_FILENAME1 */
+#ifndef NP_DEFAULT_INI_FILENAME2
+# define NP_DEFAULT_INI_FILENAME2 "nagios-plugins.ini"
+#endif /* NP_DEFAULT_INI_FILENAME2 */
+
+/* Config paths ending in nagios (search for NP_DEFAULT_INI_FILENAME1) */
+#ifndef NP_DEFAULT_INI_NAGIOS_PATH1
+# define NP_DEFAULT_INI_NAGIOS_PATH1 "/etc/nagios"
+#endif /* NP_DEFAULT_INI_NAGIOS_PATH1 */
+#ifndef NP_DEFAULT_INI_NAGIOS_PATH2
+# define NP_DEFAULT_INI_NAGIOS_PATH2 "/usr/local/nagios/etc"
+#endif /* NP_DEFAULT_INI_NAGIOS_PATH2 */
+#ifndef NP_DEFAULT_INI_NAGIOS_PATH3
+# define NP_DEFAULT_INI_NAGIOS_PATH3 "/usr/local/etc/nagios"
+#endif /* NP_DEFAULT_INI_NAGIOS_PATH3 */
+#ifndef NP_DEFAULT_INI_NAGIOS_PATH4
+# define NP_DEFAULT_INI_NAGIOS_PATH4 "/etc/opt/nagios"
+#endif /* NP_DEFAULT_INI_NAGIOS_PATH4 */
+
+/* Config paths not ending in nagios (search for NP_DEFAULT_INI_FILENAME2) */
+#ifndef NP_DEFAULT_INI_PATH1
+# define NP_DEFAULT_INI_PATH1 "/etc"
+#endif /* NP_DEFAULT_INI_PATH1 */
+#ifndef NP_DEFAULT_INI_PATH2
+# define NP_DEFAULT_INI_PATH2 "/usr/local/etc"
+#endif /* NP_DEFAULT_INI_PATH2 */
+#ifndef NP_DEFAULT_INI_PATH3
+# define NP_DEFAULT_INI_PATH3 "/etc/opt"
+#endif /* NP_DEFAULT_INI_PATH3 */
 
 /* np_load_defaults: load the default configuration (if present) for
  * a plugin from the ini file
