@@ -30,6 +30,10 @@
 #include "utils_base.h"
 #include <ctype.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 /* FIXME: N::P dies if section is not found */
 /* FIXME: N::P dies if config file is not found */
 
@@ -50,6 +54,8 @@ static int read_defaults(FILE *f, const char *stanza, np_arg_list **opts);
 static int add_option(FILE *f, np_arg_list **optlst);
 /* internal function to find default file */
 static char* default_file(void);
+/* internal function to stat() files */
+static int test_file(const char* env, int len, const char* file, char* temp_file);
 
 /* parse_locator decomposes a string of the form
  * 	[stanza][@filename]
@@ -296,23 +302,71 @@ static int add_option(FILE *f, np_arg_list **optlst){
 }
 
 static char* default_file(void){
-	char *np_env=NULL;
+	struct stat sb;
+	char *np_env=NULL, *default_file=NULL;
+	char temp_file[MAX_INPUT_BUFFER];
+	size_t len;
 
-	/* FIXME: STUB */
-	return "";
-#if 0
 	if((np_env=getenv("NAGIOS_CONFIG_PATH"))!=NULL) {
+		/* skip ant starting colon... */
+		while(*np_env==':') np_env++;
 		/* Look for NP_DEFAULT_INI_FILENAME1 and NP_DEFAULT_INI_FILENAME2 in
 		 * every PATHs defined (colon-separated).
 		 */
+		while((len=strcspn(np_env,":"))>0){
+			/* Test NP_DEFAULT_INI_FILENAME[1-2] in current np_env token */
+			if(test_file(np_env,len,NP_DEFAULT_INI_FILENAME1,temp_file)==1 ||
+			   test_file(np_env,len,NP_DEFAULT_INI_FILENAME2,temp_file)==1){
+				default_file=strdup(temp_file);
+				break;
+			}
+
+			/* Move on to the next token */
+			np_env+=len;
+			while(*np_env==':') np_env++;
+		} /* while(...) */
+	} /* if(getenv("NAGIOS_CONFIG_PATH")) */
+
+	/* Look for NP_DEFAULT_INI_FILENAME1 in NP_DEFAULT_INI_NAGIOS_PATH[1-4] */
+	if(!default_file){
+		if(test_file(NP_DEFAULT_INI_NAGIOS_PATH1,strlen(NP_DEFAULT_INI_NAGIOS_PATH1),NP_DEFAULT_INI_FILENAME1,temp_file)==1 ||
+		   test_file(NP_DEFAULT_INI_NAGIOS_PATH2,strlen(NP_DEFAULT_INI_NAGIOS_PATH2),NP_DEFAULT_INI_FILENAME1,temp_file)==1 ||
+		   test_file(NP_DEFAULT_INI_NAGIOS_PATH3,strlen(NP_DEFAULT_INI_NAGIOS_PATH3),NP_DEFAULT_INI_FILENAME1,temp_file)==1 ||
+		   test_file(NP_DEFAULT_INI_NAGIOS_PATH4,strlen(NP_DEFAULT_INI_NAGIOS_PATH4),NP_DEFAULT_INI_FILENAME1,temp_file)==1)
+			default_file=strdup(temp_file);
 	}
-	if !file_found
-		search NP_DEFAULT_INI_NAGIOS_PATH[1-4] for NP_DEFAULT_INI_FILENAME1;
-	if !file_found
-		search NP_DEFAULT_INI_PATH[1-3] for NP_DEFAULT_INI_FILENAME2;
-	if !file_found
-		return empty string (or null if we want to die);
-	return file name;
-#endif
+
+	/* Look for NP_DEFAULT_INI_FILENAME2 in NP_DEFAULT_INI_PATH[1-3] */
+	if(!default_file){
+		if(test_file(NP_DEFAULT_INI_PATH1,strlen(NP_DEFAULT_INI_PATH1),NP_DEFAULT_INI_FILENAME2,temp_file)==1 ||
+		   test_file(NP_DEFAULT_INI_PATH2,strlen(NP_DEFAULT_INI_PATH2),NP_DEFAULT_INI_FILENAME2,temp_file)==1 ||
+		   test_file(NP_DEFAULT_INI_PATH3,strlen(NP_DEFAULT_INI_PATH3),NP_DEFAULT_INI_FILENAME2,temp_file)==1)
+			default_file=strdup(temp_file);
+	}
+
+	/* Return default_file or empty string (should return NULL if we want to
+	 * die there...
+	 */
+	if(default_file)
+		return default_file;
+	return "";
+}
+
+/* put together len bytes from env and the filename and test for its
+ * existence. Returns 1 if found, 0 if not and -1 if test wasn't performed.
+ */
+static int test_file(const char* env, int len, const char* file, char* temp_file){
+	struct stat sb;
+
+	/* test for len + filelen + '/' + '\0' */
+	if((len+strlen(file)+2)>MAX_INPUT_BUFFER)	return -1;
+
+	strncpy(temp_file,env,len);
+	temp_file[len]='\0';
+	strncat(temp_file,"/",len+1);
+	strncat(temp_file,file,len+strlen(file)+1);
+
+	if(stat(temp_file, &sb) != -1) return 1;
+	return 0;
 }
 

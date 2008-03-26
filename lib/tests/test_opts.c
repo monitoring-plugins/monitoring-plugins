@@ -59,7 +59,7 @@ main (int argc, char **argv)
 	char **argv_test=NULL, **argv_known=NULL;
 	int i, argc_test, argc_new;
 
-	plan_tests(8);
+	plan_tests(11);
 
 	argv_test=(char **)malloc(2*sizeof(char **));
 	argv_test[0] = "prog_name";
@@ -201,6 +201,64 @@ main (int argc, char **argv)
 	argv_known[4] = NULL;
 	argv_test=np_extra_opts(argc_test, argv_test, "check_missing", &argc_new);
 	ok(array_diff(argc_new, argv_test, 4, argv_known), "Missing section 3");
+	my_free(&argc_new,argv_test);
+
+	setenv("NAGIOS_CONFIG_PATH", ".", 1);
+	argv_test=(char **)malloc(6*sizeof(char **));
+	argv_test[0] = "prog_name";
+	argv_test[1] = "arg1";
+	argv_test[2] = "--extra-opts";
+	argv_test[3] = "--arg3";
+	argv_test[4] = "val2";
+	argv_test[5] = NULL;
+	argc_test=5;
+	argv_known=(char **)realloc(argv_known, 6*sizeof(char **));
+	argv_known[0] = "prog_name";
+	argv_known[1] = "--foo=bar";
+	argv_known[2] = "arg1";
+	argv_known[3] = "--arg3";
+	argv_known[4] = "val2";
+	argv_known[5] = NULL;
+	argv_test=np_extra_opts(argc_test, argv_test, "check_disk", &argc_new);
+	ok(array_diff(argc_new, argv_test, 5, argv_known), "Default section 1");
+	my_free(&argc_new,argv_test);
+
+	argv_test=(char **)malloc(6*sizeof(char **));
+	argv_test[0] = "prog_name";
+	argv_test[1] = "arg1";
+	argv_test[2] = "--extra-opts=section1";
+	argv_test[3] = "--arg3";
+	argv_test[4] = "val2";
+	argv_test[5] = NULL;
+	argc_test=5;
+	argv_known=(char **)realloc(argv_known, 6*sizeof(char **));
+	argv_known[0] = "prog_name";
+	argv_known[1] = "--foobar=baz";
+	argv_known[2] = "arg1";
+	argv_known[3] = "--arg3";
+	argv_known[4] = "val2";
+	argv_known[5] = NULL;
+	argv_test=np_extra_opts(argc_test, argv_test, "check_disk", &argc_new);
+	ok(array_diff(argc_new, argv_test, 5, argv_known), "Default section 2");
+	my_free(&argc_new,argv_test);
+
+	argv_test=(char **)malloc(6*sizeof(char **));
+	argv_test[0] = "prog_name";
+	argv_test[1] = "arg1";
+	argv_test[2] = "--extra-opts=section2";
+	argv_test[3] = "--arg3";
+	argv_test[4] = "val2";
+	argv_test[5] = NULL;
+	argc_test=5;
+	argv_known=(char **)realloc(argv_known, 6*sizeof(char **));
+	argv_known[0] = "prog_name";
+	argv_known[1] = "--foo=bar";
+	argv_known[2] = "arg1";
+	argv_known[3] = "--arg3";
+	argv_known[4] = "val2";
+	argv_known[5] = NULL;
+	argv_test=np_extra_opts(argc_test, argv_test, "check_disk", &argc_new);
+	ok(array_diff(argc_new, argv_test, 5, argv_known), "Default section 3");
 	my_free(&argc_new,argv_test);
 
 	return exit_status();

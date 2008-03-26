@@ -13,10 +13,12 @@ typedef struct np_arg_el {
 	struct np_arg_el *next;
 } np_arg_list;
 
-/* NP_DEFAULT_INI_PATH: compile-time default location for ini file
-#ifndef NP_DEFAULT_INI_PATH
-# define NP_DEFAULT_INI_PATH "/etc/nagios-plugins.ini"
-#endif NP_DEFAULT_INI_PATH */
+/* FIXME: This is in plugins/common.c. Should be eventually moved to lib/
+ * (although for this particular one  a configure settings should be ideal)
+ */
+#ifndef MAX_INPUT_BUFFER
+# define MAX_INPUT_BUFFER 8192
+#endif /* MAX_INPUT_BUFFER */
 
 /* Filenames (see below) */
 #ifndef NP_DEFAULT_INI_FILENAME1
