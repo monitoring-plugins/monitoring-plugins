@@ -51,7 +51,6 @@ make %{?_smp_mflags}
 rm -rf $RPM_BUILD_ROOT
 make AM_INSTALL_PROGRAM_FLAGS="" DESTDIR=${RPM_BUILD_ROOT} install
 install -d ${RPM_BUILD_ROOT}/etc/nagios
-install -m 664 command.cfg ${RPM_BUILD_ROOT}/etc/nagios
 %find_lang %{name}
 
 
@@ -61,9 +60,8 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -f %{name}.lang
 %defattr(-,root,root)
-%config(missingok,noreplace) /etc/nagios/command.cfg
 %doc CODING COPYING FAQ INSTALL LEGAL README REQUIREMENTS SUPPORT THANKS
-%doc ChangeLog command.cfg
+%doc ChangeLog
 %defattr(775,root,root)
 %dir %{_exec_prefix}/lib/nagios/plugins
 %{_datadir}/locale/de/LC_MESSAGES/nagios-plugins.mo
