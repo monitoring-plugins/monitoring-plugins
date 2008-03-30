@@ -57,7 +57,7 @@ int
 main (int argc, char **argv)
 {
 	char **argv_test=NULL, **argv_known=NULL;
-	int i, argc_test, argc_new;
+	int i, argc_test;
 
 	plan_tests(11);
 
@@ -68,9 +68,9 @@ main (int argc, char **argv)
 	argv_known=(char **)realloc(argv_known, 2*sizeof(char **));
 	argv_known[0] = "prog_name";
 	argv_known[1] = NULL;
-	argv_test=np_extra_opts(argc_test, argv_test, "check_disk", &argc_new);
-	ok(array_diff(argc_new, argv_test, 1, argv_known), "No opts, returns correct argv/argc");
-	my_free(&argc_new, argv_test);
+	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
+	ok(array_diff(argc_test, argv_test, 1, argv_known), "No opts, returns correct argv/argc");
+	my_free(&argc_test, argv_test);
 
 	argv_test=(char **)malloc(6*sizeof(char **));
 	argv_test[0] = "prog_name";
@@ -87,9 +87,9 @@ main (int argc, char **argv)
 	argv_known[3] = "--arg3";
 	argv_known[4] = "val2";
 	argv_known[5] = NULL;
-	argv_test=np_extra_opts(argc_test, argv_test, "check_disk", &argc_new);
-	ok(array_diff(argc_new, argv_test, 5, argv_known), "No extra opts, verbatim copy of argv");
-	my_free(&argc_new,argv_test);
+	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
+	ok(array_diff(argc_test, argv_test, 5, argv_known), "No extra opts, verbatim copy of argv");
+	my_free(&argc_test,argv_test);
 
 	argv_test=(char **)malloc(3*sizeof(char **));
 	argv_test[0] = "prog_name";
@@ -102,9 +102,9 @@ main (int argc, char **argv)
 	argv_known[2] = "--this=Your Mother!";
 	argv_known[3] = "--blank";
 	argv_known[4] = NULL;
-	argv_test=np_extra_opts(argc_test, argv_test, "check_disk", &argc_new);
-	ok(array_diff(argc_new, argv_test, 4, argv_known), "Only extra opts using default section");
-	my_free(&argc_new,argv_test);
+	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
+	ok(array_diff(argc_test, argv_test, 4, argv_known), "Only extra opts using default section");
+	my_free(&argc_test,argv_test);
 
 	argv_test=(char **)malloc(5*sizeof(char **));
 	argv_test[0] = "prog_name";
@@ -119,9 +119,9 @@ main (int argc, char **argv)
 	argv_known[2] = "--something else=oops";
 	argv_known[3] = "--this=that";
 	argv_known[4] = NULL;
-	argv_test=np_extra_opts(argc_test, argv_test, "check_disk", &argc_new);
-	ok(array_diff(argc_new, argv_test, 4, argv_known), "Only extra opts specified twice");
-	my_free(&argc_new,argv_test);
+	argv_test=np_extra_opts(argc_test, argv_test, "check_disk");
+	ok(array_diff(argc_test, argv_test, 4, argv_known), "Only extra opts specified twice");
+	my_free(&argc_test,argv_test);
 
 	argv_test=(char **)malloc(7*sizeof(char **));
 	argv_test[0] = "prog_name";
@@ -141,9 +141,9 @@ main (int argc, char **argv)
 	argv_known[5] = "--arg1=val1";
 	argv_known[6] = "--arg2";
 	argv_known[7] = NULL;
-	argv_test=np_extra_opts(argc_test, argv_test, "check_disk", &argc_new);
-	ok(array_diff(argc_new, argv_test, 7, argv_known), "twice extra opts using two sections");
-	my_free(&argc_new,argv_test);
+	argv_test=np_extra_opts(argc_test, argv_test, "check_disk");
+	ok(array_diff(argc_test, argv_test, 7, argv_known), "twice extra opts using two sections");
+	my_free(&argc_test,argv_test);
 
 	/* Next three checks should die according to N::P - for now they're useful
 	 * to test code is working properly (i.e. no srash or unexpected behavior)
@@ -162,9 +162,9 @@ main (int argc, char **argv)
 	argv_known[2] = "--arg3";
 	argv_known[3] = "val2";
 	argv_known[4] = NULL;
-	argv_test=np_extra_opts(argc_test, argv_test, "check_missing", &argc_new);
-	ok(array_diff(argc_new, argv_test, 4, argv_known), "Missing section 1");
-	my_free(&argc_new,argv_test);
+	argv_test=np_extra_opts(argc_test, argv_test, "check_missing");
+	ok(array_diff(argc_test, argv_test, 4, argv_known), "Missing section 1");
+	my_free(&argc_test,argv_test);
 
 	argv_test=(char **)malloc(7*sizeof(char **));
 	argv_test[0] = "prog_name";
@@ -181,9 +181,9 @@ main (int argc, char **argv)
 	argv_known[2] = "--arg3";
 	argv_known[3] = "val2";
 	argv_known[4] = NULL;
-	argv_test=np_extra_opts(argc_test, argv_test, "check_missing", &argc_new);
-	ok(array_diff(argc_new, argv_test, 4, argv_known), "Missing section 2");
-	my_free(&argc_new,argv_test);
+	argv_test=np_extra_opts(argc_test, argv_test, "check_missing");
+	ok(array_diff(argc_test, argv_test, 4, argv_known), "Missing section 2");
+	my_free(&argc_test,argv_test);
 
 	argv_test=(char **)malloc(6*sizeof(char **));
 	argv_test[0] = "prog_name";
@@ -199,9 +199,9 @@ main (int argc, char **argv)
 	argv_known[2] = "--arg3";
 	argv_known[3] = "val2";
 	argv_known[4] = NULL;
-	argv_test=np_extra_opts(argc_test, argv_test, "check_missing", &argc_new);
-	ok(array_diff(argc_new, argv_test, 4, argv_known), "Missing section 3");
-	my_free(&argc_new,argv_test);
+	argv_test=np_extra_opts(argc_test, argv_test, "check_missing");
+	ok(array_diff(argc_test, argv_test, 4, argv_known), "Missing section 3");
+	my_free(&argc_test,argv_test);
 
 	setenv("NAGIOS_CONFIG_PATH", ".", 1);
 	argv_test=(char **)malloc(6*sizeof(char **));
@@ -219,9 +219,9 @@ main (int argc, char **argv)
 	argv_known[3] = "--arg3";
 	argv_known[4] = "val2";
 	argv_known[5] = NULL;
-	argv_test=np_extra_opts(argc_test, argv_test, "check_disk", &argc_new);
-	ok(array_diff(argc_new, argv_test, 5, argv_known), "Default section 1");
-	my_free(&argc_new,argv_test);
+	argv_test=np_extra_opts(argc_test, argv_test, "check_disk");
+	ok(array_diff(argc_test, argv_test, 5, argv_known), "Default section 1");
+	my_free(&argc_test,argv_test);
 
 	argv_test=(char **)malloc(6*sizeof(char **));
 	argv_test[0] = "prog_name";
@@ -238,9 +238,9 @@ main (int argc, char **argv)
 	argv_known[3] = "--arg3";
 	argv_known[4] = "val2";
 	argv_known[5] = NULL;
-	argv_test=np_extra_opts(argc_test, argv_test, "check_disk", &argc_new);
-	ok(array_diff(argc_new, argv_test, 5, argv_known), "Default section 2");
-	my_free(&argc_new,argv_test);
+	argv_test=np_extra_opts(argc_test, argv_test, "check_disk");
+	ok(array_diff(argc_test, argv_test, 5, argv_known), "Default section 2");
+	my_free(&argc_test,argv_test);
 
 	argv_test=(char **)malloc(6*sizeof(char **));
 	argv_test[0] = "prog_name";
@@ -257,9 +257,9 @@ main (int argc, char **argv)
 	argv_known[3] = "--arg3";
 	argv_known[4] = "val2";
 	argv_known[5] = NULL;
-	argv_test=np_extra_opts(argc_test, argv_test, "check_disk", &argc_new);
-	ok(array_diff(argc_new, argv_test, 5, argv_known), "Default section 3");
-	my_free(&argc_new,argv_test);
+	argv_test=np_extra_opts(argc_test, argv_test, "check_disk");
+	ok(array_diff(argc_test, argv_test, 5, argv_known), "Default section 3");
+	my_free(&argc_test,argv_test);
 
 	return exit_status();
 }

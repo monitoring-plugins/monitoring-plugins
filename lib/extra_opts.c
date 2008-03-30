@@ -44,23 +44,18 @@ is_option (char *str)
 }
 
 /* this is the externally visible function used by plugins */
-/* Shouldn't se modify directly **argv (passed as a char ***) and argc
- * (as int *) ?
- */
-char **np_extra_opts(int argc, char **argv, const char *plugin_name, int *argc_new){
-	np_arg_list *extra_args=NULL, *ea_tmp1=NULL, *ea_tmp2=NULL;
+char **np_extra_opts(int *argc, char **argv, const char *plugin_name){
+	np_arg_list *extra_args=NULL, *ea1=NULL, *ea_tmp=NULL;
 	char **argv_new=NULL;
 	char *argptr=NULL;
-	int i, j, optfound, ea_num=argc;
+	int i, j, optfound, argc_new, ea_num=*argc;
 
-	if(argc<2) {
+	if(*argc<2) {
 		/* No arguments provided */
-		*argc_new=argc;
-		argv_new=argv;
-		return argv_new;
+		return argv;
 	}
 
-	for(i=1; i<argc; i++){
+	for(i=1; i<*argc; i++){
 		argptr=NULL;
 		optfound=0;
 
@@ -69,86 +64,76 @@ char **np_extra_opts(int argc, char **argv, const char *plugin_name, int *argc_n
 			/* It is a single argument with value */
 			argptr=argv[i]+13;
 			/* Delete the extra opts argument */
-			for(j=i;j<argc;j++) argv[j]=argv[j+1];
+			for(j=i;j<*argc;j++) argv[j]=argv[j+1];
 			i--;
-			argc--;
+			*argc--;
 		}else if(strcmp(argv[i], "--extra-opts")==0){
 			if(!is_option(argv[i+1])){
 				/* It is a argument with separate value */
 				argptr=argv[i+1];
 				/* Delete the extra-opts argument/value */
-				for(j=i;j<argc-1;j++) argv[j]=argv[j+2];
+				for(j=i;j<*argc-1;j++) argv[j]=argv[j+2];
 				i-=2;
-				argc-=2;
+				*argc-=2;
 				ea_num--;
 			}else{
 				/* It has no value */
 				optfound=1;
 				/* Delete the extra opts argument */
-				for(j=i;j<argc;j++) argv[j]=argv[j+1];
+				for(j=i;j<*argc;j++) argv[j]=argv[j+1];
 				i--;
-				argc--;
+				*argc--;
 			}
 		}
 
+		/* If we found extra-opts, expand them and store them for later*/
 		if(argptr||optfound){
 			/* Process ini section, returning a linked list of arguments */
-			ea_tmp1=np_get_defaults(argptr, plugin_name);
-			if(ea_tmp1==NULL) {
-				/* no extra args? */
+			ea1=np_get_defaults(argptr, plugin_name);
+			if(ea1==NULL) {
+				/* no extra args (empty section)? */
 				ea_num--;
 				continue;
 			}
 
 			/* append the list to extra_args */
 			if(extra_args==NULL){
-				extra_args=ea_tmp2=ea_tmp1;
-				while(ea_tmp2->next) {
-					ea_tmp2=ea_tmp2->next;
-					ea_num++;
-				}
+				extra_args=ea1;
+				while(ea1=ea1->next) ea_num++;
 			}else{
-				ea_tmp2=extra_args;
-				while(ea_tmp2->next) {
-					ea_tmp2=ea_tmp2->next;
-					ea_num++;
-				}
-				ea_tmp2->next=ea_tmp1;
+				ea_tmp=extra_args;
+				while(ea_tmp=ea_tmp->next) ea_num++;
+				ea_tmp->next=ea1;
 			}
-			ea_tmp1=ea_tmp2=NULL;
+			ea1=ea_tmp=NULL;
 		}
 		/* lather, rince, repeat */
 	}
 
-	if(ea_num==argc && extra_args==NULL){
+	if(ea_num==*argc && extra_args==NULL){
 		/* No extra-opts */
-		*argc_new=argc;
-		argv_new=argv;
-		return argv_new;
+		return argv;
 	}
 
-	/* done processing arguments. now create a new argc/argv set... */
+	/* done processing arguments. now create a new argv array... */
 	argv_new=(char**)malloc((ea_num+1)*sizeof(char**));
 	if(argv_new==NULL) die(STATE_UNKNOWN, _("malloc() failed!\n"));
 
-	/* starting with program name (Should we strdup or just use the poiter?) */
+	/* starting with program name */
 	argv_new[0]=strdup(argv[0]);
-	*argc_new=1;
+	argc_new=1;
 	/* then parsed ini opts (frying them up in the same run) */
 	while(extra_args){
-		argv_new[*argc_new]=strdup(extra_args->arg);
-		*argc_new+=1;
-		ea_tmp1=extra_args;
+		argv_new[argc_new++]=extra_args->arg;
+		ea1=extra_args;
 		extra_args=extra_args->next;
-		free(ea_tmp1);
+		free(ea1);
 	}
-	/* finally the rest of the argv array (Should we strdup or just use the poiter?) */
-	for (i=1; i<argc; i++){
-		argv_new[*argc_new]=strdup(argv[i]);
-		*argc_new+=1;
-	}
+	/* finally the rest of the argv array */
+	for (i=1; i<*argc; i++)	argv_new[argc_new++]=strdup(argv[i]);
+	*argc=argc_new;
 	/* and terminate. */
-	argv_new[*argc_new]=NULL;
+	argv_new[argc_new]=NULL;
 
 	return argv_new;
 }
