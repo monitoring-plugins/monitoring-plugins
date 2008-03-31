@@ -59,7 +59,7 @@ main (int argc, char **argv)
 	char **argv_test=NULL, **argv_known=NULL;
 	int i, argc_test;
 
-	plan_tests(11);
+	plan_tests(12);
 
 	argv_test=(char **)malloc(2*sizeof(char **));
 	argv_test[0] = "prog_name";
@@ -221,6 +221,18 @@ main (int argc, char **argv)
 	argv_known[5] = NULL;
 	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
 	ok(array_diff(argc_test, argv_test, 5, argv_known), "Default section 1");
+
+	argv_test=(char **)malloc(3*sizeof(char **));
+	argv_test[0] = "prog_name";
+	argv_test[1] = "--extra-opts";
+	argv_test[2] = NULL;
+	argc_test=2;
+	argv_known=(char **)realloc(argv_known, 3*sizeof(char **));
+	argv_known[0] = "prog_name";
+	argv_known[1] = "--foo=bar";
+	argv_known[2] = NULL;
+	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
+	ok(array_diff(argc_test, argv_test, 2, argv_known), "Default section 2");
 	my_free(&argc_test,argv_test);
 
 	argv_test=(char **)malloc(6*sizeof(char **));
@@ -239,7 +251,7 @@ main (int argc, char **argv)
 	argv_known[4] = "val2";
 	argv_known[5] = NULL;
 	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
-	ok(array_diff(argc_test, argv_test, 5, argv_known), "Default section 2");
+	ok(array_diff(argc_test, argv_test, 5, argv_known), "Default section 3");
 	my_free(&argc_test,argv_test);
 
 	argv_test=(char **)malloc(6*sizeof(char **));

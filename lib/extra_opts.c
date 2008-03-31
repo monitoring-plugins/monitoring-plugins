@@ -32,7 +32,7 @@
 
 /* FIXME: copied from utils.h; we should move a bunch of libs! */
 int
-is_option (char *str)
+is_option2 (char *str)
 {
 	if (!str)
 		return 0;
@@ -67,7 +67,7 @@ char **np_extra_opts(int *argc, char **argv, const char *plugin_name){
 			i--;
 			*argc-=1;
 		}else if(strcmp(argv[i], "--extra-opts")==0){
-			if(!is_option(argv[i+1])){
+			if((i+1<*argc)&&!is_option2(argv[i+1])){
 				/* It is a argument with separate value */
 				argptr=argv[i+1];
 				/* Delete the extra-opts argument/value */
