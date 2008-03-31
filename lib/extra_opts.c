@@ -26,10 +26,9 @@
 *****************************************************************************/
 
 #include "common.h"
-#include "extra_opts.h"
-#include "parse_ini.h"
 #include "utils_base.h"
-#include <ctype.h>
+#include "parse_ini.h"
+#include "extra_opts.h"
 
 /* FIXME: copied from utils.h; we should move a bunch of libs! */
 int
@@ -66,7 +65,7 @@ char **np_extra_opts(int *argc, char **argv, const char *plugin_name){
 			/* Delete the extra opts argument */
 			for(j=i;j<*argc;j++) argv[j]=argv[j+1];
 			i--;
-			*argc--;
+			*argc-=1;
 		}else if(strcmp(argv[i], "--extra-opts")==0){
 			if(!is_option(argv[i+1])){
 				/* It is a argument with separate value */
@@ -82,7 +81,7 @@ char **np_extra_opts(int *argc, char **argv, const char *plugin_name){
 				/* Delete the extra opts argument */
 				for(j=i;j<*argc;j++) argv[j]=argv[j+1];
 				i--;
-				*argc--;
+				*argc-=1;
 			}
 		}
 
@@ -102,7 +101,10 @@ char **np_extra_opts(int *argc, char **argv, const char *plugin_name){
 				while(ea1=ea1->next) ea_num++;
 			}else{
 				ea_tmp=extra_args;
-				while(ea_tmp=ea_tmp->next) ea_num++;
+				while(ea_tmp->next) {
+					ea_tmp=ea_tmp->next;
+					ea_num++;
+				}
 				ea_tmp->next=ea1;
 			}
 			ea1=ea_tmp=NULL;

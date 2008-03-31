@@ -17,3 +17,4 @@
 char **np_extra_opts(int *argc, char **argv, const char *plugin_name);
 
 #endif /* _EXTRA_OPTS_H_ */
+

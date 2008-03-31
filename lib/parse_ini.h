@@ -59,3 +59,4 @@ typedef struct np_arg_el {
 np_arg_list* np_get_defaults(const char *locator, const char *default_section);
 
 #endif /* _PARSE_INI_H_ */
+

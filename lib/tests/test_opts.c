@@ -18,8 +18,8 @@
 *****************************************************************************/
 
 #include "common.h"
-#include "extra_opts.h"
 #include "utils_base.h"
+#include "extra_opts.h"
 
 #include "tap.h"
 
@@ -119,7 +119,7 @@ main (int argc, char **argv)
 	argv_known[2] = "--something else=oops";
 	argv_known[3] = "--this=that";
 	argv_known[4] = NULL;
-	argv_test=np_extra_opts(argc_test, argv_test, "check_disk");
+	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
 	ok(array_diff(argc_test, argv_test, 4, argv_known), "Only extra opts specified twice");
 	my_free(&argc_test,argv_test);
 
@@ -141,7 +141,7 @@ main (int argc, char **argv)
 	argv_known[5] = "--arg1=val1";
 	argv_known[6] = "--arg2";
 	argv_known[7] = NULL;
-	argv_test=np_extra_opts(argc_test, argv_test, "check_disk");
+	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
 	ok(array_diff(argc_test, argv_test, 7, argv_known), "twice extra opts using two sections");
 	my_free(&argc_test,argv_test);
 
@@ -162,7 +162,7 @@ main (int argc, char **argv)
 	argv_known[2] = "--arg3";
 	argv_known[3] = "val2";
 	argv_known[4] = NULL;
-	argv_test=np_extra_opts(argc_test, argv_test, "check_missing");
+	argv_test=np_extra_opts(&argc_test, argv_test, "check_missing");
 	ok(array_diff(argc_test, argv_test, 4, argv_known), "Missing section 1");
 	my_free(&argc_test,argv_test);
 
@@ -181,7 +181,7 @@ main (int argc, char **argv)
 	argv_known[2] = "--arg3";
 	argv_known[3] = "val2";
 	argv_known[4] = NULL;
-	argv_test=np_extra_opts(argc_test, argv_test, "check_missing");
+	argv_test=np_extra_opts(&argc_test, argv_test, "check_missing");
 	ok(array_diff(argc_test, argv_test, 4, argv_known), "Missing section 2");
 	my_free(&argc_test,argv_test);
 
@@ -199,7 +199,7 @@ main (int argc, char **argv)
 	argv_known[2] = "--arg3";
 	argv_known[3] = "val2";
 	argv_known[4] = NULL;
-	argv_test=np_extra_opts(argc_test, argv_test, "check_missing");
+	argv_test=np_extra_opts(&argc_test, argv_test, "check_missing");
 	ok(array_diff(argc_test, argv_test, 4, argv_known), "Missing section 3");
 	my_free(&argc_test,argv_test);
 
@@ -219,7 +219,7 @@ main (int argc, char **argv)
 	argv_known[3] = "--arg3";
 	argv_known[4] = "val2";
 	argv_known[5] = NULL;
-	argv_test=np_extra_opts(argc_test, argv_test, "check_disk");
+	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
 	ok(array_diff(argc_test, argv_test, 5, argv_known), "Default section 1");
 	my_free(&argc_test,argv_test);
 
@@ -238,7 +238,7 @@ main (int argc, char **argv)
 	argv_known[3] = "--arg3";
 	argv_known[4] = "val2";
 	argv_known[5] = NULL;
-	argv_test=np_extra_opts(argc_test, argv_test, "check_disk");
+	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
 	ok(array_diff(argc_test, argv_test, 5, argv_known), "Default section 2");
 	my_free(&argc_test,argv_test);
 
@@ -257,7 +257,7 @@ main (int argc, char **argv)
 	argv_known[3] = "--arg3";
 	argv_known[4] = "val2";
 	argv_known[5] = NULL;
-	argv_test=np_extra_opts(argc_test, argv_test, "check_disk");
+	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
 	ok(array_diff(argc_test, argv_test, 5, argv_known), "Default section 3");
 	my_free(&argc_test,argv_test);
 
