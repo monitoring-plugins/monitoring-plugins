@@ -99,19 +99,19 @@ np_arg_list* np_get_defaults(const char *locator, const char *default_section){
 	/* if a file was specified or if we're using the default file */
 	if(i.file != NULL && strlen(i.file) > 0){
 		if(strcmp(i.file, "-")==0){
-			inifile=stdout; /* FIXME: Shouldn't it be 'stdin' ??? */
+			inifile=stdin;
 		} else {
 			inifile=fopen(i.file, "r");
 		}
 		if(inifile==NULL) die(STATE_UNKNOWN, _("Can't read config file"));
-		if(read_defaults(inifile, i.stanza, &defaults)==FALSE && strcmp(i.stanza, default_section) && inifile!=stdout) { /* FIXME: Shouldn't it be 'stdin' ??? */
+		if(read_defaults(inifile, i.stanza, &defaults)==FALSE && strcmp(i.stanza, default_section) && inifile!=stdin) {
 			/* We got nothing, try the default section */
 			rewind(inifile);
 			read_defaults(inifile, default_section, &defaults);
 		}
 
 		free(i.file);
-		if(inifile!=stdout) fclose(inifile); /* FIXME: Shouldn't it be 'stdin' ??? */
+		if(inifile!=stdin) fclose(inifile);
 	}
 	free(i.stanza);
 	return defaults;	
