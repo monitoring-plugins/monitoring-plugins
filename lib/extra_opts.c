@@ -122,7 +122,7 @@ char **np_extra_opts(int *argc, char **argv, const char *plugin_name){
 	if(argv_new==NULL) die(STATE_UNKNOWN, _("malloc() failed!\n"));
 
 	/* starting with program name */
-	argv_new[0]=strdup(argv[0]);
+	argv_new[0]=argv[0];
 	argc_new=1;
 	/* then parsed ini opts (frying them up in the same run) */
 	while(extra_args){
@@ -132,7 +132,7 @@ char **np_extra_opts(int *argc, char **argv, const char *plugin_name){
 		free(ea1);
 	}
 	/* finally the rest of the argv array */
-	for (i=1; i<*argc; i++)	argv_new[argc_new++]=strdup(argv[i]);
+	for (i=1; i<*argc; i++)	argv_new[argc_new++]=argv[i];
 	*argc=argc_new;
 	/* and terminate. */
 	argv_new[argc_new]=NULL;

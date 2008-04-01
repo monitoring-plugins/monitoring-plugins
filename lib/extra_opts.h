@@ -11,8 +11,8 @@
  * ini-procesed arguments always come first (in the ord of --extra-opts
  * arguments). If no --extra-opts arguments are provided or returned nothing
  * it returns **argv otherwise the new array is returned. --extra-opts are
- * always removed from **argv and the new array and all its elements can be
- * freed with free();
+ * always removed from **argv. The original pointers from **argv are kept in
+ * the new array to preserve ability to overwrite arguments in processlist.
  */
 char **np_extra_opts(int *argc, char **argv, const char *plugin_name);
 
