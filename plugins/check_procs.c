@@ -108,6 +108,7 @@ thresholds *number_threshold = NULL;
 thresholds *vsz_threshold = NULL;
 thresholds *rss_threshold = NULL;
 thresholds *cpu_threshold = NULL;
+int new_style_thresholds = 0;
 
 int warn = 0; /* number of processes in warn state */
 int crit = 0; /* number of processes in crit state */
@@ -119,6 +120,9 @@ main (int argc, char **argv)
 	char *input_buffer;
 	char *input_line;
 	char *procprog;
+	char *last_critical = NULL;
+	char *last_warning = NULL;
+	char *last_failed_process = NULL;
 
 	pid_t mypid = 0;
 	int procuid = 0;
@@ -147,6 +151,8 @@ main (int argc, char **argv)
 	double vsz_max = 0;
 	double rss_max = 0;
 	double cpu_max = 0;
+	int multiple_process_output_flag = 0;
+	int number_threshold_failure_flag = 0;
 
 
 	setlocale (LC_ALL, "");
@@ -158,6 +164,7 @@ main (int argc, char **argv)
 	procprog = malloc (MAX_INPUT_BUFFER);
 
 	asprintf (&metric_name, "PROCS");
+	asprintf (&last_failed_process, "");
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
@@ -171,7 +178,7 @@ main (int argc, char **argv)
 	}
 	alarm (timeout_interval);
 
-	if (verbose >= 2)
+	if (verbose >= 3)
 		printf (_("CMD: %s\n"), PS_COMMAND);
 
 	if (input_filename == NULL) {
@@ -280,10 +287,18 @@ main (int argc, char **argv)
 				actions_on_failed_state( check_thresholds (procseconds), procprog );
 			}
 
+			asprintf( &last_critical, "" );
+			asprintf( &last_warning, "" );
 			/* Check against all new style thresholds */
 			if (vsz_threshold != NULL) {
 				if ((i = get_status( procvsz, vsz_threshold )) != STATE_OK ) {
 					actions_on_failed_state(i, procprog);
+					asprintf( &last_failed_process, "%s", procprog );
+					if (i == STATE_CRITICAL) {
+						asprintf( &last_critical, "vsz=%d", procvsz );
+					} else if (i == STATE_WARNING) {
+						asprintf( &last_warning, "vsz=%d", procvsz );
+					}
 					if (verbose >= 2) {
 						printf("VSZ state %d: proc=%s vsz=%d ", i, procprog, procvsz);
 						print_thresholds( vsz_threshold );
@@ -293,6 +308,12 @@ main (int argc, char **argv)
 			if (rss_threshold != NULL) {
 				if ((i = get_status( procrss, rss_threshold )) != STATE_OK ) {
 					actions_on_failed_state(i, procprog);
+					asprintf( &last_failed_process, "%s", procprog );
+					if (i == STATE_CRITICAL) {
+						asprintf( &last_critical, "%s%srss=%d", last_critical, (strcmp(last_critical,"") ? ", " : ""), procrss );
+					} else if (i == STATE_WARNING) {
+						asprintf( &last_warning, "%s%srss=%d", last_warning, (strcmp(last_warning,"") ? ", " : ""), procrss );
+					}
 					if (verbose >= 2) {
 						printf("RSS: proc=%s rss=%d ", procprog, procrss);
 						print_thresholds( rss_threshold );
@@ -302,6 +323,12 @@ main (int argc, char **argv)
 			if (cpu_threshold != NULL) {
 				if (( i = get_status( procpcpu, cpu_threshold )) != STATE_OK ) {
 					actions_on_failed_state(i, procprog);
+					asprintf( &last_failed_process, "%s", procprog );
+					if (i == STATE_CRITICAL) {
+						asprintf( &last_critical, "%s%scpu=%.2f%%", last_critical, (strcmp(last_critical,"") ? ", " : ""), procpcpu );
+					} else if (i == STATE_WARNING) {
+						asprintf( &last_warning, "%s%scpu=%.2f%%", last_warning, (strcmp(last_warning,"") ? ", " : ""), procpcpu );
+					}
 					if (verbose >= 2) {
 						printf("CPU: proc=%s cpu=%f ", procprog, procpcpu);
 						print_thresholds( cpu_threshold );
@@ -358,31 +385,54 @@ main (int argc, char **argv)
 	}
 
 	if (number_threshold != NULL) {
-		i = get_status( procs, number_threshold );
-		actions_on_failed_state(i, "NUMBER_OF_PROCESSES");
+		if (i = get_status( procs, number_threshold ) != STATE_OK) {
+			actions_on_failed_state(i, "NUMBER_OF_PROCESSES");
+			if (verbose >= 2) {
+				printf("NUMBER: total_procs=%d ", procs);
+				print_thresholds( number_threshold );
+			}
+			number_threshold_failure_flag = 1;
+		}
 	}
 
 	if ( result == STATE_OK ) {
 		printf ("%s %s: ", metric_name, _("OK"));
+		multiple_process_output_flag = 1;
 	} else if (result == STATE_WARNING) {
 		printf ("%s %s: ", metric_name, _("WARNING"));
-		if ( metric != METRIC_PROCS ) {
-			printf (_("Alerts: %d warn from "), warn);
+		if (procs == 1 && new_style_thresholds && ! number_threshold_failure_flag) {
+			printf("%s: warning %s", last_failed_process, last_warning);
+		} else {
+			if ( metric != METRIC_PROCS ) {
+				printf (_("Alerts: %d warn from "), warn);
+			}
+			multiple_process_output_flag = 1;
 		}
 	} else if (result == STATE_CRITICAL) {
 		printf ("%s %s: ", metric_name, _("CRITICAL"));
-		if (metric != METRIC_PROCS) {
-			printf (_("Alerts: %d crit, %d warn from "), crit, warn);
+		if (procs == 1 && new_style_thresholds && ! number_threshold_failure_flag) {
+			printf("%s: critical %s", last_failed_process, last_critical);
+			if (strcmp(last_warning, "")) {
+				printf("; warning %s", last_warning);
+			}
+		} else {
+			if (metric != METRIC_PROCS) {
+				printf (_("Alerts: %d crit, %d warn from "), crit, warn);
+			}
+			multiple_process_output_flag = 1;
 		}
 	} 
-	printf (ngettext ("%d process", "%d processes", (unsigned long) procs), procs);
-	
-	if (strcmp(fmt,"") != 0) {
-		printf (_(" with %s"), fmt);
-	}
 
-	if ( verbose >= 1 && strcmp(fails,"") )
-		printf (" [%s]", fails);
+	if (multiple_process_output_flag) {
+		printf (ngettext ("%d process", "%d processes", (unsigned long) procs), procs);
+	
+		if (strcmp(fmt,"") != 0) {
+			printf (_(" with %s"), fmt);
+		}
+
+		if ( verbose >= 1 && strcmp(fails,"") )
+			printf (" [%s]", fails);
+	}
 
 	printf(" | ");
 	if( number_threshold != NULL)
@@ -622,16 +672,19 @@ process_arguments (int argc, char **argv)
 			break;
 		case CHAR_MAX+4:
 			rss_threshold = parse_thresholds_string(optarg);
+			new_style_thresholds++;
 			if (metric == DEFAULT)
 				default_metric=NONE;
 			break;
 		case CHAR_MAX+7:
 			vsz_threshold = parse_thresholds_string(optarg);
+			new_style_thresholds++;
 			if (metric == DEFAULT)
 				default_metric=NONE;
 			break;
 		case CHAR_MAX+10:
 			cpu_threshold = parse_thresholds_string(optarg);
+			new_style_thresholds++;
 			if (metric == DEFAULT)
 				default_metric=NONE;
 			break;
