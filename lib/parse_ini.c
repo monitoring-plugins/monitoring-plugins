@@ -34,8 +34,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-/* FIXME: N::P dies if section is not found */
-/* FIXME: N::P dies if config file is not found */
+/* TODO: die like N::P if section is not found */
+/* TODO: die like N::P if config file is not found */
 
 /* np_ini_info contains the result of parsing a "locator" in the format
  * [stanza_name][@config_filename] (check_foo@/etc/foo.ini, for example)

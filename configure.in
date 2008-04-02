@@ -160,6 +160,19 @@ AC_CHECK_LIB(tap, plan_tests,
 	AC_SUBST(EXTRA_TEST)
 	)
 
+dnl INI Parsing
+AC_ARG_ENABLE(extra-opts,
+  AC_HELP_STRING([--enable-extra-opts], 
+		[Enables parsing of plugins ini config files for extra options (default: no)]),
+	[enable_extra_opts=$enableval],
+	[enable_extra_opts=no])
+AM_CONDITIONAL([USE_PARSE_INI],[test "$enable_extra_opts" = "yes"])
+if test "$enable_extra_opts" = "yes" ; then
+	EXTRA_TEST="$EXTRA_TEST test_ini test_opts"
+	AC_SUBST(EXTRA_TEST)
+	AC_DEFINE(NP_EXTRA_OPTS,[1],[Enable INI file parsing.])
+fi
+
 dnl Check for PostgreSQL libraries
 _SAVEDLIBS="$LIBS"
 _SAVEDCPPFLAGS="$CPPFLAGS"
@@ -1621,6 +1634,7 @@ ACX_FEATURE([with],[ipv6])
 ACX_FEATURE([with],[mysql])
 ACX_FEATURE([with],[openssl])
 ACX_FEATURE([with],[gnutls])
+ACX_FEATURE([enable],[extra-opts])
 ACX_FEATURE([with],[perl])
 ACX_FEATURE([enable],[perl-modules])
 ACX_FEATURE([with],[cgiurl])
