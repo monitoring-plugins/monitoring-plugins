@@ -55,7 +55,7 @@ main (int argc, char **argv)
 {
 	char *optstr=NULL;
 
-	plan_tests(12);
+	plan_tests(11);
 
 	optstr=list2str(np_get_defaults("section@./config-tiny.ini", "check_disk"));
 	ok( !strcmp(optstr, "--one=two --Foo=Bar --this=Your Mother! --blank"), "config-tiny.ini's section as expected");
@@ -65,9 +65,13 @@ main (int argc, char **argv)
 	ok( !strcmp(optstr, "--one=two --Foo=Bar --this=Your Mother! --blank"), "Used default section name, without specific");
 	my_free(optstr);
 
-	optstr=list2str(np_get_defaults("section_unknown@./config-tiny.ini", "section"));
-	ok( !strcmp(optstr, "--one=two --Foo=Bar --this=Your Mother! --blank"), "Used default section name over specified one");
-	my_free(optstr);
+	/*
+	 * This check is expected to die - It's commented so we can eventually put
+	 * it in a separate file for testing the return value
+	 */
+	/* optstr=list2str(np_get_defaults("section_unknown@./config-tiny.ini", "section"));
+	ok( 0, "die if section isn't found");
+	my_free(optstr); */
 
 	optstr=list2str(np_get_defaults("Section Two@./config-tiny.ini", "check_disk"));
 	ok( !strcmp(optstr, "--something else=blah --remove=whitespace"), "config-tiny.ini's Section Two as expected");

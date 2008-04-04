@@ -35,11 +35,11 @@ int
 is_option2 (char *str)
 {
 	if (!str)
-		return 0;
+		return FALSE;
 	else if (strspn (str, "-") == 1 || strspn (str, "-") == 2)
-		return 1;
+		return TRUE;
 	else
-		return 0;
+		return FALSE;
 }
 
 /* this is the externally visible function used by plugins */

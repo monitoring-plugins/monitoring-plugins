@@ -59,7 +59,7 @@ main (int argc, char **argv)
 	char **argv_test=NULL, **argv_known=NULL;
 	int i, argc_test;
 
-	plan_tests(12);
+	plan_tests(9);
 
 	argv_test=(char **)malloc(2*sizeof(char **));
 	argv_test[0] = "prog_name";
@@ -145,10 +145,10 @@ main (int argc, char **argv)
 	ok(array_diff(argc_test, argv_test, 7, argv_known), "twice extra opts using two sections");
 	my_free(&argc_test,argv_test);
 
-	/* Next three checks should die according to N::P - for now they're useful
-	 * to test code is working properly (i.e. no srash or unexpected behavior)
+	/* Next three checks dre expected to die. They are commented out as they
+	 * could possibly go in a sepatare test checked for return value.
 	 */
-	argv_test=(char **)malloc(6*sizeof(char **));
+	/* argv_test=(char **)malloc(6*sizeof(char **));
 	argv_test[0] = "prog_name";
 	argv_test[1] = "arg1";
 	argv_test[2] = "--extra-opts=missing@./config-opts.ini";
@@ -164,9 +164,9 @@ main (int argc, char **argv)
 	argv_known[4] = NULL;
 	argv_test=np_extra_opts(&argc_test, argv_test, "check_missing");
 	ok(array_diff(argc_test, argv_test, 4, argv_known), "Missing section 1");
-	my_free(&argc_test,argv_test);
+	my_free(&argc_test,argv_test); */
 
-	argv_test=(char **)malloc(7*sizeof(char **));
+	/* argv_test=(char **)malloc(7*sizeof(char **));
 	argv_test[0] = "prog_name";
 	argv_test[1] = "arg1";
 	argv_test[2] = "--extra-opts";
@@ -183,9 +183,9 @@ main (int argc, char **argv)
 	argv_known[4] = NULL;
 	argv_test=np_extra_opts(&argc_test, argv_test, "check_missing");
 	ok(array_diff(argc_test, argv_test, 4, argv_known), "Missing section 2");
-	my_free(&argc_test,argv_test);
+	my_free(&argc_test,argv_test); */
 
-	argv_test=(char **)malloc(6*sizeof(char **));
+	/* argv_test=(char **)malloc(6*sizeof(char **));
 	argv_test[0] = "prog_name";
 	argv_test[1] = "arg1";
 	argv_test[2] = "--extra-opts";
@@ -201,7 +201,7 @@ main (int argc, char **argv)
 	argv_known[4] = NULL;
 	argv_test=np_extra_opts(&argc_test, argv_test, "check_missing");
 	ok(array_diff(argc_test, argv_test, 4, argv_known), "Missing section 3");
-	my_free(&argc_test,argv_test);
+	my_free(&argc_test,argv_test); */
 
 	setenv("NAGIOS_CONFIG_PATH", ".", 1);
 	argv_test=(char **)malloc(6*sizeof(char **));
@@ -257,8 +257,8 @@ main (int argc, char **argv)
 	argv_test=(char **)malloc(6*sizeof(char **));
 	argv_test[0] = "prog_name";
 	argv_test[1] = "arg1";
-	argv_test[2] = "--extra-opts=section2";
-	argv_test[3] = "--arg3";
+	argv_test[2] = "--extra-opts";
+	argv_test[3] = "-arg3";
 	argv_test[4] = "val2";
 	argv_test[5] = NULL;
 	argc_test=5;
@@ -266,11 +266,11 @@ main (int argc, char **argv)
 	argv_known[0] = "prog_name";
 	argv_known[1] = "--foo=bar";
 	argv_known[2] = "arg1";
-	argv_known[3] = "--arg3";
+	argv_known[3] = "-arg3";
 	argv_known[4] = "val2";
 	argv_known[5] = NULL;
 	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
-	ok(array_diff(argc_test, argv_test, 5, argv_known), "Default section 3");
+	ok(array_diff(argc_test, argv_test, 5, argv_known), "Default section 4");
 	my_free(&argc_test,argv_test);
 
 	return exit_status();

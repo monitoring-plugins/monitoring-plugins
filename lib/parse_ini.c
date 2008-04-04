@@ -34,7 +34,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-/* TODO: die like N::P if section is not found */
 /* TODO: die like N::P if config file is not found */
 
 /* np_ini_info contains the result of parsing a "locator" in the format
@@ -104,11 +103,8 @@ np_arg_list* np_get_defaults(const char *locator, const char *default_section){
 			inifile=fopen(i.file, "r");
 		}
 		if(inifile==NULL) die(STATE_UNKNOWN, _("Can't read config file"));
-		if(read_defaults(inifile, i.stanza, &defaults)==FALSE && strcmp(i.stanza, default_section) && inifile!=stdin) {
-			/* We got nothing, try the default section */
-			rewind(inifile);
-			read_defaults(inifile, default_section, &defaults);
-		}
+		if(read_defaults(inifile, i.stanza, &defaults)==FALSE)
+			die(STATE_UNKNOWN, _("Invalid section '%s' in config file '%s'\n"), i.stanza, i.file);
 
 		free(i.file);
 		if(inifile!=stdin) fclose(inifile);
