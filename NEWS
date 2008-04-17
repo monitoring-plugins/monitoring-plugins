@@ -17,6 +17,7 @@ This file documents the major additions and syntax changes between releases.
 	If applicable, Gettext linked dynamically instead of statically
 	check_dig can now pass arguments dig by using -A/--dig-arguments (#1874041/#1889453)
 	check_ntp and check_ntp_peer now show proper jitter/stratum thresholds longopts in --help
+	check_dns now allow to repeat -a to match multiple possibly returned address (common with load balancers)
 
 1.4.11 13th December 2007
 	Fixed check_http regression in 1.4.10 where following redirects to

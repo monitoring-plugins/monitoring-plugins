@@ -54,8 +54,9 @@ char query_address[ADDRESS_LENGTH] = "";
 char dns_server[ADDRESS_LENGTH] = "";
 char ptr_server[ADDRESS_LENGTH] = "";
 int verbose = FALSE;
-char expected_address[ADDRESS_LENGTH] = "";
-int match_expected_address = FALSE;
+char **expected_address = NULL;
+int expected_address_cnt = 0;
+
 int expect_authority = FALSE;
 thresholds *time_thresholds = NULL;
 
@@ -202,9 +203,19 @@ main (int argc, char **argv)
          NSLOOKUP_COMMAND);
 
   /* compare to expected address */
-  if (result == STATE_OK && match_expected_address && strcmp(address, expected_address)) {
+  if (result == STATE_OK && expected_address_cnt > 0) {
     result = STATE_CRITICAL;
-    asprintf(&msg, _("expected '%s' but got '%s'"), expected_address, address);
+    temp_buffer = "";
+    for (i=0; i<expected_address_cnt; i++) {
+      /* check if we get a match and prepare an error string */
+      if (strcmp(address, expected_address[i]) == 0) result = STATE_OK;
+      asprintf(&temp_buffer, "%s%s; ", temp_buffer, expected_address[i]);
+    }
+    if (result == STATE_CRITICAL) {
+      /* Strip off last semicolon... */
+      temp_buffer[strlen(temp_buffer)-2] = '\0';
+      asprintf(&msg, _("expected '%s' but got '%s'"), temp_buffer, address);
+    }
   }
 
   /* check if authoritative */
@@ -380,8 +391,9 @@ process_arguments (int argc, char **argv)
     case 'a': /* expected address */
       if (strlen (optarg) >= ADDRESS_LENGTH)
         die (STATE_UNKNOWN, _("Input buffer overflow\n"));
-      strcpy (expected_address, optarg);
-      match_expected_address = TRUE;
+      expected_address = (char **)realloc(expected_address, (expected_address_cnt+1) * sizeof(char**));
+      expected_address[expected_address_cnt] = strdup(optarg);
+      expected_address_cnt++;
       break;
     case 'A': /* expect authority */
       expect_authority = TRUE;
@@ -451,8 +463,10 @@ print_help (void)
   printf (" -s, --server=HOST\n");
   printf ("    %s\n", _("Optional DNS server you want to use for the lookup"));
   printf (" -a, --expected-address=IP-ADDRESS|HOST\n");
-  printf ("    %s\n", _("Optional IP-ADDRESS you expect the DNS server to return. HOST must end with ."));
-  printf ("    %s\n", _("Multiple addresses can be separated with commas, and need to be sorted."));
+  printf ("    %s\n", _("Optional IP-ADDRESS you expect the DNS server to return. HOST must end with"));
+  printf ("    %s\n", _("a dot (.). This option can be repeated multiple times (Returns OK if any"));
+  printf ("    %s\n", _("value match). If multiple are returned at once, you have to match the whole"));
+  printf ("    %s\n", _("string of addresses separated with commas (it needs to be sorted)."));
   printf (" -A, --expect-authority\n");
   printf ("    %s\n", _("Optionally expect the DNS server to be authoritative for the lookup"));
   printf (" -w, --warning=seconds\n");
