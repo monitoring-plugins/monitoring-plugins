@@ -354,7 +354,7 @@ main (int argc, char **argv)
 	}
 
 	if (number_threshold != NULL) {
-		if (i = get_status( procs, number_threshold ) != STATE_OK) {
+		if ((i = get_status( procs, number_threshold )) != STATE_OK) {
 			actions_on_failed_state(i, "NUMBER_OF_PROCESSES");
 			if (verbose >= 2) {
 				printf("NUMBER: total_procs=%d ", procs);
