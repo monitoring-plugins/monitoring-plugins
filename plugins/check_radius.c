@@ -3,7 +3,7 @@
 * Nagios check_radius plugin
 * 
 * License: GPL
-* Copyright (c) 1999-2007 Nagios Plugins Development Team
+* Copyright (c) 1999-2008 Nagios Plugins Development Team
 * 
 * Last Modified: $Date$
 * 
@@ -33,7 +33,7 @@
 
 const char *progname = "check_radius";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2007";
+const char *copyright = "2000-2008";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -340,9 +340,8 @@ print_help (void)
 	printf ("%s\n", _("The password option presents a substantial security issue because the"));
   printf ("%s\n", _("password can be determined by careful watching of the command line in"));
   printf ("%s\n", _("a process listing.  This risk is exacerbated because nagios will"));
-  printf ("%s\n", _("run the plugin at regular prdictable intervals.  Please be sure that"));
-  printf ("%s\n", _("the password used does not allow access to sensitive system resources,"));
-  printf ("%s\n", _("otherwise compormise could occur."));
+  printf ("%s\n", _("run the plugin at regular predictable intervals.  Please be sure that"));
+  printf ("%s\n", _("the password used does not allow access to sensitive system resources."));
 
 	printf (_(UT_SUPPORT));
 }
