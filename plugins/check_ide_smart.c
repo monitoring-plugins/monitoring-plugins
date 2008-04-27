@@ -484,13 +484,13 @@ print_help (void)
 	printf (COPYRIGHT, copyright, email);
 
 	printf (_("This plugin checks a local hard drive with the (Linux specific) SMART interface [http://smartlinux.sourceforge.net/smart/index.php]."));
- 
+
   printf ("\n\n");
-  
+
   print_usage ();
 
   printf (_(UT_HELP_VRSN));
-	
+
   printf (" %s\n", "-d, --device=DEVICE");
   printf ("    %s\n", _("Select device DEVICE"));
   printf ("    %s\n", _("Note: if the device is selected with this option, _no_ other options are accepted"));
@@ -503,7 +503,7 @@ print_help (void)
   printf (" %s\n", "-0, --auto-off");
   printf ("    %s\n", _("Turn off automatic offline tests"));
   printf (" %s\n", "-n, --nagios");
-  printf ("    %s\n\n", _("Output suitable for Nagios"));
+  printf ("    %s\n", _("Output suitable for Nagios"));
   printf (_(UT_SUPPORT));
 }
 

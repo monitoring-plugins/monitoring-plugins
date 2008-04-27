@@ -78,7 +78,7 @@ main (int argc, char **argv)
   setlocale (LC_ALL, "");
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
-  
+
   if (process_arguments (argc, argv) == ERROR)
     usage_va(_("Could not parse arguments"));
 
@@ -87,7 +87,7 @@ main (int argc, char **argv)
   /* create the command line to execute */
   asprintf (&command_line, "%s -raw %s -%s %s",
             PATH_TO_QSTAT, QSTAT_DATA_DELIMITER, game_type, server_ip);
-  
+
   if (port)
     asprintf (&command_line, "%s:%-d", command_line, port);
 
@@ -298,11 +298,11 @@ print_help (void)
   printf (_("This plugin tests game server connections with the specified host."));
 
   printf ("\n\n");
- 
+
   print_usage ();
 
   printf (_(UT_HELP_VRSN));
-  
+
   printf (" %s\n", "-p");
   printf ("    %s\n", _("Optional port of which to connect"));
   printf (" %s\n", "gf");
@@ -314,13 +314,11 @@ print_help (void)
 
   printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
+  printf ("\n");
   printf ("%s\n", _("Notes:"));
-
-  printf ("%s\n", _("This plugin uses the 'qstat' command, the popular game server status query tool ."));
-
-  printf ("%s\n", _("If you don't have the package installed, you will need to download it from"));
-
-  printf ("%s\n", _("http://www.activesw.com/people/steve/qstat.html before you can use this plugin."));
+  printf (" %s\n", _("This plugin uses the 'qstat' command, the popular game server status query tool."));
+  printf (" %s\n", _("If you don't have the package installed, you will need to download it from"));
+  printf (" %s\n", _("http://www.activesw.com/people/steve/qstat.html before you can use this plugin."));
 
   printf (_(UT_SUPPORT));
 }

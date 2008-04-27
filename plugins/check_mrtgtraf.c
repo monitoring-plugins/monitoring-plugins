@@ -359,6 +359,7 @@ print_help (void)
   printf (" %s\n", "-c, --critical");
   printf ("    %s\n", _("Critical threshold pair <incoming>,<outgoing>"));
 
+  printf ("\n");
 	printf ("%s\n", _("Notes:"));
   printf (" %s\n", _("- MRTG stands for Multi Router Traffic Grapher. It can be downloaded from"));
   printf (" %s\n", "  http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html");

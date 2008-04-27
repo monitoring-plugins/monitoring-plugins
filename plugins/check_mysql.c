@@ -370,7 +370,7 @@ print_help (void)
 	printf ("%s\n", _("This program tests connections to a mysql server"));
 
   printf ("\n\n");
-  
+
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
@@ -391,8 +391,10 @@ print_help (void)
   printf ("    %s\n", _("Exit with WARNING status if slave server is more than INTEGER seconds behind master"));
   printf (" %s\n", "-c, --critical");
   printf ("    %s\n", _("Exit with CRITICAL status if slave server is more then INTEGER seconds behind master"));
+
+	printf ("\n");
   printf (" %s\n", _("There are no required arguments. By default, the local database with"));
-  printf (_("a server listening on MySQL standard port %d will be checked\n"), MYSQL_PORT);
+  printf (_(" a server listening on MySQL standard port %d will be checked\n"), MYSQL_PORT);
 
 	printf (_(UT_SUPPORT));
 }

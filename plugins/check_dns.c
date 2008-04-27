@@ -124,7 +124,7 @@ main (int argc, char **argv)
       addresses = malloc(sizeof(*addresses)*10);
     else if (!(n_addresses % 10))
       addresses = realloc(addresses,sizeof(*addresses) * (n_addresses + 10));
- 
+
     if (verbose)
       puts(chld_out.line[i]);
 
@@ -148,7 +148,7 @@ main (int argc, char **argv)
       /* Strip leading spaces */
       for (; *temp_buffer != '\0' && *temp_buffer == ' '; temp_buffer++)
         /* NOOP */;
-      
+
       strip(temp_buffer);
       if (temp_buffer==NULL || strlen(temp_buffer)==0) {
         die (STATE_CRITICAL,
@@ -451,13 +451,13 @@ print_help (void)
   printf ("%s\n", _("This plugin uses the nslookup program to obtain the IP address for the given host/domain query."));
   printf ("%s\n", _("An optional DNS server to use may be specified."));
   printf ("%s\n", _("If no DNS server is specified, the default server(s) specified in /etc/resolv.conf will be used."));
-  
+
   printf ("\n\n");
 
   print_usage ();
-  
+
   printf (_(UT_HELP_VRSN));
-  
+
   printf (" -H, --hostname=HOST\n");
   printf ("    %s\n", _("The name or address you want to query"));
   printf (" -s, --server=HOST\n");

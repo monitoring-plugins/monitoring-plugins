@@ -3,7 +3,7 @@
 * Nagios check_by_ssh plugin
 * 
 * License: GPL
-* Copyright (c) 2000-2007 Nagios Plugins Development Team
+* Copyright (c) 2000-2008 Nagios Plugins Development Team
 * 
 * Last Modified: $Date$
 * 
@@ -28,10 +28,10 @@
 * $Id$
 * 
 *****************************************************************************/
- 
+
 const char *progname = "check_by_ssh";
 const char *revision = "$Revision$";
-const char *copyright = "2000-2007";
+const char *copyright = "2000-2008";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -345,7 +345,7 @@ print_help (void)
 	printf (_("This plugin uses SSH to execute commands on a remote host"));
 
   printf ("\n\n");
-  
+
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
@@ -382,6 +382,8 @@ print_help (void)
   printf ("    %s\n", _("Tell ssh to suppress warning and diagnostic messages [optional]"));
 	printf (_(UT_WARN_CRIT));
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+	printf (_(UT_VERBOSE));
+	printf("\n");
   printf (" %s\n", _("The most common mode of use is to refer to a local identity file with"));
   printf (" %s\n", _("the '-i' option. In this mode, the identity pair should have a null"));
   printf (" %s\n", _("passphrase and the public key should be listed in the authorized_keys"));
@@ -389,6 +391,7 @@ print_help (void)
   printf (" %s\n", _("only one command on the remote server. If the remote SSH server tracks"));
   printf (" %s\n", _("invocation arguments, the one remote program may be an agent that can"));
   printf (" %s\n", _("execute additional commands as proxy"));
+  printf("\n");
   printf (" %s\n", _("To use passive mode, provide multiple '-C' options, and provide"));
   printf (" %s\n", _("all of -O, -s, and -n options (servicelist order must match '-C'options)"));
   printf ("\n");
@@ -398,8 +401,8 @@ print_help (void)
   printf (" %s\n", "[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c1;0; up 2 days");
   printf (" %s\n", "[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c2;0; up 2 days");
   printf (" %s\n", "[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c3;0; up 2 days");
-	printf (_(UT_VERBOSE));
-	printf (_(UT_SUPPORT));
+
+	printf(_(UT_SUPPORT));
 }
 
 

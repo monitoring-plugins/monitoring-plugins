@@ -526,7 +526,7 @@ print_help (void)
 	printf ("%s\n", _("Check swap space on local machine."));
 
   printf ("\n\n");
-  
+
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
@@ -542,9 +542,10 @@ print_help (void)
   printf (" %s\n", "-a, --allswaps");
   printf ("    %s\n", _("Conduct comparisons for all swap partitions, one by one"));
 	printf (_(UT_VERBOSE));
+
 	printf ("\n");
   printf ("%s\n", _("Notes:"));
-  printf (" %s\n", _("On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s.\n"));
+  printf (" %s\n", _("On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s."));
 
 	printf (_(UT_SUPPORT));
 }

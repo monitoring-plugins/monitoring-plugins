@@ -774,7 +774,7 @@ check_http (void)
     } else {
       asprintf (&buf, "%sContent-Type: application/x-www-form-urlencoded\r\n", buf);
     }
-    
+
     asprintf (&buf, "%sContent-Length: %i\r\n\r\n", buf, (int)strlen (http_post_data));
     asprintf (&buf, "%s%s%s", buf, http_post_data, CRLF);
   }
@@ -936,7 +936,7 @@ check_http (void)
     } /* end if (http_status >= 300) */
 
   } /* end else (server_expect_yn)  */
-    
+
         if (maximum_age >= 0) {
           check_document_dates (header);
         }
@@ -1048,7 +1048,7 @@ redir (char *pos, char *status_line)
   addr = malloc (MAX_IPV4_HOSTLENGTH + 1);
   if (addr == NULL)
     die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate addr\n"));
-  
+
   url = malloc (strcspn (pos, "\r\n"));
   if (url == NULL)
     die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate url\n"));
@@ -1322,7 +1322,7 @@ print_help (void)
   printf (" %s\n", _("When the certificate of 'www.verisign.com' is valid for more than 14 days,"));
   printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
   printf (" %s\n", _("14 days, a STATE_WARNING is returned. A STATE_CRITICAL will be returned when"));
-  printf (" %s\n\n", _("the certificate is expired."));
+  printf (" %s\n", _("the certificate is expired."));
 #endif
 
   printf (_(UT_SUPPORT));

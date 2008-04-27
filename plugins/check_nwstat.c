@@ -518,14 +518,14 @@ main(int argc, char **argv) {
 			result=STATE_OK;
 		else
 			result=STATE_WARNING;
- 
+
 		close(sd);
 		my_tcp_connect (server_address, server_port, &sd);
 
 		send_buffer = strdup ("S13\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		temp_buffer=strtok(recv_buffer,"\r\n");
- 
+
 		asprintf (&output_message,_("Directory Services Database is %s (DS version %s)"),(result==STATE_OK)?"open":"closed",temp_buffer);
 
 		/* check to see if logins are enabled */
@@ -593,7 +593,7 @@ main(int argc, char **argv) {
 			return result;
 
 		max_packet_receive_buffers=atoi(recv_buffer);
- 
+
 		percent_used_packet_receive_buffers=(unsigned long)(((double)used_packet_receive_buffers/(double)max_packet_receive_buffers)*100.0);
 
 		if (vars_to_check==UPRB) {
@@ -607,7 +607,7 @@ main(int argc, char **argv) {
 			else if (check_warning_value==TRUE && percent_used_packet_receive_buffers >= warning_value)
 				result=STATE_WARNING;
 		}
- 
+
 		asprintf (&output_message,_("%lu of %lu (%lu%%) packet receive buffers used"),used_packet_receive_buffers,max_packet_receive_buffers,percent_used_packet_receive_buffers);
 
 		/* check SAP table entries */
@@ -623,9 +623,9 @@ main(int argc, char **argv) {
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
- 
+
 		sap_entries=atoi(recv_buffer);
- 
+
 		if (check_critical_value==TRUE && sap_entries >= critical_value)
 			result=STATE_CRITICAL;
 		else if (check_warning_value==TRUE && sap_entries >= warning_value)
@@ -811,9 +811,9 @@ main(int argc, char **argv) {
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
- 
+
 		open_files=atoi(recv_buffer);
- 
+
 		if (check_critical_value==TRUE && open_files >= critical_value)
 			result=STATE_CRITICAL;
 		else if (check_warning_value==TRUE && open_files >= warning_value)
@@ -836,9 +836,9 @@ main(int argc, char **argv) {
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
- 
+
 		abended_threads=atoi(recv_buffer);
- 
+
 		if (check_critical_value==TRUE && abended_threads >= critical_value)
 			result=STATE_CRITICAL;
 		else if (check_warning_value==TRUE && abended_threads >= warning_value)
@@ -860,9 +860,9 @@ main(int argc, char **argv) {
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
- 
+
 		max_service_processes=atoi(recv_buffer);
- 
+
 		close(sd);
 		my_tcp_connect (server_address, server_port, &sd);
 
@@ -870,9 +870,9 @@ main(int argc, char **argv) {
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
- 
+
 		current_service_processes=atoi(recv_buffer);
- 
+
 		if (check_critical_value==TRUE && current_service_processes >= critical_value)
 			result=STATE_CRITICAL;
 		else if (check_warning_value==TRUE && current_service_processes >= warning_value)
@@ -1673,7 +1673,7 @@ void print_help(void)
   printf (" %s\n", _("  (available from http://www.engr.wisc.edu/~drews/mrtg/)"));
   printf (" %s\n", _("- Values for critical thresholds should be lower than warning thresholds"));
   printf (" %s\n", _("  when the following variables are checked: VPF, VKF, LTCH, CBUFF, DCB, "));
-  printf (" %s\n", _("  TCB, LRUS and LRUM.\n"));
+  printf (" %s\n", _("  TCB, LRUS and LRUM."));
 
 	printf (_(UT_SUPPORT));
 }

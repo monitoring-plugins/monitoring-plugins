@@ -204,7 +204,7 @@ textscan (char *buf)
     die (status, _("FPING %s - %s (loss=%.0f%% )|%s\n"),
          state_text (status), server_name, loss ,
          perfdata ("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, TRUE, 0, TRUE, 100));
-  
+
   }
   else {
     status = max_state (status, STATE_WARNING);
@@ -371,11 +371,11 @@ print_help (void)
   printf (COPYRIGHT, copyright, email);
 
   printf ("%s\n", _("This plugin will use the fping command to ping the specified host for a fast check"));
-  
+
   printf ("%s\n", _("Note that it is necessary to set the suid flag on fping."));
 
   printf ("\n\n");
-  
+
   print_usage ();
 
   printf (_(UT_HELP_VRSN));
@@ -392,9 +392,9 @@ print_help (void)
   printf ("    %s\n", _("number of ICMP packets to send (default: %d)"),PACKET_COUNT);
   printf (_(UT_VERBOSE));
   printf ("\n");
-  printf ("    %s\n", _("THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel time (ms)"));
-  printf ("    %s\n", _("which triggers a WARNING or CRITICAL state, and <pl> is the percentage of"));
-  printf ("    %s\n", _("packet loss to trigger an alarm state."));
+  printf (" %s\n", _("THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel time (ms)"));
+  printf (" %s\n", _("which triggers a WARNING or CRITICAL state, and <pl> is the percentage of"));
+  printf (" %s\n", _("packet loss to trigger an alarm state."));
   printf (_(UT_SUPPORT));
 }
 

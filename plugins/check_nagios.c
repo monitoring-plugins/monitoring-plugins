@@ -285,7 +285,7 @@ print_help (void)
   printf ("%s\n", _("It also checks the process table for a process matching the command argument."));
 
   printf ("\n\n");
-  
+
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
@@ -300,6 +300,7 @@ print_help (void)
   printf ("\n");
   printf ("%s\n", _("Examples:"));
   printf (" %s\n", "check_nagios -e 5 -F /usr/local/nagios/var/status.log -C /usr/local/nagios/bin/nagios");
+
   printf (_(UT_SUPPORT));
 }
 

@@ -256,12 +256,9 @@ print_help(void)
 
 	printf("\n");
 	printf("%s\n", _("Notes:"));
-	printf(" %s\n", _("See:"));
-	printf(" %s\n", ("http://nagiosplug.sourceforge.net/developer-guidelines.html#THRESHOLDFORMAT"));
-	printf(" %s\n", _("for THRESHOLD format and examples."));
+	printf(_(UT_THRESHOLDS_NOTES));
 
 	printf(_(UT_SUPPORT));
-	printf("\n");
 }
 
 

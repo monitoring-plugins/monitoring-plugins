@@ -323,7 +323,7 @@ print_help (void)
   printf ("%s\n", _("two variables recorded in an MRTG log file."));
 
   printf ("\n\n");
-  
+
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
@@ -346,25 +346,27 @@ print_help (void)
   printf ("   %s\n", _("Option units label for data (Example: Packets/Sec, Errors/Sec,"));
   printf ("   %s\n", _("\"Bytes Per Second\", \"%% Utilization\")"));
 
-	printf ("%s\n", _("If the value exceeds the <vwl> threshold, a WARNING status is returned. If"));
-  printf ("%s\n", _("the value exceeds the <vcl> threshold, a CRITICAL status is returned.  If"));
-  printf ("%s\n", _("the data in the log file is older than <expire_minutes> old, a WARNING"));
-  printf ("%s\n", _("status is returned and a warning message is printed."));
+  printf ("\n");
+	printf (" %s\n", _("If the value exceeds the <vwl> threshold, a WARNING status is returned. If"));
+  printf (" %s\n", _("the value exceeds the <vcl> threshold, a CRITICAL status is returned.  If"));
+  printf (" %s\n", _("the data in the log file is older than <expire_minutes> old, a WARNING"));
+  printf (" %s\n", _("status is returned and a warning message is printed."));
 
-	printf ("%s\n", _("This plugin is useful for monitoring MRTG data that does not correspond to"));
-  printf ("%s\n", _("bandwidth usage.  (Use the check_mrtgtraf plugin for monitoring bandwidth)."));
-  printf ("%s\n", _("It can be used to monitor any kind of data that MRTG is monitoring - errors,"));
-  printf ("%s\n", _("packets/sec, etc.  I use MRTG in conjuction with the Novell NLM that allows"));
-  printf ("%s\n", _("me to track processor utilization, user connections, drive space, etc and"));
-  printf ("%s\n\n", _("this plugin works well for monitoring that kind of data as well."));
+  printf ("\n");
+	printf (" %s\n", _("This plugin is useful for monitoring MRTG data that does not correspond to"));
+  printf (" %s\n", _("bandwidth usage.  (Use the check_mrtgtraf plugin for monitoring bandwidth)."));
+  printf (" %s\n", _("It can be used to monitor any kind of data that MRTG is monitoring - errors,"));
+  printf (" %s\n", _("packets/sec, etc.  I use MRTG in conjuction with the Novell NLM that allows"));
+  printf (" %s\n", _("me to track processor utilization, user connections, drive space, etc and"));
+  printf (" %s\n\n", _("this plugin works well for monitoring that kind of data as well."));
 
 	printf ("%s\n", _("Notes:"));
   printf (" %s\n", _("- This plugin only monitors one of the two variables stored in the MRTG log"));
-  printf (" %s\n", _("  file.  If you want to monitor both values you will have to define two"));
-  printf (" %s\n", _("  commands with different values for the <variable> argument.  Of course,"));
-  printf (" %s\n", _("you can always hack the code to make this plugin work for you..."));
+  printf ("   %s\n", _("file.  If you want to monitor both values you will have to define two"));
+  printf ("   %s\n", _("commands with different values for the <variable> argument.  Of course,"));
+  printf ("   %s\n", _("you can always hack the code to make this plugin work for you..."));
   printf (" %s\n", _("- MRTG stands for the Multi Router Traffic Grapher.  It can be downloaded from"));
-  printf (" %s\n", "http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html");
+  printf ("   %s\n", "http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html");
 
 	printf (_(UT_SUPPORT));
 }

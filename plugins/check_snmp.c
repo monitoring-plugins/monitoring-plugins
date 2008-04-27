@@ -993,27 +993,30 @@ print_help (void)
 
 	printf (_(UT_VERBOSE));
 
-	printf ("%s\n", _("This plugin uses the 'snmpget' command included with the NET-SNMP package."));
+  printf ("\n");
+  printf ("%s\n", _("This plugin uses the 'snmpget' command included with the NET-SNMP package."));
   printf ("%s\n", _("if you don't have the package installed, you will need to download it from"));
   printf ("%s\n", _("http://net-snmp.sourceforge.net before you can use this plugin."));
 
-	printf ("%s\n", _("- Multiple OIDs may be indicated by a comma- or space-delimited list (lists with"));
-  printf ("%s\n", _(" internal spaces must be quoted) [max 8 OIDs]"));
+  printf ("\n");
+  printf ("%s\n", _("Notes:"));
+  printf (" %s\n", _("- Multiple OIDs may be indicated by a comma- or space-delimited list (lists with"));
+  printf ("   %s\n", _("internal spaces must be quoted) [max 8 OIDs]"));
 
-	printf ("%s\n", _("- Ranges are inclusive and are indicated with colons. When specified as"));
-  printf ("%s\n", _(" 'min:max' a STATE_OK will be returned if the result is within the indicated"));
-  printf ("%s\n", _(" range or is equal to the upper or lower bound. A non-OK state will be"));
-  printf ("%s\n", _(" returned if the result is outside the specified range."));
+  printf (" %s\n", _("- Ranges are inclusive and are indicated with colons. When specified as"));
+  printf ("   %s\n", _("'min:max' a STATE_OK will be returned if the result is within the indicated"));
+  printf ("   %s\n", _("range or is equal to the upper or lower bound. A non-OK state will be"));
+  printf ("   %s\n", _("returned if the result is outside the specified range."));
 
-	printf ("%s\n", _("- If specified in the order 'max:min' a non-OK state will be returned if the"));
-  printf ("%s\n", _(" result is within the (inclusive) range."));
+  printf (" %s\n", _("- If specified in the order 'max:min' a non-OK state will be returned if the"));
+  printf ("   %s\n", _("result is within the (inclusive) range."));
 
-	printf ("%s\n", _("- Upper or lower bounds may be omitted to skip checking the respective limit."));
-  printf ("%s\n", _("- Bare integers are interpreted as upper limits."));
-  printf ("%s\n", _("- When checking multiple OIDs, separate ranges by commas like '-w 1:10,1:,:20'"));
-  printf ("%s\n", _("- Note that only one string and one regex may be checked at present"));
-  printf ("%s\n", _("- All evaluation methods other than PR, STR, and SUBSTR expect that the value"));
-  printf ("%s\n", _(" returned from the SNMP query is an unsigned integer."));
+  printf (" %s\n", _("- Upper or lower bounds may be omitted to skip checking the respective limit."));
+  printf (" %s\n", _("- Bare integers are interpreted as upper limits."));
+  printf (" %s\n", _("- When checking multiple OIDs, separate ranges by commas like '-w 1:10,1:,:20'"));
+  printf (" %s\n", _("- Note that only one string and one regex may be checked at present"));
+  printf (" %s\n", _("- All evaluation methods other than PR, STR, and SUBSTR expect that the value"));
+  printf ("   %s\n", _("returned from the SNMP query is an unsigned integer."));
 
 	printf (_(UT_SUPPORT));
 }

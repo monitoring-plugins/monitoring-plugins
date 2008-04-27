@@ -438,9 +438,11 @@ print_help (void)
   printf (" %s\n", _("specified database, and then disconnects. If no database is specified, it"));
   printf (" %s\n", _("connects to the template1 database, which is present in every functioning"));
   printf (" %s\n\n", _("PostgreSQL DBMS."));
+
 	printf (" %s\n", _("The plugin will connect to a local postmaster if no host is specified. To"));
   printf (" %s\n", _("connect to a remote host, be sure that the remote postmaster accepts TCP/IP"));
   printf (" %s\n\n", _("connections (start the postmaster with the -i option)."));
+
 	printf (" %s\n", _("Typically, the nagios user (unless the --logname option is used) should be"));
   printf (" %s\n", _("able to connect to the database without a password. The plugin can also send"));
   printf (" %s\n", _("a password, but no effort is made to obsure or encrypt the password."));

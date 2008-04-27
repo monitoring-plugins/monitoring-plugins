@@ -106,11 +106,11 @@ print_help (void)
   printf (COPYRIGHT, copyright, email);
 
   printf ("%s\n", _("This plugin will simply return the state corresponding to the numeric value"));
- 
+
   printf ("%s\n", _("of the <state> argument with optional text"));
 
   printf ("\n\n");
-  
+
   print_usage ();
 
   printf (_(UT_HELP_VRSN));

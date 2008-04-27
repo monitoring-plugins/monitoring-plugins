@@ -393,7 +393,7 @@ print_help (void)
   printf ("%s\n", _("Net-snmp must be installed on the computer running the plugin."));
 
   printf ("\n\n");
-  
+
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
@@ -402,6 +402,7 @@ print_help (void)
   printf ("    %s", _("The SNMP community name "));
   printf (_("(default=%s)"), DEFAULT_COMMUNITY);
 
+  printf ("\n");
 	printf (_(UT_SUPPORT));
 }
 

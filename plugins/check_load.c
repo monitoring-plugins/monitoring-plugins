@@ -303,7 +303,7 @@ print_help (void)
 	printf (_("This plugin tests the current system load average."));
 
   printf ("\n\n");
-  
+
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));

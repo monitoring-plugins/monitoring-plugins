@@ -157,7 +157,7 @@ int main(int argc, char **argv){
 			return_code=STATE_OK;
 			temp_string = strdup (_("CPU Load"));
 			temp_string_perf = strdup (" ");
-      
+
 			/* loop until one of the parameters is wrong or not present */
 			while (lvalue_list[0+offset]> (unsigned long)0 &&
 						 lvalue_list[0+offset]<=(unsigned long)17280 && 
@@ -185,7 +185,7 @@ int main(int argc, char **argv){
 				asprintf(&temp_string_perf,"%s%s",temp_string_perf,perfdata);
 				offset+=3;	/* move across the array */
 			}
-      
+
 			if (strlen(temp_string)>10) {  /* we had at least one loop */
 				output_message = strdup (temp_string);
 				perfdata = temp_string_perf;
@@ -640,7 +640,7 @@ void print_help(void)
   printf ("%s\n", _("Windows NT/2000/XP/2003 server."));
 
   printf ("\n\n");
-  
+
 	print_usage();
 	
   printf (_(UT_HELP_VRSN));
@@ -720,14 +720,17 @@ void print_help(void)
   printf ("  %s\n", _(" configuration files."));
   printf ("  %s\n", _("Some examples:"));
   printf ("  %s\n\n", _("check_nt -H 192.168.1.1 -p 1248 -v INSTANCES -l Process"));
-  printf (_("Notes:"));
+
+  printf ("%s\n", _("Notes:"));
   printf (" %s\n", _("- The NSClient service should be running on the server to get any information"));
-  printf (" %s\n", "(http://nsclient.ready2run.nl).");
+  printf ("   %s\n", "(http://nsclient.ready2run.nl).");
   printf (" %s\n", _("- Critical thresholds should be lower than warning thresholds"));
   printf (" %s\n", _("- Default port 1248 is sometimes in use by other services. The error"));
-  printf (" %s\n", _("output when this happens contains \"Cannot map xxxxx to protocol number\"."));
-  printf (" %s\n", _("One fix for this is to change the port to something else on check_nt "));
-  printf (" %s\n", _("and on the client service it\'s connecting to."));
+  printf ("   %s\n", _("output when this happens contains \"Cannot map xxxxx to protocol number\"."));
+  printf ("   %s\n", _("One fix for this is to change the port to something else on check_nt "));
+  printf ("   %s\n", _("and on the client service it\'s connecting to."));
+
+  printf (_(UT_SUPPORT));
 }
 
 

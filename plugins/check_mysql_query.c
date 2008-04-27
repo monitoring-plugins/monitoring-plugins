@@ -302,9 +302,8 @@ print_help (void)
 	printf ("    ==> %s <==\n", _("IMPORTANT: THIS FORM OF AUTHENTICATION IS NOT SECURE!!!"));
 
 	printf ("\n");
-
-	printf ("%s\n", _("A query is required. The result from the query should be numeric."));
-	printf ("%s\n", _("For extra security, create a user with minimal access."));
+	printf (" %s\n", _("A query is required. The result from the query should be numeric."));
+	printf (" %s\n", _("For extra security, create a user with minimal access."));
 
 	printf (_(UT_SUPPORT));
 }

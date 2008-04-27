@@ -220,7 +220,7 @@ main (int argc, char **argv)
 
     temp_list = temp_list->name_next;
   }
-  
+
   /* Process for every path in list */
   for (path = path_select_list; path; path=path->name_next) {
 
@@ -254,7 +254,7 @@ main (int argc, char **argv)
 
         for (temp_list = path_select_list; temp_list; temp_list=temp_list->name_next) {
           if (temp_list->group && ! (strcmp(temp_list->group, path->group))) {
-            
+
             stat_path(path);
             get_fs_usage (temp_list->best_match->me_mountdir, temp_list->best_match->me_devname, &tmpfsp);
 
@@ -267,7 +267,7 @@ main (int argc, char **argv)
             fsp.fsu_bavail    += (tmpfsp.fsu_bavail > tmpfsp.fsu_bfree ? 0 : tmpfsp.fsu_bavail); /* Free blocks available to non-superuser. */
             fsp.fsu_files     += tmpfsp.fsu_files;      /* Total file nodes. */
             fsp.fsu_ffree     += tmpfsp.fsu_ffree;      /* Free file nodes. */
-            
+
             if (verbose > 3)
               printf("Group %s: add %llu blocks (%s) \n", path->group, tmpfsp.fsu_bavail, temp_list->name);
              /* printf("Group %s: add %u blocks (%s)\n", temp_list->name); *//* path->group, tmpfsp.fsu_bavail, temp_list->name); */
@@ -318,7 +318,7 @@ main (int argc, char **argv)
         me->me_mountdir, total, available, available_to_root, used, fsp.fsu_files, fsp.fsu_ffree);
 
       dused_pct = calculate_percent( used, used + available );	/* used + available can never be > uintmax */
-     
+
       dfree_pct = 100 - dused_pct;
       dused_units = used*fsp.fsu_blocksize/mult;
       dfree_units = available*fsp.fsu_blocksize/mult;
@@ -683,7 +683,7 @@ process_arguments (int argc, char **argv)
       while (temp_list) {
         if (temp_list->best_match) {
           if (np_regex_match_mount_entry(temp_list->best_match, &re)) {
-        
+
               if (verbose >=3)
                 printf("ignoring %s matching regex\n", temp_list->name);
 
@@ -722,7 +722,7 @@ process_arguments (int argc, char **argv)
         regerror (err, &re, errbuf, MAX_INPUT_BUFFER);
         die (STATE_UNKNOWN, "DISK %s: %s - %s\n",_("UNKNOWN"), _("Could not compile regular expression"), errbuf);
       }
-          
+
       for (me = mount_list; me; me = me->me_next) {
         if (np_regex_match_mount_entry(me, &re)) {
           fnd = TRUE;
@@ -776,7 +776,7 @@ process_arguments (int argc, char **argv)
       crit_usedinodes_percent = NULL;
       warn_freeinodes_percent = NULL;
       crit_freeinodes_percent = NULL;
-    
+
       path_selected = FALSE;
       group = NULL;
       break;
@@ -875,7 +875,7 @@ INPUT ERROR: C_DF (%lu) should be less than W_DF (%lu) and both should be greate
     print_path (mypath);
     return ERROR;
   }
-  
+
   return OK;
 }
 
@@ -964,6 +964,7 @@ print_help (void)
   printf ("    %s\n", _("are grouped which means the freespace thresholds are applied to all disks together"));
   printf (" %s\n", "check_disk -w 100M -c 50M -C -w 1000M -c 500M -p /foo -C -w 5% -c 3% -p /bar");
   printf ("    %s\n", _("Checks /foo for 1000M/500M and /bar for 5/3%. All remaining volumes use 100M/50M"));
+
   printf (_(UT_SUPPORT));
 }
 

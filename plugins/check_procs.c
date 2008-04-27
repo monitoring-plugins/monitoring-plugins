@@ -712,7 +712,7 @@ print_help (void)
   printf ("%s\n", _("of processes.  Search filters can be applied to limit the processes to check."));
 
   printf ("\n\n");
-  
+
 	print_usage ();
 
 	printf ("%s\n", _("Required Arguments:"));
@@ -781,7 +781,7 @@ be the total number of running processes\n\n"));
   printf (" %s\n", "check_procs -w 50000 -c 100000 --metric=VSZ");
   printf ("  %s\n\n", _("Alert if vsz of any processes over 50K or 100K"));
   printf (" %s\n", "check_procs -w 10 -c 20 --metric=CPU");
-  printf ("  %s\n\n", _("Alert if cpu of any processes over 10%% or 20%%"));
+  printf ("  %s\n", _("Alert if cpu of any processes over 10%% or 20%%"));
 
 	printf (_(UT_SUPPORT));
 }

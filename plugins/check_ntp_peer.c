@@ -602,7 +602,7 @@ int main(int argc, char *argv[]){
 		asprintf(&result_line, "%s %s,", result_line, _("Server not synchronized"));
 	else if(li_alarm)
 		asprintf(&result_line, "%s %s,", result_line, _("Server has the LI_ALARM bit set"));
- 
+
 	if(offset_result == STATE_UNKNOWN){
 		asprintf(&result_line, "%s %s", result_line, _("Offset unknown"));
 		asprintf(&perfdata_line, "");

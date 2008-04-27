@@ -173,10 +173,15 @@ char *fperfdata (const char *,
  -t, --timeout=INTEGER\n\
     Seconds before connection times out (default: %d)\n"
 
+#define UT_THRESHOLDS_NOTES "\
+ See:\n\
+ http://nagiosplug.sourceforge.net/developer-guidelines.html#THRESHOLDFORMAT\n\
+ for THRESHOLD format and examples.\n"
+
 #define UT_SUPPORT "\n\
 Send email to nagios-users@lists.sourceforge.net if you have questions\n\
 regarding use of this software. To submit patches or suggest improvements,\n\
-send email to nagiosplug-devel@lists.sourceforge.net\n"
+send email to nagiosplug-devel@lists.sourceforge.net\n\n"
 
 #define UT_NOWARRANTY "\n\
 The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\

@@ -601,7 +601,7 @@ print_help (void)
 	printf ("Copyright (c) 2004 Arnaud Quette <arnaud.quette@mgeups.com>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf ("%s\n", _("This plugin tests the UPS service on the specified host.Network UPS Tools "));
+	printf ("%s\n", _("This plugin tests the UPS service on the specified host. Network UPS Tools"));
   printf ("%s\n", _("from www.networkupstools.org must be running for thisplugin to work."));
 
   printf ("\n\n");
@@ -628,22 +628,24 @@ print_help (void)
 /*	printf (_(UT_VERBOSE)); */
 
   printf ("\n");
-  printf ("%s\n", _("Notes:"));
-  
 	printf ("%s\n", _("This plugin attempts to determine the status of a UPS (Uninterruptible Power"));
   printf ("%s\n", _("Supply) on a local or remote host. If the UPS is online or calibrating, the"));
   printf ("%s\n", _("plugin will return an OK state. If the battery is on it will return a WARNING"));
   printf ("%s\n", _("state.If the UPS is off or has a low battery the plugin will return a CRITICAL"));
-  printf ("%s\n\n", _("state."));
+  printf ("%s\n", _("state."));
 
-	printf ("%s\n", _("You may also specify a variable to check [such as temperature, utility voltage,"));
-  printf ("%s\n", _("battery load, etc.]  as well as warning and critical thresholds for the value of"));
-  printf ("%s\n", _("that variable.  If the remote host has multiple UPS that are being monitored you"));
-  printf ("%s\n", _("will have to use the [ups] option to specify which UPS to check."));
+  printf ("\n");
+  printf ("%s\n", _("Notes:"));
+  printf (" %s\n", _("You may also specify a variable to check (such as temperature, utility voltage,"));
+  printf (" %s\n", _("battery load, etc.)  as well as warning and critical thresholds for the value"));
+  printf (" %s\n", _("of that variable.  If the remote host has multiple UPS that are being monitored"));
+  printf (" %s\n", _("you will have to use the --ups option to specify which UPS to check."));
 
-	printf ("%s\n", _("This plugin requires that the UPSD daemon distributed with Russel Kroll's"));
-  printf ("%s\n", _("Smart UPS Tools be installed on the remote host.  If you do not have the"));
-  printf ("%s\n", _("package installed on your system, you can download it from http://www.networkupstools.org"));
+  printf ("\n");
+  printf (" %s\n", _("This plugin requires that the UPSD daemon distributed with Russel Kroll's"));
+  printf (" %s\n", _("Smart UPS Tools be installed on the remote host. If you do not have the"));
+  printf (" %s\n", _("package installed on your system, you can download it from"));
+  printf (" %s\n", _("http://www.networkupstools.org"));
 
 	printf (_(UT_SUPPORT));
 }

@@ -3,7 +3,7 @@
 * Nagios check_apt plugin
 * 
 * License: GPL
-* Copyright (c) 2006-2007 Nagios Plugins Development Team
+* Copyright (c) 2006-2008 Nagios Plugins Development Team
 * 
 * Original author: Sean Finney
 * 
@@ -35,7 +35,7 @@
 
 const char *progname = "check_apt";
 const char *revision = "$Revision$";
-const char *copyright = "2006-2007";
+const char *copyright = "2006-2008";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -402,9 +402,9 @@ void
 print_help (void)
 {
   print_revision(progname, revision);
-  
+
   printf(_(COPYRIGHT), copyright, email);
-  
+
   printf("%s\n", _("This plugin checks for software updates on systems that use"));
   printf("%s\n", _("package management systems based on the apt-get(8) command"));
   printf("%s\n", _("found in Debian GNU/Linux"));
@@ -412,11 +412,11 @@ print_help (void)
   printf ("\n\n");
 
   print_usage();
-  
+
   printf(_(UT_HELP_VRSN));
-  
+
   printf(_(UT_TIMEOUT), timeout_interval);
-  
+
   printf (" %s\n", "-U, --upgrade=OPTS");
   printf ("    %s\n", _("[Default] Perform an upgrade.  If an optional OPTS argument is provided,"));
   printf ("    %s\n", _("apt-get will be run with these command line options instead of the"));
@@ -445,17 +445,19 @@ print_help (void)
   printf ("    %s\n", _("upgrades for Debian and Ubuntu:"));
   printf ("    \t\%s\n", SECURITY_RE);
   printf ("    %s\n", _("Note that the package must first match the include list before its"));
-  printf ("    %s\n\n\n", _("information is compared against the critical list."));
-  
+  printf ("    %s\n\n", _("information is compared against the critical list."));
+
   printf ("%s\n\n", _("The following options require root privileges and should be used with care:"));
   printf (" %s\n", "-u, --update=OPTS");
   printf ("    %s\n", _("First perform an 'apt-get update'.  An optional OPTS parameter overrides"));
   printf ("    %s\n", _("the default options.  Note: you may also need to adjust the global"));
   printf ("    %s\n", _("timeout (with -t) to prevent the plugin from timing out if apt-get"));
   printf ("    %s\n", _("upgrade is expected to take longer than the default timeout."));
+
+  printf(_(UT_SUPPORT));
 }
 
-  
+
 /* simple usage heading */
 void
 print_usage(void)

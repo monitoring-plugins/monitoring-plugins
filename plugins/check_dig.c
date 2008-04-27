@@ -3,7 +3,7 @@
 * Nagios check_dig plugin
 * 
 * License: GPL
-* Copyright (c) 2002-2007 Nagios Plugins Development Team
+* Copyright (c) 2002-2008 Nagios Plugins Development Team
 * 
 * Last Modified: $Date$
 * 
@@ -37,7 +37,7 @@
 
 const char *progname = "check_dig";
 const char *revision = "$Revision$";
-const char *copyright = "2002-2007";
+const char *copyright = "2002-2008";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -331,9 +331,12 @@ print_help (void)
   printf (_(UT_WARN_CRIT));
   printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
   printf (_(UT_VERBOSE));
+
+  printf("\n");
   printf ("%s\n", _("Examples:"));
   printf (" %s\n", "check_dig -H DNSSERVER -l www.example.com -A \"+tcp\"");
   printf (" %s\n", "This will send a tcp query to DNSSERVER for www.example.com");
+
   printf (_(UT_SUPPORT));
 }
 

@@ -393,7 +393,7 @@ print_help (void)
 	printf (COPYRIGHT, copyright, email);
 
   printf ("\n\n");
-  
+
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
@@ -429,12 +429,12 @@ print_help (void)
 
 	printf (_(UT_VERBOSE));
 
-	printf ("\n%s\n", _("Note:"));
-	printf ("%s\n", _("If this plugin is called via 'check_ldaps', method 'STARTTLS' will be"));
-	printf (_("implied (using default port %i) unless --port=636 is specified. In that case %s"), DEFAULT_PORT, "\n");
-	printf ("%s\n", _("'SSL on connect' will be used no matter how the plugin was called."));
-	printf ("%s\n", _("This detection is deprecated, please use 'check_ldap' with the '--starttls' or '--ssl' flags"));
-	printf ("%s\n", _("to define the behaviour explicitly instead."));
+	printf ("\n%s\n", _("Notes:"));
+	printf (" %s\n", _("If this plugin is called via 'check_ldaps', method 'STARTTLS' will be"));
+	printf (_(" implied (using default port %i) unless --port=636 is specified. In that case %s"), DEFAULT_PORT, "\n");
+	printf (" %s\n", _("'SSL on connect' will be used no matter how the plugin was called."));
+	printf (" %s\n", _("This detection is deprecated, please use 'check_ldap' with the '--starttls' or '--ssl' flags"));
+	printf (" %s\n", _("to define the behaviour explicitly instead."));
 
 	printf (_(UT_SUPPORT));
 }

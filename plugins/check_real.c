@@ -433,6 +433,7 @@ print_help (void)
 
 	printf (_(UT_VERBOSE));
 
+  printf ("\n");
 	printf ("%s\n", _("This plugin will attempt to open an RTSP connection with the host."));
   printf ("%s\n", _("Successul connects return STATE_OK, refusals and timeouts return"));
   printf ("%s\n", _("STATE_CRITICAL, other errors return STATE_UNKNOWN.  Successful connects,"));

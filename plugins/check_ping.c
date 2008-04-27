@@ -572,18 +572,16 @@ print_help (void)
 
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
+  printf ("\n");
 	printf ("%s\n", _("THRESHOLD is <rta>,<pl>% where <rta> is the round trip average travel"));
   printf ("%s\n", _("time (ms) which triggers a WARNING or CRITICAL state, and <pl> is the"));
   printf ("%s\n", _("percentage of packet loss to trigger an alarm state."));
 
-  printf ("\n\n");
-
+  printf ("\n");
 	printf ("%s\n", _("This plugin uses the ping command to probe the specified host for packet loss"));
   printf ("%s\n", _("(percentage) and round trip average (milliseconds). It can produce HTML output"));
   printf ("%s\n", _("linking to a traceroute CGI contributed by Ian Cass. The CGI can be found in"));
   printf ("%s\n", _("the contrib area of the downloads section at http://www.nagios.org/"));
-
-  printf ("\n\n");
 
 	printf (_(UT_SUPPORT));
 }
