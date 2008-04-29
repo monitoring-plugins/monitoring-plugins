@@ -274,7 +274,7 @@ int main(int argc, char **argv){
 
 	/* this plugin almost certainly needs root permissions. */
 	np_warn_if_not_root();
-	
+
 	/* create socket for DHCP communications */
 	dhcp_socket=create_dhcp_socket();
 
@@ -316,7 +316,7 @@ int get_hardware_address(int sock,char *interface_name){
 
 	strncpy((char *)&ifr.ifr_name,interface_name,sizeof(ifr.ifr_name)-1);
 	ifr.ifr_name[sizeof(ifr.ifr_name)-1]='\0';
-	
+
 	/* try and grab hardware address of requested interface */
 	if(ioctl(sock,SIOCGIFHWADDR,&ifr)<0){
                 printf(_("Error: Could not get hardware address of interface '%s'\n"),interface_name);
@@ -506,7 +506,7 @@ int send_dhcp_discover(int sock){
 		opts += sizeof(requested_address);
 	        }
 	discover_packet.options[opts++]=DHCP_OPTION_END;
-	
+
 	/* unicast fields */
 	if(unicast)
 		discover_packet.giaddr.s_addr = my_ip.s_addr;
@@ -571,7 +571,7 @@ int get_dhcp_offer(int sock){
 
 		result=OK;
 		result=receive_dhcp_packet(&offer_packet,sizeof(offer_packet),sock,dhcpoffer_timeout,&source);
-		
+
 		if(result!=OK){
 			if(verbose)
 				printf(_("Result=ERROR\n"));
@@ -952,7 +952,7 @@ int free_requested_server_list(void){
 		next_server=this_server->next;
 		free(this_server);
 	        }
-	
+
 	return OK;
         }
 
@@ -977,7 +977,7 @@ int get_results(void){
 				/* get max lease time we were offered */
 				if(temp_offer->lease_time>max_lease_time || temp_offer->lease_time==DHCP_INFINITE_TIME)
 					max_lease_time=temp_offer->lease_time;
-				
+
 				/* see if we got the address we requested */
 				if(!memcmp(&requested_address,&temp_offer->offered_address,sizeof(requested_address)))
 					received_requested_address=TRUE;
@@ -1009,7 +1009,7 @@ int get_results(void){
 			/* get max lease time we were offered */
 			if(temp_offer->lease_time>max_lease_time || temp_offer->lease_time==DHCP_INFINITE_TIME)
 				max_lease_time=temp_offer->lease_time;
-				
+
 			/* see if we got the address we requested */
 			if(!memcmp(&requested_address,&temp_offer->offered_address,sizeof(requested_address)))
 				received_requested_address=TRUE;
@@ -1387,7 +1387,7 @@ void print_help(void){
 
 	printf("Copyright (c) 2001-2004 Ethan Galstad (nagios@nagios.org)\n");
 	printf (COPYRIGHT, copyright, email);
-	
+
 	printf("%s\n", _("This plugin tests the availability of DHCP servers on a network."));
 
   printf ("\n\n");
@@ -1411,17 +1411,18 @@ void print_help(void){
   printf (" %s\n", "-u, --unicast");
   printf ("    %s\n", _("Unicast testing: mimic a DHCP relay, requires -s"));
 
+  printf (_(UT_SUPPORT));
 	return;
 	}
 
 
 void
 print_usage(void){
-	
+
   printf (_("Usage:"));
   printf (" %s [-v] [-u] [-s serverip] [-r requestedip] [-t timeout]\n",progname);
   printf ("                  [-i interface] [-m mac]\n");
-  
+
 	return;
 	}
 

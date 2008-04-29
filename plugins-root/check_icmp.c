@@ -378,7 +378,7 @@ main(int argc, char **argv)
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
-	
+
 	/* print a helpful error message if geteuid != 0 */
 	np_warn_if_not_root();
 
@@ -646,7 +646,7 @@ run_checks()
 								 table[t]->name);
 				continue;
 			}
-			
+
 			/* we're still in the game, so send next packet */
 			(void)send_icmp_ping(icmp_sock, table[t]);
 			result = wait_for_reply(icmp_sock, target_interval);
@@ -1253,16 +1253,16 @@ print_help(void)
 {
 
   /*print_revision (progname, revision);*/ /* FIXME: Why? */
-  
+
   printf ("Copyright (c) 2005 Andreas Ericsson <ae@op5.se>\n");
   printf (COPYRIGHT, copyright, email);
-  
+
   printf ("\n\n");
-  
+
   print_usage ();
-  
+
   printf (_(UT_HELP_VRSN));
-  
+
   printf (" %s\n", "-H");
   printf ("    %s\n", _("specify a target"));
   printf (" %s\n", "-w");
@@ -1297,23 +1297,25 @@ print_help(void)
   printf ("    %s\n", _("verbose"));
 
   printf ("\n");
-	printf ("%s\n\n", _("The -H switch is optional. Naming a host (or several) to check is not."));
-  printf ("%s\n", _("Threshold format for -w and -c is 200.25,60% for 200.25 msec RTA and 60%"));
-  printf ("%s\n", _("packet loss.  The default values should work well for most users."));
-  printf ("%s\n", _("You can specify different RTA factors using the standardized abbreviations"));
-  printf ("%s\n\n", _("us (microseconds), ms (milliseconds, default) or just plain s for seconds."));
+  printf ("%s\n", _("Notes:"));
+  printf (" %s\n", _("The -H switch is optional. Naming a host (or several) to check is not."));
+  printf ("\n");
+  printf (" %s\n", _("Threshold format for -w and -c is 200.25,60% for 200.25 msec RTA and 60%"));
+  printf (" %s\n", _("packet loss.  The default values should work well for most users."));
+  printf (" %s\n", _("You can specify different RTA factors using the standardized abbreviations"));
+  printf (" %s\n", _("us (microseconds), ms (milliseconds, default) or just plain s for seconds."));
 /* -d not yet implemented */
 /*  printf ("%s\n", _("Threshold format for -d is warn,crit.  12,14 means WARNING if >= 12 hops"));
   printf ("%s\n", _("are spent and CRITICAL if >= 14 hops are spent."));
   printf ("%s\n\n", _("NOTE: Some systems decrease TTL when forming ICMP_ECHOREPLY, others do not."));*/
-  printf ("%s\n\n", _("The -v switch can be specified several times for increased verbosity."));
+  printf ("\n");
+  printf (" %s\n", _("The -v switch can be specified several times for increased verbosity."));
 
 /*  printf ("%s\n", _("Long options are currently unsupported."));
   printf ("%s\n", _("Options marked with * require an argument"));
 */
+
   printf (_(UT_SUPPORT));
-  
-  printf (_(UT_NOWARRANTY));
 }
 
 
@@ -1322,5 +1324,5 @@ void
 print_usage (void)
 {
   printf (_("Usage:"));
-  printf(" %s [options] [-H] host1 host2 hostn\n", progname);
+  printf(" %s [options] [-H] host1 host2 hostN\n", progname);
 }
