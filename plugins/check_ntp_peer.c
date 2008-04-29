@@ -657,17 +657,16 @@ void print_help(void){
 	printf (_(UT_VERBOSE));
 
 	printf("\n");
+	printf("%s\n", _("This plugin checks an NTP server independent of any commandline"));
+	printf("%s\n\n", _("programs or external libraries."));
+
 	printf("%s\n", _("Notes:"));
-	printf(" %s\n", _("This plugin checks an NTP server independent of any commandline"));
-	printf(" %s\n\n", _("programs or external libraries."));
 	printf(" %s\n", _("Use this plugin to check the health of an NTP server. It supports"));
 	printf(" %s\n", _("checking the offset with the sync peer, the jitter and stratum. This"));
 	printf(" %s\n", _("plugin will not check the clock offset between the local host and NTP"));
 	printf(" %s\n\n", _("server; please use check_ntp_time for that purpose."));
 
-	printf(" %s\n", _("See:"));
-	printf(" %s\n", ("http://nagiosplug.sourceforge.net/developer-guidelines.html#THRESHOLDFORMAT"));
-	printf(" %s\n", _("for THRESHOLD format and examples."));
+	printf(_(UT_THRESHOLDS_NOTES));
 
 	printf("\n");
 	printf("%s\n", _("Examples:"));
