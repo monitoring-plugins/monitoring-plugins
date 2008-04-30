@@ -19,12 +19,16 @@ use vars qw($tests);
 
 plan skip_all => "check_mysql not compiled" unless (-x "check_mysql");
 
-plan tests => 10;
+plan tests => 15;
 
 my $bad_login_output = '/Access denied for user /';
 my $mysqlserver = getTestParameter( 
 		"NP_MYSQL_SERVER", 
-		"A MySQL Server with no slaves setup"
+		"A MySQL Server hostname or IP with no slaves setup"
+		);
+my $mysqlsocket = getTestParameter( 
+		"NP_MYSQL_SOCKET", 
+		"A MySQL Server socket with no slaves setup"
 		);
 my $mysql_login_details = getTestParameter( 
 		"MYSQL_LOGIN_DETAILS", 
@@ -53,6 +57,20 @@ SKIP: {
 	like( $result->output, $bad_login_output, "Expected login failure message");
 
 	$result = NPTest->testCmd("./check_mysql -S -H $mysqlserver $mysql_login_details");
+	cmp_ok( $result->return_code, "==", 1, "No slaves defined" );
+	like( $result->output, "/No slaves defined/", "Correct error message");
+}
+
+SKIP: {
+	skip "No mysql socket defined", 5 unless $mysqlsocket;
+	$result = NPTest->testCmd("./check_mysql -s $mysqlsocket $mysql_login_details");
+	cmp_ok( $result->return_code, '==', 0, "Login okay");
+
+	$result = NPTest->testCmd("./check_mysql -s $mysqlsocket -u dummy -pdummy");
+	cmp_ok( $result->return_code, '==', 2, "Login failure");
+	like( $result->output, $bad_login_output, "Expected login failure message");
+
+	$result = NPTest->testCmd("./check_mysql -S -s $mysqlsocket $mysql_login_details");
 	cmp_ok( $result->return_code, "==", 1, "No slaves defined" );
 	like( $result->output, "/No slaves defined/", "Correct error message");
 }

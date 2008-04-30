@@ -47,6 +47,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 char *db_user = NULL;
 char *db_host = NULL;
+char *db_socket = NULL;
 char *db_pass = NULL;
 char *db = NULL;
 unsigned int db_port = MYSQL_PORT;
@@ -86,7 +87,7 @@ main (int argc, char **argv)
 	mysql_options(&mysql,MYSQL_READ_DEFAULT_GROUP,"client");
 
 	/* establish a connection to the server and error checking */
-	if (!mysql_real_connect(&mysql,db_host,db_user,db_pass,db,db_port,NULL,0)) {
+	if (!mysql_real_connect(&mysql,db_host,db_user,db_pass,db,db_port,db_socket,0)) {
 		if (mysql_errno (&mysql) == CR_UNKNOWN_HOST)
 			die (STATE_WARNING, "QUERY %s: %s\n", _("WARNING"), mysql_error (&mysql));
 		else if (mysql_errno (&mysql) == CR_VERSION_ERROR)
@@ -170,6 +171,7 @@ process_arguments (int argc, char **argv)
 	int option = 0;
 	static struct option longopts[] = {
 		{"hostname", required_argument, 0, 'H'},
+		{"socket", required_argument, 0, 's'},
 		{"database", required_argument, 0, 'd'},
 		{"username", required_argument, 0, 'u'},
 		{"password", required_argument, 0, 'p'},
@@ -187,7 +189,7 @@ process_arguments (int argc, char **argv)
 		return ERROR;
 
 	while (1) {
-		c = getopt_long (argc, argv, "hvVSP:p:u:d:H:q:w:c:", longopts, &option);
+		c = getopt_long (argc, argv, "hvVSP:p:u:d:H:s:q:w:c:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -201,14 +203,17 @@ process_arguments (int argc, char **argv)
 				usage2 (_("Invalid hostname/address"), optarg);
 			}
 			break;
-		case 'd':									/* hostname */
+		case 's':									/* socket */
+			db_socket = optarg;
+			break;
+		case 'd':									/* database */
 			db = optarg;
 			break;
 		case 'u':									/* username */
 			db_user = optarg;
 			break;
 		case 'p':									/* authentication information: password */
-			asprintf(&db_pass, "%s", optarg);
+			db_pass = strdup(optarg);
 
 			/* Delete the password from process list */
 			while (*optarg != '\0') {
@@ -293,6 +298,8 @@ print_help (void)
 	printf ("    %s\n", _("SQL query to run. Only first column in first row will be read"));
 	printf (_(UT_WARN_CRIT_RANGE));
 	printf (_(UT_HOST_PORT), 'P', myport);
+	printf (" %s\n", "-s, --socket=STRING");
+	printf ("    %s\n", _("Use the specified socket (has no effect if -H is used)"));
 	printf (" -d, --database=STRING\n");
 	printf ("    %s\n", _("Database to check"));
 	printf (" -u, --username=STRING\n");
@@ -300,6 +307,7 @@ print_help (void)
 	printf (" -p, --password=STRING\n");
 	printf ("    %s\n", _("Password to login with"));
 	printf ("    ==> %s <==\n", _("IMPORTANT: THIS FORM OF AUTHENTICATION IS NOT SECURE!!!"));
+	printf ("    %s\n", _("Your clear-text password could be visible as a process table entry"));
 
 	printf ("\n");
 	printf (" %s\n", _("A query is required. The result from the query should be numeric."));
@@ -313,6 +321,6 @@ void
 print_usage (void)
 {
   printf (_("Usage:"));
-	printf ("%s -q SQL_query [-w warn] [-c crit]\n",progname);
-  printf ("[-d database] [-H host] [-P port] [-u user] [-p password]\n");
+  printf (" %s -q SQL_query [-w warn] [-c crit] [-H host] [-P port] [-s socket]\n",progname);
+  printf ("       [-d database] [-u user] [-p password]\n");
 }
