@@ -20,6 +20,7 @@ This file documents the major additions and syntax changes between releases.
 	check_dns now allow to repeat -a to match multiple possibly returned address (common with load balancers)
 	check_mysql now try clearing password in processlist just like check_mysql_query
 	check_mysql and check_mysql_query now support sockets explicitely (-s, --socket)
+	negate now has the ability to replace the status text as well (-s, --substitute)
 
 1.4.11 13th December 2007
 	Fixed check_http regression in 1.4.10 where following redirects to
