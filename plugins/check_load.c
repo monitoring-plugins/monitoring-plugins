@@ -119,6 +119,9 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 	setlocale(LC_NUMERIC, "POSIX");
 
+	/* Parse extra opts if any */
+	argv = np_extra_opts (&argc, argv, progname);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
@@ -307,6 +310,7 @@ print_help (void)
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
+	printf (_(UT_EXTRA_OPTS));
 
 	printf (" %s\n", "-w, --warning=WLOAD1,WLOAD5,WLOAD15");
   printf ("    %s\n", _("Exit with WARNING status if load average exceeds WLOADn"));
@@ -315,6 +319,12 @@ print_help (void)
   printf ("    %s\n", _("the load average format is the same used by \"uptime\" and \"w\""));
   printf (" %s\n", "-r, --percpu");
   printf ("    %s\n", _("Divide the load averages by the number of CPUs (when possible)"));
+
+#ifdef NP_EXTRA_OPTS
+	printf ("\n");
+	printf ("%s\n", _("Notes:"));
+	printf (_(UT_EXTRA_OPTS_NOTES));
+#endif
 
 	printf (_(UT_SUPPORT));
 }

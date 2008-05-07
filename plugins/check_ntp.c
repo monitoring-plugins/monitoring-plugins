@@ -763,6 +763,9 @@ int main(int argc, char *argv[]){
 
 	result = offset_result = jitter_result = STATE_OK;
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
@@ -844,6 +847,7 @@ void print_help(void){
 
 	print_usage();
 	printf (_(UT_HELP_VRSN));
+	printf (_(UT_EXTRA_OPTS));
 	printf (_(UT_HOST_PORT), 'p', "123");
 	printf (" %s\n", "-w, --warning=THRESHOLD");
 	printf ("    %s\n", _("Offset to result in warning status (seconds)"));
@@ -859,11 +863,16 @@ void print_help(void){
 	printf("\n");
 	printf("%s\n", _("Notes:"));
 	printf(_(UT_THRESHOLDS_NOTES));
+#ifdef NP_EXTRA_OPTS
+	printf("\n");
+	printf(_(UT_EXTRA_OPTS_NOTES));
+#endif
 
 	printf("\n");
 	printf("%s\n", _("Examples:"));
 	printf(" %s\n", _("Normal offset check:"));
 	printf("  %s\n", ("./check_ntp -H ntpserv -w 0.5 -c 1"));
+	printf("\n");
 	printf(" %s\n", _("Check jitter too, avoiding critical notifications if jitter isn't available"));
 	printf(" %s\n", _("(See Notes above for more details on thresholds formats):"));
 	printf("  %s\n", ("./check_ntp -H ntpserv -w 0.5 -c 1 -j -1:100 -k -1:200"));

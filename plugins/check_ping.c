@@ -92,6 +92,9 @@ main (int argc, char **argv)
 	addresses = malloc (sizeof(char*) * max_addr);
 	addresses[0] = NULL;
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
@@ -564,6 +567,7 @@ print_help (void)
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
+	printf (_(UT_EXTRA_OPTS));
 
 	printf (_(UT_IPv46));
 
@@ -591,6 +595,12 @@ print_help (void)
   printf ("%s\n", _("(percentage) and round trip average (milliseconds). It can produce HTML output"));
   printf ("%s\n", _("linking to a traceroute CGI contributed by Ian Cass. The CGI can be found in"));
   printf ("%s\n", _("the contrib area of the downloads section at http://www.nagios.org/"));
+
+#ifdef NP_EXTRA_OPTS
+  printf ("\n");
+  printf ("%s\n", _("Notes:"));
+  printf (_(UT_EXTRA_OPTS_NOTES));
+#endif
 
 	printf (_(UT_SUPPORT));
 }

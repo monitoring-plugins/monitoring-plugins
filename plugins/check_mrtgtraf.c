@@ -80,6 +80,9 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
@@ -347,6 +350,7 @@ print_help (void)
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
+	printf (_(UT_EXTRA_OPTS));
 
 	printf (" %s\n", "-F, --filename=STRING");
   printf ("    %s\n", _("File to read log from"));
@@ -368,6 +372,9 @@ print_help (void)
   printf (" %s\n", _("- The calculated i/o rates are a little off from what MRTG actually"));
   printf (" %s\n", _("  reports.  I'm not sure why this is right now, but will look into it"));
   printf (" %s\n", _("  for future enhancements of this plugin."));
+#ifdef NP_EXTRA_OPTS
+	printf (" -%s", _(UT_EXTRA_OPTS_NOTES));
+#endif
 
 	printf (_(UT_SUPPORT));
 }

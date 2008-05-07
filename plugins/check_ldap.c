@@ -104,7 +104,10 @@ main (int argc, char *argv[])
 	if (strstr(argv[0],"check_ldaps")) {
 		asprintf (&progname, "check_ldaps");
  	}
-	
+
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
@@ -392,11 +395,12 @@ print_help (void)
 	printf ("Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)\n");
 	printf (COPYRIGHT, copyright, email);
 
-  printf ("\n\n");
+	printf ("\n\n");
 
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
+	printf (_(UT_EXTRA_OPTS));
 
 	printf (_(UT_HOST_PORT), 'p', myport);
 
@@ -429,12 +433,17 @@ print_help (void)
 
 	printf (_(UT_VERBOSE));
 
-	printf ("\n%s\n", _("Notes:"));
+	printf ("\n");
+	printf ("%s\n", _("Notes:"));
 	printf (" %s\n", _("If this plugin is called via 'check_ldaps', method 'STARTTLS' will be"));
-	printf (_(" implied (using default port %i) unless --port=636 is specified. In that case %s"), DEFAULT_PORT, "\n");
+	printf (_(" implied (using default port %i) unless --port=636 is specified. In that case\n"), DEFAULT_PORT);
 	printf (" %s\n", _("'SSL on connect' will be used no matter how the plugin was called."));
 	printf (" %s\n", _("This detection is deprecated, please use 'check_ldap' with the '--starttls' or '--ssl' flags"));
 	printf (" %s\n", _("to define the behaviour explicitly instead."));
+#ifdef NP_EXTRA_OPTS
+	printf ("\n");
+	printf (_(UT_EXTRA_OPTS_NOTES));
+#endif
 
 	printf (_(UT_SUPPORT));
 }

@@ -170,6 +170,9 @@ main(int argc, char **argv) {
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts(&argc, argv, progname);
+
 	if (process_arguments(argc,argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
@@ -1607,6 +1610,7 @@ void print_help(void)
 	print_usage();
 
 	printf (_(UT_HELP_VRSN));
+	printf (_(UT_EXTRA_OPTS));
 
 	printf (_(UT_HOST_PORT), 'p', myport);
 
@@ -1674,6 +1678,9 @@ void print_help(void)
   printf (" %s\n", _("- Values for critical thresholds should be lower than warning thresholds"));
   printf (" %s\n", _("  when the following variables are checked: VPF, VKF, LTCH, CBUFF, DCB, "));
   printf (" %s\n", _("  TCB, LRUS and LRUM."));
+#ifdef NP_EXTRA_OPTS
+  printf (" -%s", _(UT_EXTRA_OPTS_NOTES));
+#endif
 
 	printf (_(UT_SUPPORT));
 }

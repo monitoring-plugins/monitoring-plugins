@@ -447,6 +447,9 @@ main(int argc, char **argv)
 		packets = 5;
 	}
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts(&argc, argv, progname);
+
 	/* parse the arguments */
 	for(i = 1; i < argc; i++) {
 		while((arg = getopt(argc, argv, "vhVw:c:n:p:t:H:s:i:b:I:l:m:")) != EOF) {
@@ -1262,6 +1265,7 @@ print_help(void)
   print_usage ();
 
   printf (_(UT_HELP_VRSN));
+  printf (_(UT_EXTRA_OPTS));
 
   printf (" %s\n", "-H");
   printf ("    %s\n", _("specify a target"));
@@ -1310,10 +1314,13 @@ print_help(void)
   printf ("%s\n\n", _("NOTE: Some systems decrease TTL when forming ICMP_ECHOREPLY, others do not."));*/
   printf ("\n");
   printf (" %s\n", _("The -v switch can be specified several times for increased verbosity."));
-
 /*  printf ("%s\n", _("Long options are currently unsupported."));
   printf ("%s\n", _("Options marked with * require an argument"));
 */
+#ifdef NP_EXTRA_OPTS
+  printf ("\n");
+  printf (_(UT_EXTRA_OPTS_NOTES));
+#endif
 
   printf (_(UT_SUPPORT));
 }

@@ -107,6 +107,9 @@ main (int argc, char **argv)
 
 	status = strdup ("");
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
@@ -530,6 +533,7 @@ print_help (void)
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
+	printf (_(UT_EXTRA_OPTS));
 
 	printf (" %s\n", "-w, --warning=INTEGER");
   printf ("    %s\n", _("Exit with WARNING status if less than INTEGER bytes of swap space are free"));
@@ -546,6 +550,11 @@ print_help (void)
 	printf ("\n");
   printf ("%s\n", _("Notes:"));
   printf (" %s\n", _("On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s."));
+#ifdef NP_EXTRA_OPTS
+  printf ("\n");
+  printf (_(UT_EXTRA_OPTS_NOTES));
+#endif
+
 
 	printf (_(UT_SUPPORT));
 }

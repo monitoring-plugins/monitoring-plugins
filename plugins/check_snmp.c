@@ -176,6 +176,9 @@ main (int argc, char **argv)
 	timeout_interval = DEFAULT_TIMEOUT;
 	retries = DEFAULT_RETRIES;
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
@@ -932,6 +935,7 @@ print_help (void)
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
+	printf (_(UT_EXTRA_OPTS));
 
 	printf (_(UT_HOST_PORT), 'p', DEFAULT_PORT);
 
@@ -1017,6 +1021,9 @@ print_help (void)
   printf (" %s\n", _("- Note that only one string and one regex may be checked at present"));
   printf (" %s\n", _("- All evaluation methods other than PR, STR, and SUBSTR expect that the value"));
   printf ("   %s\n", _("returned from the SNMP query is an unsigned integer."));
+#ifdef NP_EXTRA_OPTS
+  printf (" -%s", _(UT_EXTRA_OPTS_NOTES));
+#endif
 
 	printf (_(UT_SUPPORT));
 }

@@ -78,6 +78,9 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
@@ -294,6 +297,7 @@ print_help (void)
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
+	printf (_(UT_EXTRA_OPTS));
 	printf (" -q, --query=STRING\n");
 	printf ("    %s\n", _("SQL query to run. Only first column in first row will be read"));
 	printf (_(UT_WARN_CRIT_RANGE));
@@ -312,6 +316,12 @@ print_help (void)
 	printf ("\n");
 	printf (" %s\n", _("A query is required. The result from the query should be numeric."));
 	printf (" %s\n", _("For extra security, create a user with minimal access."));
+
+#ifdef NP_EXTRA_OPTS
+	printf ("\n");
+	printf ("%s\n", _("Notes:"));
+	printf (_(UT_EXTRA_OPTS_NOTES));
+#endif
 
 	printf (_(UT_SUPPORT));
 }

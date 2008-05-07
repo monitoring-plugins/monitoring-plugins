@@ -122,6 +122,9 @@ int main(int argc, char **argv){
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
 	if(process_arguments(argc,argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
@@ -644,8 +647,9 @@ void print_help(void)
 	print_usage();
 	
   printf (_(UT_HELP_VRSN));
+  printf (_(UT_EXTRA_OPTS));
 
-    printf ("%s\n", _("Options:"));
+  printf ("%s\n", _("Options:"));
   printf (" %s\n", "-H, --hostname=HOST");
   printf ("   %s\n", _("Name of the host to check"));
   printf (" %s\n", "-p, --port=INTEGER");
@@ -729,6 +733,9 @@ void print_help(void)
   printf ("   %s\n", _("output when this happens contains \"Cannot map xxxxx to protocol number\"."));
   printf ("   %s\n", _("One fix for this is to change the port to something else on check_nt "));
   printf ("   %s\n", _("and on the client service it\'s connecting to."));
+#ifdef NP_EXTRA_OPTS
+  printf (" -%s", _(UT_EXTRA_OPTS_NOTES));
+#endif
 
   printf (_(UT_SUPPORT));
 }

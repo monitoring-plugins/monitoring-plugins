@@ -72,6 +72,9 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments\n"));
 
@@ -327,6 +330,7 @@ print_help (void)
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
+	printf (_(UT_EXTRA_OPTS));
 
 	printf (" %s\n", "-F, --logfile=FILE");
   printf ("   %s\n", _("The MRTG log file containing the data you want to monitor"));
@@ -367,6 +371,9 @@ print_help (void)
   printf ("   %s\n", _("you can always hack the code to make this plugin work for you..."));
   printf (" %s\n", _("- MRTG stands for the Multi Router Traffic Grapher.  It can be downloaded from"));
   printf ("   %s\n", "http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html");
+#ifdef NP_EXTRA_OPTS
+	printf (" -%s", _(UT_EXTRA_OPTS_NOTES));
+#endif
 
 	printf (_(UT_SUPPORT));
 }

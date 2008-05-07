@@ -76,6 +76,9 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
 	/* process arguments */
 	if (process_arguments (argc, argv) == ERROR)
 		usage_va(_("Could not parse arguments"));
@@ -350,6 +353,8 @@ print_help (void)
 
 	printf (_(UT_HELP_VRSN));
 
+	printf (_(UT_EXTRA_OPTS));
+
 	printf (_(UT_HOST_PORT), 'p', "none");
 
 	printf (_(UT_IPv46));
@@ -401,6 +406,12 @@ print_help (void)
   printf (" %s\n", "[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c1;0; up 2 days");
   printf (" %s\n", "[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c2;0; up 2 days");
   printf (" %s\n", "[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c3;0; up 2 days");
+
+#ifdef NP_EXTRA_OPTS
+	printf("\n");
+	printf("%s\n", _("Notes:"));
+	printf(_(UT_EXTRA_OPTS_NOTES));
+#endif
 
 	printf(_(UT_SUPPORT));
 }

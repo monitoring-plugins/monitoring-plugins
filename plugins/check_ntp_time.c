@@ -540,6 +540,9 @@ int main(int argc, char *argv[]){
 
 	result = offset_result = STATE_OK;
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
@@ -597,6 +600,7 @@ void print_help(void){
 
 	print_usage();
 	printf (_(UT_HELP_VRSN));
+	printf (_(UT_EXTRA_OPTS));
 	printf (_(UT_HOST_PORT), 'p', "123");
 	printf (" %s\n", "-q, --quiet");
 	printf ("    %s\n", _("Returns UNKNOWN instead of CRITICAL if offset cannot be found"));
@@ -610,13 +614,18 @@ void print_help(void){
 	printf("\n");
 	printf("%s\n", _("This plugin checks the clock offset between the local host and a"));
 	printf("%s\n", _("remote NTP server. It is independent of any commandline programs or"));
-	printf("%s\n\n", _("external libraries."));
+	printf("%s\n", _("external libraries."));
 
+	printf("\n");
 	printf("%s\n", _("Notes:"));
 	printf(" %s\n", _("If you'd rather want to monitor an NTP server, please use"));
-	printf(" %s\n\n", _("check_ntp_peer."));
-
+	printf(" %s\n", _("check_ntp_peer."));
+	printf("\n");
 	printf(_(UT_THRESHOLDS_NOTES));
+#ifdef NP_EXTRA_OPTS
+	printf("\n");
+	printf(_(UT_EXTRA_OPTS_NOTES));
+#endif
 
 	printf("\n");
 	printf("%s\n", _("Examples:"));

@@ -99,6 +99,9 @@ main (int argc, char **argv)
     usage_va(_("Cannot catch SIGALRM"));
   }
 
+  /* Parse extra opts if any */
+  argv=np_extra_opts (&argc, argv, progname);
+
   if (process_arguments (argc, argv) == ERROR) {
     usage_va(_("Could not parse arguments"));
   }
@@ -457,6 +460,7 @@ print_help (void)
   print_usage ();
 
   printf (_(UT_HELP_VRSN));
+  printf (_(UT_EXTRA_OPTS));
 
   printf (" -H, --hostname=HOST\n");
   printf ("    %s\n", _("The name or address you want to query"));
@@ -475,6 +479,13 @@ print_help (void)
   printf ("    %s\n", _("Return critical if elapsed time exceeds value. Default off"));
 
   printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+
+#ifdef NP_EXTRA_OPTS
+  printf ("\n");
+  printf ("%s\n", _("Notes:"));
+  printf (_(UT_EXTRA_OPTS_NOTES));
+#endif
+
   printf (_(UT_SUPPORT));
 }
 

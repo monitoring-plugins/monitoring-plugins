@@ -84,6 +84,9 @@ main (int argc, char **argv)
   if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR)
     usage_va(_("Cannot catch SIGALRM"));
 
+  /* Parse extra opts if any */
+  argv=np_extra_opts (&argc, argv, progname);
+
   if (process_arguments (argc, argv) == ERROR)
     usage_va(_("Could not parse arguments"));
 
@@ -317,6 +320,8 @@ print_help (void)
 
   printf (_(UT_HELP_VRSN));
 
+  printf (_(UT_EXTRA_OPTS));
+
   printf (_(UT_HOST_PORT), 'p', myport);
 
   printf (" %s\n","-l, --query_address=STRING");
@@ -332,10 +337,16 @@ print_help (void)
   printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
   printf (_(UT_VERBOSE));
 
-  printf("\n");
+  printf ("\n");
   printf ("%s\n", _("Examples:"));
   printf (" %s\n", "check_dig -H DNSSERVER -l www.example.com -A \"+tcp\"");
   printf (" %s\n", "This will send a tcp query to DNSSERVER for www.example.com");
+
+#ifdef NP_EXTRA_OPTS
+  printf ("\n");
+  printf ("%s\n", _("Notes:"));
+  printf (_(UT_EXTRA_OPTS_NOTES));
+#endif
 
   printf (_(UT_SUPPORT));
 }

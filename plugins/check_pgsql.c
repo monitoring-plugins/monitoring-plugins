@@ -150,6 +150,9 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
@@ -412,6 +415,7 @@ print_help (void)
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
+	printf (_(UT_EXTRA_OPTS));
 
 	printf (_(UT_HOST_PORT), 'P', myport);
 
@@ -446,6 +450,12 @@ print_help (void)
 	printf (" %s\n", _("Typically, the nagios user (unless the --logname option is used) should be"));
   printf (" %s\n", _("able to connect to the database without a password. The plugin can also send"));
   printf (" %s\n", _("a password, but no effort is made to obsure or encrypt the password."));
+
+#ifdef NP_EXTRA_OPTS
+  printf ("\n");
+  printf ("%s\n", _("Notes:"));
+  printf (_(UT_EXTRA_OPTS_NOTES));
+#endif
 
 	printf (_(UT_SUPPORT));
 }

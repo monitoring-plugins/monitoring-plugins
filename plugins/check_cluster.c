@@ -74,6 +74,9 @@ int main(int argc, char **argv){
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts(&argc, argv, progname);
+
 	if(process_arguments(argc,argv)==ERROR)
 		usage(_("Could not parse arguments"));
 
@@ -236,6 +239,7 @@ print_help(void)
 
 	printf("\n");
 	printf("%s\n", _("Options:"));
+	printf(_(UT_EXTRA_OPTS));
 	printf (" %s\n", "-s, --service");
 	printf ("    %s\n", _("Check service cluster status"));
 	printf (" %s\n", "-h, --host");
@@ -257,6 +261,10 @@ print_help(void)
 	printf("\n");
 	printf("%s\n", _("Notes:"));
 	printf(_(UT_THRESHOLDS_NOTES));
+#ifdef NP_EXTRA_OPTS
+	printf ("\n");
+	printf (_(UT_EXTRA_OPTS_NOTES));
+#endif
 
 	printf(_(UT_SUPPORT));
 }

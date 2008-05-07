@@ -83,6 +83,9 @@ main (int argc, char **argv)
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
+  /* Parse extra opts if any */
+  argv=np_extra_opts (&argc, argv, progname);
+
   if (process_arguments (argc, argv) == ERROR)
     usage4 (_("Could not parse arguments"));
 
@@ -379,6 +382,7 @@ print_help (void)
   print_usage ();
 
   printf (_(UT_HELP_VRSN));
+  printf (_(UT_EXTRA_OPTS));
 
   printf (" %s\n", "-H, --hostname=HOST");
   printf ("    %s\n", _("name or IP Address of host to ping (IP Address bypasses name lookup, reducing system load)"));
@@ -395,6 +399,13 @@ print_help (void)
   printf (" %s\n", _("THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel time (ms)"));
   printf (" %s\n", _("which triggers a WARNING or CRITICAL state, and <pl> is the percentage of"));
   printf (" %s\n", _("packet loss to trigger an alarm state."));
+
+#ifdef NP_EXTRA_OPTS
+  printf ("\n");
+  printf ("%s\n", _("Notes:"));
+  printf (_(UT_EXTRA_OPTS_NOTES));
+#endif
+
   printf (_(UT_SUPPORT));
 }
 

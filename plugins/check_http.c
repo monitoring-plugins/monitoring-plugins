@@ -147,6 +147,9 @@ main (int argc, char **argv)
   asprintf (&user_agent, "User-Agent: check_http/%s (nagios-plugins %s)",
             clean_revstring (revision), VERSION);
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
   if (process_arguments (argc, argv) == ERROR)
     usage4 (_("Could not parse arguments"));
 
@@ -1232,6 +1235,7 @@ print_help (void)
   printf ("\n");
 
   printf (_(UT_HELP_VRSN));
+  printf (_(UT_EXTRA_OPTS));
 
   printf (" %s\n", "-H, --hostname=ADDRESS");
   printf ("    %s\n", _("Host name argument for servers using host headers (virtual host)"));
@@ -1299,19 +1303,24 @@ print_help (void)
 
   printf (_(UT_VERBOSE));
 
-  printf (_("Notes:"));
+  printf ("\n");
+  printf ("%s\n", _("Notes:"));
   printf (" %s\n", _("This plugin will attempt to open an HTTP connection with the host."));
   printf (" %s\n", _("Successful connects return STATE_OK, refusals and timeouts return STATE_CRITICAL"));
   printf (" %s\n", _("other errors return STATE_UNKNOWN.  Successful connects, but incorrect reponse"));
   printf (" %s\n", _("messages from the host result in STATE_WARNING return values.  If you are"));
   printf (" %s\n", _("checking a virtual server that uses 'host headers' you must supply the FQDN"));
   printf (" %s\n", _("(fully qualified domain name) as the [host_name] argument."));
+  printf ("\n");
+  printf (_(UT_EXTRA_OPTS_NOTES));
 
 #ifdef HAVE_SSL
+  printf ("\n");
   printf (" %s\n", _("This plugin can also check whether an SSL enabled web server is able to"));
   printf (" %s\n", _("serve content (optionally within a specified time) or whether the X509 "));
   printf (" %s\n", _("certificate is still valid for the specified number of days."));
-  printf (_("Examples:"));
+  printf ("\n");
+  printf ("%s\n", _("Examples:"));
   printf (" %s\n\n", "CHECK CONTENT: check_http -w 5 -c 10 --ssl -H www.verisign.com");
   printf (" %s\n", _("When the 'www.verisign.com' server returns its content within 5 seconds,"));
   printf (" %s\n", _("a STATE_OK will be returned. When the server returns its content but exceeds"));

@@ -79,6 +79,9 @@ main (int argc, char **argv)
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
+  /* Parse extra opts if any */
+  argv=np_extra_opts (&argc, argv, progname);
+
   if (process_arguments (argc, argv) == ERROR)
     usage_va(_("Could not parse arguments"));
 
@@ -302,6 +305,7 @@ print_help (void)
   print_usage ();
 
   printf (_(UT_HELP_VRSN));
+  printf (_(UT_EXTRA_OPTS));
 
   printf (" %s\n", "-p");
   printf ("    %s\n", _("Optional port of which to connect"));
@@ -319,6 +323,10 @@ print_help (void)
   printf (" %s\n", _("This plugin uses the 'qstat' command, the popular game server status query tool."));
   printf (" %s\n", _("If you don't have the package installed, you will need to download it from"));
   printf (" %s\n", _("http://www.activesw.com/people/steve/qstat.html before you can use this plugin."));
+#ifdef NP_EXTRA_OPTS
+  printf ("\n");
+  printf (_(UT_EXTRA_OPTS_NOTES));
+#endif
 
   printf (_(UT_SUPPORT));
 }

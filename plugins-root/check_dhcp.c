@@ -268,6 +268,9 @@ int main(int argc, char **argv){
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts(&argc, argv, progname);
+
 	if(process_arguments(argc,argv)!=OK){
 		usage4 (_("Could not parse arguments"));
 		}
@@ -1395,6 +1398,7 @@ void print_help(void){
 	print_usage();
 
 	printf (_(UT_HELP_VRSN));
+	printf (_(UT_EXTRA_OPTS));
 
 	printf (_(UT_VERBOSE));
 
@@ -1410,6 +1414,12 @@ void print_help(void){
   printf ("    %s\n", _("MAC address to use in the DHCP request"));
   printf (" %s\n", "-u, --unicast");
   printf ("    %s\n", _("Unicast testing: mimic a DHCP relay, requires -s"));
+
+#ifdef NP_EXTRA_OPTS
+  printf ("\n");
+  printf ("%s\n", _("Notes:"));
+  printf (_(UT_EXTRA_OPTS_NOTES));
+#endif
 
   printf (_(UT_SUPPORT));
 	return;

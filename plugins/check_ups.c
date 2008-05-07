@@ -119,6 +119,9 @@ main (int argc, char **argv)
 	data = strdup ("");
 	message = strdup ("");
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
@@ -609,6 +612,7 @@ print_help (void)
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
+	printf (_(UT_EXTRA_OPTS));
 
 	printf (_(UT_HOST_PORT), 'p', myport);
 
@@ -640,12 +644,15 @@ print_help (void)
   printf (" %s\n", _("battery load, etc.)  as well as warning and critical thresholds for the value"));
   printf (" %s\n", _("of that variable.  If the remote host has multiple UPS that are being monitored"));
   printf (" %s\n", _("you will have to use the --ups option to specify which UPS to check."));
-
   printf ("\n");
   printf (" %s\n", _("This plugin requires that the UPSD daemon distributed with Russel Kroll's"));
   printf (" %s\n", _("Smart UPS Tools be installed on the remote host. If you do not have the"));
   printf (" %s\n", _("package installed on your system, you can download it from"));
   printf (" %s\n", _("http://www.networkupstools.org"));
+#ifdef NP_EXTRA_OPTS
+  printf ("\n");
+  printf (_(UT_EXTRA_OPTS_NOTES));
+#endif
 
 	printf (_(UT_SUPPORT));
 }

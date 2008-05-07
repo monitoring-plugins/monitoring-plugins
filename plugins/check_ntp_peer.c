@@ -552,6 +552,9 @@ int main(int argc, char *argv[]){
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
@@ -638,6 +641,7 @@ void print_help(void){
 
 	print_usage();
 	printf (_(UT_HELP_VRSN));
+	printf (_(UT_EXTRA_OPTS));
 	printf (_(UT_HOST_PORT), 'p', "123");
 	printf (" %s\n", "-q, --quiet");
 	printf ("    %s\n", _("Returns UNKNOWN instead of CRITICAL or WARNING if server isn't synchronized"));
@@ -664,17 +668,23 @@ void print_help(void){
 	printf(" %s\n", _("Use this plugin to check the health of an NTP server. It supports"));
 	printf(" %s\n", _("checking the offset with the sync peer, the jitter and stratum. This"));
 	printf(" %s\n", _("plugin will not check the clock offset between the local host and NTP"));
-	printf(" %s\n\n", _("server; please use check_ntp_time for that purpose."));
-
+	printf(" %s\n", _("server; please use check_ntp_time for that purpose."));
+	printf("\n");
 	printf(_(UT_THRESHOLDS_NOTES));
+#ifdef NP_EXTRA_OPTS
+	printf("\n");
+	printf(_(UT_EXTRA_OPTS_NOTES));
+#endif
 
 	printf("\n");
 	printf("%s\n", _("Examples:"));
 	printf(" %s\n", _("Simple NTP server check:"));
 	printf("  %s\n", ("./check_ntp_peer -H ntpserv -w 0.5 -c 1"));
+	printf("\n");
 	printf(" %s\n", _("Check jitter too, avoiding critical notifications if jitter isn't available"));
 	printf(" %s\n", _("(See Notes above for more details on thresholds formats):"));
 	printf("  %s\n", ("./check_ntp_peer -H ntpserv -w 0.5 -c 1 -j -1:100 -k -1:200"));
+	printf("\n");
 	printf(" %s\n", _("Check only stratum:"));
 	printf("  %s\n", ("./check_ntp_peer -H ntpserv -W 4 -C 6"));
 

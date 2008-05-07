@@ -143,6 +143,9 @@ main (int argc, char **argv)
 	asprintf (&metric_name, "PROCS");
 	metric = METRIC_PROCS;
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
@@ -715,13 +718,12 @@ print_help (void)
 
 	print_usage ();
 
-	printf ("%s\n", _("Required Arguments:"));
+  printf (_(UT_HELP_VRSN));
+  printf (_(UT_EXTRA_OPTS));
   printf (" %s\n", "-w, --warning=RANGE");
   printf ("   %s\n", _("Generate warning state if metric is outside this range"));
   printf (" %s\n", "-c, --critical=RANGE");
   printf ("   %s\n", _("Generate critical state if metric is outside this range"));
-
-	printf ("%s\n", _("Optional Arguments:"));
   printf (" %s\n", "-m, --metric=TYPE");
   printf ("  %s\n", _("Check thresholds against metric. Valid types:"));
   printf ("  %s\n", _("PROCS   - number of processes (default)"));
@@ -737,7 +739,8 @@ print_help (void)
 	printf (" %s\n", "-v, --verbose");
   printf ("    %s\n", _("Extra information. Up to 3 verbosity levels"));
 
-	printf ("%s\n", "Optional Filters:");
+  printf ("\n");
+	printf ("%s\n", "Filters:");
   printf (" %s\n", "-s, --state=STATUSFLAGS");
   printf ("   %s\n", _("Only scan for processes that have, in the output of `ps`, one or"));
   printf ("   %s\n", _("more of the status flags you specify (for example R, Z, S, RS,"));
@@ -770,6 +773,12 @@ generates WARNING or CRITICAL states if the process count is outside\n\
 the specified threshold ranges. The process count can be filtered by\n\
 process owner, parent process PID, current state (e.g., 'Z'), or may\n\
 be the total number of running processes\n\n"));
+
+#ifdef NP_EXTRA_OPTS
+  printf ("%s\n", _("Notes:"));
+  printf (_(UT_EXTRA_OPTS_NOTES));
+  printf ("\n");
+#endif
 
 	printf ("%s\n", _("Examples:"));
   printf (" %s\n", "check_procs -w 2:2 -c 2:1024 -C portsentry");

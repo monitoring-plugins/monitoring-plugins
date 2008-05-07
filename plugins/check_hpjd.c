@@ -100,6 +100,9 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
@@ -390,19 +393,26 @@ print_help (void)
 	printf (COPYRIGHT, copyright, email);
 
 	printf ("%s\n", _("This plugin tests the STATUS of an HP printer with a JetDirect card."));
-  printf ("%s\n", _("Net-snmp must be installed on the computer running the plugin."));
+	printf ("%s\n", _("Net-snmp must be installed on the computer running the plugin."));
 
-  printf ("\n\n");
+	printf ("\n\n");
 
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
+	printf (_(UT_EXTRA_OPTS));
 
 	printf (" %s\n", "-C, --community=STRING");
-  printf ("    %s", _("The SNMP community name "));
-  printf (_("(default=%s)"), DEFAULT_COMMUNITY);
+	printf ("    %s", _("The SNMP community name "));
+	printf (_("(default=%s)"), DEFAULT_COMMUNITY);
+	printf ("\n");
 
-  printf ("\n");
+#ifdef NP_EXTRA_OPTS
+	printf ("\n");
+	printf ("%s\n", _("Notes:"));
+	printf (_(UT_EXTRA_OPTS_NOTES));
+#endif
+
 	printf (_(UT_SUPPORT));
 }
 

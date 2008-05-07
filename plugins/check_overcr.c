@@ -99,6 +99,9 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
@@ -425,6 +428,7 @@ print_help (void)
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
+	printf (_(UT_EXTRA_OPTS));
 
 	printf (_(UT_HOST_PORT), 'p', myport);
 
@@ -445,16 +449,21 @@ print_help (void)
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 
   printf (_(UT_VERBOSE));
+
   printf ("\n");
-  printf ("%s\n", _("Notes:"));
-
-  printf (" %s\n", _("For the available options, the critical threshold value should always be"));
-  printf (" %s\n\n", _("higher than the warning threshold value, EXCEPT with the uptime variable"));
-
-  printf ("%s\n", _("This plugin requres that Eric Molitors' Over-CR collector daemon be"));
+  printf ("%s\n", _("This plugin requires that Eric Molitors' Over-CR collector daemon be"));
   printf ("%s\n", _("running on the remote server."));
   printf ("%s\n", _("Over-CR can be downloaded from http://www.molitor.org/overcr"));
   printf ("%s\n", _("This plugin was tested with version 0.99.53 of the Over-CR collector"));
+
+  printf ("\n");
+  printf ("%s\n", _("Notes:"));
+  printf (" %s\n", _("For the available options, the critical threshold value should always be"));
+  printf (" %s\n", _("higher than the warning threshold value, EXCEPT with the uptime variable"));
+#ifdef NP_EXTRA_OPTS
+  printf ("\n");
+  printf (_(UT_EXTRA_OPTS_NOTES));
+#endif
 
   printf (_(UT_SUPPORT));
 }

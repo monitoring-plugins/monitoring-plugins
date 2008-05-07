@@ -88,6 +88,9 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage_va(_("Could not parse arguments"));
 
@@ -289,6 +292,7 @@ print_help (void)
 	print_usage ();
 
 	printf (_(UT_HELP_VRSN));
+	printf (_(UT_EXTRA_OPTS));
 
 	printf (" %s\n", "-F, --filename=FILE");
   printf ("    %s\n", _("Name of the log file to check"));
@@ -297,6 +301,13 @@ print_help (void)
   printf (" %s\n", "-C, --command=STRING");
   printf ("    %s\n", _("Substring to search for in process arguments"));
   printf (_(UT_VERBOSE));
+
+#ifdef NP_EXTRA_OPTS
+  printf ("\n");
+  printf ("%s\n", _("Notes:"));
+  printf (_(UT_EXTRA_OPTS_NOTES));
+#endif
+
   printf ("\n");
   printf ("%s\n", _("Examples:"));
   printf (" %s\n", "check_nagios -e 5 -F /usr/local/nagios/var/status.log -C /usr/local/nagios/bin/nagios");

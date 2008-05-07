@@ -162,6 +162,9 @@ main (int argc, char *argv[])
 	values_t values;
 	int fd;
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
+
 	static struct option longopts[] = { 
 		{"device", required_argument, 0, 'd'}, 
 		{"immediate", no_argument, 0, 'i'}, 
@@ -490,6 +493,7 @@ print_help (void)
   print_usage ();
 
   printf (_(UT_HELP_VRSN));
+  printf (_(UT_EXTRA_OPTS));
 
   printf (" %s\n", "-d, --device=DEVICE");
   printf ("    %s\n", _("Select device DEVICE"));
@@ -504,6 +508,13 @@ print_help (void)
   printf ("    %s\n", _("Turn off automatic offline tests"));
   printf (" %s\n", "-n, --nagios");
   printf ("    %s\n", _("Output suitable for Nagios"));
+
+#ifdef NP_EXTRA_OPTS
+  printf ("\n");
+  printf ("%s\n", _("Notes:"));
+  printf (_(UT_EXTRA_OPTS_NOTES));
+#endif
+
   printf (_(UT_SUPPORT));
 }
 

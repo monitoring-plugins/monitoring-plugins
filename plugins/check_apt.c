@@ -88,6 +88,9 @@ static int exec_warning = 0;     /* if a cmd exited non-zero */
 int main (int argc, char **argv) {
 	int result=STATE_UNKNOWN, packages_available=0, sec_count=0;
 
+	/* Parse extra opts if any */
+	argv=np_extra_opts(&argc, argv, progname);
+
 	if (process_arguments(argc, argv) == ERROR)
 		usage_va(_("Could not parse arguments"));
 
@@ -414,6 +417,7 @@ print_help (void)
   print_usage();
 
   printf(_(UT_HELP_VRSN));
+  printf(_(UT_EXTRA_OPTS));
 
   printf(_(UT_TIMEOUT), timeout_interval);
 
@@ -453,6 +457,12 @@ print_help (void)
   printf ("    %s\n", _("the default options.  Note: you may also need to adjust the global"));
   printf ("    %s\n", _("timeout (with -t) to prevent the plugin from timing out if apt-get"));
   printf ("    %s\n", _("upgrade is expected to take longer than the default timeout."));
+
+#ifdef NP_EXTRA_OPTS
+  printf("\n");
+  printf("%s\n", _("Notes:"));
+  printf(_(UT_EXTRA_OPTS_NOTES));
+#endif
 
   printf(_(UT_SUPPORT));
 }

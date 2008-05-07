@@ -16,6 +16,14 @@ suite of plugins. */
 /* now some functions etc are being defined in ../lib/utils_base.c */
 #include "utils_base.h"
 
+#ifdef NP_EXTRA_OPTS
+/* Include extra-opts functions if compiled in */
+#include "extra_opts.h"
+#else
+/* else, fake np_extra_opts */
+#define np_extra_opts(acptr,av,pr) av
+#endif
+
 /* Standardize version information, termination */
 
 /* $Id$ */
@@ -172,6 +180,17 @@ char *fperfdata (const char *,
 #define UT_TIMEOUT "\
  -t, --timeout=INTEGER\n\
     Seconds before connection times out (default: %d)\n"
+
+#ifdef NP_EXTRA_OPTS
+#define UT_EXTRA_OPTS "\
+ --extra-opts=[section][@file]\n\
+    Read additionnal options from ini file\n"
+#define UT_EXTRA_OPTS_NOTES "\
+ See: http://nagiosplugins.org/extra-opts for --extra-opts usage and examples.\n"
+#else
+#define UT_EXTRA_OPTS ""
+#define UT_EXTRA_OPTS_NOTES ""
+#endif
 
 #define UT_THRESHOLDS_NOTES "\
  See:\n\

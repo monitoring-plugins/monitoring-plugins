@@ -192,6 +192,9 @@ main (int argc, char **argv)
 
   mount_list = read_file_system_list (0);
 
+  /* Parse extra opts if any */
+  argv = np_extra_opts (&argc, argv, progname);
+
   if (process_arguments (argc, argv) == ERROR)
     usage4 (_("Could not parse arguments"));
 
@@ -903,6 +906,7 @@ print_help (void)
   print_usage ();
 
   printf (_(UT_HELP_VRSN));
+  printf (_(UT_EXTRA_OPTS));
 
   printf (" %s\n", "-w, --warning=INTEGER");
   printf ("    %s\n", _("Exit with WARNING status if less than INTEGER units of disk are free"));
@@ -955,6 +959,13 @@ print_help (void)
   printf (_(UT_VERBOSE));
   printf (" %s\n", "-X, --exclude-type=TYPE");
   printf ("    %s\n", _("Ignore all filesystems of indicated type (may be repeated)"));
+
+#ifdef NP_EXTRA_OPTS
+  printf ("\n");
+  printf ("%s\n", _("Notes:"));
+  printf (_(UT_EXTRA_OPTS_NOTES));
+#endif
+
   printf ("\n");
   printf ("%s\n", _("Examples:"));
   printf (" %s\n", "check_disk -w 10% -c 5% -p /tmp -p /var -C -w 100000 -c 50000 -p /");
