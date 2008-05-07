@@ -162,7 +162,16 @@ main (int argc, char **argv)
 							state_text (this_result), warn_text, pl, rta);
 		if (display_html == TRUE)
 			printf ("</A>");
-		printf ("\n");
+
+		/* Print performance data */
+		printf("|%s", fperfdata ("rta", (double) rta, "ms",
+		                          wrta>0?TRUE:FALSE, wrta,
+		                          crta>0?TRUE:FALSE, crta,
+		                          TRUE, 0, FALSE, 0));
+		printf(" %s\n", perfdata ("pl", (long) pl, "%",
+		                          wpl>0?TRUE:FALSE, wpl,
+		                          cpl>0?TRUE:FALSE, cpl,
+		                          TRUE, 0, FALSE, 0));
 
 		if (verbose >= 2)
 			printf ("%f:%d%% %f:%d%%\n", wrta, wpl, crta, cpl);

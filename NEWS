@@ -21,6 +21,8 @@ This file documents the major additions and syntax changes between releases.
 	check_mysql now try clearing password in processlist just like check_mysql_query
 	check_mysql and check_mysql_query now support sockets explicitely (-s, --socket)
 	negate now has the ability to replace the status text as well (-s, --substitute)
+	Added performance data to check_ping (Christian Schneemann)
+	Added support for --extra-opts in all C plugins (disabled by default, see configure --help)
 
 1.4.11 13th December 2007
 	Fixed check_http regression in 1.4.10 where following redirects to
