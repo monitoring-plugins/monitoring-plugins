@@ -260,7 +260,13 @@ process_arguments (int argc, char **argv)
 			username = optarg;
 			break;
 		case 'p':									/* password */
-			password = optarg;
+			password = strdup(optarg);
+
+			/* Delete the password from process list */
+			while (*optarg != '\0') {
+				*optarg = 'X';
+				optarg++;
+			}
 			break;
 		case 'n':									/* nas id */
 			nasid = optarg;
@@ -343,9 +349,9 @@ print_help (void)
   printf ("%s\n", _("name and password. A configuration file may also be present. The format of"));
   printf ("%s\n", _("the configuration file is described in the radiusclient library sources."));
 	printf ("%s\n", _("The password option presents a substantial security issue because the"));
-  printf ("%s\n", _("password can be determined by careful watching of the command line in"));
-  printf ("%s\n", _("a process listing.  This risk is exacerbated because nagios will"));
-  printf ("%s\n", _("run the plugin at regular predictable intervals.  Please be sure that"));
+  printf ("%s\n", _("password can possibly be determined by careful watching of the command line"));
+  printf ("%s\n", _("in a process listing. This risk is exacerbated because nagios will"));
+  printf ("%s\n", _("run the plugin at regular predictable intervals. Please be sure that"));
   printf ("%s\n", _("the password used does not allow access to sensitive system resources."));
 
 #ifdef NP_EXTRA_OPTS
