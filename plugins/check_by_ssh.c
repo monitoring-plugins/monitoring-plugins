@@ -100,11 +100,11 @@ main (int argc, char **argv)
 	if (skip_stderr == -1) /* --skip-stderr specified without argument */
 		skip_stderr = chld_err.lines;
 
-	/* UNKNOWN if (non-skipped) output found on stderr */
+	/* UNKNOWN or worse if (non-skipped) output found on stderr */
 	if(chld_err.lines > skip_stderr) {
 		printf (_("Remote command execution failed: %s\n"),
 		        chld_err.line[skip_stderr]);
-		return STATE_UNKNOWN;
+		return max_state_alt(result, STATE_UNKNOWN);
 	}
 
 	/* this is simple if we're not supposed to be passive.
@@ -133,21 +133,20 @@ main (int argc, char **argv)
 	local_time = time (NULL);
 	commands = 0;
 	for(i = skip_stdout; i < chld_out.lines; i++) {
-		status_text = strstr (chld_out.line[i], "STATUS CODE: ");
-		if (status_text == NULL) {
-			printf ("%s", chld_out.line[i]);
-			return result;
-		}
+		status_text = chld_out.line[i++];
+		if (i == chld_out.lines || strstr (chld_out.line[i], "STATUS CODE: ") == NULL)
+			die (STATE_UNKNOWN, _("%s: Error parsing output\n"), progname);
+
 		if (service[commands] && status_text
-			&& sscanf (status_text, "STATUS CODE: %d", &cresult) == 1)
+			&& sscanf (chld_out.line[i], "STATUS CODE: %d", &cresult) == 1)
 		{
 			fprintf (fp, "[%d] PROCESS_SERVICE_CHECK_RESULT;%s;%s;%d;%s\n",
 			         (int) local_time, host_shortname, service[commands++],
-			         cresult, chld_out.line[i]);
+			         cresult, status_text);
 		}
 	}
 	
-	/* force an OK state */
+	/* Multiple commands and passive checking should always return OK */
 	return result;
 }
 
@@ -308,7 +307,7 @@ process_arguments (int argc, char **argv)
 				asprintf (&remotecmd, "%s", argv[c]);
 	}
 
-	if (commands > 1)
+	if (commands > 1 || passive)
 		asprintf (&remotecmd, "%s;echo STATUS CODE: $?;", remotecmd);
 
 	if (remotecmd == NULL || strlen (remotecmd) <= 1)

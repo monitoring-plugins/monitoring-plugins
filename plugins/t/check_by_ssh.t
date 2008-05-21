@@ -20,7 +20,7 @@ my $ssh_key = getTestParameter( "NP_SSH_IDENTITY",
 
 plan skip_all => "SSH_HOST and SSH_IDENTITY must be defined" unless ($ssh_service && $ssh_key);
 
-plan tests => 38;
+plan tests => 40;
 
 # Some random check strings/response
 my @responce = ('OK: Everything is fine!',
@@ -29,9 +29,13 @@ my @responce = ('OK: Everything is fine!',
                 'UNKNOWN: What can I do for ya?',
                 'WOOPS: What did I smoke?',
 );
+my @responce_re;
 my @check;
 for (@responce) {
 	push(@check, "echo $_");
+	my $re_str = $_;
+	$re_str =~ s{(.)} { "\Q$1" }ge;
+	push(@responce_re, $re_str);
 }
 
 my $result;
@@ -88,6 +92,7 @@ $result = NPTest->testCmd(
 	);
 cmp_ok($result->return_code, '==', 0, "Multiple checks always return OK");
 my @lines = split(/\n/, $result->output);
+cmp_ok(scalar(@lines), '==', 8, "Correct number of output lined for multiple checks");
 my %linemap = (
                '0' => '1',
                '2' => '0',
@@ -102,30 +107,41 @@ foreach my $line (0, 2, 4, 6) {
 }
 
 # Passive checks
+unlink("/tmp/check_by_ssh.$$");
 $result = NPTest->testCmd(
 	"./check_by_ssh -i $ssh_key -H $ssh_service -n flint -s serv -C '$check[2]; sh -c exit\\ 2' -O /tmp/check_by_ssh.$$"
 	);
 cmp_ok($result->return_code, '==', 0, "Exit always ok on passive checks");
 open(PASV, "/tmp/check_by_ssh.$$") or die("Unable to open '/tmp/check_by_ssh.$$': $!");
-my $count=0;
-while (<PASV>) {
-	like($_, '/^\[\d+\] PROCESS_SERVICE_CHECK_RESULT;flint;serv;2;$responce[2]$/', 'proper result for passive check');
-	$count++;
+my @pasv = <PASV>;
+close(PASV) or die("Unable to close '/tmp/check_by_ssh.$$': $!");
+cmp_ok(scalar(@pasv), '==', 1, 'One passive result for one check performed');
+for (0) {
+	if ($pasv[$_]) {
+		like($pasv[$_], '/^\[\d+\] PROCESS_SERVICE_CHECK_RESULT;flint;serv;2;' . $responce_re[2] . '$/', 'proper result for passive check');
+	} else {
+		fail('proper result for passive check');
+	}
 }
-cmp_ok($count, '==', 1, 'One passive result for one check performed');
 unlink("/tmp/check_by_ssh.$$") or die("Unable to unlink '/tmp/check_by_ssh.$$': $!");
+undef @pasv;
 
 $result = NPTest->testCmd(
-	"./check_by_ssh -i $ssh_key -H $ssh_service -n flint -s c0:c1:c2:c3:c4 -C '$check[0], exit 0' -C '$check[1]; exit 1' -C '$check[2]; exit 2' -C '$check[3]; exit 3' -C '$check[4]; exit 9' -O /tmp/check_by_ssh.$$"
+	"./check_by_ssh -i $ssh_key -H $ssh_service -n flint -s c0:c1:c2:c3:c4 -C '$check[0];sh -c exit\\ 0' -C '$check[1];sh -c exit\\ 1' -C '$check[2];sh -c exit\\ 2' -C '$check[3];sh -c exit\\ 3' -C '$check[4];sh -c exit\\ 9' -O /tmp/check_by_ssh.$$"
 	);
 cmp_ok($result->return_code, '==', 0, "Exit always ok on passive checks");
-$count=0;
 open(PASV, "/tmp/check_by_ssh.$$") or die("Unable to open '/tmp/check_by_ssh.$$': $!");
-while (<PASV>) {
-	my $ret;
-	($count == 4 ? $ret = 7 : $ret = $count);
-	like($_, '/^\[\d+\] PROCESS_SERVICE_CHECK_RESULT;flint;c' . $count . ';' . $ret . ';' . $responce[$count] . '$/', "proper result for passive check $count");
+@pasv = <PASV>;
+close(PASV) or die("Unable to close '/tmp/check_by_ssh.$$': $!");
+cmp_ok(scalar(@pasv), '==', 5, 'Five passive result for five checks performed');
+for (0, 1, 2, 3, 4) {
+	if ($pasv[$_]) {
+		my $ret = $_;
+		$ret = 9 if ($_ == 4);
+		like($pasv[$_], '/^\[\d+\] PROCESS_SERVICE_CHECK_RESULT;flint;c' . $_ . ';' . $ret . ';' . $responce_re[$_] . '$/', "proper result for passive check $_");
+	} else {
+		fail("proper result for passive check $_");
+	}
 }
-cmp_ok($count, '==', 5, 'Five passive result for five checks performed');
 unlink("/tmp/check_by_ssh.$$") or die("Unable to unlink '/tmp/check_by_ssh.$$': $!");
 
