@@ -337,6 +337,14 @@ if test "$FOUNDINCLUDE" = "no"; then
   CPPFLAGS="$_SAVEDCPPFLAGS"
 fi
 
+dnl *** The following block comes from wget configure.ac ***
+dnl Unfortunately, as of this writing (OpenSSL 0.9.6), the libcrypto
+dnl shared library doesn't record its dependency on libdl, so we
+dnl need to check for it ourselves so we won't fail to link due to a
+dnl lack of -ldl.  Most OSes use dlopen(), but HP-UX uses
+dnl shl_load().
+AC_CHECK_LIB(dl,dlopen)
+AC_CHECK_LIB(dl,shl_load)
 
 dnl openssl detection/configuration
 if ! test x"$with_openssl" = x"no"; then

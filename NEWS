@@ -25,6 +25,7 @@ This file documents the major additions and syntax changes between releases.
 	Added support for --extra-opts in all C plugins (disabled by default, see configure --help)
 	Fixed passive option in check_by_ssh
 	On non-skipped stderr, check_by_ssh now returns UNKNOWN or worse (result from command) instead of always UNKNOWN.
+	Fix linking against OpenSSL where libdl is required
 
 1.4.11 13th December 2007
 	Fixed check_http regression in 1.4.10 where following redirects to
