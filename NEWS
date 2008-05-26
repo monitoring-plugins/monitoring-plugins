@@ -15,7 +15,7 @@ This file documents the major additions and syntax changes between releases.
 	check_procs now accepts --ereg-argument-array for a regular expression match to the argument array
 	Reverted back to using pst3 for Solaris systems. Fixed issues re: -m64 needed to compile on 64bit systems
 	If applicable, Gettext linked dynamically instead of statically
-	check_dig can now pass arguments dig by using -A/--dig-arguments (#1874041/#1889453)
+	check_dig can now pass arguments to dig by using -A/--dig-arguments (#1874041/#1889453)
 	check_ntp and check_ntp_peer now show proper jitter/stratum thresholds longopts in --help
 	check_dns now allow to repeat -a to match multiple possibly returned address (common with load balancers)
 	check_mysql and check_radius now try clearing password in processlist just like check_mysql_query
