@@ -99,7 +99,7 @@ int main (int argc, char **argv)
 	if ((pDir = opendir(PROC_DIR)) != NULL)
 	{
 		/* Display column headings */
-		printf("S   UID  PPID    VSZ    RSS %%CPU COMMAND ARGS\n");
+		printf("S   UID   PID  PPID    VSZ    RSS %%CPU COMMAND ARGS\n");
 
 		/* Zip through all of the process entries */
 		while ((pDent = readdir(pDir)) != NULL)
