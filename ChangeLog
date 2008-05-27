@@ -1,3 +1,799 @@
+2008-05-27 21:52  tonvoon
+
+	* [r2003] THANKS.in, configure.in:
+	  Not picking up solaris systems correctly for check_dhcp. Only
+	  affected SunStudio compiles of check_dhcp (1890260 - Rob Windsor)
+
+2008-05-27 21:31  tonvoon
+
+	* [r2002] plugins/check_by_ssh.c:
+	  Addition to help to state that -f will always return OK if ssh
+	  command is executed (Alain Dewit - 1852198)
+
+2008-05-27 13:35  tonvoon
+
+	* [r2001] plugins-root/pst3.c:
+	  Add additional PID column heading
+
+2008-05-26 09:43  dermoth
+
+	* [r2000] NEWS:
+	  correct typo in NEWS
+
+2008-05-23 09:09  dermoth
+
+	* [r1999] REQUIREMENTS:
+	  Add a note about radiusclient
+
+2008-05-22 08:25  dermoth
+
+	* [r1998] NEWS, configure.in:
+	  Fix linking against OpenSSL where libdl is required
+
+2008-05-21 08:57  dermoth
+
+	* [r1997] NEWS, plugins/check_by_ssh.c, plugins/t/check_by_ssh.t:
+	  Fixed passive option in check_by_ssh Also: - On non-skipped
+	  stderr, check_by_ssh now returns UNKNOWN or worse (result from
+	  command) instead of always UNKNOWN. - Fixed passive tests and
+	  make is always run the specified number of tests (using fail if
+	  there's nothing to test).
+
+2008-05-20 11:37  dermoth
+
+	* [r1996] plugins/t/check_by_ssh.t:
+	  Oops - forgot to remove the SKIP block (which didn't seem to work
+	  fine)
+
+2008-05-20 11:32  dermoth
+
+	* [r1995] plugins/t/check_by_ssh.t:
+	  Add check_by_ssh tests (passive checks are broken - should be
+	  fixed before next release!)
+
+2008-05-20 07:57  dermoth
+
+	* [r1994] NEWS, plugins/check_radius.c:
+	  Clobber password in check_radius process list aguments
+
+2008-05-13 09:14  dermoth
+
+	* [r1992] plugins/check_dns.c:
+	  Typo
+
+2008-05-07 10:02  dermoth
+
+	* [r1991] plugins-root/check_dhcp.c, plugins-root/check_icmp.c,
+	  plugins/check_apt.c, plugins/check_by_ssh.c,
+	  plugins/check_cluster.c, plugins/check_dig.c,
+	  plugins/check_disk.c, plugins/check_dns.c, plugins/check_fping.c,
+	  plugins/check_game.c, plugins/check_hpjd.c, plugins/check_http.c,
+	  plugins/check_ide_smart.c, plugins/check_ldap.c,
+	  plugins/check_load.c, plugins/check_mrtg.c,
+	  plugins/check_mrtgtraf.c, plugins/check_mysql.c,
+	  plugins/check_mysql_query.c, plugins/check_nagios.c,
+	  plugins/check_nt.c, plugins/check_ntp.c,
+	  plugins/check_ntp_peer.c, plugins/check_ntp_time.c,
+	  plugins/check_nwstat.c, plugins/check_overcr.c,
+	  plugins/check_pgsql.c, plugins/check_ping.c,
+	  plugins/check_procs.c, plugins/check_radius.c,
+	  plugins/check_real.c, plugins/check_smtp.c, plugins/check_snmp.c,
+	  plugins/check_ssh.c, plugins/check_swap.c, plugins/check_tcp.c,
+	  plugins/check_time.c, plugins/check_ups.c, plugins/check_users.c,
+	  plugins/utils.h:
+	  Added support for --extra-opts in all C plugins (disabled by
+	  default, see configure --help)
+
+2008-05-07 10:01  dermoth
+
+	* [r1990] NEWS, THANKS.in, plugins/check_ping.c:
+	  Added performance data to check_ping (Christian Schneemann)
+
+2008-05-02 09:28  dermoth
+
+	* [r1989] NEWS, plugins/negate.c:
+	  negate now has the ability to replace the status text as well
+	  (-s, --substitute) Also changed: - default timeout to 11 instead
+	  of 9 (since it's recommended to have a higher timeout, and many
+	  plugins default to 10 seconds) - If there's no STDOUT lines
+	  returned, still returns the returned result if it's NON-ok
+	  instead of forcing it to UNKNOWN
+
+2008-04-30 12:50  dermoth
+
+	* [r1988] NEWS, plugins/check_mysql.c, plugins/check_mysql_query.c,
+	  plugins/t/check_mysql.t:
+	  Add socket support to check_mysql* Also clears the password from
+	  check_mysql command-line options
+
+2008-04-29 14:54  hweiss
+
+	* [r1987] configure.in:
+	  Support "--without-pgsql" (reported by Alex Songe via IRC).
+
+2008-04-29 09:01  dermoth
+
+	* [r1986] plugins/check_ntp.c, plugins/check_ntp_peer.c,
+	  plugins/check_ntp_time.c:
+	  Use UT_THRESHOLDS_NOTES in all plugins
+
+2008-04-29 09:01  dermoth
+
+	* [r1985] plugins-root/check_dhcp.c, plugins-root/check_icmp.c:
+	  --help output cleanup (plus removal of spaces on blank lines)
+
+2008-04-27 14:35  dermoth
+
+	* [r1984] plugins/check_apt.c, plugins/check_by_ssh.c,
+	  plugins/check_cluster.c, plugins/check_dig.c,
+	  plugins/check_disk.c, plugins/check_dns.c, plugins/check_dummy.c,
+	  plugins/check_fping.c, plugins/check_game.c,
+	  plugins/check_hpjd.c, plugins/check_http.c,
+	  plugins/check_ide_smart.c, plugins/check_ldap.c,
+	  plugins/check_load.c, plugins/check_mrtg.c,
+	  plugins/check_mrtgtraf.c, plugins/check_mysql.c,
+	  plugins/check_mysql_query.c, plugins/check_nagios.c,
+	  plugins/check_nt.c, plugins/check_ntp.c,
+	  plugins/check_ntp_peer.c, plugins/check_nwstat.c,
+	  plugins/check_overcr.c, plugins/check_pgsql.c,
+	  plugins/check_ping.c, plugins/check_procs.c,
+	  plugins/check_radius.c, plugins/check_real.c,
+	  plugins/check_snmp.c, plugins/check_swap.c, plugins/check_ups.c,
+	  plugins/utils.h:
+	  --help output cleanup (plus removal of spaces on blank lines)
+
+2008-04-23 08:19  dermoth
+
+	* [r1983] plugins/check_radius.c:
+	  Correct typo and make the --help notes a bit simpler.
+
+2008-04-17 10:46  dermoth
+
+	* [r1979] plugins/check_dns.c:
+	  Correct the help text
+
+2008-04-17 10:37  dermoth
+
+	* [r1978] NEWS, plugins/check_dns.c:
+	  Allow to repeat -a to set multiple possible addresses
+
+2008-04-05 08:02  dermoth
+
+	* [r1977] NEWS, plugins/check_ntp.c, plugins/check_ntp_peer.c:
+	  check_ntp and check_ntp_peer now show proper jitter/stratum
+	  thresholds longopts in --help
+
+2008-04-04 10:11  dermoth
+
+	* [r1976] lib/extra_opts.c, lib/parse_ini.c, lib/tests/test_ini.c,
+	  lib/tests/test_opts.c:
+	  make parse_ini die like in N::P if section isn't found
+
+2008-04-02 09:19  dermoth
+
+	* [r1974] lib/Makefile.config-opts, lib/tests/Makefile.config-opts:
+	  Delete obsolete files
+
+2008-04-02 09:11  dermoth
+
+	* [r1973] configure.in, lib/Makefile.am, lib/parse_ini.c,
+	  lib/tests/Makefile.am, lib/tests/test_ini.t,
+	  lib/tests/test_opts.t, po/de.po, po/fr.po, po/nagios-plugins.pot:
+	  - Add --enable-extra-opts configure option for compiling
+	  extra-opts support - Auto-update po/pot files
+
+2008-04-01 09:38  dermoth
+
+	* [r1972] lib/parse_ini.c:
+	  fix the obvious...
+
+2008-04-01 09:31  dermoth
+
+	* [r1971] lib/extra_opts.c, lib/extra_opts.h:
+	  np_extra_opts now retain pointers from argv so that plugins can
+	  still overwrite sensitive options
+
+2008-03-31 07:07  dermoth
+
+	* [r1970] gl:
+	  update svn:ignore property (last gnulib update added many
+	  auto-generated files)
+
+2008-03-31 07:04  dermoth
+
+	* [r1969] lib/extra_opts.c, lib/tests/test_opts.c:
+	  Fix bug with --extra-opts as last argument with no value Fix
+	  problem with duplicate function name (function should eventually
+	  move to /lib)
+
+2008-03-31 05:31  dermoth
+
+	* [r1968] lib/extra_opts.c, lib/extra_opts.h, lib/parse_ini.c,
+	  lib/parse_ini.h, lib/tests/test_ini.c, lib/tests/test_opts.c:
+	  Fix for last commit - I accidentaly broke my local Makefile and
+	  tests weren't being re-compiled.
+
+2008-03-30 14:02  dermoth
+
+	* [r1967] lib/extra_opts.c, lib/extra_opts.h,
+	  lib/tests/test_opts.c:
+	  - Remove the last argument of np_extra_opts - Code cleanups and
+	  comments
+
+2008-03-29 15:35  dermoth
+
+	* [r1966] lib/tests:
+	  Update svn:ignore property
+
+2008-03-26 09:46  dermoth
+
+	* [r1962] lib/parse_ini.c, lib/parse_ini.h, lib/tests/plugins.ini,
+	  lib/tests/test_opts.c:
+	  write ini-file lookup function + tests
+
+2008-03-24 07:02  dermoth
+
+	* [r1961] lib/extra_opts.c, lib/extra_opts.h,
+	  lib/tests/config-opts.ini, lib/tests/test_opts.c,
+	  lib/tests/test_opts.t:
+	  Add extra-opts argument parsing with tests
+
+2008-03-24 06:28  dermoth
+
+	* [r1960] lib/parse_ini.c, lib/parse_ini.h:
+	  Replace broken usage of NAGIOS_CONFIG_PATH with a stub function
+	  (that will try to find a config file in the future...) Allow NULL
+	  locator (default file/section)
+
+2008-03-20 11:53  dermoth
+
+	* [r1959] plugins/check_dig.c:
+	  - Fix bug #1920671 - Make --help output looks nice
+
+2008-03-18 10:59  tonvoon
+
+	* [r1955] plugins/tests/check_procs.t:
+	  Include test for check_procs, using input file
+
+2008-03-18 01:21  tonvoon
+
+	* [r1954] plugins/check_procs.c, plugins/tests/var,
+	  plugins/tests/var/ps-axwo.darwin,
+	  plugins/tests/var/ps_axwo.debian:
+	  Updated check_procs with a hidden --input-file option. Include
+	  some sample outputs for testing
+
+2008-03-17 23:08  tonvoon
+
+	* [r1953] plugins/t/check_nagios.t:
+	  Don't run check_nagios tests on Solaris, because of pst3
+	  requirement
+
+2008-03-16 18:10  dermoth
+
+	* [r1951] lib/tests/config-dos.ini, lib/tests/plugin.ini,
+	  lib/tests/test_ini.c:
+	  Add tests: - DOS-newline ini file - section defined twice
+
+2008-03-15 22:42  dermoth
+
+	* [r1950] lib/parse_ini.c:
+	  parse_ini now reads the default section if the request one can't
+	  be found. All tests should return ok now.
+
+2008-03-15 21:51  dermoth
+
+	* [r1949] lib/parse_ini.c:
+	  Oops - this line shouldn't have been here (doesn't even work
+	  anyways) ;)
+
+2008-03-15 20:47  dermoth
+
+	* [r1948] lib/parse_ini.c, lib/tests/plugin.ini,
+	  lib/tests/test_ini.c:
+	  - Make equal-less parameters illegal - parameters without
+	  argument after '=' are now assumed to be argument-less - Add a
+	  testcase for space in stanza and various argument-less parameters
+
+2008-03-15 20:34  dermoth
+
+	* [r1947] lib/parse_ini.c:
+	  Fix handling of leading and trailing spaces in stanza
+
+2008-03-15 16:17  dermoth
+
+	* [r1946] lib/parse_ini.c, lib/tests/test_ini.c:
+	  Fix segfault in test_ini.c and uncomment the affected tests Fix
+	  bug in stanza parsing where full section could be skipped Fix
+	  single-argument options
+
+2008-03-15 04:51  dermoth
+
+	* [r1945] lib/parse_ini.c, lib/parse_ini.h, lib/tests/test_ini.c,
+	  lib/tests/test_ini.t:
+	  This commit consist of two changes: 1. Make np_get_defaults
+	  return a linked list instead of a string. It will then be easy to
+	  convert the linked list back to an argument array. 2. Fix tests
+	  3-4 of test_ini.c.
+	  
+	  A test_ini.t was added too. parse_ini and test_ini aren't
+	  included yet in the build makefiles.
+
+2008-03-15 00:14  psychotrahe
+
+	* [r1944] plugins/check_http.c:
+	  Add port to Host Header to prevent problems with non default
+	  ports (Christophe Dupre #1881898)
+
+2008-03-14 23:47  psychotrahe
+
+	* [r1943] NEWS, plugins/check_dig.c:
+	  Added -A/--dig-arguments to check_dig (#1889453/#1874041)
+
+2008-03-14 22:35  psychotrahe
+
+	* [r1942] plugins/check_smtp.c:
+	  Enhanced check_smtp to actually print invalid response text
+	  (#1911239)
+
+2008-03-14 15:44  tonvoon
+
+	* [r1941] NEWS, plugins-root/Makefile.am, plugins/Makefile.am:
+	  Fixed 64 bit pst3 when tries to link to gettext. Gettext linked
+	  dynamically, if necessary
+
+2008-03-14 10:17  dermoth
+
+	* [r1940] gl/charset.alias, gl/configmake.h, gl/math.h,
+	  gl/ref-add.sed, gl/ref-del.sed, gl/stdio.h, gl/stdlib.h,
+	  gl/string.h, gl/unistd.h:
+	  These files are generated automatically during the make process,
+	  and removed by make clean.
+
+2008-03-11 00:37  tonvoon
+
+	* [r1939] configure.in, gl/m4/mbstate_t.m4:
+	  Possible fix for HP-UX compile problems of regex_internal.c
+
+2008-03-11 00:10  tonvoon
+
+	* [r1938] configure.in, lib/utils_base.c, plugins-root/Makefile.am,
+	  plugins/check_http.c, plugins/check_smtp.c, plugins/common.h:
+	  Fixed link -m64 problems on pst3 for solaris. Fixed
+	  _FILE_OFFSET_BITS redefinition warnings. Fixed helper ar error in
+	  ./configure
+
+2008-02-28 16:21  tonvoon
+
+	* [r1937] NEWS, configure.in, plugins-root/Makefile.am,
+	  plugins-root/pst3.c, plugins/check_procs.c,
+	  plugins/t/check_procs.t:
+	  Reverted check_procs for solaris back to using pst3 due to
+	  truncation for argument fields using other methods
+
+2008-02-28 12:54  tonvoon
+
+	* [r1936] tools/build_perl_modules:
+	  Fix where PERL5LIB is blank
+
+2008-02-18 11:23  tonvoon
+
+	* [r1935] NEWS:
+	  Added CVE MITRE tracking number
+
+2008-02-13 20:36  psychotrahe
+
+	* [r1934] NEWS, plugins/check_pgsql.c:
+	  check_pgsql now builds with postgres lib v8.3 (Jan Wagner
+	  #1878972)
+
+2008-02-13 19:14  psychotrahe
+
+	* [r1933] plugins/check_disk.c:
+	  Fix --local argument handling (Jan Wagner #1878971)
+
+2008-02-13 15:10  dermoth
+
+	* [r1932] plugins/check_disk.c:
+	  Fix broken intending (The whole file use spaces only except my
+	  last patch and 1-3 other places).
+
+2008-02-13 11:37  dermoth
+
+	* [r1931] gl:
+	  Add two files to svn:ignore
+
+2008-02-13 11:05  dermoth
+
+	* [r1930] lib/utils_base.c, plugins/check_disk.c:
+	  set_thresholds now let the user free the thresolds. (P.S.: When
+	  you set twice the thresholds for a path in check disk (like using
+	  -C followed by -p ) it overrides them. All new elements are
+	  created with np_add_parameter which initialises the thresholds to
+	  NULL.)
+
+2008-02-13 04:18  dermoth
+
+	* [r1929] NEWS:
+	  News, nothing else.
+
+2008-02-13 04:16  dermoth
+
+	* [r1928] plugins/common.h:
+	  This floorf workaround is Nnot needed anymore since floorf is
+	  part of Gnulib
+
+2008-02-13 04:07  dermoth
+
+	* [r1927] lib/tests/test_base64.c:
+	  Reverting patch to test 8-bit data: Still broken on Solaris
+	  (7-bit works as before)
+
+2008-02-12 12:03  dermoth
+
+	* [r1926] gl/Makefile.am, gl/base64.c, gl/base64.h,
+	  gl/charset.alias, gl/configmake.h, gl/floor.c, gl/floorf.c,
+	  gl/m4/base64.m4, gl/m4/floorf.m4, gl/m4/gnulib-cache.m4,
+	  gl/m4/gnulib-comp.m4, gl/m4/math_h.m4, gl/math.h, gl/math.in.h,
+	  gl/ref-add.sed, gl/ref-del.sed, gl/stdio.h, gl/stdlib.h,
+	  gl/string.h, gl/unistd.h, lib/Makefile.am, lib/base64.c,
+	  lib/base64.h, lib/tests/Makefile.am, lib/tests/test_base64.c,
+	  plugins/check_http.c, plugins/check_smtp.c:
+	  Import Gnulib floorf and base64 and removed our old base64
+	  library.
+
+2008-02-12 11:07  dermoth
+
+	* [r1925] build-aux/config.rpath, build-aux/link-warning.h,
+	  gl/Makefile.am, gl/alloca.c, gl/alloca.in.h, gl/alloca_.h,
+	  gl/asnprintf.c, gl/asprintf.c, gl/basename.c, gl/c-strtod.c,
+	  gl/cloexec.c, gl/config.charset, gl/creat-safer.c, gl/dirname.c,
+	  gl/dirname.h, gl/dup-safer.c, gl/error.c, gl/error.h, gl/exit.h,
+	  gl/exitfail.c, gl/exitfail.h, gl/fcntl--.h, gl/fcntl-safer.h,
+	  gl/fd-safer.c, gl/float+.h, gl/float.in.h, gl/fsusage.c,
+	  gl/fsusage.h, gl/full-read.c, gl/full-read.h, gl/full-write.c,
+	  gl/full-write.h, gl/gai_strerror.c, gl/getaddrinfo.c,
+	  gl/getaddrinfo.h, gl/gethostname.c, gl/getloadavg.c, gl/getopt.c,
+	  gl/getopt.in.h, gl/getopt1.c, gl/getopt_.h, gl/getopt_int.h,
+	  gl/gettext.h, gl/inet_ntop.c, gl/inet_ntop.h, gl/intprops.h,
+	  gl/localcharset.c, gl/localcharset.h, gl/m4/absolute-header.m4,
+	  gl/m4/alloca.m4, gl/m4/extensions.m4, gl/m4/float_h.m4,
+	  gl/m4/fsusage.m4, gl/m4/getaddrinfo.m4, gl/m4/getloadavg.m4,
+	  gl/m4/gettext.m4, gl/m4/gnulib-cache.m4, gl/m4/gnulib-common.m4,
+	  gl/m4/gnulib-comp.m4, gl/m4/iconv.m4, gl/m4/include_next.m4,
+	  gl/m4/intdiv0.m4, gl/m4/intl.m4, gl/m4/intlmacosx.m4,
+	  gl/m4/intmax_t.m4, gl/m4/lib-link.m4, gl/m4/localcharset.m4,
+	  gl/m4/lock.m4, gl/m4/longdouble.m4, gl/m4/longlong.m4,
+	  gl/m4/malloc.m4, gl/m4/mbchar.m4, gl/m4/mbiter.m4,
+	  gl/m4/mbrtowc.m4, gl/m4/memchr.m4, gl/m4/minmax.m4,
+	  gl/m4/netinet_in_h.m4, gl/m4/po.m4, gl/m4/printf-posix.m4,
+	  gl/m4/regex.m4, gl/m4/snprintf.m4, gl/m4/socklen.m4,
+	  gl/m4/stdint.m4, gl/m4/stdio_h.m4, gl/m4/stdlib_h.m4,
+	  gl/m4/strcase.m4, gl/m4/strdup.m4, gl/m4/strerror.m4,
+	  gl/m4/string_h.m4, gl/m4/strndup.m4, gl/m4/strnlen.m4,
+	  gl/m4/sys_socket_h.m4, gl/m4/uintmax_t.m4, gl/m4/ulonglong.m4,
+	  gl/m4/unistd_h.m4, gl/m4/vasnprintf.m4, gl/m4/vasprintf.m4,
+	  gl/m4/vsnprintf.m4, gl/m4/wchar.m4, gl/m4/wctype.m4,
+	  gl/m4/wcwidth.m4, gl/m4/wint_t.m4, gl/malloc.c, gl/mbchar.c,
+	  gl/mbchar.h, gl/mbuiter.h, gl/memchr.c, gl/minmax.h,
+	  gl/mountlist.c, gl/mountlist.h, gl/netinet_in.in.h,
+	  gl/open-safer.c, gl/pipe-safer.c, gl/printf-args.c,
+	  gl/printf-args.h, gl/printf-parse.c, gl/printf-parse.h,
+	  gl/ref-add.sin, gl/ref-del.sin, gl/regcomp.c, gl/regex.c,
+	  gl/regex.h, gl/regex_internal.c, gl/regex_internal.h,
+	  gl/regexec.c, gl/safe-read.c, gl/safe-read.h, gl/safe-write.c,
+	  gl/safe-write.h, gl/size_max.h, gl/snprintf.c, gl/snprintf.h,
+	  gl/socket_.h, gl/stdbool.in.h, gl/stdbool_.h, gl/stdint.in.h,
+	  gl/stdint_.h, gl/stdio.in.h, gl/stdlib.in.h, gl/strcase.h,
+	  gl/strcasecmp.c, gl/strdup.c, gl/strdup.h, gl/strerror.c,
+	  gl/string.in.h, gl/stripslash.c, gl/strncasecmp.c, gl/strndup.c,
+	  gl/strndup.h, gl/strnlen.c, gl/strnlen.h, gl/strnlen1.c,
+	  gl/strnlen1.h, gl/sys_socket.in.h, gl/unistd--.h,
+	  gl/unistd-safer.h, gl/unistd.in.h, gl/unistd_.h, gl/vasnprintf.c,
+	  gl/vasnprintf.h, gl/vasprintf.c, gl/vasprintf.h, gl/vsnprintf.c,
+	  gl/vsnprintf.h, gl/wchar.in.h, gl/wchar_.h, gl/wctype.in.h,
+	  gl/wctype_.h, gl/wcwidth.h, gl/xalloc-die.c, gl/xalloc.h,
+	  gl/xmalloc.c, gl/xsize.h, gl/xstrndup.c, gl/xstrndup.h,
+	  plugins/common.h, po/Makevars:
+	  Sync to latest Gnulib
+
+2008-02-11 21:36  tonvoon
+
+	* [r1924] REQUIREMENTS:
+	  Hints re: SSL features
+
+2008-02-11 21:23  tonvoon
+
+	* [r1923] configure.in:
+	  Added link to FAQ for redhat spopen problem
+
+2008-01-31 11:52  dermoth
+
+	* [r1920] plugins-root/check_dhcp.c, plugins-root/check_icmp.c,
+	  plugins-root/pst3.c:
+	  Bump plugins-root/ to GPLv3
+
+2008-01-31 11:45  dermoth
+
+	* [r1919] plugins/common.h, plugins/netutils.h, plugins/popen.h,
+	  plugins/runcmd.h:
+	  Bump plugins/ to GPLv3 (header files)
+
+2008-01-31 11:27  dermoth
+
+	* [r1918] plugins/negate.c, plugins/netutils.c, plugins/popen.c,
+	  plugins/runcmd.c, plugins/sslutils.c, plugins/urlize.c,
+	  plugins/utils.c:
+	  Bump plugins/ to GPLv3 (non-plugind files)
+
+2008-01-31 10:44  dermoth
+
+	* [r1917] plugins/check_overcr.c, plugins/check_pgsql.c,
+	  plugins/check_ping.c, plugins/check_procs.c,
+	  plugins/check_radius.c, plugins/check_real.c,
+	  plugins/check_smtp.c, plugins/check_snmp.c, plugins/check_ssh.c,
+	  plugins/check_swap.c, plugins/check_tcp.c, plugins/check_time.c,
+	  plugins/check_ups.c, plugins/check_users.c:
+	  Bump plugin/ to GPLv3 (check_overcr to check_users)
+
+2008-01-30 10:53  dermoth
+
+	* [r1916] plugins/check_apt.c, plugins/check_by_ssh.c,
+	  plugins/check_cluster.c, plugins/check_dig.c,
+	  plugins/check_disk.c, plugins/check_dns.c, plugins/check_dummy.c,
+	  plugins/check_fping.c, plugins/check_game.c,
+	  plugins/check_hpjd.c, plugins/check_http.c,
+	  plugins/check_ide_smart.c, plugins/check_ldap.c,
+	  plugins/check_load.c, plugins/check_mrtg.c,
+	  plugins/check_mrtgtraf.c, plugins/check_mysql.c,
+	  plugins/check_mysql_query.c, plugins/check_nagios.c,
+	  plugins/check_nt.c, plugins/check_ntp.c,
+	  plugins/check_ntp_peer.c, plugins/check_ntp_time.c,
+	  plugins/check_nwstat.c:
+	  Bump plugins/ to GPLv3 (check_apt to check_nwstat)
+
+2008-01-30 09:46  dermoth
+
+	* [r1915] lib/utils_disk.c, lib/utils_tcp.c:
+	  details...
+
+2008-01-30 09:38  dermoth
+
+	* [r1914] lib/tests/test_base64.c, lib/tests/test_cmd.c,
+	  lib/tests/test_disk.c, lib/tests/test_ini.c,
+	  lib/tests/test_tcp.c, lib/tests/test_utils.c:
+	  Bump lib/tests to GPLv3
+
+2008-01-30 09:33  dermoth
+
+	* [r1913] lib/parse_ini.c, lib/utils_base.c, lib/utils_cmd.c,
+	  lib/utils_disk.c, lib/utils_tcp.c:
+	  Bump /lib to GPLv3
+
+2008-01-30 09:03  dermoth
+
+	* [r1912] lib/parse_ini.c:
+	  new standardized GPLv3 header (will be applied to all C files)
+
+2008-01-29 10:27  dermoth
+
+	* [r1911] NEWS, plugins/check_ntp_peer.c:
+	  check_ntp_peer now checks for the LI_ALARM flag
+
+2008-01-29 08:55  dermoth
+
+	* [r1910] NEWS:
+	  typo
+
+2008-01-29 08:54  dermoth
+
+	* [r1909] NEWS, plugins/check_ntp.c, plugins/check_ntp_time.c:
+	  Fix bugs and flaws in best offset server selection of
+	  check_ntp_time and (deprecated) check_ntp
+
+2008-01-26 15:55  dermoth
+
+	* [r1908] NEWS, THANKS.in, plugins/check_ntp_peer.c,
+	  plugins/check_ntp_time.c:
+	  Fix help text of check_ntp_* (Bug #1880095)
+
+2008-01-15 11:34  dermoth
+
+	* [r1907] NEWS, plugins/check_disk.c:
+	  Fix check_disk disk usage calculation when using --group=NAME
+	  (related to bug #1348746)
+
+2008-01-15 09:40  dermoth
+
+	* [r1906] NEWS, configure.in:
+	  Add AC_SYS_LARGEFILE to configure.in (check_disk should now work
+	  with large file systems (2TB+) on all archs that supports it)
+
+2008-01-10 07:49  dermoth
+
+	* [r1905] lib/tests/test_cmd.c:
+	  Add a return-code check (also test cmd_run without out/err
+	  buffers)
+
+2008-01-09 04:27  dermoth
+
+	* [r1904] tools/tinderbox_build:
+	  make test-debug generate lots of false errors in tinderbox.
+	  Turning off until we find a solution (so al least we can watch
+	  the tinderbox for breakages again)
+
+2008-01-08 23:08  psychotrahe
+
+	* [r1903] plugins/check_dns.c:
+	  Fixed reverse lookup damaged by previous commit
+
+2008-01-08 16:05  tonvoon
+
+	* [r1902] plugins/t/check_dns.t:
+	  Changed default test values for check_dns (using nagios.com)
+
+2008-01-08 11:57  tonvoon
+
+	* [r1901] plugins/t/check_ftp.t, plugins/t/check_imap.t,
+	  plugins/t/check_jabber.t, plugins/t/check_pop.t,
+	  plugins/t/check_tcp.t:
+	  Reverted commits 1898 and 1899 due to reversion of 1879
+
+2008-01-08 11:51  tonvoon
+
+	* [r1900] NEWS, plugins/check_tcp.c:
+	  Reverted commit 1879 where an invalid hostname returns UNKNOWN -
+	  back to CRITICAL
+
+2008-01-08 11:35  dermoth
+
+	* [r1899] plugins/t/check_imap.t, plugins/t/check_jabber.t,
+	  plugins/t/check_pop.t:
+	  more r1879 fixes
+
+2008-01-08 11:27  dermoth
+
+	* [r1898] plugins/t/check_ftp.t, plugins/t/check_tcp.t:
+	  Fix test breakages for commit r1879: check_tcp now returns
+	  UNKNOWN with an invalid hostname on command line
+
+2008-01-08 02:06  hweiss
+
+	* [r1897] plugins-root/check_icmp.c:
+	  Hide some debug output which was printed even without "-v" (under
+	  certain circumstances).
+
+2008-01-08 01:51  hweiss
+
+	* [r1896] plugins-root/check_icmp.c:
+	  Fix the handling of ICMP packets which are not echo replies (such
+	  as destination unreachable messages) or which are not directed at
+	  us.
+
+2008-01-08 01:43  hweiss
+
+	* [r1895] plugins-root/check_icmp.c:
+	  Get rid of a cast which increases the required alignment.
+
+2008-01-08 01:40  hweiss
+
+	* [r1894] plugins-root/check_icmp.c:
+	  Mark some constant strings "const".
+
+2008-01-07 02:04  hweiss
+
+	* [r1893] plugins/netutils.c:
+	  Support "[IPv6]" address syntax.
+
+2008-01-07 01:59  hweiss
+
+	* [r1892] plugins/check_http.c:
+	  My assumption that "-H example.com:80" didn't work (see my
+	  previous commit) was wrong, it worked if used together with "-I".
+	  So, here's support for "-H [IPv6]:port", "-H [IPv6]", "-H IPv6",
+	  "-H IPv4:port", "-H IPv4", and "-H host:port".
+
+2008-01-06 19:45  hweiss
+
+	* [r1891] plugins/check_http.c:
+	  Remove support for specifying the port number using "-H
+	  example.com:80". Since this didn't work anyway (because ":80"
+	  wasn't stripped from the "host_name" after extracting the
+	  "server_port"), nobody can be using this syntax, and it prevents
+	  "-H" from accepting IPv6 addresses (neufeind - 1865082). IMO,
+	  fixing it to recognize both ":80" and IPv6 addresses isn't worth
+	  it, as the ":80" syntax doesn't seem very useful for Nagios
+	  plugins (given the way how they are usually called in Nagios
+	  command definitions).
+
+2008-01-06 15:44  dermoth
+
+	* [r1890] lib/tests/test_base64.c:
+	  Fix base64 test (known string wasn't null-terminated)
+
+2008-01-06 07:04  dermoth
+
+	* [r1889] lib/tests/test_cmd.c:
+	  Fix tinderbox breakage
+
+2008-01-06 00:10  psychotrahe
+
+	* [r1888] plugins/check_ldap.c:
+	  If unspecified set LDAP_OPT_SUCCESS to LDAP_SUCCESS (Sergei
+	  Haramundanis - #1498923)
+
+2008-01-05 14:09  dermoth
+
+	* [r1887] NEWS, plugins/check_ntp.c, plugins/check_ntp_time.c:
+	  Fix Bug #1862300: check_ntp_time segfault in 1.4.11 (Also apply
+	  to check_ntp)
+
+2008-01-05 01:06  psychotrahe
+
+	* [r1886] NEWS, THANKS.in, plugins/check_dns.c:
+	  check_dns now sorts addresses for -a support with multiple
+	  address replies (Matthias Urlichs #1724052)
+
+2008-01-04 22:10  psychotrahe
+
+	* [r1885] plugins/check_procs.c:
+	  Cleaned check_procs usage output (Ferenc Wagner #1862218)
+
+2007-12-21 14:19  hweiss
+
+	* [r1884] plugins-root/check_icmp.c:
+	  Fix INADDR_NONE value (for systems which don't define it).
+
+2007-12-21 14:17  hweiss
+
+	* [r1883] plugins-root/check_icmp.c:
+	  Include <sys/sockio.h> (if available) to get SIOCGIFADDR defined
+	  on Solaris.
+
+2007-12-21 13:25  hweiss
+
+	* [r1882] NEWS, THANKS.in, plugins-root/check_icmp.c:
+	  New "-s" option to specify the source IP address (thanks to
+	  Harald Jenny for providing the patch and to Patrick Cervicek for
+	  looking into it!)
+
+2007-12-21 04:23  dermoth
+
+	* [r1881] plugins/check_ldap.c:
+	  Remove c formating from translated strings (makes translation
+	  easier)
+
+2007-12-19 18:41  hweiss
+
+	* [r1880] plugins/check_ldap.c:
+	  Fix the "--help" output.
+
+2007-12-19 10:08  tonvoon
+
+	* [r1879] NEWS, plugins/check_tcp.c:
+	  check_tcp now returns UNKNOWN with an invalid hostname on command
+	  line
+
+2007-12-17 11:47  tonvoon
+
+	* [r1877] NEWS, THANKS.in, plugins/check_nt.c:
+	  Add check_nt -v INSTANCES (Alessandro Ren)
+
+2007-12-13 23:17  tonvoon
+
+	* [r1876] plugins/check_nwstat.c:
+	  Fixed help output (Christian Mies)
+
+2007-12-13 23:12  tonvoon
+
+	* [r1875] NEWS:
+	  NEWS edited for consistent grammar
+
+2007-12-13 22:39  tonvoon
+
+	* [r1873] BUGS, ChangeLog, NEWS, configure.in, package.def:
+	  Preparation for 1.4.11
+
 2007-12-13 22:22  tonvoon
 
 	* [r1872] NEWS, THANKS.in, plugins-root/Makefile.am:
