@@ -367,7 +367,7 @@ print_help (void)
   printf (" %s\n", "-E, --skip-stderr[=n]");
   printf ("    %s\n", _("Ignore all or (if specified) first n lines on STDERR [optional]"));
   printf (" %s\n", "-f");
-  printf ("    %s\n", _("tells ssh to fork rather than create a tty [optional]"));
+  printf ("    %s\n", _("tells ssh to fork rather than create a tty [optional]. This will always return OK if ssh is executed"));
   printf (" %s\n","-C, --command='COMMAND STRING'");
   printf ("    %s\n", _("command to execute on the remote machine"));
   printf (" %s\n","-l, --logname=USERNAME");
