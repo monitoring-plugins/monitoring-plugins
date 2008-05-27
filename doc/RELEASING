@@ -23,10 +23,8 @@ tools/setup
 ./configure
 make dist
 
-ftp upload.sf.net
-anonymous/email
-bin
-cd /incoming
+sftp upload.sf.net
+cd uploads
 put file
 
 SF -> Submit News about release. Make sure it is called "Nagios Plugins" (with those caps)
