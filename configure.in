@@ -1531,9 +1531,9 @@ case $host in
 		AC_DEFINE(__bsd__,1,[bsd specific code in check_dhcp.c])
 	;;
 	*linux*)
-		AC_DEFINE(__linux__,1,[sun specific code in check_dhcp.c])
+		AC_DEFINE(__linux__,1,[linux specific code in check_dhcp.c])
 	;;
-	*sun* | solaris*)
+	*sun* | *solaris*)
 		AC_DEFINE(__sun__,1,[sun specific code in check_dhcp.c])
 	;;
 	*hpux*)  
