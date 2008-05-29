@@ -6,7 +6,7 @@ For the 1.4.11 release:
 
 1939578 - check_jabber: Always returns WARNING with Openfire server
 1939529 - check_tcp: Expiring SSL certs produce confusing messages
-1928399 - check_porcs METRIC_CPU should ignore kernel processes on FreeBSD
+1928399 - check_procs METRIC_CPU should ignore kernel processes on FreeBSD
 1922579 - check_ldap: ldap_init implicitly converted
 1904965 - check_apt: SECURITY_RE is not correct
 1894850 - check_ping: incorrectly parses ping6 output
