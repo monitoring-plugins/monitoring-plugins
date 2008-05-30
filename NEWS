@@ -1,5 +1,8 @@
 This file documents the major additions and syntax changes between releases.
 
+1.4.?? ??th ??? 200?
+	Fix Debian bug #460097: check_http --max-age broken (Hilko Bengen)
+
 1.4.12 27th May 2008
 	Added ./check_nt -v INSTANCES to count number of instances (Alessandro Ren)
 	New check_icmp -s option to specify the source IP address
