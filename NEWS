@@ -2,6 +2,7 @@ This file documents the major additions and syntax changes between releases.
 
 1.4.?? ??th ??? 200?
 	Fix Debian bug #460097: check_http --max-age broken (Hilko Bengen)
+	Updated Nagios::Plugin to 0.27
 
 1.4.12 27th May 2008
 	Added ./check_nt -v INSTANCES to count number of instances (Alessandro Ren)
