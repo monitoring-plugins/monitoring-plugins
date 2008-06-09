@@ -143,8 +143,10 @@ main (int argc, char **argv)
     }
   }
 
-  if (result == STATE_UNKNOWN)
+  if (result == STATE_UNKNOWN) {
     msg = (char *)_("No ANSWER SECTION found");
+    result = STATE_CRITICAL;
+  }
 
   /* If we get anything on STDERR, at least set warning */
   if(chld_err.buflen > 0) {
@@ -295,7 +297,10 @@ process_arguments (int argc, char **argv)
 int
 validate_arguments (void)
 {
-  return OK;
+  if (query_address != NULL)
+    return OK;
+  else
+    return ERROR;
 }
 
 
@@ -357,7 +362,7 @@ void
 print_usage (void)
 {
   printf (_("Usage:"));
-  printf ("%s -H <host> -l <query_address> [-p <server port>]\n", progname);
+  printf ("%s -l <query_address> [-H <host>] [-p <server port>]\n", progname);
   printf (" [-T <query type>] [-w <warning interval>] [-c <critical interval>]\n");
   printf (" [-t <timeout>] [-a <expected answer address>] [-v]\n");
 }
