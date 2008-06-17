@@ -81,9 +81,8 @@ static char **       myArgv;
  *	Prototypes
  */
 
-static int output_info(struct proc *proc_kvm, psinfo_t procinfo,char **proc_argv);
-static psinfo_t get_procinfo(struct proc *proc);
-static int HandleProc(struct proc *proc);
+static void output_info(struct proc *proc_kvm,char **proc_argv);
+static void HandleProc(struct proc *proc);
 
 /*----------------------------------------------------------------------------*/
 
@@ -147,12 +146,11 @@ int main (int argc, char **argv)
 
 /*----------------------------------------------------------------------------*/
 
-static int HandleProc(struct proc *proc)
+static void HandleProc(struct proc *proc)
 {
 	struct pid pid;
 	struct user *user;
-	psinfo_t procinfo;
-	char **proc_argv = 0;
+	char **proc_argv = NULL;
 
 	if(kvm_kread(kd, (unsigned long) proc->p_pidp, (char *) &pid, sizeof pid) == -1) {
 		perror("kvm_read error");
@@ -162,38 +160,36 @@ static int HandleProc(struct proc *proc)
 	user = kvm_getu(kd, proc);
 
 	if(kvm_getcmd(kd, proc, user, &proc_argv, NULL) == -1) {
-		return FAIL;
+		return;
 	}
 
-	procinfo = get_procinfo(proc);
-	return output_info(proc, procinfo, proc_argv);
+	if(proc_argv == NULL) {
+		return;
+	}
+
+	output_info(proc, proc_argv);
+	free(proc_argv);
 }
 
-static psinfo_t get_procinfo(struct proc *proc)
+static void output_info(struct proc *proc_kvm, char **proc_argv)
 {
 	char procpath[MAX_PATH];
 	psinfo_t procinfo;
 	int fd, len;
+	char *procname;
+	int i;
 
-	sprintf(procpath, "/proc/%d/psinfo", proc->p_pidp->pid_id);
+	sprintf(procpath, "/proc/%d/psinfo", proc_kvm->p_pidp->pid_id);
 
 	if ((fd = open(procpath, O_RDONLY)) >= 0)
 	{
 		if ((len = read(fd, &procinfo, sizeof(procinfo))) != sizeof(procinfo))
 		{
-			fprintf(stderr,"%s: Read error of psingo structure (%d)\n", procpath, len);
+			fprintf(stderr,"%s: Read error of psinfo structure (%d)\n", procpath, len);
 			exit(2);
 		}
 		close(fd);
 	}
-	return procinfo;
-
-}
-
-static int output_info(struct proc *proc_kvm, psinfo_t procinfo, char **proc_argv)
-{
-	char *procname;
-	int i;
 
 	if((procname = strrchr(proc_argv[0], '/')) != NULL)
 		procname++;
@@ -216,7 +212,5 @@ static int output_info(struct proc *proc_kvm, psinfo_t procinfo, char **proc_arg
 	}
 
 	printf("\n");
-
-	return OK;
 }
 
