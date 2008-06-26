@@ -8,7 +8,7 @@ EXTRA_DIST = config.rpath \
 	NPTest.pm contrib pkg nagios-plugins.spec \
 	config_test/Makefile config_test/run_tests config_test/child_test.c \
 	perlmods tools/build_perl_modules \
-	tools/tinderbox_build
+	tools/tinderbox_build @TAP_DIR@
 
 ACLOCAL_AMFLAGS = -I gl/m4 -I m4
 
@@ -22,7 +22,10 @@ dist-hook:
 install-root:
 	cd plugins-root && $(MAKE) $@
 
-test test-debug:
+tap:
+	cd @TAP_DIR@ && $(MAKE)
+
+test test-debug: tap
 	cd lib && $(MAKE) $@
 	if test "$(PERLMODS_DIR)" != ""; then cd perlmods && $(MAKE) $@; fi
 	cd plugins && $(MAKE) $@

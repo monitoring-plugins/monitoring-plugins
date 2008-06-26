@@ -1,0 +1,4 @@
+Changes to tap-1.01.tar.gz from http://jc.ngo.org.uk/trac-bin/trac.cgi/wiki/LibTap:
+
+Added vasprintf from gnulib (see http://jc.ngo.org.uk/trac-bin/trac.cgi/ticket/32)
+Added -UHAVE_LIBPTHREAD (see http://nagiosplugins.org/faq/libtap)

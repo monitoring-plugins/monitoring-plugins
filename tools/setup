@@ -49,3 +49,6 @@ fi
 if [ $docbook = 1 ] ; then
 	cd doc && make
 fi
+
+# Untar libtap
+cd external && tar --gzip -xf tap-1.01-altinity.tar.gz
