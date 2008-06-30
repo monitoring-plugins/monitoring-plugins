@@ -2,13 +2,15 @@
 
 SUBDIRS = gl lib plugins plugins-scripts plugins-root po @PERLMODS_DIR@
 
+# Have to list TAP_DIR manually to get in distribution
 EXTRA_DIST = config.rpath \
 	ABOUT-NLS ACKNOWLEDGEMENTS AUTHORS BUGS CODING FAQ LEGAL NEWS \
 	REQUIREMENTS SUPPORT THANKS \
 	NPTest.pm contrib pkg nagios-plugins.spec \
 	config_test/Makefile config_test/run_tests config_test/child_test.c \
 	perlmods tools/build_perl_modules \
-	tools/tinderbox_build @TAP_DIR@
+	tools/tinderbox_build \
+	external/tap-1.01
 
 ACLOCAL_AMFLAGS = -I gl/m4 -I m4
 
