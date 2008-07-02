@@ -5,7 +5,8 @@ noinst_PROGRAMS = @EXTRA_TEST@
 TESTS = @EXTRA_TEST@
 check_PROGRAMS = @EXTRA_TEST@
 
-INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl -I$(top_srcdir)/plugins
+TAP_LIB_DIR = $(top_srcdir)/@TAP_DIR@/src
+INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl -I$(top_srcdir)/plugins -I$(TAP_LIB_DIR)
 
 EXTRA_PROGRAMS = test_utils test_disk test_tcp test_cmd test_base64 test_ini test_opts
 
@@ -14,8 +15,6 @@ np_test_files = config-dos.ini config-opts.ini config-tiny.ini plugin.ini plugin
 EXTRA_DIST = $(np_test_scripts) $(np_test_files)
 
 LIBS = @LIBINTL@
-
-TAP_LIB_DIR = $(top_srcdir)/@TAP_DIR@/src
 
 test_utils_SOURCES = test_utils.c
 test_utils_CFLAGS = -g -I..
