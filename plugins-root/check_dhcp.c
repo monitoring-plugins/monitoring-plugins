@@ -195,7 +195,6 @@ typedef struct requested_server_struct{
 #define DHCP_INFINITE_TIME              0xFFFFFFFF
 
 #define DHCP_BROADCAST_FLAG 32768
-#define DHCP_UNICAST_FLAG   0
 
 #define DHCP_SERVER_PORT   67
 #define DHCP_CLIENT_PORT   68
@@ -767,7 +766,7 @@ int create_dhcp_socket(void){
 	        }
 
         /* set the broadcast option - we need this to listen to DHCP broadcast messages */
-        if(setsockopt(sock,SOL_SOCKET,SO_BROADCAST,(char *)&flag,sizeof flag)<0){
+        if(!unicast && setsockopt(sock,SOL_SOCKET,SO_BROADCAST,(char *)&flag,sizeof flag)<0){
 		printf(_("Error: Could not set broadcast option on DHCP socket!\n"));
 		exit(STATE_UNKNOWN);
 	        }
