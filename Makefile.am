@@ -27,7 +27,7 @@ install-root:
 tap:
 	cd @TAP_DIR@ && $(MAKE)
 
-test test-debug: tap
+test test-debug:
 	cd lib && $(MAKE) $@
 	if test "$(PERLMODS_DIR)" != ""; then cd perlmods && $(MAKE) $@; fi
 	cd plugins && $(MAKE) $@
