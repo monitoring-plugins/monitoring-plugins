@@ -41,8 +41,8 @@ const char *copyright = "2000-2008";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
-#include "popen.h"
 #include "utils.h"
+#include "utils_cmd.h"
 #include "regex.h"
 
 #include <pwd.h>
@@ -129,8 +129,9 @@ main (int argc, char **argv)
 	int expected_cols = PS_COLS - 1;
 	int warn = 0; /* number of processes in warn state */
 	int crit = 0; /* number of processes in crit state */
-	int i = 0;
+	int i = 0, j = 0;
 	int result = STATE_UNKNOWN;
+	output chld_out, chld_err;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -153,41 +154,27 @@ main (int argc, char **argv)
 	mypid = getpid();
 
 	/* Set signal handling and alarm timeout */
-	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
-		usage4 (_("Cannot catch SIGALRM"));
+	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR) {
+		die (STATE_UNKNOWN, _("Cannot catch SIGALRM"));
 	}
-	alarm (timeout_interval);
+	(void) alarm ((unsigned) timeout_interval);
 
 	if (verbose >= 2)
 		printf (_("CMD: %s\n"), PS_COMMAND);
 
 	if (input_filename == NULL) {
-		ps_input = spopen (PS_COMMAND);
-		if (ps_input == NULL) {
-			printf (_("Could not open pipe: %s\n"), PS_COMMAND);
-			return STATE_UNKNOWN;
+		result = cmd_run( PS_COMMAND, &chld_out, &chld_err, 0);
+		if (chld_err.lines > 0) {
+			printf ("%s: %s", _("System call sent warnings to stderr"), chld_err.line[0]);
+			exit(STATE_WARNING);
 		}
-		child_stderr = fdopen (child_stderr_array[fileno (ps_input)], "r");
-		if (child_stderr == NULL)
-			printf (_("Could not open stderr for %s\n"), PS_COMMAND);
 	} else {
-		ps_input = fopen(input_filename, "r");
-		if (ps_input == NULL) {
-			die( STATE_UNKNOWN, _("Error opening %s\n"), input_filename );
-		}
+		result = cmd_file_read( input_filename, &chld_out, 0);
 	}
 
-	/* flush first line */
-	fgets (input_buffer, MAX_INPUT_BUFFER - 1, ps_input);
-	while ( input_buffer[strlen(input_buffer)-1] != '\n' )
-		fgets (input_buffer, MAX_INPUT_BUFFER - 1, ps_input);
-
-	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, ps_input)) {
-		asprintf (&input_line, "%s", input_buffer);
-		while ( input_buffer[strlen(input_buffer)-1] != '\n' ) {
-			fgets (input_buffer, MAX_INPUT_BUFFER - 1, ps_input);
-			asprintf (&input_line, "%s%s", input_line, input_buffer);
-		}
+	/* flush first line: j starts at 1 */
+	for (j = 1; j < chld_out.lines; j++) {
+		input_line = chld_out.line[j];
 
 		if (verbose >= 3)
 			printf ("%s", input_line);
@@ -283,27 +270,9 @@ main (int argc, char **argv)
 		}
 	}
 
-	/* If we get anything on STDERR, at least set warning */
-	if (input_filename == NULL) {
-		while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
-			if (verbose)
-				printf ("STDERR: %s", input_buffer);
-			result = max_state (result, STATE_WARNING);
-			printf (_("System call sent warnings to stderr\n"));
-		}
-	
-		(void) fclose (child_stderr);
-
-		/* close the pipe */
-		if (spclose (ps_input)) {
-			printf (_("System call returned nonzero status\n"));
-			result = max_state (result, STATE_WARNING);
-		}
-	}
-
 	if (found == 0) {							/* no process lines parsed so return STATE_UNKNOWN */
 		printf (_("Unable to read output\n"));
-		return result;
+		return STATE_UNKNOWN;
 	}
 
 	if ( result == STATE_UNKNOWN ) 
