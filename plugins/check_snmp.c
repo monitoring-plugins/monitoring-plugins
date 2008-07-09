@@ -228,14 +228,14 @@ main (int argc, char **argv)
 
 	strncat(perfstr, "| ", sizeof(perfstr)-strlen(perfstr)-1);
 	while (ptr) {
-		char *foo;
+		char *foo, *ptr2;
 		unsigned int copylen;
 
 		foo = strstr (ptr, delimiter);
 		copylen = foo-ptr;
 		if (copylen > sizeof(perfstr)-strlen(perfstr)-1)
 			copylen = sizeof(perfstr)-strlen(perfstr)-1;
-		strncat(perfstr, ptr, copylen);
+		ptr2 = ptr;
 		ptr = foo; 
 
 		if (ptr == NULL)
@@ -368,11 +368,15 @@ main (int argc, char **argv)
 
 		i++;
 
-		strncat(perfstr, "=", sizeof(perfstr)-strlen(perfstr)-1);
-		strncat(perfstr, show, sizeof(perfstr)-strlen(perfstr)-1);
-		if (type)
-			strncat(perfstr, type, sizeof(perfstr)-strlen(perfstr)-1);
-		strncat(perfstr, " ", sizeof(perfstr)-strlen(perfstr)-1);
+		if (is_numeric(show)) {
+			strncat(perfstr, ptr2, copylen);
+			strncat(perfstr, "=", sizeof(perfstr)-strlen(perfstr)-1);
+			strncat(perfstr, show, sizeof(perfstr)-strlen(perfstr)-1);
+
+			if (type)
+				strncat(perfstr, type, sizeof(perfstr)-strlen(perfstr)-1);
+			strncat(perfstr, " ", sizeof(perfstr)-strlen(perfstr)-1);
+		}
 
 	}	/* end while (ptr) */
 
