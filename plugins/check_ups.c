@@ -635,7 +635,7 @@ print_help (void)
 	printf ("%s\n", _("This plugin attempts to determine the status of a UPS (Uninterruptible Power"));
   printf ("%s\n", _("Supply) on a local or remote host. If the UPS is online or calibrating, the"));
   printf ("%s\n", _("plugin will return an OK state. If the battery is on it will return a WARNING"));
-  printf ("%s\n", _("state.If the UPS is off or has a low battery the plugin will return a CRITICAL"));
+  printf ("%s\n", _("state. If the UPS is off or has a low battery the plugin will return a CRITICAL"));
   printf ("%s\n", _("state."));
 
   printf ("\n");
