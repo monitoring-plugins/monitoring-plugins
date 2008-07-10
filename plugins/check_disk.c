@@ -227,11 +227,11 @@ main (int argc, char **argv)
   /* Process for every path in list */
   for (path = path_select_list; path; path=path->name_next) {
 
-    if (verbose > 3 && path->freespace_percent->warning != NULL && path->freespace_percent->critical != NULL)
+    if (verbose >= 3 && path->freespace_percent->warning != NULL && path->freespace_percent->critical != NULL)
       printf("Thresholds(pct) for %s warn: %f crit %f\n",path->name, path->freespace_percent->warning->end,
                                                          path->freespace_percent->critical->end);
 
-    if (verbose > 3 && path->group != NULL)
+    if (verbose >= 3 && path->group != NULL)
       printf("Group of %s: %s\n",path->name,path->group);
 
     /* reset disk result */
@@ -271,7 +271,7 @@ main (int argc, char **argv)
             fsp.fsu_files     += tmpfsp.fsu_files;      /* Total file nodes. */
             fsp.fsu_ffree     += tmpfsp.fsu_ffree;      /* Free file nodes. */
 
-            if (verbose > 3)
+            if (verbose >= 3)
               printf("Group %s: add %llu blocks (%s) \n", path->group, tmpfsp.fsu_bavail, temp_list->name);
              /* printf("Group %s: add %u blocks (%s)\n", temp_list->name); *//* path->group, tmpfsp.fsu_bavail, temp_list->name); */
 
@@ -420,7 +420,7 @@ main (int argc, char **argv)
 
   }
 
-  if (verbose > 2)
+  if (verbose >= 2)
     asprintf (&output, "%s%s", output, details);
 
 
@@ -729,7 +729,7 @@ process_arguments (int argc, char **argv)
       for (me = mount_list; me; me = me->me_next) {
         if (np_regex_match_mount_entry(me, &re)) {
           fnd = TRUE;
-          if (verbose > 3)
+          if (verbose >= 3)
             printf("%s %s matching expression %s\n", me->me_devname, me->me_mountdir, optarg);
 
           /* add parameter if not found. overwrite thresholds if path has already been added  */
@@ -994,10 +994,10 @@ void
 stat_path (struct parameter_list *p)
 {
   /* Stat entry to check that dir exists and is accessible */
-  if (verbose > 3)
+  if (verbose >= 3)
     printf("calling stat on %s\n", p->name);
   if (stat (p->name, &stat_buf[0])) {
-    if (verbose > 3)
+    if (verbose >= 3)
       printf("stat failed on %s\n", p->name);
     printf("DISK %s - ", _("CRITICAL"));
     die (STATE_CRITICAL, _("%s %s: %s\n"), p->name, _("is not accessible"), strerror(errno));
