@@ -203,7 +203,9 @@ extern char **environ;
 static struct rta_host **table, *cursor, *list;
 static threshold crit = {80, 500000}, warn = {40, 200000};
 static int mode, protocols, sockets, debug = 0, timeout = 10;
-static unsigned short icmp_pkt_size, icmp_data_size = DEFAULT_PING_DATA_SIZE;
+static unsigned short icmp_data_size = DEFAULT_PING_DATA_SIZE;
+static unsigned short icmp_pkt_size = DEFAULT_PING_DATA_SIZE + ICMP_MINLEN;
+
 static unsigned int icmp_sent = 0, icmp_recv = 0, icmp_lost = 0;
 #define icmp_pkts_en_route (icmp_sent - (icmp_recv + icmp_lost))
 static unsigned short targets_down = 0, targets = 0, packets = 0;
@@ -453,12 +455,22 @@ main(int argc, char **argv)
 	/* parse the arguments */
 	for(i = 1; i < argc; i++) {
 		while((arg = getopt(argc, argv, "vhVw:c:n:p:t:H:s:i:b:I:l:m:")) != EOF) {
+			long size;
 			switch(arg) {
 			case 'v':
 				debug++;
 				break;
 			case 'b':
-				/* silently ignored for now */
+				size = strtol(optarg,NULL,0);
+				if (size >= (sizeof(struct icmp) + sizeof(struct icmp_ping_data)) &&
+				    size <= MAX_PING_DATA + ICMP_MINLEN) {
+					icmp_pkt_size = size;
+					icmp_data_size = icmp_pkt_size - ICMP_MINLEN;
+				} else
+					usage_va("ICMP packet size must be between: %d and %d",
+					         sizeof(struct icmp) + sizeof(struct icmp_ping_data),
+					         MAX_PING_DATA + ICMP_MINLEN);
+
 				break;
 			case 'i':
 				pkt_interval = get_timevar(optarg);
@@ -586,13 +598,6 @@ main(int argc, char **argv)
 				   max_completion_time / 1000000 + 1);
 		}
 	}
-
-	icmp_pkt_size = icmp_data_size + ICMP_MINLEN;
-	if(debug > 2) printf("icmp_pkt_size = %u\n", icmp_pkt_size);
-	if(icmp_pkt_size < sizeof(struct icmp) + sizeof(struct icmp_ping_data)) {
-		icmp_pkt_size = sizeof(struct icmp) + sizeof(struct icmp_ping_data);
-	}
-	if(debug > 2) printf("icmp_pkt_size = %u\n", icmp_pkt_size);
 
 	if(debug) {
 		printf("crit = {%u, %u%%}, warn = {%u, %u%%}\n",
@@ -1296,7 +1301,8 @@ print_help(void)
   printf ("    %s",_("timeout value (seconds, currently  "));
   printf ("%u)\n", timeout);
   printf (" %s\n", "-b");
-  printf ("    %s\n", _("icmp packet size (currenly ignored)"));
+  printf ("    %s", _("icmp packet size (bytes, currently "));
+  printf ("%u)\n", icmp_pkt_size);
   printf (" %s\n", "-v");
   printf ("    %s\n", _("verbose"));
 

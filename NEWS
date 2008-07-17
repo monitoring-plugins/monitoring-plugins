@@ -8,6 +8,7 @@ This file documents the major additions and syntax changes between releases.
 	check_dig now returns CRITICAL instead of WARNING when no answer section is found
 	check_procs now captures stderr in external command and adds to plugin output
 	check_snmp now only prints perfdata for non numeric values (#1867716)
+	check_icmp now supports packet size modification
 
 1.4.12 27th May 2008
 	Added ./check_nt -v INSTANCES to count number of instances (Alessandro Ren)
