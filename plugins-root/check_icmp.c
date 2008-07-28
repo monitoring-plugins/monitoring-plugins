@@ -463,13 +463,13 @@ main(int argc, char **argv)
 			case 'b':
 				size = strtol(optarg,NULL,0);
 				if (size >= (sizeof(struct icmp) + sizeof(struct icmp_ping_data)) &&
-				    size <= MAX_PING_DATA + ICMP_MINLEN) {
-					icmp_pkt_size = size;
-					icmp_data_size = icmp_pkt_size - ICMP_MINLEN;
+				    size < MAX_PING_DATA) {
+					icmp_data_size = size;
+					icmp_pkt_size = size + ICMP_MINLEN;
 				} else
-					usage_va("ICMP packet size must be between: %d and %d",
+					usage_va("ICMP data length must be between: %d and %d",
 					         sizeof(struct icmp) + sizeof(struct icmp_ping_data),
-					         MAX_PING_DATA + ICMP_MINLEN);
+					         MAX_PING_DATA - 1);
 
 				break;
 			case 'i':
@@ -1301,8 +1301,8 @@ print_help(void)
   printf ("    %s",_("timeout value (seconds, currently  "));
   printf ("%u)\n", timeout);
   printf (" %s\n", "-b");
-  printf ("    %s", _("icmp packet size (bytes, currently "));
-  printf ("%u)\n", icmp_pkt_size);
+  printf ("    %s\n", _("Number of icmp data bytes to send")); 
+  printf ("    %s %u + %d)\n", _("Packet size will be data bytes + icmp header (currently"),icmp_data_size, ICMP_MINLEN);
   printf (" %s\n", "-v");
   printf ("    %s\n", _("verbose"));
 
