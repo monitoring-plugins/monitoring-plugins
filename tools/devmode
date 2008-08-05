@@ -1,2 +1,3 @@
 # do "eval tools/devmode" to get pedantic compiler settings
-echo export CFLAGS=\"-g -O3 -D_FORTIFY_SOURCE -pedantic -Wall -W -Wformat=2 -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wsign-compare -Waggregate-return -Wstrict-prototypes -Wmissing-prototypes -Wmissing-noreturn -Wmissing-format-attribute -Wnested-externs -Wunreachable-code -Winline\"
+# Info about -D_FORTIFY_SOURCE: http://gcc.gnu.org/ml/gcc-patches/2004-09/msg02055.html
+echo export CFLAGS=\"-g -O3 -D_FORTIFY_SOURCE=2 -pedantic -Wall -W -Wformat=2 -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wsign-compare -Waggregate-return -Wstrict-prototypes -Wmissing-prototypes -Wmissing-noreturn -Wmissing-format-attribute -Wnested-externs -Wunreachable-code -Winline\"
