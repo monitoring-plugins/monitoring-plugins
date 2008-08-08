@@ -228,6 +228,7 @@ try_again:
     }
     free(args_vecs);
     free(args);
+    close(as_fd);
     printf("\n");
   }
 
