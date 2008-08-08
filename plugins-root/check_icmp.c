@@ -1296,7 +1296,7 @@ print_help(void)
   printf ("\n");
   printf (" %s\n", "-l");
   printf ("    %s", _("TTL on outgoing packets (currently "));
-  printf ("%u)", ttl);
+  printf ("%u)\n", ttl);
   printf (" %s\n", "-t");
   printf ("    %s",_("timeout value (seconds, currently  "));
   printf ("%u)\n", timeout);
