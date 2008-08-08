@@ -743,20 +743,22 @@ check_http (void)
     if (check_cert == TRUE) {
       result = np_net_ssl_check_cert(days_till_exp);
       np_net_ssl_cleanup();
-      if(sd) close(sd);
+      if (sd) close(sd);
       return result;
     }
   }
 #endif /* HAVE_SSL */
 
-  asprintf (&buf, "%s %s HTTP/1.0\r\n%s\r\n", http_method, server_url, user_agent);
+  /* If a hostname is provided, use HTTP/1.1 and send the hostname before the 
+  *  Useragent. This fixes an issue with getting 301 responses from servers
+  *  with virtual hosts */
+  if (host_name)
+    asprintf (&buf, "%s %s HTTP/1.1\r\nHost: %s\r\n%s\r\n", http_method, server_url, host_name, user_agent);  
+  else
+    asprintf (&buf, "%s %s HTTP/1.0\r\n%s\r\n", http_method, server_url, user_agent);
 
   /* tell HTTP/1.1 servers not to keep the connection alive */
   asprintf (&buf, "%sConnection: close\r\n", buf);
-
-  /* optionally send the host header info */
-  if (host_name)
-    asprintf (&buf, "%sHost: %s:%d\r\n", buf, host_name, server_port);
 
   /* optionally send any other header tag */
   if (http_opt_headers_count) {
@@ -835,7 +837,7 @@ check_http (void)
 #ifdef HAVE_SSL
   np_net_ssl_cleanup();
 #endif
-  if(sd) close(sd);
+  if (sd) close(sd);
 
   /* reset the alarm */
   alarm (0);
@@ -1101,13 +1103,13 @@ redir (char *pos, char *status_line)
     }
 
     /* URI_HTTP URI_HOST URI_PORT */
-    else if(sscanf (pos, HD3, type, addr, &i) == 3) {
+    else if (sscanf (pos, HD3, type, addr, &i) == 3) {
       strcpy (url, HTTP_URL);
       use_ssl = server_type_check (type);
     }
 
     /* URI_HTTP URI_HOST */
-    else if(sscanf (pos, HD4, type, addr) == 2) {
+    else if (sscanf (pos, HD4, type, addr) == 2) {
       strcpy (url, HTTP_URL);
       use_ssl = server_type_check (type);
       i = server_port_check (use_ssl);
