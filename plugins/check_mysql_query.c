@@ -271,7 +271,7 @@ validate_arguments (void)
 		db_host = strdup("");
 
 	if (db_pass == NULL)
-		db_pass == strdup("");
+		db_pass = strdup("");
 
 	if (db == NULL)
 		db = strdup("");
