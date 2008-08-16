@@ -92,7 +92,7 @@ $result = NPTest->testCmd(
 	);
 cmp_ok($result->return_code, '==', 0, "Multiple checks always return OK");
 my @lines = split(/\n/, $result->output);
-cmp_ok(scalar(@lines), '==', 8, "Correct number of output lined for multiple checks");
+cmp_ok(scalar(@lines), '==', 8, "Correct number of output lines for multiple checks");
 my %linemap = (
                '0' => '1',
                '2' => '0',
