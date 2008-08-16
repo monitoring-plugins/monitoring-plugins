@@ -391,9 +391,9 @@ print_help (void)
   printf (" %s\n", "-c, --critical=THRESHOLD");
   printf ("    %s\n", _("critical threshold pair"));
   printf (" %s\n", "-b, --bytes=INTEGER");
-  printf ("    %s\n", _("size of ICMP packet (default: %d)"),PACKET_SIZE);
+  printf ("    %s (default: %d)\n", _("size of ICMP packet"),PACKET_SIZE);
   printf (" %s\n", "-n, --number=INTEGER");
-  printf ("    %s\n", _("number of ICMP packets to send (default: %d)"),PACKET_COUNT);
+  printf ("    %s (default: %d)\n", _("number of ICMP packets to send"),PACKET_COUNT);
   printf (_(UT_VERBOSE));
   printf ("\n");
   printf (" %s\n", _("THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel time (ms)"));
