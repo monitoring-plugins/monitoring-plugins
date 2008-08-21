@@ -304,7 +304,7 @@ static char* default_file(void){
 	size_t len;
 
 	if((np_env=getenv("NAGIOS_CONFIG_PATH"))!=NULL) {
-		/* skip ant starting colon... */
+		/* skip any starting colon... */
 		while(*np_env==':') np_env++;
 		/* Look for NP_DEFAULT_INI_FILENAME1 and NP_DEFAULT_INI_FILENAME2 in
 		 * every PATHs defined (colon-separated).
@@ -340,8 +340,8 @@ static char* default_file(void){
 			default_file=strdup(temp_file);
 	}
 
-	/* Return default_file or empty string (should return NULL if we want to
-	 * die there...
+	/* Return default_file or empty string (should return NULL if we want plugins
+	 * to die there)...
 	 */
 	if(default_file)
 		return default_file;
@@ -354,7 +354,7 @@ static char* default_file(void){
 static int test_file(const char* env, int len, const char* file, char* temp_file){
 	struct stat sb;
 
-	/* test for len + filelen + '/' + '\0' */
+	/* test if len + filelen + '/' + '\0' fits in temp_file */
 	if((len+strlen(file)+2)>MAX_INPUT_BUFFER)	return -1;
 
 	strncpy(temp_file,env,len);

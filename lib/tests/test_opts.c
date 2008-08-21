@@ -145,7 +145,7 @@ main (int argc, char **argv)
 	ok(array_diff(argc_test, argv_test, 7, argv_known), "twice extra opts using two sections");
 	my_free(&argc_test,argv_test);
 
-	/* Next three checks dre expected to die. They are commented out as they
+	/* Next three checks are expected to die. They are commented out as they
 	 * could possibly go in a sepatare test checked for return value.
 	 */
 	/* argv_test=(char **)malloc(6*sizeof(char **));

@@ -14,7 +14,7 @@ typedef struct np_arg_el {
 } np_arg_list;
 
 /* FIXME: This is in plugins/common.c. Should be eventually moved to lib/
- * (although for this particular one  a configure settings should be ideal)
+ * (although for this particular one a configure settings should be ideal)
  */
 #ifndef MAX_INPUT_BUFFER
 # define MAX_INPUT_BUFFER 8192
