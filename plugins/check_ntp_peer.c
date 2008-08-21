@@ -175,23 +175,56 @@ void print_ntp_control_message(const ntp_control_message *p){
 	}
 }
 
+/*
+ * Extract the value from NTP key/value pairs, or return NULL.
+ * The value returned can be free()ed.
+ */
 char *extract_value(const char *varlist, const char *name){
-	char *tmpvarlist=NULL, *tmpkey=NULL, *value=NULL;
-	int last=0;
+	char *tmp=NULL, *value=NULL;
+	int i;
 
-	/* The following code require a non-empty varlist */
-	if(strlen(varlist) == 0)
-		return NULL;
+  /* Strip any leading space */
 
-	tmpvarlist = strdup(varlist);
-	tmpkey = strtok(tmpvarlist, "=");
+	while (1) {
+		for (varlist; isspace(varlist[0]); varlist++);
+		if (strncmp(name, varlist, strlen(name)) == 0) {
+			varlist += strlen(name);
+			/* strip trailing spaces */
+			for (varlist; isspace(varlist[0]); varlist++);
 
-	do {
-		if(strstr(tmpkey, name) != NULL) {
-		value = strtok(NULL, ",");
-			last = 1;
+			if (varlist[0] == '=') {
+				/* We matched the key, go past the = sign */
+				varlist++;
+				/* strip leading spaces */
+				for (varlist; isspace(varlist[0]); varlist++);
+
+				if (tmp = index(varlist, ',')) {
+					/* Value is delimited by a comma */
+					if (tmp-varlist == 0) continue;
+					value = (char *)malloc(tmp-varlist+1);
+					strncpy(value, varlist, tmp-varlist);
+					value[tmp-varlist] = '\0';
+				} else {
+					/* Value is delimited by a \0 */
+					if (strlen(varlist) == 0) continue;
+					value = (char *)malloc(strlen(varlist) + 1);
+					strncpy(value, varlist, strlen(varlist));
+					value[strlen(varlist)] = '\0';
+				}
+				break;
+			}
 		}
-	} while (last == 0 && (tmpkey = strtok(NULL, "=")));
+		if (tmp = index(varlist, ',')) {
+			/* More keys, keep going... */
+			varlist = tmp + 1;
+		} else {
+			/* We're done */
+			break;
+		}
+	}
+
+	/* Clean-up trailing spaces/newlines */
+	if (value) for (i=strlen(value)-1; isspace(value[i]); i--) value[i] = '\0';
 
 	return value;
 }
