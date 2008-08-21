@@ -183,10 +183,10 @@ char *extract_value(const char *varlist, const char *name){
 	char *tmp=NULL, *value=NULL;
 	int i;
 
-  /* Strip any leading space */
-
 	while (1) {
+	  /* Strip any leading space */
 		for (varlist; isspace(varlist[0]); varlist++);
+
 		if (strncmp(name, varlist, strlen(name)) == 0) {
 			varlist += strlen(name);
 			/* strip trailing spaces */
