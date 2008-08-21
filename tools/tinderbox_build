@@ -82,7 +82,7 @@ sub BuildIt {
 	if (-e (my $file = "nagios-plugins.spec")) {
 		open F, $file;
 		while (<F>) {
-			if (/^Version: HEAD-(\d\d\d\d)(\d\d)(\d\d)(\d\d)(\d\d)$/) {
+			if (/^Version: trunk-(\d\d\d\d)(\d\d)(\d\d)(\d\d)(\d\d)$/) {
 				$StartTime = timegm(0, $5, $4, $3, ($2 - 1), ($1 - 1900));
 				last;
 			}
