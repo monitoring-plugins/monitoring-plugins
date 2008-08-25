@@ -12,6 +12,9 @@ use HTTP::Daemon;
 use HTTP::Status;
 use HTTP::Response;
 
+# set a fixed version, so the header size doesn't vary
+$HTTP::Daemon::VERSION = "1.00";
+
 my $port = 50000 + int(rand(1000));
 
 my $pid = fork();
