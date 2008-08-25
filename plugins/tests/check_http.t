@@ -60,7 +60,7 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 }
 
 if (-x "./check_http") {
-	plan tests => 15;
+	plan tests => 19;
 } else {
 	plan skip_all => "No check_http compiled";
 }
@@ -105,4 +105,14 @@ $cmd = "$command -u /statuscode/200 -e 200,201,202";
 $result = NPTest->testCmd( $cmd );
 is( $result->return_code, 0, $cmd);
 like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - 89 bytes in ([\d\.]+) seconds/', "Output correct: ".$result->output );
+
+$cmd = "$command -u /statuscode/201 -e 200,201,202";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 0, $cmd);
+like( $result->output, '/^HTTP OK HTTP/1.1 201 Created - 94 bytes in ([\d\.]+) seconds/', "Output correct: ".$result->output );
+
+$cmd = "$command -u /statuscode/203 -e 200,201,202";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 2, $cmd);
+like( $result->output, '/^HTTP CRITICAL - Invalid HTTP response received from host on port (\d+): HTTP/1.1 203 Non-Authoritative Information/', "Output correct: ".$result->output );
 
