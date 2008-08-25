@@ -18,6 +18,8 @@ my $pid = fork();
 if ($pid) {
 	# Parent
 	#print "parent\n";
+	# give our webserver some time to startup
+	sleep(1);
 } else {
 	# Child
 	#print "child\n";
@@ -58,7 +60,7 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 }
 
 if (-x "./check_http") {
-	plan tests => 13;
+	plan tests => 15;
 } else {
 	plan skip_all => "No check_http compiled";
 }
@@ -97,5 +99,10 @@ like( $result->output, '/^HTTP OK HTTP/1.1 201 Created - 94 bytes in ([\d\.]+) s
 $cmd = "$command -u /statuscode/201 -e 200";
 $result = NPTest->testCmd( $cmd );
 is( $result->return_code, 2, $cmd);
-like( $result->output, '/^HTTP CRITICAL - Invalid HTTP response received from host on port /', "Output correct: ".$result->output );
+like( $result->output, '/^HTTP CRITICAL - Invalid HTTP response received from host on port \d+: HTTP/1.1 201 Created/', "Output correct: ".$result->output );
+
+$cmd = "$command -u /statuscode/200 -e 200,201,202";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 0, $cmd);
+like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - 89 bytes in ([\d\.]+) seconds/', "Output correct: ".$result->output );
 

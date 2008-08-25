@@ -573,7 +573,25 @@ parse_time_string (const char *string)
   }
 }
 
+/* Checks if the server 'reply' is one of the expected 'statuscodes' */
+static int
+expected_statuscode (const char *reply, const char *statuscodes)
+{
+  char *expected, *code;
+  int result = 0;
 
+  if ((expected = strdup (statuscodes)) == NULL)
+    die (STATE_UNKNOWN, _("HTTP UNKNOWN - Memory allocation error\n"));
+
+  for (code = strtok (expected, ","); code != NULL; code = strtok (NULL, ","))
+    if (strstr (reply, code) != NULL) {
+      result = 1;
+      break;
+    }
+
+  free (expected);
+  return result;
+}
 
 static void
 check_document_dates (const char *headers)
@@ -878,14 +896,15 @@ check_http (void)
                 (no_body ? "  [[ skipped ]]" : page));
 
   /* make sure the status line matches the response we are looking for */
-  if (!strstr (status_line, server_expect)) {
+  if (!expected_statuscode (status_line, server_expect)) {
     if (server_port == HTTP_PORT)
       asprintf (&msg,
-                _("Invalid HTTP response received from host\n"));
+                _("Invalid HTTP response received from host: %s\n"),
+                status_line);
     else
       asprintf (&msg,
-                _("Invalid HTTP response received from host on port %d\n"),
-                server_port);
+                _("Invalid HTTP response received from host on port %d: %s\n"),
+                server_port, status_line);
     die (STATE_CRITICAL, "HTTP CRITICAL - %s", msg);
   }
 
@@ -1262,7 +1281,8 @@ print_help (void)
 #endif
 
   printf (" %s\n", "-e, --expect=STRING");
-  printf ("    %s\n", _("String to expect in first (status) line of server response (default: "));
+  printf ("    %s\n", _("Comma-delimited list of strings, at least one of them is expected in"));
+  printf ("    %s", _("the first (status) line of the server response (default: "));
   printf ("%s)\n", HTTP_EXPECT);
   printf ("    %s\n", _("If specified skips all other status line logic (ex: 3xx, 4xx, 5xx processing)"));
   printf (" %s\n", "-s, --string=STRING");
