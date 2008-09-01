@@ -47,6 +47,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "utils.h"
 
 static char *server_address=NULL;
+static char *port="123";
 static int verbose=0;
 static int quiet=0;
 static char *owarn="60";
@@ -319,7 +320,7 @@ double offset_request(const char *host, int *status){
 	hints.ai_socktype = SOCK_DGRAM;
 
 	/* fill in ai with the list of hosts resolved by the host name */
-	ga_result = getaddrinfo(host, "123", &hints, &ai);
+	ga_result = getaddrinfo(host, port, &hints, &ai);
 	if(ga_result!=0){
 		die(STATE_UNKNOWN, "error getting address for %s: %s\n",
 		    host, gai_strerror(ga_result));
@@ -456,6 +457,7 @@ int process_arguments(int argc, char **argv){
 		{"critical", required_argument, 0, 'c'},
 		{"timeout", required_argument, 0, 't'},
 		{"hostname", required_argument, 0, 'H'},
+		{"port", required_argument, 0, 'p'},
 		{0, 0, 0, 0}
 	};
 
@@ -464,7 +466,7 @@ int process_arguments(int argc, char **argv){
 		usage ("\n");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vhv46qw:c:t:H:", longopts, &option);
+		c = getopt_long (argc, argv, "Vhv46qw:c:t:H:p:", longopts, &option);
 		if (c == -1 || c == EOF || c == 1)
 			break;
 
@@ -493,6 +495,9 @@ int process_arguments(int argc, char **argv){
 			if(is_host(optarg) == FALSE)
 				usage2(_("Invalid hostname/address"), optarg);
 			server_address = strdup(optarg);
+			break;
+		case 'p':
+			port = strdup(optarg);
 			break;
 		case 't':
 			socket_timeout=atoi(optarg);

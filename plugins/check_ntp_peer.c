@@ -48,6 +48,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "utils.h"
 
 static char *server_address=NULL;
+static int port=123;
 static int verbose=0;
 static int quiet=0;
 static short do_offset=0;
@@ -283,7 +284,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 	 * 4) Extract the offset, jitter and stratum value from the data[]
 	 *    (it's ASCII)
 	 */
-	my_udp_connect(server_address, 123, &conn);
+	my_udp_connect(server_address, port, &conn);
 
 	/* keep sending requests until the server stops setting the
 	 * REM_MORE bit, though usually this is only 1 packet. */
@@ -469,6 +470,7 @@ int process_arguments(int argc, char **argv){
 		{"jcrit", required_argument, 0, 'k'},
 		{"timeout", required_argument, 0, 't'},
 		{"hostname", required_argument, 0, 'H'},
+		{"port", required_argument, 0, 'p'},
 		{0, 0, 0, 0}
 	};
 
@@ -477,7 +479,7 @@ int process_arguments(int argc, char **argv){
 		usage ("\n");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vhv46qw:c:W:C:j:k:t:H:", longopts, &option);
+		c = getopt_long (argc, argv, "Vhv46qw:c:W:C:j:k:t:H:p:", longopts, &option);
 		if (c == -1 || c == EOF || c == 1)
 			break;
 
@@ -524,6 +526,9 @@ int process_arguments(int argc, char **argv){
 			if(is_host(optarg) == FALSE)
 				usage2(_("Invalid hostname/address"), optarg);
 			server_address = strdup(optarg);
+			break;
+		case 'p':
+			port=atoi(optarg);
 			break;
 		case 't':
 			socket_timeout=atoi(optarg);
