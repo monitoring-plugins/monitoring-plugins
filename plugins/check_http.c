@@ -732,6 +732,22 @@ get_content_length (const char *headers)
   return (content_length);
 }
 
+char *
+prepend_slash (char *path)
+{
+  char *newpath;
+
+  if (path[0] == '/')
+    return path;
+
+  if ((newpath = malloc (strlen(path) + 2)) == NULL)
+    die (STATE_UNKNOWN, _("HTTP UNKNOWN - Memory allocation error\n"));
+  newpath[0] = '/';
+  strcpy (newpath + 1, path);
+  free (path);
+  return newpath;
+}
+
 int
 check_http (void)
 {
@@ -1112,11 +1128,14 @@ redir (char *pos, char *status_line)
       die (STATE_UNKNOWN, _("HTTP UNKNOWN - could not allocate url\n"));
 
     /* URI_HTTP, URI_HOST, URI_PORT, URI_PATH */
-    if (sscanf (pos, HD1, type, addr, &i, url) == 4)
+    if (sscanf (pos, HD1, type, addr, &i, url) == 4) {
+      url = prepend_slash (url);
       use_ssl = server_type_check (type);
+    }
 
     /* URI_HTTP URI_HOST URI_PATH */
     else if (sscanf (pos, HD2, type, addr, url) == 3 ) { 
+      url = prepend_slash (url);
       use_ssl = server_type_check (type);
       i = server_port_check (use_ssl);
     }
@@ -1179,12 +1198,7 @@ redir (char *pos, char *status_line)
   server_address = strdup (addr);
 
   free (server_url);
-  if ((url[0] == '/'))
-    server_url = strdup (url);
-  else if (asprintf(&server_url, "/%s", url) == -1)
-    die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate server_url%s\n"),
-         display_html ? "</A>" : "");
-  free(url);
+  server_url = url;
 
   if ((server_port = i) > MAX_PORT)
     die (STATE_UNKNOWN,
