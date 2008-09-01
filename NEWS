@@ -9,7 +9,6 @@ This file documents the major additions and syntax changes between releases.
 	check_procs now captures stderr in external command and adds to plugin output
 	check_snmp now only prints perfdata for non numeric values (#1867716)
 	check_icmp now supports packet size modification
-	check_http now sends the Host header first to fix 301s on servers with vitrual hosts (Michael Harris).
 	check_http -e now accepts a comma-delimited list of expected status codes
 	libtap now included with this distribution for easier testing. Run ./configure with --enable-libtap
 

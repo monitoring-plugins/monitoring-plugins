@@ -783,16 +783,14 @@ check_http (void)
   }
 #endif /* HAVE_SSL */
 
-  /* If a hostname is provided, use HTTP/1.1 and send the hostname before the 
-  *  Useragent. This fixes an issue with getting 301 responses from servers
-  *  with virtual hosts */
-  if (host_name)
-    asprintf (&buf, "%s %s HTTP/1.1\r\nHost: %s\r\n%s\r\n", http_method, server_url, host_name, user_agent);  
-  else
-    asprintf (&buf, "%s %s HTTP/1.0\r\n%s\r\n", http_method, server_url, user_agent);
+  asprintf (&buf, "%s %s HTTP/1.0\r\n%s\r\n", http_method, server_url, user_agent);
 
   /* tell HTTP/1.1 servers not to keep the connection alive */
   asprintf (&buf, "%sConnection: close\r\n", buf);
+
+  /* optionally send the host header info */
+  if (host_name)
+    asprintf (&buf, "%sHost: %s:%d\r\n", buf, host_name, server_port);
 
   /* optionally send any other header tag */
   if (http_opt_headers_count) {
