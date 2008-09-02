@@ -789,8 +789,18 @@ check_http (void)
   asprintf (&buf, "%sConnection: close\r\n", buf);
 
   /* optionally send the host header info */
-  if (host_name)
-    asprintf (&buf, "%sHost: %s:%d\r\n", buf, host_name, server_port);
+  if (host_name) {
+    /*
+     * Specify the port only if we're using a non-default port (see RFC 2616,
+     * 14.23).  Some server applications/configurations cause trouble if the
+     * (default) port is explicitly specified in the "Host:" header line.
+     */
+    if ((use_ssl == FALSE && server_port == HTTP_PORT) ||
+        (use_ssl == TRUE && server_port == HTTPS_PORT))
+      asprintf (&buf, "%sHost: %s\r\n", buf, host_name);
+    else
+      asprintf (&buf, "%sHost: %s:%d\r\n", buf, host_name, server_port);
+  }
 
   /* optionally send any other header tag */
   if (http_opt_headers_count) {
