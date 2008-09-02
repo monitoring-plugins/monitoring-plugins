@@ -299,6 +299,9 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 		if(read(conn, &req, SIZEOF_NTPCM(req)) == -1)
 			die(STATE_CRITICAL, "NTP CRITICAL: No response from NTP server\n");
 		DBG(print_ntp_control_message(&req));
+		/* discard obviously invalid packets */
+		if (ntohs(req.count) > MAX_CM_SIZE)
+			die(STATE_CRITICAL, "NTP CRITICAL: Invalid paclet received from NTP server\n");
 		if (LI(req.flags) == LI_ALARM) li_alarm = 1;
 		/* Each peer identifier is 4 bytes in the data section, which
 	 	 * we represent as a ntp_assoc_status_pair datatype.

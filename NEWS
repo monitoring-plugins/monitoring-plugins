@@ -11,7 +11,8 @@ This file documents the major additions and syntax changes between releases.
 	check_icmp now supports packet size modification
 	check_http -e now accepts a comma-delimited list of expected status codes
 	libtap now included with this distribution for easier testing. Run ./configure with --enable-libtap
-	check_ntp_peer/check_ntp_time used to show port in --help but ignored the argument - now implemented.
+	check_ntp_peer/check_ntp_time used to show port in --help but ignored the argument - now implemented
+	Fix possible segfault in check_ntp_peer with deliberately invalid packets
 
 1.4.12 27th May 2008
 	Added ./check_nt -v INSTANCES to count number of instances (Alessandro Ren)
