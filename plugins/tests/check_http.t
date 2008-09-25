@@ -75,10 +75,10 @@ $result = NPTest->testCmd( "$command -u /file/root" );
 is( $result->return_code, 0, "/file/root");
 like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - 274 bytes in [\d\.]+ seconds/', "Output correct" );
 
-TODO: {
-local $TODO = "Output is different if a string is requested - should this be right?";
 $result = NPTest->testCmd( "$command -u /file/root -s Root" );
 is( $result->return_code, 0, "/file/root search for string");
+TODO: {
+local $TODO = "Output is different if a string is requested - should this be right?";
 like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - 274 bytes in [\d\.]+ seconds/', "Output correct" );
 }
 
