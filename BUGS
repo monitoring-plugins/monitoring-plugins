@@ -2,8 +2,12 @@ This file lists the major bugs from the Nagios Plugins page on Sourceforge
 at http://sourceforge.net/tracker/?group_id=29880&atid=397597. These are not
 necessarily verified as errors.
 
-For the 1.4.11 release:
+For the 1.4.13 release:
 
+2075933 - check_disk segfault on freebsd 7 if using -p option
+1985263 - check_ups doesn't disconnect cleanly
+1984255 - check_swap not built on Solaris 10 and HP-UX 11.11, 11.23
+1984240 - check_tcp Segmentation fault on HP-UX 11.23
 1939578 - check_jabber: Always returns WARNING with Openfire server
 1939529 - check_tcp: Expiring SSL certs produce confusing messages
 1928399 - check_procs METRIC_CPU should ignore kernel processes on FreeBSD

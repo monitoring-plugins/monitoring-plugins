@@ -1,3 +1,312 @@
+2008-09-25 08:04  tonvoon
+
+	* [r2056] plugins/tests/check_http.t:
+	  Fix small test failure
+
+2008-09-25 08:01  tonvoon
+
+	* [r2055] doc/LEAVERS, doc/NEW_STARTERS, doc/RELEASING:
+	  Moving project administration documents to nagiosplugins.org site
+
+2008-09-02 12:28  dermoth
+
+	* [r2054] plugins/check_ntp_peer.c:
+	  Typo
+
+2008-09-02 11:26  hweiss
+
+	* [r2053] THANKS.in, plugins/check_http.c:
+	  Some HTTP server applications/configurations cause trouble if the
+	  port is explicitly specified in our "Host:" header line.
+	  Therefore, we now specify the port only if we're using a
+	  non-default port (Erik Wasser - 2082501).
+
+2008-09-02 03:42  dermoth
+
+	* [r2052] NEWS, plugins/check_ntp_peer.c:
+	  Fix possible segfault in check_ntp_peer with deliberately invalid
+	  packets
+
+2008-09-01 14:04  dermoth
+
+	* [r2051] NEWS, plugins/check_ntp_peer.c, plugins/check_ntp_time.c:
+	  check_ntp_peer/check_ntp_time used to show port in --help but
+	  ignored the argument - now implemented.
+
+2008-09-01 14:04  dermoth
+
+	* [r2050] NEWS, THANKS.in, plugins/check_http.c:
+	  Revert "Re-structure the HTTP 1.1 headers to prevent 301s on
+	  servers with virtual hosts"
+	  
+	  This reverts commit 2030
+
+2008-09-01 12:20  hweiss
+
+	* [r2049] plugins/check_http.c:
+	  Under some circumstances, the 'url' path of a redirection target
+	  missed a leading slash. While this was fixed later on, the
+	  incomplete 'url' was used for redirection loop detection and
+	  error messages. This is now fixed by adding the missing slash
+	  immediately.
+
+2008-08-25 18:39  tonvoon
+
+	* [r2048] plugins/tests/check_http.t:
+	  Fix HTTP::Daemon::VERSION to get a fixed header size for tests
+	  (Sven Nierlein)
+
+2008-08-25 13:26  tonvoon
+
+	* [r2047] plugins/tests/check_http.t:
+	  Updated with more tests re: multiple status codes (Sven Nierlein)
+
+2008-08-25 11:42  hweiss
+
+	* [r2046] NEWS, THANKS.in, plugins/check_http.c,
+	  plugins/tests/check_http.t:
+	  The "-e" option now accepts a comma-delimited list of expected
+	  status lines (Sven Nierlein - 1894496).
+
+2008-08-22 13:08  tonvoon
+
+	* [r2045] plugins/tests/check_http.t, plugins/tests/var/root:
+	  Added HTTP tests for status codes
+
+2008-08-21 21:52  tonvoon
+
+	* [r2044] configure.in:
+	  Only include extra-opts tests if libtap is enabled
+
+2008-08-21 15:21  tonvoon
+
+	* [r2043] NEWS:
+	  Note re: --enable-libtap
+
+2008-08-21 15:18  tonvoon
+
+	* [r2042] lib/tests/Makefile.am, lib/tests/test_all.t,
+	  lib/tests/test_base64.t, lib/tests/test_cmd.t,
+	  lib/tests/test_disk.t, lib/tests/test_ini.t,
+	  lib/tests/test_opts.t, lib/tests/test_tcp.t,
+	  lib/tests/test_utils.c, lib/tests/test_utils.t:
+	  Correctly link to included libtap. Simplify invoking test
+	  scripts. Removed basename test as we should use base_name from
+	  GNUlib which is tested separately
+
+2008-08-21 15:15  tonvoon
+
+	* [r2041] tools/tinderbox_build:
+	  Fix regexp of version number of snapshot
+
+2008-08-21 15:12  tonvoon
+
+	* [r2040] Makefile.am:
+	  Remove .svn files in distribution
+
+2008-08-21 15:12  tonvoon
+
+	* [r2039] external/tap-1.01-altinity.tar.gz,
+	  external/tap-1.01-nagios-plugins.tar.gz, tools/setup:
+	  Renamed altered tap file to nagios-plugins
+
+2008-08-21 09:41  dermoth
+
+	* [r2038] plugins/check_ntp_peer.c:
+	  Nothing
+
+2008-08-21 04:22  dermoth
+
+	* [r2037] plugins/check_ntp_peer.c:
+	  Misplaced comment
+
+2008-08-21 04:17  dermoth
+
+	* [r2036] plugins/check_ntp_peer.c:
+	  Complete rewrite of the extract_value function
+	  
+	  The original one was flawed (easy to trigger segfaults) and did
+	  not allow some whitespaces as permitted by rfc1305. This one has
+	  been troughfully tested with tap (the testing code might get
+	  included later)
+
+2008-08-21 04:17  dermoth
+
+	* [r2035] lib/parse_ini.c, lib/parse_ini.h, lib/tests/test_opts.c:
+	  Typos in comments
+
+2008-08-16 04:47  dermoth
+
+	* [r2034] plugins/check_mysql.c, plugins/check_mysql_query.c:
+	  Fix assignment written as a comparison in validate_arguments()
+	  when db_pass is NULL (Patch from
+	  http://blog.barfoo.org/projects/rpms-for-sles10)
+
+2008-08-16 04:47  dermoth
+
+	* [r2033] plugins/check_fping.c:
+	  Fix check_fping --help output (Patch from
+	  http://blog.barfoo.org/projects/rpms-for-sles10)
+
+2008-08-16 01:52  dermoth
+
+	* [r2032] plugins/t/check_by_ssh.t:
+	  Typo
+
+2008-08-08 16:12  tonvoon
+
+	* [r2031] plugins-root/pst3.c:
+	  Close on fd
+
+2008-08-08 02:25  dermoth
+
+	* [r2030] NEWS, THANKS.in, plugins/check_http.c:
+	  Re-structure the HTTP 1.1 headers to prevent 301s on servers with
+	  virtual hosts
+
+2008-08-08 02:08  dermoth
+
+	* [r2029] plugins-root/check_icmp.c:
+	  Typo in --help output
+
+2008-08-05 11:14  dermoth
+
+	* [r2028] tools/devmode:
+	  Set -D_FORTIFY_SOURCE=2, and added a comment with link to
+	  explaination of this flag.
+
+2008-07-28 20:15  psychotrahe
+
+	* [r2027] plugins-root/check_icmp.c:
+	  -b option now specifies ICMP data bytes instead of packet size
+
+2008-07-17 07:06  psychotrahe
+
+	* [r2026] NEWS, plugins-root/check_icmp.c:
+	  Add support for packet size modification (-b)
+
+2008-07-10 10:03  dermoth
+
+	* [r2025] plugins/check_disk.c:
+	  Verbose should not have to exceed 3 as per developement
+	  guidelines
+
+2008-07-10 10:03  dermoth
+
+	* [r2024] tools/devmode:
+	  Add -D_FORTIFY_SOURCE
+
+2008-07-10 10:03  dermoth
+
+	* [r2023] plugins/check_ups.c:
+	  Typo in check_ups
+
+2008-07-09 21:54  psychotrahe
+
+	* [r2022] plugins/t/check_snmp.t:
+	  rewrote check_snmp.t to use Test::More added perfdata checking
+	  for string values
+
+2008-07-09 21:53  psychotrahe
+
+	* [r2021] NEWS, plugins/check_snmp.c:
+	  check_snmp now only prints perfdata for non numeric values (Joerg
+	  Linge #1867716)
+
+2008-07-08 10:09  tonvoon
+
+	* [r2020] Makefile.am, tools/tinderbox_build:
+	  Removed libtap configuration for the moment, as tinderbox builds
+	  are breaking
+
+2008-07-08 09:31  tonvoon
+
+	* [r2019] NEWS, lib/utils_cmd.c, lib/utils_cmd.h,
+	  plugins/Makefile.am, plugins/check_procs.c:
+	  check_procs captures stderr and adds to plugin output. This is
+	  from a merge of branch nagiosplug/branches/new_threshold_syntax
+	  1979:1982
+
+2008-07-06 12:57  hweiss
+
+	* [r2018] plugins-root/check_dhcp.c:
+	  Don't try to set the "SO_BROADCAST" socket option for unicast
+	  requests. (Also, removed the unused "DHCP_UNICAST_FLAG" macro.)
+
+2008-07-02 20:07  tonvoon
+
+	* [r2017] lib/tests/Makefile.am:
+	  Use tap.h from the libtap directory
+
+2008-07-02 20:00  tonvoon
+
+	* [r2016] plugins-root/Makefile.am, plugins-root/pst3.c:
+	  Change pst3 again, this time to remove use of kvm which is not
+	  available in Solaris 10 non-global zones. Uses /proc, which is
+	  not available in older versions of Solaris.
+
+2008-06-30 14:32  tonvoon
+
+	* [r2015] tools/setup:
+	  Fixed bug in tools/setup if docbook was run
+
+2008-06-30 09:01  tonvoon
+
+	* [r2014] Makefile.am:
+	  Have to list tap_dir manually to get into make dist
+
+2008-06-26 22:00  tonvoon
+
+	* [r2013] Makefile.am, configure.in, external, external/README,
+	  external/tap-1.01-altinity.tar.gz, lib/tests/Makefile.am,
+	  tools/setup, tools/tinderbox_build:
+	  Adding libtap into distribution to help run C based tests
+
+2008-06-17 14:19  tonvoon
+
+	* [r2012] plugins-root/pst3.c:
+	  Fixed possible coredump. Removed one level of subroutines (Duncan
+	  Ferguson)
+
+2008-06-09 19:47  psychotrahe
+
+	* [r2011] NEWS, plugins/check_dig.c, plugins/t/check_dig.t:
+	  Added testcases for check_dig check_dig's -l option is mandatory
+	  now (#1986306)
+
+2008-06-02 16:22  tonvoon
+
+	* [r2010] NEWS, plugins-root/pst3.c:
+	  Optimised pst3 for systems with large number of processes (Duncan
+	  Ferguson)
+
+2008-06-02 16:21  tonvoon
+
+	* [r2009] NEWS, perlmods/Nagios-Plugin-0.22.tar.gz,
+	  perlmods/Nagios-Plugin-0.27.tar.gz:
+	  Updated Nagios::Plugin perl modules to 0.27
+
+2008-05-30 23:38  dermoth
+
+	* [r2008] NEWS, THANKS.in, plugins/check_http.c:
+	  Fix Debian bug #460097: check_http --max-age broken (Hilko
+	  Bengen)
+
+2008-05-29 10:21  dermoth
+
+	* [r2007] BUGS:
+	  typo
+
+2008-05-27 23:44  tonvoon
+
+	* [r2006] doc/RELEASING:
+	  Changed SF file release to use sftp instead of ftp
+
+2008-05-27 22:01  tonvoon
+
+	* [r2004] BUGS, ChangeLog, NEWS, configure.in, package.def:
+	  Preparation for 1.4.12 release
+
 2008-05-27 21:52  tonvoon
 
 	* [r2003] THANKS.in, configure.in:
@@ -4762,8 +5071,7 @@
 
 2005-04-04 18:24  tonvoon
 
-	* [r1155] nagiosplug/branches/r1_4-patches/plugins/check_smtp.c,
-	  plugins/check_smtp.c:
+	* [r1155] plugins/check_smtp.c:
 	  Fix static buffer (Nikolay Sturm)
 
 2005-03-18 03:14  mattkent
@@ -6506,8 +6814,7 @@
 
 2004-03-18 20:40  tonvoon
 
-	* [r852] nagiosplug/branches/release-1.3.0/configure.in,
-	  configure.in:
+	* [r852] configure.in:
 	  Mysql include path not added correctly (Arnold Cavazos - 912974)
 
 2004-03-18 20:31  tonvoon
@@ -6689,14 +6996,8 @@
 
 2004-02-20 05:25  kdebisschop
 
-	* [r818] nagiosplug/branches/release-1.3.0/contrib/check_dhcp.c,
-	  nagiosplug/branches/release-1.3.0/contrib/check_procl.sh,
-	  nagiosplug/branches/release-1.3.0/plugins/check_snmp.c,
-	  nagiosplug/branches/release-1.3.0/plugins/negate.c,
-	  nagiosplug/branches/release-1.3.0/plugins/netutils.c,
-	  nagiosplug/branches/release-1.3.0/plugins/urlize.c,
-	  contrib/check_dhcp.c, plugins/check_snmp.c, plugins/negate.c,
-	  plugins/netutils.c, plugins/urlize.c:
+	* [r818] contrib/check_dhcp.c, plugins/check_snmp.c,
+	  plugins/negate.c, plugins/netutils.c, plugins/urlize.c:
 	  spell fix "received"
 
 2004-02-20 05:21  kdebisschop
@@ -6807,14 +7108,13 @@
 
 2004-01-21 12:50  kdebisschop
 
-	* [r797] nagiosplug/branches/release-1.3.0/AUTHORS, AUTHORS:
+	* [r797] AUTHORS:
 	  credit David Croft (patch check_tcp formultibyte malloc bug in
 	  server_expect)
 
 2004-01-21 12:49  kdebisschop
 
-	* [r796] nagiosplug/branches/release-1.3.0/plugins/check_tcp.c,
-	  plugins/check_tcp.c:
+	* [r796] plugins/check_tcp.c:
 	  =fix segfault on malloc of server_expect for multibyte chars
 	  (David Croft)
 
@@ -7384,8 +7684,7 @@
 
 2003-08-22 04:43  kdebisschop
 
-	* [r689] nagiosplug/branches/release-1.3.0/plugins/check_http.c,
-	  plugins/check_http.c:
+	* [r689] plugins/check_http.c:
 	  * bugfix: snprintf of timestamp truncated '\0'
 
 2003-08-21 18:00  kdebisschop
@@ -7765,8 +8064,7 @@
 
 2003-08-01 02:12  kdebisschop
 
-	* [r624] nagiosplug/branches/release-1.3.0/plugins/Makefile.am,
-	  plugins/Makefile.am:
+	* [r624] plugins/Makefile.am:
 	  'ln -f -s ...' is not reliable/portable. Use 'rm -f ...; ln -s
 	  ...'
 
@@ -7831,14 +8129,12 @@
 
 2003-07-29 03:06  kdebisschop
 
-	* [r613] nagiosplug/branches/release-1.3.0/configure.in,
-	  configure.in:
+	* [r613] configure.in:
 	  look for getloadavg.c in $topdir/lib, not $srcdir/lib
 
 2003-07-29 03:05  kdebisschop
 
-	* [r612] nagiosplug/branches/release-1.3.0/plugins/check_http.c,
-	  plugins/check_http.c:
+	* [r612] plugins/check_http.c:
 	  patch attempt to reference undefined optarg (credit Paul Farrall)
 
 2003-07-28 11:36  tonvoon
@@ -7974,9 +8270,7 @@
 
 2003-07-02 16:21  tonvoon
 
-	* [r581]
-	  nagiosplug/branches/release-1.3.0/plugins-scripts/check_oracle.sh,
-	  plugins-scripts/check_oracle.sh:
+	* [r581] plugins-scripts/check_oracle.sh:
 	  Check for ORA- errors for tablespace and cache (patch 755456 -
 	  Sven Meyer)
 
@@ -8145,14 +8439,12 @@
 
 2003-06-12 04:46  undrgrid
 
-	* [r548] nagiosplug/branches/release-1.3.0/command.cfg.in,
-	  command.cfg.in:
+	* [r548] command.cfg.in:
 	  Renamed duplicate check_snmp command definitions to be unique
 
 2003-06-12 04:16  undrgrid
 
-	* [r547] nagiosplug/branches/release-1.3.0/command.cfg.in,
-	  command.cfg.in, configure.in:
+	* [r547] command.cfg.in, configure.in:
 	  Made the two check_ifoperstatus commands unique to remove
 	  conflicts
 
@@ -8202,8 +8494,7 @@
 
 2003-06-02 14:46  kdebisschop
 
-	* [r531] nagiosplug/branches/release-1.3.0/plugins/check_tcp.c,
-	  plugins/check_tcp.c:
+	* [r531] plugins/check_tcp.c:
 	  finish recv() loop when stream GT or EQ maxbytes (was GT)
 
 2003-06-01 05:38  kdebisschop
@@ -8231,26 +8522,22 @@
 
 2003-05-17 23:10  tonvoon
 
-	* [r521] nagiosplug/branches/release-1.3.0/plugins/t/check_ftp.t,
-	  plugins/t/check_ftp.t:
+	* [r521] plugins/t/check_ftp.t:
 	  Fixed test (Mathew Ericson - 738609)
 
 2003-05-17 17:59  tonvoon
 
-	* [r520] nagiosplug/branches/release-1.3.0/plugins/t/check_load.t,
-	  plugins/t/check_load.t:
+	* [r520] plugins/t/check_load.t:
 	  Fixed tests (Mathew Ericson - 738607)
 
 2003-05-17 17:50  tonvoon
 
-	* [r519] nagiosplug/branches/release-1.3.0/plugins/t/check_procs.t,
-	  plugins/t/check_procs.t:
+	* [r519] plugins/t/check_procs.t:
 	  Fixed test commands (Mathew Ericson - 738605)
 
 2003-05-17 17:40  tonvoon
 
-	* [r518] nagiosplug/branches/release-1.3.0/plugins/t/check_http.t,
-	  plugins/t/check_http.t:
+	* [r518] plugins/t/check_http.t:
 	  Fixed tests (Mathew Ericson - 738608)
 
 2003-05-17 17:36  tonvoon
@@ -8261,9 +8548,7 @@
 
 2003-05-16 17:33  sghosh
 
-	* [r515]
-	  nagiosplug/branches/release-1.3.0/plugins-scripts/check_ntp.pl,
-	  plugins-scripts/check_ntp.pl:
+	* [r515] plugins-scripts/check_ntp.pl:
 	  bug fix
 
 2003-05-14 23:17  tonvoon
@@ -8332,8 +8617,7 @@
 
 2003-05-09 03:00  kdebisschop
 
-	* [r501] nagiosplug/branches/release-1.3.0/plugins/check_snmp.c,
-	  plugins/check_snmp.c:
+	* [r501] plugins/check_snmp.c:
 	  cause snmpget try try for 1 second less than the timeout
 	  (allowing plugin to force close if needed)
 
@@ -8349,16 +8633,12 @@
 
 2003-04-25 09:07  sghosh
 
-	* [r499]
-	  nagiosplug/branches/release-1.3.0/plugins-scripts/check_ntp.pl,
-	  plugins-scripts/check_ntp.pl:
+	* [r499] plugins-scripts/check_ntp.pl:
 	  corrected output units
 
 2003-04-23 04:58  kdebisschop
 
-	* [r498] nagiosplug/branches/release-1.3.0/plugins/check_http.c,
-	  nagiosplug/branches/release-1.3.0/plugins/utils.c,
-	  plugins/check_http.c:
+	* [r498] plugins/check_http.c:
 	  update to RFC1123 hostname specs
 
 2003-04-17 05:56  kdebisschop
@@ -8573,8 +8853,7 @@
 
 2003-03-24 00:42  tonvoon
 
-	* [r452] nagiosplug/branches/release-1.3.0/REQUIREMENTS,
-	  REQUIREMENTS:
+	* [r452] REQUIREMENTS:
 	  Add NSClient requirement for check_nt
 
 2003-03-24 00:26  tonvoon
@@ -8684,9 +8963,7 @@
 
 2003-03-17 22:24  tonvoon
 
-	* [r428]
-	  nagiosplug/branches/release-1.3.0/plugins-scripts/check_oracle.sh,
-	  plugins-scripts/check_oracle.sh:
+	* [r428] plugins-scripts/check_oracle.sh:
 	  Allow default Oracle home from oratab (reported by Walbert
 	  Oberngruber)
 
@@ -8872,8 +9149,7 @@
 
 2003-03-11 22:34  tonvoon
 
-	* [r397] nagiosplug/branches/release-1.3.0/plugins/negate.c,
-	  plugins/negate.c:
+	* [r397] plugins/negate.c:
 	  Fixed reading too many argv parameters and changed to asprintf
 
 2003-03-11 22:22  tonvoon
@@ -8936,14 +9212,12 @@
 
 2003-03-09 10:39  tonvoon
 
-	* [r388] nagiosplug/branches/release-1.3.0/plugins/check_disk.c,
-	  plugins/check_disk.c:
+	* [r388] plugins/check_disk.c:
 	  Implement error-only option for check_disk (Ian Duggan)
 
 2003-03-08 12:08  tonvoon
 
-	* [r387] nagiosplug/branches/release-1.3.0/plugins/check_disk.c,
-	  plugins/check_disk.c:
+	* [r387] plugins/check_disk.c:
 	  Fix AIX /proc filesystem (Ian Duggan)
 
 2003-03-08 11:44  tonvoon
@@ -9004,8 +9278,7 @@
 
 2003-03-08 00:23  tonvoon
 
-	* [r377] nagiosplug/branches/release-1.3.0/Makefile.am,
-	  Makefile.am:
+	* [r377] Makefile.am:
 	  Use Makefile's variables (to support a shortcut in sfsnapshot)
 
 2003-03-07 22:11  undrgrid
@@ -9027,14 +9300,12 @@
 
 2003-03-07 07:17  kdebisschop
 
-	* [r373] nagiosplug/branches/release-1.3.0/plugins/check_smtp.c,
-	  plugins/check_smtp.c:
+	* [r373] plugins/check_smtp.c:
 	  whole timer loop was on the wrong side of connection close code
 
 2003-03-07 06:43  kdebisschop
 
-	* [r372] nagiosplug/branches/release-1.3.0/plugins/check_udp.c,
-	  plugins/check_udp.c:
+	* [r372] plugins/check_udp.c:
 	  fix for -H invocation of hostname
 
 2003-03-06 06:40  undrgrid
@@ -11067,9 +11338,6 @@
 
 2002-02-28 06:42  
 
-	* [r1] Nagios-Plugin, Nagios-Plugin/branches, Nagios-Plugin/tags,
-	  Nagios-Plugin/trunk, nagiosmib, nagiosmib/branches,
-	  nagiosmib/tags, nagiosmib/trunk, nagiosplug, nagiosplug/branches,
-	  nagiosplug/tags, .:
+	* [r1] .:
 	  New repository initialized by cvs2svn.
 

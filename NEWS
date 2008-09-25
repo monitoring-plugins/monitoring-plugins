@@ -1,6 +1,6 @@
 This file documents the major additions and syntax changes between releases.
 
-1.4.?? ??th ??? 200?
+1.4.13 25th Sept 2008
 	Fix Debian bug #460097: check_http --max-age broken (Hilko Bengen)
 	Optimised pst3 for systems with large number of processes (Duncan Ferguson)
 	Updated Nagios::Plugin to 0.27
@@ -9,7 +9,7 @@ This file documents the major additions and syntax changes between releases.
 	check_procs now captures stderr in external command and adds to plugin output
 	check_snmp now only prints perfdata for non numeric values (#1867716)
 	check_icmp now supports packet size modification
-	check_http -e now accepts a comma-delimited list of expected status codes
+	check_http -e now accepts a comma-delimited list of expected status codes (Sven Nierlein)
 	libtap now included with this distribution for easier testing. Run ./configure with --enable-libtap
 	check_ntp_peer/check_ntp_time used to show port in --help but ignored the argument - now implemented
 	Fix possible segfault in check_ntp_peer with deliberately invalid packets
