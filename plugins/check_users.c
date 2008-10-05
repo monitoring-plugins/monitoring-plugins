@@ -108,9 +108,9 @@ main (int argc, char **argv)
 		result = possibly_set (result, STATE_UNKNOWN);
 
 	/* else check the user count against warning and critical thresholds */
-	if (users >= cusers)
+	if (users > cusers)
 		result = STATE_CRITICAL;
-	else if (users >= wusers)
+	else if (users > wusers)
 		result = STATE_WARNING;
 	else if (users >= 0)
 		result = STATE_OK;
