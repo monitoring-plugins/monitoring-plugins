@@ -29,7 +29,9 @@ my $ReportStatus = 0;  # Do not send results to server
 # Set these to what makes sense for your system
 
 # Set these proper values for your tinderbox server
-my $Tinderbox_server = 'tinderbox2@tinderbox.altinity.org';
+# Have the StrictHostKeyChecking=no so that a new host will automatically add hostkey without
+# prompting. If host key changes, then will get error, so this should still be secure
+my $Tinderbox_server = '-p 1022 -o StrictHostKeyChecking=no tinderbox2@tinderbox.opsera.com';
 
 # These shouldn't really need to be changed
 my $BuildTree = 'nagiosplug';
