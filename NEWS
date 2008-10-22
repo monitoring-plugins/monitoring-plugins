@@ -3,6 +3,8 @@ This file documents the major additions and syntax changes between releases.
 1.4.14 ...
 	check_users thresholds were not working excatly as documented (>= rather than >)
 	Updated tinderbox_build script to point to new tinderbox server
+	check_ifoperstatus -n flag now works as expected (sf.net #1569488)
+	check_ifoperstatus now supports ifType based lookup for ifIndex
 
 1.4.13 25th Sept 2008
 	Fix Debian bug #460097: check_http --max-age broken (Hilko Bengen)

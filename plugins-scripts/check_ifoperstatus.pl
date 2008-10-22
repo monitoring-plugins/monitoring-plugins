@@ -67,6 +67,7 @@ my $port = 161;
 my @snmpoids;
 my $sysUptime        = '1.3.6.1.2.1.1.3.0';
 my $snmpIfDescr      = '1.3.6.1.2.1.2.2.1.2';
+my $snmpIfType       = '1.3.6.1.2.1.2.2.1.3';
 my $snmpIfAdminStatus = '1.3.6.1.2.1.2.2.1.7';
 my $snmpIfOperStatus = '1.3.6.1.2.1.2.2.1.8';
 my $snmpIfName       = '1.3.6.1.2.1.31.1.1.1.1';
@@ -83,6 +84,7 @@ my $ifXTable;
 my $opt_h ;
 my $opt_V ;
 my $ifdescr;
+my $iftype;
 my $key;
 my $lastc;
 my $dormantWarn;
@@ -105,15 +107,18 @@ alarm($timeout);
 
 ## map ifdescr to ifindex - should look at being able to cache this value
 
-if (defined $ifdescr) {
+if (defined $ifdescr || defined $iftype) {
 	# escape "/" in ifdescr - very common in the Cisco world
-	$ifdescr =~ s/\//\\\//g;
-
-	$status=fetch_ifdescr();  # if using on device with large number of interfaces
-							  # recommend use of SNMP v2 (get-bulk)
+	if (defined $iftype) {
+		$status=fetch_ifindex($snmpIfType, $iftype);  
+	} else {
+		$ifdescr =~ s/\//\\\//g;
+		$status=fetch_ifindex($snmpIfDescr, $ifdescr);  # if using on device with large number of interfaces
+		                                                # recommend use of SNMP v2 (get-bulk)
+	}
 	if ($status==0) {
 		$state = "UNKNOWN";
-		printf "$state: could not retrive ifdescr snmpkey - $status-$snmpkey\n";
+		printf "$state: could not retrive ifdescr/iftype snmpkey - $status-$snmpkey\n";
 		$session->close;
 		exit $ERRORS{$state};
 	}
@@ -152,10 +157,10 @@ push(@snmpoids,$snmpIfAlias) if (defined $ifXTable) ;
 
    ## Check to see if ifName match is requested and it matches - exit if no match
    ## not the interface we want to monitor
-   if ( defined $name && not ($response->{$snmpIfName} eq $name) ) {
+   if ( defined $ifName && not ($response->{$snmpIfName} eq $ifName) ) {
       $state = 'UNKNOWN';
-      $answer = "Interface name ($name) doesn't match snmp value ($response->{$snmpIfName}) (index $snmpkey)";
-      print ("$state: $answer");
+      $answer = "Interface name ($ifName) doesn't match snmp value ($response->{$snmpIfName}) (index $snmpkey)";
+      print ("$state: $answer\n");
       exit $ERRORS{$state};
    } 
 
@@ -219,14 +224,17 @@ push(@snmpoids,$snmpIfAlias) if (defined $ifXTable) ;
 
 
 
-print ("$state: $answer");
+print ("$state: $answer\n");
 exit $ERRORS{$state};
 
 
 ### subroutines
 
-sub fetch_ifdescr {
-	if (!defined ($response = $session->get_table($snmpIfDescr))) {
+sub fetch_ifindex {
+	my $oid = shift;
+	my $lookup = shift;
+
+	if (!defined ($response = $session->get_table($oid))) {
 		$answer=$session->error;
 		$session->close;
 		$state = 'CRITICAL';
@@ -236,10 +244,10 @@ sub fetch_ifdescr {
 	}
 	
 	foreach $key ( keys %{$response}) {
-		if ($response->{$key} =~ /^$ifdescr$/) {
+		if ($response->{$key} =~ /^$lookup$/) {
 			$key =~ /.*\.(\d+)$/;
 			$snmpkey = $1;
-			#print "$ifdescr = $key / $snmpkey \n";  #debug
+			#print "$lookup = $key / $snmpkey \n";  #debug
 		}
 	}
 	unless (defined $snmpkey) {
@@ -288,6 +296,7 @@ sub print_help() {
 	printf "                     privacy password and authEngineID\n";
 	printf "   -k (--key)        SNMP IfIndex value\n";
 	printf "   -d (--descr)      SNMP ifDescr value\n";
+	printf "   -T (--type)       SNMP ifType integer value (see http://www.iana.org/assignments/ianaiftype-mib)\n";
 	printf "   -p (--port)       SNMP port (default 161)\n";
 	printf "   -I (--ifmib)      Agent supports IFMIB ifXTable.  Do not use if\n";
 	printf "                     you don't know what this is. \n";
@@ -299,8 +308,8 @@ sub print_help() {
 	printf "   -t (--timeout)    seconds before the plugin times out (default=$TIMEOUT)\n";
 	printf "   -V (--version)    Plugin version\n";
 	printf "   -h (--help)       usage help \n\n";
-	printf " -k or -d must be specified\n\n";
-	printf "Note: either -k or -d must be specified and -d is much more network \n";
+	printf " -k or -d or -T must be specified\n\n";
+	printf "Note: either -k or -d or -T must be specified and -d and -T are much more network \n";
 	printf "intensive.  Use it sparingly or not at all.  -n is used to match against\n";
 	printf "a much more descriptive ifName value in the IfXTable to verify that the\n";
 	printf "snmpkey has not changed to some other network interface after a reboot.\n\n";
@@ -331,6 +340,7 @@ sub process_arguments() {
 			"D=s" => \$adminWarn, "admin-down=s" => \$adminWarn,
 			"M=i" => \$maxmsgsize, "maxmsgsize=i" => \$maxmsgsize,
 			"t=i" => \$timeout,    "timeout=i" => \$timeout,
+			"T=i" => \$iftype,    "type=i" => \$iftype,
 			);
 
 
@@ -356,7 +366,7 @@ sub process_arguments() {
 	}
 
 
-	unless ($snmpkey > 0 || defined $ifdescr){
+	unless ($snmpkey > 0 || defined $ifdescr || defined $iftype){
 		printf "Either a valid snmpkey key (-k) or a ifDescr (-d) must be provided)\n";
 		usage();
 		exit $ERRORS{"UNKNOWN"};
@@ -451,7 +461,7 @@ sub process_arguments() {
 		if (!defined($session)) {
 			$state='UNKNOWN';
 			$answer=$error;
-			print ("$state: $answer");
+			print ("$state: $answer\n");
 			exit $ERRORS{$state};
 		}
 	
@@ -490,7 +500,7 @@ sub process_arguments() {
 		if (!defined($session)) {
 					$state='UNKNOWN';
 					$answer=$error;
-					print ("$state: $answer");
+					print ("$state: $answer\n");
 					exit $ERRORS{$state};
 		}
 
