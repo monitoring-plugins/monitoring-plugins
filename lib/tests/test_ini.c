@@ -55,7 +55,7 @@ main (int argc, char **argv)
 {
 	char *optstr=NULL;
 
-	plan_tests(11);
+	plan_tests(12);
 
 	optstr=list2str(np_get_defaults("section@./config-tiny.ini", "check_disk"));
 	ok( !strcmp(optstr, "--one=two --Foo=Bar --this=Your Mother! --blank"), "config-tiny.ini's section as expected");
@@ -107,6 +107,10 @@ main (int argc, char **argv)
 
 	optstr=list2str(np_get_defaults("section_twice@./plugin.ini", "check_disk"));
 	ok( !strcmp(optstr, "--foo=bar --bar=foo"), "plugin.ini's section_twice defined twice in the file");
+	my_free(optstr);
+
+	optstr=list2str(np_get_defaults("tcp_long_lines@plugins.ini", "check_tcp"));
+	ok( !strcmp(optstr, "--escape --send=Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda --expect=Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda --jail"), "Long options");
 	my_free(optstr);
 
 	return exit_status();
