@@ -59,7 +59,7 @@ main (int argc, char **argv)
 	char **argv_test=NULL, **argv_known=NULL;
 	int i, argc_test;
 
-	plan_tests(9);
+	plan_tests(10);
 
 	argv_test=(char **)malloc(2*sizeof(char **));
 	argv_test[0] = "prog_name";
