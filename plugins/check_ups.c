@@ -398,12 +398,15 @@ get_ups_variable (const char *varname, char *buf, size_t buflen)
 	char temp_buffer[MAX_INPUT_BUFFER];
 	char send_buffer[MAX_INPUT_BUFFER];
 	char *ptr;
+	char *logout = "OK Goodbye\n";
+	int logout_len = strlen(logout);
 	int len;
 
 	*buf=0;
 	
 	/* create the command string to send to the UPS daemon */
-	sprintf (send_buffer, "GET VAR %s %s\n", ups_name, varname);
+	/* Add LOGOUT to avoid read failure logs */
+	sprintf (send_buffer, "GET VAR %s %s\nLOGOUT\n", ups_name, varname);
 
 	/* send the command to the daemon and get a response back */
 	if (process_tcp_request
@@ -415,6 +418,7 @@ get_ups_variable (const char *varname, char *buf, size_t buflen)
 
 	ptr = temp_buffer;
 	len = strlen(ptr);
+	if (len > logout_len && strcmp (ptr + len - logout_len, logout) == 0) len -= logout_len;
 	if (len > 0 && ptr[len-1] == '\n') ptr[len-1]=0;
 	if (strcmp (ptr, "ERR UNKNOWN-UPS") == 0) {
 		printf (_("CRITICAL - no such ups '%s' on that host\n"), ups_name);

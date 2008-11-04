@@ -5,6 +5,7 @@ This file documents the major additions and syntax changes between releases.
 	Updated tinderbox_build script to point to new tinderbox server
 	check_ifoperstatus -n flag now works as expected (sf.net #1569488)
 	check_ifoperstatus now supports ifType based lookup for ifIndex
+	check_ups now sends a LOGOUT string (debian bug #387001)
 
 1.4.13 25th Sept 2008
 	Fix Debian bug #460097: check_http --max-age broken (Hilko Bengen)
