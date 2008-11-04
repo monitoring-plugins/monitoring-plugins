@@ -273,6 +273,27 @@ main (int argc, char **argv)
 	ok(array_diff(argc_test, argv_test, 5, argv_known), "Default section 4");
 	my_free(&argc_test,argv_test);
 
+	argv_test=(char **)malloc(4*sizeof(char **));
+	argv_test[0] = "check_tcp";
+	argv_test[1] = "--extra-opts";
+	argv_test[2] = "--extra-opts=tcp_long_lines@plugins.ini";
+	argv_test[3] = NULL;
+	argc_test=3;
+	argv_known=(char **)realloc(argv_known, 10*sizeof(char **));
+	argv_known[0] = "check_tcp";
+	argv_known[1] = "--timeout";
+	argv_known[2] = "10";
+	argv_known[3] = "--escape";
+	argv_known[4] = "--send";
+	argv_known[5] = "Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda";
+	argv_known[6] = "--expect";
+	argv_known[7] = "Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda";
+	argv_known[8] = "--jail";
+	argv_known[9] = NULL;
+	argv_test=np_extra_opts(&argc_test, argv_test, "check_tcp");
+	ok(array_diff(argc_test, argv_test, 9, argv_known), "Long lines test");
+	my_free(&argc_test,argv_test);
+
 	return exit_status();
 }
 
