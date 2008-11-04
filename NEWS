@@ -6,6 +6,8 @@ This file documents the major additions and syntax changes between releases.
 	check_ifoperstatus -n flag now works as expected (sf.net #1569488)
 	check_ifoperstatus now supports ifType based lookup for ifIndex
 	check_ups now sends a LOGOUT string (debian bug #387001)
+	Extra-opts (C plugins) now allows both '#' and ';' for comments (like N::P)
+	Extra-opts (C plugins) does not allow trailing comments anymore (like N::P)
 
 1.4.13 25th Sept 2008
 	Fix Debian bug #460097: check_http --max-age broken (Hilko Bengen)

@@ -132,6 +132,7 @@ static int read_defaults(FILE *f, const char *stanza, np_arg_list **opts){
 		if(isspace(c)) continue;
 		switch(c){
 			/* globble up coment lines */
+			case ';':
 			case '#':
 				GOBBLE_TO(f, c, '\n');
 				break;
@@ -232,10 +233,8 @@ static int add_option(FILE *f, np_arg_list **optlst){
 	if(optptr==eqptr) die(STATE_UNKNOWN, _("Config file error\n"));
 	/* continue from '=' to start of value or EOL */
 	for(valptr=eqptr+1; valptr<lineend && isspace(*valptr); valptr++);
-	/* continue to the end of value (FIXME: watching for trailing comments) */
-	for(valend=valptr; valend<lineend; valend++)
-		/* FIXME: N::P doesn't allow comments here. Remove next line and parse_ini won't either */
-		if(*valend=='#') break;
+	/* continue to the end of value */
+	for(valend=valptr; valend<lineend; valend++);
 	--valend;
 	/* Finally trim off trailing spaces */
 	for(valend; isspace(*valend); valend--);
