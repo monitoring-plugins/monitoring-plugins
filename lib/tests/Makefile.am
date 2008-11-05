@@ -6,7 +6,7 @@ TESTS = @EXTRA_TEST@
 check_PROGRAMS = @EXTRA_TEST@
 
 TAP_LIB_DIR = $(top_srcdir)/@TAP_DIR@/src
-TAP_O = $(TAP_LIB_DIR)/tap.o
+TAP_O = $(TAP_LIB_DIR)/tap.o $(TAP_LIB_DIR)/../lib/libgnu.la
 INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl -I$(top_srcdir)/plugins -I$(TAP_LIB_DIR)
 
 EXTRA_PROGRAMS = test_utils test_disk test_tcp test_cmd test_base64 test_ini test_opts
