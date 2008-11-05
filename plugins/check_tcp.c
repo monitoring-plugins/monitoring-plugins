@@ -395,10 +395,10 @@ process_arguments (int argc, char **argv)
 		{"critical-codes", required_argument, 0, 'C'},
 		{"warning-codes", required_argument, 0, 'W'},
 		{"timeout", required_argument, 0, 't'},
-		{"protocol", required_argument, 0, 'P'},
+		{"protocol", required_argument, 0, 'P'}, /* FIXME: Unhandled */
 		{"port", required_argument, 0, 'p'},
-		{"escape", required_argument, 0, 'E'},
-		{"all", required_argument, 0, 'A'},
+		{"escape", no_argument, 0, 'E'},
+		{"all", no_argument, 0, 'A'},
 		{"send", required_argument, 0, 's'},
 		{"expect", required_argument, 0, 'e'},
 		{"maxbytes", required_argument, 0, 'm'},
@@ -412,10 +412,8 @@ process_arguments (int argc, char **argv)
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
-#ifdef HAVE_SSL
 		{"ssl", no_argument, 0, 'S'},
 		{"certificate", required_argument, 0, 'D'},
-#endif
 		{0, 0, 0, 0}
 	};
 
