@@ -103,14 +103,13 @@ char **np_extra_opts(int *argc, char **argv, const char *plugin_name){
 				ea_tmp=extra_args;
 				while(ea_tmp->next) {
 					ea_tmp=ea_tmp->next;
-					ea_num++;
 				}
 				ea_tmp->next=ea1;
+				while(ea1=ea1->next) ea_num++;
 			}
 			ea1=ea_tmp=NULL;
 		}
-		/* lather, rince, repeat */
-	}
+	} /* lather, rince, repeat */
 
 	if(ea_num==*argc && extra_args==NULL){
 		/* No extra-opts */

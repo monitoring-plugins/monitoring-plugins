@@ -276,7 +276,7 @@ main (int argc, char **argv)
 	argv_test=(char **)malloc(4*sizeof(char **));
 	argv_test[0] = "check_tcp";
 	argv_test[1] = "--extra-opts";
-	argv_test[2] = "--extra-opts=tcp_long_lines@plugins.ini";
+	argv_test[2] = "--extra-opts=tcp_long_lines";
 	argv_test[3] = NULL;
 	argc_test=3;
 	argv_known=(char **)realloc(argv_known, 7*sizeof(char **));
