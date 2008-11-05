@@ -166,6 +166,10 @@ AC_SUBST(TAP_DIR)
 if test "$enable_libtap" = yes; then
 	dnl Have to have AC_CONFIG_SUBDIRS as a literal
 	AC_CONFIG_SUBDIRS([external/tap-1.01])
+	dnl This is required so that TAP stuff is compiled before the libs and tests
+	dnl A make install will also install the tap library, but as this is a development tool, this should be okay
+	INCLUDE_TAP_DIR=$TAP_DIR
+	AC_SUBST(INCLUDE_TAP_DIR)
 	EXTRA_TEST="test_utils test_disk test_tcp test_cmd test_base64"
 	AC_SUBST(EXTRA_TEST)
 fi

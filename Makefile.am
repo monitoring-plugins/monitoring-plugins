@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = gl lib plugins plugins-scripts plugins-root po @PERLMODS_DIR@
+SUBDIRS = gl @INCLUDE_TAP_DIR@ lib plugins plugins-scripts plugins-root po @PERLMODS_DIR@
 
 # Have to list TAP_DIR manually to get in distribution
 EXTRA_DIST = config.rpath \
