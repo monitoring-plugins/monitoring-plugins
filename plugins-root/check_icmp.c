@@ -106,6 +106,9 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 # define ICMP_UNREACH_PRECEDENCE_CUTOFF 15
 #endif
 
+#ifndef DBL_MAX
+# define DBL_MAX 9.9999999999e999
+#endif
 
 typedef unsigned short range_t;  /* type for get_range() -- unimplemented */
 
@@ -120,6 +123,8 @@ typedef struct rta_host {
 	unsigned char icmp_type, icmp_code; /* type and code from errors */
 	unsigned short flags;        /* control/status flags */
 	double rta;                  /* measured RTA */
+	double rtmax;                /* max rtt */
+	double rtmin;                /* min rtt */
 	unsigned char pl;            /* measured packet loss */
 	struct rta_host *next;       /* linked list */
 } rta_host;
@@ -782,11 +787,15 @@ wait_for_reply(int sock, u_int t)
 		host->time_waited += tdiff;
 		host->icmp_recv++;
 		icmp_recv++;
+		if (tdiff > host->rtmax)
+			host->rtmax = tdiff;
+		if (tdiff < host->rtmin)
+			host->rtmin = tdiff;
 
 		if(debug) {
-			printf("%0.3f ms rtt from %s, outgoing ttl: %u, incoming ttl: %u\n",
+			printf("%0.3f ms rtt from %s, outgoing ttl: %u, incoming ttl: %u, max: %0.3f, min: %0.3f\n",
 				   (float)tdiff / 1000, inet_ntoa(resp_addr.sin_addr),
-				   ttl, ip->ip_ttl);
+				   ttl, ip->ip_ttl, (float)host->rtmax / 1000, (float)host->rtmin / 1000);
 		}
 
 		/* if we're in hostcheck mode, exit with limited printouts */
@@ -993,11 +1002,12 @@ finish(int sig)
 	host = list;
 	while(host) {
 		if(debug) puts("");
-		printf("%srta=%0.3fms;%0.3f;%0.3f;0; %spl=%u%%;%u;%u;; ",
+		printf("%srta=%0.3fms;%0.3f;%0.3f;0; %spl=%u%%;%u;%u;; %srtmax=%0.3fms;;;; %srtmin=%0.3fms;;;; ",
 			   (targets > 1) ? host->name : "",
 			   host->rta / 1000, (float)warn.rta / 1000, (float)crit.rta / 1000,
-			   (targets > 1) ? host->name : "",
-			   host->pl, warn.pl, crit.pl);
+			   (targets > 1) ? host->name : "", host->pl, warn.pl, crit.pl,
+			   (targets > 1) ? host->name : "", (float)host->rtmax / 1000,
+			   (targets > 1) ? host->name : "", (host->rtmin < DBL_MAX) ? (float)host->rtmin / 1000 : (float)0);
 
 		host = host->next;
 	}
@@ -1073,6 +1083,8 @@ add_target_ip(char *arg, struct in_addr *in)
 	/* fill out the sockaddr_in struct */
 	host->saddr_in.sin_family = AF_INET;
 	host->saddr_in.sin_addr.s_addr = in->s_addr;
+
+	host->rtmin = DBL_MAX;
 
 	if(!list) list = cursor = host;
 	else cursor->next = host;
