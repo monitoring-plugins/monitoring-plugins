@@ -13,6 +13,7 @@ This file documents the major additions and syntax changes between releases.
 	Fixed segfault in extra-opts under some circumstance when reading multiple sections
 	Fix long options parsing in check_tcp
 	check_icmp now reports min and max round trip time perfdata (Steve Rader)
+	Fixed bug where additional headers with redirection caused a segfault (Dieter Van de Walle - 2089159)
 
 1.4.13 25th Sept 2008
 	Fix Debian bug #460097: check_http --max-age broken (Hilko Bengen)

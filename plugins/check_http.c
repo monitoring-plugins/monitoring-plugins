@@ -815,7 +815,9 @@ check_http (void)
       for ((pos = strtok(http_opt_headers[i], INPUT_DELIMITER)); pos; (pos = strtok(NULL, INPUT_DELIMITER)))
         asprintf (&buf, "%s%s\r\n", buf, pos);
     }
-    free(http_opt_headers);
+    /* This cannot be free'd here because a redirection will then try to access this and segfault */
+    /* Covered in a testcase in tests/check_http.t */
+    /* free(http_opt_headers); */
   }
 
   /* optionally send the authentication info */

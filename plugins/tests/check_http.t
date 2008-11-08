@@ -28,7 +28,8 @@ if ($pid) {
 	#print "child\n";
 
 	my $d = HTTP::Daemon->new(
-		LocalPort => $port
+		LocalPort => $port,
+		LocalAddr => "127.0.0.1",
 	) || die;
 	print "Please contact me at: <URL:", $d->url, ">\n";
 	while (my $c = $d->accept ) {
@@ -57,6 +58,12 @@ if ($pid) {
 				$c->send_basic_header;
 				$c->send_crlf;
 				$c->send_response($r->method.":".$r->content);
+			} elsif ($r->url->path eq "/redirect") {
+				$c->send_redirect( "/redirect2" );
+			} elsif ($r->url->path eq "/redirect2") {
+				$c->send_basic_header;
+				$c->send_crlf;
+				$c->send_response("redirected");
 			} else {
 				$c->send_error(RC_FORBIDDEN);
 			}
@@ -73,7 +80,7 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 }
 
 if (-x "./check_http") {
-	plan tests => 39;
+	plan tests => 47;
 } else {
 	plan skip_all => "No check_http compiled";
 }
@@ -179,4 +186,24 @@ $cmd = "$command -P stufftoinclude -j PUT -u /postdata -s PUT:stufftoinclude";
 $result = NPTest->testCmd( $cmd );
 is( $result->return_code, 0, $cmd);
 like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - ([\d\.]+) second/', "Output correct: ".$result->output );
+
+$cmd = "$command -u /redirect";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 0, $cmd);
+like( $result->output, '/^HTTP OK - HTTP/1.1 301 Moved Permanently - [\d\.]+ second/', "Output correct: ".$result->output );
+
+$cmd = "$command -f follow -u /redirect";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 0, $cmd);
+like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - 183 bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+
+$cmd = "$command -u /redirect -k 'follow: me'";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 0, $cmd);
+like( $result->output, '/^HTTP OK - HTTP/1.1 301 Moved Permanently - [\d\.]+ second/', "Output correct: ".$result->output );
+
+$cmd = "$command -f follow -u /redirect -k 'follow: me'";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 0, $cmd);
+like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - 183 bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
