@@ -33,9 +33,7 @@ if ($pid) {
 	print "Please contact me at: <URL:", $d->url, ">\n";
 	while (my $c = $d->accept ) {
 		while (my $r = $c->get_request) {
-			if ($r->method eq "GET" and $r->url->path eq "/xyzzy") {
-				$c->send_file_response("/etc/passwd");
-			} elsif ($r->method eq "GET" and $r->url->path =~ m^/statuscode/(\d+)^) {
+			if ($r->method eq "GET" and $r->url->path =~ m^/statuscode/(\d+)^) {
 				$c->send_basic_header($1);
 				$c->send_crlf;
 			} elsif ($r->method eq "GET" and $r->url->path =~ m^/file/(.*)^) {
@@ -47,6 +45,18 @@ if ($pid) {
 				$c->send_crlf;
 				sleep 1;
 				$c->send_response("slow");
+			} elsif ($r->url->path eq "/method") {
+				if ($r->method eq "DELETE") {
+					$c->send_error(RC_METHOD_NOT_ALLOWED);
+				} elsif ($r->method eq "foo") {
+					$c->send_error(RC_NOT_IMPLEMENTED);
+				} else {
+					$c->send_status_line(200, $r->method);
+				}
+			} elsif ($r->url->path eq "/postdata") {
+				$c->send_basic_header;
+				$c->send_crlf;
+				$c->send_response($r->method.":".$r->content);
 			} else {
 				$c->send_error(RC_FORBIDDEN);
 			}
@@ -63,7 +73,7 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 }
 
 if (-x "./check_http") {
-	plan tests => 19;
+	plan tests => 39;
 } else {
 	plan skip_all => "No check_http compiled";
 }
@@ -118,4 +128,55 @@ $cmd = "$command -u /statuscode/203 -e 200,201,202";
 $result = NPTest->testCmd( $cmd );
 is( $result->return_code, 2, $cmd);
 like( $result->output, '/^HTTP CRITICAL - Invalid HTTP response received from host on port (\d+): HTTP/1.1 203 Non-Authoritative Information/', "Output correct: ".$result->output );
+
+$cmd = "$command -j HEAD -u /method";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 0, $cmd);
+like( $result->output, '/^HTTP OK HTTP/1.1 200 HEAD - 19 bytes in ([\d\.]+) seconds/', "Output correct: ".$result->output );
+
+$cmd = "$command -j POST -u /method";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 0, $cmd);
+like( $result->output, '/^HTTP OK HTTP/1.1 200 POST - 19 bytes in ([\d\.]+) seconds/', "Output correct: ".$result->output );
+
+$cmd = "$command -j GET -u /method";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 0, $cmd);
+like( $result->output, '/^HTTP OK HTTP/1.1 200 GET - 18 bytes in ([\d\.]+) seconds/', "Output correct: ".$result->output );
+
+$cmd = "$command -u /method";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 0, $cmd);
+like( $result->output, '/^HTTP OK HTTP/1.1 200 GET - 18 bytes in ([\d\.]+) seconds/', "Output correct: ".$result->output );
+
+$cmd = "$command -P foo -u /method";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 0, $cmd);
+like( $result->output, '/^HTTP OK HTTP/1.1 200 POST - 19 bytes in ([\d\.]+) seconds/', "Output correct: ".$result->output );
+
+$cmd = "$command -j DELETE -u /method";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 1, $cmd);
+like( $result->output, '/^HTTP WARNING: HTTP/1.1 405 Method Not Allowed/', "Output correct: ".$result->output );
+
+$cmd = "$command -j foo -u /method";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 2, $cmd);
+like( $result->output, '/^HTTP CRITICAL: HTTP/1.1 501 Not Implemented/', "Output correct: ".$result->output );
+
+$cmd = "$command -P stufftoinclude -u /postdata -s POST:stufftoinclude";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 0, $cmd);
+like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - ([\d\.]+) second/', "Output correct: ".$result->output );
+
+$cmd = "$command -j PUT -P stufftoinclude -u /postdata -s PUT:stufftoinclude";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 0, $cmd);
+like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - ([\d\.]+) second/', "Output correct: ".$result->output );
+
+# To confirm that the free doesn't segfault
+$cmd = "$command -P stufftoinclude -j PUT -u /postdata -s PUT:stufftoinclude";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 0, $cmd);
+like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - ([\d\.]+) second/', "Output correct: ".$result->output );
 

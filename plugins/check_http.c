@@ -187,6 +187,7 @@ process_arguments (int argc, char **argv)
     {"nohtml", no_argument, 0, 'n'},
     {"ssl", no_argument, 0, 'S'},
     {"post", required_argument, 0, 'P'},
+    {"method", required_argument, 0, 'j'},
     {"IP-address", required_argument, 0, 'I'},
     {"url", required_argument, 0, 'u'},
     {"port", required_argument, 0, 'p'},
@@ -228,7 +229,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:T:I:a:e:p:s:R:r:u:f:C:nlLSm:M:N", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:e:p:s:R:r:u:f:C:nlLSm:M:N", longopts, &option);
     if (c == -1 || c == EOF)
       break;
 
@@ -344,10 +345,16 @@ process_arguments (int argc, char **argv)
       strncpy (user_auth, optarg, MAX_INPUT_BUFFER - 1);
       user_auth[MAX_INPUT_BUFFER - 1] = 0;
       break;
-    case 'P': /* HTTP POST data in URL encoded format */
-      if (http_method || http_post_data) break;
-      http_method = strdup("POST");
-      http_post_data = strdup (optarg);
+    case 'P': /* HTTP POST data in URL encoded format; ignored if settings already */
+      if (! http_post_data)
+        http_post_data = strdup (optarg);
+      if (! http_method)
+        http_method = strdup("POST");
+      break;
+    case 'j': /* Set HTTP method */
+      if (http_method)
+        free(http_method);
+      http_method = strdup (optarg);
       break;
     case 's': /* string or substring */
       strncpy (string_expect, optarg, MAX_INPUT_BUFFER - 1);
@@ -817,7 +824,7 @@ check_http (void)
     asprintf (&buf, "%sAuthorization: Basic %s\r\n", buf, auth);
   }
 
-  /* either send http POST data */
+  /* either send http POST data (any data, not only POST)*/
   if (http_post_data) {
     if (http_content_type) {
       asprintf (&buf, "%sContent-Type: %s\r\n", buf, http_content_type);
@@ -1313,6 +1320,8 @@ print_help (void)
   printf ("    %s\n", _("URL to GET or POST (default: /)"));
   printf (" %s\n", "-P, --post=STRING");
   printf ("    %s\n", _("URL encoded http POST data"));
+  printf (" %s\n", "-j, --method=STRING  (for example: HEAD, OPTIONS, TRACE, PUT, DELETE)");
+  printf ("    %s\n", _("Set HTTP method."));
   printf (" %s\n", "-N, --no-body");
   printf ("    %s\n", _("Don't wait for document body: stop reading after headers."));
   printf ("    %s\n", _("(Note that this still does an HTTP GET or POST, not a HEAD.)"));
@@ -1396,5 +1405,5 @@ print_usage (void)
   printf ("       [-a auth] [-f <ok | warn | critcal | follow>] [-e <expect>]\n");
   printf ("       [-s string] [-l] [-r <regex> | -R <case-insensitive regex>] [-P string]\n");
   printf ("       [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>] [-A string]\n");
-  printf ("       [-k string] [-S] [-C <age>] [-T <content-type>]\n");
+  printf ("       [-k string] [-S] [-C <age>] [-T <content-type>] [-j method]\n");
 }
