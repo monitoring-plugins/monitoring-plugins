@@ -11,7 +11,7 @@ This file documents the major additions and syntax changes between releases.
 	Extra-opts (C plugins) does not allow trailing comments anymore (like N::P)
 	Fixed dependency issue on libtap when ./configure --enable-libtap used. Warning: will install libtap
 	Fixed segfault in extra-opts under some circumstance when reading multiple sections
-	Fix long options parsing in check_tcp
+	Fix long options parsing in check_disk, check_dns, check_mrtg, check_mrtgtraf and check_tcp.
 	check_icmp now reports min and max round trip time perfdata (Steve Rader)
 	Fixed bug where additional headers with redirection caused a segfault (Dieter Van de Walle - 2089159)
 

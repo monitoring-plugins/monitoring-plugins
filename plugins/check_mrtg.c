@@ -181,7 +181,7 @@ process_arguments (int argc, char **argv)
 		{"warning", required_argument, 0, 'w'},
 		{"label", required_argument, 0, 'l'},
 		{"units", required_argument, 0, 'u'},
-		{"verbose", no_argument, 0, 'v'},
+		{"variable", required_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
@@ -334,7 +334,7 @@ print_help (void)
 
 	printf (" %s\n", "-F, --logfile=FILE");
   printf ("   %s\n", _("The MRTG log file containing the data you want to monitor"));
-  printf ("-e, --expires=MINUTES");
+  printf (" %s\n", "-e, --expires=MINUTES");
   printf ("   %s\n", _("Minutes before MRTG data is considered to be too old"));
   printf (" %s\n", "-a, --aggregation=AVG|MAX");
   printf ("   %s\n", _("Should we check average or maximum values?"));

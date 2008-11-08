@@ -745,6 +745,6 @@ void print_help(void)
 void print_usage(void)
 {
   printf (_("Usage:"));
-	printf ("%s -H host -v variable [-p port] [-w warning] [-c critical]",progname);
+	printf ("%s -H host -v variable [-p port] [-w warning] [-c critical]\n",progname);
   printf ("[-l params] [-d SHOWALL] [-t timeout]\n");
 }

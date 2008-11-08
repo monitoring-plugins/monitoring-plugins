@@ -223,13 +223,11 @@ process_arguments (int argc, char **argv)
 
 	int option = 0;
 	static struct option longopts[] = {
-		{"logfile", required_argument, 0, 'F'},
+		{"filename", required_argument, 0, 'F'},
 		{"expires", required_argument, 0, 'e'},
 		{"aggregation", required_argument, 0, 'a'},
-		{"variable", required_argument, 0, 'v'},
 		{"critical", required_argument, 0, 'c'},
 		{"warning", required_argument, 0, 'w'},
-		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
@@ -385,6 +383,6 @@ void
 print_usage (void)
 {
 	printf (_("Usage"));
-  printf (" %s -F <log_file> -a <AVG | MAX> -v <variable> -w <warning_pair>",progname);
-  printf ("-c <critical_pair> [-e expire_minutes] [-t timeout] [-v]\n");
+  printf (" %s -F <log_file> -a <AVG | MAX> -w <warning_pair>\n",progname);
+  printf ("-c <critical_pair> [-e expire_minutes]\n");
 }

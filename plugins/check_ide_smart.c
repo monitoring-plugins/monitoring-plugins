@@ -173,7 +173,8 @@ main (int argc, char *argv[])
 		{"auto-off", no_argument, 0, '0'}, 
 		{"nagios", no_argument, 0, 'n'}, 
 		{"help", no_argument, 0, 'h'}, 
-		{"version", no_argument, 0, 'V'}, {0, 0, 0, 0} 
+		{"version", no_argument, 0, 'V'},
+		{0, 0, 0, 0}
 	};
 
 	setlocale (LC_ALL, "");

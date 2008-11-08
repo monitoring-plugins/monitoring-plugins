@@ -340,8 +340,8 @@ process_arguments (int argc, char **argv)
     {"reverse-server", required_argument, 0, 'r'},
     {"expected-address", required_argument, 0, 'a'},
     {"expect-authority", no_argument, 0, 'A'},
-    {"warning", no_argument, 0, 'w'},
-    {"critical", no_argument, 0, 'c'},
+    {"warning", required_argument, 0, 'w'},
+    {"critical", required_argument, 0, 'c'},
     {0, 0, 0, 0}
   };
 

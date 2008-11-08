@@ -477,8 +477,8 @@ process_arguments (int argc, char **argv)
     {"iwarning", required_argument, 0, 'W'},
     /* Dang, -C is taken. We might want to reshuffle this. */
     {"icritical", required_argument, 0, 'K'},
-    {"kilobytes", required_argument, 0, 'k'},
-    {"megabytes", required_argument, 0, 'm'},
+    {"kilobytes", no_argument, 0, 'k'},
+    {"megabytes", no_argument, 0, 'm'},
     {"units", required_argument, 0, 'u'},
     {"path", required_argument, 0, 'p'},
     {"partition", required_argument, 0, 'p'},
