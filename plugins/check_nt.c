@@ -476,6 +476,9 @@ int process_arguments(int argc, char **argv){
 		{"warning",  required_argument,0,'w'},
 		{"variable", required_argument,0,'v'},
 		{"hostname", required_argument,0,'H'},
+		{"params",   required_argument,0,'l'},
+		{"secret",   required_argument,0,'s'},
+		{"display",  required_argument,0,'d'},
 		{"version",  no_argument,      0,'V'},
 		{"help",     no_argument,      0,'h'},
 		{0,0,0,0}
@@ -655,7 +658,7 @@ void print_help(void)
   printf (" %s\n", "-p, --port=INTEGER");
   printf ("   %s", _("Optional port number (default: "));
   printf ("%d)\n", PORT);
-  printf (" %s\n", "-s <password>");
+  printf (" %s\n", "-s, --secret=<password>");
   printf ("   %s\n", _("Password needed for the request"));
   printf (" %s\n", "-w, --warning=INTEGER");
   printf ("   %s\n", _("Threshold which will result in a warning status"));
@@ -663,6 +666,10 @@ void print_help(void)
   printf ("   %s\n", _("Threshold which will result in a critical status"));
   printf (" %s\n", "-t, --timeout=INTEGER");
   printf ("   %s", _("Seconds before connection attempt times out (default: "));
+  printf (" %s\n", "-l, --params=<parameters>");
+  printf ("   %s", _("Parameters passed to specified check (see below)"));
+  printf (" %s\n", "-d, --display={SHOWALL}");
+  printf ("   %s", _("Display options (currently only SHOWALL works)"));
   printf ("%d)\n", DEFAULT_SOCKET_TIMEOUT);
   printf (" %s\n", "-h, --help");
   printf ("   %s\n", _("Print this help screen"));
