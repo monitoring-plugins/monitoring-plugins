@@ -678,7 +678,7 @@ all the current tests and report an overall success rate.
 </para>
 
 <para>
-See the <ulink url="http://tinderbox.altinity.org">Nagios Plugins Tinderbox server</ulink>
+See the <ulink url="http://tinderbox.opsera.com">Nagios Plugins Tinderbox server</ulink>
 for the daily test results.
 </para>
 
