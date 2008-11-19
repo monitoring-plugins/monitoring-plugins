@@ -15,6 +15,7 @@ This file documents the major additions and syntax changes between releases.
 	Add missing long options for check_nt (for use with extra-opts)
 	check_icmp now reports min and max round trip time perfdata (Steve Rader)
 	Fixed bug where additional headers with redirection caused a segfault (Dieter Van de Walle - 2089159)
+	check_disk: make autofs mount paths specified with -p before we determing the mount list (Erik Welch)
 
 1.4.13 25th Sept 2008
 	Fix Debian bug #460097: check_http --max-age broken (Hilko Bengen)

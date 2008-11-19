@@ -118,9 +118,6 @@ enum
  #pragma alloca
 #endif
 
-/* Linked list of mounted filesystems. */
-static struct mount_entry *mount_list;
-
 int process_arguments (int, char **);
 void print_path (const char *mypath);
 void set_all_thresholds (struct parameter_list *path);
@@ -639,8 +636,12 @@ process_arguments (int argc, char **argv)
       }
       se->group = group;
       set_all_thresholds(se);
-      np_set_best_match(se, mount_list, exact_match);
+
+      /* With autofs, it is required to stat() the path before populating the mount_list */
       stat_path(se);
+      mount_list = read_file_system_list (0);
+      np_set_best_match(se, mount_list, exact_match);
+
       path_selected = TRUE;
       break;
     case 'x':                 /* exclude path or partition */
@@ -757,7 +758,6 @@ process_arguments (int argc, char **argv)
     case 'C':
        /* add all mount entries to path_select list if no partitions have been explicitly defined using -p */
        if (path_selected == FALSE) {
-         struct mount_entry *me;
          struct parameter_list *path;
          for (me = mount_list; me; me = me->me_next) {
            if (! (path = np_find_parameter(path_select_list, me->me_mountdir))) 

@@ -77,19 +77,18 @@ np_add_parameter(struct parameter_list **list, const char *name)
 struct parameter_list *
 np_del_parameter(struct parameter_list *item, struct parameter_list *prev)
 {
-	struct parameter_list *next;
-   	if (item->name_next)
-  		next = item->name_next;
-	else
-	  	next = NULL;
+  struct parameter_list *next;
 
-	
-	free(item);
-	if (prev)
-	  prev->name_next = next;
+  if (item->name_next)
+    next = item->name_next;
+  else
+    next = NULL;
 
-	return next;
+  free(item);
+  if (prev)
+    prev->name_next = next;
 
+  return next;
 }
 
   
