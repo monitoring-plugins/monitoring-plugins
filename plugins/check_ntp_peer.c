@@ -162,7 +162,7 @@ void print_ntp_control_message(const ntp_control_message *p){
 	if(p->op&REM_RESP && p->op&OP_READSTAT){
 		peer=(ntp_assoc_status_pair*)p->data;
 		for(i=0;i<numpeers;i++){
-			printf("\tpeer id %.2x status %.2x", 
+			printf("\tpeer id %.2x status %.2x",
 			       ntohs(peer[i].assoc), ntohs(peer[i].status));
 			if (PEER_SEL(peer[i].status) >= PEER_INCLUDED){
 				if(PEER_SEL(peer[i].status) >= PEER_SYNCSOURCE){
@@ -477,7 +477,7 @@ int process_arguments(int argc, char **argv){
 		{0, 0, 0, 0}
 	};
 
-	
+
 	if (argc < 2)
 		usage ("\n");
 

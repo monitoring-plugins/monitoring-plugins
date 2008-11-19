@@ -380,7 +380,7 @@ print_help (void)
 
 
 
-/* original command line: 
+/* original command line:
 	 <log_file> <expire_minutes> <AVG|MAX> <variable> <vwl> <vcl> <label> [units] */
 
 void

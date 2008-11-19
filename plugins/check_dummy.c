@@ -87,7 +87,7 @@ main (int argc, char **argv)
     return STATE_UNKNOWN;
   }
 
-  if (argc >= 3) 
+  if (argc >= 3)
     printf (": %s", argv[2]);
 
   printf("\n");

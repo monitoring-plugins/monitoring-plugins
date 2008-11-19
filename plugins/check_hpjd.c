@@ -123,7 +123,7 @@ main (int argc, char **argv)
 		 HPJD_GD_DOOR_OPEN, HPJD_GD_PAPER_OUTPUT, HPJD_GD_STATUS_DISPLAY);
 
 	/* get the command to run */
-	sprintf (command_line, "%s -OQa -m : -v 1 -c %s %s %s", PATH_TO_SNMPGET, community, 
+	sprintf (command_line, "%s -OQa -m : -v 1 -c %s %s %s", PATH_TO_SNMPGET, community,
 									address, query_string);
 
 	/* run the command */
@@ -198,7 +198,7 @@ main (int argc, char **argv)
 				strcpy (display_message, temp_buffer + 1);
 				break;
 			default:										/* fold multiline message */
-				strncat (display_message, input_buffer, 
+				strncat (display_message, input_buffer,
 						sizeof (display_message) - strlen (display_message) - 1);
 			}
 
@@ -218,7 +218,7 @@ main (int argc, char **argv)
 		sprintf (errmsg, "%s", input_buffer );
 
 	}
-	
+
 	/* close stderr */
 	(void) fclose (child_stderr);
 
@@ -232,7 +232,7 @@ main (int argc, char **argv)
 		/* might not be the problem, but most likely is. */
 		result = STATE_UNKNOWN ;
 		asprintf (&errmsg, "%s : Timeout from host %s\n", errmsg, address );
-		 
+
 	}
 
 	/* if we had no read errors, check the printer status results... */
@@ -326,7 +326,7 @@ process_arguments (int argc, char **argv)
 	if (argc < 2)
 		return ERROR;
 
-	
+
 	while (1) {
 		c = getopt_long (argc, argv, "+hVH:C:", longopts, &option);
 
@@ -365,7 +365,7 @@ process_arguments (int argc, char **argv)
 			usage2 (_("Invalid hostname/address"), argv[c]);
 		}
 	}
-	
+
 	if (community == NULL) {
 		if (argv[c] != NULL )
 			community = argv[c];

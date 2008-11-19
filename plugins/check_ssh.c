@@ -78,7 +78,7 @@ main (int argc, char **argv)
 
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
-	
+
 	alarm (socket_timeout);
 
 	/* ssh_connect exits if error is found */
@@ -255,7 +255,7 @@ ssh_connect (char *haddr, int hport, char *remote_version)
 			close(sd);
 			exit (STATE_WARNING);
 		}
-		
+
 		printf
 			(_("SSH OK - %s (protocol %s)\n"),
 			 ssh_server, ssh_proto);
@@ -294,7 +294,7 @@ print_help (void)
 
 	printf (" %s\n", "-r, --remote-version=STRING");
   printf ("    %s\n", _("Warn if string doesn't match expected server version (ex: OpenSSH_3.9p1)"));
-	
+
 	printf (_(UT_VERBOSE));
 
 #ifdef NP_EXTRA_OPTS

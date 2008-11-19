@@ -105,7 +105,7 @@ main (int argc, char **argv)
   /* was thinking about running qstat without any options, capturing the
      -default line, parsing it & making an array of all know server types
      but thought this would be too much hassle considering this is a tool
-     for intelligent sysadmins (ha). Could put a static array of known 
+     for intelligent sysadmins (ha). Could put a static array of known
      server types in a header file but then we'd be limiting ourselves
 
      In the end, I figured I'd simply let an error occur & then trap it
@@ -139,10 +139,10 @@ main (int argc, char **argv)
     result = STATE_CRITICAL;
   }
   else {
-    printf ("OK: %s/%s %s (%s), Ping: %s ms|%s %s\n", 
+    printf ("OK: %s/%s %s (%s), Ping: %s ms|%s %s\n",
             ret[qstat_game_players],
             ret[qstat_game_players_max],
-            ret[qstat_game_field], 
+            ret[qstat_game_field],
             ret[qstat_map_field],
             ret[qstat_ping_field],
             perfdata ("players", atol(ret[qstat_game_players]), "",
@@ -345,7 +345,7 @@ print_usage (void)
  * Test Cases:
  *
  * ./check_game --players 7 -p 8 --map 5 qs 67.20.190.61 26000
- * 
+ *
  * qstat -raw , -qs 67.20.190.61
  *  ==> QS,67.20.190.61,Nightmare.fintek.ca,67.20.190.61:26000,3,e2m1,6,0,83,0
  *

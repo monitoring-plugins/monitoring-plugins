@@ -507,7 +507,7 @@ validate_arguments (void)
 		return ERROR;
 	}
 	else if (warn_percent < crit_percent) {
-		usage4 
+		usage4
 			(_("Warning percentage should be more than critical percentage"));
 	}
 	else if (warn_size_bytes < crit_size_bytes) {

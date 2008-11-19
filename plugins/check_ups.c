@@ -403,7 +403,7 @@ get_ups_variable (const char *varname, char *buf, size_t buflen)
 	int len;
 
 	*buf=0;
-	
+
 	/* create the command string to send to the UPS daemon */
 	/* Add LOGOUT to avoid read failure logs */
 	sprintf (send_buffer, "GET VAR %s %s\nLOGOUT\n", ups_name, varname);
@@ -453,7 +453,7 @@ get_ups_variable (const char *varname, char *buf, size_t buflen)
 }
 
 
-/* Command line: CHECK_UPS -H <host_address> -u ups [-p port] [-v variable] 
+/* Command line: CHECK_UPS -H <host_address> -u ups [-p port] [-v variable]
 			   [-wv warn_value] [-cv crit_value] [-to to_sec] */
 
 
@@ -508,7 +508,7 @@ process_arguments (int argc, char **argv)
 				usage2 (_("Invalid hostname/address"), optarg);
 			}
 			break;
-		case 'T': /* FIXME: to be improved (ie "-T C" for Celsius or "-T F" for Farenheit) */ 
+		case 'T': /* FIXME: to be improved (ie "-T C" for Celsius or "-T F" for Farenheit) */
 			temp_output_c = 1;
 			break;
 		case 'u':									/* ups name */

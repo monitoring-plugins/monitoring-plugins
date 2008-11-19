@@ -79,7 +79,7 @@ main (int argc, char **argv)
 
 	while (1) {
 		c = getopt_long (argc, argv, "+hVu:", longopts, &option);
-		
+
 		if (c == -1 || c == EOF)
 			break;
 
@@ -144,7 +144,7 @@ main (int argc, char **argv)
 	printf ("%s", nstr);
 	printf ("</A>");
 	nstr = strtok(NULL, PERF_CHARACTER);
-	if (nstr != NULL) 
+	if (nstr != NULL)
 		printf (" | %s", nstr);
 
 	/* close the pipe */

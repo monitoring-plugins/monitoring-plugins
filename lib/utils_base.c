@@ -89,7 +89,7 @@ range
 		set_range_end(temp_range, end);
 	}
 
-	if (temp_range->start_infinity == TRUE || 
+	if (temp_range->start_infinity == TRUE ||
 		temp_range->end_infinity == TRUE ||
 		temp_range->start <= temp_range->end) {
 		return temp_range;
@@ -164,7 +164,7 @@ check_range(double value, range *my_range)
 {
 	int no = FALSE;
 	int yes = TRUE;
-	
+
 	if (my_range->alert_on == INSIDE) {
 		no = TRUE;
 		yes = FALSE;

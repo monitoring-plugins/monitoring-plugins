@@ -1313,7 +1313,7 @@ print_help(void)
   printf ("    %s",_("timeout value (seconds, currently  "));
   printf ("%u)\n", timeout);
   printf (" %s\n", "-b");
-  printf ("    %s\n", _("Number of icmp data bytes to send")); 
+  printf ("    %s\n", _("Number of icmp data bytes to send"));
   printf ("    %s %u + %d)\n", _("Packet size will be data bytes + icmp header (currently"),icmp_data_size, ICMP_MINLEN);
   printf (" %s\n", "-v");
   printf ("    %s\n", _("verbose"));

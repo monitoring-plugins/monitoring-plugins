@@ -187,8 +187,8 @@ main (int argc, char **argv)
 	printf (ngettext ("%d process", "%d processes", proc_entries), proc_entries);
 	printf (", ");
 	printf (
-	  ngettext ("status log updated %d second ago", 
-	    "status log updated %d seconds ago", 
+	  ngettext ("status log updated %d second ago",
+	    "status log updated %d seconds ago",
 	    (int) (current_time - latest_entry_time) ),
 	    (int) (current_time - latest_entry_time) );
 	printf ("\n");

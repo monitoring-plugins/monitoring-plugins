@@ -79,8 +79,8 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #elif defined(__sun__) || defined(__solaris__) || defined(__hpux__)
 
-#define INSAP 22 
-#define OUTSAP 24 
+#define INSAP 22
+#define OUTSAP 24
 
 #include <signal.h>
 #include <ctype.h>
@@ -90,17 +90,17 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #define bcopy(source, destination, length) memcpy(destination, source, length)
 
-#define AREA_SZ 5000		/* buffer length in bytes */ 
+#define AREA_SZ 5000		/* buffer length in bytes */
 static u_long ctl_area[AREA_SZ];
 static u_long dat_area[AREA_SZ];
 static struct strbuf ctl = {AREA_SZ, 0, (char *)ctl_area};
 static struct strbuf dat = {AREA_SZ, 0, (char *)dat_area};
 
-#define GOT_CTRL 1 
-#define GOT_DATA 2 
-#define GOT_BOTH 3 
-#define GOT_INTR 4 
-#define GOT_ERR 128 
+#define GOT_CTRL 1
+#define GOT_DATA 2
+#define GOT_BOTH 3
+#define GOT_INTR 4
+#define GOT_ERR 128
 
 #define u_int8_t	 uint8_t
 #define u_int16_t	uint16_t
@@ -222,7 +222,7 @@ dhcp_offer *dhcp_offer_list=NULL;
 requested_server *requested_server_list=NULL;
 
 int valid_responses=0;     /* number of valid DHCPOFFERs we received */
-int requested_servers=0;   
+int requested_servers=0;
 int requested_responses=0;
 
 int request_specific_address=FALSE;
@@ -382,7 +382,7 @@ int get_hardware_address(int sock,char *interface_name){
 		unit = atoi(p) ;
 		*p = '\0' ;
 		strncat(dev, interface_name, 6) ;
-		} 
+		}
 	else{
 		printf(_("Error: can't find unit number in interface_name (%s) - expecting TypeNumber eg lnc0.\n"), interface_name);
 		exit(STATE_UNKNOWN);
@@ -535,7 +535,7 @@ int send_dhcp_discover(int sock){
 	/* send the DHCPDISCOVER packet out */
 	send_dhcp_packet(&discover_packet,sizeof(discover_packet),sock,&sockaddr_broadcast);
 
-	if(verbose) 
+	if(verbose)
 		printf("\n\n");
 
 	return OK;
@@ -564,7 +564,7 @@ int get_dhcp_offer(int sock){
 		if((current_time-start_time)>=dhcpoffer_timeout)
 			break;
 
-		if(verbose) 
+		if(verbose)
 			printf("\n\n");
 
 		bzero(&source,sizeof(source));
@@ -581,7 +581,7 @@ int get_dhcp_offer(int sock){
 			continue;
 		        }
 		else{
-			if(verbose) 
+			if(verbose)
 				printf(_("Result=OK\n"));
 
 			responses++;
@@ -626,7 +626,7 @@ int get_dhcp_offer(int sock){
 			printf("\n");
 
 		if(result==ERROR){
-			if(verbose) 
+			if(verbose)
 				printf(_("DHCPOFFER hardware address did not match our own - ignoring packet\n"));
 
 			continue;
@@ -660,7 +660,7 @@ int send_dhcp_packet(void *buffer, int buffer_size, int sock, struct sockaddr_in
 
 	result=sendto(sock,(char *)buffer,buffer_size,0,(struct sockaddr *)dest,sizeof(*dest));
 
-	if(verbose) 
+	if(verbose)
 		printf(_("send_dhcp_packet result: %d\n"),result);
 
 	if(result<0)
@@ -853,7 +853,7 @@ int add_dhcp_offer(struct in_addr source,dhcp_packet *offer_packet){
 		/* get option length */
 		option_length=offer_packet->options[x++];
 
-		if(verbose) 
+		if(verbose)
 			printf("Option: %d (0x%02X)\n",option_type,option_length);
 
 		/* get option data */
@@ -989,7 +989,7 @@ int get_results(void){
 					if(verbose){
 						printf(_("DHCP Server Match: Offerer=%s"),inet_ntoa(temp_offer->server_address));
 						printf(_(" Requested=%s"),inet_ntoa(temp_server->server_address));
-						if(temp_server->answered) 
+						if(temp_server->answered)
 							printf(_(" (duplicate)"));
 						printf(_("\n"));
 						}
@@ -1090,7 +1090,7 @@ int call_getopt(int argc, char **argv){
 
 	int option_index = 0;
 	static struct option long_options[] =
-	{ 
+	{
 		{"serverip",       required_argument,0,'s'},
 		{"requestedip",    required_argument,0,'r'},
 		{"timeout",        required_argument,0,'t'},
@@ -1306,7 +1306,7 @@ static int dl_bind(int fd, int sap, u_char *addr){
 
 /***********************************************************************
  * interface:
- * function mac_addr_dlpi - get the mac address of the interface with 
+ * function mac_addr_dlpi - get the mac address of the interface with
  *                          type dev (eg lnc, hme) and unit (0, 1 ..)
  *
  * parameter: addr: an array of six bytes, has to be allocated by the caller

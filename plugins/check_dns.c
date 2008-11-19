@@ -123,7 +123,7 @@ main (int argc, char **argv)
 
   /* scan stdout */
   for(i = 0; i < chld_out.lines; i++) {
-    if (addresses == NULL)  
+    if (addresses == NULL)
       addresses = malloc(sizeof(*addresses)*10);
     else if (!(n_addresses % 10))
       addresses = realloc(addresses,sizeof(*addresses) * (n_addresses + 10));
@@ -289,7 +289,7 @@ error_scan (char *input_buffer)
             strstr (input_buffer, ": REFUSED")))
     die (STATE_CRITICAL, _("Connection to DNS %s was refused\n"), dns_server);
 
-  /* Query refused (usually by an ACL in the namserver) */ 
+  /* Query refused (usually by an ACL in the namserver) */
   else if (strstr (input_buffer, "Query refused"))
     die (STATE_CRITICAL, _("Query was refused by DNS server at %s\n"), dns_server);
 

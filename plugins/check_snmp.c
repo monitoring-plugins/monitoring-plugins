@@ -199,10 +199,10 @@ main (int argc, char **argv)
 			PATH_TO_SNMPGET, timeout_interval, retries, miblist, proto,
 			"[authpriv]", server_address, port, oid);
 	}
-	
+
 	if (verbose)
 		printf ("%s\n", command_line);
-	
+
 
 	/* run the command */
 	child_process = spopen (command_line);
@@ -236,7 +236,7 @@ main (int argc, char **argv)
 		if (copylen > sizeof(perfstr)-strlen(perfstr)-1)
 			copylen = sizeof(perfstr)-strlen(perfstr)-1;
 		ptr2 = ptr;
-		ptr = foo; 
+		ptr = foo;
 
 		if (ptr == NULL)
 			break;
@@ -309,7 +309,7 @@ main (int argc, char **argv)
 		    eval_method[i] & WARN_EQ ||
 		    eval_method[i] & WARN_NE) {
 			p2 = strpbrk (p2, "0123456789");
-			if (p2 == NULL) 
+			if (p2 == NULL)
 				die (STATE_UNKNOWN,_("No valid data returned"));
 			response_value[i] = strtoul (p2, NULL, 10);
 			iresult = check_num (i);
@@ -346,7 +346,7 @@ main (int argc, char **argv)
 				iresult = STATE_CRITICAL;
 			else if (eval_method[i] & WARN_PRESENT)
 				iresult = STATE_WARNING;
-			else if (response && iresult == STATE_DEPENDENT) 
+			else if (response && iresult == STATE_DEPENDENT)
 				iresult = STATE_OK;
 		}
 
@@ -473,7 +473,7 @@ process_arguments (int argc, char **argv)
 			usage5 ();
 		case 'h':	/* help */
 			print_help ();
-			exit (STATE_OK); 
+			exit (STATE_OK);
 		case 'V':	/* version */
 			print_revision (progname, revision);
 			exit (STATE_OK);
@@ -571,7 +571,7 @@ process_arguments (int argc, char **argv)
 				jj++;
 				ii++;
 			}
-			if (c == 'E') 
+			if (c == 'E')
 				eval_method[j+1] |= WARN_PRESENT;
 			else if (c == 'e')
 				eval_method[j+1] |= CRIT_PRESENT;
@@ -672,7 +672,7 @@ process_arguments (int argc, char **argv)
 
 	if (community == NULL)
 		community = strdup (DEFAULT_COMMUNITY);
-	
+
 
 
 	return validate_arguments ();
@@ -687,8 +687,8 @@ process_arguments (int argc, char **argv)
 
 <para>&PROTO_validate_arguments;</para>
 
-<para>Checks to see if the default miblist needs to be loaded. Also verifies 
-the authentication and authorization combinations based on protocol version 
+<para>Checks to see if the default miblist needs to be loaded. Also verifies
+the authentication and authorization combinations based on protocol version
 selected.</para>
 
 <para></para>
@@ -713,16 +713,16 @@ validate_arguments ()
 
 
 	/* Need better checks to verify seclevel and authproto choices */
-	
-	if (seclevel == NULL) 
+
+	if (seclevel == NULL)
 		asprintf (&seclevel, "noAuthNoPriv");
 
 
-	if (authproto == NULL ) 
+	if (authproto == NULL )
 		asprintf(&authproto, DEFAULT_AUTH_PROTOCOL);
-	
-	 
-	
+
+
+
 	if (proto == NULL || (strcmp(proto,DEFAULT_PROTOCOL) == 0) ) {	/* default protocol version */
 		asprintf(&proto, DEFAULT_PROTOCOL);
 		asprintf(&authpriv, "%s%s", "-c ", community);
@@ -732,7 +732,7 @@ validate_arguments ()
 	}
 	else if ( strcmp (proto, "3") == 0 ) {		/* snmpv3 args */
 		asprintf(&proto, "%s", "3");
-		
+
 		if ( (strcmp(seclevel, "noAuthNoPriv") == 0) || seclevel == NULL ) {
 			asprintf(&authpriv, "%s", "-l noAuthNoPriv" );
 		}
@@ -752,12 +752,12 @@ validate_arguments ()
 			}
 			asprintf(&authpriv, "-l authPriv -a %s -u %s -A %s -x DES -X %s ", authproto, secname, authpasswd, privpasswd);
 		}
-		
+
 	}
 	else {
 		usage2 (_("Invalid SNMP version"), proto);
 	}
-			
+
 	return OK;
 }
 

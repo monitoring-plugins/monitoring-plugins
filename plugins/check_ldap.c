@@ -87,15 +87,15 @@ main (int argc, char *argv[])
 	LDAPMessage *result;
 
 	/* should be 	int result = STATE_UNKNOWN; */
-	
+
 	int status = STATE_UNKNOWN;
 	long microsec;
 	double elapsed_time;
-	
+
 	/* for ldap tls */
-	
- 	int tls; 
- 	int version=3;
+
+	int tls;
+	int version=3;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -129,7 +129,7 @@ main (int argc, char *argv[])
 		printf ("Could not connect to the server at port %i\n", ld_port);
 		return STATE_CRITICAL;
 	}
-#else	
+#else
 	if (!(ld = ldap_open (ld_host, ld_port))) {
 		if (verbose)
 			ldap_perror(ld, "ldap_open");
@@ -137,7 +137,7 @@ main (int argc, char *argv[])
 		return STATE_CRITICAL;
 	}
 #endif /* HAVE_LDAP_INIT */
-	
+
 #ifdef HAVE_LDAP_SET_OPTION
 	/* set ldap options */
 	if (ldap_set_option (ld, LDAP_OPT_PROTOCOL_VERSION, &ld_protocol) !=
@@ -152,7 +152,7 @@ main (int argc, char *argv[])
 #if defined(HAVE_LDAP_SET_OPTION) && defined(LDAP_OPT_X_TLS)
 		/* ldaps: set option tls */
 		tls = LDAP_OPT_X_TLS_HARD;
-		
+
 		if (ldap_set_option (ld, LDAP_OPT_X_TLS, &tls) != LDAP_SUCCESS)
 		{
 			if (verbose)
@@ -179,7 +179,7 @@ main (int argc, char *argv[])
 		/* call start_tls */
 		if (ldap_start_tls_s(ld, NULL, NULL) != LDAP_SUCCESS)
 		{
-			if (verbose) 
+			if (verbose)
 				ldap_perror(ld, "ldap_start_tls");
 			printf (_("Could not init startTLS at port %i!\n"), ld_port);
 			return STATE_CRITICAL;
@@ -189,7 +189,7 @@ main (int argc, char *argv[])
 		return STATE_CRITICAL;
 #endif /* HAVE_LDAP_START_TLS_S */
 	}
-	
+
 	/* bind to the ldap server */
 	if (ldap_bind_s (ld, ld_binddn, ld_passwd, LDAP_AUTH_SIMPLE) !=
 			LDAP_SUCCESS) {

@@ -81,7 +81,7 @@ typedef struct {
 
 /* this structure holds data about results from querying offset from a peer */
 typedef struct {
-	time_t waiting;         /* ts set when we started waiting for a response */ 
+	time_t waiting;         /* ts set when we started waiting for a response */
 	int num_responses;      /* number of successfully recieved responses */
 	uint8_t stratum;        /* copied verbatim from the ntp_message */
 	double rtdelay;         /* converted from the ntp_message */
@@ -132,7 +132,7 @@ typedef struct {
  they are divided into halves, each being a 16-bit int in network byte order:
  - the first 16 bits are an int on the left side of a decimal point.
  - the second 16 bits represent a fraction n/(2^16)
- likewise for the 64-bit "fixed point" numbers with everything doubled :) 
+ likewise for the 64-bit "fixed point" numbers with everything doubled :)
  **/
 
 /* macros to access the left/right 16 bits of a 32-bit ntp "fixed point"
@@ -299,7 +299,7 @@ int best_offset_server(const ntp_server_results *slist, int nservers){
 
 /* do everything we need to get the total average offset
  * - we use a certain amount of parallelization with poll() to ensure
- *   we don't waste time sitting around waiting for single packets. 
+ *   we don't waste time sitting around waiting for single packets.
  * - we also "manually" handle resolving host names and connecting, because
  *   we have to do it in a way that our lazy macros don't handle currently :( */
 double offset_request(const char *host, int *status){
@@ -461,7 +461,7 @@ int process_arguments(int argc, char **argv){
 		{0, 0, 0, 0}
 	};
 
-	
+
 	if (argc < 2)
 		usage ("\n");
 

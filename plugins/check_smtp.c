@@ -168,7 +168,7 @@ main (int argc, char **argv)
 
 	if (verbose && smtp_use_dummycmd)
 		printf ("FROM CMD: %s", cmd_str);
-	
+
 	/* initialize alarm signal handling */
 	(void) signal (SIGALRM, socket_timeout_alarm_handler);
 
@@ -285,7 +285,7 @@ main (int argc, char **argv)
 #  endif /* USE_OPENSSL */
 		}
 #endif
-				
+
 		/* sendmail will syslog a "NOQUEUE" error if session does not attempt
 		 * to do something useful. This can be prevented by giving a command
 		 * even if syntax is illegal (MAIL requires a FROM:<...> argument)
@@ -746,7 +746,7 @@ recvlines(char *buf, size_t bufsize)
 }
 
 
-int 
+int
 my_close (void)
 {
 #ifdef HAVE_SSL

@@ -8,7 +8,7 @@
 * Description:
 * 
 * This file contains the pst3 executable. This is a replacement ps command
-* for Solaris to get output which provides a long argument listing, which 
+* for Solaris to get output which provides a long argument listing, which
 * is not possible with the standard ps command (due to truncation). /usr/ucb/ps
 * also has issues where some fields run into each other.
 * 
@@ -17,7 +17,7 @@
 *
 * Originally written by R.W.Ingraham
 * Rewritten by Duncan Ferguson (Altinity Ltd, June 2008)
-*   The rewrite was necessary as /dev/kmem is not available within 
+*   The rewrite was necessary as /dev/kmem is not available within
 *   non-global zones on Solaris 10
 *
 *   Details for rewrite came from
@@ -48,7 +48,7 @@
 #include <fcntl.h>
 #include <procfs.h>
 #include <errno.h>
-#include <sys/types32.h> 
+#include <sys/types32.h>
 
 /*
  *  Constants
@@ -125,8 +125,8 @@ int main (int argc, char **argv)
     char *procname;
     char *ptr;
     int argslen;
-    uintptr_t args_addr;; 
-    uintptr_t *args_vecs;; 
+    uintptr_t args_addr;;
+    uintptr_t *args_vecs;;
     int args_count;
 
     if(proc->d_name[0] == '.')
@@ -146,8 +146,8 @@ try_again:
       close(ps_fd);
       close(as_fd);
       if(err == EAGAIN) goto try_again;
-      if(err != ENOENT) 
-        fprintf(stderr, "%s: read() on %s: %s\n", szProg, 
+      if(err != ENOENT)
+        fprintf(stderr, "%s: read() on %s: %s\n", szProg,
           ps_name, strerror(err));
       continue;
     }
@@ -185,7 +185,7 @@ try_again:
     );
     free(procname);
 
-    /* 
+    /*
      * and now for the command line stuff
      */
 
@@ -195,18 +195,18 @@ try_again:
 
     if(psinfo.pr_dmodel == PR_MODEL_NATIVE) {
       /* this process matches target process */
-      pread(as_fd,args_vecs, args_count * sizeof(uintptr_t), 
+      pread(as_fd,args_vecs, args_count * sizeof(uintptr_t),
         args_addr);
-    } else { 
+    } else {
       /* this process is 64bit, target process is 32 bit*/
       caddr32_t *args_vecs32 = (caddr32_t *)args_vecs;
-      pread(as_fd,args_vecs32,args_count * sizeof(caddr32_t), 
+      pread(as_fd,args_vecs32,args_count * sizeof(caddr32_t),
         args_addr);
       for (i=args_count-1;i>=0;--i)
         args_vecs[i]=args_vecs32[i];
     }
 
-    /* 
+    /*
      * now read in the args - if what we read in fills buffer
      * resize buffer and reread that bit again
      */

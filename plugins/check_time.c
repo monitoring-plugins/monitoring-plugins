@@ -115,7 +115,7 @@ main (int argc, char **argv)
 				result = STATE_WARNING;
 			else
 				result = STATE_UNKNOWN;
-			die (result, 
+			die (result,
 			  _("TIME UNKNOWN - could not send UDP request to server %s, port %d\n"),
 			  server_address, server_port);
 		}

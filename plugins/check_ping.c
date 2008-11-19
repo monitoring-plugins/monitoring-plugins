@@ -112,7 +112,7 @@ main (int argc, char **argv)
 #endif
 
 	for (i = 0 ; i < n_addresses ; i++) {
-		
+
 #ifdef PING6_COMMAND
 		if (address_family != AF_INET && is_inet6_addr(addresses[i]))
 			rawcmd = strdup(PING6_COMMAND);
@@ -150,8 +150,8 @@ main (int argc, char **argv)
 		else if (pl >= wpl || rta >= wrta)
 			this_result = STATE_WARNING;
 		else if (pl >= 0 && rta >= 0)
-			this_result = max_state (STATE_OK, this_result);	
-	
+			this_result = max_state (STATE_OK, this_result);
+
 		if (n_addresses > 1 && this_result != STATE_UNKNOWN)
 			die (STATE_OK, "%s is alive\n", addresses[i]);
 
@@ -370,7 +370,7 @@ get_threshold (char *arg, float *trta, int *tpl)
 		return OK;
 	else if (strpbrk (arg, ",:") && strstr (arg, "%") && sscanf (arg, "%f%*[:,]%d%%", trta, tpl) == 2)
 		return OK;
-	else if (strstr (arg, "%") && sscanf (arg, "%d%%", tpl) == 1) 
+	else if (strstr (arg, "%") && sscanf (arg, "%d%%", tpl) == 1)
 		return OK;
 
 	usage2 (_("%s: Warning threshold must be integer or percentage!\n\n"), arg);

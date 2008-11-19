@@ -154,7 +154,7 @@ main (int argc, char **argv)
     usage4 (_("Could not parse arguments"));
 
   if (display_html == TRUE)
-    printf ("<A HREF=\"%s://%s:%d%s\" target=\"_blank\">", 
+    printf ("<A HREF=\"%s://%s:%d%s\" target=\"_blank\">",
       use_ssl ? "https" : "http", host_name ? host_name : server_address,
       server_port, server_url);
 
@@ -314,7 +314,7 @@ process_arguments (int argc, char **argv)
       if (!strcmp (optarg, "critical"))
         onredirect = STATE_CRITICAL;
       if (verbose)
-        printf(_("option f:%d \n"), onredirect);  
+        printf(_("option f:%d \n"), onredirect);
       break;
     /* Note: H, I, and u must be malloc'd or will fail on redirects */
     case 'H': /* Host Name (virtual host) */
@@ -417,7 +417,7 @@ process_arguments (int argc, char **argv)
           exit (STATE_WARNING);
         } else
           max_page_len = atoi(tmp);
-      } else 
+      } else
         min_page_len = atoi (optarg);
       break;
       }
@@ -556,7 +556,7 @@ parse_time_string (const char *string)
     if (tm.tm_mon < 0 || tm.tm_mday < 1 || tm.tm_mday > 31)
       return 0;
 
-    /* 
+    /*
     This is actually wrong: we need to subtract the local timezone
     offset from GMT from this value.  But, that's ok in this usage,
     because we only comparing these two GMT dates against each other,
@@ -990,7 +990,7 @@ check_http (void)
       elapsed_time = (double)microsec / 1.0e6;
       die (onredirect,
            _(" - %s - %.3f second response time %s|%s %s\n"),
-           status_line, elapsed_time, 
+           status_line, elapsed_time,
            (display_html ? "</A>" : ""),
            perfd_time (elapsed_time), perfd_size (pagesize));
     } /* end if (http_status >= 300) */
@@ -1006,7 +1006,7 @@ check_http (void)
   elapsed_time = (double)microsec / 1.0e6;
   asprintf (&msg,
             _(" - %s - %.3f second response time %s|%s %s\n"),
-            status_line, elapsed_time, 
+            status_line, elapsed_time,
             (display_html ? "</A>" : ""),
             perfd_time (elapsed_time), perfd_size (pagesize));
   if (check_critical_time == TRUE && elapsed_time > critical_time)
@@ -1043,9 +1043,9 @@ check_http (void)
       exit (STATE_OK);
     }
     else if ((errcode == REG_NOMATCH && invert_regex == 0) || (errcode == 0 && invert_regex == 1)) {
-      if (invert_regex == 0) 
+      if (invert_regex == 0)
         msg = strdup(_("pattern not found"));
-      else 
+      else
         msg = strdup(_("pattern found"));
       printf (("%s - %s%s|%s %s\n"),
         _("HTTP CRITICAL"),
@@ -1118,7 +1118,7 @@ redir (char *pos, char *status_line)
     if (i == 0) {
       pos += (size_t) strcspn (pos, "\r\n");
       pos += (size_t) strspn (pos, "\r\n");
-      if (strlen(pos) == 0) 
+      if (strlen(pos) == 0)
         die (STATE_UNKNOWN,
              _("HTTP UNKNOWN - Could not find redirect location - %s%s\n"),
              status_line, (display_html ? "</A>" : ""));
@@ -1151,7 +1151,7 @@ redir (char *pos, char *status_line)
     }
 
     /* URI_HTTP URI_HOST URI_PATH */
-    else if (sscanf (pos, HD2, type, addr, url) == 3 ) { 
+    else if (sscanf (pos, HD2, type, addr, url) == 3 ) {
       url = prepend_slash (url);
       use_ssl = server_type_check (type);
       i = server_port_check (use_ssl);
@@ -1181,7 +1181,7 @@ redir (char *pos, char *status_line)
       i = server_port;
       strcpy (type, server_type);
       strcpy (addr, host_name ? host_name : server_address);
-    }           
+    }
 
     else {
       die (STATE_UNKNOWN,

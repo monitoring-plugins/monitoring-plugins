@@ -124,7 +124,7 @@ int main(int argc, char **argv){
 		        }
 	        }
         }
-	
+
 
 	/* return the status of the cluster */
 	if(check_type==CHECK_SERVICES){
@@ -149,7 +149,7 @@ int main(int argc, char **argv){
 int process_arguments(int argc, char **argv){
 	int c;
 	int option=0;
-	static struct option longopts[]={ 
+	static struct option longopts[]={
 		{"data",     required_argument,0,'d'},
 		{"warning",  required_argument,0,'w'},
 		{"critical", required_argument,0,'c'},

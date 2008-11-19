@@ -169,8 +169,8 @@ main (int argc, char **argv)
 				(nasid==NULL || my_rc_avpair_add (&data.send_pairs, PW_NAS_IDENTIFIER, nasid, 0))))
 		die (STATE_UNKNOWN, _("Out of Memory?"));
 
-	/* 
-	 * Fill in NAS-IP-Address 
+	/*
+	 * Fill in NAS-IP-Address
 	 */
 
 	if ((client_id = my_rc_own_ipaddress ()) == 0)

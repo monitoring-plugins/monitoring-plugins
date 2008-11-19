@@ -140,7 +140,7 @@ spopen (const char *cmdstring)
 	/* there cannot be more args than characters */
 	argc = strlen (cmdstring) + 1;	/* add 1 for NULL termination */
 	argv = malloc (sizeof(char*)*argc);
-	
+
 	if (argv == NULL) {
 		printf ("%s\n", _("Could not malloc argv array in popen()"));
 		return NULL;
@@ -165,7 +165,7 @@ spopen (const char *cmdstring)
 		}
 		else if (strcspn(str,"'") < strcspn (str, " \t\r\n")) {
 										/* handle --option='foo bar' strings */
-			tmp = str + strcspn(str, "'") + 1; 
+			tmp = str + strcspn(str, "'") + 1;
 			if (!strstr (tmp, "'"))
 				return NULL;						/* balanced? */
 			tmp += strcspn(tmp,"'") + 1;

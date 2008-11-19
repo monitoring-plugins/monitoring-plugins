@@ -82,7 +82,7 @@ static void parse_locator(const char *locator, const char *def_stanza, np_ini_in
 	} else {
 		i->file=strdup(&(locator[stanza_len+1]));
 	}
-	
+
 	if(i->file==NULL || i->stanza==NULL){
 		die(STATE_UNKNOWN, _("malloc() failed!\n"));
 	}
@@ -110,7 +110,7 @@ np_arg_list* np_get_defaults(const char *locator, const char *default_section){
 		if(inifile!=stdin) fclose(inifile);
 	}
 	free(i.stanza);
-	return defaults;	
+	return defaults;
 }
 
 /* read_defaults is where the meat of the parsing takes place.
@@ -161,7 +161,7 @@ static int read_defaults(FILE *f, const char *stanza, np_arg_list **opts){
 			default:
 				switch(stanzastate){
 					/* we never found the start of the first stanza, so
-					 * we're dealing with a config error 
+					 * we're dealing with a config error
 					 */
 					case NOSTANZA:
 						die(STATE_UNKNOWN, _("Config file error"));

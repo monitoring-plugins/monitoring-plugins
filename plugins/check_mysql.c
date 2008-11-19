@@ -71,9 +71,9 @@ main (int argc, char **argv)
 	MYSQL mysql;
 	MYSQL_RES *res;
 	MYSQL_ROW row;
-	
+
 	/* should be status */
-	
+
 	char *result = NULL;
 	char *error = NULL;
 	char slaveresult[SLAVERESULTSIZE];
@@ -186,7 +186,7 @@ main (int argc, char **argv)
 				mysql_close (&mysql);
 				die (STATE_CRITICAL, "Slave status unavailable\n");
 			}
-			
+
 			snprintf (slaveresult, SLAVERESULTSIZE, "Slave IO: %s Slave SQL: %s Seconds Behind Master: %s", row[slave_io_field], row[slave_sql_field], row[seconds_behind_field]);
 			if (strcmp (row[slave_io_field], "Yes") != 0 || strcmp (row[slave_sql_field], "Yes") != 0) {
 				mysql_free_result (res);

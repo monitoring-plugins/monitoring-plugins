@@ -91,7 +91,7 @@ np_del_parameter(struct parameter_list *item, struct parameter_list *prev)
   return next;
 }
 
-  
+
 /* returns a pointer to the struct found in the list */
 struct parameter_list *
 np_find_parameter(struct parameter_list *list, const char *name)
@@ -101,7 +101,7 @@ np_find_parameter(struct parameter_list *list, const char *name)
     if (! strcmp(temp_list->name, name))
         return temp_list;
   }
-        
+
   return NULL;
 }
 
@@ -126,7 +126,7 @@ np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list
       if (! best_match) {
         for (me = mount_list; me; me = me->me_next) {
           size_t len = strlen (me->me_mountdir);
-          if ((exact == FALSE && (best_match_len <= len && len <= name_len && 
+          if ((exact == FALSE && (best_match_len <= len && len <= name_len &&
              (len == 1 || strncmp (me->me_mountdir, d->name, len) == 0)))
              || (exact == TRUE && strcmp(me->me_mountdir, d->name)==0))
           {
@@ -175,7 +175,7 @@ np_seen_name(struct name_list *list, const char *name)
 }
 
 int
-np_regex_match_mount_entry (struct mount_entry* me, regex_t* re) 
+np_regex_match_mount_entry (struct mount_entry* me, regex_t* re)
 {
   if (regexec(re, me->me_devname, (size_t) 0, NULL, 0) == 0 ||
       regexec(re, me->me_mountdir, (size_t) 0, NULL, 0) == 0 ) {

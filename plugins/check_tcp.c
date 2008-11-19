@@ -24,7 +24,7 @@
 * 
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*  
+*
 * $Id$
 * 
 *****************************************************************************/
@@ -315,7 +315,7 @@ main (int argc, char **argv)
 	}
 #ifdef HAVE_SSL
 	np_net_ssl_cleanup();
-#endif 
+#endif
 	if (sd) close (sd);
 
 	microsec = deltime (tv);

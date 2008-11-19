@@ -116,7 +116,7 @@ int main (int argc, char **argv) {
 		result = max_state(result, STATE_OK);
 	}
 
-	printf(_("APT %s: %d packages available for %s (%d critical updates). %s%s%s%s\n"), 
+	printf(_("APT %s: %d packages available for %s (%d critical updates). %s%s%s%s\n"),
 	       state_text(result),
 	       packages_available,
 	       (upgrade==DIST_UPGRADE)?"dist-upgrade":"upgrade",
@@ -305,7 +305,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 	}
 	regfree(&ireg);
 	regfree(&sreg);
-	if(do_exclude!=NULL) regfree(&ereg); 
+	if(do_exclude!=NULL) regfree(&ereg);
 	free(cmdline);
 	return result;
 }
@@ -364,7 +364,7 @@ char* add_to_regexp(char *expr, const char *next){
 		sprintf((char*)(re+strlen(re)-2), "|%s) ", next);
 	}
 
-	return re;	
+	return re;
 }
 
 char* construct_cmdline(upgrade_type u, const char *opts){

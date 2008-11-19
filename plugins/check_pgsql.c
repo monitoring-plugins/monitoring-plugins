@@ -186,7 +186,7 @@ main (int argc, char **argv)
 		status = STATE_OK;
 	}
 	PQfinish (conn);
-	printf (_(" %s - database %s (%d sec.)|%s\n"), 
+	printf (_(" %s - database %s (%d sec.)|%s\n"),
 	        state_text(status), dbName, elapsed_time,
 	        fperfdata("time", elapsed_time, "s",
 	                 (int)twarn, twarn, (int)tcrit, tcrit, TRUE, 0, FALSE,0));
@@ -355,7 +355,7 @@ is_pg_dbname (char *dbname)
 
 /**
 
-the tango program should eventually create an entity here based on the 
+the tango program should eventually create an entity here based on the
 function prototype
 
 @@-
@@ -389,7 +389,7 @@ is_pg_logname (char *username)
 
 /******************************************************************************
 @@-
-</sect2> 
+</sect2>
 </sect1>
 </article>
 -@@
