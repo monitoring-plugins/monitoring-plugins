@@ -198,7 +198,7 @@ typedef struct {
 /* NTP control message header is 12 bytes, plus any data in the data
  * field, plus null padding to the nearest 32-bit boundary per rfc.
  */
-#define SIZEOF_NTPCM(m) (12+ntohs(m.count)+((m.count)?4-(ntohs(m.count)%4):0))
+#define SIZEOF_NTPCM(m) (12+ntohs(m.count)+((ntohs(m.count)%4)?4-(ntohs(m.count)%4):0))
 
 /* finally, a little helper or two for debugging: */
 #define DBG(x) do{if(verbose>1){ x; }}while(0);
