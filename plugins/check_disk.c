@@ -637,8 +637,11 @@ process_arguments (int argc, char **argv)
       se->group = group;
       set_all_thresholds(se);
 
-      /* With autofs, it is required to stat() the path before populating the mount_list */
+      /* With autofs, it is required to stat() the path before re-populating the mount_list */
       stat_path(se);
+      /* NB: We can't free the old mount_list "just like that": both list pointers and struct
+       * pointers are copied around. One of the reason it wasn't done yet is that other parts
+       * of check_disk need the same kind of cleanup so it'd better be done as a whole */
       mount_list = read_file_system_list (0);
       np_set_best_match(se, mount_list, exact_match);
 
