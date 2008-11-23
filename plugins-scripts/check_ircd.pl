@@ -7,7 +7,6 @@
 #
 # Date:			1999/09/20
 #
-# $Id$
 #
 # Description:		This script will check to see if an IRCD is running
 #			about how many users it has
@@ -119,7 +118,7 @@ sub print_usage () {
 
 sub print_help ()
 {
-	print_revision($PROGNAME,'$Revision$ ');
+	print_revision($PROGNAME,'@NP_VERSION@');
 	print "Copyright (c) 2000 Richard Mayhew/Karl DeBisschop
 
 Perl Check IRCD plugin for Nagios
@@ -190,7 +189,7 @@ MAIN:
 		"H=s" => \$opt_H,  "hostname=s" => \$opt_H);
 
 	if ($opt_V) {
-		print_revision($PROGNAME,'$Revision$ ');
+		print_revision($PROGNAME,'@NP_VERSION@');
 		exit $ERRORS{'OK'};
 	}
 

@@ -5,8 +5,6 @@
 * License: GPL
 * Copyright (c) 2002-2008 Nagios Plugins Development Team
 * 
-* Last Modified: $Date$
-* 
 * Description:
 * 
 * This file contains the check_dig plugin
@@ -25,7 +23,6 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * 
-* $Id$
 * 
 *****************************************************************************/
 
@@ -36,7 +33,6 @@
  *  because on some architectures those strings are in non-writable memory */
 
 const char *progname = "check_dig";
-const char *revision = "$Revision$";
 const char *copyright = "2002-2008";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
@@ -220,7 +216,7 @@ process_arguments (int argc, char **argv)
       print_help ();
       exit (STATE_OK);
     case 'V':                 /* version */
-      print_revision (progname, revision);
+      print_revision (progname, NP_VERSION);
       exit (STATE_OK);
     case 'H':                 /* hostname */
       host_or_die(optarg);
@@ -312,7 +308,7 @@ print_help (void)
 
   asprintf (&myport, "%d", DEFAULT_PORT);
 
-  print_revision (progname, revision);
+  print_revision (progname, NP_VERSION);
 
   printf ("Copyright (c) 2000 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n");
   printf (COPYRIGHT, copyright, email);

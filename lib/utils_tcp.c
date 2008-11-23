@@ -5,8 +5,6 @@
 * License: GPL
 * Copyright (c) 1999-2007 Nagios Plugins Development Team
 * 
-* Last Modified: $Date$
-* 
 * Description:
 * 
 * This file contains utilities for check_tcp. These are tested by libtap
@@ -25,7 +23,6 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * 
-* $Id$
 * 
 *****************************************************************************/
 

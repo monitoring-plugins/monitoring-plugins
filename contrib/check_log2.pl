@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# $Id$
+# $Id: check_log2.pl 1300 2005-12-16 18:41:45Z harpermann $
 #
 # Log file regular expression detector for Nagios.
 # Written by Aaron Bostick (abostick@mydoconline.com)
@@ -77,7 +77,7 @@ sub print_help ();
     $neg_re_pattern = '';
     $pattern_count = 0;
     $pattern_line = '';
-    $plugin_revision = '$Revision$ ';
+    $plugin_revision = '$Revision: 1300 $ ';
 
     # Grab options from command line
     GetOptions

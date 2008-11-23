@@ -2,7 +2,6 @@
 #
 # check_dummy tests
 #
-# $Id$
 #
 
 use strict;

@@ -2,7 +2,6 @@
 #
 # Remote Procedure Call (RPC) Tests via check_rpc
 #
-# $Id$
 #
 
 use strict;

@@ -1,7 +1,5 @@
 #!/bin/sh
 #
-# $Id$
-#
 # Requires: automake, autoconf, dpkg-dev
 # set -e
 

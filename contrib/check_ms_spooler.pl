@@ -1,8 +1,7 @@
 #!/usr/bin/perl -w
 
-# $Id$
+# $Id: check_ms_spooler.pl 64 2002-07-16 00:04:42Z stanleyhopcroft $
 
-# $Log$
 # Revision 1.1  2002/07/16 00:04:42  stanleyhopcroft
 # Primitive and in need of refinement test of MS spooler (with smbclient)
 #
@@ -268,7 +267,7 @@ sub print_usage () {
 }
 
 sub print_help () {
-	print_revision($PROGNAME,'$Revision$ ');
+	print_revision($PROGNAME,'$Revision: 64 $ ');
 	print "Copyright (c) 2001 Karl DeBisschop/S Hopcroft
 
 Perl Check MS Spooler plugin for NetSaint. Display a subset of the queues on an SMB (Samba or MS) print spooler.
@@ -292,7 +291,7 @@ Perl Check MS Spooler plugin for NetSaint. Display a subset of the queues on an 
 }
 
 sub version () {
-	print_revision($PROGNAME,'$Revision$ ');
+	print_revision($PROGNAME,'$Revision: 64 $ ');
 	exit $ERRORS{'OK'};
 }
 

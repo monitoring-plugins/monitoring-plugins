@@ -5,8 +5,6 @@
 * License: GPL
 * Copyright (c) 1999-2007 Nagios Plugins Development Team
 * 
-* Last Modified: $Date$
-* 
 * Description:
 * 
 * This file contains the check_nagios plugin
@@ -31,12 +29,10 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * 
-* $Id$
 * 
 *****************************************************************************/
 
 const char *progname = "check_nagios";
-const char *revision = "$Revision$";
 const char *copyright = "1999-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
@@ -240,7 +236,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (progname, revision);
+			print_revision (progname, NP_VERSION);
 			exit (STATE_OK);
 		case 'F':									/* status log */
 			status_log = optarg;
@@ -278,7 +274,7 @@ process_arguments (int argc, char **argv)
 void
 print_help (void)
 {
-	print_revision (progname, revision);
+	print_revision (progname, NP_VERSION);
 
 	printf (_(COPYRIGHT), copyright, email);
 

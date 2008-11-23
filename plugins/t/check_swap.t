@@ -2,7 +2,6 @@
 #
 # Swap Space Tests via check_swap
 #
-# $Id$
 #
 
 use strict;

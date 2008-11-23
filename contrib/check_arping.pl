@@ -55,7 +55,7 @@ if ($status == 0)
 
 
 if ($opt_V) {
-	print_revision($PROGNAME,'$Revision$ ');
+	print_revision($PROGNAME,'$Revision: 1112 $ ');
 	exit $ERRORS{'OK'};
 }
 
@@ -115,6 +115,6 @@ sub print_help {
 	print "   -t (--timeout)    Timeout in seconds.\n";
 	print "   -V (--version)    Plugin version\n";
 	print "   -h (--help)       usage help \n\n";
-	print_revision($PROGNAME, '$Revision$');
+	print_revision($PROGNAME, '$Revision: 1112 $');
 	
 }

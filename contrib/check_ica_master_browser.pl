@@ -1,8 +1,7 @@
 #!/usr/bin/perl -w
 
-# $Id$
+# $Id: check_ica_master_browser.pl 1099 2005-01-25 09:09:33Z stanleyhopcroft $
 
-# $Log$
 # Revision 1.1  2005/01/25 09:09:33  stanleyhopcroft
 # New plugin - checks that ICA master browser is what it should be (important for firewalled dialup)
 #
@@ -170,7 +169,7 @@ sub print_usage () {
 }
 
 sub print_help () {
-	print_revision($PROGNAME,'$Revision$ ');
+	print_revision($PROGNAME,'$Revision: 1099 $ ');
 	print "Copyright (c) 2002 Ed Rolison/Tom De Blende/S Hopcroft
 
 Perl Check Citrix Master Browser plugin for Nagios.
@@ -218,7 +217,7 @@ The ICA Client requests the address of the ICA master browser from the Citrix se
 }
 
 sub version () {
-	print_revision($PROGNAME,'$Revision$ ');
+	print_revision($PROGNAME,'$Revision: 1099 $ ');
 	exit $ERRORS{'OK'};
 }
 

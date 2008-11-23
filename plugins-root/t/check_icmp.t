@@ -2,8 +2,6 @@
 #
 # Ping Response Tests via check_icmp
 #
-# $Id$
-#
 
 use strict;
 use Test::More;

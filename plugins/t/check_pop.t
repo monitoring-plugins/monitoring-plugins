@@ -2,7 +2,6 @@
 #
 # Post Office Protocol (POP) Server Tests via check_pop
 #
-# $Id$
 #
 
 use strict;

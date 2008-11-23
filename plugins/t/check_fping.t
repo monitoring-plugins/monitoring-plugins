@@ -2,7 +2,6 @@
 #
 # FPing Tests via check_fping
 #
-# $Id$
 #
 
 use strict;

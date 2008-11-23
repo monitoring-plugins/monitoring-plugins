@@ -2,7 +2,6 @@
 #
 # Simple Network Management Protocol (SNMP) Test via check_snmp
 #
-# $Id$
 #
 
 use strict;

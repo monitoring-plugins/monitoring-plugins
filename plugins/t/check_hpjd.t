@@ -2,7 +2,6 @@
 #
 # HP JetDirect Test via check_hpjd
 #
-# $Id$
 #
 
 use strict;

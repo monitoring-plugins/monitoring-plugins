@@ -2,7 +2,6 @@
 #
 # File Transfer Protocol (FTP) Test via check_ftp
 #
-# $Id$
 #
 
 use strict;

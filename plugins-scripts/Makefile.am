@@ -1,5 +1,11 @@
 ## Process this file with automake to produce Makefile.in
 
+NP-VERSION-FILE: .FORCE-NP-VERSION-FILE
+	@$(SHELL_PATH) $(top_srcdir)/NP-VERSION-GEN
+-include NP-VERSION-FILE
+
+export NP_VERSION:= $(NP_VERSION)
+
 SUFFIXES = .pl .sh
 
 VPATH=$(top_srcdir) $(top_srcdir)/plugins-scripts $(top_srcdir)/plugins-scripts/t
@@ -18,6 +24,8 @@ TESTS_ENVIRONMENT=perl -I $(top_builddir) -I $(top_srcdir)
 
 TESTS = @SCRIPT_TEST@
 
+all-local: NP-VERSION-FILE
+
 test:
 	perl -I $(top_builddir) -I $(top_srcdir) ../test.pl
 	perl -I $(top_builddir) -I $(top_srcdir) ../test.pl t/utils.t	# utils.t is excluded from above, so manually ask to test
@@ -35,3 +43,8 @@ CLEANFILES=$(libexec_SCRIPTS)
 .sh :
 	$(AWK) -f ./subst $< > $@
 	chmod +x $@
+
+clean-local:
+	rm -f NP-VERSION-FILE
+
+.PHONY: .FORCE-NP-VERSION-FILE

@@ -2,7 +2,6 @@
 #
 # TCP Connection Based Tests via check_tcp
 #
-# $Id$
 #
 
 use strict;

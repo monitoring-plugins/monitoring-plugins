@@ -6,8 +6,6 @@
 * Copyright (c) 2000-2002 Yves Rubin (rubiyz@yahoo.com)
 * Copyright (c) 2003-2007 Nagios Plugins Development Team
 * 
-* Last Modified: $Date$
-* 
 * Description:
 * 
 * This file contains the check_nt plugin
@@ -31,12 +29,10 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * 
-* $Id$
 * 
 *****************************************************************************/
 
 const char *progname = "check_nt";
-const char *revision = "$Revision$";
 const char *copyright = "2000-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
@@ -517,7 +513,7 @@ int process_arguments(int argc, char **argv){
 				print_help();
 				exit(STATE_OK);
 			case 'V': /* version */
-				print_revision(progname,revision);
+				print_revision(progname, NP_VERSION);
 				exit(STATE_OK);
 			case 'H': /* hostname */
 				if (server_address)	free(server_address);
@@ -637,7 +633,7 @@ void preparelist(char *string) {
 
 void print_help(void)
 {
-	print_revision(progname,revision);
+	print_revision(progname, NP_VERSION);
 	
 	printf ("Copyright (c) 2000 Yves Rubin (rubiyz@yahoo.com)\n");
 	printf (COPYRIGHT, copyright, email);

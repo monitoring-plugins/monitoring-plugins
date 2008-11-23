@@ -5,8 +5,6 @@
  *  Modified by Douglas Warner
  *  Last Modified: 05/02/2002
  *
- *  $Id$
- *
  *  This is a sample mini embedded Perl interpreter (hacked out checks.c and 
  *  perlembed) for use in testing Perl plugins. 
  *

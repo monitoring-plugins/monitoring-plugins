@@ -6,8 +6,6 @@
 * Copyright (c) 2001-2004 Ethan Galstad (nagios@nagios.org)
 * Copyright (c) 2001-2007 Nagios Plugin Development Team
 * 
-* Last Modified: $Date$
-* 
 * Description:
 * 
 * This file contains the check_dhcp plugin
@@ -32,12 +30,10 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * 
-* $Id$
 * 
 *****************************************************************************/
 
 const char *progname = "check_dhcp";
-const char *revision = "$Revision$";
 const char *copyright = "2001-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
@@ -1168,7 +1164,7 @@ int call_getopt(int argc, char **argv){
 			break;
 
 		case 'V': /* version */
-			print_revision(progname,revision);
+			print_revision(progname, NP_VERSION);
 			exit(STATE_OK);
 
 		case 'h': /* help */
@@ -1385,7 +1381,7 @@ void print_hardware_address(const unsigned char *address){
 /* print usage help */
 void print_help(void){
 
-	print_revision(progname,revision);
+	print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 2001-2004 Ethan Galstad (nagios@nagios.org)\n");
 	printf (COPYRIGHT, copyright, email);

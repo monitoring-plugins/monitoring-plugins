@@ -1,6 +1,5 @@
 #!/usr/bin/perl -wT
 #
-# $Id$
 
 
 use strict;
@@ -30,7 +29,7 @@ GetOptions
 	 "H=s" => \$opt_H, "hostname=s" => \$opt_H);
 
 if ($opt_V) {
-	print_revision($PROGNAME,'$Revision$'); #'
+	print_revision($PROGNAME,'@NP_VERSION@'); #'
 	exit $ERRORS{'OK'};
 }
 
@@ -112,7 +111,7 @@ sub print_usage () {
 }
 
 sub print_help () {
-	print_revision($PROGNAME,'$Revision$');
+	print_revision($PROGNAME,'@NP_VERSION@');
 	print "Copyright (c) 2000 Jeffery Blank/Karl DeBisschop\n";
 	print "\n";
 	print_usage();

@@ -5,8 +5,6 @@
 * License: GPL
 * Copyright (c) 1999-2007 Nagios Plugins Development Team
 * 
-* Last Modified: $Date$
-* 
 * Description:
 * 
 * This file contains the check_pgsql plugin
@@ -27,12 +25,10 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * 
-* $Id$
 * 
 *****************************************************************************/
 
 const char *progname = "check_pgsql";
-const char *revision = "$Revision$";
 const char *copyright = "1999-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
@@ -231,7 +227,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case 'V':     /* version */
-			print_revision (progname, revision);
+			print_revision (progname, NP_VERSION);
 			exit (STATE_OK);
 		case 't':     /* timeout period */
 			if (!is_integer (optarg))
@@ -404,7 +400,7 @@ print_help (void)
 
 	asprintf (&myport, "%d", DEFAULT_PORT);
 
-	print_revision (progname, revision);
+	print_revision (progname, NP_VERSION);
 
 	printf (COPYRIGHT, copyright, email);
 

@@ -2,7 +2,6 @@
 #
 # HyperText Transfer Protocol (HTTP) Test via check_http
 #
-# $Id$
 #
 
 use strict;

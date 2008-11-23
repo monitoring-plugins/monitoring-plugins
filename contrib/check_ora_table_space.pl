@@ -4,8 +4,8 @@
 # Written by: Erwan Arzur (erwan@netvalue.com)
 # License: GPL
 #
-# Last Modified: $Date$
-# Revisiin: $Revision$
+# Last Modified: $Date: 2002-02-28 01:42:51 -0500 (Thu, 28 Feb 2002) $
+# Revisiin: $Revision: 2 $
 #
 # "check_ora_table_space.pl" plugin to check the state of Oracle 
 # table spaces. Scarce documentation.

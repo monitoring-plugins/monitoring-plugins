@@ -6,8 +6,6 @@
 * Copyright (c) 2006 Sean Finney <seanius@seanius.net>
 * Copyright (c) 2006-2008 Nagios Plugins Development Team
 * 
-* Last Modified: $Date$
-* 
 * Description:
 * 
 * This file contains the check_ntp_peer plugin
@@ -34,12 +32,10 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * 
-* $Id$
 * 
 *****************************************************************************/
 
 const char *progname = "check_ntp_peer";
-const char *revision = "$Revision$";
 const char *copyright = "2006-2008";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
@@ -492,7 +488,7 @@ int process_arguments(int argc, char **argv){
 			exit(STATE_OK);
 			break;
 		case 'V':
-			print_revision(progname, revision);
+			print_revision(progname, NP_VERSION);
 			exit(STATE_OK);
 			break;
 		case 'v':
@@ -671,7 +667,7 @@ int main(int argc, char *argv[]){
 
 
 void print_help(void){
-	print_revision(progname, revision);
+	print_revision(progname, NP_VERSION);
 
 	printf ("Copyright (c) 2006 Sean Finney\n");
 	printf (COPYRIGHT, copyright, email);

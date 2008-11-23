@@ -5,8 +5,6 @@
 * License: GPL
 * Copyright (c) 2002-2008 Nagios Plugins Development Team
 * 
-* Last Modified: $Date$
-* 
 * Description:
 * 
 * This file contains the negate plugin
@@ -28,12 +26,10 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * 
-* $Id$
 * 
 *****************************************************************************/
 
 const char *progname = "negate";
-const char *revision = "$Revision$";
 const char *copyright = "2002-2008";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
@@ -155,7 +151,7 @@ process_arguments (int argc, char **argv)
 			exit (EXIT_SUCCESS);
 			break;
 		case 'V':     /* version */
-			print_revision (progname, revision);
+			print_revision (progname, NP_VERSION);
 			exit (EXIT_SUCCESS);
 		case 't':     /* timeout period */
 			if (!is_integer (optarg))
@@ -233,7 +229,7 @@ translate_state (char *state_text)
 void
 print_help (void)
 {
-	print_revision (progname, revision);
+	print_revision (progname, NP_VERSION);
 
 	printf (COPYRIGHT, copyright, email);
 

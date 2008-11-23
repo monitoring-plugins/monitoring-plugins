@@ -2,7 +2,6 @@
 #
 # utils.pm tests
 #
-# $Id$
 #
 # Run with perl t/utils.t
 

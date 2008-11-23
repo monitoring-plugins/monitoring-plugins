@@ -2,7 +2,6 @@
 #
 # Internet Mail Access Protocol (IMAP) Server Tests via check_imap
 #
-# $Id$
 #
 
 use strict;

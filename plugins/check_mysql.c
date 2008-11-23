@@ -7,8 +7,6 @@
 * Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
 * Copyright (c) 1999-2007 Nagios Plugins Development Team
 * 
-* Last Modified: $Date$
-*
 * Description:
 * 
 * This file contains the check_mysql plugin
@@ -29,12 +27,10 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * 
-* $Id$
 * 
 *****************************************************************************/
 
 const char *progname = "check_mysql";
-const char *revision = "$Revision$";
 const char *copyright = "1999-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
@@ -310,7 +306,7 @@ process_arguments (int argc, char **argv)
 			critical = optarg;
 			break;
 		case 'V':									/* version */
-			print_revision (progname, revision);
+			print_revision (progname, NP_VERSION);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -377,7 +373,7 @@ print_help (void)
 	char *myport;
 	asprintf (&myport, "%d", MYSQL_PORT);
 
-	print_revision (progname, revision);
+	print_revision (progname, NP_VERSION);
 
 	printf (_(COPYRIGHT), copyright, email);
 

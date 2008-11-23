@@ -9,7 +9,7 @@
 # using "aecho"
 #
 # initial version: 23 October 2002 by Stefan Beck, IT Software Solutions
-# current status: $Revision$
+# current status: $Revision: 1771 $
 #
 # Copyright Notice: GPL
 #
@@ -122,7 +122,7 @@ while (<CMD>) {
 }
 
 sub print_help() {
-     print_revision( $PROGNAME, '$Revision$ ' );
+     print_revision( $PROGNAME, '$Revision: 1771 $ ' );
      print "Copyright (c) 2002 Stefan Beck\n";
      print "\n";
      print "Check if an atalkhost responds to an atalk echo using\n";
@@ -159,7 +159,7 @@ sub print_usage () {
 }
 
 sub version () {
-     print_revision( $PROGNAME, '$Revision$ ' );
+     print_revision( $PROGNAME, '$Revision: 1771 $ ' );
      exit $ERRORS{'OK'};
 }
 

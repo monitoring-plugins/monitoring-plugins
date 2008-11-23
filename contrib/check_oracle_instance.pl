@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id$
+# $Id: check_oracle_instance.pl 10 2002-04-03 02:58:47Z sghosh $
 
 #  Copyright (c) 2002  Sven Dolderer
 #  some pieces of Code adopted from Adam vonNieda's oracletool.pl
@@ -23,7 +23,7 @@ require DBD::Oracle || die "It appears that the DBD::Oracle module is not instal
 
 use vars qw($VERSION $PROGNAME $logfile $debug $state $dbh $database $username $password $message $sql $cursor $opt_asession $opt_nsession $opt_tablespace $opt_nextents $opt_fextents $opt_aextents $privsok $warn $critical);
 
-'$Revision$' =~ /^.*(\d+.\d+) \$$/;  # Use The Revision from RCS/CVS
+'$Revision: 10 $' =~ /^.*(\d+.\d+) \$$/;  # Use The Revision from RCS/CVS
 $VERSION = $1;
 $0 =~ m!^.*/([^/]+)$!;
 $PROGNAME = $1;

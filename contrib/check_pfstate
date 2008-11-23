@@ -27,7 +27,7 @@ GetOptions
 	 "c=s" => \$opt_c, "critical=s"	=> \$opt_c);
 
 if ($opt_V) {
-        print_revision($PROGNAME,'$Revision$');
+        print_revision($PROGNAME,'$Revision: 1112 $');
         exit $ERRORS{'OK'};
 }
 if ($opt_h) {
@@ -67,7 +67,7 @@ exit $ERRORS{'OK'};
 
 
 sub print_help {
-        print_revision($PROGNAME,'$Revision$');
+        print_revision($PROGNAME,'$Revision: 1112 $');
         print "Copyright (c) 2002 Jason Dixon\n\nThis plugin checks the number of state table entries on a PF-enabled OpenBSD system.\n\n";
         print "Usage:\t-H, --hostname=<HOST> [-w, --warning=<WARNING>] [-c, --critical=<CRITICAL>]\n\n\tDefault warning is 50000 and critical is 60000.\n\n";
         support();

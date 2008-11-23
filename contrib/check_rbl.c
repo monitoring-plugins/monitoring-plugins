@@ -11,7 +11,7 @@
 * * License: GPL
 * * Copyright (c) 2000
 * * 
-* * $Id$
+* * $Id: check_rbl.c 970 2004-12-02 00:30:32Z opensides $
 *
 *****************************************************************************/
 
@@ -22,7 +22,7 @@
 #include "string.h"
 
 const char progname = "check_rbl";
-const char *revision = "$Revision$";
+const char *revision = "$Revision: 970 $";
 //const char *copyright = "2000-2003";
 //const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
@@ -263,7 +263,7 @@ int call_getopt(int argc, char **argv)
 				}
 				break;
       case 'V': /* version */
-				print_revision(progname,"$Revision$");
+				print_revision(progname,"$Revision: 970 $");
 				exit(STATE_OK);
       case 'h': /* help */
 				print_help();
@@ -291,7 +291,7 @@ int validate_arguments(void)
 
 void print_help(void)
 {
-	print_revision(progname,"$Revision$");
+	print_revision(progname,"$Revision: 970 $");
 	printf
 		("Copyright (c) 2000 Karl DeBisschop\n\n"
 		 "This plugin uses dig to test whether the specified host is on any RBL lists.\n\n");

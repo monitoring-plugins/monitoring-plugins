@@ -38,7 +38,7 @@ GetOptions
 	 "H=s" => \$opt_H, "hostname=s"		=> \$opt_H);
 
 if ($opt_V) {
-	print_revision($PROGNAME,'$Revision$');
+	print_revision($PROGNAME,'$Revision: 1771 $');
 	exit $ERRORS{'OK'};
 }
 
@@ -252,7 +252,7 @@ sub print_usage () {
 }
 
 sub print_help () {
-	print_revision($PROGNAME,'$Revision$');
+	print_revision($PROGNAME,'$Revision: 1771 $');
 	print "Copyright (c) 2001 Gerald Combs/Jeffrey Blank/Karl DeBisschop
 
 This plugin reports the status of an APC UPS equipped with an SNMP management

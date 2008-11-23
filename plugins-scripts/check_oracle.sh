@@ -8,7 +8,7 @@
 
 PROGNAME=`basename $0`
 PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
-REVISION=`echo '$Revision$' | sed -e 's/[^0-9.]//g'`
+REVISION="@NP_VERSION@"
 
 . $PROGPATH/utils.sh
 

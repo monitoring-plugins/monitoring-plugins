@@ -1,0 +1,46 @@
+#!/bin/sh
+#
+# This is from the Git repository (GIT-VERSION-GEN with modifications)
+#
+
+SRC_ROOT=`dirname $0`
+
+NPVF=NP-VERSION-FILE
+DEF_VER=1.4.13.git
+
+LF='
+'
+
+# First see if there is a version file (included in release tarballs),
+# then try git-describe, then default.
+if test -f $SRC_ROOT/version
+then
+	VN=`cat $SRC_ROOT/version` || VN="$DEF_VER"
+elif test -d $SRC_ROOT/.git -o -f $SRC_ROOT/.git &&
+	VN=`cd $SRC_ROOT; git describe --abbrev=4 HEAD 2>/dev/null` &&
+	case "$VN" in
+	*$LF*) (exit 1) ;;
+	release-[0-9]*)
+		git update-index -q --refresh
+		test -z "`git diff-index --name-only HEAD --`" ||
+		VN="$VN-dirty" ;;
+	esac
+then
+	VN=`echo "$VN" | sed -e 's/^release-//' | sed -e 's/-/./g'`;
+else
+	VN="$DEF_VER"
+fi
+
+VN=`expr "$VN" : v*'\(.*\)'`
+
+if test -r $NPVF
+then
+	VC=`sed -e 's/^NP_VERSION = //' <$NPVF`
+else
+	VC=unset
+fi
+test "$VN" = "$VC" || {
+	echo >&2 "NP_VERSION = $VN"
+	echo "NP_VERSION = $VN" >$NPVF
+}
+

@@ -4,7 +4,7 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 
 PROGNAME=`basename $0`
 PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
-REVISION=`echo '$Revision$' | sed -e 's/[^0-9.]//g'`
+REVISION=`echo '$Revision: 2 $' | sed -e 's/[^0-9.]//g'`
 STATUS=""
 
 . $PROGPATH/utils.sh

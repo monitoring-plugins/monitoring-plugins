@@ -9,7 +9,7 @@
  * Based on CHECK_LOAD.C
  * Copyright (c) 1999 Felipe Gustavo de Almeida <galmeida@linux.ime.usp.br>
  *
- * Last Modified: $Date$
+ * Last Modified: $Date: 2002-02-28 21:42:56 -0500 (Thu, 28 Feb 2002) $
  *
  * Command line: CHECK_UPTIME <host_address>
  * 
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
   if(argc != 2){
     printf("Incorrect number of arguments supplied\n");
     printf("\n");
-    print_revision(argv[0],"$Revision$");
+    print_revision(argv[0],"$Revision: 6 $");
     printf("Copyright (c) 2000 Teresa Ramanan (tlr@redowl.org)\n");
     printf("\n");
     printf("Usage: %s <host_address>\n",argv[0]);

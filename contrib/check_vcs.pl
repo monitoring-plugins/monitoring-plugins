@@ -71,7 +71,7 @@ sub print_help ();
     $vcs_negate = '';
     $vcs_result = '';
     $vcs_expected_result = 'ONLINE';
-    $plugin_revision = '$Revision$ ';
+    $plugin_revision = '$Revision: 33 $ ';
 
     # Grab options from command line
     GetOptions

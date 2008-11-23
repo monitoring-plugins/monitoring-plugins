@@ -1,5 +1,4 @@
 # Utility drawer for Nagios plugins.
-# $Id$
 #
 # This will be deprecated soon. Please use Nagios::Plugin from CPAN
 # for new plugins
@@ -32,8 +31,6 @@ $TIMEOUT = 15;
 sub print_revision ($$) {
 	my $commandName = shift;
 	my $pluginRevision = shift;
-	$pluginRevision =~ s/^\$Revision: //;
-	$pluginRevision =~ s/ \$\s*$//;
 	print "$commandName v$pluginRevision (@PACKAGE@ @VERSION@)\n";
 	print "@WARRANTY@";
 }

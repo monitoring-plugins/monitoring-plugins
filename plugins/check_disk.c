@@ -5,8 +5,6 @@
 * License: GPL
 * Copyright (c) 1999-2008 Nagios Plugins Development Team
 * 
-* Last Modified: $Date$
-* 
 * Description:
 * 
 * This file contains the check_disk plugin
@@ -25,13 +23,11 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * 
-* $Id$
 * 
 *****************************************************************************/
 
 const char *progname = "check_disk";
 const char *program_name = "check_disk";  /* Required for coreutils libs */
-const char *revision = "$Revision$";
 const char *copyright = "1999-2008";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
@@ -787,7 +783,7 @@ process_arguments (int argc, char **argv)
       group = NULL;
       break;
     case 'V':                 /* version */
-      print_revision (progname, revision);
+      print_revision (progname, NP_VERSION);
       exit (STATE_OK);
     case 'h':                 /* help */
       print_help ();
@@ -896,7 +892,7 @@ INPUT ERROR: C_DF (%lu) should be less than W_DF (%lu) and both should be greate
 void
 print_help (void)
 {
-  print_revision (progname, revision);
+  print_revision (progname, NP_VERSION);
 
   printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
   printf (COPYRIGHT, copyright, email);

@@ -2,7 +2,6 @@
 #
 # Testing NTP
 #
-# $Id$
 #
 
 use strict;

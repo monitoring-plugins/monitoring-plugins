@@ -9,8 +9,6 @@
 * Copyright (c) 2000 Robert Dale <rdale@digital-mission.com>
 * Copyright (c) 2000-2007 Nagios Plugins Development Team
 * 
-* Last Modified: $Date$
-* 
 * Description:
 * 
 * This file contains the check_ide_smart plugin
@@ -32,12 +30,10 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * 
-* $Id$
 * 
 *****************************************************************************/
 
 const char *progname = "check_ide_smart";
-const char *revision = "$Revision$";
 const char *copyright = "1998-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 	
@@ -211,7 +207,7 @@ main (int argc, char *argv[])
 			print_help ();
 			return STATE_OK;
 		case 'V':
-			print_revision (progname, revision);
+			print_revision (progname, NP_VERSION);
 			return STATE_OK;
 		default:
 			usage5 ();
@@ -481,7 +477,7 @@ smart_read_thresholds (int fd, thresholds_t * thresholds)
 void
 print_help (void)
 {
-	print_revision (progname, revision);
+	print_revision (progname, NP_VERSION);
 
 	printf ("Nagios feature - 1999 Robert Dale <rdale@digital-mission.com>\n");
 	printf ("(C) 1999 Ragnar Hojland Espinosa <ragnar@lightside.dhis.org>\n");

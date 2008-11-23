@@ -2,7 +2,6 @@
 #
 # check_cluster tests
 #
-# $Id$
 #
 
 use strict;

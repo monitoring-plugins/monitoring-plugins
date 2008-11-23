@@ -1,9 +1,0 @@
-# $Id$
-#
-# This file describes the current branches in CVS for nagiosplug
-# Used by sfsnapshot to generate the snapshots
-#
-# Format:
-# cvs_branch_name:description
-HEAD:Stable - 1.4.x releases
-r1_4-patches:Testing multiple branches

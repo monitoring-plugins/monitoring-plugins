@@ -3,8 +3,6 @@
 # negate checks
 # Need check_dummy to work for testing
 #
-# $Id: negate.pl 1717 2007-05-24 08:53:50Z tonvoon $
-#
 
 use strict;
 use Test::More;

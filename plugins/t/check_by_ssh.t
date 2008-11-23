@@ -2,7 +2,6 @@
 #
 # check_by_ssh tests
 #
-# $Id$
 #
 
 use strict;

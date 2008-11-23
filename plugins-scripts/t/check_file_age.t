@@ -2,7 +2,6 @@
 #
 # check_file_age tests
 #
-# $Id$
 #
 
 use strict;

@@ -111,7 +111,7 @@ sub print_usage () {
 	}
 
 sub print_help () {
-	print_revision($PROGNAME,'$Revision$\n ');
+	print_revision($PROGNAME,'$Revision: 1113 $\n ');
 	print "Copyright (c) 2003 Rainer Duffner\n ";
 	print_usage();
 	print "\n";
@@ -122,7 +122,7 @@ sub print_help () {
 	}
 
 sub version () {
-        print_revision($PROGNAME,'$Revision$ ');
+        print_revision($PROGNAME,'$Revision: 1113 $ ');
         exit $ERRORS{'OK'};
 }
 

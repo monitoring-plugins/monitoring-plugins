@@ -5,7 +5,6 @@
 #
 # Copyright 2000, virCIO, LLP
 #
-# $Log$
 # Revision 1.3  2002/05/07 05:35:49  sghosh
 # 2nd fix for ePN
 #

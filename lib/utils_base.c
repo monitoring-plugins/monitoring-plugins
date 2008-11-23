@@ -5,8 +5,6 @@
 * License: GPL
 * Copyright (c) 2006 Nagios Plugins Development Team
 *
-* Last Modified: $Date$
-*
 * Library of useful functions for plugins
 * 
 *
@@ -23,7 +21,6 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * 
-* $Id$
 *
 *****************************************************************************/
 

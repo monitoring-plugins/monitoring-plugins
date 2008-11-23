@@ -2,7 +2,6 @@
 #
 # Ping Response Tests via check_ping
 #
-# $Id$
 #
 
 use strict;

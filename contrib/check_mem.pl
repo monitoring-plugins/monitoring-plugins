@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $Id$
+# $Id: check_mem.pl 2 2002-02-28 06:42:51Z egalstad $
 
 # check_mem.pl Copyright (C) 2000 Dan Larsson <dl@tyfon.net>
 #

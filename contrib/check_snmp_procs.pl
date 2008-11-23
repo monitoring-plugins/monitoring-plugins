@@ -109,7 +109,7 @@ if (GetOptions(
 }
 
 if ($opt_version) {
-	print_revision($PROGNAME, "\$Revision$REVISION \$");
+	print_revision($PROGNAME, "\$Revision: 1771 $REVISION \$");
 	exit $ERRORS{'OK'};
 }
 
@@ -529,7 +529,7 @@ sub print_usage {
 
 #
 sub print_help {
-	print_revision($PROGNAME, "\$Revision$REVISION \$");
+	print_revision($PROGNAME, "\$Revision: 1771 $REVISION \$");
 	print "Copyright (c) 2003 David Alden
 
 Check if processes are running on a host via snmp

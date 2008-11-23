@@ -2,7 +2,6 @@
 #
 # System Time Tests via check_time
 #
-# $Id$
 #
 
 use strict;

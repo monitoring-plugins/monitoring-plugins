@@ -52,7 +52,7 @@ sub process_options {
 }
 
 sub local_print_revision {
-        print_revision( $PROGNAME, '$Revision$ ' )
+        print_revision( $PROGNAME, '$Revision: 82 $ ' )
 }
 
 sub print_usage {

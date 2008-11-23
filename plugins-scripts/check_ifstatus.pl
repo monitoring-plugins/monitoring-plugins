@@ -29,7 +29,6 @@
 # 
 # 11.01.2000 Version 1.0
 #
-# $Id$
 
 use POSIX;
 use strict;
@@ -255,7 +254,7 @@ sub print_help (){
 	printf "   -t (--timeout)    seconds before the plugin times out (default=$TIMEOUT)\n";
 	printf "   -V (--version)    Plugin version\n";
 	printf "   -h (--help)       usage help \n\n";
-	print_revision($PROGNAME, '$Revision$');
+	print_revision($PROGNAME, '@NP_VERSION@');
 	
 }
 
@@ -285,7 +284,7 @@ sub process_arguments() {
 		exit $ERRORS{'OK'};
 	}
 	if ($opt_V) {
-		print_revision($PROGNAME,'$Revision$ ');
+		print_revision($PROGNAME,'@NP_VERSION@');
 		exit $ERRORS{'OK'};
 	}
 

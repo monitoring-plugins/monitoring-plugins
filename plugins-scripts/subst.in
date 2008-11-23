@@ -37,6 +37,9 @@ BEGIN {
 
 }
 
+# Plugin revision
+/@NP_VERSION@/ {sub(/@NP_VERSION@/,ENVIRON["NP_VERSION"]);}
+
 # scripting language (first line)
 
 /^#! ?\/.*\/python/ {sub(/^#! ?\/.*\/python/,"#! @PYTHON@");}

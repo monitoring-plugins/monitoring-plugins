@@ -26,7 +26,6 @@
 # initial version: 9-10-99 Ernst-Dieter Martin edmt@infineon.com
 #
 # License: GPL
-# $Id$
 #
 # lmstat output patches from Steve Rigler/Cliff Rice 13-Apr-2002
 # srigler@marathonoil.com,cerice@marathonoil.com
@@ -57,7 +56,7 @@ GetOptions
 	 "t=i" => \$opt_t, "timeout=i"  => \$opt_t);
 
 if ($opt_V) {
-	print_revision($PROGNAME,'$Revision$');
+	print_revision($PROGNAME,'@NP_VERSION@');
 	exit $ERRORS{'OK'};
 }
 
@@ -217,7 +216,7 @@ sub print_usage () {
 }
 
 sub print_help () {
-	print_revision($PROGNAME,'$Revision$');
+	print_revision($PROGNAME,'@NP_VERSION@');
 	print "Copyright (c) 2000 Ernst-Dieter Martin/Karl DeBisschop
 
 Check available flexlm license managers

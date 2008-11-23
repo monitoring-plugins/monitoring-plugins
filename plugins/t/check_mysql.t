@@ -2,7 +2,6 @@
 #
 # MySQL Database Server Tests via check_mysql
 #
-# $Id$
 #
 #
 # These are the database permissions required for this test:

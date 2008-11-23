@@ -2,7 +2,6 @@
 #
 # check_nagios tests
 #
-# $Id$
 #
 
 use strict;

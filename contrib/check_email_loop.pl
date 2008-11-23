@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# $Id$
+# $Id: check_email_loop.pl 1290 2005-11-29 23:21:06Z harpermann $
 #
 # (c)2000 Benjamin Schmid, blueshift@gmx.net (emergency use only ;-)
 # Copyleft by GNU GPL

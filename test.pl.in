@@ -2,8 +2,6 @@
 #
 # Wrapper for running the test harnesses
 #
-# $Id$
-#
 
 use strict;
 

@@ -21,7 +21,7 @@ use Data::Dumper;
 use Test;
 
 use vars qw($VERSION);
-$VERSION = do { my @r = (q$Revision$ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r }; # must be all one line, for MakeMaker
+$VERSION = "1556."; # must be all one line, for MakeMaker
 
 =head1 NAME
 

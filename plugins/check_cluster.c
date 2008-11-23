@@ -6,9 +6,6 @@
 * Copyright (c) 2000-2004 Ethan Galstad (nagios@nagios.org)
 * Copyright (c) 2007 Nagios Plugins Development Team
 * 
-* Last Modified: $Date$
-* 
-* 
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
@@ -22,12 +19,10 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * 
-* $Id$
 * 
 *****************************************************************************/
 
 const char *progname = "check_cluster";
-const char *revision = "$Revision$";
 const char *copyright = "2000-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
@@ -204,7 +199,7 @@ int process_arguments(int argc, char **argv){
 			break;
 
 		case 'V': /* version */
-			print_revision (progname, revision);
+			print_revision (progname, NP_VERSION);
 			exit (STATE_OK);
 			break;
 
@@ -228,7 +223,7 @@ int process_arguments(int argc, char **argv){
 void
 print_help(void)
 {
-	print_revision(progname, revision);
+	print_revision(progname, NP_VERSION);
 	printf ("Copyright (c) 2000-2004 Ethan Galstad (nagios@nagios.org)\n");
 	printf(COPYRIGHT, copyright, email);
 

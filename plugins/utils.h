@@ -26,10 +26,7 @@ suite of plugins. */
 
 /* Standardize version information, termination */
 
-/* $Id$ */
-
 void support (void);
-char *clean_revstring (const char *);
 void print_revision (const char *, const char *);
 
 /* Handle timeouts */

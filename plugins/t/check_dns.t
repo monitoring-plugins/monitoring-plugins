@@ -2,7 +2,6 @@
 #
 # Domain Name Server (DNS) Tests via check_dns
 #
-# $Id$
 #
 
 use strict;

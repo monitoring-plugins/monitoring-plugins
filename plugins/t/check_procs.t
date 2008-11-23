@@ -2,7 +2,6 @@
 #
 # Process Tests via check_procs
 #
-# $Id$
 #
 
 use strict;

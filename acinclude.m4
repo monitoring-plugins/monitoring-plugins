@@ -8,7 +8,6 @@ dnl e.g. 6 arguments (linux)
 dnl e.g. 5 arguments (solaris)
 dnl e.g. 3 arguments (osf/1)
 dnl
-dnl @version $Id$
 dnl @author Brian Stafford <brian@stafford.uklinux.net>
 dnl
 dnl based on version by Caolan McNamara <caolan@skynet.ie>

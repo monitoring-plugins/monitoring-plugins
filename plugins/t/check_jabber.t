@@ -2,7 +2,6 @@
 #
 # Jabber Server Tests via check_jabber
 #
-# $Id$
 #
 
 use strict;

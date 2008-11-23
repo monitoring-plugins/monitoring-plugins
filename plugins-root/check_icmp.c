@@ -6,8 +6,6 @@
 * Copyright (c) 2005-2008 Nagios Plugins Development Team
 * Original Author : Andreas Ericsson <ae@op5.se>
 * 
-* Last Modified: $Date$
-* 
 * Description:
 * 
 * This file contains the check_icmp plugin
@@ -35,14 +33,12 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * 
-* $Id$
 * 
 *****************************************************************************/
 
 /* progname may change */
 /* char *progname = "check_icmp"; */
 char *progname;
-const char *revision = "$Revision$";
 const char *copyright = "2005-2008";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
@@ -516,7 +512,7 @@ main(int argc, char **argv)
 				set_source_ip(optarg);
 				break;
       case 'V':                 /* version */
-        /*print_revision (progname, revision);*/ /* FIXME: Why? */
+        print_revision (progname, NP_VERSION);
         exit (STATE_OK);
       case 'h':                 /* help */
         print_help ();
@@ -1272,7 +1268,7 @@ void
 print_help(void)
 {
 
-  /*print_revision (progname, revision);*/ /* FIXME: Why? */
+  /*print_revision (progname);*/ /* FIXME: Why? */
 
   printf ("Copyright (c) 2005 Andreas Ericsson <ae@op5.se>\n");
   printf (COPYRIGHT, copyright, email);

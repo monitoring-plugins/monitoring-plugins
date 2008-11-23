@@ -2,7 +2,6 @@
 #
 # Logged in Users Tests via check_users
 #
-# $Id$
 #
 
 use strict;

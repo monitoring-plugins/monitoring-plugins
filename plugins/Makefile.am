@@ -1,5 +1,11 @@
 ## Process this file with automake to produce Makefile.in
 
+NP-VERSION-FILE: .FORCE-NP-VERSION-FILE
+	@$(SHELL_PATH) $(top_srcdir)/NP-VERSION-GEN
+-include NP-VERSION-FILE
+
+AM_CFLAGS = -DNP_VERSION='"$(NP_VERSION)"'
+
 VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t 
 
 INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl @LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@
@@ -65,10 +71,10 @@ check_ldap_LDADD = $(NETLIBS) $(LDAPLIBS)
 check_load_LDADD = $(BASEOBJS) popen.o
 check_mrtg_LDADD = $(BASEOBJS)
 check_mrtgtraf_LDADD = $(BASEOBJS)
-check_mysql_CFLAGS = $(MYSQLCFLAGS)
+check_mysql_CFLAGS = $(MYSQLCFLAGS) -DNP_VERSION='"$(NP_VERSION)"'
 check_mysql_CPPFLAGS = $(MYSQLINCLUDE)
 check_mysql_LDADD = $(NETLIBS) $(MYSQLLIBS)
-check_mysql_query_CFLAGS = $(MYSQLCFLAGS)
+check_mysql_query_CFLAGS = $(MYSQLCFLAGS) -DNP_VERSION='"$(NP_VERSION)"'
 check_mysql_query_CPPFLAGS = $(MYSQLINCLUDE)
 check_mysql_query_LDADD = $(NETLIBS) $(MYSQLLIBS)
 check_nagios_LDADD = $(BASEOBJS) runcmd.o
@@ -153,7 +159,7 @@ getaddrinfo.o: getaddrinfo.h $(PLUGINHDRS)
 
 gethostbyname.o: gethostbyname.h $(PLUGINHDRS)
 
-all-local: $(check_tcp_programs)
+all-local: $(check_tcp_programs) NP-VERSION-FILE
 
 $(check_tcp_programs): check_tcp
 	rm -f $@
@@ -166,6 +172,10 @@ install-exec-hook:
 	
 clean-local:
 	rm -f $(check_tcp_programs)
+	rm -f NP-VERSION-FILE
 
 uninstall-local:
 	cd $(DESTDIR)$(libexecdir) && rm -f $(check_tcp_programs)
+
+.PHONY: .FORCE-NP-VERSION-FILE
+

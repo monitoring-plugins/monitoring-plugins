@@ -30,7 +30,7 @@ if (!$ENV{ORACLE_HOME}) {
 my $state = $ERRORS{'UNKNOWN'};
 my $answer = undef;
 
-my ($MAJOR_VERSION, $MINOR_VERSION) = q$Revision$ =~ /(\d+)\.(\d+)/;
+my ($MAJOR_VERSION, $MINOR_VERSION) = q$Revision: 1134 $ =~ /(\d+)\.(\d+)/;
 my $VERSION = sprintf("%d.%02d", $MAJOR_VERSION - 1, $MINOR_VERSION);
 
 my $opt_debug;                  # -d|--debug

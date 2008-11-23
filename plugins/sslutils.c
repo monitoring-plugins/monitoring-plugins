@@ -5,8 +5,6 @@
 * License: GPL
 * Copyright (c) 2005-2007 Nagios Plugins Development Team
 * 
-* Last Modified: $Date$
-* 
 * Description:
 * 
 * This file contains common functions for plugins that require SSL.
@@ -25,7 +23,6 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * 
-* $Id$
 * 
 *****************************************************************************/
 

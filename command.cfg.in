@@ -1,8 +1,6 @@
 ###############################################################################
 # COMMAND CONFIGURATION
 #
-# $Id$
-#
 # SYNTAX:
 # command[<command_name>]=<command_line>
 #

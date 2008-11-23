@@ -116,7 +116,7 @@ GetOptions
 $PROGNAME = "check_snmp_printer";
 
 if ($opt_V) {
-	print_revision($PROGNAME,'$Revision$');
+	print_revision($PROGNAME,'$Revision: 795 $');
 	exit $ERRORS{'OK'};
 }
 
@@ -572,7 +572,7 @@ sub print_usage () {
 }
 
 sub print_help () {
-	print_revision($PROGNAME,'$Revision$');
+	print_revision($PROGNAME,'$Revision: 795 $');
 	print "Copyright (c) 2002 Subhendu Ghosh/Ethan Galstad.
 
 This plugin reports the status of an network printer with an SNMP management

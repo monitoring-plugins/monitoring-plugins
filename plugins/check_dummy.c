@@ -5,8 +5,6 @@
 * License: GPL
 * Copyright (c) 1999-2007 Nagios Plugins Development Team
 * 
-* Last Modified: $Date$
-* 
 * Description:
 * 
 * This file contains the check_dummy plugin
@@ -27,12 +25,10 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * 
-* $Id$
 * 
 *****************************************************************************/
 
 const char *progname = "check_dummy";
-const char *revision = "$Revision$";
 const char *copyright = "1999-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
@@ -55,7 +51,7 @@ main (int argc, char **argv)
   if (argc < 2)
     usage4 (_("Could not parse arguments"));
   else if (strcmp (argv[1], "-V") == 0 || strcmp (argv[1], "--version") == 0) {
-    print_revision (progname, revision);
+    print_revision (progname, NP_VERSION);
     exit (STATE_OK);
   }
   else if (strcmp (argv[1], "-h") == 0 || strcmp (argv[1], "--help") == 0) {
@@ -100,7 +96,7 @@ main (int argc, char **argv)
 void
 print_help (void)
 {
-  print_revision (progname, revision);
+  print_revision (progname, NP_VERSION);
 
   printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
   printf (COPYRIGHT, copyright, email);

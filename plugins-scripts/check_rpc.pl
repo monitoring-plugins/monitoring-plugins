@@ -15,10 +15,8 @@
 #
 # initial version: 3 May 2000 by Truongchinh Nguyen and Karl DeBisschop
 # Modified May 2002 Subhendu Ghosh - support for ePN and patches
-# current status: $Revision$
 #
 # Copyright Notice: GPL
-# $Id$
 #
 
 use strict;
@@ -38,13 +36,13 @@ sub print_help ();
 sub print_usage ();
 sub in ($$);
 
-$ENV{'BASH_ENV'}=''; 
+$ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 $ENV{'PATH'}='';
 $ENV{'LC_ALL'}='C';
 
 #Initialise protocol for each progname number
-# 'u' for UDP, 't' for TCP 
+# 'u' for UDP, 't' for TCP
 $proto[10003]='u';
 $proto[10004]='u';
 $proto[10007]='u';
@@ -67,9 +65,9 @@ GetOptions(
 if ($opt_h) { print_help(); exit $ERRORS{'OK'}; }
 
 # -V means display version number
-if ($opt_V) { 
-	print_revision($PROGNAME,'$Revision$ '); 
-	exit $ERRORS{'OK'}; 
+if ($opt_V) {
+	print_revision($PROGNAME,'@NP_VERSION@');
+	exit $ERRORS{'OK'};
 }
 
 # Hash containing all RPC program names and numbers
@@ -275,7 +273,7 @@ if (defined $opt_c ) {
 		}else{
 			print "Version $vers is not an integer\n" if $verbose;
 		}
-	
+
 	}
 }else{
 	get_rpcinfo();
@@ -311,7 +309,7 @@ sub get_rpcinfo {
 	while ( $line = <CMD> ) {
 		printf "$line " if $verbose;
 		chomp $line;
-	
+
     	if ( $line =~ /program $prognum version ([0-9]*) ready and waiting/ ) {
 			$response .= " version $1";
 			$state = 'OK' unless $state ne 'UNKNOWN';
@@ -336,7 +334,7 @@ sub get_rpcinfo {
 
 
 sub print_help() {
-	print_revision($PROGNAME,'$Revision$ ');
+	print_revision($PROGNAME,'@NP_VERSION@');
 	print "Copyright (c) 2002 Karl DeBisschop/Truongchinh Nguyen/Subhendu Ghosh\n";
 	print "\n";
 	print "Check if a rpc service is registered and running using\n";

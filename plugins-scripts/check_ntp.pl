@@ -7,7 +7,6 @@
 # be installed on the system, however since it's part of the ntp suite, you 
 # should already have it installed.
 #
-# $Id$
 #
 # Nothing clever done in this program - its a very simple bare basics hack to
 # get the job done.
@@ -97,7 +96,7 @@ GetOptions
 	 "H=s" => \$opt_H, "hostname=s" => \$opt_H);
 
 if ($opt_V) {
-	print_revision($PROGNAME,'$Revision$ ');
+	print_revision($PROGNAME,'@NP_VERSION@');
 	exit $ERRORS{'OK'};
 }
 
@@ -443,7 +442,7 @@ sub print_usage () {
 }
 
 sub print_help () {
-	print_revision($PROGNAME,'$Revision$');
+	print_revision($PROGNAME,'@NP_VERSION@');
 	print "Copyright (c) 2003 Bo Kersey/Karl DeBisschop\n";
 	print "\n";
 	print_usage();

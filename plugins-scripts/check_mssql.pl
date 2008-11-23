@@ -23,7 +23,6 @@
 #
 # Report bugs to: nagiosplug-help@lists.sourceforge.net
 # 
-# $Id$
 #
 
 
@@ -125,7 +124,7 @@ sub process_arguments {
 		 "V" => \$opt_V, "version" => \$opt_V);
 
 	if (defined $opt_V) {
-		print_revision($PROGNAME,'$Revision$');
+		print_revision($PROGNAME,'@NP_VERSION@');
 		exit $ERRORS{'OK'};
 	}
 

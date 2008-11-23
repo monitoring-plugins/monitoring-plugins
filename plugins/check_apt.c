@@ -7,8 +7,6 @@
 * 
 * Original author: Sean Finney
 * 
-* Last Modified: $Date$
-* 
 * Description:
 * 
 * This file contains the check_apt plugin
@@ -29,12 +27,9 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * 
-* $Id$
-* 
 *****************************************************************************/
 
 const char *progname = "check_apt";
-const char *revision = "$Revision$";
 const char *copyright = "2006-2008";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
@@ -159,7 +154,7 @@ int process_arguments (int argc, char **argv) {
 			print_help();
 			exit(STATE_OK);
 		case 'V':
-			print_revision(progname, revision);
+			print_revision(progname, NP_VERSION);
 			exit(STATE_OK);
 		case 'v':
 			verbose++;
@@ -404,7 +399,7 @@ char* construct_cmdline(upgrade_type u, const char *opts){
 void
 print_help (void)
 {
-  print_revision(progname, revision);
+  print_revision(progname, NP_VERSION);
 
   printf(_(COPYRIGHT), copyright, email);
 

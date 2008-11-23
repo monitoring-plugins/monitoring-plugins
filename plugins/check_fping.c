@@ -5,8 +5,6 @@
 * License: GPL
 * Copyright (c) 2000-2007 Nagios Plugins Development Team
 * 
-* Last Modified: $Date$
-* 
 * Description:
 * 
 * This file contains the check_disk plugin
@@ -28,12 +26,10 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * 
-* $Id$
 * 
 *****************************************************************************/
 
 const char *progname = "check_fping";
-const char *revision = "$Revision$";
 const char *copyright = "2000-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
@@ -264,7 +260,7 @@ process_arguments (int argc, char **argv)
       print_help ();
       exit (STATE_OK);
     case 'V':                 /* version */
-      print_revision (progname, revision);
+      print_revision (progname, NP_VERSION);
       exit (STATE_OK);
     case 'v':                 /* verbose mode */
       verbose = TRUE;
@@ -368,7 +364,7 @@ void
 print_help (void)
 {
 
-  print_revision (progname, revision);
+  print_revision (progname, NP_VERSION);
 
   printf ("Copyright (c) 1999 Didi Rieder <adrieder@sbox.tu-graz.ac.at>\n");
   printf (COPYRIGHT, copyright, email);

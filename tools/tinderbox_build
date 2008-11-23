@@ -14,7 +14,7 @@ use Sys::Hostname;
 use Cwd;
 use Time::Local;
 
-my $Version = '$Revision$';
+my $Version = `git describe --abbrev=4 HEAD`;
 
 my $myhost = hostname;
 chomp($myhost);

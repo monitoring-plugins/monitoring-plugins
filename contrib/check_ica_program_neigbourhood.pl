@@ -1,8 +1,7 @@
 #!/usr/bin/perl -w
 
-# $Id$
+# $Id: check_ica_program_neigbourhood.pl 1097 2005-01-25 09:05:53Z stanleyhopcroft $
 
-# $Log$
 # Revision 1.1  2005/01/25 09:05:53  stanleyhopcroft
 # New plugin to check Citrix Metaframe XP "Program Neighbourhood"
 #
@@ -290,7 +289,7 @@ sub print_help() {
 #          1        2         3         4         5         6         7         8
 #12345678901234567890123456789012345678901234567890123456789012345678901234567890
 
-	print_revision($PROGNAME,'$Revision$ ');
+	print_revision($PROGNAME,'$Revision: 1097 $ ');
 
 my $help = <<EOHELP ;
 Copyright (c) 2004 Karl DeBisschop/S Hopcroft
@@ -345,7 +344,7 @@ sub usage {
 }
 
 sub version () {
-	print_revision($PROGNAME,'$Revision$ ');
+	print_revision($PROGNAME,'$Revision: 1097 $ ');
 	exit $ERRORS{'OK'};
 }
 

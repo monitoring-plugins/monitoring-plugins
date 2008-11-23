@@ -2,7 +2,6 @@
 #
 # Load Average Tests via check_load
 #
-# $Id$
 #
 
 use strict;

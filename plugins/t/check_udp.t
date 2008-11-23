@@ -2,7 +2,6 @@
 #
 # UDP Connection Based Tests via check_udp
 #
-# $Id$
 #
 
 use strict;

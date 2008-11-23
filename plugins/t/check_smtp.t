@@ -2,7 +2,6 @@
 #
 # Simple Mail Transfer Protocol (SMTP) Test via check_smtp
 #
-# $Id$
 #
 
 use strict;

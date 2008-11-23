@@ -1,8 +1,7 @@
 #!/usr/bin/perl -w
 
-# $Id$
+# $Id: check_ica_metaframe_pub_apps.pl 1098 2005-01-25 09:07:39Z stanleyhopcroft $
 
-# $Log$
 # Revision 1.1  2005/01/25 09:07:39  stanleyhopcroft
 # Replacement (structured name mainly) for check_citrix: check of ICA browse service
 #
@@ -303,7 +302,7 @@ sub print_usage () {
 }
 
 sub print_help () {
-	print_revision($PROGNAME,'$Revision$ ');
+	print_revision($PROGNAME,'$Revision: 1098 $ ');
 	print "Copyright (c) 2002 Ed Rolison/Tom De Blende/S Hopcroft
 
 Perl Check Citrix plugin for Nagios.
@@ -350,7 +349,7 @@ The plugin works by
 }
 
 sub version () {
-	print_revision($PROGNAME,'$Revision$ ');
+	print_revision($PROGNAME,'$Revision: 1098 $ ');
 	exit $ERRORS{'OK'};
 }
 
