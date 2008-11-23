@@ -1,3 +1,6 @@
+# In all paths
+NP-VERSION-FILE
+*.o
 
 # /
 /aclocal.m4
