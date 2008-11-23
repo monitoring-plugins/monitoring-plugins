@@ -2,6 +2,8 @@
 
 NP-VERSION-FILE: .FORCE-NP-VERSION-FILE
 	@$(SHELL_PATH) $(top_srcdir)/NP-VERSION-GEN
+.FORCE-NP-VERSION-FILE:
+
 -include NP-VERSION-FILE
 
 AM_CFLAGS = -DNP_VERSION='"$(NP_VERSION)"'
@@ -176,6 +178,4 @@ clean-local:
 
 uninstall-local:
 	cd $(DESTDIR)$(libexecdir) && rm -f $(check_tcp_programs)
-
-.PHONY: .FORCE-NP-VERSION-FILE
 
