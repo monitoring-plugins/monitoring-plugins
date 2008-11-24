@@ -12,10 +12,9 @@ fi
 
 if [ -f Makefile ]; then
   echo "$0: Makefile present. Cleaning up with 'make distclean'..."
-  make distclean
+  make -i distclean
   if [ $? -ne 0 ]; then
     echo "Uh-oh! Make distclean failed."
-    echo "Please run './config.status' and try again."
     exit 1
   fi
 fi
