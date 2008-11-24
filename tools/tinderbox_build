@@ -234,11 +234,9 @@ sub SetupPath {
     $Path = $ENV{PATH};
     print "Path before: $Path\n";
 
-# Any reason for this? This make use of Sun make which cannot handle the
-# optional makefile include used for Git versioning.
-#    if ( $OS eq 'SunOS' ) {
-#	$ENV{'PATH'} = '/usr/ccs/bin:' . $ENV{'PATH'};
-#    }
+    if ( $OS eq 'SunOS' ) {
+	$ENV{'PATH'} = '/usr/ccs/bin:' . $ENV{'PATH'};
+    }
 
     $Path = $ENV{PATH};
     print "Path After: $Path\n";
