@@ -29,8 +29,8 @@ elif test -d $SRC_ROOT/.svn -o -f $SRC_ROOT/.svn &&
 	*$LF*) (exit 1) ;;
 	Revision:*)
 		VN=`echo $VN | awk '{print $NF}'`
-		SS=`svn status 2>/dev/null | grep '^[AMD]' | wc -l`
-		test "$SS" = 0 ||	VN="$VN-dirty" ;;
+		test "`svn status 2>/dev/null | grep '^[AMD]' | wc -l | tr -d ' '`" = 0 ||
+		VN="$VN-dirty" ;;
 	esac
 then
 	VN=`echo "trunk.$VN" | sed -e 's/-/./g'`;
