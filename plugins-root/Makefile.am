@@ -1,13 +1,13 @@
 ## Process this file with automake to produce Makefile.in
 
+if RELEASE_PRESENT
+NP_VERSION = $(PACKAGE_VERSION)
+else
 NP-VERSION-FILE: .FORCE-NP-VERSION-FILE
 	@$(SHELL_PATH) $(top_srcdir)/NP-VERSION-GEN
 .FORCE-NP-VERSION-FILE:
-
-## This is undocumented and could possibly break in future versions of
-## automake. See:
-## http://article.gmane.org/gmane.comp.sysutils.automake.general/10036
-@am__include@ @am__quote@NP-VERSION-FILE@am__quote@
+-include NP-VERSION-FILE
+endif
 
 AM_CFLAGS = -DNP_VERSION='"$(NP_VERSION)"'
 

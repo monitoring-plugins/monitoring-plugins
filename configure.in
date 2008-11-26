@@ -98,6 +98,9 @@ AC_SUBST(PKG_ARCH)
 AC_SUBST(REV_DATESTAMP)
 AC_SUBST(REV_TIMESTAMP)
 
+dnl Check if version file is present
+AM_CONDITIONAL([RELEASE_PRESENT], [test -f release])
+
 dnl Checks for programs.
 AC_PATH_PROG(PYTHON,python)
 AC_PATH_PROG(SH,sh)

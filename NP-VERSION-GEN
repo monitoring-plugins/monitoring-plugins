@@ -11,12 +11,8 @@ DEF_VER=1.4.13.git
 LF='
 '
 
-# First see if there is a version file (included in release tarballs),
-# then try git-describe, then default.
-if test -f $SRC_ROOT/version
-then
-	VN=`cat $SRC_ROOT/version` || VN="$DEF_VER"
-elif test -d $SRC_ROOT/.git -o -f $SRC_ROOT/.git &&
+# First try git-describe, then svn info, then default.
+if test -d $SRC_ROOT/.git -o -f $SRC_ROOT/.git &&
 	VN=`cd $SRC_ROOT; git describe --abbrev=4 HEAD 2>/dev/null` &&
 	case "$VN" in
 	*$LF*) (exit 1) ;;
@@ -27,6 +23,17 @@ elif test -d $SRC_ROOT/.git -o -f $SRC_ROOT/.git &&
 	esac
 then
 	VN=`echo "$VN" | sed -e 's/^release-//' | sed -e 's/-/./g'`;
+elif test -d $SRC_ROOT/.svn -o -f $SRC_ROOT/.svn &&
+	VN=`cd $SRC_ROOT; svn info 2>/dev/null | grep '^Revision'` &&
+	case "$VN" in
+	*$LF*) (exit 1) ;;
+	Revision:*)
+		VN=`echo $VN | awk '{print $NF}'`
+		test "`svn status 2>/dev/null | grep '^[AMD]' | wc -l`" = 0 ||
+		VN="$VN-dirty" ;;
+	esac
+then
+	VN=`echo "trunk.$VN" | sed -e 's/-/./g'`;
 else
 	VN="$DEF_VER"
 fi

@@ -19,7 +19,7 @@ DEFS = -DLOCALEDIR=\"$(localedir)\"
 
 dist-hook:
 	make THANKS nagios-plugins.spec pkg/fedora/nagios-plugins.spec
-	echo ${VERSION} >$(distdir)/version
+	echo ${VERSION} >$(distdir)/release
 
 install-root:
 	cd plugins-root && $(MAKE) $@
