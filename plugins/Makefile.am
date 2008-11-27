@@ -164,7 +164,7 @@ getaddrinfo.o: getaddrinfo.h $(PLUGINHDRS)
 
 gethostbyname.o: gethostbyname.h $(PLUGINHDRS)
 
-all-local: $(check_tcp_programs) NP-VERSION-FILE
+all-local: $(check_tcp_programs)
 
 $(check_tcp_programs): check_tcp
 	rm -f $@

@@ -86,8 +86,6 @@ pst3_LDFLAGS = @PST3CFLAGS@
 check_dhcp_DEPENDENCIES = check_dhcp.c $(NETOBJS) $(DEPLIBS) 
 check_icmp_DEPENDENCIES = check_icmp.c $(NETOBJS)
 
-all-local: .FORCE-NP-VERSION-FILE
-
 clean-local:
 	rm -f NP-VERSION-FILE
 
