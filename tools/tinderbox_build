@@ -234,8 +234,10 @@ sub SetupPath {
     $Path = $ENV{PATH};
     print "Path before: $Path\n";
 
-    if ( $OS eq 'SunOS' ) {
-	$ENV{'PATH'} = '/usr/ccs/bin:' . $ENV{'PATH'};
+    # Don't alter path if we're building off a repository tree;
+    # SunOS make will work only out of snapshots and releases.
+    if ( $OS eq 'SunOS' && !( -e '.svn' || -e '.git' )) {
+        $ENV{'PATH'} = '/usr/ccs/bin:' . $ENV{'PATH'};
     }
 
     $Path = $ENV{PATH};
