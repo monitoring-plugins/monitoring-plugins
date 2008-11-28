@@ -156,25 +156,11 @@ AC_CHECK_HEADERS(math.h)
 AC_CHECK_LIB(m,floor,MATHLIBS="-lm")
 AC_SUBST(MATHLIBS)
 
-dnl Add libtap for tests
-AC_ARG_ENABLE(libtap,
-  AC_HELP_STRING([--enable-libtap], 
-		[Enables configuring of libtap in external/tap/. Run "make tap" to compile (default: no)]),
-	[enable_libtap=$enableval],
-	[enable_libtap=no])
-dnl Have to define TAP_DIR so that Makefile can pull it as an extra dist
-TAP_DIR=external/tap-1.01
-AC_SUBST(TAP_DIR)
-if test "$enable_libtap" = yes; then
-	dnl Have to have AC_CONFIG_SUBDIRS as a literal
-	AC_CONFIG_SUBDIRS([external/tap-1.01])
-	dnl This is required so that TAP stuff is compiled before the libs and tests
-	dnl A make install will also install the tap library, but as this is a development tool, this should be okay
-	INCLUDE_TAP_DIR=$TAP_DIR
-	AC_SUBST(INCLUDE_TAP_DIR)
+dnl Check for libtap, to run perl-like tests
+AC_CHECK_LIB(tap, plan_tests, 
 	EXTRA_TEST="test_utils test_disk test_tcp test_cmd test_base64"
 	AC_SUBST(EXTRA_TEST)
-fi
+	)
 
 dnl INI Parsing
 AC_ARG_ENABLE(extra-opts,
@@ -184,11 +170,9 @@ AC_ARG_ENABLE(extra-opts,
 	[enable_extra_opts=no])
 AM_CONDITIONAL([USE_PARSE_INI],[test "$enable_extra_opts" = "yes"])
 if test "$enable_extra_opts" = "yes" ; then
+	EXTRA_TEST="$EXTRA_TEST test_ini test_opts"
+	AC_SUBST(EXTRA_TEST)
 	AC_DEFINE(NP_EXTRA_OPTS,[1],[Enable INI file parsing.])
-	if test "$enable_libtap" = yes; then
-		EXTRA_TEST="$EXTRA_TEST test_ini test_opts"
-		AC_SUBST(EXTRA_TEST)
-	fi
 fi
 
 dnl Check for PostgreSQL libraries

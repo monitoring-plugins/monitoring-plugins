@@ -1,16 +1,14 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = gl @INCLUDE_TAP_DIR@ lib plugins plugins-scripts plugins-root po @PERLMODS_DIR@
+SUBDIRS = gl lib plugins plugins-scripts plugins-root po @PERLMODS_DIR@
 
-# Have to list TAP_DIR manually to get in distribution
 EXTRA_DIST = config.rpath \
 	ABOUT-NLS ACKNOWLEDGEMENTS AUTHORS BUGS CODING FAQ LEGAL NEWS \
 	NP-VERSION-GEN REQUIREMENTS SUPPORT THANKS \
 	NPTest.pm contrib pkg nagios-plugins.spec \
 	config_test/Makefile config_test/run_tests config_test/child_test.c \
 	perlmods tools/build_perl_modules \
-	tools/tinderbox_build \
-	external/tap-1.01
+	tools/tinderbox_build
 
 ACLOCAL_AMFLAGS = -I gl/m4 -I m4
 
@@ -23,9 +21,6 @@ dist-hook:
 
 install-root:
 	cd plugins-root && $(MAKE) $@
-
-tap:
-	cd @TAP_DIR@ && $(MAKE)
 
 test test-debug:
 	cd lib && $(MAKE) $@

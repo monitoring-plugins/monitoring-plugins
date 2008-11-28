@@ -48,6 +48,3 @@ fi
 if [ $docbook = 1 ] ; then
 	( cd doc && make )
 fi
-
-# Untar libtap
-( cd external && gunzip -c tap-1.01-nagios-plugins.tar.gz | tar -xf - )
