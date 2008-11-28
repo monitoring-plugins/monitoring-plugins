@@ -96,6 +96,14 @@ NP-VERSION-FILE
 /intl/ref-del.sin
 /intl/textdomain.c
 
+# /tap/
+/tap/.deps
+/tap/.libs
+/tap/Makefile
+/tap/Makefile.in
+/tap/libtap.la
+/tap/tap.lo
+
 # /lib/
 /lib/.deps
 /lib/getopt.h

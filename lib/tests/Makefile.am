@@ -15,40 +15,49 @@ EXTRA_DIST = $(np_test_scripts) $(np_test_files)
 
 LIBS = @LIBINTL@
 
+if USE_LIBTAP_LOCAL
+tap_cflags = -I$(top_srcdir)/tap
+tap_ldflags = -L$(top_srcdir)/tap
+tap_ldadd = $(top_srcdir)/gl/libgnu.a
+else
+## Shouldn't we detect that??
+tap_ldflags = -L/usr/local/lib
+endif
+
 test_utils_SOURCES = test_utils.c
-test_utils_CFLAGS = -g -I..
-test_utils_LDFLAGS = -L/usr/local/lib -ltap
-test_utils_LDADD = ../utils_base.o
+test_utils_CFLAGS = -g -I.. $(tap_cflags)
+test_utils_LDFLAGS = $(tap_ldflags) -ltap
+test_utils_LDADD = ../utils_base.o $(tap_ldadd)
 
 test_disk_SOURCES = test_disk.c
-test_disk_CFLAGS = -g -I..
-test_disk_LDFLAGS = -L/usr/local/lib -ltap
+test_disk_CFLAGS = -g -I.. $(tap_cflags)
+test_disk_LDFLAGS = $(tap_ldflags) -ltap
 test_disk_LDADD = ../utils_disk.o $(top_srcdir)/gl/libgnu.a
 
 test_tcp_SOURCES = test_tcp.c
-test_tcp_CFLAGS = -g -I..
-test_tcp_LDFLAGS = -L/usr/local/lib -ltap
-test_tcp_LDADD = ../utils_tcp.o 
+test_tcp_CFLAGS = -g -I.. $(tap_cflags)
+test_tcp_LDFLAGS = $(tap_ldflags) -ltap
+test_tcp_LDADD = ../utils_tcp.o $(tap_ldadd)
 
 test_cmd_SOURCES = test_cmd.c
-test_cmd_CFLAGS = -g -I..
-test_cmd_LDFLAGS = -L/usr/local/lib -ltap
-test_cmd_LDADD = ../utils_cmd.o ../utils_base.o
+test_cmd_CFLAGS = -g -I.. $(tap_cflags)
+test_cmd_LDFLAGS = $(tap_ldflags) -ltap
+test_cmd_LDADD = ../utils_cmd.o ../utils_base.o $(tap_ldadd)
 
 test_base64_SOURCES = test_base64.c
-test_base64_CFLAGS = -g -I..
-test_base64_LDFLAGS = -L/usr/local/lib -ltap
-test_base64_LDADD = $(top_srcdir)/gl/base64.o 
+test_base64_CFLAGS = -g -I.. $(tap_cflags)
+test_base64_LDFLAGS = $(tap_ldflags) -ltap
+test_base64_LDADD = $(top_srcdir)/gl/base64.o $(tap_ldadd)
 
 test_ini_SOURCES = test_ini.c
-test_ini_CFLAGS = -g -I..
-test_ini_LDFLAGS = -L/usr/local/lib -ltap
-test_ini_LDADD = ../utils_base.o ../parse_ini.o
+test_ini_CFLAGS = -g -I.. $(tap_cflags)
+test_ini_LDFLAGS = $(tap_ldflags) -ltap
+test_ini_LDADD = ../utils_base.o ../parse_ini.o $(tap_ldadd)
 
 test_opts_SOURCES = test_opts.c
-test_opts_CFLAGS = -g -I..
-test_opts_LDFLAGS = -L/usr/local/lib -ltap
-test_opts_LDADD = ../utils_base.o ../parse_ini.o ../extra_opts.o
+test_opts_CFLAGS = -g -I.. $(tap_cflags)
+test_opts_LDFLAGS = $(tap_ldflags) -ltap
+test_opts_LDADD = ../utils_base.o ../parse_ini.o ../extra_opts.o $(tap_ldadd)
 
 test: ${noinst_PROGRAMS}
 	perl -MTest::Harness -e '$$Test::Harness::switches=""; runtests(map {$$_ .= ".t"} @ARGV)' $(EXTRA_PROGRAMS)
