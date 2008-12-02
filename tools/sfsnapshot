@@ -61,7 +61,7 @@ COMPILE_DIR=/tmp/tonvoon/tmp_snapshot
 IN=${HOME}/tmp_snapshot
 
 # Where to place the generated files
-OUT_SERVER="tonvoon@shell.sf.net"
+OUT_SERVER="tonvoon@web.sourceforge.net"
 OUT="/home/groups/n/na/nagiosplug/htdocs/snapshot"
 
 # Make sure prereqs are satisfied on server!
@@ -77,20 +77,8 @@ for i in $* ; do
 	make_dist $i
 done
 
-# Check for *.gz files locally (expect NFS between cf shell server and $CF)
-set -x
-files=$(ls $IN/*.gz 2>/dev/null)
-[[ -z $files ]] && die "No files created"
-head_file=$(cd $IN && ls *-trunk-*.gz 2>/dev/null)
-ssh -2 $OUT_SERVER "rm -f $OUT/*.gz"
-scp -2 $files $OUT_SERVER:$OUT
-if [[ -n $head_file ]] ; then
-	ssh -2 $OUT_SERVER "cd $OUT && ln -s $head_file nagios-plugins-HEAD.tar.gz"
-fi
-
 # Create MD5 sum
-ssh -2 $OUT_SERVER << EOF
-cd $OUT
+cd $IN
 cat <<-END_README > README
 This is the daily SVN snapshot of nagiosplug, consisting of the SVN trunk
 and any other branches.
@@ -101,9 +89,28 @@ The nagios-plugins-HEAD.tar.gz link will always go to the latest trunk snapshot
 The MD5SUM is:
 END_README
 md5sum *.gz | tee -a README > MD5SUM
+
+
+# Check for *.gz files locally (expect NFS between cf shell server and $CF)
+set -x
+cd $IN
+files=$(ls *.gz 2>/dev/null)
+[[ -z $files ]] && die "No files created"
+head_file=$(cd $IN && ls -rt *-trunk-*.gz | head -1 2>/dev/null)
+cat <<-EOF > /tmp/batchfile.$$
+cd $OUT
+rm *.gz
+put *.gz
+ln $head_file nagios-plugins-HEAD.tar.gz
+put MD5SUM
+put README readme
 EOF
 
-rm -f $files
+# Do the actual transfer
+# Have to put README down as readme because SF's apache server appears to block README files
+sftp -b /tmp/batchfile.$$ $OUT_SERVER
+
+rm -f $files /tmp/batchfile.$$
 
 # Work out success or failure
 expected=$(($# + 1))
