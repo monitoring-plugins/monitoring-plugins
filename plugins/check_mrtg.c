@@ -53,7 +53,7 @@ char *units;
 int
 main (int argc, char **argv)
 {
-	int result = STATE_UNKNOWN;
+	int result = STATE_OK;
 	FILE *fp;
 	int line;
 	char input_buffer[MAX_INPUT_BUFFER];
