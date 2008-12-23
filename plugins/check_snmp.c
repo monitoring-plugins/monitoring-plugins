@@ -43,6 +43,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #define DEFAULT_TIMEOUT 1
 #define DEFAULT_RETRIES 5
 #define DEFAULT_AUTH_PROTOCOL "MD5"
+#define DEFAULT_PRIV_PROTOCOL "DES"
 #define DEFAULT_DELIMITER "="
 #define DEFAULT_OUTPUT_DELIMITER " "
 
@@ -102,6 +103,7 @@ char *proto = NULL;
 char *seclevel = NULL;
 char *secname = NULL;
 char *authproto = NULL;
+char *privproto = NULL;
 char *authpasswd = NULL;
 char *privpasswd = NULL;
 char *oid;
@@ -438,6 +440,7 @@ process_arguments (int argc, char **argv)
 		{"seclevel", required_argument, 0, 'L'},
 		{"secname", required_argument, 0, 'U'},
 		{"authproto", required_argument, 0, 'a'},
+		{"privproto", required_argument, 0, 'x'},
 		{"authpasswd", required_argument, 0, 'A'},
 		{"privpasswd", required_argument, 0, 'X'},
 		{"next", no_argument, 0, 'n'},
@@ -458,7 +461,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "nhvVt:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:L:U:a:A:X:",
+		c = getopt_long (argc, argv, "nhvVt:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:L:U:a:x:A:X:",
 									 longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -504,6 +507,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'a':	/* auth protocol */
 			authproto = optarg;
+			break;
+		case 'x':	/* priv protocol */
+			privproto = optarg;
 			break;
 		case 'A':	/* auth passwd */
 			authpasswd = optarg;
@@ -717,7 +723,8 @@ validate_arguments ()
 	if (authproto == NULL )
 		asprintf(&authproto, DEFAULT_AUTH_PROTOCOL);
 
-
+	if (privproto == NULL )
+		asprintf(&privproto, DEFAULT_PRIV_PROTOCOL);
 
 	if (proto == NULL || (strcmp(proto,DEFAULT_PROTOCOL) == 0) ) {	/* default protocol version */
 		asprintf(&proto, DEFAULT_PROTOCOL);
@@ -746,7 +753,7 @@ validate_arguments ()
 				print_usage ();
 				exit (STATE_UNKNOWN);
 			}
-			asprintf(&authpriv, "-l authPriv -a %s -u %s -A %s -x DES -X %s ", authproto, secname, authpasswd, privpasswd);
+			asprintf(&authpriv, "-l authPriv -a %s -u %s -A %s -x %s -X %s ", authproto, secname, authpasswd, privproto, privpasswd);
 		}
 
 	}
@@ -948,6 +955,8 @@ print_help (void)
   printf ("    %s\n", _("SNMPv3 securityLevel"));
   printf (" %s\n", "-a, --authproto=[MD5|SHA]");
   printf ("    %s\n", _("SNMPv3 auth proto"));
+  printf (" %s\n", "-x, --privproto=[DES|AES]");
+  printf ("    %s\n", _("SNMPv3 priv proto (default DES)"));
 
 	/* Authentication Tokens*/
 	printf (" %s\n", "-C, --community=STRING");
@@ -1038,5 +1047,5 @@ print_usage (void)
   printf ("[-C community] [-s string] [-r regex] [-R regexi] [-t timeout] [-e retries]\n");
   printf ("[-l label] [-u units] [-p port-number] [-d delimiter] [-D output-delimiter]\n");
   printf ("[-m miblist] [-P snmp version] [-L seclevel] [-U secname] [-a authproto]\n");
-  printf ("[-A authpasswd] [-X privpasswd]\n");
+  printf ("[-A authpasswd] [-x privproto] [-X privpasswd]\n");
 }
