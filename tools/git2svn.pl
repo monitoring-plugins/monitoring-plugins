@@ -114,8 +114,8 @@ if (@commits == 0) {
 # Finally, commit every revision found into SVN
 foreach my $commit (@commits) {
 	print "Commiting $commit to Subversion\n";
-	print "Running: $git svn set-tree $commit\n"	if ($DEBUG);
-	`$git svn set-tree $commit`;
+	print "Running: $git svn set-tree --add-author-from $commit\n"	if ($DEBUG);
+	`$git svn set-tree --add-author-from $commit`;
 	die("Failed to commit hash $commit") if ($?);
 }
 
