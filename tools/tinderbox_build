@@ -235,7 +235,7 @@ sub SetupPath {
     print "Path before: $Path\n";
 
     # Don't alter path if we're building off a repository tree;
-    # SunOS make will work only out of snapshots and releases.
+    # SunOS make will be used only for snapshots and releases.
     if ( $OS eq 'SunOS' && !( -e '.svn' || -e '.git' )) {
         $ENV{'PATH'} = '/usr/ccs/bin:' . $ENV{'PATH'};
     }
