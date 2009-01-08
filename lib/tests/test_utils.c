@@ -173,7 +173,7 @@ main (int argc, char **argv)
 	ok( strcmp(test, "everything") == 0, "everything okay");
 	free(test);
 
-	test = basename("/here/is/a/path");
+	test = (char *)basename("/here/is/a/path");
 	ok( strcmp(test, "path") == 0, "basename okay");
 
 	return exit_status();
