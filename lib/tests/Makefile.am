@@ -24,11 +24,40 @@ else
 tap_ldflags = -L/usr/local/lib
 endif
 
-AM_CFLAGS = -g -I$(top_srcdir)/lib -I$(top_srcdir)/gl $(tap_cflags)
-AM_LDFLAGS = $(tap_ldflags) -ltap
-LDADD = $(top_srcdir)/lib/libnagiosplug.a $(top_srcdir)/gl/libgnu.a
+test_utils_SOURCES = test_utils.c
+test_utils_CFLAGS = -g -I.. $(tap_cflags)
+test_utils_LDFLAGS = $(tap_ldflags) -ltap
+test_utils_LDADD = ../utils_base.o $(tap_ldadd)
 
-SOURCES = test_utils.c test_disk.c test_tcp.c test_cmd.c test_base64.c test_ini.c test_opts.c
+test_disk_SOURCES = test_disk.c
+test_disk_CFLAGS = -g -I.. $(tap_cflags)
+test_disk_LDFLAGS = $(tap_ldflags) -ltap
+test_disk_LDADD = ../utils_disk.o $(top_srcdir)/gl/libgnu.a
+
+test_tcp_SOURCES = test_tcp.c
+test_tcp_CFLAGS = -g -I.. $(tap_cflags)
+test_tcp_LDFLAGS = $(tap_ldflags) -ltap
+test_tcp_LDADD = ../utils_tcp.o $(tap_ldadd)
+
+test_cmd_SOURCES = test_cmd.c
+test_cmd_CFLAGS = -g -I.. $(tap_cflags)
+test_cmd_LDFLAGS = $(tap_ldflags) -ltap
+test_cmd_LDADD = ../utils_cmd.o ../utils_base.o $(tap_ldadd)
+
+test_base64_SOURCES = test_base64.c
+test_base64_CFLAGS = -g -I.. $(tap_cflags)
+test_base64_LDFLAGS = $(tap_ldflags) -ltap
+test_base64_LDADD = $(top_srcdir)/gl/base64.o $(tap_ldadd)
+
+test_ini_SOURCES = test_ini.c
+test_ini_CFLAGS = -g -I.. $(tap_cflags)
+test_ini_LDFLAGS = $(tap_ldflags) -ltap
+test_ini_LDADD = ../utils_base.o ../parse_ini.o $(tap_ldadd)
+
+test_opts_SOURCES = test_opts.c
+test_opts_CFLAGS = -g -I.. $(tap_cflags)
+test_opts_LDFLAGS = $(tap_ldflags) -ltap
+test_opts_LDADD = ../utils_base.o ../parse_ini.o ../extra_opts.o $(tap_ldadd)
 
 test: ${noinst_PROGRAMS}
 	perl -MTest::Harness -e '$$Test::Harness::switches=""; runtests(map {$$_ .= ".t"} @ARGV)' $(EXTRA_PROGRAMS)
