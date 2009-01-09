@@ -171,10 +171,6 @@ main (int argc, char **argv)
 
 	test = np_escaped_string("everything");
 	ok( strcmp(test, "everything") == 0, "everything okay");
-	free(test);
-
-	test = (char *)basename("/here/is/a/path");
-	ok( strcmp(test, "path") == 0, "basename okay");
 
 	return exit_status();
 }
