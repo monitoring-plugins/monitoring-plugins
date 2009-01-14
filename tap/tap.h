@@ -47,7 +47,7 @@
 			skip(n, fmt, ## __VA_ARGS__);	\
 			continue;			\
 		}
-#elif __STDC_VERSION__ >= 199901L /* __GNUC__ */
+#else /*#elif __STDC_VERSION__ >= 199901L*/ /* __GNUC__ */
 # define ok(e, ...) ((e) ?						\
 		     _gen_result(1, __func__, __FILE__, __LINE__,	\
 				 __VA_ARGS__) :				\
@@ -67,8 +67,8 @@
 			skip(n,  __VA_ARGS__);		\
 			continue;			\
 		}
-#else /* __STDC_VERSION__ */
-# error "Needs gcc or C99 compiler for variadic macros."
+/*#else *//* __STDC_VERSION__ */
+/*# error "Needs gcc or C99 compiler for variadic macros."*/
 #endif /* __STDC_VERSION__ */
 
 # define skip_end } while(0);
