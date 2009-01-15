@@ -1,5 +1,5 @@
-# double-slash-root.m4 serial 2   -*- Autoconf -*-
-dnl Copyright (C) 2006 Free Software Foundation, Inc.
+# double-slash-root.m4 serial 4   -*- Autoconf -*-
+dnl Copyright (C) 2006, 2008, 2009 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -24,15 +24,15 @@ AC_DEFUN([gl_DOUBLE_SLASH_ROOT],
 	    gl_cv_double_slash_root='unknown, assuming no' ;;
 	esac
       else
-	set x `ls -di / //`
-	if test $[2] = $[4] && wc //dev/null >/dev/null 2>&1; then
+	set x `ls -di / // 2>/dev/null`
+	if test "$[2]" = "$[4]" && wc //dev/null >/dev/null 2>&1; then
 	  gl_cv_double_slash_root=no
 	else
 	  gl_cv_double_slash_root=yes
 	fi
       fi])
   if test "$gl_cv_double_slash_root" = yes; then
-    AC_DEFINE([DOUBLE_SLASH_IS_DISTINCT_ROOT], 1,
+    AC_DEFINE([DOUBLE_SLASH_IS_DISTINCT_ROOT], [1],
       [Define to 1 if // is a file system root distinct from /.])
   fi
 ])

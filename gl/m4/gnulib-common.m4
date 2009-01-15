@@ -1,8 +1,37 @@
-# gnulib-common.m4 serial 3
-dnl Copyright (C) 2007 Free Software Foundation, Inc.
+# gnulib-common.m4 serial 7
+dnl Copyright (C) 2007-2009 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
+
+# gl_COMMON
+# is expanded unconditionally through gnulib-tool magic.
+AC_DEFUN([gl_COMMON], [
+  dnl Use AC_REQUIRE here, so that the code is expanded once only.
+  AC_REQUIRE([gl_COMMON_BODY])
+])
+AC_DEFUN([gl_COMMON_BODY], [
+  AH_VERBATIM([isoc99_inline],
+[/* Work around a bug in Apple GCC 4.0.1 build 5465: In C99 mode, it supports
+   the ISO C 99 semantics of 'extern inline' (unlike the GNU C semantics of
+   earlier versions), but does not display it by setting __GNUC_STDC_INLINE__.
+   __APPLE__ && __MACH__ test for MacOS X.
+   __APPLE_CC__ tests for the Apple compiler and its version.
+   __STDC_VERSION__ tests for the C99 mode.  */
+#if defined __APPLE__ && defined __MACH__ && __APPLE_CC__ >= 5465 && !defined __cplusplus && __STDC_VERSION__ >= 199901L && !defined __GNUC_STDC_INLINE__
+# define __GNUC_STDC_INLINE__ 1
+#endif])
+  AH_VERBATIM([unused_parameter],
+[/* Define as a marker that can be attached to function parameter declarations
+   for parameters that are not used.  This helps to reduce warnings, such as
+   from GCC -Wunused-parameter.  */
+#if __GNUC__ >= 3 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
+# define _UNUSED_PARAMETER_ __attribute__ ((__unused__))
+#else
+# define _UNUSED_PARAMETER_
+#endif
+])
+])
 
 # gl_MODULE_INDICATOR([modulename])
 # defines a C macro indicating the presence of the given module.
@@ -11,6 +40,13 @@ AC_DEFUN([gl_MODULE_INDICATOR],
   AC_DEFINE([GNULIB_]translit([$1],[abcdefghijklmnopqrstuvwxyz./-],[ABCDEFGHIJKLMNOPQRSTUVWXYZ___]), [1],
     [Define to 1 when using the gnulib module ]$1[.])
 ])
+
+# m4_foreach_w
+# is a backport of autoconf-2.59c's m4_foreach_w.
+# Remove this macro when we can assume autoconf >= 2.60.
+m4_ifndef([m4_foreach_w],
+  [m4_define([m4_foreach_w],
+    [m4_foreach([$1], m4_split(m4_normalize([$2]), [ ]), [$3])])])
 
 # AC_PROG_MKDIR_P
 # is a backport of autoconf-2.60's AC_PROG_MKDIR_P.
@@ -27,7 +63,7 @@ m4_ifdef([AC_PROG_MKDIR_P], [], [
 # works.
 # This definition can be removed once autoconf >= 2.62 can be assumed.
 AC_DEFUN([AC_C_RESTRICT],
-[AC_CACHE_CHECK([for C/C++ restrict keyword], ac_cv_c_restrict,
+[AC_CACHE_CHECK([for C/C++ restrict keyword], [ac_cv_c_restrict],
   [ac_cv_c_restrict=no
    # The order here caters to the fact that C++ does not require restrict.
    for ac_kw in __restrict __restrict__ _Restrict restrict; do

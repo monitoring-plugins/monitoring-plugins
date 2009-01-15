@@ -1,6 +1,6 @@
 /* Invoke open, but avoid some glitches.
 
-   Copyright (C) 2005, 2006 Free Software Foundation, Inc.
+   Copyright (C) 2005, 2006, 2008 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -38,9 +38,10 @@ open_safer (char const *file, int flags, ...)
       /* Assume mode_t promotes to int if and only if it is smaller.
 	 This assumption isn't guaranteed by the C standard, but we
 	 don't know of any real-world counterexamples.  */
-      mode = (sizeof (mode_t) < sizeof (int)
-	      ? va_arg (ap, int)
-	      : va_arg (ap, mode_t));
+      if (sizeof (mode_t) < sizeof (int))
+	mode = va_arg (ap, int);
+      else
+	mode = va_arg (ap, mode_t);
 
       va_end (ap);
     }

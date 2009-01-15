@@ -1,5 +1,5 @@
-# inline.m4 serial 3
-dnl Copyright (C) 2006 Free Software Foundation, Inc.
+# inline.m4 serial 4
+dnl Copyright (C) 2006, 2009 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -32,7 +32,7 @@ AC_DEFUN([gl_INLINE],
      fi
     ])
   if test $gl_cv_c_inline_effective = yes; then
-    AC_DEFINE([HAVE_INLINE], 1,
+    AC_DEFINE([HAVE_INLINE], [1],
       [Define to 1 if the compiler supports one of the keywords
        'inline', '__inline__', '__inline' and effectively inlines
        functions marked as such.])

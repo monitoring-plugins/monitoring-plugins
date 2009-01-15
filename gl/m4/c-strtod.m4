@@ -1,6 +1,6 @@
-# c-strtod.m4 serial 9
+# c-strtod.m4 serial 10
 
-# Copyright (C) 2004, 2005, 2006 Free Software Foundation, Inc.
+# Copyright (C) 2004, 2005, 2006, 2009 Free Software Foundation, Inc.
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -29,7 +29,7 @@ AC_DEFUN([gl_C99_STRTOLD],
        [gl_cv_func_c99_strtold=yes],
        [gl_cv_func_c99_strtold=no])])
   if test $gl_cv_func_c99_strtold = yes; then
-    AC_DEFINE([HAVE_C99_STRTOLD], 1, [Define to 1 if strtold conforms to C99.])
+    AC_DEFINE([HAVE_C99_STRTOLD], [1], [Define to 1 if strtold conforms to C99.])
   fi
 ])
 

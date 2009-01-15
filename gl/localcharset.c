@@ -1,6 +1,6 @@
 /* Determine a canonical name for the current locale's character encoding.
 
-   Copyright (C) 2000-2006 Free Software Foundation, Inc.
+   Copyright (C) 2000-2006, 2008 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -34,7 +34,9 @@
 
 #if defined __EMX__
 /* Assume EMX program runs on OS/2, even if compiled under DOS.  */
-# define OS2
+# ifndef OS2
+#  define OS2
+# endif
 #endif
 
 #if !defined WIN32_NATIVE

@@ -1,7 +1,7 @@
-# serial 5  -*- Autoconf -*-
+# serial 6  -*- Autoconf -*-
 # Enable extensions on systems that normally disable them.
 
-# Copyright (C) 2003, 2006, 2007 Free Software Foundation, Inc.
+# Copyright (C) 2003, 2006-2008 Free Software Foundation, Inc.
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -24,6 +24,8 @@ AC_DEFUN([AC_USE_SYSTEM_EXTENSIONS],
 [AC_BEFORE([$0], [AC_COMPILE_IFELSE])dnl
 AC_BEFORE([$0], [AC_RUN_IFELSE])dnl
 
+  AC_REQUIRE([AC_CANONICAL_HOST])
+
   AC_CHECK_HEADER([minix/config.h], [MINIX=yes], [MINIX=])
   if test "$MINIX" = yes; then
     AC_DEFINE([_POSIX_SOURCE], [1],
@@ -35,6 +37,16 @@ AC_BEFORE([$0], [AC_RUN_IFELSE])dnl
     AC_DEFINE([_MINIX], [1],
       [Define to 1 if on MINIX.])
   fi
+
+  dnl HP-UX 11.11 defines mbstate_t only if _XOPEN_SOURCE is defined to 500,
+  dnl regardless of whether the flags -Ae or _D_HPUX_SOURCE=1 are already
+  dnl provided.
+  case "$host_os" in
+    hpux*)
+      AC_DEFINE([_XOPEN_SOURCE], [500],
+        [Define to 500 only on HP-UX.])
+      ;;
+  esac
 
   AH_VERBATIM([__EXTENSIONS__],
 [/* Enable extensions on AIX 3, Interix.  */
@@ -61,9 +73,9 @@ AC_BEFORE([$0], [AC_RUN_IFELSE])dnl
   AC_CACHE_CHECK([whether it is safe to define __EXTENSIONS__],
     [ac_cv_safe_to_define___extensions__],
     [AC_COMPILE_IFELSE(
-       [AC_LANG_PROGRAM([
+       [AC_LANG_PROGRAM([[
 #	  define __EXTENSIONS__ 1
-	  AC_INCLUDES_DEFAULT])],
+	  ]AC_INCLUDES_DEFAULT])],
        [ac_cv_safe_to_define___extensions__=yes],
        [ac_cv_safe_to_define___extensions__=no])])
   test $ac_cv_safe_to_define___extensions__ = yes &&

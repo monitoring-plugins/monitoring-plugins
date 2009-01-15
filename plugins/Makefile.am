@@ -160,10 +160,6 @@ utils.o: utils.c utils.h $(PLUGINHDRS)
 netutils.o: netutils.c netutils.h $(PLUGINHDRS)
 sslutils.o: sslutils.c netutils.h $(PLUGINHDRS)
 
-getaddrinfo.o: getaddrinfo.h $(PLUGINHDRS)
-
-gethostbyname.o: gethostbyname.h $(PLUGINHDRS)
-
 all-local: $(check_tcp_programs)
 
 $(check_tcp_programs): check_tcp

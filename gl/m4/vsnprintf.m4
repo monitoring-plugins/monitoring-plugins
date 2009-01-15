@@ -1,5 +1,5 @@
-# vsnprintf.m4 serial 4
-dnl Copyright (C) 2002, 2003, 2004, 2007 Free Software Foundation, Inc.
+# vsnprintf.m4 serial 5
+dnl Copyright (C) 2002-2004, 2007-2008 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -7,8 +7,17 @@ dnl with or without modifications, as long as this notice is preserved.
 AC_DEFUN([gl_FUNC_VSNPRINTF],
 [
   AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+  gl_cv_func_vsnprintf_usable=no
   AC_CHECK_FUNCS([vsnprintf])
-  if test $ac_cv_func_vsnprintf = no; then
+  if test $ac_cv_func_vsnprintf = yes; then
+    gl_SNPRINTF_SIZE1
+    case "$gl_cv_func_snprintf_size1" in
+      *yes)
+        gl_cv_func_vsnprintf_usable=yes
+        ;;
+    esac
+  fi
+  if test $gl_cv_func_vsnprintf_usable = no; then
     gl_REPLACE_VSNPRINTF
   fi
   AC_CHECK_DECLS_ONCE([vsnprintf])

@@ -19,6 +19,9 @@
 
 #include <config.h>
 
+/* Specification.  */
+#include <unistd.h>
+
 #ifdef HAVE_UNAME
 # include <sys/utsname.h>
 #endif

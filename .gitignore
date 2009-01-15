@@ -35,67 +35,6 @@ NP-VERSION-FILE
 # /doc/
 /doc/developer-guidelines.html
 
-# /external/
-/external/tap-1.01
-
-# /gl/
-/gl/alloca.h
-/gl/.deps
-/gl/libgnu.a
-/gl/Makefile
-/gl/Makefile.in
-/gl/stdint.h
-/gl/stdbool.h
-/gl/getopt.h
-/gl/math.h
-/gl/configmake.h
-/gl/ref-del.sed
-/gl/string.h
-/gl/stdio.h
-/gl/ref-add.sed
-/gl/unistd.h
-/gl/charset.alias
-/gl/stdlib.h
-
-# /intl/
-/intl/ChangeLog
-/intl/Makefile.in
-/intl/VERSION
-/intl/bindtextdom.c
-/intl/config.charset
-/intl/dcgettext.c
-/intl/dcigettext.c
-/intl/dcngettext.c
-/intl/dgettext.c
-/intl/dngettext.c
-/intl/eval-plural.h
-/intl/explodename.c
-/intl/finddomain.c
-/intl/gettext.c
-/intl/gettextP.h
-/intl/gmo.h
-/intl/hash-string.h
-/intl/intl-compat.c
-/intl/l10nflist.c
-/intl/libgnuintl.h
-/intl/loadinfo.h
-/intl/loadmsgcat.c
-/intl/localcharset.c
-/intl/locale.alias
-/intl/localealias.c
-/intl/localename.c
-/intl/ngettext.c
-/intl/os2compat.c
-/intl/os2compat.h
-/intl/osdep.c
-/intl/plural-exp.c
-/intl/plural-exp.h
-/intl/plural.c
-/intl/plural.y
-/intl/ref-add.sin
-/intl/ref-del.sin
-/intl/textdomain.c
-
 # /tap/
 /tap/.deps
 /tap/.libs
@@ -103,6 +42,33 @@ NP-VERSION-FILE
 /tap/Makefile.in
 /tap/libtap.la
 /tap/tap.lo
+
+# /gl/
+/gl/.deps
+/gl/alloca.h
+/gl/arpa
+/gl/configmake.h
+/gl/errno.h
+/gl/float.h
+/gl/fcntl.h
+/gl/getopt.h
+/gl/libgnu.a
+/gl/Makefile
+/gl/Makefile.in
+/gl/math.h
+/gl/netinet_in.h
+/gl/ref-del.sed
+/gl/ref-add.sed
+/gl/charset.alias
+/gl/stdint.h
+/gl/stdbool.h
+/gl/stdlib.h
+/gl/stdio.h
+/gl/string.h
+/gl/sys_socket.h
+/gl/unistd.h
+/gl/wchar.h
+/gl/wctype.h
 
 # /lib/
 /lib/.deps

@@ -1,7 +1,7 @@
 #! /bin/sh
 # Output a system dependent table of character encoding aliases.
 #
-#   Copyright (C) 2000-2004, 2006-2007 Free Software Foundation, Inc.
+#   Copyright (C) 2000-2004, 2006-2008 Free Software Foundation, Inc.
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -478,8 +478,8 @@ case "$os" in
 	# space nevertheless.
 	echo "* UTF-8"
 	;;
-    beos*)
-	# BeOS has a single locale, and it has UTF-8 encoding.
+    beos* | haiku*)
+	# BeOS and Haiku have a single locale, and it has UTF-8 encoding.
 	echo "* UTF-8"
 	;;
     msdosdjgpp*)

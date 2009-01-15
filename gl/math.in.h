@@ -1,6 +1,6 @@
 /* A GNU-like <math.h>.
 
-   Copyright (C) 2002-2003, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2002-2003, 2007-2008 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,8 +17,12 @@
 
 #ifndef _GL_MATH_H
 
+#if __GNUC__ >= 3
+@PRAGMA_SYSTEM_HEADER@
+#endif
+
 /* The include_next requires a split double-inclusion guard.  */
-#@INCLUDE_NEXT@ @NEXT_MATH_H@
+#@INCLUDE_NEXT_AS_FIRST_DIRECTIVE@ @NEXT_MATH_H@
 
 #ifndef _GL_MATH_H
 #define _GL_MATH_H
@@ -31,6 +35,34 @@
 extern "C" {
 #endif
 
+
+/* POSIX allows platforms that don't support NAN.  But all major
+   machines in the past 15 years have supported something close to
+   IEEE NaN, so we define this unconditionally.  We also must define
+   it on platforms like Solaris 10, where NAN is present but defined
+   as a function pointer rather than a floating point constant.  */
+#if !defined NAN || @REPLACE_NAN@
+# undef NAN
+  /* The Compaq (ex-DEC) C 6.4 compiler chokes on the expression 0.0 / 0.0.  */
+# ifdef __DECC
+static float
+_NaN ()
+{
+  static float zero = 0.0f;
+  return zero / zero;
+}
+#  define NAN (_NaN())
+# else
+#  define NAN (0.0f / 0.0f)
+# endif
+#endif
+
+/* Solaris 10 defines HUGE_VAL, but as a function pointer rather
+   than a floating point constant.  */
+#if @REPLACE_HUGE_VAL@
+# undef HUGE_VAL
+# define HUGE_VAL (1.0 / 0.0)
+#endif
 
 /* Write x as
      x = mantissa * 2^exp
@@ -323,7 +355,8 @@ extern double trunc (double x);
 #endif
 
 #if @GNULIB_TRUNCL@
-# if !@HAVE_DECL_TRUNCL@
+# if @REPLACE_TRUNCL@
+#  undef truncl
 #  define truncl rpl_truncl
 extern long double truncl (long double x);
 # endif
@@ -346,6 +379,124 @@ extern int gl_isfinitel (long double x);
    (sizeof (x) == sizeof (long double) ? gl_isfinitel (x) : \
     sizeof (x) == sizeof (double) ? gl_isfinited (x) : \
     gl_isfinitef (x))
+# endif
+#elif defined GNULIB_POSIXCHECK
+  /* How to override a macro?  */
+#endif
+
+
+#if @GNULIB_ISINF@
+# if @REPLACE_ISINF@
+extern int gl_isinff (float x);
+extern int gl_isinfd (double x);
+extern int gl_isinfl (long double x);
+#  undef isinf
+#  define isinf(x) \
+   (sizeof (x) == sizeof (long double) ? gl_isinfl (x) : \
+    sizeof (x) == sizeof (double) ? gl_isinfd (x) : \
+    gl_isinff (x))
+# endif
+#elif defined GNULIB_POSIXCHECK
+  /* How to override a macro?  */
+#endif
+
+
+#if @GNULIB_ISNANF@
+/* Test for NaN for 'float' numbers.  */
+# if @HAVE_ISNANF@
+/* The original <math.h> included above provides a declaration of isnan macro
+   or (older) isnanf function.  */
+#  include <math.h>
+#  if __GNUC__ >= 4
+    /* GCC 4.0 and newer provides three built-ins for isnan.  */
+#   undef isnanf
+#   define isnanf(x) __builtin_isnanf ((float)(x))
+#  elif defined isnan
+#   undef isnanf
+#   define isnanf(x) isnan ((float)(x))
+#  endif
+# else
+/* Test whether X is a NaN.  */
+#  undef isnanf
+#  define isnanf rpl_isnanf
+extern int isnanf (float x);
+# endif
+#endif
+
+#if @GNULIB_ISNAND@
+/* Test for NaN for 'double' numbers.
+   This function is a gnulib extension, unlike isnan() which applied only
+   to 'double' numbers earlier but now is a type-generic macro.  */
+# if @HAVE_ISNAND@
+/* The original <math.h> included above provides a declaration of isnan macro.  */
+#  include <math.h>
+#  if __GNUC__ >= 4
+    /* GCC 4.0 and newer provides three built-ins for isnan.  */
+#   undef isnand
+#   define isnand(x) __builtin_isnan ((double)(x))
+#  else
+#   undef isnand
+#   define isnand(x) isnan ((double)(x))
+#  endif
+# else
+/* Test whether X is a NaN.  */
+#  undef isnand
+#  define isnand rpl_isnand
+extern int isnand (double x);
+# endif
+#endif
+
+#if @GNULIB_ISNANL@
+/* Test for NaN for 'long double' numbers.  */
+# if @HAVE_ISNANL@
+/* The original <math.h> included above provides a declaration of isnan macro or (older) isnanl function.  */
+#  include <math.h>
+#  if __GNUC__ >= 4
+    /* GCC 4.0 and newer provides three built-ins for isnan.  */
+#   undef isnanl
+#   define isnanl(x) __builtin_isnanl ((long double)(x))
+#  elif defined isnan
+#   undef isnanl
+#   define isnanl(x) isnan ((long double)(x))
+#  endif
+# else
+/* Test whether X is a NaN.  */
+#  undef isnanl
+#  define isnanl rpl_isnanl
+extern int isnanl (long double x);
+# endif
+#endif
+
+/* This must come *after* the snippets for GNULIB_ISNANF and GNULIB_ISNANL!  */
+#if @GNULIB_ISNAN@
+# if @REPLACE_ISNAN@
+/* We can't just use the isnanf macro (e.g.) as exposed by
+   isnanf.h (e.g.) here, because those may end up being macros
+   that recursively expand back to isnan.  So use the gnulib
+   replacements for them directly. */
+#  if @HAVE_ISNANF@ && __GNUC__ >= 4
+#   define gl_isnan_f(x) __builtin_isnan ((float)(x))
+#  else
+extern int rpl_isnanf (float x);
+#   define gl_isnan_f(x) rpl_isnanf (x)
+#  endif
+#  if @HAVE_ISNAND@ && __GNUC__ >= 4
+#   define gl_isnan_d(x) __builtin_isnan ((double)(x))
+#  else
+extern int rpl_isnand (double x);
+#   define gl_isnan_d(x) rpl_isnand (x)
+#  endif
+#  if @HAVE_ISNANL@ && __GNUC__ >= 4
+#   define gl_isnan_l(x) __builtin_isnan ((long double)(x))
+#  else
+extern int rpl_isnanl (long double x);
+#   define gl_isnan_l(x) rpl_isnanl (x)
+#  endif
+#  undef isnan
+#  define isnan(x) \
+   (sizeof (x) == sizeof (long double) ? gl_isnan_l (x) : \
+    sizeof (x) == sizeof (double) ? gl_isnan_d (x) : \
+    gl_isnan_f (x))
 # endif
 #elif defined GNULIB_POSIXCHECK
   /* How to override a macro?  */

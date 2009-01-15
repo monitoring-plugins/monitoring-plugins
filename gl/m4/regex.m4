@@ -1,7 +1,7 @@
-#serial 48
+# serial 53
 
 # Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005,
-# 2006, 2007 Free Software Foundation, Inc.
+# 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -17,7 +17,7 @@ AC_DEFUN([gl_REGEX],
   AC_CHECK_HEADERS_ONCE([locale.h])
 
   AC_ARG_WITH([included-regex],
-    [AC_HELP_STRING([--without-included-regex],
+    [AS_HELP_STRING([--without-included-regex],
 		    [don't compile regex; this is the default on 32-bit
 		     systems with recent-enough versions of the GNU C
 		     Library (use with caution on other systems).
@@ -37,13 +37,13 @@ AC_DEFUN([gl_REGEX],
 		   [gl_cv_func_re_compile_pattern_working],
       [AC_RUN_IFELSE(
 	[AC_LANG_PROGRAM(
-	  [AC_INCLUDES_DEFAULT
+	  [AC_INCLUDES_DEFAULT[
 	   #if HAVE_LOCALE_H
 	    #include <locale.h>
 	   #endif
 	   #include <limits.h>
 	   #include <regex.h>
-	   ],
+	   ]],
 	  [[static struct re_pattern_buffer regex;
 	    unsigned char folded_chars[UCHAR_MAX + 1];
 	    int i;
@@ -175,7 +175,7 @@ AC_DEFUN([gl_REGEX],
   esac
 
   if test $ac_use_included_regex = yes; then
-    AC_DEFINE([_REGEX_LARGE_OFFSETS], 1,
+    AC_DEFINE([_REGEX_LARGE_OFFSETS], [1],
       [Define if you want regoff_t to be at least as wide POSIX requires.])
     AC_DEFINE([re_syntax_options], [rpl_re_syntax_options],
       [Define to rpl_re_syntax_options if the replacement should be used.])
@@ -217,6 +217,8 @@ AC_DEFUN([gl_PREREQ_REGEX],
 [
   AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
   AC_REQUIRE([AC_C_RESTRICT])
-  AC_CHECK_FUNCS_ONCE([isblank iswctype mbrtowc wcrtomb wcscoll])
+  AC_REQUIRE([AC_TYPE_MBSTATE_T])
+  AC_CHECK_HEADERS([libintl.h])
+  AC_CHECK_FUNCS_ONCE([isblank iswctype wcscoll])
   AC_CHECK_DECLS([isblank], [], [], [#include <ctype.h>])
 ])
