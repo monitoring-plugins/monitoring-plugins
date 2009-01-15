@@ -219,5 +219,6 @@ np_test_mount_entry_regex (struct mount_entry *dummy_mount_list, char *regstr, i
 		    desc, regstr, expect, matches);
 
 	} else
-		ok ( false, "regex '%s' not compileable", regstr);
+		ok ( false, "regex '%s' not compilable", regstr);
 }
+
