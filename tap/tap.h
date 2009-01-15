@@ -47,7 +47,11 @@
 			skip(n, fmt, ## __VA_ARGS__);	\
 			continue;			\
 		}
-#else /*#elif __STDC_VERSION__ >= 199901L*/ /* __GNUC__ */
+#else /* __GNUC__ */
+/* The original tap.h used to test if __STDC_VERSION__ >= 199901L here. This
+ * doesn't seem to work on HP-UX even though the code compile fine. I'm not
+ * sure how to add an exception here for HP-UX so I just removed the check
+ * for now */
 # define ok(e, ...) ((e) ?						\
 		     _gen_result(1, __func__, __FILE__, __LINE__,	\
 				 __VA_ARGS__) :				\
@@ -67,9 +71,7 @@
 			skip(n,  __VA_ARGS__);		\
 			continue;			\
 		}
-/*#else *//* __STDC_VERSION__ */
-/*# error "Needs gcc or C99 compiler for variadic macros."*/
-#endif /* __STDC_VERSION__ */
+#endif /* __GNUC__ */
 
 # define skip_end } while(0);
 
