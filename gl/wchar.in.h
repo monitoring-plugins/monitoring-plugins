@@ -46,6 +46,7 @@
 /* Normal invocation convention.  */
 
 #ifndef _GL_WCHAR_H
+#define _GL_WCHAR_H
 
 /* Tru64 with Desktop Toolkit C has a bug: <stdio.h> must be included before
    <wchar.h>.
@@ -61,9 +62,6 @@
 #if @HAVE_WCHAR_H@
 # @INCLUDE_NEXT@ @NEXT_WCHAR_H@
 #endif
-
-#ifndef _GL_WCHAR_H
-#define _GL_WCHAR_H
 
 /* The definition of GL_LINK_WARNING is copied here.  */
 
@@ -294,6 +292,5 @@ extern int wcwidth (int /* actually wchar_t */);
 }
 #endif
 
-#endif /* _GL_WCHAR_H */
 #endif /* _GL_WCHAR_H */
 #endif
