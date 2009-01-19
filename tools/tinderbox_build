@@ -246,8 +246,8 @@ sub SetupPath {
 
 sub configure {
 	# Configure
-        print LOG "./configure --enable-libtap $ConfigureArgs\n";
-        open (CONFIGURE, "./configure --enable-libtap $ConfigureArgs 2>&1 |") || die "../configure: $!\n";
+        print LOG "./configure --enable-extra-opts --enable-libtap $ConfigureArgs\n";
+        open (CONFIGURE, "./configure --enable-extra-opts --enable-libtap $ConfigureArgs 2>&1 |") || die "../configure: $!\n";
         while (<CONFIGURE>) {
             print $_;
             print LOG $_;
