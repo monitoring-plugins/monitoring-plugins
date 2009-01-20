@@ -172,60 +172,6 @@ void print_ntp_control_message(const ntp_control_message *p){
 	}
 }
 
-/*
- * Extract the value from NTP key/value pairs, or return NULL.
- * The value returned can be free()ed.
- */
-char *extract_value(const char *varlist, const char *name){
-	char *tmp=NULL, *value=NULL;
-	int i;
-
-	while (1) {
-		/* Strip any leading space */
-		for (varlist; isspace(varlist[0]); varlist++);
-
-		if (strncmp(name, varlist, strlen(name)) == 0) {
-			varlist += strlen(name);
-			/* strip trailing spaces */
-			for (varlist; isspace(varlist[0]); varlist++);
-
-			if (varlist[0] == '=') {
-				/* We matched the key, go past the = sign */
-				varlist++;
-				/* strip leading spaces */
-				for (varlist; isspace(varlist[0]); varlist++);
-
-				if (tmp = index(varlist, ',')) {
-					/* Value is delimited by a comma */
-					if (tmp-varlist == 0) continue;
-					value = (char *)malloc(tmp-varlist+1);
-					strncpy(value, varlist, tmp-varlist);
-					value[tmp-varlist] = '\0';
-				} else {
-					/* Value is delimited by a \0 */
-					if (strlen(varlist) == 0) continue;
-					value = (char *)malloc(strlen(varlist) + 1);
-					strncpy(value, varlist, strlen(varlist));
-					value[strlen(varlist)] = '\0';
-				}
-				break;
-			}
-		}
-		if (tmp = index(varlist, ',')) {
-			/* More keys, keep going... */
-			varlist = tmp + 1;
-		} else {
-			/* We're done */
-			break;
-		}
-	}
-
-	/* Clean-up trailing spaces/newlines */
-	if (value) for (i=strlen(value)-1; isspace(value[i]); i--) value[i] = '\0';
-
-	return value;
-}
-
 void
 setup_control_request(ntp_control_message *p, uint8_t opcode, uint16_t seq){
 	memset(p, 0, sizeof(ntp_control_message));
@@ -387,7 +333,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 			if(verbose)
 				printf("parsing offset from peer %.2x: ", ntohs(peers[i].assoc));
 
-			value = extract_value(data, "offset");
+			value = np_extract_value(data, "offset");
 			nptr=NULL;
 			/* Convert the value if we have one */
 			if(value != NULL)
@@ -411,7 +357,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 				if(verbose) {
 					printf("parsing %s from peer %.2x: ", strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter", ntohs(peers[i].assoc));
 				}
-				value = extract_value(data, strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter");
+				value = np_extract_value(data, strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter");
 				nptr=NULL;
 				/* Convert the value if we have one */
 				if(value != NULL)
@@ -430,7 +376,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 				if(verbose) {
 					printf("parsing stratum from peer %.2x: ", ntohs(peers[i].assoc));
 				}
-				value = extract_value(data, "stratum");
+				value = np_extract_value(data, "stratum");
 				nptr=NULL;
 				/* Convert the value if we have one */
 				if(value != NULL)

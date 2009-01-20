@@ -50,4 +50,12 @@ int np_check_if_root(void);
  * code from the above function, in case it's helpful for testing */
 int np_warn_if_not_root(void);
 
+/*
+ * Extract the value from key/value pairs, or return NULL. The value returned
+ * can be free()ed.
+ * This function can be used to parse NTP control packet data and performance
+ * data strings.
+ */
+char *np_extract_value(const char*, const char*);
+
 #endif /* _UTILS_BASE_ */
