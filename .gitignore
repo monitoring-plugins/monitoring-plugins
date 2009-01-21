@@ -96,6 +96,7 @@ NP-VERSION-FILE
 /lib/tests/test_ini
 /lib/tests/test_opts1
 /lib/tests/test_opts2
+/lib/tests/test_opts3
 /lib/tests/extra_opts.Po
 
 # /m4/

@@ -188,7 +188,7 @@ AM_CONDITIONAL([USE_PARSE_INI],[test "$enable_extra_opts" = "yes"])
 if test "$enable_extra_opts" = "yes" ; then
 	AC_DEFINE(NP_EXTRA_OPTS,[1],[Enable INI file parsing.])
 	if test "$enable_libtap" = "yes"; then
-		EXTRA_TEST="$EXTRA_TEST test_ini test_opts1 test_opts2"
+		EXTRA_TEST="$EXTRA_TEST test_ini test_opts1 test_opts2 test_opts3"
 		AC_SUBST(EXTRA_TEST)
 	fi
 fi
