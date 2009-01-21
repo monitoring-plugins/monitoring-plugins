@@ -13,7 +13,7 @@ np_test_scripts = test_base64.t test_cmd.t test_disk.t test_ini.t test_opts.t te
 np_test_files = config-dos.ini config-opts.ini config-tiny.ini plugin.ini plugins.ini
 EXTRA_DIST = $(np_test_scripts) $(np_test_files)
 
-LIBS = @LIBINTL@
+LIBS = @LTLIBINTL@
 
 if USE_LIBTAP_LOCAL
 tap_cflags = -I$(top_srcdir)/tap
