@@ -75,6 +75,9 @@ static void parse_locator(const char *locator, const char *def_stanza, np_ini_in
 	/* if there is no @file part */
 	if(stanza_len==locator_len){
 		i->file=default_file();
+		if(strcmp(i->file, "") == 0){
+			die(STATE_UNKNOWN, _("Cannot find '%s' or '%s' in any standard location.\n"), NP_DEFAULT_INI_FILENAME1, NP_DEFAULT_INI_FILENAME2);
+		}
 	} else {
 		i->file=strdup(&(locator[stanza_len+1]));
 	}
