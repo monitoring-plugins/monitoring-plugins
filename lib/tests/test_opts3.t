@@ -28,8 +28,12 @@ plan tests => scalar(@TESTS);
 my $count=1;
 
 foreach my $args (@TESTS) {
-  my $rc = shift(@$args);
-  $ENV{"NAGIOS_CONFIG_PATH"} = shift(@$args);
+	my $rc = shift(@$args);
+	if (my $env = shift(@$args)) {
+		$ENV{"NAGIOS_CONFIG_PATH"} = $env;
+	} else {
+		delete($ENV{"NAGIOS_CONFIG_PATH"});
+	}
 	system {'./test_opts3'} @$args;
 	cmp_ok($?>>8, '==', $rc, "Extra-opts die " . $count++);
 }

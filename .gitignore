@@ -93,7 +93,8 @@ NP-VERSION-FILE
 /lib/tests/utils_disk.Po
 /lib/tests/utils_tcp.Po
 /lib/tests/parse_ini.Po
-/lib/tests/test_ini
+/lib/tests/test_ini1
+/lib/tests/test_ini3
 /lib/tests/test_opts1
 /lib/tests/test_opts2
 /lib/tests/test_opts3
