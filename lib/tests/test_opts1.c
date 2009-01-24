@@ -143,64 +143,6 @@ main (int argc, char **argv)
 	ok(array_diff(argc_test, argv_test, 7, argv_known), "twice extra opts using two sections");
 	my_free(&argc_test,argv_test);
 
-	/* Next three checks are expected to die. They are commented out as they
-	 * could possibly go in a sepatare test checked for return value.
-	 */
-	/* argv_test=(char **)malloc(6*sizeof(char **));
-	argv_test[0] = "prog_name";
-	argv_test[1] = "arg1";
-	argv_test[2] = "--extra-opts=missing@./config-opts.ini";
-	argv_test[3] = "--arg3";
-	argv_test[4] = "val2";
-	argv_test[5] = NULL;
-	argc_test=5;
-	argv_known=(char **)realloc(argv_known, 5*sizeof(char **));
-	argv_known[0] = "prog_name";
-	argv_known[1] = "arg1";
-	argv_known[2] = "--arg3";
-	argv_known[3] = "val2";
-	argv_known[4] = NULL;
-	argv_test=np_extra_opts(&argc_test, argv_test, "check_missing");
-	ok(array_diff(argc_test, argv_test, 4, argv_known), "Missing section 1");
-	my_free(&argc_test,argv_test); */
-
-	/* argv_test=(char **)malloc(7*sizeof(char **));
-	argv_test[0] = "prog_name";
-	argv_test[1] = "arg1";
-	argv_test[2] = "--extra-opts";
-	argv_test[3] = "missing@./config-opts.ini";
-	argv_test[4] = "--arg3";
-	argv_test[5] = "val2";
-	argv_test[6] = NULL;
-	argc_test=6;
-	argv_known=(char **)realloc(argv_known, 5*sizeof(char **));
-	argv_known[0] = "prog_name";
-	argv_known[1] = "arg1";
-	argv_known[2] = "--arg3";
-	argv_known[3] = "val2";
-	argv_known[4] = NULL;
-	argv_test=np_extra_opts(&argc_test, argv_test, "check_missing");
-	ok(array_diff(argc_test, argv_test, 4, argv_known), "Missing section 2");
-	my_free(&argc_test,argv_test); */
-
-	/* argv_test=(char **)malloc(6*sizeof(char **));
-	argv_test[0] = "prog_name";
-	argv_test[1] = "arg1";
-	argv_test[2] = "--extra-opts";
-	argv_test[3] = "--arg3";
-	argv_test[4] = "val2";
-	argv_test[5] = NULL;
-	argc_test=5;
-	argv_known=(char **)realloc(argv_known, 5*sizeof(char **));
-	argv_known[0] = "prog_name";
-	argv_known[1] = "arg1";
-	argv_known[2] = "--arg3";
-	argv_known[3] = "val2";
-	argv_known[4] = NULL;
-	argv_test=np_extra_opts(&argc_test, argv_test, "check_missing");
-	ok(array_diff(argc_test, argv_test, 4, argv_known), "Missing section 3");
-	my_free(&argc_test,argv_test); */
-
 	return exit_status();
 }
 
