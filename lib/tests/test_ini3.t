@@ -3,7 +3,7 @@ use Test::More;
 use strict;
 use warnings;
 
-if (! -e "./test_ini") {
+if (! -e "./test_ini3") {
 	plan skip_all => "./test_ini not compiled - please install tap library and/or enable parse-ini to test";
 }
 
@@ -28,7 +28,7 @@ foreach my $args (@TESTS) {
 	} else {
 		delete($ENV{"NAGIOS_CONFIG_PATH"});
 	}
-	system {'./test_ini2'} @$args;
+	system {'./test_ini3'} @$args;
 	cmp_ok($?>>8, '==', $rc, "Parse-ini die " . $count++);
 }
 
