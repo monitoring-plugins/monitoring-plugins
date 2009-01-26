@@ -258,7 +258,7 @@ int np_warn_if_not_root(void) {
  * This function can be used to parse NTP control packet data and performance
  * data strings.
  */
-char *np_extract_value(const char *varlist, const char *name) {
+char *np_extract_value(const char *varlist, const char *name, char sep) {
 	char *tmp=NULL, *value=NULL;
 	int i;
 
@@ -277,7 +277,7 @@ char *np_extract_value(const char *varlist, const char *name) {
 				/* strip leading spaces */
 				for (varlist; isspace(varlist[0]); varlist++);
 
-				if (tmp = index(varlist, ',')) {
+				if (tmp = index(varlist, sep)) {
 					/* Value is delimited by a comma */
 					if (tmp-varlist == 0) continue;
 					value = (char *)malloc(tmp-varlist+1);
@@ -293,7 +293,7 @@ char *np_extract_value(const char *varlist, const char *name) {
 				break;
 			}
 		}
-		if (tmp = index(varlist, ',')) {
+		if (tmp = index(varlist, sep)) {
 			/* More keys, keep going... */
 			varlist = tmp + 1;
 		} else {

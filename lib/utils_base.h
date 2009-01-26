@@ -56,6 +56,12 @@ int np_warn_if_not_root(void);
  * This function can be used to parse NTP control packet data and performance
  * data strings.
  */
-char *np_extract_value(const char*, const char*);
+char *np_extract_value(const char*, const char*, char);
+
+/*
+ * Same as np_extract_value with separator suitable for NTP control packet
+ * payloads (comma)
+ */
+#define np_extract_ntpvar(l, n) np_extract_value(l, n, ',')
 
 #endif /* _UTILS_BASE_ */

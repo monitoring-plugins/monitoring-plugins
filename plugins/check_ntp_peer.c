@@ -333,7 +333,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 			if(verbose)
 				printf("parsing offset from peer %.2x: ", ntohs(peers[i].assoc));
 
-			value = np_extract_value(data, "offset");
+			value = np_extract_ntpvar(data, "offset");
 			nptr=NULL;
 			/* Convert the value if we have one */
 			if(value != NULL)
@@ -357,7 +357,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 				if(verbose) {
 					printf("parsing %s from peer %.2x: ", strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter", ntohs(peers[i].assoc));
 				}
-				value = np_extract_value(data, strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter");
+				value = np_extract_ntpvar(data, strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter");
 				nptr=NULL;
 				/* Convert the value if we have one */
 				if(value != NULL)
@@ -376,7 +376,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 				if(verbose) {
 					printf("parsing stratum from peer %.2x: ", ntohs(peers[i].assoc));
 				}
-				value = np_extract_value(data, "stratum");
+				value = np_extract_ntpvar(data, "stratum");
 				nptr=NULL;
 				/* Convert the value if we have one */
 				if(value != NULL)
