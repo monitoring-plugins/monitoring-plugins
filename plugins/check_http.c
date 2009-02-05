@@ -106,6 +106,7 @@ int display_html = FALSE;
 char **http_opt_headers;
 int http_opt_headers_count = 0;
 int onredirect = STATE_OK;
+int followsticky = 0;
 int use_ssl = FALSE;
 int verbose = FALSE;
 int sd;
@@ -299,8 +300,10 @@ process_arguments (int argc, char **argv)
         server_port = HTTPS_PORT;
       break;
     case 'f': /* onredirect */
+      if (!strcmp (optarg, "sticky"))
+        onredirect = STATE_DEPENDENT, followsticky = 1;
       if (!strcmp (optarg, "follow"))
-        onredirect = STATE_DEPENDENT;
+        onredirect = STATE_DEPENDENT, followsticky = 0;
       if (!strcmp (optarg, "unknown"))
         onredirect = STATE_UNKNOWN;
       if (!strcmp (optarg, "ok"))
@@ -1200,8 +1203,10 @@ redir (char *pos, char *status_line)
   free (host_name);
   host_name = strdup (addr);
 
-  free (server_address);
-  server_address = strdup (addr);
+  if (followsticky == 0) {
+    free (server_address);
+    server_address = strdup (addr);
+  }
 
   free (server_url);
   server_url = url;
@@ -1338,8 +1343,9 @@ print_help (void)
   printf ("    %s\n", _(" Any other tags to be sent in http header. Use multiple times for additional headers"));
   printf (" %s\n", "-L, --link");
   printf ("    %s\n", _("Wrap output in HTML link (obsoleted by urlize)"));
-  printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow>");
-  printf ("    %s\n", _("How to handle redirected pages"));
+  printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow|sticky>");
+  printf ("    %s\n", _("How to handle redirected pages. sticky is like follow but stick to the"));
+  printf ("    %s\n", _("specified IP address"));
   printf (" %s\n", "-m, --pagesize=INTEGER<:INTEGER>");
   printf ("    %s\n", _("Minimum page size required (bytes) : Maximum page size required (bytes)"));
 
