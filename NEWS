@@ -14,7 +14,7 @@ This file documents the major additions and syntax changes between releases.
 	Fix long options parsing in check_disk, check_dns, check_mrtg, check_mrtgtraf and check_tcp
 	Add missing long options for check_nt (for use with extra-opts)
 	check_icmp now reports min and max round trip time perfdata (Steve Rader)
-	Fixed bug where additional headers with redirection caused a segfault (Dieter Van de Walle - 2089159)
+	Fixed check_http bug where additional headers with redirection caused a segfault (Dieter Van de Walle - 2089159)
 	check_disk: make autofs mount paths specified with -p before we determine the mount list (Erik Welch)
 	Fixed buffer overflow in check_ntp/check_ntp_peer (#1999319, Ubuntu #291265)
 	Re-bundled libtap as a built-in library (--enable-libtap): detects system library as pre-1.4.13 and does not install the built-in library anymore
