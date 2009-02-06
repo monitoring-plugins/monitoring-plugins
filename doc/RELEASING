@@ -1,28 +1,34 @@
 NOTES ON RELEASING NEW VERSION OF NAGIOSPLUG
 
-svn update in main area
+*** Pre-release
+git pull
 . tools/devmode, if feeling adventurous
 check compilation, check tinderbox screens
 
+*** Prepare and commit files
 Update BUGS, NEWS file
 Update AUTHORS if new members
 Update configure.in and package.def with version
-Run svn2cl (get from http://ch.tudelft.nl/~arthur/svn2cl):
-svn2cl.sh --break-before-msg --reparagraph -i http://nagiosplug.svn.sourceforge.net/svnroot/nagiosplug/nagiosplug/trunk
+Run git2cl (get from http://josefsson.org/git2cl/):
+git2cl >Changelog
 commit BUGS NEWS configure.in package.def ChangeLog
 
-svn copy http://nagiosplug.svn.sourceforge.net/svnroot/nagiosplug/nagiosplug/trunk 
-http://nagiosplug.svn.sourceforge.net/svnroot/nagiosplug/nagiosplug/tags/release-1.4.10
+*** Create new tag
+git tag release-1.4.14
 
-checkout new version:
-cd /tmp
-rm -fr nagiosplug
-svn export http://nagiosplug.svn.sourceforge.net/svnroot/nagiosplug/nagiosplug/tags/release-1.4.10 nagiosplug
-cd nagiosplug
+*** Checkout new version
+rm -fr /tmp/nagioslug
+# If you need to checkout the tag, don't forget to "checkout master" later to
+# get back to your development branch:
+git checkout tags/release-1.4.14
+# Beware: the trailing slash of --prefix is REQUIRED
+git checkout-index --prefix=/tmp/nagioslug/ -a
+cd /tmp/nagioslug
 tools/setup
 ./configure
 make dist
 
+*** Upload generated tarball to sourceforge
 sftp upload.sf.net
 cd uploads
 put file
@@ -43,5 +49,6 @@ Step 2: add file
 Step 3: *.tar.gz, Platform Independent, Source .gz
 Step 4: Send notice
 
+*** Announce new release
 Send email to nagiosplug-help, nagios-announce with the news text
 Add a news item to http://nagiosplugins.org

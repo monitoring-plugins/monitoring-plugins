@@ -21,4 +21,5 @@ Need to know:
 3. Add to CVS avail file:
   - Translator: Add member to translation files
   - Developer: Add member to CVSROOT/avail for all files
-4. Send email to nagiosplug-team introducing new member
+4. Add Git access on repos.or.cz
+5. Send email to nagiosplug-team introducing new member
