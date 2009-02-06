@@ -8,7 +8,7 @@ check compilation, check tinderbox screens
 *** Prepare and commit files
 Update BUGS, NEWS file
 Update AUTHORS if new members
-Update configure.in and package.def with version
+Update configure.in, package.def and NP-VERSION-GEN with version
 Run git2cl (get from http://josefsson.org/git2cl/):
 git2cl >Changelog
 commit BUGS NEWS configure.in package.def ChangeLog
@@ -23,6 +23,8 @@ rm -fr /tmp/nagioslug
 git checkout tags/release-1.4.14
 # Beware: the trailing slash of --prefix is REQUIRED
 git checkout-index --prefix=/tmp/nagioslug/ -a
+
+*** Build the tarball
 cd /tmp/nagioslug
 tools/setup
 ./configure
