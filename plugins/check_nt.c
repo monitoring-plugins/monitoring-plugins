@@ -93,6 +93,7 @@ int main(int argc, char **argv){
 	char *temp_string_perf=NULL;
 	char *description=NULL,*counter_unit = NULL;
 	char *minval = NULL, *maxval = NULL, *errcvt = NULL;
+	char *fds=NULL, *tds=NULL;
 
 	double total_disk_space=0;
 	double free_disk_space=0;
@@ -214,13 +215,18 @@ int main(int argc, char **argv){
 		else {
 			asprintf(&send_buffer,"%s&4&%s", req_password, value_list);
 			fetch_data (server_address, server_port, send_buffer);
-			free_disk_space=atof(strtok(recv_buffer,"&"));
-			total_disk_space=atof(strtok(NULL,"&"));
-			percent_used_space = ((total_disk_space - free_disk_space) / total_disk_space) * 100;
-			warning_used_space = ((float)warning_value / 100) * total_disk_space;
-			critical_used_space = ((float)critical_value / 100) * total_disk_space;
+			fds=strtok(recv_buffer,"&");
+			tds=strtok(NULL,"&");
+			if(fds!=NULL)
+				free_disk_space=atof(fds);
+			if(tds!=NULL)
+				total_disk_space=atof(tds);
 
-			if (free_disk_space>=0) {
+			if (total_disk_space>0 && free_disk_space>=0) {
+				percent_used_space = ((total_disk_space - free_disk_space) / total_disk_space) * 100;
+				warning_used_space = ((float)warning_value / 100) * total_disk_space;
+				critical_used_space = ((float)critical_value / 100) * total_disk_space;
+
 				asprintf(&temp_string,_("%s:\\ - total: %.2f Gb - used: %.2f Gb (%.0f%%) - free %.2f Gb (%.0f%%)"),
 				  value_list, total_disk_space / 1073741824, (total_disk_space - free_disk_space) / 1073741824,
 				  percent_used_space, free_disk_space / 1073741824, (free_disk_space / total_disk_space)*100);
@@ -238,7 +244,7 @@ int main(int argc, char **argv){
 				output_message = strdup (temp_string);
 				perfdata = temp_string_perf;
 			} else {
-				output_message = strdup (_("Free disk space : Invalid drive "));
+				output_message = strdup (_("Free disk space : Invalid drive"));
 				return_code=STATE_UNKNOWN;
 			}
 		}
