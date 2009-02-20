@@ -1103,7 +1103,7 @@ redir (char *pos, char *status_line)
 
   url = malloc (strcspn (pos, "\r\n"));
   if (url == NULL)
-    die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate url\n"));
+    die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate URL\n"));
 
   while (pos) {
     sscanf (pos, "%1[Ll]%*1[Oo]%*1[Cc]%*1[Aa]%*1[Tt]%*1[Ii]%*1[Oo]%*1[Nn]:%n", xx, &i);
@@ -1134,7 +1134,7 @@ redir (char *pos, char *status_line)
 
     url = realloc (url, strcspn (pos, "\r\n") + 1);
     if (url == NULL)
-      die (STATE_UNKNOWN, _("HTTP UNKNOWN - could not allocate url\n"));
+      die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate URL\n"));
 
     /* URI_HTTP, URI_HOST, URI_PORT, URI_PATH */
     if (sscanf (pos, HD1, type, addr, &i, url) == 4) {
@@ -1301,7 +1301,7 @@ print_help (void)
   printf ("   %s\n", _("Connect via SSL. Port defaults to 443"));
   printf (" %s\n", "-C, --certificate=INTEGER");
   printf ("   %s\n", _("Minimum number of days a certificate has to be valid. Port defaults to 443"));
-  printf ("   %s\n", _("(when this option is used the url is not checked.)\n"));
+  printf ("   %s\n", _("(when this option is used the URL is not checked.)\n"));
 #endif
 
   printf (" %s\n", "-e, --expect=STRING");

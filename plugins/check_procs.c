@@ -694,7 +694,7 @@ print_help (void)
   printf ("  %s\n", _("PROCS   - number of processes (default)"));
   printf ("  %s\n", _("VSZ     - virtual memory size"));
   printf ("  %s\n", _("RSS     - resident set memory size"));
-  printf ("  %s\n", _("CPU     - percentage cpu"));
+  printf ("  %s\n", _("CPU     - percentage CPU"));
 /* only linux etime is support currently */
 #if defined( __linux__ )
 	printf ("  %s\n", _("ELAPSED - time elapsed in seconds"));
@@ -713,11 +713,11 @@ print_help (void)
   printf (" %s\n", "-p, --ppid=PPID");
   printf ("   %s\n", _("Only scan for children of the parent process ID indicated."));
   printf (" %s\n", "-z, --vsz=VSZ");
-  printf ("   %s\n", _("Only scan for processes with vsz higher than indicated."));
+  printf ("   %s\n", _("Only scan for processes with VSZ higher than indicated."));
   printf (" %s\n", "-r, --rss=RSS");
-  printf ("   %s\n", _("Only scan for processes with rss higher than indicated."));
+  printf ("   %s\n", _("Only scan for processes with RSS higher than indicated."));
 	printf (" %s\n", "-P, --pcpu=PCPU");
-  printf ("   %s\n", _("Only scan for processes with pcpu higher than indicated."));
+  printf ("   %s\n", _("Only scan for processes with PCPU higher than indicated."));
   printf (" %s\n", "-u, --user=USER");
   printf ("   %s\n", _("Only scan for processes with user name or ID indicated."));
   printf (" %s\n", "-a, --argument-array=STRING");
@@ -753,9 +753,9 @@ be the total number of running processes\n\n"));
   printf ("  %s\n", _("Warning alert if > 10 processes with command arguments containing"));
   printf ("  %s\n\n", _("'/usr/local/bin/perl' and owned by root"));
   printf (" %s\n", "check_procs -w 50000 -c 100000 --metric=VSZ");
-  printf ("  %s\n\n", _("Alert if vsz of any processes over 50K or 100K"));
+  printf ("  %s\n\n", _("Alert if VSZ of any processes over 50K or 100K"));
   printf (" %s\n", "check_procs -w 10 -c 20 --metric=CPU");
-  printf ("  %s\n", _("Alert if cpu of any processes over 10%% or 20%%"));
+  printf ("  %s\n", _("Alert if CPU of any processes over 10%% or 20%%"));
 
 	printf (_(UT_SUPPORT));
 }

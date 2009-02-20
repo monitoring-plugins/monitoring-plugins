@@ -191,7 +191,7 @@ main (int argc, char *argv[])
 			LDAP_SUCCESS) {
 		if (verbose)
 			ldap_perror(ld, "ldap_bind");
-		printf (_("Could not bind to the ldap-server\n"));
+		printf (_("Could not bind to the LDAP server\n"));
 		return STATE_CRITICAL;
 	}
 

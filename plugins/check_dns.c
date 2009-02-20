@@ -251,7 +251,7 @@ main (int argc, char **argv)
     printf (_("DNS CRITICAL - %s\n"),
             !strcmp (msg, "") ? _(" Probably a non-existent host/domain") : msg);
   else
-    printf (_("DNS UNKNOW - %s\n"),
+    printf (_("DNS UNKNOWN - %s\n"),
             !strcmp (msg, "") ? _(" Probably a non-existent host/domain") : msg);
 
   return result;

@@ -935,7 +935,7 @@ print_help (void)
 
 	printf (COPYRIGHT, copyright, email);
 
-	printf ("%s\n", _("Check status of remote machines and obtain sustem information via SNMP"));
+	printf ("%s\n", _("Check status of remote machines and obtain system information via SNMP"));
 
   printf ("\n\n");
 
@@ -973,8 +973,8 @@ print_help (void)
 	printf (" %s\n", "-o, --oid=OID(s)");
   printf ("    %s\n", _("Object identifier(s) or SNMP variables whose value you wish to query"));
   printf (" %s\n", "-m, --miblist=STRING");
-  printf ("    %s\n", _("List of MIBS to be loaded (default = none if using numeric oids or 'ALL'"));
-  printf ("    %s\n", _("for symbolic oids.)"));
+  printf ("    %s\n", _("List of MIBS to be loaded (default = none if using numeric OIDs or 'ALL'"));
+  printf ("    %s\n", _("for symbolic OIDs.)"));
   printf (" %s\n", "-d, --delimiter=STRING");
   printf (_("    Delimiter to use when parsing returned data. Default is \"%s\""), DEFAULT_DELIMITER);
   printf ("    %s\n", _("Any data on the right hand side of the delimiter is considered"));

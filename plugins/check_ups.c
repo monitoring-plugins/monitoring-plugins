@@ -417,7 +417,7 @@ get_ups_variable (const char *varname, char *buf, size_t buflen)
 	if (len > logout_len && strcmp (ptr + len - logout_len, logout) == 0) len -= logout_len;
 	if (len > 0 && ptr[len-1] == '\n') ptr[len-1]=0;
 	if (strcmp (ptr, "ERR UNKNOWN-UPS") == 0) {
-		printf (_("CRITICAL - no such ups '%s' on that host\n"), ups_name);
+		printf (_("CRITICAL - no such UPS '%s' on that host\n"), ups_name);
 		return ERROR;
 	}
 
@@ -584,7 +584,7 @@ int
 validate_arguments (void)
 {
 	if (! ups_name) {
-		printf ("%s\n", _("Error : no ups indicated"));
+		printf ("%s\n", _("Error : no UPS indicated"));
 		return ERROR;
 	}
 	return OK;
@@ -645,7 +645,7 @@ print_help (void)
   printf (" %s\n", _("of that variable.  If the remote host has multiple UPS that are being monitored"));
   printf (" %s\n", _("you will have to use the --ups option to specify which UPS to check."));
   printf ("\n");
-  printf (" %s\n", _("This plugin requires that the UPSD daemon distributed with Russel Kroll's"));
+  printf (" %s\n", _("This plugin requires that the UPSD daemon distributed with Russell Kroll's"));
   printf (" %s\n", _("Smart UPS Tools be installed on the remote host. If you do not have the"));
   printf (" %s\n", _("package installed on your system, you can download it from"));
   printf (" %s\n", _("http://www.networkupstools.org"));

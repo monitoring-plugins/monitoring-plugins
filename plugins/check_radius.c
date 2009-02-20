@@ -313,7 +313,7 @@ print_help (void)
 	printf ("Copyright (c) 1999 Robert August Vincent II\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf("%s\n", _("Tests to see if a radius server is accepting connections."));
+	printf("%s\n", _("Tests to see if a RADIUS server is accepting connections."));
 
   printf ("\n\n");
 
@@ -340,7 +340,7 @@ print_help (void)
 	printf (_(UT_TIMEOUT), timeout_interval);
 
   printf ("\n");
-  printf ("%s\n", _("This plugin tests a radius server to see if it is accepting connections."));
+  printf ("%s\n", _("This plugin tests a RADIUS server to see if it is accepting connections."));
   printf ("%s\n", _("The server to test must be specified in the invocation, as well as a user"));
   printf ("%s\n", _("name and password. A configuration file may also be present. The format of"));
   printf ("%s\n", _("the configuration file is described in the radiusclient library sources."));

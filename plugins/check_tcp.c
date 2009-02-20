@@ -618,7 +618,7 @@ print_help (void)
   printf (" %s\n", "-q, --quit=STRING");
   printf ("    %s\n", _("String to send server to initiate a clean close of the connection"));
   printf (" %s\n", "-r, --refuse=ok|warn|crit");
-  printf ("    %s\n", _("Accept tcp refusals with states ok, warn, crit (default: crit)"));
+  printf ("    %s\n", _("Accept TCP refusals with states ok, warn, crit (default: crit)"));
   printf (" %s\n", "-M, --mismatch=ok|warn|crit");
   printf ("    %s\n", _("Accept expected string mismatches with states ok, warn, crit (default: warn)"));
   printf (" %s\n", "-j, --jail");

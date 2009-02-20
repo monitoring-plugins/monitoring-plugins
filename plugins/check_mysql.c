@@ -377,7 +377,7 @@ print_help (void)
 
 	printf (_(COPYRIGHT), copyright, email);
 
-	printf ("%s\n", _("This program tests connections to a mysql server"));
+	printf ("%s\n", _("This program tests connections to a MySQL server"));
 
   printf ("\n\n");
 
