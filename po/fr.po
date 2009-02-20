@@ -688,7 +688,7 @@ msgstr "DNS CRITIQUE - %s\n"
 
 #: plugins/check_dns.c:244
 #, c-format
-msgid "DNS UNKNOW - %s\n"
+msgid "DNS UNKNOWN - %s\n"
 msgstr "DNS INCONNU - %s\n"
 
 #: plugins/check_dns.c:257
@@ -1588,7 +1588,7 @@ msgstr ""
 
 #: plugins/check_ldap.c:195
 #, c-format
-msgid "Could not bind to the ldap-server\n"
+msgid "Could not bind to the LDAP server\n"
 msgstr "Impossible de se connecter au serveur LDAP\n"
 
 #: plugins/check_ldap.c:204
@@ -4308,7 +4308,7 @@ msgid "Unbalanced quotes\n"
 msgstr "Guillemets manquants\n"
 
 #: plugins/check_snmp.c:928
-msgid "Check status of remote machines and obtain sustem information via SNMP"
+msgid "Check status of remote machines and obtain system information via SNMP"
 msgstr ""
 "Vérifie l'état des machines distantes et obtient l'information système via "
 "SNMP"
