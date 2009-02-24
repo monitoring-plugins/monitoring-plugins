@@ -1003,6 +1003,8 @@ print_help (void)
   printf ("    %s\n", _("Separates output on multiple OID requests"));
 
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+	printf (" %s\n", "-e, --retries=INTEGER");
+	printf ("    %s\n", _("Number of retries to be used in the requests"));
 
 	printf (_(UT_VERBOSE));
 

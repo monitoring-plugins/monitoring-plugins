@@ -20,7 +20,7 @@ This file documents the major additions and syntax changes between releases.
 	Re-bundled libtap as a built-in library (--enable-libtap): detects system library as pre-1.4.13 and does not install the built-in library anymore
 	Fixed check_mrtg returning UNKNOWN instead of OK (bug #2378068)
 	Fixed check_http behaviour: all check are now performed as long as a valid response is returned (sf.net #1460312)
-	check_http --onredirect=sticky follows using the same IP address (sf.net #2550208).
+	check_http --onredirect=sticky follows using the same IP address (sf.net #2550208)
 	Fixed coredump from check_nt when invalid drive is specified (#2179754 - Olli Hauer)
 
 1.4.13 25th Sept 2008
