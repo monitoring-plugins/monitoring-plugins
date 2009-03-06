@@ -2,6 +2,16 @@
 #
 # Test check_http by having an actual HTTP server running
 #
+# To create the https server certificate:
+# openssl req -new -x509 -keyout server-key.pem -out server-cert.pem -days 3650 -nodes
+# Country Name (2 letter code) [AU]:UK
+# State or Province Name (full name) [Some-State]:Derbyshire
+# Locality Name (eg, city) []:Belper
+# Organization Name (eg, company) [Internet Widgits Pty Ltd]:Nagios Plugins
+# Organizational Unit Name (eg, section) []:
+# Common Name (eg, YOUR name) []:Ton Voon
+# Email Address []:tonvoon@mac.com
+
 
 use strict;
 use Test::More;
@@ -25,17 +35,35 @@ $HTTP::Daemon::VERSION = "1.00";
 
 my $port_http = 50000 + int(rand(1000));
 my $port_https = $port_http + 1;
+my $port_https_expired = $port_http + 2;
 
-# Start up both servers
-my $pid_https;
-my $pid_http = fork();
-if ($pid_http) {
+# Start up all servers
+my @pids;
+my $pid = fork();
+if ($pid) {
 	# Parent
+	push @pids, $pid;
 	if (exists $servers->{https}) {
-		# Fork another server
-		$pid_https = fork();
-		if ($pid_https) {
+		# Fork a normal HTTPS server
+		$pid = fork();
+		if ($pid) {
 			# Parent
+			push @pids, $pid;
+			# Fork an expired cert server
+			$pid = fork();
+			if ($pid) {
+				push @pids, $pid;
+			} else {
+				my $d = HTTP::Daemon::SSL->new(
+					LocalPort => $port_https_expired,
+					LocalAddr => "127.0.0.1",
+					SSL_cert_file => "$Bin/certs/expired-cert.pem",
+					SSL_key_file => "$Bin/certs/expired-key.pem",
+				) || die;
+				print "Please contact https expired at: <URL:", $d->url, ">\n";
+				run_server( $d );
+				exit;
+			}
 		} else {
 			my $d = HTTP::Daemon::SSL->new(
 				LocalPort => $port_https,
@@ -106,7 +134,7 @@ sub run_server {
 }
 
 END { 
-	foreach my $pid ($pid_http, $pid_https) {
+	foreach my $pid (@pids) {
 		if ($pid) { print "Killing $pid\n"; kill "INT", $pid } 
 	}
 };
@@ -116,8 +144,9 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 }
 
 my $common_tests = 47;
+my $ssl_only_tests = 6;
 if (-x "./check_http") {
-	plan tests => $common_tests * 2;
+	plan tests => $common_tests * 2 + $ssl_only_tests;
 } else {
 	plan skip_all => "No check_http compiled";
 }
@@ -127,8 +156,25 @@ my $command = "./check_http -H 127.0.0.1";
 
 run_common_tests( { command => "$command -p $port_http" } );
 SKIP: {
-	skip "HTTP::Daemon::SSL not installed", $common_tests if ! exists $servers->{https};
+	skip "HTTP::Daemon::SSL not installed", $common_tests + $ssl_only_tests if ! exists $servers->{https};
 	run_common_tests( { command => "$command -p $port_https", ssl => 1 } );
+	
+	$result = NPTest->testCmd( "$command -p $port_https -S -C 14" );
+	is( $result->return_code, 0, "$command -p $port_https -S -C 14" );
+	is( $result->output, 'OK - Certificate will expire on 03/03/2019 21:41.', "output ok" );
+
+	$result = NPTest->testCmd( "$command -p $port_https -S -C 14000" );
+	is( $result->return_code, 1, "$command -p $port_https -S -C 14000" );
+	like( $result->output, '/WARNING - Certificate expires in \d+ day\(s\) \(03/03/2019 21:41\)./', "output ok" );
+
+
+	# Expired cert tests
+	$result = NPTest->testCmd( "$command -p $port_https_expired -S -C 7" );
+	is( $result->return_code, 2, "$command -p $port_https_expired -S -C 7" );
+	is( $result->output, 
+		'CRITICAL - Certificate expired on 03/05/2009 00:13.',
+		"output ok" );
+
 }
 
 sub run_common_tests {
