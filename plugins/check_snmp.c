@@ -34,7 +34,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
 #include "utils.h"
-#include "popen.h"
+#include "utils_cmd.h"
 
 #define DEFAULT_COMMUNITY "public"
 #define DEFAULT_PORT "161"
@@ -91,14 +91,14 @@ regex_t preg;
 regmatch_t pmatch[10];
 char timestamp[10] = "";
 char errbuf[MAX_INPUT_BUFFER] = "";
-char perfstr[MAX_INPUT_BUFFER] = "";
+char perfstr[MAX_INPUT_BUFFER] = "| ";
 int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
 int eflags = 0;
 int errcode, excode;
 
 char *server_address = NULL;
 char *community = NULL;
-char *authpriv = NULL;
+char **authpriv = NULL;
 char *proto = NULL;
 char *seclevel = NULL;
 char *secname = NULL;
@@ -106,10 +106,11 @@ char *authproto = NULL;
 char *privproto = NULL;
 char *authpasswd = NULL;
 char *privpasswd = NULL;
-char *oid;
+char **oids = NULL; 
 char *label;
 char *units;
 char *port;
+char *snmpcmd;
 char string_value[MAX_INPUT_BUFFER] = "";
 char **labels = NULL;
 char **unitv = NULL;
@@ -117,6 +118,8 @@ size_t nlabels = 0;
 size_t labels_size = 8;
 size_t nunits = 0;
 size_t unitv_size = 8;
+int numoids = 0;
+int numauthpriv = 0;
 int verbose = FALSE;
 int usesnmpgetnext = FALSE;
 unsigned long long lower_warn_lim[MAX_OIDS];
@@ -139,18 +142,16 @@ main (int argc, char **argv)
 {
 	int i = 0;
 	int iresult = STATE_UNKNOWN;
-	int found = 0;
-	int result = STATE_DEPENDENT;
-	char input_buffer[MAX_INPUT_BUFFER];
-	char *command_line = NULL;
+	int result = STATE_UNKNOWN;
+	char **command_line = NULL;
 	char *cl_hidden_auth = NULL;
+	char *oidname = NULL;
 	char *response = NULL;
 	char *outbuff;
-	char *output;
 	char *ptr = NULL;
-	char *p2 = NULL;
 	char *show = NULL;
 	char type[8] = "";
+	output chld_out, chld_err;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -162,12 +163,10 @@ main (int argc, char **argv)
 		eval_method[i] = CHECK_UNDEF;
 	i = 0;
 
-	oid = strdup ("");
 	label = strdup ("SNMP");
 	units = strdup ("");
 	port = strdup (DEFAULT_PORT);
 	outbuff = strdup ("");
-	output = strdup ("");
 	delimiter = strdup (" = ");
 	output_delim = strdup (DEFAULT_OUTPUT_DELIMITER);
 	/* miblist = strdup (DEFAULT_MIBLIST); */
@@ -180,91 +179,73 @@ main (int argc, char **argv)
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
-	/* create the command line to execute */
-		if(usesnmpgetnext == TRUE) {
-		asprintf(&command_line, "%s -t %d -r %d -m %s -v %s %s %s:%s %s",
-			PATH_TO_SNMPGETNEXT, timeout_interval, retries, miblist, proto,
-			authpriv, server_address, port, oid);
-		asprintf(&cl_hidden_auth, "%s -t %d -r %d -m %s -v %s %s %s:%s %s",
-			PATH_TO_SNMPGETNEXT, timeout_interval, retries, miblist, proto,
-			"[authpriv]", server_address, port, oid);
+	/* Create the command array to execute */
+	if(usesnmpgetnext == TRUE) {
+		snmpcmd = strdup (PATH_TO_SNMPGETNEXT);
 	}else{
+		snmpcmd = strdup (PATH_TO_SNMPGET);
+	} 
+	
+        /* 9 arguments to pass before authpriv options + 1 for host and numoids. Add one for terminating NULL */
+	command_line = calloc (9 + numauthpriv + 1 + numoids + 1, sizeof (char *));
+	command_line[0] = snmpcmd;
+	command_line[1] = strdup ("-t");
+	asprintf (&command_line[2], "%d", timeout_interval);
+	command_line[3] = strdup ("-r");
+	asprintf (&command_line[4], "%d", retries);
+	command_line[5] = strdup ("-m");
+	command_line[6] = strdup (miblist);
+	command_line[7] = "-v";
+	command_line[8] = strdup (proto);
 
-		asprintf (&command_line, "%s -t %d -r %d -m %s -v %s %s %s:%s %s",
-			PATH_TO_SNMPGET, timeout_interval, retries, miblist, proto,
-			authpriv, server_address, port, oid);
-		asprintf(&cl_hidden_auth, "%s -t %d -r %d -m %s -v %s %s %s:%s %s",
-			PATH_TO_SNMPGET, timeout_interval, retries, miblist, proto,
-			"[authpriv]", server_address, port, oid);
+	for (i = 0; i < numauthpriv; i++) {
+		command_line[9 + i] = authpriv[i];
 	}
 
+	asprintf (&command_line[9 + numauthpriv], "%s:%s", server_address, port);
+
+        /* This is just for display purposes, so it can remain a string */
+	asprintf(&cl_hidden_auth, "%s -t %d -r %d -m %s -v %s %s %s:%s",
+		snmpcmd, timeout_interval, retries, miblist, proto, "[authpriv]",
+		server_address, port);
+
+	for (i = 0; i < numoids; i++) {
+		command_line[9 + numauthpriv + 1 + i] = oids[i];
+		asprintf(&cl_hidden_auth, "%s %s", cl_hidden_auth, oids[i]);	
+	}
+
+	command_line[9 + numauthpriv + 1 + numoids] = NULL;
+
 	if (verbose)
-		printf ("%s\n", command_line);
+		printf ("%s\n", cl_hidden_auth);
 
+	/* Run the command */
+	result = cmd_run_array (command_line, &chld_out, &chld_err, 0);
 
-	/* run the command */
-	child_process = spopen (command_line);
-	if (child_process == NULL) {
-		printf (_("Could not open pipe: %s\n"), cl_hidden_auth);
+	if (chld_err.lines > 0) {
+		printf (_("External command error: %s\n"), chld_err.line[0]);
+		for (i = 1; i < chld_err.lines; i++) {
+			printf ("%s\n", chld_err.line[i]);
+		}
 		exit (STATE_UNKNOWN);
 	}
 
-#if 0		/* Removed May 29, 2007 */
-	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
-	if (child_stderr == NULL) {
-		printf (_("Could not open stderr for %s\n"), cl_hidden_auth);
+	/* Return UNKNOWN or worse if no output is returned */
+	if (chld_out.lines == 0)
+		die (max_state_alt (result, STATE_UNKNOWN), _("%s problem - No data received from host\nCMD: %s\n"),
+								label,
+								cl_hidden_auth);
+
+	if (verbose) {
+		for (i = 0; i < chld_out.lines; i++) {
+			printf ("%s\n", chld_out.line[i]);
+		}
 	}
-#endif
 
-	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process))
-		asprintf (&output, "%s%s", output, input_buffer);
-
-	if (verbose)
-		printf ("%s\n", output);
-
-	ptr = output;
-
-	strncat(perfstr, "| ", sizeof(perfstr)-strlen(perfstr)-1);
-	while (ptr) {
-		char *foo, *ptr2;
-		unsigned int copylen;
-
-		foo = strstr (ptr, delimiter);
-		copylen = foo-ptr;
-		if (copylen > sizeof(perfstr)-strlen(perfstr)-1)
-			copylen = sizeof(perfstr)-strlen(perfstr)-1;
-		ptr2 = ptr;
-		ptr = foo;
-
-		if (ptr == NULL)
-			break;
-
-		ptr += strlen (delimiter);
-		ptr += strspn (ptr, " ");
-
-		found++;
-
-		if (ptr[0] == '"') {
-			ptr++;
-			response = strpcpy (response, ptr, "\"");
-			ptr = strpbrk (ptr, "\"");
-			ptr += strspn (ptr, "\"\n");
-		}
-		else {
-			response = strpcpy (response, ptr, "\n");
-			ptr = strpbrk (ptr, "\n");
-			ptr += strspn (ptr, "\n");
-			while
-				(strstr (ptr, delimiter) &&
-				 strstr (ptr, "\n") && strstr (ptr, "\n") < strstr (ptr, delimiter)) {
-				response = strpcat (response, ptr, "\n");
-				ptr = strpbrk (ptr, "\n");
-			}
-			if (ptr && strstr (ptr, delimiter) == NULL) {
-				asprintf (&response, "%s%s", response, ptr);
-				ptr = NULL;
-			}
-		}
+	for (i = 0; i < chld_out.lines; i++) {
+		ptr = chld_out.line[i];
+		oidname = strpcpy (oidname, ptr, delimiter); 
+		response = strstr (ptr, delimiter);
 
 		/* We strip out the datatype indicator for PHBs */
 
@@ -289,7 +270,6 @@ main (int argc, char **argv)
 			show = strstr (response, "STRING: ") + 8;
 		else
 			show = response;
-		p2 = show;
 
 		iresult = STATE_DEPENDENT;
 
@@ -306,10 +286,10 @@ main (int argc, char **argv)
 		    eval_method[i] & WARN_LE ||
 		    eval_method[i] & WARN_EQ ||
 		    eval_method[i] & WARN_NE) {
-			p2 = strpbrk (p2, "0123456789");
-			if (p2 == NULL)
+			ptr = strpbrk (show, "0123456789");
+			if (ptr == NULL)
 				die (STATE_UNKNOWN,_("No valid data returned"));
-			response_value[i] = strtoul (p2, NULL, 10);
+			response_value[i] = strtoul (ptr, NULL, 10);
 			iresult = check_num (i);
 			asprintf (&show, "%llu", response_value[i]);
 		}
@@ -364,10 +344,8 @@ main (int argc, char **argv)
 		if (nunits > (size_t)0 && (size_t)i < nunits && unitv[i] != NULL)
 			asprintf (&outbuff, "%s %s", outbuff, unitv[i]);
 
-		i++;
-
 		if (is_numeric(show)) {
-			strncat(perfstr, ptr2, copylen);
+			strncat(perfstr, oidname, sizeof(perfstr)-strlen(perfstr)-1);
 			strncat(perfstr, "=", sizeof(perfstr)-strlen(perfstr)-1);
 			strncat(perfstr, show, sizeof(perfstr)-strlen(perfstr)-1);
 
@@ -375,29 +353,6 @@ main (int argc, char **argv)
 				strncat(perfstr, type, sizeof(perfstr)-strlen(perfstr)-1);
 			strncat(perfstr, " ", sizeof(perfstr)-strlen(perfstr)-1);
 		}
-
-	}	/* end while (ptr) */
-
-	if (found == 0)
-		die (STATE_UNKNOWN,
-			_("%s problem - No data received from host\nCMD: %s\n"),
-			label,
-			cl_hidden_auth);
-
-#if 0		/* Removed May 29, 2007 */
-	/* WARNING if output found on stderr */
-	if (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
-		result = max_state (result, STATE_WARNING);
-
-	/* close stderr */
-	(void) fclose (child_stderr);
-#endif
-
-	/* close the pipe */
-	if (spclose (child_process)) {
-		if (result == STATE_OK)
-			result = STATE_UNKNOWN;
-		asprintf (&outbuff, "%s (%s)", outbuff, _("snmpget returned an error status"));
 	}
 
 /* 	if (nunits == 1 || i == 1) */
@@ -563,12 +518,12 @@ process_arguments (int argc, char **argv)
 					 */
 					needmibs = TRUE;
 			}
-
-			for (ptr = optarg; (ptr = index (ptr, ',')); ptr++)
-				ptr[0] = ' '; /* relpace comma with space */
-			for (ptr = optarg; (ptr = index (ptr, ' ')); ptr++)
-				j++; /* count OIDs */
-			asprintf (&oid, "%s %s", (oid?oid:""), optarg);
+			oids = calloc(MAX_OIDS, sizeof (char *));
+			for (ptr = strtok(optarg, ", "); ptr != NULL; ptr = strtok(NULL, ", ")) {
+				oids[j] = strdup(ptr);
+				j++;
+			}
+			numoids = j;
 			if (c == 'E' || c == 'e') {
 				jj++;
 				ii++;
@@ -675,8 +630,6 @@ process_arguments (int argc, char **argv)
 	if (community == NULL)
 		community = strdup (DEFAULT_COMMUNITY);
 
-
-
 	return validate_arguments ();
 }
 
@@ -713,47 +666,79 @@ validate_arguments ()
 		}
 	}
 
+	/* Check server_address is given */
+	if (server_address == NULL)
+		die(STATE_UNKNOWN, _("No host specified\n"));
 
-	/* Need better checks to verify seclevel and authproto choices */
+	/* Check oid is given */
+	if (numoids == 0)
+		die(STATE_UNKNOWN, _("No OIDs specified\n"));
 
-	if (seclevel == NULL)
-		asprintf (&seclevel, "noAuthNoPriv");
-
-
-	if (authproto == NULL )
-		asprintf(&authproto, DEFAULT_AUTH_PROTOCOL);
-
-	if (privproto == NULL )
-		asprintf(&privproto, DEFAULT_PRIV_PROTOCOL);
-
-	if (proto == NULL || (strcmp(proto,DEFAULT_PROTOCOL) == 0) ) {	/* default protocol version */
+	if (proto == NULL)
 		asprintf(&proto, DEFAULT_PROTOCOL);
-		asprintf(&authpriv, "%s%s", "-c ", community);
-	}
-	else if ( strcmp (proto, "2c") == 0 ) {		/* snmpv2c args */
-		asprintf(&authpriv, "%s%s", "-c ", community);
+
+	if ((strcmp(proto,"1") == 0) || (strcmp(proto, "2c")==0)) {	/* snmpv1 or snmpv2c */
+		numauthpriv = 2;
+		authpriv = calloc (numauthpriv, sizeof (char *));
+		authpriv[0] = strdup ("-c");
+		authpriv[1] = strdup (community);
 	}
 	else if ( strcmp (proto, "3") == 0 ) {		/* snmpv3 args */
-		asprintf(&proto, "%s", "3");
+		if (seclevel == NULL)
+			asprintf(&seclevel, "noAuthNoPriv");
 
-		if ( (strcmp(seclevel, "noAuthNoPriv") == 0) || seclevel == NULL ) {
-			asprintf(&authpriv, "%s", "-l noAuthNoPriv" );
-		}
-		else if ( strcmp(seclevel, "authNoPriv") == 0 ) {
-			if ( secname == NULL || authpasswd == NULL) {
-				printf (_("Missing secname (%s) or authpassword (%s) ! \n"),secname, authpasswd );
-				print_usage ();
-				exit (STATE_UNKNOWN);
+		if (strcmp(seclevel, "noAuthNoPriv") == 0) {
+			numauthpriv = 2;
+			authpriv = calloc (numauthpriv, sizeof (char *));
+			authpriv[0] = strdup ("-l");
+			authpriv[1] = strdup ("noAuthNoPriv");
+		} else {
+			if (! ( (strcmp(seclevel, "authNoPriv")==0) || (strcmp(seclevel, "authPriv")==0) ) ) {
+				usage2 (_("Invalid seclevel"), seclevel);
 			}
-			asprintf(&authpriv, "-l authNoPriv -a %s -u %s -A %s ", authproto, secname, authpasswd);
-		}
-		else if ( strcmp(seclevel, "authPriv") == 0 ) {
-			if ( secname == NULL || authpasswd == NULL || privpasswd == NULL ) {
-				printf (_("Missing secname (%s), authpassword (%s), or privpasswd (%s)! \n"),secname, authpasswd,privpasswd );
-				print_usage ();
-				exit (STATE_UNKNOWN);
+
+			if (authproto == NULL )
+				asprintf(&authproto, DEFAULT_AUTH_PROTOCOL);
+
+			if (secname == NULL)
+				die(STATE_UNKNOWN, _("Required parameter: %s\n"), "secname");
+
+			if (authpasswd == NULL)
+				die(STATE_UNKNOWN, _("Required parameter: %s\n"), "authpasswd");
+
+			if ( strcmp(seclevel, "authNoPriv") == 0 ) {
+				numauthpriv = 8;
+				authpriv = calloc (numauthpriv, sizeof (char *));
+				authpriv[0] = strdup ("-l");
+				authpriv[1] = strdup ("authNoPriv");
+				authpriv[2] = strdup ("-a");
+				authpriv[3] = strdup (authproto);
+				authpriv[4] = strdup ("-u");
+				authpriv[5] = strdup (secname);
+				authpriv[6] = strdup ("-A");
+				authpriv[7] = strdup (authpasswd);
+			} else if ( strcmp(seclevel, "authPriv") == 0 ) {
+				if (privproto == NULL )
+					asprintf(&privproto, DEFAULT_PRIV_PROTOCOL);
+
+				if (privpasswd == NULL)
+					die(STATE_UNKNOWN, _("Required parameter: %s\n"), "privpasswd");
+
+				numauthpriv = 12;
+				authpriv = calloc (numauthpriv, sizeof (char *));
+				authpriv[0] = strdup ("-l");
+				authpriv[1] = strdup ("authPriv");
+				authpriv[2] = strdup ("-a");
+				authpriv[3] = strdup (authproto);
+				authpriv[4] = strdup ("-u");
+				authpriv[5] = strdup (secname);
+				authpriv[6] = strdup ("-A");
+				authpriv[7] = strdup (authpasswd);
+				authpriv[8] = strdup ("-x");
+				authpriv[9] = strdup (privproto);
+				authpriv[10] = strdup ("-X");
+				authpriv[11] = strdup (privpasswd);
 			}
-			asprintf(&authpriv, "-l authPriv -a %s -u %s -A %s -x %s -X %s ", authproto, secname, authpasswd, privproto, privpasswd);
 		}
 
 	}
