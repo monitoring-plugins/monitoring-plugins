@@ -143,6 +143,8 @@ main (int argc, char **argv)
 	int i = 0;
 	int iresult = STATE_UNKNOWN;
 	int result = STATE_UNKNOWN;
+	int return_code = 0;
+	int external_error = 0;
 	char **command_line = NULL;
 	char *cl_hidden_auth = NULL;
 	char *oidname = NULL;
@@ -220,21 +222,27 @@ main (int argc, char **argv)
 		printf ("%s\n", cl_hidden_auth);
 
 	/* Run the command */
-	result = cmd_run_array (command_line, &chld_out, &chld_err, 0);
+	return_code = cmd_run_array (command_line, &chld_out, &chld_err, 0);
 
-	if (chld_err.lines > 0) {
-		printf (_("External command error: %s\n"), chld_err.line[0]);
-		for (i = 1; i < chld_err.lines; i++) {
-			printf ("%s\n", chld_err.line[i]);
+	/* Due to net-snmp sometimes showing stderr messages with poorly formed MIBs, 
+	   only return state unknown if return code is non zero or there is no stdout.
+	   Do this way so that if there is stderr, will get added to output, which helps problem diagnosis
+	/*
+	if (return_code != 0)
+		external_error=1;
+	if (chld_out.lines == 0)
+		external_error=1;
+	if (external_error) {
+		if (chld_err.lines > 0) {
+			printf (_("External command error: %s\n"), chld_err.line[0]);
+			for (i = 1; i < chld_err.lines; i++) {
+				printf ("%s\n", chld_err.line[i]);
+			}
+		} else {
+			printf(_("External command error with no output (return code: %d)\n"), return_code);
 		}
 		exit (STATE_UNKNOWN);
 	}
-
-	/* Return UNKNOWN or worse if no output is returned */
-	if (chld_out.lines == 0)
-		die (max_state_alt (result, STATE_UNKNOWN), _("%s problem - No data received from host\nCMD: %s\n"),
-								label,
-								cl_hidden_auth);
 
 	if (verbose) {
 		for (i = 0; i < chld_out.lines; i++) {
