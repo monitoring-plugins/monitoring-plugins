@@ -140,10 +140,12 @@ END {
 };
 
 if ($ARGV[0] && $ARGV[0] eq "-d") {
-	sleep 1000;
+	while (1) {
+		`sleep 100`
+	}
 }
 
-my $common_tests = 47;
+my $common_tests = 51;
 my $ssl_only_tests = 6;
 if (-x "./check_http") {
 	plan tests => $common_tests * 2 + $ssl_only_tests;
@@ -180,95 +182,91 @@ SKIP: {
 sub run_common_tests {
 	my ($opts) = @_;
 	my $command = $opts->{command};
-	my $b;
-	my $add = 0;
 	if ($opts->{ssl}) {
 		$command .= " --ssl";
 	}
 
 	$result = NPTest->testCmd( "$command -u /file/root" );
 	is( $result->return_code, 0, "/file/root");
-	like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - 274 bytes in [\d\.]+ seconds/', "Output correct" );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - 274 bytes in [\d\.]+ second/', "Output correct" );
 
 	$result = NPTest->testCmd( "$command -u /file/root -s Root" );
 	is( $result->return_code, 0, "/file/root search for string");
-	TODO: {
-	local $TODO = "Output is different if a string is requested - should this be right?";
-	like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - 274 bytes in [\d\.]+ seconds/', "Output correct" );
-	}
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - 274 bytes in [\d\.]+ second/', "Output correct" );
 
-
-	$b = 177 + $add;
-	$result = NPTest->testCmd( "$command -u /slow" );
-	is( $result->return_code, 0, "/file/root");
-	like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - '.$b.' bytes in ([\d\.]+) seconds/', "Output correct" );
-	$result->output =~ /in ([\d\.]+) seconds/;
-	cmp_ok( $1, ">", 1, "Time is > 1 second" );
 
 	my $cmd;
-	$b = 89 + $add;
+	$cmd = "$command -u /slow";
+	$result = NPTest->testCmd( $cmd );
+	is( $result->return_code, 0, "$cmd");
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+	$result->output =~ /in ([\d\.]+) second/;
+	cmp_ok( $1, ">", 1, "Time is > 1 second" );
+
+	$cmd = "$command -u /statuscode/200";
+	$result = NPTest->testCmd( $cmd );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+
 	$cmd = "$command -u /statuscode/200 -e 200";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - '.$b.' bytes in ([\d\.]+) seconds/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: Status line output matched "200" - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
-	$b = 94 + $add;
+	$cmd = "$command -u /statuscode/201";
+	$result = NPTest->testCmd( $cmd );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/^HTTP OK: HTTP/1.1 201 Created - \d+ bytes in [\d\.]+ second /', "Output correct: ".$result->output );
+
 	$cmd = "$command -u /statuscode/201 -e 201";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK HTTP/1.1 201 Created - '.$b.' bytes in ([\d\.]+) seconds /', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: Status line output matched "201" - \d+ bytes in [\d\.]+ second /', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /statuscode/201 -e 200";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 2, $cmd);
 	like( $result->output, '/^HTTP CRITICAL - Invalid HTTP response received from host on port \d+: HTTP/1.1 201 Created/', "Output correct: ".$result->output );
 
-	$b = 89 + $add;
 	$cmd = "$command -u /statuscode/200 -e 200,201,202";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - '.$b.' bytes in ([\d\.]+) seconds/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: Status line output matched "200,201,202" - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
-	$b = 94 + $add;
 	$cmd = "$command -u /statuscode/201 -e 200,201,202";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK HTTP/1.1 201 Created - '.$b.' bytes in ([\d\.]+) seconds/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: Status line output matched "200,201,202" - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /statuscode/203 -e 200,201,202";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 2, $cmd);
 	like( $result->output, '/^HTTP CRITICAL - Invalid HTTP response received from host on port (\d+): HTTP/1.1 203 Non-Authoritative Information/', "Output correct: ".$result->output );
 
-	$b = 19 + $add;
 	$cmd = "$command -j HEAD -u /method";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK HTTP/1.1 200 HEAD - '.$b.' bytes in ([\d\.]+) seconds/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 HEAD - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
-	$b = 19 + $add;
 	$cmd = "$command -j POST -u /method";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK HTTP/1.1 200 POST - '.$b.' bytes in ([\d\.]+) seconds/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 POST - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
-	$b = 18 + $add;
 	$cmd = "$command -j GET -u /method";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK HTTP/1.1 200 GET - '.$b.' bytes in ([\d\.]+) seconds/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 GET - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
-	$b = 18 + $add;
 	$cmd = "$command -u /method";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK HTTP/1.1 200 GET - '.$b.' bytes in ([\d\.]+) seconds/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 GET - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
-	$b = 19 + $add;
 	$cmd = "$command -P foo -u /method";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK HTTP/1.1 200 POST - '.$b.' bytes in ([\d\.]+) seconds/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 POST - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -j DELETE -u /method";
 	$result = NPTest->testCmd( $cmd );
@@ -283,39 +281,38 @@ sub run_common_tests {
 	$cmd = "$command -P stufftoinclude -u /postdata -s POST:stufftoinclude";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - ([\d\.]+) second/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -j PUT -P stufftoinclude -u /postdata -s PUT:stufftoinclude";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - ([\d\.]+) second/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	# To confirm that the free doesn't segfault
 	$cmd = "$command -P stufftoinclude -j PUT -u /postdata -s PUT:stufftoinclude";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - ([\d\.]+) second/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /redirect";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK - HTTP/1.1 301 Moved Permanently - [\d\.]+ second/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 301 Moved Permanently - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
-	$b = 183 + $add;
 	$cmd = "$command -f follow -u /redirect";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - '.$b.' bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+
 
 	$cmd = "$command -u /redirect -k 'follow: me'";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK - HTTP/1.1 301 Moved Permanently - [\d\.]+ second/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 301 Moved Permanently - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
-	$b = 183 + $add;
 	$cmd = "$command -f follow -u /redirect -k 'follow: me'";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK HTTP/1.1 200 OK - '.$b.' bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 }
