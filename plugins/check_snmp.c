@@ -106,7 +106,7 @@ char *authproto = NULL;
 char *privproto = NULL;
 char *authpasswd = NULL;
 char *privpasswd = NULL;
-char **oids = NULL; 
+char **oids = NULL;
 char *label;
 char *units;
 char *port;
@@ -186,7 +186,7 @@ main (int argc, char **argv)
 		snmpcmd = strdup (PATH_TO_SNMPGETNEXT);
 	}else{
 		snmpcmd = strdup (PATH_TO_SNMPGET);
-	} 
+	}
 	
         /* 9 arguments to pass before authpriv options + 1 for host and numoids. Add one for terminating NULL */
 	command_line = calloc (9 + numauthpriv + 1 + numoids + 1, sizeof (char *));
@@ -224,10 +224,10 @@ main (int argc, char **argv)
 	/* Run the command */
 	return_code = cmd_run_array (command_line, &chld_out, &chld_err, 0);
 
-	/* Due to net-snmp sometimes showing stderr messages with poorly formed MIBs, 
+	/* Due to net-snmp sometimes showing stderr messages with poorly formed MIBs,
 	   only return state unknown if return code is non zero or there is no stdout.
 	   Do this way so that if there is stderr, will get added to output, which helps problem diagnosis
-	/*
+	*/
 	if (return_code != 0)
 		external_error=1;
 	if (chld_out.lines == 0)
@@ -252,7 +252,7 @@ main (int argc, char **argv)
 
 	for (i = 0; i < chld_out.lines; i++) {
 		ptr = chld_out.line[i];
-		oidname = strpcpy (oidname, ptr, delimiter); 
+		oidname = strpcpy (oidname, ptr, delimiter);
 		response = strstr (ptr, delimiter);
 
 		/* We strip out the datatype indicator for PHBs */
