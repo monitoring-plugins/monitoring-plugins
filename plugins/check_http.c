@@ -975,7 +975,7 @@ check_http (void)
     }
     /* server errors result in a critical state */
     else if (http_status >= 500) {
-      asprintf (&msg, _("%s - "), msg, status_line);
+      asprintf (&msg, _("%s - "), status_line);
       result = STATE_CRITICAL;
     }
     /* client errors result in a warning state */
@@ -1059,8 +1059,8 @@ check_http (void)
 
   /* check elapsed time */
   asprintf (&msg,
-            _("%s - %.3f second response time %s|%s %s"),
-            msg, elapsed_time,
+            _("%s - %d bytes in %.3f second response time %s|%s %s"),
+            msg, page_len, elapsed_time,
             (display_html ? "</A>" : ""),
             perfd_time (elapsed_time), perfd_size (page_len));
 
