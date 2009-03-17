@@ -30,6 +30,10 @@
 #include "common.h"
 #include "netutils.h"
 
+/* Max length of timestamps, ex: "03/05/2009 00:13 GMT". Calculate up to 6
+ * chars for the timezone (ex: "GMT-10") and one terminating \0 */
+#define TS_LENGTH 24
+
 #ifdef HAVE_SSL
 static SSL_CTX *c=NULL;
 static SSL *s=NULL;
@@ -90,7 +94,7 @@ int np_net_ssl_check_cert(int days_till_exp){
 	int offset;
 	struct tm stamp;
 	int days_left;
-	char timestamp[17] = "";
+	char timestamp[TS_LENGTH] = "";
 
 	certificate=SSL_get_peer_certificate(s);
 	if(! certificate){
@@ -135,16 +139,17 @@ int np_net_ssl_check_cert(int days_till_exp){
 	stamp.tm_sec = 0;
 	stamp.tm_isdst = -1;
 
-	days_left = (mktime (&stamp) - time (NULL)) / 86400;
+	float time_left = difftime(timegm(&stamp), time(NULL));
+	days_left = time_left / 86400;
 	snprintf
-		(timestamp, 17, "%02d/%02d/%04d %02d:%02d",
+		(timestamp, TS_LENGTH, "%02d/%02d/%04d %02d:%02d %s",
 		 stamp.tm_mon + 1,
-		 stamp.tm_mday, stamp.tm_year + 1900, stamp.tm_hour, stamp.tm_min);
+		 stamp.tm_mday, stamp.tm_year + 1900, stamp.tm_hour, stamp.tm_min, stamp.tm_zone);
 
 	if (days_left > 0 && days_left <= days_till_exp) {
 		printf (_("WARNING - Certificate expires in %d day(s) (%s).\n"), days_left, timestamp);
 		return STATE_WARNING;
-	} else if (days_left < 0) {
+	} else if (time_left < 0) {
 		printf (_("CRITICAL - Certificate expired on %s.\n"), timestamp);
 		return STATE_CRITICAL;
 	} else if (days_left == 0) {
