@@ -794,7 +794,7 @@ check_http (void)
   }
 #endif /* HAVE_SSL */
 
-  asprintf (&buf, "%s %s HTTP/1.0\r\n%s\r\n", http_method, server_url, user_agent);
+  asprintf (&buf, "%s %s %s\r\n%s\r\n", http_method, server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
 
   /* tell HTTP/1.1 servers not to keep the connection alive */
   asprintf (&buf, "%sConnection: close\r\n", buf);
