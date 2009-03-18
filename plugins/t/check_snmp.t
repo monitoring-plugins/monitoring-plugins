@@ -8,7 +8,7 @@ use strict;
 use Test::More;
 use NPTest;
 
-my $tests = 32;
+my $tests = 34;
 plan tests => $tests;
 my $res;
 
@@ -81,6 +81,10 @@ SKIP: {
 		like($res->output, "/^SNMP CRITICAL - 2 *1*/", "Got two values back" );
 		like( $res->perf_output, "/ifIndex.2=2/", "Got 1st perf data" );
 		like( $res->perf_output, "/ifIndex.1=1/", "Got 2nd perf data" );
+
+		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o host.hrStorage.hrMemorySize.0,host.hrSystem.hrSystemProcesses.0 -w 1:,1: -c 1:,1:");
+		cmp_ok( $res->return_code, '==', 0, "Exit OK when querying hrMemorySize and hrSystemProcesses");
+		like($res->output, '/^SNMP OK - \d+ \d+/', "String contains hrMemorySize and hrSystemProcesses");
 	}
 
 	SKIP: {
