@@ -894,9 +894,6 @@ check_http (void)
 #endif
   if (sd) close(sd);
 
-  /* reset the alarm */
-  alarm (0);
-
   /* Save check time */
   microsec = deltime (tv);
   elapsed_time = (double)microsec / 1.0e6;
@@ -998,6 +995,9 @@ check_http (void)
     }
 
   } /* end else (server_expect_yn)  */
+
+  /* reset the alarm - must be called *after* redir or we'll never die on redirects! */
+  alarm (0);
 
   if (maximum_age >= 0) {
     result = max_state_alt(check_document_dates(header, &msg), result);
