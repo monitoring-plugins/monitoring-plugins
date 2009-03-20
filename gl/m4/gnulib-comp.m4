@@ -94,6 +94,7 @@ AC_DEFUN([gl_INIT],
   gl_WCHAR_MODULE_INDICATOR([mbrtowc])
   gl_FUNC_MBSINIT
   gl_WCHAR_MODULE_INDICATOR([mbsinit])
+  gl_FUNC_MKTIME
   gl_MOUNTLIST
   gl_MULTIARCH
   gl_HEADER_NETDB
@@ -125,6 +126,9 @@ AC_DEFUN([gl_INIT],
   gl_HEADER_SYS_SOCKET
   gl_MODULE_INDICATOR([sys_socket])
   AC_PROG_MKDIR_P
+  gl_HEADER_TIME_H
+  gl_TIME_R
+  gl_FUNC_TIMEGM
   gl_UNISTD_H
   gl_UNISTD_SAFER
   gl_FUNC_VASNPRINTF
@@ -332,6 +336,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/math.in.h
   lib/mbrtowc.c
   lib/mbsinit.c
+  lib/mktime.c
   lib/mountlist.c
   lib/mountlist.h
   lib/netdb.in.h
@@ -369,6 +374,9 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/strndup.c
   lib/strnlen.c
   lib/sys_socket.in.h
+  lib/time.in.h
+  lib/time_r.c
+  lib/timegm.c
   lib/unistd--.h
   lib/unistd-safer.h
   lib/unistd.in.h
@@ -444,6 +452,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/mbrtowc.m4
   m4/mbsinit.m4
   m4/mbstate_t.m4
+  m4/mktime.m4
   m4/mountlist.m4
   m4/multiarch.m4
   m4/netdb_h.m4
@@ -475,6 +484,9 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/strnlen.m4
   m4/sys_socket_h.m4
   m4/threadlib.m4
+  m4/time_h.m4
+  m4/time_r.m4
+  m4/timegm.m4
   m4/uintmax_t.m4
   m4/unistd-safer.m4
   m4/unistd_h.m4

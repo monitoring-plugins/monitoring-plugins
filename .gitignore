@@ -66,6 +66,7 @@ NP-VERSION-FILE
 /gl/stdio.h
 /gl/string.h
 /gl/sys_socket.h
+/gl/time.h
 /gl/unistd.h
 /gl/wchar.h
 /gl/wctype.h
