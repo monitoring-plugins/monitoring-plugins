@@ -37,6 +37,9 @@ my $port_http = 50000 + int(rand(1000));
 my $port_https = $port_http + 1;
 my $port_https_expired = $port_http + 2;
 
+# This array keeps sockets around for implementing timeouts
+my @persist;
+
 # Start up all servers
 my @pids;
 my $pid = fork();
@@ -93,7 +96,7 @@ if ($pid) {
 # Run the same server on http and https
 sub run_server {
 	my $d = shift;
-	while (my $c = $d->accept ) {
+	MAINLOOP: while (my $c = $d->accept ) {
 		while (my $r = $c->get_request) {
 			if ($r->method eq "GET" and $r->url->path =~ m^/statuscode/(\d+)^) {
 				$c->send_basic_header($1);
@@ -121,10 +124,19 @@ sub run_server {
 				$c->send_response($r->method.":".$r->content);
 			} elsif ($r->url->path eq "/redirect") {
 				$c->send_redirect( "/redirect2" );
+			} elsif ($r->url->path eq "/redir_external") {
+				$c->send_redirect( "http://169.254.169.254/redirect2" );
 			} elsif ($r->url->path eq "/redirect2") {
 				$c->send_basic_header;
 				$c->send_crlf;
 				$c->send_response("redirected");
+			} elsif ($r->url->path eq "/redir_timeout") {
+				$c->send_redirect( "/timeout" );
+			} elsif ($r->url->path eq "/timeout") {
+				# Keep $c from being destroyed, but prevent severe leaks
+				unshift @persist, $c;
+				delete($persist[1000]);
+				next MAINLOOP;
 			} else {
 				$c->send_error(RC_FORBIDDEN);
 			}
@@ -141,11 +153,11 @@ END {
 
 if ($ARGV[0] && $ARGV[0] eq "-d") {
 	while (1) {
-		`sleep 100`
+		sleep 100;
 	}
 }
 
-my $common_tests = 51;
+my $common_tests = 55;
 my $ssl_only_tests = 6;
 if (-x "./check_http") {
 	plan tests => $common_tests * 2 + $ssl_only_tests;
@@ -314,5 +326,41 @@ sub run_common_tests {
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+
+  # These tests may block
+	print "ALRM\n";
+
+	$cmd = "$command -f sticky -u /redir_external -t 5";
+	eval {
+		local $SIG{ALRM} = sub { die "alarm\n" };
+		alarm(2);
+		$result = NPTest->testCmd( $cmd );
+		alarm(0);	};
+	isnt( $@, "alarm\n", $cmd);
+
+	# Will this one work everywhere???
+	$cmd = "$command -f follow -u /redir_external -t 5";
+	eval {
+		local $SIG{ALRM} = sub { die "alarm\n" };
+		alarm(2);
+		$result = NPTest->testCmd( $cmd );
+		alarm(0); };
+	is( $@, "alarm\n", $cmd);
+
+	$cmd = "$command -u /timeout -t 5";
+	eval {
+		local $SIG{ALRM} = sub { die "alarm\n" };
+		alarm(2);
+		$result = NPTest->testCmd( $cmd );
+		alarm(0); };
+	is( $@, "alarm\n", $cmd);
+
+	$cmd = "$command -f follow -u /redir_timeout -t 2";
+	eval {
+		local $SIG{ALRM} = sub { die "alarm\n" };
+		alarm(5);
+		$result = NPTest->testCmd( $cmd );
+		alarm(0); };
+	isnt( $@, "alarm\n", $cmd);
 
 }
