@@ -67,6 +67,8 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
+	timeout_interval = DEFAULT_TIMEOUT;
+
 	command_line = (char **) process_arguments (argc, argv);
 
 	/* Set signal handling and alarm */
@@ -242,7 +244,7 @@ print_help (void)
 
 	printf (_(UT_HELP_VRSN));
 
-	printf (_(UT_TIMEOUT), DEFAULT_TIMEOUT);
+	printf (_(UT_TIMEOUT), timeout_interval);
 	printf ("    %s\n", _("Keep timeout longer than the plugin timeout to retain CRITICAL status."));
 
 	printf(" -o, --ok=STATUS\n");
