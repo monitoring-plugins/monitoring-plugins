@@ -8,8 +8,8 @@ use strict;
 use Test::More;
 use NPTest;
 
-# 15 tests in the first part and 32 in the last loop
-plan tests => 47;
+# 15 tests in the first part, 9 in timeout tests and 2 * 32 in the last loops
+plan tests => 88;
 
 my $res;
 
@@ -53,18 +53,37 @@ is( $res->output, "No data returned from command", "Bad command, as expected (tr
 $res = NPTest->testCmd( './negate $PWD/check_dummy 0 \'$$ a dummy okay\'' );
 is( $res->output, 'OK: $$ a dummy okay', 'Proves that $$ is not being expanded again' );
 
-
 my %state = (
 	ok => 0,
 	warning => 1,
 	critical => 2,
 	unknown => 3,
 	);
-foreach my $current_state (qw(ok warning critical unknown)) {
-	foreach my $new_state (qw(ok warning critical unknown)) {
+
+# Timeout tests
+$res = NPTest->testCmd( "./negate -t 2 /bin/sh -c 'sleep 5'" );
+is( $res->output, 'CRITICAL - Plugin timed out after 2 seconds' );
+
+foreach my $state (keys(%state)) {
+	$res = NPTest->testCmd( "./negate -t 2 -T $state /bin/sh -c 'sleep 5'" );
+	is( $res->return_code, $state{$state}, "Got timeout state $state" );
+	is( $res->output,  uc($state)." - Plugin timed out after 2 seconds", "Timeout state $state output");
+}
+
+foreach my $current_state (keys(%state)) {
+	foreach my $new_state (keys(%state)) {
 		$res = NPTest->testCmd( "./negate --$current_state=$new_state ./check_dummy ".$state{$current_state}." 'Fake $new_state'" );
 		is( $res->return_code, $state{$new_state}, "Got fake $new_state" );
-		is( $res->output, uc($current_state).": Fake $new_state" );
+		is( $res->output, uc($current_state).": Fake $new_state", "Fake $new_state output");
+	}
+}
+
+# Same as aboce with substitute
+foreach my $current_state (keys(%state)) {
+	foreach my $new_state (keys(%state)) {
+		$res = NPTest->testCmd( "./negate -s --$current_state=$new_state ./check_dummy ".$state{$current_state}." 'Fake $new_state'" );
+		is( $res->return_code, $state{$new_state}, "Got fake $new_state (with substitute)" );
+		is( $res->output, uc($new_state).": Fake $new_state", "Substitued fake $new_state output");
 	}
 }
 

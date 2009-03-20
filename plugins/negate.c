@@ -130,6 +130,7 @@ process_arguments (int argc, char **argv)
 		{"help", no_argument, 0, 'h'},
 		{"version", no_argument, 0, 'V'},
 		{"timeout", required_argument, 0, 't'},
+		{"timeout-result", required_argument, 0, 'T'},
 		{"ok", required_argument, 0, 'o'},
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
@@ -139,7 +140,7 @@ process_arguments (int argc, char **argv)
 	};
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVt:o:w:c:u:s", longopts, &option);
+		c = getopt_long (argc, argv, "+hVt:T:o:w:c:u:s", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -160,6 +161,10 @@ process_arguments (int argc, char **argv)
 				usage2 (_("Timeout interval must be a positive integer"), optarg);
 			else
 				timeout_interval = atoi (optarg);
+			break;
+		case 'T':     /* Result to return on timeouts */
+			if ((timeout_state = translate_state(optarg)) == ERROR)
+				usage4 (_("timeout result must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			break;
 		case 'o':     /* replacement for OK */
 			if ((state[STATE_OK] = translate_state(optarg)) == ERROR)
@@ -246,6 +251,8 @@ print_help (void)
 
 	printf (_(UT_TIMEOUT), timeout_interval);
 	printf ("    %s\n", _("Keep timeout longer than the plugin timeout to retain CRITICAL status."));
+	printf (" -T, --timeout-result=STATUS\n");
+	printf ("    %s\n", _("Custom result on Negate timeouts; see below for STATUS definition\n"));
 
 	printf(" -o, --ok=STATUS\n");
 	printf(" -w, --warning=STATUS\n");
@@ -270,6 +277,9 @@ print_help (void)
 	printf (" %s\n", _("If the wrapped plugin returns OK, the wrapper will return CRITICAL."));
 	printf (" %s\n", _("If the wrapped plugin returns CRITICAL, the wrapper will return OK."));
 	printf (" %s\n", _("Otherwise, the output state of the wrapped plugin is unchanged."));
+	printf ("\n");
+	printf (" %s\n", _("Using timeout-result, it is possible to override the timeout behaviour or a"));
+	printf (" %s\n", _("plugin by setting the negate timeout a bit lower."));
 
 	printf (_(UT_SUPPORT));
 }
@@ -280,5 +290,5 @@ void
 print_usage (void)
 {
 	printf (_("Usage:"));
-	printf ("%s [-t timeout] [-owcu STATE] [-s] <definition of wrapped plugin>\n", progname);
+	printf ("%s [-t timeout] [-Towcu STATE] [-s] <definition of wrapped plugin>\n", progname);
 }

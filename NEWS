@@ -26,6 +26,7 @@ This file documents the major additions and syntax changes between releases.
 	Fixed check_http sending HTTP/1.0 with v1.1 headers (#2638765)
 	Fixed check_http not timing-out on redirects
 	Fixed negate not printing the real timeout in ALRM handler when left to default
+	negate timeout result is now configurable
 
 1.4.13 25th Sept 2008
 	Fix Debian bug #460097: check_http --max-age broken (Hilko Bengen)
