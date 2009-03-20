@@ -168,9 +168,9 @@ void
 timeout_alarm_handler (int signo)
 {
 	if (signo == SIGALRM) {
-		printf (_("CRITICAL - Plugin timed out after %d seconds\n"),
-						timeout_interval);
-		exit (STATE_CRITICAL);
+		printf (_("%s - Plugin timed out after %d seconds\n"),
+						state_text(timeout_state), timeout_interval);
+		exit (timeout_state);
 	}
 }
 
