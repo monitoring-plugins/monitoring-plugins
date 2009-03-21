@@ -125,11 +125,11 @@ sub run_server {
 			} elsif ($r->url->path eq "/redirect") {
 				$c->send_redirect( "/redirect2" );
 			} elsif ($r->url->path eq "/redir_external") {
-				$c->send_redirect( "http://169.254.169.254/redirect2" );
+				$c->send_redirect(($d->isa('HTTP::Daemon::SSL') ? "https" : "http") . "://169.254.169.254/redirect2" );
 			} elsif ($r->url->path eq "/redirect2") {
 				$c->send_basic_header;
 				$c->send_crlf;
-				$c->send_response("redirected");
+				$c->send_response(HTTP::Response->new( 200, 'OK', undef, 'redirected' ));
 			} elsif ($r->url->path eq "/redir_timeout") {
 				$c->send_redirect( "/timeout" );
 			} elsif ($r->url->path eq "/timeout") {
@@ -157,7 +157,7 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 	}
 }
 
-my $common_tests = 55;
+my $common_tests = 62;
 my $ssl_only_tests = 6;
 if (-x "./check_http") {
 	plan tests => $common_tests * 2 + $ssl_only_tests;
@@ -180,7 +180,6 @@ SKIP: {
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 14000" );
 	is( $result->return_code, 1, "$command -p $port_https -S -C 14000" );
 	like( $result->output, '/WARNING - Certificate expires in \d+ day\(s\) \(03/03/2019 21:41\)./', "output ok" );
-
 
 	# Expired cert tests
 	$result = NPTest->testCmd( "$command -p $port_https_expired -S -C 7" );
@@ -316,7 +315,6 @@ sub run_common_tests {
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
-
 	$cmd = "$command -u /redirect -k 'follow: me'";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
@@ -327,25 +325,50 @@ sub run_common_tests {
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
+	$cmd = "$command -f sticky -u /redirect -k 'follow: me'";
+	$result = NPTest->testCmd( $cmd );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+
+	$cmd = "$command -f stickyport -u /redirect -k 'follow: me'";
+	$result = NPTest->testCmd( $cmd );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+
   # These tests may block
 	print "ALRM\n";
 
-	$cmd = "$command -f sticky -u /redir_external -t 5";
+	# stickyport - on full urlS port is set back to 80 otherwise
+	$cmd = "$command -f stickyport -u /redir_external -t 5 -s redirected";
 	eval {
 		local $SIG{ALRM} = sub { die "alarm\n" };
 		alarm(2);
 		$result = NPTest->testCmd( $cmd );
 		alarm(0);	};
-	isnt( $@, "alarm\n", $cmd);
+	isnt( $@, "alarm\n", $cmd );
+	is( $result->return_code, 0, $cmd );
 
-	# Will this one work everywhere???
-	$cmd = "$command -f follow -u /redir_external -t 5";
+	# Let's hope there won't be any web server on :80 returning "redirected"!
+	$cmd = "$command -f sticky -u /redir_external -t 5 -s redirected";
 	eval {
 		local $SIG{ALRM} = sub { die "alarm\n" };
 		alarm(2);
 		$result = NPTest->testCmd( $cmd );
 		alarm(0); };
-	is( $@, "alarm\n", $cmd);
+	isnt( $@, "alarm\n", $cmd );
+	isnt( $result->return_code, 0, $cmd );
+
+	# Test an external address - timeout
+	SKIP: {
+		skip "This doesn't seems to work all the time", 1 unless ($ENV{HTTP_EXTERNAL});
+		$cmd = "$command -f follow -u /redir_external -t 5";
+		eval {
+			local $SIG{ALRM} = sub { die "alarm\n" };
+			alarm(2);
+			$result = NPTest->testCmd( $cmd );
+			alarm(0); };
+		is( $@, "alarm\n", $cmd );
+	}
 
 	$cmd = "$command -u /timeout -t 5";
 	eval {
@@ -353,7 +376,7 @@ sub run_common_tests {
 		alarm(2);
 		$result = NPTest->testCmd( $cmd );
 		alarm(0); };
-	is( $@, "alarm\n", $cmd);
+	is( $@, "alarm\n", $cmd );
 
 	$cmd = "$command -f follow -u /redir_timeout -t 2";
 	eval {
@@ -361,6 +384,7 @@ sub run_common_tests {
 		alarm(5);
 		$result = NPTest->testCmd( $cmd );
 		alarm(0); };
-	isnt( $@, "alarm\n", $cmd);
+	isnt( $@, "alarm\n", $cmd );
 
 }
+

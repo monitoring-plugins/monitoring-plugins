@@ -44,6 +44,9 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include <ctype.h>
 
 #define INPUT_DELIMITER ";"
+#define STICKY_NONE 0
+#define STICKY_HOST 1
+#define STICKY_PORT 2
 
 #define HTTP_EXPECT "HTTP/1."
 enum {
@@ -106,7 +109,7 @@ int display_html = FALSE;
 char **http_opt_headers;
 int http_opt_headers_count = 0;
 int onredirect = STATE_OK;
-int followsticky = 0;
+int followsticky = STICKY_NONE;
 int use_ssl = FALSE;
 int verbose = FALSE;
 int sd;
@@ -300,10 +303,12 @@ process_arguments (int argc, char **argv)
         server_port = HTTPS_PORT;
       break;
     case 'f': /* onredirect */
+      if (!strcmp (optarg, "stickyport"))
+        onredirect = STATE_DEPENDENT, followsticky = STICKY_HOST|STICKY_PORT;
       if (!strcmp (optarg, "sticky"))
-        onredirect = STATE_DEPENDENT, followsticky = 1;
+        onredirect = STATE_DEPENDENT, followsticky = STICKY_HOST;
       if (!strcmp (optarg, "follow"))
-        onredirect = STATE_DEPENDENT, followsticky = 0;
+        onredirect = STATE_DEPENDENT, followsticky = STICKY_NONE;
       if (!strcmp (optarg, "unknown"))
         onredirect = STATE_UNKNOWN;
       if (!strcmp (optarg, "ok"))
@@ -1203,15 +1208,18 @@ redir (char *pos, char *status_line)
   free (host_name);
   host_name = strdup (addr);
 
-  if (followsticky == 0) {
+  if (!(followsticky & STICKY_HOST)) {
     free (server_address);
     server_address = strdup (addr);
+  }
+  if (!(followsticky & STICKY_PORT)) {
+    server_port = i;
   }
 
   free (server_url);
   server_url = url;
 
-  if ((server_port = i) > MAX_PORT)
+  if (server_port > MAX_PORT)
     die (STATE_UNKNOWN,
          _("HTTP UNKNOWN - Redirection to port above %d - %s://%s:%d%s%s\n"),
          MAX_PORT, server_type, server_address, server_port, server_url,
@@ -1343,9 +1351,9 @@ print_help (void)
   printf ("    %s\n", _(" Any other tags to be sent in http header. Use multiple times for additional headers"));
   printf (" %s\n", "-L, --link");
   printf ("    %s\n", _("Wrap output in HTML link (obsoleted by urlize)"));
-  printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow|sticky>");
+  printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow|sticky|stickyport>");
   printf ("    %s\n", _("How to handle redirected pages. sticky is like follow but stick to the"));
-  printf ("    %s\n", _("specified IP address"));
+  printf ("    %s\n", _("specified IP address. stickyport also ensure post stays the same."));
   printf (" %s\n", "-m, --pagesize=INTEGER<:INTEGER>");
   printf ("    %s\n", _("Minimum page size required (bytes) : Maximum page size required (bytes)"));
 
