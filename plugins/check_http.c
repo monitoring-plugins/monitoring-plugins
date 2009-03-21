@@ -305,18 +305,19 @@ process_arguments (int argc, char **argv)
     case 'f': /* onredirect */
       if (!strcmp (optarg, "stickyport"))
         onredirect = STATE_DEPENDENT, followsticky = STICKY_HOST|STICKY_PORT;
-      if (!strcmp (optarg, "sticky"))
+      else if (!strcmp (optarg, "sticky"))
         onredirect = STATE_DEPENDENT, followsticky = STICKY_HOST;
-      if (!strcmp (optarg, "follow"))
+      else if (!strcmp (optarg, "follow"))
         onredirect = STATE_DEPENDENT, followsticky = STICKY_NONE;
-      if (!strcmp (optarg, "unknown"))
+      else if (!strcmp (optarg, "unknown"))
         onredirect = STATE_UNKNOWN;
-      if (!strcmp (optarg, "ok"))
+      else if (!strcmp (optarg, "ok"))
         onredirect = STATE_OK;
-      if (!strcmp (optarg, "warning"))
+      else if (!strcmp (optarg, "warning"))
         onredirect = STATE_WARNING;
-      if (!strcmp (optarg, "critical"))
+      else if (!strcmp (optarg, "critical"))
         onredirect = STATE_CRITICAL;
+      else usage2 (_("Invalid onredirect option"), optarg);
       if (verbose)
         printf(_("option f:%d \n"), onredirect);
       break;
