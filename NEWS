@@ -29,6 +29,7 @@ This file documents the major additions and syntax changes between releases.
 	Fixed negate not printing the real timeout in ALRM handler when left to default
 	negate timeout result is now configurable
 	Fixed segfault in check_mysql with old slaves (#2696823 - Oskar Ahner)
+	check_nt can return UNKNOWN on timeouts (-u)
 
 1.4.13 25th Sept 2008
 	Fix Debian bug #460097: check_http --max-age broken (Hilko Bengen)

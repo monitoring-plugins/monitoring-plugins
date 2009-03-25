@@ -480,6 +480,7 @@ int process_arguments(int argc, char **argv){
 		{"params",   required_argument,0,'l'},
 		{"secret",   required_argument,0,'s'},
 		{"display",  required_argument,0,'d'},
+		{"unknown-timeout", no_argument, 0, 'u'},
 		{"version",  no_argument,      0,'V'},
 		{"help",     no_argument,      0,'h'},
 		{0,0,0,0}
@@ -506,7 +507,7 @@ int process_arguments(int argc, char **argv){
 	}
 
 	while (1) {
-		c = getopt_long(argc,argv,"+hVH:t:c:w:p:v:l:s:d:",longopts,&option);
+		c = getopt_long(argc,argv,"+hVH:t:c:w:p:v:l:s:d:u",longopts,&option);
 
 		if (c==-1||c==EOF||c==1)
 			break;
@@ -573,6 +574,9 @@ int process_arguments(int argc, char **argv){
 			case 'd': /* Display select for services */
 				if (!strcmp(optarg,"SHOWALL"))
 					show_all = TRUE;
+				break;
+			case 'u':
+				socket_timeout_state=STATE_UNKNOWN;
 				break;
 			case 't': /* timeout */
 				socket_timeout=atoi(optarg);
@@ -671,6 +675,8 @@ void print_help(void)
 	printf ("   %s", _("Parameters passed to specified check (see below)"));
 	printf (" %s\n", "-d, --display={SHOWALL}");
 	printf ("   %s", _("Display options (currently only SHOWALL works)"));
+	printf (" %s\n", "-u, --unknown-timeout");
+	printf ("   %s", _("Return UNKNOWN on timeouts"));
 	printf ("%d)\n", DEFAULT_SOCKET_TIMEOUT);
 	printf (" %s\n", "-h, --help");
 	printf ("   %s\n", _("Print this help screen"));
@@ -754,6 +760,6 @@ void print_usage(void)
 {
 	printf (_("Usage:"));
 	printf ("%s -H host -v variable [-p port] [-w warning] [-c critical]\n",progname);
-	printf ("[-l params] [-d SHOWALL] [-t timeout]\n");
+	printf ("[-l params] [-d SHOWALL] [-u] [-t timeout]\n");
 }
 
