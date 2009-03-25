@@ -45,8 +45,6 @@
 # endif /* UNIX_PATH_MAX */
 #endif /* HAVE_SYS_UN_H */
 
-RETSIGTYPE socket_timeout_alarm_handler (int) __attribute__((noreturn));
-
 /* process_request and wrapper macros */
 #define process_tcp_request(addr, port, sbuf, rbuf, rsize) \
 	process_request(addr, port, IPPROTO_TCP, sbuf, rbuf, rsize)
@@ -83,7 +81,16 @@ void host_or_die(const char *str);
 #  define is_hostname(addr) resolve_host_or_addr(addr, AF_INET)
 #endif
 
+#ifdef LOCAL_TIMEOUT_ALARM_HANDLER
 extern unsigned int socket_timeout;
+extern int socket_timeout_state;
+RETSIGTYPE socket_timeout_alarm_handler (int) __attribute__((noreturn));
+#else
+unsigned int socket_timeout = DEFAULT_SOCKET_TIMEOUT;
+unsigned int socket_timeout_state = STATE_CRITICAL;
+extern RETSIGTYPE socket_timeout_alarm_handler (int) __attribute__((noreturn));
+#endif
+
 extern int econn_refuse_state;
 extern int was_refused;
 extern int address_family;

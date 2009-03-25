@@ -32,7 +32,6 @@
 #include "common.h"
 #include "netutils.h"
 
-unsigned int socket_timeout = DEFAULT_SOCKET_TIMEOUT;
 int econn_refuse_state = STATE_CRITICAL;
 int was_refused = FALSE;
 #if USE_IPV6
@@ -46,11 +45,11 @@ void
 socket_timeout_alarm_handler (int sig)
 {
 	if (sig == SIGALRM)
-		printf (_("CRITICAL - Socket timeout after %d seconds\n"), socket_timeout);
+		printf (_("%s - Socket timeout after %d seconds\n"), state_text(socket_timeout_state),  socket_timeout);
 	else
-		printf (_("CRITICAL - Abnormal timeout after %d seconds\n"), socket_timeout);
+		printf (_("%s - Abnormal timeout after %d seconds\n"), state_text(socket_timeout_state), socket_timeout);
 
-	exit (STATE_CRITICAL);
+	exit (socket_timeout_state);
 }
 
 
