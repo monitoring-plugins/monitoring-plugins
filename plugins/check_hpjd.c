@@ -98,6 +98,7 @@ main (int argc, char **argv)
 
 	errmsg = malloc(MAX_INPUT_BUFFER);
 
+	np_set_mynames(argv[0], "HPJD");
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
@@ -127,15 +128,12 @@ main (int argc, char **argv)
 
 	/* run the command */
 	child_process = spopen (command_line);
-	if (child_process == NULL) {
-		printf (_("Could not open pipe: %s\n"), command_line);
-		return STATE_UNKNOWN;
-	}
+	if (child_process == NULL)
+		np_die(STATE_UNKNOWN, _("Could not open pipe: %s"), command_line);
 
 	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
-	if (child_stderr == NULL) {
+	if (child_stderr == NULL)
 		printf (_("Could not open stderr for %s\n"), command_line);
-	}
 
 	result = STATE_OK;
 
@@ -286,21 +284,13 @@ main (int argc, char **argv)
 	}
 
 	if (result == STATE_OK)
-		printf (_("Printer ok - (%s)\n"), display_message);
-
-	else if (result == STATE_UNKNOWN) {
-
-		printf ("%s\n", errmsg);
-
-		/* if printer could not be reached, escalate to critical */
-		if (strstr (errmsg, "Timeout"))
-			result = STATE_CRITICAL;
-	}
-
+		np_die(STATE_OK, _("Printer ok - (%s)"), display_message);
 	else if (result == STATE_WARNING)
-		printf ("%s (%s)\n", errmsg, display_message);
+		np_die(STATE_WARNING, "%s (%s)\n", errmsg, display_message);
 
-	return result;
+	/* if printer could not be reached, escalate to critical */
+	np_die(strstr(errmsg, "Timeout") ? STATE_CRITICAL : STATE_UNKNOWN,
+	    "%s", errmsg);
 }
 
 

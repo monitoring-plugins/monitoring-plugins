@@ -60,7 +60,6 @@ void print_usage (void);
 char *server_name = NULL;
 int packet_size = PACKET_SIZE;
 int packet_count = PACKET_COUNT;
-int verbose = FALSE;
 int cpl;
 int wpl;
 double crta;
@@ -81,6 +80,7 @@ main (int argc, char **argv)
   char *input_buffer = NULL;
   input_buffer = malloc (MAX_INPUT_BUFFER);
 
+  np_set_mynames(argv[0], "FPING");
   setlocale (LC_ALL, "");
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
@@ -94,32 +94,26 @@ main (int argc, char **argv)
   asprintf (&command_line, "%s -b %d -c %d %s", PATH_TO_FPING,
             packet_size, packet_count, server);
 
-  if (verbose)
-    printf ("%s\n", command_line);
+  np_verbatim(command_line);
 
   /* run the command */
   child_process = spopen (command_line);
-  if (child_process == NULL) {
-    printf (_("Could not open pipe: %s\n"), command_line);
-    return STATE_UNKNOWN;
-  }
+  if (child_process == NULL)
+    np_die(STATE_UNKNOWN, _("Could not open pipe: %s"), command_line);
 
   child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
-  if (child_stderr == NULL) {
+  if (child_stderr == NULL)
     printf (_("Could not open stderr for %s\n"), command_line);
-  }
 
   while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
-    if (verbose)
-      printf ("%s", input_buffer);
+    np_verbatim(input_buffer);
     status = max_state (status, textscan (input_buffer));
   }
 
   /* If we get anything on STDERR, at least set warning */
   while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
     status = max_state (status, STATE_WARNING);
-    if (verbose)
-      printf ("%s", input_buffer);
+    np_verbatim(input_buffer);
     status = max_state (status, textscan (input_buffer));
   }
   (void) fclose (child_stderr);
@@ -129,9 +123,7 @@ main (int argc, char **argv)
     /* need to use max_state not max */
     status = max_state (status, STATE_WARNING);
 
-  printf ("FPING %s - %s\n", state_text (status), server_name);
-
-  return status;
+  np_die("%s", server_name);
 }
 
 
@@ -146,16 +138,15 @@ textscan (char *buf)
   int status = STATE_UNKNOWN;
 
   if (strstr (buf, "not found")) {
-    die (STATE_CRITICAL, _("FPING UNKNOW - %s not found\n"), server_name);
+    np_die(STATE_UNKNOWN, _("%s not found"), server_name);
 
   }
   else if (strstr (buf, "is unreachable") || strstr (buf, "Unreachable")) {
-    die (STATE_CRITICAL, _("FPING CRITICAL - %s is unreachable\n"),
-               "host");
+    np_die(STATE_CRITICAL, _("%s is unreachable"), "host");
 
   }
   else if (strstr (buf, "is down")) {
-    die (STATE_CRITICAL, _("FPING CRITICAL - %s is down\n"), server_name);
+    np_die(STATE_CRITICAL, _("%s is down"), server_name);
 
   }
   else if (strstr (buf, "is alive")) {
@@ -181,9 +172,9 @@ textscan (char *buf)
       status = STATE_WARNING;
     else
       status = STATE_OK;
-    die (status,
-          _("FPING %s - %s (loss=%.0f%%, rta=%f ms)|%s %s\n"),
-         state_text (status), server_name, loss, rta,
+    np_die(status,
+          _("- %s (loss=%.0f%%, rta=%f ms)|%s %s\n"),
+         server_name, loss, rta,
          perfdata ("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, TRUE, 0, TRUE, 100),
          fperfdata ("rta", rta/1.0e3, "s", wrta_p, wrta/1.0e3, crta_p, crta/1.0e3, TRUE, 0, FALSE, 0));
 
@@ -203,8 +194,8 @@ textscan (char *buf)
     else
       status = STATE_OK;
     /* loss=%.0f%%;%d;%d;0;100 */
-    die (status, _("FPING %s - %s (loss=%.0f%% )|%s\n"),
-         state_text (status), server_name, loss ,
+    np_die(status, _("%s (loss=%.0f%% )|%s"),
+         server_name, loss,
          perfdata ("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, TRUE, 0, TRUE, 100));
   
   }
@@ -266,7 +257,7 @@ process_arguments (int argc, char **argv)
       print_revision (progname, revision);
       exit (STATE_OK);
     case 'v':                 /* verbose mode */
-      verbose = TRUE;
+      np_increase_verbosity(1);
       break;
     case 'H':                 /* hostname */
       if (is_host (optarg) == FALSE) {
@@ -335,13 +326,11 @@ get_threshold (char *arg, char *rv[2])
   if (arg2) {
     arg1[strcspn (arg1, ",:")] = 0;
     if (strstr (arg1, "%") && strstr (arg2, "%"))
-      die (STATE_UNKNOWN,
-                 _("%s: Only one threshold may be packet loss (%s)\n"), progname,
-                 arg);
+      np_die(STATE_UNKNOWN,
+                 _("Only one threshold may be packet loss (%s)\n"), arg);
     if (!strstr (arg1, "%") && !strstr (arg2, "%"))
-      die (STATE_UNKNOWN,
-                 _("%s: Only one threshold must be packet loss (%s)\n"),
-                 progname, arg);
+      np_die(STATE_UNKNOWN,
+                 _("Only one threshold must be packet loss (%s)\n"), arg);
   }
 
   if (arg2 && strstr (arg2, "%")) {

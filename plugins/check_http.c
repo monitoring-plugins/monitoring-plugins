@@ -113,7 +113,6 @@ char **http_opt_headers;
 int http_opt_headers_count = 0;
 int onredirect = STATE_OK;
 int use_ssl = FALSE;
-int verbose = FALSE;
 int sd;
 int min_page_len = 0;
 int max_page_len = 0;
@@ -139,6 +138,8 @@ int
 main (int argc, char **argv)
 {
   int result = STATE_UNKNOWN;
+
+  np_set_mynames(argv[0], "HTTP");
 
   /* Set default URL. Must be malloced for subsequent realloc if --onredirect=follow */
   server_url = strdup(HTTP_URL);
@@ -307,8 +308,7 @@ process_arguments (int argc, char **argv)
         onredirect = STATE_WARNING;
       if (!strcmp (optarg, "critical"))
         onredirect = STATE_CRITICAL;
-      if (verbose)
-        printf(_("option f:%d \n"), onredirect);  
+      np_verbose (_("option f:%d"), onredirect);
       break;
     /* Note: H, I, and u must be malloc'd or will fail on redirects */
     case 'H': /* Host Name (virtual host) */
@@ -381,7 +381,7 @@ process_arguments (int argc, char **argv)
 #endif
       break;
     case 'v': /* verbose */
-      verbose = TRUE;
+      np_increase_verbosity(1);
       break;
     case 'm': /* min_page_length */
       {
@@ -389,17 +389,15 @@ process_arguments (int argc, char **argv)
       if (strchr(optarg, ':') != (char *)NULL) {
         /* range, so get two values, min:max */
         tmp = strtok(optarg, ":");
-        if (tmp == NULL) {
-          printf("Bad format: try \"-m min:max\"\n");
-          exit (STATE_WARNING);
-        } else
+        if (tmp == NULL)
+          np_die (STATE_UNKNOWN, "Bad format: try \"-m min:max\"");
+        else
           min_page_len = atoi(tmp);
 
         tmp = strtok(NULL, ":");
-        if (tmp == NULL) {
-          printf("Bad format: try \"-m min:max\"\n");
-          exit (STATE_WARNING);
-        } else
+        if (tmp == NULL)
+          np_die (STATE_UNKNOWN, "Bad format: try \"-m min:max\"");
+        else
           max_page_len = atoi(tmp);
       } else 
         min_page_len = atoi (optarg);
@@ -420,10 +418,8 @@ process_arguments (int argc, char **argv)
                     else if (L && (optarg[L-1] == 's' ||
                                    isdigit (optarg[L-1])))
                       maximum_age = atoi (optarg);
-                    else {
-                      fprintf (stderr, "unparsable max-age: %s\n", optarg);
-                      exit (STATE_WARNING);
-                    }
+                    else
+                      np_die (STATE_UNKNOWN, _("Unparsable max-age: %s"), optarg);
                   }
                   break;
     }
@@ -593,7 +589,7 @@ parse_time_string (const char *string)
     t = mktime (&tm);
     if (t == (time_t) -1) t = 0;
 
-    if (verbose) {
+    if (np_get_verbosity() > 0) {
       const char *s = string;
       while (*s && *s != '\r' && *s != '\n')
       fputc (*s++, stdout);
@@ -665,28 +661,27 @@ check_document_dates (const char *headers)
 
   /* Done parsing the body.  Now check the dates we (hopefully) parsed.  */
   if (!server_date || !*server_date) {
-    die (STATE_UNKNOWN, _("HTTP UNKNOWN - Server date unknown\n"));
+    np_die (STATE_UNKNOWN, _("Server date unknown"));
   } else if (!document_date || !*document_date) {
-    die (STATE_CRITICAL, _("HTTP CRITICAL - Document modification date unknown\n"));
+    np_die (STATE_CRITICAL, _("Document modification date unknown"));
   } else {
     time_t srv_data = parse_time_string (server_date);
     time_t doc_data = parse_time_string (document_date);
 
     if (srv_data <= 0) {
-      die (STATE_CRITICAL, _("HTTP CRITICAL - Server date \"%100s\" unparsable"), server_date);
+      np_die (STATE_CRITICAL, _("Server date \"%100s\" unparsable"), server_date);
     } else if (doc_data <= 0) {
-      die (STATE_CRITICAL, _("HTTP CRITICAL - Document date \"%100s\" unparsable"), document_date);
+      np_die (STATE_CRITICAL, _("Document date \"%100s\" unparsable"), document_date);
     } else if (doc_data > srv_data + 30) {
-      die (STATE_CRITICAL, _("HTTP CRITICAL - Document is %d seconds in the future\n"), (int)doc_data - (int)srv_data);
+      np_die (STATE_CRITICAL, _("Document is %d seconds in the future"),
+        (int)doc_data - (int)srv_data);
     } else if (doc_data < srv_data - maximum_age) {
     int n = (srv_data - doc_data);
     if (n > (60 * 60 * 24 * 2))
-      die (STATE_CRITICAL,
-        _("HTTP CRITICAL - Last modified %.1f days ago\n"),
+      np_die (STATE_CRITICAL, _("Last modified %.1f days ago"),
         ((float) n) / (60 * 60 * 24));
   else
-    die (STATE_CRITICAL,
-        _("HTTP CRITICAL - Last modified %d:%02d:%02d ago\n"),
+    np_die (STATE_CRITICAL, _("Last modified %d:%02d:%02d ago"),
         n / (60 * 60), (n / 60) % 60, n % 60);
     }
 
@@ -767,7 +762,7 @@ check_http (void)
 
   /* try to connect to the host at the given port number */
   if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK)
-    die (STATE_CRITICAL, _("HTTP CRITICAL - Unable to open TCP socket\n"));
+    np_die (STATE_CRITICAL, _("Unable to open TCP socket"));
 #ifdef HAVE_SSL
   if (use_ssl == TRUE) {
     np_net_ssl_init(sd);
@@ -820,7 +815,7 @@ check_http (void)
     asprintf (&buf, "%s%s", buf, CRLF);
   }
 
-  if (verbose) printf ("%s\n", buf);
+  np_verbatim (buf);
   my_send (buf, strlen (buf));
 
   /* fetch the page */
@@ -842,15 +837,15 @@ check_http (void)
     if (use_ssl) {
       sslerr=SSL_get_error(ssl, i);
       if ( sslerr == SSL_ERROR_SSL ) {
-        die (STATE_WARNING, _("HTTP WARNING - Client Certificate Required\n"));
+        np_die (STATE_WARNING, _("Client Certificate Required"));
       } else {
-        die (STATE_CRITICAL, _("HTTP CRITICAL - Error on receive\n"));
+        np_die (STATE_CRITICAL, _("Error on receive"));
       }
     }
     else {
     */
 #endif
-      die (STATE_CRITICAL, _("HTTP CRITICAL - Error on receive\n"));
+      np_die (STATE_CRITICAL, _("HTTP CRITICAL - Error on receive"));
 #ifdef HAVE_SSL
       /* XXX
     }
@@ -860,7 +855,7 @@ check_http (void)
 
   /* return a CRITICAL status if we couldn't read any data */
   if (pagesize == (size_t) 0)
-    die (STATE_CRITICAL, _("HTTP CRITICAL - No data received from host\n"));
+    np_die (STATE_CRITICAL, _("HTTP CRITICAL - No data received from host"));
 
   /* close the connection */
 #ifdef HAVE_SSL
@@ -874,8 +869,7 @@ check_http (void)
   /* leave full_page untouched so we can free it later */
   page = full_page;
 
-  if (verbose)
-    printf ("%s://%s:%d%s is %d characters\n",
+  np_verbose ("%s://%s:%d%s is %d characters",
       use_ssl ? "https" : "http", server_address,
       server_port, server_url, (int)pagesize);
 
@@ -886,8 +880,7 @@ check_http (void)
   page += (size_t) strspn (page, "\r\n");
   status_line[strcspn(status_line, "\r\n")] = 0;
   strip (status_line);
-  if (verbose)
-    printf ("STATUS: %s\n", status_line);
+  np_verbose ("STATUS: %s", status_line);
 
   /* find header info and null-terminate it */
   header = page;
@@ -902,29 +895,27 @@ check_http (void)
   }
   page += (size_t) strspn (page, "\r\n");
   header[pos - header] = 0;
-  if (verbose)
-    printf ("**** HEADER ****\n%s\n**** CONTENT ****\n%s\n", header,
+  np_verbose ("**** HEADER ****\n%s\n**** CONTENT ****\n%s", header,
                 (no_body ? "  [[ skipped ]]" : page));
 
   /* make sure the status line matches the response we are looking for */
   if (!strstr (status_line, server_expect)) {
     if (server_port == HTTP_PORT)
       asprintf (&msg,
-                _("Invalid HTTP response received from host\n"));
+                _("Invalid HTTP response received from host"));
     else
       asprintf (&msg,
-                _("Invalid HTTP response received from host on port %d\n"),
+                _("Invalid HTTP response received from host on port %d"),
                 server_port);
-    die (STATE_CRITICAL, "HTTP CRITICAL - %s", msg);
+    np_die (STATE_CRITICAL, "%s", msg);
   }
 
   /* Exit here if server_expect was set by user and not default */
   if ( server_expect_yn  )  {
     asprintf (&msg,
-              _("HTTP OK: Status line output matched \"%s\"\n"),
+              _("Status line output matched \"%s\""),
               server_expect);
-    if (verbose)
-      printf ("%s\n",msg);
+    np_verbatim (msg);
   }
   else {
     /* Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF */
@@ -933,40 +924,32 @@ check_http (void)
 
     status_code = strchr (status_line, ' ') + sizeof (char);
     if (strspn (status_code, "1234567890") != 3)
-      die (STATE_CRITICAL, _("HTTP CRITICAL: Invalid Status Line (%s)\n"), status_line);
+      np_die (STATE_CRITICAL, _("Invalid Status Line (%s)"), status_line);
 
     http_status = atoi (status_code);
 
     /* check the return code */
 
     if (http_status >= 600 || http_status < 100)
-      die (STATE_CRITICAL, _("HTTP CRITICAL: Invalid Status (%s)\n"), status_line);
+      np_die (STATE_CRITICAL, _("Invalid Status (%s)"), status_line);
 
     /* server errors result in a critical state */
     else if (http_status >= 500)
-      die (STATE_CRITICAL, _("HTTP CRITICAL: %s\n"), status_line);
+      np_die (STATE_CRITICAL, _("%s"), status_line);
 
     /* client errors result in a warning state */
     else if (http_status >= 400)
-      die (STATE_WARNING, _("HTTP WARNING: %s\n"), status_line);
+      np_die (STATE_WARNING, _("%s"), status_line);
 
     /* check redirected page if specified */
     else if (http_status >= 300) {
 
       if (onredirect == STATE_DEPENDENT)
         redir (header, status_line);
-      else if (onredirect == STATE_UNKNOWN)
-        printf (_("HTTP UNKNOWN"));
-      else if (onredirect == STATE_OK)
-        printf (_("HTTP OK"));
-      else if (onredirect == STATE_WARNING)
-        printf (_("HTTP WARNING"));
-      else if (onredirect == STATE_CRITICAL)
-        printf (_("HTTP CRITICAL"));
       microsec = deltime (tv);
       elapsed_time = (double)microsec / 1.0e6;
-      die (onredirect,
-           _(" - %s - %.3f second response time %s|%s %s\n"),
+      np_die (onredirect,
+           _("%s - %.3f second response time %s|%s %s"),
            status_line, elapsed_time, 
            (display_html ? "</A>" : ""),
            perfd_time (elapsed_time), perfd_size (pagesize));
@@ -982,59 +965,50 @@ check_http (void)
   microsec = deltime (tv);
   elapsed_time = (double)microsec / 1.0e6;
   asprintf (&msg,
-            _("HTTP WARNING: %s - %.3f second response time %s|%s %s\n"),
+            _("%s - %.3f second response time %s|%s %s"),
             status_line, elapsed_time, 
             (display_html ? "</A>" : ""),
             perfd_time (elapsed_time), perfd_size (pagesize));
   if (check_critical_time == TRUE && elapsed_time > critical_time)
-    die (STATE_CRITICAL, "%s", msg);
+    np_die (STATE_CRITICAL, "%s", msg);
   if (check_warning_time == TRUE && elapsed_time > warning_time)
-    die (STATE_WARNING, "%s", msg);
+    np_die (STATE_WARNING, "%s", msg);
 
   /* Page and Header content checks go here */
   /* these checks should be last */
 
   if (strlen (string_expect)) {
-    if (strstr (page, string_expect)) {
-      printf (_("HTTP OK %s - %.3f second response time %s|%s %s\n"),
+    if (strstr (page, string_expect))
+      np_die (STATE_OK, _("%s - %.3f second response time %s|%s %s"),
               status_line, elapsed_time,
               (display_html ? "</A>" : ""),
               perfd_time (elapsed_time), perfd_size (pagesize));
-      exit (STATE_OK);
-    }
-    else {
-      printf (_("HTTP CRITICAL - string not found%s|%s %s\n"),
+    else
+      np_die (STATE_CRITICAL, _("string not found%s|%s %s"),
               (display_html ? "</A>" : ""),
               perfd_time (elapsed_time), perfd_size (pagesize));
-      exit (STATE_CRITICAL);
-    }
   }
 
   if (strlen (regexp)) {
     errcode = regexec (&preg, page, REGS, pmatch, 0);
-    if ((errcode == 0 && invert_regex == 0) || (errcode == REG_NOMATCH && invert_regex == 1)) {
-      printf (_("HTTP OK %s - %.3f second response time %s|%s %s\n"),
+    if ((errcode == 0 && invert_regex == 0) || (errcode == REG_NOMATCH && invert_regex == 1))
+      np_die (STATE_OK, _("%s - %.3f second response time %s|%s %s"),
               status_line, elapsed_time,
               (display_html ? "</A>" : ""),
               perfd_time (elapsed_time), perfd_size (pagesize));
-      exit (STATE_OK);
-    }
     else if ((errcode == REG_NOMATCH && invert_regex == 0) || (errcode == 0 && invert_regex == 1)) {
       if (invert_regex == 0) 
         msg = strdup(_("pattern not found"));
       else 
         msg = strdup(_("pattern found"));
-      printf (("%s - %s%s|%s %s\n"),
-        _("HTTP CRITICAL"),
+      np_die (STATE_CRITICAL, "%s%s|%s %s",
         msg,
         (display_html ? "</A>" : ""),
         perfd_time (elapsed_time), perfd_size (pagesize));
-      exit (STATE_CRITICAL);
     }
     else {
       regerror (errcode, &preg, errbuf, MAX_INPUT_BUFFER);
-      printf (_("HTTP CRITICAL - Execute Error: %s\n"), errbuf);
-      exit (STATE_CRITICAL);
+      np_die (STATE_CRITICAL, _("Execute Error: %s"), errbuf);
     }
   }
 
@@ -1042,20 +1016,18 @@ check_http (void)
   /* page_len = get_content_length(header); */
   page_len = pagesize;
   if ((max_page_len > 0) && (page_len > max_page_len)) {
-    printf (_("HTTP WARNING: page size %d too large%s|%s\n"),
+    np_die (STATE_WARNING, _("page size %d too large%s|%s"),
       page_len, (display_html ? "</A>" : ""), perfd_size (page_len) );
-    exit (STATE_WARNING);
   } else if ((min_page_len > 0) && (page_len < min_page_len)) {
-    printf (_("HTTP WARNING: page size %d too small%s|%s\n"),
+    np_die (STATE_WARNING, _("page size %d too small%s|%s"),
       page_len, (display_html ? "</A>" : ""), perfd_size (page_len) );
-    exit (STATE_WARNING);
   }
   /* We only get here if all tests have been passed */
-  asprintf (&msg, _("HTTP OK %s - %d bytes in %.3f seconds %s|%s %s\n"),
+  asprintf (&msg, _("%s - %d bytes in %.3f seconds %s|%s %s"),
             status_line, page_len, elapsed_time,
             (display_html ? "</A>" : ""),
             perfd_time (elapsed_time), perfd_size (page_len));
-  die (STATE_OK, "%s", msg);
+  np_die (STATE_OK, "%s", msg);
   return STATE_UNKNOWN;
 }
 
@@ -1085,11 +1057,11 @@ redir (char *pos, char *status_line)
 
   addr = malloc (MAX_IPV4_HOSTLENGTH + 1);
   if (addr == NULL)
-    die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate addr\n"));
+    np_die (STATE_UNKNOWN, _("Could not allocate addr"));
   
   url = malloc (strcspn (pos, "\r\n"));
   if (url == NULL)
-    die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate url\n"));
+    np_die (STATE_UNKNOWN, _("Could not allocate url"));
 
   while (pos) {
     sscanf (pos, "%[Ll]%*[Oo]%*[Cc]%*[Aa]%*[Tt]%*[Ii]%*[Oo]%*[Nn]:%n", xx, &i);
@@ -1097,8 +1069,8 @@ redir (char *pos, char *status_line)
       pos += (size_t) strcspn (pos, "\r\n");
       pos += (size_t) strspn (pos, "\r\n");
       if (strlen(pos) == 0) 
-        die (STATE_UNKNOWN,
-             _("HTTP UNKNOWN - Could not find redirect location - %s%s\n"),
+        np_die (STATE_UNKNOWN,
+             _("Could not find redirect location - %s%s"),
              status_line, (display_html ? "</A>" : ""));
       continue;
     }
@@ -1113,14 +1085,14 @@ redir (char *pos, char *status_line)
     for (; (i = strspn (pos, "\r\n")); pos += i) {
       pos += i;
       if (!(i = strspn (pos, " \t"))) {
-        die (STATE_UNKNOWN, _("HTTP UNKNOWN - Empty redirect location%s\n"),
+        np_die (STATE_UNKNOWN, _("Empty redirect location%s"),
              display_html ? "</A>" : "");
       }
     }
 
     url = realloc (url, strcspn (pos, "\r\n") + 1);
     if (url == NULL)
-      die (STATE_UNKNOWN, _("HTTP UNKNOWN - could not allocate url\n"));
+      np_die (STATE_UNKNOWN, _("could not allocate url"));
 
     /* URI_HTTP, URI_HOST, URI_PORT, URI_PATH */
     if (sscanf (pos, HD1, type, addr, &i, url) == 4)
@@ -1159,8 +1131,8 @@ redir (char *pos, char *status_line)
     }           
 
     else {
-      die (STATE_UNKNOWN,
-           _("HTTP UNKNOWN - Could not parse redirect location - %s%s\n"),
+      np_die (STATE_UNKNOWN,
+           _("Could not parse redirect location - %s%s"),
            pos, (display_html ? "</A>" : ""));
     }
 
@@ -1169,16 +1141,16 @@ redir (char *pos, char *status_line)
   } /* end while (pos) */
 
   if (++redir_depth > max_depth)
-    die (STATE_WARNING,
-         _("HTTP WARNING - maximum redirection depth %d exceeded - %s://%s:%d%s%s\n"),
+    np_die (STATE_WARNING,
+         _("maximum redirection depth %d exceeded - %s://%s:%d%s%s"),
          max_depth, type, addr, i, url, (display_html ? "</A>" : ""));
 
   if (server_port==i &&
       !strcmp(server_address, addr) &&
       (host_name && !strcmp(host_name, addr)) &&
       !strcmp(server_url, url))
-    die (STATE_WARNING,
-         _("HTTP WARNING - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
+    np_die (STATE_WARNING,
+         _("redirection creates an infinite loop - %s://%s:%d%s%s"),
          type, addr, i, url, (display_html ? "</A>" : ""));
 
   strcpy (server_type, type);
@@ -1193,18 +1165,17 @@ redir (char *pos, char *status_line)
   if ((url[0] == '/'))
     server_url = strdup (url);
   else if (asprintf(&server_url, "/%s", url) == -1)
-    die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate server_url%s\n"),
+    np_die (STATE_UNKNOWN, _("Could not allocate server_url%s"),
          display_html ? "</A>" : "");
   free(url);
 
   if ((server_port = i) > MAX_PORT)
-    die (STATE_UNKNOWN,
-         _("HTTP UNKNOWN - Redirection to port above %d - %s://%s:%d%s%s\n"),
+    np_die (STATE_UNKNOWN,
+         _("Redirection to port above %d - %s://%s:%d%s%s"),
          MAX_PORT, server_type, server_address, server_port, server_url,
          display_html ? "</A>" : "");
 
-  if (verbose)
-    printf (_("Redirection to %s://%s:%d%s\n"), server_type, server_address,
+  np_verbose (_("Redirection to %s://%s:%d%s"), server_type, server_address,
             server_port, server_url);
 
   check_http ();

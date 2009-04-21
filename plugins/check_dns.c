@@ -56,7 +56,6 @@ void print_usage (void);
 char query_address[ADDRESS_LENGTH] = "";
 char dns_server[ADDRESS_LENGTH] = "";
 char ptr_server[ADDRESS_LENGTH] = "";
-int verbose = FALSE;
 char expected_address[ADDRESS_LENGTH] = "";
 int match_expected_address = FALSE;
 int expect_authority = FALSE;
@@ -80,6 +79,7 @@ main (int argc, char **argv)
   output chld_out, chld_err;
   size_t i;
 
+  np_set_mynames(argv[0], "DNS");
   setlocale (LC_ALL, "");
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
@@ -99,8 +99,7 @@ main (int argc, char **argv)
   alarm (timeout_interval);
   gettimeofday (&tv, NULL);
 
-  if (verbose)
-    printf ("%s\n", command_line);
+  np_verbatim(command_line);
 
   /* run the command */
   if((np_runcmd(command_line, &chld_out, &chld_err, 0)) != 0) {
@@ -110,8 +109,7 @@ main (int argc, char **argv)
 
   /* scan stdout */
   for(i = 0; i < chld_out.lines; i++) {
-    if (verbose)
-      puts(chld_out.line[i]);
+    np_verbatim(chld_out.line[i]);
 
     if (strstr (chld_out.line[i], ".in-addr.arpa")) {
       if ((temp_buffer = strstr (chld_out.line[i], "name = ")))
@@ -161,8 +159,7 @@ main (int argc, char **argv)
 
   /* scan stderr */
   for(i = 0; i < chld_err.lines; i++) {
-    if (verbose)
-      puts(chld_err.line[i]);
+    np_verbatim(chld_err.line[i]);
 
     if (error_scan (chld_err.line[i]) != STATE_OK) {
       result = max_state (result, error_scan (chld_err.line[i]));
@@ -329,7 +326,7 @@ process_arguments (int argc, char **argv)
       print_revision (progname, revision);
       exit (STATE_OK);
     case 'v': /* version */
-      verbose = TRUE;
+      np_increase_verbosity(1);
       break;
     case 't': /* timeout period */
       timeout_interval = atoi (optarg);

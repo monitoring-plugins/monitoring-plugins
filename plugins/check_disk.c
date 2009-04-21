@@ -134,7 +134,6 @@ char *path;
 char *exclude_device;
 char *units;
 uintmax_t mult = 1024 * 1024;
-int verbose = 0;
 int erronly = FALSE;
 int display_mntp = FALSE;
 int exact_match = FALSE;
@@ -178,7 +177,8 @@ main (int argc, char **argv)
   struct name_list *seen = NULL;
   struct stat *stat_buf;
 
-  preamble = strdup (" - free space:");
+  np_set_mynames(argv[0], "DISK");
+  preamble = strdup (" free space:");
   output = strdup ("");
   details = strdup ("");
   perf = strdup ("");
@@ -228,12 +228,12 @@ main (int argc, char **argv)
   /* Process for every path in list */
   for (path = path_select_list; path; path=path->name_next) {
 
-    if (verbose > 3 && path->freespace_percent->warning != NULL && path->freespace_percent->critical != NULL)
-      printf("Thresholds(pct) for %s warn: %f crit %f\n",path->name, path->freespace_percent->warning->end,
-                                                         path->freespace_percent->critical->end);
+    if (path->freespace_percent->warning != NULL && path->freespace_percent->critical != NULL)
+      np_debug(4, "Thresholds(pct) for %s warn: %f crit %f\n",path->name, path->freespace_percent->warning->end,
+                                                              path->freespace_percent->critical->end);
 
-    if (verbose > 3 && path->group != NULL)
-      printf("Group of %s: %s\n",path->name,path->group);
+    if (path->group != NULL)
+      np_debug(4, "Group of %s: %s\n",path->name,path->group);
 
     /* reset disk result */
     disk_result = STATE_UNKNOWN;
@@ -270,8 +270,7 @@ main (int argc, char **argv)
             fsp.fsu_files     += tmpfsp.fsu_files;      /* Total file nodes. */
             fsp.fsu_ffree     += tmpfsp.fsu_ffree;      /* Free file nodes. */
             
-            if (verbose > 3)
-              printf("Group %s: add %llu blocks (%s) \n", path->group, tmpfsp.fsu_bavail, temp_list->name);
+            np_debug(4, "Group %s: add %llu blocks (%s) \n", path->group, tmpfsp.fsu_bavail, temp_list->name);
              /* printf("Group %s: add %u blocks (%s)\n", temp_list->name); // path->group, tmpfsp.fsu_bavail, temp_list->name); */
 
             np_add_name(&seen, temp_list->best_match->me_mountdir);
@@ -318,35 +317,33 @@ main (int argc, char **argv)
       dused_inodes_percent = calculate_percent(fsp.fsu_files - fsp.fsu_ffree, fsp.fsu_files);
       dfree_inodes_percent = 100 - dused_inodes_percent;
 
-      if (verbose >= 3) {
-        printf ("For %s, used_pct=%g free_pct=%g used_units=%g free_units=%g total_units=%g used_inodes_pct=%g free_inodes_pct=%g\n", 
+      np_debug(3, "For %s, used_pct=%g free_pct=%g used_units=%g free_units=%g total_units=%g used_inodes_pct=%g free_inodes_pct=%g\n", 
           me->me_mountdir, dused_pct, dfree_pct, dused_units, dfree_units, dtotal_units, dused_inodes_percent, dfree_inodes_percent);
-      }
 
       /* Threshold comparisons */
 
       temp_result = get_status(dfree_units, path->freespace_units);
-      if (verbose >=3) printf("Freespace_units result=%d\n", temp_result);
+      np_debug(3, "Freespace_units result=%d\n", temp_result);
       disk_result = max_state( disk_result, temp_result );
 
       temp_result = get_status(dfree_pct, path->freespace_percent);
-      if (verbose >=3) printf("Freespace%% result=%d\n", temp_result);
+      np_debug(3, "Freespace%% result=%d\n", temp_result);
       disk_result = max_state( disk_result, temp_result );
 
       temp_result = get_status(dused_units, path->usedspace_units);
-      if (verbose >=3) printf("Usedspace_units result=%d\n", temp_result);
+      np_debug(3, "Usedspace_units result=%d\n", temp_result);
       disk_result = max_state( disk_result, temp_result );
 
       temp_result = get_status(dused_pct, path->usedspace_percent);
-      if (verbose >=3) printf("Usedspace_percent result=%d\n", temp_result);
+      np_debug(3, "Usedspace_percent result=%d\n", temp_result);
       disk_result = max_state( disk_result, temp_result );
 
       temp_result = get_status(dused_inodes_percent, path->usedinodes_percent);
-      if (verbose >=3) printf("Usedinodes_percent result=%d\n", temp_result);
+      np_debug(3, "Usedinodes_percent result=%d\n", temp_result);
       disk_result = max_state( disk_result, temp_result );
 
       temp_result = get_status(dfree_inodes_percent, path->freeinodes_percent);
-      if (verbose >=3) printf("Freeinodes_percent result=%d\n", temp_result);
+      np_debug(3, "Freeinodes_percent result=%d\n", temp_result);
       disk_result = max_state( disk_result, temp_result );
 
       result = max_state(result, disk_result);
@@ -381,10 +378,10 @@ main (int argc, char **argv)
 			  TRUE, 0,
 			  TRUE, dtotal_units));
 
-      if (disk_result==STATE_OK && erronly && !verbose)
+      if (disk_result==STATE_OK && erronly && np_get_verbosity()<=0)
         continue;
 
-      if (disk_result!=STATE_OK || verbose>=0) {
+      if (disk_result!=STATE_OK || np_get_verbosity()>=0) {
         asprintf (&output, "%s %s %.0f %s (%.0f%%",
                   output,
                   (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
@@ -410,12 +407,11 @@ main (int argc, char **argv)
 
   }
 
-  if (verbose > 2)
+  if (np_get_verbosity()>=3)
     asprintf (&output, "%s%s", output, details);
 
 
-  printf ("DISK %s%s%s|%s\n", state_text (result), (erronly && result==STATE_OK) ? "" : preamble, output, perf);
-  return result;
+  np_die(result, "%s%s|%s", (erronly && result==STATE_OK) ? "" : preamble, output, perf);
 }
 
 
@@ -635,10 +631,10 @@ process_arguments (int argc, char **argv)
       np_add_name(&fs_exclude_list, optarg);
       break;
     case 'v':                 /* verbose */
-      verbose++;
+      np_increase_verbosity(1);
       break;
     case 'q':                 /* verbose */
-      verbose--;
+      np_decrease_verbosity(1);
       break;
     case 'e':
       erronly = TRUE;
@@ -670,8 +666,7 @@ process_arguments (int argc, char **argv)
       for (me = mount_list; me; me = me->me_next) {
         if (np_regex_match_mount_entry(me, &re)) {
 	  fnd = true;
-          if (verbose > 3)
-	    printf("%s %s matching expression %s\n", me->me_devname, me->me_mountdir, optarg);
+	  np_debug(4, "%s %s matching expression %s\n", me->me_devname, me->me_mountdir, optarg);
 
           /* add parameter if not found. overwrite thresholds if path has already been added  */
           if (! (se = np_find_parameter(path_select_list, me->me_mountdir))) {

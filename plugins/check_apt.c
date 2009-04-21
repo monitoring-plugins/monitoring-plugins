@@ -43,6 +43,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "common.h"
 #include "runcmd.h"
 #include "utils.h"
+#include "utils.h"
 #include "regex.h"
 
 /* some constants */
@@ -74,7 +75,6 @@ int run_upgrade(int *pkgcount, int *secpkgcount);
 char* add_to_regexp(char *expr, const char *next);
 
 /* configuration variables */
-static int verbose = 0;      /* -v */
 static int do_update = 0;    /* whether to call apt-get update */
 static upgrade_type upgrade = UPGRADE; /* which type of upgrade to do */
 static char *upgrade_opts = NULL; /* options to override defaults for upgrade */
@@ -90,6 +90,7 @@ static int exec_warning = 0;     /* if a cmd exited non-zero */
 int main (int argc, char **argv) {
 	int result=STATE_UNKNOWN, packages_available=0, sec_count=0;
 
+	np_set_mynames(argv[0], "APT");
 	if (process_arguments(argc, argv) == ERROR)
 		usage_va(_("Could not parse arguments"));
 
@@ -115,8 +116,8 @@ int main (int argc, char **argv) {
 		result = max_state(result, STATE_OK);
 	}
 
-	printf(_("APT %s: %d packages available for %s (%d critical updates). %s%s%s%s\n"), 
-	       state_text(result),
+	np_die(result,
+	       _("%d packages available for %s (%d critical updates). %s%s%s%s"),
 	       packages_available,
 	       (upgrade==DIST_UPGRADE)?"dist-upgrade":"upgrade",
 		   sec_count,
@@ -125,8 +126,6 @@ int main (int argc, char **argv) {
 	       (exec_warning)?" errors detected":"",
 	       (stderr_warning||exec_warning)?". run with -v for information.":""
 	       );
-
-	return result;
 }
 
 /* process command-line arguments */
@@ -161,7 +160,7 @@ int process_arguments (int argc, char **argv) {
 			print_revision(progname, revision);
 			exit(STATE_OK);
 		case 'v':
-			verbose++;
+			np_increase_verbosity(1);
 			break;
 		case 't':
 			timeout_interval=atoi(optarg);
@@ -170,14 +169,14 @@ int process_arguments (int argc, char **argv) {
 			upgrade=DIST_UPGRADE;
 			if(optarg!=NULL){
 				upgrade_opts=strdup(optarg);
-				if(upgrade_opts==NULL) die(STATE_UNKNOWN, "strdup failed");
+				if(upgrade_opts==NULL) np_die(STATE_UNKNOWN, "strdup failed: %m");
 			}
 			break;
 		case 'U':
 			upgrade=UPGRADE;
 			if(optarg!=NULL){
 				upgrade_opts=strdup(optarg);
-				if(upgrade_opts==NULL) die(STATE_UNKNOWN, "strdup failed");
+				if(upgrade_opts==NULL) np_die(STATE_UNKNOWN, "strdup failed: %m");
 			}
 			break;
 		case 'n':
@@ -187,7 +186,7 @@ int process_arguments (int argc, char **argv) {
 			do_update=1;
 			if(optarg!=NULL){
 				update_opts=strdup(optarg);
-				if(update_opts==NULL) die(STATE_UNKNOWN, "strdup failed");
+				if(update_opts==NULL) np_die(STATE_UNKNOWN, "strdup failed: %m");
 			}
 			break;
 		case 'i':
@@ -228,22 +227,22 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 	regres=regcomp(&ireg, include_ptr, REG_EXTENDED);
 	if(regres!=0) {
 		regerror(regres, &ireg, rerrbuf, 64);
-		die(STATE_UNKNOWN, _("%s: Error compiling regexp: %s"), progname, rerrbuf);
+		np_die(STATE_UNKNOWN, _("Error compiling regexp: %s"), rerrbuf);
 	}
 
 	if(do_exclude!=NULL){
 		regres=regcomp(&ereg, do_exclude, REG_EXTENDED);
 		if(regres!=0) {
 			regerror(regres, &ereg, rerrbuf, 64);
-			die(STATE_UNKNOWN, _("%s: Error compiling regexp: %s"),
-			    progname, rerrbuf);
+			np_die(STATE_UNKNOWN, _("Error compiling regexp: %s"),
+			    rerrbuf);
 		}
 	}
 	regres=regcomp(&sreg, crit_ptr, REG_EXTENDED);
 	if(regres!=0) {
 		regerror(regres, &ereg, rerrbuf, 64);
-		die(STATE_UNKNOWN, _("%s: Error compiling regexp: %s"),
-		    progname, rerrbuf);
+		np_die(STATE_UNKNOWN, _("Error compiling regexp: %s"),
+		    rerrbuf);
 	}
 
 	cmdline=construct_cmdline(upgrade, upgrade_opts);
@@ -255,8 +254,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 	if(result != 0){
 		exec_warning=1;
 		result = STATE_UNKNOWN;
-		fprintf(stderr, _("'%s' exited with non-zero status.\n"),
-		    cmdline);
+		np_verbose(_("'%s' exited with non-zero status."), cmdline);
 	}
 
 	/* parse the output, which should only consist of lines like
@@ -269,9 +267,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 	 * in which case the logic here will slightly change.
 	 */
 	for(i = 0; i < chld_out.lines; i++) {
-		if(verbose){
-			printf("%s\n", chld_out.line[i]);
-		}
+		np_verbatim(chld_out.line[i]);
 		/* if it is a package we care about */
 		if(regexec(&ireg, chld_out.line[i], 0, NULL, 0)==0){
 			/* if we're not excluding, or it's not in the
@@ -281,11 +277,9 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 				pc++;
 				if(regexec(&sreg, chld_out.line[i], 0, NULL, 0)==0){
 					spc++;
-					if(verbose) printf("*");
+					np_debug(1, "*");
 				}
-				if(verbose){
-					printf("*%s\n", chld_out.line[i]);
-				}
+				np_verbose("*%s", chld_out.line[i]);
 			}
 		}
 	}
@@ -296,11 +290,8 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 	if(chld_err.buflen){
 		stderr_warning=1;
 		result = max_state(result, STATE_WARNING);
-		if(verbose){
-			for(i = 0; i < chld_err.lines; i++) {
-				fprintf(stderr, "%s\n", chld_err.line[i]);
-			}
-		}
+		for(i = 0; i < chld_err.lines; i++)
+			np_verbatim(chld_err.line[i]);
 	}
 	regfree(&ireg);
 	regfree(&sreg);
@@ -324,25 +315,18 @@ int run_update(void){
 	if(result != 0){
 		exec_warning=1;
 		result = STATE_CRITICAL;
-		fprintf(stderr, _("'%s' exited with non-zero status.\n"),
-		        cmdline);
+		np_verbose(_("'%s' exited with non-zero status."), cmdline);
 	}
 
-	if(verbose){
-		for(i = 0; i < chld_out.lines; i++) {
-			printf("%s\n", chld_out.line[i]);
-		}
-	}
+	for(i = 0; i < chld_out.lines; i++)
+		np_verbatim(chld_out.line[i]);
 
 	/* If we get anything on stderr, at least set warning */
 	if(chld_err.buflen){
 		stderr_warning=1;
 		result = max_state(result, STATE_WARNING);
-		if(verbose){
-			for(i = 0; i < chld_err.lines; i++) {
-				fprintf(stderr, "%s\n", chld_err.line[i]);
-			}
-		}
+		for(i = 0; i < chld_err.lines; i++)
+			np_verbatim(chld_err.line[i]);
 	}
 	free(cmdline);
 	return result;
@@ -353,12 +337,12 @@ char* add_to_regexp(char *expr, const char *next){
 
 	if(expr==NULL){
 		re=malloc(sizeof(char)*(strlen("^Inst () ")+strlen(next)+1));
-		if(!re) die(STATE_UNKNOWN, "malloc failed!\n");
+		if(!re) np_die(STATE_UNKNOWN, "malloc failed: %m");
 		sprintf(re, "^Inst (%s) ", next);
 	} else {
 		/* resize it, adding an extra char for the new '|' separator */
 		re=realloc(expr, sizeof(char)*strlen(expr)+1+strlen(next)+1);
-		if(!re) die(STATE_UNKNOWN, "realloc failed!\n");
+		if(!re) np_die(STATE_UNKNOWN, "realloc failed: %m");
 		/* append it starting at ')' in the old re */
 		sprintf((char*)(re+strlen(re)-2), "|%s) ", next);
 	}
@@ -394,7 +378,7 @@ char* construct_cmdline(upgrade_type u, const char *opts){
 	len+=strlen(aptcmd)+1;         /* "upgrade\0" */
 
 	cmd=(char*)malloc(sizeof(char)*len);
-	if(cmd==NULL) die(STATE_UNKNOWN, "malloc failed");
+	if(cmd==NULL) np_die(STATE_UNKNOWN, "malloc failed: %m");
 	sprintf(cmd, "%s %s %s", PATH_TO_APTGET, opts_ptr, aptcmd);
 	return cmd;
 }

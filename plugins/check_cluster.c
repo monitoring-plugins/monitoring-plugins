@@ -59,8 +59,6 @@ int check_type=CHECK_SERVICES;
 char *data_vals=NULL;
 char *label=NULL;
 
-int verbose=0;
-
 int process_arguments(int,char **);
 
 
@@ -71,12 +69,13 @@ int main(int argc, char **argv){
 	int return_code=STATE_OK;
 	thresholds *thresholds = NULL;
 
+	np_set_mynames(argv[0], "CLUSTER");
 	if(process_arguments(argc,argv)==ERROR)
 		usage(_("Could not parse arguments"));
 
 	/* Initialize the thresholds */
 	set_thresholds(&thresholds, warn_threshold, crit_threshold);
-	if(verbose)
+	if(np_get_verbosity()>0)
 		print_thresholds("check_cluster", thresholds);
 
 	/* check the data values */
@@ -121,21 +120,17 @@ int main(int argc, char **argv){
 	
 
 	/* return the status of the cluster */
-	if(check_type==CHECK_SERVICES){
-		return_code=get_status(total_services_warning+total_services_unknown+total_services_critical, thresholds);
-		printf("CLUSTER %s: %s: %d ok, %d warning, %d unknown, %d critical\n",
-			state_text(return_code), (label==NULL)?"Service cluster":label,
+	if(check_type==CHECK_SERVICES)
+		np_die(get_status(total_services_warning+total_services_unknown+total_services_critical, thresholds),
+			"%s: %d ok, %d warning, %d unknown, %d critical\n",
+			(label==NULL)?"Service cluster":label,
 			total_services_ok,total_services_warning,
 			total_services_unknown,total_services_critical);
-	}
-	else{
-		return_code=get_status(total_hosts_down+total_hosts_unreachable, thresholds);
-		printf("CLUSTER %s: %s: %d up, %d down, %d unreachable\n",
-			state_text(return_code), (label==NULL)?"Host cluster":label,
+	else
+		np_die(get_status(total_services_warning+total_services_unknown+total_services_critical, thresholds),
+			"%s: %d up, %d down, %d unreachable\n",
+			(label==NULL)?"Host cluster":label,
 			total_hosts_up,total_hosts_down,total_hosts_unreachable);
-	}
-
-	return return_code;
 }
 
 
@@ -198,7 +193,7 @@ int process_arguments(int argc, char **argv){
 			break;
 
 		case 'v': /* verbose */
-			verbose++;
+			np_increase_verbosity(1);
 			break;
 
 		case 'V': /* version */

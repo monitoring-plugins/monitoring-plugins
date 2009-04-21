@@ -59,7 +59,6 @@ char *query_address = NULL;
 char *record_type = "A";
 char *expected_address = NULL;
 char *dns_server = NULL;
-int verbose = FALSE;
 int server_port = DEFAULT_PORT;
 double warning_interval = UNDEFINED;
 double critical_interval = UNDEFINED;
@@ -77,6 +76,7 @@ main (int argc, char **argv)
   double elapsed_time;
   int result = STATE_UNKNOWN;
 
+  np_set_mynames(argv[0], "DNS");
   setlocale (LC_ALL, "");
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
@@ -95,13 +95,11 @@ main (int argc, char **argv)
   alarm (timeout_interval);
   gettimeofday (&tv, NULL);
 
-  if (verbose) {
-    printf ("%s\n", command_line);
-    if(expected_address != NULL) {
-      printf (_("Looking for: '%s'\n"), expected_address);
-    } else {
-      printf (_("Looking for: '%s'\n"), query_address);
-    }
+  np_verbatim(command_line);
+  if(expected_address != NULL) {
+    np_verbose(_("Looking for: '%s'"), expected_address);
+  } else {
+    np_verbose(_("Looking for: '%s'"), query_address);
   }
 
   /* run the command */
@@ -117,8 +115,7 @@ main (int argc, char **argv)
       /* loop through the whole 'ANSWER SECTION' */
       for(; i < chld_out.lines; i++) {
         /* get the host address */
-        if (verbose)
-          printf ("%s\n", chld_out.line[i]);
+        np_verbatim(chld_out.line[i]);
 
         if (strstr (chld_out.line[i], (expected_address == NULL ? query_address : expected_address)) != NULL) {
           msg = chld_out.line[i];
@@ -165,8 +162,9 @@ main (int argc, char **argv)
   else if (warning_interval > UNDEFINED && elapsed_time > warning_interval)
     result = STATE_WARNING;
 
-  printf ("DNS %s - %.3f seconds response time (%s)|%s\n",
-          state_text (result), elapsed_time,
+  np_die(result,
+          "%.3f seconds response time (%s)|%s\n",
+          elapsed_time,
           msg ? msg : _("Probably a non-existent host/domain"),
           fperfdata("time", elapsed_time, "s",
                     (warning_interval>UNDEFINED?TRUE:FALSE),
@@ -174,7 +172,6 @@ main (int argc, char **argv)
                     (critical_interval>UNDEFINED?TRUE:FALSE),
             critical_interval,
             TRUE, 0, FALSE, 0));
-  return result;
 }
 
 
@@ -257,7 +254,7 @@ process_arguments (int argc, char **argv)
       }
       break;
     case 'v':                 /* verbose */
-      verbose = TRUE;
+      np_increase_verbosity(1);
       break;
     case 'T':
       record_type = optarg;

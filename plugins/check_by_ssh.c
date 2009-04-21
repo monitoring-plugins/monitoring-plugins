@@ -57,7 +57,6 @@ char *outputfile = NULL;
 char *host_shortname = NULL;
 char **service;
 int passive = FALSE;
-int verbose = FALSE;
 
 int
 main (int argc, char **argv)
@@ -71,6 +70,7 @@ main (int argc, char **argv)
 	FILE *fp = NULL;
 	struct output chld_out, chld_err;
 
+	np_set_mynames(argv[0], "BY-SSH");
 	remotecmd = "";
 	comm = strdup (SSH_COMMAND);
 
@@ -89,8 +89,7 @@ main (int argc, char **argv)
 	alarm (timeout_interval);
 
 	/* run the command */
-	if (verbose)
-		printf ("%s\n", comm);
+	np_verbatim(comm);
 
 	result = np_runcmd(comm, &chld_out, &chld_err, 0);
 
@@ -206,7 +205,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case 'v':									/* help */
-			verbose = TRUE;
+			np_increase_verbosity(1);
 			break;
 		case 't':									/* timeout period */
 			if (!is_integer (optarg))
@@ -292,7 +291,7 @@ process_arguments (int argc, char **argv)
 	c = optind;
 	if (hostname == NULL) {
 		if (c <= argc) {
-			die (STATE_UNKNOWN, _("%s: You must provide a host name\n"), progname);
+			np_die(STATE_UNKNOWN, _("You must provide a host name"));
 		}
 		host_or_die(argv[c]);
 		hostname = argv[c++];
@@ -326,10 +325,10 @@ validate_arguments (void)
 		return ERROR;
 
 	if (passive && commands != services)
-		die (STATE_UNKNOWN, _("%s: In passive mode, you must provide a service name for each command.\n"), progname);
+		np_die(STATE_UNKNOWN, _("In passive mode, you must provide a service name for each command."));
 
 	if (passive && host_shortname == NULL)
-		die (STATE_UNKNOWN, _("%s: In passive mode, you must provide the host short name from the nagios configs.\n"), progname);
+		np_die(STATE_UNKNOWN, _("In passive mode, you must provide the host short name from the nagios configs."));
 
 	return OK;
 }

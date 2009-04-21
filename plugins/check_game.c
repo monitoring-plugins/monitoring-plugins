@@ -58,8 +58,6 @@ char *server_ip;
 char *game_type;
 int port = 0;
 
-int verbose;
-
 int qstat_game_players_max = -1;
 int qstat_game_players = -1;
 int qstat_game_field = -1;
@@ -76,6 +74,7 @@ main (int argc, char **argv)
   size_t i = 0;
   output chld_out;
 
+  np_set_mymanes(argv[0], "GAME");
   setlocale (LC_ALL, "");
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
@@ -92,8 +91,7 @@ main (int argc, char **argv)
   if (port)
     asprintf (&command_line, "%s:%-d", command_line, port);
 
-  if (verbose > 0)
-    printf ("%s\n", command_line);
+  np_verbatim(command_line);
 
   /* run the command. historically, this plugin ignores output on stderr,
    * as well as return status of the qstat program */
@@ -109,11 +107,8 @@ main (int argc, char **argv)
      In the end, I figured I'd simply let an error occur & then trap it
    */
 
-  if (!strncmp (chld_out.line[0], "unknown option", 14)) {
-    printf (_("CRITICAL - Host type parameter incorrect!\n"));
-    result = STATE_CRITICAL;
-    return result;
-  }
+  if (!strncmp (chld_out.line[0], "unknown option", 14))
+    np_die(STATE_CRITICAL, _("CRITICAL - Host type parameter incorrect!"));
 
   p = (char *) strtok (chld_out.line[0], QSTAT_DATA_DELIMITER);
   while (p != NULL) {
@@ -124,20 +119,14 @@ main (int argc, char **argv)
       break;
   }
 
-  if (strstr (ret[2], QSTAT_HOST_ERROR)) {
-    printf (_("CRITICAL - Host not found\n"));
-    result = STATE_CRITICAL;
-  }
-  else if (strstr (ret[2], QSTAT_HOST_DOWN)) {
-    printf (_("CRITICAL - Game server down or unavailable\n"));
-    result = STATE_CRITICAL;
-  }
-  else if (strstr (ret[2], QSTAT_HOST_TIMEOUT)) {
-    printf (_("CRITICAL - Game server timeout\n"));
-    result = STATE_CRITICAL;
-  }
-  else {
-    printf ("OK: %s/%s %s (%s), Ping: %s ms|%s %s\n", 
+  if (strstr (ret[2], QSTAT_HOST_ERROR))
+    np_die(STATE_CRITICAL, _("CRITICAL - Host not found"));
+  else if (strstr (ret[2], QSTAT_HOST_DOWN))
+    np_die(STATE_CRITICAL, _("CRITICAL - Game server down or unavailable"));
+  else if (strstr (ret[2], QSTAT_HOST_TIMEOUT))
+    np_die(STATE_CRITICAL, _("CRITICAL - Game server timeout\n"));
+  else
+    np_die(STATE_OK, "%s/%s %s (%s), Ping: %s ms|%s %s\n",
             ret[qstat_game_players],
             ret[qstat_game_players_max],
             ret[qstat_game_field], 
@@ -149,9 +138,6 @@ main (int argc, char **argv)
             fperfdata ("ping", strtod(ret[qstat_ping_field], NULL), "",
                       FALSE, 0, FALSE, 0,
                       TRUE, 0, FALSE, 0));
-  }
-
-  return result;
 }
 
 
@@ -203,14 +189,14 @@ process_arguments (int argc, char **argv)
       print_revision (progname, revision);
       exit (STATE_OK);
     case 'v': /* version */
-      verbose = TRUE;
+      np_increase_verbosity(1);
       break;
     case 't': /* timeout period */
       timeout_interval = atoi (optarg);
       break;
     case 'H': /* hostname */
       if (strlen (optarg) >= MAX_HOST_ADDRESS_LENGTH)
-        die (STATE_UNKNOWN, _("Input buffer overflow\n"));
+        np_die(STATE_UNKNOWN, _("Input buffer overflow"));
       server_ip = optarg;
       break;
     case 'P': /* port */
@@ -218,7 +204,7 @@ process_arguments (int argc, char **argv)
       break;
     case 'G': /* hostname */
       if (strlen (optarg) >= MAX_INPUT_BUFFER)
-        die (STATE_UNKNOWN, _("Input buffer overflow\n"));
+        np_die(STATE_UNKNOWN, _("Input buffer overflow"));
       game_type = optarg;
       break;
     case 'p': /* index of ping field */
