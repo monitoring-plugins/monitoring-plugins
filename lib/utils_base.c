@@ -24,10 +24,151 @@
 *
 *****************************************************************************/
 
+#if HAVE_LIBGEN_H
+#include <libgen.h>	/* basename(3) */
+#endif
+#include <stdarg.h>
 #include "common.h"
 #include <stdarg.h>
 #include "utils_base.h"
 
+#define PRINT_OUTPUT(fmt, ap)                                          \
+	do {                                                           \
+		fmt = insert_syserr(fmt);                              \
+		va_start(ap, fmt);                                     \
+		vprintf(fmt, ap);                                      \
+		va_end(ap);                                            \
+	} while (/* CONSTCOND */ 0)
+
+static char *insert_syserr(const char *);
+
+extern int errno;
+static int verbosity_level = -2;
+static const char *program_name = NULL;
+static const char *service_name = NULL;
+
+/*
+ * Set static variables for use in output functions.  Usually, argv[0] may be
+ * used as progname, since we call basename(3) ourselves.  If a verbosity value
+ * of -2 is specified, the verbosity_level won't be set.  Currently, no flags
+ * are implemented.
+ */
+void
+np_set_output(const char *progname, const char *servname, int verbosity,
+              int flags __attribute__((unused)))
+{
+	static char pathbuf[128], progbuf[128], servbuf[32];
+
+	if (progname != NULL) {
+#if HAVE_BASENAME
+		/*
+		 * Copy the progname into a temporary buffer in order to cope
+		 * with basename(3) implementations which modify their argument.
+		 * TODO: Maybe we should implement an np_basename()?  Gnulib's
+		 * base_name() dies on error, writing a message to stderr, which
+		 * is probably not what we want.  Once we have some replacement,
+		 * the libgen-/basename(3)-related checks can be removed from
+		 * configure.in.
+		 */
+		strncpy(pathbuf, progname, sizeof(pathbuf) - 1);
+		pathbuf[sizeof(pathbuf) - 1] = '\0';
+		progname = basename(pathbuf);
+#endif
+		strncpy(progbuf, progname, sizeof(progbuf) - 1);
+		progbuf[sizeof(progbuf) - 1] = '\0';
+		program_name = progbuf;
+	}
+	if (servname != NULL) {
+		strncpy(servbuf, servname, sizeof(servbuf) - 1);
+		servbuf[sizeof(servbuf) - 1] = '\0';
+		service_name = servbuf;
+	}
+	if (verbosity != -2)
+		verbosity_level = verbosity;
+}
+
+int
+np_adjust_verbosity(int by)
+{
+	if (verbosity_level == -2)
+		verbosity_level = by;
+	else
+		verbosity_level += by;
+
+	/* We don't support verbosity levels < -1. */
+	if (verbosity_level < -1)
+		verbosity_level = -1;
+
+	return verbosity_level;
+}
+
+void
+np_debug(int verbosity, const char *fmt, ...)
+{
+	va_list ap;
+
+	if (verbosity_level != -1 && verbosity >= verbosity_level)
+		PRINT_OUTPUT(fmt, ap);
+}
+
+void
+np_verbose(const char *fmt, ...)
+{
+	va_list ap;
+
+	if (verbosity_level >= 1) {
+		PRINT_OUTPUT(fmt, ap);
+		putchar('\n');
+	}
+}
+
+void
+np_die(int status, const char *fmt, ...)
+{
+	va_list ap;
+	const char *p;
+
+	if (program_name == NULL || service_name == NULL)
+		PRINT_OUTPUT(fmt, ap);
+
+	for (p = (verbosity_level > 0) ?
+	    VERBOSE_OUTPUT_FORMAT : STANDARD_OUTPUT_FORMAT;
+	    *p != '\0'; p++) {
+		if (*p == '%') {
+			if (*++p == '\0')
+				break;
+			switch (*p) {
+			case 'm':
+				PRINT_OUTPUT(fmt, ap);
+				continue;
+			case 'p':
+				fputs(program_name, stdout);
+				continue;
+			case 's':
+				fputs(service_name, stdout);
+				continue;
+			case 'x':
+				fputs(state_text(status), stdout);
+				continue;
+			}
+		} else if (*p == '\\') {
+			if (*++p == '\0')
+				break;
+			switch (*p) {
+			case 'n':
+				putchar('\n');
+				continue;
+			case 't':
+				putchar('\t');
+				continue;
+			}
+		}
+		putchar(*p);
+	}
+	exit(status);
+}
+
+/* TODO: die() can be removed as soon as all plugins use np_die() instead. */
 void
 die (int result, const char *fmt, ...)
 {
@@ -308,3 +449,67 @@ char *np_extract_value(const char *varlist, const char *name, char sep) {
 	return value;
 }
 
+/*
+ * Replace occurrences of "%m" by strerror(errno).  Other printf(3)-style
+ * conversion specifications will be copied verbatim, including "%%", even if
+ * followed by an "m".  Returns a pointer to a static buffer in order to not
+ * fail on memory allocation error.
+ */
+static char *
+insert_syserr(const char *buf)
+{
+	static char newbuf[8192];
+	char *errstr = strerror(errno);
+	size_t errlen = strlen(errstr);
+	size_t copylen;
+	unsigned i, j;
+
+	for (i = 0, j = 0; buf[i] != '\0' && j < sizeof(newbuf) - 2; i++, j++) {
+		if (buf[i] == '%') {
+			if (buf[++i] == 'm') {
+				copylen = (errlen > sizeof(newbuf) - j - 1) ?
+				    sizeof(newbuf) - j - 1 : errlen;
+				memcpy(newbuf + j, errstr, copylen);
+				/*
+				 * As we'll increment j by 1 after the iteration
+				 * anyway, we only increment j by the number of
+				 * copied bytes - 1.
+				 */
+				j += copylen - 1;
+				continue;
+			} else {
+				/*
+				 * The possibility to run into this block is the
+				 * reason we checked for j < sizeof(newbuf) - 2
+				 * instead of j < sizeof(newbuf) - 1.
+				 */
+				newbuf[j++] = '%';
+				if (buf[i] == '\0')
+					break;
+			}
+		}
+		newbuf[j] = buf[i];
+	}
+	newbuf[j] = '\0';
+	return newbuf;
+}
+
+/*
+ * Given a numerical status, return a pointer to the according string.
+ */
+const char *
+state_text(int result)
+{
+	switch (result) {
+	case STATE_OK:
+		return "OK";
+	case STATE_WARNING:
+		return "WARNING";
+	case STATE_CRITICAL:
+		return "CRITICAL";
+	case STATE_DEPENDENT:
+		return "DEPENDENT";
+	default:
+		return "UNKNOWN";
+	}
+}

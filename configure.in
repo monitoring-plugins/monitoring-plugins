@@ -39,6 +39,39 @@ INSTALL="$INSTALL $extra_install_args"
 INSTALL_STRIP_PROGRAM="$INSTALL_STRIP_PROGRAM $extra_install_args"
 AC_SUBST(INSTALL)
 
+dnl Configure the plugin output format
+default_output_format="%s %x: %i\n"
+AC_ARG_WITH([standard_output_format],
+	[AS_HELP_STRING([--with-standard-output-format=FORMAT],
+		[specify the standard plugin output FORMAT; %p, %s, %x, and %m
+		 will be replaced by the plugin name, the service name, the
+		 status string, and the information message, respectively; tabs
+		 or newlines can be inserted using \t or \n
+		 @<:@default="%s %x: %m\n"@:>@])],
+	[standard_output_format=$withval],
+	[standard_output_format="yes"])
+AC_ARG_WITH([verbose_output_format],
+	[AS_HELP_STRING([--with-verbose-output-format=FORMAT],
+		[specify the verbose plugin output FORMAT; %p, %s, %x, and %m
+		 will be replaced by the plugin name, the service name, the
+		 status string, and the information message, respectively; tabs
+		 or newlines can be inserted using \t or \n
+		 @<:@default="%s %x: %m\n"@:>@])],
+	[verbose_output_format=$withval],
+	[verbose_output_format="yes"])
+AS_IF([test "$standard_output_format" = yes],
+		[standard_output_format=$default_output_format],
+	[test "$standard_output_format" = no],
+		[standard_output_format=""],
+	[test "$verbose_output_format" = yes],
+		[verbose_output_format=$default_output_format],
+	[test "$verbose_output_format" = no],
+		[verbose_output_format=""])
+AC_DEFINE_UNQUOTED([STANDARD_OUTPUT_FORMAT], ["$standard_output_format"],
+	[Define the standard plugin output format.])
+AC_DEFINE_UNQUOTED([VERBOSE_OUTPUT_FORMAT], ["$verbose_output_format"],
+	[Define the verbose plugin output format.])
+
 AC_PROG_CC
 gl_EARLY
 AC_PROG_GCC_TRADITIONAL
@@ -149,6 +182,11 @@ AC_CHECK_LIB(nsl,main,SOCKETLIBS="$SOCKETLIBS -lnsl")
 AC_CHECK_LIB(socket,socket,SOCKETLIBS="$SOCKETLIBS -lsocket")
 AC_CHECK_LIB(resolv,main,SOCKETLIBS="$SOCKETLIBS -lresolv")
 AC_SUBST(SOCKETLIBS)
+
+dnl check for basename(3) which needs -lgen on some systems (e.g. IRIX)
+AC_CHECK_HEADERS([libgen.h])
+AC_SEARCH_LIBS([basename], [gen])
+AC_CHECK_FUNCS([basename])
 
 dnl
 dnl check for math-related functions needing -lm

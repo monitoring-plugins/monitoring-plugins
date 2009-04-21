@@ -37,6 +37,23 @@ int get_status(double, thresholds *);
 
 char *np_escaped_string (const char *);
 
+void np_set_output(const char *, const char *, int, int);
+int np_adjust_verbosity(int);
+void np_debug(int, const char *, ...)
+    __attribute__((format(printf, 2, 3)));
+void np_verbose(const char *, ...)
+    __attribute__((format(printf, 1, 2)));
+void np_die(int, const char *, ...)
+    __attribute__((noreturn, format(printf, 2, 3)));
+
+#define np_verbatim(s) np_verbose("%s", s)
+#define np_increase_verbosity(i) np_adjust_verbosity(i)
+#define np_decrease_verbosity(i) np_adjust_verbosity(-i)
+#define np_get_verbosity() np_adjust_verbosity(0)
+#define np_set_verbosity(v) np_set_output(NULL, NULL, v, 0)
+#define np_set_mynames(p, s) np_set_output(p, s, -2, 0)
+
+/* TODO: die() can be removed as soon as all plugins use np_die() instead. */
 void die (int, const char *, ...) __attribute__((noreturn,format(printf, 2, 3)));
 
 /* Return codes for _set_thresholds */
@@ -63,5 +80,8 @@ char *np_extract_value(const char*, const char*, char);
  * payloads (comma)
  */
 #define np_extract_ntpvar(l, n) np_extract_value(l, n, ',')
+
+/* Given a numerical status, return a pointer to the according string. */
+const char *state_text(int);
 
 #endif /* _UTILS_BASE_ */
