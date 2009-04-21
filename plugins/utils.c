@@ -121,23 +121,6 @@ print_revision (const char *command_name, const char *revision_string)
 	         command_name, clean_revstring(revision_string), PACKAGE, VERSION);
 }
 
-const char *
-state_text (int result)
-{
-	switch (result) {
-	case STATE_OK:
-		return "OK";
-	case STATE_WARNING:
-		return "WARNING";
-	case STATE_CRITICAL:
-		return "CRITICAL";
-	case STATE_DEPENDENT:
-		return "DEPENDENT";
-	default:
-		return "UNKNOWN";
-	}
-}
-
 void
 timeout_alarm_handler (int signo)
 {

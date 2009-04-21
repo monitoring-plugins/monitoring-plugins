@@ -84,8 +84,6 @@ void usage4(const char *) __attribute__((noreturn));
 void usage5(void) __attribute__((noreturn));
 void usage_va(const char *fmt, ...) __attribute__((noreturn));
 
-const char *state_text (int);
-
 #define max(a,b) (((a)>(b))?(a):(b))
 #define min(a,b) (((a)<(b))?(a):(b))
 
