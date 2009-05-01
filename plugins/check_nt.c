@@ -522,7 +522,6 @@ int process_arguments(int argc, char **argv){
 				print_revision(progname, NP_VERSION);
 				exit(STATE_OK);
 			case 'H': /* hostname */
-				if (server_address)	free(server_address);
 				server_address = optarg;
 				break;
 			case 's': /* password */
@@ -585,6 +584,8 @@ int process_arguments(int argc, char **argv){
 			}
 
 	}
+	if (server_address == NULL)
+		usage4 (_("You must provide a server address or host name"));
 
 	if (vars_to_check==CHECK_NONE)
 		return ERROR;

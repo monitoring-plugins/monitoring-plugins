@@ -59,7 +59,7 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 }
 
 if (-x "./check_nt") {
-	plan tests => 4;
+	plan tests => 5;
 } else {
 	plan skip_all => "No check_nt compiled";
 }
@@ -74,4 +74,7 @@ is( $result->output, q{c:\ - total: 0.93 Gb - used: 0.07 Gb (7%) - free 0.87 Gb 
 $result = NPTest->testCmd( "$command -v USEDDISKSPACE -l d" );
 is( $result->return_code, 3, "USEDDISKSPACE d - invalid");
 is( $result->output, "Free disk space : Invalid drive", "Output right" );
+
+$result = NPTest->testCmd( "./check_nt -v USEDDISKSPACE -l d" );
+is( $result->return_code, 3, "Fail if -H missing");
 
