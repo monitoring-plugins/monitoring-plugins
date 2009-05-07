@@ -661,19 +661,19 @@ process_arguments (int argc, char **argv)
       break;
     case 'E':
       if (path_selected)
-        die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set -E before selecting pathes\n"));
+        die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set -E before selecting paths\n"));
       exact_match = TRUE;
       break;
     case 'g':
       if (path_selected)
-        die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set group value before selecting pathes \n"));
+        die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set group value before selecting paths\n"));
       group = optarg;
       break;
     case 'I':
       cflags |= REG_ICASE;
     case 'i':
       if (!path_selected)
-        die (STATE_UNKNOWN, "DISK %s: %s\n", _("UNKNOWN"), _("Pathes need to be selected before using -i/-I. Use -A to select all pathes explicitly"));
+        die (STATE_UNKNOWN, "DISK %s: %s\n", _("UNKNOWN"), _("Paths need to be selected before using -i/-I. Use -A to select all paths explicitly"));
       err = regcomp(&re, optarg, cflags);
       if (err != 0) {
         regerror (err, &re, errbuf, MAX_INPUT_BUFFER);
@@ -930,7 +930,7 @@ print_help (void)
   printf (" %s\n", "-e, --errors-only");
   printf ("    %s\n", _("Display only devices/mountpoints with errors"));
   printf (" %s\n", "-g, --group=NAME");
-  printf ("    %s\n", _("Group pathes. Thresholds apply to (free-)space of all partitions together"));
+  printf ("    %s\n", _("Group paths. Thresholds apply to (free-)space of all partitions together"));
   printf (" %s\n", "-k, --kilobytes");
   printf ("    %s\n", _("Same as '--units kB'"));
   printf (" %s\n", "-l, --local");
@@ -943,7 +943,7 @@ print_help (void)
   printf (" %s\n", "-m, --megabytes");
   printf ("    %s\n", _("Same as '--units MB'"));
   printf (" %s\n", "-A, --all");
-  printf ("    %s\n", _("Explicitly select all pathes. This is equivalent to -R '.*'"));
+  printf ("    %s\n", _("Explicitly select all paths. This is equivalent to -R '.*'"));
   printf (" %s\n", "-R, --eregi-path=PATH, --eregi-partition=PARTITION");
   printf ("    %s\n", _("Case insensitive regular expression for path/partition (may be repeated)"));
   printf (" %s\n", "-r, --ereg-path=PATH, --ereg-partition=PARTITION");
