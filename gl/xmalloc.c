@@ -1,7 +1,7 @@
 /* xmalloc.c -- malloc with out of memory checking
 
    Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2002, 2003, 2004, 2005, 2006, 2008 Free Software Foundation,
+   1999, 2000, 2002, 2003, 2004, 2005, 2006, 2008-2009 Free Software Foundation,
    Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -27,10 +27,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-
-#ifndef SIZE_MAX
-# define SIZE_MAX ((size_t) -1)
-#endif
 
 /* 1 if calloc is known to be compatible with GNU calloc.  This
    matters if we are not also using the calloc module, which defines

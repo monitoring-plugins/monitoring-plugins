@@ -1,7 +1,6 @@
 /* mountlist.c -- return a list of mounted file systems
 
-   Copyright (C) 1991, 1992, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005, 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1991, 1992, 1997-2009 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -24,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "xalloc.h"
 
@@ -132,10 +132,6 @@
 
 #if USE_UNLOCKED_IO
 # include "unlocked-io.h"
-#endif
-
-#ifndef SIZE_MAX
-# define SIZE_MAX ((size_t) -1)
 #endif
 
 /* The results of open() in this file are not used with fchdir,
@@ -300,7 +296,6 @@ fstype_to_string (int t)
 
 /* Return the device number from MOUNT_OPTIONS, if possible.
    Otherwise return (dev_t) -1.  */
-
 static dev_t
 dev_from_mount_options (char const *mount_options)
 {
@@ -327,7 +322,7 @@ dev_from_mount_options (char const *mount_options)
     }
 
 # endif
-
+  (void) mount_options;
   return -1;
 }
 
@@ -344,6 +339,7 @@ read_file_system_list (bool need_fs_type)
   struct mount_entry *mount_list;
   struct mount_entry *me;
   struct mount_entry **mtail = &mount_list;
+  (void) need_fs_type;
 
 #ifdef MOUNTED_LISTMNTENT
   {
@@ -378,7 +374,7 @@ read_file_system_list (bool need_fs_type)
 #ifdef MOUNTED_GETMNTENT1 /* GNU/Linux, 4.3BSD, SunOS, HP-UX, Dynix, Irix.  */
   {
     struct mntent *mnt;
-    char *table = MOUNTED;
+    char const *table = MOUNTED;
     FILE *fp;
 
     fp = setmntent (table, "r");

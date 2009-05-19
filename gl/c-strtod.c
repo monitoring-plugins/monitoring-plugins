@@ -1,6 +1,6 @@
 /* Convert string to double, using the C locale.
 
-   Copyright (C) 2003, 2004, 2006 Free Software Foundation, Inc.
+   Copyright (C) 2003, 2004, 2006, 2009 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,10 +21,10 @@
 
 #include "c-strtod.h"
 
+#include <errno.h>
 #include <locale.h>
 #include <stdlib.h>
-
-#include "xalloc.h"
+#include <string.h>
 
 #if LONG
 # define C_STRTOD c_strtold
@@ -43,6 +43,25 @@
 # define STRTOD strtod
 #endif
 
+#ifdef LC_ALL_MASK
+
+/* Cache for the C locale object.
+   Marked volatile so that different threads see the same value
+   (avoids locking).  */
+static volatile locale_t c_locale_cache;
+
+/* Return the C locale object, or (locale_t) 0 with errno set
+   if it cannot be created.  */
+static inline locale_t
+c_locale (void)
+{
+  if (!c_locale_cache)
+    c_locale_cache = newlocale (LC_ALL_MASK, "C", (locale_t) 0);
+  return c_locale_cache;
+}
+
+#endif
+
 DOUBLE
 C_STRTOD (char const *nptr, char **endptr)
 {
@@ -50,9 +69,15 @@ C_STRTOD (char const *nptr, char **endptr)
 
 #ifdef LC_ALL_MASK
 
-  locale_t c_locale = newlocale (LC_ALL_MASK, "C", 0);
-  r = STRTOD_L (nptr, endptr, c_locale);
-  freelocale (c_locale);
+  locale_t locale = c_locale ();
+  if (!locale)
+    {
+      if (endptr)
+	*endptr = (char *) nptr;
+      return 0; /* errno is set here */
+    }
+
+  r = STRTOD_L (nptr, endptr, locale);
 
 #else
 
@@ -60,7 +85,13 @@ C_STRTOD (char const *nptr, char **endptr)
 
   if (saved_locale)
     {
-      saved_locale = xstrdup (saved_locale);
+      saved_locale = strdup (saved_locale);
+      if (saved_locale == NULL)
+	{
+	  if (endptr)
+	    *endptr = (char *) nptr;
+	  return 0; /* errno is set here */
+	}
       setlocale (LC_NUMERIC, "C");
     }
 
@@ -68,8 +99,11 @@ C_STRTOD (char const *nptr, char **endptr)
 
   if (saved_locale)
     {
+      int saved_errno = errno;
+
       setlocale (LC_NUMERIC, saved_locale);
       free (saved_locale);
+      errno = saved_errno;
     }
 
 #endif

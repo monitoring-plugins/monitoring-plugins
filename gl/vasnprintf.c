@@ -1,5 +1,5 @@
 /* vsprintf with automatic memory allocation.
-   Copyright (C) 1999, 2002-2008 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2002-2009 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -117,29 +117,6 @@
 # include "fpucw.h"
 #endif
 
-#if HAVE_WCHAR_T
-# if HAVE_WCSLEN
-#  define local_wcslen wcslen
-# else
-   /* Solaris 2.5.1 has wcslen() in a separate library libw.so. To avoid
-      a dependency towards this library, here is a local substitute.
-      Define this substitute only once, even if this file is included
-      twice in the same compilation unit.  */
-#  ifndef local_wcslen_defined
-#   define local_wcslen_defined 1
-static size_t
-local_wcslen (const wchar_t *s)
-{
-  const wchar_t *ptr;
-
-  for (ptr = s; *ptr != (wchar_t) 0; ptr++)
-    ;
-  return ptr - s;
-}
-#  endif
-# endif
-#endif
-
 /* Default parameters.  */
 #ifndef VASNPRINTF
 # if WIDE_CHAR_VERSION
@@ -152,6 +129,7 @@ local_wcslen (const wchar_t *s)
 #  define DIRECTIVES wchar_t_directives
 #  define PRINTF_PARSE wprintf_parse
 #  define DCHAR_CPY wmemcpy
+#  define DCHAR_SET wmemset
 # else
 #  define VASNPRINTF vasnprintf
 #  define FCHAR_T char
@@ -162,6 +140,7 @@ local_wcslen (const wchar_t *s)
 #  define DIRECTIVES char_directives
 #  define PRINTF_PARSE printf_parse
 #  define DCHAR_CPY memcpy
+#  define DCHAR_SET memset
 # endif
 #endif
 #if WIDE_CHAR_VERSION
@@ -214,6 +193,64 @@ local_wcslen (const wchar_t *s)
 #define exp expo
 #undef remainder
 #define remainder rem
+
+#if !USE_SNPRINTF && !WIDE_CHAR_VERSION
+# if (HAVE_STRNLEN && !defined _AIX)
+#  define local_strnlen strnlen
+# else
+#  ifndef local_strnlen_defined
+#   define local_strnlen_defined 1
+static size_t
+local_strnlen (const char *string, size_t maxlen)
+{
+  const char *end = memchr (string, '\0', maxlen);
+  return end ? (size_t) (end - string) : maxlen;
+}
+#  endif
+# endif
+#endif
+
+#if (!USE_SNPRINTF || (NEED_PRINTF_DIRECTIVE_LS && !defined IN_LIBINTL)) && HAVE_WCHAR_T && (WIDE_CHAR_VERSION || DCHAR_IS_TCHAR)
+# if HAVE_WCSLEN
+#  define local_wcslen wcslen
+# else
+   /* Solaris 2.5.1 has wcslen() in a separate library libw.so. To avoid
+      a dependency towards this library, here is a local substitute.
+      Define this substitute only once, even if this file is included
+      twice in the same compilation unit.  */
+#  ifndef local_wcslen_defined
+#   define local_wcslen_defined 1
+static size_t
+local_wcslen (const wchar_t *s)
+{
+  const wchar_t *ptr;
+
+  for (ptr = s; *ptr != (wchar_t) 0; ptr++)
+    ;
+  return ptr - s;
+}
+#  endif
+# endif
+#endif
+
+#if !USE_SNPRINTF && HAVE_WCHAR_T && WIDE_CHAR_VERSION
+# if HAVE_WCSNLEN
+#  define local_wcsnlen wcsnlen
+# else
+#  ifndef local_wcsnlen_defined
+#   define local_wcsnlen_defined 1
+static size_t
+local_wcsnlen (const wchar_t *s, size_t maxlen)
+{
+  const wchar_t *ptr;
+
+  for (ptr = s; maxlen > 0 && *ptr != (wchar_t) 0; ptr++, maxlen--)
+    ;
+  return ptr - s;
+}
+#  endif
+# endif
+#endif
 
 #if (NEED_PRINTF_DIRECTIVE_A || NEED_PRINTF_LONG_DOUBLE || NEED_PRINTF_INFINITE_LONG_DOUBLE || NEED_PRINTF_DOUBLE || NEED_PRINTF_INFINITE_DOUBLE) && !defined IN_LIBINTL
 /* Determine the decimal-point character according to the current locale.  */
@@ -376,7 +413,7 @@ divide (mpn_t a, mpn_t b, mpn_t *q)
        Normalise [q[m-1],...,q[0]], yields q.
      If m>=n>1, perform a multiple-precision division:
        We have a/b < beta^(m-n+1).
-       s:=intDsize-1-(hightest bit in b[n-1]), 0<=s<intDsize.
+       s:=intDsize-1-(highest bit in b[n-1]), 0<=s<intDsize.
        Shift a and b left by s bits, copying them. r:=a.
        r=[r[m],...,r[0]], b=[b[n-1],...,b[0]] with b[n-1]>=beta/2.
        For j=m-n,...,0: {Here 0 <= r < b*beta^(j+1).}
@@ -1762,18 +1799,18 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 			size_t converted_len = allocated - length;
 #  if DCHAR_IS_TCHAR
 			/* Convert from UTF-8 to locale encoding.  */
-			if (u8_conv_to_encoding (locale_charset (),
-						 iconveh_question_mark,
-						 arg, arg_end - arg, NULL,
-						 &converted, &converted_len)
-			    < 0)
+			converted =
+			  u8_conv_to_encoding (locale_charset (),
+					       iconveh_question_mark,
+					       arg, arg_end - arg, NULL,
+					       converted, &converted_len);
 #  else
 			/* Convert from UTF-8 to UTF-16/UTF-32.  */
 			converted =
 			  U8_TO_DCHAR (arg, arg_end - arg,
 				       converted, &converted_len);
-			if (converted == NULL)
 #  endif
+			if (converted == NULL)
 			  {
 			    int saved_errno = errno;
 			    if (!(result == resultbuf || result == NULL))
@@ -1890,18 +1927,18 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 			size_t converted_len = allocated - length;
 #  if DCHAR_IS_TCHAR
 			/* Convert from UTF-16 to locale encoding.  */
-			if (u16_conv_to_encoding (locale_charset (),
-						  iconveh_question_mark,
-						  arg, arg_end - arg, NULL,
-						  &converted, &converted_len)
-			    < 0)
+			converted =
+			  u16_conv_to_encoding (locale_charset (),
+						iconveh_question_mark,
+						arg, arg_end - arg, NULL,
+						converted, &converted_len);
 #  else
 			/* Convert from UTF-16 to UTF-8/UTF-32.  */
 			converted =
 			  U16_TO_DCHAR (arg, arg_end - arg,
 					converted, &converted_len);
-			if (converted == NULL)
 #  endif
+			if (converted == NULL)
 			  {
 			    int saved_errno = errno;
 			    if (!(result == resultbuf || result == NULL))
@@ -2018,18 +2055,18 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 			size_t converted_len = allocated - length;
 #  if DCHAR_IS_TCHAR
 			/* Convert from UTF-32 to locale encoding.  */
-			if (u32_conv_to_encoding (locale_charset (),
-						  iconveh_question_mark,
-						  arg, arg_end - arg, NULL,
-						  &converted, &converted_len)
-			    < 0)
+			converted =
+			  u32_conv_to_encoding (locale_charset (),
+						iconveh_question_mark,
+						arg, arg_end - arg, NULL,
+						converted, &converted_len);
 #  else
 			/* Convert from UTF-32 to UTF-8/UTF-16.  */
 			converted =
 			  U32_TO_DCHAR (arg, arg_end - arg,
 					converted, &converted_len);
-			if (converted == NULL)
 #  endif
+			if (converted == NULL)
 			  {
 			    int saved_errno = errno;
 			    if (!(result == resultbuf || result == NULL))
@@ -2065,6 +2102,522 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 		    abort ();
 		  }
 	      }
+#endif
+#if (!USE_SNPRINTF || (NEED_PRINTF_DIRECTIVE_LS && !defined IN_LIBINTL)) && HAVE_WCHAR_T
+	    else if (dp->conversion == 's'
+# if WIDE_CHAR_VERSION
+		     && a.arg[dp->arg_index].type != TYPE_WIDE_STRING
+# else
+		     && a.arg[dp->arg_index].type == TYPE_WIDE_STRING
+# endif
+		    )
+	      {
+		/* The normal handling of the 's' directive below requires
+		   allocating a temporary buffer.  The determination of its
+		   length (tmp_length), in the case when a precision is
+		   specified, below requires a conversion between a char[]
+		   string and a wchar_t[] wide string.  It could be done, but
+		   we have no guarantee that the implementation of sprintf will
+		   use the exactly same algorithm.  Without this guarantee, it
+		   is possible to have buffer overrun bugs.  In order to avoid
+		   such bugs, we implement the entire processing of the 's'
+		   directive ourselves.  */
+		int flags = dp->flags;
+		int has_width;
+		size_t width;
+		int has_precision;
+		size_t precision;
+
+		has_width = 0;
+		width = 0;
+		if (dp->width_start != dp->width_end)
+		  {
+		    if (dp->width_arg_index != ARG_NONE)
+		      {
+			int arg;
+
+			if (!(a.arg[dp->width_arg_index].type == TYPE_INT))
+			  abort ();
+			arg = a.arg[dp->width_arg_index].a.a_int;
+			if (arg < 0)
+			  {
+			    /* "A negative field width is taken as a '-' flag
+			        followed by a positive field width."  */
+			    flags |= FLAG_LEFT;
+			    width = (unsigned int) (-arg);
+			  }
+			else
+			  width = arg;
+		      }
+		    else
+		      {
+			const FCHAR_T *digitp = dp->width_start;
+
+			do
+			  width = xsum (xtimes (width, 10), *digitp++ - '0');
+			while (digitp != dp->width_end);
+		      }
+		    has_width = 1;
+		  }
+
+		has_precision = 0;
+		precision = 6;
+		if (dp->precision_start != dp->precision_end)
+		  {
+		    if (dp->precision_arg_index != ARG_NONE)
+		      {
+			int arg;
+
+			if (!(a.arg[dp->precision_arg_index].type == TYPE_INT))
+			  abort ();
+			arg = a.arg[dp->precision_arg_index].a.a_int;
+			/* "A negative precision is taken as if the precision
+			    were omitted."  */
+			if (arg >= 0)
+			  {
+			    precision = arg;
+			    has_precision = 1;
+			  }
+		      }
+		    else
+		      {
+			const FCHAR_T *digitp = dp->precision_start + 1;
+
+			precision = 0;
+			while (digitp != dp->precision_end)
+			  precision = xsum (xtimes (precision, 10), *digitp++ - '0');
+			has_precision = 1;
+		      }
+		  }
+
+# if WIDE_CHAR_VERSION
+		/* %s in vasnwprintf.  See the specification of fwprintf.  */
+		{
+		  const char *arg = a.arg[dp->arg_index].a.a_string;
+		  const char *arg_end;
+		  size_t characters;
+
+		  if (has_precision)
+		    {
+		      /* Use only as many bytes as needed to produce PRECISION
+			 wide characters, from the left.  */
+#  if HAVE_MBRTOWC
+		      mbstate_t state;
+		      memset (&state, '\0', sizeof (mbstate_t));
+#  endif
+		      arg_end = arg;
+		      characters = 0;
+		      for (; precision > 0; precision--)
+			{
+			  int count;
+#  if HAVE_MBRTOWC
+			  count = mbrlen (arg_end, MB_CUR_MAX, &state);
+#  else
+			  count = mblen (arg_end, MB_CUR_MAX);
+#  endif
+			  if (count == 0)
+			    /* Found the terminating NUL.  */
+			    break;
+			  if (count < 0)
+			    {
+			      /* Invalid or incomplete multibyte character.  */
+			      if (!(result == resultbuf || result == NULL))
+				free (result);
+			      if (buf_malloced != NULL)
+				free (buf_malloced);
+			      CLEANUP ();
+			      errno = EILSEQ;
+			      return NULL;
+			    }
+			  arg_end += count;
+			  characters++;
+			}
+		    }
+		  else if (has_width)
+		    {
+		      /* Use the entire string, and count the number of wide
+			 characters.  */
+#  if HAVE_MBRTOWC
+		      mbstate_t state;
+		      memset (&state, '\0', sizeof (mbstate_t));
+#  endif
+		      arg_end = arg;
+		      characters = 0;
+		      for (;;)
+			{
+			  int count;
+#  if HAVE_MBRTOWC
+			  count = mbrlen (arg_end, MB_CUR_MAX, &state);
+#  else
+			  count = mblen (arg_end, MB_CUR_MAX);
+#  endif
+			  if (count == 0)
+			    /* Found the terminating NUL.  */
+			    break;
+			  if (count < 0)
+			    {
+			      /* Invalid or incomplete multibyte character.  */
+			      if (!(result == resultbuf || result == NULL))
+				free (result);
+			      if (buf_malloced != NULL)
+				free (buf_malloced);
+			      CLEANUP ();
+			      errno = EILSEQ;
+			      return NULL;
+			    }
+			  arg_end += count;
+			  characters++;
+			}
+		    }
+		  else
+		    {
+		      /* Use the entire string.  */
+		      arg_end = arg + strlen (arg);
+		      /* The number of characters doesn't matter.  */
+		      characters = 0;
+		    }
+
+		  if (has_width && width > characters
+		      && !(dp->flags & FLAG_LEFT))
+		    {
+		      size_t n = width - characters;
+		      ENSURE_ALLOCATION (xsum (length, n));
+		      DCHAR_SET (result + length, ' ', n);
+		      length += n;
+		    }
+
+		  if (has_precision || has_width)
+		    {
+		      /* We know the number of wide characters in advance.  */
+		      size_t remaining;
+#  if HAVE_MBRTOWC
+		      mbstate_t state;
+		      memset (&state, '\0', sizeof (mbstate_t));
+#  endif
+		      ENSURE_ALLOCATION (xsum (length, characters));
+		      for (remaining = characters; remaining > 0; remaining--)
+			{
+			  wchar_t wc;
+			  int count;
+#  if HAVE_MBRTOWC
+			  count = mbrtowc (&wc, arg, arg_end - arg, &state);
+#  else
+			  count = mbtowc (&wc, arg, arg_end - arg);
+#  endif
+			  if (count <= 0)
+			    /* mbrtowc not consistent with mbrlen, or mbtowc
+			       not consistent with mblen.  */
+			    abort ();
+			  result[length++] = wc;
+			  arg += count;
+			}
+		      if (!(arg == arg_end))
+			abort ();
+		    }
+		  else
+		    {
+#  if HAVE_MBRTOWC
+		      mbstate_t state;
+		      memset (&state, '\0', sizeof (mbstate_t));
+#  endif
+		      while (arg < arg_end)
+			{
+			  wchar_t wc;
+			  int count;
+#  if HAVE_MBRTOWC
+			  count = mbrtowc (&wc, arg, arg_end - arg, &state);
+#  else
+			  count = mbtowc (&wc, arg, arg_end - arg);
+#  endif
+			  if (count <= 0)
+			    /* mbrtowc not consistent with mbrlen, or mbtowc
+			       not consistent with mblen.  */
+			    abort ();
+			  ENSURE_ALLOCATION (xsum (length, 1));
+			  result[length++] = wc;
+			  arg += count;
+			}
+		    }
+
+		  if (has_width && width > characters
+		      && (dp->flags & FLAG_LEFT))
+		    {
+		      size_t n = width - characters;
+		      ENSURE_ALLOCATION (xsum (length, n));
+		      DCHAR_SET (result + length, ' ', n);
+		      length += n;
+		    }
+		}
+# else
+		/* %ls in vasnprintf.  See the specification of fprintf.  */
+		{
+		  const wchar_t *arg = a.arg[dp->arg_index].a.a_wide_string;
+		  const wchar_t *arg_end;
+		  size_t characters;
+#  if !DCHAR_IS_TCHAR
+		  /* This code assumes that TCHAR_T is 'char'.  */
+		  typedef int TCHAR_T_verify[2 * (sizeof (TCHAR_T) == 1) - 1];
+		  TCHAR_T *tmpsrc;
+		  DCHAR_T *tmpdst;
+		  size_t tmpdst_len;
+#  endif
+		  size_t w;
+
+		  if (has_precision)
+		    {
+		      /* Use only as many wide characters as needed to produce
+			 at most PRECISION bytes, from the left.  */
+#  if HAVE_WCRTOMB
+		      mbstate_t state;
+		      memset (&state, '\0', sizeof (mbstate_t));
+#  endif
+		      arg_end = arg;
+		      characters = 0;
+		      while (precision > 0)
+			{
+			  char buf[64]; /* Assume MB_CUR_MAX <= 64.  */
+			  int count;
+
+			  if (*arg_end == 0)
+			    /* Found the terminating null wide character.  */
+			    break;
+#  if HAVE_WCRTOMB
+			  count = wcrtomb (buf, *arg_end, &state);
+#  else
+			  count = wctomb (buf, *arg_end);
+#  endif
+			  if (count < 0)
+			    {
+			      /* Cannot convert.  */
+			      if (!(result == resultbuf || result == NULL))
+				free (result);
+			      if (buf_malloced != NULL)
+				free (buf_malloced);
+			      CLEANUP ();
+			      errno = EILSEQ;
+			      return NULL;
+			    }
+			  if (precision < count)
+			    break;
+			  arg_end++;
+			  characters += count;
+			  precision -= count;
+			}
+		    }
+#  if DCHAR_IS_TCHAR
+		  else if (has_width)
+#  else
+		  else
+#  endif
+		    {
+		      /* Use the entire string, and count the number of
+			 bytes.  */
+#  if HAVE_WCRTOMB
+		      mbstate_t state;
+		      memset (&state, '\0', sizeof (mbstate_t));
+#  endif
+		      arg_end = arg;
+		      characters = 0;
+		      for (;;)
+			{
+			  char buf[64]; /* Assume MB_CUR_MAX <= 64.  */
+			  int count;
+
+			  if (*arg_end == 0)
+			    /* Found the terminating null wide character.  */
+			    break;
+#  if HAVE_WCRTOMB
+			  count = wcrtomb (buf, *arg_end, &state);
+#  else
+			  count = wctomb (buf, *arg_end);
+#  endif
+			  if (count < 0)
+			    {
+			      /* Cannot convert.  */
+			      if (!(result == resultbuf || result == NULL))
+				free (result);
+			      if (buf_malloced != NULL)
+				free (buf_malloced);
+			      CLEANUP ();
+			      errno = EILSEQ;
+			      return NULL;
+			    }
+			  arg_end++;
+			  characters += count;
+			}
+		    }
+#  if DCHAR_IS_TCHAR
+		  else
+		    {
+		      /* Use the entire string.  */
+		      arg_end = arg + local_wcslen (arg);
+		      /* The number of bytes doesn't matter.  */
+		      characters = 0;
+		    }
+#  endif
+
+#  if !DCHAR_IS_TCHAR
+		  /* Convert the string into a piece of temporary memory.  */
+		  tmpsrc = (TCHAR_T *) malloc (characters * sizeof (TCHAR_T));
+		  if (tmpsrc == NULL)
+		    goto out_of_memory;
+		  {
+		    TCHAR_T *tmpptr = tmpsrc;
+		    size_t remaining;
+#   if HAVE_WCRTOMB
+		    mbstate_t state;
+		    memset (&state, '\0', sizeof (mbstate_t));
+#   endif
+		    for (remaining = characters; remaining > 0; )
+		      {
+			char buf[64]; /* Assume MB_CUR_MAX <= 64.  */
+			int count;
+
+			if (*arg == 0)
+			  abort ();
+#   if HAVE_WCRTOMB
+			count = wcrtomb (buf, *arg, &state);
+#   else
+			count = wctomb (buf, *arg);
+#   endif
+			if (count <= 0)
+			  /* Inconsistency.  */
+			  abort ();
+			memcpy (tmpptr, buf, count);
+			tmpptr += count;
+			arg++;
+			remaining -= count;
+		      }
+		    if (!(arg == arg_end))
+		      abort ();
+		  }
+
+		  /* Convert from TCHAR_T[] to DCHAR_T[].  */
+		  tmpdst =
+		    DCHAR_CONV_FROM_ENCODING (locale_charset (),
+					      iconveh_question_mark,
+					      tmpsrc, characters,
+					      NULL,
+					      NULL, &tmpdst_len);
+		  if (tmpdst == NULL)
+		    {
+		      int saved_errno = errno;
+		      free (tmpsrc);
+		      if (!(result == resultbuf || result == NULL))
+			free (result);
+		      if (buf_malloced != NULL)
+			free (buf_malloced);
+		      CLEANUP ();
+		      errno = saved_errno;
+		      return NULL;
+		    }
+		  free (tmpsrc);
+#  endif
+
+		  if (has_width)
+		    {
+#  if ENABLE_UNISTDIO
+		      /* Outside POSIX, it's preferrable to compare the width
+			 against the number of _characters_ of the converted
+			 value.  */
+		      w = DCHAR_MBSNLEN (result + length, characters);
+#  else
+		      /* The width is compared against the number of _bytes_
+			 of the converted value, says POSIX.  */
+		      w = characters;
+#  endif
+		    }
+		  else
+		    /* w doesn't matter.  */
+		    w = 0;
+
+		  if (has_width && width > w
+		      && !(dp->flags & FLAG_LEFT))
+		    {
+		      size_t n = width - w;
+		      ENSURE_ALLOCATION (xsum (length, n));
+		      DCHAR_SET (result + length, ' ', n);
+		      length += n;
+		    }
+
+#  if DCHAR_IS_TCHAR
+		  if (has_precision || has_width)
+		    {
+		      /* We know the number of bytes in advance.  */
+		      size_t remaining;
+#   if HAVE_WCRTOMB
+		      mbstate_t state;
+		      memset (&state, '\0', sizeof (mbstate_t));
+#   endif
+		      ENSURE_ALLOCATION (xsum (length, characters));
+		      for (remaining = characters; remaining > 0; )
+			{
+			  char buf[64]; /* Assume MB_CUR_MAX <= 64.  */
+			  int count;
+
+			  if (*arg == 0)
+			    abort ();
+#   if HAVE_WCRTOMB
+			  count = wcrtomb (buf, *arg, &state);
+#   else
+			  count = wctomb (buf, *arg);
+#   endif
+			  if (count <= 0)
+			    /* Inconsistency.  */
+			    abort ();
+			  memcpy (result + length, buf, count);
+			  length += count;
+			  arg++;
+			  remaining -= count;
+			}
+		      if (!(arg == arg_end))
+			abort ();
+		    }
+		  else
+		    {
+#   if HAVE_WCRTOMB
+		      mbstate_t state;
+		      memset (&state, '\0', sizeof (mbstate_t));
+#   endif
+		      while (arg < arg_end)
+			{
+			  char buf[64]; /* Assume MB_CUR_MAX <= 64.  */
+			  int count;
+
+			  if (*arg == 0)
+			    abort ();
+#   if HAVE_WCRTOMB
+			  count = wcrtomb (buf, *arg, &state);
+#   else
+			  count = wctomb (buf, *arg);
+#   endif
+			  if (count <= 0)
+			    /* Inconsistency.  */
+			    abort ();
+			  ENSURE_ALLOCATION (xsum (length, count));
+			  memcpy (result + length, buf, count);
+			  length += count;
+			  arg++;
+			}
+		    }
+#  else
+		  ENSURE_ALLOCATION (xsum (length, tmpdst_len));
+		  DCHAR_CPY (result + length, tmpdst, tmpdst_len);
+		  free (tmpdst);
+		  length += tmpdst_len;
+#  endif
+
+		  if (has_width && width > w
+		      && (dp->flags & FLAG_LEFT))
+		    {
+		      size_t n = width - w;
+		      ENSURE_ALLOCATION (xsum (length, n));
+		      DCHAR_SET (result + length, ' ', n);
+		      length += n;
+		    }
+		}
+	      }
+# endif
 #endif
 #if (NEED_PRINTF_DIRECTIVE_A || NEED_PRINTF_LONG_DOUBLE || NEED_PRINTF_DOUBLE) && !defined IN_LIBINTL
 	    else if ((dp->conversion == 'a' || dp->conversion == 'A')
@@ -4032,16 +4585,64 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 # if HAVE_WCHAR_T
 		      if (type == TYPE_WIDE_STRING)
 			{
-			  tmp_length =
-			    local_wcslen (a.arg[dp->arg_index].a.a_wide_string);
+#  if WIDE_CHAR_VERSION
+			  /* ISO C says about %ls in fwprintf:
+			       "If the precision is not specified or is greater
+				than the size of the array, the array shall
+				contain a null wide character."
+			     So if there is a precision, we must not use
+			     wcslen.  */
+			  const wchar_t *arg =
+			    a.arg[dp->arg_index].a.a_wide_string;
 
-#  if !WIDE_CHAR_VERSION
-			  tmp_length = xtimes (tmp_length, MB_CUR_MAX);
+			  if (has_precision)
+			    tmp_length = local_wcsnlen (arg, precision);
+			  else
+			    tmp_length = local_wcslen (arg);
+#  else
+			  /* ISO C says about %ls in fprintf:
+			       "If a precision is specified, no more than that
+				many bytes are written (including shift
+				sequences, if any), and the array shall contain
+				a null wide character if, to equal the
+				multibyte character sequence length given by
+				the precision, the function would need to
+				access a wide character one past the end of the
+				array."
+			     So if there is a precision, we must not use
+			     wcslen.  */
+			  /* This case has already been handled above.  */
+			  abort ();
 #  endif
 			}
 		      else
 # endif
-			tmp_length = strlen (a.arg[dp->arg_index].a.a_string);
+			{
+# if WIDE_CHAR_VERSION
+			  /* ISO C says about %s in fwprintf:
+			       "If the precision is not specified or is greater
+				than the size of the converted array, the
+				converted array shall contain a null wide
+				character."
+			     So if there is a precision, we must not use
+			     strlen.  */
+			  /* This case has already been handled above.  */
+			  abort ();
+# else
+			  /* ISO C says about %s in fprintf:
+			       "If the precision is not specified or greater
+				than the size of the array, the array shall
+				contain a null character."
+			     So if there is a precision, we must not use
+			     strlen.  */
+			  const char *arg = a.arg[dp->arg_index].a.a_string;
+
+			  if (has_precision)
+			    tmp_length = local_strnlen (arg, precision);
+			  else
+			    tmp_length = strlen (arg);
+# endif
+			}
 		      break;
 
 		    case 'p':
@@ -4614,14 +5215,13 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 # else
 			tmpsrc = tmp;
 # endif
-			tmpdst = NULL;
-			tmpdst_len = 0;
-			if (DCHAR_CONV_FROM_ENCODING (locale_charset (),
-						      iconveh_question_mark,
-						      tmpsrc, count,
-						      NULL,
-						      &tmpdst, &tmpdst_len)
-			    < 0)
+			tmpdst =
+			  DCHAR_CONV_FROM_ENCODING (locale_charset (),
+						    iconveh_question_mark,
+						    tmpsrc, count,
+						    NULL,
+						    NULL, &tmpdst_len);
+			if (tmpdst == NULL)
 			  {
 			    int saved_errno = errno;
 			    if (!(result == resultbuf || result == NULL))

@@ -1,6 +1,6 @@
 /* Determine a canonical name for the current locale's character encoding.
 
-   Copyright (C) 2000-2006, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2000-2006, 2008-2009 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -27,6 +27,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#if defined __APPLE__ && defined __MACH__ && HAVE_LANGINFO_CODESET
+# define DARWIN7 /* Darwin 7 or newer, i.e. MacOS X 10.3 or newer */
+#endif
 
 #if defined _WIN32 || defined __WIN32__
 # define WIN32_NATIVE
@@ -112,7 +116,7 @@ get_charset_aliases (void)
   cp = charset_aliases;
   if (cp == NULL)
     {
-#if !(defined VMS || defined WIN32_NATIVE || defined __CYGWIN__)
+#if !(defined DARWIN7 || defined VMS || defined WIN32_NATIVE || defined __CYGWIN__)
       FILE *fp;
       const char *dir;
       const char *base = "charset.alias";
@@ -212,6 +216,39 @@ get_charset_aliases (void)
 	free (file_name);
 
 #else
+
+# if defined DARWIN7
+      /* To avoid the trouble of installing a file that is shared by many
+	 GNU packages -- many packaging systems have problems with this --,
+	 simply inline the aliases here.  */
+      cp = "ISO8859-1" "\0" "ISO-8859-1" "\0"
+	   "ISO8859-2" "\0" "ISO-8859-2" "\0"
+	   "ISO8859-4" "\0" "ISO-8859-4" "\0"
+	   "ISO8859-5" "\0" "ISO-8859-5" "\0"
+	   "ISO8859-7" "\0" "ISO-8859-7" "\0"
+	   "ISO8859-9" "\0" "ISO-8859-9" "\0"
+	   "ISO8859-13" "\0" "ISO-8859-13" "\0"
+	   "ISO8859-15" "\0" "ISO-8859-15" "\0"
+	   "KOI8-R" "\0" "KOI8-R" "\0"
+	   "KOI8-U" "\0" "KOI8-U" "\0"
+	   "CP866" "\0" "CP866" "\0"
+	   "CP949" "\0" "CP949" "\0"
+	   "CP1131" "\0" "CP1131" "\0"
+	   "CP1251" "\0" "CP1251" "\0"
+	   "eucCN" "\0" "GB2312" "\0"
+	   "GB2312" "\0" "GB2312" "\0"
+	   "eucJP" "\0" "EUC-JP" "\0"
+	   "eucKR" "\0" "EUC-KR" "\0"
+	   "Big5" "\0" "BIG5" "\0"
+	   "Big5HKSCS" "\0" "BIG5-HKSCS" "\0"
+	   "GBK" "\0" "GBK" "\0"
+	   "GB18030" "\0" "GB18030" "\0"
+	   "SJIS" "\0" "SHIFT_JIS" "\0"
+	   "ARMSCII-8" "\0" "ARMSCII-8" "\0"
+	   "PT154" "\0" "PT154" "\0"
+	 /*"ISCII-DEV" "\0" "?" "\0"*/
+	   "*" "\0" "UTF-8" "\0";
+# endif
 
 # if defined VMS
       /* To avoid the troubles of an extra file charset.alias_vms in the

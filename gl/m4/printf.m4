@@ -1,4 +1,4 @@
-# printf.m4 serial 26
+# printf.m4 serial 33
 dnl Copyright (C) 2003, 2007-2009 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -125,7 +125,8 @@ changequote([,])dnl
 ])
 
 dnl Test whether the *printf family of functions supports infinite and NaN
-dnl 'double' arguments in the %f, %e, %g directives. (ISO C99, POSIX:2001)
+dnl 'double' arguments and negative zero arguments in the %f, %e, %g
+dnl directives. (ISO C99, POSIX:2001)
 dnl Result is gl_cv_func_printf_infinite.
 
 AC_DEFUN([gl_PRINTF_INFINITE],
@@ -155,6 +156,13 @@ strisnan (const char *string, size_t start_index, size_t end_index)
         }
     }
   return 0;
+}
+static int
+have_minus_zero ()
+{
+  static double plus_zero = 0.0;
+  double minus_zero = - plus_zero;
+  return memcmp (&plus_zero, &minus_zero, sizeof (double)) != 0;
 }
 static char buf[10000];
 static double zero = 0.0;
@@ -186,6 +194,11 @@ int main ()
     return 1;
   if (sprintf (buf, "%g", zero / zero) < 0
       || !strisnan (buf, 0, strlen (buf)))
+    return 1;
+  /* This test fails on HP-UX 10.20.  */
+  if (have_minus_zero ())
+    if (sprintf (buf, "%g", - zero) < 0
+        || strcmp (buf, "-0") != 0)
     return 1;
   return 0;
 }], [gl_cv_func_printf_infinite=yes], [gl_cv_func_printf_infinite=no],
@@ -225,7 +238,7 @@ AC_DEFUN([gl_PRINTF_INFINITE_LONG_DOUBLE],
 [
   AC_REQUIRE([gl_PRINTF_LONG_DOUBLE])
   AC_REQUIRE([AC_PROG_CC])
-  AC_REQUIRE([AC_C_BIGENDIAN])
+  AC_REQUIRE([gl_BIGENDIAN])
   AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
   dnl The user can set or unset the variable gl_printf_safe to indicate
   dnl that he wishes a safe handling of non-IEEE-754 'long double' values.
@@ -545,7 +558,7 @@ int main ()
   if (sprintf (buf, "%F", 1.0 / 0.0) < 0
       || (strcmp (buf, "INF") != 0 && strcmp (buf, "INFINITY") != 0))
     return 1;
-  /* This catches a Cygwin 2007 bug.  */
+  /* This catches a Cygwin 1.5.x bug.  */
   if (sprintf (buf, "%.F", 1234.0) < 0
       || strcmp (buf, "1234") != 0)
     return 1;
@@ -606,6 +619,84 @@ int main ()
 changequote(,)dnl
        case "$host_os" in
          *)     gl_cv_func_printf_directive_n="guessing yes";;
+       esac
+changequote([,])dnl
+      ])
+    ])
+])
+
+dnl Test whether the *printf family of functions supports the %ls format
+dnl directive and in particular, when a precision is specified, whether
+dnl the functions stop converting the wide string argument when the number
+dnl of bytes that have been produced by this conversion equals or exceeds
+dnl the precision.
+dnl Result is gl_cv_func_printf_directive_ls.
+
+AC_DEFUN([gl_PRINTF_DIRECTIVE_LS],
+[
+  AC_REQUIRE([AC_PROG_CC])
+  AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
+  AC_CACHE_CHECK([whether printf supports the 'ls' directive],
+    [gl_cv_func_printf_directive_ls],
+    [
+      AC_TRY_RUN([
+/* Tru64 with Desktop Toolkit C has a bug: <stdio.h> must be included before
+   <wchar.h>.
+   BSD/OS 4.0.1 has a bug: <stddef.h>, <stdio.h> and <time.h> must be
+   included before <wchar.h>.  */
+#include <stddef.h>
+#include <stdio.h>
+#include <time.h>
+#include <wchar.h>
+#include <string.h>
+int main ()
+{
+  char buf[100];
+  /* Test whether %ls works at all.
+     This test fails on OpenBSD 4.0, IRIX 6.5, Solaris 2.6, Haiku, but not on
+     Cygwin 1.5.  */
+  {
+    static const wchar_t wstring[] = { 'a', 'b', 'c', 0 };
+    buf[0] = '\0';
+    if (sprintf (buf, "%ls", wstring) < 0
+        || strcmp (buf, "abc") != 0)
+      return 1;
+  }
+  /* This test fails on IRIX 6.5, Solaris 2.6, Cygwin 1.5, Haiku (with an
+     assertion failure inside libc), but not on OpenBSD 4.0.  */
+  {
+    static const wchar_t wstring[] = { 'a', 0 };
+    buf[0] = '\0';
+    if (sprintf (buf, "%ls", wstring) < 0
+        || strcmp (buf, "a") != 0)
+      return 1;
+  }
+  /* Test whether precisions in %ls are supported as specified in ISO C 99
+     section 7.19.6.1:
+       "If a precision is specified, no more than that many bytes are written
+        (including shift sequences, if any), and the array shall contain a
+        null wide character if, to equal the multibyte character sequence
+        length given by the precision, the function would need to access a
+        wide character one past the end of the array."
+     This test fails on Solaris 10.  */
+  {
+    static const wchar_t wstring[] = { 'a', 'b', (wchar_t) 0xfdfdfdfd, 0 };
+    buf[0] = '\0';
+    if (sprintf (buf, "%.2ls", wstring) < 0
+        || strcmp (buf, "ab") != 0)
+      return 1;
+  }
+  return 0;
+}], [gl_cv_func_printf_directive_ls=yes], [gl_cv_func_printf_directive_ls=no],
+      [
+changequote(,)dnl
+       case "$host_os" in
+         openbsd*)        gl_cv_func_printf_directive_ls="guessing no";;
+         irix*)           gl_cv_func_printf_directive_ls="guessing no";;
+         solaris*)        gl_cv_func_printf_directive_ls="guessing no";;
+         cygwin*)         gl_cv_func_printf_directive_ls="guessing no";;
+         beos* | haiku*)  gl_cv_func_printf_directive_ls="guessing no";;
+         *)               gl_cv_func_printf_directive_ls="guessing yes";;
        esac
 changequote([,])dnl
       ])
@@ -1142,7 +1233,7 @@ AC_DEFUN([gl_SNPRINTF_SIZE1],
 #include <stdio.h>
 int main()
 {
-  static char buf[8] = "DEADBEEF";
+  static char buf[8] = { 'D', 'E', 'A', 'D', 'B', 'E', 'E', 'F' };
   snprintf (buf, 1, "%d", 12345);
   return buf[1] != 'E';
 }],
@@ -1160,7 +1251,7 @@ dnl     ---------------------------------------------------------------------
 dnl     #include <stdio.h>
 dnl     int main()
 dnl     {
-dnl       static char buf[8] = "DEADBEEF";
+dnl       static char buf[8] = { 'D', 'E', 'A', 'D', 'B', 'E', 'E', 'F' };
 dnl       snprintf (buf, 0, "%d", 12345);
 dnl       return buf[0] != 'D';
 dnl     }
@@ -1181,7 +1272,7 @@ dnl       return ret;
 dnl     }
 dnl     int main()
 dnl     {
-dnl       static char buf[8] = "DEADBEEF";
+dnl       static char buf[8] = { 'D', 'E', 'A', 'D', 'B', 'E', 'E', 'F' };
 dnl       my_snprintf (buf, 0, "%d", 12345);
 dnl       return buf[0] != 'D';
 dnl     }
@@ -1209,7 +1300,7 @@ static int my_snprintf (char *buf, int size, const char *format, ...)
 }
 int main()
 {
-  static char buf[8] = "DEADBEEF";
+  static char buf[8] = { 'D', 'E', 'A', 'D', 'B', 'E', 'E', 'F' };
   my_snprintf (buf, 0, "%d", 12345);
   return buf[0] != 'D';
 }],
@@ -1261,18 +1352,19 @@ dnl 4 = gl_PRINTF_INFINITE_LONG_DOUBLE
 dnl 5 = gl_PRINTF_DIRECTIVE_A
 dnl 6 = gl_PRINTF_DIRECTIVE_F
 dnl 7 = gl_PRINTF_DIRECTIVE_N
-dnl 8 = gl_PRINTF_POSITIONS
-dnl 9 = gl_PRINTF_FLAG_GROUPING
-dnl 10 = gl_PRINTF_FLAG_LEFTADJUST
-dnl 11 = gl_PRINTF_FLAG_ZERO
-dnl 12 = gl_PRINTF_PRECISION
-dnl 13 = gl_PRINTF_ENOMEM
-dnl 14 = gl_SNPRINTF_PRESENCE
-dnl 15 = gl_SNPRINTF_TRUNCATION_C99
-dnl 16 = gl_SNPRINTF_RETVAL_C99
-dnl 17 = gl_SNPRINTF_DIRECTIVE_N
-dnl 18 = gl_SNPRINTF_SIZE1
-dnl 19 = gl_VSNPRINTF_ZEROSIZE_C99
+dnl 8 = gl_PRINTF_DIRECTIVE_LS
+dnl 9 = gl_PRINTF_POSITIONS
+dnl 10 = gl_PRINTF_FLAG_GROUPING
+dnl 11 = gl_PRINTF_FLAG_LEFTADJUST
+dnl 12 = gl_PRINTF_FLAG_ZERO
+dnl 13 = gl_PRINTF_PRECISION
+dnl 14 = gl_PRINTF_ENOMEM
+dnl 15 = gl_SNPRINTF_PRESENCE
+dnl 16 = gl_SNPRINTF_TRUNCATION_C99
+dnl 17 = gl_SNPRINTF_RETVAL_C99
+dnl 18 = gl_SNPRINTF_DIRECTIVE_N
+dnl 19 = gl_SNPRINTF_SIZE1
+dnl 20 = gl_VSNPRINTF_ZEROSIZE_C99
 dnl
 dnl 1 = checking whether printf supports size specifiers as in C99...
 dnl 2 = checking whether printf supports 'long double' arguments...
@@ -1281,42 +1373,44 @@ dnl 4 = checking whether printf supports infinite 'long double' arguments...
 dnl 5 = checking whether printf supports the 'a' and 'A' directives...
 dnl 6 = checking whether printf supports the 'F' directive...
 dnl 7 = checking whether printf supports the 'n' directive...
-dnl 8 = checking whether printf supports POSIX/XSI format strings with positions...
-dnl 9 = checking whether printf supports the grouping flag...
-dnl 10 = checking whether printf supports the left-adjust flag correctly...
-dnl 11 = checking whether printf supports the zero flag correctly...
-dnl 12 = checking whether printf supports large precisions...
-dnl 13 = checking whether printf survives out-of-memory conditions...
-dnl 14 = checking for snprintf...
-dnl 15 = checking whether snprintf truncates the result as in C99...
-dnl 16 = checking whether snprintf returns a byte count as in C99...
-dnl 17 = checking whether snprintf fully supports the 'n' directive...
-dnl 18 = checking whether snprintf respects a size of 1...
-dnl 19 = checking whether vsnprintf respects a zero size as in C99...
+dnl 8 = checking whether printf supports the 'ls' directive...
+dnl 9 = checking whether printf supports POSIX/XSI format strings with positions...
+dnl 10 = checking whether printf supports the grouping flag...
+dnl 11 = checking whether printf supports the left-adjust flag correctly...
+dnl 12 = checking whether printf supports the zero flag correctly...
+dnl 13 = checking whether printf supports large precisions...
+dnl 14 = checking whether printf survives out-of-memory conditions...
+dnl 15 = checking for snprintf...
+dnl 16 = checking whether snprintf truncates the result as in C99...
+dnl 17 = checking whether snprintf returns a byte count as in C99...
+dnl 18 = checking whether snprintf fully supports the 'n' directive...
+dnl 19 = checking whether snprintf respects a size of 1...
+dnl 20 = checking whether vsnprintf respects a zero size as in C99...
 dnl
 dnl . = yes, # = no.
 dnl
-dnl                                  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19
-dnl   glibc 2.5                      .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
-dnl   glibc 2.3.6                    .  .  .  .  #  .  .  .  .  .  .  .  .  .  .  .  .  .  .
-dnl   FreeBSD 5.4, 6.1               .  .  .  .  #  .  .  .  .  .  #  .  #  .  .  .  .  .  .
-dnl   MacOS X 10.3.9                 .  .  .  .  #  .  .  .  .  .  #  .  #  .  .  .  .  .  .
-dnl   OpenBSD 3.9, 4.0               .  .  #  #  #  #  .  .  #  .  #  .  #  .  .  .  .  .  .
-dnl   Cygwin 2007 (= Cygwin 1.5.24)  .  .  .  .  #  #  .  .  .  ?  #  ?  ?  .  .  .  .  .  .
-dnl   Cygwin 2006 (= Cygwin 1.5.19)  #  .  .  .  #  #  .  .  #  ?  #  ?  ?  .  .  .  .  .  .
-dnl   Solaris 10                     .  .  #  #  #  .  .  .  .  .  #  .  .  .  .  .  .  .  .
-dnl   Solaris 2.6 ... 9              #  .  #  #  #  #  .  .  .  .  #  .  .  .  .  .  .  .  .
-dnl   Solaris 2.5.1                  #  .  #  #  #  #  .  .  .  .  #  .  .  #  #  #  #  #  #
-dnl   AIX 5.2                        .  .  #  #  #  .  .  .  .  .  #  .  .  .  .  .  .  .  .
-dnl   AIX 4.3.2, 5.1                 #  .  #  #  #  #  .  .  .  .  #  .  .  .  .  .  .  .  .
-dnl   HP-UX 11.31                    .  .  .  .  #  .  .  .  .  .  #  .  .  .  .  #  #  .  .
-dnl   HP-UX 11.{00,11,23}            #  .  .  .  #  #  .  .  .  .  #  .  .  .  .  #  #  .  #
-dnl   HP-UX 10.20                    #  .  .  .  #  #  .  .  .  #  #  .  .  .  .  #  #  ?  #
-dnl   IRIX 6.5                       #  .  #  #  #  #  .  .  .  .  #  .  .  .  .  #  .  .  .
-dnl   OSF/1 5.1                      #  .  #  #  #  #  .  .  .  .  #  .  .  .  .  #  .  .  #
-dnl   OSF/1 4.0d                     #  .  #  #  #  #  .  .  .  .  #  .  .  #  #  #  #  #  #
-dnl   NetBSD 4.0                     .  ?  ?  ?  ?  ?  .  .  ?  ?  ?  ?  ?  .  .  .  ?  ?  ?
-dnl   NetBSD 3.0                     .  .  .  .  #  #  .  #  #  ?  #  .  #  .  .  .  .  .  .
-dnl   Haiku                          .  .  .  #  #  #  .  .  .  .  .  .  ?  .  .  .  .  .  .
-dnl   BeOS                           #  #  .  #  #  #  .  #  .  ?  .  #  ?  .  .  .  .  .  .
-dnl   mingw                          #  #  #  #  #  #  .  #  #  .  #  #  ?  .  #  #  #  .  .
+dnl                                  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20
+dnl   glibc 2.5                      .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+dnl   glibc 2.3.6                    .  .  .  .  #  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+dnl   FreeBSD 5.4, 6.1               .  .  .  .  #  .  .  .  .  .  .  #  .  #  .  .  .  .  .  .
+dnl   MacOS X 10.3.9                 .  .  .  .  #  .  .  .  .  .  .  #  .  #  .  .  .  .  .  .
+dnl   OpenBSD 3.9, 4.0               .  .  #  #  #  #  .  #  .  #  .  #  .  #  .  .  .  .  .  .
+dnl   Cygwin 1.7.0 (2009)            .  .  .  #  .  .  .  ?  .  .  .  .  .  ?  .  .  .  .  .  .
+dnl   Cygwin 1.5.25 (2008)           .  .  .  #  #  .  .  #  .  .  .  .  .  #  .  .  .  .  .  .
+dnl   Cygwin 1.5.19 (2006)           #  .  .  #  #  #  .  #  .  #  .  #  #  #  .  .  .  .  .  .
+dnl   Solaris 10                     .  .  #  #  #  .  .  #  .  .  .  #  .  .  .  .  .  .  .  .
+dnl   Solaris 2.6 ... 9              #  .  #  #  #  #  .  #  .  .  .  #  .  .  .  .  .  .  .  .
+dnl   Solaris 2.5.1                  #  .  #  #  #  #  .  #  .  .  .  #  .  .  #  #  #  #  #  #
+dnl   AIX 5.2                        .  .  #  #  #  .  .  .  .  .  .  #  .  .  .  .  .  .  .  .
+dnl   AIX 4.3.2, 5.1                 #  .  #  #  #  #  .  .  .  .  .  #  .  .  .  .  .  .  .  .
+dnl   HP-UX 11.31                    .  .  .  .  #  .  .  .  .  .  .  #  .  .  .  .  #  #  .  .
+dnl   HP-UX 11.{00,11,23}            #  .  .  .  #  #  .  .  .  .  .  #  .  .  .  .  #  #  .  #
+dnl   HP-UX 10.20                    #  .  #  .  #  #  .  ?  .  .  #  #  .  .  .  .  #  #  ?  #
+dnl   IRIX 6.5                       #  .  #  #  #  #  .  #  .  .  .  #  .  .  .  .  #  .  .  .
+dnl   OSF/1 5.1                      #  .  #  #  #  #  .  .  .  .  .  #  .  .  .  .  #  .  .  #
+dnl   OSF/1 4.0d                     #  .  #  #  #  #  .  .  .  .  .  #  .  .  #  #  #  #  #  #
+dnl   NetBSD 4.0                     .  ?  ?  ?  ?  ?  .  ?  .  ?  ?  ?  ?  ?  .  .  .  ?  ?  ?
+dnl   NetBSD 3.0                     .  .  .  .  #  #  .  ?  #  #  ?  #  .  #  .  .  .  .  .  .
+dnl   Haiku                          .  .  .  #  #  #  .  #  .  .  .  .  .  ?  .  .  .  .  .  .
+dnl   BeOS                           #  #  .  #  #  #  .  ?  #  .  ?  .  #  ?  .  .  .  .  .  .
+dnl   mingw                          #  #  #  #  #  #  .  .  #  #  .  #  #  ?  .  #  #  #  .  .

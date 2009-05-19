@@ -1,4 +1,4 @@
-# stdint.m4 serial 33
+# stdint.m4 serial 34
 dnl Copyright (C) 2001-2009 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -201,7 +201,75 @@ struct s {
   int check_size: (size_t) -1 == SIZE_MAX ? 1 : -1;
 };
          ]])],
-         [gl_cv_header_working_stdint_h=yes])])
+         [dnl Determine whether the various *_MIN, *_MAX macros are usable
+          dnl in preprocessor expression. We could do it by compiling a test
+          dnl program for each of these macros. It is faster to run a program
+          dnl that inspects the macro expansion.
+          dnl This detects a bug on HP-UX 11.23/ia64.
+          AC_RUN_IFELSE([
+            AC_LANG_PROGRAM([[
+#define __STDC_LIMIT_MACROS 1 /* to make it work also in C++ mode */
+#define __STDC_CONSTANT_MACROS 1 /* to make it work also in C++ mode */
+#define _GL_JUST_INCLUDE_SYSTEM_STDINT_H 1 /* work if build isn't clean */
+#include <stdint.h>
+]
+gl_STDINT_INCLUDES
+[
+#include <stdio.h>
+#include <string.h>
+#define MVAL(macro) MVAL1(macro)
+#define MVAL1(expression) #expression
+static const char *macro_values[] =
+  {
+#ifdef INT8_MAX
+    MVAL (INT8_MAX),
+#endif
+#ifdef INT16_MAX
+    MVAL (INT16_MAX),
+#endif
+#ifdef INT32_MAX
+    MVAL (INT32_MAX),
+#endif
+#ifdef INT64_MAX
+    MVAL (INT64_MAX),
+#endif
+#ifdef UINT8_MAX
+    MVAL (UINT8_MAX),
+#endif
+#ifdef UINT16_MAX
+    MVAL (UINT16_MAX),
+#endif
+#ifdef UINT32_MAX
+    MVAL (UINT32_MAX),
+#endif
+#ifdef UINT64_MAX
+    MVAL (UINT64_MAX),
+#endif
+    NULL
+  };
+]], [[
+  const char **mv;
+  for (mv = macro_values; *mv != NULL; mv++)
+    {
+      const char *value = *mv;
+      /* Test whether it looks like a cast expression.  */
+      if (strncmp (value, "((unsigned int)"/*)*/, 15) == 0
+          || strncmp (value, "((unsigned short)"/*)*/, 17) == 0
+          || strncmp (value, "((unsigned char)"/*)*/, 16) == 0
+          || strncmp (value, "((int)"/*)*/, 6) == 0
+          || strncmp (value, "((signed short)"/*)*/, 15) == 0
+          || strncmp (value, "((signed char)"/*)*/, 14) == 0)
+        return 1;
+    }
+  return 0;
+]])],
+              [gl_cv_header_working_stdint_h=yes],
+              [],
+              [dnl When cross-compiling, assume it works.
+               gl_cv_header_working_stdint_h=yes
+              ])
+         ])
+      ])
   fi
   if test "$gl_cv_header_working_stdint_h" = yes; then
     STDINT_H=

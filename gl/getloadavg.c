@@ -1,8 +1,8 @@
 /* Get the system load averages.
 
    Copyright (C) 1985, 1986, 1987, 1988, 1989, 1991, 1992, 1993, 1994,
-   1995, 1997, 1999, 2000, 2003, 2004, 2005, 2006, 2007, 2008 Free Software
-   Foundation, Inc.
+   1995, 1997, 1999, 2000, 2003, 2004, 2005, 2006, 2007, 2008, 2009 Free
+   Software Foundation, Inc.
 
    NOTE: The canonical source of this file is maintained with gnulib.
    Bugs can be reported to bug-gnulib@gnu.org.
@@ -621,8 +621,11 @@ getloadavg (double loadavg[], int nelem)
   for (elem = 0; elem < nelem; elem++)
     {
       char *endptr;
-      double d = c_strtod (ptr, &endptr);
-      if (ptr == endptr)
+      double d;
+
+      errno = 0;
+      d = c_strtod (ptr, &endptr);
+      if (ptr == endptr || (d == 0 && errno != 0))
 	{
 	  if (elem == 0)
 	    return -1;

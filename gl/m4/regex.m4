@@ -1,4 +1,4 @@
-# serial 53
+# serial 54
 
 # Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005,
 # 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
@@ -18,12 +18,9 @@ AC_DEFUN([gl_REGEX],
 
   AC_ARG_WITH([included-regex],
     [AS_HELP_STRING([--without-included-regex],
-		    [don't compile regex; this is the default on 32-bit
-		     systems with recent-enough versions of the GNU C
-		     Library (use with caution on other systems).
-		     On systems with 64-bit ptrdiff_t and 32-bit int,
-		     --with-included-regex is the default, in case
-		     regex functions operate on very long strings (>2GB)])])
+		    [don't compile regex; this is the default on systems
+		     with recent-enough versions of the GNU C Library
+		     (use with caution on other systems).])])
 
   case $with_included_regex in #(
   yes|no) ac_use_included_regex=$with_included_regex

@@ -1,4 +1,4 @@
-/* Copyright (C) 1997, 2001, 2002, 2004, 2005, 2006, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 1997, 2001, 2002, 2004, 2005, 2006, 2008, 2009 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Philip Blundell <pjb27@cam.ac.uk>, 1997.
 
@@ -50,7 +50,7 @@ values[] =
     { EAI_SOCKTYPE, N_("ai_socktype not supported") },
     { EAI_SYSTEM, N_("System error") },
     { EAI_OVERFLOW, N_("Argument buffer too small") },
-#ifdef __USE_GNU
+#ifdef EAI_INPROGRESS
     { EAI_INPROGRESS, N_("Processing request in progress") },
     { EAI_CANCELED, N_("Request canceled") },
     { EAI_NOTCANCELED, N_("Request not canceled") },

@@ -1,4 +1,4 @@
-# lib-link.m4 serial 18 (gettext-0.18)
+# lib-link.m4 serial 19 (gettext-0.18)
 dnl Copyright (C) 2001-2009 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -43,12 +43,13 @@ AC_DEFUN([AC_LIB_LINKFLAGS],
   popdef([Name])
 ])
 
-dnl AC_LIB_HAVE_LINKFLAGS(name, dependencies, includes, testcode)
+dnl AC_LIB_HAVE_LINKFLAGS(name, dependencies, includes, testcode, [missing-message])
 dnl searches for libname and the libraries corresponding to explicit and
 dnl implicit dependencies, together with the specified include files and
-dnl the ability to compile and link the specified testcode. If found, it
-dnl sets and AC_SUBSTs HAVE_LIB${NAME}=yes and the LIB${NAME} and
-dnl LTLIB${NAME} variables and augments the CPPFLAGS variable, and
+dnl the ability to compile and link the specified testcode. The missing-message
+dnl defaults to 'no' and may contain additional hints for the user.
+dnl If found, it sets and AC_SUBSTs HAVE_LIB${NAME}=yes and the LIB${NAME}
+dnl and LTLIB${NAME} variables and augments the CPPFLAGS variable, and
 dnl #defines HAVE_LIB${NAME} to 1. Otherwise, it sets and AC_SUBSTs
 dnl HAVE_LIB${NAME}=no and LIB${NAME} and LTLIB${NAME} to empty.
 dnl Sets and AC_SUBSTs the LIB${NAME}_PREFIX variable to nonempty if libname
@@ -74,12 +75,14 @@ AC_DEFUN([AC_LIB_HAVE_LINKFLAGS],
   AC_CACHE_CHECK([for lib[]$1], [ac_cv_lib[]Name], [
     ac_save_LIBS="$LIBS"
     LIBS="$LIBS $LIB[]NAME"
-    AC_TRY_LINK([$3], [$4], [ac_cv_lib[]Name=yes], [ac_cv_lib[]Name=no])
+    AC_TRY_LINK([$3], [$4],
+      [ac_cv_lib[]Name=yes],
+      [ac_cv_lib[]Name='m4_if([$5], [], [no], [[$5]])'])
     LIBS="$ac_save_LIBS"
   ])
   if test "$ac_cv_lib[]Name" = yes; then
     HAVE_LIB[]NAME=yes
-    AC_DEFINE([HAVE_LIB]NAME, 1, [Define if you have the $1 library.])
+    AC_DEFINE([HAVE_LIB]NAME, 1, [Define if you have the lib[]$1 library.])
     AC_MSG_CHECKING([how to link with lib[]$1])
     AC_MSG_RESULT([$LIB[]NAME])
   else

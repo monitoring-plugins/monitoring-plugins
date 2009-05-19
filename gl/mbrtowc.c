@@ -1,5 +1,5 @@
 /* Convert multibyte character to wide character.
-   Copyright (C) 1999-2002, 2005-2008 Free Software Foundation, Inc.
+   Copyright (C) 1999-2002, 2005-2009 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2008.
 
    This program is free software: you can redistribute it and/or modify
@@ -89,7 +89,7 @@ mbrtowc (wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 	return (size_t)(-1);
       }
 
-    /* Here 0 < m ≤ 4.  */
+    /* Here m > 0.  */
 
 # if __GLIBC__
     /* Work around bug <http://sourceware.org/bugzilla/show_bug.cgi?id=9674> */
@@ -118,7 +118,7 @@ mbrtowc (wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 	 lack mbrtowc(), we use the second approach.
 	 The possible encodings are:
 	   - 8-bit encodings,
-	   - EUC-JP, EUC-KR, GB2312, EUC-TW, BIG5, SJIS,
+	   - EUC-JP, EUC-KR, GB2312, EUC-TW, BIG5, GB18030, SJIS,
 	   - UTF-8.
 	 Use specialized code for each.  */
       if (m >= 4 || m >= MB_CUR_MAX)
@@ -238,6 +238,39 @@ mbrtowc (wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 	      }
 	    goto invalid;
 	  }
+	if (STREQ (encoding, "GB18030", 'G', 'B', '1', '8', '0', '3', '0', 0, 0))
+	  {
+	    if (m == 1)
+	      {
+		unsigned char c = (unsigned char) p[0];
+
+		if ((c >= 0x90 && c <= 0xe3) || (c >= 0xf8 && c <= 0xfe))
+		  goto incomplete;
+	      }
+	    else /* m == 2 || m == 3 */
+	      {
+		unsigned char c = (unsigned char) p[0];
+
+		if (c >= 0x90 && c <= 0xe3)
+		  {
+		    unsigned char c2 = (unsigned char) p[1];
+
+		    if (c2 >= 0x30 && c2 <= 0x39)
+		      {
+			if (m == 2)
+			  goto incomplete;
+			else /* m == 3 */
+			  {
+			    unsigned char c3 = (unsigned char) p[2];
+
+			    if (c3 >= 0x81 && c3 <= 0xfe)
+			      goto incomplete;
+			  }
+		      }
+		  }
+	      }
+	    goto invalid;
+	  }
 	if (STREQ (encoding, "SJIS", 'S', 'J', 'I', 'S', 0, 0, 0, 0, 0))
 	  {
 	    if (m == 1)
@@ -258,10 +291,14 @@ mbrtowc (wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
      incomplete:
       {
 	size_t k = nstate;
-	/* Here 0 < k < m < 4.  */
+	/* Here 0 <= k < m < 4.  */
 	pstate[++k] = s[0];
 	if (k < m)
-	  pstate[++k] = s[1];
+	  {
+	    pstate[++k] = s[1];
+	    if (k < m)
+	      pstate[++k] = s[2];
+	  }
 	if (k != m)
 	  abort ();
       }

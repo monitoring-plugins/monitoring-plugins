@@ -9,6 +9,8 @@ dnl Written by Paul Eggert.
 AC_DEFUN([gl_FCNTL_H],
 [
   AC_REQUIRE([gl_FCNTL_H_DEFAULTS])
+  dnl Persuade glibc <fcntl.h> to define O_NOATIME and O_NOFOLLOW.
+  AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
   AC_CACHE_CHECK([for working fcntl.h], [gl_cv_header_working_fcntl_h],
     [AC_RUN_IFELSE(
        [AC_LANG_PROGRAM(

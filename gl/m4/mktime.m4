@@ -1,4 +1,4 @@
-# serial 14
+# serial 15
 dnl Copyright (C) 2002-2003, 2005-2007, 2009 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -15,6 +15,13 @@ dnl From Jim Meyering.
 AC_DEFUN([AC_FUNC_MKTIME],
 [AC_CHECK_HEADERS_ONCE([unistd.h])
 AC_CHECK_FUNCS_ONCE([alarm])
+AC_REQUIRE([gl_MULTIARCH])
+if test $APPLE_UNIVERSAL_BUILD = 1; then
+  # A universal build on Apple MacOS X platforms.
+  # The test result would be 'yes' in 32-bit mode and 'no' in 64-bit mode.
+  # But we need a configuration result that is valid in both modes.
+  ac_cv_func_working_mktime=no
+fi
 AC_CACHE_CHECK([for working mktime], [ac_cv_func_working_mktime],
 [AC_RUN_IFELSE([AC_LANG_SOURCE(
 [[/* Test program from Paul Eggert and Tony Leneis.  */

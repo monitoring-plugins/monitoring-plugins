@@ -1,4 +1,4 @@
-# inet_ntop.m4 serial 8
+# inet_ntop.m4 serial 9
 dnl Copyright (C) 2005, 2006, 2008, 2009 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -11,7 +11,18 @@ AC_DEFUN([gl_INET_NTOP],
 
   gl_REPLACE_ARPA_INET_H
 
-  AC_REPLACE_FUNCS([inet_ntop])
+  dnl The AC_SEARCH_LIBS call is a hack to persuade the Solaris 8 linker to
+  dnl find inet_ntop.
+  dnl
+  dnl It is the responsibility of gl_INET_NTOP's caller to arrange for
+  dnl -lnsl if it is needed.  Normally -lnsl is not needed on Solaris 8,
+  dnl since inet_ntop is needed only by getaddrinfo, and getaddrinfo
+  dnl isn't built on Solaris 8.
+  gl_save_LIBS=$LIBS
+  AC_SEARCH_LIBS([inet_ntop], [nsl], [],
+    [AC_REPLACE_FUNCS([inet_ntop])])
+  LIBS=$gl_save_LIBS
+
   gl_PREREQ_INET_NTOP
 ])
 

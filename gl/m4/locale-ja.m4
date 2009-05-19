@@ -1,4 +1,4 @@
-# locale-ja.m4 serial 6
+# locale-ja.m4 serial 7
 dnl Copyright (C) 2003, 2005-2009 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -12,25 +12,7 @@ AC_DEFUN([gt_LOCALE_JA],
   AC_REQUIRE([AC_CANONICAL_HOST])
   AC_REQUIRE([AM_LANGINFO_CODESET])
   AC_CACHE_CHECK([for a traditional japanese locale], [gt_cv_locale_ja], [
-    macosx=
-changequote(,)dnl
-    case "$host_os" in
-      darwin[56]*) ;;
-      darwin*) macosx=yes;;
-    esac
-changequote([,])dnl
-    if test -n "$macosx"; then
-      # On Darwin 7 (MacOS X), the libc supports some locales in non-UTF-8
-      # encodings, but the kernel does not support them. The documentation
-      # says:
-      #   "... all code that calls BSD system routines should ensure
-      #    that the const *char parameters of these routines are in UTF-8
-      #    encoding. All BSD system functions expect their string
-      #    parameters to be in UTF-8 encoding and nothing else."
-      # See the comments in config.charset. Therefore we bypass the test.
-      gt_cv_locale_ja=none
-    else
-      AC_LANG_CONFTEST([AC_LANG_SOURCE([
+    AC_LANG_CONFTEST([AC_LANG_SOURCE([
 changequote(,)dnl
 #include <locale.h>
 #include <time.h>
@@ -79,47 +61,46 @@ int main ()
   return 0;
 }
 changequote([,])dnl
-        ])])
-      if AC_TRY_EVAL([ac_link]) && test -s conftest$ac_exeext; then
-        # Setting LC_ALL is not enough. Need to set LC_TIME to empty, because
-        # otherwise on MacOS X 10.3.5 the LC_TIME=C from the beginning of the
-        # configure script would override the LC_ALL setting. Likewise for
-        # LC_CTYPE, which is also set at the beginning of the configure script.
-        # Test for the AIX locale name.
-        if (LC_ALL=ja_JP LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
-          gt_cv_locale_ja=ja_JP
+      ])])
+    if AC_TRY_EVAL([ac_link]) && test -s conftest$ac_exeext; then
+      # Setting LC_ALL is not enough. Need to set LC_TIME to empty, because
+      # otherwise on MacOS X 10.3.5 the LC_TIME=C from the beginning of the
+      # configure script would override the LC_ALL setting. Likewise for
+      # LC_CTYPE, which is also set at the beginning of the configure script.
+      # Test for the AIX locale name.
+      if (LC_ALL=ja_JP LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
+        gt_cv_locale_ja=ja_JP
+      else
+        # Test for the locale name with explicit encoding suffix.
+        if (LC_ALL=ja_JP.EUC-JP LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
+          gt_cv_locale_ja=ja_JP.EUC-JP
         else
-          # Test for the locale name with explicit encoding suffix.
-          if (LC_ALL=ja_JP.EUC-JP LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
-            gt_cv_locale_ja=ja_JP.EUC-JP
+          # Test for the HP-UX, OSF/1, NetBSD locale name.
+          if (LC_ALL=ja_JP.eucJP LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
+            gt_cv_locale_ja=ja_JP.eucJP
           else
-            # Test for the HP-UX, OSF/1, NetBSD locale name.
-            if (LC_ALL=ja_JP.eucJP LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
-              gt_cv_locale_ja=ja_JP.eucJP
+            # Test for the IRIX, FreeBSD locale name.
+            if (LC_ALL=ja_JP.EUC LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
+              gt_cv_locale_ja=ja_JP.EUC
             else
-              # Test for the IRIX, FreeBSD locale name.
-              if (LC_ALL=ja_JP.EUC LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
-                gt_cv_locale_ja=ja_JP.EUC
+              # Test for the Solaris 7 locale name.
+              if (LC_ALL=ja LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
+                gt_cv_locale_ja=ja
               else
-                # Test for the Solaris 7 locale name.
-                if (LC_ALL=ja LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
-                  gt_cv_locale_ja=ja
+                # Special test for NetBSD 1.6.
+                if test -f /usr/share/locale/ja_JP.eucJP/LC_CTYPE; then
+                  gt_cv_locale_ja=ja_JP.eucJP
                 else
-                  # Special test for NetBSD 1.6.
-                  if test -f /usr/share/locale/ja_JP.eucJP/LC_CTYPE; then
-                    gt_cv_locale_ja=ja_JP.eucJP
-                  else
-                    # None found.
-                    gt_cv_locale_ja=none
-                  fi
+                  # None found.
+                  gt_cv_locale_ja=none
                 fi
               fi
             fi
           fi
         fi
       fi
-      rm -fr conftest*
     fi
+    rm -fr conftest*
   ])
   LOCALE_JA=$gt_cv_locale_ja
   AC_SUBST([LOCALE_JA])

@@ -1,4 +1,4 @@
-# vasnprintf.m4 serial 26
+# vasnprintf.m4 serial 29
 dnl Copyright (C) 2002-2004, 2006-2009 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -52,13 +52,13 @@ AC_DEFUN([gl_PREREQ_PRINTF_PARSE],
 ])
 
 # Prerequisites of lib/vasnprintf.c.
-AC_DEFUN([gl_PREREQ_VASNPRINTF],
+AC_DEFUN_ONCE([gl_PREREQ_VASNPRINTF],
 [
   AC_REQUIRE([AC_FUNC_ALLOCA])
   AC_REQUIRE([AC_TYPE_LONG_LONG_INT])
   AC_REQUIRE([gt_TYPE_WCHAR_T])
   AC_REQUIRE([gt_TYPE_WINT_T])
-  AC_CHECK_FUNCS([snprintf wcslen])
+  AC_CHECK_FUNCS([snprintf strnlen wcslen wcsnlen mbrtowc wcrtomb])
   dnl Use the _snprintf function only if it is declared (because on NetBSD it
   dnl is defined as a weak alias of snprintf; we prefer to use the latter).
   AC_CHECK_DECLS([_snprintf], , , [#include <stdio.h>])
@@ -66,7 +66,7 @@ AC_DEFUN([gl_PREREQ_VASNPRINTF],
 
 # Extra prerequisites of lib/vasnprintf.c for supporting 'long double'
 # arguments.
-AC_DEFUN([gl_PREREQ_VASNPRINTF_LONG_DOUBLE],
+AC_DEFUN_ONCE([gl_PREREQ_VASNPRINTF_LONG_DOUBLE],
 [
   AC_REQUIRE([gl_PRINTF_LONG_DOUBLE])
   case "$gl_cv_func_printf_long_double" in
@@ -146,6 +146,21 @@ AC_DEFUN([gl_PREREQ_VASNPRINTF_DIRECTIVE_F],
       AC_DEFINE([NEED_PRINTF_DIRECTIVE_F], [1],
         [Define if the vasnprintf implementation needs special code for
          the 'F' directive.])
+      ;;
+  esac
+])
+
+# Extra prerequisites of lib/vasnprintf.c for supporting the 'ls' directive.
+AC_DEFUN([gl_PREREQ_VASNPRINTF_DIRECTIVE_LS],
+[
+  AC_REQUIRE([gl_PRINTF_DIRECTIVE_LS])
+  case "$gl_cv_func_printf_directive_ls" in
+    *yes)
+      ;;
+    *)
+      AC_DEFINE([NEED_PRINTF_DIRECTIVE_LS], [1],
+        [Define if the vasnprintf implementation needs special code for
+         the 'ls' directive.])
       ;;
   esac
 ])
@@ -247,6 +262,7 @@ AC_DEFUN([gl_PREREQ_VASNPRINTF_WITH_EXTRAS],
   gl_PREREQ_VASNPRINTF_INFINITE_LONG_DOUBLE
   gl_PREREQ_VASNPRINTF_DIRECTIVE_A
   gl_PREREQ_VASNPRINTF_DIRECTIVE_F
+  gl_PREREQ_VASNPRINTF_DIRECTIVE_LS
   gl_PREREQ_VASNPRINTF_FLAG_GROUPING
   gl_PREREQ_VASNPRINTF_FLAG_LEFTADJUST
   gl_PREREQ_VASNPRINTF_FLAG_ZERO

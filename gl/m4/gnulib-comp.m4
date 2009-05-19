@@ -25,7 +25,6 @@ AC_DEFUN([gl_EARLY],
   m4_pattern_allow([^gl_LIBOBJS$])dnl a variable
   m4_pattern_allow([^gl_LTLIBOBJS$])dnl a variable
   AC_REQUIRE([AC_PROG_RANLIB])
-  AC_REQUIRE([AC_GNU_SOURCE])
   AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
 ])
 
@@ -116,6 +115,8 @@ AC_DEFUN([gl_INIT],
   gl_STDINT_H
   gl_STDIO_H
   gl_STDLIB_H
+  gl_FUNC_STRDUP_POSIX
+  gl_STRING_MODULE_INDICATOR([strdup])
   gl_FUNC_STRERROR
   gl_STRING_MODULE_INDICATOR([strerror])
   gl_HEADER_STRING_H
@@ -124,7 +125,6 @@ AC_DEFUN([gl_INIT],
   gl_FUNC_STRNLEN
   gl_STRING_MODULE_INDICATOR([strnlen])
   gl_HEADER_SYS_SOCKET
-  gl_MODULE_INDICATOR([sys_socket])
   AC_PROG_MKDIR_P
   gl_HEADER_TIME_H
   gl_TIME_R
@@ -282,6 +282,7 @@ AC_DEFUN([gltests_LIBSOURCES], [
 AC_DEFUN([gl_FILE_LIST], [
   build-aux/config.rpath
   build-aux/link-warning.h
+  lib/alignof.h
   lib/alloca.c
   lib/alloca.in.h
   lib/arpa_inet.in.h
@@ -367,6 +368,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/stdio-write.c
   lib/stdio.in.h
   lib/stdlib.in.h
+  lib/strdup.c
   lib/streq.h
   lib/strerror.c
   lib/string.in.h
@@ -395,6 +397,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/xsize.h
   lib/xstrndup.c
   lib/xstrndup.h
+  m4/00gnulib.m4
   m4/alloca.m4
   m4/arpa_inet_h.m4
   m4/base64.m4
@@ -478,6 +481,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/stdint_h.m4
   m4/stdio_h.m4
   m4/stdlib_h.m4
+  m4/strdup.m4
   m4/strerror.m4
   m4/string_h.m4
   m4/strndup.m4

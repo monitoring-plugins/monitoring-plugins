@@ -1,6 +1,6 @@
 /* Provide a sys/socket header file for systems lacking it (read: MinGW)
    and for systems where it is incomplete.
-   Copyright (C) 2005-2008 Free Software Foundation, Inc.
+   Copyright (C) 2005-2009 Free Software Foundation, Inc.
    Written by Simon Josefsson.
 
    This program is free software; you can redistribute it and/or modify
@@ -42,6 +42,26 @@
 
 #ifndef _GL_SYS_SOCKET_H
 #define _GL_SYS_SOCKET_H
+
+#if !@HAVE_STRUCT_SOCKADDR_STORAGE@
+# include <alignof.h>
+/* Code taken from glibc sysdeps/unix/sysv/linux/bits/socket.h on
+   2009-05-08, licensed under LGPLv2.1+, plus portability fixes. */
+# define __ss_aligntype unsigned long int
+# define _SS_SIZE 256
+# define _SS_PADSIZE \
+    (_SS_SIZE - ((sizeof (sa_family_t) >= alignof (__ss_aligntype)	\
+		  ? sizeof (sa_family_t)				\
+		  : alignof (__ss_aligntype))				\
+		 + sizeof (__ss_aligntype)))
+
+struct sockaddr_storage
+{
+  sa_family_t ss_family;      /* Address family, etc.  */
+  __ss_aligntype __ss_align;  /* Force desired alignment.  */
+  char __ss_padding[_SS_PADSIZE];
+};
+#endif
 
 #if @HAVE_SYS_SOCKET_H@
 
@@ -256,7 +276,7 @@ extern int rpl_getsockname (int, struct sockaddr *, int *);
 #  if @HAVE_WINSOCK2_H@
 #   undef getsockopt
 #   define getsockopt		rpl_getsockopt
-extern int rpl_getsockopt (int, int, int, void *, int *);
+extern int rpl_getsockopt (int, int, int, void *, socklen_t *);
 #  endif
 # elif @HAVE_WINSOCK2_H@
 #  undef getsockopt
@@ -358,7 +378,7 @@ extern int rpl_sendto (int, const void *, int, int, struct sockaddr *, int);
 #  if @HAVE_WINSOCK2_H@
 #   undef setsockopt
 #   define setsockopt		rpl_setsockopt
-extern int rpl_setsockopt (int, int, int, const void *, int);
+extern int rpl_setsockopt (int, int, int, const void *, socklen_t);
 #  endif
 # elif @HAVE_WINSOCK2_H@
 #  undef setsockopt

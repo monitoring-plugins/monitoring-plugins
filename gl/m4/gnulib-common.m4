@@ -1,4 +1,4 @@
-# gnulib-common.m4 serial 7
+# gnulib-common.m4 serial 11
 dnl Copyright (C) 2007-2009 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -8,6 +8,7 @@ dnl with or without modifications, as long as this notice is preserved.
 # is expanded unconditionally through gnulib-tool magic.
 AC_DEFUN([gl_COMMON], [
   dnl Use AC_REQUIRE here, so that the code is expanded once only.
+  AC_REQUIRE([gl_00GNULIB])
   AC_REQUIRE([gl_COMMON_BODY])
 ])
 AC_DEFUN([gl_COMMON_BODY], [
@@ -52,7 +53,7 @@ m4_ifndef([m4_foreach_w],
 # is a backport of autoconf-2.60's AC_PROG_MKDIR_P.
 # Remove this macro when we can assume autoconf >= 2.60.
 m4_ifdef([AC_PROG_MKDIR_P], [], [
-  AC_DEFUN([AC_PROG_MKDIR_P],
+  AC_DEFUN_ONCE([AC_PROG_MKDIR_P],
     [AC_REQUIRE([AM_PROG_MKDIR_P])dnl defined by automake
      MKDIR_P='$(mkdir_p)'
      AC_SUBST([MKDIR_P])])])
@@ -98,4 +99,26 @@ AC_DEFUN([AC_C_RESTRICT],
    no) AC_DEFINE([restrict], []) ;;
    *)  AC_DEFINE_UNQUOTED([restrict], [$ac_cv_c_restrict]) ;;
  esac
+])
+
+# gl_BIGENDIAN
+# is like AC_C_BIGENDIAN, except that it can be AC_REQUIREd.
+# Note that AC_REQUIRE([AC_C_BIGENDIAN]) does not work reliably because some
+# macros invoke AC_C_BIGENDIAN with arguments.
+AC_DEFUN([gl_BIGENDIAN],
+[
+  AC_C_BIGENDIAN
+])
+
+# gl_CACHE_VAL_SILENT(cache-id, command-to-set-it)
+# is like AC_CACHE_VAL(cache-id, command-to-set-it), except that it does not
+# output a spurious "(cached)" mark in the midst of other configure output.
+# This macro should be used instead of AC_CACHE_VAL when it is not surrounded
+# by an AC_MSG_CHECKING/AC_MSG_RESULT pair.
+AC_DEFUN([gl_CACHE_VAL_SILENT],
+[
+  saved_as_echo_n="$as_echo_n"
+  as_echo_n=':'
+  AC_CACHE_VAL([$1], [$2])
+  as_echo_n="$saved_as_echo_n"
 ])

@@ -1,5 +1,5 @@
-# include_next.m4 serial 10
-dnl Copyright (C) 2006-2008 Free Software Foundation, Inc.
+# include_next.m4 serial 12
+dnl Copyright (C) 2006-2009 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -32,14 +32,15 @@ AC_DEFUN([gl_INCLUDE_NEXT],
     [gl_cv_have_include_next],
     [rm -rf conftestd1a conftestd1b conftestd2
      mkdir conftestd1a conftestd1b conftestd2
-     dnl The include of <stdio.h> is because IBM C 9.0 on AIX 6.1 supports
-     dnl include_next when used as first preprocessor directive in a file,
-     dnl but not when preceded by another include directive. Additionally,
-     dnl with this same compiler, include_next is a no-op when used in a
-     dnl header file that was included by specifying its absolute file name.
-     dnl Despite these two bugs, include_next is used in the compiler's
-     dnl <math.h>. By virtue of the second bug, we need to use include_next
-     dnl as well in this case.
+     dnl IBM C 9.0, 10.1 (original versions, prior to the 2009-01 updates) on
+     dnl AIX 6.1 support include_next when used as first preprocessor directive
+     dnl in a file, but not when preceded by another include directive. Check
+     dnl for this bug by including <stdio.h>.
+     dnl Additionally, with this same compiler, include_next is a no-op when
+     dnl used in a header file that was included by specifying its absolute
+     dnl file name. Despite these two bugs, include_next is used in the
+     dnl compiler's <math.h>. By virtue of the second bug, we need to use
+     dnl include_next as well in this case.
      cat <<EOF > conftestd1a/conftest.h
 #define DEFINED_IN_CONFTESTD1
 #include_next <conftest.h>

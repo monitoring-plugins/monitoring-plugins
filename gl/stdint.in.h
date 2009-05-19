@@ -435,7 +435,7 @@ typedef int _verify_intmax_size[2 * (sizeof (intmax_t) == sizeof (uintmax_t)) - 
 #undef PTRDIFF_MIN
 #undef PTRDIFF_MAX
 #if @APPLE_UNIVERSAL_BUILD@
-# if _LP64
+# ifdef _LP64
 #  define PTRDIFF_MIN  _STDINT_MIN (1, 64, 0l)
 #  define PTRDIFF_MAX  _STDINT_MAX (1, 64, 0l)
 # else
@@ -463,7 +463,7 @@ typedef int _verify_intmax_size[2 * (sizeof (intmax_t) == sizeof (uintmax_t)) - 
 /* size_t limit */
 #undef SIZE_MAX
 #if @APPLE_UNIVERSAL_BUILD@
-# if _LP64
+# ifdef _LP64
 #  define SIZE_MAX  _STDINT_MAX (0, 64, 0ul)
 # else
 #  define SIZE_MAX  _STDINT_MAX (0, 32, 0ul)
