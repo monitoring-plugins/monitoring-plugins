@@ -11,7 +11,7 @@
       </author>
     </authorgroup>
 
-    <pubdate>2006</pubdate>
+    <pubdate>2009</pubdate>
     <title>Nagios plug-in development guidelines</title>
 	
     <revhistory>
@@ -22,7 +22,7 @@
     </revhistory>
 
 	<copyright>
-		<year>2000 - 2006</year> 
+		<year>2000 - 2009</year>
 		<holder>Nagios Plugins Development Team</holder>
 	</copyright>
 
@@ -34,7 +34,7 @@
     the plug-in developers and encourage the standarization of the
     different kind of plug-ins: C, shell, perl, python, etc.</para>
 
-        <para>Nagios Plug-in Development Guidelines Copyright (C) 2000-2006
+        <para>Nagios Plug-in Development Guidelines Copyright (C) 2000-2009
         (Nagios Plugins Team)</para>
 
         <para>Permission is granted to make and distribute verbatim
@@ -50,18 +50,18 @@
 	<para>
 	Nagios plugins are developed to the GNU standard, so any OS which is supported by GNU
 	should run the plugins. While the requirements for compiling the Nagios plugins release 
-	is very small, to develop from CVS needs additional software to be installed. These are the 
-	minimum levels of software required:
+	are very basic, developing from the Git repository requires additional software to be
+	installed. These are the minimum levels of software required:
 
 	<literallayout>
-	gnu make 3.79
-	automake 1.9.2
-	autoconf 2.59
-	gnu m4 1.4.2
-	gnu libtool 1.5
+	GNU make 3.79
+	GNU automake 1.9.2
+	GNU autoconf 2.59
+	GNU m4 1.4.2
+	GNU libtool 1.5
 	</literallayout>
 
-	To compile from CVS, after you have checked out the code, run:
+	To compile from Git, after you have cloned the repository, run:
 	<literallayout>
 	tools/setup
 	./configure
@@ -748,7 +748,7 @@ setup the tests. Run "make test" to run all the tests.
 update the THANKS.in file.</para>
         <para>If you have a change that is useful for noting in the next release, please
 	update the NEWS file.</para>
-	<para>All CVS commit comments will be written to a ChangeLog at release time.
+	<para>All commit comments will be written to a ChangeLog at release time.
 	</para>
 	</section>
 
@@ -784,7 +784,7 @@ update the THANKS.in file.</para>
 	<section id="Patches"><title>Patches</title>
 	<para>If you have a bug patch, please supply a unified or context diff against the
 	version you are using. For new features, please supply a diff against
-	the CVS HEAD version.</para>
+	the Git "master" branch.</para>
 
 	<para>Patches should be submitted via 
 	<ulink url="http://sourceforge.net/tracker/?group_id=29880&amp;atid=397599">SourceForge's
