@@ -12,8 +12,8 @@
 * 
 * This file contains Network UPS Tools plugin for Nagios
 * 
-* This plugin tests the UPS service on the specified host.Network UPS Tools
-* from www.networkupstools.org must be running for thisplugin to work.
+* This plugin tests the UPS service on the specified host. Network UPS Tools
+* from www.networkupstools.org must be running for this plugin to work.
 * 
 * 
 * This program is free software: you can redistribute it and/or modify
@@ -605,7 +605,7 @@ print_help (void)
 	printf (COPYRIGHT, copyright, email);
 
 	printf ("%s\n", _("This plugin tests the UPS service on the specified host. Network UPS Tools"));
-  printf ("%s\n", _("from www.networkupstools.org must be running for thisplugin to work."));
+  printf ("%s\n", _("from www.networkupstools.org must be running for this plugin to work."));
 
   printf ("\n\n");
 
@@ -641,12 +641,12 @@ print_help (void)
   printf ("\n");
   printf ("%s\n", _("Notes:"));
   printf (" %s\n", _("You may also specify a variable to check (such as temperature, utility voltage,"));
-  printf (" %s\n", _("battery load, etc.)  as well as warning and critical thresholds for the value"));
+  printf (" %s\n", _("battery load, etc.) as well as warning and critical thresholds for the value"));
   printf (" %s\n", _("of that variable.  If the remote host has multiple UPS that are being monitored"));
   printf (" %s\n", _("you will have to use the --ups option to specify which UPS to check."));
   printf ("\n");
   printf (" %s\n", _("This plugin requires that the UPSD daemon distributed with Russell Kroll's"));
-  printf (" %s\n", _("Smart UPS Tools be installed on the remote host. If you do not have the"));
+  printf (" %s\n", _("Network UPS Tools be installed on the remote host. If you do not have the"));
   printf (" %s\n", _("package installed on your system, you can download it from"));
   printf (" %s\n", _("http://www.networkupstools.org"));
 #ifdef NP_EXTRA_OPTS
