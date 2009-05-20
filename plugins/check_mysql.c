@@ -5,7 +5,7 @@
 * License: GPL
 * Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)
 * Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
-* Copyright (c) 1999-2007 Nagios Plugins Development Team
+* Copyright (c) 1999-2009 Nagios Plugins Development Team
 * 
 * Description:
 * 
@@ -358,9 +358,6 @@ validate_arguments (void)
 	if (db_host == NULL)
 		db_host = strdup("");
 
-	if (db_pass == NULL)
-		db_pass = strdup("");
-
 	if (db == NULL)
 		db = strdup("");
 
@@ -417,6 +414,9 @@ print_help (void)
 	printf ("\n");
 	printf ("%s\n", _("Notes:"));
 	printf (_(UT_EXTRA_OPTS_NOTES));
+	printf ("\n");
+	printf (" %s\n", _("You must specify -p with an empty string to force an empty password,"));
+	printf (" %s\n", _("overriding any my.cnf settings."));
 #endif
 
 	printf (_(UT_SUPPORT));
