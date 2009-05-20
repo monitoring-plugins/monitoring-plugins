@@ -99,6 +99,7 @@ extern int address_family;
 #ifdef HAVE_SSL
 /* maybe this could be merged with the above np_net_connect, via some flags */
 int np_net_ssl_init(int sd);
+int np_net_ssl_init_with_hostname(int sd, char *host_name);
 void np_net_ssl_cleanup();
 int np_net_ssl_write(const void *buf, int num);
 int np_net_ssl_read(void *buf, int num);

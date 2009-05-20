@@ -790,7 +790,7 @@ check_http (void)
     die (STATE_CRITICAL, _("HTTP CRITICAL - Unable to open TCP socket\n"));
 #ifdef HAVE_SSL
   if (use_ssl == TRUE) {
-    np_net_ssl_init(sd);
+    np_net_ssl_init_with_hostname(sd, host_name);
     if (check_cert == TRUE) {
       result = np_net_ssl_check_cert(days_till_exp);
       np_net_ssl_cleanup();

@@ -35,7 +35,11 @@ static SSL_CTX *c=NULL;
 static SSL *s=NULL;
 static int initialized=0;
 
-int np_net_ssl_init (int sd){
+int np_net_ssl_init (int sd) {
+    return np_net_ssl_init_with_hostname(sd, NULL);
+}
+
+int np_net_ssl_init_with_hostname (int sd, char *host_name) {
 		if (!initialized) {
 			/* Initialize SSL context */
 			SSLeay_add_ssl_algorithms ();
@@ -48,6 +52,10 @@ int np_net_ssl_init (int sd){
 				return STATE_CRITICAL;
 		}
 		if ((s = SSL_new (c)) != NULL){
+#ifdef SSL_set_tlsext_host_name
+				if (host_name != NULL)
+					SSL_set_tlsext_host_name(s, host_name);
+#endif
 				SSL_set_fd (s, sd);
 				if (SSL_connect(s) == 1){
 						return OK;
@@ -65,6 +73,9 @@ int np_net_ssl_init (int sd){
 
 void np_net_ssl_cleanup (){
 		if(s){
+#ifdef SSL_set_tlsext_host_name
+				SSL_set_tlsext_host_name(s, NULL);
+#endif
 				SSL_shutdown (s);
 				SSL_free (s);
 				if(c) {
