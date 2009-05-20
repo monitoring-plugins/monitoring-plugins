@@ -33,6 +33,7 @@ This file documents the major additions and syntax changes between releases.
 	check_nt can return UNKNOWN on timeouts (-u)
 	Fixed typos for check_disk (Chris Pepper)
 	Fixed check_mysql* not using password set in my.cnf (#2531905 - Ben Timby) - Specify an empty password explicitly if you need to override it.
+	Fixed awk subst.in/subst script path error (#2722832 - Martin Foster)
 
 1.4.13 25th Sept 2008
 	Fix Debian bug #460097: check_http --max-age broken (Hilko Bengen)

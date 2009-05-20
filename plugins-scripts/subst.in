@@ -47,6 +47,17 @@ BEGIN {
 /^#! ?\/.*\/[a-z]{0,2}awk/ {sub(/^#! ?\/.*\/[a-z]{0,2}awk/,"#! @AWK@");}
 /^#! ?\/.*\/sh/ {sub(/^#! ?\/.*\/sh/,"#! @SHELL@");}
 
+# If a script contains a reference to a fully qualified command,
+# subst will replace the fully qualified command with whatever is
+# returned from the which subroutine. run before changes to INC to add libexecdir
+# FIXME: Prepend executables with a substitution keyword instead.
+#
+/^[^#]/ && /(\/.*)?\/(bin|sbin|lib|libexec)\// {
+	match($0,/(\/.*)?\/(bin|sbin|lib|libexec)\/[-_a-zA-Z0-9]+/);
+	c=substr($0,RSTART,RLENGTH);
+	sub(c,which(c,path));
+}
+
 # add to libexecdir to INC for perl utils.pm
 /^use/ { if (/lib/) { if (/utils.pm|"."/ ) {sub(/utils.pm|"."/,led() )} } }
 
@@ -59,16 +70,6 @@ BEGIN {
 
 /^[\t ]*(export[\t ]*)?PATH[\t ]*=['"]+.+["']$/ {
 	sub(/\=.*$/,"='@with_trusted_path@' # autoconf-derived");
-}
-
-# If a script contains a reference to a fully qualified command, 
-# subst will replace the fully qualified command with whatever is
-# returned from the which subroutine
-#
-/^[^#]/ && /(\/.*)?\/(bin|sbin|lib|libexec)\// {
-	match($0,/(\/.*)?\/(bin|sbin|lib|libexec)\/[-_a-zA-Z0-9]+/);
-	c=substr($0,RSTART,RLENGTH);
-	sub(c,which(c,path));
 }
 
 {
