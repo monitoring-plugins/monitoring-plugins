@@ -36,7 +36,7 @@ static SSL *s=NULL;
 static int initialized=0;
 
 int np_net_ssl_init (int sd) {
-    return np_net_ssl_init_with_hostname(sd, NULL);
+		return np_net_ssl_init_with_hostname(sd, NULL);
 }
 
 int np_net_ssl_init_with_hostname (int sd, char *host_name) {
@@ -97,7 +97,7 @@ int np_net_ssl_read(void *buf, int num){
 int np_net_ssl_check_cert(int days_till_exp){
 #  ifdef USE_OPENSSL
 	X509 *certificate=NULL;
-        ASN1_STRING *tm;
+	ASN1_STRING *tm;
 	int offset;
 	struct tm stamp;
 	float time_left;
