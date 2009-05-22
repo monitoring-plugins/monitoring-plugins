@@ -35,6 +35,7 @@ This file documents the major additions and syntax changes between releases.
 	Fixed check_mysql* not using password set in my.cnf (#2531905 - Ben Timby) - Specify an empty password explicitly if you need to override it.
 	Fixed awk subst.in/subst script path error (#2722832 - Martin Foster)
 	check_http: Add SSL/TLS hostname extension support (SNI) - (#1939022 - Joe Presbrey)
+	Fixed wrong perfdata label for output traffic in check_mrtgtraf (#2654308 - Gavin Williams)
 
 1.4.13 25th Sept 2008
 	Fix Debian bug #460097: check_http --max-age broken (Hilko Bengen)

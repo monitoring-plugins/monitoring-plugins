@@ -199,7 +199,7 @@ main (int argc, char **argv)
 	                   (int)incoming_warning_threshold, incoming_warning_threshold,
 	                   (int)incoming_critical_threshold, incoming_critical_threshold,
 	                   TRUE, 0, FALSE, 0),
-	          fperfdata("in", adjusted_outgoing_rate, outgoing_speed_rating,
+	          fperfdata("out", adjusted_outgoing_rate, outgoing_speed_rating,
 	                   (int)outgoing_warning_threshold, outgoing_warning_threshold,
 	                   (int)outgoing_critical_threshold, outgoing_critical_threshold,
 	                   TRUE, 0, FALSE, 0));
