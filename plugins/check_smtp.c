@@ -289,7 +289,6 @@ main (int argc, char **argv)
 		 * According to rfc821 you can include a null reversepath in the from command
 		 * - but a log message is generated on the smtp server.
 		 *
-		 * You can disable sending mail_command with '--nocommand'
 		 * Use the -f option to provide a FROM address
 		 */
 		if (smtp_use_dummycmd) {
@@ -470,7 +469,6 @@ process_arguments (int argc, char **argv)
 		{"authpass", required_argument, 0, 'P'},
 		{"command", required_argument, 0, 'C'},
 		{"response", required_argument, 0, 'R'},
-		{"nocommand", required_argument, 0, 'n'},
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"use-ipv4", no_argument, 0, '4'},
@@ -778,8 +776,6 @@ print_help (void)
 
 	printf (" %s\n", "-e, --expect=STRING");
   printf (_("    String to expect in first line of server response (default: '%s')\n"), SMTP_EXPECT);
-  printf (" %s\n", "-n, nocommand");
-  printf ("    %s\n", _("Suppress SMTP command"));
   printf (" %s\n", "-C, --command=STRING");
   printf ("    %s\n", _("SMTP command (may be used repeatedly)"));
   printf (" %s\n", "-R, --command=STRING");
@@ -829,6 +825,6 @@ print_usage (void)
   printf (_("Usage:"));
 	printf ("%s -H host [-p port] [-e expect] [-C command] [-f from addr]", progname);
   printf ("[-A authtype -U authuser -P authpass] [-w warn] [-c crit] [-t timeout]\n");
-  printf ("[-S] [-D days] [-n] [-v] [-4|-6]\n");
+  printf ("[-S] [-D days] [-v] [-4|-6]\n");
 }
 
