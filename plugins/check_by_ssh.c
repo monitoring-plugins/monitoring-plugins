@@ -31,12 +31,17 @@ const char *copyright = "2000-2008";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
-#include "netutils.h"
 #include "utils.h"
-#include "runcmd.h"
+#include "netutils.h"
+#include "utils_cmd.h"
+
+#ifndef NP_MAXARGS
+#define NP_MAXARGS 1024
+#endif
 
 int process_arguments (int, char **);
 int validate_arguments (void);
+void comm_append (const char *);
 void print_help (void);
 void print_usage (void);
 
@@ -45,7 +50,8 @@ unsigned int services = 0;
 int skip_stdout = 0;
 int skip_stderr = 0;
 char *remotecmd = NULL;
-char *comm = NULL;
+char **commargv = NULL;
+int commargc = 0;
 char *hostname = NULL;
 char *outputfile = NULL;
 char *host_shortname = NULL;
@@ -63,10 +69,10 @@ main (int argc, char **argv)
 	int i;
 	time_t local_time;
 	FILE *fp = NULL;
-	struct output chld_out, chld_err;
+	output chld_out, chld_err;
 
 	remotecmd = "";
-	comm = strdup (SSH_COMMAND);
+	comm_append(SSH_COMMAND);
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -80,16 +86,19 @@ main (int argc, char **argv)
 		usage_va(_("Could not parse arguments"));
 
 	/* Set signal handling and alarm timeout */
-	if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
+	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR) {
 		usage_va(_("Cannot catch SIGALRM"));
 	}
 	alarm (timeout_interval);
 
 	/* run the command */
-	if (verbose)
-		printf ("%s\n", comm);
+	if (verbose) {
+		printf ("Command: %s\n", commargv[0]);
+		for (i=1; i<commargc; i++)
+			printf ("Argument %i: %s\n", i, commargv[i]);
+	}
 
-	result = np_runcmd(comm, &chld_out, &chld_err, 0);
+	result = cmd_run_array (commargv, &chld_out, &chld_err, 0);
 
 	if (skip_stdout == -1) /* --skip-stdout specified without argument */
 		skip_stdout = chld_out.lines;
@@ -218,7 +227,8 @@ process_arguments (int argc, char **argv)
 		case 'p': /* port number */
 			if (!is_integer (optarg))
 				usage_va(_("Port must be a positive integer"));
-			asprintf (&comm,"%s -p %s", comm, optarg);
+			comm_append("-p");
+			comm_append(optarg);
 			break;
 		case 'O':									/* output file */
 			outputfile = optarg;
@@ -240,18 +250,32 @@ process_arguments (int argc, char **argv)
 			break;
 
 		case 'u':
-			c = 'l';
+			comm_append("-l");
+			comm_append(optarg);
+			break;
 		case 'l':									/* login name */
+			comm_append("-l");
+			comm_append(optarg);
+			break;
 		case 'i':									/* identity */
-			asprintf (&comm, "%s -%c %s", comm, c, optarg);
+			comm_append("-i");
+			comm_append(optarg);
 			break;
 
 		case '1':									/* Pass these switches directly to ssh */
+			comm_append("-1");
+			break;
 		case '2':									/* 1 to force version 1, 2 to force version 2 */
+			comm_append("-2");
+			break;
 		case '4':									/* -4 for IPv4 */
+			comm_append("-4");
+			break;
 		case '6': 								/* -6 for IPv6 */
+			comm_append("-6");
+			break;
 		case 'f':									/* fork to background */
-			asprintf (&comm, "%s -%c", comm, c);
+			comm_append("-f");
 			break;
 		case 'C':									/* Command for remote machine */
 			commands++;
@@ -276,10 +300,11 @@ process_arguments (int argc, char **argv)
 				skip_stderr = atoi (optarg);
 			break;
 		case 'o':									/* Extra options for the ssh command */
-			asprintf (&comm, "%s -%c '%s'", comm, c, optarg);
+			comm_append("-o");
+			comm_append(optarg);
 			break;
 		case 'q':									/* Tell the ssh command to be quiet */
-			asprintf (&comm, "%s -%c", comm, c);
+			comm_append("-q");
 			break;
 		default:									/* help */
 			usage5();
@@ -309,12 +334,27 @@ process_arguments (int argc, char **argv)
 	if (remotecmd == NULL || strlen (remotecmd) <= 1)
 		usage_va(_("No remotecmd"));
 
-	asprintf (&comm, "%s %s '%s'", comm, hostname, remotecmd);
+	comm_append(hostname);
+	comm_append(remotecmd);
 
 	return validate_arguments ();
 }
 
 
+void
+comm_append (const char *str)
+{
+
+	if (++commargc > NP_MAXARGS)
+		die(STATE_UNKNOWN, _("%s: Argument limit of %d exceeded\n"), progname, NP_MAXARGS);
+
+	if ((commargv = (char **)realloc(commargv, (commargc+1) * sizeof(char *))) == NULL)
+		die(STATE_UNKNOWN, _("Can not (re)allocate 'commargv' buffer\n"));
+
+	commargv[commargc-1] = strdup(str);
+	commargv[commargc] = NULL;
+
+}
 
 int
 validate_arguments (void)
