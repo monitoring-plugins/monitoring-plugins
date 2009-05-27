@@ -188,7 +188,7 @@ main (int argc, char **argv)
 		snmpcmd = strdup (PATH_TO_SNMPGET);
 	}
 	
-        /* 9 arguments to pass before authpriv options + 1 for host and numoids. Add one for terminating NULL */
+	/* 9 arguments to pass before authpriv options + 1 for host and numoids. Add one for terminating NULL */
 	command_line = calloc (9 + numauthpriv + 1 + numoids + 1, sizeof (char *));
 	command_line[0] = snmpcmd;
 	command_line[1] = strdup ("-t");
@@ -206,7 +206,7 @@ main (int argc, char **argv)
 
 	asprintf (&command_line[9 + numauthpriv], "%s:%s", server_address, port);
 
-        /* This is just for display purposes, so it can remain a string */
+	/* This is just for display purposes, so it can remain a string */
 	asprintf(&cl_hidden_auth, "%s -t %d -r %d -m %s -v %s %s %s:%s",
 		snmpcmd, timeout_interval, retries, miblist, proto, "[authpriv]",
 		server_address, port);
@@ -453,7 +453,7 @@ process_arguments (int argc, char **argv)
 		case 'p':	/* TCP port number */
 			port = optarg;
 			break;
-		case 'm':	/* List of MIBS  */
+		case 'm':	/* List of MIBS */
 			miblist = optarg;
 			break;
 		case 'n':	/* usesnmpgetnext */
@@ -666,7 +666,7 @@ validate_arguments ()
 {
 	/* check whether to load locally installed MIBS (CPU/disk intensive) */
 	if (miblist == NULL) {
-		if ( needmibs  == TRUE ) {
+		if ( needmibs == TRUE ) {
 			miblist = strdup (DEFAULT_MIBLIST);
 		}else{
 			miblist = "''";			/* don't read any mib files for numeric oids */
@@ -929,7 +929,7 @@ print_help (void)
 
 	printf ("%s\n", _("Check status of remote machines and obtain system information via SNMP"));
 
-  printf ("\n\n");
+	printf ("\n\n");
 
 	print_usage ();
 
@@ -940,59 +940,59 @@ print_help (void)
 
 	/* SNMP and Authentication Protocol */
 	printf (" %s\n", "-n, --next");
-  printf ("    %s\n", _("Use SNMP GETNEXT instead of SNMP GET"));
-  printf (" %s\n", "-P, --protocol=[1|2c|3]");
-  printf ("    %s\n", _("SNMP protocol version"));
-  printf (" %s\n", "-L, --seclevel=[noAuthNoPriv|authNoPriv|authPriv]");
-  printf ("    %s\n", _("SNMPv3 securityLevel"));
-  printf (" %s\n", "-a, --authproto=[MD5|SHA]");
-  printf ("    %s\n", _("SNMPv3 auth proto"));
-  printf (" %s\n", "-x, --privproto=[DES|AES]");
-  printf ("    %s\n", _("SNMPv3 priv proto (default DES)"));
+	printf ("    %s\n", _("Use SNMP GETNEXT instead of SNMP GET"));
+	printf (" %s\n", "-P, --protocol=[1|2c|3]");
+	printf ("    %s\n", _("SNMP protocol version"));
+	printf (" %s\n", "-L, --seclevel=[noAuthNoPriv|authNoPriv|authPriv]");
+	printf ("    %s\n", _("SNMPv3 securityLevel"));
+	printf (" %s\n", "-a, --authproto=[MD5|SHA]");
+	printf ("    %s\n", _("SNMPv3 auth proto"));
+	printf (" %s\n", "-x, --privproto=[DES|AES]");
+	printf ("    %s\n", _("SNMPv3 priv proto (default DES)"));
 
 	/* Authentication Tokens*/
 	printf (" %s\n", "-C, --community=STRING");
-  printf ("    %s ", _("Optional community string for SNMP communication"));
-  printf ("(%s \"%s\")\n", _("default is") ,DEFAULT_COMMUNITY);
-  printf (" %s\n", "-U, --secname=USERNAME");
-  printf ("    %s\n", _("SNMPv3 username"));
-  printf (" %s\n", "-A, --authpassword=PASSWORD");
-  printf ("    %s\n", _("SNMPv3 authentication password"));
-  printf (" %s\n", "-X, --privpasswd=PASSWORD");
-  printf ("    %s\n", _("SNMPv3 privacy password"));
+	printf ("    %s ", _("Optional community string for SNMP communication"));
+	printf ("(%s \"%s\")\n", _("default is") ,DEFAULT_COMMUNITY);
+	printf (" %s\n", "-U, --secname=USERNAME");
+	printf ("    %s\n", _("SNMPv3 username"));
+	printf (" %s\n", "-A, --authpassword=PASSWORD");
+	printf ("    %s\n", _("SNMPv3 authentication password"));
+	printf (" %s\n", "-X, --privpasswd=PASSWORD");
+	printf ("    %s\n", _("SNMPv3 privacy password"));
 
 	/* OID Stuff */
 	printf (" %s\n", "-o, --oid=OID(s)");
-  printf ("    %s\n", _("Object identifier(s) or SNMP variables whose value you wish to query"));
-  printf (" %s\n", "-m, --miblist=STRING");
-  printf ("    %s\n", _("List of MIBS to be loaded (default = none if using numeric OIDs or 'ALL'"));
-  printf ("    %s\n", _("for symbolic OIDs.)"));
-  printf (" %s\n", "-d, --delimiter=STRING");
-  printf (_("    Delimiter to use when parsing returned data. Default is \"%s\""), DEFAULT_DELIMITER);
-  printf ("    %s\n", _("Any data on the right hand side of the delimiter is considered"));
-  printf ("    %s\n", _("to be the data that should be used in the evaluation."));
+	printf ("    %s\n", _("Object identifier(s) or SNMP variables whose value you wish to query"));
+	printf (" %s\n", "-m, --miblist=STRING");
+	printf ("    %s\n", _("List of MIBS to be loaded (default = none if using numeric OIDs or 'ALL'"));
+	printf ("    %s\n", _("for symbolic OIDs.)"));
+	printf (" %s\n", "-d, --delimiter=STRING");
+	printf ("    %s \"%s\"\n", _("Delimiter to use when parsing returned data. Default is"), DEFAULT_DELIMITER);
+	printf ("    %s\n", _("Any data on the right hand side of the delimiter is considered"));
+	printf ("    %s\n", _("to be the data that should be used in the evaluation."));
 
 	/* Tests Against Integers */
 	printf (" %s\n", "-w, --warning=INTEGER_RANGE(s)");
-  printf ("    %s\n", _("Range(s) which will not result in a WARNING status"));
-  printf (" %s\n", "-c, --critical=INTEGER_RANGE(s)");
-  printf ("    %s\n", _("Range(s) which will not result in a CRITICAL status"));
+	printf ("    %s\n", _("Range(s) which will not result in a WARNING status"));
+	printf (" %s\n", "-c, --critical=INTEGER_RANGE(s)");
+	printf ("    %s\n", _("Range(s) which will not result in a CRITICAL status"));
 
 	/* Tests Against Strings */
 	printf (" %s\n", "-s, --string=STRING");
-  printf ("    %s\n", _("Return OK state (for that OID) if STRING is an exact match"));
-  printf (" %s\n", "-r, --ereg=REGEX");
-  printf ("    %s\n", _("Return OK state (for that OID) if extended regular expression REGEX matches"));
-  printf (" %s\n", "-R, --eregi=REGEX");
-  printf ("    %s\n", _("Return OK state (for that OID) if case-insensitive extended REGEX matches"));
-  printf (" %s\n", "-l, --label=STRING");
-  printf ("    %s\n", _("Prefix label for output from plugin (default -s 'SNMP')"));
+	printf ("    %s\n", _("Return OK state (for that OID) if STRING is an exact match"));
+	printf (" %s\n", "-r, --ereg=REGEX");
+	printf ("    %s\n", _("Return OK state (for that OID) if extended regular expression REGEX matches"));
+	printf (" %s\n", "-R, --eregi=REGEX");
+	printf ("    %s\n", _("Return OK state (for that OID) if case-insensitive extended REGEX matches"));
+	printf (" %s\n", "-l, --label=STRING");
+	printf ("    %s\n", _("Prefix label for output from plugin (default -s 'SNMP')"));
 
 	/* Output Formatting */
 	printf (" %s\n", "-u, --units=STRING");
-  printf ("    %s\n", _("Units label(s) for output data (e.g., 'sec.')."));
-  printf (" %s\n", "-D, --output-delimiter=STRING");
-  printf ("    %s\n", _("Separates output on multiple OID requests"));
+	printf ("    %s\n", _("Units label(s) for output data (e.g., 'sec.')."));
+	printf (" %s\n", "-D, --output-delimiter=STRING");
+	printf ("    %s\n", _("Separates output on multiple OID requests"));
 
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 	printf (" %s\n", "-e, --retries=INTEGER");
@@ -1000,32 +1000,32 @@ print_help (void)
 
 	printf (_(UT_VERBOSE));
 
-  printf ("\n");
-  printf ("%s\n", _("This plugin uses the 'snmpget' command included with the NET-SNMP package."));
-  printf ("%s\n", _("if you don't have the package installed, you will need to download it from"));
-  printf ("%s\n", _("http://net-snmp.sourceforge.net before you can use this plugin."));
+	printf ("\n");
+	printf ("%s\n", _("This plugin uses the 'snmpget' command included with the NET-SNMP package."));
+	printf ("%s\n", _("if you don't have the package installed, you will need to download it from"));
+	printf ("%s\n", _("http://net-snmp.sourceforge.net before you can use this plugin."));
 
-  printf ("\n");
-  printf ("%s\n", _("Notes:"));
-  printf (" %s\n", _("- Multiple OIDs may be indicated by a comma- or space-delimited list (lists with"));
-  printf ("   %s\n", _("internal spaces must be quoted) [max 8 OIDs]"));
+	printf ("\n");
+	printf ("%s\n", _("Notes:"));
+	printf (" %s\n", _("- Multiple OIDs may be indicated by a comma- or space-delimited list (lists with"));
+	printf ("   %s\n", _("internal spaces must be quoted) [max 8 OIDs]"));
 
-  printf (" %s\n", _("- Ranges are inclusive and are indicated with colons. When specified as"));
-  printf ("   %s\n", _("'min:max' a STATE_OK will be returned if the result is within the indicated"));
-  printf ("   %s\n", _("range or is equal to the upper or lower bound. A non-OK state will be"));
-  printf ("   %s\n", _("returned if the result is outside the specified range."));
+	printf (" %s\n", _("- Ranges are inclusive and are indicated with colons. When specified as"));
+	printf ("   %s\n", _("'min:max' a STATE_OK will be returned if the result is within the indicated"));
+	printf ("   %s\n", _("range or is equal to the upper or lower bound. A non-OK state will be"));
+	printf ("   %s\n", _("returned if the result is outside the specified range."));
 
-  printf (" %s\n", _("- If specified in the order 'max:min' a non-OK state will be returned if the"));
-  printf ("   %s\n", _("result is within the (inclusive) range."));
+	printf (" %s\n", _("- If specified in the order 'max:min' a non-OK state will be returned if the"));
+	printf ("   %s\n", _("result is within the (inclusive) range."));
 
-  printf (" %s\n", _("- Upper or lower bounds may be omitted to skip checking the respective limit."));
-  printf (" %s\n", _("- Bare integers are interpreted as upper limits."));
-  printf (" %s\n", _("- When checking multiple OIDs, separate ranges by commas like '-w 1:10,1:,:20'"));
-  printf (" %s\n", _("- Note that only one string and one regex may be checked at present"));
-  printf (" %s\n", _("- All evaluation methods other than PR, STR, and SUBSTR expect that the value"));
-  printf ("   %s\n", _("returned from the SNMP query is an unsigned integer."));
+	printf (" %s\n", _("- Upper or lower bounds may be omitted to skip checking the respective limit."));
+	printf (" %s\n", _("- Bare integers are interpreted as upper limits."));
+	printf (" %s\n", _("- When checking multiple OIDs, separate ranges by commas like '-w 1:10,1:,:20'"));
+	printf (" %s\n", _("- Note that only one string and one regex may be checked at present"));
+	printf (" %s\n", _("- All evaluation methods other than PR, STR, and SUBSTR expect that the value"));
+	printf ("   %s\n", _("returned from the SNMP query is an unsigned integer."));
 #ifdef NP_EXTRA_OPTS
-  printf (" -%s", _(UT_EXTRA_OPTS_NOTES));
+	printf (" -%s", _(UT_EXTRA_OPTS_NOTES));
 #endif
 
 	printf (_(UT_SUPPORT));
@@ -1036,10 +1036,10 @@ print_help (void)
 void
 print_usage (void)
 {
-  printf (_("Usage:"));
+	printf (_("Usage:"));
 	printf ("%s -H <ip_address> -o <OID> [-w warn_range] [-c crit_range]\n",progname);
-  printf ("[-C community] [-s string] [-r regex] [-R regexi] [-t timeout] [-e retries]\n");
-  printf ("[-l label] [-u units] [-p port-number] [-d delimiter] [-D output-delimiter]\n");
-  printf ("[-m miblist] [-P snmp version] [-L seclevel] [-U secname] [-a authproto]\n");
-  printf ("[-A authpasswd] [-x privproto] [-X privpasswd]\n");
+	printf ("[-C community] [-s string] [-r regex] [-R regexi] [-t timeout] [-e retries]\n");
+	printf ("[-l label] [-u units] [-p port-number] [-d delimiter] [-D output-delimiter]\n");
+	printf ("[-m miblist] [-P snmp version] [-L seclevel] [-U secname] [-a authproto]\n");
+	printf ("[-A authpasswd] [-x privproto] [-X privpasswd]\n");
 }
