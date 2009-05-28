@@ -37,6 +37,7 @@ This file documents the major additions and syntax changes between releases.
 	check_http: Add SSL/TLS hostname extension support (SNI) - (#1939022 - Joe Presbrey)
 	Fixed wrong perfdata label for output traffic in check_mrtgtraf (#2654308 - Gavin Williams)
 	Fixed check_by_ssh interpretation of quotes in -C parameter (#1985246, #2268675)
+	check_snmp now supports standard threshold ranges and doubles (floating numbers) in thresholds
 
 1.4.13 25th Sept 2008
 	Fix Debian bug #460097: check_http --max-age broken (Hilko Bengen)

@@ -53,33 +53,14 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #define CRIT_PRESENT 1
 #define CRIT_STRING 2
 #define CRIT_REGEX 4
-#define CRIT_GT 8
-#define CRIT_LT 16
-#define CRIT_GE 32
-#define CRIT_LE 64
-#define CRIT_EQ 128
-#define CRIT_NE 256
-#define CRIT_RANGE 512
-#define WARN_PRESENT 1024
-#define WARN_STRING 2048
-#define WARN_REGEX 4096
-#define WARN_GT 8192
-#define WARN_LT 16384
-#define WARN_GE 32768
-#define WARN_LE 65536
-#define WARN_EQ 131072
-#define WARN_NE 262144
-#define WARN_RANGE 524288
+#define WARN_PRESENT 8
+#define WARN_STRING 16
+#define WARN_REGEX 32
 
 #define MAX_OIDS 8
-#define MAX_DELIM_LENGTH 8
 
 int process_arguments (int, char **);
 int validate_arguments (void);
-char *clarify_message (char *);
-int check_num (int);
-int llu_getll (unsigned long long *, char *);
-int llu_getul (unsigned long long *, char *);
 char *thisarg (char *str);
 char *nextarg (char *str);
 void print_usage (void);
@@ -89,7 +70,6 @@ void print_help (void);
 char regex_expect[MAX_INPUT_BUFFER] = "";
 regex_t preg;
 regmatch_t pmatch[10];
-char timestamp[10] = "";
 char errbuf[MAX_INPUT_BUFFER] = "";
 char perfstr[MAX_INPUT_BUFFER] = "| ";
 int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
@@ -122,15 +102,12 @@ int numoids = 0;
 int numauthpriv = 0;
 int verbose = FALSE;
 int usesnmpgetnext = FALSE;
-unsigned long long lower_warn_lim[MAX_OIDS];
-unsigned long long upper_warn_lim[MAX_OIDS];
-unsigned long long lower_crit_lim[MAX_OIDS];
-unsigned long long upper_crit_lim[MAX_OIDS];
-unsigned long long response_value[MAX_OIDS];
-int check_warning_value = FALSE;
-int check_critical_value = FALSE;
+char *warning_thresholds = NULL;
+char *critical_thresholds = NULL;
+thresholds *thlds[MAX_OIDS];
+double response_value[MAX_OIDS];
 int retries = 0;
-unsigned long long eval_method[MAX_OIDS];
+int eval_method[MAX_OIDS];
 char *delimiter;
 char *output_delim;
 char *miblist = NULL;
@@ -140,7 +117,7 @@ int needmibs = FALSE;
 int
 main (int argc, char **argv)
 {
-	int i = 0;
+	int i;
 	int iresult = STATE_UNKNOWN;
 	int result = STATE_UNKNOWN;
 	int return_code = 0;
@@ -152,6 +129,8 @@ main (int argc, char **argv)
 	char *outbuff;
 	char *ptr = NULL;
 	char *show = NULL;
+	char *th_warn=NULL;
+	char *th_crit=NULL;
 	char type[8] = "";
 	output chld_out, chld_err;
 
@@ -163,7 +142,6 @@ main (int argc, char **argv)
 	unitv = malloc (unitv_size);
 	for (i = 0; i < MAX_OIDS; i++)
 		eval_method[i] = CHECK_UNDEF;
-	i = 0;
 
 	label = strdup ("SNMP");
 	units = strdup ("");
@@ -171,7 +149,6 @@ main (int argc, char **argv)
 	outbuff = strdup ("");
 	delimiter = strdup (" = ");
 	output_delim = strdup (DEFAULT_OUTPUT_DELIMITER);
-	/* miblist = strdup (DEFAULT_MIBLIST); */
 	timeout_interval = DEFAULT_TIMEOUT;
 	retries = DEFAULT_RETRIES;
 
@@ -180,6 +157,28 @@ main (int argc, char **argv)
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
+
+	/* Populate the thresholds */
+	th_warn=warning_thresholds;
+	th_crit=critical_thresholds;
+	for (i=0; i<numoids; i++) {
+		char *w = th_warn ? strndup(th_warn, strcspn(th_warn, ",")) : NULL;
+		char *c = th_crit ? strndup(th_crit, strcspn(th_crit, ",")) : NULL;
+		/* Skip empty thresholds, while avoiding segfault */
+		set_thresholds(&thlds[i],
+		               w ? strpbrk(w, NP_THRESHOLDS_CHARS) : NULL,
+		               c ? strpbrk(c, NP_THRESHOLDS_CHARS) : NULL);
+		if (w) {
+			th_warn=strchr(th_warn, ',');
+			if (th_warn) th_warn++;
+			free(w);
+		}
+		if (c) {
+			th_crit=strchr(th_crit, ',');
+			if (th_crit) th_crit++;
+			free(c);
+		}
+	}
 
 	/* Create the command array to execute */
 	if(usesnmpgetnext == TRUE) {
@@ -251,6 +250,8 @@ main (int argc, char **argv)
 	}
 
 	for (i = 0; i < chld_out.lines; i++) {
+		const char *conv = "%.0f";
+
 		ptr = chld_out.line[i];
 		oidname = strpcpy (oidname, ptr, delimiter);
 		response = strstr (ptr, delimiter);
@@ -274,32 +275,25 @@ main (int argc, char **argv)
 		}
 		else if (strstr (response, "INTEGER: "))
 			show = strstr (response, "INTEGER: ") + 9;
-		else if (strstr (response, "STRING: "))
+		else if (strstr (response, "STRING: ")) {
 			show = strstr (response, "STRING: ") + 8;
+			conv = "%.10g";
+		}
+		else if (strstr (response, "Timeticks: "))
+			show = strstr (response, "Timeticks: ");
 		else
 			show = response;
 
 		iresult = STATE_DEPENDENT;
 
 		/* Process this block for integer comparisons */
-		if (eval_method[i] & CRIT_GT ||
-		    eval_method[i] & CRIT_LT ||
-		    eval_method[i] & CRIT_GE ||
-		    eval_method[i] & CRIT_LE ||
-		    eval_method[i] & CRIT_EQ ||
-		    eval_method[i] & CRIT_NE ||
-		    eval_method[i] & WARN_GT ||
-		    eval_method[i] & WARN_LT ||
-		    eval_method[i] & WARN_GE ||
-		    eval_method[i] & WARN_LE ||
-		    eval_method[i] & WARN_EQ ||
-		    eval_method[i] & WARN_NE) {
+		if (thlds[i]->warning || thlds[i]->critical) {
 			ptr = strpbrk (show, "0123456789");
 			if (ptr == NULL)
 				die (STATE_UNKNOWN,_("No valid data returned"));
-			response_value[i] = strtoul (ptr, NULL, 10);
-			iresult = check_num (i);
-			asprintf (&show, "%llu", response_value[i]);
+			response_value[i] = strtod (ptr, NULL);
+			iresult = get_status(response_value[i], thlds[i]);
+			asprintf (&show, conv, response_value[i]);
 		}
 
 		/* Process this block for string matching */
@@ -363,9 +357,6 @@ main (int argc, char **argv)
 		}
 	}
 
-/* 	if (nunits == 1 || i == 1) */
-/* 		printf ("%s %s -%s %s\n", label, state_text (result), outbuff, units); */
-/* 	else */
 	printf ("%s %s -%s %s \n", label, state_text (result), outbuff, perfstr);
 
 	return result;
@@ -488,27 +479,11 @@ process_arguments (int argc, char **argv)
 			break;
 
 	/* Test parameters */
-		case 'c':									/* critical time threshold */
-			if (strspn (optarg, "0123456789:,") < strlen (optarg))
-				usage2 (_("Invalid critical threshold"), optarg);
-			for (ptr = optarg; ptr && jj < MAX_OIDS; jj++) {
-				if (llu_getll (&lower_crit_lim[jj], ptr) == 1)
-					eval_method[jj] |= CRIT_LT;
-				if (llu_getul (&upper_crit_lim[jj], ptr) == 1)
-					eval_method[jj] |= CRIT_GT;
-				(ptr = index (ptr, ',')) ? ptr++ : ptr;
-			}
+		case 'c':									/* critical threshold */
+			critical_thresholds = optarg;
 			break;
-		case 'w':									/* warning time threshold */
-			if (strspn (optarg, "0123456789:,") < strlen (optarg))
-				usage2 (_("Invalid warning threshold"), optarg);
-			for (ptr = optarg; ptr && ii < MAX_OIDS; ii++) {
-				if (llu_getll (&lower_warn_lim[ii], ptr) == 1)
-					eval_method[ii] |= WARN_LT;
-				if (llu_getul (&upper_warn_lim[ii], ptr) == 1)
-					eval_method[ii] |= WARN_GT;
-				(ptr = index (ptr, ',')) ? ptr++ : ptr;
-			}
+		case 'w':									/* warning threshold */
+			warning_thresholds = optarg;
 			break;
 		case 'e': /* PRELIMINARY - may change */
 		case 'E': /* PRELIMINARY - may change */
@@ -758,117 +733,6 @@ validate_arguments ()
 
 
 
-char *
-clarify_message (char *msg)
-{
-	int i = 0;
-	int foo;
-	char tmpmsg_c[MAX_INPUT_BUFFER];
-	char *tmpmsg = (char *) &tmpmsg_c;
-	tmpmsg = strcpy (tmpmsg, msg);
-	if (!strncmp (tmpmsg, " Hex:", 5)) {
-		tmpmsg = strtok (tmpmsg, ":");
-		while ((tmpmsg = strtok (NULL, " "))) {
-			foo = strtol (tmpmsg, NULL, 16);
-			/* Translate chars that are not the same value in the printers
-			 * character set.
-			 */
-			switch (foo) {
-			case 208:
-				{
-					foo = 197;
-					break;
-				}
-			case 216:
-				{
-					foo = 196;
-					break;
-				}
-			}
-			msg[i] = foo;
-			i++;
-		}
-		msg[i] = 0;
-	}
-	return (msg);
-}
-
-
-
-int
-check_num (int i)
-{
-	int result;
-	result = STATE_OK;
-	if (eval_method[i] & WARN_GT && eval_method[i] & WARN_LT &&
-			lower_warn_lim[i] > upper_warn_lim[i]) {
-		if (response_value[i] <= lower_warn_lim[i] &&
-				response_value[i] >= upper_warn_lim[i]) {
-			result = STATE_WARNING;
-		}
-	}
-	else if
-		((eval_method[i] & WARN_GT && response_value[i] > upper_warn_lim[i]) ||
-		 (eval_method[i] & WARN_GE && response_value[i] >= upper_warn_lim[i]) ||
-		 (eval_method[i] & WARN_LT && response_value[i] < lower_warn_lim[i]) ||
-		 (eval_method[i] & WARN_LE && response_value[i] <= lower_warn_lim[i]) ||
-		 (eval_method[i] & WARN_EQ && response_value[i] == upper_warn_lim[i]) ||
-		 (eval_method[i] & WARN_NE && response_value[i] != upper_warn_lim[i])) {
-		result = STATE_WARNING;
-	}
-
-	if (eval_method[i] & CRIT_GT && eval_method[i] & CRIT_LT &&
-			lower_crit_lim[i] > upper_crit_lim[i]) {
-		if (response_value[i] <= lower_crit_lim[i] &&
-				response_value[i] >= upper_crit_lim[i]) {
-			result = STATE_CRITICAL;
-		}
-	}
-	else if
-		((eval_method[i] & CRIT_GT && response_value[i] > upper_crit_lim[i]) ||
-		 (eval_method[i] & CRIT_GE && response_value[i] >= upper_crit_lim[i]) ||
-		 (eval_method[i] & CRIT_LT && response_value[i] < lower_crit_lim[i]) ||
-		 (eval_method[i] & CRIT_LE && response_value[i] <= lower_crit_lim[i]) ||
-		 (eval_method[i] & CRIT_EQ && response_value[i] == upper_crit_lim[i]) ||
-		 (eval_method[i] & CRIT_NE && response_value[i] != upper_crit_lim[i])) {
-		result = STATE_CRITICAL;
-	}
-
-	return result;
-}
-
-
-
-int
-llu_getll (unsigned long long *ll, char *str)
-{
-	char tmp[100];
-	if (strchr (str, ':') == NULL)
-		return 0;
-	if (strchr (str, ',') != NULL && (strchr (str, ',') < strchr (str, ':')))
-		return 0;
-	if (sscanf (str, "%llu%[:]", ll, tmp) == 2)
-		return 1;
-	return 0;
-}
-
-
-
-int
-llu_getul (unsigned long long *ul, char *str)
-{
-	char tmp[100];
-	if (sscanf (str, "%llu%[^,]", ul, tmp) == 1)
-		return 1;
-	if (sscanf (str, ":%llu%[^,]", ul, tmp) == 1)
-		return 1;
-	if (sscanf (str, "%*u:%llu%[^,]", ul, tmp) == 1)
-		return 1;
-	return 0;
-}
-
-
-
 /* trim leading whitespace
 	 if there is a leading quote, make sure it balances */
 
@@ -973,10 +837,10 @@ print_help (void)
 	printf ("    %s\n", _("to be the data that should be used in the evaluation."));
 
 	/* Tests Against Integers */
-	printf (" %s\n", "-w, --warning=INTEGER_RANGE(s)");
-	printf ("    %s\n", _("Range(s) which will not result in a WARNING status"));
-	printf (" %s\n", "-c, --critical=INTEGER_RANGE(s)");
-	printf ("    %s\n", _("Range(s) which will not result in a CRITICAL status"));
+	printf (" %s\n", "-w, --warning=THRESHOLD(s)");
+	printf ("    %s\n", _("Warning threshold range(s)"));
+	printf (" %s\n", "-c, --critical=THRESHOLD(s)");
+	printf ("    %s\n", _("Critical threshold range(s)"));
 
 	/* Tests Against Strings */
 	printf (" %s\n", "-s, --string=STRING");
@@ -1010,16 +874,8 @@ print_help (void)
 	printf (" %s\n", _("- Multiple OIDs may be indicated by a comma- or space-delimited list (lists with"));
 	printf ("   %s\n", _("internal spaces must be quoted) [max 8 OIDs]"));
 
-	printf (" %s\n", _("- Ranges are inclusive and are indicated with colons. When specified as"));
-	printf ("   %s\n", _("'min:max' a STATE_OK will be returned if the result is within the indicated"));
-	printf ("   %s\n", _("range or is equal to the upper or lower bound. A non-OK state will be"));
-	printf ("   %s\n", _("returned if the result is outside the specified range."));
+	printf(" -%s", _(UT_THRESHOLDS_NOTES));
 
-	printf (" %s\n", _("- If specified in the order 'max:min' a non-OK state will be returned if the"));
-	printf ("   %s\n", _("result is within the (inclusive) range."));
-
-	printf (" %s\n", _("- Upper or lower bounds may be omitted to skip checking the respective limit."));
-	printf (" %s\n", _("- Bare integers are interpreted as upper limits."));
 	printf (" %s\n", _("- When checking multiple OIDs, separate ranges by commas like '-w 1:10,1:,:20'"));
 	printf (" %s\n", _("- Note that only one string and one regex may be checked at present"));
 	printf (" %s\n", _("- All evaluation methods other than PR, STR, and SUBSTR expect that the value"));

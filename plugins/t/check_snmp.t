@@ -8,7 +8,7 @@ use strict;
 use Test::More;
 use NPTest;
 
-my $tests = 34;
+my $tests = 44;
 plan tests => $tests;
 my $res;
 
@@ -44,7 +44,7 @@ SKIP: {
 	like( $res->output, "/check_snmp: Invalid SNMP version - 3c/" );
 
 	SKIP: {
-		skip "no snmp host defined", 20 if ( ! $host_snmp );
+		skip "no snmp host defined", 30 if ( ! $host_snmp );
 
 		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o system.sysUpTime.0 -w 1: -c 1:");
 		cmp_ok( $res->return_code, '==', 0, "Exit OK when querying uptime" ); 
@@ -85,6 +85,33 @@ SKIP: {
 		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o host.hrStorage.hrMemorySize.0,host.hrSystem.hrSystemProcesses.0 -w 1:,1: -c 1:,1:");
 		cmp_ok( $res->return_code, '==', 0, "Exit OK when querying hrMemorySize and hrSystemProcesses");
 		like($res->output, '/^SNMP OK - \d+ \d+/', "String contains hrMemorySize and hrSystemProcesses");
+
+		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o host.hrSWRun.hrSWRunTable.hrSWRunEntry.hrSWRunIndex.1 -w \@:0 -c \@0");
+		cmp_ok( $res->return_code, '==', 0, "Exit OK with inside-range thresholds");
+		like($res->output, '/^SNMP OK - 1\s.*$/', "String matches SNMP OK and output format");
+
+		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o enterprises.ucdavis.laTable.laEntry.laLoad.3");
+		$res->output =~ m/^SNMP OK - (\d+\.\d{2})\s.*$/;
+		my $lower = $1 - 0.05;
+		my $higher = $1 + 0.05;
+		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o enterprises.ucdavis.laTable.laEntry.laLoad.3 -w $lower -c $higher");
+		cmp_ok( $res->return_code, '==', 1, "Exit WARNING with fractionnal arcuments");
+
+		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o system.sysUpTime.0,host.hrSWRun.hrSWRunTable.hrSWRunEntry.hrSWRunIndex.1 -w ,:0 -c ,:2");
+		cmp_ok( $res->return_code, '==', 1, "Exit WARNING on 2nd threshold");
+		like($res->output, '/^SNMP WARNING - Timeticks:\s\(\d+\)\s.*,\s.*\s\*1\*\s.*$/', "First OID returned as string, 2nd checked for thresholds");
+
+		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o host.hrSWRun.hrSWRunTable.hrSWRunEntry.hrSWRunIndex.1 -w '' -c ''");
+		cmp_ok( $res->return_code, '==', 0, "Empty thresholds doesn't crash");
+
+		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o host.hrStorage.hrMemorySize.0,host.hrSystem.hrSystemProcesses.0 -w ,,1 -c ,,2");
+		cmp_ok( $res->return_code, '==', 0, "Skipping first two thresholds on 2 OID check");
+		like($res->output, '/^SNMP OK - \d+ \w+ \d+\s.*$/', "Skipping first two thresholds, result printed rather than parsed");
+
+		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o host.hrStorage.hrMemorySize.0,host.hrSystem.hrSystemProcesses.0 -w ,, -c ,,");
+		cmp_ok( $res->return_code, '==', 0, "Skipping all thresholds");
+		like($res->output, '/^SNMP OK - \d+ \w+ \d+\s.*$/', "Skipping all thresholds, result printed rather than parsed");
+
 	}
 
 	SKIP: {
