@@ -67,6 +67,7 @@ char *pguser = NULL;
 char *pgpasswd = NULL;
 double twarn = (double)DEFAULT_WARN;
 double tcrit = (double)DEFAULT_CRIT;
+int verbose = 0;
 
 PGconn *conn;
 /*PGresult   *res;*/
@@ -151,6 +152,8 @@ main (int argc, char **argv)
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
+	if (verbose > 2)
+		printf("Arguments initialized\n");
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR) {
@@ -158,14 +161,24 @@ main (int argc, char **argv)
 	}
 	alarm (timeout_interval);
 
+	if (verbose)
+		printf("Connecting to database:\n DB: %s\n User: %s\n Host: %s\n Port: %d\n", dbName,
+		(pguser != NULL) ? pguser : "unspecified",
+		(pghost != NULL) ? pghost : "unspecified",
+		(pgport != NULL) ? atoi(pgport) : DEFAULT_PORT);
+
 	/* make a connection to the database */
 	time (&start_time);
 	conn =
 		PQsetdbLogin (pghost, pgport, pgoptions, pgtty, dbName, pguser, pgpasswd);
 	time (&end_time);
 	elapsed_time = (int) (end_time - start_time);
+	if (verbose)
+		printf("Time elapsed: %d\n", elapsed_time);
 
 	/* check to see that the backend connection was successfully made */
+	if (verbose)
+		printf("Verifying connection\n");
 	if (PQstatus (conn) == CONNECTION_BAD) {
 		printf (_("CRITICAL - no connection to '%s' (%s).\n"),
 		        dbName,	PQerrorMessage (conn));
@@ -181,6 +194,8 @@ main (int argc, char **argv)
 	else {
 		status = STATE_OK;
 	}
+	if (verbose)
+		printf("Closing connection\n");
 	PQfinish (conn);
 	printf (_(" %s - database %s (%d sec.)|%s\n"),
 	        state_text(status), dbName, elapsed_time,
@@ -210,11 +225,12 @@ process_arguments (int argc, char **argv)
 		{"authorization", required_argument, 0, 'a'},
 		{"port", required_argument, 0, 'P'},
 		{"database", required_argument, 0, 'd'},
+		{"verbose", no_argument, 0, 'v'},
 		{0, 0, 0, 0}
 	};
 
 	while (1) {
-		c = getopt_long (argc, argv, "hVt:c:w:H:P:d:l:p:a:",
+		c = getopt_long (argc, argv, "hVt:c:w:H:P:d:l:p:a:v",
 		                 longopts, &option);
 
 		if (c == EOF)
@@ -274,6 +290,9 @@ process_arguments (int argc, char **argv)
 		case 'p':     /* authentication password */
 		case 'a':
 			pgpasswd = optarg;
+			break;
+		case 'v':
+			verbose++;
 			break;
 		}
 	}
