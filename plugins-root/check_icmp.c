@@ -70,6 +70,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include <netinet/ip_icmp.h>
 #include <arpa/inet.h>
 #include <signal.h>
+#include <float.h>
 
 
 /** sometimes undefined system macros (quite a few, actually) **/
