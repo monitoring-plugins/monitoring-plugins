@@ -1284,10 +1284,10 @@ print_help(void)
   printf ("    %s\n", _("specify a target"));
   printf (" %s\n", "-w");
   printf ("    %s", _("warning threshold (currently "));
-  printf ("%0.3fms,%u%%)\n", (float)warn.rta / 1000 , warn.pl / 1000);
+  printf ("%0.3fms,%u%%)\n", (float)warn.rta / 1000, warn.pl);
   printf (" %s\n", "-c");
   printf ("    %s", _("critical threshold (currently "));
-  printf ("%0.3fms,%u%%)\n", (float)crit.rta, crit.pl);
+  printf ("%0.3fms,%u%%)\n", (float)crit.rta / 1000, crit.pl);
   printf (" %s\n", "-s");
   printf ("    %s\n", _("specify a source IP address or device name"));
   printf (" %s\n", "-n");
