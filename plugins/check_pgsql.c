@@ -425,7 +425,7 @@ print_help (void)
 
 	printf (_("Test whether a PostgreSQL Database is accepting connections."));
 
-  printf ("\n\n");
+	printf ("\n\n");
 
 	print_usage ();
 
@@ -437,12 +437,12 @@ print_help (void)
 	printf (_(UT_IPv46));
 
 	printf (" %s\n", "-d, --database=STRING");
-  printf ("    %s", _("Database to check "));
-  printf (_("(default: %s)"), DEFAULT_DB);
-  printf (" %s\n", "-l, --logname = STRING");
-  printf ("    %s\n", _("Login name of user"));
-  printf (" %s\n", "-p, --password = STRING");
-  printf ("    %s\n", _("Password (BIG SECURITY ISSUE)"));
+	printf ("    %s", _("Database to check "));
+	printf (_("(default: %s)"), DEFAULT_DB);
+	printf (" %s\n", "-l, --logname = STRING");
+	printf ("    %s\n", _("Login name of user"));
+	printf (" %s\n", "-p, --password = STRING");
+	printf ("    %s\n", _("Password (BIG SECURITY ISSUE)"));
 
 	printf (_(UT_WARN_CRIT));
 
@@ -450,26 +450,26 @@ print_help (void)
 
 	printf (_(UT_VERBOSE));
 
-  printf ("\n");
+	printf ("\n");
 	printf (" %s\n", _("All parameters are optional."));
-  printf (" %s\n", _("This plugin tests a PostgreSQL DBMS to determine whether it is active and"));
-  printf (" %s\n", _("accepting queries. In its current operation, it simply connects to the"));
-  printf (" %s\n", _("specified database, and then disconnects. If no database is specified, it"));
-  printf (" %s\n", _("connects to the template1 database, which is present in every functioning"));
-  printf (" %s\n\n", _("PostgreSQL DBMS."));
+	printf (" %s\n", _("This plugin tests a PostgreSQL DBMS to determine whether it is active and"));
+	printf (" %s\n", _("accepting queries. In its current operation, it simply connects to the"));
+	printf (" %s\n", _("specified database, and then disconnects. If no database is specified, it"));
+	printf (" %s\n", _("connects to the template1 database, which is present in every functioning"));
+	printf (" %s\n\n", _("PostgreSQL DBMS."));
 
 	printf (" %s\n", _("The plugin will connect to a local postmaster if no host is specified. To"));
-  printf (" %s\n", _("connect to a remote host, be sure that the remote postmaster accepts TCP/IP"));
-  printf (" %s\n\n", _("connections (start the postmaster with the -i option)."));
+	printf (" %s\n", _("connect to a remote host, be sure that the remote postmaster accepts TCP/IP"));
+	printf (" %s\n\n", _("connections (start the postmaster with the -i option)."));
 
 	printf (" %s\n", _("Typically, the nagios user (unless the --logname option is used) should be"));
-  printf (" %s\n", _("able to connect to the database without a password. The plugin can also send"));
-  printf (" %s\n", _("a password, but no effort is made to obsure or encrypt the password."));
+	printf (" %s\n", _("able to connect to the database without a password. The plugin can also send"));
+	printf (" %s\n", _("a password, but no effort is made to obsure or encrypt the password."));
 
 #ifdef NP_EXTRA_OPTS
-  printf ("\n");
-  printf ("%s\n", _("Notes:"));
-  printf (_(UT_EXTRA_OPTS_NOTES));
+	printf ("\n");
+	printf ("%s\n", _("Notes:"));
+	printf (_(UT_EXTRA_OPTS_NOTES));
 #endif
 
 	printf (_(UT_SUPPORT));
@@ -480,7 +480,7 @@ print_help (void)
 void
 print_usage (void)
 {
-  printf (_("Usage:"));
+	printf (_("Usage:"));
 	printf ("%s [-H <host>] [-P <port>] [-c <critical time>] [-w <warning time>]\n", progname);
-  printf (" [-t <timeout>] [-d <database>] [-l <logname>] [-p <password>]\n");
+	printf (" [-t <timeout>] [-d <database>] [-l <logname>] [-p <password>]\n");
 }
