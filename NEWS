@@ -39,6 +39,7 @@ This file documents the major additions and syntax changes between releases.
 	Fixed check_by_ssh interpretation of quotes in -C parameter (#1985246, #2268675)
 	check_snmp now supports standard threshold ranges and doubles (floating numbers) in thresholds
 	check_fping now supports passing target timeout and interval to fping (#2347686 - Martin Foster)
+	Fixed SNMPv3 behaviour of check_ifoperstatus. Added -x to define privprotocol (#2343438 - Robin Schroeder)
 
 1.4.13 25th Sept 2008
 	Fix Debian bug #460097: check_http --max-age broken (Hilko Bengen)
