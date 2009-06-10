@@ -99,8 +99,8 @@ $status = process_arguments();
 use Data::Dumper;
 # Just in case of problems, let's not hang Nagios
 $SIG{'ALRM'} = sub {
-     print ("ERROR: No snmp response from $hostname (alarm)\n");
-     exit $ERRORS{"UNKNOWN"};
+	print ("ERROR: No snmp response from $hostname (alarm)\n");
+	exit $ERRORS{"UNKNOWN"};
 };
 
 alarm($timeout);
@@ -121,7 +121,7 @@ if (!defined($session)) {
 if (defined $ifdescr || defined $iftype) {
 	# escape "/" in ifdescr - very common in the Cisco world
 	if (defined $iftype) {
-		$status=fetch_ifindex($snmpIfType, $iftype);  
+		$status=fetch_ifindex($snmpIfType, $iftype);
 	} else {
 		$ifdescr =~ s/\//\\\//g;
 		$status=fetch_ifindex($snmpIfDescr, $ifdescr);  # if using on device with large number of interfaces
@@ -150,88 +150,86 @@ push(@snmpoids,$snmpIfDescr);
 push(@snmpoids,$snmpIfName) if (defined $ifXTable) ;
 push(@snmpoids,$snmpIfAlias) if (defined $ifXTable) ;
 
-   if (!defined($response = $session->get_request(@snmpoids))) {
-      $answer=$session->error;
-      $session->close;
-      $state = 'WARNING';
-      print ("$state: SNMP error: $answer\n");
-      exit $ERRORS{$state};
-   }
+if (!defined($response = $session->get_request(@snmpoids))) {
+	$answer=$session->error;
+	$session->close;
+	$state = 'WARNING';
+	print ("$state: SNMP error: $answer\n");
+	exit $ERRORS{$state};
+}
 
-   $answer = sprintf("host '%s', %s(%s) is %s\n", 
-      $hostname, 
-      $response->{$snmpIfDescr},
-      $snmpkey, 
-      $ifOperStatus{$response->{$snmpIfOperStatus}}
-   );
+$answer = sprintf("host '%s', %s(%s) is %s\n", 
+	$hostname, 
+	$response->{$snmpIfDescr},
+	$snmpkey, 
+	$ifOperStatus{$response->{$snmpIfOperStatus}}
+);
 
 
-   ## Check to see if ifName match is requested and it matches - exit if no match
-   ## not the interface we want to monitor
-   if ( defined $ifName && not ($response->{$snmpIfName} eq $ifName) ) {
-      $state = 'UNKNOWN';
-      $answer = "Interface name ($ifName) doesn't match snmp value ($response->{$snmpIfName}) (index $snmpkey)";
-      print ("$state: $answer\n");
-      exit $ERRORS{$state};
-   } 
+## Check to see if ifName match is requested and it matches - exit if no match
+## not the interface we want to monitor
+if ( defined $ifName && not ($response->{$snmpIfName} eq $ifName) ) {
+	$state = 'UNKNOWN';
+	$answer = "Interface name ($ifName) doesn't match snmp value ($response->{$snmpIfName}) (index $snmpkey)";
+	print ("$state: $answer\n");
+	exit $ERRORS{$state};
+} 
 
-   ## define the interface name
-   if (defined $ifXTable) {
-     $name = $response->{$snmpIfName} ." - " .$response->{$snmpIfAlias} ; 
-   }else{
-     $name = $response->{$snmpIfDescr} ;
-   }
-   
-   ## if AdminStatus is down - some one made a consious effort to change config
-   ##
-   if ( not ($response->{$snmpIfAdminStatus} == 1) ) {
-     $answer = "Interface $name (index $snmpkey) is administratively down.";
-     if ( not defined $adminWarn or $adminWarn eq "w" ) {
-        $state = 'WARNING';
-     } elsif ( $adminWarn eq "i" ) {
-        $state = 'OK';
-     } elsif ( $adminWarn eq "c" ) {
-        $state = 'CRITICAL';
-     } else { # If wrong value for -a, say warning
-        $state = 'WARNING';
-     }
-   } 
-   ## Check operational status
-   elsif ( $response->{$snmpIfOperStatus} == 2 ) {
-      $state = 'CRITICAL';
-      $answer = "Interface $name (index $snmpkey) is down.";
-   } elsif ( $response->{$snmpIfOperStatus} == 5 ) {
-      if (defined $dormantWarn ) {
-				if ($dormantWarn eq "w") {
-		  	  $state = 'WARNING';
-				  $answer = "Interface $name (index $snmpkey) is dormant.";
-	  	  }elsif($dormantWarn eq "c") {
-	  	  	$state = 'CRITICAL';
-				  $answer = "Interface $name (index $snmpkey) is dormant.";
-        }elsif($dormantWarn eq "i") {
-	  		  $state = 'OK';
-		  		$answer = "Interface $name (index $snmpkey) is dormant.";
-        }
-			}else{
-	    	# dormant interface  - but warning/critical/ignore not requested
-	 	   $state = 'CRITICAL';
-		   $answer = "Interface $name (index $snmpkey) is dormant.";
-			}
-   } elsif ( $response->{$snmpIfOperStatus} == 6 ) {
-	   $state = 'CRITICAL';
-	   $answer = "Interface $name (index $snmpkey) notPresent - possible hotswap in progress.";
-   } elsif ( $response->{$snmpIfOperStatus} == 7 ) {
-	   $state = 'CRITICAL';
-	   $answer = "Interface $name (index $snmpkey) down due to lower layer being down.";
+## define the interface name
+if (defined $ifXTable) {
+	 $name = $response->{$snmpIfName} ." - " .$response->{$snmpIfAlias} ; 
+}else{
+	 $name = $response->{$snmpIfDescr} ;
+}
 
-   } elsif ( $response->{$snmpIfOperStatus} == 3 || $response->{$snmpIfOperStatus} == 4  ) {
-	   $state = 'CRITICAL';
-	   $answer = "Interface $name (index $snmpkey) down (testing/unknown).";
-
-   } else {
-      $state = 'OK';
-      $answer = "Interface $name (index $snmpkey) is up.";
-   }
+## if AdminStatus is down - some one made a consious effort to change config
+##
+if ( not ($response->{$snmpIfAdminStatus} == 1) ) {
+	$answer = "Interface $name (index $snmpkey) is administratively down.";
+	if ( not defined $adminWarn or $adminWarn eq "w" ) {
+		$state = 'WARNING';
+	} elsif ( $adminWarn eq "i" ) {
+		$state = 'OK';
+	} elsif ( $adminWarn eq "c" ) {
+		$state = 'CRITICAL';
+	} else { # If wrong value for -a, say warning
+		$state = 'WARNING';
+	}
+} 
+## Check operational status
+elsif ( $response->{$snmpIfOperStatus} == 2 ) {
+	$state = 'CRITICAL';
+	$answer = "Interface $name (index $snmpkey) is down.";
+} elsif ( $response->{$snmpIfOperStatus} == 5 ) {
+	if (defined $dormantWarn ) {
+		if ($dormantWarn eq "w") {
+			$state = 'WARNING';
+			$answer = "Interface $name (index $snmpkey) is dormant.";
+		}elsif($dormantWarn eq "c") {
+			$state = 'CRITICAL';
+			$answer = "Interface $name (index $snmpkey) is dormant.";
+		}elsif($dormantWarn eq "i") {
+			$state = 'OK';
+			$answer = "Interface $name (index $snmpkey) is dormant.";
+		}
+	}else{
+		# dormant interface - but warning/critical/ignore not requested
+		$state = 'CRITICAL';
+		$answer = "Interface $name (index $snmpkey) is dormant.";
+	}
+} elsif ( $response->{$snmpIfOperStatus} == 6 ) {
+	$state = 'CRITICAL';
+	$answer = "Interface $name (index $snmpkey) notPresent - possible hotswap in progress.";
+} elsif ( $response->{$snmpIfOperStatus} == 7 ) {
+	$state = 'CRITICAL';
+	$answer = "Interface $name (index $snmpkey) down due to lower layer being down.";
+} elsif ( $response->{$snmpIfOperStatus} == 3 || $response->{$snmpIfOperStatus} == 4  ) {
+	$state = 'CRITICAL';
+	$answer = "Interface $name (index $snmpkey) down (testing/unknown).";
+} else {
+	$state = 'OK';
+	$answer = "Interface $name (index $snmpkey) is up.";
+}
 
 
 
@@ -272,21 +270,21 @@ sub fetch_ifindex {
 }
 
 sub usage() {
-  printf "\nMissing arguments!\n";
-  printf "\n";
-  printf "usage: \n";
-  printf "check_ifoperstatus -k <IF_KEY> -H <HOSTNAME> [-C <community>]\n";
-  printf "Copyright (C) 2000 Christoph Kron\n";
-  printf "check_ifoperstatus.pl comes with ABSOLUTELY NO WARRANTY\n";
-  printf "This programm is licensed under the terms of the ";
-  printf "GNU General Public License\n(check source code for details)\n";
-  printf "\n\n";
-  exit $ERRORS{"UNKNOWN"};
+	printf "\nMissing arguments!\n";
+	printf "\n";
+	printf "usage: \n";
+	printf "check_ifoperstatus -k <IF_KEY> -H <HOSTNAME> [-C <community>]\n";
+	printf "Copyright (C) 2000 Christoph Kron\n";
+	printf "check_ifoperstatus.pl comes with ABSOLUTELY NO WARRANTY\n";
+	printf "This programm is licensed under the terms of the ";
+	printf "GNU General Public License\n(check source code for details)\n";
+	printf "\n\n";
+	exit $ERRORS{"UNKNOWN"};
 }
 
 sub print_help() {
 	printf "check_ifoperstatus plugin for Nagios monitors operational \n";
-  	printf "status of a particular network interface on the target host\n";
+	printf "status of a particular network interface on the target host\n";
 	printf "\nUsage:\n";
 	printf "   -H (--hostname)   Hostname to query - (required)\n";
 	printf "   -C (--community)  SNMP read community (defaults to public,\n";
@@ -297,20 +295,20 @@ sub print_help() {
 	printf "                        if monitoring with -d\n";
 	printf "   -L (--seclevel)   choice of \"noAuthNoPriv\", \"authNoPriv\", or	\"authPriv\"\n";
 	printf "   -U (--secname)    username for SNMPv3 context\n";
-	printf "   -c (--context)    SNMPv3 context name (default is empty	string)";
+	printf "   -c (--context)    SNMPv3 context name (default is empty string)\n";
 	printf "   -A (--authpass)   authentication password (cleartext ascii or localized key\n";
-	printf "                     in hex with 0x prefix generated by using	\"snmpkey\" utility\n"; 
+	printf "                     in hex with 0x prefix generated by using \"snmpkey\" utility\n"; 
 	printf "                     auth password and authEngineID\n";
-	printf "   -a (--authproto)  Authentication protocol ( MD5 or SHA1)\n";
+	printf "   -a (--authproto)  Authentication protocol (MD5 or SHA1)\n";
 	printf "   -X (--privpass)   privacy password (cleartext ascii or localized key\n";
-	printf "                     in hex with 0x prefix generated by using	\"snmpkey\" utility\n"; 
+	printf "                     in hex with 0x prefix generated by using \"snmpkey\" utility\n"; 
 	printf "                     privacy password and authEngineID\n";
 	printf "   -x (--privproto)  privacy protocol (DES or AES; default: DES)\n";
 	printf "   -k (--key)        SNMP IfIndex value\n";
 	printf "   -d (--descr)      SNMP ifDescr value\n";
 	printf "   -T (--type)       SNMP ifType integer value (see http://www.iana.org/assignments/ianaiftype-mib)\n";
 	printf "   -p (--port)       SNMP port (default 161)\n";
-	printf "   -I (--ifmib)      Agent supports IFMIB ifXTable.  Do not use if\n";
+	printf "   -I (--ifmib)      Agent supports IFMIB ifXTable. Do not use if\n";
 	printf "                     you don't know what this is. \n";
 	printf "   -n (--name)       the value should match the returned ifName\n";
 	printf "                     (Implies the use of -I)\n";
@@ -357,12 +355,11 @@ sub process_arguments() {
 			);
 
 
-				
 	if ($status == 0){
 		print_help();
 		exit $ERRORS{'OK'};
 	}
-  
+
 	if ($opt_V) {
 		print_revision($PROGNAME,'@NP_VERSION@');
 		exit $ERRORS{'OK'};
@@ -378,13 +375,11 @@ sub process_arguments() {
 		exit $ERRORS{"UNKNOWN"};
 	}
 
-
 	unless ($snmpkey > 0 || defined $ifdescr || defined $iftype){
 		printf "Either a valid snmpkey key (-k) or a ifDescr (-d) must be provided)\n";
 		usage();
 		exit $ERRORS{"UNKNOWN"};
 	}
-
 
 	if (defined $name) {
 		$ifXTable=1;
@@ -401,7 +396,6 @@ sub process_arguments() {
 		$timeout = $TIMEOUT;
 	}
 
-		
 	if ($snmp_version !~ /[123]/){
 		$state='UNKNOWN';
 		print ("$state: No support for SNMP v$snmp_version yet\n");
@@ -409,9 +403,9 @@ sub process_arguments() {
 	}
 
 	%session_opts = (
-		-hostname  => $hostname,
-		-port      => $port,
-		-version	=> $snmp_version,
+		-hostname   => $hostname,
+		-port       => $port,
+		-version    => $snmp_version,
 		-maxmsgsize => $maxmsgsize
 	);
 
@@ -420,7 +414,7 @@ sub process_arguments() {
 	if ($snmp_version =~ /3/ ) {
 		# Must define a security level even though default is noAuthNoPriv
 		# v3 requires a security username
-		if (defined $seclevel  && defined $secname) {
+		if (defined $seclevel && defined $secname) {
 			$session_opts{'-username'} = $secname;
 		
 			# Must define a security level even though defualt is noAuthNoPriv
@@ -450,7 +444,7 @@ sub process_arguments() {
 			}
 			
 			# Privacy (DES encryption) wanted
-			if ($seclevel eq  'authPriv' ) {
+			if ($seclevel eq 'authPriv' ) {
 				if (! defined $privpass) {
 					usage();
 					exit $ERRORS{"UNKNOWN"};
