@@ -21,14 +21,44 @@
 
 #include "tap.h"
 
-void my_free(int *argc, char **argv) {
+/* This my_free would be the most efficient way of freeing an extra-opts array,
+ * provided as an example */
+#if 0
+void my_free(int *argc, char **newargv, char **argv) {
 	int i;
-	printf ("    Arg(%i): ", *argc);
-	for (i=1; i<*argc; i++) printf ("'%s' ", argv[i]);
+	/* Return if both arrays are the same */
+	if (newargv == argv) return;
+
+	for (i=1; i<*argc; i++) {
+		/* Free array items until we reach the start of the original argv */
+		if (newargv[i] == argv[1]) break;
+		free(newargv[i]);
+	}
+	/* Free the array itself */
+	free(newargv);
+}
+#else
+void my_free(int *argc, char **newargv, char **argv) {
+	/* Free stuff (and print while we're at it) */
+	int i, freeflag=1;
+	printf ("    Arg(%i): ", *argc+1);
+	printf ("'%s' ", newargv[0]);
+	for (i=1; i<*argc; i++) {
+		printf ("'%s' ", newargv[i]);
+		/* Stop freeing when we get to the start of the original array */
+		if (freeflag) {
+			if (newargv[i] == argv[1])
+				freeflag=0;
+			else
+				free(newargv[i]);
+		}
+	}
 	printf ("\n");
-	free(argv);
+	/* Free only if it's a different array */
+	if (newargv != argv) free(newargv);
 	*argc=0;
 }
+#endif
 
 int array_diff(int i1, char **a1, int i2, char **a2) {
 	int i;
@@ -54,94 +84,55 @@ int array_diff(int i1, char **a1, int i2, char **a2) {
 int
 main (int argc, char **argv)
 {
-	char **argv_test=NULL, **argv_known=NULL;
+	char **argv_new=NULL;
 	int i, argc_test;
 
 	plan_tests(5);
 
-	argv_test=(char **)malloc(2*sizeof(char **));
-	argv_test[0] = "prog_name";
-	argv_test[1] = NULL;
-	argc_test=1;
-	argv_known=(char **)realloc(argv_known, 2*sizeof(char **));
-	argv_known[0] = "prog_name";
-	argv_known[1] = NULL;
-	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
-	ok(array_diff(argc_test, argv_test, 1, argv_known), "No opts, returns correct argv/argc");
-	my_free(&argc_test, argv_test);
+	{
+		char *argv_test[] = {"prog_name", (char *) NULL};
+		argc_test=1;
+		char *argv_known[] = {"prog_name", (char *) NULL};
+		argv_new=np_extra_opts(&argc_test, argv_test, "check_disk");
+		ok(array_diff(argc_test, argv_new, 1, argv_known), "No opts, returns correct argv/argc");
+		my_free(&argc_test, argv_new, argv_test);
+	}
 
-	argv_test=(char **)malloc(6*sizeof(char **));
-	argv_test[0] = "prog_name";
-	argv_test[1] = "arg1";
-	argv_test[2] = "--arg2=val1";
-	argv_test[3] = "--arg3";
-	argv_test[4] = "val2";
-	argv_test[5] = NULL;
-	argc_test=5;
-	argv_known=(char **)realloc(argv_known, 6*sizeof(char **));
-	argv_known[0] = "prog_name";
-	argv_known[1] = "arg1";
-	argv_known[2] = "--arg2=val1";
-	argv_known[3] = "--arg3";
-	argv_known[4] = "val2";
-	argv_known[5] = NULL;
-	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
-	ok(array_diff(argc_test, argv_test, 5, argv_known), "No extra opts, verbatim copy of argv");
-	my_free(&argc_test,argv_test);
+	{
+		char *argv_test[] = {"prog_name", "arg1", "--arg2=val1", "--arg3", "val2", (char *) NULL};
+		argc_test=5;
+		char *argv_known[] = {"prog_name", "arg1", "--arg2=val1", "--arg3", "val2", (char *) NULL};
+		argv_new=np_extra_opts(&argc_test, argv_test, "check_disk");
+		ok(array_diff(argc_test, argv_new, 5, argv_known), "No extra opts, verbatim copy of argv");
+		my_free(&argc_test, argv_new, argv_test);
+	}
 
-	argv_test=(char **)malloc(3*sizeof(char **));
-	argv_test[0] = "prog_name";
-	argv_test[1] = "--extra-opts=@./config-opts.ini";
-	argv_test[2] = NULL;
-	argc_test=2;
-	argv_known=(char **)realloc(argv_known, 5*sizeof(char **));
-	argv_known[0] = "prog_name";
-	argv_known[1] = "--foo=Bar";
-	argv_known[2] = "--this=Your Mother!";
-	argv_known[3] = "--blank";
-	argv_known[4] = NULL;
-	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
-	ok(array_diff(argc_test, argv_test, 4, argv_known), "Only extra opts using default section");
-	my_free(&argc_test,argv_test);
+	{
+		char *argv_test[] = {"prog_name", "--extra-opts=@./config-opts.ini", (char *) NULL};
+		argc_test=2;
+		char *argv_known[] = {"prog_name", "--foo=Bar", "--this=Your Mother!", "--blank", (char *) NULL};
+		argv_new=np_extra_opts(&argc_test, argv_test, "check_disk");
+		ok(array_diff(argc_test, argv_new, 4, argv_known), "Only extra opts using default section");
+		my_free(&argc_test, argv_new, argv_test);
+	}
 
-	argv_test=(char **)malloc(5*sizeof(char **));
-	argv_test[0] = "prog_name";
-	argv_test[1] = "--extra-opts=sect1@./config-opts.ini";
-	argv_test[2] = "--extra-opts";
-	argv_test[3] = "sect2@./config-opts.ini";
-	argv_test[4] = NULL;
-	argc_test=4;
-	argv_known=(char **)realloc(argv_known, 5*sizeof(char **));
-	argv_known[0] = "prog_name";
-	argv_known[1] = "--one=two";
-	argv_known[2] = "--something else=oops";
-	argv_known[3] = "--this=that";
-	argv_known[4] = NULL;
-	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
-	ok(array_diff(argc_test, argv_test, 4, argv_known), "Only extra opts specified twice");
-	my_free(&argc_test,argv_test);
+	{
+		char *argv_test[] = {"prog_name", "--extra-opts=sect1@./config-opts.ini", "--extra-opts", "sect2@./config-opts.ini", (char *) NULL};
+		argc_test=4;
+		char *argv_known[] = {"prog_name", "--one=two", "--something else=oops", "--this=that", (char *) NULL};
+		argv_new=np_extra_opts(&argc_test, argv_test, "check_disk");
+		ok(array_diff(argc_test, argv_new, 4, argv_known), "Only extra opts specified twice");
+		my_free(&argc_test, argv_new, argv_test);
+	}
 
-	argv_test=(char **)malloc(7*sizeof(char **));
-	argv_test[0] = "prog_name";
-	argv_test[1] = "--arg1=val1";
-	argv_test[2] = "--extra-opts=@./config-opts.ini";
-	argv_test[3] = "--extra-opts";
-	argv_test[4] = "sect1@./config-opts.ini";
-	argv_test[5] = "--arg2";
-	argv_test[6] = NULL;
-	argc_test=6;
-	argv_known=(char **)realloc(argv_known, 8*sizeof(char **));
-	argv_known[0] = "prog_name";
-	argv_known[1] = "--foo=Bar";
-	argv_known[2] = "--this=Your Mother!";
-	argv_known[3] = "--blank";
-	argv_known[4] = "--one=two";
-	argv_known[5] = "--arg1=val1";
-	argv_known[6] = "--arg2";
-	argv_known[7] = NULL;
-	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
-	ok(array_diff(argc_test, argv_test, 7, argv_known), "twice extra opts using two sections");
-	my_free(&argc_test,argv_test);
+	{
+		char *argv_test[] = {"prog_name", "--arg1=val1", "--extra-opts=@./config-opts.ini", "--extra-opts", "sect1@./config-opts.ini", "--arg2", (char *) NULL};
+		argc_test=6;
+		char *argv_known[] = {"prog_name", "--foo=Bar", "--this=Your Mother!", "--blank", "--one=two", "--arg1=val1", "--arg2", (char *) NULL};
+		argv_new=np_extra_opts(&argc_test, argv_test, "check_disk");
+		ok(array_diff(argc_test, argv_new, 7, argv_known), "twice extra opts using two sections");
+		my_free(&argc_test, argv_new, argv_test);
+	}
 
 	return exit_status();
 }

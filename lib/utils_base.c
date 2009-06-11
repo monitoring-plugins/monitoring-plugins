@@ -101,7 +101,9 @@ _set_thresholds(thresholds **my_thresholds, char *warn_string, char *critical_st
 {
 	thresholds *temp_thresholds = NULL;
 
-	temp_thresholds = malloc(sizeof(temp_thresholds));
+	if ((temp_thresholds = malloc(sizeof(thresholds))) == NULL)
+		die(STATE_UNKNOWN, _("Cannot allocate memory: %s\n"),
+		    strerror(errno));
 
 	temp_thresholds->warning = NULL;
 	temp_thresholds->critical = NULL;

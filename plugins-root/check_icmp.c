@@ -184,14 +184,14 @@ static u_int get_timevar(const char *);
 static u_int get_timevaldiff(struct timeval *, struct timeval *);
 static in_addr_t get_ip_address(const char *);
 static int wait_for_reply(int, u_int);
-static int recvfrom_wto(int, char *, unsigned int, struct sockaddr *, u_int *);
+static int recvfrom_wto(int, void *, unsigned int, struct sockaddr *, u_int *);
 static int send_icmp_ping(int, struct rta_host *);
 static int get_threshold(char *str, threshold *th);
 static void run_checks(void);
 static void set_source_ip(char *);
 static int add_target(char *);
 static int add_target_ip(char *, struct in_addr *);
-static int handle_random_icmp(char *, struct sockaddr_in *);
+static int handle_random_icmp(unsigned char *, struct sockaddr_in *);
 static unsigned short icmp_checksum(unsigned short *, int);
 static void finish(int);
 static void crash(const char *, ...);
@@ -300,7 +300,7 @@ get_icmp_error_msg(unsigned char icmp_type, unsigned char icmp_code)
 }
 
 static int
-handle_random_icmp(char *packet, struct sockaddr_in *addr)
+handle_random_icmp(unsigned char *packet, struct sockaddr_in *addr)
 {
 	struct icmp p, sent_icmp;
 	struct rta_host *host = NULL;
@@ -694,7 +694,7 @@ static int
 wait_for_reply(int sock, u_int t)
 {
 	int n, hlen;
-	static char buf[4096];
+	static unsigned char buf[4096];
 	struct sockaddr_in resp_addr;
 	struct ip *ip;
 	struct icmp icp;
@@ -814,7 +814,7 @@ static int
 send_icmp_ping(int sock, struct rta_host *host)
 {
 	static union {
-		char *buf; /* re-use so we prevent leaks */
+		void *buf; /* re-use so we prevent leaks */
 		struct icmp *icp;
 		u_short *cksum_in;
 	} packet = { NULL };
@@ -867,7 +867,7 @@ send_icmp_ping(int sock, struct rta_host *host)
 }
 
 static int
-recvfrom_wto(int sock, char *buf, unsigned int len, struct sockaddr *saddr,
+recvfrom_wto(int sock, void *buf, unsigned int len, struct sockaddr *saddr,
 			 u_int *timo)
 {
 	u_int slen;
