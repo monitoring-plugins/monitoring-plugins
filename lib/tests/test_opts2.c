@@ -21,12 +21,24 @@
 
 #include "tap.h"
 
-void my_free(int *argc, char **argv) {
-	int i;
-	printf ("    Arg(%i): ", *argc);
-	for (i=1; i<*argc; i++) printf ("'%s' ", argv[i]);
+void my_free(int *argc, char **newargv, char **argv) {
+	/* Free stuff (and print while we're at it) */
+	int i, freeflag=1;
+	printf ("    Arg(%i): ", *argc+1);
+	printf ("'%s' ", newargv[0]);
+	for (i=1; i<*argc; i++) {
+		printf ("'%s' ", newargv[i]);
+		/* Stop freeing when we get to the start of the original array */
+		if (freeflag) {
+			if (newargv[i] == argv[1])
+				freeflag=0;
+			else
+				free(newargv[i]);
+		}
+	}
 	printf ("\n");
-	free(argv);
+	/* Free only if it's a different array */
+	if (newargv != argv) free(newargv);
 	*argc=0;
 }
 
@@ -54,97 +66,55 @@ int array_diff(int i1, char **a1, int i2, char **a2) {
 int
 main (int argc, char **argv)
 {
-	char **argv_test=NULL, **argv_known=NULL;
+	char **argv_new=NULL;
 	int i, argc_test;
 
 	plan_tests(5);
 
-	argv_test=(char **)malloc(6*sizeof(char **));
-	argv_test[0] = "prog_name";
-	argv_test[1] = "arg1";
-	argv_test[2] = "--extra-opts";
-	argv_test[3] = "--arg3";
-	argv_test[4] = "val2";
-	argv_test[5] = NULL;
-	argc_test=5;
-	argv_known=(char **)realloc(argv_known, 6*sizeof(char **));
-	argv_known[0] = "prog_name";
-	argv_known[1] = "--foo=bar";
-	argv_known[2] = "arg1";
-	argv_known[3] = "--arg3";
-	argv_known[4] = "val2";
-	argv_known[5] = NULL;
-	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
-	ok(array_diff(argc_test, argv_test, 5, argv_known), "Default section 1");
+	{
+		char *argv_test[] = {"prog_name", "arg1", "--extra-opts", "--arg3", "val2", (char *) NULL};
+		argc_test=5;
+		char *argv_known[] = {"prog_name", "--foo=bar", "arg1", "--arg3", "val2", (char *) NULL};
+		argv_new=np_extra_opts(&argc_test, argv_test, "check_disk");
+		ok(array_diff(argc_test, argv_new, 5, argv_known), "Default section 1");
+		my_free(&argc_test, argv_new, argv_test);
+	}
 
-	argv_test=(char **)malloc(3*sizeof(char **));
-	argv_test[0] = "prog_name";
-	argv_test[1] = "--extra-opts";
-	argv_test[2] = NULL;
-	argc_test=2;
-	argv_known=(char **)realloc(argv_known, 3*sizeof(char **));
-	argv_known[0] = "prog_name";
-	argv_known[1] = "--foo=bar";
-	argv_known[2] = NULL;
-	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
-	ok(array_diff(argc_test, argv_test, 2, argv_known), "Default section 2");
-	my_free(&argc_test,argv_test);
+	{
+		char *argv_test[] = {"prog_name", "--extra-opts", (char *) NULL};
+		argc_test=2;
+		char *argv_known[] = {"prog_name", "--foo=bar", (char *) NULL};
+		argv_new=np_extra_opts(&argc_test, argv_test, "check_disk");
+		ok(array_diff(argc_test, argv_new, 2, argv_known), "Default section 2");
+		my_free(&argc_test, argv_new, argv_test);
+	}
 
-	argv_test=(char **)malloc(6*sizeof(char **));
-	argv_test[0] = "prog_name";
-	argv_test[1] = "arg1";
-	argv_test[2] = "--extra-opts=section1";
-	argv_test[3] = "--arg3";
-	argv_test[4] = "val2";
-	argv_test[5] = NULL;
-	argc_test=5;
-	argv_known=(char **)realloc(argv_known, 6*sizeof(char **));
-	argv_known[0] = "prog_name";
-	argv_known[1] = "--foobar=baz";
-	argv_known[2] = "arg1";
-	argv_known[3] = "--arg3";
-	argv_known[4] = "val2";
-	argv_known[5] = NULL;
-	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
-	ok(array_diff(argc_test, argv_test, 5, argv_known), "Default section 3");
-	my_free(&argc_test,argv_test);
+	{
+		char *argv_test[] = {"prog_name", "arg1", "--extra-opts=section1", "--arg3", "val2", (char *) NULL};
+		argc_test=5;
+		char *argv_known[] = {"prog_name", "--foobar=baz", "arg1", "--arg3", "val2", (char *) NULL};
+		argv_new=np_extra_opts(&argc_test, argv_test, "check_disk");
+		ok(array_diff(argc_test, argv_new, 5, argv_known), "Default section 3");
+		my_free(&argc_test, argv_new, argv_test);
+	}
 
-	argv_test=(char **)malloc(6*sizeof(char **));
-	argv_test[0] = "prog_name";
-	argv_test[1] = "arg1";
-	argv_test[2] = "--extra-opts";
-	argv_test[3] = "-arg3";
-	argv_test[4] = "val2";
-	argv_test[5] = NULL;
-	argc_test=5;
-	argv_known=(char **)realloc(argv_known, 6*sizeof(char **));
-	argv_known[0] = "prog_name";
-	argv_known[1] = "--foo=bar";
-	argv_known[2] = "arg1";
-	argv_known[3] = "-arg3";
-	argv_known[4] = "val2";
-	argv_known[5] = NULL;
-	argv_test=np_extra_opts(&argc_test, argv_test, "check_disk");
-	ok(array_diff(argc_test, argv_test, 5, argv_known), "Default section 4");
-	my_free(&argc_test,argv_test);
+	{
+		char *argv_test[] = {"prog_name", "arg1", "--extra-opts", "-arg3", "val2", (char *) NULL};
+		argc_test=5;
+		char *argv_known[] = {"prog_name", "--foo=bar", "arg1", "-arg3", "val2", (char *) NULL};
+		argv_new=np_extra_opts(&argc_test, argv_test, "check_disk");
+		ok(array_diff(argc_test, argv_new, 5, argv_known), "Default section 4");
+		my_free(&argc_test, argv_new, argv_test);
+	}
 
-	argv_test=(char **)malloc(4*sizeof(char **));
-	argv_test[0] = "check_tcp";
-	argv_test[1] = "--extra-opts";
-	argv_test[2] = "--extra-opts=tcp_long_lines";
-	argv_test[3] = NULL;
-	argc_test=3;
-	argv_known=(char **)realloc(argv_known, 7*sizeof(char **));
-	argv_known[0] = "check_tcp";
-	argv_known[1] = "--timeout=10";
-	argv_known[2] = "--escape";
-	argv_known[3] = "--send=Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda";
-	argv_known[4] = "--expect=Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda";
-	argv_known[5] = "--jail";
-	argv_known[6] = NULL;
-	argv_test=np_extra_opts(&argc_test, argv_test, "check_tcp");
-	ok(array_diff(argc_test, argv_test, 6, argv_known), "Long lines test");
-	my_free(&argc_test,argv_test);
+	{
+		char *argv_test[] = {"check_tcp", "--extra-opts", "--extra-opts=tcp_long_lines", (char *) NULL};
+		argc_test=3;
+		char *argv_known[] = {"check_tcp", "--timeout=10", "--escape", "--send=Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda", "--expect=Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda", "--jail", (char *) NULL};
+		argv_new=np_extra_opts(&argc_test, argv_test, "check_tcp");
+		ok(array_diff(argc_test, argv_new, 6, argv_known), "Long lines test");
+		my_free(&argc_test, argv_new, argv_test);
+	}
 
 	return exit_status();
 }
