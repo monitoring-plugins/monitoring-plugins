@@ -379,10 +379,10 @@ sub process_arguments() {
 	}
 
 	unless ($snmpkey > 0 || defined $ifdescr || defined $iftype){
-		usage("Either a valid snmpkey key (-k) or a ifDescr (-d) must be provided");
+		usage("Either a valid snmp key (-k) or a ifDescr (-d) must be provided");
 	}
 
-	if (defined $name) {
+	if (defined $ifName) {
 		$ifXTable=1;
 	}	
 
@@ -420,7 +420,7 @@ sub process_arguments() {
 		
 			# Must define a security level even though defualt is noAuthNoPriv
 			unless ( grep /^$seclevel$/, qw(noAuthNoPriv authNoPriv authPriv) ) {
-				usage("Must define a security level even though default is noAuthNoPriv");
+				usage("Must define a valid security level even though default is noAuthNoPriv");
 			}
 			
 			# Authentication wanted
