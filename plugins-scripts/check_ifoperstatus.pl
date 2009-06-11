@@ -43,18 +43,19 @@ use Getopt::Long;
 
 my $PROGNAME = "check_ifoperstatus";
 sub print_help ();
-sub usage ();
+sub usage ($);
+sub print_usage ();
 sub process_arguments ();
 
 my $timeout;
 my $status;
 my %ifOperStatus = 	('1','up',
-			 '2','down',
-			 '3','testing',
-			 '4','unknown',
-			 '5','dormant',
-			 '6','notPresent',
-			 '7','lowerLayerDown');  # down due to the state of lower layer interface(s)
+                     '2','down',
+                     '3','testing',
+                     '4','unknown',
+                     '5','dormant',
+                     '6','notPresent',
+                     '7','lowerLayerDown');  # down due to the state of lower layer interface(s)
 
 my $state = "UNKNOWN";
 my $answer = "";
@@ -96,7 +97,6 @@ my %session_opts;
 $status = process_arguments();
 
 
-use Data::Dumper;
 # Just in case of problems, let's not hang Nagios
 $SIG{'ALRM'} = sub {
 	print ("ERROR: No snmp response from $hostname (alarm)\n");
@@ -105,7 +105,6 @@ $SIG{'ALRM'} = sub {
 
 alarm($timeout);
 
-print Dumper(\%session_opts);
 ($session, $error) = Net::SNMP->session(%session_opts);
 
 		
@@ -269,8 +268,13 @@ sub fetch_ifindex {
 	return $snmpkey;
 }
 
-sub usage() {
-	printf "\nMissing arguments!\n";
+sub usage($) {
+	print "$_[0]\n";
+	print_usage();
+	exit $ERRORS{"UNKNOWN"};
+}
+
+sub print_usage() {
 	printf "\n";
 	printf "usage: \n";
 	printf "check_ifoperstatus -k <IF_KEY> -H <HOSTNAME> [-C <community>]\n";
@@ -279,10 +283,11 @@ sub usage() {
 	printf "This programm is licensed under the terms of the ";
 	printf "GNU General Public License\n(check source code for details)\n";
 	printf "\n\n";
-	exit $ERRORS{"UNKNOWN"};
 }
 
 sub print_help() {
+	print_revision($PROGNAME, '@NP_VERSION@');
+	print_usage();
 	printf "check_ifoperstatus plugin for Nagios monitors operational \n";
 	printf "status of a particular network interface on the target host\n";
 	printf "\nUsage:\n";
@@ -323,7 +328,6 @@ sub print_help() {
 	printf "intensive.  Use it sparingly or not at all.  -n is used to match against\n";
 	printf "a much more descriptive ifName value in the IfXTable to verify that the\n";
 	printf "snmpkey has not changed to some other network interface after a reboot.\n\n";
-	print_revision($PROGNAME, '@NP_VERSION@');
 	
 }
 
@@ -371,14 +375,11 @@ sub process_arguments() {
 	}
 
 	if (! utils::is_hostname($hostname)){
-		usage();
-		exit $ERRORS{"UNKNOWN"};
+		usage("Hostname invalid or not given");
 	}
 
 	unless ($snmpkey > 0 || defined $ifdescr || defined $iftype){
-		printf "Either a valid snmpkey key (-k) or a ifDescr (-d) must be provided)\n";
-		usage();
-		exit $ERRORS{"UNKNOWN"};
+		usage("Either a valid snmpkey key (-k) or a ifDescr (-d) must be provided");
 	}
 
 	if (defined $name) {
@@ -419,21 +420,18 @@ sub process_arguments() {
 		
 			# Must define a security level even though defualt is noAuthNoPriv
 			unless ( grep /^$seclevel$/, qw(noAuthNoPriv authNoPriv authPriv) ) {
-				usage();
-				exit $ERRORS{"UNKNOWN"};
+				usage("Must define a security level even though default is noAuthNoPriv");
 			}
 			
 			# Authentication wanted
 			if ( $seclevel eq 'authNoPriv' || $seclevel eq 'authPriv' ) {
-				unless ( $authproto eq 'MD5' || $authproto eq 'SHA1' ) {
-					usage();
-					exit $ERRORS{"UNKNOWN"};
+				if (defined $authproto && $authproto ne 'MD5' && $authproto ne 'SHA1') {
+					usage("Auth protocol can be either MD5 or SHA1");
 				}
 				$session_opts{'-authprotocol'} = $authproto if(defined $authproto);
 
 				if ( !defined $authpass) {
-					usage();
-					exit $ERRORS{"UNKNOWN"};
+					usage("Auth password/key is not defined");
 				}else{
 					if ($authpass =~ /^0x/ ) {
 						$session_opts{'-authkey'} = $authpass ;
@@ -446,8 +444,7 @@ sub process_arguments() {
 			# Privacy (DES encryption) wanted
 			if ($seclevel eq 'authPriv' ) {
 				if (! defined $privpass) {
-					usage();
-					exit $ERRORS{"UNKNOWN"};
+					usage("Privacy passphrase/key is not defined");
 				}else{
 					if ($privpass =~ /^0x/){
 						$session_opts{'-privkey'} = $privpass;
@@ -465,8 +462,7 @@ sub process_arguments() {
 			}
 		
 		}else {
-					usage();
-					exit $ERRORS{'UNKNOWN'}; ;
+			usage("Security level or name is not defined");
 		}
 	} # end snmpv3
 
