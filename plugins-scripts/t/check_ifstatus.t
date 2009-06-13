@@ -16,17 +16,19 @@ my $plugin = "check_ifstatus";
 SKIP: {
 	skip "$plugin is not created", $tests if ( ! -x $plugin );
 
-	my $host_snmp = getTestParameter( "host_snmp",          "NP_HOST_SNMP",      "localhost",
-	                                   "A host providing an SNMP Service");
+	my $host_snmp = getTestParameter( "NP_HOST_SNMP", "A host providing an SNMP Service", "localhost");
 
-	my $snmp_community = getTestParameter( "snmp_community",     "NP_SNMP_COMMUNITY", "public",
-                                           "The SNMP Community string for SNMP Testing (assumes snmp v1)" );
+	my $snmp_community = getTestParameter( "NP_SNMP_COMMUNITY",
+	                                       "The SNMP Community string for SNMP Testing (pick default rather than 'none' when no snmp host is available)",
+	                                       "public");
 
-	my $host_nonresponsive = getTestParameter( "host_nonresponsive", "NP_HOST_NONRESPONSIVE", "10.0.0.1",
-	                                           "The hostname of system not responsive to network requests" );
+	my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE",
+	                                           "The hostname of system not responsive to network requests", "10.0.0.1" );
 
-	my $hostname_invalid   = getTestParameter( "hostname_invalid",   "NP_HOSTNAME_INVALID",   "nosuchhost",
-	                                           "An invalid (not known to DNS) hostname" );
+	my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
+	                                           "An invalid (not known to DNS) hostname",
+	                                           "nosuchhost" );
+
 
 	$res = NPTest->testCmd( "./$plugin" );
 	is( $res->return_code, 3, "No arguments" );

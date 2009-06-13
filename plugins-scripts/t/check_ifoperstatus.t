@@ -16,17 +16,29 @@ my $plugin = "check_ifoperstatus";
 SKIP: {
 	skip "$plugin is not created", $tests if ( ! -x $plugin );
 
-	my $host_snmp = getTestParameter( "host_snmp",          "NP_HOST_SNMP",      "localhost",
-	                                   "A host providing an SNMP Service");
+	my $host_snmp = getTestParameter( "NP_HOST_SNMP", "A host providing an SNMP Service", "localhost");
 
-	my $snmp_community = getTestParameter( "snmp_community",     "NP_SNMP_COMMUNITY", "public",
-                                           "The SNMP Community string for SNMP Testing (assumes snmp v1)" );
+	my $snmp_community = getTestParameter( "NP_SNMP_COMMUNITY",
+	                                       "The SNMP Community string for SNMP Testing (pick default rather than 'none' when no snmp host is available)",
+	                                       "public");
 
-	my $host_nonresponsive = getTestParameter( "host_nonresponsive", "NP_HOST_NONRESPONSIVE", "10.0.0.1",
-	                                           "The hostname of system not responsive to network requests" );
+	my ($snmp_interface, $snmp_ifxtable);
+	if ($host_snmp) {
+		$snmp_interface   = getTestParameter( "NP_SNMP_INTERFACE", "Name of an active network interface on SNMP server", "lo" );
 
-	my $hostname_invalid   = getTestParameter( "hostname_invalid",   "NP_HOSTNAME_INVALID",   "nosuchhost",
-	                                           "An invalid (not known to DNS) hostname" );
+		$snmp_ifxtable   = getTestParameter( "NP_SNMP_IFXTABLE",   
+		                                     "Is IFXTABLE activated in SNMP server (1: yes, 0: no)? snmpwalk -v1 -c $snmp_community $host_snmp ifxtable",
+		                                     "1" );
+	}
+
+	my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE", 
+	                                           "The hostname of system not responsive to network requests", "10.0.0.1" );
+
+	my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
+	                                           "An invalid (not known to DNS) hostname",
+	                                           "nosuchhost" );
+
+
 
 	$res = NPTest->testCmd( "./$plugin" );
 	is( $res->return_code, 3, "No arguments" );
@@ -47,13 +59,19 @@ SKIP: {
 		cmp_ok( $res->return_code, '==', 0, "Exit OK for ifindex 1" ); 
 		like($res->output, '/^OK.*Interface.*is up/', "String contains OK Interface is up");
 
-		$res = NPTest->testCmd( "./$plugin -H $host_snmp -C $snmp_community -d lo");
-		cmp_ok( $res->return_code, '==', 0, "Exit OK for ifdescr lo" ); 
-		like($res->output, '/^OK.*Interface.*is up/', "String contains OK Interface is up");
+		SKIP: {
+			skip "no snmp interface defined", 2 if ( ! $snmp_interface );
+			$res = NPTest->testCmd( "./$plugin -H $host_snmp -C $snmp_community -d $snmp_interface");
+			cmp_ok( $res->return_code, '==', 0, "Exit OK for ifdescr $snmp_interface" );
+			like($res->output, '/^OK.*Interface.*is up/', "String contains OK Interface is up");
+		}
 
-		$res = NPTest->testCmd( "./$plugin -H $host_snmp -C $snmp_community -k 1 -n rubbish");
-		cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN if interface name doesn't match" ); 
-		like($res->output, '/doesn\'t match snmp value/', "String contains 'doesn't match snmp value'");
+		SKIP: {
+			skip "ifxtable not available", 2 if ( ! $snmp_ifxtable );
+			$res = NPTest->testCmd( "./$plugin -H $host_snmp -C $snmp_community -k 1 -n rubbish");
+			cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN if interface name doesn't match" ); 
+			like($res->output, '/doesn\'t match snmp value/', "String contains 'doesn't match snmp value'");
+		}
 
 	}
 
