@@ -44,7 +44,7 @@ SKIP: {
 	like( $res->output, "/check_snmp: Invalid SNMP version - 3c/" );
 
 	SKIP: {
-		skip "no snmp host defined", 30 if ( ! $host_snmp );
+		skip "no snmp host defined", 32 if ( ! $host_snmp );
 
 		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o system.sysUpTime.0 -w 1: -c 1:");
 		cmp_ok( $res->return_code, '==', 0, "Exit OK when querying uptime" ); 
@@ -114,16 +114,18 @@ SKIP: {
 
 	}
 
+	# These checks need a complete command line. An invalid community is used so
+	# the tests can run on hosts w/o snmp host/community in NPTest.cache. Execution will fail anyway
 	SKIP: {
 		skip "no non responsive host defined", 2 if ( ! $host_nonresponsive );
-		$res = NPTest->testCmd( "./check_snmp -H $host_nonresponsive -C $snmp_community -o system.sysUpTime.0 -w 1: -c 1:");
+		$res = NPTest->testCmd( "./check_snmp -H $host_nonresponsive -C np_foobar -o system.sysUpTime.0 -w 1: -c 1:");
 		cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN with non responsive host" ); 
 		like($res->output, '/External command error: Timeout: No Response from /', "String matches timeout problem");
 	}
 
 	SKIP: {
 		skip "no non invalid host defined", 2 if ( ! $hostname_invalid );
-		$res = NPTest->testCmd( "./check_snmp -H $hostname_invalid   -C $snmp_community -o system.sysUpTime.0 -w 1: -c 1:");
+		$res = NPTest->testCmd( "./check_snmp -H $hostname_invalid   -C np_foobar -o system.sysUpTime.0 -w 1: -c 1:");
 		cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN with non responsive host" ); 
 		like($res->output, '/External command error: .*(nosuchhost|Name or service not known|Unknown host)/', "String matches invalid host");
 	}

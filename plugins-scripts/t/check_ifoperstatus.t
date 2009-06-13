@@ -19,7 +19,7 @@ SKIP: {
 	my $host_snmp = getTestParameter( "NP_HOST_SNMP", "A host providing an SNMP Service", "localhost");
 
 	my $snmp_community = getTestParameter( "NP_SNMP_COMMUNITY",
-	                                       "The SNMP Community string for SNMP Testing (pick default rather than 'none' when no snmp host is available)",
+	                                       "The SNMP Community string for SNMP Testing",
 	                                       "public");
 
 	my ($snmp_interface, $snmp_ifxtable);
@@ -75,15 +75,17 @@ SKIP: {
 
 	}
 
+	# These checks need a complete command line. An invalid community is used so
+	# the tests can run on hosts w/o snmp host/community in NPTest.cache. Execution will fail anyway
 	SKIP: {
 		skip "no non responsive host defined", 1 if ( ! $host_nonresponsive );
-		$res = NPTest->testCmd( "./$plugin -H $host_nonresponsive -C $snmp_community -k 1");
+		$res = NPTest->testCmd( "./$plugin -H $host_nonresponsive -C np_foobar -k 1");
 		cmp_ok( $res->return_code, '==', 1, "Exit WARNING with non responsive host" ); 
 	}
 
 	SKIP: {
 		skip "no invalid host defined", 2 if ( ! $hostname_invalid );
-		$res = NPTest->testCmd( "./$plugin -H $hostname_invalid -C $snmp_community -k 1");
+		$res = NPTest->testCmd( "./$plugin -H $hostname_invalid -C np_foobar -k 1");
 		cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN with invalid host" ); 
 		like($res->output, "/Unable to resolve.*$hostname_invalid/", "String matches unable to resolve.*$hostname_invalid");
 	}
