@@ -1035,7 +1035,7 @@ get_timevaldiff(struct timeval *early, struct timeval *later)
 	if(!early) early = &prog_start;
 
 	/* if early > later we return 0 so as to indicate a timeout */
-	if(early->tv_sec > early->tv_sec ||
+	if(early->tv_sec > later->tv_sec ||
 	   (early->tv_sec == later->tv_sec && early->tv_usec > later->tv_usec))
 	{
 		return 0;
