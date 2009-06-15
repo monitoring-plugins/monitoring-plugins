@@ -18,7 +18,7 @@ use File::Basename;
 use IO::File;
 use Data::Dumper;
 
-use Test;
+use Test::More;
 
 use vars qw($VERSION);
 $VERSION = "1556."; # must be all one line, for MakeMaker
@@ -625,12 +625,12 @@ sub testCmd {
 	chomp $output;
 	$object->output($output);
 
+	my ($pkg, $file, $line) = caller(0);
+	diag("Testing: $command", $/);
 	if ($ENV{'NPTEST_DEBUG'}) {
-		my ($pkg, $file, $line) = caller(0);
-		print "testCmd: Called from line $line in $file", $/;
-		print "Testing: $command", $/;
-		print "Output:  ", $object->output, $/;
-		print "Return code: ", $object->return_code, $/;
+		diag("testCmd: Called from line $line in $file", $/);
+		diag("Output:  ", $object->output, $/);
+		diag("Return code: ", $object->return_code, $/);
 	}
 
 	return $object;
