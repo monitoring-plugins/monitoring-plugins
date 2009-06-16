@@ -626,7 +626,7 @@ sub testCmd {
 	$object->output($output);
 
 	my ($pkg, $file, $line) = caller(0);
-	diag("Testing: $command", $/);
+	print "Testing: $command", $/;
 	if ($ENV{'NPTEST_DEBUG'}) {
 		diag("testCmd: Called from line $line in $file", $/);
 		diag("Output:  ", $object->output, $/);
