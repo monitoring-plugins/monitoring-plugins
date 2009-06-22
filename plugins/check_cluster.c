@@ -261,6 +261,11 @@ print_help(void)
 	printf (_(UT_EXTRA_OPTS_NOTES));
 #endif
 
+	printf ("\n");
+	printf ("%s\n", _("Examples:"));
+	printf (" %s\n", "check_cluster -s -d 2,0,2,0 -c @3:");
+	printf ("    %s\n", _("Will alert critical if there are 3 or more service data points in a non-OK state") );
+
 	printf(_(UT_SUPPORT));
 }
 
