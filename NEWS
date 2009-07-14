@@ -41,6 +41,7 @@ This file documents the major additions and syntax changes between releases.
 	check_fping now supports passing target timeout and interval to fping (#2347686 - Martin Foster)
 	Fixed SNMPv3 behaviour of check_ifoperstatus and check_ifstatus. Added -P to define privprotocol (#2343438 - Robin Schroeder)
 	check_ifoperstatus and check_ifstatus are now more user-friendly in case of missing arguments
+	pst3 compile fix for Sun Studio Compiler (Grant Byers)
 
 1.4.13 25th Sept 2008
 	Fix Debian bug #460097: check_http --max-age broken (Hilko Bengen)
