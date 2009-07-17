@@ -805,7 +805,7 @@ update the THANKS.in file.</para>
 	distributed with the Nagios Plugin files are held in the contrib/ directory and are not installed
 	by default. These plugins are not officially supported by the team. 
 	The current policy is that these plugins should be owned and maintained by the original 
-	contributor, preferably hosted on <ulink url="http://www.nagiosexchange.org">NagiosExchange</ulink>.
+	contributor, preferably hosted on <ulink url="http://exchange.nagios.org">Nagios Exchange</ulink>.
 	</para>
 	<para>If patches or bugs are raised to an contributed plugin, we will start communications with the
 	original contributor, but seek to remove the plugin from our distribution.
@@ -817,7 +817,7 @@ update the THANKS.in file.</para>
 	<section id="Newplugins"><title>New plugins</title>
 	<para>If you would like others to use your plugins, please add it to
 	the official 3rd party plugin repository, 
-	<ulink url="http://www.nagiosexchange.org">NagiosExchange</ulink>.
+	<ulink url="http://exchange.nagios.org">Nagios Exchange</ulink>.
 	</para>
 
 	<para>We are not accepting requests for inclusion of plugins into 
