@@ -31,26 +31,26 @@ tools/setup
 make dist
 
 *** Upload generated tarball to sourceforge
-sftp upload.sf.net
-cd uploads
+sftp frs.sourceforge.net
+SF username and password
+cd /uploads
 put file
 
 SF -> Submit News about release. Make sure it is called "Nagios Plugins" (with those caps)
 Link to download at http://sourceforge.net/project/showfiles.php?group_id=29880
 Include contents of NEWS for this release
-List all people on team involved. 
+List all people on team involved.
 Add acknowledgement to contributors
 Submit. Get URL to news item
 
 SF -> Admin -> File Releases
 Add a release to nagiosplug and create a file release
-Name: 1.4.1 
+Name: 1.4.1
 Create release
 Step 1: Add release notes pointing to news item
 Step 2: add file
 Step 3: *.tar.gz, Platform Independent, Source .gz
 Step 4: Send notice
 
-*** Announce new release
 Send email to nagiosplug-help, nagios-announce with the news text
 Add a news item to http://nagiosplugins.org
