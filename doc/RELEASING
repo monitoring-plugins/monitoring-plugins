@@ -1,5 +1,8 @@
 NOTES ON RELEASING NEW VERSION OF NAGIOSPLUG
 
+NB: A copy of this document is located at:
+    http://nagiosplugins.org/node/96
+
 *** Pre-release
 git pull
 . tools/devmode, if feeling adventurous
@@ -52,5 +55,6 @@ Step 2: add file
 Step 3: *.tar.gz, Platform Independent, Source .gz
 Step 4: Send notice
 
+*** Announce new release
 Send email to nagiosplug-help, nagios-announce with the news text
 Add a news item to http://nagiosplugins.org
