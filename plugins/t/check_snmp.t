@@ -95,11 +95,11 @@ SKIP: {
 		my $lower = $1 - 0.05;
 		my $higher = $1 + 0.05;
 		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o enterprises.ucdavis.laTable.laEntry.laLoad.3 -w $lower -c $higher");
-		cmp_ok( $res->return_code, '==', 1, "Exit WARNING with fractionnal arcuments");
+		cmp_ok( $res->return_code, '==', 1, "Exit WARNING with fractionnal arguments");
 
 		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o system.sysUpTime.0,host.hrSWRun.hrSWRunTable.hrSWRunEntry.hrSWRunIndex.1 -w ,:0 -c ,:2");
 		cmp_ok( $res->return_code, '==', 1, "Exit WARNING on 2nd threshold");
-		like($res->output, '/^SNMP WARNING - Timeticks:\s\(\d+\)\s.*,\s.*\s\*1\*\s.*$/', "First OID returned as string, 2nd checked for thresholds");
+		like($res->output, '/^SNMP WARNING - Timeticks:\s\(\d+\)\s+(?:\d+ days?,\s+)?\d+:\d+:\d+\.\d+\s+\*1\*\s.*$/', "First OID returned as string, 2nd checked for thresholds");
 
 		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o host.hrSWRun.hrSWRunTable.hrSWRunEntry.hrSWRunIndex.1 -w '' -c ''");
 		cmp_ok( $res->return_code, '==', 0, "Empty thresholds doesn't crash");
