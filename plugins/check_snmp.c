@@ -100,7 +100,7 @@ size_t nunits = 0;
 size_t unitv_size = 8;
 int numoids = 0;
 int numauthpriv = 0;
-int verbose = FALSE;
+int verbose = 0;
 int usesnmpgetnext = FALSE;
 char *warning_thresholds = NULL;
 char *critical_thresholds = NULL;
@@ -255,6 +255,9 @@ main (int argc, char **argv)
 		ptr = chld_out.line[i];
 		oidname = strpcpy (oidname, ptr, delimiter);
 		response = strstr (ptr, delimiter);
+		if (verbose > 2) {
+			printf("Processing line %i\n  line: %s\n  oidname: %s\n  response: %s\n", i+1, ptr, oidname, response);
+		}
 
 		/* We strip out the datatype indicator for PHBs */
 
@@ -431,7 +434,7 @@ process_arguments (int argc, char **argv)
 			print_revision (progname, NP_VERSION);
 			exit (STATE_OK);
 		case 'v': /* verbose */
-			verbose = TRUE;
+			verbose++;
 			break;
 
 	/* Connection info */
