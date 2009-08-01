@@ -207,7 +207,7 @@ main (int argc, char **argv)
 
 	/* This is just for display purposes, so it can remain a string */
 	asprintf(&cl_hidden_auth, "%s -t %d -r %d -m %s -v %s %s %s:%s",
-		snmpcmd, timeout_interval, retries, miblist, proto, "[authpriv]",
+		snmpcmd, timeout_interval, retries, strlen(miblist) ? miblist : "''", proto, "[authpriv]",
 		server_address, port);
 
 	for (i = 0; i < numoids; i++) {
@@ -256,7 +256,7 @@ main (int argc, char **argv)
 		oidname = strpcpy (oidname, ptr, delimiter);
 		response = strstr (ptr, delimiter);
 		if (verbose > 2) {
-			printf("Processing line %i\n  line: %s\n  oidname: %s\n  response: %s\n", i+1, ptr, oidname, response);
+			printf("Processing line %i\n  oidname: %s\n  response: %s\n", i+1, oidname, response);
 		}
 
 		/* We strip out the datatype indicator for PHBs */
@@ -647,7 +647,7 @@ validate_arguments ()
 		if ( needmibs == TRUE ) {
 			miblist = strdup (DEFAULT_MIBLIST);
 		}else{
-			miblist = "''";			/* don't read any mib files for numeric oids */
+			miblist = "";			/* don't read any mib files for numeric oids */
 		}
 	}
 
