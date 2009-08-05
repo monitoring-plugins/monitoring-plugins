@@ -585,13 +585,72 @@ elif test "$ac_cv_uname_s" = "SunOS"; then
         ac_cv_ps_cols=9
         AC_MSG_RESULT([using nagios-plugins internal ps command (pst3) for solaris])
 	if test `isainfo -b` = 64 ; then
-		PST3CFLAGS="-m64"
-		AC_SUBST(PST3CFLAGS)
-		AC_MSG_NOTICE([using 64bit pst3])	
+		pst3_use_64bit=1
+		AC_MSG_NOTICE([using 64bit pst3])
 	else
 		AC_MSG_NOTICE([using 32bit pst3])
 	fi
         EXTRAS_ROOT="$EXTRAS_ROOT pst3"
+
+	if test "$pst3_use_64bit" = 1; then
+		dnl Test if we can actually compile code in 64bit
+		old_cflags=$CFLAGS
+		CFLAGS="$CFLAGS -m64"
+		pst3_64bit_working=0
+		AC_RUN_IFELSE(
+			[AC_LANG_PROGRAM([], [
+return sizeof(void*) == 8 ? 0 : 1;
+			])
+		],[
+			PST3CFLAGS="-m64"
+			AC_SUBST(PST3CFLAGS)
+			pst3_64bit_working=1
+			AC_MSG_NOTICE([using -m64 for 64bit code])
+		],[
+			pst3_64bit_working=0
+			AC_MSG_NOTICE([compiler do not like -m64])
+		])
+		CFLAGS=$old_cflags
+		if test "$pst3_64bit_working" = 0; then
+			old_cflags=$CFLAGS
+			CFLAGS="$CFLAGS -xarch=v9"
+			AC_RUN_IFELSE(
+				[AC_LANG_PROGRAM([], [
+return sizeof(void*) == 8 ? 0 : 1;
+				])
+			],[
+				PST3CFLAGS="-xarch=v9"
+				AC_SUBST(PST3CFLAGS)
+				pst3_64bit_working=1
+				AC_MSG_NOTICE([using -xarch=v9 for 64bit code])
+			],[
+				pst3_64bit_working=0
+				AC_MSG_NOTICE([compiler do not like -xarch=v9])
+			])
+			CFLAGS=$old_cflags
+		fi
+		if test "$pst3_64bit_working" = 0; then
+			old_cflags=$CFLAGS
+			CFLAGS="$CFLAGS -xarch=amd64"
+			AC_RUN_IFELSE(
+				[AC_LANG_PROGRAM([], [
+return sizeof(void*) == 8 ? 0 : 1;
+				])
+			],[
+				PST3CFLAGS="-xarch=amd64"
+				AC_SUBST(PST3CFLAGS)
+				pst3_64bit_working=1
+				AC_MSG_NOTICE([using -xarch=amd64 for 64bit code])
+			],[
+				pst3_64bit_working=0
+				AC_MSG_NOTICE([compiler do not like -xarch=amd64])
+			])
+			CFLAGS=$old_cflags
+		fi
+		if test "$pst3_64bit_working" = 0; then
+			AC_MSG_ERROR([I don't know how to build a 64-bit object!])
+		fi
+	fi
 
 dnl Removing this for the moment - Ton
 dnl Using /usr/ucb/ps on Solaris systems, to avoid truncation
