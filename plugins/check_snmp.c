@@ -186,7 +186,7 @@ main (int argc, char **argv)
 	}else{
 		snmpcmd = strdup (PATH_TO_SNMPGET);
 	}
-	
+
 	/* 9 arguments to pass before authpriv options + 1 for host and numoids. Add one for terminating NULL */
 	command_line = calloc (9 + numauthpriv + 1 + numoids + 1, sizeof (char *));
 	command_line[0] = snmpcmd;
@@ -255,15 +255,17 @@ main (int argc, char **argv)
 		ptr = chld_out.line[i];
 		oidname = strpcpy (oidname, ptr, delimiter);
 		response = strstr (ptr, delimiter);
+		if (response == NULL)
+			break;
+
 		if (verbose > 2) {
 			printf("Processing line %i\n  oidname: %s\n  response: %s\n", i+1, oidname, response);
 		}
 
-		/* We strip out the datatype indicator for PHBs */
-
 		/* Clean up type array - Sol10 does not necessarily zero it out */
 		bzero(type, sizeof(type));
 
+		/* We strip out the datatype indicator for PHBs */
 		if (strstr (response, "Gauge: "))
 			show = strstr (response, "Gauge: ") + 7;
 		else if (strstr (response, "Gauge32: "))
