@@ -41,7 +41,7 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 	}
 }
 
-my $tests = 2;
+my $tests = 3;
 if (-x "./check_snmp") {
 	plan tests => $tests;
 } else {
@@ -53,4 +53,11 @@ my $res;
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.0");
 cmp_ok( $res->return_code, '==', 0, "Exit OK when querying a multi-line string" );
 like($res->output, '/^SNMP OK - /', "String contains SNMP OK");
+like($res->output, '/'.quotemeta('SNMP OK - "Cisco Internetwork Operating System SoftwareIOS (tm) Catalyst 4000 L3 Switch Software (cat4000-I9K91S-M), Version
+12.2(20)EWA, RELEASE SOFTWARE (fc1)
+Technical Support: http://www.cisco.com/techsupport
+Copyright (c) 1986-2004 by cisco Systems, Inc.
+"').'/m', "String contains all lines");
+
+print $res->output;
 
