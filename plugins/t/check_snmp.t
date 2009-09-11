@@ -44,7 +44,7 @@ SKIP: {
 	like( $res->output, "/check_snmp: Invalid SNMP version - 3c/" );
 
 	SKIP: {
-		skip "no snmp host defined", 32 if ( ! $host_snmp );
+		skip "no snmp host defined", 34 if ( ! $host_snmp );
 
 		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o system.sysUpTime.0 -w 1: -c 1:");
 		cmp_ok( $res->return_code, '==', 0, "Exit OK when querying uptime" ); 
