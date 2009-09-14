@@ -234,6 +234,8 @@ try_again:
     printf("\n");
   }
 
+  (void) closedir(procdir);
+
   return (0);
 }
 
