@@ -1,6 +1,6 @@
 This file documents the major additions and syntax changes between releases.
 
-1.4.14 ...
+1.4.14 16th September 2009
 	check_http has options to specify the HTTP method (#2155152)
 	check_users thresholds were not working exactly as documented (>= rather than >)
 	Updated tinderbox_build script to point to new tinderbox server
