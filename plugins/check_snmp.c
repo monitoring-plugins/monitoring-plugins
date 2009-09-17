@@ -117,7 +117,7 @@ int needmibs = FALSE;
 int
 main (int argc, char **argv)
 {
-	int i, len;
+	int i, len, line;
 	int iresult = STATE_UNKNOWN;
 	int result = STATE_UNKNOWN;
 	int return_code = 0;
@@ -126,6 +126,7 @@ main (int argc, char **argv)
 	char *cl_hidden_auth = NULL;
 	char *oidname = NULL;
 	char *response = NULL;
+	char *mult_resp = NULL;
 	char *outbuff;
 	char *ptr = NULL;
 	char *show = NULL;
@@ -249,10 +250,10 @@ main (int argc, char **argv)
 		}
 	}
 
-	for (i = 0; i < chld_out.lines; i++) {
+	for (line=0, i=0; line < chld_out.lines; line++, i++) {
 		const char *conv = "%.0f";
 
-		ptr = chld_out.line[i];
+		ptr = chld_out.line[line];
 		oidname = strpcpy (oidname, ptr, delimiter);
 		response = strstr (ptr, delimiter);
 		if (response == NULL)
@@ -283,6 +284,18 @@ main (int argc, char **argv)
 		else if (strstr (response, "STRING: ")) {
 			show = strstr (response, "STRING: ") + 8;
 			conv = "%.10g";
+			/* Get the rest of the string on multi-line strings */
+			if (show[0] == '"' && (response[strlen(response)-1] != '\"' || response[strlen(response)-2] != '\\')) {
+				/* Strip out unmatched double-quote */
+				if (show[0] == '"') show++;
+				if (!mult_resp) mult_resp = strdup("");
+				asprintf (&mult_resp, "%s%s:\n%s\n", mult_resp, oids[i], strstr (response, "STRING: ") + 8);
+				for (line++; line < chld_out.lines; line++) {
+					asprintf (&mult_resp, "%s%s\n", mult_resp, chld_out.line[line]);
+					if (mult_resp[strlen(mult_resp)-2] == '"' && response[strlen(response)-2] != '\\') break;
+				}
+			}
+
 		}
 		else if (strstr (response, "Timeticks: "))
 			show = strstr (response, "Timeticks: ");
@@ -367,6 +380,7 @@ main (int argc, char **argv)
 	}
 
 	printf ("%s %s -%s %s \n", label, state_text (result), outbuff, perfstr);
+	if (mult_resp) printf ("%s", mult_resp);
 
 	return result;
 }

@@ -18,15 +18,24 @@ if (!$agent) {
 my $baseoid = '.1.3.6.1.4.1.8072.3.2.67';
 # Next are arrays of indexes (Type, initial value and increments)
 # Undef miltipliers are randomized
-my $multiline = "Cisco Internetwork Operating System Software
-IOS (tm) Catalyst 4000 L3 Switch Software (cat4000-I9K91S-M), Version
+my $multiline = 'Cisco Internetwork Operating System Software
+IOS (tm) Catalyst 4000 "L3" Switch Software (cat4000-I9K91S-M), Version
 12.2(20)EWA, RELEASE SOFTWARE (fc1)
 Technical Support: http://www.cisco.com/techsupport
 Copyright (c) 1986-2004 by cisco Systems, Inc.
-";
-my @fields = (ASN_OCTET_STR, ASN_UNSIGNED, ASN_UNSIGNED, ASN_COUNTER, ASN_COUNTER64, ASN_UNSIGNED);
-my @values = ($multiline, 4294965296, 1000, 4294965296, uint64("18446744073709351616"), int(rand(2**32)));
-my @incrts = (undef, 1000, -500, 1000, 100000, undef);
+';
+my $multilin2 = "Kisco Outernetwork Oserating Gystem Totware
+Copyleft (c) 2400-2689 by kisco Systrems, Inc.";
+my $multilin3 = 'This should not confuse check_snmp "parser"
+into thinking there is no 2nd line';
+my $multilin4 = 'It\'s getting even harder if the line
+ends with with this: C:\\';
+my $multilin5 = 'And now have fun with with this: "C:\\"
+because we\'re not done yet!';
+
+my @fields = (ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_UNSIGNED, ASN_UNSIGNED, ASN_COUNTER, ASN_COUNTER64, ASN_UNSIGNED);
+my @values = ($multiline, $multilin2, $multilin3, $multilin4, $multilin5, 4294965296, 1000, 4294965296, uint64("18446744073709351616"), int(rand(2**32)));
+my @incrts = (undef, undef, undef, undef, undef, 1000, -500, 1000, 100000, undef);
 
 # Number of elements in our OID
 my $oidelts;
