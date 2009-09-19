@@ -1,5 +1,8 @@
 This file documents the major additions and syntax changes between releases.
 
+1.4.15 ...
+	Fix check_ircd binding to wrong interface (#668778)
+
 1.4.14 16th September 2009
 	check_http has options to specify the HTTP method (#2155152)
 	check_users thresholds were not working exactly as documented (>= rather than >)
