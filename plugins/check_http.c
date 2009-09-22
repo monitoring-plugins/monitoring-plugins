@@ -105,6 +105,7 @@ int check_warning_time = FALSE;
 double critical_time = 0;
 int check_critical_time = FALSE;
 char user_auth[MAX_INPUT_BUFFER] = "";
+char proxy_auth[MAX_INPUT_BUFFER] = "";
 int display_html = FALSE;
 char **http_opt_headers;
 int http_opt_headers_count = 0;
@@ -192,6 +193,7 @@ process_arguments (int argc, char **argv)
     {"url", required_argument, 0, 'u'},
     {"port", required_argument, 0, 'p'},
     {"authorization", required_argument, 0, 'a'},
+    {"proxy_authorization", required_argument, 0, 'b'},
     {"string", required_argument, 0, 's'},
     {"expect", required_argument, 0, 'e'},
     {"regex", required_argument, 0, 'r'},
@@ -229,7 +231,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:e:p:s:R:r:u:f:C:nlLSm:M:N", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:e:p:s:R:r:u:f:C:nlLSm:M:N", longopts, &option);
     if (c == -1 || c == EOF)
       break;
 
@@ -349,6 +351,10 @@ process_arguments (int argc, char **argv)
     case 'a': /* authorization info */
       strncpy (user_auth, optarg, MAX_INPUT_BUFFER - 1);
       user_auth[MAX_INPUT_BUFFER - 1] = 0;
+      break;
+    case 'b': /* proxy-authorization info */
+      strncpy (proxy_auth, optarg, MAX_INPUT_BUFFER - 1);
+      proxy_auth[MAX_INPUT_BUFFER - 1] = 0;
       break;
     case 'P': /* HTTP POST data in URL encoded format; ignored if settings already */
       if (! http_post_data)
@@ -834,6 +840,12 @@ check_http (void)
   if (strlen(user_auth)) {
     base64_encode_alloc (user_auth, strlen (user_auth), &auth);
     asprintf (&buf, "%sAuthorization: Basic %s\r\n", buf, auth);
+  }
+
+  /* optionally send the proxy authentication info */
+  if (strlen(proxy_auth)) {
+    base64_encode_alloc (proxy_auth, strlen (proxy_auth), &auth);
+    asprintf (&buf, "%sProxy-Authorization: Basic %s\r\n", buf, auth);
   }
 
   /* either send http POST data (any data, not only POST)*/
@@ -1346,6 +1358,8 @@ print_help (void)
 
   printf (" %s\n", "-a, --authorization=AUTH_PAIR");
   printf ("    %s\n", _("Username:password on sites with basic authentication"));
+  printf (" %s\n", "-b, --proxy-authorization=AUTH_PAIR");
+  printf (" 	%s\n", _("Username:password on proxy-servers with basic authentication"));
   printf (" %s\n", "-A, --useragent=STRING");
   printf ("    %s\n", _("String to be sent in http header as \"User Agent\""));
   printf (" %s\n", "-k, --header=STRING");
@@ -1407,7 +1421,7 @@ print_usage (void)
   printf (_("Usage:"));
   printf (" %s -H <vhost> | -I <IP-address> [-u <uri>] [-p <port>]\n",progname);
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L]\n");
-  printf ("       [-a auth] [-f <ok | warn | critcal | follow | sticky | stickyport>]\n");
+  printf ("       [-a auth] [-b proxy_auth] [-f <ok | warn | critcal | follow | sticky | stickyport>]\n");
   printf ("       [-e <expect>] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S] [-C <age>] [-T <content-type>] [-j method]\n");
