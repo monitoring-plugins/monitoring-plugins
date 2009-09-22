@@ -2,7 +2,7 @@ This file documents the major additions and syntax changes between releases.
 
 1.4.15 ...
 	Fix check_ircd binding to wrong interface (#668778)
-	Add proxy-authorization option to check_http (Peter Doherty - #2863772, Bryan Irvine - #2863925)
+	Add proxy-authorization option to check_http (Marcel Kuiper - #1323230, Bryan Irvine - #2863925)
 
 1.4.14 16th September 2009
 	check_http has options to specify the HTTP method (#2155152)
