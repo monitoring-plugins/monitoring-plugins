@@ -1,6 +1,6 @@
 This file documents the major additions and syntax changes between releases.
 
-1.4.15 ...
+1.4.15  ...
 	Fix check_ircd binding to wrong interface (#668778)
 	Add proxy-authorization option to check_http (Marcel Kuiper - #1323230, Bryan Irvine - #2863925)
 
