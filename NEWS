@@ -6,7 +6,8 @@ This file documents the major additions and syntax changes between releases.
 	Fix check_ircd binding to wrong interface (#668778)
 	Add proxy-authorization option to check_http (Marcel Kuiper - #1323230, Bryan Irvine - #2863925)
 	WARNINGS
-	Updated developer documentation to say that performance labels should not have an equals sign in the label
+	Updated developer documentation to say that performance labels should not have an equals sign or
+	single quote in the label
 
 1.4.14 16th September 2009
 	check_http has options to specify the HTTP method (#2155152)

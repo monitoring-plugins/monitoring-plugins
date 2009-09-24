@@ -333,10 +333,10 @@
 		<orderedlist>
 		<listitem><para>space separated list of label/value pairs</para>
 			</listitem>
-		<listitem><para>label can contain any characters</para>
+		<listitem><para>label can contain any characters except the equals sign or single quote (')</para>
 			</listitem>
 		<listitem><para>the single quotes for the label are optional. Required if 
-			spaces, = or ' are in the label</para>
+			spaces are in the label</para>
 			</listitem>
 		<listitem><para>label length is arbitrary, but ideally the first 19 characters
 			are unique (due to a limitation in RRD). Be aware of a limitation in the
