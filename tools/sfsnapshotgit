@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# Handle command errors (-e) and coder sleep deprivation issues (-u)
+set -eu
+trap 'echo "An error occurred at line $LINENO"; exit 1' EXIT
+
+# Timestamp
+DS=`date -u +%Y%m%d%H%M`
+
+if [ $# -ne 1 ]
+then
+	HEAD='master'
+else
+	HEAD="$1"
+fi
+
+if [ -z "$HEAD" ]
+then
+	echo "If specified, the refspec must not be empty"
+	exit
+fi
+
+# Clean up and pull
+cd ~/staging/nagiosplugins
+git clean -qfdx
+git checkout "$HEAD"
+git pull origin "$HEAD"
+# Tags are important for git-describe
+git fetch --tags origin
+
+# Write our snapshot version string (similar to NP-VERSION-GEN) to "release"
+VS=$(git describe --abbrev=4 HEAD)
+
+# Configure and dist
+tools/setup
+./configure
+make dist VERSION=${VS#release-} RELEASE=snapshot
+
+# The rest is probably going to change... The mv below is for backwards
+# compatibility, however I'd recommend:
+# ln -s nagios-plugins-${VS#release-}.tar.gz nagios-plugins-$HEAD.tar.gz
+# ln -s nagios-plugins-${VS#release-}.tar.gz nagios-plugins-trunk-$DS.tar.gz
+# ln -s nagios-plugins-master.tar.gz nagios-plugins-HEAD.tar.gz
+# NB: the 3rd one would be permannent, no need to do it each time
+# Additionally, we could check whenever we need to re-generate a snapshot.
+# This way we could make snapshots much more often as only symlink changes
+# would have to be uploaded.
+mv nagios-plugins-${VS#release-}.tar.gz nagios-plugins-trunk-$DS.tar.gz
+cp *.tar.gz /tmp/
+
+trap - EXIT
+
