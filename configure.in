@@ -99,10 +99,10 @@ AC_SUBST(REV_DATESTAMP)
 AC_SUBST(REV_TIMESTAMP)
 
 dnl Check if version file is present
-AM_CONDITIONAL([RELEASE_PRESENT], [test -f release])
+AM_CONDITIONAL([RELEASE_PRESENT], [test -f $srcdir/release])
 
 # Also read in the version from it
-if test -f release; then
+if test -f $srcdir/release; then
 	NP_RELEASE="$(<release)"
 else
 	NP_RELEASE="$PACKAGE_VERSION"
@@ -1543,9 +1543,7 @@ if test -n "$PATH_TO_APTGET" ; then
 fi
 
 
-if test -f plugins/check_nt.c ; then
-  EXTRAS="$EXTRAS check_nt"
-elif test -f ../plugins/check_nt.c ; then
+if test -f $srcdir/plugins/check_nt.c ; then
   EXTRAS="$EXTRAS check_nt"
 fi
 
