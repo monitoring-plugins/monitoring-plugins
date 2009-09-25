@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 if RELEASE_PRESENT
-NP_VERSION = $(PACKAGE_VERSION)
+NP_VERSION = @NP_RELEASE@
 else
 NP-VERSION-FILE: .FORCE-NP-VERSION-FILE
 	@$(SHELL_PATH) $(top_srcdir)/NP-VERSION-GEN

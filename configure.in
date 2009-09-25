@@ -101,6 +101,14 @@ AC_SUBST(REV_TIMESTAMP)
 dnl Check if version file is present
 AM_CONDITIONAL([RELEASE_PRESENT], [test -f release])
 
+# Also read in the version from it
+if test -f release; then
+	NP_RELEASE="$(<release)"
+else
+	NP_RELEASE="$PACKAGE_VERSION"
+fi
+AC_SUBST(NP_RELEASE)
+
 dnl Checks for programs.
 AC_PATH_PROG(PYTHON,python)
 AC_PATH_PROG(SH,sh)
