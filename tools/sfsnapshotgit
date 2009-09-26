@@ -1,6 +1,6 @@
 #!/bin/bash
 # sfsnapshotgit - Snapshot script for Git repository
-# Original author: Thomas Gguyot-Sionnest <tguyot@unix.net>
+# Original author: Thomas Guyot-Sionnest <tguyot@gmail.com>
 #
 # Given an optional branch name (master by default), this script creates
 # a snapshot from the tip of the branch and move it to ~/staging/.
