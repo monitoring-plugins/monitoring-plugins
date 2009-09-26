@@ -20,7 +20,7 @@ exec 3>&1 1>&2
 # caller The defaults are:
 SFSNAP_REPO=${SFSNAP_REPO-~/staging/nagiosplugins}
 SFSNAP_ORIGIN=${SFSNAP_ORIGIN-origin}
-SFSNAP_DEST=${SFSNAP_DEST-~/staging}
+SFSNAP_DEST=${SFSNAP_DEST-~/staging/snapshot}
 
 # If one argument is given, this is the branch to create the snapshot from
 if [ $# -eq 0 ]
