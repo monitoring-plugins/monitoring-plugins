@@ -1,52 +1,70 @@
 #!/bin/bash
+# sfsnapshotgit - Snapshot script for Git repository
+# Original author: Thomas Gguyot-Sionnest <tguyot@unix.net>
+#
+# Given an optional branch name (master by default), this script creates
+# a snapshot from the tip of the branch and move it to ~/staging/.
+# The repository, origin and destination directory can be overridden
+# with environment variable (see below)
 
 # Handle command errors (-e) and coder sleep deprivation issues (-u)
 set -eu
 trap 'echo "An error occurred at line $LINENO"; exit 1' EXIT
 
-# Timestamp
-DS=`date -u +%Y%m%d%H%M`
+# Send all command output to STDERR while allowing us to write to STDOUT
+# using fd 3
+exec 3>&1 1>&2
 
-if [ $# -ne 1 ]
+# Git repository, origin and destination directory can be overridden by
+# setting SFSNAP_REPO, SFSNAP_ORIGIN and SFSNAP_DEST respectively from the
+# caller The defaults are:
+SFSNAP_REPO=${SFSNAP_REPO-~/staging/nagiosplugins}
+SFSNAP_ORIGIN=${SFSNAP_ORIGIN-origin}
+SFSNAP_DEST=${SFSNAP_DEST-~/staging}
+
+# If one argument is given, this is the branch to create the snapshot from
+if [ $# -eq 0 ]
 then
 	HEAD='master'
-else
-	HEAD="$1"
-fi
-
-if [ -z "$HEAD" ]
+elif [ $# -eq 1 ]
 then
-	echo "If specified, the refspec must not be empty"
+	if [ -z "$1" ]
+	then
+		echo "If specified, the refspec must not be empty"
+		exit
+	fi
+	HEAD="$1"
+else
+	echo "Too many arguments"
 	exit
 fi
 
 # Clean up and pull
-cd ~/staging/nagiosplugins
+cd "$SFSNAP_REPO"
+# Sometimes "make dist" can modify versioned files so we must reset first
+git reset --hard
 git clean -qfdx
+# Any branch used to create snapshots must already exist
 git checkout "$HEAD"
-git pull origin "$HEAD"
+git pull "$SFSNAP_ORIGIN" "$HEAD"
 # Tags are important for git-describe
-git fetch --tags origin
+git fetch --tags "$SFSNAP_ORIGIN"
 
 # Write our snapshot version string (similar to NP-VERSION-GEN) to "release"
 VS=$(git describe --abbrev=4 HEAD)
+VS=${VS#release-}
 
-# Configure and dist
-tools/setup
-./configure
-make dist VERSION=${VS#release-} RELEASE=snapshot
+# Configure and dist only if needed
+if [ ! -e "$SFSNAP_DEST/nagios-plugins-$VS.tar.gz" ]
+then
+	tools/setup
+	./configure
+	make dist VERSION=$VS RELEASE=snapshot
+	cp nagios-plugins-$VS.tar.gz "$SFSNAP_DEST/"
+fi
 
-# The rest is probably going to change... The mv below is for backwards
-# compatibility, however I'd recommend:
-# ln -s nagios-plugins-${VS#release-}.tar.gz nagios-plugins-$HEAD.tar.gz
-# ln -s nagios-plugins-${VS#release-}.tar.gz nagios-plugins-trunk-$DS.tar.gz
-# ln -s nagios-plugins-master.tar.gz nagios-plugins-HEAD.tar.gz
-# NB: the 3rd one would be permannent, no need to do it each time
-# Additionally, we could check whenever we need to re-generate a snapshot.
-# This way we could make snapshots much more often as only symlink changes
-# would have to be uploaded.
-mv nagios-plugins-${VS#release-}.tar.gz nagios-plugins-trunk-$DS.tar.gz
-cp *.tar.gz /tmp/
+# fd 3 goes to STDOUT; print the generated filename
+echo "nagios-plugins-$VS.tar.gz" 1>&3
 
 trap - EXIT
 
