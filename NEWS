@@ -5,6 +5,7 @@ This file documents the major additions and syntax changes between releases.
 	FIXES
 	Fix check_ircd binding to wrong interface (#668778)
 	Add proxy-authorization option to check_http (Marcel Kuiper - #1323230, Bryan Irvine - #2863925)
+	check_icmp now increment the sequence counter in each packet
 	WARNINGS
 	Updated developer documentation to say that performance labels should not have an equals sign or
 	single quote in the label
