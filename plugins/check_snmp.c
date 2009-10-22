@@ -506,7 +506,7 @@ process_arguments (int argc, char **argv)
 					 */
 					needmibs = TRUE;
 			}
-			oids = calloc(MAX_OIDS, sizeof (char *));
+			if (!oids) oids = calloc(MAX_OIDS, sizeof (char *));
 			for (ptr = strtok(optarg, ", "); ptr != NULL && j < MAX_OIDS; ptr = strtok(NULL, ", "), j++) {
 				oids[j] = strdup(ptr);
 			}

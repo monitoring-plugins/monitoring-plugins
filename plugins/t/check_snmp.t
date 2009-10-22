@@ -8,7 +8,7 @@ use strict;
 use Test::More;
 use NPTest;
 
-my $tests = 46;
+my $tests = 8+38+2+2;
 plan tests => $tests;
 my $res;
 
@@ -44,10 +44,10 @@ SKIP: {
 	like( $res->output, "/check_snmp: Invalid SNMP version - 3c/" );
 
 	SKIP: {
-		skip "no snmp host defined", 34 if ( ! $host_snmp );
+		skip "no snmp host defined", 38 if ( ! $host_snmp );
 
 		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o system.sysUpTime.0 -w 1: -c 1:");
-		cmp_ok( $res->return_code, '==', 0, "Exit OK when querying uptime" ); 
+		cmp_ok( $res->return_code, '==', 0, "Exit OK when querying uptime" );
 		like($res->output, '/^SNMP OK - (\d+)/', "String contains SNMP OK");
 		$res->output =~ /^SNMP OK - (\d+)/;
 		my $value = $1;
@@ -59,19 +59,27 @@ SKIP: {
 		like($res->output, '/^SNMP OK - \d+/', "String contains SNMP OK");
 
 		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o system.sysDescr.0");
-		cmp_ok( $res->return_code, '==', 0, "Exit OK when querying sysDescr" ); 
+		cmp_ok( $res->return_code, '==', 0, "Exit OK when querying sysDescr" );
 		unlike($res->perf_output, '/sysDescr/', "Perfdata doesn't contain string values");
 
+		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o system.sysDescr.0,system.sysDescr.0");
+		cmp_ok( $res->return_code, '==', 0, "Exit OK when querying two string OIDs, comma-separated" );
+		like($res->output, '/^SNMP OK - /', "String contains SNMP OK");
+
+		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o system.sysDescr.0 -o system.sysDescr.0");
+		cmp_ok( $res->return_code, '==', 0, "Exit OK when querying two string OIDs, repeated option" );
+		like($res->output, '/^SNMP OK - /', "String contains SNMP OK");
+
 		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o host.hrSWRun.hrSWRunTable.hrSWRunEntry.hrSWRunIndex.1 -w 1:1 -c 1:1");
-		cmp_ok( $res->return_code, '==', 0, "Exit OK when querying hrSWRunIndex.1" ); 
+		cmp_ok( $res->return_code, '==', 0, "Exit OK when querying hrSWRunIndex.1" );
 		like($res->output, '/^SNMP OK - 1\s.*$/', "String fits SNMP OK and output format");
 
 		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o host.hrSWRun.hrSWRunTable.hrSWRunEntry.hrSWRunIndex.1 -w 0   -c 1:");
-		cmp_ok( $res->return_code, '==', 1, "Exit WARNING when querying hrSWRunIndex.1 and warn-th doesn't apply " ); 
+		cmp_ok( $res->return_code, '==', 1, "Exit WARNING when querying hrSWRunIndex.1 and warn-th doesn't apply " );
 		like($res->output, '/^SNMP WARNING - \*1\*\s.*$/', "String matches SNMP WARNING and output format");
 
 		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o host.hrSWRun.hrSWRunTable.hrSWRunEntry.hrSWRunIndex.1 -w  :0 -c 0");
-		cmp_ok( $res->return_code, '==', 2, "Exit CRITICAL when querying hrSWRunIndex.1 and crit-th doesn't apply" ); 
+		cmp_ok( $res->return_code, '==', 2, "Exit CRITICAL when querying hrSWRunIndex.1 and crit-th doesn't apply" );
 		like($res->output, '/^SNMP CRITICAL - \*1\*\s.*$/', "String matches SNMP CRITICAL and output format");
 
 		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o ifIndex.2,ifIndex.1 -w 1:2 -c 1:2");
@@ -123,14 +131,14 @@ SKIP: {
 	SKIP: {
 		skip "no non responsive host defined", 2 if ( ! $host_nonresponsive );
 		$res = NPTest->testCmd( "./check_snmp -H $host_nonresponsive -C np_foobar -o system.sysUpTime.0 -w 1: -c 1:");
-		cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN with non responsive host" ); 
+		cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN with non responsive host" );
 		like($res->output, '/External command error: Timeout: No Response from /', "String matches timeout problem");
 	}
 
 	SKIP: {
 		skip "no non invalid host defined", 2 if ( ! $hostname_invalid );
 		$res = NPTest->testCmd( "./check_snmp -H $hostname_invalid   -C np_foobar -o system.sysUpTime.0 -w 1: -c 1:");
-		cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN with non responsive host" ); 
+		cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN with non responsive host" );
 		like($res->output, '/External command error: .*(nosuchhost|Name or service not known|Unknown host)/', "String matches invalid host");
 	}
 
