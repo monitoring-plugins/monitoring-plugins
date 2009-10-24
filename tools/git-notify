@@ -230,6 +230,12 @@ sub send_commit_notice($$)
     my %info = get_object_info($obj);
     my @notice = ();
 
+    open DIFF, "-|" or exec "git", "diff-tree", "-p", "-M", "--no-commit-id", $obj or die "cannot exec git-diff-tree";
+    my $diff = join("", <DIFF>);
+    close DIFF;
+
+    return if length($diff) == 0;
+
     push @notice,
         "Module: $repos_name",
         "Branch: $ref",
@@ -246,10 +252,6 @@ sub send_commit_notice($$)
     open STAT, "-|" or exec "git", "diff-tree", "--stat", "-M", "--no-commit-id", $obj or die "cannot exec git-diff-tree";
     push @notice, join("", <STAT>);
     close STAT;
-
-    open DIFF, "-|" or exec "git", "diff-tree", "-p", "-M", "--no-commit-id", $obj or die "cannot exec git-diff-tree";
-    my $diff = join( "", <DIFF> );
-    close DIFF;
 
     if (($max_diff_size == -1) || (length($diff) < $max_diff_size))
     {
