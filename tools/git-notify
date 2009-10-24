@@ -28,13 +28,9 @@
 #
 
 use strict;
-use open ':utf8';
 use Fcntl ':flock';
-use Encode 'encode';
+use Encode qw(encode decode);
 use Cwd 'realpath';
-
-binmode STDIN, ':utf8';
-binmode STDOUT, ':utf8';
 
 sub git_config($);
 sub get_repos_name();
@@ -296,6 +292,7 @@ sub mail_notification($$$@)
     $subject = encode("MIME-Q",$subject);
     if ($debug)
     {
+        binmode STDOUT, ":utf8";
         print "---------------------\n";
         print "To: $name\n";
         print "Subject: $subject\n";
@@ -310,6 +307,7 @@ sub mail_notification($$$@)
         {
             exec $mailer, "-s", $subject, "-a", "Content-Type: $content_type", $name or die "Cannot exec $mailer";
         }
+        binmode MAIL, ":utf8";
         print MAIL join("\n", @text), "\n";
         close MAIL;
     }
@@ -334,12 +332,15 @@ sub get_object_info($)
     my @log = ();
     my $do_log = 0;
 
+    $info{"encoding"} = "utf-8";
+
     open OBJ, "-|" or exec "git", "cat-file", "commit", $obj or die "cannot run git-cat-file";
     while (<OBJ>)
     {
         chomp;
         if ($do_log) { push @log, $_; }
         elsif (/^$/) { $do_log = 1; }
+        elsif (/^encoding (.+)/) { $info{"encoding"} = $1; }
         elsif (/^(author|committer) ((.*) (<.*>)) (\d+) ([+-]\d+)$/)
         {
             $info{$1} = $2;
@@ -428,6 +429,8 @@ sub send_commit_notice($$)
     {
         push @notice, "Diff:   $gitweb_url/?a=commitdiff;h=$obj" if $gitweb_url;
     }
+
+    $_ = decode($info{"encoding"}, $_) for @notice;
 
     mail_notification($commitlist_address,
         $info{"author_name"} . ": " . truncate_str(${$info{"log"}}[0], 50),
