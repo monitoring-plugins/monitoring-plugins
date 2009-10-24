@@ -3,6 +3,7 @@
 # Tool to send git commit notifications
 #
 # Copyright 2005 Alexandre Julliard
+# Copyright 2009 Nagios Plugins Development Team
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -19,6 +20,7 @@
 #   -n max    Set max number of individual mails to send
 #   -r name   Set the git repository name
 #   -s bytes  Set the maximum diff size in bytes (-1 for no limit)
+#   -t file   Set the file to use for reading and saving state
 #   -u url    Set the URL to the gitweb browser
 #   -i branch If at least one -i is given, report only for specified branches
 #   -x branch Exclude changes to the specified branch from reports
@@ -27,6 +29,7 @@
 
 use strict;
 use open ':utf8';
+use Fcntl ':flock';
 use Encode 'encode';
 use Cwd 'realpath';
 
@@ -76,6 +79,9 @@ my @include_list = split /\s+/, git_config( "notify.include" ) || "";
 # branches to exclude
 my @exclude_list = split /\s+/, git_config( "notify.exclude" ) || "";
 
+# the state file we use (can be changed with the -t option)
+my $state_file = git_config( "notify.statefile" ) || "/var/tmp/git-notify.state";
+
 # Extra options to git rev-list
 my @revlist_options;
 
@@ -87,6 +93,7 @@ sub usage()
     print "   -n max    Set max number of individual mails to send\n";
     print "   -r name   Set the git repository name\n";
     print "   -s bytes  Set the maximum diff size in bytes (-1 for no limit)\n";
+    print "   -t file   Set the file to use for reading and saving state\n";
     print "   -u url    Set the URL to the gitweb browser\n";
     print "   -i branch If at least one -i is given, report only for specified branches\n";
     print "   -x branch Exclude changes to the specified branch from reports\n";
@@ -125,6 +132,59 @@ sub git_rev_list(@)
     }
     close REVLIST or die $! ? "Cannot execute rev-list: $!" : "rev-list exited with status: $?";
     return $revlist;
+}
+
+# append the given commit hashes to the state file
+sub save_commits($)
+{
+    my $commits = shift;
+
+    open STATE, ">>", $state_file or die "Cannot open $state_file: $!";
+    flock STATE, LOCK_EX or die "Cannot lock $state_file";
+    print STATE "$_\n" for @$commits;
+    flock STATE, LOCK_UN or die "Cannot unlock $state_file";
+    close STATE or die "Cannot close $state_file: $!";
+}
+
+# for the given range, return the new hashes and append them to the state file
+sub get_new_commits($$)
+{
+    my ($old_sha1, $new_sha1) = @_;
+    my ($seen, @args);
+    my $newrevs = [];
+
+    @args = ( "^$old_sha1" ) unless $old_sha1 eq '0' x 40;
+    push @args, $new_sha1, @exclude_list;
+
+    my $revlist = git_rev_list(@args);
+
+    if (not -e $state_file)  # initialize the state file with all hashes
+    {
+        save_commits(git_rev_list("--all", "--full-history"));
+        return $revlist;
+    }
+
+    open STATE, $state_file or die "Cannot open $state_file: $!";
+    flock STATE, LOCK_SH or die "Cannot lock $state_file";
+    while (<STATE>)
+    {
+        chomp;
+        die "Invalid commit: $_" if not /^[0-9a-f]{40}$/;
+        $seen->{$_} = 1;
+    }
+    flock STATE, LOCK_UN or die "Cannot unlock $state_file";
+    close STATE or die "Cannot close $state_file: $!";
+
+    # FIXME: if another git-notify process reads the $state_file at *this*
+    # point, that process might generate duplicates of our notifications.
+
+    save_commits($revlist);
+
+    foreach my $commit (@$revlist)
+    {
+        push @$newrevs, $commit unless $seen->{$commit};
+    }
+    return $newrevs;
 }
 
 # truncate the given string if it exceeds the specified number of characters
@@ -217,6 +277,7 @@ sub parse_options()
         elsif ($arg eq '-n') { $max_individual_notices = shift @ARGV; }
         elsif ($arg eq '-r') { $repos_name = shift @ARGV; }
         elsif ($arg eq '-s') { $max_diff_size = shift @ARGV; }
+        elsif ($arg eq '-t') { $state_file = shift @ARGV; }
         elsif ($arg eq '-u') { $gitweb_url = shift @ARGV; }
         elsif ($arg eq '-i') { push @include_list, shift @ARGV; }
         elsif ($arg eq '-x') { push @exclude_list, shift @ARGV; }
