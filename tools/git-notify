@@ -102,6 +102,33 @@ sub xml_escape($)
     return $str;
 }
 
+# right-justify the left column of "left: right" elements, omit undefined elements
+sub format_table(@)
+{
+    my @lines = @_;
+    my @table;
+    my $max = 0;
+
+    foreach my $line (@lines)
+    {
+       next if not defined $line;
+       my $pos = index($line, ":");
+
+       $max = $pos if $pos > $max;
+    }
+
+    foreach my $line (@lines)
+    {
+       next if not defined $line;
+       my ($left, $right) = split(/: */, $line, 2);
+
+       push @table, (defined $left and defined $right)
+           ? sprintf("%*s: %s", $max + 1, $left, $right)
+           : $line;
+    }
+    return @table;
+}
+
 # format an integer date + timezone as string
 # algorithm taken from git's date.c
 sub format_date($$)
@@ -236,15 +263,15 @@ sub send_commit_notice($$)
 
     return if length($diff) == 0;
 
-    push @notice,
+    push @notice, format_table(
         "Module: $repos_name",
         "Branch: $ref",
         "Commit: $obj",
-        $gitweb_url ? "URL:    $gitweb_url/?a=commit;h=$obj\n" : "",
-        "Author: " . $info{"author"},
-        "Date:   " . format_date($info{"author_date"},$info{"author_tz"}),
+        $gitweb_url ? "URL: $gitweb_url/?a=commit;h=$obj" : undef),
+        "Author:" . $info{"author"},
+        "Date:" . format_date($info{"author_date"},$info{"author_tz"}),
         "",
-        join "\n", @{$info{"log"}},
+        @{$info{"log"}},
         "",
         "---",
         "";
