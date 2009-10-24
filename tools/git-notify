@@ -168,6 +168,11 @@ sub format_table(@)
     return @table;
 }
 
+# return the gitweb URL of the given commit or undef
+sub gitweb_url($$)
+{
+}
+
 # format an integer date + timezone as string
 # algorithm taken from git's date.c
 sub format_date($$)
@@ -317,12 +322,24 @@ sub send_commit_notice($$)
     my ($ref,$obj) = @_;
     my %info = get_object_info($obj);
     my @notice = ();
+    my $url;
 
     open DIFF, "-|" or exec "git", "diff-tree", "-p", "-M", "--no-commit-id", $obj or die "cannot exec git-diff-tree";
     my $diff = join("", <DIFF>);
     close DIFF;
 
     return if length($diff) == 0;
+
+    if ($gitweb_url)
+    {
+        open REVPARSE, "-|" or exec "git", "rev-parse", "--short", $obj or die "cannot exec git-rev-parse";
+        my $short_obj = <REVPARSE>;
+        close REVPARSE or die $! ? "Cannot execute rev-parse: $!" : "rev-parse exited with status: $?";
+
+        $short_obj = $obj if not defined $short_obj;
+        chomp $short_obj;
+        $url = "$gitweb_url/?a=commit;h=$short_obj";
+    }
 
     push @notice, format_table(
         "Module: $repos_name",
@@ -331,7 +348,7 @@ sub send_commit_notice($$)
         "Author:" . $info{"author"},
         $info{"committer"} ne $info{"author"} ? "Committer:" . $info{"committer"} : undef,
         "Date:" . format_date($info{"author_date"},$info{"author_tz"}),
-        $gitweb_url ? "URL: $gitweb_url/?a=commit;h=$obj" : undef),
+        $url ? "URL: $url" : undef),
         "",
         @{$info{"log"}},
         "",
