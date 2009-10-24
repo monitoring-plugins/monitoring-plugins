@@ -216,7 +216,7 @@ sub get_object_info($)
             last if /^-----BEGIN PGP SIGNATURE-----/;
             push @log, $_;
         }
-        elsif (/^(author|committer|tagger) ((.*)(<.*>)) (\d+) ([+-]\d+)$/)
+        elsif (/^(author|committer|tagger) ((.*) (<.*>)) (\d+) ([+-]\d+)$/)
         {
             $info{$1} = $2;
             $info{$1 . "_name"} = $3;
