@@ -127,6 +127,20 @@ sub git_rev_list(@)
     return $revlist;
 }
 
+# truncate the given string if it exceeds the specified number of characters
+sub truncate_str($$)
+{
+    my ($str, $max) = @_;
+
+    if (length($str) > $max)
+    {
+        $str = substr($str, 0, $max);
+        $str =~ s/\s+\S+$//;
+        $str .= " ...";
+    }
+    return $str;
+}
+
 # right-justify the left column of "left: right" elements, omit undefined elements
 sub format_table(@)
 {
@@ -338,7 +352,7 @@ sub send_commit_notice($$)
     }
 
     mail_notification($commitlist_address,
-        $info{"author_name"} . ": " . ${$info{"log"}}[0],
+        $info{"author_name"} . ": " . truncate_str(${$info{"log"}}[0], 50),
         "text/plain; charset=UTF-8", @notice);
     $sent_notices++;
 }
