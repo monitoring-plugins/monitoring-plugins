@@ -309,7 +309,7 @@ sub mail_notification($$$@)
         }
         binmode MAIL, ":utf8";
         print MAIL join("\n", @text), "\n";
-        close MAIL;
+        close MAIL or die $! ? "Cannot execute $mailer: $!" : "$mailer exited with status: $?";
     }
 }
 
@@ -350,7 +350,7 @@ sub get_object_info($)
             $info{$1 . "_tz"} = $6;
         }
     }
-    close OBJ;
+    close OBJ or die $! ? "Cannot execute cat-file: $!" : "cat-file exited with status: $?";
 
     $info{"log"} = \@log;
     return %info;
@@ -388,7 +388,7 @@ sub send_commit_notice($$)
 
     open DIFF, "-|" or exec "git", "diff-tree", "-p", "-M", "--no-commit-id", $obj or die "cannot exec git-diff-tree";
     my $diff = join("", <DIFF>);
-    close DIFF;
+    close DIFF or die $! ? "Cannot execute diff-tree: $!" : "diff-tree exited with status: $?";
 
     return if length($diff) == 0;
 
@@ -419,7 +419,7 @@ sub send_commit_notice($$)
 
     open STAT, "-|" or exec "git", "diff-tree", "--stat", "-M", "--no-commit-id", $obj or die "cannot exec git-diff-tree";
     push @notice, join("", <STAT>);
-    close STAT;
+    close STAT or die $! ? "Cannot execute diff-tree: $!" : "diff-tree exited with status: $?";
 
     if (($max_diff_size == -1) || (length($diff) < $max_diff_size))
     {
@@ -479,7 +479,7 @@ sub send_cia_notice($$)
             push @cia_text, "        <file action=\"rename\" to=\"" . xml_escape($new) . "\">" . xml_escape($old) . "</file>";
         }
     }
-    close COMMIT;
+    close COMMIT or die $! ? "Cannot execute diff-tree: $!" : "diff-tree exited with status: $?";
 
     push @cia_text,
         "      </files>",
