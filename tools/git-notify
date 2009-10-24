@@ -269,6 +269,7 @@ sub send_commit_notice($$)
         "Commit: $obj",
         $gitweb_url ? "URL: $gitweb_url/?a=commit;h=$obj" : undef),
         "Author:" . $info{"author"},
+        $info{"committer"} ne $info{"author"} ? "Committer:" . $info{"committer"} : undef,
         "Date:" . format_date($info{"author_date"},$info{"author_tz"}),
         "",
         @{$info{"log"}},
