@@ -102,6 +102,28 @@ sub xml_escape($)
     return $str;
 }
 
+# execute git-rev-list(1) with the given parameters and return the output
+sub git_rev_list(@)
+{
+    my @args = @_;
+    my $revlist = [];
+    my $pid = open REVLIST, "-|";
+
+    die "Cannot open pipe: $!" if not defined $pid;
+    if (!$pid)
+    {
+        exec "git", "rev-list", @revlist_options, @args or die "Cannot execute rev-list: $!";
+    }
+    while (<REVLIST>)
+    {
+        chomp;
+        die "Invalid commit: $_" if not /^[0-9a-f]{40}$/;
+        push @$revlist, $_;
+    }
+    close REVLIST or die $! ? "Cannot execute rev-list: $!" : "rev-list exited with status: $?";
+    return $revlist;
+}
+
 # right-justify the left column of "left: right" elements, omit undefined elements
 sub format_table(@)
 {
@@ -353,19 +375,14 @@ sub send_cia_notice($$)
 sub send_global_notice($$$)
 {
     my ($ref, $old_sha1, $new_sha1) = @_;
-    my @notice = ();
+    my $notice = git_rev_list("--pretty", "^$old_sha1", "$new_sha1", @exclude_list);
 
-    push @revlist_options, "--pretty";
-    open LIST, "-|" or exec "git", "rev-list", @revlist_options, "^$old_sha1", "$new_sha1", @exclude_list or die "cannot exec git-rev-list";
-    while (<LIST>)
+    foreach my $rev (@$notice)
     {
-        chomp;
-        s/^commit /URL:    $gitweb_url\/?a=commit;h=/ if $gitweb_url;
-        push @notice, $_;
+        $rev =~ s/^commit /URL:    $gitweb_url\/?a=commit;h=/ if $gitweb_url;
     }
-    close LIST;
 
-    mail_notification($commitlist_address, "New commits on branch $ref", "text/plain; charset=UTF-8", @notice);
+    mail_notification($commitlist_address, "New commits on branch $ref", "text/plain; charset=UTF-8", @$notice);
 }
 
 # send all the notices
