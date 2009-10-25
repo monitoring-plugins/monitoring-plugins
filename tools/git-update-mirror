@@ -75,7 +75,7 @@ do
 	git fetch --quiet --tags
 	checkrefs 2
 
-	find "$tempdir" -type 'f' -print | sed 's!^\./!!' | while read reffile
+	find "$tempdir" -type 'f' -print | while read reffile
 	do
 		ref=${reffile#$tempdir/}
 		old=$(awk '$1 == "1" { print $2; exit }' "$reffile")
