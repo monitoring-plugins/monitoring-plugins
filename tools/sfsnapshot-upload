@@ -94,7 +94,8 @@ END_README
 md5sum *.gz | tee -a README > MD5SUM
 
 # Sync the files
-rsync -a --exclude=.htaccess --exclude=HEADER.html --delete "$SFSNAP_DEST/" "$OUT_SERVER:$OUT_PATH"
+[ -n "$OUT_SERVER" ] && OUT_SERVER="$OUT_SERVER:"
+rsync -a --exclude=.htaccess --exclude=HEADER.html --delete "$SFSNAP_DEST/" "$OUT_SERVER$OUT_PATH"
 
 trap - EXIT
 
