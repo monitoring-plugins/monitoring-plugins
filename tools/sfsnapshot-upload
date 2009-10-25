@@ -1,0 +1,100 @@
+#!/bin/bash
+# sfsnapshot-upload - Snapshot upload script using sfsnapshotgit
+# Original author: Thomas Guyot-Sionnest <tguyot@gmail.com>
+#
+# This script uses sfsnapshotgit to update the snapshot is needed and upload
+# it to SourceForge. The branches to create snapshot from can be given as an
+# argument, otherwise the default is master.
+
+# Handle command errors (-e) and coder sleep deprivation issues (-u)
+set -eu
+trap 'echo "An error occurred at line $LINENO"; exit 1' EXIT
+
+# This can be used to override the default in sfsnapshotgit:
+export SFSNAP_REPO=~/staging/nagiosplugins
+export SFSNAP_ORIGIN=origin
+export SFSNAP_DEST=~/staging/snapshot
+
+## Some stuff that shouldn't change often...
+# The file we'll use to create the snapshot
+sfsnapshot=~/sfsnapshotgit
+
+# Retention time for snapshots (in minutes)
+CLEAN_TIME=1440
+
+# Where to place the generated files
+OUT_SERVER="tonvoon@frs.sourceforge.net"
+OUT_PATH="/home/groups/n/na/nagiosplug/htdocs/snapshot"
+
+# Links to always point to the master branch for backwards-compatibility
+COMPATLINKS="HEAD trunk-`date -u +%Y%m%d%H%M`"
+# And compatibility links to always delete except the last one
+COMPATCLEANUP="trunk-*"
+
+# If one or more argument is given, this is the branches to create the snapshots from
+if [ $# -eq 0 ]
+then
+	HEADS='master'
+else
+	HEADS=$@
+fi
+
+for head in $HEADS ; do
+	file=$($sfsnapshot $head)
+	ln -sf $file $SFSNAP_DEST/nagios-plugins-$head.tar.gz
+	# Keep links by branch name too
+	[ -f "$SFSNAP_DEST/nagios-plugins-$head-${file#nagios-plugins-}" ] || ln -s $file $SFSNAP_DEST/nagios-plugins-$head-${file#nagios-plugins-}
+	if [ "$head" == "master" ]
+	then
+		for cclean in $COMPATCLEANUP
+		do
+			find . -type l -name "nagios-plugins-$cclean.tar.gz" -delete
+		done
+		for compat in $COMPATLINKS
+		do
+			ln -sf $file $SFSNAP_DEST/nagios-plugins-$compat.tar.gz
+		done
+	fi
+done
+
+# Cleanup old snapshots and links...
+cd $SFSNAP_DEST
+
+# Clean up links older than $CLEAN_TIME
+find . -type l -name '*.gz' -mmin +$CLEAN_TIME -delete
+
+# Then clean up files that we don't need
+for dest in `find . -type f -name '*.gz' |xargs -n 1 basename`
+do
+	# Loop over the list of linked-to files
+	for current in `find .  -type l -name '*.gz' |xargs -n 1 readlink | uniq`
+	do
+		if [ "$current" == "$dest" ]
+		then
+			continue 2
+		fi
+	done
+	rm -f $dest
+done
+
+# Create MD5 sum
+cat <<-END_README > README
+This is the latest snapshot of nagiosplug, consisting of the following
+head(s):
+        $HEADS
+
+The nagios-plugins-<head>.tar.gz link will always point to the latest
+corresponding snapshot (nagios-plugins-<git-describe>.tar.gz).
+
+For backward-compatibility, the nagios-plugins-HEAD.tar.gz and
+nagios-plugins-trunk-<ts> point to their corresponding "master" head.
+
+The MD5SUM are:
+END_README
+md5sum *.gz | tee -a README > MD5SUM
+
+# Sync the files
+rsync -a --exclude=.htaccess --exclude=HEADER.html --delete "$SFSNAP_DEST/" "$OUT_SERVER:$OUT_PATH"
+
+trap - EXIT
+
