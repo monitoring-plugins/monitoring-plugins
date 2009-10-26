@@ -78,6 +78,9 @@ my @exclude_list = split /\s+/, git_config( "notify.exclude" ) || "";
 # the state file we use (can be changed with the -t option)
 my $state_file = git_config( "notify.statefile" ) || "/var/tmp/git-notify.state";
 
+# umask for creating the state file (can be set with -U option)
+my $mode_mask = git_config( "notify.umask" ) || 002;
+
 # Extra options to git rev-list
 my @revlist_options;
 
@@ -91,6 +94,7 @@ sub usage()
     print "   -s bytes  Set the maximum diff size in bytes (-1 for no limit)\n";
     print "   -t file   Set the file to use for reading and saving state\n";
     print "   -u url    Set the URL to the gitweb browser\n";
+    print "   -U mask   Set the umask for creatung the state file\n";
     print "   -i branch If at least one -i is given, report only for specified branches\n";
     print "   -x branch Exclude changes to the specified branch from reports\n";
     print "   -X        Exclude merge commits\n";
@@ -270,6 +274,7 @@ sub parse_options()
         elsif ($arg eq '-s') { $max_diff_size = shift @ARGV; }
         elsif ($arg eq '-t') { $state_file = shift @ARGV; }
         elsif ($arg eq '-u') { $gitweb_url = shift @ARGV; }
+        elsif ($arg eq '-U') { $mode_mask = shift @ARGV; }
         elsif ($arg eq '-i') { push @include_list, shift @ARGV; }
         elsif ($arg eq '-x') { push @exclude_list, shift @ARGV; }
         elsif ($arg eq '-X') { push @revlist_options, "--no-merges"; }
@@ -561,6 +566,8 @@ sub send_all_notices($$$)
 }
 
 parse_options();
+
+umask( $mode_mask );
 
 # append repository path to URL
 $gitweb_url .= "/$repos_name.git" if $gitweb_url;
