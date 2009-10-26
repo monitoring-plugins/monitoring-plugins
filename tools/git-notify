@@ -224,11 +224,6 @@ sub format_table(@)
     return @table;
 }
 
-# return the gitweb URL of the given commit or undef
-sub gitweb_url($$)
-{
-}
-
 # format an integer date + timezone as string
 # algorithm taken from git's date.c
 sub format_date($$)
