@@ -21,6 +21,7 @@
 #   -r name   Set the git repository name
 #   -s bytes  Set the maximum diff size in bytes (-1 for no limit)
 #   -t file   Set the file to use for reading and saving state
+#   -U mask   Set the umask for creating the state file
 #   -u url    Set the URL to the gitweb browser
 #   -i branch If at least one -i is given, report only for specified branches
 #   -x branch Exclude changes to the specified branch from reports
@@ -93,8 +94,8 @@ sub usage()
     print "   -r name   Set the git repository name\n";
     print "   -s bytes  Set the maximum diff size in bytes (-1 for no limit)\n";
     print "   -t file   Set the file to use for reading and saving state\n";
+    print "   -U mask   Set the umask for creating the state file\n";
     print "   -u url    Set the URL to the gitweb browser\n";
-    print "   -U mask   Set the umask for creatung the state file\n";
     print "   -i branch If at least one -i is given, report only for specified branches\n";
     print "   -x branch Exclude changes to the specified branch from reports\n";
     print "   -X        Exclude merge commits\n";
@@ -273,8 +274,8 @@ sub parse_options()
         elsif ($arg eq '-r') { $repos_name = shift @ARGV; }
         elsif ($arg eq '-s') { $max_diff_size = shift @ARGV; }
         elsif ($arg eq '-t') { $state_file = shift @ARGV; }
-        elsif ($arg eq '-u') { $gitweb_url = shift @ARGV; }
         elsif ($arg eq '-U') { $mode_mask = shift @ARGV; }
+        elsif ($arg eq '-u') { $gitweb_url = shift @ARGV; }
         elsif ($arg eq '-i') { push @include_list, shift @ARGV; }
         elsif ($arg eq '-x') { push @exclude_list, shift @ARGV; }
         elsif ($arg eq '-X') { push @revlist_options, "--no-merges"; }
