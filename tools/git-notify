@@ -307,7 +307,7 @@ sub mail_notification($$$@)
         }
         binmode MAIL, ":utf8";
         print MAIL join("\n", @text), "\n";
-        close MAIL or die $! ? "Cannot execute $mailer: $!" : "$mailer exited with status: $?";
+        close MAIL or warn $! ? "Cannot execute $mailer: $!" : "$mailer exited with status: $?";
     }
 }
 
