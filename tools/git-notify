@@ -27,6 +27,7 @@
 #   -i branch If at least one -i is given, report only for specified branches
 #   -x branch Exclude changes to the specified branch from reports
 #   -X        Exclude merge commits
+#   -z        Try to abbreviate the SHA1 name within gitweb URLs (unsafe)
 #
 
 use strict;
@@ -55,6 +56,9 @@ my $show_committer = git_config( "notify.showcommitter" );
 
 # base URL of the gitweb repository browser (can be set with the -u option)
 my $gitweb_url = git_config( "notify.baseurl" );
+
+# abbreviate the SHA1 name within gitweb URLs (can be set with the -z option)
+my $abbreviate_url = git_config( "notify.shorturls" );
 
 # default repository name (can be changed with the -r option)
 my $repos_name = git_config( "notify.repository" ) || get_repos_name();
@@ -101,6 +105,7 @@ sub usage()
     print "   -i branch If at least one -i is given, report only for specified branches\n";
     print "   -x branch Exclude changes to the specified branch from reports\n";
     print "   -X        Exclude merge commits\n";
+    print "   -z        Try to abbreviate the SHA1 name within gitweb URLs (unsafe)\n";
     exit 1;
 }
 
@@ -282,6 +287,7 @@ sub parse_options()
         elsif ($arg eq '-i') { push @include_list, shift @ARGV; }
         elsif ($arg eq '-x') { push @exclude_list, shift @ARGV; }
         elsif ($arg eq '-X') { push @revlist_options, "--no-merges"; }
+        elsif ($arg eq '-z') { $abbreviate_url = 1; }
         elsif ($arg eq '-d') { $debug++; }
         else { usage(); }
     }
@@ -404,17 +410,19 @@ sub send_commit_notice($$)
     my ($ref,$obj) = @_;
     my %info = get_object_info($obj);
     my @notice = ();
-    my ($url,$subject);
+    my ($url,$subject,$obj_string);
 
     if ($gitweb_url)
     {
-        open REVPARSE, "-|" or exec "git", "rev-parse", "--short", $obj or die "cannot exec git-rev-parse";
-        my $short_obj = <REVPARSE>;
-        close REVPARSE or die $! ? "Cannot execute rev-parse: $!" : "rev-parse exited with status: $?";
-
-        $short_obj = $obj if not defined $short_obj;
-        chomp $short_obj;
-        $url = "$gitweb_url/?a=$info{type};h=$short_obj";
+        if ($abbreviate_url)
+        {
+            open REVPARSE, "-|" or exec "git", "rev-parse", "--short", $obj or die "cannot exec git-rev-parse";
+            $obj_string = <REVPARSE>;
+            chomp $obj_string if defined $obj_string;
+            close REVPARSE or die $! ? "Cannot execute rev-parse: $!" : "rev-parse exited with status: $?";
+        }
+        $obj_string = $obj if not defined $obj_string;
+        $url = "$gitweb_url/?a=$info{type};h=$obj_string";
     }
 
     if ($info{"type"} eq "tag")
@@ -461,7 +469,7 @@ sub send_commit_notice($$)
         }
         else
         {
-            push @notice, "Diff:   $gitweb_url/?a=commitdiff;h=$obj" if $gitweb_url;
+            push @notice, "Diff: $gitweb_url/?a=commitdiff;h=$obj_string" if $gitweb_url;
         }
         $subject = $info{"author_name"};
     }
