@@ -404,12 +404,6 @@ sub send_commit_notice($$)
     my @notice = ();
     my ($url,$subject);
 
-    open DIFF, "-|" or exec "git", "diff-tree", "-p", "-M", "--no-commit-id", $obj or die "cannot exec git-diff-tree";
-    my $diff = join("", <DIFF>);
-    close DIFF or die $! ? "Cannot execute diff-tree: $!" : "diff-tree exited with status: $?";
-
-    return if length($diff) == 0;
-
     if ($gitweb_url)
     {
         open REVPARSE, "-|" or exec "git", "rev-parse", "--short", $obj or die "cannot exec git-rev-parse";
@@ -454,6 +448,10 @@ sub send_commit_notice($$)
         open STAT, "-|" or exec "git", "diff-tree", "--stat", "-M", "--no-commit-id", $obj or die "cannot exec git-diff-tree";
         push @notice, join("", <STAT>);
         close STAT or die $! ? "Cannot execute diff-tree: $!" : "diff-tree exited with status: $?";
+
+        open DIFF, "-|" or exec "git", "diff-tree", "-p", "-M", "--no-commit-id", $obj or die "cannot exec git-diff-tree";
+        my $diff = join("", <DIFF>);
+        close DIFF or die $! ? "Cannot execute diff-tree: $!" : "diff-tree exited with status: $?";
 
         if (($max_diff_size == -1) || (length($diff) < $max_diff_size))
         {
