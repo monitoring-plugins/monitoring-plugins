@@ -456,8 +456,8 @@ sub send_commit_notice($$)
     {
         push @notice, format_table(
           "Module: $repos_name",
-          "Branch: $ref",
-          "Tag: $obj",
+          "Tag: $ref",
+          "SHA1: $obj",
           "Tagger:" . $info{"tagger"},
           "Date:" . format_date($info{"tagger_date"},$info{"tagger_tz"}),
           $url ? "URL: $url" : undef),
