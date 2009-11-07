@@ -22,6 +22,7 @@
 #   -m addr   Send mail notifications to specified address
 #   -n max    Set max number of individual mails to send
 #   -r name   Set the git repository name
+#   -S        Enable compatibility with SourceForge's gitweb URLs
 #   -s bytes  Set the maximum diff size in bytes (-1 for no limit)
 #   -T        Prefix the mail subject with a [repository name] tag
 #   -t file   Prevent duplicate notifications by saving state to this file
@@ -72,6 +73,9 @@ my $gitweb_url = git_config( "notify.baseurl" );
 # abbreviate the SHA1 name within gitweb URLs (can be set with the -z option)
 my $abbreviate_url = git_config( "notify.shorturls" );
 
+# enable compatibility with SourceForge's gitweb (can be set with the -S option)
+my $sourceforge = git_config( "notify.sourceforge" );
+
 # default repository name (can be changed with the -r option)
 my $repos_name = git_config( "notify.repository" ) || get_repos_name();
 
@@ -112,6 +116,7 @@ sub usage()
     print "   -m addr   Send mail notifications to specified address\n";
     print "   -n max    Set max number of individual mails to send\n";
     print "   -r name   Set the git repository name\n";
+    print "   -S        Enable compatibility with SourceForge's gitweb URLs\n";
     print "   -s bytes  Set the maximum diff size in bytes (-1 for no limit)\n";
     print "   -T        Prefix the mail subject with a [repository name] tag\n";
     print "   -t file   Prevent duplicate notifications by saving state to this file\n";
@@ -300,6 +305,7 @@ sub parse_options()
         elsif ($arg eq '-m') { $commitlist_address = shift @ARGV; }
         elsif ($arg eq '-n') { $max_individual_notices = shift @ARGV; }
         elsif ($arg eq '-r') { $repos_name = shift @ARGV; }
+        elsif ($arg eq '-S') { $sourceforge = 1; }
         elsif ($arg eq '-s') { $max_diff_size = shift @ARGV; }
         elsif ($arg eq '-T') { $emit_repo = 1; }
         elsif ($arg eq '-t') { $state_file = shift @ARGV; }
@@ -435,7 +441,7 @@ sub send_ref_notice($$@)
         ($reftype eq "tag" ? "Tag:" : "Branch:") . $refname,
         @notice,
         ($action ne "removed" and $gitweb_url)
-            ? "URL: $gitweb_url/?a=shortlog;h=$ref" : undef),
+            ? "URL: ${gitweb_url}a=shortlog;h=$ref" : undef),
         "",
         "The $refname $reftype has been $action.");
 
@@ -461,7 +467,7 @@ sub send_commit_notice($$)
             close REVPARSE or die $! ? "Cannot execute rev-parse: $!" : "rev-parse exited with status: $?";
         }
         $obj_string = $obj if not defined $obj_string;
-        $url = "$gitweb_url/?a=$info{type};h=$obj_string";
+        $url = "${gitweb_url}a=$info{type};h=$obj_string";
     }
 
     if ($info{"type"} eq "tag")
@@ -509,7 +515,7 @@ sub send_commit_notice($$)
         }
         else
         {
-            push @notice, "Diff: $gitweb_url/?a=commitdiff;h=$obj_string" if $gitweb_url;
+            push @notice, "Diff: ${gitweb_url}a=commitdiff;h=$obj_string" if $gitweb_url;
         }
         $subject = $info{"author_name"} . ": " unless $omit_author;
     }
@@ -566,7 +572,7 @@ sub send_cia_notice($$)
 
     push @cia_text,
         "      </files>",
-        $gitweb_url ? "      <url>" . xml_escape("$gitweb_url/?a=commit;h=$commit") . "</url>" : "",
+        $gitweb_url ? "      <url>" . xml_escape("${gitweb_url}a=commit;h=$commit") . "</url>" : "",
         "    </commit>",
         "  </body>",
         "  <timestamp>" . $info{"author_date"} . "</timestamp>",
@@ -583,7 +589,7 @@ sub send_global_notice($$$)
 
     foreach my $rev (@$notice)
     {
-        $rev =~ s/^commit /URL:    $gitweb_url\/?a=commit;h=/ if $gitweb_url;
+        $rev =~ s/^commit /URL:    ${gitweb_url}a=commit;h=/ if $gitweb_url;
     }
 
     mail_notification($commitlist_address, "New commits on branch $ref", "text/plain; charset=UTF-8", @$notice);
@@ -662,7 +668,9 @@ parse_options();
 umask( $mode_mask );
 
 # append repository path to URL
-$gitweb_url .= "/$repos_name.git" if $gitweb_url;
+if ($gitweb_url) {
+    $gitweb_url .= $sourceforge ? "/$repos_name;" : "/$repos_name.git/?";
+}
 
 if (@ARGV)
 {
