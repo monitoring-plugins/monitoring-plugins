@@ -47,9 +47,6 @@ my $cia_address = "cia\@cia.navi.cx";
 # debug mode
 my $debug = 0;
 
-# number of generated (non-CIA) notifications
-my $sent_notices = 0;
-
 # configuration parameters
 
 # base URL of the gitweb repository browser (can be set with the -u option)
@@ -393,7 +390,6 @@ sub send_ref_notice($$@)
 
     mail_notification($commitlist_address, "$refname $reftype $action",
         "text/plain; charset=us-ascii", @notice);
-    $sent_notices++;
 }
 
 # send a commit notice to a mailing list
@@ -467,7 +463,6 @@ sub send_commit_notice($$)
     $subject .= ": " . truncate_str(${$info{"log"}}[0],50);
     $_ = decode($info{"encoding"}, $_) for @notice;
     mail_notification($commitlist_address, $subject, "text/plain; charset=UTF-8", @notice);
-    $sent_notices++;
 }
 
 # send a commit notice to the CIA server
@@ -538,7 +533,6 @@ sub send_global_notice($$$)
     }
 
     mail_notification($commitlist_address, "New commits on branch $ref", "text/plain; charset=UTF-8", @$notice);
-    $sent_notices++;
 }
 
 # send all the notices
@@ -583,7 +577,7 @@ sub send_all_notices($$$)
         {
             send_global_notice( $refname, $old_sha1, $new_sha1 ) if $commitlist_address;
         }
-        else
+        elsif (@$commits > 0)
         {
             foreach my $commit (@$commits)
             {
@@ -591,7 +585,7 @@ sub send_all_notices($$$)
                 send_cia_notice( $refname, $commit ) if $cia_project_name;
             }
         }
-        if ($sent_notices == 0 and $commitlist_address)
+        elsif ($commitlist_address)
         {
             @notice = ( "Old SHA1: $old_sha1", "New SHA1: $new_sha1" );
             send_ref_notice( $ref, "modified", @notice );
