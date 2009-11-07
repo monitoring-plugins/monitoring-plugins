@@ -352,6 +352,18 @@ sub get_repos_name()
     return $repos;
 }
 
+# return the type of the given object
+sub get_object_type($)
+{
+    my $obj = shift;
+
+    open TYPE, "-|" or exec "git", "cat-file", "-t", $obj or die "cannot run git-cat-file";
+    my $type = <TYPE>;
+    chomp $type;
+    close TYPE or die $! ? "Cannot execute cat-file: $!" : "cat-file exited with status: $?";
+    return $type;
+}
+
 # extract the information from a commit or tag object and return a hash containing the various fields
 sub get_object_info($)
 {
@@ -362,10 +374,7 @@ sub get_object_info($)
 
     $info{"encoding"} = "utf-8";
 
-    open TYPE, "-|" or exec "git", "cat-file", "-t", $obj or die "cannot run git-cat-file";
-    my $type = <TYPE>;
-    chomp $type;
-    close TYPE or die $! ? "Cannot execute cat-file: $!" : "cat-file exited with status: $?";
+    my $type = get_object_type($obj);
 
     open OBJ, "-|" or exec "git", "cat-file", $type, $obj or die "cannot run git-cat-file";
     while (<OBJ>)
@@ -572,12 +581,17 @@ sub send_global_notice($$$)
 sub send_all_notices($$$)
 {
     my ($old_sha1, $new_sha1, $ref) = @_;
-    my ($reftype, $refname, $action, @notice);
+    my ($reftype, $refname, $tagtype, $action, @notice);
 
     return if ($ref =~ /^refs\/remotes\//
         or (@include_list && !grep {$_ eq $ref} @include_list));
     die "The name \"$ref\" doesn't sound like a local branch or tag"
         if not (($reftype, $refname) = ($ref =~ /^refs\/(head|tag)s\/(.+)/));
+
+    if ($reftype eq "tag")
+    {
+        $tagtype = get_object_type($ref) eq "tag" ? "annotated" : "lightweight";
+    }
 
     if ($new_sha1 eq '0' x 40)
     {
@@ -586,6 +600,11 @@ sub send_all_notices($$$)
     }
     elsif ($old_sha1 eq '0' x 40)
     {
+        if ($reftype eq "tag" and $tagtype eq "annotated")
+        {
+            send_commit_notice( $refname, $new_sha1 ) if $commitlist_address;
+            return;
+        }
         $action = "created";
         @notice = ( "SHA1: $new_sha1" );
     }
