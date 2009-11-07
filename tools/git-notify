@@ -325,7 +325,7 @@ sub get_repos_name()
     return $repos;
 }
 
-# extract the information from a commit object and return a hash containing the various fields
+# extract the information from a commit or tag object and return a hash containing the various fields
 sub get_object_info($)
 {
     my $obj = shift;
@@ -335,14 +335,21 @@ sub get_object_info($)
 
     $info{"encoding"} = "utf-8";
 
-    open OBJ, "-|" or exec "git", "cat-file", "commit", $obj or die "cannot run git-cat-file";
+    open TYPE, "-|" or exec "git", "cat-file", "-t", $obj or die "cannot run git-cat-file";
+    my $type = <TYPE>;
+    chomp $type;
+    close TYPE or die $! ? "Cannot execute cat-file: $!" : "cat-file exited with status: $?";
+
+    open OBJ, "-|" or exec "git", "cat-file", $type, $obj or die "cannot run git-cat-file";
     while (<OBJ>)
     {
         chomp;
-        if ($do_log) { push @log, $_; }
-        elsif (/^$/) { $do_log = 1; }
-        elsif (/^encoding (.+)/) { $info{"encoding"} = $1; }
-        elsif (/^(author|committer) ((.*) (<.*>)) (\d+) ([+-]\d+)$/)
+        if ($do_log)
+        {
+            last if /^-----BEGIN PGP SIGNATURE-----/;
+            push @log, $_;
+        }
+        elsif (/^(author|committer|tagger) ((.*) (<.*>)) (\d+) ([+-]\d+)$/)
         {
             $info{$1} = $2;
             $info{$1 . "_name"} = $3;
@@ -350,9 +357,19 @@ sub get_object_info($)
             $info{$1 . "_date"} = $5;
             $info{$1 . "_tz"} = $6;
         }
+        elsif (/^tag (.+)/)
+        {
+            $info{"tag"} = $1;
+        }
+        elsif (/^encoding (.+)/)
+        {
+            $info{"encoding"} = $1;
+        }
+        elsif (/^$/) { $do_log = 1; }
     }
     close OBJ or die $! ? "Cannot execute cat-file: $!" : "cat-file exited with status: $?";
 
+    $info{"type"} = $type;
     $info{"log"} = \@log;
     return %info;
 }
@@ -385,7 +402,7 @@ sub send_commit_notice($$)
     my ($ref,$obj) = @_;
     my %info = get_object_info($obj);
     my @notice = ();
-    my $url;
+    my ($url,$subject);
 
     open DIFF, "-|" or exec "git", "diff-tree", "-p", "-M", "--no-commit-id", $obj or die "cannot exec git-diff-tree";
     my $diff = join("", <DIFF>);
@@ -401,41 +418,57 @@ sub send_commit_notice($$)
 
         $short_obj = $obj if not defined $short_obj;
         chomp $short_obj;
-        $url = "$gitweb_url/?a=commit;h=$short_obj";
+        $url = "$gitweb_url/?a=$info{type};h=$short_obj";
     }
 
-    push @notice, format_table(
-        "Module: $repos_name",
-        "Branch: $ref",
-        "Commit: $obj",
-        "Author:" . $info{"author"},
-        $info{"committer"} ne $info{"author"} ? "Committer:" . $info{"committer"} : undef,
-        "Date:" . format_date($info{"author_date"},$info{"author_tz"}),
-        $url ? "URL: $url" : undef),
-        "",
-        @{$info{"log"}},
-        "",
-        "---",
-        "";
-
-    open STAT, "-|" or exec "git", "diff-tree", "--stat", "-M", "--no-commit-id", $obj or die "cannot exec git-diff-tree";
-    push @notice, join("", <STAT>);
-    close STAT or die $! ? "Cannot execute diff-tree: $!" : "diff-tree exited with status: $?";
-
-    if (($max_diff_size == -1) || (length($diff) < $max_diff_size))
+    if ($info{"type"} eq "tag")
     {
-        push @notice, $diff;
+        push @notice, format_table(
+          "Module: $repos_name",
+          "Branch: $ref",
+          "Tag: $obj",
+          "Tagger:" . $info{"tagger"},
+          "Date:" . format_date($info{"tagger_date"},$info{"tagger_tz"}),
+          $url ? "URL: $url" : undef),
+          "",
+          join "\n", @{$info{"log"}};
+
+        $subject = "Tag " . $info{"tag"} . ": " . $info{"tagger_name"};
     }
     else
     {
-        push @notice, "Diff:   $gitweb_url/?a=commitdiff;h=$obj" if $gitweb_url;
+        push @notice, format_table(
+          "Module: $repos_name",
+          "Branch: $ref",
+          "Commit: $obj",
+          "Author:" . $info{"author"},
+          $info{"committer"} ne $info{"author"} ? "Committer:" . $info{"committer"} : undef,
+          "Date:" . format_date($info{"author_date"},$info{"author_tz"}),
+          $url ? "URL: $url" : undef),
+          "",
+          @{$info{"log"}},
+          "",
+          "---",
+          "";
+
+        open STAT, "-|" or exec "git", "diff-tree", "--stat", "-M", "--no-commit-id", $obj or die "cannot exec git-diff-tree";
+        push @notice, join("", <STAT>);
+        close STAT or die $! ? "Cannot execute diff-tree: $!" : "diff-tree exited with status: $?";
+
+        if (($max_diff_size == -1) || (length($diff) < $max_diff_size))
+        {
+            push @notice, $diff;
+        }
+        else
+        {
+            push @notice, "Diff:   $gitweb_url/?a=commitdiff;h=$obj" if $gitweb_url;
+        }
+        $subject = $info{"author_name"};
     }
 
+    $subject .= ": " . truncate_str(${$info{"log"}}[0],50);
     $_ = decode($info{"encoding"}, $_) for @notice;
-
-    mail_notification($commitlist_address,
-        $info{"author_name"} . ": " . truncate_str(${$info{"log"}}[0], 50),
-        "text/plain; charset=UTF-8", @notice);
+    mail_notification($commitlist_address, $subject, "text/plain; charset=UTF-8", @notice);
     $sent_notices++;
 }
 
@@ -445,6 +478,8 @@ sub send_cia_notice($$)
     my ($ref,$commit) = @_;
     my %info = get_object_info($commit);
     my @cia_text = ();
+
+    return if $info{"type"} ne "commit";
 
     push @cia_text,
         "<message>",
