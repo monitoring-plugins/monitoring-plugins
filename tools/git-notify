@@ -20,7 +20,7 @@
 #   -n max    Set max number of individual mails to send
 #   -r name   Set the git repository name
 #   -s bytes  Set the maximum diff size in bytes (-1 for no limit)
-#   -t file   Set the file to use for reading and saving state
+#   -t file   Prevent duplicate notifications by saving state to this file
 #   -U mask   Set the umask for creating the state file
 #   -u url    Set the URL to the gitweb browser
 #   -i branch If at least one -i is given, report only for specified branches
@@ -73,8 +73,8 @@ my @include_list = split /\s+/, git_config( "notify.include" ) || "";
 # branches to exclude
 my @exclude_list = split /\s+/, git_config( "notify.exclude" ) || "";
 
-# the state file we use (can be changed with the -t option)
-my $state_file = git_config( "notify.statefile" ) || "/var/tmp/git-notify.state";
+# the state file we use (can be set with the -t option)
+my $state_file = git_config( "notify.statefile" );
 
 # umask for creating the state file (can be set with -U option)
 my $mode_mask = git_config( "notify.umask" ) || 002;
@@ -90,7 +90,7 @@ sub usage()
     print "   -n max    Set max number of individual mails to send\n";
     print "   -r name   Set the git repository name\n";
     print "   -s bytes  Set the maximum diff size in bytes (-1 for no limit)\n";
-    print "   -t file   Set the file to use for reading and saving state\n";
+    print "   -t file   Prevent duplicate notifications by saving state to this file\n";
     print "   -U mask   Set the umask for creating the state file\n";
     print "   -u url    Set the URL to the gitweb browser\n";
     print "   -i branch If at least one -i is given, report only for specified branches\n";
@@ -144,7 +144,7 @@ sub save_commits($)
     close STATE or die "Cannot close $state_file: $!";
 }
 
-# for the given range, return the new hashes and append them to the state file
+# for the given range, return the new hashes (and append them to the state file)
 sub get_new_commits($$)
 {
     my ($old_sha1, $new_sha1) = @_;
@@ -156,9 +156,9 @@ sub get_new_commits($$)
 
     my $revlist = git_rev_list(@args);
 
-    if (not -e $state_file)  # initialize the state file with all hashes
+    if (not defined $state_file or not -e $state_file)
     {
-        save_commits(git_rev_list("--all", "--full-history"));
+        save_commits(git_rev_list("--all", "--full-history")) if defined $state_file;
         return $revlist;
     }
 
