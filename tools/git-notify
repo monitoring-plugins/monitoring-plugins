@@ -145,7 +145,10 @@ sub git_rev_list(@)
     while (<REVLIST>)
     {
         chomp;
-        die "Invalid commit: $_" if not /^[0-9a-f]{40}$/;
+        unless (grep {$_ eq "--pretty"} @args)
+        {
+            die "Invalid commit: $_" if not /^[0-9a-f]{40}$/;
+        }
         push @$revlist, $_;
     }
     close REVLIST or die $! ? "Cannot execute rev-list: $!" : "rev-list exited with status: $?";
