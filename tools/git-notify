@@ -22,6 +22,7 @@
 #   -n max    Set max number of individual mails to send
 #   -r name   Set the git repository name
 #   -s bytes  Set the maximum diff size in bytes (-1 for no limit)
+#   -T        Prefix the mail subject with a [repository name] tag
 #   -t file   Prevent duplicate notifications by saving state to this file
 #   -U mask   Set the umask for creating the state file
 #   -u url    Set the URL to the gitweb browser
@@ -54,6 +55,9 @@ my $debug = 0;
 
 # omit the author from the mail subject (can be set with the -A option)
 my $omit_author = git_config( "notify.omitauthor" );
+
+# prefix the mail subject with a [repository name] tag (can be set with the -T option)
+my $emit_repo = git_config( "notify.emitrepository" );
 
 # show the committer if different from the author (can be set with the -C option)
 my $show_committer = git_config( "notify.showcommitter" );
@@ -104,6 +108,7 @@ sub usage()
     print "   -n max    Set max number of individual mails to send\n";
     print "   -r name   Set the git repository name\n";
     print "   -s bytes  Set the maximum diff size in bytes (-1 for no limit)\n";
+    print "   -T        Prefix the mail subject with a [repository name] tag\n";
     print "   -t file   Prevent duplicate notifications by saving state to this file\n";
     print "   -U mask   Set the umask for creating the state file\n";
     print "   -u url    Set the URL to the gitweb browser\n";
@@ -287,6 +292,7 @@ sub parse_options()
         elsif ($arg eq '-n') { $max_individual_notices = shift @ARGV; }
         elsif ($arg eq '-r') { $repos_name = shift @ARGV; }
         elsif ($arg eq '-s') { $max_diff_size = shift @ARGV; }
+        elsif ($arg eq '-T') { $emit_repo = 1; }
         elsif ($arg eq '-t') { $state_file = shift @ARGV; }
         elsif ($arg eq '-U') { $mode_mask = shift @ARGV; }
         elsif ($arg eq '-u') { $gitweb_url = shift @ARGV; }
@@ -305,7 +311,10 @@ sub parse_options()
 sub mail_notification($$$@)
 {
     my ($name, $subject, $content_type, @text) = @_;
+
+    $subject = "[$repos_name] $subject" if $emit_repo;
     $subject = encode("MIME-Q",$subject);
+
     if ($debug)
     {
         binmode STDOUT, ":utf8";
