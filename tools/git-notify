@@ -15,6 +15,7 @@
 #
 # Usage: git-notify [options] [--] old-sha1 new-sha1 refname
 #
+#   -A        Omit the author name from the mail subject
 #   -C        Show committer in the body if different from the author
 #   -c name   Send CIA notifications under specified project name
 #   -m addr   Send mail notifications to specified address
@@ -50,6 +51,9 @@ my $cia_address = "cia\@cia.navi.cx";
 my $debug = 0;
 
 # configuration parameters
+
+# omit the author from the mail subject (can be set with the -A option)
+my $omit_author = git_config( "notify.omitauthor" );
 
 # show the committer if different from the author (can be set with the -C option)
 my $show_committer = git_config( "notify.showcommitter" );
@@ -93,6 +97,7 @@ my @revlist_options;
 sub usage()
 {
     print "Usage: $0 [options] [--] old-sha1 new-sha1 refname\n";
+    print "   -A        Omit the author name from the mail subject\n";
     print "   -C        Show committer in the body if different from the author\n";
     print "   -c name   Send CIA notifications under specified project name\n";
     print "   -m addr   Send mail notifications to specified address\n";
@@ -275,6 +280,7 @@ sub parse_options()
         my $arg = shift @ARGV;
 
         if ($arg eq '--') { last; }
+        elsif ($arg eq '-A') { $omit_author = 1; }
         elsif ($arg eq '-C') { $show_committer = 1; }
         elsif ($arg eq '-c') { $cia_project_name = shift @ARGV; }
         elsif ($arg eq '-m') { $commitlist_address = shift @ARGV; }
@@ -437,7 +443,8 @@ sub send_commit_notice($$)
           "",
           join "\n", @{$info{"log"}};
 
-        $subject = "Tag " . $info{"tag"} . ": " . $info{"tagger_name"};
+        $subject = "Tag " . $info{"tag"} . ": ";
+        $subject .= $info{"tagger_name"} . ": " unless $omit_author;
     }
     else
     {
@@ -471,10 +478,10 @@ sub send_commit_notice($$)
         {
             push @notice, "Diff: $gitweb_url/?a=commitdiff;h=$obj_string" if $gitweb_url;
         }
-        $subject = $info{"author_name"};
+        $subject = $info{"author_name"} . ": " unless $omit_author;
     }
 
-    $subject .= ": " . truncate_str(${$info{"log"}}[0],50);
+    $subject .= truncate_str(${$info{"log"}}[0],50);
     $_ = decode($info{"encoding"}, $_) for @notice;
     mail_notification($commitlist_address, $subject, "text/plain; charset=UTF-8", @notice);
 }
