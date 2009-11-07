@@ -15,6 +15,7 @@
 #
 # Usage: git-notify [options] [--] old-sha1 new-sha1 refname
 #
+#   -C        Show committer in the body if different from the author
 #   -c name   Send CIA notifications under specified project name
 #   -m addr   Send mail notifications to specified address
 #   -n max    Set max number of individual mails to send
@@ -48,6 +49,9 @@ my $cia_address = "cia\@cia.navi.cx";
 my $debug = 0;
 
 # configuration parameters
+
+# show the committer if different from the author (can be set with the -C option)
+my $show_committer = git_config( "notify.showcommitter" );
 
 # base URL of the gitweb repository browser (can be set with the -u option)
 my $gitweb_url = git_config( "notify.baseurl" );
@@ -85,6 +89,7 @@ my @revlist_options;
 sub usage()
 {
     print "Usage: $0 [options] [--] old-sha1 new-sha1 refname\n";
+    print "   -C        Show committer in the body if different from the author\n";
     print "   -c name   Send CIA notifications under specified project name\n";
     print "   -m addr   Send mail notifications to specified address\n";
     print "   -n max    Set max number of individual mails to send\n";
@@ -265,6 +270,7 @@ sub parse_options()
         my $arg = shift @ARGV;
 
         if ($arg eq '--') { last; }
+        elsif ($arg eq '-C') { $show_committer = 1; }
         elsif ($arg eq '-c') { $cia_project_name = shift @ARGV; }
         elsif ($arg eq '-m') { $commitlist_address = shift @ARGV; }
         elsif ($arg eq '-n') { $max_individual_notices = shift @ARGV; }
@@ -432,7 +438,7 @@ sub send_commit_notice($$)
           "Branch: $ref",
           "Commit: $obj",
           "Author:" . $info{"author"},
-          $info{"committer"} ne $info{"author"} ? "Committer:" . $info{"committer"} : undef,
+          $show_committer && $info{"committer"} ne $info{"author"} ? "Committer:" . $info{"committer"} : undef,
           "Date:" . format_date($info{"author_date"},$info{"author_tz"}),
           $url ? "URL: $url" : undef),
           "",
