@@ -9,7 +9,7 @@
 
 # Handle command errors (-e) and coder sleep deprivation issues (-u)
 set -eu
-trap 'echo "An error occurred at line $LINENO"; exit 1' EXIT
+trap 'echo "An error occurred in sfsnapshotgit at line $LINENO"; exit 1' EXIT
 
 # Send all command output to STDERR while allowing us to write to STDOUT
 # using fd 3
@@ -46,7 +46,8 @@ git reset --hard
 git clean -qfdx
 # Any branch used to create snapshots must already exist
 git checkout "$HEAD"
-git pull "$SFSNAP_ORIGIN" "$HEAD"
+git fetch "$SFSNAP_ORIGIN" "$HEAD"
+git reset --hard "$SFSNAP_ORIGIN"/"$HEAD"
 # Tags are important for git-describe
 git fetch --tags "$SFSNAP_ORIGIN"
 

@@ -8,7 +8,7 @@
 
 # Handle command errors (-e) and coder sleep deprivation issues (-u)
 set -eu
-trap 'echo "An error occurred at line $LINENO"; exit 1' EXIT
+trap 'echo "An error occurred in sfsnapshot-upload at line $LINENO"; exit 1' EXIT
 
 # This can be used to override the default in sfsnapshotgit:
 export SFSNAP_REPO=~/staging/nagiosplugins
@@ -19,7 +19,7 @@ export SFSNAP_DEST=~/staging/snapshot
 # The file we'll use to create the snapshot
 sfsnapshot=~/sfsnapshotgit
 
-# Retention time for snapshots (in minutes)
+# Retention time for snapshots (in minutes), 0 for no retention.
 CLEAN_TIME=1440
 
 # Where to place the generated files
@@ -39,16 +39,31 @@ else
 	HEADS=$@
 fi
 
+# If we don't keep old snapshots we can clean up all links now
+if [ $CLEAN_TIME -eq 0 ]
+then
+	find $SFSNAP_DEST -type l -name '*.gz' -delete
+fi
+
 for head in $HEADS ; do
+	# This runs the actual snapshot code. It creates new snapshots if needed and always
+	# return the current snapshot file (even if it wasn't modified).
 	file=$($sfsnapshot $head)
+	# Create main head link
 	ln -sf $file $SFSNAP_DEST/nagios-plugins-$head.tar.gz
-	# Keep links by branch name too
-	[ -f "$SFSNAP_DEST/nagios-plugins-$head-${file#nagios-plugins-}" ] || ln -s $file $SFSNAP_DEST/nagios-plugins-$head-${file#nagios-plugins-}
+
+	# Keep links by branch name too if we keep old snapshots, so we can keep tracks of them
+	if [ $CLEAN_TIME -gt 0 -a ! -e "$SFSNAP_DEST/nagios-plugins-$head-${file#nagios-plugins-}" ]
+	then
+		ln -s $file $SFSNAP_DEST/nagios-plugins-$head-${file#nagios-plugins-}
+	fi
+
+	# Cleanup and re-create backward-compatibility links
 	if [ "$head" == "master" ]
 	then
 		for cclean in $COMPATCLEANUP
 		do
-			find . -type l -name "nagios-plugins-$cclean.tar.gz" -delete
+			find $SFSNAP_DEST -type l -name "nagios-plugins-$cclean.tar.gz" -delete
 		done
 		for compat in $COMPATLINKS
 		do
@@ -57,40 +72,45 @@ for head in $HEADS ; do
 	fi
 done
 
-# Cleanup old snapshots and links...
 cd $SFSNAP_DEST
 
-# Clean up links older than $CLEAN_TIME
-find . -type l -name '*.gz' -mmin +$CLEAN_TIME -delete
+# Clean up links older than $CLEAN_TIME if needed
+if [ $CLEAN_TIME -gt 0 ]
+then
+	find . -type l -name '*.gz' -mmin +$CLEAN_TIME -delete
+fi
 
-# Then clean up files that we don't need
+# Now clean up files that we don't need
+# 1. loop over actual snapshots
 for dest in `find . -type f -name '*.gz' |xargs -n 1 basename`
 do
-	# Loop over the list of linked-to files
-	for current in `find .  -type l -name '*.gz' |xargs -n 1 readlink | uniq`
+	# 2. Loop over the list of linked-to files
+	for current in `find . -type l -name '*.gz' |xargs -n 1 readlink | sort | uniq`
 	do
 		if [ "$current" == "$dest" ]
 		then
+			# File is being linked to - don't delete (continue first loop)
 			continue 2
 		fi
 	done
+	# No link to this file, we can drop it
 	rm -f $dest
 done
 
 # Create MD5 sum
 cat <<-END_README > README
-This is the latest snapshot of nagiosplug, consisting of the following
-head(s):
-        $HEADS
+	This is the latest snapshot of nagiosplug, consisting of the following
+	head(s):
+	        $HEADS
 
-The nagios-plugins-<head>.tar.gz link will always point to the latest
-corresponding snapshot (nagios-plugins-<git-describe>.tar.gz).
+	The nagios-plugins-<head>.tar.gz link will always point to the latest
+	corresponding snapshot (nagios-plugins-<git-describe>.tar.gz).
 
-For backward-compatibility, the nagios-plugins-HEAD.tar.gz and
-nagios-plugins-trunk-<ts> point to their corresponding "master" head.
+	For backward-compatibility, the nagios-plugins-HEAD.tar.gz and
+	nagios-plugins-trunk-<ts> point to their corresponding "master" head.
 
-The MD5SUM are:
-END_README
+	The MD5SUM are:
+	END_README
 md5sum *.gz | tee -a README > MD5SUM
 
 # Sync the files
