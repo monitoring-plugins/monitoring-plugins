@@ -46,7 +46,7 @@ git reset --hard
 git clean -qfdx
 # Any branch used to create snapshots must already exist
 git checkout "$HEAD"
-git fetch "$SFSNAP_ORIGIN" "$HEAD"
+git fetch "$SFSNAP_ORIGIN"
 git reset --hard "$SFSNAP_ORIGIN"/"$HEAD"
 # Tags are important for git-describe
 git fetch --tags "$SFSNAP_ORIGIN"
