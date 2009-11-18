@@ -742,13 +742,13 @@ setup the tests. Run "make test" to run all the tests.
 	</para>
 	</section>
 
-	<section><title>CVS comments</title>
+	<section><title>Commit Messages</title>
 	<para>If the change is due to a contribution, please quote the contributor's name 
 	and, if applicable, add the SourceForge Tracker number. Don't forget to 
 update the THANKS.in file.</para>
         <para>If you have a change that is useful for noting in the next release, please
 	update the NEWS file.</para>
-	<para>All commit comments will be written to a ChangeLog at release time.
+	<para>All commits will be written to a ChangeLog at release time.
 	</para>
 	</section>
 
