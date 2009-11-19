@@ -17,7 +17,7 @@ export SFSNAP_DEST=~/staging/snapshot
 
 ## Some stuff that shouldn't change often...
 # The file we'll use to create the snapshot
-sfsnapshot=~/sfsnapshotgit
+sfsnapshot=~/bin/sfsnapshotgit
 
 # Retention time for snapshots (in minutes), 0 for no retention.
 CLEAN_TIME=1440
