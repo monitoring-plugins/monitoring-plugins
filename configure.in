@@ -887,14 +887,14 @@ elif [[ "z$ac_cv_uname_s" = "zUnixWare" ]] && \
 	$PATH_TO_PING -n -s 127.0.0.1 56 1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
-        with_ping_command="$PATH_TO_PING -n -U -c %d %s"
+	with_ping_command="$PATH_TO_PING -n -U -c %d %s"
 	ac_cv_ping_packets_first=yes
 	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n -U -w 10 -c 1 127.0.0.1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
-        with_ping_command="$PATH_TO_PING -n -U -w %d -c %d %s"
+	with_ping_command="$PATH_TO_PING -n -U -w %d -c %d %s"
 	ac_cv_ping_packets_first=yes
   ac_cv_ping_has_timeout=yes
 	AC_MSG_RESULT([$with_ping_command])
@@ -902,7 +902,7 @@ then
 elif $PATH_TO_PING -n -U -c 1 127.0.0.1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
-        with_ping_command="$PATH_TO_PING -n -U -c %d %s"
+	with_ping_command="$PATH_TO_PING -n -U -c %d %s"
 	ac_cv_ping_packets_first=yes
 	AC_MSG_RESULT([$with_ping_command])
 
@@ -991,7 +991,7 @@ elif test "x$PATH_TO_PING6" != "x"; then
 		$PATH_TO_PING6 -n -s ::1 56 1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-        	with_ping6_command="$PATH_TO_PING6 -n -U -c %d %s"
+		with_ping6_command="$PATH_TO_PING6 -n -U -c %d %s"
 		ac_cv_ping6_packets_first=yes
 		AC_MSG_RESULT([$with_ping6_command])
 
@@ -1006,7 +1006,7 @@ elif test "x$PATH_TO_PING6" != "x"; then
 	elif $PATH_TO_PING6 -n -U -c 1 ::1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-        	with_ping6_command="$PATH_TO_PING6 -n -U -c %d %s"
+		with_ping6_command="$PATH_TO_PING6 -n -U -c %d %s"
 		ac_cv_ping6_packets_first=yes
 		AC_MSG_RESULT([$with_ping6_command])
 
@@ -1062,14 +1062,14 @@ elif test "x$PATH_TO_PING" != "x"; then
 		$PATH_TO_PING -A inet6 -n -s ::1 56 1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-        	with_ping6_command="$PATH_TO_PING -A inet6 -n -U -c %d %s"
+		with_ping6_command="$PATH_TO_PING -A inet6 -n -U -c %d %s"
 		ac_cv_ping6_packets_first=yes
 		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING -A inet6 -n -U -c 1 ::1 2>/dev/null | \
 		egrep -i "^round-trip|^rtt" >/dev/null
 	then
-        	with_ping6_command="$PATH_TO_PING -A inet6 -n -U -c %d %s"
+		with_ping6_command="$PATH_TO_PING -A inet6 -n -U -c %d %s"
 		ac_cv_ping6_packets_first=yes
 		AC_MSG_RESULT([$with_ping6_command])
 
@@ -1411,23 +1411,23 @@ AC_CHECK_HEADERS([sys/swap.h], [], [], [
 AC_CHECK_DECLS([swapctl],,,[
                #include <unistd.h>
                #include <sys/types.h>
-	       #include <sys/param.h>
+               #include <sys/param.h>
                #include <sys/stat.h>
                #include <sys/swap.h>
                ])
 AC_CHECK_TYPES([swaptbl_t, swapent_t],,,[
                #include <sys/types.h>
-	       #include <sys/param.h>
+               #include <sys/param.h>
                #include <sys/stat.h>
                #include <sys/swap.h>
                ])
 AC_CHECK_MEMBERS([struct swapent.se_nblks],,,[
-               #include <unistd.h>
-               #include <sys/types.h>
-	       #include <sys/param.h>
-               #include <sys/stat.h>
-               #include <sys/swap.h>
-               ])
+                 #include <unistd.h>
+                 #include <sys/types.h>
+                 #include <sys/param.h>
+                 #include <sys/stat.h>
+                 #include <sys/swap.h>
+                 ])
 
 if test "$ac_cv_have_decl_swapctl" = "yes";
 then
