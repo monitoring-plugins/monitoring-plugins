@@ -877,10 +877,17 @@ ac_cv_ping_has_timeout=no
 if test -n "$with_ping_command"
 then
 	AC_MSG_RESULT([(command-line) $with_ping_command])
-	if test -n "$ac_cv_ping_packets_first"
+	if echo "$with_ping_command" | grep '%d.*%d.*%s' >/dev/null
 	then
 		ac_cv_ping_packets_first=yes
 		ac_cv_ping_has_timeout=yes
+	elif echo "$with_ping_command" | grep '%d.*%s.*%d' >/dev/null || \
+	     echo "$with_ping_command" | grep '%s.*%d.*%d' >/dev/null
+	then
+		ac_cv_ping_has_timeout=yes
+	elif echo "$with_ping_command" | grep '%d.*%s' >/dev/null
+	then
+		ac_cv_ping_packets_first=yes
 	fi
 
 elif [[ "z$ac_cv_uname_s" = "zUnixWare" ]] && \
@@ -981,7 +988,15 @@ ac_cv_ping6_packets_first=no
 if test -n "$with_ping6_command"
 then
 	AC_MSG_RESULT([(command-line) $with_ping6_command])
-	if test -n "$ac_cv_ping6_packets_first"
+	if echo "$with_ping6_command" | grep '%d.*%d.*%s' >/dev/null
+	then
+		ac_cv_ping6_packets_first=yes
+	elif echo "$with_ping6_command" | grep '%d.*%s.*%d' >/dev/null || \
+	     echo "$with_ping6_command" | grep '%s.*%d.*%d' >/dev/null
+	then
+		# Just keep same logic as ping (IPv4) if we ever need ac_cv_ping6_has_timeout
+		true
+	elif echo "$with_ping6_command" | grep '%d.*%s' >/dev/null
 	then
 		ac_cv_ping6_packets_first=yes
 	fi

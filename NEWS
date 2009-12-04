@@ -7,6 +7,7 @@ This file documents the major additions and syntax changes between releases.
 	Add proxy-authorization option to check_http (Marcel Kuiper - #1323230, Bryan Irvine - #2863925)
 	check_icmp now increment the sequence counter in each packet
 	Fix usage of repeated -o options in check_snmp
+	Try to detect arguments passed via --with-ping[6]-command and set options accordingly (#2908236)
 	WARNINGS
 	Updated developer documentation to say that performance labels should not have an equals sign or
 	single quote in the label
