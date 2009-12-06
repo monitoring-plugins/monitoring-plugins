@@ -4,11 +4,13 @@ prefix="${0%/*}/notifications"	# $GIT_DIR/hooks/notifications
 recipient='Nagios Plugin Commits <nagiosplug-checkins@lists.sourceforge.net>'
 maxcommits=100
 maxdiffsize=$((300 * 1024))
+project='nagiosplug'
 gitweburl='http://nagiosplug.git.sf.net/git/gitweb.cgi?p=nagiosplug'
 gitnotify="$prefix/git-notify.pl"
 statefile="$prefix/git-notify.dat"
 
 exec "$gitnotify" \
+  -c "$project" \
   -m "$recipient" \
   -n "$maxcommits" \
   -s "$maxdiffsize" \

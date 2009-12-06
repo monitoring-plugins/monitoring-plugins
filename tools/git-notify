@@ -48,7 +48,7 @@ sub get_repos_name();
 my $mailer = "/usr/bin/mail";
 
 # CIA notification address
-my $cia_address = "cia\@cia.navi.cx";
+my $cia_address = "cia\@cia.vc";
 
 # debug mode
 my $debug = 0;
@@ -327,7 +327,7 @@ sub mail_notification($$$@)
 {
     my ($name, $subject, $content_type, @text) = @_;
 
-    $subject = "[$repos_name] $subject" if $emit_repo;
+    $subject = "[$repos_name] $subject" if ($emit_repo and $name ne $cia_address);
     $subject = encode("MIME-Q",$subject);
 
     if ($debug)
