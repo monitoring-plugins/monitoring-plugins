@@ -18,7 +18,6 @@
 #   -A        Omit the author name from the mail subject
 #   -C        Show committer in the body if different from the author
 #   -c name   Send CIA notifications under specified project name
-#   -H        The mail(1) utility doesn't accept headers via "-a"
 #   -m addr   Send mail notifications to specified address
 #   -n max    Set max number of individual mails to send
 #   -r name   Set the git repository name
@@ -44,8 +43,8 @@ sub get_repos_name();
 
 # some parameters you may want to change
 
-# set this to something that takes "-s"
-my $mailer = "/usr/bin/mail";
+# sendmail's pathname
+my $sendmail = "/usr/sbin/sendmail";
 
 # CIA notification address
 my $cia_address = "cia\@cia.vc";
@@ -54,9 +53,6 @@ my $cia_address = "cia\@cia.vc";
 my $debug = 0;
 
 # configuration parameters
-
-# the $mailer doesn't accept headers via "-a" (can be set with the -H option)
-my $legacy_mail = git_config( "notify.legacymail" );
 
 # omit the author from the mail subject (can be set with the -A option)
 my $omit_author = git_config( "notify.omitauthor" );
@@ -112,7 +108,6 @@ sub usage()
     print "   -A        Omit the author name from the mail subject\n";
     print "   -C        Show committer in the body if different from the author\n";
     print "   -c name   Send CIA notifications under specified project name\n";
-    print "   -H        The mail(1) utility doesn't accept headers via `-a'\n";
     print "   -m addr   Send mail notifications to specified address\n";
     print "   -n max    Set max number of individual mails to send\n";
     print "   -r name   Set the git repository name\n";
@@ -301,7 +296,6 @@ sub parse_options()
         elsif ($arg eq '-A') { $omit_author = 1; }
         elsif ($arg eq '-C') { $show_committer = 1; }
         elsif ($arg eq '-c') { $cia_project_name = shift @ARGV; }
-        elsif ($arg eq '-H') { $legacy_mail = 1; }
         elsif ($arg eq '-m') { $commitlist_address = shift @ARGV; }
         elsif ($arg eq '-n') { $max_individual_notices = shift @ARGV; }
         elsif ($arg eq '-r') { $repos_name = shift @ARGV; }
@@ -330,14 +324,13 @@ sub mail_notification($$$@)
     $subject = "[$repos_name] $subject" if ($emit_repo and $name ne $cia_address);
     $subject = encode("MIME-Q",$subject);
 
+    my @header = ("To: $name", "Subject: $subject", "Content-Type: $content_type");
+
     if ($debug)
     {
         binmode STDOUT, ":utf8";
         print "---------------------\n";
-        print "To: $name\n";
-        print "Subject: $subject\n";
-        print "Content-Type: $content_type\n";
-        print "\n", join("\n", @text), "\n";
+        print join("\n", @header), "\n\n", join("\n", @text), "\n";
     }
     else
     {
@@ -345,17 +338,11 @@ sub mail_notification($$$@)
         return unless defined $pid;
         if (!$pid)
         {
-            my @mailer_options = ( "-s", $subject );
-
-            unless ($legacy_mail)
-            {
-                push @mailer_options, "-a", "Content-Type: $content_type";
-            }
-            exec $mailer, @mailer_options, $name or die "Cannot exec $mailer";
+            exec $sendmail, "-t", "-oi", "-oem" or die "Cannot exec $sendmail";
         }
         binmode MAIL, ":utf8";
-        print MAIL join("\n", @text), "\n";
-        close MAIL or warn $! ? "Cannot execute $mailer: $!" : "$mailer exited with status: $?";
+        print MAIL join("\n", @header), "\n\n", join("\n", @text), "\n";
+        close MAIL or warn $! ? "Cannot execute $sendmail: $!" : "$sendmail exited with status: $?";
     }
 }
 

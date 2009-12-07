@@ -18,7 +18,6 @@ exec "$gitnotify" \
   -u "$gitweburl" \
   -A \
   -C \
-  -H \
   -S \
   -T \
   -X \
