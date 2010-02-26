@@ -784,6 +784,7 @@ check_http (void)
   int i = 0;
   size_t pagesize = 0;
   char *full_page;
+  char *full_page_new;
   char *buf;
   char *pos;
   long microsec;
@@ -871,7 +872,9 @@ check_http (void)
   full_page = strdup("");
   while ((i = my_recv (buffer, MAX_INPUT_BUFFER-1)) > 0) {
     buffer[i] = '\0';
-    asprintf (&full_page, "%s%s", full_page, buffer);
+    asprintf (&full_page_new, "%s%s", full_page, buffer);
+    free (full_page);
+    full_page = full_page_new;
     pagesize += i;
 
                 if (no_body && document_headers_done (full_page)) {
