@@ -311,7 +311,7 @@
 					</row>
 					<row>
 						<entry>check_stuff -c10:20</entry>
-						<entry>Critical if "stuff" is 10 to 20</entry>
+						<entry>Critical if "stuff" is less than 10 or over 20</entry>
 					</row>
 				</tbody>
 			</tgroup>
