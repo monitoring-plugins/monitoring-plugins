@@ -153,7 +153,7 @@ This file documents the major additions and syntax changes between releases.
 	IPv6 support can now be disabled using ./configure --without-ipv6
 	Fix check_ntp now honor ntp flags
 
-1.4.9 4th June 2006
+1.4.9 4th June 2007
 	Inclusion of contrib/check_cluster2 as check_cluster with some improvements
 	New/improved -E/--skip-stderr and -S/--skip-stdout options for check_by_ssh
 	check_snmp now supports Counter64
