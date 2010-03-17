@@ -56,6 +56,9 @@ static char *scrit="-1:16";
 static short do_jitter=0;
 static char *jwarn="-1:5000";
 static char *jcrit="-1:10000";
+static short do_truechimers=0;
+static char *twarn="0:";
+static char *tcrit="0:";
 static int syncsource_found=0;
 static int li_alarm=0;
 
@@ -63,6 +66,7 @@ int process_arguments (int, char **);
 thresholds *offset_thresholds = NULL;
 thresholds *jitter_thresholds = NULL;
 thresholds *stratum_thresholds = NULL;
+thresholds *truechimer_thresholds = NULL;
 void print_help (void);
 void print_usage (void);
 
@@ -121,6 +125,7 @@ typedef struct {
 #define OP_READVAR  0x02
 /* In peer status bytes, bits 6,7,8 determine clock selection status */
 #define PEER_SEL(x) ((ntohs(x)>>8)&0x07)
+#define PEER_TRUECHIMER 0x02
 #define PEER_INCLUDED 0x04
 #define PEER_SYNCSOURCE 0x06
 
@@ -160,12 +165,12 @@ void print_ntp_control_message(const ntp_control_message *p){
 		for(i=0;i<numpeers;i++){
 			printf("\tpeer id %.2x status %.2x",
 			       ntohs(peer[i].assoc), ntohs(peer[i].status));
-			if (PEER_SEL(peer[i].status) >= PEER_INCLUDED){
-				if(PEER_SEL(peer[i].status) >= PEER_SYNCSOURCE){
-					printf(" <-- current sync source");
-				} else {
-					printf(" <-- current sync candidate");
-				}
+			if(PEER_SEL(peer[i].status) >= PEER_SYNCSOURCE){
+				printf(" <-- current sync source");
+			} else if(PEER_SEL(peer[i].status) >= PEER_INCLUDED){
+				printf(" <-- current sync candidate");
+			} else if(PEER_SEL(peer[i].status) >= PEER_TRUECHIMER){
+				printf(" <-- outlyer, but truechimer");
 			}
 			printf("\n");
 		}
@@ -194,7 +199,7 @@ setup_control_request(ntp_control_message *p, uint8_t opcode, uint16_t seq){
  *  status is pretty much useless as syncsource_found is a global variable
  *  used later in main to check is the server was synchronized. It works
  *  so I left it alone */
-int ntp_request(const char *host, double *offset, int *offset_result, double *jitter, int *stratum){
+int ntp_request(const char *host, double *offset, int *offset_result, double *jitter, int *stratum, int *num_truechimers){
 	int conn=-1, i, npeers=0, num_candidates=0;
 	double tmp_offset = 0;
 	int min_peer_sel=PEER_INCLUDED;
@@ -209,6 +214,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 	status = STATE_OK;
 	*offset_result = STATE_UNKNOWN;
 	*jitter = *stratum = -1;
+	*num_truechimers = 0;
 
 	/* Long-winded explanation:
 	 * Getting the sync peer offset, jitter and stratum requires a number of
@@ -261,11 +267,14 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 	 * at least some candidates. In the latter case we'll issue
 	 * a warning but go ahead with the check on them. */
 	for (i = 0; i < npeers; i++){
-		if (PEER_SEL(peers[i].status) >= PEER_INCLUDED){
-			num_candidates++;
-			if(PEER_SEL(peers[i].status) >= PEER_SYNCSOURCE){
-				syncsource_found=1;
-				min_peer_sel=PEER_SYNCSOURCE;
+		if(PEER_SEL(peers[i].status) >= PEER_TRUECHIMER){
+			(*num_truechimers)++;
+			if(PEER_SEL(peers[i].status) >= PEER_INCLUDED){
+				num_candidates++;
+				if(PEER_SEL(peers[i].status) >= PEER_SYNCSOURCE){
+					syncsource_found=1;
+					min_peer_sel=PEER_SYNCSOURCE;
+				}
 			}
 		}
 	}
@@ -413,6 +422,8 @@ int process_arguments(int argc, char **argv){
 		{"scrit", required_argument, 0, 'C'},
 		{"jwarn", required_argument, 0, 'j'},
 		{"jcrit", required_argument, 0, 'k'},
+		{"twarn", required_argument, 0, 'm'},
+		{"tcrit", required_argument, 0, 'n'},
 		{"timeout", required_argument, 0, 't'},
 		{"hostname", required_argument, 0, 'H'},
 		{"port", required_argument, 0, 'p'},
@@ -424,7 +435,7 @@ int process_arguments(int argc, char **argv){
 		usage ("\n");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vhv46qw:c:W:C:j:k:t:H:p:", longopts, &option);
+		c = getopt_long (argc, argv, "Vhv46qw:c:W:C:j:k:m:n:t:H:p:", longopts, &option);
 		if (c == -1 || c == EOF || c == 1)
 			break;
 
@@ -466,6 +477,14 @@ int process_arguments(int argc, char **argv){
 		case 'k':
 			do_jitter=1;
 			jcrit = optarg;
+			break;
+		case 'm':
+			do_truechimers=1;
+			twarn = optarg;
+			break;
+		case 'n':
+			do_truechimers=1;
+			tcrit = optarg;
 			break;
 		case 'H':
 			if(is_host(optarg) == FALSE)
@@ -526,8 +545,16 @@ char *perfd_stratum (int stratum)
 		TRUE, 0, TRUE, 16);
 }
 
+char *perfd_truechimers (int num_truechimers)
+{
+	return perfdata ("truechimers", num_truechimers, "",
+		do_truechimers, (int)truechimer_thresholds->warning->end,
+		do_truechimers, (int)truechimer_thresholds->critical->end,
+		TRUE, 0, FALSE, 0);
+}
+
 int main(int argc, char *argv[]){
-	int result, offset_result, stratum;
+	int result, offset_result, stratum, num_truechimers;
 	double offset=0, jitter=0;
 	char *result_line, *perfdata_line;
 
@@ -544,6 +571,7 @@ int main(int argc, char *argv[]){
 	set_thresholds(&offset_thresholds, owarn, ocrit);
 	set_thresholds(&jitter_thresholds, jwarn, jcrit);
 	set_thresholds(&stratum_thresholds, swarn, scrit);
+	set_thresholds(&truechimer_thresholds, twarn, tcrit);
 
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
@@ -552,7 +580,7 @@ int main(int argc, char *argv[]){
 	alarm (socket_timeout);
 
 	/* This returns either OK or WARNING (See comment preceeding ntp_request) */
-	result = ntp_request(server_address, &offset, &offset_result, &jitter, &stratum);
+	result = ntp_request(server_address, &offset, &offset_result, &jitter, &stratum, &num_truechimers);
 
 	if(offset_result == STATE_UNKNOWN) {
 		/* if there's no sync peer (this overrides ntp_request output): */
@@ -563,6 +591,9 @@ int main(int argc, char *argv[]){
 			result = STATE_UNKNOWN;
 		result = max_state_alt(result, get_status(fabs(offset), offset_thresholds));
 	}
+
+	if(do_truechimers)
+		result = max_state_alt(result, get_status(num_truechimers, truechimer_thresholds));
 
 	if(do_stratum)
 		result = max_state_alt(result, get_status(stratum, stratum_thresholds));
@@ -604,6 +635,10 @@ int main(int argc, char *argv[]){
 		asprintf(&result_line, "%s, stratum=%i", result_line, stratum);
 		asprintf(&perfdata_line, "%s %s", perfdata_line, perfd_stratum(stratum));
 	}
+	if (do_truechimers) {
+		asprintf(&result_line, "%s, truechimers=%i", result_line, num_truechimers);
+		asprintf(&perfdata_line, "%s %s", perfdata_line, perfd_truechimers(num_truechimers));
+	}
 	printf("%s|%s\n", result_line, perfdata_line);
 
 	if(server_address!=NULL) free(server_address);
@@ -640,6 +675,10 @@ void print_help(void){
 	printf ("    %s\n", _("Warning threshold for jitter"));
 	printf (" %s\n", "-k, --jcrit=THRESHOLD");
 	printf ("    %s\n", _("Critical threshold for jitter"));
+	printf (" %s\n", "-m, --twarn=THRESHOLD");
+	printf ("    %s\n", _("Warning threshold for number of usable time sources (\"truechimers\")"));
+	printf (" %s\n", "-n, --tcrit=THRESHOLD");
+	printf ("    %s\n", _("Critical threshold for number of usable time sources (\"truechimers\")"));
 	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
 	printf (_(UT_VERBOSE));
 
@@ -667,6 +706,9 @@ void print_help(void){
 	printf(" %s\n", _("Check jitter too, avoiding critical notifications if jitter isn't available"));
 	printf(" %s\n", _("(See Notes above for more details on thresholds formats):"));
 	printf("  %s\n", ("./check_ntp_peer -H ntpserv -w 0.5 -c 1 -j -1:100 -k -1:200"));
+	printf("\n");
+	printf(" %s\n", _("Only check the number of usable time sources (\"truechimers\"):"));
+	printf("  %s\n", ("./check_ntp_peer -H ntpserv -m :5 -n :3"));
 	printf("\n");
 	printf(" %s\n", _("Check only stratum:"));
 	printf("  %s\n", ("./check_ntp_peer -H ntpserv -W 4 -C 6"));

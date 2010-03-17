@@ -2,6 +2,7 @@ This file documents the major additions and syntax changes between releases.
 
 1.4.15 ...
 	ENHANCEMENTS
+	New check_ntp_peer -m and -n options to check the number of usable time sources ("truechimers")
 	FIXES
 	Fix check_ircd binding to wrong interface (#668778)
 	Add proxy-authorization option to check_http (Marcel Kuiper - #1323230, Bryan Irvine - #2863925)

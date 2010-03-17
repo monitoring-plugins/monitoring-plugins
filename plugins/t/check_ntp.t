@@ -34,9 +34,9 @@ my $hostname_invalid = getTestParameter( "NP_HOSTNAME_INVALID",
 my $ntp_okmatch1 = '/^NTP\sOK:\sOffset\s-?[0-9]+(\.[0-9]+)?(e-[0-9]{2})?\ssecs/';
 my $ntp_warnmatch1 = '/^NTP\sWARNING:\sOffset\s-?[0-9]+(\.[0-9]+)?(e-[0-9]{2})?\ssecs/';
 my $ntp_critmatch1 = '/^NTP\sCRITICAL:\sOffset\s-?[0-9]+(\.[0-9]+)?(e-[0-9]{2})?\ssecs/';
-my $ntp_okmatch2 = '/^NTP\sOK:\sOffset\s-?[0-9]+(\.[0-9]+)?(e-[0-9]{2})?\ssecs,\sjitter=[0-9]+\.[0-9]+,\sstratum=[0-9]{1,2}/';
-my $ntp_warnmatch2 = '/^NTP\sWARNING:\sOffset\s-?[0-9]+(\.[0-9]+)?(e-[0-9]{2})?\ssecs,\sjitter=[0-9]+\.[0-9]+,\sstratum=[0-9]{1,2}/';
-my $ntp_critmatch2 = '/^NTP\sCRITICAL:\sOffset\s-?[0-9]+(\.[0-9]+)?(e-[0-9]{2})?\ssecs,\sjitter=[0-9]+\.[0-9]+,\sstratum=[0-9]{1,2}/';
+my $ntp_okmatch2 = '/^NTP\sOK:\sOffset\s-?[0-9]+(\.[0-9]+)?(e-[0-9]{2})?\ssecs,\sjitter=[0-9]+\.[0-9]+,\sstratum=[0-9]{1,2},\struechimers=[0-9]+/';
+my $ntp_warnmatch2 = '/^NTP\sWARNING:\sOffset\s-?[0-9]+(\.[0-9]+)?(e-[0-9]{2})?\ssecs,\sjitter=[0-9]+\.[0-9]+,\sstratum=[0-9]{1,2},\struechimers=[0-9]+/';
+my $ntp_critmatch2 = '/^NTP\sCRITICAL:\sOffset\s-?[0-9]+(\.[0-9]+)?(e-[0-9]{2})?\ssecs,\sjitter=[0-9]+\.[0-9]+,\sstratum=[0-9]{1,2},\struechimers=[0-9]+/';
 my $ntp_noresponse = '/^(CRITICAL - Socket timeout after 3 seconds)|(NTP CRITICAL: No response from NTP server)$/';
 my $ntp_nosuchhost = '/^check_ntp.*: Invalid hostname/address - ' . $hostname_invalid . '/';
 
@@ -90,21 +90,21 @@ foreach my $plugin (@PLUGINS2) {
 	SKIP: {
 		skip "No NTP server defined", 1 unless $ntp_service;
 		$res = NPTest->testCmd(
-			"./$plugin -H $ntp_service -w 1000 -c 2000 -W 20 -C 21 -j 100000 -k 200000"
+			"./$plugin -H $ntp_service -w 1000 -c 2000 -W 20 -C 21 -j 100000 -k 200000 -m 1: -n 0:"
 			);
-		cmp_ok( $res->return_code, '==', 0, "$plugin: Good NTP result with jitter and stratum check" );
-		like( $res->output, $ntp_okmatch2, "$plugin: Output match OK with jitter and stratum" );
+		cmp_ok( $res->return_code, '==', 0, "$plugin: Good NTP result with jitter, stratum, and truechimers check" );
+		like( $res->output, $ntp_okmatch2, "$plugin: Output match OK with jitter, stratum, and truechimers" );
 
 		$res = NPTest->testCmd(
-			"./$plugin -H $ntp_service -w 1000 -c 2000 -W \\~:-1 -C 21 -j 100000 -k 200000"
+			"./$plugin -H $ntp_service -w 1000 -c 2000 -W \\~:-1 -C 21 -j 100000 -k 200000 -m 1: -n 0:"
 			);
-		cmp_ok( $res->return_code, '==', 1, "$plugin: Warning NTP result with jitter and stratum check" );
-		like( $res->output, $ntp_warnmatch2, "$plugin: Output match WARNING with jitter and stratum" );
+		cmp_ok( $res->return_code, '==', 1, "$plugin: Warning NTP result with jitter, stratum, and truechimers check" );
+		like( $res->output, $ntp_warnmatch2, "$plugin: Output match WARNING with jitter, stratum, and truechimers" );
 
 		$res = NPTest->testCmd(
-			"./$plugin -H $ntp_service -w 1000 -c 2000 -W 20 -C 21 -j 100000 -k \\~:-1"
+			"./$plugin -H $ntp_service -w 1000 -c 2000 -W 20 -C 21 -j 100000 -k \\~:-1 -m 1: -n 0:"
 			);
-		cmp_ok( $res->return_code, '==', 2, "$plugin: Critical NTP result with jitter and stratum check" );
-		like( $res->output, $ntp_critmatch2, "$plugin: Output match CRITICAL with jitter and stratum" );
+		cmp_ok( $res->return_code, '==', 2, "$plugin: Critical NTP result with jitter, stratum, and truechimers check" );
+		like( $res->output, $ntp_critmatch2, "$plugin: Output match CRITICAL with jitter, stratum, and truechimers" );
 	}
 }
