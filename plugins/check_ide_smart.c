@@ -158,9 +158,6 @@ main (int argc, char *argv[])
 	values_t values;
 	int fd;
 
-	/* Parse extra opts if any */
-	argv=np_extra_opts (&argc, argv, progname);
-
 	static struct option longopts[] = { 
 		{"device", required_argument, 0, 'd'}, 
 		{"immediate", no_argument, 0, 'i'}, 
@@ -172,6 +169,9 @@ main (int argc, char *argv[])
 		{"version", no_argument, 0, 'V'},
 		{0, 0, 0, 0}
 	};
+
+	/* Parse extra opts if any */
+	argv=np_extra_opts (&argc, argv, progname);
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
