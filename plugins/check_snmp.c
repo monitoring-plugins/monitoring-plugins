@@ -122,6 +122,7 @@ main (int argc, char **argv)
 	int result = STATE_UNKNOWN;
 	int return_code = 0;
 	int external_error = 0;
+	double perftmp;
 	char **command_line = NULL;
 	char *cl_hidden_auth = NULL;
 	char *oidname = NULL;
@@ -351,10 +352,17 @@ main (int argc, char **argv)
 		if (nunits > (size_t)0 && (size_t)i < nunits && unitv[i] != NULL)
 			asprintf (&outbuff, "%s %s", outbuff, unitv[i]);
 
-		if (is_numeric(show)) {
+		/* Try a two-way conversion of show and add perfdata only if we get
+		 * something back at the end */
+		ptr = NULL;
+		perftmp = strtod(show, &ptr);
+		if (ptr != show) {
+			ptr = NULL;
+			asprintf(&ptr, "%0.9g", perftmp);
 			strncat(perfstr, oidname, sizeof(perfstr)-strlen(perfstr)-1);
 			strncat(perfstr, "=", sizeof(perfstr)-strlen(perfstr)-1);
-			strncat(perfstr, show, sizeof(perfstr)-strlen(perfstr)-1);
+			strncat(perfstr, ptr, sizeof(perfstr)-strlen(perfstr)-1);
+			free(ptr);
 
 			if (type)
 				strncat(perfstr, type, sizeof(perfstr)-strlen(perfstr)-1);
