@@ -117,12 +117,11 @@ int needmibs = FALSE;
 int
 main (int argc, char **argv)
 {
-	int i;
+	int i, len;
 	int iresult = STATE_UNKNOWN;
 	int result = STATE_UNKNOWN;
 	int return_code = 0;
 	int external_error = 0;
-	double perftmp;
 	char **command_line = NULL;
 	char *cl_hidden_auth = NULL;
 	char *oidname = NULL;
@@ -352,17 +351,14 @@ main (int argc, char **argv)
 		if (nunits > (size_t)0 && (size_t)i < nunits && unitv[i] != NULL)
 			asprintf (&outbuff, "%s %s", outbuff, unitv[i]);
 
-		/* Try a two-way conversion of show and add perfdata only if we get
-		 * something back at the end */
+		/* Write perfdata with whatever can be parsed by strtod, if possible */
 		ptr = NULL;
-		perftmp = strtod(show, &ptr);
-		if (ptr != show) {
-			ptr = NULL;
-			asprintf(&ptr, "%0.9g", perftmp);
+		strtod(show, &ptr);
+		if (ptr > show) {
 			strncat(perfstr, oidname, sizeof(perfstr)-strlen(perfstr)-1);
 			strncat(perfstr, "=", sizeof(perfstr)-strlen(perfstr)-1);
-			strncat(perfstr, ptr, sizeof(perfstr)-strlen(perfstr)-1);
-			free(ptr);
+			len = sizeof(perfstr)-strlen(perfstr)-1;
+			strncat(perfstr, show, len>ptr-show ? ptr-show : len);
 
 			if (type)
 				strncat(perfstr, type, sizeof(perfstr)-strlen(perfstr)-1);
