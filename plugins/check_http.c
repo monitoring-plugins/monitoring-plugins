@@ -112,6 +112,7 @@ int http_opt_headers_count = 0;
 int onredirect = STATE_OK;
 int followsticky = STICKY_NONE;
 int use_ssl = FALSE;
+int use_sni = FALSE;
 int verbose = FALSE;
 int sd;
 int min_page_len = 0;
@@ -178,7 +179,8 @@ process_arguments (int argc, char **argv)
   char *p;
 
   enum {
-    INVERT_REGEX = CHAR_MAX + 1
+    INVERT_REGEX = CHAR_MAX + 1,
+    SNI_OPTION
   };
 
   int option = 0;
@@ -187,6 +189,7 @@ process_arguments (int argc, char **argv)
     {"link", no_argument, 0, 'L'},
     {"nohtml", no_argument, 0, 'n'},
     {"ssl", no_argument, 0, 'S'},
+    {"sni", no_argument, 0, SNI_OPTION},
     {"post", required_argument, 0, 'P'},
     {"method", required_argument, 0, 'j'},
     {"IP-address", required_argument, 0, 'I'},
@@ -303,6 +306,9 @@ process_arguments (int argc, char **argv)
       use_ssl = TRUE;
       if (specify_port == FALSE)
         server_port = HTTPS_PORT;
+      break;
+    case SNI_OPTION:
+      use_sni = TRUE;
       break;
     case 'f': /* onredirect */
       if (!strcmp (optarg, "stickyport"))
@@ -797,7 +803,7 @@ check_http (void)
     die (STATE_CRITICAL, _("HTTP CRITICAL - Unable to open TCP socket\n"));
 #ifdef HAVE_SSL
   if (use_ssl == TRUE) {
-    np_net_ssl_init_with_hostname(sd, host_name);
+    np_net_ssl_init_with_hostname(sd, (use_sni ? host_name : NULL));
     if (check_cert == TRUE) {
       result = np_net_ssl_check_cert(days_till_exp);
       np_net_ssl_cleanup();
@@ -1323,6 +1329,8 @@ print_help (void)
 #ifdef HAVE_SSL
   printf (" %s\n", "-S, --ssl");
   printf ("   %s\n", _("Connect via SSL. Port defaults to 443"));
+  printf (" %s\n", "--sni");
+  printf ("   %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
   printf (" %s\n", "-C, --certificate=INTEGER");
   printf ("   %s\n", _("Minimum number of days a certificate has to be valid. Port defaults to 443"));
   printf ("   %s\n", _("(when this option is used the URL is not checked.)\n"));
@@ -1427,5 +1435,6 @@ print_usage (void)
   printf ("       [-b proxy_auth] [-f <ok|warning|critcal|follow|sticky|stickyport>]\n");
   printf ("       [-e <expect>] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
-  printf ("       [-A string] [-k string] [-S] [-C <age>] [-T <content-type>] [-j method]\n");
+  printf ("       [-A string] [-k string] [-S] [--sni] [-C <age>] [-T <content-type>]\n");
+  printf ("       [-j method]\n");
 }

@@ -12,6 +12,7 @@ This file documents the major additions and syntax changes between releases.
 	Fix memory leak in check_http for large pages (Jimmy Bergman - #2957455)
 	Fix compilation with GCC 2.96 (Konstantin Khomoutov - #2977105)
 	Fix regression introduced in #1867716 where partially valid performance strings would not be printed anymore
+	Fix regression in check_http ssl checks on some servers - make SNI an option
 	WARNINGS
 	Updated developer documentation to say that performance labels should not have an equals sign or
 	single quote in the label
