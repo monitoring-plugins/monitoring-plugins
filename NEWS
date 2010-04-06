@@ -16,6 +16,7 @@ This file documents the major additions and syntax changes between releases.
 	WARNINGS
 	Updated developer documentation to say that performance labels should not have an equals sign or
 	single quote in the label
+	check_http 1.4.14 introduced SSL SNI support - you now have to enable it explicitly with "--sni"
 
 1.4.14 16th September 2009
 	check_http has options to specify the HTTP method (#2155152)
