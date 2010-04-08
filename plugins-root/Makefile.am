@@ -13,7 +13,7 @@ AM_CFLAGS = -DNP_VERSION='"$(NP_VERSION)"'
 
 VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t $(srcdir)
 
-INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl -I$(top_srcdir)/plugins @SSLINCLUDE@
+AM_CPPFLAGS = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl -I$(top_srcdir)/plugins @SSLINCLUDE@
 
 localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
@@ -79,9 +79,12 @@ install-exec-local: $(noinst_PROGRAMS)
 # the actual targets
 check_dhcp_LDADD = @LTLIBINTL@ $(NETLIBS)
 check_icmp_LDADD = @LTLIBINTL@ $(NETLIBS) $(SOCKETLIBS)
+
 # -m64 needed at compiler and linker phase
 pst3_CFLAGS = @PST3CFLAGS@
 pst3_LDFLAGS = @PST3CFLAGS@
+# pst3 must not use nagiosplug/gnulib includes!
+pst3_CPPFLAGS =
 
 check_dhcp_DEPENDENCIES = check_dhcp.c $(NETOBJS) $(DEPLIBS) 
 check_icmp_DEPENDENCIES = check_icmp.c $(NETOBJS)

@@ -49,7 +49,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <procfs.h>
-#include <errno.h>
 #include <sys/types32.h>
 
 /*

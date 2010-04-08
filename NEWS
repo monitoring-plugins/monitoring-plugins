@@ -17,7 +17,8 @@ This file documents the major additions and syntax changes between releases.
 	Fix regression in check_http ssl checks on some servers - make SNI an option
 	Fix guest mode support in check_disk_smb
 	Fix check_disk_smb and check_ircd failures when run via ePN
-	check_ldap now allows for specifying an empty LDAP base
+	check_ldap now allows for specifying an empty LDAP bas
+	Fix compilation error of pst3 in Solaris 8
 	WARNINGS
 	Updated developer documentation to say that performance labels should not have an equals sign or
 	single quote in the label
