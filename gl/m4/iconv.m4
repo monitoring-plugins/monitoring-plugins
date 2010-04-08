@@ -1,5 +1,5 @@
-# iconv.m4 serial AM7 (gettext-0.18)
-dnl Copyright (C) 2000-2002, 2007-2009 Free Software Foundation, Inc.
+# iconv.m4 serial 9 (gettext-0.18)
+dnl Copyright (C) 2000-2002, 2007-2010 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -58,7 +58,7 @@ AC_DEFUN([AM_ICONV_LINK],
   ])
   if test "$am_cv_func_iconv" = yes; then
     AC_CACHE_CHECK([for working iconv], [am_cv_func_iconv_works], [
-      dnl This tests against bugs in AIX 5.1 and HP-UX 11.11.
+      dnl This tests against bugs in AIX 5.1, HP-UX 11.11, Solaris 10.
       am_save_LIBS="$LIBS"
       if test $am_cv_lib_iconv = yes; then
         LIBS="$LIBS $LIBICONV"
@@ -81,6 +81,25 @@ int main ()
         char *outptr = buf;
         size_t outbytesleft = sizeof (buf);
         size_t res = iconv (cd_utf8_to_88591,
+                            (char **) &inptr, &inbytesleft,
+                            &outptr, &outbytesleft);
+        if (res == 0)
+          return 1;
+      }
+  }
+  /* Test against Solaris 10 bug: Failures are not distinguishable from
+     successful returns.  */
+  {
+    iconv_t cd_ascii_to_88591 = iconv_open ("ISO8859-1", "646");
+    if (cd_ascii_to_88591 != (iconv_t)(-1))
+      {
+        static const char input[] = "\263";
+        char buf[10];
+        const char *inptr = input;
+        size_t inbytesleft = strlen (input);
+        char *outptr = buf;
+        size_t outbytesleft = sizeof (buf);
+        size_t res = iconv (cd_ascii_to_88591,
                             (char **) &inptr, &inbytesleft,
                             &outptr, &outbytesleft);
         if (res == 0)
@@ -172,8 +191,8 @@ size_t iconv();
 ], [], [am_cv_proto_iconv_arg1=""], [am_cv_proto_iconv_arg1="const"])
       am_cv_proto_iconv="extern size_t iconv (iconv_t cd, $am_cv_proto_iconv_arg1 char * *inbuf, size_t *inbytesleft, char * *outbuf, size_t *outbytesleft);"])
     am_cv_proto_iconv=`echo "[$]am_cv_proto_iconv" | tr -s ' ' | sed -e 's/( /(/'`
-    AC_MSG_RESULT([${ac_t:-
-         }$am_cv_proto_iconv])
+    AC_MSG_RESULT([
+         $am_cv_proto_iconv])
     AC_DEFINE_UNQUOTED([ICONV_CONST], [$am_cv_proto_iconv_arg1],
       [Define as const if the declaration of iconv() needs const.])
   fi

@@ -1,5 +1,6 @@
-# mbrtowc.m4 serial 15
-dnl Copyright (C) 2001-2002, 2004-2005, 2008, 2009 Free Software Foundation, Inc.
+# mbrtowc.m4 serial 17
+dnl Copyright (C) 2001-2002, 2004-2005, 2008-2010 Free Software Foundation,
+dnl Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -10,38 +11,39 @@ AC_DEFUN([gl_FUNC_MBRTOWC],
 
   AC_REQUIRE([AC_TYPE_MBSTATE_T])
   gl_MBSTATE_T_BROKEN
-  if test $REPLACE_MBSTATE_T = 1; then
-    REPLACE_MBRTOWC=1
-  fi
+
   AC_CHECK_FUNCS_ONCE([mbrtowc])
   if test $ac_cv_func_mbrtowc = no; then
     HAVE_MBRTOWC=0
-  fi
-  if test $HAVE_MBRTOWC != 0 && test $REPLACE_MBRTOWC != 1; then
-    gl_MBRTOWC_NULL_ARG
-    gl_MBRTOWC_RETVAL
-    gl_MBRTOWC_NUL_RETVAL
-    case "$gl_cv_func_mbrtowc_null_arg" in
-      *yes) ;;
-      *) AC_DEFINE([MBRTOWC_NULL_ARG_BUG], [1],
-           [Define if the mbrtowc function has the NULL string argument bug.])
-         REPLACE_MBRTOWC=1
-         ;;
-    esac
-    case "$gl_cv_func_mbrtowc_retval" in
-      *yes) ;;
-      *) AC_DEFINE([MBRTOWC_RETVAL_BUG], [1],
-           [Define if the mbrtowc function returns a wrong return value.])
-         REPLACE_MBRTOWC=1
-         ;;
-    esac
-    case "$gl_cv_func_mbrtowc_nul_retval" in
-      *yes) ;;
-      *) AC_DEFINE([MBRTOWC_NUL_RETVAL_BUG], [1],
-           [Define if the mbrtowc function does not return 0 for a NUL character.])
-         REPLACE_MBRTOWC=1
-         ;;
-    esac
+  else
+    if test $REPLACE_MBSTATE_T = 1; then
+      REPLACE_MBRTOWC=1
+    else
+      gl_MBRTOWC_NULL_ARG
+      gl_MBRTOWC_RETVAL
+      gl_MBRTOWC_NUL_RETVAL
+      case "$gl_cv_func_mbrtowc_null_arg" in
+        *yes) ;;
+        *) AC_DEFINE([MBRTOWC_NULL_ARG_BUG], [1],
+             [Define if the mbrtowc function has the NULL string argument bug.])
+           REPLACE_MBRTOWC=1
+           ;;
+      esac
+      case "$gl_cv_func_mbrtowc_retval" in
+        *yes) ;;
+        *) AC_DEFINE([MBRTOWC_RETVAL_BUG], [1],
+             [Define if the mbrtowc function returns a wrong return value.])
+           REPLACE_MBRTOWC=1
+           ;;
+      esac
+      case "$gl_cv_func_mbrtowc_nul_retval" in
+        *yes) ;;
+        *) AC_DEFINE([MBRTOWC_NUL_RETVAL_BUG], [1],
+             [Define if the mbrtowc function does not return 0 for a NUL character.])
+           REPLACE_MBRTOWC=1
+           ;;
+      esac
+    fi
   fi
   if test $HAVE_MBRTOWC = 0 || test $REPLACE_MBRTOWC = 1; then
     gl_REPLACE_WCHAR_H
@@ -156,6 +158,7 @@ changequote([,])dnl
       if test $LOCALE_ZH_CN != none; then
         AC_TRY_RUN([
 #include <locale.h>
+#include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
 int main ()

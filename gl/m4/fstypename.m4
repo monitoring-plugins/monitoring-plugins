@@ -6,7 +6,8 @@ dnl See if struct statfs has the f_fstypename member.
 dnl If so, define HAVE_STRUCT_STATFS_F_FSTYPENAME.
 dnl
 
-# Copyright (C) 1998, 1999, 2001, 2004, 2006 Free Software Foundation, Inc.
+# Copyright (C) 1998-1999, 2001, 2004, 2006, 2009-2010 Free Software
+# Foundation, Inc.
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.

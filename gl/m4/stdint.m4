@@ -1,5 +1,5 @@
 # stdint.m4 serial 34
-dnl Copyright (C) 2001-2009 Free Software Foundation, Inc.
+dnl Copyright (C) 2001-2010 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -396,12 +396,12 @@ AC_DEFUN([gl_INTEGER_TYPE_SUFFIX],
        for glsuf in "$glsufu" ${glsufu}l ${glsufu}ll ${glsufu}i64; do
          case $glsuf in
            '')  gltype1='int';;
-           l)	gltype1='long int';;
-           ll)	gltype1='long long int';;
-           i64)	gltype1='__int64';;
-           u)	gltype1='unsigned int';;
-           ul)	gltype1='unsigned long int';;
-           ull)	gltype1='unsigned long long int';;
+           l)   gltype1='long int';;
+           ll)  gltype1='long long int';;
+           i64) gltype1='__int64';;
+           u)   gltype1='unsigned int';;
+           ul)  gltype1='unsigned long int';;
+           ull) gltype1='unsigned long long int';;
            ui64)gltype1='unsigned __int64';;
          esac
          AC_COMPILE_IFELSE(

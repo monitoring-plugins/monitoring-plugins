@@ -1,5 +1,5 @@
-# lib-link.m4 serial 19 (gettext-0.18)
-dnl Copyright (C) 2001-2009 Free Software Foundation, Inc.
+# lib-link.m4 serial 20 (gettext-0.18)
+dnl Copyright (C) 2001-2010 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -82,7 +82,7 @@ AC_DEFUN([AC_LIB_HAVE_LINKFLAGS],
   ])
   if test "$ac_cv_lib[]Name" = yes; then
     HAVE_LIB[]NAME=yes
-    AC_DEFINE([HAVE_LIB]NAME, 1, [Define if you have the lib[]$1 library.])
+    AC_DEFINE([HAVE_LIB]NAME, 1, [Define if you have the lib][$1 library.])
     AC_MSG_CHECKING([how to link with lib[]$1])
     AC_MSG_RESULT([$LIB[]NAME])
   else
@@ -210,6 +210,9 @@ AC_DEFUN([AC_LIB_LINKFLAGS_BODY],
   LTLIB[]NAME=
   INC[]NAME=
   LIB[]NAME[]_PREFIX=
+  dnl HAVE_LIB${NAME} is an indicator that LIB${NAME}, LTLIB${NAME} have been
+  dnl computed. So it has to be reset here.
+  HAVE_LIB[]NAME=
   rpathdirs=
   ltrpathdirs=
   names_already_handled=

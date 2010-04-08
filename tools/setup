@@ -23,6 +23,10 @@ if test -d $HOME/share/aclocal ; then
 	extra="-I $HOME/share/aclocal"
 fi
 
+# This file will be automagically re-generated of present - still looks
+# better than having a versioned file change based on automake version
+touch build-aux/mkinstalldirs
+
 aclocal -I gl/m4 -I m4 $extra
 #libtoolize --force --copy
 autoheader

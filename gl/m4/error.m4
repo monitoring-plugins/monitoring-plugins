@@ -1,7 +1,6 @@
-#serial 11
+#serial 12
 
-# Copyright (C) 1996, 1997, 1998, 2001, 2002, 2003, 2004 Free Software
-# Foundation, Inc.
+# Copyright (C) 1996-1998, 2001-2004, 2009-2010 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -18,5 +17,6 @@ AC_DEFUN([gl_ERROR],
 AC_DEFUN([gl_PREREQ_ERROR],
 [
   AC_REQUIRE([AC_FUNC_STRERROR_R])
+  AC_REQUIRE([AC_C_INLINE])
   :
 ])

@@ -1,5 +1,5 @@
-# arpa_inet_h.m4 serial 5
-dnl Copyright (C) 2006, 2008 Free Software Foundation, Inc.
+# arpa_inet_h.m4 serial 8
+dnl Copyright (C) 2006, 2008, 2009, 2010 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -16,27 +16,35 @@ AC_DEFUN([gl_HEADER_ARPA_INET],
   if test $ac_cv_header_arpa_inet_h = yes; then
     HAVE_ARPA_INET_H=1
   else
-    ARPA_INET_H='arpa/inet.h'
     HAVE_ARPA_INET_H=0
   fi
   AC_SUBST([HAVE_ARPA_INET_H])
-  dnl Execute this unconditionally, because ARPA_INET_H may be set by other
-  dnl modules, after this code is executed.
+  dnl <arpa/inet.h> is always overridden, because of GNULIB_POSIXCHECK.
   gl_CHECK_NEXT_HEADERS([arpa/inet.h])
+
+  dnl Check for declarations of anything we want to poison if the
+  dnl corresponding gnulib module is not in use.
+  gl_WARN_ON_USE_PREPARE([[
+/* On some systems, this header is not self-consistent.  */
+#ifndef __GLIBC__
+# include <sys/socket.h>
+#endif
+#include <arpa/inet.h>
+    ]], [inet_ntop inet_pton])
 ])
 
 dnl Unconditionally enables the replacement of <arpa/inet.h>.
 AC_DEFUN([gl_REPLACE_ARPA_INET_H],
 [
-  AC_REQUIRE([gl_ARPA_INET_H_DEFAULTS])
-  ARPA_INET_H='arpa/inet.h'
+  dnl This is a no-op, because <arpa/inet.h> is always overridden.
+  :
 ])
 
 AC_DEFUN([gl_ARPA_INET_MODULE_INDICATOR],
 [
   dnl Use AC_REQUIRE here, so that the default settings are expanded once only.
   AC_REQUIRE([gl_ARPA_INET_H_DEFAULTS])
-  GNULIB_[]m4_translit([$1],[abcdefghijklmnopqrstuvwxyz./-],[ABCDEFGHIJKLMNOPQRSTUVWXYZ___])=1
+  gl_MODULE_INDICATOR_SET_VARIABLE([$1])
 ])
 
 AC_DEFUN([gl_ARPA_INET_H_DEFAULTS],
@@ -46,5 +54,4 @@ AC_DEFUN([gl_ARPA_INET_H_DEFAULTS],
   dnl Assume proper GNU behavior unless another module says otherwise.
   HAVE_DECL_INET_NTOP=1;  AC_SUBST([HAVE_DECL_INET_NTOP])
   HAVE_DECL_INET_PTON=1;  AC_SUBST([HAVE_DECL_INET_PTON])
-  ARPA_INET_H='';         AC_SUBST([ARPA_INET_H])
 ])

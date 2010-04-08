@@ -1,6 +1,6 @@
 /* strerror.c --- POSIX compatible system error routine
 
-   Copyright (C) 2007-2009 Free Software Foundation, Inc.
+   Copyright (C) 2007-2010 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -313,7 +313,13 @@ rpl_strerror (int n)
       break;
 # endif
 
-# if GNULIB_defined_
+# if GNULIB_defined_ESTALE
+    case ESTALE:
+      msg = "Stale NFS file handle";
+      break;
+# endif
+
+# if GNULIB_defined_ECANCELED
     case ECANCELED:
       msg = "Operation canceled";
       break;
@@ -328,10 +334,10 @@ rpl_strerror (int n)
 
     if (result == NULL || result[0] == '\0')
       {
-	static char const fmt[] = "Unknown error (%d)";
-	static char msg_buf[sizeof fmt + INT_STRLEN_BOUND (n)];
-	sprintf (msg_buf, fmt, n);
-	return msg_buf;
+        static char const fmt[] = "Unknown error (%d)";
+        static char msg_buf[sizeof fmt + INT_STRLEN_BOUND (n)];
+        sprintf (msg_buf, fmt, n);
+        return msg_buf;
       }
 
     return result;

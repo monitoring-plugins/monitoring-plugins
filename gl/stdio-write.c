@@ -1,5 +1,5 @@
 /* POSIX compatible FILE stream write function.
-   Copyright (C) 2008 Free Software Foundation, Inc.
+   Copyright (C) 2008-2010 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2008.
 
    This program is free software: you can redistribute it and/or modify
@@ -39,30 +39,31 @@
 #  include <windows.h>
 
 #  define CALL_WITH_SIGPIPE_EMULATION(RETTYPE, EXPRESSION, FAILED) \
-  if (ferror (stream))							      \
-    return (EXPRESSION);						      \
-  else									      \
-    {									      \
-      RETTYPE ret;							      \
-      SetLastError (0);							      \
-      ret = (EXPRESSION);						      \
+  if (ferror (stream))                                                        \
+    return (EXPRESSION);                                                      \
+  else                                                                        \
+    {                                                                         \
+      RETTYPE ret;                                                            \
+      SetLastError (0);                                                       \
+      ret = (EXPRESSION);                                                     \
       if (FAILED && GetLastError () == ERROR_NO_DATA && ferror (stream))      \
-	{								      \
-	  int fd = fileno (stream);					      \
-	  if (fd >= 0							      \
-	      && GetFileType ((HANDLE) _get_osfhandle (fd)) == FILE_TYPE_PIPE)\
-	    {								      \
-	      /* Try to raise signal SIGPIPE.  */			      \
-	      raise (SIGPIPE);						      \
-	      /* If it is currently blocked or ignored, change errno from     \
-		 EINVAL to EPIPE.  */					      \
-	      errno = EPIPE;						      \
-	    }								      \
-	}								      \
-      return ret;							      \
+        {                                                                     \
+          int fd = fileno (stream);                                           \
+          if (fd >= 0                                                         \
+              && GetFileType ((HANDLE) _get_osfhandle (fd)) == FILE_TYPE_PIPE)\
+            {                                                                 \
+              /* Try to raise signal SIGPIPE.  */                             \
+              raise (SIGPIPE);                                                \
+              /* If it is currently blocked or ignored, change errno from     \
+                 EINVAL to EPIPE.  */                                         \
+              errno = EPIPE;                                                  \
+            }                                                                 \
+        }                                                                     \
+      return ret;                                                             \
     }
 
 #  if !REPLACE_PRINTF_POSIX /* avoid collision with printf.c */
+#   if !DEPENDS_ON_LIBINTL /* avoid collision with intl/printf.c */
 int
 printf (const char *format, ...)
 {
@@ -75,6 +76,7 @@ printf (const char *format, ...)
 
   return retval;
 }
+#   endif
 #  endif
 
 #  if !REPLACE_FPRINTF_POSIX /* avoid collision with fprintf.c */
@@ -92,7 +94,7 @@ fprintf (FILE *stream, const char *format, ...)
 }
 #  endif
 
-#  if !REPLACE_VFPRINTF_POSIX /* avoid collision with vprintf.c */
+#  if !REPLACE_VPRINTF_POSIX /* avoid collision with vprintf.c */
 int
 vprintf (const char *format, va_list args)
 {
@@ -100,7 +102,7 @@ vprintf (const char *format, va_list args)
 }
 #  endif
 
-#  if !REPLACE_VPRINTF_POSIX /* avoid collision with vfprintf.c */
+#  if !REPLACE_VFPRINTF_POSIX /* avoid collision with vfprintf.c */
 int
 vfprintf (FILE *stream, const char *format, va_list args)
 #undef vfprintf

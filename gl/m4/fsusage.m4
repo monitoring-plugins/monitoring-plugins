@@ -1,7 +1,7 @@
-# serial 24
+# serial 25
 # Obtaining file system usage information.
 
-# Copyright (C) 1997-1998, 2000-2001, 2003-2009 Free Software Foundation, Inc.
+# Copyright (C) 1997-1998, 2000-2001, 2003-2010 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -46,7 +46,7 @@ ac_fsusage_space=no
 if test $ac_fsusage_space = no; then
   # SVR4
   AC_CACHE_CHECK([for statvfs function (SVR4)], [fu_cv_sys_stat_statvfs],
-		 [AC_TRY_LINK([#include <sys/types.h>
+                 [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
 #if defined __GLIBC__ && defined __linux__
 Do not use statvfs on systems with GNU libc on Linux, because that function
 stats all preceding entries in /proc/mounts, and that makes df hang if even
@@ -59,14 +59,14 @@ a system call.
 "Do not use Tru64's statvfs implementation"
 #endif
 
-#include <sys/statvfs.h>],
-			      [struct statvfs fsd; statvfs (0, &fsd);],
-			      fu_cv_sys_stat_statvfs=yes,
-			      fu_cv_sys_stat_statvfs=no)])
+#include <sys/statvfs.h>]],
+                                    [[struct statvfs fsd; statvfs (0, &fsd);]])],
+                                 [fu_cv_sys_stat_statvfs=yes],
+                                 [fu_cv_sys_stat_statvfs=no])])
   if test $fu_cv_sys_stat_statvfs = yes; then
     ac_fsusage_space=yes
     AC_DEFINE([STAT_STATVFS], [1],
-	      [  Define if there is a function named statvfs.  (SVR4)])
+              [  Define if there is a function named statvfs.  (SVR4)])
   fi
 fi
 
@@ -74,7 +74,7 @@ if test $ac_fsusage_space = no; then
   # DEC Alpha running OSF/1
   AC_MSG_CHECKING([for 3-argument statfs function (DEC OSF/1)])
   AC_CACHE_VAL([fu_cv_sys_stat_statfs3_osf1],
-  [AC_TRY_RUN([
+  [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -84,15 +84,15 @@ if test $ac_fsusage_space = no; then
     struct statfs fsd;
     fsd.f_fsize = 0;
     return statfs (".", &fsd, sizeof (struct statfs)) != 0;
-  }],
-  fu_cv_sys_stat_statfs3_osf1=yes,
-  fu_cv_sys_stat_statfs3_osf1=no,
-  fu_cv_sys_stat_statfs3_osf1=no)])
+  }]])],
+    [fu_cv_sys_stat_statfs3_osf1=yes],
+    [fu_cv_sys_stat_statfs3_osf1=no],
+    [fu_cv_sys_stat_statfs3_osf1=no])])
   AC_MSG_RESULT([$fu_cv_sys_stat_statfs3_osf1])
   if test $fu_cv_sys_stat_statfs3_osf1 = yes; then
     ac_fsusage_space=yes
     AC_DEFINE([STAT_STATFS3_OSF1], [1],
-	      [   Define if  statfs takes 3 args.  (DEC Alpha running OSF/1)])
+              [   Define if  statfs takes 3 args.  (DEC Alpha running OSF/1)])
   fi
 fi
 
@@ -101,7 +101,7 @@ if test $ac_fsusage_space = no; then
   AC_MSG_CHECKING([for two-argument statfs with statfs.bsize dnl
 member (AIX, 4.3BSD)])
   AC_CACHE_VAL([fu_cv_sys_stat_statfs2_bsize],
-  [AC_TRY_RUN([
+  [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
@@ -117,10 +117,10 @@ member (AIX, 4.3BSD)])
   struct statfs fsd;
   fsd.f_bsize = 0;
   return statfs (".", &fsd) != 0;
-  }],
-  fu_cv_sys_stat_statfs2_bsize=yes,
-  fu_cv_sys_stat_statfs2_bsize=no,
-  fu_cv_sys_stat_statfs2_bsize=no)])
+  }]])],
+    [fu_cv_sys_stat_statfs2_bsize=yes],
+    [fu_cv_sys_stat_statfs2_bsize=no],
+    [fu_cv_sys_stat_statfs2_bsize=no])])
   AC_MSG_RESULT([$fu_cv_sys_stat_statfs2_bsize])
   if test $fu_cv_sys_stat_statfs2_bsize = yes; then
     ac_fsusage_space=yes
@@ -134,22 +134,23 @@ if test $ac_fsusage_space = no; then
 # SVR3
   AC_MSG_CHECKING([for four-argument statfs (AIX-3.2.5, SVR3)])
   AC_CACHE_VAL([fu_cv_sys_stat_statfs4],
-  [AC_TRY_RUN([#include <sys/types.h>
+  [AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <sys/types.h>
 #include <sys/statfs.h>
   int
   main ()
   {
   struct statfs fsd;
   return statfs (".", &fsd, sizeof fsd, 0) != 0;
-  }],
-    fu_cv_sys_stat_statfs4=yes,
-    fu_cv_sys_stat_statfs4=no,
-    fu_cv_sys_stat_statfs4=no)])
+  }]])],
+    [fu_cv_sys_stat_statfs4=yes],
+    [fu_cv_sys_stat_statfs4=no],
+    [fu_cv_sys_stat_statfs4=no])])
   AC_MSG_RESULT([$fu_cv_sys_stat_statfs4])
   if test $fu_cv_sys_stat_statfs4 = yes; then
     ac_fsusage_space=yes
     AC_DEFINE([STAT_STATFS4], [1],
-	      [  Define if statfs takes 4 args.  (SVR3, Dynix, Irix, Dolphin)])
+              [  Define if statfs takes 4 args.  (SVR3, Dynix, Irix, Dolphin)])
   fi
 fi
 
@@ -158,7 +159,8 @@ if test $ac_fsusage_space = no; then
   AC_MSG_CHECKING([for two-argument statfs with statfs.fsize dnl
 member (4.4BSD and NetBSD)])
   AC_CACHE_VAL([fu_cv_sys_stat_statfs2_fsize],
-  [AC_TRY_RUN([#include <sys/types.h>
+  [AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <sys/types.h>
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
@@ -171,10 +173,10 @@ member (4.4BSD and NetBSD)])
   struct statfs fsd;
   fsd.f_fsize = 0;
   return statfs (".", &fsd) != 0;
-  }],
-  fu_cv_sys_stat_statfs2_fsize=yes,
-  fu_cv_sys_stat_statfs2_fsize=no,
-  fu_cv_sys_stat_statfs2_fsize=no)])
+  }]])],
+    [fu_cv_sys_stat_statfs2_fsize=yes],
+    [fu_cv_sys_stat_statfs2_fsize=no],
+    [fu_cv_sys_stat_statfs2_fsize=no])])
   AC_MSG_RESULT([$fu_cv_sys_stat_statfs2_fsize])
   if test $fu_cv_sys_stat_statfs2_fsize = yes; then
     ac_fsusage_space=yes
@@ -188,7 +190,8 @@ if test $ac_fsusage_space = no; then
   # Ultrix
   AC_MSG_CHECKING([for two-argument statfs with struct fs_data (Ultrix)])
   AC_CACHE_VAL([fu_cv_sys_stat_fs_data],
-  [AC_TRY_RUN([#include <sys/types.h>
+  [AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <sys/types.h>
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
@@ -205,10 +208,10 @@ if test $ac_fsusage_space = no; then
   /* Ultrix's statfs returns 1 for success,
      0 for not mounted, -1 for failure.  */
   return statfs (".", &fsd) != 1;
-  }],
-  fu_cv_sys_stat_fs_data=yes,
-  fu_cv_sys_stat_fs_data=no,
-  fu_cv_sys_stat_fs_data=no)])
+  }]])],
+    [fu_cv_sys_stat_fs_data=yes],
+    [fu_cv_sys_stat_fs_data=no],
+    [fu_cv_sys_stat_fs_data=no])])
   AC_MSG_RESULT([$fu_cv_sys_stat_fs_data])
   if test $fu_cv_sys_stat_fs_data = yes; then
     ac_fsusage_space=yes
@@ -220,12 +223,12 @@ fi
 
 if test $ac_fsusage_space = no; then
   # SVR2
-  AC_TRY_CPP([#include <sys/filsys.h>
-    ],
-    AC_DEFINE([STAT_READ_FILSYS], [1],
+  AC_PREPROC_IFELSE([AC_LANG_SOURCE([[#include <sys/filsys.h>
+        ]])],
+    [AC_DEFINE([STAT_READ_FILSYS], [1],
       [Define if there is no specific function for reading file systems usage
        information and you have the <sys/filsys.h> header file.  (SVR2)])
-    ac_fsusage_space=yes)
+     ac_fsusage_space=yes])
 fi
 
 AS_IF([test $ac_fsusage_space = yes], [$1], [$2])
@@ -246,8 +249,8 @@ choke -- this is a workaround for a Sun-specific problem
 #endif
 #include <sys/types.h>
 #include <sys/vfs.h>]],
-    [[struct statfs t; long c = *(t.f_spare);
-      if (c) return 0;]])],
+      [[struct statfs t; long c = *(t.f_spare);
+        if (c) return 0;]])],
     [fu_cv_sys_truncating_statfs=yes],
     [fu_cv_sys_truncating_statfs=no])])
   if test $fu_cv_sys_truncating_statfs = yes; then

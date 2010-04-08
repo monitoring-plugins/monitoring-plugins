@@ -1,5 +1,5 @@
-# threadlib.m4 serial 3 (gettext-0.18)
-dnl Copyright (C) 2005-2009 Free Software Foundation, Inc.
+# threadlib.m4 serial 5 (gettext-0.18)
+dnl Copyright (C) 2005-2010 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -52,13 +52,24 @@ AC_HELP_STRING([--disable-threads], [build without multithread safety]),
     [if test -n "$gl_use_threads_default"; then
        gl_use_threads="$gl_use_threads_default"
      else
+changequote(,)dnl
        case "$host_os" in
          dnl Disable multithreading by default on OSF/1, because it interferes
          dnl with fork()/exec(): When msgexec is linked with -lpthread, its
          dnl child process gets an endless segmentation fault inside execvp().
+         dnl Disable multithreading by default on Cygwin 1.5.x, because it has
+         dnl bugs that lead to endless loops or crashes. See
+         dnl <http://cygwin.com/ml/cygwin/2009-08/msg00283.html>.
          osf*) gl_use_threads=no ;;
+         cygwin*)
+               case `uname -r` in
+                 1.[0-5].*) gl_use_threads=no ;;
+                 *)         gl_use_threads=yes ;;
+               esac
+               ;;
          *)    gl_use_threads=yes ;;
        esac
+changequote([,])dnl
      fi
     ])
   if test "$gl_use_threads" = yes || test "$gl_use_threads" = posix; then
@@ -96,11 +107,34 @@ AC_DEFUN([gl_THREADLIB_BODY],
   LTLIBMULTITHREAD=
   if test "$gl_use_threads" != no; then
     dnl Check whether the compiler and linker support weak declarations.
-    AC_MSG_CHECKING([whether imported symbols can be declared weak])
-    gl_have_weak=no
-    AC_TRY_LINK([extern void xyzzy ();
-#pragma weak xyzzy], [xyzzy();], [gl_have_weak=yes])
-    AC_MSG_RESULT([$gl_have_weak])
+    AC_CACHE_CHECK([whether imported symbols can be declared weak],
+      [gl_cv_have_weak],
+      [gl_cv_have_weak=no
+       dnl First, test whether the compiler accepts it syntactically.
+       AC_TRY_LINK([extern void xyzzy ();
+#pragma weak xyzzy], [xyzzy();], [gl_cv_have_weak=maybe])
+       if test $gl_cv_have_weak = maybe; then
+         dnl Second, test whether it actually works. On Cygwin 1.7.2, with
+         dnl gcc 4.3, symbols declared weak always evaluate to the address 0.
+         AC_TRY_RUN([
+#include <stdio.h>
+#pragma weak fputs
+int main ()
+{
+  return (fputs == NULL);
+}], [gl_cv_have_weak=yes], [gl_cv_have_weak=no],
+           [dnl When cross-compiling, assume that only ELF platforms support
+            dnl weak symbols.
+            AC_EGREP_CPP([Extensible Linking Format],
+              [#ifdef __ELF__
+               Extensible Linking Format
+               #endif
+              ],
+              [gl_cv_have_weak="guessing yes"],
+              [gl_cv_have_weak="guessing no"])
+           ])
+       fi
+      ])
     if test "$gl_use_threads" = yes || test "$gl_use_threads" = posix; then
       # On OSF/1, the compiler needs the flag -pthread or -D_REENTRANT so that
       # it groks <pthread.h>. It's added above, in gl_THREADLIB_EARLY_BODY.
@@ -154,7 +188,7 @@ AC_DEFUN([gl_THREADLIB_BODY],
           AC_DEFINE([USE_POSIX_THREADS], [1],
             [Define if the POSIX multithreading library can be used.])
           if test -n "$LIBMULTITHREAD" || test -n "$LTLIBMULTITHREAD"; then
-            if test $gl_have_weak = yes; then
+            if case "$gl_cv_have_weak" in *yes) true;; *) false;; esac; then
               AC_DEFINE([USE_POSIX_THREADS_WEAK], [1],
                 [Define if references to the POSIX multithreading library should be made weak.])
               LIBTHREAD=
@@ -182,7 +216,7 @@ AC_DEFUN([gl_THREADLIB_BODY],
           LTLIBMULTITHREAD="$LTLIBTHREAD"
           AC_DEFINE([USE_SOLARIS_THREADS], [1],
             [Define if the old Solaris multithreading library can be used.])
-          if test $gl_have_weak = yes; then
+          if case "$gl_cv_have_weak" in *yes) true;; *) false;; esac; then
             AC_DEFINE([USE_SOLARIS_THREADS_WEAK], [1],
               [Define if references to the old Solaris multithreading library should be made weak.])
             LIBTHREAD=
@@ -208,7 +242,7 @@ AC_DEFUN([gl_THREADLIB_BODY],
         AC_DEFINE([USE_PTH_THREADS], [1],
           [Define if the GNU Pth multithreading library can be used.])
         if test -n "$LIBMULTITHREAD" || test -n "$LTLIBMULTITHREAD"; then
-          if test $gl_have_weak = yes; then
+          if case "$gl_cv_have_weak" in *yes) true;; *) false;; esac; then
             AC_DEFINE([USE_PTH_THREADS_WEAK], [1],
               [Define if references to the GNU Pth multithreading library should be made weak.])
             LIBTHREAD=

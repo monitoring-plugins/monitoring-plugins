@@ -1,6 +1,6 @@
 /* A GNU-like <math.h>.
 
-   Copyright (C) 2002-2003, 2007-2009 Free Software Foundation, Inc.
+   Copyright (C) 2002-2003, 2007-2010 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,18 +22,48 @@
 #endif
 
 /* The include_next requires a split double-inclusion guard.  */
-#@INCLUDE_NEXT_AS_FIRST_DIRECTIVE@ @NEXT_MATH_H@
+#@INCLUDE_NEXT_AS_FIRST_DIRECTIVE@ @NEXT_AS_FIRST_DIRECTIVE_MATH_H@
 
 #ifndef _GL_MATH_H
 #define _GL_MATH_H
 
 
-/* The definition of GL_LINK_WARNING is copied here.  */
+/* The definitions of _GL_FUNCDECL_RPL etc. are copied here.  */
 
+/* The definition of _GL_ARG_NONNULL is copied here.  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+/* The definition of _GL_WARN_ON_USE is copied here.  */
+
+/* Helper macros to define a portability warning for the
+   classification macro FUNC called with VALUE.  POSIX declares the
+   classification macros with an argument of real-floating (that is,
+   one of float, double, or long double).  */
+#define _GL_WARN_REAL_FLOATING_DECL(func) \
+static inline int                                                   \
+rpl_ ## func ## f (float f)                                         \
+{                                                                   \
+  return func (f);                                                  \
+}                                                                   \
+static inline int                                                   \
+rpl_ ## func ## d (double d)                                        \
+{                                                                   \
+  return func (d);                                                  \
+}                                                                   \
+static inline int                                                   \
+rpl_ ## func ## l (long double l)                                   \
+{                                                                   \
+  return func (l);                                                  \
+}                                                                   \
+_GL_WARN_ON_USE (rpl_ ## func ## f, #func " is unportable - "       \
+                 "use gnulib module " #func " for portability");    \
+_GL_WARN_ON_USE (rpl_ ## func ## d, #func " is unportable - "       \
+                 "use gnulib module " #func " for portability");    \
+_GL_WARN_ON_USE (rpl_ ## func ## l, #func " is unportable - "       \
+                 "use gnulib module " #func " for portability")
+#define _GL_WARN_REAL_FLOATING_IMPL(func, value) \
+  (sizeof (value) == sizeof (float) ? rpl_ ## func ## f (value)     \
+   : sizeof (value) == sizeof (double) ? rpl_ ## func ## d (value)  \
+   : rpl_ ## func ## l (value))
 
 
 /* POSIX allows platforms that don't support NAN.  But all major
@@ -64,6 +94,7 @@ _NaN ()
 # define HUGE_VAL (1.0 / 0.0)
 #endif
 
+
 /* Write x as
      x = mantissa * 2^exp
    where
@@ -73,129 +104,198 @@ _NaN ()
    Store exp in *EXPPTR and return mantissa.  */
 #if @GNULIB_FREXP@
 # if @REPLACE_FREXP@
-#  define frexp rpl_frexp
-extern double frexp (double x, int *expptr);
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   define frexp rpl_frexp
+#  endif
+_GL_FUNCDECL_RPL (frexp, double, (double x, int *expptr) _GL_ARG_NONNULL ((2)));
+_GL_CXXALIAS_RPL (frexp, double, (double x, int *expptr));
+# else
+_GL_CXXALIAS_SYS (frexp, double, (double x, int *expptr));
 # endif
+_GL_CXXALIASWARN (frexp);
 #elif defined GNULIB_POSIXCHECK
 # undef frexp
-# define frexp(x,e) \
-    (GL_LINK_WARNING ("frexp is unportable - " \
-                      "use gnulib module frexp for portability"), \
-     frexp (x, e))
+/* Assume frexp is always declared.  */
+_GL_WARN_ON_USE (frexp, "frexp is unportable - "
+                 "use gnulib module frexp for portability");
 #endif
 
 
-#if @GNULIB_MATHL@ || !@HAVE_DECL_ACOSL@
-extern long double acosl (long double x);
+#if @GNULIB_LOGB@
+# if !@HAVE_DECL_LOGB@
+_GL_EXTERN_C double logb (double x);
+# endif
+#elif defined GNULIB_POSIXCHECK
+# undef logb
+# if HAVE_RAW_DECL_LOGB
+_GL_WARN_ON_USE (logb, "logb is unportable - "
+                 "use gnulib module logb for portability");
+# endif
 #endif
-#if !@GNULIB_MATHL@ && defined GNULIB_POSIXCHECK
+
+
+#if @GNULIB_ACOSL@
+# if !@HAVE_ACOSL@ || !@HAVE_DECL_ACOSL@
+_GL_FUNCDECL_SYS (acosl, long double, (long double x));
+# endif
+_GL_CXXALIAS_SYS (acosl, long double, (long double x));
+_GL_CXXALIASWARN (acosl);
+#elif defined GNULIB_POSIXCHECK
 # undef acosl
-# define acosl(x) \
-    (GL_LINK_WARNING ("acosl is unportable - " \
-                      "use gnulib module mathl for portability"), \
-     acosl (x))
+# if HAVE_RAW_DECL_ACOSL
+_GL_WARN_ON_USE (acosl, "acosl is unportable - "
+                 "use gnulib module mathl for portability");
+# endif
 #endif
 
 
-#if @GNULIB_MATHL@ || !@HAVE_DECL_ASINL@
-extern long double asinl (long double x);
-#endif
-#if !@GNULIB_MATHL@ && defined GNULIB_POSIXCHECK
+#if @GNULIB_ASINL@
+# if !@HAVE_ASINL@ || !@HAVE_DECL_ASINL@
+_GL_FUNCDECL_SYS (asinl, long double, (long double x));
+# endif
+_GL_CXXALIAS_SYS (asinl, long double, (long double x));
+_GL_CXXALIASWARN (asinl);
+#elif defined GNULIB_POSIXCHECK
 # undef asinl
-# define asinl(x) \
-    (GL_LINK_WARNING ("asinl is unportable - " \
-                      "use gnulib module mathl for portability"), \
-     asinl (x))
+# if HAVE_RAW_DECL_ASINL
+_GL_WARN_ON_USE (asinl, "asinl is unportable - "
+                 "use gnulib module mathl for portability");
+# endif
 #endif
 
 
-#if @GNULIB_MATHL@ || !@HAVE_DECL_ATANL@
-extern long double atanl (long double x);
-#endif
-#if !@GNULIB_MATHL@ && defined GNULIB_POSIXCHECK
+#if @GNULIB_ATANL@
+# if !@HAVE_ATANL@ || !@HAVE_DECL_ATANL@
+_GL_FUNCDECL_SYS (atanl, long double, (long double x));
+# endif
+_GL_CXXALIAS_SYS (atanl, long double, (long double x));
+_GL_CXXALIASWARN (atanl);
+#elif defined GNULIB_POSIXCHECK
 # undef atanl
-# define atanl(x) \
-    (GL_LINK_WARNING ("atanl is unportable - " \
-                      "use gnulib module mathl for portability"), \
-     atanl (x))
+# if HAVE_RAW_DECL_ATANL
+_GL_WARN_ON_USE (atanl, "atanl is unportable - "
+                 "use gnulib module mathl for portability");
+# endif
 #endif
 
 
 #if @GNULIB_CEILF@
 # if @REPLACE_CEILF@
-#  define ceilf rpl_ceilf
-extern float ceilf (float x);
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   define ceilf rpl_ceilf
+#  endif
+_GL_FUNCDECL_RPL (ceilf, float, (float x));
+_GL_CXXALIAS_RPL (ceilf, float, (float x));
+# else
+#  if !@HAVE_DECL_CEILF@
+_GL_FUNCDECL_SYS (ceilf, float, (float x));
+#  endif
+_GL_CXXALIAS_SYS (ceilf, float, (float x));
 # endif
+_GL_CXXALIASWARN (ceilf);
 #elif defined GNULIB_POSIXCHECK
 # undef ceilf
-# define ceilf(x) \
-    (GL_LINK_WARNING ("ceilf is unportable - " \
-                      "use gnulib module ceilf for portability"), \
-     ceilf (x))
+# if HAVE_RAW_DECL_CEILF
+_GL_WARN_ON_USE (ceilf, "ceilf is unportable - "
+                 "use gnulib module ceilf for portability");
+# endif
 #endif
 
 #if @GNULIB_CEILL@
 # if @REPLACE_CEILL@
-#  define ceill rpl_ceill
-extern long double ceill (long double x);
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   define ceill rpl_ceill
+#  endif
+_GL_FUNCDECL_RPL (ceill, long double, (long double x));
+_GL_CXXALIAS_RPL (ceill, long double, (long double x));
+# else
+#  if !@HAVE_DECL_CEILL@
+_GL_FUNCDECL_SYS (ceill, long double, (long double x));
+#  endif
+_GL_CXXALIAS_SYS (ceill, long double, (long double x));
 # endif
+_GL_CXXALIASWARN (ceill);
 #elif defined GNULIB_POSIXCHECK
 # undef ceill
-# define ceill(x) \
-    (GL_LINK_WARNING ("ceill is unportable - " \
-                      "use gnulib module ceill for portability"), \
-     ceill (x))
+# if HAVE_RAW_DECL_CEILL
+_GL_WARN_ON_USE (ceill, "ceill is unportable - "
+                 "use gnulib module ceill for portability");
+# endif
 #endif
 
 
-#if @GNULIB_MATHL@ || !@HAVE_DECL_COSL@
-extern long double cosl (long double x);
-#endif
-#if !@GNULIB_MATHL@ && defined GNULIB_POSIXCHECK
+#if @GNULIB_COSL@
+# if !@HAVE_COSL@ || !@HAVE_DECL_COSL@
+_GL_FUNCDECL_SYS (cosl, long double, (long double x));
+# endif
+_GL_CXXALIAS_SYS (cosl, long double, (long double x));
+_GL_CXXALIASWARN (cosl);
+#elif defined GNULIB_POSIXCHECK
 # undef cosl
-# define cosl(x) \
-    (GL_LINK_WARNING ("cosl is unportable - " \
-                      "use gnulib module mathl for portability"), \
-     cosl (x))
+# if HAVE_RAW_DECL_COSL
+_GL_WARN_ON_USE (cosl, "cosl is unportable - "
+                 "use gnulib module mathl for portability");
+# endif
 #endif
 
 
-#if @GNULIB_MATHL@ || !@HAVE_DECL_EXPL@
-extern long double expl (long double x);
-#endif
-#if !@GNULIB_MATHL@ && defined GNULIB_POSIXCHECK
+#if @GNULIB_EXPL@
+# if !@HAVE_EXPL@ || !@HAVE_DECL_EXPL@
+_GL_FUNCDECL_SYS (expl, long double, (long double x));
+# endif
+_GL_CXXALIAS_SYS (expl, long double, (long double x));
+_GL_CXXALIASWARN (expl);
+#elif defined GNULIB_POSIXCHECK
 # undef expl
-# define expl(x) \
-    (GL_LINK_WARNING ("expl is unportable - " \
-                      "use gnulib module mathl for portability"), \
-     expl (x))
+# if HAVE_RAW_DECL_EXPL
+_GL_WARN_ON_USE (expl, "expl is unportable - "
+                 "use gnulib module mathl for portability");
+# endif
 #endif
 
 
 #if @GNULIB_FLOORF@
 # if @REPLACE_FLOORF@
-#  define floorf rpl_floorf
-extern float floorf (float x);
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   define floorf rpl_floorf
+#  endif
+_GL_FUNCDECL_RPL (floorf, float, (float x));
+_GL_CXXALIAS_RPL (floorf, float, (float x));
+#else
+#  if !@HAVE_DECL_FLOORF@
+_GL_FUNCDECL_SYS (floorf, float, (float x));
+#  endif
+_GL_CXXALIAS_SYS (floorf, float, (float x));
 # endif
+_GL_CXXALIASWARN (floorf);
 #elif defined GNULIB_POSIXCHECK
 # undef floorf
-# define floorf(x) \
-    (GL_LINK_WARNING ("floorf is unportable - " \
-                      "use gnulib module floorf for portability"), \
-     floorf (x))
+# if HAVE_RAW_DECL_FLOORF
+_GL_WARN_ON_USE (floorf, "floorf is unportable - "
+                 "use gnulib module floorf for portability");
+# endif
 #endif
 
 #if @GNULIB_FLOORL@
 # if @REPLACE_FLOORL@
-#  define floorl rpl_floorl
-extern long double floorl (long double x);
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   define floorl rpl_floorl
+#  endif
+_GL_FUNCDECL_RPL (floorl, long double, (long double x));
+_GL_CXXALIAS_RPL (floorl, long double, (long double x));
+# else
+#  if !@HAVE_DECL_FLOORL@
+_GL_FUNCDECL_SYS (floorl, long double, (long double x));
+#  endif
+_GL_CXXALIAS_SYS (floorl, long double, (long double x));
 # endif
+_GL_CXXALIASWARN (floorl);
 #elif defined GNULIB_POSIXCHECK
 # undef floorl
-# define floorl(x) \
-    (GL_LINK_WARNING ("floorl is unportable - " \
-                      "use gnulib module floorl for portability"), \
-     floorl (x))
+# if HAVE_RAW_DECL_FLOORL
+_GL_WARN_ON_USE (floorl, "floorl is unportable - "
+                 "use gnulib module floorl for portability");
+# endif
 #endif
 
 
@@ -207,173 +307,247 @@ extern long double floorl (long double x);
      If x is infinite or NaN: mantissa = x, exp unspecified.
    Store exp in *EXPPTR and return mantissa.  */
 #if @GNULIB_FREXPL@ && @REPLACE_FREXPL@
-# define frexpl rpl_frexpl
+# if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#  define frexpl rpl_frexpl
+# endif
+_GL_FUNCDECL_RPL (frexpl, long double,
+                  (long double x, int *expptr) _GL_ARG_NONNULL ((2)));
+_GL_CXXALIAS_RPL (frexpl, long double, (long double x, int *expptr));
+#else
+# if !@HAVE_DECL_FREXPL@
+_GL_FUNCDECL_SYS (frexpl, long double,
+                  (long double x, int *expptr) _GL_ARG_NONNULL ((2)));
+# endif
+# if @GNULIB_FREXPL@
+_GL_CXXALIAS_SYS (frexpl, long double, (long double x, int *expptr));
+# endif
 #endif
-#if (@GNULIB_FREXPL@ && @REPLACE_FREXPL@) || !@HAVE_DECL_FREXPL@
-extern long double frexpl (long double x, int *expptr);
+#if @GNULIB_FREXPL@ && !(@REPLACE_FREXPL@ && !@HAVE_DECL_FREXPL@)
+_GL_CXXALIASWARN (frexpl);
 #endif
 #if !@GNULIB_FREXPL@ && defined GNULIB_POSIXCHECK
 # undef frexpl
-# define frexpl(x,e) \
-    (GL_LINK_WARNING ("frexpl is unportable - " \
-                      "use gnulib module frexpl for portability"), \
-     frexpl (x, e))
+# if HAVE_RAW_DECL_FREXPL
+_GL_WARN_ON_USE (frexpl, "frexpl is unportable - "
+                 "use gnulib module frexpl for portability");
+# endif
 #endif
 
 
 /* Return x * 2^exp.  */
 #if @GNULIB_LDEXPL@ && @REPLACE_LDEXPL@
-# define ldexpl rpl_ldexpl
+# if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#  define ldexpl rpl_ldexpl
+# endif
+_GL_FUNCDECL_RPL (ldexpl, long double, (long double x, int exp));
+_GL_CXXALIAS_RPL (ldexpl, long double, (long double x, int exp));
+#else
+# if !@HAVE_DECL_LDEXPL@
+_GL_FUNCDECL_SYS (ldexpl, long double, (long double x, int exp));
+# endif
+# if @GNULIB_LDEXPL@
+_GL_CXXALIAS_SYS (ldexpl, long double, (long double x, int exp));
+# endif
 #endif
-#if (@GNULIB_LDEXPL@ && @REPLACE_LDEXPL@) || !@HAVE_DECL_LDEXPL@
-extern long double ldexpl (long double x, int exp);
+#if @GNULIB_LDEXPL@
+_GL_CXXALIASWARN (ldexpl);
 #endif
 #if !@GNULIB_LDEXPL@ && defined GNULIB_POSIXCHECK
 # undef ldexpl
-# define ldexpl(x,e) \
-    (GL_LINK_WARNING ("ldexpl is unportable - " \
-                      "use gnulib module ldexpl for portability"), \
-     ldexpl (x, e))
+# if HAVE_RAW_DECL_LDEXPL
+_GL_WARN_ON_USE (ldexpl, "ldexpl is unportable - "
+                 "use gnulib module ldexpl for portability");
+# endif
 #endif
 
 
-#if @GNULIB_MATHL@ || !@HAVE_DECL_LOGL@
-extern long double logl (long double x);
-#endif
-#if !@GNULIB_MATHL@ && defined GNULIB_POSIXCHECK
+#if @GNULIB_LOGL@
+# if !@HAVE_LOGL@ || !@HAVE_DECL_LOGL@
+_GL_FUNCDECL_SYS (logl, long double, (long double x));
+# endif
+_GL_CXXALIAS_SYS (logl, long double, (long double x));
+_GL_CXXALIASWARN (logl);
+#elif defined GNULIB_POSIXCHECK
 # undef logl
-# define logl(x) \
-    (GL_LINK_WARNING ("logl is unportable - " \
-                      "use gnulib module mathl for portability"), \
-     logl (x))
+# if HAVE_RAW_DECL_LOGL
+_GL_WARN_ON_USE (logl, "logl is unportable - "
+                 "use gnulib module mathl for portability");
+# endif
 #endif
 
 
 #if @GNULIB_ROUNDF@
 # if @REPLACE_ROUNDF@
-#  undef roundf
-#  define roundf rpl_roundf
-extern float roundf (float x);
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef roundf
+#   define roundf rpl_roundf
+#  endif
+_GL_FUNCDECL_RPL (roundf, float, (float x));
+_GL_CXXALIAS_RPL (roundf, float, (float x));
+# else
+#  if !@HAVE_DECL_ROUNDF@
+_GL_FUNCDECL_SYS (roundf, float, (float x));
+#  endif
+_GL_CXXALIAS_SYS (roundf, float, (float x));
 # endif
+_GL_CXXALIASWARN (roundf);
 #elif defined GNULIB_POSIXCHECK
 # undef roundf
-# define roundf(x) \
-    (GL_LINK_WARNING ("roundf is unportable - " \
-                      "use gnulib module roundf for portability"), \
-     roundf (x))
+# if HAVE_RAW_DECL_ROUNDF
+_GL_WARN_ON_USE (roundf, "roundf is unportable - "
+                 "use gnulib module roundf for portability");
+# endif
 #endif
 
 #if @GNULIB_ROUND@
 # if @REPLACE_ROUND@
-#  undef round
-#  define round rpl_round
-extern double round (double x);
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef round
+#   define round rpl_round
+#  endif
+_GL_FUNCDECL_RPL (round, double, (double x));
+_GL_CXXALIAS_RPL (round, double, (double x));
+# else
+#  if !@HAVE_DECL_ROUND@
+_GL_FUNCDECL_SYS (round, double, (double x));
+#  endif
+_GL_CXXALIAS_SYS (round, double, (double x));
 # endif
+_GL_CXXALIASWARN (round);
 #elif defined GNULIB_POSIXCHECK
 # undef round
-# define round(x) \
-    (GL_LINK_WARNING ("round is unportable - " \
-                      "use gnulib module round for portability"), \
-     round (x))
+# if HAVE_RAW_DECL_ROUND
+_GL_WARN_ON_USE (round, "round is unportable - "
+                 "use gnulib module round for portability");
+# endif
 #endif
 
 #if @GNULIB_ROUNDL@
 # if @REPLACE_ROUNDL@
-#  undef roundl
-#  define roundl rpl_roundl
-extern long double roundl (long double x);
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef roundl
+#   define roundl rpl_roundl
+#  endif
+_GL_FUNCDECL_RPL (roundl, long double, (long double x));
+_GL_CXXALIAS_RPL (roundl, long double, (long double x));
+# else
+#  if !@HAVE_DECL_ROUNDL@
+_GL_FUNCDECL_SYS (roundl, long double, (long double x));
+#  endif
+_GL_CXXALIAS_SYS (roundl, long double, (long double x));
 # endif
+_GL_CXXALIASWARN (roundl);
 #elif defined GNULIB_POSIXCHECK
 # undef roundl
-# define roundl(x) \
-    (GL_LINK_WARNING ("roundl is unportable - " \
-                      "use gnulib module roundl for portability"), \
-     roundl (x))
+# if HAVE_RAW_DECL_ROUNDL
+_GL_WARN_ON_USE (roundl, "roundl is unportable - "
+                 "use gnulib module roundl for portability");
+# endif
 #endif
 
 
-#if @GNULIB_MATHL@ || !@HAVE_DECL_SINL@
-extern long double sinl (long double x);
-#endif
-#if !@GNULIB_MATHL@ && defined GNULIB_POSIXCHECK
+#if @GNULIB_SINL@
+# if !@HAVE_SINL@ || !@HAVE_DECL_SINL@
+_GL_FUNCDECL_SYS (sinl, long double, (long double x));
+# endif
+_GL_CXXALIAS_SYS (sinl, long double, (long double x));
+_GL_CXXALIASWARN (sinl);
+#elif defined GNULIB_POSIXCHECK
 # undef sinl
-# define sinl(x) \
-    (GL_LINK_WARNING ("sinl is unportable - " \
-                      "use gnulib module mathl for portability"), \
-     sinl (x))
+# if HAVE_RAW_DECL_SINL
+_GL_WARN_ON_USE (sinl, "sinl is unportable - "
+                 "use gnulib module mathl for portability");
+# endif
 #endif
 
 
-#if @GNULIB_MATHL@ || !@HAVE_DECL_SQRTL@
-extern long double sqrtl (long double x);
-#endif
-#if !@GNULIB_MATHL@ && defined GNULIB_POSIXCHECK
+#if @GNULIB_SQRTL@
+# if !@HAVE_SQRTL@ || !@HAVE_DECL_SQRTL@
+_GL_FUNCDECL_SYS (sqrtl, long double, (long double x));
+# endif
+_GL_CXXALIAS_SYS (sqrtl, long double, (long double x));
+_GL_CXXALIASWARN (sqrtl);
+#elif defined GNULIB_POSIXCHECK
 # undef sqrtl
-# define sqrtl(x) \
-    (GL_LINK_WARNING ("sqrtl is unportable - " \
-                      "use gnulib module mathl for portability"), \
-     sqrtl (x))
+# if HAVE_RAW_DECL_SQRTL
+_GL_WARN_ON_USE (sqrtl, "sqrtl is unportable - "
+                 "use gnulib module mathl for portability");
+# endif
 #endif
 
 
-#if @GNULIB_MATHL@ || !@HAVE_DECL_TANL@
-extern long double tanl (long double x);
-#endif
-#if !@GNULIB_MATHL@ && defined GNULIB_POSIXCHECK
+#if @GNULIB_TANL@
+# if !@HAVE_TANL@ || !@HAVE_DECL_TANL@
+_GL_FUNCDECL_SYS (tanl, long double, (long double x));
+# endif
+_GL_CXXALIAS_SYS (tanl, long double, (long double x));
+_GL_CXXALIASWARN (tanl);
+#elif defined GNULIB_POSIXCHECK
 # undef tanl
-# define tanl(x) \
-    (GL_LINK_WARNING ("tanl is unportable - " \
-                      "use gnulib module mathl for portability"), \
-     tanl (x))
+# if HAVE_RAW_DECL_TANL
+_GL_WARN_ON_USE (tanl, "tanl is unportable - "
+                 "use gnulib module mathl for portability");
+# endif
 #endif
 
 
 #if @GNULIB_TRUNCF@
 # if !@HAVE_DECL_TRUNCF@
-#  define truncf rpl_truncf
-extern float truncf (float x);
+_GL_FUNCDECL_SYS (truncf, float, (float x));
 # endif
+_GL_CXXALIAS_SYS (truncf, float, (float x));
+_GL_CXXALIASWARN (truncf);
 #elif defined GNULIB_POSIXCHECK
 # undef truncf
-# define truncf(x) \
-    (GL_LINK_WARNING ("truncf is unportable - " \
-                      "use gnulib module truncf for portability"), \
-     truncf (x))
+# if HAVE_RAW_DECL_TRUNCF
+_GL_WARN_ON_USE (truncf, "truncf is unportable - "
+                 "use gnulib module truncf for portability");
+# endif
 #endif
 
 #if @GNULIB_TRUNC@
 # if !@HAVE_DECL_TRUNC@
-#  define trunc rpl_trunc
-extern double trunc (double x);
+_GL_FUNCDECL_SYS (trunc, double, (double x));
 # endif
+_GL_CXXALIAS_SYS (trunc, double, (double x));
+_GL_CXXALIASWARN (trunc);
 #elif defined GNULIB_POSIXCHECK
 # undef trunc
-# define trunc(x) \
-    (GL_LINK_WARNING ("trunc is unportable - " \
-                      "use gnulib module trunc for portability"), \
-     trunc (x))
+# if HAVE_RAW_DECL_TRUNC
+_GL_WARN_ON_USE (trunc, "trunc is unportable - "
+                 "use gnulib module trunc for portability");
+# endif
 #endif
 
 #if @GNULIB_TRUNCL@
 # if @REPLACE_TRUNCL@
-#  undef truncl
-#  define truncl rpl_truncl
-extern long double truncl (long double x);
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef truncl
+#   define truncl rpl_truncl
+#  endif
+_GL_FUNCDECL_RPL (truncl, long double, (long double x));
+_GL_CXXALIAS_RPL (truncl, long double, (long double x));
+# else
+#  if !@HAVE_DECL_TRUNCL@
+_GL_FUNCDECL_SYS (truncl, long double, (long double x));
+#  endif
+_GL_CXXALIAS_SYS (truncl, long double, (long double x));
 # endif
+_GL_CXXALIASWARN (truncl);
 #elif defined GNULIB_POSIXCHECK
 # undef truncl
-# define truncl(x) \
-    (GL_LINK_WARNING ("truncl is unportable - " \
-                      "use gnulib module truncl for portability"), \
-     truncl (x))
+# if HAVE_RAW_DECL_TRUNCL
+_GL_WARN_ON_USE (truncl, "truncl is unportable - "
+                 "use gnulib module truncl for portability");
+# endif
 #endif
 
 
 #if @GNULIB_ISFINITE@
 # if @REPLACE_ISFINITE@
-extern int gl_isfinitef (float x);
-extern int gl_isfinited (double x);
-extern int gl_isfinitel (long double x);
+_GL_EXTERN_C int gl_isfinitef (float x);
+_GL_EXTERN_C int gl_isfinited (double x);
+_GL_EXTERN_C int gl_isfinitel (long double x);
 #  undef isfinite
 #  define isfinite(x) \
    (sizeof (x) == sizeof (long double) ? gl_isfinitel (x) : \
@@ -381,15 +555,19 @@ extern int gl_isfinitel (long double x);
     gl_isfinitef (x))
 # endif
 #elif defined GNULIB_POSIXCHECK
-  /* How to override a macro?  */
+# if defined isfinite
+_GL_WARN_REAL_FLOATING_DECL (isfinite);
+#  undef isfinite
+#  define isfinite(x) _GL_WARN_REAL_FLOATING_IMPL (isfinite, x)
+# endif
 #endif
 
 
 #if @GNULIB_ISINF@
 # if @REPLACE_ISINF@
-extern int gl_isinff (float x);
-extern int gl_isinfd (double x);
-extern int gl_isinfl (long double x);
+_GL_EXTERN_C int gl_isinff (float x);
+_GL_EXTERN_C int gl_isinfd (double x);
+_GL_EXTERN_C int gl_isinfl (long double x);
 #  undef isinf
 #  define isinf(x) \
    (sizeof (x) == sizeof (long double) ? gl_isinfl (x) : \
@@ -397,7 +575,11 @@ extern int gl_isinfl (long double x);
     gl_isinff (x))
 # endif
 #elif defined GNULIB_POSIXCHECK
-  /* How to override a macro?  */
+# if defined isinf
+_GL_WARN_REAL_FLOATING_DECL (isinf);
+#  undef isinf
+#  define isinf(x) _GL_WARN_REAL_FLOATING_IMPL (isinf, x)
+# endif
 #endif
 
 
@@ -406,7 +588,6 @@ extern int gl_isinfl (long double x);
 # if @HAVE_ISNANF@
 /* The original <math.h> included above provides a declaration of isnan macro
    or (older) isnanf function.  */
-#  include <math.h>
 #  if __GNUC__ >= 4
     /* GCC 4.0 and newer provides three built-ins for isnan.  */
 #   undef isnanf
@@ -419,7 +600,7 @@ extern int gl_isinfl (long double x);
 /* Test whether X is a NaN.  */
 #  undef isnanf
 #  define isnanf rpl_isnanf
-extern int isnanf (float x);
+_GL_EXTERN_C int isnanf (float x);
 # endif
 #endif
 
@@ -429,7 +610,6 @@ extern int isnanf (float x);
    to 'double' numbers earlier but now is a type-generic macro.  */
 # if @HAVE_ISNAND@
 /* The original <math.h> included above provides a declaration of isnan macro.  */
-#  include <math.h>
 #  if __GNUC__ >= 4
     /* GCC 4.0 and newer provides three built-ins for isnan.  */
 #   undef isnand
@@ -442,7 +622,7 @@ extern int isnanf (float x);
 /* Test whether X is a NaN.  */
 #  undef isnand
 #  define isnand rpl_isnand
-extern int isnand (double x);
+_GL_EXTERN_C int isnand (double x);
 # endif
 #endif
 
@@ -450,7 +630,6 @@ extern int isnand (double x);
 /* Test for NaN for 'long double' numbers.  */
 # if @HAVE_ISNANL@
 /* The original <math.h> included above provides a declaration of isnan macro or (older) isnanl function.  */
-#  include <math.h>
 #  if __GNUC__ >= 4
     /* GCC 4.0 and newer provides three built-ins for isnan.  */
 #   undef isnanl
@@ -463,7 +642,7 @@ extern int isnand (double x);
 /* Test whether X is a NaN.  */
 #  undef isnanl
 #  define isnanl rpl_isnanl
-extern int isnanl (long double x);
+_GL_EXTERN_C int isnanl (long double x);
 # endif
 #endif
 
@@ -477,19 +656,19 @@ extern int isnanl (long double x);
 #  if @HAVE_ISNANF@ && __GNUC__ >= 4
 #   define gl_isnan_f(x) __builtin_isnan ((float)(x))
 #  else
-extern int rpl_isnanf (float x);
+_GL_EXTERN_C int rpl_isnanf (float x);
 #   define gl_isnan_f(x) rpl_isnanf (x)
 #  endif
 #  if @HAVE_ISNAND@ && __GNUC__ >= 4
 #   define gl_isnan_d(x) __builtin_isnan ((double)(x))
 #  else
-extern int rpl_isnand (double x);
+_GL_EXTERN_C int rpl_isnand (double x);
 #   define gl_isnan_d(x) rpl_isnand (x)
 #  endif
 #  if @HAVE_ISNANL@ && __GNUC__ >= 4
 #   define gl_isnan_l(x) __builtin_isnan ((long double)(x))
 #  else
-extern int rpl_isnanl (long double x);
+_GL_EXTERN_C int rpl_isnanl (long double x);
 #   define gl_isnan_l(x) rpl_isnanl (x)
 #  endif
 #  undef isnan
@@ -499,7 +678,11 @@ extern int rpl_isnanl (long double x);
     gl_isnan_f (x))
 # endif
 #elif defined GNULIB_POSIXCHECK
-  /* How to override a macro?  */
+# if defined isnan
+_GL_WARN_REAL_FLOATING_DECL (isnan);
+#  undef isnan
+#  define isnan(x) _GL_WARN_REAL_FLOATING_IMPL (isnan, x)
+# endif
 #endif
 
 
@@ -514,38 +697,38 @@ extern int rpl_isnanl (long double x);
 # endif
 # if @REPLACE_SIGNBIT@
 #  undef signbit
-extern int gl_signbitf (float arg);
-extern int gl_signbitd (double arg);
-extern int gl_signbitl (long double arg);
+_GL_EXTERN_C int gl_signbitf (float arg);
+_GL_EXTERN_C int gl_signbitd (double arg);
+_GL_EXTERN_C int gl_signbitl (long double arg);
 #  if __GNUC__ >= 2 && !__STRICT_ANSI__
 #   if defined FLT_SIGNBIT_WORD && defined FLT_SIGNBIT_BIT && !defined gl_signbitf
 #    define gl_signbitf_OPTIMIZED_MACRO
 #    define gl_signbitf(arg) \
-       ({ union { float _value;						\
+       ({ union { float _value;                                         \
                   unsigned int _word[(sizeof (float) + sizeof (unsigned int) - 1) / sizeof (unsigned int)]; \
-                } _m;							\
-          _m._value = (arg);						\
-          (_m._word[FLT_SIGNBIT_WORD] >> FLT_SIGNBIT_BIT) & 1;		\
+                } _m;                                                   \
+          _m._value = (arg);                                            \
+          (_m._word[FLT_SIGNBIT_WORD] >> FLT_SIGNBIT_BIT) & 1;          \
         })
 #   endif
 #   if defined DBL_SIGNBIT_WORD && defined DBL_SIGNBIT_BIT && !defined gl_signbitd
 #    define gl_signbitd_OPTIMIZED_MACRO
 #    define gl_signbitd(arg) \
-       ({ union { double _value;						\
+       ({ union { double _value;                                                \
                   unsigned int _word[(sizeof (double) + sizeof (unsigned int) - 1) / sizeof (unsigned int)]; \
-                } _m;							\
-          _m._value = (arg);						\
-          (_m._word[DBL_SIGNBIT_WORD] >> DBL_SIGNBIT_BIT) & 1;		\
+                } _m;                                                   \
+          _m._value = (arg);                                            \
+          (_m._word[DBL_SIGNBIT_WORD] >> DBL_SIGNBIT_BIT) & 1;          \
         })
 #   endif
 #   if defined LDBL_SIGNBIT_WORD && defined LDBL_SIGNBIT_BIT && !defined gl_signbitl
 #    define gl_signbitl_OPTIMIZED_MACRO
 #    define gl_signbitl(arg) \
-       ({ union { long double _value;					\
+       ({ union { long double _value;                                   \
                   unsigned int _word[(sizeof (long double) + sizeof (unsigned int) - 1) / sizeof (unsigned int)]; \
-                } _m;							\
-          _m._value = (arg);						\
-          (_m._word[LDBL_SIGNBIT_WORD] >> LDBL_SIGNBIT_BIT) & 1;		\
+                } _m;                                                   \
+          _m._value = (arg);                                            \
+          (_m._word[LDBL_SIGNBIT_WORD] >> LDBL_SIGNBIT_BIT) & 1;                \
         })
 #   endif
 #  endif
@@ -555,13 +738,13 @@ extern int gl_signbitl (long double arg);
     gl_signbitf (x))
 # endif
 #elif defined GNULIB_POSIXCHECK
-  /* How to override a macro?  */
+# if defined signbit
+_GL_WARN_REAL_FLOATING_DECL (signbit);
+#  undef signbit
+#  define signbit(x) _GL_WARN_REAL_FLOATING_IMPL (signbit, x)
+# endif
 #endif
 
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* _GL_MATH_H */
 #endif /* _GL_MATH_H */

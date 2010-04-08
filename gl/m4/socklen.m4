@@ -1,5 +1,5 @@
-# socklen.m4 serial 6
-dnl Copyright (C) 2005, 2006, 2007 Free Software Foundation, Inc.
+# socklen.m4 serial 7
+dnl Copyright (C) 2005, 2006, 2007, 2009, 2010 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -20,30 +20,30 @@ AC_DEFUN([gl_TYPE_SOCKLEN_T],
    AC_CHECK_TYPE([socklen_t], ,
      [AC_MSG_CHECKING([for socklen_t equivalent])
       AC_CACHE_VAL([gl_cv_socklen_t_equiv],
-	[# Systems have either "struct sockaddr *" or
-	 # "void *" as the second argument to getpeername
-	 gl_cv_socklen_t_equiv=
-	 for arg2 in "struct sockaddr" void; do
-	   for t in int size_t "unsigned int" "long int" "unsigned long int"; do
-	     AC_TRY_COMPILE(
-	       [#include <sys/types.h>
-		#include <sys/socket.h>
+        [# Systems have either "struct sockaddr *" or
+         # "void *" as the second argument to getpeername
+         gl_cv_socklen_t_equiv=
+         for arg2 in "struct sockaddr" void; do
+           for t in int size_t "unsigned int" "long int" "unsigned long int"; do
+             AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+                 [[#include <sys/types.h>
+                   #include <sys/socket.h>
 
-		int getpeername (int, $arg2 *, $t *);],
-	       [$t len;
-		getpeername (0, 0, &len);],
-	       [gl_cv_socklen_t_equiv="$t"])
-	     test "$gl_cv_socklen_t_equiv" != "" && break
-	   done
-	   test "$gl_cv_socklen_t_equiv" != "" && break
-	 done
+                   int getpeername (int, $arg2 *, $t *);]],
+                 [[$t len;
+                  getpeername (0, 0, &len);]])],
+               [gl_cv_socklen_t_equiv="$t"])
+             test "$gl_cv_socklen_t_equiv" != "" && break
+           done
+           test "$gl_cv_socklen_t_equiv" != "" && break
+         done
       ])
       if test "$gl_cv_socklen_t_equiv" = ""; then
-	AC_MSG_ERROR([Cannot find a type to use in place of socklen_t])
+        AC_MSG_ERROR([Cannot find a type to use in place of socklen_t])
       fi
       AC_MSG_RESULT([$gl_cv_socklen_t_equiv])
       AC_DEFINE_UNQUOTED([socklen_t], [$gl_cv_socklen_t_equiv],
-	[type to use in place of socklen_t if not defined])],
+        [type to use in place of socklen_t if not defined])],
      [#include <sys/types.h>
       #if HAVE_SYS_SOCKET_H
       # include <sys/socket.h>

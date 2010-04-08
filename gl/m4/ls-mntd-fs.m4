@@ -1,7 +1,7 @@
-# serial 27
+# serial 28
 # How to list mounted file systems.
 
-# Copyright (C) 1998-2004, 2006, 2009 Free Software Foundation, Inc.
+# Copyright (C) 1998-2004, 2006, 2009-2010 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -84,7 +84,7 @@ if test -z "$ac_list_mounted_fs"; then
 yes
 #endif
         ], [test $ac_cv_func_listmntent = yes \
-	    && fu_cv_sys_mounted_cray_listmntent=yes]
+            && fu_cv_sys_mounted_cray_listmntent=yes]
       )
     ]
   )
@@ -101,14 +101,14 @@ if test -z "$ac_list_mounted_fs"; then
   # AIX.
   AC_MSG_CHECKING([for mntctl function and struct vmount])
   AC_CACHE_VAL([fu_cv_sys_mounted_vmount],
-  [AC_TRY_CPP([#include <fshelp.h>],
-    fu_cv_sys_mounted_vmount=yes,
-    fu_cv_sys_mounted_vmount=no)])
+  [AC_PREPROC_IFELSE([AC_LANG_SOURCE([[#include <fshelp.h>]])],
+    [fu_cv_sys_mounted_vmount=yes],
+    [fu_cv_sys_mounted_vmount=no])])
   AC_MSG_RESULT([$fu_cv_sys_mounted_vmount])
   if test $fu_cv_sys_mounted_vmount = yes; then
     ac_list_mounted_fs=found
     AC_DEFINE([MOUNTED_VMOUNT], [1],
-	[Define if there is a function named mntctl that can be used to read
+        [Define if there is a function named mntctl that can be used to read
          the list of mounted file systems, and there is a system header file
          that declares `struct vmount.'  (AIX)])
   fi
@@ -123,27 +123,27 @@ if test $ac_cv_func_getmntent = yes; then
     # 4.3BSD, SunOS, HP-UX, Dynix, Irix
     AC_MSG_CHECKING([for one-argument getmntent function])
     AC_CACHE_VAL([fu_cv_sys_mounted_getmntent1],
-		 [AC_TRY_COMPILE([
+                 [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 /* SunOS 4.1.x /usr/include/mntent.h needs this for FILE */
 #include <stdio.h>
 
 #include <mntent.h>
 #if !defined MOUNTED
-# if defined _PATH_MOUNTED	/* GNU libc  */
+# if defined _PATH_MOUNTED      /* GNU libc  */
 #  define MOUNTED _PATH_MOUNTED
 # endif
-# if defined MNT_MNTTAB	/* HP-UX.  */
+# if defined MNT_MNTTAB /* HP-UX.  */
 #  define MOUNTED MNT_MNTTAB
 # endif
-# if defined MNTTABNAME	/* Dynix.  */
+# if defined MNTTABNAME /* Dynix.  */
 #  define MOUNTED MNTTABNAME
 # endif
 #endif
-],
-                    [ struct mntent *mnt = 0; char *table = MOUNTED;
-		      if (sizeof mnt && sizeof table) return 0;],
-		    fu_cv_sys_mounted_getmntent1=yes,
-		    fu_cv_sys_mounted_getmntent1=no)])
+]],
+                      [[ struct mntent *mnt = 0; char *table = MOUNTED;
+                         if (sizeof mnt && sizeof table) return 0;]])],
+                    [fu_cv_sys_mounted_getmntent1=yes],
+                    [fu_cv_sys_mounted_getmntent1=no])])
     AC_MSG_RESULT([$fu_cv_sys_mounted_getmntent1])
     if test $fu_cv_sys_mounted_getmntent1 = yes; then
       ac_list_mounted_fs=found
@@ -179,25 +179,25 @@ if test -z "$ac_list_mounted_fs"; then
 
   AC_MSG_CHECKING([for getfsstat function])
   AC_CACHE_VAL([fu_cv_sys_mounted_getfsstat],
-  [AC_TRY_LINK([
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
 #if HAVE_STRUCT_FSSTAT_F_FSTYPENAME
 # define FS_TYPE(Ent) ((Ent).f_fstypename)
 #else
 # define FS_TYPE(Ent) mnt_names[(Ent).f_type]
 #endif
-]$getfsstat_includes
+$getfsstat_includes]]
 ,
-  [struct statfs *stats;
-   int numsys = getfsstat ((struct statfs *)0, 0L, MNT_WAIT);
-   char *t = FS_TYPE (*stats); ],
-    fu_cv_sys_mounted_getfsstat=yes,
-    fu_cv_sys_mounted_getfsstat=no)])
+      [[struct statfs *stats;
+        int numsys = getfsstat ((struct statfs *)0, 0L, MNT_WAIT);
+        char *t = FS_TYPE (*stats); ]])],
+    [fu_cv_sys_mounted_getfsstat=yes],
+    [fu_cv_sys_mounted_getfsstat=no])])
   AC_MSG_RESULT([$fu_cv_sys_mounted_getfsstat])
   if test $fu_cv_sys_mounted_getfsstat = yes; then
     ac_list_mounted_fs=found
     AC_DEFINE([MOUNTED_GETFSSTAT], [1],
-	      [Define if there is a function named getfsstat for reading the
+              [Define if there is a function named getfsstat for reading the
                list of mounted file systems.  (DEC Alpha running OSF/1)])
   fi
 fi
@@ -206,12 +206,12 @@ if test -z "$ac_list_mounted_fs"; then
   # SVR3
   AC_MSG_CHECKING([for FIXME existence of three headers])
   AC_CACHE_VAL([fu_cv_sys_mounted_fread_fstyp],
-    [AC_TRY_CPP([
+    [AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
 #include <sys/statfs.h>
 #include <sys/fstyp.h>
-#include <mnttab.h>],
-		fu_cv_sys_mounted_fread_fstyp=yes,
-		fu_cv_sys_mounted_fread_fstyp=no)])
+#include <mnttab.h>]])],
+                       [fu_cv_sys_mounted_fread_fstyp=yes],
+                       [fu_cv_sys_mounted_fread_fstyp=no])])
   AC_MSG_RESULT([$fu_cv_sys_mounted_fread_fstyp])
   if test $fu_cv_sys_mounted_fread_fstyp = yes; then
     ac_list_mounted_fs=found
@@ -228,15 +228,15 @@ if test -z "$ac_list_mounted_fs"; then
   AC_CACHE_VAL([fu_cv_sys_mounted_getmntinfo],
     [
       test "$ac_cv_func_getmntinfo" = yes \
-	  && fu_cv_sys_mounted_getmntinfo=yes \
-	  || fu_cv_sys_mounted_getmntinfo=no
+          && fu_cv_sys_mounted_getmntinfo=yes \
+          || fu_cv_sys_mounted_getmntinfo=no
     ])
   AC_MSG_RESULT([$fu_cv_sys_mounted_getmntinfo])
   if test $fu_cv_sys_mounted_getmntinfo = yes; then
     AC_MSG_CHECKING([whether getmntinfo returns statvfs structures])
     AC_CACHE_VAL([fu_cv_sys_mounted_getmntinfo2],
       [
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #if HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
@@ -248,7 +248,7 @@ if test -z "$ac_list_mounted_fs"; then
 # include <sys/statvfs.h>
 #endif
 extern int getmntinfo (struct statfs **, int);
-          ], [],
+            ]], [])],
           [fu_cv_sys_mounted_getmntinfo2=no],
           [fu_cv_sys_mounted_getmntinfo2=yes])
       ])
@@ -256,13 +256,13 @@ extern int getmntinfo (struct statfs **, int);
     if test $fu_cv_sys_mounted_getmntinfo2 = no; then
       ac_list_mounted_fs=found
       AC_DEFINE([MOUNTED_GETMNTINFO], [1],
-	        [Define if there is a function named getmntinfo for reading the
+                [Define if there is a function named getmntinfo for reading the
                  list of mounted file systems and it returns an array of
                  'struct statfs'.  (4.4BSD, Darwin)])
     else
       ac_list_mounted_fs=found
       AC_DEFINE([MOUNTED_GETMNTINFO2], [1],
-	        [Define if there is a function named getmntinfo for reading the
+                [Define if there is a function named getmntinfo for reading the
                  list of mounted file systems and it returns an array of
                  'struct statvfs'.  (NetBSD 3.0)])
     fi
@@ -273,11 +273,11 @@ if test -z "$ac_list_mounted_fs"; then
   # Ultrix
   AC_MSG_CHECKING([for getmnt function])
   AC_CACHE_VAL([fu_cv_sys_mounted_getmnt],
-    [AC_TRY_CPP([
+    [AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
 #include <sys/fs_types.h>
-#include <sys/mount.h>],
-		fu_cv_sys_mounted_getmnt=yes,
-		fu_cv_sys_mounted_getmnt=no)])
+#include <sys/mount.h>]])],
+                       [fu_cv_sys_mounted_getmnt=yes],
+                       [fu_cv_sys_mounted_getmnt=no])])
   AC_MSG_RESULT([$fu_cv_sys_mounted_getmnt])
   if test $fu_cv_sys_mounted_getmnt = yes; then
     ac_list_mounted_fs=found
@@ -294,7 +294,7 @@ if test -z "$ac_list_mounted_fs"; then
   AC_MSG_CHECKING([for BEOS mounted file system support functions])
   if test $ac_cv_header_fs_info_h = yes \
       && test $ac_cv_func_next_dev = yes \
-	&& test $ac_cv_func_fs_stat_dev = yes; then
+        && test $ac_cv_func_fs_stat_dev = yes; then
     fu_result=yes
   else
     fu_result=no
@@ -312,14 +312,14 @@ if test -z "$ac_list_mounted_fs"; then
   # SVR2
   AC_MSG_CHECKING([whether it is possible to resort to fread on /etc/mnttab])
   AC_CACHE_VAL([fu_cv_sys_mounted_fread],
-    [AC_TRY_CPP([#include <mnttab.h>],
-		fu_cv_sys_mounted_fread=yes,
-		fu_cv_sys_mounted_fread=no)])
+    [AC_PREPROC_IFELSE([AC_LANG_SOURCE([[#include <mnttab.h>]])],
+                       [fu_cv_sys_mounted_fread=yes],
+                       [fu_cv_sys_mounted_fread=no])])
   AC_MSG_RESULT([$fu_cv_sys_mounted_fread])
   if test $fu_cv_sys_mounted_fread = yes; then
     ac_list_mounted_fs=found
     AC_DEFINE([MOUNTED_FREAD], [1],
-	      [Define if there is no specific function for reading the list of
+              [Define if there is no specific function for reading the list of
                mounted file systems.  fread will be used to read /etc/mnttab.
                (SVR2) ])
   fi

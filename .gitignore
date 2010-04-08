@@ -5,7 +5,6 @@ NP-VERSION-FILE
 # /
 /aclocal.m4
 /autom4te*.cache
-/build-*
 /Cache.pm
 /command.cfg
 /compile
@@ -25,12 +24,14 @@ NP-VERSION-FILE
 /THANKS
 
 # /build-aux/
+/build-aux/*~
 /build-aux/compile
 /build-aux/config.guess
 /build-aux/config.sub
 /build-aux/depcomp
 /build-aux/install-sh
 /build-aux/missing
+/build-aux/mkinstalldirs
 
 # /doc/
 /doc/developer-guidelines.html
@@ -46,28 +47,38 @@ NP-VERSION-FILE
 # /gl/
 /gl/.deps
 /gl/alloca.h
+/gl/arg-nonnull.h
 /gl/arpa
+/gl/arpa_inet.h
+/gl/c++defs.h
+/gl/charset.alias
 /gl/configmake.h
 /gl/errno.h
-/gl/float.h
 /gl/fcntl.h
+/gl/float.h
 /gl/getopt.h
+/gl/langinfo.h
 /gl/libgnu.a
+/gl/locale.h
 /gl/Makefile
 /gl/Makefile.in
 /gl/math.h
+/gl/netdb.h
 /gl/netinet_in.h
-/gl/ref-del.sed
 /gl/ref-add.sed
-/gl/charset.alias
-/gl/stdint.h
+/gl/ref-del.sed
 /gl/stdbool.h
-/gl/stdlib.h
+/gl/stddef.h
+/gl/stdint.h
 /gl/stdio.h
+/gl/stdlib.h
 /gl/string.h
 /gl/sys_socket.h
+/gl/sys_stat.h
+/gl/sys
 /gl/time.h
 /gl/unistd.h
+/gl/warn-on-use.h
 /gl/wchar.h
 /gl/wctype.h
 

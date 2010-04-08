@@ -1,5 +1,5 @@
 # lib-ld.m4 serial 4 (gettext-0.18)
-dnl Copyright (C) 1996-2003, 2009 Free Software Foundation, Inc.
+dnl Copyright (C) 1996-2003, 2009-2010 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -59,7 +59,7 @@ if test "$GCC" = yes; then
       # Canonicalize the path of ld
       ac_prog=`echo $ac_prog| sed 's%\\\\%/%g'`
       while echo $ac_prog | grep "$re_direlt" > /dev/null 2>&1; do
-	ac_prog=`echo $ac_prog| sed "s%$re_direlt%/%"`
+        ac_prog=`echo $ac_prog| sed "s%$re_direlt%/%"`
       done
       test -z "$LD" && LD="$ac_prog"
       ;;
@@ -89,9 +89,9 @@ AC_CACHE_VAL([acl_cv_path_LD],
       # Break only if it was the GNU/non-GNU ld that we prefer.
       case `"$acl_cv_path_LD" -v 2>&1 < /dev/null` in
       *GNU* | *'with BFD'*)
-	test "$with_gnu_ld" != no && break ;;
+        test "$with_gnu_ld" != no && break ;;
       *)
-	test "$with_gnu_ld" != yes && break ;;
+        test "$with_gnu_ld" != yes && break ;;
       esac
     fi
   done

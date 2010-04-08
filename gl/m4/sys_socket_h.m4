@@ -1,5 +1,5 @@
-# sys_socket_h.m4 serial 12
-dnl Copyright (C) 2005-2009 Free Software Foundation, Inc.
+# sys_socket_h.m4 serial 17
+dnl Copyright (C) 2005-2010 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -19,7 +19,6 @@ AC_DEFUN([gl_HEADER_SYS_SOCKET],
         [gl_cv_header_sys_socket_h_selfcontained=no])
     ])
   if test $gl_cv_header_sys_socket_h_selfcontained = yes; then
-    SYS_SOCKET_H=''
     dnl If the shutdown function exists, <sys/socket.h> should define
     dnl SHUT_RD, SHUT_WR, SHUT_RDWR.
     AC_CHECK_FUNCS([shutdown])
@@ -37,12 +36,10 @@ AC_DEFUN([gl_HEADER_SYS_SOCKET],
         SYS_SOCKET_H='sys/socket.h'
       fi
     fi
-  else
-    SYS_SOCKET_H='sys/socket.h'
   fi
   # We need to check for ws2tcpip.h now.
   gl_PREREQ_SYS_H_SOCKET
-  AC_CHECK_TYPES([struct sockaddr_storage],,,[
+  AC_CHECK_TYPES([struct sockaddr_storage, sa_family_t],,,[
   /* sys/types.h is not needed according to POSIX, but the
      sys/socket.h in i386-unknown-freebsd4.10 and
      powerpc-apple-darwin5.5 required it. */
@@ -56,12 +53,23 @@ AC_DEFUN([gl_HEADER_SYS_SOCKET],
 ])
   if test $ac_cv_type_struct_sockaddr_storage = no; then
     HAVE_STRUCT_SOCKADDR_STORAGE=0
-    SYS_SOCKET_H='sys/socket.h'
   fi
-  if test -n "$SYS_SOCKET_H"; then
-    gl_PREREQ_SYS_H_WINSOCK2
+  if test $ac_cv_type_sa_family_t = no; then
+    HAVE_SA_FAMILY_T=0
   fi
-  AC_SUBST([SYS_SOCKET_H])
+  gl_PREREQ_SYS_H_WINSOCK2
+
+  dnl Check for declarations of anything we want to poison if the
+  dnl corresponding gnulib module is not in use.
+  gl_WARN_ON_USE_PREPARE([[
+/* Some systems require prerequisite headers.  */
+#include <sys/types.h>
+#if !defined __GLIBC__ && HAVE_SYS_TIME_H
+# include <sys/time.h>
+#endif
+#include <sys/select.h>
+    ]], [socket connect accept bind getpeername getsockname getsockopt
+    listen recv send recvfrom sendto setsockopt shutdown accept4])
 ])
 
 AC_DEFUN([gl_PREREQ_SYS_H_SOCKET],
@@ -88,7 +96,7 @@ AC_DEFUN([gl_PREREQ_SYS_H_SOCKET],
   AC_SUBST([HAVE_WS2TCPIP_H])
 ])
 
-# Common prerequisites of of the <sys/socket.h> replacement and of the
+# Common prerequisites of the <sys/socket.h> replacement and of the
 # <sys/select.h> replacement.
 # Sets and substitutes HAVE_WINSOCK2_H.
 AC_DEFUN([gl_PREREQ_SYS_H_WINSOCK2],
@@ -117,7 +125,9 @@ AC_DEFUN([gl_SYS_SOCKET_MODULE_INDICATOR],
 [
   dnl Use AC_REQUIRE here, so that the default settings are expanded once only.
   AC_REQUIRE([gl_SYS_SOCKET_H_DEFAULTS])
-  GNULIB_[]m4_translit([$1],[abcdefghijklmnopqrstuvwxyz./-],[ABCDEFGHIJKLMNOPQRSTUVWXYZ___])=1
+  gl_MODULE_INDICATOR_SET_VARIABLE([$1])
+  dnl Define it also as a C macro, for the benefit of the unit tests.
+  gl_MODULE_INDICATOR_FOR_TESTS([$1])
 ])
 
 AC_DEFUN([gl_SYS_SOCKET_H_DEFAULTS],
@@ -136,5 +146,8 @@ AC_DEFUN([gl_SYS_SOCKET_H_DEFAULTS],
   GNULIB_SENDTO=0;      AC_SUBST([GNULIB_SENDTO])
   GNULIB_SETSOCKOPT=0;  AC_SUBST([GNULIB_SETSOCKOPT])
   GNULIB_SHUTDOWN=0;    AC_SUBST([GNULIB_SHUTDOWN])
+  GNULIB_ACCEPT4=0;     AC_SUBST([GNULIB_ACCEPT4])
   HAVE_STRUCT_SOCKADDR_STORAGE=1; AC_SUBST([HAVE_STRUCT_SOCKADDR_STORAGE])
+  HAVE_SA_FAMILY_T=1;   AC_SUBST([HAVE_SA_FAMILY_T])
+  HAVE_ACCEPT4=1;       AC_SUBST([HAVE_ACCEPT4])
 ])

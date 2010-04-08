@@ -1,7 +1,7 @@
 # Check for getloadavg.
 
-# Copyright (C) 1992, 1993, 1994, 1995, 1996, 1999, 2000, 2002, 2003,
-# 2006, 2008, 2009 Free Software Foundation, Inc.
+# Copyright (C) 1992-1996, 1999-2000, 2002-2003, 2006, 2008-2010 Free Software
+# Foundation, Inc.
 
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -60,17 +60,17 @@ if test $gl_have_func = no; then
   gl_getloadavg_LIBS=$LIBS
   LIBS="-L/usr/local/lib $LIBS"
   AC_CHECK_LIB([getloadavg], [getloadavg],
-	       [LIBS="-lgetloadavg $LIBS"], [LIBS=$gl_getloadavg_LIBS])
+               [LIBS="-lgetloadavg $LIBS"], [LIBS=$gl_getloadavg_LIBS])
 fi
 
 # Make sure it is really in the library, if we think we found it,
 # otherwise set up the replacement function.
 AC_CHECK_FUNCS([getloadavg], [],
-	       [gl_PREREQ_GETLOADAVG])
+               [gl_PREREQ_GETLOADAVG])
 
 # Some definitions of getloadavg require that the program be installed setgid.
 AC_CACHE_CHECK([whether getloadavg requires setgid],
-	       gl_cv_func_getloadavg_setgid,
+               gl_cv_func_getloadavg_setgid,
 [AC_EGREP_CPP([Yowza Am I SETGID yet],
 [#define CONFIGURING_GETLOADAVG
 #include "$srcdir/$1/getloadavg.c"
@@ -78,13 +78,13 @@ AC_CACHE_CHECK([whether getloadavg requires setgid],
 Yowza Am I SETGID yet
 #endif
 ],
-	      gl_cv_func_getloadavg_setgid=yes,
-	      gl_cv_func_getloadavg_setgid=no)])
+              gl_cv_func_getloadavg_setgid=yes,
+              gl_cv_func_getloadavg_setgid=no)])
 if test $gl_cv_func_getloadavg_setgid = yes; then
   NEED_SETGID=true
   AC_DEFINE([GETLOADAVG_PRIVILEGED], [1],
-	    [Define to 1 if the `getloadavg' function needs to be run setuid
-	     or setgid.])
+            [Define to 1 if the `getloadavg' function needs to be run setuid
+             or setgid.])
 else
   NEED_SETGID=false
 fi
@@ -98,8 +98,8 @@ if test $gl_cv_func_getloadavg_setgid = yes; then
   test -z "$ac_ls_output" && ac_ls_output=`ls -lg /dev/kmem`
   gl_cv_group_kmem=`echo $ac_ls_output \
     | sed -ne ['s/[	 ][	 ]*/ /g
-	       s/^.[sSrwx-]* *[0-9]* *\([^0-9]*\)  *.*/\1/
-	       / /s/.* //;p']`
+               s/^.[sSrwx-]* *[0-9]* *\([^0-9]*\)  *.*/\1/
+               / /s/.* //;p']`
 ])
   AC_SUBST([KMEM_GROUP], [$gl_cv_group_kmem])dnl
 fi
@@ -154,8 +154,8 @@ if test $gl_have_func = no; then
   [gl_have_func=yes
    AC_DEFINE([UMAX], [1], [Define to 1 for Encore UMAX.])
    AC_DEFINE([UMAX4_3], [1],
-	     [Define to 1 for Encore UMAX 4.3 that has <inq_status/cpustats.h>
-	      instead of <sys/cpustats.h>.])])
+             [Define to 1 for Encore UMAX 4.3 that has <inq_status/cpustats.h>
+              instead of <sys/cpustats.h>.])])
 fi
 
 if test $gl_have_func = no; then
@@ -169,10 +169,19 @@ fi
 
 AC_CHECK_HEADERS([nlist.h],
 [AC_CHECK_MEMBERS([struct nlist.n_un.n_name],
-		  [AC_DEFINE([NLIST_NAME_UNION], [1],
-			     [Define to 1 if your `struct nlist' has an
-			      `n_un' member.  Obsolete, depend on
-			      `HAVE_STRUCT_NLIST_N_UN_N_NAME])], [],
-		  [@%:@include <nlist.h>])
+                  [AC_DEFINE([NLIST_NAME_UNION], [1],
+                             [Define to 1 if your `struct nlist' has an
+                              `n_un' member.  Obsolete, depend on
+                              `HAVE_STRUCT_NLIST_N_UN_N_NAME])], [],
+                  [@%:@include <nlist.h>])
+ AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <nlist.h>]],
+                   [[struct nlist x;
+                    #ifdef HAVE_STRUCT_NLIST_N_UN_N_NAME
+                    x.n_un.n_name = "";
+                    #else
+                    x.n_name = "";
+                    #endif]])],
+                [AC_DEFINE([N_NAME_POINTER], [1],
+                           [Define to 1 if the nlist n_name member is a pointer])])
 ])dnl
 ])# gl_PREREQ_GETLOADAVG
