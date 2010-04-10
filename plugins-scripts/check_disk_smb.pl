@@ -22,7 +22,7 @@ require 5.004;
 use POSIX;
 use strict;
 use Getopt::Long;
-use vars qw($opt_P $opt_V $opt_h $opt_H $opt_s $opt_W $opt_u $opt_p $opt_w $opt_c $verbose);
+use vars qw($opt_P $opt_V $opt_h $opt_H $opt_s $opt_W $opt_u $opt_p $opt_w $opt_c $opt_a $verbose);
 use vars qw($PROGNAME);
 use lib utils.pm ;
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
@@ -48,7 +48,8 @@ GetOptions
 	 "u=s" => \$opt_u, "username=s" => \$opt_u,
 	 "s=s" => \$opt_s, "share=s"    => \$opt_s,
 	 "W=s" => \$opt_W, "workgroup=s" => \$opt_W,
-	 "H=s" => \$opt_H, "hostname=s" => \$opt_H);
+	 "H=s" => \$opt_H, "hostname=s" => \$opt_H,
+	 "a=s" => \$opt_a, "address=s" => \$opt_a);
 
 if ($opt_V) {
 	print_revision($PROGNAME,'@NP_VERSION@'); #'
@@ -64,7 +65,7 @@ my $smbclientoptions= $opt_P ? "-p $opt_P " : "";
 # Options checking
 
 ($opt_H) || ($opt_H = shift) || usage("Host name not specified\n");
-my $host = $1 if ($opt_H =~ /^([-_.A-Za-z0-9]+\$?)$/);
+my $host = $1 if ($opt_H =~ /^([-_.A-Za-z0-9 ]+\$?)$/);
 ($host) || usage("Invalid host: $opt_H\n");
 
 ($opt_s) || ($opt_s = shift) || usage("Share volume not specified\n");
@@ -141,6 +142,8 @@ if ( $warn_type eq "K") {
 
 my $workgroup = $1 if (defined($opt_W) && $opt_W =~ /(.*)/);
 
+my $address = $1 if (defined($opt_a) && $opt_a =~ /(.*)/);
+
 # end of options checking
 
 
@@ -159,10 +162,21 @@ alarm($TIMEOUT);
 # Execute an "ls" on the share using smbclient program
 # get the results into $res
 if (defined($workgroup)) {
-	$res = qx/$smbclient \/\/$host\/$share -W $workgroup -U $user%$pass $smbclientoptions -c ls/;
+	if (defined($address)) {
+		print "$smbclient " . "\/\/$host\/$share" ." $pass -W $workgroup -U $user $smbclientoptions -I $address -c ls\n" if ($verbose);
+		$res = qx/$smbclient "\/\/$host\/$share" $pass -W $workgroup -U $user $smbclientoptions -I $address -c ls/;
+	} else {
+		print "$smbclient " . "\/\/$host\/$share" ." $pass -W $workgroup -U $user $smbclientoptions -c ls\n" if ($verbose);
+		$res = qx/$smbclient "\/\/$host\/$share" $pass -W $workgroup -U $user $smbclientoptions -c ls/;
+	}
 } else {
-	print "$smbclient " . "\/\/$host\/$share" ." $pass -U $user $smbclientoptions -c ls\n" if ($verbose);
-	$res = qx/$smbclient \/\/$host\/$share -U $user%$pass $smbclientoptions -c ls/;
+	if (defined($address)) {
+		print "$smbclient " . "\/\/$host\/$share" ." $pass -U $user $smbclientoptions -I $address -c ls\n" if ($verbose);
+		$res = qx/$smbclient "\/\/$host\/$share" $pass -U $user $smbclientoptions -I $address -c ls/;
+	} else {
+		print "$smbclient " . "\/\/$host\/$share" ." $pass -U $user $smbclientoptions -c ls\n" if ($verbose);
+		$res = qx/$smbclient "\/\/$host\/$share" $pass -U $user $smbclientoptions -c ls/;
+	}
 }
 #Turn off alarm
 alarm(0);
@@ -238,7 +252,7 @@ exit $ERRORS{$state};
 
 sub print_usage () {
 	print "Usage: $PROGNAME -H <host> -s <share> -u <user> -p <password> 
-      -w <warn> -c <crit> [-W <workgroup>] [-P <port>]\n";
+      -w <warn> -c <crit> [-W <workgroup>] [-P <port>] [-a <IP>]\n";
 }
 
 sub print_help () {
@@ -256,6 +270,8 @@ Perl Check SMB Disk plugin for Nagios
    Share name to be tested
 -W, --workgroup=STRING
    Workgroup or Domain used (Defaults to \"WORKGROUP\")
+-a, --address=IP
+   IP-address of HOST (only necessary if HOST is in another network)
 -u, --user=STRING
    Username to log in to server. (Defaults to \"guest\")
 -p, --password=STRING
