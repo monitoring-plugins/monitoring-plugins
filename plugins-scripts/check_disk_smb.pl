@@ -58,9 +58,7 @@ if ($opt_V) {
 
 if ($opt_h) {print_help(); exit $ERRORS{'OK'};}
 
-my $smbclient= "$utils::PATH_TO_SMBCLIENT " ;
-my $smbclientoptions= $opt_P ? "-p $opt_P " : "";
-
+my $smbclient = $utils::PATH_TO_SMBCLIENT;
 
 # Options checking
 
@@ -72,13 +70,12 @@ my $host = $1 if ($opt_H =~ /^([-_.A-Za-z0-9 ]+\$?)$/);
 my $share = $1 if ($opt_s =~ /^([-_.A-Za-z0-9]+\$?)$/);
 ($share) || usage("Invalid share: $opt_s\n");
 
-($opt_u) || ($opt_u = shift @ARGV) || ($opt_u = "guest");
-my $user = $1 if ($opt_u =~ /^([-_.A-Za-z0-9\\]+)$/);
-($user) || usage("Invalid user: $opt_u\n");
+defined($opt_u) || ($opt_u = shift @ARGV) || ($opt_u = "guest");
+my $user = $1 if ($opt_u =~ /^([-_.A-Za-z0-9\\]*)$/);
+defined($user) || usage("Invalid user: $opt_u\n");
 
-($opt_p) || ($opt_p = shift @ARGV) || ($opt_p = "");
+defined($opt_p) || ($opt_p = shift @ARGV) || ($opt_p = "");
 my $pass = $1 if ($opt_p =~ /(.*)/);
-$pass = "-N" if ($opt_p eq "");
 
 ($opt_w) || ($opt_w = shift @ARGV) || ($opt_w = 85);
 my $warn = $1 if ($opt_w =~ /^([0-9]{1,2}\%?|100\%?|[0-9]+[kMG])$/);
@@ -87,6 +84,24 @@ my $warn = $1 if ($opt_w =~ /^([0-9]{1,2}\%?|100\%?|[0-9]+[kMG])$/);
 ($opt_c) || ($opt_c = shift @ARGV) || ($opt_c = 95);
 my $crit = $1 if ($opt_c =~ /^([0-9]{1,2}\%?|100\%?|[0-9]+[kMG])$/);
 ($crit) || usage("Invalid critical threshold: $opt_c\n");
+
+# Execute the given command line and return anything it writes to STDOUT and/or
+# STDERR.  (This might be useful for other plugins, too, so it should possibly
+# be moved to utils.pm.)
+sub output_and_error_of {
+	local *CMD;
+	local $/ = undef;
+	my $pid = open CMD, "-|";
+	if (defined($pid)) {
+		if ($pid) {
+			return <CMD>;
+		} else {
+			open STDERR, ">&STDOUT" and exec @_;
+			exit(1);
+		}
+	}
+	return undef;
+}
 
 # split the type from the unit value
 #Check $warn and $crit for type (%/M/G) and set up for tests
@@ -162,23 +177,19 @@ alarm($TIMEOUT);
 
 # Execute an "ls" on the share using smbclient program
 # get the results into $res
-if (defined($workgroup)) {
-	if (defined($address)) {
-		print "$smbclient " . "\/\/$host\/$share" ." $pass -W $workgroup -U $user $smbclientoptions -I $address -c ls\n" if ($verbose);
-		$res = qx/$smbclient "\/\/$host\/$share" $pass -W $workgroup -U $user $smbclientoptions -I $address -c ls/;
-	} else {
-		print "$smbclient " . "\/\/$host\/$share" ." $pass -W $workgroup -U $user $smbclientoptions -c ls\n" if ($verbose);
-		$res = qx/$smbclient "\/\/$host\/$share" $pass -W $workgroup -U $user $smbclientoptions -c ls/;
-	}
-} else {
-	if (defined($address)) {
-		print "$smbclient " . "\/\/$host\/$share" ." $pass -U $user $smbclientoptions -I $address -c ls\n" if ($verbose);
-		$res = qx/$smbclient "\/\/$host\/$share" $pass -U $user $smbclientoptions -I $address -c ls/;
-	} else {
-		print "$smbclient " . "\/\/$host\/$share" ." $pass -U $user $smbclientoptions -c ls\n" if ($verbose);
-		$res = qx/$smbclient "\/\/$host\/$share" $pass -U $user $smbclientoptions -c ls/;
-	}
-}
+my @cmd = (
+	$smbclient,
+	"//$host/$share",
+	"-U", "$user%$pass",
+	defined($workgroup) ? ("-W", $workgroup) : (),
+	defined($address) ? ("-I", $address) : (),
+	defined($opt_P) ? ("-p", $opt_P) : (),
+	"-c", "ls"
+);
+
+print join(" ", @cmd) . "\n" if ($verbose);
+$res = output_and_error_of(@cmd) or exit $ERRORS{"UNKNOWN"};
+
 #Turn off alarm
 alarm(0);
 
