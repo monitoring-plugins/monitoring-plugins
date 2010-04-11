@@ -733,7 +733,10 @@ get_content_length (const char *headers)
     /* Skip to the end of the header, including continuation lines. */
     while (*s && !(*s == '\n' && (s[1] != ' ' && s[1] != '\t')))
       s++;
-    s++;
+
+    /* Avoid stepping over end-of-string marker */
+    if (*s)
+      s++;
 
     /* Process this header. */
     if (value && value > field+2) {
