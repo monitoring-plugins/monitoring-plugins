@@ -374,7 +374,7 @@ validate_arguments ()
 	if (ld_host==NULL || strlen(ld_host)==0)
 		usage4 (_("Please specify the host name\n"));
 
-	if (ld_base==NULL || strlen(ld_base)==0)
+	if (ld_base==NULL)
 		usage4 (_("Please specify the LDAP base\n"));
 
 	return OK;
