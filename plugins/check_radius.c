@@ -69,6 +69,7 @@ char *server = NULL;
 char *username = NULL;
 char *password = NULL;
 char *nasid = NULL;
+char *nasipaddress = NULL;
 char *expect = NULL;
 char *config_file = NULL;
 unsigned short port = PW_AUTH_UDP_PORT;
@@ -161,19 +162,26 @@ main (int argc, char **argv)
 	memset (&data, 0, sizeof(data));
 	if (!(my_rc_avpair_add (&data.send_pairs, PW_SERVICE_TYPE, &service, 0) &&
 				my_rc_avpair_add (&data.send_pairs, PW_USER_NAME, username, 0) &&
-				my_rc_avpair_add (&data.send_pairs, PW_USER_PASSWORD, password, 0) &&
-				(nasid==NULL || my_rc_avpair_add (&data.send_pairs, PW_NAS_IDENTIFIER, nasid, 0))))
+				my_rc_avpair_add (&data.send_pairs, PW_USER_PASSWORD, password, 0)
+				))
 		die (STATE_UNKNOWN, _("Out of Memory?"));
 
-	/*
-	 * Fill in NAS-IP-Address
-	 */
+	if (nasid != NULL) {
+		if (!(my_rc_avpair_add (&data.send_pairs, PW_NAS_IDENTIFIER, nasid, 0)))
+			die (STATE_UNKNOWN, _("Invalid NAS-Identifier"));
+	}
 
-	if ((client_id = my_rc_own_ipaddress ()) == 0)
-		return (ERROR_RC);
-
-	if (my_rc_avpair_add (&(data.send_pairs), PW_NAS_IP_ADDRESS, &client_id, 0) ==
-			NULL) return (ERROR_RC);
+	if (nasipaddress != NULL) {
+		if (rc_good_ipaddr (nasipaddress))
+			die (STATE_UNKNOWN, _("Invalid NAS-IP-Address"));
+		if ((client_id = rc_get_ipaddr(nasipaddress)) == 0)
+			die (STATE_UNKNOWN, _("Invalid NAS-IP-Address"));
+	} else {
+		if ((client_id = my_rc_own_ipaddress ()) == 0)
+			die (STATE_UNKNOWN, _("Can't find local IP for NAS-IP-Address"));
+	}
+	if (my_rc_avpair_add (&(data.send_pairs), PW_NAS_IP_ADDRESS, &client_id, 0) == NULL)
+		die (STATE_UNKNOWN, _("Invalid NAS-IP-Address"));
 
 	my_rc_buildreq (&data, PW_ACCESS_REQUEST, server, port, (int)timeout_interval,
 	             retries);
@@ -211,6 +219,7 @@ process_arguments (int argc, char **argv)
 		{"username", required_argument, 0, 'u'},
 		{"password", required_argument, 0, 'p'},
 		{"nas-id", required_argument, 0, 'n'},
+		{"nas-ip-address", required_argument, 0, 'N'},
 		{"filename", required_argument, 0, 'F'},
 		{"expect", required_argument, 0, 'e'},
 		{"retries", required_argument, 0, 'r'},
@@ -222,7 +231,7 @@ process_arguments (int argc, char **argv)
 	};
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVvH:P:F:u:p:n:t:r:e:", longopts,
+		c = getopt_long (argc, argv, "+hVvH:P:F:u:p:n:N:t:r:e:", longopts,
 									 &option);
 
 		if (c == -1 || c == EOF || c == 1)
@@ -266,6 +275,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'n':									/* nas id */
 			nasid = optarg;
+			break;
+		case 'N':									/* nas ip address */
+			nasipaddress = optarg;
 			break;
 		case 'F':									/* configuration file */
 			config_file = optarg;
@@ -330,6 +342,8 @@ print_help (void)
   printf ("    %s\n", _("Password for autentication (SECURITY RISK)"));
   printf (" %s\n", "-n, --nas-id=STRING");
   printf ("    %s\n", _("NAS identifier"));
+  printf (" %s\n", "-N, --nas-ip-address=STRING");
+  printf ("    %s\n", _("NAS IP Address"));
   printf (" %s\n", "-F, --filename=STRING");
   printf ("    %s\n", _("Configuration file"));
   printf (" %s\n", "-e, --expect=STRING");
@@ -365,8 +379,9 @@ void
 print_usage (void)
 {
   printf (_("Usage:"));
-	printf ("%s -H host -F config_file -u username -p password [-n nas-id] [-P port]\n\
-                  [-t timeout] [-r retries] [-e expect]\n", progname);
+	printf ("%s -H host -F config_file -u username -p password\n\
+			[-P port] [-t timeout] [-r retries] [-e expect]\n\
+			[-n nas-id] [-N nas-ip-addr]\n", progname);
 }
 
 
