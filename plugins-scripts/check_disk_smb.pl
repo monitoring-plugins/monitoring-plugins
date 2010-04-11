@@ -78,6 +78,7 @@ my $user = $1 if ($opt_u =~ /^([-_.A-Za-z0-9\\]+)$/);
 
 ($opt_p) || ($opt_p = shift) || ($opt_p = "");
 my $pass = $1 if ($opt_p =~ /(.*)/);
+$pass = "-N" if ($opt_p eq "");
 
 ($opt_w) || ($opt_w = shift) || ($opt_w = 85);
 my $warn = $1 if ($opt_w =~ /^([0-9]{1,2}\%?|100\%?|[0-9]+[kMG])$/);
