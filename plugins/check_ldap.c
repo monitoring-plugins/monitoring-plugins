@@ -36,6 +36,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "utils.h"
 
 #include <lber.h>
+#define LDAP_DEPRECATED 1
 #include <ldap.h>
 
 enum {
