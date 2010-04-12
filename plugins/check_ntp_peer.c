@@ -278,7 +278,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 			}
 		}
 	}
-	if(verbose) printf("%d candiate peers available\n", num_candidates);
+	if(verbose) printf("%d candidate peers available\n", num_candidates);
 	if(verbose && syncsource_found) printf("synchronization source found\n");
 	if(! syncsource_found){
 		status = STATE_WARNING;
