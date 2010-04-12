@@ -187,19 +187,19 @@ MAIN:
 
 	if ($opt_h) {print_help(); exit $ERRORS{'OK'};}
 
-	($opt_H) || ($opt_H = shift) || usage("Host name/address not specified\n");
+	($opt_H) || ($opt_H = shift @ARGV) || usage("Host name/address not specified\n");
 	my $remotehost = $1 if ($opt_H =~ /([-.A-Za-z0-9]+)/);
 	($remotehost) || usage("Invalid host: $opt_H\n");
 
-	($opt_w) || ($opt_w = shift) || ($opt_w = 50);
+	($opt_w) || ($opt_w = shift @ARGV) || ($opt_w = 50);
 	my $warn = $1 if ($opt_w =~ /^([0-9]+)$/);
 	($warn) || usage("Invalid warning threshold: $opt_w\n");
 
-	($opt_c) || ($opt_c = shift) || ($opt_c = 100);
+	($opt_c) || ($opt_c = shift @ARGV) || ($opt_c = 100);
 	my $crit = $1 if ($opt_c =~ /^([0-9]+)$/);
 	($crit) || usage("Invalid critical threshold: $opt_c\n");
 
-	($opt_p) || ($opt_p = shift) || ($opt_p = 6667);
+	($opt_p) || ($opt_p = shift @ARGV) || ($opt_p = 6667);
 	my $remoteport = $1 if ($opt_p =~ /^([0-9]+)$/);
 	($remoteport) || usage("Invalid port: $opt_p\n");
 

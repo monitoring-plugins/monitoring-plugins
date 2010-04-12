@@ -16,7 +16,7 @@ This file documents the major additions and syntax changes between releases.
 	Fix regression introduced in #1867716 where partially valid performance strings would not be printed anymore
 	Fix regression in check_http ssl checks on some servers - make SNI an option
 	Fix guest mode support in check_disk_smb
-	Fix check_disk_smb failure when run via ePN
+	Fix check_disk_smb and check_ircd failures when run via ePN
 	check_ldap now allows for specifying an empty LDAP base
 	WARNINGS
 	Updated developer documentation to say that performance labels should not have an equals sign or
