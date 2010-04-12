@@ -44,7 +44,7 @@ sub max_state($$){
 
 my $nextdev;
 if(defined $ARGV[0]) { $nextdev = shift; }
-else { $nextdev = "md[0-9]"; }
+else { $nextdev = "md[0-9]+"; }
 
 my $code = "UNKNOWN";
 my $msg = "";
