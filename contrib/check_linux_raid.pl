@@ -64,6 +64,7 @@ while(defined $nextdev){
 			} elsif (/recovery = (.*?)\s/) {  
 				$recovery{$device} = $1;
 				($finish{$device}) = /finish=(.*?min)/;
+				$device=undef;
 			} elsif (/^\s*$/) {
 				$device=undef;
 			}
