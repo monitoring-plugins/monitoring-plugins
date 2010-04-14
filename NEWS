@@ -19,6 +19,7 @@ This file documents the major additions and syntax changes between releases.
 	Fix check_disk_smb and check_ircd failures when run via ePN
 	check_ldap now allows for specifying an empty LDAP base
 	Fix compilation error of pst3 in Solaris 8
+	Fix check_radius returning OK on unexpected results (Craig Leres - #2911752)
 	WARNINGS
 	Updated developer documentation to say that performance labels should not have an equals sign or
 	single quote in the label

@@ -63,6 +63,13 @@ void print_usage (void);
 #define my_rc_avpair_add(a,b,c,d) rc_avpair_add(a, b, c, d)
 #define my_rc_read_dictionary(a) rc_read_dictionary(a)
 #endif
+
+/* REJECT_RC is only defined in some version of radiusclient. It has
+ * been reported from radiusclient-ng 0.5.6 on FreeBSD 7.2-RELEASE */
+#ifndef REJECT_RC
+#define REJECT_RC BADRESP_RC
+#endif
+
 int my_rc_read_config(char *);
 
 char *server = NULL;
@@ -195,13 +202,16 @@ main (int argc, char **argv)
 		die (STATE_CRITICAL, _("Timeout"));
 	if (result == ERROR_RC)
 		die (STATE_CRITICAL, _("Auth Error"));
-	if (result == BADRESP_RC)
+	if (result == REJECT_RC)
 		die (STATE_WARNING, _("Auth Failed"));
+	if (result == BADRESP_RC)
+		die (STATE_WARNING, _("Bad Response"));
 	if (expect && !strstr (msg, expect))
 		die (STATE_WARNING, "%s", msg);
 	if (result == OK_RC)
 		die (STATE_OK, _("Auth OK"));
-	return (0);
+	(void)snprintf(msg, sizeof(msg), _("Unexpected result code %d"), result);
+	die (STATE_UNKNOWN, msg);
 }
 
 
