@@ -164,7 +164,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'T':     /* Result to return on timeouts */
 			if ((timeout_state = translate_state(optarg)) == ERROR)
-				usage4 (_("timeout result must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+				usage4 (_("Timeout result must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			break;
 		case 'o':     /* replacement for OK */
 			if ((state[STATE_OK] = translate_state(optarg)) == ERROR)
