@@ -39,5 +39,6 @@ plugins/netutils.c
 plugins/popen.c
 plugins/urlize.c
 plugins/utils.c
+plugins/utils.h
 plugins-root/check_dhcp.c
 plugins-root/check_icmp.c

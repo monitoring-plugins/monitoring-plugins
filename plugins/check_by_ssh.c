@@ -386,13 +386,13 @@ print_help (void)
 
 	print_usage ();
 
-	printf (_(UT_HELP_VRSN));
+	printf (UT_HELP_VRSN);
 
-	printf (_(UT_EXTRA_OPTS));
+	printf (UT_EXTRA_OPTS);
 
-	printf (_(UT_HOST_PORT), 'p', "none");
+	printf (UT_HOST_PORT, 'p', "none");
 
-	printf (_(UT_IPv46));
+	printf (UT_IPv46);
 
   printf (" %s\n", "-1, --proto1");
   printf ("    %s\n", _("tell ssh to use Protocol 1 [optional]"));
@@ -420,9 +420,9 @@ print_help (void)
   printf ("    %s\n", _("Call ssh with '-o OPTION' (may be used multiple times) [optional]"));
   printf (" %s\n","-q, --quiet");
   printf ("    %s\n", _("Tell ssh to suppress warning and diagnostic messages [optional]"));
-	printf (_(UT_WARN_CRIT));
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-	printf (_(UT_VERBOSE));
+	printf (UT_WARN_CRIT);
+	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_VERBOSE);
 	printf("\n");
   printf (" %s\n", _("The most common mode of use is to refer to a local identity file with"));
   printf (" %s\n", _("the '-i' option. In this mode, the identity pair should have a null"));
@@ -445,10 +445,10 @@ print_help (void)
 #ifdef NP_EXTRA_OPTS
 	printf("\n");
 	printf("%s\n", _("Notes:"));
-	printf(_(UT_EXTRA_OPTS_NOTES));
+	printf(UT_EXTRA_OPTS_NOTES);
 #endif
 
-	printf(_(UT_SUPPORT));
+	printf(UT_SUPPORT);
 }
 
 

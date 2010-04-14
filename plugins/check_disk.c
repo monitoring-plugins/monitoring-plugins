@@ -904,8 +904,8 @@ print_help (void)
 
   print_usage ();
 
-  printf (_(UT_HELP_VRSN));
-  printf (_(UT_EXTRA_OPTS));
+  printf (UT_HELP_VRSN);
+  printf (UT_EXTRA_OPTS);
 
   printf (" %s\n", "-w, --warning=INTEGER");
   printf ("    %s\n", _("Exit with WARNING status if less than INTEGER units of disk are free"));
@@ -952,17 +952,17 @@ print_help (void)
   printf ("    %s\n", _("Regular expression to ignore selected path/partition (case insensitive) (may be repeated)"));
   printf (" %s\n", "-i, --ignore-ereg-path=PATH, --ignore-ereg-partition=PARTITION");
   printf ("    %s\n", _("Regular expression to ignore selected path or partition (may be repeated)"));
-  printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+  printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
   printf (" %s\n", "-u, --units=STRING");
   printf ("    %s\n", _("Choose bytes, kB, MB, GB, TB (default: MB)"));
-  printf (_(UT_VERBOSE));
+  printf (UT_VERBOSE);
   printf (" %s\n", "-X, --exclude-type=TYPE");
   printf ("    %s\n", _("Ignore all filesystems of indicated type (may be repeated)"));
 
 #ifdef NP_EXTRA_OPTS
   printf ("\n");
   printf ("%s\n", _("Notes:"));
-  printf (_(UT_EXTRA_OPTS_NOTES));
+  printf (UT_EXTRA_OPTS_NOTES);
 #endif
 
   printf ("\n");
@@ -975,7 +975,7 @@ print_help (void)
   printf (" %s\n", "check_disk -w 100M -c 50M -C -w 1000M -c 500M -p /foo -C -w 5% -c 3% -p /bar");
   printf ("    %s\n", _("Checks /foo for 1000M/500M and /bar for 5/3%. All remaining volumes use 100M/50M"));
 
-  printf (_(UT_SUPPORT));
+  printf (UT_SUPPORT);
 }
 
 

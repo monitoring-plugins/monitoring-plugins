@@ -300,8 +300,8 @@ print_help (void)
 
   print_usage ();
 
-  printf (_(UT_HELP_VRSN));
-  printf (_(UT_EXTRA_OPTS));
+  printf (UT_HELP_VRSN);
+  printf (UT_EXTRA_OPTS);
 
   printf (" %s\n", "-p");
   printf ("    %s\n", _("Optional port of which to connect"));
@@ -312,7 +312,7 @@ print_help (void)
   printf (" %s\n", "-pf");
   printf ("    %s\n", _("Field number in raw qstat output that contains ping time"));
 
-  printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+  printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
   printf ("\n");
   printf ("%s\n", _("Notes:"));
@@ -321,10 +321,10 @@ print_help (void)
   printf (" %s\n", _("http://www.activesw.com/people/steve/qstat.html before you can use this plugin."));
 #ifdef NP_EXTRA_OPTS
   printf ("\n");
-  printf (_(UT_EXTRA_OPTS_NOTES));
+  printf (UT_EXTRA_OPTS_NOTES);
 #endif
 
-  printf (_(UT_SUPPORT));
+  printf (UT_SUPPORT);
 }
 
 

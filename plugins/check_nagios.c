@@ -287,8 +287,8 @@ print_help (void)
 
 	print_usage ();
 
-	printf (_(UT_HELP_VRSN));
-	printf (_(UT_EXTRA_OPTS));
+	printf (UT_HELP_VRSN);
+	printf (UT_EXTRA_OPTS);
 
 	printf (" %s\n", "-F, --filename=FILE");
   printf ("    %s\n", _("Name of the log file to check"));
@@ -296,19 +296,19 @@ print_help (void)
   printf ("    %s\n", _("Minutes aging after which logfile is considered stale"));
   printf (" %s\n", "-C, --command=STRING");
   printf ("    %s\n", _("Substring to search for in process arguments"));
-  printf (_(UT_VERBOSE));
+  printf (UT_VERBOSE);
 
 #ifdef NP_EXTRA_OPTS
   printf ("\n");
   printf ("%s\n", _("Notes:"));
-  printf (_(UT_EXTRA_OPTS_NOTES));
+  printf (UT_EXTRA_OPTS_NOTES);
 #endif
 
   printf ("\n");
   printf ("%s\n", _("Examples:"));
   printf (" %s\n", "check_nagios -e 5 -F /usr/local/nagios/var/status.log -C /usr/local/nagios/bin/nagios");
 
-  printf (_(UT_SUPPORT));
+  printf (UT_SUPPORT);
 }
 
 

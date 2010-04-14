@@ -423,10 +423,10 @@ print_help (void)
 
 	print_usage ();
 
-	printf (_(UT_HELP_VRSN));
-	printf (_(UT_EXTRA_OPTS));
+	printf (UT_HELP_VRSN);
+	printf (UT_EXTRA_OPTS);
 
-	printf (_(UT_HOST_PORT), 'p', myport);
+	printf (UT_HOST_PORT, 'p', myport);
 
   printf (" %s\n", "-w, --warning=INTEGER");
   printf ("    %s\n", _("Threshold which will result in a warning status"));
@@ -442,9 +442,9 @@ print_help (void)
   printf ("    %s\n", _("NET<port>     = number of active connections on TCP port <port>"));
   printf ("    %s\n", _("UPTIME        = system uptime in seconds"));
 
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
-  printf (_(UT_VERBOSE));
+  printf (UT_VERBOSE);
 
   printf ("\n");
   printf ("%s\n", _("This plugin requires that Eric Molitors' Over-CR collector daemon be"));
@@ -458,10 +458,10 @@ print_help (void)
   printf (" %s\n", _("higher than the warning threshold value, EXCEPT with the uptime variable"));
 #ifdef NP_EXTRA_OPTS
   printf ("\n");
-  printf (_(UT_EXTRA_OPTS_NOTES));
+  printf (UT_EXTRA_OPTS_NOTES);
 #endif
 
-  printf (_(UT_SUPPORT));
+  printf (UT_SUPPORT);
 }
 
 

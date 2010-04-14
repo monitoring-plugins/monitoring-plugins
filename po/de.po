@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nagiosplug\n"
 "Report-Msgid-Bugs-To: nagiosplug-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2010-04-14 05:43-0400\n"
+"POT-Creation-Date: 2010-04-14 06:17-0400\n"
 "PO-Revision-Date: 2004-12-23 17:46+0100\n"
 "Last-Translator:  <>\n"
 "Language-Team: English <en@li.org>\n"
@@ -5316,6 +5316,106 @@ msgstr "konnte keinen Speicher für '%s' reservieren\n"
 #, fuzzy
 msgid "failed malloc in strscat\n"
 msgstr "konnte keinen Speicher für '%s' reservieren\n"
+
+#: plugins/utils.h:140
+#, c-format
+msgid ""
+"       %s (-h | --help) for detailed help\n"
+"       %s (-V | --version) for version information\n"
+msgstr ""
+
+#: plugins/utils.h:144
+msgid ""
+"\n"
+"Options:\n"
+" -h, --help\n"
+"    Print detailed help screen\n"
+" -V, --version\n"
+"    Print version information\n"
+msgstr ""
+
+#: plugins/utils.h:151
+#, c-format
+msgid ""
+" -H, --hostname=ADDRESS\n"
+"    Host name, IP Address, or unix socket (must be an absolute path)\n"
+" -%c, --port=INTEGER\n"
+"    Port number (default: %s)\n"
+msgstr ""
+
+#: plugins/utils.h:157
+msgid ""
+" -4, --use-ipv4\n"
+"    Use IPv4 connection\n"
+" -6, --use-ipv6\n"
+"    Use IPv6 connection\n"
+msgstr ""
+
+#: plugins/utils.h:163
+msgid ""
+" -v, --verbose\n"
+"    Show details for command-line debugging (Nagios may truncate output)\n"
+msgstr ""
+
+#: plugins/utils.h:167
+msgid ""
+" -w, --warning=DOUBLE\n"
+"    Response time to result in warning status (seconds)\n"
+" -c, --critical=DOUBLE\n"
+"    Response time to result in critical status (seconds)\n"
+msgstr ""
+
+#: plugins/utils.h:173
+msgid ""
+" -w, --warning=RANGE\n"
+"    Warning range (format: start:end). Alert if outside this range\n"
+" -c, --critical=RANGE\n"
+"    Critical range\n"
+msgstr ""
+
+#: plugins/utils.h:179
+#, c-format
+msgid ""
+" -t, --timeout=INTEGER\n"
+"    Seconds before connection times out (default: %d)\n"
+msgstr ""
+
+#: plugins/utils.h:184
+msgid ""
+" --extra-opts=[section][@file]\n"
+"    Read additionnal options from ini file\n"
+msgstr ""
+
+#: plugins/utils.h:187
+msgid ""
+" See: http://nagiosplugins.org/extra-opts for --extra-opts usage and "
+"examples.\n"
+msgstr ""
+
+#: plugins/utils.h:194
+msgid ""
+" See:\n"
+" http://nagiosplug.sourceforge.net/developer-guidelines."
+"html#THRESHOLDFORMAT\n"
+" for THRESHOLD format and examples.\n"
+msgstr ""
+
+#: plugins/utils.h:199
+msgid ""
+"\n"
+"Send email to nagios-users@lists.sourceforge.net if you have questions\n"
+"regarding use of this software. To submit patches or suggest improvements,\n"
+"send email to nagiosplug-devel@lists.sourceforge.net\n"
+"\n"
+msgstr ""
+
+#: plugins/utils.h:204
+msgid ""
+"\n"
+"The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n"
+"copies of the plugins under the terms of the GNU General Public License.\n"
+"For more information about these matters, see the file named COPYING.\n"
+msgstr ""
 
 #: plugins-root/check_dhcp.c:320
 #, c-format

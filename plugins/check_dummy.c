@@ -109,9 +109,9 @@ print_help (void)
 
   print_usage ();
 
-  printf (_(UT_HELP_VRSN));
+  printf (UT_HELP_VRSN);
 
-  printf (_(UT_SUPPORT));
+  printf (UT_SUPPORT);
 }
 
 

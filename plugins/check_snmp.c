@@ -806,10 +806,10 @@ print_help (void)
 
 	print_usage ();
 
-	printf (_(UT_HELP_VRSN));
-	printf (_(UT_EXTRA_OPTS));
+	printf (UT_HELP_VRSN);
+	printf (UT_EXTRA_OPTS);
 
-	printf (_(UT_HOST_PORT), 'p', DEFAULT_PORT);
+	printf (UT_HOST_PORT, 'p', DEFAULT_PORT);
 
 	/* SNMP and Authentication Protocol */
 	printf (" %s\n", "-n, --next");
@@ -867,11 +867,11 @@ print_help (void)
 	printf (" %s\n", "-D, --output-delimiter=STRING");
 	printf ("    %s\n", _("Separates output on multiple OID requests"));
 
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf (" %s\n", "-e, --retries=INTEGER");
 	printf ("    %s\n", _("Number of retries to be used in the requests"));
 
-	printf (_(UT_VERBOSE));
+	printf (UT_VERBOSE);
 
 	printf ("\n");
 	printf ("%s\n", _("This plugin uses the 'snmpget' command included with the NET-SNMP package."));
@@ -883,17 +883,17 @@ print_help (void)
 	printf (" %s\n", _("- Multiple OIDs may be indicated by a comma- or space-delimited list (lists with"));
 	printf ("   %s\n", _("internal spaces must be quoted) [max 8 OIDs]"));
 
-	printf(" -%s", _(UT_THRESHOLDS_NOTES));
+	printf(" -%s", UT_THRESHOLDS_NOTES);
 
 	printf (" %s\n", _("- When checking multiple OIDs, separate ranges by commas like '-w 1:10,1:,:20'"));
 	printf (" %s\n", _("- Note that only one string and one regex may be checked at present"));
 	printf (" %s\n", _("- All evaluation methods other than PR, STR, and SUBSTR expect that the value"));
 	printf ("   %s\n", _("returned from the SNMP query is an unsigned integer."));
 #ifdef NP_EXTRA_OPTS
-	printf (" -%s", _(UT_EXTRA_OPTS_NOTES));
+	printf (" -%s", UT_EXTRA_OPTS_NOTES);
 #endif
 
-	printf (_(UT_SUPPORT));
+	printf (UT_SUPPORT);
 }
 
 

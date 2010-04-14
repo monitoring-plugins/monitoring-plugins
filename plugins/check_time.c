@@ -342,10 +342,10 @@ print_help (void)
 
 	print_usage ();
 
-	printf (_(UT_HELP_VRSN));
-	printf (_(UT_EXTRA_OPTS));
+	printf (UT_HELP_VRSN);
+	printf (UT_EXTRA_OPTS);
 
-	printf (_(UT_HOST_PORT), 'p', myport);
+	printf (UT_HOST_PORT, 'p', myport);
 
 	printf (" %s\n", "-u, --udp");
   printf ("   %s\n", _("Use UDP to connect, not TCP"));
@@ -358,15 +358,15 @@ print_help (void)
   printf (" %s\n", "-C, --critical-connect=INTEGER");
   printf ("   %s\n", _("Response time (sec.) necessary to result in critical status"));
 
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 #ifdef NP_EXTRA_OPTS
 	printf ("\n");
 	printf ("%s\n", _("Notes:"));
-	printf (_(UT_EXTRA_OPTS_NOTES));
+	printf (UT_EXTRA_OPTS_NOTES);
 #endif
 
-	printf (_(UT_SUPPORT));
+	printf (UT_SUPPORT);
 }
 
 

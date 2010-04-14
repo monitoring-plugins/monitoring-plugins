@@ -396,12 +396,12 @@ print_help (void)
 
 	print_usage ();
 
-	printf (_(UT_HELP_VRSN));
-	printf (_(UT_EXTRA_OPTS));
+	printf (UT_HELP_VRSN);
+	printf (UT_EXTRA_OPTS);
 
-	printf (_(UT_HOST_PORT), 'p', myport);
+	printf (UT_HOST_PORT, 'p', myport);
 
-	printf (_(UT_IPv46));
+	printf (UT_IPv46);
 
 	printf (" %s\n", "-a [--attr]");
   printf ("    %s\n", _("ldap attribute to search (default: \"(objectclass=*)\""));
@@ -424,11 +424,11 @@ print_help (void)
   printf ("    (%s %d)\n", _("default protocol version:"), DEFAULT_PROTOCOL);
 #endif
 
-	printf (_(UT_WARN_CRIT));
+	printf (UT_WARN_CRIT);
 
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
-	printf (_(UT_VERBOSE));
+	printf (UT_VERBOSE);
 
 	printf ("\n");
 	printf ("%s\n", _("Notes:"));
@@ -439,10 +439,10 @@ print_help (void)
 	printf (" %s\n", _("to define the behaviour explicitly instead."));
 #ifdef NP_EXTRA_OPTS
 	printf ("\n");
-	printf (_(UT_EXTRA_OPTS_NOTES));
+	printf (UT_EXTRA_OPTS_NOTES);
 #endif
 
-	printf (_(UT_SUPPORT));
+	printf (UT_SUPPORT);
 }
 
 /* todo

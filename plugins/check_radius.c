@@ -341,10 +341,10 @@ print_help (void)
 
 	print_usage ();
 
-	printf (_(UT_HELP_VRSN));
-	printf (_(UT_EXTRA_OPTS));
+	printf (UT_HELP_VRSN);
+	printf (UT_EXTRA_OPTS);
 
-	printf (_(UT_HOST_PORT), 'P', myport);
+	printf (UT_HOST_PORT, 'P', myport);
 
 	printf (" %s\n", "-u, --username=STRING");
   printf ("    %s\n", _("The user to authenticate"));
@@ -361,7 +361,7 @@ print_help (void)
   printf (" %s\n", "-r, --retries=INTEGER");
   printf ("    %s\n", _("Number of times to retry a failed connection"));
 
-	printf (_(UT_TIMEOUT), timeout_interval);
+	printf (UT_TIMEOUT, timeout_interval);
 
   printf ("\n");
   printf ("%s\n", _("This plugin tests a RADIUS server to see if it is accepting connections."));
@@ -377,10 +377,10 @@ print_help (void)
 #ifdef NP_EXTRA_OPTS
   printf ("\n");
   printf ("%s\n", _("Notes:"));
-  printf (_(UT_EXTRA_OPTS_NOTES));
+  printf (UT_EXTRA_OPTS_NOTES);
 #endif
 
-	printf (_(UT_SUPPORT));
+	printf (UT_SUPPORT);
 }
 
 

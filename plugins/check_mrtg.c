@@ -325,8 +325,8 @@ print_help (void)
 
 	print_usage ();
 
-	printf (_(UT_HELP_VRSN));
-	printf (_(UT_EXTRA_OPTS));
+	printf (UT_HELP_VRSN);
+	printf (UT_EXTRA_OPTS);
 
 	printf (" %s\n", "-F, --logfile=FILE");
   printf ("   %s\n", _("The MRTG log file containing the data you want to monitor"));
@@ -368,10 +368,10 @@ print_help (void)
   printf (" %s\n", _("- MRTG stands for the Multi Router Traffic Grapher.  It can be downloaded from"));
   printf ("   %s\n", "http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html");
 #ifdef NP_EXTRA_OPTS
-	printf (" -%s", _(UT_EXTRA_OPTS_NOTES));
+	printf (" -%s", UT_EXTRA_OPTS_NOTES);
 #endif
 
-	printf (_(UT_SUPPORT));
+	printf (UT_SUPPORT);
 }
 
 

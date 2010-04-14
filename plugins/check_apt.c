@@ -411,10 +411,10 @@ print_help (void)
 
   print_usage();
 
-  printf(_(UT_HELP_VRSN));
-  printf(_(UT_EXTRA_OPTS));
+  printf(UT_HELP_VRSN);
+  printf(UT_EXTRA_OPTS);
 
-  printf(_(UT_TIMEOUT), timeout_interval);
+  printf(UT_TIMEOUT, timeout_interval);
 
   printf (" %s\n", "-U, --upgrade=OPTS");
   printf ("    %s\n", _("[Default] Perform an upgrade.  If an optional OPTS argument is provided,"));
@@ -456,10 +456,10 @@ print_help (void)
 #ifdef NP_EXTRA_OPTS
   printf("\n");
   printf("%s\n", _("Notes:"));
-  printf(_(UT_EXTRA_OPTS_NOTES));
+  printf(UT_EXTRA_OPTS_NOTES);
 #endif
 
-  printf(_(UT_SUPPORT));
+  printf(UT_SUPPORT);
 }
 
 

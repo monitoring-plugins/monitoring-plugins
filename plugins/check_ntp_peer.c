@@ -658,9 +658,9 @@ void print_help(void){
 	printf ("\n\n");
 
 	print_usage();
-	printf (_(UT_HELP_VRSN));
-	printf (_(UT_EXTRA_OPTS));
-	printf (_(UT_HOST_PORT), 'p', "123");
+	printf (UT_HELP_VRSN);
+	printf (UT_EXTRA_OPTS);
+	printf (UT_HOST_PORT, 'p', "123");
 	printf (" %s\n", "-q, --quiet");
 	printf ("    %s\n", _("Returns UNKNOWN instead of CRITICAL or WARNING if server isn't synchronized"));
 	printf (" %s\n", "-w, --warning=THRESHOLD");
@@ -679,8 +679,8 @@ void print_help(void){
 	printf ("    %s\n", _("Warning threshold for number of usable time sources (\"truechimers\")"));
 	printf (" %s\n", "-n, --tcrit=THRESHOLD");
 	printf ("    %s\n", _("Critical threshold for number of usable time sources (\"truechimers\")"));
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-	printf (_(UT_VERBOSE));
+	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_VERBOSE);
 
 	printf("\n");
 	printf("%s\n", _("This plugin checks an NTP server independent of any commandline"));
@@ -692,10 +692,10 @@ void print_help(void){
 	printf(" %s\n", _("plugin will not check the clock offset between the local host and NTP"));
 	printf(" %s\n", _("server; please use check_ntp_time for that purpose."));
 	printf("\n");
-	printf(_(UT_THRESHOLDS_NOTES));
+	printf(UT_THRESHOLDS_NOTES);
 #ifdef NP_EXTRA_OPTS
 	printf("\n");
-	printf(_(UT_EXTRA_OPTS_NOTES));
+	printf(UT_EXTRA_OPTS_NOTES);
 #endif
 
 	printf("\n");
@@ -713,7 +713,7 @@ void print_help(void){
 	printf(" %s\n", _("Check only stratum:"));
 	printf("  %s\n", ("./check_ntp_peer -H ntpserv -W 4 -C 6"));
 
-	printf (_(UT_SUPPORT));
+	printf (UT_SUPPORT);
 }
 
 void

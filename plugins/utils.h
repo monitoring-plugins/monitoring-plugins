@@ -137,73 +137,73 @@ char *fperfdata (const char *,
 #define COPYRIGHT "Copyright (c) %s Nagios Plugin Development Team\n\
 \t<%s>\n\n"
 
-#define UT_HLP_VRS "\
+#define UT_HLP_VRS _("\
        %s (-h | --help) for detailed help\n\
-       %s (-V | --version) for version information\n"
+       %s (-V | --version) for version information\n")
 
-#define UT_HELP_VRSN "\
+#define UT_HELP_VRSN _("\
 \nOptions:\n\
  -h, --help\n\
     Print detailed help screen\n\
  -V, --version\n\
-    Print version information\n"
+    Print version information\n")
 
-#define UT_HOST_PORT "\
+#define UT_HOST_PORT _("\
  -H, --hostname=ADDRESS\n\
     Host name, IP Address, or unix socket (must be an absolute path)\n\
  -%c, --port=INTEGER\n\
-    Port number (default: %s)\n"
+    Port number (default: %s)\n")
 
-#define UT_IPv46 "\
+#define UT_IPv46 _("\
  -4, --use-ipv4\n\
     Use IPv4 connection\n\
  -6, --use-ipv6\n\
-    Use IPv6 connection\n"
+    Use IPv6 connection\n")
 
-#define UT_VERBOSE "\
+#define UT_VERBOSE _("\
  -v, --verbose\n\
-    Show details for command-line debugging (Nagios may truncate output)\n"
+    Show details for command-line debugging (Nagios may truncate output)\n")
 
-#define UT_WARN_CRIT "\
+#define UT_WARN_CRIT _("\
  -w, --warning=DOUBLE\n\
     Response time to result in warning status (seconds)\n\
  -c, --critical=DOUBLE\n\
-    Response time to result in critical status (seconds)\n"
+    Response time to result in critical status (seconds)\n")
 
-#define UT_WARN_CRIT_RANGE "\
+#define UT_WARN_CRIT_RANGE _("\
  -w, --warning=RANGE\n\
     Warning range (format: start:end). Alert if outside this range\n\
  -c, --critical=RANGE\n\
-    Critical range\n"
+    Critical range\n")
 
-#define UT_TIMEOUT "\
+#define UT_TIMEOUT _("\
  -t, --timeout=INTEGER\n\
-    Seconds before connection times out (default: %d)\n"
+    Seconds before connection times out (default: %d)\n")
 
 #ifdef NP_EXTRA_OPTS
-#define UT_EXTRA_OPTS "\
+#define UT_EXTRA_OPTS _("\
  --extra-opts=[section][@file]\n\
-    Read additionnal options from ini file\n"
-#define UT_EXTRA_OPTS_NOTES "\
- See: http://nagiosplugins.org/extra-opts for --extra-opts usage and examples.\n"
+    Read additionnal options from ini file\n")
+#define UT_EXTRA_OPTS_NOTES _("\
+ See: http://nagiosplugins.org/extra-opts for --extra-opts usage and examples.\n")
 #else
 #define UT_EXTRA_OPTS ""
 #define UT_EXTRA_OPTS_NOTES ""
 #endif
 
-#define UT_THRESHOLDS_NOTES "\
+#define UT_THRESHOLDS_NOTES _("\
  See:\n\
  http://nagiosplug.sourceforge.net/developer-guidelines.html#THRESHOLDFORMAT\n\
- for THRESHOLD format and examples.\n"
+ for THRESHOLD format and examples.\n")
 
-#define UT_SUPPORT "\n\
+#define UT_SUPPORT _("\n\
 Send email to nagios-users@lists.sourceforge.net if you have questions\n\
 regarding use of this software. To submit patches or suggest improvements,\n\
-send email to nagiosplug-devel@lists.sourceforge.net\n\n"
+send email to nagiosplug-devel@lists.sourceforge.net\n\n")
 
-#define UT_NOWARRANTY "\n\
+#define UT_NOWARRANTY _("\n\
 The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\
 copies of the plugins under the terms of the GNU General Public License.\n\
-For more information about these matters, see the file named COPYING.\n"
+For more information about these matters, see the file named COPYING.\n")
 
 #endif /* NP_UTILS_H */

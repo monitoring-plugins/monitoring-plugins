@@ -416,10 +416,10 @@ print_help (void)
 
 	print_usage ();
 
-	printf (_(UT_HELP_VRSN));
-	printf (_(UT_EXTRA_OPTS));
+	printf (UT_HELP_VRSN);
+	printf (UT_EXTRA_OPTS);
 
-	printf (_(UT_HOST_PORT), 'p', myport);
+	printf (UT_HOST_PORT, 'p', myport);
 
 	printf (" %s\n", "-u, --url=STRING");
   printf ("    %s\n", _("Connect to this url"));
@@ -427,11 +427,11 @@ print_help (void)
   printf (_("String to expect in first line of server response (default: %s)\n"),
 	       EXPECT);
 
-	printf (_(UT_WARN_CRIT));
+	printf (UT_WARN_CRIT);
 
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
-	printf (_(UT_VERBOSE));
+	printf (UT_VERBOSE);
 
   printf ("\n");
 	printf ("%s\n", _("This plugin will attempt to open an RTSP connection with the host."));
@@ -443,10 +443,10 @@ print_help (void)
 #ifdef NP_EXTRA_OPTS
   printf ("\n");
   printf ("%s\n", _("Notes:"));
-  printf (_(UT_EXTRA_OPTS_NOTES));
+  printf (UT_EXTRA_OPTS_NOTES);
 #endif
 
-	printf (_(UT_SUPPORT));
+	printf (UT_SUPPORT);
 }
 
 

@@ -600,17 +600,17 @@ void print_help(void){
 	printf ("\n\n");
 
 	print_usage();
-	printf (_(UT_HELP_VRSN));
-	printf (_(UT_EXTRA_OPTS));
-	printf (_(UT_HOST_PORT), 'p', "123");
+	printf (UT_HELP_VRSN);
+	printf (UT_EXTRA_OPTS);
+	printf (UT_HOST_PORT, 'p', "123");
 	printf (" %s\n", "-q, --quiet");
 	printf ("    %s\n", _("Returns UNKNOWN instead of CRITICAL if offset cannot be found"));
 	printf (" %s\n", "-w, --warning=THRESHOLD");
 	printf ("    %s\n", _("Offset to result in warning status (seconds)"));
 	printf (" %s\n", "-c, --critical=THRESHOLD");
 	printf ("    %s\n", _("Offset to result in critical status (seconds)"));
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-	printf (_(UT_VERBOSE));
+	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_VERBOSE);
 
 	printf("\n");
 	printf("%s\n", _("This plugin checks the clock offset between the local host and a"));
@@ -622,17 +622,17 @@ void print_help(void){
 	printf(" %s\n", _("If you'd rather want to monitor an NTP server, please use"));
 	printf(" %s\n", _("check_ntp_peer."));
 	printf("\n");
-	printf(_(UT_THRESHOLDS_NOTES));
+	printf(UT_THRESHOLDS_NOTES);
 #ifdef NP_EXTRA_OPTS
 	printf("\n");
-	printf(_(UT_EXTRA_OPTS_NOTES));
+	printf(UT_EXTRA_OPTS_NOTES);
 #endif
 
 	printf("\n");
 	printf("%s\n", _("Examples:"));
 	printf("  %s\n", ("./check_ntp_time -H ntpserv -w 0.5 -c 1"));
 
-	printf (_(UT_SUPPORT));
+	printf (UT_SUPPORT);
 }
 
 void

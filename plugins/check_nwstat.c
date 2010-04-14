@@ -1605,10 +1605,10 @@ void print_help(void)
 
 	print_usage();
 
-	printf (_(UT_HELP_VRSN));
-	printf (_(UT_EXTRA_OPTS));
+	printf (UT_HELP_VRSN);
+	printf (UT_EXTRA_OPTS);
 
-	printf (_(UT_HOST_PORT), 'p', myport);
+	printf (UT_HOST_PORT, 'p', myport);
 
 	printf (" %s\n", "-v, --variable=STRING");
   printf ("   %s\n", _("Variable to check.  Valid variables include:"));
@@ -1664,7 +1664,7 @@ void print_help(void)
   printf (" %s\n", "-o, --osversion");
   printf ("    %s\n", _("Include server version string in results"));
 
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
   printf ("\n");
   printf ("%s\n", _("Notes:"));
@@ -1675,10 +1675,10 @@ void print_help(void)
   printf (" %s\n", _("  when the following variables are checked: VPF, VKF, LTCH, CBUFF, DCB, "));
   printf (" %s\n", _("  TCB, LRUS and LRUM."));
 #ifdef NP_EXTRA_OPTS
-  printf (" -%s", _(UT_EXTRA_OPTS_NOTES));
+  printf (" -%s", UT_EXTRA_OPTS_NOTES);
 #endif
 
-	printf (_(UT_SUPPORT));
+	printf (UT_SUPPORT);
 }
 
 

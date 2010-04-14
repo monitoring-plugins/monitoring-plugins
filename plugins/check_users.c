@@ -211,8 +211,8 @@ print_help (void)
 
 	print_usage ();
 
-	printf (_(UT_HELP_VRSN));
-	printf (_(UT_EXTRA_OPTS));
+	printf (UT_HELP_VRSN);
+	printf (UT_EXTRA_OPTS);
 
 	printf (" %s\n", "-w, --warning=INTEGER");
   printf ("    %s\n", _("Set WARNING status if more than INTEGER users are logged in"));
@@ -222,10 +222,10 @@ print_help (void)
 #ifdef NP_EXTRA_OPTS
   printf ("\n");
   printf ("%s\n", _("Notes:"));
-  printf (_(UT_EXTRA_OPTS_NOTES));
+  printf (UT_EXTRA_OPTS_NOTES);
 #endif
 
-	printf (_(UT_SUPPORT));
+	printf (UT_SUPPORT);
 }
 
 

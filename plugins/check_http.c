@@ -1315,8 +1315,8 @@ print_help (void)
 
   printf ("\n");
 
-  printf (_(UT_HELP_VRSN));
-  printf (_(UT_EXTRA_OPTS));
+  printf (UT_HELP_VRSN);
+  printf (UT_EXTRA_OPTS);
 
   printf (" %s\n", "-H, --hostname=ADDRESS");
   printf ("    %s\n", _("Host name argument for servers using host headers (virtual host)"));
@@ -1327,7 +1327,7 @@ print_help (void)
   printf ("    %s", _("Port number (default: "));
   printf ("%d)\n", HTTP_PORT);
 
-  printf (_(UT_IPv46));
+  printf (UT_IPv46);
 
 #ifdef HAVE_SSL
   printf (" %s\n", "-S, --ssl");
@@ -1386,11 +1386,11 @@ print_help (void)
   printf (" %s\n", "-m, --pagesize=INTEGER<:INTEGER>");
   printf ("    %s\n", _("Minimum page size required (bytes) : Maximum page size required (bytes)"));
 
-  printf (_(UT_WARN_CRIT));
+  printf (UT_WARN_CRIT);
 
-  printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+  printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
-  printf (_(UT_VERBOSE));
+  printf (UT_VERBOSE);
 
   printf ("\n");
   printf ("%s\n", _("Notes:"));
@@ -1401,7 +1401,7 @@ print_help (void)
   printf (" %s\n", _("checking a virtual server that uses 'host headers' you must supply the FQDN"));
   printf (" %s\n", _("(fully qualified domain name) as the [host_name] argument."));
   printf ("\n");
-  printf (_(UT_EXTRA_OPTS_NOTES));
+  printf (UT_EXTRA_OPTS_NOTES);
 
 #ifdef HAVE_SSL
   printf ("\n");
@@ -1423,7 +1423,7 @@ print_help (void)
   printf (" %s\n", _("the certificate is expired."));
 #endif
 
-  printf (_(UT_SUPPORT));
+  printf (UT_SUPPORT);
 
 }
 

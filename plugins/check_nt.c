@@ -655,8 +655,8 @@ void print_help(void)
 
 	print_usage();
 
-	printf (_(UT_HELP_VRSN));
-	printf (_(UT_EXTRA_OPTS));
+	printf (UT_HELP_VRSN);
+	printf (UT_EXTRA_OPTS);
 
 	printf ("%s\n", _("Options:"));
 	printf (" %s\n", "-H, --hostname=HOST");
@@ -749,10 +749,10 @@ void print_help(void)
 	printf ("   %s\n", _("One fix for this is to change the port to something else on check_nt "));
 	printf ("   %s\n", _("and on the client service it\'s connecting to."));
 #ifdef NP_EXTRA_OPTS
-	printf (" -%s", _(UT_EXTRA_OPTS_NOTES));
+	printf (" -%s", UT_EXTRA_OPTS_NOTES);
 #endif
 
-	printf (_(UT_SUPPORT));
+	printf (UT_SUPPORT);
 }
 
 

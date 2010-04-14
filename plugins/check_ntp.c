@@ -842,9 +842,9 @@ void print_help(void){
 	printf ("\n\n");
 
 	print_usage();
-	printf (_(UT_HELP_VRSN));
-	printf (_(UT_EXTRA_OPTS));
-	printf (_(UT_HOST_PORT), 'p', "123");
+	printf (UT_HELP_VRSN);
+	printf (UT_EXTRA_OPTS);
+	printf (UT_HOST_PORT, 'p', "123");
 	printf (" %s\n", "-w, --warning=THRESHOLD");
 	printf ("    %s\n", _("Offset to result in warning status (seconds)"));
 	printf (" %s\n", "-c, --critical=THRESHOLD");
@@ -853,15 +853,15 @@ void print_help(void){
 	printf ("    %s\n", _("Warning threshold for jitter"));
 	printf (" %s\n", "-k, --jcrit=THRESHOLD");
 	printf ("    %s\n", _("Critical threshold for jitter"));
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
-	printf (_(UT_VERBOSE));
+	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_VERBOSE);
 
 	printf("\n");
 	printf("%s\n", _("Notes:"));
-	printf(_(UT_THRESHOLDS_NOTES));
+	printf(UT_THRESHOLDS_NOTES);
 #ifdef NP_EXTRA_OPTS
 	printf("\n");
-	printf(_(UT_EXTRA_OPTS_NOTES));
+	printf(UT_EXTRA_OPTS_NOTES);
 #endif
 
 	printf("\n");
@@ -873,7 +873,7 @@ void print_help(void){
 	printf(" %s\n", _("(See Notes above for more details on thresholds formats):"));
 	printf("  %s\n", ("./check_ntp -H ntpserv -w 0.5 -c 1 -j -1:100 -k -1:200"));
 
-	printf (_(UT_SUPPORT));
+	printf (UT_SUPPORT);
 
 	printf ("%s\n", _("WARNING: check_ntp is deprecated. Please use check_ntp_peer or"));
 	printf ("%s\n\n", _("check_ntp_time instead."));

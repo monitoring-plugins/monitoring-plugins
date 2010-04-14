@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: nagiosplug-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2010-04-14 05:43-0400\n"
+"POT-Creation-Date: 2010-04-14 06:17-0400\n"
 "PO-Revision-Date: 2010-04-14 05:30-0400\n"
 "Last-Translator: Thomas Guyot-Sionnest <dermoth@aei.ca>\n"
 "Language-Team: Nagios Plugin Development Mailing List <nagiosplug-"
@@ -2612,12 +2612,12 @@ msgstr "Ce plugin vérifie le service ntp sur l'hôte"
 #: plugins/check_ntp.c:849 plugins/check_ntp_peer.c:667
 #: plugins/check_ntp_time.c:609
 msgid "Offset to result in warning status (seconds)"
-msgstr "Décalage résultant un avertissement (secondes)"
+msgstr "Décalage résultant en un avertissement (secondes)"
 
 #: plugins/check_ntp.c:851 plugins/check_ntp_peer.c:669
 #: plugins/check_ntp_time.c:611
 msgid "Offset to result in critical status (seconds)"
-msgstr "Décalage résultant un état critique (secondes)"
+msgstr "Décalage résultant en un état critique (secondes)"
 
 #: plugins/check_ntp.c:853 plugins/check_ntp_peer.c:675
 msgid "Warning threshold for jitter"
@@ -5411,6 +5411,155 @@ msgstr "La fonction realloc à échoué dans strpcpy\n"
 msgid "failed malloc in strscat\n"
 msgstr "La fonction malloc à échoué dans strscat\n"
 
+#: plugins/utils.h:140
+#, c-format
+msgid ""
+"       %s (-h | --help) for detailed help\n"
+"       %s (-V | --version) for version information\n"
+msgstr ""
+"       %s (-h | --help) pour l'aide détaillée\n"
+"       %s (-V | --version) pour les informations relative à la version\n"
+
+#: plugins/utils.h:144
+msgid ""
+"\n"
+"Options:\n"
+" -h, --help\n"
+"    Print detailed help screen\n"
+" -V, --version\n"
+"    Print version information\n"
+msgstr ""
+"\n"
+"Options:\n"
+" -h, --help\n"
+"    Afficher l'aide détaillée\n"
+" -V, --version\n"
+"    Afficher les informations relative à la version\n"
+
+#: plugins/utils.h:151
+#, c-format
+msgid ""
+" -H, --hostname=ADDRESS\n"
+"    Host name, IP Address, or unix socket (must be an absolute path)\n"
+" -%c, --port=INTEGER\n"
+"    Port number (default: %s)\n"
+msgstr ""
+" -H, --hostname=ADDRESS\n"
+"    Nom d'hôte, Adresse IP, ou socket UNIX (doit être un chemin absolu)\n"
+" -%c, --port=INTEGER\n"
+"    Numéro de port (défaut: %s)\n"
+
+#: plugins/utils.h:157
+msgid ""
+" -4, --use-ipv4\n"
+"    Use IPv4 connection\n"
+" -6, --use-ipv6\n"
+"    Use IPv6 connection\n"
+msgstr ""
+" -4, --use-ipv4\n"
+"    Utiliser une connection IPv4\n"
+" -6, --use-ipv6\n"
+"    Utiliser une connection IPv6\n"
+
+#: plugins/utils.h:163
+msgid ""
+" -v, --verbose\n"
+"    Show details for command-line debugging (Nagios may truncate output)\n"
+msgstr ""
+" -v, --verbose\n"
+"    Affiche les informations de déboguage en ligne de commande (Nagios peut "
+"tronquer la sortie)\n"
+
+#: plugins/utils.h:167
+msgid ""
+" -w, --warning=DOUBLE\n"
+"    Response time to result in warning status (seconds)\n"
+" -c, --critical=DOUBLE\n"
+"    Response time to result in critical status (seconds)\n"
+msgstr ""
+" -w, --warning=DOUBLE\n"
+"    Temps de réponse résultant en un état d'avertissement (secondes)\n"
+" -c, --critical=DOUBLE\n"
+"    Temps de réponse résultant en un état critique (secondes)\n"
+
+#: plugins/utils.h:173
+msgid ""
+" -w, --warning=RANGE\n"
+"    Warning range (format: start:end). Alert if outside this range\n"
+" -c, --critical=RANGE\n"
+"    Critical range\n"
+msgstr ""
+" -w, --warning=RANGE\n"
+"    Seuil d'avertissement (format: début:fin). Alerte à l'extérieur de la "
+"plage\n"
+" -c, --critical=RANGE\n"
+"    Seuil critique\n"
+
+#: plugins/utils.h:179
+#, c-format
+msgid ""
+" -t, --timeout=INTEGER\n"
+"    Seconds before connection times out (default: %d)\n"
+msgstr ""
+" -t, --timeout=INTEGER\n"
+"    Délais de connection en secondes (défaut: %d)\n"
+
+#: plugins/utils.h:184
+msgid ""
+" --extra-opts=[section][@file]\n"
+"    Read additionnal options from ini file\n"
+msgstr ""
+" --extra-opts=[section][@file]\n"
+"    Lire les options additionnelles à partir d'un fichier ini\n"
+
+#: plugins/utils.h:187
+msgid ""
+" See: http://nagiosplugins.org/extra-opts for --extra-opts usage and "
+"examples.\n"
+msgstr ""
+" Voir: http://nagiosplugins.org/extra-opts pour le format et examples de --"
+"extra-opts.\n"
+
+#: plugins/utils.h:194
+msgid ""
+" See:\n"
+" http://nagiosplug.sourceforge.net/developer-guidelines."
+"html#THRESHOLDFORMAT\n"
+" for THRESHOLD format and examples.\n"
+msgstr ""
+" Voir:\n"
+" http://nagiosplug.sourceforge.net/developer-guidelines."
+"html#THRESHOLDFORMAT\n"
+" pour le format et examples des seuils (THRESHOLD).\n"
+
+#: plugins/utils.h:199
+msgid ""
+"\n"
+"Send email to nagios-users@lists.sourceforge.net if you have questions\n"
+"regarding use of this software. To submit patches or suggest improvements,\n"
+"send email to nagiosplug-devel@lists.sourceforge.net\n"
+"\n"
+msgstr ""
+"\n"
+"Envoyez un email à nagios-users@lists.sourceforge.net si vous avez des "
+"questions\n"
+"reliées à l'utilisation de ce logiciel. Pour envoyer des patches ou suggérer "
+"des\n"
+"améliorations, envoyez un email à nagiosplug-devel@lists.sourceforge.net\n"
+"\n"
+
+#: plugins/utils.h:204
+msgid ""
+"\n"
+"The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n"
+"copies of the plugins under the terms of the GNU General Public License.\n"
+"For more information about these matters, see the file named COPYING.\n"
+msgstr ""
+"\n"
+"Les plugins de Nagios ne portent AUCUNE GARANTIE. Vous pouvez redistribuer\n"
+"des copies des plugins selon les termes de la GNU General Public License.\n"
+"Pour de plus ample informations, voir le fichier COPYING.\n"
+
 #: plugins-root/check_dhcp.c:320
 #, c-format
 msgid "Error: Could not get hardware address of interface '%s'\n"
@@ -5838,12 +5987,3 @@ msgstr ""
 #: plugins-root/check_icmp.c:1334
 msgid "The -v switch can be specified several times for increased verbosity."
 msgstr ""
-
-#~ msgid "See:"
-#~ msgstr "Voir:"
-
-#~ msgid "for THRESHOLD format and examples."
-#~ msgstr "pour le format et examples des seuils (THRESHOLD)."
-
-#~ msgid "for --extra-opts usage and examples."
-#~ msgstr "pour le format et examples de --extra-opts."

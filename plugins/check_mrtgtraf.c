@@ -343,8 +343,8 @@ print_help (void)
 
 	print_usage ();
 
-	printf (_(UT_HELP_VRSN));
-	printf (_(UT_EXTRA_OPTS));
+	printf (UT_HELP_VRSN);
+	printf (UT_EXTRA_OPTS);
 
 	printf (" %s\n", "-F, --filename=STRING");
   printf ("    %s\n", _("File to read log from"));
@@ -367,10 +367,10 @@ print_help (void)
   printf (" %s\n", _("  reports.  I'm not sure why this is right now, but will look into it"));
   printf (" %s\n", _("  for future enhancements of this plugin."));
 #ifdef NP_EXTRA_OPTS
-	printf (" -%s", _(UT_EXTRA_OPTS_NOTES));
+	printf (" -%s", UT_EXTRA_OPTS_NOTES);
 #endif
 
-	printf (_(UT_SUPPORT));
+	printf (UT_SUPPORT);
 }
 
 

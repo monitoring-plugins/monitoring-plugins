@@ -611,10 +611,10 @@ print_help (void)
 
 	print_usage ();
 
-	printf (_(UT_HELP_VRSN));
-	printf (_(UT_EXTRA_OPTS));
+	printf (UT_HELP_VRSN);
+	printf (UT_EXTRA_OPTS);
 
-	printf (_(UT_HOST_PORT), 'p', myport);
+	printf (UT_HOST_PORT, 'p', myport);
 
 	printf (" %s\n", "-u, --ups=STRING");
   printf ("    %s\n", _("Name of UPS"));
@@ -623,13 +623,13 @@ print_help (void)
   printf (" %s\n", "-v, --variable=STRING");
   printf ("    %s %s\n", _("Valid values for STRING are"), "LINE, TEMP, BATTPCT or LOADPCT");
 
-	printf (_(UT_WARN_CRIT));
+	printf (UT_WARN_CRIT);
 
-	printf (_(UT_TIMEOUT), DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 /* TODO: -v clashing with -v/-variable. Commenting out help text since verbose
          is unused up to now */
-/*	printf (_(UT_VERBOSE)); */
+/*	printf (UT_VERBOSE); */
 
   printf ("\n");
 	printf ("%s\n", _("This plugin attempts to determine the status of a UPS (Uninterruptible Power"));
@@ -651,10 +651,10 @@ print_help (void)
   printf (" %s\n", _("http://www.networkupstools.org"));
 #ifdef NP_EXTRA_OPTS
   printf ("\n");
-  printf (_(UT_EXTRA_OPTS_NOTES));
+  printf (UT_EXTRA_OPTS_NOTES);
 #endif
 
-	printf (_(UT_SUPPORT));
+	printf (UT_SUPPORT);
 }
 
 
