@@ -145,7 +145,7 @@ sub git_rev_list(@)
     die "Cannot open pipe: $!" if not defined $pid;
     if (!$pid)
     {
-        exec "git", "rev-list", @revlist_options, @args or die "Cannot execute rev-list: $!";
+        exec "git", "rev-list", "--reverse", @revlist_options, @args or die "Cannot execute rev-list: $!";
     }
     while (<REVLIST>)
     {
