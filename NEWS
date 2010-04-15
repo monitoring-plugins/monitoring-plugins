@@ -5,6 +5,7 @@ This file documents the major additions and syntax changes between releases.
 	New check_ntp_peer -m and -n options to check the number of usable time sources ("truechimers")
 	New check_disk_smb -a option which allows for specifying the IP address of the remote server
 	New check_radius -N option which allows for specifying the value of the NAS-IP-Address attribute
+    Updated Nagios::Plugin perl module
 	FIXES
 	Fix check_ircd binding to wrong interface (#668778)
 	Add proxy-authorization option to check_http (Marcel Kuiper - #1323230, Bryan Irvine - #2863925)
