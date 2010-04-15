@@ -59,6 +59,25 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #define MAX_OIDS 8
 
+/* Gobble to string - stop incrementing c when c[0] match one of the
+ * characters in s */
+#define GOBBLE_TOS(c, s) while(c[0]!='\0' && strchr(s, c[0])==NULL) { c++; }
+/* Given c, keep track of backslashes (bk) and double-quotes (dq)
+ * from c[0] */
+#define COUNT_SEQ(c, bk, dq) switch(c[0]) {\
+	case '\\': \
+		if (bk) bk--; \
+		else bk++; \
+		break; \
+	case '"': \
+		if (!dq) { dq++; } \
+		else if(!bk) { dq--; } \
+		else { bk--; } \
+		break; \
+	}
+
+
+
 int process_arguments (int, char **);
 int validate_arguments (void);
 char *thisarg (char *str);
@@ -118,6 +137,7 @@ int
 main (int argc, char **argv)
 {
 	int i, len, line;
+	unsigned int bk_count = 0, dq_count = 0;
 	int iresult = STATE_UNKNOWN;
 	int result = STATE_UNKNOWN;
 	int return_code = 0;
@@ -260,7 +280,7 @@ main (int argc, char **argv)
 			break;
 
 		if (verbose > 2) {
-			printf("Processing line %i\n  oidname: %s\n  response: %s\n", i+1, oidname, response);
+			printf("Processing oid %i (line %i)\n  oidname: %s\n  response: %s\n", i+1, line+1, oidname, response);
 		}
 
 		/* Clean up type array - Sol10 does not necessarily zero it out */
@@ -284,15 +304,36 @@ main (int argc, char **argv)
 		else if (strstr (response, "STRING: ")) {
 			show = strstr (response, "STRING: ") + 8;
 			conv = "%.10g";
+
 			/* Get the rest of the string on multi-line strings */
-			if (show[0] == '"' && (response[strlen(response)-1] != '\"' || response[strlen(response)-2] != '\\')) {
-				/* Strip out unmatched double-quote */
-				if (show[0] == '"') show++;
+			ptr = show;
+			COUNT_SEQ(ptr, bk_count, dq_count)
+			while (dq_count && ptr[0] != '\n' && ptr[0] != '\0') {
+				ptr++;
+				GOBBLE_TOS(ptr, "\n\"\\")
+				COUNT_SEQ(ptr, bk_count, dq_count)
+			}
+
+			if (dq_count) { /* unfinished line */
+				/* copy show verbatim first */
 				if (!mult_resp) mult_resp = strdup("");
-				asprintf (&mult_resp, "%s%s:\n%s\n", mult_resp, oids[i], strstr (response, "STRING: ") + 8);
+				asprintf (&mult_resp, "%s%s:\n%s\n", mult_resp, oids[i], show);
+				/* then strip out unmatched double-quote from single-line output */
+				if (show[0] == '"') show++;
+
+				/* Keep reading until we match end of double-quoted string */
 				for (line++; line < chld_out.lines; line++) {
-					asprintf (&mult_resp, "%s%s\n", mult_resp, chld_out.line[line]);
-					if (mult_resp[strlen(mult_resp)-2] == '"' && response[strlen(response)-2] != '\\') break;
+					ptr = chld_out.line[line];
+					asprintf (&mult_resp, "%s%s\n", mult_resp, ptr);
+
+					COUNT_SEQ(ptr, bk_count, dq_count)
+					while (dq_count && ptr[0] != '\n' && ptr[0] != '\0') {
+						ptr++;
+						GOBBLE_TOS(ptr, "\n\"\\")
+						COUNT_SEQ(ptr, bk_count, dq_count)
+					}
+					/* Break for loop before next line increment when done */
+					if (!dq_count) break;
 				}
 			}
 
@@ -379,7 +420,7 @@ main (int argc, char **argv)
 		}
 	}
 
-	printf ("%s %s -%s %s \n", label, state_text (result), outbuff, perfstr);
+	printf ("%s %s -%s %s\n", label, state_text (result), outbuff, perfstr);
 	if (mult_resp) printf ("%s", mult_resp);
 
 	return result;
