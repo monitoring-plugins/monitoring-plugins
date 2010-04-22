@@ -1410,12 +1410,6 @@ void print_help(void){
   printf (" %s\n", "-u, --unicast");
   printf ("    %s\n", _("Unicast testing: mimic a DHCP relay, requires -s"));
 
-#ifdef NP_EXTRA_OPTS
-  printf ("\n");
-  printf ("%s\n", _("Notes:"));
-  printf (UT_EXTRA_OPTS_NOTES);
-#endif
-
   printf (UT_SUPPORT);
 	return;
 	}

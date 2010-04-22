@@ -453,12 +453,6 @@ print_help (void)
   printf ("    %s\n", _("timeout (with -t) to prevent the plugin from timing out if apt-get"));
   printf ("    %s\n", _("upgrade is expected to take longer than the default timeout."));
 
-#ifdef NP_EXTRA_OPTS
-  printf("\n");
-  printf("%s\n", _("Notes:"));
-  printf(UT_EXTRA_OPTS_NOTES);
-#endif
-
   printf(UT_SUPPORT);
 }
 

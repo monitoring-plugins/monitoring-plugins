@@ -1674,9 +1674,6 @@ void print_help(void)
   printf (" %s\n", _("- Values for critical thresholds should be lower than warning thresholds"));
   printf (" %s\n", _("  when the following variables are checked: VPF, VKF, LTCH, CBUFF, DCB, "));
   printf (" %s\n", _("  TCB, LRUS and LRUM."));
-#ifdef NP_EXTRA_OPTS
-  printf (" -%s", UT_EXTRA_OPTS_NOTES);
-#endif
 
 	printf (UT_SUPPORT);
 }

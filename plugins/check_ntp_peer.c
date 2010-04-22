@@ -693,10 +693,6 @@ void print_help(void){
 	printf(" %s\n", _("server; please use check_ntp_time for that purpose."));
 	printf("\n");
 	printf(UT_THRESHOLDS_NOTES);
-#ifdef NP_EXTRA_OPTS
-	printf("\n");
-	printf(UT_EXTRA_OPTS_NOTES);
-#endif
 
 	printf("\n");
 	printf("%s\n", _("Examples:"));

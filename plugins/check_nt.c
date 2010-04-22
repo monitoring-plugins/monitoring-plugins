@@ -748,9 +748,6 @@ void print_help(void)
 	printf ("   %s\n", _("output when this happens contains \"Cannot map xxxxx to protocol number\"."));
 	printf ("   %s\n", _("One fix for this is to change the port to something else on check_nt "));
 	printf ("   %s\n", _("and on the client service it\'s connecting to."));
-#ifdef NP_EXTRA_OPTS
-	printf (" -%s", UT_EXTRA_OPTS_NOTES);
-#endif
 
 	printf (UT_SUPPORT);
 }

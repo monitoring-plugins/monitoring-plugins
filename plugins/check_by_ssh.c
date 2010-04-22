@@ -442,12 +442,6 @@ print_help (void)
   printf (" %s\n", "[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c2;0; up 2 days");
   printf (" %s\n", "[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c3;0; up 2 days");
 
-#ifdef NP_EXTRA_OPTS
-	printf("\n");
-	printf("%s\n", _("Notes:"));
-	printf(UT_EXTRA_OPTS_NOTES);
-#endif
-
 	printf(UT_SUPPORT);
 }
 

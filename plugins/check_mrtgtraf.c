@@ -366,9 +366,6 @@ print_help (void)
   printf (" %s\n", _("- The calculated i/o rates are a little off from what MRTG actually"));
   printf (" %s\n", _("  reports.  I'm not sure why this is right now, but will look into it"));
   printf (" %s\n", _("  for future enhancements of this plugin."));
-#ifdef NP_EXTRA_OPTS
-	printf (" -%s", UT_EXTRA_OPTS_NOTES);
-#endif
 
 	printf (UT_SUPPORT);
 }

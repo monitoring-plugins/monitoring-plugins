@@ -298,12 +298,6 @@ print_help (void)
   printf ("    %s\n", _("Substring to search for in process arguments"));
   printf (UT_VERBOSE);
 
-#ifdef NP_EXTRA_OPTS
-  printf ("\n");
-  printf ("%s\n", _("Notes:"));
-  printf (UT_EXTRA_OPTS_NOTES);
-#endif
-
   printf ("\n");
   printf ("%s\n", _("Examples:"));
   printf (" %s\n", "check_nagios -e 5 -F /usr/local/nagios/var/status.log -C /usr/local/nagios/bin/nagios");

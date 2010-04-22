@@ -546,11 +546,6 @@ print_help (void)
 	printf ("\n");
   printf ("%s\n", _("Notes:"));
   printf (" %s\n", _("On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s."));
-#ifdef NP_EXTRA_OPTS
-  printf ("\n");
-  printf (UT_EXTRA_OPTS_NOTES);
-#endif
-
 
 	printf (UT_SUPPORT);
 }

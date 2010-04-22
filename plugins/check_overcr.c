@@ -456,10 +456,6 @@ print_help (void)
   printf ("%s\n", _("Notes:"));
   printf (" %s\n", _("For the available options, the critical threshold value should always be"));
   printf (" %s\n", _("higher than the warning threshold value, EXCEPT with the uptime variable"));
-#ifdef NP_EXTRA_OPTS
-  printf ("\n");
-  printf (UT_EXTRA_OPTS_NOTES);
-#endif
 
   printf (UT_SUPPORT);
 }

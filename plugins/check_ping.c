@@ -592,12 +592,6 @@ print_help (void)
   printf ("%s\n", _("linking to a traceroute CGI contributed by Ian Cass. The CGI can be found in"));
   printf ("%s\n", _("the contrib area of the downloads section at http://www.nagios.org/"));
 
-#ifdef NP_EXTRA_OPTS
-  printf ("\n");
-  printf ("%s\n", _("Notes:"));
-  printf (UT_EXTRA_OPTS_NOTES);
-#endif
-
 	printf (UT_SUPPORT);
 }
 

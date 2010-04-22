@@ -466,12 +466,6 @@ print_help (void)
 	printf (" %s\n", _("able to connect to the database without a password. The plugin can also send"));
 	printf (" %s\n", _("a password, but no effort is made to obsure or encrypt the password."));
 
-#ifdef NP_EXTRA_OPTS
-	printf ("\n");
-	printf ("%s\n", _("Notes:"));
-	printf (UT_EXTRA_OPTS_NOTES);
-#endif
-
 	printf (UT_SUPPORT);
 }
 

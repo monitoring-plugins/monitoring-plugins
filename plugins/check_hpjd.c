@@ -403,12 +403,6 @@ print_help (void)
 	printf (_("(default=%s)"), DEFAULT_COMMUNITY);
 	printf ("\n");
 
-#ifdef NP_EXTRA_OPTS
-	printf ("\n");
-	printf ("%s\n", _("Notes:"));
-	printf (UT_EXTRA_OPTS_NOTES);
-#endif
-
 	printf (UT_SUPPORT);
 }
 

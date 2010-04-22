@@ -219,12 +219,6 @@ print_help (void)
   printf (" %s\n", "-c, --critical=INTEGER");
   printf ("    %s\n", _("Set CRITICAL status if more than INTEGER users are logged in"));
 
-#ifdef NP_EXTRA_OPTS
-  printf ("\n");
-  printf ("%s\n", _("Notes:"));
-  printf (UT_EXTRA_OPTS_NOTES);
-#endif
-
 	printf (UT_SUPPORT);
 }
 

@@ -641,12 +641,6 @@ print_help (void)
 
 	printf (UT_VERBOSE);
 
-#ifdef NP_EXTRA_OPTS
-	printf ("\n");
-	printf ("%s\n", _("Notes:"));
-	printf (UT_EXTRA_OPTS_NOTES);
-#endif
-
 	printf (UT_SUPPORT);
 }
 

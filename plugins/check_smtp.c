@@ -808,12 +808,6 @@ print_help (void)
   printf ("%s\n", _("connects, but incorrect reponse messages from the host result in"));
   printf ("%s\n", _("STATE_WARNING return values."));
 
-#ifdef NP_EXTRA_OPTS
-  printf ("\n");
-  printf ("%s\n", _("Notes:"));
-  printf (UT_EXTRA_OPTS_NOTES);
-#endif
-
 	printf (UT_SUPPORT);
 }
 

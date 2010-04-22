@@ -440,12 +440,6 @@ print_help (void)
   printf ("%s\n", _("but incorrect reponse messages from the host result in STATE_WARNING return"));
   printf ("%s\n", _("values."));
 
-#ifdef NP_EXTRA_OPTS
-  printf ("\n");
-  printf ("%s\n", _("Notes:"));
-  printf (UT_EXTRA_OPTS_NOTES);
-#endif
-
 	printf (UT_SUPPORT);
 }
 

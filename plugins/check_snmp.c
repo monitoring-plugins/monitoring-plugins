@@ -944,9 +944,6 @@ print_help (void)
 	printf (" %s\n", _("- Note that only one string and one regex may be checked at present"));
 	printf (" %s\n", _("- All evaluation methods other than PR, STR, and SUBSTR expect that the value"));
 	printf ("   %s\n", _("returned from the SNMP query is an unsigned integer."));
-#ifdef NP_EXTRA_OPTS
-	printf (" -%s", UT_EXTRA_OPTS_NOTES);
-#endif
 
 	printf (UT_SUPPORT);
 }

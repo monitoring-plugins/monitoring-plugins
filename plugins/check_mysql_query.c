@@ -310,14 +310,10 @@ print_help (void)
 	printf (" %s\n", _("A query is required. The result from the query should be numeric."));
 	printf (" %s\n", _("For extra security, create a user with minimal access."));
 
-#ifdef NP_EXTRA_OPTS
 	printf ("\n");
 	printf ("%s\n", _("Notes:"));
-	printf (UT_EXTRA_OPTS_NOTES);
-	printf ("\n");
 	printf (" %s\n", _("You must specify -p with an empty string to force an empty password,"));
 	printf (" %s\n", _("overriding any my.cnf settings."));
-#endif
 
 	printf (UT_SUPPORT);
 }

@@ -1335,10 +1335,6 @@ print_help(void)
 /*  printf ("%s\n", _("Long options are currently unsupported."));
   printf ("%s\n", _("Options marked with * require an argument"));
 */
-#ifdef NP_EXTRA_OPTS
-  printf ("\n");
-  printf (UT_EXTRA_OPTS_NOTES);
-#endif
 
   printf (UT_SUPPORT);
 }

@@ -739,12 +739,6 @@ the specified threshold ranges. The process count can be filtered by\n\
 process owner, parent process PID, current state (e.g., 'Z'), or may\n\
 be the total number of running processes\n\n"));
 
-#ifdef NP_EXTRA_OPTS
-  printf ("%s\n", _("Notes:"));
-  printf (UT_EXTRA_OPTS_NOTES);
-  printf ("\n");
-#endif
-
 	printf ("%s\n", _("Examples:"));
   printf (" %s\n", "check_procs -w 2:2 -c 2:1024 -C portsentry");
   printf ("  %s\n", _("Warning if not two processes with command name portsentry."));

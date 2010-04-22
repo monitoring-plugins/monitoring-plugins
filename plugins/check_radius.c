@@ -374,12 +374,6 @@ print_help (void)
   printf ("%s\n", _("run the plugin at regular predictable intervals. Please be sure that"));
   printf ("%s\n", _("the password used does not allow access to sensitive system resources."));
 
-#ifdef NP_EXTRA_OPTS
-  printf ("\n");
-  printf ("%s\n", _("Notes:"));
-  printf (UT_EXTRA_OPTS_NOTES);
-#endif
-
 	printf (UT_SUPPORT);
 }
 

@@ -649,10 +649,6 @@ print_help (void)
   printf (" %s\n", _("Network UPS Tools be installed on the remote host. If you do not have the"));
   printf (" %s\n", _("package installed on your system, you can download it from"));
   printf (" %s\n", _("http://www.networkupstools.org"));
-#ifdef NP_EXTRA_OPTS
-  printf ("\n");
-  printf (UT_EXTRA_OPTS_NOTES);
-#endif
 
 	printf (UT_SUPPORT);
 }

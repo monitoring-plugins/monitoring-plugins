@@ -506,12 +506,6 @@ print_help (void)
   printf (" %s\n", "-n, --nagios");
   printf ("    %s\n", _("Output suitable for Nagios"));
 
-#ifdef NP_EXTRA_OPTS
-  printf ("\n");
-  printf ("%s\n", _("Notes:"));
-  printf (UT_EXTRA_OPTS_NOTES);
-#endif
-
   printf (UT_SUPPORT);
 }
 

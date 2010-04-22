@@ -422,12 +422,6 @@ print_help (void)
   printf (" %s\n", _("which triggers a WARNING or CRITICAL state, and <pl> is the percentage of"));
   printf (" %s\n", _("packet loss to trigger an alarm state."));
 
-#ifdef NP_EXTRA_OPTS
-  printf ("\n");
-  printf ("%s\n", _("Notes:"));
-  printf (UT_EXTRA_OPTS_NOTES);
-#endif
-
   printf (UT_SUPPORT);
 }
 

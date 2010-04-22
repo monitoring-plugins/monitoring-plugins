@@ -437,10 +437,6 @@ print_help (void)
 	printf (" %s\n", _("'SSL on connect' will be used no matter how the plugin was called."));
 	printf (" %s\n", _("This detection is deprecated, please use 'check_ldap' with the '--starttls' or '--ssl' flags"));
 	printf (" %s\n", _("to define the behaviour explicitly instead."));
-#ifdef NP_EXTRA_OPTS
-	printf ("\n");
-	printf (UT_EXTRA_OPTS_NOTES);
-#endif
 
 	printf (UT_SUPPORT);
 }

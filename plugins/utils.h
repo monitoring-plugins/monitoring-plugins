@@ -183,12 +183,9 @@ char *fperfdata (const char *,
 #ifdef NP_EXTRA_OPTS
 #define UT_EXTRA_OPTS _("\
  --extra-opts=[section][@file]\n\
-    Read additionnal options from ini file\n")
-#define UT_EXTRA_OPTS_NOTES _("\
- See: http://nagiosplugins.org/extra-opts for --extra-opts usage and examples.\n")
+    Read options from an ini file. See http://nagiosplugins.org/extra-opts for usage\n")
 #else
 #define UT_EXTRA_OPTS ""
-#define UT_EXTRA_OPTS_NOTES ""
 #endif
 
 #define UT_THRESHOLDS_NOTES _("\

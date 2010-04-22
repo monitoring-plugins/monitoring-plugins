@@ -623,10 +623,6 @@ void print_help(void){
 	printf(" %s\n", _("check_ntp_peer."));
 	printf("\n");
 	printf(UT_THRESHOLDS_NOTES);
-#ifdef NP_EXTRA_OPTS
-	printf("\n");
-	printf(UT_EXTRA_OPTS_NOTES);
-#endif
 
 	printf("\n");
 	printf("%s\n", _("Examples:"));

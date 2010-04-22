@@ -343,12 +343,6 @@ print_help (void)
   printf (" %s\n", "check_dig -H DNSSERVER -l www.example.com -A \"+tcp\"");
   printf (" %s\n", "This will send a tcp query to DNSSERVER for www.example.com");
 
-#ifdef NP_EXTRA_OPTS
-  printf ("\n");
-  printf ("%s\n", _("Notes:"));
-  printf (UT_EXTRA_OPTS_NOTES);
-#endif
-
   printf (UT_SUPPORT);
 }
 
