@@ -657,6 +657,6 @@ print_help (void)
 void
 print_usage (void)
 {
-  printf (_("Usage:"));
+  printf ("%s\n", _("Usage:"));
 	printf ("%s -H host -u ups [-p port] [-v variable] [-w warn_value] [-c crit_value] [-to to_sec] [-T]\n", progname);
 }

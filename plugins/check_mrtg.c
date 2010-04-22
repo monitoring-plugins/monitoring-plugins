@@ -379,7 +379,7 @@ print_help (void)
 void
 print_usage (void)
 {
-  printf (_("Usage:"));
+  printf ("%s\n", _("Usage:"));
 	printf ("%s -F log_file -a <AVG | MAX> -v variable -w warning -c critical\n",progname);
   printf ("[-l label] [-u units] [-e expire_minutes] [-t timeout] [-v]\n");
 }

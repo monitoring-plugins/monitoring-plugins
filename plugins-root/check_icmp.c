@@ -1344,6 +1344,6 @@ print_help(void)
 void
 print_usage (void)
 {
-  printf (_("Usage:"));
+  printf ("%s\n", _("Usage:"));
   printf(" %s [options] [-H] host1 host2 hostN\n", progname);
 }

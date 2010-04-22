@@ -757,7 +757,7 @@ be the total number of running processes\n\n"));
 void
 print_usage (void)
 {
-  printf (_("Usage: "));
+  printf ("%s\n", _("Usage:"));
 	printf ("%s -w <range> -c <range> [-m metric] [-s state] [-p ppid]\n", progname);
   printf (" [-u user] [-r rss] [-z vsz] [-P %%cpu] [-a argument-array]\n");
   printf (" [-C command] [-t timeout] [-v]\n");

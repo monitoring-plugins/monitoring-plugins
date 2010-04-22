@@ -368,7 +368,7 @@ print_help (void)
 void
 print_usage (void)
 {
-  printf (_("Usage:"));
+  printf ("%s\n", _("Usage:"));
 	printf ("%s -H <host_address> [-p port] [-u] [-w variance] [-c variance]\n",progname);
   printf (" [-W connect_time] [-C connect_time] [-t timeout]\n");
 }

@@ -1418,7 +1418,7 @@ void print_help(void){
 void
 print_usage(void){
 
-  printf (_("Usage:"));
+  printf ("%s\n", _("Usage:"));
   printf (" %s [-v] [-u] [-s serverip] [-r requestedip] [-t timeout]\n",progname);
   printf ("                  [-i interface] [-m mac]\n");
 

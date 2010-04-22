@@ -328,7 +328,7 @@ print_help (void)
 void
 print_usage (void)
 {
-  printf (_("Usage:"));
+  printf ("%s\n", _("Usage:"));
   printf (" %s [-hvV] [-P port] [-t timeout] [-g game_field] [-m map_field] [-p ping_field] [-G game-time] [-H hostname] <game> <ip_address>\n", progname);
 }
 

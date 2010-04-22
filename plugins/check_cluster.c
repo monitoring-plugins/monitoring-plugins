@@ -271,7 +271,7 @@ void
 print_usage(void)
 {
 
-	printf(_("Usage:"));
+	printf("%s\n", _("Usage:"));
 	printf(" %s (-s | -h) -d val1[,val2,...,valn] [-l label]\n", progname);
 	printf("[-w threshold] [-c threshold] [-v] [--help]\n");
 

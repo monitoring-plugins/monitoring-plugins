@@ -880,6 +880,6 @@ print_usage(void)
 {
 	printf ("%s\n", _("WARNING: check_ntp is deprecated. Please use check_ntp_peer or"));
 	printf ("%s\n\n", _("check_ntp_time instead."));
-	printf (_("Usage:"));
+	printf ("%s\n", _("Usage:"));
 	printf(" %s -H <host> [-w <warn>] [-c <crit>] [-j <warn>] [-k <crit>] [-v verbose]\n", progname);
 }

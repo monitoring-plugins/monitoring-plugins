@@ -1682,6 +1682,6 @@ void print_help(void)
 
 void print_usage(void)
 {
-  printf (_("Usage:"));
+  printf ("%s\n", _("Usage:"));
 	printf ("%s -H host [-p port] [-v variable] [-w warning] [-c critical] [-t timeout]\n",progname);
 }

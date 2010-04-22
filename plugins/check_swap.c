@@ -555,7 +555,7 @@ print_help (void)
 void
 print_usage (void)
 {
-	printf (_("Usage:"));
+	printf ("%s\n", _("Usage:"));
   printf ("%s [-av] -w <percent_free>%% -c <percent_free>%%\n",progname);
   printf ("%s [-av] -w <bytes_free> -c <bytes_free>\n", progname);
 }

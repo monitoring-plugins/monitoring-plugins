@@ -310,6 +310,6 @@ print_help (void)
 void
 print_usage (void)
 {
-  printf (_("Usage:"));
+  printf ("%s\n", _("Usage:"));
 	printf ("%s -F <status log file> -e <expire_minutes> -C <process_string>\n", progname);
 }

@@ -194,6 +194,6 @@ print_help (void)
 void
 print_usage (void)
 {
-  printf (_("Usage:"));
+  printf ("%s\n", _("Usage:"));
 	printf ("%s <url> <plugin> <arg1> ... <argN>\n", progname);
 }

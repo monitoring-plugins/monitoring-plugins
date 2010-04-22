@@ -715,7 +715,7 @@ void print_help(void){
 void
 print_usage(void)
 {
-	printf (_("Usage:"));
+	printf ("%s\n", _("Usage:"));
 	printf(" %s -H <host> [-w <warn>] [-c <crit>] [-W <warn>] [-C <crit>]\n", progname);
 	printf("       [-j <warn>] [-k <crit>] [-v verbose]\n");
 }
