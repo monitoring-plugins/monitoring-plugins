@@ -183,7 +183,8 @@ char *fperfdata (const char *,
 #ifdef NP_EXTRA_OPTS
 #define UT_EXTRA_OPTS _("\
  --extra-opts=[section][@file]\n\
-    Read options from an ini file. See http://nagiosplugins.org/extra-opts for usage\n")
+    Read options from an ini file. See http://nagiosplugins.org/extra-opts\n\
+    for usage and examples.\n")
 #else
 #define UT_EXTRA_OPTS ""
 #endif

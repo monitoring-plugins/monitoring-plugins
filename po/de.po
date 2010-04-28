@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nagiosplug\n"
 "Report-Msgid-Bugs-To: nagiosplug-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2010-04-21 23:38-0400\n"
+"POT-Creation-Date: 2010-04-28 05:59-0400\n"
 "PO-Revision-Date: 2004-12-23 17:46+0100\n"
 "Last-Translator:  <>\n"
 "Language-Team: English <en@li.org>\n"
@@ -227,7 +227,7 @@ msgstr ""
 msgid "Examples:"
 msgstr ""
 
-#: plugins/check_by_ssh.c:453 plugins/check_cluster.c:273
+#: plugins/check_by_ssh.c:453 plugins/check_cluster.c:274
 #: plugins/check_dig.c:354 plugins/check_disk.c:980 plugins/check_dns.c:486
 #: plugins/check_dummy.c:122 plugins/check_fping.c:432
 #: plugins/check_game.c:331 plugins/check_hpjd.c:414 plugins/check_http.c:1433
@@ -236,13 +236,13 @@ msgstr ""
 #: plugins/check_ntp.c:883 plugins/check_ntp_peer.c:718
 #: plugins/check_ntp_time.c:637 plugins/check_nwstat.c:1685
 #: plugins/check_overcr.c:467 plugins/check_pgsql.c:477
-#: plugins/check_ping.c:601 plugins/check_radius.c:385
-#: plugins/check_real.c:451 plugins/check_smtp.c:819 plugins/check_snmp.c:956
-#: plugins/check_ssh.c:302 plugins/check_swap.c:558 plugins/check_tcp.c:651
-#: plugins/check_time.c:371 plugins/check_ups.c:660 plugins/check_users.c:229
+#: plugins/check_ping.c:601 plugins/check_procs.c:760
+#: plugins/check_radius.c:385 plugins/check_real.c:451
+#: plugins/check_smtp.c:819 plugins/check_snmp.c:956 plugins/check_ssh.c:302
+#: plugins/check_swap.c:558 plugins/check_tcp.c:651 plugins/check_time.c:371
+#: plugins/check_ups.c:660 plugins/check_users.c:229
 #: plugins/check_ide_smart.c:527 plugins/negate.c:292 plugins/urlize.c:197
 #: plugins-root/check_dhcp.c:1421 plugins-root/check_icmp.c:1347
-#, c-format
 msgid "Usage:"
 msgstr ""
 
@@ -300,8 +300,11 @@ msgstr ""
 
 #: plugins/check_cluster.c:263
 msgid ""
-"Will alert critical if there are 3 or more service data points in a non-OK "
-"state"
+"Will alert critical if there are 3 or more service data points in a non-OK"
+msgstr ""
+
+#: plugins/check_cluster.c:264 plugins/check_ups.c:639
+msgid "state."
 msgstr ""
 
 #: plugins/check_dig.c:99 plugins/check_dig.c:101
@@ -3811,11 +3814,6 @@ msgstr ""
 msgid "Alert if CPU of any processes over 10%% or 20%%"
 msgstr ""
 
-#: plugins/check_procs.c:760
-#, c-format
-msgid "Usage: "
-msgstr ""
-
 #: plugins/check_radius.c:165
 msgid "Config file error"
 msgstr ""
@@ -4883,10 +4881,6 @@ msgid ""
 "CRITICAL"
 msgstr ""
 
-#: plugins/check_ups.c:639
-msgid "state."
-msgstr ""
-
 #: plugins/check_ups.c:643
 msgid ""
 "You may also specify a variable to check (such as temperature, utility "
@@ -5375,11 +5369,11 @@ msgstr ""
 #: plugins/utils.h:184
 msgid ""
 " --extra-opts=[section][@file]\n"
-"    Read options from an ini file. See http://nagiosplugins.org/extra-opts "
-"for usage\n"
+"    Read options from an ini file. See http://nagiosplugins.org/extra-opts\n"
+"    for usage and examples.\n"
 msgstr ""
 
-#: plugins/utils.h:191
+#: plugins/utils.h:192
 msgid ""
 " See:\n"
 " http://nagiosplug.sourceforge.net/developer-guidelines."
@@ -5387,7 +5381,7 @@ msgid ""
 " for THRESHOLD format and examples.\n"
 msgstr ""
 
-#: plugins/utils.h:196
+#: plugins/utils.h:197
 msgid ""
 "\n"
 "Send email to nagios-users@lists.sourceforge.net if you have questions\n"
@@ -5396,7 +5390,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: plugins/utils.h:201
+#: plugins/utils.h:202
 msgid ""
 "\n"
 "The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n"
