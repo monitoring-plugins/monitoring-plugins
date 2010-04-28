@@ -10,6 +10,18 @@ if [ ! -f tools/distclean ]; then
   exit 1
 fi
 
+# First try git-clean, removing all ignored files will be perfect...
+if [ -d ".git" ]; then
+  echo "$0: Running 'git clean -fdX', this will remove all files ignored by git..."
+	git clean -fdX
+	if [ "$?" -eq "0" ]; then
+		echo "$0: Cleanup complete! Have a nice day..."
+		exit 0
+	fi
+	echo "$0: git-clean error, failing back to legacy cleanup!"
+fi
+
+# If we get here, then git-clean did not run or failed. Using the legacy method...
 if [ -f Makefile ]; then
   echo "$0: Makefile present. Cleaning up with 'make distclean'..."
   make -i distclean

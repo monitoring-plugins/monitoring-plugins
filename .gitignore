@@ -8,6 +8,7 @@ NP-VERSION-FILE
 /Cache.pm
 /command.cfg
 /compile
+/confdefs.h
 /config.*
 /configure
 /debian
