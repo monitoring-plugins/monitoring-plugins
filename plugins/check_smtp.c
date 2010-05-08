@@ -782,6 +782,8 @@ print_help (void)
   printf ("    %s\n", _("Expected response to command (may be used repeatedly)"));
   printf (" %s\n", "-f, --from=STRING");
   printf ("    %s\n", _("FROM-address to include in MAIL command, required by Exchange 2000")),
+  printf (" %s\n", "-F, --fqdn=STRING");
+  printf ("    %s\n", _("FQDN used for HELO"));
 #ifdef HAVE_SSL
   printf (" %s\n", "-D, --certificate=INTEGER");
   printf ("    %s\n", _("Minimum number of days a certificate has to be valid."));
@@ -817,8 +819,8 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-	printf ("%s -H host [-p port] [-e expect] [-C command] [-f from addr]", progname);
+  printf ("%s -H host [-p port] [-e expect] [-C command] [-f from addr]", progname);
   printf ("[-A authtype -U authuser -P authpass] [-w warn] [-c crit] [-t timeout]\n");
-  printf ("[-S] [-D days] [-v] [-4|-6]\n");
+  printf ("[-F fqdn] [-S] [-D days] [-v] [-4|-6]\n");
 }
 
