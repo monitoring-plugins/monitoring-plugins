@@ -28,6 +28,23 @@ typedef struct thresholds_struct {
 	range	*critical;
 	} thresholds;
 
+#define STATE_FORMAT_VERSION "1"
+
+typedef struct state_data_struct {
+	time_t	time;
+	void	*data;
+	int	length; /* Of binary data */
+	} state_data;
+
+
+typedef struct state_key_struct {
+	char       *name;
+	char       *plugin_name;
+	int        data_version;
+	char       *_filename;
+	state_data *state_data;
+	} state_key;
+
 range *parse_range_string (char *);
 int _set_thresholds(thresholds **, char *, char *);
 void set_thresholds(thresholds **, char *, char *);
@@ -66,5 +83,12 @@ char *np_extract_value(const char*, const char*, char);
  * payloads (comma)
  */
 #define np_extract_ntpvar(l, n) np_extract_value(l, n, ',')
+
+
+char *np_state_generate_key(const char **);
+state_key *np_state_init(char *, char *, int);
+state_data *np_state_read(state_key *);
+void np_state_write_string(state_key *, time_t, char *);
+void np_state_cleanup(state_key *);
 
 #endif /* _UTILS_BASE_ */

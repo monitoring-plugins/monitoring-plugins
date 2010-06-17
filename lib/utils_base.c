@@ -310,3 +310,64 @@ char *np_extract_value(const char *varlist, const char *name, char sep) {
 	return value;
 }
 
+/*
+ * Returns a string to use as a keyname, based on an md5 hash of argv, thus
+ * hopefully a unique key per service/plugin invocation. Use the extra-opts
+ * parse of argv, so that uniqueness in parameters are reflected there.
+ */
+char *np_state_generate_key(const char **argv) {
+	return "Ahash";
+}
+
+/*
+ * Initiatializer for state routines.
+ * Sets variables. Generates filename. Returns np_state_key. die with
+ * UNKNOWN if exception
+ */
+state_key *np_state_init(char *plugin_name, char *keyname, int expected_data_version) {
+	state_key *this_state = NULL;
+
+	this_state = (state_key *) malloc(sizeof(state_key));
+	
+	if(this_state==NULL)
+		die(STATE_UNKNOWN, _("Cannot allocate memory for state key"));
+
+	this_state->name=keyname;
+	this_state->plugin_name=plugin_name;
+	this_state->data_version=expected_data_version;
+
+	/* Calculate filename */
+	this_state->_filename="Tobedone";
+
+	return this_state;
+}
+
+/*
+ * Will return NULL if no data is available (first run). If key currently
+ * exists, read data. If state file format version is not expected, return
+ * as if no data. Get state data version number and compares to expected.
+ * If numerically lower, then return as no previous state. die with UNKNOWN
+ * if exceptional error.
+ */
+state_data *np_state_read(state_key *my_state_key) {
+	state_data *this_state_data=NULL;
+	my_state_key->state_data = this_state_data;
+	return this_state_data;
+}
+
+/*
+ * If time=NULL, use current time. Create state file, with state format 
+ * version, default text. Writes version, time, and data. Avoid locking 
+ * problems - use mv to write and then swap. Possible loss of state data if 
+ * two things writing to same key at same time. 
+ * Will die with UNKNOWN if errors
+ */
+void np_state_write_string(state_key *my_state_key, time_t data_time, char *data_string) {
+}
+
+/*
+ * Cleanup
+ */
+void np_state_cleanup(state_key *my_state_key) {
+}
+
