@@ -33,8 +33,18 @@ main (int argc, char **argv)
 	state_data *temp_state_data;
 	time_t	current_time;
 	char 	*temp_filename;
+	nagios_plugin *temp_nagios_plugin;
 
 	plan_tests(81+23);
+
+	_get_nagios_plugin( &temp_nagios_plugin );
+	ok( temp_nagios_plugin==NULL, "nagios_plugin not initialised");
+
+	np_init( "check_test" );
+	_get_nagios_plugin( &temp_nagios_plugin );
+	ok( temp_nagios_plugin!=NULL, "nagios_plugin now initialised");
+	ok( !strcmp(temp_nagios_plugin->plugin_name, "check_test"), "plugin name initialised" );
+
 
 	range = parse_range_string("6");
 	ok( range != NULL, "'6' is valid range");
@@ -257,33 +267,63 @@ main (int argc, char **argv)
 	ok(!test, "Empty string return NULL");
 
 
-	temp_string = np_state_generate_key(argv);
+	temp_string = (char *) _np_state_generate_key();
 	ok(!strcmp(temp_string, "Ahash"), "Got hash" );
 	
-	temp_string = _np_state_calculate_location_prefix();
+
+
+	unsetenv("NAGIOS_PLUGIN_STATE_DIRECTORY");
+	temp_string = (char *) _np_state_calculate_location_prefix();
 	ok(!strcmp(temp_string, NP_SHAREDSTATE_DIR), "Got default directory" );
 
+	setenv("NAGIOS_PLUGIN_STATE_DIRECTORY", "", 1);
+	temp_string = (char *) _np_state_calculate_location_prefix();
+	ok(!strcmp(temp_string, NP_SHAREDSTATE_DIR), "Got default directory even with empty string" );
+
+	setenv("NAGIOS_PLUGIN_STATE_DIRECTORY", "/usr/local/nagios/var", 1);
+	temp_string = (char *) _np_state_calculate_location_prefix();
+	ok(!strcmp(temp_string, "/usr/local/nagios/var"), "Got default directory" );
+
+
+
 	ok(temp_state_key==NULL, "temp_state_key initially empty");
-	temp_state_key = np_state_init("check_test", temp_string, 54);
+
+	np_state_init(NULL, 51);
+	temp_state_key = temp_nagios_plugin->state;
 	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
-	ok( !strcmp(temp_state_key->name, temp_string), "Got key name" );
+	ok( !strcmp(temp_state_key->name, "Ahash"), "Got key name" );
+
+
+	printf("Filename=%s\n", temp_state_key->_filename);
+	np_state_init("funnykeyname", 54);
+	temp_state_key = temp_nagios_plugin->state;
+	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
+	ok( !strcmp(temp_state_key->name, "funnykeyname"), "Got key name" );
+
 	printf("Filename=%s\n", temp_state_key->_filename);
 
-	ok( !strcmp(temp_state_key->_filename, "Tobedone"), "Got internal filename" );
+
+	ok( !strcmp(temp_state_key->_filename, "/usr/local/nagios/var/check_test/funnykeyname"), "Got internal filename" );
 	ok( temp_state_key->data_version==54, "Version set" );
 
 	temp_state_data = np_state_read(temp_state_key);
-	ok( temp_state_data==NULL, "Got state data" );
+	ok( temp_state_data==NULL, "Got no state data as file does not exist" );
+
+	temp_state_key->_filename="var/statefile";
+	temp_state_data = np_state_read(temp_state_key);
+	ok( temp_state_data!=NULL, "Got state data now" );
+
 
 	time(&current_time);
-	np_state_write_string(temp_state_key, NULL, "New data");
+	np_state_write_string(NULL, "New data");
 
 	temp_state_data = np_state_read(temp_state_key);
 	/* Check time is set to current_time */
 
 
-	np_state_cleanup(temp_state_key);
+	np_cleanup();
 	ok(temp_state_key==NULL, "temp_state_key cleared");
+	ok( temp_nagios_plugin==NULL, "Reset" );
 
 	return exit_status();
 }

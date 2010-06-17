@@ -27,8 +27,38 @@
 #include "common.h"
 #include <stdarg.h>
 #include "utils_base.h"
+#include <fcntl.h>
 
 #define np_free(ptr) { if(ptr) { free(ptr); ptr = NULL; } }
+
+nagios_plugin *this_nagios_plugin=NULL;
+
+void np_init( char *plugin_name ) {
+	if (this_nagios_plugin==NULL) {
+		this_nagios_plugin = malloc(sizeof(nagios_plugin));
+		if (this_nagios_plugin==NULL) {
+			die(STATE_UNKNOWN, _("Cannot allocate memory: %s\n"),
+			    strerror(errno));
+		}
+		this_nagios_plugin->plugin_name = strdup(plugin_name);
+	}
+}
+
+void np_cleanup() {
+	if (this_nagios_plugin!=NULL) {
+		if(this_nagios_plugin->state!=NULL) {
+			np_free(this_nagios_plugin->state);
+		}
+		np_free(this_nagios_plugin->plugin_name);
+		np_free(this_nagios_plugin);
+	}
+	this_nagios_plugin=NULL;
+}
+
+/* Hidden function to get a pointer to this_nagios_plugin for testing */
+void _get_nagios_plugin( nagios_plugin **pointer ){
+	*pointer = this_nagios_plugin;
+}
 
 void
 die (int result, const char *fmt, ...)
@@ -37,6 +67,9 @@ die (int result, const char *fmt, ...)
 	va_start (ap, fmt);
 	vprintf (fmt, ap);
 	va_end (ap);
+	if(this_nagios_plugin!=NULL) {
+		np_cleanup();
+	}
 	exit (result);
 }
 
@@ -317,11 +350,21 @@ char *np_extract_value(const char *varlist, const char *name, char sep) {
  * hopefully a unique key per service/plugin invocation. Use the extra-opts
  * parse of argv, so that uniqueness in parameters are reflected there.
  */
-char *np_state_generate_key(char **argv) {
+char *_np_state_generate_key() {
 	return "Ahash";
 }
 
+/*
+ * Internal function. Returns either:
+ *   envvar NAGIOS_PLUGIN_STATE_DIRECTORY
+ *   statically compiled shared state directory
+ */
 char* _np_state_calculate_location_prefix(){
+	char *env_dir;
+
+	env_dir = getenv("NAGIOS_PLUGIN_STATE_DIRECTORY");
+	if(env_dir && env_dir[0] != '\0')
+		return env_dir;
 	return NP_SHAREDSTATE_DIR;
 }
 
@@ -330,24 +373,30 @@ char* _np_state_calculate_location_prefix(){
  * Sets variables. Generates filename. Returns np_state_key. die with
  * UNKNOWN if exception
  */
-state_key *np_state_init(char *plugin_name, char *keyname, int expected_data_version) {
+void np_state_init(char *keyname, int expected_data_version) {
 	state_key *this_state = NULL;
 	char *temp_filename = NULL;
+
+	if(this_nagios_plugin==NULL)
+		die(STATE_UNKNOWN, _("This requires np_init to be called"));
 
 	this_state = (state_key *) malloc(sizeof(state_key));
 	
 	if(this_state==NULL)
 		die(STATE_UNKNOWN, _("Cannot allocate memory for state key"));
 
+	if(keyname==NULL) {
+		keyname = _np_state_generate_key();
+	}
 	this_state->name=keyname;
-	this_state->plugin_name=plugin_name;
+	this_state->plugin_name=this_nagios_plugin->plugin_name;
 	this_state->data_version=expected_data_version;
 
 	/* Calculate filename */
-	asprintf(&temp_filename, "%s/%s", _np_state_calculate_location_prefix(), plugin_name);
+	asprintf(&temp_filename, "%s/%s/%s", _np_state_calculate_location_prefix(), this_nagios_plugin->plugin_name, keyname);
 	this_state->_filename=temp_filename;
 
-	return this_state;
+	this_nagios_plugin->state = this_state;
 }
 
 /*
@@ -357,11 +406,19 @@ state_key *np_state_init(char *plugin_name, char *keyname, int expected_data_ver
  * If numerically lower, then return as no previous state. die with UNKNOWN
  * if exceptional error.
  */
-state_data *np_state_read(state_key *my_state_key) {
+state_data *np_state_read() {
+	state_key *my_state_key;
 	state_data *this_state_data=NULL;
+	int statefile=0;
+
+	my_state_key = this_nagios_plugin->state;
 	my_state_key->state_data = this_state_data;
 
-	/* Open file */
+	/* Open file. If this fails, no previous state found */
+	statefile = open( my_state_key->_filename, O_RDONLY );
+	if(statefile<0) {
+		return NULL;
+	}
 
 	return this_state_data;
 }
@@ -373,14 +430,6 @@ state_data *np_state_read(state_key *my_state_key) {
  * two things writing to same key at same time. 
  * Will die with UNKNOWN if errors
  */
-void np_state_write_string(state_key *my_state_key, time_t *data_time, char *data_string) {
-}
-
-/*
- * Cleanup
- */
-void np_state_cleanup(state_key *my_state_key) {
-	free(my_state_key);
-	my_state_key=NULL;
+void np_state_write_string(time_t *data_time, char *data_string) {
 }
 
