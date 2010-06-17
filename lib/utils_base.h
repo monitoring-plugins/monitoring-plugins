@@ -2,6 +2,8 @@
 #define _UTILS_BASE_
 /* Header file for nagios plugins utils_base.c */
 
+#include "sha1.h"
+
 /* This file holds header information for thresholds - use this in preference to 
    individual plugin logic */
 
@@ -27,6 +29,30 @@ typedef struct thresholds_struct {
 	range	*warning;
 	range	*critical;
 	} thresholds;
+
+#define NP_STATE_FORMAT_VERSION 1
+
+typedef struct state_data_struct {
+	time_t	time;
+	void	*data;
+	int	length; /* Of binary data */
+	} state_data;
+
+
+typedef struct state_key_struct {
+	char       *name;
+	char       *plugin_name;
+	int        data_version;
+	char       *_filename;
+	state_data *state_data;
+	} state_key;
+
+typedef struct np_struct {
+	char      *plugin_name;
+	state_key *state;
+	int       argc;
+	char      **argv;
+	} nagios_plugin;
 
 range *parse_range_string (char *);
 int _set_thresholds(thresholds **, char *, char *);
@@ -66,5 +92,14 @@ char *np_extract_value(const char*, const char*, char);
  * payloads (comma)
  */
 #define np_extract_ntpvar(l, n) np_extract_value(l, n, ',')
+
+
+void np_enable_state(char *, int);
+state_data *np_state_read();
+void np_state_write_string(time_t, char *);
+
+void np_init(char *, int argc, char **argv);
+void np_set_args(int argc, char **argv);
+void np_cleanup();
 
 #endif /* _UTILS_BASE_ */

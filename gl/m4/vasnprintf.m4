@@ -1,4 +1,4 @@
-# vasnprintf.m4 serial 29
+# vasnprintf.m4 serial 31
 dnl Copyright (C) 2002-2004, 2006-2010 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -54,6 +54,7 @@ AC_DEFUN([gl_PREREQ_PRINTF_PARSE],
 # Prerequisites of lib/vasnprintf.c.
 AC_DEFUN_ONCE([gl_PREREQ_VASNPRINTF],
 [
+  AC_REQUIRE([AC_C_INLINE])
   AC_REQUIRE([AC_FUNC_ALLOCA])
   AC_REQUIRE([AC_TYPE_LONG_LONG_INT])
   AC_REQUIRE([gt_TYPE_WCHAR_T])
@@ -62,6 +63,17 @@ AC_DEFUN_ONCE([gl_PREREQ_VASNPRINTF],
   dnl Use the _snprintf function only if it is declared (because on NetBSD it
   dnl is defined as a weak alias of snprintf; we prefer to use the latter).
   AC_CHECK_DECLS([_snprintf], , , [#include <stdio.h>])
+  dnl We can avoid a lot of code by assuming that snprintf's return value
+  dnl conforms to ISO C99. So check that.
+  AC_REQUIRE([gl_SNPRINTF_RETVAL_C99])
+  case "$gl_cv_func_snprintf_retval_c99" in
+    *yes)
+      AC_DEFINE([HAVE_SNPRINTF_RETVAL_C99], [1],
+        [Define if the return value of the snprintf function is the number of
+         of bytes (excluding the terminating NUL) that would have been produced
+         if the buffer had been large enough.])
+      ;;
+  esac
 ])
 
 # Extra prerequisites of lib/vasnprintf.c for supporting 'long double'

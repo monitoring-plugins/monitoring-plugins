@@ -41,6 +41,8 @@
 
 /* The definition of _GL_ARG_NONNULL is copied here.  */
 
+/* The definition of _GL_WARN_ON_USE is copied here.  */
+
 /* Declarations for a platform that lacks <netdb.h>, or where it is
    incomplete.  */
 
@@ -186,7 +188,33 @@ extern int getnameinfo (const struct sockaddr *restrict sa, socklen_t salen,
 #  define NI_NUMERICSERV 2
 # endif
 
-#endif /* @GNULIB_GETADDRINFO@ */
+#elif defined GNULIB_POSIXCHECK
+
+# undef getaddrinfo
+# if HAVE_RAW_DECL_GETADDRINFO
+_GL_WARN_ON_USE (getaddrinfo, "getaddrinfo is unportable - "
+                 "use gnulib module getaddrinfo for portability");
+# endif
+
+# undef freeaddrinfo
+# if HAVE_RAW_DECL_FREEADDRINFO
+_GL_WARN_ON_USE (freeaddrinfo, "freeaddrinfo is unportable - "
+                 "use gnulib module getaddrinfo for portability");
+# endif
+
+# undef gai_strerror
+# if HAVE_RAW_DECL_GAI_STRERROR
+_GL_WARN_ON_USE (gai_strerror, "gai_strerror is unportable - "
+                 "use gnulib module getaddrinfo for portability");
+# endif
+
+# undef getnameinfo
+# if HAVE_RAW_DECL_GETNAMEINFO
+_GL_WARN_ON_USE (getnameinfo, "getnameinfo is unportable - "
+                 "use gnulib module getaddrinfo for portability");
+# endif
+
+#endif
 
 #endif /* _GL_NETDB_H */
 #endif /* _GL_NETDB_H */

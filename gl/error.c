@@ -88,6 +88,15 @@ extern void __error_at_line (int status, int errnum, const char *file_name,
 # include <fcntl.h>
 # include <unistd.h>
 
+# if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
+/* Get declarations of the Win32 API functions.  */
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+# endif
+
+/* The gnulib override of fcntl is not needed in this file.  */
+# undef fcntl
+
 # if !HAVE_DECL_STRERROR_R && STRERROR_R_CHAR_P
 #  ifndef HAVE_DECL_STRERROR_R
 "this configure-time declaration test was not run"
@@ -104,10 +113,29 @@ extern char *program_name;
 # endif /* HAVE_STRERROR_R || defined strerror_r */
 #endif  /* not _LIBC */
 
+#if !_LIBC
+/* Return non-zero if FD is open.  */
+static inline int
+is_open (int fd)
+{
+# if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
+  /* On Win32: The initial state of unassigned standard file descriptors is
+     that they are open but point to an INVALID_HANDLE_VALUE.  There is no
+     fcntl, and the gnulib replacement fcntl does not support F_GETFL.  */
+  return (HANDLE) _get_osfhandle (fd) != INVALID_HANDLE_VALUE;
+# else
+#  ifndef F_GETFL
+#   error Please port fcntl to your platform
+#  endif
+  return 0 <= fcntl (fd, F_GETFL);
+# endif
+}
+#endif
+
 static inline void
 flush_stdout (void)
 {
-#if !_LIBC && defined F_GETFL
+#if !_LIBC
   int stdout_fd;
 
 # if GNULIB_FREOPEN_SAFER
@@ -124,7 +152,7 @@ flush_stdout (void)
   /* POSIX states that fflush (stdout) after fclose is unspecified; it
      is safe in glibc, but not on all other platforms.  fflush (NULL)
      is always defined, but too draconian.  */
-  if (0 <= stdout_fd && 0 <= fcntl (stdout_fd, F_GETFL))
+  if (0 <= stdout_fd && is_open (stdout_fd))
 #endif
     fflush (stdout);
 }

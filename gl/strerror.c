@@ -32,6 +32,9 @@
 
 # include "intprops.h"
 
+/* Use the system functions, not the gnulib overrides in this file.  */
+# undef sprintf
+
 # undef strerror
 # if ! HAVE_DECL_STRERROR
 #  define strerror(n) NULL

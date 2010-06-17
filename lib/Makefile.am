@@ -4,6 +4,7 @@ SUBDIRS = . tests
 
 noinst_LIBRARIES = libnagiosplug.a
 
+AM_CPPFLAGS = -DNP_STATE_DIR_PREFIX=\"$(localstatedir)\"
 
 libnagiosplug_a_SOURCES = utils_base.c utils_disk.c utils_tcp.c utils_cmd.c
 EXTRA_DIST = utils_base.h utils_disk.h utils_tcp.h utils_cmd.h parse_ini.h extra_opts.h

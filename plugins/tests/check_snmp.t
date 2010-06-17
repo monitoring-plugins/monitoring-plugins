@@ -51,7 +51,7 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 	}
 }
 
-my $tests = 9;
+my $tests = 21;
 if (-x "./check_snmp") {
 	plan tests => $tests;
 } else {
@@ -105,4 +105,41 @@ like($res->output, '/'.quotemeta('SNMP OK - And now have fun with with this: \"C
 .1.3.6.1.4.1.8072.3.2.67.4:
 "And now have fun with with this: \"C:\\\\\"
 because we\'re not done yet!"').'/m', "Attempt to confuse parser No.3");
+
+system("rm /usr/local/nagios/var/check_snmp/*");
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -w 600" );
+is($res->return_code, 0, "Returns OK");
+is($res->output, "No previous data to calculate rate - assume okay");
+
+# Need to sleep, otherwise duration=0
+sleep 1;
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -w 600" );
+is($res->return_code, 1, "WARNING - due to going above rate calculation" );
+is($res->output, "SNMP RATE WARNING - *666* | iso.3.6.1.4.1.8072.3.2.67.10-rate=666 ");
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -w 600" );
+is($res->return_code, 3, "UNKNOWN - basically the divide by zero error" );
+is($res->output, "Time duration between plugin calls is invalid");
+
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets" );
+is($res->return_code, 0, "OK for first call" );
+is($res->output, "No previous data to calculate rate - assume okay" );
+
+# Need to sleep, otherwise duration=0
+sleep 1;
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets" );
+is($res->return_code, 0, "OK as no thresholds" );
+is($res->output, "SNMP RATE OK - inoctets 666 | inoctets-rate=666 ", "Check label");
+
+sleep 2;
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets" );
+is($res->return_code, 0, "OK as no thresholds" );
+is($res->output, "SNMP RATE OK - inoctets 333 | inoctets-rate=333 ", "Check rate decreases due to longer interval");
+
+
+
 

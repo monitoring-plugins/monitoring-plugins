@@ -56,7 +56,8 @@
 /* Before doing "#define mkdir rpl_mkdir" below, we need to include all
    headers that may declare mkdir().  */
 #if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
-# include <io.h>
+# include <io.h>     /* mingw32, mingw64 */
+# include <direct.h> /* mingw64 */
 #endif
 
 #ifndef S_IFMT
@@ -455,7 +456,8 @@ _GL_CXXALIAS_RPL (mkdir, int, (char const *name, mode_t mode));
 #else
 /* mingw's _mkdir() function has 1 argument, but we pass 2 arguments.
    Additionally, it declares _mkdir (and depending on compile flags, an
-   alias mkdir), only in the nonstandard <io.h>, which is included above.  */
+   alias mkdir), only in the nonstandard includes <direct.h> and <io.h>,
+   which are included above.  */
 # if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
 
 static inline int

@@ -69,13 +69,14 @@
      if the entity names are not disambiguated.  A workaround is to
      attach the current line number to the entity name:
 
-       #define GL_CONCAT0(x, y) x##y
-       #define GL_CONCAT(x, y) GL_CONCAT0 (x, y)
-       extern struct {...} * GL_CONCAT(dummy,__LINE__);
+       #define _GL_CONCAT0(x, y) x##y
+       #define _GL_CONCAT(x, y) _GL_CONCAT0 (x, y)
+       extern struct {...} * _GL_CONCAT (dummy, __LINE__);
 
      But this has the problem that two invocations of verify from
      within the same macro would collide, since the __LINE__ value
-     would be the same for both invocations.
+     would be the same for both invocations.  (The GCC __COUNTER__
+     macro solves this problem, but is not portable.)
 
      A solution is to use the sizeof operator.  It yields a number,
      getting rid of the identity of the type.  Declarations like
@@ -103,20 +104,41 @@
 
        extern int (*dummy (void)) [sizeof (struct {...})];
 
+   * GCC warns about duplicate declarations of the dummy function if
+     -Wredundant_decls is used.  GCC 4.3 and later have a builtin
+     __COUNTER__ macro that can let us generate unique identifiers for
+     each dummy function, to suppress this warning.
+
    * This implementation exploits the fact that GCC does not warn about
      the last declaration mentioned above.  If a future version of GCC
      introduces a warning for this, the problem could be worked around
-     by using code specialized to GCC, e.g.,:
+     by using code specialized to GCC, just as __COUNTER__ is already
+     being used if available.
 
        #if 4 <= __GNUC__
-       # define verify(R) \
-           extern int (* verify_function__ (void)) \
-                      [__builtin_constant_p (R) && (R) ? 1 : -1]
+       # define verify(R) [another version to keep GCC happy]
        #endif
 
    * In C++, any struct definition inside sizeof is invalid.
      Use a template type to work around the problem.  */
 
+/* Concatenate two preprocessor tokens.  */
+# define _GL_CONCAT(x, y) _GL_CONCAT0 (x, y)
+# define _GL_CONCAT0(x, y) x##y
+
+/* _GL_COUNTER is an integer, preferably one that changes each time we
+   use it.  Use __COUNTER__ if it works, falling back on __LINE__
+   otherwise.  __LINE__ isn't perfect, but it's better than a
+   constant.  */
+# if defined __COUNTER__ && __COUNTER__ != __COUNTER__
+#  define _GL_COUNTER __COUNTER__
+# else
+#  define _GL_COUNTER __LINE__
+# endif
+
+/* Generate a symbol with the given prefix, making it unique if
+   possible.  */
+# define _GL_GENSYM(prefix) _GL_CONCAT (prefix, _GL_COUNTER)
 
 /* Verify requirement R at compile-time, as an integer constant expression.
    Return 1.  */
@@ -135,6 +157,7 @@ template <int w>
 /* Verify requirement R at compile-time, as a declaration without a
    trailing ';'.  */
 
-# define verify(R) extern int (* verify_function__ (void)) [verify_true (R)]
+# define verify(R) \
+    extern int (* _GL_GENSYM (verify_function) (void)) [verify_true (R)]
 
 #endif

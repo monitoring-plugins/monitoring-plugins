@@ -1,4 +1,4 @@
-# gettext.m4 serial 62 (gettext-0.18)
+# gettext.m4 serial 63 (gettext-0.18)
 dnl Copyright (C) 1995-2010 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -15,7 +15,7 @@ dnl They are *not* in the public domain.
 
 dnl Authors:
 dnl   Ulrich Drepper <drepper@cygnus.com>, 1995-2000.
-dnl   Bruno Haible <haible@clisp.cons.org>, 2000-2006.
+dnl   Bruno Haible <haible@clisp.cons.org>, 2000-2006, 2008-2010.
 
 dnl Macro to add for using GNU gettext.
 
@@ -60,6 +60,8 @@ AC_DEFUN([AM_GNU_GETTEXT],
   ifelse([$1], [], , [ifelse([$1], [external], , [ifelse([$1], [no-libtool], , [ifelse([$1], [use-libtool], ,
     [errprint([ERROR: invalid first argument to AM_GNU_GETTEXT
 ])])])])])
+  ifelse(ifelse([$1], [], [old])[]ifelse([$1], [no-libtool], [old]), [old],
+    [AC_DIAGNOSE([obsolete], [Use of AM_GNU_GETTEXT without [external] argument is deprecated.])])
   ifelse([$2], [], , [ifelse([$2], [need-ngettext], , [ifelse([$2], [need-formatstring-macros], ,
     [errprint([ERROR: invalid second argument to AM_GNU_GETTEXT
 ])])])])

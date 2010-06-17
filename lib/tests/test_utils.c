@@ -21,6 +21,11 @@
 
 #include "tap.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include "utils_base.c"
+
 int
 main (int argc, char **argv)
 {
@@ -28,8 +33,31 @@ main (int argc, char **argv)
 	double	temp;
 	thresholds *thresholds = NULL;
 	int	rc;
+	char	*temp_string;
+	state_key *temp_state_key = NULL;
+	state_data *temp_state_data;
+	time_t	current_time;
+	char 	*temp_filename;
+	FILE    *temp_fp;
 
-	plan_tests(81+23);
+	plan_tests(141);
+
+	ok( this_nagios_plugin==NULL, "nagios_plugin not initialised");
+
+	np_init( "check_test", argc, argv );
+
+	ok( this_nagios_plugin!=NULL, "nagios_plugin now initialised");
+	ok( !strcmp(this_nagios_plugin->plugin_name, "check_test"), "plugin name initialised" );
+
+	ok( this_nagios_plugin->argc==argc, "Argc set" );
+	ok( this_nagios_plugin->argv==argv, "Argv set" );
+
+	np_set_args(0,0);
+
+	ok( this_nagios_plugin->argc==0, "argc changed" );
+	ok( this_nagios_plugin->argv==0, "argv changed" );
+
+	np_set_args(argc, argv);
 
 	range = parse_range_string("6");
 	ok( range != NULL, "'6' is valid range");
@@ -251,5 +279,157 @@ main (int argc, char **argv)
 	test=np_extract_ntpvar("", "foo");
 	ok(!test, "Empty string return NULL");
 
+
+	/* This is the result of running ./test_utils */
+	temp_string = (char *) _np_state_generate_key();
+	ok(!strcmp(temp_string, "83d877b6cdfefb5d6f06101fd6fe76762f21792c"), "Got hash with exe and no parameters" ) || 
+        diag( "You are probably running in wrong directory. Must run as ./test_utils" );
+
+
+	this_nagios_plugin->argc=4;
+	this_nagios_plugin->argv[0] = "./test_utils";
+	this_nagios_plugin->argv[1] = "here";
+	this_nagios_plugin->argv[2] = "--and";
+	this_nagios_plugin->argv[3] = "now";
+	temp_string = (char *) _np_state_generate_key();
+	ok(!strcmp(temp_string, "94b5e17bf5abf51cb15aff5f69b96f2f8dac5ecd"), "Got based on expected argv" );
+
+	unsetenv("NAGIOS_PLUGIN_STATE_DIRECTORY");
+	temp_string = (char *) _np_state_calculate_location_prefix();
+	ok(!strcmp(temp_string, NP_STATE_DIR_PREFIX), "Got default directory" );
+
+	setenv("NAGIOS_PLUGIN_STATE_DIRECTORY", "", 1);
+	temp_string = (char *) _np_state_calculate_location_prefix();
+	ok(!strcmp(temp_string, NP_STATE_DIR_PREFIX), "Got default directory even with empty string" );
+
+	setenv("NAGIOS_PLUGIN_STATE_DIRECTORY", "/usr/local/nagios/var", 1);
+	temp_string = (char *) _np_state_calculate_location_prefix();
+	ok(!strcmp(temp_string, "/usr/local/nagios/var"), "Got default directory" );
+
+
+
+	ok(temp_state_key==NULL, "temp_state_key initially empty");
+
+	this_nagios_plugin->argc=1;
+	this_nagios_plugin->argv[0] = "./test_utils";
+	np_enable_state(NULL, 51);
+	temp_state_key = this_nagios_plugin->state;
+	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
+	ok( !strcmp(temp_state_key->name, "83d877b6cdfefb5d6f06101fd6fe76762f21792c"), "Got generated filename" );
+
+
+	np_enable_state("allowedchars_in_keyname", 77);
+	temp_state_key = this_nagios_plugin->state;
+	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
+	ok( !strcmp(temp_state_key->name, "allowedchars_in_keyname"), "Got key name with valid chars" );
+	ok( !strcmp(temp_state_key->_filename, "/usr/local/nagios/var/check_test/allowedchars_in_keyname"), "Got internal filename" );
+
+
+	/* Don't do this test just yet. Will die */
+	/*
+	np_enable_state("bad^chars$in@here", 77);
+	temp_state_key = this_nagios_plugin->state;
+	ok( !strcmp(temp_state_key->name, "bad_chars_in_here"), "Got key name with bad chars replaced" );
+	*/
+
+	np_enable_state("funnykeyname", 54);
+	temp_state_key = this_nagios_plugin->state;
+	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
+	ok( !strcmp(temp_state_key->name, "funnykeyname"), "Got key name" );
+
+
+
+	ok( !strcmp(temp_state_key->_filename, "/usr/local/nagios/var/check_test/funnykeyname"), "Got internal filename" );
+	ok( temp_state_key->data_version==54, "Version set" );
+
+	temp_state_data = np_state_read(temp_state_key);
+	ok( temp_state_data==NULL, "Got no state data as file does not exist" );
+
+
+/*
+	temp_fp = fopen("var/statefile", "r");
+	if (temp_fp==NULL) 
+		printf("Error opening. errno=%d\n", errno);
+	printf("temp_fp=%s\n", temp_fp);
+	ok( _np_state_read_file(temp_fp) == TRUE, "Can read state file" );
+	fclose(temp_fp);
+*/
+	
+	temp_state_key->_filename="var/statefile";
+	temp_state_data = np_state_read(temp_state_key);
+	ok( this_nagios_plugin->state->state_data!=NULL, "Got state data now" ) || diag("Are you running in right directory? Will get coredump next if not");
+	ok( this_nagios_plugin->state->state_data->time==1234567890, "Got time" );
+	ok( !strcmp((char *)this_nagios_plugin->state->state_data->data, "String to read"), "Data as expected" );
+
+	temp_state_key->data_version=53;
+	temp_state_data = np_state_read(temp_state_key);
+	ok( temp_state_data==NULL, "Older data version gives NULL" );
+	temp_state_key->data_version=54;
+
+	temp_state_key->_filename="var/nonexistant";
+	temp_state_data = np_state_read(temp_state_key);
+	ok( temp_state_data==NULL, "Missing file gives NULL" );
+	ok( this_nagios_plugin->state->state_data==NULL, "No state information" );
+
+	temp_state_key->_filename="var/oldformat";
+	temp_state_data = np_state_read(temp_state_key);
+	ok( temp_state_data==NULL, "Old file format gives NULL" );
+
+	temp_state_key->_filename="var/baddate";
+	temp_state_data = np_state_read(temp_state_key);
+	ok( temp_state_data==NULL, "Bad date gives NULL" );
+
+	temp_state_key->_filename="var/missingdataline";
+	temp_state_data = np_state_read(temp_state_key);
+	ok( temp_state_data==NULL, "Missing data line gives NULL" );
+
+
+
+
+	unlink("var/generated");
+	temp_state_key->_filename="var/generated";
+	current_time=1234567890;
+	np_state_write_string(current_time, "String to read");
+	ok(system("cmp var/generated var/statefile")==0, "Generated file same as expected");
+
+
+
+
+	unlink("var/generated_directory/statefile");
+	unlink("var/generated_directory");
+	temp_state_key->_filename="var/generated_directory/statefile";
+	current_time=1234567890;
+	np_state_write_string(current_time, "String to read");
+	ok(system("cmp var/generated_directory/statefile var/statefile")==0, "Have created directory");
+
+	/* This test to check cannot write to dir - can't automate yet */
+	/*
+	unlink("var/generated_bad_dir");
+	mkdir("var/generated_bad_dir", S_IRUSR);
+	np_state_write_string(current_time, "String to read");
+	*/
+
+
+	temp_state_key->_filename="var/generated";
+	time(&current_time);
+	np_state_write_string(0, "String to read");
+	temp_state_data = np_state_read(temp_state_key);
+	/* Check time is set to current_time */
+	ok(system("cmp var/generated var/statefile > /dev/null")!=0, "Generated file should be different this time");
+	ok(this_nagios_plugin->state->state_data->time-current_time<=1, "Has time generated from current time");
+	
+
+	/* Don't know how to automatically test this. Need to be able to redefine die and catch the error */
+	/*
+	temp_state_key->_filename="/dev/do/not/expect/to/be/able/to/write";
+	np_state_write_string(0, "Bad file");
+	*/
+	
+
+	np_cleanup();
+
+	ok( this_nagios_plugin==NULL, "Free'd this_nagios_plugin" );
+
 	return exit_status();
 }
+

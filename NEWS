@@ -5,7 +5,10 @@ This file documents the major additions and syntax changes between releases.
 	New check_ntp_peer -m and -n options to check the number of usable time sources ("truechimers")
 	New check_disk_smb -a option which allows for specifying the IP address of the remote server
 	New check_radius -N option which allows for specifying the value of the NAS-IP-Address attribute
-    Updated Nagios::Plugin perl module
+	New check_snmp --rate option to store differences between invocations. Saves state in PREFIX/var/{plugin}
+	check_snmp -l label option now also changes the perfdata label. See WARNINGS
+	Updated Nagios::Plugin perl module
+	Updated gnulib to June 2010
 	FIXES
 	Fix check_ircd binding to wrong interface (#668778)
 	Add proxy-authorization option to check_http (Marcel Kuiper - #1323230, Bryan Irvine - #2863925)
@@ -28,6 +31,7 @@ This file documents the major additions and syntax changes between releases.
 	Updated developer documentation to say that performance labels should not have an equals sign or
 	single quote in the label
 	check_http 1.4.14 introduced SSL SNI support - you now have to enable it explicitly with "--sni"
+	check_snmp -l label option is also used for the performance label. This could change history from previous uses
 
 1.4.14 16th September 2009
 	check_http has options to specify the HTTP method (#2155152)
