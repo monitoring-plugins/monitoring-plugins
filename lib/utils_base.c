@@ -28,6 +28,8 @@
 #include <stdarg.h>
 #include "utils_base.h"
 
+#define np_free(ptr) { if(ptr) { free(ptr); ptr = NULL; } }
+
 void
 die (int result, const char *fmt, ...)
 {
@@ -315,7 +317,7 @@ char *np_extract_value(const char *varlist, const char *name, char sep) {
  * hopefully a unique key per service/plugin invocation. Use the extra-opts
  * parse of argv, so that uniqueness in parameters are reflected there.
  */
-char *np_state_generate_key(const char **argv) {
+char *np_state_generate_key(char **argv) {
 	return "Ahash";
 }
 
@@ -352,6 +354,9 @@ state_key *np_state_init(char *plugin_name, char *keyname, int expected_data_ver
 state_data *np_state_read(state_key *my_state_key) {
 	state_data *this_state_data=NULL;
 	my_state_key->state_data = this_state_data;
+
+	/* Open file */
+
 	return this_state_data;
 }
 
@@ -362,12 +367,14 @@ state_data *np_state_read(state_key *my_state_key) {
  * two things writing to same key at same time. 
  * Will die with UNKNOWN if errors
  */
-void np_state_write_string(state_key *my_state_key, time_t data_time, char *data_string) {
+void np_state_write_string(state_key *my_state_key, time_t *data_time, char *data_string) {
 }
 
 /*
  * Cleanup
  */
 void np_state_cleanup(state_key *my_state_key) {
+	free(my_state_key);
+	my_state_key=NULL;
 }
 

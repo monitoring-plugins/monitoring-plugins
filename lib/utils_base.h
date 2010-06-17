@@ -85,10 +85,10 @@ char *np_extract_value(const char*, const char*, char);
 #define np_extract_ntpvar(l, n) np_extract_value(l, n, ',')
 
 
-char *np_state_generate_key(const char **);
+char *np_state_generate_key(char **);
 state_key *np_state_init(char *, char *, int);
 state_data *np_state_read(state_key *);
-void np_state_write_string(state_key *, time_t, char *);
+void np_state_write_string(state_key *, time_t *, char *);
 void np_state_cleanup(state_key *);
 
 #endif /* _UTILS_BASE_ */

@@ -28,6 +28,10 @@ main (int argc, char **argv)
 	double	temp;
 	thresholds *thresholds = NULL;
 	int	rc;
+	char	*temp_string;
+	state_key *temp_state_key = NULL;
+	state_data *temp_state_data;
+	time_t	current_time;
 
 	plan_tests(81+23);
 
@@ -250,6 +254,30 @@ main (int argc, char **argv)
 
 	test=np_extract_ntpvar("", "foo");
 	ok(!test, "Empty string return NULL");
+
+
+	temp_string = np_state_generate_key(argv);
+	ok(!strcmp(temp_string, "Ahash"), "Got hash" );
+	
+	ok(temp_state_key==NULL, "temp_state_key initially empty");
+	temp_state_key = np_state_init("check_test", temp_string, 54);
+	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
+	ok( !strcmp(temp_state_key->name, temp_string), "Got key name" );
+	ok( !strcmp(temp_state_key->_filename, "Tobedone"), "Got internal filename" );
+	ok( temp_state_key->data_version==54, "Version set" );
+
+	temp_state_data = np_state_read(temp_state_key);
+	ok( temp_state_data==NULL, "Got state data" );
+
+	time(&current_time);
+	np_state_write_string(temp_state_key, NULL, "New data");
+
+	temp_state_data = np_state_read(temp_state_key);
+	/* Check time is set to current_time */
+
+
+	np_state_cleanup(temp_state_key);
+	ok(temp_state_key==NULL, "temp_state_key cleared");
 
 	return exit_status();
 }
