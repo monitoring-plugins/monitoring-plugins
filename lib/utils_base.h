@@ -28,6 +28,7 @@ typedef struct thresholds_struct {
 	range	*critical;
 	} thresholds;
 
+#define NP_SHAREDSTATE_DIR "/tmp"
 #define STATE_FORMAT_VERSION "1"
 
 typedef struct state_data_struct {

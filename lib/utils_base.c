@@ -321,6 +321,10 @@ char *np_state_generate_key(char **argv) {
 	return "Ahash";
 }
 
+char* _np_state_calculate_location_prefix(){
+	return NP_SHAREDSTATE_DIR;
+}
+
 /*
  * Initiatializer for state routines.
  * Sets variables. Generates filename. Returns np_state_key. die with
@@ -328,6 +332,7 @@ char *np_state_generate_key(char **argv) {
  */
 state_key *np_state_init(char *plugin_name, char *keyname, int expected_data_version) {
 	state_key *this_state = NULL;
+	char *temp_filename = NULL;
 
 	this_state = (state_key *) malloc(sizeof(state_key));
 	
@@ -339,7 +344,8 @@ state_key *np_state_init(char *plugin_name, char *keyname, int expected_data_ver
 	this_state->data_version=expected_data_version;
 
 	/* Calculate filename */
-	this_state->_filename="Tobedone";
+	asprintf(&temp_filename, "%s/%s", _np_state_calculate_location_prefix(), plugin_name);
+	this_state->_filename=temp_filename;
 
 	return this_state;
 }

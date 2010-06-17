@@ -32,6 +32,7 @@ main (int argc, char **argv)
 	state_key *temp_state_key = NULL;
 	state_data *temp_state_data;
 	time_t	current_time;
+	char 	*temp_filename;
 
 	plan_tests(81+23);
 
@@ -259,10 +260,15 @@ main (int argc, char **argv)
 	temp_string = np_state_generate_key(argv);
 	ok(!strcmp(temp_string, "Ahash"), "Got hash" );
 	
+	temp_string = _np_state_calculate_location_prefix();
+	ok(!strcmp(temp_string, NP_SHAREDSTATE_DIR), "Got default directory" );
+
 	ok(temp_state_key==NULL, "temp_state_key initially empty");
 	temp_state_key = np_state_init("check_test", temp_string, 54);
 	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
 	ok( !strcmp(temp_state_key->name, temp_string), "Got key name" );
+	printf("Filename=%s\n", temp_state_key->_filename);
+
 	ok( !strcmp(temp_state_key->_filename, "Tobedone"), "Got internal filename" );
 	ok( temp_state_key->data_version==54, "Version set" );
 
