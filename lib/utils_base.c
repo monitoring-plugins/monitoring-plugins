@@ -357,7 +357,6 @@ char *_np_state_generate_key() {
 void _cleanup_state_data() {
 	if (this_nagios_plugin->state->state_data!=NULL) {
 		np_free(this_nagios_plugin->state->state_data->data);
-		printf("***Setting\n");
 		np_free(this_nagios_plugin->state->state_data);
 	}
 }
@@ -399,6 +398,7 @@ void np_enable_state(char *keyname, int expected_data_version) {
 	this_state->name=keyname;
 	this_state->plugin_name=this_nagios_plugin->plugin_name;
 	this_state->data_version=expected_data_version;
+	this_state->state_data=NULL;
 
 	/* Calculate filename */
 	asprintf(&temp_filename, "%s/%s/%s", _np_state_calculate_location_prefix(), this_nagios_plugin->plugin_name, keyname);
@@ -433,6 +433,7 @@ state_data *np_state_read() {
 		if(this_state_data==NULL)
 			die(STATE_UNKNOWN, _("Cannot allocate memory for state data"));
 
+		this_state_data->data=NULL;
 		this_nagios_plugin->state->state_data = this_state_data;
 
 		rc = _np_state_read_file(statefile);
@@ -441,7 +442,6 @@ state_data *np_state_read() {
 	}
 
 	if(rc==FALSE) {
-		printf("Called\n");
 		_cleanup_state_data();
 	}
 
@@ -465,21 +465,17 @@ int _np_state_read_file(FILE *f) {
 	/* Note: This introduces a limit of 1024 bytes in the string data */
 	line = (char *) malloc(1024);
 
-	printf("Here\n");
 	while(!failure && (fgets(line,1024,f))!=NULL){
 		pos=strlen(line);
 		if(line[pos-1]=='\n') {
 			line[pos-1]='\0';
 		}
-		printf("Reading line |%s|\n", line);
 
 		if(line[0] == '#') continue;
 
 		switch(expected) {
 			case STATE_FILE_VERSION:
 				i=atoi(line);
-				//printf("line=|%d|, exp=|%d|\n", i, NP_STATE_FORMAT_VERSION);
-				//if(!strcmp(NP_STATE_FORMAT_VERSION, line)) {
 				if(i!=NP_STATE_FORMAT_VERSION)
 					failure++;
 				else
@@ -487,7 +483,6 @@ int _np_state_read_file(FILE *f) {
 				break;
 			case STATE_DATA_VERSION:
 				i=atoi(line);
-				printf("i=%d, exp=%d\n", i, this_nagios_plugin->state->data_version);
 				if(i != this_nagios_plugin->state->data_version)
 					failure++;
 				else
@@ -514,7 +509,6 @@ int _np_state_read_file(FILE *f) {
 	}
 
 	np_free(line);
-	printf("Returning status=%d\n", status);
 	return status;
 }
 
@@ -526,5 +520,82 @@ int _np_state_read_file(FILE *f) {
  * Will die with UNKNOWN if errors
  */
 void np_state_write_string(time_t *data_time, char *data_string) {
+	FILE *fp;
+	char *temp_file=NULL;
+	int fd=0, result=0;
+	time_t current_time;
+	size_t len;
+	char *directories=NULL;
+	char *p=NULL;
+
+	if(data_time==NULL)
+		time(&current_time);
+	else
+		current_time=*data_time;
+	
+	/* If file doesn't currently exist, create directories */
+	if(access(this_nagios_plugin->state->_filename,F_OK)!=0) {
+		asprintf(&directories, "%s", this_nagios_plugin->state->_filename);
+		if(directories==NULL)
+			die(STATE_UNKNOWN, _("Cannot malloc"));
+
+		for(p=directories+1; *p; p++) {
+			if(*p=='/') {
+				*p='\0';
+				if((access(directories,F_OK)!=0) && (mkdir(directories, S_IRWXU)!=0)) {
+					/* Can't free this! Otherwise error message is wrong! */
+					/* np_free(directories); */ 
+					die(STATE_UNKNOWN, _("Cannot create directory: %s"), directories);
+				}
+				*p='/';
+			}
+		}
+		np_free(directories);
+	}
+
+	asprintf(&temp_file,"%s.XXXXXX",this_nagios_plugin->state->_filename);
+	if(temp_file==NULL)
+		die(STATE_UNKNOWN, _("Cannot malloc temporary state file"));
+
+	if((fd=mkstemp(temp_file))==-1) {
+		np_free(temp_file);
+		die(STATE_UNKNOWN, _("Cannot create temporary filename"));
+	}
+
+	fp=(FILE *)fdopen(fd,"w");
+	if(fp==NULL) {
+		close(fd);
+		unlink(temp_file);
+		np_free(temp_file);
+		die(STATE_UNKNOWN, _("Unable to open temporary state file"));
+	}
+	
+	fprintf(fp,"# NP State file\n");
+	fprintf(fp,"%d\n",NP_STATE_FORMAT_VERSION);
+	fprintf(fp,"%d\n",this_nagios_plugin->state->data_version);
+	fprintf(fp,"%lu\n",current_time);
+	fprintf(fp,"%s\n",data_string);
+	
+	fchmod(fd, S_IRUSR | S_IWUSR | S_IRGRP);
+	
+	fflush(fp);
+
+	result=fclose(fp);
+
+	fsync(fd);
+
+	if(result!=0) {
+		unlink(temp_file);
+		np_free(temp_file);
+		die(STATE_UNKNOWN, _("Error writing temp file"));
+	}
+
+	if(rename(temp_file, this_nagios_plugin->state->_filename)!=0) {
+		unlink(temp_file);
+		np_free(temp_file);
+		die(STATE_UNKNOWN, _("Cannot rename state temp file"));
+	}
+
+	np_free(temp_file);
 }
 

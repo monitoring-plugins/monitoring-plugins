@@ -21,6 +21,9 @@
 
 #include "tap.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 int
 main (int argc, char **argv)
 {
@@ -36,7 +39,7 @@ main (int argc, char **argv)
 	nagios_plugin *temp_nagios_plugin;
 	FILE    *temp_fp;
 
-	plan_tests(81+23);
+	plan_tests(134);
 
 	_get_nagios_plugin( &temp_nagios_plugin );
 	ok( temp_nagios_plugin==NULL, "nagios_plugin not initialised");
@@ -295,13 +298,11 @@ main (int argc, char **argv)
 	ok( !strcmp(temp_state_key->name, "Ahash"), "Got key name" );
 
 
-	printf("Filename=%s\n", temp_state_key->_filename);
 	np_enable_state("funnykeyname", 54);
 	temp_state_key = temp_nagios_plugin->state;
 	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
 	ok( !strcmp(temp_state_key->name, "funnykeyname"), "Got key name" );
 
-	printf("Filename=%s\n", temp_state_key->_filename);
 
 
 	ok( !strcmp(temp_state_key->_filename, "/usr/local/nagios/var/check_test/funnykeyname"), "Got internal filename" );
@@ -325,20 +326,71 @@ main (int argc, char **argv)
 	ok( temp_nagios_plugin->state->state_data!=NULL, "Got state data now" );
 	ok( temp_nagios_plugin->state->state_data->time==1234567890, "Got time" );
 	ok( !strcmp((char *)temp_nagios_plugin->state->state_data->data, "String to read"), "Data as expected" );
-	printf("state_data=%s|\n", temp_nagios_plugin->state->state_data->data);
 
+	temp_state_key->data_version=53;
+	temp_state_data = np_state_read(temp_state_key);
+	ok( temp_state_data==NULL, "Older data version gives NULL" );
+	temp_state_key->data_version=54;
 
 	temp_state_key->_filename="var/nonexistant";
 	temp_state_data = np_state_read(temp_state_key);
 	ok( temp_state_data==NULL, "Missing file gives NULL" );
 	ok( temp_nagios_plugin->state->state_data==NULL, "No state information" );
 
-	time(&current_time);
-	np_state_write_string(NULL, "New data");
+	temp_state_key->_filename="var/oldformat";
+	temp_state_data = np_state_read(temp_state_key);
+	ok( temp_state_data==NULL, "Old file format gives NULL" );
 
+	temp_state_key->_filename="var/baddate";
+	temp_state_data = np_state_read(temp_state_key);
+	ok( temp_state_data==NULL, "Bad date gives NULL" );
+
+	temp_state_key->_filename="var/missingdataline";
+	temp_state_data = np_state_read(temp_state_key);
+	ok( temp_state_data==NULL, "Missing data line gives NULL" );
+
+
+
+
+	unlink("var/generated");
+	temp_state_key->_filename="var/generated";
+	current_time=1234567890;
+	np_state_write_string(&current_time, "String to read");
+	ok(system("cmp var/generated var/statefile")==0, "Generated file same as expected");
+
+
+
+
+	unlink("var/generated_directory/statefile");
+	unlink("var/generated_directory");
+	temp_state_key->_filename="var/generated_directory/statefile";
+	current_time=1234567890;
+	np_state_write_string(&current_time, "String to read");
+	ok(system("cmp var/generated_directory/statefile var/statefile")==0, "Have created directory");
+
+	/* This test to check cannot write to dir - can't automate yet */
+	/*
+	unlink("var/generated_bad_dir");
+	mkdir("var/generated_bad_dir", S_IRUSR);
+	np_state_write_string(&current_time, "String to read");
+	*/
+
+
+	temp_state_key->_filename="var/generated";
+	time(&current_time);
+	np_state_write_string(NULL, "String to read");
 	temp_state_data = np_state_read(temp_state_key);
 	/* Check time is set to current_time */
+	ok(system("cmp var/generated var/statefile > /dev/null")!=0, "Generated file should be different this time");
+	ok(temp_nagios_plugin->state->state_data->time-current_time<=1, "Has time generated from current time");
+	
 
+	/* Don't know how to automatically test this. Need to be able to redefine die and catch the error */
+	/*
+	temp_state_key->_filename="/dev/do/not/expect/to/be/able/to/write";
+	np_state_write_string(NULL, "Bad file");
+	*/
+	
 
 	np_cleanup();
 	ok(temp_state_key==NULL, "temp_state_key cleared");
