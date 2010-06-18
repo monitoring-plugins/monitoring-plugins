@@ -354,6 +354,14 @@ char *_np_state_generate_key() {
 	return "Ahash";
 }
 
+void _cleanup_state_data() {
+	if (this_nagios_plugin->state->state_data!=NULL) {
+		np_free(this_nagios_plugin->state->state_data->data);
+		printf("***Setting\n");
+		np_free(this_nagios_plugin->state->state_data);
+	}
+}
+
 /*
  * Internal function. Returns either:
  *   envvar NAGIOS_PLUGIN_STATE_DIRECTORY
@@ -373,7 +381,7 @@ char* _np_state_calculate_location_prefix(){
  * Sets variables. Generates filename. Returns np_state_key. die with
  * UNKNOWN if exception
  */
-void np_state_init(char *keyname, int expected_data_version) {
+void np_enable_state(char *keyname, int expected_data_version) {
 	state_key *this_state = NULL;
 	char *temp_filename = NULL;
 
@@ -409,18 +417,105 @@ void np_state_init(char *keyname, int expected_data_version) {
 state_data *np_state_read() {
 	state_key *my_state_key;
 	state_data *this_state_data=NULL;
-	int statefile=0;
+	FILE *statefile;
+	int c;
+	int rc = FALSE;
 
-	my_state_key = this_nagios_plugin->state;
-	my_state_key->state_data = this_state_data;
+	if(this_nagios_plugin==NULL)
+		die(STATE_UNKNOWN, _("This requires np_init to be called"));
 
 	/* Open file. If this fails, no previous state found */
-	statefile = open( my_state_key->_filename, O_RDONLY );
-	if(statefile<0) {
-		return NULL;
+	statefile = fopen( this_nagios_plugin->state->_filename, "r" );
+	if(statefile!=NULL) {
+
+		this_state_data = (state_data *) malloc(sizeof(state_data));
+		
+		if(this_state_data==NULL)
+			die(STATE_UNKNOWN, _("Cannot allocate memory for state data"));
+
+		this_nagios_plugin->state->state_data = this_state_data;
+
+		rc = _np_state_read_file(statefile);
+
+		fclose(statefile);
 	}
 
-	return this_state_data;
+	if(rc==FALSE) {
+		printf("Called\n");
+		_cleanup_state_data();
+	}
+
+	return this_nagios_plugin->state->state_data;
+}
+
+/* 
+ * Read the state file
+ */
+int _np_state_read_file(FILE *f) {
+	int c, status=FALSE;
+	size_t pos;
+	char *line;
+	int i;
+	int failure=0;
+	time_t current_time, data_time;
+	enum { STATE_FILE_VERSION, STATE_DATA_VERSION, STATE_DATA_TIME, STATE_DATA_TEXT, STATE_DATA_END } expected=STATE_FILE_VERSION;
+
+	time(&current_time);
+
+	/* Note: This introduces a limit of 1024 bytes in the string data */
+	line = (char *) malloc(1024);
+
+	printf("Here\n");
+	while(!failure && (fgets(line,1024,f))!=NULL){
+		pos=strlen(line);
+		if(line[pos-1]=='\n') {
+			line[pos-1]='\0';
+		}
+		printf("Reading line |%s|\n", line);
+
+		if(line[0] == '#') continue;
+
+		switch(expected) {
+			case STATE_FILE_VERSION:
+				i=atoi(line);
+				//printf("line=|%d|, exp=|%d|\n", i, NP_STATE_FORMAT_VERSION);
+				//if(!strcmp(NP_STATE_FORMAT_VERSION, line)) {
+				if(i!=NP_STATE_FORMAT_VERSION)
+					failure++;
+				else
+					expected=STATE_DATA_VERSION;
+				break;
+			case STATE_DATA_VERSION:
+				i=atoi(line);
+				printf("i=%d, exp=%d\n", i, this_nagios_plugin->state->data_version);
+				if(i != this_nagios_plugin->state->data_version)
+					failure++;
+				else
+					expected=STATE_DATA_TIME;
+				break;
+			case STATE_DATA_TIME:
+				/* If time > now, error */
+				data_time=strtoul(line,NULL,10);
+				if(data_time > current_time)
+					failure++;
+				else {
+					this_nagios_plugin->state->state_data->time = data_time;
+					expected=STATE_DATA_TEXT;
+				}
+				break;
+			case STATE_DATA_TEXT:
+				this_nagios_plugin->state->state_data->data = strdup(line);
+				expected=STATE_DATA_END;
+				status=TRUE;
+				break;
+			case STATE_DATA_END:
+				;
+		}
+	}
+
+	np_free(line);
+	printf("Returning status=%d\n", status);
+	return status;
 }
 
 /*

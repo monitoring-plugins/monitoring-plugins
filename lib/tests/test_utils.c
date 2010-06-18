@@ -34,6 +34,7 @@ main (int argc, char **argv)
 	time_t	current_time;
 	char 	*temp_filename;
 	nagios_plugin *temp_nagios_plugin;
+	FILE    *temp_fp;
 
 	plan_tests(81+23);
 
@@ -288,14 +289,14 @@ main (int argc, char **argv)
 
 	ok(temp_state_key==NULL, "temp_state_key initially empty");
 
-	np_state_init(NULL, 51);
+	np_enable_state(NULL, 51);
 	temp_state_key = temp_nagios_plugin->state;
 	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
 	ok( !strcmp(temp_state_key->name, "Ahash"), "Got key name" );
 
 
 	printf("Filename=%s\n", temp_state_key->_filename);
-	np_state_init("funnykeyname", 54);
+	np_enable_state("funnykeyname", 54);
 	temp_state_key = temp_nagios_plugin->state;
 	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
 	ok( !strcmp(temp_state_key->name, "funnykeyname"), "Got key name" );
@@ -309,10 +310,28 @@ main (int argc, char **argv)
 	temp_state_data = np_state_read(temp_state_key);
 	ok( temp_state_data==NULL, "Got no state data as file does not exist" );
 
+
+/*
+	temp_fp = fopen("var/statefile", "r");
+	if (temp_fp==NULL) 
+		printf("Error opening. errno=%d\n", errno);
+	printf("temp_fp=%s\n", temp_fp);
+	ok( _np_state_read_file(temp_fp) == TRUE, "Can read state file" );
+	fclose(temp_fp);
+*/
+	
 	temp_state_key->_filename="var/statefile";
 	temp_state_data = np_state_read(temp_state_key);
-	ok( temp_state_data!=NULL, "Got state data now" );
+	ok( temp_nagios_plugin->state->state_data!=NULL, "Got state data now" );
+	ok( temp_nagios_plugin->state->state_data->time==1234567890, "Got time" );
+	ok( !strcmp((char *)temp_nagios_plugin->state->state_data->data, "String to read"), "Data as expected" );
+	printf("state_data=%s|\n", temp_nagios_plugin->state->state_data->data);
 
+
+	temp_state_key->_filename="var/nonexistant";
+	temp_state_data = np_state_read(temp_state_key);
+	ok( temp_state_data==NULL, "Missing file gives NULL" );
+	ok( temp_nagios_plugin->state->state_data==NULL, "No state information" );
 
 	time(&current_time);
 	np_state_write_string(NULL, "New data");

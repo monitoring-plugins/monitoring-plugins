@@ -30,7 +30,7 @@ typedef struct thresholds_struct {
 	} thresholds;
 
 #define NP_SHAREDSTATE_DIR "/tmp"
-#define STATE_FORMAT_VERSION "1"
+#define NP_STATE_FORMAT_VERSION 1
 
 typedef struct state_data_struct {
 	time_t	time;
@@ -93,7 +93,7 @@ char *np_extract_value(const char*, const char*, char);
 #define np_extract_ntpvar(l, n) np_extract_value(l, n, ',')
 
 
-void np_state_init(char *, int);
+void np_enable_state(char *, int);
 state_data *np_state_read();
 void np_state_write_string(time_t *, char *);
 
