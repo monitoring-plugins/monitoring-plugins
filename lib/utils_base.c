@@ -432,11 +432,11 @@ void np_enable_state(char *keyname, int expected_data_version) {
 		if(temp_keyname==NULL)
 			die(STATE_UNKNOWN, _("Cannot execute strdup: %s"), strerror(errno));
 	}
-	/* Convert all non-alphanumerics to _ */
+	/* Die if invalid characters used for keyname */
 	p = temp_keyname;
 	while(*p!='\0') {
-		if(! isalnum(*p)) {
-			*p='_';
+		if(! (isalnum(*p) || *p == '_')) {
+			die(STATE_UNKNOWN, _("Invalid character for keyname - only alphanumerics or '_'"));
 		}
 		p++;
 	}
