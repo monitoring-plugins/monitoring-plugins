@@ -47,6 +47,9 @@ void np_init( char *plugin_name ) {
 void np_cleanup() {
 	if (this_nagios_plugin!=NULL) {
 		if(this_nagios_plugin->state!=NULL) {
+			np_free(this_nagios_plugin->state->state_data->data);
+			np_free(this_nagios_plugin->state->state_data);
+			np_free(this_nagios_plugin->state->name);
 			np_free(this_nagios_plugin->state);
 		}
 		np_free(this_nagios_plugin->plugin_name);
@@ -351,7 +354,7 @@ char *np_extract_value(const char *varlist, const char *name, char sep) {
  * parse of argv, so that uniqueness in parameters are reflected there.
  */
 char *_np_state_generate_key() {
-	return "Ahash";
+	return strdup("Ahash");
 }
 
 void _cleanup_state_data() {
@@ -383,6 +386,8 @@ char* _np_state_calculate_location_prefix(){
 void np_enable_state(char *keyname, int expected_data_version) {
 	state_key *this_state = NULL;
 	char *temp_filename = NULL;
+	char *temp_keyname = NULL;
+	char *p=NULL;
 
 	if(this_nagios_plugin==NULL)
 		die(STATE_UNKNOWN, _("This requires np_init to be called"));
@@ -393,15 +398,25 @@ void np_enable_state(char *keyname, int expected_data_version) {
 		die(STATE_UNKNOWN, _("Cannot allocate memory for state key"));
 
 	if(keyname==NULL) {
-		keyname = _np_state_generate_key();
+		temp_keyname = _np_state_generate_key();
+	} else {
+		temp_keyname = strdup(keyname);
 	}
-	this_state->name=keyname;
+	/* Convert all non-alphanumerics to _ */
+	p = temp_keyname;
+	while(*p!='\0') {
+		if(! isalnum(*p)) {
+			*p='_';
+		}
+		p++;
+	}
+	this_state->name=temp_keyname;
 	this_state->plugin_name=this_nagios_plugin->plugin_name;
 	this_state->data_version=expected_data_version;
 	this_state->state_data=NULL;
 
 	/* Calculate filename */
-	asprintf(&temp_filename, "%s/%s/%s", _np_state_calculate_location_prefix(), this_nagios_plugin->plugin_name, keyname);
+	asprintf(&temp_filename, "%s/%s/%s", _np_state_calculate_location_prefix(), this_nagios_plugin->plugin_name, this_state->name);
 	this_state->_filename=temp_filename;
 
 	this_nagios_plugin->state = this_state;
