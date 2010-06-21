@@ -5,8 +5,7 @@ noinst_PROGRAMS = @EXTRA_TEST@
 TESTS = @EXTRA_TEST@
 check_PROGRAMS = @EXTRA_TEST@
 
-# See lib/Makefile.am
-DEFS = -DNP_STATE_DIR_PREFIX='"$(localstatedir)"'
+AM_CPPFLAGS = -DNP_STATE_DIR_PREFIX=\"$(localstatedir)\"
 
 INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl -I$(top_srcdir)/plugins
 
