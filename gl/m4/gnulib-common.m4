@@ -1,4 +1,4 @@
-# gnulib-common.m4 serial 18
+# gnulib-common.m4 serial 20
 dnl Copyright (C) 2007-2010 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -35,6 +35,12 @@ AC_DEFUN([gl_COMMON_BODY], [
    is a misnomer outside of parameter lists.  */
 #define _UNUSED_PARAMETER_ _GL_UNUSED
 ])
+  dnl Preparation for running test programs:
+  dnl Tell glibc to write diagnostics from -D_FORTIFY_SOURCE=2 to stderr, not
+  dnl to /dev/tty, so they can be redirected to log files.  Such diagnostics
+  dnl arise e.g., in the macros gl_PRINTF_DIRECTIVE_N, gl_SNPRINTF_DIRECTIVE_N.
+  LIBC_FATAL_STDERR_=1
+  export LIBC_FATAL_STDERR_
 ])
 
 # gl_MODULE_INDICATOR_CONDITION
@@ -132,6 +138,7 @@ m4_ifdef([AC_PROG_MKDIR_P], [
 # so that mixed use of GNU C and GNU C++ and mixed use of Sun C and Sun C++
 # works.
 # This definition can be removed once autoconf >= 2.62 can be assumed.
+m4_if(m4_version_compare(m4_defn([m4_PACKAGE_VERSION]),[2.62]),[-1],[
 AC_DEFUN([AC_C_RESTRICT],
 [AC_CACHE_CHECK([for C/C++ restrict keyword], [ac_cv_c_restrict],
   [ac_cv_c_restrict=no
@@ -168,6 +175,7 @@ AC_DEFUN([AC_C_RESTRICT],
    no) AC_DEFINE([restrict], []) ;;
    *)  AC_DEFINE_UNQUOTED([restrict], [$ac_cv_c_restrict]) ;;
  esac
+])
 ])
 
 # gl_BIGENDIAN

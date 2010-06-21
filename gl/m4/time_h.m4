@@ -2,6 +2,8 @@
 
 # Copyright (C) 2000-2001, 2003-2007, 2009-2010 Free Software Foundation, Inc.
 
+# serial 2
+
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -24,7 +26,7 @@ AC_DEFUN([gl_HEADER_TIME_H_BODY],
 ])
 
 dnl Define HAVE_STRUCT_TIMESPEC if `struct timespec' is declared
-dnl in time.h or sys/time.h.
+dnl in time.h, sys/time.h, or pthread.h.
 
 AC_DEFUN([gl_CHECK_TYPE_STRUCT_TIMESPEC],
 [
@@ -41,6 +43,7 @@ AC_DEFUN([gl_CHECK_TYPE_STRUCT_TIMESPEC],
 
   TIME_H_DEFINES_STRUCT_TIMESPEC=0
   SYS_TIME_H_DEFINES_STRUCT_TIMESPEC=0
+  PTHREAD_H_DEFINES_STRUCT_TIMESPEC=0
   if test $gl_cv_sys_struct_timespec_in_time_h = yes; then
     TIME_H_DEFINES_STRUCT_TIMESPEC=1
   else
@@ -55,10 +58,24 @@ AC_DEFUN([gl_CHECK_TYPE_STRUCT_TIMESPEC],
          [gl_cv_sys_struct_timespec_in_sys_time_h=no])])
     if test $gl_cv_sys_struct_timespec_in_sys_time_h = yes; then
       SYS_TIME_H_DEFINES_STRUCT_TIMESPEC=1
+    else
+      AC_CACHE_CHECK([for struct timespec in <pthread.h>],
+        [gl_cv_sys_struct_timespec_in_pthread_h],
+        [AC_COMPILE_IFELSE(
+           [AC_LANG_PROGRAM(
+              [[#include <pthread.h>
+              ]],
+              [[static struct timespec x; x.tv_sec = x.tv_nsec;]])],
+           [gl_cv_sys_struct_timespec_in_pthread_h=yes],
+           [gl_cv_sys_struct_timespec_in_pthread_h=no])])
+      if test $gl_cv_sys_struct_timespec_in_pthread_h = yes; then
+        PTHREAD_H_DEFINES_STRUCT_TIMESPEC=1
+      fi
     fi
   fi
   AC_SUBST([TIME_H_DEFINES_STRUCT_TIMESPEC])
   AC_SUBST([SYS_TIME_H_DEFINES_STRUCT_TIMESPEC])
+  AC_SUBST([PTHREAD_H_DEFINES_STRUCT_TIMESPEC])
 ])
 
 AC_DEFUN([gl_TIME_MODULE_INDICATOR],

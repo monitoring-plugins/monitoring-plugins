@@ -372,12 +372,23 @@ _GL_WARN_ON_USE (strndup, "strndup is unportable - "
    MAXLEN bytes.  If no '\0' terminator is found in that many bytes,
    return MAXLEN.  */
 #if @GNULIB_STRNLEN@
-# if ! @HAVE_DECL_STRNLEN@
+# if @REPLACE_STRNLEN@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef strnlen
+#   define strnlen rpl_strnlen
+#  endif
+_GL_FUNCDECL_RPL (strnlen, size_t, (char const *__string, size_t __maxlen)
+                                   __attribute__ ((__pure__))
+                                   _GL_ARG_NONNULL ((1)));
+_GL_CXXALIAS_RPL (strnlen, size_t, (char const *__string, size_t __maxlen));
+# else
+#  if ! @HAVE_DECL_STRNLEN@
 _GL_FUNCDECL_SYS (strnlen, size_t, (char const *__string, size_t __maxlen)
                                    __attribute__ ((__pure__))
                                    _GL_ARG_NONNULL ((1)));
-# endif
+#  endif
 _GL_CXXALIAS_SYS (strnlen, size_t, (char const *__string, size_t __maxlen));
+# endif
 _GL_CXXALIASWARN (strnlen);
 #elif defined GNULIB_POSIXCHECK
 # undef strnlen

@@ -26,7 +26,6 @@ AC_DEFUN([gl_EARLY],
   m4_pattern_allow([^gl_LTLIBOBJS$])dnl a variable
   AC_REQUIRE([AC_PROG_RANLIB])
   # Code from module alignof:
-  # Code from module alloca:
   # Code from module alloca-opt:
   # Code from module arg-nonnull:
   # Code from module arpa_inet:
@@ -146,7 +145,6 @@ AC_DEFUN([gl_INIT],
   gl_COMMON
   gl_source_base='gl'
   # Code from module alignof:
-  # Code from module alloca:
   # Code from module alloca-opt:
   gl_FUNC_ALLOCA
   # Code from module arg-nonnull:
@@ -222,7 +220,7 @@ AC_DEFUN([gl_INIT],
   gl_FUNC_GETOPT_POSIX
   # Code from module gettext:
   dnl you must add AM_GNU_GETTEXT([external]) or similar to configure.ac.
-  AM_GNU_GETTEXT_VERSION([0.17])
+  AM_GNU_GETTEXT_VERSION([0.18.1])
   # Code from module gettext-h:
   AC_SUBST([LIBINTL])
   AC_SUBST([LTLIBINTL])
@@ -522,7 +520,6 @@ AC_DEFUN([gl_FILE_LIST], [
   build-aux/config.rpath
   build-aux/warn-on-use.h
   lib/alignof.h
-  lib/alloca.c
   lib/alloca.in.h
   lib/arpa_inet.in.h
   lib/asnprintf.c
@@ -660,6 +657,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/00gnulib.m4
   m4/alloca.m4
   m4/arpa_inet_h.m4
+  m4/asm-underscore.m4
   m4/base64.m4
   m4/btowc.m4
   m4/c-strtod.m4

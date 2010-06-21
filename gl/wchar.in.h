@@ -407,7 +407,7 @@ _GL_WARN_ON_USE (wcsnrtombs, "wcsnrtombs is unportable - "
 _GL_FUNCDECL_RPL (wcwidth, int, (wchar_t));
 _GL_CXXALIAS_RPL (wcwidth, int, (wchar_t));
 # else
-#  if !defined wcwidth && !@HAVE_DECL_WCWIDTH@
+#  if !@HAVE_DECL_WCWIDTH@
 /* wcwidth exists but is not declared.  */
 _GL_FUNCDECL_SYS (wcwidth, int, (wchar_t));
 #  endif

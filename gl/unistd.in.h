@@ -86,7 +86,7 @@
 #endif
 
 #if (@GNULIB_WRITE@ || @GNULIB_READLINK@ || @GNULIB_READLINKAT@ \
-     || @GNULIB_PREAD@ || defined GNULIB_POSIXCHECK)
+     || @GNULIB_PREAD@ || @GNULIB_PWRITE@ || defined GNULIB_POSIXCHECK)
 /* Get ssize_t.  */
 # include <sys/types.h>
 #endif
@@ -1016,6 +1016,40 @@ _GL_WARN_ON_USE (pread, "pread is unportable - "
 #endif
 
 
+#if @GNULIB_PWRITE@
+/* Write at most BUFSIZE bytes from BUF into FD, starting at OFFSET.
+   Return the number of bytes written if successful, otherwise
+   set errno and return -1.  0 indicates nothing written.  See the
+   POSIX:2001 specification
+   <http://www.opengroup.org/susv3xsh/pwrite.html>.  */
+# if @REPLACE_PWRITE@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   define pwrite rpl_pwrite
+#  endif
+_GL_FUNCDECL_RPL (pwrite, ssize_t,
+                  (int fd, const void *buf, size_t bufsize, off_t offset)
+                  _GL_ARG_NONNULL ((2)));
+_GL_CXXALIAS_RPL (pwrite, ssize_t,
+                  (int fd, const void *buf, size_t bufsize, off_t offset));
+# else
+#  if !@HAVE_PWRITE@
+_GL_FUNCDECL_SYS (pwrite, ssize_t,
+                  (int fd, const void *buf, size_t bufsize, off_t offset)
+                  _GL_ARG_NONNULL ((2)));
+#  endif
+_GL_CXXALIAS_SYS (pwrite, ssize_t,
+                  (int fd, const void *buf, size_t bufsize, off_t offset));
+# endif
+_GL_CXXALIASWARN (pwrite);
+#elif defined GNULIB_POSIXCHECK
+# undef pwrite
+# if HAVE_RAW_DECL_PWRITE
+_GL_WARN_ON_USE (pwrite, "pwrite is unportable - "
+                 "use gnulib module pwrite for portability");
+# endif
+#endif
+
+
 #if @GNULIB_READLINK@
 /* Read the contents of the symbolic link FILE and place the first BUFSIZE
    bytes of it into BUF.  Return the number of bytes placed into BUF if
@@ -1164,12 +1198,23 @@ _GL_WARN_ON_USE (symlinkat, "symlinkat is not portable - "
 #if @GNULIB_TTYNAME_R@
 /* Store at most BUFLEN characters of the pathname of the terminal FD is
    open on in BUF.  Return 0 on success, otherwise an error number.  */
-# if !@HAVE_TTYNAME_R@
+# if @REPLACE_TTYNAME_R@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef ttyname_r
+#   define ttyname_r rpl_ttyname_r
+#  endif
+_GL_FUNCDECL_RPL (ttyname_r, int,
+                  (int fd, char *buf, size_t buflen) _GL_ARG_NONNULL ((2)));
+_GL_CXXALIAS_RPL (ttyname_r, int,
+                  (int fd, char *buf, size_t buflen));
+# else
+#  if !@HAVE_TTYNAME_R@
 _GL_FUNCDECL_SYS (ttyname_r, int,
                   (int fd, char *buf, size_t buflen) _GL_ARG_NONNULL ((2)));
-# endif
+#  endif
 _GL_CXXALIAS_SYS (ttyname_r, int,
                   (int fd, char *buf, size_t buflen));
+# endif
 _GL_CXXALIASWARN (ttyname_r);
 #elif defined GNULIB_POSIXCHECK
 # undef ttyname_r
@@ -1268,7 +1313,10 @@ _GL_FUNCDECL_RPL (write, ssize_t, (int fd, const void *buf, size_t count)
                                   _GL_ARG_NONNULL ((2)));
 _GL_CXXALIAS_RPL (write, ssize_t, (int fd, const void *buf, size_t count));
 # else
-_GL_CXXALIAS_SYS (write, ssize_t, (int fd, const void *buf, size_t count));
+/* Need to cast, because on mingw, the third parameter is
+                                                             unsigned int count
+   and the return type is 'int'.  */
+_GL_CXXALIAS_SYS_CAST (write, ssize_t, (int fd, const void *buf, size_t count));
 # endif
 _GL_CXXALIASWARN (write);
 #endif

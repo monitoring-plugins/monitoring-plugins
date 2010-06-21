@@ -50,6 +50,9 @@
          with this substitute.  With this substitute, only the values 0 and 1
          give the expected result when converted to _Bool' or 'bool'.
 
+       - C99 allows the use of (_Bool)0.0 in constant expressions, but
+         this substitute cannot always provide this property.
+
    Also, it is suggested that programs use 'bool' rather than '_Bool';
    this isn't required, but 'bool' is more common.  */
 

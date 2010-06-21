@@ -1,4 +1,4 @@
-# unistd_h.m4 serial 45
+# unistd_h.m4 serial 46
 dnl Copyright (C) 2006-2010 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -38,8 +38,9 @@ AC_DEFUN([gl_UNISTD_H],
     ]], [chown dup2 dup3 environ euidaccess faccessat fchdir fchownat
     fsync ftruncate getcwd getdomainname getdtablesize getgroups
     gethostname getlogin getlogin_r getpagesize getusershell setusershell
-    endusershell lchown link linkat lseek pipe2 pread readlink readlinkat
-    rmdir sleep symlink symlinkat ttyname_r unlink unlinkat usleep])
+    endusershell lchown link linkat lseek pipe2 pread pwrite readlink
+    readlinkat rmdir sleep symlink symlinkat ttyname_r unlink unlinkat
+    usleep])
 ])
 
 AC_DEFUN([gl_UNISTD_MODULE_INDICATOR],
@@ -79,6 +80,7 @@ AC_DEFUN([gl_UNISTD_H_DEFAULTS],
   GNULIB_LSEEK=0;            AC_SUBST([GNULIB_LSEEK])
   GNULIB_PIPE2=0;            AC_SUBST([GNULIB_PIPE2])
   GNULIB_PREAD=0;            AC_SUBST([GNULIB_PREAD])
+  GNULIB_PWRITE=0;           AC_SUBST([GNULIB_PWRITE])
   GNULIB_READLINK=0;         AC_SUBST([GNULIB_READLINK])
   GNULIB_READLINKAT=0;       AC_SUBST([GNULIB_READLINKAT])
   GNULIB_RMDIR=0;            AC_SUBST([GNULIB_RMDIR])
@@ -113,6 +115,7 @@ AC_DEFUN([gl_UNISTD_H_DEFAULTS],
   HAVE_LINKAT=1;          AC_SUBST([HAVE_LINKAT])
   HAVE_PIPE2=1;           AC_SUBST([HAVE_PIPE2])
   HAVE_PREAD=1;           AC_SUBST([HAVE_PREAD])
+  HAVE_PWRITE=1;          AC_SUBST([HAVE_PWRITE])
   HAVE_READLINK=1;        AC_SUBST([HAVE_READLINK])
   HAVE_READLINKAT=1;      AC_SUBST([HAVE_READLINKAT])
   HAVE_SLEEP=1;           AC_SUBST([HAVE_SLEEP])
@@ -140,10 +143,12 @@ AC_DEFUN([gl_UNISTD_H_DEFAULTS],
   REPLACE_LINKAT=0;       AC_SUBST([REPLACE_LINKAT])
   REPLACE_LSEEK=0;        AC_SUBST([REPLACE_LSEEK])
   REPLACE_PREAD=0;        AC_SUBST([REPLACE_PREAD])
+  REPLACE_PWRITE=0;       AC_SUBST([REPLACE_PWRITE])
   REPLACE_READLINK=0;     AC_SUBST([REPLACE_READLINK])
   REPLACE_RMDIR=0;        AC_SUBST([REPLACE_RMDIR])
   REPLACE_SLEEP=0;        AC_SUBST([REPLACE_SLEEP])
   REPLACE_SYMLINK=0;      AC_SUBST([REPLACE_SYMLINK])
+  REPLACE_TTYNAME_R=0;    AC_SUBST([REPLACE_TTYNAME_R])
   REPLACE_UNLINK=0;       AC_SUBST([REPLACE_UNLINK])
   REPLACE_UNLINKAT=0;     AC_SUBST([REPLACE_UNLINKAT])
   REPLACE_USLEEP=0;       AC_SUBST([REPLACE_USLEEP])

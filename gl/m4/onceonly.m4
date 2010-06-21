@@ -1,4 +1,4 @@
-# onceonly.m4 serial 6
+# onceonly.m4 serial 7
 dnl Copyright (C) 2002-2003, 2005-2006, 2008-2010 Free Software Foundation,
 dnl Inc.
 dnl This file is free software, distributed under the terms of the GNU
@@ -39,16 +39,16 @@ AC_PREREQ([2.59])
 AC_DEFUN([AC_CHECK_HEADERS_ONCE], [
   :
   m4_foreach_w([gl_HEADER_NAME], [$1], [
-    AC_DEFUN([gl_CHECK_HEADER_]m4_quote(translit(gl_HEADER_NAME,
-                                                 [./-], [___])), [
+    AC_DEFUN([gl_CHECK_HEADER_]m4_quote(m4_translit(gl_HEADER_NAME,
+                                                    [./-], [___])), [
       m4_divert_text([INIT_PREPARE],
         [gl_header_list="$gl_header_list gl_HEADER_NAME"])
       gl_HEADERS_EXPANSION
       AH_TEMPLATE(AS_TR_CPP([HAVE_]m4_defn([gl_HEADER_NAME])),
         [Define to 1 if you have the <]m4_defn([gl_HEADER_NAME])[> header file.])
     ])
-    AC_REQUIRE([gl_CHECK_HEADER_]m4_quote(translit(gl_HEADER_NAME,
-                                                   [./-], [___])))
+    AC_REQUIRE([gl_CHECK_HEADER_]m4_quote(m4_translit(gl_HEADER_NAME,
+                                                      [./-], [___])))
   ])
 ])
 m4_define([gl_HEADERS_EXPANSION], [

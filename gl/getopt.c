@@ -348,8 +348,6 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                     int long_only, struct _getopt_data *d, int posixly_correct)
 {
   int print_errors = d->opterr;
-  if (optstring[0] == ':')
-    print_errors = 0;
 
   if (argc < 1)
     return -1;
@@ -364,6 +362,10 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                                       posixly_correct);
       d->__initialized = 1;
     }
+  else if (optstring[0] == '-' || optstring[0] == '+')
+    optstring++;
+  if (optstring[0] == ':')
+    print_errors = 0;
 
   /* Test whether ARGV[optind] points to a non-option argument.
      Either it does not have option syntax, or there is an environment flag
@@ -633,8 +635,8 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                       char *buf;
 
                       if (__asprintf (&buf, _("\
-%s: option '%s' requires an argument\n"),
-                                      argv[0], argv[d->optind - 1]) >= 0)
+%s: option '--%s' requires an argument\n"),
+                                      argv[0], pfound->name) >= 0)
                         {
                           _IO_flockfile (stderr);
 
@@ -651,8 +653,8 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                         }
 #else
                       fprintf (stderr,
-                               _("%s: option '%s' requires an argument\n"),
-                               argv[0], argv[d->optind - 1]);
+                               _("%s: option '--%s' requires an argument\n"),
+                               argv[0], pfound->name);
 #endif
                     }
                   d->__nextchar += strlen (d->__nextchar);
@@ -736,13 +738,13 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
 
   {
     char c = *d->__nextchar++;
-    char *temp = strchr (optstring, c);
+    const char *temp = strchr (optstring, c);
 
     /* Increment `optind' when we start to process its last character.  */
     if (*d->__nextchar == '\0')
       ++d->optind;
 
-    if (temp == NULL || c == ':')
+    if (temp == NULL || c == ':' || c == ';')
       {
         if (print_errors)
           {
@@ -864,7 +866,10 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                   pfound = p;
                   indfound = option_index;
                 }
-              else
+              else if (long_only
+                       || pfound->has_arg != p->has_arg
+                       || pfound->flag != p->flag
+                       || pfound->val != p->val)
                 /* Second or later nonexact match found.  */
                 ambig = 1;
             }
@@ -876,7 +881,7 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                 char *buf;
 
                 if (__asprintf (&buf, _("%s: option '-W %s' is ambiguous\n"),
-                                argv[0], argv[d->optind]) >= 0)
+                                argv[0], d->optarg) >= 0)
                   {
                     _IO_flockfile (stderr);
 
@@ -892,7 +897,7 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                   }
 #else
                 fprintf (stderr, _("%s: option '-W %s' is ambiguous\n"),
-                         argv[0], argv[d->optind]);
+                         argv[0], d->optarg);
 #endif
               }
             d->__nextchar += strlen (d->__nextchar);
@@ -955,8 +960,8 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                         char *buf;
 
                         if (__asprintf (&buf, _("\
-%s: option '%s' requires an argument\n"),
-                                        argv[0], argv[d->optind - 1]) >= 0)
+%s: option '-W %s' requires an argument\n"),
+                                        argv[0], pfound->name) >= 0)
                           {
                             _IO_flockfile (stderr);
 
@@ -972,15 +977,17 @@ _getopt_internal_r (int argc, char **argv, const char *optstring,
                             free (buf);
                           }
 #else
-                        fprintf (stderr,
-                                 _("%s: option '%s' requires an argument\n"),
-                                 argv[0], argv[d->optind - 1]);
+                        fprintf (stderr, _("\
+%s: option '-W %s' requires an argument\n"),
+                                 argv[0], pfound->name);
 #endif
                       }
                     d->__nextchar += strlen (d->__nextchar);
                     return optstring[0] == ':' ? ':' : '?';
                   }
               }
+            else
+              d->optarg = NULL;
             d->__nextchar += strlen (d->__nextchar);
             if (longind != NULL)
               *longind = option_index;

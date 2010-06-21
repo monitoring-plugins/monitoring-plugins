@@ -467,6 +467,8 @@ static unsigned int re_string_context_at (const re_string_t *input, Idx idx,
 # else
 /* alloca is implemented with malloc, so just use malloc.  */
 #  define __libc_use_alloca(n) 0
+#  undef alloca
+#  define alloca(n) malloc (n)
 # endif
 #endif
 

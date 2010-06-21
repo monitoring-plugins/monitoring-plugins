@@ -148,8 +148,14 @@
 # define USE_SNPRINTF 1
 # if HAVE_DECL__SNWPRINTF
    /* On Windows, the function swprintf() has a different signature than
-      on Unix; we use the _snwprintf() function instead.  */
-#  define SNPRINTF _snwprintf
+      on Unix; we use the function _snwprintf() or - on mingw - snwprintf()
+      instead.  The mingw function snwprintf() has fewer bugs than the
+      MSVCRT function _snwprintf(), so prefer that.  */
+#  if defined __MINGW32__
+#   define SNPRINTF snwprintf
+#  else
+#   define SNPRINTF _snwprintf
+#  endif
 # else
    /* Unix.  */
 #  define SNPRINTF swprintf
@@ -167,8 +173,15 @@
 #  define USE_SNPRINTF 0
 # endif
 # if HAVE_DECL__SNPRINTF
-   /* Windows.  */
-#  define SNPRINTF _snprintf
+   /* Windows.  The mingw function snprintf() has fewer bugs than the MSVCRT
+      function _snprintf(), so prefer that.  */
+#  if defined __MINGW32__
+#   define SNPRINTF snprintf
+    /* Here we need to call the native snprintf, not rpl_snprintf.  */
+#   undef snprintf
+#  else
+#   define SNPRINTF _snprintf
+#  endif
 # else
    /* Unix.  */
 #  define SNPRINTF snprintf
@@ -194,7 +207,7 @@
 #undef remainder
 #define remainder rem
 
-#if !USE_SNPRINTF && !WIDE_CHAR_VERSION
+#if (!USE_SNPRINTF || !HAVE_SNPRINTF_RETVAL_C99) && !WIDE_CHAR_VERSION
 # if (HAVE_STRNLEN && !defined _AIX)
 #  define local_strnlen strnlen
 # else
@@ -210,7 +223,7 @@ local_strnlen (const char *string, size_t maxlen)
 # endif
 #endif
 
-#if (!USE_SNPRINTF || (NEED_PRINTF_DIRECTIVE_LS && !defined IN_LIBINTL)) && HAVE_WCHAR_T && (WIDE_CHAR_VERSION || DCHAR_IS_TCHAR)
+#if (((!USE_SNPRINTF || !HAVE_SNPRINTF_RETVAL_C99) && WIDE_CHAR_VERSION) || ((!USE_SNPRINTF || !HAVE_SNPRINTF_RETVAL_C99 || (NEED_PRINTF_DIRECTIVE_LS && !defined IN_LIBINTL)) && !WIDE_CHAR_VERSION && DCHAR_IS_TCHAR)) && HAVE_WCHAR_T
 # if HAVE_WCSLEN
 #  define local_wcslen wcslen
 # else
@@ -233,7 +246,7 @@ local_wcslen (const wchar_t *s)
 # endif
 #endif
 
-#if !USE_SNPRINTF && HAVE_WCHAR_T && WIDE_CHAR_VERSION
+#if (!USE_SNPRINTF || !HAVE_SNPRINTF_RETVAL_C99) && HAVE_WCHAR_T && WIDE_CHAR_VERSION
 # if HAVE_WCSNLEN
 #  define local_wcsnlen wcsnlen
 # else
@@ -1474,6 +1487,258 @@ is_borderline (const char *digits, size_t precision)
 
 #endif
 
+#if !USE_SNPRINTF || !HAVE_SNPRINTF_RETVAL_C99
+
+/* Use a different function name, to make it possible that the 'wchar_t'
+   parametrization and the 'char' parametrization get compiled in the same
+   translation unit.  */
+# if WIDE_CHAR_VERSION
+#  define MAX_ROOM_NEEDED wmax_room_needed
+# else
+#  define MAX_ROOM_NEEDED max_room_needed
+# endif
+
+/* Returns the number of TCHAR_T units needed as temporary space for the result
+   of sprintf or SNPRINTF of a single conversion directive.  */
+static inline size_t
+MAX_ROOM_NEEDED (const arguments *ap, size_t arg_index, FCHAR_T conversion,
+                 arg_type type, int flags, size_t width, int has_precision,
+                 size_t precision, int pad_ourselves)
+{
+  size_t tmp_length;
+
+  switch (conversion)
+    {
+    case 'd': case 'i': case 'u':
+# if HAVE_LONG_LONG_INT
+      if (type == TYPE_LONGLONGINT || type == TYPE_ULONGLONGINT)
+        tmp_length =
+          (unsigned int) (sizeof (unsigned long long) * CHAR_BIT
+                          * 0.30103 /* binary -> decimal */
+                         )
+          + 1; /* turn floor into ceil */
+      else
+# endif
+      if (type == TYPE_LONGINT || type == TYPE_ULONGINT)
+        tmp_length =
+          (unsigned int) (sizeof (unsigned long) * CHAR_BIT
+                          * 0.30103 /* binary -> decimal */
+                         )
+          + 1; /* turn floor into ceil */
+      else
+        tmp_length =
+          (unsigned int) (sizeof (unsigned int) * CHAR_BIT
+                          * 0.30103 /* binary -> decimal */
+                         )
+          + 1; /* turn floor into ceil */
+      if (tmp_length < precision)
+        tmp_length = precision;
+      /* Multiply by 2, as an estimate for FLAG_GROUP.  */
+      tmp_length = xsum (tmp_length, tmp_length);
+      /* Add 1, to account for a leading sign.  */
+      tmp_length = xsum (tmp_length, 1);
+      break;
+
+    case 'o':
+# if HAVE_LONG_LONG_INT
+      if (type == TYPE_LONGLONGINT || type == TYPE_ULONGLONGINT)
+        tmp_length =
+          (unsigned int) (sizeof (unsigned long long) * CHAR_BIT
+                          * 0.333334 /* binary -> octal */
+                         )
+          + 1; /* turn floor into ceil */
+      else
+# endif
+      if (type == TYPE_LONGINT || type == TYPE_ULONGINT)
+        tmp_length =
+          (unsigned int) (sizeof (unsigned long) * CHAR_BIT
+                          * 0.333334 /* binary -> octal */
+                         )
+          + 1; /* turn floor into ceil */
+      else
+        tmp_length =
+          (unsigned int) (sizeof (unsigned int) * CHAR_BIT
+                          * 0.333334 /* binary -> octal */
+                         )
+          + 1; /* turn floor into ceil */
+      if (tmp_length < precision)
+        tmp_length = precision;
+      /* Add 1, to account for a leading sign.  */
+      tmp_length = xsum (tmp_length, 1);
+      break;
+
+    case 'x': case 'X':
+# if HAVE_LONG_LONG_INT
+      if (type == TYPE_LONGLONGINT || type == TYPE_ULONGLONGINT)
+        tmp_length =
+          (unsigned int) (sizeof (unsigned long long) * CHAR_BIT
+                          * 0.25 /* binary -> hexadecimal */
+                         )
+          + 1; /* turn floor into ceil */
+      else
+# endif
+      if (type == TYPE_LONGINT || type == TYPE_ULONGINT)
+        tmp_length =
+          (unsigned int) (sizeof (unsigned long) * CHAR_BIT
+                          * 0.25 /* binary -> hexadecimal */
+                         )
+          + 1; /* turn floor into ceil */
+      else
+        tmp_length =
+          (unsigned int) (sizeof (unsigned int) * CHAR_BIT
+                          * 0.25 /* binary -> hexadecimal */
+                         )
+          + 1; /* turn floor into ceil */
+      if (tmp_length < precision)
+        tmp_length = precision;
+      /* Add 2, to account for a leading sign or alternate form.  */
+      tmp_length = xsum (tmp_length, 2);
+      break;
+
+    case 'f': case 'F':
+      if (type == TYPE_LONGDOUBLE)
+        tmp_length =
+          (unsigned int) (LDBL_MAX_EXP
+                          * 0.30103 /* binary -> decimal */
+                          * 2 /* estimate for FLAG_GROUP */
+                         )
+          + 1 /* turn floor into ceil */
+          + 10; /* sign, decimal point etc. */
+      else
+        tmp_length =
+          (unsigned int) (DBL_MAX_EXP
+                          * 0.30103 /* binary -> decimal */
+                          * 2 /* estimate for FLAG_GROUP */
+                         )
+          + 1 /* turn floor into ceil */
+          + 10; /* sign, decimal point etc. */
+      tmp_length = xsum (tmp_length, precision);
+      break;
+
+    case 'e': case 'E': case 'g': case 'G':
+      tmp_length =
+        12; /* sign, decimal point, exponent etc. */
+      tmp_length = xsum (tmp_length, precision);
+      break;
+
+    case 'a': case 'A':
+      if (type == TYPE_LONGDOUBLE)
+        tmp_length =
+          (unsigned int) (LDBL_DIG
+                          * 0.831 /* decimal -> hexadecimal */
+                         )
+          + 1; /* turn floor into ceil */
+      else
+        tmp_length =
+          (unsigned int) (DBL_DIG
+                          * 0.831 /* decimal -> hexadecimal */
+                         )
+          + 1; /* turn floor into ceil */
+      if (tmp_length < precision)
+        tmp_length = precision;
+      /* Account for sign, decimal point etc. */
+      tmp_length = xsum (tmp_length, 12);
+      break;
+
+    case 'c':
+# if HAVE_WINT_T && !WIDE_CHAR_VERSION
+      if (type == TYPE_WIDE_CHAR)
+        tmp_length = MB_CUR_MAX;
+      else
+# endif
+        tmp_length = 1;
+      break;
+
+    case 's':
+# if HAVE_WCHAR_T
+      if (type == TYPE_WIDE_STRING)
+        {
+#  if WIDE_CHAR_VERSION
+          /* ISO C says about %ls in fwprintf:
+               "If the precision is not specified or is greater than the size
+                of the array, the array shall contain a null wide character."
+             So if there is a precision, we must not use wcslen.  */
+          const wchar_t *arg = ap->arg[arg_index].a.a_wide_string;
+
+          if (has_precision)
+            tmp_length = local_wcsnlen (arg, precision);
+          else
+            tmp_length = local_wcslen (arg);
+#  else
+          /* ISO C says about %ls in fprintf:
+               "If a precision is specified, no more than that many bytes are
+                written (including shift sequences, if any), and the array
+                shall contain a null wide character if, to equal the multibyte
+                character sequence length given by the precision, the function
+                would need to access a wide character one past the end of the
+                array."
+             So if there is a precision, we must not use wcslen.  */
+          /* This case has already been handled separately in VASNPRINTF.  */
+          abort ();
+#  endif
+        }
+      else
+# endif
+        {
+# if WIDE_CHAR_VERSION
+          /* ISO C says about %s in fwprintf:
+               "If the precision is not specified or is greater than the size
+                of the converted array, the converted array shall contain a
+                null wide character."
+             So if there is a precision, we must not use strlen.  */
+          /* This case has already been handled separately in VASNPRINTF.  */
+          abort ();
+# else
+          /* ISO C says about %s in fprintf:
+               "If the precision is not specified or greater than the size of
+                the array, the array shall contain a null character."
+             So if there is a precision, we must not use strlen.  */
+          const char *arg = ap->arg[arg_index].a.a_string;
+
+          if (has_precision)
+            tmp_length = local_strnlen (arg, precision);
+          else
+            tmp_length = strlen (arg);
+# endif
+        }
+      break;
+
+    case 'p':
+      tmp_length =
+        (unsigned int) (sizeof (void *) * CHAR_BIT
+                        * 0.25 /* binary -> hexadecimal */
+                       )
+          + 1 /* turn floor into ceil */
+          + 2; /* account for leading 0x */
+      break;
+
+    default:
+      abort ();
+    }
+
+  if (!pad_ourselves)
+    {
+# if ENABLE_UNISTDIO
+      /* Padding considers the number of characters, therefore the number of
+         elements after padding may be
+           > max (tmp_length, width)
+         but is certainly
+           <= tmp_length + width.  */
+      tmp_length = xsum (tmp_length, width);
+# else
+      /* Padding considers the number of elements, says POSIX.  */
+      if (tmp_length < width)
+        tmp_length = width;
+# endif
+    }
+
+  tmp_length = xsum (tmp_length, 1); /* account for trailing NUL */
+
+  return tmp_length;
+}
+
+#endif
+
 DCHAR_T *
 VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
             const FCHAR_T *format, va_list args)
@@ -2103,7 +2368,7 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
                   }
               }
 #endif
-#if (!USE_SNPRINTF || (NEED_PRINTF_DIRECTIVE_LS && !defined IN_LIBINTL)) && HAVE_WCHAR_T
+#if (!USE_SNPRINTF || !HAVE_SNPRINTF_RETVAL_C99 || (NEED_PRINTF_DIRECTIVE_LS && !defined IN_LIBINTL)) && HAVE_WCHAR_T
             else if (dp->conversion == 's'
 # if WIDE_CHAR_VERSION
                      && a.arg[dp->arg_index].type != TYPE_WIDE_STRING
@@ -2592,8 +2857,16 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
                           count = wctomb (cbuf, *arg);
 #   endif
                           if (count <= 0)
-                            /* Inconsistency.  */
-                            abort ();
+                            {
+                              /* Cannot convert.  */
+                              if (!(result == resultbuf || result == NULL))
+                                free (result);
+                              if (buf_malloced != NULL)
+                                free (buf_malloced);
+                              CLEANUP ();
+                              errno = EILSEQ;
+                              return NULL;
+                            }
                           ENSURE_ALLOCATION (xsum (length, count));
                           memcpy (result + length, cbuf, count);
                           length += count;
@@ -2616,8 +2889,8 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
                       length += n;
                     }
                 }
-              }
 # endif
+              }
 #endif
 #if (NEED_PRINTF_DIRECTIVE_A || NEED_PRINTF_LONG_DOUBLE || NEED_PRINTF_DOUBLE) && !defined IN_LIBINTL
             else if ((dp->conversion == 'a' || dp->conversion == 'A')
@@ -4301,11 +4574,11 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
               {
                 arg_type type = a.arg[dp->arg_index].type;
                 int flags = dp->flags;
-#if !USE_SNPRINTF || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
+#if !USE_SNPRINTF || !HAVE_SNPRINTF_RETVAL_C99 || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
                 int has_width;
                 size_t width;
 #endif
-#if !USE_SNPRINTF || NEED_PRINTF_UNBOUNDED_PRECISION
+#if !USE_SNPRINTF || !HAVE_SNPRINTF_RETVAL_C99 || NEED_PRINTF_UNBOUNDED_PRECISION
                 int has_precision;
                 size_t precision;
 #endif
@@ -4330,7 +4603,7 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
                 TCHAR_T *tmp;
 #endif
 
-#if !USE_SNPRINTF || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
+#if !USE_SNPRINTF || !HAVE_SNPRINTF_RETVAL_C99 || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
                 has_width = 0;
                 width = 0;
                 if (dp->width_start != dp->width_end)
@@ -4364,7 +4637,7 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
                   }
 #endif
 
-#if !USE_SNPRINTF || NEED_PRINTF_UNBOUNDED_PRECISION
+#if !USE_SNPRINTF || !HAVE_SNPRINTF_RETVAL_C99 || NEED_PRINTF_UNBOUNDED_PRECISION
                 has_precision = 0;
                 precision = 6;
                 if (dp->precision_start != dp->precision_end)
@@ -4437,246 +4710,10 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 #if !USE_SNPRINTF
                 /* Allocate a temporary buffer of sufficient size for calling
                    sprintf.  */
-                {
-                  switch (dp->conversion)
-                    {
-
-                    case 'd': case 'i': case 'u':
-# if HAVE_LONG_LONG_INT
-                      if (type == TYPE_LONGLONGINT || type == TYPE_ULONGLONGINT)
-                        tmp_length =
-                          (unsigned int) (sizeof (unsigned long long) * CHAR_BIT
-                                          * 0.30103 /* binary -> decimal */
-                                         )
-                          + 1; /* turn floor into ceil */
-                      else
-# endif
-                      if (type == TYPE_LONGINT || type == TYPE_ULONGINT)
-                        tmp_length =
-                          (unsigned int) (sizeof (unsigned long) * CHAR_BIT
-                                          * 0.30103 /* binary -> decimal */
-                                         )
-                          + 1; /* turn floor into ceil */
-                      else
-                        tmp_length =
-                          (unsigned int) (sizeof (unsigned int) * CHAR_BIT
-                                          * 0.30103 /* binary -> decimal */
-                                         )
-                          + 1; /* turn floor into ceil */
-                      if (tmp_length < precision)
-                        tmp_length = precision;
-                      /* Multiply by 2, as an estimate for FLAG_GROUP.  */
-                      tmp_length = xsum (tmp_length, tmp_length);
-                      /* Add 1, to account for a leading sign.  */
-                      tmp_length = xsum (tmp_length, 1);
-                      break;
-
-                    case 'o':
-# if HAVE_LONG_LONG_INT
-                      if (type == TYPE_LONGLONGINT || type == TYPE_ULONGLONGINT)
-                        tmp_length =
-                          (unsigned int) (sizeof (unsigned long long) * CHAR_BIT
-                                          * 0.333334 /* binary -> octal */
-                                         )
-                          + 1; /* turn floor into ceil */
-                      else
-# endif
-                      if (type == TYPE_LONGINT || type == TYPE_ULONGINT)
-                        tmp_length =
-                          (unsigned int) (sizeof (unsigned long) * CHAR_BIT
-                                          * 0.333334 /* binary -> octal */
-                                         )
-                          + 1; /* turn floor into ceil */
-                      else
-                        tmp_length =
-                          (unsigned int) (sizeof (unsigned int) * CHAR_BIT
-                                          * 0.333334 /* binary -> octal */
-                                         )
-                          + 1; /* turn floor into ceil */
-                      if (tmp_length < precision)
-                        tmp_length = precision;
-                      /* Add 1, to account for a leading sign.  */
-                      tmp_length = xsum (tmp_length, 1);
-                      break;
-
-                    case 'x': case 'X':
-# if HAVE_LONG_LONG_INT
-                      if (type == TYPE_LONGLONGINT || type == TYPE_ULONGLONGINT)
-                        tmp_length =
-                          (unsigned int) (sizeof (unsigned long long) * CHAR_BIT
-                                          * 0.25 /* binary -> hexadecimal */
-                                         )
-                          + 1; /* turn floor into ceil */
-                      else
-# endif
-                      if (type == TYPE_LONGINT || type == TYPE_ULONGINT)
-                        tmp_length =
-                          (unsigned int) (sizeof (unsigned long) * CHAR_BIT
-                                          * 0.25 /* binary -> hexadecimal */
-                                         )
-                          + 1; /* turn floor into ceil */
-                      else
-                        tmp_length =
-                          (unsigned int) (sizeof (unsigned int) * CHAR_BIT
-                                          * 0.25 /* binary -> hexadecimal */
-                                         )
-                          + 1; /* turn floor into ceil */
-                      if (tmp_length < precision)
-                        tmp_length = precision;
-                      /* Add 2, to account for a leading sign or alternate form.  */
-                      tmp_length = xsum (tmp_length, 2);
-                      break;
-
-                    case 'f': case 'F':
-                      if (type == TYPE_LONGDOUBLE)
-                        tmp_length =
-                          (unsigned int) (LDBL_MAX_EXP
-                                          * 0.30103 /* binary -> decimal */
-                                          * 2 /* estimate for FLAG_GROUP */
-                                         )
-                          + 1 /* turn floor into ceil */
-                          + 10; /* sign, decimal point etc. */
-                      else
-                        tmp_length =
-                          (unsigned int) (DBL_MAX_EXP
-                                          * 0.30103 /* binary -> decimal */
-                                          * 2 /* estimate for FLAG_GROUP */
-                                         )
-                          + 1 /* turn floor into ceil */
-                          + 10; /* sign, decimal point etc. */
-                      tmp_length = xsum (tmp_length, precision);
-                      break;
-
-                    case 'e': case 'E': case 'g': case 'G':
-                      tmp_length =
-                        12; /* sign, decimal point, exponent etc. */
-                      tmp_length = xsum (tmp_length, precision);
-                      break;
-
-                    case 'a': case 'A':
-                      if (type == TYPE_LONGDOUBLE)
-                        tmp_length =
-                          (unsigned int) (LDBL_DIG
-                                          * 0.831 /* decimal -> hexadecimal */
-                                         )
-                          + 1; /* turn floor into ceil */
-                      else
-                        tmp_length =
-                          (unsigned int) (DBL_DIG
-                                          * 0.831 /* decimal -> hexadecimal */
-                                         )
-                          + 1; /* turn floor into ceil */
-                      if (tmp_length < precision)
-                        tmp_length = precision;
-                      /* Account for sign, decimal point etc. */
-                      tmp_length = xsum (tmp_length, 12);
-                      break;
-
-                    case 'c':
-# if HAVE_WINT_T && !WIDE_CHAR_VERSION
-                      if (type == TYPE_WIDE_CHAR)
-                        tmp_length = MB_CUR_MAX;
-                      else
-# endif
-                        tmp_length = 1;
-                      break;
-
-                    case 's':
-# if HAVE_WCHAR_T
-                      if (type == TYPE_WIDE_STRING)
-                        {
-#  if WIDE_CHAR_VERSION
-                          /* ISO C says about %ls in fwprintf:
-                               "If the precision is not specified or is greater
-                                than the size of the array, the array shall
-                                contain a null wide character."
-                             So if there is a precision, we must not use
-                             wcslen.  */
-                          const wchar_t *arg =
-                            a.arg[dp->arg_index].a.a_wide_string;
-
-                          if (has_precision)
-                            tmp_length = local_wcsnlen (arg, precision);
-                          else
-                            tmp_length = local_wcslen (arg);
-#  else
-                          /* ISO C says about %ls in fprintf:
-                               "If a precision is specified, no more than that
-                                many bytes are written (including shift
-                                sequences, if any), and the array shall contain
-                                a null wide character if, to equal the
-                                multibyte character sequence length given by
-                                the precision, the function would need to
-                                access a wide character one past the end of the
-                                array."
-                             So if there is a precision, we must not use
-                             wcslen.  */
-                          /* This case has already been handled above.  */
-                          abort ();
-#  endif
-                        }
-                      else
-# endif
-                        {
-# if WIDE_CHAR_VERSION
-                          /* ISO C says about %s in fwprintf:
-                               "If the precision is not specified or is greater
-                                than the size of the converted array, the
-                                converted array shall contain a null wide
-                                character."
-                             So if there is a precision, we must not use
-                             strlen.  */
-                          /* This case has already been handled above.  */
-                          abort ();
-# else
-                          /* ISO C says about %s in fprintf:
-                               "If the precision is not specified or greater
-                                than the size of the array, the array shall
-                                contain a null character."
-                             So if there is a precision, we must not use
-                             strlen.  */
-                          const char *arg = a.arg[dp->arg_index].a.a_string;
-
-                          if (has_precision)
-                            tmp_length = local_strnlen (arg, precision);
-                          else
-                            tmp_length = strlen (arg);
-# endif
-                        }
-                      break;
-
-                    case 'p':
-                      tmp_length =
-                        (unsigned int) (sizeof (void *) * CHAR_BIT
-                                        * 0.25 /* binary -> hexadecimal */
-                                       )
-                          + 1 /* turn floor into ceil */
-                          + 2; /* account for leading 0x */
-                      break;
-
-                    default:
-                      abort ();
-                    }
-
-                  if (!pad_ourselves)
-                    {
-# if ENABLE_UNISTDIO
-                      /* Padding considers the number of characters, therefore
-                         the number of elements after padding may be
-                           > max (tmp_length, width)
-                         but is certainly
-                           <= tmp_length + width.  */
-                      tmp_length = xsum (tmp_length, width);
-# else
-                      /* Padding considers the number of elements,
-                         says POSIX.  */
-                      if (tmp_length < width)
-                        tmp_length = width;
-# endif
-                    }
-
-                  tmp_length = xsum (tmp_length, 1); /* account for trailing NUL */
-                }
+                tmp_length =
+                  MAX_ROOM_NEEDED (&a, dp->arg_index, dp->conversion, type,
+                                   flags, width, has_precision, precision,
+                                   pad_ourselves);
 
                 if (tmp_length <= sizeof (tmpbuf) / sizeof (TCHAR_T))
                   tmp = tmpbuf;
@@ -4916,6 +4953,7 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
                       }
 #endif
 
+                    errno = 0;
                     switch (type)
                       {
                       case TYPE_SCHAR:
@@ -5062,15 +5100,44 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
                             /* Look at the snprintf() return value.  */
                             if (retcount < 0)
                               {
+# if !HAVE_SNPRINTF_RETVAL_C99
                                 /* HP-UX 10.20 snprintf() is doubly deficient:
                                    It doesn't understand the '%n' directive,
                                    *and* it returns -1 (rather than the length
                                    that would have been required) when the
-                                   buffer is too small.  */
-                                size_t bigger_need =
-                                  xsum (xtimes (allocated, 2), 12);
-                                ENSURE_ALLOCATION (bigger_need);
-                                continue;
+                                   buffer is too small.
+                                   But a failure at this point can also come
+                                   from other reasons than a too small buffer,
+                                   such as an invalid wide string argument to
+                                   the %ls directive, or possibly an invalid
+                                   floating-point argument.  */
+                                size_t tmp_length =
+                                  MAX_ROOM_NEEDED (&a, dp->arg_index,
+                                                   dp->conversion, type, flags,
+                                                   width, has_precision,
+                                                   precision, pad_ourselves);
+
+                                if (maxlen < tmp_length)
+                                  {
+                                    /* Make more room.  But try to do through
+                                       this reallocation only once.  */
+                                    size_t bigger_need =
+                                      xsum (length,
+                                            xsum (tmp_length,
+                                                  TCHARS_PER_DCHAR - 1)
+                                            / TCHARS_PER_DCHAR);
+                                    /* And always grow proportionally.
+                                       (There may be several arguments, each
+                                       needing a little more room than the
+                                       previous one.)  */
+                                    size_t bigger_need2 =
+                                      xsum (xtimes (allocated, 2), 12);
+                                    if (bigger_need < bigger_need2)
+                                      bigger_need = bigger_need2;
+                                    ENSURE_ALLOCATION (bigger_need);
+                                    continue;
+                                  }
+# endif
                               }
                             else
                               count = retcount;
@@ -5081,12 +5148,21 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
                     /* Attempt to handle failure.  */
                     if (count < 0)
                       {
+                        /* SNPRINTF or sprintf failed.  Save and use the errno
+                           that it has set, if any.  */
+                        int saved_errno = errno;
+
                         if (!(result == resultbuf || result == NULL))
                           free (result);
                         if (buf_malloced != NULL)
                           free (buf_malloced);
                         CLEANUP ();
-                        errno = EINVAL;
+                        errno =
+                          (saved_errno != 0
+                           ? saved_errno
+                           : (dp->conversion == 'c' || dp->conversion == 's'
+                              ? EILSEQ
+                              : EINVAL));
                         return NULL;
                       }
 
@@ -5422,6 +5498,8 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
                     length += count;
                     break;
                   }
+#undef pad_ourselves
+#undef prec_ourselves
               }
           }
       }
@@ -5473,6 +5551,7 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
   }
 }
 
+#undef MAX_ROOM_NEEDED
 #undef TCHARS_PER_DCHAR
 #undef SNPRINTF
 #undef USE_SNPRINTF
