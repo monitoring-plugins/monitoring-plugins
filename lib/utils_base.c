@@ -37,10 +37,12 @@ void np_init( char *plugin_name, int argc, char **argv ) {
 	if (this_nagios_plugin==NULL) {
 		this_nagios_plugin = malloc(sizeof(nagios_plugin));
 		if (this_nagios_plugin==NULL) {
-			die(STATE_UNKNOWN, _("Cannot allocate memory: %s\n"),
+			die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
 			    strerror(errno));
 		}
 		this_nagios_plugin->plugin_name = strdup(plugin_name);
+		if (this_nagios_plugin->plugin_name==NULL)
+			die(STATE_UNKNOWN, _("Cannot execute strdup: %s"), strerror(errno));
 		this_nagios_plugin->argc = argc;
 		this_nagios_plugin->argv = argv;
 	}
@@ -142,7 +144,7 @@ _set_thresholds(thresholds **my_thresholds, char *warn_string, char *critical_st
 	thresholds *temp_thresholds = NULL;
 
 	if ((temp_thresholds = malloc(sizeof(thresholds))) == NULL)
-		die(STATE_UNKNOWN, _("Cannot allocate memory: %s\n"),
+		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
 		    strerror(errno));
 
 	temp_thresholds->warning = NULL;
@@ -361,6 +363,7 @@ char *_np_state_generate_key() {
 	char **argv = this_nagios_plugin->argv;
 	unsigned char result[20];
 	char keyname[41];
+	char *p=NULL;
 
 	sha1_init_ctx(&ctx);
 	
@@ -375,7 +378,11 @@ char *_np_state_generate_key() {
 	}
 	keyname[40]='\0';
 	
-	return strdup(keyname);
+	p = strdup(keyname);
+	if(p==NULL) {
+		die(STATE_UNKNOWN, _("Cannot execute strdup: %s"), strerror(errno));
+	}
+	return p;
 }
 
 void _cleanup_state_data() {
@@ -414,14 +421,16 @@ void np_enable_state(char *keyname, int expected_data_version) {
 		die(STATE_UNKNOWN, _("This requires np_init to be called"));
 
 	this_state = (state_key *) malloc(sizeof(state_key));
-	
 	if(this_state==NULL)
-		die(STATE_UNKNOWN, _("Cannot allocate memory for state key"));
+		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
+		    strerror(errno));
 
 	if(keyname==NULL) {
 		temp_keyname = _np_state_generate_key();
 	} else {
 		temp_keyname = strdup(keyname);
+		if(temp_keyname==NULL)
+			die(STATE_UNKNOWN, _("Cannot execute strdup: %s"), strerror(errno));
 	}
 	/* Convert all non-alphanumerics to _ */
 	p = temp_keyname;
@@ -465,9 +474,9 @@ state_data *np_state_read() {
 	if(statefile!=NULL) {
 
 		this_state_data = (state_data *) malloc(sizeof(state_data));
-		
 		if(this_state_data==NULL)
-			die(STATE_UNKNOWN, _("Cannot allocate memory for state data"));
+			die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
+			    strerror(errno));
 
 		this_state_data->data=NULL;
 		this_nagios_plugin->state->state_data = this_state_data;
@@ -500,6 +509,9 @@ int _np_state_read_file(FILE *f) {
 
 	/* Note: This introduces a limit of 1024 bytes in the string data */
 	line = (char *) malloc(1024);
+	if(line==NULL)
+		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
+		    strerror(errno));
 
 	while(!failure && (fgets(line,1024,f))!=NULL){
 		pos=strlen(line);
@@ -536,6 +548,8 @@ int _np_state_read_file(FILE *f) {
 				break;
 			case STATE_DATA_TEXT:
 				this_nagios_plugin->state->state_data->data = strdup(line);
+				if(this_nagios_plugin->state->state_data->data==NULL)
+					die(STATE_UNKNOWN, _("Cannot execute strdup: %s"), strerror(errno));
 				expected=STATE_DATA_END;
 				status=TRUE;
 				break;
@@ -573,7 +587,8 @@ void np_state_write_string(time_t data_time, char *data_string) {
 	if(access(this_nagios_plugin->state->_filename,F_OK)!=0) {
 		asprintf(&directories, "%s", this_nagios_plugin->state->_filename);
 		if(directories==NULL)
-			die(STATE_UNKNOWN, _("Cannot malloc"));
+			die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
+			    strerror(errno));
 
 		for(p=directories+1; *p; p++) {
 			if(*p=='/') {
@@ -591,7 +606,8 @@ void np_state_write_string(time_t data_time, char *data_string) {
 
 	asprintf(&temp_file,"%s.XXXXXX",this_nagios_plugin->state->_filename);
 	if(temp_file==NULL)
-		die(STATE_UNKNOWN, _("Cannot malloc temporary state file"));
+		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
+		    strerror(errno));
 
 	if((fd=mkstemp(temp_file))==-1) {
 		np_free(temp_file);
