@@ -403,7 +403,7 @@ char* _np_state_calculate_location_prefix(){
 	env_dir = getenv("NAGIOS_PLUGIN_STATE_DIRECTORY");
 	if(env_dir && env_dir[0] != '\0')
 		return env_dir;
-	return NP_SHAREDSTATE_DIR;
+	return NP_STATE_DIR_PREFIX;
 }
 
 /*

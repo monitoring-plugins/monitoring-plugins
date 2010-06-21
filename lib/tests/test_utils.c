@@ -24,6 +24,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "utils_base.c"
+
 int
 main (int argc, char **argv)
 {
@@ -36,19 +38,16 @@ main (int argc, char **argv)
 	state_data *temp_state_data;
 	time_t	current_time;
 	char 	*temp_filename;
-	nagios_plugin *temp_nagios_plugin;
 	FILE    *temp_fp;
 
-	plan_tests(138);
+	plan_tests(137);
 
-	_get_nagios_plugin( &temp_nagios_plugin );
-	ok( temp_nagios_plugin==NULL, "nagios_plugin not initialised");
+	ok( this_nagios_plugin==NULL, "nagios_plugin not initialised");
 
 	np_init( "check_test", argc, argv );
 
-	_get_nagios_plugin( &temp_nagios_plugin );
-	ok( temp_nagios_plugin!=NULL, "nagios_plugin now initialised");
-	ok( !strcmp(temp_nagios_plugin->plugin_name, "check_test"), "plugin name initialised" );
+	ok( this_nagios_plugin!=NULL, "nagios_plugin now initialised");
+	ok( !strcmp(this_nagios_plugin->plugin_name, "check_test"), "plugin name initialised" );
 
 
 	range = parse_range_string("6");
@@ -277,21 +276,21 @@ main (int argc, char **argv)
 	ok(!strcmp(temp_string, "83d877b6cdfefb5d6f06101fd6fe76762f21792c"), "Got hash with exe and no parameters" );
 	
 
-	temp_nagios_plugin->argc=4;
-	temp_nagios_plugin->argv[0] = "./test_utils";
-	temp_nagios_plugin->argv[1] = "here";
-	temp_nagios_plugin->argv[2] = "--and";
-	temp_nagios_plugin->argv[3] = "now";
+	this_nagios_plugin->argc=4;
+	this_nagios_plugin->argv[0] = "./test_utils";
+	this_nagios_plugin->argv[1] = "here";
+	this_nagios_plugin->argv[2] = "--and";
+	this_nagios_plugin->argv[3] = "now";
 	temp_string = (char *) _np_state_generate_key();
 	ok(!strcmp(temp_string, "94b5e17bf5abf51cb15aff5f69b96f2f8dac5ecd"), "Got based on expected argv" );
 
 	unsetenv("NAGIOS_PLUGIN_STATE_DIRECTORY");
 	temp_string = (char *) _np_state_calculate_location_prefix();
-	ok(!strcmp(temp_string, NP_SHAREDSTATE_DIR), "Got default directory" );
+	ok(!strcmp(temp_string, NP_STATE_DIR_PREFIX), "Got default directory" );
 
 	setenv("NAGIOS_PLUGIN_STATE_DIRECTORY", "", 1);
 	temp_string = (char *) _np_state_calculate_location_prefix();
-	ok(!strcmp(temp_string, NP_SHAREDSTATE_DIR), "Got default directory even with empty string" );
+	ok(!strcmp(temp_string, NP_STATE_DIR_PREFIX), "Got default directory even with empty string" );
 
 	setenv("NAGIOS_PLUGIN_STATE_DIRECTORY", "/usr/local/nagios/var", 1);
 	temp_string = (char *) _np_state_calculate_location_prefix();
@@ -301,22 +300,22 @@ main (int argc, char **argv)
 
 	ok(temp_state_key==NULL, "temp_state_key initially empty");
 
-	temp_nagios_plugin->argc=1;
-	temp_nagios_plugin->argv[0] = "./test_utils";
+	this_nagios_plugin->argc=1;
+	this_nagios_plugin->argv[0] = "./test_utils";
 	np_enable_state(NULL, 51);
-	temp_state_key = temp_nagios_plugin->state;
+	temp_state_key = this_nagios_plugin->state;
 	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
 	ok( !strcmp(temp_state_key->name, "83d877b6cdfefb5d6f06101fd6fe76762f21792c"), "Got generated filename" );
 
 
 	np_enable_state("bad^chars$in@here", 77);
-	temp_state_key = temp_nagios_plugin->state;
+	temp_state_key = this_nagios_plugin->state;
 	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
 	ok( !strcmp(temp_state_key->name, "bad_chars_in_here"), "Got key name with bad chars replaced" );
 	ok( !strcmp(temp_state_key->_filename, "/usr/local/nagios/var/check_test/bad_chars_in_here"), "Got internal filename" );
 
 	np_enable_state("funnykeyname", 54);
-	temp_state_key = temp_nagios_plugin->state;
+	temp_state_key = this_nagios_plugin->state;
 	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
 	ok( !strcmp(temp_state_key->name, "funnykeyname"), "Got key name" );
 
@@ -340,9 +339,9 @@ main (int argc, char **argv)
 	
 	temp_state_key->_filename="var/statefile";
 	temp_state_data = np_state_read(temp_state_key);
-	ok( temp_nagios_plugin->state->state_data!=NULL, "Got state data now" );
-	ok( temp_nagios_plugin->state->state_data->time==1234567890, "Got time" );
-	ok( !strcmp((char *)temp_nagios_plugin->state->state_data->data, "String to read"), "Data as expected" );
+	ok( this_nagios_plugin->state->state_data!=NULL, "Got state data now" );
+	ok( this_nagios_plugin->state->state_data->time==1234567890, "Got time" );
+	ok( !strcmp((char *)this_nagios_plugin->state->state_data->data, "String to read"), "Data as expected" );
 
 	temp_state_key->data_version=53;
 	temp_state_data = np_state_read(temp_state_key);
@@ -352,7 +351,7 @@ main (int argc, char **argv)
 	temp_state_key->_filename="var/nonexistant";
 	temp_state_data = np_state_read(temp_state_key);
 	ok( temp_state_data==NULL, "Missing file gives NULL" );
-	ok( temp_nagios_plugin->state->state_data==NULL, "No state information" );
+	ok( this_nagios_plugin->state->state_data==NULL, "No state information" );
 
 	temp_state_key->_filename="var/oldformat";
 	temp_state_data = np_state_read(temp_state_key);
@@ -399,7 +398,7 @@ main (int argc, char **argv)
 	temp_state_data = np_state_read(temp_state_key);
 	/* Check time is set to current_time */
 	ok(system("cmp var/generated var/statefile > /dev/null")!=0, "Generated file should be different this time");
-	ok(temp_nagios_plugin->state->state_data->time-current_time<=1, "Has time generated from current time");
+	ok(this_nagios_plugin->state->state_data->time-current_time<=1, "Has time generated from current time");
 	
 
 	/* Don't know how to automatically test this. Need to be able to redefine die and catch the error */
@@ -410,8 +409,9 @@ main (int argc, char **argv)
 	
 
 	np_cleanup();
-	ok(temp_state_key==NULL, "temp_state_key cleared");
-	ok( temp_nagios_plugin==NULL, "Reset" );
+
+	ok( this_nagios_plugin==NULL, "Free'd this_nagios_plugin" );
 
 	return exit_status();
 }
+
