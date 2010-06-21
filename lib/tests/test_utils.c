@@ -355,7 +355,7 @@ main (int argc, char **argv)
 	unlink("var/generated");
 	temp_state_key->_filename="var/generated";
 	current_time=1234567890;
-	np_state_write_string(&current_time, "String to read");
+	np_state_write_string(current_time, "String to read");
 	ok(system("cmp var/generated var/statefile")==0, "Generated file same as expected");
 
 
@@ -365,20 +365,20 @@ main (int argc, char **argv)
 	unlink("var/generated_directory");
 	temp_state_key->_filename="var/generated_directory/statefile";
 	current_time=1234567890;
-	np_state_write_string(&current_time, "String to read");
+	np_state_write_string(current_time, "String to read");
 	ok(system("cmp var/generated_directory/statefile var/statefile")==0, "Have created directory");
 
 	/* This test to check cannot write to dir - can't automate yet */
 	/*
 	unlink("var/generated_bad_dir");
 	mkdir("var/generated_bad_dir", S_IRUSR);
-	np_state_write_string(&current_time, "String to read");
+	np_state_write_string(current_time, "String to read");
 	*/
 
 
 	temp_state_key->_filename="var/generated";
 	time(&current_time);
-	np_state_write_string(NULL, "String to read");
+	np_state_write_string(0, "String to read");
 	temp_state_data = np_state_read(temp_state_key);
 	/* Check time is set to current_time */
 	ok(system("cmp var/generated var/statefile > /dev/null")!=0, "Generated file should be different this time");
@@ -388,7 +388,7 @@ main (int argc, char **argv)
 	/* Don't know how to automatically test this. Need to be able to redefine die and catch the error */
 	/*
 	temp_state_key->_filename="/dev/do/not/expect/to/be/able/to/write";
-	np_state_write_string(NULL, "Bad file");
+	np_state_write_string(0, "Bad file");
 	*/
 	
 

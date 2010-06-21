@@ -519,7 +519,7 @@ int _np_state_read_file(FILE *f) {
  * two things writing to same key at same time. 
  * Will die with UNKNOWN if errors
  */
-void np_state_write_string(time_t *data_time, char *data_string) {
+void np_state_write_string(time_t data_time, char *data_string) {
 	FILE *fp;
 	char *temp_file=NULL;
 	int fd=0, result=0;
@@ -528,10 +528,10 @@ void np_state_write_string(time_t *data_time, char *data_string) {
 	char *directories=NULL;
 	char *p=NULL;
 
-	if(data_time==NULL)
+	if(data_time==0)
 		time(&current_time);
 	else
-		current_time=*data_time;
+		current_time=data_time;
 	
 	/* If file doesn't currently exist, create directories */
 	if(access(this_nagios_plugin->state->_filename,F_OK)!=0) {

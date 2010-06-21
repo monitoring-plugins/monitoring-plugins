@@ -95,7 +95,7 @@ char *np_extract_value(const char*, const char*, char);
 
 void np_enable_state(char *, int);
 state_data *np_state_read();
-void np_state_write_string(time_t *, char *);
+void np_state_write_string(time_t, char *);
 
 void np_init(char *);
 void np_cleanup();
