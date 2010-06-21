@@ -2,6 +2,7 @@
 #define _UTILS_BASE_
 /* Header file for nagios plugins utils_base.c */
 
+#include "sha1.h"
 
 /* This file holds header information for thresholds - use this in preference to 
    individual plugin logic */
@@ -50,7 +51,8 @@ typedef struct state_key_struct {
 typedef struct np_struct {
 	char      *plugin_name;
 	state_key *state;
-	char      **expanded_argv;
+	int       argc;
+	char      **argv;
 	} nagios_plugin;
 
 range *parse_range_string (char *);
@@ -97,7 +99,7 @@ void np_enable_state(char *, int);
 state_data *np_state_read();
 void np_state_write_string(time_t, char *);
 
-void np_init(char *);
+void np_init(char *, int argc, char **argv);
 void np_cleanup();
 
 #endif /* _UTILS_BASE_ */

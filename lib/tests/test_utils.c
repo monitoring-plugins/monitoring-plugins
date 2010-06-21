@@ -39,12 +39,13 @@ main (int argc, char **argv)
 	nagios_plugin *temp_nagios_plugin;
 	FILE    *temp_fp;
 
-	plan_tests(134);
+	plan_tests(138);
 
 	_get_nagios_plugin( &temp_nagios_plugin );
 	ok( temp_nagios_plugin==NULL, "nagios_plugin not initialised");
 
-	np_init( "check_test" );
+	np_init( "check_test", argc, argv );
+
 	_get_nagios_plugin( &temp_nagios_plugin );
 	ok( temp_nagios_plugin!=NULL, "nagios_plugin now initialised");
 	ok( !strcmp(temp_nagios_plugin->plugin_name, "check_test"), "plugin name initialised" );
@@ -271,10 +272,18 @@ main (int argc, char **argv)
 	ok(!test, "Empty string return NULL");
 
 
+	/* This is the result of running ./test_utils */
 	temp_string = (char *) _np_state_generate_key();
-	ok(!strcmp(temp_string, "Ahash"), "Got hash" );
+	ok(!strcmp(temp_string, "83d877b6cdfefb5d6f06101fd6fe76762f21792c"), "Got hash with exe and no parameters" );
 	
 
+	temp_nagios_plugin->argc=4;
+	temp_nagios_plugin->argv[0] = "./test_utils";
+	temp_nagios_plugin->argv[1] = "here";
+	temp_nagios_plugin->argv[2] = "--and";
+	temp_nagios_plugin->argv[3] = "now";
+	temp_string = (char *) _np_state_generate_key();
+	ok(!strcmp(temp_string, "94b5e17bf5abf51cb15aff5f69b96f2f8dac5ecd"), "Got based on expected argv" );
 
 	unsetenv("NAGIOS_PLUGIN_STATE_DIRECTORY");
 	temp_string = (char *) _np_state_calculate_location_prefix();
@@ -292,10 +301,12 @@ main (int argc, char **argv)
 
 	ok(temp_state_key==NULL, "temp_state_key initially empty");
 
+	temp_nagios_plugin->argc=1;
+	temp_nagios_plugin->argv[0] = "./test_utils";
 	np_enable_state(NULL, 51);
 	temp_state_key = temp_nagios_plugin->state;
 	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
-	ok( !strcmp(temp_state_key->name, "Ahash"), "Got key name" );
+	ok( !strcmp(temp_state_key->name, "83d877b6cdfefb5d6f06101fd6fe76762f21792c"), "Got generated filename" );
 
 
 	np_enable_state("bad^chars$in@here", 77);

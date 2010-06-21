@@ -33,7 +33,7 @@
 
 nagios_plugin *this_nagios_plugin=NULL;
 
-void np_init( char *plugin_name ) {
+void np_init( char *plugin_name, int argc, char **argv ) {
 	if (this_nagios_plugin==NULL) {
 		this_nagios_plugin = malloc(sizeof(nagios_plugin));
 		if (this_nagios_plugin==NULL) {
@@ -41,6 +41,8 @@ void np_init( char *plugin_name ) {
 			    strerror(errno));
 		}
 		this_nagios_plugin->plugin_name = strdup(plugin_name);
+		this_nagios_plugin->argc = argc;
+		this_nagios_plugin->argv = argv;
 	}
 }
 
@@ -354,7 +356,26 @@ char *np_extract_value(const char *varlist, const char *name, char sep) {
  * parse of argv, so that uniqueness in parameters are reflected there.
  */
 char *_np_state_generate_key() {
-	return strdup("Ahash");
+	struct sha1_ctx ctx;
+	int i;
+	char **argv = this_nagios_plugin->argv;
+	unsigned char result[20];
+	char keyname[41];
+
+	sha1_init_ctx(&ctx);
+	
+	for(i=0; i<this_nagios_plugin->argc; i++) {
+		sha1_process_bytes(argv[i], strlen(argv[i]), &ctx);
+	}
+
+	sha1_finish_ctx(&ctx, &result);
+	
+	for (i=0; i<20; ++i) {
+		sprintf(&keyname[2*i], "%02x", result[i]);
+	}
+	keyname[40]='\0';
+	
+	return strdup(keyname);
 }
 
 void _cleanup_state_data() {
