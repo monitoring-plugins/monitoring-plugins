@@ -99,6 +99,7 @@ state_data *np_state_read();
 void np_state_write_string(time_t, char *);
 
 void np_init(char *, int argc, char **argv);
+void np_set_args(int argc, char **argv);
 void np_cleanup();
 
 #endif /* _UTILS_BASE_ */

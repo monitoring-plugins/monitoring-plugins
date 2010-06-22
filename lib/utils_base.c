@@ -48,11 +48,22 @@ void np_init( char *plugin_name, int argc, char **argv ) {
 	}
 }
 
+void np_set_args( int argc, char **argv ) {
+	if (this_nagios_plugin==NULL)
+		die(STATE_UNKNOWN, _("This requires np_init to be called"));
+
+	this_nagios_plugin->argc = argc;
+	this_nagios_plugin->argv = argv;
+}
+
+
 void np_cleanup() {
 	if (this_nagios_plugin!=NULL) {
 		if(this_nagios_plugin->state!=NULL) {
-			np_free(this_nagios_plugin->state->state_data->data);
-			np_free(this_nagios_plugin->state->state_data);
+			if(this_nagios_plugin->state->state_data) { 
+				np_free(this_nagios_plugin->state->state_data->data);
+				np_free(this_nagios_plugin->state->state_data);
+			}
 			np_free(this_nagios_plugin->state->name);
 			np_free(this_nagios_plugin->state);
 		}

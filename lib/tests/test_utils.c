@@ -40,7 +40,7 @@ main (int argc, char **argv)
 	char 	*temp_filename;
 	FILE    *temp_fp;
 
-	plan_tests(137);
+	plan_tests(141);
 
 	ok( this_nagios_plugin==NULL, "nagios_plugin not initialised");
 
@@ -49,6 +49,15 @@ main (int argc, char **argv)
 	ok( this_nagios_plugin!=NULL, "nagios_plugin now initialised");
 	ok( !strcmp(this_nagios_plugin->plugin_name, "check_test"), "plugin name initialised" );
 
+	ok( this_nagios_plugin->argc==argc, "Argc set" );
+	ok( this_nagios_plugin->argv==argv, "Argv set" );
+
+	np_set_args(0,0);
+
+	ok( this_nagios_plugin->argc==0, "argc changed" );
+	ok( this_nagios_plugin->argv==0, "argv changed" );
+
+	np_set_args(argc, argv);
 
 	range = parse_range_string("6");
 	ok( range != NULL, "'6' is valid range");
