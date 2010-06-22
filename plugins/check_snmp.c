@@ -131,12 +131,15 @@ char *delimiter;
 char *output_delim;
 char *miblist = NULL;
 int needmibs = FALSE;
+int calculate_rate = 0;
+state_data *previous_state;
+double previous_value[MAX_OIDS];
 
 
 int
 main (int argc, char **argv)
 {
-	int i, len, line;
+	int i, len, line, total_oids;
 	unsigned int bk_count = 0, dq_count = 0;
 	int iresult = STATE_UNKNOWN;
 	int result = STATE_UNKNOWN;
@@ -154,6 +157,15 @@ main (int argc, char **argv)
 	char *th_crit=NULL;
 	char type[8] = "";
 	output chld_out, chld_err;
+	char *previous_string=NULL;
+	char *ap=NULL;
+	char *state_string=NULL;
+	size_t response_length, current_length, string_length;
+	char *temp_string=NULL;
+	int is_numeric=0;
+	time_t current_time;
+	double temp_double;
+	time_t duration;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -173,11 +185,32 @@ main (int argc, char **argv)
 	timeout_interval = DEFAULT_TIMEOUT;
 	retries = DEFAULT_RETRIES;
 
+	np_init( (char *) progname, argc, argv );
+
 	/* Parse extra opts if any */
 	argv=np_extra_opts (&argc, argv, progname);
 
+	np_set_args(argc, argv);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
+
+	if(calculate_rate) {
+		if (!strcmp(label, "SNMP"))
+			label = strdup("SNMP RATE");
+		time(&current_time);
+		i=0;
+		previous_state = np_state_read();
+		if(previous_state!=NULL) {
+			/* Split colon separated values */
+			previous_string = strdup((char *) previous_state->data);
+			while((ap = strsep(&previous_string, ":")) != NULL) {
+				if(verbose>2)
+					printf("State for %d=%s\n", i, ap);
+				previous_value[i++]=strtod(ap,NULL);
+			}
+		}
+	}
 
 	/* Populate the thresholds */
 	th_warn=warning_thresholds;
@@ -287,20 +320,30 @@ main (int argc, char **argv)
 		bzero(type, sizeof(type));
 
 		/* We strip out the datatype indicator for PHBs */
-		if (strstr (response, "Gauge: "))
+		if (strstr (response, "Gauge: ")) {
 			show = strstr (response, "Gauge: ") + 7;
-		else if (strstr (response, "Gauge32: "))
+			is_numeric++;
+		} 
+		else if (strstr (response, "Gauge32: ")) {
 			show = strstr (response, "Gauge32: ") + 9;
+			is_numeric++;
+		} 
 		else if (strstr (response, "Counter32: ")) {
 			show = strstr (response, "Counter32: ") + 11;
-			strcpy(type, "c");
+			is_numeric++;
+			if(!calculate_rate) 
+				strcpy(type, "c");
 		}
 		else if (strstr (response, "Counter64: ")) {
 			show = strstr (response, "Counter64: ") + 11;
-			strcpy(type, "c");
+			is_numeric++;
+			if(!calculate_rate)
+				strcpy(type, "c");
 		}
-		else if (strstr (response, "INTEGER: "))
+		else if (strstr (response, "INTEGER: ")) {
 			show = strstr (response, "INTEGER: ") + 9;
+			is_numeric++;
+		}
 		else if (strstr (response, "STRING: ")) {
 			show = strstr (response, "STRING: ") + 8;
 			conv = "%.10g";
@@ -345,14 +388,26 @@ main (int argc, char **argv)
 
 		iresult = STATE_DEPENDENT;
 
-		/* Process this block for integer comparisons */
-		if (thlds[i]->warning || thlds[i]->critical) {
+		/* Process this block for numeric comparisons */
+		 if (is_numeric) {
 			ptr = strpbrk (show, "0123456789");
 			if (ptr == NULL)
 				die (STATE_UNKNOWN,_("No valid data returned"));
 			response_value[i] = strtod (ptr, NULL);
-			iresult = get_status(response_value[i], thlds[i]);
-			asprintf (&show, conv, response_value[i]);
+
+			if(calculate_rate) {
+				if (previous_state!=NULL) {
+					duration = current_time-previous_state->time;
+					if(duration<=0)
+						die(STATE_UNKNOWN,_("Time duration between plugin calls is invalid"));
+					temp_double = (response_value[i]-previous_value[i])/duration;
+					iresult = get_status(temp_double, thlds[i]);
+					asprintf (&show, conv, temp_double);
+				}
+			} else {
+				iresult = get_status(response_value[i], thlds[i]);
+				asprintf (&show, conv, response_value[i]);
+			}
 		}
 
 		/* Process this block for string matching */
@@ -380,6 +435,7 @@ main (int argc, char **argv)
 		}
 
 		/* Process this block for existence-nonexistence checks */
+		/* TV: Should this be outside of this else block? */
 		else {
 			if (eval_method[i] & CRIT_PRESENT)
 				iresult = STATE_CRITICAL;
@@ -417,6 +473,44 @@ main (int argc, char **argv)
 			if (type)
 				strncat(perfstr, type, sizeof(perfstr)-strlen(perfstr)-1);
 			strncat(perfstr, " ", sizeof(perfstr)-strlen(perfstr)-1);
+		}
+	}
+	total_oids=i;
+
+	/* Save state data, as all data collected now */
+	if(calculate_rate) {
+		string_length=1024;
+		state_string=malloc(string_length);
+		if(state_string==NULL)
+			die(STATE_UNKNOWN, _("Cannot malloc"));
+		
+		current_length=0;
+		for(i=0; i<total_oids; i++) {
+			asprintf(&temp_string,"%.0f",response_value[i]);
+			if(temp_string==NULL)
+				die(STATE_UNKNOWN,_("Cannot asprintf()"));
+			response_length = strlen(temp_string);
+			if(current_length+response_length>string_length) {
+				string_length=current_length+1024;
+				state_string=realloc(state_string,string_length);
+				if(state_string==NULL)
+					die(STATE_UNKNOWN, _("Cannot realloc()"));
+			}
+			strcpy(&state_string[current_length],temp_string);
+			current_length=current_length+response_length;
+			state_string[current_length]=':';
+			current_length++;
+			free(temp_string);
+		}
+		state_string[--current_length]='\0';
+		if (verbose > 2)
+			printf("State string=%s\n",state_string);
+		
+		/* This is not strictly the same as time now, but any subtle variations will cancel out */
+		np_state_write_string(current_time, state_string );
+		if(previous_state==NULL) {
+			/* Or should this be highest state? */
+			die( STATE_OK, _("No previous data to calculate rate - assume okay" ) );
 		}
 	}
 
@@ -462,6 +556,7 @@ process_arguments (int argc, char **argv)
 		{"authpasswd", required_argument, 0, 'A'},
 		{"privpasswd", required_argument, 0, 'X'},
 		{"next", no_argument, 0, 'n'},
+		{"calculate-rate", no_argument, 0, CHAR_MAX+1},
 		{0, 0, 0, 0}
 	};
 
@@ -666,7 +761,11 @@ process_arguments (int argc, char **argv)
 					unitv[nunits - 1] = ptr;
 			}
 			break;
-
+		case CHAR_MAX+1:
+			if(calculate_rate==0)
+				np_enable_state(NULL, 1);
+			calculate_rate = 1;
+			break;
 		}
 	}
 
@@ -905,6 +1004,8 @@ print_help (void)
 	printf ("    %s\n", _("Warning threshold range(s)"));
 	printf (" %s\n", "-c, --critical=THRESHOLD(s)");
 	printf ("    %s\n", _("Critical threshold range(s)"));
+	printf (" %s\n", "--calculate-rate");
+	printf ("    %s\n", _("Values will be converted to rate per second"));
 
 	/* Tests Against Strings */
 	printf (" %s\n", "-s, --string=STRING");
@@ -914,7 +1015,7 @@ print_help (void)
 	printf (" %s\n", "-R, --eregi=REGEX");
 	printf ("    %s\n", _("Return OK state (for that OID) if case-insensitive extended REGEX matches"));
 	printf (" %s\n", "-l, --label=STRING");
-	printf ("    %s\n", _("Prefix label for output from plugin (default -s 'SNMP')"));
+	printf ("    %s\n", _("Prefix label for output from plugin (default -l 'SNMP')"));
 
 	/* Output Formatting */
 	printf (" %s\n", "-u, --units=STRING");
