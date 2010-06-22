@@ -489,6 +489,8 @@ main (int argc, char **argv)
 				temp_string=labels[i];
 			else
 				temp_string=oidname;
+			if(calculate_rate)
+				asprintf(&temp_string,"%s-rate",temp_string);
 			strncat(perfstr, temp_string, sizeof(perfstr)-strlen(perfstr)-1);
 			strncat(perfstr, "=", sizeof(perfstr)-strlen(perfstr)-1);
 			len = sizeof(perfstr)-strlen(perfstr)-1;
