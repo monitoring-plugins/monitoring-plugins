@@ -59,6 +59,10 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #define MAX_OIDS 8
 
+/* Longopts only arguments */
+#define L_CALCULATE_RATE CHAR_MAX+1
+#define L_RATE_MULTIPLIER CHAR_MAX+2
+
 /* Gobble to string - stop incrementing c when c[0] match one of the
  * characters in s */
 #define GOBBLE_TOS(c, s) while(c[0]!='\0' && strchr(s, c[0])==NULL) { c++; }
@@ -132,6 +136,7 @@ char *output_delim;
 char *miblist = NULL;
 int needmibs = FALSE;
 int calculate_rate = 0;
+int rate_multiplier = 1;
 state_data *previous_state;
 double previous_value[MAX_OIDS];
 
@@ -167,6 +172,7 @@ main (int argc, char **argv)
 	double temp_double;
 	time_t duration;
 	char *conv = "12345678";
+	int is_counter=0;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -306,7 +312,7 @@ main (int argc, char **argv)
 
 	for (line=0, i=0; line < chld_out.lines; line++, i++) {
 		if(calculate_rate)
-			conv = "%.1f";
+			conv = "%.10g";
 		else
 			conv = "%.0f";
 
@@ -323,6 +329,7 @@ main (int argc, char **argv)
 		/* Clean up type array - Sol10 does not necessarily zero it out */
 		bzero(type, sizeof(type));
 
+		is_counter=0;
 		/* We strip out the datatype indicator for PHBs */
 		if (strstr (response, "Gauge: ")) {
 			show = strstr (response, "Gauge: ") + 7;
@@ -335,12 +342,14 @@ main (int argc, char **argv)
 		else if (strstr (response, "Counter32: ")) {
 			show = strstr (response, "Counter32: ") + 11;
 			is_numeric++;
+			is_counter=1;
 			if(!calculate_rate) 
 				strcpy(type, "c");
 		}
 		else if (strstr (response, "Counter64: ")) {
 			show = strstr (response, "Counter64: ") + 11;
 			is_numeric++;
+			is_counter=1;
 			if(!calculate_rate)
 				strcpy(type, "c");
 		}
@@ -405,6 +414,13 @@ main (int argc, char **argv)
 					if(duration<=0)
 						die(STATE_UNKNOWN,_("Time duration between plugin calls is invalid"));
 					temp_double = (response_value[i]-previous_value[i])/duration;
+					/* Simple overflow catcher (same as in rrdtool, rrd_update.c) */
+					if(is_counter) {
+						if(temp_double<(double)0.0)
+							temp_double+=(double)4294967296.0; /* 2^32 */
+						if(temp_double<(double)0.0)
+							temp_double+=(double)18446744069414584320.0; /* 2^64-2^32 */;
+					}
 					iresult = get_status(temp_double, thlds[i]);
 					asprintf (&show, conv, temp_double);
 				}
@@ -564,7 +580,8 @@ process_arguments (int argc, char **argv)
 		{"authpasswd", required_argument, 0, 'A'},
 		{"privpasswd", required_argument, 0, 'X'},
 		{"next", no_argument, 0, 'n'},
-		{"calculate-rate", no_argument, 0, CHAR_MAX+1},
+		{"rate", no_argument, 0, L_CALCULATE_RATE},
+		{"rate-multiplier", required_argument, 0, L_RATE_MULTIPLIER},
 		{0, 0, 0, 0}
 	};
 
@@ -768,10 +785,14 @@ process_arguments (int argc, char **argv)
 					unitv[nunits - 1] = ptr;
 			}
 			break;
-		case CHAR_MAX+1:
+		case L_CALCULATE_RATE:
 			if(calculate_rate==0)
 				np_enable_state(NULL, 1);
 			calculate_rate = 1;
+			break;
+		case L_RATE_MULTIPLIER:
+			if(!is_integer(optarg)||(rate_multiplier=atoi(optarg)<=0))
+				usage2(_("Rate multiplier must be a positive integer"),optarg);
 			break;
 		}
 	}
@@ -1012,7 +1033,7 @@ print_help (void)
 	printf (" %s\n", "-c, --critical=THRESHOLD(s)");
 	printf ("    %s\n", _("Critical threshold range(s)"));
 	printf (" %s\n", "--calculate-rate");
-	printf ("    %s\n", _("Values will be converted to rate per second"));
+	printf ("    %s\n", _("Enable rate calculation. See 'Rate Calculation' below"));
 
 	/* Tests Against Strings */
 	printf (" %s\n", "-s, --string=STRING");
@@ -1052,6 +1073,16 @@ print_help (void)
 	printf (" %s\n", _("- Note that only one string and one regex may be checked at present"));
 	printf (" %s\n", _("- All evaluation methods other than PR, STR, and SUBSTR expect that the value"));
 	printf ("   %s\n", _("returned from the SNMP query is an unsigned integer."));
+
+	printf("\n");
+	printf("%s\n", _("Rate Calculation:"));
+	printf(" %s\n", _("In many places, SNMP returns counters that are only meaningful when"));
+	printf(" %s\n", _("calculating the counter difference since the last check. check_snmp"));
+	printf(" %s\n", _("saves the last state information in a file so that the rate can be"));
+	printf(" %s\n", _("calculated. Use the --rate option to save state information. On the"));
+	printf(" %s\n", _("first run, there will be no prior state - this will return with OK."));
+	printf(" %s\n", _("The state is uniquely determined by the arguments to the plugin, so"));
+	printf(" %s\n", _("changing the arguments will create a new state file."));
 
 	printf (UT_SUPPORT);
 }
