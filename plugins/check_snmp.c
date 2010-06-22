@@ -166,6 +166,7 @@ main (int argc, char **argv)
 	time_t current_time;
 	double temp_double;
 	time_t duration;
+	char *conv = "12345678";
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -304,7 +305,10 @@ main (int argc, char **argv)
 	}
 
 	for (line=0, i=0; line < chld_out.lines; line++, i++) {
-		const char *conv = "%.0f";
+		if(calculate_rate)
+			conv = "%.1f";
+		else
+			conv = "%.0f";
 
 		ptr = chld_out.line[line];
 		oidname = strpcpy (oidname, ptr, delimiter);
@@ -449,7 +453,7 @@ main (int argc, char **argv)
 		result = max_state (result, iresult);
 
 		/* Prepend a label for this OID if there is one */
-		if (nlabels > (size_t)1 && (size_t)i < nlabels && labels[i] != NULL)
+		if (nlabels >= (size_t)1 && (size_t)i < nlabels && labels[i] != NULL)
 			asprintf (&outbuff, "%s%s%s %s%s%s", outbuff,
 				(i == 0) ? " " : output_delim,
 				labels[i], mark (iresult), show, mark (iresult));
@@ -465,7 +469,11 @@ main (int argc, char **argv)
 		ptr = NULL;
 		strtod(show, &ptr);
 		if (ptr > show) {
-			strncat(perfstr, oidname, sizeof(perfstr)-strlen(perfstr)-1);
+			if (nlabels >= (size_t)1 && (size_t)i < nlabels && labels[i] != NULL)
+				temp_string=labels[i];
+			else
+				temp_string=oidname;
+			strncat(perfstr, temp_string, sizeof(perfstr)-strlen(perfstr)-1);
 			strncat(perfstr, "=", sizeof(perfstr)-strlen(perfstr)-1);
 			len = sizeof(perfstr)-strlen(perfstr)-1;
 			strncat(perfstr, show, len>ptr-show ? ptr-show : len);
@@ -704,7 +712,6 @@ process_arguments (int argc, char **argv)
 			output_delim = strscpy (output_delim, optarg);
 			break;
 		case 'l':									/* label */
-			label = optarg;
 			nlabels++;
 			if (nlabels >= labels_size) {
 				labels_size += 8;
