@@ -62,6 +62,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 /* Longopts only arguments */
 #define L_CALCULATE_RATE CHAR_MAX+1
 #define L_RATE_MULTIPLIER CHAR_MAX+2
+#define L_INVERT_SEARCH CHAR_MAX+3
 
 /* Gobble to string - stop incrementing c when c[0] match one of the
  * characters in s */
@@ -115,6 +116,7 @@ char *units;
 char *port;
 char *snmpcmd;
 char string_value[MAX_INPUT_BUFFER] = "";
+int  invert_search=0;
 char **labels = NULL;
 char **unitv = NULL;
 size_t nlabels = 0;
@@ -433,16 +435,16 @@ main (int argc, char **argv)
 		/* Process this block for string matching */
 		else if (eval_method[i] & CRIT_STRING) {
 			if (strcmp (show, string_value))
-				iresult = STATE_CRITICAL;
+				iresult = (invert_search==0) ? STATE_CRITICAL : STATE_OK;
 			else
-				iresult = STATE_OK;
+				iresult = (invert_search==0) ? STATE_OK : STATE_CRITICAL;
 		}
 
 		/* Process this block for regex matching */
 		else if (eval_method[i] & CRIT_REGEX) {
 			excode = regexec (&preg, response, 10, pmatch, eflags);
 			if (excode == 0) {
-				iresult = STATE_OK;
+				iresult = (invert_search==0) ? STATE_OK : STATE_CRITICAL;
 			}
 			else if (excode != REG_NOMATCH) {
 				regerror (excode, &preg, errbuf, MAX_INPUT_BUFFER);
@@ -450,7 +452,7 @@ main (int argc, char **argv)
 				exit (STATE_CRITICAL);
 			}
 			else {
-				iresult = STATE_CRITICAL;
+				iresult = (invert_search==0) ? STATE_CRITICAL : STATE_OK;
 			}
 		}
 
@@ -584,6 +586,7 @@ process_arguments (int argc, char **argv)
 		{"next", no_argument, 0, 'n'},
 		{"rate", no_argument, 0, L_CALCULATE_RATE},
 		{"rate-multiplier", required_argument, 0, L_RATE_MULTIPLIER},
+		{"invert-search", no_argument, 0, L_INVERT_SEARCH},
 		{0, 0, 0, 0}
 	};
 
@@ -795,6 +798,9 @@ process_arguments (int argc, char **argv)
 		case L_RATE_MULTIPLIER:
 			if(!is_integer(optarg)||(rate_multiplier=atoi(optarg)<=0))
 				usage2(_("Rate multiplier must be a positive integer"),optarg);
+			break;
+		case L_INVERT_SEARCH:
+			invert_search=1;
 			break;
 		}
 	}
@@ -1044,10 +1050,12 @@ print_help (void)
 	printf ("    %s\n", _("Return OK state (for that OID) if extended regular expression REGEX matches"));
 	printf (" %s\n", "-R, --eregi=REGEX");
 	printf ("    %s\n", _("Return OK state (for that OID) if case-insensitive extended REGEX matches"));
-	printf (" %s\n", "-l, --label=STRING");
-	printf ("    %s\n", _("Prefix label for output from plugin (default -l 'SNMP')"));
+	printf (" %s\n", "--invert-search");
+	printf ("    %s\n", _("Invert search result (CRITICAL if found)"));
 
 	/* Output Formatting */
+	printf (" %s\n", "-l, --label=STRING");
+	printf ("    %s\n", _("Prefix label for output from plugin"));
 	printf (" %s\n", "-u, --units=STRING");
 	printf ("    %s\n", _("Units label(s) for output data (e.g., 'sec.')."));
 	printf (" %s\n", "-D, --output-delimiter=STRING");

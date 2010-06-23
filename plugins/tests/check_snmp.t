@@ -51,7 +51,7 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 	}
 }
 
-my $tests = 21;
+my $tests = 29;
 if (-x "./check_snmp") {
 	plan tests => $tests;
 } else {
@@ -140,6 +140,22 @@ $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1
 is($res->return_code, 0, "OK as no thresholds" );
 is($res->output, "SNMP RATE OK - inoctets 333 | inoctets-rate=333 ", "Check rate decreases due to longer interval");
 
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.11 -s '\"stringtests\"'" );
+is($res->return_code, 0, "OK as string matches" );
+is($res->output, 'SNMP OK - "stringtests" | ', "Good string match" );
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.11 -s ring" );
+is($res->return_code, 2, "CRITICAL as string doesn't match (though is a substring)" );
+is($res->output, 'SNMP CRITICAL - *"stringtests"* | ', "Failed string match" );
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.11 --invert-search -s '\"stringtests\"'" );
+is($res->return_code, 2, "CRITICAL as string matches but inverted" );
+is($res->output, 'SNMP CRITICAL - *"stringtests"* | ', "Inverted string match" );
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.11 --invert-search -s ring" );
+is($res->return_code, 0, "OK as string doesn't match but inverted" );
+is($res->output, 'SNMP OK - "stringtests" | ', "OK as inverted string no match" );
 
 
 
