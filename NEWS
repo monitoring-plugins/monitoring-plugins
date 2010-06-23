@@ -7,6 +7,7 @@ This file documents the major additions and syntax changes between releases.
 	New check_radius -N option which allows for specifying the value of the NAS-IP-Address attribute
 	New check_snmp --rate option to store differences between invocations. Saves state in PREFIX/var/{plugin}
 	check_snmp -l label option now also changes the perfdata label. See WARNINGS
+	check_http now displays the missing search string and the URL in the output when failed (Duncan Ferguson - #2999924)
 	Updated Nagios::Plugin perl module
 	Updated gnulib to June 2010
 	FIXES

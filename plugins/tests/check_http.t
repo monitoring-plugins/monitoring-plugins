@@ -157,7 +157,7 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 	}
 }
 
-my $common_tests = 62;
+my $common_tests = 66;
 my $ssl_only_tests = 6;
 if (-x "./check_http") {
 	plan tests => $common_tests * 2 + $ssl_only_tests;
@@ -204,6 +204,14 @@ sub run_common_tests {
 	$result = NPTest->testCmd( "$command -u /file/root -s Root" );
 	is( $result->return_code, 0, "/file/root search for string");
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - 274 bytes in [\d\.]+ second/', "Output correct" );
+
+	$result = NPTest->testCmd( "$command -u /file/root -s NonRoot" );
+	is( $result->return_code, 2, "Missing string check");
+	like( $result->output, qr%^HTTP CRITICAL: HTTP/1\.1 200 OK - string 'NonRoot' not found on 'https?://127\.0\.0\.1:\d+/file/root'%, "Shows search string and location");
+
+	$result = NPTest->testCmd( "$command -u /file/root -s NonRootWithOver30charsAndMoreFunThanAWetFish" );
+	is( $result->return_code, 2, "Missing string check");
+	like( $result->output, qr%HTTP CRITICAL: HTTP/1\.1 200 OK - string 'NonRootWithOver30charsAndM...' not found on 'https?://127\.0\.0\.1:\d+/file/root'%, "Shows search string and location");
 
 
 	my $cmd;

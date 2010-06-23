@@ -100,6 +100,7 @@ int server_url_length;
 int server_expect_yn = 0;
 char server_expect[MAX_INPUT_BUFFER] = HTTP_EXPECT;
 char string_expect[MAX_INPUT_BUFFER] = "";
+char output_string_search[30] = "";
 double warning_time = 0;
 int check_warning_time = FALSE;
 double critical_time = 0;
@@ -1037,7 +1038,11 @@ check_http (void)
 
   if (strlen (string_expect)) {
     if (!strstr (page, string_expect)) {
-      asprintf (&msg, _("%sstring not found, "), msg);
+      strncpy(&output_string_search[0],string_expect,sizeof(output_string_search));
+      if(output_string_search[sizeof(output_string_search)-1]!='\0') {
+        bcopy("...",&output_string_search[sizeof(output_string_search)-4],4);
+      }
+      asprintf (&msg, _("%sstring '%s' not found on '%s://%s:%d%s', "), msg, output_string_search, use_ssl ? "https" : "http", host_name ? host_name : server_address, server_port, server_url);
       result = STATE_CRITICAL;
     }
   }
