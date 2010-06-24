@@ -41,6 +41,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module dirname-lgpl:
   # Code from module double-slash-root:
   # Code from module dup2:
+  # Code from module environ:
   # Code from module errno:
   # Code from module error:
   # Code from module exitfail:
@@ -74,6 +75,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module locale:
   # Code from module malloc:
   # Code from module malloc-posix:
+  # Code from module malloca:
   # Code from module math:
   # Code from module mbrtowc:
   # Code from module mbsinit:
@@ -89,6 +91,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module safe-read:
   # Code from module safe-write:
   # Code from module servent:
+  # Code from module setenv:
   # Code from module size_max:
   # Code from module snprintf:
   # Code from module sockets:
@@ -115,6 +118,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module timegm:
   # Code from module unistd:
   # Code from module unistd-safer:
+  # Code from module unsetenv:
   # Code from module vasnprintf:
   # Code from module vasprintf:
   # Code from module verify:
@@ -178,6 +182,9 @@ AC_DEFUN([gl_INIT],
   # Code from module dup2:
   gl_FUNC_DUP2
   gl_UNISTD_MODULE_INDICATOR([dup2])
+  # Code from module environ:
+  gl_ENVIRON
+  gl_UNISTD_MODULE_INDICATOR([environ])
   # Code from module errno:
   gl_HEADER_ERRNO_H
   # Code from module error:
@@ -252,6 +259,8 @@ AC_DEFUN([gl_INIT],
   # Code from module malloc-posix:
   gl_FUNC_MALLOC_POSIX
   gl_STDLIB_MODULE_INDICATOR([malloc-posix])
+  # Code from module malloca:
+  gl_MALLOCA
   # Code from module math:
   gl_MATH_H
   # Code from module mbrtowc:
@@ -289,6 +298,9 @@ AC_DEFUN([gl_INIT],
   gl_SAFE_WRITE
   # Code from module servent:
   gl_SERVENT
+  # Code from module setenv:
+  gl_FUNC_SETENV
+  gl_STDLIB_MODULE_INDICATOR([setenv])
   # Code from module size_max:
   gl_SIZE_MAX
   # Code from module snprintf:
@@ -352,6 +364,9 @@ AC_DEFUN([gl_INIT],
   gl_UNISTD_H
   # Code from module unistd-safer:
   gl_UNISTD_SAFER
+  # Code from module unsetenv:
+  gl_FUNC_UNSETENV
+  gl_STDLIB_MODULE_INDICATOR([unsetenv])
   # Code from module vasnprintf:
   gl_FUNC_VASNPRINTF
   # Code from module vasprintf:
@@ -586,6 +601,9 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/localcharset.h
   lib/locale.in.h
   lib/malloc.c
+  lib/malloca.c
+  lib/malloca.h
+  lib/malloca.valgrind
   lib/math.in.h
   lib/mbrtowc.c
   lib/mbsinit.c
@@ -617,6 +635,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/safe-read.h
   lib/safe-write.c
   lib/safe-write.h
+  lib/setenv.c
   lib/sha1.c
   lib/sha1.h
   lib/size_max.h
@@ -648,6 +667,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/unistd--.h
   lib/unistd-safer.h
   lib/unistd.in.h
+  lib/unsetenv.c
   lib/vasnprintf.c
   lib/vasnprintf.h
   lib/vasprintf.c
@@ -677,6 +697,8 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/dos.m4
   m4/double-slash-root.m4
   m4/dup2.m4
+  m4/eealloc.m4
+  m4/environ.m4
   m4/errno_h.m4
   m4/error.m4
   m4/extensions.m4
@@ -724,6 +746,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/longlong.m4
   m4/ls-mntd-fs.m4
   m4/malloc.m4
+  m4/malloca.m4
   m4/math_h.m4
   m4/mbrtowc.m4
   m4/mbsinit.m4
@@ -748,6 +771,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/safe-read.m4
   m4/safe-write.m4
   m4/servent.m4
+  m4/setenv.m4
   m4/sha1.m4
   m4/size_max.m4
   m4/snprintf.m4
