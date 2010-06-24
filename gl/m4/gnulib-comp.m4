@@ -106,6 +106,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module string:
   # Code from module strndup:
   # Code from module strnlen:
+  # Code from module strsep:
   # Code from module strstr-simple:
   # Code from module sys_socket:
   # Code from module sys_stat:
@@ -327,6 +328,9 @@ AC_DEFUN([gl_INIT],
   # Code from module strnlen:
   gl_FUNC_STRNLEN
   gl_STRING_MODULE_INDICATOR([strnlen])
+  # Code from module strsep:
+  gl_FUNC_STRSEP
+  gl_STRING_MODULE_INDICATOR([strsep])
   # Code from module strstr-simple:
   gl_FUNC_STRSTR_SIMPLE
   gl_STRING_MODULE_INDICATOR([strstr])
@@ -634,6 +638,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/stripslash.c
   lib/strndup.c
   lib/strnlen.c
+  lib/strsep.c
   lib/strstr.c
   lib/sys_socket.in.h
   lib/sys_stat.in.h
@@ -762,6 +767,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/string_h.m4
   m4/strndup.m4
   m4/strnlen.m4
+  m4/strsep.m4
   m4/strstr.m4
   m4/sys_socket_h.m4
   m4/sys_stat_h.m4
