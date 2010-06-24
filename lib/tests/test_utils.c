@@ -37,8 +37,6 @@ main (int argc, char **argv)
 	state_key *temp_state_key = NULL;
 	state_data *temp_state_data;
 	time_t	current_time;
-	char 	*temp_filename;
-	FILE    *temp_fp;
 
 	plan_tests(141);
 
@@ -342,7 +340,7 @@ main (int argc, char **argv)
 	ok( !strcmp(temp_state_key->_filename, "/usr/local/nagios/var/check_test/funnykeyname"), "Got internal filename" );
 	ok( temp_state_key->data_version==54, "Version set" );
 
-	temp_state_data = np_state_read(temp_state_key);
+	temp_state_data = np_state_read();
 	ok( temp_state_data==NULL, "Got no state data as file does not exist" );
 
 
@@ -356,31 +354,31 @@ main (int argc, char **argv)
 */
 	
 	temp_state_key->_filename="var/statefile";
-	temp_state_data = np_state_read(temp_state_key);
+	temp_state_data = np_state_read();
 	ok( this_nagios_plugin->state->state_data!=NULL, "Got state data now" ) || diag("Are you running in right directory? Will get coredump next if not");
 	ok( this_nagios_plugin->state->state_data->time==1234567890, "Got time" );
 	ok( !strcmp((char *)this_nagios_plugin->state->state_data->data, "String to read"), "Data as expected" );
 
 	temp_state_key->data_version=53;
-	temp_state_data = np_state_read(temp_state_key);
+	temp_state_data = np_state_read();
 	ok( temp_state_data==NULL, "Older data version gives NULL" );
 	temp_state_key->data_version=54;
 
 	temp_state_key->_filename="var/nonexistant";
-	temp_state_data = np_state_read(temp_state_key);
+	temp_state_data = np_state_read();
 	ok( temp_state_data==NULL, "Missing file gives NULL" );
 	ok( this_nagios_plugin->state->state_data==NULL, "No state information" );
 
 	temp_state_key->_filename="var/oldformat";
-	temp_state_data = np_state_read(temp_state_key);
+	temp_state_data = np_state_read();
 	ok( temp_state_data==NULL, "Old file format gives NULL" );
 
 	temp_state_key->_filename="var/baddate";
-	temp_state_data = np_state_read(temp_state_key);
+	temp_state_data = np_state_read();
 	ok( temp_state_data==NULL, "Bad date gives NULL" );
 
 	temp_state_key->_filename="var/missingdataline";
-	temp_state_data = np_state_read(temp_state_key);
+	temp_state_data = np_state_read();
 	ok( temp_state_data==NULL, "Missing data line gives NULL" );
 
 
@@ -413,7 +411,7 @@ main (int argc, char **argv)
 	temp_state_key->_filename="var/generated";
 	time(&current_time);
 	np_state_write_string(0, "String to read");
-	temp_state_data = np_state_read(temp_state_key);
+	temp_state_data = np_state_read();
 	/* Check time is set to current_time */
 	ok(system("cmp var/generated var/statefile > /dev/null")!=0, "Generated file should be different this time");
 	ok(this_nagios_plugin->state->state_data->time-current_time<=1, "Has time generated from current time");

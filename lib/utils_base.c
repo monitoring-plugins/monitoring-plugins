@@ -471,10 +471,8 @@ void np_enable_state(char *keyname, int expected_data_version) {
  * if exceptional error.
  */
 state_data *np_state_read() {
-	state_key *my_state_key;
 	state_data *this_state_data=NULL;
 	FILE *statefile;
-	int c;
 	int rc = FALSE;
 
 	if(this_nagios_plugin==NULL)
@@ -508,7 +506,7 @@ state_data *np_state_read() {
  * Read the state file
  */
 int _np_state_read_file(FILE *f) {
-	int c, status=FALSE;
+	int status=FALSE;
 	size_t pos;
 	char *line;
 	int i;
@@ -585,7 +583,6 @@ void np_state_write_string(time_t data_time, char *data_string) {
 	char *temp_file=NULL;
 	int fd=0, result=0;
 	time_t current_time;
-	size_t len;
 	char *directories=NULL;
 	char *p=NULL;
 
