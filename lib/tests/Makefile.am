@@ -13,7 +13,7 @@ EXTRA_PROGRAMS = test_utils test_disk test_tcp test_cmd test_base64 test_ini1 te
 
 np_test_scripts = test_base64.t test_cmd.t test_disk.t test_ini1.t test_ini3.t test_opts1.t test_opts2.t test_opts3.t test_tcp.t test_utils.t
 np_test_files = config-dos.ini config-opts.ini config-tiny.ini plugin.ini plugins.ini
-EXTRA_DIST = $(np_test_scripts) $(np_test_files)
+EXTRA_DIST = $(np_test_scripts) $(np_test_files) var
 
 LIBS = @LTLIBINTL@
 
