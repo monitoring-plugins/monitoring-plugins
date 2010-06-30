@@ -415,7 +415,7 @@ main (int argc, char **argv)
 					duration = current_time-previous_state->time;
 					if(duration<=0)
 						die(STATE_UNKNOWN,_("Time duration between plugin calls is invalid"));
-					temp_double = (response_value[i]-previous_value[i])/duration;
+					temp_double = response_value[i]-previous_value[i];
 					/* Simple overflow catcher (same as in rrdtool, rrd_update.c) */
 					if(is_counter) {
 						if(temp_double<(double)0.0)
@@ -423,6 +423,8 @@ main (int argc, char **argv)
 						if(temp_double<(double)0.0)
 							temp_double+=(double)18446744069414584320.0; /* 2^64-2^32 */;
 					}
+					/* Convert to per second, then use multiplier */
+					temp_double = temp_double/(duration*rate_multiplier);
 					iresult = get_status(temp_double, thlds[i]);
 					asprintf (&show, conv, temp_double);
 				}
@@ -1042,6 +1044,8 @@ print_help (void)
 	printf ("    %s\n", _("Critical threshold range(s)"));
 	printf (" %s\n", "--rate");
 	printf ("    %s\n", _("Enable rate calculation. See 'Rate Calculation' below"));
+	printf (" %s\n", "--rate-multiplier");
+	printf ("    %s\n", _("Converts rate per second. For example, set to 60 to convert to per minute"));
 
 	/* Tests Against Strings */
 	printf (" %s\n", "-s, --string=STRING");
@@ -1088,9 +1092,9 @@ print_help (void)
 	printf("%s\n", _("Rate Calculation:"));
 	printf(" %s\n", _("In many places, SNMP returns counters that are only meaningful when"));
 	printf(" %s\n", _("calculating the counter difference since the last check. check_snmp"));
-	printf(" %s\n", _("saves the last state information in a file so that the rate can be"));
-	printf(" %s\n", _("calculated. Use the --rate option to save state information. On the"));
-	printf(" %s\n", _("first run, there will be no prior state - this will return with OK."));
+	printf(" %s\n", _("saves the last state information in a file so that the rate per second"));
+	printf(" %s\n", _("can be calculated. Use the --rate option to save state information."));
+	printf(" %s\n", _("On the first run, there will be no prior state - this will return with OK."));
 	printf(" %s\n", _("The state is uniquely determined by the arguments to the plugin, so"));
 	printf(" %s\n", _("changing the arguments will create a new state file."));
 
