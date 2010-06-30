@@ -798,7 +798,7 @@ process_arguments (int argc, char **argv)
 			calculate_rate = 1;
 			break;
 		case L_RATE_MULTIPLIER:
-			if(!is_integer(optarg)||(rate_multiplier=atoi(optarg)<=0))
+			if(!is_integer(optarg)||((rate_multiplier=atoi(optarg))<=0))
 				usage2(_("Rate multiplier must be a positive integer"),optarg);
 			break;
 		case L_INVERT_SEARCH:

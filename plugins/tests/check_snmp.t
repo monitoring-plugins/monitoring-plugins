@@ -141,6 +141,19 @@ is($res->return_code, 0, "OK as no thresholds" );
 is($res->output, "SNMP RATE OK - inoctets 333 | inoctets-rate=333 ", "Check rate decreases due to longer interval");
 
 
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets_per_minute --rate-multiplier=60" );
+is($res->return_code, 0, "OK for first call" );
+is($res->output, "No previous data to calculate rate - assume okay" );
+
+# Need to sleep, otherwise duration=0
+sleep 1;
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets_per_minute --rate-multiplier=60" );
+is($res->return_code, 0, "OK as no thresholds" );
+is($res->output, "SNMP RATE OK - inoctets_per_minute 11.1 | inoctets_per_minute-rate=11.1 ", "Checking multiplier");
+
+
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.11 -s '\"stringtests\"'" );
 is($res->return_code, 0, "OK as string matches" );
 is($res->output, 'SNMP OK - "stringtests" | ', "Good string match" );
