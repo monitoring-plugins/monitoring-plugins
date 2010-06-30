@@ -51,7 +51,7 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 	}
 }
 
-my $tests = 29;
+my $tests = 33;
 if (-x "./check_snmp") {
 	plan tests => $tests;
 } else {
@@ -116,7 +116,7 @@ sleep 1;
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -w 600" );
 is($res->return_code, 1, "WARNING - due to going above rate calculation" );
-is($res->output, "SNMP RATE WARNING - *666* | iso.3.6.1.4.1.8072.3.2.67.10-rate=666 ");
+is($res->output, "SNMP RATE WARNING - *666* | iso.3.6.1.4.1.8072.3.2.67.10=666 ");
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -w 600" );
 is($res->return_code, 3, "UNKNOWN - basically the divide by zero error" );
@@ -132,13 +132,13 @@ sleep 1;
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets" );
 is($res->return_code, 0, "OK as no thresholds" );
-is($res->output, "SNMP RATE OK - inoctets 666 | inoctets-rate=666 ", "Check label");
+is($res->output, "SNMP RATE OK - inoctets 666 | inoctets=666 ", "Check label");
 
 sleep 2;
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets" );
 is($res->return_code, 0, "OK as no thresholds" );
-is($res->output, "SNMP RATE OK - inoctets 333 | inoctets-rate=333 ", "Check rate decreases due to longer interval");
+is($res->output, "SNMP RATE OK - inoctets 333 | inoctets=333 ", "Check rate decreases due to longer interval");
 
 
 
@@ -151,7 +151,7 @@ sleep 1;
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets_per_minute --rate-multiplier=60" );
 is($res->return_code, 0, "OK as no thresholds" );
-is($res->output, "SNMP RATE OK - inoctets_per_minute 11.1 | inoctets_per_minute-rate=11.1 ", "Checking multiplier");
+is($res->output, "SNMP RATE OK - inoctets_per_minute 11.1 | inoctets_per_minute=11.1 ", "Checking multiplier");
 
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.11 -s '\"stringtests\"'" );
