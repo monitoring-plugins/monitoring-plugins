@@ -151,7 +151,7 @@ sleep 1;
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets_per_minute --rate-multiplier=60" );
 is($res->return_code, 0, "OK as no thresholds" );
-is($res->output, "SNMP RATE OK - inoctets_per_minute 11.1 | inoctets_per_minute=11.1 ", "Checking multiplier");
+is($res->output, "SNMP RATE OK - inoctets_per_minute 39960 | inoctets_per_minute=39960 ", "Checking multiplier");
 
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.11 -s '\"stringtests\"'" );

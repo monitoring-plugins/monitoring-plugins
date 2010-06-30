@@ -424,7 +424,7 @@ main (int argc, char **argv)
 							temp_double+=(double)18446744069414584320.0; /* 2^64-2^32 */;
 					}
 					/* Convert to per second, then use multiplier */
-					temp_double = temp_double/(duration*rate_multiplier);
+					temp_double = temp_double/duration*rate_multiplier;
 					iresult = get_status(temp_double, thlds[i]);
 					asprintf (&show, conv, temp_double);
 				}
