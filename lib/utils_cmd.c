@@ -48,6 +48,9 @@
 # include <sys/wait.h>
 #endif
 
+/* used in _cmd_open to pass the environment to commands */
+extern char **environ;
+
 /** macros **/
 #ifndef WEXITSTATUS
 # define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
@@ -122,7 +125,6 @@ cmd_init (void)
 static int
 _cmd_open (char *const *argv, int *pfd, int *pfderr)
 {
-	char *env[2];
 	pid_t pid;
 #ifdef RLIMIT_CORE
 	struct rlimit limit;
@@ -137,8 +139,7 @@ _cmd_open (char *const *argv, int *pfd, int *pfderr)
 	if (!_cmd_pids)
 		CMD_INIT;
 
-	env[0] = strdup ("LC_ALL=C");
-	env[1] = '\0';
+	setenv("LC_ALL", "C", 1);
 
 	if (pipe (pfd) < 0 || pipe (pfderr) < 0 || (pid = fork ()) < 0)
 		return -1;									/* errno set by the failing function */
@@ -169,7 +170,7 @@ _cmd_open (char *const *argv, int *pfd, int *pfderr)
 			if (_cmd_pids[i] > 0)
 				close (i);
 
-		execve (argv[0], argv, env);
+		execve (argv[0], argv, environ);
 		_exit (STATE_UNKNOWN);
 	}
 
