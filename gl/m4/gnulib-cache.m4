@@ -15,7 +15,7 @@
 
 
 # Specification in the form of a command-line invocation:
-#   gnulib-tool --import --dir=. --lib=libgnu --source-base=gl --m4-base=gl/m4 --doc-base=doc --tests-base=tests --aux-dir=build-aux --no-libtool --macro-prefix=gl --no-vc-files base64 crypto/sha1 dirname floorf fsusage getaddrinfo gethostname getloadavg getopt gettext mountlist regex setenv strsep timegm unsetenv vasprintf vsnprintf
+#   gnulib-tool --import --dir=. --lib=libgnu --source-base=gl --m4-base=gl/m4 --doc-base=doc --tests-base=tests --aux-dir=build-aux --no-libtool --macro-prefix=gl --no-vc-files base64 crypto/sha1 dirname environ floorf fsusage getaddrinfo gethostname getloadavg getopt gettext mountlist regex setenv strsep timegm unsetenv vasprintf vsnprintf
 
 # Specification in the form of a few gnulib-tool.m4 macro invocations:
 gl_LOCAL_DIR([])
@@ -23,6 +23,7 @@ gl_MODULES([
   base64
   crypto/sha1
   dirname
+  environ
   floorf
   fsusage
   getaddrinfo
