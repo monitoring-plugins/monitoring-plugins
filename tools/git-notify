@@ -69,6 +69,9 @@ my $gitweb_url = git_config( "notify.baseurl" );
 # abbreviate the SHA1 name within gitweb URLs (can be set with the -z option)
 my $abbreviate_url = git_config( "notify.shorturls" );
 
+# don't report merge commits (can be set with the -X option)
+my $ignore_merges = git_config( "notify.ignoremerges" );
+
 # enable compatibility with SourceForge's gitweb (can be set with the -S option)
 my $sourceforge = git_config( "notify.sourceforge" );
 
@@ -98,9 +101,6 @@ my $state_file = git_config( "notify.statefile" );
 
 # umask for creating the state file (can be set with -U option)
 my $mode_mask = git_config( "notify.umask" ) || 002;
-
-# Extra options to git rev-list
-my @revlist_options;
 
 sub usage()
 {
@@ -145,7 +145,7 @@ sub git_rev_list(@)
     die "Cannot open pipe: $!" if not defined $pid;
     if (!$pid)
     {
-        exec "git", "rev-list", "--reverse", @revlist_options, @args or die "Cannot execute rev-list: $!";
+        exec "git", "rev-list", "--reverse", @args or die "Cannot execute rev-list: $!";
     }
     while (<REVLIST>)
     {
@@ -181,6 +181,7 @@ sub get_new_commits($$)
 
     @args = ( "^$old_sha1" ) unless $old_sha1 eq '0' x 40;
     push @args, $new_sha1, @exclude_list;
+    unshift @args, "--no-merges" if $ignore_merges;
 
     my $revlist = git_rev_list(@args);
 
@@ -306,8 +307,8 @@ sub parse_options()
         elsif ($arg eq '-U') { $mode_mask = shift @ARGV; }
         elsif ($arg eq '-u') { $gitweb_url = shift @ARGV; }
         elsif ($arg eq '-i') { push @include_list, shift @ARGV; }
+        elsif ($arg eq '-X') { $ignore_merges = 1; }
         elsif ($arg eq '-x') { push @exclude_list, shift @ARGV; }
-        elsif ($arg eq '-X') { push @revlist_options, "--no-merges"; }
         elsif ($arg eq '-z') { $abbreviate_url = 1; }
         elsif ($arg eq '-d') { $debug++; }
         else { usage(); }
