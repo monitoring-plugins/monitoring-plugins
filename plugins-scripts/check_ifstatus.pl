@@ -280,7 +280,7 @@ sub process_arguments() {
 	$status = GetOptions(
 		"V"   => \$opt_V, "version"    => \$opt_V,
 		"h"   => \$opt_h, "help"       => \$opt_h,
-		"v=i" => \$snmp_version, "snmp_version=i"  => \$snmp_version,
+		"v=s" => \$snmp_version, "snmp_version=s"  => \$snmp_version,
 		"C=s" => \$community,"community=s" => \$community,
 		"L=s" => \$seclevel, "seclevel=s" => \$seclevel,
 		"a=s" => \$authproto, "authproto=s" => \$authproto,
@@ -317,7 +317,10 @@ sub process_arguments() {
 		$timeout = $TIMEOUT;
 	}
 
-	if ($snmp_version !~ /[123]/){
+	# Net::SNMP wants an integer
+	$snmp_version = 2 if $snmp_version eq "2c";
+
+	if ($snmp_version !~ /^[123]$/){
 		$state='UNKNOWN';
 		print ("$state: No support for SNMP v$snmp_version yet\n");
 		exit $ERRORS{$state};

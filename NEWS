@@ -30,6 +30,7 @@ This file documents the major additions and syntax changes between releases.
 	Fix parsing of multi-line strings in check_snmp (broken in 1.4.14) and enhance output in such case (#2832451)
 	Fix detection of pst3 64-bit compile flags with Sun CC
 	Fix cmd_run overwriting the environment, which would break some commands that needed it
+	Allow check_ifstatus to accept version=2c - used to only allow version=2 (Brian Landers)
 	WARNINGS
 	Updated developer documentation to say that performance labels should not have an equals sign or
 	single quote in the label
