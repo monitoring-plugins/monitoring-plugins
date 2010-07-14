@@ -1076,8 +1076,8 @@ print_help (void)
 
 	printf ("\n");
 	printf ("%s\n", _("Notes:"));
-	printf (" %s\n", _("- Multiple OIDs may be indicated by a comma- or space-delimited list (lists with"));
-	printf ("   %s\n", _("internal spaces must be quoted) [max 8 OIDs]"));
+	printf (" %s\n", _("- Multiple OIDs may be indicated by a comma or space-delimited list (lists with"));
+	printf ("   %s %i %s\n", _("internal spaces must be quoted). Maximum:"), MAX_OIDS, _("OIDs."));
 
 	printf(" -%s", UT_THRESHOLDS_NOTES);
 
