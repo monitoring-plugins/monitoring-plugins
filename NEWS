@@ -1,6 +1,6 @@
 This file documents the major additions and syntax changes between releases.
 
-1.4.15 ...
+1.4.15 27th July 2010
 	ENHANCEMENTS
 	New check_ntp_peer -m and -n options to check the number of usable time sources ("truechimers")
 	New check_disk_smb -a option which allows for specifying the IP address of the remote server
@@ -11,6 +11,7 @@ This file documents the major additions and syntax changes between releases.
 	check_http now displays the missing search string and the URL in the output when failed (Duncan Ferguson - #2999924)
 	Updated Nagios::Plugin perl module
 	Updated gnulib to June 2010
+
 	FIXES
 	Fix check_ircd binding to wrong interface (#668778)
 	Add proxy-authorization option to check_http (Marcel Kuiper - #1323230, Bryan Irvine - #2863925)
@@ -32,6 +33,7 @@ This file documents the major additions and syntax changes between releases.
 	Fix cmd_run overwriting the environment, which would break some commands that needed it
 	Allow check_ifstatus to accept version=2c - used to only allow version=2 (Brian Landers)
 	Fix examples in check_disk, where it implied was possible to suffix unit values to warn/crit parameters
+
 	WARNINGS
 	Updated developer documentation to say that performance labels should not have an equals sign or
 	single quote in the label

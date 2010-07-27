@@ -1,3 +1,942 @@
+2010-07-14  Ton Voon <ton.voon@opsera.com>
+
+	* : commit 9bab433981f6c67b40776d1916baae28a0243124 Author: Ton Voon
+	<ton.voon@opsera.com> Date:   Wed Jul 14 14:22:04 2010 +0100
+
+2010-07-09  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* plugins/check_snmp.c, po/de.po, po/fr.po, po/nagios-plugins.pot: 
+	Fix --help output when MAX_OIDS is altered.
+
+2010-07-07  Ton Voon <ton.voon@opsera.com>
+
+	* NEWS, plugins/check_disk.c: Fix examples in check_disk, where it
+	implied was possible to suffix unit values to warn/crit parameters
+
+2010-07-07  Ton Voon <ton.voon@opsera.com>
+
+	* NEWS, THANKS.in, plugins-scripts/check_ifstatus.pl: Allow
+	check_ifstatus to accept version=2c
+
+2010-07-02  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, lib/utils_cmd.c: Fix cmd_run overwriting the environment Some commands need the environment to function properly. One such
+	example is check_ssh and check_by_ssh when a SOCKS proxy is
+	required.  This patch use setenv and extern char **environ to alter and pass
+	the new environment to the child process Those modules have been
+	added to Gnulib for portability.
+
+2010-07-02  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* gl/Makefile.am, gl/m4/gnulib-cache.m4: Import the environ module
+	from gnulib (86ba51)
+
+2010-07-02  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Be careful with "--no-merge" The "-X" option (which asks git-notify to not report merge commits)
+	was implemented by setting the "--no-merge" option on each
+	invocation of git-rev-list(1).  However, we do not only use
+	git-rev-list(1) to get the list of new commits, but also to check
+	whether the old branch head (or tag) is a parent of the new branch
+	head (or tag).  For this latter check, the "--no-merge" option
+	should not be set; otherwise, git-notify would be fooled to believe
+	that the branch has been rewritten if the old head was a merge
+	commit.
+
+2010-06-30  tonvoon <ton.voon@opsview.com>
+
+	* plugins/check_snmp.c, plugins/tests/check_snmp.t: Corrected
+	rate_multiplier calculation
+
+2010-06-30  tonvoon <ton.voon@opsview.com>
+
+	* plugins/check_snmp.c, plugins/tests/check_snmp.t: Removed suffix
+	of "-rate" and let user decide label via --label
+
+2010-06-30  tonvoon <ton.voon@opsview.com>
+
+	* plugins/check_snmp.c, plugins/tests/check_snmp.t: Tests for
+	--rate-multiplier option
+
+2010-06-30  Ton Voon <ton.voon@opsera.com>
+
+	* : commit 6805fecd620e4f2c2fa53f2a331e7c6a005ea9c4 Author: Ton Voon
+	<ton.voon@opsera.com> Date:   Wed Jun 30 09:01:14 2010 +0100
+
+2010-06-25  tonvoon <ton.voon@opsview.com>
+
+	* lib/tests/Makefile.am: Add test file directory
+
+2010-06-24  Ton Voon <ton.voon@opsera.com>
+
+	* lib/tests/test_utils.c, lib/utils_base.c: Cleanup some warnings
+	displayed from IRIX tinderbox server
+
+2010-06-24  Ton Voon <ton.voon@opsera.com>
+
+	* gl/Makefile.am, gl/m4/eealloc.m4, gl/m4/environ.m4,
+	gl/m4/gnulib-cache.m4, gl/m4/gnulib-comp.m4, gl/m4/malloca.m4,
+	gl/m4/setenv.m4, gl/malloca.c, gl/malloca.h, gl/malloca.valgrind,
+	gl/setenv.c, gl/unsetenv.c: Added unsetenv and setenv from gnulib
+
+2010-06-24  Ton Voon <ton.voon@opsera.com>
+
+	* gl/Makefile.am, gl/m4/gnulib-cache.m4, gl/m4/gnulib-comp.m4,
+	gl/m4/strsep.m4, gl/strsep.c: Added strsep to gnulib, for
+	check_snmp.c
+
+2010-06-23  tonvoon <ton.voon@opsview.com>
+
+	* NEWS, plugins/check_snmp.c, plugins/tests/check_snmp.t,
+	plugins/tests/check_snmp_agent.pl, po/de.po, po/fr.po,
+	po/nagios-plugins.pot: Added option to invert search results
+
+2010-06-23  tonvoon <ton.voon@opsview.com>
+
+	* NEWS, plugins/check_http.c, plugins/tests/check_http.t: Display
+	missing search string and URL when failed (Duncan Ferguson #2999924)
+
+2010-06-17  Ton Voon <ton.voon@opsera.com>
+
+	* NEWS, build-aux/c++defs.h, build-aux/warn-on-use.h,
+	gl/Makefile.am, gl/alloca.c, gl/config.charset, gl/error.c,
+	gl/getopt.c, gl/getopt_int.h, gl/localcharset.c,
+	gl/m4/asm-underscore.m4, gl/m4/getopt.m4, gl/m4/gettext.m4,
+	gl/m4/gnulib-cache.m4, gl/m4/gnulib-common.m4,
+	gl/m4/gnulib-comp.m4, gl/m4/iconv.m4, gl/m4/intl.m4,
+	gl/m4/lib-link.m4, gl/m4/netdb_h.m4, gl/m4/onceonly.m4,
+	gl/m4/po.m4, gl/m4/printf.m4, gl/m4/sha1.m4, gl/m4/sockpfaf.m4,
+	gl/m4/stdint.m4, gl/m4/stdio_h.m4, gl/m4/string_h.m4,
+	gl/m4/strnlen.m4, gl/m4/time_h.m4, gl/m4/unistd_h.m4,
+	gl/m4/vasnprintf.m4, gl/m4/visibility.m4, gl/netdb.in.h,
+	gl/regex_internal.c, gl/regex_internal.h, gl/sha1.c, gl/sha1.h,
+	gl/stdbool.in.h, gl/stdio-write.c, gl/stdio.in.h, gl/strerror.c,
+	gl/string.in.h, gl/sys_stat.in.h, gl/time.in.h, gl/unistd.in.h,
+	gl/vasnprintf.c, gl/verify.h, gl/wchar.in.h, lib/Makefile.am,
+	lib/tests/Makefile.am, lib/tests/test_utils.c,
+	lib/tests/var/.gitignore, lib/tests/var/baddate,
+	lib/tests/var/missingdataline, lib/tests/var/oldformat,
+	lib/tests/var/statefile, lib/utils_base.c, lib/utils_base.h,
+	plugins/Makefile.am, plugins/check_snmp.c,
+	plugins/tests/check_snmp.t, plugins/tests/check_snmp_agent.pl: Added
+	state retention APIs. Implemented for check_snmp with --rate option.  See http://nagiosplugin.org/c-api-private for more details on the
+	API.  Also updated check_snmp -l option to change the perfdata label.
+
+2010-06-18  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS: NEWS entry for last commit
+
+2009-08-05  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* configure.in: Attempt at detecting 64bit compilation flags between
+	gcc, old, and new versions of sun cc Gcc accepts -m64, just as newer version of Suncc.  Older Suncc
+	required -xarch=v9 (SPARC) or -xarch=amd64 (x86-64) to generate
+	64bit code.
+
+2010-05-08  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* plugins/check_smtp.c: Add missing --fqdn help (Jan Wagner)
+
+2010-04-28  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* plugins/utils.h, po/de.po, po/fr.po, po/nagios-plugins.pot: Update
+	extra-opts help text based on ML agreement
+
+2010-04-28  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* .gitignore, tools/distclean: tools/distclean: use git-clean when
+	possible git-clean is much faster and more reliable...  Also add confdefs.h in gitignore, although this file is normally
+	removed at the end of the configure script.
+
+2010-04-28  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* build-aux/ltmain.sh, gl/m4/libtool.m4, gl/m4/ltoptions.m4,
+	gl/m4/ltsugar.m4, gl/m4/ltversion.m4, gl/m4/lt~obsolete.m4: Update
+	libtool Nagios-plugins wouldn't compile on Ubuntu 10.04 (Lucid) with the old
+	libtool
+
+2010-04-22  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* plugins-root/check_dhcp.c, plugins-root/check_icmp.c,
+	plugins/check_apt.c, plugins/check_by_ssh.c,
+	plugins/check_cluster.c, plugins/check_dig.c, plugins/check_disk.c,
+	plugins/check_dns.c, plugins/check_dummy.c, plugins/check_fping.c,
+	plugins/check_game.c, plugins/check_hpjd.c, plugins/check_http.c,
+	plugins/check_ide_smart.c, plugins/check_ldap.c,
+	plugins/check_load.c, plugins/check_mrtg.c, plugins/check_mysql.c,
+	plugins/check_mysql_query.c, plugins/check_nagios.c,
+	plugins/check_nt.c, plugins/check_ntp.c, plugins/check_ntp_peer.c,
+	plugins/check_ntp_time.c, plugins/check_nwstat.c,
+	plugins/check_overcr.c, plugins/check_pgsql.c,
+	plugins/check_ping.c, plugins/check_procs.c,
+	plugins/check_radius.c, plugins/check_real.c, plugins/check_smtp.c,
+	plugins/check_snmp.c, plugins/check_ssh.c, plugins/check_swap.c,
+	plugins/check_tcp.c, plugins/check_time.c, plugins/check_ups.c,
+	plugins/check_users.c, plugins/negate.c, plugins/urlize.c: Add
+	newline after "Usage:" in --help
+
+2010-04-22  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* plugins/check_cluster.c: Split long line in check_cluster --help
+
+2010-04-21  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* po/de.po, po/fr.po, po/nagios-plugins.pot: Update French
+	translations with extra-opts change
+
+2010-04-21  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* plugins-root/check_dhcp.c, plugins-root/check_icmp.c,
+	plugins/check_apt.c, plugins/check_by_ssh.c,
+	plugins/check_cluster.c, plugins/check_dig.c, plugins/check_disk.c,
+	plugins/check_dns.c, plugins/check_fping.c, plugins/check_game.c,
+	plugins/check_hpjd.c, plugins/check_http.c,
+	plugins/check_ide_smart.c, plugins/check_ldap.c,
+	plugins/check_load.c, plugins/check_mrtg.c,
+	plugins/check_mrtgtraf.c, plugins/check_mysql.c,
+	plugins/check_mysql_query.c, plugins/check_nagios.c,
+	plugins/check_nt.c, plugins/check_ntp.c, plugins/check_ntp_peer.c,
+	plugins/check_ntp_time.c, plugins/check_nwstat.c,
+	plugins/check_overcr.c, plugins/check_pgsql.c,
+	plugins/check_ping.c, plugins/check_procs.c,
+	plugins/check_radius.c, plugins/check_real.c, plugins/check_smtp.c,
+	plugins/check_snmp.c, plugins/check_ssh.c, plugins/check_swap.c,
+	plugins/check_tcp.c, plugins/check_time.c, plugins/check_ups.c,
+	plugins/check_users.c, plugins/utils.h: Standardize the extra-opts
+	notes
+
+2010-04-21  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, plugins/tests/check_snmp.t: Fix tests and update NEWS file
+
+2010-04-15  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* plugins/check_snmp.c: Replace the lousy multiline parser with a
+	robust one.  This one counts double quotes and backslashes so it should handle
+	any level of escaping.
+
+2009-09-17  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* plugins/check_snmp.c, plugins/tests/check_snmp_agent.pl: Attempt
+	at fixing check_snmp multiline output: This patch tries to detect and output nicely multi-line strings.
+	This method is broken by design; only a count of double-quotes and
+	escapes could work in every situation.
+
+2010-04-15  tonvoon <ton.voon@opsera.com>
+
+	* NEWS: Updated Nagios::Plugin library
+
+2010-04-14  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Fix the ordering of commits If notifications for multiple commits are created, sort them
+	chronologically instead of in reverse chronological order.
+
+2010-04-14  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, plugins-root/check_dhcp.c, plugins-root/check_icmp.c,
+	plugins/check_apt.c, plugins/check_by_ssh.c,
+	plugins/check_cluster.c, plugins/check_dig.c, plugins/check_disk.c,
+	plugins/check_dns.c, plugins/check_dummy.c, plugins/check_fping.c,
+	plugins/check_game.c, plugins/check_hpjd.c, plugins/check_http.c,
+	plugins/check_ide_smart.c, plugins/check_ldap.c,
+	plugins/check_load.c, plugins/check_mrtg.c,
+	plugins/check_mrtgtraf.c, plugins/check_mysql.c,
+	plugins/check_mysql_query.c, plugins/check_nagios.c,
+	plugins/check_nt.c, plugins/check_ntp.c, plugins/check_ntp_peer.c,
+	plugins/check_ntp_time.c, plugins/check_nwstat.c,
+	plugins/check_overcr.c, plugins/check_pgsql.c,
+	plugins/check_ping.c, plugins/check_procs.c,
+	plugins/check_radius.c, plugins/check_real.c, plugins/check_smtp.c,
+	plugins/check_snmp.c, plugins/check_ssh.c, plugins/check_swap.c,
+	plugins/check_tcp.c, plugins/check_time.c, plugins/check_ups.c,
+	plugins/check_users.c, plugins/negate.c, plugins/urlize.c,
+	plugins/utils.h, po/POTFILES.in, po/de.po, po/fr.po,
+	po/nagios-plugins.pot: Fix translations when extra-opts aren't
+	enabled Bug #2832884 reported problem with translations outputting pot file
+	headers. This is caused by "" matching the header of the translation
+	files.  This patch moves gettext macros inside utils macros and update some
+	french translations.
+
+2010-04-14  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* plugins/check_ntp.c, plugins/negate.c, po/de.po, po/fr.po,
+	po/nagios-plugins.pot: Update french translation  (fix all fuzzy's)
+
+2010-04-14  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, THANKS.in, plugins/check_radius.c: Fix check_radius
+	returning OK on unexpected results REJECT_RC is defined on some radiusclient versions and
+	differenciates between auth errors and bad responses. This patch
+	will affect only the behaviour of those clients exporting REJECT_RC.  In addition, unexpected return codes are now handled properly and
+	return UNKNOWN.
+
+2010-04-14  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS: Typo
+
+2010-04-08  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, plugins-root/Makefile.am, plugins-root/pst3.c: pst3.c must
+	not use nagiosplug/gnulib includes
+
+2010-04-07  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* .gitignore, build-aux/arg-nonnull.h, build-aux/c++defs.h,
+	build-aux/config.rpath, build-aux/mkinstalldirs,
+	build-aux/warn-on-use.h, gl/Makefile.am, gl/alignof.h, gl/alloca.c,
+	gl/alloca.in.h, gl/arpa_inet.in.h, gl/asnprintf.c, gl/asprintf.c,
+	gl/base64.c, gl/base64.h, gl/basename-lgpl.c, gl/basename.c,
+	gl/btowc.c, gl/c-strtod.c, gl/c-strtod.h, gl/cloexec.c,
+	gl/cloexec.h, gl/close-hook.c, gl/close-hook.h, gl/config.charset,
+	gl/creat-safer.c, gl/dirname-lgpl.c, gl/dirname.c, gl/dirname.h,
+	gl/dup-safer.c, gl/dup2.c, gl/errno.in.h, gl/error.c, gl/error.h,
+	gl/exitfail.c, gl/exitfail.h, gl/fcntl--.h, gl/fcntl-safer.h,
+	gl/fcntl.c, gl/fcntl.in.h, gl/fd-safer.c, gl/float+.h,
+	gl/float.in.h, gl/floor.c, gl/floorf.c, gl/fsusage.c, gl/fsusage.h,
+	gl/full-read.c, gl/full-read.h, gl/full-write.c, gl/full-write.h,
+	gl/gai_strerror.c, gl/getaddrinfo.c, gl/getdtablesize.c,
+	gl/gethostname.c, gl/getloadavg.c, gl/getopt.c, gl/getopt.in.h,
+	gl/getopt1.c, gl/getopt_int.h, gl/gettext.h, gl/inet_ntop.c,
+	gl/intprops.h, gl/langinfo.in.h, gl/localcharset.c,
+	gl/localcharset.h, gl/locale.in.h, gl/m4/00gnulib.m4,
+	gl/m4/alloca.m4, gl/m4/arpa_inet_h.m4, gl/m4/base64.m4,
+	gl/m4/btowc.m4, gl/m4/c-strtod.m4, gl/m4/cloexec.m4,
+	gl/m4/codeset.m4, gl/m4/dirname.m4, gl/m4/dos.m4,
+	gl/m4/double-slash-root.m4, gl/m4/dup2.m4, gl/m4/errno_h.m4,
+	gl/m4/error.m4, gl/m4/exitfail.m4, gl/m4/extensions.m4,
+	gl/m4/fcntl-o.m4, gl/m4/fcntl-safer.m4, gl/m4/fcntl.m4,
+	gl/m4/fcntl_h.m4, gl/m4/float_h.m4, gl/m4/floorf.m4,
+	gl/m4/fstypename.m4, gl/m4/fsusage.m4, gl/m4/getaddrinfo.m4,
+	gl/m4/getdtablesize.m4, gl/m4/gethostname.m4, gl/m4/getloadavg.m4,
+	gl/m4/getopt.m4, gl/m4/gettext.m4, gl/m4/glibc2.m4,
+	gl/m4/glibc21.m4, gl/m4/gnulib-cache.m4, gl/m4/gnulib-common.m4,
+	gl/m4/gnulib-comp.m4, gl/m4/gnulib-tool.m4, gl/m4/hostent.m4,
+	gl/m4/iconv.m4, gl/m4/include_next.m4, gl/m4/inet_ntop.m4,
+	gl/m4/inline.m4, gl/m4/intdiv0.m4, gl/m4/intl.m4, gl/m4/intldir.m4,
+	gl/m4/intlmacosx.m4, gl/m4/intmax.m4, gl/m4/intmax_t.m4,
+	gl/m4/inttypes-pri.m4, gl/m4/inttypes_h.m4, gl/m4/langinfo_h.m4,
+	gl/m4/lcmessage.m4, gl/m4/lib-ld.m4, gl/m4/lib-link.m4,
+	gl/m4/lib-prefix.m4, gl/m4/localcharset.m4, gl/m4/locale-fr.m4,
+	gl/m4/locale-ja.m4, gl/m4/locale-zh.m4, gl/m4/locale_h.m4,
+	gl/m4/lock.m4, gl/m4/longlong.m4, gl/m4/ls-mntd-fs.m4,
+	gl/m4/malloc.m4, gl/m4/math_h.m4, gl/m4/mbrtowc.m4,
+	gl/m4/mbsinit.m4, gl/m4/mbstate_t.m4, gl/m4/memchr.m4,
+	gl/m4/mktime.m4, gl/m4/mmap-anon.m4, gl/m4/mode_t.m4,
+	gl/m4/mountlist.m4, gl/m4/multiarch.m4, gl/m4/netdb_h.m4,
+	gl/m4/netinet_in_h.m4, gl/m4/nl_langinfo.m4, gl/m4/nls.m4,
+	gl/m4/onceonly.m4, gl/m4/open.m4, gl/m4/po.m4,
+	gl/m4/printf-posix.m4, gl/m4/printf.m4, gl/m4/progtest.m4,
+	gl/m4/regex.m4, gl/m4/safe-read.m4, gl/m4/safe-write.m4,
+	gl/m4/servent.m4, gl/m4/size_max.m4, gl/m4/snprintf.m4,
+	gl/m4/sockets.m4, gl/m4/socklen.m4, gl/m4/sockpfaf.m4,
+	gl/m4/ssize_t.m4, gl/m4/stat.m4, gl/m4/stdbool.m4,
+	gl/m4/stddef_h.m4, gl/m4/stdint.m4, gl/m4/stdint_h.m4,
+	gl/m4/stdio_h.m4, gl/m4/stdlib_h.m4, gl/m4/strdup.m4,
+	gl/m4/strerror.m4, gl/m4/string_h.m4, gl/m4/strndup.m4,
+	gl/m4/strnlen.m4, gl/m4/strstr.m4, gl/m4/sys_socket_h.m4,
+	gl/m4/sys_stat_h.m4, gl/m4/threadlib.m4, gl/m4/time_h.m4,
+	gl/m4/time_r.m4, gl/m4/timegm.m4, gl/m4/uintmax_t.m4,
+	gl/m4/unistd-safer.m4, gl/m4/unistd_h.m4, gl/m4/vasnprintf.m4,
+	gl/m4/vasprintf.m4, gl/m4/visibility.m4, gl/m4/vsnprintf.m4,
+	gl/m4/warn-on-use.m4, gl/m4/wchar.m4, gl/m4/wchar_h.m4,
+	gl/m4/wchar_t.m4, gl/m4/wcrtomb.m4, gl/m4/wctype.m4,
+	gl/m4/wctype_h.m4, gl/m4/wint_t.m4, gl/m4/write.m4,
+	gl/m4/xalloc.m4, gl/m4/xsize.m4, gl/m4/xstrndup.m4, gl/malloc.c,
+	gl/math.in.h, gl/mbrtowc.c, gl/mbsinit.c, gl/memchr.c,
+	gl/memchr.valgrind, gl/mktime-internal.h, gl/mktime.c,
+	gl/mountlist.c, gl/mountlist.h, gl/netdb.in.h, gl/netinet_in.in.h,
+	gl/nl_langinfo.c, gl/open-safer.c, gl/open.c, gl/pipe-safer.c,
+	gl/printf-args.c, gl/printf-args.h, gl/printf-parse.c,
+	gl/printf-parse.h, gl/ref-add.sin, gl/ref-del.sin, gl/regcomp.c,
+	gl/regex.c, gl/regex.h, gl/regex_internal.c, gl/regex_internal.h,
+	gl/regexec.c, gl/safe-read.c, gl/safe-read.h, gl/safe-write.c,
+	gl/safe-write.h, gl/size_max.h, gl/snprintf.c, gl/sockets.c,
+	gl/sockets.h, gl/stat.c, gl/stdbool.in.h, gl/stddef.in.h,
+	gl/stdint.in.h, gl/stdio-write.c, gl/stdio.in.h, gl/stdlib.in.h,
+	gl/str-two-way.h, gl/strdup.c, gl/streq.h, gl/strerror.c,
+	gl/string.in.h, gl/stripslash.c, gl/strndup.c, gl/strnlen.c,
+	gl/strstr.c, gl/sys_socket.in.h, gl/sys_stat.in.h, gl/time.in.h,
+	gl/time_r.c, gl/timegm.c, gl/unistd--.h, gl/unistd-safer.h,
+	gl/unistd.in.h, gl/vasnprintf.c, gl/vasnprintf.h, gl/vasprintf.c,
+	gl/verify.h, gl/vsnprintf.c, gl/w32sock.h, gl/wchar.in.h,
+	gl/wcrtomb.c, gl/wctype.in.h, gl/write.c, gl/xalloc-die.c,
+	gl/xalloc.h, gl/xmalloc.c, gl/xsize.h, gl/xstrndup.c,
+	gl/xstrndup.h, tools/setup: Sync with the latest Gnulib code
+	(177f525) Signed-off-by: Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+2010-04-13  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* plugins/check_ntp_peer.c: Fix typo
+
+2010-04-12  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* contrib/check_linux_raid.pl: Fix Debian bug #574612: Return
+	WARNING on rebuild Let check_linux_raid return a WARNING instead of an OK state during
+	volume recovery.  See: http://bugs.debian.org/574612 (Fixed by Christoph Martin, forwarded by Jan Wagner.)
+
+2010-04-12  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* contrib/check_linux_raid.pl: Fix Debian bug #534604: Checking md10
+	and above | check_linux_raid malfunctions if system has software RAID devices
+	with | two or more digits.  For example, for system having
+	/dev/md10, | /dev/md11 etc, the plugin returns 'UNKNOWN' in
+	automatic mode (if RAID | devices are manually specified it works).
+	Also, if system has both | one-digit, and two-digit RAID devices,
+	the two-digit devices are | silently ignored in checks, which is
+	even more problematic.  [ http://bugs.debian.org/534604 ] (Fixed by Matija Nalis, forwarded by Jan Wagner.)
+
+2010-04-12  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* NEWS, plugins-scripts/check_ircd.pl: Fix Debian bug #545940:
+	Failure when run via ePN If Perl's "shift" function is called outside of a subroutine and
+	without any argument, it usually shifts @ARGV.  However, if a plugin
+	is executed via ePN, such a call will shift @_ instead, so we must
+	explicitly specify @ARGV for this to work as expected.  This fixes Debian bug #545940, see: http://bugs.debian.org/545940 Commit de7191e3424e02ba278a39b86e8b1906a25d0362 fixed the same issue
+	for check_disk_smb.  (Reported by Hendrik Jaeger, forwarded by Jan Wagner.)
+
+2010-04-11  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* NEWS, plugins/check_radius.c: Fix Debian bug #482947: No
+	--nas-ip-address option | check_radius doesn't seem to provide any way to modify the |
+	NAS-IP-Address attribute that it uses in the packets it sends, but
+	it | does so for NAS-Identifier.  | | Instead, it hardcodes the IP
+	address that it gets from the | rc_own_ipaddress() library call, and
+	that in turn translates into | calling gethostbyname() on the result
+	of uname(). This call can easily | fail, and its result can easily
+	be unsuitable - for example when the | Nagios instance uses its own
+	virtual host, and you don't want the | original system hostname
+	leaked to the RADIUS servers you monitor with | this.  | |
+	Furthermore, this behaviour is inconsistent with RFC 2865, which |
+	defines the two attributes as analogous and never suggests
+	hardcoding | the value of either of them in client software.  Therefore, this commit adds the "-N, --nas-ip-address" option which
+	allows for specifying the value of the NAS-IP-Address attribute.  | I've also noticed that the original code for NAS-IP-Address
+	hardcoding | is broken in its error handling - it does "return
+	(ERROR_PC)", which | is meaningless in the context of
+	check_radius.c. That actually seems | to be copy&waste from
+	radiusclient-0.3.2/src/radexample.c. :) I fixed | that.  | | While
+	debugging, I also took the opportunity to decouple the |
+	nas-identifier rc_avpair_add() instance from the initial three, |
+	because this is just bad practice to lump a fourth optional
+	attribute | into the same block with the required attributes, the
+	error handling | for which is throwing the same daft message "Out of
+	Memory?"...  [ http://bugs.debian.org/482947 ] (Contributed by Josip Rodin, forwarded by Jan Wagner.)
+
+2010-04-11  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* NEWS, plugins/check_ldap.c: Fix Debian bug #479984: Allow empty
+	LDAP base The check_ldap plugin did not allow for specifying an empty LDAP
+	base.  See: http://bugs.debian.org/479984 (Fixed by Stephane Chazelas, forwarded by Jan Wagner.)
+
+2010-04-11  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* plugins/check_http.c: Fix Debian bug #460097: check_http -M broken See: http://bugs.debian.org/460097 One instance of this bug has already been fixed in commit
+	888358122004b9571c8fbdfa52ceee1ba5e5f4f2.  (Fixed by Hilko Bengen, forwarded by Jan Wagner.)
+
+2010-04-11  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* plugins-scripts/check_disk_smb.pl: Fix Debian bug #478942: Fragile
+	argument passing Fix some problems regarding the way check_disk_smb passes command
+	line arguments to smbclient(1).  | It runs: | | 	$res = qx/$smbclient "\/\/$host\/$share" $pass -W
+	$workgroup \ | 	       -U $user $smbclientoptions -I $address -c
+	ls/; | | [...] | | The documentation says that if the password is
+	not passed, it | defaults to "".  That is not true above, as $pass
+	expands to | nothing which leaves no argument at all (instead of an
+	empty | argument) so is different from providing with an empty
+	password | or with the -N option.  | | Also, if the password starts
+	with "-", you're in trouble, that's | why -U $user%$pass may be
+	prefered.  | | Also, the doc says that if $user is not provided,
+	then it | defaults to "guest" but the problem is that if it is
+	provided | but empty, it is changed to "guest" as well, which
+	prevents us | from querying hosts that don't do user authentication.  [ http://bugs.debian.org/478942 ] (Fixed by Stephane Chazelas, forwarded by Jan Wagner.)
+
+2010-04-11  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* NEWS, THANKS.in, plugins-scripts/check_disk_smb.pl: Fix Debian bug
+	#478906: Failure when run via ePN | When perl plugin scripts are run with the embedded perl
+	interpreter in | nagios3, the "shift" perl command doesn't shift
+	@ARGV, but @_ (which | happens to contain the same thing as @ARGV at
+	the time the script was | started).  | | [...] | | A fix is to
+	replace all the instances of "shift" with "shift @ARGV".  [ http://bugs.debian.org/478906 ] (Fixed by Stephane Chazelas, forwarded by Jan Wagner.)
+
+2010-04-11  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* THANKS.in, plugins/check_ldap.c: Fix Debian bug #463322: Use
+	deprecated libldap API | Our automated build log filter[1] detected a problem that is
+	likely to | cause your package to segfault on architectures where
+	the size of a | pointer is greater than the size of an integer, such
+	as ia64 and | amd64.  | | This is often due to a missing function
+	prototype definition.  For | more information, see [2].  | |
+	Function `ldap_init' implicitly converted to pointer at |
+	check_ldap.c:124 | | [1]
+	http://people.debian.org/~dannf/check-implicit-pointer-functions |
+	[2] http://wiki.debian.org/ImplicitPointerConversions | | The
+	libldap API has been updated and many functions used by the ldap |
+	plugin are now deprecated.  This package should either update to the
+	| new API or define LDAP_DEPRECATED to continue using the deprecated
+	| interfaces.  | | This patch implements the lazy solution.  [ http://bugs.debian.org/463322 ] (Contributed by Dann Frazier, forwarded by Jan Wagner.)
+
+2010-04-11  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* NEWS, THANKS.in, plugins-scripts/check_disk_smb.pl: Fix Debian bug
+	#425129: SMB guest mode won't work | The check_disk_smb plugin purports to support guest users, but it
+	| doesn't work out, because it doesn't specify the -N command line |
+	option to smbclient when no password is specified, making smbclient
+	| stop and ask.  [ http://bugs.debian.org/425129 ] (Fixed by Josip Rodin, forwarded by Jan Wagner.)
+
+2010-04-11  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* plugins/check_game.c: Fix Debian bug #307905: Incorrect usage
+	output The usage output of check_game was wrong, see: 	http://bugs.debian.org/307905 (Fixed by Sean Finney, forwarded by Jan Wagner.)
+
+2010-04-11  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* NEWS, plugins-scripts/check_disk_smb.pl: check_disk_smb: Allow for
+	specifying an IP address Add the "-a, --address option" which allows for specifying the IP
+	address of the server to connect to.  If this option is used, the IP
+	address will be handed over to smbclient(1)'s "-I" option.
+	(Contributed by Sean Finney, forwarded by Jan Wagner.)
+
+2010-04-06  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS: check_http: Add warning about SNI not enabled by default
+	anymore
+
+2010-04-05  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, plugins/check_http.c: Fix regression in check_http ssl
+	checks on some servers The fix is making SNI an option.
+
+2010-03-31  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* plugins/check_snmp.c: check_snmp: Update last patch to copy value
+	verbatim Rework last patch, copying the converted portion of the string
+	rather than re-converting it. This is safer for
+	backwards-compatibility as the value is never modified.
+
+2010-03-30  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, plugins/check_snmp.c: check_snmp: Fix regression introduced
+	in #1867716 Bug #1867716 fixed what it meant to fix: broken perfdata strings.
+	Unfortunately some users relied on half-broken perfdata string where
+	at least the first token was OK. This patch do a two-way conversion
+	(string to double then back to string) instead and use the
+	conversion result for the performance data.  A possible caveat is that the string may change where it normally
+	shouldn't but the result should be somewhat similar.
+
+2010-03-27  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, THANKS.in, plugins/check_ide_smart.c: Fix compilation with
+	GCC 2.96 (Konstantin Khomoutov - #2977105)
+
+2010-03-18  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* NEWS, plugins/check_ntp_peer.c, plugins/t/check_ntp.t: Let
+	check_ntp_peer check the number of truechimers Add support for checking the number of usable time sources (i.e.,
+	the number of peers which are classified as so-called "truechimers"
+	by NTP's intersection algorithm).  The new "-m" and "-n" options
+	allow for specifying the according WARNING and CRITICAL thresholds
+	(and thereby activating the truechimers check), respectively.
+
+2010-03-16  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS: Typo in NEWS
+
+2010-03-15  Ton Voon <ton.voon@opsera.com>
+
+	* doc/developer-guidelines.sgml: Corrected example
+
+2010-02-26  Ton Voon <ton.voon@opsera.com>
+
+	* NEWS, THANKS.in, plugins/check_http.c: Fix memory leak in
+	check_http for large pages (Jimmy Bergman - #2957455)
+
+2009-12-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify, tools/git-post-receive-hook: git-notify: Pipe
+	e-mails directly to sendmail(8) Use sendmail(8) instead of mail(1) in order to be able to set the
+	"Content-Type" header field on systems where the available mail(1)
+	command doesn't allow for setting it.  This makes the "-H" flag (cf.
+	commit 71350c5a) unnecessary.
+
+2009-12-06  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify, tools/git-post-receive-hook: Enable CIA's commit
+	notifications We now use CIA's service to send commit notifications to IRC.  They
+	are currently sent to the #Nagios-Devel channel on Freenode.  See: 	http://cia.vc/stats/project/nagiosplug/ 	http://cia.vc/account/bots/15699/
+
+2009-12-04  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, configure.in: Detect arguments passed via
+	--with-ping[6]-command (#2908236)
+
+2009-12-04  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* configure.in: Whitespace fixes
+
+2009-12-02  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* plugins/check_http.c: Fix short help using "warn" for the -f
+	option instead of "warning" (onredirect).
+
+2009-11-19  Ton Voon <tonvoon@nagiosplugins.org>
+
+	* tools/sfsnapshot-upload: Updated link to sfsnapshotgit
+
+2009-11-18  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* doc/developer-guidelines.sgml: Update developer guideline
+	regarding CVS Commits (mostly for testing my snapshot script, though
+	it had to be updated anyway)
+
+2009-11-11  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* tools/sfsnapshotgit: Fix fetching of remote branches
+
+2009-11-11  dermoth <dermoth@nagiosplugins.org>
+
+	* tools/sfsnapshot-upload, tools/sfsnapshotgit: Many fixes to
+	snapshot scripts sfsnapshotgit:   - Use fetch/reset instead to pull to avoid merges on forced
+	  updates sfsnapshot-upload:   - Fix link deletion walking the entire home dir 	- Allow CLEAN_TIME=0 (no retention) 	- Re-add per-branch links when CLEAN_TIME > 0 	- Add many comments
+
+2009-11-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-post-receive-hook, tools/git-update-mirror: Git commit
+	notifications via post-receive hook Now that we moved our Git repositories to SourceForge, we don't need
+	to maintain local clones for generating commit notifications
+	anymore, as SourceForge provides shell access to the repositories.
+	Instead, we now run git-notify as a post-receive hook on the
+	SourceForge server.  Actually, we use a wrapper which executes
+	git-notify with the desired options and which makes it easy to add
+	other post-receive hooks in the future.
+
+2009-11-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Support SourceForge repositories The Gitweb URLs for repositories hosted by SourceForge are slightly
+	different than other Gitweb URLs.  The correct URL cannot be
+	specified via "-u" if we append "/$repos_name.git/?" to that URL as
+	we usually do.  If the new "-S" flag is specified or
+	"notify.sourceforge" is set, we'll append "/$repos_name;" instead,
+	which makes the "-u" option usable for SourceForge repositories.
+
+2009-11-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Optionally call mail(1) without "-a" Not all mail(1) implementations support specifying additional header
+	fields via "-a": with some, this flag is used for attaching files,
+	others don't provide an "-a" flag at all (this is true for the
+	/bin/mail utility currently installed on the SourceForge servers,
+	for example).  We now provide the "-H" flag and the
+	"notify.legacyMail" configuration key for these cases.
+
+2009-11-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Polish up the "tag notifications" Use better labels for the tag ref and the SHA1 name of the tag
+	object.
+
+2009-11-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Distinguish between tag types Distinguish between annotated tags and lightweight tags.  In the
+	former case, send an annotated "tag notification", in the latter
+	case, send a "ref change notification" (as we did in both cases
+	before).
+
+2009-11-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Fix "global" notifications If the number of commits included with a single push exceeds the
+	maximum specified via "-n", a single notification will be generated
+	instead of individual e-mails.  For listing the commits within such
+	a notification, git-rev-list(1)'s "--pretty" option is used.  This
+	yields output which the git_rev_list() subroutine didn't accept.
+	That's now fixed.
+
+2009-11-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Optionally [tag] the subject If the new "-T" option is specified or "notify.emitRepository" is
+	set, the subject of e-mail notifications will be prefixed with
+	[<tag>], where <tag> is the name of the updated repository.
+
+2009-11-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Optionally omit the author name If the new "-A" option is specified (or "notify.omitAuthor" is set),
+	the author name will be omitted from the subject of e-mail
+	notifications.
+
+2009-11-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Make abbreviating Gitweb URLs
+	optional The SHA1 object name part of Gitweb URLs is now only shortened if
+	the user requested this by specifying the new "-z" option (or by
+	setting "notify.shortURLs").  While at it, also shorten the additional URL which references a diff
+	in e-mail notifications which don't include that diff inline because
+	its size exceeds the maximum number of bytes specified via "-s".  Note that while the abbreviated SHA1 object names will be unique at
+	push time, this cannot be guaranteed for the future, so the
+	shortened URLs might break some day.
+
+2009-11-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Make showing the committer optional Only the author's name and address will now be mentioned in a commit
+	notification by default.  However, if the "-C" option is specified
+	(or "notify.showCommitter" is set), the committer's name and address
+	will also be included in the notification if the committer is not
+	the author of the commit (as we previously did by default).
+
+2009-11-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Make using a state file optional Making use of a state file in order to prevent duplicate
+	notifications is now optional.  The user must explicitly specify a
+	file path via the "-t" option or by setting the git-config(1)
+	variable "notify.statefile" to activate this functionality.
+
+2009-11-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Don't abort if mail(1) exits
+	non-zero As nothing in git-notify depends on the success of the mail(1) call,
+	don't abort if it fails, just spit out a warning.
+
+2009-11-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Drop the $sent_notices variable Now that we don't ignore empty commits anymore, there's no need to
+	keep track of the number of commits actually notified about, as that
+	will always be equal to the number of commits returned by
+	get_new_commits().
+
+2009-11-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: Revert "git-notify: Ignore `empty' commits" This reverts commit db63fbfa036f5cd757aedf4547fef9e195a8c285, as it
+	is no longer needed and we'd like to keep the diff against the
+	git-notify version maintained by the Wine people as small as
+	possible.  The purpose of db63fbfa was to suppress notifications on
+	empty merge commits, which can now be requested directly by
+	specifying git-notify's "-X" option.  (Our change was implemented
+	before the "-X" option was available, even though the Git history
+	suggests otherwise.) Conflicts: 	tools/git-notify
+
+2009-11-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: Revert "git-notify: Remove unused [...] code" This reverts commit 5445b9769f254781e482062bacc6603a5cd63059.
+	Alexandre Julliard pointed out that the code in question was used if
+	git-notify was explicitly called with the SHA1 name of an annotated
+	tag object.  At the moment, the code in question actually _is_
+	unused due to later modifications, but it wasn't at the time
+	5445b976 was committed, and we'll add further changes so that the
+	code will be used again in the future.  Conflicts: 	tools/git-notify
+
+2009-11-06  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Minor cosmetic changes Fix the description of the "-U" option.
+
+2009-10-25  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* tools/sfsnapshot-upload: Allow rsyncing to local paths
+
+2009-10-25  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* tools/sfsnapshot-upload: Add snapshots upload scripts
+
+2009-10-26  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Make the state file group writable For shared repositories, the state file used by git-notify should
+	usually be group writable, so we now set the umask to 0002 by
+	default.  This can be adjusted by setting the "notify.umask"
+	configuration key or by using the "-U" option on the command line.
+
+2009-10-26  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Remove an empty subroutine The gitweb_url() subroutine was an unused and empty hangover.
+
+2009-10-25  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-update-mirror: git-update-mirror: Remove a useless
+	sed(1) call The sed(1) command in question was a hangover which had no effect
+	anymore.
+
+2009-10-24  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Check the exit status of pipes Properly check the exit status of all processes we execute and abort
+	on error.
+
+2009-10-24  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Handle non-UTF-8 commits Make sure that commit messages which use an encoding other than
+	US-ASCII or UTF-8 are handled correctly.  Also, assume that the diff
+	contents use the same encoding as the commit message.  This
+	assumption may well be wrong, but that's the best we can do.
+
+2009-10-24  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Don't generate duplicate
+	notifications Never notify on a given commit more than once, even if it's
+	referenced via multiple branch heads.  We make sure this won't
+	happen simply by maintaining a list of commits we notified about.
+	The file path used for saving this list can be specified using the
+	new "-t" option.  (The contrib/hooks/post-receive-email script
+	distributed with Git tries hard to avoid such a list, but it doesn't
+	get the necessary magic right.)
+
+2009-10-24  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-nofity: Try to shorten Gitweb URLs Instead of using the full SHA1 values of commit object names within
+	Gitweb URLs, try to abbreviate them to a shorter unique name.
+
+2009-10-24  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Move the Gitweb URL to the bottom In commit notifications, specify the Gitweb URL (if any) at the
+	bottom of the ASCII "table" which summarizes the commit.  That looks
+	better.
+
+2009-10-24  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Truncate summary after 50 characters If the first line of a commit message is longer than 50 characters,
+	truncate it before adding the resulting string to the subject line
+	of a notification.  This makes sure the subject line won't get too
+	long (unless the commit author name is unusually long, which we
+	don't check).  The Git User's Manual recommends keeping the first
+	line of a commit message shorter than that, anyway: | Though not required, it's a good idea to begin the commit message
+	with | a single short (less than 50 character) line summarizing the
+	change, | followed by a blank line and then a more thorough
+	description.  Tools | that turn commits into email, for example, use
+	the first line on the | Subject line and the rest of the commit in
+	the body.  [ http://www.kernel.org/pub/software/scm/git/docs/user-manual.html ]
+
+2009-10-24  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Send notifications on ref changes,
+	too Do not only generate notifications on commits, but also if a branch
+	head or lightweight tag was created, removed, or modified.
+	Notifications on branch head updates are omitted if one or more
+	commit notification have been generated and the branch head now
+	references a descendant of the originally referenced commit (which
+	should be the usual case).
+
+2009-10-24  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Call git-rev-list(1) via a
+	subroutine Add a subroutine which abstracts away executing git-rev-list(1) and
+	checking the result in order to avoid code duplication.
+
+2009-10-24  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Mention the committer where
+	applicable If the committer is not the author of the commit, mention the
+	committer in addition to the author.
+
+2009-10-24  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: New subroutine for column alignment Most notifications include an ASCII "table" with two columns.  The
+	formatting of these columns is now handled by the new format_table()
+	subroutine, so that the alignment can easily be changed in the
+	future.
+
+2009-10-24  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Ignore "empty" commits Omit notifications regarding commits which don't change the tree
+	whatsoever.
+
+2009-10-24  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Remove unused tag notification code The code which handles notifications regarding tags was unused, as
+	only objects listed by git-rev-list(1) are considered, and
+	git-rev-list(1) never spits out the sha1 of a tag object.
+
+2009-10-24  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify: git-notify: Save author without trailing space Adjust the regular expression which catches the commit author name
+	so that it doesn't include the space character which follows that
+	name.
+
+2009-10-24  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* tools/git-notify, tools/git-update-mirror: Import
+	git-update-mirror and git-notify Import the (self-written) git-update-mirror script, which updates
+	clones of Git repositories and then calls git-notify (in just the
+	same way as a post-receive hook would be called by Git).  The
+	git-notify script is imported from
+	git://source.winehq.org/git/tools.git (commit: 03d66f34) and
+	generates notifications on repository changes.  We'll use these
+	scripts for generating our commit e-mails.
+
+2009-10-22  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, plugins/check_snmp.c, plugins/t/check_snmp.t: Fix usage of
+	repeated -o options in check_snmp
+
+2009-10-15  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* plugins-root/check_icmp.c: Set proper network byte order for
+	icmp_id and icmp_seq in icmp packets
+
+2009-10-14  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, plugins-root/check_icmp.c: Increment per-host sequence in
+	check_icmp
+
+2009-09-26  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* tools/sfsnapshotgit: Change default for SFSNAP_DEST
+
+2009-09-26  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* tools/sfsnapshotgit: Correcting name and email address
+
+2009-09-26  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* tools/sfsnapshotgit: Enhancements to tools/sfsnapshotgit
+
+2009-09-25  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* configure.in: Using $srcdir is the proper way to go
+
+2009-09-25  nagiosplugins <nagiosplugins@nagiosplugins.org>
+
+	* tools/sfsnapshotgit: Add sfsnapshotgit
+
+2009-09-25  nagiosplugins <nagiosplugins@nagiosplugins.org>
+
+	* configure.in, plugins-root/Makefile.am,
+	plugins-scripts/Makefile.am, plugins/Makefile.am: Allow custom
+	versions with the release file...
+
+2009-09-24  Ton Voon <ton.voon@opsera.com>
+
+	* NEWS, doc/developer-guidelines.sgml: Updated documentation re: no
+	equals sign and single quote
+
+2009-09-24  Ton Voon <ton.voon@opsera.com>
+
+	* NEWS: Updated NEWS file with docs changes
+
+2009-09-23  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS: Test, again
+
+2009-09-23  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS: Test
+
+2009-09-21  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, THANKS.in: Oops - wrong author/bug in last commit!
+
+2009-09-21  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, THANKS.in, plugins/check_http.c: Add proxy-authorization
+	option to check_http (Peter Doherty - #2863772, Bryan Irvine -
+	#2863925)
+
+2009-09-19  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, plugins-scripts/check_ircd.pl: Fix check_ircd binding to
+	wrong interface (#668778)
+
+2009-09-19  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* doc/RELEASING: Update RELEASING document with proper tag creation
+	and push commands
+
+2009-09-16  Ton Voon <ton.voon@opsera.com>
+
+	* BUGS, ChangeLog, NEWS, NP-VERSION-GEN, configure.in, package.def: 
+	Prep for 1.4.14 release
+
 2009-09-14  Ton Voon <ton.voon@opsera.com>
 
 	* plugins-root/pst3.c: Ensure dirhandle is closed (Duncan Ferguson)

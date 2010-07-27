@@ -2,9 +2,11 @@ This file lists the major bugs from the Nagios Plugins page on Sourceforge
 at http://sourceforge.net/tracker/?group_id=29880&atid=397597. These are not
 necessarily verified as errors.
 
-For the 1.4.14 release:
+For the 1.4.15 release:
 
-2832451 - check_snmp regression parsing multi-line snmpget responses
+3028955 - check_users always reports 1 user connected in French
+3003419 - check_snmp converts negative values to positive
+2991170 - check_nt segfaults on unexpected server response
 2826570 - check_http does not work with some HTTPS servers
 2823005 - check_swap returns OK if no swap activated
 2786808 - check_http asks for HTTP/1.1, but doesn't understand chunked
