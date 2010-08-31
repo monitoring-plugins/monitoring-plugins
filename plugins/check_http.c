@@ -1387,7 +1387,7 @@ print_help (void)
   printf ("    %s\n", _("Wrap output in HTML link (obsoleted by urlize)"));
   printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow|sticky|stickyport>");
   printf ("    %s\n", _("How to handle redirected pages. sticky is like follow but stick to the"));
-  printf ("    %s\n", _("specified IP address. stickyport also ensure post stays the same."));
+  printf ("    %s\n", _("specified IP address. stickyport also ensures port stays the same."));
   printf (" %s\n", "-m, --pagesize=INTEGER<:INTEGER>");
   printf ("    %s\n", _("Minimum page size required (bytes) : Maximum page size required (bytes)"));
 
