@@ -71,7 +71,8 @@ while(defined $nextdev){
 		} elsif (/^($nextdev)\s*:/) {
 			$device=$1;
 			$devices{$device}=$device;
-			if (/active/) {
+			if (/\sactive/) {
+				$status{$device} = ''; # Shall be filled later if available
 				$active{$device} = 1;
 			}
 		}
@@ -80,7 +81,11 @@ while(defined $nextdev){
 }
 
 foreach my $k (sort keys %devices){
-	if ($status{$k} =~ /_/) {
+	if (!exists($status{$k})) {
+		$msg .= sprintf " %s inactive with no status information.",
+			$devices{$k};
+		$code = max_state($code, "CRITICAL");
+	} elsif ($status{$k} =~ /_/) {
 		if (defined $recovery{$k}) {
 			$msg .= sprintf " %s status=%s, recovery=%s, finish=%s.",
 				$devices{$k}, $status{$k}, $recovery{$k}, $finish{$k};
@@ -94,10 +99,11 @@ foreach my $k (sort keys %devices){
 		$code = max_state($code, "OK");
 	} else {
 		if ($active{$k}) {
-			$msg .= sprintf " %s active with no status information.\n",
+			$msg .= sprintf " %s active with no status information.",
 				$devices{$k};
 			$code = max_state($code, "OK");
 		} else {
+			# This should't run anymore, but is left as a catch-all
 			$msg .= sprintf " %s does not exist.\n", $devices{$k};
 			$code = max_state($code, "CRITICAL");
 		}
