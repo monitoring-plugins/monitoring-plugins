@@ -44,11 +44,17 @@ cd "$SFSNAP_REPO"
 # Sometimes "make dist" can modify versioned files so we must reset first
 git reset --hard
 git clean -qfdx
-# Any branch used to create snapshots must already exist
+
+# Any branch used to create snapshots must already exist and be properly configured
 git checkout "$HEAD"
-git fetch "$SFSNAP_ORIGIN"
-git reset --hard "$SFSNAP_ORIGIN"/"$HEAD"
-# Tags are important for git-describe
+
+# Get the remote tracking branch from config
+origin=$(git config branch.$HEAD.remote)
+ref=$(git config branch.$HEAD.merge |sed -e 's|^refs/heads/||')
+git fetch "$origin"
+git reset --hard "$origin/$ref"
+
+# Tags are important for git-describe, but take only the ones from the hard-coded origin
 git fetch --tags "$SFSNAP_ORIGIN"
 
 # Write our snapshot version string (similar to NP-VERSION-GEN) to "release"
