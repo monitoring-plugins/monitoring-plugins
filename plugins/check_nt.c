@@ -203,7 +203,12 @@ int main(int argc, char **argv){
 		uphours = (uptime % 86400) / 3600;
 		upminutes = ((uptime % 86400) % 3600) / 60;
 		asprintf(&output_message,_("System Uptime - %u day(s) %u hour(s) %u minute(s)"),updays,uphours, upminutes);
-		return_code=STATE_OK;
+		if (check_critical_value==TRUE && uptime <= critical_value)
+			return_code=STATE_CRITICAL;
+		else if (check_warning_value==TRUE && uptime <= warning_value)
+			return_code=STATE_WARNING;
+		else
+			return_code=STATE_OK;
 		break;
 
 	case CHECK_USEDDISKSPACE:
