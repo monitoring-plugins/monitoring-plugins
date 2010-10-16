@@ -1,5 +1,9 @@
 This file documents the major additions and syntax changes between releases.
 
+...
+	ENHANCEMENTS
+	check_nt UPTIME accepts warning/critical thresholds (Ryan Kelly)
+
 1.4.15 27th July 2010
 	ENHANCEMENTS
 	New check_ntp_peer -m and -n options to check the number of usable time sources ("truechimers")
