@@ -51,7 +51,7 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 	}
 }
 
-my $tests = 33;
+my $tests = 41;
 if (-x "./check_snmp") {
 	plan tests => $tests;
 } else {
@@ -170,5 +170,20 @@ $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1
 is($res->return_code, 0, "OK as string doesn't match but inverted" );
 is($res->output, 'SNMP OK - "stringtests" | ', "OK as inverted string no match" );
 
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.12" );
+is($res->return_code, 0, "Numeric in string test" );
+is($res->output, 'SNMP OK - 3.5 | iso.3.6.1.4.1.8072.3.2.67.12=3.5 ', "Check seen as numeric" );
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.12 -w 4:5" );
+is($res->return_code, 1, "Numeric in string test" );
+is($res->output, 'SNMP WARNING - *3.5* | iso.3.6.1.4.1.8072.3.2.67.12=3.5 ', "WARNING threshold checks for string masquerading as number" );
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.13" );
+is($res->return_code, 0, "Not really numeric test" );
+is($res->output, 'SNMP OK - "87.4startswithnumberbutshouldbestring" | ', "Check string with numeric start is still string" );
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.14" );
+is($res->return_code, 0, "Not really numeric test (trying best to fool it)" );
+is($res->output, 'SNMP OK - "555\"I said\"" | ', "Check string with a double quote following is still a string (looks like the perl routine will always escape though)" );
 
 

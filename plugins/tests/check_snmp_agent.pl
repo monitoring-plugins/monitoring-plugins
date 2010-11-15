@@ -33,9 +33,9 @@ ends with with this: C:\\';
 my $multilin5 = 'And now have fun with with this: "C:\\"
 because we\'re not done yet!';
 
-my @fields = (ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_UNSIGNED, ASN_UNSIGNED, ASN_COUNTER, ASN_COUNTER64, ASN_UNSIGNED, ASN_COUNTER, ASN_OCTET_STR);
-my @values = ($multiline, $multilin2, $multilin3, $multilin4, $multilin5, 4294965296, 1000, 4294965296, uint64("18446744073709351616"), int(rand(2**32)), 64000, "stringtests");
-my @incrts = (undef, undef, undef, undef, undef, 1000, -500, 1000, 100000, undef, 666, undef);
+my @fields = (ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_UNSIGNED, ASN_UNSIGNED, ASN_COUNTER, ASN_COUNTER64, ASN_UNSIGNED, ASN_COUNTER, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR );
+my @values = ($multiline, $multilin2, $multilin3, $multilin4, $multilin5, 4294965296, 1000, 4294965296, uint64("18446744073709351616"), int(rand(2**32)), 64000, "stringtests", "3.5", "87.4startswithnumberbutshouldbestring", '555"I said"' );
+my @incrts = (undef, undef, undef, undef, undef, 1000, -500, 1000, 100000, undef, 666, undef, undef, undef, undef );
 
 # Number of elements in our OID
 my $oidelts;
