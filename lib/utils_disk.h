@@ -24,6 +24,10 @@ struct parameter_list
   char *group;
   struct mount_entry *best_match;
   struct parameter_list *name_next;
+  uintmax_t total, available, available_to_root, used, inodes_free, inodes_total;
+  double dfree_pct, dused_pct;
+  double dused_units, dfree_units, dtotal_units;
+  double dused_inodes_percent, dfree_inodes_percent;
 };
 
 void np_add_name (struct name_list **list, const char *name);

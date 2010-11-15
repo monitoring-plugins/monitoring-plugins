@@ -3,10 +3,12 @@ This file documents the major additions and syntax changes between releases.
 ...
 	ENHANCEMENTS
 	check_nt UPTIME accepts warning/critical thresholds (Ryan Kelly)
+
 	FIXES
 	check_snmp now attempts to convert string responses into a double value. If the full string is a value, 
 	  check_snmp will consider it a numeric value and thus apply threshold checks and return performance data.
 	  This reverts back to 1.4.14 behaviour with strings
+	Fix check_disk free space calculation if blocksizes differ within a disk group (Bekar - #2973603)
 
 1.4.15 27th July 2010
 	ENHANCEMENTS

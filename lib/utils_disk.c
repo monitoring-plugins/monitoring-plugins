@@ -58,6 +58,19 @@ np_add_parameter(struct parameter_list **list, const char *name)
   new_path->usedinodes_percent = NULL;
   new_path->freeinodes_percent = NULL;
   new_path->group = NULL;
+  new_path->dfree_pct = -1;
+  new_path->dused_pct = -1; 
+  new_path->total = 0;
+  new_path->available = 0;
+  new_path->available_to_root = 0;
+  new_path->used = 0;
+  new_path->dused_units = 0;
+  new_path->dfree_units = 0;
+  new_path->dtotal_units = 0;
+  new_path->inodes_total = 0;
+  new_path->inodes_free = 0;
+  new_path->dused_inodes_percent = 0;
+  new_path->dfree_inodes_percent = 0;
 
   if (current == NULL) {
     *list = new_path;

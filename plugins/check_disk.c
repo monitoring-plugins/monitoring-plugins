@@ -122,6 +122,8 @@ void print_help (void);
 void print_usage (void);
 double calculate_percent(uintmax_t, uintmax_t);
 void stat_path (struct parameter_list *p);
+void get_stats (struct parameter_list *p, struct fs_usage *fsp);
+void get_path_stats (struct parameter_list *p, struct fs_usage *fsp);
 
 double w_dfp = -1.0;
 double c_dfp = -1.0;
@@ -148,6 +150,7 @@ char *crit_freeinodes_percent = NULL;
 int path_selected = FALSE;
 char *group = NULL;
 struct stat *stat_buf;
+struct name_list *seen = NULL;
 
 
 int
@@ -160,10 +163,6 @@ main (int argc, char **argv)
   char *perf;
   char *preamble;
   double inode_space_pct;
-  uintmax_t total, available, available_to_root, used;
-  double dfree_pct = -1, dused_pct = -1;
-  double dused_units, dfree_units, dtotal_units;
-  double dused_inodes_percent, dfree_inodes_percent;
   double warning_high_tide;
   double critical_high_tide;
   int temp_result;
@@ -171,7 +170,6 @@ main (int argc, char **argv)
   struct mount_entry *me;
   struct fs_usage fsp, tmpfsp;
   struct parameter_list *temp_list, *path;
-  struct name_list *seen = NULL;
 
   preamble = strdup (" - free space:");
   output = strdup ("");
@@ -237,45 +235,8 @@ main (int argc, char **argv)
     /* Remove filesystems already seen */
     if (np_seen_name(seen, me->me_mountdir)) {
       continue;
-    } else {
-      if (path->group != NULL) {
-        /* find all group members */
-        fsp.fsu_blocksize = 0;
-        fsp.fsu_blocks    = 0;
-        fsp.fsu_bfree     = 0;
-        fsp.fsu_bavail    = 0;
-        fsp.fsu_files     = 0;
-        fsp.fsu_ffree     = 0;
-
-
-        for (temp_list = path_select_list; temp_list; temp_list=temp_list->name_next) {
-          if (temp_list->group && ! (strcmp(temp_list->group, path->group))) {
-
-            stat_path(path);
-            get_fs_usage (temp_list->best_match->me_mountdir, temp_list->best_match->me_devname, &tmpfsp);
-
-            /* possibly differing blocksizes if disks are grouped. Calculating average */
-            fsp.fsu_blocksize = (fsp.fsu_blocksize * fsp.fsu_blocks + tmpfsp.fsu_blocksize * tmpfsp.fsu_blocks) / \
-                                (fsp.fsu_blocks + tmpfsp.fsu_blocks);  /* Size of a block.  */
-            fsp.fsu_blocks    += tmpfsp.fsu_blocks;     /* Total blocks. */
-            fsp.fsu_bfree     += tmpfsp.fsu_bfree;      /* Free blocks available to superuser. */
-            /* Gnulib workaround - see comment about it a few lines below */
-            fsp.fsu_bavail    += (tmpfsp.fsu_bavail > tmpfsp.fsu_bfree ? 0 : tmpfsp.fsu_bavail); /* Free blocks available to non-superuser. */
-            fsp.fsu_files     += tmpfsp.fsu_files;      /* Total file nodes. */
-            fsp.fsu_ffree     += tmpfsp.fsu_ffree;      /* Free file nodes. */
-
-            if (verbose >= 3)
-              printf("Group %s: add %llu blocks (%s) \n", path->group, tmpfsp.fsu_bavail, temp_list->name);
-             /* printf("Group %s: add %u blocks (%s)\n", temp_list->name); *//* path->group, tmpfsp.fsu_bavail, temp_list->name); */
-
-            np_add_name(&seen, temp_list->best_match->me_mountdir);
-          }
-        }
-        /* modify devname and mountdir for output */
-        me->me_mountdir = me->me_devname = path->group;
-      } else
-        np_add_name(&seen, me->me_mountdir);
-    }
+    } 
+    np_add_name(&seen, me->me_mountdir);
 
     if (path->group == NULL) {
       /* Skip remote filesystems if we're not interested in them */
@@ -301,55 +262,36 @@ main (int argc, char **argv)
     }
 
     if (fsp.fsu_blocks && strcmp ("none", me->me_mountdir)) {
-      total = fsp.fsu_blocks;
-      /* 2007-12-08 - Workaround for Gnulib reporting insanely high available
-       * space on BSD (the actual value should be negative but fsp.fsu_bavail
-       * is unsigned) */
-      available = fsp.fsu_bavail > fsp.fsu_bfree ? 0 : fsp.fsu_bavail;
-      available_to_root = fsp.fsu_bfree;
-      used = total - available_to_root;
-
-      if (verbose >= 3)
-        printf ("For %s, total=%llu, available=%llu, available_to_root=%llu, used=%llu, fsp.fsu_files=%llu, fsp.fsu_ffree=%llu\n",
-        me->me_mountdir, total, available, available_to_root, used, fsp.fsu_files, fsp.fsu_ffree);
-
-      dused_pct = calculate_percent( used, used + available );	/* used + available can never be > uintmax */
-
-      dfree_pct = 100 - dused_pct;
-      dused_units = used*fsp.fsu_blocksize/mult;
-      dfree_units = available*fsp.fsu_blocksize/mult;
-      dtotal_units = total*fsp.fsu_blocksize/mult;
-      dused_inodes_percent = calculate_percent(fsp.fsu_files - fsp.fsu_ffree, fsp.fsu_files);
-      dfree_inodes_percent = 100 - dused_inodes_percent;
+      get_stats (path, &fsp);
 
       if (verbose >= 3) {
         printf ("For %s, used_pct=%g free_pct=%g used_units=%g free_units=%g total_units=%g used_inodes_pct=%g free_inodes_pct=%g fsp.fsu_blocksize=%llu mult=%llu\n",
-          me->me_mountdir, dused_pct, dfree_pct, dused_units, dfree_units, dtotal_units, dused_inodes_percent, dfree_inodes_percent, fsp.fsu_blocksize, mult);
+          me->me_mountdir, path->dused_pct, path->dfree_pct, path->dused_units, path->dfree_units, path->dtotal_units, path->dused_inodes_percent, path->dfree_inodes_percent, fsp.fsu_blocksize, mult);
       }
 
       /* Threshold comparisons */
 
-      temp_result = get_status(dfree_units, path->freespace_units);
+      temp_result = get_status(path->dfree_units, path->freespace_units);
       if (verbose >=3) printf("Freespace_units result=%d\n", temp_result);
       disk_result = max_state( disk_result, temp_result );
 
-      temp_result = get_status(dfree_pct, path->freespace_percent);
+      temp_result = get_status(path->dfree_pct, path->freespace_percent);
       if (verbose >=3) printf("Freespace%% result=%d\n", temp_result);
       disk_result = max_state( disk_result, temp_result );
 
-      temp_result = get_status(dused_units, path->usedspace_units);
+      temp_result = get_status(path->dused_units, path->usedspace_units);
       if (verbose >=3) printf("Usedspace_units result=%d\n", temp_result);
       disk_result = max_state( disk_result, temp_result );
 
-      temp_result = get_status(dused_pct, path->usedspace_percent);
+      temp_result = get_status(path->dused_pct, path->usedspace_percent);
       if (verbose >=3) printf("Usedspace_percent result=%d\n", temp_result);
       disk_result = max_state( disk_result, temp_result );
 
-      temp_result = get_status(dused_inodes_percent, path->usedinodes_percent);
+      temp_result = get_status(path->dused_inodes_percent, path->usedinodes_percent);
       if (verbose >=3) printf("Usedinodes_percent result=%d\n", temp_result);
       disk_result = max_state( disk_result, temp_result );
 
-      temp_result = get_status(dfree_inodes_percent, path->freeinodes_percent);
+      temp_result = get_status(path->dfree_inodes_percent, path->freeinodes_percent);
       if (verbose >=3) printf("Freeinodes_percent result=%d\n", temp_result);
       disk_result = max_state( disk_result, temp_result );
 
@@ -365,26 +307,26 @@ main (int argc, char **argv)
       critical_high_tide = UINT_MAX;
 
       if (path->freespace_units->warning != NULL) {
-        warning_high_tide = dtotal_units - path->freespace_units->warning->end;
+        warning_high_tide = path->dtotal_units - path->freespace_units->warning->end;
       }
       if (path->freespace_percent->warning != NULL) {
-        warning_high_tide = abs( min( (double) warning_high_tide, (double) (1.0 - path->freespace_percent->warning->end/100)*dtotal_units ));
+        warning_high_tide = abs( min( (double) warning_high_tide, (double) (1.0 - path->freespace_percent->warning->end/100)*path->dtotal_units ));
       }
       if (path->freespace_units->critical != NULL) {
-        critical_high_tide = dtotal_units - path->freespace_units->critical->end;
+        critical_high_tide = path->dtotal_units - path->freespace_units->critical->end;
       }
       if (path->freespace_percent->critical != NULL) {
-        critical_high_tide = abs( min( (double) critical_high_tide, (double) (1.0 - path->freespace_percent->critical->end/100)*dtotal_units ));
+        critical_high_tide = abs( min( (double) critical_high_tide, (double) (1.0 - path->freespace_percent->critical->end/100)*path->dtotal_units ));
       }
 
       /* Nb: *_high_tide are unset when == UINT_MAX */
       asprintf (&perf, "%s %s", perf,
                 perfdata ((!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
-                          dused_units, units,
+                          path->dused_units, units,
                           (warning_high_tide != UINT_MAX ? TRUE : FALSE), warning_high_tide,
                           (critical_high_tide != UINT_MAX ? TRUE : FALSE), critical_high_tide,
                           TRUE, 0,
-                          TRUE, dtotal_units));
+                          TRUE, path->dtotal_units));
 
       if (disk_result==STATE_OK && erronly && !verbose)
         continue;
@@ -392,13 +334,13 @@ main (int argc, char **argv)
       asprintf (&output, "%s %s %.0f %s (%.0f%%",
                 output,
                 (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
-                dfree_units,
+                path->dfree_units,
                 units,
-                dfree_pct);
-      if (dused_inodes_percent < 0) {
+                path->dfree_pct);
+      if (path->dused_inodes_percent < 0) {
         asprintf(&output, "%s inode=-);", output);
       } else {
-        asprintf(&output, "%s inode=%.0f%%);", output, dfree_inodes_percent );
+        asprintf(&output, "%s inode=%.0f%%);", output, path->dfree_inodes_percent );
       }
 
       /* TODO: Need to do a similar debug line
@@ -995,4 +937,75 @@ stat_path (struct parameter_list *p)
     printf("DISK %s - ", _("CRITICAL"));
     die (STATE_CRITICAL, _("%s %s: %s\n"), p->name, _("is not accessible"), strerror(errno));
   }
+}
+
+
+void
+get_stats (struct parameter_list *p, struct fs_usage *fsp) {
+  struct parameter_list *p_list;
+  struct fs_usage tmpfsp;
+  int first = 1;
+
+  if (p->group == NULL) {
+    get_path_stats(p,fsp);
+  } else {
+    /* find all group members */
+    for (p_list = path_select_list; p_list; p_list=p_list->name_next) {
+      if (p_list->group && ! (strcmp(p_list->group, p->group))) {
+        stat_path(p_list);
+        get_fs_usage (p_list->best_match->me_mountdir, p_list->best_match->me_devname, &tmpfsp);
+        get_path_stats(p_list, &tmpfsp); 
+        if (verbose >= 3)
+          printf("Group %s: adding %llu blocks sized %llu, (%s) used_units=%g free_units=%g total_units=%g fsu_blocksize=%llu mult=%llu\n",
+                 p_list->group, tmpfsp.fsu_bavail, tmpfsp.fsu_blocksize, p_list->best_match->me_mountdir, p_list->dused_units, p_list->dfree_units,
+                 p_list->dtotal_units, mult);
+
+        /* prevent counting the first FS of a group twice since its parameter_list entry 
+         * is used to carry the information of all file systems of the entire group */
+        if (! first) {
+          p->total += p_list->total;
+          p->available += p_list->available;
+          p->available_to_root += p_list->available_to_root;
+          p->used += p_list->used;
+            
+          p->dused_units += p_list->dused_units;
+          p->dfree_units += p_list->dfree_units;
+          p->dtotal_units += p_list->dtotal_units;
+          p->inodes_total += p_list->inodes_total;
+          p->inodes_free  += p_list->inodes_free;
+        }
+        first = 0;
+      }
+      if (verbose >= 3) 
+        printf("Group %s now has: used_units=%g free_units=%g total_units=%g fsu_blocksize=%llu mult=%llu\n",
+               p->group, tmpfsp.fsu_bavail, tmpfsp.fsu_blocksize, p->best_match->me_mountdir, p->dused_units,
+               p->dfree_units, p->dtotal_units, mult);
+    }
+    /* modify devname and mountdir for output */
+    p->best_match->me_mountdir = p->best_match->me_devname = p->group;
+  }
+  /* finally calculate percentages for either plain FS or summed up group */
+  p->dused_pct = calculate_percent( p->used, p->used + p->available );	/* used + available can never be > uintmax */
+  p->dfree_pct = 100 - p->dused_pct;
+  p->dused_inodes_percent = calculate_percent(p->inodes_total - p->inodes_free, p->inodes_total);
+  p->dfree_inodes_percent = 100 - p->dused_inodes_percent;
+  
+}
+
+void
+get_path_stats (struct parameter_list *p, struct fs_usage *fsp) {
+  p->total = fsp->fsu_blocks;
+  /* 2007-12-08 - Workaround for Gnulib reporting insanely high available
+  * space on BSD (the actual value should be negative but fsp->fsu_bavail
+  * is unsigned) */
+  p->available = fsp->fsu_bavail > fsp->fsu_bfree ? 0 : fsp->fsu_bavail;
+  p->available_to_root = fsp->fsu_bfree;
+  p->used = p->total - p->available_to_root;
+  
+  p->dused_units = p->used*fsp->fsu_blocksize/mult;
+  p->dfree_units = p->available*fsp->fsu_blocksize/mult;
+  p->dtotal_units = p->total*fsp->fsu_blocksize/mult;
+  p->inodes_total = fsp->fsu_files;      /* Total file nodes. */
+  p->inodes_free  = fsp->fsu_ffree;      /* Free file nodes. */
+  np_add_name(&seen, p->best_match->me_mountdir);
 }
