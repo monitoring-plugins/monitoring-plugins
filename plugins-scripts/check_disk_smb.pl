@@ -239,7 +239,7 @@ if (/\s*(\d*) blocks of size (\d*)\. (\d*) blocks available/) {
 	$answer = "Result from smbclient not suitable\n";
 	$state = "UNKNOWN";
 	foreach (@lines) {
-		if (/(Access denied|NT_STATUS_LOGON_FAILURE)/) {
+		if (/(Access denied|NT_STATUS_LOGON_FAILURE|NT_STATUS_ACCESS_DENIED)/) {
 			$answer = "Access Denied\n";
 			$state = "CRITICAL";
 			last;
