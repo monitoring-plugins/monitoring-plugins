@@ -3,6 +3,7 @@ This file documents the major additions and syntax changes between releases.
 ...
 	ENHANCEMENTS
 	check_nt UPTIME accepts warning/critical thresholds (Ryan Kelly)
+	check_disk_smb now allows spaces in share names (#990948, #1370031, Debian #601699)
 
 	FIXES
 	check_snmp now attempts to convert string responses into a double value. If the full string is a value, 
