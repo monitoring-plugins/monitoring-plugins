@@ -8,7 +8,7 @@ use strict;
 use Test::More;
 use NPTest;
 
-my $tests = 8+38+2+2;
+my $tests = 8+42+2+2;
 plan tests => $tests;
 my $res;
 
@@ -124,6 +124,13 @@ SKIP: {
 		cmp_ok( $res->return_code, '==', 0, "Skipping all thresholds");
 		like($res->output, '/^SNMP OK - \d+ \w+ \d+\s.*$/', "Skipping all thresholds, result printed rather than parsed");
 
+		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o system.sysUpTime.0 -c 1000000000: -u '1/100 sec'");
+		cmp_ok( $res->return_code, '==', 2, "Timetick used as a threshold");
+		like($res->output, '/^SNMP CRITICAL - \*\d+\* 1\/100 sec.*$/', "Timetick used as a threshold, parsed as numeric");
+
+		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o system.sysUpTime.0");
+		cmp_ok( $res->return_code, '==', 0, "Timetick used as a string");
+		like($res->output, '/^SNMP OK - Timeticks:\s\(\d+\)\s+(?:\d+ days?,\s+)?\d+:\d+:\d+\.\d+\s.*$/', "Timetick used as a string, result printed rather than parsed");
 	}
 
 	# These checks need a complete command line. An invalid community is used so

@@ -12,6 +12,9 @@ This file documents the major additions and syntax changes between releases.
 	Fix check_disk free space calculation if blocksizes differ within a disk group (Bekar - #2973603)
 	check_disk_smb now handles NT_STATUS_ACCESS_DENIED properly (Debian #601696) 
 
+	FIXES
+	Make check_snmp work more like v1.4.14 with regard to using special values (Timeticks, STRING) as numeric thresholds.
+
 1.4.15 27th July 2010
 	ENHANCEMENTS
 	New check_ntp_peer -m and -n options to check the number of usable time sources ("truechimers")

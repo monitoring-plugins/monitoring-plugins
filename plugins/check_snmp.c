@@ -170,7 +170,6 @@ main (int argc, char **argv)
 	char *state_string=NULL;
 	size_t response_length, current_length, string_length;
 	char *temp_string=NULL;
-	int is_numeric=0;
 	time_t current_time;
 	double temp_double;
 	time_t duration;
@@ -336,29 +335,24 @@ main (int argc, char **argv)
 		/* We strip out the datatype indicator for PHBs */
 		if (strstr (response, "Gauge: ")) {
 			show = strstr (response, "Gauge: ") + 7;
-			is_numeric++;
 		} 
 		else if (strstr (response, "Gauge32: ")) {
 			show = strstr (response, "Gauge32: ") + 9;
-			is_numeric++;
 		} 
 		else if (strstr (response, "Counter32: ")) {
 			show = strstr (response, "Counter32: ") + 11;
-			is_numeric++;
 			is_counter=1;
 			if(!calculate_rate) 
 				strcpy(type, "c");
 		}
 		else if (strstr (response, "Counter64: ")) {
 			show = strstr (response, "Counter64: ") + 11;
-			is_numeric++;
 			is_counter=1;
 			if(!calculate_rate)
 				strcpy(type, "c");
 		}
 		else if (strstr (response, "INTEGER: ")) {
 			show = strstr (response, "INTEGER: ") + 9;
-			is_numeric++;
 		}
 		else if (strstr (response, "STRING: ")) {
 			show = strstr (response, "STRING: ") + 8;
@@ -410,15 +404,17 @@ main (int argc, char **argv)
 			}
 
 		}
-		else if (strstr (response, "Timeticks: "))
+		else if (strstr (response, "Timeticks: ")) {
 			show = strstr (response, "Timeticks: ");
+		}
 		else
 			show = response;
 
 		iresult = STATE_DEPENDENT;
 
 		/* Process this block for numeric comparisons */
-		 if (is_numeric) {
+		/* Make some special values,like Timeticks numeric only if a threshold is defined */
+		if (thlds[i]->warning || thlds[i]->critical || calculate_rate) {
 			ptr = strpbrk (show, "0123456789");
 			if (ptr == NULL)
 				die (STATE_UNKNOWN,_("No valid data returned"));
