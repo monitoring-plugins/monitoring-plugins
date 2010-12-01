@@ -6,13 +6,8 @@ This file documents the major additions and syntax changes between releases.
 	check_disk_smb now allows spaces in share names (#990948, #1370031, Debian #601699)
 
 	FIXES
-	check_snmp now attempts to convert string responses into a double value. If the full string is a value, 
-	  check_snmp will consider it a numeric value and thus apply threshold checks and return performance data.
-	  This reverts back to 1.4.14 behaviour with strings
 	Fix check_disk free space calculation if blocksizes differ within a disk group (Bekar - #2973603)
 	check_disk_smb now handles NT_STATUS_ACCESS_DENIED properly (Debian #601696) 
-
-	FIXES
 	Make check_snmp work more like v1.4.14 with regard to using special values (Timeticks, STRING) as numeric thresholds.
 
 1.4.15 27th July 2010

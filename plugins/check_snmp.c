@@ -160,7 +160,6 @@ main (int argc, char **argv)
 	char *outbuff;
 	char *ptr = NULL;
 	char *show = NULL;
-	char *endptr = NULL;
 	char *th_warn=NULL;
 	char *th_crit=NULL;
 	char type[8] = "";
@@ -388,19 +387,6 @@ main (int argc, char **argv)
 					/* Break for loop before next line increment when done */
 					if (!dq_count) break;
 				}
-			}
-
-			/* Allow numeric conversion if whole string is a number. Make concession for strings with " at beginning or end */
-			/* This duplicates the conversion a bit later, but is cleaner to separate out the checking against the conversion */
-			ptr = show;
-			if (*ptr == '"')
-				ptr++;
-			if (*ptr != '\0' ) {
-				strtod( ptr, &endptr );
-				if (*endptr == '"')
-					endptr++;
-				if (*endptr == '\0')
-					is_numeric=1;
 			}
 
 		}

@@ -54,7 +54,7 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 # We should merge that with $ENV{'NPTEST_CACHE'}, use one dir for all test data
 $ENV{'NAGIOS_PLUGIN_STATE_DIRECTORY'} ||= "/var/tmp";
 
-my $tests = 41;
+my $tests = 39;
 if (-x "./check_snmp") {
 	plan tests => $tests;
 } else {
@@ -172,10 +172,6 @@ is($res->output, 'SNMP CRITICAL - *"stringtests"* | ', "Inverted string match" )
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.11 --invert-search -s ring" );
 is($res->return_code, 0, "OK as string doesn't match but inverted" );
 is($res->output, 'SNMP OK - "stringtests" | ', "OK as inverted string no match" );
-
-$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.12" );
-is($res->return_code, 0, "Numeric in string test" );
-is($res->output, 'SNMP OK - 3.5 | iso.3.6.1.4.1.8072.3.2.67.12=3.5 ', "Check seen as numeric" );
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.12 -w 4:5" );
 is($res->return_code, 1, "Numeric in string test" );
