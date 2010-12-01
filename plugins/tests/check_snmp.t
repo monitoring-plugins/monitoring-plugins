@@ -51,6 +51,9 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 	}
 }
 
+# We should merge that with $ENV{'NPTEST_CACHE'}, use one dir for all test data
+$ENV{'NAGIOS_PLUGIN_STATE_DIRECTORY'} ||= "/var/tmp";
+
 my $tests = 41;
 if (-x "./check_snmp") {
 	plan tests => $tests;
@@ -106,7 +109,7 @@ like($res->output, '/'.quotemeta('SNMP OK - And now have fun with with this: \"C
 "And now have fun with with this: \"C:\\\\\"
 because we\'re not done yet!"').'/m', "Attempt to confuse parser No.3");
 
-system("rm /usr/local/nagios/var/check_snmp/*");
+system("rm -f ".$ENV{'NAGIOS_PLUGIN_STATE_DIRECTORY'}."/check_snmp/*");
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -w 600" );
 is($res->return_code, 0, "Returns OK");
 is($res->output, "No previous data to calculate rate - assume okay");
