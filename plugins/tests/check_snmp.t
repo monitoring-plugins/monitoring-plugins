@@ -8,6 +8,7 @@ use Test::More;
 use NPTest;
 use FindBin qw($Bin);
 
+my $tests = 39;
 # Check that all dependent modules are available
 eval {
 	require NetSNMP::OID;
@@ -17,6 +18,12 @@ eval {
 
 if ($@) {
 	plan skip_all => "Missing required module for test: $@";
+} else {
+	if (-x "./check_snmp") {
+		plan tests => $tests;
+	} else {
+		plan skip_all => "No check_snmp compiled";
+	}
 }
 
 my $port_snmp = 16100 + int(rand(100));
@@ -53,13 +60,6 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 
 # We should merge that with $ENV{'NPTEST_CACHE'}, use one dir for all test data
 $ENV{'NAGIOS_PLUGIN_STATE_DIRECTORY'} ||= "/var/tmp";
-
-my $tests = 39;
-if (-x "./check_snmp") {
-	plan tests => $tests;
-} else {
-	plan skip_all => "No check_snmp compiled";
-}
 
 my $res;
 
