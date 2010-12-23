@@ -58,7 +58,7 @@ char *ld_host = NULL;
 char *ld_base = NULL;
 char *ld_passwd = NULL;
 char *ld_binddn = NULL;
-int ld_port = DEFAULT_PORT;
+int ld_port = -1;
 #ifdef HAVE_LDAP_SET_OPTION
 int ld_protocol = DEFAULT_PROTOCOL;
 #endif
@@ -341,7 +341,8 @@ process_arguments (int argc, char **argv)
 		case 'S':
 			if (! starttls) {
 				ssl_on_connect = TRUE;
-				ld_port = LDAPS_PORT;
+				if (ld_port == -1)
+					ld_port = LDAPS_PORT;
 			} else
 				usage_va(_("%s cannot be combined with %s"), "-S/--ssl", "-T/--starttls");
 			break;
@@ -363,6 +364,9 @@ process_arguments (int argc, char **argv)
 
 	if (ld_base == NULL && argv[c])
 		ld_base = strdup (argv[c++]);
+
+	if (ld_port == -1)
+		ld_port = DEFAULT_PORT;
 
 	return validate_arguments ();
 }
