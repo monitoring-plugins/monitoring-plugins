@@ -101,10 +101,9 @@ int server_expect_yn = 0;
 char server_expect[MAX_INPUT_BUFFER] = HTTP_EXPECT;
 char string_expect[MAX_INPUT_BUFFER] = "";
 char output_string_search[30] = "";
-double warning_time = 0;
-int check_warning_time = FALSE;
-double critical_time = 0;
-int check_critical_time = FALSE;
+char *warning_thresholds = NULL;
+char *critical_thresholds = NULL;
+thresholds *thlds;
 char user_auth[MAX_INPUT_BUFFER] = "";
 char proxy_auth[MAX_INPUT_BUFFER] = "";
 int display_html = FALSE;
@@ -258,20 +257,10 @@ process_arguments (int argc, char **argv)
         socket_timeout = atoi (optarg);
       break;
     case 'c': /* critical time threshold */
-      if (!is_nonnegative (optarg))
-        usage2 (_("Critical threshold must be integer"), optarg);
-      else {
-        critical_time = strtod (optarg, NULL);
-        check_critical_time = TRUE;
-      }
+      critical_thresholds = optarg;
       break;
     case 'w': /* warning time threshold */
-      if (!is_nonnegative (optarg))
-        usage2 (_("Warning threshold must be integer"), optarg);
-      else {
-        warning_time = strtod (optarg, NULL);
-        check_warning_time = TRUE;
-      }
+      warning_thresholds = optarg;
       break;
     case 'A': /* User Agent String */
       asprintf (&user_agent, "User-Agent: %s", optarg);
@@ -478,8 +467,10 @@ process_arguments (int argc, char **argv)
       server_address = strdup (host_name);
   }
 
-  if (check_critical_time && critical_time>(double)socket_timeout)
-    socket_timeout = (int)critical_time + 1;
+  set_thresholds(&thlds, warning_thresholds, critical_thresholds);
+
+  if (critical_thresholds && thlds->critical->end>(double)socket_timeout)
+    socket_timeout = (int)thlds->critical->end + 1;
 
   if (http_method == NULL)
     http_method = strdup ("GET");
@@ -1099,10 +1090,7 @@ check_http (void)
             (display_html ? "</A>" : ""),
             perfd_time (elapsed_time), perfd_size (page_len));
 
-  if (check_critical_time == TRUE && elapsed_time > critical_time)
-    result = STATE_CRITICAL;
-  if (check_warning_time == TRUE && elapsed_time > warning_time)
-    result =  max_state_alt(STATE_WARNING, result);
+  result = max_state_alt(get_status(elapsed_time, thlds), result);
 
   die (result, "HTTP %s: %s\n", state_text(result), msg);
   /* die failed? */
@@ -1284,8 +1272,8 @@ server_port_check (int ssl_flag)
 char *perfd_time (double elapsed_time)
 {
   return fperfdata ("time", elapsed_time, "s",
-            check_warning_time, warning_time,
-            check_critical_time, critical_time,
+            thlds->warning?TRUE:FALSE, thlds->warning?thlds->warning->end:0,
+            thlds->critical?TRUE:FALSE, thlds->critical?thlds->critical->end:0,
                    TRUE, 0, FALSE, 0);
 }
 
@@ -1336,12 +1324,12 @@ print_help (void)
 
 #ifdef HAVE_SSL
   printf (" %s\n", "-S, --ssl");
-  printf ("   %s\n", _("Connect via SSL. Port defaults to 443"));
+  printf ("    %s\n", _("Connect via SSL. Port defaults to 443"));
   printf (" %s\n", "--sni");
-  printf ("   %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
+  printf ("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
   printf (" %s\n", "-C, --certificate=INTEGER");
-  printf ("   %s\n", _("Minimum number of days a certificate has to be valid. Port defaults to 443"));
-  printf ("   %s\n", _("(when this option is used the URL is not checked.)\n"));
+  printf ("    %s\n", _("Minimum number of days a certificate has to be valid. Port defaults to 443"));
+  printf ("    %s\n", _("(when this option is used the URL is not checked.)\n"));
 #endif
 
   printf (" %s\n", "-e, --expect=STRING");
@@ -1378,11 +1366,11 @@ print_help (void)
   printf (" %s\n", "-a, --authorization=AUTH_PAIR");
   printf ("    %s\n", _("Username:password on sites with basic authentication"));
   printf (" %s\n", "-b, --proxy-authorization=AUTH_PAIR");
-  printf (" 	%s\n", _("Username:password on proxy-servers with basic authentication"));
+  printf ("    %s\n", _("Username:password on proxy-servers with basic authentication"));
   printf (" %s\n", "-A, --useragent=STRING");
   printf ("    %s\n", _("String to be sent in http header as \"User Agent\""));
   printf (" %s\n", "-k, --header=STRING");
-  printf ("    %s\n", _(" Any other tags to be sent in http header. Use multiple times for additional headers"));
+  printf ("    %s\n", _("Any other tags to be sent in http header. Use multiple times for additional headers"));
   printf (" %s\n", "-L, --link");
   printf ("    %s\n", _("Wrap output in HTML link (obsoleted by urlize)"));
   printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow|sticky|stickyport>");
