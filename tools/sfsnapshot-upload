@@ -107,12 +107,13 @@ cat <<-END_README > README
 	corresponding snapshot (nagios-plugins-<git-describe>.tar.gz).
 
 	For backward-compatibility, the nagios-plugins-HEAD.tar.gz and
-	nagios-plugins-trunk-<ts> point to their corresponding "master" head.
+	nagios-plugins-trunk-<ts>.tar.gz point to their corresponding "master"
+	head.
 
 	The tarballs will only be updated when a change has been made. The
-	MD5SUM file will be updated each time.
+	MD5SUM file is updated every time the snapshot script runs.
 
-	The MD5SUM are:
+	The MD5SUMs are:
 	END_README
 md5sum *.gz | tee -a README > MD5SUM
 
