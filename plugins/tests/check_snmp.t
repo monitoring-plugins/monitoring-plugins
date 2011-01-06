@@ -8,7 +8,7 @@ use Test::More;
 use NPTest;
 use FindBin qw($Bin);
 
-my $tests = 39;
+my $tests = 41;
 # Check that all dependent modules are available
 eval {
 	require NetSNMP::OID;
@@ -185,4 +185,7 @@ $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1
 is($res->return_code, 0, "Not really numeric test (trying best to fool it)" );
 is($res->output, 'SNMP OK - "555\"I said\"" | ', "Check string with a double quote following is still a string (looks like the perl routine will always escape though)" );
 
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.15 -r 'CUSTOM CHECK OK'" );
+is($res->return_code, 0, "String check should check whole string, not a parsed number" );
+is($res->output, 'SNMP OK - "CUSTOM CHECK OK: foo is 12345" | ', "String check witn numbers returns whole string");
 

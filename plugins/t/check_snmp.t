@@ -124,7 +124,7 @@ SKIP: {
 		cmp_ok( $res->return_code, '==', 0, "Skipping all thresholds");
 		like($res->output, '/^SNMP OK - \d+ \w+ \d+\s.*$/', "Skipping all thresholds, result printed rather than parsed");
 
-		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o system.sysUpTime.0 -c 1000000000: -u '1/100 sec'");
+		$res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o system.sysUpTime.0 -c 1000000000000: -u '1/100 sec'");
 		cmp_ok( $res->return_code, '==', 2, "Timetick used as a threshold");
 		like($res->output, '/^SNMP CRITICAL - \*\d+\* 1\/100 sec.*$/', "Timetick used as a threshold, parsed as numeric");
 
