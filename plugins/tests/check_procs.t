@@ -8,7 +8,7 @@ use Test::More;
 use NPTest;
 
 if (-x "./check_procs") {
-	plan tests => 48;
+	plan tests => 50;
 } else {
 	plan skip_all => "No check_procs compiled";
 }
@@ -112,4 +112,8 @@ is( $result->output, 'VSZ WARNING: 4 warn out of 95 processes [WindowServer, Saf
 $result = NPTest->testCmd( "$command --metric=RSS -c 70000 -v" );
 is( $result->return_code, 2, "Checking against RSS > 70MB" );
 is( $result->output, 'RSS CRITICAL: 5 crit, 0 warn out of 95 processes [WindowServer, SystemUIServer, Safari, Mail, Safari]', "Output correct" );
+
+$result = NPTest->testCmd( "$command --ereg-argument-array='(nosuchname|nosuch2name)'" );
+is( $result->return_code, 0, "Checking no pipe symbol in output" );
+is( $result->output, "PROCS OK: 0 processes with regex args '(nosuchname,nosuch2name)'", "Output correct" );
 

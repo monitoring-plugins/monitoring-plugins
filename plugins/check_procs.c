@@ -318,6 +318,8 @@ process_arguments (int argc, char **argv)
 	int err;
 	int cflags = REG_NOSUB | REG_EXTENDED;
 	char errbuf[MAX_INPUT_BUFFER];
+	char *temp_string;
+	int i=0;
 	static struct option longopts[] = {
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
@@ -450,7 +452,14 @@ process_arguments (int argc, char **argv)
 				regerror (err, &re_args, errbuf, MAX_INPUT_BUFFER);
 				die (STATE_UNKNOWN, "PROCS %s: %s - %s\n", _("UNKNOWN"), _("Could not compile regular expression"), errbuf);
 			}
-			asprintf (&fmt, "%s%sregex args '%s'", (fmt ? fmt : ""), (options ? ", " : ""), optarg);
+			/* Strip off any | within the regex optarg */
+			temp_string = strdup(optarg);
+			while(temp_string[i]!='\0'){
+				if(temp_string[i]=='|')
+					temp_string[i]=',';
+				i++;
+			}
+			asprintf (&fmt, "%s%sregex args '%s'", (fmt ? fmt : ""), (options ? ", " : ""), temp_string);
 			options |= EREG_ARGS;
 			break;
 		case 'r': 					/* RSS */

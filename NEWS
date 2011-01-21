@@ -11,6 +11,7 @@ This file documents the major additions and syntax changes between releases.
 	check_disk_smb now handles NT_STATUS_ACCESS_DENIED properly (Debian #601696) 
 	Make check_snmp work more like v1.4.14 with regard to using special values (Timeticks, STRING) as numeric thresholds
 	Fix check_ldap overriding the port when --ssl was specified after -p
+	Fix check_procs where regex input of '|' would get displayed in output - now replaced with ','
 
 1.4.15 27th July 2010
 	ENHANCEMENTS
