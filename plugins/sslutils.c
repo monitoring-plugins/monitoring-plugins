@@ -3,7 +3,7 @@
 * Nagios plugins SSL utilities
 * 
 * License: GPL
-* Copyright (c) 2005-2007 Nagios Plugins Development Team
+* Copyright (c) 2005-2010 Nagios Plugins Development Team
 * 
 * Description:
 * 
@@ -26,6 +26,7 @@
 * 
 *****************************************************************************/
 
+#define MAX_CN_LENGTH 256
 #define LOCAL_TIMEOUT_ALARM_HANDLER
 #include "common.h"
 #include "netutils.h"
@@ -97,6 +98,11 @@ int np_net_ssl_read(void *buf, int num){
 int np_net_ssl_check_cert(int days_till_exp){
 #  ifdef USE_OPENSSL
 	X509 *certificate=NULL;
+	X509_NAME *subj=NULL;
+	char cn[MAX_CN_LENGTH]= "";
+	int cnlen =-1;
+	int status=STATE_UNKNOWN;
+
 	ASN1_STRING *tm;
 	int offset;
 	struct tm stamp;
@@ -109,6 +115,17 @@ int np_net_ssl_check_cert(int days_till_exp){
 		printf ("%s\n",_("CRITICAL - Cannot retrieve server certificate."));
 		return STATE_CRITICAL;
 	}
+
+	/* Extract CN from certificate subject */
+	subj=X509_get_subject_name(certificate);
+
+	if(! subj){
+		printf ("%s\n",_("CRITICAL - Cannot retrieve certificate subject."));
+		return STATE_CRITICAL;
+	}
+	cnlen = X509_NAME_get_text_by_NID (subj, NID_commonName, cn, sizeof(cn));
+	if ( cnlen == -1 )
+		strcpy(cn , _("Unknown CN"));
 
 	/* Retrieve timestamp of certificate */
 	tm = X509_get_notAfter (certificate);
@@ -155,19 +172,20 @@ int np_net_ssl_check_cert(int days_till_exp){
 		 stamp.tm_mday, stamp.tm_year + 1900, stamp.tm_hour, stamp.tm_min);
 
 	if (days_left > 0 && days_left <= days_till_exp) {
-		printf (_("WARNING - Certificate expires in %d day(s) (%s).\n"), days_left, timestamp);
-		return STATE_WARNING;
+		printf (_("WARNING - Certificate '%s' expires in %d day(s) (%s).\n"), cn, days_left, timestamp);
+		status=STATE_WARNING;
 	} else if (time_left < 0) {
-		printf (_("CRITICAL - Certificate expired on %s.\n"), timestamp);
-		return STATE_CRITICAL;
+		printf (_("CRITICAL - Certificate '%s' expired on %s.\n"), cn, timestamp);
+		status=STATE_CRITICAL;
 	} else if (days_left == 0) {
-		printf (_("WARNING - Certificate expires today (%s).\n"), timestamp);
-		return STATE_WARNING;
+		printf (_("WARNING - Certificate '%s' expires today (%s).\n"), cn, timestamp);
+		status=STATE_WARNING;
+	} else {
+		printf (_("OK - Certificate '%s' will expire on %s.\n"), cn, timestamp);
+		status=STATE_OK;
 	}
-
-	printf (_("OK - Certificate will expire on %s.\n"), timestamp);
 	X509_free (certificate);
-	return STATE_OK;
+	return status;
 #  else /* ifndef USE_OPENSSL */
 	printf ("%s\n", _("WARNING - Plugin does not support checking certificates."));
 	return STATE_WARNING;

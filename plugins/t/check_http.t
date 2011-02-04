@@ -102,7 +102,7 @@ SKIP: {
 
         $res = NPTest->testCmd( "./check_http -C 1 --ssl www.verisign.com" );
         cmp_ok( $res->return_code, '==', 0, "Checking certificate for www.verisign.com");
-        like  ( $res->output, '/Certificate will expire on/', "Output OK" );
+        like  ( $res->output, "/Certificate 'www.verisign.com' will expire on/", "Output OK" );
         my $saved_cert_output = $res->output;
 
         $res = NPTest->testCmd( "./check_http www.verisign.com -C 1" );

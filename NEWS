@@ -5,6 +5,7 @@ This file documents the major additions and syntax changes between releases.
 	check_nt UPTIME accepts warning/critical thresholds (Ryan Kelly)
 	check_disk_smb now allows spaces in share names (#990948, #1370031, Debian #601699)
 	check_http now uses standard threshold functions (enables floating point and ranges)
+	check_http now checks for and prints the certificate cn (hostname) in SSL certificate checks (Stéphane Urbanovski)
 
 	FIXES
 	Fix check_disk free space calculation if blocksizes differ within a disk group (Bekar - #2973603)
