@@ -183,7 +183,7 @@ main (int argc, char **argv)
 		/* return a WARNING status if we couldn't read any data */
 		if (recvlines(buffer, MAX_INPUT_BUFFER) <= 0) {
 			printf (_("recv() failed\n"));
-			result = STATE_WARNING;
+			return STATE_WARNING;
 		}
 		else {
 			if (verbose)
@@ -197,7 +197,7 @@ main (int argc, char **argv)
 				else
 					printf (_("Invalid SMTP response received from host on port %d: %s\n"),
 									server_port, buffer);
-				result = STATE_WARNING;
+				return STATE_WARNING;
 			}
 		}
 
