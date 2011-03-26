@@ -215,6 +215,10 @@ ssh_connect (char *haddr, int hport, char *remote_version)
 	char *ssh_proto = NULL;
 	char *ssh_server = NULL;
 	static char *rev_no = VERSION;
+	struct timeval tv;
+	double elapsed_time;
+
+	gettimeofday(&tv, NULL);
 
 	result = my_tcp_connect (haddr, hport, &sd);
 
@@ -250,9 +254,12 @@ ssh_connect (char *haddr, int hport, char *remote_version)
 			exit (STATE_WARNING);
 		}
 
+		elapsed_time = (double)deltime(tv) / 1.0e6;
+
 		printf
-			(_("SSH OK - %s (protocol %s)\n"),
-			 ssh_server, ssh_proto);
+			(_("SSH OK - %s (protocol %s) | %s\n"),
+			 ssh_server, ssh_proto, fperfdata("time", elapsed_time, "s",
+			 FALSE, 0, FALSE, 0, TRUE, 0, TRUE, (int)socket_timeout));
 		close(sd);
 		exit (STATE_OK);
 	}
