@@ -578,7 +578,9 @@ do_query (PGconn *conn, char *query)
 						? _("CRITICAL")
 						: _("UNKNOWN"));
 	printf (_("'%s' returned %f"), query, value);
-	printf ("|query=%f;%s;%s;0\n", value, query_warning, query_critical);
+	printf ("|query=%f;%s;%s;0\n", value,
+			query_warning ? query_warning : "",
+			query_critical ? query_critical : "");
 	return my_status;
 }
 
