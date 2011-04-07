@@ -54,6 +54,10 @@ char *warning_range = NULL;
 char *critical_range = NULL;
 thresholds *query_thresholds = NULL;
 
+char *conntime_warning_range = NULL;
+char *conntime_critical_range = NULL;
+thresholds *conntime_thresholds = NULL;
+
 char *np_dbi_driver = NULL;
 driver_option_t *np_dbi_options = NULL;
 int np_dbi_options_num = 0;
@@ -72,7 +76,10 @@ int do_query (dbi_conn, double *);
 int
 main (int argc, char **argv)
 {
+	int conntime_status = STATE_UNKNOWN;
 	int status = STATE_UNKNOWN;
+
+	int exit_status = STATE_UNKNOWN;
 
 	dbi_driver driver;
 	dbi_conn conn;
@@ -193,6 +200,8 @@ main (int argc, char **argv)
 	if (verbose)
 		printf("Time elapsed: %f\n", elapsed_time);
 
+	conntime_status = get_status (elapsed_time, conntime_thresholds);
+
 	/* select a database */
 	if (np_dbi_database) {
 		if (verbose > 1)
@@ -217,11 +226,23 @@ main (int argc, char **argv)
 		printf("Closing connection\n");
 	dbi_conn_close (conn);
 
-	printf ("%s - connection time: %fs, '%s' returned %f",
-			state_text (status), elapsed_time, np_dbi_query, query_val);
-	printf (" | conntime=%fs;;;0 query=%f;%s;%s;0\n", elapsed_time, query_val,
-			warning_range ? warning_range : "", critical_range ? critical_range : "");
-	return status;
+	/* 'conntime_status' is worse than 'status' (but not UNKOWN) */
+	if (((conntime_status < STATE_UNKNOWN) && (conntime_status > status))
+			/* 'status' is UNKNOWN and 'conntime_status' is not OK */
+			|| ((status >= STATE_UNKNOWN) && (conntime_status != STATE_OK)))
+		exit_status = conntime_status;
+	else
+		exit_status = status;
+
+	printf ("%s - %s: connection time: %fs, %s: '%s' returned %f",
+			state_text (exit_status),
+			state_text (conntime_status), elapsed_time,
+			state_text (status), np_dbi_query, query_val);
+	printf (" | conntime=%fs;%s;%s;0 query=%f;%s;%s;0\n", elapsed_time,
+			conntime_warning_range ? conntime_warning_range : "",
+			conntime_critical_range ? conntime_critical_range : "",
+			query_val, warning_range ? warning_range : "", critical_range ? critical_range : "");
+	return exit_status;
 }
 
 /* process command-line arguments */
@@ -234,6 +255,9 @@ process_arguments (int argc, char **argv)
 	static struct option longopts[] = {
 		STD_LONG_OPTS,
 
+		{"conntime-warning", required_argument, 0, 'W'},
+		{"conntime-critical", required_argument, 0, 'C'},
+
 		{"driver", required_argument, 0, 'd'},
 		{"option", required_argument, 0, 'o'},
 		{"query", required_argument, 0, 'q'},
@@ -242,7 +266,7 @@ process_arguments (int argc, char **argv)
 	};
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvht:c:w:H:d:o:q:D:",
+		c = getopt_long (argc, argv, "Vvht:c:w:H:W:C:d:o:q:D:",
 				longopts, &option);
 
 		if (c == EOF)
@@ -269,6 +293,13 @@ process_arguments (int argc, char **argv)
 				usage2 (_("Timeout interval must be a positive integer"), optarg);
 			else
 				timeout_interval = atoi (optarg);
+
+		case 'C':     /* critical conntime range */
+			conntime_critical_range = optarg;
+			break;
+		case 'W':     /* warning conntime range */
+			conntime_warning_range = optarg;
+			break;
 
 		case 'H':     /* host */
 			if (!is_host (optarg))
@@ -323,6 +354,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	set_thresholds (&query_thresholds, warning_range, critical_range);
+	set_thresholds (&conntime_thresholds, conntime_warning_range, conntime_critical_range);
 
 	return validate_arguments ();
 }
@@ -369,6 +401,11 @@ print_help (void)
 	printf ("\n");
 
 	printf (UT_WARN_CRIT_RANGE);
+	printf (" %s\n", "-W, --conntime-warning=RANGE");
+	printf ("    %s\n", _("Connection time warning range"));
+	printf (" %s\n", "-C, --conntime-critical=RANGE");
+	printf ("    %s\n", _("Connection time critical range"));
+	printf ("\n");
 
 	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
@@ -394,7 +431,8 @@ print_usage (void)
 {
 	printf ("%s\n", _("Usage:"));
 	printf ("%s -d <DBI driver> [-o <DBI driver option> [...]] -q <SQL query>\n", progname);
-	printf (" [-H <host>] [-c <critical value>] [-w <warning value>]\n");
+	printf (" [-H <host>] [-c <critical range>] [-w <warning range>]\n");
+	printf (" [-C <critical conntime range>] [-W <warning conntime range>]\n");
 }
 
 double
