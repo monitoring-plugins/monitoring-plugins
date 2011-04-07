@@ -69,9 +69,11 @@ int validate_arguments (void);
 void print_usage (void);
 void print_help (void);
 
+double timediff (struct timeval, struct timeval);
+
 void np_dbi_print_error (dbi_conn, char *, ...);
 
-int do_query (dbi_conn, double *);
+int do_query (dbi_conn, double *, double *);
 
 int
 main (int argc, char **argv)
@@ -85,7 +87,8 @@ main (int argc, char **argv)
 	dbi_conn conn;
 
 	struct timeval start_timeval, end_timeval;
-	double elapsed_time;
+	double conn_time = 0.0;
+	double query_time = 0.0;
 
 	double query_val = 0.0;
 
@@ -190,17 +193,12 @@ main (int argc, char **argv)
 	}
 
 	gettimeofday (&end_timeval, NULL);
-	while (start_timeval.tv_usec > end_timeval.tv_usec) {
-		--end_timeval.tv_sec;
-		end_timeval.tv_usec += 1000000;
-	}
-	elapsed_time = (double)(end_timeval.tv_sec - start_timeval.tv_sec)
-		+ (double)(end_timeval.tv_usec - start_timeval.tv_usec) / 1000000.0;
+	conn_time = timediff (start_timeval, end_timeval);
 
 	if (verbose)
-		printf("Time elapsed: %f\n", elapsed_time);
+		printf("Time elapsed: %f\n", conn_time);
 
-	conntime_status = get_status (elapsed_time, conntime_thresholds);
+	conntime_status = get_status (conn_time, conntime_thresholds);
 
 	/* select a database */
 	if (np_dbi_database) {
@@ -215,7 +213,7 @@ main (int argc, char **argv)
 	}
 
 	/* execute query */
-	status = do_query (conn, &query_val);
+	status = do_query (conn, &query_val, &query_time);
 	if (status != STATE_OK)
 		/* do_query prints an error message in this case */
 		return status;
@@ -234,14 +232,15 @@ main (int argc, char **argv)
 	else
 		exit_status = status;
 
-	printf ("%s - %s: connection time: %fs, %s: '%s' returned %f",
+	printf ("%s - %s: connection time: %fs, %s: '%s' returned %f in %fs",
 			state_text (exit_status),
-			state_text (conntime_status), elapsed_time,
-			state_text (status), np_dbi_query, query_val);
-	printf (" | conntime=%fs;%s;%s;0 query=%f;%s;%s;0\n", elapsed_time,
+			state_text (conntime_status), conn_time,
+			state_text (status), np_dbi_query, query_val, query_time);
+	printf (" | conntime=%fs;%s;%s;0 query=%f;%s;%s;0 querytime=%fs;;;0\n", conn_time,
 			conntime_warning_range ? conntime_warning_range : "",
 			conntime_critical_range ? conntime_critical_range : "",
-			query_val, warning_range ? warning_range : "", critical_range ? critical_range : "");
+			query_val, warning_range ? warning_range : "", critical_range ? critical_range : "",
+			query_time);
 	return exit_status;
 }
 
@@ -486,15 +485,19 @@ get_field (dbi_conn conn, dbi_result res, unsigned short *field_type)
 }
 
 int
-do_query (dbi_conn conn, double *res_val)
+do_query (dbi_conn conn, double *res_val, double *res_time)
 {
 	dbi_result res;
 
 	unsigned short field_type;
 	double val = 0.0;
 
+	struct timeval timeval_start, timeval_end;
+
 	if (verbose)
 		printf ("Executing query '%s'\n", np_dbi_query);
+
+	gettimeofday (&timeval_start, NULL);
 
 	res = dbi_conn_query (conn, np_dbi_query);
 	if (! res) {
@@ -531,6 +534,9 @@ do_query (dbi_conn conn, double *res_val)
 	if (field_type != DBI_TYPE_ERROR)
 		val = get_field (conn, res, &field_type);
 
+	gettimeofday (&timeval_end, NULL);
+	*res_time = timediff (timeval_start, timeval_end);
+
 	if (field_type == DBI_TYPE_ERROR) {
 		np_dbi_print_error (conn, "CRITICAL - failed to fetch data");
 		return STATE_CRITICAL;
@@ -540,6 +546,20 @@ do_query (dbi_conn conn, double *res_val)
 
 	dbi_result_free (res);
 	return STATE_OK;
+}
+
+double
+timediff (struct timeval start, struct timeval end)
+{
+	double diff;
+
+	while (start.tv_usec > end.tv_usec) {
+		--end.tv_sec;
+		end.tv_usec += 1000000;
+	}
+	diff = (double)(end.tv_sec - start.tv_sec)
+		+ (double)(end.tv_usec - start.tv_usec) / 1000000.0;
+	return diff;
 }
 
 void
