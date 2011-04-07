@@ -496,8 +496,6 @@ print_help (void)
 
 	printf (UT_HOST_PORT, 'P', myport);
 
-	printf (UT_IPv46);
-
 	printf (" %s\n", "-d, --database=STRING");
 	printf ("    %s", _("Database to check "));
 	printf (_("(default: %s)"), DEFAULT_DB);
