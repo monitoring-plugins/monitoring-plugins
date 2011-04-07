@@ -80,6 +80,7 @@ char *pgtty = NULL;
 char dbName[NAMEDATALEN] = DEFAULT_DB;
 char *pguser = NULL;
 char *pgpasswd = NULL;
+char *pgparams = NULL;
 double twarn = (double)DEFAULT_WARN;
 double tcrit = (double)DEFAULT_CRIT;
 char *pgquery = NULL;
@@ -130,9 +131,6 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 <sect2>
 <title>Future Enhancements</title>
 <para>ToDo List</para>
-<itemizedlist>
-<listitem>Add option to get password from a secured file rather than the command line</listitem>
-</itemizedlist>
 </sect2>
 
 
@@ -179,7 +177,10 @@ main (int argc, char **argv)
 	}
 	alarm (timeout_interval);
 
-	asprintf (&conninfo, "dbname = '%s'", dbName);
+	if (pgparams)
+		asprintf (&conninfo, "%s ", pgparams);
+
+	asprintf (&conninfo, "%sdbname = '%s'", conninfo ? conninfo : "", dbName);
 	if (pghost)
 		asprintf (&conninfo, "%s host = '%s'", conninfo, pghost);
 	if (pgport)
@@ -273,6 +274,7 @@ process_arguments (int argc, char **argv)
 		{"authorization", required_argument, 0, 'a'},
 		{"port", required_argument, 0, 'P'},
 		{"database", required_argument, 0, 'd'},
+		{"option", required_argument, 0, 'o'},
 		{"query", required_argument, 0, 'q'},
 		{"query_critical", required_argument, 0, 'C'},
 		{"query_warning", required_argument, 0, 'W'},
@@ -281,7 +283,7 @@ process_arguments (int argc, char **argv)
 	};
 
 	while (1) {
-		c = getopt_long (argc, argv, "hVt:c:w:H:P:d:l:p:a:q:C:W:v",
+		c = getopt_long (argc, argv, "hVt:c:w:H:P:d:l:p:a:o:q:C:W:v",
 		                 longopts, &option);
 
 		if (c == EOF)
@@ -347,6 +349,12 @@ process_arguments (int argc, char **argv)
 		case 'p':     /* authentication password */
 		case 'a':
 			pgpasswd = optarg;
+			break;
+		case 'o':
+			if (pgparams)
+				asprintf (&pgparams, "%s %s", pgparams, optarg);
+			else
+				asprintf (&pgparams, "%s", optarg);
 			break;
 		case 'q':
 			pgquery = optarg;
@@ -503,6 +511,8 @@ print_help (void)
 	printf ("    %s\n", _("Login name of user"));
 	printf (" %s\n", "-p, --password = STRING");
 	printf ("    %s\n", _("Password (BIG SECURITY ISSUE)"));
+	printf (" %s\n", "-o, --option = STRING");
+	printf ("    %s\n", _("Connection parameters (keyword = value), see below"));
 
 	printf (UT_WARN_CRIT);
 
@@ -533,6 +543,13 @@ print_help (void)
 
 	printf (" %s\n", _("See the chapter \"Monitoring Database Activity\" of the PostgreSQL manual"));
 	printf (" %s\n\n", _("for details about how to access internal statistics of the database server."));
+
+	printf (" %s\n", _("For a list of available connection parameters which may be used with the -o"));
+	printf (" %s\n", _("command line option, see the documentation for PQconnectdb() in the chapter"));
+	printf (" %s\n", _("\"libpq - C Library\" of the PostgreSQL manual. For example, this may be"));
+	printf (" %s\n", _("used to specify a service name in pg_service.conf to be used for additional"));
+	printf (" %s\n", _("connection parameters: -o 'service=<name>' or to specify the SSL mode:"));
+	printf (" %s\n\n", _("-o 'sslmode=require'."));
 
 	printf (" %s\n", _("The plugin will connect to a local postmaster if no host is specified. To"));
 	printf (" %s\n", _("connect to a remote host, be sure that the remote postmaster accepts TCP/IP"));
