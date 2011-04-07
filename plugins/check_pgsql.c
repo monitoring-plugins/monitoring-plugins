@@ -42,6 +42,20 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #define DEFAULT_DB "template1"
 #define DEFAULT_HOST "127.0.0.1"
 
+/* return the PSQL server version as a 3-tuple */
+#define PSQL_SERVER_VERSION3(server_version) \
+	(server_version) / 10000, \
+	(server_version) / 100 - (int)((server_version) / 10000) * 100, \
+	(server_version) - (int)((server_version) / 100) * 100
+/* return true if the given host is a UNIX domain socket */
+#define PSQL_IS_UNIX_DOMAIN_SOCKET(host) \
+	((NULL == (host)) || ('\0' == *(host)) || ('/' == *(host)))
+/* return a 3-tuple identifying a host/port independent of the socket type */
+#define PSQL_SOCKET3(host, port) \
+	((NULL == (host)) || ('\0' == *(host))) ? DEFAULT_PGSOCKET_DIR : host, \
+	PSQL_IS_UNIX_DOMAIN_SOCKET (host) ? "/.s.PGSQL." : ":", \
+	port
+
 enum {
 	DEFAULT_PORT = 5432,
 	DEFAULT_WARN = 2,
@@ -133,6 +147,7 @@ int
 main (int argc, char **argv)
 {
 	PGconn *conn;
+	char *conninfo = NULL;
 
 	int elapsed_time;
 	int status = STATE_UNKNOWN;
@@ -164,18 +179,30 @@ main (int argc, char **argv)
 	}
 	alarm (timeout_interval);
 
-	if (verbose)
-		printf("Connecting to database:\n DB: %s\n User: %s\n Host: %s\n Port: %d\n", dbName,
-		(pguser != NULL) ? pguser : "unspecified",
-		(pghost != NULL) ? pghost : "unspecified",
-		(pgport != NULL) ? atoi(pgport) : DEFAULT_PORT);
+	asprintf (&conninfo, "dbname = '%s'", dbName);
+	if (pghost)
+		asprintf (&conninfo, "%s host = '%s'", conninfo, pghost);
+	if (pgport)
+		asprintf (&conninfo, "%s port = '%s'", conninfo, pgport);
+	if (pgoptions)
+		asprintf (&conninfo, "%s options = '%s'", conninfo, pgoptions);
+	/* if (pgtty) -- ignored by PQconnectdb */
+	if (pguser)
+		asprintf (&conninfo, "%s user = '%s'", conninfo, pguser);
+
+	if (verbose) /* do not include password (see right below) in output */
+		printf ("Connecting to PostgreSQL using conninfo: %s%s\n", conninfo,
+				pgpasswd ? " password = <hidden>" : "");
+
+	if (pgpasswd)
+		asprintf (&conninfo, "%s password = '%s'", conninfo, pgpasswd);
 
 	/* make a connection to the database */
 	time (&start_time);
-	conn =
-		PQsetdbLogin (pghost, pgport, pgoptions, pgtty, dbName, pguser, pgpasswd);
+	conn = PQconnectdb (conninfo);
 	time (&end_time);
 	elapsed_time = (int) (end_time - start_time);
+
 	if (verbose)
 		printf("Time elapsed: %d\n", elapsed_time);
 
@@ -197,6 +224,20 @@ main (int argc, char **argv)
 	else {
 		status = STATE_OK;
 	}
+
+	if (verbose) {
+		char *server_host = PQhost (conn);
+		int server_version = PQserverVersion (conn);
+
+		printf ("Successfully connected to database %s (user %s) "
+				"at server %s%s%s (server version: %d.%d.%d, "
+				"protocol version: %d, pid: %d)\n",
+				PQdb (conn), PQuser (conn),
+				PSQL_SOCKET3 (server_host, PQport (conn)),
+				PSQL_SERVER_VERSION3 (server_version),
+				PQprotocolVersion (conn), PQbackendPID (conn));
+	}
+
 	printf (_(" %s - database %s (%d sec.)|%s\n"),
 	        state_text(status), dbName, elapsed_time,
 	        fperfdata("time", elapsed_time, "s",
