@@ -321,7 +321,7 @@ process_arguments (int argc, char **argv)
 			query_warning = optarg;
 			break;
 		case 'H':     /* host */
-			if (!is_host (optarg))
+			if ((*optarg != '/') && (!is_host (optarg)))
 				usage2 (_("Invalid hostname/address"), optarg);
 			else
 				pghost = optarg;
