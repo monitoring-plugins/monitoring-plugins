@@ -255,6 +255,19 @@ fi
 LIBS="$_SAVEDLIBS"
 CPPFLAGS="$_SAVEDCPPFLAGS"
 
+dnl Check for DBI libraries
+_SAVEDLIBS="$LIBS"
+AC_CHECK_LIB(dbi,dbi_initialize)
+if test "$ac_cv_lib_dbi_dbi_initialize" = "yes"; then
+  EXTRAS="$EXTRAS check_dbi"
+	DBILIBS="-ldbi"
+  AC_SUBST(DBILIBS)
+else
+  AC_MSG_WARN([Skipping dbi plugin])
+  AC_MSG_WARN([install DBI libs to compile this plugin (see REQUIREMENTS).])
+fi
+LIBS="$_SAVEDLIBS"
+
 dnl Check for radius libraries
 _SAVEDLIBS="$LIBS"
 AC_CHECK_LIB(radiusclient,rc_read_config)
