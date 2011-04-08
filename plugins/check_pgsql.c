@@ -147,7 +147,9 @@ main (int argc, char **argv)
 	PGconn *conn;
 	char *conninfo = NULL;
 
-	int elapsed_time;
+	struct timeval start_timeval;
+	struct timeval end_timeval;
+	double elapsed_time;
 	int status = STATE_UNKNOWN;
 	int query_status = STATE_UNKNOWN;
 
@@ -199,13 +201,19 @@ main (int argc, char **argv)
 		asprintf (&conninfo, "%s password = '%s'", conninfo, pgpasswd);
 
 	/* make a connection to the database */
-	time (&start_time);
+	gettimeofday (&start_timeval, NULL);
 	conn = PQconnectdb (conninfo);
-	time (&end_time);
-	elapsed_time = (int) (end_time - start_time);
+	gettimeofday (&end_timeval, NULL);
+
+	while (start_timeval.tv_usec > end_timeval.tv_usec) {
+		--end_timeval.tv_sec;
+		end_timeval.tv_usec += 1000000;
+	}
+	elapsed_time = (double)(end_timeval.tv_sec - start_timeval.tv_sec)
+		+ (double)(end_timeval.tv_usec - start_timeval.tv_usec) / 1000000.0;
 
 	if (verbose)
-		printf("Time elapsed: %d\n", elapsed_time);
+		printf("Time elapsed: %f\n", elapsed_time);
 
 	/* check to see that the backend connection was successfully made */
 	if (verbose)
@@ -239,10 +247,10 @@ main (int argc, char **argv)
 				PQprotocolVersion (conn), PQbackendPID (conn));
 	}
 
-	printf (_(" %s - database %s (%d sec.)|%s\n"),
+	printf (_(" %s - database %s (%f sec.)|%s\n"),
 	        state_text(status), dbName, elapsed_time,
 	        fperfdata("time", elapsed_time, "s",
-	                 (int)twarn, twarn, (int)tcrit, tcrit, TRUE, 0, FALSE,0));
+	                 !!(twarn > 0.0), twarn, !!(tcrit > 0.0), tcrit, TRUE, 0, FALSE,0));
 
 	if (pgquery)
 		query_status = do_query (conn, pgquery);
