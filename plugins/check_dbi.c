@@ -236,7 +236,7 @@ main (int argc, char **argv)
 			state_text (exit_status),
 			state_text (conntime_status), conn_time,
 			state_text (status), np_dbi_query, query_val, query_time);
-	printf (" | conntime=%fs;%s;%s;0 query=%f;%s;%s;0 querytime=%fs;;;0\n", conn_time,
+	printf (" | conntime=%fs;%s;%s;0; query=%f;%s;%s;; querytime=%fs;;;0;\n", conn_time,
 			conntime_warning_range ? conntime_warning_range : "",
 			conntime_critical_range ? conntime_critical_range : "",
 			query_val, warning_range ? warning_range : "", critical_range ? critical_range : "",
