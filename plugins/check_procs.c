@@ -299,6 +299,13 @@ main (int argc, char **argv)
 	if ( verbose >= 1 && strcmp(fails,"") )
 		printf (" [%s]", fails);
 
+	if (metric == METRIC_PROCS)
+		printf (" | procs=%d;%s;%s;0;\n", procs,
+				warning_range ? warning_range : "",
+				critical_range ? critical_range : "");
+	else
+		printf (" | procs=%d;;;0; procs_warn=%d;;;0; procs_crit=%d;;;0;", procs, warn, crit);
+
 	printf ("\n");
 	return result;
 }
