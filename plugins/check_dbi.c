@@ -10,7 +10,7 @@
 * 
 * This file contains the check_dbi plugin
 * 
-* Runs an arbitrary SQL command and checks the result.
+* Runs an arbitrary (SQL) command and checks the result.
 * 
 * 
 * This program is free software: you can redistribute it and/or modify
@@ -38,9 +38,16 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "netutils.h"
 
+#include <assert.h>
+
 #include <dbi/dbi.h>
 
 #include <stdarg.h>
+
+typedef enum {
+	METRIC_CONN_TIME,
+	METRIC_QUERY_RESULT,
+} np_dbi_metric_t;
 
 typedef struct {
 	char *key;
@@ -52,11 +59,9 @@ int verbose = 0;
 
 char *warning_range = NULL;
 char *critical_range = NULL;
-thresholds *query_thresholds = NULL;
+thresholds *dbi_thresholds = NULL;
 
-char *conntime_warning_range = NULL;
-char *conntime_critical_range = NULL;
-thresholds *conntime_thresholds = NULL;
+np_dbi_metric_t metric = METRIC_QUERY_RESULT;
 
 char *np_dbi_driver = NULL;
 driver_option_t *np_dbi_options = NULL;
@@ -78,10 +83,7 @@ int do_query (dbi_conn, double *, double *);
 int
 main (int argc, char **argv)
 {
-	int conntime_status = STATE_UNKNOWN;
 	int status = STATE_UNKNOWN;
-
-	int exit_status = STATE_UNKNOWN;
 
 	dbi_driver driver;
 	dbi_conn conn;
@@ -198,7 +200,8 @@ main (int argc, char **argv)
 	if (verbose)
 		printf("Time elapsed: %f\n", conn_time);
 
-	conntime_status = get_status (conn_time, conntime_thresholds);
+	if (metric == METRIC_CONN_TIME)
+		status = get_status (conn_time, dbi_thresholds);
 
 	/* select a database */
 	if (np_dbi_database) {
@@ -212,36 +215,35 @@ main (int argc, char **argv)
 		}
 	}
 
-	/* execute query */
-	status = do_query (conn, &query_val, &query_time);
-	if (status != STATE_OK)
-		/* do_query prints an error message in this case */
-		return status;
+	if (np_dbi_query) {
+		/* execute query */
+		status = do_query (conn, &query_val, &query_time);
+		if (status != STATE_OK)
+			/* do_query prints an error message in this case */
+			return status;
 
-	status = get_status (query_val, query_thresholds);
+		if (metric == METRIC_QUERY_RESULT)
+			status = get_status (query_val, dbi_thresholds);
+	}
 
 	if (verbose)
 		printf("Closing connection\n");
 	dbi_conn_close (conn);
 
-	/* 'conntime_status' is worse than 'status' (but not UNKOWN) */
-	if (((conntime_status < STATE_UNKNOWN) && (conntime_status > status))
-			/* 'status' is UNKNOWN and 'conntime_status' is not OK */
-			|| ((status >= STATE_UNKNOWN) && (conntime_status != STATE_OK)))
-		exit_status = conntime_status;
-	else
-		exit_status = status;
+	printf ("%s - connection time: %fs", state_text (status), conn_time);
+	if (np_dbi_query)
+		printf (", '%s' returned %f in %fs", np_dbi_query, query_val, query_time);
 
-	printf ("%s - %s: connection time: %fs, %s: '%s' returned %f in %fs",
-			state_text (exit_status),
-			state_text (conntime_status), conn_time,
-			state_text (status), np_dbi_query, query_val, query_time);
-	printf (" | conntime=%fs;%s;%s;0; query=%f;%s;%s;; querytime=%fs;;;0;\n", conn_time,
-			conntime_warning_range ? conntime_warning_range : "",
-			conntime_critical_range ? conntime_critical_range : "",
-			query_val, warning_range ? warning_range : "", critical_range ? critical_range : "",
-			query_time);
-	return exit_status;
+	printf (" | conntime=%fs;%s;%s;0;", conn_time,
+			((metric == METRIC_CONN_TIME) && warning_range) ? warning_range : "",
+			((metric == METRIC_CONN_TIME) && critical_range) ? critical_range : "");
+	if (np_dbi_query)
+		printf (" query=%f;%s;%s;; querytime=%fs;;;0;", query_val,
+				((metric == METRIC_QUERY_RESULT) && warning_range) ? warning_range : "",
+				((metric == METRIC_QUERY_RESULT) && critical_range) ? critical_range : "",
+				query_time);
+	printf ("\n");
+	return status;
 }
 
 /* process command-line arguments */
@@ -254,9 +256,7 @@ process_arguments (int argc, char **argv)
 	static struct option longopts[] = {
 		STD_LONG_OPTS,
 
-		{"conntime-warning", required_argument, 0, 'W'},
-		{"conntime-critical", required_argument, 0, 'C'},
-
+		{"metric", required_argument, 0, 'm'},
 		{"driver", required_argument, 0, 'd'},
 		{"option", required_argument, 0, 'o'},
 		{"query", required_argument, 0, 'q'},
@@ -265,7 +265,7 @@ process_arguments (int argc, char **argv)
 	};
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvht:c:w:H:W:C:d:o:q:D:",
+		c = getopt_long (argc, argv, "Vvht:c:w:m:H:d:o:q:D:",
 				longopts, &option);
 
 		if (c == EOF)
@@ -287,18 +287,19 @@ process_arguments (int argc, char **argv)
 		case 'w':     /* warning range */
 			warning_range = optarg;
 			break;
+		case 'm':
+			if (! strcasecmp (optarg, "CONN_TIME"))
+				metric = METRIC_CONN_TIME;
+			else if (! strcasecmp (optarg, "QUERY_RESULT"))
+				metric = METRIC_QUERY_RESULT;
+			else
+				usage2 (_("Invalid metric"), optarg);
+			break;
 		case 't':     /* timeout */
 			if (!is_intnonneg (optarg))
 				usage2 (_("Timeout interval must be a positive integer"), optarg);
 			else
 				timeout_interval = atoi (optarg);
-
-		case 'C':     /* critical conntime range */
-			conntime_critical_range = optarg;
-			break;
-		case 'W':     /* warning conntime range */
-			conntime_warning_range = optarg;
-			break;
 
 		case 'H':     /* host */
 			if (!is_host (optarg))
@@ -352,8 +353,7 @@ process_arguments (int argc, char **argv)
 		}
 	}
 
-	set_thresholds (&query_thresholds, warning_range, critical_range);
-	set_thresholds (&conntime_thresholds, conntime_warning_range, conntime_critical_range);
+	set_thresholds (&dbi_thresholds, warning_range, critical_range);
 
 	return validate_arguments ();
 }
@@ -364,8 +364,12 @@ validate_arguments ()
 	if (! np_dbi_driver)
 		usage ("Must specify a DBI driver");
 
-	if (! np_dbi_query)
-		usage ("Must specify an SQL query to execute");
+	if ((metric == METRIC_QUERY_RESULT) && (! np_dbi_query))
+		usage ("Must specify a query to execute (metric == QUERY_RESULT)");
+
+	if ((metric != METRIC_CONN_TIME)
+			&& (metric != METRIC_QUERY_RESULT))
+		usage ("Invalid metric specified");
 
 	return OK;
 }
@@ -377,7 +381,9 @@ print_help (void)
 
 	printf (COPYRIGHT, copyright, email);
 
-	printf (_("This program checks a query result against threshold levels"));
+	printf (_("This program connects to an (SQL) database using DBI and checks the\n"
+			"specified metric against threshold levels. The default metric is\n"
+			"the result of the specified query.\n"));
 
 	printf ("\n\n");
 
@@ -396,14 +402,14 @@ print_help (void)
 	printf (" %s\n", "-o, --option=STRING");
 	printf ("    %s\n", _("DBI driver options"));
 	printf (" %s\n", "-q, --query=STRING");
-	printf ("    %s\n", _("SQL query to execute"));
+	printf ("    %s\n", _("query to execute"));
 	printf ("\n");
 
 	printf (UT_WARN_CRIT_RANGE);
-	printf (" %s\n", "-W, --conntime-warning=RANGE");
-	printf ("    %s\n", _("Connection time warning range"));
-	printf (" %s\n", "-C, --conntime-critical=RANGE");
-	printf ("    %s\n", _("Connection time critical range"));
+	printf (" %s\n", "-m, --metric=METRIC");
+	printf ("    %s\n", _("Metric to check thresholds against. Available metrics:"));
+	printf ("    CONN_TIME    - %s\n", _("time used for setting up the database connection"));
+	printf ("    QUERY_RESULT - %s\n", _("result (first column of first row) of the query"));
 	printf ("\n");
 
 	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
@@ -411,10 +417,12 @@ print_help (void)
 	printf (UT_VERBOSE);
 
 	printf ("\n");
-	printf (" %s\n", _("A DBI driver (-d option) and a query (-q option) are required."));
-	printf (" %s\n", _("This plugin connects to an SQL database using libdbi and executes the"));
-	printf (" %s\n", _("specified SQL query. The first column of the first row of the result"));
-	printf (" %s\n", _("will be used as the check result and, if specified, compared with the"));
+	printf (" %s\n", _("A DBI driver (-d option) is required. If the specified metric operates"));
+	printf (" %s\n\n", _("on a query, one has to be specified (-q option)."));
+
+	printf (" %s\n", _("This plugin connects to an (SQL) database using libdbi and, optionally,"));
+	printf (" %s\n", _("executes the specified query. The first column of the first row of the"));
+	printf (" %s\n", _("result will be parsed and, in QUERY_RESULT mode, compared with the"));
 	printf (" %s\n", _("warning and critical ranges. The result from the query has to be numeric"));
 	printf (" %s\n\n", _("(strings representing numbers are fine)."));
 
@@ -429,9 +437,8 @@ void
 print_usage (void)
 {
 	printf ("%s\n", _("Usage:"));
-	printf ("%s -d <DBI driver> [-o <DBI driver option> [...]] -q <SQL query>\n", progname);
-	printf (" [-H <host>] [-c <critical range>] [-w <warning range>]\n");
-	printf (" [-C <critical conntime range>] [-W <warning conntime range>]\n");
+	printf ("%s -d <DBI driver> [-o <DBI driver option> [...]] [-q <query>]\n", progname);
+	printf (" [-H <host>] [-c <critical range>] [-w <warning range>] [-m <metric>]\n");
 }
 
 double
@@ -493,6 +500,8 @@ do_query (dbi_conn conn, double *res_val, double *res_time)
 	double val = 0.0;
 
 	struct timeval timeval_start, timeval_end;
+
+	assert (np_dbi_query);
 
 	if (verbose)
 		printf ("Executing query '%s'\n", np_dbi_query);
