@@ -38,7 +38,13 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "netutils.h"
 
+/* required for NAN */
+#ifndef _ISOC99_SOURCE
+#define _ISOC99_SOURCE
+#endif
+
 #include <assert.h>
+#include <math.h>
 
 #include <dbi/dbi.h>
 
@@ -47,6 +53,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 typedef enum {
 	METRIC_CONN_TIME,
 	METRIC_QUERY_RESULT,
+	METRIC_QUERY_TIME,
 } np_dbi_metric_t;
 
 typedef struct {
@@ -224,24 +231,38 @@ main (int argc, char **argv)
 
 		if (metric == METRIC_QUERY_RESULT)
 			status = get_status (query_val, dbi_thresholds);
+		else if (metric == METRIC_QUERY_TIME)
+			status = get_status (query_time, dbi_thresholds);
 	}
 
 	if (verbose)
 		printf("Closing connection\n");
 	dbi_conn_close (conn);
 
+	/* In case of METRIC_QUERY_RESULT, isnan(query_val) indicates an error
+	 * which should have been reported and handled (abort) before */
+	assert ((metric != METRIC_QUERY_RESULT) || (! isnan (query_val)));
+
 	printf ("%s - connection time: %fs", state_text (status), conn_time);
-	if (np_dbi_query)
-		printf (", '%s' returned %f in %fs", np_dbi_query, query_val, query_time);
+	if (np_dbi_query) {
+		if (isnan (query_val))
+			printf (", '%s' query execution time: %fs", np_dbi_query, query_time);
+		else
+			printf (", '%s' returned %f in %fs", np_dbi_query, query_val, query_time);
+	}
 
 	printf (" | conntime=%fs;%s;%s;0;", conn_time,
 			((metric == METRIC_CONN_TIME) && warning_range) ? warning_range : "",
 			((metric == METRIC_CONN_TIME) && critical_range) ? critical_range : "");
-	if (np_dbi_query)
-		printf (" query=%f;%s;%s;; querytime=%fs;;;0;", query_val,
-				((metric == METRIC_QUERY_RESULT) && warning_range) ? warning_range : "",
-				((metric == METRIC_QUERY_RESULT) && critical_range) ? critical_range : "",
-				query_time);
+	if (np_dbi_query) {
+		if (! isnan (query_val))
+			printf (" query=%f;%s;%s;;", query_val,
+					((metric == METRIC_QUERY_RESULT) && warning_range) ? warning_range : "",
+					((metric == METRIC_QUERY_RESULT) && critical_range) ? critical_range : "");
+		printf (" querytime=%fs;%s;%s;0;", query_time,
+				((metric == METRIC_QUERY_TIME) && warning_range) ? warning_range : "",
+				((metric == METRIC_QUERY_TIME) && critical_range) ? critical_range : "");
+	}
 	printf ("\n");
 	return status;
 }
@@ -292,6 +313,8 @@ process_arguments (int argc, char **argv)
 				metric = METRIC_CONN_TIME;
 			else if (! strcasecmp (optarg, "QUERY_RESULT"))
 				metric = METRIC_QUERY_RESULT;
+			else if (! strcasecmp (optarg, "QUERY_TIME"))
+				metric = METRIC_QUERY_TIME;
 			else
 				usage2 (_("Invalid metric"), optarg);
 			break;
@@ -364,11 +387,13 @@ validate_arguments ()
 	if (! np_dbi_driver)
 		usage ("Must specify a DBI driver");
 
-	if ((metric == METRIC_QUERY_RESULT) && (! np_dbi_query))
+	if (((metric == METRIC_QUERY_RESULT) || (metric == METRIC_QUERY_TIME))
+			&& (! np_dbi_query))
 		usage ("Must specify a query to execute (metric == QUERY_RESULT)");
 
 	if ((metric != METRIC_CONN_TIME)
-			&& (metric != METRIC_QUERY_RESULT))
+			&& (metric != METRIC_QUERY_RESULT)
+			&& (metric != METRIC_QUERY_TIME))
 		usage ("Invalid metric specified");
 
 	return OK;
@@ -410,6 +435,8 @@ print_help (void)
 	printf ("    %s\n", _("Metric to check thresholds against. Available metrics:"));
 	printf ("    CONN_TIME    - %s\n", _("time used for setting up the database connection"));
 	printf ("    QUERY_RESULT - %s\n", _("result (first column of first row) of the query"));
+	printf ("    QUERY_TIME   - %s\n", _("time used to execute the query"));
+	printf ("                   %s\n", _("(ignore the query result)"));
 	printf ("\n");
 
 	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
@@ -441,10 +468,16 @@ print_usage (void)
 	printf (" [-H <host>] [-c <critical range>] [-w <warning range>] [-m <metric>]\n");
 }
 
+#define CHECK_IGNORE_ERROR(s) \
+	do { \
+		if (metric != METRIC_QUERY_RESULT) \
+			return (s); \
+	} while (0)
+
 double
 get_field (dbi_conn conn, dbi_result res, unsigned short *field_type)
 {
-	double val = 0.0;
+	double val = NAN;
 
 	if (*field_type == DBI_TYPE_INTEGER) {
 		val = (double)dbi_result_get_longlong_idx (res, 1);
@@ -458,9 +491,10 @@ get_field (dbi_conn conn, dbi_result res, unsigned short *field_type)
 
 		val_str = dbi_result_get_string_idx (res, 1);
 		if ((! val_str) || (strcmp (val_str, "ERROR") == 0)) {
+			CHECK_IGNORE_ERROR (NAN);
 			np_dbi_print_error (conn, "CRITICAL - failed to fetch string value");
 			*field_type = DBI_TYPE_ERROR;
-			return 0.0;
+			return NAN;
 		}
 
 		if (verbose > 2)
@@ -468,9 +502,10 @@ get_field (dbi_conn conn, dbi_result res, unsigned short *field_type)
 
 		val = strtod (val_str, &endptr);
 		if (endptr == val_str) {
+			CHECK_IGNORE_ERROR (NAN);
 			printf ("CRITICAL - result value is not a numeric: %s\n", val_str);
 			*field_type = DBI_TYPE_ERROR;
-			return 0.0;
+			return NAN;
 		}
 		else if ((endptr != NULL) && (*endptr != '\0')) {
 			if (verbose)
@@ -478,6 +513,7 @@ get_field (dbi_conn conn, dbi_result res, unsigned short *field_type)
 		}
 	}
 	else {
+		CHECK_IGNORE_ERROR (NAN);
 		printf ("CRITICAL - cannot parse value of type %s (%i)\n",
 				(*field_type == DBI_TYPE_BINARY)
 					? "BINARY"
@@ -486,20 +522,72 @@ get_field (dbi_conn conn, dbi_result res, unsigned short *field_type)
 						: "<unknown>",
 				*field_type);
 		*field_type = DBI_TYPE_ERROR;
-		return 0.0;
+		return NAN;
 	}
 	return val;
 }
+
+double
+get_query_result (dbi_conn conn, dbi_result res, double *res_val)
+{
+	unsigned short field_type;
+	double val = NAN;
+
+	if (dbi_result_get_numrows (res) == DBI_ROW_ERROR) {
+		CHECK_IGNORE_ERROR (STATE_OK);
+		np_dbi_print_error (conn, "CRITICAL - failed to fetch rows");
+		return STATE_CRITICAL;
+	}
+
+	if (dbi_result_get_numrows (res) < 1) {
+		CHECK_IGNORE_ERROR (STATE_OK);
+		printf ("WARNING - no rows returned\n");
+		return STATE_WARNING;
+	}
+
+	if (dbi_result_get_numfields (res) == DBI_FIELD_ERROR) {
+		CHECK_IGNORE_ERROR (STATE_OK);
+		np_dbi_print_error (conn, "CRITICAL - failed to fetch fields");
+		return STATE_CRITICAL;
+	}
+
+	if (dbi_result_get_numfields (res) < 1) {
+		CHECK_IGNORE_ERROR (STATE_OK);
+		printf ("WARNING - no fields returned\n");
+		return STATE_WARNING;
+	}
+
+	if (dbi_result_first_row (res) != 1) {
+		CHECK_IGNORE_ERROR (STATE_OK);
+		np_dbi_print_error (conn, "CRITICAL - failed to fetch first row");
+		return STATE_CRITICAL;
+	}
+
+	field_type = dbi_result_get_field_type_idx (res, 1);
+	if (field_type != DBI_TYPE_ERROR)
+		val = get_field (conn, res, &field_type);
+
+	*res_val = val;
+
+	if (field_type == DBI_TYPE_ERROR) {
+		CHECK_IGNORE_ERROR (STATE_OK);
+		np_dbi_print_error (conn, "CRITICAL - failed to fetch data");
+		return STATE_CRITICAL;
+	}
+
+	dbi_result_free (res);
+	return STATE_OK;
+}
+
+#undef CHECK_IGNORE_ERROR
 
 int
 do_query (dbi_conn conn, double *res_val, double *res_time)
 {
 	dbi_result res;
 
-	unsigned short field_type;
-	double val = 0.0;
-
 	struct timeval timeval_start, timeval_end;
+	int status = STATE_OK;
 
 	assert (np_dbi_query);
 
@@ -514,47 +602,12 @@ do_query (dbi_conn conn, double *res_val, double *res_time)
 		return STATE_CRITICAL;
 	}
 
-	if (dbi_result_get_numrows (res) == DBI_ROW_ERROR) {
-		np_dbi_print_error (conn, "CRITICAL - failed to fetch rows");
-		return STATE_CRITICAL;
-	}
-
-	if (dbi_result_get_numrows (res) < 1) {
-		printf ("WARNING - no rows returned\n");
-		return STATE_WARNING;
-	}
-
-	if (dbi_result_get_numfields (res) == DBI_FIELD_ERROR) {
-		np_dbi_print_error (conn, "CRITICAL - failed to fetch fields");
-		return STATE_CRITICAL;
-	}
-
-	if (dbi_result_get_numfields (res) < 1) {
-		printf ("WARNING - no fields returned\n");
-		return STATE_WARNING;
-	}
-
-	if (dbi_result_first_row (res) != 1) {
-		np_dbi_print_error (conn, "CRITICAL - failed to fetch first row");
-		return STATE_CRITICAL;
-	}
-
-	field_type = dbi_result_get_field_type_idx (res, 1);
-	if (field_type != DBI_TYPE_ERROR)
-		val = get_field (conn, res, &field_type);
+	status = get_query_result (conn, res, res_val);
 
 	gettimeofday (&timeval_end, NULL);
 	*res_time = timediff (timeval_start, timeval_end);
 
-	if (field_type == DBI_TYPE_ERROR) {
-		np_dbi_print_error (conn, "CRITICAL - failed to fetch data");
-		return STATE_CRITICAL;
-	}
-
-	*res_val = val;
-
-	dbi_result_free (res);
-	return STATE_OK;
+	return status;
 }
 
 double
