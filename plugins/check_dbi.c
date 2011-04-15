@@ -68,6 +68,8 @@ char *warning_range = NULL;
 char *critical_range = NULL;
 thresholds *dbi_thresholds = NULL;
 
+char *expect = NULL;
+
 np_dbi_metric_t metric = METRIC_QUERY_RESULT;
 
 char *np_dbi_driver = NULL;
@@ -85,7 +87,7 @@ double timediff (struct timeval, struct timeval);
 
 void np_dbi_print_error (dbi_conn, char *, ...);
 
-int do_query (dbi_conn, double *, double *);
+int do_query (dbi_conn, const char **, double *, double *);
 
 int
 main (int argc, char **argv)
@@ -99,6 +101,7 @@ main (int argc, char **argv)
 	double conn_time = 0.0;
 	double query_time = 0.0;
 
+	const char *query_val_str = NULL;
 	double query_val = 0.0;
 
 	int i;
@@ -224,13 +227,21 @@ main (int argc, char **argv)
 
 	if (np_dbi_query) {
 		/* execute query */
-		status = do_query (conn, &query_val, &query_time);
+		status = do_query (conn, &query_val_str, &query_val, &query_time);
 		if (status != STATE_OK)
 			/* do_query prints an error message in this case */
 			return status;
 
-		if (metric == METRIC_QUERY_RESULT)
-			status = get_status (query_val, dbi_thresholds);
+		if (metric == METRIC_QUERY_RESULT) {
+			if (expect) {
+				if ((! query_val_str) || strcmp (query_val_str, expect))
+					status = STATE_CRITICAL;
+				else
+					status = STATE_OK;
+			}
+			else
+				status = get_status (query_val, dbi_thresholds);
+		}
 		else if (metric == METRIC_QUERY_TIME)
 			status = get_status (query_time, dbi_thresholds);
 	}
@@ -241,11 +252,17 @@ main (int argc, char **argv)
 
 	/* In case of METRIC_QUERY_RESULT, isnan(query_val) indicates an error
 	 * which should have been reported and handled (abort) before */
-	assert ((metric != METRIC_QUERY_RESULT) || (! isnan (query_val)));
+	assert ((metric != METRIC_QUERY_RESULT) || (! isnan (query_val)) || expect);
 
 	printf ("%s - connection time: %fs", state_text (status), conn_time);
 	if (np_dbi_query) {
-		if (isnan (query_val))
+		if (expect) {
+			printf (", '%s' returned '%s' in %fs", np_dbi_query,
+					query_val_str ? query_val_str : "<nothing>", query_time);
+			if (status != STATE_OK)
+				printf (" (expected '%s')", expect);
+		}
+		else if (isnan (query_val))
 			printf (", '%s' query execution time: %fs", np_dbi_query, query_time);
 		else
 			printf (", '%s' returned %f in %fs", np_dbi_query, query_val, query_time);
@@ -255,7 +272,7 @@ main (int argc, char **argv)
 			((metric == METRIC_CONN_TIME) && warning_range) ? warning_range : "",
 			((metric == METRIC_CONN_TIME) && critical_range) ? critical_range : "");
 	if (np_dbi_query) {
-		if (! isnan (query_val))
+		if (! isnan (query_val)) /* this is also true when -e is used */
 			printf (" query=%f;%s;%s;;", query_val,
 					((metric == METRIC_QUERY_RESULT) && warning_range) ? warning_range : "",
 					((metric == METRIC_QUERY_RESULT) && critical_range) ? critical_range : "");
@@ -277,6 +294,7 @@ process_arguments (int argc, char **argv)
 	static struct option longopts[] = {
 		STD_LONG_OPTS,
 
+		{"expect", required_argument, 0, 'e'},
 		{"metric", required_argument, 0, 'm'},
 		{"driver", required_argument, 0, 'd'},
 		{"option", required_argument, 0, 'o'},
@@ -286,7 +304,7 @@ process_arguments (int argc, char **argv)
 	};
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvht:c:w:m:H:d:o:q:D:",
+		c = getopt_long (argc, argv, "Vvht:c:w:e:m:H:d:o:q:D:",
 				longopts, &option);
 
 		if (c == EOF)
@@ -307,6 +325,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'w':     /* warning range */
 			warning_range = optarg;
+			break;
+		case 'e':
+			expect = optarg;
 			break;
 		case 'm':
 			if (! strcasecmp (optarg, "CONN_TIME"))
@@ -396,6 +417,12 @@ validate_arguments ()
 			&& (metric != METRIC_QUERY_TIME))
 		usage ("Invalid metric specified");
 
+	if (expect && (warning_range || critical_range))
+		usage ("Do not mix -e and -w/-c");
+
+	if (expect && (metric != METRIC_QUERY_RESULT))
+		usage ("Option -e requires metric QUERY_RESULT");
+
 	return OK;
 }
 
@@ -431,6 +458,9 @@ print_help (void)
 	printf ("\n");
 
 	printf (UT_WARN_CRIT_RANGE);
+	printf (" %s\n", "-e, --expect=STRING");
+	printf ("    %s\n", _("String to expect as query result"));
+	printf ("    %s\n", _("Do not mix with -w or -c!"));
 	printf (" %s\n", "-m, --metric=METRIC");
 	printf ("    %s\n", _("Metric to check thresholds against. Available metrics:"));
 	printf ("    CONN_TIME    - %s\n", _("time used for setting up the database connection"));
@@ -481,6 +511,7 @@ print_usage (void)
 	printf ("%s\n", _("Usage:"));
 	printf ("%s -d <DBI driver> [-o <DBI driver option> [...]] [-q <query>]\n", progname);
 	printf (" [-H <host>] [-c <critical range>] [-w <warning range>] [-m <metric>]\n");
+	printf (" [-e <string>]\n");
 }
 
 #define CHECK_IGNORE_ERROR(s) \
@@ -488,6 +519,28 @@ print_usage (void)
 		if (metric != METRIC_QUERY_RESULT) \
 			return (s); \
 	} while (0)
+
+const char *
+get_field_str (dbi_conn conn, dbi_result res, unsigned short field_type)
+{
+	const char *str;
+
+	if (field_type != DBI_TYPE_STRING) {
+		printf ("CRITICAL - result value is not a string\n");
+		return NULL;
+	}
+
+	str = dbi_result_get_string_idx (res, 1);
+	if ((! str) || (strcmp (str, "ERROR") == 0)) {
+		CHECK_IGNORE_ERROR (NULL);
+		np_dbi_print_error (conn, "CRITICAL - failed to fetch string value");
+		return NULL;
+	}
+
+	if ((verbose && expect) || (verbose > 2))
+		printf ("Query returned string '%s'\n", str);
+	return str;
+}
 
 double
 get_field (dbi_conn conn, dbi_result res, unsigned short *field_type)
@@ -504,16 +557,12 @@ get_field (dbi_conn conn, dbi_result res, unsigned short *field_type)
 		const char *val_str;
 		char *endptr = NULL;
 
-		val_str = dbi_result_get_string_idx (res, 1);
-		if ((! val_str) || (strcmp (val_str, "ERROR") == 0)) {
+		val_str = get_field_str (conn, res, *field_type);
+		if (! val_str) {
 			CHECK_IGNORE_ERROR (NAN);
-			np_dbi_print_error (conn, "CRITICAL - failed to fetch string value");
 			*field_type = DBI_TYPE_ERROR;
 			return NAN;
 		}
-
-		if (verbose > 2)
-			printf ("Query returned string '%s'\n", val_str);
 
 		val = strtod (val_str, &endptr);
 		if (endptr == val_str) {
@@ -543,7 +592,7 @@ get_field (dbi_conn conn, dbi_result res, unsigned short *field_type)
 }
 
 double
-get_query_result (dbi_conn conn, dbi_result res, double *res_val)
+get_query_result (dbi_conn conn, dbi_result res, const char **res_val_str, double *res_val)
 {
 	unsigned short field_type;
 	double val = NAN;
@@ -579,8 +628,13 @@ get_query_result (dbi_conn conn, dbi_result res, double *res_val)
 	}
 
 	field_type = dbi_result_get_field_type_idx (res, 1);
-	if (field_type != DBI_TYPE_ERROR)
-		val = get_field (conn, res, &field_type);
+	if (field_type != DBI_TYPE_ERROR) {
+		if (expect)
+			/* the value will be freed in dbi_result_free */
+			*res_val_str = strdup (get_field_str (conn, res, field_type));
+		else
+			val = get_field (conn, res, &field_type);
+	}
 
 	*res_val = val;
 
@@ -597,7 +651,7 @@ get_query_result (dbi_conn conn, dbi_result res, double *res_val)
 #undef CHECK_IGNORE_ERROR
 
 int
-do_query (dbi_conn conn, double *res_val, double *res_time)
+do_query (dbi_conn conn, const char **res_val_str, double *res_val, double *res_time)
 {
 	dbi_result res;
 
@@ -617,10 +671,13 @@ do_query (dbi_conn conn, double *res_val, double *res_time)
 		return STATE_CRITICAL;
 	}
 
-	status = get_query_result (conn, res, res_val);
+	status = get_query_result (conn, res, res_val_str, res_val);
 
 	gettimeofday (&timeval_end, NULL);
 	*res_time = timediff (timeval_start, timeval_end);
+
+	if (verbose)
+		printf ("Time elapsed: %f\n", *res_time);
 
 	return status;
 }
