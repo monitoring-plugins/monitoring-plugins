@@ -455,7 +455,22 @@ print_help (void)
 
 	printf (" %s\n", _("The number and type of required DBI driver options depends on the actual"));
 	printf (" %s\n", _("driver. See its documentation at http://libdbi-drivers.sourceforge.net/"));
-	printf (" %s\n", _("for details."));
+	printf (" %s\n\n", _("for details."));
+
+	printf (" %s\n", _("Examples:"));
+	printf ("  check_dbi -d pgsql -o username=postgres -m QUERY_RESULT \\\n");
+	printf ("    -q 'SELECT COUNT(*) FROM pg_stat_activity' -w 5 -c 10\n");
+	printf ("  Warning if more than five connections; critical if more than ten.\n\n");
+
+	printf ("  check_dbi -d mysql -H localhost -o username=user -o password=secret \\\n");
+	printf ("    -q 'SELECT COUNT(*) FROM logged_in_users -w 5:20 -c 0:50\n");
+	printf ("  Warning if less than 5 or more than 20 users are logged in; critical\n");
+	printf ("  if more than 50 users.\n\n");
+
+	printf ("  check_dbi -d firebird -o username=user -o password=secret -o dbname=foo \\\n");
+	printf ("    -m CONN_TIME -w 0.5 -c 2\n");
+	printf ("  Warning if connecting to the database takes more than half of a second;\n");
+	printf ("  critical if it takes more than 2 seconds.\n");
 
 	printf (UT_SUPPORT);
 }
