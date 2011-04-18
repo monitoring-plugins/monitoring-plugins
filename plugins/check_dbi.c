@@ -38,6 +38,8 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "netutils.h"
 
+#include "regex.h"
+
 /* required for NAN */
 #ifndef _ISOC99_SOURCE
 #define _ISOC99_SOURCE
@@ -56,6 +58,11 @@ typedef enum {
 	METRIC_QUERY_TIME,
 } np_dbi_metric_t;
 
+typedef enum {
+	TYPE_NUMERIC,
+	TYPE_STRING,
+} np_dbi_type_t;
+
 typedef struct {
 	char *key;
 	char *value;
@@ -70,7 +77,12 @@ thresholds *dbi_thresholds = NULL;
 
 char *expect = NULL;
 
+regex_t expect_re;
+char *expect_re_str = NULL;
+int expect_re_cflags = 0;
+
 np_dbi_metric_t metric = METRIC_QUERY_RESULT;
+np_dbi_type_t type = TYPE_NUMERIC;
 
 char *np_dbi_driver = NULL;
 driver_option_t *np_dbi_options = NULL;
@@ -239,6 +251,22 @@ main (int argc, char **argv)
 				else
 					status = STATE_OK;
 			}
+			else if (expect_re_str) {
+				int err;
+
+				err = regexec (&expect_re, query_val_str, 0, NULL, /* flags = */ 0);
+				if (! err)
+					status = STATE_OK;
+				else if (err == REG_NOMATCH)
+					status = STATE_CRITICAL;
+				else {
+					char errmsg[1024];
+					regerror (err, &expect_re, errmsg, sizeof (errmsg));
+					printf ("ERROR - failed to execute regular expression: %s\n",
+							errmsg);
+					status = STATE_CRITICAL;
+				}
+			}
 			else
 				status = get_status (query_val, dbi_thresholds);
 		}
@@ -251,16 +279,26 @@ main (int argc, char **argv)
 	dbi_conn_close (conn);
 
 	/* In case of METRIC_QUERY_RESULT, isnan(query_val) indicates an error
-	 * which should have been reported and handled (abort) before */
-	assert ((metric != METRIC_QUERY_RESULT) || (! isnan (query_val)) || expect);
+	 * which should have been reported and handled (abort) before
+	 * ... unless we expected a string to be returned */
+	assert ((metric != METRIC_QUERY_RESULT) || (! isnan (query_val))
+			|| (type == TYPE_STRING));
+
+	assert ((type != TYPE_STRING) || (expect || expect_re_str));
 
 	printf ("%s - connection time: %fs", state_text (status), conn_time);
 	if (np_dbi_query) {
-		if (expect) {
+		if (type == TYPE_STRING) {
+			assert (expect || expect_re_str);
 			printf (", '%s' returned '%s' in %fs", np_dbi_query,
 					query_val_str ? query_val_str : "<nothing>", query_time);
-			if (status != STATE_OK)
-				printf (" (expected '%s')", expect);
+			if (status != STATE_OK) {
+				if (expect)
+					printf (" (expected '%s')", expect);
+				else if (expect_re_str)
+					printf (" (expected regex /%s/%s)", expect_re_str,
+							((expect_re_cflags & REG_ICASE) ? "i" : ""));
+			}
 		}
 		else if (isnan (query_val))
 			printf (", '%s' query execution time: %fs", np_dbi_query, query_time);
@@ -295,6 +333,8 @@ process_arguments (int argc, char **argv)
 		STD_LONG_OPTS,
 
 		{"expect", required_argument, 0, 'e'},
+		{"regex", required_argument, 0, 'r'},
+		{"regexi", required_argument, 0, 'R'},
 		{"metric", required_argument, 0, 'm'},
 		{"driver", required_argument, 0, 'd'},
 		{"option", required_argument, 0, 'o'},
@@ -304,7 +344,7 @@ process_arguments (int argc, char **argv)
 	};
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvht:c:w:e:m:H:d:o:q:D:",
+		c = getopt_long (argc, argv, "Vvht:c:w:e:r:R:m:H:d:o:q:D:",
 				longopts, &option);
 
 		if (c == EOF)
@@ -322,13 +362,38 @@ process_arguments (int argc, char **argv)
 
 		case 'c':     /* critical range */
 			critical_range = optarg;
+			type = TYPE_NUMERIC;
 			break;
 		case 'w':     /* warning range */
 			warning_range = optarg;
+			type = TYPE_NUMERIC;
 			break;
 		case 'e':
 			expect = optarg;
+			type = TYPE_STRING;
 			break;
+		case 'R':
+			expect_re_cflags = REG_ICASE;
+			/* fall through */
+		case 'r':
+			{
+				int err;
+
+				expect_re_cflags |= REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
+				expect_re_str = optarg;
+				type = TYPE_STRING;
+
+				err = regcomp (&expect_re, expect_re_str, expect_re_cflags);
+				if (err) {
+					char errmsg[1024];
+					regerror (err, &expect_re, errmsg, sizeof (errmsg));
+					printf ("ERROR - failed to compile regular expression: %s\n",
+							errmsg);
+					return ERROR;
+				}
+				break;
+			}
+
 		case 'm':
 			if (! strcasecmp (optarg, "CONN_TIME"))
 				metric = METRIC_CONN_TIME;
@@ -417,11 +482,17 @@ validate_arguments ()
 			&& (metric != METRIC_QUERY_TIME))
 		usage ("Invalid metric specified");
 
-	if (expect && (warning_range || critical_range))
-		usage ("Do not mix -e and -w/-c");
+	if (expect && (warning_range || critical_range || expect_re_str))
+		usage ("Do not mix -e and -w/-c/-r/-R");
+
+	if (expect_re_str && (warning_range || critical_range || expect))
+		usage ("Do not mix -r/-R and -w/-c/-e");
 
 	if (expect && (metric != METRIC_QUERY_RESULT))
 		usage ("Option -e requires metric QUERY_RESULT");
+
+	if (expect_re_str && (metric != METRIC_QUERY_RESULT))
+		usage ("Options -r/-R require metric QUERY_RESULT");
 
 	return OK;
 }
@@ -460,7 +531,13 @@ print_help (void)
 	printf (UT_WARN_CRIT_RANGE);
 	printf (" %s\n", "-e, --expect=STRING");
 	printf ("    %s\n", _("String to expect as query result"));
-	printf ("    %s\n", _("Do not mix with -w or -c!"));
+	printf ("    %s\n", _("Do not mix with -w, -c, -r, or -R!"));
+	printf (" %s\n", "-r, --regex=REGEX");
+	printf ("    %s\n", _("Extended POSIX regular expression to check query result against"));
+	printf ("    %s\n", _("Do not mix with -w, -c, -e, or -R!"));
+	printf (" %s\n", "-R, --regexi=REGEX");
+	printf ("    %s\n", _("Case-insensitive extended POSIX regex to check query result against"));
+	printf ("    %s\n", _("Do not mix with -w, -c, -e, or -r!"));
 	printf (" %s\n", "-m, --metric=METRIC");
 	printf ("    %s\n", _("Metric to check thresholds against. Available metrics:"));
 	printf ("    CONN_TIME    - %s\n", _("time used for setting up the database connection"));
@@ -511,7 +588,7 @@ print_usage (void)
 	printf ("%s\n", _("Usage:"));
 	printf ("%s -d <DBI driver> [-o <DBI driver option> [...]] [-q <query>]\n", progname);
 	printf (" [-H <host>] [-c <critical range>] [-w <warning range>] [-m <metric>]\n");
-	printf (" [-e <string>]\n");
+	printf (" [-e <string>] [-r|-R <regex>]\n");
 }
 
 #define CHECK_IGNORE_ERROR(s) \
@@ -537,7 +614,7 @@ get_field_str (dbi_conn conn, dbi_result res, unsigned short field_type)
 		return NULL;
 	}
 
-	if ((verbose && expect) || (verbose > 2))
+	if ((verbose && (type == TYPE_STRING)) || (verbose > 2))
 		printf ("Query returned string '%s'\n", str);
 	return str;
 }
@@ -629,7 +706,7 @@ get_query_result (dbi_conn conn, dbi_result res, const char **res_val_str, doubl
 
 	field_type = dbi_result_get_field_type_idx (res, 1);
 	if (field_type != DBI_TYPE_ERROR) {
-		if (expect)
+		if (type == TYPE_STRING)
 			/* the value will be freed in dbi_result_free */
 			*res_val_str = strdup (get_field_str (conn, res, field_type));
 		else
