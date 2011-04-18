@@ -595,6 +595,12 @@ print_help (void)
 	printf ("  Warning if connecting to the database takes more than half of a second;\n");
 	printf ("  critical if it takes more than 2 seconds.\n\n");
 
+	printf ("  check_dbi -d mysql -H localhost -o username=user \\\n");
+	printf ("    -q 'SELECT concat(@@version, \" \", @@version_comment)' \\\n");
+	printf ("    -r '^5\\.[01].*MySQL Enterprise Server'\n");
+	printf ("  Critical if the database server is not a MySQL enterprise server in either\n");
+	printf ("  version 5.0.x or 5.1.x.\n\n");
+
 	printf ("  check_dbi -d pgsql -u username=user -m SERVER_VERSION \\\n");
 	printf ("    -w 090000:090099 -c 090000:090199\n");
 	printf ("  Warn if the PostgreSQL server version is not 9.0.x; critical if the version\n");
