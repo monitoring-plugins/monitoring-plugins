@@ -54,6 +54,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 typedef enum {
 	METRIC_CONN_TIME,
+	METRIC_SERVER_VERSION,
 	METRIC_QUERY_RESULT,
 	METRIC_QUERY_TIME,
 } np_dbi_metric_t;
@@ -108,6 +109,8 @@ main (int argc, char **argv)
 
 	dbi_driver driver;
 	dbi_conn conn;
+
+	unsigned int server_version;
 
 	struct timeval start_timeval, end_timeval;
 	double conn_time = 0.0;
@@ -219,8 +222,15 @@ main (int argc, char **argv)
 	gettimeofday (&end_timeval, NULL);
 	conn_time = timediff (start_timeval, end_timeval);
 
+	server_version = dbi_conn_get_engine_version (conn);
 	if (verbose)
-		printf("Time elapsed: %f\n", conn_time);
+		printf ("Connected to server version %u\n", server_version);
+
+	if (metric == METRIC_SERVER_VERSION)
+		status = get_status (server_version, dbi_thresholds);
+
+	if (verbose)
+		printf ("Time elapsed: %f\n", conn_time);
 
 	if (metric == METRIC_CONN_TIME)
 		status = get_status (conn_time, dbi_thresholds);
@@ -306,9 +316,12 @@ main (int argc, char **argv)
 			printf (", '%s' returned %f in %fs", np_dbi_query, query_val, query_time);
 	}
 
-	printf (" | conntime=%fs;%s;%s;0;", conn_time,
+	printf (" | conntime=%fs;%s;%s;0; server_version=%u;%s;%s;0;", conn_time,
 			((metric == METRIC_CONN_TIME) && warning_range) ? warning_range : "",
-			((metric == METRIC_CONN_TIME) && critical_range) ? critical_range : "");
+			((metric == METRIC_CONN_TIME) && critical_range) ? critical_range : "",
+			server_version,
+			((metric == METRIC_SERVER_VERSION) && warning_range) ? warning_range : "",
+			((metric == METRIC_SERVER_VERSION) && critical_range) ? critical_range : "");
 	if (np_dbi_query) {
 		if (! isnan (query_val)) /* this is also true when -e is used */
 			printf (" query=%f;%s;%s;;", query_val,
@@ -397,6 +410,8 @@ process_arguments (int argc, char **argv)
 		case 'm':
 			if (! strcasecmp (optarg, "CONN_TIME"))
 				metric = METRIC_CONN_TIME;
+			else if (! strcasecmp (optarg, "SERVER_VERSION"))
+				metric = METRIC_SERVER_VERSION;
 			else if (! strcasecmp (optarg, "QUERY_RESULT"))
 				metric = METRIC_QUERY_RESULT;
 			else if (! strcasecmp (optarg, "QUERY_TIME"))
@@ -478,6 +493,7 @@ validate_arguments ()
 		usage ("Must specify a query to execute (metric == QUERY_RESULT)");
 
 	if ((metric != METRIC_CONN_TIME)
+			&& (metric != METRIC_SERVER_VERSION)
 			&& (metric != METRIC_QUERY_RESULT)
 			&& (metric != METRIC_QUERY_TIME))
 		usage ("Invalid metric specified");
@@ -577,7 +593,12 @@ print_help (void)
 	printf ("  check_dbi -d firebird -o username=user -o password=secret -o dbname=foo \\\n");
 	printf ("    -m CONN_TIME -w 0.5 -c 2\n");
 	printf ("  Warning if connecting to the database takes more than half of a second;\n");
-	printf ("  critical if it takes more than 2 seconds.\n");
+	printf ("  critical if it takes more than 2 seconds.\n\n");
+
+	printf ("  check_dbi -d pgsql -u username=user -m SERVER_VERSION \\\n");
+	printf ("    -w 090000:090099 -c 090000:090199\n");
+	printf ("  Warn if the PostgreSQL server version is not 9.0.x; critical if the version\n");
+	printf ("  is less than 9.x or higher than 9.1.x.\n");
 
 	printf (UT_SUPPORT);
 }
