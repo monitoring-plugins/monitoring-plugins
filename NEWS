@@ -16,6 +16,7 @@ This file documents the major additions and syntax changes between releases.
 	Fix check_ldap overriding the port when --ssl was specified after -p
 	Fix check_procs where regex input of '|' would get displayed in output - now replaced with ','
 	Fix segfault in check_host when hostname returns multiple IP addresses (Sebastian Harl)
+	Fix check_smtp and check_tcp where duplicate messages were displayed for certificate errors
 
 1.4.15 27th July 2010
 	ENHANCEMENTS

@@ -276,9 +276,6 @@ main (int argc, char **argv)
 #  ifdef USE_OPENSSL
 		  if ( check_cert ) {
 		    result = np_net_ssl_check_cert(days_till_exp);
-		    if(result != STATE_OK){
-		      printf ("%s\n", _("CRITICAL - Cannot retrieve server certificate."));
-		    }
 		    my_close();
 		    return result;
 		  }

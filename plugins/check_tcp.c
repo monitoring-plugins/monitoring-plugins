@@ -236,12 +236,9 @@ main (int argc, char **argv)
 		result = np_net_ssl_init(sd);
 		if (result == STATE_OK && check_cert == TRUE) {
 			result = np_net_ssl_check_cert(days_till_exp);
-			if(result != STATE_OK) {
-				printf(_("CRITICAL - Cannot retrieve server certificate.\n"));
-			}
 		}
 	}
-	if(result != STATE_OK){
+	if(result != STATE_OK || check_cert == TRUE){
 		np_net_ssl_cleanup();
 		if(sd) close(sd);
 		return result;
