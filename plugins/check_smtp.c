@@ -114,6 +114,7 @@ enum {
   TCP_PROTOCOL = 1,
   UDP_PROTOCOL = 2,
 };
+int ignore_send_quit_failure = FALSE;
 
 
 int
@@ -128,6 +129,9 @@ main (int argc, char **argv)
 	char *helocmd = NULL;
 	char *error_msg = "";
 	struct timeval tv;
+
+	/* Catch pipe errors in read/write - sometimes occurs when writing QUIT */
+	(void) signal (SIGPIPE, SIG_IGN);
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -476,6 +480,7 @@ process_arguments (int argc, char **argv)
 		{"help", no_argument, 0, 'h'},
 		{"starttls",no_argument,0,'S'},
 		{"certificate",required_argument,0,'D'},
+		{"ignore-quit-failure",no_argument,0,'q'},
 		{0, 0, 0, 0}
 	};
 
@@ -492,7 +497,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVv46t:p:f:e:c:w:H:C:R:SD:F:A:U:P:",
+		c = getopt_long (argc, argv, "+hVv46t:p:f:e:c:w:H:C:R:SD:F:A:U:P:q",
 		                 longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -579,6 +584,9 @@ process_arguments (int argc, char **argv)
 		case 'v':									/* verbose */
 			verbose++;
 			break;
+		case 'q':
+			ignore_send_quit_failure++;             /* ignore problem sending QUIT */
+			break;
 		case 't':									/* timeout */
 			if (is_intnonneg (optarg)) {
 				socket_timeout = atoi (optarg);
@@ -662,8 +670,20 @@ void
 smtp_quit(void)
 {
 	int bytes;
+	int n;
 
-	my_send(SMTP_QUIT, strlen(SMTP_QUIT));
+	n = my_send(SMTP_QUIT, strlen(SMTP_QUIT));
+	if(n < 0) {
+		if(ignore_send_quit_failure) {
+			if(verbose) {
+				printf(_("Connection closed by server before sending QUIT command\n"));
+			}
+			return;
+		}
+		die (STATE_UNKNOWN,
+			_("Connection closed by server before sending QUIT command\n"));
+	}
+
 	if (verbose)
 		printf(_("sent %s\n"), "QUIT");
 
@@ -797,7 +817,9 @@ print_help (void)
   printf ("    %s\n", _("SMTP AUTH username"));
   printf (" %s\n", "-P, --authpass=STRING");
   printf ("    %s\n", _("SMTP AUTH password"));
-
+  printf (" %s\n", "-q, --ignore-quit-failure");
+  printf ("    %s\n", _("Ignore failure when sending QUIT command to server"));
+   
 	printf (UT_WARN_CRIT);
 
 	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
@@ -821,6 +843,6 @@ print_usage (void)
   printf ("%s\n", _("Usage:"));
   printf ("%s -H host [-p port] [-e expect] [-C command] [-f from addr]", progname);
   printf ("[-A authtype -U authuser -P authpass] [-w warn] [-c crit] [-t timeout]\n");
-  printf ("[-F fqdn] [-S] [-D days] [-v] [-4|-6]\n");
+  printf ("[-F fqdn] [-S] [-D days] [-v] [-4|-6] [-q]\n");
 }
 
