@@ -247,7 +247,7 @@ process_arguments (int argc, char **argv)
 		{"help", no_argument, 0, 'h'},
 		{"version", no_argument, 0, 'V'},
 		{"timeout", required_argument, 0, 't'},
-		{"host", required_argument, 0, 'H'},
+		{"hostname", required_argument, 0, 'H'},
 		{"base", required_argument, 0, 'b'},
 		{"attr", required_argument, 0, 'a'},
 		{"bind", required_argument, 0, 'D'},
