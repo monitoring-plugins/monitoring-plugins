@@ -34,7 +34,7 @@ case "$1" in
 		exit 0
 		;;
 	--version)
-   	print_revision $PROGNAME $REVISION
+		print_revision $PROGNAME $REVISION
 		exit 0
 		;;
 	-V)
@@ -50,7 +50,7 @@ case "$1" in
 		if test ${status} -eq 127; then
 			echo "SENSORS UNKNOWN - command not found (did you install lmsensors?)"
 			exit -1
-		elif test ${status} -ne 0 ; then
+		elif test ${status} -ne 0; then
 			echo "WARNING - sensors returned state $status"
 			exit 1
 		fi
