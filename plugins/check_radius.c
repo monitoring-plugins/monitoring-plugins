@@ -211,7 +211,7 @@ main (int argc, char **argv)
 	if (result == OK_RC)
 		die (STATE_OK, _("Auth OK"));
 	(void)snprintf(msg, sizeof(msg), _("Unexpected result code %d"), result);
-	die (STATE_UNKNOWN, msg);
+	die (STATE_UNKNOWN, "%s", msg);
 }
 
 
