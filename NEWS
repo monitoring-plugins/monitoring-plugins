@@ -8,6 +8,7 @@ This file documents the major additions and syntax changes between releases.
 	check_http now checks for and prints the certificate cn (hostname) in SSL certificate checks (Stéphane Urbanovski)
 	Add perfdata to check_ssh (#3244097 - Marco Beck)
 	New option to check_smtp to ignore failures when sending QUIT (#3358348 - Duncan Ferguson)
+	check_sensors now detects faulty sensors unless --ignore-fault is specified (Jan Wagner)
 
 	FIXES
 	Fix check_disk free space calculation if blocksizes differ within a disk group (Bekar - #2973603)

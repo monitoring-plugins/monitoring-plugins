@@ -10,7 +10,7 @@ REVISION="@NP_VERSION@"
 
 
 print_usage() {
-	echo "Usage: $PROGNAME"
+	echo "Usage: $PROGNAME" [--ignore-fault]
 }
 
 print_help() {
@@ -57,9 +57,12 @@ case "$1" in
 		if echo ${sensordata} | egrep ALARM > /dev/null; then
 			echo SENSOR CRITICAL - Sensor alarm detected!
 			exit 2
-		else
-			echo sensor ok
-			exit 0
+		elif echo ${sensordata} | egrep FAULT > /dev/null \
+		    && test "$1" != "-i" -a "$1" != "--ignore-fault"; then
+			echo SENSOR UNKNOWN - Sensor reported fault
+			exit 3
 		fi
+		echo sensor ok
+		exit 0
 		;;
 esac
