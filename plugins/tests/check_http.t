@@ -75,6 +75,7 @@ if ($pid) {
 				my $d = HTTP::Daemon::SSL->new(
 					LocalPort => $port_https_expired,
 					LocalAddr => "127.0.0.1",
+					ReuseAddr => 1,
 					SSL_cert_file => "$Bin/certs/expired-cert.pem",
 					SSL_key_file => "$Bin/certs/expired-key.pem",
 				) || die;
@@ -86,6 +87,7 @@ if ($pid) {
 			my $d = HTTP::Daemon::SSL->new(
 				LocalPort => $port_https,
 				LocalAddr => "127.0.0.1",
+				ReuseAddr => 1,
 				SSL_cert_file => "$Bin/certs/server-cert.pem",
 				SSL_key_file => "$Bin/certs/server-key.pem",
 			) || die;
@@ -102,6 +104,7 @@ if ($pid) {
 	my $d = HTTP::Daemon->new(
 		LocalPort => $port_http,
 		LocalAddr => "127.0.0.1",
+		ReuseAddr => 1,
 	) || die;
 	print "Please contact http at: <URL:", $d->url, ">\n";
 	run_server( $d );
