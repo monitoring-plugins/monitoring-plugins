@@ -17,7 +17,7 @@ use Test::More;
 use NPTest;
 use FindBin qw($Bin);
 
-my $common_tests = 70;
+my $common_tests = 72;
 my $ssl_only_tests = 8;
 # Check that all dependent modules are available
 eval "use HTTP::Daemon 6.01;";
@@ -54,6 +54,18 @@ my $port_https_expired = $port_http + 2;
 
 # This array keeps sockets around for implementing timeouts
 my @persist;
+
+# Helper for returning chunked responses
+our $ckn = 0;
+sub chunked_resp {
+	$ckn++;
+	return "foo" if ($ckn < 2);
+	return "bar" if ($ckn < 3);
+	return "baz" if ($ckn < 4);
+	return "\n"  if ($ckn < 5);
+	$ckn = 0     if ($ckn < 6);
+	return undef;
+}
 
 # Start up all servers
 my @pids;
@@ -128,6 +140,8 @@ sub run_server {
 				$c->send_crlf;
 				sleep 1;
 				$c->send_response("slow");
+			} elsif ($r->method eq "GET" and $r->url->path eq "/chunked") {
+				$c->send_response(HTTP::Response->new(200, 'OK', undef, \&chunked_resp));
 			} elsif ($r->url->path eq "/method") {
 				if ($r->method eq "DELETE") {
 					$c->send_error(HTTP::Status->RC_METHOD_NOT_ALLOWED);
@@ -367,6 +381,14 @@ sub run_common_tests {
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+
+	SKIP: {
+		skip "FIXME: Chunked-encoding isn't supported yet", 2 unless ($ENV{HTTP_CHUNKED});
+		$cmd = "$command -u /chunked -s foobarbaz";
+		$result = NPTest->testCmd( $cmd );
+		is( $result->return_code, 0, $cmd);
+		like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+	}
 
   # These tests may block
 	print "ALRM\n";
