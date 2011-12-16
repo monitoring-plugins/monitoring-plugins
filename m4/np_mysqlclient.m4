@@ -42,6 +42,12 @@ AC_DEFUN([np_mysqlclient],
       fi
       np_mysql_libs="`$np_mysql_config --libs`"
       np_mysql_cflags="`$np_mysql_config --cflags`"
+      # On Solaris, cflags may contain -xstrconst, which is not acceptable to the
+      # gcc compiler. In this case, use the include flags as the cflags
+      echo $np_mysql_cflags | grep -- -xstrconst > /dev/null 2> /dev/null
+      if test $? -eq 0 -a "$CC" = "gcc" ; then
+        np_mysql_cflags="`$np_mysql_config --include`"
+      fi
 
       dnl Test a mysql_init. Some systems have mysql_config, but no headers
       _savedcppflags="$CPPFLAGS"
