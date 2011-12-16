@@ -1,0 +1,35 @@
+#!/usr/bin/sh
+
+user="nagios"
+uid=-1
+group="nagios"
+gid=-1
+
+/usr/bin/getent group $group > /dev/null 2> /dev/null
+result=$?
+if [ $result -eq 2 ] ; then
+	echo "Group $group does not exist. Creating..."
+	if [ $gid -ne -1 ] ; then
+		/usr/sbin/groupadd -g $gid $group
+	else
+		/usr/sbin/groupadd $group
+	fi
+elif [ $result -ne 0 ] ; then
+	echo "An error occurred determining the existence of the groug $group. Terminating."
+	exit 1;
+fi
+
+/usr/bin/getent passwd $user > /dev/null 2> /dev/null
+result=$?
+if [ $result -eq 2 ] ; then
+	echo "User $user does not exist. Creating..."
+	if [ $uid -ne -1 ] ; then
+		/usr/sbin/useradd -u $uid -g $group $user
+	else
+		/usr/sbin/useradd -g $group $user
+	fi
+elif [ $result -ne 0 ] ; then
+	echo "An error occurred determining the existence of the user $user. Terminating."
+	exit 1;
+fi
+
