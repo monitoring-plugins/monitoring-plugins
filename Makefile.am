@@ -46,6 +46,7 @@ solpkg:
 	$(MAKE) all
 	$(MAKE) DESTDIR=$$PWD/$(BUILDDIR) install
 	$(INSTALL) pkg/solaris/pkginfo $(BUILDDIR)
+	$(INSTALL) pkg/solaris/preinstall $(BUILDDIR)
 	cd $(BUILDDIR) && $(PERL) ../$(PKGSCRIPT) ../$(PACKDIR)
 
 THANKS: THANKS.in
