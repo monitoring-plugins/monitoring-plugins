@@ -45,6 +45,7 @@ solpkg:
 	if [ ! -d $(PACKDIR) ] ; then mkdir $(PACKDIR); fi
 	$(MAKE) all
 	$(MAKE) DESTDIR=$$PWD/$(BUILDDIR) install
+	$(INSTALL) plugins-root/pst3 $(BUILDDIR)$(libexecdir)
 	$(INSTALL) pkg/solaris/pkginfo $(BUILDDIR)
 	$(INSTALL) pkg/solaris/preinstall $(BUILDDIR)
 	cd $(BUILDDIR) && $(PERL) ../$(PKGSCRIPT) ../$(PACKDIR)

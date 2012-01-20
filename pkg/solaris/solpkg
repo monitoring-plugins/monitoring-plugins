@@ -34,6 +34,11 @@ while (<PREPROTO>) {
 	  or $thisline =~ " pkginfo "
 	  or $thisline =~ " preinstall ") {
 	    # Don't do anything as they aren't important
+	} elsif ($thisline =~ "pst3") {
+		# Needs to be installed SUID root
+	  ($dir, $none, $file, $mode, $user, $group) = split / /,$thisline;
+	  print PROTO "$dir $none $file 4755 root bin\n";
+		
 	} elsif ($thisline =~ "^[fd] ") {
 	  # Change the ownership of files and directories
 	  ($dir, $none, $file, $mode, $user, $group) = split / /,$thisline;
