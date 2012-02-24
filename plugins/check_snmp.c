@@ -749,7 +749,7 @@ process_arguments (int argc, char **argv)
 					if (labels == NULL)
 						die (STATE_UNKNOWN, _("Could not reallocate labels\n"));
 				}
-				labels++;
+				nlabels++;
 				ptr = thisarg (ptr);
 				if (strstr (ptr, "'") == ptr)
 					labels[nlabels - 1] = ptr + 1;
@@ -1072,8 +1072,8 @@ print_help (void)
 
 	printf ("\n");
 	printf ("%s\n", _("Notes:"));
-	printf (" %s\n", _("- Multiple OIDs may be indicated by a comma or space-delimited list (lists with"));
-	printf ("   %s %i %s\n", _("internal spaces must be quoted). Maximum:"), MAX_OIDS, _("OIDs."));
+	printf (" %s\n", _("- Multiple OIDs (and labels) may be indicated by a comma or space-delimited  "));
+	printf ("   %s %i %s\n", _("list (lists with internal spaces must be quoted). Maximum:"), MAX_OIDS, _("OIDs."));
 
 	printf(" -%s", UT_THRESHOLDS_NOTES);
 
