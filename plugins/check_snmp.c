@@ -740,7 +740,7 @@ process_arguments (int argc, char **argv)
 			labels[nlabels - 1] = optarg;
 			ptr = thisarg (optarg);
 			labels[nlabels - 1] = ptr;
-			if (strstr (ptr, "'") == ptr)
+			if (ptr[0] == '\'')
 				labels[nlabels - 1] = ptr + 1;
 			while (ptr && (ptr = nextarg (ptr))) {
 				if (nlabels >= labels_size) {
@@ -751,7 +751,7 @@ process_arguments (int argc, char **argv)
 				}
 				nlabels++;
 				ptr = thisarg (ptr);
-				if (strstr (ptr, "'") == ptr)
+				if (ptr[0] == '\'')
 					labels[nlabels - 1] = ptr + 1;
 				else
 					labels[nlabels - 1] = ptr;
@@ -769,7 +769,7 @@ process_arguments (int argc, char **argv)
 			unitv[nunits - 1] = optarg;
 			ptr = thisarg (optarg);
 			unitv[nunits - 1] = ptr;
-			if (strstr (ptr, "'") == ptr)
+			if (ptr[0] == '\'')
 				unitv[nunits - 1] = ptr + 1;
 			while (ptr && (ptr = nextarg (ptr))) {
 				if (nunits >= unitv_size) {
@@ -780,7 +780,7 @@ process_arguments (int argc, char **argv)
 				}
 				nunits++;
 				ptr = thisarg (ptr);
-				if (strstr (ptr, "'") == ptr)
+				if (ptr[0] == '\'')
 					unitv[nunits - 1] = ptr + 1;
 				else
 					unitv[nunits - 1] = ptr;
@@ -935,7 +935,7 @@ char *
 thisarg (char *str)
 {
 	str += strspn (str, " \t\r\n");	/* trim any leading whitespace */
-	if (strstr (str, "'") == str) {	/* handle SIMPLE quoted strings */
+	if (str[0] == '\'') {	/* handle SIMPLE quoted strings */
 		if (strlen (str) == 1 || !strstr (str + 1, "'"))
 			die (STATE_UNKNOWN, _("Unbalanced quotes\n"));
 	}
@@ -951,7 +951,7 @@ thisarg (char *str)
 char *
 nextarg (char *str)
 {
-	if (strstr (str, "'") == str) {
+	if (str[0] == '\'') {
 		str[0] = 0;
 		if (strlen (str) > 1) {
 			str = strstr (str + 1, "'");
@@ -961,7 +961,7 @@ nextarg (char *str)
 			return NULL;
 		}
 	}
-	if (strstr (str, ",") == str) {
+	if (str[0] == ',') {
 		str[0] = 0;
 		if (strlen (str) > 1) {
 			return (++str);
