@@ -1400,6 +1400,10 @@ print_help (void)
   printf (" %s\n", _("serve content (optionally within a specified time) or whether the X509 "));
   printf (" %s\n", _("certificate is still valid for the specified number of days."));
   printf ("\n");
+  printf (" %s\n", _("Please note that this plugin does not check if the presented server"));
+  printf (" %s\n", _("certificate matches the hostname of the server, or if the certificate"));
+  printf (" %s\n", _("has a valid chain of trust to one of the locally installed CAs."));
+  printf ("\n");
   printf ("%s\n", _("Examples:"));
   printf (" %s\n\n", "CHECK CONTENT: check_http -w 5 -c 10 --ssl -H www.verisign.com");
   printf (" %s\n", _("When the 'www.verisign.com' server returns its content within 5 seconds,"));
