@@ -16,7 +16,7 @@ localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\"
 
 dist-hook:
-	make THANKS nagios-plugins.spec pkg/fedora/nagios-plugins.spec
+	$(MAKE) THANKS
 	echo ${VERSION} >$(distdir)/release
 
 install-root:
@@ -27,13 +27,6 @@ test test-debug:
 	if test "$(PERLMODS_DIR)" != ""; then cd perlmods && $(MAKE) $@; fi
 	cd plugins && $(MAKE) $@
 	cd plugins-scripts && $(MAKE) $@
-
-nagios-plugins.spec: nagios-plugins.spec.in
-	sed "s/%%{VERSION}/${VERSION}/;s/%%{RELEASE}/${RELEASE}/;s/^%%{requires}$$//" $? > $@
-
-pkg/fedora/nagios-plugins.spec: nagios-plugins.spec.in
-	$(top_srcdir)/mkinstalldirs pkg/fedora
-	sed "s/%%{VERSION}/${VERSION}/;s/%%{RELEASE}/${RELEASE}/;/^# Requires$$/r $(top_srcdir)/pkg/fedora/requires" $? > $@
 
 # Solaris pkgmk
 BUILDDIR = build-solaris
