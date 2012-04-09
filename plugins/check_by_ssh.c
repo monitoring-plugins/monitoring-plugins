@@ -187,6 +187,7 @@ process_arguments (int argc, char **argv)
 		{"use-ipv6", no_argument, 0, '6'},
 		{"ssh-option", required_argument, 0, 'o'},
 		{"quiet", no_argument, 0, 'q'},
+		{"configfile", optional_argument, 0, 'F'},
 		{0, 0, 0, 0}
 	};
 
@@ -198,7 +199,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvh1246fqt:H:O:p:i:u:l:C:S::E::n:s:o:", longopts,
+		c = getopt_long (argc, argv, "Vvh1246fqt:H:O:p:i:u:l:C:S::E::n:s:o:F:", longopts,
 		                 &option);
 
 		if (c == -1 || c == EOF)
@@ -305,6 +306,10 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'q':									/* Tell the ssh command to be quiet */
 			comm_append("-q");
+			break;
+		case 'F': 									/* ssh configfile */
+			comm_append("-F");
+			comm_append(optarg);
 			break;
 		default:									/* help */
 			usage5();
@@ -418,6 +423,8 @@ print_help (void)
   printf ("    %s\n", _("short name of host in nagios configuration [optional]"));
   printf (" %s\n","-o, --ssh-option=OPTION");
   printf ("    %s\n", _("Call ssh with '-o OPTION' (may be used multiple times) [optional]"));
+  printf (" %s\n","-F, --configfile");
+  printf ("    %s\n", _("Tell ssh to use this configfile [optional]"));
   printf (" %s\n","-q, --quiet");
   printf ("    %s\n", _("Tell ssh to suppress warning and diagnostic messages [optional]"));
 	printf (UT_WARN_CRIT);
@@ -454,6 +461,6 @@ print_usage (void)
 	printf (" %s -H <host> -C <command> [-fqv] [-1|-2] [-4|-6]\n"
 	        "       [-S [lines]] [-E [lines]] [-t timeout] [-i identity]\n"
 	        "       [-l user] [-n name] [-s servicelist] [-O outputfile]\n"
-	        "       [-p port] [-o ssh-option]\n",
+	        "       [-p port] [-o ssh-option] [-F configfile]\n",
 	        progname);
 }

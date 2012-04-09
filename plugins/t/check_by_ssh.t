@@ -17,9 +17,14 @@ my $ssh_key = getTestParameter( "NP_SSH_IDENTITY",
     "A key allowing access to NP_SSH_HOST",
     "~/.ssh/id_dsa");
 
+my $ssh_conf = getTestParameter( "NP_SSH_CONFIGFILE",
+    "A config file with ssh settings",
+    "~/.ssh/config");
+
+
 plan skip_all => "SSH_HOST and SSH_IDENTITY must be defined" unless ($ssh_service && $ssh_key);
 
-plan tests => 40;
+plan tests => 42;
 
 # Some random check strings/response
 my @responce = ('OK: Everything is fine!',
@@ -84,6 +89,12 @@ $result = NPTest->testCmd(
 	);
 cmp_ok($result->return_code, '==', 8, "Exit with return code 8 (out of bounds)");
 is($result->output, $responce[4], "Return proper status text even with unknown status codes");
+
+$result = NPTest->testCmd(
+	"./check_by_ssh -i $ssh_key -H $ssh_service -F $ssh_conf -C 'exit 0'"
+	);
+cmp_ok($result->return_code, '==', 0, "Exit with return code 0 (OK)");
+is($result->output, 'OK - check_by_ssh: Remote command \'exit 0\' returned status 0', "Status text if command returned none (OK)");
 
 # Multiple active checks
 $result = NPTest->testCmd(
