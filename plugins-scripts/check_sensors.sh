@@ -10,7 +10,7 @@ REVISION="@NP_VERSION@"
 
 
 print_usage() {
-	echo "Usage: $PROGNAME"
+	echo "Usage: $PROGNAME" [--ignore-fault]
 }
 
 print_help() {
@@ -21,25 +21,25 @@ print_help() {
 	echo "This plugin checks hardware status using the lm_sensors package."
 	echo ""
 	support
-	exit 0
+	exit $STATE_OK
 }
 
 case "$1" in
 	--help)
 		print_help
-		exit 0
+		exit $STATE_OK
 		;;
 	-h)
 		print_help
-		exit 0
+		exit $STATE_OK
 		;;
 	--version)
-   	print_revision $PROGNAME $REVISION
-		exit 0
+		print_revision $PROGNAME $REVISION
+		exit $STATE_OK
 		;;
 	-V)
 		print_revision $PROGNAME $REVISION
-		exit 0
+		exit $STATE_OK
 		;;
 	*)
 		sensordata=`sensors 2>&1`
@@ -49,17 +49,20 @@ case "$1" in
 		fi
 		if test ${status} -eq 127; then
 			echo "SENSORS UNKNOWN - command not found (did you install lmsensors?)"
-			exit -1
-		elif test ${status} -ne 0 ; then
+			exit $STATE_UNKNOWN
+		elif test ${status} -ne 0; then
 			echo "WARNING - sensors returned state $status"
-			exit 1
+			exit $STATE_WARNING
 		fi
 		if echo ${sensordata} | egrep ALARM > /dev/null; then
 			echo SENSOR CRITICAL - Sensor alarm detected!
-			exit 2
-		else
-			echo sensor ok
-			exit 0
+			exit $STATE_CRITICAL
+		elif echo ${sensordata} | egrep FAULT > /dev/null \
+		    && test "$1" != "-i" -a "$1" != "--ignore-fault"; then
+			echo SENSOR UNKNOWN - Sensor reported fault
+			exit $STATE_UNKNOWN
 		fi
+		echo sensor ok
+		exit $STATE_OK
 		;;
 esac

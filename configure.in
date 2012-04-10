@@ -2,7 +2,8 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
 AC_INIT(nagios-plugins,1.4.15)
 AC_CONFIG_SRCDIR(NPTest.pm)
-AC_CONFIG_FILES(gl/Makefile)
+AC_CONFIG_FILES([gl/Makefile 
+	nagios-plugins.spec])
 AC_CONFIG_AUX_DIR(build-aux)
 AM_INIT_AUTOMAKE([1.8.3])
 AM_CONFIG_HEADER(config.h)
@@ -162,6 +163,8 @@ dnl
 dnl check for math-related functions needing -lm
 AC_CHECK_HEADERS(math.h)
 AC_CHECK_LIB(m,floor,MATHLIBS="-lm")
+AC_CHECK_HEADERS(mp.h)
+AC_CHECK_LIB(bsd,pow,MATHLIBS="$MATHLIBS -lbsd")
 AC_SUBST(MATHLIBS)
 
 dnl Check if we buils local libtap

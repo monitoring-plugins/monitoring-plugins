@@ -8,6 +8,7 @@ $pkgmk = "/usr/bin/pkgmk";
 $pkgtrans = "/usr/bin/pkgtrans";
 $prototype = "prototype";
 $pkginfo = "pkginfo";
+$preinstall = "preinstall";
 $egrep = "/usr/bin/egrep";
 
 # Sanity check
@@ -24,17 +25,24 @@ open (PREPROTO,"$find . -print |$egrep -v \"^\.(/usr(/local)?|/opt)?\$\" | $pkgp
 open (PROTO,">$prototype") ||
 	die "Unable to write file prototype ($!)\n";
 print PROTO "i pkginfo=./$pkginfo\n";
+print PROTO "i preinstall=./$preinstall\n";
 while (<PREPROTO>) {
 	# Read in the prototype information
 	chomp;
 	$thisline = $_;
 	if ($thisline =~ " prototype "
-	  or $thisline =~ " pkginfo ") {
+	  or $thisline =~ " pkginfo "
+	  or $thisline =~ " preinstall ") {
 	    # Don't do anything as they aren't important
+	} elsif ($thisline =~ "pst3") {
+		# Needs to be installed SUID root
+	  ($dir, $none, $file, $mode, $user, $group) = split / /,$thisline;
+	  print PROTO "$dir $none $file 4755 root bin\n";
+		
 	} elsif ($thisline =~ "^[fd] ") {
 	  # Change the ownership of files and directories
 	  ($dir, $none, $file, $mode, $user, $group) = split / /,$thisline;
-	  print PROTO "$dir $none $file $mode bin bin\n";
+	  print PROTO "$dir $none $file $mode $user bin\n";
 	} else {
 	  # Symlinks and other stuff should be printed also
 	  print PROTO "$thisline\n";
@@ -58,6 +66,7 @@ while (<PKGINFO>) {
 	$thisline = $_;
 	($var,$value) = split /=/,$thisline;
 	if ("$var" eq "NAME" 
+	  or "$var" eq "PKG"
 	  or "$var" eq "VERSION"
 	  or "$var" eq "ARCH") {
 		$tmp = lc($var);
@@ -77,5 +86,5 @@ $packagename = "$name-$version-$os-$arch-local";
 
 print "Building package\n";
 system ("$pkgmk -o -r `pwd` -d $pkgdevice");
-system ("(cd $pkgdevice && $pkgtrans -s `pwd` ../$packagename)");
+system ("(cd $pkgdevice && $pkgtrans -s `pwd` ../$packagename $pkg)");
 print "Done. ($packagename)\n";
