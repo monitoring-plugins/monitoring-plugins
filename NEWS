@@ -14,12 +14,13 @@ This file documents the major additions and syntax changes between releases.
 
 	FIXES
 	Fix check_disk free space calculation if blocksizes differ within a disk group (Bekar - #2973603)
-	check_disk_smb now handles NT_STATUS_ACCESS_DENIED properly (Debian #601696) 
+	check_disk_smb now handles NT_STATUS_ACCESS_DENIED properly (Debian #601696)
 	Make check_snmp work more like v1.4.14 with regard to using special values (Timeticks, STRING) as numeric thresholds
 	Fix check_ldap overriding the port when --ssl was specified after -p
 	Fix check_procs where regex input of '|' would get displayed in output - now replaced with ','
 	Fix segfault in check_host when hostname returns multiple IP addresses (Sebastian Harl)
 	Fix check_smtp and check_tcp where duplicate messages were displayed for certificate errors
+	Fix check_ping where output of ping6 when unreachable (Debian #662638)
 
 1.4.15 27th July 2010
 	ENHANCEMENTS

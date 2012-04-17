@@ -533,6 +533,8 @@ error_scan (char buf[MAX_INPUT_BUFFER], const char *addr)
 		die (STATE_CRITICAL, _("CRITICAL - Host not found (%s)"), addr);
 	else if (strstr (buf, "Time to live exceeded"))
 		die (STATE_CRITICAL, _("CRITICAL - Time to live exceeded (%s)"), addr);
+	else if (strstr (buf, "Destination unreachable: "))
+		die (STATE_CRITICAL, _("CRITICAL - DestinationUnreachable (%s)"), addr);
 
 	if (strstr (buf, "(DUP!)") || strstr (buf, "DUPLICATES FOUND")) {
 		if (warn_text == NULL)
