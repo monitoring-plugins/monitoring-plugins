@@ -20,6 +20,7 @@ NP-VERSION-FILE
 /Makefile
 /Makefile.in
 /missing
+/nagios-plugins.spec
 /stamp-h1
 /test.pl
 /THANKS
