@@ -517,7 +517,9 @@ error_scan (char buf[MAX_INPUT_BUFFER], const char *addr)
 		strstr (buf, "Destination Net Unreachable")
 		)
 		die (STATE_CRITICAL, _("CRITICAL - Network Unreachable (%s)"), addr);
-	else if (strstr (buf, "Destination Host Unreachable"))
+	else if (strstr (buf, "Destination Host Unreachable") ||
+		strstr (buf, "Address unreachable")
+		)
 		die (STATE_CRITICAL, _("CRITICAL - Host Unreachable (%s)"), addr);
 	else if (strstr (buf, "Destination Port Unreachable"))
 		die (STATE_CRITICAL, _("CRITICAL - Bogus ICMP: Port Unreachable (%s)"), addr);
