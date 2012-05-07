@@ -52,6 +52,9 @@ int np_net_ssl_init_with_hostname (int sd, char *host_name) {
 				printf ("%s\n", _("CRITICAL - Cannot create SSL context."));
 				return STATE_CRITICAL;
 		}
+#ifdef SSL_OP_NO_TICKET
+		SSL_CTX_set_options(c, SSL_OP_NO_TICKET);
+#endif
 		if ((s = SSL_new (c)) != NULL){
 #ifdef SSL_set_tlsext_host_name
 				if (host_name != NULL)
