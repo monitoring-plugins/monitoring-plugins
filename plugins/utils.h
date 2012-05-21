@@ -59,6 +59,8 @@ int is_percentage (char *);
 
 int is_option (char *);
 
+int is_sha1_fingerprint (char *str);
+
 /* Generalized timer that will do milliseconds if available */
 #ifndef HAVE_STRUCT_TIMEVAL
 struct timeval {

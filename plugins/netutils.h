@@ -103,7 +103,7 @@ int np_net_ssl_init_with_hostname(int sd, char *host_name);
 void np_net_ssl_cleanup();
 int np_net_ssl_write(const void *buf, int num);
 int np_net_ssl_read(void *buf, int num);
-int np_net_ssl_check_cert(int days_till_exp);
+int np_net_ssl_check_cert(int days_till_exp, const char *fingerprint);
 #endif /* HAVE_SSL */
 
 #endif /* _NETUTILS_H_ */
