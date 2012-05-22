@@ -58,8 +58,8 @@ enum {
 
 #ifdef HAVE_SSL
 int check_cert = FALSE;
-int days_till_exp;
 int ssl_version;
+int days_till_exp_warn, days_till_exp_crit;
 char *randbuff;
 X509 *server_cert;
 #  define my_recv(buf, len) ((use_ssl) ? np_net_ssl_read(buf, len) : read(sd, buf, len))
@@ -178,6 +178,7 @@ process_arguments (int argc, char **argv)
 {
   int c = 1;
   char *p;
+  char *temp;
 
   enum {
     INVERT_REGEX = CHAR_MAX + 1,
@@ -282,13 +283,25 @@ process_arguments (int argc, char **argv)
       break;
     case 'C': /* Check SSL cert validity */
 #ifdef HAVE_SSL
-      if (!is_intnonneg (optarg))
-        usage2 (_("Invalid certificate expiration period"), optarg);
-      else {
-        days_till_exp = atoi (optarg);
-        check_cert = TRUE;
+      if ((temp=strchr(optarg,','))!=NULL) {
+	*temp='\0';
+	if (!is_intnonneg (temp))
+	  usage2 (_("Invalid certificate expiration period"), optarg);
+	days_till_exp_warn = atoi(optarg);
+	*temp=',';
+	temp++;
+	if (!is_intnonneg (temp))
+	  usage2 (_("Invalid certificate expiration period"), temp);
+	days_till_exp_crit = atoi (temp);
       }
-     /* Fall through to -S option */
+      else {
+	days_till_exp_crit=0;
+        if (!is_intnonneg (optarg))
+          usage2 (_("Invalid certificate expiration period"), optarg);
+        days_till_exp_warn = atoi (optarg);
+      }
+      check_cert = TRUE;
+      /* Fall through to -S option */
 #endif
     case 'S': /* use SSL */
 #ifndef HAVE_SSL
@@ -810,7 +823,7 @@ check_http (void)
     if (result != STATE_OK)
       return result;
     if (check_cert == TRUE) {
-      result = np_net_ssl_check_cert(days_till_exp);
+      result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
       np_net_ssl_cleanup();
       if (sd) close(sd);
       return result;
@@ -1427,6 +1440,13 @@ print_help (void)
   printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
   printf (" %s\n", _("14 days, a STATE_WARNING is returned. A STATE_CRITICAL will be returned when"));
   printf (" %s\n", _("the certificate is expired."));
+
+  printf (" %s\n\n", "CHECK CERTIFICATE: check_http -H www.verisign.com -C 30,14");
+  printf (" %s\n", _("When the certificate of 'www.verisign.com' is valid for more than 30 days,"));
+  printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
+  printf (" %s\n", _("30 days, but more than 14 days, a STATE_WARNING is returned."));
+  printf (" %s\n", _("A STATE_CRITICAL will be returned when certificate expires in less than 14 days"));
+
 #endif
 
   printf (UT_SUPPORT);
@@ -1444,6 +1464,6 @@ print_usage (void)
   printf ("       [-b proxy_auth] [-f <ok|warning|critcal|follow|sticky|stickyport>]\n");
   printf ("       [-e <expect>] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
-  printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <age>] [-T <content-type>]\n");
-  printf ("       [-j method]\n");
+  printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
+  printf ("       [-T <content-type>] [-j method]\n");
 }

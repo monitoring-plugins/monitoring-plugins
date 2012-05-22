@@ -41,7 +41,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #ifdef HAVE_SSL
 int check_cert = FALSE;
-int days_till_exp;
+int days_till_exp_warn, days_till_exp_crit;
 #  define my_recv(buf, len) ((use_ssl && ssl_established) ? np_net_ssl_read(buf, len) : read(sd, buf, len))
 #  define my_send(buf, len) ((use_ssl && ssl_established) ? np_net_ssl_write(buf, len) : send(sd, buf, len, 0))
 #else /* ifndef HAVE_SSL */
@@ -275,7 +275,7 @@ main (int argc, char **argv)
 
 #  ifdef USE_OPENSSL
 		  if ( check_cert ) {
-		    result = np_net_ssl_check_cert(days_till_exp);
+                    result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
 		    my_close();
 		    return result;
 		  }
@@ -454,6 +454,7 @@ int
 process_arguments (int argc, char **argv)
 {
 	int c;
+	char* temp;
 
 	int option = 0;
 	static struct option longopts[] = {
@@ -600,12 +601,26 @@ process_arguments (int argc, char **argv)
 		case 'D':
 		/* Check SSL cert validity */
 #ifdef USE_OPENSSL
-			if (!is_intnonneg (optarg))
-				usage2 ("Invalid certificate expiration period",optarg);
-				days_till_exp = atoi (optarg);
-				check_cert = TRUE;
+                        if ((temp=strchr(optarg,','))!=NULL) {
+                            *temp='\0';
+                            if (!is_intnonneg (temp))
+                               usage2 ("Invalid certificate expiration period", optarg);
+                            days_till_exp_warn = atoi(optarg);
+                            *temp=',';
+                            temp++;
+                            if (!is_intnonneg (temp))
+                                usage2 (_("Invalid certificate expiration period"), temp);
+                            days_till_exp_crit = atoi (temp);
+                        }
+                        else {
+                            days_till_exp_crit=0;
+                            if (!is_intnonneg (optarg))
+                                usage2 ("Invalid certificate expiration period", optarg);
+                            days_till_exp_warn = atoi (optarg);
+                        }
+			check_cert = TRUE;
 #else
-				usage (_("SSL support not available - install OpenSSL and recompile"));
+			usage (_("SSL support not available - install OpenSSL and recompile"));
 #endif
 			break;
 		case '4':
@@ -802,7 +817,7 @@ print_help (void)
   printf (" %s\n", "-F, --fqdn=STRING");
   printf ("    %s\n", _("FQDN used for HELO"));
 #ifdef HAVE_SSL
-  printf (" %s\n", "-D, --certificate=INTEGER");
+  printf (" %s\n", "-D, --certificate=INTEGER[,INTEGER]");
   printf ("    %s\n", _("Minimum number of days a certificate has to be valid."));
   printf (" %s\n", "-S, --starttls");
   printf ("    %s\n", _("Use STARTTLS for the connection."));
@@ -838,8 +853,8 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-  printf ("%s -H host [-p port] [-e expect] [-C command] [-f from addr]", progname);
-  printf ("[-A authtype -U authuser -P authpass] [-w warn] [-c crit] [-t timeout]\n");
-  printf ("[-F fqdn] [-S] [-D days] [-v] [-4|-6] [-q]\n");
+  printf ("%s -H host [-p port] [-4|-6] [-e expect] [-C command] [-f from addr]", progname);
+  printf ("[-A authtype -U authuser -P authpass] [-w warn] [-c crit] [-t timeout] [-q]\n");
+  printf ("[-F fqdn] [-S] [-D warn days cert expire[,crit days cert expire]] [-v] \n");
 }
 
