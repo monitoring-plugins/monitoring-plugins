@@ -146,13 +146,14 @@ static int hex2sha1(unsigned char *sha1, unsigned const char *hex)
 	int i;
 
 	for (i = 0; i < 20; i++) {
-		unsigned int val = (hex2val(*hex) << 4) || hex2val(*++hex);
+		unsigned int val = (hex2val(*hex) << 4) | hex2val(*++hex);
 		if (val & ~0xff)
 			return -1;
 
 		sha1[i] = val;
+		hex++;
 
-		if (hex && (*hex == ':'))
+		if (hex && *hex == ':')
 			hex++;
 	}
 }
@@ -229,6 +230,36 @@ static int check_cert_expiration(X509 *certificate, int days_till_exp)
 	return status;
 }
 
+static int check_cert_fingerprint(X509 *certificate, const char *fingerprint)
+{
+	int status = STATE_UNKNOWN;
+	const EVP_MD *digest;
+	unsigned char md[EVP_MAX_MD_SIZE];
+	unsigned int md_len;
+	unsigned char fp[EVP_MAX_MD_SIZE];
+
+	hex2sha1(fp, fingerprint);
+
+	digest = EVP_get_digestbyname("sha1");
+	X509_digest(certificate, digest, md, &md_len);
+
+	if (!memcmp(md, fp, md_len)) {
+		printf("%s\n", "OK - Certificate matches fingerprint");
+		return STATE_OK;
+	}
+
+	printf("%s\n", "CRITICAL - Certificate does not match fingerprint");
+
+	/* XXX: debug */
+	int pos;
+	for (pos = 0; pos < md_len; pos++) {
+		fprintf(stderr, "md = %#2x; fp = %#2x\n", md[pos], fp[pos]);
+	}
+	/* XXX: debug */
+
+	return STATE_CRITICAL;
+}
+
 
 #endif
 
@@ -240,11 +271,6 @@ int np_net_ssl_check_cert(int days_till_exp, const char *fingerprint){
 	char cn[MAX_CN_LENGTH]= "";
 	int cnlen =-1;
 	int status=STATE_UNKNOWN;
-
-	/* fingerprint stuff */
-	const EVP_MD *digest;
-	unsigned char md[EVP_MAX_MD_SIZE];
-	unsigned int md_len;
 
 
 	certificate=SSL_get_peer_certificate(s);
@@ -269,8 +295,7 @@ int np_net_ssl_check_cert(int days_till_exp, const char *fingerprint){
 	}
 
 	if (fingerprint) {
-		unsigned char fp[EVP_MAX_MD_SIZE];
-		hex2sha1(fp, fingerprint);
+		status = check_cert_fingerprint(certificate, fingerprint);
 
 	}
 	X509_free (certificate);

@@ -287,7 +287,10 @@ process_arguments (int argc, char **argv)
 	  if (!is_sha1_fingerprint(optarg))
 		  usage2 (_("Invalid fingerprint"), optarg);
 	  check_fingerprint = optarg;
+	  check_cert = TRUE;
 
+#else
+      usage4 (_("Invalid option - SSL is not available"));
 #endif
 	  break;
     case 'C': /* Check SSL cert validity */
