@@ -806,7 +806,9 @@ check_http (void)
     die (STATE_CRITICAL, _("HTTP CRITICAL - Unable to open TCP socket\n"));
 #ifdef HAVE_SSL
   if (use_ssl == TRUE) {
-    np_net_ssl_init_with_hostname_and_version(sd, (use_sni ? host_name : NULL), ssl_version);
+    result = np_net_ssl_init_with_hostname_and_version(sd, (use_sni ? host_name : NULL), ssl_version);
+    if (result != STATE_OK)
+      return result;
     if (check_cert == TRUE) {
       result = np_net_ssl_check_cert(days_till_exp);
       np_net_ssl_cleanup();
