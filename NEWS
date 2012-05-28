@@ -6,6 +6,7 @@ This file documents the major additions and syntax changes between releases.
 	check_disk_smb now allows spaces in share names (#990948, #1370031, Debian #601699)
 	check_http now uses standard threshold functions (enables floating point and ranges)
 	check_http now checks for and prints the certificate cn (hostname) in SSL certificate checks (Stéphane Urbanovski)
+	check_http now supports an optional -S/--ssl value to choose the SSL protocol version (#3066166 - Jason Lunn)
 	Add perfdata to check_ssh (#3244097 - Marco Beck)
 	New option to check_smtp to ignore failures when sending QUIT (#3358348 - Duncan Ferguson)
 	New check_by_ssh -F option which allows for specifying an alternative ssh_config(5) file (#2895334 - Sven Nierlein)

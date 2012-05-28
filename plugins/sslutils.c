@@ -41,6 +41,29 @@ int np_net_ssl_init (int sd) {
 }
 
 int np_net_ssl_init_with_hostname (int sd, char *host_name) {
+		return np_net_ssl_init_with_hostname_and_version(sd, host_name, 0);
+}
+
+int np_net_ssl_init_with_hostname_and_version (int sd, char *host_name, int version) {
+		const SSL_METHOD *method = NULL;
+
+		switch (version) {
+		case 0: /* Deafult to auto negotiation */
+			method = SSLv23_client_method();
+			break;
+		case 1: /* TLSv1 protocol */
+			method = TLSv1_client_method();
+			break;
+		case 2: /* SSLv2 protocol */
+			method = SSLv2_client_method();
+			break;
+		case 3: /* SSLv3 protocol */
+			method = SSLv3_client_method();
+			break;
+		default: /* Unsupported */
+			printf ("%s\n", _("CRITICAL - Unsupported SSL Protocol Version."));
+			return STATE_CRITICAL;
+		}
 		if (!initialized) {
 			/* Initialize SSL context */
 			SSLeay_add_ssl_algorithms ();
@@ -48,7 +71,7 @@ int np_net_ssl_init_with_hostname (int sd, char *host_name) {
 			OpenSSL_add_all_algorithms ();
 			initialized = 1;
 		}
-		if ((c = SSL_CTX_new (SSLv23_client_method ())) == NULL) {
+		if ((c = SSL_CTX_new (method)) == NULL) {
 				printf ("%s\n", _("CRITICAL - Cannot create SSL context."));
 				return STATE_CRITICAL;
 		}
