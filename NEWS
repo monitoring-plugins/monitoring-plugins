@@ -11,6 +11,7 @@ This file documents the major additions and syntax changes between releases.
 	New option to check_smtp to ignore failures when sending QUIT (#3358348 - Duncan Ferguson)
 	New check_by_ssh -F option which allows for specifying an alternative ssh_config(5) file (#2895334 - Sven Nierlein)
 	check_sensors now detects faulty sensors unless --ignore-fault is specified (Jan Wagner)
+	utils.sh now provides a check_range function (Alex Griffin)
 	Updated Nagios::Plugin perl module
 
 	FIXES
