@@ -295,7 +295,7 @@ process_arguments (int argc, char **argv)
       usage4 (_("Invalid option - SSL is not available"));
 #endif
       use_ssl = TRUE;
-      if (optarg == NULL)
+      if (optarg == NULL || c != 'S')
         ssl_version = 0;
       else {
         ssl_version = atoi(optarg);
