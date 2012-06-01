@@ -275,7 +275,7 @@ main (int argc, char **argv)
 
 #  ifdef USE_OPENSSL
 		  if ( check_cert ) {
-		    result = np_net_ssl_check_cert(days_till_exp);
+		    result = np_net_ssl_check_cert(days_till_exp, NULL);
 		    my_close();
 		    return result;
 		  }
