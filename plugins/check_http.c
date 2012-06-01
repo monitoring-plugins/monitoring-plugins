@@ -34,7 +34,7 @@
 /* splint -I. -I../../plugins -I../../lib/ -I/usr/kerberos/include/ ../../plugins/check_http.c */
 
 const char *progname = "check_http";
-const char *copyright = "1999-2008";
+const char *copyright = "1999-2011";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -59,6 +59,7 @@ enum {
 #ifdef HAVE_SSL
 int check_cert = FALSE;
 int days_till_exp_warn, days_till_exp_crit;
+int ssl_version;
 char *randbuff;
 X509 *server_cert;
 #  define my_recv(buf, len) ((use_ssl) ? np_net_ssl_read(buf, len) : read(sd, buf, len))
@@ -189,7 +190,7 @@ process_arguments (int argc, char **argv)
     STD_LONG_OPTS,
     {"link", no_argument, 0, 'L'},
     {"nohtml", no_argument, 0, 'n'},
-    {"ssl", no_argument, 0, 'S'},
+    {"ssl", optional_argument, 0, 'S'},
     {"sni", no_argument, 0, SNI_OPTION},
     {"post", required_argument, 0, 'P'},
     {"method", required_argument, 0, 'j'},
@@ -235,7 +236,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:e:p:s:R:r:u:f:C:nlLSm:M:N", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:e:p:s:R:r:u:f:C:nlLS::m:M:N", longopts, &option);
     if (c == -1 || c == EOF)
       break;
 
@@ -307,6 +308,13 @@ process_arguments (int argc, char **argv)
       usage4 (_("Invalid option - SSL is not available"));
 #endif
       use_ssl = TRUE;
+      if (optarg == NULL || c != 'S')
+        ssl_version = 0;
+      else {
+        ssl_version = atoi(optarg);
+        if (ssl_version < 1 || ssl_version > 3)
+            usage4 (_("Invalid option - Valid values for SSL Version are 1 (TLSv1), 2 (SSLv2) or 3 (SSLv3)"));
+      }
       if (specify_port == FALSE)
         server_port = HTTPS_PORT;
       break;
@@ -811,7 +819,9 @@ check_http (void)
     die (STATE_CRITICAL, _("HTTP CRITICAL - Unable to open TCP socket\n"));
 #ifdef HAVE_SSL
   if (use_ssl == TRUE) {
-    np_net_ssl_init_with_hostname(sd, (use_sni ? host_name : NULL));
+    result = np_net_ssl_init_with_hostname_and_version(sd, (use_sni ? host_name : NULL), ssl_version);
+    if (result != STATE_OK)
+      return result;
     if (check_cert == TRUE) {
       result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
       np_net_ssl_cleanup();
@@ -1336,8 +1346,9 @@ print_help (void)
   printf (UT_IPv46);
 
 #ifdef HAVE_SSL
-  printf (" %s\n", "-S, --ssl");
-  printf ("    %s\n", _("Connect via SSL. Port defaults to 443"));
+  printf (" %s\n", "-S, --ssl=VERSION");
+  printf ("    %s\n", _("Connect via SSL. Port defaults to 443. VERSION is optional, and prevents"));
+  printf ("    %s\n", _("auto-negotiation (1 = TLSv1, 2 = SSLv2, 3 = SSLv3)."));
   printf (" %s\n", "--sni");
   printf ("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
   printf (" %s\n", "-C, --certificate=INTEGER");
@@ -1453,6 +1464,6 @@ print_usage (void)
   printf ("       [-b proxy_auth] [-f <ok|warning|critcal|follow|sticky|stickyport>]\n");
   printf ("       [-e <expect>] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
-  printf ("       [-A string] [-k string] [-S] [--sni] [-C <warn_age>[,<crit_age>]]\n");
+  printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
   printf ("       [-T <content-type>] [-j method]\n");
 }
