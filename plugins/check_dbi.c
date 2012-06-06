@@ -141,7 +141,7 @@ main (int argc, char **argv)
 		printf ("Initializing DBI\n");
 
 	if (dbi_initialize (NULL) < 0) {
-		printf ("UNKNOWN - failed to initialize DBI.\n");
+		printf ("UNKNOWN - failed to initialize DBI; possibly you don't have any drivers installed.\n");
 		return STATE_UNKNOWN;
 	}
 
