@@ -99,7 +99,9 @@ char *user_agent;
 int server_url_length;
 int server_expect_yn = 0;
 char server_expect[MAX_INPUT_BUFFER] = HTTP_EXPECT;
+char header_expect[MAX_INPUT_BUFFER] = "";
 char string_expect[MAX_INPUT_BUFFER] = "";
+char output_header_search[30] = "";
 char output_string_search[30] = "";
 char *warning_thresholds = NULL;
 char *critical_thresholds = NULL;
@@ -197,6 +199,7 @@ process_arguments (int argc, char **argv)
     {"port", required_argument, 0, 'p'},
     {"authorization", required_argument, 0, 'a'},
     {"proxy_authorization", required_argument, 0, 'b'},
+    {"return_header", required_argument, 0, 'd'},
     {"string", required_argument, 0, 's'},
     {"expect", required_argument, 0, 'e'},
     {"regex", required_argument, 0, 'r'},
@@ -234,7 +237,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:e:p:s:R:r:u:f:C:nlLSm:M:N", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:nlLSm:M:N", longopts, &option);
     if (c == -1 || c == EOF)
       break;
 
@@ -362,6 +365,10 @@ process_arguments (int argc, char **argv)
       if (http_method)
         free(http_method);
       http_method = strdup (optarg);
+      break;
+    case 'd': /* string or substring */
+      strncpy (header_expect, optarg, MAX_INPUT_BUFFER - 1);
+      header_expect[MAX_INPUT_BUFFER - 1] = 0;
       break;
     case 's': /* string or substring */
       strncpy (string_expect, optarg, MAX_INPUT_BUFFER - 1);
@@ -1026,6 +1033,17 @@ check_http (void)
   }
 
   /* Page and Header content checks go here */
+  if (strlen (header_expect)) {
+    if (!strstr (header, header_expect)) {
+      strncpy(&output_header_search[0],header_expect,sizeof(output_header_search));
+      if(output_header_search[sizeof(output_header_search)-1]!='\0') {
+        bcopy("...",&output_header_search[sizeof(output_header_search)-4],4);
+      }
+      asprintf (&msg, _("%sheader '%s' not found on '%s://%s:%d%s', "), msg, output_header_search, use_ssl ? "https" : "http", host_name ? host_name : server_address, server_port, server_url);
+      result = STATE_CRITICAL;
+    }
+  }
+
 
   if (strlen (string_expect)) {
     if (!strstr (page, string_expect)) {
@@ -1356,6 +1374,8 @@ print_help (void)
 
   printf (" %s\n", "-l, --linespan");
   printf ("    %s\n", _("Allow regex to span newlines (must precede -r or -R)"));
+  printf (" %s\n", "-d, --header-string=STRING");
+  printf ("    %s\n", _("Search header for regex STRING"));
   printf (" %s\n", "-r, --regex, --ereg=STRING");
   printf ("    %s\n", _("Search page for regex STRING"));
   printf (" %s\n", "-R, --eregi=STRING");
@@ -1430,7 +1450,7 @@ print_usage (void)
   printf ("%s\n", _("Usage:"));
   printf (" %s -H <vhost> | -I <IP-address> [-u <uri>] [-p <port>]\n",progname);
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L] [-a auth]\n");
-  printf ("       [-b proxy_auth] [-f <ok|warning|critcal|follow|sticky|stickyport>]\n");
+  printf ("       [-b proxy_auth] [-d string] [-f <ok|warning|critcal|follow|sticky|stickyport>]\n");
   printf ("       [-e <expect>] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S] [--sni] [-C <age>] [-T <content-type>]\n");
