@@ -35,8 +35,8 @@ const char *copyright = "2000-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
-#include "popen.h"
 #include "utils.h"
+#include <utmpx.h>
 
 #define possibly_set(a,b) ((a) == 0 ? (b) : 0)
 
@@ -54,6 +54,7 @@ main (int argc, char **argv)
 	int result = STATE_UNKNOWN;
 	char input_buffer[MAX_INPUT_BUFFER];
 	char *perf;
+	struct utmpx *putmpx;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -67,43 +68,20 @@ main (int argc, char **argv)
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
-	/* run the command */
-	child_process = spopen (WHO_COMMAND);
-	if (child_process == NULL) {
-		printf (_("Could not open pipe: %s\n"), WHO_COMMAND);
-		return STATE_UNKNOWN;
-	}
-
-	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
-	if (child_stderr == NULL)
-		printf (_("Could not open stderr for %s\n"), WHO_COMMAND);
-
 	users = 0;
 
-	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
+	/* get currently logged users from utmpx */
+	setutxent();
 
-		/* increment 'users' on all lines except total user count */
-		if (input_buffer[0] != '#') {
+	while( (putmpx=getutxent()) ) {
+		if( (putmpx->ut_type==USER_PROCESS) ) {
 			users++;
-			continue;
 		}
-
-		/* get total logged in users */
-		if (sscanf (input_buffer, _("# users=%d"), &users) == 1)
-			break;
-
 	}
 
-	/* check STDERR */
-	if (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
-		result = possibly_set (result, STATE_UNKNOWN);
-	(void) fclose (child_stderr);
+	endutxent();
 
-	/* close the pipe */
-	if (spclose (child_process))
-		result = possibly_set (result, STATE_UNKNOWN);
-
-	/* else check the user count against warning and critical thresholds */
+	/* check the user count against warning and critical thresholds */
 	if (users > cusers)
 		result = STATE_CRITICAL;
 	else if (users > wusers)
