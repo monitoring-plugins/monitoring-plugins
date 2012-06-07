@@ -1375,7 +1375,7 @@ print_help (void)
   printf (" %s\n", "-l, --linespan");
   printf ("    %s\n", _("Allow regex to span newlines (must precede -r or -R)"));
   printf (" %s\n", "-d, --header-string=STRING");
-  printf ("    %s\n", _("Search header for regex STRING"));
+  printf ("    %s\n", _("String to expect in the headers"));
   printf (" %s\n", "-r, --regex, --ereg=STRING");
   printf ("    %s\n", _("Search page for regex STRING"));
   printf (" %s\n", "-R, --eregi=STRING");
