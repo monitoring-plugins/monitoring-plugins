@@ -12,6 +12,7 @@ This file documents the major additions and syntax changes between releases.
 	New check_by_ssh -F option which allows for specifying an alternative ssh_config(5) file (#2895334 - Sven Nierlein)
 	check_sensors now detects faulty sensors unless --ignore-fault is specified (Jan Wagner)
 	utils.sh now provides a check_range function (Alex Griffin)
+	Improved the performance of check_users (Marc Remy)
 	Updated Nagios::Plugin perl module
 
 	FIXES
