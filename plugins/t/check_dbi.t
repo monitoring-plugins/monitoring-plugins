@@ -49,7 +49,8 @@ SKIP: {
 	$filename =~ s/^\/tmp\///;
 
 	system("$sqlite3 /tmp/$filename 'CREATE TABLE test(a INT, b TEXT)'");
-	system("$sqlite3 /tmp/$filename 'INSERT INTO test VALUES (1, \"text1\"), (2, \"text2\")'");
+	system("$sqlite3 /tmp/$filename 'INSERT INTO test VALUES (1, \"text1\")'");
+	system("$sqlite3 /tmp/$filename 'INSERT INTO test VALUES (2, \"text2\")'");
 
 	my $check_cmd = "./check_dbi -d sqlite3 -o sqlite3_dbdir=/tmp -o dbname=$filename";
 
