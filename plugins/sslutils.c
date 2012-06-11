@@ -44,6 +44,11 @@ static int initialized=0;
  * You *should not* modify directly its fields directly. Instead use
  * ssl_status_* functions to set the struct fields and record new statuses.
  */
+#define SSL_STATUS_INIT { \
+	.state = 3, /* unknown */ \
+	.message = NULL \
+}
+
 struct ssl_status {
 	int state;
 	char *message;
@@ -55,8 +60,10 @@ static void ssl_status_set (struct ssl_status *s, int state, char *message)
 		return;
 
 	s->state = state;
-	if (s->message)
+	if (s->message) {
 		free(s->message);
+		s->message = NULL;
+	}
 
 	s->message = strdup(message);
 }
@@ -326,10 +333,9 @@ int np_net_ssl_check_cert(int days_till_exp, const char *fingerprint){
 #  ifdef USE_OPENSSL
 	X509 *certificate=NULL;
 	X509_NAME *subj=NULL;
-	char cn[MAX_CN_LENGTH]= "";
-	int cnlen =-1;
-	struct ssl_status st;
+	struct ssl_status st = SSL_STATUS_INIT;
 
+	ssl_status_set(&st, STATE_UNKNOWN, _("UNKNOWN - Unknown certificate check status"));
 
 	certificate=SSL_get_peer_certificate(s);
 	if(! certificate){
