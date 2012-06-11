@@ -55,8 +55,8 @@ int np_net_ssl_init_with_hostname_and_version (int sd, char *host_name, int vers
 			method = TLSv1_client_method();
 			break;
 		case 2: /* SSLv2 protocol */
-#ifdef OPENSSL_NO_SSL2
-			printf (("%s\n", _("CRITICAL - SSL Protocol Version 2 is not supported by your build of OpenSSL.")));
+#if defined(USE_GNUTLS) || defined(OPENSSL_NO_SSL2)
+			printf (("%s\n", _("CRITICAL - SSL Protocol Version 2 is not supported by your SSL library.")));
 			return STATE_CRITICAL;
 #else
 			method = SSLv2_client_method();
