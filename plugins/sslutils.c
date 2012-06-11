@@ -219,6 +219,29 @@ static int hex2sha1(unsigned char *sha1, unsigned const char *hex)
 }
 
 #ifdef USE_OPENSSL
+
+/*
+ * The return string _must not_ be freed
+ */
+static char * get_cert_cn(X509 *certificate)
+{
+	X509_NAME *subj=NULL;
+	static char cn[MAX_CN_LENGTH]= "";
+	static int cnlen =-1;
+
+	subj = X509_get_subject_name(certificate);
+	if (!subj) {
+		strcpy(cn , _("Unknown Subject"));
+		return cn;
+	}
+
+	cnlen = X509_NAME_get_text_by_NID (subj, NID_commonName, cn, sizeof(cn));
+	if ( cnlen == -1 )
+		strcpy(cn , _("Unknown CN"));
+
+	return cn;
+}
+
 static int check_cert_expiration(X509 *certificate, int days_till_exp, struct ssl_status *status)
 {
 	ASN1_STRING *tm;
@@ -229,16 +252,17 @@ static int check_cert_expiration(X509 *certificate, int days_till_exp, struct ss
 	char timestamp[17] = "";
 	char *msg = NULL;
 	int st = STATE_UNKNOWN;
+	char *cn = NULL;
 
 	/* Retrieve timestamp of certificate */
 	tm = X509_get_notAfter(certificate);
 
+	cn = get_cert_cn(certificate);
+
 	/* Generate tm structure to process timestamp */
 	if (tm->type == V_ASN1_UTCTIME) {
 		if (tm->length < 10) {
-			asprintf (&msg, "%s\n", _("CRITICAL - Wrong time format in certificate."));
-			ssl_status_record(status, STATE_CRITICAL, msg);
-			free(msg);
+			ssl_status_record(status, STATE_CRITICAL, _("CRITICAL - Wrong time format in certificate.\n"));
 			return status->state;
 		} else {
 			stamp.tm_year = (tm->data[0] - '0') * 10 + (tm->data[1] - '0');
@@ -248,9 +272,7 @@ static int check_cert_expiration(X509 *certificate, int days_till_exp, struct ss
 		}
 	} else {
 		if (tm->length < 12) {
-			asprintf (&msg, "%s\n", _("CRITICAL - Wrong time format in certificate."));
-			ssl_status_record(status, STATE_CRITICAL, msg);
-			free(msg);
+			ssl_status_record(status, STATE_CRITICAL, _("CRITICAL - Wrong time format in certificate."));
 			return status->state;
 		} else {
 			stamp.tm_year =
@@ -279,16 +301,16 @@ static int check_cert_expiration(X509 *certificate, int days_till_exp, struct ss
 		 stamp.tm_mday, stamp.tm_year + 1900, stamp.tm_hour, stamp.tm_min);
 
 	if (days_left > 0 && days_left <= days_till_exp) {
-		asprintf (&msg, _("WARNING - Certificate expires in %d day(s) (%s).\n"), days_left, timestamp);
+		asprintf (&msg, _("WARNING - Certificate '%s' expires in %d day(s) (%s).\n"), cn, days_left, timestamp);
 		st=STATE_WARNING;
 	} else if (time_left < 0) {
-		asprintf (&msg, _("CRITICAL - Certificate expired on %s.\n"), timestamp);
+		asprintf (&msg, _("CRITICAL - Certificate '%s' expired on %s.\n"), cn, timestamp);
 		st=STATE_CRITICAL;
 	} else if (days_left == 0) {
-		asprintf (&msg, _("WARNING - Certificate expires today (%s).\n"), timestamp);
+		asprintf (&msg, _("WARNING - Certificate '%s' expires today (%s).\n"), cn, timestamp);
 		st=STATE_WARNING;
 	} else {
-		asprintf (&msg, _("OK - Certificate will expire on %s.\n"), timestamp);
+		asprintf (&msg, _("OK - Certificate '%s' will expire on %s.\n"), cn, timestamp);
 		st=STATE_OK;
 	}
 
@@ -304,20 +326,22 @@ static int check_cert_fingerprint(X509 *certificate, const char *fingerprint, st
 	unsigned int md_len;
 	unsigned char fp[EVP_MAX_MD_SIZE];
 	char *msg = NULL;
+	char *cn = NULL;
 
 	hex2sha1(fp, fingerprint);
+	cn = get_cert_cn(certificate);
 
 	digest = EVP_get_digestbyname("sha1");
 	X509_digest(certificate, digest, md, &md_len);
 
 	if (!memcmp(md, fp, md_len)) {
-		asprintf (&msg, "%s\n", _("OK - Certificate matches fingerprint"));
+		asprintf (&msg, _("OK - Certificate '%s' matches fingerprint\n"), cn);
 		ssl_status_record(status, STATE_OK, msg);
 		free(msg);
 		return status->state;
 	}
 
-	asprintf (&msg, "%s\n", _("CRITICAL - Certificate does not match fingerprint"));
+	asprintf (&msg, _("CRITICAL - Certificate '%s' does not match fingerprint\n"), cn);
 
 	ssl_status_record(status, STATE_CRITICAL, msg);
 	free(msg);
@@ -350,11 +374,6 @@ int np_net_ssl_check_cert(int days_till_exp, const char *fingerprint){
 		printf ("%s\n",_("CRITICAL - Cannot retrieve certificate subject."));
 		return STATE_CRITICAL;
 	}
-	cnlen = X509_NAME_get_text_by_NID (subj, NID_commonName, cn, sizeof(cn));
-	if ( cnlen == -1 )
-		strcpy(cn , _("Unknown CN"));
-
-	ssl_status_set(&st, STATE_UNKNOWN, _("UNKNOWN - Unknown certificate check status"));
 
 	if (days_till_exp > 0) {
 		check_cert_expiration(certificate, days_till_exp, &st);
@@ -364,8 +383,9 @@ int np_net_ssl_check_cert(int days_till_exp, const char *fingerprint){
 		check_cert_fingerprint(certificate, fingerprint, &st);
 
 	}
+
 	X509_free (certificate);
-	printf("%s\n", st.message);
+	printf("%s", st.message);
 	ssl_status_free(&st);
 
 	return st.state;
