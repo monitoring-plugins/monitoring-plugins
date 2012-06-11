@@ -220,6 +220,9 @@ sub run_common_tests {
 	is( $result->return_code, 2, "Missing string check");
 	like( $result->output, qr%HTTP CRITICAL: HTTP/1\.1 200 OK - string 'NonRootWithOver30charsAndM...' not found on 'https?://127\.0\.0\.1:\d+/file/root'%, "Shows search string and location");
 
+	$result = NPTEST->testCmd( "$command -u /file/root -s stringToFind" );
+	is( $result-return_code, 0. "file/root search for string");
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK, "Output correct" );
 
 	my $cmd;
 	$cmd = "$command -u /slow";
