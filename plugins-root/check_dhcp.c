@@ -839,8 +839,7 @@ int add_dhcp_offer(struct in_addr source,dhcp_packet *offer_packet){
 	/* process all DHCP options present in the packet */
 	for(x=4;x<MAX_DHCP_OPTIONS_LENGTH;){
 
-		/* end of options (0 is really just a pad, but bail out anyway) */
-		if((int)offer_packet->options[x]==-1 || (int)offer_packet->options[x]==0)
+		if((int)offer_packet->options[x]==-1)
 			break;
 
 		/* get option type */
@@ -872,7 +871,9 @@ int add_dhcp_offer(struct in_addr source,dhcp_packet *offer_packet){
 			}
 
 		/* skip option data we're ignoring */
-		if(option_type!=DHCP_OPTION_REBINDING_TIME)
+		if(option_type==0) /* "pad" option, see RFC 2132 (3.1) */
+			x+=1;
+		else
 			x+=option_length;
 		}
 
