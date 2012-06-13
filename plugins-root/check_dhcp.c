@@ -141,7 +141,7 @@ typedef struct dhcp_packet_struct{
         u_int16_t flags;                /* flags */
         struct in_addr ciaddr;          /* IP address of this machine (if we already have one) */
         struct in_addr yiaddr;          /* IP address of this machine (offered by the DHCP server) */
-        struct in_addr siaddr;          /* IP address of DHCP server */
+        struct in_addr siaddr;          /* IP address of next server */
         struct in_addr giaddr;          /* IP address of DHCP relay */
         unsigned char chaddr [MAX_DHCP_CHADDR_LENGTH];      /* hardware address of this machine */
         char sname [MAX_DHCP_SNAME_LENGTH];    /* name of DHCP server */
@@ -587,11 +587,6 @@ int get_dhcp_offer(int sock){
 		/* Save a copy of "source" into "via" even if it's via itself */
 		memcpy(&via,&source,sizeof(source)) ;
 
-		/* If siaddr is non-zero, set "source" to siaddr */
-		if(offer_packet.siaddr.s_addr != 0L){
-			source.sin_addr.s_addr = offer_packet.siaddr.s_addr ;
-			}
-
 		if(verbose){
 			printf(_("DHCPOFFER from IP address %s"),inet_ntoa(source.sin_addr));
 			printf(_(" via %s\n"),inet_ntoa(via.sin_addr));
@@ -904,9 +899,9 @@ int add_dhcp_offer(struct in_addr source,dhcp_packet *offer_packet){
 	 * the next bootstrap service (e.g., delivery of an operating system
 	 * executable image).  A DHCP server always returns its own address in
 	 * the 'server identifier' option."  'serv_ident' is the 'server
-	 * identifier' option, 'source' is the 'siaddr' field or (if 'siaddr'
-	 * wasn't available) the IP address we received the DHCPOFFER from.  If
-	 * 'serv_ident' isn't available for some reason, we use 'source'.
+	 * identifier' option, 'source' is the IP address we received the
+	 * DHCPOFFER from.  If 'serv_ident' isn't available for some reason, we
+	 * use 'source'.
 	 */
 	new_offer->server_address=serv_ident.s_addr?serv_ident:source;
 	new_offer->offered_address=offer_packet->yiaddr;
