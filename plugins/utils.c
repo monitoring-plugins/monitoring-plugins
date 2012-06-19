@@ -289,6 +289,31 @@ is_option (char *str)
 		return FALSE;
 }
 
+int
+is_sha1_fingerprint (char *str)
+{
+	int count;
+
+	if (!str)
+		return FALSE;
+
+	for (count = 0; count < 19; count++) {
+		if (!str || !(str+1) || !isxdigit(*str) || !isxdigit(*++str))
+			return FALSE;
+
+		str++;
+		if (*str++ != ':')
+			return FALSE;
+
+	}
+	
+	if (!str || !(str+1) || !isxdigit(*str) || !isxdigit(*++str))
+		return FALSE;
+
+	return TRUE;
+}
+
+
 #ifdef NEED_GETTIMEOFDAY
 int
 gettimeofday (struct timeval *tv, struct timezone *tz)

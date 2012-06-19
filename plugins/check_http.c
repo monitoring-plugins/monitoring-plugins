@@ -58,6 +58,7 @@ enum {
 
 #ifdef HAVE_SSL
 int check_cert = FALSE;
+char *check_fingerprint = NULL;
 int days_till_exp;
 int ssl_version;
 char *randbuff;
@@ -215,6 +216,7 @@ process_arguments (int argc, char **argv)
     {"invert-regex", no_argument, NULL, INVERT_REGEX},
     {"use-ipv4", no_argument, 0, '4'},
     {"use-ipv6", no_argument, 0, '6'},
+	{"fingerprint", required_argument, 0, 'F'},
     {0, 0, 0, 0}
   };
 
@@ -235,7 +237,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:e:p:s:R:r:u:f:C:nlLS::m:M:N", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:e:p:s:R:r:u:f:C:nlLS::m:M:NF:", longopts, &option);
     if (c == -1 || c == EOF)
       break;
 
@@ -280,6 +282,17 @@ process_arguments (int argc, char **argv)
     case 'n': /* do not show html link */
       display_html = FALSE;
       break;
+	case 'F': /* Check certificate fingerprint */
+#ifdef HAVE_SSL
+	  if (!is_sha1_fingerprint(optarg))
+		  usage2 (_("Invalid fingerprint"), optarg);
+	  check_fingerprint = optarg;
+	  check_cert = TRUE;
+
+#else
+      usage4 (_("Invalid option - SSL is not available"));
+#endif
+	  break;
     case 'C': /* Check SSL cert validity */
 #ifdef HAVE_SSL
       if (!is_intnonneg (optarg))
@@ -810,7 +823,7 @@ check_http (void)
     if (result != STATE_OK)
       return result;
     if (check_cert == TRUE) {
-      result = np_net_ssl_check_cert(days_till_exp);
+      result = np_net_ssl_check_cert(days_till_exp, check_fingerprint);
       np_net_ssl_cleanup();
       if (sd) close(sd);
       return result;
@@ -1341,6 +1354,8 @@ print_help (void)
   printf (" %s\n", "-C, --certificate=INTEGER");
   printf ("    %s\n", _("Minimum number of days a certificate has to be valid. Port defaults to 443"));
   printf ("    %s\n", _("(when this option is used the URL is not checked.)\n"));
+  printf (" %s\n", "-F, --fingerprint=STRING");
+  printf ("    %s\n", _("Check certificate fingerprint against the sha1 passed as argument"));
 #endif
 
   printf (" %s\n", "-e, --expect=STRING");
@@ -1445,5 +1460,5 @@ print_usage (void)
   printf ("       [-e <expect>] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <age>] [-T <content-type>]\n");
-  printf ("       [-j method]\n");
+  printf ("       [-j method] [-F <sha1 fingerprint>]\n");
 }

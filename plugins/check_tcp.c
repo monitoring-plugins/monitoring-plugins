@@ -235,7 +235,7 @@ main (int argc, char **argv)
 	if (flags & FLAG_SSL){
 		result = np_net_ssl_init(sd);
 		if (result == STATE_OK && check_cert == TRUE) {
-			result = np_net_ssl_check_cert(days_till_exp);
+			result = np_net_ssl_check_cert(days_till_exp, NULL);
 		}
 	}
 	if(result != STATE_OK || check_cert == TRUE){

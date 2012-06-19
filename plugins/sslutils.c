@@ -36,8 +36,68 @@ static SSL_CTX *c=NULL;
 static SSL *s=NULL;
 static int initialized=0;
 
-int np_net_ssl_init(int sd) {
-	return np_net_ssl_init_with_hostname(sd, NULL);
+/*
+ * If a helper can do more than one subkeck (np_net_ssl_check_cert), keep track
+ * of the previous checks results so we can output a final status code and
+ * message.
+ *
+ * You *should not* modify directly its fields directly. Instead use
+ * ssl_status_* functions to set the struct fields and record new statuses.
+ */
+#define SSL_STATUS_INIT { \
+	.state = 3, /* unknown */ \
+	.message = NULL \
+}
+
+struct ssl_status {
+	int state;
+	char *message;
+};
+
+static void ssl_status_set (struct ssl_status *s, int state, char *message)
+{
+	if (!s)
+		return;
+
+	s->state = state;
+	if (s->message) {
+		free(s->message);
+		s->message = NULL;
+	}
+
+	s->message = strdup(message);
+}
+
+/*
+ * Frees the allocated message (if any)
+ */
+static void ssl_status_free (struct ssl_status *s)
+{
+	if (!s)
+		return;
+
+	if (s->message)
+		free(s->message);
+}
+
+/*
+ * Sets new information if criticity is higher than the current status
+ */
+static void ssl_status_record (struct ssl_status *cur, int state, char *message)
+{
+	if (!cur || !message)
+		return;
+
+	if (max_state(cur->state, state) == cur->state)
+		return;
+
+	ssl_status_set(cur, state, message);
+
+}
+
+
+int np_net_ssl_init (int sd) {
+		return np_net_ssl_init_with_hostname(sd, NULL);
 }
 
 int np_net_ssl_init_with_hostname(int sd, char *host_name) {
@@ -126,46 +186,84 @@ int np_net_ssl_read(void *buf, int num) {
 	return SSL_read(s, buf, num);
 }
 
-int np_net_ssl_check_cert(int days_till_exp) {
-#  ifdef USE_OPENSSL
-	X509 *certificate=NULL;
-	X509_NAME *subj=NULL;
-	char cn[MAX_CN_LENGTH]= "";
-	int cnlen =-1;
-	int status=STATE_UNKNOWN;
+static unsigned hex2val(unsigned const char c)
+{
+	if (isdigit(c))
+		return c - '0';
 
+	if ((c >= 'a') && (c <= 'f'))
+		return 10 + (c - 'a');
+
+	if ((c >= 'A') && (c <= 'F'))
+		return 10 + (c - 'A');
+
+	return ~0;
+
+}
+
+static int hex2sha1(unsigned char *sha1, unsigned const char *hex)
+{
+	int i;
+
+	for (i = 0; i < 20; i++) {
+		unsigned int val = (hex2val(*hex) << 4) | hex2val(*++hex);
+		if (val & ~0xff)
+			return -1;
+
+		sha1[i] = val;
+		hex++;
+
+		if (hex && *hex == ':')
+			hex++;
+	}
+}
+
+#ifdef USE_OPENSSL
+
+/*
+ * The return string _must not_ be freed
+ */
+static char * get_cert_cn(X509 *certificate)
+{
+	X509_NAME *subj=NULL;
+	static char cn[MAX_CN_LENGTH]= "";
+	static int cnlen =-1;
+
+	subj = X509_get_subject_name(certificate);
+	if (!subj) {
+		strcpy(cn , _("Unknown Subject"));
+		return cn;
+	}
+
+	cnlen = X509_NAME_get_text_by_NID (subj, NID_commonName, cn, sizeof(cn));
+	if ( cnlen == -1 )
+		strcpy(cn , _("Unknown CN"));
+
+	return cn;
+}
+
+static int check_cert_expiration(X509 *certificate, int days_till_exp, struct ssl_status *status)
+{
 	ASN1_STRING *tm;
 	int offset;
 	struct tm stamp;
 	float time_left;
 	int days_left;
 	char timestamp[17] = "";
-
-	certificate=SSL_get_peer_certificate(s);
-	if (!certificate) {
-		printf("%s\n",_("CRITICAL - Cannot retrieve server certificate."));
-		return STATE_CRITICAL;
-	}
-
-	/* Extract CN from certificate subject */
-	subj=X509_get_subject_name(certificate);
-
-	if (!subj) {
-		printf("%s\n",_("CRITICAL - Cannot retrieve certificate subject."));
-		return STATE_CRITICAL;
-	}
-	cnlen = X509_NAME_get_text_by_NID(subj, NID_commonName, cn, sizeof(cn));
-	if (cnlen == -1)
-		strcpy(cn, _("Unknown CN"));
+	char *msg = NULL;
+	int st = STATE_UNKNOWN;
+	char *cn = NULL;
 
 	/* Retrieve timestamp of certificate */
 	tm = X509_get_notAfter(certificate);
 
+	cn = get_cert_cn(certificate);
+
 	/* Generate tm structure to process timestamp */
 	if (tm->type == V_ASN1_UTCTIME) {
 		if (tm->length < 10) {
-			printf("%s\n", _("CRITICAL - Wrong time format in certificate."));
-			return STATE_CRITICAL;
+			ssl_status_record(status, STATE_CRITICAL, _("CRITICAL - Wrong time format in certificate.\n"));
+			return status->state;
 		} else {
 			stamp.tm_year = (tm->data[0] - '0') * 10 + (tm->data[1] - '0');
 			if (stamp.tm_year < 50)
@@ -174,8 +272,8 @@ int np_net_ssl_check_cert(int days_till_exp) {
 		}
 	} else {
 		if (tm->length < 12) {
-			printf("%s\n", _("CRITICAL - Wrong time format in certificate."));
-			return STATE_CRITICAL;
+			ssl_status_record(status, STATE_CRITICAL, _("CRITICAL - Wrong time format in certificate."));
+			return status->state;
 		} else {
 			stamp.tm_year =
 				(tm->data[0] - '0') * 1000 + (tm->data[1] - '0') * 100 +
@@ -203,20 +301,94 @@ int np_net_ssl_check_cert(int days_till_exp) {
 		 stamp.tm_mday, stamp.tm_year + 1900, stamp.tm_hour, stamp.tm_min);
 
 	if (days_left > 0 && days_left <= days_till_exp) {
-		printf(_("WARNING - Certificate '%s' expires in %d day(s) (%s).\n"), cn, days_left, timestamp);
-		status=STATE_WARNING;
+		asprintf (&msg, _("WARNING - Certificate '%s' expires in %d day(s) (%s).\n"), cn, days_left, timestamp);
+		st=STATE_WARNING;
 	} else if (time_left < 0) {
-		printf(_("CRITICAL - Certificate '%s' expired on %s.\n"), cn, timestamp);
-		status=STATE_CRITICAL;
+		asprintf (&msg, _("CRITICAL - Certificate '%s' expired on %s.\n"), cn, timestamp);
+		st=STATE_CRITICAL;
 	} else if (days_left == 0) {
-		printf(_("WARNING - Certificate '%s' expires today (%s).\n"), cn, timestamp);
-		status=STATE_WARNING;
+		asprintf (&msg, _("WARNING - Certificate '%s' expires today (%s).\n"), cn, timestamp);
+		st=STATE_WARNING;
 	} else {
-		printf(_("OK - Certificate '%s' will expire on %s.\n"), cn, timestamp);
-		status=STATE_OK;
+		asprintf (&msg, _("OK - Certificate '%s' will expire on %s.\n"), cn, timestamp);
+		st=STATE_OK;
 	}
-	X509_free(certificate);
-	return status;
+
+	ssl_status_record(status, st, msg);
+	free(msg);
+	return status->state;
+}
+
+static int check_cert_fingerprint(X509 *certificate, const char *fingerprint, struct ssl_status *status)
+{
+	const EVP_MD *digest;
+	unsigned char md[EVP_MAX_MD_SIZE];
+	unsigned int md_len;
+	unsigned char fp[EVP_MAX_MD_SIZE];
+	char *msg = NULL;
+	char *cn = NULL;
+
+	hex2sha1(fp, fingerprint);
+	cn = get_cert_cn(certificate);
+
+	digest = EVP_get_digestbyname("sha1");
+	X509_digest(certificate, digest, md, &md_len);
+
+	if (!memcmp(md, fp, md_len)) {
+		asprintf (&msg, _("OK - Certificate '%s' matches fingerprint\n"), cn);
+		ssl_status_record(status, STATE_OK, msg);
+		free(msg);
+		return status->state;
+	}
+
+	asprintf (&msg, _("CRITICAL - Certificate '%s' does not match fingerprint\n"), cn);
+
+	ssl_status_record(status, STATE_CRITICAL, msg);
+	free(msg);
+
+	return status->state;
+}
+
+
+#endif
+
+
+int np_net_ssl_check_cert(int days_till_exp, const char *fingerprint){
+#  ifdef USE_OPENSSL
+	X509 *certificate=NULL;
+	X509_NAME *subj=NULL;
+	struct ssl_status st = SSL_STATUS_INIT;
+
+	ssl_status_set(&st, STATE_UNKNOWN, _("UNKNOWN - Unknown certificate check status"));
+
+	certificate=SSL_get_peer_certificate(s);
+	if(! certificate){
+		printf ("%s\n",_("CRITICAL - Cannot retrieve server certificate."));
+		return STATE_CRITICAL;
+	}
+
+	/* Extract CN from certificate subject */
+	subj=X509_get_subject_name(certificate);
+
+	if(! subj){
+		printf ("%s\n",_("CRITICAL - Cannot retrieve certificate subject."));
+		return STATE_CRITICAL;
+	}
+
+	if (days_till_exp > 0) {
+		check_cert_expiration(certificate, days_till_exp, &st);
+	}
+
+	if (fingerprint) {
+		check_cert_fingerprint(certificate, fingerprint, &st);
+
+	}
+
+	X509_free (certificate);
+	printf("%s", st.message);
+	ssl_status_free(&st);
+
+	return st.state;
 #  else /* ifndef USE_OPENSSL */
 	printf("%s\n", _("WARNING - Plugin does not support checking certificates."));
 	return STATE_WARNING;

@@ -19,7 +19,7 @@ use NPTest;
 use FindBin qw($Bin);
 
 my $common_tests = 66;
-my $ssl_only_tests = 6;
+my $ssl_only_tests = 18;
 # Check that all dependent modules are available
 eval {
 	require HTTP::Daemon;
@@ -194,6 +194,41 @@ SKIP: {
 	is( $result->output, 
 		'CRITICAL - Certificate \'Ton Voon\' expired on 03/05/2009 00:13.',
 		"output ok" );
+
+	# Fingerprint OK
+	$result = NPTest->testCmd( "$command -p $port_https -S -F 38:1A:20:3C:93:6F:5E:E2:F3:C2:02:C7:DB:C8:2B:BC:74:55:74:53");
+	is( $result->return_code, 0, "$command -p $port_https -S -F 38:1A:20:3C:93:6F:5E:E2:F3:C2:02:C7:DB:C8:2B:BC:74:55:74:53" );
+	is( $result->output, 'OK - Certificate \'Ton Voon\' matches fingerprint', "output ok" );
+
+	# Fingerprint NOK
+	$result = NPTest->testCmd( "$command -p $port_https -S -F FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF");
+	is( $result->return_code, 2, "$command -p $port_https -S -F FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF" );
+	is( $result->output, 'CRITICAL - Certificate \'Ton Voon\' does not match fingerprint', "output ok" );
+
+	# Cert OK and fingerprint OK
+	$result = NPTest->testCmd( "$command -p $port_https -S -C 7 -F 38:1A:20:3C:93:6F:5E:E2:F3:C2:02:C7:DB:C8:2B:BC:74:55:74:53");
+	is( $result->return_code, 0, "$command -p $port_https -S -C 7 -F 38:1A:20:3C:93:6F:5E:E2:F3:C2:02:C7:DB:C8:2B:BC:74:55:74:53" );
+	is( $result->output, 'OK - Certificate \'Ton Voon\' will expire on 03/03/2019 21:41.', "output ok" );
+
+	# Cert NOK and fingerprint OK
+	$result = NPTest->testCmd( "$command -p $port_https_expired -S -C 7 -F 66:F6:2E:4B:BF:69:97:EB:03:1A:D1:7C:37:CF:84:2E:C3:58:3E:7B" );
+	is( $result->return_code, 2, "$command -p $port_https_expired -S -C 7 -F 66:F6:2E:4B:BF:69:97:EB:03:1A:D1:7C:37:CF:84:2E:C3:58:3E:7B" );
+	is( $result->output,
+		'CRITICAL - Certificate \'Ton Voon\' expired on 03/05/2009 00:13.',
+		"output ok" );
+
+	# Cert OK and fingerprint NOK
+	$result = NPTest->testCmd( "$command -p $port_https -S -C 7 -F FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF");
+	is( $result->return_code, 2, "$command -p $port_https -S -C 7 -F FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF" );
+	is( $result->output, 'CRITICAL - Certificate \'Ton Voon\' does not match fingerprint', "output ok" );
+
+	# Cert NOK and fingerprint NOK
+	$result = NPTest->testCmd( "$command -p $port_https_expired -S -C 7 -F FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF" );
+	is( $result->return_code, 2, "$command -p $port_https_expired -S -C 7 -F FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF" );
+	is( $result->output,
+		'CRITICAL - Certificate \'Ton Voon\' expired on 03/05/2009 00:13.',
+		"output ok" );
+
 
 }
 
