@@ -13,6 +13,7 @@ This file documents the major additions and syntax changes between releases.
 	check_sensors now detects faulty sensors unless --ignore-fault is specified (Jan Wagner)
 	utils.sh now provides a check_range function (Alex Griffin)
 	Improved the performance of check_users (Marc Remy)
+	Add perfdata to check_disk_smb (Debian #654259 - Charles-Henri Larose)
 	Updated Nagios::Plugin perl module
 
 	FIXES
