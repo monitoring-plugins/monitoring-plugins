@@ -25,7 +25,7 @@ This file documents the major additions and syntax changes between releases.
 	Fix segfault in check_host when hostname returns multiple IP addresses (Sebastian Harl)
 	Fix check_smtp and check_tcp where duplicate messages were displayed for certificate errors
 	Fix check_ping's parsing of ping6(1) output (#1894850, Debian #514588, Debian #662638 - Matej Vela)
-	Fix a check_dhcp bug which was triggered by using it to check Windows 2003 DHCP servers (#3503921)
+	Fix a check_dhcp bug which was triggered by checking Windows 2003 DHCP servers (#3503921)
 	Disable RFC4507 support, to work around SSL negotiation issues with (at least) some Tomcat versions
 
 1.4.15 27th July 2010
