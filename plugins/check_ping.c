@@ -516,32 +516,32 @@ error_scan (char buf[MAX_INPUT_BUFFER], const char *addr)
 	if (strstr (buf, "Network is unreachable") ||
 		strstr (buf, "Destination Net Unreachable")
 		)
-		die (STATE_CRITICAL, _("CRITICAL - Network Unreachable (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Network Unreachable (%s)\n"), addr);
 	else if (strstr (buf, "Destination Host Unreachable"))
-		die (STATE_CRITICAL, _("CRITICAL - Host Unreachable (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Host Unreachable (%s)\n"), addr);
 	else if (strstr (buf, "Destination Port Unreachable"))
-		die (STATE_CRITICAL, _("CRITICAL - Bogus ICMP: Port Unreachable (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Bogus ICMP: Port Unreachable (%s)\n"), addr);
 	else if (strstr (buf, "Destination Protocol Unreachable"))
-		die (STATE_CRITICAL, _("CRITICAL - Bogus ICMP: Protocol Unreachable (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Bogus ICMP: Protocol Unreachable (%s)\n"), addr);
 	else if (strstr (buf, "Destination Net Prohibited"))
-		die (STATE_CRITICAL, _("CRITICAL - Network Prohibited (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Network Prohibited (%s)\n"), addr);
 	else if (strstr (buf, "Destination Host Prohibited"))
-		die (STATE_CRITICAL, _("CRITICAL - Host Prohibited (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Host Prohibited (%s)\n"), addr);
 	else if (strstr (buf, "Packet filtered"))
-		die (STATE_CRITICAL, _("CRITICAL - Packet Filtered (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Packet Filtered (%s)\n"), addr);
 	else if (strstr (buf, "unknown host" ))
-		die (STATE_CRITICAL, _("CRITICAL - Host not found (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Host not found (%s)\n"), addr);
 	else if (strstr (buf, "Time to live exceeded"))
-		die (STATE_CRITICAL, _("CRITICAL - Time to live exceeded (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Time to live exceeded (%s)\n"), addr);
 	else if (strstr (buf, "Destination unreachable: "))
-		die (STATE_CRITICAL, _("CRITICAL - Destination Unreachable (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Destination Unreachable (%s)\n"), addr);
 
 	if (strstr (buf, "(DUP!)") || strstr (buf, "DUPLICATES FOUND")) {
 		if (warn_text == NULL)
 			warn_text = strdup (_(WARN_DUPLICATES));
 		else if (! strstr (warn_text, _(WARN_DUPLICATES)) &&
 		         asprintf (&warn_text, "%s %s", warn_text, _(WARN_DUPLICATES)) == -1)
-			die (STATE_UNKNOWN, _("Unable to realloc warn_text"));
+			die (STATE_UNKNOWN, _("Unable to realloc warn_text\n"));
 		return (STATE_WARNING);
 	}
 
