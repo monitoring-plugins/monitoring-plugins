@@ -500,9 +500,7 @@ run_ping (const char *cmd, const char *addr)
 	(void) fclose (child_stderr);
 
 
-	/* close the pipe - WARNING if status is set */
-	if (spclose (child_process))
-		result = max_state (result, STATE_WARNING);
+	spclose (child_process);
 
 	if (warn_text == NULL)
 		warn_text = strdup("");
