@@ -15,6 +15,7 @@ This file documents the major additions and syntax changes between releases.
 	Improved the performance of check_users (Marc Remy)
 	Add perfdata to check_disk_smb (Debian #654259 - Charles-Henri Larose)
 	Updated Nagios::Plugin perl module
+	Add warning threshold to certificate expiration checks of check_tcp/http/smtp (William Leibzon)
 
 	FIXES
 	Fix check_disk free space calculation if blocksizes differ within a disk group (Bekar - #2973603)
