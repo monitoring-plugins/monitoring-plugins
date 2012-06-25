@@ -203,7 +203,7 @@ int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
 		 stamp.tm_mday, stamp.tm_year + 1900, stamp.tm_hour, stamp.tm_min);
 
 	if (days_left > 0 && days_left <= days_till_exp_warn) {
-		printf (_("%s - Certificate '%s' expires in %d day(s) (%s).\n"), (days_left>days_till_exp_crit)?"CRITICAL":"WARNING", cn, days_left, timestamp);
+		printf (_("%s - Certificate '%s' expires in %d day(s) (%s).\n"), (days_left>days_till_exp_crit)?"WARNING":"CRITICAL", cn, days_left, timestamp);
 		if (days_left > days_till_exp_crit)
 			return STATE_WARNING;
 		else
@@ -212,7 +212,7 @@ int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
 		printf(_("CRITICAL - Certificate '%s' expired on %s.\n"), cn, timestamp);
 		status=STATE_CRITICAL;
 	} else if (days_left == 0) {
-		printf (_("%s - Certificate '%s' expires today (%s).\n"), (days_left>days_till_exp_crit)?"CRITICAL":"WARNING", cn, timestamp);
+		printf (_("%s - Certificate '%s' expires today (%s).\n"), (days_left>days_till_exp_crit)?"WARNING":"CRITICAL", cn, timestamp);
 		if (days_left > days_till_exp_crit)
 			return STATE_WARNING;
 		else
