@@ -222,7 +222,7 @@ sub run_common_tests {
 
 	$result = NPTEST->testCmd( "$command -u /file/root -d Root" );
 	is( $result-return_code, 0. "file/root search for string");
-	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK, "Output correct" );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK', "Output correct" );
 
 	my $cmd;
 	$cmd = "$command -u /slow";
