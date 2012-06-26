@@ -153,7 +153,9 @@ sub run_server {
 				delete($persist[1000]);
 				next MAINLOOP;
 			} elsif ($r->url->path eq "/header_check") {
-				$c->send_basic_header($1);
+				$c->send_basic_header;
+				$c->send_crlf;
+				$c->send_basic_header("foo");
 				$c->send_crlf;
 			} else {
 				$c->send_error(HTTP::Status->RC_FORBIDDEN);
@@ -223,13 +225,13 @@ sub run_common_tests {
 	is( $result->return_code, 2, "Missing string check");
 	like( $result->output, qr%HTTP CRITICAL: HTTP/1\.1 200 OK - string 'NonRootWithOver30charsAndM...' not found on 'https?://127\.0\.0\.1:\d+/file/root'%, "Shows search string and location");
 
-        $result = NPTest->testCmd( "$command -u /header_check/ -d Root" );
+        $result = NPTest->testCmd( "$command -u /header_check -d foo" );
         is( $result->return_code, 0, "header_check/rootk search for string");
         like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - 274 bytes in [\d\.]+ second/', "Output correct" );
 
-        $result = NPTest->testCmd( "$command -u /header_check/root -d NonRoot" );
+        $result = NPTest->testCmd( "$command -u /header_check -d foobar" );
         is( $result->return_code, 2, "Missing string check");
-        like( $result->output, qr%^HTTP CRITICAL: HTTP/1\.1 200 OK - string 'NonRoot' not found on 'https?://127\.0\.0\.1:\d+
+        like( $result->output, qr%^HTTP CRITICAL: HTTP/1\.1 200 OK - string 'foobar' not found on 'https?://127\.0\.0\.1:\d+
 /header_check/root'%, "Shows search string and location");
 
 

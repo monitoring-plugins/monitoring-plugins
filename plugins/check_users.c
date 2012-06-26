@@ -3,7 +3,7 @@
 * Nagios check_users plugin
 * 
 * License: GPL
-* Copyright (c) 2000-2007 Nagios Plugins Development Team
+* Copyright (c) 2000-2012 Nagios Plugins Development Team
 * 
 * Description:
 * 
@@ -35,8 +35,8 @@ const char *copyright = "2000-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
-#include "popen.h"
 #include "utils.h"
+#include <utmpx.h>
 
 #define possibly_set(a,b) ((a) == 0 ? (b) : 0)
 
@@ -52,58 +52,33 @@ main (int argc, char **argv)
 {
 	int users = -1;
 	int result = STATE_UNKNOWN;
-	char input_buffer[MAX_INPUT_BUFFER];
 	char *perf;
+	struct utmpx *putmpx;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
-	perf = strdup("");
+	perf = strdup ("");
 
 	/* Parse extra opts if any */
-	argv=np_extra_opts (&argc, argv, progname);
+	argv = np_extra_opts (&argc, argv, progname);
 
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
-	/* run the command */
-	child_process = spopen (WHO_COMMAND);
-	if (child_process == NULL) {
-		printf (_("Could not open pipe: %s\n"), WHO_COMMAND);
-		return STATE_UNKNOWN;
-	}
-
-	child_stderr = fdopen (child_stderr_array[fileno (child_process)], "r");
-	if (child_stderr == NULL)
-		printf (_("Could not open stderr for %s\n"), WHO_COMMAND);
-
 	users = 0;
 
-	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
+	/* get currently logged users from utmpx */
+	setutxent ();
 
-		/* increment 'users' on all lines except total user count */
-		if (input_buffer[0] != '#') {
+	while ((putmpx = getutxent ()) != NULL)
+		if (putmpx->ut_type == USER_PROCESS)
 			users++;
-			continue;
-		}
 
-		/* get total logged in users */
-		if (sscanf (input_buffer, _("# users=%d"), &users) == 1)
-			break;
+	endutxent ();
 
-	}
-
-	/* check STDERR */
-	if (fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
-		result = possibly_set (result, STATE_UNKNOWN);
-	(void) fclose (child_stderr);
-
-	/* close the pipe */
-	if (spclose (child_process))
-		result = possibly_set (result, STATE_UNKNOWN);
-
-	/* else check the user count against warning and critical thresholds */
+	/* check the user count against warning and critical thresholds */
 	if (users > cusers)
 		result = STATE_CRITICAL;
 	else if (users > wusers)
@@ -114,7 +89,7 @@ main (int argc, char **argv)
 	if (result == STATE_UNKNOWN)
 		printf ("%s\n", _("Unable to read output"));
 	else {
-		asprintf(&perf, "%s", perfdata ("users", users, "",
+		asprintf (&perf, "%s", perfdata ("users", users, "",
 		  TRUE, wusers,
 		  TRUE, cusers,
 		  TRUE, 0,
@@ -126,14 +101,11 @@ main (int argc, char **argv)
 	return result;
 }
 
-
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
 {
 	int c;
-
 	int option = 0;
 	static struct option longopts[] = {
 		{"critical", required_argument, 0, 'c'},
@@ -183,7 +155,6 @@ process_arguments (int argc, char **argv)
 		else
 			wusers = atoi (argv[c++]);
 	}
-
 	if (cusers == -1 && argc > c) {
 		if (is_intnonneg (argv[c]) == FALSE)
 			usage4 (_("Warning threshold must be a positive integer"));
@@ -194,8 +165,6 @@ process_arguments (int argc, char **argv)
 	return OK;
 }
 
-
-
 void
 print_help (void)
 {
@@ -205,9 +174,9 @@ print_help (void)
 	printf (COPYRIGHT, copyright, email);
 
 	printf ("%s\n", _("This plugin checks the number of users currently logged in on the local"));
-  printf ("%s\n", _("system and generates an error if the number exceeds the thresholds specified."));
+	printf ("%s\n", _("system and generates an error if the number exceeds the thresholds specified."));
 
-  printf ("\n\n");
+	printf ("\n\n");
 
 	print_usage ();
 
@@ -215,17 +184,16 @@ print_help (void)
 	printf (UT_EXTRA_OPTS);
 
 	printf (" %s\n", "-w, --warning=INTEGER");
-  printf ("    %s\n", _("Set WARNING status if more than INTEGER users are logged in"));
-  printf (" %s\n", "-c, --critical=INTEGER");
-  printf ("    %s\n", _("Set CRITICAL status if more than INTEGER users are logged in"));
+	printf ("    %s\n", _("Set WARNING status if more than INTEGER users are logged in"));
+	printf (" %s\n", "-c, --critical=INTEGER");
+	printf ("    %s\n", _("Set CRITICAL status if more than INTEGER users are logged in"));
 
 	printf (UT_SUPPORT);
 }
 
-
 void
 print_usage (void)
 {
-  printf ("%s\n", _("Usage:"));
+	printf ("%s\n", _("Usage:"));
 	printf ("%s -w <users> -c <users>\n", progname);
 }

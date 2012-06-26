@@ -432,6 +432,7 @@ run_ping (const char *cmd, const char *addr)
 {
 	char buf[MAX_INPUT_BUFFER];
 	int result = STATE_UNKNOWN;
+	int match;
 
 	if ((child_process = spopen (cmd)) == NULL)
 		die (STATE_UNKNOWN, _("Could not open pipe: %s\n"), cmd);
@@ -448,28 +449,29 @@ run_ping (const char *cmd, const char *addr)
 		result = max_state (result, error_scan (buf, addr));
 
 		/* get the percent loss statistics */
-		if(sscanf(buf,"%*d packets transmitted, %*d packets received, +%*d errors, %d%% packet loss",&pl)==1 ||
-			 sscanf(buf,"%*d packets transmitted, %*d packets received, +%*d duplicates, %d%% packet loss", &pl) == 1 ||
-			 sscanf(buf,"%*d packets transmitted, %*d received, +%*d duplicates, %d%% packet loss", &pl) == 1 ||
-			 sscanf(buf,"%*d packets transmitted, %*d packets received, %d%% packet loss",&pl)==1 ||
-			 sscanf(buf,"%*d packets transmitted, %*d packets received, %d%% loss, time",&pl)==1 ||
-			 sscanf(buf,"%*d packets transmitted, %*d received, %d%% loss, time", &pl)==1 ||
-			 sscanf(buf,"%*d packets transmitted, %*d received, %d%% packet loss, time", &pl)==1 ||
-			 sscanf(buf,"%*d packets transmitted, %*d received, +%*d errors, %d%% packet loss", &pl) == 1 ||
-			 sscanf(buf,"%*d packets transmitted %*d received, +%*d errors, %d%% packet loss", &pl) == 1
+		match = 0;
+		if((sscanf(buf,"%*d packets transmitted, %*d packets received, +%*d errors, %d%% packet loss%n",&pl,&match) && match) ||
+			 (sscanf(buf,"%*d packets transmitted, %*d packets received, +%*d duplicates, %d%% packet loss%n",&pl,&match) && match) ||
+			 (sscanf(buf,"%*d packets transmitted, %*d received, +%*d duplicates, %d%% packet loss%n",&pl,&match) && match) ||
+			 (sscanf(buf,"%*d packets transmitted, %*d packets received, %d%% packet loss%n",&pl,&match) && match) ||
+			 (sscanf(buf,"%*d packets transmitted, %*d packets received, %d%% loss, time%n",&pl,&match) && match) ||
+			 (sscanf(buf,"%*d packets transmitted, %*d received, %d%% loss, time%n",&pl,&match) && match) ||
+			 (sscanf(buf,"%*d packets transmitted, %*d received, %d%% packet loss, time%n",&pl,&match) && match) ||
+			 (sscanf(buf,"%*d packets transmitted, %*d received, +%*d errors, %d%% packet loss%n",&pl,&match) && match) ||
+			 (sscanf(buf,"%*d packets transmitted %*d received, +%*d errors, %d%% packet loss%n",&pl,&match) && match)
 			 )
 			continue;
 
 		/* get the round trip average */
 		else
-			if(sscanf(buf,"round-trip min/avg/max = %*f/%f/%*f",&rta)==1 ||
-				 sscanf(buf,"round-trip min/avg/max/mdev = %*f/%f/%*f/%*f",&rta)==1 ||
-				 sscanf(buf,"round-trip min/avg/max/sdev = %*f/%f/%*f/%*f",&rta)==1 ||
-				 sscanf(buf,"round-trip min/avg/max/stddev = %*f/%f/%*f/%*f",&rta)==1 ||
-				 sscanf(buf,"round-trip min/avg/max/std-dev = %*f/%f/%*f/%*f",&rta)==1 ||
-				 sscanf(buf,"round-trip (ms) min/avg/max = %*f/%f/%*f",&rta)==1 ||
-				 sscanf(buf,"round-trip (ms) min/avg/max/stddev = %*f/%f/%*f/%*f",&rta)==1 ||
-				 sscanf(buf,"rtt min/avg/max/mdev = %*f/%f/%*f/%*f ms",&rta)==1)
+			if((sscanf(buf,"round-trip min/avg/max = %*f/%f/%*f%n",&rta,&match) && match) ||
+				 (sscanf(buf,"round-trip min/avg/max/mdev = %*f/%f/%*f/%*f%n",&rta,&match) && match) ||
+				 (sscanf(buf,"round-trip min/avg/max/sdev = %*f/%f/%*f/%*f%n",&rta,&match) && match) ||
+				 (sscanf(buf,"round-trip min/avg/max/stddev = %*f/%f/%*f/%*f%n",&rta,&match) && match) ||
+				 (sscanf(buf,"round-trip min/avg/max/std-dev = %*f/%f/%*f/%*f%n",&rta,&match) && match) ||
+				 (sscanf(buf,"round-trip (ms) min/avg/max = %*f/%f/%*f%n",&rta,&match) && match) ||
+				 (sscanf(buf,"round-trip (ms) min/avg/max/stddev = %*f/%f/%*f/%*f%n",&rta,&match) && match) ||
+				 (sscanf(buf,"rtt min/avg/max/mdev = %*f/%f/%*f/%*f ms%n",&rta,&match) && match))
 			continue;
 	}
 

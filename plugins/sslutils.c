@@ -36,69 +36,97 @@ static SSL_CTX *c=NULL;
 static SSL *s=NULL;
 static int initialized=0;
 
-int np_net_ssl_init (int sd) {
-		return np_net_ssl_init_with_hostname(sd, NULL);
+int np_net_ssl_init(int sd) {
+	return np_net_ssl_init_with_hostname(sd, NULL);
 }
 
-int np_net_ssl_init_with_hostname (int sd, char *host_name) {
-		if (!initialized) {
-			/* Initialize SSL context */
-			SSLeay_add_ssl_algorithms ();
-			SSL_load_error_strings ();
-			OpenSSL_add_all_algorithms ();
-			initialized = 1;
-		}
-		if ((c = SSL_CTX_new (SSLv23_client_method ())) == NULL) {
-				printf ("%s\n", _("CRITICAL - Cannot create SSL context."));
-				return STATE_CRITICAL;
-		}
-#ifdef SSL_OP_NO_TICKET
-		SSL_CTX_set_options(c, SSL_OP_NO_TICKET);
-#endif
-		if ((s = SSL_new (c)) != NULL){
-#ifdef SSL_set_tlsext_host_name
-				if (host_name != NULL)
-					SSL_set_tlsext_host_name(s, host_name);
-#endif
-				SSL_set_fd (s, sd);
-				if (SSL_connect(s) == 1){
-						return OK;
-				} else {
-						printf ("%s\n", _("CRITICAL - Cannot make SSL connection "));
-#  ifdef USE_OPENSSL /* XXX look into ERR_error_string */
-						ERR_print_errors_fp (stdout);
-#  endif /* USE_OPENSSL */
-				}
-		} else {
-				printf ("%s\n", _("CRITICAL - Cannot initiate SSL handshake."));
-		}
+int np_net_ssl_init_with_hostname(int sd, char *host_name) {
+	return np_net_ssl_init_with_hostname_and_version(sd, host_name, 0);
+}
+
+int np_net_ssl_init_with_hostname_and_version(int sd, char *host_name, int version) {
+	const SSL_METHOD *method = NULL;
+
+	switch (version) {
+	case 0: /* Deafult to auto negotiation */
+		method = SSLv23_client_method();
+		break;
+	case 1: /* TLSv1 protocol */
+		method = TLSv1_client_method();
+		break;
+	case 2: /* SSLv2 protocol */
+#if defined(USE_GNUTLS) || defined(OPENSSL_NO_SSL2)
+		printf(("%s\n", _("CRITICAL - SSL protocol version 2 is not supported by your SSL library.")));
 		return STATE_CRITICAL;
-}
-
-void np_net_ssl_cleanup (){
-		if(s){
-#ifdef SSL_set_tlsext_host_name
-				SSL_set_tlsext_host_name(s, NULL);
+#else
+		method = SSLv2_client_method();
 #endif
-				SSL_shutdown (s);
-				SSL_free (s);
-				if(c) {
-					SSL_CTX_free (c);
-					c=NULL;
-				}
-				s=NULL;
+		break;
+	case 3: /* SSLv3 protocol */
+		method = SSLv3_client_method();
+		break;
+	default: /* Unsupported */
+		printf("%s\n", _("CRITICAL - Unsupported SSL protocol version."));
+		return STATE_CRITICAL;
+	}
+	if (!initialized) {
+		/* Initialize SSL context */
+		SSLeay_add_ssl_algorithms();
+		SSL_load_error_strings();
+		OpenSSL_add_all_algorithms();
+		initialized = 1;
+	}
+	if ((c = SSL_CTX_new(method)) == NULL) {
+		printf("%s\n", _("CRITICAL - Cannot create SSL context."));
+		return STATE_CRITICAL;
+	}
+#ifdef SSL_OP_NO_TICKET
+	SSL_CTX_set_options(c, SSL_OP_NO_TICKET);
+#endif
+	if ((s = SSL_new(c)) != NULL) {
+#ifdef SSL_set_tlsext_host_name
+		if (host_name != NULL)
+			SSL_set_tlsext_host_name(s, host_name);
+#endif
+		SSL_set_fd(s, sd);
+		if (SSL_connect(s) == 1) {
+			return OK;
+		} else {
+			printf("%s\n", _("CRITICAL - Cannot make SSL connection."));
+#  ifdef USE_OPENSSL /* XXX look into ERR_error_string */
+			ERR_print_errors_fp(stdout);
+#  endif /* USE_OPENSSL */
 		}
+	} else {
+			printf("%s\n", _("CRITICAL - Cannot initiate SSL handshake."));
+	}
+	return STATE_CRITICAL;
 }
 
-int np_net_ssl_write(const void *buf, int num){
+void np_net_ssl_cleanup() {
+	if (s) {
+#ifdef SSL_set_tlsext_host_name
+		SSL_set_tlsext_host_name(s, NULL);
+#endif
+		SSL_shutdown(s);
+		SSL_free(s);
+		if (c) {
+			SSL_CTX_free(c);
+			c=NULL;
+		}
+		s=NULL;
+	}
+}
+
+int np_net_ssl_write(const void *buf, int num) {
 	return SSL_write(s, buf, num);
 }
 
-int np_net_ssl_read(void *buf, int num){
+int np_net_ssl_read(void *buf, int num) {
 	return SSL_read(s, buf, num);
 }
 
-int np_net_ssl_check_cert(int days_till_exp){
+int np_net_ssl_check_cert(int days_till_exp) {
 #  ifdef USE_OPENSSL
 	X509 *certificate=NULL;
 	X509_NAME *subj=NULL;
@@ -114,29 +142,29 @@ int np_net_ssl_check_cert(int days_till_exp){
 	char timestamp[17] = "";
 
 	certificate=SSL_get_peer_certificate(s);
-	if(! certificate){
-		printf ("%s\n",_("CRITICAL - Cannot retrieve server certificate."));
+	if (!certificate) {
+		printf("%s\n",_("CRITICAL - Cannot retrieve server certificate."));
 		return STATE_CRITICAL;
 	}
 
 	/* Extract CN from certificate subject */
 	subj=X509_get_subject_name(certificate);
 
-	if(! subj){
-		printf ("%s\n",_("CRITICAL - Cannot retrieve certificate subject."));
+	if (!subj) {
+		printf("%s\n",_("CRITICAL - Cannot retrieve certificate subject."));
 		return STATE_CRITICAL;
 	}
-	cnlen = X509_NAME_get_text_by_NID (subj, NID_commonName, cn, sizeof(cn));
-	if ( cnlen == -1 )
-		strcpy(cn , _("Unknown CN"));
+	cnlen = X509_NAME_get_text_by_NID(subj, NID_commonName, cn, sizeof(cn));
+	if (cnlen == -1)
+		strcpy(cn, _("Unknown CN"));
 
 	/* Retrieve timestamp of certificate */
-	tm = X509_get_notAfter (certificate);
+	tm = X509_get_notAfter(certificate);
 
 	/* Generate tm structure to process timestamp */
 	if (tm->type == V_ASN1_UTCTIME) {
 		if (tm->length < 10) {
-			printf ("%s\n", _("CRITICAL - Wrong time format in certificate."));
+			printf("%s\n", _("CRITICAL - Wrong time format in certificate."));
 			return STATE_CRITICAL;
 		} else {
 			stamp.tm_year = (tm->data[0] - '0') * 10 + (tm->data[1] - '0');
@@ -146,7 +174,7 @@ int np_net_ssl_check_cert(int days_till_exp){
 		}
 	} else {
 		if (tm->length < 12) {
-			printf ("%s\n", _("CRITICAL - Wrong time format in certificate."));
+			printf("%s\n", _("CRITICAL - Wrong time format in certificate."));
 			return STATE_CRITICAL;
 		} else {
 			stamp.tm_year =
@@ -175,22 +203,22 @@ int np_net_ssl_check_cert(int days_till_exp){
 		 stamp.tm_mday, stamp.tm_year + 1900, stamp.tm_hour, stamp.tm_min);
 
 	if (days_left > 0 && days_left <= days_till_exp) {
-		printf (_("WARNING - Certificate '%s' expires in %d day(s) (%s).\n"), cn, days_left, timestamp);
+		printf(_("WARNING - Certificate '%s' expires in %d day(s) (%s).\n"), cn, days_left, timestamp);
 		status=STATE_WARNING;
 	} else if (time_left < 0) {
-		printf (_("CRITICAL - Certificate '%s' expired on %s.\n"), cn, timestamp);
+		printf(_("CRITICAL - Certificate '%s' expired on %s.\n"), cn, timestamp);
 		status=STATE_CRITICAL;
 	} else if (days_left == 0) {
-		printf (_("WARNING - Certificate '%s' expires today (%s).\n"), cn, timestamp);
+		printf(_("WARNING - Certificate '%s' expires today (%s).\n"), cn, timestamp);
 		status=STATE_WARNING;
 	} else {
-		printf (_("OK - Certificate '%s' will expire on %s.\n"), cn, timestamp);
+		printf(_("OK - Certificate '%s' will expire on %s.\n"), cn, timestamp);
 		status=STATE_OK;
 	}
-	X509_free (certificate);
+	X509_free(certificate);
 	return status;
 #  else /* ifndef USE_OPENSSL */
-	printf ("%s\n", _("WARNING - Plugin does not support checking certificates."));
+	printf("%s\n", _("WARNING - Plugin does not support checking certificates."));
 	return STATE_WARNING;
 #  endif /* USE_OPENSSL */
 }
