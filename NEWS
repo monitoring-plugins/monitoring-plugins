@@ -16,6 +16,7 @@ This file documents the major additions and syntax changes between releases.
 	Add perfdata to check_disk_smb (Debian #654259 - Charles-Henri Larose)
 	Updated Nagios::Plugin perl module
 	Add warning threshold to certificate expiration checks of check_tcp/http/smtp (William Leibzon)
+	Add --perf-oids option for check_snmp (Jochen Bern)
 
 	FIXES
 	Fix check_disk free space calculation if blocksizes differ within a disk group (Bekar - #2973603)
@@ -28,6 +29,7 @@ This file documents the major additions and syntax changes between releases.
 	Fix check_ping's parsing of ping6(1) output (#1894850, Debian #514588, Debian #662638 - Matej Vela)
 	Fix a check_dhcp bug which was triggered by checking Windows 2003 DHCP servers (#3503921)
 	Disable RFC4507 support, to work around SSL negotiation issues with (at least) some Tomcat versions
+	Fix performance data label containing spaces in check_snmp (Jochen Bern)
 
 1.4.15 27th July 2010
 	ENHANCEMENTS

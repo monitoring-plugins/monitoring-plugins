@@ -141,6 +141,7 @@ int calculate_rate = 0;
 int rate_multiplier = 1;
 state_data *previous_state;
 double previous_value[MAX_OIDS];
+int perf_labels = 1;
 
 
 int
@@ -169,6 +170,7 @@ main (int argc, char **argv)
 	char *state_string=NULL;
 	size_t response_length, current_length, string_length;
 	char *temp_string=NULL;
+	char *quote_string=NULL;
 	time_t current_time;
 	double temp_double;
 	time_t duration;
@@ -485,11 +487,22 @@ main (int argc, char **argv)
 		ptr = NULL;
 		strtod(show, &ptr);
 		if (ptr > show) {
-			if (nlabels >= (size_t)1 && (size_t)i < nlabels && labels[i] != NULL)
+			if (perf_labels && nlabels >= (size_t)1 && (size_t)i < nlabels && labels[i] != NULL)
 				temp_string=labels[i];
 			else
 				temp_string=oidname;
-			strncat(perfstr, temp_string, sizeof(perfstr)-strlen(perfstr)-1);
+			if (strpbrk (temp_string, " ='\"") == NULL) {
+				strncat(perfstr, temp_string, sizeof(perfstr)-strlen(perfstr)-1);
+			} else {
+				if (strpbrk (temp_string, "\"") == NULL) {
+					quote_string="\"";
+				} else {
+					quote_string="'";
+				}
+				strncat(perfstr, quote_string, sizeof(perfstr)-strlen(perfstr)-1);
+				strncat(perfstr, temp_string, sizeof(perfstr)-strlen(perfstr)-1);
+				strncat(perfstr, quote_string, sizeof(perfstr)-strlen(perfstr)-1);
+			}
 			strncat(perfstr, "=", sizeof(perfstr)-strlen(perfstr)-1);
 			len = sizeof(perfstr)-strlen(perfstr)-1;
 			strncat(perfstr, show, len>ptr-show ? ptr-show : len);
@@ -583,6 +596,7 @@ process_arguments (int argc, char **argv)
 		{"rate", no_argument, 0, L_CALCULATE_RATE},
 		{"rate-multiplier", required_argument, 0, L_RATE_MULTIPLIER},
 		{"invert-search", no_argument, 0, L_INVERT_SEARCH},
+		{"perf-oids", no_argument, 0, 'O'},
 		{0, 0, 0, 0}
 	};
 
@@ -600,7 +614,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "nhvVt:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:L:U:a:x:A:X:",
+		c = getopt_long (argc, argv, "nhvVOt:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:L:U:a:x:A:X:",
 									 longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -797,6 +811,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case L_INVERT_SEARCH:
 			invert_search=1;
+			break;
+		case 'O':
+			perf_labels=0;
 			break;
 		}
 	}
@@ -1062,6 +1079,9 @@ print_help (void)
 	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf (" %s\n", "-e, --retries=INTEGER");
 	printf ("    %s\n", _("Number of retries to be used in the requests"));
+
+	printf (" %s\n", "-O, --perf-oids");
+	printf ("    %s\n", _("Label performance data with OIDs instead of --label's"));
 
 	printf (UT_VERBOSE);
 
