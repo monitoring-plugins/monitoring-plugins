@@ -494,10 +494,10 @@ main (int argc, char **argv)
 			if (strpbrk (temp_string, " ='\"") == NULL) {
 				strncat(perfstr, temp_string, sizeof(perfstr)-strlen(perfstr)-1);
 			} else {
-				if (strpbrk (temp_string, "\"") == NULL) {
-					quote_string="\"";
-				} else {
+				if (strpbrk (temp_string, "'") == NULL) {
 					quote_string="'";
+				} else {
+					quote_string="\"";
 				}
 				strncat(perfstr, quote_string, sizeof(perfstr)-strlen(perfstr)-1);
 				strncat(perfstr, temp_string, sizeof(perfstr)-strlen(perfstr)-1);

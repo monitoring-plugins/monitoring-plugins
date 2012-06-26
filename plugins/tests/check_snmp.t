@@ -8,7 +8,7 @@ use Test::More;
 use NPTest;
 use FindBin qw($Bin);
 
-my $tests = 51;
+my $tests = 53;
 # Check that all dependent modules are available
 eval {
 	require NetSNMP::OID;
@@ -164,6 +164,10 @@ is($res->output, "SNMP OK - test 69994 | iso.3.6.1.4.1.8072.3.2.67.10=69994c ", 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10" );
 is($res->return_code, 0, "OK as no thresholds" );
 is($res->output, "SNMP OK - 70660 | iso.3.6.1.4.1.8072.3.2.67.10=70660c ", "Check label");
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 -l 'test test'" );
+is($res->return_code, 0, "OK as no thresholds" );
+is($res->output, "SNMP OK - test test 71326 | 'test test'=71326c ", "Check label");
 
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets_per_minute --rate-multiplier=60" );
