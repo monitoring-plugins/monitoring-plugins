@@ -2,7 +2,7 @@ This file lists the major bugs from the Nagios Plugins page on Sourceforge
 at http://sourceforge.net/tracker/?group_id=29880&atid=397597. These are not
 necessarily verified as errors.
 
-For the 1.4.15 release:
+For the 1.4.16 release:
 
 3535511 - check_snmp memory corruption with many OIDs/labels/units
 3434735 - check_http failing with proxy server

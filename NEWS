@@ -1,6 +1,6 @@
 This file documents the major additions and syntax changes between releases.
 
-...
+1.4.16 27th June 2012
 	ENHANCEMENTS
 	check_nt UPTIME accepts warning/critical thresholds (Ryan Kelly)
 	check_disk_smb now allows spaces in share names (#990948, #1370031, Debian #601699)
