@@ -238,7 +238,7 @@ main (int argc, char **argv)
 			result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
 		}
 	}
-	if(result != STATE_OK || check_cert == TRUE){
+	if(result != STATE_OK){
 		np_net_ssl_cleanup();
 		if(sd) close(sd);
 		return result;
