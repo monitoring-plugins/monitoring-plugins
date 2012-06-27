@@ -1,4 +1,4 @@
-This file lists the major bugs from the Nagios Plugins page on Sourceforge 
+This file lists the major bugs from the Nagios Plugins page on Sourceforge
 at http://sourceforge.net/tracker/?group_id=29880&atid=397597. These are not
 necessarily verified as errors.
 
@@ -30,4 +30,3 @@ For the 1.4.16 release:
 1370031 - check_disk_smb requires DNS agree with NetBIOS names
 1225470 - check_swap perf data incorrect
 1090549 - check_dhcp ignores DHCP replies
- 990948 - check_disk_smb doesn't allow spaces in share names
