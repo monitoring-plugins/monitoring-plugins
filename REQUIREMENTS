@@ -46,6 +46,10 @@ check_pqsql:
 	- Requires the PostgreSQL libraries available from
 	  http://www.postgresql.org/
 
+check_dbi:
+	- Requires the DBI libraries available from
+	  http://libdbi.sourceforge.net/
+
 check_radius:
 	- Requires the radiusclient-ng library available from:
 	  http://developer.berlios.de/projects/radiusclient-ng/
