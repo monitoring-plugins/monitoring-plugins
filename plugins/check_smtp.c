@@ -87,9 +87,7 @@ int errcode, excode;
 int server_port = SMTP_PORT;
 char *server_address = NULL;
 char *server_expect = NULL;
-int smtp_use_dummycmd = 0;
-char *mail_command = NULL;
-char *from_arg = NULL;
+int send_mail_from=0;
 int ncommands=0;
 int command_size=0;
 int nresponses=0;
@@ -166,7 +164,7 @@ main (int argc, char **argv)
 	/* initialize the MAIL command with optional FROM command  */
 	xasprintf (&cmd_str, "%sFROM:<%s>%s", mail_command, from_arg, "\r\n");
 
-	if (verbose && smtp_use_dummycmd)
+	if (verbose && send_mail_from)
 		printf ("FROM CMD: %s", cmd_str);
 
 	/* initialize alarm signal handling */
@@ -283,16 +281,7 @@ main (int argc, char **argv)
 		}
 #endif
 
-		/* sendmail will syslog a "NOQUEUE" error if session does not attempt
-		 * to do something useful. This can be prevented by giving a command
-		 * even if syntax is illegal (MAIL requires a FROM:<...> argument)
-		 *
-		 * According to rfc821 you can include a null reversepath in the from command
-		 * - but a log message is generated on the smtp server.
-		 *
-		 * Use the -f option to provide a FROM address
-		 */
-		if (smtp_use_dummycmd) {
+		if (send_mail_from) {
 		  my_send(cmd_str, strlen(cmd_str));
 		  if (recvlines(buffer, MAX_INPUT_BUFFER) >= 1 && verbose)
 		    printf("%s", buffer);
@@ -521,7 +510,7 @@ process_arguments (int argc, char **argv)
 		case 'f':									/* from argument */
 			from_arg = optarg + strspn(optarg, "<");
 			from_arg = strndup(from_arg, strcspn(from_arg, ">"));
-			smtp_use_dummycmd = 1;
+			send_mail_from = 1;
 			break;
 		case 'A':
 			authtype = optarg;
