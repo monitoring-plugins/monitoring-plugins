@@ -121,12 +121,12 @@ main (int argc, char **argv)
 		/* does the host address of number of packets argument come first? */
 #ifdef PING_PACKETS_FIRST
 # ifdef PING_HAS_TIMEOUT
-		asprintf (&cmd, rawcmd, timeout_interval, max_packets, addresses[i]);
+		xasprintf (&cmd, rawcmd, timeout_interval, max_packets, addresses[i]);
 # else
-		asprintf (&cmd, rawcmd, max_packets, addresses[i]);
+		xasprintf (&cmd, rawcmd, max_packets, addresses[i]);
 # endif
 #else
-		asprintf (&cmd, rawcmd, addresses[i], max_packets);
+		xasprintf (&cmd, rawcmd, addresses[i], max_packets);
 #endif
 
 		if (verbose >= 2)
@@ -491,7 +491,7 @@ run_ping (const char *cmd, const char *addr)
 				if (warn_text == NULL) {
 					warn_text = strdup(_("System call sent warnings to stderr "));
 				} else {
-					asprintf(&warn_text, "%s %s", warn_text, _("System call sent warnings to stderr "));
+					xasprintf(&warn_text, "%s %s", warn_text, _("System call sent warnings to stderr "));
 				}
 			}
 		}
@@ -540,7 +540,7 @@ error_scan (char buf[MAX_INPUT_BUFFER], const char *addr)
 		if (warn_text == NULL)
 			warn_text = strdup (_(WARN_DUPLICATES));
 		else if (! strstr (warn_text, _(WARN_DUPLICATES)) &&
-		         asprintf (&warn_text, "%s %s", warn_text, _(WARN_DUPLICATES)) == -1)
+		         xasprintf (&warn_text, "%s %s", warn_text, _(WARN_DUPLICATES)) == -1)
 			die (STATE_UNKNOWN, _("Unable to realloc warn_text\n"));
 		return (STATE_WARNING);
 	}

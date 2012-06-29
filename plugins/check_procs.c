@@ -137,7 +137,7 @@ main (int argc, char **argv)
 	input_buffer = malloc (MAX_INPUT_BUFFER);
 	procprog = malloc (MAX_INPUT_BUFFER);
 
-	asprintf (&metric_name, "PROCS");
+	xasprintf (&metric_name, "PROCS");
 	metric = METRIC_PROCS;
 
 	/* Parse extra opts if any */
@@ -176,7 +176,7 @@ main (int argc, char **argv)
 			printf ("%s", input_line);
 
 		strcpy (procprog, "");
-		asprintf (&procargs, "%s", "");
+		xasprintf (&procargs, "%s", "");
 
 		cols = sscanf (input_line, PS_FORMAT, PS_VARLIST);
 
@@ -186,7 +186,7 @@ main (int argc, char **argv)
 		}
 		if ( cols >= expected_cols ) {
 			resultsum = 0;
-			asprintf (&procargs, "%s", input_line + pos);
+			xasprintf (&procargs, "%s", input_line + pos);
 			strip (procargs);
 
 			/* Some ps return full pathname for command. This removes path */
@@ -250,12 +250,12 @@ main (int argc, char **argv)
 			if (metric != METRIC_PROCS) {
 				if (i == STATE_WARNING) {
 					warn++;
-					asprintf (&fails, "%s%s%s", fails, (strcmp(fails,"") ? ", " : ""), procprog);
+					xasprintf (&fails, "%s%s%s", fails, (strcmp(fails,"") ? ", " : ""), procprog);
 					result = max_state (result, i);
 				}
 				if (i == STATE_CRITICAL) {
 					crit++;
-					asprintf (&fails, "%s%s%s", fails, (strcmp(fails,"") ? ", " : ""), procprog);
+					xasprintf (&fails, "%s%s%s", fails, (strcmp(fails,"") ? ", " : ""), procprog);
 					result = max_state (result, i);
 				}
 			}
@@ -393,7 +393,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'p':									/* process id */
 			if (sscanf (optarg, "%d%[^0-9]", &ppid, tmp) == 1) {
-				asprintf (&fmt, "%s%sPPID = %d", (fmt ? fmt : "") , (options ? ", " : ""), ppid);
+				xasprintf (&fmt, "%s%sPPID = %d", (fmt ? fmt : "") , (options ? ", " : ""), ppid);
 				options |= PPID;
 				break;
 			}
@@ -403,7 +403,7 @@ process_arguments (int argc, char **argv)
 				break;
 			else
 				statopts = optarg;
-			asprintf (&fmt, _("%s%sSTATE = %s"), (fmt ? fmt : ""), (options ? ", " : ""), statopts);
+			xasprintf (&fmt, _("%s%sSTATE = %s"), (fmt ? fmt : ""), (options ? ", " : ""), statopts);
 			options |= STAT;
 			break;
 		case 'u':									/* user or user id */
@@ -423,7 +423,7 @@ process_arguments (int argc, char **argv)
 				uid = pw->pw_uid;
 			}
 			user = pw->pw_name;
-			asprintf (&fmt, "%s%sUID = %d (%s)", (fmt ? fmt : ""), (options ? ", " : ""),
+			xasprintf (&fmt, "%s%sUID = %d (%s)", (fmt ? fmt : ""), (options ? ", " : ""),
 			          uid, user);
 			options |= USER;
 			break;
@@ -433,7 +433,7 @@ process_arguments (int argc, char **argv)
 				break;
 			else
 				prog = optarg;
-			asprintf (&fmt, _("%s%scommand name '%s'"), (fmt ? fmt : ""), (options ? ", " : ""),
+			xasprintf (&fmt, _("%s%scommand name '%s'"), (fmt ? fmt : ""), (options ? ", " : ""),
 			          prog);
 			options |= PROG;
 			break;
@@ -443,7 +443,7 @@ process_arguments (int argc, char **argv)
 				break;
 			else
 				args = optarg;
-			asprintf (&fmt, "%s%sargs '%s'", (fmt ? fmt : ""), (options ? ", " : ""), args);
+			xasprintf (&fmt, "%s%sargs '%s'", (fmt ? fmt : ""), (options ? ", " : ""), args);
 			options |= ARGS;
 			break;
 		case CHAR_MAX+1:
@@ -459,19 +459,19 @@ process_arguments (int argc, char **argv)
 					temp_string[i]=',';
 				i++;
 			}
-			asprintf (&fmt, "%s%sregex args '%s'", (fmt ? fmt : ""), (options ? ", " : ""), temp_string);
+			xasprintf (&fmt, "%s%sregex args '%s'", (fmt ? fmt : ""), (options ? ", " : ""), temp_string);
 			options |= EREG_ARGS;
 			break;
 		case 'r': 					/* RSS */
 			if (sscanf (optarg, "%d%[^0-9]", &rss, tmp) == 1) {
-				asprintf (&fmt, "%s%sRSS >= %d", (fmt ? fmt : ""), (options ? ", " : ""), rss);
+				xasprintf (&fmt, "%s%sRSS >= %d", (fmt ? fmt : ""), (options ? ", " : ""), rss);
 				options |= RSS;
 				break;
 			}
 			usage4 (_("RSS must be an integer!"));
 		case 'z':					/* VSZ */
 			if (sscanf (optarg, "%d%[^0-9]", &vsz, tmp) == 1) {
-				asprintf (&fmt, "%s%sVSZ >= %d", (fmt ? fmt : ""), (options ? ", " : ""), vsz);
+				xasprintf (&fmt, "%s%sVSZ >= %d", (fmt ? fmt : ""), (options ? ", " : ""), vsz);
 				options |= VSZ;
 				break;
 			}
@@ -479,13 +479,13 @@ process_arguments (int argc, char **argv)
 		case 'P':					/* PCPU */
 			/* TODO: -P 1.5.5 is accepted */
 			if (sscanf (optarg, "%f%[^0-9.]", &pcpu, tmp) == 1) {
-				asprintf (&fmt, "%s%sPCPU >= %.2f", (fmt ? fmt : ""), (options ? ", " : ""), pcpu);
+				xasprintf (&fmt, "%s%sPCPU >= %.2f", (fmt ? fmt : ""), (options ? ", " : ""), pcpu);
 				options |= PCPU;
 				break;
 			}
 			usage4 (_("PCPU must be a float!"));
 		case 'm':
-			asprintf (&metric_name, "%s", optarg);
+			xasprintf (&metric_name, "%s", optarg);
 			if ( strcmp(optarg, "PROCS") == 0) {
 				metric = METRIC_PROCS;
 				break;
@@ -523,8 +523,8 @@ process_arguments (int argc, char **argv)
 	if (cmax == -1 && argv[c])
 		cmax = atoi (argv[c++]);
 	if (statopts == NULL && argv[c]) {
-		asprintf (&statopts, "%s", argv[c++]);
-		asprintf (&fmt, _("%s%sSTATE = %s"), (fmt ? fmt : ""), (options ? ", " : ""), statopts);
+		xasprintf (&statopts, "%s", argv[c++]);
+		xasprintf (&fmt, _("%s%sSTATE = %s"), (fmt ? fmt : ""), (options ? ", " : ""), statopts);
 		options |= STAT;
 	}
 

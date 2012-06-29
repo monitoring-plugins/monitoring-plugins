@@ -564,24 +564,24 @@ int main(int argc, char *argv[]){
 
 	switch (result) {
 		case STATE_CRITICAL :
-			asprintf(&result_line, _("NTP CRITICAL:"));
+			xasprintf(&result_line, _("NTP CRITICAL:"));
 			break;
 		case STATE_WARNING :
-			asprintf(&result_line, _("NTP WARNING:"));
+			xasprintf(&result_line, _("NTP WARNING:"));
 			break;
 		case STATE_OK :
-			asprintf(&result_line, _("NTP OK:"));
+			xasprintf(&result_line, _("NTP OK:"));
 			break;
 		default :
-			asprintf(&result_line, _("NTP UNKNOWN:"));
+			xasprintf(&result_line, _("NTP UNKNOWN:"));
 			break;
 	}
 	if(offset_result == STATE_UNKNOWN){
-		asprintf(&result_line, "%s %s", result_line, _("Offset unknown"));
-		asprintf(&perfdata_line, "");
+		xasprintf(&result_line, "%s %s", result_line, _("Offset unknown"));
+		xasprintf(&perfdata_line, "");
 	} else {
-		asprintf(&result_line, "%s %s %.10g secs", result_line, _("Offset"), offset);
-		asprintf(&perfdata_line, "%s", perfd_offset(offset));
+		xasprintf(&result_line, "%s %s %.10g secs", result_line, _("Offset"), offset);
+		xasprintf(&perfdata_line, "%s", perfd_offset(offset));
 	}
 	printf("%s|%s\n", result_line, perfdata_line);
 

@@ -99,7 +99,7 @@ main (int argc, char *argv[])
 	textdomain (PACKAGE);
 
 	if (strstr(argv[0],"check_ldaps")) {
-		asprintf (&progname, "check_ldaps");
+		xasprintf (&progname, "check_ldaps");
  	}
 
 	/* Parse extra opts if any */
@@ -145,7 +145,7 @@ main (int argc, char *argv[])
 #endif
 
 	if (ld_port == LDAPS_PORT || ssl_on_connect) {
-		asprintf (&SERVICE, "LDAPS");
+		xasprintf (&SERVICE, "LDAPS");
 #if defined(HAVE_LDAP_SET_OPTION) && defined(LDAP_OPT_X_TLS)
 		/* ldaps: set option tls */
 		tls = LDAP_OPT_X_TLS_HARD;
@@ -162,7 +162,7 @@ main (int argc, char *argv[])
 		return STATE_CRITICAL;
 #endif /* LDAP_OPT_X_TLS */
 	} else if (starttls) {
-		asprintf (&SERVICE, "LDAP-TLS");
+		xasprintf (&SERVICE, "LDAP-TLS");
 #if defined(HAVE_LDAP_SET_OPTION) && defined(HAVE_LDAP_START_TLS_S)
 		/* ldap with startTLS: set option version */
 		if (ldap_get_option(ld,LDAP_OPT_PROTOCOL_VERSION, &version) == LDAP_OPT_SUCCESS )
@@ -389,7 +389,7 @@ void
 print_help (void)
 {
 	char *myport;
-	asprintf (&myport, "%d", DEFAULT_PORT);
+	xasprintf (&myport, "%d", DEFAULT_PORT);
 
 	print_revision (progname, NP_VERSION);
 

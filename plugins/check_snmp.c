@@ -255,9 +255,9 @@ main (int argc, char **argv)
 	command_line = calloc (9 + numauthpriv + 1 + numoids + 1, sizeof (char *));
 	command_line[0] = snmpcmd;
 	command_line[1] = strdup ("-t");
-	asprintf (&command_line[2], "%d", timeout_interval);
+	xasprintf (&command_line[2], "%d", timeout_interval);
 	command_line[3] = strdup ("-r");
-	asprintf (&command_line[4], "%d", retries);
+	xasprintf (&command_line[4], "%d", retries);
 	command_line[5] = strdup ("-m");
 	command_line[6] = strdup (miblist);
 	command_line[7] = "-v";
@@ -267,16 +267,16 @@ main (int argc, char **argv)
 		command_line[9 + i] = authpriv[i];
 	}
 
-	asprintf (&command_line[9 + numauthpriv], "%s:%s", server_address, port);
+	xasprintf (&command_line[9 + numauthpriv], "%s:%s", server_address, port);
 
 	/* This is just for display purposes, so it can remain a string */
-	asprintf(&cl_hidden_auth, "%s -t %d -r %d -m %s -v %s %s %s:%s",
+	xasprintf(&cl_hidden_auth, "%s -t %d -r %d -m %s -v %s %s %s:%s",
 		snmpcmd, timeout_interval, retries, strlen(miblist) ? miblist : "''", proto, "[authpriv]",
 		server_address, port);
 
 	for (i = 0; i < numoids; i++) {
 		command_line[9 + numauthpriv + 1 + i] = oids[i];
-		asprintf(&cl_hidden_auth, "%s %s", cl_hidden_auth, oids[i]);	
+		xasprintf(&cl_hidden_auth, "%s %s", cl_hidden_auth, oids[i]);	
 	}
 
 	command_line[9 + numauthpriv + 1 + numoids] = NULL;
@@ -371,14 +371,14 @@ main (int argc, char **argv)
 			if (dq_count) { /* unfinished line */
 				/* copy show verbatim first */
 				if (!mult_resp) mult_resp = strdup("");
-				asprintf (&mult_resp, "%s%s:\n%s\n", mult_resp, oids[i], show);
+				xasprintf (&mult_resp, "%s%s:\n%s\n", mult_resp, oids[i], show);
 				/* then strip out unmatched double-quote from single-line output */
 				if (show[0] == '"') show++;
 
 				/* Keep reading until we match end of double-quoted string */
 				for (line++; line < chld_out.lines; line++) {
 					ptr = chld_out.line[line];
-					asprintf (&mult_resp, "%s%s\n", mult_resp, ptr);
+					xasprintf (&mult_resp, "%s%s\n", mult_resp, ptr);
 
 					COUNT_SEQ(ptr, bk_count, dq_count)
 					while (dq_count && ptr[0] != '\n' && ptr[0] != '\0') {
@@ -424,11 +424,11 @@ main (int argc, char **argv)
 					/* Convert to per second, then use multiplier */
 					temp_double = temp_double/duration*rate_multiplier;
 					iresult = get_status(temp_double, thlds[i]);
-					asprintf (&show, conv, temp_double);
+					xasprintf (&show, conv, temp_double);
 				}
 			} else {
 				iresult = get_status(response_value[i], thlds[i]);
-				asprintf (&show, conv, response_value[i]);
+				xasprintf (&show, conv, response_value[i]);
 			}
 		}
 
@@ -472,16 +472,16 @@ main (int argc, char **argv)
 
 		/* Prepend a label for this OID if there is one */
 		if (nlabels >= (size_t)1 && (size_t)i < nlabels && labels[i] != NULL)
-			asprintf (&outbuff, "%s%s%s %s%s%s", outbuff,
+			xasprintf (&outbuff, "%s%s%s %s%s%s", outbuff,
 				(i == 0) ? " " : output_delim,
 				labels[i], mark (iresult), show, mark (iresult));
 		else
-			asprintf (&outbuff, "%s%s%s%s%s", outbuff, (i == 0) ? " " : output_delim,
+			xasprintf (&outbuff, "%s%s%s%s%s", outbuff, (i == 0) ? " " : output_delim,
 				mark (iresult), show, mark (iresult));
 
 		/* Append a unit string for this OID if there is one */
 		if (nunits > (size_t)0 && (size_t)i < nunits && unitv[i] != NULL)
-			asprintf (&outbuff, "%s %s", outbuff, unitv[i]);
+			xasprintf (&outbuff, "%s %s", outbuff, unitv[i]);
 
 		/* Write perfdata with whatever can be parsed by strtod, if possible */
 		ptr = NULL;
@@ -523,7 +523,7 @@ main (int argc, char **argv)
 		
 		current_length=0;
 		for(i=0; i<total_oids; i++) {
-			asprintf(&temp_string,"%.0f",response_value[i]);
+			xasprintf(&temp_string,"%.0f",response_value[i]);
 			if(temp_string==NULL)
 				die(STATE_UNKNOWN,_("Cannot asprintf()"));
 			response_length = strlen(temp_string);
@@ -869,7 +869,7 @@ validate_arguments ()
 		die(STATE_UNKNOWN, _("No OIDs specified\n"));
 
 	if (proto == NULL)
-		asprintf(&proto, DEFAULT_PROTOCOL);
+		xasprintf(&proto, DEFAULT_PROTOCOL);
 
 	if ((strcmp(proto,"1") == 0) || (strcmp(proto, "2c")==0)) {	/* snmpv1 or snmpv2c */
 		numauthpriv = 2;
@@ -879,7 +879,7 @@ validate_arguments ()
 	}
 	else if ( strcmp (proto, "3") == 0 ) {		/* snmpv3 args */
 		if (seclevel == NULL)
-			asprintf(&seclevel, "noAuthNoPriv");
+			xasprintf(&seclevel, "noAuthNoPriv");
 
 		if (strcmp(seclevel, "noAuthNoPriv") == 0) {
 			numauthpriv = 2;
@@ -892,7 +892,7 @@ validate_arguments ()
 			}
 
 			if (authproto == NULL )
-				asprintf(&authproto, DEFAULT_AUTH_PROTOCOL);
+				xasprintf(&authproto, DEFAULT_AUTH_PROTOCOL);
 
 			if (secname == NULL)
 				die(STATE_UNKNOWN, _("Required parameter: %s\n"), "secname");
@@ -913,7 +913,7 @@ validate_arguments ()
 				authpriv[7] = strdup (authpasswd);
 			} else if ( strcmp(seclevel, "authPriv") == 0 ) {
 				if (privproto == NULL )
-					asprintf(&privproto, DEFAULT_PRIV_PROTOCOL);
+					xasprintf(&privproto, DEFAULT_PRIV_PROTOCOL);
 
 				if (privpasswd == NULL)
 					die(STATE_UNKNOWN, _("Required parameter: %s\n"), "privpasswd");

@@ -186,7 +186,7 @@ main (int argc, char **argv)
 	/* we got this far, so assume OK until we've measured */
 	result = STATE_OK;
 
-	asprintf(&status_line, _("load average: %.2f, %.2f, %.2f"), la1, la5, la15);
+	xasprintf(&status_line, _("load average: %.2f, %.2f, %.2f"), la1, la5, la15);
 
 	for(i = 0; i < 3; i++) {
 		if(la[i] > cload[i]) {

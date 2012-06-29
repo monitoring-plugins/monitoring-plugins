@@ -102,7 +102,7 @@ main (int argc, char **argv)
 
 	cmd = strdup (argv[optind++]);
 	for (c = optind; c < argc; c++) {
-		asprintf (&cmd, "%s %s", cmd, argv[c]);
+		xasprintf (&cmd, "%s %s", cmd, argv[c]);
 	}
 
 	child_process = spopen (cmd);

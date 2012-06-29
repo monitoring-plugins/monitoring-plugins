@@ -191,7 +191,7 @@ main(int argc, char **argv) {
 			netware_version = strdup("");
 		else {
 			recv_buffer[strlen(recv_buffer)-1]=0;
-			asprintf (&netware_version,_("NetWare %s: "),recv_buffer);
+			xasprintf (&netware_version,_("NetWare %s: "),recv_buffer);
 		}
 	} else
 		netware_version = strdup("");
@@ -215,7 +215,7 @@ main(int argc, char **argv) {
 		close(sd);
 		my_tcp_connect (server_address, server_port, &sd);
 
-		asprintf (&send_buffer,"UTIL%s\r\n",temp_buffer);
+		xasprintf (&send_buffer,"UTIL%s\r\n",temp_buffer);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
@@ -236,7 +236,7 @@ main(int argc, char **argv) {
 		else if (check_warning_value==TRUE && utilization >= warning_value)
 			result=STATE_WARNING;
 
-		asprintf (&output_message,
+		xasprintf (&output_message,
 		          _("Load %s - %s %s-min load average = %lu%%|load%s=%lu;%lu;%lu;0;100"),
 		          state_text(result),
 		          uptime,
@@ -264,7 +264,7 @@ main(int argc, char **argv) {
 		else if (check_warning_value==TRUE && current_connections >= warning_value)
 			result=STATE_WARNING;
 
-		asprintf (&output_message,
+		xasprintf (&output_message,
 			_("Conns %s - %lu current connections|Conns=%lu;%lu;%lu;;"),
 		          state_text(result),
 		          current_connections,
@@ -289,7 +289,7 @@ main(int argc, char **argv) {
 		else if (check_warning_value==TRUE && cache_hits <= warning_value)
 			result=STATE_WARNING;
 
-		asprintf (&output_message,
+		xasprintf (&output_message,
 		          _("%s: Long term cache hits = %lu%%"),
 		          state_text(result),
 		          cache_hits);
@@ -311,7 +311,7 @@ main(int argc, char **argv) {
 		else if (check_warning_value==TRUE && cache_buffers <= warning_value)
 			result=STATE_WARNING;
 
-		asprintf (&output_message,
+		xasprintf (&output_message,
 		          _("%s: Total cache buffers = %lu|Cachebuffers=%lu;%lu;%lu;;"),
 		          state_text(result),
 		          cache_buffers,
@@ -336,7 +336,7 @@ main(int argc, char **argv) {
 		else if (check_warning_value==TRUE && cache_buffers >= warning_value)
 			result=STATE_WARNING;
 
-		asprintf (&output_message,
+		xasprintf (&output_message,
 		          _("%s: Dirty cache buffers = %lu|Dirty-Cache-Buffers=%lu;%lu;%lu;;"),
 		          state_text(result),
 		          cache_buffers,
@@ -361,7 +361,7 @@ main(int argc, char **argv) {
 		else if (check_warning_value==TRUE && lru_time <= warning_value)
 			result=STATE_WARNING;
 
-		asprintf (&output_message,
+		xasprintf (&output_message,
 		          _("%s: LRU sitting time = %lu minutes"),
 		          state_text(result),
 		          lru_time);
@@ -373,13 +373,13 @@ main(int argc, char **argv) {
 		close(sd);
 		my_tcp_connect (server_address, server_port, &sd);
 
-		asprintf (&send_buffer,"VKF%s\r\n",volume_name);
+		xasprintf (&send_buffer,"VKF%s\r\n",volume_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
+			xasprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
 			result=STATE_CRITICAL;
 		}	else {
 			free_disk_space=strtoul(recv_buffer,NULL,10);
@@ -387,7 +387,7 @@ main(int argc, char **argv) {
 				result=STATE_CRITICAL;
 			else if (check_warning_value==TRUE && free_disk_space <= warning_value)
 				result=STATE_WARNING;
-			asprintf (&output_message,
+			xasprintf (&output_message,
 			          _("%s%lu KB free on volume %s|KBFree%s=%lu;%lu;%lu;;"),
 			         (result==STATE_OK)?"":_("Only "),
 			         free_disk_space,
@@ -401,13 +401,13 @@ main(int argc, char **argv) {
 		/* check MB free space on volume */
 	} else if (vars_to_check==VMF) {
 
-		asprintf (&send_buffer,"VMF%s\r\n",volume_name);
+		xasprintf (&send_buffer,"VMF%s\r\n",volume_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
+			xasprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
 			result=STATE_CRITICAL;
 		}	else {
 			free_disk_space=strtoul(recv_buffer,NULL,10);
@@ -415,7 +415,7 @@ main(int argc, char **argv) {
 				result=STATE_CRITICAL;
 			else if (check_warning_value==TRUE && free_disk_space <= warning_value)
 				result=STATE_WARNING;
-			asprintf (&output_message,
+			xasprintf (&output_message,
 			          _("%s%lu MB free on volume %s|MBFree%s=%lu;%lu;%lu;;"),
 			         (result==STATE_OK)?"":_("Only "),
 			         free_disk_space,
@@ -428,13 +428,13 @@ main(int argc, char **argv) {
 		/* check MB used space on volume */
 	} else if (vars_to_check==VMU) {
 
-		asprintf (&send_buffer,"VMU%s\r\n",volume_name);
+		xasprintf (&send_buffer,"VMU%s\r\n",volume_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
+			xasprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
 			result=STATE_CRITICAL;
 		}	else {
 			free_disk_space=strtoul(recv_buffer,NULL,10);
@@ -442,7 +442,7 @@ main(int argc, char **argv) {
 				result=STATE_CRITICAL;
 			else if (check_warning_value==TRUE && free_disk_space <= warning_value)
 				result=STATE_WARNING;
-			asprintf (&output_message,
+			xasprintf (&output_message,
 			          _("%s%lu MB used on volume %s|MBUsed%s=%lu;%lu;%lu;;"),
 			         (result==STATE_OK)?"":_("Only "),
 			         free_disk_space,
@@ -460,14 +460,14 @@ main(int argc, char **argv) {
 		close(sd);
 		my_tcp_connect (server_address, server_port, &sd);
 
-		asprintf (&send_buffer,"VKF%s\r\n",volume_name);
+		xasprintf (&send_buffer,"VKF%s\r\n",volume_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
 
-			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
+			xasprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
 			result=STATE_CRITICAL;
 
 		} else {
@@ -477,7 +477,7 @@ main(int argc, char **argv) {
 			close(sd);
 			my_tcp_connect (server_address, server_port, &sd);
 
-			asprintf (&send_buffer,"VKS%s\r\n",volume_name);
+			xasprintf (&send_buffer,"VKS%s\r\n",volume_name);
 			result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 			if (result!=STATE_OK)
 				return result;
@@ -491,7 +491,7 @@ main(int argc, char **argv) {
 				result=STATE_WARNING;
 			free_disk_space/=1024;
 			total_disk_space/=1024;
-			asprintf (&output_message,_("%lu MB (%lu%%) free on volume %s - total %lu MB|FreeMB%s=%lu;%lu;%lu;0;100"),
+			xasprintf (&output_message,_("%lu MB (%lu%%) free on volume %s - total %lu MB|FreeMB%s=%lu;%lu;%lu;0;100"),
 				free_disk_space,
 				percent_free_space,
 				volume_name,
@@ -525,7 +525,7 @@ main(int argc, char **argv) {
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		temp_buffer=strtok(recv_buffer,"\r\n");
 
-		asprintf (&output_message,_("Directory Services Database is %s (DS version %s)"),(result==STATE_OK)?"open":"closed",temp_buffer);
+		xasprintf (&output_message,_("Directory Services Database is %s (DS version %s)"),(result==STATE_OK)?"open":"closed",temp_buffer);
 
 		/* check to see if logins are enabled */
 	} else if (vars_to_check==LOGINS) {
@@ -542,13 +542,13 @@ main(int argc, char **argv) {
 		else
 			result=STATE_WARNING;
 
-		asprintf (&output_message,_("Logins are %s"),(result==STATE_OK)?_("enabled"):_("disabled"));
+		xasprintf (&output_message,_("Logins are %s"),(result==STATE_OK)?_("enabled"):_("disabled"));
 
 
 		/* check NRM Health Status Summary*/
 	} else if (vars_to_check==NRMH) {
 
-		asprintf (&send_buffer,"NRMH\r\n");
+		xasprintf (&send_buffer,"NRMH\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
@@ -557,15 +557,15 @@ main(int argc, char **argv) {
 
 		if (nrm_health_status==2) {
 			result=STATE_OK;
-			asprintf (&output_message,_("CRITICAL - NRM Status is bad!"));
+			xasprintf (&output_message,_("CRITICAL - NRM Status is bad!"));
 		}
 		else {
 			if (nrm_health_status==1) {
 				result=STATE_WARNING;
-				asprintf (&output_message,_("Warning - NRM Status is suspect!"));
+				xasprintf (&output_message,_("Warning - NRM Status is suspect!"));
 			}
 
-			asprintf (&output_message,_("OK - NRM Status is good!"));
+			xasprintf (&output_message,_("OK - NRM Status is good!"));
 		}
 
 
@@ -576,7 +576,7 @@ main(int argc, char **argv) {
 		close(sd);
 		my_tcp_connect (server_address, server_port, &sd);
 
-		asprintf (&send_buffer,"S15\r\n");
+		xasprintf (&send_buffer,"S15\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
@@ -586,7 +586,7 @@ main(int argc, char **argv) {
 		close(sd);
 		my_tcp_connect (server_address, server_port, &sd);
 
-		asprintf (&send_buffer,"S16\r\n");
+		xasprintf (&send_buffer,"S16\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
@@ -607,7 +607,7 @@ main(int argc, char **argv) {
 				result=STATE_WARNING;
 		}
 
-		asprintf (&output_message,_("%lu of %lu (%lu%%) packet receive buffers used"),used_packet_receive_buffers,max_packet_receive_buffers,percent_used_packet_receive_buffers);
+		xasprintf (&output_message,_("%lu of %lu (%lu%%) packet receive buffers used"),used_packet_receive_buffers,max_packet_receive_buffers,percent_used_packet_receive_buffers);
 
 		/* check SAP table entries */
 	} else if (vars_to_check==SAPENTRIES) {
@@ -616,9 +616,9 @@ main(int argc, char **argv) {
 		my_tcp_connect (server_address, server_port, &sd);
 
 		if (sap_number==-1)
-			asprintf (&send_buffer,"S9\r\n");
+			xasprintf (&send_buffer,"S9\r\n");
 		else
-			asprintf (&send_buffer,"S9.%d\r\n",sap_number);
+			xasprintf (&send_buffer,"S9.%d\r\n",sap_number);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
@@ -631,9 +631,9 @@ main(int argc, char **argv) {
 			result=STATE_WARNING;
 
 		if (sap_number==-1)
-			asprintf (&output_message,_("%lu entries in SAP table"),sap_entries);
+			xasprintf (&output_message,_("%lu entries in SAP table"),sap_entries);
 		else
-			asprintf (&output_message,_("%lu entries in SAP table for SAP type %d"),sap_entries,sap_number);
+			xasprintf (&output_message,_("%lu entries in SAP table for SAP type %d"),sap_entries,sap_number);
 
 		/* check KB purgeable space on volume */
 	} else if (vars_to_check==VKP) {
@@ -641,13 +641,13 @@ main(int argc, char **argv) {
 		close(sd);
 		my_tcp_connect (server_address, server_port, &sd);
 
-		asprintf (&send_buffer,"VKP%s\r\n",volume_name);
+		xasprintf (&send_buffer,"VKP%s\r\n",volume_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
+			xasprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
 			result=STATE_CRITICAL;
 		} else {
 			purgeable_disk_space=strtoul(recv_buffer,NULL,10);
@@ -655,7 +655,7 @@ main(int argc, char **argv) {
 				result=STATE_CRITICAL;
 			else if (check_warning_value==TRUE && purgeable_disk_space >= warning_value)
 				result=STATE_WARNING;
-			asprintf (&output_message,_("%s%lu KB purgeable on volume %s|Purge%s=%lu;%lu;%lu;;"),
+			xasprintf (&output_message,_("%s%lu KB purgeable on volume %s|Purge%s=%lu;%lu;%lu;;"),
 				 (result==STATE_OK)?"":_("Only "),
 				 purgeable_disk_space,
 				 volume_name,
@@ -667,13 +667,13 @@ main(int argc, char **argv) {
 		/* check MB purgeable space on volume */
 	} else if (vars_to_check==VMP) {
 
-		asprintf (&send_buffer,"VMP%s\r\n",volume_name);
+		xasprintf (&send_buffer,"VMP%s\r\n",volume_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
+			xasprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
 			result=STATE_CRITICAL;
 		} else {
 			purgeable_disk_space=strtoul(recv_buffer,NULL,10);
@@ -681,7 +681,7 @@ main(int argc, char **argv) {
 				result=STATE_CRITICAL;
 			else if (check_warning_value==TRUE && purgeable_disk_space >= warning_value)
 				result=STATE_WARNING;
-			asprintf (&output_message,_("%s%lu MB purgeable on volume %s|Purge%s=%lu;%lu;%lu;;"),
+			xasprintf (&output_message,_("%s%lu MB purgeable on volume %s|Purge%s=%lu;%lu;%lu;;"),
 				 (result==STATE_OK)?"":_("Only "),
 				 purgeable_disk_space,
 				 volume_name,
@@ -697,14 +697,14 @@ main(int argc, char **argv) {
 		close(sd);
 		my_tcp_connect (server_address, server_port, &sd);
 
-		asprintf (&send_buffer,"VKP%s\r\n",volume_name);
+		xasprintf (&send_buffer,"VKP%s\r\n",volume_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
 
-			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
+			xasprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
 			result=STATE_CRITICAL;
 
 		} else {
@@ -714,7 +714,7 @@ main(int argc, char **argv) {
 			close(sd);
 			my_tcp_connect (server_address, server_port, &sd);
 
-			asprintf (&send_buffer,"VKS%s\r\n",volume_name);
+			xasprintf (&send_buffer,"VKS%s\r\n",volume_name);
 			result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 			if (result!=STATE_OK)
 				return result;
@@ -727,7 +727,7 @@ main(int argc, char **argv) {
 			else if (check_warning_value==TRUE && percent_purgeable_space >= warning_value)
 				result=STATE_WARNING;
 			purgeable_disk_space/=1024;
-			asprintf (&output_message,_("%lu MB (%lu%%) purgeable on volume %s|Purgeable%s=%lu;%lu;%lu;0;100"),
+			xasprintf (&output_message,_("%lu MB (%lu%%) purgeable on volume %s|Purgeable%s=%lu;%lu;%lu;0;100"),
 					purgeable_disk_space,
 					percent_purgeable_space,
 					volume_name,
@@ -744,13 +744,13 @@ main(int argc, char **argv) {
 		close(sd);
 		my_tcp_connect (server_address, server_port, &sd);
 
-		asprintf (&send_buffer,"VKNP%s\r\n",volume_name);
+		xasprintf (&send_buffer,"VKNP%s\r\n",volume_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
+			xasprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
 			result=STATE_CRITICAL;
 		} else {
 			non_purgeable_disk_space=strtoul(recv_buffer,NULL,10);
@@ -758,7 +758,7 @@ main(int argc, char **argv) {
 				result=STATE_CRITICAL;
 			else if (check_warning_value==TRUE && non_purgeable_disk_space >= warning_value)
 				result=STATE_WARNING;
-			asprintf (&output_message,_("%s%lu KB not yet purgeable on volume %s"),(result==STATE_OK)?"":_("Only "),non_purgeable_disk_space,volume_name);
+			xasprintf (&output_message,_("%s%lu KB not yet purgeable on volume %s"),(result==STATE_OK)?"":_("Only "),non_purgeable_disk_space,volume_name);
 		}
 
 		/* check % not yet purgeable space on volume */
@@ -767,14 +767,14 @@ main(int argc, char **argv) {
 		close(sd);
 		my_tcp_connect (server_address, server_port, &sd);
 
-		asprintf (&send_buffer,"VKNP%s\r\n",volume_name);
+		xasprintf (&send_buffer,"VKNP%s\r\n",volume_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
 
-			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
+			xasprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
 			result=STATE_CRITICAL;
 
 		} else {
@@ -784,7 +784,7 @@ main(int argc, char **argv) {
 			close(sd);
 			my_tcp_connect (server_address, server_port, &sd);
 
-			asprintf (&send_buffer,"VKS%s\r\n",volume_name);
+			xasprintf (&send_buffer,"VKS%s\r\n",volume_name);
 			result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 			if (result!=STATE_OK)
 				return result;
@@ -797,7 +797,7 @@ main(int argc, char **argv) {
 			else if (check_warning_value==TRUE && percent_non_purgeable_space >= warning_value)
 				result=STATE_WARNING;
 			purgeable_disk_space/=1024;
-			asprintf (&output_message,_("%lu MB (%lu%%) not yet purgeable on volume %s"),non_purgeable_disk_space,percent_non_purgeable_space,volume_name);
+			xasprintf (&output_message,_("%lu MB (%lu%%) not yet purgeable on volume %s"),non_purgeable_disk_space,percent_non_purgeable_space,volume_name);
 		}
 
 		/* check # of open files */
@@ -806,7 +806,7 @@ main(int argc, char **argv) {
 		close(sd);
 		my_tcp_connect (server_address, server_port, &sd);
 
-		asprintf (&send_buffer,"S18\r\n");
+		xasprintf (&send_buffer,"S18\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
@@ -818,7 +818,7 @@ main(int argc, char **argv) {
 		else if (check_warning_value==TRUE && open_files >= warning_value)
 			result=STATE_WARNING;
 
-		asprintf (&output_message,_("%lu open files|Openfiles=%lu;%lu;%lu;0,0"),
+		xasprintf (&output_message,_("%lu open files|Openfiles=%lu;%lu;%lu;0,0"),
 				open_files,
 				open_files,
 				warning_value,
@@ -831,7 +831,7 @@ main(int argc, char **argv) {
 		close(sd);
 		my_tcp_connect (server_address, server_port, &sd);
 
-		asprintf (&send_buffer,"S17\r\n");
+		xasprintf (&send_buffer,"S17\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
@@ -843,7 +843,7 @@ main(int argc, char **argv) {
 		else if (check_warning_value==TRUE && abended_threads >= warning_value)
 			result=STATE_WARNING;
 
-		asprintf (&output_message,_("%lu abended threads|Abends=%lu;%lu;%lu;;"),
+		xasprintf (&output_message,_("%lu abended threads|Abends=%lu;%lu;%lu;;"),
 				abended_threads,
 				abended_threads,
 				warning_value,
@@ -855,7 +855,7 @@ main(int argc, char **argv) {
 		close(sd);
 		my_tcp_connect (server_address, server_port, &sd);
 
-		asprintf (&send_buffer,"S20\r\n");
+		xasprintf (&send_buffer,"S20\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
@@ -865,7 +865,7 @@ main(int argc, char **argv) {
 		close(sd);
 		my_tcp_connect (server_address, server_port, &sd);
 
-		asprintf (&send_buffer,"S21\r\n");
+		xasprintf (&send_buffer,"S21\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
@@ -877,7 +877,7 @@ main(int argc, char **argv) {
 		else if (check_warning_value==TRUE && current_service_processes >= warning_value)
 			result=STATE_WARNING;
 
-		asprintf (&output_message,
+		xasprintf (&output_message,
 		          _("%lu current service processes (%lu max)|Processes=%lu;%lu;%lu;0;%lu"),
 		          current_service_processes,
 		          max_service_processes,
@@ -892,7 +892,7 @@ main(int argc, char **argv) {
 		close(sd);
 		my_tcp_connect (server_address, server_port, &sd);
 
-		asprintf (&send_buffer,"S22\r\n");
+		xasprintf (&send_buffer,"S22\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
@@ -901,10 +901,10 @@ main(int argc, char **argv) {
 
 		if (time_sync_status==0) {
 			result=STATE_CRITICAL;
-			asprintf (&output_message,_("CRITICAL - Time not in sync with network!"));
+			xasprintf (&output_message,_("CRITICAL - Time not in sync with network!"));
 		}
 		else {
-			asprintf (&output_message,_("OK - Time in sync with network!"));
+			xasprintf (&output_message,_("OK - Time in sync with network!"));
 		}
 
 
@@ -927,7 +927,7 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		else if (check_warning_value==TRUE && lru_time <= warning_value)
 			result=STATE_WARNING;
-		asprintf (&output_message,_("LRU sitting time = %lu seconds"),lru_time);
+		xasprintf (&output_message,_("LRU sitting time = %lu seconds"),lru_time);
 
 
 		/* check % dirty cacheobuffers as a percentage of the total*/
@@ -946,7 +946,7 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		else if (check_warning_value==TRUE && dirty_cache_buffers <= warning_value)
 			result=STATE_WARNING;
-		asprintf (&output_message,_("Dirty cache buffers = %lu%% of the total|DCB=%lu;%lu;%lu;0;100"),
+		xasprintf (&output_message,_("Dirty cache buffers = %lu%% of the total|DCB=%lu;%lu;%lu;0;100"),
 				dirty_cache_buffers,
 				dirty_cache_buffers,
 				warning_value,
@@ -968,7 +968,7 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		else if (check_warning_value==TRUE && total_cache_buffers <= warning_value)
 			result=STATE_WARNING;
-		asprintf (&output_message,_("Total cache buffers = %lu%% of the original|TCB=%lu;%lu;%lu;0;100"),
+		xasprintf (&output_message,_("Total cache buffers = %lu%% of the original|TCB=%lu;%lu;%lu;0;100"),
 				total_cache_buffers,
 				total_cache_buffers,
 				warning_value,
@@ -979,21 +979,21 @@ main(int argc, char **argv) {
 		close(sd);
 		my_tcp_connect (server_address, server_port, &sd);
 
-		asprintf (&send_buffer,"S13\r\n");
+		xasprintf (&send_buffer,"S13\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		recv_buffer[strlen(recv_buffer)-1]=0;
 
-		asprintf (&output_message,_("NDS Version %s"),recv_buffer);
+		xasprintf (&output_message,_("NDS Version %s"),recv_buffer);
 
 	} else if (vars_to_check==UPTIME) {
 
 		close(sd);
 		my_tcp_connect (server_address, server_port, &sd);
 
-		asprintf (&send_buffer,"UPTIME\r\n");
+		xasprintf (&send_buffer,"UPTIME\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 	 		return result;
@@ -1002,35 +1002,35 @@ main(int argc, char **argv) {
 		recv_buffer[sizeof(recv_buffer)-1]=0;
 		recv_buffer[strlen(recv_buffer)-1]=0;
 
-		asprintf (&output_message,_("Up %s"),recv_buffer);
+		xasprintf (&output_message,_("Up %s"),recv_buffer);
 
 	} else if (vars_to_check==NLM) {
 
 		close(sd);
 		my_tcp_connect (server_address, server_port, &sd);
 
-		asprintf (&send_buffer,"S24:%s\r\n",nlm_name);
+		xasprintf (&send_buffer,"S24:%s\r\n",nlm_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		recv_buffer[strlen(recv_buffer)-1]=0;
 		if (strcmp(recv_buffer,"-1")) {
-			asprintf (&output_message,_("Module %s version %s is loaded"),nlm_name,recv_buffer);
+			xasprintf (&output_message,_("Module %s version %s is loaded"),nlm_name,recv_buffer);
 		} else {
 			result=STATE_CRITICAL;
-			asprintf (&output_message,_("Module %s is not loaded"),nlm_name);
+			xasprintf (&output_message,_("Module %s is not loaded"),nlm_name);
 
 			}
 	} else if (vars_to_check==NRMP) {
 
-		asprintf (&send_buffer,"NRMP:%s\r\n",nrmp_name);
+		xasprintf (&send_buffer,"NRMP:%s\r\n",nrmp_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nrmp_name);
+			xasprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nrmp_name);
 			result=STATE_CRITICAL;
 		}	else {
 			nrmp_value=strtoul(recv_buffer,NULL,10);
@@ -1038,7 +1038,7 @@ main(int argc, char **argv) {
 				result=STATE_CRITICAL;
 			else if (check_warning_value==TRUE && nrmp_value <= warning_value)
 				result=STATE_WARNING;
-			asprintf (&output_message,
+			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
 			         nrmp_name,
 			         nrmp_value,
@@ -1050,13 +1050,13 @@ main(int argc, char **argv) {
 
 	} else if (vars_to_check==NRMM) {
 
-		asprintf (&send_buffer,"NRMM:%s\r\n",nrmm_name);
+		xasprintf (&send_buffer,"NRMM:%s\r\n",nrmm_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nrmm_name);
+			xasprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nrmm_name);
 			result=STATE_CRITICAL;
 		}	else {
 			nrmm_value=strtoul(recv_buffer,NULL,10);
@@ -1064,7 +1064,7 @@ main(int argc, char **argv) {
 				result=STATE_CRITICAL;
 			else if (check_warning_value==TRUE && nrmm_value <= warning_value)
 				result=STATE_WARNING;
-			asprintf (&output_message,
+			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
 			         nrmm_name,
 			         nrmm_value,
@@ -1076,13 +1076,13 @@ main(int argc, char **argv) {
 
 	} else if (vars_to_check==NRMS) {
 
-		asprintf (&send_buffer,"NRMS:%s\r\n",nrms_name);
+		xasprintf (&send_buffer,"NRMS:%s\r\n",nrms_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nrms_name);
+			xasprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nrms_name);
 			result=STATE_CRITICAL;
 		}	else {
 			nrms_value=strtoul(recv_buffer,NULL,10);
@@ -1090,7 +1090,7 @@ main(int argc, char **argv) {
 				result=STATE_CRITICAL;
 			else if (check_warning_value==TRUE && nrms_value >= warning_value)
 				result=STATE_WARNING;
-			asprintf (&output_message,
+			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
 			         nrms_name,
 			         nrms_value,
@@ -1102,13 +1102,13 @@ main(int argc, char **argv) {
 
 	} else if (vars_to_check==NSS1) {
 
-		asprintf (&send_buffer,"NSS1:%s\r\n",nss1_name);
+		xasprintf (&send_buffer,"NSS1:%s\r\n",nss1_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss1_name);
+			xasprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss1_name);
 			result=STATE_CRITICAL;
 		}	else {
 			nss1_value=strtoul(recv_buffer,NULL,10);
@@ -1116,7 +1116,7 @@ main(int argc, char **argv) {
 				result=STATE_CRITICAL;
 			else if (check_warning_value==TRUE && nss1_value >= warning_value)
 				result=STATE_WARNING;
-			asprintf (&output_message,
+			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
 			         nss1_name,
 			         nss1_value,
@@ -1128,13 +1128,13 @@ main(int argc, char **argv) {
 
 	} else if (vars_to_check==NSS2) {
 
-		asprintf (&send_buffer,"NSS2:%s\r\n",nss2_name);
+		xasprintf (&send_buffer,"NSS2:%s\r\n",nss2_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss2_name);
+			xasprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss2_name);
 			result=STATE_CRITICAL;
 		}	else {
 			nss2_value=strtoul(recv_buffer,NULL,10);
@@ -1142,7 +1142,7 @@ main(int argc, char **argv) {
 				result=STATE_CRITICAL;
 			else if (check_warning_value==TRUE && nss2_value >= warning_value)
 				result=STATE_WARNING;
-			asprintf (&output_message,
+			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
 			         nss2_name,
 			         nss2_value,
@@ -1154,13 +1154,13 @@ main(int argc, char **argv) {
 
 	} else if (vars_to_check==NSS3) {
 
-		asprintf (&send_buffer,"NSS3:%s\r\n",nss3_name);
+		xasprintf (&send_buffer,"NSS3:%s\r\n",nss3_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss3_name);
+			xasprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss3_name);
 			result=STATE_CRITICAL;
 		}	else {
 			nss3_value=strtoul(recv_buffer,NULL,10);
@@ -1168,7 +1168,7 @@ main(int argc, char **argv) {
 				result=STATE_CRITICAL;
 			else if (check_warning_value==TRUE && nss3_value >= warning_value)
 				result=STATE_WARNING;
-			asprintf (&output_message,
+			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
 			         nss3_name,
 			         nss3_value,
@@ -1180,13 +1180,13 @@ main(int argc, char **argv) {
 
 	} else if (vars_to_check==NSS4) {
 
-		asprintf (&send_buffer,"NSS4:%s\r\n",nss4_name);
+		xasprintf (&send_buffer,"NSS4:%s\r\n",nss4_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss4_name);
+			xasprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss4_name);
 			result=STATE_CRITICAL;
 		}	else {
 			nss4_value=strtoul(recv_buffer,NULL,10);
@@ -1194,7 +1194,7 @@ main(int argc, char **argv) {
 				result=STATE_CRITICAL;
 			else if (check_warning_value==TRUE && nss4_value >= warning_value)
 				result=STATE_WARNING;
-			asprintf (&output_message,
+			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
 			         nss4_name,
 			         nss4_value,
@@ -1206,13 +1206,13 @@ main(int argc, char **argv) {
 
 	} else if (vars_to_check==NSS5) {
 
-		asprintf (&send_buffer,"NSS5:%s\r\n",nss5_name);
+		xasprintf (&send_buffer,"NSS5:%s\r\n",nss5_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss5_name);
+			xasprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss5_name);
 			result=STATE_CRITICAL;
 		}	else {
 			nss5_value=strtoul(recv_buffer,NULL,10);
@@ -1220,7 +1220,7 @@ main(int argc, char **argv) {
 				result=STATE_CRITICAL;
 			else if (check_warning_value==TRUE && nss5_value >= warning_value)
 				result=STATE_WARNING;
-			asprintf (&output_message,
+			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
 			         nss5_name,
 			         nss5_value,
@@ -1232,13 +1232,13 @@ main(int argc, char **argv) {
 
 	} else if (vars_to_check==NSS6) {
 
-		asprintf (&send_buffer,"NSS6:%s\r\n",nss6_name);
+		xasprintf (&send_buffer,"NSS6:%s\r\n",nss6_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss6_name);
+			xasprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss6_name);
 			result=STATE_CRITICAL;
 		}	else {
 			nss6_value=strtoul(recv_buffer,NULL,10);
@@ -1246,7 +1246,7 @@ main(int argc, char **argv) {
 				result=STATE_CRITICAL;
 			else if (check_warning_value==TRUE && nss6_value >= warning_value)
 				result=STATE_WARNING;
-			asprintf (&output_message,
+			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
 			         nss6_name,
 			         nss6_value,
@@ -1258,13 +1258,13 @@ main(int argc, char **argv) {
 
 	} else if (vars_to_check==NSS7) {
 
-		asprintf (&send_buffer,"NSS7:%s\r\n",nss7_name);
+		xasprintf (&send_buffer,"NSS7:%s\r\n",nss7_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-			asprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss7_name);
+			xasprintf (&output_message,_("CRITICAL - Value '%s' does not exist!"),nss7_name);
 			result=STATE_CRITICAL;
 		}	else {
 			nss7_value=strtoul(recv_buffer,NULL,10);
@@ -1272,7 +1272,7 @@ main(int argc, char **argv) {
 				result=STATE_CRITICAL;
 			else if (check_warning_value==TRUE && nss7_value >= warning_value)
 				result=STATE_WARNING;
-			asprintf (&output_message,
+			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
 			         nss7_name,
 			         nss7_value,
@@ -1591,7 +1591,7 @@ int process_arguments(int argc, char **argv) {
 void print_help(void)
 {
 	char *myport;
-	asprintf (&myport, "%d", PORT);
+	xasprintf (&myport, "%d", PORT);
 
 	print_revision (progname, NP_VERSION);
 
