@@ -164,7 +164,7 @@ main (int argc, char **argv)
 		printf("HELOCMD: %s", helocmd);
 
 	/* initialize the MAIL command with optional FROM command  */
-	asprintf (&cmd_str, "%sFROM: %s%s", mail_command, from_arg, "\r\n");
+	asprintf (&cmd_str, "%sFROM:<%s>%s", mail_command, from_arg, "\r\n");
 
 	if (verbose && smtp_use_dummycmd)
 		printf ("FROM CMD: %s", cmd_str);
