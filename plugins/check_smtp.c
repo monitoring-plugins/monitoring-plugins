@@ -521,7 +521,8 @@ process_arguments (int argc, char **argv)
 			localhostname = strdup(optarg);
 			break;
 		case 'f':									/* from argument */
-			from_arg = optarg;
+			from_arg = optarg + strspn(optarg, "<");
+			from_arg = strndup(from_arg, strcspn(from_arg, ">"));
 			smtp_use_dummycmd = 1;
 			break;
 		case 'A':
