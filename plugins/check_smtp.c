@@ -809,7 +809,7 @@ print_help (void)
   printf (_("    String to expect in first line of server response (default: '%s')\n"), SMTP_EXPECT);
   printf (" %s\n", "-C, --command=STRING");
   printf ("    %s\n", _("SMTP command (may be used repeatedly)"));
-  printf (" %s\n", "-R, --command=STRING");
+  printf (" %s\n", "-R, --response=STRING");
   printf ("    %s\n", _("Expected response to command (may be used repeatedly)"));
   printf (" %s\n", "-f, --from=STRING");
   printf ("    %s\n", _("FROM-address to include in MAIL command, required by Exchange 2000")),
@@ -852,7 +852,7 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-  printf ("%s -H host [-p port] [-4|-6] [-e expect] [-C command] [-f from addr]", progname);
+  printf ("%s -H host [-p port] [-4|-6] [-e expect] [-C command] [-R response] [-f from addr]\n", progname);
   printf ("[-A authtype -U authuser -P authpass] [-w warn] [-c crit] [-t timeout] [-q]\n");
   printf ("[-F fqdn] [-S] [-D warn days cert expire[,crit days cert expire]] [-v] \n");
 }
