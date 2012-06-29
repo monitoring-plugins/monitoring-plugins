@@ -502,7 +502,7 @@ process_arguments (int argc, char **argv)
 			if (escape)
 				server_send = np_escaped_string(optarg);
 			else
-				asprintf(&server_send, "%s", optarg);
+				xasprintf(&server_send, "%s", optarg);
 			break;
 		case 'e': /* expect string (may be repeated) */
 			flags &= ~FLAG_EXACT_MATCH;
@@ -522,7 +522,7 @@ process_arguments (int argc, char **argv)
 			if (escape)
 				server_quit = np_escaped_string(optarg);
 			else
-				asprintf(&server_quit, "%s\r\n", optarg);
+				xasprintf(&server_quit, "%s\r\n", optarg);
 			break;
 		case 'r':
 			if (!strncmp(optarg,"ok",2))

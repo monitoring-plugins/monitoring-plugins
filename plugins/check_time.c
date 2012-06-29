@@ -329,7 +329,7 @@ void
 print_help (void)
 {
 	char *myport;
-	asprintf (&myport, "%d", TIME_PORT);
+	xasprintf (&myport, "%d", TIME_PORT);
 
 	print_revision (progname, NP_VERSION);
 

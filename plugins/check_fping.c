@@ -92,11 +92,11 @@ main (int argc, char **argv)
 
   /* compose the command */
   if (target_timeout)
-    asprintf(&option_string, "%s-t %d ", option_string, target_timeout);
+    xasprintf(&option_string, "%s-t %d ", option_string, target_timeout);
   if (packet_interval)
-    asprintf(&option_string, "%s-p %d ", option_string, packet_interval);
+    xasprintf(&option_string, "%s-p %d ", option_string, packet_interval);
 
-  asprintf (&command_line, "%s %s-b %d -c %d %s", PATH_TO_FPING,
+  xasprintf (&command_line, "%s %s-b %d -c %d %s", PATH_TO_FPING,
             option_string, packet_size, packet_count, server);
 
   if (verbose)

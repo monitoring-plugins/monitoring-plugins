@@ -281,8 +281,8 @@ process_arguments (int argc, char **argv)
 		case 'C':									/* Command for remote machine */
 			commands++;
 			if (commands > 1)
-				asprintf (&remotecmd, "%s;echo STATUS CODE: $?;", remotecmd);
-			asprintf (&remotecmd, "%s%s", remotecmd, optarg);
+				xasprintf (&remotecmd, "%s;echo STATUS CODE: $?;", remotecmd);
+			xasprintf (&remotecmd, "%s%s", remotecmd, optarg);
 			break;
 		case 'S':									/* skip n (or all) lines on stdout */
 			if (optarg == NULL)
@@ -328,13 +328,13 @@ process_arguments (int argc, char **argv)
 	if (strlen(remotecmd) == 0) {
 		for (; c < argc; c++)
 			if (strlen(remotecmd) > 0)
-				asprintf (&remotecmd, "%s %s", remotecmd, argv[c]);
+				xasprintf (&remotecmd, "%s %s", remotecmd, argv[c]);
 			else
-				asprintf (&remotecmd, "%s", argv[c]);
+				xasprintf (&remotecmd, "%s", argv[c]);
 	}
 
 	if (commands > 1 || passive)
-		asprintf (&remotecmd, "%s;echo STATUS CODE: $?;", remotecmd);
+		xasprintf (&remotecmd, "%s;echo STATUS CODE: $?;", remotecmd);
 
 	if (remotecmd == NULL || strlen (remotecmd) <= 1)
 		usage_va(_("No remotecmd"));

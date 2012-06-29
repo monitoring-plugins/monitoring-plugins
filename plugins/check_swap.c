@@ -129,7 +129,7 @@ main (int argc, char **argv)
 					percent = 100 * (((double) dskused_mb) / ((double) dsktotal_mb));
 				result = max_state (result, check_swap (percent, dskfree_mb));
 				if (verbose)
-					asprintf (&status, "%s [%.0f (%d%%)]", status, dskfree_mb, 100 - percent);
+					xasprintf (&status, "%s [%.0f (%d%%)]", status, dskfree_mb, 100 - percent);
 			}
 		}
 		else if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%[TotalFre]%*[:] %f %*[k]%*[B]", str, &tmp_mb)) {
@@ -152,15 +152,15 @@ main (int argc, char **argv)
 	free_swap_mb = dskfree_mb;
 #else
 # ifdef HAVE_SWAP
-	asprintf(&swap_command, "%s", SWAP_COMMAND);
-	asprintf(&swap_format, "%s", SWAP_FORMAT);
+	xasprintf(&swap_command, "%s", SWAP_COMMAND);
+	xasprintf(&swap_format, "%s", SWAP_FORMAT);
 
 /* These override the command used if a summary (and thus ! allswaps) is required */
 /* The summary flag returns more accurate information about swap usage on these OSes */
 #  ifdef _AIX
 	if (!allswaps) {
-		asprintf(&swap_command, "%s", "/usr/sbin/lsps -s");
-		asprintf(&swap_format, "%s", "%f%*s %f");
+		xasprintf(&swap_command, "%s", "/usr/sbin/lsps -s");
+		xasprintf(&swap_format, "%s", "%f%*s %f");
 		conv_factor = 1;
 	}
 #  endif
@@ -228,7 +228,7 @@ main (int argc, char **argv)
 				percent = 100 * (((double) dskused_mb) / ((double) dsktotal_mb));
 				result = max_state (result, check_swap (percent, dskfree_mb));
 				if (verbose)
-					asprintf (&status, "%s [%.0f (%d%%)]", status, dskfree_mb, 100 - percent);
+					xasprintf (&status, "%s [%.0f (%d%%)]", status, dskfree_mb, 100 - percent);
 			}
 		}
 #  ifdef _AIX
@@ -290,7 +290,7 @@ main (int argc, char **argv)
 			percent = 100 * (((double) dskused_mb) / ((double) dsktotal_mb));
 			result = max_state (result, check_swap (percent, dskfree_mb));
 			if (verbose) {
-				asprintf (&status, "%s [%.0f (%d%%)]", status, dskfree_mb, 100 - percent);
+				xasprintf (&status, "%s [%.0f (%d%%)]", status, dskfree_mb, 100 - percent);
 			}
 		}
 
@@ -329,7 +329,7 @@ main (int argc, char **argv)
 			percent = 100 * (((double) dskused_mb) / ((double) dsktotal_mb));
 			result = max_state (result, check_swap (percent, dskfree_mb));
 			if (verbose) {
-				asprintf (&status, "%s [%.0f (%d%%)]", status, dskfree_mb, 100 - percent);
+				xasprintf (&status, "%s [%.0f (%d%%)]", status, dskfree_mb, 100 - percent);
 			}
 		}
 

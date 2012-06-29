@@ -358,7 +358,7 @@ strscpy (char *dest, const char *src)
 	if (src == NULL)
 		return NULL;
 
-	asprintf (&dest, "%s", src);
+	xasprintf (&dest, "%s", src);
 
 	return dest;
 }
@@ -513,6 +513,33 @@ strpcat (char *dest, const char *src, const char *str)
 	return dest;
 }
 
+
+/******************************************************************************
+ *
+ * asprintf, but die on failure
+ *
+ ******************************************************************************/
+
+int
+xvasprintf (char **strp, const char *fmt, va_list ap)
+{
+	int result = vasprintf (strp, fmt, ap);
+	if (result == -1 || *strp == NULL)
+		die (STATE_UNKNOWN, _("failed malloc in xvasprintf\n"));
+	return result;
+}
+
+int
+xasprintf (char **strp, const char *fmt, ...)
+{
+	va_list ap;
+	int result;
+	va_start (ap, fmt);
+	result = xvasprintf (strp, fmt, ap);
+	va_end (ap);
+	return result;
+}
+
 /******************************************************************************
  *
  * Print perfdata in a standard format
@@ -534,25 +561,25 @@ char *perfdata (const char *label,
 	char *data = NULL;
 
 	if (strpbrk (label, "'= "))
-		asprintf (&data, "'%s'=%ld%s;", label, val, uom);
+		xasprintf (&data, "'%s'=%ld%s;", label, val, uom);
 	else
-		asprintf (&data, "%s=%ld%s;", label, val, uom);
+		xasprintf (&data, "%s=%ld%s;", label, val, uom);
 
 	if (warnp)
-		asprintf (&data, "%s%ld;", data, warn);
+		xasprintf (&data, "%s%ld;", data, warn);
 	else
-		asprintf (&data, "%s;", data);
+		xasprintf (&data, "%s;", data);
 
 	if (critp)
-		asprintf (&data, "%s%ld;", data, crit);
+		xasprintf (&data, "%s%ld;", data, crit);
 	else
-		asprintf (&data, "%s;", data);
+		xasprintf (&data, "%s;", data);
 
 	if (minp)
-		asprintf (&data, "%s%ld", data, minv);
+		xasprintf (&data, "%s%ld", data, minv);
 
 	if (maxp)
-		asprintf (&data, "%s;%ld", data, maxv);
+		xasprintf (&data, "%s;%ld", data, maxv);
 
 	return data;
 }
@@ -573,29 +600,29 @@ char *fperfdata (const char *label,
 	char *data = NULL;
 
 	if (strpbrk (label, "'= "))
-		asprintf (&data, "'%s'=", label);
+		xasprintf (&data, "'%s'=", label);
 	else
-		asprintf (&data, "%s=", label);
+		xasprintf (&data, "%s=", label);
 
-	asprintf (&data, "%s%f", data, val);
-	asprintf (&data, "%s%s;", data, uom);
+	xasprintf (&data, "%s%f", data, val);
+	xasprintf (&data, "%s%s;", data, uom);
 
 	if (warnp)
-		asprintf (&data, "%s%f", data, warn);
+		xasprintf (&data, "%s%f", data, warn);
 
-	asprintf (&data, "%s;", data);
+	xasprintf (&data, "%s;", data);
 
 	if (critp)
-		asprintf (&data, "%s%f", data, crit);
+		xasprintf (&data, "%s%f", data, crit);
 
-	asprintf (&data, "%s;", data);
+	xasprintf (&data, "%s;", data);
 
 	if (minp)
-		asprintf (&data, "%s%f", data, minv);
+		xasprintf (&data, "%s%f", data, minv);
 
 	if (maxp) {
-		asprintf (&data, "%s;", data);
-		asprintf (&data, "%s%f", data, maxv);
+		xasprintf (&data, "%s;", data);
+		xasprintf (&data, "%s%f", data, maxv);
 	}
 
 	return data;

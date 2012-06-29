@@ -295,7 +295,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 		/* If there's no sync.peer, query all candidates and use the best one */
 		if (PEER_SEL(peers[i].status) >= min_peer_sel){
 			if(verbose) printf("Getting offset, jitter and stratum for peer %.2x\n", ntohs(peers[i].assoc));
-			asprintf(&data, "");
+			xasprintf(&data, "");
 			do{
 				setup_control_request(&req, OP_READVAR, 2);
 				req.assoc = peers[i].assoc;
@@ -318,7 +318,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 				DBG(print_ntp_control_message(&req));
 
 				if(!(req.op&REM_ERROR))
-					asprintf(&data, "%s%s", data, req.data);
+					xasprintf(&data, "%s%s", data, req.data);
 			} while(req.op&REM_MORE);
 
 			if(req.op&REM_ERROR) {
@@ -603,41 +603,41 @@ int main(int argc, char *argv[]){
 
 	switch (result) {
 		case STATE_CRITICAL :
-			asprintf(&result_line, _("NTP CRITICAL:"));
+			xasprintf(&result_line, _("NTP CRITICAL:"));
 			break;
 		case STATE_WARNING :
-			asprintf(&result_line, _("NTP WARNING:"));
+			xasprintf(&result_line, _("NTP WARNING:"));
 			break;
 		case STATE_OK :
-			asprintf(&result_line, _("NTP OK:"));
+			xasprintf(&result_line, _("NTP OK:"));
 			break;
 		default :
-			asprintf(&result_line, _("NTP UNKNOWN:"));
+			xasprintf(&result_line, _("NTP UNKNOWN:"));
 			break;
 	}
 	if(!syncsource_found)
-		asprintf(&result_line, "%s %s,", result_line, _("Server not synchronized"));
+		xasprintf(&result_line, "%s %s,", result_line, _("Server not synchronized"));
 	else if(li_alarm)
-		asprintf(&result_line, "%s %s,", result_line, _("Server has the LI_ALARM bit set"));
+		xasprintf(&result_line, "%s %s,", result_line, _("Server has the LI_ALARM bit set"));
 
 	if(offset_result == STATE_UNKNOWN){
-		asprintf(&result_line, "%s %s", result_line, _("Offset unknown"));
-		asprintf(&perfdata_line, "");
+		xasprintf(&result_line, "%s %s", result_line, _("Offset unknown"));
+		xasprintf(&perfdata_line, "");
 	} else {
-		asprintf(&result_line, "%s %s %.10g secs", result_line, _("Offset"), offset);
-		asprintf(&perfdata_line, "%s", perfd_offset(offset));
+		xasprintf(&result_line, "%s %s %.10g secs", result_line, _("Offset"), offset);
+		xasprintf(&perfdata_line, "%s", perfd_offset(offset));
 	}
 	if (do_jitter) {
-		asprintf(&result_line, "%s, jitter=%f", result_line, jitter);
-		asprintf(&perfdata_line, "%s %s", perfdata_line, perfd_jitter(jitter));
+		xasprintf(&result_line, "%s, jitter=%f", result_line, jitter);
+		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_jitter(jitter));
 	}
 	if (do_stratum) {
-		asprintf(&result_line, "%s, stratum=%i", result_line, stratum);
-		asprintf(&perfdata_line, "%s %s", perfdata_line, perfd_stratum(stratum));
+		xasprintf(&result_line, "%s, stratum=%i", result_line, stratum);
+		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_stratum(stratum));
 	}
 	if (do_truechimers) {
-		asprintf(&result_line, "%s, truechimers=%i", result_line, num_truechimers);
-		asprintf(&perfdata_line, "%s %s", perfdata_line, perfd_truechimers(num_truechimers));
+		xasprintf(&result_line, "%s, truechimers=%i", result_line, num_truechimers);
+		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_truechimers(num_truechimers));
 	}
 	printf("%s|%s\n", result_line, perfdata_line);
 

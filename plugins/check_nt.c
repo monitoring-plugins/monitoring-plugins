@@ -135,13 +135,13 @@ int main(int argc, char **argv){
 
 	case CHECK_CLIENTVERSION:
 
-		asprintf(&send_buffer, "%s&1", req_password);
+		xasprintf(&send_buffer, "%s&1", req_password);
 		fetch_data (server_address, server_port, send_buffer);
 		if (value_list != NULL && strcmp(recv_buffer, value_list) != 0) {
-			asprintf (&output_message, _("Wrong client version - running: %s, required: %s"), recv_buffer, value_list);
+			xasprintf (&output_message, _("Wrong client version - running: %s, required: %s"), recv_buffer, value_list);
 			return_code = STATE_WARNING;
 		} else {
-			asprintf (&output_message, "%s", recv_buffer);
+			xasprintf (&output_message, "%s", recv_buffer);
 			return_code = STATE_OK;
 		}
 		break;
@@ -167,7 +167,7 @@ int main(int argc, char **argv){
 						 lvalue_list[2+offset]<=(unsigned long)100) {
 
 				/* Send request and retrieve data */
-				asprintf(&send_buffer,"%s&2&%lu",req_password,lvalue_list[0+offset]);
+				xasprintf(&send_buffer,"%s&2&%lu",req_password,lvalue_list[0+offset]);
 				fetch_data (server_address, server_port, send_buffer);
 
 				utilization=strtoul(recv_buffer,NULL,10);
@@ -178,11 +178,11 @@ int main(int argc, char **argv){
 				else if(utilization >= lvalue_list[1+offset] && return_code<STATE_WARNING)
 					return_code=STATE_WARNING;
 
-				asprintf(&output_message,_(" %lu%% (%lu min average)"), utilization, lvalue_list[0+offset]);
-				asprintf(&temp_string,"%s%s",temp_string,output_message);
-				asprintf(&perfdata,_(" '%lu min avg Load'=%lu%%;%lu;%lu;0;100"), lvalue_list[0+offset], utilization,
+				xasprintf(&output_message,_(" %lu%% (%lu min average)"), utilization, lvalue_list[0+offset]);
+				xasprintf(&temp_string,"%s%s",temp_string,output_message);
+				xasprintf(&perfdata,_(" '%lu min avg Load'=%lu%%;%lu;%lu;0;100"), lvalue_list[0+offset], utilization,
 				  lvalue_list[1+offset], lvalue_list[2+offset]);
-				asprintf(&temp_string_perf,"%s%s",temp_string_perf,perfdata);
+				xasprintf(&temp_string_perf,"%s%s",temp_string_perf,perfdata);
 				offset+=3;	/* move across the array */
 			}
 
@@ -196,13 +196,13 @@ int main(int argc, char **argv){
 
 	case CHECK_UPTIME:
 
-		asprintf(&send_buffer, "%s&3", req_password);
+		xasprintf(&send_buffer, "%s&3", req_password);
 		fetch_data (server_address, server_port, send_buffer);
 		uptime=strtoul(recv_buffer,NULL,10);
 		updays = uptime / 86400;
 		uphours = (uptime % 86400) / 3600;
 		upminutes = ((uptime % 86400) % 3600) / 60;
-		asprintf(&output_message,_("System Uptime - %u day(s) %u hour(s) %u minute(s)"),updays,uphours, upminutes);
+		xasprintf(&output_message,_("System Uptime - %u day(s) %u hour(s) %u minute(s)"),updays,uphours, upminutes);
 		if (check_critical_value==TRUE && uptime <= critical_value)
 			return_code=STATE_CRITICAL;
 		else if (check_warning_value==TRUE && uptime <= warning_value)
@@ -218,7 +218,7 @@ int main(int argc, char **argv){
 		else if (strlen(value_list)!=1)
 			output_message = strdup (_("wrong -l argument"));
 		else {
-			asprintf(&send_buffer,"%s&4&%s", req_password, value_list);
+			xasprintf(&send_buffer,"%s&4&%s", req_password, value_list);
 			fetch_data (server_address, server_port, send_buffer);
 			fds=strtok(recv_buffer,"&");
 			tds=strtok(NULL,"&");
@@ -232,10 +232,10 @@ int main(int argc, char **argv){
 				warning_used_space = ((float)warning_value / 100) * total_disk_space;
 				critical_used_space = ((float)critical_value / 100) * total_disk_space;
 
-				asprintf(&temp_string,_("%s:\\ - total: %.2f Gb - used: %.2f Gb (%.0f%%) - free %.2f Gb (%.0f%%)"),
+				xasprintf(&temp_string,_("%s:\\ - total: %.2f Gb - used: %.2f Gb (%.0f%%) - free %.2f Gb (%.0f%%)"),
 				  value_list, total_disk_space / 1073741824, (total_disk_space - free_disk_space) / 1073741824,
 				  percent_used_space, free_disk_space / 1073741824, (free_disk_space / total_disk_space)*100);
-				asprintf(&temp_string_perf,_("'%s:\\ Used Space'=%.2fGb;%.2f;%.2f;0.00;%.2f"), value_list,
+				xasprintf(&temp_string_perf,_("'%s:\\ Used Space'=%.2fGb;%.2f;%.2f;0.00;%.2f"), value_list,
 				  (total_disk_space - free_disk_space) / 1073741824, warning_used_space / 1073741824,
 				  critical_used_space / 1073741824, total_disk_space / 1073741824);
 
@@ -262,7 +262,7 @@ int main(int argc, char **argv){
 			output_message = strdup (_("No service/process specified"));
 		else {
 			preparelist(value_list);		/* replace , between services with & to send the request */
-			asprintf(&send_buffer,"%s&%u&%s&%s", req_password,(vars_to_check==CHECK_SERVICESTATE)?5:6,
+			xasprintf(&send_buffer,"%s&%u&%s&%s", req_password,(vars_to_check==CHECK_SERVICESTATE)?5:6,
 							 (show_all==TRUE) ? "ShowAll" : "ShowFail",value_list);
 			fetch_data (server_address, server_port, send_buffer);
 			return_code=atoi(strtok(recv_buffer,"&"));
@@ -273,7 +273,7 @@ int main(int argc, char **argv){
 
 	case CHECK_MEMUSE:
 
-		asprintf(&send_buffer,"%s&7", req_password);
+		xasprintf(&send_buffer,"%s&7", req_password);
 		fetch_data (server_address, server_port, send_buffer);
 		mem_commitLimit=atof(strtok(recv_buffer,"&"));
 		mem_commitByte=atof(strtok(NULL,"&"));
@@ -283,10 +283,10 @@ int main(int argc, char **argv){
 
 		/* Divisor should be 1048567, not 3044515, as we are measuring "Commit Charge" here,
 		which equals RAM + Pagefiles. */
-		asprintf(&output_message,_("Memory usage: total:%.2f Mb - used: %.2f Mb (%.0f%%) - free: %.2f Mb (%.0f%%)"),
+		xasprintf(&output_message,_("Memory usage: total:%.2f Mb - used: %.2f Mb (%.0f%%) - free: %.2f Mb (%.0f%%)"),
 		  mem_commitLimit / 1048567, mem_commitByte / 1048567, percent_used_space,
 		  (mem_commitLimit - mem_commitByte) / 1048567, (mem_commitLimit - mem_commitByte) / mem_commitLimit * 100);
-		asprintf(&perfdata,_("'Memory usage'=%.2fMb;%.2f;%.2f;0.00;%.2f"), mem_commitByte / 1048567,
+		xasprintf(&perfdata,_("'Memory usage'=%.2fMb;%.2f;%.2f;0.00;%.2f"), mem_commitByte / 1048567,
 		  warning_used_space / 1048567, critical_used_space / 1048567, mem_commitLimit / 1048567);
 
 		return_code=STATE_OK;
@@ -331,12 +331,12 @@ int main(int argc, char **argv){
 			strtok (value_list, "&");	/* burn the first parameters */
 			description = strtok (NULL, "&");
 			counter_unit = strtok (NULL, "&");
-			asprintf (&send_buffer, "%s&8&%s", req_password, value_list);
+			xasprintf (&send_buffer, "%s&8&%s", req_password, value_list);
 			fetch_data (server_address, server_port, send_buffer);
 			counter_value = atof (recv_buffer);
 
 			if (description == NULL)
-			asprintf (&output_message, "%.f", counter_value);
+			xasprintf (&output_message, "%.f", counter_value);
 			else if (isPercent)
 			{
 				counter_unit = strdup ("%");
@@ -371,13 +371,13 @@ int main(int argc, char **argv){
 			{
 				/* Let's format the output string, finally... */
 					if (strstr(description, "%") == NULL) {
-						asprintf (&output_message, "%s = %.2f %s", description, counter_value, counter_unit);
+						xasprintf (&output_message, "%s = %.2f %s", description, counter_value, counter_unit);
 					} else {
 						/* has formatting, will segv if wrong */
-						asprintf (&output_message, description, counter_value);
+						xasprintf (&output_message, description, counter_value);
 					}
-					asprintf (&output_message, "%s |", output_message);
-					asprintf (&output_message,"%s %s", output_message,
+					xasprintf (&output_message, "%s |", output_message);
+					xasprintf (&output_message,"%s %s", output_message,
 						fperfdata (description, counter_value,
 							counter_unit, 1, warning_value, 1, critical_value,
 							(!(isPercent) && (minval != NULL)), fminval,
@@ -410,7 +410,7 @@ int main(int argc, char **argv){
 			output_message = strdup (_("No counter specified"));
 		else {
 			preparelist(value_list);		/* replace , between services with & to send the request */
-			asprintf(&send_buffer,"%s&9&%s", req_password,value_list);
+			xasprintf(&send_buffer,"%s&9&%s", req_password,value_list);
 			fetch_data (server_address, server_port, send_buffer);
 			age_in_minutes = atoi(strtok(recv_buffer,"&"));
 			description = strtok(NULL,"&");
@@ -439,13 +439,13 @@ int main(int argc, char **argv){
 		if (value_list==NULL)
 			output_message = strdup (_("No counter specified"));
 		else {
-			asprintf(&send_buffer,"%s&10&%s", req_password,value_list);
+			xasprintf(&send_buffer,"%s&10&%s", req_password,value_list);
 			fetch_data (server_address, server_port, send_buffer);
 			if (!strncmp(recv_buffer,"ERROR",5)) {
 				printf("NSClient - %s\n",recv_buffer);
 				exit(STATE_UNKNOWN);
 			}
-			asprintf(&output_message,"%s",recv_buffer);
+			xasprintf(&output_message,"%s",recv_buffer);
 			return_code=STATE_OK;
 		}
 		break;

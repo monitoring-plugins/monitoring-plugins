@@ -137,7 +137,7 @@ main (int argc, char **argv)
 			chld_out.line[i][pos+1] = 0x0;
 		}
 		if ( cols >= expected_cols ) {
-			asprintf (&procargs, "%s", chld_out.line[i] + pos);
+			xasprintf (&procargs, "%s", chld_out.line[i] + pos);
 			strip (procargs);
 
 			/* Some ps return full pathname for command. This removes path */

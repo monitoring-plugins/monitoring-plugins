@@ -84,11 +84,11 @@ main (int argc, char **argv)
   result = STATE_OK;
 
   /* create the command line to execute */
-  asprintf (&command_line, "%s -raw %s -%s %s",
+  xasprintf (&command_line, "%s -raw %s -%s %s",
             PATH_TO_QSTAT, QSTAT_DATA_DELIMITER, game_type, server_ip);
 
   if (port)
-    asprintf (&command_line, "%s:%-d", command_line, port);
+    xasprintf (&command_line, "%s:%-d", command_line, port);
 
   if (verbose > 0)
     printf ("%s\n", command_line);

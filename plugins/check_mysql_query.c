@@ -233,7 +233,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case 'q':
-			asprintf(&sql_query, "%s", optarg);
+			xasprintf(&sql_query, "%s", optarg);
 			break;
 		case 'w':
 			warning = optarg;
@@ -277,7 +277,7 @@ void
 print_help (void)
 {
 	char *myport;
-	asprintf (&myport, "%d", MYSQL_PORT);
+	xasprintf (&myport, "%d", MYSQL_PORT);
 
 	print_revision (progname, NP_VERSION);
 

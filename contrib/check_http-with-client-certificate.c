@@ -606,7 +606,7 @@ process_arguments( int argc, char **argv )
                          *if ( !is_hostname( optarg ) )
                          *        usage2( "invalid hostname", optarg );
                          */
-                        asprintf( &server_hostname, "%s", optarg );
+                        xasprintf( &server_hostname, "%s", optarg );
                         use_server_hostname = TRUE;
                         break;
                 case 'F': /* File (dummy) */
@@ -619,7 +619,7 @@ process_arguments( int argc, char **argv )
                          *if ( !is_host( optarg ) )
                          *        usage2( "invalid ip address or hostname", optarg )
                          */
-                        asprintf( &server_host, "%s", optarg );
+                        xasprintf( &server_host, "%s", optarg );
                         break;
                 case 'p': /* Server port */
                         if ( !is_intnonneg( optarg ) )
@@ -653,7 +653,7 @@ process_arguments( int argc, char **argv )
                         break;
                 case 'A': /* client certificate */
 #ifdef HAVE_SSL
-                        asprintf( &client_certificate_file, "%s", optarg );
+                        xasprintf( &client_certificate_file, "%s", optarg );
                         use_client_certificate = TRUE;
 #else
                         usage( "check_http: invalid option - SSL is not available\n" );
@@ -661,26 +661,26 @@ process_arguments( int argc, char **argv )
                         break;
                 case 'K': /* client certificate passphrase */
 #ifdef HAVE_SSL
-                        asprintf( &client_certificate_passphrase, "%s", optarg );
+                        xasprintf( &client_certificate_passphrase, "%s", optarg );
                         use_client_certificate_passphrase = TRUE;
 #else
                         usage( "check_http: invalid option - SSL is not available\n" );
 #endif
                 case 'Z': /* valid CA certificates */
 #ifdef HAVE_SSL
-                        asprintf( &ca_certificate_file, "%s", optarg );
+                        xasprintf( &ca_certificate_file, "%s", optarg );
                         use_ca_certificate = TRUE;
 #else
                         usage( "check_http: invalid option - SSL is not available\n" );
 #endif
                         break;
                 case 'u': /* URL PATH */
-                        asprintf( &http_url_path, "%s", optarg );
+                        xasprintf( &http_url_path, "%s", optarg );
                         break;
                 case 'P': /* POST DATA */
-                        asprintf( &http_post_data, "%s", optarg );
+                        xasprintf( &http_post_data, "%s", optarg );
                         use_http_post_data = TRUE;
-                        asprintf( &http_method, "%s", "POST" );
+                        xasprintf( &http_method, "%s", "POST" );
                         break;
                 case 'e': /* expected string in first line of HTTP response */
                         strncpy( http_expect , optarg, MAX_INPUT_BUFFER - 1 );
@@ -765,13 +765,13 @@ process_arguments( int argc, char **argv )
          *    without an option
          */
         if ( ( strcmp( server_host, "" ) ) && (c < argc) ) {
-                asprintf( &server_host, "%s", argv[c++] );
+                xasprintf( &server_host, "%s", argv[c++] );
         }
 
         /* 2. check if another artument is supplied
          */
         if ( ( strcmp( server_hostname, "" ) == 0 ) && (c < argc) ) {
-               asprintf( &server_hostname, "%s", argv[c++] ); 
+               xasprintf( &server_hostname, "%s", argv[c++] ); 
         }
 
         /* 3. if host is still not defined, just copy hostname, 
@@ -781,7 +781,7 @@ process_arguments( int argc, char **argv )
                 if ( strcmp( server_hostname, "" ) == 0 ) {
 			usage ("check_http: you must specify a server address or host name\n");
                 } else {
-                        asprintf( &server_host, "%s", server_hostname );
+                        xasprintf( &server_host, "%s", server_hostname );
                 }
         }
 
@@ -807,9 +807,9 @@ process_arguments( int argc, char **argv )
 
         /* Finally set some default values if necessary */
         if ( strcmp( http_method, "" ) == 0 )
-                asprintf( &http_method, "%s", DEFAULT_HTTP_METHOD );
+                xasprintf( &http_method, "%s", DEFAULT_HTTP_METHOD );
         if ( strcmp( http_url_path, "" ) == 0 ) {
-                asprintf( &http_url_path, "%s", DEFAULT_HTTP_URL_PATH );
+                xasprintf( &http_url_path, "%s", DEFAULT_HTTP_URL_PATH );
         }
 
         return TRUE;
@@ -829,25 +829,25 @@ http_request( int sock, struct pageref *page )
         size_t size = 0;
         char *basic_auth_encoded = NULL;
 
-        asprintf( &buffer, HTTP_TEMPLATE_REQUEST, buffer, http_method, http_url_path );
+        xasprintf( &buffer, HTTP_TEMPLATE_REQUEST, buffer, http_method, http_url_path );
 
-        asprintf( &buffer, HTTP_TEMPLATE_HEADER_USERAGENT, buffer, progname, REVISION, PACKAGE_VERSION );
+        xasprintf( &buffer, HTTP_TEMPLATE_HEADER_USERAGENT, buffer, progname, REVISION, PACKAGE_VERSION );
 
         if ( use_server_hostname ) {
-                asprintf( &buffer, HTTP_TEMPLATE_HEADER_HOST, buffer, server_hostname );
+                xasprintf( &buffer, HTTP_TEMPLATE_HEADER_HOST, buffer, server_hostname );
         }
 
         if ( use_basic_auth ) {
                 basic_auth_encoded = base64( basic_auth, strlen( basic_auth ) );
-                asprintf( &buffer, HTTP_TEMPLATE_HEADER_AUTH, buffer, basic_auth_encoded );
+                xasprintf( &buffer, HTTP_TEMPLATE_HEADER_AUTH, buffer, basic_auth_encoded );
         }
 
         /* either send http POST data */
         if ( use_http_post_data ) {
         /* based on code written by Chris Henesy <lurker@shadowtech.org> */
-                asprintf( &buffer, "Content-Type: application/x-www-form-urlencoded\r\n" );
-                asprintf( &buffer, "Content-Length: %i\r\n\r\n", buffer, content_len );
-                asprintf( &buffer, "%s%s%s", buffer, http_post_data, "\r\n" );
+                xasprintf( &buffer, "Content-Type: application/x-www-form-urlencoded\r\n" );
+                xasprintf( &buffer, "Content-Length: %i\r\n\r\n", buffer, content_len );
+                xasprintf( &buffer, "%s%s%s", buffer, http_post_data, "\r\n" );
                 sendsize = send( sock, buffer, strlen( buffer ), 0 );
                 if ( sendsize < strlen( buffer ) ) {
                         printf( "ERROR: Incomplete write\n" );
@@ -855,7 +855,7 @@ http_request( int sock, struct pageref *page )
                 }
         /* or just a newline */
         } else {
-	        asprintf( &buffer, "%s%s", buffer, "\r\n" );
+	        xasprintf( &buffer, "%s%s", buffer, "\r\n" );
 	       	sendsize = send( sock, buffer, strlen( buffer ) , 0 );
 	       	if ( sendsize < strlen( buffer ) ) {
 	  	        printf( "ERROR: Incomplete write\n" );
@@ -870,12 +870,12 @@ http_request( int sock, struct pageref *page )
                 recvsize = recv( sock, recvbuff, MAX_INPUT_BUFFER - 1, 0 );
                 if ( recvsize > (size_t) 0 ) {
                         recvbuff[recvsize] = '\0';
-                        asprintf( &content, "%s%s", content, recvbuff );
+                        xasprintf( &content, "%s%s", content, recvbuff );
                         size += recvsize;
                 }
         } while ( recvsize > (size_t) 0 );
 
-        asprintf( &page->content, "%s", content );
+        xasprintf( &page->content, "%s", content );
         page->size = size;
 
         /* return a CRITICAL status if we couldn't read any data */
@@ -895,7 +895,7 @@ parse_http_response( struct pageref *page )
         size_t len = 0;         //temporary used
         char *pos = "";         //temporary used
 
-        asprintf( &content, "%s", page->content );
+        xasprintf( &content, "%s", page->content );
 
         /* find status line and null-terminate it */
         // copy content to status
@@ -962,7 +962,7 @@ check_http_response( struct pageref *page )
 
         /* check response time befor anything else */
         if ( use_critical_interval && ( elapsed_time > critical_interval ) ) {
-                asprintf( &msg, RESULT_TEMPLATE_RESPONSE_TIME, 
+                xasprintf( &msg, RESULT_TEMPLATE_RESPONSE_TIME, 
                                 protocol_text( use_ssl ),
                                 state_text( STATE_CRITICAL ),
                                 elapsed_time,
@@ -970,7 +970,7 @@ check_http_response( struct pageref *page )
                 terminate( STATE_CRITICAL, msg );
         }
         if ( use_warning_interval  && ( elapsed_time > warning_interval ) ) {
-                asprintf( &msg, RESULT_TEMPLATE_RESPONSE_TIME, 
+                xasprintf( &msg, RESULT_TEMPLATE_RESPONSE_TIME, 
                                 protocol_text( use_ssl ),
                                 state_text( STATE_WARNING ),
                                 elapsed_time,
@@ -990,9 +990,9 @@ check_http_response( struct pageref *page )
 #else
                            )
 #endif 
-                                asprintf( &msg, "Expected HTTP response received from host\n" );
+                                xasprintf( &msg, "Expected HTTP response received from host\n" );
                         else
-                                asprintf( &msg, "Expected HTTP response received from host on port %d\n", server_port );
+                                xasprintf( &msg, "Expected HTTP response received from host on port %d\n", server_port );
                         terminate( STATE_OK, msg );
                 }
         } else {
@@ -1002,9 +1002,9 @@ check_http_response( struct pageref *page )
 #else
                    )
 #endif
-                        asprintf( &msg, "Invalid HTTP response received from host\n" );
+                        xasprintf( &msg, "Invalid HTTP response received from host\n" );
                 else
-                        asprintf( &msg, "Invalid HTTP response received from host on port %d\n", server_port );
+                        xasprintf( &msg, "Invalid HTTP response received from host on port %d\n", server_port );
                 terminate( STATE_CRITICAL, msg );
         }
 
@@ -1016,7 +1016,7 @@ check_http_response( struct pageref *page )
              strstr( page->status, "503" ) ||
              strstr( page->status, "504" ) ||
              strstr( page->status, "505" )) {
-                asprintf( &msg, RESULT_TEMPLATE_STATUS_RESPONSE_TIME,
+                xasprintf( &msg, RESULT_TEMPLATE_STATUS_RESPONSE_TIME,
                                 protocol_text( use_ssl ),
                                 state_text( http_client_error_state ),
                                 page->status,
@@ -1044,7 +1044,7 @@ check_http_response( struct pageref *page )
              strstr( page->status, "415" ) ||
              strstr( page->status, "416" ) ||
              strstr( page->status, "417" ) ) {
-                asprintf( &msg, RESULT_TEMPLATE_STATUS_RESPONSE_TIME,
+                xasprintf( &msg, RESULT_TEMPLATE_STATUS_RESPONSE_TIME,
                                 protocol_text( use_ssl ),
                                 state_text( http_client_error_state ),
                                 page->status,
@@ -1066,7 +1066,7 @@ check_http_response( struct pageref *page )
                                 /* returning STATE_DEPENDENT means follow redirect */
                                 return STATE_DEPENDENT;
                 } else {
-                        asprintf( &msg, RESULT_TEMPLATE_STATUS_RESPONSE_TIME,
+                        xasprintf( &msg, RESULT_TEMPLATE_STATUS_RESPONSE_TIME,
                                         protocol_text( use_ssl ),
                                         state_text( http_redirect_state ),
                                         page->status,
@@ -1087,7 +1087,7 @@ check_http_content( struct pageref *page )
         /* check for string in content */
         if ( check_content_string ) {
                 if ( strstr( page->content, content_string ) ) {
-                        asprintf( &msg, RESULT_TEMPLATE_STATUS_RESPONSE_TIME,
+                        xasprintf( &msg, RESULT_TEMPLATE_STATUS_RESPONSE_TIME,
                                         protocol_text( use_ssl ),
                                         state_text( STATE_OK ),
                                         page->status,
@@ -1095,7 +1095,7 @@ check_http_content( struct pageref *page )
                                         elapsed_time );
                         terminate( STATE_OK, msg );
                 } else {
-                        asprintf( &msg, RESULT_TEMPLATE_STATUS_RESPONSE_TIME,
+                        xasprintf( &msg, RESULT_TEMPLATE_STATUS_RESPONSE_TIME,
                                         protocol_text( use_ssl ),
                                         state_text( STATE_CRITICAL ),
                                         page->status,
@@ -1110,7 +1110,7 @@ check_http_content( struct pageref *page )
         if ( check_content_regex ) {
                 regex_error = regexec( &regex_preg, page->content, REGEX_REGS, regex_pmatch, 0);
                 if ( regex_error == 0 ) {
-                        asprintf( &msg, RESULT_TEMPLATE_STATUS_RESPONSE_TIME,
+                        xasprintf( &msg, RESULT_TEMPLATE_STATUS_RESPONSE_TIME,
                                         protocol_text( use_ssl ),
                                         state_text( STATE_OK ),
                                         page->status,
@@ -1119,13 +1119,13 @@ check_http_content( struct pageref *page )
                         terminate( STATE_OK, msg );
                 } else {
                         if ( regex_error == REG_NOMATCH ) {
-                                asprintf( &msg, "%s, %s: regex pattern not found\n",
+                                xasprintf( &msg, "%s, %s: regex pattern not found\n",
                                                 protocol_text( use_ssl) ,
                                                 state_text( STATE_CRITICAL ) );
                                 terminate( STATE_CRITICAL, msg );
                         } else {
                                 regerror( regex_error, &regex_preg, regex_error_buffer, MAX_INPUT_BUFFER);
-                                asprintf( &msg, "%s %s: Regex execute Error: %s\n",
+                                xasprintf( &msg, "%s %s: Regex execute Error: %s\n",
                                                 protocol_text( use_ssl) ,
                                                 state_text( STATE_CRITICAL ),
                                                 regex_error_buffer );
@@ -1152,16 +1152,16 @@ prepare_follow_redirect( struct pageref *page )
         char *orig_url_dirname = NULL;
         size_t len = 0;
 
-        asprintf( &header, "%s", page->header );
+        xasprintf( &header, "%s", page->header );
 
 
         /* restore some default values */
         use_http_post_data = FALSE;
-        asprintf( &http_method, "%s", DEFAULT_HTTP_METHOD );
+        xasprintf( &http_method, "%s", DEFAULT_HTTP_METHOD );
 
         /* copy url of original request, maybe we need it to compose 
            absolute url from relative Location: header */
-        asprintf( &orig_url_path, "%s", http_url_path );
+        xasprintf( &orig_url_path, "%s", http_url_path );
 
         while ( strcspn( header, "\r\n" ) > (size_t) 0 ) {
                 url_path = realloc( url_path, (size_t) strcspn( header, "\r\n" ) );
@@ -1172,43 +1172,43 @@ prepare_follow_redirect( struct pageref *page )
                 /* Try to find a Location header combination of METHOD HOSTNAME PORT and PATH */
                 /* 1. scan for Location: http[s]://hostname:port/path */
                 if ( sscanf ( header, HTTP_HEADER_LOCATION_MATCH HTTP_HEADER_PROTOCOL_MATCH HTTP_HEADER_HOSTNAME_MATCH HTTP_HEADER_PORT_MATCH HTTP_HEADER_URL_PATH_MATCH, &protocol, &hostname, &port, url_path ) == 4 ) {
-                        asprintf( &server_hostname, "%s", hostname );
-                        asprintf( &server_host, "%s", hostname );
+                        xasprintf( &server_hostname, "%s", hostname );
+                        xasprintf( &server_host, "%s", hostname );
                         use_ssl = chk_protocol(protocol);
                         server_port = atoi( port );
-                        asprintf( &http_url_path, "%s", url_path );
+                        xasprintf( &http_url_path, "%s", url_path );
                         return STATE_DEPENDENT;
                 } 
                 else if ( sscanf ( header, HTTP_HEADER_LOCATION_MATCH HTTP_HEADER_PROTOCOL_MATCH HTTP_HEADER_HOSTNAME_MATCH HTTP_HEADER_URL_PATH_MATCH, &protocol, &hostname, url_path ) == 3) {
-                        asprintf( &server_hostname, "%s", hostname );
-                        asprintf( &server_host, "%s", hostname );
+                        xasprintf( &server_hostname, "%s", hostname );
+                        xasprintf( &server_host, "%s", hostname );
                         use_ssl = chk_protocol(protocol);
                         server_port = protocol_std_port(use_ssl);
-                        asprintf( &http_url_path, "%s", url_path );
+                        xasprintf( &http_url_path, "%s", url_path );
                         return STATE_DEPENDENT;
                 }
                 else if ( sscanf ( header, HTTP_HEADER_LOCATION_MATCH HTTP_HEADER_PROTOCOL_MATCH HTTP_HEADER_HOSTNAME_MATCH HTTP_HEADER_PORT_MATCH, &protocol, &hostname, &port ) == 3) {
-                        asprintf( &server_hostname, "%s", hostname );
-                        asprintf( &server_host, "%s", hostname );
+                        xasprintf( &server_hostname, "%s", hostname );
+                        xasprintf( &server_host, "%s", hostname );
                         use_ssl = chk_protocol(protocol);
                         server_port = atoi( port );
-                        asprintf( &http_url_path, "%s", DEFAULT_HTTP_URL_PATH );
+                        xasprintf( &http_url_path, "%s", DEFAULT_HTTP_URL_PATH );
                         return STATE_DEPENDENT;
                 }
                 else if ( sscanf ( header, HTTP_HEADER_LOCATION_MATCH HTTP_HEADER_PROTOCOL_MATCH HTTP_HEADER_HOSTNAME_MATCH, protocol, hostname ) == 2 ) {
-                        asprintf( &server_hostname, "%s", hostname );
-                        asprintf( &server_host, "%s", hostname );
+                        xasprintf( &server_hostname, "%s", hostname );
+                        xasprintf( &server_host, "%s", hostname );
                         use_ssl = chk_protocol(protocol);
                         server_port = protocol_std_port(use_ssl);
-                        asprintf( &http_url_path, "%s", DEFAULT_HTTP_URL_PATH );
+                        xasprintf( &http_url_path, "%s", DEFAULT_HTTP_URL_PATH );
                 }
                 else if ( sscanf ( header, HTTP_HEADER_LOCATION_MATCH HTTP_HEADER_URL_PATH_MATCH, url_path ) == 1 ) {
                         /* check for relative url and prepend path if necessary */
                         if ( ( url_path[0] != '/' ) && ( orig_url_dirname = strrchr( orig_url_path, '/' ) ) ) {
                                 *orig_url_dirname = '\0';
-                                asprintf( &http_url_path, "%s%s", orig_url_path, url_path );
+                                xasprintf( &http_url_path, "%s%s", orig_url_path, url_path );
                         } else {
-                                asprintf( &http_url_path, "%s", url_path );
+                                xasprintf( &http_url_path, "%s", url_path );
                         }
                         return STATE_DEPENDENT;
                 }
@@ -1218,7 +1218,7 @@ prepare_follow_redirect( struct pageref *page )
         
 
         /* default return value is STATE_DEPENDENT to continue looping in main() */
-        asprintf( &msg, "% %: % - Could not find redirect Location",
+        xasprintf( &msg, "% %: % - Could not find redirect Location",
                         protocol_text( use_ssl ),
                         state_text( STATE_UNKNOWN ),
                         page->status );
@@ -1239,24 +1239,24 @@ https_request( SSL_CTX *ctx, SSL *ssl, struct pageref *page )
         size_t size = 0;
         char *basic_auth_encoded = NULL;
 
-        asprintf( &buffer, HTTP_TEMPLATE_REQUEST, buffer, http_method, http_url_path );
+        xasprintf( &buffer, HTTP_TEMPLATE_REQUEST, buffer, http_method, http_url_path );
 
-        asprintf( &buffer, HTTP_TEMPLATE_HEADER_USERAGENT, buffer, progname, REVISION, PACKAGE_VERSION );
+        xasprintf( &buffer, HTTP_TEMPLATE_HEADER_USERAGENT, buffer, progname, REVISION, PACKAGE_VERSION );
         
         if ( use_server_hostname ) {
-                asprintf( &buffer, HTTP_TEMPLATE_HEADER_HOST, buffer, server_hostname );
+                xasprintf( &buffer, HTTP_TEMPLATE_HEADER_HOST, buffer, server_hostname );
         }
 
         if ( use_basic_auth ) {
                 basic_auth_encoded = base64( basic_auth, strlen( basic_auth ) );
-                asprintf( &buffer, HTTP_TEMPLATE_HEADER_AUTH, buffer, basic_auth_encoded );
+                xasprintf( &buffer, HTTP_TEMPLATE_HEADER_AUTH, buffer, basic_auth_encoded );
         }
 
         /* either send http POST data */
         if ( use_http_post_data ) {
-                asprintf( &buffer, "%sContent-Type: application/x-www-form-urlencoded\r\n", buffer );
-                asprintf( &buffer, "%sContent-Length: %i\r\n\r\n", buffer, content_len );
-                asprintf( &buffer, "%s%s%s", buffer, http_post_data, "\r\n" );
+                xasprintf( &buffer, "%sContent-Type: application/x-www-form-urlencoded\r\n", buffer );
+                xasprintf( &buffer, "%sContent-Length: %i\r\n\r\n", buffer, content_len );
+                xasprintf( &buffer, "%s%s%s", buffer, http_post_data, "\r\n" );
                 sendsize = SSL_write( ssl, buffer, strlen( buffer ) );
                 switch ( SSL_get_error( ssl, sendsize ) ) {
                         case SSL_ERROR_NONE:
@@ -1270,7 +1270,7 @@ https_request( SSL_CTX *ctx, SSL *ssl, struct pageref *page )
         /* or just a newline */
         } else {
 
-                asprintf( &buffer, "%s\r\n", buffer );
+                xasprintf( &buffer, "%s\r\n", buffer );
                 sendsize = SSL_write( ssl, buffer, strlen( buffer ) );
                 switch ( SSL_get_error( ssl, sendsize ) ) {
                         case SSL_ERROR_NONE:
@@ -1293,7 +1293,7 @@ https_request( SSL_CTX *ctx, SSL *ssl, struct pageref *page )
                         case SSL_ERROR_NONE:
                                 if ( recvsize > (size_t) 0 ) {
                                         recvbuff[recvsize] = '\0';
-                                        asprintf( &content, "%s%s", content, recvbuff );
+                                        xasprintf( &content, "%s%s", content, recvbuff );
                                         size += recvsize;
                                 }
                                 break;
@@ -1317,7 +1317,7 @@ https_request( SSL_CTX *ctx, SSL *ssl, struct pageref *page )
                 }
         } while ( recvsize > (size_t) 0 );
 
-        asprintf( &page->content, "%s", content );
+        xasprintf( &page->content, "%s", content );
         page->size = size;
 
         /* return a CRITICAL status if we couldn't read any data */
@@ -1446,7 +1446,7 @@ check_server_certificate_hostname( )
         char *msg = NULL;
         X509_NAME_get_text_by_NID( X509_get_subject_name( server_certificate ), NID_commonName, server_CN, 256 );
         if ( strcasecmp( server_CN, server_hostname ) ) {
-                asprintf( &msg, "SSL ERROR: Server Certificate does not match Hostname %s.\n", server_hostname );
+                xasprintf( &msg, "SSL ERROR: Server Certificate does not match Hostname %s.\n", server_hostname );
                 ssl_terminate( STATE_WARNING, msg );
         }
 
@@ -1507,20 +1507,20 @@ check_server_certificate_expires( )
                  stamp.tm_hour, stamp.tm_min );
 
         if ( ( days_left > 0 ) && ( days_left <= server_certificate_min_days_valid ) ) {
-                asprintf( &msg, "Certificate expires in %d day(s) (%s).\n", days_left, timestamp );
+                xasprintf( &msg, "Certificate expires in %d day(s) (%s).\n", days_left, timestamp );
                 ssl_terminate( STATE_WARNING, msg );
         }
         if ( days_left < 0 ) {
-                asprintf( &msg, "Certificate expired on %s.\n", timestamp );
+                xasprintf( &msg, "Certificate expired on %s.\n", timestamp );
                 ssl_terminate( STATE_CRITICAL, msg );
         }
 
         if (days_left == 0) {
-                asprintf( &msg, "Certificate expires today (%s).\n", timestamp );
+                xasprintf( &msg, "Certificate expires today (%s).\n", timestamp );
                 ssl_terminate( STATE_WARNING, msg );
         }
 
-        asprintf( &msg, "Certificate will expire on %s.\n", timestamp );
+        xasprintf( &msg, "Certificate will expire on %s.\n", timestamp );
         ssl_terminate( STATE_OK, msg );
 }
 #endif
