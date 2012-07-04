@@ -87,6 +87,8 @@ int errcode, excode;
 int server_port = SMTP_PORT;
 char *server_address = NULL;
 char *server_expect = NULL;
+char *mail_command = NULL;
+char *from_arg = NULL;
 int send_mail_from=0;
 int ncommands=0;
 int command_size=0;
