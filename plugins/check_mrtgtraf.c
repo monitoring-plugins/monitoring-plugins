@@ -191,7 +191,7 @@ main (int argc, char **argv)
 		result = STATE_WARNING;
 	}
 
-	asprintf (&error_message, _("%s. In = %0.1f %s, %s. Out = %0.1f %s|%s %s\n"),
+	xasprintf (&error_message, _("%s. In = %0.1f %s, %s. Out = %0.1f %s|%s %s\n"),
 	          (use_average == TRUE) ? _("Avg") : _("Max"), adjusted_incoming_rate,
 	          incoming_speed_rating, (use_average == TRUE) ? _("Avg") : _("Max"),
 	          adjusted_outgoing_rate, outgoing_speed_rating,

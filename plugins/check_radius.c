@@ -328,7 +328,7 @@ void
 print_help (void)
 {
 	char *myport;
-	asprintf (&myport, "%d", PW_AUTH_UDP_PORT);
+	xasprintf (&myport, "%d", PW_AUTH_UDP_PORT);
 
 	print_revision (progname, NP_VERSION);
 

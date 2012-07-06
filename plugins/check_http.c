@@ -58,8 +58,8 @@ enum {
 
 #ifdef HAVE_SSL
 int check_cert = FALSE;
-int days_till_exp;
 int ssl_version;
+int days_till_exp_warn, days_till_exp_crit;
 char *randbuff;
 X509 *server_cert;
 #  define my_recv(buf, len) ((use_ssl) ? np_net_ssl_read(buf, len) : read(sd, buf, len))
@@ -149,7 +149,7 @@ main (int argc, char **argv)
   /* Set default URL. Must be malloced for subsequent realloc if --onredirect=follow */
   server_url = strdup(HTTP_URL);
   server_url_length = strlen(server_url);
-  asprintf (&user_agent, "User-Agent: check_http/v%s (nagios-plugins %s)",
+  xasprintf (&user_agent, "User-Agent: check_http/v%s (nagios-plugins %s)",
             NP_VERSION, VERSION);
 
   /* Parse extra opts if any */
@@ -180,6 +180,7 @@ process_arguments (int argc, char **argv)
 {
   int c = 1;
   char *p;
+  char *temp;
 
   enum {
     INVERT_REGEX = CHAR_MAX + 1,
@@ -267,7 +268,7 @@ process_arguments (int argc, char **argv)
       warning_thresholds = optarg;
       break;
     case 'A': /* User Agent String */
-      asprintf (&user_agent, "User-Agent: %s", optarg);
+      xasprintf (&user_agent, "User-Agent: %s", optarg);
       break;
     case 'k': /* Additional headers */
       if (http_opt_headers_count == 0)
@@ -275,7 +276,7 @@ process_arguments (int argc, char **argv)
       else
         http_opt_headers = realloc (http_opt_headers, sizeof (char *) * (++http_opt_headers_count));
       http_opt_headers[http_opt_headers_count - 1] = optarg;
-      /* asprintf (&http_opt_headers, "%s", optarg); */
+      /* xasprintf (&http_opt_headers, "%s", optarg); */
       break;
     case 'L': /* show html link */
       display_html = TRUE;
@@ -285,13 +286,25 @@ process_arguments (int argc, char **argv)
       break;
     case 'C': /* Check SSL cert validity */
 #ifdef HAVE_SSL
-      if (!is_intnonneg (optarg))
-        usage2 (_("Invalid certificate expiration period"), optarg);
-      else {
-        days_till_exp = atoi (optarg);
-        check_cert = TRUE;
+      if ((temp=strchr(optarg,','))!=NULL) {
+	*temp='\0';
+	if (!is_intnonneg (temp))
+	  usage2 (_("Invalid certificate expiration period"), optarg);
+	days_till_exp_warn = atoi(optarg);
+	*temp=',';
+	temp++;
+	if (!is_intnonneg (temp))
+	  usage2 (_("Invalid certificate expiration period"), temp);
+	days_till_exp_crit = atoi (temp);
       }
-     /* Fall through to -S option */
+      else {
+	days_till_exp_crit=0;
+        if (!is_intnonneg (optarg))
+          usage2 (_("Invalid certificate expiration period"), optarg);
+        days_till_exp_warn = atoi (optarg);
+      }
+      check_cert = TRUE;
+      /* Fall through to -S option */
 #endif
     case 'S': /* use SSL */
 #ifndef HAVE_SSL
@@ -388,7 +401,7 @@ process_arguments (int argc, char **argv)
       server_expect_yn = 1;
       break;
     case 'T': /* Content-type */
-      asprintf (&http_content_type, "%s", optarg);
+      xasprintf (&http_content_type, "%s", optarg);
       break;
     case 'l': /* linespan */
       cflags &= ~REG_NEWLINE;
@@ -684,31 +697,31 @@ check_document_dates (const char *headers, char **msg)
 
   /* Done parsing the body.  Now check the dates we (hopefully) parsed.  */
   if (!server_date || !*server_date) {
-    asprintf (msg, _("%sServer date unknown, "), *msg);
+    xasprintf (msg, _("%sServer date unknown, "), *msg);
     date_result = max_state_alt(STATE_UNKNOWN, date_result);
   } else if (!document_date || !*document_date) {
-    asprintf (msg, _("%sDocument modification date unknown, "), *msg);
+    xasprintf (msg, _("%sDocument modification date unknown, "), *msg);
     date_result = max_state_alt(STATE_CRITICAL, date_result);
   } else {
     time_t srv_data = parse_time_string (server_date);
     time_t doc_data = parse_time_string (document_date);
 
     if (srv_data <= 0) {
-      asprintf (msg, _("%sServer date \"%100s\" unparsable, "), *msg, server_date);
+      xasprintf (msg, _("%sServer date \"%100s\" unparsable, "), *msg, server_date);
       date_result = max_state_alt(STATE_CRITICAL, date_result);
     } else if (doc_data <= 0) {
-      asprintf (msg, _("%sDocument date \"%100s\" unparsable, "), *msg, document_date);
+      xasprintf (msg, _("%sDocument date \"%100s\" unparsable, "), *msg, document_date);
       date_result = max_state_alt(STATE_CRITICAL, date_result);
     } else if (doc_data > srv_data + 30) {
-      asprintf (msg, _("%sDocument is %d seconds in the future, "), *msg, (int)doc_data - (int)srv_data);
+      xasprintf (msg, _("%sDocument is %d seconds in the future, "), *msg, (int)doc_data - (int)srv_data);
       date_result = max_state_alt(STATE_CRITICAL, date_result);
     } else if (doc_data < srv_data - maximum_age) {
       int n = (srv_data - doc_data);
       if (n > (60 * 60 * 24 * 2)) {
-        asprintf (msg, _("%sLast modified %.1f days ago, "), *msg, ((float) n) / (60 * 60 * 24));
+        xasprintf (msg, _("%sLast modified %.1f days ago, "), *msg, ((float) n) / (60 * 60 * 24));
         date_result = max_state_alt(STATE_CRITICAL, date_result);
       } else {
-        asprintf (msg, _("%sLast modified %d:%02d:%02d ago, "), *msg, n / (60 * 60), (n / 60) % 60, n % 60);
+        xasprintf (msg, _("%sLast modified %d:%02d:%02d ago, "), *msg, n / (60 * 60), (n / 60) % 60, n % 60);
         date_result = max_state_alt(STATE_CRITICAL, date_result);
       }
     }
@@ -817,7 +830,7 @@ check_http (void)
     if (result != STATE_OK)
       return result;
     if (check_cert == TRUE) {
-      result = np_net_ssl_check_cert(days_till_exp);
+      result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
       np_net_ssl_cleanup();
       if (sd) close(sd);
       return result;
@@ -825,10 +838,10 @@ check_http (void)
   }
 #endif /* HAVE_SSL */
 
-  asprintf (&buf, "%s %s %s\r\n%s\r\n", http_method, server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
+  xasprintf (&buf, "%s %s %s\r\n%s\r\n", http_method, server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
 
   /* tell HTTP/1.1 servers not to keep the connection alive */
-  asprintf (&buf, "%sConnection: close\r\n", buf);
+  xasprintf (&buf, "%sConnection: close\r\n", buf);
 
   /* optionally send the host header info */
   if (host_name) {
@@ -839,16 +852,16 @@ check_http (void)
      */
     if ((use_ssl == FALSE && server_port == HTTP_PORT) ||
         (use_ssl == TRUE && server_port == HTTPS_PORT))
-      asprintf (&buf, "%sHost: %s\r\n", buf, host_name);
+      xasprintf (&buf, "%sHost: %s\r\n", buf, host_name);
     else
-      asprintf (&buf, "%sHost: %s:%d\r\n", buf, host_name, server_port);
+      xasprintf (&buf, "%sHost: %s:%d\r\n", buf, host_name, server_port);
   }
 
   /* optionally send any other header tag */
   if (http_opt_headers_count) {
     for (i = 0; i < http_opt_headers_count ; i++) {
       for ((pos = strtok(http_opt_headers[i], INPUT_DELIMITER)); pos; (pos = strtok(NULL, INPUT_DELIMITER)))
-        asprintf (&buf, "%s%s\r\n", buf, pos);
+        xasprintf (&buf, "%s%s\r\n", buf, pos);
     }
     /* This cannot be free'd here because a redirection will then try to access this and segfault */
     /* Covered in a testcase in tests/check_http.t */
@@ -858,29 +871,29 @@ check_http (void)
   /* optionally send the authentication info */
   if (strlen(user_auth)) {
     base64_encode_alloc (user_auth, strlen (user_auth), &auth);
-    asprintf (&buf, "%sAuthorization: Basic %s\r\n", buf, auth);
+    xasprintf (&buf, "%sAuthorization: Basic %s\r\n", buf, auth);
   }
 
   /* optionally send the proxy authentication info */
   if (strlen(proxy_auth)) {
     base64_encode_alloc (proxy_auth, strlen (proxy_auth), &auth);
-    asprintf (&buf, "%sProxy-Authorization: Basic %s\r\n", buf, auth);
+    xasprintf (&buf, "%sProxy-Authorization: Basic %s\r\n", buf, auth);
   }
 
   /* either send http POST data (any data, not only POST)*/
   if (http_post_data) {
     if (http_content_type) {
-      asprintf (&buf, "%sContent-Type: %s\r\n", buf, http_content_type);
+      xasprintf (&buf, "%sContent-Type: %s\r\n", buf, http_content_type);
     } else {
-      asprintf (&buf, "%sContent-Type: application/x-www-form-urlencoded\r\n", buf);
+      xasprintf (&buf, "%sContent-Type: application/x-www-form-urlencoded\r\n", buf);
     }
 
-    asprintf (&buf, "%sContent-Length: %i\r\n\r\n", buf, (int)strlen (http_post_data));
-    asprintf (&buf, "%s%s%s", buf, http_post_data, CRLF);
+    xasprintf (&buf, "%sContent-Length: %i\r\n\r\n", buf, (int)strlen (http_post_data));
+    xasprintf (&buf, "%s%s%s", buf, http_post_data, CRLF);
   }
   else {
     /* or just a newline so the server knows we're done with the request */
-    asprintf (&buf, "%s%s", buf, CRLF);
+    xasprintf (&buf, "%s%s", buf, CRLF);
   }
 
   if (verbose) printf ("%s\n", buf);
@@ -890,7 +903,7 @@ check_http (void)
   full_page = strdup("");
   while ((i = my_recv (buffer, MAX_INPUT_BUFFER-1)) > 0) {
     buffer[i] = '\0';
-    asprintf (&full_page_new, "%s%s", full_page, buffer);
+    xasprintf (&full_page_new, "%s%s", full_page, buffer);
     free (full_page);
     full_page = full_page_new;
     pagesize += i;
@@ -975,11 +988,11 @@ check_http (void)
   /* make sure the status line matches the response we are looking for */
   if (!expected_statuscode (status_line, server_expect)) {
     if (server_port == HTTP_PORT)
-      asprintf (&msg,
+      xasprintf (&msg,
                 _("Invalid HTTP response received from host: %s\n"),
                 status_line);
     else
-      asprintf (&msg,
+      xasprintf (&msg,
                 _("Invalid HTTP response received from host on port %d: %s\n"),
                 server_port, status_line);
     die (STATE_CRITICAL, "HTTP CRITICAL - %s", msg);
@@ -988,7 +1001,7 @@ check_http (void)
   /* Bypass normal status line check if server_expect was set by user and not default */
   /* NOTE: After this if/else block msg *MUST* be an asprintf-allocated string */
   if ( server_expect_yn  )  {
-    asprintf (&msg,
+    xasprintf (&msg,
               _("Status line output matched \"%s\" - "), server_expect);
     if (verbose)
       printf ("%s\n",msg);
@@ -1011,12 +1024,12 @@ check_http (void)
     }
     /* server errors result in a critical state */
     else if (http_status >= 500) {
-      asprintf (&msg, _("%s - "), status_line);
+      xasprintf (&msg, _("%s - "), status_line);
       result = STATE_CRITICAL;
     }
     /* client errors result in a warning state */
     else if (http_status >= 400) {
-      asprintf (&msg, _("%s - "), status_line);
+      xasprintf (&msg, _("%s - "), status_line);
       result = max_state_alt(STATE_WARNING, result);
     }
     /* check redirected page if specified */
@@ -1026,11 +1039,11 @@ check_http (void)
         redir (header, status_line);
       else
         result = max_state_alt(onredirect, result);
-      asprintf (&msg, _("%s - "), status_line);
+      xasprintf (&msg, _("%s - "), status_line);
     } /* end if (http_status >= 300) */
     else {
       /* Print OK status anyway */
-      asprintf (&msg, _("%s - "), status_line);
+      xasprintf (&msg, _("%s - "), status_line);
     }
 
   } /* end else (server_expect_yn)  */
@@ -1061,7 +1074,7 @@ check_http (void)
       if(output_string_search[sizeof(output_string_search)-1]!='\0') {
         bcopy("...",&output_string_search[sizeof(output_string_search)-4],4);
       }
-      asprintf (&msg, _("%sstring '%s' not found on '%s://%s:%d%s', "), msg, output_string_search, use_ssl ? "https" : "http", host_name ? host_name : server_address, server_port, server_url);
+      xasprintf (&msg, _("%sstring '%s' not found on '%s://%s:%d%s', "), msg, output_string_search, use_ssl ? "https" : "http", host_name ? host_name : server_address, server_port, server_url);
       result = STATE_CRITICAL;
     }
   }
@@ -1074,15 +1087,15 @@ check_http (void)
     }
     else if ((errcode == REG_NOMATCH && invert_regex == 0) || (errcode == 0 && invert_regex == 1)) {
       if (invert_regex == 0)
-        asprintf (&msg, _("%spattern not found, "), msg);
+        xasprintf (&msg, _("%spattern not found, "), msg);
       else
-        asprintf (&msg, _("%spattern found, "), msg);
+        xasprintf (&msg, _("%spattern found, "), msg);
       result = STATE_CRITICAL;
     }
     else {
       /* FIXME: Shouldn't that be UNKNOWN? */
       regerror (errcode, &preg, errbuf, MAX_INPUT_BUFFER);
-      asprintf (&msg, _("%sExecute Error: %s, "), msg, errbuf);
+      xasprintf (&msg, _("%sExecute Error: %s, "), msg, errbuf);
       result = STATE_CRITICAL;
     }
   }
@@ -1098,10 +1111,10 @@ check_http (void)
    */
   page_len = pagesize;
   if ((max_page_len > 0) && (page_len > max_page_len)) {
-    asprintf (&msg, _("%spage size %d too large, "), msg, page_len);
+    xasprintf (&msg, _("%spage size %d too large, "), msg, page_len);
     result = max_state_alt(STATE_WARNING, result);
   } else if ((min_page_len > 0) && (page_len < min_page_len)) {
-    asprintf (&msg, _("%spage size %d too small, "), msg, page_len);
+    xasprintf (&msg, _("%spage size %d too small, "), msg, page_len);
     result = max_state_alt(STATE_WARNING, result);
   }
 
@@ -1112,7 +1125,7 @@ check_http (void)
     msg[strlen(msg)-3] = '\0';
 
   /* check elapsed time */
-  asprintf (&msg,
+  xasprintf (&msg,
             _("%s - %d bytes in %.3f second response time %s|%s %s"),
             msg, page_len, elapsed_time,
             (display_html ? "</A>" : ""),
@@ -1219,7 +1232,7 @@ redir (char *pos, char *status_line)
       if ((url[0] != '/')) {
         if ((x = strrchr(server_url, '/')))
           *x = '\0';
-        asprintf (&url, "%s/%s", server_url, url);
+        xasprintf (&url, "%s/%s", server_url, url);
       }
       i = server_port;
       strcpy (type, server_type);
@@ -1447,6 +1460,13 @@ print_help (void)
   printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
   printf (" %s\n", _("14 days, a STATE_WARNING is returned. A STATE_CRITICAL will be returned when"));
   printf (" %s\n", _("the certificate is expired."));
+
+  printf (" %s\n\n", "CHECK CERTIFICATE: check_http -H www.verisign.com -C 30,14");
+  printf (" %s\n", _("When the certificate of 'www.verisign.com' is valid for more than 30 days,"));
+  printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
+  printf (" %s\n", _("30 days, but more than 14 days, a STATE_WARNING is returned."));
+  printf (" %s\n", _("A STATE_CRITICAL will be returned when certificate expires in less than 14 days"));
+
 #endif
 
   printf (UT_SUPPORT);
@@ -1464,6 +1484,6 @@ print_usage (void)
   printf ("       [-b proxy_auth] [-f <ok|warning|critcal|follow|sticky|stickyport>]\n");
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
-  printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <age>] [-T <content-type>]\n");
-  printf ("       [-j method]\n");
+  printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
+  printf ("       [-T <content-type>] [-j method]\n");
 }

@@ -126,7 +126,7 @@ int np_net_ssl_read(void *buf, int num) {
 	return SSL_read(s, buf, num);
 }
 
-int np_net_ssl_check_cert(int days_till_exp) {
+int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
 #  ifdef USE_OPENSSL
 	X509 *certificate=NULL;
 	X509_NAME *subj=NULL;
@@ -202,15 +202,21 @@ int np_net_ssl_check_cert(int days_till_exp) {
 		 stamp.tm_mon + 1,
 		 stamp.tm_mday, stamp.tm_year + 1900, stamp.tm_hour, stamp.tm_min);
 
-	if (days_left > 0 && days_left <= days_till_exp) {
-		printf(_("WARNING - Certificate '%s' expires in %d day(s) (%s).\n"), cn, days_left, timestamp);
-		status=STATE_WARNING;
+	if (days_left > 0 && days_left <= days_till_exp_warn) {
+		printf (_("%s - Certificate '%s' expires in %d day(s) (%s).\n"), (days_left>days_till_exp_crit)?"WARNING":"CRITICAL", cn, days_left, timestamp);
+		if (days_left > days_till_exp_crit)
+			return STATE_WARNING;
+		else
+			return STATE_CRITICAL;
 	} else if (time_left < 0) {
 		printf(_("CRITICAL - Certificate '%s' expired on %s.\n"), cn, timestamp);
 		status=STATE_CRITICAL;
 	} else if (days_left == 0) {
-		printf(_("WARNING - Certificate '%s' expires today (%s).\n"), cn, timestamp);
-		status=STATE_WARNING;
+		printf (_("%s - Certificate '%s' expires today (%s).\n"), (days_left>days_till_exp_crit)?"WARNING":"CRITICAL", cn, timestamp);
+		if (days_left > days_till_exp_crit)
+			return STATE_WARNING;
+		else
+			return STATE_CRITICAL;
 	} else {
 		printf(_("OK - Certificate '%s' will expire on %s.\n"), cn, timestamp);
 		status=STATE_OK;

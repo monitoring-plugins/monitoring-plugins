@@ -121,12 +121,12 @@ main (int argc, char **argv)
 		/* does the host address of number of packets argument come first? */
 #ifdef PING_PACKETS_FIRST
 # ifdef PING_HAS_TIMEOUT
-		asprintf (&cmd, rawcmd, timeout_interval, max_packets, addresses[i]);
+		xasprintf (&cmd, rawcmd, timeout_interval, max_packets, addresses[i]);
 # else
-		asprintf (&cmd, rawcmd, max_packets, addresses[i]);
+		xasprintf (&cmd, rawcmd, max_packets, addresses[i]);
 # endif
 #else
-		asprintf (&cmd, rawcmd, addresses[i], max_packets);
+		xasprintf (&cmd, rawcmd, addresses[i], max_packets);
 #endif
 
 		if (verbose >= 2)
@@ -491,7 +491,7 @@ run_ping (const char *cmd, const char *addr)
 				if (warn_text == NULL) {
 					warn_text = strdup(_("System call sent warnings to stderr "));
 				} else {
-					asprintf(&warn_text, "%s %s", warn_text, _("System call sent warnings to stderr "));
+					xasprintf(&warn_text, "%s %s", warn_text, _("System call sent warnings to stderr "));
 				}
 			}
 		}
@@ -500,9 +500,7 @@ run_ping (const char *cmd, const char *addr)
 	(void) fclose (child_stderr);
 
 
-	/* close the pipe - WARNING if status is set */
-	if (spclose (child_process))
-		result = max_state (result, STATE_WARNING);
+	spclose (child_process);
 
 	if (warn_text == NULL)
 		warn_text = strdup("");
@@ -518,30 +516,32 @@ error_scan (char buf[MAX_INPUT_BUFFER], const char *addr)
 	if (strstr (buf, "Network is unreachable") ||
 		strstr (buf, "Destination Net Unreachable")
 		)
-		die (STATE_CRITICAL, _("CRITICAL - Network Unreachable (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Network Unreachable (%s)\n"), addr);
 	else if (strstr (buf, "Destination Host Unreachable"))
-		die (STATE_CRITICAL, _("CRITICAL - Host Unreachable (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Host Unreachable (%s)\n"), addr);
 	else if (strstr (buf, "Destination Port Unreachable"))
-		die (STATE_CRITICAL, _("CRITICAL - Bogus ICMP: Port Unreachable (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Bogus ICMP: Port Unreachable (%s)\n"), addr);
 	else if (strstr (buf, "Destination Protocol Unreachable"))
-		die (STATE_CRITICAL, _("CRITICAL - Bogus ICMP: Protocol Unreachable (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Bogus ICMP: Protocol Unreachable (%s)\n"), addr);
 	else if (strstr (buf, "Destination Net Prohibited"))
-		die (STATE_CRITICAL, _("CRITICAL - Network Prohibited (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Network Prohibited (%s)\n"), addr);
 	else if (strstr (buf, "Destination Host Prohibited"))
-		die (STATE_CRITICAL, _("CRITICAL - Host Prohibited (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Host Prohibited (%s)\n"), addr);
 	else if (strstr (buf, "Packet filtered"))
-		die (STATE_CRITICAL, _("CRITICAL - Packet Filtered (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Packet Filtered (%s)\n"), addr);
 	else if (strstr (buf, "unknown host" ))
-		die (STATE_CRITICAL, _("CRITICAL - Host not found (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Host not found (%s)\n"), addr);
 	else if (strstr (buf, "Time to live exceeded"))
-		die (STATE_CRITICAL, _("CRITICAL - Time to live exceeded (%s)"), addr);
+		die (STATE_CRITICAL, _("CRITICAL - Time to live exceeded (%s)\n"), addr);
+	else if (strstr (buf, "Destination unreachable: "))
+		die (STATE_CRITICAL, _("CRITICAL - Destination Unreachable (%s)\n"), addr);
 
 	if (strstr (buf, "(DUP!)") || strstr (buf, "DUPLICATES FOUND")) {
 		if (warn_text == NULL)
 			warn_text = strdup (_(WARN_DUPLICATES));
 		else if (! strstr (warn_text, _(WARN_DUPLICATES)) &&
-		         asprintf (&warn_text, "%s %s", warn_text, _(WARN_DUPLICATES)) == -1)
-			die (STATE_UNKNOWN, _("Unable to realloc warn_text"));
+		         xasprintf (&warn_text, "%s %s", warn_text, _(WARN_DUPLICATES)) == -1)
+			die (STATE_UNKNOWN, _("Unable to realloc warn_text\n"));
 		return (STATE_WARNING);
 	}
 

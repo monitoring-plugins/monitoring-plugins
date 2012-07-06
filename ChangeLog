@@ -1,3 +1,453 @@
+2012-06-27  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* plugins/check_tcp.c: check_tcp: Print performance data even with
+	-D When using the 1.4.15 release of the Nagios Plugins, a command such
+	as   check_tcp -H pop.example.com -p 995 -D 14 usually produced two lines of output, e.g.:   OK - Certificate will expire on 12/13/2014 23:59.    TCP OK - 0.009 second response time on port
+	  995|time=0.008849s;;;0.000000;10.000000 The second line was removed by
+	4d06603060fc1233861b164870f0d3a2e0d8d2eb.  However, as the old
+	two-line output is a valid (though in this case unintended) way to
+	spit out performance data, removing the second line might break
+	current setups.  Therefore, we revert to the old behaviour, at least
+	for the moment.  The issue was reported by Jochen Bern on the "nagiosplug-devel"
+	mailing list (Message-ID: <4FEAE812.8030309@LINworks.de>).
+
+2012-06-27  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* BUGS: Update the BUGS file Remove the bug reports that were closed, and add two new items.
+
+2012-06-27  Sven Nierlein <sven@nierlein.de>
+
+	* plugins/check_snmp.c, plugins/tests/check_snmp.t: check_snmp: use
+	single quotes for perf data labels
+
+2012-06-26  Sven Nierlein <sven@nierlein.de>
+
+	* NEWS, THANKS.in, plugins/check_snmp.c, plugins/tests/check_snmp.t: 
+	Fix performance data label containing spaces in check_snmp (Jochen
+	Bern) Add --perf-oids option for check_snmp to retain optional 1.4.14
+	compatibility
+
+2012-06-26  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* THANKS.in: Remove team members from the THANKS file The (current and past) team members are listed in the AUTHORS file.
+
+2012-06-26  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* AUTHORS, THANKS.in: Add Sven Nierlein to the list of AUTHORS
+
+2012-06-25  William Leibzon <william@leibzon.org>
+
+	* plugins/tests/check_http.t: added test case for certificate checs
+	with both warning and critical values
+
+2012-06-25  Sven Nierlein <sven@nierlein.de>
+
+	* plugins/sslutils.c, plugins/t/check_http.t, plugins/t/check_tcp.t: 
+	check_http: added test for warning thresholds fixed typo in sslutils
+
+2012-06-25  Sven Nierlein <sven@nierlein.de>
+
+	* NEWS, THANKS.in: updated changelog
+
+2012-05-21  William Leibzon <william@leibzon.org>
+
+	* plugins/check_http.c, plugins/check_smtp.c, plugins/check_tcp.c,
+	plugins/netutils.h, plugins/sslutils.c: applied patch that adds both
+	critical and warning thresholds to certificate expiration checks of
+	check_tcp, check_http, check_smtp
+
+2012-06-25  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* plugins/check_ping.c: check_ping: Add missing newline to die()
+	calls Our die() function expects the caller to append the trailing newline
+	character.
+
+2012-06-25  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* NEWS: NEWS: Improve the wording a bit
+
+2012-06-25  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* : Merge remote-tracking branch 'github/waja/master' Conflicts: 	NEWS
+
+2012-06-23  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* NEWS, THANKS.in, plugins-scripts/check_disk_smb.pl: 
+	check_disk_smb: Add performance data (Debian #654259 - Charles-Henri Larose)
+
+2012-06-22  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* plugins/t/check_by_ssh.t: Fix check_by_ssh test for non-Bash login
+	shells In the C shell and in the Z shell, the "?" character must be quoted
+	or backslash-escaped in order to use it verbatim.  Therefore, a
+	command such as 	check_by_ssh -H test.example.com -l joe echo huh? might fail, depending on joe's login shell on test.example.com.  Just to make sure, this commit removes most punctuation characters
+	from our test strings.
+
+2012-06-14  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* THANKS.in, plugins-root/check_dhcp.c: check_dhcp: Don't
+	misinterpret the "siaddr" field RFC 2131 (2.) says: "DHCP clarifies the interpretation of the
+	'siaddr' field as the address of the server to use in the next step
+	of the client's bootstrap process."  So, we shouldn't interpret this
+	field as the DHCP server's own address.  (#3503921 - Jason Ellison)
+
+2012-06-13  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* NEWS, plugins-root/check_dhcp.c: check_dhcp: Fix handling of "pad"
+	options Don't let "pad" options[*] terminate the parsing of DHCP options.
+	This bug was triggered by using check_dhcp against Windows 2003 DHCP
+	servers (see #3503921).  [*] Cf. RFC 2132, 3.1.
+
+2012-06-11  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* NEWS, THANKS.in, plugins/check_ping.c: Improve parsing of ping6(1)
+	output The ping6(1) implementation provided by Debian's iputils-ping
+	package may produce output such as the following: | 3 packets transmitted, 0 received, +3 errors, 100% packet loss,
+	time 2009ms There's a corresponding pattern in check_ping.c:458: | "%*d packets transmitted, %*d received, +%*d errors, %d%% packet
+	loss" Without this fix, the pattern in check_ping.c:456 matched first (as
+	sscanf(3) interprets "+3" as a match for "%d"): | "%*d packets transmitted, %*d received, %d%% loss, time" (#1894850 - Debian bug report #514588 - Matej Vela)
+
+2012-06-11  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* plugins/sslutils.c: Fix whitespace and capitalization issues Fix indentation and whitespace issues, and correct some
+	capitalization errors in error messages.  The behaviour is
+	unchanged.
+
+2012-06-11  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* plugins/sslutils.c: Don't use SSLv2 when compiling against GnuTLS GnuTLS doesn't support SSL version 2.
+
+2012-06-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* plugins/check_users.c: check_users: Whitespace fixes, etc.
+
+2012-06-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* NEWS, THANKS.in: Update NEWS and THANKS w.r.t. check_users change
+
+2012-04-17  M. Remy <mremy@gmx.ch>
+
+	* plugins/Makefile.am, plugins/check_users.c: check_users: improve
+	performance This patch use the utxent function family to collect the user data.
+	It improve the check speed.  Need a system conforming to
+	POSIX.1-2001.
+
+2012-06-06  Sebastian Harl <sh@teamix.net>
+
+	* plugins/sslutils.c: sslutils: Check if OpenSSL supports SSLv2.  Recent versions/builds seem to disable that feature.
+
+2012-05-29  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* NEWS, THANKS.in, plugins-scripts/utils.sh.in: Mention the
+	check_range function in NEWS, etc.
+
+2012-04-18  Alex Griffin <griffin.aj@gmail.com>
+
+	* plugins-scripts/utils.sh.in: Added check_range shell function to
+	utils.sh.in
+
+2012-05-29  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* plugins/check_http.c: check_http: Fix -C/--certificate option
+	handling The support for specifying the desired SSL protocol version via an
+	optional -S/--ssl argument broke the -C/--certificate option.  This
+	is fixed now.
+
+2012-05-28  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* plugins/check_http.c: check_http: Don't ignore SSL initialization
+	errors SSL initialization errors are now handled properly by check_http
+	(#3095106 - Eric Schoeller).
+
+2012-05-28  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* NEWS, THANKS.in, plugins/check_http.c, plugins/sslutils.c: Add
+	support for specifying SSL protocol version The check_http -S/--ssl option now takes an optional argument which
+	specifies the desired SSL/TLS protocol version (#3285367 - Jason
+	Lunn).
+
+2012-05-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* NEWS, plugins/sslutils.c: Disable stateless SSL session resumption Some versions of OpenSSL fail to negotiate the SSL connection with
+	at least some versions of Tomcat if stateless SSL session resumption
+	support (see RFC4507) is enabled: | CRITICAL - Cannot make SSL connection |
+	140099330348712:error:140943F2:SSL routines:SSL3_READ_BYTES:sslv3
+	alert unexpected message:s3_pkt.c:1195:SSL alert number 10 The problem is reproducible with OpenSSL 1.0.0h, but not with
+	OpenSSL 0.9.8o-4squeeze12 (as shipped with Debian 6.0.4).  We work
+	around it by disabling the RFC4507 functionality when using OpenSSL
+	versions which support it.  Thanks to Dag Bakke for reporting the issue and for giving me access
+	to a server I could use to reproduce the problem.
+
+2012-04-17  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* .gitignore: Add nagios-plugins.spec file to .gitignore The nagios-plugins.spec file is created from nagios-plugins.spec.in
+	and should be ignored by Git.
+
+2012-04-17  Jan Wagner <waja@cyconet.org>
+
+	* NEWS, plugins/check_ping.c: Fix check_ping where output of ping6
+	when unreachable (Debian #662638)
+
+2012-04-10  Matthias Eble <psychotrahe@users.sourceforge.net>
+
+	* : commit 8c7e2b636c601dd05a6881c84cc95136ecf9323e Author: Holger
+	Weiss <holger@zedat.fu-berlin.de> Date:   Mon Apr 9 23:04:55 2012
+	+0200
+
+2012-04-09  Sven Nierlein <sven@nierlein.de>
+
+	* plugins/check_by_ssh.c, plugins/t/check_by_ssh.t: check_by_ssh:
+	added -F config file to specify alternative ssh config
+
+2012-04-06  Eric Stanley <estanley@nagios.com>
+
+	* : commit 9cdd9a149c1c0213802d15cc204d60b3199a9653 Author: Eric
+	Stanley <estanley@nagios.com> Date:   Fri Apr 6 10:18:47 2012 -0500
+
+2012-02-24  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* plugins/check_http.c: Clarify that check_http won't verify
+	certificates Add a note to the --help output which clarifies that check_http
+	doesn't perform certificate verification (beyond what the "-C"
+	option does).  (Suggested by Michael Renner in Debian bug report #644627, forwarded
+	by Jan Wagner.)
+
+2012-02-24  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* plugins/check_snmp.c: Cosmetic change Replace all occurrences of "strstr(s, "c") == s" with "s[0] == 'c'".
+
+2012-02-24  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* plugins/check_snmp.c: Accept multiple labels specified with "-l" Fix the code which accepts a comma-separated list of labels
+	specified via the "-l" option.  (Spotted by Oskar Liljeblad in Debian bug report #647020, forwarded
+	by Jan Wagner.)
+
+2012-02-10  Eric Stanley <estanley@nagios.com>
+
+	* configure.in, plugins/common.h: Enable compiling on AIX 6.1
+
+2012-01-20  Eric Stanley <estanley@nagios.com>
+
+	* Makefile.am, pkg/solaris/solpkg: Added pst3 to Solaris package.
+
+2011-12-25  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* NEWS: Updated Nagios::Plugin library
+
+2011-12-16  Eric Stanley <estanley@nagios.com>
+
+	* Makefile.am, pkg/solaris/pkginfo.in, pkg/solaris/solpkg: Commit
+	files which were inadvertently omitted from the previous commit.
+
+2011-12-16  Eric Stanley <estanley@nagios.com>
+
+	* pkg/solaris/preinstall: Updated Solaris package creation to newer
+	standards The Solaris package creation has been updated to newer standards to
+	match those of the NRPE package. The following changes have been
+	    made: - the plugins now install under /opt/nagios     - the name of package is now NGOSplugin     - the files installed are now owned by the nagios user     - the package includes a pre-installation script that creates a
+	        nagios user and a nagios group if one did not previously exist
+
+2011-12-16  Eric Stanley <estanley@nagios.com>
+
+	* m4/np_mysqlclient.m4: Fixed issue for compiling mysql plugin on
+	Solaris On Solaris, in the case where the mysql libraries were compiled
+	using a non-gcc compiler, but the plugins are being compiled with
+	gcc, the configure process would incorrectly determine the
+	MYSQLCFLAGS. This has been corrected in the m4/np_mysqlclient.m4
+	file.
+
+2011-09-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* plugins-scripts/check_sensors.sh: check_sensors: Use symbolic exit
+	codes Specify the exit codes by using the constants from utils.sh.
+
+2011-09-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* plugins-scripts/check_sensors.sh: check_sensors: Minor whitespace
+	fixes
+
+2011-09-07  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* NEWS, plugins-scripts/check_sensors.sh: check_sensors: Detect
+	FAULT status Return an UNKNOWN status if a faulty sensor is detected.  This can
+	be suppressed with the new "--ignore-fault" option.  (Fixes Debian bug #615133, patch suggested by Jan Wagner.)
+
+2011-09-06  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* plugins/check_radius.c: Make GCC happy It won't trust us about msg containing no format string, and fail
+	miserably when compiled with -Werror=format-security. Reported by
+	spy6 on IRC.
+
+2011-08-13  Matthias Eble <psychotrahe@users.sourceforge.net>
+
+	* plugins/check_ldap.c: Fix: check_ldap now correctly handles the
+	long option --hostname for -H The undocumented --host has been changed to --hostname which is
+	actually mentioned in --help. Thanks to lgarrett (#3191388)
+
+2011-07-15  Ton Voon <ton.voon@opsera.com>
+
+	* NEWS, plugins/check_smtp.c, plugins/check_tcp.c: Fix check_smtp
+	and check_tcp where duplicate messages were displayed for
+	certificate errors (Opsview team)
+
+2011-07-15  Ton Voon <ton.voon@opsera.com>
+
+	* NEWS, plugins/check_smtp.c: New option to check_smtp to ignore
+	failures when sending QUIT (#3358348 - Duncan Ferguson)
+
+2011-04-28  Sebastian Harl <sh@teamix.net>
+
+	* NEWS, THANKS.in, plugins-root/check_icmp.c: check_host: Allocate a
+	large-enough buffer for the host table.  When specifying a host-name on the command line, each of its IPs is
+	added to the host table (and each one is pinged). So, the buffer has
+	to be large enough to hold all of the respective host objects. (argc
+	- 1) only fits hosts with a single IP.  Thanks to Max Kosmach <max@tcen.ru> for reporting this in Debian bug
+	#623702.
+
+2011-03-26  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, THANKS.in, plugins/check_ssh.c: Add perfdata to check_ssh
+	(#3244097 - Marco Beck)
+
+2011-02-08  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* plugins/check_smtp.c: check_smtp: Abort on missing/unexpected
+	greeting Abort immediately if we don't receive a server greeting or if the
+	greeting doesn't contain the "--expect"ed string (by default: "220")
+	instead of blindly sending the EHLO/HELO line.  Spotted by Daniel Piddock, see Debian bug report #611914.
+
+2011-02-04  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, THANKS.in, plugins/sslutils.c, plugins/t/check_http.t,
+	plugins/tests/check_http.t: check_http: check for and print the
+	certificate cn This patch adds a check for the certificate cn (hostname) to normal
+	certificate checks. It returns CRITICAL if th cn is missing,
+	otherwise it prints it in the normal output.  Patch by Stéphane Urbanovski
+
+2011-01-21  Ton Voon <ton.voon@opsera.com>
+
+	* NEWS, plugins/check_procs.c, plugins/tests/check_procs.t: Fix for
+	regex input of '|', being output causing problems with Nagios'
+	parsing of performance data. Now replaced with ','
+
+2011-01-05  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* plugins/t/check_snmp.t, plugins/tests/check_snmp.t,
+	plugins/tests/check_snmp_agent.pl: Test updates...  1. Timetick test could fail with uptime > 115 days. Thresholds are
+	double type, so it's safe to put a large number even for 32bit
+	systems.  2. Add a test based on an invalid bug report, worthy anyway.
+
+2011-01-01  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* tools/sfsnapshot-upload: Update the README text
+
+2011-01-01  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, plugins/check_http.c: Make check_http use standard threshold
+	functions This enables floating point and ranges, and make the code more
+	standard.
+
+2010-12-23  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, plugins/check_ldap.c: Fix check_ldap overriding the port
+	when --ssl was specified after -p
+
+2010-11-30  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* plugins/tests/check_http.t, plugins/tests/check_snmp.t: Fix minor
+	test issues My Test::More wouldn't print the total number of tests anymore,
+	moving the plan at the top appears to fix it.  At the same time I made check-http.t eval the special modules so it
+	can skip the tests instead of failing.
+
+2010-11-30  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, plugins/check_snmp.c, plugins/tests/check_snmp.t: Revert
+	"check_snmp now considers strings returned by SNMP that contain
+	just" This reverts commit 896962a1ad1b7d7c75d42c565b06cc799feb0a7c.  Conflicts: 	NEWS 	plugins/tests/check_snmp.t Notes: 	Reverting because I rebased a patch that was doing the same thing,
+		plus fixing more related regressions, and both didn't work
+		together.  I kept the tests intact except for one that wouldn't pass
+		on 1.4.14 either
+
+2010-11-30  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* plugins/tests/check_snmp.t: State-based tests enhancements - Use /var/tmp for state if no state dir environment variable is
+	  set, this avoid the need for a writable localstatedir during tests.  - Use "rm -f", mostly to avoid printing out garbage of the directory   doesn't exists
+
+2010-11-30  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS, plugins/check_snmp.c, plugins/t/check_snmp.t: check_snmp:
+	Remove that is_numeric madness Original patch to make Timeticks works as in check_snmp v1.4.14, it
+	turns out is_numeric isn't so useful and treating all types as
+	numeric works best for backwards-compatibility. This is how it used
+	to work in 1.4.14.  As a special case, I also make calculate_rate look up for numeric
+	values as it would otherwise return the last value instead.
+
+2010-11-28  Matthias Eble <psychotrahe@users.sourceforge.net>
+
+	* plugins-scripts/t/check_disk_smb.t: add test cases for
+	check_disk_smb
+
+2010-11-28  Matthias Eble <psychotrahe@users.sourceforge.net>
+
+	* NEWS, plugins-scripts/check_disk_smb.pl: check_disk_smb now
+	handles NT_STATUS_ACCESS_DENIED properly (Debian #601696)
+
+2010-11-28  Matthias Eble <psychotrahe@users.sourceforge.net>
+
+	* NEWS, plugins-scripts/check_disk_smb.pl: Make check_disk_smb
+	accept spaces in share names (#990948, #1370031, Debian #601699)
+
+2010-11-15  Matthias Eble <psychotrahe@users.sourceforge.net>
+
+	* NEWS, lib/utils_disk.c, lib/utils_disk.h, plugins/check_disk.c: 
+	Fix check_disk free space calculation if blocksizes differ within a
+	disk group (Bekar - #2973603) Various values (dused_pct, dfree_pct, inodes_free, inodes_total,
+	...) are now carried in the parameter_list structure. Assignments
+	have been moved to a subroutine preventing code redundancies.  Group
+	metrics are now calculated based on units rather than blocks. This
+	fixes freespace calculation when blocksizes differ within a group.
+
+2010-11-15  nagios <nagios@opsviewdev32.(none)>
+
+	* NEWS, plugins/check_snmp.c, plugins/tests/check_snmp.t,
+	plugins/tests/check_snmp_agent.pl: check_snmp now considers strings
+	returned by SNMP that contain just numbers (according to strtod) to
+	be a numeric value for threshold and performance data
+
+2010-10-16  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* NEWS: Update NEWS for last commit
+
+2010-10-13  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* THANKS.in, plugins/check_nt.c: check_nt: make UPTIME accept
+	warning/critical levels Patch originally by Ryan Kelly
+
+2010-10-11  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* tools/sfsnapshotgit: sfsnapshotgit: Better handling of remote refs This commit allow to track branches from unusually-named remote refs
+	and makes possible using external remotes (other than origin) for
+	snapshots.
+
+2010-10-05  Thomas Guyot-Sionnest <dermoth@aei.ca>
+
+	* contrib/check_linux_raid.pl: Patch for check_linux_raid with on
+	linear/raid0 arrays Fixes bug #3049988, Debian bug #579049
+
+2010-08-31  Ton Voon <ton.voon@opsera.com>
+
+	* plugins/check_http.c: Fix typos in -f help text
+
+2010-07-27  Holger Weiss <holger@zedat.fu-berlin.de>
+
+	* COPYING: Update the COPYING file to the GPLv3 We switched to the GPLv3 early in 2008, but we forgot to update the
+	COPYING file accordingly.
+
+2010-07-27  Ton Voon <ton.voon@opsera.com>
+
+	* BUGS, ChangeLog, NEWS, NP-VERSION-GEN, configure.in, package.def: 
+	1.4.15 prep
+
 2010-07-14  Ton Voon <ton.voon@opsera.com>
 
 	* : commit 9bab433981f6c67b40776d1916baae28a0243124 Author: Ton Voon

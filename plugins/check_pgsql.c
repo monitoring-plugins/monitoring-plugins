@@ -417,7 +417,7 @@ print_help (void)
 {
 	char *myport;
 
-	asprintf (&myport, "%d", DEFAULT_PORT);
+	xasprintf (&myport, "%d", DEFAULT_PORT);
 
 	print_revision (progname, NP_VERSION);
 

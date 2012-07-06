@@ -403,7 +403,7 @@ void
 print_help (void)
 {
 	char *myport;
-	asprintf (&myport, "%d", PORT);
+	xasprintf (&myport, "%d", PORT);
 
 	print_revision (progname, NP_VERSION);
 

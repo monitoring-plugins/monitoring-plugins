@@ -89,7 +89,7 @@ main (int argc, char **argv)
 	if (result == STATE_UNKNOWN)
 		printf ("%s\n", _("Unable to read output"));
 	else {
-		asprintf (&perf, "%s", perfdata ("users", users, "",
+		xasprintf (&perf, "%s", perfdata ("users", users, "",
 		  TRUE, wusers,
 		  TRUE, cusers,
 		  TRUE, 0,

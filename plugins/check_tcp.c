@@ -39,7 +39,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #ifdef HAVE_SSL
 static int check_cert = FALSE;
-static int days_till_exp;
+static int days_till_exp_warn, days_till_exp_crit;
 # define my_recv(buf, len) ((flags & FLAG_SSL) ? np_net_ssl_read(buf, len) : read(sd, buf, len))
 # define my_send(buf, len) ((flags & FLAG_SSL) ? np_net_ssl_write(buf, len) : send(sd, buf, len, 0))
 #else
@@ -235,10 +235,10 @@ main (int argc, char **argv)
 	if (flags & FLAG_SSL){
 		result = np_net_ssl_init(sd);
 		if (result == STATE_OK && check_cert == TRUE) {
-			result = np_net_ssl_check_cert(days_till_exp);
+			result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
 		}
 	}
-	if(result != STATE_OK || check_cert == TRUE){
+	if(result != STATE_OK){
 		np_net_ssl_cleanup();
 		if(sd) close(sd);
 		return result;
@@ -380,6 +380,7 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 	int escape = 0;
+	char *temp;
 
 	int option = 0;
 	static struct option longopts[] = {
@@ -501,7 +502,7 @@ process_arguments (int argc, char **argv)
 			if (escape)
 				server_send = np_escaped_string(optarg);
 			else
-				asprintf(&server_send, "%s", optarg);
+				xasprintf(&server_send, "%s", optarg);
 			break;
 		case 'e': /* expect string (may be repeated) */
 			flags &= ~FLAG_EXACT_MATCH;
@@ -521,7 +522,7 @@ process_arguments (int argc, char **argv)
 			if (escape)
 				server_quit = np_escaped_string(optarg);
 			else
-				asprintf(&server_quit, "%s\r\n", optarg);
+				xasprintf(&server_quit, "%s\r\n", optarg);
 			break;
 		case 'r':
 			if (!strncmp(optarg,"ok",2))
@@ -552,9 +553,22 @@ process_arguments (int argc, char **argv)
 		case 'D': /* Check SSL cert validity - days 'til certificate expiration */
 #ifdef HAVE_SSL
 #  ifdef USE_OPENSSL /* XXX */
-			if (!is_intnonneg (optarg))
+			if ((temp=strchr(optarg,','))!=NULL) {
+			    *temp='\0';
+			    if (!is_intnonneg (temp))
+                               usage2 (_("Invalid certificate expiration period"), optarg);				 days_till_exp_warn = atoi(optarg);
+			    *temp=',';
+			    temp++;
+			    if (!is_intnonneg (temp))
+				usage2 (_("Invalid certificate expiration period"), temp);
+			    days_till_exp_crit = atoi (temp);
+			}
+			else {
+			    days_till_exp_crit=0;
+			    if (!is_intnonneg (optarg))
 				usage2 (_("Invalid certificate expiration period"), optarg);
-			days_till_exp = atoi (optarg);
+			    days_till_exp_warn = atoi (optarg);
+			}
 			check_cert = TRUE;
 			flags |= FLAG_SSL;
 			break;
@@ -626,8 +640,9 @@ print_help (void)
   printf ("    %s\n", _("Seconds to wait between sending string and polling for response"));
 
 #ifdef HAVE_SSL
-	printf (" %s\n", "-D, --certificate=INTEGER");
+	printf (" %s\n", "-D, --certificate=INTEGER[,INTEGER]");
   printf ("    %s\n", _("Minimum number of days a certificate has to be valid."));
+  printf ("    %s\n", _("1st is #days for warning, 2nd is critical (if not specified - 0)."));
   printf (" %s\n", "-S, --ssl");
   printf ("    %s\n", _("Use SSL for the connection."));
 #endif
@@ -649,6 +664,6 @@ print_usage (void)
   printf ("%s -H host -p port [-w <warning time>] [-c <critical time>] [-s <send string>]\n",progname);
   printf ("[-e <expect string>] [-q <quit string>][-m <maximum bytes>] [-d <delay>]\n");
   printf ("[-t <timeout seconds>] [-r <refuse state>] [-M <mismatch state>] [-v] [-4|-6] [-j]\n");
-  printf ("[-D <days to cert expiry>] [-S <use SSL>] [-E]\n");
+  printf ("[-D <warn days cert expire>[,<crit days cert expire>]] [-S <use SSL>] [-E]\n");
 }
 

@@ -37,7 +37,7 @@ check_tcp_programs = check_ftp check_imap check_nntp check_pop \
 EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 	check_swap check_fping check_ldap check_game check_dig \
 	check_nagios check_by_ssh check_dns check_nt check_ide_smart	\
-	check_procs check_mysql_query check_apt
+	check_procs check_mysql_query check_apt check_dbi
 
 EXTRA_DIST = t tests utils.c netutils.c sslutils.c popen.c utils.h netutils.h \
 	popen.h common.h runcmd.c runcmd.h
@@ -64,6 +64,7 @@ test-debug:
 
 check_apt_LDADD = $(BASEOBJS) runcmd.o
 check_cluster_LDADD = $(BASEOBJS)
+check_dbi_LDADD = $(NETLIBS) $(DBILIBS)
 check_dig_LDADD = $(NETLIBS) runcmd.o 
 check_disk_LDADD = $(BASEOBJS) popen.o
 check_dns_LDADD = $(NETLIBS) runcmd.o
@@ -109,6 +110,7 @@ urlize_LDADD = $(BASEOBJS) popen.o
 
 check_apt_DEPENDENCIES = check_apt.c $(BASEOBJS) runcmd.o $(DEPLIBS)
 check_cluster_DEPENDENCIES = check_cluster.c $(BASEOBJS) $(DEPLIBS)
+check_dbi_DEPENDENCIES = check_dbi.c $(NETOBJS) $(DEPLIBS)
 check_dig_DEPENDENCIES = check_dig.c $(NETOBJS) runcmd.o $(DEPLIBS)
 check_disk_DEPENDENCIES = check_disk.c $(BASEOBJS) popen.o $(DEPLIBS) 
 check_dns_DEPENDENCIES = check_dns.c $(NETOBJS) runcmd.o $(DEPLIBS)

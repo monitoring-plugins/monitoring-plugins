@@ -104,7 +104,7 @@ main (int argc, char **argv)
 				*sub = '\0';
 				sub += strlen (state_text (result));
 				/* then put everything back together */
-				asprintf (&chld_out.line[i], "%s%s%s", chld_out.line[i], state_text (state[result]), sub);
+				xasprintf (&chld_out.line[i], "%s%s%s", chld_out.line[i], state_text (state[result]), sub);
 			}
 		}
 		printf ("%s\n", chld_out.line[i]);

@@ -227,7 +227,7 @@ main (int argc, char **argv)
 
 		/* might not be the problem, but most likely is. */
 		result = STATE_UNKNOWN ;
-		asprintf (&errmsg, "%s : Timeout from host %s\n", errmsg, address );
+		xasprintf (&errmsg, "%s : Timeout from host %s\n", errmsg, address );
 
 	}
 
