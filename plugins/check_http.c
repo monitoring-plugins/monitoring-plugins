@@ -287,18 +287,18 @@ process_arguments (int argc, char **argv)
     case 'C': /* Check SSL cert validity */
 #ifdef HAVE_SSL
       if ((temp=strchr(optarg,','))!=NULL) {
-	*temp='\0';
-	if (!is_intnonneg (temp))
-	  usage2 (_("Invalid certificate expiration period"), optarg);
-	days_till_exp_warn = atoi(optarg);
-	*temp=',';
-	temp++;
-	if (!is_intnonneg (temp))
-	  usage2 (_("Invalid certificate expiration period"), temp);
-	days_till_exp_crit = atoi (temp);
+        *temp='\0';
+        if (!is_intnonneg (temp))
+          usage2 (_("Invalid certificate expiration period"), optarg);
+        days_till_exp_warn = atoi(optarg);
+        *temp=',';
+        temp++;
+        if (!is_intnonneg (temp))
+          usage2 (_("Invalid certificate expiration period"), temp);
+        days_till_exp_crit = atoi (temp);
       }
       else {
-	days_till_exp_crit=0;
+        days_till_exp_crit=0;
         if (!is_intnonneg (optarg))
           usage2 (_("Invalid certificate expiration period"), optarg);
         days_till_exp_warn = atoi (optarg);
@@ -307,9 +307,7 @@ process_arguments (int argc, char **argv)
       /* Fall through to -S option */
 #endif
     case 'S': /* use SSL */
-#ifndef HAVE_SSL
-      usage4 (_("Invalid option - SSL is not available"));
-#endif
+#ifdef HAVE_SSL
       use_ssl = TRUE;
       if (optarg == NULL || c != 'S')
         ssl_version = 0;
@@ -320,6 +318,9 @@ process_arguments (int argc, char **argv)
       }
       if (specify_port == FALSE)
         server_port = HTTPS_PORT;
+#else
+      usage4 (_("Invalid option - SSL is not available"));
+#endif
       break;
     case SNI_OPTION:
       use_sni = TRUE;
