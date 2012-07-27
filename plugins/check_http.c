@@ -58,10 +58,6 @@ enum {
 
 #ifdef HAVE_SSL
 int check_cert = FALSE;
-<<<<<<< HEAD
-int days_till_exp_warn, days_till_exp_crit;
-=======
->>>>>>> upstream/master
 int ssl_version;
 int days_till_exp_warn, days_till_exp_crit;
 char *randbuff;
