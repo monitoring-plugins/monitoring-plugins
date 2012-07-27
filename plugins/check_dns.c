@@ -103,7 +103,7 @@ main (int argc, char **argv)
   }
 
   /* get the command to run */
-  asprintf (&command_line, "%s %s %s", NSLOOKUP_COMMAND, query_address, dns_server);
+  xasprintf (&command_line, "%s %s %s", NSLOOKUP_COMMAND, query_address, dns_server);
 
   alarm (timeout_interval);
   gettimeofday (&tv, NULL);
@@ -208,19 +208,19 @@ main (int argc, char **argv)
     for (i=0; i<expected_address_cnt; i++) {
       /* check if we get a match and prepare an error string */
       if (strcmp(address, expected_address[i]) == 0) result = STATE_OK;
-      asprintf(&temp_buffer, "%s%s; ", temp_buffer, expected_address[i]);
+      xasprintf(&temp_buffer, "%s%s; ", temp_buffer, expected_address[i]);
     }
     if (result == STATE_CRITICAL) {
       /* Strip off last semicolon... */
       temp_buffer[strlen(temp_buffer)-2] = '\0';
-      asprintf(&msg, _("expected '%s' but got '%s'"), temp_buffer, address);
+      xasprintf(&msg, _("expected '%s' but got '%s'"), temp_buffer, address);
     }
   }
 
   /* check if authoritative */
   if (result == STATE_OK && expect_authority && non_authoritative) {
     result = STATE_CRITICAL;
-    asprintf(&msg, _("server %s is not authoritative for %s"), dns_server, query_address);
+    xasprintf(&msg, _("server %s is not authoritative for %s"), dns_server, query_address);
   }
 
   microsec = deltime (tv);

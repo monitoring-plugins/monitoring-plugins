@@ -166,6 +166,7 @@ my $address = $1 if (defined($opt_a) && $opt_a =~ /(.*)/);
 my $state = "OK";
 my $answer = undef;
 my $res = undef;
+my $perfdata = "";
 my @lines = undef;
 
 # Just in case of problems, let's not hang Nagios
@@ -204,10 +205,22 @@ $_ = $lines[$#lines];
 #If line does not match required regexp, return an UNKNOWN error
 if (/\s*(\d*) blocks of size (\d*)\. (\d*) blocks available/) {
 
-	my ($avail) = ($3*$2)/1024;
-	my ($avail_bytes) = $avail;
+	my ($avail_bytes) = $3 * $2;
+	my ($total_bytes) = $1 * $2;
+	my ($occupied_bytes) = $1 * $2 - $avail_bytes;
+	my ($avail) = $avail_bytes/1024;
 	my ($capper) = int(($3/$1)*100);
 	my ($mountpt) = "\\\\$host\\$share";
+
+	# TODO : why is the kB the standard unit for args ?
+	my ($warn_bytes) = $total_bytes - $warn * 1024;
+	if ($warn_type eq "P") {
+		$warn_bytes = $warn * $1 * $2 / 100;
+	}
+	my ($crit_bytes) = $total_bytes - $crit * 1024;
+	if ($crit_type eq "P") {
+		$crit_bytes = $crit * $1 * $2 / 100;
+	}
 
 
 	if (int($avail / 1024) > 0) {
@@ -225,32 +238,37 @@ if (/\s*(\d*) blocks of size (\d*)\. (\d*) blocks available/) {
 #print ":$warn:$warn_type:\n";
 #print ":$crit:$crit_type:\n";
 #print ":$avail:$avail_bytes:$capper:$mountpt:\n";
+	$perfdata = "'" . $share . "'=" . $occupied_bytes . 'B;'
+		. $warn_bytes . ';'
+		. $crit_bytes . ';'
+		. '0;'
+		. $total_bytes;
 
-	if ((($warn_type eq "P") && (100 - $capper) < $warn) || (($warn_type eq "K") && ($avail_bytes > $warn))) { 
-		$answer = "Disk ok - $avail ($capper%) free on $mountpt\n";
-	} elsif ((($crit_type eq "P") && (100 - $capper) < $crit) || (($crit_type eq "K") && ($avail_bytes > $crit))) {
-		$state = "WARNING";
-		$answer = "WARNING: Only $avail ($capper%) free on $mountpt\n";
-	} else {
+	if ($occupied_bytes > $crit_bytes) {
 		$state = "CRITICAL";
-		$answer = "CRITICAL: Only $avail ($capper%) free on $mountpt\n";
+		$answer = "CRITICAL: Only $avail ($capper%) free on $mountpt";
+	} elsif ( $occupied_bytes > $warn_bytes ) {
+		$state = "WARNING";
+		$answer = "WARNING: Only $avail ($capper%) free on $mountpt";
+	} else {
+		$answer = "Disk ok - $avail ($capper%) free on $mountpt";
 	}
 } else {
-	$answer = "Result from smbclient not suitable\n";
+	$answer = "Result from smbclient not suitable";
 	$state = "UNKNOWN";
 	foreach (@lines) {
 		if (/(Access denied|NT_STATUS_LOGON_FAILURE|NT_STATUS_ACCESS_DENIED)/) {
-			$answer = "Access Denied\n";
+			$answer = "Access Denied";
 			$state = "CRITICAL";
 			last;
 		}
 		if (/(Unknown host \w*|Connection.*failed)/) {
-			$answer = "$1\n";
+			$answer = "$1";
 			$state = "CRITICAL";
 			last;
 		}
 		if (/(You specified an invalid share name|NT_STATUS_BAD_NETWORK_NAME)/) {
-			$answer = "Invalid share name \\\\$host\\$share\n";
+			$answer = "Invalid share name \\\\$host\\$share";
 			$state = "CRITICAL";
 			last;
 		}
@@ -259,6 +277,8 @@ if (/\s*(\d*) blocks of size (\d*)\. (\d*) blocks available/) {
 
 
 print $answer;
+print " | " . $perfdata if ($perfdata);
+print "\n";
 print "$state\n" if ($verbose);
 exit $ERRORS{$state};
 

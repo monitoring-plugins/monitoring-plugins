@@ -87,9 +87,9 @@ int errcode, excode;
 int server_port = SMTP_PORT;
 char *server_address = NULL;
 char *server_expect = NULL;
-int smtp_use_dummycmd = 0;
 char *mail_command = NULL;
 char *from_arg = NULL;
+int send_mail_from=0;
 int ncommands=0;
 int command_size=0;
 int nresponses=0;
@@ -156,17 +156,17 @@ main (int argc, char **argv)
 		}
 	}
 	if(use_ehlo)
-		asprintf (&helocmd, "%s%s%s", SMTP_EHLO, localhostname, "\r\n");
+		xasprintf (&helocmd, "%s%s%s", SMTP_EHLO, localhostname, "\r\n");
 	else
-		asprintf (&helocmd, "%s%s%s", SMTP_HELO, localhostname, "\r\n");
+		xasprintf (&helocmd, "%s%s%s", SMTP_HELO, localhostname, "\r\n");
 
 	if (verbose)
 		printf("HELOCMD: %s", helocmd);
 
 	/* initialize the MAIL command with optional FROM command  */
-	asprintf (&cmd_str, "%sFROM: %s%s", mail_command, from_arg, "\r\n");
+	xasprintf (&cmd_str, "%sFROM:<%s>%s", mail_command, from_arg, "\r\n");
 
-	if (verbose && smtp_use_dummycmd)
+	if (verbose && send_mail_from)
 		printf ("FROM CMD: %s", cmd_str);
 
 	/* initialize alarm signal handling */
@@ -283,23 +283,14 @@ main (int argc, char **argv)
 		}
 #endif
 
-		/* sendmail will syslog a "NOQUEUE" error if session does not attempt
-		 * to do something useful. This can be prevented by giving a command
-		 * even if syntax is illegal (MAIL requires a FROM:<...> argument)
-		 *
-		 * According to rfc821 you can include a null reversepath in the from command
-		 * - but a log message is generated on the smtp server.
-		 *
-		 * Use the -f option to provide a FROM address
-		 */
-		if (smtp_use_dummycmd) {
+		if (send_mail_from) {
 		  my_send(cmd_str, strlen(cmd_str));
 		  if (recvlines(buffer, MAX_INPUT_BUFFER) >= 1 && verbose)
 		    printf("%s", buffer);
 		}
 
 		while (n < ncommands) {
-			asprintf (&cmd_str, "%s%s", commands[n], "\r\n");
+			xasprintf (&cmd_str, "%s%s", commands[n], "\r\n");
 			my_send(cmd_str, strlen(cmd_str));
 			if (recvlines(buffer, MAX_INPUT_BUFFER) >= 1 && verbose)
 				printf("%s", buffer);
@@ -336,12 +327,12 @@ main (int argc, char **argv)
 				do {
 					if (authuser == NULL) {
 						result = STATE_CRITICAL;
-						asprintf(&error_msg, _("no authuser specified, "));
+						xasprintf(&error_msg, _("no authuser specified, "));
 						break;
 					}
 					if (authpass == NULL) {
 						result = STATE_CRITICAL;
-						asprintf(&error_msg, _("no authpass specified, "));
+						xasprintf(&error_msg, _("no authpass specified, "));
 						break;
 					}
 
@@ -351,7 +342,7 @@ main (int argc, char **argv)
 						printf (_("sent %s\n"), "AUTH LOGIN");
 
 					if ((ret = recvlines(buffer, MAX_INPUT_BUFFER)) <= 0) {
-						asprintf(&error_msg, _("recv() failed after AUTH LOGIN, "));
+						xasprintf(&error_msg, _("recv() failed after AUTH LOGIN, "));
 						result = STATE_WARNING;
 						break;
 					}
@@ -360,21 +351,20 @@ main (int argc, char **argv)
 
 					if (strncmp (buffer, "334", 3) != 0) {
 						result = STATE_CRITICAL;
-						asprintf(&error_msg, _("invalid response received after AUTH LOGIN, "));
+						xasprintf(&error_msg, _("invalid response received after AUTH LOGIN, "));
 						break;
 					}
 
 					/* encode authuser with base64 */
 					base64_encode_alloc (authuser, strlen(authuser), &abuf);
-					/* FIXME: abuf shouldn't have enough space to strcat a '\r\n' into it. */
-					strcat (abuf, "\r\n");
+					xasprintf(&abuf, "%s\r\n", abuf);
 					my_send(abuf, strlen(abuf));
 					if (verbose)
 						printf (_("sent %s\n"), abuf);
 
 					if ((ret = recvlines(buffer, MAX_INPUT_BUFFER)) <= 0) {
 						result = STATE_CRITICAL;
-						asprintf(&error_msg, _("recv() failed after sending authuser, "));
+						xasprintf(&error_msg, _("recv() failed after sending authuser, "));
 						break;
 					}
 					if (verbose) {
@@ -382,20 +372,19 @@ main (int argc, char **argv)
 					}
 					if (strncmp (buffer, "334", 3) != 0) {
 						result = STATE_CRITICAL;
-						asprintf(&error_msg, _("invalid response received after authuser, "));
+						xasprintf(&error_msg, _("invalid response received after authuser, "));
 						break;
 					}
 					/* encode authpass with base64 */
 					base64_encode_alloc (authpass, strlen(authpass), &abuf);
-					/* FIXME: abuf shouldn't have enough space to strcat a '\r\n' into it. */
-					strcat (abuf, "\r\n");
+					xasprintf(&abuf, "%s\r\n", abuf);
 					my_send(abuf, strlen(abuf));
 					if (verbose) {
 						printf (_("sent %s\n"), abuf);
 					}
 					if ((ret = recvlines(buffer, MAX_INPUT_BUFFER)) <= 0) {
 						result = STATE_CRITICAL;
-						asprintf(&error_msg, _("recv() failed after sending authpass, "));
+						xasprintf(&error_msg, _("recv() failed after sending authpass, "));
 						break;
 					}
 					if (verbose) {
@@ -403,14 +392,14 @@ main (int argc, char **argv)
 					}
 					if (strncmp (buffer, "235", 3) != 0) {
 						result = STATE_CRITICAL;
-						asprintf(&error_msg, _("invalid response received after authpass, "));
+						xasprintf(&error_msg, _("invalid response received after authpass, "));
 						break;
 					}
 					break;
 				} while (0);
 			} else {
 				result = STATE_CRITICAL;
-				asprintf(&error_msg, _("only authtype LOGIN is supported, "));
+				xasprintf(&error_msg, _("only authtype LOGIN is supported, "));
 			}
 		}
 
@@ -521,8 +510,9 @@ process_arguments (int argc, char **argv)
 			localhostname = strdup(optarg);
 			break;
 		case 'f':									/* from argument */
-			from_arg = optarg;
-			smtp_use_dummycmd = 1;
+			from_arg = optarg + strspn(optarg, "<");
+			from_arg = strndup(from_arg, strcspn(from_arg, ">"));
+			send_mail_from = 1;
 			break;
 		case 'A':
 			authtype = optarg;
@@ -653,7 +643,7 @@ process_arguments (int argc, char **argv)
 				usage2 (_("Invalid hostname/address"), argv[c]);
 		}
 		else {
-			asprintf (&server_address, "127.0.0.1");
+			xasprintf (&server_address, "127.0.0.1");
 		}
 	}
 
@@ -786,7 +776,7 @@ void
 print_help (void)
 {
 	char *myport;
-	asprintf (&myport, "%d", SMTP_PORT);
+	xasprintf (&myport, "%d", SMTP_PORT);
 
 	print_revision (progname, NP_VERSION);
 
@@ -810,7 +800,7 @@ print_help (void)
   printf (_("    String to expect in first line of server response (default: '%s')\n"), SMTP_EXPECT);
   printf (" %s\n", "-C, --command=STRING");
   printf ("    %s\n", _("SMTP command (may be used repeatedly)"));
-  printf (" %s\n", "-R, --command=STRING");
+  printf (" %s\n", "-R, --response=STRING");
   printf ("    %s\n", _("Expected response to command (may be used repeatedly)"));
   printf (" %s\n", "-f, --from=STRING");
   printf ("    %s\n", _("FROM-address to include in MAIL command, required by Exchange 2000")),
@@ -853,7 +843,11 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
+<<<<<<< HEAD
   printf ("%s -H host [-p port] [-4|-6] [-e expect] [-C command] [-f from addr]", progname);
+=======
+  printf ("%s -H host [-p port] [-4|-6] [-e expect] [-C command] [-R response] [-f from addr]\n", progname);
+>>>>>>> upstream/master
   printf ("[-A authtype -U authuser -P authpass] [-w warn] [-c crit] [-t timeout] [-q]\n");
   printf ("[-F fqdn] [-S] [-D warn days cert expire[,crit days cert expire]] [-v] \n");
 }

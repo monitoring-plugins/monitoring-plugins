@@ -8,7 +8,7 @@ use strict;
 use Test::More;
 use NPTest;
 
-plan tests => 26;
+plan tests => 28;
 
 my $successOutput = '/OK.*HTTP.*second/';
 
@@ -104,6 +104,10 @@ SKIP: {
         cmp_ok( $res->return_code, '==', 0, "Checking certificate for www.verisign.com");
         like  ( $res->output, "/Certificate 'www.verisign.com' will expire on/", "Output OK" );
         my $saved_cert_output = $res->output;
+
+        $res = NPTest->testCmd( "./check_http -C 8000,1 --ssl www.verisign.com" );
+        cmp_ok( $res->return_code, '==', 1, "Checking certificate for www.verisign.com");
+        like  ( $res->output, qr/WARNING - Certificate 'www.verisign.com' expires in \d+ day/, "Output Warning" );
 
         $res = NPTest->testCmd( "./check_http www.verisign.com -C 1" );
         is( $res->return_code, 0, "Old syntax for cert checking okay" );

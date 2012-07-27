@@ -27,11 +27,11 @@ plan skip_all => "SSH_HOST and SSH_IDENTITY must be defined" unless ($ssh_servic
 plan tests => 42;
 
 # Some random check strings/response
-my @responce = ('OK: Everything is fine!',
-                'WARNING: Hey, pick me, pick me!',
-                'CRITICAL: Shit happens...',
-                'UNKNOWN: What can I do for ya?',
-                'WOOPS: What did I smoke?',
+my @responce = ('OK: Everything is fine',
+                'WARNING: Hey, pick me, pick me',
+                'CRITICAL: Shit happens',
+                'UNKNOWN: What can I do for ya',
+                'WOOPS: What did I smoke',
 );
 my @responce_re;
 my @check;

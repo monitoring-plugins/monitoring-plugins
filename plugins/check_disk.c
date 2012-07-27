@@ -320,7 +320,7 @@ main (int argc, char **argv)
       }
 
       /* Nb: *_high_tide are unset when == UINT_MAX */
-      asprintf (&perf, "%s %s", perf,
+      xasprintf (&perf, "%s %s", perf,
                 perfdata ((!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
                           path->dused_units, units,
                           (warning_high_tide != UINT_MAX ? TRUE : FALSE), warning_high_tide,
@@ -331,20 +331,20 @@ main (int argc, char **argv)
       if (disk_result==STATE_OK && erronly && !verbose)
         continue;
 
-      asprintf (&output, "%s %s %.0f %s (%.0f%%",
+      xasprintf (&output, "%s %s %.0f %s (%.0f%%",
                 output,
                 (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
                 path->dfree_units,
                 units,
                 path->dfree_pct);
       if (path->dused_inodes_percent < 0) {
-        asprintf(&output, "%s inode=-);", output);
+        xasprintf(&output, "%s inode=-);", output);
       } else {
-        asprintf(&output, "%s inode=%.0f%%);", output, path->dfree_inodes_percent );
+        xasprintf(&output, "%s inode=%.0f%%);", output, path->dfree_inodes_percent );
       }
 
       /* TODO: Need to do a similar debug line
-      asprintf (&details, _("%s\n\
+      xasprintf (&details, _("%s\n\
 %.0f of %.0f %s (%.0f%% inode=%.0f%%) free on %s (type %s mounted on %s) warn:%lu crit:%lu warn%%:%.0f%% crit%%:%.0f%%"),
                 details, dfree_units, dtotal_units, units, dfree_pct, inode_space_pct,
                 me->me_devname, me->me_type, me->me_mountdir,
@@ -356,7 +356,7 @@ main (int argc, char **argv)
   }
 
   if (verbose >= 2)
-    asprintf (&output, "%s%s", output, details);
+    xasprintf (&output, "%s%s", output, details);
 
 
   printf ("DISK %s%s%s|%s\n", state_text (result), (erronly && result==STATE_OK) ? "" : preamble, output, perf);
@@ -473,13 +473,13 @@ process_arguments (int argc, char **argv)
         if (*optarg == '@') {
           warn_freespace_percent = optarg;
         } else {
-          asprintf(&warn_freespace_percent, "@%s", optarg);
+          xasprintf(&warn_freespace_percent, "@%s", optarg);
         }
       } else {
         if (*optarg == '@') {
           warn_freespace_units = optarg;
         } else {
-          asprintf(&warn_freespace_units, "@%s", optarg);
+          xasprintf(&warn_freespace_units, "@%s", optarg);
         }
       }
       break;
@@ -494,13 +494,13 @@ process_arguments (int argc, char **argv)
         if (*optarg == '@') {
           crit_freespace_percent = optarg;
         } else {
-          asprintf(&crit_freespace_percent, "@%s", optarg);
+          xasprintf(&crit_freespace_percent, "@%s", optarg);
         }
       } else {
         if (*optarg == '@') {
           crit_freespace_units = optarg;
         } else {
-          asprintf(&crit_freespace_units, "@%s", optarg);
+          xasprintf(&crit_freespace_units, "@%s", optarg);
         }
       }
       break;
@@ -509,14 +509,14 @@ process_arguments (int argc, char **argv)
       if (*optarg == '@') {
         warn_freeinodes_percent = optarg;
       } else {
-        asprintf(&warn_freeinodes_percent, "@%s", optarg);
+        xasprintf(&warn_freeinodes_percent, "@%s", optarg);
       }
       break;
     case 'K':			/* critical inode threshold */
       if (*optarg == '@') {
         crit_freeinodes_percent = optarg;
       } else {
-        asprintf(&crit_freeinodes_percent, "@%s", optarg);
+        xasprintf(&crit_freeinodes_percent, "@%s", optarg);
       }
       break;
     case 'u':

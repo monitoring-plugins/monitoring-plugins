@@ -141,6 +141,7 @@ int calculate_rate = 0;
 int rate_multiplier = 1;
 state_data *previous_state;
 double previous_value[MAX_OIDS];
+int perf_labels = 1;
 
 
 int
@@ -169,6 +170,7 @@ main (int argc, char **argv)
 	char *state_string=NULL;
 	size_t response_length, current_length, string_length;
 	char *temp_string=NULL;
+	char *quote_string=NULL;
 	time_t current_time;
 	double temp_double;
 	time_t duration;
@@ -253,9 +255,9 @@ main (int argc, char **argv)
 	command_line = calloc (9 + numauthpriv + 1 + numoids + 1, sizeof (char *));
 	command_line[0] = snmpcmd;
 	command_line[1] = strdup ("-t");
-	asprintf (&command_line[2], "%d", timeout_interval);
+	xasprintf (&command_line[2], "%d", timeout_interval);
 	command_line[3] = strdup ("-r");
-	asprintf (&command_line[4], "%d", retries);
+	xasprintf (&command_line[4], "%d", retries);
 	command_line[5] = strdup ("-m");
 	command_line[6] = strdup (miblist);
 	command_line[7] = "-v";
@@ -265,16 +267,16 @@ main (int argc, char **argv)
 		command_line[9 + i] = authpriv[i];
 	}
 
-	asprintf (&command_line[9 + numauthpriv], "%s:%s", server_address, port);
+	xasprintf (&command_line[9 + numauthpriv], "%s:%s", server_address, port);
 
 	/* This is just for display purposes, so it can remain a string */
-	asprintf(&cl_hidden_auth, "%s -t %d -r %d -m %s -v %s %s %s:%s",
+	xasprintf(&cl_hidden_auth, "%s -t %d -r %d -m %s -v %s %s %s:%s",
 		snmpcmd, timeout_interval, retries, strlen(miblist) ? miblist : "''", proto, "[authpriv]",
 		server_address, port);
 
 	for (i = 0; i < numoids; i++) {
 		command_line[9 + numauthpriv + 1 + i] = oids[i];
-		asprintf(&cl_hidden_auth, "%s %s", cl_hidden_auth, oids[i]);	
+		xasprintf(&cl_hidden_auth, "%s %s", cl_hidden_auth, oids[i]);	
 	}
 
 	command_line[9 + numauthpriv + 1 + numoids] = NULL;
@@ -369,14 +371,14 @@ main (int argc, char **argv)
 			if (dq_count) { /* unfinished line */
 				/* copy show verbatim first */
 				if (!mult_resp) mult_resp = strdup("");
-				asprintf (&mult_resp, "%s%s:\n%s\n", mult_resp, oids[i], show);
+				xasprintf (&mult_resp, "%s%s:\n%s\n", mult_resp, oids[i], show);
 				/* then strip out unmatched double-quote from single-line output */
 				if (show[0] == '"') show++;
 
 				/* Keep reading until we match end of double-quoted string */
 				for (line++; line < chld_out.lines; line++) {
 					ptr = chld_out.line[line];
-					asprintf (&mult_resp, "%s%s\n", mult_resp, ptr);
+					xasprintf (&mult_resp, "%s%s\n", mult_resp, ptr);
 
 					COUNT_SEQ(ptr, bk_count, dq_count)
 					while (dq_count && ptr[0] != '\n' && ptr[0] != '\0') {
@@ -422,11 +424,11 @@ main (int argc, char **argv)
 					/* Convert to per second, then use multiplier */
 					temp_double = temp_double/duration*rate_multiplier;
 					iresult = get_status(temp_double, thlds[i]);
-					asprintf (&show, conv, temp_double);
+					xasprintf (&show, conv, temp_double);
 				}
 			} else {
 				iresult = get_status(response_value[i], thlds[i]);
-				asprintf (&show, conv, response_value[i]);
+				xasprintf (&show, conv, response_value[i]);
 			}
 		}
 
@@ -470,26 +472,37 @@ main (int argc, char **argv)
 
 		/* Prepend a label for this OID if there is one */
 		if (nlabels >= (size_t)1 && (size_t)i < nlabels && labels[i] != NULL)
-			asprintf (&outbuff, "%s%s%s %s%s%s", outbuff,
+			xasprintf (&outbuff, "%s%s%s %s%s%s", outbuff,
 				(i == 0) ? " " : output_delim,
 				labels[i], mark (iresult), show, mark (iresult));
 		else
-			asprintf (&outbuff, "%s%s%s%s%s", outbuff, (i == 0) ? " " : output_delim,
+			xasprintf (&outbuff, "%s%s%s%s%s", outbuff, (i == 0) ? " " : output_delim,
 				mark (iresult), show, mark (iresult));
 
 		/* Append a unit string for this OID if there is one */
 		if (nunits > (size_t)0 && (size_t)i < nunits && unitv[i] != NULL)
-			asprintf (&outbuff, "%s %s", outbuff, unitv[i]);
+			xasprintf (&outbuff, "%s %s", outbuff, unitv[i]);
 
 		/* Write perfdata with whatever can be parsed by strtod, if possible */
 		ptr = NULL;
 		strtod(show, &ptr);
 		if (ptr > show) {
-			if (nlabels >= (size_t)1 && (size_t)i < nlabels && labels[i] != NULL)
+			if (perf_labels && nlabels >= (size_t)1 && (size_t)i < nlabels && labels[i] != NULL)
 				temp_string=labels[i];
 			else
 				temp_string=oidname;
-			strncat(perfstr, temp_string, sizeof(perfstr)-strlen(perfstr)-1);
+			if (strpbrk (temp_string, " ='\"") == NULL) {
+				strncat(perfstr, temp_string, sizeof(perfstr)-strlen(perfstr)-1);
+			} else {
+				if (strpbrk (temp_string, "'") == NULL) {
+					quote_string="'";
+				} else {
+					quote_string="\"";
+				}
+				strncat(perfstr, quote_string, sizeof(perfstr)-strlen(perfstr)-1);
+				strncat(perfstr, temp_string, sizeof(perfstr)-strlen(perfstr)-1);
+				strncat(perfstr, quote_string, sizeof(perfstr)-strlen(perfstr)-1);
+			}
 			strncat(perfstr, "=", sizeof(perfstr)-strlen(perfstr)-1);
 			len = sizeof(perfstr)-strlen(perfstr)-1;
 			strncat(perfstr, show, len>ptr-show ? ptr-show : len);
@@ -510,7 +523,7 @@ main (int argc, char **argv)
 		
 		current_length=0;
 		for(i=0; i<total_oids; i++) {
-			asprintf(&temp_string,"%.0f",response_value[i]);
+			xasprintf(&temp_string,"%.0f",response_value[i]);
 			if(temp_string==NULL)
 				die(STATE_UNKNOWN,_("Cannot asprintf()"));
 			response_length = strlen(temp_string);
@@ -583,6 +596,7 @@ process_arguments (int argc, char **argv)
 		{"rate", no_argument, 0, L_CALCULATE_RATE},
 		{"rate-multiplier", required_argument, 0, L_RATE_MULTIPLIER},
 		{"invert-search", no_argument, 0, L_INVERT_SEARCH},
+		{"perf-oids", no_argument, 0, 'O'},
 		{0, 0, 0, 0}
 	};
 
@@ -600,7 +614,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "nhvVt:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:L:U:a:x:A:X:",
+		c = getopt_long (argc, argv, "nhvVOt:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:L:U:a:x:A:X:",
 									 longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -798,6 +812,9 @@ process_arguments (int argc, char **argv)
 		case L_INVERT_SEARCH:
 			invert_search=1;
 			break;
+		case 'O':
+			perf_labels=0;
+			break;
 		}
 	}
 
@@ -852,7 +869,7 @@ validate_arguments ()
 		die(STATE_UNKNOWN, _("No OIDs specified\n"));
 
 	if (proto == NULL)
-		asprintf(&proto, DEFAULT_PROTOCOL);
+		xasprintf(&proto, DEFAULT_PROTOCOL);
 
 	if ((strcmp(proto,"1") == 0) || (strcmp(proto, "2c")==0)) {	/* snmpv1 or snmpv2c */
 		numauthpriv = 2;
@@ -862,7 +879,7 @@ validate_arguments ()
 	}
 	else if ( strcmp (proto, "3") == 0 ) {		/* snmpv3 args */
 		if (seclevel == NULL)
-			asprintf(&seclevel, "noAuthNoPriv");
+			xasprintf(&seclevel, "noAuthNoPriv");
 
 		if (strcmp(seclevel, "noAuthNoPriv") == 0) {
 			numauthpriv = 2;
@@ -875,7 +892,7 @@ validate_arguments ()
 			}
 
 			if (authproto == NULL )
-				asprintf(&authproto, DEFAULT_AUTH_PROTOCOL);
+				xasprintf(&authproto, DEFAULT_AUTH_PROTOCOL);
 
 			if (secname == NULL)
 				die(STATE_UNKNOWN, _("Required parameter: %s\n"), "secname");
@@ -896,7 +913,7 @@ validate_arguments ()
 				authpriv[7] = strdup (authpasswd);
 			} else if ( strcmp(seclevel, "authPriv") == 0 ) {
 				if (privproto == NULL )
-					asprintf(&privproto, DEFAULT_PRIV_PROTOCOL);
+					xasprintf(&privproto, DEFAULT_PRIV_PROTOCOL);
 
 				if (privpasswd == NULL)
 					die(STATE_UNKNOWN, _("Required parameter: %s\n"), "privpasswd");
@@ -1062,6 +1079,9 @@ print_help (void)
 	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf (" %s\n", "-e, --retries=INTEGER");
 	printf ("    %s\n", _("Number of retries to be used in the requests"));
+
+	printf (" %s\n", "-O, --perf-oids");
+	printf ("    %s\n", _("Label performance data with OIDs instead of --label's"));
 
 	printf (UT_VERBOSE);
 

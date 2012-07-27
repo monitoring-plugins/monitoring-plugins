@@ -134,6 +134,7 @@ NP-VERSION-FILE
 /plugins/check_by_ssh
 /plugins/check_clamd
 /plugins/check_cluster
+/plugins/check_dbi
 /plugins/check_dig
 /plugins/check_disk
 /plugins/check_dns

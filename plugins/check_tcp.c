@@ -238,7 +238,7 @@ main (int argc, char **argv)
 			result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
 		}
 	}
-	if(result != STATE_OK || check_cert == TRUE){
+	if(result != STATE_OK){
 		np_net_ssl_cleanup();
 		if(sd) close(sd);
 		return result;
@@ -502,7 +502,7 @@ process_arguments (int argc, char **argv)
 			if (escape)
 				server_send = np_escaped_string(optarg);
 			else
-				asprintf(&server_send, "%s", optarg);
+				xasprintf(&server_send, "%s", optarg);
 			break;
 		case 'e': /* expect string (may be repeated) */
 			flags &= ~FLAG_EXACT_MATCH;
@@ -522,7 +522,7 @@ process_arguments (int argc, char **argv)
 			if (escape)
 				server_quit = np_escaped_string(optarg);
 			else
-				asprintf(&server_quit, "%s\r\n", optarg);
+				xasprintf(&server_quit, "%s\r\n", optarg);
 			break;
 		case 'r':
 			if (!strncmp(optarg,"ok",2))
