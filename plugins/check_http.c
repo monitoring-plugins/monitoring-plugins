@@ -58,6 +58,10 @@ enum {
 
 #ifdef HAVE_SSL
 int check_cert = FALSE;
+<<<<<<< HEAD
+int days_till_exp_warn, days_till_exp_crit;
+=======
+>>>>>>> upstream/master
 int ssl_version;
 int days_till_exp_warn, days_till_exp_crit;
 char *randbuff;
@@ -285,7 +289,7 @@ process_arguments (int argc, char **argv)
 #ifdef HAVE_SSL
       if ((temp=strchr(optarg,','))!=NULL) {
         *temp='\0';
-        if (!is_intnonneg (temp))
+        if (!is_intnonneg (optarg))
           usage2 (_("Invalid certificate expiration period"), optarg);
         days_till_exp_warn = atoi(optarg);
         *temp=',';

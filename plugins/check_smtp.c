@@ -593,7 +593,7 @@ process_arguments (int argc, char **argv)
 #ifdef USE_OPENSSL
                         if ((temp=strchr(optarg,','))!=NULL) {
                             *temp='\0';
-                            if (!is_intnonneg (temp))
+                            if (!is_intnonneg (optarg))
                                usage2 ("Invalid certificate expiration period", optarg);
                             days_till_exp_warn = atoi(optarg);
                             *temp=',';
