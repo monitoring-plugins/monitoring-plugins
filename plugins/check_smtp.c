@@ -843,11 +843,7 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-<<<<<<< HEAD
-  printf ("%s -H host [-p port] [-4|-6] [-e expect] [-C command] [-f from addr]", progname);
-=======
   printf ("%s -H host [-p port] [-4|-6] [-e expect] [-C command] [-R response] [-f from addr]\n", progname);
->>>>>>> upstream/master
   printf ("[-A authtype -U authuser -P authpass] [-w warn] [-c crit] [-t timeout] [-q]\n");
   printf ("[-F fqdn] [-S] [-D warn days cert expire[,crit days cert expire]] [-v] \n");
 }
