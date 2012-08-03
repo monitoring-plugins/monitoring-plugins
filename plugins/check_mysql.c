@@ -53,6 +53,9 @@ unsigned int db_port = MYSQL_PORT;
 int check_slave = 0, warn_sec = 0, crit_sec = 0;
 int verbose = 0;
 
+static double warning_time = 0;
+static double critical_time = 0;
+
 thresholds *my_threshold = NULL;
 
 int process_arguments (int, char **);
@@ -73,6 +76,7 @@ main (int argc, char **argv)
 	char *result = NULL;
 	char *error = NULL;
 	char slaveresult[SLAVERESULTSIZE];
+	char* slaveperfdata = NULL;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -205,11 +209,17 @@ main (int argc, char **argv)
 
 				status = get_status(value, my_threshold);
 
+				slaveperfdata = fperfdata ("seconds behind master", value, "s",
+        	                        TRUE, (double) warning_time,
+                	                TRUE, (double) critical_time,
+                        	        FALSE, 0,
+                                	FALSE, 0);
+
 				if (status == STATE_WARNING) {
-					printf("SLOW_SLAVE %s: %s\n", _("WARNING"), slaveresult);
+					printf("SLOW_SLAVE %s: %s|%s\n", _("WARNING"), slaveresult, slaveperfdata);
 					exit(STATE_WARNING);
 				} else if (status == STATE_CRITICAL) {
-					printf("SLOW_SLAVE %s: %s\n", _("CRITICAL"), slaveresult);
+					printf("SLOW_SLAVE %s: %s|%s\n", _("CRITICAL"), slaveresult, slaveperfdata);
 					exit(STATE_CRITICAL);
 				}
 			}
@@ -223,7 +233,9 @@ main (int argc, char **argv)
 	mysql_close (&mysql);
 
 	/* print out the result of stats */
-	if (check_slave) {
+	if (check_slave && slaveperfdata) {
+		printf ("%s %s|%s\n", result, slaveresult, slaveperfdata);
+	} else if (check_slave) {
 		printf ("%s %s\n", result, slaveresult);
 	} else {
 		printf ("%s\n", result);
@@ -302,9 +314,11 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'w':
 			warning = optarg;
+			warning_time = strtod (warning, NULL);
 			break;
 		case 'c':
 			critical = optarg;
+			critical_time = strtod (critical, NULL);
 			break;
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
