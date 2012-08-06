@@ -704,7 +704,7 @@ void print_help(void){
 	printf("  %s\n", ("./check_ntp_peer -H ntpserv -w 0.5 -c 1 -j -1:100 -k -1:200"));
 	printf("\n");
 	printf(" %s\n", _("Only check the number of usable time sources (\"truechimers\"):"));
-	printf("  %s\n", ("./check_ntp_peer -H ntpserv -m :5 -n :3"));
+	printf("  %s\n", ("./check_ntp_peer -H ntpserv -m @5 -n @3"));
 	printf("\n");
 	printf(" %s\n", _("Check only stratum:"));
 	printf("  %s\n", ("./check_ntp_peer -H ntpserv -W 4 -C 6"));
