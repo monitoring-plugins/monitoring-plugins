@@ -1352,7 +1352,7 @@ print_help (void)
   printf ("    %s\n", _("auto-negotiation (1 = TLSv1, 2 = SSLv2, 3 = SSLv3)."));
   printf (" %s\n", "--sni");
   printf ("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
-  printf (" %s\n", "-C, --certificate=INTEGER");
+  printf (" %s\n", "-C, --certificate=INTEGER[,INTEGER]");
   printf ("    %s\n", _("Minimum number of days a certificate has to be valid. Port defaults to 443"));
   printf ("    %s\n", _("(when this option is used the URL is not checked.)\n"));
 #endif
