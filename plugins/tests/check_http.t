@@ -19,7 +19,7 @@ use NPTest;
 use FindBin qw($Bin);
 
 my $common_tests = 66;
-my $ssl_only_tests = 6;
+my $ssl_only_tests = 8;
 # Check that all dependent modules are available
 eval {
 	require HTTP::Daemon;
