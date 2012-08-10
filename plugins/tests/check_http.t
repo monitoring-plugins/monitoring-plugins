@@ -189,7 +189,7 @@ SKIP: {
 	like( $result->output, '/WARNING - Certificate \'Ton Voon\' expires in \d+ day\(s\) \(03/03/2019 21:41\)./', "output ok" );
 
         $result = NPTest->testCmd( "$command -p $port_https -S -C 13960,14000" );
-        is( $result->return_code, 1, "$command -p $port_https -S -C 139600,14000" );
+        is( $result->return_code, 2, "$command -p $port_https -S -C 13960,14000" );
         like( $result->output, '/CRITICAL - Certificate \'Ton Voon\' expires in \d+ day\(s\) \(03/03/2019 21:41\)./', "output ok" );
 
 	# Expired cert tests
