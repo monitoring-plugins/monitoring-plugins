@@ -12,7 +12,6 @@
 # Common Name (eg, YOUR name) []:Ton Voon
 # Email Address []:tonvoon@mac.com
 
-
 use strict;
 use Test::More;
 use NPTest;
@@ -160,9 +159,9 @@ sub run_server {
 	}
 }
 
-END { 
+END {
 	foreach my $pid (@pids) {
-		if ($pid) { print "Killing $pid\n"; kill "INT", $pid } 
+		if ($pid) { print "Killing $pid\n"; kill "INT", $pid }
 	}
 };
 
@@ -179,7 +178,7 @@ run_common_tests( { command => "$command -p $port_http" } );
 SKIP: {
 	skip "HTTP::Daemon::SSL not installed", $common_tests + $ssl_only_tests if ! exists $servers->{https};
 	run_common_tests( { command => "$command -p $port_https", ssl => 1 } );
-	
+
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 14" );
 	is( $result->return_code, 0, "$command -p $port_https -S -C 14" );
 	is( $result->output, 'OK - Certificate \'Ton Voon\' will expire on 03/03/2019 21:41.', "output ok" );
@@ -188,14 +187,14 @@ SKIP: {
 	is( $result->return_code, 1, "$command -p $port_https -S -C 14000" );
 	like( $result->output, '/WARNING - Certificate \'Ton Voon\' expires in \d+ day\(s\) \(03/03/2019 21:41\)./', "output ok" );
 
-        $result = NPTest->testCmd( "$command -p $port_https -S -C 13960,14000" );
-        is( $result->return_code, 2, "$command -p $port_https -S -C 13960,14000" );
-        like( $result->output, '/CRITICAL - Certificate \'Ton Voon\' expires in \d+ day\(s\) \(03/03/2019 21:41\)./', "output ok" );
-
 	# Expired cert tests
+	$result = NPTest->testCmd( "$command -p $port_https -S -C 13960,14000" );
+	is( $result->return_code, 2, "$command -p $port_https -S -C 13960,14000" );
+	like( $result->output, '/CRITICAL - Certificate \'Ton Voon\' expires in \d+ day\(s\) \(03/03/2019 21:41\)./', "output ok" );
+
 	$result = NPTest->testCmd( "$command -p $port_https_expired -S -C 7" );
 	is( $result->return_code, 2, "$command -p $port_https_expired -S -C 7" );
-	is( $result->output, 
+	is( $result->output,
 		'CRITICAL - Certificate \'Ton Voon\' expired on 03/05/2009 00:13.',
 		"output ok" );
 
@@ -406,4 +405,3 @@ sub run_common_tests {
 	isnt( $@, "alarm\n", $cmd );
 
 }
-
