@@ -91,7 +91,7 @@ main (int argc, char **argv)
   textdomain (PACKAGE);
 
   /* Set signal handling and alarm */
-  if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
+  if (signal (SIGALRM, runcmd_timeout_alarm_handler) == SIG_ERR) {
     usage_va(_("Cannot catch SIGALRM"));
   }
 
