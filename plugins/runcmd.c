@@ -256,7 +256,7 @@ np_runcmd_close(int fd)
 
 
 void
-popen_timeout_alarm_handler (int signo)
+runcmd_timeout_alarm_handler (int signo)
 {
 	size_t i;
 

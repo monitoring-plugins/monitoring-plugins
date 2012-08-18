@@ -39,7 +39,7 @@ typedef struct output output;
 
 /** prototypes **/
 int np_runcmd(const char *, output *, output *, int);
-void popen_timeout_alarm_handler(int)
+void runcmd_timeout_alarm_handler(int)
 	__attribute__((__noreturn__));
 
 /* only multi-threaded plugins need to bother with this */
