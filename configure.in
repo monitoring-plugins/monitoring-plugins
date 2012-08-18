@@ -255,55 +255,66 @@ fi
 LIBS="$_SAVEDLIBS"
 CPPFLAGS="$_SAVEDCPPFLAGS"
 
+AC_ARG_WITH([dbi], [AS_HELP_STRING([--without-dbi], [Skips the dbi plugin])])
 dnl Check for DBI libraries
-_SAVEDLIBS="$LIBS"
-AC_CHECK_LIB(dbi,dbi_initialize)
-if test "$ac_cv_lib_dbi_dbi_initialize" = "yes"; then
-  EXTRAS="$EXTRAS check_dbi"
-	DBILIBS="-ldbi"
-  AC_SUBST(DBILIBS)
-else
-  AC_MSG_WARN([Skipping dbi plugin])
-  AC_MSG_WARN([install DBI libs to compile this plugin (see REQUIREMENTS).])
-fi
-LIBS="$_SAVEDLIBS"
+AS_IF([test "x$with_dbi" != "xno"], [
+  _SAVEDLIBS="$LIBS"
+  AC_CHECK_LIB(dbi,dbi_initialize)
+  if test "$ac_cv_lib_dbi_dbi_initialize" = "yes"; then
+    EXTRAS="$EXTRAS check_dbi"
+  	DBILIBS="-ldbi"
+    AC_SUBST(DBILIBS)
+  else
+    AC_MSG_WARN([Skipping dbi plugin])
+    AC_MSG_WARN([install DBI libs to compile this plugin (see REQUIREMENTS).])
+  fi
+  LIBS="$_SAVEDLIBS"
+])
+
+AC_ARG_WITH([radius], [AS_HELP_STRING([--without-radius], [Skips the radius plugin])])
 
 dnl Check for radius libraries
-_SAVEDLIBS="$LIBS"
-AC_CHECK_LIB(radiusclient,rc_read_config)
-if test "$ac_cv_lib_radiusclient_rc_read_config" = "yes"; then
-  EXTRAS="$EXTRAS check_radius"
-	RADIUSLIBS="-lradiusclient"
-  AC_SUBST(RADIUSLIBS)
-else
-  AC_CHECK_LIB(radiusclient-ng,rc_read_config)
-  if test "$ac_cv_lib_radiusclient_ng_rc_read_config" = "yes"; then
+AS_IF([test "x$with_radius" != "xno"], [
+  _SAVEDLIBS="$LIBS"
+  AC_CHECK_LIB(radiusclient,rc_read_config)
+  if test "$ac_cv_lib_radiusclient_rc_read_config" = "yes"; then
     EXTRAS="$EXTRAS check_radius"
-  	  RADIUSLIBS="-lradiusclient-ng"
+  	RADIUSLIBS="-lradiusclient"
     AC_SUBST(RADIUSLIBS)
   else
-    AC_MSG_WARN([Skipping radius plugin])
-    AC_MSG_WARN([install radius libs to compile this plugin (see REQUIREMENTS).])
+    AC_CHECK_LIB(radiusclient-ng,rc_read_config)
+    if test "$ac_cv_lib_radiusclient_ng_rc_read_config" = "yes"; then
+      EXTRAS="$EXTRAS check_radius"
+    	  RADIUSLIBS="-lradiusclient-ng"
+      AC_SUBST(RADIUSLIBS)
+    else
+      AC_MSG_WARN([Skipping radius plugin])
+      AC_MSG_WARN([install radius libs to compile this plugin (see REQUIREMENTS).])
+    fi
   fi
-fi
-LIBS="$_SAVEDLIBS"
+  LIBS="$_SAVEDLIBS"
+])
+
+AC_ARG_WITH([ldap], [AS_HELP_STRING([--without-ldap], [Skips the LDAP plugin])])
 
 dnl Check for LDAP libraries
-_SAVEDLIBS="$LIBS"
-AC_CHECK_LIB(ldap,main,,,-llber)
-if test "$ac_cv_lib_ldap_main" = "yes"; then
-  LDAPLIBS="-lldap -llber"\
-  LDAPINCLUDE="-I/usr/include/ldap"
-  AC_SUBST(LDAPLIBS)
-  AC_SUBST(LDAPINCLUDE)
-  AC_CHECK_FUNCS(ldap_set_option)
-  EXTRAS="$EXTRAS check_ldap"
-	AC_CHECK_FUNCS(ldap_init ldap_set_option ldap_get_option ldap_start_tls_s)
-else
-  AC_MSG_WARN([Skipping LDAP plugin])
-  AC_MSG_WARN([install LDAP libs to compile this plugin (see REQUIREMENTS).])
-fi
-LIBS="$_SAVEDLIBS"
+AS_IF([test "x$with_ldap" != "xno"], [
+  _SAVEDLIBS="$LIBS"
+  AC_CHECK_LIB(ldap,main,,,-llber)
+  if test "$ac_cv_lib_ldap_main" = "yes"; then
+    LDAPLIBS="-lldap -llber"\
+    LDAPINCLUDE="-I/usr/include/ldap"
+    AC_SUBST(LDAPLIBS)
+    AC_SUBST(LDAPINCLUDE)
+    AC_CHECK_FUNCS(ldap_set_option)
+    EXTRAS="$EXTRAS check_ldap"
+  	AC_CHECK_FUNCS(ldap_init ldap_set_option ldap_get_option ldap_start_tls_s)
+  else
+    AC_MSG_WARN([Skipping LDAP plugin])
+    AC_MSG_WARN([install LDAP libs to compile this plugin (see REQUIREMENTS).])
+  fi
+  LIBS="$_SAVEDLIBS"
+])
 
 dnl Check for headers used by check_ide_smart
 AC_CHECK_HEADER(linux/hdreg.h, FOUNDINCLUDE=yes, FOUNDINCLUDE=no)
