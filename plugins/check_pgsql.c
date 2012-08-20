@@ -3,7 +3,7 @@
 * Nagios check_pgsql plugin
 * 
 * License: GPL
-* Copyright (c) 1999-2007 Nagios Plugins Development Team
+* Copyright (c) 1999-2011 Nagios Plugins Development Team
 * 
 * Description:
 * 
@@ -29,7 +29,7 @@
 *****************************************************************************/
 
 const char *progname = "check_pgsql";
-const char *copyright = "1999-2007";
+const char *copyright = "1999-2011";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -41,6 +41,20 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #define DEFAULT_DB "template1"
 #define DEFAULT_HOST "127.0.0.1"
+
+/* return the PSQL server version as a 3-tuple */
+#define PSQL_SERVER_VERSION3(server_version) \
+	(server_version) / 10000, \
+	(server_version) / 100 - (int)((server_version) / 10000) * 100, \
+	(server_version) - (int)((server_version) / 100) * 100
+/* return true if the given host is a UNIX domain socket */
+#define PSQL_IS_UNIX_DOMAIN_SOCKET(host) \
+	((NULL == (host)) || ('\0' == *(host)) || ('/' == *(host)))
+/* return a 3-tuple identifying a host/port independent of the socket type */
+#define PSQL_SOCKET3(host, port) \
+	((NULL == (host)) || ('\0' == *(host))) ? DEFAULT_PGSOCKET_DIR : host, \
+	PSQL_IS_UNIX_DOMAIN_SOCKET (host) ? "/.s.PGSQL." : ":", \
+	port
 
 enum {
 	DEFAULT_PORT = 5432,
@@ -56,6 +70,7 @@ void print_usage (void);
 void print_help (void);
 int is_pg_dbname (char *);
 int is_pg_logname (char *);
+int do_query (PGconn *, char *);
 
 char *pghost = NULL;						/* host name of the backend server */
 char *pgport = NULL;						/* port of the backend server */
@@ -65,13 +80,14 @@ char *pgtty = NULL;
 char dbName[NAMEDATALEN] = DEFAULT_DB;
 char *pguser = NULL;
 char *pgpasswd = NULL;
+char *pgparams = NULL;
 double twarn = (double)DEFAULT_WARN;
 double tcrit = (double)DEFAULT_CRIT;
+char *pgquery = NULL;
+char *query_warning = NULL;
+char *query_critical = NULL;
+thresholds *qthresholds = NULL;
 int verbose = 0;
-
-PGconn *conn;
-/*PGresult   *res;*/
-
 
 /******************************************************************************
 
@@ -115,10 +131,6 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 <sect2>
 <title>Future Enhancements</title>
 <para>ToDo List</para>
-<itemizedlist>
-<listitem>Add option to get password from a secured file rather than the command line</listitem>
-<listitem>Add option to specify the query to execute</listitem>
-</itemizedlist>
 </sect2>
 
 
@@ -132,8 +144,14 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 int
 main (int argc, char **argv)
 {
-	int elapsed_time;
+	PGconn *conn;
+	char *conninfo = NULL;
+
+	struct timeval start_timeval;
+	struct timeval end_timeval;
+	double elapsed_time;
 	int status = STATE_UNKNOWN;
+	int query_status = STATE_UNKNOWN;
 
 	/* begin, by setting the parameters for a backend connection if the
 	 * parameters are null, then the system will try to use reasonable
@@ -161,20 +179,41 @@ main (int argc, char **argv)
 	}
 	alarm (timeout_interval);
 
-	if (verbose)
-		printf("Connecting to database:\n DB: %s\n User: %s\n Host: %s\n Port: %d\n", dbName,
-		(pguser != NULL) ? pguser : "unspecified",
-		(pghost != NULL) ? pghost : "unspecified",
-		(pgport != NULL) ? atoi(pgport) : DEFAULT_PORT);
+	if (pgparams)
+		asprintf (&conninfo, "%s ", pgparams);
+
+	asprintf (&conninfo, "%sdbname = '%s'", conninfo ? conninfo : "", dbName);
+	if (pghost)
+		asprintf (&conninfo, "%s host = '%s'", conninfo, pghost);
+	if (pgport)
+		asprintf (&conninfo, "%s port = '%s'", conninfo, pgport);
+	if (pgoptions)
+		asprintf (&conninfo, "%s options = '%s'", conninfo, pgoptions);
+	/* if (pgtty) -- ignored by PQconnectdb */
+	if (pguser)
+		asprintf (&conninfo, "%s user = '%s'", conninfo, pguser);
+
+	if (verbose) /* do not include password (see right below) in output */
+		printf ("Connecting to PostgreSQL using conninfo: %s%s\n", conninfo,
+				pgpasswd ? " password = <hidden>" : "");
+
+	if (pgpasswd)
+		asprintf (&conninfo, "%s password = '%s'", conninfo, pgpasswd);
 
 	/* make a connection to the database */
-	time (&start_time);
-	conn =
-		PQsetdbLogin (pghost, pgport, pgoptions, pgtty, dbName, pguser, pgpasswd);
-	time (&end_time);
-	elapsed_time = (int) (end_time - start_time);
+	gettimeofday (&start_timeval, NULL);
+	conn = PQconnectdb (conninfo);
+	gettimeofday (&end_timeval, NULL);
+
+	while (start_timeval.tv_usec > end_timeval.tv_usec) {
+		--end_timeval.tv_sec;
+		end_timeval.tv_usec += 1000000;
+	}
+	elapsed_time = (double)(end_timeval.tv_sec - start_timeval.tv_sec)
+		+ (double)(end_timeval.tv_usec - start_timeval.tv_usec) / 1000000.0;
+
 	if (verbose)
-		printf("Time elapsed: %d\n", elapsed_time);
+		printf("Time elapsed: %f\n", elapsed_time);
 
 	/* check to see that the backend connection was successfully made */
 	if (verbose)
@@ -194,14 +233,32 @@ main (int argc, char **argv)
 	else {
 		status = STATE_OK;
 	}
+
+	if (verbose) {
+		char *server_host = PQhost (conn);
+		int server_version = PQserverVersion (conn);
+
+		printf ("Successfully connected to database %s (user %s) "
+				"at server %s%s%s (server version: %d.%d.%d, "
+				"protocol version: %d, pid: %d)\n",
+				PQdb (conn), PQuser (conn),
+				PSQL_SOCKET3 (server_host, PQport (conn)),
+				PSQL_SERVER_VERSION3 (server_version),
+				PQprotocolVersion (conn), PQbackendPID (conn));
+	}
+
+	printf (_(" %s - database %s (%f sec.)|%s\n"),
+	        state_text(status), dbName, elapsed_time,
+	        fperfdata("time", elapsed_time, "s",
+	                 !!(twarn > 0.0), twarn, !!(tcrit > 0.0), tcrit, TRUE, 0, FALSE,0));
+
+	if (pgquery)
+		query_status = do_query (conn, pgquery);
+
 	if (verbose)
 		printf("Closing connection\n");
 	PQfinish (conn);
-	printf (_(" %s - database %s (%d sec.)|%s\n"),
-	        state_text(status), dbName, elapsed_time,
-	        fperfdata("time", elapsed_time, "s",
-	                 (int)twarn, twarn, (int)tcrit, tcrit, TRUE, 0, FALSE,0));
-	return status;
+	return (query_status > status) ? query_status : status;
 }
 
 
@@ -225,12 +282,16 @@ process_arguments (int argc, char **argv)
 		{"authorization", required_argument, 0, 'a'},
 		{"port", required_argument, 0, 'P'},
 		{"database", required_argument, 0, 'd'},
+		{"option", required_argument, 0, 'o'},
+		{"query", required_argument, 0, 'q'},
+		{"query_critical", required_argument, 0, 'C'},
+		{"query_warning", required_argument, 0, 'W'},
 		{"verbose", no_argument, 0, 'v'},
 		{0, 0, 0, 0}
 	};
 
 	while (1) {
-		c = getopt_long (argc, argv, "hVt:c:w:H:P:d:l:p:a:v",
+		c = getopt_long (argc, argv, "hVt:c:w:H:P:d:l:p:a:o:q:C:W:v",
 		                 longopts, &option);
 
 		if (c == EOF)
@@ -263,8 +324,14 @@ process_arguments (int argc, char **argv)
 			else
 				twarn = strtod (optarg, NULL);
 			break;
+		case 'C':     /* critical query threshold */
+			query_critical = optarg;
+			break;
+		case 'W':     /* warning query threshold */
+			query_warning = optarg;
+			break;
 		case 'H':     /* host */
-			if (!is_host (optarg))
+			if ((*optarg != '/') && (!is_host (optarg)))
 				usage2 (_("Invalid hostname/address"), optarg);
 			else
 				pghost = optarg;
@@ -291,11 +358,22 @@ process_arguments (int argc, char **argv)
 		case 'a':
 			pgpasswd = optarg;
 			break;
+		case 'o':
+			if (pgparams)
+				asprintf (&pgparams, "%s %s", pgparams, optarg);
+			else
+				asprintf (&pgparams, "%s", optarg);
+			break;
+		case 'q':
+			pgquery = optarg;
+			break;
 		case 'v':
 			verbose++;
 			break;
 		}
 	}
+
+	set_thresholds (&qthresholds, query_warning, query_critical);
 
 	return validate_arguments ();
 }
@@ -434,8 +512,6 @@ print_help (void)
 
 	printf (UT_HOST_PORT, 'P', myport);
 
-	printf (UT_IPv46);
-
 	printf (" %s\n", "-d, --database=STRING");
 	printf ("    %s", _("Database to check "));
 	printf (_("(default: %s)"), DEFAULT_DB);
@@ -443,10 +519,19 @@ print_help (void)
 	printf ("    %s\n", _("Login name of user"));
 	printf (" %s\n", "-p, --password = STRING");
 	printf ("    %s\n", _("Password (BIG SECURITY ISSUE)"));
+	printf (" %s\n", "-o, --option = STRING");
+	printf ("    %s\n", _("Connection parameters (keyword = value), see below"));
 
 	printf (UT_WARN_CRIT);
 
 	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+
+	printf (" %s\n", "-q, --query=STRING");
+	printf ("    %s\n", _("SQL query to run. Only first column in first row will be read"));
+	printf (" %s\n", "-W, --query-warning=RANGE");
+	printf ("    %s\n", _("SQL query value to result in warning status (double)"));
+	printf (" %s\n", "-C, --query-critical=RANGE");
+	printf ("    %s\n", _("SQL query value to result in critical status (double)"));
 
 	printf (UT_VERBOSE);
 
@@ -457,6 +542,22 @@ print_help (void)
 	printf (" %s\n", _("specified database, and then disconnects. If no database is specified, it"));
 	printf (" %s\n", _("connects to the template1 database, which is present in every functioning"));
 	printf (" %s\n\n", _("PostgreSQL DBMS."));
+
+	printf (" %s\n", _("If a query is specified using the -q option, it will be executed after"));
+	printf (" %s\n", _("connecting to the server. The result from the query has to be numeric."));
+	printf (" %s\n", _("Multiple SQL commands, separated by semicolon, are allowed but the result "));
+	printf (" %s\n", _("of the last command is taken into account only. The value of the first"));
+	printf (" %s\n\n", _("column in the first row is used as the check result."));
+
+	printf (" %s\n", _("See the chapter \"Monitoring Database Activity\" of the PostgreSQL manual"));
+	printf (" %s\n\n", _("for details about how to access internal statistics of the database server."));
+
+	printf (" %s\n", _("For a list of available connection parameters which may be used with the -o"));
+	printf (" %s\n", _("command line option, see the documentation for PQconnectdb() in the chapter"));
+	printf (" %s\n", _("\"libpq - C Library\" of the PostgreSQL manual. For example, this may be"));
+	printf (" %s\n", _("used to specify a service name in pg_service.conf to be used for additional"));
+	printf (" %s\n", _("connection parameters: -o 'service=<name>' or to specify the SSL mode:"));
+	printf (" %s\n\n", _("-o 'sslmode=require'."));
 
 	printf (" %s\n", _("The plugin will connect to a local postmaster if no host is specified. To"));
 	printf (" %s\n", _("connect to a remote host, be sure that the remote postmaster accepts TCP/IP"));
@@ -476,5 +577,74 @@ print_usage (void)
 {
 	printf ("%s\n", _("Usage:"));
 	printf ("%s [-H <host>] [-P <port>] [-c <critical time>] [-w <warning time>]\n", progname);
-	printf (" [-t <timeout>] [-d <database>] [-l <logname>] [-p <password>]\n");
+	printf (" [-t <timeout>] [-d <database>] [-l <logname>] [-p <password>]\n"
+			"[-q <query>] [-C <critical query range>] [-W <warning query range>]\n");
 }
+
+int
+do_query (PGconn *conn, char *query)
+{
+	PGresult *res;
+
+	char *val_str;
+	double value;
+
+	char *endptr = NULL;
+
+	int my_status = STATE_UNKNOWN;
+
+	if (verbose)
+		printf ("Executing SQL query \"%s\".\n");
+	res = PQexec (conn, query);
+
+	if (PGRES_TUPLES_OK != PQresultStatus (res)) {
+		printf (_("QUERY %s - %s: %s.\n"), _("CRITICAL"), _("Error with query"),
+					PQerrorMessage (conn));
+		return STATE_CRITICAL;
+	}
+
+	if (PQntuples (res) < 1) {
+		printf ("QUERY %s - %s.\n", _("WARNING"), _("No rows returned"));
+		return STATE_WARNING;
+	}
+
+	if (PQnfields (res) < 1) {
+		printf ("QUERY %s - %s.\n", _("WARNING"), _("No columns returned"));
+		return STATE_WARNING;
+	}
+
+	val_str = PQgetvalue (res, 0, 0);
+	if (! val_str) {
+		printf ("QUERY %s - %s.\n", _("CRITICAL"), _("No data returned"));
+		return STATE_CRITICAL;
+	}
+
+	value = strtod (val_str, &endptr);
+	if (verbose)
+		printf ("Query result: %f\n", value);
+
+	if (endptr == val_str) {
+		printf ("QUERY %s - %s: %s\n", _("CRITICAL"), _("Is not a numeric"), val_str);
+		return STATE_CRITICAL;
+	}
+	else if ((endptr != NULL) && (*endptr != '\0')) {
+		if (verbose)
+			printf ("Garbage after value: %s.\n", endptr);
+	}
+
+	my_status = get_status (value, qthresholds);
+	printf ("QUERY %s - ",
+			(my_status == STATE_OK)
+				? _("OK")
+				: (my_status == STATE_WARNING)
+					? _("WARNING")
+					: (my_status == STATE_CRITICAL)
+						? _("CRITICAL")
+						: _("UNKNOWN"));
+	printf (_("'%s' returned %f"), query, value);
+	printf ("|query=%f;%s;%s;;\n", value,
+			query_warning ? query_warning : "",
+			query_critical ? query_critical : "");
+	return my_status;
+}
+
