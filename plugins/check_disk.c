@@ -856,7 +856,7 @@ print_help (void)
   printf (" %s\n", "-c, --critical=INTEGER");
   printf ("    %s\n", _("Exit with CRITICAL status if less than INTEGER units of disk are free"));
   printf (" %s\n", "-c, --critical=PERCENT%");
-  printf ("    %s\n", _("Exit with CRITCAL status if less than PERCENT of disk space is free"));
+  printf ("    %s\n", _("Exit with CRITICAL status if less than PERCENT of disk space is free"));
   printf (" %s\n", "-W, --iwarning=PERCENT%");
   printf ("    %s\n", _("Exit with WARNING status if less than PERCENT of inode space is free"));
   printf (" %s\n", "-K, --icritical=PERCENT%");
