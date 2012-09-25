@@ -61,7 +61,7 @@ while(defined $nextdev){
 		if (defined $device) {
 			if (/(\[[_U]+\])/) {
 				$status{$device} = $1;
-			} elsif (/recovery = (.*?)\s/) {  
+			} elsif (/recovery =\s+(.*?)\s/) {
 				$recovery{$device} = $1;
 				($finish{$device}) = /finish=(.*?min)/;
 				$device=undef;
