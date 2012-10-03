@@ -49,6 +49,8 @@ typedef enum { UPGRADE, DIST_UPGRADE, NO_UPGRADE } upgrade_type;
 #ifndef PATH_TO_APTGET
 # define PATH_TO_APTGET "/usr/bin/apt-get"
 #endif /* PATH_TO_APTGET */
+/* String found at the beginning of the apt output lines we're interested in */
+#define PKGINST_PREFIX "Inst "
 /* the RE that catches security updates */
 #define SECURITY_RE "^[^\\(]*\\([^ ]* (Debian-Security:|Ubuntu:[^/]*/[^-]*-security)"
 
@@ -211,22 +213,18 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 	struct output chld_out, chld_err;
 	regex_t ireg, ereg, sreg;
 	char *cmdline=NULL, rerrbuf[64];
-	const char *include_ptr=NULL, *crit_ptr=NULL;
 
 	if(upgrade==NO_UPGRADE) return STATE_OK;
 
 	/* compile the regexps */
-	if(do_include!=NULL) include_ptr=do_include;
-	else include_ptr="^Inst";
-	if(do_critical!=NULL) crit_ptr=do_critical;
-	else crit_ptr=SECURITY_RE;
-
-	regres=regcomp(&ireg, include_ptr, REG_EXTENDED);
-	if(regres!=0) {
-		regerror(regres, &ireg, rerrbuf, 64);
-		die(STATE_UNKNOWN, _("%s: Error compiling regexp: %s"), progname, rerrbuf);
+	if (do_include != NULL) {
+		regres=regcomp(&ireg, do_include, REG_EXTENDED);
+		if (regres!=0) {
+			regerror(regres, &ireg, rerrbuf, 64);
+			die(STATE_UNKNOWN, _("%s: Error compiling regexp: %s"), progname, rerrbuf);
+		}
 	}
-
+   
 	if(do_exclude!=NULL){
 		regres=regcomp(&ereg, do_exclude, REG_EXTENDED);
 		if(regres!=0) {
@@ -235,6 +233,8 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 			    progname, rerrbuf);
 		}
 	}
+   
+	const char *crit_ptr = (do_critical != NULL) ? do_critical : SECURITY_RE;
 	regres=regcomp(&sreg, crit_ptr, REG_EXTENDED);
 	if(regres!=0) {
 		regerror(regres, &ereg, rerrbuf, 64);
@@ -269,7 +269,8 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 			printf("%s\n", chld_out.line[i]);
 		}
 		/* if it is a package we care about */
-		if(regexec(&ireg, chld_out.line[i], 0, NULL, 0)==0){
+		if (strncmp(PKGINST_PREFIX, chld_out.line[i], strlen(PKGINST_PREFIX)) == 0 &&
+		    (do_include == NULL || regexec(&ireg, chld_out.line[i], 0, NULL, 0) == 0)) {
 			/* if we're not excluding, or it's not in the
 			 * list of stuff to exclude */
 			if(do_exclude==NULL ||
@@ -298,7 +299,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 			}
 		}
 	}
-	regfree(&ireg);
+	if (do_include != NULL) regfree(&ireg);
 	regfree(&sreg);
 	if(do_exclude!=NULL) regfree(&ereg);
 	free(cmdline);
@@ -348,15 +349,15 @@ char* add_to_regexp(char *expr, const char *next){
 	char *re=NULL;
 
 	if(expr==NULL){
-		re=malloc(sizeof(char)*(strlen("^Inst () ")+strlen(next)+1));
+		re=malloc(sizeof(char)*(strlen("()")+strlen(next)+1));
 		if(!re) die(STATE_UNKNOWN, "malloc failed!\n");
-		sprintf(re, "^Inst (%s) ", next);
+		sprintf(re, "(%s)", next);
 	} else {
 		/* resize it, adding an extra char for the new '|' separator */
-		re=realloc(expr, sizeof(char)*strlen(expr)+1+strlen(next)+1);
+		re=realloc(expr, sizeof(char)*(strlen(expr)+1+strlen(next)+1));
 		if(!re) die(STATE_UNKNOWN, "realloc failed!\n");
 		/* append it starting at ')' in the old re */
-		sprintf((char*)(re+strlen(re)-2), "|%s) ", next);
+		sprintf((char*)(re+strlen(re)-1), "|%s)", next);
 	}
 
 	return re;
