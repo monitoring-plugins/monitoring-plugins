@@ -1,0 +1,54 @@
+NOTE: This is only a simulation!
+      apt-get needs root privileges for real execution.
+      Also keep in mind that locking is deactivated,
+      so don't depend on the relevance to the real current situation!
+Inst libc6-dev [2.15-0ubuntu10] (2.15-0ubuntu10.2 Ubuntu:12.04/precise-security [amd64]) []
+Inst libc-dev-bin [2.15-0ubuntu10] (2.15-0ubuntu10.2 Ubuntu:12.04/precise-security [amd64]) []
+Inst linux-libc-dev [3.2.0-29.46] (3.2.0-31.50 Ubuntu:12.04/precise-security [amd64]) []
+Inst tzdata [2012e-0ubuntu0.12.04] (2012e-0ubuntu0.12.04.1 Ubuntu:12.04/precise-security [all]) []
+Conf tzdata (2012e-0ubuntu0.12.04.1 Ubuntu:12.04/precise-security [all]) []
+Inst libc-bin [2.15-0ubuntu10] (2.15-0ubuntu10.2 Ubuntu:12.04/precise-security [amd64]) [libc6:amd64 ]
+Conf libc-bin (2.15-0ubuntu10.2 Ubuntu:12.04/precise-security [amd64]) [libc6:amd64 ]
+Inst libc6 [2.15-0ubuntu10] (2.15-0ubuntu10.2 Ubuntu:12.04/precise-security [amd64])
+Conf libc6 (2.15-0ubuntu10.2 Ubuntu:12.04/precise-security [amd64])
+Inst libapt-pkg4.12 [0.8.16~exp12ubuntu10.2] (0.8.16~exp12ubuntu10.3 Ubuntu:12.04/precise-updates [amd64])
+Conf libapt-pkg4.12 (0.8.16~exp12ubuntu10.3 Ubuntu:12.04/precise-updates [amd64])
+Inst ubuntu-keyring [2011.11.21] (2011.11.21.1 Ubuntu:12.04/precise-updates [all])
+Conf ubuntu-keyring (2011.11.21.1 Ubuntu:12.04/precise-updates [all])
+Inst gpgv [1.4.11-3ubuntu2] (1.4.11-3ubuntu2.1 Ubuntu:12.04/precise-security [amd64])
+Conf gpgv (1.4.11-3ubuntu2.1 Ubuntu:12.04/precise-security [amd64])
+Inst gnupg [1.4.11-3ubuntu2] (1.4.11-3ubuntu2.1 Ubuntu:12.04/precise-security [amd64])
+Conf gnupg (1.4.11-3ubuntu2.1 Ubuntu:12.04/precise-security [amd64])
+Inst apt [0.8.16~exp12ubuntu10.2] (0.8.16~exp12ubuntu10.3 Ubuntu:12.04/precise-updates [amd64])
+Conf apt (0.8.16~exp12ubuntu10.3 Ubuntu:12.04/precise-updates [amd64])
+Inst libssl1.0.0 [1.0.1-4ubuntu5.3] (1.0.1-4ubuntu5.5 Ubuntu:12.04/precise-updates [amd64])
+Conf libssl1.0.0 (1.0.1-4ubuntu5.5 Ubuntu:12.04/precise-updates [amd64])
+Inst libapt-inst1.4 [0.8.16~exp12ubuntu10.2] (0.8.16~exp12ubuntu10.3 Ubuntu:12.04/precise-updates [amd64])
+Inst resolvconf [1.63ubuntu15] (1.63ubuntu16 Ubuntu:12.04/precise-updates [all])
+Inst libdbus-1-3 [1.4.18-1ubuntu1] (1.4.18-1ubuntu1.1 Ubuntu:12.04/precise-security [amd64])
+Inst libxml2 [2.7.8.dfsg-5.1ubuntu4.1] (2.7.8.dfsg-5.1ubuntu4.2 Ubuntu:12.04/precise-security [amd64])
+Inst multiarch-support [2.15-0ubuntu10] (2.15-0ubuntu10.2 Ubuntu:12.04/precise-security [amd64])
+Conf multiarch-support (2.15-0ubuntu10.2 Ubuntu:12.04/precise-security [amd64])
+Inst apt-utils [0.8.16~exp12ubuntu10.2] (0.8.16~exp12ubuntu10.3 Ubuntu:12.04/precise-updates [amd64])
+Inst isc-dhcp-client [4.1.ESV-R4-0ubuntu5.2] (4.1.ESV-R4-0ubuntu5.5 Ubuntu:12.04/precise-security [amd64]) []
+Inst isc-dhcp-common [4.1.ESV-R4-0ubuntu5.2] (4.1.ESV-R4-0ubuntu5.5 Ubuntu:12.04/precise-security [amd64])
+Inst dbus [1.4.18-1ubuntu1] (1.4.18-1ubuntu1.1 Ubuntu:12.04/precise-security [amd64])
+Inst linux-firmware [1.79] (1.79.1 Ubuntu:12.04/precise-updates [all])
+Inst xserver-common [2:1.11.4-0ubuntu10.7] (2:1.11.4-0ubuntu10.8 Ubuntu:12.04/precise-updates [all])
+Inst xserver-xorg-core [2:1.11.4-0ubuntu10.7] (2:1.11.4-0ubuntu10.8 Ubuntu:12.04/precise-updates [amd64])
+Inst xserver-xorg-input-synaptics [1.6.2-1ubuntu1~precise1] (1.6.2-1ubuntu1~precise2 Ubuntu:12.04/precise-updates [amd64])
+Conf libc-dev-bin (2.15-0ubuntu10.2 Ubuntu:12.04/precise-security [amd64])
+Conf linux-libc-dev (3.2.0-31.50 Ubuntu:12.04/precise-security [amd64])
+Conf libc6-dev (2.15-0ubuntu10.2 Ubuntu:12.04/precise-security [amd64])
+Conf libapt-inst1.4 (0.8.16~exp12ubuntu10.3 Ubuntu:12.04/precise-updates [amd64])
+Conf resolvconf (1.63ubuntu16 Ubuntu:12.04/precise-updates [all])
+Conf libdbus-1-3 (1.4.18-1ubuntu1.1 Ubuntu:12.04/precise-security [amd64])
+Conf libxml2 (2.7.8.dfsg-5.1ubuntu4.2 Ubuntu:12.04/precise-security [amd64])
+Conf apt-utils (0.8.16~exp12ubuntu10.3 Ubuntu:12.04/precise-updates [amd64])
+Conf isc-dhcp-common (4.1.ESV-R4-0ubuntu5.5 Ubuntu:12.04/precise-security [amd64])
+Conf isc-dhcp-client (4.1.ESV-R4-0ubuntu5.5 Ubuntu:12.04/precise-security [amd64])
+Conf dbus (1.4.18-1ubuntu1.1 Ubuntu:12.04/precise-security [amd64])
+Conf linux-firmware (1.79.1 Ubuntu:12.04/precise-updates [all])
+Conf xserver-common (2:1.11.4-0ubuntu10.8 Ubuntu:12.04/precise-updates [all])
+Conf xserver-xorg-core (2:1.11.4-0ubuntu10.8 Ubuntu:12.04/precise-updates [amd64])
+Conf xserver-xorg-input-synaptics (1.6.2-1ubuntu1~precise2 Ubuntu:12.04/precise-updates [amd64])

@@ -41,6 +41,8 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 /* some constants */
 typedef enum { UPGRADE, DIST_UPGRADE, NO_UPGRADE } upgrade_type;
 
+/* Character for hidden input file option (for testing). */
+#define INPUT_FILE_OPT CHAR_MAX+1
 /* the default opts can be overridden via the cmdline */
 #define UPGRADE_DEFAULT_OPTS "-o 'Debug::NoLocking=true' -s -qq"
 #define UPDATE_DEFAULT_OPTS "-q"
@@ -77,6 +79,7 @@ static char *update_opts = NULL; /* options to override defaults for update */
 static char *do_include = NULL;  /* regexp to only include certain packages */
 static char *do_exclude = NULL;  /* regexp to only exclude certain packages */
 static char *do_critical = NULL;  /* regexp specifying critical packages */
+static char *input_filename = NULL; /* input filename for testing */
 
 /* other global variables */
 static int stderr_warning = 0;   /* if a cmd issued output on stderr */
@@ -143,6 +146,7 @@ int process_arguments (int argc, char **argv) {
 		{"include", required_argument, 0, 'i'},
 		{"exclude", required_argument, 0, 'e'},
 		{"critical", required_argument, 0, 'c'},
+		{"input-file", required_argument, 0, INPUT_FILE_OPT},
 		{0, 0, 0, 0}
 	};
 
@@ -197,6 +201,9 @@ int process_arguments (int argc, char **argv) {
 		case 'c':
 			do_critical=add_to_regexp(do_critical, optarg);
 			break;
+		case INPUT_FILE_OPT:
+			input_filename = optarg;
+			break;
 		default:
 			/* print short usage statement if args not parsable */
 			usage5();
@@ -243,8 +250,14 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 	}
 
 	cmdline=construct_cmdline(upgrade, upgrade_opts);
-	/* run the upgrade */
-	result = np_runcmd(cmdline, &chld_out, &chld_err, 0);
+	if (input_filename != NULL) {
+		/* read input from a file for testing */
+		result = cmd_file_read(input_filename, &chld_out, 0);
+	} else {
+		/* run the upgrade */
+		result = np_runcmd(cmdline, &chld_out, &chld_err, 0);
+	}
+   
 	/* apt-get upgrade only changes exit status if there is an
 	 * internal error when run in dry-run mode.  therefore we will
 	 * treat such an error as UNKNOWN */
@@ -290,7 +303,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 	*secpkgcount=spc;
 
 	/* If we get anything on stderr, at least set warning */
-	if(chld_err.buflen){
+	if (input_filename == NULL && chld_err.buflen) {
 		stderr_warning=1;
 		result = max_state(result, STATE_WARNING);
 		if(verbose){
