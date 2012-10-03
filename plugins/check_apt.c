@@ -52,7 +52,7 @@ typedef enum { UPGRADE, DIST_UPGRADE, NO_UPGRADE } upgrade_type;
 /* String found at the beginning of the apt output lines we're interested in */
 #define PKGINST_PREFIX "Inst "
 /* the RE that catches security updates */
-#define SECURITY_RE "^[^\\(]*\\([^ ]* (Debian-Security:|Ubuntu:[^/]*/[^-]*-security)"
+#define SECURITY_RE "^[^\\(]*\\(.* (Debian-Security:|Ubuntu:[^/]*/[^-]*-security)"
 
 /* some standard functions */
 int process_arguments(int, char **);
