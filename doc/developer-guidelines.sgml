@@ -307,10 +307,10 @@
 					</row>
 					<row>
 						<entry>check_stuff -c5:6</entry>
-						<entry>The only noncritical range is 5:6</entry>
+						<entry>Critical if "stuff" is outside of 5:6</entry>
 					</row>
 					<row>
-						<entry>check_stuff -c10:20</entry>
+						<entry>check_stuff -c@10:20</entry>
 						<entry>Critical if "stuff" is less than 10 or over 20</entry>
 					</row>
 				</tbody>
