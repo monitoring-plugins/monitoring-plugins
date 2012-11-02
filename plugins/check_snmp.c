@@ -419,7 +419,7 @@ main (int argc, char **argv)
 			show = strstr (response, "Timeticks: ");
 		}
 		else
-			show = response;
+			show = response + 3;
 
 		iresult = STATE_DEPENDENT;
 
@@ -428,7 +428,7 @@ main (int argc, char **argv)
 		if (thlds[i]->warning || thlds[i]->critical || calculate_rate) {
 			ptr = strpbrk (show, "0123456789");
 			if (ptr == NULL)
-				die (STATE_UNKNOWN,_("No valid data returned"));
+				die (STATE_UNKNOWN,_("No valid data returned (%s)\n"), show);
 			response_value[i] = strtod (ptr, NULL);
 
 			if(calculate_rate) {
