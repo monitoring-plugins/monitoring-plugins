@@ -35,7 +35,7 @@ nagios_plugin *this_nagios_plugin=NULL;
 
 void np_init( char *plugin_name, int argc, char **argv ) {
 	if (this_nagios_plugin==NULL) {
-		this_nagios_plugin = malloc(sizeof(nagios_plugin));
+		this_nagios_plugin = calloc(1, sizeof(nagios_plugin));
 		if (this_nagios_plugin==NULL) {
 			die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
 			    strerror(errno));
@@ -108,7 +108,7 @@ range
 	double end;
 	char *end_str;
 
-	temp_range = (range *) malloc(sizeof(range));
+	temp_range = (range *) calloc(1, sizeof(range));
 
 	/* Set defaults */
 	temp_range->start = 0;
@@ -154,7 +154,7 @@ _set_thresholds(thresholds **my_thresholds, char *warn_string, char *critical_st
 {
 	thresholds *temp_thresholds = NULL;
 
-	if ((temp_thresholds = malloc(sizeof(thresholds))) == NULL)
+	if ((temp_thresholds = calloc(1, sizeof(thresholds))) == NULL)
 		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
 		    strerror(errno));
 
@@ -335,13 +335,13 @@ char *np_extract_value(const char *varlist, const char *name, char sep) {
 				if (tmp = index(varlist, sep)) {
 					/* Value is delimited by a comma */
 					if (tmp-varlist == 0) continue;
-					value = (char *)malloc(tmp-varlist+1);
+					value = (char *)calloc(1, tmp-varlist+1);
 					strncpy(value, varlist, tmp-varlist);
 					value[tmp-varlist] = '\0';
 				} else {
 					/* Value is delimited by a \0 */
 					if (strlen(varlist) == 0) continue;
-					value = (char *)malloc(strlen(varlist) + 1);
+					value = (char *)calloc(1, strlen(varlist) + 1);
 					strncpy(value, varlist, strlen(varlist));
 					value[strlen(varlist)] = '\0';
 				}
@@ -431,7 +431,7 @@ void np_enable_state(char *keyname, int expected_data_version) {
 	if(this_nagios_plugin==NULL)
 		die(STATE_UNKNOWN, _("This requires np_init to be called"));
 
-	this_state = (state_key *) malloc(sizeof(state_key));
+	this_state = (state_key *) calloc(1, sizeof(state_key));
 	if(this_state==NULL)
 		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
 		    strerror(errno));
@@ -482,7 +482,7 @@ state_data *np_state_read() {
 	statefile = fopen( this_nagios_plugin->state->_filename, "r" );
 	if(statefile!=NULL) {
 
-		this_state_data = (state_data *) malloc(sizeof(state_data));
+		this_state_data = (state_data *) calloc(1, sizeof(state_data));
 		if(this_state_data==NULL)
 			die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
 			    strerror(errno));
@@ -517,7 +517,7 @@ int _np_state_read_file(FILE *f) {
 	time(&current_time);
 
 	/* Note: This introduces a limit of 1024 bytes in the string data */
-	line = (char *) malloc(1024);
+	line = (char *) calloc(1, 1024);
 	if(line==NULL)
 		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
 		    strerror(errno));
