@@ -4,15 +4,16 @@
 # To update the developers-guidelines.html and put in html area
 #
 # Install in cron with something like:
-#  47 7 * * * $HOME/bin/sfwebcron
+#  47 7 * * * $HOME/bin/sfwebcron >/tmp/sfwebcron.log 2>&1 || cat /tmp/sfwebcron.log
 
-function die { echo $1; exit 1; }
+set -eu
+trap 'echo "Command failed at line $LINENO"' ERR
 
 # Set working variables
 PROJECT=nagiosplug
-IN=${HOME}/tmp_sfwebcron
-OUT_SERVER="tonvoon@shell.sf.net"
-OUT="/home/groups/n/na/nagiosplug/htdocs"
+IN=${HOME}/sfwebcron
+OUT_SERVER="tonvoon@frs.sourceforge.net"
+OUT_PATH="/home/groups/n/na/nagiosplug/htdocs"
 
 if [[ ! -e developer-guidelines.html.last ]] ; then
 	touch developer-guidelines.html.last
@@ -21,15 +22,15 @@ fi
 # Get latest dev guildelines
 [[ ! -d $IN ]] && mkdir $IN
 cd $IN
-if [[ ! -d doc ]] ; then
-	#cvs -z3 -d:pserver:anonymous@cvs1:/cvsroot/nagiosplug co nagiosplug || die "Cannot cvs"
-	svn checkout http://nagiosplug.svn.sourceforge.net/svnroot/nagiosplug/nagiosplug/trunk/doc doc
+if [[ ! -d nagios-plugins ]] ; then
+	git clone https://github.com/nagios-plugins/nagios-plugins.git nagios-plugins
 fi
-cd doc
-svn update
+cd nagios-plugins/doc
+git pull
 
 make
 if [[ developer-guidelines.html -nt developer-guidelines.html.last ]] ; then
-	scp developer-guidelines.{html,sgml} $OUT_SERVER:$OUT
+	rsync -av developer-guidelines.{html,sgml} $OUT_SERVER:$OUT_PATH/
 	touch developer-guidelines.html.last
 fi
+
