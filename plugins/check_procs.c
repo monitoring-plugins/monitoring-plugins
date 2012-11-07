@@ -43,6 +43,14 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include <pwd.h>
 
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+typedef struct stat struct_stat_t;
+#else
+/* won't be used anyway */
+typedef struct { dev_t dev; ino_t ino; } struct_stat_t;
+#endif
+
 int process_arguments (int, char **);
 int validate_arguments (void);
 int convert_to_seconds (char *); 
@@ -95,8 +103,23 @@ char *fmt;
 char *fails;
 char tmp[MAX_INPUT_BUFFER];
 int kthread_filter = 0;
+int usepid = 0; /* whether to test for pid or /proc/pid/exe */
 
 FILE *ps_input = NULL;
+
+static int
+stat_exe (const pid_t pid, struct_stat_t *buf) {
+#if defined(HAVE_PROC_PID_EXE) && defined(HAVE_SYS_STAT_H)
+	char *path;
+	int ret;
+	xasprintf(&path, "/proc/%d/exe", pid);
+	ret = stat(path, buf);
+	free(path);
+	return ret;
+#else
+	return -1;
+#endif
+}
 
 
 int
@@ -107,6 +130,9 @@ main (int argc, char **argv)
 	char *procprog;
 
 	pid_t mypid = 0;
+	struct_stat_t statbuf;
+	dev_t mydev = 0;
+	ino_t myino = 0;
 	int procuid = 0;
 	pid_t procpid = 0;
 	pid_t procppid = 0;
@@ -150,8 +176,16 @@ main (int argc, char **argv)
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
-	/* get our pid */
+	/* find ourself */
 	mypid = getpid();
+	if (usepid || stat_exe(mypid, &statbuf) == -1) {
+		/* usepid might have been set by -T */
+		usepid = 1;
+	} else {
+		usepid = 0;
+		mydev = statbuf.st_dev;
+		myino = statbuf.st_ino;
+	}
 
 	/* Set signal handling and alarm timeout */
 	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR) {
@@ -206,7 +240,12 @@ main (int argc, char **argv)
 					procetime, procprog, procargs);
 
 			/* Ignore self */
-			if (mypid == procpid) continue;
+			if ((usepid && mypid == procpid) ||
+				(!usepid && stat_exe(procpid, &statbuf) != -1 && statbuf.st_dev == mydev && statbuf.st_ino == myino)) {
+				if (verbose >= 3)
+					 printf("not considering - is myself\n");
+				continue;
+			}
 
 			/* filter kernel threads (childs of KTHREAD_PARENT)*/
 			/* TODO adapt for other OSes than GNU/Linux
@@ -366,6 +405,7 @@ process_arguments (int argc, char **argv)
 		{"ereg-argument-array", required_argument, 0, CHAR_MAX+1},
 		{"input-file", required_argument, 0, CHAR_MAX+2},
 		{"no-kthreads", required_argument, 0, 'k'},
+		{"traditional-filter", no_argument, 0, 'T'},
 		{0, 0, 0, 0}
 	};
 
@@ -374,7 +414,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvhkt:c:w:p:s:u:C:a:z:r:m:P:",
+		c = getopt_long (argc, argv, "Vvhkt:c:w:p:s:u:C:a:z:r:m:P:T",
 			longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -523,6 +563,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'v':									/* command */
 			verbose++;
+			break;
+		case 'T':
+			usepid = 1;
 			break;
 		case CHAR_MAX+2:
 			input_filename = optarg;
@@ -673,6 +716,9 @@ print_help (void)
 
 	printf (" %s\n", "-v, --verbose");
   printf ("    %s\n", _("Extra information. Up to 3 verbosity levels"));
+
+  printf (" %s\n", "-T, --traditional");
+  printf ("   %s\n", _("Filter own process the traditional way by PID instead of /proc/pid/exe"));
 
   printf ("\n");
 	printf ("%s\n", "Filters:");
