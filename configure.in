@@ -1632,6 +1632,12 @@ if test -n "$ac_cv_proc_meminfo"; then
 	EXTRAS="$EXTRAS check_swap"
 fi
 
+AC_MSG_CHECKING([for /proc/pid/exe])
+if [readlink /proc/$$/exe > /dev/null 2>&1]; then
+    AC_MSG_RESULT([found])
+    AC_DEFINE(HAVE_PROC_PID_EXE,1,[Define if we have /proc/pid/exe])
+fi
+
 AC_PATH_PROG(PATH_TO_DIG,dig)
 AC_ARG_WITH(dig_command,
             ACX_HELP_STRING([--with-dig-command=PATH],
