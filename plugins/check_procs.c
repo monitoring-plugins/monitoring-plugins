@@ -48,7 +48,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 typedef struct stat struct_stat_t;
 #else
 /* won't be used anyway */
-typedef struct { dev_t dev; ino_t ino; } struct_stat_t;
+typedef struct { dev_t st_dev; ino_t st_ino; } struct_stat_t;
 #endif
 
 int process_arguments (int, char **);
