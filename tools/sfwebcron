@@ -12,25 +12,24 @@ trap 'echo "Command failed at line $LINENO"' ERR
 # Set working variables
 PROJECT=nagiosplug
 IN=${HOME}/sfwebcron
+PROBE="developer-guidelines.html.last"
 OUT_SERVER="tonvoon@frs.sourceforge.net"
 OUT_PATH="/home/groups/n/na/nagiosplug/htdocs"
-
-if [[ ! -e developer-guidelines.html.last ]] ; then
-	touch developer-guidelines.html.last
-fi
 
 # Get latest dev guildelines
 [[ ! -d $IN ]] && mkdir $IN
 cd $IN
-if [[ ! -d nagios-plugins ]] ; then
+if [[ ! -d nagios-plugins ]]
+then
 	git clone https://github.com/nagios-plugins/nagios-plugins.git nagios-plugins
 fi
 cd nagios-plugins/doc
 git pull
 
 make
-if [[ developer-guidelines.html -nt developer-guidelines.html.last ]] ; then
+if [[ ! -e $PROBE || developer-guidelines.html -nt $PROBE ]]
+then
 	rsync -av developer-guidelines.{html,sgml} $OUT_SERVER:$OUT_PATH/
-	touch developer-guidelines.html.last
+	touch $PROBE
 fi
 
