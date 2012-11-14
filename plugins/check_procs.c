@@ -300,7 +300,7 @@ main (int argc, char **argv)
 		printf (" [%s]", fails);
 
 	if (metric == METRIC_PROCS)
-		printf (" | procs=%d;%s;%s;0;\n", procs,
+		printf (" | procs=%d;%s;%s;0;", procs,
 				warning_range ? warning_range : "",
 				critical_range ? critical_range : "");
 	else
