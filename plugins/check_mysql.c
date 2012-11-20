@@ -166,21 +166,24 @@ main (int argc, char **argv)
 		while ( (row = mysql_fetch_row (res)) != NULL) {
 			int i;
 
-			for(i = 0; i < LENGTH_METRIC_UNIT - 1; i++) {
+			for(i = 0; i < LENGTH_METRIC_UNIT; i++) {
 				if (strcmp(row[0], metric_unit[i]) == 0) {
-					xasprintf(&perf, "%s %s", perf, perfdata(metric_unit[i],
+					xasprintf(&perf, "%s%s ", perf, perfdata(metric_unit[i],
 						atol(row[1]), "", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0));
 					continue;
 				}
 			}
-			for(i = 0; i < LENGTH_METRIC_COUNTER - 1; i++) {
+			for(i = 0; i < LENGTH_METRIC_COUNTER; i++) {
 				if (strcmp(row[0], metric_counter[i]) == 0) {
-					xasprintf(&perf, "%s %s", perf, perfdata(metric_counter[i],
+					xasprintf(&perf, "%s%s ", perf, perfdata(metric_counter[i],
 						atol(row[1]), "c", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0));
 					continue;
 				}
 			}
 		}
+		/* remove trailing space */
+                if (strlen(perf) > 0)
+                    perf[strlen(perf) - 1] = '\0';
 	}
 
 	if(check_slave) {
