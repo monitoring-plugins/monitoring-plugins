@@ -56,9 +56,8 @@ int verbose = 0;
 static double warning_time = 0;
 static double critical_time = 0;
 
-#define LENGTH_METRIC_UNIT 7
+#define LENGTH_METRIC_UNIT 6
 static const char *metric_unit[LENGTH_METRIC_UNIT] = {
-	"Connections",
 	"Open_files",
 	"Open_tables",
 	"Qcache_free_memory",
@@ -67,8 +66,9 @@ static const char *metric_unit[LENGTH_METRIC_UNIT] = {
 	"Threads_running"
 };
 
-#define LENGTH_METRIC_COUNTER 8
+#define LENGTH_METRIC_COUNTER 9
 static const char *metric_counter[LENGTH_METRIC_COUNTER] = {
+	"Connections",
 	"Qcache_hits",
 	"Qcache_inserts",
 	"Qcache_lowmem_prunes",
