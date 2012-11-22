@@ -39,12 +39,12 @@ EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 	check_nagios check_by_ssh check_dns check_nt check_ide_smart	\
 	check_procs check_mysql_query check_apt check_dbi
 
-EXTRA_DIST = t tests utils.c netutils.c sslutils.c popen.c utils.h netutils.h \
-	popen.h common.h runcmd.c runcmd.h
+EXTRA_DIST = t tests utils.c netutils.c sslutils.c popen.c help.c \
+	utils.h netutils.h popen.h common.h runcmd.c runcmd.h help.h
 
 PLUGINHDRS = common.h
 
-BASEOBJS = utils.o ../lib/libnagiosplug.a ../gl/libgnu.a
+BASEOBJS = utils.o help.o ../lib/libnagiosplug.a ../gl/libgnu.a
 NETOBJS = netutils.o $(BASEOBJS) $(EXTRA_NETOBJS)
 SSLOBJS = sslutils.o
 NETLIBS = $(NETOBJS) $(SOCKETLIBS)
@@ -158,6 +158,8 @@ popen.o: popen.c popen.h $(PLUGINHDRS)
 runcmd.o: runcmd.c runcmd.h $(PLUGINHDRS)
 
 utils.o: utils.c utils.h $(PLUGINHDRS)
+
+help.o: help.c help.h
 
 netutils.o: netutils.c netutils.h $(PLUGINHDRS)
 sslutils.o: sslutils.c netutils.h $(PLUGINHDRS)
