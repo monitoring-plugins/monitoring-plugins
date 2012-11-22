@@ -24,6 +24,8 @@ suite of plugins. */
 #define np_extra_opts(acptr,av,pr) av
 #endif
 
+#include "help.h"
+
 /* Standardize version information, termination */
 
 void support (void);
