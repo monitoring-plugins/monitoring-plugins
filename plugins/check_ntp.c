@@ -845,6 +845,7 @@ void print_help(void){
 	printf (UT_HELP_VRSN);
 	printf (UT_EXTRA_OPTS);
 	printf (UT_HOST_PORT, 'p', "123");
+	printf (UT_IPv46);
 	printf (" %s\n", "-w, --warning=THRESHOLD");
 	printf ("    %s\n", _("Offset to result in warning status (seconds)"));
 	printf (" %s\n", "-c, --critical=THRESHOLD");
@@ -881,5 +882,5 @@ print_usage(void)
 	printf ("%s\n", _("WARNING: check_ntp is deprecated. Please use check_ntp_peer or"));
 	printf ("%s\n\n", _("check_ntp_time instead."));
 	printf ("%s\n", _("Usage:"));
-	printf(" %s -H <host> [-w <warn>] [-c <crit>] [-j <warn>] [-k <crit>] [-v verbose]\n", progname);
+	printf(" %s -H <host> [-w <warn>] [-c <crit>] [-j <warn>] [-k <crit>] [-4|-6] [-v verbose]\n", progname);
 }

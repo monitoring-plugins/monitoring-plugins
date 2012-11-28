@@ -602,6 +602,7 @@ void print_help(void){
 	print_usage();
 	printf (UT_HELP_VRSN);
 	printf (UT_EXTRA_OPTS);
+	printf (UT_IPv46);
 	printf (UT_HOST_PORT, 'p', "123");
 	printf (" %s\n", "-q, --quiet");
 	printf ("    %s\n", _("Returns UNKNOWN instead of CRITICAL if offset cannot be found"));
@@ -635,6 +636,6 @@ void
 print_usage(void)
 {
 	printf ("%s\n", _("Usage:"));
-	printf(" %s -H <host> [-w <warn>] [-c <crit>] [-v verbose]\n", progname);
+	printf(" %s -H <host> [-4|-6] [-w <warn>] [-c <crit>] [-v verbose]\n", progname);
 }
 

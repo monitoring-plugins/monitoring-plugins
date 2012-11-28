@@ -475,6 +475,6 @@ void
 print_usage (void)
 {
 	printf ("%s\n", _("Usage:"));
-	printf ("%s [-H <host>] [-P <port>] [-c <critical time>] [-w <warning time>]\n", progname);
+	printf ("%s [-H <host>] [-4|-6] [-P <port>] [-c <critical time>] [-w <warning time>]\n", progname);
 	printf (" [-t <timeout>] [-d <database>] [-l <logname>] [-p <password>]\n");
 }
