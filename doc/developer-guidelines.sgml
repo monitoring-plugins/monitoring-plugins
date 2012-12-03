@@ -303,7 +303,7 @@
 					</row>
 					<row>
 						<entry>check_stuff -w~:0 -c10</entry>
-						<entry>Critical if "stuff" is above 10; Warn if "stuff" is above zero</entry>
+						<entry>Critical if "stuff" is above 10; Warn if "stuff" is above zero (will be critical if "stuff" is less than 0)</entry>
 					</row>
 					<row>
 						<entry>check_stuff -c5:6</entry>
