@@ -157,6 +157,12 @@ AC_CHECK_LIB(dce,main,SOCKETLIBS="$SOCKETLIBS -ldce")
 AC_CHECK_LIB(nsl,main,SOCKETLIBS="$SOCKETLIBS -lnsl")
 AC_CHECK_LIB(socket,socket,SOCKETLIBS="$SOCKETLIBS -lsocket")
 AC_CHECK_LIB(resolv,main,SOCKETLIBS="$SOCKETLIBS -lresolv")
+
+
+
+
+
+
 AC_SUBST(SOCKETLIBS)
 
 dnl
@@ -203,6 +209,20 @@ if test "$enable_extra_opts" = "yes" ; then
 		AC_SUBST(EXTRA_TEST)
 	fi
 fi
+
+
+dnl Check for ssh libraries
+
+AC_CHECK_LIB(ssh,ssh_connect)
+if test "$ac_cv_lib_ssh_ssh_connect" = "yes"; then
+	SSHLIB="-lssh"
+  AC_SUBST(SSHLIB)
+  AC_DEFINE(HAVE_SSH,1,[Define if SSL libraries are found])
+else
+    AC_MSG_WARN([Skipping check_ssh plugin])
+    AC_MSG_WARN([install ssh libs to compile this plugin (see REQUIREMENTS).]) 
+fi
+
 
 dnl Check for PostgreSQL libraries
 _SAVEDLIBS="$LIBS"
