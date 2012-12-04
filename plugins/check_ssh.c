@@ -330,7 +330,7 @@ print_help (void)
 	printf (" %s\n", "-r, --remote-version=STRING");
   printf ("    %s\n", _("Warn if remote version is lower than value e.g.: 5.5.0"));
   
-  printf (" %s\n", "-f, --fingerprint=STRING");
+  printf (" %s\n", "-f, --fingerprint=STRING (e.g.: a247e883d98bf5c41923470de0bfa826)");
   printf ("    %s\n", _("Critical if remote fingerprint is not equal to supplied"));
 
 	printf (UT_VERBOSE);
