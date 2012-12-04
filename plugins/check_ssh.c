@@ -274,7 +274,16 @@ ssh_connect_p (char *haddr, int hport, char *remote_version, char * remote_finge
     	}
     }
     
-    printf("Fingerprint: %s - Version: %d\n", fingerprint, version);
+    
+    elapsed_time = (double)deltime(tv) / 1.0e6;
+
+		printf
+			(_("SSH OK - fingerprint: %s (Version %d) | %s\n"),
+			 fingerprint, version, fperfdata("time", elapsed_time, "s",
+			 FALSE, 0, FALSE, 0, TRUE, 0, TRUE, (int)socket_timeout));
+			 
+			 
+    //printf("Fingerprint: %s - Version: %d\n", fingerprint, version);
    	ssh_disconnect(my_ssh_session);
   	ssh_free(my_ssh_session);
     exit(STATE_OK);
