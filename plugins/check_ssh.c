@@ -32,6 +32,9 @@ const char *progname = "check_ssh";
 const char *copyright = "2000-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
+
+
+#include <libssh/libssh.h>
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
@@ -46,6 +49,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 int port = -1;
 char *server_name = NULL;
 char *remote_version = NULL;
+char *remote_fingerprint = NULL;
 int verbose = FALSE;
 
 int process_arguments (int, char **);
@@ -53,7 +57,7 @@ int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
 
-int ssh_connect (char *haddr, int hport, char *remote_version);
+int ssh_connect_p (char *haddr, int hport, char *remote_version, char *remote_fingerprint);
 
 
 
@@ -78,7 +82,7 @@ main (int argc, char **argv)
 	alarm (socket_timeout);
 
 	/* ssh_connect exits if error is found */
-	result = ssh_connect (server_name, port, remote_version);
+	result = ssh_connect_p (server_name, port, remote_version, remote_fingerprint);
 
 	alarm (0);
 
@@ -105,6 +109,7 @@ process_arguments (int argc, char **argv)
 		{"timeout", required_argument, 0, 't'},
 		{"verbose", no_argument, 0, 'v'},
 		{"remote-version", required_argument, 0, 'r'},
+		{"fingerprint", required_argument, 0, 'f'},
 		{0, 0, 0, 0}
 	};
 
@@ -116,7 +121,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "+Vhv46t:r:H:p:", longopts, &option);
+		c = getopt_long (argc, argv, "+Vhv46t:r:f:H:p:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -151,6 +156,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'r':									/* remote version */
 			remote_version = optarg;
+			break;
+		case 'f':									/* remote version */
+			remote_fingerprint = optarg;
 			break;
 		case 'H':									/* host */
 			if (is_host (optarg) == FALSE)
@@ -206,68 +214,94 @@ validate_arguments (void)
 
 
 int
-ssh_connect (char *haddr, int hport, char *remote_version)
+ssh_connect_p (char *haddr, int hport, char *remote_version, char * remote_fingerprint)
 {
-	int sd;
-	int result;
-	char *output = NULL;
-	char *buffer = NULL;
-	char *ssh_proto = NULL;
-	char *ssh_server = NULL;
-	static char *rev_no = VERSION;
+
 	struct timeval tv;
 	double elapsed_time;
 
+	ssh_session my_ssh_session;
+  int  version;
+  int myversion;
+  int hlen;
+  int rc;
+  int state;
+  int i;
+  unsigned char *hash = NULL;
+  char fingerprint[128];
+  
+  int sshv1,sshv2,sshv3;
+  
+
 	gettimeofday(&tv, NULL);
 
-	result = my_tcp_connect (haddr, hport, &sd);
+	 my_ssh_session = ssh_new();
 
-	if (result != STATE_OK)
-		return result;
+    if (my_ssh_session == NULL)
+    return STATE_CRITICAL;
+    
+ 
+  	ssh_options_set(my_ssh_session, SSH_OPTIONS_HOST, haddr);
+  	ssh_options_set(my_ssh_session, SSH_OPTIONS_PORT, &hport);
+ 		rc = ssh_connect(my_ssh_session);
+  	if (rc != SSH_OK)
+  	{
+    	printf("Connect to Server failed\n");
+			exit (STATE_CRITICAL);
+  	}
+  	
+  	state = ssh_is_server_known(my_ssh_session);
+  	hlen = ssh_get_pubkey_hash(my_ssh_session, &hash);
 
-	output = (char *) malloc (BUFF_SZ + 1);
-	memset (output, 0, BUFF_SZ + 1);
-	recv (sd, output, BUFF_SZ, 0);
-	if (strncmp (output, "SSH", 3)) {
-		printf (_("Server answer: %s"), output);
-		close(sd);
-		exit (STATE_CRITICAL);
-	}
-	else {
-		strip (output);
-		if (verbose)
-			printf ("%s\n", output);
-		ssh_proto = output + 4;
-		ssh_server = ssh_proto + strspn (ssh_proto, "-0123456789. ");
-		ssh_proto[strspn (ssh_proto, "0123456789. ")] = 0;
-
-		xasprintf (&buffer, "SSH-%s-check_ssh_%s\r\n", ssh_proto, rev_no);
-		send (sd, buffer, strlen (buffer), MSG_DONTWAIT);
-		if (verbose)
-			printf ("%s\n", buffer);
-
-		if (remote_version && strcmp(remote_version, ssh_server)) {
-			printf
-				(_("SSH WARNING - %s (protocol %s) version mismatch, expected '%s'\n"),
-				 ssh_server, ssh_proto, remote_version);
-			close(sd);
-			exit (STATE_WARNING);
-		}
-
-		elapsed_time = (double)deltime(tv) / 1.0e6;
+	
+		
+		//Get the finger print as a string
+		fingerprint[0]='\0';	
+    for(i = 0; i < hlen; i++) {
+        sprintf(fingerprint + strlen(fingerprint), "%02x", (unsigned char)hash[i]);
+        
+    }
+    version = ssh_get_openssh_version(my_ssh_session);
+    if(remote_fingerprint && strcmp(remote_fingerprint, fingerprint)) {
+    	printf("SSH CRITICAL - Fingerprint (%s) mismatched %s\n", remote_fingerprint,fingerprint);
+    	exit(STATE_CRITICAL);
+    }
+    if(remote_version && sscanf(remote_version, "%d.%d.%d", &sshv1, &sshv2, &sshv3)) {
+    	myversion = SSH_VERSION_INT(sshv1, sshv2, sshv3);	
+    	if(version < myversion) {
+    		printf("SSH WARNING version on server is below %s\n", remote_version);
+    		exit(STATE_CRITICAL);
+    	}
+    }
+    
+    
+    elapsed_time = (double)deltime(tv) / 1.0e6;
 
 		printf
-			(_("SSH OK - %s (protocol %s) | %s\n"),
-			 ssh_server, ssh_proto, fperfdata("time", elapsed_time, "s",
+			(_("SSH OK - fingerprint: %s (Version %d) | %s\n"),
+			 fingerprint, version, fperfdata("time", elapsed_time, "s",
 			 FALSE, 0, FALSE, 0, TRUE, 0, TRUE, (int)socket_timeout));
-		close(sd);
-		exit (STATE_OK);
-	}
+			 
+			 
+    //printf("Fingerprint: %s - Version: %d\n", fingerprint, version);
+   	ssh_disconnect(my_ssh_session);
+  	ssh_free(my_ssh_session);
+    exit(STATE_OK);
+  	
+  	
+  	
+  
+  	
+  	
+  	
+  	
+	
+	
 }
 
 
 
-void
+void 
 print_help (void)
 {
 	char *myport;
@@ -275,7 +309,7 @@ print_help (void)
 
 	print_revision (progname, NP_VERSION);
 
-	printf ("Copyright (c) 1999 Remi Paulmier <remi@sinfomic.fr>\n");
+	printf ("Helmut Januschka <helmut@januschka.com>\n");
 	printf (COPYRIGHT, copyright, email);
 
 	printf ("%s\n", _("Try to connect to an SSH server at specified server and port"));
@@ -294,7 +328,10 @@ print_help (void)
 	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 	printf (" %s\n", "-r, --remote-version=STRING");
-  printf ("    %s\n", _("Warn if string doesn't match expected server version (ex: OpenSSH_3.9p1)"));
+  printf ("    %s\n", _("Warn if remote version is lower than value e.g.: 5.5.0"));
+  
+  printf (" %s\n", "-f, --fingerprint=STRING (e.g.: a247e883d98bf5c41923470de0bfa826)");
+  printf ("    %s\n", _("Critical if remote fingerprint is not equal to supplied"));
 
 	printf (UT_VERBOSE);
 
@@ -307,6 +344,6 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-	printf ("%s  [-4|-6] [-t <timeout>] [-r <remote version>] [-p <port>] <host>\n", progname);
+	printf ("%s  [-4|-6] [-t <timeout>] [-f <fingerprint>] [-r <remote version>] [-p <port>] <host>\n", progname);
 }
 

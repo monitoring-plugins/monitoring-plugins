@@ -157,6 +157,12 @@ AC_CHECK_LIB(dce,main,SOCKETLIBS="$SOCKETLIBS -ldce")
 AC_CHECK_LIB(nsl,main,SOCKETLIBS="$SOCKETLIBS -lnsl")
 AC_CHECK_LIB(socket,socket,SOCKETLIBS="$SOCKETLIBS -lsocket")
 AC_CHECK_LIB(resolv,main,SOCKETLIBS="$SOCKETLIBS -lresolv")
+AC_CHECK_LIB(ssh,ssh_connect,SSHLIB="-lssh -DHAVE_SSH",[
+        echo "Error! You need to have libssh around."
+        exit -1
+        ])
+
+AC_SUBST(SSHLIB)
 AC_SUBST(SOCKETLIBS)
 
 dnl
