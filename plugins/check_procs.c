@@ -42,6 +42,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "regex.h"
 
 #include <pwd.h>
+#include <errno.h>
 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -157,6 +158,7 @@ main (int argc, char **argv)
 	int crit = 0; /* number of processes in crit state */
 	int i = 0, j = 0;
 	int result = STATE_UNKNOWN;
+	int ret;
 	output chld_out, chld_err;
 
 	setlocale (LC_ALL, "");
@@ -241,7 +243,8 @@ main (int argc, char **argv)
 
 			/* Ignore self */
 			if ((usepid && mypid == procpid) ||
-				(!usepid && stat_exe(procpid, &statbuf) != -1 && statbuf.st_dev == mydev && statbuf.st_ino == myino)) {
+				(!usepid && ((ret = stat_exe(procpid, &statbuf) != -1) && statbuf.st_dev == mydev && statbuf.st_ino == myino) ||
+				 (ret == -1 && errno == ENOENT))) {
 				if (verbose >= 3)
 					 printf("not considering - is myself\n");
 				continue;
