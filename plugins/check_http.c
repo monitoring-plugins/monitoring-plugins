@@ -1042,11 +1042,11 @@ check_http (void)
   page += (size_t) strspn (page, "\r\n");
   header[pos - header] = 0;
 
-  page2 = (char *) calloc(strlen(page)+1, 1);
-  page2_ptr = page2;
-
   if (chunking && check_if_chunked(header))
   {
+    page2 = (char *) malloc(strlen(page)+1);
+    page2_ptr = page2;
+
     while (chunk_length = strtol(page, NULL, 16))
     {
        /* The +2's reference the trailing CRLF at the end of each line */
