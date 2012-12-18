@@ -69,6 +69,7 @@ X509 *server_cert;
 #  define my_send(buf, len) send(sd, buf, len, 0)
 #endif /* HAVE_SSL */
 int no_body = FALSE;
+int chunking = FALSE;
 int maximum_age = -1;
 
 enum {
@@ -216,6 +217,7 @@ process_arguments (int argc, char **argv)
     {"invert-regex", no_argument, NULL, INVERT_REGEX},
     {"use-ipv4", no_argument, 0, '4'},
     {"use-ipv6", no_argument, 0, '6'},
+    {"chunking", no_argument, 0, 'U'},
     {0, 0, 0, 0}
   };
 
@@ -236,7 +238,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:e:p:s:R:r:u:f:C:nlLS::m:M:N", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:e:p:s:R:r:u:f:C:nlLS::m:M:N:U", longopts, &option);
     if (c == -1 || c == EOF)
       break;
 
@@ -396,6 +398,9 @@ process_arguments (int argc, char **argv)
       break;
     case 'T': /* Content-type */
       xasprintf (&http_content_type, "%s", optarg);
+      break;
+    case 'U': /* chunking */
+      chunking = TRUE;
       break;
     case 'l': /* linespan */
       cflags &= ~REG_NEWLINE;
@@ -632,6 +637,63 @@ expected_statuscode (const char *reply, const char *statuscodes)
 }
 
 static int
+check_if_chunked (const char *headers)
+{
+  const char *s;
+  char *server_date = 0;
+  char *document_date = 0;
+  int date_result = STATE_OK;
+
+  s = headers;
+  while (*s) {
+    const char *field = s;
+    const char *value = 0;
+
+    /* Find the end of the header field */
+    while (*s && !isspace(*s) && *s != ':')
+      s++;
+
+    /* Remember the header value, if any. */
+    if (*s == ':')
+      value = ++s;
+
+    /* Skip to the end of the header, including continuation lines. */
+    while (*s && !(*s == '\n' && (s[1] != ' ' && s[1] != '\t')))
+      s++;
+
+    /* Avoid stepping over end-of-string marker */
+    if (*s)
+      s++;
+
+    /* Process this header. */
+    if (value && value > field+2) {
+      char *ff = (char *) malloc (value-field);
+      char *ss = ff;
+      while (field < value-1)
+        *ss++ = tolower(*field++);
+      *ss++ = 0;
+
+      if (!strcmp (ff, "transfer-encoding")) {
+        const char *e;
+        while (*value && isspace (*value))
+          value++;
+        for (e = value; *e && *e != '\r' && *e != '\n'; e++)
+          ;
+
+	ss = (char *) malloc (e - value + 1);
+        strncpy (ss, value, e - value);
+        ss[e - value] = 0;
+
+        if (!strcmp(ss,"chunked"))
+		return 1;
+      }
+      free (ff);
+    }
+  }
+  return 0;
+}
+
+static int
 check_document_dates (const char *headers, char **msg)
 {
   const char *s;
@@ -814,6 +876,10 @@ check_http (void)
   double elapsed_time;
   int page_len = 0;
   int result = STATE_OK;
+  char *page2;
+  char *page2_ptr;
+  int chunk_length = 0;
+
 
   /* try to connect to the host at the given port number */
   if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK)
@@ -975,6 +1041,24 @@ check_http (void)
   }
   page += (size_t) strspn (page, "\r\n");
   header[pos - header] = 0;
+
+  page2 = (char *) calloc(strlen(page)+1, 1);
+  page2_ptr = page2;
+
+  if (chunking && check_if_chunked(header))
+  {
+    while (chunk_length = strtol(page, NULL, 16))
+    {
+       /* The +2's reference the trailing CRLF at the end of each line */
+       page = strstr(page, "\r\n") + 2;
+       strncpy(page2_ptr, page, chunk_length);
+       page2_ptr += chunk_length;
+       page += chunk_length + 2;
+    }
+    *page2_ptr = '\0';
+    page = page2;
+    pagesize = strlen(page);
+  }
   if (verbose)
     printf ("**** HEADER ****\n%s\n**** CONTENT ****\n%s\n", header,
                 (no_body ? "  [[ skipped ]]" : page));
@@ -1377,7 +1461,9 @@ print_help (void)
   printf ("    %s\n", _("Warn if document is more than SECONDS old. the number can also be of"));
   printf ("    %s\n", _("the form \"10m\" for minutes, \"10h\" for hours, or \"10d\" for days."));
   printf (" %s\n", "-T, --content-type=STRING");
-  printf ("    %s\n", _("specify Content-Type header media type when POSTing\n"));
+  printf ("    %s\n", _("specify Content-Type header media type when POSTing"));
+  printf (" %s\n", "-U, --chunking");
+  printf ("    %s\n", _("Decode chunked body if returned Content-Encoding header is set to 'chunked'.\n"));
 
   printf (" %s\n", "-l, --linespan");
   printf ("    %s\n", _("Allow regex to span newlines (must precede -r or -R)"));
