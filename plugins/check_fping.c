@@ -52,6 +52,8 @@ void print_help (void);
 void print_usage (void);
 
 char *server_name = NULL;
+char *sourceip = NULL;
+char *sourceif = NULL;
 int packet_size = PACKET_SIZE;
 int packet_count = PACKET_COUNT;
 int target_timeout = 0;
@@ -95,6 +97,10 @@ main (int argc, char **argv)
     xasprintf(&option_string, "%s-t %d ", option_string, target_timeout);
   if (packet_interval)
     xasprintf(&option_string, "%s-p %d ", option_string, packet_interval);
+  if (sourceip)
+    xasprintf(&option_string, "%s-S %s ", option_string, sourceip);
+  if (sourceif)
+    xasprintf(&option_string, "%s-I %s ", option_string, sourceif);
 
   xasprintf (&command_line, "%s %s-b %d -c %d %s", PATH_TO_FPING,
             option_string, packet_size, packet_count, server);
@@ -232,6 +238,8 @@ process_arguments (int argc, char **argv)
   int option = 0;
   static struct option longopts[] = {
     {"hostname", required_argument, 0, 'H'},
+    {"sourceip", required_argument, 0, 'S'},
+    {"sourceif", required_argument, 0, 'I'},
     {"critical", required_argument, 0, 'c'},
     {"warning", required_argument, 0, 'w'},
     {"bytes", required_argument, 0, 'b'},
@@ -258,7 +266,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "+hVvH:c:w:b:n:T:i:", longopts, &option);
+    c = getopt_long (argc, argv, "+hVvH:S:c:w:b:n:T:i:I:", longopts, &option);
 
     if (c == -1 || c == EOF || c == 1)
       break;
@@ -280,6 +288,15 @@ process_arguments (int argc, char **argv)
         usage2 (_("Invalid hostname/address"), optarg);
       }
       server_name = strscpy (server_name, optarg);
+      break;
+    case 'S':                 /* sourceip */
+      if (is_host (optarg) == FALSE) {
+        usage2 (_("Invalid hostname/address"), optarg);
+      }
+      sourceip = strscpy (sourceip, optarg);
+      break;
+    case 'I':                 /* sourceip */
+      sourceif = strscpy (sourceif, optarg);
       break;
     case 'c':
       get_threshold (optarg, rv);
@@ -416,6 +433,10 @@ print_help (void)
   printf ("    %s (default: fping's default for -t)\n", _("Target timeout (ms)"),PACKET_COUNT);
   printf (" %s\n", "-i, --interval=INTEGER");
   printf ("    %s (default: fping's default for -p)\n", _("Interval (ms) between sending packets"),PACKET_COUNT);
+  printf (" %s\n", "-S, --sourceip=HOST");
+  printf ("    %s\n", _("name or IP Address of sourceip"));
+  printf (" %s\n", "-I, --sourceif=IF");
+  printf ("    %s\n", _("source interface name"));
   printf (UT_VERBOSE);
   printf ("\n");
   printf (" %s\n", _("THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel time (ms)"));
