@@ -344,7 +344,11 @@ double offset_request(const char *host, int *status){
 			die(STATE_UNKNOWN, "can not create new socket");
 		}
 		if(connect(socklist[i], ai_tmp->ai_addr, ai_tmp->ai_addrlen)){
-			die(STATE_UNKNOWN, "can't create socket connection");
+			/* don't die here, because it is enough if there is one server
+			   answering in time. This also would break for dual ipv4/6 stacked
+			   ntp servers when the client only supports on of them.
+			 */
+			DBG(printf("can't create socket connection on peer %i: %s\n", i, strerror(errno)));
 		} else {
 			ufds[i].fd=socklist[i];
 			ufds[i].events=POLLIN;
@@ -602,6 +606,7 @@ void print_help(void){
 	print_usage();
 	printf (UT_HELP_VRSN);
 	printf (UT_EXTRA_OPTS);
+	printf (UT_IPv46);
 	printf (UT_HOST_PORT, 'p', "123");
 	printf (" %s\n", "-q, --quiet");
 	printf ("    %s\n", _("Returns UNKNOWN instead of CRITICAL if offset cannot be found"));
@@ -635,6 +640,6 @@ void
 print_usage(void)
 {
 	printf ("%s\n", _("Usage:"));
-	printf(" %s -H <host> [-w <warn>] [-c <crit>] [-v verbose]\n", progname);
+	printf(" %s -H <host> [-4|-6] [-w <warn>] [-c <crit>] [-v verbose]\n", progname);
 }
 

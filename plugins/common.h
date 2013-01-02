@@ -141,6 +141,7 @@
 #ifdef HAVE_GNUTLS_OPENSSL_H
 #  include <gnutls/openssl.h>
 #else
+#  define OPENSSL_LOAD_CONF /* See the OPENSSL_config(3) man page. */
 #  ifdef HAVE_SSL_H
 #    include <rsa.h>
 #    include <crypto.h>

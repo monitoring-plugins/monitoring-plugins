@@ -445,11 +445,6 @@ print_help (void)
 	printf (UT_SUPPORT);
 }
 
-/* todo
-* add option -4 and -6 to the long manual
-*
-*/
-
 void
 print_usage (void)
 {

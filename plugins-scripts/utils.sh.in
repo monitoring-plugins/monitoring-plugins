@@ -23,7 +23,16 @@ support() {
 
 #
 # check_range takes a value and a range string, returning successfully if an
-# alert should be raised based on the range.
+# alert should be raised based on the range.  Range values are inclusive.
+# Values may be integers or floats.
+#
+# Example usage:
+#
+# Generating an exit code of 1:
+# check_range 5 2:8
+#
+# Generating an exit code of 0:
+# check_range 1 2:8
 #
 check_range() {
 	local v range yes no err decimal start end cmp match

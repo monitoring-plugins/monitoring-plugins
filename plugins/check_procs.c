@@ -45,15 +45,13 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 int process_arguments (int, char **);
 int validate_arguments (void);
-int check_thresholds (int);
 int convert_to_seconds (char *); 
 void print_help (void);
 void print_usage (void);
 
-int wmax = -1;
-int cmax = -1;
-int wmin = -1;
-int cmin = -1;
+char *warning_range = NULL;
+char *critical_range = NULL;
+thresholds *procs_thresholds = NULL;
 
 int options = 0; /* bitmask of filter criteria to test against */
 #define ALL 1
@@ -238,14 +236,14 @@ main (int argc, char **argv)
 			}
 
 			if (metric == METRIC_VSZ)
-				i = check_thresholds (procvsz);
+				i = get_status ((double)procvsz, procs_thresholds);
 			else if (metric == METRIC_RSS)
-				i = check_thresholds (procrss);
+				i = get_status ((double)procrss, procs_thresholds);
 			/* TODO? float thresholds for --metric=CPU */
 			else if (metric == METRIC_CPU)
-				i = check_thresholds ((int)procpcpu); 
+				i = get_status (procpcpu, procs_thresholds);
 			else if (metric == METRIC_ELAPSED)
-				i = check_thresholds (procseconds);
+				i = get_status ((double)procseconds, procs_thresholds);
 
 			if (metric != METRIC_PROCS) {
 				if (i == STATE_WARNING) {
@@ -276,7 +274,7 @@ main (int argc, char **argv)
 
 	/* Needed if procs found, but none match filter */
 	if ( metric == METRIC_PROCS ) {
-		result = max_state (result, check_thresholds (procs) );
+		result = max_state (result, get_status ((double)procs, procs_thresholds) );
 	}
 
 	if ( result == STATE_OK ) {
@@ -300,6 +298,13 @@ main (int argc, char **argv)
 
 	if ( verbose >= 1 && strcmp(fails,"") )
 		printf (" [%s]", fails);
+
+	if (metric == METRIC_PROCS)
+		printf (" | procs=%d;%s;%s;0;", procs,
+				warning_range ? warning_range : "",
+				critical_range ? critical_range : "");
+	else
+		printf (" | procs=%d;;;0; procs_warn=%d;;;0; procs_crit=%d;;;0;", procs, warn, crit);
 
 	printf ("\n");
 	return result;
@@ -368,28 +373,10 @@ process_arguments (int argc, char **argv)
 				timeout_interval = atoi (optarg);
 			break;
 		case 'c':									/* critical threshold */
-			if (is_integer (optarg))
-				cmax = atoi (optarg);
-			else if (sscanf (optarg, ":%d", &cmax) == 1)
-				break;
-			else if (sscanf (optarg, "%d:%d", &cmin, &cmax) == 2)
-				break;
-			else if (sscanf (optarg, "%d:", &cmin) == 1)
-				break;
-			else
-				usage4 (_("Critical Process Count must be an integer!"));
+			critical_range = optarg;
 			break;							 
 		case 'w':									/* warning threshold */
-			if (is_integer (optarg))
-				wmax = atoi (optarg);
-			else if (sscanf (optarg, ":%d", &wmax) == 1)
-				break;
-			else if (sscanf (optarg, "%d:%d", &wmin, &wmax) == 2)
-				break;
-			else if (sscanf (optarg, "%d:", &wmin) == 1)
-				break;
-			else
-				usage4 (_("Warning Process Count must be an integer!"));
+			warning_range = optarg;
 			break;
 		case 'p':									/* process id */
 			if (sscanf (optarg, "%d%[^0-9]", &ppid, tmp) == 1) {
@@ -518,15 +505,18 @@ process_arguments (int argc, char **argv)
 	}
 
 	c = optind;
-	if (wmax == -1 && argv[c])
-		wmax = atoi (argv[c++]);
-	if (cmax == -1 && argv[c])
-		cmax = atoi (argv[c++]);
+	if ((! warning_range) && argv[c])
+		warning_range = argv[c++];
+	if ((! critical_range) && argv[c])
+		critical_range = argv[c++];
 	if (statopts == NULL && argv[c]) {
 		xasprintf (&statopts, "%s", argv[c++]);
 		xasprintf (&fmt, _("%s%sSTATE = %s"), (fmt ? fmt : ""), (options ? ", " : ""), statopts);
 		options |= STAT;
 	}
+
+	/* this will abort in case of invalid ranges */
+	set_thresholds (&procs_thresholds, warning_range, critical_range);
 
 	return validate_arguments ();
 }
@@ -536,27 +526,6 @@ process_arguments (int argc, char **argv)
 int
 validate_arguments ()
 {
-
-	if (wmax >= 0 && wmin == -1)
-		wmin = 0;
-	if (cmax >= 0 && cmin == -1)
-		cmin = 0;
-	if (wmax >= wmin && cmax >= cmin) {	/* standard ranges */
-		if (wmax > cmax && cmax != -1) {
-			printf (_("wmax (%d) cannot be greater than cmax (%d)\n"), wmax, cmax);
-			return ERROR;
-		}
-		if (cmin > wmin && wmin != -1) {
-			printf (_("wmin (%d) cannot be less than cmin (%d)\n"), wmin, cmin);
-			return ERROR;
-		}
-	}
-
-/* 	if (wmax == -1 && cmax == -1 && wmin == -1 && cmin == -1) { */
-/* 		printf ("At least one threshold must be set\n"); */
-/* 		return ERROR; */
-/* 	} */
-
 	if (options == 0)
 		options = ALL;
 
@@ -576,40 +545,6 @@ validate_arguments ()
 		fails = strdup("");
 
 	return options;
-}
-
-
-
-/* Check thresholds against value */
-int
-check_thresholds (int value)
-{
- 	if (wmax == -1 && cmax == -1 && wmin == -1 && cmin == -1) {
-		return OK;
- 	}
-	else if (cmax >= 0 && cmin >= 0 && cmax < cmin) {
-		if (value > cmax && value < cmin)
-			return STATE_CRITICAL;
-	}
-	else if (cmax >= 0 && value > cmax) {
-		return STATE_CRITICAL;
-	}
-	else if (cmin >= 0 && value < cmin) {
-		return STATE_CRITICAL;
-	}
-
-	if (wmax >= 0 && wmin >= 0 && wmax < wmin) {
-		if (value > wmax && value < wmin) {
-			return STATE_WARNING;
-		}
-	}
-	else if (wmax >= 0 && value > wmax) {
-		return STATE_WARNING;
-	}
-	else if (wmin >= 0 && value < wmin) {
-		return STATE_WARNING;
-	}
-	return STATE_OK;
 }
 
 

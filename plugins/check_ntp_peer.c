@@ -660,6 +660,7 @@ void print_help(void){
 	print_usage();
 	printf (UT_HELP_VRSN);
 	printf (UT_EXTRA_OPTS);
+	printf (UT_IPv46);
 	printf (UT_HOST_PORT, 'p', "123");
 	printf (" %s\n", "-q, --quiet");
 	printf ("    %s\n", _("Returns UNKNOWN instead of CRITICAL or WARNING if server isn't synchronized"));
@@ -668,9 +669,9 @@ void print_help(void){
 	printf (" %s\n", "-c, --critical=THRESHOLD");
 	printf ("    %s\n", _("Offset to result in critical status (seconds)"));
 	printf (" %s\n", "-W, --swarn=THRESHOLD");
-	printf ("    %s\n", _("Warning threshold for stratum"));
+	printf ("    %s\n", _("Warning threshold for stratum of server's synchronization peer"));
 	printf (" %s\n", "-C, --scrit=THRESHOLD");
-	printf ("    %s\n", _("Critical threshold for stratum"));
+	printf ("    %s\n", _("Critical threshold for stratum of server's synchronization peer"));
 	printf (" %s\n", "-j, --jwarn=THRESHOLD");
 	printf ("    %s\n", _("Warning threshold for jitter"));
 	printf (" %s\n", "-k, --jcrit=THRESHOLD");
@@ -704,7 +705,7 @@ void print_help(void){
 	printf("  %s\n", ("./check_ntp_peer -H ntpserv -w 0.5 -c 1 -j -1:100 -k -1:200"));
 	printf("\n");
 	printf(" %s\n", _("Only check the number of usable time sources (\"truechimers\"):"));
-	printf("  %s\n", ("./check_ntp_peer -H ntpserv -m :5 -n :3"));
+	printf("  %s\n", ("./check_ntp_peer -H ntpserv -m @5 -n @3"));
 	printf("\n");
 	printf(" %s\n", _("Check only stratum:"));
 	printf("  %s\n", ("./check_ntp_peer -H ntpserv -W 4 -C 6"));
@@ -716,6 +717,6 @@ void
 print_usage(void)
 {
 	printf ("%s\n", _("Usage:"));
-	printf(" %s -H <host> [-w <warn>] [-c <crit>] [-W <warn>] [-C <crit>]\n", progname);
+	printf(" %s -H <host> [-4|-6] [-w <warn>] [-c <crit>] [-W <warn>] [-C <crit>]\n", progname);
 	printf("       [-j <warn>] [-k <crit>] [-v verbose]\n");
 }

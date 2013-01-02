@@ -144,6 +144,25 @@ double previous_value[MAX_OIDS];
 int perf_labels = 1;
 
 
+static char *fix_snmp_range(char *th)
+{
+	double left, right;
+	char *colon, *ret;
+	if (!(colon = strchr(th, ':')))
+		return th;
+	*colon = 0;
+
+	left = strtod(th, NULL);
+	right = strtod(colon + 1, NULL);
+	if (right >= left) {
+		return th;
+	}
+	ret = malloc(strlen(th) + strlen(colon + 1) + 2);
+	sprintf(ret, "@%s:%s", colon + 1, th);
+	free(th);
+	return ret;
+}
+
 int
 main (int argc, char **argv)
 {
@@ -228,6 +247,10 @@ main (int argc, char **argv)
 	for (i=0; i<numoids; i++) {
 		char *w = th_warn ? strndup(th_warn, strcspn(th_warn, ",")) : NULL;
 		char *c = th_crit ? strndup(th_crit, strcspn(th_crit, ",")) : NULL;
+		/* translate "2:1" to "@1:2" for backwards compatibility */
+		w = w ? fix_snmp_range(w) : NULL;
+		c = c ? fix_snmp_range(c) : NULL;
+
 		/* Skip empty thresholds, while avoiding segfault */
 		set_thresholds(&thlds[i],
 		               w ? strpbrk(w, NP_THRESHOLDS_CHARS) : NULL,
@@ -396,7 +419,7 @@ main (int argc, char **argv)
 			show = strstr (response, "Timeticks: ");
 		}
 		else
-			show = response;
+			show = response + 3;
 
 		iresult = STATE_DEPENDENT;
 
@@ -405,7 +428,7 @@ main (int argc, char **argv)
 		if (thlds[i]->warning || thlds[i]->critical || calculate_rate) {
 			ptr = strpbrk (show, "0123456789");
 			if (ptr == NULL)
-				die (STATE_UNKNOWN,_("No valid data returned"));
+				die (STATE_UNKNOWN,_("No valid data returned (%s)\n"), show);
 			response_value[i] = strtod (ptr, NULL);
 
 			if(calculate_rate) {

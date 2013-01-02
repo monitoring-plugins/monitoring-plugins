@@ -37,6 +37,8 @@ NP-VERSION-FILE
 
 # /doc/
 /doc/developer-guidelines.html
+/doc/developer-guidelines.html.last
+/doc/jade-out.fot
 
 # /tap/
 /tap/.deps

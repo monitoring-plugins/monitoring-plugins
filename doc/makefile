@@ -8,4 +8,4 @@ developer-guidelines.html: developer-guidelines.sgml
 	fi
 
 clean:
-	rm -f developer-guidelines.html
+	rm -f developer-guidelines.html developer-guidelines.html.last jade-out.fot

@@ -285,7 +285,7 @@ process_arguments (int argc, char **argv)
 #ifdef HAVE_SSL
       if ((temp=strchr(optarg,','))!=NULL) {
         *temp='\0';
-        if (!is_intnonneg (temp))
+        if (!is_intnonneg (optarg))
           usage2 (_("Invalid certificate expiration period"), optarg);
         days_till_exp_warn = atoi(optarg);
         *temp=',';
@@ -1352,7 +1352,7 @@ print_help (void)
   printf ("    %s\n", _("auto-negotiation (1 = TLSv1, 2 = SSLv2, 3 = SSLv3)."));
   printf (" %s\n", "--sni");
   printf ("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
-  printf (" %s\n", "-C, --certificate=INTEGER");
+  printf (" %s\n", "-C, --certificate=INTEGER[,INTEGER]");
   printf ("    %s\n", _("Minimum number of days a certificate has to be valid. Port defaults to 443"));
   printf ("    %s\n", _("(when this option is used the URL is not checked.)\n"));
 #endif
@@ -1434,14 +1434,14 @@ print_help (void)
   printf (" %s\n", _("When the 'www.verisign.com' server returns its content within 5 seconds,"));
   printf (" %s\n", _("a STATE_OK will be returned. When the server returns its content but exceeds"));
   printf (" %s\n", _("the 5-second threshold, a STATE_WARNING will be returned. When an error occurs,"));
-  printf (" %s\n\n", _("a STATE_CRITICAL will be returned."));
-
+  printf (" %s\n", _("a STATE_CRITICAL will be returned."));
+  printf ("\n");
   printf (" %s\n\n", "CHECK CERTIFICATE: check_http -H www.verisign.com -C 14");
   printf (" %s\n", _("When the certificate of 'www.verisign.com' is valid for more than 14 days,"));
   printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
   printf (" %s\n", _("14 days, a STATE_WARNING is returned. A STATE_CRITICAL will be returned when"));
   printf (" %s\n", _("the certificate is expired."));
-
+  printf ("\n");
   printf (" %s\n\n", "CHECK CERTIFICATE: check_http -H www.verisign.com -C 30,14");
   printf (" %s\n", _("When the certificate of 'www.verisign.com' is valid for more than 30 days,"));
   printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));

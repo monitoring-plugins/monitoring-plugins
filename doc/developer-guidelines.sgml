@@ -303,15 +303,15 @@
 					</row>
 					<row>
 						<entry>check_stuff -w~:0 -c10</entry>
-						<entry>Critical if "stuff" is above 10; Warn if "stuff" is above zero</entry>
+						<entry>Critical if "stuff" is above 10; Warn if "stuff" is above zero (will be critical if "stuff" is less than 0)</entry>
 					</row>
 					<row>
 						<entry>check_stuff -c5:6</entry>
-						<entry>The only noncritical range is 5:6</entry>
+						<entry>Critical if "stuff" is less than 5 or more than 6</entry>
 					</row>
 					<row>
-						<entry>check_stuff -c10:20</entry>
-						<entry>Critical if "stuff" is less than 10 or over 20</entry>
+						<entry>check_stuff -c@10:20</entry>
+						<entry>OK if stuff is less than 10 or higher than 20, otherwise critical </entry>
 					</row>
 				</tbody>
 			</tgroup>
