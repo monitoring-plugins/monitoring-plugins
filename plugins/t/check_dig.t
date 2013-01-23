@@ -10,30 +10,30 @@ use NPTest;
 
 plan skip_all => "check_dig not compiled" unless (-x "check_dig");
 
-plan tests => 12;
+plan tests => 16;
 
 my $successOutput = '/DNS OK - [\.0-9]+ seconds? response time/';
 
-my $hostname_valid = getTestParameter( 
+my $hostname_valid = getTestParameter(
 			"NP_HOSTNAME_VALID",
 			"A valid (known to DNS) hostname",
-			"nagios.com"
+			"nagiosplugins.org"
 			);
 
 my $hostname_valid_ip = getTestParameter(
 			"NP_HOSTNAME_VALID_IP",
 			"The IP address of the valid hostname $hostname_valid",
-			"66.118.156.50",
+			"67.207.143.200",
 			);
 
 my $hostname_valid_reverse = getTestParameter(
 			"NP_HOSTNAME_VALID_REVERSE",
 			"The hostname of $hostname_valid_ip",
-			"66-118-156-50.static.sagonet.net.",
+			"nagiosplugins.org.",
 			);
 
-my $hostname_invalid = getTestParameter( 
-			"NP_HOSTNAME_INVALID", 
+my $hostname_invalid = getTestParameter(
+			"NP_HOSTNAME_INVALID",
 			"An invalid (not known to DNS) hostname",
 			"nosuchhost.altinity.com",
 			);
@@ -68,6 +68,14 @@ SKIP: {
 	$res = NPTest->testCmd("./check_dig -H $dns_server -l $hostname_valid  -t 5");
 	cmp_ok( $res->return_code, '==', 0, "Found $hostname_valid on $dns_server");
 	like  ( $res->output, $successOutput, "Output OK" );
+
+	$res = NPTest->testCmd("./check_dig -H $dns_server -l $hostname_valid  -t 5 -4");
+	cmp_ok( $res->return_code, '==', 0, "Found $hostname_valid on $dns_server");
+	like  ( $res->output, $successOutput, "Output OK for IPv4" );
+
+	$res = NPTest->testCmd("./check_dig -H $dns_server -l $hostname_valid  -t 5 -6");
+	cmp_ok( $res->return_code, '==', 0, "Found $hostname_valid on $dns_server");
+	like  ( $res->output, $successOutput, "Output OK for IPv6" );
 
 	$res = NPTest->testCmd("./check_dig -H $dns_server -l $hostname_valid -a $hostname_valid_ip -t 5");
 	cmp_ok( $res->return_code, '==', 0, "Got expected address");
