@@ -1,0 +1,14 @@
+NOTE: This is only a simulation!
+      apt-get needs root privileges for real execution.
+      Also keep in mind that locking is deactivated,
+      so don't depend on the relevance to the real current situation!
+Inst grub-pc [1.99-21ubuntu3.1] (1.99-21ubuntu3.4 Ubuntu:12.04/precise-updates [amd64]) []
+Inst grub-pc-bin [1.99-21ubuntu3.1] (1.99-21ubuntu3.4 Ubuntu:12.04/precise-updates [amd64]) []
+Inst grub2-common [1.99-21ubuntu3.1] (1.99-21ubuntu3.4 Ubuntu:12.04/precise-updates [amd64]) []
+Inst grub-efi-amd64-bin [1.99-21ubuntu3.1] (1.99-21ubuntu3.4 Ubuntu:12.04/precise-updates [amd64]) []
+Inst grub-common [1.99-21ubuntu3.1] (1.99-21ubuntu3.4 Ubuntu:12.04/precise-updates [amd64])
+Conf grub-common (1.99-21ubuntu3.4 Ubuntu:12.04/precise-updates [amd64])
+Conf grub2-common (1.99-21ubuntu3.4 Ubuntu:12.04/precise-updates [amd64])
+Conf grub-pc-bin (1.99-21ubuntu3.4 Ubuntu:12.04/precise-updates [amd64])
+Conf grub-pc (1.99-21ubuntu3.4 Ubuntu:12.04/precise-updates [amd64])
+Conf grub-efi-amd64-bin (1.99-21ubuntu3.4 Ubuntu:12.04/precise-updates [amd64])
