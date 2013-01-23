@@ -1,3 +1,7 @@
+2013-01-23  Robin Sonefors <robin.sonefors@op5.com>
+
+	* plugins/check_snmp.c: fix memory allocation if using >= 8 oids
+
 2012-06-27  Holger Weiss <holger@zedat.fu-berlin.de>
 
 	* plugins/check_tcp.c: check_tcp: Print performance data even with
