@@ -1,0 +1,37 @@
+NOTE: This is only a simulation!
+      apt-get needs root privileges for real execution.
+      Keep also in mind that locking is deactivated,
+      so don't depend on the relevance to the real current situation!
+Reading package lists... Done
+Building dependency tree       
+Reading state information... Done
+The following packages will be upgraded:
+  base-files debian-archive-keyring dpkg firmware-linux-free libc-bin libc-dev-bin libc6 libc6-dev linux-base
+  linux-image-2.6.32-5-xen-amd64 linux-libc-dev locales lockfile-progs
+13 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
+Inst base-files [6.0squeeze5] (6.0squeeze6 Debian:6.0.6/stable [amd64])
+Conf base-files (6.0squeeze6 Debian:6.0.6/stable [amd64])
+Inst dpkg [1.15.8.12] (1.15.8.13 Debian:6.0.6/stable [amd64])
+Conf dpkg (1.15.8.13 Debian:6.0.6/stable [amd64])
+Inst linux-base [2.6.32-45] (2.6.32-46 Debian:6.0.6/stable [all])
+Inst linux-image-2.6.32-5-xen-amd64 [2.6.32-45] (2.6.32-46 Debian:6.0.6/stable [amd64])
+Inst debian-archive-keyring [2010.08.28] (2010.08.28+squeeze1 Debian:6.0.6/stable [all])
+Conf debian-archive-keyring (2010.08.28+squeeze1 Debian:6.0.6/stable [all])
+Inst libc6-dev [2.11.3-3] (2.11.3-4 Debian:6.0.6/stable [amd64]) []
+Inst libc-dev-bin [2.11.3-3] (2.11.3-4 Debian:6.0.6/stable [amd64]) []
+Inst linux-libc-dev [2.6.32-45] (2.6.32-46 Debian:6.0.6/stable [amd64]) []
+Inst libc-bin [2.11.3-3] (2.11.3-4 Debian:6.0.6/stable [amd64]) [libc6:amd64 ]
+Conf libc-bin (2.11.3-4 Debian:6.0.6/stable [amd64]) [libc6:amd64 ]
+Inst libc6 [2.11.3-3] (2.11.3-4 Debian:6.0.6/stable [amd64])
+Conf libc6 (2.11.3-4 Debian:6.0.6/stable [amd64])
+Inst locales [2.11.3-3] (2.11.3-4 Debian:6.0.6/stable [all])
+Inst firmware-linux-free [2.6.32-45] (2.6.32-46 Debian:6.0.6/stable [all])
+Inst lockfile-progs [0.1.15] (0.1.15+squeeze1 Debian:6.0.6/stable [amd64])
+Conf linux-base (2.6.32-46 Debian:6.0.6/stable [all])
+Conf linux-image-2.6.32-5-xen-amd64 (2.6.32-46 Debian:6.0.6/stable [amd64])
+Conf libc-dev-bin (2.11.3-4 Debian:6.0.6/stable [amd64])
+Conf linux-libc-dev (2.6.32-46 Debian:6.0.6/stable [amd64])
+Conf libc6-dev (2.11.3-4 Debian:6.0.6/stable [amd64])
+Conf locales (2.11.3-4 Debian:6.0.6/stable [all])
+Conf firmware-linux-free (2.6.32-46 Debian:6.0.6/stable [all])
+Conf lockfile-progs (0.1.15+squeeze1 Debian:6.0.6/stable [amd64])
