@@ -5,7 +5,7 @@
 * License: GPL
 * Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)
 * Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
-* Copyright (c) 1999-2009 Nagios Plugins Development Team
+* Copyright (c) 1999-2011 Nagios Plugins Development Team
 * 
 * Description:
 * 
@@ -31,7 +31,7 @@
 *****************************************************************************/
 
 const char *progname = "check_mysql";
-const char *copyright = "1999-2007";
+const char *copyright = "1999-2011";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #define SLAVERESULTSIZE 70
@@ -157,7 +157,7 @@ main (int argc, char **argv)
 			}
 
 		} else {
-			/* mysql 4.x.x */
+			/* mysql 4.x.x and mysql 5.x.x */
 			int slave_io_field = -1 , slave_sql_field = -1, seconds_behind_field = -1, i, num_fields;
 			MYSQL_FIELD* fields;
 
@@ -178,13 +178,17 @@ main (int argc, char **argv)
 				}
 			}
 
+			/* Check if slave status is available */
 			if ((slave_io_field < 0) || (slave_sql_field < 0) || (num_fields == 0)) {
 				mysql_free_result (res);
 				mysql_close (&mysql);
 				die (STATE_CRITICAL, "Slave status unavailable\n");
 			}
 
+			/* Save slave status in slaveresult */
 			snprintf (slaveresult, SLAVERESULTSIZE, "Slave IO: %s Slave SQL: %s Seconds Behind Master: %s", row[slave_io_field], row[slave_sql_field], seconds_behind_field!=-1?row[seconds_behind_field]:"Unknown");
+
+			/* Raise critical error if SQL THREAD or IO THREAD are stopped */
 			if (strcmp (row[slave_io_field], "Yes") != 0 || strcmp (row[slave_sql_field], "Yes") != 0) {
 				mysql_free_result (res);
 				mysql_close (&mysql);
@@ -199,6 +203,7 @@ main (int argc, char **argv)
 				}
 			}
 
+			/* Check Seconds Behind against threshold */
 			if ((seconds_behind_field != -1) && (strcmp (row[seconds_behind_field], "NULL") != 0)) {
 				double value = atof(row[seconds_behind_field]);
 				int status;
