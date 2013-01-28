@@ -36,10 +36,9 @@ check_ldap:
 
 check_mysql, check_mysql_query:
 	- Requires the MySQL libraries available from
-	  http://www.mysql.org/
+	  http://dev.mysql.com/downloads/
 		Lib: libmysql, libmysqlclient
-		Redhat Powertools Source: mysql-3.20.32a-3.i386.rpm, mysql-devel-3.20.32a-3.i386.rpm (these seem to be broken, however)
-		RPMS from www.mysql.org work better
+		Redhat Source (RHEL6, YUM): mysql-devel, mysql-libs
 	  Must have mysql_config in PATH or specified with --with-mysql=DIR for DIR/bin/mysql_config
 
 check_pqsql:

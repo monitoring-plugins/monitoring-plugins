@@ -200,8 +200,8 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
-	labels = malloc (labels_size);
-	unitv = malloc (unitv_size);
+	labels = malloc (labels_size * sizeof(*labels));
+	unitv = malloc (unitv_size * sizeof(*unitv));
 	for (i = 0; i < MAX_OIDS; i++)
 		eval_method[i] = CHECK_UNDEF;
 
@@ -768,9 +768,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'l':									/* label */
 			nlabels++;
-			if (nlabels >= labels_size) {
+			if (nlabels > labels_size) {
 				labels_size += 8;
-				labels = realloc (labels, labels_size);
+				labels = realloc (labels, labels_size * sizeof(*labels));
 				if (labels == NULL)
 					die (STATE_UNKNOWN, _("Could not reallocate labels[%d]"), (int)nlabels);
 			}
@@ -780,13 +780,13 @@ process_arguments (int argc, char **argv)
 			if (ptr[0] == '\'')
 				labels[nlabels - 1] = ptr + 1;
 			while (ptr && (ptr = nextarg (ptr))) {
-				if (nlabels >= labels_size) {
+				nlabels++;
+				if (nlabels > labels_size) {
 					labels_size += 8;
-					labels = realloc (labels, labels_size);
+					labels = realloc (labels, labels_size * sizeof(*labels));
 					if (labels == NULL)
 						die (STATE_UNKNOWN, _("Could not reallocate labels\n"));
 				}
-				nlabels++;
 				ptr = thisarg (ptr);
 				if (ptr[0] == '\'')
 					labels[nlabels - 1] = ptr + 1;
@@ -797,9 +797,9 @@ process_arguments (int argc, char **argv)
 		case 'u':									/* units */
 			units = optarg;
 			nunits++;
-			if (nunits >= unitv_size) {
+			if (nunits > unitv_size) {
 				unitv_size += 8;
-				unitv = realloc (unitv, unitv_size);
+				unitv = realloc (unitv, unitv_size * sizeof(*unitv));
 				if (unitv == NULL)
 					die (STATE_UNKNOWN, _("Could not reallocate units [%d]\n"), (int)nunits);
 			}
@@ -809,9 +809,9 @@ process_arguments (int argc, char **argv)
 			if (ptr[0] == '\'')
 				unitv[nunits - 1] = ptr + 1;
 			while (ptr && (ptr = nextarg (ptr))) {
-				if (nunits >= unitv_size) {
+				if (nunits > unitv_size) {
 					unitv_size += 8;
-					unitv = realloc (unitv, unitv_size);
+					unitv = realloc (unitv, unitv_size * sizeof(*unitv));
 					if (units == NULL)
 						die (STATE_UNKNOWN, _("Could not realloc() units\n"));
 				}
