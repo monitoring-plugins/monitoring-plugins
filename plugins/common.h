@@ -208,9 +208,9 @@ enum {
 # define bindtextdomain(Domainname, Dirname) /* empty */
 #endif
 
-/* For non-GNU compilers to ignore __attribute__ */
-#ifndef __GNUC__
-# define __attribute__(x) /* do nothing */
+/* For non-GNU/non-clang compilers to ignore __attribute__ */
+#if !defined(__GNUC__) && !defined(__CLANG__)
+# define __attribute__(noreturn) /* do nothing */
 #endif
 
 #endif /* _COMMON_H_ */

@@ -229,13 +229,14 @@ main (int argc, char **argv)
 
 	np_set_args(argc, argv);
 
+	time(&current_time);
+
 	if (process_arguments (argc, argv) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
 	if(calculate_rate) {
 		if (!strcmp(label, "SNMP"))
 			label = strdup("SNMP RATE");
-		time(&current_time);
 		i=0;
 		previous_state = np_state_read();
 		if(previous_state!=NULL) {
