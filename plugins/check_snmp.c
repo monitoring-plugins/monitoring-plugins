@@ -57,7 +57,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #define WARN_STRING 16
 #define WARN_REGEX 32
 
-#define MAX_OIDS 8
+#define OID_COUNT_STEP 8
 
 /* Longopts only arguments */
 #define L_CALCULATE_RATE CHAR_MAX+1
@@ -111,6 +111,7 @@ char *privproto = NULL;
 char *authpasswd = NULL;
 char *privpasswd = NULL;
 char **oids = NULL;
+size_t oids_size = NULL;
 char *label;
 char *units;
 char *port;
@@ -120,19 +121,22 @@ int  invert_search=0;
 char **labels = NULL;
 char **unitv = NULL;
 size_t nlabels = 0;
-size_t labels_size = 8;
+size_t labels_size = OID_COUNT_STEP;
 size_t nunits = 0;
-size_t unitv_size = 8;
+size_t unitv_size = OID_COUNT_STEP;
 int numoids = 0;
 int numauthpriv = 0;
 int verbose = 0;
 int usesnmpgetnext = FALSE;
 char *warning_thresholds = NULL;
 char *critical_thresholds = NULL;
-thresholds *thlds[MAX_OIDS];
-double response_value[MAX_OIDS];
+thresholds **thlds;
+size_t thlds_size = OID_COUNT_STEP;
+double *response_value;
+size_t response_size = OID_COUNT_STEP;
 int retries = 0;
-int eval_method[MAX_OIDS];
+int *eval_method;
+size_t eval_size = OID_COUNT_STEP;
 char *delimiter;
 char *output_delim;
 char *miblist = NULL;
@@ -140,7 +144,8 @@ int needmibs = FALSE;
 int calculate_rate = 0;
 int rate_multiplier = 1;
 state_data *previous_state;
-double previous_value[MAX_OIDS];
+double *previous_value;
+size_t previous_size = OID_COUNT_STEP;
 int perf_labels = 1;
 
 
@@ -202,8 +207,11 @@ main (int argc, char **argv)
 
 	labels = malloc (labels_size * sizeof(*labels));
 	unitv = malloc (unitv_size * sizeof(*unitv));
-	for (i = 0; i < MAX_OIDS; i++)
-		eval_method[i] = CHECK_UNDEF;
+	thlds = malloc (thlds_size * sizeof(*thlds));
+	response_value = malloc (response_size * sizeof(*response_value));
+	previous_value = malloc (previous_size * sizeof(*previous_value));
+	eval_method = calloc (eval_size, sizeof(*eval_method));
+	oids = calloc(oids_size, sizeof (char *));
 
 	label = strdup ("SNMP");
 	units = strdup ("");
@@ -236,6 +244,10 @@ main (int argc, char **argv)
 			while((ap = strsep(&previous_string, ":")) != NULL) {
 				if(verbose>2)
 					printf("State for %d=%s\n", i, ap);
+				while (i >= previous_size) {
+					previous_size += OID_COUNT_STEP;
+					previous_value = realloc(previous_value, previous_size * sizeof(*previous_value));
+				}
 				previous_value[i++]=strtod(ap,NULL);
 			}
 		}
@@ -250,6 +262,11 @@ main (int argc, char **argv)
 		/* translate "2:1" to "@1:2" for backwards compatibility */
 		w = w ? fix_snmp_range(w) : NULL;
 		c = c ? fix_snmp_range(c) : NULL;
+
+		while (i >= thlds_size) {
+			thlds_size += OID_COUNT_STEP;
+			thlds = realloc(thlds, thlds_size * sizeof(*thlds));
+		}
 
 		/* Skip empty thresholds, while avoiding segfault */
 		set_thresholds(&thlds[i],
@@ -429,6 +446,10 @@ main (int argc, char **argv)
 			ptr = strpbrk (show, "0123456789");
 			if (ptr == NULL)
 				die (STATE_UNKNOWN,_("No valid data returned (%s)\n"), show);
+			while (i >= response_size) {
+				response_size += OID_COUNT_STEP;
+				response_value = realloc(response_value, response_size * sizeof(*response_value));
+			}
 			response_value[i] = strtod (ptr, NULL);
 
 			if(calculate_rate) {
@@ -456,7 +477,7 @@ main (int argc, char **argv)
 		}
 
 		/* Process this block for string matching */
-		else if (eval_method[i] & CRIT_STRING) {
+		else if (eval_size > i && eval_method[i] & CRIT_STRING) {
 			if (strcmp (show, string_value))
 				iresult = (invert_search==0) ? STATE_CRITICAL : STATE_OK;
 			else
@@ -464,7 +485,7 @@ main (int argc, char **argv)
 		}
 
 		/* Process this block for regex matching */
-		else if (eval_method[i] & CRIT_REGEX) {
+		else if (eval_size > i && eval_method[i] & CRIT_REGEX) {
 			excode = regexec (&preg, response, 10, pmatch, eflags);
 			if (excode == 0) {
 				iresult = (invert_search==0) ? STATE_OK : STATE_CRITICAL;
@@ -482,9 +503,9 @@ main (int argc, char **argv)
 		/* Process this block for existence-nonexistence checks */
 		/* TV: Should this be outside of this else block? */
 		else {
-			if (eval_method[i] & CRIT_PRESENT)
+			if (eval_size > i && eval_method[i] & CRIT_PRESENT)
 				iresult = STATE_CRITICAL;
-			else if (eval_method[i] & WARN_PRESENT)
+			else if (eval_size > i && eval_method[i] & WARN_PRESENT)
 				iresult = STATE_WARNING;
 			else if (response && iresult == STATE_DEPENDENT)
 				iresult = STATE_OK;
@@ -723,23 +744,36 @@ process_arguments (int argc, char **argv)
 					 */
 					needmibs = TRUE;
 			}
-			if (!oids) oids = calloc(MAX_OIDS, sizeof (char *));
-			for (ptr = strtok(optarg, ", "); ptr != NULL && j < MAX_OIDS; ptr = strtok(NULL, ", "), j++) {
+			for (ptr = strtok(optarg, ", "); ptr != NULL; ptr = strtok(NULL, ", "), j++) {
+				while (j >= oids_size) {
+					oids_size += OID_COUNT_STEP;
+					oids = realloc(oids, oids_size * sizeof (*oids));
+				}
 				oids[j] = strdup(ptr);
 			}
 			numoids = j;
 			if (c == 'E' || c == 'e') {
 				jj++;
 				ii++;
+				while (j+1 >= eval_size) {
+					eval_size += OID_COUNT_STEP;
+					eval_method = realloc(eval_method, eval_size * sizeof(*eval_method));
+					memset(eval_method + eval_size - OID_COUNT_STEP, 0, 8);
+				}
+				if (c == 'E')
+					eval_method[j+1] |= WARN_PRESENT;
+				else if (c == 'e')
+					eval_method[j+1] |= CRIT_PRESENT;
 			}
-			if (c == 'E')
-				eval_method[j+1] |= WARN_PRESENT;
-			else if (c == 'e')
-				eval_method[j+1] |= CRIT_PRESENT;
 			break;
 		case 's':									/* string or substring */
 			strncpy (string_value, optarg, sizeof (string_value) - 1);
 			string_value[sizeof (string_value) - 1] = 0;
+			while (jj >= eval_size) {
+				eval_size += OID_COUNT_STEP;
+				eval_method = realloc(eval_method, eval_size * sizeof(*eval_method));
+				memset(eval_method + eval_size - OID_COUNT_STEP, 0, 8);
+			}
 			eval_method[jj++] = CRIT_STRING;
 			ii++;
 			break;
@@ -754,6 +788,11 @@ process_arguments (int argc, char **argv)
 				regerror (errcode, &preg, errbuf, MAX_INPUT_BUFFER);
 				printf (_("Could Not Compile Regular Expression"));
 				return ERROR;
+			}
+			while (jj >= eval_size) {
+				eval_size += OID_COUNT_STEP;
+				eval_method = realloc(eval_method, eval_size * sizeof(*eval_method));
+				memset(eval_method + eval_size - OID_COUNT_STEP, 0, 8);
 			}
 			eval_method[jj++] = CRIT_REGEX;
 			ii++;
@@ -1116,7 +1155,7 @@ print_help (void)
 	printf ("\n");
 	printf ("%s\n", _("Notes:"));
 	printf (" %s\n", _("- Multiple OIDs (and labels) may be indicated by a comma or space-delimited  "));
-	printf ("   %s %i %s\n", _("list (lists with internal spaces must be quoted). Maximum:"), MAX_OIDS, _("OIDs."));
+	printf ("   %s %i %s\n", _("list (lists with internal spaces must be quoted)."));
 
 	printf(" -%s", UT_THRESHOLDS_NOTES);
 
