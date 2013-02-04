@@ -60,6 +60,84 @@ int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
 
+static struct help_head resource_meta = {
+	"mysql",
+	"This program tests connections to a MySQL server",
+};
+
+static struct parameter_help options_help[] = {
+	/* hostname */
+	{
+		"hostname", 'H',
+		"Host name, IP Address, or unix socket (must be an absolute path)",
+		0, 1, "string", "", "ADDRESS",
+	},
+	/* port */
+	{
+		"port", 'P',
+		"Port number (default: 3306)",
+		0, 0, "integer", "3306", "INTEGER",
+	},
+	/* socket */
+	{
+		"socket", 's',
+		"Use the specified socket (has no effect if -H is used)",
+		0, 0, "string", "", "STRING",
+	},
+	/* database */
+	{
+		"database", 'd',
+		"Check database with indicated name",
+		0, 0, "string", "", "STRING",
+	},
+	/* username */
+	{
+		"username", 'u',
+		"Connect using the indicated username",
+		0, 0, "string", "", "STRING",
+	},
+	/* password */
+	{
+		"password", 'p',
+		"Use the indicated password to authenticate the connection",
+		0, 0, "string", "", "STRING",
+		"Use the indicated password to authenticate the connection\n"
+		"IMPORTANT: THIS FORM OF AUTHENTICATION IS NOT SECURE!!!\n"
+		"Your clear-text password could be visible as a process table entry\n"
+	},
+	/* check-slave */
+	{
+		"check-slave", 'S',
+		"Check if the slave thread is running properly.",
+		0, 0, "boolean", "false", "",
+	},
+	/* warning */
+	{
+		"warning", 'w',
+		"warning level",
+		0, 0, "boolean", "false", "",
+		"Exit with WARNING status if slave server is more than INTEGER seconds\n"
+		"behind master\n"
+	},
+	/* critical */
+	{
+		"critical", 'c',
+		"critical level",
+		0, 0, "boolean", "false", "",
+		"Exit with CRITICAL status if slave server is more then INTEGER seconds\n"
+		"behind master\n"
+	},
+	/* extra-opts */
+	{
+		"extra-opts", 0,
+		"ini file with extra options",
+		0, 0, "string", "", "string",
+		"Read options from an ini file. See http://nagiosplugins.org/extra-opts\n"
+		"for usage and examples.\n"
+	},
+	{}
+};
+
 int
 main (int argc, char **argv)
 {
@@ -79,6 +157,12 @@ main (int argc, char **argv)
 	textdomain (PACKAGE);
 
 	/* Parse extra opts if any */
+  if (argc==2 && !strcmp(argv[1], "--metadata")) {
+    /* dump metadata and exit */
+    print_meta_data(&resource_meta, options_help);
+    exit(0);
+  }
+
 	argv=np_extra_opts (&argc, argv, progname);
 
 	if (process_arguments (argc, argv) == ERROR)
@@ -380,35 +464,15 @@ print_help (void)
 
 	printf (_(COPYRIGHT), copyright, email);
 
-	printf ("%s\n", _("This program tests connections to a MySQL server"));
+  print_help_head(&resource_meta);
 
   printf ("\n\n");
 
 	print_usage ();
 
   printf (UT_HELP_VRSN);
-	printf (UT_EXTRA_OPTS);
-
-  printf (UT_HOST_PORT, 'P', myport);
-  printf (" %s\n", "-s, --socket=STRING");
-  printf ("    %s\n", _("Use the specified socket (has no effect if -H is used)"));
-
-  printf (" %s\n", "-d, --database=STRING");
-  printf ("    %s\n", _("Check database with indicated name"));
-  printf (" %s\n", "-u, --username=STRING");
-  printf ("    %s\n", _("Connect using the indicated username"));
-  printf (" %s\n", "-p, --password=STRING");
-  printf ("    %s\n", _("Use the indicated password to authenticate the connection"));
-  printf ("    ==> %s <==\n", _("IMPORTANT: THIS FORM OF AUTHENTICATION IS NOT SECURE!!!"));
-  printf ("    %s\n", _("Your clear-text password could be visible as a process table entry"));
-  printf (" %s\n", "-S, --check-slave");
-  printf ("    %s\n", _("Check if the slave thread is running properly."));
-  printf (" %s\n", "-w, --warning");
-  printf ("    %s\n", _("Exit with WARNING status if slave server is more than INTEGER seconds"));
-  printf ("    %s\n", _("behind master"));
-  printf (" %s\n", "-c, --critical");
-  printf ("    %s\n", _("Exit with CRITICAL status if slave server is more then INTEGER seconds"));
-  printf ("    %s\n", _("behind master"));
+  print_parameters_help(options_help);
+  printf (UT_VERBOSE);
 
   printf ("\n");
   printf (" %s\n", _("There are no required arguments. By default, the local database is checked"));
@@ -420,7 +484,9 @@ print_help (void)
 	printf (" %s\n", _("You must specify -p with an empty string to force an empty password,"));
 	printf (" %s\n", _("overriding any my.cnf settings."));
 
-	printf (UT_SUPPORT);
+  printf ("\n\n");
+
+  printf (UT_SUPPORT);
 }
 
 
@@ -430,4 +496,5 @@ print_usage (void)
 	printf ("%s\n", _("Usage:"));
   printf (" %s [-d database] [-H host] [-P port] [-s socket]\n",progname);
   printf ("       [-u user] [-p password] [-S]\n");
+  printf (" %s --metadata\n", progname);
 }
