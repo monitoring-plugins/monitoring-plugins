@@ -9,7 +9,7 @@ use Test;
 use NPTest;
 
 use vars qw($tests);
-BEGIN {$tests = 7; plan tests => $tests}
+BEGIN {$tests = 14; plan tests => $tests}
 
 my $host_tcp_http      = getTestParameter( "host_tcp_http",      "NP_HOST_TCP_HTTP",      "localhost",
 					   "A host providing the HTTP Service (a web server)" );
@@ -27,6 +27,7 @@ my $failedExpect = '/^TCP WARNING\s-\sUnexpected response from host/socket on po
 my $t;
 
 $t += checkCmd( "./check_tcp $host_tcp_http      -p 80 -wt 300 -ct 600",       0, $successOutput );
+$t += checkCmd( "./check_tcp $host_tcp_http      -p 80 -wt 300 -ct 600 -6 ",   0, $successOutput );
 $t += checkCmd( "./check_tcp $host_tcp_http      -p 81 -wt   0 -ct   0 -to 1", 2 ); # use invalid port for this test
 $t += checkCmd( "./check_tcp $host_nonresponsive -p 80 -wt   0 -ct   0 -to 1", 2 );
 $t += checkCmd( "./check_tcp $hostname_invalid   -p 80 -wt   0 -ct   0 -to 1", 2 );
@@ -34,6 +35,7 @@ $t += checkCmd( "./check_tcp -S -D 1 -H www.verisign.com -p 443",              0
 $t += checkCmd( "./check_tcp -S -D 9000,1    -H www.verisign.com -p 443",      0 );
 $t += checkCmd( "./check_tcp -S -D 9000      -H www.verisign.com -p 443",      1 );
 $t += checkCmd( "./check_tcp -S -D 9000,8999 -H www.verisign.com -p 443",      2 );
+$t += checkCmd( "./check_tcp -6 -p 80 www.heise.de",                           0 );
 
 # Need the \r\n to make it more standards compliant with web servers. Need the various quotes
 # so that perl doesn't interpret the \r\n and is passed onto command line correctly

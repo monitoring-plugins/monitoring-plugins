@@ -1,30 +1,30 @@
 /*****************************************************************************
-* 
+*
 * Nagios check_tcp plugin
-* 
+*
 * License: GPL
 * Copyright (c) 1999-2008 Nagios Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_tcp plugin
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 * $Id$
-* 
+*
 *****************************************************************************/
 
 /* progname "check_tcp" changes depending on symlink called */
@@ -61,6 +61,7 @@ static int PORT = 0;
 
 static int server_port = 0;
 static char *server_address = NULL;
+static int host_specified = FALSE;
 static char *server_send = NULL;
 static char *server_quit = NULL;
 static char **server_expect;
@@ -462,6 +463,7 @@ process_arguments (int argc, char **argv)
 #endif
 			break;
 		case 'H':                 /* hostname */
+			host_specified = TRUE;
 			server_address = optarg;
 			break;
 		case 'c':                 /* critical */
@@ -588,6 +590,10 @@ process_arguments (int argc, char **argv)
 		}
 	}
 
+	c = optind;
+	if(host_specified == FALSE && c < argc)
+		server_address = strdup (argv[c++]);
+
 	if (server_address == NULL)
 		usage4 (_("You must provide a server address"));
 	else if (server_address[0] != '/' && is_host (server_address) == FALSE)
@@ -666,4 +672,3 @@ print_usage (void)
   printf ("[-t <timeout seconds>] [-r <refuse state>] [-M <mismatch state>] [-v] [-4|-6] [-j]\n");
   printf ("[-D <warn days cert expire>[,<crit days cert expire>]] [-S <use SSL>] [-E]\n");
 }
-
