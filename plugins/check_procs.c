@@ -331,7 +331,7 @@ process_arguments (int argc, char **argv)
 		{"metric", required_argument, 0, 'm'},
 		{"timeout", required_argument, 0, 't'},
 		{"status", required_argument, 0, 's'},
-		{"ppid", required_argument, 0, 'p'},
+		{"user", required_argument, 0, 'u'},
 		{"command", required_argument, 0, 'C'},
 		{"vsz", required_argument, 0, 'z'},
 		{"rss", required_argument, 0, 'r'},
