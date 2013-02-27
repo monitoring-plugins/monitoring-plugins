@@ -43,7 +43,7 @@ _version_ = '1.21'
 # 0.20   2000-07-10 jaclu Initial release
 
 
-import sys, os, string, whrandom
+import sys, os, string, random
 
 import tempfile
 from getopt import getopt
@@ -207,7 +207,7 @@ class CheckNmap:
 	# _if_ two processes in deed get the same tmp-file
 	# the only result is a normal error message to nagios
 	#
-	r=whrandom.whrandom()
+	r=random.random()
 	self.tmp_file=tempfile.mktemp('.%s')%r.randint(0,100000)
 	if self.debug:
 	    print 'Tmpfile is: %s'%self.tmp_file
@@ -388,7 +388,7 @@ Version: %s""" % _version_
 
 def doc_syntax():
     print """
-Usage: check_ports [-v|--debug] [-H|--host host] [-V|--version] [-h|--help]
+Usage: check_nmap.py [-v|--debug] [-H|--host host] [-V|--version] [-h|--help]
                    [-o|--optional port1,port2,port3 ...] [-r|--range range]
                    [-p|--port port1,port2,port3 ...] [-t|--timeout timeout]"""
     
