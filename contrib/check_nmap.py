@@ -207,8 +207,7 @@ class CheckNmap:
 	# _if_ two processes in deed get the same tmp-file
 	# the only result is a normal error message to nagios
 	#
-	r=random.random()
-	self.tmp_file=tempfile.mktemp('.%s')%r.randint(0,100000)
+	self.tmp_file=tempfile.mktemp('.%s') % random.randint(0,100000)
 	if self.debug:
 	    print 'Tmpfile is: %s'%self.tmp_file
 	#
