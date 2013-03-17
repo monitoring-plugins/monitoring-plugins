@@ -444,7 +444,7 @@ print_help (void)
   printf ("    %s\n", _("Do not run the upgrade.  Probably not useful (without -u at least)."));
   printf (" %s\n", "-i, --include=REGEXP");
   printf ("    %s\n", _("Include only packages matching REGEXP.  Can be specified multiple times"));
-  printf ("    %s\n", _("the values will be combined together.  Any patches matching this list"));
+  printf ("    %s\n", _("the values will be combined together.  Any packages matching this list"));
   printf ("    %s\n", _("cause the plugin to return WARNING status.  Others will be ignored."));
   printf ("    %s\n", _("Default is to include all packages."));
   printf (" %s\n", "-e, --exclude=REGEXP");
