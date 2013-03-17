@@ -205,6 +205,7 @@ process_arguments (int argc, char **argv)
 		{"filename", required_argument, 0, 'F'},
 		{"expires", required_argument, 0, 'e'},
 		{"command", required_argument, 0, 'C'},
+		{"timeout", optional_argument, 0, 't'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
 		{"verbose", no_argument, 0, 'v'},
@@ -226,7 +227,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVvF:C:e:", longopts, &option);
+		c = getopt_long (argc, argv, "+hVvF:C:e:t:", longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)
 			break;
@@ -250,6 +251,13 @@ process_arguments (int argc, char **argv)
 			else
 				die (STATE_UNKNOWN,
 				     _("Expiration time must be an integer (seconds)\n"));
+			break;
+		case 't':									/* timeout */
+			if (is_intnonneg (optarg))
+				timeout_interval = atoi (optarg);
+			else
+				die (STATE_UNKNOWN,
+				     _("Timeout must be an integer (seconds)\n"));
 			break;
 		case 'v':
 			verbose++;
@@ -296,11 +304,13 @@ print_help (void)
   printf ("    %s\n", _("Minutes aging after which logfile is considered stale"));
   printf (" %s\n", "-C, --command=STRING");
   printf ("    %s\n", _("Substring to search for in process arguments"));
+  printf (" %s\n", "-t, --timeout=INTEGER");
+  printf ("    %s\n", _("Timeout for the plugin in seconds"));
   printf (UT_VERBOSE);
 
   printf ("\n");
   printf ("%s\n", _("Examples:"));
-  printf (" %s\n", "check_nagios -e 5 -F /usr/local/nagios/var/status.log -C /usr/local/nagios/bin/nagios");
+  printf (" %s\n", "check_nagios -t 20 -e 5 -F /usr/local/nagios/var/status.log -C /usr/local/nagios/bin/nagios");
 
   printf (UT_SUPPORT);
 }
@@ -311,5 +321,5 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-	printf ("%s -F <status log file> -e <expire_minutes> -C <process_string>\n", progname);
+	printf ("%s -F <status log file> -t <timeout_seconds> -e <expire_minutes> -C <process_string>\n", progname);
 }
