@@ -91,8 +91,11 @@ static int stat_remote_fs = 0;
 
 /* Linked list of filesystem types to omit.
    If the list is empty, don't exclude any types.  */
-
 static struct name_list *fs_exclude_list;
+
+/* Linked list of filesystem types to check.
+   If the list is empty, include all types.  */
+static struct name_list *fs_include_list;
 
 static struct name_list *dp_exclude_list;
 
@@ -254,6 +257,9 @@ main (int argc, char **argv)
       } else if (dp_exclude_list &&
                (np_find_name (dp_exclude_list, me->me_devname) ||
                 np_find_name (dp_exclude_list, me->me_mountdir))) {
+        continue;
+      /* Skip not included fstypes */
+      } else if (fs_include_list && !np_find_name (fs_include_list, me->me_type)) {
         continue;
       }
 
@@ -419,6 +425,7 @@ process_arguments (int argc, char **argv)
     {"partition", required_argument, 0, 'p'},
     {"exclude_device", required_argument, 0, 'x'},
     {"exclude-type", required_argument, 0, 'X'},
+    {"include-type", required_argument, 0, 'N'},
     {"group", required_argument, 0, 'g'},
     {"eregi-path", required_argument, 0, 'R'},
     {"eregi-partition", required_argument, 0, 'R'},
@@ -452,7 +459,7 @@ process_arguments (int argc, char **argv)
       strcpy (argv[c], "-t");
 
   while (1) {
-    c = getopt_long (argc, argv, "+?VqhveCt:c:w:K:W:u:p:x:X:mklLg:R:r:i:I:MEA", longopts, &option);
+    c = getopt_long (argc, argv, "+?VqhveCt:c:w:K:W:u:p:x:X:N:mklLg:R:r:i:I:MEA", longopts, &option);
 
     if (c == -1 || c == EOF)
       break;
@@ -590,6 +597,9 @@ process_arguments (int argc, char **argv)
       break;
     case 'X':                 /* exclude file system type */
       np_add_name(&fs_exclude_list, optarg);
+      break;
+    case 'N':                 /* include file system type */
+      np_add_name(&fs_include_list, optarg);
       break;
     case 'v':                 /* verbose */
       verbose++;
@@ -900,6 +910,8 @@ print_help (void)
   printf (UT_VERBOSE);
   printf (" %s\n", "-X, --exclude-type=TYPE");
   printf ("    %s\n", _("Ignore all filesystems of indicated type (may be repeated)"));
+  printf (" %s\n", "-N, --include-type=TYPE");
+  printf ("    %s\n", _("Check only filesystems of indicated type (may be repeated)"));
 
   printf ("\n");
   printf ("%s\n", _("Examples:"));
@@ -922,7 +934,7 @@ print_usage (void)
   printf ("%s\n", _("Usage:"));
   printf (" %s -w limit -c limit [-W limit] [-K limit] {-p path | -x device}\n", progname);
   printf ("[-C] [-E] [-e] [-g group ] [-k] [-l] [-M] [-m] [-R path ] [-r path ]\n");
-  printf ("[-t timeout] [-u unit] [-v] [-X type]\n");
+  printf ("[-t timeout] [-u unit] [-v] [-X type] [-N type]\n");
 }
 
 void
