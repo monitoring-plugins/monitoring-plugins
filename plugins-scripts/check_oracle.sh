@@ -18,6 +18,7 @@ print_usage() {
   echo "  $PROGNAME --tns <Oracle Sid or Hostname/IP address>"
   echo "  $PROGNAME --db <ORACLE_SID>"
   echo "  $PROGNAME --login <ORACLE_SID>"
+  echo "  $PROGNAME --connect <ORACLE_SID>"
   echo "  $PROGNAME --cache <ORACLE_SID> <USER> <PASS> <CRITICAL> <WARNING>"
   echo "  $PROGNAME --tablespace <ORACLE_SID> <USER> <PASS> <TABLESPACE> <CRITICAL> <WARNING>"
   echo "  $PROGNAME --oranames <Hostname>"
@@ -39,6 +40,8 @@ print_help() {
   echo "   filesystem for sgadefORACLE_SID.dbf"
   echo "--login SID"
   echo "   Attempt a dummy login and alert if not ORA-01017: invalid username/password"
+  echo "--connect SID"
+  echo "   Attempt a login and alert if an ORA- error is returned"
   echo "--cache"
   echo "   Check local database for library and buffer cache hit ratios"
   echo "       --->  Requires Oracle user/password and SID specified."
@@ -184,6 +187,18 @@ case "$cmd" in
     else
 	loginchk3=` echo "$loginchk" | grep "ORA-" | head -1`
 	echo "CRITICAL - $loginchk3"
+	exit $STATE_CRITICAL
+    fi
+    ;;
+--connect)
+    connectchk=`sqlplus $2 < /dev/null`
+    connectchk2=` echo  $connectchk | grep -c ORA-`
+    if [ ${connectchk2} -eq 0 ] ; then
+	echo "OK - login successful"
+	exit $STATE_OK
+    else
+	connectchk3=` echo "$connectchk" | grep "ORA-" | head -1`
+	echo "CRITICAL - $connectchk3"
 	exit $STATE_CRITICAL
     fi
     ;;
