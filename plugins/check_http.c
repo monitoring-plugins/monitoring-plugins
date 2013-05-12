@@ -135,6 +135,227 @@ char *perfd_size (int page_len);
 void print_help (void);
 void print_usage (void);
 
+static struct help_head resource_meta = {
+	"http",
+	"Test the HTTP service",
+	"This plugin tests the HTTP service on the specified host. It can test\n"
+	"normal (http) and secure (https) servers, follow redirects, search for\n"
+	"strings and regular expressions, check connection times, and report on\n"
+	"certificate expiration times.\n"
+};
+
+static struct parameter_help options_help[] = {
+	/* hostname */
+	{
+		"hostname", 'H',
+		"Host name",
+		0, 1, "string", "", "ADDRESS",
+		"Host name argument for servers using host headers (virtual host)\n"
+		"Append a port to include it in the header (eg: example.com:5000)\n"
+	},
+	/* IP-address */
+	{
+		"IP-address", 'I',
+		"IP address or name",
+		0, 0, "string", "", "ADDRESS",
+		"IP address or name (use numeric address if possible to bypass DNS lookup).\n"
+	},
+	/* port */
+	{
+		"port", 'p',
+		"Port number (default: 80)",
+		0, 0, "integer", "80", "INTEGER",
+	},
+	/* use-ipv4 */
+	{
+		"use-ipv4", '4',
+		"Use IPv4 connection",
+		0, 0, "boolean", "false", "",
+	},
+	/* use-ipv6 */
+	{
+		"use-ipv6", '6',
+		"Use IPv6 connection",
+		0, 0, "boolean", "false", "",
+	},
+#ifdef HAVE_SSL
+	/* ssl */
+	{
+		"ssl", 'S',
+		"Connect via SSL.",
+		0, 0, "string", "", "VERSION",
+		"Connect via SSL. Port defaults to 443. VERSION is optional, and prevents\n"
+		"auto-negotiation (1 = TLSv1, 2 = SSLv2, 3 = SSLv3).\n"
+	},
+	/* sni */
+	{
+		"sni", 0,
+		"Enable SSL/TLS hostname extension support (SNI)",
+		0, 0, "boolean", "false", "",
+	},
+	/* certificate */
+	{
+		"certificate", 'C',
+		"Minimum number of days a certificate has to be valid",
+		0, 0, "integer", "", "INTEGER",
+		"Minimum number of days a certificate has to be valid. Port defaults to 443\n"
+		"(when this option is used the URL is not checked.)\n"
+	},
+#endif
+	/* expect */
+	{
+		"expect", 'e',
+		"list of strings of which at least one must match",
+		0, 0, "string", "", "STRING",
+		"Comma-delimited list of strings, at least one of them is expected in\n"
+		"the first (status) line of the server response (default: HTTP/1.)\n"
+		"If specified skips all other status line logic (ex: 3xx, 4xx, 5xx processing)\n"
+	},
+	/* string */
+	{
+		"string", 's',
+		"String to expect in the content",
+		0, 0, "string", "", "STRING",
+	},
+	/* url */
+	{
+		"url", 'u',
+		"URL to GET or POST (default: /)",
+		0, 0, "string", "/", "PATH",
+	},
+	/* post */
+	{
+		"post", 'P',
+		"URL encoded http POST data",
+		0, 0, "string", "", "STRING",
+	},
+	/* method */
+	{
+		"method", 'j',
+		"Set HTTP method.",
+		0, 0, "string", "", "STRING",
+	},
+	/* no-body */
+	{
+		"no-body", 'N',
+		"Don't wait for document body",
+		0, 0, "boolean", "false", "",
+		"Don't wait for document body: stop reading after headers.\n"
+		"(Note that this still does an HTTP GET or POST, not a HEAD.)\n"
+	},
+	/* max-age */
+	{
+		"max-age", 'M',
+		"maximum age of document",
+		0, 0, "string", "", "SECONDS",
+		"Warn if document is more than SECONDS old. the number can also be of\n"
+		"the form \"10m\" for minutes, \"10h\" for hours, or \"10d\" for days.\n"
+	},
+	/* content-type */
+	{
+		"content-type", 'T',
+		"specify Content-Type header media type when POSTing",
+		0, 0, "string", "", "STRING",
+	},
+	/* linespan */
+	{
+		"linespan", 'l',
+		"Allow regex to span newlines (must precede -r or -R)",
+		0, 0, "boolean", "false", "",
+	},
+	/* regex */
+	{
+		"regex", 'r',
+		"Search page for regex STRING",
+		0, 0, "boolean", "false", "",
+	},
+	/* eregi */
+	{
+		"eregi", 'R',
+		"Search page for case-insensitive regex STRING",
+		0, 0, "string", "", "STRING",
+	},
+	/* invert-regex */
+	{
+		"invert-regex", 0,
+		"Return CRITICAL if found, OK if not",
+		0, 0, "boolean", "false", "",
+	},
+	/* authorization */
+	{
+		"authorization", 'a',
+		"Username:password on sites with basic authentication",
+		0, 0, "string", "", "AUTH_PAIR",
+	},
+	/* proxy_authorization */
+	{
+		"proxy_authorization", 'b',
+		"Username:password on proxy-servers with basic authentication",
+		0, 0, "string", "", "AUTH_PAIR",
+	},
+	/* useragent */
+	{
+		"useragent", 'A',
+		"String to be sent in http header as \"User Agent\"",
+		0, 0, "string", "", "STRING",
+	},
+	/* header */
+	{
+		"header", 'k',
+		"other tags to be sent in http header",
+		0, 0, "string", "", "STRING",
+		"Any other tags to be sent in http header. Use multiple times for additional headers\n"
+	},
+	/* link */
+	{
+		"link", 'L',
+		"Wrap output in HTML link (obsoleted by urlize)",
+		0, 0, "boolean", "false", "",
+	},
+	/* onredirect */
+	{
+		"onredirect", 'f',
+		"How to handle redirected pages",
+		0, 0, "string", "", "<ok|warning|critical|follow|sticky|stickyport>",
+		"How to handle redirected pages. sticky is like follow but stick to the\n"
+		"specified IP address. stickyport also ensures port stays the same.\n"
+	},
+	/* pagesize */
+	{
+		"pagesize", 'm',
+		"minimum[:maximum] page size",
+		0, 0, "string", "", "INTEGER<:INTEGER>",
+		"Minimum page size required (bytes) : Maximum page size required (bytes)\n"
+	},
+	/* warning */
+	{
+		"warning", 'w',
+		"Response time to result in warning status (seconds)",
+		0, 0, "string", "", "DOUBLE",
+	},
+	/* critical */
+	{
+		"critical", 'c',
+		"Response time to result in critical status (seconds)",
+		0, 0, "string", "", "DOUBLE",
+	},
+	/* timeout */
+	{
+		"timeout", 't',
+		"Seconds before connection times out (default: 10)",
+		0, 0, "integer", "10", "INTEGER",
+	},
+	/* extra-opts */
+	{
+		"extra-opts", 0,
+		"ini file with extra options",
+		0, 0, "string", "", "string",
+		"Read options from an ini file. See http://nagiosplugins.org/extra-opts\n"
+		"for usage and examples.\n"
+	},
+	{}
+};
+
 int
 main (int argc, char **argv)
 {
@@ -151,6 +372,12 @@ main (int argc, char **argv)
             NP_VERSION, VERSION);
 
   /* Parse extra opts if any */
+  if (argc==2 && !strcmp(argv[1], "--metadata")) {
+    /* dump metadata and exit */
+    print_meta_data(&resource_meta, options_help);
+    exit(0);
+  }
+
   argv=np_extra_opts (&argc, argv, progname);
 
   if (process_arguments (argc, argv) == ERROR)
@@ -1319,10 +1546,7 @@ print_help (void)
   printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
   printf (COPYRIGHT, copyright, email);
 
-  printf ("%s\n", _("This plugin tests the HTTP service on the specified host. It can test"));
-  printf ("%s\n", _("normal (http) and secure (https) servers, follow redirects, search for"));
-  printf ("%s\n", _("strings and regular expressions, check connection times, and report on"));
-  printf ("%s\n", _("certificate expiration times."));
+  print_help_head(&resource_meta);
 
   printf ("\n\n");
 
@@ -1333,80 +1557,7 @@ print_help (void)
   printf ("\n");
 
   printf (UT_HELP_VRSN);
-  printf (UT_EXTRA_OPTS);
-
-  printf (" %s\n", "-H, --hostname=ADDRESS");
-  printf ("    %s\n", _("Host name argument for servers using host headers (virtual host)"));
-  printf ("    %s\n", _("Append a port to include it in the header (eg: example.com:5000)"));
-  printf (" %s\n", "-I, --IP-address=ADDRESS");
-  printf ("    %s\n", _("IP address or name (use numeric address if possible to bypass DNS lookup)."));
-  printf (" %s\n", "-p, --port=INTEGER");
-  printf ("    %s", _("Port number (default: "));
-  printf ("%d)\n", HTTP_PORT);
-
-  printf (UT_IPv46);
-
-#ifdef HAVE_SSL
-  printf (" %s\n", "-S, --ssl=VERSION");
-  printf ("    %s\n", _("Connect via SSL. Port defaults to 443. VERSION is optional, and prevents"));
-  printf ("    %s\n", _("auto-negotiation (1 = TLSv1, 2 = SSLv2, 3 = SSLv3)."));
-  printf (" %s\n", "--sni");
-  printf ("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
-  printf (" %s\n", "-C, --certificate=INTEGER[,INTEGER]");
-  printf ("    %s\n", _("Minimum number of days a certificate has to be valid. Port defaults to 443"));
-  printf ("    %s\n", _("(when this option is used the URL is not checked.)\n"));
-#endif
-
-  printf (" %s\n", "-e, --expect=STRING");
-  printf ("    %s\n", _("Comma-delimited list of strings, at least one of them is expected in"));
-  printf ("    %s", _("the first (status) line of the server response (default: "));
-  printf ("%s)\n", HTTP_EXPECT);
-  printf ("    %s\n", _("If specified skips all other status line logic (ex: 3xx, 4xx, 5xx processing)"));
-  printf (" %s\n", "-s, --string=STRING");
-  printf ("    %s\n", _("String to expect in the content"));
-  printf (" %s\n", "-u, --url=PATH");
-  printf ("    %s\n", _("URL to GET or POST (default: /)"));
-  printf (" %s\n", "-P, --post=STRING");
-  printf ("    %s\n", _("URL encoded http POST data"));
-  printf (" %s\n", "-j, --method=STRING  (for example: HEAD, OPTIONS, TRACE, PUT, DELETE)");
-  printf ("    %s\n", _("Set HTTP method."));
-  printf (" %s\n", "-N, --no-body");
-  printf ("    %s\n", _("Don't wait for document body: stop reading after headers."));
-  printf ("    %s\n", _("(Note that this still does an HTTP GET or POST, not a HEAD.)"));
-  printf (" %s\n", "-M, --max-age=SECONDS");
-  printf ("    %s\n", _("Warn if document is more than SECONDS old. the number can also be of"));
-  printf ("    %s\n", _("the form \"10m\" for minutes, \"10h\" for hours, or \"10d\" for days."));
-  printf (" %s\n", "-T, --content-type=STRING");
-  printf ("    %s\n", _("specify Content-Type header media type when POSTing\n"));
-
-  printf (" %s\n", "-l, --linespan");
-  printf ("    %s\n", _("Allow regex to span newlines (must precede -r or -R)"));
-  printf (" %s\n", "-r, --regex, --ereg=STRING");
-  printf ("    %s\n", _("Search page for regex STRING"));
-  printf (" %s\n", "-R, --eregi=STRING");
-  printf ("    %s\n", _("Search page for case-insensitive regex STRING"));
-  printf (" %s\n", "--invert-regex");
-  printf ("    %s\n", _("Return CRITICAL if found, OK if not\n"));
-
-  printf (" %s\n", "-a, --authorization=AUTH_PAIR");
-  printf ("    %s\n", _("Username:password on sites with basic authentication"));
-  printf (" %s\n", "-b, --proxy-authorization=AUTH_PAIR");
-  printf ("    %s\n", _("Username:password on proxy-servers with basic authentication"));
-  printf (" %s\n", "-A, --useragent=STRING");
-  printf ("    %s\n", _("String to be sent in http header as \"User Agent\""));
-  printf (" %s\n", "-k, --header=STRING");
-  printf ("    %s\n", _("Any other tags to be sent in http header. Use multiple times for additional headers"));
-  printf (" %s\n", "-L, --link");
-  printf ("    %s\n", _("Wrap output in HTML link (obsoleted by urlize)"));
-  printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow|sticky|stickyport>");
-  printf ("    %s\n", _("How to handle redirected pages. sticky is like follow but stick to the"));
-  printf ("    %s\n", _("specified IP address. stickyport also ensures port stays the same."));
-  printf (" %s\n", "-m, --pagesize=INTEGER<:INTEGER>");
-  printf ("    %s\n", _("Minimum page size required (bytes) : Maximum page size required (bytes)"));
-
-  printf (UT_WARN_CRIT);
-
-  printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+  print_parameters_help(options_help);
 
   printf (UT_VERBOSE);
 
@@ -1467,4 +1618,5 @@ print_usage (void)
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
   printf ("       [-T <content-type>] [-j method]\n");
+  printf (" %s --metadata\n", progname);
 }

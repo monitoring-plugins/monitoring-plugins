@@ -51,6 +51,69 @@ int get_threshold (char *arg, char *rv[2]);
 void print_help (void);
 void print_usage (void);
 
+static struct help_head resource_meta = {
+	"fping",
+	"ping the specified host",
+	"This plugin will use the fping command to ping the specified host for a fast check\n"
+	"The threshold is set as pair rta,pl%, where rta is the round trip average\n"
+	"travel time in ms and pl is the percentage of packet loss.\n"
+	"Note that it is necessary to set the suid flag on fping.\n"
+};
+
+static struct parameter_help options_help[] = {
+	/* hostname */
+	{
+		"hostname", 'H',
+		"name or IP Address of host to ping (IP Address bypasses name lookup, reducing system load)",
+		0, 1, "string", "", "HOST",
+	},
+	/* warning */
+	{
+		"warning", 'w',
+		"warning threshold",
+		0, 0, "string", "", "THRESHOLD",
+	},
+	/* critical */
+	{
+		"critical", 'c',
+		"critical threshold",
+		0, 0, "string", "", "THRESHOLD",
+	},
+	/* bytes */
+	{
+		"bytes", 'b',
+		"size of ICMP packet (default: 56)",
+		0, 0, "integer", "56", "INTEGER",
+	},
+	/* number */
+	{
+		"number", 'n',
+		"number of ICMP packets to send (default: 1)",
+		0, 0, "integer", "1", "INTEGER",
+	},
+	/* target-timeout */
+	{
+		"target-timeout", 'T',
+		"Target timeout (ms) (default: fping's default for -t)",
+		0, 0, "integer", "", "INTEGER",
+	},
+	/* interval */
+	{
+		"interval", 'i',
+		"Interval (ms) between sending packets (default: fping's default for -p)",
+		0, 0, "integer", "", "INTEGER",
+	},
+	/* extra-opts */
+	{
+		"extra-opts", 0,
+		"ini file with extra options",
+		0, 0, "string", "", "string",
+		"Read options from an ini file. See http://nagiosplugins.org/extra-opts\n"
+		"for usage and examples.\n"
+	},
+	{}
+};
+
 char *server_name = NULL;
 int packet_size = PACKET_SIZE;
 int packet_count = PACKET_COUNT;
@@ -83,6 +146,12 @@ main (int argc, char **argv)
   textdomain (PACKAGE);
 
   /* Parse extra opts if any */
+  if (argc==2 && !strcmp(argv[1], "--metadata")) {
+    /* dump metadata and exit */
+    print_meta_data(&resource_meta, options_help);
+    exit(0);
+  }
+
   argv=np_extra_opts (&argc, argv, progname);
 
   if (process_arguments (argc, argv) == ERROR)
@@ -391,31 +460,14 @@ print_help (void)
   printf ("Copyright (c) 1999 Didi Rieder <adrieder@sbox.tu-graz.ac.at>\n");
   printf (COPYRIGHT, copyright, email);
 
-  printf ("%s\n", _("This plugin will use the fping command to ping the specified host for a fast check"));
-
-  printf ("%s\n", _("Note that it is necessary to set the suid flag on fping."));
+  print_help_head(&resource_meta);
 
   printf ("\n\n");
 
   print_usage ();
 
   printf (UT_HELP_VRSN);
-  printf (UT_EXTRA_OPTS);
-
-  printf (" %s\n", "-H, --hostname=HOST");
-  printf ("    %s\n", _("name or IP Address of host to ping (IP Address bypasses name lookup, reducing system load)"));
-  printf (" %s\n", "-w, --warning=THRESHOLD");
-  printf ("    %s\n", _("warning threshold pair"));
-  printf (" %s\n", "-c, --critical=THRESHOLD");
-  printf ("    %s\n", _("critical threshold pair"));
-  printf (" %s\n", "-b, --bytes=INTEGER");
-  printf ("    %s (default: %d)\n", _("size of ICMP packet"),PACKET_SIZE);
-  printf (" %s\n", "-n, --number=INTEGER");
-  printf ("    %s (default: %d)\n", _("number of ICMP packets to send"),PACKET_COUNT);
-  printf (" %s\n", "-T, --target-timeout=INTEGER");
-  printf ("    %s (default: fping's default for -t)\n", _("Target timeout (ms)"),PACKET_COUNT);
-  printf (" %s\n", "-i, --interval=INTEGER");
-  printf ("    %s (default: fping's default for -p)\n", _("Interval (ms) between sending packets"),PACKET_COUNT);
+  print_parameters_help(options_help);
   printf (UT_VERBOSE);
   printf ("\n");
   printf (" %s\n", _("THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel time (ms)"));
@@ -431,4 +483,5 @@ print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
   printf (" %s <host_address> -w limit -c limit [-b size] [-n number] [-T number] [-i number]\n", progname);
+  printf (" %s --metadata\n", progname);
 }
