@@ -5,10 +5,13 @@
 #
 # Copyright (C) 2000 Christoph Kron
 # Modified 5/2002 to conform to updated Nagios Plugin Guidelines (S. Ghosh)
+# Modified 5/2013 to allow ignoring by interface descriptor (N. Peelman)
+#
 #  Added -x option (4/2003)
 #  Added -u option (4/2003)
 #  Added -M option (10/2003)
 #  Added SNMPv3 support (10/2003)
+#  Added -n option (05/2013)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -90,8 +93,10 @@ my $ifXTable;
 my $opt_h ;
 my $opt_V ;
 my $opt_u;
+my $opt_unused_by_name;
 my $opt_x ;
 my %excluded ;
+my %unused_names ;
 my @unused_ports ;
 my %session_opts;
 
@@ -166,29 +171,31 @@ alarm(0);
 foreach $key (keys %ifStatus) {
 
 	# skip unused interfaces
-	if (!defined($ifStatus{$key}{'notInUse'})) {
+	my $ifName = $ifStatus{$key}{$snmpIfDescr};
+
+	if (!defined($ifStatus{$key}{'notInUse'}) || !grep(/^${ifName}/, @unused_ports )) {
 		# check only if interface is administratively up
-    if ($ifStatus{$key}{$snmpIfAdminStatus} == 1 ) {
-    
-			# check only if interface type is not listed in %excluded
-			if (!defined $excluded{$ifStatus{$key}{$snmpIfType}} ) {
-				if ($ifStatus{$key}{$snmpIfOperStatus} == 1 ) { $ifup++ ;}
-				if ($ifStatus{$key}{$snmpIfOperStatus} == 2 ) {
-								$ifdown++ ;
-								if (defined $ifXTable) {
-									$ifmessage .= sprintf("%s: down -> %s<BR>",
-                                $ifStatus{$key}{$snmpIfName},
-																$ifStatus{$key}{$snmpIfAlias});
-								}else{
-									$ifmessage .= sprintf("%s: down <BR>",
-																$ifStatus{$key}{$snmpIfDescr});
-								}
+    		if ($ifStatus{$key}{$snmpIfAdminStatus} == 1 ) {
+			#check only if interface is not excluded
+			if (!defined $unused_names{$ifStatus{$key}{$snmpIfDescr}} ) {    			
+				# check only if interface type is not listed in %excluded
+				if (!defined $excluded{$ifStatus{$key}{$snmpIfType}} ) {
+					if ($ifStatus{$key}{$snmpIfOperStatus} == 1 ) { $ifup++ ; }
+					if ($ifStatus{$key}{$snmpIfOperStatus} == 2 ) {
+									$ifdown++ ;
+									if (defined $ifXTable) {
+										$ifmessage .= sprintf("%s: down -> %s<BR>\n", $ifStatus{$key}{$snmpIfName}, $ifStatus{$key}{$snmpIfAlias});
+									}else{
+										$ifmessage .= sprintf("%s: down <BR>\n",$ifStatus{$key}{$snmpIfDescr});
+									}
+					}
+					if ($ifStatus{$key}{$snmpIfOperStatus} == 5 ) { $ifdormant++ ;}
+				} else {
+					$ifexclude++;
 				}
-				if ($ifStatus{$key}{$snmpIfOperStatus} == 5 ) { $ifdormant++ ;}
-			}else{
-				$ifexclude++;
+			} else {
+				$ifunused++;
 			}
-		
 		}
 	}else{
 		$ifunused++;
@@ -237,7 +244,7 @@ sub print_usage() {
 }
 
 sub print_help() {
-	print_revision($PROGNAME, '@NP_VERSION@');
+	print_revision($PROGNAME, '1.4.15');
 	print_usage();
 	printf "check_ifstatus plugin for Nagios monitors operational \n";
 	printf "status of each network interface on the target host\n";
@@ -294,6 +301,7 @@ sub process_arguments() {
 		"I"		=> \$ifXTable, "ifmib" => \$ifXTable,
 		"x:s"		=>	\$opt_x,   "exclude:s" => \$opt_x,
 		"u=s" => \$opt_u,  "unused_ports=s" => \$opt_u,
+		"n=s" => \$opt_unused_by_name, "unused_ports_by_name=s" => \$opt_unused_by_name,
 		"M=i" => \$maxmsgsize, "maxmsgsize=i" => \$maxmsgsize,
 		"t=i" => \$timeout,    "timeout=i" => \$timeout,
 		);
@@ -398,6 +406,16 @@ sub process_arguments() {
 			}
 		}else{
 			$excluded{23} = 1; # default PPP(23) if empty list - note (AIX seems to think PPP is 22 according to a post)
+		}
+	}
+
+	# Excluded interface descriptors
+	if (defined $opt_unused_by_name) {
+		my @unused = split(/,/,$opt_unused_by_name);
+		if ( @unused ) {
+			foreach $key (@unused) {
+				$unused_names{$key} = 1;
+			}
 		}
 	}
 	
