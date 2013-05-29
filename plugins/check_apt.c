@@ -30,7 +30,7 @@
 *****************************************************************************/
 
 const char *progname = "check_apt";
-const char *copyright = "2006-2008";
+const char *copyright = "2006-2013";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -49,7 +49,7 @@ typedef enum { UPGRADE, DIST_UPGRADE, NO_UPGRADE } upgrade_type;
 /* until i commit the configure.in patch which gets this, i'll define
  * it here as well */
 #ifndef PATH_TO_APTGET
-# define PATH_TO_APTGET "/usr/bin/apt-get"
+#define PATH_TO_APTGET "/usr/bin/apt-get"
 #endif /* PATH_TO_APTGET */
 /* String found at the beginning of the apt output lines we're interested in */
 #define PKGINST_PREFIX "Inst "
@@ -87,6 +87,7 @@ static int exec_warning = 0;     /* if a cmd exited non-zero */
 
 int main (int argc, char **argv) {
 	int result=STATE_UNKNOWN, packages_available=0, sec_count=0;
+	FILE *fhandle;
 
 	/* Parse extra opts if any */
 	argv=np_extra_opts(&argc, argv, progname);
@@ -97,6 +98,16 @@ int main (int argc, char **argv) {
 	/* Set signal handling and alarm timeout */
 	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR) {
 		usage_va(_("Cannot catch SIGALRM"));
+	}
+
+	/* Check if apt-get binary is available */
+	if ( fhandle = fopen(PATH_TO_APTGET, "r") ) {
+		fclose(fhandle);
+	} else {
+		printf(_("APT UNKNOWN: unable to open apt-get binary (%s)\n"),
+			PATH_TO_APTGET
+		);
+		return STATE_UNKNOWN;
 	}
 
 	/* handle timeouts gracefully... */
