@@ -112,8 +112,8 @@ int main (int argc, char **argv) {
 		result = max_state(result, STATE_CRITICAL);
 	} else if(packages_available > 0){
 		result = max_state(result, STATE_WARNING);
-	} else {
-		result = max_state(result, STATE_OK);
+	} else if(result > STATE_UNKNOWN){
+		result = STATE_UNKNOWN;
 	}
 
 	printf(_("APT %s: %d packages available for %s (%d critical updates). %s%s%s%s\n"),
