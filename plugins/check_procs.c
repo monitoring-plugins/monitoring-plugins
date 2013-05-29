@@ -65,6 +65,10 @@ int options = 0; /* bitmask of filter criteria to test against */
 #define PCPU 256
 #define ELAPSED 512
 #define EREG_ARGS 1024
+
+#define KTHREAD_PARENT "kthreadd" /* the parent process of kernel threads:
+							ppid of procs are compared to pid of this proc*/
+
 /* Different metrics */
 char *metric_name;
 enum metric {
@@ -90,6 +94,7 @@ regex_t re_args;
 char *fmt;
 char *fails;
 char tmp[MAX_INPUT_BUFFER];
+int kthread_filter = 0;
 
 FILE *ps_input = NULL;
 
@@ -105,6 +110,7 @@ main (int argc, char **argv)
 	int procuid = 0;
 	pid_t procpid = 0;
 	pid_t procppid = 0;
+	pid_t kthread_ppid = 0;
 	int procvsz = 0;
 	int procrss = 0;
 	int procseconds = 0;
@@ -201,6 +207,21 @@ main (int argc, char **argv)
 
 			/* Ignore self */
 			if (mypid == procpid) continue;
+
+			/* filter kernel threads (childs of KTHREAD_PARENT)*/
+			/* TODO adapt for other OSes than GNU/Linux
+					sorry for not doing that, but I've no other OSes to test :-( */
+			if (kthread_filter == 1) {
+				/* get pid KTHREAD_PARENT */
+				if (kthread_ppid == 0 && !strcmp(procprog, KTHREAD_PARENT) )
+					kthread_ppid = procpid;
+
+				if (kthread_ppid == procppid) {
+					if (verbose >= 2)
+						printf ("Ignore kernel thread: pid=%d ppid=%d prog=%s args=%s\n", procpid, procppid, procprog, procargs);
+					continue;
+				}
+			}
 
 			if ((options & STAT) && (strstr (statopts, procstat)))
 				resultsum |= STAT;
@@ -344,6 +365,7 @@ process_arguments (int argc, char **argv)
 		{"verbose", no_argument, 0, 'v'},
 		{"ereg-argument-array", required_argument, 0, CHAR_MAX+1},
 		{"input-file", required_argument, 0, CHAR_MAX+2},
+		{"no-kthreads", required_argument, 0, 'k'},
 		{0, 0, 0, 0}
 	};
 
@@ -352,7 +374,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvht:c:w:p:s:u:C:a:z:r:m:P:", 
+		c = getopt_long (argc, argv, "Vvhkt:c:w:p:s:u:C:a:z:r:m:P:",
 			longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -496,6 +518,9 @@ process_arguments (int argc, char **argv)
 			}
 				
 			usage4 (_("Metric must be one of PROCS, VSZ, RSS, CPU, ELAPSED!"));
+		case 'k':	/* linux kernel thread filter */
+			kthread_filter = 1;
+			break;
 		case 'v':									/* command */
 			verbose++;
 			break;
@@ -671,6 +696,8 @@ print_help (void)
   printf ("   %s\n", _("Only scan for processes with args that contain the regex STRING."));
   printf (" %s\n", "-C, --command=COMMAND");
   printf ("   %s\n", _("Only scan for exact matches of COMMAND (without path)."));
+  printf (" %s\n", "-k, --no-kthreads");
+  printf ("   %s\n", _("Only scan for non kernel threads (works on Linux only)."));
 
 	printf(_("\n\
 RANGEs are specified 'min:max' or 'min:' or ':max' (or 'max'). If\n\
@@ -705,5 +732,5 @@ print_usage (void)
   printf ("%s\n", _("Usage:"));
 	printf ("%s -w <range> -c <range> [-m metric] [-s state] [-p ppid]\n", progname);
   printf (" [-u user] [-r rss] [-z vsz] [-P %%cpu] [-a argument-array]\n");
-  printf (" [-C command] [-t timeout] [-v]\n");
+  printf (" [-C command] [-k] [-t timeout] [-v]\n");
 }
