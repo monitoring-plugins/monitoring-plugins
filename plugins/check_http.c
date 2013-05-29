@@ -43,7 +43,6 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "base64.h"
 #include <ctype.h>
 
-#define INPUT_DELIMITER ";"
 #define STICKY_NONE 0
 #define STICKY_HOST 1
 #define STICKY_PORT 2
@@ -876,8 +875,7 @@ check_http (void)
   /* optionally send any other header tag */
   if (http_opt_headers_count) {
     for (i = 0; i < http_opt_headers_count ; i++) {
-      for ((pos = strtok(http_opt_headers[i], INPUT_DELIMITER)); pos; (pos = strtok(NULL, INPUT_DELIMITER)))
-        xasprintf (&buf, "%s%s\r\n", buf, pos);
+      xasprintf (&buf, "%s%s\r\n", buf, http_opt_headers[i]);
     }
     /* This cannot be free'd here because a redirection will then try to access this and segfault */
     /* Covered in a testcase in tests/check_http.t */
