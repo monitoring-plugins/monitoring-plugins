@@ -74,6 +74,7 @@ main (int argc, char **argv)
 /* normaly should be  int result = STATE_UNKNOWN; */
 
   int status = STATE_UNKNOWN;
+  int result = 0;
   char *server = NULL;
   char *command_line = NULL;
   char *input_buffer = NULL;
@@ -136,9 +137,23 @@ main (int argc, char **argv)
   (void) fclose (child_stderr);
 
   /* close the pipe */
-  if (spclose (child_process))
+  if (result = spclose (child_process))
     /* need to use max_state not max */
     status = max_state (status, STATE_WARNING);
+
+  if (result > 1 ) {
+    status = max_state (status, STATE_CRITICAL);
+    if (result == 2) {
+      die (STATE_CRITICAL, _("FPING CRITICAL - IP address not found\n"));
+    }
+    if (result == 3) {
+      die (STATE_CRITICAL, _("FPING CRITICAL - invalid commandline argument\n"));
+    }
+    if (result == 4) {
+      die (STATE_CRITICAL, _("FPING CRITICAL - failed system call\n"));
+    }
+
+  }
 
   printf ("FPING %s - %s\n", state_text (status), server_name);
 
@@ -164,6 +179,10 @@ textscan (char *buf)
     die (STATE_CRITICAL, _("FPING CRITICAL - %s is unreachable\n"),
                "host");
 
+  }
+  else if (strstr (buf, "Operation not permitted") || strstr (buf, "No such device") ) {
+    die (STATE_CRITICAL, _("FPING CRITICAL - %s parameter error\n"),
+               "host");
   }
   else if (strstr (buf, "is down")) {
     die (STATE_CRITICAL, _("FPING CRITICAL - %s is down\n"), server_name);
