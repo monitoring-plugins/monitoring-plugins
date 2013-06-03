@@ -41,6 +41,8 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 /* some constants */
 typedef enum { UPGRADE, DIST_UPGRADE, NO_UPGRADE } upgrade_type;
 
+/* Character for hidden input file option (for testing). */
+#define INPUT_FILE_OPT CHAR_MAX+1
 /* the default opts can be overridden via the cmdline */
 #define UPGRADE_DEFAULT_OPTS "-o 'Debug::NoLocking=true' -s -qq"
 #define UPDATE_DEFAULT_OPTS "-q"
@@ -49,8 +51,10 @@ typedef enum { UPGRADE, DIST_UPGRADE, NO_UPGRADE } upgrade_type;
 #ifndef PATH_TO_APTGET
 # define PATH_TO_APTGET "/usr/bin/apt-get"
 #endif /* PATH_TO_APTGET */
+/* String found at the beginning of the apt output lines we're interested in */
+#define PKGINST_PREFIX "Inst "
 /* the RE that catches security updates */
-#define SECURITY_RE "^[^\\(]*\\([^ ]* (Debian-Security:|Ubuntu:[^/]*/[^-]*-security)"
+#define SECURITY_RE "^[^\\(]*\\(.* (Debian-Security:|Ubuntu:[^/]*/[^-]*-security)"
 
 /* some standard functions */
 int process_arguments(int, char **);
@@ -75,6 +79,7 @@ static char *update_opts = NULL; /* options to override defaults for update */
 static char *do_include = NULL;  /* regexp to only include certain packages */
 static char *do_exclude = NULL;  /* regexp to only exclude certain packages */
 static char *do_critical = NULL;  /* regexp specifying critical packages */
+static char *input_filename = NULL; /* input filename for testing */
 
 /* other global variables */
 static int stderr_warning = 0;   /* if a cmd issued output on stderr */
@@ -141,6 +146,7 @@ int process_arguments (int argc, char **argv) {
 		{"include", required_argument, 0, 'i'},
 		{"exclude", required_argument, 0, 'e'},
 		{"critical", required_argument, 0, 'c'},
+		{"input-file", required_argument, 0, INPUT_FILE_OPT},
 		{0, 0, 0, 0}
 	};
 
@@ -195,6 +201,9 @@ int process_arguments (int argc, char **argv) {
 		case 'c':
 			do_critical=add_to_regexp(do_critical, optarg);
 			break;
+		case INPUT_FILE_OPT:
+			input_filename = optarg;
+			break;
 		default:
 			/* print short usage statement if args not parsable */
 			usage5();
@@ -211,22 +220,18 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 	struct output chld_out, chld_err;
 	regex_t ireg, ereg, sreg;
 	char *cmdline=NULL, rerrbuf[64];
-	const char *include_ptr=NULL, *crit_ptr=NULL;
 
 	if(upgrade==NO_UPGRADE) return STATE_OK;
 
 	/* compile the regexps */
-	if(do_include!=NULL) include_ptr=do_include;
-	else include_ptr="^Inst";
-	if(do_critical!=NULL) crit_ptr=do_critical;
-	else crit_ptr=SECURITY_RE;
-
-	regres=regcomp(&ireg, include_ptr, REG_EXTENDED);
-	if(regres!=0) {
-		regerror(regres, &ireg, rerrbuf, 64);
-		die(STATE_UNKNOWN, _("%s: Error compiling regexp: %s"), progname, rerrbuf);
+	if (do_include != NULL) {
+		regres=regcomp(&ireg, do_include, REG_EXTENDED);
+		if (regres!=0) {
+			regerror(regres, &ireg, rerrbuf, 64);
+			die(STATE_UNKNOWN, _("%s: Error compiling regexp: %s"), progname, rerrbuf);
+		}
 	}
-
+   
 	if(do_exclude!=NULL){
 		regres=regcomp(&ereg, do_exclude, REG_EXTENDED);
 		if(regres!=0) {
@@ -235,6 +240,8 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 			    progname, rerrbuf);
 		}
 	}
+   
+	const char *crit_ptr = (do_critical != NULL) ? do_critical : SECURITY_RE;
 	regres=regcomp(&sreg, crit_ptr, REG_EXTENDED);
 	if(regres!=0) {
 		regerror(regres, &ereg, rerrbuf, 64);
@@ -243,8 +250,14 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 	}
 
 	cmdline=construct_cmdline(upgrade, upgrade_opts);
-	/* run the upgrade */
-	result = np_runcmd(cmdline, &chld_out, &chld_err, 0);
+	if (input_filename != NULL) {
+		/* read input from a file for testing */
+		result = cmd_file_read(input_filename, &chld_out, 0);
+	} else {
+		/* run the upgrade */
+		result = np_runcmd(cmdline, &chld_out, &chld_err, 0);
+	}
+   
 	/* apt-get upgrade only changes exit status if there is an
 	 * internal error when run in dry-run mode.  therefore we will
 	 * treat such an error as UNKNOWN */
@@ -269,7 +282,8 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 			printf("%s\n", chld_out.line[i]);
 		}
 		/* if it is a package we care about */
-		if(regexec(&ireg, chld_out.line[i], 0, NULL, 0)==0){
+		if (strncmp(PKGINST_PREFIX, chld_out.line[i], strlen(PKGINST_PREFIX)) == 0 &&
+		    (do_include == NULL || regexec(&ireg, chld_out.line[i], 0, NULL, 0) == 0)) {
 			/* if we're not excluding, or it's not in the
 			 * list of stuff to exclude */
 			if(do_exclude==NULL ||
@@ -289,7 +303,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 	*secpkgcount=spc;
 
 	/* If we get anything on stderr, at least set warning */
-	if(chld_err.buflen){
+	if (input_filename == NULL && chld_err.buflen) {
 		stderr_warning=1;
 		result = max_state(result, STATE_WARNING);
 		if(verbose){
@@ -298,7 +312,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 			}
 		}
 	}
-	regfree(&ireg);
+	if (do_include != NULL) regfree(&ireg);
 	regfree(&sreg);
 	if(do_exclude!=NULL) regfree(&ereg);
 	free(cmdline);
@@ -348,15 +362,15 @@ char* add_to_regexp(char *expr, const char *next){
 	char *re=NULL;
 
 	if(expr==NULL){
-		re=malloc(sizeof(char)*(strlen("^Inst () ")+strlen(next)+1));
+		re=malloc(sizeof(char)*(strlen("()")+strlen(next)+1));
 		if(!re) die(STATE_UNKNOWN, "malloc failed!\n");
-		sprintf(re, "^Inst (%s) ", next);
+		sprintf(re, "(%s)", next);
 	} else {
 		/* resize it, adding an extra char for the new '|' separator */
-		re=realloc(expr, sizeof(char)*strlen(expr)+1+strlen(next)+1);
+		re=realloc(expr, sizeof(char)*(strlen(expr)+1+strlen(next)+1));
 		if(!re) die(STATE_UNKNOWN, "realloc failed!\n");
 		/* append it starting at ')' in the old re */
-		sprintf((char*)(re+strlen(re)-2), "|%s) ", next);
+		sprintf((char*)(re+strlen(re)-1), "|%s)", next);
 	}
 
 	return re;
@@ -430,7 +444,7 @@ print_help (void)
   printf ("    %s\n", _("Do not run the upgrade.  Probably not useful (without -u at least)."));
   printf (" %s\n", "-i, --include=REGEXP");
   printf ("    %s\n", _("Include only packages matching REGEXP.  Can be specified multiple times"));
-  printf ("    %s\n", _("the values will be combined together.  Any patches matching this list"));
+  printf ("    %s\n", _("the values will be combined together.  Any packages matching this list"));
   printf ("    %s\n", _("cause the plugin to return WARNING status.  Others will be ignored."));
   printf ("    %s\n", _("Default is to include all packages."));
   printf (" %s\n", "-e, --exclude=REGEXP");

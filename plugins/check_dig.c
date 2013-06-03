@@ -54,6 +54,7 @@ char *record_type = "A";
 char *expected_address = NULL;
 char *dns_server = NULL;
 char *dig_args = "";
+char *query_transport = "";
 int verbose = FALSE;
 int server_port = DEFAULT_PORT;
 double warning_interval = UNDEFINED;
@@ -77,7 +78,7 @@ main (int argc, char **argv)
   textdomain (PACKAGE);
 
   /* Set signal handling and alarm */
-  if (signal (SIGALRM, popen_timeout_alarm_handler) == SIG_ERR)
+  if (signal (SIGALRM, runcmd_timeout_alarm_handler) == SIG_ERR)
     usage_va(_("Cannot catch SIGALRM"));
 
   /* Parse extra opts if any */
@@ -87,8 +88,8 @@ main (int argc, char **argv)
     usage_va(_("Could not parse arguments"));
 
   /* get the command to run */
-  xasprintf (&command_line, "%s @%s -p %d %s -t %s %s",
-            PATH_TO_DIG, dns_server, server_port, query_address, record_type, dig_args);
+  xasprintf (&command_line, "%s @%s -p %d %s -t %s %s %s",
+            PATH_TO_DIG, dns_server, server_port, query_address, record_type, dig_args, query_transport);
 
   alarm (timeout_interval);
   gettimeofday (&tv, NULL);
@@ -199,6 +200,8 @@ process_arguments (int argc, char **argv)
     {"record_type", required_argument, 0, 'T'},
     {"expected_address", required_argument, 0, 'a'},
     {"port", required_argument, 0, 'p'},
+    {"use-ipv4", no_argument, 0, '4'},
+    {"use-ipv6", no_argument, 0, '6'},
     {0, 0, 0, 0}
   };
 
@@ -206,7 +209,7 @@ process_arguments (int argc, char **argv)
     return ERROR;
 
   while (1) {
-    c = getopt_long (argc, argv, "hVvt:l:H:w:c:T:p:a:A:", longopts, &option);
+    c = getopt_long (argc, argv, "hVvt:l:H:w:c:T:p:a:A:46", longopts, &option);
 
     if (c == -1 || c == EOF)
       break;
@@ -269,6 +272,12 @@ process_arguments (int argc, char **argv)
     case 'a':
       expected_address = optarg;
       break;
+    case '4':
+      query_transport = "-4";
+      break;
+    case '6':
+      query_transport = "-6";
+      break;
     default:                  /* usage5 */
       usage5();
     }
@@ -325,6 +334,10 @@ print_help (void)
 
   printf (UT_HOST_PORT, 'p', myport);
 
+  printf (" %s\n","-4, --use-ipv4");
+  printf ("    %s\n",_("Force dig to only use IPv4 query transport"));
+  printf (" %s\n","-6, --use-ipv6");
+  printf ("    %s\n",_("Force dig to only use IPv6 query transport"));
   printf (" %s\n","-l, --query_address=STRING");
   printf ("    %s\n",_("Machine name to lookup"));
   printf (" %s\n","-T, --record_type=STRING");
