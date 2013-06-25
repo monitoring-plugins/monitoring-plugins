@@ -4,6 +4,7 @@ This file documents the major additions and syntax changes between releases.
 	ENHANCEMENTS
 	New check_dbi plugin for checking an (SQL) database using DBI
 	Let OpenSSL load its configuration file (see the OPENSSL_config(3) man page)
+	Add performance data to check_apt
 	Add performance data to check_procs
 	Added -4/-6 options to check_dig (Ville Mattila)
 	New check_oracle --connect option to perform real login
