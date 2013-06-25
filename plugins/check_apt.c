@@ -116,7 +116,7 @@ int main (int argc, char **argv) {
 		result = STATE_UNKNOWN;
 	}
 
-	printf(_("APT %s: %d packages available for %s (%d critical updates). %s%s%s%s\n"),
+	printf(_("APT %s: %d packages available for %s (%d critical updates). %s%s%s%s|available_upgrades=%d;;;0 critical_updates=%d;;;0\n"),
 	       state_text(result),
 	       packages_available,
 	       (upgrade==DIST_UPGRADE)?"dist-upgrade":"upgrade",
@@ -124,7 +124,9 @@ int main (int argc, char **argv) {
 	       (stderr_warning)?" warnings detected":"",
 	       (stderr_warning && exec_warning)?",":"",
 	       (exec_warning)?" errors detected":"",
-	       (stderr_warning||exec_warning)?". run with -v for information.":""
+	       (stderr_warning||exec_warning)?". run with -v for information.":"",
+	        packages_available,
+		   sec_count
 	       );
 
 	return result;
