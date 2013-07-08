@@ -241,15 +241,19 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 		DBG(printf("sending READSTAT request"));
 		write(conn, &req, SIZEOF_NTPCM(req));
 		DBG(print_ntp_control_message(&req));
-		/* Attempt to read the largest size packet possible */
-		req.count=htons(MAX_CM_SIZE);
-		DBG(printf("recieving READSTAT response"))
-		if(read(conn, &req, SIZEOF_NTPCM(req)) == -1)
-			die(STATE_CRITICAL, "NTP CRITICAL: No response from NTP server\n");
-		DBG(print_ntp_control_message(&req));
-		/* discard obviously invalid packets */
-		if (ntohs(req.count) > MAX_CM_SIZE)
-			die(STATE_CRITICAL, "NTP CRITICAL: Invalid packet received from NTP server\n");
+
+		do {
+			/* Attempt to read the largest size packet possible */
+			req.count=htons(MAX_CM_SIZE);
+			DBG(printf("recieving READSTAT response"))
+			if(read(conn, &req, SIZEOF_NTPCM(req)) == -1)
+				die(STATE_CRITICAL, "NTP CRITICAL: No response from NTP server\n");
+			DBG(print_ntp_control_message(&req));
+			/* discard obviously invalid packets */
+			if (ntohs(req.count) > MAX_CM_SIZE)
+				die(STATE_CRITICAL, "NTP CRITICAL: Invalid packet received from NTP server\n");
+		} while (!(req.op&OP_READSTAT && ntohs(req.seq) == 1));
+
 		if (LI(req.flags) == LI_ALARM) li_alarm = 1;
 		/* Each peer identifier is 4 bytes in the data section, which
 	 	 * we represent as a ntp_assoc_status_pair datatype.
@@ -312,10 +316,12 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 				write(conn, &req, SIZEOF_NTPCM(req));
 				DBG(print_ntp_control_message(&req));
 
-				req.count = htons(MAX_CM_SIZE);
-				DBG(printf("receiving READVAR response...\n"));
-				read(conn, &req, SIZEOF_NTPCM(req));
-				DBG(print_ntp_control_message(&req));
+				do {
+					req.count = htons(MAX_CM_SIZE);
+					DBG(printf("receiving READVAR response...\n"));
+					read(conn, &req, SIZEOF_NTPCM(req));
+					DBG(print_ntp_control_message(&req));
+				} while (!(req.op&OP_READVAR && ntohs(req.seq) == 2));
 
 				if(!(req.op&REM_ERROR))
 					xasprintf(&data, "%s%s", data, req.data);
