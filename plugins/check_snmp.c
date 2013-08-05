@@ -63,6 +63,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #define L_CALCULATE_RATE CHAR_MAX+1
 #define L_RATE_MULTIPLIER CHAR_MAX+2
 #define L_INVERT_SEARCH CHAR_MAX+3
+#define L_OFFSET CHAR_MAX+4
 
 /* Gobble to string - stop incrementing c when c[0] match one of the
  * characters in s */
@@ -138,6 +139,7 @@ char *output_delim;
 char *miblist = NULL;
 int needmibs = FALSE;
 int calculate_rate = 0;
+double offset = 0.0;
 int rate_multiplier = 1;
 state_data *previous_state;
 double previous_value[MAX_OIDS];
@@ -429,7 +431,7 @@ main (int argc, char **argv)
 			ptr = strpbrk (show, "0123456789");
 			if (ptr == NULL)
 				die (STATE_UNKNOWN,_("No valid data returned (%s)\n"), show);
-			response_value[i] = strtod (ptr, NULL);
+			response_value[i] = strtod (ptr, NULL)+offset;
 
 			if(calculate_rate) {
 				if (previous_state!=NULL) {
@@ -618,6 +620,7 @@ process_arguments (int argc, char **argv)
 		{"next", no_argument, 0, 'n'},
 		{"rate", no_argument, 0, L_CALCULATE_RATE},
 		{"rate-multiplier", required_argument, 0, L_RATE_MULTIPLIER},
+		{"offset", required_argument, 0, L_OFFSET},
 		{"invert-search", no_argument, 0, L_INVERT_SEARCH},
 		{"perf-oids", no_argument, 0, 'O'},
 		{0, 0, 0, 0}
@@ -831,6 +834,9 @@ process_arguments (int argc, char **argv)
 		case L_RATE_MULTIPLIER:
 			if(!is_integer(optarg)||((rate_multiplier=atoi(optarg))<=0))
 				usage2(_("Rate multiplier must be a positive integer"),optarg);
+			break;
+		case L_OFFSET:
+                        offset=strtod(optarg,NULL);
 			break;
 		case L_INVERT_SEARCH:
 			invert_search=1;
@@ -1080,6 +1086,8 @@ print_help (void)
 	printf ("    %s\n", _("Enable rate calculation. See 'Rate Calculation' below"));
 	printf (" %s\n", "--rate-multiplier");
 	printf ("    %s\n", _("Converts rate per second. For example, set to 60 to convert to per minute"));
+	printf (" %s\n", "--offset=OFFSET");
+	printf ("    %s\n", _("Allows to add/substract a value to numeric sensor data."));
 
 	/* Tests Against Strings */
 	printf (" %s\n", "-s, --string=STRING");
