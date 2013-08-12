@@ -176,7 +176,7 @@ $SIG{'ALRM'} = sub {
 };
 alarm($TIMEOUT);
 
-# Execute an "ls" on the share using smbclient program
+# Execute a "du" on the share using smbclient program
 # get the results into $res
 my @cmd = (
 	$smbclient,
@@ -185,7 +185,7 @@ my @cmd = (
 	defined($workgroup) ? ("-W", $workgroup) : (),
 	defined($address) ? ("-I", $address) : (),
 	defined($opt_P) ? ("-p", $opt_P) : (),
-	"-c", "ls"
+	"-c", "du"
 );
 
 print join(" ", @cmd) . "\n" if ($verbose);
@@ -198,7 +198,7 @@ alarm(0);
 @lines = split /\n/, $res;
 
 #Get the last line into $_
-$_ = $lines[$#lines];
+$_ = $lines[$#lines-1];
 #print "$_\n";
 
 #Process the last line to get free space.  
