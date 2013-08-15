@@ -3,7 +3,7 @@
 * Nagios check_http plugin
 * 
 * License: GPL
-* Copyright (c) 1999-2008 Nagios Plugins Development Team
+* Copyright (c) 1999-2013 Nagios Plugins Development Team
 * 
 * Description:
 * 
@@ -34,7 +34,7 @@
 /* splint -I. -I../../plugins -I../../lib/ -I/usr/kerberos/include/ ../../plugins/check_http.c */
 
 const char *progname = "check_http";
-const char *copyright = "1999-2011";
+const char *copyright = "1999-2013";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
@@ -84,6 +84,7 @@ int errcode;
 int invert_regex = 0;
 
 struct timeval tv;
+struct timeval tv_temp;
 
 #define HTTP_URL "/"
 #define CRLF "\r\n"
@@ -114,6 +115,7 @@ int followsticky = STICKY_NONE;
 int use_ssl = FALSE;
 int use_sni = FALSE;
 int verbose = FALSE;
+int show_extended_perfdata = FALSE;
 int sd;
 int min_page_len = 0;
 int max_page_len = 0;
@@ -130,6 +132,11 @@ void redir (char *pos, char *status_line);
 int server_type_check(const char *type);
 int server_port_check(int ssl_flag);
 char *perfd_time (double microsec);
+char *perfd_time_connect (double microsec);
+char *perfd_time_ssl (double microsec);
+char *perfd_time_firstbyte (double microsec);
+char *perfd_time_headers (double microsec);
+char *perfd_time_transfer (double microsec);
 char *perfd_size (int page_len);
 void print_help (void);
 void print_usage (void);
@@ -215,6 +222,7 @@ process_arguments (int argc, char **argv)
     {"invert-regex", no_argument, NULL, INVERT_REGEX},
     {"use-ipv4", no_argument, 0, '4'},
     {"use-ipv6", no_argument, 0, '6'},
+    {"extended-perfdata", no_argument, 0, 'E'},
     {0, 0, 0, 0}
   };
 
@@ -235,7 +243,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:e:p:s:R:r:u:f:C:nlLS::m:M:N", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:e:p:s:R:r:u:f:C:nlLS::m:M:N:E", longopts, &option);
     if (c == -1 || c == EOF)
       break;
 
@@ -470,6 +478,9 @@ process_arguments (int argc, char **argv)
                     }
                   }
                   break;
+    case 'E': /* show extended perfdata */
+      show_extended_perfdata = TRUE;
+      break;
     }
   }
 
@@ -811,17 +822,33 @@ check_http (void)
   char *pos;
   long microsec;
   double elapsed_time;
+  long microsec_connect;
+  double elapsed_time_connect;
+  long microsec_ssl;
+  double elapsed_time_ssl;
+  long microsec_firstbyte;
+  double elapsed_time_firstbyte;
+  long microsec_headers;
+  double elapsed_time_headers;
+  long microsec_transfer;
+  double elapsed_time_transfer;
   int page_len = 0;
   int result = STATE_OK;
 
   /* try to connect to the host at the given port number */
+  gettimeofday (&tv_temp, NULL);
   if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK)
     die (STATE_CRITICAL, _("HTTP CRITICAL - Unable to open TCP socket\n"));
+  microsec_connect = deltime (tv_temp);
 #ifdef HAVE_SSL
+  elapsed_time_connect = (double)microsec_connect / 1.0e6;
   if (use_ssl == TRUE) {
+    gettimeofday (&tv_temp, NULL);
     result = np_net_ssl_init_with_hostname_and_version(sd, (use_sni ? host_name : NULL), ssl_version);
     if (result != STATE_OK)
       return result;
+    microsec_ssl = deltime (tv_temp);
+    elapsed_time_ssl = (double)microsec_ssl / 1.0e6;
     if (check_cert == TRUE) {
       result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
       np_net_ssl_cleanup();
@@ -889,11 +916,19 @@ check_http (void)
   }
 
   if (verbose) printf ("%s\n", buf);
+  gettimeofday (&tv_temp, NULL);
   my_send (buf, strlen (buf));
+  microsec_headers = deltime (tv_temp);
+  elapsed_time_headers = (double)microsec_headers / 1.0e6;
 
   /* fetch the page */
   full_page = strdup("");
+  gettimeofday (&tv_temp, NULL);
   while ((i = my_recv (buffer, MAX_INPUT_BUFFER-1)) > 0) {
+    if ((i >= 1) && (elapsed_time_firstbyte <= 0.000001)) {
+      microsec_firstbyte = deltime (tv_temp);
+      elapsed_time_firstbyte = (double)microsec_firstbyte / 1.0e6;
+    }
     buffer[i] = '\0';
     xasprintf (&full_page_new, "%s%s", full_page, buffer);
     free (full_page);
@@ -905,6 +940,8 @@ check_http (void)
                   break;
                 }
   }
+  microsec_transfer = deltime (tv_temp);
+  elapsed_time_transfer = (double)microsec_transfer / 1.0e6;
 
   if (i < 0 && errno != ECONNRESET) {
 #ifdef HAVE_SSL
@@ -1106,12 +1143,26 @@ check_http (void)
     msg[strlen(msg)-3] = '\0';
 
   /* check elapsed time */
-  xasprintf (&msg,
-            _("%s - %d bytes in %.3f second response time %s|%s %s"),
-            msg, page_len, elapsed_time,
-            (display_html ? "</A>" : ""),
-            perfd_time (elapsed_time), perfd_size (page_len));
-
+  if (show_extended_perfdata)
+    xasprintf (&msg,
+	       _("%s - %d bytes in %.3f second response time %s|%s %s %s %s %s %s %s"),
+	       msg, page_len, elapsed_time,
+	       (display_html ? "</A>" : ""),
+	       perfd_time (elapsed_time), 
+	       perfd_size (page_len),
+	       perfd_time_connect (elapsed_time_connect), 
+	       perfd_time_ssl (elapsed_time_ssl), 
+	       perfd_time_headers (elapsed_time_headers), 
+	       perfd_time_firstbyte (elapsed_time_firstbyte), 
+	       perfd_time_transfer (elapsed_time_transfer));
+  else
+    xasprintf (&msg,
+	       _("%s - %d bytes in %.3f second response time %s|%s %s"),
+	       msg, page_len, elapsed_time,
+	       (display_html ? "</A>" : ""),
+	       perfd_time (elapsed_time), 
+	       perfd_size (page_len));
+    
   result = max_state_alt(get_status(elapsed_time, thlds), result);
 
   die (result, "HTTP %s: %s\n", state_text(result), msg);
@@ -1299,7 +1350,30 @@ char *perfd_time (double elapsed_time)
                    TRUE, 0, FALSE, 0);
 }
 
+char *perfd_time_connect (double elapsed_time_connect)
+{
+  return fperfdata ("time_connect", elapsed_time_connect, "s", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);
+}
 
+char *perfd_time_ssl (double elapsed_time_ssl)
+{
+  return fperfdata ("time_ssl", elapsed_time_ssl, "s", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);
+}
+
+char *perfd_time_headers (double elapsed_time_headers)
+{
+  return fperfdata ("time_headers", elapsed_time_headers, "s", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);
+}
+ 
+char *perfd_time_firstbyte (double elapsed_time_firstbyte)
+{
+  return fperfdata ("time_firstbyte", elapsed_time_firstbyte, "s", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);
+}
+
+char *perfd_time_transfer (double elapsed_time_transfer)
+{
+  return fperfdata ("time_transfer", elapsed_time_transfer, "s", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);
+}
 
 char *perfd_size (int page_len)
 {
