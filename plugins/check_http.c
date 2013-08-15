@@ -1,34 +1,34 @@
 /*****************************************************************************
-* 
+*
 * Nagios check_http plugin
-* 
+*
 * License: GPL
 * Copyright (c) 1999-2013 Nagios Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_http plugin
-* 
+*
 * This plugin tests the HTTP service on the specified host. It can test
 * normal (http) and secure (https) servers, follow redirects, search for
 * strings and regular expressions, check connection times, and report on
 * certificate expiration times.
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 /* splint -I. -I../../plugins -I../../lib/ -I/usr/kerberos/include/ ../../plugins/check_http.c */
@@ -1145,24 +1145,24 @@ check_http (void)
   /* check elapsed time */
   if (show_extended_perfdata)
     xasprintf (&msg,
-	       _("%s - %d bytes in %.3f second response time %s|%s %s %s %s %s %s %s"),
-	       msg, page_len, elapsed_time,
-	       (display_html ? "</A>" : ""),
-	       perfd_time (elapsed_time), 
-	       perfd_size (page_len),
-	       perfd_time_connect (elapsed_time_connect), 
-	       perfd_time_ssl (elapsed_time_ssl), 
-	       perfd_time_headers (elapsed_time_headers), 
-	       perfd_time_firstbyte (elapsed_time_firstbyte), 
-	       perfd_time_transfer (elapsed_time_transfer));
+           _("%s - %d bytes in %.3f second response time %s|%s %s %s %s %s %s %s"),
+           msg, page_len, elapsed_time,
+           (display_html ? "</A>" : ""),
+           perfd_time (elapsed_time),
+           perfd_size (page_len),
+           perfd_time_connect (elapsed_time_connect),
+           use_ssl == TRUE ? perfd_time_ssl (elapsed_time_ssl) : "",
+           perfd_time_headers (elapsed_time_headers),
+           perfd_time_firstbyte (elapsed_time_firstbyte),
+           perfd_time_transfer (elapsed_time_transfer));
   else
     xasprintf (&msg,
-	       _("%s - %d bytes in %.3f second response time %s|%s %s"),
-	       msg, page_len, elapsed_time,
-	       (display_html ? "</A>" : ""),
-	       perfd_time (elapsed_time), 
-	       perfd_size (page_len));
-    
+           _("%s - %d bytes in %.3f second response time %s|%s %s"),
+           msg, page_len, elapsed_time,
+           (display_html ? "</A>" : ""),
+           perfd_time (elapsed_time),
+           perfd_size (page_len));
+
   result = max_state_alt(get_status(elapsed_time, thlds), result);
 
   die (result, "HTTP %s: %s\n", state_text(result), msg);
@@ -1364,7 +1364,7 @@ char *perfd_time_headers (double elapsed_time_headers)
 {
   return fperfdata ("time_headers", elapsed_time_headers, "s", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);
 }
- 
+
 char *perfd_time_firstbyte (double elapsed_time_firstbyte)
 {
   return fperfdata ("time_firstbyte", elapsed_time_firstbyte, "s", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);

@@ -8,22 +8,22 @@ use strict;
 use Test::More;
 use NPTest;
 
-plan tests => 27;
+plan tests => 30;
 
 my $successOutput = '/OK.*HTTP.*second/';
 
 my $res;
 
-my $host_tcp_http      = getTestParameter( "NP_HOST_TCP_HTTP", 
-		"A host providing the HTTP Service (a web server)", 
+my $host_tcp_http      = getTestParameter( "NP_HOST_TCP_HTTP",
+		"A host providing the HTTP Service (a web server)",
 		"localhost" );
 
-my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE", 
+my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE",
 		"The hostname of system not responsive to network requests",
 		"10.0.0.1" );
 
-my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID", 
-		"An invalid (not known to DNS) hostname",  
+my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
+		"An invalid (not known to DNS) hostname",
 		"nosuchhost");
 
 my $internet_access = getTestParameter( "NP_INTERNET_ACCESS",
@@ -32,8 +32,8 @@ my $internet_access = getTestParameter( "NP_INTERNET_ACCESS",
 
 my $host_tcp_http2;
 if ($internet_access eq "no") {
-    $host_tcp_http2     = getTestParameter( "NP_HOST_TCP_HTTP2", 
-            "A host providing an index page containing the string 'nagios'", 
+    $host_tcp_http2     = getTestParameter( "NP_HOST_TCP_HTTP2",
+            "A host providing an index page containing the string 'nagios'",
             "www.nagios.com" );
 }
 
@@ -118,6 +118,10 @@ SKIP: {
         $res = NPTest->testCmd( "./check_http www.verisign.com -C 1" );
         cmp_ok( $res->output, 'eq', $saved_cert_output, "Old syntax for cert checking still works");
 
+        $res = NPTest->testCmd( "./check_http --ssl www.verisign.com -E" );
+        like  ( $res->output, '/time_connect=[\d\.]+/', 'Extended Performance Data Output OK' );
+        like  ( $res->output, '/time_ssl=[\d\.]+/', 'Extended Performance Data SSL Output OK' );
+
         $res = NPTest->testCmd(
                 "./check_http --ssl www.e-paycobalt.com"
                 );
@@ -126,4 +130,7 @@ SKIP: {
 
         $res = NPTest->testCmd( "./check_http -H www.mozilla.com -u /firefox -f follow" );
         is( $res->return_code, 0, "Redirection based on location is okay");
+
+        $res = NPTest->testCmd( "./check_http -H www.mozilla.com --extended-perfdata" );
+        like  ( $res->output, '/time_connect=[\d\.]+/', 'Extended Performance Data Output OK' );
 }
