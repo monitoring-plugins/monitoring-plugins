@@ -115,6 +115,7 @@ int followsticky = STICKY_NONE;
 int use_ssl = FALSE;
 int use_sni = FALSE;
 int verbose = FALSE;
+int show_extended_perfdata = FALSE;
 int sd;
 int min_page_len = 0;
 int max_page_len = 0;
@@ -221,6 +222,7 @@ process_arguments (int argc, char **argv)
     {"invert-regex", no_argument, NULL, INVERT_REGEX},
     {"use-ipv4", no_argument, 0, '4'},
     {"use-ipv6", no_argument, 0, '6'},
+    {"extended-perfdata", no_argument, 0, 'E'},
     {0, 0, 0, 0}
   };
 
@@ -241,7 +243,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:e:p:s:R:r:u:f:C:nlLS::m:M:N", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:e:p:s:R:r:u:f:C:nlLS::m:M:N:E", longopts, &option);
     if (c == -1 || c == EOF)
       break;
 
@@ -476,6 +478,9 @@ process_arguments (int argc, char **argv)
                     }
                   }
                   break;
+    case 'E': /* show extended perfdata */
+      show_extended_perfdata = TRUE;
+      break;
     }
   }
 
@@ -1138,18 +1143,26 @@ check_http (void)
     msg[strlen(msg)-3] = '\0';
 
   /* check elapsed time */
-  xasprintf (&msg,
-            _("%s - %d bytes in %.3f second response time %s|%s %s %s %s %s %s %s"),
-            msg, page_len, elapsed_time,
-            (display_html ? "</A>" : ""),
-            perfd_time (elapsed_time), 
-            perfd_size (page_len),
-            perfd_time_connect (elapsed_time_connect), 
-            perfd_time_ssl (elapsed_time_ssl), 
-            perfd_time_headers (elapsed_time_headers), 
-            perfd_time_firstbyte (elapsed_time_firstbyte), 
-            perfd_time_transfer (elapsed_time_transfer));
-
+  if (show_extended_perfdata)
+    xasprintf (&msg,
+	       _("%s - %d bytes in %.3f second response time %s|%s %s %s %s %s %s %s"),
+	       msg, page_len, elapsed_time,
+	       (display_html ? "</A>" : ""),
+	       perfd_time (elapsed_time), 
+	       perfd_size (page_len),
+	       perfd_time_connect (elapsed_time_connect), 
+	       perfd_time_ssl (elapsed_time_ssl), 
+	       perfd_time_headers (elapsed_time_headers), 
+	       perfd_time_firstbyte (elapsed_time_firstbyte), 
+	       perfd_time_transfer (elapsed_time_transfer));
+  else
+    xasprintf (&msg,
+	       _("%s - %d bytes in %.3f second response time %s|%s %s"),
+	       msg, page_len, elapsed_time,
+	       (display_html ? "</A>" : ""),
+	       perfd_time (elapsed_time), 
+	       perfd_size (page_len));
+    
   result = max_state_alt(get_status(elapsed_time, thlds), result);
 
   die (result, "HTTP %s: %s\n", state_text(result), msg);
