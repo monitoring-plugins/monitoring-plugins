@@ -38,7 +38,7 @@ main (int argc, char **argv)
 	state_data *temp_state_data;
 	time_t	current_time;
 
-	plan_tests(141);
+	plan_tests(150);
 
 	ok( this_nagios_plugin==NULL, "nagios_plugin not initialised");
 
@@ -130,6 +130,18 @@ main (int argc, char **argv)
 	ok( check_range(-2, range)    == FALSE, "-2 - no alert");
 	ok( check_range(657.8210567, range) == TRUE, "657.8210567 - alert");
 	ok( check_range(0, range)     == TRUE, "0 - alert");
+	free(range);
+
+	range = parse_range_string("@1:1");
+	ok( range != NULL, "'@1:1' is a valid range");
+	ok( range->start == 1, "Start correct");
+	ok( range->start_infinity == FALSE, "Not using negative infinity");
+	ok( range->end == 1, "End correct");
+	ok( range->end_infinity == FALSE, "Not using infinity");
+	ok( range->alert_on == INSIDE, "Will alert on inside of this range" );
+	ok( check_range(0.5, range) == FALSE, "0.5 - no alert");
+	ok( check_range(1, range) == TRUE, "1 - alert");
+	ok( check_range(5.2, range) == FALSE, "5.2 - no alert");
 	free(range);
 
 	range = parse_range_string("1:1");
