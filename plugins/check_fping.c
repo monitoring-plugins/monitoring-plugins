@@ -430,9 +430,9 @@ print_help (void)
   printf (" %s\n", "-n, --number=INTEGER");
   printf ("    %s (default: %d)\n", _("number of ICMP packets to send"),PACKET_COUNT);
   printf (" %s\n", "-T, --target-timeout=INTEGER");
-  printf ("    %s (default: fping's default for -t)\n", _("Target timeout (ms)"),PACKET_COUNT);
+  printf ("    %s (default: fping's default for -t)\n", _("Target timeout (ms)"));
   printf (" %s\n", "-i, --interval=INTEGER");
-  printf ("    %s (default: fping's default for -p)\n", _("Interval (ms) between sending packets"),PACKET_COUNT);
+  printf ("    %s (default: fping's default for -p)\n", _("Interval (ms) between sending packets"));
   printf (" %s\n", "-S, --sourceip=HOST");
   printf ("    %s\n", _("name or IP Address of sourceip"));
   printf (" %s\n", "-I, --sourceif=IF");
