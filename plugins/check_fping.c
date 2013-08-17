@@ -74,6 +74,7 @@ main (int argc, char **argv)
 /* normaly should be  int result = STATE_UNKNOWN; */
 
   int status = STATE_UNKNOWN;
+  char *fping_prog = NULL;
   char *server = NULL;
   char *command_line = NULL;
   char *input_buffer = NULL;
@@ -102,7 +103,16 @@ main (int argc, char **argv)
   if (sourceif)
     xasprintf(&option_string, "%s-I %s ", option_string, sourceif);
 
-  xasprintf (&command_line, "%s %s-b %d -c %d %s", PATH_TO_FPING,
+#ifdef USE_IPV6
+  if (address_family == AF_INET6)
+    fping_prog = strdup(PATH_TO_FPING6);
+  else
+    fping_prog = strdup(PATH_TO_FPING);
+#else
+  fping_prog = strdup(PATH_TO_FPING);
+#endif
+
+  xasprintf (&command_line, "%s %s-b %d -c %d %s", fping_prog,
             option_string, packet_size, packet_count, server);
 
   if (verbose)
@@ -249,6 +259,8 @@ process_arguments (int argc, char **argv)
     {"verbose", no_argument, 0, 'v'},
     {"version", no_argument, 0, 'V'},
     {"help", no_argument, 0, 'h'},
+    {"use-ipv4", no_argument, 0, '4'},
+    {"use-ipv6", no_argument, 0, '6'},
     {0, 0, 0, 0}
   };
 
@@ -266,7 +278,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "+hVvH:S:c:w:b:n:T:i:I:", longopts, &option);
+    c = getopt_long (argc, argv, "+hVvH:S:c:w:b:n:T:i:I:46", longopts, &option);
 
     if (c == -1 || c == EOF || c == 1)
       break;
@@ -297,6 +309,15 @@ process_arguments (int argc, char **argv)
       break;
     case 'I':                 /* sourceip */
       sourceif = strscpy (sourceif, optarg);
+    case '4':                 /* IPv4 only */
+      address_family = AF_INET;
+      break;
+    case '6':                 /* IPv6 only */
+#ifdef USE_IPV6
+      address_family = AF_INET6;
+#else
+      usage (_("IPv6 support not available\n"));
+#endif
       break;
     case 'c':
       get_threshold (optarg, rv);
@@ -419,6 +440,8 @@ print_help (void)
   printf (UT_HELP_VRSN);
   printf (UT_EXTRA_OPTS);
 
+  printf (UT_IPv46);
+
   printf (" %s\n", "-H, --hostname=HOST");
   printf ("    %s\n", _("name or IP Address of host to ping (IP Address bypasses name lookup, reducing system load)"));
   printf (" %s\n", "-w, --warning=THRESHOLD");
@@ -442,6 +465,9 @@ print_help (void)
   printf (" %s\n", _("THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel time (ms)"));
   printf (" %s\n", _("which triggers a WARNING or CRITICAL state, and <pl> is the percentage of"));
   printf (" %s\n", _("packet loss to trigger an alarm state."));
+
+  printf ("\n");
+  printf (" %s\n", _("IPv4 is used by default. Specify -6 to use IPv6."));
 
   printf (UT_SUPPORT);
 }
