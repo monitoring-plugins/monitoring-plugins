@@ -1378,26 +1378,24 @@ then
 fi
 
 AC_PATH_PROG(PATH_TO_FPING,fping)
+AC_PATH_PROG(PATH_TO_FPING6,fping6)
+
 AC_ARG_WITH(fping_command,
             ACX_HELP_STRING([--with-fping-command=PATH],
                             [Path to fping command]), PATH_TO_FPING=$withval)
+AC_ARG_WITH(fping6_command,
+            ACX_HELP_STRING([--with-fping6-command=PATH],
+                            [Path to fping6 command]), PATH_TO_FPING6=$withval)
+
 if test -n "$PATH_TO_FPING"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_FPING,"$PATH_TO_FPING",[path to fping])
 	EXTRAS="$EXTRAS check_fping"
+	if test x"$with_ipv6" != xno && test -n "$PATH_TO_FPING6"; then
+		AC_DEFINE_UNQUOTED(PATH_TO_FPING6,"$PATH_TO_FPING6",[path to fping6])
+	fi
 else
 	AC_MSG_WARN([Get fping from http://www.fping.com in order to make check_fping plugin])
-fi
-
-AC_PATH_PROG(PATH_TO_FPING6,fping6)
-AC_ARG_WITH(fping6_command,
-            ACX_HELP_STRING([--with-fping6-command=PATH],
-                            [Path to fping6 command]), PATH_TO_FPING6=$withval)
-if test -n "$PATH_TO_FPING6"
-then
-	AC_DEFINE_UNQUOTED(PATH_TO_FPING6,"$PATH_TO_FPING6",[path to fping6])
-else
-	AC_MSG_WARN([Get fping6 from http://www.fping.com in order to make check_fping plugin])
 fi
 
 AC_PATH_PROG(PATH_TO_SSH,ssh)

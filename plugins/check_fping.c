@@ -103,7 +103,7 @@ main (int argc, char **argv)
   if (sourceif)
     xasprintf(&option_string, "%s-I %s ", option_string, sourceif);
 
-#ifdef USE_IPV6
+#ifdef PATH_TO_FPING6
   if (address_family == AF_INET6)
     fping_prog = strdup(PATH_TO_FPING6);
   else
