@@ -28,8 +28,8 @@ use utils qw(%ERRORS);
 
 # die with an error if we're not on Linux
 if ($^O ne 'linux') {
-    print "This plugin only applicable on Linux.\n";
-    exit $ERRORS{'UNKNOWN'};
+	print "This plugin only applicable on Linux.\n";
+	exit $ERRORS{'UNKNOWN'};
 }
 
 sub max_state($$){
@@ -66,10 +66,10 @@ while(defined $nextdev){
 				$recovery{$device} = $1;
 				($finish{$device}) = /finish=(.*?min)/;
 				$device=undef;
-            } elsif (/resync =\s+(.*?)\s/) {
-                $resyncing{$device} = $1;
-                ($finish{$device}) = /finish=(.*?min)/;
-                $device=undef;
+			} elsif (/resync =\s+(.*?)\s/) {
+				$resyncing{$device} = $1;
+				($finish{$device}) = /finish=(.*?min)/;
+				$device=undef;
 			} elsif (/^\s*$/) {
 				$device=undef;
 			}
@@ -100,14 +100,14 @@ foreach my $k (sort keys %devices){
 			$code = max_state($code, "CRITICAL");
 		}
 	} elsif ($status{$k} =~ /U+/) {
-        if (defined $resyncing{$k}) {
-            $msg .= sprintf " %s status=%s, resync=%s, finish=%s.",
-                $devices{$k}, $status{$k}, $resyncing{$k}, $finish{$k};
-            $code = max_state($code, "WARNING");
-        } else {
-            $msg .= sprintf " %s status=%s.", $devices{$k}, $status{$k};
-            $code = max_state($code, "OK");
-        }
+		if (defined $resyncing{$k}) {
+			$msg .= sprintf " %s status=%s, resync=%s, finish=%s.",
+				$devices{$k}, $status{$k}, $resyncing{$k}, $finish{$k};
+			$code = max_state($code, "WARNING");
+		} else {
+			$msg .= sprintf " %s status=%s.", $devices{$k}, $status{$k};
+			$code = max_state($code, "OK");
+		}
 	} else {
 		if ($active{$k}) {
 			$msg .= sprintf " %s active with no status information.",
@@ -123,4 +123,3 @@ foreach my $k (sort keys %devices){
 
 print $code, $msg, "\n";
 exit ($ERRORS{$code});
-
