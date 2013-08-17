@@ -49,6 +49,12 @@ char *db_host = NULL;
 char *db_socket = NULL;
 char *db_pass = NULL;
 char *db = NULL;
+char *ca_cert = NULL;
+char *ca_path = NULL;
+char *cert = NULL;
+char *key = NULL;
+char *cipher = NULL;
+bool ssl = false;
 unsigned int db_port = MYSQL_PORT;
 int check_slave = 0, warn_sec = 0, crit_sec = 0;
 int verbose = 0;
@@ -89,6 +95,8 @@ main (int argc, char **argv)
 
 	mysql_options(&mysql,MYSQL_READ_DEFAULT_GROUP,"client");
 
+	if (ssl)
+		mysql_ssl_set(&mysql,key,cert,ca_cert,ca_path,cipher);
 	/* establish a connection to the server and error checking */
 	if (!mysql_real_connect(&mysql,db_host,db_user,db_pass,db,db_port,db_socket,0)) {
 		if (mysql_errno (&mysql) == CR_UNKNOWN_HOST)
@@ -188,7 +196,7 @@ main (int argc, char **argv)
 			/* Save slave status in slaveresult */
 			snprintf (slaveresult, SLAVERESULTSIZE, "Slave IO: %s Slave SQL: %s Seconds Behind Master: %s", row[slave_io_field], row[slave_sql_field], seconds_behind_field!=-1?row[seconds_behind_field]:"Unknown");
 
-			/* Raise critical error if SQL THREAD or IO THREAD are stopped */
+			/* Raise critical error if SQL THREAD or IO THREAD are stopped */ 
 			if (strcmp (row[slave_io_field], "Yes") != 0 || strcmp (row[slave_sql_field], "Yes") != 0) {
 				mysql_free_result (res);
 				mysql_close (&mysql);
@@ -260,6 +268,12 @@ process_arguments (int argc, char **argv)
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
+		{"ssl", no_argument, 0, 'l'},
+		{"ca_cert", optional_argument, 0, 'A'},
+		{"key", required_argument,0,'k'},
+		{"cert", required_argument,0,'a'},
+		{"ca_path", required_argument, 0, 'F'},
+		{"cipher", required_argument, 0, 'C'},
 		{0, 0, 0, 0}
 	};
 
@@ -267,7 +281,7 @@ process_arguments (int argc, char **argv)
 		return ERROR;
 
 	while (1) {
-		c = getopt_long (argc, argv, "hvVSP:p:u:d:H:s:c:w:", longopts, &option);
+		c = getopt_long (argc, argv, "hlvVSP:p:u:d:H:s:c:w:A:a:k:F:C:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -286,6 +300,24 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'd':									/* database */
 			db = optarg;
+			break;
+		case 'l':
+			ssl = true;
+			break;
+		case 'A':
+			ca_cert = optarg;
+			break;
+		case 'a':
+			cert = optarg;
+			break;
+		case 'k':
+			key = optarg;
+			break;
+		case 'F':
+			ca_path = optarg;
+			break;
+		case 'C':
+			cipher = optarg;
 			break;
 		case 'u':									/* username */
 			db_user = optarg;
@@ -409,6 +441,19 @@ print_help (void)
   printf (" %s\n", "-c, --critical");
   printf ("    %s\n", _("Exit with CRITICAL status if slave server is more then INTEGER seconds"));
   printf ("    %s\n", _("behind master"));
+  printf (" %s\n", "-l, --ssl");
+  printf ("    %s\n", _("Use ssl encryptation"));
+  printf (" %s\n", "-A, --ca_cert");
+  printf ("    %s\n", _("Path to CA signing the cert"));
+  printf (" %s\n", "-a, --cert");
+  printf ("    %s\n", _("Path to certificate to use for encriptation"));
+  printf (" %s\n", "-k, --key");
+  printf ("    %s\n", _("Path to certificate key"));
+  printf (" %s\n", "-F, --ca_path");
+  printf ("    %s\n", _("Path to CA dir"));
+  printf (" %s\n", "-C, --cipher");
+  printf ("    %s\n", _("List of valid cipher to use for encriptation"));
+
 
   printf ("\n");
   printf (" %s\n", _("There are no required arguments. By default, the local database is checked"));
@@ -429,5 +474,6 @@ print_usage (void)
 {
 	printf ("%s\n", _("Usage:"));
   printf (" %s [-d database] [-H host] [-P port] [-s socket]\n",progname);
-  printf ("       [-u user] [-p password] [-S]\n");
+  printf ("       [-u user] [-p password] [-S] [-l] [-A ca] [-a cert]\n");
+  printf ("	  [-k key] [-F ca_dir] [-C cipher]\n");
 }
