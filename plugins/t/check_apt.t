@@ -18,8 +18,8 @@ sub make_result_regexp {
     } else {
 	$status = "CRITICAL";
     }
-    return sprintf('/^APT %s: %d packages available for upgrade \(%d critical updates\).\s*$/',
-	$status, $warning, $critical);
+    return sprintf('/^APT %s: %d packages available for upgrade \(%d critical updates\)\. |available_upgrades=%d;;;0 critical_updates=%d;;;0$/',
+	$status, $warning, $critical, $warning, $critical);
 }
 
 if (-x "./check_apt") {
