@@ -594,7 +594,7 @@ do_query (PGconn *conn, char *query)
 	int my_status = STATE_UNKNOWN;
 
 	if (verbose)
-		printf ("Executing SQL query \"%s\".\n");
+		printf ("Executing SQL query \"%s\".\n", query);
 	res = PQexec (conn, query);
 
 	if (PGRES_TUPLES_OK != PQresultStatus (res)) {
