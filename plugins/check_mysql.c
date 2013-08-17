@@ -50,10 +50,10 @@ char *db_socket = NULL;
 char *db_pass = NULL;
 char *db = NULL;
 char *ca_cert = NULL;
-char *ca_path = NULL;
+char *ca_dir = NULL;
 char *cert = NULL;
 char *key = NULL;
-char *cipher = NULL;
+char *ciphers = NULL;
 bool ssl = false;
 unsigned int db_port = MYSQL_PORT;
 int check_slave = 0, warn_sec = 0, crit_sec = 0;
@@ -96,7 +96,7 @@ main (int argc, char **argv)
 	mysql_options(&mysql,MYSQL_READ_DEFAULT_GROUP,"client");
 
 	if (ssl)
-		mysql_ssl_set(&mysql,key,cert,ca_cert,ca_path,cipher);
+		mysql_ssl_set(&mysql,key,cert,ca_cert,ca_dir,ciphers);
 	/* establish a connection to the server and error checking */
 	if (!mysql_real_connect(&mysql,db_host,db_user,db_pass,db,db_port,db_socket,0)) {
 		if (mysql_errno (&mysql) == CR_UNKNOWN_HOST)
@@ -269,11 +269,11 @@ process_arguments (int argc, char **argv)
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
 		{"ssl", no_argument, 0, 'l'},
-		{"ca_cert", optional_argument, 0, 'A'},
+		{"ca-cert", optional_argument, 0, 'C'},
 		{"key", required_argument,0,'k'},
 		{"cert", required_argument,0,'a'},
-		{"ca_path", required_argument, 0, 'F'},
-		{"cipher", required_argument, 0, 'C'},
+		{"ca-dir", required_argument, 0, 'D'},
+		{"ciphers", required_argument, 0, 'L'},
 		{0, 0, 0, 0}
 	};
 
@@ -281,7 +281,7 @@ process_arguments (int argc, char **argv)
 		return ERROR;
 
 	while (1) {
-		c = getopt_long (argc, argv, "hlvVSP:p:u:d:H:s:c:w:A:a:k:F:C:", longopts, &option);
+		c = getopt_long (argc, argv, "hlvVSP:p:u:d:H:s:c:w:a:k:C:D:L:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -304,7 +304,7 @@ process_arguments (int argc, char **argv)
 		case 'l':
 			ssl = true;
 			break;
-		case 'A':
+		case 'C':
 			ca_cert = optarg;
 			break;
 		case 'a':
@@ -313,11 +313,11 @@ process_arguments (int argc, char **argv)
 		case 'k':
 			key = optarg;
 			break;
-		case 'F':
-			ca_path = optarg;
+		case 'D':
+			ca_dir = optarg;
 			break;
-		case 'C':
-			cipher = optarg;
+		case 'L':
+			ciphers = optarg;
 			break;
 		case 'u':									/* username */
 			db_user = optarg;
@@ -443,16 +443,16 @@ print_help (void)
   printf ("    %s\n", _("behind master"));
   printf (" %s\n", "-l, --ssl");
   printf ("    %s\n", _("Use ssl encryptation"));
-  printf (" %s\n", "-A, --ca_cert");
+  printf (" %s\n", "-C, --ca-cert=STRING");
   printf ("    %s\n", _("Path to CA signing the cert"));
-  printf (" %s\n", "-a, --cert");
-  printf ("    %s\n", _("Path to certificate to use for encriptation"));
-  printf (" %s\n", "-k, --key");
-  printf ("    %s\n", _("Path to certificate key"));
-  printf (" %s\n", "-F, --ca_path");
-  printf ("    %s\n", _("Path to CA dir"));
-  printf (" %s\n", "-C, --cipher");
-  printf ("    %s\n", _("List of valid cipher to use for encriptation"));
+  printf (" %s\n", "-a, --cert=STRING");
+  printf ("    %s\n", _("Path to SSL certificate"));
+  printf (" %s\n", "-k, --key=STRING");
+  printf ("    %s\n", _("Path to private SSL key"));
+  printf (" %s\n", "-D, --ca-dir=STRING");
+  printf ("    %s\n", _("Path to CA directory"));
+  printf (" %s\n", "-L, --ciphers=STRING");
+  printf ("    %s\n", _("List of valid SSL ciphers"));
 
 
   printf ("\n");
@@ -474,6 +474,6 @@ print_usage (void)
 {
 	printf ("%s\n", _("Usage:"));
   printf (" %s [-d database] [-H host] [-P port] [-s socket]\n",progname);
-  printf ("       [-u user] [-p password] [-S] [-l] [-A ca] [-a cert]\n");
-  printf ("       [-k key] [-F ca_dir] [-C cipher]\n");
+  printf ("       [-u user] [-p password] [-S] [-l] [-a cert] [-k key]\n");
+  printf ("       [-C ca-cert] [-D ca-dir] [-L ciphers]\n");
 }
