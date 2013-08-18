@@ -15,6 +15,7 @@ This file documents the major additions and syntax changes between releases.
 	Made Verbose output of check_sensors compliant (Gabriele Tozzi)
 	New switch -E/--extended-perfdata for check_http to print additional performance data (Sebastian Nohn)
 	New check_http -d option to specify a string to expect within the response headers
+	New check_http -J/-K options for client certificate authentication support
 	Add support for executing queries to check_pgsql
 	Let check_pgsql accept a UNIX socket directory as hostname
 	New check_pgsql -o option to specify additional connection parameters
