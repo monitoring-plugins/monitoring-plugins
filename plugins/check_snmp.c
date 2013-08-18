@@ -277,32 +277,33 @@ main (int argc, char **argv)
 	/* 9 arguments to pass before authpriv options + 1 for host and numoids. Add one for terminating NULL */
 	command_line = calloc (9 + numauthpriv + 1 + numoids + 1, sizeof (char *));
 	command_line[0] = snmpcmd;
-	command_line[1] = strdup ("-t");
-	xasprintf (&command_line[2], "%d", timeout_interval);
-	command_line[3] = strdup ("-r");
-	xasprintf (&command_line[4], "%d", retries);
-	command_line[5] = strdup ("-m");
-	command_line[6] = strdup (miblist);
-	command_line[7] = "-v";
-	command_line[8] = strdup (proto);
+	command_line[1] = strdup ("-Le");
+	command_line[2] = strdup ("-t");
+	xasprintf (&command_line[3], "%d", timeout_interval);
+	command_line[4] = strdup ("-r");
+	xasprintf (&command_line[5], "%d", retries);
+	command_line[6] = strdup ("-m");
+	command_line[7] = strdup (miblist);
+	command_line[8] = "-v";
+	command_line[9] = strdup (proto);
 
 	for (i = 0; i < numauthpriv; i++) {
-		command_line[9 + i] = authpriv[i];
+		command_line[10 + i] = authpriv[i];
 	}
 
-	xasprintf (&command_line[9 + numauthpriv], "%s:%s", server_address, port);
+	xasprintf (&command_line[10 + numauthpriv], "%s:%s", server_address, port);
 
 	/* This is just for display purposes, so it can remain a string */
-	xasprintf(&cl_hidden_auth, "%s -t %d -r %d -m %s -v %s %s %s:%s",
+	xasprintf(&cl_hidden_auth, "%s -Le -t %d -r %d -m %s -v %s %s %s:%s",
 		snmpcmd, timeout_interval, retries, strlen(miblist) ? miblist : "''", proto, "[authpriv]",
 		server_address, port);
 
 	for (i = 0; i < numoids; i++) {
-		command_line[9 + numauthpriv + 1 + i] = oids[i];
+		command_line[10 + numauthpriv + 1 + i] = oids[i];
 		xasprintf(&cl_hidden_auth, "%s %s", cl_hidden_auth, oids[i]);	
 	}
 
-	command_line[9 + numauthpriv + 1 + numoids] = NULL;
+	command_line[10 + numauthpriv + 1 + numoids] = NULL;
 
 	if (verbose)
 		printf ("%s\n", cl_hidden_auth);
