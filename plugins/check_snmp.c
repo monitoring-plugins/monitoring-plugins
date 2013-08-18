@@ -274,8 +274,8 @@ main (int argc, char **argv)
 		snmpcmd = strdup (PATH_TO_SNMPGET);
 	}
 
-	/* 9 arguments to pass before authpriv options + 1 for host and numoids. Add one for terminating NULL */
-	command_line = calloc (9 + numauthpriv + 1 + numoids + 1, sizeof (char *));
+	/* 10 arguments to pass before authpriv options + 1 for host and numoids. Add one for terminating NULL */
+	command_line = calloc (10 + numauthpriv + 1 + numoids + 1, sizeof (char *));
 	command_line[0] = snmpcmd;
 	command_line[1] = strdup ("-Le");
 	command_line[2] = strdup ("-t");
