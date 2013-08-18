@@ -17,7 +17,7 @@ use Test::More;
 use NPTest;
 use FindBin qw($Bin);
 
-my $common_tests = 66;
+my $common_tests = 70;
 my $ssl_only_tests = 8;
 # Check that all dependent modules are available
 eval {
@@ -229,11 +229,11 @@ sub run_common_tests {
 
 	$result = NPTest->testCmd( "$command -u /header_check -d foo" );
 	is( $result->return_code, 0, "header_check search for string");
-	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - 274 bytes in [\d\.]+ second/', "Output correct" );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - 96 bytes in [\d\.]+ second/', "Output correct" );
 
-	$result = NPTest->testCmd( "$command -u /header_check -d foobar" );
+	$result = NPTest->testCmd( "$command -u /header_check -d bar" );
 	is( $result->return_code, 2, "Missing header string check");
-	like( $result->output, qr%^HTTP CRITICAL: HTTP/1\.1 200 OK - string 'foobar' not found on 'https?://127\.0\.0\.1:\d+/header_check/root'%, "Shows search string and location");
+	like( $result->output, qr%^HTTP CRITICAL: HTTP/1\.1 200 OK - header 'bar' not found on 'https?://127\.0\.0\.1:\d+/header_check'%, "Shows search string and location");
 
 	my $cmd;
 	$cmd = "$command -u /slow";
