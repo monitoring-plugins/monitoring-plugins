@@ -1098,7 +1098,7 @@ check_http (void)
       if(output_header_search[sizeof(output_header_search)-1]!='\0') {
         bcopy("...",&output_header_search[sizeof(output_header_search)-4],4);
       }
-      asprintf (&msg, _("%sheader '%s' not found on '%s://%s:%d%s', "), msg, output_header_search, use_ssl ? "https" : "http", host_name ? host_name : server_address, server_port, server_url);
+      xasprintf (&msg, _("%sheader '%s' not found on '%s://%s:%d%s', "), msg, output_header_search, use_ssl ? "https" : "http", host_name ? host_name : server_address, server_port, server_url);
       result = STATE_CRITICAL;
     }
   }
