@@ -110,7 +110,7 @@ FILE *ps_input = NULL;
 
 static int
 stat_exe (const pid_t pid, struct_stat_t *buf) {
-#if defined(HAVE_PROC_PID_EXE) && defined(HAVE_SYS_STAT_H)
+#ifdef HAVE_SYS_STAT_H
 	char *path;
 	int ret;
 	xasprintf(&path, "/proc/%d/exe", pid);
