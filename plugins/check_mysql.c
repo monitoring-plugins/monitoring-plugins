@@ -407,10 +407,10 @@ process_arguments (int argc, char **argv)
 				optarg++;
 			}
 			break;
-		case 'f':									/* username */
+		case 'f':									/* client options file */
 			opt_file = optarg;
 			break;
-		case 'g':									/* username */
+		case 'g':									/* client options group */
 			opt_group = optarg;
 			break;
 		case 'P':									/* critical time threshold */
