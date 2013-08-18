@@ -500,7 +500,7 @@ void
 print_help (void)
 {
 	char *myport;
-	asprintf (&myport, "%d", MYSQL_PORT);
+	xasprintf (&myport, "%d", MYSQL_PORT);
 
 	print_revision (progname, NP_VERSION);
 
