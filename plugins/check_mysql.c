@@ -456,10 +456,6 @@ process_arguments (int argc, char **argv)
 			}
 		else if (db_user == NULL)
 			db_user = argv[c++];
-		else if (opt_file == NULL)
-			opt_file = argv[c++];
-		else if (opt_group == NULL)
-			opt_group = argv[c++];
 		else if (db_pass == NULL)
 			db_pass = argv[c++];
 		else if (db == NULL)
