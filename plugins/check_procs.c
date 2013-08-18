@@ -46,10 +46,6 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-typedef struct stat struct_stat_t;
-#else
-/* won't be used anyway */
-typedef struct { dev_t st_dev; ino_t st_ino; } struct_stat_t;
 #endif
 
 int process_arguments (int, char **);
@@ -109,17 +105,13 @@ int usepid = 0; /* whether to test for pid or /proc/pid/exe */
 FILE *ps_input = NULL;
 
 static int
-stat_exe (const pid_t pid, struct_stat_t *buf) {
-#ifdef HAVE_SYS_STAT_H
+stat_exe (const pid_t pid, struct stat *buf) {
 	char *path;
 	int ret;
 	xasprintf(&path, "/proc/%d/exe", pid);
 	ret = stat(path, buf);
 	free(path);
 	return ret;
-#else
-	return -1;
-#endif
 }
 
 
@@ -131,7 +123,7 @@ main (int argc, char **argv)
 	char *procprog;
 
 	pid_t mypid = 0;
-	struct_stat_t statbuf;
+	struct stat statbuf;
 	dev_t mydev = 0;
 	ino_t myino = 0;
 	int procuid = 0;
