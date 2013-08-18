@@ -45,10 +45,10 @@ int np_net_ssl_init_with_hostname(int sd, char *host_name) {
 }
 
 int np_net_ssl_init_with_hostname_and_version(int sd, char *host_name, int version) {
-	return np_net_ssl_init_with_hostname_version_and_certificate(sd, host_name, version, NULL, NULL);
+	return np_net_ssl_init_with_hostname_version_and_cert(sd, host_name, version, NULL, NULL);
 }
 
-int np_net_ssl_init_with_hostname_version_and_certificate(int sd, char *host_name, int version, char *cert, char *privkey) {
+int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int version, char *cert, char *privkey) {
 	const SSL_METHOD *method = NULL;
 
 	switch (version) {
