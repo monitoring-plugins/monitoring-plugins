@@ -127,6 +127,8 @@ char *http_method;
 char *http_post_data;
 char *http_content_type;
 char buffer[MAX_INPUT_BUFFER];
+char *client_cert = NULL;
+char *client_privkey = NULL;
 
 int process_arguments (int, char **);
 int check_http (void);
@@ -178,7 +180,14 @@ main (int argc, char **argv)
   return result;
 }
 
-
+/* check whether a file exists */
+void
+test_file (char *path)
+{
+  if (access(path, R_OK) == 0)
+    return;
+  usage2 (_("file does not exist or is not readable"), path);
+}
 
 /* process command-line arguments */
 int
@@ -216,6 +225,8 @@ process_arguments (int argc, char **argv)
     {"linespan", no_argument, 0, 'l'},
     {"onredirect", required_argument, 0, 'f'},
     {"certificate", required_argument, 0, 'C'},
+    {"client-cert", required_argument, 0, 'J'},
+    {"private-key", required_argument, 0, 'K'},
     {"useragent", required_argument, 0, 'A'},
     {"header", required_argument, 0, 'k'},
     {"no-body", no_argument, 0, 'N'},
@@ -246,7 +257,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:nlLS::m:M:N:E", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:N:E", longopts, &option);
     if (c == -1 || c == EOF)
       break;
 
@@ -311,10 +322,23 @@ process_arguments (int argc, char **argv)
         days_till_exp_warn = atoi (optarg);
       }
       check_cert = TRUE;
-      /* Fall through to -S option */
+      goto enable_ssl;
+#endif
+    case 'J': /* use client certificate */
+#ifdef HAVE_SSL
+      test_file(optarg);
+      client_cert = optarg;
+      goto enable_ssl;
+#endif
+    case 'K': /* use client private key */
+#ifdef HAVE_SSL
+      test_file(optarg);
+      client_privkey = optarg;
+      goto enable_ssl;
 #endif
     case 'S': /* use SSL */
 #ifdef HAVE_SSL
+    enable_ssl:
       use_ssl = TRUE;
       if (optarg == NULL || c != 'S')
         ssl_version = 0;
@@ -326,6 +350,7 @@ process_arguments (int argc, char **argv)
       if (specify_port == FALSE)
         server_port = HTTPS_PORT;
 #else
+      /* -C -J and -K fall through to here without SSL */
       usage4 (_("Invalid option - SSL is not available"));
 #endif
       break;
@@ -513,6 +538,9 @@ process_arguments (int argc, char **argv)
 
   if (http_method == NULL)
     http_method = strdup ("GET");
+
+  if (client_cert && !client_privkey) 
+    usage4 (_("If you use a client certificate you must also specify a private key file"));
 
   return TRUE;
 }
@@ -851,7 +879,7 @@ check_http (void)
   elapsed_time_connect = (double)microsec_connect / 1.0e6;
   if (use_ssl == TRUE) {
     gettimeofday (&tv_temp, NULL);
-    result = np_net_ssl_init_with_hostname_and_version(sd, (use_sni ? host_name : NULL), ssl_version);
+    result = np_net_ssl_init_with_hostname_version_and_certificate(sd, (use_sni ? host_name : NULL), ssl_version, client_cert, client_privkey);
     if (result != STATE_OK)
       return result;
     microsec_ssl = deltime (tv_temp);
@@ -1444,7 +1472,13 @@ print_help (void)
   printf ("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
   printf (" %s\n", "-C, --certificate=INTEGER[,INTEGER]");
   printf ("    %s\n", _("Minimum number of days a certificate has to be valid. Port defaults to 443"));
-  printf ("    %s\n", _("(when this option is used the URL is not checked.)\n"));
+  printf ("    %s\n", _("(when this option is used the URL is not checked.)"));
+  printf (" %s\n", "-J, --client-cert=FILE");
+  printf ("   %s\n", _("Name of file that contains the client certificate (PEM format)"));
+  printf ("   %s\n", _("to be used in establishing the SSL session"));
+  printf (" %s\n", "-K, --private-key=FILE");
+  printf ("   %s\n", _("Name of file containing the private key (PEM format)"));
+  printf ("   %s\n", _("matching the client certificate"));
 #endif
 
   printf (" %s\n", "-e, --expect=STRING");
@@ -1553,6 +1587,7 @@ print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
   printf (" %s -H <vhost> | -I <IP-address> [-u <uri>] [-p <port>]\n",progname);
+  printf ("       [-J <client certificate file>] [-K <private key>]\n");
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L] [-a auth]\n");
   printf ("       [-b proxy_auth] [-f <ok|warning|critcal|follow|sticky|stickyport>]\n");
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");

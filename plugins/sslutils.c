@@ -45,6 +45,10 @@ int np_net_ssl_init_with_hostname(int sd, char *host_name) {
 }
 
 int np_net_ssl_init_with_hostname_and_version(int sd, char *host_name, int version) {
+	return np_net_ssl_init_with_hostname_version_and_certificate(sd, host_name, version, NULL, NULL);
+}
+
+int np_net_ssl_init_with_hostname_version_and_certificate(int sd, char *host_name, int version, char *cert, char *privkey) {
 	const SSL_METHOD *method = NULL;
 
 	switch (version) {
@@ -79,6 +83,14 @@ int np_net_ssl_init_with_hostname_and_version(int sd, char *host_name, int versi
 	if ((c = SSL_CTX_new(method)) == NULL) {
 		printf("%s\n", _("CRITICAL - Cannot create SSL context."));
 		return STATE_CRITICAL;
+	}
+	if (cert && privkey) {
+		SSL_CTX_use_certificate_file(c, cert, SSL_FILETYPE_PEM);
+		SSL_CTX_use_PrivateKey_file(c, privkey, SSL_FILETYPE_PEM);
+		if (!SSL_CTX_check_private_key(c)) {
+			printf ("%s\n", _("CRITICAL - Private key does not seem to match certificate!\n"));
+			return STATE_CRITICAL;
+		}
 	}
 #ifdef SSL_OP_NO_TICKET
 	SSL_CTX_set_options(c, SSL_OP_NO_TICKET);
