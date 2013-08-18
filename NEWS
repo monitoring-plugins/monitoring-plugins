@@ -21,6 +21,7 @@ This file documents the major additions and syntax changes between releases.
 	New check_fping -I option to specify the interface to bind to
 	Let check_fping support IPv6
 	New check_procs -k option to ignore kernel threads (on Linux)
+	Let check_procs use /proc/<PID>/exe (if available) instead of getpid(2), unless -T is specified
 	Let check_mysql support SSL
 
 	FIXES
