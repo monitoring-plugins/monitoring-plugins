@@ -59,6 +59,32 @@ unsigned int db_port = MYSQL_PORT;
 int check_slave = 0, warn_sec = 0, crit_sec = 0;
 int verbose = 0;
 
+static double warning_time = 0;
+static double critical_time = 0;
+
+#define LENGTH_METRIC_UNIT 6
+static const char *metric_unit[LENGTH_METRIC_UNIT] = {
+	"Open_files",
+	"Open_tables",
+	"Qcache_free_memory",
+	"Qcache_queries_in_cache",
+	"Threads_connected",
+	"Threads_running"
+};
+
+#define LENGTH_METRIC_COUNTER 9
+static const char *metric_counter[LENGTH_METRIC_COUNTER] = {
+	"Connections",
+	"Qcache_hits",
+	"Qcache_inserts",
+	"Qcache_lowmem_prunes",
+	"Qcache_not_cached",
+	"Queries",
+	"Questions",
+	"Table_locks_waited",
+	"Uptime"
+};
+
 thresholds *my_threshold = NULL;
 
 int process_arguments (int, char **);
@@ -79,6 +105,9 @@ main (int argc, char **argv)
 	char *result = NULL;
 	char *error = NULL;
 	char slaveresult[SLAVERESULTSIZE];
+	char* perf;
+
+        perf = strdup ("");
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -124,6 +153,37 @@ main (int argc, char **argv)
 			die (STATE_CRITICAL, "%s\n", mysql_error (&mysql));
 		else if (mysql_errno (&mysql) == CR_UNKNOWN_ERROR)
 			die (STATE_CRITICAL, "%s\n", mysql_error (&mysql));
+	}
+
+	/* try to fetch some perf data */
+	if (mysql_query (&mysql, "show global status") == 0) {
+		if ( (res = mysql_store_result (&mysql)) == NULL) {
+			error = strdup(mysql_error(&mysql));
+			mysql_close (&mysql);
+			die (STATE_CRITICAL, _("status store_result error: %s\n"), error);
+		}
+
+		while ( (row = mysql_fetch_row (res)) != NULL) {
+			int i;
+
+			for(i = 0; i < LENGTH_METRIC_UNIT; i++) {
+				if (strcmp(row[0], metric_unit[i]) == 0) {
+					xasprintf(&perf, "%s%s ", perf, perfdata(metric_unit[i],
+						atol(row[1]), "", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0));
+					continue;
+				}
+			}
+			for(i = 0; i < LENGTH_METRIC_COUNTER; i++) {
+				if (strcmp(row[0], metric_counter[i]) == 0) {
+					xasprintf(&perf, "%s%s ", perf, perfdata(metric_counter[i],
+						atol(row[1]), "c", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0));
+					continue;
+				}
+			}
+		}
+		/* remove trailing space */
+                if (strlen(perf) > 0)
+                    perf[strlen(perf) - 1] = '\0';
 	}
 
 	if(check_slave) {
@@ -218,11 +278,17 @@ main (int argc, char **argv)
 
 				status = get_status(value, my_threshold);
 
+				xasprintf (&perf, "%s %s", perf, fperfdata ("seconds behind master", value, "s",
+        	                        TRUE, (double) warning_time,
+                	                TRUE, (double) critical_time,
+                        	        FALSE, 0,
+                                	FALSE, 0));
+
 				if (status == STATE_WARNING) {
-					printf("SLOW_SLAVE %s: %s\n", _("WARNING"), slaveresult);
+					printf("SLOW_SLAVE %s: %s|%s\n", _("WARNING"), slaveresult, perf);
 					exit(STATE_WARNING);
 				} else if (status == STATE_CRITICAL) {
-					printf("SLOW_SLAVE %s: %s\n", _("CRITICAL"), slaveresult);
+					printf("SLOW_SLAVE %s: %s|%s\n", _("CRITICAL"), slaveresult, perf);
 					exit(STATE_CRITICAL);
 				}
 			}
@@ -237,9 +303,9 @@ main (int argc, char **argv)
 
 	/* print out the result of stats */
 	if (check_slave) {
-		printf ("%s %s\n", result, slaveresult);
+		printf ("%s %s|%s\n", result, slaveresult, perf);
 	} else {
-		printf ("%s\n", result);
+		printf ("%s|%s\n", result, perf);
 	}
 
 	return STATE_OK;
@@ -339,9 +405,11 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'w':
 			warning = optarg;
+			warning_time = strtod (warning, NULL);
 			break;
 		case 'c':
 			critical = optarg;
+			critical_time = strtod (critical, NULL);
 			break;
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
