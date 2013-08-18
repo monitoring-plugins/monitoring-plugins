@@ -432,7 +432,7 @@ main (int argc, char **argv)
 			ptr = strpbrk (show, "0123456789");
 			if (ptr == NULL)
 				die (STATE_UNKNOWN,_("No valid data returned (%s)\n"), show);
-			response_value[i] = strtod (ptr, NULL)+offset;
+			response_value[i] = strtod (ptr, NULL) + offset;
 
 			if(calculate_rate) {
 				if (previous_state!=NULL) {
@@ -1088,7 +1088,7 @@ print_help (void)
 	printf (" %s\n", "--rate-multiplier");
 	printf ("    %s\n", _("Converts rate per second. For example, set to 60 to convert to per minute"));
 	printf (" %s\n", "--offset=OFFSET");
-	printf ("    %s\n", _("Allows to add/substract a value to numeric sensor data."));
+	printf ("    %s\n", _("Add/substract the specified OFFSET to numeric sensor data"));
 
 	/* Tests Against Strings */
 	printf (" %s\n", "-s, --string=STRING");
