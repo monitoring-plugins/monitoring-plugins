@@ -55,6 +55,8 @@ char *cert = NULL;
 char *key = NULL;
 char *ciphers = NULL;
 bool ssl = false;
+char *opt_file = NULL;
+char *opt_group = NULL;
 unsigned int db_port = MYSQL_PORT;
 int check_slave = 0, warn_sec = 0, crit_sec = 0;
 int verbose = 0;
@@ -121,8 +123,14 @@ main (int argc, char **argv)
 
 	/* initialize mysql  */
 	mysql_init (&mysql);
+	
+	if (opt_file != NULL)
+		mysql_options(&mysql,MYSQL_READ_DEFAULT_FILE,opt_file);
 
-	mysql_options(&mysql,MYSQL_READ_DEFAULT_GROUP,"client");
+	if (opt_group != NULL)
+		mysql_options(&mysql,MYSQL_READ_DEFAULT_GROUP,opt_group);
+	else
+		mysql_options(&mysql,MYSQL_READ_DEFAULT_GROUP,"client");
 
 	if (ssl)
 		mysql_ssl_set(&mysql,key,cert,ca_cert,ca_dir,ciphers);
@@ -327,6 +335,8 @@ process_arguments (int argc, char **argv)
 		{"database", required_argument, 0, 'd'},
 		{"username", required_argument, 0, 'u'},
 		{"password", required_argument, 0, 'p'},
+		{"file", required_argument, 0, 'f'},
+		{"group", required_argument, 0, 'g'},
 		{"port", required_argument, 0, 'P'},
 		{"critical", required_argument, 0, 'c'},
 		{"warning", required_argument, 0, 'w'},
@@ -347,7 +357,7 @@ process_arguments (int argc, char **argv)
 		return ERROR;
 
 	while (1) {
-		c = getopt_long (argc, argv, "hlvVSP:p:u:d:H:s:c:w:a:k:C:D:L:", longopts, &option);
+		c = getopt_long (argc, argv, "hlvVSP:p:u:d:H:s:c:w:a:k:C:D:L:f:g:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -397,6 +407,12 @@ process_arguments (int argc, char **argv)
 				optarg++;
 			}
 			break;
+		case 'f':									/* username */
+			opt_file = optarg;
+			break;
+		case 'g':									/* username */
+			opt_group = optarg;
+			break;
 		case 'P':									/* critical time threshold */
 			db_port = atoi (optarg);
 			break;
@@ -440,6 +456,10 @@ process_arguments (int argc, char **argv)
 			}
 		else if (db_user == NULL)
 			db_user = argv[c++];
+		else if (opt_file == NULL)
+			opt_file = argv[c++];
+		else if (opt_group == NULL)
+			opt_group = argv[c++];
 		else if (db_pass == NULL)
 			db_pass = argv[c++];
 		else if (db == NULL)
@@ -460,6 +480,12 @@ validate_arguments (void)
 	if (db_user == NULL)
 		db_user = strdup("");
 
+	if (opt_file == NULL)
+		opt_file = strdup("");
+
+	if (opt_group == NULL)
+		opt_group = strdup("");
+
 	if (db_host == NULL)
 		db_host = strdup("");
 
@@ -474,7 +500,7 @@ void
 print_help (void)
 {
 	char *myport;
-	xasprintf (&myport, "%d", MYSQL_PORT);
+	asprintf (&myport, "%d", MYSQL_PORT);
 
 	print_revision (progname, NP_VERSION);
 
@@ -495,6 +521,10 @@ print_help (void)
 
   printf (" %s\n", "-d, --database=STRING");
   printf ("    %s\n", _("Check database with indicated name"));
+  printf (" %s\n", "-f, --file=STRING");
+  printf ("    %s\n", _("Read from the specified client options file"));
+  printf (" %s\n", "-g, --group=STRING");
+  printf ("    %s\n", _("Use a client options group"));
   printf (" %s\n", "-u, --username=STRING");
   printf ("    %s\n", _("Connect using the indicated username"));
   printf (" %s\n", "-p, --password=STRING");
@@ -543,5 +573,5 @@ print_usage (void)
 	printf ("%s\n", _("Usage:"));
   printf (" %s [-d database] [-H host] [-P port] [-s socket]\n",progname);
   printf ("       [-u user] [-p password] [-S] [-l] [-a cert] [-k key]\n");
-  printf ("       [-C ca-cert] [-D ca-dir] [-L ciphers]\n");
+  printf ("       [-C ca-cert] [-D ca-dir] [-L ciphers] [-f optfile] [-g group]\n");
 }
