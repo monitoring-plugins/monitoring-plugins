@@ -94,7 +94,7 @@
 int
 get_fs_usage (char const *file, char const *disk, struct fs_usage *fsp)
 {
-#if defined STAT_STATVFS                /* POSIX */
+#if defined STAT_STATVFS                /* POSIX, except glibc/Linux */
 
   struct statvfs fsd;
 
@@ -156,7 +156,7 @@ get_fs_usage (char const *file, char const *disk, struct fs_usage *fsp)
                     : (fsd.s_isize - 2) * INOPB * (fsd.s_type == Fs2b ? 2 : 1));
   fsp->fsu_ffree = PROPAGATE_ALL_ONES (fsd.s_tinode);
 
-#elif defined STAT_STATFS3_OSF1
+#elif defined STAT_STATFS3_OSF1         /* OSF/1 */
 
   struct statfs fsd;
 
@@ -165,7 +165,9 @@ get_fs_usage (char const *file, char const *disk, struct fs_usage *fsp)
 
   fsp->fsu_blocksize = PROPAGATE_ALL_ONES (fsd.f_fsize);
 
-#elif defined STAT_STATFS2_BSIZE        /* 4.3BSD, SunOS 4, HP-UX, AIX */
+#elif defined STAT_STATFS2_BSIZE        /* glibc/Linux, 4.3BSD, SunOS 4, \
+                                           MacOS X < 10.4, FreeBSD < 5.0, \
+                                           NetBSD < 3.0, OpenBSD < 4.4 */
 
   struct statfs fsd;
 
@@ -189,7 +191,7 @@ get_fs_usage (char const *file, char const *disk, struct fs_usage *fsp)
     }
 # endif /* STATFS_TRUNCATES_BLOCK_COUNTS */
 
-#elif defined STAT_STATFS2_FSIZE        /* 4.4BSD */
+#elif defined STAT_STATFS2_FSIZE        /* 4.4BSD and older NetBSD */
 
   struct statfs fsd;
 
@@ -198,7 +200,8 @@ get_fs_usage (char const *file, char const *disk, struct fs_usage *fsp)
 
   fsp->fsu_blocksize = PROPAGATE_ALL_ONES (fsd.f_fsize);
 
-#elif defined STAT_STATFS4              /* SVR3, Dynix, Irix, AIX */
+#elif defined STAT_STATFS4              /* SVR3, Dynix, old Irix, old AIX, \
+                                           Dolphin */
 
 # if !_AIX && !defined _SEQUENT_ && !defined DOLPHIN
 #  define f_bavail f_bfree

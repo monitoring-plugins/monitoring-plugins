@@ -254,7 +254,7 @@ AC_DEFUN([gl_INIT],
   # Code from module locale:
   gl_LOCALE_H
   # Code from module malloc:
-  AC_FUNC_MALLOC
+  gl_FUNC_MALLOC_GNU
   AC_DEFINE([GNULIB_MALLOC_GNU], 1, [Define to indicate the 'malloc' module.])
   # Code from module malloc-posix:
   gl_FUNC_MALLOC_POSIX

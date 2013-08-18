@@ -1,4 +1,4 @@
-# lib-link.m4 serial 23 (gettext-0.18.2)
+# lib-link.m4 serial 24 (gettext-0.18.2)
 dnl Copyright (C) 2001-2010 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -165,7 +165,7 @@ AC_DEFUN([AC_LIB_FROMPACKAGE],
   pushdef([PACKUP],[m4_translit(PACK,[abcdefghijklmnopqrstuvwxyz./+-],
                                      [ABCDEFGHIJKLMNOPQRSTUVWXYZ____])])
   define([acl_libsinpackage_]PACKUP,
-    m4_ifdef([acl_libsinpackage_]PACKUP, [acl_libsinpackage_]PACKUP[[, ]],)[lib$1])
+    m4_ifdef([acl_libsinpackage_]PACKUP, [m4_defn([acl_libsinpackage_]PACKUP)[, ]],)[lib$1])
   popdef([PACKUP])
   popdef([PACK])
 ])

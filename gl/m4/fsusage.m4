@@ -1,4 +1,4 @@
-# serial 25
+# serial 26
 # Obtaining file system usage information.
 
 # Copyright (C) 1997-1998, 2000-2001, 2003-2010 Free Software Foundation, Inc.
@@ -44,7 +44,8 @@ ac_fsusage_space=no
 # systems.  That system is reported to work fine with STAT_STATFS4 which
 # is what it gets when this test fails.
 if test $ac_fsusage_space = no; then
-  # SVR4
+  # glibc/{Hurd,kFreeBSD}, MacOS X >= 10.4, FreeBSD >= 5.0, NetBSD >= 3.0,
+  # OpenBSD >= 4.4, AIX, HP-UX, IRIX, Solaris, Cygwin, Interix, BeOS.
   AC_CACHE_CHECK([for statvfs function (SVR4)], [fu_cv_sys_stat_statvfs],
                  [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
 #if defined __GLIBC__ && defined __linux__
@@ -97,8 +98,13 @@ if test $ac_fsusage_space = no; then
 fi
 
 if test $ac_fsusage_space = no; then
-# AIX
-  AC_MSG_CHECKING([for two-argument statfs with statfs.bsize dnl
+  # glibc/Linux, MacOS X < 10.4, FreeBSD < 5.0, NetBSD < 3.0, OpenBSD < 4.4.
+  # (glibc/{Hurd,kFreeBSD}, MacOS X >= 10.4, FreeBSD >= 5.0, NetBSD >= 3.0,
+  # OpenBSD >= 4.4, AIX, HP-UX, OSF/1, Cygwin already handled above.)
+  # (On IRIX you need to include <sys/statfs.h>, not only <sys/mount.h> and
+  # <sys/vfs.h>.)
+  # (On Solaris, statfs has 4 arguments.)
+  AC_MSG_CHECKING([for two-argument statfs with statfs.f_bsize dnl
 member (AIX, 4.3BSD)])
   AC_CACHE_VAL([fu_cv_sys_stat_statfs2_bsize],
   [AC_RUN_IFELSE([AC_LANG_SOURCE([[
@@ -131,7 +137,8 @@ member (AIX, 4.3BSD)])
 fi
 
 if test $ac_fsusage_space = no; then
-# SVR3
+  # SVR3
+  # (Solaris already handled above.)
   AC_MSG_CHECKING([for four-argument statfs (AIX-3.2.5, SVR3)])
   AC_CACHE_VAL([fu_cv_sys_stat_statfs4],
   [AC_RUN_IFELSE([AC_LANG_SOURCE([[
@@ -150,13 +157,17 @@ if test $ac_fsusage_space = no; then
   if test $fu_cv_sys_stat_statfs4 = yes; then
     ac_fsusage_space=yes
     AC_DEFINE([STAT_STATFS4], [1],
-              [  Define if statfs takes 4 args.  (SVR3, Dynix, Irix, Dolphin)])
+      [  Define if statfs takes 4 args.  (SVR3, Dynix, old Irix, old AIX, Dolphin)])
   fi
 fi
 
 if test $ac_fsusage_space = no; then
-# 4.4BSD and NetBSD
-  AC_MSG_CHECKING([for two-argument statfs with statfs.fsize dnl
+  # 4.4BSD and older NetBSD
+  # (OSF/1 already handled above.)
+  # (On AIX, you need to include <sys/statfs.h>, not only <sys/mount.h>.)
+  # (On Solaris, statfs has 4 arguments and 'struct statfs' is not declared in
+  # <sys/mount.h>.)
+  AC_MSG_CHECKING([for two-argument statfs with statfs.f_fsize dnl
 member (4.4BSD and NetBSD)])
   AC_CACHE_VAL([fu_cv_sys_stat_statfs2_fsize],
   [AC_RUN_IFELSE([AC_LANG_SOURCE([[
@@ -223,6 +234,7 @@ fi
 
 if test $ac_fsusage_space = no; then
   # SVR2
+  # (AIX, HP-UX, OSF/1 already handled above.)
   AC_PREPROC_IFELSE([AC_LANG_SOURCE([[#include <sys/filsys.h>
         ]])],
     [AC_DEFINE([STAT_READ_FILSYS], [1],

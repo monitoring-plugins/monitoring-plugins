@@ -1,4 +1,4 @@
-# stdlib_h.m4 serial 28
+# stdlib_h.m4 serial 30
 dnl Copyright (C) 2007-2010 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -33,7 +33,7 @@ AC_DEFUN([gl_STDLIB_H],
 #if HAVE_RANDOM_H
 # include <random.h>
 #endif
-    ]], [atoll canonicalize_file_name getloadavg getsubopt grantpt mkdtemp
+    ]], [_Exit atoll canonicalize_file_name getloadavg getsubopt grantpt mkdtemp
     mkostemp mkostemps mkstemp mkstemps ptsname random_r initstat_r srandom_r
     setstate_r realpath rpmatch setenv strtod strtoll strtoull unlockpt
     unsetenv])
@@ -50,6 +50,7 @@ AC_DEFUN([gl_STDLIB_MODULE_INDICATOR],
 
 AC_DEFUN([gl_STDLIB_H_DEFAULTS],
 [
+  GNULIB__EXIT=0;         AC_SUBST([GNULIB__EXIT])
   GNULIB_ATOLL=0;         AC_SUBST([GNULIB_ATOLL])
   GNULIB_CALLOC_POSIX=0;  AC_SUBST([GNULIB_CALLOC_POSIX])
   GNULIB_CANONICALIZE_FILE_NAME=0;  AC_SUBST([GNULIB_CANONICALIZE_FILE_NAME])
@@ -75,13 +76,12 @@ AC_DEFUN([gl_STDLIB_H_DEFAULTS],
   GNULIB_UNLOCKPT=0;      AC_SUBST([GNULIB_UNLOCKPT])
   GNULIB_UNSETENV=0;      AC_SUBST([GNULIB_UNSETENV])
   dnl Assume proper GNU behavior unless another module says otherwise.
+  HAVE__EXIT=1;              AC_SUBST([HAVE__EXIT])
   HAVE_ATOLL=1;              AC_SUBST([HAVE_ATOLL])
-  HAVE_CALLOC_POSIX=1;       AC_SUBST([HAVE_CALLOC_POSIX])
   HAVE_CANONICALIZE_FILE_NAME=1;  AC_SUBST([HAVE_CANONICALIZE_FILE_NAME])
   HAVE_DECL_GETLOADAVG=1;    AC_SUBST([HAVE_DECL_GETLOADAVG])
   HAVE_GETSUBOPT=1;          AC_SUBST([HAVE_GETSUBOPT])
   HAVE_GRANTPT=1;            AC_SUBST([HAVE_GRANTPT])
-  HAVE_MALLOC_POSIX=1;       AC_SUBST([HAVE_MALLOC_POSIX])
   HAVE_MKDTEMP=1;            AC_SUBST([HAVE_MKDTEMP])
   HAVE_MKOSTEMP=1;           AC_SUBST([HAVE_MKOSTEMP])
   HAVE_MKOSTEMPS=1;          AC_SUBST([HAVE_MKOSTEMPS])
@@ -89,7 +89,6 @@ AC_DEFUN([gl_STDLIB_H_DEFAULTS],
   HAVE_MKSTEMPS=1;           AC_SUBST([HAVE_MKSTEMPS])
   HAVE_PTSNAME=1;            AC_SUBST([HAVE_PTSNAME])
   HAVE_RANDOM_R=1;           AC_SUBST([HAVE_RANDOM_R])
-  HAVE_REALLOC_POSIX=1;      AC_SUBST([HAVE_REALLOC_POSIX])
   HAVE_REALPATH=1;           AC_SUBST([HAVE_REALPATH])
   HAVE_RPMATCH=1;            AC_SUBST([HAVE_RPMATCH])
   HAVE_SETENV=1;             AC_SUBST([HAVE_SETENV])
@@ -100,9 +99,12 @@ AC_DEFUN([gl_STDLIB_H_DEFAULTS],
   HAVE_SYS_LOADAVG_H=0;      AC_SUBST([HAVE_SYS_LOADAVG_H])
   HAVE_UNLOCKPT=1;           AC_SUBST([HAVE_UNLOCKPT])
   HAVE_UNSETENV=1;           AC_SUBST([HAVE_UNSETENV])
+  REPLACE_CALLOC=0;          AC_SUBST([REPLACE_CALLOC])
   REPLACE_CANONICALIZE_FILE_NAME=0;  AC_SUBST([REPLACE_CANONICALIZE_FILE_NAME])
+  REPLACE_MALLOC=0;          AC_SUBST([REPLACE_MALLOC])
   REPLACE_MKSTEMP=0;         AC_SUBST([REPLACE_MKSTEMP])
   REPLACE_PUTENV=0;          AC_SUBST([REPLACE_PUTENV])
+  REPLACE_REALLOC=0;         AC_SUBST([REPLACE_REALLOC])
   REPLACE_REALPATH=0;        AC_SUBST([REPLACE_REALPATH])
   REPLACE_SETENV=0;          AC_SUBST([REPLACE_SETENV])
   REPLACE_STRTOD=0;          AC_SUBST([REPLACE_STRTOD])

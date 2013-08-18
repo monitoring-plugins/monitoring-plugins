@@ -1,4 +1,4 @@
-# fcntl-o.m4 serial 1
+# fcntl-o.m4 serial 2
 dnl Copyright (C) 2006, 2009-2010 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -12,7 +12,11 @@ dnl Written by Paul Eggert.
 AC_DEFUN([gl_FCNTL_O_FLAGS],
 [
   dnl Persuade glibc <fcntl.h> to define O_NOATIME and O_NOFOLLOW.
-  AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+  dnl AC_USE_SYSTEM_EXTENSIONS was introduced in autoconf 2.60 and obsoletes
+  dnl AC_GNU_SOURCE.
+  m4_ifdef([AC_USE_SYSTEM_EXTENSIONS],
+    [AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])],
+    [AC_REQUIRE([AC_GNU_SOURCE])])
   AC_CACHE_CHECK([for working fcntl.h], [gl_cv_header_working_fcntl_h],
     [AC_RUN_IFELSE(
        [AC_LANG_PROGRAM(
