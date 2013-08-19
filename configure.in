@@ -1268,21 +1268,21 @@ if test -n "$ac_cv_nslookup_command"; then
 	AC_DEFINE_UNQUOTED(NSLOOKUP_COMMAND,"$ac_cv_nslookup_command", [path and args for nslookup])
 fi
 
-AC_MSG_CHECKING([for number of cpus])
+AC_MSG_CHECKING([for number of online cpus])
 AC_TRY_COMPILE([#include <unistd.h>],
 	[sysconf(_SC_NPROCESSORS_ONLN) > 0;],
-	AC_DEFINE(HAVE_SYSCONF__SC_NPROCESSORS_ONLN,1,[Define if sysconf returns number of cpus])
+	AC_DEFINE(HAVE_SYSCONF__SC_NPROCESSORS_ONLN,1,[Define if sysconf returns number of online cpus])
 	AC_MSG_RESULT([sysconf(_SC_NPROCESSORS_ONLN)]),
 	AC_MSG_RESULT([cannot calculate])
 	)
 
+AC_MSG_CHECKING([for number of available cpus])
 AC_TRY_COMPILE([#include <unistd.h>],
-        [sysconf(_SC_NPROCESSORS_CONF) > 0;],
-        AC_DEFINE(HAVE_SYSCONF__SC_NPROCESSORS_CONF,1,[Define if sysconf returns number of cpus])
-        AC_MSG_RESULT([sysconf(_SC_NPROCESSORS_CONF)]),
-        AC_MSG_RESULT([cannot calculate])
-        )
-
+	[sysconf(_SC_NPROCESSORS_CONF) > 0;],
+	AC_DEFINE(HAVE_SYSCONF__SC_NPROCESSORS_CONF,1,[Define if sysconf returns number of available cpus])
+	AC_MSG_RESULT([sysconf(_SC_NPROCESSORS_CONF)]),
+	AC_MSG_RESULT([cannot calculate])
+	)
 
 AC_PATH_PROG(PATH_TO_UPTIME,uptime)
 AC_ARG_WITH(uptime_command,

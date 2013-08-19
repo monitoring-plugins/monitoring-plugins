@@ -82,14 +82,12 @@
    getting that data
    Will return -1 if cannot get data
 */
-#ifdef HAVE_SYSCONF__SC_NPROCESSORS_ONLN
-#define GET_NUMBER_OF_CPUS() sysconf(_SC_NPROCESSORS_ONLN)
+#if defined(HAVE_SYSCONF__SC_NPROCESSORS_ONLN)
+# define GET_NUMBER_OF_CPUS() sysconf(_SC_NPROCESSORS_ONLN)
+#elif defined (HAVE_SYSCONF__SC_NPROCESSORS_CONF)
+# define GET_NUMBER_OF_CPUS() sysconf(_SC_NPROCESSORS_CONF)
 #else
-# ifdef HAVE_SYSCONF__SC_NPROCESSORS_CONF
-#  define GET_NUMBER_OF_CPUS() sysconf(_SC_NPROCESSORS_CONF)
-# else
-#  define GET_NUMBER_OF_CPUS() -1
-# endif
+# define GET_NUMBER_OF_CPUS() -1
 #endif
 
 #ifdef TIME_WITH_SYS_TIME
