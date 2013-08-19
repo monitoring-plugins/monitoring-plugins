@@ -46,12 +46,12 @@ void print_usage (void);
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
-#ifdef linux
+#ifdef __linux__
 #include <linux/hdreg.h>
 #include <linux/types.h>
 
 #define OPEN_MODE O_RDONLY
-#endif /* linux */
+#endif /* __linux__ */
 #ifdef __NetBSD__
 #include <sys/device.h>
 #include <sys/param.h>
@@ -305,7 +305,7 @@ get_offline_text (int status)
 int
 smart_read_values (int fd, values_t * values) 
 {
-#ifdef linux
+#ifdef __linux__
 	int e;
 	__u8 args[4 + 512];
 	args[0] = WIN_SMART;
@@ -318,7 +318,7 @@ smart_read_values (int fd, values_t * values)
 		return e;
 	}
 	memcpy (values, args + 4, 512);
-#endif /* linux */
+#endif /* __linux__ */
 #ifdef __NetBSD__
 	struct atareq req;
 	unsigned char inbuf[DEV_BSIZE];
@@ -490,7 +490,7 @@ int
 smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0, char show_error) 
 {
 	int e = 0;
-#ifdef linux
+#ifdef __linux__
 	__u8 args[4];
 	args[0] = WIN_SMART;
 	args[1] = val0;
@@ -502,7 +502,7 @@ smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0, char show_error)
 			printf (_("CRITICAL - %s: %s\n"), smart_command[command].text, strerror (errno));
 		}
 	}
-#endif /* linux */
+#endif /* __linux__ */
 #ifdef __NetBSD__
 	struct atareq req;
 
@@ -535,7 +535,7 @@ smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0, char show_error)
 int
 smart_read_thresholds (int fd, thresholds_t * thresholds) 
 {
-#ifdef linux
+#ifdef __linux__
 	int e;
 	__u8 args[4 + 512];
 	args[0] = WIN_SMART;
@@ -548,7 +548,7 @@ smart_read_thresholds (int fd, thresholds_t * thresholds)
 		return e;
 	}
 	memcpy (thresholds, args + 4, 512);
-#endif /* linux */
+#endif /* __linux__ */
 #ifdef __NetBSD__
 	struct atareq req;
 	unsigned char inbuf[DEV_BSIZE];
