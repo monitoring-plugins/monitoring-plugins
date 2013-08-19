@@ -46,8 +46,29 @@ void print_usage (void);
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
+#ifdef linux
 #include <linux/hdreg.h>
 #include <linux/types.h>
+
+#define OPEN_MODE O_RDONLY
+#endif /* linux */
+#ifdef __NetBSD__
+#include <sys/device.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <sys/videoio.h> /* for __u8 and friends */
+#include <sys/scsiio.h>
+#include <sys/ataio.h>
+#include <dev/ata/atareg.h>
+#include <dev/ic/wdcreg.h>
+
+#define SMART_ENABLE WDSM_ENABLE_OPS
+#define SMART_DISABLE WDSM_DISABLE_OPS
+#define SMART_IMMEDIATE_OFFLINE WDSM_EXEC_OFFL_IMM
+#define SMART_AUTO_OFFLINE 0xdb /* undefined in NetBSD headers */
+
+#define OPEN_MODE O_RDWR
+#endif /* __NetBSD__ */
 #include <errno.h>
 	
 #define NR_ATTRIBUTES	30
@@ -223,7 +244,7 @@ main (int argc, char *argv[])
 		return STATE_OK;
 	}
 
-	fd = open (device, O_RDONLY);
+	fd = open (device, OPEN_MODE);
 
 	if (fd < 0) {
 		printf (_("CRITICAL - Couldn't open device %s: %s\n"), device, strerror (errno));
@@ -284,6 +305,7 @@ get_offline_text (int status)
 int
 smart_read_values (int fd, values_t * values) 
 {
+#ifdef linux
 	int e;
 	__u8 args[4 + 512];
 	args[0] = WIN_SMART;
@@ -296,6 +318,35 @@ smart_read_values (int fd, values_t * values)
 		return e;
 	}
 	memcpy (values, args + 4, 512);
+#endif /* linux */
+#ifdef __NetBSD__
+	struct atareq req;
+	unsigned char inbuf[DEV_BSIZE];
+
+	memset(&req, 0, sizeof(req));
+	req.timeout = 1000;
+	memset(&inbuf, 0, sizeof(inbuf));
+
+	req.flags = ATACMD_READ;
+	req.features = WDSM_RD_DATA;
+	req.command = WDCC_SMART;
+	req.databuf = (char *)inbuf;
+	req.datalen = sizeof(inbuf);
+	req.cylinder = WDSMART_CYL;
+
+	if (ioctl(fd, ATAIOCCOMMAND, &req) == 0) {
+		if (req.retsts != ATACMD_OK)
+			errno = ENODEV;
+	}
+
+	if (errno != 0) {
+		int e = errno;
+		printf (_("CRITICAL - SMART_READ_VALUES: %s\n"), strerror (errno));
+		return e;
+	}
+
+	(void)memcpy(values, inbuf, 512);
+#endif /* __NetBSD__ */
 	return 0;
 }
 
@@ -439,6 +490,7 @@ int
 smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0, char show_error) 
 {
 	int e = 0;
+#ifdef linux
 	__u8 args[4];
 	args[0] = WIN_SMART;
 	args[1] = val0;
@@ -450,6 +502,31 @@ smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0, char show_error)
 			printf (_("CRITICAL - %s: %s\n"), smart_command[command].text, strerror (errno));
 		}
 	}
+#endif /* linux */
+#ifdef __NetBSD__
+	struct atareq req;
+
+	memset(&req, 0, sizeof(req));
+	req.timeout = 1000;
+	req.flags = ATACMD_READREG;
+	req.features = smart_command[command].value;
+	req.command = WDCC_SMART;
+	req.cylinder = WDSMART_CYL;
+	req.sec_count = val0;
+
+	if (ioctl(fd, ATAIOCCOMMAND, &req) == 0) {
+		if (req.retsts != ATACMD_OK)
+			errno = ENODEV;
+		if (req.cylinder != WDSMART_CYL)
+			errno = ENODEV;
+	}
+
+	if (errno != 0) {
+		e = errno;
+		printf (_("CRITICAL - %s: %s\n"), smart_command[command].text, strerror (errno));
+		return e;
+	}
+#endif /* __NetBSD__ */
 	return e;
 }
 
@@ -458,6 +535,7 @@ smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0, char show_error)
 int
 smart_read_thresholds (int fd, thresholds_t * thresholds) 
 {
+#ifdef linux
 	int e;
 	__u8 args[4 + 512];
 	args[0] = WIN_SMART;
@@ -470,6 +548,35 @@ smart_read_thresholds (int fd, thresholds_t * thresholds)
 		return e;
 	}
 	memcpy (thresholds, args + 4, 512);
+#endif /* linux */
+#ifdef __NetBSD__
+	struct atareq req;
+	unsigned char inbuf[DEV_BSIZE];
+
+	memset(&req, 0, sizeof(req));
+	req.timeout = 1000;
+	memset(&inbuf, 0, sizeof(inbuf));
+
+	req.flags = ATACMD_READ;
+	req.features = WDSM_RD_THRESHOLDS;
+	req.command = WDCC_SMART;
+	req.databuf = (char *)inbuf;
+	req.datalen = sizeof(inbuf);
+	req.cylinder = WDSMART_CYL;
+
+	if (ioctl(fd, ATAIOCCOMMAND, &req) == 0) {
+		if (req.retsts != ATACMD_OK)
+			errno = ENODEV;
+	}
+
+	if (errno != 0) {
+		int e = errno;
+		printf (_("CRITICAL - SMART_READ_THRESHOLDS: %s\n"), strerror (errno));
+		return e;
+	}
+
+	(void)memcpy(thresholds, inbuf, 512);
+#endif /* __NetBSD__ */
 	return 0;
 }
 
