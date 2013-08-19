@@ -1,5 +1,5 @@
-/* Copyright (C) 1997, 2001, 2002, 2004, 2005, 2006, 2008, 2009, 2010 Free
-   Software Foundation, Inc.
+/* Copyright (C) 1997, 2001-2002, 2004-2006, 2008-2013 Free Software
+   Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Philip Blundell <pjb27@cam.ac.uk>, 1997.
 
@@ -14,8 +14,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #ifndef _LIBC
 # include <config.h>
@@ -31,6 +30,22 @@
 # define _(String) gettext (String)
 # define N_(String) String
 #endif
+
+#if HAVE_DECL_GAI_STRERROR
+
+# include <sys/socket.h>
+# undef gai_strerror
+# if HAVE_DECL_GAI_STRERRORA
+#  define gai_strerror gai_strerrorA
+# endif
+
+const char *
+rpl_gai_strerror (int code)
+{
+  return gai_strerror (code);
+}
+
+#else /* !HAVE_DECL_GAI_STRERROR */
 
 static struct
   {
@@ -71,6 +86,7 @@ gai_strerror (int code)
 
   return _("Unknown error");
 }
-#ifdef _LIBC
+# ifdef _LIBC
 libc_hidden_def (gai_strerror)
-#endif
+# endif
+#endif /* !HAVE_DECL_GAI_STRERROR */

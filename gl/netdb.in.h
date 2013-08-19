@@ -1,5 +1,5 @@
 /* Provide a netdb.h header file for systems lacking it (read: MinGW).
-   Copyright (C) 2008-2010 Free Software Foundation, Inc.
+   Copyright (C) 2008-2013 Free Software Foundation, Inc.
    Written by Simon Josefsson.
 
    This program is free software; you can redistribute it and/or modify
@@ -13,18 +13,18 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 /* This file is supposed to be used on platforms that lack <netdb.h>.
    It is intended to provide definitions and prototypes needed by an
    application.  */
 
-#ifndef _GL_NETDB_H
+#ifndef _@GUARD_PREFIX@_NETDB_H
 
 #if __GNUC__ >= 3
 @PRAGMA_SYSTEM_HEADER@
 #endif
+@PRAGMA_COLUMNS@
 
 #if @HAVE_NETDB_H@
 
@@ -33,11 +33,14 @@
 
 #endif
 
-#ifndef _GL_NETDB_H
-#define _GL_NETDB_H
+#ifndef _@GUARD_PREFIX@_NETDB_H
+#define _@GUARD_PREFIX@_NETDB_H
 
-/* Get netdb.h definitions such as struct hostent for MinGW.  */
+/* Get <netdb.h> definitions such as 'socklen_t' on IRIX 6.5 and OSF/1 4.0 and
+   'struct hostent' on MinGW.  */
 #include <sys/socket.h>
+
+/* The definitions of _GL_FUNCDECL_RPL etc. are copied here.  */
 
 /* The definition of _GL_ARG_NONNULL is copied here.  */
 
@@ -50,6 +53,11 @@
 
 # if !@HAVE_STRUCT_ADDRINFO@
 
+#  ifdef __cplusplus
+extern "C" {
+#  endif
+
+#  if !GNULIB_defined_struct_addrinfo
 /* Structure to contain information about address of a service provider.  */
 struct addrinfo
 {
@@ -62,11 +70,18 @@ struct addrinfo
   char *ai_canonname;           /* Canonical name for service location.  */
   struct addrinfo *ai_next;     /* Pointer to next in list.  */
 };
+#   define GNULIB_defined_struct_addrinfo 1
+#  endif
+
+#  ifdef __cplusplus
+}
+#  endif
+
 # endif
 
-/* Possible values for `ai_flags' field in `addrinfo' structure.  */
+/* Possible values for 'ai_flags' field in 'addrinfo' structure.  */
 # ifndef AI_PASSIVE
-#  define AI_PASSIVE    0x0001  /* Socket address is intended for `bind'.  */
+#  define AI_PASSIVE    0x0001  /* Socket address is intended for 'bind'.  */
 # endif
 # ifndef AI_CANONNAME
 #  define AI_CANONNAME  0x0002  /* Request for canonical name.  */
@@ -95,16 +110,16 @@ struct addrinfo
                                       returned address type.  */
 # endif
 
-/* Error values for `getaddrinfo' function.  */
+/* Error values for 'getaddrinfo' function.  */
 # ifndef EAI_BADFLAGS
-#  define EAI_BADFLAGS    -1    /* Invalid value for `ai_flags' field.  */
+#  define EAI_BADFLAGS    -1    /* Invalid value for 'ai_flags' field.  */
 #  define EAI_NONAME      -2    /* NAME or SERVICE is unknown.  */
 #  define EAI_AGAIN       -3    /* Temporary failure in name resolution.  */
 #  define EAI_FAIL        -4    /* Non-recoverable failure in name res.  */
 #  define EAI_NODATA      -5    /* No address associated with NAME.  */
-#  define EAI_FAMILY      -6    /* `ai_family' not supported.  */
-#  define EAI_SOCKTYPE    -7    /* `ai_socktype' not supported.  */
-#  define EAI_SERVICE     -8    /* SERVICE not supported for `ai_socktype'.  */
+#  define EAI_FAMILY      -6    /* 'ai_family' not supported.  */
+#  define EAI_SOCKTYPE    -7    /* 'ai_socktype' not supported.  */
+#  define EAI_SERVICE     -8    /* SERVICE not supported for 'ai_socktype'.  */
 #  define EAI_MEMORY      -10   /* Memory allocation failure.  */
 # endif
 
@@ -125,7 +140,7 @@ struct addrinfo
 # endif
 # ifndef EAI_SYSTEM
 /* Not defined on mingw32. */
-#  define EAI_SYSTEM      -11   /* System error returned in `errno'.  */
+#  define EAI_SYSTEM      -11   /* System error returned in 'errno'.  */
 # endif
 
 # if 0
@@ -148,37 +163,67 @@ struct addrinfo
    socket addresses.
    For more details, see the POSIX:2001 specification
    <http://www.opengroup.org/susv3xsh/getaddrinfo.html>.  */
-extern int getaddrinfo (const char *restrict nodename,
-                        const char *restrict servname,
-                        const struct addrinfo *restrict hints,
-                        struct addrinfo **restrict res)
-     _GL_ARG_NONNULL ((4));
+_GL_FUNCDECL_SYS (getaddrinfo, int,
+                  (const char *restrict nodename,
+                   const char *restrict servname,
+                   const struct addrinfo *restrict hints,
+                   struct addrinfo **restrict res)
+                  _GL_ARG_NONNULL ((4)));
 # endif
+_GL_CXXALIAS_SYS (getaddrinfo, int,
+                  (const char *restrict nodename,
+                   const char *restrict servname,
+                   const struct addrinfo *restrict hints,
+                   struct addrinfo **restrict res));
+_GL_CXXALIASWARN (getaddrinfo);
 
 # if !@HAVE_DECL_FREEADDRINFO@
-/* Free `addrinfo' structure AI including associated storage.
+/* Free 'addrinfo' structure AI including associated storage.
    For more details, see the POSIX:2001 specification
    <http://www.opengroup.org/susv3xsh/getaddrinfo.html>.  */
-extern void freeaddrinfo (struct addrinfo *ai) _GL_ARG_NONNULL ((1));
+_GL_FUNCDECL_SYS (freeaddrinfo, void, (struct addrinfo *ai)
+                                      _GL_ARG_NONNULL ((1)));
 # endif
+_GL_CXXALIAS_SYS (freeaddrinfo, void, (struct addrinfo *ai));
+_GL_CXXALIASWARN (freeaddrinfo);
 
-# if !@HAVE_DECL_GAI_STRERROR@
+# if @REPLACE_GAI_STRERROR@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef gai_strerror
+#   define gai_strerror rpl_gai_strerror
+#  endif
+_GL_FUNCDECL_RPL (gai_strerror, const char *, (int ecode));
+_GL_CXXALIAS_RPL (gai_strerror, const char *, (int ecode));
+# else
+#  if !@HAVE_DECL_GAI_STRERROR@
 /* Convert error return from getaddrinfo() to a string.
    For more details, see the POSIX:2001 specification
    <http://www.opengroup.org/susv3xsh/gai_strerror.html>.  */
-extern const char *gai_strerror (int ecode);
+_GL_FUNCDECL_SYS (gai_strerror, const char *, (int ecode));
+#  endif
+_GL_CXXALIAS_SYS (gai_strerror, const char *, (int ecode));
 # endif
+_GL_CXXALIASWARN (gai_strerror);
 
 # if !@HAVE_DECL_GETNAMEINFO@
 /* Convert socket address to printable node and service names.
    For more details, see the POSIX:2001 specification
    <http://www.opengroup.org/susv3xsh/getnameinfo.html>.  */
-extern int getnameinfo (const struct sockaddr *restrict sa, socklen_t salen,
+_GL_FUNCDECL_SYS (getnameinfo, int,
+                  (const struct sockaddr *restrict sa, socklen_t salen,
+                   char *restrict node, socklen_t nodelen,
+                   char *restrict service, socklen_t servicelen,
+                   int flags)
+                  _GL_ARG_NONNULL ((1)));
+# endif
+/* Need to cast, because on glibc systems, the seventh parameter is
+                        unsigned int flags.  */
+_GL_CXXALIAS_SYS_CAST (getnameinfo, int,
+                       (const struct sockaddr *restrict sa, socklen_t salen,
                         char *restrict node, socklen_t nodelen,
                         char *restrict service, socklen_t servicelen,
-                        int flags)
-     _GL_ARG_NONNULL ((1));
-# endif
+                        int flags));
+_GL_CXXALIASWARN (getnameinfo);
 
 /* Possible flags for getnameinfo.  */
 # ifndef NI_NUMERICHOST
@@ -216,5 +261,5 @@ _GL_WARN_ON_USE (getnameinfo, "getnameinfo is unportable - "
 
 #endif
 
-#endif /* _GL_NETDB_H */
-#endif /* _GL_NETDB_H */
+#endif /* _@GUARD_PREFIX@_NETDB_H */
+#endif /* _@GUARD_PREFIX@_NETDB_H */

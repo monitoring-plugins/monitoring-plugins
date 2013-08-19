@@ -1,6 +1,6 @@
 dnl Reentrant time functions: localtime_r, gmtime_r.
 
-dnl Copyright (C) 2003, 2006-2010 Free Software Foundation, Inc.
+dnl Copyright (C) 2003, 2006-2013 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -15,8 +15,16 @@ AC_DEFUN([gl_TIME_R],
   AC_REQUIRE([gl_HEADER_TIME_H_DEFAULTS])
   AC_REQUIRE([AC_C_RESTRICT])
 
+  dnl Some systems don't declare localtime_r() and gmtime_r() if _REENTRANT is
+  dnl not defined.
+  AC_CHECK_DECLS([localtime_r], [], [], [[#include <time.h>]])
+  if test $ac_cv_have_decl_localtime_r = no; then
+    HAVE_DECL_LOCALTIME_R=0
+  fi
+
   AC_CHECK_FUNCS_ONCE([localtime_r])
   if test $ac_cv_func_localtime_r = yes; then
+    HAVE_LOCALTIME_R=1
     AC_CACHE_CHECK([whether localtime_r is compatible with its POSIX signature],
       [gl_cv_time_r_posix],
       [AC_COMPILE_IFELSE(
@@ -41,10 +49,6 @@ AC_DEFUN([gl_TIME_R],
     fi
   else
     HAVE_LOCALTIME_R=0
-  fi
-  if test $HAVE_LOCALTIME_R = 0 || test $REPLACE_LOCALTIME_R = 1; then
-    AC_LIBOBJ([time_r])
-    gl_PREREQ_TIME_R
   fi
 ])
 

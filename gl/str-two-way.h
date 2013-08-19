@@ -1,5 +1,5 @@
 /* Byte-wise substring search, using the Two-Way algorithm.
-   Copyright (C) 2008, 2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 2008-2013 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Eric Blake <ebb9@byu.net>, 2008.
 
@@ -14,8 +14,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License along
-   with this program; if not, write to the Free Software Foundation,
-   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
+   with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 /* Before including this file, you need to include <config.h> and
    <string.h>, and define:
@@ -44,14 +43,15 @@
 #include <limits.h>
 #include <stdint.h>
 
-/* We use the Two-Way string matching algorithm, which guarantees
-   linear complexity with constant space.  Additionally, for long
-   needles, we also use a bad character shift table similar to the
-   Boyer-Moore algorithm to achieve improved (potentially sub-linear)
-   performance.
+/* We use the Two-Way string matching algorithm (also known as
+   Chrochemore-Perrin), which guarantees linear complexity with
+   constant space.  Additionally, for long needles, we also use a bad
+   character shift table similar to the Boyer-Moore algorithm to
+   achieve improved (potentially sub-linear) performance.
 
-   See http://www-igm.univ-mlv.fr/~lecroq/string/node26.html#SECTION00260
-   and http://en.wikipedia.org/wiki/Boyer-Moore_string_search_algorithm
+   See http://www-igm.univ-mlv.fr/~lecroq/string/node26.html#SECTION00260,
+   http://en.wikipedia.org/wiki/Boyer-Moore_string_search_algorithm,
+   http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.34.6641&rep=rep1&type=pdf
 */
 
 /* Point at which computing a bad-byte shift table is likely to be
@@ -108,7 +108,7 @@ static size_t
 critical_factorization (const unsigned char *needle, size_t needle_len,
                         size_t *period)
 {
-  /* Index of last byte of left half.  */
+  /* Index of last byte of left half, or SIZE_MAX.  */
   size_t max_suffix, max_suffix_rev;
   size_t j; /* Index into NEEDLE for current candidate suffix.  */
   size_t k; /* Offset into current period.  */
@@ -124,8 +124,8 @@ critical_factorization (const unsigned char *needle, size_t needle_len,
     }
 
   /* Invariants:
-     1 <= j < NEEDLE_LEN - 1
-     0 <= max_suffix{,_rev} < j
+     0 <= j < NEEDLE_LEN - 1
+     -1 <= max_suffix{,_rev} < j (treating SIZE_MAX as if it were signed)
      min(max_suffix, max_suffix_rev) < global period of NEEDLE
      1 <= p <= global period of NEEDLE
      p == global period of the substring NEEDLE[max_suffix{,_rev}+1...j]
@@ -133,8 +133,9 @@ critical_factorization (const unsigned char *needle, size_t needle_len,
   */
 
   /* Perform lexicographic search.  */
-  max_suffix = 0;
-  j = k = p = 1;
+  max_suffix = SIZE_MAX;
+  j = 0;
+  k = p = 1;
   while (j + k < needle_len)
     {
       a = CANON_ELEMENT (needle[j + k]);
@@ -167,8 +168,9 @@ critical_factorization (const unsigned char *needle, size_t needle_len,
   *period = p;
 
   /* Perform reverse lexicographic search.  */
-  max_suffix_rev = 0;
-  j = k = p = 1;
+  max_suffix_rev = SIZE_MAX;
+  j = 0;
+  k = p = 1;
   while (j + k < needle_len)
     {
       a = CANON_ELEMENT (needle[j + k]);
@@ -370,8 +372,8 @@ two_way_long_needle (const unsigned char *haystack, size_t haystack_len,
                      a byte out of place, there can be no match until
                      after the mismatch.  */
                   shift = needle_len - period;
-                  memory = 0;
                 }
+              memory = 0;
               j += shift;
               continue;
             }

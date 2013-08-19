@@ -1,6 +1,6 @@
 /* sockets.c --- wrappers for Windows socket functions
 
-   Copyright (C) 2008-2010 Free Software Foundation, Inc.
+   Copyright (C) 2008-2013 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -27,14 +27,21 @@
 /* This includes winsock2.h on MinGW. */
 # include <sys/socket.h>
 
-# include "close-hook.h"
+# include "fd-hook.h"
+# include "msvc-nothrow.h"
 
 /* Get set_winsock_errno, FD_TO_SOCKET etc. */
 # include "w32sock.h"
 
 static int
-close_fd_maybe_socket (int fd, const struct close_hook *remaining_list)
+close_fd_maybe_socket (const struct fd_hook *remaining_list,
+                       gl_close_fn primary,
+                       int fd)
 {
+  /* Note about multithread-safety: There is a race condition where, between
+     our calls to closesocket() and the primary close(), some other thread
+     could make system calls that allocate precisely the same HANDLE value
+     as sock; then the primary close() would call CloseHandle() on it.  */
   SOCKET sock;
   WSANETWORKEVENTS ev;
 
@@ -64,10 +71,38 @@ close_fd_maybe_socket (int fd, const struct close_hook *remaining_list)
     }
   else
     /* Some other type of file descriptor.  */
-    return execute_close_hooks (fd, remaining_list);
+    return execute_close_hooks (remaining_list, primary, fd);
 }
 
-static struct close_hook close_sockets_hook;
+static int
+ioctl_fd_maybe_socket (const struct fd_hook *remaining_list,
+                       gl_ioctl_fn primary,
+                       int fd, int request, void *arg)
+{
+  SOCKET sock;
+  WSANETWORKEVENTS ev;
+
+  /* Test whether fd refers to a socket.  */
+  sock = FD_TO_SOCKET (fd);
+  ev.lNetworkEvents = 0xDEADBEEF;
+  WSAEnumNetworkEvents (sock, NULL, &ev);
+  if (ev.lNetworkEvents != 0xDEADBEEF)
+    {
+      /* fd refers to a socket.  */
+      if (ioctlsocket (sock, request, arg) < 0)
+        {
+          set_winsock_errno ();
+          return -1;
+        }
+      else
+        return 0;
+    }
+  else
+    /* Some other type of file descriptor.  */
+    return execute_ioctl_hooks (remaining_list, primary, fd, request, arg);
+}
+
+static struct fd_hook fd_sockets_hook;
 
 static int initialized_sockets_version /* = 0 */;
 
@@ -90,7 +125,8 @@ gl_sockets_startup (int version _GL_UNUSED)
         return 2;
 
       if (initialized_sockets_version == 0)
-        register_close_hook (close_fd_maybe_socket, &close_sockets_hook);
+        register_fd_hook (close_fd_maybe_socket, ioctl_fd_maybe_socket,
+                          &fd_sockets_hook);
 
       initialized_sockets_version = version;
     }
@@ -107,7 +143,7 @@ gl_sockets_cleanup (void)
 
   initialized_sockets_version = 0;
 
-  unregister_close_hook (&close_sockets_hook);
+  unregister_fd_hook (&fd_sockets_hook);
 
   err = WSACleanup ();
   if (err != 0)

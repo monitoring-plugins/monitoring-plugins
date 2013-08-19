@@ -1,6 +1,6 @@
 /* inet_ntop.c -- convert IPv4 and IPv6 addresses from binary to text form
 
-   Copyright (C) 2005-2006, 2008-2010 Free Software Foundation, Inc.
+   Copyright (C) 2005-2006, 2008-2013 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,8 +13,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -38,30 +37,53 @@
 /* Specification.  */
 #include <arpa/inet.h>
 
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
+/* Use this to suppress gcc's "...may be used before initialized" warnings.
+   Beware: The Code argument must not contain commas.  */
+#ifndef IF_LINT
+# ifdef lint
+#  define IF_LINT(Code) Code
+# else
+#  define IF_LINT(Code) /* empty */
+# endif
+#endif
 
-#define NS_IN6ADDRSZ 16
-#define NS_INT16SZ 2
+#if HAVE_DECL_INET_NTOP
+
+# undef inet_ntop
+
+const char *
+rpl_inet_ntop (int af, const void *restrict src,
+               char *restrict dst, socklen_t cnt)
+{
+  return inet_ntop (af, src, dst, cnt);
+}
+
+#else
+
+# include <stdio.h>
+# include <string.h>
+# include <errno.h>
+
+# define NS_IN6ADDRSZ 16
+# define NS_INT16SZ 2
 
 /*
  * WARNING: Don't even consider trying to compile this on a system where
  * sizeof(int) < 4.  sizeof(int) > 4 is fine; all the world's not a VAX.
  */
-typedef int verify_int_size[2 * sizeof (int) - 7];
+typedef int verify_int_size[4 <= sizeof (int) ? 1 : -1];
 
 static const char *inet_ntop4 (const unsigned char *src, char *dst, socklen_t size);
-#if HAVE_IPV6
+# if HAVE_IPV6
 static const char *inet_ntop6 (const unsigned char *src, char *dst, socklen_t size);
-#endif
+# endif
 
 
 /* char *
  * inet_ntop(af, src, dst, size)
  *      convert a network format address to presentation format.
  * return:
- *      pointer to presentation format address (`dst'), or NULL (see errno).
+ *      pointer to presentation format address ('dst'), or NULL (see errno).
  * author:
  *      Paul Vixie, 1996.
  */
@@ -71,15 +93,15 @@ inet_ntop (int af, const void *restrict src,
 {
   switch (af)
     {
-#if HAVE_IPV4
+# if HAVE_IPV4
     case AF_INET:
       return (inet_ntop4 (src, dst, cnt));
-#endif
+# endif
 
-#if HAVE_IPV6
+# if HAVE_IPV6
     case AF_INET6:
       return (inet_ntop6 (src, dst, cnt));
-#endif
+# endif
 
     default:
       errno = EAFNOSUPPORT;
@@ -92,7 +114,7 @@ inet_ntop (int af, const void *restrict src,
  * inet_ntop4(src, dst, size)
  *      format an IPv4 address
  * return:
- *      `dst' (as a const)
+ *      'dst' (as a const)
  * notes:
  *      (1) uses no statics
  *      (2) takes a u_char* not an in_addr as input
@@ -118,7 +140,7 @@ inet_ntop4 (const unsigned char *src, char *dst, socklen_t size)
   return strcpy (dst, tmp);
 }
 
-#if HAVE_IPV6
+# if HAVE_IPV6
 
 /* const char *
  * inet_ntop6(src, dst, size)
@@ -154,6 +176,8 @@ inet_ntop6 (const unsigned char *src, char *dst, socklen_t size)
     words[i / 2] = (src[i] << 8) | src[i + 1];
   best.base = -1;
   cur.base = -1;
+  IF_LINT(best.len = 0);
+  IF_LINT(cur.len = 0);
   for (i = 0; i < (NS_IN6ADDRSZ / NS_INT16SZ); i++)
     {
       if (words[i] == 0)
@@ -230,5 +254,7 @@ inet_ntop6 (const unsigned char *src, char *dst, socklen_t size)
 
   return strcpy (dst, tmp);
 }
+
+# endif
 
 #endif

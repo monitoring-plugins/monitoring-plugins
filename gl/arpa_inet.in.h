@@ -1,6 +1,6 @@
 /* A GNU-like <arpa/inet.h>.
 
-   Copyright (C) 2005-2006, 2008-2010 Free Software Foundation, Inc.
+   Copyright (C) 2005-2006, 2008-2013 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,20 +13,30 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef _GL_ARPA_INET_H
+#ifndef _@GUARD_PREFIX@_ARPA_INET_H
 
 #if __GNUC__ >= 3
 @PRAGMA_SYSTEM_HEADER@
 #endif
+@PRAGMA_COLUMNS@
 
-/* Gnulib's sys/socket.h is responsible for pulling in winsock2.h etc
-   under MinGW.
+#if @HAVE_FEATURES_H@
+# include <features.h> /* for __GLIBC__ */
+#endif
+
+/* Gnulib's sys/socket.h is responsible for defining socklen_t (used below) and
+   for pulling in winsock2.h etc. under MinGW.
    But avoid namespace pollution on glibc systems.  */
 #ifndef __GLIBC__
 # include <sys/socket.h>
+#endif
+
+/* On NonStop Kernel, inet_ntop and inet_pton are declared in <netdb.h>.
+   But avoid namespace pollution on glibc systems.  */
+#if defined __TANDEM && !defined __GLIBC__
+# include <netdb.h>
 #endif
 
 #if @HAVE_ARPA_INET_H@
@@ -36,19 +46,17 @@
 
 #endif
 
-#ifndef _GL_ARPA_INET_H
-#define _GL_ARPA_INET_H
+#ifndef _@GUARD_PREFIX@_ARPA_INET_H
+#define _@GUARD_PREFIX@_ARPA_INET_H
+
+/* The definitions of _GL_FUNCDECL_RPL etc. are copied here.  */
 
 /* The definition of _GL_ARG_NONNULL is copied here.  */
 
 /* The definition of _GL_WARN_ON_USE is copied here.  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #if @GNULIB_INET_NTOP@
-# if !@HAVE_DECL_INET_NTOP@
 /* Converts an internet address from internal format to a printable,
    presentable format.
    AF is an internet address family, such as AF_INET or AF_INET6.
@@ -64,10 +72,32 @@ extern "C" {
 
    For more details, see the POSIX:2001 specification
    <http://www.opengroup.org/susv3xsh/inet_ntop.html>.  */
-extern const char *inet_ntop (int af, const void *restrict src,
-                              char *restrict dst, socklen_t cnt)
-     _GL_ARG_NONNULL ((2, 3));
+# if @REPLACE_INET_NTOP@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef inet_ntop
+#   define inet_ntop rpl_inet_ntop
+#  endif
+_GL_FUNCDECL_RPL (inet_ntop, const char *,
+                  (int af, const void *restrict src,
+                   char *restrict dst, socklen_t cnt)
+                  _GL_ARG_NONNULL ((2, 3)));
+_GL_CXXALIAS_RPL (inet_ntop, const char *,
+                  (int af, const void *restrict src,
+                   char *restrict dst, socklen_t cnt));
+# else
+#  if !@HAVE_DECL_INET_NTOP@
+_GL_FUNCDECL_SYS (inet_ntop, const char *,
+                  (int af, const void *restrict src,
+                   char *restrict dst, socklen_t cnt)
+                  _GL_ARG_NONNULL ((2, 3)));
+#  endif
+/* Need to cast, because on NonStop Kernel, the fourth parameter is
+                                            size_t cnt.  */
+_GL_CXXALIAS_SYS_CAST (inet_ntop, const char *,
+                       (int af, const void *restrict src,
+                        char *restrict dst, socklen_t cnt));
 # endif
+_GL_CXXALIASWARN (inet_ntop);
 #elif defined GNULIB_POSIXCHECK
 # undef inet_ntop
 # if HAVE_RAW_DECL_INET_NTOP
@@ -77,10 +107,26 @@ _GL_WARN_ON_USE (inet_ntop, "inet_ntop is unportable - "
 #endif
 
 #if @GNULIB_INET_PTON@
-# if !@HAVE_DECL_INET_PTON@
-extern int inet_pton (int af, const char *restrict src, void *restrict dst)
-     _GL_ARG_NONNULL ((2, 3));
+# if @REPLACE_INET_PTON@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef inet_pton
+#   define inet_pton rpl_inet_pton
+#  endif
+_GL_FUNCDECL_RPL (inet_pton, int,
+                  (int af, const char *restrict src, void *restrict dst)
+                  _GL_ARG_NONNULL ((2, 3)));
+_GL_CXXALIAS_RPL (inet_pton, int,
+                  (int af, const char *restrict src, void *restrict dst));
+# else
+#  if !@HAVE_DECL_INET_PTON@
+_GL_FUNCDECL_SYS (inet_pton, int,
+                  (int af, const char *restrict src, void *restrict dst)
+                  _GL_ARG_NONNULL ((2, 3)));
+#  endif
+_GL_CXXALIAS_SYS (inet_pton, int,
+                  (int af, const char *restrict src, void *restrict dst));
 # endif
+_GL_CXXALIASWARN (inet_pton);
 #elif defined GNULIB_POSIXCHECK
 # undef inet_pton
 # if HAVE_RAW_DECL_INET_PTON
@@ -89,9 +135,6 @@ _GL_WARN_ON_USE (inet_pton, "inet_pton is unportable - "
 # endif
 #endif
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif /* _GL_ARPA_INET_H */
-#endif /* _GL_ARPA_INET_H */
+#endif /* _@GUARD_PREFIX@_ARPA_INET_H */
+#endif /* _@GUARD_PREFIX@_ARPA_INET_H */

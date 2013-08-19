@@ -1,5 +1,5 @@
-# sockpfaf.m4 serial 7
-dnl Copyright (C) 2004, 2006, 2009, 2010 Free Software Foundation, Inc.
+# sockpfaf.m4 serial 8
+dnl Copyright (C) 2004, 2006, 2009-2013 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -57,5 +57,31 @@ AC_DEFUN([gl_SOCKET_FAMILIES],
   AC_MSG_RESULT([$gl_cv_socket_ipv6])
   if test $gl_cv_socket_ipv6 = yes; then
     AC_DEFINE([HAVE_IPV6], [1], [Define to 1 if <sys/socket.h> defines AF_INET6.])
+  fi
+])
+
+AC_DEFUN([gl_SOCKET_FAMILY_UNIX],
+[
+  AC_REQUIRE([gl_HEADER_SYS_SOCKET])
+  AC_CHECK_HEADERS_ONCE([sys/un.h])
+
+  AC_MSG_CHECKING([for UNIX domain sockets])
+  AC_CACHE_VAL([gl_cv_socket_unix],
+    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_UN_H
+#include <sys/un.h>
+#endif
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#endif]],
+[[int x = AF_UNIX; struct sockaddr_un y;
+ if (&x && &y) return 0;]])],
+       gl_cv_socket_unix=yes, gl_cv_socket_unix=no)])
+  AC_MSG_RESULT([$gl_cv_socket_unix])
+  if test $gl_cv_socket_unix = yes; then
+    AC_DEFINE([HAVE_UNIXSOCKET], [1], [Define to 1 if <sys/socket.h> defines AF_UNIX.])
   fi
 ])

@@ -1,6 +1,6 @@
 /* Provide a sys/socket header file for systems lacking it (read: MinGW)
    and for systems where it is incomplete.
-   Copyright (C) 2005-2010 Free Software Foundation, Inc.
+   Copyright (C) 2005-2013 Free Software Foundation, Inc.
    Written by Simon Josefsson.
 
    This program is free software; you can redistribute it and/or modify
@@ -14,8 +14,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 /* This file is supposed to be used on platforms that lack <sys/socket.h>,
    on platforms where <sys/socket.h> cannot be included standalone, and on
@@ -26,6 +25,7 @@
 #if __GNUC__ >= 3
 @PRAGMA_SYSTEM_HEADER@
 #endif
+@PRAGMA_COLUMNS@
 
 #if defined _GL_ALREADY_INCLUDING_SYS_SOCKET_H
 /* Special invocation convention:
@@ -39,7 +39,7 @@
 #else
 /* Normal invocation convention.  */
 
-#ifndef _GL_SYS_SOCKET_H
+#ifndef _@GUARD_PREFIX@_SYS_SOCKET_H
 
 #if @HAVE_SYS_SOCKET_H@
 
@@ -49,6 +49,10 @@
    <sys/types.h>.  */
 # include <sys/types.h>
 
+/* On FreeBSD 6.4, <sys/socket.h> defines some macros that assume that NULL
+   is defined.  */
+# include <stddef.h>
+
 /* The include_next requires a split double-inclusion guard.  */
 # @INCLUDE_NEXT@ @NEXT_SYS_SOCKET_H@
 
@@ -56,8 +60,13 @@
 
 #endif
 
-#ifndef _GL_SYS_SOCKET_H
-#define _GL_SYS_SOCKET_H
+#ifndef _@GUARD_PREFIX@_SYS_SOCKET_H
+#define _@GUARD_PREFIX@_SYS_SOCKET_H
+
+_GL_INLINE_HEADER_BEGIN
+#ifndef _GL_SYS_SOCKET_INLINE
+# define _GL_SYS_SOCKET_INLINE _GL_INLINE
+#endif
 
 /* The definitions of _GL_FUNCDECL_RPL etc. are copied here.  */
 
@@ -66,11 +75,21 @@
 /* The definition of _GL_WARN_ON_USE is copied here.  */
 
 #if !@HAVE_SA_FAMILY_T@
+# if !GNULIB_defined_sa_family_t
 typedef unsigned short  sa_family_t;
+#  define GNULIB_defined_sa_family_t 1
+# endif
 #endif
 
-#if !@HAVE_STRUCT_SOCKADDR_STORAGE@
-# include <alignof.h>
+#if @HAVE_STRUCT_SOCKADDR_STORAGE@
+/* Make the 'struct sockaddr_storage' field 'ss_family' visible on AIX 7.1.  */
+# if !@HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY@
+#  ifndef ss_family
+#   define ss_family __ss_family
+#  endif
+# endif
+#else
+# include <stdalign.h>
 /* Code taken from glibc sysdeps/unix/sysv/linux/bits/socket.h on
    2009-05-08, licensed under LGPLv2.1+, plus portability fixes. */
 # define __ss_aligntype unsigned long int
@@ -81,12 +100,22 @@ typedef unsigned short  sa_family_t;
                   : alignof (__ss_aligntype))                           \
                  + sizeof (__ss_aligntype)))
 
+# if !GNULIB_defined_struct_sockaddr_storage
 struct sockaddr_storage
 {
   sa_family_t ss_family;      /* Address family, etc.  */
   __ss_aligntype __ss_align;  /* Force desired alignment.  */
   char __ss_padding[_SS_PADSIZE];
 };
+#  define GNULIB_defined_struct_sockaddr_storage 1
+# endif
+
+#endif
+
+/* Get struct iovec.  */
+/* But avoid namespace pollution on glibc systems.  */
+#if ! defined __GLIBC__
+# include <sys/uio.h>
 #endif
 
 #if @HAVE_SYS_SOCKET_H@
@@ -118,15 +147,14 @@ struct sockaddr_storage
    that you can influence which definitions you get by setting the
    WINVER symbol before including these two files.  For example,
    getaddrinfo is only available if _WIN32_WINNT >= 0x0501 (that
-   symbol is set indiriectly through WINVER).  You can set this by
+   symbol is set indirectly through WINVER).  You can set this by
    adding AC_DEFINE(WINVER, 0x0501) to configure.ac.  Note that your
    code may not run on older Windows releases then.  My Windows 2000
    box was not able to run the code, for example.  The situation is
-   slightly confusing because:
-   http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winsock/winsock/getaddrinfo_2.asp
+   slightly confusing because
+   <http://msdn.microsoft.com/en-us/library/ms738520>
    suggests that getaddrinfo should be available on all Windows
    releases. */
-
 
 # if @HAVE_WINSOCK2_H@
 #  include <winsock2.h>
@@ -151,17 +179,34 @@ struct sockaddr_storage
 #  include <sys/types.h>
 #  include <io.h>
 
+#  if !GNULIB_defined_socklen_t
 typedef int socklen_t;
+#   define GNULIB_defined_socklen_t 1
+#  endif
 
 # endif
 
+/* Rudimentary 'struct msghdr'; this works as long as you don't try to
+   access msg_control or msg_controllen.  */
+struct msghdr {
+  void *msg_name;
+  socklen_t msg_namelen;
+  struct iovec *msg_iov;
+  int msg_iovlen;
+  int msg_flags;
+};
+
 #endif
+
+/* Fix some definitions from <winsock2.h>.  */
 
 #if @HAVE_WINSOCK2_H@
 
+# if !GNULIB_defined_rpl_fd_isset
+
 /* Re-define FD_ISSET to avoid a WSA call while we are not using
    network sockets.  */
-static inline int
+_GL_SYS_SOCKET_INLINE int
 rpl_fd_isset (SOCKET fd, fd_set * set)
 {
   u_int i;
@@ -175,32 +220,45 @@ rpl_fd_isset (SOCKET fd, fd_set * set)
   return 0;
 }
 
+#  define GNULIB_defined_rpl_fd_isset 1
+# endif
+
 # undef FD_ISSET
 # define FD_ISSET(fd, set) rpl_fd_isset(fd, set)
 
 #endif
 
+/* Hide some function declarations from <winsock2.h>.  */
+
+#if @HAVE_WINSOCK2_H@
+# if !defined _@GUARD_PREFIX@_UNISTD_H
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef close
+#   define close close_used_without_including_unistd_h
+#  else
+    _GL_WARN_ON_USE (close,
+                     "close() used without including <unistd.h>");
+#  endif
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef gethostname
+#   define gethostname gethostname_used_without_including_unistd_h
+#  else
+    _GL_WARN_ON_USE (gethostname,
+                     "gethostname() used without including <unistd.h>");
+#  endif
+# endif
+# if !defined _@GUARD_PREFIX@_SYS_SELECT_H
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef select
+#   define select select_used_without_including_sys_select_h
+#  else
+    _GL_WARN_ON_USE (select,
+                     "select() used without including <sys/select.h>");
+#  endif
+# endif
+#endif
+
 /* Wrap everything else to use libc file descriptors for sockets.  */
-
-#if @HAVE_WINSOCK2_H@ && !defined _GL_UNISTD_H
-# if !(defined __cplusplus && defined GNULIB_NAMESPACE)
-#  undef close
-#  define close close_used_without_including_unistd_h
-# else
-   _GL_WARN_ON_USE (close,
-                    "close() used without including <unistd.h>");
-# endif
-#endif
-
-#if @HAVE_WINSOCK2_H@ && !defined _GL_UNISTD_H
-# if !(defined __cplusplus && defined GNULIB_NAMESPACE)
-#  undef gethostname
-#  define gethostname gethostname_used_without_including_unistd_h
-# else
-   _GL_WARN_ON_USE (gethostname,
-                    "gethostname() used without including <unistd.h>");
-# endif
-#endif
 
 #if @GNULIB_SOCKET@
 # if @HAVE_WINSOCK2_H@
@@ -237,8 +295,11 @@ _GL_FUNCDECL_RPL (connect, int,
 _GL_CXXALIAS_RPL (connect, int,
                   (int fd, const struct sockaddr *addr, socklen_t addrlen));
 # else
-_GL_CXXALIAS_SYS (connect, int,
-                  (int fd, const struct sockaddr *addr, socklen_t addrlen));
+/* Need to cast, because on NonStop Kernel, the third parameter is
+                                                     size_t addrlen.  */
+_GL_CXXALIAS_SYS_CAST (connect, int,
+                       (int fd,
+                        const struct sockaddr *addr, socklen_t addrlen));
 # endif
 _GL_CXXALIASWARN (connect);
 #elif @HAVE_WINSOCK2_H@
@@ -292,8 +353,11 @@ _GL_FUNCDECL_RPL (bind, int,
 _GL_CXXALIAS_RPL (bind, int,
                   (int fd, const struct sockaddr *addr, socklen_t addrlen));
 # else
-_GL_CXXALIAS_SYS (bind, int,
-                  (int fd, const struct sockaddr *addr, socklen_t addrlen));
+/* Need to cast, because on NonStop Kernel, the third parameter is
+                                                     size_t addrlen.  */
+_GL_CXXALIAS_SYS_CAST (bind, int,
+                       (int fd,
+                        const struct sockaddr *addr, socklen_t addrlen));
 # endif
 _GL_CXXALIASWARN (bind);
 #elif @HAVE_WINSOCK2_H@
@@ -514,9 +578,11 @@ _GL_CXXALIAS_RPL (sendto, ssize_t,
                   (int fd, const void *buf, size_t len, int flags,
                    const struct sockaddr *to, socklen_t tolen));
 # else
-_GL_CXXALIAS_SYS (sendto, ssize_t,
-                  (int fd, const void *buf, size_t len, int flags,
-                   const struct sockaddr *to, socklen_t tolen));
+/* Need to cast, because on NonStop Kernel, the sixth parameter is
+                                                   size_t tolen.  */
+_GL_CXXALIAS_SYS_CAST (sendto, ssize_t,
+                       (int fd, const void *buf, size_t len, int flags,
+                        const struct sockaddr *to, socklen_t tolen));
 # endif
 _GL_CXXALIASWARN (sendto);
 #elif @HAVE_WINSOCK2_H@
@@ -542,8 +608,11 @@ _GL_FUNCDECL_RPL (setsockopt, int, (int fd, int level, int optname,
 _GL_CXXALIAS_RPL (setsockopt, int, (int fd, int level, int optname,
                                     const void * optval, socklen_t optlen));
 # else
-_GL_CXXALIAS_SYS (setsockopt, int, (int fd, int level, int optname,
-                                    const void * optval, socklen_t optlen));
+/* Need to cast, because on NonStop Kernel, the fifth parameter is
+                                             size_t optlen.  */
+_GL_CXXALIAS_SYS_CAST (setsockopt, int,
+                       (int fd, int level, int optname,
+                        const void * optval, socklen_t optlen));
 # endif
 _GL_CXXALIASWARN (setsockopt);
 #elif @HAVE_WINSOCK2_H@
@@ -580,16 +649,6 @@ _GL_WARN_ON_USE (shutdown, "shutdown is not always POSIX compliant - "
 # endif
 #endif
 
-#if @HAVE_WINSOCK2_H@
-# if !(defined __cplusplus && defined GNULIB_NAMESPACE)
-#  undef select
-#  define select select_used_without_including_sys_select_h
-# else
-   _GL_WARN_ON_USE (select,
-                    "select() used without including <sys/select.h>");
-# endif
-#endif
-
 #if @GNULIB_ACCEPT4@
 /* Accept a connection on a socket, with specific opening flags.
    The flags are a bitmask, possibly including O_CLOEXEC (defined in <fcntl.h>)
@@ -623,6 +682,8 @@ _GL_WARN_ON_USE (accept4, "accept4 is unportable - "
 # endif
 #endif
 
-#endif /* _GL_SYS_SOCKET_H */
-#endif /* _GL_SYS_SOCKET_H */
+_GL_INLINE_HEADER_END
+
+#endif /* _@GUARD_PREFIX@_SYS_SOCKET_H */
+#endif /* _@GUARD_PREFIX@_SYS_SOCKET_H */
 #endif

@@ -1,6 +1,6 @@
 /* mountlist.h -- declarations for list of mounted file systems
 
-   Copyright (C) 1991-1992, 1998, 2000-2005, 2009-2010 Free Software
+   Copyright (C) 1991-1992, 1998, 2000-2005, 2009-2013 Free Software
    Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -36,5 +36,6 @@ struct mount_entry
 };
 
 struct mount_entry *read_file_system_list (bool need_fs_type);
+void free_mount_entry (struct mount_entry *entry);
 
 #endif

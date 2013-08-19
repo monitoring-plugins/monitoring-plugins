@@ -1,6 +1,6 @@
 /* Get the system load averages.
 
-   Copyright (C) 1985-1989, 1991-1995, 1997, 1999-2000, 2003-2010 Free Software
+   Copyright (C) 1985-1989, 1991-1995, 1997, 1999-2000, 2003-2013 Free Software
    Foundation, Inc.
 
    NOTE: The canonical source of this file is maintained with gnulib.
@@ -28,7 +28,7 @@
                                 macro that comes with autoconf 2.13 or newer.
                                 If that isn't an option, then just put
                                 AC_CHECK_FUNCS(pstat_getdynamic) in your
-                                configure.in file.
+                                configure.ac file.
    HAVE_LIBPERFSTAT Define this if your system has the
                                 perfstat_cpu_total function in libperfstat (AIX).
    FIXUP_KERNEL_SYMBOL_ADDR()   Adjust address in returned struct nlist.
@@ -46,7 +46,7 @@
    NLIST_STRUCT                 Include nlist.h, not a.out.h.
    N_NAME_POINTER               The nlist n_name element is a pointer,
                                 not an array.
-   HAVE_STRUCT_NLIST_N_UN_N_NAME `n_un.n_name' is member of `struct nlist'.
+   HAVE_STRUCT_NLIST_N_UN_N_NAME 'n_un.n_name' is member of 'struct nlist'.
    LINUX_LDAV_FILE              [__linux__, __CYGWIN__]: File containing
                                 load averages.
 
@@ -80,51 +80,22 @@
    We also #define LDAV_PRIVILEGED if a program will require
    special installation to be able to call getloadavg.  */
 
-/* "configure" defines CONFIGURING_GETLOADAVG to sidestep problems
-   with partially-configured source directories.  */
-
-#ifndef CONFIGURING_GETLOADAVG
-# include <config.h>
-# include <stdbool.h>
-#endif
+#include <config.h>
 
 /* Specification.  */
 #include <stdlib.h>
 
 #include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
-
-/* Exclude all the code except the test program at the end
-   if the system has its own `getloadavg' function.  */
-
-#ifndef HAVE_GETLOADAVG
 
 # include <sys/types.h>
 
-/* Both the Emacs and non-Emacs sections want this.  Some
-   configuration files' definitions for the LOAD_AVE_CVT macro (like
-   sparc.h's) use macros like FSCALE, defined here.  */
-# if defined (unix) || defined (__unix)
+# if HAVE_SYS_PARAM_H
 #  include <sys/param.h>
 # endif
 
-# include "c-strtod.h"
-# include "cloexec.h"
 # include "intprops.h"
-
-/* The existing Emacs configuration files define a macro called
-   LOAD_AVE_CVT, which accepts a value of type LOAD_AVE_TYPE, and
-   returns the load average multiplied by 100.  What we actually want
-   is a macro called LDAV_CVT, which returns the load average as an
-   unmultiplied double.
-
-   For backwards compatibility, we'll define LDAV_CVT in terms of
-   LOAD_AVE_CVT, but future machine config files should just define
-   LDAV_CVT directly.  */
-
-# if !defined (LDAV_CVT) && defined (LOAD_AVE_CVT)
-#  define LDAV_CVT(n) (LOAD_AVE_CVT (n) / 100.0)
-# endif
 
 # if !defined (BSD) && defined (ultrix)
 /* Ultrix behaves like BSD on Vaxen.  */
@@ -372,7 +343,6 @@
 #    endif /* NLIST_STRUCT */
 
 #    ifdef SUNOS_5
-#     include <fcntl.h>
 #     include <kvm.h>
 #     include <kstat.h>
 #    endif
@@ -461,7 +431,10 @@
 #  include <sys/dg_sys_info.h>
 # endif
 
-# include "fcntl--.h"
+# if (defined __linux__ || defined __CYGWIN__ || defined SUNOS_5        \
+      || (defined LOAD_AVE_TYPE && ! defined __VMS))
+#  include <fcntl.h>
+# endif
 
 /* Avoid static vars inside a function since in HPUX they dump as pure.  */
 
@@ -482,13 +455,13 @@ static struct dg_sys_info_load_info load_info;  /* what-a-mouthful! */
 # if !defined (HAVE_LIBKSTAT) && defined (LOAD_AVE_TYPE)
 /* File descriptor open to /dev/kmem or VMS load ave driver.  */
 static int channel;
-/* True iff channel is valid.  */
+/* True if channel is valid.  */
 static bool getloadavg_initialized;
 /* Offset in kmem to seek to read load average, or 0 means invalid.  */
 static long offset;
 
 #  if ! defined __VMS && ! defined sgi && ! defined __linux__
-static struct nlist nl[2];
+static struct nlist name_list[2];
 #  endif
 
 #  ifdef SUNOS_5
@@ -500,7 +473,7 @@ static kvm_t *kd;
 /* Put the 1 minute, 5 minute and 15 minute load averages
    into the first NELEM elements of LOADAVG.
    Return the number written (never more than 3, but may be less than NELEM),
-   or -1 if an error occurred.  */
+   or -1 (setting errno) if an error occurred.  */
 
 int
 getloadavg (double loadavg[], int nelem)
@@ -509,18 +482,17 @@ getloadavg (double loadavg[], int nelem)
 
 # ifdef NO_GET_LOAD_AVG
 #  define LDAV_DONE
-  /* Set errno to zero to indicate that there was no particular error;
-     this function just can't work at all on this system.  */
-  errno = 0;
+  errno = ENOSYS;
   elem = -1;
 # endif
 
-# if !defined (LDAV_DONE) && defined (HAVE_LIBKSTAT)
+# if !defined (LDAV_DONE) && defined (HAVE_LIBKSTAT)       /* Solaris <= 2.6 */
 /* Use libkstat because we don't have to be root.  */
 #  define LDAV_DONE
   kstat_ctl_t *kc;
   kstat_t *ksp;
   kstat_named_t *kn;
+  int saved_errno;
 
   kc = kstat_open ();
   if (kc == 0)
@@ -559,10 +531,13 @@ getloadavg (double loadavg[], int nelem)
         }
     }
 
+  saved_errno = errno;
   kstat_close (kc);
+  errno = saved_errno;
 # endif /* HAVE_LIBKSTAT */
 
 # if !defined (LDAV_DONE) && defined (hpux) && defined (HAVE_PSTAT_GETDYNAMIC)
+                                                           /* HP-UX */
 /* Use pstat_getdynamic() because we don't have to be root.  */
 #  define LDAV_DONE
 #  undef LOAD_AVE_TYPE
@@ -579,7 +554,7 @@ getloadavg (double loadavg[], int nelem)
 
 # endif /* hpux && HAVE_PSTAT_GETDYNAMIC */
 
-# if ! defined LDAV_DONE && defined HAVE_LIBPERFSTAT
+# if ! defined LDAV_DONE && defined HAVE_LIBPERFSTAT       /* AIX */
 #  define LDAV_DONE
 #  undef LOAD_AVE_TYPE
 /* Use perfstat_cpu_total because we don't have to be root. */
@@ -596,6 +571,7 @@ getloadavg (double loadavg[], int nelem)
 # endif
 
 # if !defined (LDAV_DONE) && (defined (__linux__) || defined (__CYGWIN__))
+                                              /* Linux without glibc, Cygwin */
 #  define LDAV_DONE
 #  undef LOAD_AVE_TYPE
 
@@ -605,39 +581,54 @@ getloadavg (double loadavg[], int nelem)
 
   char ldavgbuf[3 * (INT_STRLEN_BOUND (int) + sizeof ".00 ")];
   char const *ptr = ldavgbuf;
-  int fd, count;
+  int fd, count, saved_errno;
 
   fd = open (LINUX_LDAV_FILE, O_RDONLY);
   if (fd == -1)
     return -1;
   count = read (fd, ldavgbuf, sizeof ldavgbuf - 1);
+  saved_errno = errno;
   (void) close (fd);
+  errno = saved_errno;
   if (count <= 0)
     return -1;
   ldavgbuf[count] = '\0';
 
   for (elem = 0; elem < nelem; elem++)
     {
-      char *endptr;
-      double d;
+      double numerator = 0;
+      double denominator = 1;
 
-      errno = 0;
-      d = c_strtod (ptr, &endptr);
-      if (ptr == endptr || (d == 0 && errno != 0))
+      while (*ptr == ' ')
+        ptr++;
+
+      /* Finish if this number is missing, and report an error if all
+         were missing.  */
+      if (! ('0' <= *ptr && *ptr <= '9'))
         {
           if (elem == 0)
-            return -1;
+            {
+              errno = ENOTSUP;
+              return -1;
+            }
           break;
         }
-      loadavg[elem] = d;
-      ptr = endptr;
+
+      while ('0' <= *ptr && *ptr <= '9')
+        numerator = 10 * numerator + (*ptr++ - '0');
+
+      if (*ptr == '.')
+        for (ptr++; '0' <= *ptr && *ptr <= '9'; ptr++)
+          numerator = 10 * numerator + (*ptr - '0'), denominator *= 10;
+
+      loadavg[elem++] = numerator / denominator;
     }
 
   return elem;
 
 # endif /* __linux__ || __CYGWIN__ */
 
-# if !defined (LDAV_DONE) && defined (__NetBSD__)
+# if !defined (LDAV_DONE) && defined (__NetBSD__)          /* NetBSD < 0.9 */
 #  define LDAV_DONE
 #  undef LOAD_AVE_TYPE
 
@@ -657,7 +648,10 @@ getloadavg (double loadavg[], int nelem)
                   &scale);
   (void) fclose (fp);
   if (count != 4)
-    return -1;
+    {
+      errno = ENOTSUP;
+      return -1;
+    }
 
   for (elem = 0; elem < nelem; elem++)
     loadavg[elem] = (double) load_ave[elem] / (double) scale;
@@ -666,7 +660,7 @@ getloadavg (double loadavg[], int nelem)
 
 # endif /* __NetBSD__ */
 
-# if !defined (LDAV_DONE) && defined (NeXT)
+# if !defined (LDAV_DONE) && defined (NeXT)                /* NeXTStep */
 #  define LDAV_DONE
   /* The NeXT code was adapted from iscreen 3.2.  */
 
@@ -698,7 +692,10 @@ getloadavg (double loadavg[], int nelem)
     }
 
   if (!getloadavg_initialized)
-    return -1;
+    {
+      errno = ENOTSUP;
+      return -1;
+    }
 # endif /* NeXT */
 
 # if !defined (LDAV_DONE) && defined (UMAX)
@@ -732,7 +729,7 @@ getloadavg (double loadavg[], int nelem)
       for (i = 0; i < conf.config_maxclass; ++i)
         {
           struct class_stats stats;
-          bzero ((char *) &stats, sizeof stats);
+          memset (&stats, 0, sizeof stats);
 
           desc.sd_type = CPUTYPE_CLASS;
           desc.sd_objid = i;
@@ -775,7 +772,7 @@ getloadavg (double loadavg[], int nelem)
 #  define LDAV_DONE
   /* This call can return -1 for an error, but with good args
      it's not supposed to fail.  The first argument is for no
-     apparent reason of type `long int *'.  */
+     apparent reason of type 'long int *'.  */
   dg_sys_info ((long int *) &load_info,
                DG_SYS_INFO_LOAD_INFO_TYPE,
                DG_SYS_INFO_LOAD_VERSION_0);
@@ -825,6 +822,7 @@ getloadavg (double loadavg[], int nelem)
 # endif /* OSF_MIPS */
 
 # if !defined (LDAV_DONE) && (defined (__MSDOS__) || defined (WINDOWS32))
+                                                           /* DJGPP */
 #  define LDAV_DONE
 
   /* A faithful emulation is going to have to be saved for a rainy day.  */
@@ -834,7 +832,7 @@ getloadavg (double loadavg[], int nelem)
     }
 # endif  /* __MSDOS__ || WINDOWS32 */
 
-# if !defined (LDAV_DONE) && defined (OSF_ALPHA)
+# if !defined (LDAV_DONE) && defined (OSF_ALPHA)           /* OSF/1 */
 #  define LDAV_DONE
 
   struct tbl_loadavg load_ave;
@@ -846,7 +844,7 @@ getloadavg (double loadavg[], int nelem)
          : (load_ave.tl_avenrun.l[elem] / (double) load_ave.tl_lscale));
 # endif /* OSF_ALPHA */
 
-# if ! defined LDAV_DONE && defined __VMS
+# if ! defined LDAV_DONE && defined __VMS                  /* VMS */
   /* VMS specific code -- read from the Load Ave driver.  */
 
   LOAD_AVE_TYPE load_ave[3];
@@ -883,10 +881,14 @@ getloadavg (double loadavg[], int nelem)
     }
 
   if (!getloadavg_initialized)
-    return -1;
+    {
+      errno = ENOTSUP;
+      return -1;
+    }
 # endif /* ! defined LDAV_DONE && defined __VMS */
 
 # if ! defined LDAV_DONE && defined LOAD_AVE_TYPE && ! defined __VMS
+                                                  /* IRIX, other old systems */
 
   /* UNIX-specific code -- read the average from /dev/kmem.  */
 
@@ -899,38 +901,36 @@ getloadavg (double loadavg[], int nelem)
     {
 #  ifndef sgi
 #   if ! defined NLIST_STRUCT || ! defined N_NAME_POINTER
-      strcpy (nl[0].n_name, LDAV_SYMBOL);
-      strcpy (nl[1].n_name, "");
+      strcpy (name_list[0].n_name, LDAV_SYMBOL);
+      strcpy (name_list[1].n_name, "");
 #   else /* NLIST_STRUCT */
 #    ifdef HAVE_STRUCT_NLIST_N_UN_N_NAME
-      nl[0].n_un.n_name = LDAV_SYMBOL;
-      nl[1].n_un.n_name = 0;
+      name_list[0].n_un.n_name = LDAV_SYMBOL;
+      name_list[1].n_un.n_name = 0;
 #    else /* not HAVE_STRUCT_NLIST_N_UN_N_NAME */
-      nl[0].n_name = LDAV_SYMBOL;
-      nl[1].n_name = 0;
+      name_list[0].n_name = LDAV_SYMBOL;
+      name_list[1].n_name = 0;
 #    endif /* not HAVE_STRUCT_NLIST_N_UN_N_NAME */
 #   endif /* NLIST_STRUCT */
 
 #   ifndef SUNOS_5
       if (
 #    if !(defined (_AIX) && !defined (ps2))
-          nlist (KERNEL_FILE, nl)
+          nlist (KERNEL_FILE, name_list)
 #    else  /* _AIX */
-          knlist (nl, 1, sizeof (nl[0]))
+          knlist (name_list, 1, sizeof (name_list[0]))
 #    endif
           >= 0)
-          /* Omit "&& nl[0].n_type != 0 " -- it breaks on Sun386i.  */
+          /* Omit "&& name_list[0].n_type != 0 " -- it breaks on Sun386i.  */
           {
 #    ifdef FIXUP_KERNEL_SYMBOL_ADDR
-            FIXUP_KERNEL_SYMBOL_ADDR (nl);
+            FIXUP_KERNEL_SYMBOL_ADDR (name_list);
 #    endif
-            offset = nl[0].n_value;
+            offset = name_list[0].n_value;
           }
 #   endif /* !SUNOS_5 */
 #  else  /* sgi */
-      int ldav_off;
-
-      ldav_off = sysmp (MP_KERNADDR, MPKA_AVENRUN);
+      ptrdiff_t ldav_off = sysmp (MP_KERNADDR, MPKA_AVENRUN);
       if (ldav_off != -1)
         offset = (long int) ldav_off & 0x7fffffff;
 #  endif /* sgi */
@@ -940,13 +940,27 @@ getloadavg (double loadavg[], int nelem)
   if (!getloadavg_initialized)
     {
 #  ifndef SUNOS_5
-      channel = open ("/dev/kmem", O_RDONLY);
-      if (channel >= 0)
+      /* Set the channel to close on exec, so it does not
+         litter any child's descriptor table.  */
+#   ifndef O_CLOEXEC
+#    define O_CLOEXEC 0
+#   endif
+      int fd = open ("/dev/kmem", O_RDONLY | O_CLOEXEC);
+      if (0 <= fd)
         {
-          /* Set the channel to close on exec, so it does not
-             litter any child's descriptor table.  */
-          set_cloexec_flag (channel, true);
-          getloadavg_initialized = true;
+#   if F_DUPFD_CLOEXEC
+          if (fd <= STDERR_FILENO)
+            {
+              int fd1 = fcntl (fd, F_DUPFD_CLOEXEC, STDERR_FILENO + 1);
+              close (fd);
+              fd = fd1;
+            }
+#   endif
+          if (0 <= fd)
+            {
+              channel = fd;
+              getloadavg_initialized = true;
+            }
         }
 #  else /* SUNOS_5 */
       /* We pass 0 for the kernel, corefile, and swapfile names
@@ -955,8 +969,8 @@ getloadavg (double loadavg[], int nelem)
       if (kd != 0)
         {
           /* nlist the currently running kernel.  */
-          kvm_nlist (kd, nl);
-          offset = nl[0].n_value;
+          kvm_nlist (kd, name_list);
+          offset = name_list[0].n_value;
           getloadavg_initialized = true;
         }
 #  endif /* SUNOS_5 */
@@ -985,7 +999,10 @@ getloadavg (double loadavg[], int nelem)
     }
 
   if (offset == 0 || !getloadavg_initialized)
-    return -1;
+    {
+      errno = ENOTSUP;
+      return -1;
+    }
 # endif /* ! defined LDAV_DONE && defined LOAD_AVE_TYPE && ! defined __VMS */
 
 # if !defined (LDAV_DONE) && defined (LOAD_AVE_TYPE) /* Including VMS.  */
@@ -1000,51 +1017,8 @@ getloadavg (double loadavg[], int nelem)
 # endif /* !LDAV_DONE && LOAD_AVE_TYPE */
 
 # if !defined LDAV_DONE
-  /* Set errno to zero to indicate that there was no particular error;
-     this function just can't work at all on this system.  */
-  errno = 0;
+  errno = ENOSYS;
   elem = -1;
 # endif
   return elem;
 }
-
-#endif /* ! HAVE_GETLOADAVG */
-
-#ifdef TEST
-int
-main (int argc, char **argv)
-{
-  int naptime = 0;
-
-  if (argc > 1)
-    naptime = atoi (argv[1]);
-
-  while (1)
-    {
-      double avg[3];
-      int loads;
-
-      errno = 0;                /* Don't be misled if it doesn't set errno.  */
-      loads = getloadavg (avg, 3);
-      if (loads == -1)
-        {
-          perror ("Error getting load average");
-          return EXIT_FAILURE;
-        }
-      if (loads > 0)
-        printf ("1-minute: %f  ", avg[0]);
-      if (loads > 1)
-        printf ("5-minute: %f  ", avg[1]);
-      if (loads > 2)
-        printf ("15-minute: %f  ", avg[2]);
-      if (loads > 0)
-        putchar ('\n');
-
-      if (naptime == 0)
-        break;
-      sleep (naptime);
-    }
-
-  return EXIT_SUCCESS;
-}
-#endif /* TEST */

@@ -1,5 +1,5 @@
-# gethostname.m4 serial 9
-dnl Copyright (C) 2002, 2008, 2009, 2010 Free Software Foundation, Inc.
+# gethostname.m4 serial 13
+dnl Copyright (C) 2002, 2008-2013 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -14,7 +14,7 @@ AC_DEFUN([gl_FUNC_GETHOSTNAME],
 
   dnl Where is gethostname() defined?
   dnl - On native Windows, it is in ws2_32.dll.
-  dnl - Otherwise is is in libc.
+  dnl - Otherwise it is in libc.
   GETHOSTNAME_LIB=
   AC_CHECK_FUNCS([gethostname], , [
     AC_CACHE_CHECK([for gethostname in winsock2.h and -lws2_32],
@@ -37,12 +37,14 @@ AC_DEFUN([gl_FUNC_GETHOSTNAME],
   AC_SUBST([GETHOSTNAME_LIB])
 
   if test "$ac_cv_func_gethostname" = no; then
-    AC_LIBOBJ([gethostname])
     HAVE_GETHOSTNAME=0
-    gl_PREREQ_GETHOSTNAME
   fi
 
-  dnl Also provide HOST_NAME_MAX when <limits.h> lacks it.
+  gl_PREREQ_HOST_NAME_MAX
+])
+
+# Provide HOST_NAME_MAX when <limits.h> lacks it.
+AC_DEFUN([gl_PREREQ_HOST_NAME_MAX], [
   dnl - On most Unix systems, use MAXHOSTNAMELEN from <sys/param.h> instead.
   dnl - On Solaris, Cygwin, BeOS, use MAXHOSTNAMELEN from <netdb.h> instead.
   dnl - On mingw, use 256, because
@@ -83,7 +85,11 @@ lucky
 #if HAVE_NETDB_H
 # include <netdb.h>
 #endif
-])
+],
+          [dnl The system does not define MAXHOSTNAMELEN in any of the common
+           dnl headers. Use a safe fallback.
+           gl_cv_decl_HOST_NAME_MAX=256
+          ])
       fi
     fi
   ])

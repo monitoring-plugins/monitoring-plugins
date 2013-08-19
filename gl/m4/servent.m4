@@ -1,5 +1,5 @@
-# servent.m4 serial 1
-dnl Copyright (C) 2008, 2009, 2010 Free Software Foundation, Inc.
+# servent.m4 serial 2
+dnl Copyright (C) 2008, 2010-2013 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -30,12 +30,16 @@ AC_DEFUN([gl_SERVENT],
         [gl_cv_w32_getservbyname=no
          gl_save_LIBS="$LIBS"
          LIBS="$LIBS -lws2_32"
-         AC_TRY_LINK([
+         AC_LINK_IFELSE(
+           [AC_LANG_PROGRAM(
+              [[
 #ifdef HAVE_WINSOCK2_H
 #include <winsock2.h>
 #endif
 #include <stddef.h>
-], [getservbyname(NULL,NULL);], [gl_cv_w32_getservbyname=yes])
+              ]],
+              [[getservbyname(NULL,NULL);]])],
+           [gl_cv_w32_getservbyname=yes])
          LIBS="$gl_save_LIBS"
         ])
       if test "$gl_cv_w32_getservbyname" = "yes"; then

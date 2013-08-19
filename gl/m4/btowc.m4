@@ -1,5 +1,5 @@
-# btowc.m4 serial 6
-dnl Copyright (C) 2008-2010 Free Software Foundation, Inc.
+# btowc.m4 serial 10
+dnl Copyright (C) 2008-2013 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -26,16 +26,23 @@ AC_DEFUN([gl_FUNC_BTOWC],
     AC_CACHE_CHECK([whether btowc(0) is correct],
       [gl_cv_func_btowc_nul],
       [
-        AC_TRY_RUN([
-#include <stdio.h>
+        AC_RUN_IFELSE(
+          [AC_LANG_SOURCE([[
 #include <string.h>
+/* Tru64 with Desktop Toolkit C has a bug: <stdio.h> must be included before
+   <wchar.h>.
+   BSD/OS 4.0.1 has a bug: <stddef.h>, <stdio.h> and <time.h> must be
+   included before <wchar.h>.  */
+#include <stddef.h>
+#include <stdio.h>
+#include <time.h>
 #include <wchar.h>
 int main ()
 {
   if (btowc ('\0') != 0)
     return 1;
   return 0;
-}],
+}]])],
           [gl_cv_func_btowc_nul=yes],
           [gl_cv_func_btowc_nul=no],
           [
@@ -65,10 +72,17 @@ changequote(,)dnl
         esac
 changequote([,])dnl
         if test $LOCALE_FR != none; then
-          AC_TRY_RUN([
+          AC_RUN_IFELSE(
+            [AC_LANG_SOURCE([[
 #include <locale.h>
-#include <stdio.h>
 #include <string.h>
+/* Tru64 with Desktop Toolkit C has a bug: <stdio.h> must be included before
+   <wchar.h>.
+   BSD/OS 4.0.1 has a bug: <stddef.h>, <stdio.h> and <time.h> must be
+   included before <wchar.h>.  */
+#include <stddef.h>
+#include <stdio.h>
+#include <time.h>
 #include <wchar.h>
 int main ()
 {
@@ -78,7 +92,7 @@ int main ()
         return 1;
     }
   return 0;
-}],
+}]])],
             [gl_cv_func_btowc_eof=yes],
             [gl_cv_func_btowc_eof=no],
             [:])
@@ -93,11 +107,6 @@ int main ()
       *yes) ;;
       *) REPLACE_BTOWC=1 ;;
     esac
-  fi
-  if test $HAVE_BTOWC = 0 || test $REPLACE_BTOWC = 1; then
-    gl_REPLACE_WCHAR_H
-    AC_LIBOBJ([btowc])
-    gl_PREREQ_BTOWC
   fi
 ])
 

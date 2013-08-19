@@ -1,5 +1,5 @@
-# netinet_in_h.m4 serial 4
-dnl Copyright (C) 2006-2010 Free Software Foundation, Inc.
+# netinet_in_h.m4 serial 5
+dnl Copyright (C) 2006-2013 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -27,4 +27,5 @@ AC_DEFUN([gl_HEADER_NETINET_IN],
     AC_SUBST([HAVE_NETINET_IN_H])
   fi
   AC_SUBST([NETINET_IN_H])
+  AM_CONDITIONAL([GL_GENERATE_NETINET_IN_H], [test -n "$NETINET_IN_H"])
 ])
