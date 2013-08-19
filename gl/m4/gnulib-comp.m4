@@ -64,7 +64,6 @@ AC_DEFUN([gl_EARLY],
   # Code from module getaddrinfo:
   # Code from module gethostname:
   # Code from module getloadavg:
-  # Code from module getopt:
   # Code from module getopt-gnu:
   # Code from module getopt-posix:
   # Code from module gettext:
