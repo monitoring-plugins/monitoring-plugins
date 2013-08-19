@@ -65,8 +65,15 @@ foreach my $tarball (@tarballs) {
 		unless (-e $dir) {
 			system("gunzip -c $tarball | tar -xf -") == 0 or die "Cannot extract $tarball";
 			chdir $dir or die "Can't chdir into $dir";
-			system("perl Makefile.PL PREFIX=$destdir INSTALLDIRS=site LIB=$destdir/lib") == 0 or die "Can't run perl Makefile.PL";
-			system("make") == 0 or die "Can't run make";
+			if (-e "Makefile.PL") {
+				system("perl Makefile.PL PREFIX=$destdir INSTALLDIRS=site LIB=$destdir/lib") == 0
+					or die "Can't run perl Makefile.PL";
+				system("make") == 0 or die "Can't run make";
+			} else {
+				system("perl Build.PL --prefix $destdir --installdirs site --install_path lib=$destdir/lib") == 0
+					or die "Can't run perl Build.PL";
+				system("./Build.PL") == 0 or die "Can't run ./Build";
+			}
 			chdir $topdir or die "Can't chdir to top";;
 		}
 	}
@@ -79,10 +86,18 @@ foreach my $tarball (@tarballs) {
 	$ENV{PERL5LIB}=join(":", @dirs);
 
 	if ($opts->{t}) {
-		system("make test") == 0 or die "Can't run make test failed";
+		if (-e "Makefile") {
+			system("make test") == 0 or die "Can't run make test failed";
+		} else {
+			system("./Build test") == 0 or die "./Build test failed";
+		}
 	}
 	if ($opts->{i}) {
-		system("make install SITEPREFIX=$destdir") == 0 or die "Can't run make install";
+		if (-e "Makefile") {
+			system("make install SITEPREFIX=$destdir") == 0 or die "Can't run make install";
+		} else {
+			system("./Build install") == 0 or die "Can't run ./Build install";
+		}
 	}
 	chdir $topdir or die "Can't go back to $topdir";
 }
