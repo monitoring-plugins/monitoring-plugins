@@ -316,6 +316,10 @@ AS_IF([test "x$with_ldap" != "xno"], [
   LIBS="$_SAVEDLIBS"
 ])
 
+dnl Check for headers used by check_users
+AC_CHECK_HEADERS(utmpx.h)
+AM_CONDITIONAL([HAVE_UTMPX], [test "$ac_cv_header_utmpx_h" = "yes"])
+
 dnl Check for headers used by check_ide_smart
 case $host in
   *linux*)

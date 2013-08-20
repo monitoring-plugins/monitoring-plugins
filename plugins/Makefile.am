@@ -112,6 +112,10 @@ check_ide_smart_LDADD = $(BASEOBJS)
 negate_LDADD = $(BASEOBJS)
 urlize_LDADD = $(BASEOBJS)
 
+if !HAVE_UTMPX
+check_users_LDADD += popen.o
+endif
+
 ##############################################################################
 # secondary dependencies
 
