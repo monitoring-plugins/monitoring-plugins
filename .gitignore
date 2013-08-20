@@ -61,6 +61,8 @@ NP-VERSION-FILE
 /gl/fcntl.h
 /gl/float.h
 /gl/getopt.h
+/gl/glthread/.deps
+/gl/glthread/.dirstamp
 /gl/langinfo.h
 /gl/libgnu.a
 /gl/locale.h
@@ -71,6 +73,7 @@ NP-VERSION-FILE
 /gl/netinet_in.h
 /gl/ref-add.sed
 /gl/ref-del.sed
+/gl/stdalign.h
 /gl/stdbool.h
 /gl/stddef.h
 /gl/stdint.h
