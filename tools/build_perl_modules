@@ -72,7 +72,7 @@ foreach my $tarball (@tarballs) {
 			} else {
 				system("perl Build.PL --prefix $destdir --installdirs site --install_path lib=$destdir/lib") == 0
 					or die "Can't run perl Build.PL";
-				system("./Build.PL") == 0 or die "Can't run ./Build";
+				system("./Build") == 0 or die "Can't run ./Build";
 			}
 			chdir $topdir or die "Can't chdir to top";;
 		}

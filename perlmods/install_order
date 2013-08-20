@@ -1,5 +1,13 @@
 # Modules installed in this order
 Test-Simple
+Perl-OSType
+parent
+version
+Try-Tiny
+Module-Metadata
+Module-Runtime
+Module-Implementation
+Module-Build
 Params-Validate
 Math-Calc-Units
 Class-Accessor
