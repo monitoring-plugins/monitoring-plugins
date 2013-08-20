@@ -95,6 +95,7 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 #ifdef SSL_OP_NO_TICKET
 	SSL_CTX_set_options(c, SSL_OP_NO_TICKET);
 #endif
+	SSL_CTX_set_mode(c, SSL_MODE_AUTO_RETRY);
 	if ((s = SSL_new(c)) != NULL) {
 #ifdef SSL_set_tlsext_host_name
 		if (host_name != NULL)
