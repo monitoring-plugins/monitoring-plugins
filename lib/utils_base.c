@@ -28,6 +28,7 @@
 #include <stdarg.h>
 #include "utils_base.h"
 #include <fcntl.h>
+#include <sys/stat.h>
 
 #define np_free(ptr) { if(ptr) { free(ptr); ptr = NULL; } }
 

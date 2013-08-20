@@ -117,9 +117,7 @@
 #include <getopt.h>
 #include "dirname.h"
 
-#ifdef HAVE_LOCALE_H
 #include <locale.h>
-#endif
 
 #ifdef HAVE_SYS_POLL_H
 # include "sys/poll.h"
