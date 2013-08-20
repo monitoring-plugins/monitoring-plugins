@@ -316,10 +316,6 @@ AS_IF([test "x$with_ldap" != "xno"], [
   LIBS="$_SAVEDLIBS"
 ])
 
-dnl Check for headers used by check_users
-AC_CHECK_HEADERS(utmpx.h)
-AM_CONDITIONAL([HAVE_UTMPX], [test "$ac_cv_header_utmpx_h" = "yes"])
-
 dnl Check for headers used by check_ide_smart
 case $host in
   *linux*)
@@ -364,6 +360,26 @@ else
   AC_SUBST(MYSQLINCLUDE)
   AC_SUBST(MYSQLLIBS)
   AC_SUBST(MYSQLCFLAGS)
+fi
+
+dnl Check for headers used by check_users
+AC_CHECK_HEADERS(utmpx.h)
+AM_CONDITIONAL([HAVE_UTMPX], [test "$ac_cv_header_utmpx_h" = "yes"])
+
+dnl Fallback to who(1) if the system doesn't provide an utmpx(5) interface
+if test "$ac_cv_header_utmpx_h" = "no"
+then
+	AC_PATH_PROG(PATH_TO_WHO,who)
+
+	if [$PATH_TO_WHO -q 2>/dev/null | egrep -i "^# users=[0-9]+$" >/dev/null]
+	then
+		ac_cv_path_to_who="$PATH_TO_WHO -q"
+	else
+		ac_cv_path_to_who="$PATH_TO_WHO"
+	fi
+
+	AC_DEFINE_UNQUOTED(WHO_COMMAND,"$ac_cv_path_to_who",
+		[path and arguments for invoking 'who'])
 fi
 
 AC_ARG_WITH([ipv6],
@@ -1337,19 +1353,6 @@ then
 else
 	AC_MSG_WARN([Get smbclient from Samba.org to monitor SMB shares])
 fi
-
-
-AC_PATH_PROG(PATH_TO_WHO,who)
-
-if [$PATH_TO_WHO -q 2>/dev/null | egrep -i "^# users=[0-9]+$" >/dev/null]
-then
-	ac_cv_path_to_who="$PATH_TO_WHO -q"
-else
-	ac_cv_path_to_who="$PATH_TO_WHO"
-fi
-
-AC_DEFINE_UNQUOTED(WHO_COMMAND,"$ac_cv_path_to_who",
-	[path and arguments for invoking 'who'])
 
 AC_PATH_PROG(PATH_TO_SNMPGET,snmpget)
 AC_ARG_WITH(snmpget_command,
