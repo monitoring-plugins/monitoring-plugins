@@ -347,7 +347,8 @@
 		<listitem><para>min and max are not required if UOM=%</para>
 			</listitem>
 		<listitem><para>value, min and max in class [-0-9.]. Must all be the
-			same UOM</para>
+			same UOM. value may be a literal "U" instead, this would indicate that the
+			actual value couldn't be determined</para>
 			</listitem>
 		<listitem><para>warn and crit are in the range format (see 
 			<xref linkend="thresholdformat">). Must be the same UOM</para>
