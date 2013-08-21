@@ -150,16 +150,18 @@ static char *fix_snmp_range(char *th)
 {
 	double left, right;
 	char *colon, *ret;
-	if (!(colon = strchr(th, ':')))
+
+	if ((colon = strchr(th, ':')) == NULL || *(colon + 1) == '\0')
 		return th;
-	*colon = 0;
 
 	left = strtod(th, NULL);
 	right = strtod(colon + 1, NULL);
-	if (right >= left) {
+	if (right >= left)
 		return th;
-	}
-	ret = malloc(strlen(th) + strlen(colon + 1) + 2);
+
+	if ((ret = malloc(strlen(th) + 2)) == NULL)
+		die(STATE_UNKNOWN, _("Cannot malloc"));
+	*colon = '\0';
 	sprintf(ret, "@%s:%s", colon + 1, th);
 	free(th);
 	return ret;
