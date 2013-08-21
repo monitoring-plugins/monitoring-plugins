@@ -269,10 +269,6 @@
 						<entry>@10:20</entry>
 						<entry>&ge; 10 and &le; 20, (inside the range of {10 .. 20})</entry>
 					</row>
-					<row>
-						<entry>10</entry>
-						<entry>&lt; 0 or &gt; 10, (outside the range of {0 .. 10})</entry>
-					</row>
 				</tbody>
 			</tgroup>
 		</table>
