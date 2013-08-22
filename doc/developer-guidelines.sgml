@@ -83,10 +83,18 @@
 		STDOUT and not print to STDERR.</para>
 
 		<section><title>Print only one line of text</title>
-		<para>Nagios will only grab the first line of text from STDOUT
-		when it notifies contacts about potential problems. If you print
-		multiple lines, you're out of luck (though this will be a feature of 
-		Nagios 3). Remember, keep your output short and to the point.</para>
+		<para>Starting with version 3, Nagios will process plugins' multiline
+		output, which should be formatted as:</para>
+		<literallayout>
+		SERVICE STATUS: First line of output | First part of performance data
+		Any number of subsequent lines of output, but note that buffers
+		may have a limited size | Second part of performance data, which
+		may have continuation lines, too
+		</literallayout>
+		<para>Note, however, that the default configs still do not include
+		the output's continuation lines into the notifications sent when
+		Nagios notifies contacts about potential problems.
+		Thus, keep your output short and to the point.</para>
 
 		<para>Output should be in the format:</para>
 		<literallayout>
@@ -315,10 +323,14 @@
 		</section>
 
 		<section><title>Performance data</title>
-		<para>Performance data is defined by Nagios as "everything after the | of the plugin output" -
-		please refer to Nagios documentation for information on capturing this data to logfiles.
-		However, it is the responsibility of the plugin writer to ensure the 
-		performance data is in a "Nagios plugins" format.
+		<para>Nagios 3 and newer will concatenate the parts following a "|" in a) the first
+		line output by the plugin, and b) in the second to last line, into a string it
+		passes to whatever performance data processing it has configured. (Note that it
+		currently does not insert additional whitespace between both, so the plugin needs
+		to provide some to prevent the last pair of a) and the first of b) getting run
+		together.) Please refer to the Nagios documentation for information on how to
+		configure such processing. However, it is the responsibility of the plugin writer
+		to ensure the performance data is in a "Nagios plugins" format.
 		This is the expected format:</para>
 
 		<literallayout>
