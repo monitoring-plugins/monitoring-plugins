@@ -62,6 +62,7 @@ foreach my $tarball (@tarballs) {
 	if ($opts->{m}) {
 		# Don't compile if already done - this is because of invocating this
 		# script at different stages
+		print "******************** $tarball\n";
 		unless (-e $dir) {
 			system("gunzip -c $tarball | tar -xf -") == 0 or die "Cannot extract $tarball";
 			chdir $dir or die "Can't chdir into $dir";
