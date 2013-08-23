@@ -1,4 +1,5 @@
 # Modules installed in this order
+default:
 Test-Simple
 Perl-OSType
 parent

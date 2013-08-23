@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # SYNTAX:
-#	build_perl_modules -d dest_dir [-c] [-m] [-t] [-i] tarball_dir
+#	build_perl_modules -d dest_dir [-c] [-m] [-t] [-i] [-s <section>] tarball_dir
 #
 # DESCRIPTION:
 #	Installs perl modules found in tarball_dir
@@ -8,9 +8,12 @@
 #	Will take action against each distribution in turn
 #	-d is a necessary destination directory for the perl mods
 #	If -c is set, will remove the module build directories and exit
+# If -e is set, will extract module
 #	If -m is set, will run perl Makefile.PL and make
 #	If -t is set, will run make test
 #	If -i is set, will run make install
+# If -s <section> specified will only work on that section in the
+#    install_order file - defaults to first section only
 #	Options are discrete. This is because an overall ./configure, make, make test, make install
 #	are run in different invocations. Obviously, you can't run a -t without a -m, but there's no
 #	checking here for that
@@ -23,81 +26,264 @@ use Getopt::Std;
 use Cwd;
 use File::Path;
 
-my $opts = {};
-getopts('d:cmti', $opts) || die "Invalid options";
-my $moddir = shift @ARGV or die "Must specify a directory where tarballs exist";
+# remove host site_lib directories to ensure this is a 'full & clean' build of deps
+BEGIN: {
+    my @user_libs = split( /:/, $ENV{PERL5LIB} || "" );
+    chomp(@user_libs);
 
-my $destdir = $opts->{d};
-die "Must set a destination directory" unless $destdir;
+    # clear out old PERL5LIB to avoid confusion with anything preinstalled
+    foreach my $lib (@INC) {
+        next if $lib eq ".";
+        foreach my $var (qw/ sitelib_stem sitelib sitearch sitearchexp /) {
+            foreach my $user_lib (@user_libs) {
+                $lib = '' if ( $lib =~ m/$user_lib/ );
+            }
+            $lib = ''
+                if ( ( $Config{$var} && $lib =~ m/^$Config{$var}/ )
+                || $lib =~ m/site_perl/ );
+        }
+    }
+}
+
+my $file_regexp = '(\.pm)?-v?([\d_]+\.?)*\.(?:tgz|tar\.gz)$';
+
+my $have_yaml         = 0;
+my $have_module_build = 0;
+
+my $opts = {};
+getopts( 'd:cemtis:', $opts ) || die "Invalid options";
+my $moddir = shift @ARGV
+    or die "Must specify a directory where tarballs exist";
+
+my $prefix = $opts->{d};
+die "Must set a destination directory" unless $prefix;
+
+my $destdir    = '';
+my $mm_destdir = '';
+my $mb_destdir = '';
+if ( $ENV{DESTDIR} ) {
+    $destdir    = $ENV{DESTDIR};
+    $mm_destdir = 'DESTDIR=' . $destdir;
+    $mb_destdir = '--destdir ' . $destdir;
+}
 
 chdir $moddir or die "Cannot change to $moddir";
 open F, "install_order" or die "Cannot open install_order file";
-my @files = grep { ! /^#/ && chop } <F>;
+my @files = grep { !/^#/ && chop } <F>;
 close F;
+
+# Remove linux only perl module from Solaris systems
+if ( $^O eq "solaris" ) {
+    @files = grep { !/Sys-Statistics-Linux/ } @files;
+}
+
+my @filelist;
+opendir( DIR, "." );
+foreach my $found ( readdir(DIR) ) {
+    push( @filelist, $found )
+        if ( -f $found && $found =~ m/\.(?:tgz|tar\.gz)$/ );
+}
+close(DIR);
+
+my $tag = $opts->{s} || "default";
+my $in_section = 0;
 
 my @tarballs;
 foreach my $f (@files) {
-	# Needs to be better. Also, what if there are two with same name?
-	my $tarball;
-	eval '$tarball = <'."$f".'*.tar.gz>';
-	die unless ($tarball);
-	print "Got $f, with file: $tarball",$/;
-	push @tarballs, $tarball;
-	(my $dir = $tarball) =~ s/\.tar.gz//;
-	# Need to do cleaning before doing each module in turn
-	if ($opts->{c}) {
-		print "Cleaning $dir",$/;
-		rmtree($dir);
-	}
+    next
+        if ( !$f || $f =~ m/^\s+$/ || $f =~ m/^\s*#/ );    # ignore all blank lines
+    $f =~ s/\s+//;                                         # remove all whitespaces from line
+    $f =~ s/\s+#.*//;                                      # remove all comments from the line
+
+    if ( $f =~ m/^(\w+):$/ ) {
+        if ( $tag && $1 ne $tag && $tag ne "all" ) {
+            $in_section = 0;
+            next;
+        }
+        $in_section = 1;
+        $tag = $1 if ( !$tag );
+        last if ( $1 ne $tag && $tag ne "all" );
+        next;
+    }
+
+    next if ( !$in_section );
+
+    # sort fully qualified names
+    #$f =~ s/(\.pm)?-v?(\d+\.?)*\.(?:tgz|tar\.gz)//;
+    #warn("b4 f=$f");
+    $f =~ s/$file_regexp//;
+
+    # Needs to be better. Also, what if there are two with same name?
+    #warn("f=$f");
+    my $tarball = ( grep( /^$f$file_regexp/, @filelist ) )[0];
+
+    #warn("got f=$f tarball=$tarball");
+    #eval '$tarball = <' . "$f" . '[-pmv0-9.]*.tar.gz>';
+    die("Couldn't find tarball for $f in $moddir\n")
+        unless ( $tarball && -f $tarball );
+    push @tarballs, $tarball;
+    ( my $dir = $tarball ) =~ s/\.(?:tgz|tar.gz)$//;
+
+    # Need to do cleaning before doing each module in turn
+    if ( $opts->{c} ) {
+        print "Cleaning $dir", $/;
+        rmtree($dir) if ($dir);
+    }
 }
 
-if ($opts->{c}) {
-	print "Finished cleaning",$/;
-	exit;
+if ( $opts->{c} ) {
+    print "Finished cleaning", $/;
+    exit;
 }
+
+my $libs = "$destdir/$prefix/lib:$destdir/$prefix/lib/$Config{archname}";
 
 my $topdir = cwd();
+
+# set an initial value if there isnt one already
+# Need to use PERL5LIB to ensure we get pre-installed mods from earlier
+# tags in the install_order file
+$ENV{PERL5LIB} ||= q{};
+
+# Set Module::AutoInstall to ignore CPAN, to avoid trying to pull dependencies in
+$ENV{PERL_AUTOINSTALL} = "--skipdeps";
+
+# keep a record of how many times a module build is done.  This is so they may
+# be built a second time to include optional prereq's that couldnt
+# previously be built due to circular dependancies
+my %built_modules;
 foreach my $tarball (@tarballs) {
-	(my $dir = $tarball) =~ s/\.tar.gz//;
-	if ($opts->{m}) {
-		# Don't compile if already done - this is because of invocating this
-		# script at different stages
-		unless (-e $dir) {
-			system("gunzip -c $tarball | tar -xf -") == 0 or die "Cannot extract $tarball";
-			chdir $dir or die "Can't chdir into $dir";
-			if (-e "Makefile.PL") {
-				system("perl Makefile.PL PREFIX=$destdir INSTALLDIRS=site LIB=$destdir/lib") == 0
-					or die "Can't run perl Makefile.PL";
-				system("make") == 0 or die "Can't run make";
-			} else {
-				system("perl Build.PL --prefix $destdir --installdirs site --install_path lib=$destdir/lib") == 0
-					or die "Can't run perl Build.PL";
-				system("./Build") == 0 or die "Can't run ./Build";
-			}
-			chdir $topdir or die "Can't chdir to top";;
-		}
-	}
+    ( my $dir = $tarball ) =~ s/\.(?:tgz|tar.gz)$//;
 
-	chdir $dir or die "Can't chdir into $dir";
+    die if ( $dir eq "exit" );
 
-	# Need to add this so this module is found for subsequent ones
-	my @dirs = split(":", $ENV{PERL5LIB} || "");
-	unshift @dirs, "$topdir/$dir/blib/lib";
-	$ENV{PERL5LIB}=join(":", @dirs);
+    if ( $opts->{e} ) {
+        unless ( -e $dir ) {
+            print 'Extracting ', $tarball, $/;
+            system("gunzip -c $tarball | tar -xf -") == 0
+                or die "Cannot extract $tarball";
+        }
+        next unless ( $opts->{m} || $opts->{t} || $opts->{i} );
+    }
 
-	if ($opts->{t}) {
-		if (-e "Makefile") {
-			system("make test") == 0 or die "Can't run make test failed";
-		} else {
-			system("./Build test") == 0 or die "./Build test failed";
-		}
-	}
-	if ($opts->{i}) {
-		if (-e "Makefile") {
-			system("make install SITEPREFIX=$destdir") == 0 or die "Can't run make install";
-		} else {
-			system("./Build install") == 0 or die "Can't run ./Build install";
-		}
-	}
-	chdir $topdir or die "Can't go back to $topdir";
+    # Need to add this so all modules is are for subsequent ones
+    # Done here to partial previous builds can be continued
+    $ENV{PERL5LIB} = "$topdir/$dir/blib/arch:" . $ENV{PERL5LIB}; # Required for IO-Compress, I think
+    $ENV{PERL5LIB} = "$topdir/$dir/blib/lib:" . $ENV{PERL5LIB};
+
+    # PathTools does something weird where it removes blib from @INC. We manually force ExtUtils::MakeMaker to be included
+    $ENV{PERL5LIB} = "$topdir/$dir/lib:" . $ENV{PERL5LIB} if ($dir =~/ExtUtils-MakeMaker/);
+
+    # warn("PERL5LIB=$ENV{PERL5LIB}");
+
+    if ( !$have_yaml ) {
+        $have_yaml = 0;
+    }
+
+    if ( !$have_module_build ) {
+        $have_module_build = check_for_module('Module::Build');
+    }
+
+    if ( $opts->{m} ) {
+
+        # Don't compile if already done - this is because of invocating this
+        # script at different stages
+        if ( $built_modules{$dir} || !-f "$dir/Makefile" && !-f "$dir/Build" ) {
+            $built_modules{$dir}++;
+            my @missing;
+            chdir "$topdir/$dir" or die "Can't chdir into $dir";
+            warn("\nWorking in: $topdir/$dir\n\n");
+
+            # Another horrible hack. XML-Parser uses special Makefile variables, so we add these on here for Solaris only
+            my $extra_args = "";
+            if ( $^O eq "solaris" && $dir =~ /^XML-Parser-/ ) {
+                $extra_args = "EXPATLIBPATH=/usr/sfw/lib EXPATINCPATH=/usr/sfw/share/src/expat/lib/";
+            }
+
+            #warn("PERL5LIB=$ENV{PERL5LIB}\n");
+
+            if ( -f "Build.PL" && $have_module_build ) {
+                warn("Using Build.PL\n");
+            }
+            elsif ( -f 'Makefile.PL' ) {
+                warn("Using Makefile.PL\n");
+
+                # Horribly hacky - remove xdefine if this is Time-HiRes
+                # because the subsequent perl Makefile.PL will fail
+                if ( $dir =~ /Time-HiRes/ ) {
+                    unlink "xdefine";
+                }
+            }
+            else {
+                die "No Makefile.PL nor Build.PL found";
+            }
+
+            my $command;
+            if ( -f "Build.PL" && $have_module_build ) {
+                open( CMD, "|-", "perl Build.PL $mb_destdir --install_base=$prefix --install_path lib=$prefix/lib  --install_path arch=$prefix/lib/$Config{archname} --install_path bin=$prefix/bin --install_path script=$prefix/bin --install_path bindoc=$prefix/man/man1 --install_path libdoc=$prefix/man/man3" ) || die "Can't run perl Build.PL";
+                $command = "./Build";
+            }
+            elsif ( -f 'Makefile.PL' ) {
+                open( CMD, "|-", "perl Makefile.PL $mm_destdir INSTALL_BASE=$prefix INSTALLDIRS=site INSTALLSITELIB=$prefix/lib INSTALLSITEARCH=$prefix/lib/$Config{archname} $extra_args" ) || die "Can't run perl Makefile.PL";
+                $command = "make";
+            }
+            else {
+                die "No Makefile.PL nor Build.PL found";
+            }
+            close(CMD);
+            system($command) == 0
+                or die "Can't run $command. Please\n\trm -rf $topdir/$dir\nto remake from this point)";
+
+            chdir $topdir or die "Can't chdir to top";
+        }
+    }
+
+    chdir $dir or die "Can't chdir into $dir";
+
+    if ( $opts->{t} ) {
+        warn("****** Testing $dir ****** \n");
+        if ( -f "Build.PL" ) {
+            system("./Build test") == 0
+                or die "'Build test' failed in $dir: $!\n";
+        }
+        else {
+            system("make test") == 0
+                or die "'make test' failed in $dir: $!\n";
+        }
+    }
+    if ( $opts->{i} && !-f 'installed' ) {
+
+        # Need to set this so that XML::SAX will install ParserDetails.ini by finding the right XML::SAX copy
+        # Also makes sense to do this anyway, as I guess CPAN must be doing this for it to usually work
+        my $saved_PERL5LIB = $ENV{PERL5LIB};
+        $ENV{PERL5LIB} = "$ENV{DESTDIR}/$prefix/lib:$saved_PERL5LIB";
+        if ( -f "Build" ) {
+            system("./Build install") == 0
+                or die "Can't run make install: $!\n";
+        }
+        else {
+            system("make install") == 0
+                or die "Can't run make install: $!\n";
+        }
+        $ENV{PERL5LIB} = $saved_PERL5LIB;
+        open my $install_flag_file, '>', 'installed'
+            or die 'Unable to touch "installed": ', $!, $/;
+        close $install_flag_file
+            or die 'Unable to close "installed": ', $!, $/;
+    }
+    chdir $topdir or die "Can't go back to $topdir";
+}
+
+sub check_for_module {
+    my ($module) = @_;
+
+    warn 'Checking if ', $module, ' is available yet...', $/;
+    if ( system("$^X -M$module -e 0 2>/dev/null") == 0 ) {
+        warn '... yes!', $/;
+        return 1;
+    }
+
+    warn '... no!', $/;
+    return 0;
+
 }
