@@ -256,7 +256,7 @@ foreach my $tarball (@tarballs) {
         # Need to set this so that XML::SAX will install ParserDetails.ini by finding the right XML::SAX copy
         # Also makes sense to do this anyway, as I guess CPAN must be doing this for it to usually work
         my $saved_PERL5LIB = $ENV{PERL5LIB};
-        $ENV{PERL5LIB} = "$ENV{DESTDIR}/$prefix/lib:$saved_PERL5LIB";
+        $ENV{PERL5LIB} = "$destdir/$prefix/lib:$saved_PERL5LIB";
         if ( -f "Build" ) {
             system("./Build install") == 0
                 or die "Can't run make install: $!\n";
