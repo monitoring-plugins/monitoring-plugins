@@ -9,6 +9,7 @@ This file documents the major additions and syntax changes between releases.
 	Added -4/-6 options to check_dig (Ville Mattila)
 	New check_oracle --connect option to perform real login
 	New check_nagios -t option to override the default timeout
+	New check_disk -f/--freespace-ignore-reserved option to ignore space reserved for root
 	New check_disk -N/--include-type option to limit the filesystem types to check
 	Allow for building the plugins in parallel
 	Add --without-{dbi,ldap,radius} options to ./configure
