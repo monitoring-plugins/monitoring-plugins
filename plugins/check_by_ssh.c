@@ -186,6 +186,7 @@ process_arguments (int argc, char **argv)
 		{"use-ipv4", no_argument, 0, '4'},
 		{"use-ipv6", no_argument, 0, '6'},
 		{"ssh-option", required_argument, 0, 'o'},
+		{"force-tty", no_argument, 0, 'y'},
 		{"quiet", no_argument, 0, 'q'},
 		{"configfile", optional_argument, 0, 'F'},
 		{0, 0, 0, 0}
@@ -199,7 +200,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvh1246fqt:H:O:p:i:u:l:C:S::E::n:s:o:F:", longopts,
+		c = getopt_long (argc, argv, "Vvh1246fqty:H:O:p:i:u:l:C:S::E::n:s:o:F:", longopts,
 		                 &option);
 
 		if (c == -1 || c == EOF)
@@ -311,6 +312,9 @@ process_arguments (int argc, char **argv)
 			comm_append("-F");
 			comm_append(optarg);
 			break;
+		case 'y':									/* force pseudo-TTY allocation */
+			comm_append("-tt");
+			break;
 		default:									/* help */
 			usage5();
 		}
@@ -409,6 +413,8 @@ print_help (void)
   printf ("    %s\n", _("Ignore all or (if specified) first n lines on STDERR [optional]"));
   printf (" %s\n", "-f");
   printf ("    %s\n", _("tells ssh to fork rather than create a tty [optional]. This will always return OK if ssh is executed"));
+  printf (" %s\n", "-y");
+  printf ("    %s\n", _("tells ssh to force a pseudo-TTY allocation"));
   printf (" %s\n","-C, --command='COMMAND STRING'");
   printf ("    %s\n", _("command to execute on the remote machine"));
   printf (" %s\n","-l, --logname=USERNAME");
@@ -458,7 +464,7 @@ void
 print_usage (void)
 {
 	printf ("%s\n", _("Usage:"));
-	printf (" %s -H <host> -C <command> [-fqv] [-1|-2] [-4|-6]\n"
+	printf (" %s -H <host> -C <command> [-fqvy] [-1|-2] [-4|-6]\n"
 	        "       [-S [lines]] [-E [lines]] [-t timeout] [-i identity]\n"
 	        "       [-l user] [-n name] [-s servicelist] [-O outputfile]\n"
 	        "       [-p port] [-o ssh-option] [-F configfile]\n",
