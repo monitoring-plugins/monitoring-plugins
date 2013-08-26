@@ -200,7 +200,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvh1246fqty:H:O:p:i:u:l:C:S::E::n:s:o:F:", longopts,
+		c = getopt_long (argc, argv, "yVvh1246fqt:H:O:p:i:u:l:C:S::E::n:s:o:F:", longopts,
 		                 &option);
 
 		if (c == -1 || c == EOF)
@@ -215,6 +215,9 @@ process_arguments (int argc, char **argv)
 			exit (STATE_OK);
 		case 'v':									/* help */
 			verbose = TRUE;
+			break;
+		case 'y':									/* force pseudo-TTY allocation */
+			comm_append("-tt");
 			break;
 		case 't':									/* timeout period */
 			if (!is_integer (optarg))
@@ -311,9 +314,6 @@ process_arguments (int argc, char **argv)
 		case 'F': 									/* ssh configfile */
 			comm_append("-F");
 			comm_append(optarg);
-			break;
-		case 'y':									/* force pseudo-TTY allocation */
-			comm_append("-tt");
 			break;
 		default:									/* help */
 			usage5();
