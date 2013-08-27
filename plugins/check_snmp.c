@@ -1167,7 +1167,7 @@ print_help (void)
 	printf ("\n");
 	printf ("%s\n", _("Notes:"));
 	printf (" %s\n", _("- Multiple OIDs (and labels) may be indicated by a comma or space-delimited  "));
-	printf ("   %s %i %s\n", _("list (lists with internal spaces must be quoted)."));
+	printf ("   %s\n", _("list (lists with internal spaces must be quoted)."));
 
 	printf(" -%s", UT_THRESHOLDS_NOTES);
 
