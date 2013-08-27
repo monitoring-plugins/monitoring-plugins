@@ -30,6 +30,7 @@ This file documents the major additions and syntax changes between releases.
 	New check_mysql -f option to specify a client options file
 	New check_mysql -g option to specify a client options group
 	New check_snmp --offset option to allow for adding/substracting an offset value to sensor data
+	Let check_snmp support an arbitrary number of OIDs
 	Let check_ide_smart support NetBSD
 
 	FIXES
