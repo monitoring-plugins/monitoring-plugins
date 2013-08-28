@@ -1,34 +1,34 @@
 /*****************************************************************************
-* 
+*
 * Nagios check_http plugin
-* 
+*
 * License: GPL
 * Copyright (c) 1999-2008 Nagios Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_http plugin
-* 
+*
 * This plugin tests the HTTP service on the specified host. It can test
 * normal (http) and secure (https) servers, follow redirects, search for
 * strings and regular expressions, check connection times, and report on
 * certificate expiration times.
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 /* splint -I. -I../../plugins -I../../lib/ -I/usr/kerberos/include/ ../../plugins/check_http.c */
@@ -58,6 +58,7 @@ enum {
 
 #ifdef HAVE_SSL
 int check_cert = FALSE;
+int certificate_with_req = FALSE;
 int ssl_version;
 int days_till_exp_warn, days_till_exp_crit;
 char *randbuff;
@@ -207,6 +208,7 @@ process_arguments (int argc, char **argv)
     {"linespan", no_argument, 0, 'l'},
     {"onredirect", required_argument, 0, 'f'},
     {"certificate", required_argument, 0, 'C'},
+    {"certificate-with-req", no_argument, 0, 'g'},
     {"useragent", required_argument, 0, 'A'},
     {"header", required_argument, 0, 'k'},
     {"no-body", no_argument, 0, 'N'},
@@ -236,7 +238,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:e:p:s:R:r:u:f:C:nlLS::m:M:N", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:e:p:s:R:r:u:f:C:gnlLS::m:M:N", longopts, &option);
     if (c == -1 || c == EOF)
       break;
 
@@ -302,6 +304,10 @@ process_arguments (int argc, char **argv)
       }
       check_cert = TRUE;
       /* Fall through to -S option */
+#endif
+    case 'g': /* Issue a GET request when checking the HTTP certificate */
+#ifdef HAVE_SSL
+        certificate_with_req = TRUE;
 #endif
     case 'S': /* use SSL */
 #ifdef HAVE_SSL
@@ -823,7 +829,7 @@ check_http (void)
     result = np_net_ssl_init_with_hostname_and_version(sd, (use_sni ? host_name : NULL), ssl_version);
     if (result != STATE_OK)
       return result;
-    if (check_cert == TRUE) {
+    if (check_cert == TRUE && certificate_with_req == FALSE) {
       result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
       np_net_ssl_cleanup();
       if (sd) close(sd);
@@ -936,7 +942,15 @@ check_http (void)
 
   /* close the connection */
 #ifdef HAVE_SSL
-  np_net_ssl_cleanup();
+  if (check_cert == TRUE && certificate_with_req == TRUE) {
+    result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
+    np_net_ssl_cleanup();
+    if (sd) close(sd);
+    return result;
+  }
+  else {
+    np_net_ssl_cleanup();
+  }
 #endif
   if (sd) close(sd);
 
@@ -1354,7 +1368,9 @@ print_help (void)
   printf ("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
   printf (" %s\n", "-C, --certificate=INTEGER[,INTEGER]");
   printf ("    %s\n", _("Minimum number of days a certificate has to be valid. Port defaults to 443"));
-  printf ("    %s\n", _("(when this option is used the URL is not checked.)\n"));
+  printf ("    %s\n", _("(when this option is used the URL is not checked.)"));
+  printf (" %s\n", "-g, --certificate-with-req");
+  printf ("    %s\n", _("Issue an HTTP request (results ignored) when checking the certificate with -C.\n"));
 #endif
 
   printf (" %s\n", "-e, --expect=STRING");
@@ -1447,6 +1463,11 @@ print_help (void)
   printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
   printf (" %s\n", _("30 days, but more than 14 days, a STATE_WARNING is returned."));
   printf (" %s\n", _("A STATE_CRITICAL will be returned when certificate expires in less than 14 days"));
+  printf ("\n");
+  printf (" %s\n", _("By default, no HTTP request will be sent during a certificate check."));
+  printf (" %s\n", _("This can cause some webservers to log the transaction as being invalid."));
+  printf (" %s\n", _("The -g flag will cause check_http to send an HTTP request,"));
+  printf (" %s\n", _("but note that the HTTP response from the server will not be parsed."));
 
 #endif
 
@@ -1466,5 +1487,5 @@ print_usage (void)
   printf ("       [-e <expect>] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
-  printf ("       [-T <content-type>] [-j method]\n");
+  printf ("       [-g] [-T <content-type>] [-j method]\n");
 }
