@@ -1,7 +1,7 @@
 perlmoduledir = $(exec_prefix)/perl
 
 all-local:
-	$(top_srcdir)/tools/build_perl_modules -d $(perlmoduledir) -m .
+	$(top_srcdir)/tools/build_perl_modules -d $(perlmoduledir) -em .
 
 install-exec-local:
 	$(top_srcdir)/tools/build_perl_modules -d $(perlmoduledir) -i .
