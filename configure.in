@@ -1787,7 +1787,6 @@ AC_OUTPUT(
   plugins-scripts/utils.pm
   plugins-scripts/utils.sh
   perlmods/Makefile
-  command.cfg
   test.pl
   pkg/solaris/pkginfo
   po/Makefile.in
