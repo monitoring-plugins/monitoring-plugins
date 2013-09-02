@@ -1,5 +1,0 @@
-check_cluster2 is now part of the core Nagios-Plugins distribution and has
-been renamed check_cluster. It will be installed automatically.
-
-The threshold format has changed and is not backward-compatible; be sure to
-understand it correctly. Use --help to print the full help.
