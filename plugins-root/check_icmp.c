@@ -480,7 +480,6 @@ main(int argc, char **argv)
 					usage_va("ICMP data length must be between: %d and %d",
 					         sizeof(struct icmp) + sizeof(struct icmp_ping_data),
 					         MAX_PING_DATA - 1);
-
 				break;
 			case 'i':
 				pkt_interval = get_timevar(optarg);
@@ -520,12 +519,12 @@ main(int argc, char **argv)
 			case 's': /* specify source IP address */
 				set_source_ip(optarg);
 				break;
-      case 'V':                 /* version */
-        print_revision (progname, NP_VERSION);
-        exit (STATE_OK);
-      case 'h':                 /* help */
-        print_help ();
-        exit (STATE_OK);
+			case 'V': /* version */
+				print_revision (progname, NP_VERSION);
+				exit (STATE_OK);
+			case 'h': /* help */
+				print_help ();
+				exit (STATE_OK);
 			}
 		}
 	}
