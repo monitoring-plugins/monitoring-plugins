@@ -112,7 +112,7 @@ char *privproto = NULL;
 char *authpasswd = NULL;
 char *privpasswd = NULL;
 char **oids = NULL;
-size_t oids_size = NULL;
+size_t oids_size = 0;
 char *label;
 char *units;
 char *port;
