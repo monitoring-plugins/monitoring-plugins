@@ -454,6 +454,14 @@ main(int argc, char **argv)
 	/* Parse extra opts if any */
 	argv=np_extra_opts(&argc, argv, progname);
 
+	/* support "--help" and "--version" */
+	if(argc == 2) {
+		if(!strcmp(argv[1], "--help"))
+			strcpy(argv[1], "-h");
+		if(!strcmp(argv[1], "--version"))
+			strcpy(argv[1], "-V");
+	}
+
 	/* parse the arguments */
 	for(i = 1; i < argc; i++) {
 		while((arg = getopt(argc, argv, "vhVw:c:n:p:t:H:s:i:b:I:l:m:")) != EOF) {
