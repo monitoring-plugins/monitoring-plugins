@@ -45,6 +45,7 @@ This file documents the major additions and syntax changes between releases.
 
 	WARNINGS
 	check_http behaviour of -k/--header changed since it does not seperate multiple headers by semicolons anymore. Use multiple -k switches instead.
+	check_http's --proxy_authorization option is now called --proxy-authorization (it was always documented this way)
 
 1.4.16 27th June 2012
 	ENHANCEMENTS
