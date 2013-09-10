@@ -48,7 +48,7 @@ int np_net_ssl_init_with_hostname_and_version(int sd, char *host_name, int versi
 }
 
 int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int version, char *cert, char *privkey) {
-	const SSL_METHOD *method = NULL;
+	SSL_METHOD *method = NULL;
 
 	switch (version) {
 	case 0: /* Deafult to auto negotiation */
