@@ -22,8 +22,6 @@
 * 
 *****************************************************************************/
 
-#define LOCAL_TIMEOUT_ALARM_HANDLER
-
 #include "common.h"
 #include "utils.h"
 #include "utils_base.h"
@@ -37,6 +35,11 @@ extern const char *progname;
 
 #define STRLEN 64
 #define TXTBLK 128
+
+unsigned int timeout_state = STATE_CRITICAL;
+unsigned int timeout_interval = DEFAULT_SOCKET_TIMEOUT;
+
+time_t start_time, end_time;
 
 /* **************************************************************************
  * max_state(STATE_x, STATE_y)

@@ -31,17 +31,12 @@ void print_revision (const char *, const char *);
 
 /* Handle timeouts */
 
-#ifdef LOCAL_TIMEOUT_ALARM_HANDLER
 extern unsigned int timeout_state;
 extern unsigned int timeout_interval;
-RETSIGTYPE timeout_alarm_handler (int);
-#else
-unsigned int timeout_state = STATE_CRITICAL;
-unsigned int timeout_interval = DEFAULT_SOCKET_TIMEOUT;
-extern RETSIGTYPE timeout_alarm_handler (int);
-#endif
 
-time_t start_time, end_time;
+RETSIGTYPE timeout_alarm_handler (int);
+
+extern time_t start_time, end_time;
 
 /* Test input types */
 

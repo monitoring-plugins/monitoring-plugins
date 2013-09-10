@@ -27,10 +27,11 @@
 * 
 *****************************************************************************/
 
-#define LOCAL_TIMEOUT_ALARM_HANDLER
-
 #include "common.h"
 #include "netutils.h"
+
+unsigned int socket_timeout = DEFAULT_SOCKET_TIMEOUT;
+unsigned int socket_timeout_state = STATE_CRITICAL;
 
 int econn_refuse_state = STATE_CRITICAL;
 int was_refused = FALSE;
