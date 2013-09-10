@@ -150,7 +150,7 @@ main (int argc, char **argv)
 	int crit = 0; /* number of processes in crit state */
 	int i = 0, j = 0;
 	int result = STATE_UNKNOWN;
-	int ret;
+	int ret = 0;
 	output chld_out, chld_err;
 
 	setlocale (LC_ALL, "");

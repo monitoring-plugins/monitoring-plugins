@@ -34,7 +34,7 @@ main (int argc, char **argv)
 	struct name_list *dummy_mountlist = NULL;
 	struct name_list *temp_name;
 	struct parameter_list *paths = NULL;
-	struct parameter_list *p, *prev, *last;
+	struct parameter_list *p, *prev = NULL, *last = NULL;
 
 	struct mount_entry *dummy_mount_list;
 	struct mount_entry *me;
