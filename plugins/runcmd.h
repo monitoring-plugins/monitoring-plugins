@@ -25,17 +25,7 @@
 #define NAGIOSPLUG_RUNCMD_H
 
 #include "common.h"
-
-/** types **/
-struct output {
-	char *buf;     /* output buffer */
-	size_t buflen; /* output buffer content length */
-	char **line;   /* array of lines (points to buf) */
-	size_t *lens;  /* string lengths */
-	size_t lines;  /* lines of output */
-};
-
-typedef struct output output;
+#include "utils_cmd.h" /* for the "output" type */
 
 /** prototypes **/
 int np_runcmd(const char *, output *, output *, int);

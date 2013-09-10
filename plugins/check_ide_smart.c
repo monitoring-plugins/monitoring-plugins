@@ -164,8 +164,14 @@ enum SmartCommand
 		SMART_CMD_AUTO_OFFLINE 
 	};
 
-void print_values (values_t * p, thresholds_t * t);
-int smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0, char show_error); 
+char *get_offline_text (int);
+int smart_read_values (int, values_t *);
+int values_not_passed (values_t *, thresholds_t *);
+int nagios (values_t *, thresholds_t *);
+void print_value (value_t *, threshold_t *);
+void print_values (values_t *, thresholds_t *);
+int smart_cmd_simple (int, enum SmartCommand, __u8, char);
+int smart_read_thresholds (int, thresholds_t *);
 
 int
 main (int argc, char *argv[]) 

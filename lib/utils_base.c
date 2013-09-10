@@ -27,12 +27,15 @@
 #include "common.h"
 #include <stdarg.h>
 #include "utils_base.h"
+#include <ctype.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 
 #define np_free(ptr) { if(ptr) { free(ptr); ptr = NULL; } }
 
 nagios_plugin *this_nagios_plugin=NULL;
+
+int _np_state_read_file(FILE *);
 
 void np_init( char *plugin_name, int argc, char **argv ) {
 	if (this_nagios_plugin==NULL) {

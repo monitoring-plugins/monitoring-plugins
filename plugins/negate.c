@@ -35,6 +35,8 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #define DEFAULT_TIMEOUT 11
 
+#include <ctype.h>
+
 #include "common.h"
 #include "utils.h"
 #include "utils_cmd.h"
@@ -43,6 +45,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 static const char **process_arguments (int, char **);
 int validate_arguments (char **);
+int translate_state (char *);
 void print_help (void);
 void print_usage (void);
 int subst_text = FALSE;
