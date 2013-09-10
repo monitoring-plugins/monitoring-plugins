@@ -277,8 +277,8 @@ main (int argc, char **argv)
 			memcpy(&status[len], buffer, i);
 			len += i;
 
-			/* stop reading if user-forced or data-starved */
-			if(i < sizeof(buffer) || (maxbytes && len >= maxbytes))
+			/* stop reading if user-forced */
+			if( (maxbytes && len >= maxbytes))
 				break;
 
 			if (maxbytes && len >= maxbytes)
