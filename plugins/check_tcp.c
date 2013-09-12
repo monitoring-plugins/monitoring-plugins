@@ -289,6 +289,8 @@ main (int argc, char **argv)
 			    match_flags)) != NP_MATCH_RETRY)
 				break;
 		}
+		if (match == NP_MATCH_RETRY)
+			match = NP_MATCH_FAILURE;
 
 		/* no data when expected, so return critical */
 		if (len == 0)
@@ -320,7 +322,7 @@ main (int argc, char **argv)
 		result = STATE_WARNING;
 
 	/* did we get the response we hoped? */
-	if(match != NP_MATCH_SUCCESS && result != STATE_CRITICAL)
+	if(match == NP_MATCH_FAILURE && result != STATE_CRITICAL)
 		result = expect_mismatch_state;
 
 	/* reset the alarm */
@@ -331,10 +333,10 @@ main (int argc, char **argv)
 	 * the response we were looking for. if-else */
 	printf("%s %s - ", SERVICE, state_text(result));
 
-	if(match != NP_MATCH_SUCCESS && len && !(flags & FLAG_HIDE_OUTPUT))
+	if(match == NP_MATCH_FAILURE && len && !(flags & FLAG_HIDE_OUTPUT))
 		printf("Unexpected response from host/socket: %s", status);
 	else {
-		if(match != NP_MATCH_SUCCESS)
+		if(match == NP_MATCH_FAILURE)
 			printf("Unexpected response from host/socket on ");
 		else
 			printf("%.3f second response time on ", elapsed_time);
@@ -344,13 +346,13 @@ main (int argc, char **argv)
 			printf("socket %s", server_address);
 	}
 
-	if (match == NP_MATCH_SUCCESS && !(flags & FLAG_HIDE_OUTPUT) && len)
+	if (match != NP_MATCH_FAILURE && !(flags & FLAG_HIDE_OUTPUT) && len)
 		printf (" [%s]", status);
 
 	/* perf-data doesn't apply when server doesn't talk properly,
 	 * so print all zeroes on warn and crit. Use fperfdata since
 	 * localisation settings can make different outputs */
-	if(match != NP_MATCH_SUCCESS)
+	if(match == NP_MATCH_FAILURE)
 		printf ("|%s",
 				fperfdata ("time", elapsed_time, "s",
 				(flags & FLAG_TIME_WARN ? TRUE : FALSE), 0,
