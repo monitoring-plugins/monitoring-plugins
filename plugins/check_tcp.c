@@ -82,15 +82,14 @@ static int sd = 0;
 #define MAXBUF 1024
 static char buffer[MAXBUF];
 static int expect_mismatch_state = STATE_WARNING;
+static int match_flags = NP_MATCH_EXACT;
 
 #define FLAG_SSL 0x01
 #define FLAG_VERBOSE 0x02
-#define FLAG_EXACT_MATCH 0x04
-#define FLAG_TIME_WARN 0x08
-#define FLAG_TIME_CRIT 0x10
-#define FLAG_HIDE_OUTPUT 0x20
-#define FLAG_MATCH_ALL 0x40
-static size_t flags = FLAG_EXACT_MATCH;
+#define FLAG_TIME_WARN 0x04
+#define FLAG_TIME_CRIT 0x08
+#define FLAG_HIDE_OUTPUT 0x10
+static size_t flags;
 
 int
 main (int argc, char **argv)
@@ -296,12 +295,7 @@ main (int argc, char **argv)
 			       (int)len + 1, status);
 		while(isspace(status[len])) status[len--] = '\0';
 
-		match = np_expect_match(status,
-                                server_expect,
-                                server_expect_count,
-                                (flags & FLAG_MATCH_ALL ? TRUE : FALSE),
-                                (flags & FLAG_EXACT_MATCH ? TRUE : FALSE),
-                                (flags & FLAG_VERBOSE ? TRUE : FALSE));
+		match = np_expect_match(status, server_expect, server_expect_count, match_flags);
 	}
 
 	if (server_quit != NULL) {
@@ -450,6 +444,7 @@ process_arguments (int argc, char **argv)
 			exit (STATE_OK);
 		case 'v':                 /* verbose mode */
 			flags |= FLAG_VERBOSE;
+			match_flags |= NP_MATCH_VERBOSE;
 			break;
 		case '4':
 			address_family = AF_INET;
@@ -506,7 +501,7 @@ process_arguments (int argc, char **argv)
 				xasprintf(&server_send, "%s", optarg);
 			break;
 		case 'e': /* expect string (may be repeated) */
-			flags &= ~FLAG_EXACT_MATCH;
+			match_flags &= ~NP_MATCH_EXACT;
 			if (server_expect_count == 0)
 				server_expect = malloc (sizeof (char *) * (++server_expect_count));
 			else
@@ -584,7 +579,7 @@ process_arguments (int argc, char **argv)
 #endif
 			break;
 		case 'A':
-			flags |= FLAG_MATCH_ALL;
+			match_flags |= NP_MATCH_ALL;
 			break;
 		}
 	}

@@ -30,26 +30,27 @@
 #include "utils_tcp.h"
 
 int
-np_expect_match(char* status, char** server_expect, int expect_count, int all, int exact_match, int verbose)
+np_expect_match(char* status, char** server_expect, int expect_count, int flags)
 {
 	int match = 0;
 	int i;
 	for (i = 0; i < expect_count; i++) {
-		if (verbose)
+		if (flags & NP_MATCH_VERBOSE)
 			printf ("looking for [%s] %s [%s]\n", server_expect[i],
-					(exact_match) ? "in beginning of" : "anywhere in",
+					(flags & NP_MATCH_EXACT) ? "in beginning of" : "anywhere in",
 					status);
 
-		if ((exact_match && !strncmp(status, server_expect[i], strlen(server_expect[i]))) ||
-			(! exact_match && strstr(status, server_expect[i])))
+		if ((flags & NP_MATCH_EXACT &&
+			!strncmp(status, server_expect[i], strlen(server_expect[i]))) ||
+			(!(flags & NP_MATCH_EXACT) && strstr(status, server_expect[i])))
 		{
-			if(verbose) puts("found it");
+			if(flags & NP_MATCH_VERBOSE) puts("found it");
 			match += 1;
 		} else
-			if(verbose) puts("couldn't find it");
+			if(flags & NP_MATCH_VERBOSE) puts("couldn't find it");
 	}
-	if ((all == TRUE && match == expect_count) ||
-		(! all && match >= 1)) {
+	if ((flags & NP_MATCH_ALL && match == expect_count) ||
+		(!(flags & NP_MATCH_ALL) && match >= 1)) {
 		return TRUE;
 	} else
 		return FALSE;
