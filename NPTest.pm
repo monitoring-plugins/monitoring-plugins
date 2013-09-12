@@ -460,6 +460,7 @@ sub SaveCache
   my( $dataDumper ) = new Data::Dumper( [ \%CACHE ] );
 
   $dataDumper->Terse(1);
+  $dataDumper->Sortkeys(1);
 
   print $fileHandle $dataDumper->Dump();
 
