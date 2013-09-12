@@ -615,7 +615,10 @@ sub testCmd {
 	my $class = shift;
 	my $command = shift or die "No command passed to testCmd";
 	my $object = $class->new;
-	
+
+	local $SIG{'ALRM'} = sub { die("timeout in command: $command"); };
+	alarm(120); # no test should take longer than 120 seconds
+
 	my $output = `$command`;
 	$object->return_code($? >> 8);
 	$_ = $? & 127;
@@ -624,6 +627,8 @@ sub testCmd {
 	}
 	chomp $output;
 	$object->output($output);
+
+	alarm(0);
 
 	my ($pkg, $file, $line) = caller(0);
 	print "Testing: $command", $/;
