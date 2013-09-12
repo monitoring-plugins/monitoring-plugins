@@ -21,10 +21,11 @@
 #include "tap.h"
 
 int
-main (int argc, char **argv)
+main(void)
 {
-	char** server_expect;
+	char **server_expect;
 	int server_expect_count = 3;
+
 	plan_tests(9);
 
 	server_expect = malloc(sizeof(char*) * server_expect_count);
@@ -55,4 +56,3 @@ main (int argc, char **argv)
 
 	return exit_status();
 }
-
