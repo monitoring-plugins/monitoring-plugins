@@ -33,6 +33,7 @@ const char *copyright = "1999-2007";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
 #include "common.h"
+#include "runcmd.h"
 #include "utils.h"
 #include "utils_cmd.h"
 
@@ -330,8 +331,17 @@ main (int argc, char **argv)
 	if (verbose)
 		printf ("%s\n", cl_hidden_auth);
 
+	/* Set signal handling and alarm */
+	if (signal (SIGALRM, runcmd_timeout_alarm_handler) == SIG_ERR) {
+		usage4 (_("Cannot catch SIGALRM"));
+	}
+	alarm(timeout_interval * retries + 5);
+
 	/* Run the command */
 	return_code = cmd_run_array (command_line, &chld_out, &chld_err, 0);
+
+	/* disable alarm again */
+	alarm(0);
 
 	/* Due to net-snmp sometimes showing stderr messages with poorly formed MIBs,
 	   only return state unknown if return code is non zero or there is no stdout.
