@@ -3,7 +3,7 @@
 * Library for check_tcp
 * 
 * License: GPL
-* Copyright (c) 1999-2007 Nagios Plugins Development Team
+* Copyright (c) 1999-2013 Nagios Plugins Development Team
 * 
 * Description:
 * 
@@ -29,29 +29,44 @@
 #include "common.h"
 #include "utils_tcp.h"
 
-int
+#define VERBOSE(message)                        \
+	do {                                    \
+		if (flags & NP_MATCH_VERBOSE)   \
+			puts(message);          \
+	} while (0)
+
+enum np_match_result
 np_expect_match(char* status, char** server_expect, int expect_count, int flags)
 {
-	int match = 0;
-	int i;
+	int i, match = 0, partial = 0;
 	for (i = 0; i < expect_count; i++) {
 		if (flags & NP_MATCH_VERBOSE)
 			printf ("looking for [%s] %s [%s]\n", server_expect[i],
 					(flags & NP_MATCH_EXACT) ? "in beginning of" : "anywhere in",
 					status);
 
-		if ((flags & NP_MATCH_EXACT &&
-			!strncmp(status, server_expect[i], strlen(server_expect[i]))) ||
-			(!(flags & NP_MATCH_EXACT) && strstr(status, server_expect[i])))
-		{
-			if(flags & NP_MATCH_VERBOSE) puts("found it");
-			match += 1;
-		} else
-			if(flags & NP_MATCH_VERBOSE) puts("couldn't find it");
+		if (flags & NP_MATCH_EXACT) {
+			if (strncmp(status, server_expect[i], strlen(server_expect[i])) == 0) {
+				VERBOSE("found it");
+				match++;
+				continue;
+			} else if (strncmp(status, server_expect[i], strlen(status)) == 0) {
+				VERBOSE("found a substring");
+				partial++;
+				continue;
+			}
+		} else if (strstr(status, server_expect[i]) != NULL) {
+				VERBOSE("found it");
+				match++;
+				continue;
+		}
+		VERBOSE("couldn't find it");
 	}
 	if ((flags & NP_MATCH_ALL && match == expect_count) ||
-		(!(flags & NP_MATCH_ALL) && match >= 1)) {
-		return TRUE;
-	} else
-		return FALSE;
+	    (!(flags & NP_MATCH_ALL) && match >= 1))
+		return NP_MATCH_SUCCESS;
+	else if (partial > 0 || !(flags & NP_MATCH_EXACT))
+		return NP_MATCH_RETRY;
+	else
+		return NP_MATCH_FAILURE;
 }

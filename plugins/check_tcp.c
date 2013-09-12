@@ -3,7 +3,7 @@
 * Nagios check_tcp plugin
 *
 * License: GPL
-* Copyright (c) 1999-2008 Nagios Plugins Development Team
+* Copyright (c) 1999-2013 Nagios Plugins Development Team
 *
 * Description:
 *
@@ -277,9 +277,16 @@ main (int argc, char **argv)
 			status = realloc(status, len + i + 1);
 			memcpy(&status[len], buffer, i);
 			len += i;
+			status[len] = '\0';
 
 			/* stop reading if user-forced */
 			if (maxbytes && len >= maxbytes)
+				break;
+
+			if ((match = np_expect_match(status,
+			    server_expect,
+			    server_expect_count,
+			    match_flags)) != NP_MATCH_RETRY)
 				break;
 		}
 
@@ -287,15 +294,13 @@ main (int argc, char **argv)
 		if (len == 0)
 			die (STATE_CRITICAL, _("No data received from host\n"));
 
-		/* force null-termination and strip whitespace from end of output */
-		status[len--] = '\0';
 		/* print raw output if we're debugging */
 		if(flags & FLAG_VERBOSE)
 			printf("received %d bytes from host\n#-raw-recv-------#\n%s\n#-raw-recv-------#\n",
 			       (int)len + 1, status);
-		while(isspace(status[len])) status[len--] = '\0';
-
-		match = np_expect_match(status, server_expect, server_expect_count, match_flags);
+		/* strip whitespace from end of output */
+		while(--len > 0 && isspace(status[len]))
+			status[len] = '\0';
 	}
 
 	if (server_quit != NULL) {
@@ -315,7 +320,7 @@ main (int argc, char **argv)
 		result = STATE_WARNING;
 
 	/* did we get the response we hoped? */
-	if(match == FALSE && result != STATE_CRITICAL)
+	if(match != NP_MATCH_SUCCESS && result != STATE_CRITICAL)
 		result = expect_mismatch_state;
 
 	/* reset the alarm */
@@ -326,10 +331,10 @@ main (int argc, char **argv)
 	 * the response we were looking for. if-else */
 	printf("%s %s - ", SERVICE, state_text(result));
 
-	if(match == FALSE && len && !(flags & FLAG_HIDE_OUTPUT))
+	if(match != NP_MATCH_SUCCESS && len && !(flags & FLAG_HIDE_OUTPUT))
 		printf("Unexpected response from host/socket: %s", status);
 	else {
-		if(match == FALSE)
+		if(match != NP_MATCH_SUCCESS)
 			printf("Unexpected response from host/socket on ");
 		else
 			printf("%.3f second response time on ", elapsed_time);
@@ -339,13 +344,13 @@ main (int argc, char **argv)
 			printf("socket %s", server_address);
 	}
 
-	if (match != FALSE && !(flags & FLAG_HIDE_OUTPUT) && len)
+	if (match == NP_MATCH_SUCCESS && !(flags & FLAG_HIDE_OUTPUT) && len)
 		printf (" [%s]", status);
 
 	/* perf-data doesn't apply when server doesn't talk properly,
 	 * so print all zeroes on warn and crit. Use fperfdata since
 	 * localisation settings can make different outputs */
-	if(match == FALSE)
+	if(match != NP_MATCH_SUCCESS)
 		printf ("|%s",
 				fperfdata ("time", elapsed_time, "s",
 				(flags & FLAG_TIME_WARN ? TRUE : FALSE), 0,
