@@ -10,6 +10,8 @@ use NPTest;
 
 my $res;
 
+alarm(120); # make sure tests don't hang
+
 plan tests => 14;
 
 $res = NPTest->testCmd( "./check_udp -H localhost -p 3333" );
@@ -28,9 +30,17 @@ $res = NPTest->testCmd( "./check_udp -H localhost -p 3333 -s foo -e bar" );
 cmp_ok( $res->return_code, '==', 2, "Errors correctly because no udp service running" );
 like  ( $res->output, '/No data received from host/', "Output OK");
 
+my $nc;
+if(system("which netcat >/dev/null 2>&1") == 0) {
+	$nc = 'netcat -w 3 -l -u -p 3333';
+}
+elsif(system("which nc >/dev/null 2>&1") == 0) {
+	$nc = 'nc -w 3 -l -u -4 localhost 3333';
+}
+
 SKIP: {
-	skip "No netcat available", 6 unless (system("which nc > /dev/null") == 0);
-	open (NC, "echo 'barbar' | nc -l -p 3333 -u |");
+	skip "No netcat available", 6 unless $nc;
+	open (NC, "echo 'barbar' | $nc |");
 	sleep 1;
 	$res = NPTest->testCmd( "./check_udp -H localhost -p 3333 -s '' -e barbar -4" );
 	cmp_ok( $res->return_code, '==', 0, "Got barbar response back" );
@@ -39,7 +49,7 @@ SKIP: {
 
 	# Start up a udp server listening on port 3333, quit after 3 seconds
 	# Otherwise will hang at close
-	my $pid = open(NC, "nc -l -p 3333 -u -w 3 </dev/null |");
+	my $pid = open(NC, "$nc </dev/null |");
 	sleep 1;	# Allow nc to startup
 
 	my $start = time;
@@ -53,3 +63,5 @@ SKIP: {
 	cmp_ok( $read_nc, 'eq', "foofoo", "Data received correctly" );
 }
 
+
+alarm(0); # disable alarm
