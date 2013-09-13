@@ -177,8 +177,10 @@ textscan (char *buf)
 {
   char *rtastr = NULL;
   char *losstr = NULL;
+  char *xmtstr = NULL;
   double loss;
   double rta;
+  double xmt;
   int status = STATE_UNKNOWN;
 
   if (strstr (buf, "not found")) {
@@ -230,7 +232,12 @@ textscan (char *buf)
   }
   else if(strstr (buf, "xmt/rcv/%loss") ) {
     /* no min/max/avg if host was unreachable in fping v2.2.b1 */
+    /* in v2.4b2: 10.99.0.1 : xmt/rcv/%loss = 0/0/0% */
     losstr = strstr (buf, "=");
+    xmtstr = 1 + losstr;
+    xmt = strtod (xmtstr, NULL);
+    if(xmt == 0)
+        die (STATE_CRITICAL, _("FPING CRITICAL - %s is down\n"), server_name);
     losstr = 1 + strstr (losstr, "/");
     losstr = 1 + strstr (losstr, "/");
     loss = strtod (losstr, NULL);
