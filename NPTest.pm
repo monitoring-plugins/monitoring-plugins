@@ -462,7 +462,10 @@ sub SaveCache
   $dataDumper->Terse(1);
   $dataDumper->Sortkeys(1);
 
-  print $fileHandle $dataDumper->Dump();
+  my $data = $dataDumper->Dump();
+  $data =~ s/^\s+/  /gmx; # make sure all systems use same amount of whitespace
+  $data =~ s/^\s+}/}/gmx;
+  print $fileHandle $data;
 
   $fileHandle->close();
 
