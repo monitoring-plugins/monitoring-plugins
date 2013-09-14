@@ -645,6 +645,16 @@ sub testCmd {
 	return $object;
 }
 
+# do we have ipv6
+sub has_ipv6 {
+    # assume ipv6 if a ping6 to labs.consol.de works
+    `ping6 -c 1 2a03:3680:0:2::21 2>&1`;
+    if($? == 0) {
+        return 1;
+    }
+    return;
+}
+
 1;
 #
 # End of File

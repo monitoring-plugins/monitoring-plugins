@@ -6,19 +6,13 @@
 
 use strict;
 use Test;
-use NPTest;
 
-use vars qw($tests);
-my $has_ipv6;
+use vars qw($tests $has_ipv6);
 BEGIN {
-  $tests = 11;
-  # do we have ipv6
-  `ping6 -c 1 2a02:2e0:3fe:100::7 2>&1`;
-  if($? == 0) {
-    $has_ipv6 = 1;
-    $tests += 3;
-  }
-  plan tests => $tests;
+    use NPTest;
+    $has_ipv6 = NPTest::has_ipv6();
+    $tests = $has_ipv6 ? 14 : 11;
+    plan tests => $tests;
 }
 
 
