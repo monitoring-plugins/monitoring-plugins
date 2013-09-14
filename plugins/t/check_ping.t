@@ -90,7 +90,7 @@ like( $res->output, '/100%/', "Error contains '100%' string (for 100% packet los
 
 
 $res = NPTest->testCmd(
-	"./check_ping $host_nonresponsive -p 1 -t 1 100 100 1000 10000"
+	"./check_ping $host_nonresponsive -p 1 -t 15 100 100 1000 10000"
 	);
 is( $res->return_code, 2, "Old syntax: Timeout - host nonresponsive" );
 like( $res->output, '/100%/', "Error contains '100%' string (for 100% packet loss)" );
