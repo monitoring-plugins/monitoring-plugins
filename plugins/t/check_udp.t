@@ -31,7 +31,10 @@ cmp_ok( $res->return_code, '==', 2, "Errors correctly because no udp service run
 like  ( $res->output, '/No data received from host/', "Output OK");
 
 my $nc;
-if(system("which netcat >/dev/null 2>&1") == 0) {
+if(system("which nc.traditional >/dev/null 2>&1") == 0) {
+	$nc = 'nc.traditional -w 3 -l -u -p 3333';
+}
+elsif(system("which netcat >/dev/null 2>&1") == 0) {
 	$nc = 'netcat -w 3 -l -u -p 3333';
 }
 elsif(system("which nc >/dev/null 2>&1") == 0) {
