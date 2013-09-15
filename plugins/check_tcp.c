@@ -39,6 +39,8 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #include "utils.h"
 #include "utils_tcp.h"
 
+#include <sys/select.h>
+
 #ifdef HAVE_SSL
 static int check_cert = FALSE;
 static int days_till_exp_warn, days_till_exp_crit;
@@ -60,6 +62,7 @@ static char *SEND = NULL;
 static char *QUIT = NULL;
 static int PROTOCOL = IPPROTO_TCP; /* most common is default */
 static int PORT = 0;
+static int READ_TIMEOUT = 2;
 
 static int server_port = 0;
 static char *server_address = NULL;
@@ -98,8 +101,12 @@ main (int argc, char **argv)
 	int i;
 	char *status = NULL;
 	struct timeval tv;
+	struct timeval timeout;
 	size_t len;
 	int match = -1;
+	fd_set rfds;
+
+	FD_ZERO(&rfds);
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -287,6 +294,13 @@ main (int argc, char **argv)
 			    server_expect,
 			    server_expect_count,
 			    match_flags)) != NP_MATCH_RETRY)
+				break;
+
+			/* some protocols wait for further input, so make sure we don't wait forever */
+			FD_SET(sd, &rfds);
+			timeout.tv_sec  = READ_TIMEOUT;
+			timeout.tv_usec = 0;
+			if(select(sd + 1, &rfds, NULL, NULL, &timeout) <= 0)
 				break;
 		}
 		if (match == NP_MATCH_RETRY)
