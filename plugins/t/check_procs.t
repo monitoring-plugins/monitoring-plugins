@@ -34,7 +34,7 @@ $result = NPTest->testCmd( "./check_procs -w 0 -c 0" );
 is( $result->return_code, 2, "Checking critical if processes > 0" );
 like( $result->output, '/^PROCS CRITICAL: [0-9]+ process(es)? | procs=[0-9]+;0;0;0;$/', "Output correct" );
 
-$result = NPTest->testCmd( "./check_procs -w 0 -c 0 -s S" );
+$result = NPTest->testCmd( "./check_procs -w 0 -c 0 -s Ss" );
 is( $result->return_code, 2, "Checking critical if sleeping processes" );
 like( $result->output, '/^PROCS CRITICAL: [0-9]+ process(es)? with /', "Output correct" );
 
