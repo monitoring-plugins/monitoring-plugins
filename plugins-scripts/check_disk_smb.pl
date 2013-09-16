@@ -59,6 +59,8 @@ if ($opt_V) {
 if ($opt_h) {print_help(); exit $ERRORS{'OK'};}
 
 my $smbclient = $utils::PATH_TO_SMBCLIENT;
+$smbclient    || usage("check requires smbclient, smbclient not set\n");
+-x $smbclient || usage("check requires smbclient, $smbclient: $!\n");
 
 # Options checking
 
