@@ -559,12 +559,12 @@ sub TestsFrom
     {
       if ( $excludeIfAppMissing )
       {
-	$application = basename( $filename, ".t" );
-	if ( ! -e $application )
-	{
-	  print STDERR "No application (${application}) found for test harness (${filename})\n";
-	  next;
-	}
+        $application = basename( $filename, ".t" );
+        if ( ! -e $application and ! -e $application.'.pm' )
+        {
+          print STDERR "No application (${application}) found for test harness (${filename})\n";
+          next;
+        }
       }
       push @tests, "${directory}/${filename}";
     }
