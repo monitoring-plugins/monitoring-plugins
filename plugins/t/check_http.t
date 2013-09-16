@@ -30,12 +30,9 @@ my $internet_access = getTestParameter( "NP_INTERNET_ACCESS",
                 "Is this system directly connected to the internet?",
                 "yes");
 
-my $host_tcp_http2;
-if ($internet_access eq "no") {
-    $host_tcp_http2     = getTestParameter( "NP_HOST_TCP_HTTP2",
+my $host_tcp_http2  = getTestParameter( "NP_HOST_TCP_HTTP2",
             "A host providing an index page containing the string 'nagios'",
-            "www.nagios.com" );
-}
+            "nagiosplugins.org" );
 
 
 $res = NPTest->testCmd(
@@ -65,10 +62,7 @@ cmp_ok( $res->return_code, '==', 2, "Webserver $hostname_invalid not valid" );
 like( $res->output, "/Unable to open TCP socket|Socket timeout after/", "Output OK");
 
 SKIP: {
-        skip "No internet access and no host serving nagios in index file",
-              7 if $internet_access eq "no" && ! $host_tcp_http2;
-
-        $host_tcp_http2 = "www.nagios.com" if (! $host_tcp_http2);
+        skip "No host serving nagios in index file", 7 unless $host_tcp_http2;
 
         $res = NPTest->testCmd( "./check_http -H $host_tcp_http2 -r 'nagios'" );
         cmp_ok( $res->return_code, "==", 0, "Got a reference to 'nagios'");
