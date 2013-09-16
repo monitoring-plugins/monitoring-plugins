@@ -19,7 +19,7 @@ if ($allow_sudo eq "yes" or $> == 0) {
 my $sudo = $> == 0 ? '' : 'sudo';
 
 my $successOutput = '/OK: Received \d+ DHCPOFFER\(s\), \d+ of 1 requested servers responded, max lease time = \d+ sec\./';
-my $failureOutput = '/CRITICAL: Received \d+ DHCPOFFER\(s\), 0 of \d+ requested servers responded/';
+my $failureOutput = '/CRITICAL: No DHCPOFFERs were received/';
 my $invalidOutput = '/Invalid hostname/';
 
 my $host_responsive    = getTestParameter( "NP_HOST_DHCP_RESPONSIVE",
@@ -34,12 +34,17 @@ my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
                                            "An invalid (not known to DNS) hostname",
                                            "nosuchhost" );
 
-my $res;
+# try to determince interface
+my $interface = '';
+if(`ifconfig -a 2>/dev/null` =~ m/^(e(m|th)\d+)/mx and $1 ne 'eth0') {
+    $interface = ' -i '.$1;
+}
 
+my $res;
 SKIP: {
     skip('need responsive test host', 2) unless $host_responsive;
     $res = NPTest->testCmd(
-        "$sudo ./check_dhcp -s $host_responsive"
+        "$sudo ./check_dhcp $interface -u -s $host_responsive"
     );
     is( $res->return_code, 0, "Syntax ok" );
     like( $res->output, $successOutput, "Output OK" );
@@ -48,7 +53,7 @@ SKIP: {
 SKIP: {
     skip('need nonresponsive test host', 2) unless $host_nonresponsive;
     $res = NPTest->testCmd(
-        "$sudo ./check_dhcp -s $host_nonresponsive"
+        "$sudo ./check_dhcp $interface -u -s $host_nonresponsive"
     );
     is( $res->return_code, 2, "Exit code - host nonresponsive" );
     like( $res->output, $failureOutput, "Output OK" );
@@ -57,7 +62,7 @@ SKIP: {
 SKIP: {
     skip('need invalid test host', 2) unless $hostname_invalid;
     $res = NPTest->testCmd(
-        "$sudo ./check_dhcp -s $hostname_invalid"
+        "$sudo ./check_dhcp $interface -u -s $hostname_invalid"
     );
     is( $res->return_code, 3, "Exit code - host invalid" );
     like( $res->output, $invalidOutput, "Output OK" );
