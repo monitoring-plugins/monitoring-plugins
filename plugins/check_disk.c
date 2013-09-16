@@ -263,10 +263,10 @@ main (int argc, char **argv)
       } else if (fs_include_list && !np_find_name (fs_include_list, me->me_type)) {
         continue;
       }
-
-      stat_path(path);
-      get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
     }
+
+    stat_path(path);
+    get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
 
     if (fsp.fsu_blocks && strcmp ("none", me->me_mountdir)) {
       get_stats (path, &fsp);
