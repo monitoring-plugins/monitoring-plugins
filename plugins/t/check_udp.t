@@ -42,6 +42,7 @@ elsif(system("which nc >/dev/null 2>&1") == 0) {
 }
 
 SKIP: {
+	skip "solaris netcat does not listen to udp", 6 if $^O eq 'solaris';
 	skip "No netcat available", 6 unless $nc;
 	open (NC, "echo 'barbar' | $nc |");
 	sleep 1;
