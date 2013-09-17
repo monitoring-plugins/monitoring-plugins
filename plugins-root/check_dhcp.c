@@ -372,11 +372,16 @@ int get_hardware_address(int sock,char *interface_name){
 	char *p;
 	int unit;
 
-	for(p = interface_name; *p && isalpha(*p); p++)
-		/* no-op */ ;
-	if( p != '\0' ){
+    /* get last number from interfacename, eg lnc0, e1000g0*/
+    int i;
+    p = interface_name + strlen(interface_name) -1;
+	for(i = strlen(interface_name) -1; i > 0; p--) {
+		if(isalpha(*p))
+            break;
+    }
+    p++;
+	if( p != interface_name ){
 		unit = atoi(p) ;
-		*p = '\0' ;
 		strncat(dev, interface_name, 6) ;
 		}
 	else{
