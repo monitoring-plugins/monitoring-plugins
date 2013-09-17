@@ -31,7 +31,7 @@ SKIP: {
 	                                      "An access denying SMB share name the host provides",
 	                                      "private");
 
-	my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE", 
+	my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE",
 	                                           "The hostname of system not responsive to network requests", "10.0.0.1" );
 
 	my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
@@ -46,7 +46,7 @@ SKIP: {
 
 	$res = NPTest->testCmd( "./$plugin" );
 	is( $res->return_code, 3, "No arguments" );
-	
+
 	$res = NPTest->testCmd( "./$plugin -H fakehostname" );
 	is( $res->return_code, 3, "No share specified" );
 
@@ -54,7 +54,7 @@ SKIP: {
 	is( $res->return_code, 3, "warn is less than critical" );
 
 	SKIP: {
-		skip "no smb host defined", 6 if ( ! $host );
+		skip "no smb host defined", 10 if ( ! $host );
 
 		SKIP: {
 			skip "no share name defined", 2 if ( ! $smb_share );
@@ -90,7 +90,7 @@ SKIP: {
 	SKIP: {
 		skip "no non responsive host defined", 1 if ( ! $host_nonresponsive );
 		$res = NPTest->testCmd( "./$plugin -H $host_nonresponsive -s np_foobar ");
-		cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN with non responsive host" ); 
-	}	
+		cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN with non responsive host" );
+	}
 
 }
