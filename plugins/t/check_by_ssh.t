@@ -44,6 +44,10 @@ for (@responce) {
 
 my $result;
 
+# expand paths
+$ssh_key  = glob($ssh_key)  if $ssh_key;
+$ssh_conf = glob($ssh_conf) if $ssh_conf;
+
 ## Single active checks
 
 for (my $i=0; $i<4; $i++) {
