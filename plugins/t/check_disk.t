@@ -57,6 +57,9 @@ if ($free_on_mp1 > $free_on_mp2) {
 } else {
 	die "Two mountpoints are the same - cannot do rest of test";
 }
+if($free_on_mp1 == $avg_free || $free_on_mp2 == $avg_free) {
+	die "One mountpoints has average space free - cannot do rest of test";
+}
 
 
 # Do same for inodes
@@ -73,6 +76,9 @@ if ($free_inode_on_mp1 > $free_inode_on_mp2) {
 	$less_inode_free = $mountpoint_valid;
 } else {
 	die "Two mountpoints with same inodes free - cannot do rest of test";
+}
+if($free_inode_on_mp1 == $avg_inode_free || $free_inode_on_mp2 == $avg_inode_free) {
+	die "One mountpoints has average inodes free - cannot do rest of test";
 }
 
 # Verify performance data
