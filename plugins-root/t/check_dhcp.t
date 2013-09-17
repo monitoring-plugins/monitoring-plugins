@@ -36,7 +36,7 @@ my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
 
 # try to determince interface
 my $interface = '';
-if(`ifconfig -a 2>/dev/null` =~ m/^(e(m|th)\d+)/mx and $1 ne 'eth0') {
+if(`ifconfig -a 2>/dev/null` =~ m/^(e\w*\d+)/mx and $1 ne 'eth0') {
     $interface = ' -i '.$1;
 }
 
