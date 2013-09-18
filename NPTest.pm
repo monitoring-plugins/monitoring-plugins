@@ -422,6 +422,7 @@ sub LoadCache
 {
   return if exists( $CACHE{'_cache_loaded_'} );
 
+  my $fileContents = "";
   if ( -f $CACHEFILENAME )
   {
     my( $fileHandle ) = new IO::File;
@@ -432,44 +433,45 @@ sub LoadCache
       return;
     }
 
-    my( $fileContents ) = join( "\n", <$fileHandle> );
-
+    $fileContents = join("", <$fileHandle>);
     $fileHandle->close();
 
+    chomp($fileContents);
     my( $contentsRef ) = eval $fileContents;
     %CACHE = %{$contentsRef};
 
   }
 
-  $CACHE{'_cache_loaded_'} = 1;
+  $CACHE{'_cache_loaded_'}  = 1;
+  $CACHE{'_original_cache'} = $fileContents;
 }
 
 
 sub SaveCache
 {
   delete $CACHE{'_cache_loaded_'};
+  my $oldFileContents = delete $CACHE{'_original_cache'};
 
-  my( $fileHandle ) = new IO::File;
-
-  if ( ! $fileHandle->open( "> ${CACHEFILENAME}" ) )
-  {
-    print STDERR "NPTest::LoadCache() : Problem saving ${CACHEFILENAME} : $!\n";
-    return;
-  }
-
-  my( $dataDumper ) = new Data::Dumper( [ \%CACHE ] );
-
+  my($dataDumper) = new Data::Dumper([\%CACHE]);
   $dataDumper->Terse(1);
   $dataDumper->Sortkeys(1);
-
   my $data = $dataDumper->Dump();
   $data =~ s/^\s+/  /gmx; # make sure all systems use same amount of whitespace
   $data =~ s/^\s+}/}/gmx;
-  print $fileHandle $data;
+  chomp($data);
 
-  $fileHandle->close();
+  if($oldFileContents ne $data) {
+    my($fileHandle) = new IO::File;
+    if (!$fileHandle->open( "> ${CACHEFILENAME}")) {
+      print STDERR "NPTest::LoadCache() : Problem saving ${CACHEFILENAME} : $!\n";
+      return;
+    }
+    print $fileHandle $data;
+    $fileHandle->close();
+  }
 
-  $CACHE{'_cache_loaded_'} = 1;
+  $CACHE{'_cache_loaded_'}  = 1;
+  $CACHE{'_original_cache'} = $data;
 }
 
 #
