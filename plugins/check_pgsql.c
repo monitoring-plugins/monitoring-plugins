@@ -258,7 +258,7 @@ main (int argc, char **argv)
 	if (verbose)
 		printf("Closing connection\n");
 	PQfinish (conn);
-	return (query_status > status) ? query_status : status;
+	return (pgquery && query_status > status) ? query_status : status;
 }
 
 
