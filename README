@@ -1,98 +1,96 @@
 Nagios Plugins README
----------------------
+=====================
 
 * For instructions on installing these plugins for use with Nagios,
-  see below. In addition, generic instructions for the GNU toolchain
-  can be found in the INSTALL file.
+  see below.  In addition, generic instructions for the GNU toolchain can be
+  found in the `INSTALL` file.
 
-* For major changes between releases, read the NEWS file.
+* For major changes between releases, read the `NEWS` file.
 
-* For information on detailed changes that have been made or plugins 
-  that have been added, read the Changelog file.
+* For information on detailed changes that have been made or plugins
+  that have been added, read the `ChangeLog` file.
 
 * Some plugins require that you have additional programs and/or
-  libraries installed on your system before they can be used.  Plugins
-  that are dependent on other programs/libraries that are missing are
-  usually not compiled. Read the REQUIREMENTS file for more information.
+  libraries installed on your system before they can be used.  Plugins that
+  are dependent on other programs/libraries that are missing are usually not
+  compiled.  Read the `REQUIREMENTS` file for more information.
 
-* For a list of outstanding bugs for this release, see the BUGS file.
+* For a list of outstanding bugs for this release, see the `BUGS` file.
 
 * Individual plugins are self documenting.  All plugins that comply with
   the basic guidelines for development will provide detailed help when
-  invoked with the '-h' or '--help' options.
+  invoked with the `-h` or `--help` options.
 
 You can check for the latest plugins at:
-  http://sourceforge.net/projects/nagiosplug/
 
-Send mail to nagiosplug-help@lists.sourceforge.net for assistance.  Please
-include the OS type and version that you are using.  Also, run the plugin with
-the '-vvv' option and provide the resulting version information.  Of course, 
-there may be additional diagnostic information required as well.  Use good
-judgment.
+* <https://sourceforge.net/projects/nagiosplug/>
 
-Send mail to nagiosplug-devel@lists.sourceforge.net for developer discussions.
+Send an email to <nagiosplug-help@lists.sourceforge.net> for assistance.
+Please include the OS type and version that you are using.  Also, run the
+plugin with the `-vvv` option and provide the resulting version information.
+Of course, there may be additional diagnostic information required as well.
+Use good judgment.
 
-For patch submissions and bug reports, please use the appropriate resources at
-https://github.com/nagios-plugins/nagios-plugins/.  Also, please include
-version information for your OS and the plugin(s) your are patching/reporting.
+Send an email to <nagiosplug-devel@lists.sourceforge.net> for developer
+discussions.
 
-
-
-
-Nagios Plugins Quick-and-Dirty Installation Instructions
---------------------------------------------------------
-
-0) If you are using the Git tree, you will need m4, gettext, automake, and autoconf. 
-   To start out, run ./tools/setup
-
-   For more detail, see the developer guidelines at 
-   http://nagiosplug.sourceforge.net/developer-guidelines.html.
+For patch submissions and bug reports, please use the appropriate resources
+at <https://github.com/nagios-plugins/nagios-plugins>.
 
 
-1) Run the configure script to initialize variables and create a Makefile, etc.
+Installation Instructions
+-------------------------
+
+1.  If you are using the Git tree, you will need m4, gettext, automake, and
+    autoconf.  To start out, run:
+
+	./tools/setup
+
+    For more detail, see the developer guidelines at
+    <http://nagiosplug.sourceforge.net/developer-guidelines.html>.
+
+2.  Run the configure script to initialize variables and create a Makefile,
+    etc.
 
 	./configure --prefix=BASEDIRECTORY --with-cgiurl=SOMEURL
 
-   a) Replace BASEDIRECTORY with the path of the directory under which Nagios
-      is installed (default is '/usr/local/nagios')
-   b) Replace CGIURL with the path used to access the Nagios CGIs with
-      a web browser (default is '/nagios/cgi-bin')
+    * Replace `BASEDIRECTORY` with the path of the directory under which
+      Nagios is installed (default is `/usr/local/nagios`).
+    * Replace `CGIURL` with the path used to access the Nagios CGIs with a
+      web browser (default is `/nagios/cgi-bin`).
 
-
-2) Compile the plugins with the following command:
+3.  Compile the plugins with the following command:
 
 	make
 
-
-3) Install the compiled plugins and plugin scripts with the following command:
+4.  Install the compiled plugins and plugin scripts with the following
+    command:
 
 	make install
 
-   The installation procedure will attempt to place the plugins in a 
-   'libexec/' subdirectory in the base directory you specified with
-   the --prefix argument to the configure script.
+    The installation procedure will attempt to place the plugins in a
+    `libexec/` subdirectory in the base directory you specified with the
+    `--prefix` argument to the configure script.
 
-4) There are some plugins that require setuid. If you run make install as 
-   a non root user, they will not be installed. To install, switch to root and 
-   run:
+5.  There are some plugins that require setuid.  If you run make install as
+    a non-root user, they will not be installed.  To install, switch to root
+    and run:
 
 	make install-root
 
-
-That's it! If you have any problems or questions, feel free send mail
-to nagiosplug-help@lists.sourceforge.net
-
+That's it!  If you have any problems or questions, feel free to send an
+email to <nagiosplug-help@lists.sourceforge.net>.
 
 
-LICENSE STUFF
+License Stuff
 -------------
 
-This software is released under the GNU Public License, Version 3, with the
-additional exemption that compiling, linking and/or using OpenSSL is
-allowed.
+This software is released under the GNU General Public License, Version 3,
+with the additional exemption that compiling, linking and/or using OpenSSL
+is allowed.
 
-See the COPYING file for the complete GPLv3 text. 
+See the `COPYING` file for the complete GPLv3 text.
 
 
---
-Nagios Plugins Team
+-- 
+Nagios Plugins Development Team
