@@ -15,8 +15,6 @@ Nagios Plugins README
   are dependent on other programs/libraries that are missing are usually not
   compiled.  Read the `REQUIREMENTS` file for more information.
 
-* For a list of outstanding bugs for this release, see the `BUGS` file.
-
 * Individual plugins are self documenting.  All plugins that comply with
   the basic guidelines for development will provide detailed help when
   invoked with the `-h` or `--help` options.

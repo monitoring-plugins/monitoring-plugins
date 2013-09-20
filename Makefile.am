@@ -3,7 +3,7 @@
 SUBDIRS = gl tap lib plugins plugins-scripts plugins-root po @PERLMODS_DIR@
 
 EXTRA_DIST = config.rpath \
-	ABOUT-NLS ACKNOWLEDGEMENTS AUTHORS BUGS CODING FAQ LEGAL NEWS \
+	ABOUT-NLS ACKNOWLEDGEMENTS AUTHORS CODING FAQ LEGAL NEWS \
 	NP-VERSION-GEN REQUIREMENTS SUPPORT THANKS \
 	NPTest.pm pkg nagios-plugins.spec \
 	config_test/Makefile config_test/run_tests config_test/child_test.c \
