@@ -21,12 +21,6 @@ Nagios Plugins README
   the basic guidelines for development will provide detailed help when
   invoked with the '-h' or '--help' options.
 
-* The file command.cfg contains example configurations for many of the
-  plugins
-
-* The win32 subdir contains plugins specific to the Win32 platform. 
-  These are scripts or binaries.
-
 You can check for the latest plugins at:
   http://sourceforge.net/projects/nagiosplug/
 
@@ -39,11 +33,8 @@ judgment.
 Send mail to nagiosplug-devel@lists.sourceforge.net for developer discussions.
 
 For patch submissions and bug reports, please use the appropriate resources at
-http://sourceforge.net/projects/nagiosplug/ (navigate to the bug tool and/or
-patch tool from the summary page).  Patches should be relative to the current
-CVS head (development), or to the head of the current stable branch. Also, 
-please include version information for your OS and the plugin(s) your are 
-patching/reporting.
+https://github.com/nagios-plugins/nagios-plugins/.  Also, please include
+version information for your OS and the plugin(s) your are patching/reporting.
 
 
 
@@ -51,7 +42,7 @@ patching/reporting.
 Nagios Plugins Quick-and-Dirty Installation Instructions
 --------------------------------------------------------
 
-0) If you are using the CVS tree, you will need m4, gettext, automake, and autoconf. 
+0) If you are using the Git tree, you will need m4, gettext, automake, and autoconf. 
    To start out, run ./tools/setup
 
    For more detail, see the developer guidelines at 
@@ -87,10 +78,6 @@ Nagios Plugins Quick-and-Dirty Installation Instructions
 
 	make install-root
 
-5) Verify that your host configuration file (hosts.cfg) for Nagios contains
-   the correct paths to the new plugins.
-
-
 
 That's it! If you have any problems or questions, feel free send mail
 to nagiosplug-help@lists.sourceforge.net
@@ -100,10 +87,11 @@ to nagiosplug-help@lists.sourceforge.net
 LICENSE STUFF
 -------------
 
-This software is released under the GNU Public License with the additional
-exemption that compiling, linking and/or using OpenSSL is allowed.
+This software is released under the GNU Public License, Version 3, with the
+additional exemption that compiling, linking and/or using OpenSSL is
+allowed.
 
-See the COPYING file for the complete GPL text. 
+See the COPYING file for the complete GPLv3 text. 
 
 
 --
