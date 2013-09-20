@@ -42,7 +42,7 @@ Installation Instructions
 1.  If you are using the Git tree, you will need m4, gettext, automake, and
     autoconf.  To start out, run:
 
-	./tools/setup
+    	./tools/setup
 
     For more detail, see the developer guidelines at
     <http://nagiosplug.sourceforge.net/developer-guidelines.html>.
@@ -50,7 +50,7 @@ Installation Instructions
 2.  Run the configure script to initialize variables and create a Makefile,
     etc.
 
-	./configure --prefix=BASEDIRECTORY --with-cgiurl=SOMEURL
+    	./configure --prefix=BASEDIRECTORY --with-cgiurl=SOMEURL
 
     * Replace `BASEDIRECTORY` with the path of the directory under which
       Nagios is installed (default is `/usr/local/nagios`).
@@ -59,12 +59,12 @@ Installation Instructions
 
 3.  Compile the plugins with the following command:
 
-	make
+    	make
 
 4.  Install the compiled plugins and plugin scripts with the following
     command:
 
-	make install
+    	make install
 
     The installation procedure will attempt to place the plugins in a
     `libexec/` subdirectory in the base directory you specified with the
@@ -74,7 +74,7 @@ Installation Instructions
     a non-root user, they will not be installed.  To install, switch to root
     and run:
 
-	make install-root
+    	make install-root
 
 That's it!  If you have any problems or questions, feel free to send an
 email to <nagiosplug-help@lists.sourceforge.net>.
