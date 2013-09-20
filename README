@@ -1,5 +1,5 @@
-Nagios Plugins README
-=====================
+Nagios Plugins
+==============
 
 * For instructions on installing these plugins for use with Nagios,
   see below.  In addition, generic instructions for the GNU toolchain can be
@@ -52,10 +52,10 @@ Installation Instructions
 
     	./configure --prefix=BASEDIRECTORY --with-cgiurl=SOMEURL
 
-    * Replace `BASEDIRECTORY` with the path of the directory under which
-      Nagios is installed (default is `/usr/local/nagios`).
-    * Replace `CGIURL` with the path used to access the Nagios CGIs with a
-      web browser (default is `/nagios/cgi-bin`).
+    Replace `BASEDIRECTORY` with the path of the directory under which Nagios
+    is installed (default is `/usr/local/nagios`), and replace `SOMEURL` with
+    the path used to access the Nagios CGIs with a web browser (default is
+    `/nagios/cgi-bin`).
 
 3.  Compile the plugins with the following command:
 
@@ -88,7 +88,3 @@ with the additional exemption that compiling, linking and/or using OpenSSL
 is allowed.
 
 See the `COPYING` file for the complete GPLv3 text.
-
-
--- 
-Nagios Plugins Development Team
