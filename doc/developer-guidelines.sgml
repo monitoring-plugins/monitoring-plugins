@@ -1,6 +1,6 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.1//EN" >
 <book>
-  <title>Nagios Plug-in Developer Guidelines</title>
+  <title>Nagios Plugin Development Guidelines</title>
 
   <bookinfo>
     <authorgroup>
@@ -12,7 +12,7 @@
     </authorgroup>
 
     <pubdate>2013</pubdate>
-    <title>Nagios plug-in development guidelines</title>
+    <title>Nagios Plugin Development Guidelines</title>
 	
     <revhistory>
        <revision>
@@ -31,10 +31,10 @@
 
 <preface id="preface"><title>Preface</title>
     <para>The purpose of this guidelines is to provide a reference for
-    the plug-in developers and encourage the standarization of the
-    different kind of plug-ins: C, shell, perl, python, etc.</para>
+    the plugin developers and encourage the standarization of the
+    different kind of plugins: C, shell, perl, python, etc.</para>
 
-        <para>Nagios Plug-in Development Guidelines Copyright (C) 2000-2013
+        <para>Nagios Plugin Development Guidelines Copyright (C) 2000-2013
         (Nagios Plugins Team)</para>
 
         <para>Permission is granted to make and distribute verbatim
@@ -48,8 +48,8 @@
 <article>
 <section id="DevRequirements"><title>Development platform requirements</title>
 	<para>
-	Nagios plugins are developed to the GNU standard, so any OS which is supported by GNU
-	should run the plugins. While the requirements for compiling the Nagios plugins release 
+	Nagios Plugins are developed to the GNU standard, so any OS which is supported by GNU
+	should run the plugins. While the requirements for compiling the Nagios Plugins release 
 	are very basic, developing from the Git repository requires additional software to be
 	installed. These are the minimum levels of software required:
 
@@ -141,7 +141,7 @@
 		</section>
 
 		<section><title>Screen Output</title>
-		<para>The plug-in should print the diagnostic and just the
+		<para>The plugin should print the diagnostic and just the
 		usage part of the help message.  A well written plugin would
 		then have --help as a way to get the verbose help.</para>
 
@@ -330,7 +330,7 @@
 		to provide some to prevent the last pair of a) and the first of b) getting run
 		together.) Please refer to the Nagios documentation for information on how to
 		configure such processing. However, it is the responsibility of the plugin writer
-		to ensure the performance data is in a "Nagios plugins" format.
+		to ensure the performance data is in a "Nagios Plugins" format.
 		This is the expected format:</para>
 
 		<literallayout>
@@ -379,7 +379,7 @@
 			</listitem>
 		</orderedlist>
 
-		<para>It is up to third party programs to convert the Nagios plugins 
+		<para>It is up to third party programs to convert the Nagios Plugins 
 		performance data into graphs.</para>
 		</section>
 
