@@ -881,7 +881,7 @@ check_http (void)
     gettimeofday (&tv_temp, NULL);
     result = np_net_ssl_init_with_hostname_version_and_cert(sd, (use_sni ? host_name : NULL), ssl_version, client_cert, client_privkey);
     if (result != STATE_OK)
-      return result;
+      die (STATE_CRITICAL, NULL);
     microsec_ssl = deltime (tv_temp);
     elapsed_time_ssl = (double)microsec_ssl / 1.0e6;
     if (check_cert == TRUE) {
