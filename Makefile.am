@@ -3,7 +3,7 @@
 SUBDIRS = gl tap lib plugins plugins-scripts plugins-root po @PERLMODS_DIR@
 
 EXTRA_DIST = config.rpath \
-	ABOUT-NLS ACKNOWLEDGEMENTS AUTHORS CODING FAQ LEGAL NEWS \
+	ABOUT-NLS ACKNOWLEDGEMENTS AUTHORS CODING ChangeLog FAQ LEGAL NEWS \
 	NP-VERSION-GEN REQUIREMENTS SUPPORT THANKS \
 	NPTest.pm pkg nagios-plugins.spec \
 	config_test/Makefile config_test/run_tests config_test/child_test.c \
@@ -14,6 +14,13 @@ ACLOCAL_AMFLAGS = -I gl/m4 -I m4
 
 localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\"
+
+#
+# The ChangeLog file is auto-generated from the Git history.  We let it depend
+# on NP-VERSION-GEN, as we bump our version number in that file.
+#
+ChangeLog: NP-VERSION-GEN
+	$(top_srcdir)/tools/generate-change-log > $@
 
 dist-hook:
 	$(MAKE) THANKS

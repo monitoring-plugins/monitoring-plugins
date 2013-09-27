@@ -6,6 +6,7 @@ NP-VERSION-FILE
 /aclocal.m4
 /autom4te*.cache
 /Cache.pm
+/ChangeLog
 /command.cfg
 /compile
 /confdefs.h

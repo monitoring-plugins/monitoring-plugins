@@ -1,0 +1,67 @@
+#!/usr/bin/env perl
+#
+# Copyright (c) 2013 Nagios Plugins Development Team
+#
+# Originally written by Holger Weiss <holger@zedat.fu-berlin.de>.
+#
+# This file is free software; the Nagios Plugins Development Team gives
+# unlimited permission to copy and/or distribute it, with or without
+# modifications, as long as this notice is preserved.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY, to the extent permitted by law; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#
+
+use warnings;
+use strict;
+use Text::Wrap;
+
+# The lines will have a length of no more than $columns - 1.
+$Text::Wrap::columns = 81;
+
+if (system('git rev-parse --git-dir >/dev/null 2>&1') != 0) {
+	print "Not a Git repository, so I won't update the ChangeLog.\n";
+	exit 0;
+}
+
+my $regex =
+    '^commit [0-9a-f]+\n' .
+    '^Author: (?<name>.+) <(?<email>.*)>\n' .
+    '^Date:   (?<date>\d{4}-\d{2}-\d{2})\n' .
+    '^\n' .
+    '(?<message>(^    .*\n)+)' .
+    '^\n' .
+    '(?<files>(^.+\n)+)';
+
+my $git_log = qx'git log -M -C --stat --name-only --date=short';
+die "Cannot get `git log' output\n" if $? != 0;
+
+my ($prev_date, $prev_name, $prev_email);
+
+while ($git_log =~ /$regex/gm) {
+	my %commit = %+;
+
+	if (not defined $prev_date
+	    or $commit{date} ne $prev_date
+	    or $commit{name} ne $prev_name
+	    or $commit{email} ne $prev_email) {
+		print "$commit{date}  $commit{name}  <$commit{email}>\n\n";
+	}
+	$prev_date = $commit{date};
+	$prev_name = $commit{name};
+	$prev_email = $commit{email};
+
+	my @files = split(/\n/, $commit{files});
+	my @message = map { s/^ {4}//; $_ } split(/\n/, $commit{message});
+	my $first_line = shift(@message);
+	   $first_line =~ s/^$files[-1]: //;
+	my $intro = sprintf('* %s: %s', join(', ', @files), $first_line);
+
+	print fill("\t", "\t", $intro), "\n";
+	foreach my $line (@message) {
+		print "\t$line" if length($line) > 0;
+		print "\n";
+	}
+	print "\n";
+}
