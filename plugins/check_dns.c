@@ -136,6 +136,28 @@ main (int argc, char **argv)
       }
     }
 
+    /* bug ID: 2946553 - Older versions of bind will use all available dns 
+                         servers, we have to match the one specified */
+    if (strstr (chld_out.line[i], "Server:") && strlen(dns_server) > 0) {
+      temp_buffer = index (chld_out.line[i], ':');
+      temp_buffer++;
+
+      /* Strip leading tabs */
+      for (; *temp_buffer != '\0' && *temp_buffer == '\t'; temp_buffer++)
+        /* NOOP */;
+
+      strip(temp_buffer);
+      if (temp_buffer==NULL || strlen(temp_buffer)==0) {
+        die (STATE_CRITICAL,
+             _("DNS CRITICAL - '%s' returned empty server string\n"),
+             NSLOOKUP_COMMAND);
+      }
+
+      if (strcmp(temp_buffer, dns_server) != 0) {
+        die (STATE_CRITICAL, _("No response from DNS %s\n"), dns_server);
+      }
+    }
+
     /* the server is responding, we just got the host name... */
     if (strstr (chld_out.line[i], "Name:"))
       parse_address = TRUE;
