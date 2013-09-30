@@ -221,7 +221,7 @@ foreach $key (keys %ifStatus) {
 			$ifexclude,
 			$ifunused);
    }
-my $perfdata = sprintf("up=%d,down=%d,dormant=%d,excluded=%d,unused=%d",$ifup,$ifdown,$ifdormant,$ifexclude,$ifunused);
+my $perfdata = sprintf("up=%d down=%d dormant=%d excluded=%d unused=%d",$ifup,$ifdown,$ifdormant,$ifexclude,$ifunused);
 print ("$state: $answer |$perfdata\n");
 exit $ERRORS{$state};
 
