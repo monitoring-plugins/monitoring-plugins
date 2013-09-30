@@ -5,7 +5,7 @@
 #
 
 use strict;
-use Test::More tests => 15;
+use Test::More tests => 16;
 use NPTest;
 
 my $successOutput = '/^FILE_AGE OK: /';
@@ -56,6 +56,11 @@ $result = NPTest->testCmd(
 	"./check_file_age -f $temp_file -c 1000 -W 100"
 	);
 cmp_ok( $result->return_code, '==', 0, "Checking file size" );
+
+$result = NPTest->testCmd(
+	"./check_file_age -f /non/existent --ignore-missing"
+	);
+cmp_ok( $result->return_code, '==', 0, "Honours --ignore-missing" );
 
 $result = NPTest->testCmd(
 	"./check_file_age -f $temp_file -c 1000 -W 101"
