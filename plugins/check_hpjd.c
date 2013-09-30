@@ -41,7 +41,7 @@ const char *email = "nagiosplug-devel@lists.sourceforge.net";
 #define DEFAULT_COMMUNITY "public"
 
 
-const char *option_summary = "-H host [-C community]\n";
+const char *option_summary = "-H host [-C community] [-p port]\n";
 
 #define HPJD_LINE_STATUS           ".1.3.6.1.4.1.11.2.3.9.1.1.2.1"
 #define HPJD_PAPER_STATUS          ".1.3.6.1.4.1.11.2.3.9.1.1.2.2"
@@ -66,6 +66,7 @@ void print_usage (void);
 
 char *community = NULL;
 char *address = NULL;
+short port = 161;
 
 int
 main (int argc, char **argv)
@@ -120,7 +121,7 @@ main (int argc, char **argv)
 
 	/* get the command to run */
 	sprintf (command_line, "%s -OQa -m : -v 1 -c %s %s %s", PATH_TO_SNMPGET, community,
-									address, query_string);
+									address, port, query_string);
 
 	/* run the command */
 	child_process = spopen (command_line);
@@ -324,7 +325,7 @@ process_arguments (int argc, char **argv)
 
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVH:C:", longopts, &option);
+		c = getopt_long (argc, argv, "+hVH:C:p:", longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)
 			break;
@@ -347,6 +348,9 @@ process_arguments (int argc, char **argv)
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_OK);
+		case 'p':									/* port */
+			port = (short) atoi(optarg);
+			break;
 		case '?':									/* help */
 			usage5 ();
 		}
