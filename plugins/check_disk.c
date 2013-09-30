@@ -877,7 +877,7 @@ print_help (void)
   printf (" %s\n", "-K, --icritical=PERCENT%");
   printf ("    %s\n", _("Exit with CRITICAL status if less than PERCENT of inode space is free"));
   printf (" %s\n", "-p, --path=PATH, --partition=PARTITION");
-  printf ("    %s\n", _("Path or partition (may be repeated)"));
+  printf ("    %s\n", _("Mount point or block device as emitted by the mount(8) command (may be repeated)"));
   printf (" %s\n", "-x, --exclude_device=PATH <STRING>");
   printf ("    %s\n", _("Ignore device (only works if -p unspecified)"));
   printf (" %s\n", "-C, --clear");
