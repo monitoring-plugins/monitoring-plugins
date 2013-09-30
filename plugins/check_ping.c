@@ -482,7 +482,11 @@ run_ping (const char *cmd, const char *addr)
 	/* check stderr, setting at least WARNING if there is output here */
 	/* Add warning into warn_text */
 	while (fgets (buf, MAX_INPUT_BUFFER - 1, child_stderr)) {
-		if (! strstr(buf,"WARNING - no SO_TIMESTAMP support, falling back to SIOCGSTAMP")) {
+		if (
+			! strstr(buf,"WARNING - no SO_TIMESTAMP support, falling back to SIOCGSTAMP")
+			&& ! strstr(buf,"Warning: time of day goes back")
+
+		) {
 			if (verbose >= 3) {
 				printf("Got stderr: %s", buf);
 			}
