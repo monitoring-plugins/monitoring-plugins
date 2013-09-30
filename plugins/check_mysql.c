@@ -34,7 +34,7 @@ const char *progname = "check_mysql";
 const char *copyright = "1999-2011";
 const char *email = "nagiosplug-devel@lists.sourceforge.net";
 
-#define SLAVERESULTSIZE 70
+#define SLAVERESULTSIZE 120
 
 #include "common.h"
 #include "utils.h"
@@ -234,7 +234,7 @@ main (int argc, char **argv)
 
 		} else {
 			/* mysql 4.x.x and mysql 5.x.x */
-			int slave_io_field = -1 , slave_sql_field = -1, seconds_behind_field = -1, i, num_fields;
+			int slave_io_field = -1 , slave_sql_field = -1, seconds_behind_field = -1, until_cond_field = -1, last_errno_field = -1, i, num_fields;
 			MYSQL_FIELD* fields;
 
 			num_fields = mysql_num_fields(res);
@@ -252,20 +252,28 @@ main (int argc, char **argv)
 					seconds_behind_field = i;
 					continue;
 				}
+				if (strcmp(fields[i].name, "Until_Condition") == 0) {
+					until_cond_field = i;
+					continue;
+				}
+				if (strcmp(fields[i].name, "Last_Errno") == 0) {
+					last_errno_field = i;
+					continue;
+				}
 			}
 
 			/* Check if slave status is available */
-			if ((slave_io_field < 0) || (slave_sql_field < 0) || (num_fields == 0)) {
+			if ((slave_io_field < 0) || (slave_sql_field < 0) || (last_errno_field < 0) || (num_fields == 0)) {
 				mysql_free_result (res);
 				mysql_close (&mysql);
 				die (STATE_CRITICAL, "Slave status unavailable\n");
 			}
 
 			/* Save slave status in slaveresult */
-			snprintf (slaveresult, SLAVERESULTSIZE, "Slave IO: %s Slave SQL: %s Seconds Behind Master: %s", row[slave_io_field], row[slave_sql_field], seconds_behind_field!=-1?row[seconds_behind_field]:"Unknown");
+			snprintf (slaveresult, SLAVERESULTSIZE, "Slave IO: %s Slave SQL: %s Seconds Behind Master: %s Until Condition: %s Last Errno: %s", row[slave_io_field], row[slave_sql_field], seconds_behind_field!=-1?row[seconds_behind_field]:"Unknown", row[until_cond_field], last_errno_field!=-1?row[last_errno_field]:"No Error");
 
 			/* Raise critical error if SQL THREAD or IO THREAD are stopped */
-			if (strcmp (row[slave_io_field], "Yes") != 0 || strcmp (row[slave_sql_field], "Yes") != 0) {
+			if ((strcmp(row[until_cond_field], "None") == 0 && (strcmp (row[slave_io_field], "Yes") != 0 || strcmp (row[slave_sql_field], "Yes") != 0) ) || (strcmp(row[last_errno_field], "0") != 0)) {
 				mysql_free_result (res);
 				mysql_close (&mysql);
 				die (STATE_CRITICAL, "%s\n", slaveresult);
@@ -277,10 +285,20 @@ main (int argc, char **argv)
 				} else {
 					printf ("seconds_behind_field(index %d)=%s\n", seconds_behind_field, row[seconds_behind_field]);
 				}
+				if (until_cond_field == -1) {
+					printf("until_cond_field not found\n");
+				} else {
+					printf ("until_cond_field(index %d)=%s\n", until_cond_field, row[until_cond_field]);
+				}
+				if (last_errno_field == -1) {
+					printf("last_errno_field not found\n");
+				} else {
+					printf("last_errno_field(index %d)=%s\n", last_errno_field, row[last_errno_field]);
+				}
 			}
 
 			/* Check Seconds Behind against threshold */
-			if ((seconds_behind_field != -1) && (strcmp (row[seconds_behind_field], "NULL") != 0)) {
+			if ((seconds_behind_field != -1) && (row[seconds_behind_field] != NULL && (strcmp (row[seconds_behind_field], "NULL") != 0)) && (strcmp(row[until_cond_field], "None") == 0)) {
 				double value = atof(row[seconds_behind_field]);
 				int status;
 
