@@ -203,7 +203,7 @@ int main(int argc, char **argv){
 		updays = uptime / 86400;
 		uphours = (uptime % 86400) / 3600;
 		upminutes = ((uptime % 86400) % 3600) / 60;
-		xasprintf(&output_message,_("System Uptime - %u day(s) %u hour(s) %u minute(s)"),updays,uphours, upminutes);
+		xasprintf(&output_message,_("System Uptime - %u day(s) %u hour(s) %u minute(s)|uptime=%lu"), updays, uphours, upminutes, uptime);
 		if (check_critical_value==TRUE && uptime <= critical_value)
 			return_code=STATE_CRITICAL;
 		else if (check_warning_value==TRUE && uptime <= warning_value)
