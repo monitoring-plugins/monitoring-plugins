@@ -45,15 +45,17 @@ int error_scan (char *);
 void print_help (void);
 void print_usage (void);
 
-#define ADDRESS_LENGTH 256
+#define ADDRESS_LENGTH 384 
 char query_address[ADDRESS_LENGTH] = "";
 char dns_server[ADDRESS_LENGTH] = "";
 char ptr_server[ADDRESS_LENGTH] = "";
+char query_type[16] = "";
 int verbose = FALSE;
 char **expected_address = NULL;
 int expected_address_cnt = 0;
 
 int expect_authority = FALSE;
+int accept_cname = FALSE;
 thresholds *time_thresholds = NULL;
 
 static int
@@ -65,6 +67,22 @@ qstrcmp(const void *p1, const void *p2)
 	return strcmp(* (char * const *) p1, * (char * const *) p2);
 }
 
+char *
+check_new_address(char *temp_buffer)
+{
+      temp_buffer++;
+      /* Strip leading spaces */
+      for (; *temp_buffer != '\0' && *temp_buffer == ' '; temp_buffer++)
+        /* NOOP */;
+
+      strip(temp_buffer);
+      if (temp_buffer==NULL || strlen(temp_buffer)==0) {
+        die (STATE_CRITICAL,
+             _("DNS CRITICAL - '%s' returned empty host name string\n"),
+             NSLOOKUP_COMMAND);
+      }
+      return temp_buffer;
+}
 
 int
 main (int argc, char **argv)
@@ -103,7 +121,7 @@ main (int argc, char **argv)
   }
 
   /* get the command to run */
-  xasprintf (&command_line, "%s %s %s", NSLOOKUP_COMMAND, query_address, dns_server);
+  xasprintf (&command_line, "%s %s %s %s", NSLOOKUP_COMMAND, query_type, query_address, dns_server);
 
   alarm (timeout_interval);
   gettimeofday (&tv, NULL);
@@ -136,28 +154,26 @@ main (int argc, char **argv)
       }
     }
 
+    if (strstr (chld_out.line[i], "Authoritative answers can be found from:"))
+      break;
     /* the server is responding, we just got the host name... */
     if (strstr (chld_out.line[i], "Name:"))
       parse_address = TRUE;
+    else if (strstr (chld_out.line[i], "AAAA address")) {
+      temp_buffer = rindex (chld_out.line[i], ' ');
+      addresses[n_addresses++] = check_new_address(temp_buffer);
+    }
+    else if (strstr (chld_out.line[i], "text =") || strstr (chld_out.line[i], "exchanger =") \
+	|| strstr (chld_out.line[i], "service =") || (accept_cname && strstr (chld_out.line[i], "name ="))) {
+      temp_buffer = index (chld_out.line[i], '=');
+      addresses[n_addresses++] = check_new_address(temp_buffer);
+    }
     else if (parse_address == TRUE && (strstr (chld_out.line[i], "Address:") ||
              strstr (chld_out.line[i], "Addresses:"))) {
       temp_buffer = index (chld_out.line[i], ':');
-      temp_buffer++;
-
-      /* Strip leading spaces */
-      for (; *temp_buffer != '\0' && *temp_buffer == ' '; temp_buffer++)
-        /* NOOP */;
-
-      strip(temp_buffer);
-      if (temp_buffer==NULL || strlen(temp_buffer)==0) {
-        die (STATE_CRITICAL,
-             _("DNS CRITICAL - '%s' returned empty host name string\n"),
-             NSLOOKUP_COMMAND);
-      }
-
-      addresses[n_addresses++] = strdup(temp_buffer);
-    }
-    else if (strstr (chld_out.line[i], _("Non-authoritative answer:"))) {
+      addresses[n_addresses++] = check_new_address(temp_buffer);
+    } 
+    if (strstr (chld_out.line[i], _("Non-authoritative answer:"))) {
       non_authoritative = TRUE;
     }
 
@@ -274,7 +290,7 @@ error_scan (char *input_buffer)
     die (STATE_CRITICAL, _("No response from DNS %s\n"), dns_server);
 
   /* Host name is valid, but server doesn't have records... */
-  else if (strstr (input_buffer, "No records"))
+  else if (strstr (input_buffer, "No records") || strstr (input_buffer, "No answer"))
     die (STATE_CRITICAL, _("DNS %s has no records\n"), dns_server);
 
   /* Connection was refused */
@@ -316,7 +332,6 @@ error_scan (char *input_buffer)
 
 }
 
-
 /* process command-line arguments */
 int
 process_arguments (int argc, char **argv)
@@ -334,8 +349,10 @@ process_arguments (int argc, char **argv)
     {"hostname", required_argument, 0, 'H'},
     {"server", required_argument, 0, 's'},
     {"reverse-server", required_argument, 0, 'r'},
+    {"querytype", required_argument, 0, 'q'},
     {"expected-address", required_argument, 0, 'a'},
     {"expect-authority", no_argument, 0, 'A'},
+    {"accept-cname", no_argument, 0, 'n'},
     {"warning", required_argument, 0, 'w'},
     {"critical", required_argument, 0, 'c'},
     {0, 0, 0, 0}
@@ -349,7 +366,7 @@ process_arguments (int argc, char **argv)
       strcpy (argv[c], "-t");
 
   while (1) {
-    c = getopt_long (argc, argv, "hVvAt:H:s:r:a:w:c:", long_opts, &opt_index);
+    c = getopt_long (argc, argv, "hVvAnt:H:s:r:a:q:w:c:", long_opts, &opt_index);
 
     if (c == -1 || c == EOF)
       break;
@@ -394,8 +411,17 @@ process_arguments (int argc, char **argv)
       expected_address[expected_address_cnt] = strdup(optarg);
       expected_address_cnt++;
       break;
+    case 'q': /* querytype -- A or AAAA or ANY or SRV or TXT, etc. */
+      if (strlen (optarg) < 1 || strlen (optarg) > 4)
+	die (STATE_UNKNOWN, _("Missing valid querytype parameter.  Try using 'A' or 'AAAA' or 'SRV'\n"));
+      strcpy(query_type, "-querytype=");
+      strcat(query_type, optarg);
+      break;
     case 'A': /* expect authority */
       expect_authority = TRUE;
+      break;
+    case 'n': /* accept cname responses as a result */
+      accept_cname = TRUE;
       break;
     case 'w':
       warning = optarg;
@@ -462,13 +488,20 @@ print_help (void)
   printf ("    %s\n", _("The name or address you want to query"));
   printf (" -s, --server=HOST\n");
   printf ("    %s\n", _("Optional DNS server you want to use for the lookup"));
+  printf (" -q, --querytype=TYPE\n");
+  printf ("    %s\n", _("Optional DNS record query type where TYPE =(A, AAAA, SRV, TXT, MX, ANY)"));
+  printf ("    %s\n", _("The default query type is 'A' (IPv4 host entry)"));
   printf (" -a, --expected-address=IP-ADDRESS|HOST\n");
   printf ("    %s\n", _("Optional IP-ADDRESS you expect the DNS server to return. HOST must end with"));
   printf ("    %s\n", _("a dot (.). This option can be repeated multiple times (Returns OK if any"));
   printf ("    %s\n", _("value match). If multiple addresses are returned at once, you have to match"));
   printf ("    %s\n", _("the whole string of addresses separated with commas (sorted alphabetically)."));
+  printf ("    %s\n", _("If you would like to test for the presence of a cname, combine with -n param."));
   printf (" -A, --expect-authority\n");
   printf ("    %s\n", _("Optionally expect the DNS server to be authoritative for the lookup"));
+  printf (" -n, --accept-cname\n");
+  printf ("    %s\n", _("Optionally accept cname responses as a valid result to a query"));
+  printf ("    %s\n", _("The default is to ignore cname responses as part of the result"));
   printf (" -w, --warning=seconds\n");
   printf ("    %s\n", _("Return warning if elapsed time exceeds value. Default off"));
   printf (" -c, --critical=seconds\n");
@@ -484,5 +517,5 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-  printf ("%s -H host [-s server] [-a expected-address] [-A] [-t timeout] [-w warn] [-c crit]\n", progname);
+  printf ("%s -H host [-s server] [-q type ] [-a expected-address] [-A] [-n] [-t timeout] [-w warn] [-c crit]\n", progname);
 }
