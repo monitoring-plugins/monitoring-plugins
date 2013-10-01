@@ -25,7 +25,8 @@ directly.
 
 In brief, always provide the version of the software that you are
 using, and when requesting features or reporting bugs, first check to
-see that the issue has not already been addressed in the CVS tree.
+see that the issue has not already been addressed in the current Git
+code.
 
 GETTING HELP
 
@@ -47,8 +48,8 @@ REPORTING BUGS AND SUBMITTING PATCHES
 
 Bug reports, investigations of possible bugs, feature requests, and
 patch submissions should be submitted to the development list at
-mailto:nagiosplug-devel@lists.sourceforge.net. Please raise a tracker first 
-in Sourceforge, otherwise your email is likely to be missed over time.
+mailto:nagiosplug-devel@lists.sourceforge.net. Please raise an issue first 
+in GitHub, otherwise your email is likely to be missed over time.
 
 You should identify the version, preferably in the subject line. 
 However, to best use developer resources, it is suggested that you 
@@ -56,10 +57,10 @@ reference your report to one of the following sources:
 
   1) The most recent release, including beta's
 
-  2) The twice-daily snapshots (there's a link provided on
-     http://nagiosplug.sourceforge.net)
+  2) The current snapshots (there's a link provided on
+     https://www.nagios-plugins.org/download.html)
 
-  3) The current CVS tree from sourceforge
+  3) The current Git code from GitHub
 
 (This does not mean you should run any of these sources in a
 production environment - the latter two you clearly should
@@ -69,7 +70,7 @@ which are most recent.)
 
 From experience, I know that most bugs can be fixed with only a few
 more moments work than it takes to determine if the bug is still
-present in the CVS tree. If you can save a developer the expense of
+present in the Git tree. If you can save a developer the expense of
 that time, you ensure that bugs are fixed more rapidly, and thus you
 ensure your problem resolution is reflected in a stable release more
 quickly.
