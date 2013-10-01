@@ -124,7 +124,7 @@ main (int argc, char **argv)
 			free_swap_mb += dskfree_mb;
 			if (allswaps) {
 				if (dsktotal_mb == 0)
-					percent=100.0;
+					percent=0.0;
 				else
 					percent = 100 * (((double) dskused_mb) / ((double) dsktotal_mb));
 				result = max_state (result, check_swap (percent, dskfree_mb));
