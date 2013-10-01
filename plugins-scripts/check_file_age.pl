@@ -32,7 +32,7 @@ use utils qw (%ERRORS &print_revision &support);
 sub print_help ();
 sub print_usage ();
 
-my ($opt_c, $opt_f, $opt_w, $opt_C, $opt_W, $opt_h, $opt_V);
+my ($opt_c, $opt_f, $opt_m, $opt_w, $opt_C, $opt_W, $opt_h, $opt_V);
 my ($result, $message, $age, $size, $st);
 
 $PROGNAME="check_file_age";
@@ -47,6 +47,7 @@ Getopt::Long::Configure('bundling');
 GetOptions(
 	"V"   => \$opt_V, "version"	=> \$opt_V,
 	"h"   => \$opt_h, "help"	=> \$opt_h,
+	"m"   => \$opt_m, "missing"	=> \$opt_m,
 	"f=s" => \$opt_f, "file"	=> \$opt_f,
 	"w=f" => \$opt_w, "warning-age=f" => \$opt_w,
 	"W=f" => \$opt_W, "warning-size=f" => \$opt_W,
@@ -72,8 +73,14 @@ if (! $opt_f) {
 
 # Check that file exists (can be directory or link)
 unless (-e $opt_f) {
-	print "FILE_AGE CRITICAL: File not found - $opt_f\n";
-	exit $ERRORS{'CRITICAL'};
+	# If we allow missing files/directories, return OK
+	if ($opt_m) {
+		print "FILE_AGE OK: File not found - $opt_f\n";
+		exit $ERRORS{'OK'};
+	} else {
+		print "FILE_AGE CRITICAL: File not found - $opt_f\n";
+		exit $ERRORS{'CRITICAL'};
+	}
 }
 
 $st = File::stat::stat($opt_f);
