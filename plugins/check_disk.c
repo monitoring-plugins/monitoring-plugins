@@ -171,6 +171,7 @@ main (int argc, char **argv)
   char *details;
   char *perf;
   char *preamble;
+  char *flag_header;
   double inode_space_pct;
   double warning_high_tide;
   double critical_high_tide;
@@ -353,18 +354,23 @@ main (int argc, char **argv)
       if (disk_result==STATE_OK && erronly && !verbose)
         continue;
 
-      xasprintf (&output, "%s %s %.0f %s (%.0f%%",
-                output,
+      if(disk_result && verbose >= 1) {
+	xasprintf(&flag_header, " %s [", state_text (disk_result));
+      } else {
+	xasprintf(&flag_header, "");
+      }
+      xasprintf (&output, "%s%s %s %.0f %s (%.0f%%",
+		output, flag_header,
                 (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
                 path->dfree_units,
                 units,
                 path->dfree_pct);
       if (path->dused_inodes_percent < 0) {
-        xasprintf(&output, "%s inode=-);", output);
+	xasprintf(&output, "%s inode=-)%s;", output, (disk_result ? "]" : ""));
       } else {
-        xasprintf(&output, "%s inode=%.0f%%);", output, path->dfree_inodes_percent );
+	xasprintf(&output, "%s inode=%.0f%%)%s;", output, path->dfree_inodes_percent, ((disk_result && verbose >= 1) ? "]" : ""));
       }
-
+      free(flag_header);
       /* TODO: Need to do a similar debug line
       xasprintf (&details, _("%s\n\
 %.0f of %.0f %s (%.0f%% inode=%.0f%%) free on %s (type %s mounted on %s) warn:%lu crit:%lu warn%%:%.0f%% crit%%:%.0f%%"),
