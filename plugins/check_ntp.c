@@ -480,7 +480,7 @@ double offset_request(const char *host, int *status){
 	} else {
 		/* finally, calculate the average offset */
 		for(i=0; i<servers[best_index].num_responses;i++){
-			avg_offset+=servers[best_index].offset[j];
+			avg_offset+=servers[best_index].offset[i];
 		}
 		avg_offset/=servers[best_index].num_responses;
 	}
