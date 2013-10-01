@@ -21,7 +21,7 @@ Nagios Plugins
 
 You can check for the latest plugins at:
 
-* <https://sourceforge.net/projects/nagiosplug/>
+* <https://www.nagios-plugins.org/>
 
 Send an email to <nagiosplug-help@lists.sourceforge.net> for assistance.
 Please include the OS type and version that you are using.  Also, run the
@@ -45,7 +45,7 @@ Installation Instructions
     	./tools/setup
 
     For more detail, see the developer guidelines at
-    <http://nagiosplug.sourceforge.net/developer-guidelines.html>.
+    <https://www.nagios-plugins.org/doc/guidelines.html>.
 
 2.  Run the configure script to initialize variables and create a Makefile,
     etc.
