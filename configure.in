@@ -534,6 +534,18 @@ else
 	with_gnutls="no"
 fi
 
+dnl Check for POSIX thread libraries
+AC_CHECK_HEADERS(pthread.h)
+case $host in
+	*sun* | *solaris*)
+		AC_CHECK_LIB(pthread,pthread_create,THRLIBS="-lpthread -lrt")
+	;;
+	*)
+		AC_CHECK_LIB(pthread,pthread_create,THRLIBS="-lpthread")
+	;;
+esac
+AC_SUBST(THRLIBS)
+
 dnl
 dnl Checks for header files.
 dnl
