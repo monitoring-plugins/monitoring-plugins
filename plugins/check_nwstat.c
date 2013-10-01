@@ -46,6 +46,7 @@ enum checkvar {
 	VPF,        /* check % free space on volume */
 	VMF,	    /* check MB free space on volume */
 	VMU,	    /* check MB used space on volume */
+	VPU,	    /* check % used space on volume */
 	VMP,	    /* check MB purgeable space on volume */
 	VKF,        /* check KB free space on volume */
 	LTCH,       /* check long-term cache hit percentage */
@@ -146,6 +147,8 @@ main(int argc, char **argv) {
 	unsigned long nss6_value=0L;
 	unsigned long nss7_value=0L;
 	unsigned long total_disk_space=0L;
+	unsigned long used_disk_space=0L;
+  unsigned long percent_used_disk_space=0L;
 	unsigned long purgeable_disk_space=0L;
 	unsigned long non_purgeable_disk_space=0L;
 	unsigned long percent_free_space=0;
@@ -452,7 +455,50 @@ main(int argc, char **argv) {
 				 warning_value,
 				 critical_value);
 		}
+		/* check % used space on volume */
+	} else if (vars_to_check==VPU) {
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
 
+		asprintf (&send_buffer,"VMU%s\r\n",volume_name);
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
+		if (result!=STATE_OK)
+			return result;
+
+		if (!strcmp(recv_buffer,"-1\n")) {
+
+			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
+			result=STATE_CRITICAL;
+
+		} else {
+			used_disk_space=strtoul(recv_buffer,NULL,10);
+			close(sd);
+			my_tcp_connect (server_address, server_port, &sd);
+      /* get total volume in MB */
+			asprintf (&send_buffer,"VMS%s\r\n",volume_name);
+			result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
+			if (result!=STATE_OK)
+				return result;
+			total_disk_space=strtoul(recv_buffer,NULL,10);
+      /* calculate percent used on volume */
+			percent_used_disk_space=(unsigned long)(((double)used_disk_space/(double)total_disk_space)*100.0);
+
+			if (check_critical_value==TRUE && percent_used_disk_space >= critical_value)
+				result=STATE_CRITICAL;
+			else if (check_warning_value==TRUE && percent_used_disk_space >= warning_value)
+				result=STATE_WARNING;
+			
+			asprintf (&output_message,_("%lu MB (%lu%%) used on volume %s - total %lu MB|Used space in percent on %s=%lu;%lu;%lu;0;100"),
+				used_disk_space,
+				percent_used_disk_space,
+				volume_name,
+				total_disk_space,
+				volume_name,
+        percent_used_disk_space,
+        warning_value,
+        critical_value
+        );
+		}
 
 		/* check % free space on volume */
 	} else if (vars_to_check==VPF) {
@@ -1450,6 +1496,12 @@ int process_arguments(int argc, char **argv) {
 					if (!strcmp(volume_name,""))
 						volume_name = strdup ("SYS");
 				}
+				else if (strncmp(optarg,"VPU",3)==0) {
+					vars_to_check=VPU;
+					volume_name = strdup (optarg+3);
+					if (!strcmp(volume_name,""))
+						volume_name = strdup ("SYS");
+				}
 				else if (strncmp(optarg,"VPP",3)==0) {
 					vars_to_check=VPP;
 					volume_name = strdup (optarg+3);
@@ -1626,6 +1678,7 @@ void print_help(void)
 	printf ("    %s\n", _("OFILES    = number of open files"));
   printf ("    %s\n", _("    VMF<vol>  = MB of free space on Volume <vol>"));
   printf ("    %s\n", _("    VMU<vol>  = MB used space on Volume <vol>"));
+  printf ("    %s\n", _("    VPU<vol>  = percent used space on Volume <vol>"));
   printf ("    %s\n", _("    VMP<vol>  = MB of purgeable space on Volume <vol>"));
   printf ("    %s\n", _("    VPF<vol>  = percent free space on volume <vol>"));
   printf ("    %s\n", _("    VKF<vol>  = KB of free space on volume <vol>"));
