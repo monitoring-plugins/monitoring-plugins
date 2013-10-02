@@ -3,13 +3,12 @@ LEAVERS
 These are the steps for someone leaving the team.
 
 Leaver has to:
-  - Update all current tracker items
+  - Update all current issues on Github
 
 Administration tasks:
   - Reassign leaver's tracker items to project lead
-  - Remove from Sourceforge's list of developers. This will include CVS access. Do not
-    need to remove from CVS avail file
-  - Remove access from repos.or.cz for all three Git repositories
+  - Remove from Github's project members. This will include GIT access.
+  - Remove access from project server
   - If applicable, remove from mailing list administrators
   - Keep on nagiosplug-team mailing list, unless specifically requested to be removed
 
