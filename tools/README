@@ -1,8 +1,8 @@
 The tools subdirectory contains anciliary files that can be used to configure
 or test the plugins.
 
-1. setup - used to get the configuration initialized after a CVS download
+1. setup - used for initialization after cloning the Git repository
 2. tango -
 3. mini_epn/p1.pl - used to test perl plugins for functionality under embedded
    perl
-4. distclean - used to clean the sources leaving only original CVS files
+4. distclean - used to clean the sources leaving only original Git files
