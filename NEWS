@@ -1,6 +1,6 @@
 This file documents the major additions and syntax changes between releases.
 
-...
+1.5 2nd October 2013
 	ENHANCEMENTS
 	New check_dbi plugin for checking an (SQL) database using DBI
 	Let OpenSSL load its configuration file (see the OPENSSL_config(3) man page)

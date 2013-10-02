@@ -6,7 +6,7 @@
 SRC_ROOT=`dirname $0`
 
 NPVF=NP-VERSION-FILE
-DEF_VER=1.4.16.git
+DEF_VER=1.5.git
 
 LF='
 '
