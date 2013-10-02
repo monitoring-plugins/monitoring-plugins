@@ -15,12 +15,10 @@ A: All plugins that comply with minimal development guideline for
    this project include detailed version information.  When executed
    with the '-V' option, a version string will be printed:
 
-   check_radius (nagios-plugins 1.3.0-alpha1) 1.11
+   check_radius v1.4.16 (nagios-plugins 1.4.16)
 
-   Note that this string include both the assigned package release
-   name and the CVS-generated revision for the individual plugin.
-   Authors should strictly adhere to this format.  All bug reports
-   and help requests should reference this information.
+   All bug reports and help requests should reference this
+   information.
 
 
 Q: What information do I need to include when asking for help or
