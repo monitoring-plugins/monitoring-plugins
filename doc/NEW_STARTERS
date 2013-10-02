@@ -5,7 +5,7 @@ These are the steps for adding someone to the team.
 Need to know:
   - Name
   - Primary email for nagiosplug-team mailings
-  - Sourceforge id
+  - Github account
   - Type of member (translator, developer, release manager, project administrator)
 
 1. Add member to nagiosplug-team mailing list (https://lists.sourceforge.net/lists/admin/nagiosplug-team)
@@ -18,8 +18,7 @@ Need to know:
                Update Developer Permissions.
 	       For each tracker, set to Technician (need to add all trackers first, then change to 
 		technician for each one)
-3. Add to CVS avail file:
-  - Translator: Add member to translation files
-  - Developer: Add member to CVSROOT/avail for all files
+3. Create account on project server
+  - Add public ssh keys
 4. Add Git access on repos.or.cz
 5. Send email to nagiosplug-team introducing new member
