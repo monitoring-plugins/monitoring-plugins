@@ -476,12 +476,6 @@ validate_arguments (void)
 	if (db_user == NULL)
 		db_user = strdup("");
 
-	if (opt_file == NULL)
-		opt_file = strdup("");
-
-	if (opt_group == NULL)
-		opt_group = strdup("");
-
 	if (db_host == NULL)
 		db_host = strdup("");
 
