@@ -46,6 +46,8 @@ char *db_host = NULL;
 char *db_socket = NULL;
 char *db_pass = NULL;
 char *db = NULL;
+char *opt_file = NULL;
+char *opt_group = NULL;
 unsigned int db_port = MYSQL_PORT;
 
 int process_arguments (int, char **);
@@ -83,7 +85,13 @@ main (int argc, char **argv)
 	/* initialize mysql  */
 	mysql_init (&mysql);
 
-	mysql_options(&mysql,MYSQL_READ_DEFAULT_GROUP,"client");
+	if (opt_file != NULL)
+		mysql_options(&mysql,MYSQL_READ_DEFAULT_FILE,opt_file);
+
+	if (opt_group != NULL)
+		mysql_options(&mysql,MYSQL_READ_DEFAULT_GROUP,opt_group);
+	else
+		mysql_options(&mysql,MYSQL_READ_DEFAULT_GROUP,"client");
 
 	/* establish a connection to the server and error checking */
 	if (!mysql_real_connect(&mysql,db_host,db_user,db_pass,db,db_port,db_socket,0)) {
@@ -174,6 +182,8 @@ process_arguments (int argc, char **argv)
 		{"database", required_argument, 0, 'd'},
 		{"username", required_argument, 0, 'u'},
 		{"password", required_argument, 0, 'p'},
+		{"file", required_argument, 0, 'f'},
+		{"group", required_argument, 0, 'g'},
 		{"port", required_argument, 0, 'P'},
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
@@ -188,7 +198,7 @@ process_arguments (int argc, char **argv)
 		return ERROR;
 
 	while (1) {
-		c = getopt_long (argc, argv, "hvVP:p:u:d:H:s:q:w:c:", longopts, &option);
+		c = getopt_long (argc, argv, "hvVP:p:u:d:H:s:q:w:c:f:g:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -219,6 +229,12 @@ process_arguments (int argc, char **argv)
 				*optarg = 'X';
 				optarg++;
 			}
+			break;
+		case 'f':									/* client options file */
+			opt_file = optarg;
+			break;
+		case 'g':									/* client options group */
+			opt_group = optarg;
 			break;
 		case 'P':									/* critical time threshold */
 			db_port = atoi (optarg);
@@ -299,6 +315,10 @@ print_help (void)
 	printf ("    %s\n", _("Use the specified socket (has no effect if -H is used)"));
 	printf (" -d, --database=STRING\n");
 	printf ("    %s\n", _("Database to check"));
+	printf (" %s\n", "-f, --file=STRING");
+	printf ("    %s\n", _("Read from the specified client options file"));
+	printf (" %s\n", "-g, --group=STRING");
+	printf ("    %s\n", _("Use a client options group"));
 	printf (" -u, --username=STRING\n");
 	printf ("    %s\n", _("Username to login with"));
 	printf (" -p, --password=STRING\n");
