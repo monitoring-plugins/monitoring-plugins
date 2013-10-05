@@ -344,5 +344,5 @@ print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
   printf (" %s -q SQL_query [-w warn] [-c crit] [-H host] [-P port] [-s socket]\n",progname);
-  printf ("       [-d database] [-u user] [-p password]\n");
+  printf ("       [-d database] [-u user] [-p password] [-f optfile] [-g group]\n");
 }
