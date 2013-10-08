@@ -180,7 +180,8 @@ char *fperfdata (const char *,
 #ifdef NP_EXTRA_OPTS
 #define UT_EXTRA_OPTS _("\
  --extra-opts=[section][@file]\n\
-    Read options from an ini file. See http://nagiosplugins.org/extra-opts\n\
+    Read options from an ini file. See\n\
+    https://www.nagios-plugins.org/doc/extra-opts.html\n\
     for usage and examples.\n")
 #else
 #define UT_EXTRA_OPTS ""
@@ -188,7 +189,7 @@ char *fperfdata (const char *,
 
 #define UT_THRESHOLDS_NOTES _("\
  See:\n\
- http://nagiosplug.sourceforge.net/developer-guidelines.html#THRESHOLDFORMAT\n\
+ https://www.nagios-plugins.org/doc/guidelines.html#THRESHOLDFORMAT\n\
  for THRESHOLD format and examples.\n")
 
 #define UT_SUPPORT _("\n\
