@@ -1197,10 +1197,10 @@ check_http (void)
            perfd_time (elapsed_time),
            perfd_size (page_len),
            perfd_time_connect (elapsed_time_connect),
-           use_ssl == TRUE ? perfd_time_ssl (elapsed_time_ssl) : "",
            perfd_time_headers (elapsed_time_headers),
            perfd_time_firstbyte (elapsed_time_firstbyte),
-           perfd_time_transfer (elapsed_time_transfer));
+           perfd_time_transfer (elapsed_time_transfer),
+           use_ssl == TRUE ? perfd_time_ssl (elapsed_time_ssl) : "");
   else
     xasprintf (&msg,
            _("%s - %d bytes in %.3f second response time %s|%s %s"),
