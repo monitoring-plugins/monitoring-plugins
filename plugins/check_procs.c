@@ -123,6 +123,7 @@ main (int argc, char **argv)
 	char *procprog;
 
 	pid_t mypid = 0;
+	pid_t myppid = 0;
 	struct stat statbuf;
 	dev_t mydev = 0;
 	ino_t myino = 0;
@@ -172,6 +173,7 @@ main (int argc, char **argv)
 
 	/* find ourself */
 	mypid = getpid();
+	myppid = getppid();
 	if (usepid || stat_exe(mypid, &statbuf) == -1) {
 		/* usepid might have been set by -T */
 		usepid = 1;
@@ -239,6 +241,12 @@ main (int argc, char **argv)
 				 (ret == -1 && errno == ENOENT))) {
 				if (verbose >= 3)
 					 printf("not considering - is myself or gone\n");
+				continue;
+			}
+			/* Ignore parent*/
+			else if (myppid == procpid) {
+				if (verbose >= 3)
+					 printf("not considering - is parent\n");
 				continue;
 			}
 
@@ -409,7 +417,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvhkt:c:w:p:s:u:C:a:z:r:m:P:T",
+		c = getopt_long (argc, argv, "Vvihkt:c:w:p:s:u:C:a:z:r:m:P:T",
 			longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -773,5 +781,5 @@ print_usage (void)
   printf ("%s\n", _("Usage:"));
 	printf ("%s -w <range> -c <range> [-m metric] [-s state] [-p ppid]\n", progname);
   printf (" [-u user] [-r rss] [-z vsz] [-P %%cpu] [-a argument-array]\n");
-  printf (" [-C command] [-k] [-t timeout] [-v]\n");
+  printf (" [-C command] [-k] [-i] [-t timeout] [-v]\n");
 }
