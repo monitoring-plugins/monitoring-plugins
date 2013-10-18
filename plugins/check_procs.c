@@ -123,6 +123,7 @@ main (int argc, char **argv)
 	char *procprog;
 
 	pid_t mypid = 0;
+	pid_t myppid = 0;
 	struct stat statbuf;
 	dev_t mydev = 0;
 	ino_t myino = 0;
@@ -172,6 +173,7 @@ main (int argc, char **argv)
 
 	/* find ourself */
 	mypid = getpid();
+	myppid = getppid();
 	if (usepid || stat_exe(mypid, &statbuf) == -1) {
 		/* usepid might have been set by -T */
 		usepid = 1;
@@ -239,6 +241,12 @@ main (int argc, char **argv)
 				 (ret == -1 && errno == ENOENT))) {
 				if (verbose >= 3)
 					 printf("not considering - is myself or gone\n");
+				continue;
+			}
+			/* Ignore parent*/
+			else if (myppid == procpid) {
+				if (verbose >= 3)
+					 printf("not considering - is parent\n");
 				continue;
 			}
 
