@@ -175,7 +175,7 @@ char *fperfdata (const char *,
 
 #define UT_TIMEOUT _("\
  -t, --timeout=INTEGER\n\
-    Seconds before connection times out (default: %d)\n")
+    Seconds before plugin times out (default: %d)\n")
 
 #ifdef NP_EXTRA_OPTS
 #define UT_EXTRA_OPTS _("\
