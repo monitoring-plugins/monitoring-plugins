@@ -215,8 +215,13 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 {
 	int sd;
 	int result;
+	int len = 0;
+	ssize_t byte_offset = 0;
+	ssize_t recv_ret = 0;
+	char *version_control_string = NULL;
 	char *output = NULL;
 	char *buffer = NULL;
+	char *tmp= NULL, *saveptr = NULL;
 	char *ssh_proto = NULL;
 	char *ssh_server = NULL;
 	static char *rev_no = VERSION;
@@ -231,51 +236,94 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 		return result;
 
 	output = (char *) malloc (BUFF_SZ + 1);
-	memset (output, 0, BUFF_SZ + 1);
-	recv (sd, output, BUFF_SZ, 0);
-	if (strncmp (output, "SSH", 3)) {
-		printf (_("Server answer: %s"), output);
+	memset(output, 0, BUFF_SZ+1);
+	while (!version_control_string && (recv_ret = recv(sd, output+byte_offset, BUFF_SZ - byte_offset, 0)) > 0) {
+		if (strchr(output, '\n')) { /* we've got at least one full line, start parsing*/
+			byte_offset = 0;
+			while (strchr(output+byte_offset, '\n') != NULL) {
+				/*Partition the buffer so that this line is a separate string,
+				 * by replacing the newline with NUL*/
+				output[(strchr(output+byte_offset, '\n')-output)]= '\0';
+				len = strlen(output+byte_offset);
+				if (len >= 4) {
+					/*if the string starts with SSH-, this _should_ be a valid version control string*/
+					if (strncmp (output+byte_offset, "SSH-", 4) == 0) {
+						version_control_string = output+byte_offset;
+						break;
+					}
+				}
+
+				/*the start of the next line (if one exists) will be after the current one (+ NUL)*/
+				byte_offset+=len+1;
+			}
+			if(!version_control_string) {
+				/* move unconsumed data to beginning of buffer, null rest */
+				memmove((void *)output, (void *)output+byte_offset+1, BUFF_SZ - len+1);
+				memset(output+byte_offset+1, 0, BUFF_SZ-byte_offset+1);
+
+				/*start reading from end of current line chunk on next recv*/
+				byte_offset = strlen(output);
+			}
+		}
+		else {
+			byte_offset += recv_ret;
+		}
+	}
+	tmp = NULL;
+	if (recv_ret < 0) {
+		printf("SSH CRITICAL - %s", strerror(errno));
+		exit(STATE_CRITICAL);
+	}
+	if (!version_control_string) {
+		printf("SSH CRITICAL - No version control string received");
+		exit(STATE_CRITICAL);
+	}
+	strip (version_control_string);
+	if (verbose)
+		printf ("%s\n", version_control_string);
+	ssh_proto = version_control_string + 4;
+	ssh_server = ssh_proto + strspn (ssh_proto, "-0123456789.");
+
+	/* If there's a space in the version string, whatever's after the space is a comment
+	 * (which is NOT part of the server name/version)*/
+	tmp = strchr(ssh_server, ' ');
+	if (tmp) {
+		ssh_server[tmp - ssh_server] = '\0';
+	}
+	if (strlen(ssh_proto) == 0 || strlen(ssh_server) == 0) {
+		printf(_("SSH CRITICAL - Invalid protocol version control string %s\n"), version_control_string);
+		exit (STATE_CRITICAL);
+	}
+	ssh_proto[strspn (ssh_proto, "0123456789. ")] = 0;
+
+	xasprintf (&buffer, "SSH-%s-check_ssh_%s\r\n", ssh_proto, rev_no);
+	send (sd, buffer, strlen (buffer), MSG_DONTWAIT);
+	if (verbose)
+		printf ("%s\n", buffer);
+
+	if (remote_version && strcmp(remote_version, ssh_server)) {
+		printf
+			(_("SSH CRITICAL - %s (protocol %s) version mismatch, expected '%s'\n"),
+			 ssh_server, ssh_proto, remote_version);
 		close(sd);
 		exit (STATE_CRITICAL);
 	}
-	else {
-		strip (output);
-		if (verbose)
-			printf ("%s\n", output);
-		ssh_proto = output + 4;
-		ssh_server = ssh_proto + strspn (ssh_proto, "-0123456789. ");
-		ssh_proto[strspn (ssh_proto, "0123456789. ")] = 0;
 
-		xasprintf (&buffer, "SSH-%s-check_ssh_%s\r\n", ssh_proto, rev_no);
-		send (sd, buffer, strlen (buffer), MSG_DONTWAIT);
-		if (verbose)
-			printf ("%s\n", buffer);
-
-		if (remote_version && strcmp(remote_version, ssh_server)) {
-			printf
-				(_("SSH CRITICAL - %s (protocol %s) version mismatch, expected '%s'\n"),
-				 ssh_server, ssh_proto, remote_version);
-			close(sd);
-			exit (STATE_CRITICAL);
-		}
-
-		if (remote_protocol && strcmp(remote_protocol, ssh_proto)) {
-			printf
-				(_("SSH CRITICAL - %s (protocol %s) protocol version mismatch, expected '%s'\n"),
-				 ssh_server, ssh_proto, remote_protocol);
-			close(sd);
-			exit (STATE_CRITICAL);
-		}
-
-		elapsed_time = (double)deltime(tv) / 1.0e6;
-
+	if (remote_protocol && strcmp(remote_protocol, ssh_proto)) {
 		printf
-			(_("SSH OK - %s (protocol %s) | %s\n"),
-			 ssh_server, ssh_proto, fperfdata("time", elapsed_time, "s",
-			 FALSE, 0, FALSE, 0, TRUE, 0, TRUE, (int)socket_timeout));
+			(_("SSH CRITICAL - %s (protocol %s) protocol version mismatch, expected '%s'\n"),
+			 ssh_server, ssh_proto, remote_protocol);
 		close(sd);
-		exit (STATE_OK);
+		exit (STATE_CRITICAL);
 	}
+	elapsed_time = (double)deltime(tv) / 1.0e6;
+
+	printf
+		(_("SSH OK - %s (protocol %s) | %s\n"),
+		 ssh_server, ssh_proto, fperfdata("time", elapsed_time, "s",
+			 FALSE, 0, FALSE, 0, TRUE, 0, TRUE, (int)socket_timeout));
+	close(sd);
+	exit (STATE_OK);
 }
 
 
