@@ -164,6 +164,7 @@ case "$cmd" in
     ;;
 --db)
     pmonchk=`ps -ef | grep -v grep | grep -c "ora_pmon_${2}$"`
+    pmonchk=$(($pmonchk+`ps -ef | grep -v grep | grep -c "asm_pmon_${2}$"`))
     if [ ${pmonchk} -ge 1 ] ; then
 	echo "${2} OK - ${pmonchk} PMON process(es) running"
 	exit $STATE_OK
