@@ -32,7 +32,7 @@ sub print_usage ();
 
 $PROGNAME = "check_disk_smb";
 
-$ENV{'PATH'}='';
+$ENV{'PATH'}='@trusted_path@';
 $ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
 
