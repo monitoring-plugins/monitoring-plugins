@@ -37,7 +37,7 @@
 
 const char *progname = "check_ntp_peer";
 const char *copyright = "2006-2008";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@nagios-plugins.org";
 
 #include "common.h"
 #include "netutils.h"

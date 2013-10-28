@@ -34,7 +34,7 @@
 
 const char *progname = "check_dig";
 const char *copyright = "2002-2008";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@nagios-plugins.org";
 
 #include "common.h"
 #include "netutils.h"

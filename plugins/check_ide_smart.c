@@ -35,7 +35,7 @@
 
 const char *progname = "check_ide_smart";
 const char *copyright = "1998-2007";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@nagios-plugins.org";
 	
 #include "common.h"
 #include "utils.h"

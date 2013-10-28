@@ -32,7 +32,7 @@
 
 const char *progname = "check_mysql";
 const char *copyright = "1999-2011";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@nagios-plugins.org";
 
 #define SLAVERESULTSIZE 70
 

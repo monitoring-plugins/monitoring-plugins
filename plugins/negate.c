@@ -31,7 +31,7 @@
 
 const char *progname = "negate";
 const char *copyright = "2002-2008";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@nagios-plugins.org";
 
 #define DEFAULT_TIMEOUT 11
 

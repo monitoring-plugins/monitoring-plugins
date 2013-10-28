@@ -193,9 +193,9 @@ char *fperfdata (const char *,
  for THRESHOLD format and examples.\n")
 
 #define UT_SUPPORT _("\n\
-Send email to nagios-users@lists.sourceforge.net if you have questions\n\
-regarding use of this software. To submit patches or suggest improvements,\n\
-send email to nagiosplug-devel@lists.sourceforge.net\n\n")
+Send email to help@nagios-plugins.org if you have questions regarding use\n\
+of this software. To submit patches or suggest improvements, send email to\n\
+devel@nagios-plugins.org\n\n")
 
 #define UT_NOWARRANTY _("\n\
 The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\

@@ -22,8 +22,8 @@ Summary: Host/service/network monitoring program plugins for Nagios
 
 Group: Applications/System
 License: GPL
-URL: http://nagiosplug.sourceforge.net/
-Source0: http://dl.sf.net/sourceforge/nagiosplug/%{name}-%{version}.tar.gz
+URL: https://www.nagios-plugins.org/
+Source0: https://www.nagios-plugins.org/download/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %define npdir %{_builddir}/%{name}-%{version}

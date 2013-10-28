@@ -22,7 +22,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #
 #
-# Report bugs to:  nagiosplug-help@lists.sourceforge.net
+# Report bugs to:  help@nagios-plugins.org
 #
 # 11.01.2000 Version 1.0
 #

@@ -30,7 +30,7 @@
 /* progname "check_tcp" changes depending on symlink called */
 char *progname;
 const char *copyright = "1999-2008";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@nagios-plugins.org";
 
 #include <ctype.h>
 

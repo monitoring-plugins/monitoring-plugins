@@ -40,7 +40,7 @@
 /* char *progname = "check_icmp"; */
 char *progname;
 const char *copyright = "2005-2008";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@nagios-plugins.org";
 
 /** nagios plugins basic includes */
 #include "common.h"

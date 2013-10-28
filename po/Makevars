@@ -25,5 +25,5 @@ COPYRIGHT_HOLDER = Nagios Plugin Development Group
 EXTRA_LOCALE_CATEGORIES =
 
 # Email address were to send bug report for the .po translation files
-PACKAGE_BUGREPORT = nagiosplug-devel@lists.sourceforge.net
+PACKAGE_BUGREPORT = devel@nagios-plugins.org
 

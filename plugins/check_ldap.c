@@ -29,7 +29,7 @@
 /* progname may be check_ldaps */
 char *progname = "check_ldap";
 const char *copyright = "2000-2008";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@nagios-plugins.org";
 
 #include "common.h"
 #include "netutils.h"

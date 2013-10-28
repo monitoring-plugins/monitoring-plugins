@@ -34,7 +34,7 @@
 
 const char *progname = "check_mrtgtraf";
 const char *copyright = "1999-2007";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@nagios-plugins.org";
 
 int process_arguments (int, char **);
 int validate_arguments (void);

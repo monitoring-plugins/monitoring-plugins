@@ -32,7 +32,7 @@
 
 const char *progname = "urlize";
 const char *copyright = "2000-2006";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@nagios-plugins.org";
 
 #include "common.h"
 #include "utils.h"

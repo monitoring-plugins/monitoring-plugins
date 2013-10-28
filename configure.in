@@ -61,7 +61,7 @@ AC_SUBST(SCRIPT_TEST)dnl
 WARRANTY="The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\ncopies of the plugins under the terms of the GNU General Public License.\nFor more information about these matters, see the file named COPYING.\n"
 AC_SUBST(WARRANTY)
 
-SUPPORT="Send email to nagios-users@lists.sourceforge.net if you have questions\nregarding use of this software. To submit patches or suggest improvements,\nsend email to nagiosplug-devel@lists.sourceforge.net.\nPlease include version information with all correspondence (when possible,\nuse output from the --version option of the plugin itself).\n"
+SUPPORT="Send email to help@nagios-plugins.org if you have questions regarding use\nof this software. To submit patches or suggest improvements, send email to\ndevel@nagios-plugins.org. Please include version information with all\ncorrespondence (when possible, use output from the --version option of the\nplugin itself).\n"
 AC_SUBST(SUPPORT)
 
 dnl CGIURL has changed for Nagios with 1.0 beta

@@ -7,8 +7,8 @@ http://www.nagios.org/ to track the current status of commercial
 support offerings.
 
 There are two mailing lists associated with Nagios Plugin development:
-'help' (mailto:nagiosplug-help@lists.sourceforge.net), and 'devel'
-(mailto:nagiosplug-devel@lists.sourceforge.net). Unless you are fairly
+'help' (mailto:help@nagios-plugins.org), and 'devel'
+(mailto:devel@nagios-plugins.org). Unless you are fairly
 certain you have found a bug or that you are requesting a new feature,
 please direct support requests to 'help'.
 
@@ -48,8 +48,8 @@ REPORTING BUGS AND SUBMITTING PATCHES
 
 Bug reports, investigations of possible bugs, feature requests, and
 patch submissions should be submitted to the development list at
-mailto:nagiosplug-devel@lists.sourceforge.net. Please raise an issue first 
-in GitHub, otherwise your email is likely to be missed over time.
+mailto:devel@nagios-plugins.org. Please raise an issue first in
+GitHub, otherwise your email is likely to be missed over time.
 
 You should identify the version, preferably in the subject line. 
 However, to best use developer resources, it is suggested that you 

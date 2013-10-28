@@ -30,7 +30,7 @@
 
 const char *progname = "check_snmp";
 const char *copyright = "1999-2007";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@nagios-plugins.org";
 
 #include "common.h"
 #include "runcmd.h"
