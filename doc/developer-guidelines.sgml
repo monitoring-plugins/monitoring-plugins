@@ -694,7 +694,7 @@ This runs the test in a summary format.
 
 <para>
 For a good and amusing tutorial on using Test::More, see this 
-<ulink url="http://search.cpan.org/~mschwern/Test-Simple-0.62/lib/Test/Tutorial.pod">
+<ulink url="http://search.cpan.org/dist/Test-Simple/lib/Test/Tutorial.pod">
 link</ulink>
 </para>
 
