@@ -32,7 +32,9 @@ judgment.
 Send an email to <devel@nagios-plugins.org> for developer discussions.
 
 For patch submissions and bug reports, please use the appropriate resources
-at <https://github.com/nagios-plugins/nagios-plugins>.
+at:
+
+* <https://github.com/nagios-plugins>
 
 
 Installation Instructions
