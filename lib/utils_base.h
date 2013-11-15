@@ -62,7 +62,7 @@ int check_range(double, range *);
 int get_status(double, thresholds *);
 
 /* All possible characters in a threshold range */
-#define NP_THRESHOLDS_CHARS "0123456789.:@~"
+#define NP_THRESHOLDS_CHARS "-0123456789.:@~"
 
 char *np_escaped_string (const char *);
 
