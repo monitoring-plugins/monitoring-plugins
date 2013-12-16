@@ -296,7 +296,10 @@ process_arguments (int argc, char **argv)
       dns_server = argv[c];
     }
     else {
-      dns_server = strdup ("127.0.0.1");
+      if (strcmp(query_transport,"-6") == 0)
+        dns_server = strdup("::1");
+      else
+        dns_server = strdup ("127.0.0.1");
     }
   }
 
