@@ -88,8 +88,8 @@ main (int argc, char **argv)
     usage_va(_("Could not parse arguments"));
 
   /* get the command to run */
-  xasprintf (&command_line, "%s @%s -p %d %s -t %s %s %s",
-            PATH_TO_DIG, dns_server, server_port, query_address, record_type, dig_args, query_transport);
+  xasprintf (&command_line, "%s %s %s -p %d @%s %s %s",
+            PATH_TO_DIG, dig_args, query_transport, server_port, dns_server, query_address, record_type);
 
   alarm (timeout_interval);
   gettimeofday (&tv, NULL);
