@@ -163,8 +163,6 @@ fi
 %install
 rm -rf $RPM_BUILD_ROOT
 make AM_INSTALL_PROGRAM_FLAGS="" DESTDIR=${RPM_BUILD_ROOT} install
-build-aux/install-sh -c  -d ${RPM_BUILD_ROOT}%{_sysconfdir}
-build-aux/install-sh -c  -m 664 command.cfg ${RPM_BUILD_ROOT}%{_sysconfdir}
 %find_lang %{name}
 echo "%defattr(755,%{npusr},%{npgrp})" >> %{name}.lang
 comm -13 %{npdir}/ls-plugins-before %{npdir}/ls-plugins-after | egrep -v "\.o$|^\." | gawk -v libexecdir=%{_libexecdir} '{printf( "%s/%s\n", libexecdir, $0);}' >> %{name}.lang
@@ -174,6 +172,10 @@ echo "%defattr(755,%{npusr},%{npgrp})" >> %{name}.lang
 comm -13 %{npdir}/ls-plugins-scripts-before %{npdir}/ls-plugins-scripts-after | egrep -v "\.o$|^\." | gawk -v libexecdir=%{_libexecdir} '{printf( "%s/%s\n", libexecdir, $0);}' >> %{name}.lang
 echo "%{_libexecdir}/utils.pm" >> %{name}.lang
 echo "%{_libexecdir}/utils.sh" >> %{name}.lang
+echo "%{_libexecdir}/check_ldaps" >> %{name}.lang
+
+sed -i '/libnpcommon/d' %{name}.lang
+sed -i '/nagios-plugins.mo/d' %{name}.lang
 
 %clean
 rm -rf $RPM_BUILD_ROOT
