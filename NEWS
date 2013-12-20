@@ -1,5 +1,9 @@
 This file documents the major additions and syntax changes between releases.
 
+1.5.1 ...
+	FIXES
+	Don't let e.g. check_http's -C option reset SSL version if e.g. -S 1 -C 5 is specified
+
 1.5 2nd October 2013
 	ENHANCEMENTS
 	New check_dbi plugin for checking an (SQL) database using DBI
