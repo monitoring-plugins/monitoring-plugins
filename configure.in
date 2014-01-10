@@ -6,7 +6,7 @@ AC_CONFIG_FILES([gl/Makefile
 	nagios-plugins.spec])
 AC_CONFIG_AUX_DIR(build-aux)
 AM_INIT_AUTOMAKE([1.8.3])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_HOST
 
 RELEASE=1
