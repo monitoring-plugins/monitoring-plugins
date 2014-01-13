@@ -60,7 +60,6 @@
 # TV: removed PATH restriction. Need to think more about what this means overall
 #PATH=""
 
-ECHO="/bin/echo"
 GREP="/bin/egrep"
 DIFF="/bin/diff"
 TAIL="/bin/tail"
@@ -167,10 +166,10 @@ done
 # If the source log file doesn't exist, exit
 
 if [ ! -e $logfile ]; then
-    $ECHO "Log check error: Log file $logfile does not exist!\n"
+    echo "Log check error: Log file $logfile does not exist!"
     exit $STATE_UNKNOWN
 elif [ ! -r $logfile ] ; then
-    $ECHO "Log check error: Log file $logfile is not readable!\n"
+    echo "Log check error: Log file $logfile is not readable!"
     exit $STATE_UNKNOWN
 fi
 
@@ -180,7 +179,7 @@ fi
 
 if [ ! -e $oldlog ]; then
     $CAT $logfile > $oldlog
-    $ECHO "Log check data initialized...\n"
+    echo "Log check data initialized..."
     exit $STATE_OK
 fi
 
@@ -209,10 +208,10 @@ $RM -f $tempdiff
 $CAT $logfile > $oldlog
 
 if [ "$count" = "0" ]; then # no matches, exit with no error
-    $ECHO "Log check ok - 0 pattern matches found\n"
+    echo "Log check ok - 0 pattern matches found"
     exitstatus=$STATE_OK
 else # Print total matche count and the last entry we found
-    $ECHO "($count) $lastentry"
+    echo "($count) $lastentry"
     exitstatus=$STATE_CRITICAL
 fi
 

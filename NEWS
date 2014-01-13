@@ -3,6 +3,7 @@ This file documents the major additions and syntax changes between releases.
 1.6 ...
 	WARNINGS
 	check_procs now ignores its parent process to avoid unexpected results when invoked via certain shells
+	utils.sh no longer defines ECHO
 
 1.5 2nd October 2013
 	ENHANCEMENTS
