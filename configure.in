@@ -217,10 +217,10 @@ AC_CHECK_LIB(ssh,ssh_connect)
 if test "$ac_cv_lib_ssh_ssh_connect" = "yes"; then
 	SSHLIB="-lssh"
   AC_SUBST(SSHLIB)
-  AC_DEFINE(HAVE_SSH,1,[Define if SSL libraries are found])
+  AC_DEFINE(HAVE_SSH,1,[Define if SSH libraries are found])
 else
     AC_MSG_WARN([Skipping check_ssh plugin])
-    AC_MSG_WARN([install ssh libs to compile this plugin (see REQUIREMENTS).]) 
+    AC_MSG_WARN([install ssh libs to compile this plugin (see REQUIREMENTS).])
 fi
 
 

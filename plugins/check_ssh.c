@@ -89,7 +89,7 @@ main (int argc, char **argv)
 	alarm (socket_timeout);
 
 	/* ssh_connect exits if error is found */
-	
+
 	#ifdef HAVE_SSH
 	if(remote_openssh_version != NULL || remote_fingerprint != NULL) {
 		result = ssh_connect_p (server_name, port, remote_openssh_version, remote_fingerprint);
@@ -116,8 +116,8 @@ ssh_connect_wo_lib (char *haddr, int hport, char *remote_version)
 	static char *rev_no = VERSION;
 	struct timeval tv;
 	double elapsed_time;
-
 	gettimeofday(&tv, NULL);
+
 
 	result = my_tcp_connect (haddr, hport, &sd);
 
@@ -184,7 +184,6 @@ process_arguments (int argc, char **argv)
 		{"remote-version", required_argument, 0, 'r'},
 		{"fingerprint", required_argument, 0, 'f'},
 		{"remote-openssh-version", required_argument, 0, 'o'},
-		
 		{0, 0, 0, 0}
 	};
 
@@ -233,7 +232,7 @@ process_arguments (int argc, char **argv)
 			remote_version = optarg;
 			break;
 		case 'o':
-			remote_openssh_version=optarg;
+			remote_openssh_version = optarg;
 		break;
 		case 'f':									/* remote version */
 			remote_fingerprint = optarg;
@@ -294,94 +293,77 @@ validate_arguments (void)
 int
 ssh_connect_p (char *haddr, int hport, char *remote_version, char * remote_fingerprint)
 {
-
 	struct timeval tv;
 	double elapsed_time;
 
 	ssh_session my_ssh_session;
-  int  version;
-  int myversion;
-  int hlen;
-  int rc;
-  int state;
-  int i;
-  unsigned char *hash = NULL;
-  char *  fingerprint;
-  int in_known_host;
-  
-  int sshv1,sshv2,sshv3;
-  
+	int  version;
+	int myversion;
+	int hlen;
+	int rc;
+	int state;
+	int i;
+	unsigned char *hash = NULL;
+	char *  fingerprint;
+	int in_known_host;
+
+	int sshv1,sshv2,sshv3;
 
 	gettimeofday(&tv, NULL);
 
-	 my_ssh_session = ssh_new();
+	my_ssh_session = ssh_new();
 
-    if (my_ssh_session == NULL)
-    return STATE_CRITICAL;
-    
- 
-  	ssh_options_set(my_ssh_session, SSH_OPTIONS_HOST, haddr);
-  	ssh_options_set(my_ssh_session, SSH_OPTIONS_PORT, &hport);
- 		rc = ssh_connect(my_ssh_session);
-  	if (rc != SSH_OK)
-  	{
-    	printf("Connect to Server failed\n");
-			exit (STATE_CRITICAL);
-  	}
-  	in_known_host=-1;
-  	state = ssh_is_server_known(my_ssh_session);
-  	hlen = ssh_get_pubkey_hash(my_ssh_session, &hash);
+	if (my_ssh_session == NULL)
+		return STATE_CRITICAL;
 
-		fingerprint = ssh_get_hexa(hash, hlen);
-		if(remote_fingerprint && strcmp(remote_fingerprint, "known_host") == NULL) {
-			if(state != SSH_SERVER_KNOWN_OK) {
-				printf("SSH CRITICAL - Fingerprint (%s) checked in known_hosts failed\n", remote_fingerprint,fingerprint);
-	    	exit(STATE_CRITICAL);
-			} else {
-				in_known_host=1;
-			}
-		}	
-		//Get the finger print as a string
-		
-    version = ssh_get_openssh_version(my_ssh_session);
-    if(remote_fingerprint && strcmp(remote_fingerprint, "known_host") && strcmp(remote_fingerprint, fingerprint)) {
+	ssh_options_set(my_ssh_session, SSH_OPTIONS_HOST, haddr);
+	ssh_options_set(my_ssh_session, SSH_OPTIONS_PORT, &hport);
+	rc = ssh_connect(my_ssh_session);
+	if (rc != SSH_OK) {
+		printf ("Connect to Server failed\n");
+		exit (STATE_CRITICAL);
+	}
+	in_known_host=-1;
+	state = ssh_is_server_known(my_ssh_session);
+	hlen = ssh_get_pubkey_hash(my_ssh_session, &hash);
 
-    	printf("SSH CRITICAL - Fingerprint (%s) mismatched %s\n", remote_fingerprint,fingerprint);
+	/* Get the finger print as a string */
+	fingerprint = ssh_get_hexa(hash, hlen);
+	if(remote_fingerprint && strcmp(remote_fingerprint, "known_host") == NULL) {
+		if(state != SSH_SERVER_KNOWN_OK) {
+			printf ("SSH CRITICAL - Fingerprint (%s) checked in known_hosts failed\n", remote_fingerprint,fingerprint);
+			exit(STATE_CRITICAL);
+		} else {
+			in_known_host=1;
+		}
+	}
 
-    	free(fingerprint);
-    	exit(STATE_CRITICAL);
-    }
-		
-		if(remote_version && sscanf(remote_version, "%d.%d.%d", &sshv1, &sshv2, &sshv3)) {
-    	myversion = SSH_VERSION_INT(sshv1, sshv2, sshv3);	
-    	if(version < myversion) {
-    		printf("SSH WARNING version on server is below %s\n", remote_version);
-    		exit(STATE_CRITICAL);
-    	}
-    }
-    
-    
-    elapsed_time = (double)deltime(tv) / 1.0e6;
+	/* FIXME: This alwats eval to false... */
+	if(remote_fingerprint && strcmp(remote_fingerprint, "known_host") && strcmp(remote_fingerprint, fingerprint)) {
+		printf ("SSH CRITICAL - Fingerprint (%s) mismatched %s\n", remote_fingerprint,fingerprint);
+		free(fingerprint);
+		exit(STATE_CRITICAL);
+	}
 
-		printf
-			(_("SSH OK - fingerprint: %s (Version %d) known_host_check:%d | %s\n"),
-			 fingerprint, version,in_known_host, fperfdata("time", elapsed_time, "s",
-			 FALSE, 0, FALSE, 0, TRUE, 0, TRUE, (int)socket_timeout));
-			 
-		free(fingerprint); 
-   	ssh_disconnect(my_ssh_session);
-  	ssh_free(my_ssh_session);
-    exit(STATE_OK);
-  	
-  	
-  	
-  
-  	
-  	
-  	
-  	
-	
-	
+	version = ssh_get_openssh_version(my_ssh_session);
+	if(remote_version && sscanf(remote_version, "%d.%d.%d", &sshv1, &sshv2, &sshv3)) {
+		myversion = SSH_VERSION_INT(sshv1, sshv2, sshv3);
+		if(version < myversion) {
+			printf ("SSH WARNING version on server is below %s\n", remote_version);
+			exit(STATE_CRITICAL);
+		}
+	}
+
+	elapsed_time = (double)deltime(tv) / 1.0e6;
+
+	printf (_("SSH OK - fingerprint: %s (Version %d) known_host_check:%d | %s\n"),
+	        fingerprint, version,in_known_host, fperfdata("time", elapsed_time, "s",
+	        FALSE, 0, FALSE, 0, TRUE, 0, TRUE, (int)socket_timeout));
+	free(fingerprint);
+	ssh_disconnect(my_ssh_session);
+	ssh_free(my_ssh_session);
+	exit(STATE_OK);
+
 }
 #endif
 
@@ -402,7 +384,7 @@ print_help (void)
 
 	printf ("%s\n", _("Try to connect to an SSH server at specified server and port"));
 
-  printf ("\n\n");
+	printf ("\n\n");
 
 	print_usage ();
 
@@ -416,15 +398,17 @@ print_help (void)
 	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 	printf (" %s\n", "-r, --remote-version=STRING");
-  printf ("    %s\n", _("Warn if string doesn't match expected server version (ex: OpenSSH_3.9p1)"));
-  
-  #ifdef HAVE_SSH
-  printf (" %s\n", "-o, --remote-openssh-version=STRING");
-  printf ("    %s\n", _("Warn if Remote Openssh version is lower than STRING"));
-  #endif
-  
-  printf (" %s\n", "-f, --fingerprint=STRING (e.g.: a247e883d98bf5c41923470de0bfa826)");
-  printf ("    %s\n", _("Critical if remote fingerprint is not equal to supplied"));
+
+	printf ("    %s\n", _("Warn if string doesn't match expected server version (ex: OpenSSH_3.9p1)"));
+
+#ifdef HAVE_SSH
+	printf (" %s\n", "-o, --remote-openssh-version=STRING");
+	printf ("    %s\n", _("Warn if Remote Openssh version is lower than STRING"));
+#endif
+
+	printf (" %s\n", "-f, --fingerprint=STRING (e.g.: a247e883d98bf5c41923470de0bfa826)");
+	printf ("    %s\n", _("Critical if remote fingerprint is not equal to supplied"));
+
 
 	printf (UT_VERBOSE);
 
@@ -436,7 +420,7 @@ print_help (void)
 void
 print_usage (void)
 {
-  printf ("%s\n", _("Usage:"));
+	printf ("%s\n", _("Usage:"));
 	printf ("%s  [-4|-6] [-t <timeout>] [-f <fingerprint>] [-r <remote version>] [-o <remote openssh version>] [-p <port>] <host>\n", progname);
 }
 
