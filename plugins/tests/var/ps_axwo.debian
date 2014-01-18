@@ -31,7 +31,7 @@ S        0  6907     1  2308  892  0.0 mysqld_safe      /bin/sh /usr/bin/mysqld_
 S      103  6944  6907 123220 27724  0.0 mysqld         /usr/sbin/mysqld --basedir=/usr --datadir=/var/lib/mysql --user=mysql --pid-file=/var/run/mysqld/mysqld.pid --skip-locking --port=3306 --socket=/var/run/mysqld/mysqld.sock
 S        0  6945  6907  1488  420  0.0 logger           logger -p daemon.err -t mysqld_safe -i -t mysqld
 S     1001 17778     1  6436 1588  0.0 snmpd            /usr/sbin/snmpd -u nagios -Lsd -Lf /dev/null -p/var/run/snmpd.pid
-Ss       0 17789     1  9496 5556  0.0 snmptrapd        /usr/sbin/snmptrapd -t -m ALL -M /usr/share/snmp/mibs:/usr/local/nagios/snmp/load -p /var/run/snmptrapd.pid
+Ss       0 17789     1  9496 5556  0.0 snmptrapd        /usr/sbin/snmptrapd -t -m ALL -M /usr/share/snmp/mibs:/usr/local/monitoring/snmp/load -p /var/run/snmptrapd.pid
 Ss       0   847  2319 14452 1752  0.0 sshd             sshd: tonvoon [priv]
 S     1000   857   847 14616 1832  0.0 sshd             sshd: tonvoon@pts/3
 Ss    1000   860   857  2984 1620  0.0 bash             -bash
@@ -79,6 +79,6 @@ Ss    1001 23783     1  3220  764  0.0 ndo2db           /usr/local/nagios/bin/nd
 Ss    1001 23784     1  6428 4948  0.0 import_ndologsd  import_ndologsd
 S+    1001  9803 18955  4132 1936  0.0 ssh              ssh altinity@cube02.lei.altinity
 S     1001 22505 22324 20256 1616  0.0 nagios           ../../bin/nagios -d /usr/local/nagios/etc/nagios.cfg
-S     1001 22506 22505  1676  608  0.0 check_ping       /usr/local/nagios/libexec/check_ping -H 192.168.10.23 -w 3000.0,80% -c 5000.0,100% -p 1
+S     1001 22506 22505  1676  608  0.0 check_ping       /usr/local/monitoring/libexec/check_ping -H 192.168.10.23 -w 3000.0,80% -c 5000.0,100% -p 1
 S     1001 22507 22506  1660  492  0.0 ping             /bin/ping -n -U -w 10 -c 1 192.168.10.23
 R+    1001 22508 23370  2308  680  0.0 ps               ps axwo stat uid pid ppid vsz rss pcpu comm args

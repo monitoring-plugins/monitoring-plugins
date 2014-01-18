@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_apt plugin
+* monitoring check_apt plugin
 * 
 * License: GPL
-* Copyright (c) 2006-2008 Nagios Plugins Development Team
+* Copyright (c) 2006-2008 Monitoring Plugins Development Team
 * 
 * Original author: Sean Finney
 * 
@@ -31,7 +31,7 @@
 
 const char *progname = "check_apt";
 const char *copyright = "2006-2008";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "runcmd.h"

@@ -16,8 +16,6 @@
 # -----------------------------------------------------------------------------
 # Copyright 1999 (c) Richard Mayhew
 #
-# Credits go to Ethan Galstad for coding Nagios
-#
 # If any changes are made to this script, please mail me a copy of the
 # changes :)
 #
@@ -121,7 +119,7 @@ sub print_help ()
 	print_revision($PROGNAME,'@NP_VERSION@');
 	print "Copyright (c) 2000 Richard Mayhew/Karl DeBisschop
 
-Perl Check IRCD plugin for Nagios
+Perl Check IRCD plugin for monitoring
 
 ";
 	print_usage();
@@ -205,7 +203,7 @@ MAIN:
 
 	if ($opt_t && $opt_t =~ /^([0-9]+)$/) { $TIMEOUT = $1; }
 
-	# Just in case of problems, let's not hang Nagios
+	# Just in case of problems, let's not hang the monitoring system
 	$SIG{'ALRM'} = sub {
 		print "Somthing is Taking a Long Time, Increase Your TIMEOUT (Currently Set At $TIMEOUT Seconds)\n";
 		exit $ERRORS{"UNKNOWN"};

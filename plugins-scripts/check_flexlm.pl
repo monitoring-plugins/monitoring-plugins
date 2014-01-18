@@ -9,7 +9,7 @@
 # Check and interpret the output of lmstat
 # and create returncodes and output.
 #
-# Contrary to the nagios concept, this script takes
+# Contrary to most other plugins, this script takes
 # a file, not a hostname as an argument and returns
 # the status of hosts and services described in that
 # file. Use these hosts.cfg entries as an example
@@ -72,7 +72,7 @@ unless (defined $opt_F) {
 	print_usage();
 	exit $ERRORS{'UNKNOWN'};
 }
-# Just in case of problems, let's not hang Nagios
+# Just in case of problems, let's not hang the monitoring system
 $SIG{'ALRM'} = sub {
 	print "Timeout: No Answer from Client\n";
 	exit $ERRORS{'UNKNOWN'};

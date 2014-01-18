@@ -1,10 +1,10 @@
 /*****************************************************************************
 * 
-* Nagios check_dhcp plugin
+* monitoring check_dhcp plugin
 * 
 * License: GPL
 * Copyright (c) 2001-2004 Ethan Galstad (nagios@nagios.org)
-* Copyright (c) 2001-2007 Nagios Plugin Development Team
+* Copyright (c) 2001-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -35,7 +35,7 @@
 
 const char *progname = "check_dhcp";
 const char *copyright = "2001-2007";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "netutils.h"

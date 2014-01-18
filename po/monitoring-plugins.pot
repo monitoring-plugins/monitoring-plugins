@@ -1,5 +1,5 @@
 # SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR Nagios Plugin Development Group
+# Copyright (C) YEAR Monitoring Plugin Development Team
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: nagiosplug-devel@lists.sourceforge.net\n"
+"Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
 "POT-Creation-Date: 2012-02-16 17:35-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
@@ -162,7 +162,7 @@ msgid "list of nagios service names, separated by ':' [optional]"
 msgstr ""
 
 #: plugins/check_by_ssh.c:418
-msgid "short name of host in nagios configuration [optional]"
+msgid "short name of host in the monitoring configuration [optional]"
 msgstr ""
 
 #: plugins/check_by_ssh.c:420
@@ -239,7 +239,7 @@ msgstr ""
 
 #: plugins/check_cluster.c:230
 #, c-format
-msgid "Host/Service Cluster Plugin for Nagios 2"
+msgid "Host/Service Cluster Plugin for Monitoring"
 msgstr ""
 
 #: plugins/check_cluster.c:236 plugins/check_nt.c:666
@@ -2032,7 +2032,7 @@ msgid "Could not locate a running Nagios process!"
 msgstr ""
 
 #: plugins/check_nagios.c:172
-msgid "Cannot parse Nagios log file for valid time"
+msgid "Cannot parse monitoring log file for valid time"
 msgstr ""
 
 #: plugins/check_nagios.c:183 plugins/check_procs.c:295
@@ -2063,12 +2063,12 @@ msgstr ""
 
 #: plugins/check_nagios.c:281
 msgid ""
-"This plugin checks the status of the Nagios process on the local machine"
+"This plugin checks the status of the monitoring process on the local machine"
 msgstr ""
 
 #: plugins/check_nagios.c:282
 msgid ""
-"The plugin will check to make sure the Nagios status log is no older than"
+"The plugin will check to make sure the monitoring status log is no older than"
 msgstr ""
 
 #: plugins/check_nagios.c:283
@@ -2406,7 +2406,7 @@ msgid "  to run Perfmon directly."
 msgstr ""
 
 #: plugins/check_nt.c:743
-msgid "It can also be used in scripts that automatically create Nagios service"
+msgid "It can also be used in scripts that automatically create the monitoring service"
 msgstr ""
 
 #: plugins/check_nt.c:744
@@ -3839,7 +3839,7 @@ msgid ""
 msgstr ""
 
 #: plugins/check_radius.c:373
-msgid "in a process listing. This risk is exacerbated because nagios will"
+msgid "in a process listing. This risk is exacerbated because the monitoring will"
 msgstr ""
 
 #: plugins/check_radius.c:374
@@ -4990,7 +4990,7 @@ msgid "Turn off automatic offline tests"
 msgstr ""
 
 #: plugins/check_ide_smart.c:507
-msgid "Output suitable for Nagios"
+msgid "Output suitable for the monitoring system"
 msgstr ""
 
 #: plugins/negate.c:96
@@ -5188,7 +5188,7 @@ msgstr ""
 
 #: plugins/urlize.c:171
 msgid ""
-"the Nagios status screen.  This plugin returns the status of the invoked "
+"the monitoring status screen.  This plugin returns the status of the invoked "
 "plugin."
 msgstr ""
 
@@ -5271,7 +5271,7 @@ msgstr ""
 #: plugins/utils.h:163
 msgid ""
 " -v, --verbose\n"
-"    Show details for command-line debugging (Nagios may truncate output)\n"
+"    Show details for command-line debugging (monitoring may truncate output)\n"
 msgstr ""
 
 #: plugins/utils.h:167
@@ -5307,7 +5307,7 @@ msgstr ""
 #: plugins/utils.h:192
 msgid ""
 " See:\n"
-" http://nagiosplug.sourceforge.net/developer-guidelines."
+" http://monitoring-plugins.org/doc/guidelines.html"
 "html#THRESHOLDFORMAT\n"
 " for THRESHOLD format and examples.\n"
 msgstr ""
@@ -5315,9 +5315,9 @@ msgstr ""
 #: plugins/utils.h:197
 msgid ""
 "\n"
-"Send email to nagios-users@lists.sourceforge.net if you have questions\n"
+"Send email to help@monitoring-plugins.org if you have questions\n"
 "regarding use of this software. To submit patches or suggest improvements,\n"
-"send email to nagiosplug-devel@lists.sourceforge.net\n"
+"send email to devel@monitoring-plugins.org\n"
 "\n"
 msgstr ""
 

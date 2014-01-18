@@ -4,7 +4,7 @@
 #
 #
 
-# TODO: Add in tests for perf data. Need to beef up Nagios::Plugin::Performance to cater for max, min, etc
+# TODO: Add in tests for perf data. Need to beef up Monitoring::Plugin::Performance to cater for max, min, etc
 
 use strict;
 use Test::More;
@@ -37,7 +37,7 @@ cmp_ok( $c, '==', 2, "Got two mountpoints in output");
 
 
 # Get perf data
-# Should use Nagios::Plugin
+# Should use Monitoring::Plugin
 my @perf_data = sort(split(/ /, $result->perf_output));
 
 

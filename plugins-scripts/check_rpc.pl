@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl -w
 #
-# check_rpc plugin for nagios
+# check_rpc plugin for monitoring
 #
 # usage:
 #    check_rpc host service
@@ -254,7 +254,7 @@ $proto = 't' if ($opt_t);
 $proto = 'u' if ($opt_u);
 
 
-# Just in case of problems, let's not hang Nagios
+# Just in case of problems, let's not hang the monitoring system
 $SIG{'ALRM'} = sub {
         print ("ERROR: No response from RPC server (alarm)\n");
         exit $ERRORS{"UNKNOWN"};

@@ -17,7 +17,7 @@ my $successOutput = '/DNS OK: [\.0-9]+ seconds? response time/';
 my $hostname_valid = getTestParameter( 
 			"NP_HOSTNAME_VALID",
 			"A valid (known to DNS) hostname",
-			"nagios.com"
+			"monitoring-plugins.org"
 			);
 
 my $hostname_valid_ip = getTestParameter(

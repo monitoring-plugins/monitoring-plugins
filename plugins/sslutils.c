@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios plugins SSL utilities
+* Monitoring Plugins SSL utilities
 * 
 * License: GPL
-* Copyright (c) 2005-2010 Nagios Plugins Development Team
+* Copyright (c) 2005-2010 Monitoring Plugins Development Team
 * 
 * Description:
 * 

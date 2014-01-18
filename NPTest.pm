@@ -1,7 +1,7 @@
 package NPTest;
 
 #
-# Helper Functions for testing Nagios Plugins
+# Helper Functions for testing Monitoring Plugins
 #
 
 require Exporter;
@@ -25,14 +25,14 @@ $VERSION = "1556."; # must be all one line, for MakeMaker
 
 =head1 NAME
 
-NPTest - Simplify the testing of Nagios Plugins
+NPTest - Simplify the testing of Monitoring Plugins
 
 =head1 DESCRIPTION
 
 This modules provides convenience functions to assist in the testing
-of Nagios Plugins, making the testing code easier to read and write;
+of Monitoring Plugins, making the testing code easier to read and write;
 hopefully encouraging the development of a more complete test suite for
-the Nagios Plugins. It is based on the patterns of testing seen in the
+the Monitoring Plugins. It is based on the patterns of testing seen in the
 1.4.0 release, and continues to use the L<Test> module as the basis of
 testing.
 
@@ -92,7 +92,7 @@ Testing of results would be done in your test script, not in this module.
 This function is obsolete. Use C<testCmd()> instead.
 
 This function attempts to encompass the majority of test styles used
-in testing Nagios Plugins. As each plug-in is a separate command, the
+in testing Monitoring Plugins. As each plug-in is a separate command, the
 typical tests we wish to perform are against the exit status of the
 command and the output (if any) it generated. Simplifying these tests
 into a single function call, makes the test harness easier to read and
@@ -132,7 +132,7 @@ of either C<Test::ok(...)> or C<Test::skip(...)>, so remember this
 when counting the number of tests to place in the C<Test::plan(...)>
 call.
 
-Many Nagios Plugins test network services, some of which may not be
+Many Monitoring Plugins test network services, some of which may not be
 present on all systems. To cater for this, C<checkCmd(...)> allows the
 tester to define exceptions based on the command's exit status. These
 exceptions are provided to skip tests if the test case developer
@@ -199,7 +199,7 @@ Copyright (c) 2005 Peter Bray.  All rights reserved.
 
 This package is free software and is provided "as is" without express
 or implied warranty.  It may be used, redistributed and/or modified
-under the same terms as the Nagios Plugins release.
+under the same terms as the Monitoring Plugins release.
 
 =cut
 

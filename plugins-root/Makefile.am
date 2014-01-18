@@ -26,7 +26,7 @@ EXTRA_PROGRAMS = pst3
 
 EXTRA_DIST = t pst3.c
 
-BASEOBJS = ../plugins/utils.o ../lib/libnagiosplug.a ../gl/libgnu.a
+BASEOBJS = ../plugins/utils.o ../lib/libmonitoringplug.a ../gl/libgnu.a
 NETOBJS = ../plugins/netutils.o $(BASEOBJS) $(EXTRA_NETOBJS)
 NETLIBS = $(NETOBJS) $(SOCKETLIBS)
 
@@ -83,7 +83,7 @@ check_icmp_LDADD = @LTLIBINTL@ $(NETLIBS) $(SOCKETLIBS)
 # -m64 needed at compiler and linker phase
 pst3_CFLAGS = @PST3CFLAGS@
 pst3_LDFLAGS = @PST3CFLAGS@
-# pst3 must not use nagiosplug/gnulib includes!
+# pst3 must not use monitoringplug/gnulib includes!
 pst3_CPPFLAGS =
 
 check_dhcp_DEPENDENCIES = check_dhcp.c $(NETOBJS) $(DEPLIBS) 

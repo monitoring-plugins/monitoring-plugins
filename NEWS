@@ -293,7 +293,7 @@ This file documents the major additions and syntax changes between releases.
 	check_icmp fix for *BSD when running for long time
 	check_ping times out 1 second quicker if host is unreachable
 	Root plugins installed with world executable
-	check_sybase from contrib now maintained in NagiosExchange
+	check_sybase from contrib now maintained in MonitoringExchange
 	--with-nagios-user/group reinstated ./configure option
 	New --without-world-permissions ./configure option
 
@@ -317,7 +317,7 @@ This file documents the major additions and syntax changes between releases.
 	New C based check_ntp. The perl version is now deprecated.
 	New check_apt plugin
 	Notice: plugins in contrib/ will start to be removed from this distribution.
-	  Please check at http://www.nagiosexchange.org for contributed plugins
+	  Please check at http://www.monitoringexchange.org for contributed plugins
 	Major bug fixes to check_disk where values were incorrectly calculated and alerted on.
 	check_udp2 removed. check_udp is now linked to check_tcp.c
 	check_mailq now errors if the sub-program run returns non-zero return code. This would appear

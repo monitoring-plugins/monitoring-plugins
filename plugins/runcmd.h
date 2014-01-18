@@ -1,7 +1,7 @@
 /****************************************************************************
 * 
 * License: GPL
-* Copyright (c) 2005 Nagios Plugins Development Team
+* Copyright (c) 2005 Monitoring Plugins Development Team
 * Author: Andreas Ericsson <ae@op5.se>
 * 
 * 

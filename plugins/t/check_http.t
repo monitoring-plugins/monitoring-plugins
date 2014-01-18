@@ -31,8 +31,8 @@ my $internet_access = getTestParameter( "NP_INTERNET_ACCESS",
                 "yes");
 
 my $host_tcp_http2  = getTestParameter( "NP_HOST_TCP_HTTP2",
-            "A host providing an index page containing the string 'nagios'",
-            "nagios.org" );
+            "A host providing an index page containing the string 'monitoring'",
+            "monitoring-plugins.org" );
 
 
 $res = NPTest->testCmd(
@@ -62,23 +62,23 @@ cmp_ok( $res->return_code, '==', 2, "Webserver $hostname_invalid not valid" );
 like( $res->output, "/Unable to open TCP socket|Socket timeout after/", "Output OK");
 
 SKIP: {
-        skip "No host serving nagios in index file", 7 unless $host_tcp_http2;
+        skip "No host serving monitoring in index file", 7 unless $host_tcp_http2;
 
-        $res = NPTest->testCmd( "./check_http -H $host_tcp_http2 -r 'nagios'" );
-        cmp_ok( $res->return_code, "==", 0, "Got a reference to 'nagios'");
+        $res = NPTest->testCmd( "./check_http -H $host_tcp_http2 -r 'monitoring'" );
+        cmp_ok( $res->return_code, "==", 0, "Got a reference to 'monitoring'");
 
-        $res = NPTest->testCmd( "./check_http -H $host_tcp_http2 -r 'nAGiOs'" );
-        cmp_ok( $res->return_code, "==", 2, "Not got 'nAGiOs'");
+        $res = NPTest->testCmd( "./check_http -H $host_tcp_http2 -r 'mONiTORing'" );
+        cmp_ok( $res->return_code, "==", 2, "Not got 'mONiTORing'");
         like ( $res->output, "/pattern not found/", "Error message says 'pattern not found'");
 
-        $res = NPTest->testCmd( "./check_http -H $host_tcp_http2 -R 'nAGiOs'" );
-        cmp_ok( $res->return_code, "==", 0, "But case insensitive doesn't mind 'nAGiOs'");
+        $res = NPTest->testCmd( "./check_http -H $host_tcp_http2 -R 'mONiTORing'" );
+        cmp_ok( $res->return_code, "==", 0, "But case insensitive doesn't mind 'mONiTORing'");
 
-        $res = NPTest->testCmd( "./check_http -H $host_tcp_http2 -r 'nagios' --invert-regex" );
+        $res = NPTest->testCmd( "./check_http -H $host_tcp_http2 -r 'monitoring' --invert-regex" );
         cmp_ok( $res->return_code, "==", 2, "Invert results work when found");
         like ( $res->output, "/pattern found/", "Error message says 'pattern found'");
 
-        $res = NPTest->testCmd( "./check_http -H $host_tcp_http2 -r 'nAGiOs' --invert-regex" );
+        $res = NPTest->testCmd( "./check_http -H $host_tcp_http2 -r 'mONiTORing' --invert-regex" );
         cmp_ok( $res->return_code, "==", 0, "And also when not found");
 }
 SKIP: {

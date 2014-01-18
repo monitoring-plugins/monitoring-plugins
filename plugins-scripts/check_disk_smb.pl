@@ -3,7 +3,7 @@
 #
 # check_disk.pl <host> <share> <user> <pass> [warn] [critical] [port]
 #
-# Nagios host script to get the disk usage from a SMB share
+# Monitoring host script to get the disk usage from a SMB share
 #
 # Changes and Modifications
 # =========================
@@ -171,7 +171,7 @@ my $res = undef;
 my $perfdata = "";
 my @lines = undef;
 
-# Just in case of problems, let's not hang Nagios
+# Just in case of problems, let's not hang the monitoring system
 $SIG{'ALRM'} = sub { 
 	print "No Answer from Client\n";
 	exit $ERRORS{"UNKNOWN"};
@@ -293,7 +293,7 @@ sub print_help () {
 	print_revision($PROGNAME,'@NP_VERSION@');
 	print "Copyright (c) 2000 Michael Anthon/Karl DeBisschop
 
-Perl Check SMB Disk plugin for Nagios
+Perl Check SMB Disk plugin for monitoring
 
 ";
 	print_usage();

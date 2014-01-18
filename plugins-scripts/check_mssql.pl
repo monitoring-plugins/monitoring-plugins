@@ -21,7 +21,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #
-# Report bugs to: nagiosplug-help@lists.sourceforge.net
+# Report bugs to: help@monitoring-plugins.org
 # 
 #
 
@@ -44,7 +44,7 @@ my $exitcode = $ERRORS{'OK'};
 
 process_arguments();
 
-# Just in case of problems, let's not hang Nagios
+# Just in case of problems, let's not hang the monitoring system
 $SIG{'ALRM'} = sub {
      print ("SQL UNKNOWN: ERROR connection $server (alarm timeout)\n");
      exit $ERRORS{"UNKNOWN"};

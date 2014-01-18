@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_by_ssh plugin
+* monitoring check_by_ssh plugin
 * 
 * License: GPL
-* Copyright (c) 2000-2008 Nagios Plugins Development Team
+* Copyright (c) 2000-2008 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -28,7 +28,7 @@
 
 const char *progname = "check_by_ssh";
 const char *copyright = "2000-2008";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
@@ -246,7 +246,7 @@ process_arguments (int argc, char **argv)
 			}
 			service[services - 1] = p1;
 			break;
-		case 'n':									/* short name of host in nagios configuration */
+		case 'n':									/* short name of host in the monitoring configuration */
 			host_shortname = optarg;
 			break;
 
@@ -371,7 +371,7 @@ validate_arguments (void)
 		die (STATE_UNKNOWN, _("%s: In passive mode, you must provide a service name for each command.\n"), progname);
 
 	if (passive && host_shortname == NULL)
-		die (STATE_UNKNOWN, _("%s: In passive mode, you must provide the host short name from the nagios configs.\n"), progname);
+		die (STATE_UNKNOWN, _("%s: In passive mode, you must provide the host short name from the monitoring configs.\n"), progname);
 
 	return OK;
 }
@@ -416,11 +416,11 @@ print_help (void)
   printf (" %s\n","-i, --identity=KEYFILE");
   printf ("    %s\n", _("identity of an authorized key [optional]"));
   printf (" %s\n","-O, --output=FILE");
-  printf ("    %s\n", _("external command file for nagios [optional]"));
+  printf ("    %s\n", _("external command file for monitoring [optional]"));
   printf (" %s\n","-s, --services=LIST");
-  printf ("    %s\n", _("list of nagios service names, separated by ':' [optional]"));
+  printf ("    %s\n", _("list of monitoring service names, separated by ':' [optional]"));
   printf (" %s\n","-n, --name=NAME");
-  printf ("    %s\n", _("short name of host in nagios configuration [optional]"));
+  printf ("    %s\n", _("short name of host in the monitoring configuration [optional]"));
   printf (" %s\n","-o, --ssh-option=OPTION");
   printf ("    %s\n", _("Call ssh with '-o OPTION' (may be used multiple times) [optional]"));
   printf (" %s\n","-F, --configfile");

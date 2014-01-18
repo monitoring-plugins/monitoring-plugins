@@ -3,7 +3,7 @@
 # latigid010@yahoo.com
 # 01/06/2000
 #
-#  This Nagios plugin was created to check Oracle status
+#  This Monitoring plugin was created to check Oracle status
 #
 
 PROGNAME=`basename $0`

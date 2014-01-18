@@ -172,7 +172,7 @@ if ($utils::PATH_TO_NTPQ && -x $utils::PATH_TO_NTPQ ) {
 	$have_ntpq = 0;
 }
 
-# Just in case of problems, let's not hang Nagios
+# Just in case of problems, let's not hang the monitoring system
 $SIG{'ALRM'} = sub {
 	print ("ERROR: No response from ntp server (alarm)\n");
 	exit $ERRORS{"UNKNOWN"};

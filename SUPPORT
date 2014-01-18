@@ -1,14 +1,14 @@
 SUPPORT
 
-Using the mailing lists and tracker databases at SourceForge are the
-best ways to obtain direct support for the Nagios Plugins. There may
+Using the mailing lists and issue tracker at GitHub are the
+best ways to obtain direct support for the Monitoring Plugins. There may
 also be commercial support options available to you -- check
 http://www.nagios.org/ to track the current status of commercial
 support offerings.
 
-There are two mailing lists associated with Nagios Plugin development:
-'help' (mailto:nagiosplug-help@lists.sourceforge.net), and 'devel'
-(mailto:nagiosplug-devel@lists.sourceforge.net). Unless you are fairly
+There are two mailing lists associated with Monitoring Plugins development:
+'help' (mailto:help@monitoring-plugins.org), and 'devel'
+(mailto:help@monitoring-plugins.org). Unless you are fairly
 certain you have found a bug or that you are requesting a new feature,
 please direct support requests to 'help'.
 
@@ -18,8 +18,8 @@ their time to fix bug and provide feature requests, it is generally in
 you interest to do a modest amount of legwork before posting to either
 of these lists.
 
-Plugins that are in the contrib directories are provided as-is. We will 
-try to help, but sometimes the plugins have dependencies that the nagios-plugin
+Plugins that are in the contrib directories are provided as-is. We will
+try to help, but sometimes the plugins have dependencies that the monitoring-plugin
 developers do not have access to. You may be able to try the authors
 directly.
 
@@ -34,7 +34,7 @@ Requests to 'help' require posting the version number of the
 plugin. The best place to include the version information is in the
 subject. A good post would have a subject like:
 
-  Can I use SSL with check_imap (nagios-plugins 1.3.0-beta2) 1.12
+  Can I use SSL with check_imap (monitoring-plugins 1.3.0-beta2) 1.12
 
 If you do not include the version of the plugin, you risk having your
 post silently ignored.
@@ -48,17 +48,17 @@ REPORTING BUGS AND SUBMITTING PATCHES
 
 Bug reports, investigations of possible bugs, feature requests, and
 patch submissions should be submitted to the development list at
-mailto:nagiosplug-devel@lists.sourceforge.net. Please raise an issue first 
+mailto:devel@monitoring-plugins.org. Please raise an issue first
 in GitHub, otherwise your email is likely to be missed over time.
 
-You should identify the version, preferably in the subject line. 
-However, to best use developer resources, it is suggested that you 
+You should identify the version, preferably in the subject line.
+However, to best use developer resources, it is suggested that you
 reference your report to one of the following sources:
 
   1) The most recent release, including beta's
 
   2) The current snapshots (there's a link provided on
-     https://www.nagios-plugins.org/download.html)
+     https://www.monitoring-plugins.org/download.html)
 
   3) The current Git code from GitHub
 

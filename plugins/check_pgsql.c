@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_pgsql plugin
+* monitoring check_pgsql plugin
 * 
 * License: GPL
-* Copyright (c) 1999-2011 Nagios Plugins Development Team
+* Copyright (c) 1999-2011 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -30,7 +30,7 @@
 
 const char *progname = "check_pgsql";
 const char *copyright = "1999-2011";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
@@ -563,7 +563,7 @@ print_help (void)
 	printf (" %s\n", _("connect to a remote host, be sure that the remote postmaster accepts TCP/IP"));
 	printf (" %s\n\n", _("connections (start the postmaster with the -i option)."));
 
-	printf (" %s\n", _("Typically, the nagios user (unless the --logname option is used) should be"));
+	printf (" %s\n", _("Typically, the monitoring user (unless the --logname option is used) should be"));
 	printf (" %s\n", _("able to connect to the database without a password. The plugin can also send"));
 	printf (" %s\n", _("a password, but no effort is made to obsure or encrypt the password."));
 

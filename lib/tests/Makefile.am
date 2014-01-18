@@ -28,7 +28,7 @@ endif
 
 AM_CFLAGS = -g -I$(top_srcdir)/lib -I$(top_srcdir)/gl $(tap_cflags)
 AM_LDFLAGS = $(tap_ldflags) -ltap
-LDADD = $(top_srcdir)/lib/libnagiosplug.a $(top_srcdir)/gl/libgnu.a
+LDADD = $(top_srcdir)/lib/libmonitoringplug.a $(top_srcdir)/gl/libgnu.a
 
 SOURCES = test_utils.c test_disk.c test_tcp.c test_cmd.c test_base64.c test_ini1.c test_ini3.c test_opts1.c test_opts2.c test_opts3.c
 

@@ -1,9 +1,9 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
-AC_INIT(nagios-plugins,1.5)
+AC_INIT(monitoring-plugins,1.5)
 AC_CONFIG_SRCDIR(NPTest.pm)
 AC_CONFIG_FILES([gl/Makefile 
-	nagios-plugins.spec])
+	monitoring-plugins.spec])
 AC_CONFIG_AUX_DIR(build-aux)
 AM_INIT_AUTOMAKE([1.8.3])
 AC_CONFIG_HEADERS([config.h])
@@ -58,10 +58,10 @@ AC_SUBST(PLUGIN_TEST)dnl
 SCRIPT_TEST=`echo $srcdir/plugins-scripts/t/*.t|sed -e 's,\.*/plugins-scripts/,,g'`
 AC_SUBST(SCRIPT_TEST)dnl
 
-WARRANTY="The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\ncopies of the plugins under the terms of the GNU General Public License.\nFor more information about these matters, see the file named COPYING.\n"
+WARRANTY="The monitoring plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\ncopies of the plugins under the terms of the GNU General Public License.\nFor more information about these matters, see the file named COPYING.\n"
 AC_SUBST(WARRANTY)
 
-SUPPORT="Send email to nagios-users@lists.sourceforge.net if you have questions\nregarding use of this software. To submit patches or suggest improvements,\nsend email to nagiosplug-devel@lists.sourceforge.net.\nPlease include version information with all correspondence (when possible,\nuse output from the --version option of the plugin itself).\n"
+SUPPORT="Send email to devel@monitoring-plugins.org if you have questions\nregarding use of this software. To submit patches or suggest improvements,\nsend email to devel@monitoring-plugins.org.\nPlease include version information with all correspondence (when possible,\nuse output from the --version option of the plugin itself).\n"
 AC_SUBST(SUPPORT)
 
 dnl CGIURL has changed for Nagios with 1.0 beta
@@ -648,7 +648,7 @@ elif test "$ac_cv_uname_s" = "SunOS"; then
         ac_cv_ps_format="%s %d %d %d %d %d %f %s %n"
         ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
         ac_cv_ps_cols=9
-        AC_MSG_RESULT([using nagios-plugins internal ps command (pst3) for solaris])
+        AC_MSG_RESULT([using monitoring-plugins internal ps command (pst3) for solaris])
 	if test `isainfo -b` = 64 ; then
 		pst3_use_64bit=1
 		AC_MSG_NOTICE([using 64bit pst3])
@@ -1731,7 +1731,7 @@ AC_ARG_ENABLE(redhat-pthread-workaround,
 	[ac_cv_enable_redhat_pthread_workaround=test])
 if test "$ac_cv_enable_redhat_pthread_workaround" = "test" ; then
 	if echo $ac_cv_uname_r | egrep "\.EL(smp)?$" >/dev/null 2>&1 ; then
-		AC_MSG_NOTICE([See http://nagiosplugins.org/faq/compile/configure_appears_to_hang if this next part takes a long time])
+		AC_MSG_NOTICE([See https://www.monitoring-plugins.org/doc/faq/configure-hangs.html if this next part takes a long time])
 		AC_MSG_CHECKING(for redhat spopen problem)
 		( cd config_test && make && make test ) > /dev/null 2>&1
 		if test $? -eq 0 ; then
@@ -1748,7 +1748,7 @@ fi
 dnl Perl modules
 AC_ARG_ENABLE(perl-modules,
 	AC_HELP_STRING([--enable-perl-modules],
-		[Enables installation of Nagios::Plugin and its dependencies (default: no)]),
+		[Enables installation of Monitoring::Plugin and its dependencies (default: no)]),
 	[enable_perl_modules=$enableval],
 	[enable_perl_modules=no])
 if test "$enable_perl_modules" = "yes" ; then

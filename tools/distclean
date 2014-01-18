@@ -6,7 +6,7 @@
 # Please run this script from the top-level directory.
 
 if [ ! -f tools/distclean ]; then
-  echo "Please run this script from the top-level directory of Nagios-plugins."
+  echo "Please run this script from the top-level directory of Monitoring-plugins."
   exit 1
 fi
 
