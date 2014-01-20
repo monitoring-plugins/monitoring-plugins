@@ -347,7 +347,7 @@ sub getTestParameter
   }
 
   # Set "none" if no terminal attached (eg, tinderbox build servers when new variables set)
-  return "" unless (-t STDERR);
+  return "" unless (-t STDIN);
 
   my $userResponse = "";
 
