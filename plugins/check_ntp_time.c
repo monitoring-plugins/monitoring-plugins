@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_ntp_time plugin
+* Monitoring check_ntp_time plugin
 * 
 * License: GPL
 * Copyright (c) 2006 Sean Finney <seanius@seanius.net>

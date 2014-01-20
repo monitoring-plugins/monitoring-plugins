@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_mysql plugin
+* Monitoring check_mysql plugin
 * 
 * License: GPL
 * Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)

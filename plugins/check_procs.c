@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_procs plugin
+* Monitoring check_procs plugin
 * 
 * License: GPL
 * Copyright (c) 2000-2008 Monitoring Plugins Development Team

@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_game plugin
+* Monitoring check_game plugin
 * 
 * License: GPL
 * Copyright (c) 2002-2007 Monitoring Plugins Development Team

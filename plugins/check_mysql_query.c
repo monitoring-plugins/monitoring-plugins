@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_mysql_query plugin
+* Monitoring check_mysql_query plugin
 * 
 * License: GPL
 * Copyright (c) 2006-2009 Monitoring Plugins Development Team

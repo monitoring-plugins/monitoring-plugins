@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_apt plugin
+* Monitoring check_apt plugin
 * 
 * License: GPL
 * Copyright (c) 2006-2008 Monitoring Plugins Development Team

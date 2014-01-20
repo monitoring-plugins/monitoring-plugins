@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_dhcp plugin
+* Monitoring check_dhcp plugin
 * 
 * License: GPL
 * Copyright (c) 2001-2004 Ethan Galstad (nagios@nagios.org)

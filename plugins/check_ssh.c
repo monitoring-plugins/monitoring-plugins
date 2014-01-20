@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_ssh plugin
+* Monitoring check_ssh plugin
 * 
 * License: GPL
 * Copyright (c) 2000-2007 Monitoring Plugins Development Team

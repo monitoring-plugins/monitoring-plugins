@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_nt plugin
+* Monitoring check_nt plugin
 * 
 * License: GPL
 * Copyright (c) 2000-2002 Yves Rubin (rubiyz@yahoo.com)

@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_ide_smart plugin
+* Monitoring check_ide_smart plugin
 * ide-smart 1.3 - IDE S.M.A.R.T. checking tool
 * 
 * License: GPL

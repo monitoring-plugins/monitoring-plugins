@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_pgsql plugin
+* Monitoring check_pgsql plugin
 * 
 * License: GPL
 * Copyright (c) 1999-2011 Monitoring Plugins Development Team

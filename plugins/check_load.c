@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_load plugin
+* Monitoring check_load plugin
 * 
 * License: GPL
 * Copyright (c) 1999-2007 Monitoring Plugins Development Team

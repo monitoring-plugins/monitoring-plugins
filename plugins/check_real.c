@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_real plugin
+* Monitoring check_real plugin
 * 
 * License: GPL
 * Copyright (c) 2000-2007 Monitoring Plugins Development Team

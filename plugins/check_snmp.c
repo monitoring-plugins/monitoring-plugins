@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_snmp plugin
+* Monitoring check_snmp plugin
 * 
 * License: GPL
 * Copyright (c) 1999-2007 Monitoring Plugins Development Team

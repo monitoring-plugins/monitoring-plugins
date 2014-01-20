@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_ntp_peer plugin
+* Monitoring check_ntp_peer plugin
 * 
 * License: GPL
 * Copyright (c) 2006 Sean Finney <seanius@seanius.net>

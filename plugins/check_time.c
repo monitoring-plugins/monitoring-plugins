@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_time plugin
+* Monitoring check_time plugin
 * 
 * License: GPL
 * Copyright (c) 1999-2007 Monitoring Plugins Development Team

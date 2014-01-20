@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring negate plugin
+* Monitoring negate plugin
 * 
 * License: GPL
 * Copyright (c) 2002-2008 Monitoring Plugins Development Team

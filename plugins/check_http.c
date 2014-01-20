@@ -1,6 +1,6 @@
 /*****************************************************************************
 *
-* monitoring check_http plugin
+* Monitoring check_http plugin
 *
 * License: GPL
 * Copyright (c) 1999-2013 Monitoring Plugins Development Team

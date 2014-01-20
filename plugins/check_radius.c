@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_radius plugin
+* Monitoring check_radius plugin
 * 
 * License: GPL
 * Copyright (c) 1999-2008 Monitoring Plugins Development Team

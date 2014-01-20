@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_dns plugin
+* Monitoring check_dns plugin
 * 
 * License: GPL
 * Copyright (c) 2000-2008 Monitoring Plugins Development Team

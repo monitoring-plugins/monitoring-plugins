@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_dbi plugin
+* Monitoring check_dbi plugin
 * 
 * License: GPL
 * Copyright (c) 2011 Monitoring Plugins Development Team

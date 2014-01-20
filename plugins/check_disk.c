@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_disk plugin
+* Monitoring check_disk plugin
 * 
 * License: GPL
 * Copyright (c) 1999-2008 Monitoring Plugins Development Team

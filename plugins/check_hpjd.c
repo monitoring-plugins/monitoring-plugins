@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_hpjd plugin
+* Monitoring check_hpjd plugin
 * 
 * License: GPL
 * Copyright (c) 2000-2007 Monitoring Plugins Development Team

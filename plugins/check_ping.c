@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_ping plugin
+* Monitoring check_ping plugin
 * 
 * License: GPL
 * Copyright (c) 2000-2007 Monitoring Plugins Development Team

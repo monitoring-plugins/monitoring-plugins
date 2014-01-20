@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_icmp plugin
+* Monitoring check_icmp plugin
 * 
 * License: GPL
 * Copyright (c) 2005-2008 Monitoring Plugins Development Team

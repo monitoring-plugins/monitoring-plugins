@@ -1,6 +1,6 @@
 /*****************************************************************************
 *
-* monitoring check_tcp plugin
+* Monitoring check_tcp plugin
 *
 * License: GPL
 * Copyright (c) 1999-2013 Monitoring Plugins Development Team

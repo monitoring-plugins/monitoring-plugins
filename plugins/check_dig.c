@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_dig plugin
+* Monitoring check_dig plugin
 * 
 * License: GPL
 * Copyright (c) 2002-2008 Monitoring Plugins Development Team

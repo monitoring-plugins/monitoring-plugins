@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_dummy plugin
+* Monitoring check_dummy plugin
 * 
 * License: GPL
 * Copyright (c) 1999-2007 Monitoring Plugins Development Team

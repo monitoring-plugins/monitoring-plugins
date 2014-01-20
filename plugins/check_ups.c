@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_ups plugin
+* Monitoring check_ups plugin
 * 
 * License: GPL
 * Copyright (c) 2000 Tom Shields

@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_mrtgtraf plugin
+* Monitoring check_mrtgtraf plugin
 * 
 * License: GPL
 * Copyright (c) 1999-2007 Monitoring Plugins Development Team

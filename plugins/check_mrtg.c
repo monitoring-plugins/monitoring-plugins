@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_mrtg plugin
+* Monitoring check_mrtg plugin
 * 
 * License: GPL
 * Copyright (c) 1999-2007 Monitoring Plugins Development Team

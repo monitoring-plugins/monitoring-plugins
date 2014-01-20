@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* monitoring check_fping plugin
+* Monitoring check_fping plugin
 * 
 * License: GPL
 * Copyright (c) 2000-2007 Monitoring Plugins Development Team
