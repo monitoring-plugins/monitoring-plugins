@@ -173,9 +173,13 @@ char *fperfdata (const char *,
  -c, --critical=RANGE\n\
     Critical range\n")
 
-#define UT_TIMEOUT _("\
+#define UT_CONN_TIMEOUT _("\
  -t, --timeout=INTEGER\n\
     Seconds before connection times out (default: %d)\n")
+
+#define UT_PLUG_TIMEOUT _("\
+ -t, --timeout=INTEGER\n\
+    Seconds before plugin times out (default: %d)\n")
 
 #ifdef NP_EXTRA_OPTS
 #define UT_EXTRA_OPTS _("\
