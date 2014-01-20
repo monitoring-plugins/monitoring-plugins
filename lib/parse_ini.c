@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* Monitoring-plugins parse_ini library
+* Monitoring Plugins parse_ini library
 * 
 * License: GPL
 * Copyright (c) 2007 Monitoring Plugins Development Team

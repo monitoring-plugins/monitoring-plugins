@@ -10,8 +10,7 @@
 * This file contains the urlize plugin
 * 
 * This plugin wraps the text output of another command (plugin) in HTML <A>
-* tags, thus displaying the child plugin's output as a clickable link in compatible
-* monitoring status screen.  This plugin returns the status of the invoked plugin.
+* tags.  This plugin returns the status of the invoked plugin.
 * 
 * 
 * This program is free software: you can redistribute it and/or modify

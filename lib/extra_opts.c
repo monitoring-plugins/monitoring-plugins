@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* Monitoring-plugins extra_opts library
+* Monitoring Plugins extra_opts library
 * 
 * License: GPL
 * Copyright (c) 2007 Monitoring Plugins Development Team

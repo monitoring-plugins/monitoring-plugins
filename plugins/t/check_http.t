@@ -32,7 +32,7 @@ my $internet_access = getTestParameter( "NP_INTERNET_ACCESS",
 
 my $host_tcp_http2  = getTestParameter( "NP_HOST_TCP_HTTP2",
             "A host providing an index page containing the string 'monitoring'",
-            "monitoring-plugins.org" );
+            "test.monitoring-plugins.org" );
 
 
 $res = NPTest->testCmd(
