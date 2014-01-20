@@ -430,7 +430,7 @@ print_help (void)
   printf(UT_HELP_VRSN);
   printf(UT_EXTRA_OPTS);
 
-  printf(UT_CONN_TIMEOUT, timeout_interval);
+  printf(UT_PLUG_TIMEOUT, timeout_interval);
 
   printf (" %s\n", "-U, --upgrade=OPTS");
   printf ("    %s\n", _("[Default] Perform an upgrade.  If an optional OPTS argument is provided,"));
