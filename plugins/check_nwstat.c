@@ -1664,7 +1664,7 @@ void print_help(void)
   printf (" %s\n", "-o, --osversion");
   printf ("    %s\n", _("Include server version string in results"));
 
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
   printf ("\n");
   printf ("%s\n", _("Notes:"));

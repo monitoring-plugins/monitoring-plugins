@@ -1160,7 +1160,7 @@ print_help (void)
 	printf (" %s\n", "-D, --output-delimiter=STRING");
 	printf ("    %s\n", _("Separates output on multiple OID requests"));
 
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf (" %s\n", "-e, --retries=INTEGER");
 	printf ("    %s\n", _("Number of retries to be used in the requests"));
 

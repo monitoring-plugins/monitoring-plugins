@@ -361,7 +361,7 @@ print_help (void)
   printf (" %s\n", "-r, --retries=INTEGER");
   printf ("    %s\n", _("Number of times to retry a failed connection"));
 
-	printf (UT_TIMEOUT, timeout_interval);
+	printf (UT_CONN_TIMEOUT, timeout_interval);
 
   printf ("\n");
   printf ("%s\n", _("This plugin tests a RADIUS server to see if it is accepting connections."));

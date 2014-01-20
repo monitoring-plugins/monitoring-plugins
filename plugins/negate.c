@@ -252,7 +252,7 @@ print_help (void)
 
 	printf (UT_HELP_VRSN);
 
-	printf (UT_TIMEOUT, timeout_interval);
+	printf (UT_CONN_TIMEOUT, timeout_interval);
 	printf ("    %s\n", _("Keep timeout longer than the plugin timeout to retain CRITICAL status."));
 	printf (" -T, --timeout-result=STATUS\n");
 	printf ("    %s\n", _("Custom result on Negate timeouts; see below for STATUS definition\n"));

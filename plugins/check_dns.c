@@ -474,7 +474,7 @@ print_help (void)
   printf (" -c, --critical=seconds\n");
   printf ("    %s\n", _("Return critical if elapsed time exceeds value. Default off"));
 
-  printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+  printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
   printf (UT_SUPPORT);
 }

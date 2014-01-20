@@ -581,7 +581,7 @@ print_help (void)
   printf (" %s\n", "-L, --link");
   printf ("    %s\n", _("show HTML in the plugin output (obsoleted by urlize)"));
 
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
   printf ("\n");
 	printf ("%s\n", _("THRESHOLD is <rta>,<pl>% where <rta> is the round trip average travel"));

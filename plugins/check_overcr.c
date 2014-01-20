@@ -442,7 +442,7 @@ print_help (void)
   printf ("    %s\n", _("NET<port>     = number of active connections on TCP port <port>"));
   printf ("    %s\n", _("UPTIME        = system uptime in seconds"));
 
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
   printf (UT_VERBOSE);
 

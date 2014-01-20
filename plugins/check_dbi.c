@@ -562,7 +562,7 @@ print_help (void)
 	printf ("                   %s\n", _("(ignore the query result)"));
 	printf ("\n");
 
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 	printf (UT_VERBOSE);
 

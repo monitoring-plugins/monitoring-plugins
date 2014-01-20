@@ -1534,7 +1534,7 @@ print_help (void)
 
   printf (UT_WARN_CRIT);
 
-  printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+  printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
   printf (UT_VERBOSE);
 

@@ -312,7 +312,7 @@ print_help (void)
   printf (" %s\n", "-pf");
   printf ("    %s\n", _("Field number in raw qstat output that contains ping time"));
 
-  printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+  printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
   printf ("\n");
   printf ("%s\n", _("Notes:"));

@@ -686,7 +686,7 @@ void print_help(void){
 	printf ("    %s\n", _("Warning threshold for number of usable time sources (\"truechimers\")"));
 	printf (" %s\n", "-n, --tcrit=THRESHOLD");
 	printf ("    %s\n", _("Critical threshold for number of usable time sources (\"truechimers\")"));
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf (UT_VERBOSE);
 
 	printf("\n");

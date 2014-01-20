@@ -358,7 +358,7 @@ print_help (void)
   printf (" %s\n", "-C, --critical-connect=INTEGER");
   printf ("   %s\n", _("Response time (sec.) necessary to result in critical status"));
 
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 	printf (UT_SUPPORT);
 }
