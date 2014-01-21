@@ -1,10 +1,10 @@
 /*****************************************************************************
 * 
-* check_cluster.c - Host and Service Cluster Plugin for Nagios 2.x
+* check_cluster.c - Host and Service Cluster Plugin for Monitoring
 * 
 * License: GPL
 * Copyright (c) 2000-2004 Ethan Galstad (nagios@nagios.org)
-* Copyright (c) 2007 Nagios Plugins Development Team
+* Copyright (c) 2007 Monitoring Plugins Development Team
 * 
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 
 const char *progname = "check_cluster";
 const char *copyright = "2000-2007";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
@@ -227,7 +227,7 @@ print_help(void)
 	printf ("Copyright (c) 2000-2004 Ethan Galstad (nagios@nagios.org)\n");
 	printf(COPYRIGHT, copyright, email);
 
-	printf(_("Host/Service Cluster Plugin for Nagios 2"));
+	printf(_("Host/Service Cluster Plugin for Monitoring"));
 	printf("\n\n");
 
 	print_usage();

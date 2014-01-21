@@ -3,7 +3,7 @@
 * pst3
 * 
 * License: GPL
-* Copyright (c) 2008 Nagios Plugin Development Team
+* Copyright (c) 2008 Monitoring Plugins Development Team
 * 
 * Description:
 * 

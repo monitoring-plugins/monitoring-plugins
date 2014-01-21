@@ -1,6 +1,6 @@
-# Utility drawer for Nagios plugins.
+# Utility drawer for monitoring plugins.
 #
-# This will be deprecated soon. Please use Nagios::Plugin from CPAN
+# This will be deprecated soon. Please use Monitoring::Plugin from CPAN
 # for new plugins
 
 package utils;

@@ -1,16 +1,16 @@
 /*****************************************************************************
 * 
-* Nagios check_ups plugin
+* Monitoring check_ups plugin
 * 
 * License: GPL
 * Copyright (c) 2000 Tom Shields
 *               2004 Alain Richard <alain.richard@equation.fr>
 *               2004 Arnaud Quette <arnaud.quette@mgeups.com>
-* Copyright (c) 2002-2007 Nagios Plugins Development Team
+* Copyright (c) 2002-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
-* This file contains Network UPS Tools plugin for Nagios
+* This file contains Network UPS Tools plugin for Monitoring
 * 
 * This plugin tests the UPS service on the specified host. Network UPS Tools
 * from www.networkupstools.org must be running for this plugin to work.
@@ -34,7 +34,7 @@
 
 const char *progname = "check_ups";
 const char *copyright = "2000-2007";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "netutils.h"

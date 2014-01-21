@@ -1,6 +1,6 @@
 #ifndef NP_UTILS_H
 #define NP_UTILS_H
-/* Header file for nagios plugins utils.c */
+/* Header file for monitoring plugins utils.c */
 
 /* This file should be included in all plugins */
 
@@ -131,7 +131,7 @@ char *fperfdata (const char *,
 {"warning",required_argument,0,'w'},\
 {"hostname",required_argument,0,'H'}
 
-#define COPYRIGHT "Copyright (c) %s Nagios Plugin Development Team\n\
+#define COPYRIGHT "Copyright (c) %s Monitoring Plugins Development Team\n\
 \t<%s>\n\n"
 
 #define UT_HLP_VRS _("\
@@ -159,7 +159,8 @@ char *fperfdata (const char *,
 
 #define UT_VERBOSE _("\
  -v, --verbose\n\
-    Show details for command-line debugging (Nagios may truncate output)\n")
+    Show details for command-line debugging (output may be truncated by\n\
+		the monitoring system)\n")
 
 #define UT_WARN_CRIT _("\
  -w, --warning=DOUBLE\n\
@@ -184,7 +185,7 @@ char *fperfdata (const char *,
 #ifdef NP_EXTRA_OPTS
 #define UT_EXTRA_OPTS _("\
  --extra-opts=[section][@file]\n\
-    Read options from an ini file. See http://nagiosplugins.org/extra-opts\n\
+    Read options from an ini file. See http://monitoring-plugins.org/doc/extra-opts.html\n\
     for usage and examples.\n")
 #else
 #define UT_EXTRA_OPTS ""
@@ -192,16 +193,16 @@ char *fperfdata (const char *,
 
 #define UT_THRESHOLDS_NOTES _("\
  See:\n\
- http://nagiosplug.sourceforge.net/developer-guidelines.html#THRESHOLDFORMAT\n\
+ http://monitoring-plugins.org/doc/guidelines.html#THRESHOLDFORMAT\n\
  for THRESHOLD format and examples.\n")
 
 #define UT_SUPPORT _("\n\
-Send email to nagios-users@lists.sourceforge.net if you have questions\n\
+Send email to help@monitoring-plugins.org if you have questions\n\
 regarding use of this software. To submit patches or suggest improvements,\n\
-send email to nagiosplug-devel@lists.sourceforge.net\n\n")
+send email to devel@monitoring-plugins.org\n\n")
 
 #define UT_NOWARRANTY _("\n\
-The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\
+The monitoring plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\
 copies of the plugins under the terms of the GNU General Public License.\n\
 For more information about these matters, see the file named COPYING.\n")
 

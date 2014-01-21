@@ -3,7 +3,7 @@
 * Library for check_tcp
 * 
 * License: GPL
-* Copyright (c) 1999-2013 Nagios Plugins Development Team
+* Copyright (c) 1999-2013 Monitoring Plugins Development Team
 * 
 * Description:
 * 

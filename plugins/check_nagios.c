@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_nagios plugin
+* Monitoring check_nagios plugin
 * 
 * License: GPL
-* Copyright (c) 1999-2007 Nagios Plugins Development Team
+* Copyright (c) 1999-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -34,7 +34,7 @@
 
 const char *progname = "check_nagios";
 const char *copyright = "1999-2007";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "runcmd.h"

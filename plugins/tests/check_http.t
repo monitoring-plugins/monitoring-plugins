@@ -7,7 +7,7 @@
 # Country Name (2 letter code) [AU]:UK
 # State or Province Name (full name) [Some-State]:Derbyshire
 # Locality Name (eg, city) []:Belper
-# Organization Name (eg, company) [Internet Widgits Pty Ltd]:Nagios Plugins
+# Organization Name (eg, company) [Internet Widgits Pty Ltd]:Monitoring Plugins
 # Organizational Unit Name (eg, section) []:
 # Common Name (eg, YOUR name) []:Ton Voon
 # Email Address []:tonvoon@mac.com

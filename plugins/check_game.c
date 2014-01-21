@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_game plugin
+* Monitoring check_game plugin
 * 
 * License: GPL
-* Copyright (c) 2002-2007 Nagios Plugins Development Team
+* Copyright (c) 2002-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -31,7 +31,7 @@
 
 const char *progname = "check_game";
 const char *copyright = "2002-2007";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"

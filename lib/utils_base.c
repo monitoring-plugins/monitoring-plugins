@@ -3,7 +3,7 @@
 * utils_base.c
 *
 * License: GPL
-* Copyright (c) 2006 Nagios Plugins Development Team
+* Copyright (c) 2006 Monitoring Plugins Development Team
 *
 * Library of useful functions for plugins
 * 
@@ -33,53 +33,53 @@
 
 #define np_free(ptr) { if(ptr) { free(ptr); ptr = NULL; } }
 
-nagios_plugin *this_nagios_plugin=NULL;
+monitoring_plugin *this_monitoring_plugin=NULL;
 
 int _np_state_read_file(FILE *);
 
 void np_init( char *plugin_name, int argc, char **argv ) {
-	if (this_nagios_plugin==NULL) {
-		this_nagios_plugin = calloc(1, sizeof(nagios_plugin));
-		if (this_nagios_plugin==NULL) {
+	if (this_monitoring_plugin==NULL) {
+		this_monitoring_plugin = calloc(1, sizeof(monitoring_plugin));
+		if (this_monitoring_plugin==NULL) {
 			die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
 			    strerror(errno));
 		}
-		this_nagios_plugin->plugin_name = strdup(plugin_name);
-		if (this_nagios_plugin->plugin_name==NULL)
+		this_monitoring_plugin->plugin_name = strdup(plugin_name);
+		if (this_monitoring_plugin->plugin_name==NULL)
 			die(STATE_UNKNOWN, _("Cannot execute strdup: %s"), strerror(errno));
-		this_nagios_plugin->argc = argc;
-		this_nagios_plugin->argv = argv;
+		this_monitoring_plugin->argc = argc;
+		this_monitoring_plugin->argv = argv;
 	}
 }
 
 void np_set_args( int argc, char **argv ) {
-	if (this_nagios_plugin==NULL)
+	if (this_monitoring_plugin==NULL)
 		die(STATE_UNKNOWN, _("This requires np_init to be called"));
 
-	this_nagios_plugin->argc = argc;
-	this_nagios_plugin->argv = argv;
+	this_monitoring_plugin->argc = argc;
+	this_monitoring_plugin->argv = argv;
 }
 
 
 void np_cleanup() {
-	if (this_nagios_plugin!=NULL) {
-		if(this_nagios_plugin->state!=NULL) {
-			if(this_nagios_plugin->state->state_data) { 
-				np_free(this_nagios_plugin->state->state_data->data);
-				np_free(this_nagios_plugin->state->state_data);
+	if (this_monitoring_plugin!=NULL) {
+		if(this_monitoring_plugin->state!=NULL) {
+			if(this_monitoring_plugin->state->state_data) {
+				np_free(this_monitoring_plugin->state->state_data->data);
+				np_free(this_monitoring_plugin->state->state_data);
 			}
-			np_free(this_nagios_plugin->state->name);
-			np_free(this_nagios_plugin->state);
+			np_free(this_monitoring_plugin->state->name);
+			np_free(this_monitoring_plugin->state);
 		}
-		np_free(this_nagios_plugin->plugin_name);
-		np_free(this_nagios_plugin);
+		np_free(this_monitoring_plugin->plugin_name);
+		np_free(this_monitoring_plugin);
 	}
-	this_nagios_plugin=NULL;
+	this_monitoring_plugin=NULL;
 }
 
-/* Hidden function to get a pointer to this_nagios_plugin for testing */
-void _get_nagios_plugin( nagios_plugin **pointer ){
-	*pointer = this_nagios_plugin;
+/* Hidden function to get a pointer to this_monitoring_plugin for testing */
+void _get_monitoring_plugin( monitoring_plugin **pointer ){
+	*pointer = this_monitoring_plugin;
 }
 
 void
@@ -89,7 +89,7 @@ die (int result, const char *fmt, ...)
 	va_start (ap, fmt);
 	vprintf (fmt, ap);
 	va_end (ap);
-	if(this_nagios_plugin!=NULL) {
+	if(this_monitoring_plugin!=NULL) {
 		np_cleanup();
 	}
 	exit (result);
@@ -375,14 +375,14 @@ char *np_extract_value(const char *varlist, const char *name, char sep) {
 char *_np_state_generate_key() {
 	struct sha1_ctx ctx;
 	int i;
-	char **argv = this_nagios_plugin->argv;
+	char **argv = this_monitoring_plugin->argv;
 	unsigned char result[20];
 	char keyname[41];
 	char *p=NULL;
 
 	sha1_init_ctx(&ctx);
 	
-	for(i=0; i<this_nagios_plugin->argc; i++) {
+	for(i=0; i<this_monitoring_plugin->argc; i++) {
 		sha1_process_bytes(argv[i], strlen(argv[i]), &ctx);
 	}
 
@@ -401,9 +401,9 @@ char *_np_state_generate_key() {
 }
 
 void _cleanup_state_data() {
-	if (this_nagios_plugin->state->state_data!=NULL) {
-		np_free(this_nagios_plugin->state->state_data->data);
-		np_free(this_nagios_plugin->state->state_data);
+	if (this_monitoring_plugin->state->state_data!=NULL) {
+		np_free(this_monitoring_plugin->state->state_data->data);
+		np_free(this_monitoring_plugin->state->state_data);
 	}
 }
 
@@ -432,7 +432,7 @@ void np_enable_state(char *keyname, int expected_data_version) {
 	char *temp_keyname = NULL;
 	char *p=NULL;
 
-	if(this_nagios_plugin==NULL)
+	if(this_monitoring_plugin==NULL)
 		die(STATE_UNKNOWN, _("This requires np_init to be called"));
 
 	this_state = (state_key *) calloc(1, sizeof(state_key));
@@ -456,15 +456,15 @@ void np_enable_state(char *keyname, int expected_data_version) {
 		p++;
 	}
 	this_state->name=temp_keyname;
-	this_state->plugin_name=this_nagios_plugin->plugin_name;
+	this_state->plugin_name=this_monitoring_plugin->plugin_name;
 	this_state->data_version=expected_data_version;
 	this_state->state_data=NULL;
 
 	/* Calculate filename */
-	asprintf(&temp_filename, "%s/%s/%s", _np_state_calculate_location_prefix(), this_nagios_plugin->plugin_name, this_state->name);
+	asprintf(&temp_filename, "%s/%s/%s", _np_state_calculate_location_prefix(), this_monitoring_plugin->plugin_name, this_state->name);
 	this_state->_filename=temp_filename;
 
-	this_nagios_plugin->state = this_state;
+	this_monitoring_plugin->state = this_state;
 }
 
 /*
@@ -479,11 +479,11 @@ state_data *np_state_read() {
 	FILE *statefile;
 	int rc = FALSE;
 
-	if(this_nagios_plugin==NULL)
+	if(this_monitoring_plugin==NULL)
 		die(STATE_UNKNOWN, _("This requires np_init to be called"));
 
 	/* Open file. If this fails, no previous state found */
-	statefile = fopen( this_nagios_plugin->state->_filename, "r" );
+	statefile = fopen( this_monitoring_plugin->state->_filename, "r" );
 	if(statefile!=NULL) {
 
 		this_state_data = (state_data *) calloc(1, sizeof(state_data));
@@ -492,7 +492,7 @@ state_data *np_state_read() {
 			    strerror(errno));
 
 		this_state_data->data=NULL;
-		this_nagios_plugin->state->state_data = this_state_data;
+		this_monitoring_plugin->state->state_data = this_state_data;
 
 		rc = _np_state_read_file(statefile);
 
@@ -503,10 +503,10 @@ state_data *np_state_read() {
 		_cleanup_state_data();
 	}
 
-	return this_nagios_plugin->state->state_data;
+	return this_monitoring_plugin->state->state_data;
 }
 
-/* 
+/*
  * Read the state file
  */
 int _np_state_read_file(FILE *f) {
@@ -544,7 +544,7 @@ int _np_state_read_file(FILE *f) {
 				break;
 			case STATE_DATA_VERSION:
 				i=atoi(line);
-				if(i != this_nagios_plugin->state->data_version)
+				if(i != this_monitoring_plugin->state->data_version)
 					failure++;
 				else
 					expected=STATE_DATA_TIME;
@@ -555,13 +555,13 @@ int _np_state_read_file(FILE *f) {
 				if(data_time > current_time)
 					failure++;
 				else {
-					this_nagios_plugin->state->state_data->time = data_time;
+					this_monitoring_plugin->state->state_data->time = data_time;
 					expected=STATE_DATA_TEXT;
 				}
 				break;
 			case STATE_DATA_TEXT:
-				this_nagios_plugin->state->state_data->data = strdup(line);
-				if(this_nagios_plugin->state->state_data->data==NULL)
+				this_monitoring_plugin->state->state_data->data = strdup(line);
+				if(this_monitoring_plugin->state->state_data->data==NULL)
 					die(STATE_UNKNOWN, _("Cannot execute strdup: %s"), strerror(errno));
 				expected=STATE_DATA_END;
 				status=TRUE;
@@ -596,8 +596,8 @@ void np_state_write_string(time_t data_time, char *data_string) {
 		current_time=data_time;
 	
 	/* If file doesn't currently exist, create directories */
-	if(access(this_nagios_plugin->state->_filename,F_OK)!=0) {
-		asprintf(&directories, "%s", this_nagios_plugin->state->_filename);
+	if(access(this_monitoring_plugin->state->_filename,F_OK)!=0) {
+		asprintf(&directories, "%s", this_monitoring_plugin->state->_filename);
 		if(directories==NULL)
 			die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
 			    strerror(errno));
@@ -607,7 +607,7 @@ void np_state_write_string(time_t data_time, char *data_string) {
 				*p='\0';
 				if((access(directories,F_OK)!=0) && (mkdir(directories, S_IRWXU)!=0)) {
 					/* Can't free this! Otherwise error message is wrong! */
-					/* np_free(directories); */ 
+					/* np_free(directories); */
 					die(STATE_UNKNOWN, _("Cannot create directory: %s"), directories);
 				}
 				*p='/';
@@ -616,7 +616,7 @@ void np_state_write_string(time_t data_time, char *data_string) {
 		np_free(directories);
 	}
 
-	asprintf(&temp_file,"%s.XXXXXX",this_nagios_plugin->state->_filename);
+	asprintf(&temp_file,"%s.XXXXXX",this_monitoring_plugin->state->_filename);
 	if(temp_file==NULL)
 		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
 		    strerror(errno));
@@ -636,7 +636,7 @@ void np_state_write_string(time_t data_time, char *data_string) {
 	
 	fprintf(fp,"# NP State file\n");
 	fprintf(fp,"%d\n",NP_STATE_FORMAT_VERSION);
-	fprintf(fp,"%d\n",this_nagios_plugin->state->data_version);
+	fprintf(fp,"%d\n",this_monitoring_plugin->state->data_version);
 	fprintf(fp,"%lu\n",current_time);
 	fprintf(fp,"%s\n",data_string);
 	
@@ -654,7 +654,7 @@ void np_state_write_string(time_t data_time, char *data_string) {
 		die(STATE_UNKNOWN, _("Error writing temp file"));
 	}
 
-	if(rename(temp_file, this_nagios_plugin->state->_filename)!=0) {
+	if(rename(temp_file, this_monitoring_plugin->state->_filename)!=0) {
 		unlink(temp_file);
 		np_free(temp_file);
 		die(STATE_UNKNOWN, _("Cannot rename state temp file"));

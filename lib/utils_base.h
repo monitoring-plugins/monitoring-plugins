@@ -1,6 +1,6 @@
 #ifndef _UTILS_BASE_
 #define _UTILS_BASE_
-/* Header file for nagios plugins utils_base.c */
+/* Header file for monitoring plugins utils_base.c */
 
 #include "sha1.h"
 
@@ -52,7 +52,7 @@ typedef struct np_struct {
 	state_key *state;
 	int       argc;
 	char      **argv;
-	} nagios_plugin;
+	} monitoring_plugin;
 
 range *parse_range_string (char *);
 int _set_thresholds(thresholds **, char *, char *);

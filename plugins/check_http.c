@@ -1,9 +1,9 @@
 /*****************************************************************************
 *
-* Nagios check_http plugin
+* Monitoring check_http plugin
 *
 * License: GPL
-* Copyright (c) 1999-2013 Nagios Plugins Development Team
+* Copyright (c) 1999-2013 Monitoring Plugins Development Team
 *
 * Description:
 *
@@ -35,7 +35,7 @@
 
 const char *progname = "check_http";
 const char *copyright = "1999-2013";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "netutils.h"
@@ -157,7 +157,7 @@ main (int argc, char **argv)
   /* Set default URL. Must be malloced for subsequent realloc if --onredirect=follow */
   server_url = strdup(HTTP_URL);
   server_url_length = strlen(server_url);
-  xasprintf (&user_agent, "User-Agent: check_http/v%s (nagios-plugins %s)",
+  xasprintf (&user_agent, "User-Agent: check_http/v%s (monitoring-plugins %s)",
             NP_VERSION, VERSION);
 
   /* Parse extra opts if any */

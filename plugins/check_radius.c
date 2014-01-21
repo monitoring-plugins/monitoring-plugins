@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_radius plugin
+* Monitoring check_radius plugin
 * 
 * License: GPL
-* Copyright (c) 1999-2008 Nagios Plugins Development Team
+* Copyright (c) 1999-2008 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -30,7 +30,7 @@
 
 const char *progname = "check_radius";
 const char *copyright = "2000-2008";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
@@ -370,8 +370,8 @@ print_help (void)
   printf ("%s\n", _("the configuration file is described in the radiusclient library sources."));
 	printf ("%s\n", _("The password option presents a substantial security issue because the"));
   printf ("%s\n", _("password can possibly be determined by careful watching of the command line"));
-  printf ("%s\n", _("in a process listing. This risk is exacerbated because nagios will"));
-  printf ("%s\n", _("run the plugin at regular predictable intervals. Please be sure that"));
+  printf ("%s\n", _("in a process listing. This risk is exacerbated because the plugin will"));
+  printf ("%s\n", _("typically be executed at regular predictable intervals. Please be sure that"));
   printf ("%s\n", _("the password used does not allow access to sensitive system resources."));
 
 	printf (UT_SUPPORT);

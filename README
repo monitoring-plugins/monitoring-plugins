@@ -1,4 +1,4 @@
-Nagios Plugins
+Monitoring Plugins
 ==============
 
 * For instructions on installing these plugins for use with Nagios,
@@ -21,19 +21,19 @@ Nagios Plugins
 
 You can check for the latest plugins at:
 
-* <https://www.nagios-plugins.org/>
+* <https://www.monitoring-plugins.org/>
 
-Send an email to <nagiosplug-help@lists.sourceforge.net> for assistance.
+Send an email to <help@monitoring-plugins.org> for assistance.
 Please include the OS type and version that you are using.  Also, run the
 plugin with the `-vvv` option and provide the resulting version information.
 Of course, there may be additional diagnostic information required as well.
 Use good judgment.
 
-Send an email to <nagiosplug-devel@lists.sourceforge.net> for developer
+Send an email to <devel@monitoring-plugins.org> for developer
 discussions.
 
 For patch submissions and bug reports, please use the appropriate resources
-at <https://github.com/nagios-plugins/nagios-plugins>.
+at <https://github.com/monitoring-plugins/monitoring-plugins>.
 
 
 Installation Instructions
@@ -45,7 +45,7 @@ Installation Instructions
     	./tools/setup
 
     For more detail, see the developer guidelines at
-    <https://www.nagios-plugins.org/doc/guidelines.html>.
+    <https://www.monitoring-plugins.org/doc/guidelines.html>.
 
 2.  Run the configure script to initialize variables and create a Makefile,
     etc.
@@ -77,7 +77,7 @@ Installation Instructions
     	make install-root
 
 That's it!  If you have any problems or questions, feel free to send an
-email to <nagiosplug-help@lists.sourceforge.net>.
+email to <help@monitoring-plugins.org>.
 
 
 License Stuff

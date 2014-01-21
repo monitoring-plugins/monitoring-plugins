@@ -1,10 +1,10 @@
 /*****************************************************************************
 * 
-* Nagios check_nt plugin
+* Monitoring check_nt plugin
 * 
 * License: GPL
 * Copyright (c) 2000-2002 Yves Rubin (rubiyz@yahoo.com)
-* Copyright (c) 2003-2007 Nagios Plugins Development Team
+* Copyright (c) 2003-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -34,7 +34,7 @@
 
 const char *progname = "check_nt";
 const char *copyright = "2000-2007";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "netutils.h"
@@ -750,7 +750,7 @@ void print_help(void)
 	printf ("  %s\n", _("The purpose of this is to be run from command line to determine what instances"));
 	printf ("  %s\n", _(" are available for monitoring without having to log onto the Windows server"));
 	printf ("  %s\n", _("  to run Perfmon directly."));
-	printf ("  %s\n", _("It can also be used in scripts that automatically create Nagios service"));
+	printf ("  %s\n", _("It can also be used in scripts that automatically create the monitoring service"));
 	printf ("  %s\n", _(" configuration files."));
 	printf ("  %s\n", _("Some examples:"));
 	printf ("  %s\n\n", _("check_nt -H 192.168.1.1 -p 1248 -v INSTANCES -l Process"));

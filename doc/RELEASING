@@ -1,8 +1,5 @@
 NOTES ON RELEASING NEW VERSION OF NAGIOSPLUG
 
-NB: A copy of this document is located at:
-    http://nagiosplugins.org/node/96
-
 *** Pre-release
 git pull
 . tools/devmode, if feeling adventurous
@@ -24,15 +21,15 @@ git push origin master
 git push origin release-1.4.14
 
 *** Checkout new version
-rm -fr /tmp/nagioslug
+rm -fr /tmp/monitoringlug
 # If you need to checkout the tag, don't forget to "checkout master" later to
 # get back to your development branch:
 git checkout tags/release-1.4.14
 # Beware: the trailing slash of --prefix is REQUIRED
-git checkout-index --prefix=/tmp/nagioslug/ -a
+git checkout-index --prefix=/tmp/monitoringlug/ -a
 
 *** Build the tarball
-cd /tmp/nagioslug
+cd /tmp/monitoringlug
 tools/setup
 ./configure
 make dist
@@ -43,7 +40,7 @@ SF username and password
 cd /uploads
 put file
 
-SF -> Submit News about release. Make sure it is called "Nagios Plugins" (with those caps)
+SF -> Submit News about release. Make sure it is called "Monitoring Plugins" (with those caps)
 Link to download at http://sourceforge.net/project/showfiles.php?group_id=29880
 Include contents of NEWS for this release
 List all people on team involved.
@@ -60,5 +57,5 @@ Step 3: *.tar.gz, Platform Independent, Source .gz
 Step 4: Send notice
 
 *** Announce new release
-Send email to nagiosplug-help, nagios-announce with the news text
-Add a news item to http://nagiosplugins.org
+Send email to help, announce with the news text
+Add a news item to https://monitoring-plugins.org

@@ -1,10 +1,10 @@
 #!/usr/local/bin/perl -w
 #
-# check_ifstatus.pl - nagios plugin 
+# check_ifstatus.pl - monitoring plugin
 # 
 #
 # Copyright (C) 2000 Christoph Kron
-# Modified 5/2002 to conform to updated Nagios Plugin Guidelines (S. Ghosh)
+# Modified 5/2002 to conform to updated Monitoring Plugins Guidelines (S. Ghosh)
 #  Added -x option (4/2003)
 #  Added -u option (4/2003)
 #  Added -M option (10/2003)
@@ -25,7 +25,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #
 #
-# Report bugs to: ck@zet.net, nagiosplug-help@lists.sf.net
+# Report bugs to: ck@zet.net, help@monitoring-plugins.org
 # 
 # 11.01.2000 Version 1.0
 #
@@ -99,7 +99,7 @@ my %session_opts;
 
 
 
-# Just in case of problems, let's not hang Nagios
+# Just in case of problems, let's not hang the monitoring system
 $SIG{'ALRM'} = sub {
      print ("ERROR: No snmp response from $hostname (alarm timeout)\n");
      exit $ERRORS{"UNKNOWN"};
@@ -239,7 +239,7 @@ sub print_usage() {
 sub print_help() {
 	print_revision($PROGNAME, '@NP_VERSION@');
 	print_usage();
-	printf "check_ifstatus plugin for Nagios monitors operational \n";
+	printf "check_ifstatus plugin for monitoring operational \n";
 	printf "status of each network interface on the target host\n";
 	printf "\nUsage:\n";
 	printf "   -H (--hostname)   Hostname to query - (required)\n";

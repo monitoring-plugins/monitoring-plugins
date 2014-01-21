@@ -1,9 +1,9 @@
 /*****************************************************************************
 *
-* Nagios check_tcp plugin
+* Monitoring check_tcp plugin
 *
 * License: GPL
-* Copyright (c) 1999-2013 Nagios Plugins Development Team
+* Copyright (c) 1999-2013 Monitoring Plugins Development Team
 *
 * Description:
 *
@@ -30,7 +30,7 @@
 /* progname "check_tcp" changes depending on symlink called */
 char *progname;
 const char *copyright = "1999-2008";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@monitoring-plugins.org";
 
 #include <ctype.h>
 

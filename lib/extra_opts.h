@@ -2,7 +2,7 @@
 #define _EXTRA_OPTS_H_
 
 /*
- * extra_opts.h: routines for loading nagios-plugin defaults from ini
+ * extra_opts.h: routines for loading monitoring-plugin defaults from ini
  * configuration files.
  */
 

@@ -2,7 +2,7 @@
 #define _PARSE_INI_H_
 
 /*
- * parse_ini.h: routines for loading nagios-plugin defaults from ini
+ * parse_ini.h: routines for loading monitoring-plugin defaults from ini
  * configuration files.
  */
 

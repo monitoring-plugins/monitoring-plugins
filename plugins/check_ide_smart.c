@@ -1,13 +1,13 @@
 /*****************************************************************************
 * 
-* Nagios check_ide_smart plugin
+* Monitoring check_ide_smart plugin
 * ide-smart 1.3 - IDE S.M.A.R.T. checking tool
 * 
 * License: GPL
 * Copyright (C) 1998-1999 Ragnar Hojland Espinosa <ragnar@lightside.dhis.org>
 *               1998      Gadi Oxman <gadio@netvision.net.il>
 * Copyright (c) 2000 Robert Dale <rdale@digital-mission.com>
-* Copyright (c) 2000-2007 Nagios Plugins Development Team
+* Copyright (c) 2000-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -35,7 +35,7 @@
 
 const char *progname = "check_ide_smart";
 const char *copyright = "1998-2007";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@monitoring-plugins.org";
 	
 #include "common.h"
 #include "utils.h"
@@ -592,7 +592,7 @@ print_help (void)
 {
 	print_revision (progname, NP_VERSION);
 
-	printf ("Nagios feature - 1999 Robert Dale <rdale@digital-mission.com>\n");
+	printf ("monitoring feature - 1999 Robert Dale <rdale@digital-mission.com>\n");
 	printf ("(C) 1999 Ragnar Hojland Espinosa <ragnar@lightside.dhis.org>\n");
 	printf (COPYRIGHT, copyright, email);
 
@@ -616,8 +616,8 @@ print_help (void)
   printf ("    %s\n", _("Turn on automatic offline tests"));
   printf (" %s\n", "-0, --auto-off");
   printf ("    %s\n", _("Turn off automatic offline tests"));
-  printf (" %s\n", "-n, --nagios");
-  printf ("    %s\n", _("Output suitable for Nagios"));
+  printf (" %s\n", "-n, --monitoring");
+  printf ("    %s\n", _("Output suitable for the monitoring system"));
 
   printf (UT_SUPPORT);
 }

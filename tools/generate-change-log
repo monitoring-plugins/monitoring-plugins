@@ -1,10 +1,10 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2013 Nagios Plugins Development Team
+# Copyright (c) 2013 Monitoring Plugins Development Team
 #
 # Originally written by Holger Weiss <holger@zedat.fu-berlin.de>.
 #
-# This file is free software; the Nagios Plugins Development Team gives
+# This file is free software; the Monitoring Plugins Development Team gives
 # unlimited permission to copy and/or distribute it, with or without
 # modifications, as long as this notice is preserved.
 #

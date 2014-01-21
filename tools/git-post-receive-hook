@@ -1,11 +1,11 @@
 #!/bin/sh
 
 prefix="${0%/*}/notifications"	# $GIT_DIR/hooks/notifications
-recipient='Nagios Plugin Commits <nagiosplug-checkins@lists.sourceforge.net>'
+recipient='Monitoring Plugins Commits <commits@monitoring-plugins.org>'
 maxcommits=100
 maxdiffsize=$((300 * 1024))
-project='nagiosplug'
-gitweburl='http://nagiosplug.git.sf.net/git/gitweb.cgi?p=nagiosplug'
+project='monitoring-plugins'
+gitweburl='https://github.com/monitoring-plugins/monitoring-plugins'
 gitnotify="$prefix/git-notify.pl"
 statefile="$prefix/git-notify.dat"
 

@@ -1,17 +1,16 @@
 /*****************************************************************************
 * 
-* Nagios urlize plugin
+* Monitoring urlize plugin
 * 
 * License: GPL
-* Copyright (c) 2000-2007 Nagios Plugins Development Team
+* Copyright (c) 2000-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
 * This file contains the urlize plugin
 * 
 * This plugin wraps the text output of another command (plugin) in HTML <A>
-* tags, thus displaying the child plugin's output as a clickable link in the
-* Nagios status screen.  This plugin returns the status of the invoked plugin.
+* tags.  This plugin returns the status of the invoked plugin.
 * 
 * 
 * This program is free software: you can redistribute it and/or modify
@@ -32,7 +31,7 @@
 
 const char *progname = "urlize";
 const char *copyright = "2000-2006";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
@@ -166,9 +165,9 @@ print_help (void)
 	printf ("Copyright (c) 2000 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n");
 	printf (COPYRIGHT, copyright, email);
 
-	printf ("%s\n", _("This plugin wraps the text output of another command (plugin)"));
-  printf ("%s\n", _("in HTML <A> tags, thus displaying the child plugin's output as a clickable link in"));
-  printf ("%s\n", _("the Nagios status screen.  This plugin returns the status of the invoked plugin."));
+	printf ("%s\n", _("This plugin wraps the text output of another command (plugin) in HTML <A>"));
+  printf ("%s\n", _("tags, thus displaying the child plugin's output as a clickable link in compatible"));
+  printf ("%s\n", _("monitoring status screen. This plugin returns the status of the invoked plugin."));
 
   printf ("\n\n");
 

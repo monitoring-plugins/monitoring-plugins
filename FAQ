@@ -15,7 +15,7 @@ A: All plugins that comply with minimal development guideline for
    this project include detailed version information.  When executed
    with the '-V' option, a version string will be printed:
 
-   check_radius v1.4.16 (nagios-plugins 1.4.16)
+   check_radius v1.4.16 (monitoring-plugins 1.4.16)
 
    All bug reports and help requests should reference this
    information.
@@ -32,7 +32,7 @@ A: At a minimum, the output from 'uname -a' and the version string
 Q: I'm using Redhat Linux (or some other RPM-based distribution).
    Which packages should I install?
 
-A: The package nagios-plugins-<version>.<arch>.rpm contains only
+A: The package monitoring-plugins-<version>.<arch>.rpm contains only
    those plugins that should work on any POSIX compliant system.  In
    other words, you should be able to install this package on your
    system, no matter what else is or in not installed.
@@ -42,7 +42,7 @@ A: The package nagios-plugins-<version>.<arch>.rpm contains only
    each dependency could be installed cleanly, but many people
    found that this resulted in too many packages.  So in the end,
    all the non-POSIX plugins were folded into one RPM 
-   (nagios-plugins-<version>.<arch>.rpm).  Most people will need to
+   (monitoring-plugins-<version>.<arch>.rpm).  Most people will need to
    use RPM's '--nodeps' option to install this package.
 
 
@@ -59,10 +59,10 @@ Q: I prefer to build my own RPMs. Do I need to install all of the
 
 A: Beginning with the 1.2.9-1 release, you may run
 
-   rpm --define 'custom 1' -ta nagios-plugins-<release>.tar.gz
+   rpm --define 'custom 1' -ta monitoring-plugins-<release>.tar.gz
 
    In prior releases, you must unpack the tarball and build the
-   RPM using nagios-custom.spec with 'rpm -ba'.
+   RPM using monitoring-custom.spec with 'rpm -ba'.
 
 
 Q: I get an error like
@@ -84,8 +84,8 @@ A: Commonly, system administrators will make security as tight as
 
 Q: I have a plugin to offer. What can I do?
 
-A: You can make it available on NagiosExchange (http://nagiosexchange.org)
+A: You can make it available on MonitoringExchange (http://monitoringexchange.org)
    where other people can find it for use.
 
    You can also get feedback on improving the plugin via the 
-   nagiosplug-devel@lists.sourceforge.net mailing list.
+   devel@monitoring-plugins.org mailing list.

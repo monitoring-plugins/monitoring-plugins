@@ -21,7 +21,7 @@ NP-VERSION-FILE
 /Makefile
 /Makefile.in
 /missing
-/nagios-plugins.spec
+/monitoring-plugins.spec
 /stamp-h1
 /test.pl
 /THANKS
@@ -93,7 +93,7 @@ NP-VERSION-FILE
 # /lib/
 /lib/.deps
 /lib/getopt.h
-/lib/libnagiosplug.a
+/lib/libmonitoringplug.a
 /lib/Makefile
 /lib/Makefile.in
 

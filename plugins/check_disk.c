@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_disk plugin
+* Monitoring check_disk plugin
 * 
 * License: GPL
-* Copyright (c) 1999-2008 Nagios Plugins Development Team
+* Copyright (c) 1999-2008 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -29,7 +29,7 @@
 const char *progname = "check_disk";
 const char *program_name = "check_disk";  /* Required for coreutils libs */
 const char *copyright = "1999-2008";
-const char *email = "nagiosplug-devel@lists.sourceforge.net";
+const char *email = "devel@monitoring-plugins.org";
 
 
 #include "common.h"
