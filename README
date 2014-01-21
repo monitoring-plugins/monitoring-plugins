@@ -1,9 +1,9 @@
 Monitoring Plugins
-==============
+==================
 
-* For instructions on installing these plugins for use with Nagios,
-  see below.  In addition, generic instructions for the GNU toolchain can be
-  found in the `INSTALL` file.
+* For instructions on installing these plugins for use with your monitoring
+  system, see below.  In addition, generic instructions for the GNU
+  toolchain can be found in the `INSTALL` file.
 
 * For major changes between releases, read the `NEWS` file.
 
@@ -26,8 +26,8 @@ You can check for the latest plugins at:
 Send an email to <help@monitoring-plugins.org> for assistance.  Please
 include the OS type and version that you are using.  Also, run the plugin
 with the `-vvv` option and provide the resulting version information.  Of
-course, there may be additional diagnostic information required as well.  Use
-good judgment.
+course, there may be additional diagnostic information required as well.
+Use good judgment.
 
 Send an email to <devel@monitoring-plugins.org> for developer discussions.
 
@@ -53,10 +53,10 @@ Installation Instructions
 
     	./configure --prefix=BASEDIRECTORY --with-cgiurl=SOMEURL
 
-    Replace `BASEDIRECTORY` with the path of the directory under which Nagios
-    is installed (default is `/usr/local/nagios`), and replace `SOMEURL` with
-    the path used to access the Nagios CGIs with a web browser (default is
-    `/nagios/cgi-bin`).
+    Replace `BASEDIRECTORY` with the path of the directory under which your
+    monitoring system is installed (default is `/usr/local`), and replace
+    `SOMEURL` with the path used to access the monitoring system CGIs with a
+    web browser (default is `/nagios/cgi-bin`).
 
 3.  Compile the plugins with the following command:
 
