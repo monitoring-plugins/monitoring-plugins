@@ -55,7 +55,7 @@ void print_usage (void);
 
 char *sql_query = NULL;
 int verbose = 0;
-thresholds *my_thresholds = NULL;
+thresholds *thlds = NULL;
 
 
 int
@@ -143,7 +143,7 @@ main (int argc, char **argv)
 	if (verbose >= 3)
 		printf("mysql result: %f\n", value);
 
-	status = get_status(value, my_thresholds);
+	status = get_status(value, thlds);
 
 	if (status == STATE_OK) {
 		printf("QUERY %s: ", _("OK"));
@@ -152,7 +152,13 @@ main (int argc, char **argv)
 	} else if (status == STATE_CRITICAL) {
 		printf("QUERY %s: ", _("CRITICAL"));
 	}
-	printf(_("'%s' returned %f"), sql_query, value);
+	printf(_("'%s' returned %f | %s"), sql_query, value,
+		fperfdata("result", value, "",
+		thlds->warning?TRUE:FALSE, thlds->warning?thlds->warning->end:0,
+		thlds->critical?TRUE:FALSE, thlds->critical?thlds->critical->end:0,
+		FALSE, 0, 
+		FALSE, 0)
+	);
 	printf("\n");
 
 	return status;
@@ -248,7 +254,7 @@ process_arguments (int argc, char **argv)
 
 	c = optind;
 
-	set_thresholds(&my_thresholds, warning, critical);
+	set_thresholds(&thlds, warning, critical);
 
 	return validate_arguments ();
 }
