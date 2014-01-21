@@ -12,8 +12,6 @@ AC_CANONICAL_HOST
 RELEASE=1
 AC_SUBST(RELEASE)
 
-AC_PREFIX_DEFAULT(/usr/local/nagios)
-
 dnl Deprecated configure options
 
 

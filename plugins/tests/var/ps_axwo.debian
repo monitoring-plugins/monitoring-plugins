@@ -79,6 +79,6 @@ Ss    1001 23783     1  3220  764  0.0 ndo2db           /usr/local/nagios/bin/nd
 Ss    1001 23784     1  6428 4948  0.0 import_ndologsd  import_ndologsd
 S+    1001  9803 18955  4132 1936  0.0 ssh              ssh altinity@cube02.lei.altinity
 S     1001 22505 22324 20256 1616  0.0 nagios           ../../bin/nagios -d /usr/local/nagios/etc/nagios.cfg
-S     1001 22506 22505  1676  608  0.0 check_ping       /usr/local/monitoring/libexec/check_ping -H 192.168.10.23 -w 3000.0,80% -c 5000.0,100% -p 1
+S     1001 22506 22505  1676  608  0.0 check_ping       /usr/local/libexec/check_ping -H 192.168.10.23 -w 3000.0,80% -c 5000.0,100% -p 1
 S     1001 22507 22506  1660  492  0.0 ping             /bin/ping -n -U -w 10 -c 1 192.168.10.23
 R+    1001 22508 23370  2308  680  0.0 ps               ps axwo stat uid pid ppid vsz rss pcpu comm args
