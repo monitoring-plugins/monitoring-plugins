@@ -67,8 +67,9 @@ main (int argc, char **argv)
 	MYSQL_ROW row;
 	
 	double value;
+	char perfmin[20],perfmax[20];
 	char *error = NULL;
-	int status;
+	int status,cols;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -128,6 +129,7 @@ main (int argc, char **argv)
 		die (STATE_CRITICAL, "QUERY %s: Fetch row error - %s\n", _("CRITICAL"), error);
 	}
 
+	cols =  mysql_num_fields(res);
 	/* free the result */
 	mysql_free_result (res);
 
@@ -140,20 +142,31 @@ main (int argc, char **argv)
 
 	value = strtod(row[0], NULL);
 
+	if ( (cols >= 2) && (is_numeric(row[1])) ) 
+		sprintf(perfmin,"%g",strtod(row[1],NULL));
+	else
+		sprintf(perfmin, "");
+
+	if ( (cols >= 3) && (is_numeric(row[2])) ) 
+		sprintf(perfmax,"%g",strtod(row[2],NULL));
+	else
+		sprintf(perfmax, "");
+
 	if (verbose >= 3)
 		printf("mysql result: %f\n", value);
 
 	status = get_status(value, my_thresholds);
 
 	if (status == STATE_OK) {
-		printf("QUERY %s: ", _("OK"));
+		printf("QUERY %s: returned %g", _("OK"),value);
 	} else if (status == STATE_WARNING) {
-		printf("QUERY %s: ", _("WARNING"));
+		printf("QUERY %s: returned %g", _("WARNING"),value);
 	} else if (status == STATE_CRITICAL) {
-		printf("QUERY %s: ", _("CRITICAL"));
+		printf("QUERY %s: returned %g", _("CRITICAL"),value);
 	}
-	printf(_("'%s' returned %f"), sql_query, value);
 	printf("\n");
+	printf(_("'%s'\n"), sql_query);
+	printf("| value=%g;;;%s;%s\n",value,perfmin,perfmax);
 
 	return status;
 }
