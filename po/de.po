@@ -5772,7 +5772,7 @@ msgstr ""
 #: plugins/utils.h:200
 msgid ""
 "\n"
-"The monitoring plugins come with ABSOLUTELY NO WARRANTY. You may "
+"The Monitoring Plugins come with ABSOLUTELY NO WARRANTY. You may "
 "redistribute\n"
 "copies of the plugins under the terms of the GNU General Public License.\n"
 "For more information about these matters, see the file named COPYING.\n"

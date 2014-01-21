@@ -1,6 +1,6 @@
 #ifndef NP_UTILS_H
 #define NP_UTILS_H
-/* Header file for monitoring plugins utils.c */
+/* Header file for Monitoring Plugins utils.c */
 
 /* This file should be included in all plugins */
 
@@ -203,7 +203,7 @@ use of this software. To submit patches or suggest improvements, send email\n\
 to devel@monitoring-plugins.org\n\n")
 
 #define UT_NOWARRANTY _("\n\
-The monitoring plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\
+The Monitoring Plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\
 copies of the plugins under the terms of the GNU General Public License.\n\
 For more information about these matters, see the file named COPYING.\n")
 

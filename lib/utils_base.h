@@ -1,6 +1,6 @@
 #ifndef _UTILS_BASE_
 #define _UTILS_BASE_
-/* Header file for monitoring plugins utils_base.c */
+/* Header file for Monitoring Plugins utils_base.c */
 
 #include "sha1.h"
 

@@ -1,6 +1,6 @@
 PKG="NGOSplugin"
 NAME="monitoring-plugins"
-DESC="Network monitoring plugins for Nagios and compatible"
+DESC="Network Monitoring Plugins for Nagios and compatible"
 ARCH="@PKG_ARCH@"
 VERSION="@PACKAGE_VERSION@,REV=@REV_DATESTAMP@"
 CATEGORY="application"

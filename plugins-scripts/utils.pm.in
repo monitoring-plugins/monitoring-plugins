@@ -1,4 +1,4 @@
-# Utility drawer for monitoring plugins.
+# Utility drawer for Monitoring Plugins.
 #
 # This will be deprecated soon. Please use Monitoring::Plugin from CPAN
 # for new plugins

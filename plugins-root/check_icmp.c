@@ -42,7 +42,7 @@ char *progname;
 const char *copyright = "2005-2008";
 const char *email = "devel@monitoring-plugins.org";
 
-/** monitoring plugins basic includes */
+/** Monitoring Plugins basic includes */
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"

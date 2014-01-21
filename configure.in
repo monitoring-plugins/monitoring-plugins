@@ -56,7 +56,7 @@ AC_SUBST(PLUGIN_TEST)dnl
 SCRIPT_TEST=`echo $srcdir/plugins-scripts/t/*.t|sed -e 's,\.*/plugins-scripts/,,g'`
 AC_SUBST(SCRIPT_TEST)dnl
 
-WARRANTY="The monitoring plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\ncopies of the plugins under the terms of the GNU General Public License.\nFor more information about these matters, see the file named COPYING.\n"
+WARRANTY="The Monitoring Plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\ncopies of the plugins under the terms of the GNU General Public License.\nFor more information about these matters, see the file named COPYING.\n"
 AC_SUBST(WARRANTY)
 
 SUPPORT="Send email to help@monitoring-plugins.org if you have questions regarding use\nof this software. To submit patches or suggest improvements, send email to\ndevel@monitoring-plugins.org. Please include version information with all\ncorrespondence (when possible, use output from the --version option of the\nplugin itself).\n"

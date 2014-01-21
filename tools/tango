@@ -16,7 +16,7 @@ $REVISION =~ s/ \$ $//;
 
 my $PACKAGE = 'Monitoring Plugins';
 my $RELEASE = '1.3';
-my $WARRANTY = "The monitoring plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\ncopies of the plugins under the terms of the GNU General Public License.\nFor more information about these matters, see the file named COPYING.\n";
+my $WARRANTY = "The Monitoring Plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\ncopies of the plugins under the terms of the GNU General Public License.\nFor more information about these matters, see the file named COPYING.\n";
 
 my $version = undef;
 my $help = undef;
