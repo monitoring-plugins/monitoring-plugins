@@ -57,7 +57,7 @@ enum {
 
 #ifdef HAVE_SSL
 int check_cert = FALSE;
-int ssl_version;
+int ssl_version = 0;
 int days_till_exp_warn, days_till_exp_crit;
 char *randbuff;
 X509 *server_cert;
@@ -257,7 +257,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:N:E", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NE", longopts, &option);
     if (c == -1 || c == EOF)
       break;
 
@@ -339,10 +339,10 @@ process_arguments (int argc, char **argv)
     case 'S': /* use SSL */
 #ifdef HAVE_SSL
     enable_ssl:
+      /* ssl_version initialized to 0 as a default. Only set if it's non-zero.  This helps when we include multiple
+         parameters, like -S and -C combinations */
       use_ssl = TRUE;
-      if (optarg == NULL || c != 'S')
-        ssl_version = 0;
-      else {
+      if (c=='S' && optarg != NULL) {
         ssl_version = atoi(optarg);
         if (ssl_version < 1 || ssl_version > 3)
             usage4 (_("Invalid option - Valid values for SSL Version are 1 (TLSv1), 2 (SSLv2) or 3 (SSLv3)"));

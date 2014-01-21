@@ -185,7 +185,8 @@ char *fperfdata (const char *,
 #ifdef NP_EXTRA_OPTS
 #define UT_EXTRA_OPTS _("\
  --extra-opts=[section][@file]\n\
-    Read options from an ini file. See http://monitoring-plugins.org/doc/extra-opts.html\n\
+    Read options from an ini file. See\n\
+    https://www.monitoring-plugins.org/doc/extra-opts.html\n\
     for usage and examples.\n")
 #else
 #define UT_EXTRA_OPTS ""
@@ -193,13 +194,13 @@ char *fperfdata (const char *,
 
 #define UT_THRESHOLDS_NOTES _("\
  See:\n\
- http://monitoring-plugins.org/doc/guidelines.html#THRESHOLDFORMAT\n\
+ https://www.monitoring-plugins.org/doc/guidelines.html#THRESHOLDFORMAT\n\
  for THRESHOLD format and examples.\n")
 
 #define UT_SUPPORT _("\n\
-Send email to help@monitoring-plugins.org if you have questions\n\
-regarding use of this software. To submit patches or suggest improvements,\n\
-send email to devel@monitoring-plugins.org\n\n")
+Send email to help@monitoring-plugins.org if you have questions regarding\n\
+use of this software. To submit patches or suggest improvements, send email\n\
+to devel@monitoring-plugins.org\n\n")
 
 #define UT_NOWARRANTY _("\n\
 The monitoring plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\

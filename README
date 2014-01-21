@@ -23,17 +23,18 @@ You can check for the latest plugins at:
 
 * <https://www.monitoring-plugins.org/>
 
-Send an email to <help@monitoring-plugins.org> for assistance.
-Please include the OS type and version that you are using.  Also, run the
-plugin with the `-vvv` option and provide the resulting version information.
-Of course, there may be additional diagnostic information required as well.
-Use good judgment.
+Send an email to <help@monitoring-plugins.org> for assistance.  Please
+include the OS type and version that you are using.  Also, run the plugin
+with the `-vvv` option and provide the resulting version information.  Of
+course, there may be additional diagnostic information required as well.  Use
+good judgment.
 
-Send an email to <devel@monitoring-plugins.org> for developer
-discussions.
+Send an email to <devel@monitoring-plugins.org> for developer discussions.
 
 For patch submissions and bug reports, please use the appropriate resources
-at <https://github.com/monitoring-plugins/monitoring-plugins>.
+at:
+
+* <https://github.com/monitoring-plugins>
 
 
 Installation Instructions
@@ -80,11 +81,18 @@ That's it!  If you have any problems or questions, feel free to send an
 email to <help@monitoring-plugins.org>.
 
 
-License Stuff
--------------
+License Notice
+--------------
 
-This software is released under the GNU General Public License, Version 3,
-with the additional exemption that compiling, linking and/or using OpenSSL
-is allowed.
+You can redistribute and/or modify this software under the terms of the GNU
+General Public License as published by the Free Software Foundation; either
+version 3 of the License, or (at your option) any later version; with the
+additional exemption that compiling, linking, and/or using OpenSSL is
+allowed.
 
-See the `COPYING` file for the complete GPLv3 text.
+This software is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.
+
+See the `COPYING` file for the complete text of the GNU General Public
+License, version 3.

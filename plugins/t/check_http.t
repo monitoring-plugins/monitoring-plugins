@@ -82,7 +82,7 @@ SKIP: {
         cmp_ok( $res->return_code, "==", 0, "And also when not found");
 }
 SKIP: {
-        skip "No internet access", 11 if $internet_access eq "no";
+        skip "No internet access", 16 if $internet_access eq "no";
 
         $res = NPTest->testCmd(
                 "./check_http --ssl www.verisign.com"
