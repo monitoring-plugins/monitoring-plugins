@@ -189,7 +189,7 @@ char *fperfdata (const char *,
     https://www.monitoring-plugins.org/doc/extra-opts.html\n\
     for usage and examples.\n")
 #else
-#define UT_EXTRA_OPTS ""
+#define UT_EXTRA_OPTS " \b"
 #endif
 
 #define UT_THRESHOLDS_NOTES _("\
