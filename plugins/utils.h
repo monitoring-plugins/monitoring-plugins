@@ -160,7 +160,7 @@ char *fperfdata (const char *,
 #define UT_VERBOSE _("\
  -v, --verbose\n\
     Show details for command-line debugging (output may be truncated by\n\
-		the monitoring system)\n")
+    the monitoring system)\n")
 
 #define UT_WARN_CRIT _("\
  -w, --warning=DOUBLE\n\
