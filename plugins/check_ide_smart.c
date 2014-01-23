@@ -597,7 +597,8 @@ print_help (void)
 
   printf (" %s\n", "-d, --device=DEVICE");
   printf ("    %s\n", _("Select device DEVICE"));
-  printf ("    %s\n", _("Note: if the device is selected with this option, _no_ other options are accepted"));
+  printf ("    %s\n", _("Note: if the device is specified without this option, any further option will"));
+  printf ("          %s\n", _("be ignored."));
 
   printf (UT_VERBOSE);
 
