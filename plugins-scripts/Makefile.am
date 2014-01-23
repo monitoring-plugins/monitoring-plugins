@@ -19,7 +19,7 @@ libexec_SCRIPTS = check_breeze check_disk_smb check_flexlm check_ircd \
 	utils.sh utils.pm
 
 EXTRA_DIST=check_breeze.pl check_disk_smb.pl check_flexlm.pl check_ircd.pl \
-	check_log.sh check_ntp.pl check_oracle.sh check_rpc.pl check_sensors.sh \
+	check_log.sh check_oracle.sh check_rpc.pl check_sensors.sh \
 	check_ifstatus.pl check_ifoperstatus.pl check_wave.pl check_mailq.pl check_file_age.pl \
 	utils.sh.in utils.pm.in t
 
