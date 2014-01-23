@@ -178,7 +178,6 @@ int
 main (int argc, char *argv[]) 
 {
 	char *device = NULL;
-	int command = -1;
 	int o, longindex;
 	int retval = 0;
 
@@ -221,13 +220,10 @@ main (int argc, char *argv[])
 			fprintf (stderr, "%s\n", _("Nagios-compatible output is now always returned."));
 			break;
 		case 'i':
-			command = 2;
-			break;
 		case '1':
-			command = 1;
-			break;
 		case '0':
-			command = 0;
+			printf ("%s\n", _("SMART commands are broken and have been disabled (See Notes in --help)."));
+			return STATE_CRITICAL;
 			break;
 		case 'n':
 			fprintf (stderr, "%s\n", _("DEPRECATION WARNING: the -n switch (Nagios-compatible output) is now the"));
@@ -268,23 +264,11 @@ main (int argc, char *argv[])
 		return STATE_CRITICAL;
 	}
 
-	switch (command) {
-	case 0:
-		retval = smart_cmd_simple (fd, SMART_CMD_AUTO_OFFLINE, 0, TRUE);
-		break;
-	case 1:
-		retval = smart_cmd_simple (fd, SMART_CMD_AUTO_OFFLINE, 0xF8, TRUE);
-		break;
-	case 2:
-		retval = smart_cmd_simple (fd, SMART_CMD_IMMEDIATE_OFFLINE, 0, TRUE);
-		break;
-	default:
-		smart_read_values (fd, &values);
-		smart_read_thresholds (fd, &thresholds);
-		retval = nagios (&values, &thresholds);
-		if (verbose) print_values (&values, &thresholds);
-		break;
-	}
+	smart_read_values (fd, &values);
+	smart_read_thresholds (fd, &thresholds);
+	retval = nagios (&values, &thresholds);
+	if (verbose) print_values (&values, &thresholds);
+
 	close (fd);
 	return retval;
 }
@@ -614,16 +598,18 @@ print_help (void)
   printf (" %s\n", "-d, --device=DEVICE");
   printf ("    %s\n", _("Select device DEVICE"));
   printf ("    %s\n", _("Note: if the device is selected with this option, _no_ other options are accepted"));
-  printf (" %s\n", "-i, --immediate");
-  printf ("    %s\n", _("Perform immediately offline tests"));
-  printf (" %s\n", "-q, --quiet-check");
-  printf ("    %s\n", _("Returns the number of failed tests"));
-  printf (" %s\n", "-1, --auto-on");
-  printf ("    %s\n", _("Turn on automatic offline tests"));
-  printf (" %s\n", "-0, --auto-off");
-  printf ("    %s\n", _("Turn off automatic offline tests"));
 
-	printf (UT_VERBOSE);
+  printf (UT_VERBOSE);
+
+  printf ("\n");
+  printf ("%s\n", _("Notes:"));
+  printf (" %s\n", _("The SMART command modes (-i/--immediate, -0/--auto-off and -1/--auto-on) were"));
+  printf (" %s\n", _("broken in an underhand manner and have been disabled. You can use smartctl"));
+  printf (" %s\n", _("instead:"));
+  printf ("  %s\n", _("-0/--auto-off:  use \"smartctl --offlineauto=off\""));
+  printf ("  %s\n", _("-1/--auto-on:   use \"smartctl --offlineauto=on\""));
+  printf ("  %s\n", _("-i/--immediate: use \"smartctl --test=offline\""));
+
   printf (UT_SUPPORT);
 }
 
@@ -643,6 +629,5 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-  printf ("%s [-d <device>] [-i <immediate>] [-q quiet] [-1 <auto-on>]", progname);
-  printf (" [-O <auto-off>] [-v]\n");
+  printf ("%s [-d <device>] [-v]", progname);
 }

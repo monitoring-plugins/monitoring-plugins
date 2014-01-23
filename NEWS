@@ -6,12 +6,16 @@ This file documents the major additions and syntax changes between releases.
 
 	FIXES
 	Don't let e.g. check_http's -C option reset SSL version if e.g. -S 1 -C 5 is specified
+	check_ide_smart could disable offline auto tests but could not re-enable them.
+	  For this reason all SMART command modes have been disabled.
 
 	WARNINGS
 	check_procs now ignores its parent process to avoid unexpected results when invoked via certain shells
-	utils.sh no longer defines ECHO
-	check_ide_smart -q (quiet) and -n (Nagios-compatile output) are now deprecated
+	utils.sh no longer defines ECH
+	check_ide_smart -q/--quiet and -n/--nagios (Nagios-compatile output) are now deprecated
 	  but accepted for backward-compatibility
+	check_ide_smart -0/--auto-off, -1/--auto-on and -i/--immediate: options have
+	  been disabled because they were broken
 
 1.5 2nd October 2013
 	ENHANCEMENTS
