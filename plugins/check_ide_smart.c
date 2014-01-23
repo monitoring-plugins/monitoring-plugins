@@ -172,6 +172,7 @@ void print_value (value_t *, threshold_t *);
 void print_values (values_t *, thresholds_t *);
 int smart_cmd_simple (int, enum SmartCommand, __u8, char);
 int smart_read_thresholds (int, thresholds_t *);
+int verbose = FALSE;
 
 int
 main (int argc, char *argv[]) 
@@ -191,7 +192,7 @@ main (int argc, char *argv[])
 		{"quiet-check", no_argument, 0, 'q'}, 
 		{"auto-on", no_argument, 0, '1'}, 
 		{"auto-off", no_argument, 0, '0'}, 
-		{"nagios", no_argument, 0, 'n'}, 
+		{"nagios", no_argument, 0, 'n'}, /* DEPRECATED, but we still accept it */
 		{"help", no_argument, 0, 'h'}, 
 		{"version", no_argument, 0, 'V'},
 		{0, 0, 0, 0}
@@ -206,7 +207,7 @@ main (int argc, char *argv[])
 
 	while (1) {
 		
-		o = getopt_long (argc, argv, "+d:iq10nhV", longopts, &longindex);
+		o = getopt_long (argc, argv, "+d:iq10nhVv", longopts, &longindex);
 
 		if (o == -1 || o == EOF || o == 1)
 			break;
@@ -216,7 +217,8 @@ main (int argc, char *argv[])
 			device = optarg;
 			break;
 		case 'q':
-			command = 3;
+			fprintf (stderr, "%s\n", _("DEPRECATION WARNING: the -q switch (quiet output) is no longer \"quiet\"."));
+			fprintf (stderr, "%s\n", _("Nagios-compatible output is now always returned."));
 			break;
 		case 'i':
 			command = 2;
@@ -228,7 +230,11 @@ main (int argc, char *argv[])
 			command = 0;
 			break;
 		case 'n':
-			command = 4;
+			fprintf (stderr, "%s\n", _("DEPRECATION WARNING: the -n switch (Nagios-compatible output) is now the"));
+			fprintf (stderr, "%s\n", _("default and will be removed from future releases."));
+			break;
+		case 'v': /* verbose */
+			verbose = TRUE;
 			break;
 		case 'h':
 			print_help ();
@@ -257,7 +263,7 @@ main (int argc, char *argv[])
 		return STATE_CRITICAL;
 	}
 
-	if (smart_cmd_simple (fd, SMART_CMD_ENABLE, 0, TRUE)) {
+	if (smart_cmd_simple (fd, SMART_CMD_ENABLE, 0, FALSE)) {
 		printf (_("CRITICAL - SMART_CMD_ENABLE\n"));
 		return STATE_CRITICAL;
 	}
@@ -272,20 +278,11 @@ main (int argc, char *argv[])
 	case 2:
 		retval = smart_cmd_simple (fd, SMART_CMD_IMMEDIATE_OFFLINE, 0, TRUE);
 		break;
-	case 3:
-		smart_read_values (fd, &values);
-		smart_read_thresholds (fd, &thresholds);
-		retval = values_not_passed (&values, &thresholds);
-		break;
-	case 4:
-		smart_read_values (fd, &values);
-		smart_read_thresholds (fd, &thresholds);
-		retval = nagios (&values, &thresholds);
-		break;
 	default:
 		smart_read_values (fd, &values);
 		smart_read_thresholds (fd, &thresholds);
-		print_values (&values, &thresholds);
+		retval = nagios (&values, &thresholds);
+		if (verbose) print_values (&values, &thresholds);
 		break;
 	}
 	close (fd);
@@ -495,7 +492,7 @@ print_values (values_t * p, thresholds_t * t)
 int
 smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0, char show_error) 
 {
-	int e = 0;
+	int e = STATE_UNKNOWN;
 #ifdef __linux__
 	__u8 args[4];
 	args[0] = WIN_SMART;
@@ -503,11 +500,15 @@ smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0, char show_error)
 	args[2] = smart_command[command].value;
 	args[3] = 0;
 	if (ioctl (fd, HDIO_DRIVE_CMD, &args)) {
-		e = errno;
-		if (show_error) {
+		e = STATE_CRITICAL;
+		if (show_error)
 			printf (_("CRITICAL - %s: %s\n"), smart_command[command].text, strerror (errno));
-		}
+	} else {
+		e = STATE_OK;
+		if (show_error)
+			printf (_("OK - Command sent (%s)\n"), smart_command[command].text);
 	}
+
 #endif /* __linux__ */
 #ifdef __NetBSD__
 	struct atareq req;
@@ -528,10 +529,15 @@ smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0, char show_error)
 	}
 
 	if (errno != 0) {
-		e = errno;
-		printf (_("CRITICAL - %s: %s\n"), smart_command[command].text, strerror (errno));
-		return e;
+		e = STATE_CRITICAL;
+		if (show_error)
+			printf (_("CRITICAL - %s: %s\n"), smart_command[command].text, strerror (errno));
+	} else {
+		e = STATE_OK;
+		if (show_error)
+			printf (_("OK - Command sent (%s)\n"), smart_command[command].text);
 	}
+
 #endif /* __NetBSD__ */
 	return e;
 }
@@ -592,8 +598,8 @@ print_help (void)
 {
 	print_revision (progname, NP_VERSION);
 
-	printf ("monitoring feature - 1999 Robert Dale <rdale@digital-mission.com>\n");
 	printf ("(C) 1999 Ragnar Hojland Espinosa <ragnar@lightside.dhis.org>\n");
+	printf ("Plugin implementation - 1999 Robert Dale <rdale@digital-mission.com>\n");
 	printf (COPYRIGHT, copyright, email);
 
 	printf (_("This plugin checks a local hard drive with the (Linux specific) SMART interface [http://smartlinux.sourceforge.net/smart/index.php]."));
@@ -616,9 +622,8 @@ print_help (void)
   printf ("    %s\n", _("Turn on automatic offline tests"));
   printf (" %s\n", "-0, --auto-off");
   printf ("    %s\n", _("Turn off automatic offline tests"));
-  printf (" %s\n", "-n, --monitoring");
-  printf ("    %s\n", _("Output suitable for the monitoring system"));
 
+	printf (UT_VERBOSE);
   printf (UT_SUPPORT);
 }
 
@@ -638,6 +643,6 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-  printf ("%s [-d <device>] [-i <immediate>] [-q quiet] [-1 <auto-on>]",progname);
-  printf (" [-O <auto-off>] [-n <nagios>]\n");
+  printf ("%s [-d <device>] [-i <immediate>] [-q quiet] [-1 <auto-on>]", progname);
+  printf (" [-O <auto-off>] [-v]\n");
 }
