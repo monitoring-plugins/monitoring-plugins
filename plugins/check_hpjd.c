@@ -344,7 +344,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'p':
 			if (!is_intpos(optarg))
-				usage2 (_("Port must be a positive integer"), optarg);
+				usage2 (_("Port must be a positive short integer"), optarg);
 			else
 				port = atoi(optarg);
 			break;
