@@ -49,7 +49,7 @@ static int read_defaults(FILE *f, const char *stanza, np_arg_list **opts);
 static int add_option(FILE *f, np_arg_list **optlst);
 /* internal function to find default file */
 static char* default_file(void);
-/* internal function to stat() files */
+/* internal function to test files access */
 static int test_file(const char* env, int len, const char* file, char* temp_file);
 
 /* parse_locator decomposes a string of the form
@@ -350,7 +350,6 @@ static char* default_file(void){
  * existence. Returns 1 if found, 0 if not and -1 if test wasn't performed.
  */
 static int test_file(const char* env, int len, const char* file, char* temp_file){
-	struct stat sb;
 
 	/* test if len + filelen + '/' + '\0' fits in temp_file */
 	if((len+strlen(file)+2)>MAX_INPUT_BUFFER)	return -1;
@@ -360,7 +359,7 @@ static int test_file(const char* env, int len, const char* file, char* temp_file
 	strncat(temp_file,"/",len+1);
 	strncat(temp_file,file,len+strlen(file)+1);
 
-	if(stat(temp_file, &sb) != -1) return 1;
+	if(access(temp_file, F_OK) == 0) return 1;
 	return 0;
 }
 
