@@ -54,7 +54,9 @@ void print_help (void);
 void print_usage (void);
 
 /* number of times to perform each request to get a good average. */
+#ifndef AVG_NUM
 #define AVG_NUM 4
+#endif
 
 /* max size of control message data */
 #define MAX_CM_SIZE 468
