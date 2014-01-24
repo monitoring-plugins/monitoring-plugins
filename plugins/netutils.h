@@ -100,6 +100,7 @@ void np_net_ssl_cleanup();
 int np_net_ssl_write(const void *buf, int num);
 int np_net_ssl_read(void *buf, int num);
 int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit);
+int np_net_ssl_check_cert_real(SSL *ssl, int days_till_exp_warn, int days_till_exp_crit);
 #endif /* HAVE_SSL */
 
 #endif /* _NETUTILS_H_ */
