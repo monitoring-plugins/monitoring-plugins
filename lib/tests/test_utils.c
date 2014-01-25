@@ -304,15 +304,15 @@ main (int argc, char **argv)
 	temp_string = (char *) _np_state_generate_key();
 	ok(!strcmp(temp_string, "94b5e17bf5abf51cb15aff5f69b96f2f8dac5ecd"), "Got based on expected argv" );
 
-	unsetenv("NAGIOS_PLUGIN_STATE_DIRECTORY");
+	unsetenv("MP_STATE_DIRECTORY");
 	temp_string = (char *) _np_state_calculate_location_prefix();
 	ok(!strcmp(temp_string, NP_STATE_DIR_PREFIX), "Got default directory" );
 
-	setenv("NAGIOS_PLUGIN_STATE_DIRECTORY", "", 1);
+	setenv("MP_STATE_DIRECTORY", "", 1);
 	temp_string = (char *) _np_state_calculate_location_prefix();
 	ok(!strcmp(temp_string, NP_STATE_DIR_PREFIX), "Got default directory even with empty string" );
 
-	setenv("NAGIOS_PLUGIN_STATE_DIRECTORY", "/usr/local/nagios/var", 1);
+	setenv("MP_STATE_DIRECTORY", "/usr/local/nagios/var", 1);
 	temp_string = (char *) _np_state_calculate_location_prefix();
 	ok(!strcmp(temp_string, "/usr/local/nagios/var"), "Got default directory" );
 
