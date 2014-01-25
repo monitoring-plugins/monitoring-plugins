@@ -30,6 +30,8 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 #define np_free(ptr) { if(ptr) { free(ptr); ptr = NULL; } }
 
@@ -415,14 +417,18 @@ void _cleanup_state_data() {
 char* _np_state_calculate_location_prefix(){
 	char *env_dir;
 
-	/* FIXME: Undocumented */
-	env_dir = getenv("MP_STATE_DIRECTORY");
-	if(env_dir && env_dir[0] != '\0')
-		return env_dir;
-	/* This is the former ENV, for backward-compatibility */
-	env_dir = getenv("NAGIOS_PLUGIN_STATE_DIRECTORY");
-	if(env_dir && env_dir[0] != '\0')
-		return env_dir;
+	/* Do not allow passing MP_STATE_DIRECTORY in setuid plugins
+	 * for security reasons */
+	if (mp_suid() == FALSE) {
+		/* FIXME: Undocumented */
+		env_dir = getenv("MP_STATE_DIRECTORY");
+		if(env_dir && env_dir[0] != '\0')
+			return env_dir;
+		/* This is the former ENV, for backward-compatibility */
+		env_dir = getenv("NAGIOS_PLUGIN_STATE_DIRECTORY");
+		if(env_dir && env_dir[0] != '\0')
+			return env_dir;
+	}
 
 	return NP_STATE_DIR_PREFIX;
 }

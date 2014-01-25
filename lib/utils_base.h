@@ -102,4 +102,8 @@ void np_init(char *, int argc, char **argv);
 void np_set_args(int argc, char **argv);
 void np_cleanup();
 
+/* mp_suid() returns true if the real and effective uids differs, such as when
+ * running a suid plugin */
+#define mp_suid() (getuid() != geteuid())
+
 #endif /* _UTILS_BASE_ */
