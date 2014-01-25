@@ -373,7 +373,7 @@ elsif ( $mailq eq "postfix" ) {
                 #        }
                 #}
         }
-} # end of ($mailq eq "postfixl")
+} # end of ($mailq eq "postfix")
 elsif ( $mailq eq "qmail" ) {
 
 	# open qmail-qstat 
@@ -500,6 +500,43 @@ elsif ( $mailq eq "exim" ) {
 	}
 } # end of ($mailq eq "exim")
 
+elsif ( $mailq eq "nullmailer" ) {
+	## open mailq 
+	if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
+		if (! open (MAILQ, "$utils::PATH_TO_MAILQ | " ) ) {
+			print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
+			exit $ERRORS{'UNKNOWN'};
+		}
+	}elsif( defined $utils::PATH_TO_MAILQ){
+		unless (-x $utils::PATH_TO_MAILQ) {
+			print "ERROR: $utils::PATH_TO_MAILQ is not executable by (uid $>:gid($)))\n";
+			exit $ERRORS{'UNKNOWN'};
+		}
+	} else {
+		print "ERROR: \$utils::PATH_TO_MAILQ is not defined\n";
+		exit $ERRORS{'UNKNOWN'};
+	}
+
+	while (<MAILQ>) {
+	    #2006-06-22 16:00:00  282 bytes
+
+	    if (/^[1-9][0-9]*-[01][0-9]-[0-3][0-9]\s[0-2][0-9]\:[0-2][0-9]\:[0-2][0-9]\s{2}[0-9]+\sbytes$/) { 
+		$msg_q++ ;
+	    }
+	}
+	close(MAILQ) ;
+	if ($msg_q < $opt_w) {
+		$msg = "OK: mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
+		$state = $ERRORS{'OK'};
+	}elsif ($msg_q >= $opt_w  && $msg_q < $opt_c) {
+		$msg = "WARNING: mailq is $msg_q (threshold w = $opt_w)";
+		$state = $ERRORS{'WARNING'};
+	}else {
+		$msg = "CRITICAL: mailq is $msg_q (threshold c = $opt_c)";
+		$state = $ERRORS{'CRITICAL'};
+	}
+} # end of ($mailq eq "nullmailer")
+
 # Perfdata support
 print "$msg|unsent=$msg_q;$opt_w;$opt_c;0\n";
 exit $state;
@@ -559,7 +596,7 @@ sub process_arguments(){
 	}
 
 	if (defined $opt_M) {
-		if ($opt_M =~ /^(sendmail|qmail|postfix|exim)$/) {
+		if ($opt_M =~ /^(sendmail|qmail|postfix|exim|nullmailer)$/) {
 			$mailq = $opt_M ;
 		}elsif( $opt_M eq ''){
 			$mailq = 'sendmail';
@@ -591,7 +628,7 @@ sub print_help () {
 	print "-W (--Warning)   = Min. number of messages for same domain in queue to generate warning\n";
 	print "-C (--Critical)  = Min. number of messages for same domain in queue to generate critical alert ( W < C )\n";
 	print "-t (--timeout)   = Plugin timeout in seconds (default = $utils::TIMEOUT)\n";
-	print "-M (--mailserver) = [ sendmail | qmail | postfix | exim ] (default = sendmail)\n";
+	print "-M (--mailserver) = [ sendmail | qmail | postfix | exim | nullmailer ] (default = sendmail)\n";
 	print "-h (--help)\n";
 	print "-V (--version)\n";
 	print "-v (--verbose)   = debugging output\n";
