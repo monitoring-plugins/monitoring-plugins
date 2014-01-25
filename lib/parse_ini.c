@@ -101,7 +101,7 @@ np_arg_list* np_get_defaults(const char *locator, const char *default_section){
 		} else {
 			inifile=fopen(i.file, "r");
 		}
-		if(inifile==NULL) die(STATE_UNKNOWN, _("Can't read config file"));
+		if(inifile==NULL) die(STATE_UNKNOWN, "%s\n", _("Can't read config file"));
 		if(read_defaults(inifile, i.stanza, &defaults)==FALSE)
 			die(STATE_UNKNOWN, _("Invalid section '%s' in config file '%s'\n"), i.stanza, i.file);
 
@@ -163,7 +163,7 @@ static int read_defaults(FILE *f, const char *stanza, np_arg_list **opts){
 					 * we're dealing with a config error
 					 */
 					case NOSTANZA:
-						die(STATE_UNKNOWN, _("Config file error"));
+						die(STATE_UNKNOWN, "%s\n", _("Config file error"));
 						break;
 					/* we're in a stanza, but for a different plugin */
 					case WRONGSTANZA:
@@ -173,7 +173,7 @@ static int read_defaults(FILE *f, const char *stanza, np_arg_list **opts){
 					case RIGHTSTANZA:
 						ungetc(c, f);
 						if(add_option(f, opts)){
-							die(STATE_UNKNOWN, _("Config file error"));
+							die(STATE_UNKNOWN, "%s\n", _("Config file error"));
 						}
 						status=TRUE;
 						break;
@@ -229,7 +229,7 @@ static int add_option(FILE *f, np_arg_list **optlst){
 	if(optend==NULL) optend=eqptr;
 	--optend;
 	/* ^[[:space:]]*=foo is a syntax error */
-	if(optptr==eqptr) die(STATE_UNKNOWN, _("Config file error\n"));
+	if(optptr==eqptr) die(STATE_UNKNOWN, "%s\n", _("Config file error"));
 	/* continue from '=' to start of value or EOL */
 	for(valptr=eqptr+1; valptr<lineend && isspace(*valptr); valptr++);
 	/* continue to the end of value */
@@ -256,7 +256,7 @@ static int add_option(FILE *f, np_arg_list **optlst){
 		cfg_len+=1;
 	}
 	/* A line with no equal sign isn't valid */
-	if(equals==0) die(STATE_UNKNOWN, _("Config file error\n"));
+	if(equals==0) die(STATE_UNKNOWN, "%s\n", _("Config file error"));
 
 	/* okay, now we have all the info we need, so we create a new np_arg_list
 	 * element and set the argument...
