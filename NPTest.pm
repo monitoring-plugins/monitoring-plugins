@@ -438,7 +438,7 @@ sub LoadCache
 
     chomp($fileContents);
     my( $contentsRef ) = eval $fileContents;
-    %CACHE = %{$contentsRef};
+    %CACHE = %{$contentsRef} if (defined($contentsRef));
 
   }
 
