@@ -136,7 +136,7 @@ case "$cmd" in
     tnschk=` tnsping $2`
     tnschk2=` echo  $tnschk | grep -c OK`
     if [ ${tnschk2} -eq 1 ] ; then 
-	tnschk3=` echo $tnschk | sed -e 's/.*(//' -e 's/).*//'`
+	tnschk3=${tnschk##*(}; tnschk3=${tnschk3%)*}
 	echo "OK - reply time ${tnschk3} from $2"
 	exit $STATE_OK
     else
