@@ -420,7 +420,6 @@ char* _np_state_calculate_location_prefix(){
 	/* Do not allow passing MP_STATE_DIRECTORY in setuid plugins
 	 * for security reasons */
 	if (mp_suid() == FALSE) {
-		/* FIXME: Undocumented */
 		env_dir = getenv("MP_STATE_DIRECTORY");
 		if(env_dir && env_dir[0] != '\0')
 			return env_dir;

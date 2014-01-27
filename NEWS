@@ -17,6 +17,8 @@ This file documents the major additions and syntax changes between releases.
 	  but accepted for backward-compatibility
 	check_ide_smart -0/--auto-off, -1/--auto-on and -i/--immediate: options have
 	  been disabled because they were broken
+	State retention: the NAGIOS_PLUGIN_STATE_DIRECTORY environment variable has been
+	  renamed MP_STATE_DIRECTORY. The old variable will continue to work in v1.6.x
 
 1.5 2nd October 2013
 	ENHANCEMENTS
