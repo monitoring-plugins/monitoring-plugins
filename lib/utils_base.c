@@ -417,10 +417,10 @@ void _cleanup_state_data() {
 char* _np_state_calculate_location_prefix(){
 	char *env_dir;
 
-	/* Do not allow passing MP_STATE_DIRECTORY in setuid plugins
+	/* Do not allow passing MP_STATE_PATH in setuid plugins
 	 * for security reasons */
 	if (mp_suid() == FALSE) {
-		env_dir = getenv("MP_STATE_DIRECTORY");
+		env_dir = getenv("MP_STATE_PATH");
 		if(env_dir && env_dir[0] != '\0')
 			return env_dir;
 		/* This is the former ENV, for backward-compatibility */
