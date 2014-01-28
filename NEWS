@@ -9,6 +9,7 @@ This file documents the major additions and syntax changes between releases.
 	Don't let e.g. check_http's -C option reset SSL version if e.g. -S 1 -C 5 is specified
 	check_ide_smart could disable offline auto tests but could not re-enable them.
 	  For this reason all SMART command modes have been disabled.
+	check_dig: fix wrong IPv6 arguments order (Stéphane Bortzmeyer)
 
 	WARNINGS
 	check_procs now ignores its parent process to avoid unexpected results when invoked via certain shells
