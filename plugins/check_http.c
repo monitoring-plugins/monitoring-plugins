@@ -1099,8 +1099,11 @@ check_http (void)
     /* check redirected page if specified */
     else if (http_status >= 300) {
 
-      if (onredirect == STATE_DEPENDENT)
+      if (onredirect == STATE_DEPENDENT) {
+        microsec = socket_timeout - deltime(tv)/1.0e6;
+        alarm( microsec>1?microsec:1 );
         redir (header, status_line);
+      }
       else
         result = max_state_alt(onredirect, result);
       xasprintf (&msg, _("%s - "), status_line);
