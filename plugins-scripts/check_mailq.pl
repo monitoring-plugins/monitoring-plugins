@@ -373,7 +373,7 @@ elsif ( $mailq eq "postfix" ) {
                 #        }
                 #}
         }
-} # end of ($mailq eq "postfixl")
+} # end of ($mailq eq "postfix")
 elsif ( $mailq eq "qmail" ) {
 
 	# open qmail-qstat 
