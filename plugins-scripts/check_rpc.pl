@@ -36,9 +36,9 @@ sub print_help ();
 sub print_usage ();
 sub in ($$);
 
-$ENV{'BASH_ENV'}='';
+$ENV{'PATH'}='@trusted_path@';
+$ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
-$ENV{'PATH'}='';
 $ENV{'LC_ALL'}='C';
 
 #Initialise protocol for each progname number

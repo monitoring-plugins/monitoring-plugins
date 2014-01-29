@@ -57,8 +57,6 @@
 
 # Paths to commands used in this script.  These
 # may have to be modified to match your system setup.
-# TV: removed PATH restriction. Need to think more about what this means overall
-#PATH=""
 
 GREP="/bin/egrep"
 DIFF="/bin/diff"
@@ -71,6 +69,7 @@ TOUCH="/bin/touch"
 PROGNAME=`/bin/basename $0`
 PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
 REVISION="@NP_VERSION@"
+PATH="@trusted_path@"
 
 . $PROGPATH/utils.sh
 

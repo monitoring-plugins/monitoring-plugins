@@ -73,9 +73,8 @@ AC_DEFINE_UNQUOTED(CGIURL,"$CGIURL",[URL of CGI programs])
 
 AC_ARG_WITH(trusted_path,
 	ACX_HELP_STRING([--with-trusted-path=PATH],
-		[sets trusted path for executables called by scripts (default=/bin:/sbin:/usr/bin:/usr/sbin)]),
-	with_trusted_path=$withval,
-	with_trusted_path=/bin:/sbin:/usr/bin:/usr/sbin)
+		[sets trusted path for executables called by scripts]),
+	with_trusted_path=$withval)
 AC_SUBST(with_trusted_path)
 
 EXTRAS=

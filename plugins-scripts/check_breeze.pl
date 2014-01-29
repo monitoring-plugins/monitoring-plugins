@@ -12,7 +12,7 @@ $PROGNAME = "check_breeze";
 sub print_help ();
 sub print_usage ();
 
-$ENV{'PATH'}='';
+$ENV{'PATH'}='@trusted_path@';
 $ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
 
