@@ -78,7 +78,7 @@ foreach my $current_state (keys(%state)) {
 	}
 }
 
-# Same as aboce with substitute
+# Same as above with substitute
 foreach my $current_state (keys(%state)) {
 	foreach my $new_state (keys(%state)) {
 		$res = NPTest->testCmd( "./negate -s --$current_state=$new_state ./check_dummy ".$state{$current_state}." 'Fake $new_state'" );
