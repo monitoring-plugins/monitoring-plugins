@@ -45,7 +45,6 @@ const char *email = "devel@monitoring-plugins.org";
 
 static const char **process_arguments (int, char **);
 int validate_arguments (char **);
-int translate_state (char *);
 void print_help (void);
 void print_usage (void);
 int subst_text = FALSE;
@@ -166,27 +165,27 @@ process_arguments (int argc, char **argv)
 				timeout_interval = atoi (optarg);
 			break;
 		case 'T':     /* Result to return on timeouts */
-			if ((timeout_state = translate_state(optarg)) == ERROR)
+			if ((timeout_state = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Timeout result must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			break;
 		case 'o':     /* replacement for OK */
-			if ((state[STATE_OK] = translate_state(optarg)) == ERROR)
+			if ((state[STATE_OK] = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Ok must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			permute = FALSE;
 			break;
 
 		case 'w':     /* replacement for WARNING */
-			if ((state[STATE_WARNING] = translate_state(optarg)) == ERROR)
+			if ((state[STATE_WARNING] = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Warning must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			permute = FALSE;
 			break;
 		case 'c':     /* replacement for CRITICAL */
-			if ((state[STATE_CRITICAL] = translate_state(optarg)) == ERROR)
+			if ((state[STATE_CRITICAL] = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Critical must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			permute = FALSE;
 			break;
 		case 'u':     /* replacement for UNKNOWN */
-			if ((state[STATE_UNKNOWN] = translate_state(optarg)) == ERROR)
+			if ((state[STATE_UNKNOWN] = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Unknown must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			permute = FALSE;
 			break;
@@ -217,24 +216,6 @@ validate_arguments (char **command_line)
 		usage4 (_("Require path to command"));
 }
 
-
-int
-translate_state (char *state_text)
-{
-	char *temp_ptr;
-	for (temp_ptr = state_text; *temp_ptr; temp_ptr++) {
-		*temp_ptr = toupper(*temp_ptr);
-	}
-	if (!strcmp(state_text,"OK") || !strcmp(state_text,"0"))
-		return STATE_OK;
-	if (!strcmp(state_text,"WARNING") || !strcmp(state_text,"1"))
-		return STATE_WARNING;
-	if (!strcmp(state_text,"CRITICAL") || !strcmp(state_text,"2"))
-		return STATE_CRITICAL;
-	if (!strcmp(state_text,"UNKNOWN") || !strcmp(state_text,"3"))
-		return STATE_UNKNOWN;
-	return ERROR;
-}
 
 void
 print_help (void)

@@ -369,6 +369,23 @@ char *np_extract_value(const char *varlist, const char *name, char sep) {
 	return value;
 }
 
+
+/*
+ * Read a string representing a state (ok, warning... or numeric: 0, 1) and
+ * return the corresponding STATE_ value or ERROR)
+ */
+int mp_translate_state (char *state_text) {
+	if (!strcasecmp(state_text,"OK") || !strcmp(state_text,"0"))
+		return STATE_OK;
+	if (!strcasecmp(state_text,"WARNING") || !strcmp(state_text,"1"))
+		return STATE_WARNING;
+	if (!strcasecmp(state_text,"CRITICAL") || !strcmp(state_text,"2"))
+		return STATE_CRITICAL;
+	if (!strcasecmp(state_text,"UNKNOWN") || !strcmp(state_text,"3"))
+		return STATE_UNKNOWN;
+	return ERROR;
+}
+
 /*
  * Returns a string to use as a keyname, based on an md5 hash of argv, thus
  * hopefully a unique key per service/plugin invocation. Use the extra-opts
