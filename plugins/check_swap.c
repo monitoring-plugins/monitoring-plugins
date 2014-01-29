@@ -60,9 +60,10 @@ void print_help (void);
 int warn_percent = 0;
 int crit_percent = 0;
 float warn_size_bytes = 0;
-float crit_size_bytes= 0;
+float crit_size_bytes = 0;
 int verbose;
 int allswaps;
+int no_swap_state = STATE_CRITICAL;
 
 int
 main (int argc, char **argv)
@@ -372,6 +373,9 @@ main (int argc, char **argv)
 int
 check_swap (int usp, float free_swap_mb)
 {
+
+	if (!free_swap_mb) return no_swap_state;
+
 	int result = STATE_UNKNOWN;
 	float free_swap = free_swap_mb * (1024 * 1024);		/* Convert back to bytes as warn and crit specified in bytes */
 	if (usp >= 0 && crit_percent != 0 && usp >= (100.0 - crit_percent))
@@ -400,6 +404,7 @@ process_arguments (int argc, char **argv)
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
 		{"allswaps", no_argument, 0, 'a'},
+		{"no-swap", required_argument, 0, 'n'},
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
@@ -410,7 +415,7 @@ process_arguments (int argc, char **argv)
 		return ERROR;
 
 	while (1) {
-		c = getopt_long (argc, argv, "+?Vvhac:w:", longopts, &option);
+		c = getopt_long (argc, argv, "+?Vvhac:w:n:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -455,6 +460,10 @@ process_arguments (int argc, char **argv)
 		case 'a':									/* all swap */
 			allswaps = TRUE;
 			break;
+		case 'n':
+			if ((no_swap_state = mp_translate_state(optarg)) == ERROR) {
+				usage4 (_("no-swap result must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+			}
 		case 'v':									/* verbose */
 			verbose++;
 			break;
@@ -541,6 +550,8 @@ print_help (void)
   printf ("    %s\n", _("Exit with CRITCAL status if less than PERCENT of swap space is free"));
   printf (" %s\n", "-a, --allswaps");
   printf ("    %s\n", _("Conduct comparisons for all swap partitions, one by one"));
+  printf (" %s\n", "-n, --no-swap=<ok|warning|critical|unknown>");
+  printf ("    %s %s\n", _("Resulting state when there is no swap regardless of thresholds. Default:"), state_text(no_swap_state));
 	printf (UT_VERBOSE);
 
 	printf ("\n");
