@@ -81,6 +81,7 @@ NP-VERSION-FILE
 /gl/stdio.h
 /gl/stdlib.h
 /gl/string.h
+/gl/strings.h
 /gl/sys_socket.h
 /gl/sys_stat.h
 /gl/sys
