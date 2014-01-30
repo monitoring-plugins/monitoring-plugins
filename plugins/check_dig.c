@@ -74,6 +74,7 @@ main (int argc, char **argv)
   long microsec;
   double elapsed_time;
   int result = STATE_UNKNOWN;
+  int timeout_interval_dig;
 
   setlocale (LC_ALL, "");
   bindtextdomain (PACKAGE, LOCALEDIR);
@@ -90,7 +91,7 @@ main (int argc, char **argv)
     usage_va(_("Could not parse arguments"));
 
   /* dig applies the timeout to each try, so we need to work around this */
-  int timeout_interval_dig = timeout_interval / number_tries + number_tries;
+  timeout_interval_dig = timeout_interval / number_tries + number_tries;
 
   /* get the command to run */
   xasprintf (&command_line, "%s @%s -p %d %s -t %s %s %s +tries=%d +time=%d",
