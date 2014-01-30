@@ -48,6 +48,8 @@ void print_usage (void);
 
 #define UNDEFINED 0
 #define DEFAULT_PORT 53
+#define DEFAULT_TRIES 3
+#define DEFAULT_TIMEOUT 10
 
 char *query_address = NULL;
 char *record_type = "A";
@@ -57,6 +59,7 @@ char *dig_args = "";
 char *query_transport = "";
 int verbose = FALSE;
 int server_port = DEFAULT_PORT;
+int number_tries = DEFAULT_TRIES;
 double warning_interval = UNDEFINED;
 double critical_interval = UNDEFINED;
 struct timeval tv;
@@ -72,6 +75,7 @@ main (int argc, char **argv)
   long microsec;
   double elapsed_time;
   int result = STATE_UNKNOWN;
+  timeout_interval = DEFAULT_TIMEOUT;
 
   setlocale (LC_ALL, "");
   bindtextdomain (PACKAGE, LOCALEDIR);
@@ -87,9 +91,12 @@ main (int argc, char **argv)
   if (process_arguments (argc, argv) == ERROR)
     usage_va(_("Could not parse arguments"));
 
+  /* dig applies the timeout to each try, so we need to work around this */
+  int timeout_interval_dig = ceil((double) timeout_interval / (double) number_tries);
+
   /* get the command to run */
-  xasprintf (&command_line, "%s %s @%s -p %d %s -t %s %s",
-            PATH_TO_DIG, query_transport, dns_server, server_port, query_address, record_type, dig_args);
+  xasprintf (&command_line, "%s @%s -p %d %s -t %s %s %s +tries=%d +time=%d",
+            PATH_TO_DIG, dns_server, server_port, query_address, record_type, dig_args, query_transport, number_tries, timeout_interval_dig);
 
   alarm (timeout_interval);
   gettimeofday (&tv, NULL);
