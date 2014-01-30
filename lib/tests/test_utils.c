@@ -32,13 +32,13 @@ main (int argc, char **argv)
 	range	*range;
 	double	temp;
 	thresholds *thresholds = NULL;
-	int	rc;
+	int	i, rc;
 	char	*temp_string;
 	state_key *temp_state_key = NULL;
 	state_data *temp_state_data;
 	time_t	current_time;
 
-	plan_tests(151);
+	plan_tests(172);
 
 	ok( this_monitoring_plugin==NULL, "monitoring_plugin not initialised");
 
@@ -438,9 +438,54 @@ main (int argc, char **argv)
 
 	np_cleanup();
 
-	ok( this_monitoring_plugin==NULL, "Free'd this_monitoring_plugin" );
+	ok(this_monitoring_plugin==NULL, "Free'd this_monitoring_plugin");
 
-	ok( mp_suid() == FALSE, "test aren't suid" );
+	ok(mp_suid() == FALSE, "test aren't suid");
+
+	/* base states with random case */
+	char *states[] = {
+		"Ok",
+		"wArnINg",
+		"cRiTIcaL",
+		"UnKNoWN",
+		NULL
+	};
+
+	for (i=0; states[i]!=NULL; i++) {
+		/* out of the random case states, create the lower and upper versions + numeric string one */
+		char *statelower = strdup(states[i]);
+		char *stateupper = strdup(states[i]);
+		char statenum[2];
+		char *temp_ptr;
+		for (temp_ptr = statelower; *temp_ptr; temp_ptr++) {
+			*temp_ptr = tolower(*temp_ptr);
+		}
+		for (temp_ptr = stateupper; *temp_ptr; temp_ptr++) {
+			*temp_ptr = toupper(*temp_ptr);
+		}
+		snprintf(statenum, 2, "%i", i);
+
+		/* Base test names, we'll append the state string */
+		char testname[64] = "Translate state string: ";
+		int tlen = strlen(testname);
+
+		strcpy(testname+tlen, states[i]);
+		ok(i==mp_translate_state(states[i]), testname);
+
+		strcpy(testname+tlen, statelower);
+		ok(i==mp_translate_state(statelower), testname);
+
+		strcpy(testname+tlen, stateupper);
+		ok(i==mp_translate_state(stateupper), testname);
+
+		strcpy(testname+tlen, statenum);
+		ok(i==mp_translate_state(statenum), testname);
+	}
+	ok(ERROR==mp_translate_state("warningfewgw"), "Translate state string with garbage");
+	ok(ERROR==mp_translate_state("00"), "Translate state string: bad numeric string 1");
+	ok(ERROR==mp_translate_state("01"), "Translate state string: bad numeric string 2");
+	ok(ERROR==mp_translate_state("10"), "Translate state string: bad numeric string 3");
+	ok(ERROR==mp_translate_state(""), "Translate state string: empty string");
 
 	return exit_status();
 }
