@@ -49,7 +49,6 @@ void print_usage (void);
 #define UNDEFINED 0
 #define DEFAULT_PORT 53
 #define DEFAULT_TRIES 3
-#define DEFAULT_TIMEOUT 10
 
 char *query_address = NULL;
 char *record_type = "A";
@@ -75,7 +74,6 @@ main (int argc, char **argv)
   long microsec;
   double elapsed_time;
   int result = STATE_UNKNOWN;
-  timeout_interval = DEFAULT_TIMEOUT;
 
   setlocale (LC_ALL, "");
   bindtextdomain (PACKAGE, LOCALEDIR);
