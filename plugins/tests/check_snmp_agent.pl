@@ -7,7 +7,7 @@
 use NetSNMP::OID qw(:all);
 use NetSNMP::agent;
 use NetSNMP::ASN qw(ASN_OCTET_STR ASN_COUNTER ASN_COUNTER64 ASN_INTEGER ASN_INTEGER64 ASN_UNSIGNED ASN_UNSIGNED64);
-#use Math::Int64 qw(uint64); # Skip that module whie we don't need it
+#use Math::Int64 qw(uint64); # Skip that module while we don't need it
 sub uint64 { return $_ }
 
 if (!$agent) {
@@ -16,8 +16,6 @@ if (!$agent) {
 }
 
 my $baseoid = '.1.3.6.1.4.1.8072.3.2.67';
-# Next are arrays of indexes (Type, initial value and increments)
-# Undef miltipliers are randomized
 my $multiline = 'Cisco Internetwork Operating System Software
 IOS (tm) Catalyst 4000 "L3" Switch Software (cat4000-I9K91S-M), Version
 12.2(20)EWA, RELEASE SOFTWARE (fc1)
@@ -33,10 +31,12 @@ ends with with this: C:\\';
 my $multilin5 = 'And now have fun with with this: "C:\\"
 because we\'re not done yet!';
 
-# 0..15 <---- please update comment when adding/removing fields
-my @fields = (ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_UNSIGNED, ASN_UNSIGNED, ASN_COUNTER, ASN_COUNTER64, ASN_UNSIGNED, ASN_COUNTER, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR );
-my @values = ($multiline, $multilin2, $multilin3, $multilin4, $multilin5, 4294965296, 1000, 4294965296, uint64("18446744073709351616"), int(rand(2**32)), 64000, "stringtests", "3.5", "87.4startswithnumberbutshouldbestring", '555"I said"', 'CUSTOM CHECK OK: foo is 12345' );
-my @incrts = (undef, undef, undef, undef, undef, 1000, -500, 1000, 100000, undef, 666, undef, undef, undef, undef, undef );
+# Next are arrays of indexes (Type, initial value and increments)
+# 0..16 <---- please update comment when adding/removing fields
+my @fields = (ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_UNSIGNED, ASN_UNSIGNED, ASN_COUNTER, ASN_COUNTER64, ASN_UNSIGNED, ASN_COUNTER, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_INTEGER, ASN_OCTET_STR, ASN_OCTET_STR );
+my @values = ($multiline, $multilin2, $multilin3, $multilin4, $multilin5, 4294965296, 1000, 4294965296, uint64("18446744073709351616"), int(rand(2**32)), 64000, "stringtests", "3.5", "87.4startswithnumberbutshouldbestring", '555"I said"', 'CUSTOM CHECK OK: foo is 12345', -2, '-4', '-6.6' );
+# undef increments are randomized
+my @incrts = (undef, undef, undef, undef, undef, 1000, -500, 1000, 100000, undef, 666, undef, undef, undef, undef, undef, -1, undef, undef );
 
 # Number of elements in our OID
 my $oidelts;
