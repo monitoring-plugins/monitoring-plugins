@@ -9,9 +9,9 @@ use Getopt::Long;
 
 use NPTest qw(DetermineTestHarnessDirectory TestsFrom);
 
-my $tstdir;
+my @tstdir;
 
-if ( ! GetOptions( "testdir:s" => \$tstdir ) )
+if ( ! GetOptions( "testdir:s" => \@tstdir ) )
 {
   print "Usage: ${0} [--testdir=<directory>] [<test_harness.t> ...]\n";
   exit 1;
@@ -25,15 +25,18 @@ if ( scalar( @ARGV ) )
 }
 else
 {
-  my $directory = DetermineTestHarnessDirectory( $tstdir );
+  my @directory = DetermineTestHarnessDirectory( @tstdir );
 
-  if ( !defined( $directory ) )
+  if ( @directory == 0 )
   {
     print STDERR "$0: Unable to determine the test harness directory - ABORTING\n";
     exit 2;
   }
 
-  @tests = TestsFrom( $directory, 1 );
+  for my $d ( @directory )
+  {
+    push (@tests, TestsFrom( $d, 1 ));
+  }
 }
 
 if ( ! scalar( @tests ) )

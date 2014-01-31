@@ -494,26 +494,35 @@ sub SetCacheFilename
 
 sub DetermineTestHarnessDirectory
 {
-  my( $userSupplied ) = @_;
+  my( @userSupplied ) = @_;
+  my @dirs;
 
   # User Supplied
-  if ( defined( $userSupplied ) && $userSupplied )
+  if ( @userSupplied > 0 )
   {
-    if ( -d $userSupplied )
+    for my $u ( @userSupplied )
     {
-      return $userSupplied;
-    }
-    else
-    {
-      return undef; # userSupplied is invalid -> FAIL
+      if ( -d $u )
+      {
+        push ( @dirs, $u );
+      }
     }
   }
 
-  # Simple Case : "t" is a subdirectory of the current directory
+  # Simple Cases: "t" and tests are subdirectories of the current directory
   if ( -d "./t" )
   {
-    return "./t";
+    push ( @dirs, "./t");
   }
+  if ( -d "./tests" )
+  {
+    push ( @dirs, "./tests");
+  }
+
+	if ( @dirs > 0 )
+	{
+		return @dirs;
+	}
 
   # To be honest I don't understand which case satisfies the
   # original code in test.pl : when $tstdir == `pwd` w.r.t.
@@ -526,7 +535,7 @@ sub DetermineTestHarnessDirectory
 
   if ( $pwd =~ m|/t$| )
   {
-    return $pwd;
+    push ( @dirs, $pwd );
 
     # The alternate that might work better is
     # chdir( ".." );
@@ -535,7 +544,7 @@ sub DetermineTestHarnessDirectory
     # to be tested is in the current directory (ie "./check_disk ....")
   }
 
-  return undef;
+  return @dirs;
 }
 
 sub TestsFrom
