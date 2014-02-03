@@ -1,39 +1,39 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_icmp plugin
-* 
+*
 * License: GPL
 * Copyright (c) 2005-2008 Monitoring Plugins Development Team
 * Original Author : Andreas Ericsson <ae@op5.se>
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_icmp plugin
-* 
+*
 * Relevant RFC's: 792 (ICMP), 791 (IP)
-* 
+*
 * This program was modeled somewhat after the check_icmp program,
 * which was in turn a hack of fping (www.fping.org) but has been
 * completely rewritten since to generate higher precision rta values,
 * and support several different modes as well as setting ttl to control.
 * redundant routes. The only remainders of fping is currently a few
 * function names.
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 /* progname may change */
@@ -184,7 +184,7 @@ static u_int get_timevar(const char *);
 static u_int get_timevaldiff(struct timeval *, struct timeval *);
 static in_addr_t get_ip_address(const char *);
 static int wait_for_reply(int, u_int);
-static int recvfrom_wto(int, void *, unsigned int, struct sockaddr *, u_int *);
+static int recvfrom_wto(int, void *, unsigned int, struct sockaddr *, u_int *, struct timeval*);
 static int send_icmp_ping(int, struct rta_host *);
 static int get_threshold(char *str, threshold *th);
 static void run_checks(void);
@@ -404,6 +404,12 @@ main(int argc, char **argv)
 
 	/* now drop privileges (no effect if not setsuid or geteuid() == 0) */
 	setuid(getuid());
+
+#ifdef SO_TIMESTAMP
+	int on = 1;
+	if(setsockopt(icmp_sock, SOL_SOCKET, SO_TIMESTAMP, &on, sizeof(on)))
+	  if(debug) printf("Warning: no SO_TIMESTAMP support\n");
+#endif // SO_TIMESTAMP
 
 	/* POSIXLY_CORRECT might break things, so unset it (the portable way) */
 	environ = NULL;
@@ -730,7 +736,7 @@ wait_for_reply(int sock, u_int t)
 
 		/* reap responses until we hit a timeout */
 		n = recvfrom_wto(sock, buf, sizeof(buf),
-						 (struct sockaddr *)&resp_addr, &t);
+						 (struct sockaddr *)&resp_addr, &t, &now);
 		if(!n) {
 			if(debug > 1) {
 				printf("recvfrom_wto() timed out during a %u usecs wait\n",
@@ -784,7 +790,6 @@ wait_for_reply(int sock, u_int t)
 			       sizeof(data), ntohs(icp.icmp_id), ntohs(icp.icmp_seq), icp.icmp_cksum);
 
 		host = table[ntohs(icp.icmp_seq)/packets];
-		gettimeofday(&now, &tz);
 		tdiff = get_timevaldiff(&data.stime, &now);
 
 		host->time_waited += tdiff;
@@ -861,8 +866,17 @@ send_icmp_ping(int sock, struct rta_host *host)
 		printf("Sending ICMP echo-request of len %u, id %u, seq %u, cksum 0x%X to host %s\n",
 		       sizeof(data), ntohs(packet.icp->icmp_id), ntohs(packet.icp->icmp_seq), packet.icp->icmp_cksum, host->name);
 
-	len = sendto(sock, packet.buf, icmp_pkt_size, 0, (struct sockaddr *)addr,
-				 sizeof(struct sockaddr));
+	struct msghdr hdr;
+	memset(&hdr, 0, sizeof(hdr));
+	hdr.msg_name = addr;
+	hdr.msg_namelen = sizeof(struct sockaddr);
+	struct iovec iov;
+	memset(&iov, 0, sizeof(iov));
+	iov.iov_base = packet.buf;
+	iov.iov_len = icmp_pkt_size;
+	hdr.msg_iov = &iov;
+	hdr.msg_iovlen = 1;
+	len = sendmsg(sock, &hdr, MSG_CONFIRM);
 
 	if(len < 0 || (unsigned int)len != icmp_pkt_size) {
 		if(debug) printf("Failed to send ping to %s\n",
@@ -878,7 +892,7 @@ send_icmp_ping(int sock, struct rta_host *host)
 
 static int
 recvfrom_wto(int sock, void *buf, unsigned int len, struct sockaddr *saddr,
-			 u_int *timo)
+			 u_int *timo, struct timeval* tv)
 {
 	u_int slen;
 	int n;
@@ -907,7 +921,34 @@ recvfrom_wto(int sock, void *buf, unsigned int len, struct sockaddr *saddr,
 
 	slen = sizeof(struct sockaddr);
 
-	return recvfrom(sock, buf, len, 0, saddr, &slen);
+	struct msghdr hdr;
+	memset(&hdr, 0, sizeof(hdr));
+	hdr.msg_name = saddr;
+	hdr.msg_namelen = slen;
+	struct iovec iov;
+	memset(&iov, 0, sizeof(iov));
+	iov.iov_base = buf;
+	iov.iov_len = len;
+	hdr.msg_iov = &iov;
+	hdr.msg_iovlen = 1;
+	char ans_data[4096];
+	hdr.msg_control = ans_data;
+	hdr.msg_controllen = sizeof(ans_data);
+	int ret = recvmsg(sock, &hdr, 0);
+#ifdef SO_TIMESTAMP
+	struct cmsghdr* chdr;
+	for(chdr = CMSG_FIRSTHDR(&hdr); chdr; chdr = CMSG_NXTHDR(&hdr, chdr)) {
+		if(chdr->cmsg_level == SOL_SOCKET
+		   && chdr->cmsg_type == SO_TIMESTAMP
+		   && chdr->cmsg_len >= CMSG_LEN(sizeof(struct timeval))) {
+			memcpy(tv, CMSG_DATA(chdr), sizeof(*tv));
+			break ;
+		}
+	}
+	if (!chdr)
+#endif // SO_TIMESTAMP
+		gettimeofday(tv, &tz);
+	return (ret);
 }
 
 static void
