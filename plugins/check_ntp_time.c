@@ -621,7 +621,7 @@ void print_help(void){
 	printf ("    %s\n", _("Offset to result in warning status (seconds)"));
 	printf (" %s\n", "-c, --critical=THRESHOLD");
 	printf ("    %s\n", _("Offset to result in critical status (seconds)"));
-	printf (" %s\n", "-o, --time_offset=");
+	printf (" %s\n", "-o, --time_offset=INTEGER");
 	printf ("    %s\n", _("Expected offset of the ntp server relative to local server (seconds)"));
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf (UT_VERBOSE);
@@ -635,6 +635,8 @@ void print_help(void){
 	printf("%s\n", _("Notes:"));
 	printf(" %s\n", _("If you'd rather want to monitor an NTP server, please use"));
 	printf(" %s\n", _("check_ntp_peer."));
+	printf(" %s\n", _("--time-offset is usefull for compensating for servers with known"));
+	printf(" %s\n", _("and expected clock skew."));
 	printf("\n");
 	printf(UT_THRESHOLDS_NOTES);
 
