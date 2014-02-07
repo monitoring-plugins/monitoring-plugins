@@ -11,7 +11,7 @@ endif
 
 AM_CFLAGS = -DNP_VERSION='"$(NP_VERSION)"'
 
-VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t 
+VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t
 
 INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl @LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@
 
@@ -129,11 +129,10 @@ install-exec-hook:
 	cd $(DESTDIR)$(libexecdir) && \
 	for i in $(check_tcp_programs) ; do rm -f $$i; ln -s check_tcp $$i ; done ;\
 	if [ -x check_ldap ] ; then rm -f check_ldaps ; ln -s check_ldap check_ldaps ; fi
-	
+
 clean-local:
 	rm -f $(check_tcp_programs)
 	rm -f NP-VERSION-FILE
 
 uninstall-local:
 	cd $(DESTDIR)$(libexecdir) && rm -f $(check_tcp_programs)
-
