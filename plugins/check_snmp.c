@@ -573,6 +573,10 @@ main (int argc, char **argv)
 			}
 
 			if (critical_thresholds) {
+
+				if(! warning_thresholds) {
+					strncat(perfstr, ";", sizeof(perfstr)-strlen(perfstr)-1);
+				}
                                 strncat(perfstr, ";", sizeof(perfstr)-strlen(perfstr)-1);
                                 strncat(perfstr, critical_thresholds, sizeof(perfstr)-strlen(perfstr)-1);
                         }
