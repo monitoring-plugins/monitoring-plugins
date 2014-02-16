@@ -25,7 +25,8 @@ notifications:
     on_success: change
     on_failure: always
     skip_join: true
-#  email: false
+  email:
+    - team@monitoring-plugins.org
 
 # Don't use Clang for Coverity Scan.
 matrix:
