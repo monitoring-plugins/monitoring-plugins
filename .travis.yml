@@ -4,9 +4,11 @@ install:
     - sudo apt-get update -qq
     - sudo apt-get install -qq --no-install-recommends perl autotools-dev libdbi-dev libldap2-dev libpq-dev libmysqlclient-dev libradiusclient-ng-dev libkrb5-dev libnet-snmp-perl procps mawk
     - sudo apt-get install -qq --no-install-recommends autoconf automake
+    - tools/setup
+    - ./configure
 
 script:
-    - tools/setup && ./configure && make
+    - make
 
 compiler:
     - clang
