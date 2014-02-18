@@ -36,13 +36,17 @@ $result = NPTest->testCmd( "$command -C launchd -c 5" );
 is( $result->return_code, 2, "Checking processes filtered by command name" );
 is( $result->output, "PROCS CRITICAL: 6 processes with command name 'launchd' | procs=6;;5;0;", "Output correct" );
 
-$result = NPTest->testCmd( "$command -u 501 -w 39 -c 41" );
-is( $result->return_code, 1, "Checking processes filtered by userid" );
-like( $result->output, '/^PROCS WARNING: 40 processes with UID = 501 (.*)$/', "Output correct" );
+SKIP: {
+    skip 'user with uid 501 required', 4 unless getpwuid(501);
 
-$result = NPTest->testCmd( "$command -C launchd -u 501" );
-is( $result->return_code, 0, "Checking processes filtered by command name and userid" );
-like( $result->output, '/^PROCS OK: 1 process with command name \'launchd\', UID = 501 (.*)$/', "Output correct" );
+    $result = NPTest->testCmd( "$command -u 501 -w 39 -c 41" );
+    is( $result->return_code, 1, "Checking processes filtered by userid" );
+    like( $result->output, '/^PROCS WARNING: 40 processes with UID = 501 (.*)$/', "Output correct" );
+
+    $result = NPTest->testCmd( "$command -C launchd -u 501" );
+    is( $result->return_code, 0, "Checking processes filtered by command name and userid" );
+    like( $result->output, '/^PROCS OK: 1 process with command name \'launchd\', UID = 501 (.*)$/', "Output correct" );
+}
 
 $result = NPTest->testCmd( "$command -u -2 -w 2:2" );
 is( $result->return_code, 1, "Checking processes with userid=-2" );
@@ -97,9 +101,13 @@ is( $result->return_code, 1, "Checking against metric of CPU > 8" );
 is( $result->output, 'CPU WARNING: 1 warn out of 95 processes | procs=95;;;0; procs_warn=1;;;0; procs_crit=0;;;0;', "Output correct" );
 
 # TODO: Because of a conversion to int, if CPU is 1.45%, will not alert, but 2.01% will.
-$result = NPTest->testCmd( "$command --metric=CPU -w 1 -u 501 -v" );
-is( $result->return_code, 1, "Checking against metric of CPU > 1 with uid=501 - TODO" );
-is( $result->output, 'CPU WARNING: 2 warn out of 40 processes with UID = 501 (tonvoon) [Skype, PubSubAgent]', "Output correct" );
+SKIP: {
+    skip 'user with uid 501 required', 2 unless getpwuid(501);
+
+    $result = NPTest->testCmd( "$command --metric=CPU -w 1 -u 501 -v" );
+    is( $result->return_code, 1, "Checking against metric of CPU > 1 with uid=501 - TODO" );
+    is( $result->output, 'CPU WARNING: 2 warn out of 40 processes with UID = 501 (tonvoon) [Skype, PubSubAgent]', "Output correct" );
+};
 
 $result = NPTest->testCmd( "$command --metric=VSZ -w 1200000 -v" );
 is( $result->return_code, 1, "Checking against VSZ > 1.2GB" );
