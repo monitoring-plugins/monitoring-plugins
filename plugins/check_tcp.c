@@ -354,8 +354,13 @@ main (int argc, char **argv)
 			printf("Unexpected response from host/socket on ");
 		else
 			printf("%.3f second response time on ", elapsed_time);
-		if(server_address[0] != '/')
-			printf("port %d", server_port);
+		if(server_address[0] != '/') {
+			if (host_specified)
+				printf("host %s and port %d",
+				       server_address, server_port);
+			else
+				printf("port %d", server_port);
+		}
 		else
 			printf("socket %s", server_address);
 	}
