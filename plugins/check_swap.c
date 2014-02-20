@@ -8,7 +8,7 @@
 * 
 * Description:
 * 
-* This file contains the check_disk plugin
+* This file contains the check_swap plugin
 * 
 * 
 * This program is free software: you can redistribute it and/or modify
