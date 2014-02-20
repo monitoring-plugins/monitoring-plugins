@@ -356,7 +356,7 @@ main (int argc, char **argv)
 			printf("%.3f second response time on ", elapsed_time);
 		if(server_address[0] != '/') {
 			if (host_specified)
-				printf("host %s and port %d",
+				printf("%s port %d",
 				       server_address, server_port);
 			else
 				printf("port %d", server_port);
