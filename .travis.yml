@@ -48,4 +48,4 @@ addons:
     notification_email: team@monitoring-plugins.org
     build_command_prepend: tools/setup && ./configure
     build_command: make
-    branch_pattern: coverity
+    branch_pattern: coverity.*
