@@ -14,10 +14,6 @@ before_script:
 script:
   - if [ "$COVERITY_SCAN_BRANCH" != 1 ]; then make; fi
 
-compiler:
-  - clang
-  - gcc
-
 notifications:
   irc:
     channels:
@@ -27,12 +23,6 @@ notifications:
     skip_join: true
   email:
     - team@monitoring-plugins.org
-
-# Don't use Clang for Coverity Scan.
-matrix:
-  exclude:
-    - compiler: clang
-      env: COVERITY_SCAN_BRANCH=1
 
 env:
   global:
