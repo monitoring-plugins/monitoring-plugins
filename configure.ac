@@ -6,6 +6,7 @@ AC_CONFIG_FILES([gl/Makefile
 	monitoring-plugins.spec])
 AC_CONFIG_AUX_DIR(build-aux)
 AM_INIT_AUTOMAKE([1.8.3])
+AM_MAINTAINER_MODE([enable])
 AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_HOST
 
