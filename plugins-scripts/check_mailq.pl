@@ -31,7 +31,8 @@ use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_v $verbose $PROGNAME $opt_w $opt_c $opt_t
 					$opt_M $mailq $status $state $msg $msg_q $msg_p $opt_W $opt_C $mailq @lines
 					%srcdomains %dstdomains);
-use lib  utils.pm;
+use FindBin;
+use lib "$FindBin::Bin";
 use utils qw(%ERRORS &print_revision &support &usage );
 
 
