@@ -242,7 +242,14 @@ main (int argc, char **argv)
     }
     printf (ngettext("%.3f second response time", "%.3f seconds response time", elapsed_time), elapsed_time);
     printf (_(". %s returns %s"), query_address, address);
-    printf ("|%s\n", fperfdata ("time", elapsed_time, "s", FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
+    if ((time_thresholds->warning == NULL) || (time_thresholds->critical == NULL)) {
+      printf ("|%s\n", fperfdata ("time", elapsed_time, "s", FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
+    } else {
+      printf ("|%s\n", fperfdata ("time", elapsed_time, "s",
+                                  TRUE, time_thresholds->warning->end,
+                                  TRUE, time_thresholds->critical->end,
+                                  TRUE, 0, FALSE, 0));
+    }
   }
   else if (result == STATE_WARNING)
     printf (_("DNS WARNING - %s\n"),
