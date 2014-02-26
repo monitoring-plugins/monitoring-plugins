@@ -3,7 +3,8 @@
 
 
 use strict;
-use lib utils.pm;
+use FindBin;
+use lib "$FindBin::Bin";
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 use vars qw($PROGNAME);
 use Getopt::Long;

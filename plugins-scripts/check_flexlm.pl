@@ -35,7 +35,8 @@
 use strict;
 use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_F $opt_t $verbose $PROGNAME);
-use lib utils.pm;
+use FindBin;
+use lib "$FindBin::Bin";
 use utils qw(%ERRORS &print_revision &support &usage);
 
 $PROGNAME="check_flexlm";
