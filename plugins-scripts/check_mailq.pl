@@ -611,19 +611,19 @@ sub process_arguments(){
 		{
 			$mailq = 'qmail';
 		}
-		elsif (-d '/var/lib/postfix' || -d '/var/local/lib/postfix'
-		       || -e '/usr/sbin/postfix' || -e '/usr/local/sbin/postfix')
+		elsif (-d '/var/lib/postfix' or -d '/var/local/lib/postfix'
+		       or -e '/usr/sbin/postfix' or -e '/usr/local/sbin/postfix')
 		{
 			$mailq = 'postfix';
 		}
-		elsif (-d '/usr/lib/exim4' || -d '/usr/local/lib/exim4'
-		       || -e '/usr/sbin/exim' || -e '/usr/local/sbin/exim')
+		elsif (-d '/usr/lib/exim4' or -d '/usr/local/lib/exim4'
+		       or -e '/usr/sbin/exim' or -e '/usr/local/sbin/exim')
 		{
 			$mailq = 'exim';
 		}
-		elsif (-d '/usr/lib/nullmailer' || -d '/usr/local/lib/nullmailer'
-		       || -e '/usr/sbin/nullmailer-send'
-		       || -e '/usr/local/sbin/nullmailer-send')
+		elsif (-d '/usr/lib/nullmailer' or -d '/usr/local/lib/nullmailer'
+		       or -e '/usr/sbin/nullmailer-send'
+		       or -e '/usr/local/sbin/nullmailer-send')
 		{
 			$mailq = 'nullmailer';
 		}
