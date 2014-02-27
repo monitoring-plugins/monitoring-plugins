@@ -651,7 +651,7 @@ sub print_help () {
 	print "-W (--Warning)   = Min. number of messages for same domain in queue to generate warning\n";
 	print "-C (--Critical)  = Min. number of messages for same domain in queue to generate critical alert ( W < C )\n";
 	print "-t (--timeout)   = Plugin timeout in seconds (default = $utils::TIMEOUT)\n";
-	print "-M (--mailserver) = [ sendmail | qmail | postfix | exim | nullmailer ] (default = sendmail)\n";
+	print "-M (--mailserver) = [ sendmail | qmail | postfix | exim | nullmailer ] (default = autodetect)\n";
 	print "-h (--help)\n";
 	print "-V (--version)\n";
 	print "-v (--verbose)   = debugging output\n";
@@ -659,6 +659,8 @@ sub print_help () {
 	print "Note: -w and -c are required arguments.  -W and -C are optional.\n";
 	print " -W and -C are applied to domains listed on the queues - both FROM and TO. (sendmail)\n";
 	print " -W and -C are applied message not yet preproccessed. (qmail)\n";
+	print " This plugin tries to autodetect which mailserver you are running,\n";
+	print " you can override the autodetection with -M.\n";
 	print " This plugin uses the system mailq command (sendmail) or qmail-stat (qmail)\n";
 	print " to look at the queues. Mailq can usually only be accessed by root or \n";
 	print " a TrustedUser. You will have to set appropriate permissions for the plugin to work.\n";
