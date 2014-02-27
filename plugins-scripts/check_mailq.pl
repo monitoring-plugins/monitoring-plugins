@@ -199,20 +199,20 @@ if ($mailq eq "sendmail") {
 	## now check the queue length(s)
 
 	if ($msg_q == 0) {
-		$msg = "OK: mailq is empty";
+		$msg = "OK: $mailq mailq is empty";
 		$state = $ERRORS{'OK'};
 	} else {
 		print "msg_q = $msg_q warn=$opt_w crit=$opt_c\n" if $verbose;
 	
 		# overall queue length
 		if ($msg_q < $opt_w) {
-			$msg = "OK: mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
+			$msg = "OK: $mailq mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
 			$state = $ERRORS{'OK'};
 		}elsif ($msg_q >= $opt_w  && $msg_q < $opt_c) {
-			$msg = "WARNING: mailq is $msg_q (threshold w = $opt_w)";
+			$msg = "WARNING: $mailq mailq is $msg_q (threshold w = $opt_w)";
 			$state = $ERRORS{'WARNING'};
 		}else {
-			$msg = "CRITICAL: mailq is $msg_q (threshold c = $opt_c)";
+			$msg = "CRITICAL: $mailq mailq is $msg_q (threshold c = $opt_c)";
 			$state = $ERRORS{'CRITICAL'};
 		}
 
@@ -344,20 +344,20 @@ elsif ( $mailq eq "postfix" ) {
 
         # check queue length(s)
         if ($msg_q == 0){
-                $msg = "OK: mailq reports queue is empty";
+                $msg = "OK: $mailq mailq reports queue is empty";
                 $state = $ERRORS{'OK'};
         } else {
                 print "msg_q = $msg_q warn=$opt_w crit=$opt_c\n" if $verbose;
 
                 # overall queue length
                 if ($msg_q < $opt_w) {
-                        $msg = "OK: mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
+                        $msg = "OK: $mailq mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
                         $state = $ERRORS{'OK'};
                 }elsif  ($msg_q >= $opt_w  && $msg_q < $opt_c) {
-                        $msg = "WARNING: mailq is $msg_q (threshold w = $opt_w)";
+                        $msg = "WARNING: $mailq mailq is $msg_q (threshold w = $opt_w)";
                         $state = $ERRORS{'WARNING'};
                 }else {
-                        $msg = "CRITICAL: mailq is $msg_q (threshold c = $opt_c)";
+                        $msg = "CRITICAL: $mailq mailq is $msg_q (threshold c = $opt_c)";
                         $state = $ERRORS{'CRITICAL'};
                 }
 
@@ -431,13 +431,13 @@ elsif ( $mailq eq "qmail" ) {
 		
 		# overall queue length
 		if ($msg_q < $opt_w) {
-			$msg = "OK: mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
+			$msg = "OK: $mailq mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
 			$state = $ERRORS{'OK'};
 		}elsif ($msg_q >= $opt_w  && $msg_q < $opt_c) {
-			$msg = "WARNING: mailq is $msg_q (threshold w = $opt_w)";
+			$msg = "WARNING: $mailq mailq is $msg_q (threshold w = $opt_w)";
 			$state = $ERRORS{'WARNING'};
 		}else {
-			$msg = "CRITICAL: mailq is $msg_q (threshold c = $opt_c)";
+			$msg = "CRITICAL: $mailq mailq is $msg_q (threshold c = $opt_c)";
 			$state = $ERRORS{'CRITICAL'};
 		}
 
@@ -489,13 +489,13 @@ elsif ( $mailq eq "exim" ) {
 		exit $ERRORS{CRITICAL};
 	}
 	if ($msg_q < $opt_w) {
-		$msg = "OK: mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
+		$msg = "OK: $mailq mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
 		$state = $ERRORS{'OK'};
 	}elsif ($msg_q >= $opt_w  && $msg_q < $opt_c) {
-		$msg = "WARNING: mailq is $msg_q (threshold w = $opt_w)";
+		$msg = "WARNING: $mailq mailq is $msg_q (threshold w = $opt_w)";
 		$state = $ERRORS{'WARNING'};
 	}else {
-		$msg = "CRITICAL: mailq is $msg_q (threshold c = $opt_c)";
+		$msg = "CRITICAL: $mailq mailq is $msg_q (threshold c = $opt_c)";
 		$state = $ERRORS{'CRITICAL'};
 	}
 } # end of ($mailq eq "exim")
@@ -526,13 +526,13 @@ elsif ( $mailq eq "nullmailer" ) {
 	}
 	close(MAILQ) ;
 	if ($msg_q < $opt_w) {
-		$msg = "OK: mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
+		$msg = "OK: $mailq mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
 		$state = $ERRORS{'OK'};
 	}elsif ($msg_q >= $opt_w  && $msg_q < $opt_c) {
-		$msg = "WARNING: mailq is $msg_q (threshold w = $opt_w)";
+		$msg = "WARNING: $mailq mailq is $msg_q (threshold w = $opt_w)";
 		$state = $ERRORS{'WARNING'};
 	}else {
-		$msg = "CRITICAL: mailq is $msg_q (threshold c = $opt_c)";
+		$msg = "CRITICAL: $mailq mailq is $msg_q (threshold c = $opt_c)";
 		$state = $ERRORS{'CRITICAL'};
 	}
 } # end of ($mailq eq "nullmailer")
