@@ -605,7 +605,30 @@ sub process_arguments(){
 			exit $ERRORS{'UNKNOWN'};
 		}
 	}else{
-		$mailq = 'sendmail' ;
+		if (defined $utils::PATH_TO_QMAIL_QSTAT
+		    && -x $utils::PATH_TO_QMAIL_QSTAT)
+		{
+			$mailq = 'qmail';
+		}
+		elsif (-d '/var/lib/postfix' || -d '/var/local/lib/postfix'
+		       || -e '/usr/sbin/postfix' || -e '/usr/local/sbin/postfix')
+		{
+			$mailq = 'postfix';
+		}
+		elsif (-d '/usr/lib/exim4' || -d '/usr/local/lib/exim4'
+		       || -e '/usr/sbin/exim' || -e '/usr/local/sbin/exim')
+		{
+			$mailq = 'exim';
+		}
+		elsif (-d '/usr/lib/nullmailer' || -d '/usr/local/lib/nullmailer'
+		       || -e '/usr/sbin/nullmailer-send'
+		       || -e '/usr/local/sbin/nullmailer-send')
+		{
+			$mailq = 'nullmailer';
+		}
+		else {
+			$mailq = 'sendmail';
+		}
 	}
 		
 	return $ERRORS{'OK'};
