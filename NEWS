@@ -2,6 +2,8 @@ This file documents the major additions and syntax changes between releases.
 
 1.6 ...
 	ENHANCEMENTS
+        check_mailq now supports auto detection of qmail, postfix, exim and nullmailer with
+          fallback to sendmail
 	check_ide_smart now defaults to plugin output, original output appended with -v
 	Extra-Opts are now enabled by default
 	check_swap now supports a configurable state when there is no swap
