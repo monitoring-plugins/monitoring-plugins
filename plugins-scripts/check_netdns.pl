@@ -27,7 +27,8 @@
 
 use Getopt::Long;
 use Net::DNS;
-use lib utils.pm;
+use FindBin;
+use lib "$FindBin::Bin";
 use utils ;
 
 my $PROGNAME = "check_netdns";

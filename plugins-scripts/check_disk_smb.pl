@@ -24,7 +24,8 @@ use strict;
 use Getopt::Long;
 use vars qw($opt_P $opt_V $opt_h $opt_H $opt_s $opt_W $opt_u $opt_p $opt_w $opt_c $opt_a $verbose);
 use vars qw($PROGNAME);
-use lib utils.pm ;
+use FindBin;
+use lib "$FindBin::Bin";
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
 
 sub print_help ();
