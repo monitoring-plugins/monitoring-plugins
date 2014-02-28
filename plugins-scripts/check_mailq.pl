@@ -40,7 +40,7 @@ sub print_help ();
 sub print_usage ();
 sub process_arguments ();
 
-$ENV{'PATH'}='';
+$ENV{'PATH'}='@trusted_path@';
 $ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
 $PROGNAME = "check_mailq";

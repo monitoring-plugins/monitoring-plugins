@@ -35,6 +35,10 @@ use strict;
 
 my $PROGNAME = "check_mssql";
 
+$ENV{'PATH'}='@trusted_path@';
+$ENV{'BASH_ENV'}=''; 
+$ENV{'ENV'}='';
+
 my (
 	$server,$database,$username,$password,$query,$help,$verbose,$timeout,
 	$dbh,$sth,$row,

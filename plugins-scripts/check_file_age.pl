@@ -36,6 +36,10 @@ my ($result, $message, $age, $size, $st);
 
 $PROGNAME="check_file_age";
 
+$ENV{'PATH'}='@trusted_path@';
+$ENV{'BASH_ENV'}=''; 
+$ENV{'ENV'}='';
+
 $opt_w = 240;
 $opt_c = 600;
 $opt_W = 0;

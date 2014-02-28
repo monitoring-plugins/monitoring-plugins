@@ -33,6 +33,10 @@ use utils ;
 
 my $PROGNAME = "check_netdns";
 
+$ENV{'PATH'}='@trusted_path@';
+$ENV{'BASH_ENV'}=''; 
+$ENV{'ENV'}='';
+
 Getopt::Long::Configure(`bundling`);
 GetOptions("V" => $opt_V,         "version" => $opt_V,
 					 "h" => $opt_h,         "help" => $opt_h,

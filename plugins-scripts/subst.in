@@ -45,17 +45,9 @@ BEGIN {
 	sub(c,which(c,path));
 }
 
-# Trusted path mechanism (deprecated)
-
-/^[ \t]*\$ENV[ \t]*\{[ \t'"]*PATH[ \t"']*\}[ \t]*=/ {
-	sub(/\=[ \t]*['"][^"']+["']/,"='@with_trusted_path@' # autoconf-derived");
-}
-
-/^[\t ]*(export[\t ]*)?PATH[\t ]*=['"]+.+["']$/ {
-	sub(/\=.*$/,"='@with_trusted_path@' # autoconf-derived");
-}
+# Trusted path mechanism
+/@trusted_path@/ {sub(/@trusted_path@/,"@with_trusted_path@");}
 
 {
 	print;
 }
-

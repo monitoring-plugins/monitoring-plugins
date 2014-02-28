@@ -47,6 +47,9 @@ sub usage ($);
 sub print_usage ();
 sub process_arguments ();
 
+$ENV{'PATH'}='@trusted_path@';
+$ENV{'BASH_ENV'}=''; 
+$ENV{'ENV'}='';
 
 my $status;
 my %ifOperStatus =	('1','up',
