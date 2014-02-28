@@ -111,10 +111,7 @@ fi
 AC_SUBST(NP_RELEASE)
 
 dnl Checks for programs.
-AC_PATH_PROG(PYTHON,python)
-AC_PATH_PROG(SH,sh)
 AC_PATH_PROG(PERL,perl)
-AC_PATH_PROG(LIBGNUTLS_CONFIG,libgnutls-config)
 AC_PATH_PROG(HOSTNAME,hostname)
 AC_PATH_PROG(BASENAME,basename)
 
