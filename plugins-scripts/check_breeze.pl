@@ -1,4 +1,4 @@
-#!/usr/bin/perl -wT
+#!@PERL@ -wT
 
 
 use strict;
@@ -13,7 +13,7 @@ $PROGNAME = "check_breeze";
 sub print_help ();
 sub print_usage ();
 
-$ENV{'PATH'}='@trusted_path@';
+$ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
 

@@ -1,4 +1,4 @@
-#!/usr/bin/perl -wT
+#!@PERL@ -wT
 
 # -----------------------------------------------------------------------------
 # File Name:		check_ircd.pl
@@ -62,7 +62,7 @@ sub bindRemote ($$);
 
 # -------------------------------------------------------------[ Enviroment ]--
 
-$ENV{'PATH'}='@trusted_path@';
+$ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
 

@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!@PERL@ -w
 #
 # (c)1999 Ian Cass, Knowledge Matters Ltd.
 # Read the GNU copyright stuff for all the legalese
@@ -69,7 +69,7 @@ $PROGNAME="check_ntp";
 sub print_help ();
 sub print_usage ();
 
-$ENV{'PATH'}='@trusted_path@';
+$ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 

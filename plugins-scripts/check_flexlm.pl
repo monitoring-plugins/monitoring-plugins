@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!@PERL@ -w
 #
 # usage: 
 #    check_flexlm.pl license_file
@@ -44,7 +44,7 @@ $PROGNAME="check_flexlm";
 sub print_help ();
 sub print_usage ();
 
-$ENV{'PATH'}='@trusted_path@';
+$ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
 

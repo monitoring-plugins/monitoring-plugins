@@ -1,4 +1,4 @@
-#!/usr/bin/perl -wT
+#!@PERL@ -wT
 #
 
 
@@ -16,7 +16,7 @@ $PROGNAME = "check_wave";
 sub print_help ();
 sub print_usage ();
 
-$ENV{'PATH'}='@trusted_path@';
+$ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 

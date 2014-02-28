@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!@PERL@ -w
 
 #
 # Copyright 2003 Roy Sigurd Karlsbakk
@@ -35,7 +35,7 @@ use strict;
 
 my $PROGNAME = "check_mssql";
 
-$ENV{'PATH'}='@trusted_path@';
+$ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
 

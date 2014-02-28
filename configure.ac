@@ -10,6 +10,7 @@ AM_MAINTAINER_MODE([enable])
 AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_HOST
 
+DEFAULT_PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin"
 RELEASE=1
 AC_SUBST(RELEASE)
 
@@ -75,7 +76,8 @@ AC_DEFINE_UNQUOTED(CGIURL,"$CGIURL",[URL of CGI programs])
 AC_ARG_WITH(trusted_path,
 	ACX_HELP_STRING([--with-trusted-path=PATH],
 		[sets trusted path for executables called by scripts]),
-	with_trusted_path=$withval)
+	with_trusted_path=$withval,
+	with_trusted_path=$DEFAULT_PATH)
 AC_SUBST(with_trusted_path)
 
 EXTRAS=
@@ -1781,7 +1783,6 @@ AC_OUTPUT(
   lib/tests/Makefile
   plugins-root/Makefile
   plugins-scripts/Makefile
-  plugins-scripts/subst
   plugins-scripts/utils.pm
   plugins-scripts/utils.sh
   perlmods/Makefile

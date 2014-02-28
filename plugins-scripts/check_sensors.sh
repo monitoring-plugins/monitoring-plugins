@@ -3,8 +3,9 @@
 PROGNAME=`basename $0`
 PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
 REVISION="@NP_VERSION@"
-TRUSTED_PATH="@trusted_path@"
-PATH=${TRUSTED_PATH:-"/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"}
+PATH="@TRUSTED_PATH@"
+
+export PATH
 
 . $PROGPATH/utils.sh
 

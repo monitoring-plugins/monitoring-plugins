@@ -1,4 +1,4 @@
-#!/bin/perl -w
+#!@PERL@ -w
 
 # check_file_age.pl Copyright (C) 2003 Steven Grimm <koreth-nagios@midwinter.com>
 #
@@ -36,7 +36,7 @@ my ($result, $message, $age, $size, $st);
 
 $PROGNAME="check_file_age";
 
-$ENV{'PATH'}='@trusted_path@';
+$ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
 

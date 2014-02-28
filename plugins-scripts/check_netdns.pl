@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!@PERL@ -w
 
 # Perl version of check_dns plugin which calls DNS directly instead of
 # relying on nslookup (which has bugs)
@@ -33,7 +33,7 @@ use utils ;
 
 my $PROGNAME = "check_netdns";
 
-$ENV{'PATH'}='@trusted_path@';
+$ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
 

@@ -25,6 +25,8 @@ This file documents the major additions and syntax changes between releases.
 	  renamed MP_STATE_DIRECTORY. The old variable will continue to work in v1.6.x
 	check_swap used to allow returning OK on a system without swap when only percent thresholds
 	  were used. This is no longer the case and one must now use -n/--no-swap=<state>
+	The Perl and Shell plugins now use the PATH specified via ./configure's --trusted-path
+	  option, or "/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin" by default
 
 1.5 2nd October 2013
 	ENHANCEMENTS

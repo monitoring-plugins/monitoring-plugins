@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!@PERL@ -w
 #
 # check_rpc plugin for monitoring
 #
@@ -37,7 +37,7 @@ sub print_help ();
 sub print_usage ();
 sub in ($$);
 
-$ENV{'PATH'}='@trusted_path@';
+$ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
 $ENV{'LC_ALL'}='C';

@@ -9,7 +9,7 @@
 PROGNAME=`basename $0`
 PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
 REVISION="@NP_VERSION@"
-PATH="@trusted_path@"
+PATH="@TRUSTED_PATH@"
 
 . $PROGPATH/utils.sh
 

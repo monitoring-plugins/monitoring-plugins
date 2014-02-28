@@ -58,18 +58,12 @@
 # Paths to commands used in this script.  These
 # may have to be modified to match your system setup.
 
-GREP="/bin/egrep"
-DIFF="/bin/diff"
-TAIL="/bin/tail"
-CAT="/bin/cat"
-RM="/bin/rm"
-CHMOD="/bin/chmod"
-TOUCH="/bin/touch"
-
 PROGNAME=`/bin/basename $0`
 PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
 REVISION="@NP_VERSION@"
-PATH="@trusted_path@"
+PATH="@TRUSTED_PATH@"
+
+export PATH
 
 . $PROGPATH/utils.sh
 
@@ -177,7 +171,7 @@ fi
 # the old diff file and exit
 
 if [ ! -e $oldlog ]; then
-    $CAT $logfile > $oldlog
+    cat $logfile > $oldlog
     echo "Log check data initialized..."
     exit $STATE_OK
 fi
@@ -191,20 +185,20 @@ if [ -x /bin/mktemp ]; then
 else
     tempdiff=`/bin/date '+%H%M%S'`
     tempdiff="/tmp/check_log.${tempdiff}"
-    $TOUCH $tempdiff
-    $CHMOD 600 $tempdiff
+    touch $tempdiff
+    chmod 600 $tempdiff
 fi
 
-$DIFF $logfile $oldlog | $GREP -v "^>" > $tempdiff
+diff $logfile $oldlog | grep -v "^>" > $tempdiff
 
 # Count the number of matching log entries we have
-count=`$GREP -c "$query" $tempdiff`
+count=`grep -c "$query" $tempdiff`
 
 # Get the last matching entry in the diff file
-lastentry=`$GREP "$query" $tempdiff | $TAIL -1`
+lastentry=`grep "$query" $tempdiff | tail -1`
 
-$RM -f $tempdiff
-$CAT $logfile > $oldlog
+rm -f $tempdiff
+cat $logfile > $oldlog
 
 if [ "$count" = "0" ]; then # no matches, exit with no error
     echo "Log check ok - 0 pattern matches found"

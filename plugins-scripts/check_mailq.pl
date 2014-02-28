@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!@PERL@ -w
 
 # check_mailq - check to see how many messages are in the smtp queue awating
 #   transmittal.  
@@ -40,7 +40,7 @@ sub print_help ();
 sub print_usage ();
 sub process_arguments ();
 
-$ENV{'PATH'}='@trusted_path@';
+$ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
 $PROGNAME = "check_mailq";

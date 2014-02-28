@@ -23,6 +23,11 @@ EXTRA_DIST=check_breeze.pl check_disk_smb.pl check_flexlm.pl check_ircd.pl \
 	check_ifstatus.pl check_ifoperstatus.pl check_wave.pl check_mailq.pl check_file_age.pl \
 	utils.sh.in utils.pm.in t
 
+EDIT = sed \
+  -e 's|[@]NP_VERSION[@]|$(NP_VERSION)|g' \
+  -e 's|[@]TRUSTED_PATH[@]|$(with_trusted_path)|g' \
+  -e 's|[@]PERL[@]|$(PERL)|g'
+
 TESTS_ENVIRONMENT=perl -I $(top_builddir) -I $(top_srcdir)
 
 TESTS = @SCRIPT_TEST@
@@ -38,11 +43,11 @@ test-debug:
 CLEANFILES=$(libexec_SCRIPTS)
 
 .pl :
-	NP_VERSION=$(NP_VERSION) $(AWK) -f ./subst $< > $@
+	$(EDIT) $< > $@
 	chmod +x $@
 
 .sh :
-	NP_VERSION=$(NP_VERSION) $(AWK) -f ./subst $< > $@
+	$(EDIT) $< > $@
 	chmod +x $@
 
 clean-local:

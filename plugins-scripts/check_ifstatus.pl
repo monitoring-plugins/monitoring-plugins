@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!@PERL@ -w
 #
 # check_ifstatus.pl - monitoring plugin
 # 
@@ -47,7 +47,7 @@ sub usage ($);
 sub print_usage ();
 sub process_arguments ();
 
-$ENV{'PATH'}='@trusted_path@';
+$ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
 

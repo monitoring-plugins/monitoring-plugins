@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!@PERL@ -w
 #
 #
 # check_disk.pl <host> <share> <user> <pass> [warn] [critical] [port]
@@ -33,7 +33,7 @@ sub print_usage ();
 
 $PROGNAME = "check_disk_smb";
 
-$ENV{'PATH'}='@trusted_path@';
+$ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
 
