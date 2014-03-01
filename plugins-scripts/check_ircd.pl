@@ -1,129 +1,73 @@
-#!/usr/bin/perl -wT
-
-# -----------------------------------------------------------------------------
-# File Name:		check_ircd.pl
+#! /usr/bin/perl -w
 #
-# Author:		Richard Mayhew - South Africa
+# Copyright (C) 2014, SUSE Linux Products GmbH, Nuremberg
+# Author: Lars Vogdt
 #
-# Date:			1999/09/20
+# All rights reserved.
 #
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
 #
-# Description:		This script will check to see if an IRCD is running
-#			about how many users it has
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
 #
-# Email:		netsaint@splash.co.za
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
 #
-# -----------------------------------------------------------------------------
-# Copyright 1999 (c) Richard Mayhew
+# * Neither the name of the Novell nor the names of its contributors may be
+#   used to endorse or promote products derived from this software without
+#   specific prior written permission.
 #
-# If any changes are made to this script, please mail me a copy of the
-# changes :)
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 #
-# Some code taken from Charlie Cook (check_disk.pl)
-#
-# License GPL
-#
-# -----------------------------------------------------------------------------
-# Date		Author		Reason
-# ----		------		------
-#
-# 1999/09/20	RM		Creation
-#
-# 1999/09/20	TP		Changed script to use strict, more secure by
-#				specifying $ENV variables. The bind command is
-#				still insecure through.  Did most of my work
-#				with perl -wT and 'use strict'
-#
-# test using check_ircd.pl (irc-2.mit.edu|irc.erols.com|irc.core.com)
-# 2002/05/02    SG		Fixed for Embedded Perl
-#
-
-# ----------------------------------------------------------------[ Require ]--
-
-require 5.004;
-
-# -------------------------------------------------------------------[ Uses ]--
-
-use Socket;
-use strict;
 use Getopt::Long;
-use vars qw($opt_V $opt_h $opt_t $opt_p $opt_H $opt_w $opt_c $verbose);
-use vars qw($PROGNAME);
-use lib utils.pm;
+use IO::Socket::INET6;
+use strict;
+use vars qw($PROGNAME $VERSION);
+use vars qw($opt_V $opt_h $opt_t $opt_p $opt_H $opt_w $opt_c $ssl $verbose);
+use lib '/usr/lib/nagios/plugins';
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
 
 # ----------------------------------------------------[ Function Prototypes ]--
 
 sub print_help ();
 sub print_usage ();
-sub connection ($$$$);
-sub bindRemote ($$);
 
 # -------------------------------------------------------------[ Enviroment ]--
 
-$ENV{PATH} = "";
-$ENV{ENV} = "";
-$ENV{BASH_ENV} = "";
+$ENV{PATH}     = '';
+$ENV{ENV}      = '';
+$ENV{BASH_ENV} = '';
 
 # -----------------------------------------------------------------[ Global ]--
 
-$PROGNAME = "check_ircd";
-my $NICK="ircd$$";
-my $USER_INFO="monitor localhost localhost : ";
-	
-# -------------------------------------------------------------[ connection ]--
-sub connection ($$$$)
-{
-	my ($in_remotehost,$in_users,$in_warn,$in_crit) = @_;
-	my $state;
-	my $answer;
-
-	print "connection(debug): users = $in_users\n" if $verbose;
-	$in_users =~ s/\ //g;
-	
-	if ($in_users >= 0) {
-
-		if ($in_users > $in_crit) {
-			$state = "CRITICAL";
-			$answer = "Critical Number Of Clients Connected : $in_users (Limit = $in_crit)\n";
-
-		} elsif ($in_users > $in_warn) {
-			$state = "WARNING";
-			$answer = "Warning Number Of Clients Connected : $in_users (Limit = $in_warn)\n";
-
-		} else {
-			$state = "OK";
-			$answer = "IRCD ok - Current Local Users: $in_users\n";
-		}
-
-	} else {
-		$state = "UNKNOWN";
-		$answer = "Server $in_remotehost has less than 0 users! Something is Really WRONG!\n";
-	}
-	
-	print ClientSocket "quit\n";
-	print $answer;
-	exit $ERRORS{$state};
-}
-
-# ------------------------------------------------------------[ print_usage ]--
-
-sub print_usage () {
-	print "Usage: $PROGNAME -H <host> [-w <warn>] [-c <crit>] [-p <port>]\n";
-}
+$PROGNAME        = 'check_ircd';
+$VERSION         = '1.5.0';
+my $nick         = "ircd$$";
 
 # -------------------------------------------------------------[ print_help ]--
-
 sub print_help ()
 {
-	print_revision($PROGNAME,'@NP_VERSION@');
-	print "Copyright (c) 2000 Richard Mayhew/Karl DeBisschop
+        print_revision($PROGNAME,$VERSION);
+        print "Copyright (c) 2014 SUSE Linux Products GmbH, Nuremberg
+based on the original work of Richard Mayhew/Karl DeBisschop in 2000
 
-Perl Check IRCD plugin for monitoring
+Perl Check IRCD plugin for Nagios
 
 ";
-	print_usage();
-	print "
+        print_usage();
+        print "
 -H, --hostname=HOST
    Name or IP address of host to check
 -w, --warning=INTEGER
@@ -134,104 +78,151 @@ Perl Check IRCD plugin for monitoring
    Port that the ircd daemon is running on <host> (Default: 6667)
 -v, --verbose
    Print extra debugging information
+-s, --ssl
+   Use SSL for connection (NOTE: might need '-p 6697' option)
 ";
 }
 
-# -------------------------------------------------------------[ bindRemote ]--
+# ------------------------------------------------------------[ print_usage ]--
+sub print_usage () {
+        print "Usage: $PROGNAME -H <host> [-w <warn>] [-c <crit>] [-p <port>] [-s]\n";
+}
 
-sub bindRemote ($$)
+# ------------------------------------------------------------------[ debug ]--
+sub debug ($$)
 {
-	my ($in_remotehost, $in_remoteport) = @_;
-	my $proto = getprotobyname('tcp');
-	my $sockaddr;
-	my $that;
-	my ($name, $aliases,$type,$len,$thataddr) = gethostbyname($in_remotehost);
+	my ($string,$verbose) = @_;
+	if ($verbose){
+		print STDOUT "DEBUG: $string";
+	}
+}
 
-	if (!socket(ClientSocket,AF_INET, SOCK_STREAM, $proto)) {
-	    print "IRCD UNKNOWN: Could not start socket ($!)\n";
-	    exit $ERRORS{"UNKNOWN"};
+# ----------------------------------------------------------------[ connect ]--
+sub connection ($$$$$$) {
+	my ($server,$port,$ssl,$ping_timeout,$nick,$verbose) = @_;
+	my $user=-1;
+	debug("Attempting connect.\n",$verbose);
+	# Connect to server
+	debug("Connecting ...........\n",$verbose);
+	my $sock = IO::Socket::INET6->new(	PeerAddr => $server,
+						PeerPort => $port,
+						Proto => 'tcp',
+						Domain => AF_UNSPEC ) or return ($user);
+	
+	if($ssl) {
+		use IO::Socket::SSL;
+		debug("Starting SSL .........\n",$verbose);
+		IO::Socket::SSL->start_SSL( 	$sock,
+						SSL_verify_mode => 0, # Do not verify certificate
+						) or die "SSL handshake failed: $SSL_ERROR";
 	}
-	$sockaddr = 'S n a4 x8';
-	$that = pack($sockaddr, AF_INET, $in_remoteport, $thataddr);
-	if (!connect(ClientSocket, $that)) { 
-	    print "IRCD UNKNOWN: Could not connect socket ($!)\n";
-	    exit $ERRORS{"UNKNOWN"};
+	debug("Connected to server:   $server on port: $port\n",$verbose);
+	# Set nick and username
+	debug("Sending user info ....\n",$verbose);
+	print $sock "NICK $nick\nUSER monitor localhost localhost : \n";
+	# Catch SIGALRM from the OS when timeout expired.
+	local $SIG{ALRM} = sub {$sock->shutdown(0);};
+	# Send all incomming data to the parser
+	while (<$sock>) {
+			alarm 0;
+			chomp($_);
+		        if (/^PING \:(.+)/) {
+        		        debug("Received PING request, sending PONG :$1\n",$verbose);
+		                print $sock "PONG :$1\n";
+		        }
+		        elsif (/\:I have\s+(\d+)/){
+		                $user=$1;
+				last;
+		        }
+			alarm $ping_timeout;
 	}
-	select(ClientSocket); $| = 1; select(STDOUT);
-	return \*ClientSocket;
+	debug("Closing socket.\n",$verbose);
+	close $sock;
+	return $user;
+}
+
+# ------------------------------------------------------------[ check_users ]--
+sub check_users ($$$){
+	my ($users,$crit,$warn)=@_;
+        $users =~ s/\ //g;
+	my ($state,$answer);
+        if ($users >= 0) {
+                if ($users > $crit) {
+                        $state = "CRITICAL";
+                        $answer = "Critical Number Of Clients Connected : $users (Limit = $crit)";
+                
+                } elsif ($users > $warn) {
+                        $state = "WARNING";
+                        $answer = "Warning Number Of Clients Connected : $users (Limit = $warn)";
+                
+                } else {
+                        $state = "OK";
+                        $answer = "IRCD ok - Current Local Users: $users";
+                }
+		$answer.="|users=$users;$warn;$crit;0\n";
+        } else {
+                $state = "UNKNOWN";
+                $answer = "Server has less than 0 users! Something is Really WRONG!\n";
+        }
+	return ($answer,$state)
 }
 
 # ===================================================================[ MAIN ]==
-
 MAIN:
 {
+	my $answer = 'IRCD UNKNOWN: Unknown error - maybe could not authenticate\n';
+	my $state = 'UNKOWN';
 	my $hostname;
-
 	Getopt::Long::Configure('bundling');
-	GetOptions
-	 ("V"   => \$opt_V,  "version"    => \$opt_V,
-		"h"   => \$opt_h,  "help"       => \$opt_h,
-		"v"   => \$verbose,"verbose"    => \$verbose,
-		"t=i" => \$opt_t,  "timeout=i"  => \$opt_t,
-		"w=i" => \$opt_w,  "warning=i"  => \$opt_w,
-		"c=i" => \$opt_c,  "critical=i" => \$opt_c,
-		"p=i" => \$opt_p,  "port=i"     => \$opt_p,
-		"H=s" => \$opt_H,  "hostname=s" => \$opt_H);
+        GetOptions
+         (	"V"   => \$opt_V,  "version"    => \$opt_V,
+                "h"   => \$opt_h,  "help"       => \$opt_h,
+                "v"   => \$verbose,"verbose"    => \$verbose,
+		"s"   => \$ssl,    "ssl"        => \$ssl,
+                "t=i" => \$opt_t,  "timeout=i"  => \$opt_t,
+                "w=i" => \$opt_w,  "warning=i"  => \$opt_w,
+                "c=i" => \$opt_c,  "critical=i" => \$opt_c,
+                "p=i" => \$opt_p,  "port=i"     => \$opt_p,
+                "H=s" => \$opt_H,  "hostname=s" => \$opt_H);
 
-	if ($opt_V) {
-		print_revision($PROGNAME,'@NP_VERSION@');
-		exit $ERRORS{'OK'};
+        if ($opt_V) {
+                print_revision($PROGNAME,$VERSION);
+                exit $ERRORS{'OK'};
+        }
+
+        if ($opt_h) {print_help(); exit $ERRORS{'OK'};}
+
+        ($opt_H) || ($opt_H = shift @ARGV) || usage("Host name/address not specified\n");
+        my $server = $1 if ($opt_H =~ /([-.A-Za-z0-9]+)/);
+        ($server) || usage("Invalid host: $opt_H\n");
+
+        ($opt_w) || ($opt_w = shift @ARGV) || ($opt_w = 50);
+        my $warn = $1 if ($opt_w =~ /^([0-9]+)$/);
+        ($warn) || usage("Invalid warning threshold: $opt_w\n");
+
+        ($opt_c) || ($opt_c = shift @ARGV) || ($opt_c = 100);
+        my $crit = $1 if ($opt_c =~ /^([0-9]+)$/);
+        ($crit) || usage("Invalid critical threshold: $opt_c\n");
+	
+	if ($crit lt $warn){
+		usage("Invalid threshold: $crit for critical is lower than $warn for warning\n");
 	}
 
-	if ($opt_h) {print_help(); exit $ERRORS{'OK'};}
+        ($opt_p) || ($opt_p = shift @ARGV) || ($opt_p = 6667);
+        my $port = $1 if ($opt_p =~ /^([0-9]+)$/);
+        ($port) || usage("Invalid port: $opt_p\n");
 
-	($opt_H) || ($opt_H = shift @ARGV) || usage("Host name/address not specified\n");
-	my $remotehost = $1 if ($opt_H =~ /([-.A-Za-z0-9]+)/);
-	($remotehost) || usage("Invalid host: $opt_H\n");
+        if ($opt_t && $opt_t =~ /^([0-9]+)$/) { $TIMEOUT = $1; }
 
-	($opt_w) || ($opt_w = shift @ARGV) || ($opt_w = 50);
-	my $warn = $1 if ($opt_w =~ /^([0-9]+)$/);
-	($warn) || usage("Invalid warning threshold: $opt_w\n");
-
-	($opt_c) || ($opt_c = shift @ARGV) || ($opt_c = 100);
-	my $crit = $1 if ($opt_c =~ /^([0-9]+)$/);
-	($crit) || usage("Invalid critical threshold: $opt_c\n");
-
-	($opt_p) || ($opt_p = shift @ARGV) || ($opt_p = 6667);
-	my $remoteport = $1 if ($opt_p =~ /^([0-9]+)$/);
-	($remoteport) || usage("Invalid port: $opt_p\n");
-
-	if ($opt_t && $opt_t =~ /^([0-9]+)$/) { $TIMEOUT = $1; }
-
-	# Just in case of problems, let's not hang the monitoring system
-	$SIG{'ALRM'} = sub {
-		print "Somthing is Taking a Long Time, Increase Your TIMEOUT (Currently Set At $TIMEOUT Seconds)\n";
-		exit $ERRORS{"UNKNOWN"};
-	};
-	
-	alarm($TIMEOUT);
-
-	my ($name, $alias, $proto) = getprotobyname('tcp');
-
-	print "MAIN(debug): binding to remote host: $remotehost -> $remoteport\n" if $verbose;
-	my $ClientSocket = &bindRemote($remotehost,$remoteport);
-	
-	print ClientSocket "NICK $NICK\nUSER $USER_INFO\n";
-	
-	while (<ClientSocket>) {
-		print "MAIN(debug): default var = $_\n" if $verbose;
-
-		# DALnet,LagNet,UnderNet etc. Require this!
-		# Replies with a PONG when presented with a PING query.
-		# If a server doesn't require it, it will be ignored.
-	
-		if (m/^PING (.*)/) {print ClientSocket "PONG $1\n";}
-	
-		alarm(0);
-	
-		# Look for pattern in IRCD Output to gather Client Connections total.
-		connection($remotehost,$1,$warn,$crit) if (m/:I have\s+(\d+)/);
-	}
-	print "IRCD UNKNOWN: Unknown error - maybe could not authenticate\n";
-	exit $ERRORS{"UNKNOWN"};
+        # Just in case of problems, let's not hang Nagios
+        $SIG{'ALRM'} = sub {
+                print "Somthing is Taking a Long Time, Increase Your TIMEOUT (Currently Set At $TIMEOUT Seconds)\n";
+                exit $ERRORS{"UNKNOWN"};
+        };
+        alarm($TIMEOUT);
+	my $ping_timeout=$TIMEOUT-1;
+	my $users=connection($server,$port,$ssl,$ping_timeout,$nick,$verbose);
+	($answer,$state)=check_users($users,$crit,$warn);
+	print "$answer";
+	exit $ERRORS{$state};
 }
