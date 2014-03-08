@@ -13,7 +13,8 @@ AM_CFLAGS = -DNP_VERSION='"$(NP_VERSION)"'
 
 VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t
 
-INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl @LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@
+AM_CPPFLAGS = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl \
+	@LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@
 
 localedir = $(datadir)/locale
 # gettext docs say to use AM_CPPFLAGS, but per module_CPPFLAGS override this
@@ -81,11 +82,11 @@ check_ldap_LDADD = $(NETLIBS) $(LDAPLIBS)
 check_load_LDADD = $(BASEOBJS)
 check_mrtg_LDADD = $(BASEOBJS)
 check_mrtgtraf_LDADD = $(BASEOBJS)
-check_mysql_CFLAGS = $(MYSQLCFLAGS) -DNP_VERSION='"$(NP_VERSION)"'
-check_mysql_CPPFLAGS = $(MYSQLINCLUDE)
+check_mysql_CFLAGS = $(AM_CFLAGS) $(MYSQLCFLAGS)
+check_mysql_CPPFLAGS = $(AM_CPPFLAGS) $(MYSQLINCLUDE)
 check_mysql_LDADD = $(NETLIBS) $(MYSQLLIBS)
-check_mysql_query_CFLAGS = $(MYSQLCFLAGS) -DNP_VERSION='"$(NP_VERSION)"'
-check_mysql_query_CPPFLAGS = $(MYSQLINCLUDE)
+check_mysql_query_CFLAGS = $(AM_CFLAGS) $(MYSQLCFLAGS)
+check_mysql_query_CPPFLAGS = $(AM_CPPFLAGS) $(MYSQLINCLUDE)
 check_mysql_query_LDADD = $(NETLIBS) $(MYSQLLIBS)
 check_nagios_LDADD = $(BASEOBJS)
 check_nt_LDADD = $(NETLIBS) 
