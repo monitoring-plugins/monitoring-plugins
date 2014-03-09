@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* Monitoring check_disk plugin
+* Monitoring check_swap plugin
 * 
 * License: GPL
 * Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
