@@ -514,7 +514,7 @@ print_help (void)
 
 	printf (" %s\n", "-d, --database=STRING");
 	printf ("    %s", _("Database to check "));
-	printf (_("(default: %s)"), DEFAULT_DB);
+	printf (_("(default: %s)\n"), DEFAULT_DB);
 	printf (" %s\n", "-l, --logname = STRING");
 	printf ("    %s\n", _("Login name of user"));
 	printf (" %s\n", "-p, --password = STRING");
