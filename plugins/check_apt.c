@@ -124,7 +124,7 @@ int main (int argc, char **argv) {
 	       (stderr_warning)?" warnings detected":"",
 	       (stderr_warning && exec_warning)?",":"",
 	       (exec_warning)?" errors detected":"",
-	       (stderr_warning||exec_warning)?". run with -v for information.":"",
+	       (stderr_warning||exec_warning)?".":"",
 	        packages_available,
 		   sec_count
 	       );
