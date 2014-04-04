@@ -197,19 +197,40 @@ int main(int argc, char **argv){
 
 	case CHECK_UPTIME:
 
-		xasprintf(&send_buffer, "%s&3", req_password);
-		fetch_data (server_address, server_port, send_buffer);
-		uptime=strtoul(recv_buffer,NULL,10);
-		updays = uptime / 86400;
-		uphours = (uptime % 86400) / 3600;
-		upminutes = ((uptime % 86400) % 3600) / 60;
-		xasprintf(&output_message,_("System Uptime - %u day(s) %u hour(s) %u minute(s)|uptime=%lu"), updays, uphours, upminutes, uptime);
-		if (check_critical_value==TRUE && uptime <= critical_value)
-			return_code=STATE_CRITICAL;
-		else if (check_warning_value==TRUE && uptime <= warning_value)
-			return_code=STATE_WARNING;
-		else
-			return_code=STATE_OK;
+		if (value_list == NULL) {
+			value_list = "minutes";
+		}
+		if (strncmp(value_list, "seconds", strlen("seconds") + 1 ) &&
+			strncmp(value_list, "minutes", strlen("minutes") + 1) &&
+			strncmp(value_list, "hours", strlen("hours") + 1) &&
+			strncmp(value_list, "days", strlen("days") + 1)) {
+
+			output_message = strdup (_("wrong -l argument"));
+		} else {
+			xasprintf(&send_buffer, "%s&3", req_password);
+			fetch_data (server_address, server_port, send_buffer);
+			uptime=strtoul(recv_buffer,NULL,10);
+			updays = uptime / 86400;
+			uphours = (uptime % 86400) / 3600;
+			upminutes = ((uptime % 86400) % 3600) / 60;
+
+			if (!strncmp(value_list, "minutes", strlen("minutes")))
+				uptime = uptime / 60;
+			else if (!strncmp(value_list, "hours", strlen("hours")))
+				uptime = uptime / 3600;
+			else if (!strncmp(value_list, "days", strlen("days")))
+				uptime = uptime / 86400;
+			/* else uptime in seconds, nothing to do */
+
+			xasprintf(&output_message,_("System Uptime - %u day(s) %u hour(s) %u minute(s) |uptime=%lu"),updays, uphours, upminutes, uptime);
+
+			if (check_critical_value==TRUE && uptime <= critical_value)
+				return_code=STATE_CRITICAL;
+			else if (check_warning_value==TRUE && uptime <= warning_value)
+				return_code=STATE_WARNING;
+			else
+				return_code=STATE_OK;
+		}
 		break;
 
 	case CHECK_USEDDISKSPACE:
@@ -713,7 +734,9 @@ void print_help(void)
 	printf ("  %s\n", "ie: -l 60,90,95,120,90,95");
 	printf (" %s\n", "UPTIME =");
 	printf ("  %s\n", _("Get the uptime of the machine."));
-	printf ("  %s\n", _("No specific parameters. No warning or critical threshold"));
+	printf ("  %s\n", _("-l <unit> "));
+	printf ("  %s\n", _("<unit> = seconds, minutes, hours, or days. (default: minutes)"));
+	printf ("  %s\n", _("Thresholds will use the unit specified above."));
 	printf (" %s\n", "USEDDISKSPACE =");
 	printf ("  %s\n", _("Size and percentage of disk use."));
 	printf ("  %s\n", _("Request a -l parameter containing the drive letter only."));
