@@ -198,6 +198,7 @@ process_arguments (int argc, char **argv)
 		{"port", required_argument, 0, 'p'},
 		{"udp", no_argument, 0, 'u'},
 		{"timeout", required_argument, 0, 't'},
+		{"timeout-result", required_argument, 0, 'T'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
@@ -220,7 +221,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "hVH:w:c:W:C:p:t:u", longopts,
+		c = getopt_long (argc, argv, "hVH:w:c:W:C:p:t:uT:", longopts,
 									 &option);
 
 		if (c == -1 || c == EOF)
@@ -303,6 +304,10 @@ process_arguments (int argc, char **argv)
 			else
 				socket_timeout = atoi (optarg);
 			break;
+		case 'T':     /* Result to return on timeouts */
+			if ((socket_timeout_state = mp_translate_state(optarg)) == ERROR)
+				usage4 (_("Timeout result must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+			break;
 		case 'u':									/* udp */
 			use_udp = TRUE;
 		}
@@ -359,6 +364,8 @@ print_help (void)
   printf ("   %s\n", _("Response time (sec.) necessary to result in critical status"));
 
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+  printf (" %s\n", "-T, --timeout-result=STATUS");
+  printf ("   %s\n", _("Connection timeout will result in STATUS instead of critical"));
 
 	printf (UT_SUPPORT);
 }
@@ -370,5 +377,5 @@ print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
 	printf ("%s -H <host_address> [-p port] [-u] [-w variance] [-c variance]\n",progname);
-  printf (" [-W connect_time] [-C connect_time] [-t timeout]\n");
+  printf (" [-W connect_time] [-C connect_time] [-t timeout] [-T STATUS]\n");
 }

@@ -10,8 +10,9 @@ use NPTest;
 
 my @PLUGINS1 = ('check_ntp', 'check_ntp_peer', 'check_ntp_time');
 my @PLUGINS2 = ('check_ntp_peer');
+my @PLUGINS3 = ('check_ntp_time');
 
-plan tests => (12 * scalar(@PLUGINS1)) + (6 * scalar(@PLUGINS2));
+plan tests => (12 * scalar(@PLUGINS1)) + (6 * scalar(@PLUGINS2)) + (2 * scalar(@PLUGINS3));
 
 my $res;
 
@@ -108,3 +109,20 @@ foreach my $plugin (@PLUGINS2) {
 		like( $res->output, $ntp_critmatch2, "$plugin: Output match CRITICAL with jitter, stratum, and truechimers" );
 	}
 }
+
+foreach my $plugin (@PLUGINS3) {
+
+	# -T parameter checks
+	$res = NPTest->testCmd(
+		"./$plugin -H $host_nonresponsive -t 1 -T UNKNOWN"
+		);
+	cmp_ok( $res->return_code, '==', 3, "$plugin: timeout with result status UNKNOWN check" );
+	
+	$res = NPTest->testCmd(
+		"./$plugin -H $host_nonresponsive -t 1 -T WARNING"
+		);
+	cmp_ok( $res->return_code, '==', 1, "$plugin: timeout with result status UNKNOWN check" );
+	
+
+}
+
