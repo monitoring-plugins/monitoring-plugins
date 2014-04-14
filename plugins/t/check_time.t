@@ -9,7 +9,7 @@ use Test;
 use NPTest;
 
 use vars qw($tests);
-BEGIN {$tests = 8; plan tests => $tests}
+BEGIN {$tests = 10; plan tests => $tests}
 
 my $host_udp_time      = getTestParameter( "host_udp_time",      "NP_HOST_UDP_TIME",      "localhost",
 					   "A host providing the UDP Time Service" );
@@ -36,6 +36,10 @@ $t += checkCmd( "./check_time    $host_udp_time -wt 59 -ct 59 -cd 999999 -wd 999
 # failure mode
 $t += checkCmd( "./check_time -H $host_nonresponsive -t 1", 2 );
 $t += checkCmd( "./check_time -H $hostname_invalid   -t 1", 3 );
+
+# -T parameter checks
+$t += checkCmd( "./check_time -H $host_nonresponsive   -t 1 -T UNKNOWN", 3 );
+$t += checkCmd( "./check_time -H $host_nonresponsive   -t 1 -T WARNING", 1 );
 
 exit(0) if defined($Test::Harness::VERSION);
 exit($tests - $t);
