@@ -459,6 +459,7 @@ void np_enable_state(char *keyname, int expected_data_version) {
 	char *temp_filename = NULL;
 	char *temp_keyname = NULL;
 	char *p=NULL;
+	int ret;
 
 	if(this_monitoring_plugin==NULL)
 		die(STATE_UNKNOWN, _("This requires np_init to be called"));
@@ -489,7 +490,11 @@ void np_enable_state(char *keyname, int expected_data_version) {
 	this_state->state_data=NULL;
 
 	/* Calculate filename */
-	asprintf(&temp_filename, "%s/%s/%s", _np_state_calculate_location_prefix(), this_monitoring_plugin->plugin_name, this_state->name);
+	ret = asprintf(&temp_filename, "%s/%s/%s", _np_state_calculate_location_prefix(), this_monitoring_plugin->plugin_name, this_state->name);
+	if (ret < 0)
+		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
+		    strerror(errno));
+
 	this_state->_filename=temp_filename;
 
 	this_monitoring_plugin->state = this_state;
@@ -625,8 +630,8 @@ void np_state_write_string(time_t data_time, char *data_string) {
 	
 	/* If file doesn't currently exist, create directories */
 	if(access(this_monitoring_plugin->state->_filename,F_OK)!=0) {
-		asprintf(&directories, "%s", this_monitoring_plugin->state->_filename);
-		if(directories==NULL)
+		result = asprintf(&directories, "%s", this_monitoring_plugin->state->_filename);
+		if(result < 0)
 			die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
 			    strerror(errno));
 
@@ -644,8 +649,8 @@ void np_state_write_string(time_t data_time, char *data_string) {
 		np_free(directories);
 	}
 
-	asprintf(&temp_file,"%s.XXXXXX",this_monitoring_plugin->state->_filename);
-	if(temp_file==NULL)
+	result = asprintf(&temp_file,"%s.XXXXXX",this_monitoring_plugin->state->_filename);
+	if(result < 0)
 		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
 		    strerror(errno));
 
