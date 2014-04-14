@@ -458,7 +458,7 @@ int process_arguments(int argc, char **argv){
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
 		{"timeout", required_argument, 0, 't'},
-		{"timeout-warning", no_argument, 0, 'T'},
+		{"timeout-result", required_argument, 0, 'T'},
 		{"hostname", required_argument, 0, 'H'},
 		{"port", required_argument, 0, 'p'},
 		{0, 0, 0, 0}
@@ -469,7 +469,7 @@ int process_arguments(int argc, char **argv){
 		usage ("\n");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vhv46qw:c:t:H:p:T", longopts, &option);
+		c = getopt_long (argc, argv, "Vhv46qw:c:t:H:p:T:", longopts, &option);
 		if (c == -1 || c == EOF || c == 1)
 			break;
 
@@ -505,8 +505,9 @@ int process_arguments(int argc, char **argv){
 		case 't':
 			socket_timeout=atoi(optarg);
 			break;
-		case 'T':									/* Timeout will lead to a warning, not critical status */
-			socket_timeout_state = STATE_WARNING;
+		case 'T':     /* Result to return on timeouts */
+			if ((socket_timeout_state = mp_translate_state(optarg)) == ERROR)
+				usage4 (_("Timeout result must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			break;
 		case '4':
 			address_family = AF_INET;
@@ -621,8 +622,8 @@ void print_help(void){
 	printf (" %s\n", "-c, --critical=THRESHOLD");
 	printf ("    %s\n", _("Offset to result in critical status (seconds)"));
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
-	printf (" %s\n", "-T, --timeout-warning");
-	printf ("   %s\n", _("Connection timeout will result in warning status instead of critical"));
+	printf (" %s\n", "-T, --timeout-result=STATUS");
+	printf ("   %s\n", _("Connection timeout will result in STATUS instead of critical"));
 	printf (UT_VERBOSE);
 
 	printf("\n");
@@ -648,6 +649,6 @@ void
 print_usage(void)
 {
 	printf ("%s\n", _("Usage:"));
-	printf(" %s -H <host> [-4|-6] [-w <warn>] [-c <crit>] [-v verbose] [-t timeout] [-T]\n", progname);
+	printf(" %s -H <host> [-4|-6] [-w <warn>] [-c <crit>] [-v verbose] [-t timeout] [-T STATUS]\n", progname);
 }
 
