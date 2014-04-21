@@ -52,6 +52,11 @@ const char *email = "devel@monitoring-plugins.org";
 #endif
 #include "regex.h"
 
+#ifdef __CYGWIN__
+# include <windows.h>
+# undef ERROR
+# define ERROR -1
+#endif
 
 /* If nonzero, show inode information. */
 static int inode_format = 1;
@@ -175,6 +180,10 @@ main (int argc, char **argv)
   struct fs_usage fsp, tmpfsp;
   struct parameter_list *temp_list, *path;
 
+#ifdef __CYGWIN__
+  char mountdir[32];
+#endif
+
   preamble = strdup (" - free space:");
   output = strdup ("");
   details = strdup ("");
@@ -221,7 +230,6 @@ main (int argc, char **argv)
 
   /* Process for every path in list */
   for (path = path_select_list; path; path=path->name_next) {
-
     if (verbose >= 3 && path->freespace_percent->warning != NULL && path->freespace_percent->critical != NULL)
       printf("Thresholds(pct) for %s warn: %f crit %f\n",path->name, path->freespace_percent->warning->end,
                                                          path->freespace_percent->critical->end);
@@ -234,6 +242,13 @@ main (int argc, char **argv)
 
     me = path->best_match;
 
+#ifdef __CYGWIN__
+    if (strncmp(path->name, "/cygdrive/", 10) != 0 || strlen(path->name) > 11)
+	    continue;
+    snprintf(mountdir, sizeof(mountdir), "%s:\\", me->me_mountdir + 10);
+    if (GetDriveType(mountdir) != DRIVE_FIXED)
+	    me->me_remote = 1;
+#endif
     /* Filters */
 
     /* Remove filesystems already seen */
@@ -970,6 +985,10 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
   } else {
     /* find all group members */
     for (p_list = path_select_list; p_list; p_list=p_list->name_next) {
+#ifdef __CYGWIN__
+      if (strncmp(p_list->name, "/cygdrive/", 10) != 0)
+        continue;
+#endif
       if (p_list->group && ! (strcmp(p_list->group, p->group))) {
         stat_path(p_list);
         get_fs_usage (p_list->best_match->me_mountdir, p_list->best_match->me_devname, &tmpfsp);
