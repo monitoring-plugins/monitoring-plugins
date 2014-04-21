@@ -37,7 +37,12 @@ const char *email = "devel@monitoring-plugins.org";
 #include "common.h"
 #include "utils.h"
 
-#if HAVE_UTMPX_H
+#if HAVE_WTSAPI32_H
+# include <windows.h>
+# include <wtsapi32.h>
+# undef ERROR
+# define ERROR -1
+#elif HAVE_UTMPX_H
 # include <utmpx.h>
 #else
 # include "popen.h"
@@ -58,7 +63,11 @@ main (int argc, char **argv)
 	int users = -1;
 	int result = STATE_UNKNOWN;
 	char *perf;
-#if HAVE_UTMPX_H
+#if HAVE_WTSAPI32_H
+	WTS_SESSION_INFO *wtsinfo;
+	DWORD wtscount;
+	DWORD index;
+#elif HAVE_UTMPX_H
 	struct utmpx *putmpx;
 #else
 	char input_buffer[MAX_INPUT_BUFFER];
@@ -78,7 +87,36 @@ main (int argc, char **argv)
 
 	users = 0;
 
-#if HAVE_UTMPX_H
+#if HAVE_WTSAPI32_H
+	if (!WTSEnumerateSessions(WTS_CURRENT_SERVER_HANDLE,
+	  0, 1, &wtsinfo, &wtscount)) {
+		printf(_("Could not enumerate RD sessions: %d\n"), GetLastError());
+		return STATE_UNKNOWN;
+	}
+
+	for (index = 0; index < wtscount; index++) {
+		LPTSTR username;
+		DWORD size;
+		int len;
+
+		if (!WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE,
+		  wtsinfo[index].SessionId, WTSUserName, &username, &size))
+			continue;
+
+		len = lstrlen(username);
+
+		WTSFreeMemory(username);
+
+		if (len == 0)
+			continue;
+
+		if (wtsinfo[index].State == WTSActive ||
+		  wtsinfo[index].State == WTSDisconnected)
+			users++;
+	}
+
+	WTSFreeMemory(wtsinfo);
+#elif HAVE_UTMPX_H
 	/* get currently logged users from utmpx */
 	setutxent ();
 

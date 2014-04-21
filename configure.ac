@@ -364,8 +364,16 @@ dnl Check for headers used by check_users
 AC_CHECK_HEADERS(utmpx.h)
 AM_CONDITIONAL([HAVE_UTMPX], [test "$ac_cv_header_utmpx_h" = "yes"])
 
+AC_CHECK_HEADERS(wtsapi32.h, [], [], [#include <windows.h>])
+AM_CONDITIONAL([HAVE_WTS32API], [test "$ac_cv_header_wtsapi32_h" = "yes"])
+
+if test "$ac_cv_header_wtsapi32_h" = "yes"; then
+  WTSAPI32LIBS="-lwtsapi32"
+  AC_SUBST(WTSAPI32LIBS)
+fi
+
 dnl Fallback to who(1) if the system doesn't provide an utmpx(5) interface
-if test "$ac_cv_header_utmpx_h" = "no"
+if test "$ac_cv_header_utmpx_h" = "no" -a "$ac_cv_header_wtsapi32_h" = "no"
 then
 	AC_PATH_PROG(PATH_TO_WHO,who)
 
