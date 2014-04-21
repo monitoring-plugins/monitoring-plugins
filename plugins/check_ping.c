@@ -458,7 +458,8 @@ run_ping (const char *cmd, const char *addr)
 			 (sscanf(buf,"%*d packets transmitted, %*d received, %d%% loss, time%n",&pl,&match) && match) ||
 			 (sscanf(buf,"%*d packets transmitted, %*d received, %d%% packet loss, time%n",&pl,&match) && match) ||
 			 (sscanf(buf,"%*d packets transmitted, %*d received, +%*d errors, %d%% packet loss%n",&pl,&match) && match) ||
-			 (sscanf(buf,"%*d packets transmitted %*d received, +%*d errors, %d%% packet loss%n",&pl,&match) && match)
+			 (sscanf(buf,"%*d packets transmitted %*d received, +%*d errors, %d%% packet loss%n",&pl,&match) && match) ||
+			 (sscanf(buf,"%*[^(](%d%% %*[^)])%n",&pl,&match) && match)
 			 )
 			continue;
 
@@ -471,7 +472,9 @@ run_ping (const char *cmd, const char *addr)
 				 (sscanf(buf,"round-trip min/avg/max/std-dev = %*f/%f/%*f/%*f%n",&rta,&match) && match) ||
 				 (sscanf(buf,"round-trip (ms) min/avg/max = %*f/%f/%*f%n",&rta,&match) && match) ||
 				 (sscanf(buf,"round-trip (ms) min/avg/max/stddev = %*f/%f/%*f/%*f%n",&rta,&match) && match) ||
-				 (sscanf(buf,"rtt min/avg/max/mdev = %*f/%f/%*f/%*f ms%n",&rta,&match) && match))
+				 (sscanf(buf,"rtt min/avg/max/mdev = %*f/%f/%*f/%*f ms%n",&rta,&match) && match) ||
+				 (sscanf(buf, "%*[^=] = %*fms, %*[^=] = %*fms, %*[^=] = %fms%n", &rta, &match) && match)
+				 )
 			continue;
 	}
 

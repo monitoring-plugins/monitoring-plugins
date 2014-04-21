@@ -90,6 +90,7 @@ ac_cv_uname_m=`uname -m`
 ac_cv_uname_s=`uname -s`
 ac_cv_uname_r=`uname -r`
 ac_cv_uname_v=`uname -v`
+ac_cv_uname_o=`uname -o`
 
 PKG_ARCH=`uname -p`
 REV_DATESTAMP=`date '+%Y.%m.%d.%H.%M'`
@@ -1011,6 +1012,13 @@ then
 		ac_cv_ping_packets_first=yes
 	fi
 
+elif [[ "z$ac_cv_uname_o" = "zCygwin" ]]
+then
+	with_ping_command="$PATH_TO_PING -n %d -w %d000 %s"
+	ac_cv_ping_packets_first=yes
+	ac_cv_ping_has_timeout=yes
+	AC_MSG_RESULT([$with_ping_command])
+
 elif [[ "z$ac_cv_uname_s" = "zUnixWare" ]] && \
 	$PATH_TO_PING -n -s 127.0.0.1 56 1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
@@ -1024,7 +1032,7 @@ elif $PATH_TO_PING -n -U -w 10 -c 1 127.0.0.1 2>/dev/null | \
 then
 	with_ping_command="$PATH_TO_PING -n -U -w %d -c %d %s"
 	ac_cv_ping_packets_first=yes
-  ac_cv_ping_has_timeout=yes
+	ac_cv_ping_has_timeout=yes
 	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n -U -c 1 127.0.0.1 2>/dev/null | \
@@ -1121,7 +1129,11 @@ then
 	then
 		ac_cv_ping6_packets_first=yes
 	fi
-
+elif [[ "z$ac_cv_uname_o" = "zCygwin" -a "x$PATH_TO_PING" != "x" ]]; then
+	with_ping6_command="$PATH_TO_PING -6 -n %d -w %d000 %s"
+	ac_cv_ping6_packets_first=yes
+	ac_cv_ping_has_timeout=yes
+	AC_MSG_RESULT([$with_ping6_command])
 elif test "x$PATH_TO_PING6" != "x"; then
 	if [[ "z$ac_cv_uname_s" = "zUnixWare" ]] && \
 		$PATH_TO_PING6 -n -s ::1 56 1 2>/dev/null | \
