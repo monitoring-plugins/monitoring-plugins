@@ -278,11 +278,35 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 		printf("SSH CRITICAL - No version control string received");
 		exit(STATE_CRITICAL);
 	}
+	/*
+	 * "When the connection has been established, both sides MUST send an
+	 * identification string.  This identification string MUST be
+	 *
+	 * SSH-protoversion-softwareversion SP comments CR LF"
+	 *		- RFC 4253:4.2
+	 */
 	strip (version_control_string);
 	if (verbose)
 		printf ("%s\n", version_control_string);
 	ssh_proto = version_control_string + 4;
-	ssh_server = ssh_proto + strspn (ssh_proto, "-0123456789.");
+
+	/*
+	 * We assume the protoversion is of the form Major.Minor, although
+	 * this is not _strictly_ required. See
+	 *
+	 * "Both the 'protoversion' and 'softwareversion' strings MUST consist of
+	 * printable US-ASCII characters, with the exception of whitespace
+	 * characters and the minus sign (-)"
+	 *		- RFC 4253:4.2
+	 * and,
+	 *
+	 * "As stated earlier, the 'protoversion' specified for this protocol is
+	 * "2.0".  Earlier versions of this protocol have not been formally
+	 * documented, but it is widely known that they use 'protoversion' of
+	 * "1.x" (e.g., "1.5" or "1.3")."
+	 *		- RFC 4253:5
+	 */
+	ssh_server = ssh_proto + strspn (ssh_proto, "0123456789.") + 1; /* (+1 for the '-' separating protoversion from softwareversion) */
 
 	/* If there's a space in the version string, whatever's after the space is a comment
 	 * (which is NOT part of the server name/version)*/
