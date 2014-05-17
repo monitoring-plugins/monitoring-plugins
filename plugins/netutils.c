@@ -253,9 +253,7 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 	else if (was_refused) {
 		switch (econn_refuse_state) { /* a user-defined expected outcome */
 		case STATE_OK:
-		case STATE_WARNING:  /* user wants WARN or OK on refusal, stay quiet */
-			return STATE_CRITICAL;
-			break;
+		case STATE_WARNING:  /* user wants WARN or OK on refusal, or... */
 		case STATE_CRITICAL: /* user did not set econn_refuse_state, or wanted critical */
 			printf ("%s\n", strerror(errno));
 			return STATE_CRITICAL;
