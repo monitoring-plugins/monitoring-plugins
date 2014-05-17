@@ -238,7 +238,7 @@ main (int argc, char **argv)
 	gettimeofday (&tv, NULL);
 
 	result = np_net_connect (server_address, server_port, &sd, PROTOCOL);
-	if (result == STATE_CRITICAL) return STATE_CRITICAL;
+	if (result == STATE_CRITICAL) return econn_refuse_state;
 
 #ifdef HAVE_SSL
 	if (flags & FLAG_SSL){
