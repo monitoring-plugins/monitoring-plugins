@@ -161,6 +161,10 @@ process_request (const char *server_address, int server_port, int proto,
 int
 np_net_connect (const char *host_name, int port, int *sd, int proto)
 {
+        /* send back STATE_UNKOWN if there's an error
+           send back STATE_OK if we connect
+           send back STATE_CRITICAL if we can't connect.
+           Let upstream figure out what to send to the user. */
 	struct addrinfo hints;
 	struct addrinfo *r, *res;
 	struct sockaddr_un su;
@@ -249,12 +253,12 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 	else if (was_refused) {
 		switch (econn_refuse_state) { /* a user-defined expected outcome */
 		case STATE_OK:
-		case STATE_WARNING:  /* user wants WARN or OK on refusal */
-			return econn_refuse_state;
+		case STATE_WARNING:  /* user wants WARN or OK on refusal, stay quiet */
+			return STATE_CRITICAL;
 			break;
-		case STATE_CRITICAL: /* user did not set econn_refuse_state */
+		case STATE_CRITICAL: /* user did not set econn_refuse_state, or wanted critical */
 			printf ("%s\n", strerror(errno));
-			return econn_refuse_state;
+			return STATE_CRITICAL;
 			break;
 		default: /* it's a logic error if we do not end up in STATE_(OK|WARNING|CRITICAL) */
 			return STATE_UNKNOWN;
