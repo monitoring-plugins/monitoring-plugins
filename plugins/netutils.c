@@ -167,10 +167,9 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 	char port_str[6], host[MAX_HOST_ADDRESS_LENGTH];
 	size_t len;
 	int socktype, result;
-	bool is_socket;
+	short is_socket = (host_name[0] == '/');
 
 	socktype = (proto == IPPROTO_UDP) ? SOCK_DGRAM : SOCK_STREAM;
-	bool is_socket = (host_name[0] == '/');
 
 	/* as long as it doesn't start with a '/', it's assumed a host or ip */
 	if (!is_socket){
@@ -256,7 +255,7 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 			break;
 		case STATE_CRITICAL: /* user did not set econn_refuse_state */
 			if (is_socket)
-				printf("connect to socket %s: %s\n", host_name, strerror(errno));
+				printf("connect to file socket %s: %s\n", host_name, strerror(errno));
 			else
 				printf("connect to address %s and port %d: %s\n",
 				       host_name, port, strerror(errno));
@@ -269,7 +268,7 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 	}
 	else {
 		if (is_socket)
-			printf("connect to socket %s: %s\n", host_name, strerror(errno));
+			printf("connect to file socket %s: %s\n", host_name, strerror(errno));
 		else
 			printf("connect to address %s and port %d: %s\n",
 			       host_name, port, strerror(errno));
