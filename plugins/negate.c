@@ -35,11 +35,11 @@ const char *email = "devel@monitoring-plugins.org";
 
 #define DEFAULT_TIMEOUT 11
 
-#include <ctype.h>
-
 #include "common.h"
 #include "utils.h"
 #include "utils_cmd.h"
+
+#include <ctype.h>
 
 /* char *command_line; */
 
