@@ -86,10 +86,12 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 	if (cert && privkey) {
 		SSL_CTX_use_certificate_file(c, cert, SSL_FILETYPE_PEM);
 		SSL_CTX_use_PrivateKey_file(c, privkey, SSL_FILETYPE_PEM);
+#ifdef USE_OPENSSL
 		if (!SSL_CTX_check_private_key(c)) {
 			printf ("%s\n", _("CRITICAL - Private key does not seem to match certificate!\n"));
 			return STATE_CRITICAL;
 		}
+#endif
 	}
 #ifdef SSL_OP_NO_TICKET
 	SSL_CTX_set_options(c, SSL_OP_NO_TICKET);
