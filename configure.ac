@@ -509,8 +509,6 @@ dnl check for gnutls if openssl isn't found (or is disabled)
 if test ! "$FOUNDOPENSSL" = "yes" && test ! "$with_gnutls" = "no"; then
 	if test ! "$with_gnutls" = ""; then
 		CPPFLAGS="$CPPFLAGS -I${with_gnutls}/include"
-	elif test ! "$LIBGNUTLS_CONFIG" = ""; then
-		CPPFLAGS="$CPPFLAGS -I`$LIBGNUTLS_CONFIG --prefix`"
 	fi
 	AC_CHECK_HEADERS([gnutls/openssl.h],FOUNDGNUTLS="yes",)
 	if test "$FOUNDGNUTLS" = "yes"; then
