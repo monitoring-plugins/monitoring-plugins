@@ -627,12 +627,13 @@ sub only_output {
 }
 
 sub testCmd {
-	my $class = shift;
+	my $class   = shift;
 	my $command = shift or die "No command passed to testCmd";
+	my $timeout = shift || 120;
 	my $object = $class->new;
 
 	local $SIG{'ALRM'} = sub { die("timeout in command: $command"); };
-	alarm(120); # no test should take longer than 120 seconds
+	alarm($timeout); # no test should take longer than 120 seconds
 
 	my $output = `$command`;
 	$object->return_code($? >> 8);

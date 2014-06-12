@@ -392,27 +392,21 @@ sub run_common_tests {
 		skip "This doesn't seems to work all the time", 1 unless ($ENV{HTTP_EXTERNAL});
 		$cmd = "$command -f follow -u /redir_external -t 5";
 		eval {
-			local $SIG{ALRM} = sub { die "alarm\n" };
-			alarm(2);
-			$result = NPTest->testCmd( $cmd );
-			alarm(0); };
-		is( $@, "alarm\n", $cmd );
+			$result = NPTest->testCmd( $cmd, 2 );
+		};
+		like( $@, "/timeout in command: $cmd/", $cmd );
 	}
 
 	$cmd = "$command -u /timeout -t 5";
 	eval {
-		local $SIG{ALRM} = sub { die "alarm\n" };
-		alarm(2);
-		$result = NPTest->testCmd( $cmd );
-		alarm(0); };
-	is( $@, "alarm\n", $cmd );
+		$result = NPTest->testCmd( $cmd, 2 );
+	};
+	like( $@, "/timeout in command: $cmd/", $cmd );
 
 	$cmd = "$command -f follow -u /redir_timeout -t 2";
 	eval {
-		local $SIG{ALRM} = sub { die "alarm\n" };
-		alarm(5);
-		$result = NPTest->testCmd( $cmd );
-		alarm(0); };
-	isnt( $@, "alarm\n", $cmd );
+		$result = NPTest->testCmd( $cmd, 5 );
+	};
+	is( $@, "", $cmd );
 
 }
