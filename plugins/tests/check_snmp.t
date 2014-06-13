@@ -79,7 +79,7 @@ Copyright (c) 1986-2004 by cisco Systems, Inc.
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.0 -o sysContact.0 -o .1.3.6.1.4.1.8072.3.2.67.1");
 cmp_ok( $res->return_code, '==', 0, "Exit OK when querying multi-line OIDs" );
 like($res->output, '/^SNMP OK - /', "String contains SNMP OK");
-like($res->output, '/'.quotemeta('SNMP OK - Cisco Internetwork Operating System Software "Alice" Kisco Outernetwork Oserating Gystem Totware | 
+like($res->output, '/'.quotemeta('SNMP OK - Cisco Internetwork Operating System Software ').'"?Alice"?'.quotemeta(' Kisco Outernetwork Oserating Gystem Totware | 
 .1.3.6.1.4.1.8072.3.2.67.0:
 "Cisco Internetwork Operating System Software
 IOS (tm) Catalyst 4000 \"L3\" Switch Software (cat4000-I9K91S-M), Version
