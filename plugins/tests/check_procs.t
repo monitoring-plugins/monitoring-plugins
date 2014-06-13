@@ -50,6 +50,7 @@ SKIP: {
 
 SKIP: {
     skip 'user with uid -2 required', 8 unless getpwuid(-2);
+    skip 'uid -2 must have name "nobody"', 8 unless getpwuid(-2) eq 'nobody';
 
     $result = NPTest->testCmd( "$command -u -2 -w 2:2" );
     is( $result->return_code, 1, "Checking processes with userid=-2" );
