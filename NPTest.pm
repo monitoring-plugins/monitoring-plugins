@@ -6,7 +6,7 @@ package NPTest;
 
 require Exporter;
 @ISA       = qw(Exporter);
-@EXPORT    = qw(getTestParameter checkCmd skipMissingCmd);
+@EXPORT    = qw(getTestParameter checkCmd skipMissingCmd skipMsg);
 @EXPORT_OK = qw(DetermineTestHarnessDirectory TestsFrom SetCacheFilename);
 
 use strict;
@@ -38,8 +38,8 @@ testing.
 
 =head1 FUNCTIONS
 
-This module defines three public functions, C<getTestParameter(...)>,
-C<checkCmd(...)> and C<skipMissingCmd(...)>.  These are exported by
+This module defines four public functions, C<getTestParameter(...)>,
+C<checkCmd(...)>, C<skipMissingCmd(...)> and C<skipMsg(...)>.  These are exported by
 default via the C<use NPTest;> statement.
 
 =over
@@ -185,6 +185,15 @@ of times.
 
 =back
 
+=item C<skipMsg(...)>
+
+If for any reason the test harness must C<Test::skip()> some
+or all of the tests in a given test harness this function provides a
+simple iterator to issue an appropriate message the requested number
+of times.
+
+=back
+
 =head1 SEE ALSO
 
 L<Test>
@@ -299,6 +308,20 @@ sub skipMissingCmd
   for ( 1 .. $count )
   {
     $testStatus += skip( "Missing ${command} - tests skipped", 1 );
+  }
+
+  return $testStatus;
+}
+
+sub skipMsg
+{
+  my( $msg, $count ) = @_;
+
+  my $testStatus;
+
+  for ( 1 .. $count )
+  {
+    $testStatus += skip( $msg, 1 );
   }
 
   return $testStatus;
