@@ -20,8 +20,9 @@ use FindBin qw($Bin);
 my $common_tests = 70;
 my $ssl_only_tests = 8;
 # Check that all dependent modules are available
+eval "use HTTP::Daemon 6.01;";
+plan skip_all => 'HTTP::Daemon >= 6.01 required' if $@;
 eval {
-	require HTTP::Daemon;
 	require HTTP::Status;
 	require HTTP::Response;
 };
