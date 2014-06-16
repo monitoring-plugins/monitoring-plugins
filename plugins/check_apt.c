@@ -33,6 +33,10 @@ const char *progname = "check_apt";
 const char *copyright = "2006-2008";
 const char *email = "devel@monitoring-plugins.org";
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include "common.h"
 #include "runcmd.h"
 #include "utils.h"
@@ -56,6 +60,11 @@ typedef enum { UPGRADE, DIST_UPGRADE, NO_UPGRADE } upgrade_type;
 /* the RE that catches security updates */
 #define SECURITY_RE "^[^\\(]*\\(.* (Debian-Security:|Ubuntu:[^/]*/[^-]*-security)"
 
+/* Defined by https://wiki.ubuntu.com/HweStackEolNotifications. This path must
+ * not have a space in it, since the np_runcmd API does not support that
+ * without special quoting. */
+#define PATH_TO_HWE_SUPPORT_STATUS "/usr/bin/hwe-support-status"
+
 /* some standard functions */
 int process_arguments(int, char **);
 void print_help(void);
@@ -69,6 +78,11 @@ int run_update(void);
 int run_upgrade(int *pkgcount, int *secpkgcount);
 /* add another clause to a regexp */
 char* add_to_regexp(char *expr, const char *next);
+
+/* does this system provide an hwe-support-status command? */
+int have_hwe_support_status(void);
+/* run the HWE support check */
+int run_hwe_support_status(void);
 
 /* configuration variables */
 static int verbose = 0;      /* -v */
@@ -107,6 +121,9 @@ int main (int argc, char **argv) {
 
 	/* apt-get upgrade */
 	result = max_state(result, run_upgrade(&packages_available, &sec_count));
+
+	if(run_hwe_support_status() != STATE_OK)
+		sec_count++;
 
 	if(sec_count > 0){
 		result = max_state(result, STATE_CRITICAL);
@@ -409,6 +426,50 @@ char* construct_cmdline(upgrade_type u, const char *opts){
 	if(cmd==NULL) die(STATE_UNKNOWN, "malloc failed");
 	sprintf(cmd, "%s %s %s", PATH_TO_APTGET, opts_ptr, aptcmd);
 	return cmd;
+}
+
+int have_hwe_support_status(void){
+	struct stat sb;
+	if(stat(PATH_TO_HWE_SUPPORT_STATUS, &sb) == -1)
+		return 0;
+	/* If the path exists, treat as if we must receive an answer. For
+	 * example: if the path exists but some system configuration problem
+	 * means that it is not executable, then we should still attempt to run
+	 * it and fail loudly, instead of silently ignoring the situation. */
+	return 1;
+}
+
+int run_hwe_support_status(void){
+	char *command_line = NULL;
+	output chld_out, chld_err;
+	size_t i;
+	int result;
+
+	if (!have_hwe_support_status())
+		return STATE_OK;
+
+	xasprintf(&command_line, "%s %s", PATH_TO_HWE_SUPPORT_STATUS,
+			verbose ? "--verbose" : "--quiet");
+	if(verbose)
+		printf("%s\n", command_line);
+	result = np_runcmd(command_line, &chld_out, &chld_err, 0);
+	free(command_line);
+
+	/* Ideally stdout/stderr would not be separated like this, but it seems
+	 * that while np_runcmd is useful enought that I should use it, it
+	 * doesn't support not redirecting the command's output. In any case,
+	 * hwe-support-status should not error, and if it does, the user can
+	 * always run it directly for correctly ordered output. */
+	if(verbose) {
+		for(i = 0; i < chld_out.lines; i++)
+			printf("%s\n", chld_out.line[i]);
+		for(i = 0; i < chld_err.lines; i++)
+			fprintf(stderr, "%s\n", chld_err.line[i]);
+	}
+
+	/* The hwe-support-status tool returns an exit status of zero if all is
+	 * well, or non-zero if there is a HWE support status issue. */
+	return result ? STATE_CRITICAL : STATE_OK;
 }
 
 /* informative help message */
