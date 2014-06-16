@@ -33,9 +33,7 @@ const char *progname = "check_apt";
 const char *copyright = "2006-2008";
 const char *email = "devel@monitoring-plugins.org";
 
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 #include "common.h"
 #include "runcmd.h"
