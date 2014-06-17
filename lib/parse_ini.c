@@ -274,11 +274,11 @@ static int add_option(FILE *f, np_arg_list **optlst){
 	/* okay, now we have all the info we need, so we create a new np_arg_list
 	 * element and set the argument...
 	 */
-	optnew=(np_arg_list *)malloc(sizeof(np_arg_list));
+	optnew=malloc(sizeof(np_arg_list));
 	optnew->next=NULL;
 
 	read_pos=0;
-	optnew->arg=(char *)malloc(cfg_len+1);
+	optnew->arg=malloc(cfg_len+1);
 	/* 1-character params needs only one dash */
 	if(opt_len==1) {
 		strncpy(&optnew->arg[read_pos], "-", 1);
