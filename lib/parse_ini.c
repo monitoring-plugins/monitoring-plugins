@@ -30,8 +30,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-/* TODO: die like N::P if config file is not found */
-
 /* np_ini_info contains the result of parsing a "locator" in the format
  * [stanza_name][@config_filename] (check_foo@/etc/foo.ini, for example)
  */
@@ -112,20 +110,17 @@ np_arg_list* np_get_defaults(const char *locator, const char *default_section){
 	np_ini_info i;
 
 	parse_locator(locator, default_section, &i);
-	/* if a file was specified or if we're using the default file */
-	if(i.file != NULL && strlen(i.file) > 0){
-		if(strcmp(i.file, "-")==0){
-			inifile=stdin;
-		} else {
-			inifile=fopen(i.file, "r");
-		}
-		if(inifile==NULL) die(STATE_UNKNOWN, "%s\n", _("Can't read config file"));
-		if(read_defaults(inifile, i.stanza, &defaults)==FALSE)
-			die(STATE_UNKNOWN, _("Invalid section '%s' in config file '%s'\n"), i.stanza, i.file);
-
-		free(i.file);
-		if(inifile!=stdin) fclose(inifile);
+	if(strcmp(i.file, "-")==0){
+		inifile=stdin;
+	} else {
+		inifile=fopen(i.file, "r");
 	}
+	if(inifile==NULL) die(STATE_UNKNOWN, "%s\n", _("Can't read config file"));
+	if(read_defaults(inifile, i.stanza, &defaults)==FALSE)
+		die(STATE_UNKNOWN, _("Invalid section '%s' in config file '%s'\n"), i.stanza, i.file);
+
+	free(i.file);
+	if(inifile!=stdin) fclose(inifile);
 	free(i.stanza);
 	return defaults;
 }
