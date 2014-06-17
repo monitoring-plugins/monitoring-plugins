@@ -41,12 +41,16 @@ typedef struct {
 } np_ini_info;
 
 static char *default_ini_file_names[] = {
+	"monitoring-plugins.ini",
 	"plugins.ini",
 	"nagios-plugins.ini",
 	NULL
 };
 
 static char *default_ini_path_names[] = {
+	"/usr/local/etc/monitoring-plugins.ini",
+	"/etc/monitoring-plugins.ini",
+	/* Deprecated path names (for backward compatibility): */
 	"/etc/nagios/plugins.ini",
 	"/usr/local/nagios/etc/plugins.ini",
 	"/usr/local/etc/nagios/plugins.ini",
