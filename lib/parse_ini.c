@@ -339,7 +339,8 @@ static char *default_file_in_path(void){
 static char *default_file(void){
 	char **p, *ini_file;
 
-	if((ini_file=default_file_in_path())!=NULL)
+	if((ini_file=getenv("MP_CONFIG_FILE"))!=NULL ||
+	    (ini_file=default_file_in_path())!=NULL)
 		return ini_file;
 	for(p=default_ini_path_names; *p!=NULL; p++)
 		if (access(*p, F_OK)==0)
