@@ -368,11 +368,11 @@ default_file_in_path(void)
 	/* shall we spit out a warning that NAGIOS_CONFIG_PATH is deprecated? */
 
 	if ((tokens = strdup(config_path)) == NULL)
-		die(STATE_UNKNOWN, _("Insufficient Memory"));
+		die(STATE_UNKNOWN, "%s\n", _("Insufficient Memory"));
 	for (dir = strtok(tokens, ":"); dir != NULL; dir = strtok(NULL, ":")) {
 		for (file = default_ini_file_names; *file != NULL; file++) {
 			if ((asprintf(&ini_file, "%s/%s", dir, *file)) < 0)
-				die(STATE_UNKNOWN, _("Insufficient Memory"));
+				die(STATE_UNKNOWN, "%s\n", _("Insufficient Memory"));
 			if (access(ini_file, F_OK) == 0) {
 				free(tokens);
 				return ini_file;
