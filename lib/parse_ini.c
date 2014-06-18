@@ -46,7 +46,9 @@ static char *default_ini_file_names[] = {
 };
 
 static char *default_ini_path_names[] = {
+	"/usr/local/etc/monitoring-plugins/monitoring-plugins.ini",
 	"/usr/local/etc/monitoring-plugins.ini",
+	"/etc/monitoring-plugins/monitoring-plugins.ini",
 	"/etc/monitoring-plugins.ini",
 	/* deprecated path names (for backward compatibility): */
 	"/etc/nagios/plugins.ini",
