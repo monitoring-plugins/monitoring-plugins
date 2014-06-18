@@ -68,8 +68,9 @@ static int read_defaults(FILE *f, const char *stanza, np_arg_list **opts);
 /* internal function that converts a single line into options format */
 static int add_option(FILE *f, np_arg_list **optlst);
 
-/* internal function to find default file */
+/* internal functions to find default file */
 static char *default_file(void);
+static char *default_file_in_path(void);
 
 /*
  * Parse_locator decomposes a string of the form
@@ -344,6 +345,20 @@ add_option(FILE *f, np_arg_list **optlst)
 }
 
 static char *
+default_file(void)
+{
+	char **p, *ini_file;
+
+	if ((ini_file = getenv("MP_CONFIG_FILE")) != NULL ||
+	    (ini_file = default_file_in_path()) != NULL)
+		return ini_file;
+	for (p = default_ini_path_names; *p != NULL; p++)
+		if (access(*p, F_OK) == 0)
+			return *p;
+	return NULL;
+}
+
+static char *
 default_file_in_path(void)
 {
 	char *config_path, **file;
@@ -351,6 +366,7 @@ default_file_in_path(void)
 
 	if ((config_path = getenv("NAGIOS_CONFIG_PATH")) == NULL)
 		return NULL;
+	/* shall we spit out a warning that NAGIOS_CONFIG_PATH is deprecated? */
 
 	if ((tokens = strdup(config_path)) == NULL)
 		die(STATE_UNKNOWN, _("Insufficient Memory"));
@@ -365,19 +381,5 @@ default_file_in_path(void)
 		}
 	}
 	free(tokens);
-	return NULL;
-}
-
-static char *
-default_file(void)
-{
-	char **p, *ini_file;
-
-	if ((ini_file = getenv("MP_CONFIG_FILE")) != NULL ||
-	    (ini_file = default_file_in_path()) != NULL)
-		return ini_file;
-	for (p = default_ini_path_names; *p != NULL; p++)
-		if (access(*p, F_OK) == 0)
-			return *p;
 	return NULL;
 }
