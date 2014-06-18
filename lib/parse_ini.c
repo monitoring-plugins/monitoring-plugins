@@ -22,6 +22,7 @@
 *****************************************************************************/
 
 #include "common.h"
+#include "idpriv.h"
 #include "utils_base.h"
 #include "parse_ini.h"
 
@@ -118,6 +119,11 @@ np_get_defaults(const char *locator, const char *default_section)
 	FILE *inifile = NULL;
 	np_arg_list *defaults = NULL;
 	np_ini_info i;
+	int is_suid_plugin = mp_suid();
+
+	if (is_suid_plugin && idpriv_temp_drop() == -1)
+		die(STATE_UNKNOWN, _("Cannot drop privileges: %s\n"),
+		    strerror(errno));
 
 	parse_locator(locator, default_section, &i);
 	inifile = strcmp(i.file, "-") == 0 ? stdin : fopen(i.file, "r");
@@ -133,6 +139,10 @@ np_get_defaults(const char *locator, const char *default_section)
 	if (inifile != stdin)
 		fclose(inifile);
 	free(i.stanza);
+	if (is_suid_plugin && idpriv_temp_restore() == -1)
+		die(STATE_UNKNOWN, _("Cannot restore privileges: %s\n"),
+		    strerror(errno));
+
 	return defaults;
 }
 
