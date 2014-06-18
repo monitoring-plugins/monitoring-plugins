@@ -129,7 +129,8 @@ np_get_defaults(const char *locator, const char *default_section)
 	inifile = strcmp(i.file, "-") == 0 ? stdin : fopen(i.file, "r");
 
 	if (inifile == NULL)
-		die(STATE_UNKNOWN, "%s\n", _("Can't read config file"));
+		die(STATE_UNKNOWN, _("Can't read config file: %s\n"),
+		    strerror(errno));
 	if (read_defaults(inifile, i.stanza, &defaults) == FALSE)
 		die(STATE_UNKNOWN,
 		    _("Invalid section '%s' in config file '%s'\n"), i.stanza,
