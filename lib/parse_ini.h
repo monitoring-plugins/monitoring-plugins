@@ -16,7 +16,7 @@ typedef struct np_arg_el {
 /* np_load_defaults: load the default configuration (if present) for
  * a plugin from the ini file
  */
-np_arg_list* np_get_defaults(const char *locator, const char *default_section);
+np_arg_list *np_get_defaults(const char *locator, const char *default_section);
 
 #endif /* _PARSE_INI_H_ */
 
