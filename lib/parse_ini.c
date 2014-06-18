@@ -166,7 +166,7 @@ read_defaults(FILE *f, const char *stanza, np_arg_list **opts)
 				c = fgetc(f);
 				/* Strip leading whitespace */
 				if (i == 0)
-					for (c; isspace(c); c = fgetc(f))
+					for (; isspace(c); c = fgetc(f))
 						continue;
 				/* nope, read to the end of the line */
 				if (c != stanza[i]) {
@@ -178,7 +178,7 @@ read_defaults(FILE *f, const char *stanza, np_arg_list **opts)
 			if (i == stanza_len) {
 				c = fgetc(f);
 				/* Strip trailing whitespace */
-				for (c; isspace(c); c = fgetc(f))
+				for (; isspace(c); c = fgetc(f))
 					continue;
 				if (c == ']')
 					stanzastate = RIGHTSTANZA;
@@ -193,7 +193,6 @@ read_defaults(FILE *f, const char *stanza, np_arg_list **opts)
 			case NOSTANZA:
 				die(STATE_UNKNOWN, "%s\n",
 				    _("Config file error"));
-				break;
 				/* we're in a stanza, but for a different plugin */
 			case WRONGSTANZA:
 				GOBBLE_TO(f, c, '\n');
@@ -226,7 +225,7 @@ add_option(FILE *f, np_arg_list **optlst)
 {
 	np_arg_list *opttmp = *optlst, *optnew;
 	char *linebuf = NULL, *lineend = NULL, *optptr = NULL, *optend = NULL;
-	char *eqptr = NULL, *valptr = NULL, *spaceptr = NULL, *valend = NULL;
+	char *eqptr = NULL, *valptr = NULL, *valend = NULL;
 	short done_reading = 0, equals = 0, value = 0;
 	size_t cfg_len = 0, read_sz = 8, linebuf_sz = 0, read_pos = 0;
 	size_t opt_len = 0, val_len = 0;
@@ -240,7 +239,7 @@ add_option(FILE *f, np_arg_list **optlst)
 			if (linebuf == NULL)
 				die(STATE_UNKNOWN, _("malloc() failed!\n"));
 		}
-		if (fgets(&linebuf[read_pos], read_sz, f) == NULL)
+		if (fgets(&linebuf[read_pos], (int)read_sz, f) == NULL)
 			done_reading = 1;
 		else {
 			read_pos = strlen(linebuf);
@@ -278,10 +277,10 @@ add_option(FILE *f, np_arg_list **optlst)
 		continue;
 	--valend;
 	/* Finally trim off trailing spaces */
-	for (valend; isspace(*valend); valend--)
+	for (; isspace(*valend); valend--)
 		continue;
 	/* calculate the length of "--foo" */
-	opt_len = 1 + optend - optptr;
+	opt_len = (size_t)(1 + optend - optptr);
 	/* 1-character params needs only one dash */
 	if (opt_len == 1)
 		cfg_len = 1 + (opt_len);
@@ -290,7 +289,7 @@ add_option(FILE *f, np_arg_list **optlst)
 	/* if valptr<lineend then we have to also allocate space for "=bar" */
 	if (valptr < lineend) {
 		equals = value = 1;
-		val_len = 1 + valend - valptr;
+		val_len = (size_t)(1 + valend - valptr);
 		cfg_len += 1 + val_len;
 	}
 	/* if valptr==valend then we have "=" but no "bar" */
