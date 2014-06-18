@@ -48,7 +48,7 @@ static char *default_ini_file_names[] = {
 static char *default_ini_path_names[] = {
 	"/usr/local/etc/monitoring-plugins.ini",
 	"/etc/monitoring-plugins.ini",
-	/* Deprecated path names (for backward compatibility): */
+	/* deprecated path names (for backward compatibility): */
 	"/etc/nagios/plugins.ini",
 	"/usr/local/nagios/etc/plugins.ini",
 	"/usr/local/etc/nagios/plugins.ini",
@@ -71,9 +71,10 @@ static int add_option(FILE *f, np_arg_list **optlst);
 /* internal function to find default file */
 static char *default_file(void);
 
-/* parse_locator decomposes a string of the form
+/*
+ * Parse_locator decomposes a string of the form
  * 	[stanza][@filename]
- * into its seperate parts
+ * into its seperate parts.
  */
 static void
 parse_locator(const char *locator, const char *def_stanza, np_ini_info *i)
@@ -105,7 +106,9 @@ parse_locator(const char *locator, const char *def_stanza, np_ini_info *i)
 		    _("Cannot find config file in any standard location.\n"));
 }
 
-/* this is the externally visible function used by extra_opts */
+/*
+ * This is the externally visible function used by extra_opts.
+ */
 np_arg_list *
 np_get_defaults(const char *locator, const char *default_section)
 {
@@ -133,11 +136,12 @@ np_get_defaults(const char *locator, const char *default_section)
 	return defaults;
 }
 
-/* read_defaults is where the meat of the parsing takes place.
+/*
+ * The read_defaults() function is where the meat of the parsing takes place.
  *
- * note that this may be called by a setuid binary, so we need to
+ * Note that this may be called by a setuid binary, so we need to
  * be extra careful about user-supplied input (i.e. avoiding possible
- * format string vulnerabilities, etc)
+ * format string vulnerabilities, etc).
  */
 static int
 read_defaults(FILE *f, const char *stanza, np_arg_list **opts)
@@ -148,7 +152,7 @@ read_defaults(FILE *f, const char *stanza, np_arg_list **opts)
 
 	stanza_len = strlen(stanza);
 
-	/* our little stanza-parsing state machine.  */
+	/* our little stanza-parsing state machine */
 	while ((c = fgetc(f)) != EOF) {
 		/* gobble up leading whitespace */
 		if (isspace(c))
@@ -159,12 +163,12 @@ read_defaults(FILE *f, const char *stanza, np_arg_list **opts)
 		case '#':
 			GOBBLE_TO(f, c, '\n');
 			break;
-			/* start of a stanza.  check to see if it matches */
+			/* start of a stanza, check to see if it matches */
 		case '[':
 			stanzastate = WRONGSTANZA;
 			for (i = 0; i < stanza_len; i++) {
 				c = fgetc(f);
-				/* Strip leading whitespace */
+				/* strip leading whitespace */
 				if (i == 0)
 					for (; isspace(c); c = fgetc(f))
 						continue;
@@ -177,7 +181,7 @@ read_defaults(FILE *f, const char *stanza, np_arg_list **opts)
 			/* if it matched up to here and the next char is ']'... */
 			if (i == stanza_len) {
 				c = fgetc(f);
-				/* Strip trailing whitespace */
+				/* strip trailing whitespace */
 				for (; isspace(c); c = fgetc(f))
 					continue;
 				if (c == ']')
@@ -214,9 +218,9 @@ read_defaults(FILE *f, const char *stanza, np_arg_list **opts)
 }
 
 /*
- * read one line of input in the format
+ * Read one line of input in the format
  * 	^option[[:space:]]*(=[[:space:]]*value)?
- * and creates it as a cmdline argument
+ * and create it as a cmdline argument
  * 	--option[=value]
  * appending it to the linked list optbuf.
  */
@@ -250,7 +254,7 @@ add_option(FILE *f, np_arg_list **optlst)
 		}
 	}
 	lineend = &linebuf[read_pos];
-	/* all that to read one line.  isn't C fun? :) now comes the parsing :/ */
+	/* all that to read one line, isn't C fun? :) now comes the parsing :/ */
 
 	/* skip leading whitespace */
 	for (optptr = linebuf; optptr < lineend && isspace(*optptr); optptr++)
@@ -276,7 +280,7 @@ add_option(FILE *f, np_arg_list **optlst)
 	for (valend = valptr; valend < lineend; valend++)
 		continue;
 	--valend;
-	/* Finally trim off trailing spaces */
+	/* finally trim off trailing spaces */
 	for (; isspace(*valend); valend--)
 		continue;
 	/* calculate the length of "--foo" */
@@ -297,7 +301,7 @@ add_option(FILE *f, np_arg_list **optlst)
 		equals = 1;
 		cfg_len += 1;
 	}
-	/* A line with no equal sign isn't valid */
+	/* a line with no equal sign isn't valid */
 	if (equals == 0)
 		die(STATE_UNKNOWN, "%s\n", _("Config file error"));
 
