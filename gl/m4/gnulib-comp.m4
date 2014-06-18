@@ -28,7 +28,7 @@
 # other built files.
 
 
-# This macro should be invoked from ./configure.in, in the section
+# This macro should be invoked from ./configure.ac, in the section
 # "Checks for programs", right after AC_PROG_CC, and certainly before
 # any checks for libraries, header files, types and library functions.
 AC_DEFUN([gl_EARLY],
@@ -70,6 +70,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module gettext-h:
   # Code from module havelib:
   # Code from module hostent:
+  # Code from module idpriv-droptemp:
   # Code from module include_next:
   # Code from module inet_ntop:
   # Code from module intprops:
@@ -153,7 +154,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module xstrndup:
 ])
 
-# This macro should be invoked from ./configure.in, in the section
+# This macro should be invoked from ./configure.ac, in the section
 # "Check for header files, types and library functions".
 AC_DEFUN([gl_INIT],
 [
@@ -258,6 +259,7 @@ AC_DEFUN([gl_INIT],
   AC_SUBST([LIBINTL])
   AC_SUBST([LTLIBINTL])
   gl_HOSTENT
+  gl_IDPRIV
   gl_FUNC_INET_NTOP
   if test $HAVE_INET_NTOP = 0 || test $REPLACE_INET_NTOP = 1; then
     AC_LIBOBJ([inet_ntop])
@@ -658,6 +660,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/glthread/lock.c
   lib/glthread/lock.h
   lib/glthread/threadlib.c
+  lib/idpriv-droptemp.c
+  lib/idpriv.h
   lib/inet_ntop.c
   lib/intprops.h
   lib/itold.c
@@ -790,6 +794,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/gnulib-common.m4
   m4/hostent.m4
   m4/iconv.m4
+  m4/idpriv.m4
   m4/include_next.m4
   m4/inet_ntop.m4
   m4/intdiv0.m4
