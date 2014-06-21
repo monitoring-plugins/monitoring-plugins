@@ -23,6 +23,8 @@ This file documents the major additions and syntax changes between releases.
 	  been disabled because they were broken
 	State retention: the NAGIOS_PLUGIN_STATE_DIRECTORY environment variable has been
 	  renamed MP_STATE_PATH. The old variable will continue to work in v1.6.x
+	Add the UID of the invoking user to the state retention file path. This helps solving
+	  permission issues when different users run the same plugin
 	check_swap used to allow returning OK on a system without swap when only percent thresholds
 	  were used. This is no longer the case and one must now use -n/--no-swap=<state>
 	The Perl and Shell plugins now use the PATH specified via ./configure's --trusted-path

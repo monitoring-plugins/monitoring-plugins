@@ -489,7 +489,9 @@ void np_enable_state(char *keyname, int expected_data_version) {
 	this_state->state_data=NULL;
 
 	/* Calculate filename */
-	asprintf(&temp_filename, "%s/%s/%s", _np_state_calculate_location_prefix(), this_monitoring_plugin->plugin_name, this_state->name);
+	asprintf(&temp_filename, "%s/%lu/%s/%s",
+	    _np_state_calculate_location_prefix(), (unsigned long)geteuid(),
+	    this_monitoring_plugin->plugin_name, this_state->name);
 	this_state->_filename=temp_filename;
 
 	this_monitoring_plugin->state = this_state;
