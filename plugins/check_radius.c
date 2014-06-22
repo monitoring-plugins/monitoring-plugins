@@ -169,7 +169,7 @@ main (int argc, char **argv)
 	str = strdup ("dictionary");
 	if ((config_file && my_rc_read_config (config_file)) ||
 			my_rc_read_dictionary (my_rc_conf_str (str)))
-		die (STATE_UNKNOWN, _("Config file error"));
+		die (STATE_UNKNOWN, _("Config file error\n"));
 
 	service = PW_AUTHENTICATE_ONLY;
 
@@ -178,24 +178,24 @@ main (int argc, char **argv)
 				my_rc_avpair_add (&data.send_pairs, PW_USER_NAME, username, 0) &&
 				my_rc_avpair_add (&data.send_pairs, PW_USER_PASSWORD, password, 0)
 				))
-		die (STATE_UNKNOWN, _("Out of Memory?"));
+		die (STATE_UNKNOWN, _("Out of Memory?\n"));
 
 	if (nasid != NULL) {
 		if (!(my_rc_avpair_add (&data.send_pairs, PW_NAS_IDENTIFIER, nasid, 0)))
-			die (STATE_UNKNOWN, _("Invalid NAS-Identifier"));
+			die (STATE_UNKNOWN, _("Invalid NAS-Identifier\n"));
 	}
 
 	if (nasipaddress != NULL) {
 		if (rc_good_ipaddr (nasipaddress))
-			die (STATE_UNKNOWN, _("Invalid NAS-IP-Address"));
+			die (STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
 		if ((client_id = rc_get_ipaddr(nasipaddress)) == 0)
-			die (STATE_UNKNOWN, _("Invalid NAS-IP-Address"));
+			die (STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
 	} else {
 		if ((client_id = my_rc_own_ipaddress ()) == 0)
-			die (STATE_UNKNOWN, _("Can't find local IP for NAS-IP-Address"));
+			die (STATE_UNKNOWN, _("Can't find local IP for NAS-IP-Address\n"));
 	}
 	if (my_rc_avpair_add (&(data.send_pairs), PW_NAS_IP_ADDRESS, &client_id, 0) == NULL)
-		die (STATE_UNKNOWN, _("Invalid NAS-IP-Address"));
+		die (STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
 
 	my_rc_buildreq (&data, PW_ACCESS_REQUEST, server, port, (int)timeout_interval,
 	             retries);
@@ -206,19 +206,19 @@ main (int argc, char **argv)
 		rc_avpair_free (data.receive_pairs);
 
 	if (result == TIMEOUT_RC)
-		die (STATE_CRITICAL, _("Timeout"));
+		die (STATE_CRITICAL, _("Timeout\n"));
 	if (result == ERROR_RC)
-		die (STATE_CRITICAL, _("Auth Error"));
+		die (STATE_CRITICAL, _("Auth Error\n"));
 	if (result == REJECT_RC)
-		die (STATE_WARNING, _("Auth Failed"));
+		die (STATE_WARNING, _("Auth Failed\n"));
 	if (result == BADRESP_RC)
-		die (STATE_WARNING, _("Bad Response"));
+		die (STATE_WARNING, _("Bad Response\n"));
 	if (expect && !strstr (msg, expect))
-		die (STATE_WARNING, "%s", msg);
+		die (STATE_WARNING, "%s\n", msg);
 	if (result == OK_RC)
-		die (STATE_OK, _("Auth OK"));
+		die (STATE_OK, _("Auth OK\n"));
 	(void)snprintf(msg, sizeof(msg), _("Unexpected result code %d"), result);
-	die (STATE_UNKNOWN, "%s", msg);
+	die (STATE_UNKNOWN, "%s\n", msg);
 }
 
 
