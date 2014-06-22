@@ -51,7 +51,7 @@ check_dbi:
 
 check_radius:
 	- Requires the radiusclient-ng library available from:
-	  http://developer.berlios.de/projects/radiusclient-ng/
+	  http://sourceforge.net/projects/radiusclient-ng.berlios/
 	- This plugin also works with the original radiusclient library from
 	  ftp://ftp.cityline.net/pub/radiusclient/
 		RPM (rpmfind): radiusclient 0.3.2, radiusclient-devel-0.3.2
