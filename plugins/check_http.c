@@ -1243,6 +1243,7 @@ redir (char *pos, char *status_line)
   if (addr == NULL)
     die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate addr\n"));
 
+  memset(addr, 0, MAX_IPV4_HOSTLENGTH);
   url = malloc (strcspn (pos, "\r\n"));
   if (url == NULL)
     die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate URL\n"));
@@ -1333,8 +1334,8 @@ redir (char *pos, char *status_line)
          max_depth, type, addr, i, url, (display_html ? "</A>" : ""));
 
   if (server_port==i &&
-      !strcmp(server_address, addr) &&
-      (host_name && !strcmp(host_name, addr)) &&
+      !strncmp(server_address, addr, MAX_IPV4_HOSTLENGTH) &&
+      (host_name && !strncmp(host_name, addr, MAX_IPV4_HOSTLENGTH)) &&
       !strcmp(server_url, url))
     die (STATE_WARNING,
          _("HTTP WARNING - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
@@ -1343,11 +1344,11 @@ redir (char *pos, char *status_line)
   strcpy (server_type, type);
 
   free (host_name);
-  host_name = strdup (addr);
+  host_name = strndup (addr, MAX_IPV4_HOSTLENGTH);
 
   if (!(followsticky & STICKY_HOST)) {
     free (server_address);
-    server_address = strdup (addr);
+    server_address = strndup (addr, MAX_IPV4_HOSTLENGTH);
   }
   if (!(followsticky & STICKY_PORT)) {
     server_port = i;
@@ -1366,6 +1367,7 @@ redir (char *pos, char *status_line)
     printf (_("Redirection to %s://%s:%d%s\n"), server_type,
             host_name ? host_name : server_address, server_port, server_url);
 
+  free(addr);
   check_http ();
 }
 
