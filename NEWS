@@ -7,6 +7,7 @@ This file documents the major additions and syntax changes between releases.
 	check_ide_smart now defaults to plugin output, original output appended with -v
 	Extra-Opts are now enabled by default
 	check_swap now supports a configurable state when there is no swap
+	check_radius now supports the FreeRADIUS Client library
 
 	FIXES
 	Don't let e.g. check_http's -C option reset SSL version if e.g. -S 1 -C 5 is specified

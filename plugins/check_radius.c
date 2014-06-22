@@ -36,9 +36,10 @@ const char *email = "devel@monitoring-plugins.org";
 #include "utils.h"
 #include "netutils.h"
 
-#ifdef HAVE_LIBRADIUSCLIENT_NG
+#if defined(HAVE_LIBFREERADIUS_CLIENT)
+#include <freeradius-client.h>
+#elif defined(HAVE_LIBRADIUSCLIENT_NG)
 #include <radiusclient-ng.h>
-rc_handle *rch = NULL;
 #else
 #include <radiusclient.h>
 #endif
@@ -47,11 +48,14 @@ int process_arguments (int, char **);
 void print_help (void);
 void print_usage (void);
 
-/* libradiusclient(-ng) wrapper functions */
-#ifdef HAVE_LIBRADIUSCLIENT_NG
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG)
 #define my_rc_conf_str(a) rc_conf_str(rch,a)
 #define my_rc_send_server(a,b) rc_send_server(rch,a,b)
+#ifdef HAVE_LIBFREERADIUS_CLIENT
+#define my_rc_buildreq(a,b,c,d,e,f) rc_buildreq(rch,a,b,c,d,(a)->secret,e,f)
+#else
 #define my_rc_buildreq(a,b,c,d,e,f) rc_buildreq(rch,a,b,c,d,e,f)
+#endif
 #define my_rc_own_ipaddress() rc_own_ipaddress(rch)
 #define my_rc_avpair_add(a,b,c,d) rc_avpair_add(rch,a,b,c,-1,d)
 #define my_rc_read_dictionary(a) rc_read_dictionary(rch, a)
@@ -71,6 +75,10 @@ void print_usage (void);
 #endif
 
 int my_rc_read_config(char *);
+
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG)
+rc_handle *rch = NULL;
+#endif
 
 char *server = NULL;
 char *username = NULL;
@@ -142,11 +150,10 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 int
 main (int argc, char **argv)
 {
-	UINT4 service;
 	char msg[BUFFER_LEN];
 	SEND_DATA data;
 	int result = STATE_UNKNOWN;
-	UINT4 client_id;
+	uint32_t client_id, service;
 	char *str;
 
 	setlocale (LC_ALL, "");
@@ -392,7 +399,7 @@ print_usage (void)
 
 int my_rc_read_config(char * a)
 {
-#ifdef HAVE_LIBRADIUSCLIENT_NG
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG)
 	rch = rc_read_config(a);
 	return (rch == NULL) ? 1 : 0;
 #else
