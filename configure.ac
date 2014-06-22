@@ -274,22 +274,22 @@ AC_ARG_WITH([radius], [AS_HELP_STRING([--without-radius], [Skips the radius plug
 dnl Check for radius libraries
 AS_IF([test "x$with_radius" != "xno"], [
   _SAVEDLIBS="$LIBS"
-  AC_CHECK_LIB(radiusclient,rc_read_config)
-  if test "$ac_cv_lib_radiusclient_rc_read_config" = "yes"; then
+  AC_CHECK_LIB(freeradius-client,rc_read_config)
+  if test "$ac_cv_lib_freeradius_client_rc_read_config" = "yes"; then
     EXTRAS="$EXTRAS check_radius\$(EXEEXT)"
-  	RADIUSLIBS="-lradiusclient"
+    RADIUSLIBS="-lfreeradius-client"
     AC_SUBST(RADIUSLIBS)
   else
     AC_CHECK_LIB(radiusclient-ng,rc_read_config)
     if test "$ac_cv_lib_radiusclient_ng_rc_read_config" = "yes"; then
       EXTRAS="$EXTRAS check_radius\$(EXEEXT)"
-    	  RADIUSLIBS="-lradiusclient-ng"
+      RADIUSLIBS="-lradiusclient-ng"
       AC_SUBST(RADIUSLIBS)
     else
-      AC_CHECK_LIB(freeradius-client,rc_read_config)
-      if test "$ac_cv_lib_freeradius_client_rc_read_config" = "yes"; then
+      AC_CHECK_LIB(radiusclient,rc_read_config)
+      if test "$ac_cv_lib_radiusclient_rc_read_config" = "yes"; then
         EXTRAS="$EXTRAS check_radius\$(EXEEXT)"
-        RADIUSLIBS="-lfreeradius-client"
+        RADIUSLIBS="-lradiusclient"
         AC_SUBST(RADIUSLIBS)
       else
         AC_MSG_WARN([Skipping radius plugin])
