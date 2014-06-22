@@ -1,21 +1,35 @@
 This file documents the major additions and syntax changes between releases.
 
-1.6 ...
+2.0 ...
 	ENHANCEMENTS
 	check_mailq now supports auto detection of qmail, postfix, exim and nullmailer with
 	  fallback to sendmail
 	check_ide_smart now defaults to plugin output, original output appended with -v
-	Extra-Opts are now enabled by default
+	Extra-Opts are now enabled by default, see:
+	  https://www.monitoring-plugins.org/doc/extra-opts.html
 	check_swap now supports a configurable state when there is no swap
 	check_radius now supports the FreeRADIUS Client library
+	New check_mysql_query -f option to specify a client options file
+	New check_mysql_query -g option to specify a client options group
+	Add performance data to check_mysql_query
+	New check_file_age -i/--ignore-missing option to return OK on nonexistent files
+	Make check_ping, check_users, and check_disk work on Windows
 
 	FIXES
 	Don't let e.g. check_http's -C option reset SSL version if e.g. -S 1 -C 5 is specified
+	Don't have check_http's -N option expect an argument
 	check_ide_smart could disable offline auto tests but could not re-enable them.
 	  For this reason all SMART command modes have been disabled.
 	check_dig: fix wrong IPv6 arguments order (Stéphane Bortzmeyer)
+	check_dig: make sure not to give up too early when a timeout is specified with -t
+	check_log: don't stumble over log lines that include a "%" character
+	check_nt: add UPTIME to perfdata
+	Handle negative values properly with check_snmp
+	Handle SNMPv3 noAuthNoPriv properly with check_snmp
+	Fix compilation with GnuTLS
 
 	WARNINGS
+	New default installation prefix: /usr/local instead of /usr/local/nagios
 	check_procs now ignores its parent process to avoid unexpected results when invoked via certain shells
 	utils.sh no longer defines ECH
 	check_ide_smart -q/--quiet and -n/--nagios (Nagios-compatile output) are now deprecated
