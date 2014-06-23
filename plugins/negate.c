@@ -98,8 +98,7 @@ main (int argc, char **argv)
 		die (max_state_alt (result, STATE_UNKNOWN), _("No data returned from command\n"));
 
 	for (i = 0; i < chld_out.lines; i++) {
-		if (subst_text && result != state[result] &&
-		    result >= 0 && result <= 4) {
+		if (subst_text && result >= 0 && result <= 4 && result != state[result])  {
 			/* Loop over each match found */
 			while ((sub = strstr (chld_out.line[i], state_text (result)))) {
 				/* Terminate the first part and skip over the string we'll substitute */
