@@ -66,7 +66,7 @@ enum {
 #define UPSSTATUS_BOOST    512
 #define UPSSTATUS_CHRG    1024
 #define UPSSTATUS_DISCHRG 2048
-#define UPSSTATUS_UNKOWN  4096
+#define UPSSTATUS_UNKNOWN  4096
 
 enum { NOSUCHVAR = ERROR-1 };
 
@@ -181,7 +181,7 @@ main (int argc, char **argv)
 			if (status & UPSSTATUS_DISCHRG) {
 				xasprintf (&ups_status, "%s%s", ups_status, _(", Discharging"));
 			}
-			if (status & UPSSTATUS_UNKOWN) {
+			if (status & UPSSTATUS_UNKNOWN) {
 				xasprintf (&ups_status, "%s%s", ups_status, _(", Unknown"));
 			}
 		}
@@ -379,7 +379,7 @@ determine_status (void)
 		else if (!strcmp (ptr, "DISCHRG"))
 			status |= UPSSTATUS_DISCHRG;
 		else
-			status |= UPSSTATUS_UNKOWN;
+			status |= UPSSTATUS_UNKNOWN;
 	}
 
 	return OK;
