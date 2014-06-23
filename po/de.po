@@ -5360,7 +5360,7 @@ msgstr ""
 
 #: plugins/check_ide_smart.c:441
 #, c-format
-msgid "ERROR - Status '%d' unkown. %d/%d tests passed\n"
+msgid "ERROR - Status '%d' unknown. %d/%d tests passed\n"
 msgstr ""
 
 #: plugins/check_ide_smart.c:474
