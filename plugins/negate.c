@@ -44,7 +44,7 @@ const char *email = "devel@monitoring-plugins.org";
 /* char *command_line; */
 
 static const char **process_arguments (int, char **);
-int validate_arguments (char **);
+void validate_arguments (char **);
 void print_help (void);
 void print_usage (void);
 int subst_text = FALSE;
@@ -205,7 +205,7 @@ process_arguments (int argc, char **argv)
 }
 
 
-int
+void
 validate_arguments (char **command_line)
 {
 	if (command_line[0] == NULL)
