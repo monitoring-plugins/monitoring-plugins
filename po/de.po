@@ -1998,7 +1998,7 @@ msgstr ""
 
 #: plugins/check_mrtg.c:359
 msgid ""
-"packets/sec, etc.  I use MRTG in conjuction with the Novell NLM that allows"
+"packets/sec, etc.  I use MRTG in conjunction with the Novell NLM that allows"
 msgstr ""
 
 #: plugins/check_mrtg.c:360
