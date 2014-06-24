@@ -6,14 +6,24 @@ before_install:
 
 install:
   - sudo apt-get install -qq --no-install-recommends perl autotools-dev libdbi-dev libldap2-dev libpq-dev libmysqlclient-dev libradiusclient-ng-dev libkrb5-dev libnet-snmp-perl procps
+  - sudo apt-get install -qq --no-install-recommends libdbi0-dev libdbd-sqlite3 libssl-dev dnsutils snmp-mibs-downloader
+  - sudo apt-get install -qq --no-install-recommends fping snmp netcat smbclient fping pure-ftpd apache2 postfix
   - sudo apt-get install -qq --no-install-recommends autoconf automake
 
 before_script:
   - tools/setup
   - ./configure
+  - make
+  - export NPTEST_CACHE="$(pwd)/plugins/t/NPTest.cache.travis"
+  - ssh-keygen -t dsa -N "" -f ~/.ssh/id_dsa
+  - cat ~/.ssh/id_dsa.pub >> ~/.ssh/authorized_keys
+  - ssh-keyscan localhost >> ~/.ssh/known_hosts
+  - touch ~/.ssh/config
+  - sudo rm -f /usr/share/mibs/ietf/SNMPv2-PDU /usr/share/mibs/ietf/IPSEC-SPD-MIB /usr/share/mibs/ietf/IPATM-IPMC-MIB /usr/share/mibs/iana/IANA-IPPM-METRICS-REGISTRY-MIB
+  - sudo mkdir -p /var/lib/snmp/mib_indexes
 
 script:
-  - if [ "$COVERITY_SCAN_BRANCH" != 1 ]; then make; fi
+  - if [ "$COVERITY_SCAN_BRANCH" != 1 ]; then make test; fi
 
 notifications:
   irc:
