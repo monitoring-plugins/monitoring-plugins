@@ -62,7 +62,7 @@ SKIP: {
 	cmp_ok( $res->return_code, '==', '2', "Hung waiting for response");
 	like  ( $res->output, '/Socket timeout after 5 seconds/', "Timeout message");
 	like  ( $duration, '/^[56]$/', "Timeout after 5 (possibly 6) seconds");
-	my $read_nc = <NC>;
+	my $read_nc = <NC> || '';
 	close NC;
 	cmp_ok( $read_nc, 'eq', "foofoo", "Data received correctly" );
 }
