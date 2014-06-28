@@ -44,7 +44,7 @@ const char *email = "devel@monitoring-plugins.org";
 /* char *command_line; */
 
 static const char **process_arguments (int, char **);
-int validate_arguments (char **);
+void validate_arguments (char **);
 void print_help (void);
 void print_usage (void);
 int subst_text = FALSE;
@@ -98,8 +98,7 @@ main (int argc, char **argv)
 		die (max_state_alt (result, STATE_UNKNOWN), _("No data returned from command\n"));
 
 	for (i = 0; i < chld_out.lines; i++) {
-		if (subst_text && result != state[result] &&
-		    result >= 0 && result <= 4) {
+		if (subst_text && result >= 0 && result <= 4 && result != state[result])  {
 			/* Loop over each match found */
 			while ((sub = strstr (chld_out.line[i], state_text (result)))) {
 				/* Terminate the first part and skip over the string we'll substitute */
@@ -206,7 +205,7 @@ process_arguments (int argc, char **argv)
 }
 
 
-int
+void
 validate_arguments (char **command_line)
 {
 	if (command_line[0] == NULL)

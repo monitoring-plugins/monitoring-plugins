@@ -837,7 +837,7 @@ int add_dhcp_offer(struct in_addr source,dhcp_packet *offer_packet){
 		return ERROR;
 
 	/* process all DHCP options present in the packet */
-	for(x=4;x<MAX_DHCP_OPTIONS_LENGTH;){
+	for(x=4;x<MAX_DHCP_OPTIONS_LENGTH-1;){
 
 		if((int)offer_packet->options[x]==-1)
 			break;
