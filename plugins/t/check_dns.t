@@ -10,7 +10,7 @@ use NPTest;
 
 plan skip_all => "check_dns not compiled" unless (-x "check_dns");
 
-plan tests => 13;
+plan tests => 14;
 
 my $successOutput = '/DNS OK: [\.0-9]+ seconds? response time/';
 
@@ -54,6 +54,7 @@ cmp_ok( $res->return_code, '==', 2, "Critical threshold passed");
 
 $res = NPTest->testCmd("./check_dns -H $hostname_valid -t 5 -w 0 -c 5");
 cmp_ok( $res->return_code, '==', 1, "Warning threshold passed");
+like( $res->output, "/\|time=[\d\.]+s;0.0*;5\.0*;0\.0*/", "Output performance data OK" );
 
 $res = NPTest->testCmd("./check_dns -H $hostname_invalid -t 1");
 cmp_ok( $res->return_code, '==', 2, "Invalid $hostname_invalid");
