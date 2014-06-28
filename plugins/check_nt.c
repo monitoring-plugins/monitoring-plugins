@@ -293,10 +293,10 @@ int main(int argc, char **argv){
 
 		/* Divisor should be 1048567, not 3044515, as we are measuring "Commit Charge" here,
 		which equals RAM + Pagefiles. */
-		xasprintf(&output_message,_("Memory usage: total:%.2f Mb - used: %.2f Mb (%.0f%%) - free: %.2f Mb (%.0f%%)"),
+		xasprintf(&output_message,_("Memory usage: total:%.2f MB - used: %.2f MB (%.0f%%) - free: %.2f MB (%.0f%%)"),
 		  mem_commitLimit / 1048567, mem_commitByte / 1048567, percent_used_space,
 		  (mem_commitLimit - mem_commitByte) / 1048567, (mem_commitLimit - mem_commitByte) / mem_commitLimit * 100);
-		xasprintf(&perfdata,_("'Memory usage'=%.2fMb;%.2f;%.2f;0.00;%.2f"), mem_commitByte / 1048567,
+		xasprintf(&perfdata,_("'Memory usage'=%.2fMB;%.2f;%.2f;0.00;%.2f"), mem_commitByte / 1048567,
 		  warning_used_space / 1048567, critical_used_space / 1048567, mem_commitLimit / 1048567);
 
 		return_code=STATE_OK;
