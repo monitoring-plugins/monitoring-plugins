@@ -253,18 +253,18 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 
 		if (remote_version && strcmp(remote_version, ssh_server)) {
 			printf
-				(_("SSH WARNING - %s (protocol %s) version mismatch, expected '%s'\n"),
+				(_("SSH CRITICAL - %s (protocol %s) version mismatch, expected '%s'\n"),
 				 ssh_server, ssh_proto, remote_version);
 			close(sd);
-			exit (STATE_WARNING);
+			exit (STATE_CRITICAL);
 		}
 
 		if (remote_protocol && strcmp(remote_protocol, ssh_proto)) {
 			printf
-				(_("SSH WARNING - %s (protocol %s) protocol version mismatch, expected '%s'\n"),
+				(_("SSH CRITICAL - %s (protocol %s) protocol version mismatch, expected '%s'\n"),
 				 ssh_server, ssh_proto, remote_protocol);
 			close(sd);
-			exit (STATE_WARNING);
+			exit (STATE_CRITICAL);
 		}
 
 		elapsed_time = (double)deltime(tv) / 1.0e6;
@@ -307,10 +307,10 @@ print_help (void)
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 	printf (" %s\n", "-r, --remote-version=STRING");
-  printf ("    %s\n", _("Warn if string doesn't match expected server version (ex: OpenSSH_3.9p1)"));
+  printf ("    %s\n", _("Alert if string doesn't match expected server version (ex: OpenSSH_3.9p1)"));
 
 	printf (" %s\n", "-P, --remote-protocol=STRING");
-  printf ("    %s\n", _("Warn if protocol doesn't match expected protocol version (ex: 2.0)"));
+  printf ("    %s\n", _("Alert if protocol doesn't match expected protocol version (ex: 2.0)"));
 
 	printf (UT_VERBOSE);
 
