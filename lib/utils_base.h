@@ -75,9 +75,6 @@ void die (int, const char *, ...) __attribute__((noreturn,format(printf, 2, 3)))
 /* a simple check to see if we're running as root.  
  * returns zero on failure, nonzero on success */
 int np_check_if_root(void);
-/* and a helpful wrapper around that.  it returns the same status
- * code from the above function, in case it's helpful for testing */
-int np_warn_if_not_root(void);
 
 /* mp_suid() returns true if the real and effective uids differs, such as when
  * running a suid plugin */

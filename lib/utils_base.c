@@ -300,19 +300,6 @@ char *np_escaped_string (const char *string) {
 
 int np_check_if_root(void) { return (geteuid() == 0); }
 
-int np_warn_if_not_root(void) {
-	int status = np_check_if_root();
-	if(!status) {
-		printf(_("Warning: "));
-		printf(_("This plugin must be either run as root or setuid root.\n"));
-		printf(_("To run as root, you can use a tool like sudo.\n"));
-		printf(_("To set the setuid permissions, use the command:\n"));
-		/* XXX could we use something like progname? */
-		printf("\tchmod u+s yourpluginfile\n");
-	}
-	return status;
-}
-
 /*
  * Extract the value from key/value pairs, or return NULL. The value returned
  * can be free()ed.
