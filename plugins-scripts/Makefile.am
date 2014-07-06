@@ -26,7 +26,8 @@ EXTRA_DIST=check_breeze.pl check_disk_smb.pl check_flexlm.pl check_ircd.pl \
 EDIT = sed \
   -e 's|[@]NP_VERSION[@]|$(NP_VERSION)|g' \
   -e 's|[@]TRUSTED_PATH[@]|$(with_trusted_path)|g' \
-  -e 's|[@]PERL[@]|$(PERL)|g'
+  -e 's|[@]PERL[@]|$(PERL)|g' \
+  -e 's|[@]libexecdir[@]|$(libexecdir)|g'
 
 TESTS_ENVIRONMENT=perl -I $(top_builddir) -I $(top_srcdir)
 

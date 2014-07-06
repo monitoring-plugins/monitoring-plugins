@@ -31,6 +31,7 @@ use DBD::Sybase;
 use Getopt::Long;
 use FindBin;
 use lib "$FindBin::Bin";
+use lib '@libexecdir@';
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 use strict;
 

@@ -6,6 +6,7 @@ use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_w $opt_c $opt_H $opt_C $PROGNAME);
 use FindBin;
 use lib "$FindBin::Bin";
+use lib '@libexecdir@';
 use utils qw(%ERRORS &print_revision &support &usage);
 
 $PROGNAME = "check_breeze";
