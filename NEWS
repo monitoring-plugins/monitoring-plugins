@@ -14,6 +14,8 @@ This file documents the major additions and syntax changes between releases.
 	Add performance data to check_mysql_query
 	New check_file_age -i/--ignore-missing option to return OK on nonexistent files
 	Make check_ping, check_users, and check_disk work on Windows
+	New check_ssh -P option to specify the expected SSH protocol version
+	check_dns now emits the warning and critical thresholds with the performance data
 
 	FIXES
 	Don't let e.g. check_http's -C option reset SSL version if e.g. -S 1 -C 5 is specified
