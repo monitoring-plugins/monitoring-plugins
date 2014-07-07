@@ -26,12 +26,14 @@ This file documents the major additions and syntax changes between releases.
 	check_dig: make sure not to give up too early when a timeout is specified with -t
 	check_log: don't stumble over log lines that include a "%" character
 	check_nt: add UPTIME to perfdata
-	Handle negative values properly with check_snmp
 	Handle SNMPv3 noAuthNoPriv properly with check_snmp
 	Fix compilation with GnuTLS
 
 	WARNINGS
 	New default installation prefix: /usr/local instead of /usr/local/nagios
+	check_snmp now evaluates negative values properly, which means it might return CRITICAL
+	  in cases where it used to return OK. If this is undesired, the warning/critical
+	  threshold(s) must be fixed by specifying e.g. ~:100 instead of 100
 	check_procs now ignores its parent process to avoid unexpected results when invoked via certain shells
 	utils.sh no longer defines ECH
 	check_ide_smart -q/--quiet and -n/--nagios (Nagios-compatile output) are now deprecated
