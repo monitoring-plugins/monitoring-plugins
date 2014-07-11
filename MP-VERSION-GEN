@@ -5,7 +5,7 @@
 
 SRC_ROOT=`dirname $0`
 
-NPVF=NP-VERSION-FILE
+MPVF=MP-VERSION-FILE
 DEF_VER=2.0.git
 
 LF='
@@ -40,14 +40,14 @@ fi
 
 VN=`expr "$VN" : v*'\(.*\)'`
 
-if test -r $NPVF
+if test -r $MPVF
 then
-	VC=`sed -e 's/^NP_VERSION = //' <$NPVF`
+	VC=`sed -e 's/^NP_VERSION = //' <$MPVF`
 else
 	VC=unset
 fi
 test "$VN" = "$VC" || {
 	echo >&2 "NP_VERSION = $VN"
-	echo "NP_VERSION = $VN" >$NPVF
+	echo "NP_VERSION = $VN" >$MPVF
 }
 
