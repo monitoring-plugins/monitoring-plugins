@@ -84,7 +84,7 @@ static int sd = 0;
 #define MAXBUF 1024
 static char buffer[MAXBUF];
 static int expect_mismatch_state = STATE_WARNING;
-static int match_flags = NP_MATCH_EXACT;
+static int match_flags = MP_MATCH_EXACT;
 
 #define FLAG_SSL 0x01
 #define FLAG_VERBOSE 0x02
@@ -292,7 +292,7 @@ main (int argc, char **argv)
 			if ((match = np_expect_match(status,
 			    server_expect,
 			    server_expect_count,
-			    match_flags)) != NP_MATCH_RETRY)
+			    match_flags)) != MP_MATCH_RETRY)
 				break;
 
 			/* some protocols wait for further input, so make sure we don't wait forever */
@@ -302,8 +302,8 @@ main (int argc, char **argv)
 			if(select(sd + 1, &rfds, NULL, NULL, &timeout) <= 0)
 				break;
 		}
-		if (match == NP_MATCH_RETRY)
-			match = NP_MATCH_FAILURE;
+		if (match == MP_MATCH_RETRY)
+			match = MP_MATCH_FAILURE;
 
 		/* no data when expected, so return critical */
 		if (len == 0)
@@ -335,7 +335,7 @@ main (int argc, char **argv)
 		result = STATE_WARNING;
 
 	/* did we get the response we hoped? */
-	if(match == NP_MATCH_FAILURE && result != STATE_CRITICAL)
+	if(match == MP_MATCH_FAILURE && result != STATE_CRITICAL)
 		result = expect_mismatch_state;
 
 	/* reset the alarm */
@@ -346,10 +346,10 @@ main (int argc, char **argv)
 	 * the response we were looking for. if-else */
 	printf("%s %s - ", SERVICE, state_text(result));
 
-	if(match == NP_MATCH_FAILURE && len && !(flags & FLAG_HIDE_OUTPUT))
+	if(match == MP_MATCH_FAILURE && len && !(flags & FLAG_HIDE_OUTPUT))
 		printf("Unexpected response from host/socket: %s", status);
 	else {
-		if(match == NP_MATCH_FAILURE)
+		if(match == MP_MATCH_FAILURE)
 			printf("Unexpected response from host/socket on ");
 		else
 			printf("%.3f second response time on ", elapsed_time);
@@ -364,13 +364,13 @@ main (int argc, char **argv)
 			printf("socket %s", server_address);
 	}
 
-	if (match != NP_MATCH_FAILURE && !(flags & FLAG_HIDE_OUTPUT) && len)
+	if (match != MP_MATCH_FAILURE && !(flags & FLAG_HIDE_OUTPUT) && len)
 		printf (" [%s]", status);
 
 	/* perf-data doesn't apply when server doesn't talk properly,
 	 * so print all zeroes on warn and crit. Use fperfdata since
 	 * localisation settings can make different outputs */
-	if(match == NP_MATCH_FAILURE)
+	if(match == MP_MATCH_FAILURE)
 		printf ("|%s",
 				fperfdata ("time", elapsed_time, "s",
 				(flags & FLAG_TIME_WARN ? TRUE : FALSE), 0,
@@ -469,7 +469,7 @@ process_arguments (int argc, char **argv)
 			exit (STATE_OK);
 		case 'v':                 /* verbose mode */
 			flags |= FLAG_VERBOSE;
-			match_flags |= NP_MATCH_VERBOSE;
+			match_flags |= MP_MATCH_VERBOSE;
 			break;
 		case '4':
 			address_family = AF_INET;
@@ -526,7 +526,7 @@ process_arguments (int argc, char **argv)
 				xasprintf(&server_send, "%s", optarg);
 			break;
 		case 'e': /* expect string (may be repeated) */
-			match_flags &= ~NP_MATCH_EXACT;
+			match_flags &= ~MP_MATCH_EXACT;
 			if (server_expect_count == 0)
 				server_expect = malloc (sizeof (char *) * (++server_expect_count));
 			else
@@ -604,7 +604,7 @@ process_arguments (int argc, char **argv)
 #endif
 			break;
 		case 'A':
-			match_flags |= NP_MATCH_ALL;
+			match_flags |= MP_MATCH_ALL;
 			break;
 		}
 	}
