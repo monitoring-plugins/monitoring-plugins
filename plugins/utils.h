@@ -1,5 +1,5 @@
-#ifndef NP_UTILS_H
-#define NP_UTILS_H
+#ifndef MP_UTILS_H
+#define MP_UTILS_H
 /* Header file for Monitoring Plugins utils.c */
 
 /* This file should be included in all plugins */
@@ -207,4 +207,4 @@ The Monitoring Plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\
 copies of the plugins under the terms of the GNU General Public License.\n\
 For more information about these matters, see the file named COPYING.\n")
 
-#endif /* NP_UTILS_H */
+#endif /* MP_UTILS_H */
