@@ -35,8 +35,8 @@ const char *email = "devel@monitoring-plugins.org";
 #include "netutils.h"
 #include "utils_cmd.h"
 
-#ifndef NP_MAXARGS
-#define NP_MAXARGS 1024
+#ifndef MP_MAXARGS
+#define MP_MAXARGS 1024
 #endif
 
 int process_arguments (int, char **);
@@ -350,8 +350,8 @@ void
 comm_append (const char *str)
 {
 
-	if (++commargc > NP_MAXARGS)
-		die(STATE_UNKNOWN, _("%s: Argument limit of %d exceeded\n"), progname, NP_MAXARGS);
+	if (++commargc > MP_MAXARGS)
+		die(STATE_UNKNOWN, _("%s: Argument limit of %d exceeded\n"), progname, MP_MAXARGS);
 
 	if ((commargv = (char **)realloc(commargv, (commargc+1) * sizeof(char *))) == NULL)
 		die(STATE_UNKNOWN, _("Can not (re)allocate 'commargv' buffer\n"));
