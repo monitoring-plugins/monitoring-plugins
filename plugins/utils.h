@@ -16,7 +16,7 @@ suite of plugins. */
 /* now some functions etc are being defined in ../lib/utils_base.c */
 #include "utils_base.h"
 
-#ifdef NP_EXTRA_OPTS
+#ifdef MP_EXTRA_OPTS
 /* Include extra-opts functions if compiled in */
 #include "extra_opts.h"
 #else
@@ -182,7 +182,7 @@ char *fperfdata (const char *,
  -t, --timeout=INTEGER\n\
     Seconds before plugin times out (default: %d)\n")
 
-#ifdef NP_EXTRA_OPTS
+#ifdef MP_EXTRA_OPTS
 #define UT_EXTRA_OPTS _("\
  --extra-opts=[section][@file]\n\
     Read options from an ini file. See\n\

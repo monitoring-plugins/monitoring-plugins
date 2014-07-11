@@ -531,7 +531,7 @@ print_help (void)
 	printf (UT_HELP_VRSN);
 /* include this conditionally to avoid 'zero-length printf format string'
  * compiler warnings */
-#ifdef NP_EXTRA_OPTS
+#ifdef MP_EXTRA_OPTS
 	printf (UT_EXTRA_OPTS);
 #endif
 	printf ("\n");
