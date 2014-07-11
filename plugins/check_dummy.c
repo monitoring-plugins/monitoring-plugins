@@ -51,7 +51,7 @@ main (int argc, char **argv)
   if (argc < 2)
     usage4 (_("Could not parse arguments"));
   else if (strcmp (argv[1], "-V") == 0 || strcmp (argv[1], "--version") == 0) {
-    print_revision (progname, NP_VERSION);
+    print_revision (progname, MP_VERSION);
     exit (STATE_OK);
   }
   else if (strcmp (argv[1], "-h") == 0 || strcmp (argv[1], "--help") == 0) {
@@ -96,7 +96,7 @@ main (int argc, char **argv)
 void
 print_help (void)
 {
-  print_revision (progname, NP_VERSION);
+  print_revision (progname, MP_VERSION);
 
   printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
   printf (COPYRIGHT, copyright, email);

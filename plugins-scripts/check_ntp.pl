@@ -96,7 +96,7 @@ GetOptions
 	 "H=s" => \$opt_H, "hostname=s" => \$opt_H);
 
 if ($opt_V) {
-	print_revision($PROGNAME,'@NP_VERSION@');
+	print_revision($PROGNAME,'@MP_VERSION@');
 	exit $ERRORS{'OK'};
 }
 
@@ -442,7 +442,7 @@ sub print_usage () {
 }
 
 sub print_help () {
-	print_revision($PROGNAME,'@NP_VERSION@');
+	print_revision($PROGNAME,'@MP_VERSION@');
 	print "Copyright (c) 2003 Bo Kersey/Karl DeBisschop\n";
 	print "\n";
 	print_usage();

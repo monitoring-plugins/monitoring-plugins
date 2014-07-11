@@ -199,7 +199,7 @@ int process_arguments(int argc, char **argv){
 			break;
 
 		case 'V': /* version */
-			print_revision (progname, NP_VERSION);
+			print_revision (progname, MP_VERSION);
 			exit (STATE_OK);
 			break;
 
@@ -223,7 +223,7 @@ int process_arguments(int argc, char **argv){
 void
 print_help(void)
 {
-	print_revision(progname, NP_VERSION);
+	print_revision(progname, MP_VERSION);
 	printf ("Copyright (c) 2000-2004 Ethan Galstad (nagios@nagios.org)\n");
 	printf(COPYRIGHT, copyright, email);
 

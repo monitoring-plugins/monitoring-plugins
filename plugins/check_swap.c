@@ -468,7 +468,7 @@ process_arguments (int argc, char **argv)
 			verbose++;
 			break;
 		case 'V':									/* version */
-			print_revision (progname, NP_VERSION);
+			print_revision (progname, MP_VERSION);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -527,7 +527,7 @@ validate_arguments (void)
 void
 print_help (void)
 {
-	print_revision (progname, NP_VERSION);
+	print_revision (progname, MP_VERSION);
 
 	printf (_(COPYRIGHT), copyright, email);
 

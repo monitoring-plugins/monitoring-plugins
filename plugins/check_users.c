@@ -212,7 +212,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (progname, NP_VERSION);
+			print_revision (progname, MP_VERSION);
 			exit (STATE_OK);
 		case 'c':									/* critical */
 			if (!is_intnonneg (optarg))
@@ -249,7 +249,7 @@ process_arguments (int argc, char **argv)
 void
 print_help (void)
 {
-	print_revision (progname, NP_VERSION);
+	print_revision (progname, MP_VERSION);
 
 	printf ("Copyright (c) 1999 Ethan Galstad\n");
 	printf (COPYRIGHT, copyright, email);

@@ -162,7 +162,7 @@ int process_arguments (int argc, char **argv) {
 			print_help();
 			exit(STATE_OK);
 		case 'V':
-			print_revision(progname, NP_VERSION);
+			print_revision(progname, MP_VERSION);
 			exit(STATE_OK);
 		case 'v':
 			verbose++;
@@ -418,7 +418,7 @@ char* construct_cmdline(upgrade_type u, const char *opts){
 void
 print_help (void)
 {
-  print_revision(progname, NP_VERSION);
+  print_revision(progname, MP_VERSION);
 
   printf(_(COPYRIGHT), copyright, email);
 

@@ -68,7 +68,7 @@ if ($opt_h) { print_help(); exit $ERRORS{'OK'}; }
 
 # -V means display version number
 if ($opt_V) {
-	print_revision($PROGNAME,'@NP_VERSION@');
+	print_revision($PROGNAME,'@MP_VERSION@');
 	exit $ERRORS{'OK'};
 }
 
@@ -336,7 +336,7 @@ sub get_rpcinfo {
 
 
 sub print_help() {
-	print_revision($PROGNAME,'@NP_VERSION@');
+	print_revision($PROGNAME,'@MP_VERSION@');
 	print "Copyright (c) 2002 Karl DeBisschop/Truongchinh Nguyen/Subhendu Ghosh\n";
 	print "\n";
 	print "Check if a rpc service is registered and running using\n";

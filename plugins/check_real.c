@@ -358,7 +358,7 @@ process_arguments (int argc, char **argv)
 			}
 			break;
 		case 'V':									/* version */
-			print_revision (progname, NP_VERSION);
+			print_revision (progname, MP_VERSION);
 			exit (STATE_OK);
 		case 'h':									/* help */
 			print_help ();
@@ -406,7 +406,7 @@ print_help (void)
 	char *myport;
 	xasprintf (&myport, "%d", PORT);
 
-	print_revision (progname, NP_VERSION);
+	print_revision (progname, MP_VERSION);
 
 	printf ("Copyright (c) 1999 Pedro Leite <leite@cic.ua.pt>\n");
 	printf (COPYRIGHT, copyright, email);

@@ -261,7 +261,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (OK);
 		case 'V':									/* version */
-			print_revision (progname, NP_VERSION);
+			print_revision (progname, MP_VERSION);
 			exit (OK);
 		case 'v':									/* verbose mode */
 			verbose = TRUE;
@@ -337,7 +337,7 @@ print_help (void)
 	char *myport;
 	xasprintf (&myport, "%d", PW_AUTH_UDP_PORT);
 
-	print_revision (progname, NP_VERSION);
+	print_revision (progname, MP_VERSION);
 
 	printf ("Copyright (c) 1999 Robert August Vincent II\n");
 	printf (COPYRIGHT, copyright, email);

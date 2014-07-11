@@ -517,7 +517,7 @@ main(int argc, char **argv)
 				set_source_ip(optarg);
 				break;
 			case 'V': /* version */
-				print_revision (progname, NP_VERSION);
+				print_revision (progname, MP_VERSION);
 				exit (STATE_OK);
 			case 'h': /* help */
 				print_help ();

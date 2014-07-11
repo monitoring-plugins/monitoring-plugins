@@ -58,7 +58,7 @@ GetOptions
 	 "t=i" => \$opt_t, "timeout=i"  => \$opt_t);
 
 if ($opt_V) {
-	print_revision($PROGNAME,'@NP_VERSION@');
+	print_revision($PROGNAME,'@MP_VERSION@');
 	exit $ERRORS{'OK'};
 }
 
@@ -218,7 +218,7 @@ sub print_usage () {
 }
 
 sub print_help () {
-	print_revision($PROGNAME,'@NP_VERSION@');
+	print_revision($PROGNAME,'@MP_VERSION@');
 	print "Copyright (c) 2000 Ernst-Dieter Martin/Karl DeBisschop
 
 Check available flexlm license managers

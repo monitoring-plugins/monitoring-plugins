@@ -237,7 +237,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (progname, NP_VERSION);
+			print_revision (progname, MP_VERSION);
 			exit (STATE_OK);
 		case 'F':									/* status log */
 			status_log = optarg;
@@ -282,7 +282,7 @@ process_arguments (int argc, char **argv)
 void
 print_help (void)
 {
-	print_revision (progname, NP_VERSION);
+	print_revision (progname, MP_VERSION);
 
 	printf (_(COPYRIGHT), copyright, email);
 

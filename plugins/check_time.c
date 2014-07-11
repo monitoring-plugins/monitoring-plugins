@@ -233,7 +233,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_OK);
 		case 'V':									/* version */
-			print_revision (progname, NP_VERSION);
+			print_revision (progname, MP_VERSION);
 			exit (STATE_OK);
 		case 'H':									/* hostname */
 			if (is_host (optarg) == FALSE)
@@ -331,7 +331,7 @@ print_help (void)
 	char *myport;
 	xasprintf (&myport, "%d", TIME_PORT);
 
-	print_revision (progname, NP_VERSION);
+	print_revision (progname, MP_VERSION);
 
 	printf ("Copyright (c) 1999 Ethan Galstad\n");
 	printf (COPYRIGHT, copyright, email);

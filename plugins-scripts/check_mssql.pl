@@ -130,7 +130,7 @@ sub process_arguments {
 		 "V" => \$opt_V, "version" => \$opt_V);
 
 	if (defined $opt_V) {
-		print_revision($PROGNAME,'@NP_VERSION@');
+		print_revision($PROGNAME,'@MP_VERSION@');
 		exit $ERRORS{'OK'};
 	}
 

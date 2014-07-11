@@ -155,7 +155,7 @@ process_arguments (int argc, char **argv)
 			exit (EXIT_SUCCESS);
 			break;
 		case 'V':     /* version */
-			print_revision (progname, NP_VERSION);
+			print_revision (progname, MP_VERSION);
 			exit (EXIT_SUCCESS);
 		case 't':     /* timeout period */
 			if (!is_integer (optarg))
@@ -219,7 +219,7 @@ validate_arguments (char **command_line)
 void
 print_help (void)
 {
-	print_revision (progname, NP_VERSION);
+	print_revision (progname, MP_VERSION);
 
 	printf (COPYRIGHT, copyright, email);
 

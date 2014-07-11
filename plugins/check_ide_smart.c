@@ -236,7 +236,7 @@ main (int argc, char *argv[])
 			print_help ();
 			return STATE_OK;
 		case 'V':
-			print_revision (progname, NP_VERSION);
+			print_revision (progname, MP_VERSION);
 			return STATE_OK;
 		default:
 			usage5 ();
@@ -580,7 +580,7 @@ smart_read_thresholds (int fd, thresholds_t * thresholds)
 void
 print_help (void)
 {
-	print_revision (progname, NP_VERSION);
+	print_revision (progname, MP_VERSION);
 
 	printf ("(C) 1999 Ragnar Hojland Espinosa <ragnar@lightside.dhis.org>\n");
 	printf ("Plugin implementation - 1999 Robert Dale <rdale@digital-mission.com>\n");

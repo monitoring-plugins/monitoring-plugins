@@ -54,7 +54,7 @@ GetOptions
 	 "a=s" => \$opt_a, "address=s" => \$opt_a);
 
 if ($opt_V) {
-	print_revision($PROGNAME,'@NP_VERSION@'); #'
+	print_revision($PROGNAME,'@MP_VERSION@'); #'
 	exit $ERRORS{'OK'};
 }
 
@@ -292,7 +292,7 @@ sub print_usage () {
 }
 
 sub print_help () {
-	print_revision($PROGNAME,'@NP_VERSION@');
+	print_revision($PROGNAME,'@MP_VERSION@');
 	print "Copyright (c) 2000 Michael Anthon/Karl DeBisschop
 
 Perl Check SMB Disk plugin for monitoring

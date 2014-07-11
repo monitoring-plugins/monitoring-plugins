@@ -293,7 +293,7 @@ sub print_usage() {
 }
 
 sub print_help() {
-	print_revision($PROGNAME, '@NP_VERSION@');
+	print_revision($PROGNAME, '@MP_VERSION@');
 	print_usage();
 	printf "check_ifoperstatus plugin for monitoring operational \n";
 	printf "status of a particular network interface on the target host\n";
@@ -372,7 +372,7 @@ sub process_arguments() {
 	}
 
 	if ($opt_V) {
-		print_revision($PROGNAME,'@NP_VERSION@');
+		print_revision($PROGNAME,'@MP_VERSION@');
 		exit $ERRORS{'OK'};
 	}
 

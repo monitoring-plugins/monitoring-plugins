@@ -242,7 +242,7 @@ sub print_usage() {
 }
 
 sub print_help() {
-	print_revision($PROGNAME, '@NP_VERSION@');
+	print_revision($PROGNAME, '@MP_VERSION@');
 	print_usage();
 	printf "check_ifstatus plugin for monitoring operational \n";
 	printf "status of each network interface on the target host\n";
@@ -277,7 +277,7 @@ sub print_help() {
 	printf "   -t (--timeout)    seconds before the plugin times out (default=$TIMEOUT)\n";
 	printf "   -V (--version)    Plugin version\n";
 	printf "   -h (--help)       usage help \n\n";
-	print_revision($PROGNAME, '@NP_VERSION@');
+	print_revision($PROGNAME, '@MP_VERSION@');
 	
 }
 
@@ -309,7 +309,7 @@ sub process_arguments() {
 	}
 
 	if ($opt_V) {
-		print_revision($PROGNAME,'@NP_VERSION@');
+		print_revision($PROGNAME,'@MP_VERSION@');
 		exit $ERRORS{'OK'};
 	}
 

@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 if RELEASE_PRESENT
-NP_VERSION = @MP_RELEASE@
+MP_VERSION = @MP_RELEASE@
 else
 MP-VERSION-FILE: .FORCE-MP-VERSION-FILE
 	@$(SHELL_PATH) $(top_srcdir)/MP-VERSION-GEN
@@ -24,7 +24,7 @@ EXTRA_DIST=check_breeze.pl check_disk_smb.pl check_flexlm.pl check_ircd.pl \
 	utils.sh.in utils.pm.in t
 
 EDIT = sed \
-  -e 's|[@]NP_VERSION[@]|$(NP_VERSION)|g' \
+  -e 's|[@]MP_VERSION[@]|$(MP_VERSION)|g' \
   -e 's|[@]TRUSTED_PATH[@]|$(with_trusted_path)|g' \
   -e 's|[@]PERL[@]|$(PERL)|g' \
   -e 's|[@]libexecdir[@]|$(libexecdir)|g'

@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 if RELEASE_PRESENT
-NP_VERSION = @MP_RELEASE@
+MP_VERSION = @MP_RELEASE@
 else
 MP-VERSION-FILE: .FORCE-MP-VERSION-FILE
 	@$(SHELL_PATH) $(top_srcdir)/MP-VERSION-GEN
@@ -9,7 +9,7 @@ MP-VERSION-FILE: .FORCE-MP-VERSION-FILE
 -include MP-VERSION-FILE
 endif
 
-AM_CFLAGS = -DNP_VERSION='"$(NP_VERSION)"'
+AM_CFLAGS = -DMP_VERSION='"$(MP_VERSION)"'
 
 VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t
 
