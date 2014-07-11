@@ -34,7 +34,7 @@ void runcmd_timeout_alarm_handler(int)
 
 /* only multi-threaded plugins need to bother with this */
 void np_runcmd_init(void);
-#define NP_RUNCMD_INIT np_runcmd_init()
+#define MP_RUNCMD_INIT np_runcmd_init()
 
 /* possible flags for np_runcmd()'s fourth argument */
 #define RUNCMD_NO_ARRAYS 0x01 /* don't populate arrays at all */

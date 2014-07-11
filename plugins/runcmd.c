@@ -60,7 +60,7 @@
 
 /* This variable must be global, since there's no way the caller
  * can forcibly slay a dead or ungainly running program otherwise.
- * Multithreading apps and plugins can initialize it (via NP_RUNCMD_INIT)
+ * Multithreading apps and plugins can initialize it (via MP_RUNCMD_INIT)
  * in an async safe manner PRIOR to calling np_runcmd() for the first time.
  *
  * The check for initialized values is atomic and can
@@ -128,7 +128,7 @@ np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
 
 	int i = 0;
 
-	if(!np_pids) NP_RUNCMD_INIT;
+	if(!np_pids) MP_RUNCMD_INIT;
 
 	env[0] = strdup("LC_ALL=C");
 	env[1] = '\0';
