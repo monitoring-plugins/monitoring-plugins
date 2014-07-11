@@ -169,12 +169,12 @@ _set_thresholds(thresholds **my_thresholds, char *warn_string, char *critical_st
 
 	if (warn_string != NULL) {
 		if ((temp_thresholds->warning = parse_range_string(warn_string)) == NULL) {
-			return NP_RANGE_UNPARSEABLE;
+			return MP_RANGE_UNPARSEABLE;
 		}
 	}
 	if (critical_string != NULL) {
 		if ((temp_thresholds->critical = parse_range_string(critical_string)) == NULL) {
-			return NP_RANGE_UNPARSEABLE;
+			return MP_RANGE_UNPARSEABLE;
 		}
 	}
 
@@ -189,9 +189,9 @@ set_thresholds(thresholds **my_thresholds, char *warn_string, char *critical_str
 	switch (_set_thresholds(my_thresholds, warn_string, critical_string)) {
 	case 0:
 		return;
-	case NP_RANGE_UNPARSEABLE:
+	case MP_RANGE_UNPARSEABLE:
 		die(STATE_UNKNOWN, _("Range format incorrect"));
-	case NP_WARN_WITHIN_CRIT:
+	case MP_WARN_WITHIN_CRIT:
 		die(STATE_UNKNOWN, _("Warning level is a subset of critical and will not be alerted"));
 		break;
 	}

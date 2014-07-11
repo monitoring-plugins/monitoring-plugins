@@ -62,15 +62,15 @@ int check_range(double, range *);
 int get_status(double, thresholds *);
 
 /* All possible characters in a threshold range */
-#define NP_THRESHOLDS_CHARS "-0123456789.:@~"
+#define MP_THRESHOLDS_CHARS "-0123456789.:@~"
 
 char *np_escaped_string (const char *);
 
 void die (int, const char *, ...) __attribute__((noreturn,format(printf, 2, 3)));
 
 /* Return codes for _set_thresholds */
-#define NP_RANGE_UNPARSEABLE 1
-#define NP_WARN_WITHIN_CRIT 2
+#define MP_RANGE_UNPARSEABLE 1
+#define MP_WARN_WITHIN_CRIT 2
 
 /* a simple check to see if we're running as root.  
  * returns zero on failure, nonzero on success */
