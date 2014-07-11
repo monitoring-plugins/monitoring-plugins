@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 if RELEASE_PRESENT
-NP_VERSION = @NP_RELEASE@
+NP_VERSION = @MP_RELEASE@
 else
 NP-VERSION-FILE: .FORCE-NP-VERSION-FILE
 	@$(SHELL_PATH) $(top_srcdir)/MP-VERSION-GEN

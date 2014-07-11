@@ -105,11 +105,11 @@ AM_CONDITIONAL([RELEASE_PRESENT], [test -f $srcdir/release])
 
 # Also read in the version from it
 if test -f $srcdir/release; then
-	NP_RELEASE="$(<release)"
+	MP_RELEASE="$(<release)"
 else
-	NP_RELEASE="$PACKAGE_VERSION"
+	MP_RELEASE="$PACKAGE_VERSION"
 fi
-AC_SUBST(NP_RELEASE)
+AC_SUBST(MP_RELEASE)
 
 dnl Checks for programs.
 AC_PATH_PROG(PERL,perl)
