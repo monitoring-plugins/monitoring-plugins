@@ -37,7 +37,7 @@ This file documents the major additions and syntax changes between releases.
 	check_procs now ignores its parent process to avoid unexpected results when invoked via
 	  certain shells
 	utils.sh no longer defines ECH
-	check_ide_smart -q/--quiet and -n/--nagios (Nagios-compatile output) are now deprecated
+	check_ide_smart -q/--quiet and -n/--nagios (Nagios-compatible output) are now deprecated
 	  but accepted for backward-compatibility
 	check_ide_smart -0/--auto-off, -1/--auto-on and -i/--immediate: options have
 	  been disabled because they were broken
