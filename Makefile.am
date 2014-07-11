@@ -4,7 +4,7 @@ SUBDIRS = gl tap lib plugins plugins-scripts plugins-root po @PERLMODS_DIR@
 
 EXTRA_DIST = config.rpath \
 	ABOUT-NLS ACKNOWLEDGEMENTS AUTHORS CODING ChangeLog FAQ LEGAL NEWS \
-	NP-VERSION-GEN REQUIREMENTS SUPPORT THANKS \
+	MP-VERSION-GEN REQUIREMENTS SUPPORT THANKS \
 	NPTest.pm pkg monitoring-plugins.spec \
 	config_test/Makefile config_test/run_tests config_test/child_test.c \
 	perlmods tools/build_perl_modules \
@@ -17,9 +17,9 @@ DEFS = -DLOCALEDIR=\"$(localedir)\"
 
 #
 # The ChangeLog file is auto-generated from the Git history.  We let it depend
-# on NP-VERSION-GEN, as we bump our version number in that file.
+# on MP-VERSION-GEN, as we bump our version number in that file.
 #
-ChangeLog: NP-VERSION-GEN
+ChangeLog: MP-VERSION-GEN
 	$(top_srcdir)/tools/generate-change-log > $@
 
 dist-hook:

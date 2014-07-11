@@ -8,7 +8,7 @@ check compilation, check tinderbox screens
 *** Prepare and commit files
 Update BUGS, NEWS file
 Update AUTHORS if new members
-Update configure.in, package.def and NP-VERSION-GEN with version
+Update configure.in, package.def and MP-VERSION-GEN with version
 Run git2cl (get from http://josefsson.org/git2cl/):
 git2cl >Changelog
 commit BUGS NEWS configure.in package.def ChangeLog
