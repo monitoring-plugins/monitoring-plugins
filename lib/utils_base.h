@@ -30,7 +30,7 @@ typedef struct thresholds_struct {
 	range	*critical;
 	} thresholds;
 
-#define NP_STATE_FORMAT_VERSION 1
+#define MP_STATE_FORMAT_VERSION 1
 
 typedef struct state_data_struct {
 	time_t	time;
@@ -96,7 +96,7 @@ char *np_extract_value(const char*, const char*, char);
 
 /*
  * Read a string representing a state (ok, warning... or numeric: 0, 1) and
- * return the corresponding NP_STATE or ERROR)
+ * return the corresponding MP_STATE or ERROR)
  */
 int mp_translate_state (char *);
 

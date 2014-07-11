@@ -323,11 +323,11 @@ main (int argc, char **argv)
 
 	unsetenv("MP_STATE_PATH");
 	temp_string = (char *) _np_state_calculate_location_prefix();
-	ok(!strcmp(temp_string, NP_STATE_DIR_PREFIX), "Got default directory" );
+	ok(!strcmp(temp_string, MP_STATE_DIR_PREFIX), "Got default directory" );
 
 	setenv("MP_STATE_PATH", "", 1);
 	temp_string = (char *) _np_state_calculate_location_prefix();
-	ok(!strcmp(temp_string, NP_STATE_DIR_PREFIX), "Got default directory even with empty string" );
+	ok(!strcmp(temp_string, MP_STATE_DIR_PREFIX), "Got default directory even with empty string" );
 
 	setenv("MP_STATE_PATH", "/usr/local/nagios/var", 1);
 	temp_string = (char *) _np_state_calculate_location_prefix();

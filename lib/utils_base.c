@@ -433,7 +433,7 @@ char* _np_state_calculate_location_prefix(){
 			return env_dir;
 	}
 
-	return NP_STATE_DIR_PREFIX;
+	return MP_STATE_DIR_PREFIX;
 }
 
 /*
@@ -554,7 +554,7 @@ int _np_state_read_file(FILE *f) {
 		switch(expected) {
 			case STATE_FILE_VERSION:
 				i=atoi(line);
-				if(i!=NP_STATE_FORMAT_VERSION)
+				if(i!=MP_STATE_FORMAT_VERSION)
 					failure++;
 				else
 					expected=STATE_DATA_VERSION;
@@ -652,7 +652,7 @@ void np_state_write_string(time_t data_time, char *data_string) {
 	}
 	
 	fprintf(fp,"# NP State file\n");
-	fprintf(fp,"%d\n",NP_STATE_FORMAT_VERSION);
+	fprintf(fp,"%d\n",MP_STATE_FORMAT_VERSION);
 	fprintf(fp,"%d\n",this_monitoring_plugin->state->data_version);
 	fprintf(fp,"%lu\n",current_time);
 	fprintf(fp,"%s\n",data_string);
