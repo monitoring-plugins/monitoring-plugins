@@ -1330,17 +1330,17 @@ fi
 
 AC_MSG_CHECKING([for number of online cpus])
 AC_TRY_COMPILE([#include <unistd.h>],
-	[sysconf(_SC_NPROCESSORS_ONLN) > 0;],
-	AC_DEFINE(HAVE_SYSCONF__SC_NPROCESSORS_ONLN,1,[Define if sysconf returns number of online cpus])
-	AC_MSG_RESULT([sysconf(_SC_NPROCESSORS_ONLN)]),
+	[sysconf(_SC_MPROCESSORS_ONLN) > 0;],
+	AC_DEFINE(HAVE_SYSCONF__SC_MPROCESSORS_ONLN,1,[Define if sysconf returns number of online cpus])
+	AC_MSG_RESULT([sysconf(_SC_MPROCESSORS_ONLN)]),
 	AC_MSG_RESULT([cannot calculate])
 	)
 
 AC_MSG_CHECKING([for number of available cpus])
 AC_TRY_COMPILE([#include <unistd.h>],
-	[sysconf(_SC_NPROCESSORS_CONF) > 0;],
-	AC_DEFINE(HAVE_SYSCONF__SC_NPROCESSORS_CONF,1,[Define if sysconf returns number of available cpus])
-	AC_MSG_RESULT([sysconf(_SC_NPROCESSORS_CONF)]),
+	[sysconf(_SC_MPROCESSORS_CONF) > 0;],
+	AC_DEFINE(HAVE_SYSCONF__SC_MPROCESSORS_CONF,1,[Define if sysconf returns number of available cpus])
+	AC_MSG_RESULT([sysconf(_SC_MPROCESSORS_CONF)]),
 	AC_MSG_RESULT([cannot calculate])
 	)
 
