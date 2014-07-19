@@ -15,25 +15,25 @@ plan tests => 14;
 my $successOutput = '/DNS OK: [\.0-9]+ seconds? response time/';
 
 my $hostname_valid = getTestParameter( 
-			"NP_HOSTNAME_VALID",
+			"MP_HOSTNAME_VALID",
 			"A valid (known to DNS) hostname",
 			"monitoring-plugins.org"
 			);
 
 my $hostname_valid_ip = getTestParameter(
-			"NP_HOSTNAME_VALID_IP",
+			"MP_HOSTNAME_VALID_IP",
 			"The IP address of the valid hostname $hostname_valid",
 			"66.118.156.50",
 			);
 
 my $hostname_valid_reverse = getTestParameter(
-			"NP_HOSTNAME_VALID_REVERSE",
+			"MP_HOSTNAME_VALID_REVERSE",
 			"The hostname of $hostname_valid_ip",
 			"66-118-156-50.static.sagonet.net.",
 			);
 
 my $hostname_invalid = getTestParameter( 
-			"NP_HOSTNAME_INVALID", 
+			"MP_HOSTNAME_INVALID", 
 			"An invalid (not known to DNS) hostname",
 			"nosuchhost.altinity.com",
 			);

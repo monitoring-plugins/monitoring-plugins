@@ -11,13 +11,13 @@ use NPTest;
 use vars qw($tests);
 BEGIN {$tests = 8; plan tests => $tests}
 
-my $host_udp_time      = getTestParameter( "host_udp_time",      "NP_HOST_UDP_TIME",      "localhost",
+my $host_udp_time      = getTestParameter( "host_udp_time",      "MP_HOST_UDP_TIME",      "localhost",
 					   "A host providing the UDP Time Service" );
 
-my $host_nonresponsive = getTestParameter( "host_nonresponsive", "NP_HOST_NONRESPONSIVE", "10.0.0.1",
+my $host_nonresponsive = getTestParameter( "host_nonresponsive", "MP_HOST_NONRESPONSIVE", "10.0.0.1",
                                            "The hostname of system not responsive to network requests" );
 
-my $hostname_invalid   = getTestParameter( "hostname_invalid",   "NP_HOSTNAME_INVALID",   "nosuchhost",
+my $hostname_invalid   = getTestParameter( "hostname_invalid",   "MP_HOSTNAME_INVALID",   "nosuchhost",
                                            "An invalid (not known to DNS) hostname" );
 
 my $successOutput = '/^TIME OK - [0-9]+ second time difference/';

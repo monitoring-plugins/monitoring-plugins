@@ -21,15 +21,15 @@ my $sudo = $> == 0 ? '' : 'sudo';
 my $successOutput = '/OK - .*?: rta (?:[\d\.]+ms)|(?:nan), lost \d+%/';
 my $failureOutput = '/(WARNING|CRITICAL) - .*?: rta [\d\.]+ms, lost \d%/';
 
-my $host_responsive    = getTestParameter( "NP_HOST_RESPONSIVE",
+my $host_responsive    = getTestParameter( "MP_HOST_RESPONSIVE",
 				"The hostname of system responsive to network requests",
 				"localhost" );
 
-my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE",
+my $host_nonresponsive = getTestParameter( "MP_HOST_NONRESPONSIVE",
 				"The hostname of system not responsive to network requests",
 				"10.0.0.1" );
 
-my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
+my $hostname_invalid   = getTestParameter( "MP_HOSTNAME_INVALID",
                                 "An invalid (not known to DNS) hostname",
 				"nosuchhost" );
 

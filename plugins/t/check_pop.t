@@ -11,25 +11,25 @@ use NPTest;
 plan tests => 5;
 
 my $host_tcp_smtp = getTestParameter( 
-			"NP_HOST_TCP_SMTP",
+			"MP_HOST_TCP_SMTP",
 			"A host providing an STMP Service (a mail server)",
 			"mailhost"
 			);
 
 my $host_tcp_pop = getTestParameter(
-			"NP_HOST_TCP_POP",
+			"MP_HOST_TCP_POP",
 			"A host providing a POP Service (a mail server)",
 			$host_tcp_smtp
 			);
 
 my $host_nonresponsive = getTestParameter(
-			"NP_HOST_NONRESPONSIVE", 
+			"MP_HOST_NONRESPONSIVE", 
 			"The hostname of system not responsive to network requests",
 			"10.0.0.1",
 			);
 
 my $hostname_invalid   = getTestParameter( 
-			"NP_HOSTNAME_INVALID",
+			"MP_HOSTNAME_INVALID",
 			"An invalid (not known to DNS) hostname",
 			"nosuchhost",
 			);

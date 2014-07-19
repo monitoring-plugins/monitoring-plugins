@@ -16,7 +16,7 @@ my $plugin = "check_ifoperstatus";
 SKIP: {
 	skip "$plugin is not created", $tests if ( ! -x $plugin );
 
-	my $host_snmp = getTestParameter( "NP_HOST_SNMP", "A host providing an SNMP Service", "localhost");
+	my $host_snmp = getTestParameter( "MP_HOST_SNMP", "A host providing an SNMP Service", "localhost");
 
 	my $snmp_community = getTestParameter( "NP_SNMP_COMMUNITY",
 	                                       "The SNMP Community string for SNMP Testing",
@@ -31,10 +31,10 @@ SKIP: {
 		                                     "1" );
 	}
 
-	my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE", 
+	my $host_nonresponsive = getTestParameter( "MP_HOST_NONRESPONSIVE", 
 	                                           "The hostname of system not responsive to network requests", "10.0.0.1" );
 
-	my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
+	my $hostname_invalid   = getTestParameter( "MP_HOSTNAME_INVALID",
 	                                           "An invalid (not known to DNS) hostname",
 	                                           "nosuchhost" );
 

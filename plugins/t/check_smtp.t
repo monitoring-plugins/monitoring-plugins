@@ -8,17 +8,17 @@ use strict;
 use Test::More;
 use NPTest;
 
-my $host_tcp_smtp      = getTestParameter( "NP_HOST_TCP_SMTP", 
+my $host_tcp_smtp      = getTestParameter( "MP_HOST_TCP_SMTP", 
 					   "A host providing an SMTP Service (a mail server)", "mailhost");
-my $host_tcp_smtp_tls  = getTestParameter( "NP_HOST_TCP_SMTP_TLS",
+my $host_tcp_smtp_tls  = getTestParameter( "MP_HOST_TCP_SMTP_TLS",
 					   "A host providing SMTP with TLS", $host_tcp_smtp);
-my $host_tcp_smtp_notls = getTestParameter( "NP_HOST_TCP_SMTP_NOTLS",
+my $host_tcp_smtp_notls = getTestParameter( "MP_HOST_TCP_SMTP_NOTLS",
 					   "A host providing SMTP without TLS", "");
 
-my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE", 
+my $host_nonresponsive = getTestParameter( "MP_HOST_NONRESPONSIVE", 
 					   "The hostname of system not responsive to network requests", "10.0.0.1" );
 
-my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",   
+my $hostname_invalid   = getTestParameter( "MP_HOSTNAME_INVALID",   
                                            "An invalid (not known to DNS) hostname", "nosuchhost" );
 my $res;
 

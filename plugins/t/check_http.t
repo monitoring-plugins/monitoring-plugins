@@ -14,15 +14,15 @@ my $successOutput = '/OK.*HTTP.*second/';
 
 my $res;
 
-my $host_tcp_http      = getTestParameter( "NP_HOST_TCP_HTTP",
+my $host_tcp_http      = getTestParameter( "MP_HOST_TCP_HTTP",
 		"A host providing the HTTP Service (a web server)",
 		"localhost" );
 
-my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE",
+my $host_nonresponsive = getTestParameter( "MP_HOST_NONRESPONSIVE",
 		"The hostname of system not responsive to network requests",
 		"10.0.0.1" );
 
-my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
+my $hostname_invalid   = getTestParameter( "MP_HOSTNAME_INVALID",
 		"An invalid (not known to DNS) hostname",
 		"nosuchhost");
 
@@ -30,7 +30,7 @@ my $internet_access = getTestParameter( "NP_INTERNET_ACCESS",
                 "Is this system directly connected to the internet?",
                 "yes");
 
-my $host_tcp_http2  = getTestParameter( "NP_HOST_TCP_HTTP2",
+my $host_tcp_http2  = getTestParameter( "MP_HOST_TCP_HTTP2",
             "A host providing an index page containing the string 'monitoring'",
             "test.monitoring-plugins.org" );
 

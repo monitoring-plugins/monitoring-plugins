@@ -15,13 +15,13 @@ BEGIN {
 }
 
 
-my $host_tcp_http      = getTestParameter( "host_tcp_http",      "NP_HOST_TCP_HTTP",      "localhost",
+my $host_tcp_http      = getTestParameter( "host_tcp_http",      "MP_HOST_TCP_HTTP",      "localhost",
 					   "A host providing the HTTP Service (a web server)" );
 
-my $host_nonresponsive = getTestParameter( "host_nonresponsive", "NP_HOST_NONRESPONSIVE", "10.0.0.1",
+my $host_nonresponsive = getTestParameter( "host_nonresponsive", "MP_HOST_NONRESPONSIVE", "10.0.0.1",
 					   "The hostname of system not responsive to network requests" );
 
-my $hostname_invalid   = getTestParameter( "hostname_invalid",   "NP_HOSTNAME_INVALID",   "nosuchhost",
+my $hostname_invalid   = getTestParameter( "hostname_invalid",   "MP_HOSTNAME_INVALID",   "nosuchhost",
                                            "An invalid (not known to DNS) hostname" );
 
 my $internet_access    = getTestParameter( "NP_INTERNET_ACCESS",

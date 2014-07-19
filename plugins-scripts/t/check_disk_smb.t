@@ -16,7 +16,7 @@ SKIP: {
 	skip "$plugin is not created", $tests if ( ! -x $plugin );
 	my $auth = "";
 
-	my $host = getTestParameter("NP_HOST_SMB", "A host providing an SMB Service",
+	my $host = getTestParameter("MP_HOST_SMB", "A host providing an SMB Service",
 	                            "localhost");
 
 	my $smb_share = getTestParameter("NP_SMB_SHARE",
@@ -31,10 +31,10 @@ SKIP: {
 	                                      "An access denying SMB share name the host provides",
 	                                      "private");
 
-	my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE",
+	my $host_nonresponsive = getTestParameter( "MP_HOST_NONRESPONSIVE",
 	                                           "The hostname of system not responsive to network requests", "10.0.0.1" );
 
-	my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
+	my $hostname_invalid   = getTestParameter( "MP_HOSTNAME_INVALID",
 	                                           "An invalid (not known to DNS) hostname",
 	                                           "nosuchhost" );
 	my $user = getTestParameter( "NP_SMB_VALID_USER", "A valid smb user", "" );
