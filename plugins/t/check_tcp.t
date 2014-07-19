@@ -24,7 +24,7 @@ my $host_nonresponsive = getTestParameter( "host_nonresponsive", "MP_HOST_NONRES
 my $hostname_invalid   = getTestParameter( "hostname_invalid",   "MP_HOSTNAME_INVALID",   "nosuchhost",
                                            "An invalid (not known to DNS) hostname" );
 
-my $internet_access    = getTestParameter( "NP_INTERNET_ACCESS",
+my $internet_access    = getTestParameter( "MP_INTERNET_ACCESS",
                                            "Is this system directly connected to the internet?",
                                            "yes");
 

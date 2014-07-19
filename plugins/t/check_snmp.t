@@ -18,7 +18,7 @@ my $res;
 my $host_snmp = getTestParameter( "host_snmp",          "MP_HOST_SNMP",      "localhost",
                                   "A host providing an SNMP Service");
 
-my $snmp_community = getTestParameter( "snmp_community",     "NP_SNMP_COMMUNITY", "public",
+my $snmp_community = getTestParameter( "snmp_community",     "MP_SNMP_COMMUNITY", "public",
                                        "The SNMP Community string for SNMP Testing (assumes snmp v1)" );
 
 my $host_nonresponsive = getTestParameter( "host_nonresponsive", "MP_HOST_NONRESPONSIVE", "10.0.0.1",
@@ -26,7 +26,7 @@ my $host_nonresponsive = getTestParameter( "host_nonresponsive", "MP_HOST_NONRES
 
 my $hostname_invalid   = getTestParameter( "hostname_invalid",   "MP_HOSTNAME_INVALID",   "nosuchhost",
                                            "An invalid (not known to DNS) hostname" );
-my $user_snmp = getTestParameter( "user_snmp",    "NP_SNMP_USER",    "auth_md5", "An SNMP user");
+my $user_snmp = getTestParameter( "user_snmp",    "MP_SNMP_USER",    "auth_md5", "An SNMP user");
 
 $res = NPTest->testCmd( "./check_snmp -t 1" );
 is( $res->return_code, 3, "No host name" );

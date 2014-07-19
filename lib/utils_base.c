@@ -651,7 +651,7 @@ void np_state_write_string(time_t data_time, char *data_string) {
 		die(STATE_UNKNOWN, _("Unable to open temporary state file"));
 	}
 	
-	fprintf(fp,"# NP State file\n");
+	fprintf(fp,"# MP State file\n");
 	fprintf(fp,"%d\n",MP_STATE_FORMAT_VERSION);
 	fprintf(fp,"%d\n",this_monitoring_plugin->state->data_version);
 	fprintf(fp,"%lu\n",current_time);

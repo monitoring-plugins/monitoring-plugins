@@ -15,11 +15,11 @@ plan tests => (12 * scalar(@PLUGINS1)) + (6 * scalar(@PLUGINS2));
 
 my $res;
 
-my $ntp_service = getTestParameter( "NP_GOOD_NTP_SERVICE",
+my $ntp_service = getTestParameter( "MP_GOOD_NTP_SERVICE",
 		"A host providing NTP service",
 		"pool.ntp.org");
 
-my $no_ntp_service = getTestParameter( "NP_NO_NTP_SERVICE",
+my $no_ntp_service = getTestParameter( "MP_NO_NTP_SERVICE",
 		"A host NOT providing the NTP service",
 		"localhost" );
 

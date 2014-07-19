@@ -44,7 +44,7 @@ my $hostname_invalid = getTestParameter(
 			);
 
 my $dns_server       = getTestParameter(
-			"NP_DNS_SERVER",
+			"MP_DNS_SERVER",
 			"A non default (remote) DNS server",
 			);
 

@@ -9,7 +9,7 @@ use Test::More;
 use NPTest;
 
 # Required parameters
-my $ssh_host           = getTestParameter("NP_SSH_HOST",
+my $ssh_host           = getTestParameter("MP_SSH_HOST",
                                           "A host providing SSH service",
                                           "localhost");
 

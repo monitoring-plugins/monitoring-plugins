@@ -18,15 +18,15 @@ SKIP: {
 
 	my $host_snmp = getTestParameter( "MP_HOST_SNMP", "A host providing an SNMP Service", "localhost");
 
-	my $snmp_community = getTestParameter( "NP_SNMP_COMMUNITY",
+	my $snmp_community = getTestParameter( "MP_SNMP_COMMUNITY",
 	                                       "The SNMP Community string for SNMP Testing",
 	                                       "public");
 
 	my ($snmp_interface, $snmp_ifxtable);
 	if ($host_snmp) {
-		$snmp_interface   = getTestParameter( "NP_SNMP_INTERFACE", "Name of an active network interface on SNMP server", "lo" );
+		$snmp_interface   = getTestParameter( "MP_SNMP_INTERFACE", "Name of an active network interface on SNMP server", "lo" );
 
-		$snmp_ifxtable   = getTestParameter( "NP_SNMP_IFXTABLE",   
+		$snmp_ifxtable   = getTestParameter( "MP_SNMP_IFXTABLE",   
 		                                     "Is IFXTABLE activated in SNMP server (1: yes, 0: no)? snmpwalk -v1 -c $snmp_community $host_snmp ifxtable",
 		                                     "1" );
 	}

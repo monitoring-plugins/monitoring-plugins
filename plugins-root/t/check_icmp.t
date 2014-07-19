@@ -7,7 +7,7 @@ use strict;
 use Test::More;
 use NPTest;
 
-my $allow_sudo = getTestParameter( "NP_ALLOW_SUDO",
+my $allow_sudo = getTestParameter( "MP_ALLOW_SUDO",
 	"If sudo is setup for this user to run any command as root ('yes' to allow)",
 	"no" );
 

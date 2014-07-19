@@ -18,7 +18,7 @@ SKIP: {
 
 	my $host_snmp = getTestParameter( "MP_HOST_SNMP", "A host providing an SNMP Service", "localhost");
 
-	my $snmp_community = getTestParameter( "NP_SNMP_COMMUNITY",
+	my $snmp_community = getTestParameter( "MP_SNMP_COMMUNITY",
 	                                       "The SNMP Community string for SNMP Testing",
 	                                       "public");
 

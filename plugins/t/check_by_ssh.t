@@ -9,15 +9,15 @@ use Test::More;
 use NPTest;
 
 # Required parameters
-my $ssh_service = getTestParameter( "NP_SSH_HOST",
+my $ssh_service = getTestParameter( "MP_SSH_HOST",
     "A host providing SSH service",
     "localhost");
 
-my $ssh_key = getTestParameter( "NP_SSH_IDENTITY",
-    "A key allowing access to NP_SSH_HOST",
+my $ssh_key = getTestParameter( "MP_SSH_IDENTITY",
+    "A key allowing access to MP_SSH_HOST",
     "~/.ssh/id_dsa");
 
-my $ssh_conf = getTestParameter( "NP_SSH_CONFIGFILE",
+my $ssh_conf = getTestParameter( "MP_SSH_CONFIGFILE",
     "A config file with ssh settings",
     "~/.ssh/config");
 
