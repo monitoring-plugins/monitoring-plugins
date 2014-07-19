@@ -18,7 +18,7 @@ use vars qw($tests);
 plan skip_all => "check_mysql_query not compiled" unless (-x "check_mysql_query");
 
 my $mysqlserver = getTestParameter( 
-		"NP_MYSQL_SERVER", 
+		"MP_MYSQL_SERVER", 
 		"A MySQL Server with no slaves setup"
 		);
 my $mysql_login_details = getTestParameter( 

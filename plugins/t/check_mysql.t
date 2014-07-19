@@ -22,11 +22,11 @@ plan tests => 15;
 
 my $bad_login_output = '/Access denied for user /';
 my $mysqlserver = getTestParameter(
-		"NP_MYSQL_SERVER",
+		"MP_MYSQL_SERVER",
 		"A MySQL Server hostname or IP with no slaves setup"
 		);
 my $mysqlsocket = getTestParameter(
-		"NP_MYSQL_SOCKET",
+		"MP_MYSQL_SOCKET",
 		"Full path to a MySQL Server socket with no slaves setup"
 		);
 my $mysql_login_details = getTestParameter(
@@ -36,11 +36,11 @@ my $mysql_login_details = getTestParameter(
 		"-u test -ptest",
 		);
 my $with_slave = getTestParameter(
-		"NP_MYSQL_WITH_SLAVE",
+		"MP_MYSQL_WITH_SLAVE",
 		"MySQL server with slaves setup"
 		);
 my $with_slave_login = getTestParameter(
-		"NP_MYSQL_WITH_SLAVE_LOGIN",
+		"MP_MYSQL_WITH_SLAVE_LOGIN",
 		"Login details for server with slave (requires REPLICATION CLIENT " .
 		"privleges)",
 		$mysql_login_details || "-u test -ptest"
