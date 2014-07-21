@@ -153,7 +153,7 @@ int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
 	struct tm stamp;
 	float time_left;
 	int days_left;
-	char timestamp[17] = "";
+	char timestamp[128] = "";
 
 	certificate=SSL_get_peer_certificate(s);
 	if (!certificate) {
@@ -211,10 +211,9 @@ int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
 
 	time_left = difftime(timegm(&stamp), time(NULL));
 	days_left = time_left / 86400;
-	snprintf
-		(timestamp, 17, "%02d/%02d/%04d %02d:%02d",
-		 stamp.tm_mon + 1,
-		 stamp.tm_mday, stamp.tm_year + 1900, stamp.tm_hour, stamp.tm_min);
+
+	stamp.tm_mon++;
+	strftime (timestamp, sizeof (timestamp), "%a, %d %b %Y %H:%M:%S %z", &stamp);
 
 	if (days_left > 0 && days_left <= days_till_exp_warn) {
 		printf (_("%s - Certificate '%s' expires in %d day(s) (%s).\n"), (days_left>days_till_exp_crit)?"WARNING":"CRITICAL", cn, days_left, timestamp);
