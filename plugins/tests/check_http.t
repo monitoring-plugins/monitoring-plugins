@@ -186,21 +186,21 @@ SKIP: {
 
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 14" );
 	is( $result->return_code, 0, "$command -p $port_https -S -C 14" );
-	is( $result->output, 'OK - Certificate \'Ton Voon\' will expire on 03/03/2019 21:41.', "output ok" );
+	is( $result->output, 'OK - Certificate \'Ton Voon\' will expire on Sun Mar  3 21:41:00 2019.', "output ok" );
 
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 14000" );
 	is( $result->return_code, 1, "$command -p $port_https -S -C 14000" );
-	like( $result->output, '/WARNING - Certificate \'Ton Voon\' expires in \d+ day\(s\) \(03/03/2019 21:41\)./', "output ok" );
+	like( $result->output, '/WARNING - Certificate \'Ton Voon\' expires in \d+ day\(s\) \(Sun Mar  3 21:41:00 2019\)./', "output ok" );
 
 	# Expired cert tests
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 13960,14000" );
 	is( $result->return_code, 2, "$command -p $port_https -S -C 13960,14000" );
-	like( $result->output, '/CRITICAL - Certificate \'Ton Voon\' expires in \d+ day\(s\) \(03/03/2019 21:41\)./', "output ok" );
+	like( $result->output, '/CRITICAL - Certificate \'Ton Voon\' expires in \d+ day\(s\) \(Sun Mar  3 21:41:00 2019\)./', "output ok" );
 
 	$result = NPTest->testCmd( "$command -p $port_https_expired -S -C 7" );
 	is( $result->return_code, 2, "$command -p $port_https_expired -S -C 7" );
 	is( $result->output,
-		'CRITICAL - Certificate \'Ton Voon\' expired on 03/05/2009 00:13.',
+		'CRITICAL - Certificate \'Ton Voon\' expired on Thu Mar  5 00:13:00 2009.',
 		"output ok" );
 
 }
