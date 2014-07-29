@@ -36,9 +36,10 @@ const char *email = "devel@monitoring-plugins.org";
 #include "utils.h"
 #include "netutils.h"
 
-#ifdef HAVE_LIBRADIUSCLIENT_NG
+#if defined(HAVE_LIBFREERADIUS_CLIENT)
+#include <freeradius-client.h>
+#elif defined(HAVE_LIBRADIUSCLIENT_NG)
 #include <radiusclient-ng.h>
-rc_handle *rch = NULL;
 #else
 #include <radiusclient.h>
 #endif
@@ -47,11 +48,14 @@ int process_arguments (int, char **);
 void print_help (void);
 void print_usage (void);
 
-/* libradiusclient(-ng) wrapper functions */
-#ifdef HAVE_LIBRADIUSCLIENT_NG
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG)
 #define my_rc_conf_str(a) rc_conf_str(rch,a)
 #define my_rc_send_server(a,b) rc_send_server(rch,a,b)
+#ifdef HAVE_LIBFREERADIUS_CLIENT
+#define my_rc_buildreq(a,b,c,d,e,f) rc_buildreq(rch,a,b,c,d,(a)->secret,e,f)
+#else
 #define my_rc_buildreq(a,b,c,d,e,f) rc_buildreq(rch,a,b,c,d,e,f)
+#endif
 #define my_rc_own_ipaddress() rc_own_ipaddress(rch)
 #define my_rc_avpair_add(a,b,c,d) rc_avpair_add(rch,a,b,c,-1,d)
 #define my_rc_read_dictionary(a) rc_read_dictionary(rch, a)
@@ -71,6 +75,10 @@ void print_usage (void);
 #endif
 
 int my_rc_read_config(char *);
+
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG)
+rc_handle *rch = NULL;
+#endif
 
 char *server = NULL;
 char *username = NULL;
@@ -142,11 +150,10 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 int
 main (int argc, char **argv)
 {
-	UINT4 service;
 	char msg[BUFFER_LEN];
 	SEND_DATA data;
 	int result = STATE_UNKNOWN;
-	UINT4 client_id;
+	uint32_t client_id, service;
 	char *str;
 
 	setlocale (LC_ALL, "");
@@ -162,7 +169,7 @@ main (int argc, char **argv)
 	str = strdup ("dictionary");
 	if ((config_file && my_rc_read_config (config_file)) ||
 			my_rc_read_dictionary (my_rc_conf_str (str)))
-		die (STATE_UNKNOWN, _("Config file error"));
+		die (STATE_UNKNOWN, _("Config file error\n"));
 
 	service = PW_AUTHENTICATE_ONLY;
 
@@ -171,24 +178,24 @@ main (int argc, char **argv)
 				my_rc_avpair_add (&data.send_pairs, PW_USER_NAME, username, 0) &&
 				my_rc_avpair_add (&data.send_pairs, PW_USER_PASSWORD, password, 0)
 				))
-		die (STATE_UNKNOWN, _("Out of Memory?"));
+		die (STATE_UNKNOWN, _("Out of Memory?\n"));
 
 	if (nasid != NULL) {
 		if (!(my_rc_avpair_add (&data.send_pairs, PW_NAS_IDENTIFIER, nasid, 0)))
-			die (STATE_UNKNOWN, _("Invalid NAS-Identifier"));
+			die (STATE_UNKNOWN, _("Invalid NAS-Identifier\n"));
 	}
 
 	if (nasipaddress != NULL) {
 		if (rc_good_ipaddr (nasipaddress))
-			die (STATE_UNKNOWN, _("Invalid NAS-IP-Address"));
+			die (STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
 		if ((client_id = rc_get_ipaddr(nasipaddress)) == 0)
-			die (STATE_UNKNOWN, _("Invalid NAS-IP-Address"));
+			die (STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
 	} else {
 		if ((client_id = my_rc_own_ipaddress ()) == 0)
-			die (STATE_UNKNOWN, _("Can't find local IP for NAS-IP-Address"));
+			die (STATE_UNKNOWN, _("Can't find local IP for NAS-IP-Address\n"));
 	}
 	if (my_rc_avpair_add (&(data.send_pairs), PW_NAS_IP_ADDRESS, &client_id, 0) == NULL)
-		die (STATE_UNKNOWN, _("Invalid NAS-IP-Address"));
+		die (STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
 
 	my_rc_buildreq (&data, PW_ACCESS_REQUEST, server, port, (int)timeout_interval,
 	             retries);
@@ -199,19 +206,19 @@ main (int argc, char **argv)
 		rc_avpair_free (data.receive_pairs);
 
 	if (result == TIMEOUT_RC)
-		die (STATE_CRITICAL, _("Timeout"));
+		die (STATE_CRITICAL, _("Timeout\n"));
 	if (result == ERROR_RC)
-		die (STATE_CRITICAL, _("Auth Error"));
+		die (STATE_CRITICAL, _("Auth Error\n"));
 	if (result == REJECT_RC)
-		die (STATE_WARNING, _("Auth Failed"));
+		die (STATE_WARNING, _("Auth Failed\n"));
 	if (result == BADRESP_RC)
-		die (STATE_WARNING, _("Bad Response"));
+		die (STATE_WARNING, _("Bad Response\n"));
 	if (expect && !strstr (msg, expect))
-		die (STATE_WARNING, "%s", msg);
+		die (STATE_WARNING, "%s\n", msg);
 	if (result == OK_RC)
-		die (STATE_OK, _("Auth OK"));
+		die (STATE_OK, _("Auth OK\n"));
 	(void)snprintf(msg, sizeof(msg), _("Unexpected result code %d"), result);
-	die (STATE_UNKNOWN, "%s", msg);
+	die (STATE_UNKNOWN, "%s\n", msg);
 }
 
 
@@ -392,7 +399,7 @@ print_usage (void)
 
 int my_rc_read_config(char * a)
 {
-#ifdef HAVE_LIBRADIUSCLIENT_NG
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG)
 	rch = rc_read_config(a);
 	return (rch == NULL) ? 1 : 0;
 #else

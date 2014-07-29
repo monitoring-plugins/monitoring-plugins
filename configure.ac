@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
-AC_INIT(monitoring-plugins,1.5)
+AC_INIT(monitoring-plugins,2.0)
 AC_CONFIG_SRCDIR(NPTest.pm)
 AC_CONFIG_FILES([gl/Makefile 
 	monitoring-plugins.spec])
@@ -274,20 +274,27 @@ AC_ARG_WITH([radius], [AS_HELP_STRING([--without-radius], [Skips the radius plug
 dnl Check for radius libraries
 AS_IF([test "x$with_radius" != "xno"], [
   _SAVEDLIBS="$LIBS"
-  AC_CHECK_LIB(radiusclient,rc_read_config)
-  if test "$ac_cv_lib_radiusclient_rc_read_config" = "yes"; then
+  AC_CHECK_LIB(freeradius-client,rc_read_config)
+  if test "$ac_cv_lib_freeradius_client_rc_read_config" = "yes"; then
     EXTRAS="$EXTRAS check_radius\$(EXEEXT)"
-  	RADIUSLIBS="-lradiusclient"
+    RADIUSLIBS="-lfreeradius-client"
     AC_SUBST(RADIUSLIBS)
   else
     AC_CHECK_LIB(radiusclient-ng,rc_read_config)
     if test "$ac_cv_lib_radiusclient_ng_rc_read_config" = "yes"; then
       EXTRAS="$EXTRAS check_radius\$(EXEEXT)"
-    	  RADIUSLIBS="-lradiusclient-ng"
+      RADIUSLIBS="-lradiusclient-ng"
       AC_SUBST(RADIUSLIBS)
     else
-      AC_MSG_WARN([Skipping radius plugin])
-      AC_MSG_WARN([install radius libs to compile this plugin (see REQUIREMENTS).])
+      AC_CHECK_LIB(radiusclient,rc_read_config)
+      if test "$ac_cv_lib_radiusclient_rc_read_config" = "yes"; then
+        EXTRAS="$EXTRAS check_radius\$(EXEEXT)"
+        RADIUSLIBS="-lradiusclient"
+        AC_SUBST(RADIUSLIBS)
+      else
+        AC_MSG_WARN([Skipping radius plugin])
+        AC_MSG_WARN([install radius libs to compile this plugin (see REQUIREMENTS).])
+      fi
     fi
   fi
   LIBS="$_SAVEDLIBS"
@@ -509,8 +516,6 @@ dnl check for gnutls if openssl isn't found (or is disabled)
 if test ! "$FOUNDOPENSSL" = "yes" && test ! "$with_gnutls" = "no"; then
 	if test ! "$with_gnutls" = ""; then
 		CPPFLAGS="$CPPFLAGS -I${with_gnutls}/include"
-	elif test ! "$LIBGNUTLS_CONFIG" = ""; then
-		CPPFLAGS="$CPPFLAGS -I`$LIBGNUTLS_CONFIG --prefix`"
 	fi
 	AC_CHECK_HEADERS([gnutls/openssl.h],FOUNDGNUTLS="yes",)
 	if test "$FOUNDGNUTLS" = "yes"; then

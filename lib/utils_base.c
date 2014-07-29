@@ -300,19 +300,6 @@ char *np_escaped_string (const char *string) {
 
 int np_check_if_root(void) { return (geteuid() == 0); }
 
-int np_warn_if_not_root(void) {
-	int status = np_check_if_root();
-	if(!status) {
-		printf(_("Warning: "));
-		printf(_("This plugin must be either run as root or setuid root.\n"));
-		printf(_("To run as root, you can use a tool like sudo.\n"));
-		printf(_("To set the setuid permissions, use the command:\n"));
-		/* XXX could we use something like progname? */
-		printf("\tchmod u+s yourpluginfile\n");
-	}
-	return status;
-}
-
 /*
  * Extract the value from key/value pairs, or return NULL. The value returned
  * can be free()ed.
@@ -489,7 +476,9 @@ void np_enable_state(char *keyname, int expected_data_version) {
 	this_state->state_data=NULL;
 
 	/* Calculate filename */
-	asprintf(&temp_filename, "%s/%s/%s", _np_state_calculate_location_prefix(), this_monitoring_plugin->plugin_name, this_state->name);
+	asprintf(&temp_filename, "%s/%lu/%s/%s",
+	    _np_state_calculate_location_prefix(), (unsigned long)geteuid(),
+	    this_monitoring_plugin->plugin_name, this_state->name);
 	this_state->_filename=temp_filename;
 
 	this_monitoring_plugin->state = this_state;

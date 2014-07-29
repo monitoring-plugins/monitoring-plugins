@@ -39,7 +39,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "netutils.h"
 
 #define DEFAULT_COMMUNITY "public"
-
+#define DEFAULT_PORT "161"
 
 const char *option_summary = "-H host [-C community]\n";
 
@@ -66,6 +66,7 @@ void print_usage (void);
 
 char *community = NULL;
 char *address = NULL;
+char *port = NULL;
 
 int
 main (int argc, char **argv)
@@ -119,8 +120,8 @@ main (int argc, char **argv)
 		 HPJD_GD_DOOR_OPEN, HPJD_GD_PAPER_OUTPUT, HPJD_GD_STATUS_DISPLAY);
 
 	/* get the command to run */
-	sprintf (command_line, "%s -OQa -m : -v 1 -c %s %s %s", PATH_TO_SNMPGET, community,
-									address, query_string);
+	sprintf (command_line, "%s -OQa -m : -v 1 -c %s %s:%hd %s", PATH_TO_SNMPGET, community,
+									address, port, query_string);
 
 	/* run the command */
 	child_process = spopen (command_line);
@@ -313,7 +314,7 @@ process_arguments (int argc, char **argv)
 		{"community", required_argument, 0, 'C'},
 /*  		{"critical",       required_argument,0,'c'}, */
 /*  		{"warning",        required_argument,0,'w'}, */
-/*  		{"port",           required_argument,0,'P'}, */
+  		{"port", required_argument,0,'p'}, 
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
@@ -324,7 +325,7 @@ process_arguments (int argc, char **argv)
 
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVH:C:", longopts, &option);
+		c = getopt_long (argc, argv, "+hVH:C:p:", longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)
 			break;
@@ -340,6 +341,12 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'C':									/* community */
 			community = strscpy (community, optarg);
+			break;
+		case 'p':
+			if (!is_intpos(optarg))
+				usage2 (_("Port must be a positive short integer"), optarg);
+			else
+				port = atoi(optarg);
 			break;
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
@@ -367,6 +374,13 @@ process_arguments (int argc, char **argv)
 			community = argv[c];
 		else
 			community = strdup (DEFAULT_COMMUNITY);
+	}
+
+	if (port == NULL) {
+		if (argv[c] != NULL )
+			port = argv[c];
+		else
+			port = atoi (DEFAULT_PORT);
 	}
 
 	return validate_arguments ();
@@ -402,6 +416,10 @@ print_help (void)
 	printf ("    %s", _("The SNMP community name "));
 	printf (_("(default=%s)"), DEFAULT_COMMUNITY);
 	printf ("\n");
+	printf (" %s\n", "-p, --port=STRING");
+	printf ("    %s", _("Specify the port to check "));
+	printf (_("(default=%s)"), DEFAULT_PORT);
+	printf ("\n");
 
 	printf (UT_SUPPORT);
 }
@@ -412,5 +430,5 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-	printf ("%s -H host [-C community]\n", progname);
+	printf ("%s -H host [-C community] [-p port]\n", progname);
 }

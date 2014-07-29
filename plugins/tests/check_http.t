@@ -20,8 +20,9 @@ use FindBin qw($Bin);
 my $common_tests = 70;
 my $ssl_only_tests = 8;
 # Check that all dependent modules are available
+eval "use HTTP::Daemon 6.01;";
+plan skip_all => 'HTTP::Daemon >= 6.01 required' if $@;
 eval {
-	require HTTP::Daemon;
 	require HTTP::Status;
 	require HTTP::Response;
 };
@@ -185,21 +186,21 @@ SKIP: {
 
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 14" );
 	is( $result->return_code, 0, "$command -p $port_https -S -C 14" );
-	is( $result->output, 'OK - Certificate \'Ton Voon\' will expire on 03/03/2019 21:41.', "output ok" );
+	is( $result->output, 'OK - Certificate \'Ton Voon\' will expire on Sun Mar  3 21:41:00 2019.', "output ok" );
 
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 14000" );
 	is( $result->return_code, 1, "$command -p $port_https -S -C 14000" );
-	like( $result->output, '/WARNING - Certificate \'Ton Voon\' expires in \d+ day\(s\) \(03/03/2019 21:41\)./', "output ok" );
+	like( $result->output, '/WARNING - Certificate \'Ton Voon\' expires in \d+ day\(s\) \(Sun Mar  3 21:41:00 2019\)./', "output ok" );
 
 	# Expired cert tests
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 13960,14000" );
 	is( $result->return_code, 2, "$command -p $port_https -S -C 13960,14000" );
-	like( $result->output, '/CRITICAL - Certificate \'Ton Voon\' expires in \d+ day\(s\) \(03/03/2019 21:41\)./', "output ok" );
+	like( $result->output, '/CRITICAL - Certificate \'Ton Voon\' expires in \d+ day\(s\) \(Sun Mar  3 21:41:00 2019\)./', "output ok" );
 
 	$result = NPTest->testCmd( "$command -p $port_https_expired -S -C 7" );
 	is( $result->return_code, 2, "$command -p $port_https_expired -S -C 7" );
 	is( $result->output,
-		'CRITICAL - Certificate \'Ton Voon\' expired on 03/05/2009 00:13.',
+		'CRITICAL - Certificate \'Ton Voon\' expired on Thu Mar  5 00:13:00 2009.',
 		"output ok" );
 
 }
@@ -392,27 +393,21 @@ sub run_common_tests {
 		skip "This doesn't seems to work all the time", 1 unless ($ENV{HTTP_EXTERNAL});
 		$cmd = "$command -f follow -u /redir_external -t 5";
 		eval {
-			local $SIG{ALRM} = sub { die "alarm\n" };
-			alarm(2);
-			$result = NPTest->testCmd( $cmd );
-			alarm(0); };
-		is( $@, "alarm\n", $cmd );
+			$result = NPTest->testCmd( $cmd, 2 );
+		};
+		like( $@, "/timeout in command: $cmd/", $cmd );
 	}
 
 	$cmd = "$command -u /timeout -t 5";
 	eval {
-		local $SIG{ALRM} = sub { die "alarm\n" };
-		alarm(2);
-		$result = NPTest->testCmd( $cmd );
-		alarm(0); };
-	is( $@, "alarm\n", $cmd );
+		$result = NPTest->testCmd( $cmd, 2 );
+	};
+	like( $@, "/timeout in command: $cmd/", $cmd );
 
 	$cmd = "$command -f follow -u /redir_timeout -t 2";
 	eval {
-		local $SIG{ALRM} = sub { die "alarm\n" };
-		alarm(5);
-		$result = NPTest->testCmd( $cmd );
-		alarm(0); };
-	isnt( $@, "alarm\n", $cmd );
+		$result = NPTest->testCmd( $cmd, 5 );
+	};
+	is( $@, "", $cmd );
 
 }

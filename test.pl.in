@@ -9,6 +9,8 @@ use Getopt::Long;
 
 use NPTest qw(DetermineTestHarnessDirectory TestsFrom);
 
+$ENV{LC_ALL} = 'C';
+
 my @tstdir;
 
 if ( ! GetOptions( "testdir:s" => \@tstdir ) )

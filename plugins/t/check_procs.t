@@ -26,7 +26,7 @@ $result = NPTest->testCmd( "./check_procs -w 100000 -c 100000 -s Z" );
 is( $result->return_code, 0, "Checking less than 100000 zombie processes" );
 like( $result->output, '/^PROCS OK: [0-9]+ process(es)? with /', "Output correct" );
 
-if(fork() == 0) { exec("sleep 7"); } # fork a test process
+if(fork() == 0) { exec("sleep 7"); } else { sleep(1) } # fork a test process in child and give child time to fork in parent
 $result = NPTest->testCmd( "./check_procs -a 'sleep 7'" );
 is( $result->return_code, 0, "Parent process is ignored" );
 like( $result->output, '/^PROCS OK: 1 process?/', "Output correct" );

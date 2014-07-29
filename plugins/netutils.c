@@ -171,11 +171,12 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 	char port_str[6], host[MAX_HOST_ADDRESS_LENGTH];
 	size_t len;
 	int socktype, result;
+	short is_socket = (host_name[0] == '/');
 
 	socktype = (proto == IPPROTO_UDP) ? SOCK_DGRAM : SOCK_STREAM;
 
 	/* as long as it doesn't start with a '/', it's assumed a host or ip */
-	if(host_name[0] != '/'){
+	if (!is_socket){
 		memset (&hints, 0, sizeof (hints));
 		hints.ai_family = address_family;
 		hints.ai_protocol = proto;
@@ -255,7 +256,11 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 		case STATE_OK:
 		case STATE_WARNING:  /* user wants WARN or OK on refusal, or... */
 		case STATE_CRITICAL: /* user did not set econn_refuse_state, or wanted critical */
-			printf ("%s\n", strerror(errno));
+			if (is_socket)
+				printf("connect to file socket %s: %s\n", host_name, strerror(errno));
+			else
+				printf("connect to address %s and port %d: %s\n",
+				       host_name, port, strerror(errno));
 			return STATE_CRITICAL;
 			break;
 		default: /* it's a logic error if we do not end up in STATE_(OK|WARNING|CRITICAL) */
@@ -264,7 +269,11 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 		}
 	}
 	else {
-		printf ("%s\n", strerror(errno));
+		if (is_socket)
+			printf("connect to file socket %s: %s\n", host_name, strerror(errno));
+		else
+			printf("connect to address %s and port %d: %s\n",
+			       host_name, port, strerror(errno));
 		return STATE_CRITICAL;
 	}
 }

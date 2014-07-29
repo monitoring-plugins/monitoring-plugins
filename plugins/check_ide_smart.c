@@ -419,7 +419,7 @@ nagios (values_t * p, thresholds_t * t)
 		status=STATE_OK;
 		break;
 	default:
-		printf (_("ERROR - Status '%d' unkown. %d/%d tests passed\n"), status,
+		printf (_("ERROR - Status '%d' unknown. %d/%d tests passed\n"), status,
 						passed, total);
 		status = STATE_UNKNOWN;
 		break;

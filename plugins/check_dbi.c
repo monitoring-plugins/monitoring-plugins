@@ -215,7 +215,7 @@ main (int argc, char **argv)
 	}
 
 	if (dbi_conn_connect (conn) < 0) {
-		np_dbi_print_error (conn, "UNKOWN - failed to connect to database");
+		np_dbi_print_error (conn, "UNKNOWN - failed to connect to database");
 		return STATE_UNKNOWN;
 	}
 
@@ -241,7 +241,7 @@ main (int argc, char **argv)
 			printf ("Selecting database '%s'\n", np_dbi_database);
 
 		if (dbi_conn_select_db (conn, np_dbi_database)) {
-			np_dbi_print_error (conn, "UNKOWN - failed to select database '%s'",
+			np_dbi_print_error (conn, "UNKNOWN - failed to select database '%s'",
 					np_dbi_database);
 			return STATE_UNKNOWN;
 		}
@@ -456,7 +456,7 @@ process_arguments (int argc, char **argv)
 				new = realloc (np_dbi_options,
 						(np_dbi_options_num + 1) * sizeof (*new));
 				if (! new) {
-					printf ("UNKOWN - failed to reallocate memory\n");
+					printf ("UNKNOWN - failed to reallocate memory\n");
 					exit (STATE_UNKNOWN);
 				}
 

@@ -21,6 +21,7 @@
 
 #include "tap.h"
 
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -29,6 +30,7 @@
 int
 main (int argc, char **argv)
 {
+	char state_path[1024];
 	range	*range;
 	double	temp;
 	thresholds *thresholds = NULL;
@@ -345,9 +347,10 @@ main (int argc, char **argv)
 
 	np_enable_state("allowedchars_in_keyname", 77);
 	temp_state_key = this_monitoring_plugin->state;
+	sprintf(state_path, "/usr/local/nagios/var/%lu/check_test/allowedchars_in_keyname", (unsigned long)geteuid());
 	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
 	ok( !strcmp(temp_state_key->name, "allowedchars_in_keyname"), "Got key name with valid chars" );
-	ok( !strcmp(temp_state_key->_filename, "/usr/local/nagios/var/check_test/allowedchars_in_keyname"), "Got internal filename" );
+	ok( !strcmp(temp_state_key->_filename, state_path), "Got internal filename" );
 
 
 	/* Don't do this test just yet. Will die */
@@ -359,12 +362,13 @@ main (int argc, char **argv)
 
 	np_enable_state("funnykeyname", 54);
 	temp_state_key = this_monitoring_plugin->state;
+	sprintf(state_path, "/usr/local/nagios/var/%lu/check_test/funnykeyname", (unsigned long)geteuid());
 	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
 	ok( !strcmp(temp_state_key->name, "funnykeyname"), "Got key name" );
 
 
 
-	ok( !strcmp(temp_state_key->_filename, "/usr/local/nagios/var/check_test/funnykeyname"), "Got internal filename" );
+	ok( !strcmp(temp_state_key->_filename, state_path), "Got internal filename" );
 	ok( temp_state_key->data_version==54, "Version set" );
 
 	temp_state_data = np_state_read();

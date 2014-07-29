@@ -48,21 +48,26 @@ SKIP: {
     like( $result->output, '/^PROCS OK: 1 process with command name \'launchd\', UID = 501 (.*)$/', "Output correct" );
 }
 
-$result = NPTest->testCmd( "$command -u -2 -w 2:2" );
-is( $result->return_code, 1, "Checking processes with userid=-2" );
-like( $result->output, '/^PROCS WARNING: 3 processes with UID = -2 \(nobody\)$/', "Output correct" );
+SKIP: {
+    skip 'user with uid -2 required', 8 unless getpwuid(-2);
+    skip 'uid -2 must have name "nobody"', 8 unless getpwuid(-2) eq 'nobody';
 
-$result = NPTest->testCmd( "$command -u -2 -w 3:3" );
-is( $result->return_code, 0, "Checking processes with userid=-2 past threshold" );
-like( $result->output, '/^PROCS OK: 3 processes with UID = -2 \(nobody\)$/', "Output correct" );
+    $result = NPTest->testCmd( "$command -u -2 -w 2:2" );
+    is( $result->return_code, 1, "Checking processes with userid=-2" );
+    like( $result->output, '/^PROCS WARNING: 3 processes with UID = -2 \(nobody\)$/', "Output correct" );
 
-$result = NPTest->testCmd( "$command -u -2 -a usb" );
-is( $result->return_code, 0, "Checking processes with userid=-2 and usb in arguments" );
-like( $result->output, '/^PROCS OK: 1 process with UID = -2 \(nobody\), args \'usb\'/', "Output correct" );
+    $result = NPTest->testCmd( "$command -u -2 -w 3:3" );
+    is( $result->return_code, 0, "Checking processes with userid=-2 past threshold" );
+    like( $result->output, '/^PROCS OK: 3 processes with UID = -2 \(nobody\)$/', "Output correct" );
 
-$result = NPTest->testCmd( "$command -u -2 -a UsB" );
-is( $result->return_code, 0, "Checking case sensitivity of args" );
-like( $result->output, '/^PROCS OK: 0 processes with UID = -2 \(nobody\), args \'UsB\'/', "Output correct" );
+    $result = NPTest->testCmd( "$command -u -2 -a usb" );
+    is( $result->return_code, 0, "Checking processes with userid=-2 and usb in arguments" );
+    like( $result->output, '/^PROCS OK: 1 process with UID = -2 \(nobody\), args \'usb\'/', "Output correct" );
+
+    $result = NPTest->testCmd( "$command -u -2 -a UsB" );
+    is( $result->return_code, 0, "Checking case sensitivity of args" );
+    like( $result->output, '/^PROCS OK: 0 processes with UID = -2 \(nobody\), args \'UsB\'/', "Output correct" );
+};
 
 $result = NPTest->testCmd( "$command --ereg-argument-array='mdworker.*501'" );
 is( $result->return_code, 0, "Checking regexp search of arguments" );
