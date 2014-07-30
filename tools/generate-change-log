@@ -19,6 +19,7 @@ use Text::Wrap;
 
 # The lines will have a length of no more than $columns - 1.
 $Text::Wrap::columns = 81;
+$Text::Wrap::huge    = 'overflow';
 
 if (system('git rev-parse --git-dir >/dev/null 2>&1') != 0) {
 	print "Not a Git repository, so I won't update the ChangeLog.\n";
@@ -51,6 +52,7 @@ while ($git_log =~ /$regex/gm) {
 	$prev_date = $commit{date};
 	$prev_name = $commit{name};
 	$prev_email = $commit{email};
+	$commit{message} =~ s/\s*Signed\-off\-by.*$//sgmx;
 
 	my @files = split(/\n/, $commit{files});
 	my @message = map { s/^ {4}//; $_ } split(/\n/, $commit{message});
