@@ -19,6 +19,7 @@ use Text::Wrap;
 
 # The lines will have a length of no more than $columns - 1.
 $Text::Wrap::columns = 81;
+$Text::Wrap::huge    = 'overflow';
 
 if (system('git rev-parse --git-dir >/dev/null 2>&1') != 0) {
 	print "Not a Git repository, so I won't update the ChangeLog.\n";
