@@ -10,7 +10,7 @@ use NPTest;
 
 plan skip_all => "check_dns not compiled" unless (-x "check_dns");
 
-plan tests => 14;
+plan tests => 16;
 
 my $successOutput = '/DNS OK: [\.0-9]+ seconds? response time/';
 
@@ -43,6 +43,12 @@ my $dns_server       = getTestParameter(
 			"A non default (remote) DNS server",
 			);
 
+my $host_nonresponsive = getTestParameter(
+			"NP_HOST_NONRESPONSIVE",
+			"The hostname of system not responsive to network requests",
+			"10.0.0.1",
+			);
+
 my $res;
 
 $res = NPTest->testCmd("./check_dns -H $hostname_valid -t 5");
@@ -65,6 +71,10 @@ like  ( $res->output, $successOutput, "Output OK" );
 
 $res = NPTest->testCmd("./check_dns -H $hostname_invalid -s $dns_server -t 1");
 cmp_ok( $res->return_code, '==', 2, "Invalid $hostname_invalid on $dns_server");
+
+$res = NPTest->testCmd("./check_dns -H $hostname_valid -a $hostname_valid_ip -s $host_nonresponsive -t 2");
+cmp_ok( $res->return_code, '==', 2, "Got no answer from unresponsive server");
+like  ( $res->output, "/CRITICAL - /", "Output OK");
 
 $res = NPTest->testCmd("./check_dns -H $hostname_valid -a $hostname_valid_ip -t 5");
 cmp_ok( $res->return_code, '==', 0, "Got expected address");
