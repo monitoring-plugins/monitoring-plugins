@@ -139,7 +139,7 @@ main (int argc, char **argv)
     /* bug ID: 2946553 - Older versions of bind will use all available dns 
                          servers, we have to match the one specified */
     if (strstr (chld_out.line[i], "Server:") && strlen(dns_server) > 0) {
-      temp_buffer = index (chld_out.line[i], ':');
+      temp_buffer = strchr (chld_out.line[i], ':');
       temp_buffer++;
 
       /* Strip leading tabs */
