@@ -51,6 +51,7 @@ while ($git_log =~ /$regex/gm) {
 	$prev_date = $commit{date};
 	$prev_name = $commit{name};
 	$prev_email = $commit{email};
+	$commit{message} =~ s/\s*Signed\-off\-by.*$//sgmx;
 
 	my @files = split(/\n/, $commit{files});
 	my @message = map { s/^ {4}//; $_ } split(/\n/, $commit{message});
