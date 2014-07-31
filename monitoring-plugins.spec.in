@@ -1,7 +1,7 @@
 Name: monitoring-plugins
 Version: @PACKAGE_VERSION@
 Release: @RELEASE@
-Summary: Host/service/network monitoring program plugins for Sensu/Icinga/Nagios etc..
+Summary: Collection of monitoring plugins for Sensu/Icinga/Nagios and other Nagios compatible programs 
 Group: Applications/System
 License: GPL
 
