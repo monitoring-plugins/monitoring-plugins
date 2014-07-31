@@ -51,7 +51,7 @@ is( $res->output, "OK: a dummy okay", "The quoted string is passed through to su
 $res = NPTest->testCmd( "./negate '$PWD/check_dummy 0' 'a dummy okay'" );
 is( $res->output, "No data returned from command", "Bad command, as expected (trying to execute './check_dummy 0')");
 
-$res = NPTest->testCmd( './negate $PWD/check_dummy 0 \'$$ a dummy okay\'' );
+$res = NPTest->testCmd( './negate '.$PWD.'/check_dummy 0 \'$$ a dummy okay\'' );
 is( $res->output, 'OK: $$ a dummy okay', 'Proves that $$ is not being expanded again' );
 
 my %state = (
