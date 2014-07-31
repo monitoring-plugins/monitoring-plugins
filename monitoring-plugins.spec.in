@@ -1,86 +1,21 @@
-# Macros
-%define isaix %(test "`uname -s`" = "AIX" && echo "1" || echo "0")
-%define islinux %(test "`uname -s`" = "Linux" && echo "1" || echo "0")
-%define isredhatfamily %(test -f /etc/redhat-release && echo "1" || echo "0")
-
-%if %{isaix}
-	%define _prefix /opt/nagios
-#	%define _defaultdocdir %{_datadir}/doc
-%else
-	%define _libexecdir %{_exec_prefix}/lib/nagios/plugins
-%endif
-%define _sysconfdir /etc/nagios
-
-%define npusr nagios
-%define nphome /opt/nagios
-%define npgrp nagios
-
 Name: monitoring-plugins
 Version: @PACKAGE_VERSION@
 Release: @RELEASE@
-Summary: Host/service/network monitoring program plugins for Nagios and compatible
-
+Summary: Host/service/network monitoring program plugins for Sensu/Icinga/Nagios etc..
 Group: Applications/System
 License: GPL
+
 URL: https://www.monitoring-plugins.org/
-Source0: https://www.monitoring-plugins.org/download/%{name}-%{version}.tar.gz
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+Source: https://www.monitoring-plugins.org/download/%{name}-%{version}.tar.gz
 
-%define npdir %{_builddir}/%{name}-%{version}
+Packager: Rob Thomas <xrobau@gmail.com>
 
-%if %{isaix}
-Prefix: %{_prefix}
-%else
-Prefix: %{_prefix}/lib/nagios/plugins
-%endif
-Packager: Karl DeBisschop <kdebisschop@users.sourceforge.net>
 Vendor: Monitoring Plugins Development Team
 Provides: monitoring-plugins
 
-%{!?custom:%global custom 0}
-Obsoletes: monitoring-plugins-custom monitoring-plugins-extras
-
-
-# Requires
-%if %{isaix}
-Requires:	fping 
-Requires:	gawk
-Requires:	net-snmp 
-Requires:	net-snmp-perl 
-Requires:	net-snmp-utils
-Requires:	openldap
-Requires:	openssl
 Requires:	perl
-Requires:	python
-Requires:	openssl
-BuildRequires:	fping 
-BuildRequires:	gawk
-BuildRequires:	net-snmp 
-BuildRequires:	net-snmp-perl 
-BuildRequires:	net-snmp-utils
-BuildRequires:	openldap-devel
-%endif
-%if %{isredhatfamily}
-Requires:	bind-utils
-Requires:	coreutils
-Requires:	fping 
-Requires:	gawk
-Requires:	grep
-Requires:	iputils
-Requires:	mysql
-Requires:	net-snmp-utils
-Requires:	ntp
-Requires:	openldap
-Requires:	openssl
-Requires:	openssh-clients
-Requires:	perl
-Requires:	postgresql-libs
-Requires:	procps
-Requires:	python
-Requires:	samba-client
-Requires:	shadow-utils
-Requires:	traceroute
-Requires:	/usr/bin/mailq
+Requires:	net-snmp-perl
+
 BuildRequires:	bind-utils
 BuildRequires:	coreutils
 BuildRequires:	iputils
@@ -95,107 +30,117 @@ BuildRequires:	postgresql-devel
 BuildRequires:	procps
 BuildRequires:	samba-client
 BuildRequires:	/usr/bin/mailq
-%endif
 
+# Don't let rpmbuild try to figure out the dependancies.
+# It's far too confusing for it.
+AutoReqProv: no
 
 %description
+The Monitoring Plugins Development Team  maintain a bundle of more than
+fifty standard plugins for Icinga, Naemon, Nagios, Shinken, Sensu, and
+other monitoring applications. Each plugin is a stand-alone command line
+tool that provides a specific type of check. Typically, your monitoring
+software runs these plugins to determine the current status of hosts and
+services on your network.
 
-Nagios is a program that will monitor hosts and services on your
-network, and to email or page you when a problem arises or is
-resolved. Nagios runs on a unix server as a background or daemon
-process, intermittently running checks on various services that you
-specify. The actual service checks are performed by separate "plugin"
-programs which return the status of the checks to the monitoring
-system. This package contains those plugins.
-
-
+Note that this package explicitly excludes check_radius, and is not
+currently available in a package. You'll need to build it from source.
 %prep
 %setup -q
 
-
 %build
-%{?isaix: MAKE=gmake} ./configure \
---prefix=%{_prefix} \
---exec-prefix=%{_exec_prefix} \
---libexecdir=%{_libexecdir} \
---sysconfdir=%{_sysconfdir} \
---datadir=%{_datadir} \
---with-cgiurl=/nagios/cgi-bin
-ls -1 %{npdir}/plugins > %{npdir}/ls-plugins-before
-ls -1 %{npdir}/plugins-root > %{npdir}/ls-plugins-root-before
-ls -1 %{npdir}/plugins-scripts > %{npdir}/ls-plugins-scripts-before
-make %{?_smp_mflags}
-ls -1 %{npdir}/plugins > %{npdir}/ls-plugins-after
-ls -1 %{npdir}/plugins-root > %{npdir}/ls-plugins-root-after
-ls -1 %{npdir}/plugins-scripts > %{npdir}/ls-plugins-scripts-after
-
-%pre
-# Create `nagios' group on the system if necessary
-%if %{isaix}
-lsgroup %{npgrp} > /dev/null 2> /dev/null
-if [ $? -eq 2 ] ; then
-	mkgroup %{npgrp} || %nnmmsg Unexpected error adding group "%{npgrp}". Aborting install process.
-fi
-%endif
-%if %{islinux}
-getent group %{npgrp} > /dev/null 2> /dev/null
-if [ $? -ne 0 ] ; then
-	groupadd %{npgrp} || %nnmmsg Unexpected error adding group "%{npgrp}". Aborting install process.
-fi
-%endif
-
-# Create `nagios' user on the system if necessary
-%if %{isaix}
-lsuser %{npusr} > /dev/null 2> /dev/null
-if [ $? -eq 2 ] ; then
-	useradd -d %{nphome} -c "%{npusr}" -g %{npgrp} %{npusr} || \
-		%nnmmsg Unexpected error adding user "%{npusr}". Aborting install process.
-fi
-%endif
-%if %{islinux}
-getent passwd %{npusr} > /dev/null 2> /dev/null
-if [ $? -ne 0 ] ; then
-	useradd -r -d %{nshome} -c "%{npusr}" -g %{npgrp} %{npusr} || \
-		%nnmmsg Unexpected error adding user "%{npusr}". Aborting install process.
-fi
-%endif
+%configure --with-cgiurl="/monitoring/cgi-bin" --without-radius
+%{__make} %{?_smp_mflags}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make AM_INSTALL_PROGRAM_FLAGS="" DESTDIR=${RPM_BUILD_ROOT} install
-%find_lang %{name}
-echo "%defattr(755,%{npusr},%{npgrp})" >> %{name}.lang
-comm -13 %{npdir}/ls-plugins-before %{npdir}/ls-plugins-after | egrep -v "\.o$|^\." | gawk -v libexecdir=%{_libexecdir} '{printf( "%s/%s\n", libexecdir, $0);}' >> %{name}.lang
-echo "%defattr(755,root,root)" >> %{name}.lang
-comm -13 %{npdir}/ls-plugins-root-before %{npdir}/ls-plugins-root-after | egrep -v "\.o$|^\." | gawk -v libexecdir=%{_libexecdir} '{printf( "%s/%s\n", libexecdir, $0);}' >> %{name}.lang
-echo "%defattr(755,%{npusr},%{npgrp})" >> %{name}.lang
-comm -13 %{npdir}/ls-plugins-scripts-before %{npdir}/ls-plugins-scripts-after | egrep -v "\.o$|^\." | gawk -v libexecdir=%{_libexecdir} '{printf( "%s/%s\n", libexecdir, $0);}' >> %{name}.lang
-echo "%{_libexecdir}/utils.pm" >> %{name}.lang
-echo "%{_libexecdir}/utils.sh" >> %{name}.lang
-echo "%{_libexecdir}/check_ldaps" >> %{name}.lang
+make install DESTDIR=$RPM_BUILD_ROOT
+make install-root DESTDIR=$RPM_BUILD_ROOT
 
-sed -i '/libnpcommon/d' %{name}.lang
-sed -i '/monitoring-plugins.mo/d' %{name}.lang
+# check_radius is explicitly removed from this
+# package, as it relies on a lot of un-packaged
+# things. I will revisit in a later release.
+# --xrobau 20140801
+%{__rm} -f $RPM_BUILD_ROOT/usr/libexec/check_radius
 
 %clean
-rm -rf $RPM_BUILD_ROOT
+%{__rm} -rf $RPM_BUILD_ROOT
 
-
-%files -f %{name}.lang
-%config(missingok,noreplace) %{_sysconfdir}/command.cfg
-%doc CODING COPYING FAQ INSTALL LEGAL README REQUIREMENTS SUPPORT THANKS
-%doc ChangeLog command.cfg
-%if ! %{isaix}
-%{_datadir}/locale/de/LC_MESSAGES/monitoring-plugins.mo
-%{_datadir}/locale/fr/LC_MESSAGES/monitoring-plugins.mo
-%endif
+%files
+%defattr(-, root, root, 0755)
+%doc ABOUT-NLS ACKNOWLEDGEMENTS AUTHORS ChangeLog CODING COPYING FAQ INSTALL LEGAL
+%doc NEWS README REQUIREMENTS SUPPORT THANKS
+%{_libexecdir}/check_apt
+%{_libexecdir}/check_breeze
+%{_libexecdir}/check_by_ssh
+%{_libexecdir}/check_clamd
+%{_libexecdir}/check_cluster
+%{_libexecdir}/check_dig
+%{_libexecdir}/check_disk
+%{_libexecdir}/check_disk_smb
+%{_libexecdir}/check_dns
+%{_libexecdir}/check_dummy
+%{_libexecdir}/check_file_age
+%{_libexecdir}/check_flexlm
+%{_libexecdir}/check_ftp
+%{_libexecdir}/check_hpjd
+%{_libexecdir}/check_http
+%{_libexecdir}/check_ide_smart
+%{_libexecdir}/check_ifoperstatus
+%{_libexecdir}/check_ifstatus
+%{_libexecdir}/check_imap
+%{_libexecdir}/check_ircd
+%{_libexecdir}/check_jabber
+%{_libexecdir}/check_ldap
+%{_libexecdir}/check_ldaps
+%{_libexecdir}/check_load
+%{_libexecdir}/check_log
+%{_libexecdir}/check_mailq
+%{_libexecdir}/check_mrtg
+%{_libexecdir}/check_mrtgtraf
+%{_libexecdir}/check_mysql
+%{_libexecdir}/check_mysql_query
+%{_libexecdir}/check_nagios
+%{_libexecdir}/check_nntp
+%{_libexecdir}/check_nntps
+%{_libexecdir}/check_nt
+%{_libexecdir}/check_ntp
+%{_libexecdir}/check_ntp_peer
+%{_libexecdir}/check_ntp_time
+%{_libexecdir}/check_nwstat
+%{_libexecdir}/check_oracle
+%{_libexecdir}/check_overcr
+%{_libexecdir}/check_pgsql
+%{_libexecdir}/check_ping
+%{_libexecdir}/check_pop
+%{_libexecdir}/check_procs
+%{_libexecdir}/check_real
+%{_libexecdir}/check_rpc
+%{_libexecdir}/check_sensors
+%{_libexecdir}/check_simap
+%{_libexecdir}/check_smtp
+%{_libexecdir}/check_snmp
+%{_libexecdir}/check_spop
+%{_libexecdir}/check_ssh
+%{_libexecdir}/check_ssmtp
+%{_libexecdir}/check_swap
+%{_libexecdir}/check_tcp
+%{_libexecdir}/check_time
+%{_libexecdir}/check_udp
+%{_libexecdir}/check_ups
+%{_libexecdir}/check_users
+%{_libexecdir}/check_wave
+%{_libexecdir}/negate
+%{_libexecdir}/urlize
+%{_libexecdir}/utils.pm
+%{_libexecdir}/utils.sh
+%lang(de) %{_datadir}/locale/de/LC_MESSAGES/monitoring-plugins.mo
+%lang(fr) %{_datadir}/locale/fr/LC_MESSAGES/monitoring-plugins.mo
+# Setuid Root files
+%attr(4755, root, root) %{_libexecdir}/check_dhcp
+%attr(4755, root, root) %{_libexecdir}/check_icmp
 
 %changelog
-* Mon May 23 2005 Sean Finney <seanius@seanius.net> - cvs head
-- just include the nagios plugins directory, which will automatically include
-  all generated plugins (which keeps the build from failing on systems that
-  don't have all build-dependencies for every plugin)
-* Tue Mar 04 2004 Karl DeBisschop <karl[AT]debisschop.net> - 1.4.0alpha1
-- extensive rewrite to facilitate processing into various distro-compatible specs
-* Tue Mar 04 2004 Karl DeBisschop <karl[AT]debisschop.net> - 1.4.0alpha1
-- extensive rewrite to facilitate processing into various distro-compatible specs
+* Fri Aug 01 2014 Rob Thomas <xrobau@gmail.com> - 2.0.0-1
+- Almost complete rewrite
+
