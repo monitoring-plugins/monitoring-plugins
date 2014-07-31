@@ -20,7 +20,16 @@ if ($@) {
 	plan skip_all => "Missing required module for test: $@";
 } else {
 	if (-x "./check_snmp") {
-		plan tests => $tests;
+        # check if snmpd has perl support
+        my $test = `snmpd -c tests/conf/snmpd.conf -C -r -H 2>&1`;
+        if(!defined $test) {
+	        plan skip_all => "snmpd required";
+        }
+        elsif($test =~ m/Warning: Unknown token: perl/) {
+	        plan skip_all => "snmpd has no perl support";
+        } else {
+		    plan tests => $tests;
+        }
 	} else {
 		plan skip_all => "No check_snmp compiled";
 	}
