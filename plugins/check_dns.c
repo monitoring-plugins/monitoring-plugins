@@ -154,7 +154,7 @@ main (int argc, char **argv)
       }
 
       if (strcmp(temp_buffer, dns_server) != 0) {
-        die (STATE_CRITICAL, _("No response from DNS %s\n"), dns_server);
+        die (STATE_CRITICAL, _("DNS CRITICAL - No response from DNS %s\n"), dns_server);
       }
     }
 
