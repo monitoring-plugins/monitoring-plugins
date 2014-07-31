@@ -6,6 +6,7 @@
 
 use strict;
 use Test::More;
+use Cwd;
 use NPTest;
 
 # 15 tests in the first part, 9 in timeout tests and 2 * 32 in the last loops
@@ -13,7 +14,7 @@ plan tests => 88;
 
 my $res;
 
-my $PWD = $ENV{PWD};
+my $PWD = getcwd();
 
 $res = NPTest->testCmd( "./negate" );
 is( $res->return_code, 3, "Not enough parameters");
