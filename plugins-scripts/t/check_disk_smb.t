@@ -90,7 +90,7 @@ SKIP: {
 	SKIP: {
 		skip "no non responsive host defined", 1 if ( ! $host_nonresponsive );
 		$res = NPTest->testCmd( "./$plugin -H $host_nonresponsive -s np_foobar ");
-		cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN with non responsive host" );
+		cmp_ok( $res->return_code, '>=', 2, "Exit CRITICAL/UNKNOWN with non responsive host" );
 	}
 
 }
