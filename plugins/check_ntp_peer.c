@@ -599,17 +599,20 @@ int main(int argc, char *argv[]){
 	}
 	oresult = result;
 	
-	if(do_truechimers)
+	if(do_truechimers) {
 		tresult = get_status(num_truechimers, truechimer_thresholds);
 		result = max_state_alt(result, tresult);
+	}
 
-	if(do_stratum)
+	if(do_stratum) {
 		sresult = get_status(stratum, stratum_thresholds);
 		result = max_state_alt(result, sresult);
+	}
 
-	if(do_jitter)
+	if(do_jitter) {
 		jresult = get_status(jitter, jitter_thresholds);
 		result = max_state_alt(result, jresult);
+	}
 
 	switch (result) {
 		case STATE_CRITICAL :
