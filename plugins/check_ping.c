@@ -142,7 +142,7 @@ main (int argc, char **argv)
 		if (pl == UNKNOWN_PACKET_LOSS || rta < 0.0) {
 			printf ("%s\n", cmd);
 			die (STATE_UNKNOWN,
-			           _("CRITICAL - Could not interpret output from ping command\n"));
+				_("CRITICAL - Could not interpret output from ping command\n"));
 		}
 
 		if (pl >= cpl || rta >= crta || rta < 0)
@@ -171,13 +171,13 @@ main (int argc, char **argv)
 
 		/* Print performance data */
 		printf("|%s", fperfdata ("rta", (double) rta, "ms",
-		                          wrta>0?TRUE:FALSE, wrta,
-		                          crta>0?TRUE:FALSE, crta,
-		                          TRUE, 0, FALSE, 0));
+															wrta>0?TRUE:FALSE, wrta,
+															crta>0?TRUE:FALSE, crta,
+															TRUE, 0, FALSE, 0));
 		printf(" %s\n", perfdata ("pl", (long) pl, "%",
-		                          wpl>0?TRUE:FALSE, wpl,
-		                          cpl>0?TRUE:FALSE, cpl,
-		                          TRUE, 0, FALSE, 0));
+															wpl>0?TRUE:FALSE, wpl,
+															cpl>0?TRUE:FALSE, cpl,
+															TRUE, 0, FALSE, 0));
 
 		if (verbose >= 2)
 			printf ("%f:%d%% %f:%d%%\n", wrta, wpl, crta, cpl);
@@ -562,7 +562,7 @@ error_scan (char buf[MAX_INPUT_BUFFER], const char *addr)
 		if (warn_text == NULL)
 			warn_text = strdup (_(WARN_DUPLICATES));
 		else if (! strstr (warn_text, _(WARN_DUPLICATES)) &&
-		         xasprintf (&warn_text, "%s %s", warn_text, _(WARN_DUPLICATES)) == -1)
+				xasprintf (&warn_text, "%s %s", warn_text, _(WARN_DUPLICATES)) == -1)
 			die (STATE_UNKNOWN, _("Unable to realloc warn_text\n"));
 		return (STATE_WARNING);
 	}
@@ -582,7 +582,7 @@ print_help (void)
 
 	printf (_("Use ping to check connection statistics for a remote host."));
 
-  printf ("\n\n");
+	printf ("\n\n");
 
 	print_usage ();
 
@@ -592,31 +592,31 @@ print_help (void)
 	printf (UT_IPv46);
 
 	printf (" %s\n", "-H, --hostname=HOST");
-  printf ("    %s\n", _("host to ping"));
-  printf (" %s\n", "-w, --warning=THRESHOLD");
-  printf ("    %s\n", _("warning threshold pair"));
-  printf (" %s\n", "-c, --critical=THRESHOLD");
-  printf ("    %s\n", _("critical threshold pair"));
-  printf (" %s\n", "-p, --packets=INTEGER");
-  printf ("    %s ", _("number of ICMP ECHO packets to send"));
-  printf (_("(Default: %d)\n"), DEFAULT_MAX_PACKETS);
-  	printf (" %s\n", "-s, --show-resolution");
+	printf ("    %s\n", _("host to ping"));
+	printf (" %s\n", "-w, --warning=THRESHOLD");
+	printf ("    %s\n", _("warning threshold pair"));
+	printf (" %s\n", "-c, --critical=THRESHOLD");
+	printf ("    %s\n", _("critical threshold pair"));
+	printf (" %s\n", "-p, --packets=INTEGER");
+	printf ("    %s ", _("number of ICMP ECHO packets to send"));
+	printf (_("(Default: %d)\n"), DEFAULT_MAX_PACKETS);
+		printf (" %s\n", "-s, --show-resolution");
 	printf ("    %s\n", _("show name resolution in the plugin output (DNS & IP)"));
-  printf (" %s\n", "-L, --link");
-  printf ("    %s\n", _("show HTML in the plugin output (obsoleted by urlize)"));
+	printf (" %s\n", "-L, --link");
+	printf ("    %s\n", _("show HTML in the plugin output (obsoleted by urlize)"));
 
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
-  printf ("\n");
+	printf ("\n");
 	printf ("%s\n", _("THRESHOLD is <rta>,<pl>% where <rta> is the round trip average travel"));
-  printf ("%s\n", _("time (ms) which triggers a WARNING or CRITICAL state, and <pl> is the"));
-  printf ("%s\n", _("percentage of packet loss to trigger an alarm state."));
+	printf ("%s\n", _("time (ms) which triggers a WARNING or CRITICAL state, and <pl> is the"));
+	printf ("%s\n", _("percentage of packet loss to trigger an alarm state."));
 
-  printf ("\n");
+	printf ("\n");
 	printf ("%s\n", _("This plugin uses the ping command to probe the specified host for packet loss"));
-  printf ("%s\n", _("(percentage) and round trip average (milliseconds). It can produce HTML output"));
-  printf ("%s\n", _("linking to a traceroute CGI contributed by Ian Cass. The CGI can be found in"));
-  printf ("%s\n", _("the contrib area of the downloads section at http://www.nagios.org/"));
+	printf ("%s\n", _("(percentage) and round trip average (milliseconds). It can produce HTML output"));
+	printf ("%s\n", _("linking to a traceroute CGI contributed by Ian Cass. The CGI can be found in"));
+	printf ("%s\n", _("the contrib area of the downloads section at http://www.nagios.org/"));
 
 	printf (UT_SUPPORT);
 }
@@ -624,7 +624,7 @@ print_help (void)
 void
 print_usage (void)
 {
-  printf ("%s\n", _("Usage:"));
+	printf ("%s\n", _("Usage:"));
 	printf ("%s -H <host_address> -w <wrta>,<wpl>%% -c <crta>,<cpl>%%\n", progname);
-  printf (" [-p packets] [-t timeout] [-4|-6]\n");
+	printf (" [-p packets] [-t timeout] [-4|-6]\n");
 }
