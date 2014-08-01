@@ -54,6 +54,7 @@ void print_usage (void);
 void print_help (void);
 
 int display_html = FALSE;
+int show_resolution = FALSE;
 int wpl = UNKNOWN_PACKET_LOSS;
 int cpl = UNKNOWN_PACKET_LOSS;
 float wrta = UNKNOWN_TRIP_TIME;
@@ -66,6 +67,9 @@ int verbose = 0;
 
 float rta = UNKNOWN_TRIP_TIME;
 int pl = UNKNOWN_PACKET_LOSS;
+
+char ping_name[256];
+char ping_ip_addr[64];
 
 char *warn_text;
 
@@ -159,6 +163,9 @@ main (int argc, char **argv)
 		else
 			printf (_("PING %s - %sPacket loss = %d%%, RTA = %2.2f ms"),
 							state_text (this_result), warn_text, pl, rta);
+		if (show_resolution)
+			printf (" - %s (%s)", ping_name, ping_ip_addr);
+
 		if (display_html == TRUE)
 			printf ("</A>");
 
@@ -196,6 +203,7 @@ process_arguments (int argc, char **argv)
 	static struct option longopts[] = {
 		STD_LONG_OPTS,
 		{"packets", required_argument, 0, 'p'},
+		{"show-resolution", no_argument, 0, 's'},
 		{"nohtml", no_argument, 0, 'n'},
 		{"link", no_argument, 0, 'L'},
 		{"use-ipv4", no_argument, 0, '4'},
@@ -214,7 +222,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "VvhnL46t:c:w:H:p:", longopts, &option);
+		c = getopt_long (argc, argv, "VvhsnL46t:c:w:H:p:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -270,6 +278,9 @@ process_arguments (int argc, char **argv)
 				max_packets = atoi (optarg);
 			else
 				usage2 (_("<max_packets> (%s) must be a non-negative number\n"), optarg);
+			break;
+		case 's':
+			show_resolution = TRUE;
 			break;
 		case 'n':	/* no HTML */
 			display_html = FALSE;
@@ -448,6 +459,10 @@ run_ping (const char *cmd, const char *addr)
 
 		result = max_state (result, error_scan (buf, addr));
 
+		if(sscanf(buf, "PING %255s (%63[^)])", &ping_name, &ping_ip_addr)){
+			continue;
+		}
+
 		/* get the percent loss statistics */
 		match = 0;
 		if((sscanf(buf,"%*d packets transmitted, %*d packets received, +%*d errors, %d%% packet loss%n",&pl,&match) && match) ||
@@ -585,6 +600,8 @@ print_help (void)
   printf (" %s\n", "-p, --packets=INTEGER");
   printf ("    %s ", _("number of ICMP ECHO packets to send"));
   printf (_("(Default: %d)\n"), DEFAULT_MAX_PACKETS);
+  	printf (" %s\n", "-s, --show-resolution");
+	printf ("    %s\n", _("show name resolution in the plugin output (DNS & IP)"));
   printf (" %s\n", "-L, --link");
   printf ("    %s\n", _("show HTML in the plugin output (obsoleted by urlize)"));
 
