@@ -169,7 +169,8 @@ process_arguments (int argc, char **argv)
 		{"verbose", no_argument, 0, 'v'},
 		{"fork", no_argument, 0, 'f'},
 		{"timeout", required_argument, 0, 't'},
-		{"host", required_argument, 0, 'H'},
+		{"host", required_argument, 0, 'H'},    /* backward compatibility */
+		{"hostname", required_argument, 0, 'H'},
 		{"port", required_argument,0,'p'},
 		{"output", required_argument, 0, 'O'},
 		{"name", required_argument, 0, 'n'},
