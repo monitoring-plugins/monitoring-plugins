@@ -58,7 +58,7 @@
 # Paths to commands used in this script.  These
 # may have to be modified to match your system setup.
 
-PROGNAME=`/bin/basename $0`
+PROGNAME=`basename $0`
 PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
 REVISION="@NP_VERSION@"
 PATH="@TRUSTED_PATH@"
