@@ -722,8 +722,9 @@ header_value (const char *headers, const char *header)
   while (*s && isspace(*s))
     s++;
 
-  for (value_start = s; *s && *s != '\r' && *s != '\n'; s++)
-    ;
+  value_start = s;
+  while (*s && *s != '\r' && *s != '\n')
+    s++;
 
   value_size = (s - value_start);
   value = (char *) malloc(value_size + 1);
