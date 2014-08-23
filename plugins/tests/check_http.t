@@ -382,13 +382,10 @@ sub run_common_tests {
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
-	SKIP: {
-		skip "FIXME: Chunked-encoding isn't supported yet", 2 unless ($ENV{HTTP_CHUNKED});
-		$cmd = "$command -u /chunked -s foobarbaz";
-		$result = NPTest->testCmd( $cmd );
-		is( $result->return_code, 0, $cmd);
-		like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
-	}
+  $cmd = "$command -u /chunked -s foobarbaz";
+  $result = NPTest->testCmd( $cmd );
+  is( $result->return_code, 0, $cmd);
+  like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
   # These tests may block
 	print "ALRM\n";

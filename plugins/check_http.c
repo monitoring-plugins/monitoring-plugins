@@ -676,6 +676,83 @@ expected_statuscode (const char *reply, const char *statuscodes)
   return result;
 }
 
+char *
+decode_chunked_page (const char *raw, char *dst)
+{
+  unsigned long int chunksize;
+  char *raw_pos;
+  char *dst_pos;
+
+  raw_pos = (char *)raw;
+  dst_pos = dst;
+  while (chunksize = strtoul(raw_pos, NULL, 16)) {
+    // soak up the optional chunk params (which we will ignore)
+    for (; *raw_pos && *raw_pos != '\r' && *raw_pos != '\n'; raw_pos++)
+      ;
+
+    raw_pos += 2; // soak up the leading CRLF
+
+    strncpy(dst_pos, raw_pos, chunksize);
+
+    dst_pos += chunksize;
+    raw_pos += chunksize;
+    raw_pos += 2; // soak up the ending CRLF
+  }
+  *dst_pos = '\0';
+
+  return dst;
+}
+
+static char *header_value (const char *headers, const char *header)
+{
+  char *s;
+  char *value;
+  const char *value_start;
+  int value_size;
+
+  s = strstr(headers, header);
+  if (s == NULL)
+    return NULL;
+
+  while (*s && !isspace(*s) && *s != ':')
+    s++;
+  if (*s && *s == ':')
+    s++;
+  while (*s && isspace(*s))
+    s++;
+
+  for (value_start = s; *s && *s != '\r' && *s != '\n'; s++)
+    ;
+
+  value_size = (s - value_start);
+  value = (char *) malloc(value_size + 1);
+  if (!value)
+    die (STATE_UNKNOWN, _("HTTP_UNKOWN - Memory allocation error\n"));
+
+  strncpy(value, value_start, value_size);
+
+  value[value_size] = '\0';
+
+  return value;
+}
+
+static int
+chunked_transfer_encoding (const char *headers)
+{
+  int result;
+  char *encoding = header_value(headers, "Transfer-Encoding");
+  if (!encoding)
+    return 0;
+
+  if (strncmp(encoding, "chunked", sizeof("chunked")) == 0)
+    result = 1;
+  else
+    result = 0;
+
+  free(encoding);
+  return result;
+}
+
 static int
 check_document_dates (const char *headers, char **msg)
 {
@@ -1045,6 +1122,10 @@ check_http (void)
   }
   page += (size_t) strspn (page, "\r\n");
   header[pos - header] = 0;
+
+  if (chunked_transfer_encoding(header))
+    page = decode_chunked_page(page, page);
+
   if (verbose)
     printf ("**** HEADER ****\n%s\n**** CONTENT ****\n%s\n", header,
                 (no_body ? "  [[ skipped ]]" : page));
@@ -1119,6 +1200,7 @@ check_http (void)
     result = max_state_alt(check_document_dates(header, &msg), result);
   }
 
+
   /* Page and Header content checks go here */
   if (strlen (header_expect)) {
     if (!strstr (header, header_expect)) {
@@ -1130,7 +1212,6 @@ check_http (void)
       result = STATE_CRITICAL;
     }
   }
-
 
   if (strlen (string_expect)) {
     if (!strstr (page, string_expect)) {
