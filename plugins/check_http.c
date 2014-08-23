@@ -687,8 +687,8 @@ decode_chunked_page (const char *raw, char *dst)
   dst_pos = dst;
   while (chunksize = strtoul(raw_pos, NULL, 16)) {
     // soak up the optional chunk params (which we will ignore)
-    for (; *raw_pos && *raw_pos != '\r' && *raw_pos != '\n'; raw_pos++)
-      ;
+    while (*raw_pos && *raw_pos != '\r' && *raw_pos != '\n')
+      raw_pos++;
 
     raw_pos += 2; // soak up the leading CRLF
 
