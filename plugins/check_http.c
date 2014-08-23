@@ -703,7 +703,8 @@ decode_chunked_page (const char *raw, char *dst)
   return dst;
 }
 
-static char *header_value (const char *headers, const char *header)
+static char *
+header_value (const char *headers, const char *header)
 {
   char *s;
   char *value;
