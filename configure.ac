@@ -610,6 +610,7 @@ AC_DEFINE_UNQUOTED(SOCKET_SIZE_TYPE, $ac_cv_socket_size_type ,
 dnl #### Process table test
 
 AC_PATH_PROG(PATH_TO_PS,ps)
+AC_PATH_PROG(PATH_TO_ENV,env)
 
 AC_MSG_CHECKING(for ps syntax)
 AC_ARG_WITH(ps_command,
@@ -930,6 +931,19 @@ then
 	ac_cv_ps_format="%*s %s %d %d %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %n%s"
 	ac_cv_ps_cols=6
 	AC_MSG_RESULT([$ac_cv_ps_command])
+
+dnl HP-UX:
+dnl S        UID       RUID USER     RUSER      PID  PPID     VSZ  %CPU COMMAND         COMMAND
+dnl S          0        400 root     oracle    2805     1   12904  0.00 ora_dism_SEA1X  ora_dism_SEA1X
+dnl S        400        400 oracle   oracle   19261     1  126488  0.00 tnslsnr         /u01/app/oracle/product/db/11.2.0.3/bin/tnslsnr LISTENER -inherit
+elif env UNIX95=1 ps -eo 'state uid ruid user ruser pid ppid vsz pcpu comm args' 2>/dev/null | head -n 1 | \
+    egrep -i ["^ *S +UID +RUID +USER +RUSER +PID +PPID +VSZ +%CPU +COMMAND +COMMAND"] >/dev/null
+then
+    ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procpcpu,procprog,&pos]"
+    ac_cv_ps_command="$PATH_TO_ENV UNIX95=1 $PATH_TO_PS -eo 'state uid pid ppid vsz pcpu comm args'"
+    ac_cv_ps_format="%s %d %d %d %d %f %s %n"
+    ac_cv_ps_cols=8
+    AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl AIX 4.1:
 dnl     F S      UID   PID  PPID   C PRI NI ADDR  SZ  RSS   WCHAN    TTY  TIME CMD
