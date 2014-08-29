@@ -717,7 +717,7 @@ header_value (const char *headers, const char *header)
   const char *value_start;
   int value_size;
 
-  s = strstr(headers, header);
+  s = strcasestr(headers, header);
   if (s == NULL)
     return NULL;
 
