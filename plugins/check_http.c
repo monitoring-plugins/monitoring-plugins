@@ -677,7 +677,7 @@ expected_statuscode (const char *reply, const char *statuscodes)
 }
 
 char *
-decode_chunked_page (const char *raw, char *dst)
+decode_chunked_page (const char *raw, const char *dst)
 {
   unsigned long int chunksize;
   char *raw_pos;
@@ -692,13 +692,19 @@ decode_chunked_page (const char *raw, char *dst)
 
     raw_pos += 2; // soak up the leading CRLF
 
-    strncpy(dst_pos, raw_pos, chunksize);
+    if (*raw_pos && *dst_pos)
+      strncpy(dst_pos, raw_pos, chunksize);
+    else
+      die (STATE_UNKNOWN, _("HTTP UNKNOWN - Memory allocation error\n"));
 
     dst_pos += chunksize;
     raw_pos += chunksize;
     raw_pos += 2; // soak up the ending CRLF
   }
-  *dst_pos = '\0';
+  if (*dst_pos)
+    *dst_pos = '\0';
+  else
+    die (STATE_UNKNOWN, _("HTTP UNKNOWN - Memory allocation error\n"));
 
   return dst;
 }
