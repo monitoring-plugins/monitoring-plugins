@@ -332,7 +332,7 @@ elsif ( $mailq eq "postfix" ) {
 	}elsif ($lines[0]=~/Mail queue is empty/) {
 		$msg_q = 0;
         }else{
-                print "Couldn't match $utils::PATH_TO_QMAIL_QSTAT output\n";
+                print "Couldn't match $utils::PATH_TO_MAILQ output\n";
                 exit   $ERRORS{'UNKNOWN'};
         }
 
@@ -340,7 +340,7 @@ elsif ( $mailq eq "postfix" ) {
         #if ($lines[1]=~/^messages in queue but not yet preprocessed: (\d+)/) {
         #        my $msg_p = $1;
         #}else{
-        #        print "Couldn't match $utils::PATH_TO_QMAIL_QSTAT output\n";
+        #        print "Couldn't match $utils::PATH_TO_MAILQ output\n";
         #        exit  $ERRORS{'UNKNOWN'};
         #}
 
