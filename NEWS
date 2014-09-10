@@ -5,6 +5,7 @@ This file documents the major additions and syntax changes between releases.
 	New check_hpjd -p option for port specification (abrist)
 	New ./configure --with-qmail-qstat-command option to specify the path to
 	  qmail-qstat(8)
+	New check_ifstatus -n option to ignore interfaces by name
 
 2.0 11th July 2014
 	ENHANCEMENTS
