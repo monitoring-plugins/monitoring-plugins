@@ -746,6 +746,26 @@ dnl 	ac_cv_ps_format=["%*s %d %d %d %d %*d %*d %d %d%*[ 0123456789abcdef]%[OSRZT
 dnl 	ac_cv_ps_cols=8
 dnl 	AC_MSG_RESULT([$ac_cv_ps_command])
 
+dnl Lets test if cgroups are supported, on systems with ps axwo command:
+elif ps axwo 'stat comm vsz rss user uid pid ppid args cgroup:256' 2>/dev/null | \
+	egrep -i ["^ *STAT +[UCOMAND]+ +VSZ +RSS +USER +UID +PID +PPID +COMMAND +CGROUP"] > /dev/null
+then
+	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,proc_cgroup_hierarchy,procprog,&pos]"
+	ac_cv_ps_command="$PATH_TO_PS axwo 'stat uid pid ppid vsz rss pcpu cgroup:256 comm args'"
+	ac_cv_ps_format="%s %d %d %d %d %d %f %s %s %n"
+	ac_cv_ps_cols=10
+	AC_MSG_RESULT([$ac_cv_ps_command])
+
+dnl cgroups with ps -axwo command:
+elif ps -axwo 'stat comm vsz rss user uid pid ppid args cgroup:256' 2>/dev/null | \
+	egrep -i ["^ *STAT +[UCOMAND]+ +VSZ +RSS +USER +UID +PID +PPID +COMMAND +CGROUP"] > /dev/null
+then
+	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,proc_cgroup_hierarchy,procprog,&pos]"
+	ac_cv_ps_command="$PATH_TO_PS -axwo 'stat uid pid ppid vsz rss pcpu cgroup:256 comm args'"
+	ac_cv_ps_format="%s %d %d %d %d %d %f %s %s %n"
+	ac_cv_ps_cols=10
+	AC_MSG_RESULT([$ac_cv_ps_command])
+
 dnl Some gnu/linux systems (debian for one) don't like -axwo and need axwo.
 dnl so test for this first...
 elif ps axwo 'stat comm vsz rss user uid pid ppid args' 2>/dev/null | \

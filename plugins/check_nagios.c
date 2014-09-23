@@ -66,6 +66,7 @@ main (int argc, char **argv)
 	int procppid = 0;
 	int procvsz = 0;
 	int procrss = 0;
+	char *proc_cgroup_hierarchy;
 	float procpcpu = 0;
 	char procstat[8];
 #ifdef PS_USES_PROCETIME

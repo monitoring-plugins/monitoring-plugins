@@ -70,6 +70,7 @@ int options = 0; /* bitmask of filter criteria to test against */
 #define PCPU 256
 #define ELAPSED 512
 #define EREG_ARGS 1024
+#define CGROUP_HIERARCHY 2048
 
 #define KTHREAD_PARENT "kthreadd" /* the parent process of kernel threads:
 							ppid of procs are compared to pid of this proc*/
@@ -93,6 +94,7 @@ int rss;
 float pcpu;
 char *statopts;
 char *prog;
+char *cgroup_hierarchy;
 char *args;
 char *input_filename = NULL;
 regex_t re_args;
@@ -121,6 +123,7 @@ main (int argc, char **argv)
 	char *input_buffer;
 	char *input_line;
 	char *procprog;
+	char *proc_cgroup_hierarchy;
 
 	pid_t mypid = 0;
 	pid_t myppid = 0;
@@ -138,6 +141,7 @@ main (int argc, char **argv)
 	char procstat[8];
 	char procetime[MAX_INPUT_BUFFER] = { '\0' };
 	char *procargs;
+	char *tmp;
 
 	const char *zombie = "Z";
 
@@ -161,6 +165,7 @@ main (int argc, char **argv)
 
 	input_buffer = malloc (MAX_INPUT_BUFFER);
 	procprog = malloc (MAX_INPUT_BUFFER);
+	proc_cgroup_hierarchy = malloc (MAX_INPUT_BUFFER);
 
 	xasprintf (&metric_name, "PROCS");
 	metric = METRIC_PROCS;
@@ -210,6 +215,7 @@ main (int argc, char **argv)
 			printf ("%s", input_line);
 
 		strcpy (procprog, "");
+		strcpy (proc_cgroup_hierarchy, "");
 		xasprintf (&procargs, "%s", "");
 
 		cols = sscanf (input_line, PS_FORMAT, PS_VARLIST);
@@ -229,11 +235,17 @@ main (int argc, char **argv)
 			/* we need to convert the elapsed time to seconds */
 			procseconds = convert_to_seconds(procetime);
 
-			if (verbose >= 3)
-				printf ("proc#=%d uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s\n", 
+			if (verbose >= 3) {
+				printf ("proc#=%d uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s",
 					procs, procuid, procvsz, procrss,
-					procpid, procppid, procpcpu, procstat, 
+					procpid, procppid, procpcpu, procstat,
 					procetime, procprog, procargs);
+				if (strstr(PS_COMMAND, "cgroup") != NULL) {
+					printf(" proc_cgroup_hierarchy=%s\n", proc_cgroup_hierarchy);
+				} else {
+					printf("\n");
+				}
+			}
 
 			/* Ignore self */
 			if ((usepid && mypid == procpid) ||
@@ -283,6 +295,17 @@ main (int argc, char **argv)
 				resultsum |= RSS;
 			if ((options & PCPU)  && (procpcpu >= pcpu))
 				resultsum |= PCPU;
+			if (options & CGROUP_HIERARCHY) {
+				if(!strncmp(proc_cgroup_hierarchy,"-", 2) && !strncmp(cgroup_hierarchy,"/", 2)) {
+					resultsum |= CGROUP_HIERARCHY;
+				} else {
+					if((tmp = strstr(proc_cgroup_hierarchy,":/")) != NULL) {
+						if(!strcmp(tmp+1,cgroup_hierarchy)) {
+							resultsum |= CGROUP_HIERARCHY;
+						};
+					};
+				};
+			};
 
 			found++;
 
@@ -292,10 +315,15 @@ main (int argc, char **argv)
 
 			procs++;
 			if (verbose >= 2) {
-				printf ("Matched: uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s\n", 
+				printf ("Matched: uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s",
 					procuid, procvsz, procrss,
 					procpid, procppid, procpcpu, procstat, 
 					procetime, procprog, procargs);
+				if (strstr(PS_COMMAND, "cgroup") != NULL) {
+					printf(" cgroup_hierarchy=%s\n", cgroup_hierarchy);
+				} else {
+					printf("\n");
+				}
 			}
 
 			if (metric == METRIC_VSZ)
@@ -409,6 +437,7 @@ process_arguments (int argc, char **argv)
 		{"input-file", required_argument, 0, CHAR_MAX+2},
 		{"no-kthreads", required_argument, 0, 'k'},
 		{"traditional-filter", no_argument, 0, 'T'},
+		{"cgroup-hierarchy", required_argument, 0, 'g'},
 		{0, 0, 0, 0}
 	};
 
@@ -417,7 +446,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvhkt:c:w:p:s:u:C:a:z:r:m:P:T",
+		c = getopt_long (argc, argv, "Vvhkt:c:w:p:s:u:C:a:z:r:m:P:Tg:",
 			longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -490,6 +519,15 @@ process_arguments (int argc, char **argv)
 			          prog);
 			options |= PROG;
 			break;
+		case 'g':									/* cgroup hierarchy */
+			if (cgroup_hierarchy)
+				break;
+			else
+				cgroup_hierarchy = optarg;
+			xasprintf (&fmt, _("%s%scgroup hierarchy '%s'"), (fmt ? fmt : ""), (options ? ", " : ""),
+			          cgroup_hierarchy);
+			options |= CGROUP_HIERARCHY;
+			break;
 		case 'a':									/* args (full path name with args) */
 			/* TODO: allow this to be passed in with --metric */
 			if (args)
@@ -559,7 +597,7 @@ process_arguments (int argc, char **argv)
 				metric = METRIC_ELAPSED;
 				break;
 			}
-				
+
 			usage4 (_("Metric must be one of PROCS, VSZ, RSS, CPU, ELAPSED!"));
 		case 'k':	/* linux kernel thread filter */
 			kthread_filter = 1;
@@ -747,6 +785,8 @@ print_help (void)
   printf ("   %s\n", _("Only scan for exact matches of COMMAND (without path)."));
   printf (" %s\n", "-k, --no-kthreads");
   printf ("   %s\n", _("Only scan for non kernel threads (works on Linux only)."));
+  printf (" %s\n", "-g, --cgroup-hierarchy");
+  printf ("   %s\n", _("Only scan for processes belonging to STRING hierarchy (works on Linux only)."));
 
 	printf(_("\n\
 RANGEs are specified 'min:max' or 'min:' or ':max' (or 'max'). If\n\
@@ -764,6 +804,8 @@ be the total number of running processes\n\n"));
   printf (" %s\n", "check_procs -w 2:2 -c 2:1024 -C portsentry");
   printf ("  %s\n", _("Warning if not two processes with command name portsentry."));
   printf ("  %s\n\n", _("Critical if < 2 or > 1024 processes"));
+  printf (" %s\n", "check_procs -c 1:1 -C bind -g /");
+  printf ("  %s\n\n", _("Critical if not one processes with command name bind belonging to root cgroup."));
   printf (" %s\n", "check_procs -w 10 -a '/usr/local/bin/perl' -u root");
   printf ("  %s\n", _("Warning alert if > 10 processes with command arguments containing"));
   printf ("  %s\n\n", _("'/usr/local/bin/perl' and owned by root"));
