@@ -34,7 +34,7 @@ sub print_help ();
 sub print_usage ();
 
 my ($opt_c, $opt_f, $opt_w, $opt_C, $opt_W, $opt_h, $opt_V, $opt_i);
-my ($result, $message, $age, $size, $st);
+my ($result, $message, $age, $size, $st, $perfdata);
 
 $PROGNAME="check_file_age";
 
@@ -92,6 +92,7 @@ unless (-e $opt_f) {
 $st = File::stat::stat($opt_f);
 $age = time - $st->mtime;
 $size = $st->size;
+$perfdata = "age=${age}s;${opt_w};${opt_c} size=${size}B;${opt_W};${opt_C};0";
 
 
 $result = 'OK';
@@ -103,7 +104,7 @@ elsif (($opt_w and $age > $opt_w) or ($opt_W and $size < $opt_W)) {
 	$result = 'WARNING';
 }
 
-print "FILE_AGE $result: $opt_f is $age seconds old and $size bytes\n";
+print "FILE_AGE $result: $opt_f is $age seconds old and $size bytes | $perfdata\n";
 exit $ERRORS{$result};
 
 sub print_usage () {

@@ -5,13 +5,14 @@
 #
 
 use strict;
-use Test::More tests => 16;
+use Test::More tests => 17;
 use NPTest;
 
 my $successOutput = '/^FILE_AGE OK: /';
 my $warningOutput = '/^FILE_AGE WARNING: /';
 my $criticalOutput = '/^FILE_AGE CRITICAL: /';
 my $unknownOutput = '/^FILE_AGE UNKNOWN: /';
+my $performanceOutput = '/ \| age=[0-9]+s;[0-9]+;[0-9]+ size=[0-9]+B;[0-9]+;[0-9]+;0$/';
 
 my $result;
 my $temp_file = "/tmp/check_file_age.tmp";
@@ -56,6 +57,11 @@ $result = NPTest->testCmd(
 	"./check_file_age -f $temp_file -c 1000 -W 100"
 	);
 cmp_ok( $result->return_code, '==', 0, "Checking file size" );
+
+$result = NPTest->testCmd(
+	"./check_file_age -f $temp_file -c 1000 -W 100"
+	);
+like( $result->output, $performanceOutput, "Checking for performance Output" );
 
 $result = NPTest->testCmd(
 	"./check_file_age -f /non/existent --ignore-missing"

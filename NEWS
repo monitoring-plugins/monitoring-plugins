@@ -13,6 +13,7 @@ This file documents the major additions and syntax changes between releases.
 	check_disk shows now troubled partions in verbose mode
 	check_dig has now support for drill and dig
 	check_dig has now support for -6 option
+	Add performance data to check_file_age
 
 	FIXES
 	Fix check_jabber to work with Openfire servers
