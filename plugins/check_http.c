@@ -714,31 +714,31 @@ header_value (const char *headers, const char *header)
 {
   char *s;
   char *value;
-  const char *value_start;
+  const char *value_end;
   int value_size;
 
   s = strcasestr(headers, header);
   if (s == NULL)
     return NULL;
 
-  while (*s && !isspace(*s) && *s != ':')
-    s++;
-  if (*s && *s == ':')
+  s += sizeof(header);
+
+  while (*s && (isspace(*s) || *s == ':'))
     s++;
   while (*s && isspace(*s))
     s++;
 
-  value_start = s;
-  while (*s && *s != '\r' && *s != '\n')
-    s++;
+  value_end = strchr(s, '\r');
+  if (value_end == NULL)
+    die (STATE_UNKNOWN, _("HTTP_UNKNOWN - Failed to parse response headers\n"));
 
-  value_size = (s - value_start);
+  value_size = (value_end - s);
+
   value = (char *) malloc(value_size + 1);
-  if (!value)
-    die (STATE_UNKNOWN, _("HTTP_UNKOWN - Memory allocation error\n"));
+  if (value == NULL)
+    die (STATE_UNKNOWN, _("HTTP_UNKNOWN - Memory allocation error\n"));
 
-  strncpy(value, value_start, value_size);
-
+  strncpy(value, s, value_size);
   value[value_size] = '\0';
 
   return value;
