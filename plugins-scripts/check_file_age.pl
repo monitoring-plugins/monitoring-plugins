@@ -33,9 +33,8 @@ use utils qw (%ERRORS &print_revision &support);
 sub print_help ();
 sub print_usage ();
 
-my ($opt_c, $opt_f, $opt_w, $opt_C, $opt_W, $opt_h, $opt_V, $opt_i, $opt_p);
-my ($result, $message, $age, $size, $st);
-my $perfdata = '';
+my ($opt_c, $opt_f, $opt_w, $opt_C, $opt_W, $opt_h, $opt_V, $opt_i);
+my ($result, $message, $age, $size, $st, $perfdata);
 
 $PROGNAME="check_file_age";
 
@@ -54,7 +53,6 @@ GetOptions(
 	"V"   => \$opt_V, "version"	=> \$opt_V,
 	"h"   => \$opt_h, "help"	=> \$opt_h,
 	"i"   => \$opt_i, "ignore-missing"	=> \$opt_i,
-	"p"   => \$opt_p, "performance-data"	=> \$opt_p,
 	"f=s" => \$opt_f, "file"	=> \$opt_f,
 	"w=f" => \$opt_w, "warning-age=f" => \$opt_w,
 	"W=f" => \$opt_W, "warning-size=f" => \$opt_W,
@@ -94,9 +92,7 @@ unless (-e $opt_f) {
 $st = File::stat::stat($opt_f);
 $age = time - $st->mtime;
 $size = $st->size;
-if ($opt_p) {
-	$perfdata = " | age=${age}s;size=${size}B";
-}
+$perfdata = "age=${age}s;size=${size}B";
 
 
 $result = 'OK';
@@ -108,12 +104,12 @@ elsif (($opt_w and $age > $opt_w) or ($opt_W and $size < $opt_W)) {
 	$result = 'WARNING';
 }
 
-print "FILE_AGE $result: $opt_f is $age seconds old and $size bytes$perfdata\n";
+print "FILE_AGE $result: $opt_f is $age seconds old and $size bytes | $perfdata\n";
 exit $ERRORS{$result};
 
 sub print_usage () {
 	print "Usage:\n";
-	print "  $PROGNAME [-w <secs>] [-c <secs>] [-W <size>] [-C <size>] [-i] [-p] -f <file>\n";
+	print "  $PROGNAME [-w <secs>] [-c <secs>] [-W <size>] [-C <size>] [-i] -f <file>\n";
 	print "  $PROGNAME [-h | --help]\n";
 	print "  $PROGNAME [-V | --version]\n";
 }
@@ -124,7 +120,6 @@ sub print_help () {
 	print_usage();
 	print "\n";
 	print "  -i | --ignore-missing :  return OK if the file does not exist\n";
-	print "  -p | --performance-data :  include performance data\n";
 	print "  <secs>  File must be no more than this many seconds old (default: warn 240 secs, crit 600)\n";
 	print "  <size>  File must be at least this many bytes long (default: crit 0 bytes)\n";
 	print "\n";
