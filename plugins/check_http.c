@@ -677,30 +677,53 @@ expected_statuscode (const char *reply, const char *statuscodes)
 }
 
 char *
-decode_chunked_page (const char *raw, const char *dst)
+decode_chunked_page (const char *raw, char *dst)
 {
   unsigned long int chunksize;
   char *raw_pos;
   char *dst_pos;
+  const char *raw_end = raw + strlen(raw);
 
   raw_pos = (char *)raw;
-  dst_pos = dst;
+  dst_pos = (char *)dst;
+
   while (chunksize = strtoul(raw_pos, NULL, 16)) {
+    if (chunksize <= 0)
+      die (STATE_UNKNOWN, _("HTTP UNKNOWN - Failed to parse chunked body\n"));
+
     // soak up the optional chunk params (which we will ignore)
     while (*raw_pos && *raw_pos != '\r' && *raw_pos != '\n')
       raw_pos++;
 
-    raw_pos += 2; // soak up the leading CRLF
+    // soak up the leading CRLF
+    if (*raw_pos && *raw_pos == '\r')
+      raw_pos++;
+    else
+      die (STATE_UNKNOWN, _("HTTP UNKNOWN - Failed to parse chunked body\n"));
+    if (*raw_pos && *raw_pos == '\n')
+      raw_pos++;
+    else
+      die (STATE_UNKNOWN, _("HTTP UNKNOWN - Failed to parse chunked body\n"));
 
-    if (*raw_pos && *dst_pos)
+    if (*raw_pos && *dst_pos && (raw_pos + chunksize) < raw_end )
       strncpy(dst_pos, raw_pos, chunksize);
     else
-      die (STATE_UNKNOWN, _("HTTP UNKNOWN - Memory allocation error\n"));
+      die (STATE_UNKNOWN, _("HTTP UNKNOWN - Failed to parse chunked body\n"));
 
-    dst_pos += chunksize;
     raw_pos += chunksize;
-    raw_pos += 2; // soak up the ending CRLF
+    dst_pos += chunksize;
+
+    // soak up the ending CRLF
+    if (*raw_pos && *raw_pos == '\r')
+      raw_pos++;
+    else
+      die (STATE_UNKNOWN, _("HTTP UNKNOWN - Failed to parse chunked body\n"));
+    if (*raw_pos && *raw_pos == '\n')
+      raw_pos++;
+    else
+      die (STATE_UNKNOWN, _("HTTP UNKNOWN - Failed to parse chunked body\n"));
   }
+
   if (*dst_pos)
     *dst_pos = '\0';
   else
