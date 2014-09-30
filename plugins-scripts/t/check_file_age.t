@@ -59,7 +59,7 @@ $result = NPTest->testCmd(
 cmp_ok( $result->return_code, '==', 0, "Checking file size" );
 
 $result = NPTest->testCmd(
-	"./check_file_age -f $temp_file -c 1000 -W 100 -p"
+	"./check_file_age -f $temp_file -c 1000 -W 100"
 	);
 like( $result->output, $performanceOutput, "Checking for performance Output" );
 
