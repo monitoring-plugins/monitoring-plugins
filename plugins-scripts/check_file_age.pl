@@ -92,7 +92,7 @@ unless (-e $opt_f) {
 $st = File::stat::stat($opt_f);
 $age = time - $st->mtime;
 $size = $st->size;
-$perfdata = "age=${age}s;${opt_w};${opt_c} size=${size}B;${opt_W};${opt_C};min=0";
+$perfdata = "age=${age}s;${opt_w};${opt_c} size=${size}B;${opt_W};${opt_C};0";
 
 
 $result = 'OK';

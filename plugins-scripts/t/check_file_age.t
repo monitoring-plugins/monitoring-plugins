@@ -12,7 +12,7 @@ my $successOutput = '/^FILE_AGE OK: /';
 my $warningOutput = '/^FILE_AGE WARNING: /';
 my $criticalOutput = '/^FILE_AGE CRITICAL: /';
 my $unknownOutput = '/^FILE_AGE UNKNOWN: /';
-my $performanceOutput = '/ \| age=[0-9]+s;[0-9]+;[0-9]+ size=[0-9]+B;[0-9]+;[0-9]+;min=0$/';
+my $performanceOutput = '/ \| age=[0-9]+s;[0-9]+;[0-9]+ size=[0-9]+B;[0-9]+;[0-9]+;0$/';
 
 my $result;
 my $temp_file = "/tmp/check_file_age.tmp";
