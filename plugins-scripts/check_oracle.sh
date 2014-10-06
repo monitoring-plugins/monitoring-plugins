@@ -6,10 +6,11 @@
 #  This Monitoring plugin was created to check Oracle status
 #
 
+PATH="@TRUSTED_PATH@"
+export PATH
 PROGNAME=`basename $0`
 PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
 REVISION="@NP_VERSION@"
-PATH="@TRUSTED_PATH@"
 
 . $PROGPATH/utils.sh
 
@@ -137,7 +138,7 @@ case "$cmd" in
     tnschk=` tnsping $2`
     tnschk2=` echo  $tnschk | grep -c OK`
     if [ ${tnschk2} -eq 1 ] ; then 
-	tnschk3=` echo $tnschk | sed -e 's/.*(//' -e 's/).*//'`
+	tnschk3=${tnschk##*(}; tnschk3=${tnschk3%)*}
 	echo "OK - reply time ${tnschk3} from $2"
 	exit $STATE_OK
     else

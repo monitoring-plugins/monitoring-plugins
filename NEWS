@@ -7,6 +7,9 @@ This file documents the major additions and syntax changes between releases.
 	  qmail-qstat(8)
 	New check_ifstatus -n option to ignore interfaces by name
 
+	FIXES
+	Fix check_jabber to work with Openfire servers
+
 2.0 11th July 2014
 	ENHANCEMENTS
 	check_mailq now supports auto detection of qmail, postfix, exim and nullmailer with
