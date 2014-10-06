@@ -6,9 +6,22 @@ This file documents the major additions and syntax changes between releases.
 	New ./configure --with-qmail-qstat-command option to specify the path to
 	  qmail-qstat(8)
 	New check_ifstatus -n option to ignore interfaces by name
+	check_ntp_peer has now specific state output for each metric
+	New check_mysql -n option to ignore authentication failures
+	Added IP and port or socket name to error messages
+	New check_ntp_time -o option to add expected offset
+	check_disk shows now troubled partions in verbose mode
+	check_dig has now support for drill and dig
+	check_dig has now support for -6 option
 
 	FIXES
 	Fix check_jabber to work with Openfire servers
+	Fix check_oracle bad string matching when testing TNS server
+	Fixed check_ifstatus performance data output
+        Fixed expire time output for sslutils
+	check_dns now verifies if the answer is returning from the queried
+	  server
+	Fix check_by_ssh to accept --hostname as argument
 
 2.0 11th July 2014
 	ENHANCEMENTS
