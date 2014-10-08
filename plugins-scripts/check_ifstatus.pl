@@ -176,7 +176,7 @@ foreach $key (keys %ifStatus) {
 	# skip unused interfaces
 	my $ifName = $ifStatus{$key}{$snmpIfDescr};
 
-	if (!defined($ifStatus{$key}{'notInUse'}) || !grep(/^${ifName}/, @unused_ports )) {
+	if (!defined($ifStatus{$key}{'notInUse'}) && !grep(/^${ifName}/, @unused_ports )) {
 		# check only if interface is administratively up
 		if ($ifStatus{$key}{$snmpIfAdminStatus} == 1 ) {
 			#check only if interface is not excluded
