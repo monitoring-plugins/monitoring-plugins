@@ -24,6 +24,10 @@ This file documents the major additions and syntax changes between releases.
 	  server
 	Fix check_by_ssh to accept --hostname as argument
 
+	WARNINGS
+	This release doesn't ship with an RPM spec file, please contribute to
+	  PR #1283 if you are interested in it
+
 2.0 11th July 2014
 	ENHANCEMENTS
 	check_mailq now supports auto detection of qmail, postfix, exim and nullmailer with
