@@ -29,42 +29,6 @@ A: At a minimum, the output from 'uname -a' and the version string
    problem and any solution/patch.
 
 
-Q: I'm using Redhat Linux (or some other RPM-based distribution).
-   Which packages should I install?
-
-A: The package monitoring-plugins-<version>.<arch>.rpm contains only
-   those plugins that should work on any POSIX compliant system.  In
-   other words, you should be able to install this package on your
-   system, no matter what else is or in not installed.
-
-   However, most of us have more complex systems than barebones
-   POSIX.  We tried creating a variety of separate packages so
-   each dependency could be installed cleanly, but many people
-   found that this resulted in too many packages.  So in the end,
-   all the non-POSIX plugins were folded into one RPM 
-   (monitoring-plugins-<version>.<arch>.rpm).  Most people will need to
-   use RPM's '--nodeps' option to install this package.
-
-
-Q: My system uses the .deb package format. What packages should I
-   install?
-
-A: We strive for cooperation between all packagers and developers.
-   The answers for .deb are the same as for RPM, after changing the
-   package name suffixes accordingly.
-
-
-Q: I prefer to build my own RPMs. Do I need to install all of the
-   various dependencies?
-
-A: Beginning with the 1.2.9-1 release, you may run
-
-   rpm --define 'custom 1' -ta monitoring-plugins-<release>.tar.gz
-
-   In prior releases, you must unpack the tarball and build the
-   RPM using monitoring-custom.spec with 'rpm -ba'.
-
-
 Q: I get an error like
 
    Warning: Return code of 127 for check of service 'PING' on host 'anyhost' was out of bounds.
