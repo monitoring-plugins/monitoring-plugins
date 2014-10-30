@@ -869,6 +869,7 @@ check_http (void)
   double elapsed_time_transfer = 0.0;
   int page_len = 0;
   int result = STATE_OK;
+  char *force_host_header = NULL;
 
   /* try to connect to the host at the given port number */
   gettimeofday (&tv_temp, NULL);
@@ -926,26 +927,42 @@ check_http (void)
   /* tell HTTP/1.1 servers not to keep the connection alive */
   xasprintf (&buf, "%sConnection: close\r\n", buf);
 
+  /* check if Host header is explicitly set in options */
+  if (http_opt_headers_count) {
+    for (i = 0; i < http_opt_headers_count ; i++) {
+      if (strcmp(http_opt_headers[i], "Host: ")) {
+        force_host_header = http_opt_headers[i];
+      }
+    }
+  }
+
   /* optionally send the host header info */
   if (host_name) {
-    /*
-     * Specify the port only if we're using a non-default port (see RFC 2616,
-     * 14.23).  Some server applications/configurations cause trouble if the
-     * (default) port is explicitly specified in the "Host:" header line.
-     */
-    if ((use_ssl == FALSE && server_port == HTTP_PORT) ||
-        (use_ssl == TRUE && server_port == HTTPS_PORT) ||
-        ( server_address != NULL && strcmp(http_method, "CONNECT") == 0
+    if (force_host_header) {
+      xasprintf (&buf, "%s%s\r\n", buf, force_host_header);
+    }
+    else {
+      /*
+       * Specify the port only if we're using a non-default port (see RFC 2616,
+       * 14.23).  Some server applications/configurations cause trouble if the
+       * (default) port is explicitly specified in the "Host:" header line.
+       */
+      if ((use_ssl == FALSE && server_port == HTTP_PORT) ||
+          (use_ssl == TRUE && server_port == HTTPS_PORT) ||
+          (server_address != NULL && strcmp(http_method, "CONNECT") == 0
          && host_name != NULL && use_ssl == TRUE))
-      xasprintf (&buf, "%sHost: %s\r\n", buf, host_name);
-    else
-      xasprintf (&buf, "%sHost: %s:%d\r\n", buf, host_name, server_port);
+        xasprintf (&buf, "%sHost: %s\r\n", buf, host_name);
+      else
+        xasprintf (&buf, "%sHost: %s:%d\r\n", buf, host_name, server_port);
+    }
   }
 
   /* optionally send any other header tag */
   if (http_opt_headers_count) {
     for (i = 0; i < http_opt_headers_count ; i++) {
-      xasprintf (&buf, "%s%s\r\n", buf, http_opt_headers[i]);
+      if (force_host_header != http_opt_headers[i]) {
+        xasprintf (&buf, "%s%s\r\n", buf, http_opt_headers[i]);
+      }
     }
     /* This cannot be free'd here because a redirection will then try to access this and segfault */
     /* Covered in a testcase in tests/check_http.t */
