@@ -148,37 +148,37 @@ main (int argc, char **argv)
 
 	/* report incoming traffic in Bytes/sec */
 	if (incoming_rate < 1024) {
-		strcpy (incoming_speed_rating, "B/s");
+		strcpy (incoming_speed_rating, "B");
 		adjusted_incoming_rate = (double) incoming_rate;
 	}
 
 	/* report incoming traffic in KBytes/sec */
 	else if (incoming_rate < (1024 * 1024)) {
-		strcpy (incoming_speed_rating, "KB/s");
+		strcpy (incoming_speed_rating, "KB");
 		adjusted_incoming_rate = (double) (incoming_rate / 1024.0);
 	}
 
 	/* report incoming traffic in MBytes/sec */
 	else {
-		strcpy (incoming_speed_rating, "MB/s");
+		strcpy (incoming_speed_rating, "MB");
 		adjusted_incoming_rate = (double) (incoming_rate / 1024.0 / 1024.0);
 	}
 
 	/* report outgoing traffic in Bytes/sec */
 	if (outgoing_rate < 1024) {
-		strcpy (outgoing_speed_rating, "B/s");
+		strcpy (outgoing_speed_rating, "B");
 		adjusted_outgoing_rate = (double) outgoing_rate;
 	}
 
 	/* report outgoing traffic in KBytes/sec */
 	else if (outgoing_rate < (1024 * 1024)) {
-		strcpy (outgoing_speed_rating, "KB/s");
+		strcpy (outgoing_speed_rating, "KB");
 		adjusted_outgoing_rate = (double) (outgoing_rate / 1024.0);
 	}
 
 	/* report outgoing traffic in MBytes/sec */
 	else {
-		strcpy (outgoing_speed_rating, "MB/s");
+		strcpy (outgoing_speed_rating, "MB");
 		adjusted_outgoing_rate = (double) (outgoing_rate / 1024.0 / 1024.0);
 	}
 
@@ -191,7 +191,7 @@ main (int argc, char **argv)
 		result = STATE_WARNING;
 	}
 
-	xasprintf (&error_message, _("%s. In = %0.1f %s, %s. Out = %0.1f %s|%s %s\n"),
+	xasprintf (&error_message, _("%s. In = %0.1f %s/s, %s. Out = %0.1f %s/s|%s %s\n"),
 	          (use_average == TRUE) ? _("Avg") : _("Max"), adjusted_incoming_rate,
 	          incoming_speed_rating, (use_average == TRUE) ? _("Avg") : _("Max"),
 	          adjusted_outgoing_rate, outgoing_speed_rating,
