@@ -1,5 +1,11 @@
 This file documents the major additions and syntax changes between releases.
 
+2.2 [...]
+
+	WARNINGS
+	The format of the performance data emitted by check_mrtgtraf has been
+	  changed to comply with the development guidelines
+
 2.1 15th October 2014
 	ENHANCEMENTS
 	New check_hpjd -p option for port specification (abrist)
