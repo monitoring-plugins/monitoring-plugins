@@ -49,6 +49,7 @@ unsigned int commands = 0;
 unsigned int services = 0;
 int skip_stdout = 0;
 int skip_stderr = 0;
+int warn_on_stderr = 0;
 char *remotecmd = NULL;
 char **commargv = NULL;
 int commargc = 0;
@@ -109,7 +110,10 @@ main (int argc, char **argv)
 	if(chld_err.lines > skip_stderr) {
 		printf (_("Remote command execution failed: %s\n"),
 		        chld_err.line[skip_stderr]);
-		return max_state_alt(result, STATE_UNKNOWN);
+		if ( warn_on_stderr ) 
+			return max_state_alt(result, STATE_WARNING);
+		else
+			return max_state_alt(result, STATE_UNKNOWN);
 	}
 
 	/* this is simple if we're not supposed to be passive.
@@ -182,6 +186,7 @@ process_arguments (int argc, char **argv)
 		{"skip", optional_argument, 0, 'S'}, /* backwards compatibility */
 		{"skip-stdout", optional_argument, 0, 'S'},
 		{"skip-stderr", optional_argument, 0, 'E'},
+		{"warn-on-stderr", no_argument, 0, 'W'},
 		{"proto1", no_argument, 0, '1'},
 		{"proto2", no_argument, 0, '2'},
 		{"use-ipv4", no_argument, 0, '4'},
@@ -301,6 +306,9 @@ process_arguments (int argc, char **argv)
 			else
 				skip_stderr = atoi (optarg);
 			break;
+		case 'W':									/* exit with warning if there is an output on stderr */
+			warn_on_stderr = 1;
+			break;
 		case 'o':									/* Extra options for the ssh command */
 			comm_append("-o");
 			comm_append(optarg);
@@ -408,6 +416,8 @@ print_help (void)
   printf ("    %s\n", _("Ignore all or (if specified) first n lines on STDOUT [optional]"));
   printf (" %s\n", "-E, --skip-stderr[=n]");
   printf ("    %s\n", _("Ignore all or (if specified) first n lines on STDERR [optional]"));
+  printf (" %s\n", "-W, --warn-on-stderr]");
+  printf ("    %s\n", _("Exit with an warning, if there is an output on STDERR"));
   printf (" %s\n", "-f");
   printf ("    %s\n", _("tells ssh to fork rather than create a tty [optional]. This will always return OK if ssh is executed"));
   printf (" %s\n","-C, --command='COMMAND STRING'");
@@ -460,7 +470,7 @@ print_usage (void)
 {
 	printf ("%s\n", _("Usage:"));
 	printf (" %s -H <host> -C <command> [-fqv] [-1|-2] [-4|-6]\n"
-	        "       [-S [lines]] [-E [lines]] [-t timeout] [-i identity]\n"
+	        "       [-S [lines]] [-E [lines]] [-W] [-t timeout] [-i identity]\n"
 	        "       [-l user] [-n name] [-s servicelist] [-O outputfile]\n"
 	        "       [-p port] [-o ssh-option] [-F configfile]\n",
 	        progname);
