@@ -116,6 +116,14 @@ cmd_init (void)
 	}
 #endif
 
+	/* if maxfd is unnaturally high, we force it to a lower value
+	 * ( e.g. on SunOS, when ulimit is set to unlimited: 2147483647 this would cause
+	 * a segfault when following calloc is called ...  ) */
+
+	if ( maxfd > 2048 ) {
+		maxfd = 2048;
+	}
+
 	if (!_cmd_pids)
 		_cmd_pids = calloc (maxfd, sizeof (pid_t));
 }
