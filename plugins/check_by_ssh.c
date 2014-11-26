@@ -169,8 +169,7 @@ process_arguments (int argc, char **argv)
 		{"verbose", no_argument, 0, 'v'},
 		{"fork", no_argument, 0, 'f'},
 		{"timeout", required_argument, 0, 't'},
-		{"host", required_argument, 0, 'H'},    /* backward compatibility */
-		{"hostname", required_argument, 0, 'H'},
+		{"host", required_argument, 0, 'H'},
 		{"port", required_argument,0,'p'},
 		{"output", required_argument, 0, 'O'},
 		{"name", required_argument, 0, 'n'},
@@ -187,6 +186,7 @@ process_arguments (int argc, char **argv)
 		{"use-ipv4", no_argument, 0, '4'},
 		{"use-ipv6", no_argument, 0, '6'},
 		{"ssh-option", required_argument, 0, 'o'},
+		{"force-tty", no_argument, 0, 'z'},
 		{"quiet", no_argument, 0, 'q'},
 		{"configfile", optional_argument, 0, 'F'},
 		{0, 0, 0, 0}
@@ -200,7 +200,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvh1246fqt:H:O:p:i:u:l:C:S::E::n:s:o:F:", longopts,
+		c = getopt_long (argc, argv, "Vvh1246fqzt:H:O:p:i:u:l:C:S::E::n:s:o:F:", longopts,
 		                 &option);
 
 		if (c == -1 || c == EOF)
@@ -275,6 +275,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case '6': 								/* -6 for IPv6 */
 			comm_append("-6");
+			break;
+		case 'z':									/* force psudeo tty allocation */
+			comm_append("-t");
 			break;
 		case 'f':									/* fork to background */
 			comm_append("-f");
@@ -424,6 +427,8 @@ print_help (void)
   printf ("    %s\n", _("short name of host in the monitoring configuration [optional]"));
   printf (" %s\n","-o, --ssh-option=OPTION");
   printf ("    %s\n", _("Call ssh with '-o OPTION' (may be used multiple times) [optional]"));
+  printf (" %s\n","-z, --force-tty");
+  printf ("    %s\n", _("Call ssh with '-t' to force pseudo tty allocation. Has to be used in conjunction with -E [optional]"));
   printf (" %s\n","-F, --configfile");
   printf ("    %s\n", _("Tell ssh to use this configfile [optional]"));
   printf (" %s\n","-q, --quiet");
@@ -462,6 +467,6 @@ print_usage (void)
 	printf (" %s -H <host> -C <command> [-fqv] [-1|-2] [-4|-6]\n"
 	        "       [-S [lines]] [-E [lines]] [-t timeout] [-i identity]\n"
 	        "       [-l user] [-n name] [-s servicelist] [-O outputfile]\n"
-	        "       [-p port] [-o ssh-option] [-F configfile]\n",
+	        "       [-p port] [-z] [-o ssh-option] [-F configfile]\n",
 	        progname);
 }
