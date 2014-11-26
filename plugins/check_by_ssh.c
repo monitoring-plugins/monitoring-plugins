@@ -169,8 +169,8 @@ process_arguments (int argc, char **argv)
 		{"verbose", no_argument, 0, 'v'},
 		{"fork", no_argument, 0, 'f'},
 		{"timeout", required_argument, 0, 't'},
-                {"host", required_argument, 0, 'H'},    /* backward compatibility */
-                {"hostname", required_argument, 0, 'H'},
+		{"host", required_argument, 0, 'H'},    /* backward compatibility */
+		{"hostname", required_argument, 0, 'H'},
 		{"port", required_argument,0,'p'},
 		{"output", required_argument, 0, 'O'},
 		{"name", required_argument, 0, 'n'},
@@ -201,7 +201,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvh1246fqzt:H:O:p:i:u:l:C:S::E::n:s:o:F:", longopts,
+		c = getopt_long (argc, argv, "Vvh1246fzqt:H:O:p:i:u:l:C:S::E::n:s:o:F:", longopts,
 		                 &option);
 
 		if (c == -1 || c == EOF)
@@ -274,11 +274,11 @@ process_arguments (int argc, char **argv)
 		case '4':									/* -4 for IPv4 */
 			comm_append("-4");
 			break;
+		case 'z':									/* -4 for IPv4 */
+			comm_append("-t");
+			break;
 		case '6': 								/* -6 for IPv6 */
 			comm_append("-6");
-			break;
-		case 'z':									/* force psudeo tty allocation */
-			comm_append("-t");
 			break;
 		case 'f':									/* fork to background */
 			comm_append("-f");
@@ -426,10 +426,10 @@ print_help (void)
   printf ("    %s\n", _("list of monitoring service names, separated by ':' [optional]"));
   printf (" %s\n","-n, --name=NAME");
   printf ("    %s\n", _("short name of host in the monitoring configuration [optional]"));
-  printf (" %s\n","-o, --ssh-option=OPTION");
-  printf ("    %s\n", _("Call ssh with '-o OPTION' (may be used multiple times) [optional]"));
   printf (" %s\n","-z, --force-tty");
   printf ("    %s\n", _("Call ssh with '-t' to force pseudo tty allocation. Has to be used in conjunction with -E [optional]"));
+  printf (" %s\n","-o, --ssh-option=OPTION");
+  printf ("    %s\n", _("Call ssh with '-o OPTION' (may be used multiple times) [optional]"));
   printf (" %s\n","-F, --configfile");
   printf ("    %s\n", _("Tell ssh to use this configfile [optional]"));
   printf (" %s\n","-q, --quiet");
