@@ -35,6 +35,7 @@ NP-VERSION-FILE
 /build-aux/install-sh
 /build-aux/missing
 /build-aux/mkinstalldirs
+/build-aux/test-driver
 
 # /doc/
 /doc/developer-guidelines.html
