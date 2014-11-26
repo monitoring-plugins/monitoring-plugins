@@ -616,7 +616,7 @@ double jitter_request(const char *host, int *status){
 				if (bytes_read != ntp_cm_ints + req.count)
 					die(STATE_UNKNOWN, _("Invalid NTP response: %d bytes read does not equal %d plus %d data segment"), bytes_read, ntp_cm_ints, req.count); 
 				/* else null terminate */
-				strncpy(req.data[req.count], "\0", 1);
+				req.data[req.count] = '\0';
 
 				DBG(print_ntp_control_message(&req));
 
