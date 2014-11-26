@@ -178,7 +178,7 @@ main (int argc, char **argv)
 
 		/* watch for the REAL connection string */
 		result = recv (sd, buffer, MAX_INPUT_BUFFER - 1, 0);
-		buffer[result] = "\0"; /* null terminate recieved buffer */
+		buffer[result] = '\0'; /* null terminate recieved buffer */
 
 		/* return a CRITICAL status if we couldn't read any data */
 		if (result == -1) {
