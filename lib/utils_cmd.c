@@ -79,12 +79,14 @@ static pid_t *_cmd_pids = NULL;
  * If that fails and the macro isn't defined, we fall back to an educated
  * guess. There's no guarantee that our guess is adequate and the program
  * will die with SIGSEGV if it isn't and the upper boundary is breached. */
+#define DEFAULT_MAXFD  256   /* fallback value if no max open files value is set */
+#define MAXFD_LIMIT   8192   /* upper limit of open files */
 #ifdef _SC_OPEN_MAX
 static long maxfd = 0;
 #elif defined(OPEN_MAX)
 # define maxfd OPEN_MAX
 #else	/* sysconf macro unavailable, so guess (may be wildly inaccurate) */
-# define maxfd 256
+# define maxfd DEFAULT_MAXFD
 #endif
 
 
@@ -112,7 +114,7 @@ cmd_init (void)
 	if (!maxfd && (maxfd = sysconf (_SC_OPEN_MAX)) < 0) {
 		/* possibly log or emit a warning here, since there's no
 		 * guarantee that our guess at maxfd will be adequate */
-		maxfd = 256;
+		maxfd = DEFAULT_MAXFD;
 	}
 #endif
 
@@ -120,8 +122,8 @@ cmd_init (void)
 	 * ( e.g. on SunOS, when ulimit is set to unlimited: 2147483647 this would cause
 	 * a segfault when following calloc is called ...  ) */
 
-	if ( maxfd > 2048 ) {
-		maxfd = 2048;
+	if ( maxfd > MAXFD_LIMIT ) {
+		maxfd = MAXFD_LIMIT;
 	}
 
 	if (!_cmd_pids)
