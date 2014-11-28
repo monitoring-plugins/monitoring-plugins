@@ -133,7 +133,7 @@ void print_help (void);
 void print_usage (void);
 double calculate_percent(uintmax_t, uintmax_t);
 void stat_path (struct parameter_list *p);
-void do_stat_path (struct parameter_list *p);
+void *do_stat_path (void *p);
 void get_stats (struct parameter_list *p, struct fs_usage *fsp);
 void get_path_stats (struct parameter_list *p, struct fs_usage *fsp);
 
@@ -1005,9 +1005,11 @@ stat_path (struct parameter_list *p)
 #endif
 }
 
-void
-do_stat_path (struct parameter_list *p)
+void *
+do_stat_path (void *in)
 {
+  struct parameter_list *p = in;
+
   /* Stat entry to check that dir exists and is accessible */
   if (verbose >= 3)
     printf("calling stat on %s\n", p->name);
@@ -1017,6 +1019,7 @@ do_stat_path (struct parameter_list *p)
     printf("DISK %s - ", _("CRITICAL"));
     die (STATE_CRITICAL, _("%s %s: %s\n"), p->name, _("is not accessible"), strerror(errno));
   }
+  return NULL;
 }
 
 
