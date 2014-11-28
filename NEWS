@@ -10,6 +10,7 @@ This file documents the major additions and syntax changes between releases.
 	FIXES
 	Let check_real terminate lines with CRLF when talking to the server, as
 	  mandated by 2326
+	Fix check_procs on HP-UX
 
 	WARNINGS
 	The format of the performance data emitted by check_mrtgtraf has been
