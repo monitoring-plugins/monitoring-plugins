@@ -470,13 +470,13 @@ main(int argc, char **argv)
 	/* parse the arguments */
 	for(i = 1; i < argc; i++) {
 		while((arg = getopt(argc, argv, "vhVw:c:n:p:t:H:s:i:b:I:l:m:")) != EOF) {
-			long size;
+			unsigned short size;
 			switch(arg) {
 			case 'v':
 				debug++;
 				break;
 			case 'b':
-				size = strtol(optarg,NULL,0);
+				size = (unsigned short)strtol(optarg,NULL,0);
 				if (size >= (sizeof(struct icmp) + sizeof(struct icmp_ping_data)) &&
 				    size < MAX_PING_DATA) {
 					icmp_data_size = size;
@@ -785,7 +785,7 @@ wait_for_reply(int sock, u_int t)
 		/* this is indeed a valid response */
 		memcpy(&data, icp.icmp_data, sizeof(data));
 		if (debug > 2)
-			printf("ICMP echo-reply of len %u, id %u, seq %u, cksum 0x%X\n",
+			printf("ICMP echo-reply of len %lu, id %u, seq %u, cksum 0x%X\n",
 			       sizeof(data), ntohs(icp.icmp_id), ntohs(icp.icmp_seq), icp.icmp_cksum);
 
 		host = table[ntohs(icp.icmp_seq)/packets];
@@ -864,7 +864,7 @@ send_icmp_ping(int sock, struct rta_host *host)
 	packet.icp->icmp_cksum = icmp_checksum(packet.cksum_in, icmp_pkt_size);
 
 	if (debug > 2)
-		printf("Sending ICMP echo-request of len %u, id %u, seq %u, cksum 0x%X to host %s\n",
+		printf("Sending ICMP echo-request of len %lu, id %u, seq %u, cksum 0x%X to host %s\n",
 		       sizeof(data), ntohs(packet.icp->icmp_id), ntohs(packet.icp->icmp_seq), packet.icp->icmp_cksum, host->name);
 
 	memset(&iov, 0, sizeof(iov));
@@ -1232,7 +1232,7 @@ static u_int
 get_timevar(const char *str)
 {
 	char p, u, *ptr;
-	unsigned int len;
+	size_t len;
 	u_int i, d;	            /* integer and decimal, respectively */
 	u_int factor = 1000;    /* default to milliseconds */
 
