@@ -204,7 +204,7 @@ extern char **environ;
 /** global variables **/
 static struct rta_host **table, *cursor, *list;
 static threshold crit = {80, 500000}, warn = {40, 200000};
-static int mode, protocols, sockets, debug = 0, timeout = 10;
+static int mode, protocols, sockets, debug = 0, timeout = 10, allperf = 1;
 static unsigned short icmp_data_size = DEFAULT_PING_DATA_SIZE;
 static unsigned short icmp_pkt_size = DEFAULT_PING_DATA_SIZE + ICMP_MINLEN;
 
@@ -461,7 +461,7 @@ main(int argc, char **argv)
 
 	/* parse the arguments */
 	for(i = 1; i < argc; i++) {
-		while((arg = getopt(argc, argv, "vhVw:c:n:p:t:H:s:i:b:I:l:m:")) != EOF) {
+		while((arg = getopt(argc, argv, "vhVaw:c:n:p:t:H:s:i:b:I:l:m:")) != EOF) {
 			long size;
 			switch(arg) {
 			case 'v':
@@ -515,6 +515,9 @@ main(int argc, char **argv)
 				break;
 			case 's': /* specify source IP address */
 				set_source_ip(optarg);
+				break;
+			case 'a':
+				allperf = 0;
 				break;
 			case 'V': /* version */
 				print_revision (progname, NP_VERSION);
@@ -1006,12 +1009,16 @@ finish(int sig)
 	host = list;
 	while(host) {
 		if(debug) puts("");
-		printf("%srta=%0.3fms;%0.3f;%0.3f;0; %spl=%u%%;%u;%u;; %srtmax=%0.3fms;;;; %srtmin=%0.3fms;;;; ",
+		if(allperf) printf("%srta=%0.3fms;%0.3f;%0.3f;0; %spl=%u%%;%u;%u;; %srtmax=%0.3fms;;;; %srtmin=%0.3fms;;;; ",
 			   (targets > 1) ? host->name : "",
 			   host->rta / 1000, (float)warn.rta / 1000, (float)crit.rta / 1000,
 			   (targets > 1) ? host->name : "", host->pl, warn.pl, crit.pl,
 			   (targets > 1) ? host->name : "", (float)host->rtmax / 1000,
 			   (targets > 1) ? host->name : "", (host->rtmin < DBL_MAX) ? (float)host->rtmin / 1000 : (float)0);
+		else printf("%srta=%0.3fms;%0.3f;%0.3f;0; %spl=%u%%;%u;%u;; ",
+			   (targets > 1) ? host->name : "",
+			   host->rta / 1000, (float)warn.rta / 1000, (float)crit.rta / 1000,
+			   (targets > 1) ? host->name : "", host->pl, warn.pl, crit.pl);
 
 		host = host->next;
 	}
@@ -1319,6 +1326,8 @@ print_help(void)
   printf (" %s\n", "-b");
   printf ("    %s\n", _("Number of icmp data bytes to send"));
   printf ("    %s %u + %d)\n", _("Packet size will be data bytes + icmp header (currently"),icmp_data_size, ICMP_MINLEN);
+  printf (" %s\n", "-a");
+  printf ("    %s\n",_("no rtmin/rtmax performance data"));
   printf (" %s\n", "-v");
   printf ("    %s\n", _("verbose"));
 
