@@ -10,6 +10,7 @@ This file documents the major additions and syntax changes between releases.
 	WARNINGS
 	The format of the performance data emitted by check_mrtgtraf has been
 	  changed to comply with the development guidelines
+        check_ssh not returns CRITICAL for protocal/version errors
 
 2.1 15th October 2014
 	ENHANCEMENTS
