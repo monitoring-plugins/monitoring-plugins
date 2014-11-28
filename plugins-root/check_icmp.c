@@ -378,6 +378,9 @@ main(int argc, char **argv)
 	int icmp_sockerrno, udp_sockerrno, tcp_sockerrno;
 	int result;
 	struct rta_host *host;
+#ifdef SO_TIMESTAMP
+	int on = 1;
+#endif
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -403,7 +406,6 @@ main(int argc, char **argv)
 	setuid(getuid());
 
 #ifdef SO_TIMESTAMP
-	int on = 1;
 	if(setsockopt(icmp_sock, SOL_SOCKET, SO_TIMESTAMP, &on, sizeof(on)))
 	  if(debug) printf("Warning: no SO_TIMESTAMP support\n");
 #endif // SO_TIMESTAMP
@@ -828,6 +830,8 @@ send_icmp_ping(int sock, struct rta_host *host)
 	} packet = { NULL };
 	long int len;
 	struct icmp_ping_data data;
+	struct msghdr hdr;
+	struct iovec iov;
 	struct timeval tv;
 	struct sockaddr *addr;
 
@@ -863,16 +867,16 @@ send_icmp_ping(int sock, struct rta_host *host)
 		printf("Sending ICMP echo-request of len %u, id %u, seq %u, cksum 0x%X to host %s\n",
 		       sizeof(data), ntohs(packet.icp->icmp_id), ntohs(packet.icp->icmp_seq), packet.icp->icmp_cksum, host->name);
 
-	struct msghdr hdr;
-	memset(&hdr, 0, sizeof(hdr));
-	hdr.msg_name = addr;
-	hdr.msg_namelen = sizeof(struct sockaddr);
-	struct iovec iov;
 	memset(&iov, 0, sizeof(iov));
 	iov.iov_base = packet.buf;
 	iov.iov_len = icmp_pkt_size;
+
+	memset(&hdr, 0, sizeof(hdr));
+	hdr.msg_name = addr;
+	hdr.msg_namelen = sizeof(struct sockaddr);
 	hdr.msg_iov = &iov;
 	hdr.msg_iovlen = 1;
+
 	len = sendmsg(sock, &hdr, MSG_CONFIRM);
 
 	if(len < 0 || (unsigned int)len != icmp_pkt_size) {
@@ -892,9 +896,15 @@ recvfrom_wto(int sock, void *buf, unsigned int len, struct sockaddr *saddr,
 			 u_int *timo, struct timeval* tv)
 {
 	u_int slen;
-	int n;
+	int n, ret;
 	struct timeval to, then, now;
 	fd_set rd, wr;
+	char ans_data[4096];
+	struct msghdr hdr;
+	struct iovec iov;
+#ifdef SO_TIMESTAMP
+	struct cmsghdr* chdr;
+#endif
 
 	if(!*timo) {
 		if(debug) printf("*timo is not\n");
@@ -918,22 +928,20 @@ recvfrom_wto(int sock, void *buf, unsigned int len, struct sockaddr *saddr,
 
 	slen = sizeof(struct sockaddr);
 
-	struct msghdr hdr;
-	memset(&hdr, 0, sizeof(hdr));
-	hdr.msg_name = saddr;
-	hdr.msg_namelen = slen;
-	struct iovec iov;
 	memset(&iov, 0, sizeof(iov));
 	iov.iov_base = buf;
 	iov.iov_len = len;
+
+	memset(&hdr, 0, sizeof(hdr));
+	hdr.msg_name = saddr;
+	hdr.msg_namelen = slen;
 	hdr.msg_iov = &iov;
 	hdr.msg_iovlen = 1;
-	char ans_data[4096];
 	hdr.msg_control = ans_data;
 	hdr.msg_controllen = sizeof(ans_data);
-	int ret = recvmsg(sock, &hdr, 0);
+
+	ret = recvmsg(sock, &hdr, 0);
 #ifdef SO_TIMESTAMP
-	struct cmsghdr* chdr;
 	for(chdr = CMSG_FIRSTHDR(&hdr); chdr; chdr = CMSG_NXTHDR(&hdr, chdr)) {
 		if(chdr->cmsg_level == SOL_SOCKET
 		   && chdr->cmsg_type == SO_TIMESTAMP
