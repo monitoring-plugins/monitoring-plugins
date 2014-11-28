@@ -1,6 +1,9 @@
 This file documents the major additions and syntax changes between releases.
 
 2.2 [...]
+	ENHANCEMENTS
+	check_snmp's performance data now also includes warning/critical
+	  thresholds
 
 	WARNINGS
 	The format of the performance data emitted by check_mrtgtraf has been
