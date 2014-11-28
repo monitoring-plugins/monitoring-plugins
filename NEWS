@@ -4,6 +4,7 @@ This file documents the major additions and syntax changes between releases.
 	ENHANCEMENTS
 	check_snmp's performance data now also includes warning/critical
 	  thresholds
+	New check_snmp "-N" option to specify SNMPv3 context name
 
 	WARNINGS
 	The format of the performance data emitted by check_mrtgtraf has been
