@@ -977,6 +977,7 @@ stat_path (struct parameter_list *p)
   int statdone = 0;
   int timer = timeout_interval;
   struct timespec req, rem;
+
   req.tv_sec = 0;
   pthread_create(&stat_thread, NULL, do_stat_path, p);
   while (timer-- > 0) {
