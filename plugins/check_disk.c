@@ -974,7 +974,6 @@ stat_path (struct parameter_list *p)
 {
 #ifdef HAVE_PTHREAD_H
   pthread_t stat_thread;
-  int status;
   int statdone = 0;
   int timer = timeout_interval;
   struct timespec req, rem;
@@ -992,7 +991,7 @@ stat_path (struct parameter_list *p)
     }
   }
   if (statdone == 1) {
-    pthread_join(stat_thread, (void *)&status);
+    pthread_join(stat_thread, NULL);
   } else {
     pthread_detach(stat_thread);
     if (verbose >= 3)
