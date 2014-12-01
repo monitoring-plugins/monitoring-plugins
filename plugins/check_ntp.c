@@ -590,6 +590,9 @@ double jitter_request(const char *host, int *status){
 		for (i = 0; i < npeers; i++){
 			/* Only query this server if it is the current sync source */
 			if (PEER_SEL(peers[i].status) >= min_peer_sel){
+				char jitter_data[MAX_CM_SIZE+1];
+				size_t jitter_data_count;
+
 				num_selected++;
 				setup_control_request(&req, OP_READVAR, 2);
 				req.assoc = peers[i].assoc;
@@ -623,7 +626,14 @@ double jitter_request(const char *host, int *status){
 				if(verbose) {
 					printf("parsing jitter from peer %.2x: ", ntohs(peers[i].assoc));
 				}
-				startofvalue = strchr(req.data, '=');
+				if((jitter_data_count = ntohs(req.count)) >= sizeof(jitter_data)){
+					die(STATE_UNKNOWN,
+					    _("jitter response too large (%lu bytes)\n"),
+					    (unsigned long)jitter_data_count);
+				}
+				memcpy(jitter_data, req.data, jitter_data_count);
+				jitter_data[jitter_data_count] = '\0';
+				startofvalue = strchr(jitter_data, '=');
 				if(startofvalue != NULL) {
 					startofvalue++;
 					jitter = strtod(startofvalue, &nptr);
