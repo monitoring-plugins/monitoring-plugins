@@ -6,6 +6,7 @@ This file documents the major additions and syntax changes between releases.
 	  thresholds
 	New check_snmp "-N" option to specify SNMPv3 context name
 	New check_nt "-l" parameters: seconds|minutes|hours|days
+	Make sure check_disk won't hang on hanging (network) file systems
 
 	FIXES
 	Let check_real terminate lines with CRLF when talking to the server, as
