@@ -786,7 +786,8 @@ wait_for_reply(int sock, u_int t)
 		memcpy(&data, icp.icmp_data, sizeof(data));
 		if (debug > 2)
 			printf("ICMP echo-reply of len %lu, id %u, seq %u, cksum 0x%X\n",
-			       sizeof(data), ntohs(icp.icmp_id), ntohs(icp.icmp_seq), icp.icmp_cksum);
+			       (unsigned long)sizeof(data), ntohs(icp.icmp_id),
+			       ntohs(icp.icmp_seq), icp.icmp_cksum);
 
 		host = table[ntohs(icp.icmp_seq)/packets];
 		tdiff = get_timevaldiff(&data.stime, &now);
@@ -865,7 +866,9 @@ send_icmp_ping(int sock, struct rta_host *host)
 
 	if (debug > 2)
 		printf("Sending ICMP echo-request of len %lu, id %u, seq %u, cksum 0x%X to host %s\n",
-		       sizeof(data), ntohs(packet.icp->icmp_id), ntohs(packet.icp->icmp_seq), packet.icp->icmp_cksum, host->name);
+		       (unsigned long)sizeof(data), ntohs(packet.icp->icmp_id),
+		       ntohs(packet.icp->icmp_seq), packet.icp->icmp_cksum,
+		       host->name);
 
 	memset(&iov, 0, sizeof(iov));
 	iov.iov_base = packet.buf;
