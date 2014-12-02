@@ -643,7 +643,7 @@ print_help (void)
 	printf (UT_IPv46);
 
 	printf (" %s\n", "-E, --escape");
-  printf ("    %s\n", _("Can use \\n, \\r, \\t or \\ in send or quit string. Must come before send or quit option"));
+  printf ("    %s\n", _("Can use \\n, \\r, \\t or \\\\ in send or quit string. Must come before send or quit option"));
   printf ("    %s\n", _("Default: nothing added to send, \\r\\n added to end of quit"));
   printf (" %s\n", "-s, --send=STRING");
   printf ("    %s\n", _("String to send to the server"));

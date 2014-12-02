@@ -224,7 +224,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 	char *cmdline=NULL, rerrbuf[64];
 
 	/* initialize ereg as it is possible it is printed while uninitialized */
-	memset(&ereg, "\0", sizeof(ereg.buffer));
+	memset(&ereg, '\0', sizeof(ereg.buffer));
 
 	if(upgrade==NO_UPGRADE) return STATE_OK;
 

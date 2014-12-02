@@ -17,6 +17,14 @@ This file documents the major additions and syntax changes between releases.
 	  changed to comply with the development guidelines
         check_ssh not returns CRITICAL for protocal/version errors
 
+2.1.1 2nd December 2014
+	FIXES
+	Fix check_ntp's jitter checking
+	Fix check_ntp's handling of invalid server responses
+	Fix check_apt's handling of invalid regular expressions
+	Fix check_real's server response processing
+	Fix backslash escaping in check_tcp's --help output
+
 2.1 15th October 2014
 	ENHANCEMENTS
 	New check_hpjd -p option for port specification (abrist)
