@@ -158,9 +158,9 @@ AC_SUBST(SOCKETLIBS)
 
 dnl Check for POSIX thread libraries
 AC_CHECK_HEADERS(pthread.h)
-AC_CHECK_LIB(pthread,pthread_create,THRLIBS="-lpthread",
-             AC_CHECK_LIB(pthread,pthread_create,THRLIBS="-lpthread -lrt",-lrt))
-AC_SUBST(THRLIBS)
+AC_CHECK_LIB(pthread,pthread_create,THREADLIBS="-lpthread",
+             AC_CHECK_LIB(pthread,pthread_create,THREADLIBS="-lpthread -lrt",-lrt))
+AC_SUBST(THREADLIBS)
 
 dnl
 dnl check for math-related functions needing -lm
