@@ -28,7 +28,7 @@
 use POSIX;
 use strict;
 use Getopt::Long;
-use vars qw($opt_V $opt_h $opt_v $verbose $PROGNAME $opt_w $opt_c $opt_t
+use vars qw($opt_V $opt_h $opt_v $verbose $PROGNAME $opt_w $opt_c $opt_t $opt_s
 					$opt_M $mailq $status $state $msg $msg_q $msg_p $opt_W $opt_C $mailq @lines
 					%srcdomains %dstdomains);
 use FindBin;
@@ -36,6 +36,7 @@ use lib "$FindBin::Bin";
 use lib '@libexecdir@';
 use utils qw(%ERRORS &print_revision &support &usage );
 
+my ($sudo);
 
 sub print_help ();
 sub print_usage ();
@@ -57,6 +58,17 @@ if ($status){
 	exit $ERRORS{"UNKNOWN"};
 }
 
+if ($opt_s) {
+	if (defined $utils::PATH_TO_SUDO && -x $utils::PATH_TO_SUDO) {
+		$sudo = $utils::PATH_TO_SUDO;
+	} else {
+		print "ERROR: Cannot execute sudo\n";
+		exit $ERRORS{'UNKNOWN'};
+	}
+} else {
+	$sudo = "";
+}
+
 $SIG{'ALRM'} = sub {
 	print ("ERROR: timed out waiting for $utils::PATH_TO_MAILQ \n");
 	exit $ERRORS{"WARNING"};
@@ -69,7 +81,7 @@ if ($mailq eq "sendmail") {
 
 	## open mailq 
 	if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
-		if (! open (MAILQ, "$utils::PATH_TO_MAILQ | " ) ) {
+		if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ | " ) ) {
 			print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
 			exit $ERRORS{'UNKNOWN'};
 		}
@@ -298,7 +310,7 @@ elsif ( $mailq eq "postfix" ) {
 
      ## open mailq
         if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
-                if (! open (MAILQ, "$utils::PATH_TO_MAILQ | " ) ) {
+                if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ | " ) ) {
                         print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
                         exit $ERRORS{'UNKNOWN'};
                 }
@@ -380,7 +392,7 @@ elsif ( $mailq eq "qmail" ) {
 
 	# open qmail-qstat 
 	if ( defined $utils::PATH_TO_QMAIL_QSTAT && -x $utils::PATH_TO_QMAIL_QSTAT ) {
-		if (! open (MAILQ, "$utils::PATH_TO_QMAIL_QSTAT | " ) ) {
+		if (! open (MAILQ, "$sudo $utils::PATH_TO_QMAIL_QSTAT | " ) ) {
 			print "ERROR: could not open $utils::PATH_TO_QMAIL_QSTAT \n";
 			exit $ERRORS{'UNKNOWN'};
 		}
@@ -462,7 +474,7 @@ elsif ( $mailq eq "qmail" ) {
 elsif ( $mailq eq "exim" ) {
 	## open mailq 
 	if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
-		if (! open (MAILQ, "$utils::PATH_TO_MAILQ | " ) ) {
+		if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ | " ) ) {
 			print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
 			exit $ERRORS{'UNKNOWN'};
 		}
@@ -505,7 +517,7 @@ elsif ( $mailq eq "exim" ) {
 elsif ( $mailq eq "nullmailer" ) {
 	## open mailq
 	if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
-		if (! open (MAILQ, "$utils::PATH_TO_MAILQ | " ) ) {
+		if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ | " ) ) {
 			print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
 			exit $ERRORS{'UNKNOWN'};
 		}
@@ -556,7 +568,8 @@ sub process_arguments(){
 		 "M:s" => \$opt_M, "mailserver:s" => \$opt_M, # mailserver (default	sendmail)
 		 "w=i" => \$opt_w, "warning=i"  => \$opt_w,   # warning if above this number
 		 "c=i" => \$opt_c, "critical=i" => \$opt_c,	  # critical if above this number
-		 "t=i" => \$opt_t, "timeout=i"  => \$opt_t 
+		 "t=i" => \$opt_t, "timeout=i"  => \$opt_t,
+		 "s"   => \$opt_s, "sudo"       => \$opt_s
 		 );
 
 	if ($opt_V) {
@@ -637,7 +650,7 @@ sub process_arguments(){
 }
 
 sub print_usage () {
-	print "Usage: $PROGNAME -w <warn> -c <crit> [-W <warn>] [-C <crit>] [-M <MTA>] [-t <timeout>] [-v verbose]\n";
+	print "Usage: $PROGNAME -w <warn> -c <crit> [-W <warn>] [-C <crit>] [-M <MTA>] [-t <timeout>] [-s] [-v]\n";
 }
 
 sub print_help () {
@@ -654,6 +667,7 @@ sub print_help () {
 	print "-C (--Critical)  = Min. number of messages for same domain in queue to generate critical alert ( W < C )\n";
 	print "-t (--timeout)   = Plugin timeout in seconds (default = $utils::TIMEOUT)\n";
 	print "-M (--mailserver) = [ sendmail | qmail | postfix | exim | nullmailer ] (default = autodetect)\n";
+	print "-s (--sudo)      = Use sudo to call the mailq command\n";
 	print "-h (--help)\n";
 	print "-V (--version)\n";
 	print "-v (--verbose)   = debugging output\n";
