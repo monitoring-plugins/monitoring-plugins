@@ -81,7 +81,6 @@ main (int argc, char **argv)
   double elapsed_time;
   long microsec;
   struct timeval tv;
-  int multi_address;
   int parse_address = FALSE; /* This flag scans for Address: but only after Name: */
   output chld_out, chld_err;
   size_t i;
@@ -249,11 +248,6 @@ main (int argc, char **argv)
   elapsed_time = (double)microsec / 1.0e6;
 
   if (result == STATE_OK) {
-    if (strchr (address, ',') == NULL)
-      multi_address = FALSE;
-    else
-      multi_address = TRUE;
-
     result = get_status(elapsed_time, time_thresholds);
     if (result == STATE_OK) {
       printf ("DNS %s: ", _("OK"));
