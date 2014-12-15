@@ -1,0 +1,56 @@
+#!/bin/sh
+
+# Copyright (c) 2014 Monitoring Plugins Development Team
+#
+# Originally written by Holger Weiss <holger@zedat.fu-berlin.de>.
+#
+# This file is free software; the Monitoring Plugins Development Team gives
+# unlimited permission to copy and/or distribute it, with or without
+# modifications, as long as this notice is preserved.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY, to the extent permitted by law; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+set -e
+set -u
+
+tempfile=$(mktemp '/tmp/.plugins.XXXXXX')
+trap 'rm -f $tempfile' EXIT INT TERM
+
+if [ ! -e THANKS.in ]
+then
+	echo >&2 'Please change into the "monitoring-plugins" repository.'
+	exit 2
+fi
+
+case $# in
+	1) since=$1; git cat-file -e "$since";;
+	0) since=$(git tag -l 'v*' | tail -n 1);;
+	*) echo >&2 "Usage: $0 [<since>]"; exit 2;;
+esac
+
+git log --pretty='%an' "$since.." | sort -u | while read first last rest
+do
+	if [ -n "$first" -a -n "$last" -a -z "$rest" ]
+	then
+		if ! grep -q "^$first $last$" AUTHORS THANKS.in
+		then
+			echo "$first $last" >> THANKS.in
+		fi
+	else
+		echo "$first $last $rest" | sed 's/ *$//' >> "$tempfile"
+	fi
+done
+
+if ! git diff --quiet THANKS.in
+then
+	echo 'Please check/commit the changes in the THANKS.in file.'
+fi
+
+if [ -s "$tempfile" ]
+then
+	echo 'The following authors were NOT added to the THANKS.in file:'
+	echo
+	cat "$tempfile"
+fi
