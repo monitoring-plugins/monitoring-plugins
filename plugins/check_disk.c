@@ -61,9 +61,6 @@ const char *email = "devel@monitoring-plugins.org";
 # define ERROR -1
 #endif
 
-/* If nonzero, show inode information. */
-static int inode_format = 1;
-
 /* If nonzero, show even filesystems with zero size or
    uninteresting types. */
 static int show_all_fs = 1;
@@ -182,7 +179,7 @@ main (int argc, char **argv)
   int temp_result;
 
   struct mount_entry *me;
-  struct fs_usage fsp, tmpfsp;
+  struct fs_usage fsp;
   struct parameter_list *temp_list, *path;
 
 #ifdef __CYGWIN__
@@ -427,9 +424,7 @@ process_arguments (int argc, char **argv)
   int c, err;
   struct parameter_list *se;
   struct parameter_list *temp_list = NULL, *previous = NULL;
-  struct parameter_list *temp_path_select_list = NULL;
-  struct mount_entry *me, *temp_me;
-  int result = OK;
+  struct mount_entry *me;
   regex_t re;
   int cflags = REG_NOSUB | REG_EXTENDED;
   int default_cflags = cflags;
