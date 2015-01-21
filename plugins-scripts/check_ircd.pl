@@ -1,7 +1,7 @@
-#! /usr/bin/perl -w
+#!@PERL@ -w
 #
+# Copyright (C) 1999 Richard Mayhew <netsaint@splash.co.za>
 # Copyright (C) 2014, SUSE Linux Products GmbH, Nuremberg
-# Copyright 1999 (c) Richard Mayhew <netsaint@splash.co.za>
 # Author:       Richard Mayhew - South Africa
 # rewritten by: Lars Vogdt <lars@linux-schulserver.de>
 #
@@ -41,7 +41,7 @@ use IO::Socket::INET6;
 use strict;
 use vars qw($PROGNAME $VERSION);
 use vars qw($opt_V $opt_h $opt_t $opt_p $opt_H $opt_w $opt_c $ssl $verbose);
-use lib '/usr/lib/nagios/plugins';
+use lib '@libexecdir@';
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
 
 # ----------------------------------------------------[ Function Prototypes ]--
@@ -55,7 +55,7 @@ $ENV{BASH_ENV} = '';
 
 # -----------------------------------------------------------------[ Global ]--
 $PROGNAME        = 'check_ircd';
-$VERSION         = '1.5.0';
+$VERSION         = '@NP_VERSION@';
 my $nick         = "ircd$$";
 
 # -------------------------------------------------------------[ print_help ]--
@@ -65,7 +65,7 @@ sub print_help ()
     print "Copyright (c) 2014 SUSE Linux Products GmbH, Nuremberg
 based on the original work of Richard Mayhew/Karl DeBisschop in 2000
 
-Perl Check IRCD plugin for Nagios
+Perl Check IRCD monitoring plugin.
 
 ";
     print_usage();
