@@ -66,7 +66,7 @@ void print_usage (void);
 
 char *community = NULL;
 char *address = NULL;
-char *port = NULL;
+int port = NULL;
 
 int
 main (int argc, char **argv)
