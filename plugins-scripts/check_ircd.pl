@@ -1,7 +1,9 @@
 #! /usr/bin/perl -w
 #
 # Copyright (C) 2014, SUSE Linux Products GmbH, Nuremberg
-# Author: Lars Vogdt
+# Copyright 1999 (c) Richard Mayhew <netsaint@splash.co.za>
+# Author:       Richard Mayhew - South Africa
+# rewritten by: Lars Vogdt <lars@linux-schulserver.de>
 #
 # All rights reserved.
 #
@@ -30,6 +32,9 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+#
+# Special thanks to Richard Mayhew for the original plugin written in 
+# 1999/09/20. Some code taken from Charlie Cook (check_disk.pl).
 #
 use Getopt::Long;
 use IO::Socket::INET6;
