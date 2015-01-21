@@ -176,7 +176,7 @@ MAIN:
     my $hostname;
     Getopt::Long::Configure('bundling');
     GetOptions
-         (	"V"   => \$opt_V,  "version"    => \$opt_V,
+         (  "V"   => \$opt_V,  "version"    => \$opt_V,
             "h"   => \$opt_h,  "help"       => \$opt_h,
             "v"   => \$verbose,"verbose"    => \$verbose,
             "s"   => \$ssl,    "ssl"        => \$ssl,
