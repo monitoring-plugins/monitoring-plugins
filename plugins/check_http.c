@@ -129,6 +129,7 @@ char *http_content_type;
 char buffer[MAX_INPUT_BUFFER];
 char *client_cert = NULL;
 char *client_privkey = NULL;
+int http_connect = FALSE;
 
 int process_arguments (int, char **);
 int check_http (void);
@@ -209,6 +210,7 @@ process_arguments (int argc, char **argv)
     {"nohtml", no_argument, 0, 'n'},
     {"ssl", optional_argument, 0, 'S'},
     {"sni", no_argument, 0, SNI_OPTION},
+    {"http-connect", no_argument, 0, 'B'},
     {"post", required_argument, 0, 'P'},
     {"method", required_argument, 0, 'j'},
     {"IP-address", required_argument, 0, 'I'},
@@ -257,7 +259,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46tB:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NE", longopts, &option);
     if (c == -1 || c == EOF)
       break;
 
@@ -463,6 +465,9 @@ process_arguments (int argc, char **argv)
 #else
       usage4 (_("IPv6 support not available"));
 #endif
+      break;
+    case 'B': /* use http-connect */
+      http_connect = TRUE;
       break;
     case 'v': /* verbose */
       verbose = TRUE;
@@ -879,6 +884,11 @@ check_http (void)
   elapsed_time_connect = (double)microsec_connect / 1.0e6;
   if (use_ssl == TRUE) {
     gettimeofday (&tv_temp, NULL);
+    if (http_connect == TRUE) {
+      /* only using port 443 */
+      if (http_connect_through_proxy(host_name, 443, user_agent, sd) != STATE_OK)
+	die (STATE_CRITICAL, _("HTTP CRITICAL - Unable to open proxy tunnel TCP socket\n"));
+    }
     result = np_net_ssl_init_with_hostname_version_and_cert(sd, (use_sni ? host_name : NULL), ssl_version, client_cert, client_privkey);
     if (result != STATE_OK)
       die (STATE_CRITICAL, NULL);
@@ -1372,6 +1382,44 @@ redir (char *pos, char *status_line)
 }
 
 
+/* start the HTTP CONNECT method exchange with a proxy host */
+int
+http_connect_through_proxy (char *host_name, int port, char *user_agent, int sd)
+{
+  int result;
+  char *send_buffer=NULL;
+  char recv_buffer[MAX_INPUT_BUFFER];
+  char *status_line;
+  char *status_code;
+  int http_status;
+
+  asprintf( &send_buffer, "CONNECT %s:%d HTTP/1.0\r\nUser-agent: %s\r\n\r\n", host_name, port, user_agent);
+
+  result = STATE_OK;
+  result = send_tcp_request (sd, send_buffer, recv_buffer, sizeof(recv_buffer));
+  if (result != STATE_OK)
+    return result;
+
+  status_line = recv_buffer;
+  status_line[strcspn(status_line, "\r\n")] = 0;
+  strip (status_line);
+  if (verbose)
+    printf ("HTTP_CONNECT STATUS: %s\n", status_line);
+
+  status_code = strchr (status_line, ' ') + sizeof (char);
+  if (strspn (status_code, "1234567890") != 3)
+    die (STATE_CRITICAL, _("HTTP CRITICAL: HTTP_CONNECT Returns Invalid Status Line (%s)\n"), status_line);
+
+  http_status = atoi (status_code);
+
+  if (http_status != 200) {
+    die (STATE_CRITICAL, _("HTTP CRITICAL: Invalid HTTP Connect Proxy Status (%s)\n"), status_line);
+  }
+
+  return STATE_OK;
+}
+
+
 int
 server_type_check (const char *type)
 {
@@ -1481,6 +1529,10 @@ print_help (void)
   printf (" %s\n", "-K, --private-key=FILE");
   printf ("   %s\n", _("Name of file containing the private key (PEM format)"));
   printf ("   %s\n", _("matching the client certificate"));
+  printf (" %s\n", "-B, --http-connect");
+  printf ("   %s\n", _("Connect to a proxy using the HTTP CONNECT protocol (SSL tunnel)."));
+  printf ("   %s\n", _("Requires -S options.  Will only connect to host through tunnel"));
+  printf ("   %s\n", _("on port 443."));
 #endif
 
   printf (" %s\n", "-e, --expect=STRING");
@@ -1597,5 +1649,5 @@ print_usage (void)
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
-  printf ("       [-T <content-type>] [-j method]\n");
+  printf ("       [-T <content-type>] [-j method] [-B]\n");
 }
