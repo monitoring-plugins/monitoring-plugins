@@ -880,7 +880,12 @@ send_icmp_ping(int sock, struct rta_host *host)
 	hdr.msg_iov = &iov;
 	hdr.msg_iovlen = 1;
 
+/* MSG_CONFIRM is a linux thing and only available on linux kernels >= 2.3.15, see send(2) */
+#ifdef MSG_CONFIRM
 	len = sendmsg(sock, &hdr, MSG_CONFIRM);
+#else
+	len = sendmsg(sock, &hdr, 0);
+#endif
 
 	if(len < 0 || (unsigned int)len != icmp_pkt_size) {
 		if(debug) printf("Failed to send ping to %s\n",
