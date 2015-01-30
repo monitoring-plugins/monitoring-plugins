@@ -106,7 +106,7 @@ process_arguments (int argc, char **argv)
 		{"timeout", required_argument, 0, 't'},
 		{"verbose", no_argument, 0, 'v'},
 		{"remote-version", required_argument, 0, 'r'},
-		{"remote-protcol", required_argument, 0, 'P'},
+		{"remote-protocol", required_argument, 0, 'P'},
 		{0, 0, 0, 0}
 	};
 
