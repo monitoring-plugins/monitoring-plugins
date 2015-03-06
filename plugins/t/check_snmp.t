@@ -166,8 +166,8 @@ SKIP: {
 SKIP: {
     skip "no non responsive host defined", 2 if ( ! $host_nonresponsive );
     $res = NPTest->testCmd( "./check_snmp -H $host_nonresponsive -C np_foobar -o system.sysUpTime.0 -w 1: -c 1:");
-    cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN with non responsive host" );
-    like($res->output, '/External command error: Timeout: No Response from /', "String matches timeout problem");
+    cmp_ok( $res->return_code, '==', 2, "Exit CRITICAL with non responsive host" );
+    like($res->output, '/Plugin timed out while executing system call/', "String matches timeout problem");
 }
 
 SKIP: {
