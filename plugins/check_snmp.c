@@ -41,7 +41,6 @@ const char *email = "devel@monitoring-plugins.org";
 #define DEFAULT_PORT "161"
 #define DEFAULT_MIBLIST "ALL"
 #define DEFAULT_PROTOCOL "1"
-#define DEFAULT_TIMEOUT 1
 #define DEFAULT_RETRIES 5
 #define DEFAULT_AUTH_PROTOCOL "MD5"
 #define DEFAULT_PRIV_PROTOCOL "DES"
@@ -224,7 +223,7 @@ main (int argc, char **argv)
 	outbuff = strdup ("");
 	delimiter = strdup (" = ");
 	output_delim = strdup (DEFAULT_OUTPUT_DELIMITER);
-	timeout_interval = DEFAULT_TIMEOUT;
+	timeout_interval = DEFAULT_SOCKET_TIMEOUT;
 	retries = DEFAULT_RETRIES;
 
 	np_init( (char *) progname, argc, argv );
