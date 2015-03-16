@@ -1154,7 +1154,7 @@ check_http (void)
   page += (size_t) strspn (page, "\r\n");
   header[pos - header] = 0;
 
-  if (chunked_transfer_encoding(header))
+  if (chunked_transfer_encoding(header) && *page)
     page = decode_chunked_page(page, page);
 
   if (verbose)
