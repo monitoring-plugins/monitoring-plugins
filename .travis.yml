@@ -15,7 +15,7 @@ install:
 
 before_script:
   - tools/setup
-  - ./configure
+  - ./configure --enable-libtap
   - make
   - export NPTEST_CACHE="$(pwd)/plugins/t/NPTest.cache.travis"
   - ssh-keygen -t dsa -N "" -f ~/.ssh/id_dsa
