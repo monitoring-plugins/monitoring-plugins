@@ -19,15 +19,15 @@ git push origin master
 git push origin v2.1.1
 
 *** Checkout new version
-rm -fr /tmp/monitoringlug
+rm -fr /tmp/monitoringplug
 # If you need to checkout the tag, don't forget to "checkout master" later to
 # get back to your development branch:
 git checkout tags/v2.1.1
 # Beware: the trailing slash of --prefix is REQUIRED
-git checkout-index --prefix=/tmp/monitoringlug/ -a
+git checkout-index --prefix=/tmp/monitoringplug/ -a
 
 *** Build the tarball
-cd /tmp/monitoringlug
+cd /tmp/monitoringplug
 tools/setup
 ./configure
 make dist
