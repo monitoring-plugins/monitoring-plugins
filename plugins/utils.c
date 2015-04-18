@@ -630,3 +630,43 @@ char *fperfdata (const char *label,
 
 	return data;
 }
+
+char *sperfdata (const char *label,
+ double val,
+ const char *uom,
+ char *warn,
+ char *crit,
+ int minp,
+ double minv,
+ int maxp,
+ double maxv)
+{
+	char *data = NULL;
+	if (strpbrk (label, "'= "))
+		xasprintf (&data, "'%s'=", label);
+	else
+		xasprintf (&data, "%s=", label);
+
+	xasprintf (&data, "%s%f", data, val);
+	xasprintf (&data, "%s%s;", data, uom);
+
+	if (warn!=NULL)
+		xasprintf (&data, "%s%s", data, warn);
+
+	xasprintf (&data, "%s;", data);
+
+	if (crit!=NULL)
+		xasprintf (&data, "%s%s", data, crit);
+
+	xasprintf (&data, "%s;", data);
+
+	if (minp)
+		xasprintf (&data, "%s%f", data, minv);
+
+	if (maxp) {
+		xasprintf (&data, "%s;", data);
+		xasprintf (&data, "%s%f", data, maxv);
+	}
+
+	return data;
+}
