@@ -67,7 +67,10 @@ int ld_protocol = DEFAULT_PROTOCOL;
 #endif
 double warn_time = UNDEFINED;
 double crit_time = UNDEFINED;
+thresholds *entries_thresholds = NULL;
 struct timeval tv;
+char* warn_entries = NULL;
+char* crit_entries = NULL;
 int starttls = FALSE;
 int ssl_on_connect = FALSE;
 int verbose = 0;
@@ -93,6 +96,12 @@ main (int argc, char *argv[])
 
 	int tls;
 	int version=3;
+
+	/* for entry counting */
+
+	LDAPMessage *next_entry;
+	int status_entries = STATE_OK;
+	int num_entries = 0;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -197,12 +206,14 @@ main (int argc, char *argv[])
 	}
 
 	/* do a search of all objectclasses in the base dn */
-	if (ldap_search_s (ld, ld_base, LDAP_SCOPE_BASE, ld_attr, NULL, 0, &result)
+	if (ldap_search_s (ld, ld_base, (crit_entries!=NULL || warn_entries!=NULL) ? LDAP_SCOPE_SUBTREE : LDAP_SCOPE_BASE, ld_attr, NULL, 0, &result)
 			!= LDAP_SUCCESS) {
 		if (verbose)
 			ldap_perror(ld, "ldap_search");
 		printf (_("Could not search/find objectclasses in %s\n"), ld_base);
 		return STATE_CRITICAL;
+	} else if (crit_entries!=NULL || warn_entries!=NULL) {
+		num_entries = ldap_count_entries(ld, result);
 	}
 
 	/* unbind from the ldap server */
@@ -223,14 +234,36 @@ main (int argc, char *argv[])
 	else
 		status = STATE_OK;
 
+	status_entries = get_status(num_entries, entries_thresholds);
+	if (status_entries == STATE_CRITICAL) {
+		status = STATE_CRITICAL;
+	} else if (status!=STATE_CRITICAL) {
+		status = STATE_WARNING;
+	}
+
 	/* print out the result */
-	printf (_("LDAP %s - %.3f seconds response time|%s\n"),
-	        state_text (status),
-	        elapsed_time,
-	        fperfdata ("time", elapsed_time, "s",
-	                  (int)warn_time, warn_time,
-	                  (int)crit_time, crit_time,
-	                  TRUE, 0, FALSE, 0));
+	if (crit_entries!=NULL || warn_entries!=NULL) {
+		printf (_("LDAP %s - found %d entries in %.3f seconds|%s %s\n"),
+			state_text (status),
+			num_entries,
+			elapsed_time,
+			fperfdata ("time", elapsed_time, "s",
+				(int)warn_time, warn_time,
+				(int)crit_time, crit_time,
+				TRUE, 0, FALSE, 0),
+			sperfdata ("entries", (double)num_entries, "",
+				warn_entries,
+				crit_entries,
+				TRUE, 0.0, FALSE, 0.0));
+	} else {
+		printf (_("LDAP %s - %.3f seconds response time|%s\n"),
+			state_text (status),
+			elapsed_time,
+			fperfdata ("time", elapsed_time, "s",
+				(int)warn_time, warn_time,
+				(int)crit_time, crit_time,
+				TRUE, 0, FALSE, 0));
+	}
 
 	return status;
 }
@@ -263,6 +296,8 @@ process_arguments (int argc, char **argv)
 		{"port", required_argument, 0, 'p'},
 		{"warn", required_argument, 0, 'w'},
 		{"crit", required_argument, 0, 'c'},
+		{"warn-entries", required_argument, 0, 'W'},
+		{"crit-entries", required_argument, 0, 'C'},
 		{"verbose", no_argument, 0, 'v'},
 		{0, 0, 0, 0}
 	};
@@ -276,7 +311,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "hvV234TS6t:c:w:H:b:p:a:D:P:", longopts, &option);
+		c = getopt_long (argc, argv, "hvV234TS6t:c:w:H:b:p:a:D:P:C:W:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -317,6 +352,12 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'c':
 			crit_time = strtod (optarg, NULL);
+			break;
+		case 'W':
+			warn_entries = optarg;
+			break;
+		case 'C':
+			crit_entries = optarg;
 			break;
 #ifdef HAVE_LDAP_SET_OPTION
 		case '2':
@@ -381,6 +422,10 @@ validate_arguments ()
 	if (ld_base==NULL)
 		usage4 (_("Please specify the LDAP base\n"));
 
+	if (crit_entries!=NULL || warn_entries!=NULL) {
+		set_thresholds(&entries_thresholds,
+			warn_entries, crit_entries);
+	}
 	return OK;
 }
 
@@ -430,6 +475,11 @@ print_help (void)
 
 	printf (UT_WARN_CRIT);
 
+  printf (" %s\n", "-W [--warn-entries]");
+  printf ("    %s\n", _("Number of found entries to result in warning status"));
+  printf (" %s\n", "-W [--crit-entries]");
+  printf ("    %s\n", _("Number of found entries to result in critical status"));
+
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 	printf (UT_VERBOSE);
@@ -441,6 +491,7 @@ print_help (void)
 	printf (" %s\n", _("'SSL on connect' will be used no matter how the plugin was called."));
 	printf (" %s\n", _("This detection is deprecated, please use 'check_ldap' with the '--starttls' or '--ssl' flags"));
 	printf (" %s\n", _("to define the behaviour explicitly instead."));
+	printf (" %s\n", _("The parameters --warn-entries and --crit-entries are optional."));
 
 	printf (UT_SUPPORT);
 }
