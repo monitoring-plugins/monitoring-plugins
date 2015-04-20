@@ -221,6 +221,13 @@ int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
 			return STATE_WARNING;
 		else
 			return STATE_CRITICAL;
+        } else if (days_left == 0 && time_left > 0) {
+                int hours_left = (int) time_left/3600;
+                printf (_("%s - Certificate '%s' expires in %u %s (%s)\n"), (days_left>days_till_exp_crit) ? "WARNING" : "CRITICAL", cn, hours_left, hours_left > 0 ? "hours" : "minutes", timestamp);
+                if ( days_left > days_till_exp_crit) 
+                        return STATE_WARNING;
+                else
+			return STATE_CRITICAL;
 	} else if (time_left < 0) {
 		printf(_("CRITICAL - Certificate '%s' expired on %s.\n"), cn, timestamp);
 		status=STATE_CRITICAL;
