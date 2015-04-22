@@ -8,6 +8,7 @@ This file documents the major additions and syntax changes between releases.
 	New check_nt "-l" parameters: seconds|minutes|hours|days
 	Make sure check_disk won't hang on hanging (network) file systems
 	New check_mailq -s option which tells the plugin to use sudo(8)
+	New -W/-C option for check_ldap to check number of entries (Gerhard Lausser)
 
 	FIXES
 	Let check_real terminate lines with CRLF when talking to the server, as
