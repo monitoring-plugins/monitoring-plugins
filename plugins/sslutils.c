@@ -217,7 +217,7 @@ int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
         tz = getenv("TZ");
         if (tz)
                 tz = strndup(tz, strlen(tz));
-        setenv("TZ", "UTC", 1);
+        setenv("TZ", "", 1);
         tzset();
 
 	time_left = difftime(timegm(&stamp), time(NULL));
