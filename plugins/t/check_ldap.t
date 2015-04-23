@@ -45,8 +45,8 @@ SKIP: {
 };
 
 SKIP: {
-    skip "NP_HOST_TCP_LDAP not set", 2 if ! $host_tcp_ldap;
-    skip "NP_LDAP_BASE_DN not set",  2 if ! $ldap_base_dn;
+    skip "NP_HOST_TCP_LDAP not set", 12 if ! $host_tcp_ldap;
+    skip "NP_LDAP_BASE_DN not set",  12 if ! $ldap_base_dn;
 
     $cmd = "$command -H $host_tcp_ldap -b $ldap_base_dn -t 5 -w 2 -c 3 -3";
     $result = NPTest->testCmd($cmd);
