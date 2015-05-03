@@ -930,7 +930,7 @@ check_http (void)
   /* check if Host header is explicitly set in options */
   if (http_opt_headers_count) {
     for (i = 0; i < http_opt_headers_count ; i++) {
-      if (strcmp(http_opt_headers[i], "Host: ")) {
+      if (strncmp(http_opt_headers[i], "Host:", 5) == 0) {
         force_host_header = http_opt_headers[i];
       }
     }
