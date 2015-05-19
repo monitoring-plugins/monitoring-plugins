@@ -13,6 +13,7 @@ This file documents the major additions and syntax changes between releases.
 	The check_http -S/--ssl option now allows for specifying the desired
 	  protocol with a "+" suffix to also accept newer versions
 	check_users: add support for range thresholds (John C. Frickson)
+	check_snmp: add ipv6 support (abrist)
 
 	FIXES
 	Let check_real terminate lines with CRLF when talking to the server, as
