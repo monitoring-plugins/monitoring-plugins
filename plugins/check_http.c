@@ -129,6 +129,7 @@ char *http_content_type;
 char buffer[MAX_INPUT_BUFFER];
 char *client_cert = NULL;
 char *client_privkey = NULL;
+int http_status_code;
 
 int process_arguments (int, char **);
 int check_http (void);
@@ -142,6 +143,7 @@ char *perfd_time_firstbyte (double microsec);
 char *perfd_time_headers (double microsec);
 char *perfd_time_transfer (double microsec);
 char *perfd_size (int page_len);
+char *perfd_http_status_code (int http_status_code);
 void print_help (void);
 void print_usage (void);
 
@@ -1191,11 +1193,12 @@ check_http (void)
   /* check elapsed time */
   if (show_extended_perfdata)
     xasprintf (&msg,
-           _("%s - %d bytes in %.3f second response time %s|%s %s %s %s %s %s %s"),
+           _("%s - %d bytes in %.3f second response time %s|%s %s %s %s %s %s %s %s"),
            msg, page_len, elapsed_time,
            (display_html ? "</A>" : ""),
            perfd_time (elapsed_time),
            perfd_size (page_len),
+           perfd_http_status_code (http_status),
            perfd_time_connect (elapsed_time_connect),
            use_ssl == TRUE ? perfd_time_ssl (elapsed_time_ssl) : "",
            perfd_time_headers (elapsed_time_headers),
@@ -1203,11 +1206,12 @@ check_http (void)
            perfd_time_transfer (elapsed_time_transfer));
   else
     xasprintf (&msg,
-           _("%s - %d bytes in %.3f second response time %s|%s %s"),
+           _("%s - %d bytes in %.3f second response time %s|%s %s %s"),
            msg, page_len, elapsed_time,
            (display_html ? "</A>" : ""),
            perfd_time (elapsed_time),
-           perfd_size (page_len));
+           perfd_size (page_len),
+           perfd_http_status_code (http_status));
 
   result = max_state_alt(get_status(elapsed_time, thlds), result);
 
@@ -1421,6 +1425,11 @@ char *perfd_time_firstbyte (double elapsed_time_firstbyte)
 char *perfd_time_transfer (double elapsed_time_transfer)
 {
   return fperfdata ("time_transfer", elapsed_time_transfer, "s", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);
+}
+
+char *perfd_http_status_code (int http_status_code)
+{
+  return perfdata ("code", http_status_code, "", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);
 }
 
 char *perfd_size (int page_len)
