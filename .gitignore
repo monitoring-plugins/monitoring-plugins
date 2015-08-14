@@ -187,6 +187,7 @@ NP-VERSION-FILE
 /plugins/check_swap
 /plugins/check_tcp
 /plugins/check_time
+/plugins/check_timex
 /plugins/check_udp
 /plugins/check_ups
 /plugins/check_users
