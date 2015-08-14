@@ -117,6 +117,11 @@ if !HAVE_UTMPX
 check_users_LDADD += popen.o
 endif
 
+if HAVE_NTP_ADJTIME
+libexec_PROGRAMS += check_timex
+check_timex_LDADD = $(NETLIBS)
+endif
+
 ##############################################################################
 # secondary dependencies
 

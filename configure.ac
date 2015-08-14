@@ -600,6 +600,11 @@ dnl Checks for library functions.
 AC_CHECK_FUNCS(memmove select socket strdup strstr strtol strtoul floor)
 AC_CHECK_FUNCS(poll)
 
+AC_CHECK_FUNCS([ntp_adjtime],
+	[AM_CONDITIONAL([HAVE_NTP_ADJTIME], [true])],
+	[AM_CONDITIONAL([HAVE_NTP_ADJTIME], [false])]
+)
+
 AC_MSG_CHECKING(return type of socket size)
 AC_TRY_COMPILE([#include <stdlib.h>
                 #include <sys/types.h>
