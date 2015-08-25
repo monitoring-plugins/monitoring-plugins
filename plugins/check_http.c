@@ -116,6 +116,7 @@ int onredirect = STATE_OK;
 int followsticky = STICKY_NONE;
 int use_ssl = FALSE;
 int use_sni = FALSE;
+int use_ttfb = FALSE;
 int verbose = FALSE;
 int show_extended_perfdata = FALSE;
 int sd;
@@ -233,6 +234,7 @@ process_arguments (int argc, char **argv)
     {"max-age", required_argument, 0, 'M'},
     {"content-type", required_argument, 0, 'T'},
     {"pagesize", required_argument, 0, 'm'},
+    {"time-to-firstbyte", no_argument, 0, 'F'},
     {"invert-regex", no_argument, NULL, INVERT_REGEX},
     {"use-ipv4", no_argument, 0, '4'},
     {"use-ipv6", no_argument, 0, '6'},
@@ -257,7 +259,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NE:F", longopts, &option);    
     if (c == -1 || c == EOF)
       break;
 
@@ -503,6 +505,10 @@ process_arguments (int argc, char **argv)
     case 'N': /* no-body */
       no_body = TRUE;
       break;
+    case 'F': /* time-to-firstbyte */
+      use_ttfb = TRUE;
+      break;
+
     case 'M': /* max-age */
                   {
                     int L = strlen(optarg);
@@ -1249,8 +1255,10 @@ check_http (void)
   /* check elapsed time */
   if (show_extended_perfdata)
     xasprintf (&msg,
-           _("%s - %d bytes in %.3f second response time %s|%s %s %s %s %s %s %s"),
-           msg, page_len, elapsed_time,
+           use_ttfb ? _("%s - %d bytes. Time to first byte %.3f %s|%s %s %s %s %s %s %s"): 
+             _("%s - %d bytes in %.3f second response time %s|%s %s %s %s %s %s %s"),
+           msg, page_len, 
+           use_ttfb ? elapsed_time_firstbyte: elapsed_time_connect,
            (display_html ? "</A>" : ""),
            perfd_time (elapsed_time),
            perfd_size (page_len),
@@ -1261,13 +1269,19 @@ check_http (void)
            perfd_time_transfer (elapsed_time_transfer));
   else
     xasprintf (&msg,
-           _("%s - %d bytes in %.3f second response time %s|%s %s"),
-           msg, page_len, elapsed_time,
+	   use_ttfb ? _("%s - %d bytes. Time to first byte %.3f %s|%s %s"):     
+             _("%s - %d bytes in %.3f second response time %s|%s %s"),
+           msg, page_len, 
+           use_ttfb ? elapsed_time_firstbyte: elapsed_time,
            (display_html ? "</A>" : ""),
+	   use_ttfb ? perfd_time_firstbyte (elapsed_time_firstbyte) : perfd_time (elapsed_time),
            perfd_time (elapsed_time),
            perfd_size (page_len));
 
-  result = max_state_alt(get_status(elapsed_time, thlds), result);
+  if (use_ttfb)
+    result = max_state_alt(get_status(elapsed_time_firstbyte, thlds), result);
+  else
+    result = max_state_alt(get_status(elapsed_time, thlds), result);
 
   die (result, "HTTP %s: %s\n", state_text(result), msg);
   /* die failed? */
@@ -1449,8 +1463,10 @@ server_port_check (int ssl_flag)
 }
 
 char *perfd_time (double elapsed_time)
-{
-  return fperfdata ("time", elapsed_time, "s",
+{ if (use_ttfb)
+    return fperfdata("time", elapsed_time, "s", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);
+  else
+    return fperfdata ("time", elapsed_time, "s",
             thlds->warning?TRUE:FALSE, thlds->warning?thlds->warning->end:0,
             thlds->critical?TRUE:FALSE, thlds->critical?thlds->critical->end:0,
                    TRUE, 0, FALSE, 0);
@@ -1472,8 +1488,13 @@ char *perfd_time_headers (double elapsed_time_headers)
 }
 
 char *perfd_time_firstbyte (double elapsed_time_firstbyte)
-{
-  return fperfdata ("time_firstbyte", elapsed_time_firstbyte, "s", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);
+{ if (use_ttfb)
+    return fperfdata ("time_firstbyte", elapsed_time_firstbyte, "s", 
+    thlds->warning?TRUE:FALSE, thlds->warning?thlds->warning->end:0,
+    thlds->critical?TRUE:FALSE, thlds->critical?thlds->critical->end:0,
+      TRUE, 0, FALSE, 0);
+  else
+    return fperfdata ("time_firstbyte", elapsed_time_firstbyte, "s", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);
 }
 
 char *perfd_time_transfer (double elapsed_time_transfer)
@@ -1592,6 +1613,8 @@ print_help (void)
   printf ("    %s\n", _("specified IP address. stickyport also ensures port stays the same."));
   printf (" %s\n", "-m, --pagesize=INTEGER<:INTEGER>");
   printf ("    %s\n", _("Minimum page size required (bytes) : Maximum page size required (bytes)"));
+  printf ("    %s\n", _("Cause -w and -c to measure time to first byte."));
+  printf ("    %s\n", "-F, --time-to-firstbyte");
 
   printf (UT_WARN_CRIT);
 
@@ -1659,7 +1682,7 @@ print_usage (void)
   printf (" %s -H <vhost> | -I <IP-address> [-u <uri>] [-p <port>]\n",progname);
   printf ("       [-J <client certificate file>] [-K <private key>]\n");
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L] [-E] [-a auth]\n");
-  printf ("       [-b proxy_auth] [-f <ok|warning|critcal|follow|sticky|stickyport>]\n");
+  printf ("       [-b proxy_auth] [-f <ok|warning|critcal|follow|sticky|stickyport>]\n [-F]" );
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
