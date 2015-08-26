@@ -461,7 +461,7 @@ main (int argc, char **argv)
 			show = strstr (response, "Timeticks: ");
 		}
 		else
-			show = response + 3;
+			show = response;
 
 		iresult = STATE_DEPENDENT;
 
