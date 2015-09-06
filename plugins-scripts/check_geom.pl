@@ -1,7 +1,10 @@
-#!/usr/bin/perl -w
+#!@PERL@ -w
 
-# Copyright (c) 2007, 2008 
+# Copyright (c) 2007, 2008
 # Written by Nathan Butcher
+#
+# Copyright (c) 2015
+# Updated for monitoring-plugins by Dean Hamstead
 #
 # Released under the GNU Public License
 #
@@ -19,8 +22,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
-# Version: 1.4
-# This plugin currently supports : 
+# Version: 1.5
+# This plugin currently supports :
 # "mirror", "stripe", "raid3", "concat", and "shsec" GEOM classes.
 # With a bit of fondling, it could be expanded to recognize other classes
 #
@@ -28,142 +31,200 @@
 # argument be left out, this plugin will show results from all volumes of
 # the geom class you select.
 #
-# Usage:   check_geom <geom class> [volume]
+# Usage:   check_geom -c <geom class> [ -v <volume> ]
 #
 # Example: check_geom mirror gm0
 #          WARNING gm0 DEGRADED, { ad0 , ad1 (32%) }
 
 use strict;
+use Getopt::Long qw( :config no_ignore_case );
 
-my %ERRORS=('DEPENDENT'=>4,'UNKNOWN'=>3,'OK'=>0,'WARNING'=>1,'CRITICAL'=>2);
-my $state="UNKNOWN";
-my $msg="FAILURE";
+use vars qw($PROGNAME $opt_V $opt_h $opt_class $opt_vol );
+use FindBin;
+use lib "$FindBin::Bin";
+use lib '@libexecdir@';
+use utils qw(%ERRORS &print_revision &support );
 
-if ($#ARGV < 0) {
-	print "Not enough arguments!\nUsage: $0 <class> [device]\n";
-	exit $ERRORS{$state};
+$PROGNAME        = 'check_geom';
+
+sub print_help;
+sub print_usage;
+sub process_arguments;
+
+$ENV{'PATH'}     = '@TRUSTED_PATH@';
+$ENV{'BASH_ENV'} = '';
+$ENV{'ENV'}      = '';
+
+my $state        = 'UNKNOWN';
+my $msg          = 'FAILURE';
+
+if ( $^O ne 'freebsd' ) {
+    print "This plugin is only applicable on FreeBSD.\n";
+    exit $ERRORS{'FAILURE'}
 }
 
-if ($^O ne 'freebsd') {
-	print "This plugin is only applicable on FreeBSD.\n";
-	exit $ERRORS{$state};
+GetOptions (
+    'V' => \$opt_V, 'version' => \$opt_V,
+    'h' => \$opt_h, 'help' => \$opt_h,
+    'c=s' => \$opt_class, 'class=s' => \$opt_class,
+    'v=s' => \$opt_vol, 'volume=s' => \$opt_vol,
+) or ( print_help() and exit $ERRORS{'OK'});
+
+if ($opt_V) {
+    print_revision($PROGNAME,'@NP_VERSION@');
+    exit $ERRORS{'OK'};
 }
 
-my $class=$ARGV[0];
-my $volume="";
-my $regex='^\s*' . $class . '\/';
-
-if ($ARGV[1]) {
-	$volume="$ARGV[1]";
-	$regex = $regex . $volume . '\s';
+if ($opt_h) {
+    print_help();
+    exit $ERRORS{'OK'};
 }
 
-my $statcommand="geom $class status";
-if (! open STAT, "$statcommand|") {
-	print ("$state $statcommand returns no result!");
-	exit $ERRORS{$state};
+my $class = $opt_class
+    or ( print_usage() and exit $ERRORS{'FAILURE'} );
+
+my $volume = q();
+my $regex  = '^\s*' . $class . '\/';
+
+if ( $volume = $opt_V ) {
+    $regex  = $regex . $volume . '\s';
 }
 
-my $found=0;
-my $exist=0;
-my $status="";
-my $stateflag=0;
-my $name="";
-my $compo="";
-my $compoflag=0;
-my $output="";
+my $found     = 0;
+my $exist     = 0;
+my $status    = q();
+my $stateflag = 0;
+my $name      = q();
+my $compo     = q();
+my $compoflag = 0;
+my $output    = q();
 
 sub endunit {
 
-	$found=0;
-	$output = "$output - $name $status { $compo }";
+    $found  = 0;
+    $output = "$output - $name $status { $compo }";
 
-	if ($class eq "mirror" && $status !~ /COMPLETE/ ) {
-		if ($compoflag >= 2 && $state ne "CRITICAL") {
-			$state = "WARNING";
-		} else {
-			$state = "CRITICAL";
-		}
-	}
+    if ( $class eq 'mirror' and $status !~ m/COMPLETE/ ) {
+        if ( $compoflag >= 2 && $state ne 'CRITICAL' ) {
+            $state = 'WARNING';
+        }
+        else {
+            $state = 'CRITICAL';
+        }
+    }
 
-	if ($class eq "raid3" && $status !~ /COMPLETE/ ) {
+    if ( $class eq 'raid3' and $status !~ m/COMPLETE/ ) {
 
-		$statcommand="geom $class list $volume";
-		my $unit=0;
-		
-		if (! open STAT, "$statcommand|") {
-			print ("$state $statcommand returns no result!");
-			exit $ERRORS{$state};
-		}
+        my $statcommand = "geom $class list $volume";
+        my $unit        = 0;
 
-		while (<STAT>) {
-			next unless (/Components:/);
-			($unit) = /([0-9]+)$/;
-			next;
-		}
+        open my $STAT, '-|', $statcommand
+          or ( print("$state $statcommand returns no result!")
+            and exit $ERRORS{$state} );
 
-		if ($compoflag == $unit && $state ne "CRITICAL") {
-			$state = "WARNING";
-		}
-	}
+        while ( my $line = <$STAT> ) {
+            next unless ( $line =~ m/Components:/ );
+            ($unit) = $line =~ m/([0-9]+)$/;
+        }
 
-	$compoflag = 0;
+        $state = 'WARNING'
+            if ( $compoflag == $unit and $state ne 'CRITICAL' );
+
+    }
+
+    $compoflag = 0;
 
 }
 
-while(<STAT>) {
+my $statcommand = "geom $class status";
+open my $STAT, '-|', $statcommand
+  or ( print "$state $statcommand returns no result!" and exit $ERRORS{$state} );
 
-	chomp;
-	if ($found) {
-		if (/^\s*$class\//) {
-			&endunit;	
-		} else {
-			my ($vgh) = /\s+(.*)/;
-			$compo="$compo , $vgh";
-			$compoflag++;
-		}
-	}
+while ( my $line = <$STAT> ) {
 
-	if (/$regex/) {
-		($name, $status, $compo) = /^\s*(\S+)\s+(\S+)\s+(.*)$/;
-		$found=1;
-		$exist++;
-		$compoflag++;
+    chomp $line;
+    if ($found) {
+        if ( $line =~ m/^\s*$class\// ) {
+            &endunit;
+        }
+        else {
+            my ($vgh) = $line =~ m/\s+(.*)/;
+            $compo = "$compo , $vgh";
+            $compoflag++;
+        }
+    }
 
-		if (($class eq "mirror" || $class eq "raid3") && $status =~ /COMPLETE/ ) {
-			$stateflag++;
-		}
+    if ( $line =~ m/$regex/ ) {
+        ( $name, $status, $compo ) = $line =~ m/^\s*(\S+)\s+(\S+)\s+(.*)$/;
+        $found = 1;
+        $exist++;
+        $compoflag++;
 
-		if ($class eq "stripe" || $class eq "concat" || $class eq "shsec" && $status =~ /UP/) {
-			$stateflag++;
-		}
-	}
-	
-}
-if ($found != 0) {
-	&endunit;
-}
-close(STAT);
+        if ( ( $class eq 'mirror' or $class eq 'raid3' )
+            and $status =~ m/COMPLETE/ )
+        {
+            $stateflag++;
+        }
 
-if (! $exist ) {
-	$state = "CRITICAL";
-	if (! $volume) {
-		$volume = "volumes";
-	}
-	$msg = sprintf "%s %s unavailable, non-existant, or not responding!\n", $class, $volume;
-	print $state, " ", $msg;
-	exit ($ERRORS{$state});
-}
+        if ( (
+                   $class eq 'stripe'
+                or $class eq 'concat'
+                or $class eq 'shsec'
+            )
+            and $status =~ m/UP/
+          )
+        {
+            $stateflag++;
+        }
+    }
 
-if ($state eq "UNKNOWN" && $stateflag < $exist) {
-	$state = "CRITICAL";
 }
 
-if ($state eq "UNKNOWN") {
-	$state = "OK";
+if ( $found != 0 ) {
+    &endunit;
 }
+
+close($STAT);
+
+unless ($exist) {
+
+    $state  = 'CRITICAL';
+    $volume = 'volumes' unless $volume;
+    $msg    = sprintf "%s %s unavailable, non-existant, or not responding!\n",
+      $class, $volume;
+
+    print $state, ' ', $msg;
+    exit $ERRORS{$state}
+
+}
+
+$state = 'CRITICAL'
+  if ( $state eq 'UNKNOWN' and $stateflag < $exist );
+
+$state = 'OK'
+    if ( $state eq 'UNKNOWN' );
 
 #goats away!
-$msg = sprintf "%s %s\n", $class, $output;
-print $state, " ", $msg;
-exit ($ERRORS{$state});
+my $perfdata = sprintf '%s=%d;;;0;', 'geom_' . $class, $found;
+$msg = sprintf "%s/%s %s { %s }|%s\n", $class, $volume, $status, $compo,
+    $perfdata;
+print $state, ' ', $msg;
+exit $ERRORS{$state};
+
+sub print_usage () {
+    print "Usage:\n";
+    print "  $PROGNAME -c <class> [-v <volume>]\n";
+    print "  $PROGNAME [-h | --help]\n";
+    print "  $PROGNAME [-V | --version]\n";
+}
+
+sub print_help () {
+    print_revision( $PROGNAME, '@NP_VERSION@' );
+    print "Copyright (c) 2015 Dean Hamstead, Nathan Butcher\n\n";
+    print_usage();
+    print "\n";
+    print "  -c | --class  :  Class of geom module (stripe, mirror, raid5 etc)\n";
+    print "  -v | --volume :  Geom volume name\n";
+    print "\n";
+    support();
+}
