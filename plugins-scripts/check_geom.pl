@@ -60,7 +60,7 @@ my $msg          = 'FAILURE';
 
 if ( $^O ne 'freebsd' ) {
     print "This plugin is only applicable on FreeBSD.\n";
-    exit $ERRORS{'FAILURE'}
+    exit $ERRORS{'WARNING'}
 }
 
 GetOptions (
@@ -81,7 +81,7 @@ if ($opt_h) {
 }
 
 my $class = $opt_class
-    or ( print_usage() and exit $ERRORS{'FAILURE'} );
+    or ( print_usage() and exit $ERRORS{'WARNING'} );
 
 my $volume = q();
 my $regex  = '^\s*' . $class . '\/';
