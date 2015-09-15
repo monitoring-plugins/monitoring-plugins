@@ -91,10 +91,12 @@ struct timeval tv_temp;
 
 int specify_port = FALSE;
 int server_port = HTTP_PORT;
+int virtual_port = 0;
 char server_port_text[6] = "";
 char server_type[6] = "http";
 char *server_address;
 char *host_name;
+int host_name_length;
 char *server_url;
 char *user_agent;
 int server_url_length;
@@ -391,11 +393,25 @@ process_arguments (int argc, char **argv)
     case 'H': /* Host Name (virtual host) */
       host_name = strdup (optarg);
       if (host_name[0] == '[') {
-        if ((p = strstr (host_name, "]:")) != NULL) /* [IPv6]:port */
-          server_port = atoi (p + 2);
+        if ((p = strstr (host_name, "]:")) != NULL) { /* [IPv6]:port */
+          virtual_port = atoi (p + 2);
+          /* cut off the port */
+	  host_name_length = strlen (host_name) - strlen (p) - 1;
+          free (host_name);
+          host_name = strndup (optarg, host_name_length);
+          if (specify_port == FALSE)
+            server_port = virtual_port;
+	}
       } else if ((p = strchr (host_name, ':')) != NULL
-                 && strchr (++p, ':') == NULL) /* IPv4:port or host:port */
-          server_port = atoi (p);
+                 && strchr (++p, ':') == NULL) { /* IPv4:port or host:port */
+          virtual_port = atoi (p);
+          /* cut off the port */
+	  host_name_length = strlen (host_name) - strlen (p) - 1;
+          free (host_name);
+          host_name = strndup (optarg, host_name_length);
+          if (specify_port == FALSE)
+            server_port = virtual_port;
+        }
       break;
     case 'I': /* Server IP-address */
       server_address = strdup (optarg);
@@ -550,8 +566,11 @@ process_arguments (int argc, char **argv)
   if (http_method == NULL)
     http_method = strdup ("GET");
 
-  if (client_cert && !client_privkey) 
+  if (client_cert && !client_privkey)
     usage4 (_("If you use a client certificate you must also specify a private key file"));
+
+  if (virtual_port == 0)
+    virtual_port = server_port;
 
   return TRUE;
 }
@@ -958,13 +977,13 @@ check_http (void)
        * 14.23).  Some server applications/configurations cause trouble if the
        * (default) port is explicitly specified in the "Host:" header line.
        */
-      if ((use_ssl == FALSE && server_port == HTTP_PORT) ||
-          (use_ssl == TRUE && server_port == HTTPS_PORT) ||
+      if ((use_ssl == FALSE && virtual_port == HTTP_PORT) ||
+          (use_ssl == TRUE && virtual_port == HTTPS_PORT) ||
           (server_address != NULL && strcmp(http_method, "CONNECT") == 0
          && host_name != NULL && use_ssl == TRUE))
         xasprintf (&buf, "%sHost: %s\r\n", buf, host_name);
       else
-        xasprintf (&buf, "%sHost: %s:%d\r\n", buf, host_name, server_port);
+        xasprintf (&buf, "%sHost: %s:%d\r\n", buf, host_name, virtual_port);
     }
   }
 
@@ -1420,6 +1439,9 @@ redir (char *pos, char *status_line)
          _("HTTP UNKNOWN - Redirection to port above %d - %s://%s:%d%s%s\n"),
          MAX_PORT, server_type, server_address, server_port, server_url,
          display_html ? "</A>" : "");
+
+  /* reset virtual port */
+  virtual_port = server_port;
 
   if (verbose)
     printf (_("Redirection to %s://%s:%d%s\n"), server_type,
