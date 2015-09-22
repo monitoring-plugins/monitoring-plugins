@@ -117,6 +117,7 @@ int followsticky = STICKY_NONE;
 int use_ssl = FALSE;
 int use_sni = FALSE;
 int verbose = FALSE;
+int nrpe = FALSE;
 int show_extended_perfdata = FALSE;
 int sd;
 int min_page_len = 0;
@@ -237,6 +238,7 @@ process_arguments (int argc, char **argv)
     {"use-ipv4", no_argument, 0, '4'},
     {"use-ipv6", no_argument, 0, '6'},
     {"extended-perfdata", no_argument, 0, 'E'},
+    {"nrpe", no_argument, 0, 'o'},
     {0, 0, 0, 0}
   };
 
@@ -257,7 +259,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NEo", longopts, &option);
     if (c == -1 || c == EOF)
       break;
 
@@ -512,6 +514,11 @@ process_arguments (int argc, char **argv)
                   break;
     case 'E': /* show extended perfdata */
       show_extended_perfdata = TRUE;
+      break;
+    case 'o': /* NRPE over HTTP */
+      nrpe = TRUE;
+      strncpy (header_expect, "Content-Type: text/nagios", MAX_INPUT_BUFFER - 1);
+      header_expect[MAX_INPUT_BUFFER - 1] = 0;
       break;
     }
   }
@@ -770,8 +777,72 @@ check_document_dates (const char *headers, char **msg)
   return date_result;
 }
 
+
+/* Fetch the value of header or NULL if not found */
+char* get_header_value (const char *headers, const char *header_name)
+{
+  const char *s;
+  char *header_value = NULL;
+
+
+  s = headers;
+  while (*s) {
+    const char *field = s;
+    const char *value = 0;
+
+    /* Find the end of the header field */
+    while (*s && !isspace(*s) && *s != ':')
+      s++;
+
+    /* Remember the header value, if any. */
+    if (*s == ':')
+      value = ++s;
+
+    /* Skip to the end of the header, including continuation lines. */
+    while (*s && !(*s == '\n' && (s[1] != ' ' && s[1] != '\t')))
+      s++;
+
+    /* Avoid stepping over end-of-string marker */
+    if (*s)
+      s++;
+
+    /* Process this header. */
+    if (value && value > field+2) {
+      char *ff = (char *) malloc (value-field);
+      char *ss = ff;
+      while (field < value-1)
+        *ss++ = tolower(*field++);
+      *ss++ = 0;
+
+      if (!strcmp (ff, header_name)) {
+        const char *e;
+        while (*value && isspace (*value))
+          value++;
+        for (e = value; *e && *e != '\r' && *e != '\n'; e++)
+          ;
+        ss = (char *) malloc (e - value + 1);
+        strncpy (ss, value, e - value);
+        ss[e - value] = 0;
+        header_value = ss;
+      }
+      free (ff);
+    }
+  }
+  return header_value;
+}
+
+int get_content_length (const char *headers)
+{
+  char *length_header = get_header_value(headers, "content-length");
+  int content_length = 0;
+  if (length_header == NULL) return 0;
+  content_length = atoi (length_header);
+  free (length_header);
+  return content_length;
+}
+
 int
-get_content_length (const char *headers)
+get_old_content_length (const char *headers)
 {
   const char *s;
   int content_length = 0;
@@ -822,6 +893,21 @@ get_content_length (const char *headers)
   }
   return (content_length);
 }
+
+int get_x_nrpe_status (const char *headers)
+{
+  char *status_header = get_header_value(headers, "x-nrpe-status");
+  int status = -1;
+
+  if (status_header == NULL) return -1;
+  if (status_header[0] >= '0' && status_header[0] <= '4' && status_header[1]=='\0')
+  {
+    status = atoi(status_header);
+  }
+  free (status_header);
+  return status;
+}
+
 
 char *
 prepend_slash (char *path)
@@ -1162,6 +1248,15 @@ check_http (void)
       xasprintf (&msg, _("%sExecute Error: %s, "), msg, errbuf);
       result = STATE_CRITICAL;
     }
+  }
+
+  /* Expect NRPE style output (if we have passed the basic HTTP checks) */
+  if (result == STATE_OK && nrpe)
+  {
+    if (result == -1) die (STATE_CRITICAL, "HTTP CRITICAL: Header 'X-NRPE-Status' invalid or not found on '%s://%s:%d%s'", use_ssl ? "https" : "http", host_name ? host_name : server_address, server_port, server_url);
+    die (result, page);
+    /* die failed? */
+    return STATE_UNKNOWN;
   }
 
   /* make sure the page is of an appropriate size */
@@ -1533,6 +1628,8 @@ print_help (void)
   printf ("    %s\n", _("specified IP address. stickyport also ensures port stays the same."));
   printf (" %s\n", "-m, --pagesize=INTEGER<:INTEGER>");
   printf ("    %s\n", _("Minimum page size required (bytes) : Maximum page size required (bytes)"));
+  printf (" %s\n", "-o, --nrpe");
+  printf ("    %s\n", _("Result is already NRPE formatted"));
 
   printf (UT_WARN_CRIT);
 
@@ -1548,6 +1645,10 @@ print_help (void)
   printf (" %s\n", _("messages from the host result in STATE_WARNING return values.  If you are"));
   printf (" %s\n", _("checking a virtual server that uses 'host headers' you must supply the FQDN"));
   printf (" %s\n", _("(fully qualified domain name) as the [host_name] argument."));
+  printf ("\n");
+  printf (" %s\n", _("When using 'nrpe' the numerical return code is expected in return header"));
+  printf (" %s\n", _("'X-NRPE-Status' and Content-Type must be text/nagios. The page body is"));
+  printf (" %s\n", _("echoed out. This partly emulates the behaviour of check_nrpe over HTTP."));
 
 #ifdef HAVE_SSL
   printf ("\n");
@@ -1597,5 +1698,5 @@ print_usage (void)
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
-  printf ("       [-T <content-type>] [-j method]\n");
+  printf ("       [-T <content-type>] [-j method] [-o]\n");
 }
