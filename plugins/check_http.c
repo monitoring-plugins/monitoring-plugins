@@ -841,59 +841,6 @@ int get_content_length (const char *headers)
   return content_length;
 }
 
-int
-get_old_content_length (const char *headers)
-{
-  const char *s;
-  int content_length = 0;
-
-  s = headers;
-  while (*s) {
-    const char *field = s;
-    const char *value = 0;
-
-    /* Find the end of the header field */
-    while (*s && !isspace(*s) && *s != ':')
-      s++;
-
-    /* Remember the header value, if any. */
-    if (*s == ':')
-      value = ++s;
-
-    /* Skip to the end of the header, including continuation lines. */
-    while (*s && !(*s == '\n' && (s[1] != ' ' && s[1] != '\t')))
-      s++;
-
-    /* Avoid stepping over end-of-string marker */
-    if (*s)
-      s++;
-
-    /* Process this header. */
-    if (value && value > field+2) {
-      char *ff = (char *) malloc (value-field);
-      char *ss = ff;
-      while (field < value-1)
-        *ss++ = tolower(*field++);
-      *ss++ = 0;
-
-      if (!strcmp (ff, "content-length")) {
-        const char *e;
-        while (*value && isspace (*value))
-          value++;
-        for (e = value; *e && *e != '\r' && *e != '\n'; e++)
-          ;
-        ss = (char *) malloc (e - value + 1);
-        strncpy (ss, value, e - value);
-        ss[e - value] = 0;
-        content_length = atoi(ss);
-        free (ss);
-      }
-      free (ff);
-    }
-  }
-  return (content_length);
-}
-
 int get_x_nrpe_status (const char *headers)
 {
   char *status_header = get_header_value(headers, "x-nrpe-status");
