@@ -1028,6 +1028,7 @@ AC_ARG_WITH(ping_command,
 AC_MSG_CHECKING(for ICMP ping syntax)
 ac_cv_ping_packets_first=no
 ac_cv_ping_has_timeout=no
+ac_cv_ping_has_packetsize=no
 if test -n "$with_ping_command"
 then
 	AC_MSG_RESULT([(command-line) $with_ping_command])
@@ -1051,12 +1052,22 @@ then
 	ac_cv_ping_has_timeout=yes
 	AC_MSG_RESULT([$with_ping_command])
 
-elif [[ "z$ac_cv_uname_s" = "zUnixWare" ]] && \
-	$PATH_TO_PING -n -s 127.0.0.1 56 1 2>/dev/null | \
+# XXX with_ping_command not same like if condition
+#elif [[ "z$ac_cv_uname_s" = "zUnixWare" ]] && \
+#	$PATH_TO_PING -n -s 127.0.0.1 56 1 2>/dev/null | \
+#	egrep -i "^round-trip|^rtt" >/dev/null
+#then
+#	with_ping_command="$PATH_TO_PING -n -U -c %d %s"
+#	ac_cv_ping_packets_first=yes
+#	AC_MSG_RESULT([$with_ping_command])
+
+elif $PATH_TO_PING -n -U -w 10 -c 1 -s 56 127.0.0.1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
-	with_ping_command="$PATH_TO_PING -n -U -c %d %s"
+	with_ping_command="$PATH_TO_PING -n -U -w %d -c %d -s %d %s"
 	ac_cv_ping_packets_first=yes
+	ac_cv_ping_has_timeout=yes
+	ac_cv_ping_has_packetsize=yes
 	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n -U -w 10 -c 1 127.0.0.1 2>/dev/null | \
@@ -1065,6 +1076,14 @@ then
 	with_ping_command="$PATH_TO_PING -n -U -w %d -c %d %s"
 	ac_cv_ping_packets_first=yes
 	ac_cv_ping_has_timeout=yes
+	AC_MSG_RESULT([$with_ping_command])
+
+elif $PATH_TO_PING -n -U -c 1 -s 56 127.0.0.1 2>/dev/null | \
+	egrep -i "^round-trip|^rtt" >/dev/null
+then
+	with_ping_command="$PATH_TO_PING -n -U -c %d -s %d %s"
+	ac_cv_ping_packets_first=yes
+	ac_cv_ping_has_packetsize=yes
 	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n -U -c 1 127.0.0.1 2>/dev/null | \
@@ -1096,13 +1115,15 @@ then
 elif $PATH_TO_PING -n -s 127.0.0.1 56 1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
-	with_ping_command="$PATH_TO_PING -n -s %s 56 %d"
+	with_ping_command="$PATH_TO_PING -n -s %s %d %d"
+	ac_cv_ping_has_packetsize=yes
 	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n -h 127.0.0.1 -s 56 -c 1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
-	with_ping_command="$PATH_TO_PING -n -h %s -s 56 -c %d"
+	with_ping_command="$PATH_TO_PING -n -h %s -s %d -c %d"
+	ac_cv_ping_has_packetsize=yes
 	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n -s 56 -c 1 127.0.0.1 2>/dev/null | \
@@ -1136,6 +1157,12 @@ if test "x$ac_cv_ping_has_timeout" != "xno"
 then
 	AC_DEFINE(PING_HAS_TIMEOUT,1,
 		[Define if ping has its own timeout option that should be set])
+fi
+
+if test "x$ac_cv_ping_has_packetsize" != "xno"
+then
+	AC_DEFINE(PING_HAS_PACKETSIZE,1,
+		[Define if ping has an option for custom packet size])
 fi
 
 AC_ARG_WITH(ping6_command,

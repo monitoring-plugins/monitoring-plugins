@@ -42,7 +42,8 @@ const char *email = "devel@monitoring-plugins.org";
 
 enum {
 	UNKNOWN_PACKET_LOSS = 200,    /* 200% */
-	DEFAULT_MAX_PACKETS = 5       /* default no. of ICMP ECHO packets */
+	DEFAULT_MAX_PACKETS = 5,       /* default no. of ICMP ECHO packets */
+	DEFAULT_PACKET_SIZE = 56      /* default size of ICMP ECHO packets */
 };
 
 int process_arguments (int, char **);
@@ -62,6 +63,7 @@ char **addresses = NULL;
 int n_addresses = 0;
 int max_addr = 1;
 int max_packets = -1;
+int packet_size = DEFAULT_PACKET_SIZE;
 int verbose = 0;
 
 float rta = UNKNOWN_TRIP_TIME;
@@ -120,13 +122,21 @@ main (int argc, char **argv)
 
 		/* does the host address of number of packets argument come first? */
 #ifdef PING_PACKETS_FIRST
-# ifdef PING_HAS_TIMEOUT
+# if defined(PING_HAS_TIMEOUT) && defined(PING_HAS_PACKETSIZE)
+		xasprintf (&cmd, rawcmd, timeout_interval, max_packets, packet_size, addresses[i]);
+# elif defined(PING_HAS_TIMEOUT)
 		xasprintf (&cmd, rawcmd, timeout_interval, max_packets, addresses[i]);
+# elif defined(PING_HAS_PACKETSIZE)
+		xasprintf (&cmd, rawcmd, max_packets, packet_size, addresses[i]);
 # else
 		xasprintf (&cmd, rawcmd, max_packets, addresses[i]);
 # endif
 #else
-		xasprintf (&cmd, rawcmd, addresses[i], max_packets);
+# ifdef PING_HAS_PACKETSIZE
+		xasprintf (&cmd, rawcmd, addresses[i], packet_size, max_packets);
+# else
+                xasprintf (&cmd, rawcmd, addresses[i], max_packets);
+# endif
 #endif
 
 		if (verbose >= 2)
@@ -196,6 +206,7 @@ process_arguments (int argc, char **argv)
 	static struct option longopts[] = {
 		STD_LONG_OPTS,
 		{"packets", required_argument, 0, 'p'},
+		{"packetsize",required_argument, 0, 's'}, 
 		{"nohtml", no_argument, 0, 'n'},
 		{"link", no_argument, 0, 'L'},
 		{"use-ipv4", no_argument, 0, '4'},
@@ -214,7 +225,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "VvhnL46t:c:w:H:p:", longopts, &option);
+		c = getopt_long (argc, argv, "VvhnL46t:c:w:H:p:s:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -271,6 +282,12 @@ process_arguments (int argc, char **argv)
 			else
 				usage2 (_("<max_packets> (%s) must be a non-negative number\n"), optarg);
 			break;
+		case 's':	/* number of packets to send */
+			if (is_intnonneg (optarg))
+				packet_size = atoi (optarg);
+			else
+				usage2 (_("<packet_size> (%s) must be a non-negative number\n"), optarg);
+			break;
 		case 'n':	/* no HTML */
 			display_html = FALSE;
 			break;
@@ -301,6 +318,7 @@ process_arguments (int argc, char **argv)
 		}
 	}
 
+	/* XXX shouldnt this be in function validate_arguments ? */
 	if (wpl == UNKNOWN_PACKET_LOSS) {
 		if (is_intpercent (argv[c]) == FALSE) {
 			printf (_("<wpl> (%s) must be an integer percentage\n"), argv[c]);
@@ -353,6 +371,7 @@ process_arguments (int argc, char **argv)
 			return ERROR;
 		}
 	}
+	/* XXX END  shouldnt this be in function validate_arguments ? */
 
 	return validate_arguments ();
 }
@@ -381,6 +400,10 @@ validate_arguments ()
 	float max_seconds;
 	int i;
 
+	if (packet_size > 65528) {
+		printf (_("max packet size cannot be larger than 65528 Bytes"));
+		return ERROR;
+	}
 	if (wrta < 0.0) {
 		printf (_("<wrta> was not set\n"));
 		return ERROR;
@@ -585,6 +608,9 @@ print_help (void)
   printf (" %s\n", "-p, --packets=INTEGER");
   printf ("    %s ", _("number of ICMP ECHO packets to send"));
   printf (_("(Default: %d)\n"), DEFAULT_MAX_PACKETS);
+  printf (" %s\n", "-s, --packetsize=INTEGER");
+  printf ("    %s ", _("size of ICMP ECHO packet to send"));
+  printf (_("(Default: %d)\n"), DEFAULT_PACKET_SIZE);
   printf (" %s\n", "-L, --link");
   printf ("    %s\n", _("show HTML in the plugin output (obsoleted by urlize)"));
 
@@ -609,5 +635,5 @@ print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
 	printf ("%s -H <host_address> -w <wrta>,<wpl>%% -c <crta>,<cpl>%%\n", progname);
-  printf (" [-p packets] [-t timeout] [-4|-6]\n");
+  printf (" [-p packets] [-s packetsize] [-t timeout] [-4|-6]\n");
 }
