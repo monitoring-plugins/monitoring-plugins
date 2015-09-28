@@ -1129,8 +1129,9 @@ then
 elif $PATH_TO_PING -n -s 56 -c 1 127.0.0.1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
-	with_ping_command="$PATH_TO_PING -n -s 56 -c %d %s"
+	with_ping_command="$PATH_TO_PING -n -c %d -s %d %s"
 	ac_cv_ping_packets_first=yes
+	ac_cv_ping_has_packetsize=yes
 	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n -c 1 127.0.0.1 2>/dev/null | \
