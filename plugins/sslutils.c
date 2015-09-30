@@ -49,12 +49,14 @@ int np_net_ssl_init_with_hostname_and_version(int sd, char *host_name, int versi
 
 int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int version, char *cert, char *privkey) {
 	SSL_METHOD *method = NULL;
+	long options = 0;
 
 	switch (version) {
-	case 0: /* Deafult to auto negotiation */
+	case 0: /* Default to auto negotiate, TLS only */
+		options = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
 		method = SSLv23_client_method();
 		break;
-	case 1: /* TLSv1 protocol */
+	case 1: /* TLSv1.0 only */
 		method = TLSv1_client_method();
 		break;
 	case 2: /* SSLv2 protocol */
@@ -66,8 +68,22 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 #endif
 		break;
 	case 3: /* SSLv3 protocol */
+#if defined(OPENSSL_NO_SSL3)
+		printf(("%s\n", _("CRITICAL - SSL protocol version 3 is not supported by your SSL library.")));
+		return STATE_CRITICAL;
+#else
 		method = SSLv3_client_method();
+#endif
 		break;
+	case 4: /* TLSv1.2+ only */
+#if !defined(SSL_OP_NO_TLSv1_2) || !defined(SSL_OP_NO_TLSv1_1) || !defined(SSL_OP_NO_TLSv1)
+		printf(("%s\n", _("CRITICAL - TLS protocol version 1.2 is not supported by your SSL library.")));
+		return STATE_CRITICAL;
+#else
+		method = SSLv23_client_method();
+		options = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1;
+		break;
+#endif
 	default: /* Unsupported */
 		printf("%s\n", _("CRITICAL - Unsupported SSL protocol version."));
 		return STATE_CRITICAL;
@@ -94,8 +110,9 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 #endif
 	}
 #ifdef SSL_OP_NO_TICKET
-	SSL_CTX_set_options(c, SSL_OP_NO_TICKET);
+	options |= SSL_OP_NO_TICKET;
 #endif
+	SSL_CTX_set_options(c, options);
 	SSL_CTX_set_mode(c, SSL_MODE_AUTO_RETRY);
 	if ((s = SSL_new(c)) != NULL) {
 #ifdef SSL_set_tlsext_host_name

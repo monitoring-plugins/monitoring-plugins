@@ -1121,8 +1121,8 @@ msgstr ""
 
 #: plugins/check_http.c:348
 msgid ""
-"Invalid option - Valid values for SSL Version are 1 (TLSv1), 2 (SSLv2) or 3 "
-"(SSLv3)"
+"Invalid option - Valid values for SSL Version are 1 (TLSv1.0), 2 (SSLv2), 3 (SSLv3) "
+"or 4 (TLSv1.2+)"
 msgstr ""
 
 #: plugins/check_http.c:354 plugins/check_tcp.c:599
@@ -1372,11 +1372,11 @@ msgstr ""
 
 #: plugins/check_http.c:1469
 msgid ""
-"Connect via SSL. Port defaults to 443. VERSION is optional, and prevents"
+"Connect via SSL. Port defaults to 443. VERSION is optional, and forces a"
 msgstr ""
 
 #: plugins/check_http.c:1470
-msgid "auto-negotiation (1 = TLSv1, 2 = SSLv2, 3 = SSLv3)."
+msgid "particular version (1 = TLSv1.0, 2 = SSLv2, 3 = SSLv3, 4 = TLSv1.2+)."
 msgstr ""
 
 #: plugins/check_http.c:1472
