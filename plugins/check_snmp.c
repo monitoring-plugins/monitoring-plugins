@@ -204,6 +204,7 @@ main (int argc, char **argv)
 	time_t duration;
 	char *conv = "12345678";
 	int is_counter=0;
+	int is_ticks= 0;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -449,6 +450,8 @@ main (int argc, char **argv)
 		}
 		else if (strstr (response, "Timeticks: ")) {
 			show = strstr (response, "Timeticks: ");
+			show = strpbrk (show, "-0123456789");
+			is_ticks = 1;
 		}
 		else
 			show = response + 3;
@@ -457,7 +460,7 @@ main (int argc, char **argv)
 
 		/* Process this block for numeric comparisons */
 		/* Make some special values,like Timeticks numeric only if a threshold is defined */
-		if (thlds[i]->warning || thlds[i]->critical || calculate_rate) {
+		if (thlds[i]->warning || thlds[i]->critical || calculate_rate || is_ticks) {
 			ptr = strpbrk (show, "-0123456789");
 			if (ptr == NULL)
 				die (STATE_UNKNOWN,_("No valid data returned (%s)\n"), show);
