@@ -142,18 +142,21 @@ int np_net_ssl_read(void *buf, int num) {
 
 int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
 #  ifdef USE_OPENSSL
+        char timestamp[50] = "";
+        char cn[MAX_CN_LENGTH]= "";
+
 	X509 *certificate=NULL;
 	X509_NAME *subj=NULL;
-	char cn[MAX_CN_LENGTH]= "";
+
 	int cnlen =-1;
 	int status=STATE_UNKNOWN;
 
+        char *tz;
 	ASN1_STRING *tm;
 	int offset;
 	struct tm stamp;
 	float time_left;
 	int days_left;
-	char timestamp[50] = "";
 	time_t tm_t;
 
 	certificate=SSL_get_peer_certificate(s);
@@ -210,9 +213,22 @@ int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
 	stamp.tm_sec = 0;
 	stamp.tm_isdst = -1;
 
+        /* portable version mktime(3) which fixes the date/time representation in the current locale  */
+        tz = getenv("TZ");
+        if (tz)
+                tz = strndup(tz, strlen(tz));
+        setenv("TZ", "", 1);
+        tzset();
+
 	time_left = difftime(timegm(&stamp), time(NULL));
 	days_left = time_left / 86400;
 	tm_t = mktime (&stamp);
+
+        if (tz) {
+                setenv("TZ", tz, 1);
+                free(tz);
+        }
+
 	strftime(timestamp, 50, "%c", localtime(&tm_t));
 
 	if (days_left > 0 && days_left <= days_till_exp_warn) {
