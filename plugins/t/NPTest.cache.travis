@@ -17,7 +17,7 @@
   'NP_HOST_HPJD_PORT_INVALID' => '161',
   'NP_HOST_HPJD_PORT_VALID' => '',
   'NP_HOST_TCP_HTTP' => 'localhost',
-  'NP_HOST_TCP_HTTP2' => 'labs.consol.de',
+  'NP_HOST_TCP_HTTP2' => 'test.monitoring-plugins.org',
   'NP_HOST_TCP_IMAP' => 'imap.web.de',
   'NP_HOST_TCP_POP' => 'pop.web.de',
   'NP_HOST_TCP_SMTP' => 'localhost',
