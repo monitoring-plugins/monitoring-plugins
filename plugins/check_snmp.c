@@ -418,6 +418,9 @@ main (int argc, char **argv)
 		else if (strstr (response, "INTEGER: ")) {
 			show = strstr (response, "INTEGER: ") + 9;
 		}
+		else if (strstr (response, "OID: ")) {
+			show = strstr (response, "OID: ") + 5;
+		}
 		else if (strstr (response, "STRING: ")) {
 			show = strstr (response, "STRING: ") + 8;
 			conv = "%.10g";
