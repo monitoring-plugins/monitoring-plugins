@@ -163,17 +163,17 @@ main (int argc, char **argv)
 
 		/* Part I - Server Check */
 
-		/* send the OPTIONS request */
-		sprintf (buffer, "DESCRIBE rtsp://%s:%d%s RTSP/1.0\n", host_name,
+		/* send the DESCRIBE request */
+		sprintf (buffer, "DESCRIBE rtsp://%s:%d%s RTSP/1.0\r\n", host_name,
 						 server_port, server_url);
 		result = send (sd, buffer, strlen (buffer), 0);
 
 		/* send the header sync */
-		sprintf (buffer, "CSeq: 2\n");
+		sprintf (buffer, "CSeq: 2\r\n");
 		result = send (sd, buffer, strlen (buffer), 0);
 
 		/* send a newline so the server knows we're done with the request */
-		sprintf (buffer, "\n");
+		sprintf (buffer, "\r\n");
 		result = send (sd, buffer, strlen (buffer), 0);
 
 		/* watch for the REAL connection string */

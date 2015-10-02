@@ -128,7 +128,7 @@ sleep 1;
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -w 600" );
 is($res->return_code, 1, "WARNING - due to going above rate calculation" );
-is($res->output, "SNMP RATE WARNING - *666* | iso.3.6.1.4.1.8072.3.2.67.10=666 ");
+is($res->output, "SNMP RATE WARNING - *666* | iso.3.6.1.4.1.8072.3.2.67.10=666;600 ");
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -w 600" );
 is($res->return_code, 3, "UNKNOWN - basically the divide by zero error" );
@@ -209,7 +209,7 @@ is($res->output, 'SNMP OK - "stringtests" | ', "OK as inverted string no match" 
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.12 -w 4:5" );
 is($res->return_code, 1, "Numeric in string test" );
-is($res->output, 'SNMP WARNING - *3.5* | iso.3.6.1.4.1.8072.3.2.67.12=3.5 ', "WARNING threshold checks for string masquerading as number" );
+is($res->output, 'SNMP WARNING - *3.5* | iso.3.6.1.4.1.8072.3.2.67.12=3.5;4:5 ', "WARNING threshold checks for string masquerading as number" );
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.13" );
 is($res->return_code, 0, "Not really numeric test" );
@@ -225,29 +225,29 @@ is($res->output, 'SNMP OK - "CUSTOM CHECK OK: foo is 12345" | ', "String check w
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.16 -w -2: -c -3:" );
 is($res->return_code, 0, "Negative integer check OK" );
-is($res->output, 'SNMP OK - -2 | iso.3.6.1.4.1.8072.3.2.67.16=-2 ', "Negative integer check OK output" );
+is($res->output, 'SNMP OK - -2 | iso.3.6.1.4.1.8072.3.2.67.16=-2;-2:;-3: ', "Negative integer check OK output" );
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.16 -w -2: -c -3:" );
 is($res->return_code, 1, "Negative integer check WARNING" );
-is($res->output, 'SNMP WARNING - *-3* | iso.3.6.1.4.1.8072.3.2.67.16=-3 ', "Negative integer check WARNING output" );
+is($res->output, 'SNMP WARNING - *-3* | iso.3.6.1.4.1.8072.3.2.67.16=-3;-2:;-3: ', "Negative integer check WARNING output" );
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.16 -w -2: -c -3:" );
 is($res->return_code, 2, "Negative integer check CRITICAL" );
-is($res->output, 'SNMP CRITICAL - *-4* | iso.3.6.1.4.1.8072.3.2.67.16=-4 ', "Negative integer check CRITICAL output" );
+is($res->output, 'SNMP CRITICAL - *-4* | iso.3.6.1.4.1.8072.3.2.67.16=-4;-2:;-3: ', "Negative integer check CRITICAL output" );
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.17 -w -3: -c -6:" );
 is($res->return_code, 1, "Negative integer as string, WARNING" );
-is($res->output, 'SNMP WARNING - *-4* | iso.3.6.1.4.1.8072.3.2.67.17=-4 ', "Negative integer as string, WARNING output" );
+is($res->output, 'SNMP WARNING - *-4* | iso.3.6.1.4.1.8072.3.2.67.17=-4;-3:;-6: ', "Negative integer as string, WARNING output" );
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.17 -w -2: -c -3:" );
 is($res->return_code, 2, "Negative integer as string, CRITICAL" );
-is($res->output, 'SNMP CRITICAL - *-4* | iso.3.6.1.4.1.8072.3.2.67.17=-4 ', "Negative integer as string, CRITICAL output" );
+is($res->output, 'SNMP CRITICAL - *-4* | iso.3.6.1.4.1.8072.3.2.67.17=-4;-2:;-3: ', "Negative integer as string, CRITICAL output" );
 
-$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.18 -c ~:-6.5" );
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.18 -c '~:-6.5'" );
 is($res->return_code, 0, "Negative float OK" );
-is($res->output, 'SNMP OK - -6.6 | iso.3.6.1.4.1.8072.3.2.67.18=-6.6 ', "Negative float OK output" );
+is($res->output, 'SNMP OK - -6.6 | iso.3.6.1.4.1.8072.3.2.67.18=-6.6;;~:-6.5 ', "Negative float OK output" );
 
-$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.18 -w ~:-6.65 -c ~:-6.55" );
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.18 -w '~:-6.65' -c '~:-6.55'" );
 is($res->return_code, 1, "Negative float WARNING" );
-is($res->output, 'SNMP WARNING - *-6.6* | iso.3.6.1.4.1.8072.3.2.67.18=-6.6 ', "Negative float WARNING output" );
+is($res->output, 'SNMP WARNING - *-6.6* | iso.3.6.1.4.1.8072.3.2.67.18=-6.6;~:-6.65;~:-6.55 ', "Negative float WARNING output" );
 

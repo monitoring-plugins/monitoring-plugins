@@ -1,6 +1,6 @@
 /*****************************************************************************
 * 
-* Monitoring check_disk plugin
+* Monitoring check_swap plugin
 * 
 * License: GPL
 * Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
@@ -352,6 +352,7 @@ main (int argc, char **argv)
 		percent_used = 100 * ((double) used_swap_mb) / ((double) total_swap_mb);
 	} else {
 		percent_used = 100;
+		status = "- Swap is either disabled, not present, or of zero size. ";
 	}
 
 	result = max_state (result, check_swap (percent_used, free_swap_mb));

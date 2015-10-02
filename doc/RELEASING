@@ -1,4 +1,4 @@
-NOTES ON RELEASING NEW VERSION OF NAGIOSPLUG
+NOTES ON RELEASING NEW VERSION OF MONITORING-PLUGINS
 
 *** Pre-release
 git pull
@@ -6,55 +6,33 @@ git pull
 check compilation, check tinderbox screens
 
 *** Prepare and commit files
-Update BUGS, NEWS file
+Update NEWS file
 Update AUTHORS if new members
-Update configure.in, package.def and NP-VERSION-GEN with version
-Run git2cl (get from http://josefsson.org/git2cl/):
-git2cl >Changelog
-commit BUGS NEWS configure.in package.def ChangeLog
+Update configure.ac and NP-VERSION-GEN with version
+commit NEWS configure.ac NP-VERSION-GEN
 
 *** Create new annotated tag
-git tag -a release-1.4.14 -m release-1.4.14
+git tag -a v2.1.1 -m v2.1.1
 
 *** Push the code and tag to origin
 git push origin master
-git push origin release-1.4.14
+git push origin v2.1.1
 
 *** Checkout new version
-rm -fr /tmp/monitoringlug
+rm -fr /tmp/monitoringplug
 # If you need to checkout the tag, don't forget to "checkout master" later to
 # get back to your development branch:
-git checkout tags/release-1.4.14
+git checkout tags/v2.1.1
 # Beware: the trailing slash of --prefix is REQUIRED
-git checkout-index --prefix=/tmp/monitoringlug/ -a
+git checkout-index --prefix=/tmp/monitoringplug/ -a
 
 *** Build the tarball
-cd /tmp/monitoringlug
+cd /tmp/monitoringplug
 tools/setup
 ./configure
 make dist
 
-*** Upload generated tarball to sourceforge
-sftp frs.sourceforge.net
-SF username and password
-cd /uploads
-put file
-
-SF -> Submit News about release. Make sure it is called "Monitoring Plugins" (with those caps)
-Link to download at http://sourceforge.net/project/showfiles.php?group_id=29880
-Include contents of NEWS for this release
-List all people on team involved.
-Add acknowledgement to contributors
-Submit. Get URL to news item
-
-SF -> Admin -> File Releases
-Add a release to nagiosplug and create a file release
-Name: 1.4.14
-Create release
-Step 1: Add release notes pointing to news item
-Step 2: add file
-Step 3: *.tar.gz, Platform Independent, Source .gz
-Step 4: Send notice
+*** Upload generated tarball to our Project Site
 
 *** Announce new release
 Send email to help, announce with the news text

@@ -9,13 +9,14 @@ before_install:
 
 install:
   - sudo apt-get install -qq --no-install-recommends perl autotools-dev libdbi-dev libldap2-dev libpq-dev libmysqlclient-dev libfreeradius-client-dev libkrb5-dev libnet-snmp-perl procps
-  - sudo apt-get install -qq --no-install-recommends libdbi0-dev libdbd-sqlite3 libssl-dev dnsutils snmp-mibs-downloader
+  - sudo apt-get install -qq --no-install-recommends libdbi0-dev libdbd-sqlite3 libssl-dev dnsutils snmp-mibs-downloader libsnmp-perl snmpd
   - sudo apt-get install -qq --no-install-recommends fping snmp netcat smbclient fping pure-ftpd apache2 postfix libhttp-daemon-ssl-perl
+  - sudo apt-get install -qq --no-install-recommends slapd ldap-utils
   - sudo apt-get install -qq --no-install-recommends autoconf automake
 
 before_script:
   - tools/setup
-  - ./configure
+  - ./configure --enable-libtap
   - make
   - export NPTEST_CACHE="$(pwd)/plugins/t/NPTest.cache.travis"
   - ssh-keygen -t dsa -N "" -f ~/.ssh/id_dsa

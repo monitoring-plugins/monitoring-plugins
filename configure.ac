@@ -156,6 +156,12 @@ AC_CHECK_LIB(socket,socket,SOCKETLIBS="$SOCKETLIBS -lsocket")
 AC_CHECK_LIB(resolv,main,SOCKETLIBS="$SOCKETLIBS -lresolv")
 AC_SUBST(SOCKETLIBS)
 
+dnl Check for POSIX thread libraries
+AC_CHECK_HEADERS(pthread.h)
+AC_CHECK_LIB(pthread,pthread_create,THREADLIBS="-lpthread",
+             AC_CHECK_LIB(pthread,pthread_create,THREADLIBS="-lpthread -lrt",-lrt))
+AC_SUBST(THREADLIBS)
+
 dnl
 dnl check for math-related functions needing -lm
 AC_CHECK_HEADERS(math.h)
@@ -610,6 +616,7 @@ AC_DEFINE_UNQUOTED(SOCKET_SIZE_TYPE, $ac_cv_socket_size_type ,
 dnl #### Process table test
 
 AC_PATH_PROG(PATH_TO_PS,ps)
+AC_PATH_PROG(PATH_TO_ENV,env)
 
 AC_MSG_CHECKING(for ps syntax)
 AC_ARG_WITH(ps_command,
@@ -930,6 +937,19 @@ then
 	ac_cv_ps_format="%*s %s %d %d %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %n%s"
 	ac_cv_ps_cols=6
 	AC_MSG_RESULT([$ac_cv_ps_command])
+
+dnl HP-UX:
+dnl S        UID       RUID USER     RUSER      PID  PPID     VSZ  %CPU COMMAND         COMMAND
+dnl S          0        400 root     oracle    2805     1   12904  0.00 ora_dism_SEA1X  ora_dism_SEA1X
+dnl S        400        400 oracle   oracle   19261     1  126488  0.00 tnslsnr         /u01/app/oracle/product/db/11.2.0.3/bin/tnslsnr LISTENER -inherit
+elif env UNIX95=1 ps -eo 'state uid ruid user ruser pid ppid vsz pcpu comm args' 2>/dev/null | head -n 1 | \
+    egrep -i ["^ *S +UID +RUID +USER +RUSER +PID +PPID +VSZ +%CPU +COMMAND +COMMAND"] >/dev/null
+then
+    ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procpcpu,procprog,&pos]"
+    ac_cv_ps_command="$PATH_TO_ENV UNIX95=1 $PATH_TO_PS -eo 'state uid pid ppid vsz pcpu comm args'"
+    ac_cv_ps_format="%s %d %d %d %d %f %s %n"
+    ac_cv_ps_cols=8
+    AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl AIX 4.1:
 dnl     F S      UID   PID  PPID   C PRI NI ADDR  SZ  RSS   WCHAN    TTY  TIME CMD
@@ -1464,6 +1484,16 @@ else
 	AC_MSG_WARN([Get ssh in order to make check_by_ssh plugin])
 fi
 
+AC_PATH_PROG(PATH_TO_SUDO,sudo)
+AC_ARG_WITH(sudo_command,
+            ACX_HELP_STRING([--with-sudo-command=PATH],
+                            [sets path to sudo]), PATH_TO_SUDO=$withval)
+if test -n "$PATH_TO_SUDO"
+then
+	AC_DEFINE_UNQUOTED(PATH_TO_SUDO,"$PATH_TO_SUDO",[path to sudo])
+else
+	AC_MSG_WARN([Could not find sudo or eqivalent])
+fi
 
 AC_PATH_PROG(PATH_TO_MAILQ,mailq)
 AC_ARG_WITH(mailq_command,

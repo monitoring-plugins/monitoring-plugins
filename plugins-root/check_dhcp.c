@@ -1182,7 +1182,7 @@ int call_getopt(int argc, char **argv){
 		        }
 	        }
 
-	return i;
+	return i+1;
         }
 
 

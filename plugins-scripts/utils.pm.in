@@ -17,6 +17,7 @@ sub support();
 sub is_hostname;
 
 ## updated by autoconf
+$PATH_TO_SUDO    = "@PATH_TO_SUDO@";
 $PATH_TO_RPCINFO = "@PATH_TO_RPCINFO@" ;
 $PATH_TO_LMSTAT  = "@PATH_TO_LMSTAT@" ;
 $PATH_TO_SMBCLIENT = "@PATH_TO_SMBCLIENT@" ;
