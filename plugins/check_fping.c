@@ -105,7 +105,7 @@ main (int argc, char **argv)
     xasprintf(&option_string, "%s-I %s ", option_string, sourceif);
 
 #ifdef PATH_TO_FPING6
-  if (address_family == AF_INET6)
+  if (address_family != AF_INET && is_inet6_addr(server))
     fping_prog = strdup(PATH_TO_FPING6);
   else
     fping_prog = strdup(PATH_TO_FPING);
