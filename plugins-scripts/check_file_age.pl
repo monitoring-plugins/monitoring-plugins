@@ -27,7 +27,6 @@ use File::stat;
 use vars qw($PROGNAME);
 use FindBin;
 use lib "$FindBin::Bin";
-use lib '@libexecdir@';
 use utils qw (%ERRORS &print_revision &support);
 
 sub print_help ();
