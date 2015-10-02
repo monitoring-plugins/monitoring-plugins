@@ -209,7 +209,8 @@ int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
 		(tm->data[6 + offset] - '0') * 10 + (tm->data[7 + offset] - '0');
 	stamp.tm_min =
 		(tm->data[8 + offset] - '0') * 10 + (tm->data[9 + offset] - '0');
-	stamp.tm_sec = 0;
+	stamp.tm_sec =
+		(tm->data[10 + offset] - '0') * 10 + (tm->data[11 + offset] - '0');
 	stamp.tm_isdst = -1;
 
 	time_left = difftime(timegm(&stamp), time(NULL));
@@ -231,7 +232,7 @@ int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
 
 		printf (_("%s - Certificate '%s' expires in %u %s (%s)\n"),
 			(days_left>days_till_exp_crit) ? "WARNING" : "CRITICAL", cn, time_remaining,
-			time_left > 3600 ? "hours" : "minutes", timestamp);
+			time_left >= 3600 ? "hours" : "minutes", timestamp);
 
 		if ( days_left > days_till_exp_crit)
 			status = STATE_WARNING;
