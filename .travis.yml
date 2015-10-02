@@ -13,6 +13,7 @@ install:
   - sudo apt-get install -qq --no-install-recommends fping snmp netcat smbclient fping pure-ftpd apache2 postfix libhttp-daemon-ssl-perl
   - sudo apt-get install -qq --no-install-recommends slapd ldap-utils
   - sudo apt-get install -qq --no-install-recommends autoconf automake
+  - sudo apt-get install -qq --no-install-recommends faketime
 
 before_script:
   - tools/setup
