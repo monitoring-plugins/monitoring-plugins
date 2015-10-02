@@ -144,8 +144,6 @@ usage5 (void)
 void
 print_revision (const char *command_name, const char *revision)
 {
-	char plugin_revision[STRLEN];
-
 	printf ("%s v%s (%s %s)\n",
 	         command_name, revision, PACKAGE, VERSION);
 }
