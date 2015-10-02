@@ -61,7 +61,8 @@ use POSIX;
 use strict;
 use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_H $opt_t $opt_w $opt_c $opt_O $opt_j $opt_k $verbose $PROGNAME $def_jitter $ipv4 $ipv6);
-use lib utils.pm;
+use FindBin;
+use lib "$FindBin::Bin";
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 
 $PROGNAME="check_ntp";
