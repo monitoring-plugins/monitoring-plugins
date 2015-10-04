@@ -15,7 +15,7 @@ my $successOutput = '/^check_rpc/';
 
 my $t;
 
-$t += checkCmd( "./check_rpc -V",   0, $successOutput );
+$t += checkCmd( "./check_rpc -V",   3, $successOutput );
 
 exit(0) if defined($Test::Harness::VERSION);
 exit($tests - $t);

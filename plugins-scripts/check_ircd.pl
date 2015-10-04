@@ -181,10 +181,10 @@ MAIN:
 
 	if ($opt_V) {
 		print_revision($PROGNAME,'@NP_VERSION@');
-		exit $ERRORS{'OK'};
+		exit $ERRORS{'UNKNOWN'};
 	}
 
-	if ($opt_h) {print_help(); exit $ERRORS{'OK'};}
+	if ($opt_h) {print_help(); exit $ERRORS{'UNKNOWN'};}
 
 	($opt_H) || ($opt_H = shift @ARGV) || usage("Host name/address not specified\n");
 	my $remotehost = $1 if ($opt_H =~ /([-.A-Za-z0-9]+)/);

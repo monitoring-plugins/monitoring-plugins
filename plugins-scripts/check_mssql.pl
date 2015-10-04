@@ -130,7 +130,7 @@ sub process_arguments {
 
 	if (defined $opt_V) {
 		print_revision($PROGNAME,'@NP_VERSION@');
-		exit $ERRORS{'OK'};
+		exit $ERRORS{'UNKNOWN'};
 	}
 
 	syntax("Help:") if ($help);

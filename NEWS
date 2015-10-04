@@ -19,6 +19,8 @@ This file documents the major additions and syntax changes between releases.
 	The format of the performance data emitted by check_mrtgtraf has been
 	  changed to comply with the development guidelines
         check_ssh not returns CRITICAL for protocal/version errors
+	If a plugin is invoked with -h/--help or -V/--version, the exit status
+	  is now UNKNOWN
 
 2.1.1 2nd December 2014
 	FIXES

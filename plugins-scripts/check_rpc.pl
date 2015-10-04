@@ -63,12 +63,12 @@ GetOptions(
 );
 
 # -h means display verbose help screen
-if ($opt_h) { print_help(); exit $ERRORS{'OK'}; }
+if ($opt_h) { print_help(); exit $ERRORS{'UNKNOWN'}; }
 
 # -V means display version number
 if ($opt_V) {
 	print_revision($PROGNAME,'@NP_VERSION@');
-	exit $ERRORS{'OK'};
+	exit $ERRORS{'UNKNOWN'};
 }
 
 # Hash containing all RPC program names and numbers

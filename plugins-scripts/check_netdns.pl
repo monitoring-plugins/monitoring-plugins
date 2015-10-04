@@ -48,10 +48,10 @@ GetOptions("V" => $opt_V,         "version" => $opt_V,
 					 "H=s" => $opt_H,       "hostname=s" => $opt_H);
 
 # -h means display verbose help screen
-if($opt_h){ print_help(); exit 0; }
+if($opt_h){ print_help(); exit 3; }
 
 # -V means display version number
-if ($opt_V) { print_version(); exit 0; }
+if ($opt_V) { print_version(); exit 3; }
 
 # -H means host name
 $opt_H = shift unless ($opt_H);
@@ -73,7 +73,7 @@ if ($opt_s) {
 		$server = $1;
 	} else {
 		print "$opt_s is not a valid host name";
-		exit -1;
+		exit 3;
 	}
 }
 
