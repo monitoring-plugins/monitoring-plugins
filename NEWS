@@ -21,6 +21,8 @@ This file documents the major additions and syntax changes between releases.
 	check_ssh now returns CRITICAL for protocol/version errors
 	If a plugin is invoked with -h/--help or -V/--version, the exit status
 	  is now UNKNOWN
+	The superseded check_ntp.pl was removed, please use check_ntp_peer or
+	  check_ntp_time instead
 
 2.1.1 2nd December 2014
 	FIXES
