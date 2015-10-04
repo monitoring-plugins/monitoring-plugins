@@ -59,7 +59,7 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 		break;
 	case 2: /* SSLv2 protocol */
 #if defined(USE_GNUTLS) || defined(OPENSSL_NO_SSL2)
-		printf(("%s\n", _("CRITICAL - SSL protocol version 2 is not supported by your SSL library.")));
+		printf("%s\n", _("CRITICAL - SSL protocol version 2 is not supported by your SSL library."));
 		return STATE_CRITICAL;
 #else
 		method = SSLv2_client_method();
@@ -67,7 +67,7 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 		break;
 	case 3: /* SSLv3 protocol */
 #if defined(OPENSSL_NO_SSL3)
-		printf(("%s\n", _("CRITICAL - SSL protocol version 3 is not supported by your SSL library.")));
+		printf("%s\n", _("CRITICAL - SSL protocol version 3 is not supported by your SSL library."));
 		return STATE_CRITICAL;
 #else
 		method = SSLv3_client_method();
