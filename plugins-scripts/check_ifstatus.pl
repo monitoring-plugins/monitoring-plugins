@@ -119,7 +119,7 @@ $status = process_arguments();
 if ($status != 0)
 {
 	print_help() ;
-	exit $ERRORS{'OK'};
+	exit $ERRORS{'UNKNOWN'};
 }
 
 
@@ -313,17 +313,17 @@ sub process_arguments() {
 		
 	if ($status == 0){
 		print_help();
-		exit $ERRORS{'OK'};
+		exit $ERRORS{'UNKNOWN'};
 	}
 
 	if ($opt_V) {
 		print_revision($PROGNAME,'@NP_VERSION@');
-		exit $ERRORS{'OK'};
+		exit $ERRORS{'UNKNOWN'};
 	}
 
 	if ($opt_h) {
 		print_help();
-		exit $ERRORS{'OK'};
+		exit $ERRORS{'UNKNOWN'};
 	}
 
 	unless (defined $timeout) {

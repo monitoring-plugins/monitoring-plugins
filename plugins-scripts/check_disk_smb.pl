@@ -54,10 +54,10 @@ GetOptions
 
 if ($opt_V) {
 	print_revision($PROGNAME,'@NP_VERSION@'); #'
-	exit $ERRORS{'OK'};
+	exit $ERRORS{'UNKNOWN'};
 }
 
-if ($opt_h) {print_help(); exit $ERRORS{'OK'};}
+if ($opt_h) {print_help(); exit $ERRORS{'UNKNOWN'};}
 
 my $smbclient = $utils::PATH_TO_SMBCLIENT;
 $smbclient    || usage("check requires smbclient, smbclient not set\n");

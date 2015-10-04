@@ -60,12 +60,12 @@ GetOptions(
 
 if ($opt_V) {
 	print_revision($PROGNAME, '@NP_VERSION@');
-	exit $ERRORS{'OK'};
+	exit $ERRORS{'UNKNOWN'};
 }
 
 if ($opt_h) {
 	print_help();
-	exit $ERRORS{'OK'};
+	exit $ERRORS{'UNKNOWN'};
 }
 
 $opt_f = shift unless ($opt_f);
