@@ -231,10 +231,10 @@ process_arguments (int argc, char **argv)
 			usage5 ();
 		case 'h':									/* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'H':									/* hostname */
 			if (is_host (optarg) == FALSE)
 				usage2 (_("Invalid hostname/address"), optarg);

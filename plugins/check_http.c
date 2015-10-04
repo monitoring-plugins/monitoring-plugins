@@ -267,11 +267,11 @@ process_arguments (int argc, char **argv)
       break;
     case 'h': /* help */
       print_help ();
-      exit (STATE_OK);
+      exit (STATE_UNKNOWN);
       break;
     case 'V': /* version */
       print_revision (progname, NP_VERSION);
-      exit (STATE_OK);
+      exit (STATE_UNKNOWN);
       break;
     case 't': /* timeout period */
       if (!is_intnonneg (optarg))

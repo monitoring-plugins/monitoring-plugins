@@ -428,10 +428,10 @@ process_arguments (int argc, char **argv)
 			usage5 ();
 		case 'h':									/* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 't':									/* timeout period */
 			if (!is_integer (optarg))
 				usage2 (_("Timeout interval must be a positive integer"), optarg);

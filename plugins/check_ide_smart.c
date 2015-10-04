@@ -234,10 +234,10 @@ main (int argc, char *argv[])
 			break;
 		case 'h':
 			print_help ();
-			return STATE_OK;
+			return STATE_UNKNOWN;
 		case 'V':
 			print_revision (progname, NP_VERSION);
-			return STATE_OK;
+			return STATE_UNKNOWN;
 		default:
 			usage5 ();
 		}
@@ -249,7 +249,7 @@ main (int argc, char *argv[])
 
 	if (!device) {
 		print_help ();
-		return STATE_OK;
+		return STATE_UNKNOWN;
 	}
 
 	fd = open (device, OPEN_MODE);
