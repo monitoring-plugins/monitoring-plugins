@@ -1163,11 +1163,11 @@ int call_getopt(int argc, char **argv){
 
 		case 'V': /* version */
 			print_revision(progname, NP_VERSION);
-			exit(STATE_OK);
+			exit(STATE_UNKNOWN);
 
 		case 'h': /* help */
 			print_help();
-			exit(STATE_OK);
+			exit(STATE_UNKNOWN);
 
 		case 'v': /* verbose */
 			verbose=1;
