@@ -32,6 +32,9 @@ use lib "$FindBin::Bin";
 use utils;
 
 my $PROGNAME = "check_netdns";
+sub print_help ();
+sub print_version();
+sub print_usage ();
 
 $ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}=''; 
@@ -43,7 +46,7 @@ GetOptions("V" => $opt_V,         "version" => $opt_V,
 					 "t=i" => $opt_t,       "timeout=i" => $opt_t,
 					 "s=s" => $opt_s,       "server=s" => $opt_s,
 					 "H=s" => $opt_H,       "hostname=s" => $opt_H);
-                           
+
 # -h means display verbose help screen
 if($opt_h){ print_help(); exit 0; }
 
