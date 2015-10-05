@@ -344,8 +344,8 @@ process_arguments (int argc, char **argv)
       use_ssl = TRUE;
       if (c=='S' && optarg != NULL) {
         ssl_version = atoi(optarg);
-        if (ssl_version < 1 || ssl_version > 3)
-            usage4 (_("Invalid option - Valid values for SSL Version are 1 (TLSv1), 2 (SSLv2) or 3 (SSLv3)"));
+        if (ssl_version < 1 || ssl_version > 4)
+            usage4 (_("Invalid option - Valid values for SSL Version are 1 (TLSv1.0), 2 (SSLv2), 3 (SSLv3) or 4 (TLSv1.2+)"));
       }
       if (specify_port == FALSE)
         server_port = HTTPS_PORT;
@@ -1515,8 +1515,8 @@ print_help (void)
 
 #ifdef HAVE_SSL
   printf (" %s\n", "-S, --ssl=VERSION");
-  printf ("    %s\n", _("Connect via SSL. Port defaults to 443. VERSION is optional, and prevents"));
-  printf ("    %s\n", _("auto-negotiation (1 = TLSv1, 2 = SSLv2, 3 = SSLv3)."));
+  printf ("    %s\n", _("Connect via SSL. Port defaults to 443. VERSION is optional, and forces a"));
+  printf ("    %s\n", _("particular version (1 = TLSv1.0, 2 = SSLv2, 3 = SSLv3, 4 = TLSv1.2+)."));
   printf (" %s\n", "--sni");
   printf ("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
   printf (" %s\n", "-C, --certificate=INTEGER[,INTEGER]");
