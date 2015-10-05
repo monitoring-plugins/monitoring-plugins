@@ -57,7 +57,7 @@ enum {
 
 #ifdef HAVE_SSL
 int check_cert = FALSE;
-int ssl_version = 0;
+double ssl_version = 0;
 int days_till_exp_warn, days_till_exp_crit;
 char *randbuff;
 X509 *server_cert;
@@ -343,9 +343,17 @@ process_arguments (int argc, char **argv)
          parameters, like -S and -C combinations */
       use_ssl = TRUE;
       if (c=='S' && optarg != NULL) {
-        ssl_version = atoi(optarg);
+        ssl_version = atof(optarg);
         if (ssl_version < 1 || ssl_version > 3)
-            usage4 (_("Invalid option - Valid values for SSL Version are 1 (TLSv1), 2 (SSLv2) or 3 (SSLv3)"));
+            usage4 (_("Invalid option - Valid values for SSL Version are 1 (TLSv1), 1.1 (TLSv1.1), 1.2 (TLSv1.2), 2 (SSLv2), or 3 (SSLv3)"));
+        if (ssl_version > 1 && ssl_version < 2) {
+          if (ssl_version == 1.1)
+            ssl_version = 4;
+          else if (ssl_version == 1.2)
+            ssl_version = 5;
+          else
+            usage4 (_("Invalid option - Valid values for SSL Version are 1 (TLSv1), 1.1 (TLSv1.1), 1.2 (TLSv1.2), 2 (SSLv2), or 3 (SSLv3)"));
+        }
       }
       if (specify_port == FALSE)
         server_port = HTTPS_PORT;
@@ -1516,7 +1524,7 @@ print_help (void)
 #ifdef HAVE_SSL
   printf (" %s\n", "-S, --ssl=VERSION");
   printf ("    %s\n", _("Connect via SSL. Port defaults to 443. VERSION is optional, and prevents"));
-  printf ("    %s\n", _("auto-negotiation (1 = TLSv1, 2 = SSLv2, 3 = SSLv3)."));
+  printf ("    %s\n", _("auto-negotiation (1 = TLSv1, 1.1 = TLSv1.1, 1.2 = TLSv1.2, 2 = SSLv2, 3 = SSLv3.)"));
   printf (" %s\n", "--sni");
   printf ("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
   printf (" %s\n", "-C, --certificate=INTEGER[,INTEGER]");

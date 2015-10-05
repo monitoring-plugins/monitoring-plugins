@@ -68,6 +68,12 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 	case 3: /* SSLv3 protocol */
 		method = SSLv3_client_method();
 		break;
+	case 4: /* TLSv1.1 protocol */
+		method = TLSv1_1_client_method();
+		break;
+	case 5: /* TLSv1.2 protocol */
+		method = TLSv1_2_client_method();
+		break;
 	default: /* Unsupported */
 		printf("%s\n", _("CRITICAL - Unsupported SSL protocol version."));
 		return STATE_CRITICAL;
