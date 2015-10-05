@@ -36,7 +36,7 @@ TESTS = @SCRIPT_TEST@
 test:
 	perl -I $(top_builddir) -I $(top_srcdir) ../test.pl
 	perl -I $(top_builddir) -I $(top_srcdir) ../test.pl t/utils.t	# utils.t is excluded from above, so manually ask to test
-	for PLSCRIPTS in *.pl; do perl -wc $$PLSCRIPTS || exit 1; done
+	for SCRIPT in *.pl; do perl -wc $$SCRIPT || exit 1; done
 
 test-debug:
 	NPTEST_DEBUG=1 HARNESS_VERBOSE=1 perl -I $(top_builddir) -I $(top_srcdir) ../test.pl
