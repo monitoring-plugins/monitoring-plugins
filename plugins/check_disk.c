@@ -293,7 +293,7 @@ main (int argc, char **argv)
 
       if (verbose >= 3) {
         printf ("For %s, used_pct=%g free_pct=%g used_units=%g free_units=%g total_units=%g used_inodes_pct=%g free_inodes_pct=%g fsp.fsu_blocksize=%llu mult=%llu\n",
-          me->me_mountdir, path->dused_pct, path->dfree_pct, path->dused_units, path->dfree_units, path->dtotal_units, path->dused_inodes_percent, path->dfree_inodes_percent, fsp.fsu_blocksize, mult);
+          me->me_mountdir, path->dused_pct, path->dfree_pct, path->dused_units, path->dfree_units, path->dtotal_units, path->dused_inodes_percent, path->dfree_inodes_percent, (long long)fsp.fsu_blocksize, (long long)mult);
       }
 
       /* Threshold comparisons */
@@ -1044,8 +1044,8 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
         get_path_stats(p_list, &tmpfsp); 
         if (verbose >= 3)
           printf("Group %s: adding %llu blocks sized %llu, (%s) used_units=%g free_units=%g total_units=%g fsu_blocksize=%llu mult=%llu\n",
-                 p_list->group, tmpfsp.fsu_bavail, tmpfsp.fsu_blocksize, p_list->best_match->me_mountdir, p_list->dused_units, p_list->dfree_units,
-                 p_list->dtotal_units, mult);
+                 p_list->group, (long long)tmpfsp.fsu_bavail, (long long)tmpfsp.fsu_blocksize, p_list->best_match->me_mountdir, p_list->dused_units, 
+                 p_list->dfree_units, p_list->dtotal_units, (long long)tmpfsp.fsu_blocksize, (long long)mult);
 
         /* prevent counting the first FS of a group twice since its parameter_list entry 
          * is used to carry the information of all file systems of the entire group */
@@ -1065,8 +1065,7 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
       }
       if (verbose >= 3) 
         printf("Group %s now has: used_units=%g free_units=%g total_units=%g fsu_blocksize=%llu mult=%llu\n",
-               p->group, tmpfsp.fsu_bavail, tmpfsp.fsu_blocksize, p->best_match->me_mountdir, p->dused_units,
-               p->dfree_units, p->dtotal_units, mult);
+               p->group, p->dused_units, p->dfree_units, p->dtotal_units, (long long)tmpfsp.fsu_blocksize, (long long)mult);
     }
     /* modify devname and mountdir for output */
     p->best_match->me_mountdir = p->best_match->me_devname = p->group;
