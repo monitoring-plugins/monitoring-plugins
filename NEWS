@@ -9,6 +9,10 @@ This file documents the major additions and syntax changes between releases.
 	Make sure check_disk won't hang on hanging (network) file systems
 	New check_mailq -s option which tells the plugin to use sudo(8)
 	New -W/-C option for check_ldap to check number of entries (Gerhard Lausser)
+	The check_http -S/--ssl option now accepts the arguments "1.1" and "1.2"
+	  to force TLSv1.1 and TLSv1.2 connections, respectively
+	The check_http -S/--ssl option now allows for specifying the desired
+	  protocol with a "+" suffix to also accept newer versions
 
 	FIXES
 	Let check_real terminate lines with CRLF when talking to the server, as

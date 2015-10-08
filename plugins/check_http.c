@@ -343,9 +343,20 @@ process_arguments (int argc, char **argv)
          parameters, like -S and -C combinations */
       use_ssl = TRUE;
       if (c=='S' && optarg != NULL) {
-        ssl_version = atoi(optarg);
-        if (ssl_version < 1 || ssl_version > 3)
-            usage4 (_("Invalid option - Valid values for SSL Version are 1 (TLSv1), 2 (SSLv2) or 3 (SSLv3)"));
+        int got_plus = strchr(optarg, '+') != NULL;
+
+        if (!strncmp (optarg, "1.2", 3))
+          ssl_version = got_plus ? MP_TLSv1_2_OR_NEWER : MP_TLSv1_2;
+        else if (!strncmp (optarg, "1.1", 3))
+          ssl_version = got_plus ? MP_TLSv1_1_OR_NEWER : MP_TLSv1_1;
+        else if (optarg[0] == '1')
+          ssl_version = got_plus ? MP_TLSv1_OR_NEWER : MP_TLSv1;
+        else if (optarg[0] == '3')
+          ssl_version = got_plus ? MP_SSLv3_OR_NEWER : MP_SSLv3;
+        else if (optarg[0] == '2')
+          ssl_version = got_plus ? MP_SSLv2_OR_NEWER : MP_SSLv2;
+        else
+          usage4 (_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2 (with optional '+' suffix)"));
       }
       if (specify_port == FALSE)
         server_port = HTTPS_PORT;
@@ -1514,9 +1525,10 @@ print_help (void)
   printf (UT_IPv46);
 
 #ifdef HAVE_SSL
-  printf (" %s\n", "-S, --ssl=VERSION");
+  printf (" %s\n", "-S, --ssl=VERSION[+]");
   printf ("    %s\n", _("Connect via SSL. Port defaults to 443. VERSION is optional, and prevents"));
-  printf ("    %s\n", _("auto-negotiation (1 = TLSv1, 2 = SSLv2, 3 = SSLv3)."));
+  printf ("    %s\n", _("auto-negotiation (2 = SSLv2, 3 = SSLv3, 1 = TLSv1, 1.1 = TLSv1.1,"));
+  printf ("    %s\n", _("1.2 = TLSv1.2). With a '+' suffix, newer versions are also accepted."));
   printf (" %s\n", "--sni");
   printf ("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
   printf (" %s\n", "-C, --certificate=INTEGER[,INTEGER]");

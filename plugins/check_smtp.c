@@ -53,6 +53,7 @@ enum {
 	SMTP_PORT	= 25
 };
 #define SMTP_EXPECT "220"
+#define SMTP_STARTTLS_EXPECT "220 2.0.0"
 #define SMTP_HELO "HELO "
 #define SMTP_EHLO "EHLO "
 #define SMTP_QUIT "QUIT\r\n"
@@ -231,7 +232,7 @@ main (int argc, char **argv)
 		  send(sd, SMTP_STARTTLS, strlen(SMTP_STARTTLS), 0);
 
 		  recvlines(buffer, MAX_INPUT_BUFFER); /* wait for it */
-		  if (!strstr (buffer, server_expect)) {
+		  if (!strstr (buffer, SMTP_STARTTLS_EXPECT)) {
 		    printf (_("Server does not support STARTTLS\n"));
 		    smtp_quit();
 		    return STATE_UNKNOWN;
@@ -276,6 +277,7 @@ main (int argc, char **argv)
 #  ifdef USE_OPENSSL
 		  if ( check_cert ) {
                     result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
+		    smtp_quit();
 		    my_close();
 		    return result;
 		  }
@@ -581,11 +583,6 @@ process_arguments (int argc, char **argv)
 				usage4 (_("Timeout interval must be a positive integer"));
 			}
 			break;
-		case 'S':
-		/* starttls */
-			use_ssl = TRUE;
-			use_ehlo = TRUE;
-			break;
 		case 'D':
 		/* Check SSL cert validity */
 #ifdef USE_OPENSSL
@@ -607,9 +604,14 @@ process_arguments (int argc, char **argv)
                             days_till_exp_warn = atoi (optarg);
                         }
 			check_cert = TRUE;
+			ignore_send_quit_failure = TRUE;
 #else
 			usage (_("SSL support not available - install OpenSSL and recompile"));
 #endif
+		case 'S':
+		/* starttls */
+			use_ssl = TRUE;
+			use_ehlo = TRUE;
 			break;
 		case '4':
 			address_family = AF_INET;

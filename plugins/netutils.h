@@ -91,6 +91,16 @@ RETSIGTYPE socket_timeout_alarm_handler (int) __attribute__((noreturn));
 
 /* SSL-Related functionality */
 #ifdef HAVE_SSL
+#  define MP_SSLv2 1
+#  define MP_SSLv3 2
+#  define MP_TLSv1 3
+#  define MP_TLSv1_1 4
+#  define MP_TLSv1_2 5
+#  define MP_SSLv2_OR_NEWER 6
+#  define MP_SSLv3_OR_NEWER 7
+#  define MP_TLSv1_OR_NEWER 8
+#  define MP_TLSv1_1_OR_NEWER 9
+#  define MP_TLSv1_2_OR_NEWER 10
 /* maybe this could be merged with the above np_net_connect, via some flags */
 int np_net_ssl_init(int sd);
 int np_net_ssl_init_with_hostname(int sd, char *host_name);
