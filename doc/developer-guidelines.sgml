@@ -200,9 +200,8 @@
 						operation. Higher-level errors (such as name resolution errors,
 						socket timeouts, etc) are outside of the control of plugins and should
 						generally NOT be reported as UNKNOWN states.
-						</para>
-						<para>The --help or --version output should also result in Unknown state.</para>
-						</entry>
+						</para><para>The --help or --version output should also result in Unknown state.
+						</para></entry>
 					</row>
 				</tbody>
 			</tgroup>
