@@ -231,7 +231,7 @@ main (int argc, char **argv)
 		  send(sd, SMTP_STARTTLS, strlen(SMTP_STARTTLS), 0);
 
 		  recvlines(buffer, MAX_INPUT_BUFFER); /* wait for it */
-		  if (!strstr (buffer, server_expect)) {
+		  if (!strstr (buffer, SMTP_EXPECT)) {
 		    printf (_("Server does not support STARTTLS\n"));
 		    smtp_quit();
 		    return STATE_UNKNOWN;
