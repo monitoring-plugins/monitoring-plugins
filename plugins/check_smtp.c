@@ -53,6 +53,7 @@ enum {
 	SMTP_PORT	= 25
 };
 #define SMTP_EXPECT "220"
+#define SMTP_STARTTLS_EXPECT "220 2.0.0"
 #define SMTP_HELO "HELO "
 #define SMTP_EHLO "EHLO "
 #define SMTP_QUIT "QUIT\r\n"
@@ -231,7 +232,7 @@ main (int argc, char **argv)
 		  send(sd, SMTP_STARTTLS, strlen(SMTP_STARTTLS), 0);
 
 		  recvlines(buffer, MAX_INPUT_BUFFER); /* wait for it */
-		  if (!strstr (buffer, server_expect)) {
+		  if (!strstr (buffer, SMTP_STARTTLS_EXPECT)) {
 		    printf (_("Server does not support STARTTLS\n"));
 		    smtp_quit();
 		    return STATE_UNKNOWN;
