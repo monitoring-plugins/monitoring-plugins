@@ -613,7 +613,7 @@
 		The user should be allowed to specify -v multiple times to increase
 		the verbosity level, as described in <xref linkend="verboselevels">.</para>
 
-		The exit code for version information or help should be UNKNOWN
+		<para>The exit code for version information or help should be UNKNOWN
 		(3).</para>
     </section>
 
