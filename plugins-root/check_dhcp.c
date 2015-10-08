@@ -229,7 +229,7 @@ struct in_addr requested_address;
 
 int process_arguments(int, char **);
 int call_getopt(int, char **);
-int validate_arguments(void);
+int validate_arguments(int, int);
 void print_usage(void);
 void print_help(void);
 
@@ -1059,29 +1059,19 @@ int get_results(void){
 
 /* process command-line arguments */
 int process_arguments(int argc, char **argv){
-	int c;
+	int arg_index;
 
 	if(argc<1)
 		return ERROR;
 
-	c=0;
-	while((c+=(call_getopt(argc-c,&argv[c])))<argc){
-
-		/*
-		if(is_option(argv[c]))
-			continue;
-		*/
-		}
-
-	return validate_arguments();
+	arg_index = call_getopt(argc,argv);
+	return validate_arguments(argc,arg_index);
         }
 
 
 
 int call_getopt(int argc, char **argv){
-	int c=0;
-	int i=0;
-
+	extern int optind;
 	int option_index = 0;
 	static struct option long_options[] =
 	{
@@ -1098,23 +1088,12 @@ int call_getopt(int argc, char **argv){
 	};
 
 	while(1){
-		c=getopt_long(argc,argv,"+hVvt:s:r:t:i:m:u",long_options,&option_index);
+		int c=0;
 
-		i++;
+		c=getopt_long(argc,argv,"+hVvt:s:r:t:i:m:u",long_options,&option_index);
 
 		if(c==-1||c==EOF||c==1)
 			break;
-
-		switch(c){
-		case 'w':
-		case 'r':
-		case 't':
-		case 'i':
-			i++;
-			break;
-		default:
-			break;
-		        }
 
 		switch(c){
 
@@ -1181,12 +1160,14 @@ int call_getopt(int argc, char **argv){
 			break;
 		        }
 	        }
-
-	return i;
+	return optind;
         }
 
 
-int validate_arguments(void){
+int validate_arguments(int argc, int arg_index){
+
+	if(argc-optind > 0)
+		usage(_("Got unexpected non-option argument"));
 
 	return OK;
         }

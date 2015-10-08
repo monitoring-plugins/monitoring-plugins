@@ -242,8 +242,8 @@ main (int argc, char **argv)
 			}
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("battery", (long)ups_battery_percent, "%",
-			                    check_warn, (long)(1000*warning_value),
-			                    check_crit, (long)(1000*critical_value),
+			                    check_warn, (long)(warning_value),
+			                    check_crit, (long)(critical_value),
 			                    TRUE, 0, TRUE, 100));
 		} else {
 			xasprintf (&data, "%s %s", data,
@@ -271,8 +271,8 @@ main (int argc, char **argv)
 			}
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("load", (long)ups_load_percent, "%",
-			                    check_warn, (long)(1000*warning_value),
-			                    check_crit, (long)(1000*critical_value),
+			                    check_warn, (long)(warning_value),
+			                    check_crit, (long)(critical_value),
 			                    TRUE, 0, TRUE, 100));
 		} else {
 			xasprintf (&data, "%s %s", data,
@@ -308,8 +308,8 @@ main (int argc, char **argv)
 			}
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("temp", (long)ups_temperature, tunits,
-			                    check_warn, (long)(1000*warning_value),
-			                    check_crit, (long)(1000*critical_value),
+			                    check_warn, (long)(warning_value),
+			                    check_crit, (long)(critical_value),
 			                    TRUE, 0, FALSE, 0));
 		} else {
 			xasprintf (&data, "%s %s", data,

@@ -19,6 +19,7 @@ This file documents the major additions and syntax changes between releases.
 	  mandated by 2326
 	Fix check_procs on HP-UX
 	check_smtp's -e/--expect option can now be combined with -S/--starttls
+	Fix incorrect performance data thresholds emitted by check_ups
 
 	WARNINGS
 	The format of the performance data emitted by check_mrtgtraf has been
