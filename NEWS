@@ -3,6 +3,8 @@ This file documents the major additions and syntax changes between releases.
 2.1.2 ...
 	FIXES
 	Fix incorrect performance data thresholds emitted by check_ups
+	Fix check_dhcp's option parsing to not crash with certain arguments
+	Fix check_snmp using correct timeout
 
 2.1.1 2nd December 2014
 	FIXES
