@@ -139,8 +139,10 @@ try_again:
     if((ps_fd = open(ps_name, O_RDONLY)) == -1)
       continue;
 
-    if((as_fd = open(as_name, O_RDONLY)) == -1)
+    if((as_fd = open(as_name, O_RDONLY)) == -1) {
+      close(ps_fd);
       continue;
+    }
 
     if(read(ps_fd, &psinfo, sizeof(psinfo)) != sizeof(psinfo)) {
       int err = errno;
