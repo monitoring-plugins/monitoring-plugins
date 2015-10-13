@@ -36,6 +36,7 @@ This file documents the major additions and syntax changes between releases.
 	Fix check_apt's handling of invalid regular expressions
 	Fix check_real's server response processing
 	Fix backslash escaping in check_tcp's --help output
+	Fix check_procs's unclosed filehandle in pst3 on Solaris
 
 2.1 15th October 2014
 	ENHANCEMENTS
