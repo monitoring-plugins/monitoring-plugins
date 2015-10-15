@@ -54,7 +54,7 @@ $SIG{'ALRM'} = sub {
      print ("SQL UNKNOWN: ERROR connection $server (alarm timeout)\n");
      exit $ERRORS{"UNKNOWN"};
 };
-alarm($TIMEOUT);
+alarm($timeout);
 
 unless ($dbh = DBI->connect("dbi:Sybase:server=".uc($server), "$username", "$password")) {
 	printf "SQL CRITICAL: Can't connect to mssql server $DBI::errstr\n";
