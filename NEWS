@@ -29,6 +29,12 @@ This file documents the major additions and syntax changes between releases.
 	The superseded check_ntp.pl was removed, please use check_ntp_peer or
 	  check_ntp_time instead
 
+2.1.2 16th October 2015
+	FIXES
+	Fix incorrect performance data thresholds emitted by check_ups
+	Fix check_dhcp's option parsing to not crash with certain arguments
+	Fix check_snmp using correct timeout
+
 2.1.1 2nd December 2014
 	FIXES
 	Fix check_ntp's jitter checking
