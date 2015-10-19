@@ -3,6 +3,7 @@ dist: trusty
 language: c
 
 before_install:
+  - sudo add-apt-repository "deb http://archive.ubuntu.com/ubuntu/ trusty multiverse" && sudo add-apt-repository "deb http://archive.ubuntu.com/ubuntu/ trusty-updates multiverse"
   - sudo apt-get update -qq
   - sudo apt-get purge -qq gawk
   # http://docs.travis-ci.com/user/trusty-ci-environment/ indicates, no MySQL on Trusty (yet)
