@@ -5,8 +5,9 @@ language: c
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get purge -qq gawk
-  # ensure we have a test database in place for tests
-  - mysql -e "create database IF NOT EXISTS test;" -uroot
+  # http://docs.travis-ci.com/user/trusty-ci-environment/ indicates, no MySQL on Trusty (yet)
+  # # ensure we have a test database in place for tests
+  # - mysql -e "create database IF NOT EXISTS test;" -uroot
 
 install:
   - sudo apt-get install -qq --no-install-recommends perl autotools-dev libdbi-dev libldap2-dev libpq-dev libmysqlclient-dev libfreeradius-client-dev libkrb5-dev libnet-snmp-perl procps
@@ -16,8 +17,11 @@ install:
   - sudo apt-get install -qq --no-install-recommends slapd ldap-utils
   - sudo apt-get install -qq --no-install-recommends autoconf automake
   - sudo apt-get install -qq --no-install-recommends faketime
+  - sudo apt-get install -qq --no-install-recommends mariadb-client mariadb-server
 
 before_script:
+  # ensure we have a test database in place for tests
+  - mysql -e "create database IF NOT EXISTS test;" -uroot
   - tools/setup
   - ./configure --enable-libtap
   - make
