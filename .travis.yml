@@ -29,6 +29,8 @@ install:
 before_script:
   # ensure we have a test database in place for tests
   - mysql -e "create database IF NOT EXISTS test;" -uroot
+  # Detect LDAP configuration (seems  volatile on trusty env)
+  - sed -e 's/cn=admin,dc=nodomain/'$(sudo /usr/sbin/slapcat|grep ^dn:|grep cn=|awk '{print $2}')'/' -i plugins/t/NPTest.cache.travis
   - tools/setup
   - ./configure --enable-libtap
   - make
