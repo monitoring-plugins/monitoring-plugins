@@ -22,6 +22,7 @@ install:
   - sudo apt-get install -qq --no-install-recommends slapd ldap-utils
   - sudo apt-get install -qq --no-install-recommends autoconf automake
   - sudo apt-get install -qq --no-install-recommends faketime
+  # Trusty related dependencies (not yet provided)
   - sudo apt-get install -qq --no-install-recommends mariadb-client mariadb-server
 
 before_script:
