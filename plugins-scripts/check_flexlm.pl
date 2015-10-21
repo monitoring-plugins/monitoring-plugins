@@ -17,7 +17,7 @@
 #host[anchor]=any host will do;some.address.com;;check-host-alive;3;120;24x7;1;1;1;
 #service[anchor]=yodel;24x7;3;5;5;unix-admin;60;24x7;1;1;1;;check_flexlm!/opt/lic/licfiles/yodel_lic
 #service[anchor]=yeehaw;24x7;3;5;5;unix-admin;60;24x7;1;1;1;;check_flexlm!/opt/lic/licfiles/yeehaw_lic
-#command[check_flexlm]=/some/path/libexec/check_flexlm.pl $ARG1$
+#command[check_flexlm]=/some/path/libexec/check_flexlm.pl -F $ARG1$
 #
 # Notes:
 # - you need the lmstat utility which comes with flexlm.
@@ -34,15 +34,23 @@
 
 use strict;
 use Getopt::Long;
-use vars qw($opt_V $opt_h $opt_F $opt_t $verbose $PROGNAME);
+use vars qw($opt_V $opt_h $opt_F $opt_t $opt_l $verbose $PROGNAME);
 use FindBin;
 use lib "$FindBin::Bin";
 use utils qw(%ERRORS &print_revision &support &usage);
+use File::Which;
 
 $PROGNAME="check_flexlm";
 
 sub print_help ();
 sub print_usage ();
+
+# Before nulling search PATH, try to find lmstat binary.
+my $lmstat = $utils::PATH_TO_LMSTAT ;
+if ( $lmstat eq '') {
+	my @lmstat_bins = which('lmstat');
+	$lmstat = $lmstat_bins[0] if defined($lmstat_bins[0]);
+}
 
 $ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}=''; 
@@ -54,11 +62,17 @@ GetOptions
 	 "h"   => \$opt_h,   "help"       => \$opt_h,
 	 "v"   => \$verbose, "verbose"    => \$verbose,
 	 "F=s" => \$opt_F,   "filename=s" => \$opt_F,
+	 "l=s" => \$opt_l,   "lmstat=s" => \$opt_l,
 	 "t=i" => \$opt_t, "timeout=i"  => \$opt_t);
 
 if ($opt_V) {
 	print_revision($PROGNAME,'@NP_VERSION@');
 	exit $ERRORS{'UNKNOWN'};
+}
+
+# If option l given, use the argument as lmstat binary.
+if ($opt_l) {
+	$lmstat = $opt_l;
 }
 
 unless (defined $opt_t) {
@@ -80,7 +94,6 @@ $SIG{'ALRM'} = sub {
 };
 alarm($opt_t);
 
-my $lmstat = $utils::PATH_TO_LMSTAT ;
 unless (-x $lmstat ) {
 	print "Cannot find \"lmstat\"\n";
 	exit $ERRORS{'UNKNOWN'};
@@ -227,6 +240,8 @@ Check available flexlm license managers
 	print "
 -F, --filename=FILE
    Name of license file (usually \"license.dat\")
+-l, --lmstat=BINARY
+   Full path to lmstat binary
 -v, --verbose
    Print some extra debugging information (not advised for normal operation)
 -t, --timeout
