@@ -10,6 +10,8 @@ before_install:
   - sudo [ $(ip addr show | grep "inet6 ::1" | wc -l) -lt "1" ] && sudo sed -i '/^::1/d' /etc/hosts
   # Trusty has running ntpd on localhost, but we don't like that for our tests
   - sudo killall -9 ntpd
+  # Trusty has no swap, lets create some
+  - sudo fallocate -l 20M /swapfile; sudo chmod 600 /swapfile; sudo mkswap /swapfile; sudo swapon /swapfile
   - sudo add-apt-repository -y ppa:waja/trusty-backports
   - sudo apt-get update -qq
   - sudo apt-get purge -qq gawk
