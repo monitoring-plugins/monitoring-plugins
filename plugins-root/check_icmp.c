@@ -422,6 +422,44 @@ main(int argc, char **argv)
         address_family = AF_INET;
 	int icmp_proto = IPPROTO_ICMP;
 
+	/* get calling name the old-fashioned way for portability instead
+	 * of relying on the glibc-ism __progname */
+	ptr = strrchr(argv[0], '/');
+	if(ptr) progname = &ptr[1];
+	else progname = argv[0];
+
+	/* now set defaults. Use progname to set them initially (allows for
+	 * superfast check_host program when target host is up */
+	cursor = list = NULL;
+	table = NULL;
+
+	mode = MODE_RTA;
+	crit.rta = 500000;
+	crit.pl = 80;
+	warn.rta = 200000;
+	warn.pl = 40;
+	protocols = HAVE_ICMP | HAVE_UDP | HAVE_TCP;
+	pkt_interval = 80000;  /* 80 msec packet interval by default */
+	packets = 5;
+
+	if(!strcmp(progname, "check_icmp") || !strcmp(progname, "check_ping")) {
+		mode = MODE_ICMP;
+		protocols = HAVE_ICMP;
+	}
+	else if(!strcmp(progname, "check_host")) {
+		mode = MODE_HOSTCHECK;
+		pkt_interval = 1000000;
+		packets = 5;
+		crit.rta = warn.rta = 1000000;
+		crit.pl = warn.pl = 100;
+	}
+	else if(!strcmp(progname, "check_rta_multi")) {
+		mode = MODE_ALL;
+		target_interval = 0;
+		pkt_interval = 50000;
+		packets = 5;
+	}
+
 	/* parse the arguments */
 	for(i = 1; i < argc; i++) {
 		while((arg = getopt(argc, argv, "vhVw:c:n:p:t:H:s:i:b:I:l:m:64")) != EOF) {
@@ -532,44 +570,6 @@ main(int argc, char **argv)
 	/* Some systems have 32-bit pid_t so mask off only 16 bits */
 	pid = getpid() & 0xffff;
 	/* printf("pid = %u\n", pid); */
-
-	/* get calling name the old-fashioned way for portability instead
-	 * of relying on the glibc-ism __progname */
-	ptr = strrchr(argv[0], '/');
-	if(ptr) progname = &ptr[1];
-	else progname = argv[0];
-
-	/* now set defaults. Use progname to set them initially (allows for
-	 * superfast check_host program when target host is up */
-	cursor = list = NULL;
-	table = NULL;
-
-	mode = MODE_RTA;
-	crit.rta = 500000;
-	crit.pl = 80;
-	warn.rta = 200000;
-	warn.pl = 40;
-	protocols = HAVE_ICMP | HAVE_UDP | HAVE_TCP;
-	pkt_interval = 80000;  /* 80 msec packet interval by default */
-	packets = 5;
-
-	if(!strcmp(progname, "check_icmp") || !strcmp(progname, "check_ping")) {
-		mode = MODE_ICMP;
-		protocols = HAVE_ICMP;
-	}
-	else if(!strcmp(progname, "check_host")) {
-		mode = MODE_HOSTCHECK;
-		pkt_interval = 1000000;
-		packets = 5;
-		crit.rta = warn.rta = 1000000;
-		crit.pl = warn.pl = 100;
-	}
-	else if(!strcmp(progname, "check_rta_multi")) {
-		mode = MODE_ALL;
-		target_interval = 0;
-		pkt_interval = 50000;
-		packets = 5;
-	}
 
 	/* Parse extra opts if any */
 	argv=np_extra_opts(&argc, argv, progname);
