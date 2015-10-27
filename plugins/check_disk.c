@@ -1038,10 +1038,7 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
 
 void
 get_path_stats (struct parameter_list *p, struct fs_usage *fsp) {
-  /* 2007-12-08 - Workaround for Gnulib reporting insanely high available
-  * space on BSD (the actual value should be negative but fsp->fsu_bavail
-  * is unsigned) */
-  p->available = fsp->fsu_bavail > fsp->fsu_bfree ? 0 : fsp->fsu_bavail;
+  p->available = fsp->fsu_bavail;
   p->available_to_root = fsp->fsu_bfree;
   p->used = fsp->fsu_blocks - fsp->fsu_bfree;
   if (freespace_ignore_reserved) {
