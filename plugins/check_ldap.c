@@ -483,7 +483,7 @@ print_help (void)
 
   printf (" %s\n", "-W [--warn-entries]");
   printf ("    %s\n", _("Number of found entries to result in warning status"));
-  printf (" %s\n", "-W [--crit-entries]");
+  printf (" %s\n", "-C [--crit-entries]");
   printf ("    %s\n", _("Number of found entries to result in critical status"));
 
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
