@@ -264,10 +264,10 @@ int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
 		(tm->data[10 + offset] - '0') * 10 + (tm->data[11 + offset] - '0');
 	stamp.tm_isdst = -1;
 
-	time_left = difftime(timegm(&stamp), time(NULL));
+	tm_t = timegm(&stamp);
+	time_left = difftime(tm_t, time(NULL));
 	days_left = time_left / 86400;
-	tm_t = mktime (&stamp);
-	strftime(timestamp, 50, "%c", localtime(&tm_t));
+	strftime(timestamp, 50, "%F %R %z/%Z", localtime(&tm_t));
 
 	if (days_left > 0 && days_left <= days_till_exp_warn) {
 		printf (_("%s - Certificate '%s' expires in %d day(s) (%s).\n"), (days_left>days_till_exp_crit)?"WARNING":"CRITICAL", cn, days_left, timestamp);
