@@ -197,6 +197,7 @@ int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
 	X509_NAME *subj=NULL;
 	char timestamp[50] = "";
 	char cn[MAX_CN_LENGTH]= "";
+	char *tz;
 	
 	int cnlen =-1;
 	int status=STATE_UNKNOWN;
@@ -267,7 +268,15 @@ int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
 	tm_t = timegm(&stamp);
 	time_left = difftime(tm_t, time(NULL));
 	days_left = time_left / 86400;
-	strftime(timestamp, 50, "%F %R %z/%Z", localtime(&tm_t));
+	tz = getenv("TZ");
+	setenv("TZ", "GMT", 1);
+	tzset();
+	strftime(timestamp, 50, "%c %z", localtime(&tm_t));
+	if (tz)
+		setenv("TZ", tz, 1);
+	else
+		unsetenv("TZ");
+	tzset();
 
 	if (days_left > 0 && days_left <= days_till_exp_warn) {
 		printf (_("%s - Certificate '%s' expires in %d day(s) (%s).\n"), (days_left>days_till_exp_crit)?"WARNING":"CRITICAL", cn, days_left, timestamp);
