@@ -125,7 +125,7 @@ main (int argc, char **argv)
         if (verbose)
           printf ("%s\n", chld_out.line[i]);
 
-        if (strstr (chld_out.line[i], (expected_address == NULL ? query_address : expected_address)) != NULL) {
+        if (strcasestr (chld_out.line[i], (expected_address == NULL ? query_address : expected_address)) != NULL) {
           msg = chld_out.line[i];
           result = STATE_OK;
 
