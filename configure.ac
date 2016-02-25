@@ -1225,6 +1225,16 @@ elif [[ "z$ac_cv_uname_o" = "zCygwin" -a "x$PATH_TO_PING" != "x" ]]; then
 	ac_cv_ping6_packets_first=yes
 	ac_cv_ping_has_timeout=yes
 	AC_MSG_RESULT([$with_ping6_command])
+
+elif test "x$PATH_TO_PING" != "x" && \
+	$PATH_TO_PING -6 -n -U -w 10 -c 1 ::1 2>/dev/null | \
+	egrep -i "^round-trip|^rtt" >/dev/null
+then
+	with_ping6_command="$PATH_TO_PING -6 -n -U -w %d -c %d %s"
+	ac_cv_ping6_packets_first=yes
+	ac_cv_ping_has_timeout=yes
+	AC_MSG_RESULT([$with_ping6_command])
+
 elif test "x$PATH_TO_PING6" != "x"; then
 	if [[ "z$ac_cv_uname_s" = "zUnixWare" ]] && \
 		$PATH_TO_PING6 -n -s ::1 56 1 2>/dev/null | \
