@@ -91,6 +91,7 @@ my $opt_h ;
 my $opt_V ;
 my $ifdescr;
 my $iftype;
+my $ifnamekey;
 my $key;
 my $lastc;
 my $dormantWarn;
@@ -123,10 +124,12 @@ if (!defined($session)) {
 
 ## map ifdescr to ifindex - should look at being able to cache this value
 
-if (defined $ifdescr || defined $iftype) {
+if (defined $ifdescr || defined $ifnamekey || defined $iftype) {
 	# escape "/" in ifdescr - very common in the Cisco world
 	if (defined $iftype) {
 		$status=fetch_ifindex($snmpIfType, $iftype);
+	} elsif (defined $ifnamekey) {
+		$status=fetch_ifindex($snmpIfName, $ifnamekey);
 	} else {
 		$ifdescr =~ s/\//\\\//g;
 		$status=fetch_ifindex($snmpIfDescr, $ifdescr);  # if using on device with large number of interfaces
@@ -134,7 +137,7 @@ if (defined $ifdescr || defined $iftype) {
 	}
 	if ($status==0) {
 		$state = "UNKNOWN";
-		printf "$state: could not retrive ifdescr/iftype snmpkey - $status-$snmpkey\n";
+		printf "$state: could not retrieve ifdescr/ifname/iftype snmpkey - $status-$snmpkey\n";
 		$session->close;
 		exit $ERRORS{$state};
 	}
@@ -317,6 +320,7 @@ sub print_help() {
 	printf "   -P (--privproto)  privacy protocol (DES or AES; default: DES)\n";
 	printf "   -k (--key)        SNMP IfIndex value\n";
 	printf "   -d (--descr)      SNMP ifDescr value\n";
+	printf "   -N (--namekey)    SNMP ifName value\n";
 	printf "   -T (--type)       SNMP ifType integer value (see http://www.iana.org/assignments/ianaiftype-mib)\n";
 	printf "   -p (--port)       SNMP port (default 161)\n";
 	printf "   -I (--ifmib)      Agent supports IFMIB ifXTable. Do not use if\n";
@@ -329,8 +333,8 @@ sub print_help() {
 	printf "   -t (--timeout)    seconds before the plugin times out (default=$TIMEOUT)\n";
 	printf "   -V (--version)    Plugin version\n";
 	printf "   -h (--help)       usage help \n\n";
-	printf " -k or -d or -T must be specified\n\n";
-	printf "Note: either -k or -d or -T must be specified and -d and -T are much more network \n";
+	printf " -k or -d or -N or -T must be specified\n\n";
+	printf "Note: either -k or -d or -N or -T must be specified and -d and -T are much more network \n";
 	printf "intensive.  Use it sparingly or not at all.  -n is used to match against\n";
 	printf "a much more descriptive ifName value in the IfXTable to verify that the\n";
 	printf "snmpkey has not changed to some other network interface after a reboot.\n\n";
@@ -352,6 +356,7 @@ sub process_arguments() {
 			"c=s" => \$context,   "context=s"   => \$context,
 			"k=i" => \$snmpkey, "key=i",\$snmpkey,
 			"d=s" => \$ifdescr, "descr=s" => \$ifdescr,
+			"N=s" => \$ifnamekey, "namekey=s" => \$ifnamekey,
 			"l=s" => \$lastc,  "lastchange=s" => \$lastc,
 			"p=i" => \$port,  "port=i" =>\$port,
 			"H=s" => \$hostname, "hostname=s" => \$hostname,
@@ -384,8 +389,8 @@ sub process_arguments() {
 		usage("Hostname invalid or not given");
 	}
 
-	unless ($snmpkey > 0 || defined $ifdescr || defined $iftype){
-		usage("Either a valid snmp key (-k) or a ifDescr (-d) must be provided");
+	unless ($snmpkey > 0 || defined $ifdescr || defined $ifnamekey || defined $iftype){
+		usage("Either a valid snmp key (-k) or a ifDescr (-d) or ifName (-N) or ifType (-T) must be provided");
 	}
 
 	if (defined $ifName) {
