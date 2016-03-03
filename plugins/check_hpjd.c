@@ -41,7 +41,7 @@ const char *email = "devel@monitoring-plugins.org";
 #define DEFAULT_COMMUNITY "public"
 #define DEFAULT_PORT "161"
 
-const char *option_summary = "-H host [-C community]\n";
+const char *option_summary = "-H host [-C community] [-n]\n";
 
 #define HPJD_LINE_STATUS           ".1.3.6.1.4.1.11.2.3.9.1.1.2.1"
 #define HPJD_PAPER_STATUS          ".1.3.6.1.4.1.11.2.3.9.1.1.2.2"
@@ -67,6 +67,7 @@ void print_usage (void);
 char *community = NULL;
 char *address = NULL;
 char *port = NULL;
+int nopaperout = 0;
 
 int
 main (int argc, char **argv)
@@ -240,7 +241,9 @@ main (int argc, char **argv)
 			strcpy (errmsg, _("Paper Jam"));
 		}
 		else if (paper_out) {
-			result = STATE_WARNING;
+			if (!nopaperout) {
+				result = STATE_WARNING;
+			}
 			strcpy (errmsg, _("Out of Paper"));
 		}
 		else if (line_status == OFFLINE) {
@@ -315,6 +318,7 @@ process_arguments (int argc, char **argv)
 /*  		{"critical",       required_argument,0,'c'}, */
 /*  		{"warning",        required_argument,0,'w'}, */
   		{"port", required_argument,0,'p'}, 
+		{"nopaperout", no_argument, 0, 'n'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
@@ -325,7 +329,7 @@ process_arguments (int argc, char **argv)
 
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVH:C:p:", longopts, &option);
+		c = getopt_long (argc, argv, "+hnVH:C:p:", longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)
 			break;
@@ -347,6 +351,9 @@ process_arguments (int argc, char **argv)
 				usage2 (_("Port must be a positive short integer"), optarg);
 			else
 				port = atoi(optarg);
+			break;
+		case 'n':									/* nopaperout */
+			nopaperout = 1;
 			break;
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
@@ -414,7 +421,9 @@ print_help (void)
 
 	printf (" %s\n", "-C, --community=STRING");
 	printf ("    %s", _("The SNMP community name "));
+	printf (" %s\n", "-n, --nopaperout");
 	printf (_("(default=%s)"), DEFAULT_COMMUNITY);
+	printf ("    %s\n", "No return WARNING state on \"Out of paper\"");
 	printf ("\n");
 	printf (" %s\n", "-p, --port=STRING");
 	printf ("    %s", _("Specify the port to check "));
@@ -430,5 +439,5 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-	printf ("%s -H host [-C community] [-p port]\n", progname);
+	printf ("%s -H host [-C community] [-p port] [-n]\n", progname);
 }
