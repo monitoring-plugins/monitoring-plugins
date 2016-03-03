@@ -16,6 +16,7 @@ sub print_usage ();
 $ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
+$ENV{'CDPATH'}='';
 
 Getopt::Long::Configure('bundling');
 GetOptions
