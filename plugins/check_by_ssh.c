@@ -100,6 +100,13 @@ main (int argc, char **argv)
 
 	result = cmd_run_array (commargv, &chld_out, &chld_err, 0);
 
+	if (verbose) {
+		for(i = 0; i < chld_out.lines; i++)
+			printf("stdout: %s\n", chld_out.line[i]);
+		for(i = 0; i < chld_err.lines; i++)
+			printf("stderr: %s\n", chld_err.line[i]);
+	}
+
 	if (skip_stdout == -1) /* --skip-stdout specified without argument */
 		skip_stdout = chld_out.lines;
 	if (skip_stderr == -1) /* --skip-stderr specified without argument */
