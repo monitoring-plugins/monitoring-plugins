@@ -1444,13 +1444,9 @@ redir (char *pos, char *status_line)
       i = server_port_check (use_ssl);
     }
     else if (sscanf (pos, HD6, addr, url) == 2) {
-      //get type from
       if(use_ssl){
-        //i = server_port_check (use_ssl);
         strcpy (type,"https");
       }
-      //else if(sscanf(server_url,URI_HTTP,type)==1 ){
-      //}
       else{
          strcpy (type, server_type);
       }
