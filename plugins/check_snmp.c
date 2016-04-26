@@ -64,6 +64,8 @@ const char *email = "devel@monitoring-plugins.org";
 #define L_RATE_MULTIPLIER CHAR_MAX+2
 #define L_INVERT_SEARCH CHAR_MAX+3
 #define L_OFFSET CHAR_MAX+4
+#define L_MULTIPLY_BY CHAR_MAX+5
+#define L_DIVIDE_BY CHAR_MAX+6
 
 /* Gobble to string - stop incrementing c when c[0] match one of the
  * characters in s */
@@ -153,6 +155,9 @@ double *previous_value;
 size_t previous_size = OID_COUNT_STEP;
 int perf_labels = 1;
 
+double reponse_value_operand = 0;
+int multiply_by = 0;
+int divide_by = 0;
 
 static char *fix_snmp_range(char *th)
 {
@@ -475,7 +480,14 @@ main (int argc, char **argv)
 				response_size += OID_COUNT_STEP;
 				response_value = realloc(response_value, response_size * sizeof(*response_value));
 			}
-			response_value[i] = strtod (ptr, NULL) + offset;
+			if (multiply_by != 0)
+				temp_double = strtod(ptr, NULL) * multiply_by;
+			else if (divide_by != 0)
+				temp_double = strtod(ptr, NULL) / divide_by;
+			else
+				temp_double = strtod(ptr, NULL);
+
+			response_value[i] = temp_double + offset;
 
 			if(calculate_rate) {
 				if (previous_state!=NULL) {
@@ -680,6 +692,8 @@ process_arguments (int argc, char **argv)
 		{"offset", required_argument, 0, L_OFFSET},
 		{"invert-search", no_argument, 0, L_INVERT_SEARCH},
 		{"perf-oids", no_argument, 0, 'O'},
+		{"multiply-by", required_argument, 0, L_MULTIPLY_BY},
+		{"divide-by", required_argument, 0, L_DIVIDE_BY},
 		{0, 0, 0, 0}
 	};
 
@@ -913,8 +927,18 @@ process_arguments (int argc, char **argv)
 			if(!is_integer(optarg)||((rate_multiplier=atoi(optarg))<=0))
 				usage2(_("Rate multiplier must be a positive integer"),optarg);
 			break;
+		case L_MULTIPLY_BY:
+			if(!is_numeric(optarg))
+				usage2(_("Multiply By operand must be an number"),optarg);
+			multiply_by = atoi(optarg);
+			break;
+		case L_DIVIDE_BY:
+			if(!is_numeric(optarg))
+				usage2(_("Divide By operand must be an number"),optarg);
+			divide_by = atoi(optarg);
+			break;
 		case L_OFFSET:
-                        offset=strtod(optarg,NULL);
+			offset=strtod(optarg,NULL);
 			break;
 		case L_INVERT_SEARCH:
 			invert_search=1;
