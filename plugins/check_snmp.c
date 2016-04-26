@@ -1201,6 +1201,11 @@ print_help (void)
 	printf ("    %s\n", _("Converts rate per second. For example, set to 60 to convert to per minute"));
 	printf (" %s\n", "--offset=OFFSET");
 	printf ("    %s\n", _("Add/substract the specified OFFSET to numeric sensor data"));
+	printf (" %s\n", "--multiply-by");
+	printf ("    %s\n", _("Multiply the result by this amount."));
+	printf (" %s\n", "--divide-by");
+	printf ("    %s\n", _("Divide the result by this amount."));
+
 
 	/* Tests Against Strings */
 	printf (" %s\n", "-s, --string=STRING");
