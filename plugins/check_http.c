@@ -91,6 +91,8 @@ struct timeval tv_temp;
 
 int specify_port = FALSE;
 int server_port = HTTP_PORT;
+char *virtual_server_name = NULL;
+int virtual_server_port = -1;
 char server_port_text[6] = "";
 char server_type[6] = "http";
 char *server_address;
@@ -115,6 +117,9 @@ int http_opt_headers_count = 0;
 int onredirect = STATE_OK;
 int followsticky = STICKY_NONE;
 int use_ssl = FALSE;
+int ssl_over_proxy = FALSE;
+char *proxy_address;
+int proxy_port = 3128;
 int use_sni = FALSE;
 int verbose = FALSE;
 int show_extended_perfdata = FALSE;
@@ -391,11 +396,21 @@ process_arguments (int argc, char **argv)
     case 'H': /* Host Name (virtual host) */
       host_name = strdup (optarg);
       if (host_name[0] == '[') {
-        if ((p = strstr (host_name, "]:")) != NULL) /* [IPv6]:port */
-          server_port = atoi (p + 2);
+        if ((p = strstr (host_name, "]:")) != NULL) {
+          /* [IPv6]:port */
+          virtual_server_port = atoi (p + 2);
+          virtual_server_name = strdup (host_name);
+          p = strstr (virtual_server_name, "]:");
+          *(p + 1) = '\0';
+        }
       } else if ((p = strchr (host_name, ':')) != NULL
-                 && strchr (++p, ':') == NULL) /* IPv4:port or host:port */
-          server_port = atoi (p);
+                 && strchr (++p, ':') == NULL) {
+        /* IPv4:port or host:port */
+        virtual_server_port = atoi (p);
+        virtual_server_name = strdup (host_name);
+        p = strchr (virtual_server_name, ':');
+        *p = '\0';
+      }
       break;
     case 'I': /* Server IP-address */
       server_address = strdup (optarg);
@@ -552,6 +567,29 @@ process_arguments (int argc, char **argv)
 
   if (client_cert && !client_privkey) 
     usage4 (_("If you use a client certificate you must also specify a private key file"));
+
+  /* if we are called with the -I option, the -j method is CONNECT and */
+  /* we received -S for SSL, then we tunnel the request through a proxy*/
+  /* @20100414, public[at]frank4dd.com, http://www.frank4dd.com/howto  */
+
+  if ( server_address != NULL && strcmp(http_method, "CONNECT") == 0
+      && host_name != NULL && use_ssl == TRUE) {
+    ssl_over_proxy = TRUE;
+    proxy_address = strdup (server_address);
+    proxy_port = server_port;
+    if (virtual_server_port != -1) {
+      server_port = virtual_server_port;
+      free (host_name);
+      host_name = virtual_server_name;
+    } else {
+      server_port = HTTPS_PORT;
+    }
+    free (server_address);
+    server_address = strdup (host_name);
+  } else if (virtual_server_port != -1) {
+    /* we had a -H host:port */
+    server_port = virtual_server_port;
+  }
 
   return TRUE;
 }
@@ -884,19 +922,12 @@ check_http (void)
 
   /* try to connect to the host at the given port number */
   gettimeofday (&tv_temp, NULL);
-  if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK)
-    die (STATE_CRITICAL, _("HTTP CRITICAL - Unable to open TCP socket\n"));
-  microsec_connect = deltime (tv_temp);
 
-    /* if we are called with the -I option, the -j method is CONNECT and */
-    /* we received -S for SSL, then we tunnel the request through a proxy*/
-    /* @20100414, public[at]frank4dd.com, http://www.frank4dd.com/howto  */
-
-    if ( server_address != NULL && strcmp(http_method, "CONNECT") == 0
-      && host_name != NULL && use_ssl == TRUE) {
-
-    if (verbose) printf ("Entering CONNECT tunnel mode with proxy %s:%d to dst %s:%d\n", server_address, server_port, host_name, HTTPS_PORT);
-    asprintf (&buf, "%s %s:%d HTTP/1.1\r\n%s\r\n", http_method, host_name, HTTPS_PORT, user_agent);
+  if (ssl_over_proxy == TRUE) {
+    if (my_tcp_connect (proxy_address, proxy_port, &sd) != STATE_OK)
+      die (STATE_CRITICAL, _("HTTP CRITICAL - Unable to open TCP socket\n"));
+    if (verbose) printf ("Entering CONNECT tunnel mode with proxy %s:%d\n", proxy_address, proxy_port);
+    asprintf (&buf, "%s %s:%d HTTP/1.1\r\n%s\r\n", http_method, host_name, server_port, user_agent);
     asprintf (&buf, "%sProxy-Connection: keep-alive\r\n", buf);
     asprintf (&buf, "%sHost: %s\r\n", buf, host_name);
     /* we finished our request, send empty line with CRLF */
@@ -909,7 +940,11 @@ check_http (void)
     read (sd, buffer, MAX_INPUT_BUFFER-1);
     if (verbose) printf ("%s", buffer);
     /* Here we should check if we got HTTP/1.1 200 Connection established */
+  } else {
+    if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK)
+      die (STATE_CRITICAL, _("HTTP CRITICAL - Unable to open TCP socket\n"));
   }
+  microsec_connect = deltime (tv_temp);
 #ifdef HAVE_SSL
   elapsed_time_connect = (double)microsec_connect / 1.0e6;
   if (use_ssl == TRUE) {
@@ -929,8 +964,7 @@ check_http (void)
   }
 #endif /* HAVE_SSL */
 
-  if ( server_address != NULL && strcmp(http_method, "CONNECT") == 0
-       && host_name != NULL && use_ssl == TRUE)
+  if (ssl_over_proxy)
     asprintf (&buf, "%s %s %s\r\n%s\r\n", "GET", server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
   else
     asprintf (&buf, "%s %s %s\r\n%s\r\n", http_method, server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
@@ -959,9 +993,7 @@ check_http (void)
        * (default) port is explicitly specified in the "Host:" header line.
        */
       if ((use_ssl == FALSE && server_port == HTTP_PORT) ||
-          (use_ssl == TRUE && server_port == HTTPS_PORT) ||
-          (server_address != NULL && strcmp(http_method, "CONNECT") == 0
-         && host_name != NULL && use_ssl == TRUE))
+          (use_ssl == TRUE && server_port == HTTPS_PORT))
         xasprintf (&buf, "%sHost: %s\r\n", buf, host_name);
       else
         xasprintf (&buf, "%sHost: %s:%d\r\n", buf, host_name, server_port);
