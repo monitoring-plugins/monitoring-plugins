@@ -51,6 +51,7 @@ const char *email = "devel@monitoring-plugins.org";
 # include <limits.h>
 #endif
 #include "regex.h"
+#include <float.h>
 
 #ifdef __CYGWIN__
 # include <windows.h>
@@ -323,28 +324,28 @@ main (int argc, char **argv)
       */
 
       /* *_high_tide must be reinitialized at each run */
-      warning_high_tide = UINT_MAX;
-      critical_high_tide = UINT_MAX;
+      warning_high_tide = DBL_MAX;
+      critical_high_tide = DBL_MAX;
 
       if (path->freespace_units->warning != NULL) {
         warning_high_tide = path->dtotal_units - path->freespace_units->warning->end;
       }
       if (path->freespace_percent->warning != NULL) {
-        warning_high_tide = abs( min( (double) warning_high_tide, (double) (1.0 - path->freespace_percent->warning->end/100)*path->dtotal_units ));
+        warning_high_tide = labs( min( (double) warning_high_tide, (double) (1.0 - path->freespace_percent->warning->end/100)*path->dtotal_units ));
       }
       if (path->freespace_units->critical != NULL) {
         critical_high_tide = path->dtotal_units - path->freespace_units->critical->end;
       }
       if (path->freespace_percent->critical != NULL) {
-        critical_high_tide = abs( min( (double) critical_high_tide, (double) (1.0 - path->freespace_percent->critical->end/100)*path->dtotal_units ));
+        critical_high_tide = labs( min( (double) critical_high_tide, (double) (1.0 - path->freespace_percent->critical->end/100)*path->dtotal_units ));
       }
 
-      /* Nb: *_high_tide are unset when == UINT_MAX */
+      /* Nb: *_high_tide are unset when == DBL_MAX */
       xasprintf (&perf, "%s %s", perf,
                 perfdata ((!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
                           path->dused_units, units,
-                          (warning_high_tide != UINT_MAX ? TRUE : FALSE), warning_high_tide,
-                          (critical_high_tide != UINT_MAX ? TRUE : FALSE), critical_high_tide,
+                          (warning_high_tide != DBL_MAX ? TRUE : FALSE), warning_high_tide,
+                          (critical_high_tide != DBL_MAX ? TRUE : FALSE), critical_high_tide,
                           TRUE, 0,
                           TRUE, path->dtotal_units));
 
