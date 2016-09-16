@@ -463,10 +463,9 @@ int send_dhcp_discover(int sock){
 	discover_packet.hlen=ETHERNET_HARDWARE_ADDRESS_LENGTH;
 
 	/*
-	 * transaction ID is supposed to be random.  We won't use the address so
-	 * we don't care about high entropy here.  time(2) is good enough.
+	 * transaction ID is supposed to be random.
 	 */
-	srand(time(NULL));
+	srand(time(NULL)^getpid());
 	packet_xid=random();
 	discover_packet.xid=htonl(packet_xid);
 
