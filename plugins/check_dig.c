@@ -3,7 +3,7 @@
 * Monitoring check_dig plugin
 * 
 * License: GPL
-* Copyright (c) 2002-2008 Monitoring Plugins Development Team
+* Copyright (c) 2002-2016 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -33,7 +33,7 @@
  *  because on some architectures those strings are in non-writable memory */
 
 const char *progname = "check_dig";
-const char *copyright = "2002-2008";
+const char *copyright = "2002-2016";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
@@ -48,7 +48,7 @@ void print_usage (void);
 
 #define UNDEFINED 0
 #define DEFAULT_PORT 53
-#define DEFAULT_TRIES 3
+#define DEFAULT_TRIES 2
 
 char *query_address = NULL;
 char *record_type = "A";
@@ -94,7 +94,7 @@ main (int argc, char **argv)
   timeout_interval_dig = timeout_interval / number_tries + number_tries;
 
   /* get the command to run */
-  xasprintf (&command_line, "%s %s %s -p %d @%s %s %s +tries=%d +time=%d",
+  xasprintf (&command_line, "%s %s %s -p %d @%s %s %s +retry=%d +time=%d",
             PATH_TO_DIG, dig_args, query_transport, server_port, dns_server, query_address, record_type, number_tries, timeout_interval_dig);
 
   alarm (timeout_interval);
