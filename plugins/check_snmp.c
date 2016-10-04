@@ -152,7 +152,7 @@ state_data *previous_state;
 double *previous_value;
 size_t previous_size = OID_COUNT_STEP;
 int perf_labels = 1;
-
+char* ip_version = "";
 
 static char *fix_snmp_range(char *th)
 {
@@ -323,9 +323,9 @@ main (int argc, char **argv)
 	xasprintf (&command_line[10 + numcontext + numauthpriv], "%s:%s", server_address, port);
 
 	/* This is just for display purposes, so it can remain a string */
-	xasprintf(&cl_hidden_auth, "%s -Le -t %d -r %d -m %s -v %s %s %s %s:%s",
+	xasprintf(&cl_hidden_auth, "%s -Le -t %d -r %d -m %s -v %s %s %s %s%s:%s",
 		snmpcmd, timeout_interval, retries, strlen(miblist) ? miblist : "''", proto, "[context]", "[authpriv]",
-		server_address, port);
+		ip_version, server_address, port);
 
 	for (i = 0; i < numoids; i++) {
 		command_line[10 + numcontext + numauthpriv + 1 + i] = oids[i];
@@ -680,6 +680,8 @@ process_arguments (int argc, char **argv)
 		{"offset", required_argument, 0, L_OFFSET},
 		{"invert-search", no_argument, 0, L_INVERT_SEARCH},
 		{"perf-oids", no_argument, 0, 'O'},
+		{"ipv4", no_argument, 0, '4'},
+		{"ipv6", no_argument, 0, '6'},
 		{0, 0, 0, 0}
 	};
 
@@ -697,7 +699,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "nhvVOt:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:N:L:U:a:x:A:X:",
+		c = getopt_long (argc, argv, "nhvVO46t:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:N:L:U:a:x:A:X:",
 									 longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -922,6 +924,13 @@ process_arguments (int argc, char **argv)
 		case 'O':
 			perf_labels=0;
 			break;
+		case '4':
+			break;
+		case '6':
+			xasprintf(&ip_version, "udp6:");
+			if(verbose>2)
+				printf("IPv6 detected! Will pass \"udp6:\" to snmpget.\n");
+			break;
 		}
 	}
 
@@ -1127,6 +1136,7 @@ print_help (void)
 
 	printf (UT_HELP_VRSN);
 	printf (UT_EXTRA_OPTS);
+	printf (UT_IPv46);
 
 	printf (UT_HOST_PORT, 'p', DEFAULT_PORT);
 
@@ -1245,5 +1255,5 @@ print_usage (void)
 	printf ("[-C community] [-s string] [-r regex] [-R regexi] [-t timeout] [-e retries]\n");
 	printf ("[-l label] [-u units] [-p port-number] [-d delimiter] [-D output-delimiter]\n");
 	printf ("[-m miblist] [-P snmp version] [-N context] [-L seclevel] [-U secname]\n");
-	printf ("[-a authproto] [-A authpasswd] [-x privproto] [-X privpasswd]\n");
+	printf ("[-a authproto] [-A authpasswd] [-x privproto] [-X privpasswd] [-4|6]\n");
 }
