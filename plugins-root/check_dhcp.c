@@ -463,10 +463,9 @@ int send_dhcp_discover(int sock){
 	discover_packet.hlen=ETHERNET_HARDWARE_ADDRESS_LENGTH;
 
 	/*
-	 * transaction ID is supposed to be random.  We won't use the address so
-	 * we don't care about high entropy here.  time(2) is good enough.
+	 * transaction ID is supposed to be random.
 	 */
-	srand(time(NULL));
+	srand(time(NULL)^getpid());
 	packet_xid=random();
 	discover_packet.xid=htonl(packet_xid);
 
@@ -692,17 +691,11 @@ int receive_dhcp_packet(void *buffer, int buffer_size, int sock, int timeout, st
                 }
 
         else{
-
-		/* why do we need to peek first?  i don't know, its a hack.  without it, the source address of the first packet received was
-		   not being interpreted correctly.  sigh... */
 		bzero(&source_address,sizeof(source_address));
 		address_size=sizeof(source_address);
                 recv_result=recvfrom(sock,(char *)buffer,buffer_size,MSG_PEEK,(struct sockaddr *)&source_address,&address_size);
 		if(verbose)
-			printf("recv_result_1: %d\n",recv_result);
-                recv_result=recvfrom(sock,(char *)buffer,buffer_size,0,(struct sockaddr *)&source_address,&address_size);
-		if(verbose)
-			printf("recv_result_2: %d\n",recv_result);
+			printf("recv_result: %d\n",recv_result);
 
                 if(recv_result==-1){
 			if(verbose){

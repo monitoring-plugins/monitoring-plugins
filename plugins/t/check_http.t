@@ -154,7 +154,7 @@ SKIP: {
         like  ( $res->output, '/time_ssl=[\d\.]+/', 'Extended Performance Data SSL Output OK' );
 
         $res = NPTest->testCmd(
-                "./check_http --ssl www.e-paycobalt.com"
+                "./check_http --ssl -H www.e-paycobalt.com"
                 );
         cmp_ok( $res->return_code, "==", 0, "Can read https for www.e-paycobalt.com (uses AES certificate)" );
 
