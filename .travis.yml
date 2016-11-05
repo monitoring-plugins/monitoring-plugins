@@ -20,7 +20,7 @@ before_install:
   # - mysql -e "create database IF NOT EXISTS test;" -uroot
 
 install:
-  - sudo apt-get install -qq --no-install-recommends perl autotools-dev libdbi-dev libldap2-dev libpq-dev libmysqlclient-dev libfreeradius-client-dev libkrb5-dev libnet-snmp-perl procps
+  - sudo apt-get install -qq --no-install-recommends perl autotools-dev libdbi-dev libldap2-dev libpq-dev libmysqlclient-dev libradcli-dev libkrb5-dev libnet-snmp-perl procps
   - sudo apt-get install -qq --no-install-recommends libdbi0-dev libdbd-sqlite3 libssl-dev dnsutils snmp-mibs-downloader libsnmp-perl snmpd
   - sudo apt-get install -qq --no-install-recommends fping snmp netcat smbclient fping pure-ftpd apache2 postfix libhttp-daemon-ssl-perl
   - sudo apt-get install -qq --no-install-recommends libdbd-sybase-perl libnet-dns-perl
