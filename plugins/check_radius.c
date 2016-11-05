@@ -36,7 +36,9 @@ const char *email = "devel@monitoring-plugins.org";
 #include "utils.h"
 #include "netutils.h"
 
-#if defined(HAVE_LIBFREERADIUS_CLIENT)
+#if defined(HAVE_LIBRADCLI)
+#include <radcli/radcli.h>
+#elif defined(HAVE_LIBFREERADIUS_CLIENT)
 #include <freeradius-client.h>
 #elif defined(HAVE_LIBRADIUSCLIENT_NG)
 #include <radiusclient-ng.h>
@@ -48,10 +50,10 @@ int process_arguments (int, char **);
 void print_help (void);
 void print_usage (void);
 
-#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG)
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) || defined(HAVE_LIBRADCLI)
 #define my_rc_conf_str(a) rc_conf_str(rch,a)
 #define my_rc_send_server(a,b) rc_send_server(rch,a,b)
-#ifdef HAVE_LIBFREERADIUS_CLIENT
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADCLI)
 #define my_rc_buildreq(a,b,c,d,e,f) rc_buildreq(rch,a,b,c,d,(a)->secret,e,f)
 #else
 #define my_rc_buildreq(a,b,c,d,e,f) rc_buildreq(rch,a,b,c,d,e,f)
@@ -76,7 +78,7 @@ void print_usage (void);
 
 int my_rc_read_config(char *);
 
-#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG)
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) || defined(HAVE_LIBRADCLI)
 rc_handle *rch = NULL;
 #endif
 
@@ -399,7 +401,7 @@ print_usage (void)
 
 int my_rc_read_config(char * a)
 {
-#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG)
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) || defined(HAVE_LIBRADCLI)
 	rch = rc_read_config(a);
 	return (rch == NULL) ? 1 : 0;
 #else
