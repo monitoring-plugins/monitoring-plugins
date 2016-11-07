@@ -121,9 +121,9 @@ SKIP: {
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC ./check_http -C 1 www.verisign.com");
                 like($res->output, qr/OK - Certificate 'www.verisign.com' will expire on/, "Catch cert output");
                 is( $res->return_code, 0, "Catch cert output exit code" );
-                my($mon,$day,$hour,$min,$sec,$year) = ($res->output =~ /(\w+)\s+(\d+)\s+(\d+):(\d+):(\d+)\s+(\d+)\./);
+                my($mon,$day,$hour,$min,$sec,$year) = ($res->output =~ /(\w+)\s+(\d+)\s+(\d+):(\d+):(\d+)\s+(\d+)/);
                 if(!defined $year) {
-                    die("parsing date failed from: ".$res);
+                    die("parsing date failed from: ".$res->output);
                 }
                 my $months = {'Jan' => 0, 'Feb' => 1, 'Mar' => 2, 'Apr' => 3, 'May' => 4, 'Jun' => 5, 'Jul' => 6, 'Aug' => 7, 'Sep' => 8, 'Oct' => 9, 'Nov' => 10, 'Dec' => 11};
                 my $ts   = mktime($sec, $min, $hour, $day, $months->{$mon}, $year-1900);
