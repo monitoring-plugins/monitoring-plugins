@@ -222,9 +222,9 @@ process_arguments (int argc, char **argv)
 	/* this will abort in case of invalid ranges */
 	set_thresholds (&thlds, warning_range, critical_range);
 
-	if (thlds->warning->end <= 0)
+	if (thlds->warning->end < 0)
 		usage4 (_("Warning threshold must be a positive integer"));
-	if (thlds->critical->end <= 0)
+	if (thlds->critical->end < 0)
 		usage4 (_("Critical threshold must be a positive integer"));
 
 	return OK;
