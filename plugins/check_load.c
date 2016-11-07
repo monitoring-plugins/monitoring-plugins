@@ -160,7 +160,7 @@ main (int argc, char **argv)
 	    sscanf (input_buffer, "%*[^l]load averages: %lf, %lf, %lf", &la1, &la5, &la15);
     }
     else {
-		printf (_("could not parse load from uptime: %s\n"), result, PATH_TO_UPTIME);
+		printf (_("could not parse load from uptime: %s\n"), PATH_TO_UPTIME);
 		return STATE_UNKNOWN;
     }
 
