@@ -12,6 +12,7 @@ This file documents the major additions and syntax changes between releases.
 	  to force TLSv1.1 and TLSv1.2 connections, respectively
 	The check_http -S/--ssl option now allows for specifying the desired
 	  protocol with a "+" suffix to also accept newer versions
+	check_users: add support for range thresholds (John C. Frickson)
 
 	FIXES
 	Let check_real terminate lines with CRLF when talking to the server, as
