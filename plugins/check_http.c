@@ -117,6 +117,7 @@ int followsticky = STICKY_NONE;
 int use_ssl = FALSE;
 int use_sni = FALSE;
 int verbose = FALSE;
+int nrpe = FALSE;
 int show_extended_perfdata = FALSE;
 int sd;
 int min_page_len = 0;
@@ -237,6 +238,7 @@ process_arguments (int argc, char **argv)
     {"use-ipv4", no_argument, 0, '4'},
     {"use-ipv6", no_argument, 0, '6'},
     {"extended-perfdata", no_argument, 0, 'E'},
+    {"nrpe", no_argument, 0, 'o'},
     {0, 0, 0, 0}
   };
 
@@ -257,7 +259,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NEo", longopts, &option);
     if (c == -1 || c == EOF)
       break;
 
@@ -524,6 +526,11 @@ process_arguments (int argc, char **argv)
     case 'E': /* show extended perfdata */
       show_extended_perfdata = TRUE;
       break;
+    case 'o': /* NRPE over HTTP */
+      nrpe = TRUE;
+      strncpy (header_expect, "Content-Type: text/nagios", MAX_INPUT_BUFFER - 1);
+      header_expect[MAX_INPUT_BUFFER - 1] = 0;
+      break;
     }
   }
 
@@ -781,11 +788,13 @@ check_document_dates (const char *headers, char **msg)
   return date_result;
 }
 
-int
-get_content_length (const char *headers)
+
+/* Fetch the value of header or NULL if not found */
+char* get_header_value (const char *headers, const char *header_name)
 {
   const char *s;
-  int content_length = 0;
+  char *header_value = NULL;
+
 
   s = headers;
   while (*s) {
@@ -816,7 +825,7 @@ get_content_length (const char *headers)
         *ss++ = tolower(*field++);
       *ss++ = 0;
 
-      if (!strcmp (ff, "content-length")) {
+      if (!strcmp (ff, header_name)) {
         const char *e;
         while (*value && isspace (*value))
           value++;
@@ -825,14 +834,38 @@ get_content_length (const char *headers)
         ss = (char *) malloc (e - value + 1);
         strncpy (ss, value, e - value);
         ss[e - value] = 0;
-        content_length = atoi(ss);
-        free (ss);
+        header_value = ss;
       }
       free (ff);
     }
   }
-  return (content_length);
+  return header_value;
 }
+
+int get_content_length (const char *headers)
+{
+  char *length_header = get_header_value(headers, "content-length");
+  int content_length = 0;
+  if (length_header == NULL) return 0;
+  content_length = atoi (length_header);
+  free (length_header);
+  return content_length;
+}
+
+int get_x_nrpe_status (const char *headers)
+{
+  char *status_header = get_header_value(headers, "x-nrpe-status");
+  int status = -1;
+
+  if (status_header == NULL) return -1;
+  if (status_header[0] >= '0' && status_header[0] <= '4' && status_header[1]=='\0')
+  {
+    status = atoi(status_header);
+  }
+  free (status_header);
+  return status;
+}
+
 
 char *
 prepend_slash (char *path)
@@ -880,42 +913,17 @@ check_http (void)
   double elapsed_time_transfer = 0.0;
   int page_len = 0;
   int result = STATE_OK;
-  char *force_host_header = NULL;
 
   /* try to connect to the host at the given port number */
   gettimeofday (&tv_temp, NULL);
   if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK)
     die (STATE_CRITICAL, _("HTTP CRITICAL - Unable to open TCP socket\n"));
   microsec_connect = deltime (tv_temp);
-
-    /* if we are called with the -I option, the -j method is CONNECT and */
-    /* we received -S for SSL, then we tunnel the request through a proxy*/
-    /* @20100414, public[at]frank4dd.com, http://www.frank4dd.com/howto  */
-
-    if ( server_address != NULL && strcmp(http_method, "CONNECT") == 0
-      && host_name != NULL && use_ssl == TRUE) {
-
-    if (verbose) printf ("Entering CONNECT tunnel mode with proxy %s:%d to dst %s:%d\n", server_address, server_port, host_name, HTTPS_PORT);
-    asprintf (&buf, "%s %s:%d HTTP/1.1\r\n%s\r\n", http_method, host_name, HTTPS_PORT, user_agent);
-    asprintf (&buf, "%sProxy-Connection: keep-alive\r\n", buf);
-    asprintf (&buf, "%sHost: %s\r\n", buf, host_name);
-    /* we finished our request, send empty line with CRLF */
-    asprintf (&buf, "%s%s", buf, CRLF);
-    if (verbose) printf ("%s\n", buf);
-    send(sd, buf, strlen (buf), 0);
-    buf[0]='\0';
-
-    if (verbose) printf ("Receive response from proxy\n");
-    read (sd, buffer, MAX_INPUT_BUFFER-1);
-    if (verbose) printf ("%s", buffer);
-    /* Here we should check if we got HTTP/1.1 200 Connection established */
-  }
 #ifdef HAVE_SSL
   elapsed_time_connect = (double)microsec_connect / 1.0e6;
   if (use_ssl == TRUE) {
     gettimeofday (&tv_temp, NULL);
     result = np_net_ssl_init_with_hostname_version_and_cert(sd, (use_sni ? host_name : NULL), ssl_version, client_cert, client_privkey);
-    if (verbose) printf ("SSL initialized\n");
     if (result != STATE_OK)
       die (STATE_CRITICAL, NULL);
     microsec_ssl = deltime (tv_temp);
@@ -929,51 +937,29 @@ check_http (void)
   }
 #endif /* HAVE_SSL */
 
-  if ( server_address != NULL && strcmp(http_method, "CONNECT") == 0
-       && host_name != NULL && use_ssl == TRUE)
-    asprintf (&buf, "%s %s %s\r\n%s\r\n", "GET", server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
-  else
-    asprintf (&buf, "%s %s %s\r\n%s\r\n", http_method, server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
+  xasprintf (&buf, "%s %s %s\r\n%s\r\n", http_method, server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
 
   /* tell HTTP/1.1 servers not to keep the connection alive */
   xasprintf (&buf, "%sConnection: close\r\n", buf);
 
-  /* check if Host header is explicitly set in options */
-  if (http_opt_headers_count) {
-    for (i = 0; i < http_opt_headers_count ; i++) {
-      if (strncmp(http_opt_headers[i], "Host:", 5) == 0) {
-        force_host_header = http_opt_headers[i];
-      }
-    }
-  }
-
   /* optionally send the host header info */
   if (host_name) {
-    if (force_host_header) {
-      xasprintf (&buf, "%s%s\r\n", buf, force_host_header);
-    }
-    else {
-      /*
-       * Specify the port only if we're using a non-default port (see RFC 2616,
-       * 14.23).  Some server applications/configurations cause trouble if the
-       * (default) port is explicitly specified in the "Host:" header line.
-       */
-      if ((use_ssl == FALSE && server_port == HTTP_PORT) ||
-          (use_ssl == TRUE && server_port == HTTPS_PORT) ||
-          (server_address != NULL && strcmp(http_method, "CONNECT") == 0
-         && host_name != NULL && use_ssl == TRUE))
-        xasprintf (&buf, "%sHost: %s\r\n", buf, host_name);
-      else
-        xasprintf (&buf, "%sHost: %s:%d\r\n", buf, host_name, server_port);
-    }
+    /*
+     * Specify the port only if we're using a non-default port (see RFC 2616,
+     * 14.23).  Some server applications/configurations cause trouble if the
+     * (default) port is explicitly specified in the "Host:" header line.
+     */
+    if ((use_ssl == FALSE && server_port == HTTP_PORT) ||
+        (use_ssl == TRUE && server_port == HTTPS_PORT))
+      xasprintf (&buf, "%sHost: %s\r\n", buf, host_name);
+    else
+      xasprintf (&buf, "%sHost: %s:%d\r\n", buf, host_name, server_port);
   }
 
   /* optionally send any other header tag */
   if (http_opt_headers_count) {
     for (i = 0; i < http_opt_headers_count ; i++) {
-      if (force_host_header != http_opt_headers[i]) {
-        xasprintf (&buf, "%s%s\r\n", buf, http_opt_headers[i]);
-      }
+      xasprintf (&buf, "%s%s\r\n", buf, http_opt_headers[i]);
     }
     /* This cannot be free'd here because a redirection will then try to access this and segfault */
     /* Covered in a testcase in tests/check_http.t */
@@ -1220,6 +1206,15 @@ check_http (void)
       xasprintf (&msg, _("%sExecute Error: %s, "), msg, errbuf);
       result = STATE_CRITICAL;
     }
+  }
+
+  /* Expect NRPE style output (if we have passed the basic HTTP checks) */
+  if (result == STATE_OK && nrpe)
+  {
+    if (result == -1) die (STATE_CRITICAL, "HTTP CRITICAL: Header 'X-NRPE-Status' invalid or not found on '%s://%s:%d%s'", use_ssl ? "https" : "http", host_name ? host_name : server_address, server_port, server_url);
+    die (result, page);
+    /* die failed? */
+    return STATE_UNKNOWN;
   }
 
   /* make sure the page is of an appropriate size */
@@ -1555,7 +1550,7 @@ print_help (void)
   printf ("    %s\n", _("URL to GET or POST (default: /)"));
   printf (" %s\n", "-P, --post=STRING");
   printf ("    %s\n", _("URL encoded http POST data"));
-  printf (" %s\n", "-j, --method=STRING  (for example: HEAD, OPTIONS, TRACE, PUT, DELETE, CONNECT)");
+  printf (" %s\n", "-j, --method=STRING  (for example: HEAD, OPTIONS, TRACE, PUT, DELETE)");
   printf ("    %s\n", _("Set HTTP method."));
   printf (" %s\n", "-N, --no-body");
   printf ("    %s\n", _("Don't wait for document body: stop reading after headers."));
@@ -1592,6 +1587,8 @@ print_help (void)
   printf ("    %s\n", _("specified IP address. stickyport also ensures port stays the same."));
   printf (" %s\n", "-m, --pagesize=INTEGER<:INTEGER>");
   printf ("    %s\n", _("Minimum page size required (bytes) : Maximum page size required (bytes)"));
+  printf (" %s\n", "-o, --nrpe");
+  printf ("    %s\n", _("Result is already NRPE formatted"));
 
   printf (UT_WARN_CRIT);
 
@@ -1607,6 +1604,10 @@ print_help (void)
   printf (" %s\n", _("messages from the host result in STATE_WARNING return values.  If you are"));
   printf (" %s\n", _("checking a virtual server that uses 'host headers' you must supply the FQDN"));
   printf (" %s\n", _("(fully qualified domain name) as the [host_name] argument."));
+  printf ("\n");
+  printf (" %s\n", _("When using 'nrpe' the numerical return code is expected in return header"));
+  printf (" %s\n", _("'X-NRPE-Status' and Content-Type must be text/nagios. The page body is"));
+  printf (" %s\n", _("echoed out. This partly emulates the behaviour of check_nrpe over HTTP."));
 
 #ifdef HAVE_SSL
   printf ("\n");
@@ -1629,20 +1630,13 @@ print_help (void)
   printf (" %s\n", _("When the certificate of 'www.verisign.com' is valid for more than 14 days,"));
   printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
   printf (" %s\n", _("14 days, a STATE_WARNING is returned. A STATE_CRITICAL will be returned when"));
-  printf (" %s\n\n", _("the certificate is expired."));
+  printf (" %s\n", _("the certificate is expired."));
   printf ("\n");
   printf (" %s\n\n", "CHECK CERTIFICATE: check_http -H www.verisign.com -C 30,14");
   printf (" %s\n", _("When the certificate of 'www.verisign.com' is valid for more than 30 days,"));
   printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
   printf (" %s\n", _("30 days, but more than 14 days, a STATE_WARNING is returned."));
   printf (" %s\n", _("A STATE_CRITICAL will be returned when certificate expires in less than 14 days"));
-
-  printf (" %s\n\n", "CHECK SSL WEBSERVER CONTENT VIA PROXY USING HTTP 1.1 CONNECT: ");
-  printf (" %s\n", _("check_http -I 192.168.100.35 -p 80 -u https://www.verisign.com/ -S -j CONNECT -H www.verisign.com "));
-  printf (" %s\n", _("all these options are needed: -I <proxy> -p <proxy-port> -u <check-url> -S(sl) -j CONNECT -H <webserver>"));
-  printf (" %s\n", _("a STATE_OK will be returned. When the server returns its content but exceeds"));
-  printf (" %s\n", _("the 5-second threshold, a STATE_WARNING will be returned. When an error occurs,"));
-  printf (" %s\n", _("a STATE_CRITICAL will be returned."));
 
 #endif
 
@@ -1663,5 +1657,5 @@ print_usage (void)
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
-  printf ("       [-T <content-type>] [-j method]\n");
+  printf ("       [-T <content-type>] [-j method] [-o]\n");
 }
