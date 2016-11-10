@@ -144,8 +144,6 @@ usage5 (void)
 void
 print_revision (const char *command_name, const char *revision)
 {
-	char plugin_revision[STRLEN];
-
 	printf ("%s v%s (%s %s)\n",
 	         command_name, revision, PACKAGE, VERSION);
 }
@@ -670,3 +668,44 @@ char *sperfdata (const char *label,
 
 	return data;
 }
+
+char *sperfdata_int (const char *label,
+ int val,
+ const char *uom,
+ char *warn,
+ char *crit,
+ int minp,
+ int minv,
+ int maxp,
+ int maxv)
+{
+	char *data = NULL;
+	if (strpbrk (label, "'= "))
+		xasprintf (&data, "'%s'=", label);
+	else
+		xasprintf (&data, "%s=", label);
+
+	xasprintf (&data, "%s%d", data, val);
+	xasprintf (&data, "%s%s;", data, uom);
+
+	if (warn!=NULL)
+		xasprintf (&data, "%s%s", data, warn);
+
+	xasprintf (&data, "%s;", data);
+
+	if (crit!=NULL)
+		xasprintf (&data, "%s%s", data, crit);
+
+	xasprintf (&data, "%s;", data);
+
+	if (minp)
+		xasprintf (&data, "%s%d", data, minv);
+
+	if (maxp) {
+		xasprintf (&data, "%s;", data);
+		xasprintf (&data, "%s%d", data, maxv);
+	}
+
+	return data;
+}
+

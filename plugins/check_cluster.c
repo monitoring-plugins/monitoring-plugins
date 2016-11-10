@@ -200,7 +200,7 @@ int process_arguments(int argc, char **argv){
 
 		case 'V': /* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 			break;
 
 		case 'H': /* help */

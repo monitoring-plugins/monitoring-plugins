@@ -325,10 +325,10 @@ process_arguments (int argc, char **argv)
 		switch (c) {
 		case 'h':									/* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 't':									/* timeout period */
 			if (!is_intnonneg (optarg))
 				usage2 (_("Timeout interval must be a positive integer"), optarg);
@@ -483,7 +483,7 @@ print_help (void)
 
   printf (" %s\n", "-W [--warn-entries]");
   printf ("    %s\n", _("Number of found entries to result in warning status"));
-  printf (" %s\n", "-W [--crit-entries]");
+  printf (" %s\n", "-C [--crit-entries]");
   printf ("    %s\n", _("Number of found entries to result in critical status"));
 
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);

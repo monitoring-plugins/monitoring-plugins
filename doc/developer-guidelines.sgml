@@ -194,12 +194,13 @@
 					<row>
 						<entry align="center"><para>3</para></entry>
 						<entry valign="middle"><para>Unknown</para></entry>
-						<entry><para>Invalid command line arguments were supplied to the 
+						<entry><para>Invalid command line arguments were supplied to the
 						plugin or low-level failures internal to the plugin (such as unable to fork,
 						or open a tcp socket) that prevent it from performing the specified
 						operation. Higher-level errors (such as name resolution errors,
 						socket timeouts, etc) are outside of the control of plugins and should
 						generally NOT be reported as UNKNOWN states.
+						</para><para>The --help or --version output should also result in Unknown state.
 						</para></entry>
 					</row>
 				</tbody>
@@ -610,6 +611,9 @@
 		<para>The option -v or --verbose should be present in all plugins.
 		The user should be allowed to specify -v multiple times to increase
 		the verbosity level, as described in <xref linkend="verboselevels">.</para>
+
+		<para>The exit code for version information or help should be UNKNOWN
+		(3).</para>
     </section>
 
     <section>

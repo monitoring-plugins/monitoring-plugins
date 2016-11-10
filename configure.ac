@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
-AC_INIT(monitoring-plugins,2.1.1)
+AC_INIT(monitoring-plugins,2.1.2)
 AC_CONFIG_SRCDIR(NPTest.pm)
 AC_CONFIG_FILES([gl/Makefile])
 AC_CONFIG_AUX_DIR(build-aux)
@@ -155,12 +155,6 @@ AC_CHECK_LIB(nsl,main,SOCKETLIBS="$SOCKETLIBS -lnsl")
 AC_CHECK_LIB(socket,socket,SOCKETLIBS="$SOCKETLIBS -lsocket")
 AC_CHECK_LIB(resolv,main,SOCKETLIBS="$SOCKETLIBS -lresolv")
 AC_SUBST(SOCKETLIBS)
-
-dnl Check for POSIX thread libraries
-AC_CHECK_HEADERS(pthread.h)
-AC_CHECK_LIB(pthread,pthread_create,THREADLIBS="-lpthread",
-             AC_CHECK_LIB(pthread,pthread_create,THREADLIBS="-lpthread -lrt",-lrt))
-AC_SUBST(THREADLIBS)
 
 dnl
 dnl check for math-related functions needing -lm

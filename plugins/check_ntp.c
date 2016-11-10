@@ -297,7 +297,7 @@ void setup_request(ntp_message *p){
  * this is done by filtering servers based on stratum, dispersion, and
  * finally round-trip delay. */
 int best_offset_server(const ntp_server_results *slist, int nservers){
-	int i=0, cserver=0, best_server=-1;
+	int cserver=0, best_server=-1;
 
 	/* for each server */
 	for(cserver=0; cserver<nservers; cserver++){
@@ -356,7 +356,7 @@ int best_offset_server(const ntp_server_results *slist, int nservers){
  *   we have to do it in a way that our lazy macros don't handle currently :( */
 double offset_request(const char *host, int *status){
 	int i=0, j=0, ga_result=0, num_hosts=0, *socklist=NULL, respnum=0;
-	int servers_completed=0, one_written=0, one_read=0, servers_readable=0, best_index=-1;
+	int servers_completed=0, one_read=0, servers_readable=0, best_index=-1;
 	time_t now_time=0, start_ts=0;
 	ntp_message *req=NULL;
 	double avg_offset=0.;
@@ -421,7 +421,6 @@ double offset_request(const char *host, int *status){
 		 * been touched in the past second or so and is still lacking
 		 * some responses.  for each of these servers, send a new request,
 		 * and update the "waiting" timestamp with the current time. */
-		one_written=0;
 		now_time=time(NULL);
 
 		for(i=0; i<num_hosts; i++){
@@ -431,7 +430,6 @@ double offset_request(const char *host, int *status){
 				setup_request(&req[i]);
 				write(socklist[i], &req[i], sizeof(ntp_message));
 				servers[i].waiting=now_time;
-				one_written=1;
 				break;
 			}
 		}
@@ -691,11 +689,11 @@ int process_arguments(int argc, char **argv){
 		switch (c) {
 		case 'h':
 			print_help();
-			exit(STATE_OK);
+			exit(STATE_UNKNOWN);
 			break;
 		case 'V':
 			print_revision(progname, NP_VERSION);
-			exit(STATE_OK);
+			exit(STATE_UNKNOWN);
 			break;
 		case 'v':
 			verbose++;

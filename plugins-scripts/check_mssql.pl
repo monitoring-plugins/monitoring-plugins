@@ -31,7 +31,6 @@ use DBD::Sybase;
 use Getopt::Long;
 use FindBin;
 use lib "$FindBin::Bin";
-use lib '@libexecdir@';
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 use strict;
 
@@ -131,7 +130,7 @@ sub process_arguments {
 
 	if (defined $opt_V) {
 		print_revision($PROGNAME,'@NP_VERSION@');
-		exit $ERRORS{'OK'};
+		exit $ERRORS{'UNKNOWN'};
 	}
 
 	syntax("Help:") if ($help);

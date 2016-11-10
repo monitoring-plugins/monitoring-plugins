@@ -1,20 +1,40 @@
+sudo: required
+dist: trusty
 language: c
 
 before_install:
-  - sudo add-apt-repository -y ppa:waja/precise-backports
+  # Trusty related fixed
+  # multiverse is no on trusty activated (https://github.com/travis-ci/travis-ci/issues/4979)
+  - sudo add-apt-repository "deb http://archive.ubuntu.com/ubuntu/ trusty multiverse" && sudo add-apt-repository "deb http://archive.ubuntu.com/ubuntu/ trusty-updates multiverse"
+  # /etc/hosts has IPv6 hosts (https://github.com/travis-ci/travis-ci/issues/4978)
+  - sudo [ $(ip addr show | grep "inet6 ::1" | wc -l) -lt "1" ] && sudo sed -i '/^::1/d' /etc/hosts
+  # Trusty has running ntpd on localhost, but we don't like that for our tests
+  - sudo killall -9 ntpd
+  # Trusty has no swap, lets create some
+  - sudo fallocate -l 20M /swapfile; sudo chmod 600 /swapfile; sudo mkswap /swapfile; sudo swapon /swapfile
+  - sudo add-apt-repository -y ppa:waja/trusty-backports
   - sudo apt-get update -qq
   - sudo apt-get purge -qq gawk
-  # ensure we have a test database in place for tests
-  - mysql -e "create database IF NOT EXISTS test;" -uroot
+  # http://docs.travis-ci.com/user/trusty-ci-environment/ indicates, no MySQL on Trusty (yet)
+  # # ensure we have a test database in place for tests
+  # - mysql -e "create database IF NOT EXISTS test;" -uroot
 
 install:
   - sudo apt-get install -qq --no-install-recommends perl autotools-dev libdbi-dev libldap2-dev libpq-dev libmysqlclient-dev libfreeradius-client-dev libkrb5-dev libnet-snmp-perl procps
   - sudo apt-get install -qq --no-install-recommends libdbi0-dev libdbd-sqlite3 libssl-dev dnsutils snmp-mibs-downloader libsnmp-perl snmpd
   - sudo apt-get install -qq --no-install-recommends fping snmp netcat smbclient fping pure-ftpd apache2 postfix libhttp-daemon-ssl-perl
+  - sudo apt-get install -qq --no-install-recommends libdbd-sybase-perl libnet-dns-perl
   - sudo apt-get install -qq --no-install-recommends slapd ldap-utils
   - sudo apt-get install -qq --no-install-recommends autoconf automake
+  - sudo apt-get install -qq --no-install-recommends faketime
+  # Trusty related dependencies (not yet provided)
+  - sudo apt-get install -qq --no-install-recommends mariadb-client mariadb-server
 
 before_script:
+  # ensure we have a test database in place for tests
+  - mysql -e "create database IF NOT EXISTS test;" -uroot
+  # Detect LDAP configuration (seems  volatile on trusty env)
+  - sed -e 's/cn=admin,dc=nodomain/'$(sudo /usr/sbin/slapcat|grep ^dn:|grep cn=|awk '{print $2}')'/' -i plugins/t/NPTest.cache.travis
   - tools/setup
   - ./configure --enable-libtap
   - make

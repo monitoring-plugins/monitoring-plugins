@@ -48,7 +48,7 @@ void print_usage (void);
 
 #define UNDEFINED 0
 #define DEFAULT_PORT 53
-#define DEFAULT_TRIES 3
+#define DEFAULT_TRIES 2
 
 char *query_address = NULL;
 char *record_type = "A";
@@ -94,7 +94,7 @@ main (int argc, char **argv)
   timeout_interval_dig = timeout_interval / number_tries + number_tries;
 
   /* get the command to run */
-  xasprintf (&command_line, "%s %s %s -p %d @%s %s %s +tries=%d +time=%d",
+  xasprintf (&command_line, "%s %s %s -p %d @%s %s %s +retry=%d +time=%d",
             PATH_TO_DIG, dig_args, query_transport, server_port, dns_server, query_address, record_type, number_tries, timeout_interval_dig);
 
   alarm (timeout_interval);
@@ -125,7 +125,7 @@ main (int argc, char **argv)
         if (verbose)
           printf ("%s\n", chld_out.line[i]);
 
-        if (strstr (chld_out.line[i], (expected_address == NULL ? query_address : expected_address)) != NULL) {
+        if (strcasestr (chld_out.line[i], (expected_address == NULL ? query_address : expected_address)) != NULL) {
           msg = chld_out.line[i];
           result = STATE_OK;
 
@@ -223,10 +223,10 @@ process_arguments (int argc, char **argv)
     switch (c) {
     case 'h':                 /* help */
       print_help ();
-      exit (STATE_OK);
+      exit (STATE_UNKNOWN);
     case 'V':                 /* version */
       print_revision (progname, NP_VERSION);
-      exit (STATE_OK);
+      exit (STATE_UNKNOWN);
     case 'H':                 /* hostname */
       host_or_die(optarg);
       dns_server = optarg;

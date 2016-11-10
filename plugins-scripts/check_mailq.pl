@@ -33,7 +33,6 @@ use vars qw($opt_V $opt_h $opt_v $verbose $PROGNAME $opt_w $opt_c $opt_t $opt_s
 					%srcdomains %dstdomains);
 use FindBin;
 use lib "$FindBin::Bin";
-use lib '@libexecdir@';
 use utils qw(%ERRORS &print_revision &support &usage );
 
 my ($sudo);
@@ -574,12 +573,12 @@ sub process_arguments(){
 
 	if ($opt_V) {
 		print_revision($PROGNAME,'@NP_VERSION@');
-		exit $ERRORS{'OK'};
+		exit $ERRORS{'UNKNOWN'};
 	}
 
 	if ($opt_h) {
 		print_help();
-		exit $ERRORS{'OK'};
+		exit $ERRORS{'UNKNOWN'};
 	}
 
 	if (defined $opt_v ){

@@ -259,10 +259,10 @@ process_arguments (int argc, char **argv)
 			usage5 ();
 		case 'h':									/* help */
 			print_help ();
-			exit (OK);
+			exit (STATE_UNKNOWN);
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
-			exit (OK);
+			exit (STATE_UNKNOWN);
 		case 'v':									/* verbose mode */
 			verbose = TRUE;
 			break;

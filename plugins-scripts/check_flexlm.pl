@@ -37,7 +37,6 @@ use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_F $opt_t $verbose $PROGNAME);
 use FindBin;
 use lib "$FindBin::Bin";
-use lib '@libexecdir@';
 use utils qw(%ERRORS &print_revision &support &usage);
 
 $PROGNAME="check_flexlm";
@@ -59,7 +58,7 @@ GetOptions
 
 if ($opt_V) {
 	print_revision($PROGNAME,'@NP_VERSION@');
-	exit $ERRORS{'OK'};
+	exit $ERRORS{'UNKNOWN'};
 }
 
 unless (defined $opt_t) {
@@ -67,7 +66,7 @@ unless (defined $opt_t) {
 }
 
 
-if ($opt_h) {print_help(); exit $ERRORS{'OK'};}
+if ($opt_h) {print_help(); exit $ERRORS{'UNKNOWN'};}
 
 unless (defined $opt_F) {
 	print "Missing license.dat file\n";

@@ -49,28 +49,78 @@ int np_net_ssl_init_with_hostname_and_version(int sd, char *host_name, int versi
 
 int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int version, char *cert, char *privkey) {
 	SSL_METHOD *method = NULL;
+	long options = 0;
 
 	switch (version) {
-	case 0: /* Deafult to auto negotiation */
-		method = SSLv23_client_method();
-		break;
-	case 1: /* TLSv1 protocol */
-		method = TLSv1_client_method();
-		break;
-	case 2: /* SSLv2 protocol */
+	case MP_SSLv2: /* SSLv2 protocol */
 #if defined(USE_GNUTLS) || defined(OPENSSL_NO_SSL2)
-		printf(("%s\n", _("CRITICAL - SSL protocol version 2 is not supported by your SSL library.")));
-		return STATE_CRITICAL;
+		printf("%s\n", _("UNKNOWN - SSL protocol version 2 is not supported by your SSL library."));
+		return STATE_UNKNOWN;
 #else
 		method = SSLv2_client_method();
-#endif
 		break;
-	case 3: /* SSLv3 protocol */
+#endif
+	case MP_SSLv3: /* SSLv3 protocol */
+#if defined(OPENSSL_NO_SSL3)
+		printf("%s\n", _("UNKNOWN - SSL protocol version 3 is not supported by your SSL library."));
+		return STATE_UNKNOWN;
+#else
 		method = SSLv3_client_method();
 		break;
-	default: /* Unsupported */
-		printf("%s\n", _("CRITICAL - Unsupported SSL protocol version."));
-		return STATE_CRITICAL;
+#endif
+	case MP_TLSv1: /* TLSv1 protocol */
+#if defined(OPENSSL_NO_TLS1)
+		printf("%s\n", _("UNKNOWN - TLS protocol version 1 is not supported by your SSL library."));
+		return STATE_UNKNOWN;
+#else
+		method = TLSv1_client_method();
+		break;
+#endif
+	case MP_TLSv1_1: /* TLSv1.1 protocol */
+#if !defined(SSL_OP_NO_TLSv1_1)
+		printf("%s\n", _("UNKNOWN - TLS protocol version 1.1 is not supported by your SSL library."));
+		return STATE_UNKNOWN;
+#else
+		method = TLSv1_1_client_method();
+		break;
+#endif
+	case MP_TLSv1_2: /* TLSv1.2 protocol */
+#if !defined(SSL_OP_NO_TLSv1_2)
+		printf("%s\n", _("UNKNOWN - TLS protocol version 1.2 is not supported by your SSL library."));
+		return STATE_UNKNOWN;
+#else
+		method = TLSv1_2_client_method();
+		break;
+#endif
+	case MP_TLSv1_2_OR_NEWER:
+#if !defined(SSL_OP_NO_TLSv1_1)
+		printf("%s\n", _("UNKNOWN - Disabling TLSv1.1 is not supported by your SSL library."));
+		return STATE_UNKNOWN;
+#else
+		options |= SSL_OP_NO_TLSv1_1;
+#endif
+		/* FALLTHROUGH */
+	case MP_TLSv1_1_OR_NEWER:
+#if !defined(SSL_OP_NO_TLSv1)
+		printf("%s\n", _("UNKNOWN - Disabling TLSv1 is not supported by your SSL library."));
+		return STATE_UNKNOWN;
+#else
+		options |= SSL_OP_NO_TLSv1;
+#endif
+		/* FALLTHROUGH */
+	case MP_TLSv1_OR_NEWER:
+#if defined(SSL_OP_NO_SSLv3)
+		options |= SSL_OP_NO_SSLv3;
+#endif
+		/* FALLTHROUGH */
+	case MP_SSLv3_OR_NEWER:
+#if defined(SSL_OP_NO_SSLv2)
+		options |= SSL_OP_NO_SSLv2;
+#endif
+	case MP_SSLv2_OR_NEWER:
+		/* FALLTHROUGH */
+	default: /* Default to auto negotiation */
+		method = SSLv23_client_method();
 	}
 	if (!initialized) {
 		/* Initialize SSL context */
@@ -94,8 +144,9 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 #endif
 	}
 #ifdef SSL_OP_NO_TICKET
-	SSL_CTX_set_options(c, SSL_OP_NO_TICKET);
+	options |= SSL_OP_NO_TICKET;
 #endif
+	SSL_CTX_set_options(c, options);
 	SSL_CTX_set_mode(c, SSL_MODE_AUTO_RETRY);
 	if ((s = SSL_new(c)) != NULL) {
 #ifdef SSL_set_tlsext_host_name
@@ -144,7 +195,10 @@ int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
 #  ifdef USE_OPENSSL
 	X509 *certificate=NULL;
 	X509_NAME *subj=NULL;
+	char timestamp[50] = "";
 	char cn[MAX_CN_LENGTH]= "";
+	char *tz;
+	
 	int cnlen =-1;
 	int status=STATE_UNKNOWN;
 
@@ -153,7 +207,7 @@ int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
 	struct tm stamp;
 	float time_left;
 	int days_left;
-	char timestamp[50] = "";
+	int time_remaining;
 	time_t tm_t;
 
 	certificate=SSL_get_peer_certificate(s);
@@ -207,32 +261,55 @@ int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
 		(tm->data[6 + offset] - '0') * 10 + (tm->data[7 + offset] - '0');
 	stamp.tm_min =
 		(tm->data[8 + offset] - '0') * 10 + (tm->data[9 + offset] - '0');
-	stamp.tm_sec = 0;
+	stamp.tm_sec =
+		(tm->data[10 + offset] - '0') * 10 + (tm->data[11 + offset] - '0');
 	stamp.tm_isdst = -1;
 
-	time_left = difftime(timegm(&stamp), time(NULL));
+	tm_t = timegm(&stamp);
+	time_left = difftime(tm_t, time(NULL));
 	days_left = time_left / 86400;
-	tm_t = mktime (&stamp);
-	strftime(timestamp, 50, "%c", localtime(&tm_t));
+	tz = getenv("TZ");
+	setenv("TZ", "GMT", 1);
+	tzset();
+	strftime(timestamp, 50, "%c %z", localtime(&tm_t));
+	if (tz)
+		setenv("TZ", tz, 1);
+	else
+		unsetenv("TZ");
+	tzset();
 
 	if (days_left > 0 && days_left <= days_till_exp_warn) {
 		printf (_("%s - Certificate '%s' expires in %d day(s) (%s).\n"), (days_left>days_till_exp_crit)?"WARNING":"CRITICAL", cn, days_left, timestamp);
 		if (days_left > days_till_exp_crit)
-			return STATE_WARNING;
+			status = STATE_WARNING;
 		else
-			return STATE_CRITICAL;
+			status = STATE_CRITICAL;
+	} else if (days_left == 0 && time_left > 0) {
+		if (time_left >= 3600)
+			time_remaining = (int) time_left / 3600;
+		else
+			time_remaining = (int) time_left / 60;
+
+		printf (_("%s - Certificate '%s' expires in %u %s (%s)\n"),
+			(days_left>days_till_exp_crit) ? "WARNING" : "CRITICAL", cn, time_remaining,
+			time_left >= 3600 ? "hours" : "minutes", timestamp);
+
+		if ( days_left > days_till_exp_crit)
+			status = STATE_WARNING;
+		else
+			status = STATE_CRITICAL;
 	} else if (time_left < 0) {
 		printf(_("CRITICAL - Certificate '%s' expired on %s.\n"), cn, timestamp);
 		status=STATE_CRITICAL;
 	} else if (days_left == 0) {
-		printf (_("%s - Certificate '%s' expires today (%s).\n"), (days_left>days_till_exp_crit)?"WARNING":"CRITICAL", cn, timestamp);
+		printf (_("%s - Certificate '%s' just expired (%s).\n"), (days_left>days_till_exp_crit)?"WARNING":"CRITICAL", cn, timestamp);
 		if (days_left > days_till_exp_crit)
-			return STATE_WARNING;
+			status = STATE_WARNING;
 		else
-			return STATE_CRITICAL;
+			status = STATE_CRITICAL;
 	} else {
 		printf(_("OK - Certificate '%s' will expire on %s.\n"), cn, timestamp);
-		status=STATE_OK;
+		status = STATE_OK;
 	}
 	X509_free(certificate);
 	return status;

@@ -237,7 +237,7 @@ main (int argc, char **argv)
 	gettimeofday (&tv, NULL);
 
 	result = np_net_connect (server_address, server_port, &sd, PROTOCOL);
-	if (result == STATE_CRITICAL) return STATE_CRITICAL;
+	if (result == STATE_CRITICAL) return econn_refuse_state;
 
 #ifdef HAVE_SSL
 	if (flags & FLAG_SSL){
@@ -463,10 +463,10 @@ process_arguments (int argc, char **argv)
 			usage5 ();
 		case 'h':                 /* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'V':                 /* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'v':                 /* verbose mode */
 			flags |= FLAG_VERBOSE;
 			match_flags |= NP_MATCH_VERBOSE;

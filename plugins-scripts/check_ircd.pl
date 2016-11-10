@@ -51,7 +51,6 @@ use vars qw($opt_V $opt_h $opt_t $opt_p $opt_H $opt_w $opt_c $verbose);
 use vars qw($PROGNAME);
 use FindBin;
 use lib "$FindBin::Bin";
-use lib '@libexecdir@';
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
 
 # ----------------------------------------------------[ Function Prototypes ]--
@@ -182,10 +181,10 @@ MAIN:
 
 	if ($opt_V) {
 		print_revision($PROGNAME,'@NP_VERSION@');
-		exit $ERRORS{'OK'};
+		exit $ERRORS{'UNKNOWN'};
 	}
 
-	if ($opt_h) {print_help(); exit $ERRORS{'OK'};}
+	if ($opt_h) {print_help(); exit $ERRORS{'UNKNOWN'};}
 
 	($opt_H) || ($opt_H = shift @ARGV) || usage("Host name/address not specified\n");
 	my $remotehost = $1 if ($opt_H =~ /([-.A-Za-z0-9]+)/);

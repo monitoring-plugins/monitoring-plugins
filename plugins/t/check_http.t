@@ -6,9 +6,10 @@
 
 use strict;
 use Test::More;
+use POSIX qw/mktime strftime/;
 use NPTest;
 
-plan tests => 30;
+plan tests => 42;
 
 my $successOutput = '/OK.*HTTP.*second/';
 
@@ -34,6 +35,8 @@ my $host_tcp_http2  = getTestParameter( "NP_HOST_TCP_HTTP2",
             "A host providing an index page containing the string 'monitoring'",
             "test.monitoring-plugins.org" );
 
+my $faketime = -x '/usr/bin/faketime' ? 1 : 0;
+
 
 $res = NPTest->testCmd(
 	"./check_http $host_tcp_http -wt 300 -ct 600"
@@ -47,10 +50,10 @@ $res = NPTest->testCmd(
 like( $res->output, '/bob:there\r\ncarl:frown\r\n/', "Got headers with multiple -k options" );
 
 $res = NPTest->testCmd(
-	"./check_http $host_nonresponsive -wt 1 -ct 2"
+	"./check_http $host_nonresponsive -wt 1 -ct 2 -t 3"
 	);
 cmp_ok( $res->return_code, '==', 2, "Webserver $host_nonresponsive not responding" );
-cmp_ok( $res->output, 'eq', "CRITICAL - Socket timeout after 10 seconds", "Output OK");
+cmp_ok( $res->output, 'eq', "CRITICAL - Socket timeout after 3 seconds", "Output OK");
 
 $res = NPTest->testCmd(
 	"./check_http $hostname_invalid -wt 1 -ct 2"
@@ -112,12 +115,46 @@ SKIP: {
         $res = NPTest->testCmd( "./check_http www.verisign.com -C 1" );
         cmp_ok( $res->output, 'eq', $saved_cert_output, "Old syntax for cert checking still works");
 
+        # run some certificate checks with faketime
+        SKIP: {
+                skip "No faketime binary found", 12 if !$faketime;
+                $res = NPTest->testCmd("LC_TIME=C TZ=UTC ./check_http -C 1 www.verisign.com");
+                like($res->output, qr/OK - Certificate 'www.verisign.com' will expire on/, "Catch cert output");
+                is( $res->return_code, 0, "Catch cert output exit code" );
+                my($mon,$day,$hour,$min,$sec,$year) = ($res->output =~ /(\w+)\s+(\d+)\s+(\d+):(\d+):(\d+)\s+(\d+)/);
+                if(!defined $year) {
+                    die("parsing date failed from: ".$res->output);
+                }
+                my $months = {'Jan' => 0, 'Feb' => 1, 'Mar' => 2, 'Apr' => 3, 'May' => 4, 'Jun' => 5, 'Jul' => 6, 'Aug' => 7, 'Sep' => 8, 'Oct' => 9, 'Nov' => 10, 'Dec' => 11};
+                my $ts   = mktime($sec, $min, $hour, $day, $months->{$mon}, $year-1900);
+                my $time = strftime("%Y-%m-%d %H:%M:%S", localtime($ts));
+                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts))."' ./check_http -C 1 www.verisign.com");
+                like($res->output, qr/CRITICAL - Certificate 'www.verisign.com' just expired/, "Output on expire date");
+                is( $res->return_code, 2, "Output on expire date" );
+
+                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-1))."' ./check_http -C 1 www.verisign.com");
+                like($res->output, qr/CRITICAL - Certificate 'www.verisign.com' expires in 0 minutes/, "cert expires in 1 second output");
+                is( $res->return_code, 2, "cert expires in 1 second exit code" );
+
+                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-120))."' ./check_http -C 1 www.verisign.com");
+                like($res->output, qr/CRITICAL - Certificate 'www.verisign.com' expires in 2 minutes/, "cert expires in 2 minutes output");
+                is( $res->return_code, 2, "cert expires in 2 minutes exit code" );
+
+                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-7200))."' ./check_http -C 1 www.verisign.com");
+                like($res->output, qr/CRITICAL - Certificate 'www.verisign.com' expires in 2 hours/, "cert expires in 2 hours output");
+                is( $res->return_code, 2, "cert expires in 2 hours exit code" );
+
+                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts+1))."' ./check_http -C 1 www.verisign.com");
+                like($res->output, qr/CRITICAL - Certificate 'www.verisign.com' expired on/, "Certificate expired output");
+                is( $res->return_code, 2, "Certificate expired exit code" );
+        };
+
         $res = NPTest->testCmd( "./check_http --ssl www.verisign.com -E" );
         like  ( $res->output, '/time_connect=[\d\.]+/', 'Extended Performance Data Output OK' );
         like  ( $res->output, '/time_ssl=[\d\.]+/', 'Extended Performance Data SSL Output OK' );
 
         $res = NPTest->testCmd(
-                "./check_http --ssl www.e-paycobalt.com"
+                "./check_http --ssl -H www.e-paycobalt.com"
                 );
         cmp_ok( $res->return_code, "==", 0, "Can read https for www.e-paycobalt.com (uses AES certificate)" );
 

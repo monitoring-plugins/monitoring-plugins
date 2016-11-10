@@ -94,29 +94,17 @@ const char *state_text (int);
 #define max(a,b) (((a)>(b))?(a):(b))
 #define min(a,b) (((a)<(b))?(a):(b))
 
-char *perfdata (const char *,
- long int,
- const char *,
- int,
- long int,
- int,
- long int,
- int,
- long int,
- int,
- long int);
+char *perfdata (const char *, long int, const char *, int, long int,
+                int, long int, int, long int, int, long int);
 
-char *fperfdata (const char *,
- double,
- const char *,
- int,
- double,
- int,
- double,
- int,
- double,
- int,
- double);
+char *fperfdata (const char *, double, const char *, int, double,
+                 int, double, int, double, int, double);
+
+char *sperfdata (const char *, double, const char *, char *, char *,
+                 int, double, int, double);
+
+char *sperfdata_int (const char *, int, const char *, char *, char *,
+                     int, int, int, int);
 
 /* The idea here is that, although not every plugin will use all of these, 
    most will or should.  Therefore, for consistency, these very common 

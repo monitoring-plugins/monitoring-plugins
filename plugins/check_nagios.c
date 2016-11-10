@@ -235,10 +235,10 @@ process_arguments (int argc, char **argv)
 		switch (c) {
 		case 'h':									/* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'F':									/* status log */
 			status_log = optarg;
 			break;

@@ -5,7 +5,6 @@
 use strict;
 use FindBin;
 use lib "$FindBin::Bin";
-use lib '@libexecdir@';
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 use vars qw($PROGNAME);
 use Getopt::Long;
@@ -32,12 +31,12 @@ GetOptions
 
 if ($opt_V) {
 	print_revision($PROGNAME,'@NP_VERSION@'); #'
-	exit $ERRORS{'OK'};
+	exit $ERRORS{'UNKNOWN'};
 }
 
 if ($opt_h) {
 	print_help();
-	exit $ERRORS{'OK'};
+	exit $ERRORS{'UNKNOWN'};
 }
 
 $opt_H = shift unless ($opt_H);

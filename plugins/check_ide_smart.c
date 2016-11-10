@@ -166,7 +166,6 @@ enum SmartCommand
 
 char *get_offline_text (int);
 int smart_read_values (int, values_t *);
-int values_not_passed (values_t *, thresholds_t *);
 int nagios (values_t *, thresholds_t *);
 void print_value (value_t *, threshold_t *);
 void print_values (values_t *, thresholds_t *);
@@ -234,10 +233,10 @@ main (int argc, char *argv[])
 			break;
 		case 'h':
 			print_help ();
-			return STATE_OK;
+			return STATE_UNKNOWN;
 		case 'V':
 			print_revision (progname, NP_VERSION);
-			return STATE_OK;
+			return STATE_UNKNOWN;
 		default:
 			usage5 ();
 		}
@@ -249,7 +248,7 @@ main (int argc, char *argv[])
 
 	if (!device) {
 		print_help ();
-		return STATE_OK;
+		return STATE_UNKNOWN;
 	}
 
 	fd = open (device, OPEN_MODE);
@@ -335,31 +334,6 @@ smart_read_values (int fd, values_t * values)
 	(void)memcpy(values, inbuf, 512);
 #endif /* __NetBSD__ */
 	return 0;
-}
-
-
-
-int
-values_not_passed (values_t * p, thresholds_t * t) 
-{
-	value_t * value = p->values;
-	threshold_t * threshold = t->thresholds;
-	int failed = 0;
-	int passed = 0;
-	int i;
-	for (i = 0; i < NR_ATTRIBUTES; i++) {
-		if (value->id && threshold->id && value->id == threshold->id) {
-			if (value->value < threshold->threshold) {
-				++failed;
-			}
-			else {
-				++passed;
-			}
-		}
-		++value;
-		++threshold;
-	}
-	return (passed ? -failed : 2);
 }
 
 

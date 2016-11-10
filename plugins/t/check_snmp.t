@@ -10,7 +10,7 @@ use NPTest;
 
 BEGIN {
     plan skip_all => 'check_snmp is not compiled' unless -x "./check_snmp";
-    plan tests => 61;
+    plan tests => 63;
 }
 
 my $res;
@@ -45,7 +45,7 @@ is( $res->return_code, 3, "Invalid protocol" );
 like( $res->output, "/check_snmp: Invalid SNMP version - 3c/" );
 
 SKIP: {
-    skip "no snmp host defined", 48 if ( ! $host_snmp );
+    skip "no snmp host defined", 50 if ( ! $host_snmp );
 
     $res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o system.sysUpTime.0 -w 1: -c 1:");
     cmp_ok( $res->return_code, '==', 0, "Exit OK when querying uptime" );
@@ -153,6 +153,10 @@ SKIP: {
     $res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o system.sysUpTime.0");
     cmp_ok( $res->return_code, '==', 0, "Timetick used as a string");
     like($res->output, '/^SNMP OK - Timeticks:\s\(\d+\)\s+(?:\d+ days?,\s+)?\d+:\d+:\d+\.\d+\s.*$/', "Timetick used as a string, result printed rather than parsed");
+
+    $res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o HOST-RESOURCES-MIB::hrSWRunParameters.1");
+    cmp_ok( $res->return_code, '==', 0, "Timetick used as a string");
+    is( $res->output, 'SNMP OK - "" | ', "snmp response without datatype" );
 }
 
 SKIP: {
@@ -166,8 +170,8 @@ SKIP: {
 SKIP: {
     skip "no non responsive host defined", 2 if ( ! $host_nonresponsive );
     $res = NPTest->testCmd( "./check_snmp -H $host_nonresponsive -C np_foobar -o system.sysUpTime.0 -w 1: -c 1:");
-    cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN with non responsive host" );
-    like($res->output, '/External command error: Timeout: No Response from /', "String matches timeout problem");
+    cmp_ok( $res->return_code, '==', 2, "Exit CRITICAL with non responsive host" );
+    like($res->output, '/Plugin timed out while executing system call/', "String matches timeout problem");
 }
 
 SKIP: {

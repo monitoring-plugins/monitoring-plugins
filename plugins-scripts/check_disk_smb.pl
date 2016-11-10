@@ -26,7 +26,6 @@ use vars qw($opt_P $opt_V $opt_h $opt_H $opt_s $opt_W $opt_u $opt_p $opt_w $opt_
 use vars qw($PROGNAME);
 use FindBin;
 use lib "$FindBin::Bin";
-use lib '@libexecdir@';
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
 
 sub print_help ();
@@ -55,10 +54,10 @@ GetOptions
 
 if ($opt_V) {
 	print_revision($PROGNAME,'@NP_VERSION@'); #'
-	exit $ERRORS{'OK'};
+	exit $ERRORS{'UNKNOWN'};
 }
 
-if ($opt_h) {print_help(); exit $ERRORS{'OK'};}
+if ($opt_h) {print_help(); exit $ERRORS{'UNKNOWN'};}
 
 my $smbclient = $utils::PATH_TO_SMBCLIENT;
 $smbclient    || usage("check requires smbclient, smbclient not set\n");

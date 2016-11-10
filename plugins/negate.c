@@ -59,8 +59,8 @@ static int state[4] = {
 int
 main (int argc, char **argv)
 {
-	int found = 0, result = STATE_UNKNOWN;
-	char *buf, *sub;
+	int result = STATE_UNKNOWN;
+	char *sub;
 	char **command_line;
 	output chld_out, chld_err;
 	int i;

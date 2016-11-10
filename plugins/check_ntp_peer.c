@@ -448,11 +448,11 @@ int process_arguments(int argc, char **argv){
 		switch (c) {
 		case 'h':
 			print_help();
-			exit(STATE_OK);
+			exit(STATE_UNKNOWN);
 			break;
 		case 'V':
 			print_revision(progname, NP_VERSION);
-			exit(STATE_OK);
+			exit(STATE_UNKNOWN);
 			break;
 		case 'v':
 			verbose++;

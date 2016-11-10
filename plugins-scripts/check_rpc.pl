@@ -22,7 +22,6 @@
 use strict;
 use FindBin;
 use lib "$FindBin::Bin";
-use lib '@libexecdir@';
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 use vars qw($PROGNAME);
 my ($verbose,@proto,%prognum,$host,$response,$prognum,$port,$cmd,$progver,$state);
@@ -64,12 +63,12 @@ GetOptions(
 );
 
 # -h means display verbose help screen
-if ($opt_h) { print_help(); exit $ERRORS{'OK'}; }
+if ($opt_h) { print_help(); exit $ERRORS{'UNKNOWN'}; }
 
 # -V means display version number
 if ($opt_V) {
 	print_revision($PROGNAME,'@NP_VERSION@');
-	exit $ERRORS{'OK'};
+	exit $ERRORS{'UNKNOWN'};
 }
 
 # Hash containing all RPC program names and numbers
