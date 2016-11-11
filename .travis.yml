@@ -29,9 +29,6 @@ install:
   - sudo apt-get install -qq --no-install-recommends faketime
   # Trusty related dependencies (not yet provided)
   - sudo apt-get install -qq --no-install-recommends mariadb-client mariadb-server
-  # this perl module is not available as pkg
-  - sudo apt-get install -qq --no-install-recommends cpanminus
-  - cpanm -n HTTP::Daemon::SSL
 
 before_script:
   # ensure we have a test database in place for tests
