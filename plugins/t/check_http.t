@@ -9,7 +9,7 @@ use Test::More;
 use POSIX qw/mktime strftime/;
 use NPTest;
 
-plan tests => 42;
+plan tests => 49;
 
 my $successOutput = '/OK.*HTTP.*second/';
 
@@ -63,6 +63,32 @@ cmp_ok( $res->return_code, '==', 2, "Webserver $hostname_invalid not valid" );
 # On Debian, it is Name or service not known, on Darwin, it is No address associated with nodename
 # Is also possible to get a socket timeout if DNS is not responding fast enough
 like( $res->output, "/Unable to open TCP socket|Socket timeout after/", "Output OK");
+
+# host header checks
+$res = NPTest->testCmd("./check_http -v -H $host_tcp_http");
+like( $res->output, '/^Host: '.$host_tcp_http.'\s*$/ms', "Host Header OK" );
+
+$res = NPTest->testCmd("./check_http -v -H $host_tcp_http -p 80");
+like( $res->output, '/^Host: '.$host_tcp_http.'\s*$/ms', "Host Header OK" );
+
+$res = NPTest->testCmd("./check_http -v -H $host_tcp_http:8080 -p 80");
+like( $res->output, '/^Host: '.$host_tcp_http.':8080\s*$/ms', "Host Header OK" );
+
+$res = NPTest->testCmd("./check_http -v -H $host_tcp_http:8080 -p 80");
+like( $res->output, '/^Host: '.$host_tcp_http.':8080\s*$/ms', "Host Header OK" );
+
+SKIP: {
+        skip "No internet access", 3 if $internet_access eq "no";
+
+        $res = NPTest->testCmd("./check_http -v -H www.verisign.com -S");
+        like( $res->output, '/^Host: www.verisign.com\s*$/ms', "Host Header OK" );
+
+        $res = NPTest->testCmd("./check_http -v -H www.verisign.com:8080 -S -p 443");
+        like( $res->output, '/^Host: www.verisign.com:8080\s*$/ms', "Host Header OK" );
+
+        $res = NPTest->testCmd("./check_http -v -H www.verisign.com:443 -S -p 443");
+        like( $res->output, '/^Host: www.verisign.com\s*$/ms', "Host Header OK" );
+};
 
 SKIP: {
         skip "No host serving monitoring in index file", 7 unless $host_tcp_http2;
