@@ -17,6 +17,8 @@ use Test::More;
 use NPTest;
 use FindBin qw($Bin);
 
+$ENV{'LC_TIME'} = "C";
+
 my $common_tests = 70;
 my $ssl_only_tests = 8;
 # Check that all dependent modules are available
