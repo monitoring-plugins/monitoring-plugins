@@ -161,6 +161,13 @@
 #  endif
 #endif
 
+/* openssl 1.1 does not set OPENSSL_NO_SSL2 by default but ships without ssl2 */
+#ifdef OPENSSL_VERSION_NUMBER
+#  if OPENSSL_VERSION_NUMBER >= 0x10100000
+#   define OPENSSL_NO_SSL2
+#  endif
+#endif
+
 /*
  *
  * Standard Values

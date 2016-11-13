@@ -239,8 +239,8 @@ main (int argc, char **argv)
 		  result = np_net_ssl_init(sd);
 		  if(result != STATE_OK) {
 		    printf (_("CRITICAL - Cannot create SSL context.\n"));
-		    np_net_ssl_cleanup();
 		    close(sd);
+		    np_net_ssl_cleanup();
 		    return STATE_CRITICAL;
 		  } else {
 			ssl_established = 1;
@@ -764,10 +764,12 @@ recvlines(char *buf, size_t bufsize)
 int
 my_close (void)
 {
+	int result;
+	result = close(sd);
 #ifdef HAVE_SSL
-  np_net_ssl_cleanup();
+	np_net_ssl_cleanup();
 #endif
-  return close(sd);
+	return result;
 }
 
 
