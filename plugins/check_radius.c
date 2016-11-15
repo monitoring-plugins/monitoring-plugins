@@ -92,7 +92,6 @@ char *config_file = NULL;
 unsigned short port = PW_AUTH_UDP_PORT;
 int retries = 1;
 int verbose = FALSE;
-ENV *env = NULL;
 
 /******************************************************************************
 
