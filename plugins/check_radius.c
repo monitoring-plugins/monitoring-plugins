@@ -52,7 +52,11 @@ void print_usage (void);
 
 #if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) || defined(HAVE_LIBRADCLI)
 #define my_rc_conf_str(a) rc_conf_str(rch,a)
+#if defined(HAVE_LIBRADCLI)
+#define my_rc_send_server(a,b) rc_send_server(rch,a,b,AUTH)
+#else
 #define my_rc_send_server(a,b) rc_send_server(rch,a,b)
+#endif
 #if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADCLI)
 #define my_rc_buildreq(a,b,c,d,e,f) rc_buildreq(rch,a,b,c,d,(a)->secret,e,f)
 #else
