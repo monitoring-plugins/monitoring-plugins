@@ -19,7 +19,7 @@ use FindBin qw($Bin);
 
 $ENV{'LC_TIME'} = "C";
 
-my $common_tests = 70;
+my $common_tests = 72;
 my $ssl_only_tests = 8;
 # Check that all dependent modules are available
 eval "use HTTP::Daemon 6.01;";
@@ -158,6 +158,16 @@ sub run_server {
 				$c->send_basic_header;
 				$c->send_header('foo');
 				$c->send_crlf;
+			} elsif ($r->url->path eq "/virtual_port") {
+				# check if Host header does not contain real port (which means
+				# that the virtual header is 80 or 443)
+				if ($r->header ('Host') eq '127.0.0.1') {
+					$c->send_basic_header;
+					$c->send_crlf;
+					$c->send_response(HTTP::Response->new( 200, 'OK', undef, $r->header ('Host')));
+				} else {
+					$c->send_error(HTTP::Status->HTTP_I_AM_A_TEAPOT);
+				}
 			} else {
 				$c->send_error(HTTP::Status->RC_FORBIDDEN);
 			}
@@ -181,10 +191,10 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 my $result;
 my $command = "./check_http -H 127.0.0.1";
 
-run_common_tests( { command => "$command -p $port_http" } );
+run_common_tests( { command => "$command:80 -p $port_http" } );
 SKIP: {
 	skip "HTTP::Daemon::SSL not installed", $common_tests + $ssl_only_tests if ! exists $servers->{https};
-	run_common_tests( { command => "$command -p $port_https", ssl => 1 } );
+	run_common_tests( { command => "$command:443 -p $port_https", ssl => 1 } );
 
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 14" );
 	is( $result->return_code, 0, "$command -p $port_https -S -C 14" );
@@ -367,6 +377,11 @@ sub run_common_tests {
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
+	$cmd = "$command -u /virtual_port";
+	$result = NPTest->testCmd( $cmd );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+	
   # These tests may block
 	print "ALRM\n";
 
