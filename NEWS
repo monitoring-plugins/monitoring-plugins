@@ -15,6 +15,7 @@ This file documents the major additions and syntax changes between releases.
 	check_users: add support for range thresholds (John C. Frickson)
 	check_snmp: add ipv6 support (abrist)
 	check_http: report certificate expire date in UTC (pirtoo / ylfingr)
+	check_radius now supports the radcli library
 
 	FIXES
 	Let check_real terminate lines with CRLF when talking to the server, as
