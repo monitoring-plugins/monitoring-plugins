@@ -62,14 +62,12 @@ void print_usage (void);
 #else
 #define my_rc_buildreq(a,b,c,d,e,f) rc_buildreq(rch,a,b,c,d,e,f)
 #endif
-#define my_rc_own_ipaddress() rc_own_ipaddress(rch)
 #define my_rc_avpair_add(a,b,c,d) rc_avpair_add(rch,a,b,c,-1,d)
 #define my_rc_read_dictionary(a) rc_read_dictionary(rch, a)
 #else
 #define my_rc_conf_str(a) rc_conf_str(a)
 #define my_rc_send_server(a,b) rc_send_server(a, b)
 #define my_rc_buildreq(a,b,c,d,e,f) rc_buildreq(a,b,c,d,e,f)
-#define my_rc_own_ipaddress() rc_own_ipaddress()
 #define my_rc_avpair_add(a,b,c,d) rc_avpair_add(a, b, c, d)
 #define my_rc_read_dictionary(a) rc_read_dictionary(a)
 #endif
@@ -155,6 +153,8 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 int
 main (int argc, char **argv)
 {
+	struct sockaddr_storage ss;
+	char name[HOST_NAME_MAX];
 	char msg[BUFFER_LEN];
 	SEND_DATA data;
 	int result = STATE_UNKNOWN;
@@ -190,15 +190,14 @@ main (int argc, char **argv)
 			die (STATE_UNKNOWN, _("Invalid NAS-Identifier\n"));
 	}
 
-	if (nasipaddress != NULL) {
-		if (rc_good_ipaddr (nasipaddress))
-			die (STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
-		if ((client_id = rc_get_ipaddr(nasipaddress)) == 0)
-			die (STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
-	} else {
-		if ((client_id = my_rc_own_ipaddress ()) == 0)
-			die (STATE_UNKNOWN, _("Can't find local IP for NAS-IP-Address\n"));
+	if (nasipaddress == NULL) {
+		if (gethostname (name, sizeof(name)) != 0)
+			die (STATE_UNKNOWN, _("gethostname() failed!\n"));
+		nasipaddress = name;
 	}
+	if (!dns_lookup (nasipaddress, &ss, AF_INET)) /* TODO: Support IPv6. */
+		die (STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
+	client_id = ntohl (((struct sockaddr_in *)&ss)->sin_addr.s_addr);
 	if (my_rc_avpair_add (&(data.send_pairs), PW_NAS_IP_ADDRESS, &client_id, 0) == NULL)
 		die (STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
 

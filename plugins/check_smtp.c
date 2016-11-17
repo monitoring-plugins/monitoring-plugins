@@ -59,10 +59,6 @@ enum {
 #define SMTP_STARTTLS "STARTTLS\r\n"
 #define SMTP_AUTH_LOGIN "AUTH LOGIN\r\n"
 
-#ifndef HOST_MAX_BYTES
-#define HOST_MAX_BYTES 255
-#endif
-
 #define EHLO_SUPPORTS_STARTTLS 1
 
 int process_arguments (int, char **);
