@@ -500,15 +500,15 @@ if ! test x"$with_openssl" = x"no"; then
 	dnl Check for crypto lib
 	_SAVEDLIBS="$LIBS"
 	LIBS="-L${with_openssl}/lib"
-	AC_CHECK_LIB(crypto,CRYPTO_lock)
-	if test "$ac_cv_lib_crypto_CRYPTO_lock" = "yes"; then
+	AC_CHECK_LIB(crypto,CRYPTO_new_ex_data)
+	if test "$ac_cv_lib_crypto_CRYPTO_new_ex_data" = "yes"; then
 		dnl Check for SSL lib
 		AC_CHECK_LIB(ssl,main, SSLLIBS="-lssl -lcrypto",,-lcrypto)
 	fi
 	LIBS="$_SAVEDLIBS"
 
 	dnl test headers and libs to decide whether check_http should use SSL
-	if test "$ac_cv_lib_crypto_CRYPTO_lock" = "yes"; then
+	if test "$ac_cv_lib_crypto_CRYPTO_new_ex_data" = "yes"; then
 		if test "$ac_cv_lib_ssl_main" = "yes"; then
 			if test "$FOUNDINCLUDE" = "yes"; then
 				FOUNDOPENSSL="yes"
