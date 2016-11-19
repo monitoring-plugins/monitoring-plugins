@@ -124,6 +124,7 @@ main (int argc, char **argv)
 	char *cmd_str = NULL;
 	char *helocmd = NULL;
 	char *error_msg = "";
+	char *server_response = NULL;
 	struct timeval tv;
 
 	/* Catch pipe errors in read/write - sometimes occurs when writing QUIT */
@@ -185,21 +186,9 @@ main (int argc, char **argv)
 			printf (_("recv() failed\n"));
 			return STATE_WARNING;
 		}
-		else {
-			if (verbose)
-				printf ("%s", buffer);
-			/* strip the buffer of carriage returns */
-			strip (buffer);
-			/* make sure we find the response we are looking for */
-			if (!strstr (buffer, server_expect)) {
-				if (server_port == SMTP_PORT)
-					printf (_("Invalid SMTP response received from host: %s\n"), buffer);
-				else
-					printf (_("Invalid SMTP response received from host on port %d: %s\n"),
-									server_port, buffer);
-				return STATE_WARNING;
-			}
-		}
+
+		/* save connect return (220 hostname ..) for later use */
+		xasprintf(&server_response, "%s", buffer);
 
 		/* send the HELO/EHLO command */
 		send(sd, helocmd, strlen(helocmd), 0);
@@ -279,6 +268,24 @@ main (int argc, char **argv)
 #  endif /* USE_OPENSSL */
 		}
 #endif
+
+		if (verbose)
+			printf ("%s", buffer);
+
+		/* save buffer for later use */
+		xasprintf(&server_response, "%s%s", server_response, buffer);
+		/* strip the buffer of carriage returns */
+		strip (server_response);
+
+		/* make sure we find the droids we are looking for */
+		if (!strstr (server_response, server_expect)) {
+			if (server_port == SMTP_PORT)
+				printf (_("Invalid SMTP response received from host: %s\n"), server_response);
+			else
+				printf (_("Invalid SMTP response received from host on port %d: %s\n"),
+										server_port, server_response);
+			return STATE_WARNING;
+		}
 
 		if (send_mail_from) {
 		  my_send(cmd_str, strlen(cmd_str));
