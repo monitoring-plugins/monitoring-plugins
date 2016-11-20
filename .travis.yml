@@ -45,6 +45,7 @@ before_script:
   - touch ~/.ssh/config
   - sudo rm -f /usr/share/mibs/ietf/SNMPv2-PDU /usr/share/mibs/ietf/IPSEC-SPD-MIB /usr/share/mibs/ietf/IPATM-IPMC-MIB /usr/share/mibs/iana/IANA-IPPM-METRICS-REGISTRY-MIB
   - sudo mkdir -p /var/lib/snmp/mib_indexes
+  - sudo mkdir /media/ramdisk && sudo chmod 777 /media/ramdisk && sudo mount -t tmpfs -o size=20% none /media/ramdisk
 
 script:
   - if [ "$COVERITY_SCAN_BRANCH" != 1 ]; then make test; fi

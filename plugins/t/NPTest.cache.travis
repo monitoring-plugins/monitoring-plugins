@@ -26,7 +26,7 @@
   'NP_HOST_TCP_SMTP_TLS' => '',
   'NP_INTERNET_ACCESS' => 'yes',
   'NP_LDAP_BASE_DN' => 'cn=admin,dc=nodomain',
-  'NP_MOUNTPOINT2_VALID' => '',
+  'NP_MOUNTPOINT2_VALID' => '/media/ramdisk',
   'NP_MOUNTPOINT_VALID' => '/',
   'NP_MYSQL_SERVER' => 'localhost',
   'NP_HOST_UDP_TIME' => 'localhost',
