@@ -1,5 +1,9 @@
 This file documents the major additions and syntax changes between releases.
 
+2.3 [...]
+	ENHANCEMENTS
+	check_smtp: add -L flag to support LMTP (LHLO instead of HELO/EHLO)
+
 2.2 [...]
 	ENHANCEMENTS
 	check_snmp's performance data now also includes warning/critical
