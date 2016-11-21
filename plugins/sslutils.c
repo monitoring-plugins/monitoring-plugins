@@ -48,7 +48,7 @@ int np_net_ssl_init_with_hostname_and_version(int sd, char *host_name, int versi
 }
 
 int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int version, char *cert, char *privkey) {
-	SSL_METHOD *method = NULL;
+	const SSL_METHOD *method = NULL;
 	long options = 0;
 
 	switch (version) {
