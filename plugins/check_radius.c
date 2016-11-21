@@ -278,7 +278,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'P':									/* port */
 			if (is_intnonneg (optarg))
-				port = atoi (optarg);
+				port = (unsigned short)atoi (optarg);
 			else
 				usage4 (_("Port must be a positive integer"));
 			break;
@@ -314,7 +314,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 't':									/* timeout */
 			if (is_intpos (optarg))
-				timeout_interval = atoi (optarg);
+				timeout_interval = (unsigned)atoi (optarg);
 			else
 				usage2 (_("Timeout interval must be a positive integer"), optarg);
 			break;
