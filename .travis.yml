@@ -2,6 +2,28 @@ sudo: required
 dist: trusty
 language: c
 
+env:
+  global:
+    # This is the encrypted COVERITY_SCAN_TOKEN, created via the "travis
+    # encrypt" command using the project repository's public key.
+    - secure: "ggJ9c/VfKcwtrwz/My+ne4My7D8g3qi3vz5Hh+yLiri0+oIXCy313ZD6ssIEY/5beQZEOnuHhBgBJd/Y3clSQNc2M9fRNc+wxOkIO992lgnY0MZJN3y9MLfpqUbTClhU9Fst0qXQqGpI6UI8yz1tj7yKi7DPrycJLRrjMpyTfyo="
+
+matrix:
+  include:
+    - compiler: "gcc"
+      os: linux
+      env:
+        - PLATFORM=linux BITS=64 HOST=x86_64
+      addons:
+        coverity_scan:
+          project:
+            name: "monitoring-plugins/monitoring-plugins"
+            description: "Monitoring Plugins"
+          notification_email: team@monitoring-plugins.org
+          build_command_prepend: tools/setup && ./configure
+          build_command: make
+          branch_pattern: coverity.*
+
 before_install:
   # Trusty related fixed
   # multiverse is no on trusty activated (https://github.com/travis-ci/travis-ci/issues/4979)
@@ -60,18 +82,3 @@ notifications:
   email:
     - team@monitoring-plugins.org
 
-env:
-  global:
-    # This is the encrypted COVERITY_SCAN_TOKEN, created via the "travis
-    # encrypt" command using the project repository's public key.
-    - secure: "ggJ9c/VfKcwtrwz/My+ne4My7D8g3qi3vz5Hh+yLiri0+oIXCy313ZD6ssIEY/5beQZEOnuHhBgBJd/Y3clSQNc2M9fRNc+wxOkIO992lgnY0MZJN3y9MLfpqUbTClhU9Fst0qXQqGpI6UI8yz1tj7yKi7DPrycJLRrjMpyTfyo="
-
-addons:
-  coverity_scan:
-    project:
-      name: "monitoring-plugins/monitoring-plugins"
-      description: "Monitoring Plugins"
-    notification_email: team@monitoring-plugins.org
-    build_command_prepend: tools/setup && ./configure
-    build_command: make
-    branch_pattern: coverity.*
