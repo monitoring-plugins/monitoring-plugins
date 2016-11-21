@@ -1308,10 +1308,9 @@ check_http (void)
 #define HD2 URI_HTTP "://" URI_HOST "/" URI_PATH
 #define HD3 URI_HTTP "://" URI_HOST ":" URI_PORT
 #define HD4 URI_HTTP "://" URI_HOST
-#define HD5 URI_PATH
 /* relative reference redirect like //www.site.org/test https://tools.ietf.org/html/rfc3986 */
-#define HD6 "//" URI_HOST "/" URI_PATH
-
+#define HD5 "//" URI_HOST "/" URI_PATH
+#define HD5 URI_PATH
 
 void
 redir (char *pos, char *status_line)
@@ -1388,7 +1387,8 @@ redir (char *pos, char *status_line)
       use_ssl = server_type_check (type);
       i = server_port_check (use_ssl);
     }
-    else if (sscanf (pos, HD6, addr, url) == 2) {
+    /* URI_HTTP, URI_HOST, URI_PATH */
+    else if (sscanf (pos, HD5, addr, url) == 2) {
       if(use_ssl){
         strcpy (type,"https");
       }
@@ -1401,7 +1401,7 @@ redir (char *pos, char *status_line)
     }
 
     /* URI_PATH */
-    else if (sscanf (pos, HD5, url) == 1) {
+    else if (sscanf (pos, HD6, url) == 1) {
       /* relative url */
       if ((url[0] != '/')) {
         if ((x = strrchr(server_url, '/')))
