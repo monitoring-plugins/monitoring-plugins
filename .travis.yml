@@ -23,6 +23,11 @@ matrix:
           build_command_prepend: tools/setup && ./configure
           build_command: make
           branch_pattern: coverity.*
+    - compiler: "clang"
+      os: linux
+      env:
+        - PLATFORM=linux BITS=64 HOST=x86_64
+        - CXX=clang++
 
 before_install:
   # Trusty related fixed
