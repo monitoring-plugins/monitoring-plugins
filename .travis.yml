@@ -2,6 +2,33 @@ sudo: required
 dist: trusty
 language: c
 
+env:
+  global:
+    # This is the encrypted COVERITY_SCAN_TOKEN, created via the "travis
+    # encrypt" command using the project repository's public key.
+    - secure: "ggJ9c/VfKcwtrwz/My+ne4My7D8g3qi3vz5Hh+yLiri0+oIXCy313ZD6ssIEY/5beQZEOnuHhBgBJd/Y3clSQNc2M9fRNc+wxOkIO992lgnY0MZJN3y9MLfpqUbTClhU9Fst0qXQqGpI6UI8yz1tj7yKi7DPrycJLRrjMpyTfyo="
+
+matrix:
+  include:
+    - compiler: "gcc"
+      os: linux
+      env:
+        - PLATFORM=linux BITS=64 HOST=x86_64
+      addons:
+        coverity_scan:
+          project:
+            name: "monitoring-plugins/monitoring-plugins"
+            description: "Monitoring Plugins"
+          notification_email: team@monitoring-plugins.org
+          build_command_prepend: tools/setup && ./configure
+          build_command: make
+          branch_pattern: coverity.*
+    - compiler: "clang"
+      os: linux
+      env:
+        - PLATFORM=linux BITS=64 HOST=x86_64
+        - CXX=clang++
+
 before_install:
   # Trusty related fixed
   # multiverse is no on trusty activated (https://github.com/travis-ci/travis-ci/issues/4979)
@@ -20,7 +47,7 @@ before_install:
   # - mysql -e "create database IF NOT EXISTS test;" -uroot
 
 install:
-  - sudo apt-get install -qq --no-install-recommends perl autotools-dev libdbi-dev libldap2-dev libpq-dev libmysqlclient-dev libfreeradius-client-dev libkrb5-dev libnet-snmp-perl procps
+  - sudo apt-get install -qq --no-install-recommends perl autotools-dev libdbi-dev libldap2-dev libpq-dev libmysqlclient-dev libradcli-dev libkrb5-dev libnet-snmp-perl procps
   - sudo apt-get install -qq --no-install-recommends libdbi0-dev libdbd-sqlite3 libssl-dev dnsutils snmp-mibs-downloader libsnmp-perl snmpd
   - sudo apt-get install -qq --no-install-recommends fping snmp netcat smbclient fping pure-ftpd apache2 postfix libhttp-daemon-ssl-perl
   - sudo apt-get install -qq --no-install-recommends libdbd-sybase-perl libnet-dns-perl
@@ -45,6 +72,7 @@ before_script:
   - touch ~/.ssh/config
   - sudo rm -f /usr/share/mibs/ietf/SNMPv2-PDU /usr/share/mibs/ietf/IPSEC-SPD-MIB /usr/share/mibs/ietf/IPATM-IPMC-MIB /usr/share/mibs/iana/IANA-IPPM-METRICS-REGISTRY-MIB
   - sudo mkdir -p /var/lib/snmp/mib_indexes
+  - sudo mkdir /media/ramdisk && sudo chmod 777 /media/ramdisk && sudo mount -t tmpfs -o size=20% none /media/ramdisk
 
 script:
   - if [ "$COVERITY_SCAN_BRANCH" != 1 ]; then make test; fi
@@ -59,18 +87,3 @@ notifications:
   email:
     - team@monitoring-plugins.org
 
-env:
-  global:
-    # This is the encrypted COVERITY_SCAN_TOKEN, created via the "travis
-    # encrypt" command using the project repository's public key.
-    - secure: "ggJ9c/VfKcwtrwz/My+ne4My7D8g3qi3vz5Hh+yLiri0+oIXCy313ZD6ssIEY/5beQZEOnuHhBgBJd/Y3clSQNc2M9fRNc+wxOkIO992lgnY0MZJN3y9MLfpqUbTClhU9Fst0qXQqGpI6UI8yz1tj7yKi7DPrycJLRrjMpyTfyo="
-
-addons:
-  coverity_scan:
-    project:
-      name: "monitoring-plugins/monitoring-plugins"
-      description: "Monitoring Plugins"
-    notification_email: team@monitoring-plugins.org
-    build_command_prepend: tools/setup && ./configure
-    build_command: make
-    branch_pattern: coverity.*

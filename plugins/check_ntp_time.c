@@ -633,7 +633,7 @@ void print_help(void){
 	printf("%s\n", _("Notes:"));
 	printf(" %s\n", _("If you'd rather want to monitor an NTP server, please use"));
 	printf(" %s\n", _("check_ntp_peer."));
-	printf(" %s\n", _("--time-offset is usefull for compensating for servers with known"));
+	printf(" %s\n", _("--time-offset is useful for compensating for servers with known"));
 	printf(" %s\n", _("and expected clock skew."));
 	printf("\n");
 	printf(UT_THRESHOLDS_NOTES);

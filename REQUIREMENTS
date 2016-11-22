@@ -50,16 +50,18 @@ check_dbi:
 	  http://libdbi.sourceforge.net/
 
 check_radius:
-	- Requires the FreeRADIUS Client library available from:
+	- Requires the radcli library available from:
+	  http://radcli.github.io/radcli/
+	- As an alternative, the FreeRADIUS Client library may be used:
 	  http://freeradius.org/freeradius-client/
-	- As an alternative, the radiusclient-ng library may be used:
+	- As another alternative, the radiusclient-ng library may be used:
 	  http://sourceforge.net/projects/radiusclient-ng.berlios/
 	- This plugin also works with the original radiusclient library from
 	  ftp://ftp.cityline.net/pub/radiusclient/
 		RPM (rpmfind): radiusclient 0.3.2, radiusclient-devel-0.3.2
-	  However, you probably want to use the FreeRADIUS Client library, as
-	  both radiusclient and radiusclient-ng are unmaintained and have known
-	  issues.
+	  However, you probably want to use either radcli or the FreeRADIUS
+	  Client library, as both radiusclient and radiusclient-ng are
+	  unmaintained and have known issues.
 
 check_snmp:
 	- Requires the NET-SNMP package available from

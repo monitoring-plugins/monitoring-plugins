@@ -45,6 +45,10 @@
 # endif /* UNIX_PATH_MAX */
 #endif /* HAVE_SYS_UN_H */
 
+#ifndef HOST_MAX_BYTES
+# define HOST_MAX_BYTES 255
+#endif
+
 /* process_request and wrapper macros */
 #define process_tcp_request(addr, port, sbuf, rbuf, rsize) \
 	process_request(addr, port, IPPROTO_TCP, sbuf, rbuf, rsize)
@@ -71,8 +75,9 @@ int send_request (int sd, int proto, const char *send_buffer, char *recv_buffer,
 /* "is_*" wrapper macros and functions */
 int is_host (const char *);
 int is_addr (const char *);
-int resolve_host_or_addr (const char *, int);
+int dns_lookup (const char *, struct sockaddr_storage *, int);
 void host_or_die(const char *str);
+#define resolve_host_or_addr(addr, family) dns_lookup(addr, NULL, family)
 #define is_inet_addr(addr) resolve_host_or_addr(addr, AF_INET)
 #ifdef USE_IPV6
 #  define is_inet6_addr(addr) resolve_host_or_addr(addr, AF_INET6)

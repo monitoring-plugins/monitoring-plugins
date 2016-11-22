@@ -325,7 +325,7 @@ sub print_help() {
 	printf "                     (Implies the use of -I)\n";
 	printf "   -w (--warn =i|w|c) ignore|warn|crit if the interface is dormant (default critical)\n";
 	printf "   -D (--admin-down =i|w|c) same for administratively down interfaces (default warning)\n";
-	printf "   -M (--maxmsgsize) Max message size - usefull only for v1 or v2c\n";
+	printf "   -M (--maxmsgsize) Max message size - useful only for v1 or v2c\n";
 	printf "   -t (--timeout)    seconds before the plugin times out (default=$TIMEOUT)\n";
 	printf "   -V (--version)    Plugin version\n";
 	printf "   -h (--help)       usage help \n\n";

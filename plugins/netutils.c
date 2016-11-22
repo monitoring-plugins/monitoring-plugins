@@ -359,20 +359,21 @@ is_addr (const char *address)
 }
 
 int
-resolve_host_or_addr (const char *address, int family)
+dns_lookup (const char *in, struct sockaddr_storage *ss, int family)
 {
 	struct addrinfo hints;
 	struct addrinfo *res;
 	int retval;
 
-	memset (&hints, 0, sizeof (hints));
+	memset (&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = family;
-	retval = getaddrinfo (address, NULL, &hints, &res);
 
+	retval = getaddrinfo (in, NULL, &hints, &res);
 	if (retval != 0)
 		return FALSE;
-	else {
-		freeaddrinfo (res);
-		return TRUE;
-	}
+
+	if (ss != NULL)
+		memcpy (ss, res->ai_addr, res->ai_addrlen);
+	freeaddrinfo (res);
+	return TRUE;
 }
