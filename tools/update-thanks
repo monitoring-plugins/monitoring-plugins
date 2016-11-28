@@ -34,7 +34,7 @@ git log --pretty='%an' "$since.." | sort -u | while read first last rest
 do
 	if [ -n "$first" -a -n "$last" -a -z "$rest" ]
 	then
-		if ! grep -q "^$first $last$" AUTHORS THANKS.in
+		if ! grep -q -i "^$first $last$" AUTHORS THANKS.in
 		then
 			echo "$first $last" >> THANKS.in
 		fi
