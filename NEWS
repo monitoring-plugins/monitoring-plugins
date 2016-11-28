@@ -12,16 +12,16 @@ This file documents the major additions and syntax changes between releases.
 	check_snmp: add IPv6 support
 	check_snmp's performance data now also includes warning/critical
 	  thresholds
-	New check_snmp "-N" option to specify SNMPv3 context name
-	Let check_smtp's "-D" option imply "-S"
-	Let check_smtp's "-e" option match against the full SMTP response
+	New check_snmp -N option to specify SNMPv3 context name
+	Let check_smtp's -D option imply -S
+	Let check_smtp's -e option match against the full SMTP response
 	check_dig: expected response is now case-insensitive
 	New check_mailq -s option which tells the plugin to use sudo(8)
-	New check_nt "-l" parameters: seconds|minutes|hours|days
+	New check_nt -l parameters: seconds|minutes|hours|days
 	New -W/-C option for check_ldap to check number of entries
-	check_radius now supports the radcli library
 	check_users: add support for range thresholds
-	Let check_fping now auto-detects IPv6 addresses
+	check_fping now auto-detects IPv6 addresses
+	check_radius now supports the radcli library
 	Support OpenSSL 1.1
 
 	FIXES
