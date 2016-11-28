@@ -2,37 +2,36 @@ This file documents the major additions and syntax changes between releases.
 
 2.2 [...]
 	ENHANCEMENTS
-	check_snmp's performance data now also includes warning/critical
-	  thresholds
-	New check_snmp "-N" option to specify SNMPv3 context name
-	New check_nt "-l" parameters: seconds|minutes|hours|days
-	New check_mailq -s option which tells the plugin to use sudo(8)
-	New -W/-C option for check_ldap to check number of entries (Gerhard Lausser)
 	The check_http -S/--ssl option now accepts the arguments "1.1" and "1.2"
 	  to force TLSv1.1 and TLSv1.2 connections, respectively
 	The check_http -S/--ssl option now allows for specifying the desired
 	  protocol with a "+" suffix to also accept newer versions
-	check_users: add support for range thresholds (John C. Frickson)
-	check_snmp: add ipv6 support (abrist)
-	check_http: report certificate expire date in UTC (pirtoo / ylfingr)
-	check_radius now supports the radcli library
-	Let check_fping auto-detect IPv6 addresses
 	Let check_http check HTTPS web sites via proxies
+	check_http: add timeout to performance data as max value
+	check_http: report certificate expiry date in UTC (pirtoo / ylfingr)
+	check_snmp: add IPv6 support (abrist)
+	check_snmp's performance data now also includes warning/critical
+	  thresholds
+	New check_snmp "-N" option to specify SNMPv3 context name
 	Let check_smtp's "-D" option imply "-S"
 	Let check_smtp's "-e" option match against the full SMTP response
-	check_http: Add timeout to performance data as max value
-	check_dig: Expected response is now case-insensitive
-	Let check_http support the concept of "virtual ports"
+	check_dig: expected response is now case-insensitive
+	New check_mailq -s option which tells the plugin to use sudo(8)
+	New check_nt "-l" parameters: seconds|minutes|hours|days
+	New -W/-C option for check_ldap to check number of entries (Gerhard Lausser)
+	check_radius now supports the radcli library
+	check_users: add support for range thresholds (John C. Frickson)
+	Let check_fping now auto-detects IPv6 addresses
 	Support OpenSSL 1.1
 
 	FIXES
+	check_http: fix host header port handling (odenbach)
 	Let check_real terminate lines with CRLF when talking to the server, as
-	  mandated by 2326
+	  mandated by RFC 2326
 	Fix check_procs on HP-UX
 	check_smtp's -e/--expect option can now be combined with -S/--starttls
 	Fix incorrect performance data thresholds emitted by check_ups
-	check_http: fix host header port handling (odenbach)
-	Fix check_procs's unclosed filehandle in pst3 on Solaris
+	Don't let check_procs miss some processes on busy Solaris systems
 
 	WARNINGS
 	The format of the performance data emitted by check_mrtgtraf has been
@@ -40,7 +39,7 @@ This file documents the major additions and syntax changes between releases.
 	check_ssh now returns CRITICAL for protocol/version errors
 	If a plugin is invoked with -h/--help or -V/--version, the exit status
 	  is now UNKNOWN
-	The superseded check_ntp.pl was removed, please use check_ntp_peer or
+	The superseeded check_ntp.pl was removed, please use check_ntp_peer or
 	  check_ntp_time instead
 
 2.1.2 16th October 2015
