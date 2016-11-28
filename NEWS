@@ -16,6 +16,14 @@ This file documents the major additions and syntax changes between releases.
 	check_snmp: add ipv6 support (abrist)
 	check_http: report certificate expire date in UTC (pirtoo / ylfingr)
 	check_radius now supports the radcli library
+	Let check_fping auto-detect IPv6 addresses
+	Let check_http check HTTPS web sites via proxies
+	Let check_smtp's "-D" option imply "-S"
+	Let check_smtp's "-e" option match against the full SMTP response
+	check_http: Add timeout to performance data as max value
+	check_dig: Expected response is now case-insensitive
+	Let check_http support the concept of "virtual ports"
+	Support OpenSSL 1.1
 
 	FIXES
 	Let check_real terminate lines with CRLF when talking to the server, as
@@ -24,6 +32,7 @@ This file documents the major additions and syntax changes between releases.
 	check_smtp's -e/--expect option can now be combined with -S/--starttls
 	Fix incorrect performance data thresholds emitted by check_ups
 	check_http: fix host header port handling (odenbach)
+	Fix check_procs's unclosed filehandle in pst3 on Solaris
 
 	WARNINGS
 	The format of the performance data emitted by check_mrtgtraf has been
@@ -47,7 +56,6 @@ This file documents the major additions and syntax changes between releases.
 	Fix check_apt's handling of invalid regular expressions
 	Fix check_real's server response processing
 	Fix backslash escaping in check_tcp's --help output
-	Fix check_procs's unclosed filehandle in pst3 on Solaris
 
 2.1 15th October 2014
 	ENHANCEMENTS
