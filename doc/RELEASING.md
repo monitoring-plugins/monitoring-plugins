@@ -29,7 +29,7 @@ Prepare and commit files
 Create annotated tag
 --------------------
 
-    git tag -a v2.3 -m v2.3
+    git tag -a -m 'Monitoring Plugins 2.3' v2.3
 
 Push the code and tag to GitHub
 -------------------------------
