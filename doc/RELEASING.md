@@ -17,14 +17,14 @@ Before you start
 Prepare and commit files
 ------------------------
 
+- Update `configure.ac` and `NP-VERSION-GEN` with new version.
 - Update `NEWS` from `git log --reverse v2.2.1..` output, and specify
   the release version/date.
-- Update `configure.ac` and `NP-VERSION-GEN` with new version.
 - Update `AUTHORS` if there are new team members.
 - Update `THANKS.in` using `tools/update-thanks`.
 - Commit the results:
 
-        git commit configure.ac NP-VERSION-GEN AUTHORS THANKS.in
+        git commit configure.ac NP-VERSION-GEN NEWS AUTHORS THANKS.in
 
 Create annotated tag
 --------------------
