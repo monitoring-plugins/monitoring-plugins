@@ -3,6 +3,8 @@ Releasing a New Monitoring Plugins Version
 
 Throughout this document, it is assumed that the current Monitoring
 Plugins version is 2.2.1, and that we're about to publish version 2.3.
+It is also assumed that the official repository on GitHub is tracked
+using the remote name `monitoring-plugins` (rather than `origin`).
 
 Before you start
 ----------------
