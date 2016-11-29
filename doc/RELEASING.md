@@ -96,4 +96,4 @@ If you want to mention the number of contributors in the announcement:
 
     git shortlog -s v2.2.1..v2.3 | wc -l
 
-# vim:set filetype=markdown textwidth=72:
+<!-- vim:set filetype=markdown textwidth=72: -->
