@@ -21,11 +21,11 @@ Prepare and commit files
 - Update `AUTHORS` if there are new team members.
 - Update `THANKS.in`:
 
-    tools/update-thanks
+        tools/update-thanks
 
 - Commit the results:
 
-    git commit configure.ac NP-VERSION-GEN AUTHORS THANKS.in
+        git commit configure.ac NP-VERSION-GEN AUTHORS THANKS.in
 
 Create annotated tag
 --------------------
@@ -78,12 +78,13 @@ Announce new release
 
 - In the site.git repository,
 
-    - create `web/input/news/release-2-3.md`,
-    - update the `plugins_release` version in `web/macros.py`, and
+    - create `web/input/news/release-2-3.md`
+    - update the `plugins_release` version in `web/macros.py`
+    - commit and push the result:
 
-    git add web/input/news/release-2-3.md
-    git commit web/input/news/release-2-3.md web/macros.py
-    git push origin master
+        git add web/input/news/release-2-3.md
+        git commit web/input/news/release-2-3.md web/macros.py
+        git push origin master
 
 - Post an announcement on (at least) the following mailing lists:
 
