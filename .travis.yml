@@ -27,7 +27,6 @@ matrix:
       os: linux
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
-        - CXX=clang++
 
 before_install:
   # Trusty related fixed
