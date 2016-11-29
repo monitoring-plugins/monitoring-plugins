@@ -65,8 +65,8 @@ Upload tarball to web site
     scp monitoring-plugins-2.3.tar.gz \
         plugins@orwell.monitoring-plugins.org:web/download/
 
-Generate SHA1 checksum files on web site
-----------------------------------------
+Generate SHA1 checksum file on web site
+---------------------------------------
 
     ssh plugins@orwell.monitoring-plugins.org \
         '(cd web/download; $HOME/bin/create-checksum monitoring-plugins-2.3.tar.gz)'
