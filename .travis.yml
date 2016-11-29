@@ -79,14 +79,10 @@ script:
 notifications:
   irc:
     channels:
-      # Prevent spamming by forks using a secret
-      # - "chat.freenode.net#Monitoring-Plugins"
-      - secure: "I9SBZ/C6kY//SyfKkoZklGCZrkTKgJSQ0hWMOHoouys3C3/pk8IDsbBc6H+81vvXNwaVioLM/jVFp8xoZfLZ3ZAVwS640G7sjtqhs2XRx3JvkAZ9f8hy3ke978vaFRZzl8oZkRPx37aJA5gh838RmPMqOE3VvAv72CObhWwHSDk="
+      - "chat.freenode.net#Monitoring-Plugins"
     on_success: change
     on_failure: always
     skip_join: true
   email:
-    # Prevent spamming by forks using a secret
     # - team@monitoring-plugins.org
-    # - secure: "DWMj57rE5H1doMVqDGci2nSQc0+H7OeGFEAJW8NwFoUfNL8Wb6/BmVVbHpdJNeptec13Tir8Fh/TJkpE9C2C6sCMiFLqTDv3+7s9xU3TvWxoudCRlOG26bIjgQYGs+m3YKYMsZ9azmHYw9Y/MqIXcMgkS7tKnitlmxDbcnHTNU4="
 
