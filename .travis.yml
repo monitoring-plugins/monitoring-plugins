@@ -89,5 +89,5 @@ notifications:
   email:
     # Prevent spamming by forks using a secret
     # - team@monitoring-plugins.org
-    - secure: "DWMj57rE5H1doMVqDGci2nSQc0+H7OeGFEAJW8NwFoUfNL8Wb6/BmVVbHpdJNeptec13Tir8Fh/TJkpE9C2C6sCMiFLqTDv3+7s9xU3TvWxoudCRlOG26bIjgQYGs+m3YKYMsZ9azmHYw9Y/MqIXcMgkS7tKnitlmxDbcnHTNU4="
+    # - secure: "DWMj57rE5H1doMVqDGci2nSQc0+H7OeGFEAJW8NwFoUfNL8Wb6/BmVVbHpdJNeptec13Tir8Fh/TJkpE9C2C6sCMiFLqTDv3+7s9xU3TvWxoudCRlOG26bIjgQYGs+m3YKYMsZ9azmHYw9Y/MqIXcMgkS7tKnitlmxDbcnHTNU4="
 
