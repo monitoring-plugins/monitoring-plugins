@@ -59,8 +59,8 @@ Build the tarball
     ./configure
     make dist
 
-Upload tarball to our web site
-------------------------------
+Upload tarball to web site
+--------------------------
 
     scp monitoring-plugins-2.3.tar.gz \
         plugins@orwell.monitoring-plugins.org:web/download/
@@ -69,13 +69,12 @@ Generate SHA1 checksum files on web site
 ----------------------------------------
 
     ssh plugins@orwell.monitoring-plugins.org \
-        '(cd web/download; \
-          $HOME/bin/create-checksum monitoring-plugins-2.3.tar.gz)'
+        '(cd web/download; $HOME/bin/create-checksum monitoring-plugins-2.3.tar.gz)'
 
 Announce new release
 --------------------
 
-- In the site.git repository,
+- In the site.git repository:
 
     - Create `web/input/news/release-2-3.md`.
     - Update the `plugins_release` version in `web/macros.py`.
