@@ -548,7 +548,7 @@ double jitter_request(const char *host, int *status){
 		DBG(print_ntp_control_message(&req));
 		/* Attempt to read the largest size packet possible */
 		req.count=htons(MAX_CM_SIZE);
-		DBG(printf("recieving READSTAT response"))
+		DBG(printf("receiving READSTAT response"))
 		read(conn, &req, SIZEOF_NTPCM(req));
 		DBG(print_ntp_control_message(&req));
 		/* Each peer identifier is 4 bytes in the data section, which
@@ -608,7 +608,7 @@ double jitter_request(const char *host, int *status){
 				DBG(print_ntp_control_message(&req));
 
 				req.count = htons(MAX_CM_SIZE);
-				DBG(printf("recieving READVAR response...\n"));
+				DBG(printf("receiving READVAR response...\n"));
 				read(conn, &req, SIZEOF_NTPCM(req));
 				DBG(print_ntp_control_message(&req));
 

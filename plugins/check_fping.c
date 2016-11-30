@@ -184,7 +184,7 @@ textscan (char *buf)
   int status = STATE_UNKNOWN;
 
   if (strstr (buf, "not found")) {
-    die (STATE_CRITICAL, _("FPING UNKNOW - %s not found\n"), server_name);
+    die (STATE_CRITICAL, _("FPING UNKNOWN - %s not found\n"), server_name);
 
   }
   else if (strstr (buf, "is unreachable") || strstr (buf, "Unreachable")) {
