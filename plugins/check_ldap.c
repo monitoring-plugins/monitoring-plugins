@@ -237,7 +237,7 @@ main (int argc, char *argv[])
 	if(entries_thresholds != NULL) {
 		if (verbose) {
 			printf ("entries found: %d\n", num_entries);
-			print_thresholds("entry threasholds", entries_thresholds);
+			print_thresholds("entry thresholds", entries_thresholds);
 		}
 		status_entries = get_status(num_entries, entries_thresholds);
 		if (status_entries == STATE_CRITICAL) {

@@ -841,7 +841,7 @@ msgstr ""
 
 #: plugins/check_fping.c:187
 #, c-format
-msgid "FPING UNKNOW - %s not found\n"
+msgid "FPING UNKNOWN - %s not found\n"
 msgstr ""
 
 #: plugins/check_fping.c:191
@@ -1528,7 +1528,7 @@ msgstr ""
 #: plugins/check_http.c:1545
 msgid ""
 "other errors return STATE_UNKNOWN.  Successful connects, but incorrect "
-"reponse"
+"response"
 msgstr ""
 
 #: plugins/check_http.c:1546
@@ -3546,7 +3546,7 @@ msgid ""
 msgstr ""
 
 #: plugins/check_pgsql.c:568
-msgid "a password, but no effort is made to obsure or encrypt the password."
+msgid "a password, but no effort is made to obscure or encrypt the password."
 msgstr ""
 
 #: plugins/check_pgsql.c:601
@@ -4070,7 +4070,7 @@ msgid "The user to authenticate"
 msgstr ""
 
 #: plugins/check_radius.c:352
-msgid "Password for autentication (SECURITY RISK)"
+msgid "Password for authentication (SECURITY RISK)"
 msgstr ""
 
 #: plugins/check_radius.c:354
@@ -4203,7 +4203,7 @@ msgstr ""
 
 #: plugins/check_real.c:440
 msgid ""
-"but incorrect reponse messages from the host result in STATE_WARNING return"
+"but incorrect response messages from the host result in STATE_WARNING return"
 msgstr ""
 
 #: plugins/check_real.c:441
@@ -4417,7 +4417,7 @@ msgid "STATE_CRITICAL, other errors return STATE_UNKNOWN.  Successful"
 msgstr ""
 
 #: plugins/check_smtp.c:832
-msgid "connects, but incorrect reponse messages from the host result in"
+msgid "connects, but incorrect response messages from the host result in"
 msgstr ""
 
 #: plugins/check_smtp.c:833

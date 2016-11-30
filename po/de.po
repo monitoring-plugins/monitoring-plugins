@@ -704,7 +704,7 @@ msgstr "DNS CRITICAL - %s\n"
 #: plugins/check_dns.c:254
 #, fuzzy, c-format
 msgid "DNS UNKNOWN - %s\n"
-msgstr "DNS UNKNOW - %s\n"
+msgstr "DNS UNKNOWN - %s\n"
 
 #: plugins/check_dns.c:267
 msgid "Note: nslookup is deprecated and may be removed from future releases."
@@ -852,7 +852,7 @@ msgstr "Konnte stderr nicht öffnen für: %s\n"
 #: plugins/check_fping.c:157
 #, fuzzy
 msgid "FPING UNKNOWN - IP address not found\n"
-msgstr "FPING UNKNOW - %s nicht gefunden\n"
+msgstr "FPING UNKNOWN - %s nicht gefunden\n"
 
 #: plugins/check_fping.c:160
 msgid "FPING UNKNOWN - invalid commandline argument\n"
@@ -861,12 +861,12 @@ msgstr ""
 #: plugins/check_fping.c:163
 #, fuzzy
 msgid "FPING UNKNOWN - failed system call\n"
-msgstr "FPING UNKNOW - %s nicht gefunden\n"
+msgstr "FPING UNKNOWN - %s nicht gefunden\n"
 
 #: plugins/check_fping.c:187
 #, c-format
-msgid "FPING UNKNOW - %s not found\n"
-msgstr "FPING UNKNOW - %s nicht gefunden\n"
+msgid "FPING UNKNOWN - %s not found\n"
+msgstr "FPING UNKNOWN - %s nicht gefunden\n"
 
 #: plugins/check_fping.c:191
 #, c-format
@@ -876,7 +876,7 @@ msgstr "FPING CRITICAL - %s ist nicht erreichbar\n"
 #: plugins/check_fping.c:196
 #, fuzzy, c-format
 msgid "FPING UNKNOWN - %s parameter error\n"
-msgstr "FPING UNKNOW - %s nicht gefunden\n"
+msgstr "FPING UNKNOWN - %s nicht gefunden\n"
 
 #: plugins/check_fping.c:200 plugins/check_fping.c:240
 #, c-format
@@ -1577,7 +1577,7 @@ msgstr ""
 #: plugins/check_http.c:1545
 msgid ""
 "other errors return STATE_UNKNOWN.  Successful connects, but incorrect "
-"reponse"
+"response"
 msgstr ""
 
 #: plugins/check_http.c:1546
@@ -3636,7 +3636,7 @@ msgid ""
 msgstr ""
 
 #: plugins/check_pgsql.c:568
-msgid "a password, but no effort is made to obsure or encrypt the password."
+msgid "a password, but no effort is made to obscure or encrypt the password."
 msgstr ""
 
 #: plugins/check_pgsql.c:601
@@ -4169,7 +4169,7 @@ msgid "The user to authenticate"
 msgstr ""
 
 #: plugins/check_radius.c:352
-msgid "Password for autentication (SECURITY RISK)"
+msgid "Password for authentication (SECURITY RISK)"
 msgstr ""
 
 #: plugins/check_radius.c:354
@@ -4309,7 +4309,7 @@ msgstr ""
 
 #: plugins/check_real.c:440
 msgid ""
-"but incorrect reponse messages from the host result in STATE_WARNING return"
+"but incorrect response messages from the host result in STATE_WARNING return"
 msgstr ""
 
 #: plugins/check_real.c:441
@@ -4530,7 +4530,7 @@ msgid "STATE_CRITICAL, other errors return STATE_UNKNOWN.  Successful"
 msgstr ""
 
 #: plugins/check_smtp.c:832
-msgid "connects, but incorrect reponse messages from the host result in"
+msgid "connects, but incorrect response messages from the host result in"
 msgstr ""
 
 #: plugins/check_smtp.c:833

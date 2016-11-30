@@ -283,7 +283,7 @@ get_offline_text (int status)
 			return offline_status_text[i].text;
 		}
 	}
-	return "UNKNOW";
+	return "UNKNOWN";
 }
 
 
