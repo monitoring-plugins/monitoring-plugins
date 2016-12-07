@@ -1,5 +1,9 @@
 This file documents the major additions and syntax changes between releases.
 
+2.2.1 [...]
+	FIXES
+	Fix regression where check_dhcp was rereading response in a tight loop
+
 2.2 29th November 2016
 	ENHANCEMENTS
 	The check_http -S/--ssl option now accepts the arguments "1.1" and "1.2"
