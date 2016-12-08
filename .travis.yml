@@ -54,7 +54,7 @@ install:
   - sudo apt-get install -qq --no-install-recommends autoconf automake
   - sudo apt-get install -qq --no-install-recommends faketime
   # Trusty related dependencies (not yet provided)
-  - sudo apt-get install -qq --no-install-recommends mariadb-client mariadb-server
+  - test "$(dpkg -l | grep -E "mysql-(client|server)-[0-9].[0-9]" | grep -c ^ii)" -gt 0 || sudo apt-get install -qq --no-install-recommends mariadb-client mariadb-server
 
 before_script:
   # ensure we have a test database in place for tests
