@@ -126,7 +126,7 @@ main (int argc, char **argv)
     if (verbose)
       puts(chld_out.line[i]);
 
-    if (strcasestr (chld_out.line[i], ".in-addr.arpa")) {
+    if (strcasestr (chld_out.line[i], ".in-addr.arpa") || strcasestr (chld_out.line[i], ".ip6.arpa")) {
       if ((temp_buffer = strstr (chld_out.line[i], "name = ")))
         addresses[n_addresses++] = strdup (temp_buffer + 7);
       else {
