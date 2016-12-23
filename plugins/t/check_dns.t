@@ -17,7 +17,7 @@ my $successOutput = '/DNS OK: [\.0-9]+ seconds? response time/';
 my $hostname_valid = getTestParameter( 
 			"NP_HOSTNAME_VALID",
 			"A valid (known to DNS) hostname",
-			"monitoring-plugins.org"
+			"monitoring-plugins.org",
 			);
 
 my $hostname_valid_ip = getTestParameter(
@@ -34,14 +34,14 @@ my $hostname_valid_cidr = getTestParameter(
 
 my $hostname_invalid_cidr = getTestParameter(
 			"NP_HOSTNAME_INVALID_CIDR",
-			"An valid CIDR range not containing $hostname_valid_ip",
+			"An (valid) CIDR range NOT containing $hostname_valid_ip",
 			"130.133.8.39/30",
 			);
 
 my $hostname_valid_reverse = getTestParameter(
 			"NP_HOSTNAME_VALID_REVERSE",
 			"The hostname of $hostname_valid_ip",
-			"66-118-156-50.static.sagonet.net.",
+			"orwell.monitoring-plugins.org.",
 			);
 
 my $hostname_invalid = getTestParameter( 

@@ -4,7 +4,7 @@
   'NP_DNS_SERVER' => '8.8.8.8',
   'NP_GOOD_NTP_SERVICE' => '',
   'NP_HOSTNAME_INVALID' => 'nosuchhost',
-  'NP_HOSTNAME_VALID' => 'monitoringplugins.org',
+  'NP_HOSTNAME_VALID' => 'monitoring-plugins.org',
   'NP_HOSTNAME_VALID_IP' => '130.133.8.40',
   'NP_HOSTNAME_VALID_CIDR' => '130.133.8.41/30',
   'NP_HOSTNAME_INVALID_CIDR' => '130.133.8.39/30',
