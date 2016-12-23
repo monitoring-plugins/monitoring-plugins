@@ -1,6 +1,10 @@
 This file documents the major additions and syntax changes between releases.
 
 2.3 [...]
+	ENHANCEMENTS
+	check_dns: allow 'expected address' (-a) to be specified in CIDR notation
+	  (IPv4 only).
+
 	FIXES
 	Fix regression where check_dhcp was rereading response in a tight loop
 

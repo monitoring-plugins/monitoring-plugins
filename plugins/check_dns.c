@@ -308,7 +308,7 @@ ip_match_cidr(const char *addr, const char *cidr_ro)
   mask = atoi(mask_c);
 
   /* https://www.cryptobells.com/verifying-ips-in-a-subnet-in-php/ */
-  return ( ip2long(addr) & ~ ( ( 1 << ( 32 - mask ) ) - 1 ) ) == ( ip2long(subnet) >> (32 - mask) ) << (32 - mask);
+  return (ip2long(addr) & ~((1 << (32 - mask)) - 1)) == (ip2long(subnet) >> (32 - mask)) << (32 - mask);
 }
 
 unsigned long
