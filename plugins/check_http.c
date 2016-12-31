@@ -1365,7 +1365,7 @@ check_http (void)
 #define HD4 URI_HTTP "://" URI_HOST
 /* relative reference redirect like //www.site.org/test https://tools.ietf.org/html/rfc3986 */
 #define HD5 "//" URI_HOST "/" URI_PATH
-#define HD5 URI_PATH
+#define HD6 URI_PATH
 
 void
 redir (char *pos, char *status_line)
