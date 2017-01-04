@@ -10,26 +10,38 @@ use NPTest;
 
 plan skip_all => "check_dns not compiled" unless (-x "check_dns");
 
-plan tests => 16;
+plan tests => 19;
 
 my $successOutput = '/DNS OK: [\.0-9]+ seconds? response time/';
 
 my $hostname_valid = getTestParameter( 
 			"NP_HOSTNAME_VALID",
 			"A valid (known to DNS) hostname",
-			"monitoring-plugins.org"
+			"monitoring-plugins.org",
 			);
 
 my $hostname_valid_ip = getTestParameter(
 			"NP_HOSTNAME_VALID_IP",
 			"The IP address of the valid hostname $hostname_valid",
-			"66.118.156.50",
+			"130.133.8.40",
+			);
+
+my $hostname_valid_cidr = getTestParameter(
+			"NP_HOSTNAME_VALID_CIDR",
+			"An valid CIDR range containing $hostname_valid_ip",
+			"130.133.8.41/30",
+			);
+
+my $hostname_invalid_cidr = getTestParameter(
+			"NP_HOSTNAME_INVALID_CIDR",
+			"An (valid) CIDR range NOT containing $hostname_valid_ip",
+			"130.133.8.39/30",
 			);
 
 my $hostname_valid_reverse = getTestParameter(
 			"NP_HOSTNAME_VALID_REVERSE",
 			"The hostname of $hostname_valid_ip",
-			"66-118-156-50.static.sagonet.net.",
+			"orwell.monitoring-plugins.org.",
 			);
 
 my $hostname_invalid = getTestParameter( 
@@ -87,3 +99,9 @@ $res = NPTest->testCmd("./check_dns -H $hostname_valid_ip -a $hostname_valid_rev
 cmp_ok( $res->return_code, '==', 0, "Got expected fqdn");
 like  ( $res->output, $successOutput, "Output OK");
 
+$res = NPTest->testCmd("./check_dns -H $hostname_valid -a $hostname_valid_cidr -t 5");
+cmp_ok( $res->return_code, '==', 0, "Got expected address");
+
+$res = NPTest->testCmd("./check_dns -H $hostname_valid -a $hostname_invalid_cidr -t 5");
+cmp_ok( $res->return_code, '==', 2, "Got wrong address");
+like  ( $res->output, "/^DNS CRITICAL.*expected '$hostname_invalid_cidr' but got '$hostname_valid_ip'".'$/', "Output OK");

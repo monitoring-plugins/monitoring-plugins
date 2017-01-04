@@ -42,6 +42,8 @@ const char *email = "devel@monitoring-plugins.org";
 int process_arguments (int, char **);
 int validate_arguments (void);
 int error_scan (char *);
+int ip_match_cidr(const char *, const char *);
+unsigned long ip2long(const char *);
 void print_help (void);
 void print_usage (void);
 
@@ -226,9 +228,14 @@ main (int argc, char **argv)
   if (result == STATE_OK && expected_address_cnt > 0) {
     result = STATE_CRITICAL;
     temp_buffer = "";
+
     for (i=0; i<expected_address_cnt; i++) {
-      /* check if we get a match and prepare an error string */
-      if (strcmp(address, expected_address[i]) == 0) result = STATE_OK;
+      /* check if we get a match on 'raw' ip or cidr */
+      if ( strcmp(address, expected_address[i]) == 0
+           || ip_match_cidr(address, expected_address[i]) )
+        result = STATE_OK;
+
+      /* prepare an error string */
       xasprintf(&temp_buffer, "%s%s; ", temp_buffer, expected_address[i]);
     }
     if (result == STATE_CRITICAL) {
@@ -289,7 +296,32 @@ main (int argc, char **argv)
   return result;
 }
 
+int
+ip_match_cidr(const char *addr, const char *cidr_ro)
+{
+  char *subnet, *mask_c, *cidr = strdup(cidr_ro);
+  int mask;
+  subnet = strtok(cidr, "/");
+  mask_c = strtok(NULL, "\0");
+  if (!subnet || !mask_c)
+    return FALSE;
+  mask = atoi(mask_c);
 
+  /* https://www.cryptobells.com/verifying-ips-in-a-subnet-in-php/ */
+  return (ip2long(addr) & ~((1 << (32 - mask)) - 1)) == (ip2long(subnet) >> (32 - mask)) << (32 - mask);
+}
+
+unsigned long
+ip2long(const char* src) {
+  unsigned long ip[4];
+  /* http://computer-programming-forum.com/47-c-language/1376ffb92a12c471.htm */
+  return (sscanf(src, "%3lu.%3lu.%3lu.%3lu",
+                     &ip[0], &ip[1], &ip[2], &ip[3]) == 4 &&
+              ip[0] < 256 && ip[1] < 256 &&
+              ip[2] < 256 && ip[3] < 256)
+          ? ip[0] << 24 | ip[1] << 16 | ip[2] << 8 | ip[3]
+          : 0; 
+}
 
 int
 error_scan (char *input_buffer)
@@ -494,9 +526,9 @@ print_help (void)
   printf ("    %s\n", _("The name or address you want to query"));
   printf (" -s, --server=HOST\n");
   printf ("    %s\n", _("Optional DNS server you want to use for the lookup"));
-  printf (" -a, --expected-address=IP-ADDRESS|HOST\n");
-  printf ("    %s\n", _("Optional IP-ADDRESS you expect the DNS server to return. HOST must end with"));
-  printf ("    %s\n", _("a dot (.). This option can be repeated multiple times (Returns OK if any"));
+  printf (" -a, --expected-address=IP-ADDRESS|CIDR|HOST\n");
+  printf ("    %s\n", _("Optional IP-ADDRESS/CIDR you expect the DNS server to return. HOST must end"));
+  printf ("    %s\n", _("with a dot (.). This option can be repeated multiple times (Returns OK if any"));
   printf ("    %s\n", _("value match). If multiple addresses are returned at once, you have to match"));
   printf ("    %s\n", _("the whole string of addresses separated with commas (sorted alphabetically)."));
   printf (" -A, --expect-authority\n");
