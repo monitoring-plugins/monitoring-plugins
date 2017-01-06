@@ -60,8 +60,8 @@
 
 PATH="@TRUSTED_PATH@"
 export PATH
-PROGNAME=`basename $0`
-PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
+PROGNAME=$(basename $0)
+PROGPATH=$(echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,')
 REVISION="@NP_VERSION@"
 
 . $PROGPATH/utils.sh
@@ -180,9 +180,9 @@ fi
 # The temporary file that the script should use while
 # processing the log file.
 if [ -x /bin/mktemp ]; then
-    tempdiff=`/bin/mktemp /tmp/check_log.XXXXXXXXXX`
+	tempdiff=$(/bin/mktemp /tmp/check_log.XXXXXXXXXX)
 else
-    tempdiff=`/bin/date '+%H%M%S'`
+	tempdiff=$(/bin/date '+%H%M%S')
     tempdiff="/tmp/check_log.${tempdiff}"
     touch $tempdiff
     chmod 600 $tempdiff
@@ -191,10 +191,10 @@ fi
 diff $logfile $oldlog | grep -v "^>" > $tempdiff
 
 # Count the number of matching log entries we have
-count=`grep -c "$query" $tempdiff`
+count=$(grep -c "$query" $tempdiff)
 
 # Get the last matching entry in the diff file
-lastentry=`grep "$query" $tempdiff | tail -1`
+lastentry=$(grep "$query" $tempdiff | tail -1)
 
 rm -f $tempdiff
 cat $logfile > $oldlog

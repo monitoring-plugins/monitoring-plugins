@@ -8,8 +8,8 @@
 
 PATH="@TRUSTED_PATH@"
 export PATH
-PROGNAME=`basename $0`
-PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
+PROGNAME=$(basename $0)
+PROGPATH=$(echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,')
 REVISION="@NP_VERSION@"
 
 . $PROGPATH/utils.sh
@@ -135,8 +135,8 @@ export ORACLE_HOME PATH LD_LIBRARY_PATH
 
 case "$cmd" in
 --tns)
-    tnschk=` tnsping $2`
-    tnschk2=` echo  $tnschk | grep -c OK`
+    tnschk=$(tnsping $2)
+    tnschk2=$(echo  $tnschk | grep -c OK)
     if [ ${tnschk2} -eq 1 ] ; then 
 	tnschk3=${tnschk##*(}; tnschk3=${tnschk3%)*}
 	echo "OK - reply time ${tnschk3} from $2"
@@ -165,7 +165,7 @@ case "$cmd" in
     }'
     ;;
 --db)
-    pmonchk=`ps -ef | grep -v grep | grep -E -c "(asm|ora)_pmon_${2}$"`
+    pmonchk=$(ps -ef | grep -v grep | grep -E -c "(asm|ora)_pmon_${2}$")
     if [ ${pmonchk} -ge 1 ] ; then
 	echo "${2} OK - ${pmonchk} PMON process(es) running"
 	exit $STATE_OK
@@ -181,25 +181,25 @@ case "$cmd" in
     fi
     ;;
 --login)
-    loginchk=`sqlplus dummy/user@$2 < /dev/null`
-    loginchk2=` echo  $loginchk | grep -c ORA-01017`
+    loginchk=$(sqlplus dummy/user@$2 < /dev/null)
+    loginchk2=$(echo  $loginchk | grep -c ORA-01017)
     if [ ${loginchk2} -eq 1 ] ; then 
 	echo "OK - dummy login connected"
 	exit $STATE_OK
     else
-	loginchk3=` echo "$loginchk" | grep "ORA-" | head -1`
+	loginchk3=$(echo "$loginchk" | grep "ORA-" | head -1)
 	echo "CRITICAL - $loginchk3"
 	exit $STATE_CRITICAL
     fi
     ;;
 --connect)
-    connectchk=`sqlplus $2 < /dev/null`
-    connectchk2=` echo  $connectchk | grep -c ORA-`
+    connectchk=$(sqlplus $2 < /dev/null)
+    connectchk2=$(echo  $connectchk | grep -c ORA-)
     if [ ${connectchk2} -eq 0 ] ; then
 	echo "OK - login successful"
 	exit $STATE_OK
     else
-	connectchk3=` echo "$connectchk" | grep "ORA-" | head -1`
+	connectchk3=$(echo "$connectchk" | grep "ORA-" | head -1)
 	echo "CRITICAL - $connectchk3"
 	exit $STATE_CRITICAL
     fi
@@ -219,29 +219,29 @@ and dbg.name='db block gets'
 and cg.name='consistent gets';
 EOF`
 
-    if [ -n "`echo $result | grep ORA-`" ] ; then
-      error=` echo "$result" | grep "ORA-" | head -1`
-      echo "CRITICAL - $error"
-      exit $STATE_CRITICAL
+    if [ -n "$(echo $result | grep ORA-)" ] ; then
+        error=$(echo "$result" | grep "ORA-" | head -1)
+        echo "CRITICAL - $error"
+        exit $STATE_CRITICAL
     fi
 
-    buf_hr=`echo "$result" | awk '/^[0-9\. \t]+$/ {print int($1)}'` 
-    buf_hrx=`echo "$result" | awk '/^[0-9\. \t]+$/ {print $1}'` 
+    buf_hr=$(echo "$result" | awk '/^[0-9\. \t]+$/ {print int($1)}')
+    buf_hrx=$(echo "$result" | awk '/^[0-9\. \t]+$/ {print $1}')
     result=`sqlplus -s ${3}/${4}@${2} << EOF
 set pagesize 0
 set numf '9999999.99'
 select sum(lc.pins)/(sum(lc.pins)+sum(lc.reloads))*100
 from v\\$librarycache lc;
 EOF`
-	
-    if [ -n "`echo $result | grep ORA-`" ] ; then
-      error=` echo "$result" | grep "ORA-" | head -1`
-      echo "CRITICAL - $error"
-      exit $STATE_CRITICAL
+
+    if [ -n "$(echo $result | grep ORA-)" ] ; then
+        error=$(echo "$result" | grep "ORA-" | head -1)
+        echo "CRITICAL - $error"
+        exit $STATE_CRITICAL
     fi
 
-    lib_hr=`echo "$result" | awk '/^[0-9\. \t]+$/ {print int($1)}'`
-    lib_hrx=`echo "$result" | awk '/^[0-9\. \t]+$/ {print $1}'`
+    lib_hr=$(echo "$result" | awk '/^[0-9\. \t]+$/ {print int($1)}')
+    lib_hrx=$(echo "$result" | awk '/^[0-9\. \t]+$/ {print $1}')
 
     if [ $buf_hr -le ${5} -o $lib_hr -le ${5} ] ; then
   	echo "${2} CRITICAL - Cache Hit Rates: $lib_hrx% Lib -- $buf_hrx% Buff|lib=$lib_hrx%;${6};${5};0;100 buffer=$buf_hrx%;${6};${5};0;100"
@@ -273,16 +273,16 @@ from dba_free_space group by tablespace_name) B
 ON a.tablespace_name=b.tablespace_name WHERE a.tablespace_name='${5}';
 EOF`
 
-    if [ -n "`echo $result | grep ORA-`" ] ; then
-      error=` echo "$result" | grep "ORA-" | head -1`
-      echo "CRITICAL - $error"
-      exit $STATE_CRITICAL
+    if [ -n "$(echo $result | grep ORA-)" ] ; then
+        error=$(echo "$result" | grep "ORA-" | head -1)
+        echo "CRITICAL - $error"
+        exit $STATE_CRITICAL
     fi
 
-    ts_free=`echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($1)}'` 
-    ts_total=`echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($2)}'` 
-    ts_pct=`echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($3)}'` 
-    ts_pctx=`echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print $3}'` 
+    ts_free=$(echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($1)}')
+    ts_total=$(echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($2)}')
+    ts_pct=$(echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($3)}')
+    ts_pctx=$(echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print $3}')
     if [ "$ts_free" -eq 0 -a "$ts_total" -eq 0 -a "$ts_pct" -eq 0 ] ; then
         echo "No data returned by Oracle - tablespace $5 not found?"
         exit $STATE_UNKNOWN
