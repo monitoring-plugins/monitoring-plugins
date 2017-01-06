@@ -110,7 +110,7 @@ if [ -z "$ORACLE_HOME" ] ; then
     do
     [ ! -f $oratab ] && continue
     ORACLE_HOME=`IFS=:
-        while read SID ORACLE_HOME junk;
+        while read -r SID ORACLE_HOME junk;
         do
             if [ "$SID" = "$2" -o "$SID" = "*" ] ; then
                 echo "$ORACLE_HOME";
