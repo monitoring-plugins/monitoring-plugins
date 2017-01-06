@@ -112,7 +112,7 @@ if [ -z "$ORACLE_HOME" ] ; then
     ORACLE_HOME=`IFS=:
         while read -r SID ORACLE_HOME junk;
         do
-            if [ "$SID" = "$2" -o "$SID" = "*" ] ; then
+            if [ "$SID" = "$2" ] || [ "$SID" = "*" ] ; then
                 echo "$ORACLE_HOME";
                 exit;
             fi;
@@ -121,10 +121,10 @@ if [ -z "$ORACLE_HOME" ] ; then
     done
 fi
 # Last resort
-[ -z "$ORACLE_HOME" -a -d "$PROGPATH"/oracle ] && ORACLE_HOME=$PROGPATH/oracle
+[ -z "$ORACLE_HOME" ] && [ -d "$PROGPATH"/oracle ] && ORACLE_HOME=$PROGPATH/oracle
 
 if [ "$cmd" != "--db" ]; then
-    if [ -z "$ORACLE_HOME" -o ! -d "$ORACLE_HOME" ] ; then
+    if [ -z "$ORACLE_HOME" ] || [ ! -d "$ORACLE_HOME" ] ; then
 	echo "Cannot determine ORACLE_HOME for sid $2"
         exit "$STATE_UNKNOWN"
     fi
@@ -243,11 +243,11 @@ EOF`
     lib_hr=$(echo "$result" | awk '/^[0-9\. \t]+$/ {print int($1)}')
     lib_hrx=$(echo "$result" | awk '/^[0-9\. \t]+$/ {print $1}')
 
-    if [ "$buf_hr" -le "${5}" -o "$lib_hr" -le "${5}" ] ; then
+    if [ "$buf_hr" -le "${5}" ] || [ "$lib_hr" -le "${5}" ] ; then
         echo "${2} CRITICAL - Cache Hit Rates: $lib_hrx% Lib -- $buf_hrx% Buff|lib=$lib_hrx%;${6};${5};0;100 buffer=$buf_hrx%;${6};${5};0;100"
         exit "$STATE_CRITICAL"
     fi
-    if [ "$buf_hr" -le "${6}" -o "$lib_hr" -le "${6}" ] ; then
+    if [ "$buf_hr" -le "${6}" ] || [ "$lib_hr" -le "${6}" ] ; then
         echo "${2} WARNING  - Cache Hit Rates: $lib_hrx% Lib -- $buf_hrx% Buff|lib=$lib_hrx%;${6};${5};0;100 buffer=$buf_hrx%;${6};${5};0;100"
         exit "$STATE_WARNING"
     fi
@@ -283,7 +283,7 @@ EOF`
     ts_total=$(echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($2)}')
     ts_pct=$(echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($3)}')
     ts_pctx=$(echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print $3}')
-    if [ "$ts_free" -eq 0 -a "$ts_total" -eq 0 -a "$ts_pct" -eq 0 ] ; then
+    if [ "$ts_free" -eq 0 ] && [ "$ts_total" -eq 0 ] && [ "$ts_pct" -eq 0 ] ; then
         echo "No data returned by Oracle - tablespace $5 not found?"
         exit "$STATE_UNKNOWN"
     fi
