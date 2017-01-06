@@ -219,7 +219,7 @@ and dbg.name='db block gets'
 and cg.name='consistent gets';
 EOF`
 
-    if [ -n "$(echo "$result" | grep ORA-)" ] ; then
+    if echo "$result" | grep -q 'ORA-' ; then
         error=$(echo "$result" | grep "ORA-" | head -1)
         echo "CRITICAL - $error"
         exit "$STATE_CRITICAL"
@@ -234,7 +234,7 @@ select sum(lc.pins)/(sum(lc.pins)+sum(lc.reloads))*100
 from v\\$librarycache lc;
 EOF`
 
-    if [ -n "$(echo "$result" | grep ORA-)" ] ; then
+    if echo "$result" | grep -q 'ORA-' ; then
         error=$(echo "$result" | grep "ORA-" | head -1)
         echo "CRITICAL - $error"
         exit "$STATE_CRITICAL"
@@ -273,7 +273,7 @@ from dba_free_space group by tablespace_name) B
 ON a.tablespace_name=b.tablespace_name WHERE a.tablespace_name='${5}';
 EOF`
 
-    if [ -n "$(echo "$result" | grep ORA-)" ] ; then
+    if echo "$result" | grep -q 'ORA-' ; then
         error=$(echo "$result" | grep "ORA-" | head -1)
         echo "CRITICAL - $error"
         exit "$STATE_CRITICAL"
