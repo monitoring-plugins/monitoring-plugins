@@ -129,11 +129,13 @@ main (int argc, char **argv)
       puts(chld_out.line[i]);
 
     if (strcasestr (chld_out.line[i], ".in-addr.arpa") || strcasestr (chld_out.line[i], ".ip6.arpa")) {
-      if ((temp_buffer = strstr (chld_out.line[i], "name = ")) && (strstr (chld_out.line[i], "canonical name = ")==NULL))
-        addresses[n_addresses++] = strdup (temp_buffer + 7);
-      else {
-        msg = (char *)_("Warning plugin error");
-        result = STATE_WARNING;
+      if ((strstr (chld_out.line[i], "canonical name = ")==NULL)) {
+        if ((temp_buffer = strstr (chld_out.line[i], "name = ")))
+          addresses[n_addresses++] = strdup (temp_buffer + 7);
+        else {
+          msg = (char *)_("Warning plugin error");
+          result = STATE_WARNING;
+        }
       }
     }
 
