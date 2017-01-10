@@ -608,7 +608,7 @@ main(int argc, char **argv)
 		if(max_completion_time > (u_int)timeout * 1000000) {
 			printf("max_completion_time: %llu  timeout: %u\n",
 				   max_completion_time, timeout);
-			printf("Timout must be at lest %llu\n",
+			printf("Timeout must be at lest %llu\n",
 				   max_completion_time / 1000000 + 1);
 		}
 	}
