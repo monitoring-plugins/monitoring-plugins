@@ -385,6 +385,20 @@ if test "$ac_cv_header_wtsapi32_h" = "yes"; then
   AC_SUBST(WTSAPI32LIBS)
 fi
 
+dnl Check for cURL library
+LIBCURL_CHECK_CONFIG(yes, 7.15.2, [
+  EXTRAS="$EXTRAS check_curl\$(EXEEXT)"
+  LIBCURLINCLUDE="$LIBCURL_CPPFLAGS"
+  LIBCURLLIBS="$LIBCURL"
+  LIBCURLCFLAGS="$LIBCURL_CPPFLAGS"
+  AC_SUBST(LIBCURLINCLUDE)
+  AC_SUBST(LIBCURLLIBS)
+  AC_SUBST(LIBCURLCFLAGS)
+], [
+  AC_MSG_WARN([Skipping curl plugin])
+  AC_MSG_WARN([install libcurl libs to compile this plugin (see REQUIREMENTS).])
+])
+
 dnl Fallback to who(1) if the system doesn't provide an utmpx(5) interface
 if test "$ac_cv_header_utmpx_h" = "no" -a "$ac_cv_header_wtsapi32_h" = "no"
 then
@@ -1882,4 +1896,5 @@ ACX_FEATURE([enable],[perl-modules])
 ACX_FEATURE([with],[cgiurl])
 ACX_FEATURE([with],[trusted-path])
 ACX_FEATURE([enable],[libtap])
+ACX_FEATURE([with],[libcurl])
 
