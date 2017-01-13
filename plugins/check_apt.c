@@ -66,7 +66,7 @@ char* construct_cmdline(upgrade_type u, const char *opts);
 /* run an apt-get update */
 int run_update(void);
 /* run an apt-get upgrade */
-int run_upgrade(int *pkgcount, int *secpkgcount);
+int run_upgrade(int *pkgcount, int *secpkgcount, char *packages, size_t len);
 /* add another clause to a regexp */
 char* add_to_regexp(char *expr, const char *next);
 
@@ -81,12 +81,16 @@ static char *do_include = NULL;  /* regexp to only include certain packages */
 static char *do_exclude = NULL;  /* regexp to only exclude certain packages */
 static char *do_critical = NULL;  /* regexp specifying critical packages */
 static char *input_filename = NULL; /* input filename for testing */
+static int do_list = 0; /* whether to list package names */
 
 /* other global variables */
 static int stderr_warning = 0;   /* if a cmd issued output on stderr */
 static int exec_warning = 0;     /* if a cmd exited non-zero */
 
 int main (int argc, char **argv) {
+	const unsigned int BUF_LEN = 1000;
+	char packages[BUF_LEN];
+
 	int result=STATE_UNKNOWN, packages_available=0, sec_count=0;
 
 	/* Parse extra opts if any */
@@ -107,7 +111,7 @@ int main (int argc, char **argv) {
 	if(do_update) result = run_update();
 
 	/* apt-get upgrade */
-	result = max_state(result, run_upgrade(&packages_available, &sec_count));
+	result = max_state(result, run_upgrade(&packages_available, &sec_count, packages, BUF_LEN));
 
 	if(sec_count > 0){
 		result = max_state(result, STATE_CRITICAL);
@@ -117,11 +121,12 @@ int main (int argc, char **argv) {
 		result = STATE_UNKNOWN;
 	}
 
-	printf(_("APT %s: %d packages available for %s (%d critical updates). %s%s%s%s|available_upgrades=%d;;;0 critical_updates=%d;;;0\n"),
+	printf(_("APT %s: %d packages available for %s (%d critical updates)%s. %s%s%s%s|available_upgrades=%d;;;0 critical_updates=%d;;;0\n"),
 	       state_text(result),
 	       packages_available,
 	       (upgrade==DIST_UPGRADE)?"dist-upgrade":"upgrade",
 		   sec_count,
+		   do_list ? packages : "",
 	       (stderr_warning)?" warnings detected":"",
 	       (stderr_warning && exec_warning)?",":"",
 	       (exec_warning)?" errors detected":"",
@@ -150,12 +155,13 @@ int process_arguments (int argc, char **argv) {
 		{"exclude", required_argument, 0, 'e'},
 		{"critical", required_argument, 0, 'c'},
 		{"only-critical", no_argument, 0, 'o'},
+		{"list", no_argument, 0, 'l'},
 		{"input-file", required_argument, 0, INPUT_FILE_OPT},
 		{0, 0, 0, 0}
 	};
 
 	while(1) {
-		c = getopt_long(argc, argv, "hVvt:u::U::d::ni:e:c:o", longopts, NULL);
+		c = getopt_long(argc, argv, "hVvt:u::U::d::ni:e:c:ol", longopts, NULL);
 
 		if(c == -1 || c == EOF || c == 1) break;
 
@@ -208,6 +214,9 @@ int process_arguments (int argc, char **argv) {
 		case 'o':
 			only_critical=1;
 			break;
+		case 'l':
+			do_list=1;
+			break;
 		case INPUT_FILE_OPT:
 			input_filename = optarg;
 			break;
@@ -222,7 +231,7 @@ int process_arguments (int argc, char **argv) {
 
 
 /* run an apt-get upgrade */
-int run_upgrade(int *pkgcount, int *secpkgcount){
+int run_upgrade(int *pkgcount, int *secpkgcount, char *packages, size_t len){
 	int i=0, result=STATE_UNKNOWN, regres=0, pc=0, spc=0;
 	struct output chld_out, chld_err;
 	regex_t ireg, ereg, sreg;
@@ -305,6 +314,19 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 				}
 				if(verbose){
 					printf("*%s\n", chld_out.line[i]);
+				}
+
+				char *name = strchr(chld_out.line[i], ' ') + 1;
+				char *end = strchr(name + 1, ' ');
+				*end = 0;
+
+				if (len >= 0) {
+					size_t printed = snprintf(packages, len, " %s", name);
+					if (printed > len)
+						printed = len;
+
+					len -= printed;
+					packages += printed;
 				}
 			}
 		}
@@ -473,6 +495,8 @@ print_help (void)
   printf ("    %s\n", _("Only warn about upgrades matching the critical list.  The total number"));
   printf ("    %s\n", _("of upgrades will be printed, but any non-critical upgrades will not cause"));
   printf ("    %s\n\n", _("the plugin to return WARNING status."));
+  printf (" %s\n", " -l, --list");
+  printf ("    %s\n\n", _("List package names."));
 
   printf ("%s\n\n", _("The following options require root privileges and should be used with care:"));
   printf (" %s\n", "-u, --update=OPTS");
