@@ -38,7 +38,7 @@ check_tcp_programs = check_ftp check_imap check_nntp check_pop \
 EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 	check_swap check_fping check_ldap check_game check_dig \
 	check_nagios check_by_ssh check_dns check_nt check_ide_smart	\
-	check_procs check_mysql_query check_apt check_dbi
+	check_procs check_mysql_query check_apt check_dbi check_curl
 
 EXTRA_DIST = t tests
 
@@ -69,6 +69,9 @@ test-debug:
 
 check_apt_LDADD = $(BASEOBJS)
 check_cluster_LDADD = $(BASEOBJS)
+check_curl_CFLAGS = $(AM_CFLAGS) $(LIBCURLCFLAGS)
+check_curl_CPPFLAGS = $(AM_CPPFLAGS) $(LIBCURLINCLUDE)
+check_curl_LDADD = $(NETLIBS) $(LIBCURLLIBS)
 check_dbi_LDADD = $(NETLIBS) $(DBILIBS)
 check_dig_LDADD = $(NETLIBS)
 check_disk_LDADD = $(BASEOBJS)
