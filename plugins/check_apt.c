@@ -66,12 +66,17 @@ char* construct_cmdline(upgrade_type u, const char *opts);
 /* run an apt-get update */
 int run_update(void);
 /* run an apt-get upgrade */
-int run_upgrade(int *pkgcount, int *secpkgcount);
+int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkglist);
 /* add another clause to a regexp */
 char* add_to_regexp(char *expr, const char *next);
+/* extract package name from Inst line */
+char* pkg_name(char *line);
+/* string comparison function for qsort */
+int cmpstringp(const void *p1, const void *p2);
 
 /* configuration variables */
 static int verbose = 0;      /* -v */
+static int list = 0;         /* list packages available for upgrade */
 static int do_update = 0;    /* whether to call apt-get update */
 static int only_critical = 0;    /* whether to warn about non-critical updates */
 static upgrade_type upgrade = UPGRADE; /* which type of upgrade to do */
@@ -87,7 +92,8 @@ static int stderr_warning = 0;   /* if a cmd issued output on stderr */
 static int exec_warning = 0;     /* if a cmd exited non-zero */
 
 int main (int argc, char **argv) {
-	int result=STATE_UNKNOWN, packages_available=0, sec_count=0;
+	int result=STATE_UNKNOWN, packages_available=0, sec_count=0, i=0;
+	char **packages_list=NULL, **secpackages_list=NULL;
 
 	/* Parse extra opts if any */
 	argv=np_extra_opts(&argc, argv, progname);
@@ -107,7 +113,7 @@ int main (int argc, char **argv) {
 	if(do_update) result = run_update();
 
 	/* apt-get upgrade */
-	result = max_state(result, run_upgrade(&packages_available, &sec_count));
+	result = max_state(result, run_upgrade(&packages_available, &sec_count, &packages_list, &secpackages_list));
 
 	if(sec_count > 0){
 		result = max_state(result, STATE_CRITICAL);
@@ -130,6 +136,18 @@ int main (int argc, char **argv) {
 		   sec_count
 	       );
 
+	if(list) {
+		qsort(secpackages_list, sec_count, sizeof(char*), cmpstringp);
+		qsort(packages_list, packages_available-sec_count, sizeof(char*), cmpstringp);
+
+		for(i = 0; i < sec_count; i++)
+			printf("%s (security)\n", secpackages_list[i]);
+		if (only_critical == 0) {
+			for(i = 0; i < packages_available - sec_count; i++)
+				printf("%s\n", packages_list[i]);
+		}
+	}
+
 	return result;
 }
 
@@ -146,6 +164,7 @@ int process_arguments (int argc, char **argv) {
 		{"upgrade", optional_argument, 0, 'U'},
 		{"no-upgrade", no_argument, 0, 'n'},
 		{"dist-upgrade", optional_argument, 0, 'd'},
+		{"list", no_argument, 0, 'l'},
 		{"include", required_argument, 0, 'i'},
 		{"exclude", required_argument, 0, 'e'},
 		{"critical", required_argument, 0, 'c'},
@@ -155,7 +174,7 @@ int process_arguments (int argc, char **argv) {
 	};
 
 	while(1) {
-		c = getopt_long(argc, argv, "hVvt:u::U::d::ni:e:c:o", longopts, NULL);
+		c = getopt_long(argc, argv, "hVvt:u::U::d::nli:e:c:o", longopts, NULL);
 
 		if(c == -1 || c == EOF || c == 1) break;
 
@@ -196,6 +215,9 @@ int process_arguments (int argc, char **argv) {
 				if(update_opts==NULL) die(STATE_UNKNOWN, "strdup failed");
 			}
 			break;
+		case 'l':
+			list=1;
+			break;
 		case 'i':
 			do_include=add_to_regexp(do_include, optarg);
 			break;
@@ -222,7 +244,7 @@ int process_arguments (int argc, char **argv) {
 
 
 /* run an apt-get upgrade */
-int run_upgrade(int *pkgcount, int *secpkgcount){
+int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkglist){
 	int i=0, result=STATE_UNKNOWN, regres=0, pc=0, spc=0;
 	struct output chld_out, chld_err;
 	regex_t ireg, ereg, sreg;
@@ -278,6 +300,11 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 		    cmdline);
 	}
 
+	*pkglist=malloc(sizeof(char *) * chld_out.lines);
+	if(!pkglist) die(STATE_UNKNOWN, "malloc failed!\n");
+	*secpkglist=malloc(sizeof(char *) * chld_out.lines);
+	if(!secpkglist) die(STATE_UNKNOWN, "malloc failed!\n");
+
 	/* parse the output, which should only consist of lines like
 	 *
 	 * Inst package ....
@@ -302,6 +329,9 @@ int run_upgrade(int *pkgcount, int *secpkgcount){
 				if(regexec(&sreg, chld_out.line[i], 0, NULL, 0)==0){
 					spc++;
 					if(verbose) printf("*");
+					(*secpkglist)[spc-1] = pkg_name(chld_out.line[i]);
+				} else {
+					(*pkglist)[pc-spc-1] = pkg_name(chld_out.line[i]);
 				}
 				if(verbose){
 					printf("*%s\n", chld_out.line[i]);
@@ -366,6 +396,31 @@ int run_update(void){
 	}
 	free(cmdline);
 	return result;
+}
+
+char* pkg_name(char *line){
+	char *start=NULL, *space=NULL, *pkg=NULL;
+	int len=0;
+
+	start = line + strlen(PKGINST_PREFIX);
+	len = strlen(start);
+
+	space = index(start, ' ');
+	if(space!=NULL){
+		len = space - start;
+	}
+
+	pkg=malloc(sizeof(char)*(len+1));
+	if(!pkg) die(STATE_UNKNOWN, "malloc failed!\n");
+
+	strncpy(pkg, start, len);
+	pkg[len]='\0';
+
+	return pkg;
+}
+
+int cmpstringp(const void *p1, const void *p2){
+	return strcmp(* (char * const *) p1, * (char * const *) p2);
 }
 
 char* add_to_regexp(char *expr, const char *next){
@@ -450,8 +505,11 @@ print_help (void)
   printf (" %s\n", "-d, --dist-upgrade=OPTS");
   printf ("    %s\n", _("Perform a dist-upgrade instead of normal upgrade. Like with -U OPTS"));
   printf ("    %s\n", _("can be provided to override the default options."));
-  printf (" %s\n", " -n, --no-upgrade");
+  printf (" %s\n", "-n, --no-upgrade");
   printf ("    %s\n", _("Do not run the upgrade.  Probably not useful (without -u at least)."));
+  printf (" %s\n", "-l, --list");
+  printf ("    %s\n", _("List packages available for upgrade.  Packages are printed sorted by"));
+  printf ("    %s\n", _("name with security packages listed first."));
   printf (" %s\n", "-i, --include=REGEXP");
   printf ("    %s\n", _("Include only packages matching REGEXP.  Can be specified multiple times"));
   printf ("    %s\n", _("the values will be combined together.  Any packages matching this list"));
@@ -490,5 +548,5 @@ void
 print_usage(void)
 {
   printf ("%s\n", _("Usage:"));
-  printf ("%s [[-d|-u|-U]opts] [-n] [-t timeout]\n", progname);
+  printf ("%s [[-d|-u|-U]opts] [-n] [-l] [-t timeout]\n", progname);
 }
