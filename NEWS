@@ -4,6 +4,9 @@ This file documents the major additions and syntax changes between releases.
 	ENHANCEMENTS
 	check_dns: allow 'expected address' (-a) to be specified in CIDR notation
 	  (IPv4 only).
+	check_dns: allow for IPv6 RDNS
+	check_apt: add --only-critical switch
+	check_apt: add -l/--list option to print packages
 
 	FIXES
 	Fix regression where check_dhcp was rereading response in a tight loop
