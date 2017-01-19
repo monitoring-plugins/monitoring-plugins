@@ -268,8 +268,8 @@ main (int argc, char **argv)
 	/* Curl errors, result in critical Nagios state */
 	if (res != CURLE_OK) {
 		remove_newlines (errbuf);
-		snprintf (msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host on port %d: %s\n"),
-			server_port, status_line.msg, status_line.msg);
+		snprintf (msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host on port %d: cURL returned %d - %s\n"),
+			server_port, res, curl_easy_strerror(res));
 		die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
 	}
 
