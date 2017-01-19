@@ -90,6 +90,7 @@ char *server_address;
 char *host_name;
 char *server_url = DEFAULT_SERVER_URL;
 unsigned short server_port = DEFAULT_HTTP_PORT;
+char output_string_search[30] = "";
 char *warning_thresholds = NULL;
 char *critical_thresholds = NULL;
 thresholds *thlds;
@@ -109,6 +110,7 @@ CURLcode res;
 char url[DEFAULT_BUFFER_SIZE];
 char msg[DEFAULT_BUFFER_SIZE];
 char perfstring[DEFAULT_BUFFER_SIZE];
+char string_expect[MAX_INPUT_BUFFER] = "";
 char user_auth[MAX_INPUT_BUFFER] = "";
 int onredirect = STATE_OK;
 int use_ssl = FALSE;
@@ -246,18 +248,6 @@ main (int argc, char **argv)
 		//~ curl_easy_setopt( curl, CURLOPT_CAINFO, args_info.cacert_arg );
 	//~ }
 
-	/* TODO: old option -s: check if the excepted string matches */
-	//~ if( args_info.string_given ) {
-		//~ if( strstr( body_buf.buf, args_info.string_arg ) == NULL ) {
-			//~ printf( "HTTP CRITICAL - string not found|%s\n", perfstring );
-			//~ curl_easy_cleanup( curl );
-			//~ curl_global_cleanup( );
-			//~ curlhelp_freebuffer( &body_buf );
-			//~ curlhelp_freebuffer( &header_buf );
-			//~ exit( STATE_CRITICAL );
-		//~ }
-	//~ }
-
 	/* handle redirections */
 	if (onredirect == STATE_DEPENDENT) {
 		curl_easy_setopt (curl, CURLOPT_FOLLOWLOCATION, 1);
@@ -280,7 +270,7 @@ main (int argc, char **argv)
 		remove_newlines (errbuf);
 		snprintf (msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host on port %d: %s\n"),
 			server_port, status_line.msg, status_line.msg);
-		die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", errbuf);
+		die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
 	}
 
 	/* we got the data and we executed the request in a given time, so we can append
@@ -334,8 +324,9 @@ main (int argc, char **argv)
 			code = status_line.http_code;
 		}
 		result = max_state_alt (onredirect, result);
-		// TODO: make sure the last status line has been
-		// parsed into the status_line structure
+		/* TODO: make sure the last status line has been
+		   parsed into the status_line structure
+		 */
 	/* all other codes are considered ok */
 	} else {
 		result = STATE_OK;
@@ -348,13 +339,25 @@ main (int argc, char **argv)
 			status_line.http_code, status_line.msg, code);
 	}
 
+	/* Page and Header content checks go here */
+	if (strlen (string_expect)) {
+		if (!strstr (body_buf.buf, string_expect)) {
+			strncpy(&output_string_search[0],string_expect,sizeof(output_string_search));
+			if(output_string_search[sizeof(output_string_search)-1]!='\0') {
+				bcopy("...",&output_string_search[sizeof(output_string_search)-4],4);
+			}
+			snprintf (msg, DEFAULT_BUFFER_SIZE, _("%sstring '%s' not found on '%s://%s:%d%s', "), msg, output_string_search, use_ssl ? "https" : "http", host_name ? host_name : server_address, server_port, server_url);
+			result = STATE_CRITICAL;
+		}
+	}
+
 	/* -w, -c: check warning and critical level */
 	result = max_state_alt(get_status(total_time, thlds), result);
 
 	//~ die (result, "HTTP %s: %s\n", state_text(result), msg);
-	die (result, "HTTP %s HTTP/%d.%d %d %s - %.3g seconds response time|%s\n",
+	die (result, "HTTP %s HTTP/%d.%d %d %s - %s - %.3g seconds response time|%s\n",
 		state_text(result), status_line.http_major, status_line.http_minor,
-		status_line.http_code, status_line.msg,
+		status_line.http_code, status_line.msg, msg,
 		total_time, perfstring);
 
 	/* proper cleanup after die? */
@@ -393,6 +396,7 @@ process_arguments (int argc, char **argv)
 		{"url", required_argument, 0, 'u'},
 		{"port", required_argument, 0, 'p'},
 		{"authorization", required_argument, 0, 'a'},
+		{"string", required_argument, 0, 's'},
 		{"onredirect", required_argument, 0, 'f'},
 		{"client-cert", required_argument, 0, 'J'},
 		{"private-key", required_argument, 0, 'K'},
@@ -405,7 +409,7 @@ process_arguments (int argc, char **argv)
 		usage ("\n");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvht:c:w:A:H:I:a:p:u:f:C:J:K:S::", longopts, &option);
+		c = getopt_long (argc, argv, "Vvht:c:w:A:H:I:a:p:s:u:f:C:J:K:S::", longopts, &option);
 		if (c == -1 || c == EOF || c == 1)
 			break;
 
@@ -532,6 +536,10 @@ process_arguments (int argc, char **argv)
 			if (verbose >= 2)
 				printf(_("* Following redirects set to %s\n"), state_text(onredirect));
 			break;
+		case 's': /* string or substring */
+			strncpy (string_expect, optarg, MAX_INPUT_BUFFER - 1);
+			string_expect[MAX_INPUT_BUFFER - 1] = 0;
+			break;
 		case '?':
 			/* print short usage statement if args not parsable */
 			usage5 ();
@@ -578,6 +586,7 @@ print_help (void)
 {
 	print_revision(progname, NP_VERSION);
 
+	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf ("Copyright (c) 2017 Andreas Baumann <abaumann@yahoo.com>\n");
 	printf (COPYRIGHT, copyright, email);
 
@@ -633,6 +642,8 @@ print_help (void)
 	printf ("   %s\n", _("matching the client certificate"));
 #endif
 
+	printf (" %s\n", "-s, --string=STRING");
+	printf ("    %s\n", _("String to expect in the content"));
 	printf (" %s\n", "-u, --url=PATH");
 	printf ("    %s\n", _("URL to GET or POST (default: /)"));
 
