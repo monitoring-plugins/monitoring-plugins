@@ -32,8 +32,8 @@
 *
 *
 *****************************************************************************/
-
 const char *progname = "check_curl";
+
 const char *copyright = "2006-2017";
 const char *email = "devel@monitoring-plugins.org";
 
@@ -200,9 +200,10 @@ main (int argc, char **argv)
 
   /* backward-compatible behaviour, be tolerant in checks */
   if (!check_cert) {
-    //TODO: depending on more options have aspects we want
-    //to be tolerant about
-    //curl_easy_setopt( curl, CURLOPT_SSL_VERIFYPEER, 1 );
+    /* TODO: depending on more options have aspects we want
+     * to be tolerant about
+     * curl_easy_setopt( curl, CURLOPT_SSL_VERIFYPEER, 1 );
+     */
     curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0);
     curl_easy_setopt (curl, CURLOPT_SSL_VERIFYHOST, 0);
   }
@@ -230,9 +231,9 @@ main (int argc, char **argv)
    */
 
   /* TODO: --cacert: CA certificate file to verify SSL connection against (SSL) */
-  //~ if( args_info.cacert_given ) {
-    //~ curl_easy_setopt( curl, CURLOPT_CAINFO, args_info.cacert_arg );
-  //~ }
+  /* if( args_info.cacert_given ) {
+      curl_easy_setopt( curl, CURLOPT_CAINFO, args_info.cacert_arg );
+   } */
 
   /* handle redirections */
   if (onredirect == STATE_DEPENDENT) {
@@ -266,8 +267,8 @@ main (int argc, char **argv)
   snprintf (perfstring, DEFAULT_BUFFER_SIZE, "time=%.6gs;%.6g;%.6g;%.6g size=%dB;;;0",
     total_time,
     0.0, 0.0,
-    //~ args_info.warning_given ? args_info.warning_arg : 0.0,
-    //~ args_info.critical_given ? args_info.critical_arg : 0.0,
+    ( warning_thresholds != NULL ) ? (double)thlds->warning->end : 0.0,
+    critical_thresholds != NULL ? (double)thlds->critical->end : 0.0,
     0.0,
     (int)body_buf.buflen);
 
@@ -340,7 +341,7 @@ main (int argc, char **argv)
   /* -w, -c: check warning and critical level */
   result = max_state_alt(get_status(total_time, thlds), result);
 
-  //~ die (result, "HTTP %s: %s\n", state_text(result), msg);
+  /* TODO: separate _() msg and status code: die (result, "HTTP %s: %s\n", state_text(result), msg); */
   die (result, "HTTP %s HTTP/%d.%d %d %s - %s - %.3g seconds response time|%s\n",
     state_text(result), status_line.http_major, status_line.http_minor,
     status_line.http_code, status_line.msg, msg,
@@ -513,12 +514,6 @@ process_arguments (int argc, char **argv)
       else if (!strcmp (optarg, "follow"))
         onredirect = STATE_DEPENDENT;
       else usage2 (_("Invalid onredirect option"), optarg);
-      //~ if (!strcmp (optarg, "stickyport"))
-      //~ onredirect = STATE_DEPENDENT, followsticky = STICKY_HOST|STICKY_PORT;
-      //~ else if (!strcmp (optarg, "sticky"))
-      //~ onredirect = STATE_DEPENDENT, followsticky = STICKY_HOST;
-      //~ else if (!strcmp (optarg, "follow"))
-      //~ onredirect = STATE_DEPENDENT, followsticky = STICKY_NONE;
       if (verbose >= 2)
         printf(_("* Following redirects set to %s\n"), state_text(onredirect));
       break;
@@ -637,9 +632,8 @@ print_help (void)
   printf ("    %s\n", _("Username:password on sites with basic authentication"));
   printf (" %s\n", "-A, --useragent=STRING");
   printf ("    %s\n", _("String to be sent in http header as \"User Agent\""));
-  printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow|sticky|stickyport>");
-  printf ("    %s\n", _("How to handle redirected pages. sticky is like follow but stick to the"));
-  printf ("    %s\n", _("specified IP address. stickyport also ensures port stays the same."));
+  printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow>");
+  printf ("    %s\n", _("How to handle redirected pages."));
 
   printf (UT_WARN_CRIT);
 
