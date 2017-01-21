@@ -114,7 +114,7 @@ int curlhelp_initbuffer (curlhelp_curlbuf*);
 int curlhelp_buffer_callback (void*, size_t , size_t , void*);
 void curlhelp_freebuffer (curlhelp_curlbuf*);
 
-int curlhelp_parse_statusline (char*, curlhelp_statusline *);
+int curlhelp_parse_statusline (const char*, curlhelp_statusline *);
 void curlhelp_free_statusline (curlhelp_statusline *);
 
 void remove_newlines (char *);
@@ -700,17 +700,58 @@ curlhelp_freebuffer (curlhelp_curlbuf *buf)
   buf->buf = NULL;
 }
 
-/* TODO: when redirecting we get more than one HTTP header, make sure
- * we parse the last one
+/* TODO: should be moved into 'gl' and should be probed, glibc has
+ * a strrstr
  */
+const char* 
+strrstr2(const char *haystack, const char *needle)
+{
+  int counter;
+  size_t len;
+  const char *prev_pos;
+  const char *pos;
+  
+  if (haystack == NULL || needle == NULL)
+    return NULL;
+  
+  if (haystack[0] == '\0' || needle[0] == '\0')
+    return NULL;
+    
+  counter = 0;
+  prev_pos = NULL;
+  pos = haystack;
+  len = strlen (needle);
+  for (;;) {
+    pos = strstr (pos, needle);
+    if (pos == NULL) {
+      if (counter == 0)
+        return NULL;
+      else
+        return prev_pos;
+    }
+    counter++;
+    prev_pos = pos;
+    pos += len;
+    if (*pos == '\0') return prev_pos;
+  }
+}
+
 int
-curlhelp_parse_statusline (char *buf, curlhelp_statusline *status_line)
+curlhelp_parse_statusline (const char *buf, curlhelp_statusline *status_line)
 {
   char *first_line_end;
   char *p;
   size_t first_line_len;
   char *pp;
+  const char *start;
 
+  /* find last start of a new header */
+  start = strrstr2 (buf, "\r\nHTTP");
+  if (start != NULL) {
+    start += 2;
+    buf = start;
+  }
+  
   first_line_end = strstr(buf, "\r\n");
   if (first_line_end == NULL) return -1;
 
