@@ -105,6 +105,7 @@ int check_cert = FALSE;
 int ssl_version = CURL_SSLVERSION_DEFAULT;
 char *client_cert = NULL;
 char *client_privkey = NULL;
+char *ca_cert = NULL;
 
 int process_arguments (int, char**);
 void print_help (void);
@@ -192,6 +193,8 @@ main (int argc, char **argv)
     curl_easy_setopt (curl, CURLOPT_SSLCERT, client_cert);
   if (client_privkey)
     curl_easy_setopt (curl, CURLOPT_SSLKEY, client_privkey);
+  if (ca_cert)
+    curl_easy_setopt (curl, CURLOPT_CAINFO, ca_cert);
 
   /* per default if we have a CA verify both the peer and the
    * hostname in the certificate, can be switched off later */
@@ -372,7 +375,8 @@ process_arguments (int argc, char **argv)
   int c;
 
   enum {
-    SNI_OPTION
+    SNI_OPTION = CHAR_MAX + 1,
+    CA_CERT_OPTION
   };
 
   int option=0;
@@ -387,6 +391,7 @@ process_arguments (int argc, char **argv)
     {"onredirect", required_argument, 0, 'f'},
     {"client-cert", required_argument, 0, 'J'},
     {"private-key", required_argument, 0, 'K'},
+    {"ca-cert", required_argument, 0, CA_CERT_OPTION},
     {"useragent", required_argument, 0, 'A'},
     {"certificate", required_argument, 0, 'C'},
     {0, 0, 0, 0}
@@ -467,6 +472,12 @@ process_arguments (int argc, char **argv)
 #ifdef LIBCURL_FEATURE_SSL
       test_file(optarg);
       client_privkey = optarg;
+      goto enable_ssl;
+#endif
+#ifdef LIBCURL_FEATURE_SSL
+    case CA_CERT_OPTION: /* use CA chain file */
+      test_file(optarg);
+      ca_cert = optarg;
       goto enable_ssl;
 #endif
     case 'S': /* use SSL */
@@ -621,6 +632,8 @@ print_help (void)
   printf (" %s\n", "-K, --private-key=FILE");
   printf ("   %s\n", _("Name of file containing the private key (PEM format)"));
   printf ("   %s\n", _("matching the client certificate"));
+  printf (" %s\n", "--ca-cert=FILE");
+  printf ("   %s\n", _("CA certificate file to verify peer against"));
 #endif
 
   printf (" %s\n", "-s, --string=STRING");
@@ -649,7 +662,7 @@ print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
   printf (" %s -H <vhost> | -I <IP-address> [-u <uri>] [-p <port>]\n",progname);
-  printf ("       [-J <client certificate file>] [-K <private key>]\n");
+  printf ("       [-J <client certificate file>] [-K <private key>] [--ca-cert <CA certificate file>]\n");
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-a auth]\n");
   printf ("       [-f <ok|warning|critcal|follow>]\n");
   printf ("       [-A string] [-S <version>] [-C]\n");
