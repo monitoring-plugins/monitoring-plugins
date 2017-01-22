@@ -49,9 +49,11 @@ const char *email = "devel@monitoring-plugins.org";
 
 #define DEFAULT_BUFFER_SIZE 2048
 #define DEFAULT_SERVER_URL "/"
-#define DEFAULT_HTTP_PORT 80
-#define DEFAULT_HTTPS_PORT 443
-#define MAX_PORT 65535
+enum {
+  HTTP_PORT = 80,
+  HTTPS_PORT = 443,
+  MAX_PORT = 65535
+};
 
 /* for buffers for header and body */
 typedef struct {
@@ -72,10 +74,22 @@ typedef struct {
   char *first_line; /* a copy of the first line */
 } curlhelp_statusline;
 
+enum {
+  REGS = 2,
+  MAX_RE_SIZE = 256
+};
+#include "regex.h"
+regex_t preg;
+regmatch_t pmatch[REGS];
+char regexp[MAX_RE_SIZE];
+int cflags = REG_NOSUB | REG_EXTENDED | REG_NEWLINE;
+int errcode;
+int invert_regex = 0;
+
 char *server_address;
 char *host_name;
 char *server_url = DEFAULT_SERVER_URL;
-unsigned short server_port = DEFAULT_HTTP_PORT;
+unsigned short server_port = HTTP_PORT;
 char output_string_search[30] = "";
 char *warning_thresholds = NULL;
 char *critical_thresholds = NULL;
@@ -341,6 +355,27 @@ main (int argc, char **argv)
     }
   }
 
+  if (strlen (regexp)) {
+    errcode = regexec (&preg, body_buf.buf, REGS, pmatch, 0);
+    if ((errcode == 0 && invert_regex == 0) || (errcode == REG_NOMATCH && invert_regex == 1)) {
+      /* OK - No-op to avoid changing the logic around it */
+      result = max_state_alt(STATE_OK, result);
+    }
+    else if ((errcode == REG_NOMATCH && invert_regex == 0) || (errcode == 0 && invert_regex == 1)) {
+      if (invert_regex == 0)
+        snprintf (msg, DEFAULT_BUFFER_SIZE, _("%spattern not found"), msg);
+      else
+        snprintf (msg, DEFAULT_BUFFER_SIZE, _("%spattern found"), msg);
+      result = STATE_CRITICAL;
+    }
+    else {
+      /* FIXME: Shouldn't that be UNKNOWN? */
+      regerror (errcode, &preg, errbuf, MAX_INPUT_BUFFER);
+      snprintf (msg, DEFAULT_BUFFER_SIZE, _("%sExecute Error: %s, "), msg, errbuf);
+      result = STATE_CRITICAL;
+    }
+  }
+
   /* -w, -c: check warning and critical level */
   result = max_state_alt(get_status(total_time, thlds), result);
 
@@ -375,7 +410,8 @@ process_arguments (int argc, char **argv)
   int c;
 
   enum {
-    SNI_OPTION = CHAR_MAX + 1,
+    INVERT_REGEX = CHAR_MAX + 1,
+    SNI_OPTION,
     CA_CERT_OPTION
   };
 
@@ -388,6 +424,7 @@ process_arguments (int argc, char **argv)
     {"port", required_argument, 0, 'p'},
     {"authorization", required_argument, 0, 'a'},
     {"string", required_argument, 0, 's'},
+    {"regex", required_argument, 0, 'r'},
     {"onredirect", required_argument, 0, 'f'},
     {"client-cert", required_argument, 0, 'J'},
     {"private-key", required_argument, 0, 'K'},
@@ -401,7 +438,7 @@ process_arguments (int argc, char **argv)
     usage ("\n");
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvht:c:w:A:H:I:a:p:s:u:f:C:J:K:S::", longopts, &option);
+    c = getopt_long (argc, argv, "Vvht:c:w:A:H:I:a:p:s:r:u:f:C:J:K:S::", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
       break;
 
@@ -503,8 +540,8 @@ process_arguments (int argc, char **argv)
         else
           usage4 (_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2 (with optional '+' suffix)"));
       }
-      if (server_port == DEFAULT_HTTP_PORT)
-        server_port = DEFAULT_HTTPS_PORT;
+      if (server_port == HTTP_PORT)
+        server_port = HTTPS_PORT;
 #else
       /* -C -J and -K fall through to here without SSL */
       usage4 (_("Invalid option - SSL is not available"));
@@ -531,6 +568,19 @@ process_arguments (int argc, char **argv)
     case 's': /* string or substring */
       strncpy (string_expect, optarg, MAX_INPUT_BUFFER - 1);
       string_expect[MAX_INPUT_BUFFER - 1] = 0;
+      break;
+    case 'r': /* regex */
+      strncpy (regexp, optarg, MAX_RE_SIZE - 1);
+      regexp[MAX_RE_SIZE - 1] = 0;
+      errcode = regcomp (&preg, regexp, cflags);
+      if (errcode != 0) {
+        (void) regerror (errcode, &preg, errbuf, MAX_INPUT_BUFFER);
+        printf (_("Could Not Compile Regular Expression: %s"), errbuf);
+        return ERROR;
+      }
+      break;
+    case INVERT_REGEX:
+      invert_regex = 1;
       break;
     case '?':
       /* print short usage statement if args not parsable */
@@ -608,7 +658,7 @@ print_help (void)
   printf ("    %s\n", _("IP address or name (use numeric address if possible to bypass DNS lookup)."));
   printf (" %s\n", "-p, --port=INTEGER");
   printf ("    %s", _("Port number (default: "));
-  printf ("%d)\n", DEFAULT_HTTP_PORT);
+  printf ("%d)\n", HTTP_PORT);
 
 #ifdef LIBCURL_FEATURE_SSL
   printf (" %s\n", "-S, --ssl=VERSION[+]");
@@ -640,7 +690,8 @@ print_help (void)
   printf ("    %s\n", _("String to expect in the content"));
   printf (" %s\n", "-u, --url=PATH");
   printf ("    %s\n", _("URL to GET or POST (default: /)"));
-
+  printf (" %s\n", "-r, --regex, --ereg=STRING");
+  printf ("    %s\n", _("Search page for regex STRING"));
   printf (" %s\n", "-a, --authorization=AUTH_PAIR");
   printf ("    %s\n", _("Username:password on sites with basic authentication"));
   printf (" %s\n", "-A, --useragent=STRING");
@@ -654,6 +705,53 @@ print_help (void)
 
   printf (UT_VERBOSE);
 
+  printf ("\n");
+  printf ("%s\n", _("Notes:"));
+  printf (" %s\n", _("This plugin will attempt to open an HTTP connection with the host."));
+  printf (" %s\n", _("Successful connects return STATE_OK, refusals and timeouts return STATE_CRITICAL"));
+  printf (" %s\n", _("other errors return STATE_UNKNOWN.  Successful connects, but incorrect response"));
+  printf (" %s\n", _("messages from the host result in STATE_WARNING return values.  If you are"));
+  printf (" %s\n", _("checking a virtual server that uses 'host headers' you must supply the FQDN"));
+  printf (" %s\n", _("(fully qualified domain name) as the [host_name] argument."));
+
+#ifdef LIBCURL_FEATURE_SSL
+  printf ("\n");
+  printf (" %s\n", _("This plugin can also check whether an SSL enabled web server is able to"));
+  printf (" %s\n", _("serve content (optionally within a specified time) or whether the X509 "));
+  printf (" %s\n", _("certificate is still valid for the specified number of days."));
+  printf ("\n");
+  printf (" %s\n", _("Please note that this plugin does not check if the presented server"));
+  printf (" %s\n", _("certificate matches the hostname of the server, or if the certificate"));
+  printf (" %s\n", _("has a valid chain of trust to one of the locally installed CAs."));
+  printf ("\n");
+  printf ("%s\n", _("Examples:"));
+  printf (" %s\n\n", "CHECK CONTENT: check_http -w 5 -c 10 --ssl -H www.verisign.com");
+  printf (" %s\n", _("When the 'www.verisign.com' server returns its content within 5 seconds,"));
+  printf (" %s\n", _("a STATE_OK will be returned. When the server returns its content but exceeds"));
+  printf (" %s\n", _("the 5-second threshold, a STATE_WARNING will be returned. When an error occurs,"));
+  printf (" %s\n", _("a STATE_CRITICAL will be returned."));
+  printf ("\n");
+  printf (" %s\n\n", "CHECK CERTIFICATE: check_http -H www.verisign.com -C 14");
+  printf (" %s\n", _("When the certificate of 'www.verisign.com' is valid for more than 14 days,"));
+  printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
+  printf (" %s\n", _("14 days, a STATE_WARNING is returned. A STATE_CRITICAL will be returned when"));
+  printf (" %s\n\n", _("the certificate is expired."));
+  printf ("\n");
+  printf (" %s\n\n", "CHECK CERTIFICATE: check_http -H www.verisign.com -C 30,14");
+  printf (" %s\n", _("When the certificate of 'www.verisign.com' is valid for more than 30 days,"));
+  printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
+  printf (" %s\n", _("30 days, but more than 14 days, a STATE_WARNING is returned."));
+  printf (" %s\n", _("A STATE_CRITICAL will be returned when certificate expires in less than 14 days"));
+
+  printf (" %s\n\n", "CHECK SSL WEBSERVER CONTENT VIA PROXY USING HTTP 1.1 CONNECT: ");
+  printf (" %s\n", _("check_http -I 192.168.100.35 -p 80 -u https://www.verisign.com/ -S -j CONNECT -H www.verisign.com "));
+  printf (" %s\n", _("all these options are needed: -I <proxy> -p <proxy-port> -u <check-url> -S(sl) -j CONNECT -H <webserver>"));
+  printf (" %s\n", _("a STATE_OK will be returned. When the server returns its content but exceeds"));
+  printf (" %s\n", _("the 5-second threshold, a STATE_WARNING will be returned. When an error occurs,"));
+  printf (" %s\n", _("a STATE_CRITICAL will be returned."));
+
+#endif
+
   printf (UT_SUPPORT);
 }
 
@@ -665,6 +763,7 @@ print_usage (void)
   printf ("       [-J <client certificate file>] [-K <private key>] [--ca-cert <CA certificate file>]\n");
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-a auth]\n");
   printf ("       [-f <ok|warning|critcal|follow>]\n");
+  printf ("       [-s string] [-r <regex>\n");
   printf ("       [-A string] [-S <version>] [-C]\n");
   printf ("       [-v verbose]\n", progname);
   printf ("\n");
