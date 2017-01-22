@@ -168,13 +168,13 @@ main (int argc, char **argv)
   /* initialize buffer for body of the answer */
   if (curlhelp_initbuffer(&body_buf) < 0)
     die (STATE_UNKNOWN, "HTTP CRITICAL - out of memory allocating buffer for body\n");
-  curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, curlhelp_buffer_callback);
+  curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, (curl_write_callback)curlhelp_buffer_callback);
   curl_easy_setopt (curl, CURLOPT_WRITEDATA, (void *)&body_buf);
 
   /* initialize buffer for header of the answer */
   if (curlhelp_initbuffer( &header_buf ) < 0)
     die (STATE_UNKNOWN, "HTTP CRITICAL - out of memory allocating buffer for header\n" );
-  curl_easy_setopt (curl, CURLOPT_HEADERFUNCTION, curlhelp_buffer_callback);
+  curl_easy_setopt (curl, CURLOPT_HEADERFUNCTION, (curl_write_callback)curlhelp_buffer_callback);
   curl_easy_setopt (curl, CURLOPT_WRITEHEADER, (void *)&header_buf);
 
   /* set the error buffer */
