@@ -430,6 +430,7 @@ process_arguments (int argc, char **argv)
     {"private-key", required_argument, 0, 'K'},
     {"ca-cert", required_argument, 0, CA_CERT_OPTION},
     {"useragent", required_argument, 0, 'A'},
+    {"invert-regex", no_argument, NULL, INVERT_REGEX},
     {"certificate", required_argument, 0, 'C'},
     {0, 0, 0, 0}
   };
