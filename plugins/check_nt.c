@@ -224,9 +224,9 @@ int main(int argc, char **argv){
 
 			xasprintf(&output_message,_("System Uptime - %u day(s) %u hour(s) %u minute(s) |uptime=%lu"),updays, uphours, upminutes, uptime);
 
-			if (check_critical_value==TRUE && uptime <= critical_value)
+			if (check_critical_value==TRUE && uptime >= critical_value)
 				return_code=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && uptime <= warning_value)
+			else if (check_warning_value==TRUE && uptime >= warning_value)
 				return_code=STATE_WARNING;
 			else
 				return_code=STATE_OK;
