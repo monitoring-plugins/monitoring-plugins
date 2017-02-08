@@ -576,6 +576,10 @@ main (int argc, char **argv)
 			len = sizeof(perfstr)-strlen(perfstr)-1;
 			strncat(perfstr, show, len>ptr-show ? ptr-show : len);
 
+			/* add UOM to perfdata value */
+			if (type)
+				strncat(perfstr, type, sizeof(perfstr)-strlen(perfstr)-1);
+
 			if (warning_thresholds) {
 				strncat(perfstr, ";", sizeof(perfstr)-strlen(perfstr)-1);
 				strncat(perfstr, warning_thresholds, sizeof(perfstr)-strlen(perfstr)-1);
@@ -588,8 +592,6 @@ main (int argc, char **argv)
 				strncat(perfstr, critical_thresholds, sizeof(perfstr)-strlen(perfstr)-1);
 			}
 
-			if (type)
-				strncat(perfstr, type, sizeof(perfstr)-strlen(perfstr)-1);
 			strncat(perfstr, " ", sizeof(perfstr)-strlen(perfstr)-1);
 		}
 	}
