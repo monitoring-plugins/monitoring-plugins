@@ -118,6 +118,7 @@ size_t oids_size = 0;
 char *label;
 char *units;
 char *port;
+double value_multiplier = 1;
 char *snmpcmd;
 char string_value[MAX_INPUT_BUFFER] = "";
 int  invert_search=0;
@@ -477,6 +478,10 @@ main (int argc, char **argv)
 			}
 			response_value[i] = strtod (ptr, NULL) + offset;
 
+			/* multiplie unit with multiplier */
+			if (value_multiplier != 1)
+  				response_value[i] *= value_multiplier;
+
 			if(calculate_rate) {
 				if (previous_state!=NULL) {
 					duration = current_time-previous_state->time;
@@ -500,7 +505,6 @@ main (int argc, char **argv)
 				xasprintf (&show, conv, response_value[i]);
 			}
 		}
-
 		/* Process this block for string matching */
 		else if (eval_size > i && eval_method[i] & CRIT_STRING) {
 			if (strcmp (show, string_value))
@@ -682,6 +686,7 @@ process_arguments (int argc, char **argv)
 		{"perf-oids", no_argument, 0, 'O'},
 		{"ipv4", no_argument, 0, '4'},
 		{"ipv6", no_argument, 0, '6'},
+		{"value-multiplier", required_argument, 0, 'y'},
 		{0, 0, 0, 0}
 	};
 
@@ -699,7 +704,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "nhvVO46t:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:N:L:U:a:x:A:X:",
+		c = getopt_long (argc, argv, "nhvVO46t:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:N:L:U:a:x:A:X:y:",
 									 longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -930,6 +935,12 @@ process_arguments (int argc, char **argv)
 			xasprintf(&ip_version, "udp6:");
 			if(verbose>2)
 				printf("IPv6 detected! Will pass \"udp6:\" to snmpget.\n");
+			break;
+		case 'y':
+			if ( strspn( optarg, "0123456789.,-" ) == strlen( optarg ) )
+				value_multiplier = strtod(optarg,NULL);
+			else
+				usage2(_("Value multiplier must be a sign floating number"),optarg);
 			break;
 		}
 	}
@@ -1205,6 +1216,8 @@ print_help (void)
 	printf ("    %s\n", _("Units label(s) for output data (e.g., 'sec.')."));
 	printf (" %s\n", "-D, --output-delimiter=STRING");
 	printf ("    %s\n", _("Separates output on multiple OID requests"));
+	printf (" %s\n", "-y, --value-multiplier=FLOAT");
+	printf ("    %s\n", _("Multiplies output with value. Only if Threasholds are set"));
 
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf (" %s\n", "-e, --retries=INTEGER");
