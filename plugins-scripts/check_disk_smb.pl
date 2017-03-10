@@ -19,7 +19,7 @@
 #
 
 require 5.004;
-use POSIX;
+use POSIX qw(setsid);
 use strict;
 use Getopt::Long;
 use vars qw($opt_P $opt_V $opt_h $opt_H $opt_s $opt_W $opt_u $opt_p $opt_w $opt_c $opt_a $verbose);
@@ -27,6 +27,9 @@ use vars qw($PROGNAME);
 use FindBin;
 use lib "$FindBin::Bin";
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
+
+# make us session leader which makes all childs exit if we do
+setsid;
 
 sub print_help ();
 sub print_usage ();
@@ -175,6 +178,8 @@ my @lines = undef;
 # Just in case of problems, let's not hang the monitoring system
 $SIG{'ALRM'} = sub { 
 	print "No Answer from Client\n";
+    $SIG{'INT'} = 'IGNORE';
+    kill(-2, $$);
 	exit $ERRORS{"UNKNOWN"};
 };
 alarm($TIMEOUT);
