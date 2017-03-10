@@ -49,13 +49,18 @@ before_install:
 install:
   - sudo apt-get install -qq --no-install-recommends perl autotools-dev libdbi-dev libldap2-dev libpq-dev libmysqlclient-dev libradcli-dev libkrb5-dev libnet-snmp-perl procps
   - sudo apt-get install -qq --no-install-recommends libdbi0-dev libdbd-sqlite3 libssl-dev dnsutils snmp-mibs-downloader libsnmp-perl snmpd
-  - sudo apt-get install -qq --no-install-recommends fping snmp netcat smbclient fping pure-ftpd apache2 postfix libhttp-daemon-ssl-perl
+  - sudo apt-get install -qq --no-install-recommends fping snmp netcat smbclient fping pure-ftpd apache2 ssl-cert postfix libhttp-daemon-ssl-perl
   - sudo apt-get install -qq --no-install-recommends libdbd-sybase-perl libnet-dns-perl
   - sudo apt-get install -qq --no-install-recommends slapd ldap-utils
   - sudo apt-get install -qq --no-install-recommends autoconf automake
   - sudo apt-get install -qq --no-install-recommends faketime
   # Trusty related dependencies (not yet provided)
   - test "$(dpkg -l | grep -E "mysql-(client|server)-[0-9].[0-9]" | grep -c ^ii)" -gt 0 || sudo apt-get install -qq --no-install-recommends mariadb-client mariadb-server
+  # enable ssl apache
+  - sudo a2enmod ssl
+  - sudo a2ensite default-ssl
+  - sudo make-ssl-cert generate-default-snakeoil --force-overwrite
+  - sudo service apache2 reload
 
 before_script:
   # ensure we have a test database in place for tests
@@ -73,6 +78,7 @@ before_script:
   - sudo rm -f /usr/share/mibs/ietf/SNMPv2-PDU /usr/share/mibs/ietf/IPSEC-SPD-MIB /usr/share/mibs/ietf/IPATM-IPMC-MIB /usr/share/mibs/iana/IANA-IPPM-METRICS-REGISTRY-MIB
   - sudo mkdir -p /var/lib/snmp/mib_indexes
   - sudo mkdir /media/ramdisk && sudo chmod 777 /media/ramdisk && sudo mount -t tmpfs -o size=20% none /media/ramdisk
+  - sed "/host_tls_cert/s/.*/'host_tls_cert' => '$(hostname)',/" -i $NPTEST_CACHE
 
 script:
   - if [ "$COVERITY_SCAN_BRANCH" != 1 ]; then make test; fi
