@@ -360,6 +360,7 @@ error_scan (char *input_buffer)
   /* Host or domain name does not exist */
   else if (strstr (input_buffer, "Non-existent") ||
            strstr (input_buffer, "** server can't find") ||
+           strstr (input_buffer, "** Can't find") ||
      strstr (input_buffer,"NXDOMAIN"))
     die (STATE_CRITICAL, _("Domain %s was not found by the server\n"), query_address);
 
