@@ -96,6 +96,7 @@ char *critical_thresholds = NULL;
 thresholds *thlds;
 char user_agent[DEFAULT_BUFFER_SIZE];
 int verbose = 0;
+char *http_method = NULL;
 CURL *curl;
 struct curl_slist *header_list = NULL;
 curlhelp_curlbuf body_buf;
@@ -122,6 +123,7 @@ char *client_privkey = NULL;
 char *ca_cert = NULL;
 
 int process_arguments (int, char**);
+int check_http (void);
 void print_help (void);
 void print_usage (void);
 void print_curl_version (void);
@@ -138,7 +140,7 @@ void test_file (char *);
 int
 main (int argc, char **argv)
 {
-  int result = STATE_OK;
+  int result = STATE_UNKNOWN;
 
   setlocale (LC_ALL, "");
   bindtextdomain (PACKAGE, LOCALEDIR);
@@ -154,6 +156,15 @@ main (int argc, char **argv)
   /* parse arguments */
   if (process_arguments (argc, argv) == ERROR)
     usage4 (_("Could not parse arguments"));
+
+  result = check_http ();
+  return result;
+}
+
+int
+check_http (void)
+{
+  int result = STATE_OK;
 
   /* initialize curl */
   if (curl_global_init (CURL_GLOBAL_DEFAULT) != CURLE_OK)
@@ -192,11 +203,26 @@ main (int argc, char **argv)
   /* set port */
   curl_easy_setopt (curl, CURLOPT_PORT, server_port);
 
-  /* compose HTTP headers */
+  /* set HTTP method */
+  if (http_method) {
+    if (!strcmp(http_method, "POST"))
+      curl_easy_setopt (curl, CURLOPT_POST, 1);
+    else if (!strcmp(http_method, "PUT"))
+      curl_easy_setopt (curl, CURLOPT_PUT, 1);
+    curl_easy_setopt (curl, CURLOPT_CUSTOMREQUEST, http_method);
+  }
+
+  /* set hostname (virtual hosts) */
   snprintf (http_header, DEFAULT_BUFFER_SIZE, "Host: %s", host_name);
   header_list = curl_slist_append (header_list, http_header);
-  curl_easy_setopt( curl, CURLOPT_HTTPHEADER, header_list );
 
+  /* always close connection, be nice to servers */
+  snprintf (http_header, DEFAULT_BUFFER_SIZE, "Connection: close");
+  header_list = curl_slist_append (header_list, http_header);
+  
+  /* set HTTP headers */  
+  curl_easy_setopt( curl, CURLOPT_HTTPHEADER, header_list );
+  
   /* set SSL version, warn about unsecure or unsupported versions */
   if (use_ssl) {
     curl_easy_setopt (curl, CURLOPT_SSLVERSION, ssl_version);
@@ -407,7 +433,7 @@ test_file (char *path)
 int
 process_arguments (int argc, char **argv)
 {
-  int c;
+  int c = 1;
 
   enum {
     INVERT_REGEX = CHAR_MAX + 1,
@@ -415,10 +441,12 @@ process_arguments (int argc, char **argv)
     CA_CERT_OPTION
   };
 
-  int option=0;
+  int option = 0;
   static struct option longopts[] = {
+    STD_LONG_OPTS,
     {"ssl", optional_argument, 0, 'S'},
     {"sni", no_argument, 0, SNI_OPTION},
+    {"method", required_argument, 0, 'j'},
     {"IP-address", required_argument, 0, 'I'},
     {"url", required_argument, 0, 'u'},
     {"port", required_argument, 0, 'p'},
@@ -426,20 +454,20 @@ process_arguments (int argc, char **argv)
     {"string", required_argument, 0, 's'},
     {"regex", required_argument, 0, 'r'},
     {"onredirect", required_argument, 0, 'f'},
+    {"certificate", required_argument, 0, 'C'},
     {"client-cert", required_argument, 0, 'J'},
     {"private-key", required_argument, 0, 'K'},
     {"ca-cert", required_argument, 0, CA_CERT_OPTION},
     {"useragent", required_argument, 0, 'A'},
     {"invert-regex", no_argument, NULL, INVERT_REGEX},
-    {"certificate", required_argument, 0, 'C'},
     {0, 0, 0, 0}
   };
 
   if (argc < 2)
-    usage ("\n");
+    return ERROR;
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvht:c:w:A:H:I:a:p:s:r:u:f:C:J:K:S::", longopts, &option);
+    c = getopt_long (argc, argv, "Vvht:c:w:A:H:j:I:a:p:s:r:u:f:C:J:K:S::", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
       break;
 
@@ -489,6 +517,11 @@ process_arguments (int argc, char **argv)
     case 'a': /* authorization info */
       strncpy (user_auth, optarg, MAX_INPUT_BUFFER - 1);
       user_auth[MAX_INPUT_BUFFER - 1] = 0;
+      break;
+    case 'j': /* Set HTTP method */
+      if (http_method)
+        free(http_method);
+      http_method = strdup (optarg);
       break;
     case 'A': /* useragent */
       snprintf (user_agent, DEFAULT_BUFFER_SIZE, optarg);
@@ -612,8 +645,8 @@ process_arguments (int argc, char **argv)
   if (verbose >= 2)
     printf ("* Socket timeout set to %d seconds\n", socket_timeout);
 
-  //~ if (http_method == NULL)
-    //~ http_method = strdup ("GET");
+  if (http_method == NULL)
+    http_method = strdup ("GET");
 
   if (client_cert && !client_privkey)
     usage4 (_("If you use a client certificate you must also specify a private key file"));
@@ -627,7 +660,7 @@ process_arguments (int argc, char **argv)
 void
 print_help (void)
 {
-  print_revision(progname, NP_VERSION);
+  print_revision (progname, NP_VERSION);
 
   printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
   printf ("Copyright (c) 2017 Andreas Baumann <abaumann@yahoo.com>\n");
@@ -643,7 +676,7 @@ print_help (void)
 
   printf ("\n\n");
 
-  print_usage();
+  print_usage ();
 
   printf (_("NOTE: One or both of -H and -I must be specified"));
 
@@ -691,6 +724,8 @@ print_help (void)
   printf ("    %s\n", _("String to expect in the content"));
   printf (" %s\n", "-u, --url=PATH");
   printf ("    %s\n", _("URL to GET or POST (default: /)"));
+  printf (" %s\n", "-j, --method=STRING  (for example: HEAD, OPTIONS, TRACE, PUT, DELETE, CONNECT)");
+  printf ("    %s\n", _("Set HTTP method."));
   printf (" %s\n", "-r, --regex, --ereg=STRING");
   printf ("    %s\n", _("Search page for regex STRING"));
   printf (" %s\n", "-a, --authorization=AUTH_PAIR");
@@ -726,26 +761,26 @@ print_help (void)
   printf (" %s\n", _("has a valid chain of trust to one of the locally installed CAs."));
   printf ("\n");
   printf ("%s\n", _("Examples:"));
-  printf (" %s\n\n", "CHECK CONTENT: check_http -w 5 -c 10 --ssl -H www.verisign.com");
+  printf (" %s\n\n", "CHECK CONTENT: check_curl -w 5 -c 10 --ssl -H www.verisign.com");
   printf (" %s\n", _("When the 'www.verisign.com' server returns its content within 5 seconds,"));
   printf (" %s\n", _("a STATE_OK will be returned. When the server returns its content but exceeds"));
   printf (" %s\n", _("the 5-second threshold, a STATE_WARNING will be returned. When an error occurs,"));
   printf (" %s\n", _("a STATE_CRITICAL will be returned."));
   printf ("\n");
-  printf (" %s\n\n", "CHECK CERTIFICATE: check_http -H www.verisign.com -C 14");
+  printf (" %s\n\n", "CHECK CERTIFICATE: check_curl -H www.verisign.com -C 14");
   printf (" %s\n", _("When the certificate of 'www.verisign.com' is valid for more than 14 days,"));
   printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
   printf (" %s\n", _("14 days, a STATE_WARNING is returned. A STATE_CRITICAL will be returned when"));
   printf (" %s\n\n", _("the certificate is expired."));
   printf ("\n");
-  printf (" %s\n\n", "CHECK CERTIFICATE: check_http -H www.verisign.com -C 30,14");
+  printf (" %s\n\n", "CHECK CERTIFICATE: check_curl -H www.verisign.com -C 30,14");
   printf (" %s\n", _("When the certificate of 'www.verisign.com' is valid for more than 30 days,"));
   printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
   printf (" %s\n", _("30 days, but more than 14 days, a STATE_WARNING is returned."));
   printf (" %s\n", _("A STATE_CRITICAL will be returned when certificate expires in less than 14 days"));
 
   printf (" %s\n\n", "CHECK SSL WEBSERVER CONTENT VIA PROXY USING HTTP 1.1 CONNECT: ");
-  printf (" %s\n", _("check_http -I 192.168.100.35 -p 80 -u https://www.verisign.com/ -S -j CONNECT -H www.verisign.com "));
+  printf (" %s\n", _("check_curl -I 192.168.100.35 -p 80 -u https://www.verisign.com/ -S -j CONNECT -H www.verisign.com "));
   printf (" %s\n", _("all these options are needed: -I <proxy> -p <proxy-port> -u <check-url> -S(sl) -j CONNECT -H <webserver>"));
   printf (" %s\n", _("a STATE_OK will be returned. When the server returns its content but exceeds"));
   printf (" %s\n", _("the 5-second threshold, a STATE_WARNING will be returned. When an error occurs,"));
@@ -754,7 +789,10 @@ print_help (void)
 #endif
 
   printf (UT_SUPPORT);
+
 }
+
+
 
 void
 print_usage (void)
