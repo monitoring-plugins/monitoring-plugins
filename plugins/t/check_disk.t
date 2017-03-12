@@ -248,11 +248,11 @@ $result = NPTest->testCmd( "./check_disk -w 100% -c 100% ".${mountpoint_valid} )
 cmp_ok( $result->return_code, "==", 2, "100% empty" );
 like( $result->output, $failureOutput, "Right output" );
 
-$result = NPTest->testCmd( "./check_disk -w 100000 -c 100000 $mountpoint_valid" );
-cmp_ok( $result->return_code, '==', 2, "Check for 100GB free" );
+$result = NPTest->testCmd( "./check_disk -w 100000000 -c 100000000 $mountpoint_valid" );
+cmp_ok( $result->return_code, '==', 2, "Check for 100TB free" );
 
-$result = NPTest->testCmd( "./check_disk -w 100 -c 100 -u GB ".${mountpoint_valid} );      # 100 GB empty
-cmp_ok( $result->return_code, "==", 2, "100 GB empty" );
+$result = NPTest->testCmd( "./check_disk -w 100 -c 100 -u TB ".${mountpoint_valid} );      # 100 TB empty
+cmp_ok( $result->return_code, "==", 2, "100 TB empty" );
 
 
 # Checking old syntax of check_disk warn crit [fs], with warn/crit at USED% thresholds
