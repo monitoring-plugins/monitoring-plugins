@@ -18,6 +18,9 @@ BEGIN {
 my $host_tcp_http      = getTestParameter( "host_tcp_http",      "NP_HOST_TCP_HTTP",      "localhost",
 					   "A host providing the HTTP Service (a web server)" );
 
+my $host_tls_http      = getTestParameter( "host_tls_http",      "NP_HOST_TLS_HTTP",      "localhost",
+					   "A host providing the HTTPS Service (a tls web server)" );
+
 my $host_nonresponsive = getTestParameter( "host_nonresponsive", "NP_HOST_NONRESPONSIVE", "10.0.0.1",
 					   "The hostname of system not responsive to network requests" );
 
@@ -42,10 +45,10 @@ $t += checkCmd( "./check_tcp $host_tcp_http      -p 81 -wt   0 -ct   0 -to 1", 2
 $t += checkCmd( "./check_tcp $host_nonresponsive -p 80 -wt   0 -ct   0 -to 1", 2 );
 $t += checkCmd( "./check_tcp $hostname_invalid   -p 80 -wt   0 -ct   0 -to 1", 2 );
 if($internet_access ne "no") {
-    $t += checkCmd( "./check_tcp -S -D 1 -H www.verisign.com -p 443",              0 );
-    $t += checkCmd( "./check_tcp -S -D 9000,1    -H www.verisign.com -p 443",      1 );
-    $t += checkCmd( "./check_tcp -S -D 9000      -H www.verisign.com -p 443",      1 );
-    $t += checkCmd( "./check_tcp -S -D 9000,8999 -H www.verisign.com -p 443",      2 );
+    $t += checkCmd( "./check_tcp -S -D 1 -H $host_tls_http -p 443",              0 );
+    $t += checkCmd( "./check_tcp -S -D 9000,1    -H $host_tls_http -p 443",      1 );
+    $t += checkCmd( "./check_tcp -S -D 9000      -H $host_tls_http -p 443",      1 );
+    $t += checkCmd( "./check_tcp -S -D 9000,8999 -H $host_tls_http -p 443",      2 );
 }
 
 # Need the \r\n to make it more standards compliant with web servers. Need the various quotes

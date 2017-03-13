@@ -154,9 +154,9 @@ SKIP: {
     cmp_ok( $res->return_code, '==', 0, "Timetick used as a string");
     like($res->output, '/^SNMP OK - Timeticks:\s\(\d+\)\s+(?:\d+ days?,\s+)?\d+:\d+:\d+\.\d+\s.*$/', "Timetick used as a string, result printed rather than parsed");
 
-    $res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o HOST-RESOURCES-MIB::hrSWRunParameters.1");
-    cmp_ok( $res->return_code, '==', 0, "Timetick used as a string");
-    is( $res->output, 'SNMP OK - "" | ', "snmp response without datatype" );
+    $res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o HOST-RESOURCES-MIB::hrSWRunName.1");
+    cmp_ok( $res->return_code, '==', 0, "snmp response without datatype");
+    like( $res->output, '/^SNMP OK - "(systemd|init)" \| $/', "snmp response without datatype" );
 }
 
 SKIP: {

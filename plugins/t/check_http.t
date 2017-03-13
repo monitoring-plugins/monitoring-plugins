@@ -19,6 +19,13 @@ my $host_tcp_http      = getTestParameter( "NP_HOST_TCP_HTTP",
 		"A host providing the HTTP Service (a web server)",
 		"localhost" );
 
+my $host_tls_http      = getTestParameter( "host_tls_http",      "NP_HOST_TLS_HTTP",      "localhost",
+					   "A host providing the HTTPS Service (a tls web server)" );
+
+my $host_tls_cert      = getTestParameter( "host_tls_cert",      "NP_HOST_TLS_CERT",      "localhost",
+					   "the common name of the certificate." );
+
+
 my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE",
 		"The hostname of system not responsive to network requests",
 		"10.0.0.1" );
@@ -80,14 +87,14 @@ like( $res->output, '/^Host: '.$host_tcp_http.':8080\s*$/ms', "Host Header OK" )
 SKIP: {
         skip "No internet access", 3 if $internet_access eq "no";
 
-        $res = NPTest->testCmd("./check_http -v -H www.verisign.com -S");
-        like( $res->output, '/^Host: www.verisign.com\s*$/ms', "Host Header OK" );
+        $res = NPTest->testCmd("./check_http -v -H $host_tls_http -S");
+        like( $res->output, '/^Host: '.$host_tls_http.'\s*$/ms', "Host Header OK" );
 
-        $res = NPTest->testCmd("./check_http -v -H www.verisign.com:8080 -S -p 443");
-        like( $res->output, '/^Host: www.verisign.com:8080\s*$/ms', "Host Header OK" );
+        $res = NPTest->testCmd("./check_http -v -H $host_tls_http:8080 -S -p 443");
+        like( $res->output, '/^Host: '.$host_tls_http.':8080\s*$/ms', "Host Header OK" );
 
-        $res = NPTest->testCmd("./check_http -v -H www.verisign.com:443 -S -p 443");
-        like( $res->output, '/^Host: www.verisign.com\s*$/ms', "Host Header OK" );
+        $res = NPTest->testCmd("./check_http -v -H $host_tls_http:443 -S -p 443");
+        like( $res->output, '/^Host: '.$host_tls_http.'\s*$/ms', "Host Header OK" );
 };
 
 SKIP: {
@@ -114,38 +121,38 @@ SKIP: {
         skip "No internet access", 16 if $internet_access eq "no";
 
         $res = NPTest->testCmd(
-                "./check_http --ssl www.verisign.com"
+                "./check_http --ssl $host_tls_http"
                 );
-        cmp_ok( $res->return_code, '==', 0, "Can read https for www.verisign.com" );
+        cmp_ok( $res->return_code, '==', 0, "Can read https for $host_tls_http" );
 
-        $res = NPTest->testCmd( "./check_http -C 1 --ssl www.verisign.com" );
-        cmp_ok( $res->return_code, '==', 0, "Checking certificate for www.verisign.com");
-        like  ( $res->output, "/Certificate 'www.verisign.com' will expire on/", "Output OK" );
+        $res = NPTest->testCmd( "./check_http -C 1 --ssl $host_tls_http" );
+        cmp_ok( $res->return_code, '==', 0, "Checking certificate for $host_tls_http");
+        like  ( $res->output, "/Certificate '$host_tls_cert' will expire on/", "Output OK" );
         my $saved_cert_output = $res->output;
 
-        $res = NPTest->testCmd( "./check_http -C 8000,1 --ssl www.verisign.com" );
-        cmp_ok( $res->return_code, '==', 1, "Checking certificate for www.verisign.com");
-        like  ( $res->output, qr/WARNING - Certificate 'www.verisign.com' expires in \d+ day/, "Output Warning" );
+        $res = NPTest->testCmd( "./check_http -C 8000,1 --ssl $host_tls_http" );
+        cmp_ok( $res->return_code, '==', 1, "Checking certificate for $host_tls_http");
+        like  ( $res->output, qr/WARNING - Certificate '$host_tls_cert' expires in \d+ day/, "Output Warning" );
 
-        $res = NPTest->testCmd( "./check_http www.verisign.com -C 1" );
+        $res = NPTest->testCmd( "./check_http $host_tls_http -C 1" );
         is( $res->return_code, 0, "Old syntax for cert checking okay" );
         is( $res->output, $saved_cert_output, "Same output as new syntax" );
 
-        $res = NPTest->testCmd( "./check_http -H www.verisign.com -C 1" );
+        $res = NPTest->testCmd( "./check_http -H $host_tls_http -C 1" );
         is( $res->return_code, 0, "Updated syntax for cert checking okay" );
         is( $res->output, $saved_cert_output, "Same output as new syntax" );
 
-        $res = NPTest->testCmd( "./check_http -C 1 www.verisign.com" );
+        $res = NPTest->testCmd( "./check_http -C 1 $host_tls_http" );
         cmp_ok( $res->output, 'eq', $saved_cert_output, "--ssl option automatically added");
 
-        $res = NPTest->testCmd( "./check_http www.verisign.com -C 1" );
+        $res = NPTest->testCmd( "./check_http $host_tls_http -C 1" );
         cmp_ok( $res->output, 'eq', $saved_cert_output, "Old syntax for cert checking still works");
 
         # run some certificate checks with faketime
         SKIP: {
                 skip "No faketime binary found", 12 if !$faketime;
-                $res = NPTest->testCmd("LC_TIME=C TZ=UTC ./check_http -C 1 www.verisign.com");
-                like($res->output, qr/OK - Certificate 'www.verisign.com' will expire on/, "Catch cert output");
+                $res = NPTest->testCmd("LC_TIME=C TZ=UTC ./check_http -C 1 $host_tls_http");
+                like($res->output, qr/OK - Certificate '$host_tls_cert' will expire on/, "Catch cert output");
                 is( $res->return_code, 0, "Catch cert output exit code" );
                 my($mon,$day,$hour,$min,$sec,$year) = ($res->output =~ /(\w+)\s+(\d+)\s+(\d+):(\d+):(\d+)\s+(\d+)/);
                 if(!defined $year) {
@@ -154,28 +161,28 @@ SKIP: {
                 my $months = {'Jan' => 0, 'Feb' => 1, 'Mar' => 2, 'Apr' => 3, 'May' => 4, 'Jun' => 5, 'Jul' => 6, 'Aug' => 7, 'Sep' => 8, 'Oct' => 9, 'Nov' => 10, 'Dec' => 11};
                 my $ts   = mktime($sec, $min, $hour, $day, $months->{$mon}, $year-1900);
                 my $time = strftime("%Y-%m-%d %H:%M:%S", localtime($ts));
-                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts))."' ./check_http -C 1 www.verisign.com");
-                like($res->output, qr/CRITICAL - Certificate 'www.verisign.com' just expired/, "Output on expire date");
+                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts))."' ./check_http -C 1 $host_tls_http");
+                like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' just expired/, "Output on expire date");
                 is( $res->return_code, 2, "Output on expire date" );
 
-                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-1))."' ./check_http -C 1 www.verisign.com");
-                like($res->output, qr/CRITICAL - Certificate 'www.verisign.com' expires in 0 minutes/, "cert expires in 1 second output");
+                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-1))."' ./check_http -C 1 $host_tls_http");
+                like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expires in 0 minutes/, "cert expires in 1 second output");
                 is( $res->return_code, 2, "cert expires in 1 second exit code" );
 
-                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-120))."' ./check_http -C 1 www.verisign.com");
-                like($res->output, qr/CRITICAL - Certificate 'www.verisign.com' expires in 2 minutes/, "cert expires in 2 minutes output");
+                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-120))."' ./check_http -C 1 $host_tls_http");
+                like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expires in 2 minutes/, "cert expires in 2 minutes output");
                 is( $res->return_code, 2, "cert expires in 2 minutes exit code" );
 
-                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-7200))."' ./check_http -C 1 www.verisign.com");
-                like($res->output, qr/CRITICAL - Certificate 'www.verisign.com' expires in 2 hours/, "cert expires in 2 hours output");
+                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-7200))."' ./check_http -C 1 $host_tls_http");
+                like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expires in 2 hours/, "cert expires in 2 hours output");
                 is( $res->return_code, 2, "cert expires in 2 hours exit code" );
 
-                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts+1))."' ./check_http -C 1 www.verisign.com");
-                like($res->output, qr/CRITICAL - Certificate 'www.verisign.com' expired on/, "Certificate expired output");
+                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts+1))."' ./check_http -C 1 $host_tls_http");
+                like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expired on/, "Certificate expired output");
                 is( $res->return_code, 2, "Certificate expired exit code" );
         };
 
-        $res = NPTest->testCmd( "./check_http --ssl www.verisign.com -E" );
+        $res = NPTest->testCmd( "./check_http --ssl $host_tls_http -E" );
         like  ( $res->output, '/time_connect=[\d\.]+/', 'Extended Performance Data Output OK' );
         like  ( $res->output, '/time_ssl=[\d\.]+/', 'Extended Performance Data SSL Output OK' );
 
