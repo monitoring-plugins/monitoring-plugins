@@ -90,6 +90,8 @@ char *server_address;
 char *host_name;
 char *server_url = DEFAULT_SERVER_URL;
 unsigned short server_port = HTTP_PORT;
+int virtual_port = 0;
+int host_name_length;
 char output_string_search[30] = "";
 char *warning_thresholds = NULL;
 char *critical_thresholds = NULL;
@@ -105,7 +107,6 @@ curlhelp_curlbuf body_buf;
 curlhelp_curlbuf header_buf;
 curlhelp_statusline status_line;
 char http_header[DEFAULT_BUFFER_SIZE];
-struct curl_slist *http_opt_headers = NULL;
 long code;
 long socket_timeout = DEFAULT_SOCKET_TIMEOUT;
 double total_time;
@@ -195,7 +196,7 @@ check_http (void)
   if ((curl = curl_easy_init()) == NULL)
     die (STATE_UNKNOWN, "HTTP UNKNOWN - curl_easy_init failed\n");
 
-  if (verbose >= 3)
+  if (verbose >= 1)
     curl_easy_setopt (curl, CURLOPT_VERBOSE, TRUE);
 
   /* print everything on stdout like check_http would do */
@@ -238,8 +239,14 @@ check_http (void)
   }
 
   /* set hostname (virtual hosts) */
-  snprintf (http_header, DEFAULT_BUFFER_SIZE, "Host: %s", host_name);
-  header_list = curl_slist_append (header_list, http_header);
+  if(host_name != NULL) {
+    if((virtual_port != HTTP_PORT && !use_ssl) || (virtual_port != HTTPS_PORT && use_ssl)) {
+      snprintf(http_header, DEFAULT_BUFFER_SIZE, "Host: %s:%d", host_name, virtual_port);
+    } else {
+      snprintf(http_header, DEFAULT_BUFFER_SIZE, "Host: %s", host_name);
+    }
+    header_list = curl_slist_append (header_list, http_header);
+  }
 
   /* always close connection, be nice to servers */
   snprintf (http_header, DEFAULT_BUFFER_SIZE, "Connection: close");
@@ -316,15 +323,11 @@ check_http (void)
     */
   }
 
-  /* set optional http header */
-  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, http_opt_headers);
-
   /* do the request */
   res = curl_easy_perform(curl);
 
   /* free header list, we don't need it anymore */
   curl_slist_free_all(header_list);
-  curl_slist_free_all(http_opt_headers);
 
   /* Curl errors, result in critical Nagios state */
   if (res != CURLE_OK) {
@@ -491,6 +494,7 @@ test_file (char *path)
 int
 process_arguments (int argc, char **argv)
 {
+  char *p;
   int c = 1;
   char *temp;
 
@@ -559,6 +563,22 @@ process_arguments (int argc, char **argv)
       break;
     case 'H': /* virtual host */
       host_name = strdup (optarg);
+      if (host_name[0] == '[') {
+        if ((p = strstr (host_name, "]:")) != NULL) { /* [IPv6]:port */
+          virtual_port = atoi (p + 2);
+          /* cut off the port */
+          host_name_length = strlen (host_name) - strlen (p) - 1;
+          free (host_name);
+          host_name = strndup (optarg, host_name_length);
+          }
+      } else if ((p = strchr (host_name, ':')) != NULL
+                 && strchr (++p, ':') == NULL) { /* IPv4:port or host:port */
+          virtual_port = atoi (p);
+          /* cut off the port */
+          host_name_length = strlen (host_name) - strlen (p) - 1;
+          free (host_name);
+          host_name = strndup (optarg, host_name_length);
+        }
       break;
     case 'I': /* internet address */
       server_address = strdup (optarg);
@@ -588,7 +608,7 @@ process_arguments (int argc, char **argv)
       snprintf (user_agent, DEFAULT_BUFFER_SIZE, optarg);
       break;
     case 'k': /* Additional headers */
-      http_opt_headers = curl_slist_append(http_opt_headers, optarg);
+      header_list = curl_slist_append(header_list, optarg);
       break;
     case 'C': /* Check SSL cert validity */
 #ifdef LIBCURL_FEATURE_SSL
@@ -733,8 +753,8 @@ process_arguments (int argc, char **argv)
   if (client_cert && !client_privkey)
     usage4 (_("If you use a client certificate you must also specify a private key file"));
 
-  //~ if (virtual_port == 0)
-    //~ virtual_port = server_port;
+  if (virtual_port == 0)
+    virtual_port = server_port;
 
   return TRUE;
 }
