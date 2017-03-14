@@ -97,6 +97,7 @@ int days_till_exp_warn, days_till_exp_crit;
 thresholds *thlds;
 char user_agent[DEFAULT_BUFFER_SIZE];
 int verbose = 0;
+int show_extended_perfdata = FALSE;
 char *http_method = NULL;
 CURL *curl;
 struct curl_slist *header_list = NULL;
@@ -108,6 +109,10 @@ struct curl_slist *http_opt_headers = NULL;
 long code;
 long socket_timeout = DEFAULT_SOCKET_TIMEOUT;
 double total_time;
+double time_connect;
+double time_appconnect;
+double time_headers;
+double time_firstbyte;
 char errbuf[CURL_ERROR_SIZE+1];
 CURLcode res;
 char url[DEFAULT_BUFFER_SIZE];
@@ -136,6 +141,7 @@ void curlhelp_freebuffer (curlhelp_curlbuf*);
 
 int curlhelp_parse_statusline (const char*, curlhelp_statusline *);
 void curlhelp_free_statusline (curlhelp_statusline *);
+char *perfd_time_ssl (double microsec);
 
 void remove_newlines (char *);
 void test_file (char *);
@@ -342,13 +348,30 @@ check_http (void)
    * performance data to the answer always
    */
   curl_easy_getinfo (curl, CURLINFO_TOTAL_TIME, &total_time);
-  snprintf (perfstring, DEFAULT_BUFFER_SIZE, "time=%.6gs;%.6g;%.6g;%.6g size=%dB;;;0",
-    total_time,
-    0.0, 0.0,
-    ( warning_thresholds != NULL ) ? (double)thlds->warning->end : 0.0,
-    critical_thresholds != NULL ? (double)thlds->critical->end : 0.0,
-    0.0,
-    (int)body_buf.buflen);
+  if(show_extended_perfdata) {
+    curl_easy_getinfo(curl, CURLINFO_CONNECT_TIME, &time_connect);
+    curl_easy_getinfo(curl, CURLINFO_APPCONNECT_TIME, &time_appconnect);
+    curl_easy_getinfo(curl, CURLINFO_PRETRANSFER_TIME, &time_headers);
+    curl_easy_getinfo(curl, CURLINFO_STARTTRANSFER_TIME, &time_firstbyte);
+    snprintf(perfstring, DEFAULT_BUFFER_SIZE, "time=%.6gs;%.6g;%.6g;; size=%dB;;; time_connect=%.6gs;;;; %s time_headers=%.6gs;;;; time_firstbyte=%.6gs;;;; time_transfer=%.6gs;;;;",
+      total_time,
+      warning_thresholds != NULL ? (double)thlds->warning->end : 0.0,
+      critical_thresholds != NULL ? (double)thlds->critical->end : 0.0,
+      (int)body_buf.buflen,
+      time_connect,
+      use_ssl == TRUE ? perfd_time_ssl(time_appconnect-time_connect) : "",
+      (time_headers - time_appconnect),
+      (time_firstbyte - time_headers),
+      (total_time-time_firstbyte)
+      );
+  } else {
+    snprintf(perfstring, DEFAULT_BUFFER_SIZE, "time=%.6gs;%.6g;%.6g;; size=%dB;;;",
+      total_time,
+      warning_thresholds != NULL ? (double)thlds->warning->end : 0.0,
+      critical_thresholds != NULL ? (double)thlds->critical->end : 0.0,
+      (int)body_buf.buflen);
+  }
+
 
   /* return a CRITICAL status if we couldn't read any data */
   if (strlen(header_buf.buf) == 0 && strlen(body_buf.buf) == 0)
@@ -497,6 +520,7 @@ process_arguments (int argc, char **argv)
     {"useragent", required_argument, 0, 'A'},
     {"invert-regex", no_argument, NULL, INVERT_REGEX},
     {"header", required_argument, 0, 'k'},
+    {"extended-perfdata", no_argument, 0, 'E'},
     {0, 0, 0, 0}
   };
 
@@ -504,7 +528,7 @@ process_arguments (int argc, char **argv)
     return ERROR;
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvht:c:w:A:k:H:j:I:a:p:s:r:u:f:C:J:K:S::", longopts, &option);
+    c = getopt_long (argc, argv, "Vvht:c:w:A:k:H:j:I:a:p:s:r:u:f:C:J:K:S::E", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
       break;
 
@@ -670,6 +694,9 @@ process_arguments (int argc, char **argv)
       break;
     case INVERT_REGEX:
       invert_regex = 1;
+      break;
+    case 'E': /* show extended perfdata */
+      show_extended_perfdata = TRUE;
       break;
     case '?':
       /* print short usage statement if args not parsable */
@@ -1025,4 +1052,9 @@ remove_newlines (char *s)
   for (p = s; *p != '\0'; p++)
     if (*p == '\r' || *p == '\n')
       *p = ' ';
+}
+
+char *perfd_time_ssl (double elapsed_time_ssl)
+{
+  return fperfdata ("time_ssl", elapsed_time_ssl, "s", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);
 }
