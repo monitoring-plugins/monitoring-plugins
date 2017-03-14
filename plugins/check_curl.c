@@ -93,6 +93,7 @@ unsigned short server_port = HTTP_PORT;
 char output_string_search[30] = "";
 char *warning_thresholds = NULL;
 char *critical_thresholds = NULL;
+int days_till_exp_warn, days_till_exp_crit;
 thresholds *thlds;
 char user_agent[DEFAULT_BUFFER_SIZE];
 int verbose = 0;
@@ -122,6 +123,7 @@ int ssl_version = CURL_SSLVERSION_DEFAULT;
 char *client_cert = NULL;
 char *client_privkey = NULL;
 char *ca_cert = NULL;
+X509 *cert = NULL;
 
 int process_arguments (int, char**);
 int check_http (void);
@@ -162,6 +164,19 @@ main (int argc, char **argv)
   return result;
 }
 
+int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx)
+{
+  cert = X509_STORE_CTX_get_current_cert(x509_ctx);
+  return 1;
+}
+
+CURLcode sslctxfun(CURL *curl, SSL_CTX *sslctx, void *parm)
+{
+  SSL_CTX_set_verify(sslctx, SSL_VERIFY_PEER, verify_callback);
+
+  return CURLE_OK;
+}
+
 int
 check_http (void)
 {
@@ -176,6 +191,9 @@ check_http (void)
 
   if (verbose >= 3)
     curl_easy_setopt (curl, CURLOPT_VERBOSE, TRUE);
+
+  /* print everything on stdout like check_http would do */
+  curl_easy_setopt(curl, CURLOPT_STDERR, stdout);
 
   /* initialize buffer for body of the answer */
   if (curlhelp_initbuffer(&body_buf) < 0)
@@ -242,14 +260,16 @@ check_http (void)
   curl_easy_setopt( curl, CURLOPT_SSL_VERIFYPEER, 2);
   curl_easy_setopt( curl, CURLOPT_SSL_VERIFYHOST, 2);
 
-  /* backward-compatible behaviour, be tolerant in checks */
-  if (!check_cert) {
-    /* TODO: depending on more options have aspects we want
-     * to be tolerant about
-     * curl_easy_setopt( curl, CURLOPT_SSL_VERIFYPEER, 1 );
-     */
-    curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0);
-    curl_easy_setopt (curl, CURLOPT_SSL_VERIFYHOST, 0);
+  /* backward-compatible behaviour, be tolerant in checks
+   * TODO: depending on more options have aspects we want
+   * to be less tolerant about ssl verfications
+   */
+  curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0);
+  curl_easy_setopt (curl, CURLOPT_SSL_VERIFYHOST, 0);
+
+  /* set callback to extract certificate */
+  if(check_cert) {
+    curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, sslctxfun);
   }
 
   /* set default or user-given user agent identification */
@@ -307,6 +327,16 @@ check_http (void)
       server_port, res, curl_easy_strerror(res));
     die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
   }
+
+  /* certificate checks */
+#ifdef HAVE_SSL
+  if (use_ssl == TRUE) {
+    if (check_cert == TRUE) {
+      result = np_net_ssl_check_certificate(cert, days_till_exp_warn, days_till_exp_crit);
+      return(result);
+    }
+  }
+#endif /* HAVE_SSL */
 
   /* we got the data and we executed the request in a given time, so we can append
    * performance data to the answer always
@@ -439,6 +469,7 @@ int
 process_arguments (int argc, char **argv)
 {
   int c = 1;
+  char *temp;
 
   enum {
     INVERT_REGEX = CHAR_MAX + 1,
@@ -537,8 +568,23 @@ process_arguments (int argc, char **argv)
       break;
     case 'C': /* Check SSL cert validity */
 #ifdef LIBCURL_FEATURE_SSL
-      /* TODO: C:, check age of certificate for backward compatible
-       * behaviour, but we would later add more check conditions */
+      if ((temp=strchr(optarg,','))!=NULL) {
+        *temp='\0';
+        if (!is_intnonneg (optarg))
+          usage2 (_("Invalid certificate expiration period"), optarg);
+        days_till_exp_warn = atoi(optarg);
+        *temp=',';
+        temp++;
+        if (!is_intnonneg (temp))
+          usage2 (_("Invalid certificate expiration period"), temp);
+        days_till_exp_crit = atoi (temp);
+      }
+      else {
+        days_till_exp_crit=0;
+        if (!is_intnonneg (optarg))
+          usage2 (_("Invalid certificate expiration period"), optarg);
+        days_till_exp_warn = atoi (optarg);
+      }
       check_cert = TRUE;
       goto enable_ssl;
 #endif
