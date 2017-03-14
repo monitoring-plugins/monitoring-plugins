@@ -103,6 +103,7 @@ curlhelp_curlbuf body_buf;
 curlhelp_curlbuf header_buf;
 curlhelp_statusline status_line;
 char http_header[DEFAULT_BUFFER_SIZE];
+struct curl_slist *http_opt_headers = NULL;
 long code;
 long socket_timeout = DEFAULT_SOCKET_TIMEOUT;
 double total_time;
@@ -219,10 +220,10 @@ check_http (void)
   /* always close connection, be nice to servers */
   snprintf (http_header, DEFAULT_BUFFER_SIZE, "Connection: close");
   header_list = curl_slist_append (header_list, http_header);
-  
-  /* set HTTP headers */  
+
+  /* set HTTP headers */
   curl_easy_setopt( curl, CURLOPT_HTTPHEADER, header_list );
-  
+
   /* set SSL version, warn about unsecure or unsupported versions */
   if (use_ssl) {
     curl_easy_setopt (curl, CURLOPT_SSLVERSION, ssl_version);
@@ -289,11 +290,15 @@ check_http (void)
     */
   }
 
+  /* set optional http header */
+  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, http_opt_headers);
+
   /* do the request */
   res = curl_easy_perform(curl);
 
   /* free header list, we don't need it anymore */
-  curl_slist_free_all (header_list);
+  curl_slist_free_all(header_list);
+  curl_slist_free_all(http_opt_headers);
 
   /* Curl errors, result in critical Nagios state */
   if (res != CURLE_OK) {
@@ -460,6 +465,7 @@ process_arguments (int argc, char **argv)
     {"ca-cert", required_argument, 0, CA_CERT_OPTION},
     {"useragent", required_argument, 0, 'A'},
     {"invert-regex", no_argument, NULL, INVERT_REGEX},
+    {"header", required_argument, 0, 'k'},
     {0, 0, 0, 0}
   };
 
@@ -467,7 +473,7 @@ process_arguments (int argc, char **argv)
     return ERROR;
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvht:c:w:A:H:j:I:a:p:s:r:u:f:C:J:K:S::", longopts, &option);
+    c = getopt_long (argc, argv, "Vvht:c:w:A:k:H:j:I:a:p:s:r:u:f:C:J:K:S::", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
       break;
 
@@ -525,6 +531,9 @@ process_arguments (int argc, char **argv)
       break;
     case 'A': /* useragent */
       snprintf (user_agent, DEFAULT_BUFFER_SIZE, optarg);
+      break;
+    case 'k': /* Additional headers */
+      http_opt_headers = curl_slist_append(http_opt_headers, optarg);
       break;
     case 'C': /* Check SSL cert validity */
 #ifdef LIBCURL_FEATURE_SSL
@@ -854,20 +863,20 @@ curlhelp_freebuffer (curlhelp_curlbuf *buf)
 /* TODO: should be moved into 'gl' and should be probed, glibc has
  * a strrstr
  */
-const char* 
+const char*
 strrstr2(const char *haystack, const char *needle)
 {
   int counter;
   size_t len;
   const char *prev_pos;
   const char *pos;
-  
+
   if (haystack == NULL || needle == NULL)
     return NULL;
-  
+
   if (haystack[0] == '\0' || needle[0] == '\0')
     return NULL;
-    
+
   counter = 0;
   prev_pos = NULL;
   pos = haystack;
@@ -902,7 +911,7 @@ curlhelp_parse_statusline (const char *buf, curlhelp_statusline *status_line)
     start += 2;
     buf = start;
   }
-  
+
   first_line_end = strstr(buf, "\r\n");
   if (first_line_end == NULL) return -1;
 
