@@ -133,6 +133,7 @@ char *client_privkey = NULL;
 char *ca_cert = NULL;
 X509 *cert = NULL;
 int no_body = FALSE;
+int address_family = AF_UNSPEC;
 
 int process_arguments (int, char**);
 int check_http (void);
@@ -331,6 +332,14 @@ check_http (void)
   /* no-body */
   if (no_body)
     curl_easy_setopt (curl, CURLOPT_NOBODY, 1);
+  
+  /* IPv4 or IPv6 forced DNS resolution */
+  if (address_family == AF_UNSPEC)
+    curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_WHATEVER);
+  else if (address_family == AF_INET)
+    curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+  else if (address_family == AF_INET6)
+    curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6);    
   
   /* do the request */
   res = curl_easy_perform(curl);
@@ -548,6 +557,8 @@ process_arguments (int argc, char **argv)
     {"no-body", no_argument, 0, 'N'},
     {"pagesize", required_argument, 0, 'm'},
     {"invert-regex", no_argument, NULL, INVERT_REGEX},
+    {"use-ipv4", no_argument, 0, '4'},
+    {"use-ipv6", no_argument, 0, '6'},
     {"extended-perfdata", no_argument, 0, 'E'},
     {0, 0, 0, 0}
   };
@@ -556,7 +567,7 @@ process_arguments (int argc, char **argv)
     return ERROR;
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvht:c:w:A:k:H:j:I:a:p:s:R:r:u:f:C:J:K:S::m:NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:j:I:a:p:s:R:r:u:f:C:J:K:S::m:NE", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
       break;
 
@@ -741,6 +752,16 @@ process_arguments (int argc, char **argv)
     case INVERT_REGEX:
       invert_regex = 1;
       break;
+    case '4':
+      address_family = AF_INET;
+      break;
+    case '6':
+#ifdef USE_IPV6
+      address_family = AF_INET6;
+#else
+      usage4 (_("IPv6 support not available"));
+#endif
+      break;
     case 'm': /* min_page_length */
       {
       char *tmp;
@@ -846,6 +867,8 @@ print_help (void)
   printf (" %s\n", "-p, --port=INTEGER");
   printf ("    %s", _("Port number (default: "));
   printf ("%d)\n", HTTP_PORT);
+
+  printf (UT_IPv46);
 
 #ifdef LIBCURL_FEATURE_SSL
   printf (" %s\n", "-S, --ssl=VERSION[+]");
@@ -970,7 +993,7 @@ print_usage (void)
   printf ("       [-f <ok|warning|critcal|follow>]\n");
   printf ("       [-s string] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-m <min_pg_size>:<max_pg_size>] [-N]\n");
-  printf ("       [-N]\n");
+  printf ("       [-4|-6] [-N]\n");
   printf ("       [-A string] [-k string] [-S <version>] [-C]\n");
   printf ("       [-v verbose]\n", progname);
   printf ("\n");
