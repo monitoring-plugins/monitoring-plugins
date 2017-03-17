@@ -847,6 +847,8 @@ print_help (void)
   printf ("    %s\n", _("Search page for regex STRING"));
   printf (" %s\n", "-R, --eregi=STRING");
   printf ("    %s\n", _("Search page for case-insensitive regex STRING"));
+  printf (" %s\n", "--invert-regex");
+  printf ("    %s\n", _("Return CRITICAL if found, OK if not\n"));
   printf (" %s\n", "-a, --authorization=AUTH_PAIR");
   printf ("    %s\n", _("Username:password on sites with basic authentication"));
   printf (" %s\n", "-A, --useragent=STRING");
