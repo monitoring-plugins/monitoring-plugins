@@ -837,6 +837,8 @@ print_help (void)
   printf ("    %s\n", _("String to be sent in http header as \"User Agent\""));
   printf (" %s\n", "-k, --header=STRING");
   printf ("    %s\n", _("Any other tags to be sent in http header. Use multiple times for additional headers"));
+  printf (" %s\n", "-E, --extended-perfdata");
+  printf ("    %s\n", _("Print additional performance data"));
   printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow>");
   printf ("    %s\n", _("How to handle redirected pages."));
 
@@ -905,7 +907,7 @@ print_usage (void)
   printf ("%s\n", _("Usage:"));
   printf (" %s -H <vhost> | -I <IP-address> [-u <uri>] [-p <port>]\n",progname);
   printf ("       [-J <client certificate file>] [-K <private key>] [--ca-cert <CA certificate file>]\n");
-  printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-a auth]\n");
+  printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-E] [-a auth]\n");
   printf ("       [-f <ok|warning|critcal|follow>]\n");
   printf ("       [-s string] [-r <regex>\n");
   printf ("       [-A string] [-k string] [-S <version>] [-C]\n");
