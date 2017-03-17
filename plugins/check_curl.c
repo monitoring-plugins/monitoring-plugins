@@ -235,7 +235,8 @@ check_http (void)
       curl_easy_setopt (curl, CURLOPT_POST, 1);
     else if (!strcmp(http_method, "PUT"))
       curl_easy_setopt (curl, CURLOPT_PUT, 1);
-    curl_easy_setopt (curl, CURLOPT_CUSTOMREQUEST, http_method);
+    else
+      curl_easy_setopt (curl, CURLOPT_CUSTOMREQUEST, http_method);
   }
 
   /* set hostname (virtual hosts) */
