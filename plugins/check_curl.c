@@ -100,6 +100,8 @@ thresholds *thlds;
 char user_agent[DEFAULT_BUFFER_SIZE];
 int verbose = 0;
 int show_extended_perfdata = FALSE;
+int min_page_len = 0;
+int max_page_len = 0;
 char *http_method = NULL;
 CURL *curl;
 struct curl_slist *header_list = NULL;
@@ -189,6 +191,7 @@ int
 check_http (void)
 {
   int result = STATE_OK;
+  int page_len = 0;
 
   /* initialize curl */
   if (curl_global_init (CURL_GLOBAL_DEFAULT) != CURLE_OK)
@@ -467,6 +470,19 @@ check_http (void)
     }
   }
 
+  /* make sure the page is of an appropriate size
+   * TODO: as far I can tell check_http gets the full size of header and
+   * if -N is not given header+body. Does this make sense?
+   */
+  page_len = header_buf.buflen + body_buf.buflen;
+  if ((max_page_len > 0) && (page_len > max_page_len)) {
+    snprintf (msg, DEFAULT_BUFFER_SIZE, _("%spage size %d too large, "), msg, page_len);
+    result = max_state_alt(STATE_WARNING, result);
+  } else if ((min_page_len > 0) && (page_len < min_page_len)) {
+    snprintf (msg, DEFAULT_BUFFER_SIZE, _("%spage size %d too small, "), msg, page_len);
+    result = max_state_alt(STATE_WARNING, result);
+  }
+
   /* -w, -c: check warning and critical level */
   result = max_state_alt(get_status(total_time, thlds), result);
 
@@ -530,6 +546,7 @@ process_arguments (int argc, char **argv)
     {"useragent", required_argument, 0, 'A'},
     {"header", required_argument, 0, 'k'},
     {"no-body", no_argument, 0, 'N'},
+    {"pagesize", required_argument, 0, 'm'},
     {"invert-regex", no_argument, NULL, INVERT_REGEX},
     {"extended-perfdata", no_argument, 0, 'E'},
     {0, 0, 0, 0}
@@ -539,7 +556,7 @@ process_arguments (int argc, char **argv)
     return ERROR;
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvht:c:w:A:k:H:j:I:a:p:s:R:r:u:f:C:J:K:S::NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvht:c:w:A:k:H:j:I:a:p:s:R:r:u:f:C:J:K:S::m:NE", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
       break;
 
@@ -724,6 +741,28 @@ process_arguments (int argc, char **argv)
     case INVERT_REGEX:
       invert_regex = 1;
       break;
+    case 'm': /* min_page_length */
+      {
+      char *tmp;
+      if (strchr(optarg, ':') != (char *)NULL) {
+        /* range, so get two values, min:max */
+        tmp = strtok(optarg, ":");
+        if (tmp == NULL) {
+          printf("Bad format: try \"-m min:max\"\n");
+          exit (STATE_WARNING);
+        } else
+          min_page_len = atoi(tmp);
+
+        tmp = strtok(NULL, ":");
+        if (tmp == NULL) {
+          printf("Bad format: try \"-m min:max\"\n");
+          exit (STATE_WARNING);
+        } else
+          max_page_len = atoi(tmp);
+      } else
+        min_page_len = atoi (optarg);
+      break;
+      }
     case 'N': /* no-body */
       no_body = TRUE;
       break;
@@ -859,6 +898,8 @@ print_help (void)
   printf ("    %s\n", _("Print additional performance data"));
   printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow>");
   printf ("    %s\n", _("How to handle redirected pages."));
+  printf (" %s\n", "-m, --pagesize=INTEGER<:INTEGER>");
+  printf ("    %s\n", _("Minimum page size required (bytes) : Maximum page size required (bytes)"));
 
   printf (UT_WARN_CRIT);
 
@@ -928,6 +969,7 @@ print_usage (void)
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-E] [-a auth]\n");
   printf ("       [-f <ok|warning|critcal|follow>]\n");
   printf ("       [-s string] [-r <regex> | -R <case-insensitive regex>]\n");
+  printf ("       [-m <min_pg_size>:<max_pg_size>] [-N]\n");
   printf ("       [-N]\n");
   printf ("       [-A string] [-k string] [-S <version>] [-C]\n");
   printf ("       [-v verbose]\n", progname);
