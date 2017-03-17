@@ -130,6 +130,7 @@ char *client_cert = NULL;
 char *client_privkey = NULL;
 char *ca_cert = NULL;
 X509 *cert = NULL;
+int no_body = FALSE;
 
 int process_arguments (int, char**);
 int check_http (void);
@@ -324,6 +325,10 @@ check_http (void)
     */
   }
 
+  /* no-body */
+  if (no_body)
+    curl_easy_setopt (curl, CURLOPT_NOBODY, 1);
+  
   /* do the request */
   res = curl_easy_perform(curl);
 
@@ -395,10 +400,8 @@ check_http (void)
 
   /* print status line, header, body if verbose */
   if (verbose >= 2) {
-    puts ("--- HEADER ---");
-    puts (header_buf.buf);
-    puts ("--- BODY ---");
-    puts (body_buf.buf);
+    printf ("**** HEADER ****\n%s\n**** CONTENT ****\n%s\n", header_buf.buf,
+                (no_body ? "  [[ skipped ]]" : body_buf.buf));
   }
 
   /* illegal return codes result in a critical state */
@@ -524,6 +527,7 @@ process_arguments (int argc, char **argv)
     {"ca-cert", required_argument, 0, CA_CERT_OPTION},
     {"useragent", required_argument, 0, 'A'},
     {"header", required_argument, 0, 'k'},
+    {"no-body", no_argument, 0, 'N'},
     {"invert-regex", no_argument, NULL, INVERT_REGEX},
     {"extended-perfdata", no_argument, 0, 'E'},
     {0, 0, 0, 0}
@@ -533,7 +537,7 @@ process_arguments (int argc, char **argv)
     return ERROR;
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvht:c:w:A:k:H:j:I:a:p:s:r:u:f:C:J:K:S::E", longopts, &option);
+    c = getopt_long (argc, argv, "Vvht:c:w:A:k:H:j:I:a:p:s:r:u:f:C:J:K:S::NE", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
       break;
 
@@ -716,6 +720,9 @@ process_arguments (int argc, char **argv)
     case INVERT_REGEX:
       invert_regex = 1;
       break;
+    case 'N': /* no-body */
+      no_body = TRUE;
+      break;
     case 'E': /* show extended perfdata */
       show_extended_perfdata = TRUE;
       break;
@@ -829,6 +836,9 @@ print_help (void)
   printf ("    %s\n", _("URL to GET or POST (default: /)"));
   printf (" %s\n", "-j, --method=STRING  (for example: HEAD, OPTIONS, TRACE, PUT, DELETE, CONNECT)");
   printf ("    %s\n", _("Set HTTP method."));
+  printf (" %s\n", "-N, --no-body");
+  printf ("    %s\n", _("Don't wait for document body: stop reading after headers."));
+  printf ("    %s\n", _("(Note that this still does an HTTP GET or POST, not a HEAD.)"));
   printf (" %s\n", "-r, --regex, --ereg=STRING");
   printf ("    %s\n", _("Search page for regex STRING"));
   printf (" %s\n", "-a, --authorization=AUTH_PAIR");
@@ -910,6 +920,7 @@ print_usage (void)
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-E] [-a auth]\n");
   printf ("       [-f <ok|warning|critcal|follow>]\n");
   printf ("       [-s string] [-r <regex>\n");
+  printf ("       [-N]\n");
   printf ("       [-A string] [-k string] [-S <version>] [-C]\n");
   printf ("       [-v verbose]\n", progname);
   printf ("\n");
