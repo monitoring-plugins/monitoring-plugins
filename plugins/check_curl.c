@@ -523,6 +523,7 @@ process_arguments (int argc, char **argv)
     {"private-key", required_argument, 0, 'K'},
     {"ca-cert", required_argument, 0, CA_CERT_OPTION},
     {"useragent", required_argument, 0, 'A'},
+    {"header", required_argument, 0, 'k'},
     {"invert-regex", no_argument, NULL, INVERT_REGEX},
     {"header", required_argument, 0, 'k'},
     {"extended-perfdata", no_argument, 0, 'E'},
@@ -835,6 +836,8 @@ print_help (void)
   printf ("    %s\n", _("Username:password on sites with basic authentication"));
   printf (" %s\n", "-A, --useragent=STRING");
   printf ("    %s\n", _("String to be sent in http header as \"User Agent\""));
+  printf (" %s\n", "-k, --header=STRING");
+  printf ("    %s\n", _("Any other tags to be sent in http header. Use multiple times for additional headers"));
   printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow>");
   printf ("    %s\n", _("How to handle redirected pages."));
 
@@ -906,7 +909,7 @@ print_usage (void)
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-a auth]\n");
   printf ("       [-f <ok|warning|critcal|follow>]\n");
   printf ("       [-s string] [-r <regex>\n");
-  printf ("       [-A string] [-S <version>] [-C]\n");
+  printf ("       [-A string] [-k string] [-S <version>] [-C]\n");
   printf ("       [-v verbose]\n", progname);
   printf ("\n");
   printf ("%s\n", _("WARNING: check_curl is experimental. Please use"));
