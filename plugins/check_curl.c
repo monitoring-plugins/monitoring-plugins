@@ -525,7 +525,6 @@ process_arguments (int argc, char **argv)
     {"useragent", required_argument, 0, 'A'},
     {"header", required_argument, 0, 'k'},
     {"invert-regex", no_argument, NULL, INVERT_REGEX},
-    {"header", required_argument, 0, 'k'},
     {"extended-perfdata", no_argument, 0, 'E'},
     {0, 0, 0, 0}
   };
