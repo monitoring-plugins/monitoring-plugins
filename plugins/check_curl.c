@@ -520,6 +520,8 @@ process_arguments (int argc, char **argv)
     {"authorization", required_argument, 0, 'a'},
     {"string", required_argument, 0, 's'},
     {"regex", required_argument, 0, 'r'},
+    {"ereg", required_argument, 0, 'r'},
+    {"eregi", required_argument, 0, 'R'},
     {"onredirect", required_argument, 0, 'f'},
     {"certificate", required_argument, 0, 'C'},
     {"client-cert", required_argument, 0, 'J'},
@@ -537,7 +539,7 @@ process_arguments (int argc, char **argv)
     return ERROR;
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvht:c:w:A:k:H:j:I:a:p:s:r:u:f:C:J:K:S::NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvht:c:w:A:k:H:j:I:a:p:s:R:r:u:f:C:J:K:S::NE", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
       break;
 
@@ -707,6 +709,8 @@ process_arguments (int argc, char **argv)
       strncpy (string_expect, optarg, MAX_INPUT_BUFFER - 1);
       string_expect[MAX_INPUT_BUFFER - 1] = 0;
       break;
+    case 'R': /* regex */
+      cflags |= REG_ICASE;
     case 'r': /* regex */
       strncpy (regexp, optarg, MAX_RE_SIZE - 1);
       regexp[MAX_RE_SIZE - 1] = 0;
@@ -841,6 +845,8 @@ print_help (void)
   printf ("    %s\n", _("(Note that this still does an HTTP GET or POST, not a HEAD.)"));
   printf (" %s\n", "-r, --regex, --ereg=STRING");
   printf ("    %s\n", _("Search page for regex STRING"));
+  printf (" %s\n", "-R, --eregi=STRING");
+  printf ("    %s\n", _("Search page for case-insensitive regex STRING"));
   printf (" %s\n", "-a, --authorization=AUTH_PAIR");
   printf ("    %s\n", _("Username:password on sites with basic authentication"));
   printf (" %s\n", "-A, --useragent=STRING");
@@ -919,7 +925,7 @@ print_usage (void)
   printf ("       [-J <client certificate file>] [-K <private key>] [--ca-cert <CA certificate file>]\n");
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-E] [-a auth]\n");
   printf ("       [-f <ok|warning|critcal|follow>]\n");
-  printf ("       [-s string] [-r <regex>\n");
+  printf ("       [-s string] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-N]\n");
   printf ("       [-A string] [-k string] [-S <version>] [-C]\n");
   printf ("       [-v verbose]\n", progname);
