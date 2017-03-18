@@ -332,15 +332,15 @@ check_http (void)
   /* no-body */
   if (no_body)
     curl_easy_setopt (curl, CURLOPT_NOBODY, 1);
-  
+
   /* IPv4 or IPv6 forced DNS resolution */
   if (address_family == AF_UNSPEC)
     curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_WHATEVER);
   else if (address_family == AF_INET)
     curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
   else if (address_family == AF_INET6)
-    curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6);    
-  
+    curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6);
+
   /* do the request */
   res = curl_easy_perform(curl);
 
@@ -466,9 +466,9 @@ check_http (void)
     }
     else if ((errcode == REG_NOMATCH && invert_regex == 0) || (errcode == 0 && invert_regex == 1)) {
       if (invert_regex == 0)
-        snprintf (msg, DEFAULT_BUFFER_SIZE, _("%spattern not found"), msg);
+        snprintf (msg, DEFAULT_BUFFER_SIZE, _("%spattern not found, "), msg);
       else
-        snprintf (msg, DEFAULT_BUFFER_SIZE, _("%spattern found"), msg);
+        snprintf (msg, DEFAULT_BUFFER_SIZE, _("%spattern found, "), msg);
       result = STATE_CRITICAL;
     }
     else {
@@ -495,11 +495,18 @@ check_http (void)
   /* -w, -c: check warning and critical level */
   result = max_state_alt(get_status(total_time, thlds), result);
 
+  /* Cut-off trailing characters */
+  if(msg[strlen(msg)-2] == ',')
+    msg[strlen(msg)-2] = '\0';
+  else
+    msg[strlen(msg)-3] = '\0';
+
   /* TODO: separate _() msg and status code: die (result, "HTTP %s: %s\n", state_text(result), msg); */
-  die (result, "HTTP %s HTTP/%d.%d %d %s - %s - %.3g seconds response time|%s\n",
+  die (result, "HTTP %s: HTTP/%d.%d %d %s%s%s - %d bytes in %.3f second response time |%s\n",
     state_text(result), status_line.http_major, status_line.http_minor,
-    status_line.http_code, status_line.msg, msg,
-    total_time, perfstring);
+    status_line.http_code, status_line.msg,
+    strlen(msg) > 0 ? " - " : "",
+    msg, page_len, total_time, perfstring);
 
   /* proper cleanup after die? */
   curlhelp_free_statusline(&status_line);
