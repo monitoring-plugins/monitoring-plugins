@@ -49,6 +49,7 @@ const char *email = "devel@monitoring-plugins.org";
 
 #define DEFAULT_BUFFER_SIZE 2048
 #define DEFAULT_SERVER_URL "/"
+#define HTTP_EXPECT "HTTP/1."
 enum {
   HTTP_PORT = 80,
   HTTPS_PORT = 443,
@@ -122,6 +123,8 @@ char url[DEFAULT_BUFFER_SIZE];
 char msg[DEFAULT_BUFFER_SIZE];
 char perfstring[DEFAULT_BUFFER_SIZE];
 char string_expect[MAX_INPUT_BUFFER] = "";
+char server_expect[MAX_INPUT_BUFFER] = HTTP_EXPECT;
+int server_expect_yn = 0;
 char user_auth[MAX_INPUT_BUFFER] = "";
 int onredirect = STATE_OK;
 int use_ssl = FALSE;
@@ -186,6 +189,26 @@ CURLcode sslctxfun(CURL *curl, SSL_CTX *sslctx, void *parm)
   SSL_CTX_set_verify(sslctx, SSL_VERIFY_PEER, verify_callback);
 
   return CURLE_OK;
+}
+
+/* Checks if the server 'reply' is one of the expected 'statuscodes' */
+static int
+expected_statuscode (const char *reply, const char *statuscodes)
+{
+  char *expected, *code;
+  int result = 0;
+
+  if ((expected = strdup (statuscodes)) == NULL)
+    die (STATE_UNKNOWN, _("HTTP UNKNOWN - Memory allocation error\n"));
+
+  for (code = strtok (expected, ","); code != NULL; code = strtok (NULL, ","))
+    if (strstr (reply, code) != NULL) {
+      result = 1;
+      break;
+    }
+
+  free (expected);
+  return result;
 }
 
 int
@@ -416,27 +439,46 @@ check_http (void)
                 (no_body ? "  [[ skipped ]]" : body_buf.buf));
   }
 
-  /* illegal return codes result in a critical state */
-  if (code >= 600 || code < 100) {
-    die (STATE_CRITICAL, _("HTTP CRITICAL: Invalid Status (%d, %.40s)\n"), status_line.http_code, status_line.msg);
-  /* server errors result in a critical state */
-      } else if (code >= 500) {
-    result = STATE_CRITICAL;
-      /* client errors result in a warning state */
-  } else if (code >= 400) {
-    result = STATE_WARNING;
-  /* check redirected page if specified */
-  } else if (code >= 300) {
-    if (onredirect == STATE_DEPENDENT) {
-      code = status_line.http_code;
-    }
-    result = max_state_alt (onredirect, result);
-    /* TODO: make sure the last status line has been
-       parsed into the status_line structure
-     */
-  /* all other codes are considered ok */
-  } else {
+  /* make sure the status line matches the response we are looking for */
+  if (!expected_statuscode(header_buf.buf, server_expect)) {
+    /* TODO: fix first_line being cut off */
+    if (server_port == HTTP_PORT)
+      snprintf(msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host: %s\n"), status_line.first_line);
+    else
+      snprintf(msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host on port %d: %s\n"), server_port, status_line.first_line);
+      die (STATE_CRITICAL, "HTTP CRITICAL - %s", msg);
+  }
+
+  /* TODO: implement -d header tests */
+  if( server_expect_yn  )  {
+    snprintf(msg, DEFAULT_BUFFER_SIZE, _("Status line output matched \"%s\" - "), server_expect);
+    if (verbose)
+      printf ("%s\n",msg);
     result = STATE_OK;
+  }
+  else {
+    /* illegal return codes result in a critical state */
+    if (code >= 600 || code < 100) {
+      die (STATE_CRITICAL, _("HTTP CRITICAL: Invalid Status (%d, %.40s)\n"), status_line.http_code, status_line.msg);
+    /* server errors result in a critical state */
+        } else if (code >= 500) {
+      result = STATE_CRITICAL;
+        /* client errors result in a warning state */
+    } else if (code >= 400) {
+      result = STATE_WARNING;
+    /* check redirected page if specified */
+    } else if (code >= 300) {
+      if (onredirect == STATE_DEPENDENT) {
+        code = status_line.http_code;
+      }
+      result = max_state_alt (onredirect, result);
+      /* TODO: make sure the last status line has been
+         parsed into the status_line structure
+       */
+    /* all other codes are considered ok */
+    } else {
+      result = STATE_OK;
+    }
   }
 
   /* check status codes, set exit status accordingly */
@@ -551,6 +593,7 @@ process_arguments (int argc, char **argv)
     {"port", required_argument, 0, 'p'},
     {"authorization", required_argument, 0, 'a'},
     {"string", required_argument, 0, 's'},
+    {"expect", required_argument, 0, 'e'},
     {"regex", required_argument, 0, 'r'},
     {"ereg", required_argument, 0, 'r'},
     {"eregi", required_argument, 0, 'R'},
@@ -588,7 +631,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:j:I:a:p:s:R:r:u:f:C:J:K:S::m:NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:j:I:a:p:e:s:R:r:u:f:C:J:K:S::m:NE", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
       break;
 
@@ -758,6 +801,11 @@ process_arguments (int argc, char **argv)
       strncpy (string_expect, optarg, MAX_INPUT_BUFFER - 1);
       string_expect[MAX_INPUT_BUFFER - 1] = 0;
       break;
+    case 'e': /* string or substring */
+      strncpy (server_expect, optarg, MAX_INPUT_BUFFER - 1);
+      server_expect[MAX_INPUT_BUFFER - 1] = 0;
+      server_expect_yn = 1;
+      break;
     case 'R': /* regex */
       cflags |= REG_ICASE;
     case 'r': /* regex */
@@ -917,6 +965,11 @@ print_help (void)
   printf ("   %s\n", _("CA certificate file to verify peer against"));
 #endif
 
+  printf (" %s\n", "-e, --expect=STRING");
+  printf ("    %s\n", _("Comma-delimited list of strings, at least one of them is expected in"));
+  printf ("    %s", _("the first (status) line of the server response (default: "));
+  printf ("%s)\n", HTTP_EXPECT);
+  printf ("    %s\n", _("If specified skips all other status line logic (ex: 3xx, 4xx, 5xx processing)"));
   printf (" %s\n", "-s, --string=STRING");
   printf ("    %s\n", _("String to expect in the content"));
   printf (" %s\n", "-u, --url=PATH");
@@ -1012,7 +1065,7 @@ print_usage (void)
   printf ("       [-J <client certificate file>] [-K <private key>] [--ca-cert <CA certificate file>]\n");
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-E] [-a auth]\n");
   printf ("       [-f <ok|warning|critcal|follow>]\n");
-  printf ("       [-s string] [-r <regex> | -R <case-insensitive regex>]\n");
+  printf ("       [-e <expect>] [-s string] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-m <min_pg_size>:<max_pg_size>] [-N]\n");
   printf ("       [-4|-6] [-N]\n");
   printf ("       [-A string] [-k string] [-S <version>] [-C]\n");
