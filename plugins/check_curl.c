@@ -573,6 +573,20 @@ process_arguments (int argc, char **argv)
   if (argc < 2)
     return ERROR;
 
+  /* support check_http compatible arguments */
+  for (c = 1; c < argc; c++) {
+    if (strcmp ("-to", argv[c]) == 0)
+      strcpy (argv[c], "-t");
+    if (strcmp ("-hn", argv[c]) == 0)
+      strcpy (argv[c], "-H");
+    if (strcmp ("-wt", argv[c]) == 0)
+      strcpy (argv[c], "-w");
+    if (strcmp ("-ct", argv[c]) == 0)
+      strcpy (argv[c], "-c");
+    if (strcmp ("-nohtml", argv[c]) == 0)
+      strcpy (argv[c], "-n");
+  }
+
   while (1) {
     c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:j:I:a:p:s:R:r:u:f:C:J:K:S::m:NE", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
