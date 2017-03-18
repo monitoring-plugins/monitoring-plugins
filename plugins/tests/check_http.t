@@ -29,13 +29,16 @@ eval {
 	require HTTP::Response;
 };
 
+my $plugin = 'check_http';
+$plugin    = 'check_curl' if $0 =~ m/check_curl/mx;
+
 if ($@) {
 	plan skip_all => "Missing required module for test: $@";
 } else {
-	if (-x "./check_http") {
+	if (-x "./$plugin") {
 		plan tests => $common_tests * 2 + $ssl_only_tests;
 	} else {
-		plan skip_all => "No check_http compiled";
+		plan skip_all => "No $plugin compiled";
 	}
 }
 
@@ -179,7 +182,7 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 }
 
 my $result;
-my $command = "./check_http -H 127.0.0.1";
+my $command = "./$plugin -H 127.0.0.1";
 
 run_common_tests( { command => "$command -p $port_http" } );
 SKIP: {
