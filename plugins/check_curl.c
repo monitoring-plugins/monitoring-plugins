@@ -93,6 +93,7 @@ char *server_url = DEFAULT_SERVER_URL;
 unsigned short server_port = HTTP_PORT;
 int virtual_port = 0;
 int host_name_length;
+char output_header_search[30] = "";
 char output_string_search[30] = "";
 char *warning_thresholds = NULL;
 char *critical_thresholds = NULL;
@@ -122,6 +123,7 @@ CURLcode res;
 char url[DEFAULT_BUFFER_SIZE];
 char msg[DEFAULT_BUFFER_SIZE];
 char perfstring[DEFAULT_BUFFER_SIZE];
+char header_expect[MAX_INPUT_BUFFER] = "";
 char string_expect[MAX_INPUT_BUFFER] = "";
 char server_expect[MAX_INPUT_BUFFER] = HTTP_EXPECT;
 int server_expect_yn = 0;
@@ -489,6 +491,18 @@ check_http (void)
   }
 
   /* Page and Header content checks go here */
+
+  if (strlen (header_expect)) {
+    if (!strstr (header_buf.buf, header_expect)) {
+      strncpy(&output_header_search[0],header_expect,sizeof(output_header_search));
+      if(output_header_search[sizeof(output_header_search)-1]!='\0') {
+        bcopy("...",&output_header_search[sizeof(output_header_search)-4],4);
+      }
+      snprintf (msg, DEFAULT_BUFFER_SIZE, _("%sheader '%s' not found on '%s://%s:%d%s', "), msg, output_header_search, use_ssl ? "https" : "http", host_name ? host_name : server_address, server_port, server_url);
+      result = STATE_CRITICAL;
+    }
+  }
+
   if (strlen (string_expect)) {
     if (!strstr (body_buf.buf, string_expect)) {
       strncpy(&output_string_search[0],string_expect,sizeof(output_string_search));
@@ -592,6 +606,7 @@ process_arguments (int argc, char **argv)
     {"url", required_argument, 0, 'u'},
     {"port", required_argument, 0, 'p'},
     {"authorization", required_argument, 0, 'a'},
+    {"header-string", required_argument, 0, 'd'},
     {"string", required_argument, 0, 's'},
     {"expect", required_argument, 0, 'e'},
     {"regex", required_argument, 0, 'r'},
@@ -631,7 +646,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:j:I:a:p:e:s:R:r:u:f:C:J:K:S::m:NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:j:I:a:p:d:e:s:R:r:u:f:C:J:K:S::m:NE", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
       break;
 
@@ -796,6 +811,10 @@ process_arguments (int argc, char **argv)
       else usage2 (_("Invalid onredirect option"), optarg);
       if (verbose >= 2)
         printf(_("* Following redirects set to %s\n"), state_text(onredirect));
+      break;
+    case 'd': /* string or substring */
+      strncpy (header_expect, optarg, MAX_INPUT_BUFFER - 1);
+      header_expect[MAX_INPUT_BUFFER - 1] = 0;
       break;
     case 's': /* string or substring */
       strncpy (string_expect, optarg, MAX_INPUT_BUFFER - 1);
@@ -970,6 +989,8 @@ print_help (void)
   printf ("    %s", _("the first (status) line of the server response (default: "));
   printf ("%s)\n", HTTP_EXPECT);
   printf ("    %s\n", _("If specified skips all other status line logic (ex: 3xx, 4xx, 5xx processing)"));
+  printf (" %s\n", "-d, --header-string=STRING");
+  printf ("    %s\n", _("String to expect in the response headers"));
   printf (" %s\n", "-s, --string=STRING");
   printf ("    %s\n", _("String to expect in the content"));
   printf (" %s\n", "-u, --url=PATH");
@@ -1065,7 +1086,7 @@ print_usage (void)
   printf ("       [-J <client certificate file>] [-K <private key>] [--ca-cert <CA certificate file>]\n");
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-E] [-a auth]\n");
   printf ("       [-f <ok|warning|critcal|follow>]\n");
-  printf ("       [-e <expect>] [-s string] [-r <regex> | -R <case-insensitive regex>]\n");
+  printf ("       [-e <expect>] [-d string] [-s string] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-m <min_pg_size>:<max_pg_size>] [-N]\n");
   printf ("       [-4|-6] [-N]\n");
   printf ("       [-A string] [-k string] [-S <version>] [-C]\n");
