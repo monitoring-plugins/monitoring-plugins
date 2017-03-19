@@ -47,6 +47,8 @@ const char *email = "devel@monitoring-plugins.org";
 #include "curl/curl.h"
 #include "curl/easy.h"
 
+#define MAKE_LIBCURL_VERSION(major, minor, patch) ((major)*0x10000 + (minor)*0x100 + (patch))
+
 #define DEFAULT_BUFFER_SIZE 2048
 #define DEFAULT_SERVER_URL "/"
 #define HTTP_EXPECT "HTTP/1."
@@ -769,25 +771,81 @@ process_arguments (int argc, char **argv)
 #ifdef LIBCURL_FEATURE_SSL
     enable_ssl:
       use_ssl = TRUE;
-      /* ssl_version initialized to CURL_SSLVERSION_TLSv1_0 as a default. Only set if it's non-zero.  This helps when we include multiple
-         parameters, like -S and -C combinations */
+      /* ssl_version initialized to CURL_SSLVERSION_TLSv1_0 as a default.
+       * Only set if it's non-zero.  This helps when we include multiple
+       * parameters, like -S and -C combinations */
       ssl_version = CURL_SSLVERSION_TLSv1_0;
       if (c=='S' && optarg != NULL) {
-        int got_plus = strchr(optarg, '+') != NULL;
-
-        if (!strncmp (optarg, "1.2", 3))
-          ssl_version = CURL_SSLVERSION_TLSv1_2;
-        else if (!strncmp (optarg, "1.1", 3))
-          ssl_version = CURL_SSLVERSION_TLSv1_1;
-        else if (optarg[0] == '1')
-          ssl_version = CURL_SSLVERSION_TLSv1_0;
+        int got_plus = 0;
+        char *plus_ptr = strchr(optarg, '+');
+        if (plus_ptr) {
+          got_plus = 1;
+          *plus_ptr = '\0';
+        }
+        
+        if (optarg[0] == '2')
+          ssl_version = CURL_SSLVERSION_SSLv2;
         else if (optarg[0] == '3')
           ssl_version = CURL_SSLVERSION_SSLv3;
-        else if (optarg[0] == '2')
-          ssl_version = CURL_SSLVERSION_SSLv2;
+        else if (!strcmp (optarg, "1") || !strcmp (optarg, "1.0"))
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
+          ssl_version = CURL_SSLVERSION_TLSv1_0;
+#else
+          usage4 (_("Invalid option - Valid SSL/TLS versions: 2, 3"));
+#endif
+        else if (!strcmp (optarg, "1.1"))
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
+          ssl_version = CURL_SSLVERSION_TLSv1_1;
+#else
+          usage4 (_("Invalid option - Valid SSL/TLS versions: 2, 3"));
+#endif
+        else if (!strcmp (optarg, "1.2"))
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
+          ssl_version = CURL_SSLVERSION_TLSv1_2;
+#else
+          usage4 (_("Invalid option - Valid SSL/TLS versions: 2, 3"));
+#endif
+        else if (!strcmp (optarg, "1.3"))
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 52, 0)
+          ssl_version = CURL_SSLVERSION_TLSv1_3;
+#else
+          usage4 (_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2"));
+#endif
+        
         else
           usage4 (_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2 (with optional '+' suffix)"));
       }
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 54, 0)
+      if (got_plus) {
+        switch (ssl_version) {
+          case CURL_SSLVERSION_TLSv1_3:
+            ssl_version |= CURL_SSLVERSION_MAX_TLSv1_3;
+            break;
+          case CURL_SSLVERSION_TLSv1_2:
+          case CURL_SSLVERSION_TLSv1_1:
+          case CURL_SSLVERSION_TLSv1_0:
+            ssl_version |= CURL_SSLVERSION_MAX_DEFAULT;
+            break;
+        }
+      } else {
+        switch (ssl_version) {
+          case CURL_SSLVERSION_TLSv1_3:
+            ssl_version |= CURL_SSLVERSION_MAX_TLSv1_3;
+            break;
+          case CURL_SSLVERSION_TLSv1_2:
+            ssl_version |= CURL_SSLVERSION_MAX_TLSv1_2;
+            break;
+          case CURL_SSLVERSION_TLSv1_1:
+            ssl_version |= CURL_SSLVERSION_MAX_TLSv1_1;
+            break;
+          case CURL_SSLVERSION_TLSv1_0:
+            ssl_version |= CURL_SSLVERSION_MAX_TLSv1_0;
+            break;
+        }
+      }
+#endif      
+      if (verbose >= 2)
+        printf(_("* Set SSL/TLS version to %d\n"), ssl_version);
       if (server_port == HTTP_PORT)
         server_port = HTTPS_PORT;
 #else
