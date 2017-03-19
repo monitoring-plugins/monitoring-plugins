@@ -107,6 +107,8 @@ int show_extended_perfdata = FALSE;
 int min_page_len = 0;
 int max_page_len = 0;
 char *http_method = NULL;
+char *http_post_data = NULL;
+char *http_content_type = NULL;
 CURL *curl;
 struct curl_slist *header_list = NULL;
 curlhelp_curlbuf body_buf;
@@ -368,8 +370,20 @@ check_http (void)
   else if (address_family == AF_INET6)
     curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6);
 
+  /* either send http POST data (any data, not only POST)*/
+  if (http_post_data) {
+    if (http_content_type) {
+      snprintf (http_header, DEFAULT_BUFFER_SIZE, "Content-Type: %s", http_content_type);
+      header_list = curl_slist_append (header_list, http_header);
+    }
+    curl_easy_setopt (curl, CURLOPT_POSTFIELDS, http_post_data);
+  }
+
   /* do the request */
   res = curl_easy_perform(curl);
+
+  if (verbose>=2 && http_post_data)
+    printf ("**** REQUEST CONTENT ****\n%s\n", http_post_data);
 
   /* free header list, we don't need it anymore */
   curl_slist_free_all(header_list);
@@ -603,6 +617,7 @@ process_arguments (int argc, char **argv)
     STD_LONG_OPTS,
     {"ssl", optional_argument, 0, 'S'},
     {"sni", no_argument, 0, SNI_OPTION},
+    {"post", required_argument, 0, 'P'},
     {"method", required_argument, 0, 'j'},
     {"IP-address", required_argument, 0, 'I'},
     {"url", required_argument, 0, 'u'},
@@ -623,6 +638,7 @@ process_arguments (int argc, char **argv)
     {"useragent", required_argument, 0, 'A'},
     {"header", required_argument, 0, 'k'},
     {"no-body", no_argument, 0, 'N'},
+    {"content-type", required_argument, 0, 'T'},
     {"pagesize", required_argument, 0, 'm'},
     {"invert-regex", no_argument, NULL, INVERT_REGEX},
     {"use-ipv4", no_argument, 0, '4'},
@@ -649,7 +665,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:j:I:a:p:d:e:s:R:r:u:f:C:J:K:S::m:NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:p:d:e:s:R:r:u:f:C:J:K:S::m:NE", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
       break;
 
@@ -715,6 +731,12 @@ process_arguments (int argc, char **argv)
     case 'a': /* authorization info */
       strncpy (user_auth, optarg, MAX_INPUT_BUFFER - 1);
       user_auth[MAX_INPUT_BUFFER - 1] = 0;
+      break;
+    case 'P': /* HTTP POST data in URL encoded format; ignored if settings already */
+      if (! http_post_data)
+        http_post_data = strdup (optarg);
+      if (! http_method)
+        http_method = strdup("POST");
       break;
     case 'j': /* Set HTTP method */
       if (http_method)
@@ -884,6 +906,9 @@ process_arguments (int argc, char **argv)
       server_expect[MAX_INPUT_BUFFER - 1] = 0;
       server_expect_yn = 1;
       break;
+    case 'T': /* Content-type */
+      http_content_type = strdup (optarg);
+     break;
     case 'l': /* linespan */
       cflags &= ~REG_NEWLINE;
       break;
@@ -987,7 +1012,7 @@ print_help (void)
   print_revision (progname, NP_VERSION);
 
   printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
-  printf ("Copyright (c) 2017 Andreas Baumann <abaumann@yahoo.com>\n");
+  printf ("Copyright (c) 2017 Andreas Baumann <mail@andreasbaumann.cc>\n");
   printf (COPYRIGHT, copyright, email);
 
   printf ("%s\n", _("This plugin tests the HTTP service on the specified host. It can test"));
@@ -1058,11 +1083,15 @@ print_help (void)
   printf ("    %s\n", _("String to expect in the content"));
   printf (" %s\n", "-u, --url=PATH");
   printf ("    %s\n", _("URL to GET or POST (default: /)"));
+  printf (" %s\n", "-P, --post=STRING");
+  printf ("    %s\n", _("URL encoded http POST data"));
   printf (" %s\n", "-j, --method=STRING  (for example: HEAD, OPTIONS, TRACE, PUT, DELETE, CONNECT)");
   printf ("    %s\n", _("Set HTTP method."));
   printf (" %s\n", "-N, --no-body");
   printf ("    %s\n", _("Don't wait for document body: stop reading after headers."));
   printf ("    %s\n", _("(Note that this still does an HTTP GET or POST, not a HEAD.)"));
+  printf (" %s\n", "-T, --content-type=STRING");
+  printf ("    %s\n", _("specify Content-Type header media type when POSTing\n"));
   printf (" %s\n", "-l, --linespan");
   printf ("    %s\n", _("Allow regex to span newlines (must precede -r or -R)"));
   printf (" %s\n", "-r, --regex, --ereg=STRING");
@@ -1152,10 +1181,9 @@ print_usage (void)
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-E] [-a auth]\n");
   printf ("       [-f <ok|warning|critcal|follow>]\n");
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
-  printf ("       [-m <min_pg_size>:<max_pg_size>] [-N]\n");
-  printf ("       [-4|-6] [-N]\n");
+  printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N]\n");
   printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
-  printf ("       [-v verbose]\n", progname);
+  printf ("       [-T <content-type>] [-j method]\n", progname);
   printf ("\n");
   printf ("%s\n", _("WARNING: check_curl is experimental. Please use"));
   printf ("%s\n\n", _("check_http if you need a stable version."));
