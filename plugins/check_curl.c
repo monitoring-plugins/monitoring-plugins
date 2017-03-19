@@ -612,6 +612,7 @@ process_arguments (int argc, char **argv)
     {"regex", required_argument, 0, 'r'},
     {"ereg", required_argument, 0, 'r'},
     {"eregi", required_argument, 0, 'R'},
+    {"linespan", no_argument, 0, 'l'},
     {"onredirect", required_argument, 0, 'f'},
     {"certificate", required_argument, 0, 'C'},
     {"client-cert", required_argument, 0, 'J'},
@@ -825,6 +826,9 @@ process_arguments (int argc, char **argv)
       server_expect[MAX_INPUT_BUFFER - 1] = 0;
       server_expect_yn = 1;
       break;
+    case 'l': /* linespan */
+      cflags &= ~REG_NEWLINE;
+      break;
     case 'R': /* regex */
       cflags |= REG_ICASE;
     case 'r': /* regex */
@@ -972,8 +976,9 @@ print_help (void)
 #else
   printf ("    %s\n", _("Note: SNI is not supported in libcurl before 7.18.1"));
 #endif
-  printf (" %s\n", "-C, --certificate");
-  printf ("    %s\n", _("Check validity of certificate"));
+  printf (" %s\n", "-C, --certificate=INTEGER[,INTEGER]");
+  printf ("    %s\n", _("Minimum number of days a certificate has to be valid. Port defaults to 443"));
+  printf ("    %s\n", _("(when this option is used the URL is not checked.)"));
   printf (" %s\n", "-J, --client-cert=FILE");
   printf ("   %s\n", _("Name of file that contains the client certificate (PEM format)"));
   printf ("   %s\n", _("to be used in establishing the SSL session"));
@@ -1000,6 +1005,8 @@ print_help (void)
   printf (" %s\n", "-N, --no-body");
   printf ("    %s\n", _("Don't wait for document body: stop reading after headers."));
   printf ("    %s\n", _("(Note that this still does an HTTP GET or POST, not a HEAD.)"));
+  printf (" %s\n", "-l, --linespan");
+  printf ("    %s\n", _("Allow regex to span newlines (must precede -r or -R)"));
   printf (" %s\n", "-r, --regex, --ereg=STRING");
   printf ("    %s\n", _("Search page for regex STRING"));
   printf (" %s\n", "-R, --eregi=STRING");
@@ -1086,10 +1093,10 @@ print_usage (void)
   printf ("       [-J <client certificate file>] [-K <private key>] [--ca-cert <CA certificate file>]\n");
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-E] [-a auth]\n");
   printf ("       [-f <ok|warning|critcal|follow>]\n");
-  printf ("       [-e <expect>] [-d string] [-s string] [-r <regex> | -R <case-insensitive regex>]\n");
+  printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-m <min_pg_size>:<max_pg_size>] [-N]\n");
   printf ("       [-4|-6] [-N]\n");
-  printf ("       [-A string] [-k string] [-S <version>] [-C]\n");
+  printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
   printf ("       [-v verbose]\n", progname);
   printf ("\n");
   printf ("%s\n", _("WARNING: check_curl is experimental. Please use"));
