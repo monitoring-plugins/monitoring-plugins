@@ -230,6 +230,7 @@ NP-VERSION-FILE
 /plugins-scripts/check_breeze
 /plugins-scripts/check_disk_smb
 /plugins-scripts/check_flexlm
+/plugins-scripts/check_geom
 /plugins-scripts/check_ifoperstatus
 /plugins-scripts/check_ifstatus
 /plugins-scripts/check_ircd
