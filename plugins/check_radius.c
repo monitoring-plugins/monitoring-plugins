@@ -176,6 +176,14 @@ main (int argc, char **argv)
 			my_rc_read_dictionary (my_rc_conf_str (str)))
 		die (STATE_UNKNOWN, _("Config file error\n"));
 
+	/* Initialize Value Pair to prevent segfault on rc_avpair_add.
+	 * debugging on radiuslib-ng show that the mem isn't allocated,
+	 * and some random memory is in the USER-PASSWORD pair.
+	 * So, after initialization, the password is filled with the correct values
+	 */
+	data.send_pairs = NULL;
+	data.receive_pairs = NULL;
+
 	service = PW_AUTHENTICATE_ONLY;
 
 	memset (&data, 0, sizeof(data));
