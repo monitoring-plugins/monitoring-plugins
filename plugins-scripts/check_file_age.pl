@@ -57,7 +57,7 @@ GetOptions(
 	"C=s" => \$opt_C, "critical-size=s" => \$opt_C);
 
 if ($opt_V) {
-	print_revision($PROGNAME, '2.2.22.g0d73b');
+	print_revision($PROGNAME, '@NP_VERSION@');
 	exit $ERRORS{'UNKNOWN'};
 }
 
@@ -152,9 +152,9 @@ sub print_help () {
 	print "  If any of the warning and critical arguments are in range syntax (not just bare numbers)\n";
 	print "  then all warning and critical arguments will be interpreted as ranges.\n";
 	print "  To use range processing the perl module Monitoring::Plugin must be installed\n";
-	print "  For range syntax see https://nagios-plugins.org/doc/guidelines.html#THRESHOLDFORMAT\n";
+	print "  For range syntax see https://www.monitoring-plugins.org/doc/guidelines.html#THRESHOLDFORMAT\n";
 	print "  It is strongly recommended when using range syntax that all four of -w, -W, -c and -C are specified\n";
-	print "  otherwise it is unlikely that the size test will be doint wat is desired\n";
+	print "  otherwise it is unlikely that the size test will be doing what is desired\n";
 	print "\n";
 	support();
 }
