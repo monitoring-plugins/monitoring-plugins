@@ -37,6 +37,8 @@ const char *progname = "check_curl";
 const char *copyright = "2006-2017";
 const char *email = "devel@monitoring-plugins.org";
 
+#include <ctype.h>
+
 #include "common.h"
 #include "utils.h"
 
@@ -46,6 +48,8 @@ const char *email = "devel@monitoring-plugins.org";
 
 #include "curl/curl.h"
 #include "curl/easy.h"
+
+#include "picohttpparser.h"
 
 #define MAKE_LIBCURL_VERSION(major, minor, patch) ((major)*0x10000 + (minor)*0x100 + (patch))
 
@@ -73,7 +77,7 @@ typedef struct {
   int http_code;    /* HTTP return code as in RFC 2145 */
   int http_subcode; /* Microsoft IIS extension, HTTP subcodes, see
                      * http://support.microsoft.com/kb/318380/en-us */
-  char *msg;        /* the human readable message */
+  const char *msg;  /* the human readable message */
   char *first_line; /* a copy of the first line */
 } curlhelp_statusline;
 
@@ -142,6 +146,7 @@ char *client_privkey = NULL;
 char *ca_cert = NULL;
 X509 *cert = NULL;
 int no_body = FALSE;
+int maximum_age = -1;
 int address_family = AF_UNSPEC;
 
 int process_arguments (int, char**);
@@ -156,6 +161,9 @@ void curlhelp_freebuffer (curlhelp_curlbuf*);
 int curlhelp_parse_statusline (const char*, curlhelp_statusline *);
 void curlhelp_free_statusline (curlhelp_statusline *);
 char *perfd_time_ssl (double microsec);
+char *get_header_value (const struct phr_header* headers, const size_t nof_headers, const char* header);
+static time_t parse_time_string (const char *string);
+int check_document_dates (const curlhelp_curlbuf *, char (*msg)[DEFAULT_BUFFER_SIZE]);
 
 void remove_newlines (char *);
 void test_file (char *);
@@ -391,7 +399,7 @@ check_http (void)
   /* Curl errors, result in critical Nagios state */
   if (res != CURLE_OK) {
     remove_newlines (errbuf);
-    snprintf (msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host on port %d: cURL returned %d - %s\n"),
+    snprintf (msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host on port %d: cURL returned %d - %s"),
       server_port, res, curl_easy_strerror(res));
     die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
   }
@@ -504,6 +512,10 @@ check_http (void)
     die (STATE_CRITICAL, _("HTTP CRITICAL HTTP/%d.%d %d %s - different HTTP codes (cUrl has %ld)\n"),
       status_line.http_major, status_line.http_minor,
       status_line.http_code, status_line.msg, code);
+  }
+
+  if (maximum_age >= 0) {
+    result = max_state_alt(check_document_dates(&header_buf, &msg), result);
   }
 
   /* Page and Header content checks go here */
@@ -638,6 +650,7 @@ process_arguments (int argc, char **argv)
     {"useragent", required_argument, 0, 'A'},
     {"header", required_argument, 0, 'k'},
     {"no-body", no_argument, 0, 'N'},
+    {"max-age", required_argument, 0, 'M'},
     {"content-type", required_argument, 0, 'T'},
     {"pagesize", required_argument, 0, 'm'},
     {"invert-regex", no_argument, NULL, INVERT_REGEX},
@@ -665,7 +678,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:p:d:e:s:R:r:u:f:C:J:K:S::m:NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:p:d:e:s:R:r:u:f:C:J:K:S::m:M:NE", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
       break;
 
@@ -962,6 +975,26 @@ process_arguments (int argc, char **argv)
     case 'N': /* no-body */
       no_body = TRUE;
       break;
+    case 'M': /* max-age */
+    {
+      int L = strlen(optarg);
+      if (L && optarg[L-1] == 'm')
+        maximum_age = atoi (optarg) * 60;
+      else if (L && optarg[L-1] == 'h')
+        maximum_age = atoi (optarg) * 60 * 60;
+      else if (L && optarg[L-1] == 'd')
+        maximum_age = atoi (optarg) * 60 * 60 * 24;
+      else if (L && (optarg[L-1] == 's' ||
+                     isdigit (optarg[L-1])))
+        maximum_age = atoi (optarg);
+      else {
+        fprintf (stderr, "unparsable max-age: %s\n", optarg);
+        exit (STATE_WARNING);
+      }
+      if (verbose >= 2)
+        printf ("* Maximal age of document set to %d seconds\n", maximum_age);
+    }
+    break;
     case 'E': /* show extended perfdata */
       show_extended_perfdata = TRUE;
       break;
@@ -1090,6 +1123,9 @@ print_help (void)
   printf (" %s\n", "-N, --no-body");
   printf ("    %s\n", _("Don't wait for document body: stop reading after headers."));
   printf ("    %s\n", _("(Note that this still does an HTTP GET or POST, not a HEAD.)"));
+  printf (" %s\n", "-M, --max-age=SECONDS");
+  printf ("    %s\n", _("Warn if document is more than SECONDS old. the number can also be of"));
+  printf ("    %s\n", _("the form \"10m\" for minutes, \"10h\" for hours, or \"10d\" for days."));
   printf (" %s\n", "-T, --content-type=STRING");
   printf ("    %s\n", _("specify Content-Type header media type when POSTing\n"));
   printf (" %s\n", "-l, --linespan");
@@ -1181,7 +1217,7 @@ print_usage (void)
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-E] [-a auth]\n");
   printf ("       [-f <ok|warning|critcal|follow>]\n");
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
-  printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N]\n");
+  printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
   printf ("       [-T <content-type>] [-j method]\n", progname);
   printf ("\n");
@@ -1351,7 +1387,164 @@ remove_newlines (char *s)
       *p = ' ';
 }
 
-char *perfd_time_ssl (double elapsed_time_ssl)
+char *
+perfd_time_ssl (double elapsed_time_ssl)
 {
   return fperfdata ("time_ssl", elapsed_time_ssl, "s", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);
+}
+
+char *
+get_header_value (const struct phr_header* headers, const size_t nof_headers, const char* header)
+{
+  for( int i = 0; i < nof_headers; i++ ) {
+    if( strncasecmp( header, headers[i].name, max( headers[i].name_len, 4 ) ) == 0 ) {
+      return strndup( headers[i].value, headers[i].value_len );
+    }
+  }
+  return NULL;
+}
+
+static time_t
+parse_time_string (const char *string)
+{
+  struct tm tm;
+  time_t t;
+  memset (&tm, 0, sizeof(tm));
+
+  /* Like this: Tue, 25 Dec 2001 02:59:03 GMT */
+
+  if (isupper (string[0])  &&  /* Tue */
+    islower (string[1])  &&
+    islower (string[2])  &&
+    ',' ==   string[3]   &&
+    ' ' ==   string[4]   &&
+    (isdigit(string[5]) || string[5] == ' ') &&   /* 25 */
+    isdigit (string[6])  &&
+    ' ' ==   string[7]   &&
+    isupper (string[8])  &&  /* Dec */
+    islower (string[9])  &&
+    islower (string[10]) &&
+    ' ' ==   string[11]  &&
+    isdigit (string[12]) &&  /* 2001 */
+    isdigit (string[13]) &&
+    isdigit (string[14]) &&
+    isdigit (string[15]) &&
+    ' ' ==   string[16]  &&
+    isdigit (string[17]) &&  /* 02: */
+    isdigit (string[18]) &&
+    ':' ==   string[19]  &&
+    isdigit (string[20]) &&  /* 59: */
+    isdigit (string[21]) &&
+    ':' ==   string[22]  &&
+    isdigit (string[23]) &&  /* 03 */
+    isdigit (string[24]) &&
+    ' ' ==   string[25]  &&
+    'G' ==   string[26]  &&  /* GMT */
+    'M' ==   string[27]  &&  /* GMT */
+    'T' ==   string[28]) {
+
+    tm.tm_sec  = 10 * (string[23]-'0') + (string[24]-'0');
+    tm.tm_min  = 10 * (string[20]-'0') + (string[21]-'0');
+    tm.tm_hour = 10 * (string[17]-'0') + (string[18]-'0');
+    tm.tm_mday = 10 * (string[5] == ' ' ? 0 : string[5]-'0') + (string[6]-'0');
+    tm.tm_mon = (!strncmp (string+8, "Jan", 3) ? 0 :
+      !strncmp (string+8, "Feb", 3) ? 1 :
+      !strncmp (string+8, "Mar", 3) ? 2 :
+      !strncmp (string+8, "Apr", 3) ? 3 :
+      !strncmp (string+8, "May", 3) ? 4 :
+      !strncmp (string+8, "Jun", 3) ? 5 :
+      !strncmp (string+8, "Jul", 3) ? 6 :
+      !strncmp (string+8, "Aug", 3) ? 7 :
+      !strncmp (string+8, "Sep", 3) ? 8 :
+      !strncmp (string+8, "Oct", 3) ? 9 :
+      !strncmp (string+8, "Nov", 3) ? 10 :
+      !strncmp (string+8, "Dec", 3) ? 11 :
+      -1);
+    tm.tm_year = ((1000 * (string[12]-'0') +
+      100 * (string[13]-'0') +
+      10 * (string[14]-'0') +
+      (string[15]-'0'))
+      - 1900);
+
+    tm.tm_isdst = 0;  /* GMT is never in DST, right? */
+
+    if (tm.tm_mon < 0 || tm.tm_mday < 1 || tm.tm_mday > 31)
+      return 0;
+
+    /*
+    This is actually wrong: we need to subtract the local timezone
+    offset from GMT from this value.  But, that's ok in this usage,
+    because we only comparing these two GMT dates against each other,
+    so it doesn't matter what time zone we parse them in.
+    */
+
+    t = mktime (&tm);
+    if (t == (time_t) -1) t = 0;
+
+    if (verbose) {
+      const char *s = string;
+      while (*s && *s != '\r' && *s != '\n')
+      fputc (*s++, stdout);
+      printf (" ==> %lu\n", (unsigned long) t);
+    }
+
+    return t;
+
+  } else {
+    return 0;
+  }
+}
+
+int 
+check_document_dates (const curlhelp_curlbuf *header_buf, char (*msg)[DEFAULT_BUFFER_SIZE])
+{
+  char *server_date = NULL;
+  char *document_date = NULL;
+  int date_result = STATE_OK;
+  curlhelp_statusline status_line;
+  struct phr_header headers[255];
+  size_t nof_headers = 255;
+  size_t msglen;
+    
+  int res = phr_parse_response (header_buf->buf, header_buf->buflen,
+    &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
+    headers, &nof_headers, 0);
+  
+  server_date = get_header_value (headers, nof_headers, "date");
+  document_date = get_header_value (headers, nof_headers, "last-modified");
+
+  if (!server_date || !*server_date) {
+    snprintf (*msg, DEFAULT_BUFFER_SIZE, _("%sServer date unknown, "), *msg);
+    date_result = max_state_alt(STATE_UNKNOWN, date_result);
+  } else if (!document_date || !*document_date) {
+    snprintf (*msg, DEFAULT_BUFFER_SIZE, _("%sDocument modification date unknown, "), *msg);
+    date_result = max_state_alt(STATE_CRITICAL, date_result);
+  } else {
+    time_t srv_data = parse_time_string (server_date);
+    time_t doc_data = parse_time_string (document_date);
+    if (srv_data <= 0) {
+      snprintf (*msg, DEFAULT_BUFFER_SIZE, _("%sServer date \"%100s\" unparsable, "), *msg, server_date);
+      date_result = max_state_alt(STATE_CRITICAL, date_result);
+    } else if (doc_data <= 0) {
+      snprintf (*msg, DEFAULT_BUFFER_SIZE, _("%sDocument date \"%100s\" unparsable, "), *msg, document_date);
+      date_result = max_state_alt(STATE_CRITICAL, date_result);
+    } else if (doc_data > srv_data + 30) {
+      snprintf (*msg, DEFAULT_BUFFER_SIZE, _("%sDocument is %d seconds in the future, "), *msg, (int)doc_data - (int)srv_data);
+      date_result = max_state_alt(STATE_CRITICAL, date_result);
+    } else if (doc_data < srv_data - maximum_age) {
+      int n = (srv_data - doc_data);
+      if (n > (60 * 60 * 24 * 2)) {
+        snprintf (*msg, DEFAULT_BUFFER_SIZE, _("%sLast modified %.1f days ago, "), *msg, ((float) n) / (60 * 60 * 24));
+        date_result = max_state_alt(STATE_CRITICAL, date_result);
+      } else {
+        snprintf (*msg, DEFAULT_BUFFER_SIZE, _("%sLast modified %d:%02d:%02d ago, "), *msg, n / (60 * 60), (n / 60) % 60, n % 60);
+        date_result = max_state_alt(STATE_CRITICAL, date_result);
+      }
+    }
+  }
+  
+  if (server_date) free (server_date);
+  if (document_date) free (document_date);
+
+  return date_result;
 }

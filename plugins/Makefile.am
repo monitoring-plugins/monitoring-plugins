@@ -44,10 +44,12 @@ EXTRA_DIST = t tests
 
 PLUGINHDRS = common.h
 
-noinst_LIBRARIES = libnpcommon.a
+noinst_LIBRARIES = libnpcommon.a libpicohttpparser.a
 
 libnpcommon_a_SOURCES = utils.c netutils.c sslutils.c runcmd.c	\
 	popen.c utils.h netutils.h popen.h common.h runcmd.c runcmd.h
+
+libpicohttpparser_a_SOURCES = picohttpparser.c
 
 BASEOBJS = libnpcommon.a ../lib/libmonitoringplug.a ../gl/libgnu.a
 NETOBJS = $(BASEOBJS) $(EXTRA_NETOBLS)
@@ -71,7 +73,7 @@ check_apt_LDADD = $(BASEOBJS)
 check_cluster_LDADD = $(BASEOBJS)
 check_curl_CFLAGS = $(AM_CFLAGS) $(LIBCURLCFLAGS)
 check_curl_CPPFLAGS = $(AM_CPPFLAGS) $(LIBCURLINCLUDE)
-check_curl_LDADD = $(NETLIBS) $(LIBCURLLIBS) $(SSLOBJS)
+check_curl_LDADD = $(NETLIBS) $(LIBCURLLIBS) $(SSLOBJS) libpicohttpparser.a
 check_dbi_LDADD = $(NETLIBS) $(DBILIBS)
 check_dig_LDADD = $(NETLIBS)
 check_disk_LDADD = $(BASEOBJS)
