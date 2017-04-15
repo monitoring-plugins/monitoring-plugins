@@ -99,7 +99,7 @@ void print_singleline_exit (int service_state, const char *fmt, ...) __attribute
 /*
  * Helper functions for standard output functions
  */
-char *service_name(void);
+const char *service_name(void);
 const char *state_text (int);
 char *strrev (const char *str);
 char *strupper (const char *str);
