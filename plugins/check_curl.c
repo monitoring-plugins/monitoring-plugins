@@ -1396,7 +1396,8 @@ perfd_time_ssl (double elapsed_time_ssl)
 char *
 get_header_value (const struct phr_header* headers, const size_t nof_headers, const char* header)
 {
-  for( int i = 0; i < nof_headers; i++ ) {
+  int i;
+  for( i = 0; i < nof_headers; i++ ) {
     if( strncasecmp( header, headers[i].name, max( headers[i].name_len, 4 ) ) == 0 ) {
       return strndup( headers[i].value, headers[i].value_len );
     }
