@@ -592,11 +592,13 @@ check_http (void)
     msg[strlen(msg)-3] = '\0';
 
   /* TODO: separate _() msg and status code: die (result, "HTTP %s: %s\n", state_text(result), msg); */
-  die (result, "HTTP %s: HTTP/%d.%d %d %s%s%s - %d bytes in %.3f second response time |%s\n",
+  die (result, "HTTP %s: HTTP/%d.%d %d %s%s%s - %d bytes in %.3f second response time %s|%s\n",
     state_text(result), status_line.http_major, status_line.http_minor,
     status_line.http_code, status_line.msg,
     strlen(msg) > 0 ? " - " : "",
-    msg, page_len, total_time, perfstring);
+    msg, page_len, total_time,
+    (display_html ? "</A>" : ""),
+    perfstring);
 
   /* proper cleanup after die? */
   curlhelp_free_statusline(&status_line);
@@ -634,6 +636,7 @@ process_arguments (int argc, char **argv)
   static struct option longopts[] = {
     STD_LONG_OPTS,
     {"link", no_argument, 0, 'L'},
+    {"nohtml", no_argument, 0, 'n'},
     {"ssl", optional_argument, 0, 'S'},
     {"sni", no_argument, 0, SNI_OPTION},
     {"post", required_argument, 0, 'P'},
@@ -685,7 +688,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:p:d:e:s:R:r:u:f:C:J:K:LS::m:M:NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:p:d:e:s:R:r:u:f:C:J:K:nLS::m:M:NE", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
       break;
 
@@ -771,6 +774,9 @@ process_arguments (int argc, char **argv)
       break;
     case 'L': /* show html link */
       display_html = TRUE;
+      break;
+    case 'n': /* do not show html link */
+      display_html = FALSE;
       break;
     case 'C': /* Check SSL cert validity */
 #ifdef LIBCURL_FEATURE_SSL
