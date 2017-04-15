@@ -1,30 +1,30 @@
 /*****************************************************************************
-* 
+*
 * Monitoring Plugins network utilities
-* 
+*
 * License: GPL
 * Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
 * Copyright (c) 2003-2008 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains commons functions used in many of the plugins.
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 #include "common.h"
@@ -46,11 +46,9 @@ void
 socket_timeout_alarm_handler (int sig)
 {
 	if (sig == SIGALRM)
-		printf (_("%s - Socket timeout after %d seconds\n"), state_text(socket_timeout_state),  socket_timeout);
+		print_singleline_exit (socket_timeout_state, _("Socket timeout after %d seconds"), socket_timeout);
 	else
-		printf (_("%s - Abnormal timeout after %d seconds\n"), state_text(socket_timeout_state), socket_timeout);
-
-	exit (socket_timeout_state);
+		print_singleline_exit (socket_timeout_state, _("Abnormal timeout after %d seconds"), socket_timeout);
 }
 
 
@@ -76,9 +74,9 @@ process_tcp_request2 (const char *server_address, int server_port,
 
 	send_result = send (sd, send_buffer, strlen (send_buffer), 0);
 	if (send_result<0 || (size_t)send_result!=strlen(send_buffer)) {
-		printf ("%s\n", _("Send failed"));
-		result = STATE_WARNING;
-	}
+		print_singleline (STATE_WARNING, _("Send failed"));
+                result = STATE_WARNING;
+        }
 
 	while (1) {
 		/* wait up to the number of seconds for socket timeout
@@ -93,8 +91,8 @@ process_tcp_request2 (const char *server_address, int server_port,
 		if (!FD_ISSET (sd, &readfds)) {	/* it hasn't */
 			if (!recv_length) {
 				strcpy (recv_buffer, "");
-				printf ("%s\n", _("No data was received from host!"));
-				result = STATE_WARNING;
+				print_singleline (STATE_WARNING, _("No data was received from host!"));
+                                result = STATE_WARNING;
 			}
 			else {										/* this one failed, but previous ones worked */
 				recv_buffer[recv_length] = 0;
@@ -196,7 +194,6 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 		result = getaddrinfo (host, port_str, &hints, &res);
 
 		if (result != 0) {
-			printf ("%s\n", gai_strerror (result));
 			return STATE_UNKNOWN;
 		}
 
@@ -206,9 +203,8 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 			*sd = socket (r->ai_family, socktype, r->ai_protocol);
 
 			if (*sd < 0) {
-				printf ("%s\n", _("Socket creation failed"));
 				freeaddrinfo (r);
-				return STATE_UNKNOWN;
+				return print_singleline_return (STATE_UNKNOWN, _("Socket creation failed"));
 			}
 
 			/* attempt to open a connection */
@@ -234,17 +230,16 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 	}
 	/* else the hostname is interpreted as a path to a unix socket */
 	else {
-		if(strlen(host_name) >= UNIX_PATH_MAX){
-			die(STATE_UNKNOWN, _("Supplied path too long unix domain socket"));
-		}
+		if(strlen(host_name) >= UNIX_PATH_MAX)
+			print_singleline_exit (STATE_UNKNOWN, _("Supplied path too long unix domain socket"));
 		memset(&su, 0, sizeof(su));
 		su.sun_family = AF_UNIX;
 		strncpy(su.sun_path, host_name, UNIX_PATH_MAX);
 		*sd = socket(PF_UNIX, SOCK_STREAM, 0);
-		if(*sd < 0){
-			die(STATE_UNKNOWN, _("Socket creation failed"));
-		}
-		result = connect(*sd, (struct sockaddr *)&su, sizeof(su));
+		if(*sd < 0)
+                        print_singleline_exit (STATE_UNKNOWN, _("Socket creation failed"));
+
+                result = connect(*sd, (struct sockaddr *)&su, sizeof(su));
 		if (result < 0 && errno == ECONNREFUSED)
 			was_refused = TRUE;
 	}
@@ -256,11 +251,12 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 		case STATE_OK:
 		case STATE_WARNING:  /* user wants WARN or OK on refusal, or... */
 		case STATE_CRITICAL: /* user did not set econn_refuse_state, or wanted critical */
+                    /* Information is only needed for debug purposes
 			if (is_socket)
 				printf("connect to file socket %s: %s\n", host_name, strerror(errno));
 			else
 				printf("connect to address %s and port %d: %s\n",
-				       host_name, port, strerror(errno));
+				       host_name, port, strerror(errno)); */
 			return STATE_CRITICAL;
 			break;
 		default: /* it's a logic error if we do not end up in STATE_(OK|WARNING|CRITICAL) */
@@ -269,11 +265,12 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 		}
 	}
 	else {
+            /* Information is only needed for debug purposes
 		if (is_socket)
 			printf("connect to file socket %s: %s\n", host_name, strerror(errno));
 		else
-			printf("connect to address %s and port %d: %s\n",
-			       host_name, port, strerror(errno));
+			printf("1 connect to address %s and port %d: %s\n",
+			       host_name, port, strerror(errno)); */
 		return STATE_CRITICAL;
 	}
 }
@@ -289,8 +286,8 @@ send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int
 
 	send_result = send (sd, send_buffer, strlen (send_buffer), 0);
 	if (send_result<0 || (size_t)send_result!=strlen(send_buffer)) {
-		printf ("%s\n", _("Send failed"));
 		result = STATE_WARNING;
+		print_singleline (result, _("Send failed"));
 	}
 
 	/* wait up to the number of seconds for socket timeout minus one
@@ -304,8 +301,8 @@ send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int
 	/* make sure some data has arrived */
 	if (!FD_ISSET (sd, &readfds)) {
 		strcpy (recv_buffer, "");
-		printf ("%s\n", _("No data was received from host!"));
-		result = STATE_WARNING;
+                result = STATE_WARNING;
+		print_singleline (result, _("No data was received from host!"));
 	}
 
 	else {
@@ -313,7 +310,7 @@ send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int
 		if (recv_result == -1) {
 			strcpy (recv_buffer, "");
 			if (proto != IPPROTO_TCP)
-				printf ("%s\n", _("Receive failed"));
+				print_singleline (STATE_WARNING, _("Receive failed"));
 			result = STATE_WARNING;
 		}
 		else
@@ -322,6 +319,7 @@ send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int
 		/* die returned string */
 		recv_buffer[recv_size - 1] = 0;
 	}
+
 	return result;
 }
 
@@ -339,7 +337,7 @@ void
 host_or_die(const char *str)
 {
 	if(!str || (!is_addr(str) && !is_hostname(str)))
-		usage_va(_("Invalid hostname/address - %s"), str);
+		print_singleline_exit (STATE_UNKNOWN, _("Invalid hostname/address - %s"), str);
 }
 
 int
