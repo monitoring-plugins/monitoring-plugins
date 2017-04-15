@@ -136,6 +136,7 @@ char string_expect[MAX_INPUT_BUFFER] = "";
 char server_expect[MAX_INPUT_BUFFER] = HTTP_EXPECT;
 int server_expect_yn = 0;
 char user_auth[MAX_INPUT_BUFFER] = "";
+int display_html = FALSE;
 int onredirect = STATE_OK;
 int use_ssl = FALSE;
 int use_sni = TRUE;
@@ -187,6 +188,11 @@ main (int argc, char **argv)
   /* parse arguments */
   if (process_arguments (argc, argv) == ERROR)
     usage4 (_("Could not parse arguments"));
+
+  if (display_html == TRUE)
+    printf ("<A HREF=\"%s://%s:%d%s\" target=\"_blank\">",
+      use_ssl ? "https" : "http", host_name ? host_name : server_address,
+      server_port, server_url);
 
   result = check_http ();
   return result;
@@ -627,6 +633,7 @@ process_arguments (int argc, char **argv)
   int option = 0;
   static struct option longopts[] = {
     STD_LONG_OPTS,
+    {"link", no_argument, 0, 'L'},
     {"ssl", optional_argument, 0, 'S'},
     {"sni", no_argument, 0, SNI_OPTION},
     {"post", required_argument, 0, 'P'},
@@ -678,7 +685,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:p:d:e:s:R:r:u:f:C:J:K:S::m:M:NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:p:d:e:s:R:r:u:f:C:J:K:LS::m:M:NE", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
       break;
 
@@ -761,6 +768,9 @@ process_arguments (int argc, char **argv)
       break;
     case 'k': /* Additional headers */
       header_list = curl_slist_append(header_list, optarg);
+      break;
+    case 'L': /* show html link */
+      display_html = TRUE;
       break;
     case 'C': /* Check SSL cert validity */
 #ifdef LIBCURL_FEATURE_SSL
@@ -1144,6 +1154,8 @@ print_help (void)
   printf ("    %s\n", _("Any other tags to be sent in http header. Use multiple times for additional headers"));
   printf (" %s\n", "-E, --extended-perfdata");
   printf ("    %s\n", _("Print additional performance data"));
+  printf (" %s\n", "-L, --link");
+  printf ("    %s\n", _("Wrap output in HTML link (obsoleted by urlize)"));
   printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow>");
   printf ("    %s\n", _("How to handle redirected pages."));
   printf (" %s\n", "-m, --pagesize=INTEGER<:INTEGER>");
@@ -1214,7 +1226,7 @@ print_usage (void)
   printf ("%s\n", _("Usage:"));
   printf (" %s -H <vhost> | -I <IP-address> [-u <uri>] [-p <port>]\n",progname);
   printf ("       [-J <client certificate file>] [-K <private key>] [--ca-cert <CA certificate file>]\n");
-  printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-E] [-a auth]\n");
+  printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L] [-E] [-a auth]\n");
   printf ("       [-f <ok|warning|critcal|follow>]\n");
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
