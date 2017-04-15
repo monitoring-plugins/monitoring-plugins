@@ -24,22 +24,20 @@ suite of plugins. */
 #define np_extra_opts(acptr,av,pr) av
 #endif
 
-/* Standardize version information, termination */
+/* Handle timeouts */
+extern unsigned int timeout_state;
+extern unsigned int timeout_interval;
+extern time_t start_time, end_time;
 
+
+/* Standardize version information, termination */
 void support (void);
 void print_revision (const char *, const char *);
 
-/* Handle timeouts */
-
-extern unsigned int timeout_state;
-extern unsigned int timeout_interval;
-
 RETSIGTYPE timeout_alarm_handler (int);
 
-extern time_t start_time, end_time;
 
 /* Test input types */
-
 int is_integer (char *);
 int is_intpos (char *);
 int is_intneg (char *);
@@ -69,8 +67,8 @@ int gettimeofday(struct timeval *, struct timezone *);
 double delta_time (struct timeval tv);
 long deltime (struct timeval tv);
 
-/* Handle strings safely */
 
+/* Handle strings safely */
 void strip (char *);
 char *strscpy (char *, const char *);
 char *strnl (char *);
@@ -89,25 +87,42 @@ void usage4(const char *) __attribute__((noreturn));
 void usage5(void) __attribute__((noreturn));
 void usage_va(const char *fmt, ...) __attribute__((noreturn));
 
+
+/*
+ * Standard output function
+ */
+void print_singleline (int service_state, const char *fmt, ...);
+int print_singleline_return (int service_state, const char *fmt, ...);
+void print_singleline_exit (int service_state, const char *fmt, ...) __attribute__((noreturn));
+
+
+/*
+ * Helper functions for standard output functions
+ */
+char *service_name(void);
 const char *state_text (int);
+char *strrev (const char *str);
+char *strupper (const char *str);
 
 #define max(a,b) (((a)>(b))?(a):(b))
 #define min(a,b) (((a)<(b))?(a):(b))
 
+/******************************************************************************
+ *
+ * Print perfdata in a standard format
+ *
+ ******************************************************************************/
 char *perfdata (const char *, long int, const char *, int, long int,
                 int, long int, int, long int, int, long int);
-
 char *fperfdata (const char *, double, const char *, int, double,
                  int, double, int, double, int, double);
-
 char *sperfdata (const char *, double, const char *, char *, char *,
                  int, double, int, double);
-
 char *sperfdata_int (const char *, int, const char *, char *, char *,
                      int, int, int, int);
 
-/* The idea here is that, although not every plugin will use all of these, 
-   most will or should.  Therefore, for consistency, these very common 
+/* The idea here is that, although not every plugin will use all of these,
+   most will or should.  Therefore, for consistency, these very common
    options should have only these meanings throughout the overall suite */
 
 #define STD_LONG_OPTS \

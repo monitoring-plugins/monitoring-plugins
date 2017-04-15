@@ -1,30 +1,31 @@
 /*****************************************************************************
-* 
+*
 * Library of useful functions for plugins
-* 
+*
 * License: GPL
 * Copyright (c) 2000 Karl DeBisschop (karl@debisschop.net)
 * Copyright (c) 2002-2007 Monitoring Plugins Development Team
-* 
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 #include "common.h"
 #include "utils.h"
 #include "utils_base.h"
+#include <ctype.h>
 #include <stdarg.h>
 #include <limits.h>
 
@@ -36,10 +37,373 @@ extern const char *progname;
 #define STRLEN 64
 #define TXTBLK 128
 
+/* Handle timeouts */
 unsigned int timeout_state = STATE_CRITICAL;
 unsigned int timeout_interval = DEFAULT_SOCKET_TIMEOUT;
-
 time_t start_time, end_time;
+
+
+/* Standardize version information, termination */
+void
+print_revision (const char *command_name, const char *revision)
+{
+	printf ("%s v%s (%s %s)\n",
+	         command_name, revision, PACKAGE, VERSION);
+}
+
+void
+timeout_alarm_handler (int signo)
+{
+	if (signo == SIGALRM) {
+		printf (_("%s - Plugin timed out after %d seconds\n"),
+						state_text(timeout_state), timeout_interval);
+		exit (timeout_state);
+	}
+}
+
+
+/* Test input types */
+int
+is_integer (char *number)
+{
+	long int n;
+
+	if (!number || (strspn (number, "-0123456789 ") != strlen (number)))
+		return FALSE;
+
+	n = strtol (number, NULL, 10);
+
+	if (errno != ERANGE && n >= INT_MIN && n <= INT_MAX)
+		return TRUE;
+	else
+		return FALSE;
+}
+int
+is_intpos (char *number)
+{
+	if (is_integer (number) && atoi (number) > 0)
+		return TRUE;
+	else
+		return FALSE;
+}
+int
+is_intneg (char *number)
+{
+	if (is_integer (number) && atoi (number) < 0)
+		return TRUE;
+	else
+		return FALSE;
+}
+int
+is_intnonneg (char *number)
+{
+	if (is_integer (number) && atoi (number) >= 0)
+		return TRUE;
+	else
+		return FALSE;
+}
+int
+is_intpercent (char *number)
+{
+	int i;
+	if (is_integer (number) && (i = atoi (number)) >= 0 && i <= 100)
+		return TRUE;
+	else
+		return FALSE;
+}
+
+
+int
+is_numeric (char *number)
+{
+	char tmp[1];
+	float x;
+
+	if (!number)
+		return FALSE;
+	else if (sscanf (number, "%f%c", &x, tmp) == 1)
+		return TRUE;
+	else
+		return FALSE;
+}
+int
+is_positive (char *number)
+{
+	if (is_numeric (number) && atof (number) > 0.0)
+		return TRUE;
+	else
+		return FALSE;
+}
+int
+is_negative (char *number)
+{
+	if (is_numeric (number) && atof (number) < 0.0)
+		return TRUE;
+	else
+		return FALSE;
+}
+int
+is_nonnegative (char *number)
+{
+	if (is_numeric (number) && atof (number) >= 0.0)
+		return TRUE;
+	else
+		return FALSE;
+}
+int
+is_percentage (char *number)
+{
+	int x;
+	if (is_numeric (number) && (x = atof (number)) >= 0 && x <= 100)
+		return TRUE;
+	else
+		return FALSE;
+}
+
+int
+is_option (char *str)
+{
+	if (!str)
+		return FALSE;
+	else if (strspn (str, "-") == 1 || strspn (str, "-") == 2)
+		return TRUE;
+	else
+		return FALSE;
+}
+
+
+#ifdef NEED_GETTIMEOFDAY
+int
+gettimeofday (struct timeval *tv, struct timezone *tz)
+{
+	tv->tv_usec = 0;
+	tv->tv_sec = (long) time ((time_t) 0);
+}
+#endif
+
+double
+delta_time (struct timeval tv)
+{
+	struct timeval now;
+
+	gettimeofday (&now, NULL);
+	return ((double)(now.tv_sec - tv.tv_sec) + (double)(now.tv_usec - tv.tv_usec) / (double)1000000);
+}
+long
+deltime (struct timeval tv)
+{
+	struct timeval now;
+	gettimeofday (&now, NULL);
+	return (now.tv_sec - tv.tv_sec)*1000000 + now.tv_usec - tv.tv_usec;
+}
+
+
+/* Handle strings safely */
+void
+strip (char *buffer)
+{
+	size_t x;
+	int i;
+
+	for (x = strlen (buffer); x >= 1; x--) {
+		i = x - 1;
+		if (buffer[i] == ' ' ||
+				buffer[i] == '\r' || buffer[i] == '\n' || buffer[i] == '\t')
+			buffer[i] = '\0';
+		else
+			break;
+	}
+	return;
+}
+
+/******************************************************************************
+ *
+ * Copies one string to another. Any previously existing data in
+ * the destination string is lost.
+ *
+ * Example:
+ *
+ * char *str=NULL;
+ * str = strscpy("This is a line of text with no trailing newline");
+ *
+ *****************************************************************************/
+char *
+strscpy (char *dest, const char *src)
+{
+	if (src == NULL)
+		return NULL;
+
+	xasprintf (&dest, "%s", src);
+
+	return dest;
+}
+
+/******************************************************************************
+ *
+ * Returns a pointer to the next line of a multiline string buffer
+ *
+ * Given a pointer string, find the text following the next sequence
+ * of \r and \n characters. This has the effect of skipping blank
+ * lines as well
+ *
+ * Example:
+ *
+ * Given text as follows:
+ *
+ * ==============================
+ * This
+ * is
+ * a
+ *
+ * multiline string buffer
+ * ==============================
+ *
+ * int i=0;
+ * char *str=NULL;
+ * char *ptr=NULL;
+ * str = strscpy(str,"This\nis\r\na\n\nmultiline string buffer\n");
+ * ptr = str;
+ * while (ptr) {
+ *   printf("%d %s",i++,firstword(ptr));
+ *   ptr = strnl(ptr);
+ * }
+ *
+ * Produces the following:
+ *
+ * 1 This
+ * 2 is
+ * 3 a
+ * 4 multiline
+ *
+ * NOTE: The 'firstword()' function is conceptual only and does not
+ *       exist in this package.
+ *
+ * NOTE: Although the second 'ptr' variable is not strictly needed in
+ *       this example, it is good practice with these utilities. Once
+ *       the * pointer is advance in this manner, it may no longer be
+ *       handled with * realloc(). So at the end of the code fragment
+ *       above, * strscpy(str,"foo") work perfectly fine, but
+ *       strscpy(ptr,"foo") will * cause the the program to crash with
+ *       a segmentation fault.
+ *
+ *****************************************************************************/
+char *
+strnl (char *str)
+{
+	size_t len;
+	if (str == NULL)
+		return NULL;
+	str = strpbrk (str, "\r\n");
+	if (str == NULL)
+		return NULL;
+	len = strspn (str, "\r\n");
+	if (str[len] == '\0')
+		return NULL;
+	str += len;
+	if (strlen (str) == 0)
+		return NULL;
+	return str;
+}
+
+/******************************************************************************
+ *
+ * Like strscpy, except only the portion of the source string up to
+ * the provided delimiter is copied.
+ *
+ * Example:
+ *
+ * str = strpcpy(str,"This is a line of text with no trailing newline","x");
+ * printf("%s\n",str);
+ *
+ * Produces:
+ *
+ *This is a line of te
+ *
+ *****************************************************************************/
+char *
+strpcpy (char *dest, const char *src, const char *str)
+{
+	size_t len;
+
+	if (src)
+		len = strcspn (src, str);
+	else
+		return NULL;
+
+	if (dest == NULL || strlen (dest) < len)
+		dest = realloc (dest, len + 1);
+	if (dest == NULL)
+		die (STATE_UNKNOWN, _("failed realloc in strpcpy\n"));
+
+	strncpy (dest, src, len);
+	dest[len] = '\0';
+
+	return dest;
+}
+
+/******************************************************************************
+ *
+ * Like strscat, except only the portion of the source string up to
+ * the provided delimiter is copied.
+ *
+ * str = strpcpy(str,"This is a line of text with no trailing newline","x");
+ * str = strpcat(str,"This is a line of text with no trailing newline","x");
+ * printf("%s\n",str);
+ *
+ *This is a line of texThis is a line of tex
+ *
+ *****************************************************************************/
+char *
+strpcat (char *dest, const char *src, const char *str)
+{
+	size_t len, l2;
+
+	if (dest)
+		len = strlen (dest);
+	else
+		len = 0;
+
+	if (src) {
+		l2 = strcspn (src, str);
+	}
+	else {
+		return dest;
+	}
+
+	dest = realloc (dest, len + l2 + 1);
+	if (dest == NULL)
+		die (STATE_UNKNOWN, _("failed malloc in strpcat\n"));
+
+	strncpy (dest + len, src, l2);
+	dest[len + l2] = '\0';
+
+	return dest;
+}
+
+/******************************************************************************
+ *
+ * asprintf, but die on failure
+ *
+ ******************************************************************************/
+int
+xvasprintf (char **strp, const char *fmt, va_list ap)
+{
+	int result = vasprintf (strp, fmt, ap);
+	if (result == -1 || *strp == NULL)
+		die (STATE_UNKNOWN, _("failed malloc in xvasprintf\n"));
+	return result;
+}
+int
+xasprintf (char **strp, const char *fmt, ...)
+{
+	va_list ap;
+	int result;
+	va_start (ap, fmt);
+	result = xvasprintf (strp, fmt, ap);
+	va_end (ap);
+	return result;
+}
+
 
 /* **************************************************************************
  * max_state(STATE_x, STATE_y)
@@ -48,7 +412,6 @@ time_t start_time, end_time;
  *
  * Note that numerically the above does not hold
  ****************************************************************************/
-
 int
 max_state (int a, int b)
 {
@@ -75,7 +438,6 @@ max_state (int a, int b)
  * allow setting a default to UNKNOWN. It will instead prioritixe any valid
  * non-OK state.
  ****************************************************************************/
-
 int
 max_state_alt (int a, int b)
 {
@@ -93,14 +455,43 @@ max_state_alt (int a, int b)
 		return max (a, b);
 }
 
-void usage (const char *msg)
+
+void
+usage (const char *msg)
 {
 	printf ("%s\n", msg);
 	print_usage ();
 	exit (STATE_UNKNOWN);
 }
-
-void usage_va (const char *fmt, ...)
+void
+usage2 (const char *msg, const char *arg)
+{
+	printf ("%s: %s - %s\n", progname, msg, arg?arg:"(null)" );
+	print_usage ();
+	exit (STATE_UNKNOWN);
+}
+void
+usage3 (const char *msg, int arg)
+{
+	printf ("%s: %s - %c\n", progname, msg, arg);
+	print_usage();
+	exit (STATE_UNKNOWN);
+}
+void
+usage4 (const char *msg)
+{
+	printf ("%s: %s\n", progname, msg);
+	print_usage();
+	exit (STATE_UNKNOWN);
+}
+void
+usage5 (void)
+{
+	print_usage();
+	exit (STATE_UNKNOWN);
+}
+void
+usage_va (const char *fmt, ...)
 {
 	va_list ap;
 	printf("%s: ", progname);
@@ -111,43 +502,78 @@ void usage_va (const char *fmt, ...)
 	exit (STATE_UNKNOWN);
 }
 
-void usage2(const char *msg, const char *arg)
-{
-	printf ("%s: %s - %s\n", progname, msg, arg?arg:"(null)" );
-	print_usage ();
-	exit (STATE_UNKNOWN);
-}
 
+/*
+ * Standard output function
+ * Format: SERVICE STATUS: Information text
+ */
 void
-usage3 (const char *msg, int arg)
+print_singleline (int service_state, const char *fmt, ...)
 {
-	printf ("%s: %s - %c\n", progname, msg, arg);
-	print_usage();
-	exit (STATE_UNKNOWN);
-}
+	va_list ap;
+	char *str = NULL;
+	int result = 0;
 
+	va_start(ap, fmt);
+	result = xvasprintf (&str, fmt, ap);
+	va_end(ap);
+
+	if (result != -1 && &str != NULL)
+		printf("%s %s: %s\n", service_name(), state_text(service_state), str);
+}
+int
+print_singleline_return (int service_state, const char *fmt, ...)
+{
+	va_list ap;
+	char *str = NULL;
+	int result = 0;
+
+	va_start(ap, fmt);
+	result = xvasprintf (&str, fmt, ap);
+	va_end(ap);
+
+	if (result == -1 || &str == NULL)
+		return (FALSE);
+	else {
+		printf("%s %s: %s\n", service_name(), state_text(service_state), str);
+		return (service_state);
+	}
+}
 void
-usage4 (const char *msg)
+print_singleline_exit (int service_state, const char *fmt, ...)
 {
-	printf ("%s: %s\n", progname, msg);
-	print_usage();
-	exit (STATE_UNKNOWN);
+	va_list ap;
+	char *str = NULL;
+	int result = 0;
+
+	va_start(ap, fmt);
+	result = xvasprintf (&str, fmt, ap);
+	va_end(ap);
+
+	if (result == -1 || &str == NULL)
+		exit (FALSE);
+	else {
+		printf("%s %s: %s\n", service_name(), state_text(service_state), str);
+		exit (service_state);
+	}
 }
 
-void
-usage5 (void)
-{
-	print_usage();
-	exit (STATE_UNKNOWN);
-}
 
-void
-print_revision (const char *command_name, const char *revision)
+/*
+ * Helper functions for standard output functions
+ */
+const char *
+service_name(void)
 {
-	printf ("%s v%s (%s %s)\n",
-	         command_name, revision, PACKAGE, VERSION);
+	/* Prepare service name from progname */
+	char *service_name = NULL;
+	service_name = strscpy(service_name, progname);
+	service_name = strrev((const char *)service_name);
+	service_name = strpcpy(service_name, service_name, "_");
+	service_name = strrev(service_name);
+	service_name = strupper((const char *)service_name);
+        return service_name;
 }
-
 const char *
 state_text (int result)
 {
@@ -164,381 +590,46 @@ state_text (int result)
 		return "UNKNOWN";
 	}
 }
-
-void
-timeout_alarm_handler (int signo)
-{
-	if (signo == SIGALRM) {
-		printf (_("%s - Plugin timed out after %d seconds\n"),
-						state_text(timeout_state), timeout_interval);
-		exit (timeout_state);
-	}
-}
-
-int
-is_numeric (char *number)
-{
-	char tmp[1];
-	float x;
-
-	if (!number)
-		return FALSE;
-	else if (sscanf (number, "%f%c", &x, tmp) == 1)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-int
-is_positive (char *number)
-{
-	if (is_numeric (number) && atof (number) > 0.0)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-int
-is_negative (char *number)
-{
-	if (is_numeric (number) && atof (number) < 0.0)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-int
-is_nonnegative (char *number)
-{
-	if (is_numeric (number) && atof (number) >= 0.0)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-int
-is_percentage (char *number)
-{
-	int x;
-	if (is_numeric (number) && (x = atof (number)) >= 0 && x <= 100)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-int
-is_integer (char *number)
-{
-	long int n;
-
-	if (!number || (strspn (number, "-0123456789 ") != strlen (number)))
-		return FALSE;
-
-	n = strtol (number, NULL, 10);
-
-	if (errno != ERANGE && n >= INT_MIN && n <= INT_MAX)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-int
-is_intpos (char *number)
-{
-	if (is_integer (number) && atoi (number) > 0)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-int
-is_intneg (char *number)
-{
-	if (is_integer (number) && atoi (number) < 0)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-int
-is_intnonneg (char *number)
-{
-	if (is_integer (number) && atoi (number) >= 0)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-int
-is_intpercent (char *number)
-{
-	int i;
-	if (is_integer (number) && (i = atoi (number)) >= 0 && i <= 100)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-int
-is_option (char *str)
-{
-	if (!str)
-		return FALSE;
-	else if (strspn (str, "-") == 1 || strspn (str, "-") == 2)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-#ifdef NEED_GETTIMEOFDAY
-int
-gettimeofday (struct timeval *tv, struct timezone *tz)
-{
-	tv->tv_usec = 0;
-	tv->tv_sec = (long) time ((time_t) 0);
-}
-#endif
-
-
-
-double
-delta_time (struct timeval tv)
-{
-	struct timeval now;
-
-	gettimeofday (&now, NULL);
-	return ((double)(now.tv_sec - tv.tv_sec) + (double)(now.tv_usec - tv.tv_usec) / (double)1000000);
-}
-
-
-
-long
-deltime (struct timeval tv)
-{
-	struct timeval now;
-	gettimeofday (&now, NULL);
-	return (now.tv_sec - tv.tv_sec)*1000000 + now.tv_usec - tv.tv_usec;
-}
-
-
-
-
-void
-strip (char *buffer)
-{
-	size_t x;
-	int i;
-
-	for (x = strlen (buffer); x >= 1; x--) {
-		i = x - 1;
-		if (buffer[i] == ' ' ||
-				buffer[i] == '\r' || buffer[i] == '\n' || buffer[i] == '\t')
-			buffer[i] = '\0';
-		else
-			break;
-	}
-	return;
-}
-
-
-/******************************************************************************
- *
- * Copies one string to another. Any previously existing data in
- * the destination string is lost.
- *
- * Example:
- *
- * char *str=NULL;
- * str = strscpy("This is a line of text with no trailing newline");
- *
- *****************************************************************************/
-
 char *
-strscpy (char *dest, const char *src)
+strrev (const char *string)
 {
-	if (src == NULL)
-		return NULL;
+	char *p1, *p2, *str;
+        str = strscpy(str, string);
 
-	xasprintf (&dest, "%s", src);
+	if (! string || ! *string)
+		return str;
 
-	return dest;
-}
+	for (p1 = str, p2 = str + strlen(str) - 1; p2 > p1; ++p1, --p2)
+	{
+		*p1 ^= *p2;
+		*p2 ^= *p1;
+		*p1 ^= *p2;
+	}
 
-
-
-/******************************************************************************
- *
- * Returns a pointer to the next line of a multiline string buffer
- *
- * Given a pointer string, find the text following the next sequence
- * of \r and \n characters. This has the effect of skipping blank
- * lines as well
- *
- * Example:
- *
- * Given text as follows:
- *
- * ==============================
- * This
- * is
- * a
- * 
- * multiline string buffer
- * ==============================
- *
- * int i=0;
- * char *str=NULL;
- * char *ptr=NULL;
- * str = strscpy(str,"This\nis\r\na\n\nmultiline string buffer\n");
- * ptr = str;
- * while (ptr) {
- *   printf("%d %s",i++,firstword(ptr));
- *   ptr = strnl(ptr);
- * }
- * 
- * Produces the following:
- *
- * 1 This
- * 2 is
- * 3 a
- * 4 multiline
- *
- * NOTE: The 'firstword()' function is conceptual only and does not
- *       exist in this package.
- *
- * NOTE: Although the second 'ptr' variable is not strictly needed in
- *       this example, it is good practice with these utilities. Once
- *       the * pointer is advance in this manner, it may no longer be
- *       handled with * realloc(). So at the end of the code fragment
- *       above, * strscpy(str,"foo") work perfectly fine, but
- *       strscpy(ptr,"foo") will * cause the the program to crash with
- *       a segmentation fault.
- *
- *****************************************************************************/
-
-char *
-strnl (char *str)
-{
-	size_t len;
-	if (str == NULL)
-		return NULL;
-	str = strpbrk (str, "\r\n");
-	if (str == NULL)
-		return NULL;
-	len = strspn (str, "\r\n");
-	if (str[len] == '\0')
-		return NULL;
-	str += len;
-	if (strlen (str) == 0)
-		return NULL;
 	return str;
 }
 
-
-/******************************************************************************
- *
- * Like strscpy, except only the portion of the source string up to
- * the provided delimiter is copied.
- *
- * Example:
- *
- * str = strpcpy(str,"This is a line of text with no trailing newline","x");
- * printf("%s\n",str);
- *
- * Produces:
- *
- *This is a line of te
- *
- *****************************************************************************/
-
 char *
-strpcpy (char *dest, const char *src, const char *str)
+strupper (const char *str)
 {
+	char *dest;
 	size_t len;
 
-	if (src)
-		len = strcspn (src, str);
+	if (str)
+		len = strlen(str);
 	else
 		return NULL;
 
 	if (dest == NULL || strlen (dest) < len)
 		dest = realloc (dest, len + 1);
 	if (dest == NULL)
-		die (STATE_UNKNOWN, _("failed realloc in strpcpy\n"));
+		die (STATE_UNKNOWN, _("failed realloc in strupper\n"));
 
-	strncpy (dest, src, len);
+	for(size_t i=0; i<len; ++i)
+		dest[i] = toupper(str[i]);
+
 	dest[len] = '\0';
-
 	return dest;
-}
-
-
-
-/******************************************************************************
- *
- * Like strscat, except only the portion of the source string up to
- * the provided delimiter is copied.
- *
- * str = strpcpy(str,"This is a line of text with no trailing newline","x");
- * str = strpcat(str,"This is a line of text with no trailing newline","x");
- * printf("%s\n",str);
- * 
- *This is a line of texThis is a line of tex
- *
- *****************************************************************************/
-
-char *
-strpcat (char *dest, const char *src, const char *str)
-{
-	size_t len, l2;
-
-	if (dest)
-		len = strlen (dest);
-	else
-		len = 0;
-
-	if (src) {
-		l2 = strcspn (src, str);
-	}
-	else {
-		return dest;
-	}
-
-	dest = realloc (dest, len + l2 + 1);
-	if (dest == NULL)
-		die (STATE_UNKNOWN, _("failed malloc in strscat\n"));
-
-	strncpy (dest + len, src, l2);
-	dest[len + l2] = '\0';
-
-	return dest;
-}
-
-
-/******************************************************************************
- *
- * asprintf, but die on failure
- *
- ******************************************************************************/
-
-int
-xvasprintf (char **strp, const char *fmt, va_list ap)
-{
-	int result = vasprintf (strp, fmt, ap);
-	if (result == -1 || *strp == NULL)
-		die (STATE_UNKNOWN, _("failed malloc in xvasprintf\n"));
-	return result;
-}
-
-int
-xasprintf (char **strp, const char *fmt, ...)
-{
-	va_list ap;
-	int result;
-	va_start (ap, fmt);
-	result = xvasprintf (strp, fmt, ap);
-	va_end (ap);
-	return result;
 }
 
 /******************************************************************************
@@ -546,25 +637,25 @@ xasprintf (char **strp, const char *fmt, ...)
  * Print perfdata in a standard format
  *
  ******************************************************************************/
-
-char *perfdata (const char *label,
- long int val,
- const char *uom,
- int warnp,
- long int warn,
- int critp,
- long int crit,
- int minp,
- long int minv,
- int maxp,
- long int maxv)
+char *
+perfdata (const char *label,
+    long int val,
+    const char *uom,
+    int warnp,
+    long int warn,
+    int critp,
+    long int crit,
+    int minp,
+    long int minv,
+    int maxp,
+    long int maxv)
 {
 	char *data = NULL;
 
 	if (strpbrk (label, "'= "))
-		xasprintf (&data, "'%s'=%ld%s;", label, val, uom);
+		xasprintf (&data, "|'%s'=%ld%s;", label, val, uom);
 	else
-		xasprintf (&data, "%s=%ld%s;", label, val, uom);
+		xasprintf (&data, "|%s=%ld%s;", label, val, uom);
 
 	if (warnp)
 		xasprintf (&data, "%s%ld;", data, warn);
@@ -584,26 +675,25 @@ char *perfdata (const char *label,
 
 	return data;
 }
-
-
-char *fperfdata (const char *label,
- double val,
- const char *uom,
- int warnp,
- double warn,
- int critp,
- double crit,
- int minp,
- double minv,
- int maxp,
- double maxv)
+char *
+fperfdata (const char *label,
+    double val,
+    const char *uom,
+    int warnp,
+    double warn,
+    int critp,
+    double crit,
+    int minp,
+    double minv,
+    int maxp,
+    double maxv)
 {
 	char *data = NULL;
 
 	if (strpbrk (label, "'= "))
-		xasprintf (&data, "'%s'=", label);
+		xasprintf (&data, "|'%s'=", label);
 	else
-		xasprintf (&data, "%s=", label);
+		xasprintf (&data, "|%s=", label);
 
 	xasprintf (&data, "%s%f", data, val);
 	xasprintf (&data, "%s%s;", data, uom);
@@ -628,22 +718,22 @@ char *fperfdata (const char *label,
 
 	return data;
 }
-
-char *sperfdata (const char *label,
- double val,
- const char *uom,
- char *warn,
- char *crit,
- int minp,
- double minv,
- int maxp,
- double maxv)
+char *
+sperfdata (const char *label,
+    double val,
+    const char *uom,
+    char *warn,
+    char *crit,
+    int minp,
+    double minv,
+    int maxp,
+    double maxv)
 {
 	char *data = NULL;
 	if (strpbrk (label, "'= "))
-		xasprintf (&data, "'%s'=", label);
+		xasprintf (&data, "|'%s'=", label);
 	else
-		xasprintf (&data, "%s=", label);
+		xasprintf (&data, "|%s=", label);
 
 	xasprintf (&data, "%s%f", data, val);
 	xasprintf (&data, "%s%s;", data, uom);
@@ -668,22 +758,22 @@ char *sperfdata (const char *label,
 
 	return data;
 }
-
-char *sperfdata_int (const char *label,
- int val,
- const char *uom,
- char *warn,
- char *crit,
- int minp,
- int minv,
- int maxp,
- int maxv)
+char *
+sperfdata_int (const char *label,
+    int val,
+    const char *uom,
+    char *warn,
+    char *crit,
+    int minp,
+    int minv,
+    int maxp,
+    int maxv)
 {
 	char *data = NULL;
 	if (strpbrk (label, "'= "))
-		xasprintf (&data, "'%s'=", label);
+		xasprintf (&data, "|'%s'=", label);
 	else
-		xasprintf (&data, "%s=", label);
+		xasprintf (&data, "|%s=", label);
 
 	xasprintf (&data, "%s%d", data, val);
 	xasprintf (&data, "%s%s;", data, uom);
