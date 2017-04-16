@@ -67,7 +67,14 @@ typedef struct {
   char *buf;
   size_t buflen;
   size_t bufsize;
-} curlhelp_curlbuf;
+} curlhelp_write_curlbuf;
+
+/* for buffering the data sent in PUT */
+typedef struct {
+  char *buf;
+  size_t buflen;
+  off_t pos;
+} curlhelp_read_curlbuf;
 
 /* for parsing the HTTP status line */
 typedef struct {
@@ -115,9 +122,10 @@ char *http_post_data = NULL;
 char *http_content_type = NULL;
 CURL *curl;
 struct curl_slist *header_list = NULL;
-curlhelp_curlbuf body_buf;
-curlhelp_curlbuf header_buf;
+curlhelp_write_curlbuf body_buf;
+curlhelp_write_curlbuf header_buf;
 curlhelp_statusline status_line;
+curlhelp_read_curlbuf put_buf;
 char http_header[DEFAULT_BUFFER_SIZE];
 long code;
 long socket_timeout = DEFAULT_SOCKET_TIMEOUT;
@@ -155,16 +163,19 @@ int check_http (void);
 void print_help (void);
 void print_usage (void);
 void print_curl_version (void);
-int curlhelp_initbuffer (curlhelp_curlbuf*);
-int curlhelp_buffer_callback (void*, size_t , size_t , void*);
-void curlhelp_freebuffer (curlhelp_curlbuf*);
+int curlhelp_initwritebuffer (curlhelp_write_curlbuf*);
+int curlhelp_buffer_write_callback (void*, size_t , size_t , void*);
+void curlhelp_freewritebuffer (curlhelp_write_curlbuf*);
+int curlhelp_initreadbuffer (curlhelp_read_curlbuf *, const char *, size_t);
+int curlhelp_buffer_read_callback (void *, size_t , size_t , void *);
+void curlhelp_freereadbuffer (curlhelp_read_curlbuf *);
 
 int curlhelp_parse_statusline (const char*, curlhelp_statusline *);
 void curlhelp_free_statusline (curlhelp_statusline *);
 char *perfd_time_ssl (double microsec);
 char *get_header_value (const struct phr_header* headers, const size_t nof_headers, const char* header);
 static time_t parse_time_string (const char *string);
-int check_document_dates (const curlhelp_curlbuf *, char (*msg)[DEFAULT_BUFFER_SIZE]);
+int check_document_dates (const curlhelp_write_curlbuf *, char (*msg)[DEFAULT_BUFFER_SIZE]);
 
 void remove_newlines (char *);
 void test_file (char *);
@@ -251,15 +262,15 @@ check_http (void)
   curl_easy_setopt(curl, CURLOPT_STDERR, stdout);
 
   /* initialize buffer for body of the answer */
-  if (curlhelp_initbuffer(&body_buf) < 0)
+  if (curlhelp_initwritebuffer(&body_buf) < 0)
     die (STATE_UNKNOWN, "HTTP CRITICAL - out of memory allocating buffer for body\n");
-  curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, (curl_write_callback)curlhelp_buffer_callback);
+  curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, (curl_write_callback)curlhelp_buffer_write_callback);
   curl_easy_setopt (curl, CURLOPT_WRITEDATA, (void *)&body_buf);
 
   /* initialize buffer for header of the answer */
-  if (curlhelp_initbuffer( &header_buf ) < 0)
+  if (curlhelp_initwritebuffer( &header_buf ) < 0)
     die (STATE_UNKNOWN, "HTTP CRITICAL - out of memory allocating buffer for header\n" );
-  curl_easy_setopt (curl, CURLOPT_HEADERFUNCTION, (curl_write_callback)curlhelp_buffer_callback);
+  curl_easy_setopt (curl, CURLOPT_HEADERFUNCTION, (curl_write_callback)curlhelp_buffer_write_callback);
   curl_easy_setopt (curl, CURLOPT_WRITEHEADER, (void *)&header_buf);
 
   /* set the error buffer */
@@ -282,7 +293,11 @@ check_http (void)
     if (!strcmp(http_method, "POST"))
       curl_easy_setopt (curl, CURLOPT_POST, 1);
     else if (!strcmp(http_method, "PUT"))
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 12, 1)
+      curl_easy_setopt (curl, CURLOPT_UPLOAD, 1);
+#else
       curl_easy_setopt (curl, CURLOPT_PUT, 1);
+#endif
     else
       curl_easy_setopt (curl, CURLOPT_CUSTOMREQUEST, http_method);
   }
@@ -385,12 +400,25 @@ check_http (void)
     curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6);
 
   /* either send http POST data (any data, not only POST)*/
-  if (http_post_data) {
+  if (!strcmp(http_method, "POST") ||!strcmp(http_method, "PUT")) {
+    /* set content of payload for POST and PUT */
     if (http_content_type) {
       snprintf (http_header, DEFAULT_BUFFER_SIZE, "Content-Type: %s", http_content_type);
       header_list = curl_slist_append (header_list, http_header);
     }
-    curl_easy_setopt (curl, CURLOPT_POSTFIELDS, http_post_data);
+    /* NULL indicates "HTTP Continue" in libcurl, provide an empty string
+     * in case of no POST/PUT data */
+    if (!http_post_data)
+      http_post_data = "";
+    if (!strcmp(http_method, "POST")) {
+      /* POST method, set payload with CURLOPT_POSTFIELDS */
+      curl_easy_setopt (curl, CURLOPT_POSTFIELDS, http_post_data);
+    } else if (!strcmp(http_method, "PUT")) {
+      curl_easy_setopt (curl, CURLOPT_READFUNCTION, (curl_read_callback)curlhelp_buffer_read_callback);
+      curlhelp_initreadbuffer (&put_buf, http_post_data, strlen (http_post_data));
+      curl_easy_setopt (curl, CURLOPT_READDATA, (void *)&put_buf);
+      curl_easy_setopt (curl, CURLOPT_INFILESIZE, (curl_off_t)strlen (http_post_data));
+    }
   }
 
   /* do the request */
@@ -472,13 +500,13 @@ check_http (void)
   }
 
   /* make sure the status line matches the response we are looking for */
-  if (!expected_statuscode(header_buf.buf, server_expect)) {
+  if (!expected_statuscode(status_line.first_line, server_expect)) {
     /* TODO: fix first_line being cut off */
     if (server_port == HTTP_PORT)
       snprintf(msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host: %s\n"), status_line.first_line);
     else
       snprintf(msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host on port %d: %s\n"), server_port, status_line.first_line);
-      die (STATE_CRITICAL, "HTTP CRITICAL - %s", msg);
+    die (STATE_CRITICAL, "HTTP CRITICAL - %s", msg);
   }
 
   /* TODO: implement -d header tests */
@@ -604,8 +632,11 @@ check_http (void)
   curlhelp_free_statusline(&status_line);
   curl_easy_cleanup (curl);
   curl_global_cleanup ();
-  curlhelp_freebuffer(&body_buf);
-  curlhelp_freebuffer(&header_buf);
+  curlhelp_freewritebuffer(&body_buf);
+  curlhelp_freewritebuffer(&header_buf);
+  if (!strcmp (http_method, "PUT")) { 
+    curlhelp_freereadbuffer (&put_buf);
+  }
 
   return result;
 }
@@ -1250,7 +1281,7 @@ print_curl_version (void)
 }
 
 int
-curlhelp_initbuffer (curlhelp_curlbuf *buf)
+curlhelp_initwritebuffer (curlhelp_write_curlbuf *buf)
 {
   buf->bufsize = DEFAULT_BUFFER_SIZE;
   buf->buflen = 0;
@@ -1260,9 +1291,9 @@ curlhelp_initbuffer (curlhelp_curlbuf *buf)
 }
 
 int
-curlhelp_buffer_callback (void *buffer, size_t size, size_t nmemb, void *stream)
+curlhelp_buffer_write_callback (void *buffer, size_t size, size_t nmemb, void *stream)
 {
-  curlhelp_curlbuf *buf = (curlhelp_curlbuf *)stream;
+  curlhelp_write_curlbuf *buf = (curlhelp_write_curlbuf *)stream;
 
   while (buf->bufsize < buf->buflen + size * nmemb + 1) {
     buf->bufsize *= buf->bufsize * 2;
@@ -1277,8 +1308,39 @@ curlhelp_buffer_callback (void *buffer, size_t size, size_t nmemb, void *stream)
   return (int)(size * nmemb);
 }
 
+int
+curlhelp_buffer_read_callback (void *buffer, size_t size, size_t nmemb, void *stream)
+{
+  curlhelp_read_curlbuf *buf = (curlhelp_read_curlbuf *)stream;
+  
+  size_t n = min (nmemb * size, buf->buflen - buf->pos);
+
+  memcpy (buffer, buf->buf + buf->pos, n);
+  buf->pos += n;
+  
+  return (int)n;  
+}
+
 void
-curlhelp_freebuffer (curlhelp_curlbuf *buf)
+curlhelp_freewritebuffer (curlhelp_write_curlbuf *buf)
+{
+  free (buf->buf);
+  buf->buf = NULL;
+}
+
+int
+curlhelp_initreadbuffer (curlhelp_read_curlbuf *buf, const char *data, size_t datalen)
+{
+  buf->buflen = datalen;
+  buf->buf = (char *)malloc ((size_t)buf->buflen);
+  if (buf->buf == NULL) return -1;
+  memcpy (buf->buf, data, datalen);
+  buf->pos = 0;
+  return 0;
+}
+
+void
+curlhelp_freereadbuffer (curlhelp_read_curlbuf *buf)
 {
   free (buf->buf);
   buf->buf = NULL;
@@ -1328,6 +1390,7 @@ curlhelp_parse_statusline (const char *buf, curlhelp_statusline *status_line)
   size_t first_line_len;
   char *pp;
   const char *start;
+  char *first_line_buf;
 
   /* find last start of a new header */
   start = strrstr2 (buf, "\r\nHTTP");
@@ -1344,47 +1407,49 @@ curlhelp_parse_statusline (const char *buf, curlhelp_statusline *status_line)
   if (status_line->first_line == NULL) return -1;
   memcpy (status_line->first_line, buf, first_line_len);
   status_line->first_line[first_line_len] = '\0';
+  first_line_buf = strdup( status_line->first_line );
 
   /* protocol and version: "HTTP/x.x" SP */
 
-  p = strtok(status_line->first_line, "/");
-  if( p == NULL ) { free( status_line->first_line ); return -1; }
-  if( strcmp( p, "HTTP" ) != 0 ) { free( status_line->first_line ); return -1; }
+  p = strtok(first_line_buf, "/");
+  if( p == NULL ) { free( first_line_buf ); return -1; }
+  if( strcmp( p, "HTTP" ) != 0 ) { free( first_line_buf ); return -1; }
 
   p = strtok( NULL, "." );
-  if( p == NULL ) { free( status_line->first_line ); return -1; }
+  if( p == NULL ) { free( first_line_buf ); return -1; }
   status_line->http_major = (int)strtol( p, &pp, 10 );
-  if( *pp != '\0' ) { free( status_line->first_line ); return -1; }
+  if( *pp != '\0' ) { free( first_line_buf ); return -1; }
 
   p = strtok( NULL, " " );
-  if( p == NULL ) { free( status_line->first_line ); return -1; }
+  if( p == NULL ) { free( first_line_buf ); return -1; }
   status_line->http_minor = (int)strtol( p, &pp, 10 );
-  if( *pp != '\0' ) { free( status_line->first_line ); return -1; }
+  if( *pp != '\0' ) { free( first_line_buf ); return -1; }
 
   /* status code: "404" or "404.1", then SP */
 
   p = strtok( NULL, " ." );
-  if( p == NULL ) { free( status_line->first_line ); return -1; }
+  if( p == NULL ) { free( first_line_buf ); return -1; }
   if( strchr( p, '.' ) != NULL ) {
     char *ppp;
     ppp = strtok( p, "." );
     status_line->http_code = (int)strtol( ppp, &pp, 10 );
-    if( *pp != '\0' ) { free( status_line->first_line ); return -1; }
+    if( *pp != '\0' ) { free( first_line_buf ); return -1; }
 
     ppp = strtok( NULL, "" );
     status_line->http_subcode = (int)strtol( ppp, &pp, 10 );
-    if( *pp != '\0' ) { free( status_line->first_line ); return -1; }
+    if( *pp != '\0' ) { free( first_line_buf ); return -1; }
   } else {
     status_line->http_code = (int)strtol( p, &pp, 10 );
     status_line->http_subcode = -1;
-    if( *pp != '\0' ) { free( status_line->first_line ); return -1; }
+    if( *pp != '\0' ) { free( first_line_buf ); return -1; }
   }
 
   /* Human readable message: "Not Found" CRLF */
 
+  free( first_line_buf );
   p = strtok( NULL, "" );
   if( p == NULL ) { free( status_line->first_line ); return -1; }
-  status_line->msg = p;
+  status_line->msg = status_line->first_line + ( p - first_line_buf );
 
   return 0;
 }
@@ -1515,7 +1580,7 @@ parse_time_string (const char *string)
 }
 
 int 
-check_document_dates (const curlhelp_curlbuf *header_buf, char (*msg)[DEFAULT_BUFFER_SIZE])
+check_document_dates (const curlhelp_write_curlbuf *header_buf, char (*msg)[DEFAULT_BUFFER_SIZE])
 {
   char *server_date = NULL;
   char *document_date = NULL;
