@@ -194,6 +194,7 @@ process_arguments (int argc, char **argv)
 		{"use-ipv4", no_argument, 0, '4'},
 		{"use-ipv6", no_argument, 0, '6'},
 		{"ssh-option", required_argument, 0, 'o'},
+		{"force-tty", no_argument, 0, 'z'},
 		{"quiet", no_argument, 0, 'q'},
 		{"configfile", optional_argument, 0, 'F'},
 		{0, 0, 0, 0}
@@ -207,7 +208,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvh1246fqt:H:O:p:i:u:l:C:S::E::n:s:o:F:", longopts,
+		c = getopt_long (argc, argv, "Vvh1246fzqt:H:O:p:i:u:l:C:S::E::n:s:o:F:", longopts,
 		                 &option);
 
 		if (c == -1 || c == EOF)
@@ -279,6 +280,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case '4':									/* -4 for IPv4 */
 			comm_append("-4");
+			break;
+		case 'z':									/* -4 for IPv4 */
+			comm_append("-t");
 			break;
 		case '6': 								/* -6 for IPv6 */
 			comm_append("-6");
@@ -429,6 +433,8 @@ print_help (void)
   printf ("    %s\n", _("list of monitoring service names, separated by ':' [optional]"));
   printf (" %s\n","-n, --name=NAME");
   printf ("    %s\n", _("short name of host in the monitoring configuration [optional]"));
+  printf (" %s\n","-z, --force-tty");
+  printf ("    %s\n", _("Call ssh with '-t' to force pseudo tty allocation. Has to be used in conjunction with -E [optional]"));
   printf (" %s\n","-o, --ssh-option=OPTION");
   printf ("    %s\n", _("Call ssh with '-o OPTION' (may be used multiple times) [optional]"));
   printf (" %s\n","-F, --configfile");
@@ -469,6 +475,6 @@ print_usage (void)
 	printf (" %s -H <host> -C <command> [-fqv] [-1|-2] [-4|-6]\n"
 	        "       [-S [lines]] [-E [lines]] [-t timeout] [-i identity]\n"
 	        "       [-l user] [-n name] [-s servicelist] [-O outputfile]\n"
-	        "       [-p port] [-o ssh-option] [-F configfile]\n",
+	        "       [-p port] [-z] [-o ssh-option] [-F configfile]\n",
 	        progname);
 }
