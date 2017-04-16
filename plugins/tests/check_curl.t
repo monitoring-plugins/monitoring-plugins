@@ -257,7 +257,7 @@ sub run_common_tests {
 	$cmd = "$command -u /statuscode/200 -e 200";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK: Status line output matched "200" - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - Status line output matched "200" - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /statuscode/201";
 	$result = NPTest->testCmd( $cmd );
@@ -267,7 +267,7 @@ sub run_common_tests {
 	$cmd = "$command -u /statuscode/201 -e 201";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK: Status line output matched "201" - \d+ bytes in [\d\.]+ second /', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 201 Created - Status line output matched "201" - \d+ bytes in [\d\.]+ second /', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /statuscode/201 -e 200";
 	$result = NPTest->testCmd( $cmd );
@@ -277,12 +277,12 @@ sub run_common_tests {
 	$cmd = "$command -u /statuscode/200 -e 200,201,202";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK: Status line output matched "200,201,202" - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - Status line output matched "200,201,202" - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /statuscode/201 -e 200,201,202";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK: Status line output matched "200,201,202" - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 201 Created - Status line output matched "200,201,202" - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /statuscode/203 -e 200,201,202";
 	$result = NPTest->testCmd( $cmd );
