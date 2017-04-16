@@ -1,26 +1,26 @@
 /*****************************************************************************
-*
-* Library of useful functions for plugins
-*
-* License: GPL
-* Copyright (c) 2000 Karl DeBisschop (karl@debisschop.net)
-* Copyright (c) 2002-2007 Monitoring Plugins Development Team
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*
-*****************************************************************************/
+ *
+ * Library of useful functions for plugins
+ *
+ * License: GPL
+ * Copyright (c) 2000 Karl DeBisschop (karl@debisschop.net)
+ * Copyright (c) 2002-2007 Monitoring Plugins Development Team
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ *****************************************************************************/
 
 #include "common.h"
 #include "utils.h"
@@ -44,176 +44,159 @@ time_t start_time, end_time;
 
 
 /* Standardize version information, termination */
-void
-print_revision (const char *command_name, const char *revision)
+void print_revision (const char *command_name, const char *revision)
 {
-	printf ("%s v%s (%s %s)\n",
-	         command_name, revision, PACKAGE, VERSION);
+    printf ("%s v%s (%s %s)\n",
+            command_name, revision, PACKAGE, VERSION);
 }
 
-void
-timeout_alarm_handler (int signo)
+void timeout_alarm_handler (int signo)
 {
-	if (signo == SIGALRM) {
-		printf (_("%s - Plugin timed out after %d seconds\n"),
-						state_text(timeout_state), timeout_interval);
-		exit (timeout_state);
-	}
+    if (signo == SIGALRM) {
+        printf (_("%s - Plugin timed out after %d seconds\n"),
+                state_text(timeout_state), timeout_interval);
+        exit (timeout_state);
+    }
 }
 
 
 /* Test input types */
-int
-is_integer (char *number)
+int is_integer (char *number)
 {
-	long int n;
+    long int n;
 
-	if (!number || (strspn (number, "-0123456789 ") != strlen (number)))
-		return FALSE;
+    if (!number || (strspn (number, "-0123456789 ") != strlen (number)))
+        return FALSE;
 
-	n = strtol (number, NULL, 10);
+    n = strtol (number, NULL, 10);
 
-	if (errno != ERANGE && n >= INT_MIN && n <= INT_MAX)
-		return TRUE;
-	else
-		return FALSE;
+    if (errno != ERANGE && n >= INT_MIN && n <= INT_MAX)
+        return TRUE;
+    else
+        return FALSE;
 }
-int
-is_intpos (char *number)
+int is_intpos (char *number)
 {
-	if (is_integer (number) && atoi (number) > 0)
-		return TRUE;
-	else
-		return FALSE;
+    if (is_integer (number) && atoi (number) > 0)
+        return TRUE;
+    else
+        return FALSE;
 }
-int
-is_intneg (char *number)
+int is_intneg (char *number)
 {
-	if (is_integer (number) && atoi (number) < 0)
-		return TRUE;
-	else
-		return FALSE;
+    if (is_integer (number) && atoi (number) < 0)
+        return TRUE;
+    else
+        return FALSE;
 }
-int
-is_intnonneg (char *number)
+int is_intnonneg (char *number)
 {
-	if (is_integer (number) && atoi (number) >= 0)
-		return TRUE;
-	else
-		return FALSE;
+    if (is_integer (number) && atoi (number) >= 0)
+        return TRUE;
+    else
+        return FALSE;
 }
-int
-is_intpercent (char *number)
+int is_intpercent (char *number)
 {
-	int i;
-	if (is_integer (number) && (i = atoi (number)) >= 0 && i <= 100)
-		return TRUE;
-	else
-		return FALSE;
+    int i;
+    if (is_integer (number) && (i = atoi (number)) >= 0 && i <= 100)
+        return TRUE;
+    else
+        return FALSE;
 }
 
 
-int
-is_numeric (char *number)
+int is_numeric (char *number)
 {
-	char tmp[1];
-	float x;
+    char tmp[1];
+    float x;
 
-	if (!number)
-		return FALSE;
-	else if (sscanf (number, "%f%c", &x, tmp) == 1)
-		return TRUE;
-	else
-		return FALSE;
+    if (!number)
+        return FALSE;
+    else if (sscanf (number, "%f%c", &x, tmp) == 1)
+        return TRUE;
+    else
+        return FALSE;
 }
-int
-is_positive (char *number)
+int is_positive (char *number)
 {
-	if (is_numeric (number) && atof (number) > 0.0)
-		return TRUE;
-	else
-		return FALSE;
+    if (is_numeric (number) && atof (number) > 0.0)
+        return TRUE;
+    else
+        return FALSE;
 }
-int
-is_negative (char *number)
+int is_negative (char *number)
 {
-	if (is_numeric (number) && atof (number) < 0.0)
-		return TRUE;
-	else
-		return FALSE;
+    if (is_numeric (number) && atof (number) < 0.0)
+        return TRUE;
+    else
+        return FALSE;
 }
-int
-is_nonnegative (char *number)
+int is_nonnegative (char *number)
 {
-	if (is_numeric (number) && atof (number) >= 0.0)
-		return TRUE;
-	else
-		return FALSE;
+    if (is_numeric (number) && atof (number) >= 0.0)
+        return TRUE;
+    else
+        return FALSE;
 }
-int
-is_percentage (char *number)
+int is_percentage (char *number)
 {
-	int x;
-	if (is_numeric (number) && (x = atof (number)) >= 0 && x <= 100)
-		return TRUE;
-	else
-		return FALSE;
+    int x;
+    if (is_numeric (number) && (x = atof (number)) >= 0 && x <= 100)
+        return TRUE;
+    else
+        return FALSE;
 }
 
-int
-is_option (char *str)
+int is_option (char *str)
 {
-	if (!str)
-		return FALSE;
-	else if (strspn (str, "-") == 1 || strspn (str, "-") == 2)
-		return TRUE;
-	else
-		return FALSE;
+    if (!str)
+        return FALSE;
+    else if (strspn (str, "-") == 1 || strspn (str, "-") == 2)
+        return TRUE;
+    else
+        return FALSE;
 }
 
 
 #ifdef NEED_GETTIMEOFDAY
-int
-gettimeofday (struct timeval *tv, struct timezone *tz)
+int gettimeofday (struct timeval *tv, struct timezone *tz)
 {
-	tv->tv_usec = 0;
-	tv->tv_sec = (long) time ((time_t) 0);
+    tv->tv_usec = 0;
+    tv->tv_sec = (long) time ((time_t) 0);
 }
 #endif
 
-double
-delta_time (struct timeval tv)
+double delta_time (struct timeval tv)
 {
-	struct timeval now;
+    struct timeval now;
 
-	gettimeofday (&now, NULL);
-	return ((double)(now.tv_sec - tv.tv_sec) + (double)(now.tv_usec - tv.tv_usec) / (double)1000000);
+    gettimeofday (&now, NULL);
+    return ((double)(now.tv_sec - tv.tv_sec) + (double)(now.tv_usec - tv.tv_usec) / (double)1000000);
 }
-long
-deltime (struct timeval tv)
+long deltime (struct timeval tv)
 {
-	struct timeval now;
-	gettimeofday (&now, NULL);
-	return (now.tv_sec - tv.tv_sec)*1000000 + now.tv_usec - tv.tv_usec;
+    struct timeval now;
+    gettimeofday (&now, NULL);
+    return (now.tv_sec - tv.tv_sec)*1000000 + now.tv_usec - tv.tv_usec;
 }
 
 
 /* Handle strings safely */
-void
-strip (char *buffer)
+void strip (char *buffer)
 {
-	size_t x;
-	int i;
+    size_t x;
+    int i;
 
-	for (x = strlen (buffer); x >= 1; x--) {
-		i = x - 1;
-		if (buffer[i] == ' ' ||
-				buffer[i] == '\r' || buffer[i] == '\n' || buffer[i] == '\t')
-			buffer[i] = '\0';
-		else
-			break;
-	}
-	return;
+    for (x = strlen (buffer); x >= 1; x--) {
+        i = x - 1;
+        if (buffer[i] == ' ' ||
+                buffer[i] == '\r' || buffer[i] == '\n' || buffer[i] == '\t')
+            buffer[i] = '\0';
+        else
+            break;
+    }
+    return;
 }
 
 /******************************************************************************
@@ -227,15 +210,14 @@ strip (char *buffer)
  * str = strscpy("This is a line of text with no trailing newline");
  *
  *****************************************************************************/
-char *
-strscpy (char *dest, const char *src)
+char * strscpy (char *dest, const char *src)
 {
-	if (src == NULL)
-		return NULL;
+    if (src == NULL)
+        return NULL;
 
-	xasprintf (&dest, "%s", src);
+    xasprintf (&dest, "%s", src);
 
-	return dest;
+    return dest;
 }
 
 /******************************************************************************
@@ -287,22 +269,21 @@ strscpy (char *dest, const char *src)
  *       a segmentation fault.
  *
  *****************************************************************************/
-char *
-strnl (char *str)
+char * strnl (char *str)
 {
-	size_t len;
-	if (str == NULL)
-		return NULL;
-	str = strpbrk (str, "\r\n");
-	if (str == NULL)
-		return NULL;
-	len = strspn (str, "\r\n");
-	if (str[len] == '\0')
-		return NULL;
-	str += len;
-	if (strlen (str) == 0)
-		return NULL;
-	return str;
+    size_t len;
+    if (str == NULL)
+        return NULL;
+    str = strpbrk (str, "\r\n");
+    if (str == NULL)
+        return NULL;
+    len = strspn (str, "\r\n");
+    if (str[len] == '\0')
+        return NULL;
+    str += len;
+    if (strlen (str) == 0)
+        return NULL;
+    return str;
 }
 
 /******************************************************************************
@@ -320,25 +301,24 @@ strnl (char *str)
  *This is a line of te
  *
  *****************************************************************************/
-char *
-strpcpy (char *dest, const char *src, const char *str)
+char * strpcpy (char *dest, const char *src, const char *str)
 {
-	size_t len;
+    size_t len;
 
-	if (src)
-		len = strcspn (src, str);
-	else
-		return NULL;
+    if (src)
+        len = strcspn (src, str);
+    else
+        return NULL;
 
-	if (dest == NULL || strlen (dest) < len)
-		dest = realloc (dest, len + 1);
-	if (dest == NULL)
-		die (STATE_UNKNOWN, _("failed realloc in strpcpy\n"));
+    if (dest == NULL || strlen (dest) < len)
+        dest = realloc (dest, len + 1);
+    if (dest == NULL)
+        die (STATE_UNKNOWN, _("failed realloc in strpcpy\n"));
 
-	strncpy (dest, src, len);
-	dest[len] = '\0';
+    strncpy (dest, src, len);
+    dest[len] = '\0';
 
-	return dest;
+    return dest;
 }
 
 /******************************************************************************
@@ -353,31 +333,30 @@ strpcpy (char *dest, const char *src, const char *str)
  *This is a line of texThis is a line of tex
  *
  *****************************************************************************/
-char *
-strpcat (char *dest, const char *src, const char *str)
+char * strpcat (char *dest, const char *src, const char *str)
 {
-	size_t len, l2;
+    size_t len, l2;
 
-	if (dest)
-		len = strlen (dest);
-	else
-		len = 0;
+    if (dest)
+        len = strlen (dest);
+    else
+        len = 0;
 
-	if (src) {
-		l2 = strcspn (src, str);
-	}
-	else {
-		return dest;
-	}
+    if (src) {
+        l2 = strcspn (src, str);
+    }
+    else {
+        return dest;
+    }
 
-	dest = realloc (dest, len + l2 + 1);
-	if (dest == NULL)
-		die (STATE_UNKNOWN, _("failed malloc in strpcat\n"));
+    dest = realloc (dest, len + l2 + 1);
+    if (dest == NULL)
+        die (STATE_UNKNOWN, _("failed malloc in strpcat\n"));
 
-	strncpy (dest + len, src, l2);
-	dest[len + l2] = '\0';
+    strncpy (dest + len, src, l2);
+    dest[len + l2] = '\0';
 
-	return dest;
+    return dest;
 }
 
 /******************************************************************************
@@ -385,23 +364,21 @@ strpcat (char *dest, const char *src, const char *str)
  * asprintf, but die on failure
  *
  ******************************************************************************/
-int
-xvasprintf (char **strp, const char *fmt, va_list ap)
+int xvasprintf (char **strp, const char *fmt, va_list ap)
 {
-	int result = vasprintf (strp, fmt, ap);
-	if (result == -1 || *strp == NULL)
-		die (STATE_UNKNOWN, _("failed malloc in xvasprintf\n"));
-	return result;
+    int result = vasprintf (strp, fmt, ap);
+    if (result == -1 || *strp == NULL)
+        die (STATE_UNKNOWN, _("failed malloc in xvasprintf\n"));
+    return result;
 }
-int
-xasprintf (char **strp, const char *fmt, ...)
+int xasprintf (char **strp, const char *fmt, ...)
 {
-	va_list ap;
-	int result;
-	va_start (ap, fmt);
-	result = xvasprintf (strp, fmt, ap);
-	va_end (ap);
-	return result;
+    va_list ap;
+    int result;
+    va_start (ap, fmt);
+    result = xvasprintf (strp, fmt, ap);
+    va_end (ap);
+    return result;
 }
 
 
@@ -412,21 +389,20 @@ xasprintf (char **strp, const char *fmt, ...)
  *
  * Note that numerically the above does not hold
  ****************************************************************************/
-int
-max_state (int a, int b)
+int max_state (int a, int b)
 {
-	if (a == STATE_CRITICAL || b == STATE_CRITICAL)
-		return STATE_CRITICAL;
-	else if (a == STATE_WARNING || b == STATE_WARNING)
-		return STATE_WARNING;
-	else if (a == STATE_OK || b == STATE_OK)
-		return STATE_OK;
-	else if (a == STATE_UNKNOWN || b == STATE_UNKNOWN)
-		return STATE_UNKNOWN;
-	else if (a == STATE_DEPENDENT || b == STATE_DEPENDENT)
-		return STATE_DEPENDENT;
-	else
-		return max (a, b);
+    if (a == STATE_CRITICAL || b == STATE_CRITICAL)
+        return STATE_CRITICAL;
+    else if (a == STATE_WARNING || b == STATE_WARNING)
+        return STATE_WARNING;
+    else if (a == STATE_OK || b == STATE_OK)
+        return STATE_OK;
+    else if (a == STATE_UNKNOWN || b == STATE_UNKNOWN)
+        return STATE_UNKNOWN;
+    else if (a == STATE_DEPENDENT || b == STATE_DEPENDENT)
+        return STATE_DEPENDENT;
+    else
+        return max (a, b);
 }
 
 /* **************************************************************************
@@ -438,68 +414,61 @@ max_state (int a, int b)
  * allow setting a default to UNKNOWN. It will instead prioritixe any valid
  * non-OK state.
  ****************************************************************************/
-int
-max_state_alt (int a, int b)
+int max_state_alt (int a, int b)
 {
-	if (a == STATE_CRITICAL || b == STATE_CRITICAL)
-		return STATE_CRITICAL;
-	else if (a == STATE_WARNING || b == STATE_WARNING)
-		return STATE_WARNING;
-	else if (a == STATE_UNKNOWN || b == STATE_UNKNOWN)
-		return STATE_UNKNOWN;
-	else if (a == STATE_DEPENDENT || b == STATE_DEPENDENT)
-		return STATE_DEPENDENT;
-	else if (a == STATE_OK || b == STATE_OK)
-		return STATE_OK;
-	else
-		return max (a, b);
+    if (a == STATE_CRITICAL || b == STATE_CRITICAL)
+        return STATE_CRITICAL;
+    else if (a == STATE_WARNING || b == STATE_WARNING)
+        return STATE_WARNING;
+    else if (a == STATE_UNKNOWN || b == STATE_UNKNOWN)
+        return STATE_UNKNOWN;
+    else if (a == STATE_DEPENDENT || b == STATE_DEPENDENT)
+        return STATE_DEPENDENT;
+    else if (a == STATE_OK || b == STATE_OK)
+        return STATE_OK;
+    else
+        return max (a, b);
 }
 
 
-void
-usage (const char *msg)
+void usage (const char *msg)
 {
-	printf ("%s\n", msg);
-	print_usage ();
-	exit (STATE_UNKNOWN);
+    printf ("%s\n", msg);
+    print_usage ();
+    exit (STATE_UNKNOWN);
 }
-void
-usage2 (const char *msg, const char *arg)
+void usage2 (const char *msg, const char *arg)
 {
-	printf ("%s: %s - %s\n", progname, msg, arg?arg:"(null)" );
-	print_usage ();
-	exit (STATE_UNKNOWN);
+    printf ("%s: %s - %s\n", progname, msg, arg?arg:"(null)" );
+    print_usage ();
+    exit (STATE_UNKNOWN);
 }
-void
-usage3 (const char *msg, int arg)
+void usage3 (const char *msg, int arg)
 {
-	printf ("%s: %s - %c\n", progname, msg, arg);
-	print_usage();
-	exit (STATE_UNKNOWN);
+    printf ("%s: %s - %c\n", progname, msg, arg);
+    print_usage();
+    exit (STATE_UNKNOWN);
 }
-void
-usage4 (const char *msg)
+void usage4 (const char *msg)
 {
-	printf ("%s: %s\n", progname, msg);
-	print_usage();
-	exit (STATE_UNKNOWN);
+    printf ("%s: %s\n", progname, msg);
+    print_usage();
+    exit (STATE_UNKNOWN);
 }
-void
-usage5 (void)
+void usage5 (void)
 {
-	print_usage();
-	exit (STATE_UNKNOWN);
+    print_usage();
+    exit (STATE_UNKNOWN);
 }
-void
-usage_va (const char *fmt, ...)
+void usage_va (const char *fmt, ...)
 {
-	va_list ap;
-	printf("%s: ", progname);
-	va_start(ap, fmt);
-	vprintf(fmt, ap);
-	va_end(ap);
-	printf("\n");
-	exit (STATE_UNKNOWN);
+    va_list ap;
+    printf("%s: ", progname);
+    va_start(ap, fmt);
+    vprintf(fmt, ap);
+    va_end(ap);
+    printf("\n");
+    exit (STATE_UNKNOWN);
 }
 
 
@@ -507,129 +476,122 @@ usage_va (const char *fmt, ...)
  * Standard output function
  * Format: SERVICE STATUS: Information text
  */
-void
-print_singleline (int service_state, const char *fmt, ...)
+void print_singleline (int service_state, const char *fmt, ...)
 {
-	va_list ap;
-	char *str = NULL;
-	int result = 0;
+    va_list ap;
+    char *str = NULL;
+    int result = 0;
 
-	va_start(ap, fmt);
-	result = xvasprintf (&str, fmt, ap);
-	va_end(ap);
+    va_start(ap, fmt);
+    result = xvasprintf (&str, fmt, ap);
+    va_end(ap);
 
-	if (result != -1 && &str != NULL)
-		printf("%s %s: %s\n", service_name(), state_text(service_state), str);
+    if (result != -1 && &str != NULL)
+        printf("%s %s: %s\n", service_name(), state_text(service_state), str);
 }
-int
-print_singleline_return (int service_state, const char *fmt, ...)
+int print_singleline_return (int service_state, const char *fmt, ...)
 {
-	va_list ap;
-	char *str = NULL;
-	int result = 0;
+    va_list ap;
+    char *str = NULL;
+    int result = 0;
 
-	va_start(ap, fmt);
-	result = xvasprintf (&str, fmt, ap);
-	va_end(ap);
+    va_start(ap, fmt);
+    result = xvasprintf (&str, fmt, ap);
+    va_end(ap);
 
-	if (result == -1 || &str == NULL)
-		return (FALSE);
-	else {
-		printf("%s %s: %s\n", service_name(), state_text(service_state), str);
-		return (service_state);
-	}
+    if (result == -1 || &str == NULL)
+        return (FALSE);
+    else {
+        printf("%s %s: %s\n", service_name(), state_text(service_state), str);
+        return (service_state);
+    }
 }
-void
-print_singleline_exit (int service_state, const char *fmt, ...)
+void print_singleline_exit (int service_state, const char *fmt, ...)
 {
-	va_list ap;
-	char *str = NULL;
-	int result = 0;
+    va_list ap;
+    char *str = NULL;
+    int result = 0;
 
-	va_start(ap, fmt);
-	result = xvasprintf (&str, fmt, ap);
-	va_end(ap);
+    va_start(ap, fmt);
+    result = xvasprintf (&str, fmt, ap);
+    va_end(ap);
 
-	if (result == -1 || &str == NULL)
-		exit (FALSE);
-	else {
-		printf("%s %s: %s\n", service_name(), state_text(service_state), str);
-		exit (service_state);
-	}
+    if (result == -1 || &str == NULL)
+        exit (FALSE);
+    else {
+        printf("%s %s: %s\n", service_name(), state_text(service_state), str);
+        exit (service_state);
+    }
 }
 
 
 /*
  * Helper functions for standard output functions
  */
-const char *
-service_name(void)
+const char * service_name(void)
 {
-	/* Prepare service name from progname */
-	char *service_name = NULL;
-	service_name = strscpy(service_name, progname);
-	service_name = strrev((const char *)service_name);
-	service_name = strpcpy(service_name, service_name, "_");
-	service_name = strrev(service_name);
-	service_name = strupper((const char *)service_name);
-        return service_name;
+    /* Prepare service name from progname */
+    char *service_name = NULL;
+    service_name = strscpy(service_name, progname);
+    service_name = strrev((const char *)service_name);
+    service_name = strpcpy(service_name, service_name, "_");
+    service_name = strrev(service_name);
+    service_name = strupper((const char *)service_name);
+    return service_name;
 }
-const char *
-state_text (int result)
+const char * state_text (int result)
 {
-	switch (result) {
-	case STATE_OK:
-		return "OK";
-	case STATE_WARNING:
-		return "WARNING";
-	case STATE_CRITICAL:
-		return "CRITICAL";
-	case STATE_DEPENDENT:
-		return "DEPENDENT";
-	default:
-		return "UNKNOWN";
-	}
+    switch (result) {
+        case STATE_OK:
+            return "OK";
+        case STATE_WARNING:
+            return "WARNING";
+        case STATE_CRITICAL:
+            return "CRITICAL";
+        case STATE_DEPENDENT:
+            return "DEPENDENT";
+        default:
+            return "UNKNOWN";
+    }
 }
-char *
-strrev (const char *string)
+char * strrev (const char *string)
 {
-	char *p1, *p2, *str;
-        str = strscpy(str, string);
+    char *p1, *p2, *str;
+    str = strscpy(str, string);
 
-	if (! string || ! *string)
-		return str;
+    if (! string || ! *string)
+        return str;
 
-	for (p1 = str, p2 = str + strlen(str) - 1; p2 > p1; ++p1, --p2)
-	{
-		*p1 ^= *p2;
-		*p2 ^= *p1;
-		*p1 ^= *p2;
-	}
+    for (p1 = str, p2 = str + strlen(str) - 1; p2 > p1; ++p1, --p2)
+    {
+        *p1 ^= *p2;
+        *p2 ^= *p1;
+        *p1 ^= *p2;
+    }
 
-	return str;
+    return str;
 }
 
-char *
-strupper (const char *str)
+char * strupper (const char *str)
 {
-	char *dest;
-	size_t len;
+    char *dest;
+    size_t len;
 
-	if (str)
-		len = strlen(str);
-	else
-		return NULL;
+    if (str)
+        len = strlen(str);
+    else
+        return NULL;
 
-	if (dest == NULL || strlen (dest) < len)
-		dest = realloc (dest, len + 1);
-	if (dest == NULL)
-		die (STATE_UNKNOWN, _("failed realloc in strupper\n"));
+    if (dest == NULL || strlen (dest) < len)
+        dest = realloc (dest, len + 1);
+    if (dest == NULL)
+        die (STATE_UNKNOWN, _("failed realloc in strupper\n"));
 
-	for(size_t i=0; i<len; ++i)
-		dest[i] = toupper(str[i]);
+    for(size_t i=0; i<len; ++i)
+        dest[i] = toupper(str[i]);
 
-	dest[len] = '\0';
-	return dest;
+    dest[len] = '\0';
+    return dest;
 }
 
 /******************************************************************************
@@ -637,165 +599,133 @@ strupper (const char *str)
  * Print perfdata in a standard format
  *
  ******************************************************************************/
-char *
-perfdata (const char *label,
-    long int val,
-    const char *uom,
-    int warnp,
-    long int warn,
-    int critp,
-    long int crit,
-    int minp,
-    long int minv,
-    int maxp,
-    long int maxv)
+char * perfdata (const char *label, long int val, const char *uom,
+        int warnp, long int warn, int critp, long int crit,
+        int minp, long int minv, int maxp, long int maxv)
 {
-	char *data = NULL;
+    char *data = NULL;
 
-	if (strpbrk (label, "'= "))
-		xasprintf (&data, "|'%s'=%ld%s;", label, val, uom);
-	else
-		xasprintf (&data, "|%s=%ld%s;", label, val, uom);
+    if (strpbrk (label, "'= "))
+        xasprintf (&data, "|'%s'=%ld%s;", label, val, uom);
+    else
+        xasprintf (&data, "|%s=%ld%s;", label, val, uom);
 
-	if (warnp)
-		xasprintf (&data, "%s%ld;", data, warn);
-	else
-		xasprintf (&data, "%s;", data);
+    if (warnp)
+        xasprintf (&data, "%s%ld;", data, warn);
+    else
+        xasprintf (&data, "%s;", data);
 
-	if (critp)
-		xasprintf (&data, "%s%ld;", data, crit);
-	else
-		xasprintf (&data, "%s;", data);
+    if (critp)
+        xasprintf (&data, "%s%ld;", data, crit);
+    else
+        xasprintf (&data, "%s;", data);
 
-	if (minp)
-		xasprintf (&data, "%s%ld", data, minv);
+    if (minp)
+        xasprintf (&data, "%s%ld", data, minv);
 
-	if (maxp)
-		xasprintf (&data, "%s;%ld", data, maxv);
+    if (maxp)
+        xasprintf (&data, "%s;%ld", data, maxv);
 
-	return data;
+    return data;
 }
-char *
-fperfdata (const char *label,
-    double val,
-    const char *uom,
-    int warnp,
-    double warn,
-    int critp,
-    double crit,
-    int minp,
-    double minv,
-    int maxp,
-    double maxv)
+char * fperfdata (const char *label, double val, const char *uom,
+        int warnp, double warn, int critp, double crit,
+        int minp, double minv, int maxp, double maxv)
 {
-	char *data = NULL;
+    char *data = NULL;
 
-	if (strpbrk (label, "'= "))
-		xasprintf (&data, "|'%s'=", label);
-	else
-		xasprintf (&data, "|%s=", label);
+    if (strpbrk (label, "'= "))
+        xasprintf (&data, "|'%s'=", label);
+    else
+        xasprintf (&data, "|%s=", label);
 
-	xasprintf (&data, "%s%f", data, val);
-	xasprintf (&data, "%s%s;", data, uom);
+    xasprintf (&data, "%s%f", data, val);
+    xasprintf (&data, "%s%s;", data, uom);
 
-	if (warnp)
-		xasprintf (&data, "%s%f", data, warn);
+    if (warnp)
+        xasprintf (&data, "%s%f", data, warn);
 
-	xasprintf (&data, "%s;", data);
+    xasprintf (&data, "%s;", data);
 
-	if (critp)
-		xasprintf (&data, "%s%f", data, crit);
+    if (critp)
+        xasprintf (&data, "%s%f", data, crit);
 
-	xasprintf (&data, "%s;", data);
+    xasprintf (&data, "%s;", data);
 
-	if (minp)
-		xasprintf (&data, "%s%f", data, minv);
+    if (minp)
+        xasprintf (&data, "%s%f", data, minv);
 
-	if (maxp) {
-		xasprintf (&data, "%s;", data);
-		xasprintf (&data, "%s%f", data, maxv);
-	}
+    if (maxp) {
+        xasprintf (&data, "%s;", data);
+        xasprintf (&data, "%s%f", data, maxv);
+    }
 
-	return data;
+    return data;
 }
-char *
-sperfdata (const char *label,
-    double val,
-    const char *uom,
-    char *warn,
-    char *crit,
-    int minp,
-    double minv,
-    int maxp,
-    double maxv)
+char * sperfdata (const char *label, double val, const char *uom,
+        char *warn, char *crit, int minp,  double minv,
+        int maxp, double maxv)
 {
-	char *data = NULL;
-	if (strpbrk (label, "'= "))
-		xasprintf (&data, "|'%s'=", label);
-	else
-		xasprintf (&data, "|%s=", label);
+    char *data = NULL;
+    if (strpbrk (label, "'= "))
+        xasprintf (&data, "|'%s'=", label);
+    else
+        xasprintf (&data, "|%s=", label);
 
-	xasprintf (&data, "%s%f", data, val);
-	xasprintf (&data, "%s%s;", data, uom);
+    xasprintf (&data, "%s%f", data, val);
+    xasprintf (&data, "%s%s;", data, uom);
 
-	if (warn!=NULL)
-		xasprintf (&data, "%s%s", data, warn);
+    if (warn!=NULL)
+        xasprintf (&data, "%s%s", data, warn);
 
-	xasprintf (&data, "%s;", data);
+    xasprintf (&data, "%s;", data);
 
-	if (crit!=NULL)
-		xasprintf (&data, "%s%s", data, crit);
+    if (crit!=NULL)
+        xasprintf (&data, "%s%s", data, crit);
 
-	xasprintf (&data, "%s;", data);
+    xasprintf (&data, "%s;", data);
 
-	if (minp)
-		xasprintf (&data, "%s%f", data, minv);
+    if (minp)
+        xasprintf (&data, "%s%f", data, minv);
 
-	if (maxp) {
-		xasprintf (&data, "%s;", data);
-		xasprintf (&data, "%s%f", data, maxv);
-	}
+    if (maxp) {
+        xasprintf (&data, "%s;", data);
+        xasprintf (&data, "%s%f", data, maxv);
+    }
 
-	return data;
+    return data;
 }
-char *
-sperfdata_int (const char *label,
-    int val,
-    const char *uom,
-    char *warn,
-    char *crit,
-    int minp,
-    int minv,
-    int maxp,
-    int maxv)
+char * sperfdata_int (const char *label, int val, const char *uom,
+        char *warn, char *crit, int minp, int minv,
+        int maxp, int maxv)
 {
-	char *data = NULL;
-	if (strpbrk (label, "'= "))
-		xasprintf (&data, "|'%s'=", label);
-	else
-		xasprintf (&data, "|%s=", label);
+    char *data = NULL;
+    if (strpbrk (label, "'= "))
+        xasprintf (&data, "|'%s'=", label);
+    else
+        xasprintf (&data, "|%s=", label);
 
-	xasprintf (&data, "%s%d", data, val);
-	xasprintf (&data, "%s%s;", data, uom);
+    xasprintf (&data, "%s%d", data, val);
+    xasprintf (&data, "%s%s;", data, uom);
 
-	if (warn!=NULL)
-		xasprintf (&data, "%s%s", data, warn);
+    if (warn!=NULL)
+        xasprintf (&data, "%s%s", data, warn);
 
-	xasprintf (&data, "%s;", data);
+    xasprintf (&data, "%s;", data);
 
-	if (crit!=NULL)
-		xasprintf (&data, "%s%s", data, crit);
+    if (crit!=NULL)
+        xasprintf (&data, "%s%s", data, crit);
 
-	xasprintf (&data, "%s;", data);
+    xasprintf (&data, "%s;", data);
 
-	if (minp)
-		xasprintf (&data, "%s%d", data, minv);
+    if (minp)
+        xasprintf (&data, "%s%d", data, minv);
 
-	if (maxp) {
-		xasprintf (&data, "%s;", data);
-		xasprintf (&data, "%s%d", data, maxv);
-	}
+    if (maxp) {
+        xasprintf (&data, "%s;", data);
+        xasprintf (&data, "%s%d", data, maxv);
+    }
 
-	return data;
+    return data;
 }
 
