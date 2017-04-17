@@ -575,7 +575,7 @@ char * strrev (const char *string)
 char * strupper (const char *str)
 {
     char *dest;
-    size_t len;
+    size_t len, i;
 
     if (str)
         len = strlen(str);
@@ -587,7 +587,7 @@ char * strupper (const char *str)
     if (dest == NULL)
         die (STATE_UNKNOWN, _("failed realloc in strupper\n"));
 
-    for(size_t i=0; i<len; ++i)
+    for(i=0; i<len; ++i)
         dest[i] = toupper(str[i]);
 
     dest[len] = '\0';
