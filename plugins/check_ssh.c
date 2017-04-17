@@ -244,13 +244,13 @@ int ssh_connect (char *haddr, int hport, char *remote_version, char *remote_prot
 
         if (remote_version && strcmp(remote_version, ssh_server)) {
             close(sd);
-            print_singleline_exit (STATE_CRITICAL, _("%s (protocol %s) version mismatch, expected '%s'\n"),
+            print_singleline_exit (STATE_CRITICAL, _("%s (protocol %s) version mismatch, expected '%s'"),
                     ssh_server, ssh_proto, remote_version);
         }
 
         if (remote_protocol && strcmp(remote_protocol, ssh_proto)) {
             close(sd);
-            print_singleline_exit (STATE_CRITICAL, _("%s (protocol %s) protocol version mismatch, expected '%s'\n"),
+            print_singleline_exit (STATE_CRITICAL, _("%s (protocol %s) protocol version mismatch, expected '%s'"),
                     ssh_server, ssh_proto, remote_protocol);
         }
 
@@ -258,7 +258,7 @@ int ssh_connect (char *haddr, int hport, char *remote_version, char *remote_prot
 
         close(sd);
         print_singleline_exit (STATE_OK,
-                _("%s (protocol %s)%s"),
+                _("%s (protocol %s)|%s"),
                 ssh_server, ssh_proto, fperfdata("time", elapsed_time, "s",
                     FALSE, 0, FALSE, 0, TRUE, 0, TRUE, (int)socket_timeout));
     }

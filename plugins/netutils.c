@@ -327,7 +327,7 @@ int is_host (const char *address)
 void host_or_die(const char *str)
 {
     if(!str || (!is_addr(str) && !is_hostname(str)))
-        print_singleline_exit (STATE_UNKNOWN, _("Invalid hostname/address - %s"), str);
+        print_singleline_exit (STATE_UNKNOWN, _("Invalid hostname/address %s"), str);
 }
 
 int is_addr (const char *address)

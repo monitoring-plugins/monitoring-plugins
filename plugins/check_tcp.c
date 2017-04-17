@@ -305,7 +305,7 @@ int main (int argc, char **argv)
 
         /* no data when expected, so return critical */
         if (len == 0)
-            print_singleline_exit (STATE_CRITICAL, _("No data received from host\n"));
+            print_singleline_exit (STATE_CRITICAL, _("No data received from host"));
 
         /* print raw output if we're debugging */
         if(flags & FLAG_VERBOSE)
@@ -347,14 +347,14 @@ int main (int argc, char **argv)
     else {
         if(match == NP_MATCH_FAILURE) {
             if(server_address[0] != '/') {
-                print_singleline_exit (result, "Unexpected response from host on %s port %d%s", server_address, server_port,
+                print_singleline_exit (result, "Unexpected response from host on %s port %d|%s", server_address, server_port,
                         fperfdata ("time", elapsed_time, "s",
                             (flags & FLAG_TIME_WARN ? TRUE : FALSE), 0,
                             (flags & FLAG_TIME_CRIT ? TRUE : FALSE), 0,
                             TRUE, 0,
                             TRUE, socket_timeout));
             } else {
-                print_singleline_exit (result, "Unexpected response from socket %s%s", server_address,
+                print_singleline_exit (result, "Unexpected response from socket %s|%s", server_address,
                         fperfdata ("time", elapsed_time, "s",
                             (flags & FLAG_TIME_WARN ? TRUE : FALSE), 0,
                             (flags & FLAG_TIME_CRIT ? TRUE : FALSE), 0,
@@ -363,7 +363,7 @@ int main (int argc, char **argv)
             }
         } else {
             if(server_address[0] != '/') {
-                print_singleline_exit (result, "%.3f second response time on %s port %d%s%s", elapsed_time, server_address, server_port,
+                print_singleline_exit (result, "%.3f second response time on %s port %d%s|%s", elapsed_time, server_address, server_port,
                         ((!(flags & FLAG_HIDE_OUTPUT) && len) ? " [%s]", status : ""),
                         fperfdata ("time", elapsed_time, "s",
                             (flags & FLAG_TIME_WARN ? TRUE : FALSE), 0,
@@ -371,7 +371,7 @@ int main (int argc, char **argv)
                             TRUE, 0,
                             TRUE, socket_timeout));
             } else {
-                print_singleline_exit (result, "%.3f second response time on socket %s%s%s", server_address,
+                print_singleline_exit (result, "%.3f second response time on socket %s%s|%s", server_address,
                         ((!(flags & FLAG_HIDE_OUTPUT) && len) ? " [%s]", status : ""),
                         fperfdata ("time", elapsed_time, "s",
                             (flags & FLAG_TIME_WARN ? TRUE : FALSE), 0,

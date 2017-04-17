@@ -574,7 +574,7 @@ char * strrev (const char *string)
 
 char * strupper (const char *str)
 {
-    char *dest;
+    char *dest = NULL;
     size_t len, i;
 
     if (str)
@@ -606,9 +606,9 @@ char * perfdata (const char *label, long int val, const char *uom,
     char *data = NULL;
 
     if (strpbrk (label, "'= "))
-        xasprintf (&data, "|'%s'=%ld%s;", label, val, uom);
+        xasprintf (&data, "'%s'=%ld%s;", label, val, uom);
     else
-        xasprintf (&data, "|%s=%ld%s;", label, val, uom);
+        xasprintf (&data, "%s=%ld%s;", label, val, uom);
 
     if (warnp)
         xasprintf (&data, "%s%ld;", data, warn);
@@ -635,9 +635,9 @@ char * fperfdata (const char *label, double val, const char *uom,
     char *data = NULL;
 
     if (strpbrk (label, "'= "))
-        xasprintf (&data, "|'%s'=", label);
+        xasprintf (&data, "'%s'=", label);
     else
-        xasprintf (&data, "|%s=", label);
+        xasprintf (&data, "%s=", label);
 
     xasprintf (&data, "%s%f", data, val);
     xasprintf (&data, "%s%s;", data, uom);
@@ -668,9 +668,9 @@ char * sperfdata (const char *label, double val, const char *uom,
 {
     char *data = NULL;
     if (strpbrk (label, "'= "))
-        xasprintf (&data, "|'%s'=", label);
+        xasprintf (&data, "'%s'=", label);
     else
-        xasprintf (&data, "|%s=", label);
+        xasprintf (&data, "%s=", label);
 
     xasprintf (&data, "%s%f", data, val);
     xasprintf (&data, "%s%s;", data, uom);
@@ -701,9 +701,9 @@ char * sperfdata_int (const char *label, int val, const char *uom,
 {
     char *data = NULL;
     if (strpbrk (label, "'= "))
-        xasprintf (&data, "|'%s'=", label);
+        xasprintf (&data, "'%s'=", label);
     else
-        xasprintf (&data, "|%s=", label);
+        xasprintf (&data, "%s=", label);
 
     xasprintf (&data, "%s%d", data, val);
     xasprintf (&data, "%s%s;", data, uom);
