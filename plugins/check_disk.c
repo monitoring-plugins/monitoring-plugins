@@ -384,7 +384,7 @@ main (int argc, char **argv)
     xasprintf (&output, "%s%s", output, details);
 
 
-  printf ("DISK %s%s%s|%s\n", state_text (result), (erronly && result==STATE_OK) ? "" : preamble, output, perf);
+  printf ("DISK %s%s%s%s\n", state_text (result), (erronly && result==STATE_OK) ? "" : preamble, output, perf);
   return result;
 }
 
