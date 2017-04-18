@@ -159,6 +159,7 @@ int maximum_age = -1;
 int address_family = AF_UNSPEC;
 
 int process_arguments (int, char**);
+void handle_curl_option_return_code (CURLcode res, const char* option);
 int check_http (void);
 void print_help (void);
 void print_usage (void);
@@ -242,6 +243,16 @@ expected_statuscode (const char *reply, const char *statuscodes)
   return result;
 }
 
+void
+handle_curl_option_return_code (CURLcode res, const char* option)
+{
+  if (res != CURLE_OK) {
+    snprintf (msg, DEFAULT_BUFFER_SIZE, _("Error while setting cURL option '%s': cURL returned %d - %s"),
+      res, curl_easy_strerror(res));
+    die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
+  }
+}
+
 int
 check_http (void)
 {
@@ -256,50 +267,50 @@ check_http (void)
     die (STATE_UNKNOWN, "HTTP UNKNOWN - curl_easy_init failed\n");
 
   if (verbose >= 1)
-    curl_easy_setopt (curl, CURLOPT_VERBOSE, TRUE);
+    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_VERBOSE, TRUE), "CURLOPT_VERBOSE");
 
   /* print everything on stdout like check_http would do */
-  curl_easy_setopt(curl, CURLOPT_STDERR, stdout);
+  handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_STDERR, stdout), "CURLOPT_STDERR");
 
   /* initialize buffer for body of the answer */
   if (curlhelp_initwritebuffer(&body_buf) < 0)
     die (STATE_UNKNOWN, "HTTP CRITICAL - out of memory allocating buffer for body\n");
-  curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, (curl_write_callback)curlhelp_buffer_write_callback);
-  curl_easy_setopt (curl, CURLOPT_WRITEDATA, (void *)&body_buf);
+  handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, (curl_write_callback)curlhelp_buffer_write_callback), "CURLOPT_WRITEFUNCTION");
+  handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_WRITEDATA, (void *)&body_buf), "CURLOPT_WRITEDATA");
 
   /* initialize buffer for header of the answer */
   if (curlhelp_initwritebuffer( &header_buf ) < 0)
     die (STATE_UNKNOWN, "HTTP CRITICAL - out of memory allocating buffer for header\n" );
-  curl_easy_setopt (curl, CURLOPT_HEADERFUNCTION, (curl_write_callback)curlhelp_buffer_write_callback);
-  curl_easy_setopt (curl, CURLOPT_WRITEHEADER, (void *)&header_buf);
+  handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_HEADERFUNCTION, (curl_write_callback)curlhelp_buffer_write_callback), "CURLOPT_HEADERFUNCTION");
+  handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_WRITEHEADER, (void *)&header_buf), "CURLOPT_WRITEHEADER");
 
   /* set the error buffer */
-  curl_easy_setopt (curl, CURLOPT_ERRORBUFFER, errbuf);
+  handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_ERRORBUFFER, errbuf), "CURLOPT_ERRORBUFFER");
 
   /* set timeouts */
-  curl_easy_setopt (curl, CURLOPT_CONNECTTIMEOUT, socket_timeout);
-  curl_easy_setopt (curl, CURLOPT_TIMEOUT, socket_timeout);
+  handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CONNECTTIMEOUT, socket_timeout), "CURLOPT_CONNECTTIMEOUT");
+  handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_TIMEOUT, socket_timeout), "CURLOPT_TIMEOUT");
 
   /* compose URL */
   snprintf (url, DEFAULT_BUFFER_SIZE, "%s://%s%s", use_ssl ? "https" : "http",
     server_address, server_url);
-  curl_easy_setopt (curl, CURLOPT_URL, url);
+  handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_URL, url), "CURLOPT_URL");
 
   /* set port */
-  curl_easy_setopt (curl, CURLOPT_PORT, server_port);
+  handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_PORT, server_port), "CURLOPT_PORT");
 
   /* set HTTP method */
   if (http_method) {
     if (!strcmp(http_method, "POST"))
-      curl_easy_setopt (curl, CURLOPT_POST, 1);
+      handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_POST, 1), "CURLOPT_POST");
     else if (!strcmp(http_method, "PUT"))
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 12, 1)
-      curl_easy_setopt (curl, CURLOPT_UPLOAD, 1);
+      handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_UPLOAD, 1), "CURLOPT_UPLOAD");
 #else
-      curl_easy_setopt (curl, CURLOPT_PUT, 1);
+      handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_PUT, 1), "CURLOPT_PUT");
 #endif
     else
-      curl_easy_setopt (curl, CURLOPT_CUSTOMREQUEST, http_method);
+      handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CUSTOMREQUEST, http_method), "CURLOPT_CUSTOMREQUEST");
   }
 
   /* set hostname (virtual hosts) */
@@ -317,44 +328,44 @@ check_http (void)
   header_list = curl_slist_append (header_list, http_header);
 
   /* set HTTP headers */
-  curl_easy_setopt( curl, CURLOPT_HTTPHEADER, header_list );
+  handle_curl_option_return_code (curl_easy_setopt( curl, CURLOPT_HTTPHEADER, header_list ), "CURLOPT_HTTPHEADER");
 
   /* set SSL version, warn about unsecure or unsupported versions */
   if (use_ssl) {
-    curl_easy_setopt (curl, CURLOPT_SSLVERSION, ssl_version);
+    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_SSLVERSION, ssl_version), "CURLOPT_SSLVERSION");
   }
 
   /* client certificate and key to present to server (SSL) */
   if (client_cert)
-    curl_easy_setopt (curl, CURLOPT_SSLCERT, client_cert);
+    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_SSLCERT, client_cert), "CURLOPT_SSLCERT");
   if (client_privkey)
-    curl_easy_setopt (curl, CURLOPT_SSLKEY, client_privkey);
-  if (ca_cert)
-    curl_easy_setopt (curl, CURLOPT_CAINFO, ca_cert);
-
-  /* per default if we have a CA verify both the peer and the
-   * hostname in the certificate, can be switched off later */
-  curl_easy_setopt( curl, CURLOPT_SSL_VERIFYPEER, 2);
-  curl_easy_setopt( curl, CURLOPT_SSL_VERIFYHOST, 2);
-
-  /* backward-compatible behaviour, be tolerant in checks
-   * TODO: depending on more options have aspects we want
-   * to be less tolerant about ssl verfications
-   */
-  curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0);
-  curl_easy_setopt (curl, CURLOPT_SSL_VERIFYHOST, 0);
-
+    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_SSLKEY, client_privkey), "CURLOPT_SSLKEY");
+  if (ca_cert) {
+    /* per default if we have a CA verify both the peer and the
+     * hostname in the certificate, can be switched off later */
+    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CAINFO, ca_cert), "CURLOPT_CAINFO");
+    handle_curl_option_return_code (curl_easy_setopt( curl, CURLOPT_SSL_VERIFYPEER, 2), "CURLOPT_SSL_VERIFYPEER");
+    handle_curl_option_return_code (curl_easy_setopt( curl, CURLOPT_SSL_VERIFYHOST, 2), "CURLOPT_SSL_VERIFYHOST");
+  } else {  
+    /* backward-compatible behaviour, be tolerant in checks
+     * TODO: depending on more options have aspects we want
+     * to be less tolerant about ssl verfications
+     */
+    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0), "CURLOPT_SSL_VERIFYPEER");
+    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_SSL_VERIFYHOST, 0), "CURLOPT_SSL_VERIFYHOST");
+  }
+  
   /* set callback to extract certificate */
   if(check_cert) {
-    curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, sslctxfun);
+    handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, sslctxfun), "CURLOPT_SSL_CTX_FUNCTION");
   }
 
   /* set default or user-given user agent identification */
-  curl_easy_setopt (curl, CURLOPT_USERAGENT, user_agent);
+  handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_USERAGENT, user_agent), "CURLOPT_USERAGENT");
 
   /* authentication */
   if (strcmp(user_auth, ""))
-    curl_easy_setopt (curl, CURLOPT_USERPWD, user_auth);
+    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_USERPWD, user_auth), "CURLOPT_USERPWD");
 
   /* TODO: parameter auth method, bitfield of following methods:
    * CURLAUTH_BASIC (default)
@@ -368,17 +379,12 @@ check_http (void)
    * CURLAUTH_ANYSAFE: most secure, without BASIC
    * or CURLAUTH_ANY: most secure, even BASIC if necessary
    *
-   * curl_easy_setopt( curl, CURLOPT_HTTPAUTH, (long)CURLAUTH_DIGEST );
+   * handle_curl_option_return_code (curl_easy_setopt( curl, CURLOPT_HTTPAUTH, (long)CURLAUTH_DIGEST ), "CURLOPT_HTTPAUTH");
    */
-
-  /* TODO: --cacert: CA certificate file to verify SSL connection against (SSL) */
-  /* if( args_info.cacert_given ) {
-      curl_easy_setopt( curl, CURLOPT_CAINFO, args_info.cacert_arg );
-   } */
 
   /* handle redirections */
   if (onredirect == STATE_DEPENDENT) {
-    curl_easy_setopt (curl, CURLOPT_FOLLOWLOCATION, 1);
+    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_FOLLOWLOCATION, 1), "CURLOPT_FOLLOWLOCATION");
     /* TODO: handle the following aspects of redirection
       CURLOPT_POSTREDIR: method switch
       CURLINFO_REDIRECT_URL: custom redirect option
@@ -389,15 +395,15 @@ check_http (void)
 
   /* no-body */
   if (no_body)
-    curl_easy_setopt (curl, CURLOPT_NOBODY, 1);
+    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_NOBODY, 1), "CURLOPT_NOBODY");
 
   /* IPv4 or IPv6 forced DNS resolution */
   if (address_family == AF_UNSPEC)
-    curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_WHATEVER);
+    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_WHATEVER), "CURLOPT_IPRESOLVE(CURL_IPRESOLVE_WHATEVER)");
   else if (address_family == AF_INET)
-    curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4), "CURLOPT_IPRESOLVE(CURL_IPRESOLVE_V4)");
   else if (address_family == AF_INET6)
-    curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6);
+    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6), "CURLOPT_IPRESOLVE(CURL_IPRESOLVE_V6)");
 
   /* either send http POST data (any data, not only POST)*/
   if (!strcmp(http_method, "POST") ||!strcmp(http_method, "PUT")) {
@@ -412,12 +418,12 @@ check_http (void)
       http_post_data = "";
     if (!strcmp(http_method, "POST")) {
       /* POST method, set payload with CURLOPT_POSTFIELDS */
-      curl_easy_setopt (curl, CURLOPT_POSTFIELDS, http_post_data);
+      handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_POSTFIELDS, http_post_data), "CURLOPT_POSTFIELDS");
     } else if (!strcmp(http_method, "PUT")) {
-      curl_easy_setopt (curl, CURLOPT_READFUNCTION, (curl_read_callback)curlhelp_buffer_read_callback);
+      handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_READFUNCTION, (curl_read_callback)curlhelp_buffer_read_callback), "CURLOPT_READFUNCTION");
       curlhelp_initreadbuffer (&put_buf, http_post_data, strlen (http_post_data));
-      curl_easy_setopt (curl, CURLOPT_READDATA, (void *)&put_buf);
-      curl_easy_setopt (curl, CURLOPT_INFILESIZE, (curl_off_t)strlen (http_post_data));
+      handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_READDATA, (void *)&put_buf), "CURLOPT_READDATA");
+      handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_INFILESIZE, (curl_off_t)strlen (http_post_data)), "CURLOPT_INFILESIZE");
     }
   }
 
@@ -432,7 +438,6 @@ check_http (void)
 
   /* Curl errors, result in critical Nagios state */
   if (res != CURLE_OK) {
-    remove_newlines (errbuf);
     snprintf (msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host on port %d: cURL returned %d - %s"),
       server_port, res, curl_easy_strerror(res));
     die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
@@ -451,12 +456,12 @@ check_http (void)
   /* we got the data and we executed the request in a given time, so we can append
    * performance data to the answer always
    */
-  curl_easy_getinfo (curl, CURLINFO_TOTAL_TIME, &total_time);
+  handle_curl_option_return_code (curl_easy_getinfo (curl, CURLINFO_TOTAL_TIME, &total_time), "CURLINFO_TOTAL_TIME");
   if(show_extended_perfdata) {
-    curl_easy_getinfo(curl, CURLINFO_CONNECT_TIME, &time_connect);
-    curl_easy_getinfo(curl, CURLINFO_APPCONNECT_TIME, &time_appconnect);
-    curl_easy_getinfo(curl, CURLINFO_PRETRANSFER_TIME, &time_headers);
-    curl_easy_getinfo(curl, CURLINFO_STARTTRANSFER_TIME, &time_firstbyte);
+    handle_curl_option_return_code (curl_easy_getinfo(curl, CURLINFO_CONNECT_TIME, &time_connect), "CURLINFO_CONNECT_TIME");
+    handle_curl_option_return_code (curl_easy_getinfo(curl, CURLINFO_APPCONNECT_TIME, &time_appconnect), "CURLINFO_APPCONNECT_TIME");
+    handle_curl_option_return_code (curl_easy_getinfo(curl, CURLINFO_PRETRANSFER_TIME, &time_headers), "CURLINFO_PRETRANSFER_TIME");
+    handle_curl_option_return_code (curl_easy_getinfo(curl, CURLINFO_STARTTRANSFER_TIME, &time_firstbyte), "CURLINFO_STARTTRANSFER_TIME");
     snprintf(perfstring, DEFAULT_BUFFER_SIZE, "time=%.6gs;%.6g;%.6g;; size=%dB;;; time_connect=%.6gs;;;; %s time_headers=%.6gs;;;; time_firstbyte=%.6gs;;;; time_transfer=%.6gs;;;;",
       total_time,
       warning_thresholds != NULL ? (double)thlds->warning->end : 0.0,
@@ -489,7 +494,7 @@ check_http (void)
   }
 
   /* get result code from cURL */
-  curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &code);
+  handle_curl_option_return_code (curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &code), "CURLINFO_RESPONSE_CODE");
   if (verbose>=2)
     printf ("* curl CURLINFO_RESPONSE_CODE is %d\n", code);
 
