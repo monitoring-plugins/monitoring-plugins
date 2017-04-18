@@ -248,7 +248,7 @@ handle_curl_option_return_code (CURLcode res, const char* option)
 {
   if (res != CURLE_OK) {
     snprintf (msg, DEFAULT_BUFFER_SIZE, _("Error while setting cURL option '%s': cURL returned %d - %s"),
-      res, curl_easy_strerror(res));
+      option, res, curl_easy_strerror(res));
     die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
   }
 }
