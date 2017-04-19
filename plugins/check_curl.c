@@ -49,6 +49,9 @@ const char *email = "devel@monitoring-plugins.org";
 #include "curl/curl.h"
 #include "curl/easy.h"
 
+/* TODO: probe this one, how!? */
+#define LIBCURL_USES_OPENSSL
+
 #include "picohttpparser.h"
 
 #define MAKE_LIBCURL_VERSION(major, minor, patch) ((major)*0x10000 + (minor)*0x100 + (patch))
