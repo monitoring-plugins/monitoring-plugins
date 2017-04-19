@@ -312,11 +312,7 @@ check_http (void)
     if (!strcmp(http_method, "POST"))
       handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_POST, 1), "CURLOPT_POST");
     else if (!strcmp(http_method, "PUT"))
-#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 12, 1)
       handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_UPLOAD, 1), "CURLOPT_UPLOAD");
-#else
-      handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_PUT, 1), "CURLOPT_PUT");
-#endif
     else
       handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CUSTOMREQUEST, http_method), "CURLOPT_CUSTOMREQUEST");
   }
@@ -370,22 +366,22 @@ check_http (void)
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1)
     /* inform curl to report back certificates (this works for OpenSSL, NSS at least) */
     curl_easy_setopt (curl, CURLOPT_CERTINFO, 1L);
-#ifdef USE_OPENSSL
+#ifdef LIBCURL_USES_OPENSSL
     /* set callback to extract certificate with OpenSSL context function (works with
      * OpenSSL only!)
      */
     handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, sslctxfun), "CURLOPT_SSL_CTX_FUNCTION");
 #endif /* USE_OPENSSL */
 #else /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1) */
-#ifdef USE_OPENSSL
+#ifdef LIBCURL_USES_OPENSSL
     /* Too old curl library, hope we have OpenSSL */
     handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, sslctxfun), "CURLOPT_SSL_CTX_FUNCTION");
 #else
     die (STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates (no CURLOPT_SSL_CTX_FUNCTION, no OpenSSL library)\n");
-#endif /* USE_OPENSSL */
+#endif /* LIBCURL_USES_OPENSSL */
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1) */
 
-#endif /* HAVE_SSL */
+#endif /* LIBCURL_FEATURE_SSL */
 
   /* set default or user-given user agent identification */
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_USERAGENT, user_agent), "CURLOPT_USERAGENT");
@@ -429,7 +425,7 @@ check_http (void)
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_WHATEVER), "CURLOPT_IPRESOLVE(CURL_IPRESOLVE_WHATEVER)");
   else if (address_family == AF_INET)
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4), "CURLOPT_IPRESOLVE(CURL_IPRESOLVE_V4)");
-#ifdef USE_IPV6
+#if defined (USE_IPV6) && defined (LIBCURL_FEATURE_IPV6)
   else if (address_family == AF_INET6)
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6), "CURLOPT_IPRESOLVE(CURL_IPRESOLVE_V6)");
 #endif
@@ -500,9 +496,9 @@ check_http (void)
        * and we actually have OpenSSL in the monitoring tools
        */
 #ifdef HAVE_SSL
-#ifdef USE_OPENSSL
+#ifdef LIBCURL_USES_OPENSSL
       result = np_net_ssl_check_certificate(cert, days_till_exp_warn, days_till_exp_crit);
-#endif /* USE_OPENSSL */
+#endif /* LIBCURL_USES_OPENSSL */
 #endif /* HAVE_SSL */
       return result;
     }
@@ -1061,7 +1057,7 @@ process_arguments (int argc, char **argv)
       address_family = AF_INET;
       break;
     case '6':
-#ifdef USE_IPV6
+#if defined (USE_IPV6) && defined (LIBCURL_FEATURE_IPV6)
       address_family = AF_INET6;
 #else
       usage4 (_("IPv6 support not available"));
