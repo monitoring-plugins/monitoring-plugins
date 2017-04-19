@@ -43,7 +43,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "utils.h"
 
 #ifndef LIBCURL_PROTOCOL_HTTP
-#error libcurl compiled without HTTP support, compiling check_curl plugin makes not much sense
+#error libcurl compiled without HTTP support, compiling check_curl plugin does not makes a lot of sense
 #endif
 
 #include "curl/curl.h"
@@ -739,6 +739,7 @@ process_arguments (int argc, char **argv)
   };
 
   int option = 0;
+  int got_plus = 0;
   static struct option longopts[] = {
     STD_LONG_OPTS,
     {"link", no_argument, 0, 'L'},
@@ -933,7 +934,6 @@ process_arguments (int argc, char **argv)
        * parameters, like -S and -C combinations */
       ssl_version = CURL_SSLVERSION_TLSv1_0;
       if (c=='S' && optarg != NULL) {
-        int got_plus = 0;
         char *plus_ptr = strchr(optarg, '+');
         if (plus_ptr) {
           got_plus = 1;
@@ -948,27 +948,26 @@ process_arguments (int argc, char **argv)
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
           ssl_version = CURL_SSLVERSION_TLSv1_0;
 #else
-          usage4 (_("Invalid option - Valid SSL/TLS versions: 2, 3"));
-#endif
+          ssl_version = CURL_SSLVERSION_DEFAULT;
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
         else if (!strcmp (optarg, "1.1"))
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
           ssl_version = CURL_SSLVERSION_TLSv1_1;
 #else
-          usage4 (_("Invalid option - Valid SSL/TLS versions: 2, 3"));
-#endif
+          ssl_version = CURL_SSLVERSION_DEFAULT;
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
         else if (!strcmp (optarg, "1.2"))
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
           ssl_version = CURL_SSLVERSION_TLSv1_2;
 #else
-          usage4 (_("Invalid option - Valid SSL/TLS versions: 2, 3"));
-#endif
+          ssl_version = CURL_SSLVERSION_DEFAULT;
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
         else if (!strcmp (optarg, "1.3"))
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 52, 0)
           ssl_version = CURL_SSLVERSION_TLSv1_3;
 #else
-          usage4 (_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2"));
-#endif
-        
+          ssl_version = CURL_SSLVERSION_DEFAULT;
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 52, 0) */
         else
           usage4 (_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2 (with optional '+' suffix)"));
       }
@@ -1000,19 +999,20 @@ process_arguments (int argc, char **argv)
             break;
         }
       }
-#endif      
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 54, 0) */ 
       if (verbose >= 2)
         printf(_("* Set SSL/TLS version to %d\n"), ssl_version);
       if (server_port == HTTP_PORT)
         server_port = HTTPS_PORT;
-#else
+      break;
+#else /* LIBCURL_FEATURE_SSL */
       /* -C -J and -K fall through to here without SSL */
       usage4 (_("Invalid option - SSL is not available"));
-#endif
       break;
     case SNI_OPTION: /* --sni is parsed, but ignored, the default is TRUE with libcurl */
       use_sni = TRUE;
       break;
+#endif /* LIBCURL_FEATURE_SSL */
     case 'f': /* onredirect */
       if (!strcmp (optarg, "ok"))
         onredirect = STATE_OK;
