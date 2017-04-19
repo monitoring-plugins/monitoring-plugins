@@ -157,7 +157,9 @@ int ssl_version = CURL_SSLVERSION_DEFAULT;
 char *client_cert = NULL;
 char *client_privkey = NULL;
 char *ca_cert = NULL;
+#ifdef HAVE_SSL
 X509 *cert = NULL;
+#endif
 int no_body = FALSE;
 int maximum_age = -1;
 int address_family = AF_UNSPEC;
@@ -214,6 +216,8 @@ main (int argc, char **argv)
   return result;
 }
 
+#ifdef HAVE_SSL
+
 int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx)
 {
   /* TODO: we get all certificates of the chain, so which ones
@@ -230,6 +234,8 @@ CURLcode sslctxfun(CURL *curl, SSL_CTX *sslctx, void *parm)
 
   return CURLE_OK;
 }
+
+#endif /* HAVE_SSL */
 
 /* Checks if the server 'reply' is one of the expected 'statuscodes' */
 static int
