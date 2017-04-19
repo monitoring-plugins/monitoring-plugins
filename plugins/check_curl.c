@@ -149,6 +149,10 @@ int onredirect = STATE_OK;
 int use_ssl = FALSE;
 int use_sni = TRUE;
 int check_cert = FALSE;
+union {
+  struct curl_slist* to_info;
+  struct curl_certinfo* to_certinfo;
+} cert_ptr;
 int ssl_version = CURL_SSLVERSION_DEFAULT;
 char *client_cert = NULL;
 char *client_privkey = NULL;
@@ -212,6 +216,10 @@ main (int argc, char **argv)
 
 int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx)
 {
+  /* TODO: we get all certificates of the chain, so which ones
+   * should we test?
+   * TODO: is the last certificate always the server certificate?
+   */
   cert = X509_STORE_CTX_get_current_cert(x509_ctx);
   return 1;
 }
@@ -330,6 +338,8 @@ check_http (void)
   /* set HTTP headers */
   handle_curl_option_return_code (curl_easy_setopt( curl, CURLOPT_HTTPHEADER, header_list ), "CURLOPT_HTTPHEADER");
 
+#ifdef LIBCURL_FEATURE_SSL
+
   /* set SSL version, warn about unsecure or unsupported versions */
   if (use_ssl) {
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_SSLVERSION, ssl_version), "CURLOPT_SSLVERSION");
@@ -344,7 +354,7 @@ check_http (void)
     /* per default if we have a CA verify both the peer and the
      * hostname in the certificate, can be switched off later */
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CAINFO, ca_cert), "CURLOPT_CAINFO");
-    handle_curl_option_return_code (curl_easy_setopt( curl, CURLOPT_SSL_VERIFYPEER, 2), "CURLOPT_SSL_VERIFYPEER");
+    handle_curl_option_return_code (curl_easy_setopt( curl, CURLOPT_SSL_VERIFYPEER, 1), "CURLOPT_SSL_VERIFYPEER");
     handle_curl_option_return_code (curl_easy_setopt( curl, CURLOPT_SSL_VERIFYHOST, 2), "CURLOPT_SSL_VERIFYHOST");
   } else {  
     /* backward-compatible behaviour, be tolerant in checks
@@ -354,11 +364,28 @@ check_http (void)
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0), "CURLOPT_SSL_VERIFYPEER");
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_SSL_VERIFYHOST, 0), "CURLOPT_SSL_VERIFYHOST");
   }
-  
-  /* set callback to extract certificate */
-  if(check_cert) {
+
+  /* try hard to get a stack of certificates to verify against */
+  if (check_cert)
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1)
+    /* inform curl to report back certificates (this works for OpenSSL, NSS at least) */
+    curl_easy_setopt (curl, CURLOPT_CERTINFO, 1L);
+#ifdef USE_OPENSSL
+    /* set callback to extract certificate with OpenSSL context function (works with
+     * OpenSSL only!)
+     */
     handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, sslctxfun), "CURLOPT_SSL_CTX_FUNCTION");
-  }
+#endif /* USE_OPENSSL */
+#else /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1) */
+#ifdef USE_OPENSSL
+    /* Too old curl library, hope we have OpenSSL */
+    handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, sslctxfun), "CURLOPT_SSL_CTX_FUNCTION");
+#else
+    die (STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates (no CURLOPT_SSL_CTX_FUNCTION, no OpenSSL library)\n");
+#endif /* USE_OPENSSL */
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1) */
+
+#endif /* HAVE_SSL */
 
   /* set default or user-given user agent identification */
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_USERAGENT, user_agent), "CURLOPT_USERAGENT");
@@ -402,8 +429,10 @@ check_http (void)
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_WHATEVER), "CURLOPT_IPRESOLVE(CURL_IPRESOLVE_WHATEVER)");
   else if (address_family == AF_INET)
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4), "CURLOPT_IPRESOLVE(CURL_IPRESOLVE_V4)");
+#ifdef USE_IPV6
   else if (address_family == AF_INET6)
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6), "CURLOPT_IPRESOLVE(CURL_IPRESOLVE_V6)");
+#endif
 
   /* either send http POST data (any data, not only POST)*/
   if (!strcmp(http_method, "POST") ||!strcmp(http_method, "PUT")) {
@@ -444,14 +473,41 @@ check_http (void)
   }
 
   /* certificate checks */
-#ifdef HAVE_SSL
+#ifdef LIBCURL_FEATURE_SSL
   if (use_ssl == TRUE) {
     if (check_cert == TRUE) {
+      if (verbose >= 2)
+        printf ("**** REQUEST CERTIFICATES ****\n");
+      cert_ptr.to_info = NULL;
+      res = curl_easy_getinfo (curl, CURLINFO_CERTINFO, &cert_ptr.to_info);
+      if (!res && cert_ptr.to_info) {
+        int i;
+        for (i = 0; i < cert_ptr.to_certinfo->num_of_certs; i++) {
+          struct curl_slist *slist;
+          for (slist = cert_ptr.to_certinfo->certinfo[i]; slist; slist = slist->next) {
+            if (verbose >= 2)
+              printf ("%d ** %s\n", i, slist->data);
+          }
+        }
+      } else {
+        snprintf (msg, DEFAULT_BUFFER_SIZE, _("Cannot retrieve certificates - cURL returned %d - %s"),
+          res, curl_easy_strerror(res));
+        die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
+      }
+      if (verbose >= 2)
+        printf ("**** REQUEST CERTIFICATES ****\n");
+      /* check certificate with OpenSSL functions, curl has been built against OpenSSL
+       * and we actually have OpenSSL in the monitoring tools
+       */
+#ifdef HAVE_SSL
+#ifdef USE_OPENSSL
       result = np_net_ssl_check_certificate(cert, days_till_exp_warn, days_till_exp_crit);
-      return(result);
+#endif /* USE_OPENSSL */
+#endif /* HAVE_SSL */
+      return result;
     }
   }
-#endif /* HAVE_SSL */
+#endif /* LIBCURL_FEATURE_SSL */
 
   /* we got the data and we executed the request in a given time, so we can append
    * performance data to the answer always
@@ -480,7 +536,6 @@ check_http (void)
       critical_thresholds != NULL ? (double)thlds->critical->end : 0.0,
       (int)body_buf.buflen);
   }
-
 
   /* return a CRITICAL status if we couldn't read any data */
   if (strlen(header_buf.buf) == 0 && strlen(body_buf.buf) == 0)
@@ -605,6 +660,16 @@ check_http (void)
   /* make sure the page is of an appropriate size
    * TODO: as far I can tell check_http gets the full size of header and
    * if -N is not given header+body. Does this make sense?
+   * 
+   * TODO: check_http.c had a get_length function, the question is really
+   * here what to use? the raw data size of the header_buf, the value of
+   * Content-Length, both and warn if they differ? Should the length be
+   * header+body or only body?
+   * 
+   * One possible policy:
+   * - use header_buf.buflen (warning, if it mismatches to the Content-Length value
+   * - if -N (nobody) is given, use Content-Length only and hope the server set
+   *   the value correcly
    */
   page_len = header_buf.buflen + body_buf.buflen;
   if ((max_page_len > 0) && (page_len > max_page_len)) {
@@ -637,8 +702,8 @@ check_http (void)
   curlhelp_free_statusline(&status_line);
   curl_easy_cleanup (curl);
   curl_global_cleanup ();
-  curlhelp_freewritebuffer(&body_buf);
-  curlhelp_freewritebuffer(&header_buf);
+  curlhelp_freewritebuffer (&body_buf);
+  curlhelp_freewritebuffer (&header_buf);
   if (!strcmp (http_method, "PUT")) { 
     curlhelp_freereadbuffer (&put_buf);
   }
@@ -1493,6 +1558,7 @@ get_header_value (const struct phr_header* headers, const size_t nof_headers, co
   return NULL;
 }
 
+/* TODO: use CURL_EXTERN time_t curl_getdate(const char *p, const time_t *unused); here */
 static time_t
 parse_time_string (const char *string)
 {
