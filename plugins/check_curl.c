@@ -184,7 +184,6 @@ int curlhelp_parse_statusline (const char*, curlhelp_statusline *);
 void curlhelp_free_statusline (curlhelp_statusline *);
 char *perfd_time_ssl (double microsec);
 char *get_header_value (const struct phr_header* headers, const size_t nof_headers, const char* header);
-static time_t parse_time_string (const char *string);
 int check_document_dates (const curlhelp_write_curlbuf *, char (*msg)[DEFAULT_BUFFER_SIZE]);
 
 void remove_newlines (char *);
@@ -1563,98 +1562,6 @@ get_header_value (const struct phr_header* headers, const size_t nof_headers, co
   return NULL;
 }
 
-/* TODO: use CURL_EXTERN time_t curl_getdate(const char *p, const time_t *unused); here */
-static time_t
-parse_time_string (const char *string)
-{
-  struct tm tm;
-  time_t t;
-  memset (&tm, 0, sizeof(tm));
-
-  /* Like this: Tue, 25 Dec 2001 02:59:03 GMT */
-
-  if (isupper (string[0])  &&  /* Tue */
-    islower (string[1])  &&
-    islower (string[2])  &&
-    ',' ==   string[3]   &&
-    ' ' ==   string[4]   &&
-    (isdigit(string[5]) || string[5] == ' ') &&   /* 25 */
-    isdigit (string[6])  &&
-    ' ' ==   string[7]   &&
-    isupper (string[8])  &&  /* Dec */
-    islower (string[9])  &&
-    islower (string[10]) &&
-    ' ' ==   string[11]  &&
-    isdigit (string[12]) &&  /* 2001 */
-    isdigit (string[13]) &&
-    isdigit (string[14]) &&
-    isdigit (string[15]) &&
-    ' ' ==   string[16]  &&
-    isdigit (string[17]) &&  /* 02: */
-    isdigit (string[18]) &&
-    ':' ==   string[19]  &&
-    isdigit (string[20]) &&  /* 59: */
-    isdigit (string[21]) &&
-    ':' ==   string[22]  &&
-    isdigit (string[23]) &&  /* 03 */
-    isdigit (string[24]) &&
-    ' ' ==   string[25]  &&
-    'G' ==   string[26]  &&  /* GMT */
-    'M' ==   string[27]  &&  /* GMT */
-    'T' ==   string[28]) {
-
-    tm.tm_sec  = 10 * (string[23]-'0') + (string[24]-'0');
-    tm.tm_min  = 10 * (string[20]-'0') + (string[21]-'0');
-    tm.tm_hour = 10 * (string[17]-'0') + (string[18]-'0');
-    tm.tm_mday = 10 * (string[5] == ' ' ? 0 : string[5]-'0') + (string[6]-'0');
-    tm.tm_mon = (!strncmp (string+8, "Jan", 3) ? 0 :
-      !strncmp (string+8, "Feb", 3) ? 1 :
-      !strncmp (string+8, "Mar", 3) ? 2 :
-      !strncmp (string+8, "Apr", 3) ? 3 :
-      !strncmp (string+8, "May", 3) ? 4 :
-      !strncmp (string+8, "Jun", 3) ? 5 :
-      !strncmp (string+8, "Jul", 3) ? 6 :
-      !strncmp (string+8, "Aug", 3) ? 7 :
-      !strncmp (string+8, "Sep", 3) ? 8 :
-      !strncmp (string+8, "Oct", 3) ? 9 :
-      !strncmp (string+8, "Nov", 3) ? 10 :
-      !strncmp (string+8, "Dec", 3) ? 11 :
-      -1);
-    tm.tm_year = ((1000 * (string[12]-'0') +
-      100 * (string[13]-'0') +
-      10 * (string[14]-'0') +
-      (string[15]-'0'))
-      - 1900);
-
-    tm.tm_isdst = 0;  /* GMT is never in DST, right? */
-
-    if (tm.tm_mon < 0 || tm.tm_mday < 1 || tm.tm_mday > 31)
-      return 0;
-
-    /*
-    This is actually wrong: we need to subtract the local timezone
-    offset from GMT from this value.  But, that's ok in this usage,
-    because we only comparing these two GMT dates against each other,
-    so it doesn't matter what time zone we parse them in.
-    */
-
-    t = mktime (&tm);
-    if (t == (time_t) -1) t = 0;
-
-    if (verbose) {
-      const char *s = string;
-      while (*s && *s != '\r' && *s != '\n')
-      fputc (*s++, stdout);
-      printf (" ==> %lu\n", (unsigned long) t);
-    }
-
-    return t;
-
-  } else {
-    return 0;
-  }
-}
-
 int 
 check_document_dates (const curlhelp_write_curlbuf *header_buf, char (*msg)[DEFAULT_BUFFER_SIZE])
 {
@@ -1680,8 +1587,10 @@ check_document_dates (const curlhelp_write_curlbuf *header_buf, char (*msg)[DEFA
     snprintf (*msg, DEFAULT_BUFFER_SIZE, _("%sDocument modification date unknown, "), *msg);
     date_result = max_state_alt(STATE_CRITICAL, date_result);
   } else {
-    time_t srv_data = parse_time_string (server_date);
-    time_t doc_data = parse_time_string (document_date);
+    time_t srv_data = curl_getdate (server_date, NULL);
+    time_t doc_data = curl_getdate (document_date, NULL);
+    if (verbose >= 2)
+      printf ("* server date: '%s' (%d), doc_date: '%s' (%d)\n", server_date, srv_data, document_date, doc_data);
     if (srv_data <= 0) {
       snprintf (*msg, DEFAULT_BUFFER_SIZE, _("%sServer date \"%100s\" unparsable, "), *msg, server_date);
       date_result = max_state_alt(STATE_CRITICAL, date_result);
