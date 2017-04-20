@@ -91,6 +91,14 @@ typedef struct {
   char *first_line; /* a copy of the first line */
 } curlhelp_statusline;
 
+typedef enum curlhelp_ssl_library {
+  CURLHELP_SSL_LIBRARY_UNKNOWN,
+  CURLHELP_SSL_LIBRARY_OPENSSL,
+  CURLHELP_SSL_LIBRARY_LIBRESSL,
+  CURLHELP_SSL_LIBRARY_GNUTLS,
+  CURLHELP_SSL_LIBRARY_NSS
+} curlhelp_ssl_library;
+
 enum {
   REGS = 2,
   MAX_RE_SIZE = 256
@@ -160,12 +168,14 @@ int ssl_version = CURL_SSLVERSION_DEFAULT;
 char *client_cert = NULL;
 char *client_privkey = NULL;
 char *ca_cert = NULL;
+int is_openssl_callback = FALSE;
 #ifdef HAVE_SSL
 X509 *cert = NULL;
 #endif
 int no_body = FALSE;
 int maximum_age = -1;
 int address_family = AF_UNSPEC;
+curlhelp_ssl_library ssl_library = CURLHELP_SSL_LIBRARY_UNKNOWN;
 
 int process_arguments (int, char**);
 void handle_curl_option_return_code (CURLcode res, const char* option);
@@ -179,6 +189,8 @@ void curlhelp_freewritebuffer (curlhelp_write_curlbuf*);
 int curlhelp_initreadbuffer (curlhelp_read_curlbuf *, const char *, size_t);
 int curlhelp_buffer_read_callback (void *, size_t , size_t , void *);
 void curlhelp_freereadbuffer (curlhelp_read_curlbuf *);
+curlhelp_ssl_library curlhelp_get_ssl_library (CURL*);
+const char* curlhelp_get_ssl_library_string (curlhelp_ssl_library);
 
 int curlhelp_parse_statusline (const char*, curlhelp_statusline *);
 void curlhelp_free_statusline (curlhelp_statusline *);
@@ -368,25 +380,59 @@ check_http (void)
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0), "CURLOPT_SSL_VERIFYPEER");
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_SSL_VERIFYHOST, 0), "CURLOPT_SSL_VERIFYHOST");
   }
+  
+  /* detect SSL library used by libcurl */
+  ssl_library = curlhelp_get_ssl_library (curl);
 
   /* try hard to get a stack of certificates to verify against */
   if (check_cert)
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1)
-    /* inform curl to report back certificates (this works for OpenSSL, NSS at least) */
-    curl_easy_setopt (curl, CURLOPT_CERTINFO, 1L);
-#ifdef LIBCURL_USES_OPENSSL
-    /* set callback to extract certificate with OpenSSL context function (works with
-     * OpenSSL only!)
-     */
-    handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, sslctxfun), "CURLOPT_SSL_CTX_FUNCTION");
+    /* inform curl to report back certificates */
+    switch (ssl_library) {
+      case CURLHELP_SSL_LIBRARY_OPENSSL:
+      case CURLHELP_SSL_LIBRARY_LIBRESSL:
+        /* set callback to extract certificate with OpenSSL context function (works with
+         * OpenSSL-style libraries only!) */
+#ifdef USE_OPENSSL
+        /* libcurl and monitoring plugins built with OpenSSL, good */
+        handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, sslctxfun), "CURLOPT_SSL_CTX_FUNCTION");
+        is_openssl_callback = TRUE;
+#else /* USE_OPENSSL */
 #endif /* USE_OPENSSL */
+        /* libcurl is built with OpenSSL, monitoring plugins, so falling
+         * back to manually extracting certificate information */
+        handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CERTINFO, 1L), "CURLOPT_CERTINFO"); 
+        break;
+
+      case CURLHELP_SSL_LIBRARY_NSS:
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
+        /* NSS: support for CERTINFO is implemented since 7.34.0 */
+        handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CERTINFO, 1L), "CURLOPT_CERTINFO");
+#else /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
+        die (STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates (libcurl linked with SSL library '%s' is too old)\n", curlhelp_get_ssl_library_string (ssl_library));
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
+        break;
+      
+      case CURLHELP_SSL_LIBRARY_GNUTLS:
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 42, 0)
+        /* GnuTLS: support for CERTINFO is implemented since 7.42.0 */
+        handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CERTINFO, 1L), "CURLOPT_CERTINFO");
+#else /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 42, 0) */
+        die (STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates (libcurl linked with SSL library '%s' is too old)\n", curlhelp_get_ssl_library_string (ssl_library));
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 42, 0) */
+        break;
+      
+      case CURLHELP_SSL_LIBRARY_UNKNOWN:
+      default:
+        die (STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates (unknown SSL library '%s', must implement first)\n", curlhelp_get_ssl_library_string (ssl_library));
+        break;
+    }
 #else /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1) */
-#ifdef LIBCURL_USES_OPENSSL
-    /* Too old curl library, hope we have OpenSSL */
-    handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, sslctxfun), "CURLOPT_SSL_CTX_FUNCTION");
-#else
-    die (STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates (no CURLOPT_SSL_CTX_FUNCTION, no OpenSSL library)\n");
-#endif /* LIBCURL_USES_OPENSSL */
+    /* old libcurl, our only hope is OpenSSL, otherwise we are out of luck */
+    if (ssl_library == CURLHELP_SSL_LIBRARY_OPENSSL || ssl_library == CURLHELP_SSL_LIBRARY_LIBRESSL)
+      handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, sslctxfun), "CURLOPT_SSL_CTX_FUNCTION");
+    else
+      die (STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates (no CURLOPT_SSL_CTX_FUNCTION, no OpenSSL library or libcurl too old and has no CURLOPT_CERTINFO)\n");
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1) */
 
 #endif /* LIBCURL_FEATURE_SSL */
@@ -480,35 +526,44 @@ check_http (void)
 #ifdef LIBCURL_FEATURE_SSL
   if (use_ssl == TRUE) {
     if (check_cert == TRUE) {
-      if (verbose >= 2)
-        printf ("**** REQUEST CERTIFICATES ****\n");
-      cert_ptr.to_info = NULL;
-      res = curl_easy_getinfo (curl, CURLINFO_CERTINFO, &cert_ptr.to_info);
-      if (!res && cert_ptr.to_info) {
-        int i;
-        for (i = 0; i < cert_ptr.to_certinfo->num_of_certs; i++) {
-          struct curl_slist *slist;
-          for (slist = cert_ptr.to_certinfo->certinfo[i]; slist; slist = slist->next) {
-            if (verbose >= 2)
-              printf ("%d ** %s\n", i, slist->data);
-          }
-        }
-      } else {
-        snprintf (msg, DEFAULT_BUFFER_SIZE, _("Cannot retrieve certificates - cURL returned %d - %s"),
-          res, curl_easy_strerror(res));
-        die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
-      }
-      if (verbose >= 2)
-        printf ("**** REQUEST CERTIFICATES ****\n");
-      /* check certificate with OpenSSL functions, curl has been built against OpenSSL
-       * and we actually have OpenSSL in the monitoring tools
-       */
+      if (is_openssl_callback) {
 #ifdef HAVE_SSL
-#ifdef LIBCURL_USES_OPENSSL
-      result = np_net_ssl_check_certificate(cert, days_till_exp_warn, days_till_exp_crit);
-#endif /* LIBCURL_USES_OPENSSL */
+        /* check certificate with OpenSSL functions, curl has been built against OpenSSL
+         * and we actually have OpenSSL in the monitoring tools
+         */
+        result = np_net_ssl_check_certificate(cert, days_till_exp_warn, days_till_exp_crit);
+        return result;
+#else /* HAVE_SSL */
+        die (STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates - OpenSSL callback used and not linked against OpenSSL\n");
 #endif /* HAVE_SSL */
-      return result;
+      } else {
+        /* going with the libcurl CURLINFO data */
+        if (verbose >= 2)
+          printf ("**** REQUEST CERTIFICATES ****\n");
+        cert_ptr.to_info = NULL;
+        res = curl_easy_getinfo (curl, CURLINFO_CERTINFO, &cert_ptr.to_info);
+        if (!res && cert_ptr.to_info) {
+          int i;
+          for (i = 0; i < cert_ptr.to_certinfo->num_of_certs; i++) {
+            struct curl_slist *slist;
+            for (slist = cert_ptr.to_certinfo->certinfo[i]; slist; slist = slist->next) {
+              if (verbose >= 2)
+                printf ("%d ** %s\n", i, slist->data);
+            }
+          }
+        } else {
+          snprintf (msg, DEFAULT_BUFFER_SIZE, _("Cannot retrieve certificates - cURL returned %d - %s"),
+            res, curl_easy_strerror(res));
+          die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
+        }
+        if (verbose >= 2)
+          printf ("**** REQUEST CERTIFICATES ****\n");
+        // TODO: either convert data to X509 certs we can check with np_net_ssl_check_certificate
+        // or do something on our own..
+        //~ result = np_net_ssl_check_certificate(cert, days_till_exp_warn, days_till_exp_crit);
+        //~ return result;
+        die (STATE_UNKNOWN, "HTTP UNKNOWN - CERTINFO certificate checks not implemented yet\n");
+      }
     }
   }
 #endif /* LIBCURL_FEATURE_SSL */
@@ -1616,4 +1671,57 @@ check_document_dates (const curlhelp_write_curlbuf *header_buf, char (*msg)[DEFA
   if (document_date) free (document_date);
 
   return date_result;
+}
+
+/* TODO: is there a better way in libcurl to check for the SSL library? */
+curlhelp_ssl_library
+curlhelp_get_ssl_library (CURL* curl)
+{
+  curl_version_info_data* version_data;
+  char *ssl_version;
+  char *library;
+  curlhelp_ssl_library ssl_library = CURLHELP_SSL_LIBRARY_UNKNOWN;
+
+  version_data = curl_version_info (CURLVERSION_NOW);
+  if (version_data == NULL) return CURLHELP_SSL_LIBRARY_UNKNOWN;
+
+  ssl_version = strdup (version_data->ssl_version);
+  if (ssl_version == NULL ) return CURLHELP_SSL_LIBRARY_UNKNOWN;
+  
+  library = strtok (ssl_version, "/");
+  if (library == NULL) return CURLHELP_SSL_LIBRARY_UNKNOWN;
+  
+  if (strcmp (library, "OpenSSL") == 0)
+    ssl_library = CURLHELP_SSL_LIBRARY_OPENSSL;
+  else if (strcmp (library, "LibreSSL") == 0)
+    ssl_library = CURLHELP_SSL_LIBRARY_LIBRESSL;
+  else if (strcmp (library, "GnuTLS") == 0)
+    ssl_library = CURLHELP_SSL_LIBRARY_GNUTLS;
+  else if (strcmp (library, "NSS") == 0)
+    ssl_library = CURLHELP_SSL_LIBRARY_NSS;
+
+  if (verbose >= 2)
+    printf ("* SSL library string is : %s %s (%d)\n", version_data->ssl_version, library, ssl_library);
+  
+  free (ssl_version);
+    
+  return ssl_library;
+}
+
+const char*
+curlhelp_get_ssl_library_string (curlhelp_ssl_library ssl_library)
+{
+  switch (ssl_library) {
+    case CURLHELP_SSL_LIBRARY_OPENSSL:
+      return "OpenSSL";
+    case CURLHELP_SSL_LIBRARY_LIBRESSL:
+      return "LibreSSL";
+    case CURLHELP_SSL_LIBRARY_GNUTLS:
+      return "GnuTLS";
+    case CURLHELP_SSL_LIBRARY_NSS:
+      return "NSS";
+    case CURLHELP_SSL_LIBRARY_UNKNOWN:
+    default:
+      return "unknown";
+  }
 }
