@@ -158,18 +158,21 @@ int onredirect = STATE_OK;
 int use_ssl = FALSE;
 int use_sni = TRUE;
 int check_cert = FALSE;
-union {
+typedef union {
   struct curl_slist* to_info;
   struct curl_certinfo* to_certinfo;
-} cert_ptr;
+} cert_ptr_union;
+cert_ptr_union cert_ptr;
 int ssl_version = CURL_SSLVERSION_DEFAULT;
 char *client_cert = NULL;
 char *client_privkey = NULL;
 char *ca_cert = NULL;
 int is_openssl_callback = FALSE;
 #ifdef HAVE_SSL
+#ifdef USE_OPENSSL
 X509 *cert = NULL;
-#endif
+#endif /* USE_OPENSSL */
+#endif /* HAVE_SSL */
 int no_body = FALSE;
 int maximum_age = -1;
 int address_family = AF_UNSPEC;
@@ -189,6 +192,7 @@ int curlhelp_buffer_read_callback (void *, size_t , size_t , void *);
 void curlhelp_freereadbuffer (curlhelp_read_curlbuf *);
 curlhelp_ssl_library curlhelp_get_ssl_library (CURL*);
 const char* curlhelp_get_ssl_library_string (curlhelp_ssl_library);
+int net_noopenssl_check_certificate (cert_ptr_union*, int, int);
 
 int curlhelp_parse_statusline (const char*, curlhelp_statusline *);
 void curlhelp_free_statusline (curlhelp_statusline *);
@@ -229,6 +233,7 @@ main (int argc, char **argv)
 }
 
 #ifdef HAVE_SSL
+#ifdef USE_OPENSSL
 
 int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx)
 {
@@ -247,6 +252,7 @@ CURLcode sslctxfun(CURL *curl, SSL_CTX *sslctx, void *parm)
   return CURLE_OK;
 }
 
+#endif /* USE_OPENSSL */
 #endif /* HAVE_SSL */
 
 /* Checks if the server 'reply' is one of the expected 'statuscodes' */
@@ -535,33 +541,19 @@ check_http (void)
         die (STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates - OpenSSL callback used and not linked against OpenSSL\n");
 #endif /* HAVE_SSL */
       } else {
-        /* going with the libcurl CURLINFO data */
-        if (verbose >= 2)
-          printf ("**** REQUEST CERTIFICATES ****\n");
+        /* We assume we don't have OpenSSL and np_net_ssl_check_certificate at our disposal,
+         * so we use the libcurl CURLINFO data
+         */
         cert_ptr.to_info = NULL;
         res = curl_easy_getinfo (curl, CURLINFO_CERTINFO, &cert_ptr.to_info);
         if (!res && cert_ptr.to_info) {
-          int i;
-          for (i = 0; i < cert_ptr.to_certinfo->num_of_certs; i++) {
-            struct curl_slist *slist;
-            for (slist = cert_ptr.to_certinfo->certinfo[i]; slist; slist = slist->next) {
-              if (verbose >= 2)
-                printf ("%d ** %s\n", i, slist->data);
-            }
-          }
+          result = net_noopenssl_check_certificate(&cert_ptr, days_till_exp_warn, days_till_exp_crit);
+          return result;
         } else {
           snprintf (msg, DEFAULT_BUFFER_SIZE, _("Cannot retrieve certificates - cURL returned %d - %s"),
             res, curl_easy_strerror(res));
           die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
         }
-        if (verbose >= 2)
-          printf ("**** REQUEST CERTIFICATES ****\n");
-        /* TODO: either convert data to X509 certs we can check with np_net_ssl_check_certificate
-         * or do something on our own..
-         * result = np_net_ssl_check_certificate(cert, days_till_exp_warn, days_till_exp_crit);
-         * return result;
-         */
-        die (STATE_UNKNOWN, "HTTP UNKNOWN - CERTINFO certificate checks not implemented yet\n");
       }
     }
   }
@@ -1723,3 +1715,28 @@ curlhelp_get_ssl_library_string (curlhelp_ssl_library ssl_library)
       return "unknown";
   }
 }
+
+#ifdef LIBCURL_FEATURE_SSL
+int
+net_noopenssl_check_certificate (cert_ptr_union* cert_ptr, int days_till_exp_warn, int days_till_exp_crit)
+{
+  int i;
+  struct curl_slist *slist;
+
+  if (verbose >= 2)
+    printf ("**** REQUEST CERTIFICATES ****\n");
+
+  for (i = 0; i < cert_ptr->to_certinfo->num_of_certs; i++) {
+    for (slist = cert_ptr->to_certinfo->certinfo[i]; slist; slist = slist->next) {
+      if (verbose >= 2)
+        printf ("%d ** %s\n", i, slist->data);
+    }
+  }
+
+  if (verbose >= 2)
+    printf ("**** REQUEST CERTIFICATES ****\n");
+
+	printf("%s\n", _("WARNING - Plugin does not support checking certificates without OpenSSL."));
+	return STATE_WARNING;
+}
+#endif /* LIBCURL_FEATURE_SSL */
