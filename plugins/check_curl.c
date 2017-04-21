@@ -1752,6 +1752,7 @@ curlhelp_get_ssl_library_string (curlhelp_ssl_library ssl_library)
 }
 
 #ifdef LIBCURL_FEATURE_SSL
+#ifndef USE_OPENSSL
 time_t
 parse_cert_date (const char *s)
 {
@@ -1885,4 +1886,5 @@ HAVE_FIRST_CERT:
 	}
 	return status;
 }
+#endif /* USE_OPENSSL */
 #endif /* LIBCURL_FEATURE_SSL */
