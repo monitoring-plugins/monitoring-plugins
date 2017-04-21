@@ -1752,26 +1752,137 @@ curlhelp_get_ssl_library_string (curlhelp_ssl_library ssl_library)
 }
 
 #ifdef LIBCURL_FEATURE_SSL
+time_t
+parse_cert_date (const char *s)
+{
+  struct tm tm;
+  time_t date;
+  
+  if (!s) return -1;
+
+  strptime (s, "%Y-%m-%d %H:%M:%S GMT", &tm);
+  date = mktime (&tm);
+  
+  return date;
+}
+
+/* TODO: this needs cleanup in the sslutils.c, maybe we the #else case to
+ * OpenSSL could be this function
+ */
 int
 net_noopenssl_check_certificate (cert_ptr_union* cert_ptr, int days_till_exp_warn, int days_till_exp_crit)
 {
   int i;
-  struct curl_slist *slist;
+  struct curl_slist* slist;
+  int cname_found = 0;
+  char* start_date_str = NULL;
+  char* end_date_str = NULL;
+  time_t start_date;
+  time_t end_date;
+	char *tz;
+	float time_left;
+	int days_left;
+	int time_remaining;
+	char timestamp[50] = "";  
+	int status = STATE_UNKNOWN;
 
   if (verbose >= 2)
     printf ("**** REQUEST CERTIFICATES ****\n");
 
   for (i = 0; i < cert_ptr->to_certinfo->num_of_certs; i++) {
     for (slist = cert_ptr->to_certinfo->certinfo[i]; slist; slist = slist->next) {
+      /* find first common name in subject, TODO: check alternative subjects for
+       * multi-host certificate, check wildcards
+       */
+      if (strncmp (slist->data, "Subject:", 8) == 0) {
+        char* p = strstr (slist->data, "CN=");
+        if (p != NULL) {
+          if (strncmp (host_name, p+3, strlen (host_name)) == 0) {
+            cname_found = 1;
+          }
+        }
+      } else if (strncmp (slist->data, "Start Date:", 11) == 0) {
+        start_date_str = &slist->data[11];
+      } else if (strncmp (slist->data, "Expire Date:", 12) == 0) {
+        end_date_str = &slist->data[12];
+      } else if (strncmp (slist->data, "Cert:", 5) == 0) {
+        goto HAVE_FIRST_CERT;
+      }
       if (verbose >= 2)
         printf ("%d ** %s\n", i, slist->data);
     }
   }
+HAVE_FIRST_CERT:
 
   if (verbose >= 2)
     printf ("**** REQUEST CERTIFICATES ****\n");
+    
+  if (!cname_found) {
+		printf("%s\n",_("CRITICAL - Cannot retrieve certificate subject."));
+		return STATE_CRITICAL;
+  }
 
-	printf("%s\n", _("WARNING - Plugin does not support checking certificates without OpenSSL."));
-	return STATE_WARNING;
+  start_date = parse_cert_date (start_date_str);
+  if (start_date <= 0) {
+    snprintf (msg, DEFAULT_BUFFER_SIZE, _("WARNING - Unparsable 'Start Date' in certificate: '%s'"),
+      start_date_str);
+    puts (msg);
+    return STATE_WARNING;
+  }
+
+  end_date = parse_cert_date (end_date_str);
+  if (end_date <= 0) {
+    snprintf (msg, DEFAULT_BUFFER_SIZE, _("WARNING - Unparsable 'Expire Date' in certificate: '%s'"),
+      start_date_str);
+    puts (msg);
+    return STATE_WARNING;
+  }
+
+  time_left = difftime (end_date, time(NULL));
+	days_left = time_left / 86400;
+	tz = getenv("TZ");
+	setenv("TZ", "GMT", 1);
+	tzset();
+	strftime(timestamp, 50, "%c %z", localtime(&end_date));
+	if (tz)
+		setenv("TZ", tz, 1);
+	else
+		unsetenv("TZ");
+	tzset();
+
+	if (days_left > 0 && days_left <= days_till_exp_warn) {
+		printf (_("%s - Certificate '%s' expires in %d day(s) (%s).\n"), (days_left>days_till_exp_crit)?"WARNING":"CRITICAL", host_name, days_left, timestamp);
+		if (days_left > days_till_exp_crit)
+			status = STATE_WARNING;
+		else
+			status = STATE_CRITICAL;
+	} else if (days_left == 0 && time_left > 0) {
+		if (time_left >= 3600)
+			time_remaining = (int) time_left / 3600;
+		else
+			time_remaining = (int) time_left / 60;
+
+		printf (_("%s - Certificate '%s' expires in %u %s (%s)\n"),
+			(days_left>days_till_exp_crit) ? "WARNING" : "CRITICAL", host_name, time_remaining,
+			time_left >= 3600 ? "hours" : "minutes", timestamp);
+
+		if ( days_left > days_till_exp_crit)
+			status = STATE_WARNING;
+		else
+			status = STATE_CRITICAL;
+	} else if (time_left < 0) {
+		printf(_("CRITICAL - Certificate '%s' expired on %s.\n"), host_name, timestamp);
+		status=STATE_CRITICAL;
+	} else if (days_left == 0) {
+		printf (_("%s - Certificate '%s' just expired (%s).\n"), (days_left>days_till_exp_crit)?"WARNING":"CRITICAL", host_name, timestamp);
+		if (days_left > days_till_exp_crit)
+			status = STATE_WARNING;
+		else
+			status = STATE_CRITICAL;
+	} else {
+		printf(_("OK - Certificate '%s' will expire on %s.\n"), host_name, timestamp);
+		status = STATE_OK;
+	}
+	return status;
 }
 #endif /* LIBCURL_FEATURE_SSL */
