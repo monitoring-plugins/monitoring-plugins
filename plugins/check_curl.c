@@ -531,24 +531,59 @@ check_http (void)
   if (use_ssl == TRUE) {
     if (check_cert == TRUE) {
       if (is_openssl_callback) {
-#ifdef HAVE_SSL
+#ifdef USE_OPENSSL
         /* check certificate with OpenSSL functions, curl has been built against OpenSSL
          * and we actually have OpenSSL in the monitoring tools
          */
         result = np_net_ssl_check_certificate(cert, days_till_exp_warn, days_till_exp_crit);
         return result;
-#else /* HAVE_SSL */
+#else /* USE_OPENSSL */
         die (STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates - OpenSSL callback used and not linked against OpenSSL\n");
-#endif /* HAVE_SSL */
+#endif /* USE_OPENSSL */
       } else {
-        /* We assume we don't have OpenSSL and np_net_ssl_check_certificate at our disposal,
-         * so we use the libcurl CURLINFO data
-         */
+        int i;
+        struct curl_slist *slist;
+
         cert_ptr.to_info = NULL;
         res = curl_easy_getinfo (curl, CURLINFO_CERTINFO, &cert_ptr.to_info);
         if (!res && cert_ptr.to_info) {
+#ifdef USE_OPENSSL          
+          /* We have no OpenSSL in libcurl, but we can use OpenSSL for X509 cert parsing
+           * We only check the first certificate and assume it's the one of the server
+           */
+          const char* raw_cert = NULL;
+          for (i = 0; i < cert_ptr.to_certinfo->num_of_certs; i++) {
+            for (slist = cert_ptr.to_certinfo->certinfo[i]; slist; slist = slist->next) {
+              if (verbose >= 2)
+                printf ("%d ** %s\n", i, slist->data);
+              if (strncmp (slist->data, "Cert:", 5) == 0) {
+                raw_cert = &slist->data[5];
+                goto GOT_FIRST_CERT;
+              }
+            }
+          }
+GOT_FIRST_CERT:
+          if (!raw_cert) {
+            snprintf (msg, DEFAULT_BUFFER_SIZE, _("Cannot retrieve certificates from CERTINFO information - certificate data was empty"));
+            die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
+          }
+          BIO* cert_BIO = BIO_new (BIO_s_mem());
+          BIO_write (cert_BIO, raw_cert, strlen(raw_cert));
+          cert = PEM_read_bio_X509 (cert_BIO, NULL, NULL, NULL);
+          if (!cert) {
+            snprintf (msg, DEFAULT_BUFFER_SIZE, _("Cannot read certificate from CERTINFO information - BIO error"));
+            die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
+          }
+          BIO_free (cert_BIO);
+          result = np_net_ssl_check_certificate(cert, days_till_exp_warn, days_till_exp_crit);
+          return result;        
+#else /* USE_OPENSSL */
+          /* We assume we don't have OpenSSL and np_net_ssl_check_certificate at our disposal,
+           * so we use the libcurl CURLINFO data
+           */
           result = net_noopenssl_check_certificate(&cert_ptr, days_till_exp_warn, days_till_exp_crit);
           return result;
+#endif /* USE_OPENSSL */
         } else {
           snprintf (msg, DEFAULT_BUFFER_SIZE, _("Cannot retrieve certificates - cURL returned %d - %s"),
             res, curl_easy_strerror(res));
