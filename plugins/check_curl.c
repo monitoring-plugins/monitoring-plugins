@@ -49,9 +49,6 @@ const char *email = "devel@monitoring-plugins.org";
 #include "curl/curl.h"
 #include "curl/easy.h"
 
-/* TODO: probe this one, how!? */
-#define LIBCURL_USES_OPENSSL
-
 #include "picohttpparser.h"
 
 #define MAKE_LIBCURL_VERSION(major, minor, patch) ((major)*0x10000 + (minor)*0x100 + (patch))
@@ -91,6 +88,7 @@ typedef struct {
   char *first_line; /* a copy of the first line */
 } curlhelp_statusline;
 
+/* to know the underlying SSL library used by libcurl */
 typedef enum curlhelp_ssl_library {
   CURLHELP_SSL_LIBRARY_UNKNOWN,
   CURLHELP_SSL_LIBRARY_OPENSSL,
@@ -558,10 +556,11 @@ check_http (void)
         }
         if (verbose >= 2)
           printf ("**** REQUEST CERTIFICATES ****\n");
-        // TODO: either convert data to X509 certs we can check with np_net_ssl_check_certificate
-        // or do something on our own..
-        //~ result = np_net_ssl_check_certificate(cert, days_till_exp_warn, days_till_exp_crit);
-        //~ return result;
+        /* TODO: either convert data to X509 certs we can check with np_net_ssl_check_certificate
+         * or do something on our own..
+         * result = np_net_ssl_check_certificate(cert, days_till_exp_warn, days_till_exp_crit);
+         * return result;
+         */
         die (STATE_UNKNOWN, "HTTP UNKNOWN - CERTINFO certificate checks not implemented yet\n");
       }
     }
@@ -1475,8 +1474,7 @@ curlhelp_freereadbuffer (curlhelp_read_curlbuf *buf)
   buf->buf = NULL;
 }
 
-/* TODO: should be moved into 'gl' and should be probed, glibc has
- * a strrstr
+/* TODO: where to put this, it's actually part of sstrings2 (logically)?
  */
 const char*
 strrstr2(const char *haystack, const char *needle)
