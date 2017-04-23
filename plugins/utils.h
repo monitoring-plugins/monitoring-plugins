@@ -13,6 +13,8 @@ in order to resist overflow attacks. In addition, a few functions are
 provided to standardize version and error reporting across the entire
 suite of plugins. */
 
+#include <ctype.h>
+
 /* now some functions etc are being defined in ../lib/utils_base.c */
 #include "utils_base.h"
 
@@ -101,10 +103,10 @@ void print_singleline_exit (int service_state, const char *fmt, ...) __attribute
 /*
  * Helper functions for standard output functions
  */
-const char *service_name(void);
+char *service_name(void);
 const char *state_text (int);
-char *strrev (const char *str);
-char *strupper (const char *str);
+char *strrev (char *str);
+char *strupper (char *str);
 
 #define max(a,b) (((a)>(b))?(a):(b))
 #define min(a,b) (((a)<(b))?(a):(b))

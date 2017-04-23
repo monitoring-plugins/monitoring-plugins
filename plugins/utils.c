@@ -208,16 +208,16 @@ print_singleline_exit (int service_state, const char *fmt, ...)
 /*
  * Helper functions for standard output functions
  */
-const char *
+char *
 service_name(void)
 {
         /* Prepare service name from progname */
         char *service_name = NULL;
         service_name = strscpy(service_name, progname);
-        service_name = strrev((const char *)service_name);
+        service_name = strrev(service_name);
         service_name = strpcpy(service_name, service_name, "_");
         service_name = strrev(service_name);
-        service_name = strupper((const char *)service_name);
+        service_name = strupper(service_name);
         return service_name;
 }
 const char *
@@ -237,27 +237,25 @@ state_text (int result)
         }
 }
 char *
-strrev (const char *string)
+strrev (char *string)
 {
         if (! string || ! *string)
                 return string;
 
-        char *p1 = NULL, *p2 = NULL, *str = NULL;
-        str = strscpy(str, string);
+        char *p1 = NULL, *p2 = NULL;
 
-        for (p1 = str, p2 = str + strlen(str) - 1; p2 > p1; ++p1, --p2)
+        for (p1 = string, p2 = string + strlen(string) - 1; p2 > p1; ++p1, --p2)
         {
                 *p1 ^= *p2;
                 *p2 ^= *p1;
                 *p1 ^= *p2;
         }
 
-        return str;
+        return string;
 }
 char *
-strupper (const char *str)
+strupper (char *str)
 {
-        char *dest = NULL;
         size_t len = 0, i = 0;
 
         if (str)
@@ -265,16 +263,11 @@ strupper (const char *str)
         else
                 return NULL;
 
-        if (dest == NULL || strlen (dest) < len)
-                dest = realloc (dest, len + 1);
-        if (dest == NULL)
-                die (STATE_UNKNOWN, _("failed realloc in strupper\n"));
-
         for (i=0; i<len; ++i)
-                dest[i] = toupper(str[i]);
+                str[i] = toupper(str[i]);
 
-        dest[len] = '\0';
-        return dest;
+        str[len] = '\0';
+        return str;
 }
 
 
