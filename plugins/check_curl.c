@@ -327,7 +327,7 @@ check_http (void)
   snprintf (url, DEFAULT_BUFFER_SIZE, "%s://%s%s", use_ssl ? "https" : "http",
     host_name, server_url);
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_URL, url), "CURLOPT_URL");
-  
+
   /* set port */
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_PORT, server_port), "CURLOPT_PORT");
 
