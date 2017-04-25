@@ -3,7 +3,7 @@
 * Monitoring check_dig plugin
 * 
 * License: GPL
-* Copyright (c) 2002-2008 Monitoring Plugins Development Team
+* Copyright (c) 2002-2016 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -33,7 +33,7 @@
  *  because on some architectures those strings are in non-writable memory */
 
 const char *progname = "check_dig";
-const char *copyright = "2002-2008";
+const char *copyright = "2002-2016";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
