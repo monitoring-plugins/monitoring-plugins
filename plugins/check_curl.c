@@ -168,11 +168,9 @@ char *client_cert = NULL;
 char *client_privkey = NULL;
 char *ca_cert = NULL;
 int is_openssl_callback = FALSE;
-#ifdef HAVE_SSL
-#ifdef USE_OPENSSL
+#if defined(HAVE_SSL) && defined(USE_OPENSSL)
 X509 *cert = NULL;
-#endif /* USE_OPENSSL */
-#endif /* HAVE_SSL */
+#endif /* defined(HAVE_SSL) && defined(USE_OPENSSL) */
 int no_body = FALSE;
 int maximum_age = -1;
 int address_family = AF_UNSPEC;
@@ -199,6 +197,11 @@ void curlhelp_free_statusline (curlhelp_statusline *);
 char *perfd_time_ssl (double microsec);
 char *get_header_value (const struct phr_header* headers, const size_t nof_headers, const char* header);
 int check_document_dates (const curlhelp_write_curlbuf *, char (*msg)[DEFAULT_BUFFER_SIZE]);
+int get_content_length (const curlhelp_write_curlbuf* header_buf, const curlhelp_write_curlbuf* body_buf);
+
+#if defined(HAVE_SSL) && defined(USE_OPENSSL)
+int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn, int days_till_exp_crit);
+#endif /* defined(HAVE_SSL) && defined(USE_OPENSSL) */
 
 void remove_newlines (char *);
 void test_file (char *);
@@ -756,7 +759,7 @@ GOT_FIRST_CERT:
    * - if -N (nobody) is given, use Content-Length only and hope the server set
    *   the value correcly
    */
-  page_len = header_buf.buflen + body_buf.buflen;
+  page_len = get_content_length(&header_buf, &body_buf);
   if ((max_page_len > 0) && (page_len > max_page_len)) {
     snprintf (msg, DEFAULT_BUFFER_SIZE, _("%spage size %d too large, "), msg, page_len);
     result = max_state_alt(STATE_WARNING, result);
@@ -1696,6 +1699,35 @@ check_document_dates (const curlhelp_write_curlbuf *header_buf, char (*msg)[DEFA
   if (document_date) free (document_date);
 
   return date_result;
+}
+
+int
+get_content_length (const curlhelp_write_curlbuf* header_buf, const curlhelp_write_curlbuf* body_buf)
+{
+  const char *s;
+  int content_length = 0;
+  char *copy;
+  struct phr_header headers[255];
+  size_t nof_headers = 255;
+  size_t msglen;
+  char *content_length_s = NULL;
+  curlhelp_statusline status_line;
+
+  int res = phr_parse_response (header_buf->buf, header_buf->buflen,
+    &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
+    headers, &nof_headers, 0);
+  
+  content_length_s = get_header_value (headers, nof_headers, "content-length");
+  if (!content_length_s) {
+    /* TODO: or header_buf->buflen + body_buf->buflen */
+    return body_buf->buflen;
+  }
+  /* TODO: trim */
+  content_length = atoi (content_length_s);
+
+  if (content_length_s) free (content_length_s);
+
+  return content_length;
 }
 
 /* TODO: is there a better way in libcurl to check for the SSL library? */
