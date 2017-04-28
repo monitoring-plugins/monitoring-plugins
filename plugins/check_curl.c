@@ -112,6 +112,8 @@ int invert_regex = 0;
 char *server_address;
 char *host_name;
 char *server_url = DEFAULT_SERVER_URL;
+char server_ip[DEFAULT_BUFFER_SIZE];
+struct curl_slist *server_ips = NULL;
 unsigned short server_port = HTTP_PORT;
 int virtual_port = 0;
 int host_name_length;
@@ -326,10 +328,21 @@ check_http (void)
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CONNECTTIMEOUT, socket_timeout), "CURLOPT_CONNECTTIMEOUT");
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_TIMEOUT, socket_timeout), "CURLOPT_TIMEOUT");
 
-  /* compose URL */
+  /* compose URL: must be the host_name, only if not given take the IP address. */
   snprintf (url, DEFAULT_BUFFER_SIZE, "%s://%s%s", use_ssl ? "https" : "http",
-    server_address ? server_address : host_name, server_url);
+    host_name ? host_name : server_address, server_url);
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_URL, url), "CURLOPT_URL");
+
+  /* cURL does certificate checking with this host_name (and not the virtual host?
+   * So we force CURLOPT_RESOLVE to make sure the resolver pickes the right IP
+   * for this hostname. */
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 3)
+  if (host_name && strcmp (host_name, server_address)) {
+    snprintf (server_ip, DEFAULT_BUFFER_SIZE, "%s:%d:%s", host_name, server_port, server_address);
+    server_ips = curl_slist_append (server_ips, server_ip);
+    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_RESOLVE, server_ips), "CURLOPT_RESOLVE");
+  }
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 3) */
 
   /* set port */
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_PORT, server_port), "CURLOPT_PORT");
@@ -519,8 +532,9 @@ check_http (void)
   if (verbose>=2 && http_post_data)
     printf ("**** REQUEST CONTENT ****\n%s\n", http_post_data);
 
-  /* free header list, we don't need it anymore */
-  curl_slist_free_all(header_list);
+  /* free header and server IP resolve lists, we don't need it anymore */
+  curl_slist_free_all (header_list);
+  curl_slist_free_all (server_ips);
 
   /* Curl errors, result in critical Nagios state */
   if (res != CURLE_OK) {
