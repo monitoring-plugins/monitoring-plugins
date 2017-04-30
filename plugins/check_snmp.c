@@ -386,6 +386,7 @@ main (int argc, char **argv)
 		response = strstr (ptr, delimiter);
 		if (response == NULL)
 			break;
+		response = response + 3;
 
 		if (verbose > 2) {
 			printf("Processing oid %i (line %i)\n  oidname: %s\n  response: %s\n", i+1, line+1, oidname, response);
