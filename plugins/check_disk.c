@@ -165,6 +165,7 @@ main (int argc, char **argv)
   int result = STATE_UNKNOWN;
   int disk_result = STATE_UNKNOWN;
   char *output;
+  char *ko_output;
   char *details;
   char *perf;
   char *preamble;
@@ -184,6 +185,7 @@ main (int argc, char **argv)
 
   preamble = strdup (" - free space:");
   output = strdup ("");
+  ko_output = strdup ("");
   details = strdup ("");
   perf = strdup ("");
   stat_buf = malloc(sizeof *stat_buf);
@@ -348,9 +350,6 @@ main (int argc, char **argv)
                           TRUE, 0,
                           TRUE, path->dtotal_units));
 
-      if (disk_result==STATE_OK && erronly && !verbose)
-        continue;
-
       if(disk_result && verbose >= 1) {
 	xasprintf(&flag_header, " %s [", state_text (disk_result));
       } else {
@@ -376,15 +375,27 @@ main (int argc, char **argv)
                 (unsigned long)w_df, (unsigned long)c_df, w_dfp, c_dfp);
       */
 
+      /* OS: #1420 save all not ok paths to different output, but only in case of error only option */
+      if (disk_result!=STATE_OK && erronly) {
+        xasprintf (&ko_output, "%s%s %s %.0f %s (%.0f%%",
+                ko_output, flag_header,
+                (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
+                path->dfree_units,
+                units,
+                path->dfree_pct);
+      }
+
     }
 
+    /* OS: #1420 only show offending paths if error only option is set, but show all paths if everything is ok */
+    output = (erronly && result!=STATE_OK) ? ko_output : output;
   }
 
   if (verbose >= 2)
     xasprintf (&output, "%s%s", output, details);
 
 
-  printf ("DISK %s%s%s|%s\n", state_text (result), (erronly && result==STATE_OK) ? "" : preamble, output, perf);
+  printf ("DISK %s%s%s|%s\n", state_text (result), preamble, output, perf);
   return result;
 }
 
