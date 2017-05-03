@@ -164,7 +164,7 @@ char *sperfdata_int (const char *, int, const char *, char *, char *,
 
 #define UT_CONN_TIMEOUT _("\
  -t, --timeout=INTEGER\n\
-    Seconds before connection times out (default: %d)\n")
+    Seconds before plugin times out (default: %d)\n")
 
 #define UT_PLUG_TIMEOUT _("\
  -t, --timeout=INTEGER\n\
