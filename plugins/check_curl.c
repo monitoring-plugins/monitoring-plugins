@@ -892,7 +892,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:p:d:e:s:R:r:u:f:C:J:K:nLS::m:M:NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NE", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
       break;
 
