@@ -1715,6 +1715,7 @@ check_document_dates (const curlhelp_write_curlbuf *header_buf, char (*msg)[DEFA
   return date_result;
 }
 
+
 int
 get_content_length (const curlhelp_write_curlbuf* header_buf, const curlhelp_write_curlbuf* body_buf)
 {
@@ -1733,15 +1734,17 @@ get_content_length (const curlhelp_write_curlbuf* header_buf, const curlhelp_wri
   
   content_length_s = get_header_value (headers, nof_headers, "content-length");
   if (!content_length_s) {
-    /* TODO: or header_buf->buflen + body_buf->buflen */
-    return body_buf->buflen;
+    return header_buf->buflen + body_buf->buflen;
   }
-  /* TODO: trim */
+  content_length_s += strspn (content_length_s, " \t");
   content_length = atoi (content_length_s);
+  if (content_length != body_buf->buflen) {
+    /* TODO: should we warn if the actual and the reported body length doen't match? */
+  }
 
   if (content_length_s) free (content_length_s);
 
-  return content_length;
+  return header_buf->buflen + body_buf->buflen;
 }
 
 /* TODO: is there a better way in libcurl to check for the SSL library? */
