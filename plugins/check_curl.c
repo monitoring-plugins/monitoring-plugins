@@ -1841,18 +1841,18 @@ net_noopenssl_check_certificate (cert_ptr_union* cert_ptr, int days_till_exp_war
       /* find first common name in subject, TODO: check alternative subjects for
        * multi-host certificate, check wildcards
        */
-      if (strncmp (slist->data, "Subject:", 8) == 0) {
+      if (strncasecmp (slist->data, "Subject:", 8) == 0) {
         char* p = strstr (slist->data, "CN=");
         if (p != NULL) {
           if (strncmp (host_name, p+3, strlen (host_name)) == 0) {
             cname_found = 1;
           }
         }
-      } else if (strncmp (slist->data, "Start Date:", 11) == 0) {
+      } else if (strncasecmp (slist->data, "Start Date:", 11) == 0) {
         start_date_str = &slist->data[11];
-      } else if (strncmp (slist->data, "Expire Date:", 12) == 0) {
+      } else if (strncasecmp (slist->data, "Expire Date:", 12) == 0) {
         end_date_str = &slist->data[12];
-      } else if (strncmp (slist->data, "Cert:", 5) == 0) {
+      } else if (strncasecmp (slist->data, "Cert:", 5) == 0) {
         goto HAVE_FIRST_CERT;
       }
       if (verbose >= 2)
