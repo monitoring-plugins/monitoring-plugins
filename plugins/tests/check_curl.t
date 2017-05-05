@@ -20,6 +20,7 @@ use FindBin qw($Bin);
 $ENV{'LC_TIME'} = "C";
 
 my $common_tests = 70;
+my $virtual_port_tests = 8;
 my $ssl_only_tests = 8;
 # Check that all dependent modules are available
 eval "use HTTP::Daemon 6.01;";
@@ -36,7 +37,7 @@ if ($@) {
 	plan skip_all => "Missing required module for test: $@";
 } else {
 	if (-x "./$plugin") {
-		plan tests => $common_tests * 2 + $ssl_only_tests;
+		plan tests => $common_tests * 2 + $ssl_only_tests + $virtual_port_tests;
 	} else {
 		plan skip_all => "No $plugin compiled";
 	}
@@ -161,6 +162,11 @@ sub run_server {
 				$c->send_basic_header;
 				$c->send_header('foo');
 				$c->send_crlf;
+			} elsif ($r->url->path eq "/virtual_port") {
+				# return sent Host header
+				$c->send_basic_header;
+				$c->send_crlf;
+				$c->send_response(HTTP::Response->new( 200, 'OK', undef, $r->header ('Host')));
 			} else {
 				$c->send_error(HTTP::Status->RC_FORBIDDEN);
 			}
@@ -209,6 +215,37 @@ SKIP: {
 		"output ok" );
 
 }
+
+my $cmd;
+# check virtual port behaviour
+#
+# http without virtual port
+$cmd = "$command -p $port_http -u /virtual_port -r ^127.0.0.1:$port_http\$";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 0, $cmd);
+like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+
+# http with virtual port
+$cmd = "$command:80 -p $port_http -u /virtual_port -r ^127.0.0.1\$";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 0, $cmd);
+like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+
+SKIP: {
+	skip "HTTP::Daemon::SSL not installed", 4 if ! exists $servers->{https};
+	# https without virtual port
+	$cmd = "$command -p $port_https --ssl -u /virtual_port -r ^127.0.0.1:$port_https\$";
+	$result = NPTest->testCmd( $cmd );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+
+	# https with virtual port
+	$cmd = "$command:443 -p $port_https --ssl -u /virtual_port -r ^127.0.0.1\$";
+	$result = NPTest->testCmd( $cmd );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+}
+
 
 sub run_common_tests {
 	my ($opts) = @_;
@@ -395,7 +432,7 @@ sub run_common_tests {
 
 	# Test an external address - timeout
 	SKIP: {
-		skip "This doesn't seems to work all the time", 1 unless ($ENV{HTTP_EXTERNAL});
+		skip "This doesn't seem to work all the time", 1 unless ($ENV{HTTP_EXTERNAL});
 		$cmd = "$command -f follow -u /redir_external -t 5";
 		eval {
 			$result = NPTest->testCmd( $cmd, 2 );
