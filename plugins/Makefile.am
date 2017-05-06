@@ -40,16 +40,16 @@ EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 	check_nagios check_by_ssh check_dns check_nt check_ide_smart	\
 	check_procs check_mysql_query check_apt check_dbi check_curl
 
+SUBDIRS = @PICOHTTPPARSER_DIR@ @URIPARSER_DIR@
+
 EXTRA_DIST = t tests
 
 PLUGINHDRS = common.h
 
-noinst_LIBRARIES = libnpcommon.a libpicohttpparser.a
+noinst_LIBRARIES = libnpcommon.a
 
 libnpcommon_a_SOURCES = utils.c netutils.c sslutils.c runcmd.c	\
 	popen.c utils.h netutils.h popen.h common.h runcmd.c runcmd.h
-
-libpicohttpparser_a_SOURCES = picohttpparser.c
 
 BASEOBJS = libnpcommon.a ../lib/libmonitoringplug.a ../gl/libgnu.a
 NETOBJS = $(BASEOBJS) $(EXTRA_NETOBLS)
@@ -71,9 +71,9 @@ test-debug:
 
 check_apt_LDADD = $(BASEOBJS)
 check_cluster_LDADD = $(BASEOBJS)
-check_curl_CFLAGS = $(AM_CFLAGS) $(LIBCURLCFLAGS)
-check_curl_CPPFLAGS = $(AM_CPPFLAGS) $(LIBCURLINCLUDE)
-check_curl_LDADD = $(NETLIBS) $(LIBCURLLIBS) $(SSLOBJS) libpicohttpparser.a
+check_curl_CFLAGS = $(AM_CFLAGS) $(LIBCURLCFLAGS) -Ipicohttpparser -Iuriparser
+check_curl_CPPFLAGS = $(AM_CPPFLAGS) $(LIBCURLINCLUDE) -Ipicohttpparser -Iuriparser
+check_curl_LDADD = $(NETLIBS) $(LIBCURLLIBS) $(SSLOBJS) picohttpparser/libpicohttpparser.a uriparser/liburiparser.a
 check_dbi_LDADD = $(NETLIBS) $(DBILIBS)
 check_dig_LDADD = $(NETLIBS)
 check_disk_LDADD = $(BASEOBJS)

@@ -202,7 +202,18 @@ NP-VERSION-FILE
 /plugins/negate
 /plugins/stamp-h*
 /plugins/urlize
-/plugins/libpicohttpparser.a
+
+# /plugins/picohttpparser
+/plugins/picohttpparser/Makefile
+/plugins/picohttpparser/Makefile.in
+/plugins/picohttpparser/.deps
+/plugins/picohttpparser/libpicohttpparser.a
+
+# /plugins/uriparser
+/plugins/uriparser/Makefile
+/plugins/uriparser/Makefile.in
+/plugins/uriparser/.deps
+/plugins/uriparser/liburiparser.a
 
 # /plugins/t/
 /plugins/t/*.tmp

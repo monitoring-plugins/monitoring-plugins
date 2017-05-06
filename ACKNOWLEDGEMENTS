@@ -31,3 +31,16 @@ Gnulib team
 Copyright (C) 2001, 2003, 2004, 2006 Free Software Foundation, Inc
 http://www.gnu.org/software/gnulib/
 Use of lib files that originally were used from coreutils
+
+Copyright (c) 2009-2014 Kazuho Oku, Tokuhiro Matsuno, Daisuke Murase,
+                        Shigeo Mitsunari
+picohttpparser
+https://github.com/h2o/picohttpparser
+Use of the library for HTTP header parsing in check_curl.
+
+Copyright (C) 2007, Weijia Song <songweijia@gmail.com>
+Copyright (C) 2007, Sebastian Pipping <webmaster@hartwork.org>
+All rights reserved.
+uriparser - RFC 3986 URI parsing library
+http://uriparser.sourceforge.net/
+Use of the library for URL parsing in check_curl.
