@@ -20,7 +20,7 @@ matrix:
             name: "monitoring-plugins/monitoring-plugins"
             description: "Monitoring Plugins"
           notification_email: team@monitoring-plugins.org
-          build_command_prepend: tools/setup && ./configure
+          build_command_prepend: tools/setup && ./configure --enable-check-curl
           build_command: make
           branch_pattern: coverity.*
     - compiler: "clang"
@@ -55,6 +55,7 @@ install:
   - sudo apt-get install -qq --no-install-recommends autoconf automake
   - sudo apt-get install -qq --no-install-recommends faketime
   - sudo apt-get install -qq --no-install-recommends libmonitoring-plugin-perl
+  - sudo apt-get install -qq --no-install-recommends libcurl3-gnutls-dev
   # Trusty related dependencies (not yet provided)
   - test "$(dpkg -l | grep -E "mysql-(client|server)-[0-9].[0-9]" | grep -c ^ii)" -gt 0 || sudo apt-get install -qq --no-install-recommends mariadb-client mariadb-server
   # enable ssl apache
