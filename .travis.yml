@@ -20,7 +20,7 @@ matrix:
             name: "monitoring-plugins/monitoring-plugins"
             description: "Monitoring Plugins"
           notification_email: team@monitoring-plugins.org
-          build_command_prepend: tools/setup && ./configure --enable-check-curl
+          build_command_prepend: tools/setup && ./configure
           build_command: make
           branch_pattern: coverity.*
     - compiler: "clang"
@@ -70,7 +70,7 @@ before_script:
   # Detect LDAP configuration (seems  volatile on trusty env)
   - sed -e 's/cn=admin,dc=nodomain/'$(sudo /usr/sbin/slapcat|grep ^dn:|grep cn=|awk '{print $2}')'/' -i plugins/t/NPTest.cache.travis
   - tools/setup
-  - ./configure --enable-libtap
+  - ./configure --enable-libtap --enable-check-curl
   - make
   - export NPTEST_CACHE="$(pwd)/plugins/t/NPTest.cache.travis"
   - ssh-keygen -t dsa -N "" -f ~/.ssh/id_dsa
