@@ -1908,5 +1908,6 @@ ACX_FEATURE([enable],[perl-modules])
 ACX_FEATURE([with],[cgiurl])
 ACX_FEATURE([with],[trusted-path])
 ACX_FEATURE([enable],[libtap])
+ACX_FEATURE([enable],[check-curl])
 ACX_FEATURE([with],[libcurl])
 

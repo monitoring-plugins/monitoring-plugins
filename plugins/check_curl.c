@@ -551,7 +551,7 @@ check_http (void)
         CURLINFO_REDIRECT_COUNT: get the number of redirects, print it, maybe a range option here is nice like for expected page size?
       */
     } else {
-      // old style redirection is handled below
+      /* old style redirection is handled below */
     }
   }
 
@@ -1019,6 +1019,8 @@ redir (curlhelp_write_curlbuf* header_buf)
     new_host = strdup (uri_string (uri.hostText, buf, DEFAULT_BUFFER_SIZE));
   }
 
+  /* compose new path */
+  /* TODO: handle fragments and query part of URL */
   new_url = (char *)calloc( 1, DEFAULT_BUFFER_SIZE);
   if (uri.pathHead) {
     const UriPathSegmentA* p = uri.pathHead;
@@ -1038,23 +1040,21 @@ redir (curlhelp_write_curlbuf* header_buf)
 
   /* set new values for redirected request */
 
-  free (host_name);
-  host_name = strndup (new_host, MAX_IPV4_HOSTLENGTH);
-  free(new_host);
-
-  server_port = (unsigned short)new_port;
-
-  /* reset virtual port */
-  virtual_port = server_port;
-
   if (!(followsticky & STICKY_HOST)) {
     free (server_address);
     server_address = strndup (new_host, MAX_IPV4_HOSTLENGTH);
   }
   if (!(followsticky & STICKY_PORT)) {
-    server_port = new_port;
+    server_port = (unsigned short)new_port;
   }
 
+  free (host_name);
+  host_name = strndup (new_host, MAX_IPV4_HOSTLENGTH);
+
+  /* reset virtual port */
+  virtual_port = server_port;
+
+  free(new_host);
   free (server_url);
   server_url = new_url;
 
