@@ -51,15 +51,33 @@ const char *email = "devel@monitoring-plugins.org";
 
 #include "picohttpparser.h"
 
+#include "uriparser/Uri.h"
+
+#include <arpa/inet.h>
+
 #define MAKE_LIBCURL_VERSION(major, minor, patch) ((major)*0x10000 + (minor)*0x100 + (patch))
 
 #define DEFAULT_BUFFER_SIZE 2048
 #define DEFAULT_SERVER_URL "/"
 #define HTTP_EXPECT "HTTP/1."
+#define DEFAULT_MAX_REDIRS 15
+#define INET_ADDR_MAX_SIZE INET6_ADDRSTRLEN
 enum {
+  MAX_IPV4_HOSTLENGTH = 255,
   HTTP_PORT = 80,
   HTTPS_PORT = 443,
   MAX_PORT = 65535
+};
+
+enum {
+  STICKY_NONE = 0,
+  STICKY_HOST = 1,
+  STICKY_PORT = 2
+};
+
+enum {
+  FOLLOW_HTTP_CURL = 0,
+  FOLLOW_LIBCURL = 1
 };
 
 /* for buffers for header and body */
@@ -128,6 +146,8 @@ int verbose = 0;
 int show_extended_perfdata = FALSE;
 int min_page_len = 0;
 int max_page_len = 0;
+int redir_depth = 0;
+int max_depth = DEFAULT_MAX_REDIRS;
 char *http_method = NULL;
 char *http_post_data = NULL;
 char *http_content_type = NULL;
@@ -155,8 +175,12 @@ char string_expect[MAX_INPUT_BUFFER] = "";
 char server_expect[MAX_INPUT_BUFFER] = HTTP_EXPECT;
 int server_expect_yn = 0;
 char user_auth[MAX_INPUT_BUFFER] = "";
+char **http_opt_headers;
+int http_opt_headers_count = 0;
 int display_html = FALSE;
 int onredirect = STATE_OK;
+int followmethod = FOLLOW_HTTP_CURL;
+int followsticky = STICKY_NONE;
 int use_ssl = FALSE;
 int use_sni = TRUE;
 int check_cert = FALSE;
@@ -181,6 +205,7 @@ curlhelp_ssl_library ssl_library = CURLHELP_SSL_LIBRARY_UNKNOWN;
 int process_arguments (int, char**);
 void handle_curl_option_return_code (CURLcode res, const char* option);
 int check_http (void);
+void redir (curlhelp_write_curlbuf*);
 void print_help (void);
 void print_usage (void);
 void print_curl_version (void);
@@ -295,6 +320,8 @@ check_http (void)
 {
   int result = STATE_OK;
   int page_len = 0;
+  int i;
+  char *force_host_header = NULL;
 
   /* initialize curl */
   if (curl_global_init (CURL_GLOBAL_DEFAULT) != CURLE_OK)
@@ -370,6 +397,28 @@ check_http (void)
   /* always close connection, be nice to servers */
   snprintf (http_header, DEFAULT_BUFFER_SIZE, "Connection: close");
   header_list = curl_slist_append (header_list, http_header);
+
+  /* check if Host header is explicitly set in options */
+  if (http_opt_headers_count) {
+    for (i = 0; i < http_opt_headers_count ; i++) {
+      if (strncmp(http_opt_headers[i], "Host:", 5) == 0) {
+        force_host_header = http_opt_headers[i];
+      }
+    }
+  }
+
+  /* attach additional headers supplied by the user */
+  /* optionally send any other header tag */
+  if (http_opt_headers_count) {
+    for (i = 0; i < http_opt_headers_count ; i++) {
+      if (force_host_header != http_opt_headers[i]) {
+        header_list = curl_slist_append (header_list, http_opt_headers[i]);
+      }
+    }
+    /* This cannot be free'd here because a redirection will then try to access this and segfault */
+    /* Covered in a testcase in tests/check_http.t */
+    /* free(http_opt_headers); */
+  }
 
   /* set HTTP headers */
   handle_curl_option_return_code (curl_easy_setopt( curl, CURLOPT_HTTPHEADER, header_list ), "CURLOPT_HTTPHEADER");
@@ -481,13 +530,29 @@ check_http (void)
 
   /* handle redirections */
   if (onredirect == STATE_DEPENDENT) {
-    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_FOLLOWLOCATION, 1), "CURLOPT_FOLLOWLOCATION");
-    /* TODO: handle the following aspects of redirection
-      CURLOPT_POSTREDIR: method switch
-      CURLINFO_REDIRECT_URL: custom redirect option
-      CURLOPT_REDIRECT_PROTOCOLS
-      CURLINFO_REDIRECT_COUNT
-    */
+    if( followmethod == FOLLOW_LIBCURL ) {
+      handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_FOLLOWLOCATION, 1), "CURLOPT_FOLLOWLOCATION");
+    
+      /* default -1 is infinite, not good, could lead to zombie plugins! 
+         Setting it to one bigger than maximal limit to handle errors nicely below
+       */
+      handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_MAXREDIRS, max_depth+1), "CURLOPT_MAXREDIRS");
+    
+      /* for now allow only http and https (we are a http(s) check plugin in the end) */
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 4)
+      handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS), "CURLOPT_REDIRECT_PROTOCOLS");
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 4) */
+
+      /* TODO: handle the following aspects of redirection, make them
+       * command line options too later:
+        CURLOPT_POSTREDIR: method switch
+        CURLINFO_REDIRECT_URL: custom redirect option
+        CURLOPT_REDIRECT_PROTOCOLS: allow people to step outside safe protocols
+        CURLINFO_REDIRECT_COUNT: get the number of redirects, print it, maybe a range option here is nice like for expected page size?
+      */
+    } else {
+      // old style redirection is handled below
+    }
   }
 
   /* no-body */
@@ -533,8 +598,8 @@ check_http (void)
     printf ("**** REQUEST CONTENT ****\n%s\n", http_post_data);
 
   /* free header and server IP resolve lists, we don't need it anymore */
-  curl_slist_free_all (header_list);
-  curl_slist_free_all (server_ips);
+  curl_slist_free_all (header_list); header_list = NULL;
+  curl_slist_free_all (server_ips); server_ips = NULL;
 
   /* Curl errors, result in critical Nagios state */
   if (res != CURLE_OK) {
@@ -691,15 +756,36 @@ GOT_FIRST_CERT:
     /* check redirected page if specified */
     } else if (code >= 300) {
       if (onredirect == STATE_DEPENDENT) {
-        code = status_line.http_code;
+        if( followmethod == FOLLOW_LIBCURL ) {
+          code = status_line.http_code;
+        } else {
+          /* old check_http style redirection, if we come
+           * back here, we are in the same status as with
+           * the libcurl method
+           */
+          redir (&header_buf);
+        }
+      } else {
+        /* this is a specific code in the command line to
+         * be returned when a redirection is encoutered
+         */
       }
       result = max_state_alt (onredirect, result);
-      /* TODO: make sure the last status line has been
-         parsed into the status_line structure
-       */
     /* all other codes are considered ok */
     } else {
       result = STATE_OK;
+    }
+  }
+
+  /* libcurl redirection internally, handle error states here */
+  if( followmethod == FOLLOW_LIBCURL ) {
+    handle_curl_option_return_code (curl_easy_getinfo (curl, CURLINFO_REDIRECT_COUNT, &redir_depth), "CURLINFO_REDIRECT_COUNT");
+    if (verbose >= 2)
+      printf(_("* curl LIBINFO_REDIRECT_COUNT is %d\n"), redir_depth);
+    if (redir_depth > max_depth) {
+      snprintf (msg, DEFAULT_BUFFER_SIZE, "maximum redirection depth %d exceeded in libcurl",
+        max_depth);
+      die (STATE_WARNING, "HTTP WARNING - %s", msg);
     }
   }
 
@@ -812,6 +898,188 @@ GOT_FIRST_CERT:
 
   return result;
 }
+
+int
+uri_strcmp (const UriTextRangeA range, const char* s)
+{
+  if (!range.first) return -1;
+  if (range.afterLast - range.first < strlen (s)) return -1;
+  return strncmp (s, range.first, min( range.afterLast - range.first, strlen (s)));
+}
+
+char*
+uri_string (const UriTextRangeA range, char* buf, size_t buflen)
+{
+  if (!range.first) return "(null)";
+  strncpy (buf, range.first, max (buflen, range.afterLast - range.first));
+  buf[max (buflen, range.afterLast - range.first)] = '\0';
+  buf[range.afterLast - range.first] = '\0';
+  return buf;
+}
+
+void
+redir (curlhelp_write_curlbuf* header_buf)
+{
+  char *location = NULL;
+  curlhelp_statusline status_line;
+  struct phr_header headers[255];
+  size_t nof_headers = 255;
+  size_t msglen;
+  char buf[DEFAULT_BUFFER_SIZE];
+  char ipstr[INET_ADDR_MAX_SIZE];
+  int new_port;
+  char *new_host;
+  char *new_url;
+    
+  int res = phr_parse_response (header_buf->buf, header_buf->buflen,
+    &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
+    headers, &nof_headers, 0);
+  
+  location = get_header_value (headers, nof_headers, "location");
+
+  if (verbose >= 2)
+    printf(_("* Seen redirect location %s\n"), location);
+
+  if (++redir_depth > max_depth)
+    die (STATE_WARNING,
+         _("HTTP WARNING - maximum redirection depth %d exceeded - %s\n"),
+         max_depth, location, (display_html ? "</A>" : ""));
+  
+  UriParserStateA state;
+  UriUriA uri;
+  state.uri = &uri;
+  if (uriParseUriA (&state, location) != URI_SUCCESS) {
+    if (state.errorCode == URI_ERROR_SYNTAX) {
+      die (STATE_UNKNOWN,
+           _("HTTP UNKNOWN - Could not parse redirect location '%s'%s\n"),
+           location, (display_html ? "</A>" : ""));
+    } else if (state.errorCode == URI_ERROR_MALLOC) {
+      die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate URL\n"));
+    }
+  }
+  
+  if (verbose >= 2) {
+    printf (_("** scheme: %s\n"),
+      uri_string (uri.scheme, buf, DEFAULT_BUFFER_SIZE));
+    printf (_("** host: %s\n"),
+      uri_string (uri.hostText, buf, DEFAULT_BUFFER_SIZE));
+    printf (_("** port: %s\n"),
+      uri_string (uri.portText, buf, DEFAULT_BUFFER_SIZE));
+    if (uri.hostData.ip4) {
+      inet_ntop (AF_INET, uri.hostData.ip4->data, ipstr, sizeof (ipstr));
+      printf (_("** IPv4: %s\n"), ipstr);
+    }
+    if (uri.hostData.ip6) {
+      inet_ntop (AF_INET, uri.hostData.ip6->data, ipstr, sizeof (ipstr));
+      printf (_("** IPv6: %s\n"), ipstr);
+    }
+    if (uri.pathHead) {
+      printf (_("** path: "));
+      const UriPathSegmentA* p = uri.pathHead;
+      for (; p; p = p->next) {
+        printf ("/%s", uri_string (p->text, buf, DEFAULT_BUFFER_SIZE));
+      }
+      puts ("");
+    }
+    if (uri.query.first) {
+      printf (_("** query: %s\n"),
+      uri_string (uri.query, buf, DEFAULT_BUFFER_SIZE));
+    }
+    if (uri.fragment.first) {
+      printf (_("** fragment: %s\n"),
+      uri_string (uri.fragment, buf, DEFAULT_BUFFER_SIZE));
+    }
+  }
+
+  use_ssl = !uri_strcmp (uri.scheme, "https");
+  
+  /* we do a sloppy test here only, because uriparser would have failed
+   * above, if the port would be invalid, we just check for MAX_PORT
+   */
+  if (uri.portText.first) {
+    new_port = atoi (uri_string (uri.portText, buf, DEFAULT_BUFFER_SIZE));
+  } else {
+    new_port = HTTP_PORT;
+    if (use_ssl)
+      new_port = HTTPS_PORT;
+  }
+  if (new_port > MAX_PORT)
+    die (STATE_UNKNOWN,
+         _("HTTP UNKNOWN - Redirection to port above %d - %s\n"),
+         MAX_PORT, location, display_html ? "</A>" : "");
+      
+  /* by RFC 7231 relative URLs in Location should be taken relative to
+   * the original URL, so wy try to form a new absolute URL here
+   */
+  if (!uri.scheme.first && !uri.hostText.first) {
+    /* TODO: implement */
+    die (STATE_UNKNOWN, _("HTTP UNKNOWN - non-absolute location, not implemented yet!\n"));
+    new_host = strdup (host_name ? host_name : server_address);
+  } else {
+    new_host = strdup (uri_string (uri.hostText, buf, DEFAULT_BUFFER_SIZE));
+  }
+
+  new_url = (char *)calloc( 1, DEFAULT_BUFFER_SIZE);
+  if (uri.pathHead) {
+    const UriPathSegmentA* p = uri.pathHead;
+    for (; p; p = p->next) {
+      strncat (new_url, "/", DEFAULT_BUFFER_SIZE);
+      strncat (new_url, uri_string (p->text, buf, DEFAULT_BUFFER_SIZE), DEFAULT_BUFFER_SIZE);
+    }
+  }
+
+  if (server_port==new_port &&
+      !strncmp(server_address, new_host, MAX_IPV4_HOSTLENGTH) &&
+      (host_name && !strncmp(host_name, new_host, MAX_IPV4_HOSTLENGTH)) &&
+      !strcmp(server_url, new_url))
+    die (STATE_WARNING,
+         _("HTTP WARNING - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
+         use_ssl ? "https" : "http", new_host, new_port, new_url, (display_html ? "</A>" : ""));
+
+  /* set new values for redirected request */
+
+  free (host_name);
+  host_name = strndup (new_host, MAX_IPV4_HOSTLENGTH);
+  free(new_host);
+
+  server_port = (unsigned short)new_port;
+
+  /* reset virtual port */
+  virtual_port = server_port;
+
+  if (!(followsticky & STICKY_HOST)) {
+    free (server_address);
+    server_address = strndup (new_host, MAX_IPV4_HOSTLENGTH);
+  }
+  if (!(followsticky & STICKY_PORT)) {
+    server_port = new_port;
+  }
+
+  free (server_url);
+  server_url = new_url;
+
+  uriFreeUriMembersA (&uri);
+  
+  if (verbose)
+    printf (_("Redirection to %s://%s:%d%s\n"), use_ssl ? "https" : "http",
+            host_name ? host_name : server_address, server_port, server_url);
+  
+  /* TODO: the hash component MUST be taken from the original URL and
+   * attached to the URL in Location
+   */
+
+  check_http ();
+}
+
+#if 0
+
+int main(int argc, char *argv[]) {
+
+	for (; i < argc; i++) {
+
+		}
+		printf("\n");
+#endif
 
 /* check whether a file exists */
 void
@@ -974,7 +1242,11 @@ process_arguments (int argc, char **argv)
       snprintf (user_agent, DEFAULT_BUFFER_SIZE, optarg);
       break;
     case 'k': /* Additional headers */
-      header_list = curl_slist_append(header_list, optarg);
+      if (http_opt_headers_count == 0)
+        http_opt_headers = malloc (sizeof (char *) * (++http_opt_headers_count));
+      else
+        http_opt_headers = realloc (http_opt_headers, sizeof (char *) * (++http_opt_headers_count));
+      http_opt_headers[http_opt_headers_count - 1] = optarg;
       break;
     case 'L': /* show html link */
       display_html = TRUE;
@@ -1121,6 +1393,14 @@ process_arguments (int argc, char **argv)
         onredirect = STATE_UNKNOWN;
       else if (!strcmp (optarg, "follow"))
         onredirect = STATE_DEPENDENT;
+      else if (!strcmp (optarg, "stickyport"))
+        onredirect = STATE_DEPENDENT, followmethod = FOLLOW_HTTP_CURL, followsticky = STICKY_HOST|STICKY_PORT;
+      else if (!strcmp (optarg, "sticky"))
+        onredirect = STATE_DEPENDENT, followmethod = FOLLOW_HTTP_CURL, followsticky = STICKY_HOST;
+      else if (!strcmp (optarg, "follow"))
+        onredirect = STATE_DEPENDENT, followmethod = FOLLOW_HTTP_CURL, followsticky = STICKY_NONE;
+      else if (!strcmp (optarg, "curl"))
+        onredirect = STATE_DEPENDENT, followmethod = FOLLOW_LIBCURL;
       else usage2 (_("Invalid onredirect option"), optarg);
       if (verbose >= 2)
         printf(_("* Following redirects set to %s\n"), state_text(onredirect));
@@ -1264,7 +1544,6 @@ print_help (void)
   print_revision (progname, NP_VERSION);
 
   printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
-  printf ("Copyright (c) 2017 Andreas Baumann <mail@andreasbaumann.cc>\n");
   printf (COPYRIGHT, copyright, email);
 
   printf ("%s\n", _("This plugin tests the HTTP service on the specified host. It can test"));
@@ -1365,8 +1644,11 @@ print_help (void)
   printf ("    %s\n", _("Print additional performance data"));
   printf (" %s\n", "-L, --link");
   printf ("    %s\n", _("Wrap output in HTML link (obsoleted by urlize)"));
-  printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow>");
-  printf ("    %s\n", _("How to handle redirected pages."));
+  printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow|sticky|stickyport|curl>");
+  printf ("    %s\n", _("How to handle redirected pages. sticky is like follow but stick to the"));
+  printf ("    %s\n", _("specified IP address. stickyport also ensures port stays the same."));
+  printf ("    %s\n", _("follow uses the old redirection algorithm of check_http."));
+  printf ("    %s\n", _("curl uses CURL_FOLLOWLOCATION built into libcurl."));
   printf (" %s\n", "-m, --pagesize=INTEGER<:INTEGER>");
   printf ("    %s\n", _("Minimum page size required (bytes) : Maximum page size required (bytes)"));
 
@@ -1436,7 +1718,7 @@ print_usage (void)
   printf (" %s -H <vhost> | -I <IP-address> [-u <uri>] [-p <port>]\n",progname);
   printf ("       [-J <client certificate file>] [-K <private key>] [--ca-cert <CA certificate file>]\n");
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L] [-E] [-a auth]\n");
-  printf ("       [-f <ok|warning|critcal|follow>]\n");
+  printf ("       [-f <ok|warning|critcal|follow|sticky|stickyport|curl>]\n");
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
@@ -1739,7 +2021,7 @@ get_content_length (const curlhelp_write_curlbuf* header_buf, const curlhelp_wri
   content_length_s += strspn (content_length_s, " \t");
   content_length = atoi (content_length_s);
   if (content_length != body_buf->buflen) {
-    /* TODO: should we warn if the actual and the reported body length doen't match? */
+    /* TODO: should we warn if the actual and the reported body length don't match? */
   }
 
   if (content_length_s) free (content_length_s);
