@@ -7,3 +7,5 @@ liburiparser_a_SOURCES = UriCommon.c UriCompare.c \
 	UriParseBase.c UriQuery.c \
 	UriRecompose.c UriResolve.c \
 	UriShorten.c
+
+liburiparser_a_CFLAGS = $(AM_CFLAGS) -I..
