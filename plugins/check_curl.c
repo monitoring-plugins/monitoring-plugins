@@ -711,14 +711,14 @@ GOT_FIRST_CERT:
   /* get status line of answer, check sanity of HTTP code */
   if (curlhelp_parse_statusline (header_buf.buf, &status_line) < 0) {
     snprintf (msg, DEFAULT_BUFFER_SIZE, "Unparseable status line in %.3g seconds response time|%s\n",
-      code, total_time, perfstring);
-    die (STATE_CRITICAL, "HTTP CRITICAL HTTP/1.x %d unknown - %s", code, msg);
+      total_time, perfstring);
+    die (STATE_CRITICAL, "HTTP CRITICAL HTTP/1.x %ld unknown - %s", code, msg);
   }
 
   /* get result code from cURL */
   handle_curl_option_return_code (curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &code), "CURLINFO_RESPONSE_CODE");
   if (verbose>=2)
-    printf ("* curl CURLINFO_RESPONSE_CODE is %d\n", code);
+    printf ("* curl CURLINFO_RESPONSE_CODE is %ld\n", code);
 
   /* print status line, header, body if verbose */
   if (verbose >= 2) {
@@ -942,7 +942,7 @@ redir (curlhelp_write_curlbuf* header_buf)
 
   if (++redir_depth > max_depth)
     die (STATE_WARNING,
-         _("HTTP WARNING - maximum redirection depth %d exceeded - %s\n"),
+         _("HTTP WARNING - maximum redirection depth %d exceeded - %s%s\n"),
          max_depth, location, (display_html ? "</A>" : ""));
   
   UriParserStateA state;
@@ -1005,7 +1005,7 @@ redir (curlhelp_write_curlbuf* header_buf)
   }
   if (new_port > MAX_PORT)
     die (STATE_UNKNOWN,
-         _("HTTP UNKNOWN - Redirection to port above %d - %s\n"),
+         _("HTTP UNKNOWN - Redirection to port above %d - %s%s\n"),
          MAX_PORT, location, display_html ? "</A>" : "");
       
   /* by RFC 7231 relative URLs in Location should be taken relative to
@@ -1239,7 +1239,8 @@ process_arguments (int argc, char **argv)
       http_method = strdup (optarg);
       break;
     case 'A': /* useragent */
-      snprintf (user_agent, DEFAULT_BUFFER_SIZE, optarg);
+      strncpy (user_agent, optarg, DEFAULT_BUFFER_SIZE);
+      user_agent[DEFAULT_BUFFER_SIZE-1] = '\0';
       break;
     case 'k': /* Additional headers */
       if (http_opt_headers_count == 0)
@@ -1524,7 +1525,7 @@ process_arguments (int argc, char **argv)
   if (critical_thresholds && thlds->critical->end>(double)socket_timeout)
     socket_timeout = (int)thlds->critical->end + 1;
   if (verbose >= 2)
-    printf ("* Socket timeout set to %d seconds\n", socket_timeout);
+    printf ("* Socket timeout set to %ld seconds\n", socket_timeout);
 
   if (http_method == NULL)
     http_method = strdup ("GET");
@@ -1722,7 +1723,7 @@ print_usage (void)
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
-  printf ("       [-T <content-type>] [-j method]\n", progname);
+  printf ("       [-T <content-type>] [-j method]\n");
   printf ("\n");
   printf ("%s\n", _("WARNING: check_curl is experimental. Please use"));
   printf ("%s\n\n", _("check_http if you need a stable version."));
@@ -1969,7 +1970,7 @@ check_document_dates (const curlhelp_write_curlbuf *header_buf, char (*msg)[DEFA
     time_t srv_data = curl_getdate (server_date, NULL);
     time_t doc_data = curl_getdate (document_date, NULL);
     if (verbose >= 2)
-      printf ("* server date: '%s' (%d), doc_date: '%s' (%d)\n", server_date, srv_data, document_date, doc_data);
+      printf ("* server date: '%s' (%d), doc_date: '%s' (%d)\n", server_date, (int)srv_data, document_date, (int)doc_data);
     if (srv_data <= 0) {
       snprintf (*msg, DEFAULT_BUFFER_SIZE, _("%sServer date \"%100s\" unparsable, "), *msg, server_date);
       date_result = max_state_alt(STATE_CRITICAL, date_result);
