@@ -5,13 +5,13 @@
 /* This file should be included in all plugins */
 
 /* The purpose of this package is to provide safer alternatives to C
-functions that might otherwise be vulnerable to hacking. This
-currently includes a standard suite of validation routines to be sure
-that an string argument acually converts to its intended type and a
-suite of string handling routine that do their own memory management
-in order to resist overflow attacks. In addition, a few functions are
-provided to standardize version and error reporting across the entire
-suite of plugins. */
+   functions that might otherwise be vulnerable to hacking. This
+   currently includes a standard suite of validation routines to be sure
+   that an string argument acually converts to its intended type and a
+   suite of string handling routine that do their own memory management
+   in order to resist overflow attacks. In addition, a few functions are
+   provided to standardize version and error reporting across the entire
+   suite of plugins. */
 
 /* now some functions etc are being defined in ../lib/utils_base.c */
 #include "utils_base.h"
@@ -24,22 +24,20 @@ suite of plugins. */
 #define np_extra_opts(acptr,av,pr) av
 #endif
 
-/* Standardize version information, termination */
+/* Handle timeouts */
+extern unsigned int timeout_state;
+extern unsigned int timeout_interval;
+extern time_t start_time, end_time;
 
+
+/* Standardize version information, termination */
 void support (void);
 void print_revision (const char *, const char *);
 
-/* Handle timeouts */
-
-extern unsigned int timeout_state;
-extern unsigned int timeout_interval;
-
 RETSIGTYPE timeout_alarm_handler (int);
 
-extern time_t start_time, end_time;
 
 /* Test input types */
-
 int is_integer (char *);
 int is_intpos (char *);
 int is_intneg (char *);
@@ -57,8 +55,8 @@ int is_option (char *);
 /* Generalized timer that will do milliseconds if available */
 #ifndef HAVE_STRUCT_TIMEVAL
 struct timeval {
-	long tv_sec;        /* seconds */
-	long tv_usec;  /* microseconds */
+    long tv_sec;        /* seconds */
+    long tv_usec;  /* microseconds */
 };
 #endif
 
@@ -69,8 +67,8 @@ int gettimeofday(struct timeval *, struct timezone *);
 double delta_time (struct timeval tv);
 long deltime (struct timeval tv);
 
-/* Handle strings safely */
 
+/* Handle strings safely */
 void strip (char *);
 char *strscpy (char *, const char *);
 char *strnl (char *);
@@ -89,25 +87,42 @@ void usage4(const char *) __attribute__((noreturn));
 void usage5(void) __attribute__((noreturn));
 void usage_va(const char *fmt, ...) __attribute__((noreturn));
 
+
+/*
+ * Standard output function
+ */
+void print_singleline (int service_state, const char *fmt, ...);
+int print_singleline_return (int service_state, const char *fmt, ...);
+void print_singleline_exit (int service_state, const char *fmt, ...) __attribute__((noreturn));
+
+
+/*
+ * Helper functions for standard output functions
+ */
+const char *service_name(void);
 const char *state_text (int);
+char *strrev (const char *str);
+char *strupper (const char *str);
 
 #define max(a,b) (((a)>(b))?(a):(b))
 #define min(a,b) (((a)<(b))?(a):(b))
 
+/******************************************************************************
+ *
+ * Print perfdata in a standard format
+ *
+ ******************************************************************************/
 char *perfdata (const char *, long int, const char *, int, long int,
-                int, long int, int, long int, int, long int);
-
+        int, long int, int, long int, int, long int);
 char *fperfdata (const char *, double, const char *, int, double,
-                 int, double, int, double, int, double);
-
+        int, double, int, double, int, double);
 char *sperfdata (const char *, double, const char *, char *, char *,
-                 int, double, int, double);
-
+        int, double, int, double);
 char *sperfdata_int (const char *, int, const char *, char *, char *,
-                     int, int, int, int);
+        int, int, int, int);
 
-/* The idea here is that, although not every plugin will use all of these, 
-   most will or should.  Therefore, for consistency, these very common 
+/* The idea here is that, although not every plugin will use all of these,
+   most will or should.  Therefore, for consistency, these very common
    options should have only these meanings throughout the overall suite */
 
 #define STD_LONG_OPTS \
@@ -120,79 +135,80 @@ char *sperfdata_int (const char *, int, const char *, char *, char *,
 {"hostname",required_argument,0,'H'}
 
 #define COPYRIGHT "Copyright (c) %s Monitoring Plugins Development Team\n\
-\t<%s>\n\n"
+    \t<%s>\n\n"
 
 #define UT_HLP_VRS _("\
-       %s (-h | --help) for detailed help\n\
-       %s (-V | --version) for version information\n")
+        %s (-h | --help) for detailed help\n\
+        %s (-V | --version) for version information\n")
 
 #define UT_HELP_VRSN _("\
-\nOptions:\n\
- -h, --help\n\
-    Print detailed help screen\n\
- -V, --version\n\
-    Print version information\n")
+        \nOptions:\n\
+        -h, --help\n\
+        Print detailed help screen\n\
+        -V, --version\n\
+        Print version information\n")
 
 #define UT_HOST_PORT _("\
- -H, --hostname=ADDRESS\n\
-    Host name, IP Address, or unix socket (must be an absolute path)\n\
- -%c, --port=INTEGER\n\
-    Port number (default: %s)\n")
+        -H, --hostname=ADDRESS\n\
+        Host name, IP Address, or unix socket (must be an absolute path)\n\
+        -%c, --port=INTEGER\n\
+        Port number (default: %s)\n")
 
 #define UT_IPv46 _("\
- -4, --use-ipv4\n\
-    Use IPv4 connection\n\
- -6, --use-ipv6\n\
-    Use IPv6 connection\n")
+        -4, --use-ipv4\n\
+        Use IPv4 connection\n\
+        -6, --use-ipv6\n\
+        Use IPv6 connection\n")
 
 #define UT_VERBOSE _("\
- -v, --verbose\n\
-    Show details for command-line debugging (output may be truncated by\n\
-    the monitoring system)\n")
+        -v, --verbose\n\
+        Show details for command-line debugging (output may be truncated by\n\
+            the monitoring system)\n")
 
 #define UT_WARN_CRIT _("\
- -w, --warning=DOUBLE\n\
-    Response time to result in warning status (seconds)\n\
- -c, --critical=DOUBLE\n\
-    Response time to result in critical status (seconds)\n")
+        -w, --warning=DOUBLE\n\
+        Response time to result in warning status (seconds)\n\
+        -c, --critical=DOUBLE\n\
+        Response time to result in critical status (seconds)\n")
 
 #define UT_WARN_CRIT_RANGE _("\
- -w, --warning=RANGE\n\
-    Warning range (format: start:end). Alert if outside this range\n\
- -c, --critical=RANGE\n\
-    Critical range\n")
+        -w, --warning=RANGE\n\
+        Warning range (format: start:end). Alert if outside this range\n\
+        -c, --critical=RANGE\n\
+        Critical range\n")
 
 #define UT_CONN_TIMEOUT _("\
- -t, --timeout=INTEGER\n\
-    Seconds before connection times out (default: %d)\n")
+        -t, --timeout=INTEGER\n\
+        Seconds before connection times out (default: %d)\n")
 
 #define UT_PLUG_TIMEOUT _("\
- -t, --timeout=INTEGER\n\
-    Seconds before plugin times out (default: %d)\n")
+        -t, --timeout=INTEGER\n\
+        Seconds before plugin times out (default: %d)\n")
 
 #ifdef NP_EXTRA_OPTS
 #define UT_EXTRA_OPTS _("\
- --extra-opts=[section][@file]\n\
-    Read options from an ini file. See\n\
-    https://www.monitoring-plugins.org/doc/extra-opts.html\n\
-    for usage and examples.\n")
+        --extra-opts=[section][@file]\n\
+        Read options from an ini file. See\n\
+        https://www.monitoring-plugins.org/doc/extra-opts.html\n\
+        for usage and examples.\n")
 #else
 #define UT_EXTRA_OPTS " \b"
 #endif
 
 #define UT_THRESHOLDS_NOTES _("\
- See:\n\
- https://www.monitoring-plugins.org/doc/guidelines.html#THRESHOLDFORMAT\n\
- for THRESHOLD format and examples.\n")
+        See:\n\
+        https://www.monitoring-plugins.org/doc/guidelines.html#THRESHOLDFORMAT\n\
+        for THRESHOLD format and examples.\n")
 
 #define UT_SUPPORT _("\n\
-Send email to help@monitoring-plugins.org if you have questions regarding\n\
-use of this software. To submit patches or suggest improvements, send email\n\
-to devel@monitoring-plugins.org\n\n")
+        Send email to help@monitoring-plugins.org if you have questions regarding\n\
+        use of this software. To submit patches or suggest improvements, send email\n\
+        to devel@monitoring-plugins.org\n\n")
 
 #define UT_NOWARRANTY _("\n\
-The Monitoring Plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\
-copies of the plugins under the terms of the GNU General Public License.\n\
-For more information about these matters, see the file named COPYING.\n")
+        The Monitoring Plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\
+        copies of the plugins under the terms of the GNU General Public License.\n\
+        For more information about these matters, see the file named COPYING.\n")
 
 #endif /* NP_UTILS_H */
+
