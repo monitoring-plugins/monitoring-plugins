@@ -54,6 +54,7 @@ void print_usage (void);
 void print_help (void);
 
 int display_html = FALSE;
+int perfdata_seconds = FALSE;
 int wpl = UNKNOWN_PACKET_LOSS;
 int cpl = UNKNOWN_PACKET_LOSS;
 float wrta = UNKNOWN_TRIP_TIME;
@@ -163,6 +164,12 @@ main (int argc, char **argv)
 			printf ("</A>");
 
 		/* Print performance data */
+		if (perfdata_seconds)
+			printf("|%s", fperfdata ("rta", (double) (rta/1000), "s",
+		                           wrta>0?TRUE:FALSE, wrta/1000,
+		                           crta>0?TRUE:FALSE, crta/1000,
+		                           TRUE, 0, FALSE, 0));
+		else
 		printf("|%s", fperfdata ("rta", (double) rta, "ms",
 		                          wrta>0?TRUE:FALSE, wrta,
 		                          crta>0?TRUE:FALSE, crta,
@@ -200,6 +207,7 @@ process_arguments (int argc, char **argv)
 		{"link", no_argument, 0, 'L'},
 		{"use-ipv4", no_argument, 0, '4'},
 		{"use-ipv6", no_argument, 0, '6'},
+		{"seconds", no_argument, 0, 's'},
 		{0, 0, 0, 0}
 	};
 
@@ -214,7 +222,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "VvhnL46t:c:w:H:p:", longopts, &option);
+		c = getopt_long (argc, argv, "VvhnL46st:c:w:H:p:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -282,6 +290,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'w':
 			get_threshold (optarg, &wrta, &wpl);
+			break;
+		case 's':
+			perfdata_seconds = TRUE;
 			break;
 		}
 	}
@@ -587,6 +598,8 @@ print_help (void)
   printf (_("(Default: %d)\n"), DEFAULT_MAX_PACKETS);
   printf (" %s\n", "-L, --link");
   printf ("    %s\n", _("show HTML in the plugin output (obsoleted by urlize)"));
+  printf (" %s\n", "-s, --seconds");
+  printf ("    %s\n", _("output performance data in seconds rather than milliseconds"));
 
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
@@ -609,5 +622,5 @@ print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
 	printf ("%s -H <host_address> -w <wrta>,<wpl>%% -c <crta>,<cpl>%%\n", progname);
-  printf (" [-p packets] [-t timeout] [-4|-6]\n");
+  printf (" [-p packets] [-t timeout] [-4|-6] [-s]\n");
 }
