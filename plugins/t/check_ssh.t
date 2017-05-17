@@ -37,7 +37,7 @@ $result = NPTest->testCmd(
     "./check_ssh -H $host_nonresponsive -t 2"
     );
 cmp_ok($result->return_code, '==', 2, "Exit with return code 0 (OK)");
-like($result->output, '/^CRITICAL - Socket timeout after 2 seconds/', "Status text if command returned none (OK)");
+like($result->output, '/^SSH CRITICAL: Socket timeout after 2 seconds/', "Status text if command returned none (OK)");
 
 
 

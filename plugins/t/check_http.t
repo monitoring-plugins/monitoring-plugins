@@ -60,7 +60,7 @@ $res = NPTest->testCmd(
 	"./check_http $host_nonresponsive -wt 1 -ct 2 -t 3"
 	);
 cmp_ok( $res->return_code, '==', 2, "Webserver $host_nonresponsive not responding" );
-cmp_ok( $res->output, 'eq', "CRITICAL - Socket timeout after 3 seconds", "Output OK");
+cmp_ok( $res->output, 'eq', "HTTP CRITICAL: Socket timeout after 3 seconds", "Output OK");
 
 $res = NPTest->testCmd(
 	"./check_http $hostname_invalid -wt 1 -ct 2"
