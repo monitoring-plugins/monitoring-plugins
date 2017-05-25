@@ -166,7 +166,7 @@ main (int argc, char **argv)
   argv=np_extra_opts (&argc, argv, progname);
 
   if (process_arguments (argc, argv) == ERROR)
-    usage4 (_("Could not parse arguments"));
+    print_singleline_exit (STATE_UNKNOWN, _("Could not parse arguments"));
 
   if (display_html == TRUE)
     printf ("<A HREF=\"%s://%s:%d%s\" target=\"_blank\">",
@@ -188,7 +188,7 @@ test_file (char *path)
 {
   if (access(path, R_OK) == 0)
     return;
-  usage2 (_("file does not exist or is not readable"), path);
+  print_singleline_exit (STATE_UNKNOWN, _("File does not exist or is not readable %s"), path);
 }
 
 /* process command-line arguments */
@@ -277,7 +277,7 @@ process_arguments (int argc, char **argv)
       break;
     case 't': /* timeout period */
       if (!is_intnonneg (optarg))
-        usage2 (_("Timeout interval must be a positive integer"), optarg);
+        print_singleline_exit (STATE_UNKNOWN, _("Timeout interval must be a positive integer %i"), optarg);
       else
         socket_timeout = atoi (optarg);
       break;
@@ -295,7 +295,7 @@ process_arguments (int argc, char **argv)
         http_opt_headers = malloc (sizeof (char *) * (++http_opt_headers_count));
       else
         http_opt_headers = realloc (http_opt_headers, sizeof (char *) * (++http_opt_headers_count));
-      http_opt_headers[http_opt_headers_count - 1] = optarg;
+        http_opt_headers[http_opt_headers_count - 1] = optarg;
       /* xasprintf (&http_opt_headers, "%s", optarg); */
       break;
     case 'L': /* show html link */
@@ -309,18 +309,18 @@ process_arguments (int argc, char **argv)
       if ((temp=strchr(optarg,','))!=NULL) {
         *temp='\0';
         if (!is_intnonneg (optarg))
-          usage2 (_("Invalid certificate expiration period"), optarg);
+          print_singleline_exit (STATE_UNKNOWN, _("Invalid certificate expiration period %i"), optarg);
         days_till_exp_warn = atoi(optarg);
         *temp=',';
         temp++;
         if (!is_intnonneg (temp))
-          usage2 (_("Invalid certificate expiration period"), temp);
+          print_singleline_exit (STATE_UNKNOWN, _("Invalid certificate expiration period %i"), temp);
         days_till_exp_crit = atoi (temp);
       }
       else {
         days_till_exp_crit=0;
         if (!is_intnonneg (optarg))
-          usage2 (_("Invalid certificate expiration period"), optarg);
+          print_singleline_exit (STATE_UNKNOWN, _("Invalid certificate expiration period %i"), optarg);
         days_till_exp_warn = atoi (optarg);
       }
       check_cert = TRUE;
@@ -358,13 +358,13 @@ process_arguments (int argc, char **argv)
         else if (optarg[0] == '2')
           ssl_version = got_plus ? MP_SSLv2_OR_NEWER : MP_SSLv2;
         else
-          usage4 (_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2 (with optional '+' suffix)"));
+          print_singleline_exit (STATE_UNKNOWN, _("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2 (with optional '+' suffix)"));
       }
       if (specify_port == FALSE)
         server_port = HTTPS_PORT;
 #else
       /* -C -J and -K fall through to here without SSL */
-      usage4 (_("Invalid option - SSL is not available"));
+      print_singleline_exit (STATE_UNKNOWN, _("Invalid option - SSL is not available"));
 #endif
       break;
     case SNI_OPTION:
@@ -385,7 +385,8 @@ process_arguments (int argc, char **argv)
         onredirect = STATE_WARNING;
       else if (!strcmp (optarg, "critical"))
         onredirect = STATE_CRITICAL;
-      else usage2 (_("Invalid onredirect option"), optarg);
+      else
+        print_singleline_exit (STATE_UNKNOWN, _("Invalid onredirect option %s"), optarg);
       if (verbose)
         printf(_("option f:%d \n"), onredirect);
       break;
@@ -422,7 +423,7 @@ process_arguments (int argc, char **argv)
       break;
     case 'p': /* Server port */
       if (!is_intnonneg (optarg))
-        usage2 (_("Invalid port number"), optarg);
+        print_singleline_exit (STATE_UNKNOWN, _("Invalid port number %i"), optarg);
       else {
         server_port = atoi (optarg);
         specify_port = TRUE;
@@ -474,8 +475,7 @@ process_arguments (int argc, char **argv)
       errcode = regcomp (&preg, regexp, cflags);
       if (errcode != 0) {
         (void) regerror (errcode, &preg, errbuf, MAX_INPUT_BUFFER);
-        printf (_("Could Not Compile Regular Expression: %s"), errbuf);
-        return ERROR;
+        return print_singleline_return (ERROR, _("Could not compile regular expression: %s"), errbuf);
       }
       break;
     case INVERT_REGEX:
@@ -488,7 +488,7 @@ process_arguments (int argc, char **argv)
 #ifdef USE_IPV6
       address_family = AF_INET6;
 #else
-      usage4 (_("IPv6 support not available"));
+      print_singleline_exit (STATE_UNKNOWN, _("IPv6 support not available"));
 #endif
       break;
     case 'v': /* verbose */
@@ -501,15 +501,13 @@ process_arguments (int argc, char **argv)
         /* range, so get two values, min:max */
         tmp = strtok(optarg, ":");
         if (tmp == NULL) {
-          printf("Bad format: try \"-m min:max\"\n");
-          exit (STATE_WARNING);
+          print_singleline_exit (STATE_WARNING, ("Bad format: try \"-m min:max\""));
         } else
           min_page_len = atoi(tmp);
 
         tmp = strtok(NULL, ":");
         if (tmp == NULL) {
-          printf("Bad format: try \"-m min:max\"\n");
-          exit (STATE_WARNING);
+          print_singleline_exit (STATE_WARNING, ("Bad format: try \"-m min:max\""));
         } else
           max_page_len = atoi(tmp);
       } else
@@ -532,8 +530,7 @@ process_arguments (int argc, char **argv)
                                    isdigit (optarg[L-1])))
                       maximum_age = atoi (optarg);
                     else {
-                      fprintf (stderr, "unparsable max-age: %s\n", optarg);
-                      exit (STATE_WARNING);
+                      print_singleline_exit (STATE_WARNING, ("Unparsable max-age: %s", optarg));
                     }
                   }
                   break;
@@ -553,7 +550,7 @@ process_arguments (int argc, char **argv)
 
   if (server_address == NULL) {
     if (host_name == NULL)
-      usage4 (_("You must specify a server address or host name"));
+      print_singleline_exit (STATE_UNKNOWN, _("You must specify a server address or host name"));
     else
       server_address = strdup (host_name);
   }
@@ -567,7 +564,7 @@ process_arguments (int argc, char **argv)
     http_method = strdup ("GET");
 
   if (client_cert && !client_privkey)
-    usage4 (_("If you use a client certificate you must also specify a private key file"));
+    print_singleline_exit (STATE_UNKNOWN, _("If you use a client certificate you must also specify a private key file"));
 
   if (virtual_port == 0)
     virtual_port = server_port;
@@ -694,7 +691,7 @@ expected_statuscode (const char *reply, const char *statuscodes)
   int result = 0;
 
   if ((expected = strdup (statuscodes)) == NULL)
-    die (STATE_UNKNOWN, _("HTTP UNKNOWN - Memory allocation error\n"));
+    print_singleline_exit (STATE_UNKNOWN, _("Memory allocation error"));
 
   for (code = strtok (expected, ","); code != NULL; code = strtok (NULL, ","))
     if (strstr (reply, code) != NULL) {
@@ -862,7 +859,7 @@ prepend_slash (char *path)
     return path;
 
   if ((newpath = malloc (strlen(path) + 2)) == NULL)
-    die (STATE_UNKNOWN, _("HTTP UNKNOWN - Memory allocation error\n"));
+    print_singleline_exit (STATE_UNKNOWN, _("Memory allocation error"));
   newpath[0] = '/';
   strcpy (newpath + 1, path);
   free (path);
@@ -904,7 +901,7 @@ check_http (void)
   /* try to connect to the host at the given port number */
   gettimeofday (&tv_temp, NULL);
   if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK)
-    die (STATE_CRITICAL, _("HTTP CRITICAL - Unable to open TCP socket\n"));
+    print_singleline_exit (STATE_CRITICAL, _("Unable to open TCP socket"));
   microsec_connect = deltime (tv_temp);
 
     /* if we are called with the -I option, the -j method is CONNECT and */
@@ -936,7 +933,7 @@ check_http (void)
     result = np_net_ssl_init_with_hostname_version_and_cert(sd, (use_sni ? host_name : NULL), ssl_version, client_cert, client_privkey);
     if (verbose) printf ("SSL initialized\n");
     if (result != STATE_OK)
-      die (STATE_CRITICAL, NULL);
+      print_singleline_exit (STATE_CRITICAL, _("SSL error"));
     microsec_ssl = deltime (tv_temp);
     elapsed_time_ssl = (double)microsec_ssl / 1.0e6;
     if (check_cert == TRUE) {
@@ -1073,7 +1070,7 @@ check_http (void)
     else {
     */
 #endif
-      die (STATE_CRITICAL, _("HTTP CRITICAL - Error on receive\n"));
+      print_singleline_exit (STATE_CRITICAL, _("Error on receive"));
 #ifdef HAVE_SSL
       /* XXX
     }
@@ -1083,7 +1080,7 @@ check_http (void)
 
   /* return a CRITICAL status if we couldn't read any data */
   if (pagesize == (size_t) 0)
-    die (STATE_CRITICAL, _("HTTP CRITICAL - No data received from host\n"));
+    print_singleline_exit (STATE_CRITICAL, _("No data received from host"));
 
   /* close the connection */
   if (sd) close(sd);
@@ -1140,7 +1137,7 @@ check_http (void)
       xasprintf (&msg,
                 _("Invalid HTTP response received from host on port %d: %s\n"),
                 server_port, status_line);
-    die (STATE_CRITICAL, "HTTP CRITICAL - %s", msg);
+    print_singleline_exit (STATE_CRITICAL, msg);
   }
 
   /* Bypass normal status line check if server_expect was set by user and not default */
@@ -1158,14 +1155,14 @@ check_http (void)
 
     status_code = strchr (status_line, ' ') + sizeof (char);
     if (strspn (status_code, "1234567890") != 3)
-      die (STATE_CRITICAL, _("HTTP CRITICAL: Invalid Status Line (%s)\n"), status_line);
+      print_singleline_exit (STATE_CRITICAL, _("Invalid Status Line (%s)"), status_line);
 
     http_status = atoi (status_code);
 
     /* check the return code */
 
     if (http_status >= 600 || http_status < 100) {
-      die (STATE_CRITICAL, _("HTTP CRITICAL: Invalid Status (%s)\n"), status_line);
+      print_singleline_exit (STATE_CRITICAL, _("Invalid Status (%s)"), status_line);
     }
     /* server errors result in a critical state */
     else if (http_status >= 500) {
@@ -1292,7 +1289,7 @@ check_http (void)
 
   result = max_state_alt(get_status(elapsed_time, thlds), result);
 
-  die (result, "HTTP %s: %s\n", state_text(result), msg);
+  print_singleline_exit (result, msg);
   /* die failed? */
   return STATE_UNKNOWN;
 }
@@ -1322,12 +1319,12 @@ redir (char *pos, char *status_line)
 
   addr = malloc (MAX_IPV4_HOSTLENGTH + 1);
   if (addr == NULL)
-    die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate addr\n"));
+    print_singleline_exit (STATE_UNKNOWN, _("Could not allocate addr"));
 
   memset(addr, 0, MAX_IPV4_HOSTLENGTH);
   url = malloc (strcspn (pos, "\r\n"));
   if (url == NULL)
-    die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate URL\n"));
+    print_singleline_exit (STATE_UNKNOWN, _("Could not allocate URL"));
 
   while (pos) {
     sscanf (pos, "%1[Ll]%*1[Oo]%*1[Cc]%*1[Aa]%*1[Tt]%*1[Ii]%*1[Oo]%*1[Nn]:%n", xx, &i);
@@ -1335,8 +1332,8 @@ redir (char *pos, char *status_line)
       pos += (size_t) strcspn (pos, "\r\n");
       pos += (size_t) strspn (pos, "\r\n");
       if (strlen(pos) == 0)
-        die (STATE_UNKNOWN,
-             _("HTTP UNKNOWN - Could not find redirect location - %s%s\n"),
+        print_singleline_exit (STATE_UNKNOWN,
+             _("Could not find redirect location - %s%s"),
              status_line, (display_html ? "</A>" : ""));
       continue;
     }
@@ -1351,14 +1348,14 @@ redir (char *pos, char *status_line)
     for (; (i = strspn (pos, "\r\n")); pos += i) {
       pos += i;
       if (!(i = strspn (pos, " \t"))) {
-        die (STATE_UNKNOWN, _("HTTP UNKNOWN - Empty redirect location%s\n"),
+        print_singleline_exit (STATE_UNKNOWN, _("Empty redirect location%s"),
              display_html ? "</A>" : "");
       }
     }
 
     url = realloc (url, strcspn (pos, "\r\n") + 1);
     if (url == NULL)
-      die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate URL\n"));
+      print_singleline_exit (STATE_UNKNOWN, _("Could not allocate URL"));
 
     /* URI_HTTP, URI_HOST, URI_PORT, URI_PATH */
     if (sscanf (pos, HD1, type, addr, &i, url) == 4) {
@@ -1400,8 +1397,8 @@ redir (char *pos, char *status_line)
     }
 
     else {
-      die (STATE_UNKNOWN,
-           _("HTTP UNKNOWN - Could not parse redirect location - %s%s\n"),
+      print_singleline_exit (STATE_UNKNOWN,
+           _("Could not parse redirect location - %s%s"),
            pos, (display_html ? "</A>" : ""));
     }
 
@@ -1410,16 +1407,16 @@ redir (char *pos, char *status_line)
   } /* end while (pos) */
 
   if (++redir_depth > max_depth)
-    die (STATE_WARNING,
-         _("HTTP WARNING - maximum redirection depth %d exceeded - %s://%s:%d%s%s\n"),
+    print_singleline_exit (STATE_WARNING,
+         _("Maximum redirection depth %d exceeded - %s://%s:%d%s%s"),
          max_depth, type, addr, i, url, (display_html ? "</A>" : ""));
 
   if (server_port==i &&
       !strncmp(server_address, addr, MAX_IPV4_HOSTLENGTH) &&
       (host_name && !strncmp(host_name, addr, MAX_IPV4_HOSTLENGTH)) &&
       !strcmp(server_url, url))
-    die (STATE_WARNING,
-         _("HTTP WARNING - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
+    print_singleline_exit (STATE_WARNING,
+         _("Redirection creates an infinite loop - %s://%s:%d%s%s"),
          type, addr, i, url, (display_html ? "</A>" : ""));
 
   strcpy (server_type, type);
@@ -1439,8 +1436,8 @@ redir (char *pos, char *status_line)
   server_url = url;
 
   if (server_port > MAX_PORT)
-    die (STATE_UNKNOWN,
-         _("HTTP UNKNOWN - Redirection to port above %d - %s://%s:%d%s%s\n"),
+    print_singleline_exit (STATE_UNKNOWN,
+         _("Redirection to port above %d - %s://%s:%d%s%s"),
          MAX_PORT, server_type, server_address, server_port, server_url,
          display_html ? "</A>" : "");
 
