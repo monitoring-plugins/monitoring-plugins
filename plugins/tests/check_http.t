@@ -269,7 +269,7 @@ sub run_common_tests {
 	$cmd = "$command -u /statuscode/201 -e 200";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 2, $cmd);
-	like( $result->output, '/^HTTP CRITICAL - Invalid HTTP response received from host on port \d+: HTTP/1.1 201 Created/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP CRITICAL: Invalid HTTP response received from host on port \d+: HTTP/1.1 201 Created/', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /statuscode/200 -e 200,201,202";
 	$result = NPTest->testCmd( $cmd );
@@ -284,7 +284,7 @@ sub run_common_tests {
 	$cmd = "$command -u /statuscode/203 -e 200,201,202";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 2, $cmd);
-	like( $result->output, '/^HTTP CRITICAL - Invalid HTTP response received from host on port (\d+): HTTP/1.1 203 Non-Authoritative Information/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP CRITICAL: Invalid HTTP response received from host on port (\d+): HTTP/1.1 203 Non-Authoritative Information/', "Output correct: ".$result->output );
 
 	$cmd = "$command -j HEAD -u /method";
 	$result = NPTest->testCmd( $cmd );
