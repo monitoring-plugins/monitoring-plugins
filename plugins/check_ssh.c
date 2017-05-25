@@ -71,7 +71,7 @@ main (int argc, char **argv)
 	argv=np_extra_opts (&argc, argv, progname);
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage4 (_("Could not parse arguments"));
+            print_singleline_exit(STATE_UNKNOWN, _("Could not parse arguments"));
 
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
@@ -137,7 +137,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 't':									/* timeout period */
 			if (!is_integer (optarg))
-				usage2 (_("Timeout interval must be a positive integer"), optarg);
+				print_singleline_exit (STATE_UNKNOWN, _("Timeout interval must be a positive integer %i"), optarg);
 			else
 				socket_timeout = atoi (optarg);
 			break;
@@ -148,7 +148,7 @@ process_arguments (int argc, char **argv)
 #ifdef USE_IPV6
 			address_family = AF_INET6;
 #else
-			usage4 (_("IPv6 support not available"));
+			print_singleline_exit (STATE_UNKNOWN, _("IPv6 support not available"));
 #endif
 			break;
 		case 'r':									/* remote version */
@@ -159,7 +159,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'H':									/* host */
 			if (is_host (optarg) == FALSE)
-				usage2 (_("Invalid hostname/address"), optarg);
+				print_singleline_exit (STATE_UNKNOWN, _("Invalid hostname/address %s"), optarg);
 			server_name = optarg;
 			break;
 		case 'p':									/* port */
@@ -167,7 +167,7 @@ process_arguments (int argc, char **argv)
 				port = atoi (optarg);
 			}
 			else {
-				usage2 (_("Port number must be a positive integer"), optarg);
+				print_singleline_exit (STATE_UNKNOWN, _("Port number must be a positive integer %i"), optarg);
 			}
 		}
 	}
@@ -184,8 +184,7 @@ process_arguments (int argc, char **argv)
 			port = atoi (argv[c++]);
 		}
 		else {
-			print_usage ();
-			exit (STATE_UNKNOWN);
+			print_singleline_exit (STATE_UNKNOWN, _("Port number must be a positive integer %i"), optarg);
 		}
 	}
 
@@ -234,9 +233,8 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 	memset (output, 0, BUFF_SZ + 1);
 	recv (sd, output, BUFF_SZ, 0);
 	if (strncmp (output, "SSH", 3)) {
-		printf (_("Server answer: %s"), output);
 		close(sd);
-		exit (STATE_CRITICAL);
+		print_singleline_exit (STATE_CRITICAL, _("Server answer: %s"), output);
 	}
 	else {
 		strip (output);
@@ -252,29 +250,26 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 			printf ("%s\n", buffer);
 
 		if (remote_version && strcmp(remote_version, ssh_server)) {
-			printf
-				(_("SSH CRITICAL - %s (protocol %s) version mismatch, expected '%s'\n"),
-				 ssh_server, ssh_proto, remote_version);
 			close(sd);
-			exit (STATE_CRITICAL);
+			print_singleline_exit (STATE_CRITICAL,
+                                 _("%s (protocol %s) version mismatch, expected '%s'"),
+				 ssh_server, ssh_proto, remote_version);
 		}
 
 		if (remote_protocol && strcmp(remote_protocol, ssh_proto)) {
-			printf
-				(_("SSH CRITICAL - %s (protocol %s) protocol version mismatch, expected '%s'\n"),
-				 ssh_server, ssh_proto, remote_protocol);
 			close(sd);
-			exit (STATE_CRITICAL);
+			print_singleline_exit (STATE_CRITICAL,
+				_("%s (protocol %s) protocol version mismatch, expected '%s'"),
+				 ssh_server, ssh_proto, remote_protocol);
 		}
 
 		elapsed_time = (double)deltime(tv) / 1.0e6;
 
-		printf
-			(_("SSH OK - %s (protocol %s) | %s\n"),
+		close(sd);
+		print_singleline_exit (STATE_OK,
+			_("%s (protocol %s) | %s"),
 			 ssh_server, ssh_proto, fperfdata("time", elapsed_time, "s",
 			 FALSE, 0, FALSE, 0, TRUE, 0, TRUE, (int)socket_timeout));
-		close(sd);
-		exit (STATE_OK);
 	}
 }
 
