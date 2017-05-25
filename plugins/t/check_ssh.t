@@ -30,7 +30,7 @@ my $result = NPTest->testCmd(
     "./check_ssh -H $ssh_host"
     );
 cmp_ok($result->return_code, '==', 0, "Exit with return code 0 (OK)");
-like($result->output, '/^SSH OK - /', "Status text if command returned none (OK)");
+like($result->output, '/^SSH OK:/', "Status text if command returned none (OK)");
 
 
 $result = NPTest->testCmd(
@@ -45,5 +45,5 @@ $result = NPTest->testCmd(
     "./check_ssh -H $hostname_invalid -t 2"
     );
 cmp_ok($result->return_code, '==', 3, "Exit with return code 0 (OK)");
-like($result->output, '/^check_ssh: Invalid hostname/', "Status text if command returned none (OK)");
+like($result->output, '/^SSH UNKNOWN: Invalid hostname/', "Status text if command returned none (OK)");
 
