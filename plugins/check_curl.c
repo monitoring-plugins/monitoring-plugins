@@ -452,7 +452,7 @@ check_http (void)
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CAINFO, ca_cert), "CURLOPT_CAINFO");
     handle_curl_option_return_code (curl_easy_setopt( curl, CURLOPT_SSL_VERIFYPEER, 1), "CURLOPT_SSL_VERIFYPEER");
     handle_curl_option_return_code (curl_easy_setopt( curl, CURLOPT_SSL_VERIFYHOST, 2), "CURLOPT_SSL_VERIFYHOST");
-  } else {  
+  } else {
     /* backward-compatible behaviour, be tolerant in checks
      * TODO: depending on more options have aspects we want
      * to be less tolerant about ssl verfications
@@ -460,7 +460,7 @@ check_http (void)
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0), "CURLOPT_SSL_VERIFYPEER");
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_SSL_VERIFYHOST, 0), "CURLOPT_SSL_VERIFYHOST");
   }
-  
+
   /* detect SSL library used by libcurl */
   ssl_library = curlhelp_get_ssl_library (curl);
 
@@ -481,7 +481,7 @@ check_http (void)
 #endif /* USE_OPENSSL */
         /* libcurl is built with OpenSSL, monitoring plugins, so falling
          * back to manually extracting certificate information */
-        handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CERTINFO, 1L), "CURLOPT_CERTINFO"); 
+        handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CERTINFO, 1L), "CURLOPT_CERTINFO");
         break;
 
       case CURLHELP_SSL_LIBRARY_NSS:
@@ -492,7 +492,7 @@ check_http (void)
         die (STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates (libcurl linked with SSL library '%s' is too old)\n", curlhelp_get_ssl_library_string (ssl_library));
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
         break;
-      
+
       case CURLHELP_SSL_LIBRARY_GNUTLS:
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 42, 0)
         /* GnuTLS: support for CERTINFO is implemented since 7.42.0 */
@@ -501,7 +501,7 @@ check_http (void)
         die (STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates (libcurl linked with SSL library '%s' is too old)\n", curlhelp_get_ssl_library_string (ssl_library));
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 42, 0) */
         break;
-      
+
       case CURLHELP_SSL_LIBRARY_UNKNOWN:
       default:
         die (STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates (unknown SSL library '%s', must implement first)\n", curlhelp_get_ssl_library_string (ssl_library));
@@ -543,12 +543,12 @@ check_http (void)
   if (onredirect == STATE_DEPENDENT) {
     if( followmethod == FOLLOW_LIBCURL ) {
       handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_FOLLOWLOCATION, 1), "CURLOPT_FOLLOWLOCATION");
-    
-      /* default -1 is infinite, not good, could lead to zombie plugins! 
+
+      /* default -1 is infinite, not good, could lead to zombie plugins!
          Setting it to one bigger than maximal limit to handle errors nicely below
        */
       handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_MAXREDIRS, max_depth+1), "CURLOPT_MAXREDIRS");
-    
+
       /* for now allow only http and https (we are a http(s) check plugin in the end) */
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 4)
       handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS), "CURLOPT_REDIRECT_PROTOCOLS");
@@ -640,7 +640,7 @@ check_http (void)
         cert_ptr.to_info = NULL;
         res = curl_easy_getinfo (curl, CURLINFO_CERTINFO, &cert_ptr.to_info);
         if (!res && cert_ptr.to_info) {
-#ifdef USE_OPENSSL          
+#ifdef USE_OPENSSL
           /* We have no OpenSSL in libcurl, but we can use OpenSSL for X509 cert parsing
            * We only check the first certificate and assume it's the one of the server
            */
@@ -669,7 +669,7 @@ GOT_FIRST_CERT:
           }
           BIO_free (cert_BIO);
           result = np_net_ssl_check_certificate(cert, days_till_exp_warn, days_till_exp_crit);
-          return result;        
+          return result;
 #else /* USE_OPENSSL */
           /* We assume we don't have OpenSSL and np_net_ssl_check_certificate at our disposal,
            * so we use the libcurl CURLINFO data
@@ -859,12 +859,12 @@ GOT_FIRST_CERT:
   /* make sure the page is of an appropriate size
    * TODO: as far I can tell check_http gets the full size of header and
    * if -N is not given header+body. Does this make sense?
-   * 
+   *
    * TODO: check_http.c had a get_length function, the question is really
    * here what to use? the raw data size of the header_buf, the value of
    * Content-Length, both and warn if they differ? Should the length be
    * header+body or only body?
-   * 
+   *
    * One possible policy:
    * - use header_buf.buflen (warning, if it mismatches to the Content-Length value
    * - if -N (nobody) is given, use Content-Length only and hope the server set
@@ -903,7 +903,7 @@ GOT_FIRST_CERT:
   curl_global_cleanup ();
   curlhelp_freewritebuffer (&body_buf);
   curlhelp_freewritebuffer (&header_buf);
-  if (!strcmp (http_method, "PUT")) { 
+  if (!strcmp (http_method, "PUT")) {
     curlhelp_freereadbuffer (&put_buf);
   }
 
@@ -941,11 +941,11 @@ redir (curlhelp_write_curlbuf* header_buf)
   int new_port;
   char *new_host;
   char *new_url;
-    
+
   int res = phr_parse_response (header_buf->buf, header_buf->buflen,
     &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
     headers, &nof_headers, 0);
-  
+
   location = get_header_value (headers, nof_headers, "location");
 
   if (verbose >= 2)
@@ -955,7 +955,7 @@ redir (curlhelp_write_curlbuf* header_buf)
     die (STATE_WARNING,
          _("HTTP WARNING - maximum redirection depth %d exceeded - %s%s\n"),
          max_depth, location, (display_html ? "</A>" : ""));
-  
+
   UriParserStateA state;
   UriUriA uri;
   state.uri = &uri;
@@ -968,7 +968,7 @@ redir (curlhelp_write_curlbuf* header_buf)
       die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate URL\n"));
     }
   }
-  
+
   if (verbose >= 2) {
     printf (_("** scheme: %s\n"),
       uri_string (uri.scheme, buf, DEFAULT_BUFFER_SIZE));
@@ -1003,7 +1003,7 @@ redir (curlhelp_write_curlbuf* header_buf)
   }
 
   use_ssl = !uri_strcmp (uri.scheme, "https");
-  
+
   /* we do a sloppy test here only, because uriparser would have failed
    * above, if the port would be invalid, we just check for MAX_PORT
    */
@@ -1018,7 +1018,7 @@ redir (curlhelp_write_curlbuf* header_buf)
     die (STATE_UNKNOWN,
          _("HTTP UNKNOWN - Redirection to port above %d - %s%s\n"),
          MAX_PORT, location, display_html ? "</A>" : "");
-      
+
   /* by RFC 7231 relative URLs in Location should be taken relative to
    * the original URL, so wy try to form a new absolute URL here
    */
@@ -1070,11 +1070,11 @@ redir (curlhelp_write_curlbuf* header_buf)
   server_url = new_url;
 
   uriFreeUriMembersA (&uri);
-  
+
   if (verbose)
     printf (_("Redirection to %s://%s:%d%s\n"), use_ssl ? "https" : "http",
             host_name ? host_name : server_address, server_port, server_url);
-  
+
   /* TODO: the hash component MUST be taken from the original URL and
    * attached to the URL in Location
    */
@@ -1320,7 +1320,7 @@ process_arguments (int argc, char **argv)
           got_plus = 1;
           *plus_ptr = '\0';
         }
-        
+
         if (optarg[0] == '2')
           ssl_version = CURL_SSLVERSION_SSLv2;
         else if (optarg[0] == '3')
@@ -1380,7 +1380,7 @@ process_arguments (int argc, char **argv)
             break;
         }
       }
-#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 54, 0) */ 
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 54, 0) */
       if (verbose >= 2)
         printf(_("* Set SSL/TLS version to %d\n"), ssl_version);
       if (server_port == HTTP_PORT)
@@ -1778,13 +1778,13 @@ int
 curlhelp_buffer_read_callback (void *buffer, size_t size, size_t nmemb, void *stream)
 {
   curlhelp_read_curlbuf *buf = (curlhelp_read_curlbuf *)stream;
-  
+
   size_t n = min (nmemb * size, buf->buflen - buf->pos);
 
   memcpy (buffer, buf->buf + buf->pos, n);
   buf->pos += n;
-  
-  return (int)n;  
+
+  return (int)n;
 }
 
 void
@@ -1953,7 +1953,7 @@ get_header_value (const struct phr_header* headers, const size_t nof_headers, co
   return NULL;
 }
 
-int 
+int
 check_document_dates (const curlhelp_write_curlbuf *header_buf, char (*msg)[DEFAULT_BUFFER_SIZE])
 {
   char *server_date = NULL;
@@ -1963,11 +1963,11 @@ check_document_dates (const curlhelp_write_curlbuf *header_buf, char (*msg)[DEFA
   struct phr_header headers[255];
   size_t nof_headers = 255;
   size_t msglen;
-    
+
   int res = phr_parse_response (header_buf->buf, header_buf->buflen,
     &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
     headers, &nof_headers, 0);
-  
+
   server_date = get_header_value (headers, nof_headers, "date");
   document_date = get_header_value (headers, nof_headers, "last-modified");
 
@@ -2002,7 +2002,7 @@ check_document_dates (const curlhelp_write_curlbuf *header_buf, char (*msg)[DEFA
       }
     }
   }
-  
+
   if (server_date) free (server_date);
   if (document_date) free (document_date);
 
@@ -2025,7 +2025,7 @@ get_content_length (const curlhelp_write_curlbuf* header_buf, const curlhelp_wri
   int res = phr_parse_response (header_buf->buf, header_buf->buflen,
     &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
     headers, &nof_headers, 0);
-  
+
   content_length_s = get_header_value (headers, nof_headers, "content-length");
   if (!content_length_s) {
     return header_buf->buflen + body_buf->buflen;
@@ -2055,10 +2055,10 @@ curlhelp_get_ssl_library (CURL* curl)
 
   ssl_version = strdup (version_data->ssl_version);
   if (ssl_version == NULL ) return CURLHELP_SSL_LIBRARY_UNKNOWN;
-  
+
   library = strtok (ssl_version, "/");
   if (library == NULL) return CURLHELP_SSL_LIBRARY_UNKNOWN;
-  
+
   if (strcmp (library, "OpenSSL") == 0)
     ssl_library = CURLHELP_SSL_LIBRARY_OPENSSL;
   else if (strcmp (library, "LibreSSL") == 0)
@@ -2070,9 +2070,9 @@ curlhelp_get_ssl_library (CURL* curl)
 
   if (verbose >= 2)
     printf ("* SSL library string is : %s %s (%d)\n", version_data->ssl_version, library, ssl_library);
-  
+
   free (ssl_version);
-    
+
   return ssl_library;
 }
 
@@ -2101,12 +2101,12 @@ parse_cert_date (const char *s)
 {
   struct tm tm;
   time_t date;
-  
+
   if (!s) return -1;
 
   strptime (s, "%Y-%m-%d %H:%M:%S GMT", &tm);
   date = mktime (&tm);
-  
+
   return date;
 }
 
@@ -2127,7 +2127,7 @@ net_noopenssl_check_certificate (cert_ptr_union* cert_ptr, int days_till_exp_war
 	float time_left;
 	int days_left;
 	int time_remaining;
-	char timestamp[50] = "";  
+	char timestamp[50] = "";
 	int status = STATE_UNKNOWN;
 
   if (verbose >= 2)
@@ -2160,7 +2160,7 @@ HAVE_FIRST_CERT:
 
   if (verbose >= 2)
     printf ("**** REQUEST CERTIFICATES ****\n");
-    
+
   if (!cname_found) {
 		printf("%s\n",_("CRITICAL - Cannot retrieve certificate subject."));
 		return STATE_CRITICAL;
