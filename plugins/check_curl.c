@@ -1707,11 +1707,19 @@ print_help (void)
   printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
   printf (" %s\n", _("30 days, but more than 14 days, a STATE_WARNING is returned."));
   printf (" %s\n", _("A STATE_CRITICAL will be returned when certificate expires in less than 14 days"));
+#endif
 
-  printf (" %s\n\n", "CHECK SSL WEBSERVER CONTENT VIA PROXY USING HTTP 1.1 CONNECT: ");
+  printf ("\n %s\n", "CHECK WEBSERVER CONTENT VIA PROXY:");
   printf (" %s\n", _("It is recommended to use an environment proxy like:"));
-  printf (" %s\n", _("https_proxy=http://127.0.0.1:3128 ./check_curl -H www.verisign.com -S"));
-  printf (" %s\n", _("but proxy requests in check_http style still works:"));
+  printf (" %s\n", _("http_proxy=http://192.168.100.35:3128 ./check_curl -H www.monitoring-plugins.org"));
+  printf (" %s\n", _("legacy proxy requests in check_http style still work:"));
+  printf (" %s\n", _("check_curl -I 192.168.100.35 -p 3128 -u http://www.monitoring-plugins.org/ -H www.monitoring-plugins.org"));
+
+#ifdef LIBCURL_FEATURE_SSL
+  printf ("\n %s\n", "CHECK SSL WEBSERVER CONTENT VIA PROXY USING HTTP 1.1 CONNECT: ");
+  printf (" %s\n", _("It is recommended to use an environment proxy like:"));
+  printf (" %s\n", _("https_proxy=http://192.168.100.35:3128 ./check_curl -H www.verisign.com -S"));
+  printf (" %s\n", _("legacy proxy requests in check_http style still work:"));
   printf (" %s\n", _("check_curl -I 192.168.100.35 -p 3128 -u https://www.verisign.com/ -S -j CONNECT -H www.verisign.com "));
   printf (" %s\n", _("all these options are needed: -I <proxy> -p <proxy-port> -u <check-url> -S(sl) -j CONNECT -H <webserver>"));
   printf (" %s\n", _("a STATE_OK will be returned. When the server returns its content but exceeds"));
