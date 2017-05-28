@@ -372,14 +372,14 @@ check_http (void)
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 3) */
 
   /* extract proxy information for legacy proxy https requests */
-  if (!strcmp(http_method, "CONNECT")) {
+  if (!strcmp(http_method, "CONNECT") || strstr(server_url, "http") == server_url) {
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_PROXY, server_address), "CURLOPT_PROXY");
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_PROXYPORT, (long)server_port), "CURLOPT_PROXYPORT");
     if (verbose>=2)
       printf ("* curl CURLOPT_PROXY: %s:%d\n", server_address, server_port);
     http_method = "GET";
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_URL, server_url), "CURLOPT_URL");
-    //server_port = use_ssl ? HTTPS_PORT : HTTP_PORT;
+    virtual_port = use_ssl ? HTTPS_PORT : HTTP_PORT;
   } else {
     /* set port */
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_PORT, server_port), "CURLOPT_PORT");
