@@ -175,6 +175,7 @@ char string_expect[MAX_INPUT_BUFFER] = "";
 char server_expect[MAX_INPUT_BUFFER] = HTTP_EXPECT;
 int server_expect_yn = 0;
 char user_auth[MAX_INPUT_BUFFER] = "";
+char proxy_auth[MAX_INPUT_BUFFER] = "";
 char **http_opt_headers;
 int http_opt_headers_count = 0;
 int display_html = FALSE;
@@ -519,6 +520,10 @@ check_http (void)
 
   /* set default or user-given user agent identification */
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_USERAGENT, user_agent), "CURLOPT_USERAGENT");
+
+  /* proxy-authentication */
+  if (strcmp(proxy_auth, ""))
+    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_PROXYUSERPWD, proxy_auth), "CURLOPT_PROXYUSERPWD");
 
   /* authentication */
   if (strcmp(user_auth, ""))
@@ -1128,6 +1133,7 @@ process_arguments (int argc, char **argv)
     {"url", required_argument, 0, 'u'},
     {"port", required_argument, 0, 'p'},
     {"authorization", required_argument, 0, 'a'},
+    {"proxy-authorization", required_argument, 0, 'b'},
     {"header-string", required_argument, 0, 'd'},
     {"string", required_argument, 0, 's'},
     {"expect", required_argument, 0, 'e'},
@@ -1171,7 +1177,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NE", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
       break;
 
@@ -1237,6 +1243,10 @@ process_arguments (int argc, char **argv)
     case 'a': /* authorization info */
       strncpy (user_auth, optarg, MAX_INPUT_BUFFER - 1);
       user_auth[MAX_INPUT_BUFFER - 1] = 0;
+      break;
+    case 'b': /* proxy-authorization info */
+      strncpy (proxy_auth, optarg, MAX_INPUT_BUFFER - 1);
+      proxy_auth[MAX_INPUT_BUFFER - 1] = 0;
       break;
     case 'P': /* HTTP POST data in URL encoded format; ignored if settings already */
       if (! http_post_data)
@@ -1648,6 +1658,8 @@ print_help (void)
   printf ("    %s\n", _("Return CRITICAL if found, OK if not\n"));
   printf (" %s\n", "-a, --authorization=AUTH_PAIR");
   printf ("    %s\n", _("Username:password on sites with basic authentication"));
+  printf (" %s\n", "-b, --proxy-authorization=AUTH_PAIR");
+  printf ("    %s\n", _("Username:password on proxy-servers with basic authentication"));
   printf (" %s\n", "-A, --useragent=STRING");
   printf ("    %s\n", _("String to be sent in http header as \"User Agent\""));
   printf (" %s\n", "-k, --header=STRING");
