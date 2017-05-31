@@ -51,7 +51,7 @@ const char *email = "devel@monitoring-plugins.org";
 # define SWAP_CONVERSION 1
 #endif
 
-int check_swap (int usp, float free_swap_mb);
+int check_swap (int usp, float free_swap_mb, float total_swap_mb);
 int process_arguments (int argc, char **argv);
 int validate_arguments (void);
 void print_usage (void);
@@ -128,7 +128,7 @@ main (int argc, char **argv)
 					percent=100.0;
 				else
 					percent = 100 * (((double) dskused_mb) / ((double) dsktotal_mb));
-				result = max_state (result, check_swap (percent, dskfree_mb));
+				result = max_state (result, check_swap (percent, dskfree_mb, dsktotal_mb));
 				if (verbose)
 					xasprintf (&status, "%s [%.0f (%d%%)]", status, dskfree_mb, 100 - percent);
 			}
@@ -227,7 +227,7 @@ main (int argc, char **argv)
 			free_swap_mb += dskfree_mb;
 			if (allswaps) {
 				percent = 100 * (((double) dskused_mb) / ((double) dsktotal_mb));
-				result = max_state (result, check_swap (percent, dskfree_mb));
+				result = max_state (result, check_swap (percent, dskfree_mb, dsktotal_mb));
 				if (verbose)
 					xasprintf (&status, "%s [%.0f (%d%%)]", status, dskfree_mb, 100 - percent);
 			}
@@ -289,7 +289,7 @@ main (int argc, char **argv)
 
 		if(allswaps && dsktotal_mb > 0){
 			percent = 100 * (((double) dskused_mb) / ((double) dsktotal_mb));
-			result = max_state (result, check_swap (percent, dskfree_mb));
+			result = max_state (result, check_swap (percent, dskfree_mb, dsktotal_mb));
 			if (verbose) {
 				xasprintf (&status, "%s [%.0f (%d%%)]", status, dskfree_mb, 100 - percent);
 			}
@@ -328,7 +328,7 @@ main (int argc, char **argv)
 
 		if(allswaps && dsktotal_mb > 0){
 			percent = 100 * (((double) dskused_mb) / ((double) dsktotal_mb));
-			result = max_state (result, check_swap (percent, dskfree_mb));
+			result = max_state (result, check_swap (percent, dskfree_mb, dsktotal_mb));
 			if (verbose) {
 				xasprintf (&status, "%s [%.0f (%d%%)]", status, dskfree_mb, 100 - percent);
 			}
@@ -355,7 +355,7 @@ main (int argc, char **argv)
 		status = "- Swap is either disabled, not present, or of zero size. ";
 	}
 
-	result = max_state (result, check_swap (percent_used, free_swap_mb));
+	result = max_state (result, check_swap (percent_used, free_swap_mb, total_swap_mb));
 	printf (_("SWAP %s - %d%% free (%d MB out of %d MB) %s|"),
 			state_text (result),
 			(100 - percent_used), (int) free_swap_mb, (int) total_swap_mb, status);
@@ -372,10 +372,10 @@ main (int argc, char **argv)
 
 
 int
-check_swap (int usp, float free_swap_mb)
+check_swap (int usp, float free_swap_mb, float total_swap_mb)
 {
 
-	if (!free_swap_mb) return no_swap_state;
+	if (!total_swap_mb) return no_swap_state;
 
 	int result = STATE_UNKNOWN;
 	float free_swap = free_swap_mb * (1024 * 1024);		/* Convert back to bytes as warn and crit specified in bytes */
