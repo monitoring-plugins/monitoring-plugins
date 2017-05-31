@@ -1753,7 +1753,7 @@ print_usage (void)
   printf (" %s -H <vhost> | -I <IP-address> [-u <uri>] [-p <port>]\n",progname);
   printf ("       [-J <client certificate file>] [-K <private key>] [--ca-cert <CA certificate file>]\n");
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L] [-E] [-a auth]\n");
-  printf ("       [-f <ok|warning|critcal|follow|sticky|stickyport|curl>]\n");
+  printf ("       [-b proxy_auth] [-f <ok|warning|critcal|follow|sticky|stickyport|curl>]\n");
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
