@@ -20,7 +20,7 @@ my $host_nonresponsive = getTestParameter( "host_nonresponsive", "NP_HOST_NONRES
 my $hostname_invalid   = getTestParameter( "hostname_invalid",   "NP_HOSTNAME_INVALID",   "nosuchhost",
                                            "An invalid (not known to DNS) hostname" );
 
-my $successOutput = '/FTP OK -\s+[0-9]?\.?[0-9]+ second response time/';
+my $successOutput = '/FTP OK:\s+[0-9]?\.?[0-9]+ second response time/';
 
 my $t;
 

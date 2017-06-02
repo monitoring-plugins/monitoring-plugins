@@ -29,11 +29,11 @@ my $hostname_invalid   = getTestParameter(
 			);
 
 
-my $jabberOK = '/JABBER OK\s-\s\d+\.\d+\ssecond response time on '.$host_tcp_jabber.' port 5222/';
+my $jabberOK = '/JABBER OK:\s\d+\.\d+\ssecond response time on '.$host_tcp_jabber.' port 5222/';
 
 my $jabberUnresponsive = '/JABBER CRITICAL: Socket timeout after\s\d+\sseconds/';
 
-my $jabberInvalid = '/JABBER CRITICAL - Invalid hostname, address or socket:\s.+/';
+my $jabberInvalid = '/JABBER CRITICAL: Invalid hostname, address or socket:\s.+/';
 
 my $r;
 
