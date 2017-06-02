@@ -99,6 +99,7 @@ main (int argc, char **argv)
 	int result = STATE_UNKNOWN;
 	int i;
 	char *status = NULL;
+        char *msg = NULL;
 	struct timeval tv;
 	struct timeval timeout;
 	size_t len;
@@ -202,7 +203,7 @@ main (int argc, char **argv)
 	}
 	/* fallthrough check, so it's supposed to use reverse matching */
 	else if (strcmp (SERVICE, "TCP"))
-		usage (_("CRITICAL - Generic check_tcp called with unknown service\n"));
+		print_singleline_exit (STATE_UNKNOWN, _("Generic check_tcp called with unknown service"));
 
 	server_address = "127.0.0.1";
 	server_port = PORT;
@@ -214,7 +215,7 @@ main (int argc, char **argv)
 	argv=np_extra_opts (&argc, argv, progname);
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage4 (_("Could not parse arguments"));
+		print_singleline_exit (STATE_UNKNOWN, _("Could not parse arguments"));
 
 	if(flags & FLAG_VERBOSE) {
 		printf("Using service %s\n", SERVICE);
@@ -226,7 +227,7 @@ main (int argc, char **argv)
 		server_expect_count++;
 
 	if(PROTOCOL==IPPROTO_UDP && !(server_expect_count && server_send)){
-		usage(_("With UDP checks, a send/expect string must be specified."));
+		print_singleline_exit (STATE_UNKNOWN, _("With UDP checks, a send/expect string must be specified."));
 	}
 
 	/* set up the timer */
@@ -307,7 +308,7 @@ main (int argc, char **argv)
 
 		/* no data when expected, so return critical */
 		if (len == 0)
-			die (STATE_CRITICAL, _("No data received from host\n"));
+			print_singleline_exit (STATE_CRITICAL, _("No data received from host"));
 
 		/* print raw output if we're debugging */
 		if(flags & FLAG_VERBOSE)
@@ -344,34 +345,30 @@ main (int argc, char **argv)
 	/* this is a bit stupid, because we don't want to print the
 	 * response time (which can look ok to the user) if we didn't get
 	 * the response we were looking for. if-else */
-	printf("%s %s - ", SERVICE, state_text(result));
-
 	if(match == NP_MATCH_FAILURE && len && !(flags & FLAG_HIDE_OUTPUT))
-		printf("Unexpected response from host/socket: %s", status);
+                xasprintf (&msg, "Unexpected response from host/socket: %s", status);
 	else {
 		if(match == NP_MATCH_FAILURE)
-			printf("Unexpected response from host/socket on ");
+                        xasprintf (&msg, "Unexpected response from host/socket on");
 		else
-			printf("%.3f second response time on ", elapsed_time);
+			xasprintf (&msg, "%.3f second response time on", elapsed_time);
 		if(server_address[0] != '/') {
 			if (host_specified)
-				printf("%s port %d",
-				       server_address, server_port);
+				xasprintf (&msg, "%s %s port %d", msg, server_address, server_port);
 			else
-				printf("port %d", server_port);
-		}
-		else
-			printf("socket %s", server_address);
+				xasprintf (&msg, "%s port %d", msg, server_port);
+		} else
+			xasprintf (&msg, "%s socket %s", msg, server_address);
 	}
 
 	if (match != NP_MATCH_FAILURE && !(flags & FLAG_HIDE_OUTPUT) && len)
-		printf (" [%s]", status);
+		xasprintf (&msg, "%s [%s]", msg, status);
 
 	/* perf-data doesn't apply when server doesn't talk properly,
 	 * so print all zeroes on warn and crit. Use fperfdata since
 	 * localisation settings can make different outputs */
 	if(match == NP_MATCH_FAILURE)
-		printf ("|%s",
+		xasprintf (&msg, "%s|%s", msg,
 				fperfdata ("time", elapsed_time, "s",
 				(flags & FLAG_TIME_WARN ? TRUE : FALSE), 0,
 				(flags & FLAG_TIME_CRIT ? TRUE : FALSE), 0,
@@ -379,7 +376,7 @@ main (int argc, char **argv)
 				TRUE, socket_timeout)
 			);
 	else
-		printf("|%s",
+		xasprintf (&msg, "%s|%s", msg,
 				fperfdata ("time", elapsed_time, "s",
 				(flags & FLAG_TIME_WARN ? TRUE : FALSE), warning_time,
 				(flags & FLAG_TIME_CRIT ? TRUE : FALSE), critical_time,
@@ -387,8 +384,7 @@ main (int argc, char **argv)
 				TRUE, socket_timeout)
 			);
 
-	putchar('\n');
-	return result;
+	return print_singleline_return (result, msg);
 }
 
 
@@ -478,7 +474,7 @@ process_arguments (int argc, char **argv)
 #ifdef USE_IPV6
 			address_family = AF_INET6;
 #else
-			usage4 (_("IPv6 support not available"));
+			print_singleline_exit (STATE_UNKNOWN, _("IPv6 support not available"));
 #endif
 			break;
 		case 'H':                 /* hostname */
@@ -506,13 +502,13 @@ process_arguments (int argc, char **argv)
 			break;
 		case 't':                 /* timeout */
 			if (!is_intpos (optarg))
-				usage4 (_("Timeout interval must be a positive integer"));
+				print_singleline_exit (STATE_UNKNOWN, _("Timeout interval must be a positive integer"));
 			else
 				socket_timeout = atoi (optarg);
 			break;
 		case 'p':                 /* port */
 			if (!is_intpos (optarg))
-				usage4 (_("Port must be a positive integer"));
+				print_singleline_exit (STATE_UNKNOWN, _("Port must be a positive integer"));
 			else
 				server_port = atoi (optarg);
 			break;
@@ -535,7 +531,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'm':
 			if (!is_intpos (optarg))
-				usage4 (_("Maxbytes must be a positive integer"));
+				print_singleline_exit (STATE_UNKNOWN, _("Maxbytes must be a positive integer"));
 			else
 				maxbytes = strtol (optarg, NULL, 0);
 			break;
@@ -553,7 +549,7 @@ process_arguments (int argc, char **argv)
 			else if (!strncmp(optarg,"crit",4))
 				econn_refuse_state = STATE_CRITICAL;
 			else
-				usage4 (_("Refuse must be one of ok, warn, crit"));
+				print_singleline_exit (STATE_UNKNOWN, _("Refuse must be one of ok, warn, crit"));
 			break;
 		case 'M':
 			if (!strncmp(optarg,"ok",2))
@@ -563,13 +559,13 @@ process_arguments (int argc, char **argv)
 			else if (!strncmp(optarg,"crit",4))
 				expect_mismatch_state = STATE_CRITICAL;
 			else
-				usage4 (_("Mismatch must be one of ok, warn, crit"));
+				print_singleline_exit (STATE_UNKNOWN, _("Mismatch must be one of ok, warn, crit"));
 			break;
 		case 'd':
 			if (is_intpos (optarg))
 				delay = atoi (optarg);
 			else
-				usage4 (_("Delay must be a positive integer"));
+				print_singleline_exit (STATE_UNKNOWN, _("Delay must be a positive integer"));
 			break;
 		case 'D': /* Check SSL cert validity - days 'til certificate expiration */
 #ifdef HAVE_SSL
@@ -577,18 +573,18 @@ process_arguments (int argc, char **argv)
 			if ((temp=strchr(optarg,','))!=NULL) {
 			    *temp='\0';
 			    if (!is_intnonneg (optarg))
-                               usage2 (_("Invalid certificate expiration period"), optarg);
+                               print_singleline_exit (STATE_UNKNOWN, _("Invalid certificate expiration period %i"), optarg);
 			    days_till_exp_warn = atoi (optarg);
 			    *temp=',';
 			    temp++;
 			    if (!is_intnonneg (temp))
-				usage2 (_("Invalid certificate expiration period"), temp);
+				print_singleline_exit (STATE_UNKNOWN, _("Invalid certificate expiration period %i"), temp);
 			    days_till_exp_crit = atoi (temp);
 			}
 			else {
 			    days_till_exp_crit=0;
 			    if (!is_intnonneg (optarg))
-				usage2 (_("Invalid certificate expiration period"), optarg);
+				print_singleline_exit (STATE_UNKNOWN, _("Invalid certificate expiration period %i"), optarg);
 			    days_till_exp_warn = atoi (optarg);
 			}
 			check_cert = TRUE;
@@ -601,7 +597,7 @@ process_arguments (int argc, char **argv)
 #ifdef HAVE_SSL
 			flags |= FLAG_SSL;
 #else
-			die (STATE_UNKNOWN, _("Invalid option - SSL is not available"));
+			print_singleline_exit (STATE_UNKNOWN, _("Invalid option - SSL is not available"));
 #endif
 			break;
 		case 'A':
@@ -615,9 +611,9 @@ process_arguments (int argc, char **argv)
 		server_address = strdup (argv[c++]);
 
 	if (server_address == NULL)
-		usage4 (_("You must provide a server address"));
+		print_singleline_exit (STATE_UNKNOWN, _("You must provide a server address"));
 	else if (server_address[0] != '/' && is_host (server_address) == FALSE)
-		die (STATE_CRITICAL, "%s %s - %s: %s\n", SERVICE, state_text(STATE_CRITICAL), _("Invalid hostname, address or socket"), server_address);
+		print_singleline_exit (STATE_CRITICAL, _("Invalid hostname, address or socket: %s"), server_address);
 
 	return TRUE;
 }
