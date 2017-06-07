@@ -1,10 +1,10 @@
 /*****************************************************************************
 * 
-* Nagios check_nt plugin
+* Monitoring check_nt plugin
 * 
 * License: GPL
 * Copyright (c) 2000-2002 Yves Rubin (rubiyz@yahoo.com)
-* Copyright (c) 2003-2007 Nagios Plugins Development Team
+* Copyright (c) 2003-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -34,7 +34,7 @@
 
 const char *progname = "check_nt";
 const char *copyright = "2000-2007";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "netutils.h"
@@ -197,19 +197,40 @@ int main(int argc, char **argv){
 
 	case CHECK_UPTIME:
 
-		xasprintf(&send_buffer, "%s&3", req_password);
-		fetch_data (server_address, server_port, send_buffer);
-		uptime=strtoul(recv_buffer,NULL,10);
-		updays = uptime / 86400;
-		uphours = (uptime % 86400) / 3600;
-		upminutes = ((uptime % 86400) % 3600) / 60;
-		xasprintf(&output_message,_("System Uptime - %u day(s) %u hour(s) %u minute(s)"),updays,uphours, upminutes);
-		if (check_critical_value==TRUE && uptime <= critical_value)
-			return_code=STATE_CRITICAL;
-		else if (check_warning_value==TRUE && uptime <= warning_value)
-			return_code=STATE_WARNING;
-		else
-			return_code=STATE_OK;
+		if (value_list == NULL) {
+			value_list = "minutes";
+		}
+		if (strncmp(value_list, "seconds", strlen("seconds") + 1 ) &&
+			strncmp(value_list, "minutes", strlen("minutes") + 1) &&
+			strncmp(value_list, "hours", strlen("hours") + 1) &&
+			strncmp(value_list, "days", strlen("days") + 1)) {
+
+			output_message = strdup (_("wrong -l argument"));
+		} else {
+			xasprintf(&send_buffer, "%s&3", req_password);
+			fetch_data (server_address, server_port, send_buffer);
+			uptime=strtoul(recv_buffer,NULL,10);
+			updays = uptime / 86400;
+			uphours = (uptime % 86400) / 3600;
+			upminutes = ((uptime % 86400) % 3600) / 60;
+
+			if (!strncmp(value_list, "minutes", strlen("minutes")))
+				uptime = uptime / 60;
+			else if (!strncmp(value_list, "hours", strlen("hours")))
+				uptime = uptime / 3600;
+			else if (!strncmp(value_list, "days", strlen("days")))
+				uptime = uptime / 86400;
+			/* else uptime in seconds, nothing to do */
+
+			xasprintf(&output_message,_("System Uptime - %u day(s) %u hour(s) %u minute(s) |uptime=%lu"),updays, uphours, upminutes, uptime);
+
+			if (check_critical_value==TRUE && uptime <= critical_value)
+				return_code=STATE_CRITICAL;
+			else if (check_warning_value==TRUE && uptime <= warning_value)
+				return_code=STATE_WARNING;
+			else
+				return_code=STATE_OK;
+		}
 		break;
 
 	case CHECK_USEDDISKSPACE:
@@ -293,10 +314,10 @@ int main(int argc, char **argv){
 
 		/* Divisor should be 1048567, not 3044515, as we are measuring "Commit Charge" here,
 		which equals RAM + Pagefiles. */
-		xasprintf(&output_message,_("Memory usage: total:%.2f Mb - used: %.2f Mb (%.0f%%) - free: %.2f Mb (%.0f%%)"),
+		xasprintf(&output_message,_("Memory usage: total:%.2f MB - used: %.2f MB (%.0f%%) - free: %.2f MB (%.0f%%)"),
 		  mem_commitLimit / 1048567, mem_commitByte / 1048567, percent_used_space,
 		  (mem_commitLimit - mem_commitByte) / 1048567, (mem_commitLimit - mem_commitByte) / mem_commitLimit * 100);
-		xasprintf(&perfdata,_("'Memory usage'=%.2fMb;%.2f;%.2f;0.00;%.2f"), mem_commitByte / 1048567,
+		xasprintf(&perfdata,_("'Memory usage'=%.2fMB;%.2f;%.2f;0.00;%.2f"), mem_commitByte / 1048567,
 		  warning_used_space / 1048567, critical_used_space / 1048567, mem_commitLimit / 1048567);
 
 		return_code=STATE_OK;
@@ -532,10 +553,10 @@ int process_arguments(int argc, char **argv){
 			usage5 ();
 			case 'h': /* help */
 				print_help();
-				exit(STATE_OK);
+				exit(STATE_UNKNOWN);
 			case 'V': /* version */
 				print_revision(progname, NP_VERSION);
-				exit(STATE_OK);
+				exit(STATE_UNKNOWN);
 			case 'H': /* hostname */
 				server_address = optarg;
 				break;
@@ -713,7 +734,9 @@ void print_help(void)
 	printf ("  %s\n", "ie: -l 60,90,95,120,90,95");
 	printf (" %s\n", "UPTIME =");
 	printf ("  %s\n", _("Get the uptime of the machine."));
-	printf ("  %s\n", _("No specific parameters. No warning or critical threshold"));
+	printf ("  %s\n", _("-l <unit> "));
+	printf ("  %s\n", _("<unit> = seconds, minutes, hours, or days. (default: minutes)"));
+	printf ("  %s\n", _("Thresholds will use the unit specified above."));
 	printf (" %s\n", "USEDDISKSPACE =");
 	printf ("  %s\n", _("Size and percentage of disk use."));
 	printf ("  %s\n", _("Request a -l parameter containing the drive letter only."));
@@ -750,7 +773,7 @@ void print_help(void)
 	printf ("  %s\n", _("The purpose of this is to be run from command line to determine what instances"));
 	printf ("  %s\n", _(" are available for monitoring without having to log onto the Windows server"));
 	printf ("  %s\n", _("  to run Perfmon directly."));
-	printf ("  %s\n", _("It can also be used in scripts that automatically create Nagios service"));
+	printf ("  %s\n", _("It can also be used in scripts that automatically create the monitoring service"));
 	printf ("  %s\n", _(" configuration files."));
 	printf ("  %s\n", _("Some examples:"));
 	printf ("  %s\n\n", _("check_nt -H 192.168.1.1 -p 1248 -v INSTANCES -l Process"));

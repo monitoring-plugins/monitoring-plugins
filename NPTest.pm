@@ -1,12 +1,12 @@
 package NPTest;
 
 #
-# Helper Functions for testing Nagios Plugins
+# Helper Functions for testing Monitoring Plugins
 #
 
 require Exporter;
 @ISA       = qw(Exporter);
-@EXPORT    = qw(getTestParameter checkCmd skipMissingCmd);
+@EXPORT    = qw(getTestParameter checkCmd skipMissingCmd skipMsg);
 @EXPORT_OK = qw(DetermineTestHarnessDirectory TestsFrom SetCacheFilename);
 
 use strict;
@@ -25,21 +25,21 @@ $VERSION = "1556."; # must be all one line, for MakeMaker
 
 =head1 NAME
 
-NPTest - Simplify the testing of Nagios Plugins
+NPTest - Simplify the testing of Monitoring Plugins
 
 =head1 DESCRIPTION
 
 This modules provides convenience functions to assist in the testing
-of Nagios Plugins, making the testing code easier to read and write;
+of Monitoring Plugins, making the testing code easier to read and write;
 hopefully encouraging the development of a more complete test suite for
-the Nagios Plugins. It is based on the patterns of testing seen in the
+the Monitoring Plugins. It is based on the patterns of testing seen in the
 1.4.0 release, and continues to use the L<Test> module as the basis of
 testing.
 
 =head1 FUNCTIONS
 
-This module defines three public functions, C<getTestParameter(...)>,
-C<checkCmd(...)> and C<skipMissingCmd(...)>.  These are exported by
+This module defines four public functions, C<getTestParameter(...)>,
+C<checkCmd(...)>, C<skipMissingCmd(...)> and C<skipMsg(...)>.  These are exported by
 default via the C<use NPTest;> statement.
 
 =over
@@ -92,7 +92,7 @@ Testing of results would be done in your test script, not in this module.
 This function is obsolete. Use C<testCmd()> instead.
 
 This function attempts to encompass the majority of test styles used
-in testing Nagios Plugins. As each plug-in is a separate command, the
+in testing Monitoring Plugins. As each plug-in is a separate command, the
 typical tests we wish to perform are against the exit status of the
 command and the output (if any) it generated. Simplifying these tests
 into a single function call, makes the test harness easier to read and
@@ -132,7 +132,7 @@ of either C<Test::ok(...)> or C<Test::skip(...)>, so remember this
 when counting the number of tests to place in the C<Test::plan(...)>
 call.
 
-Many Nagios Plugins test network services, some of which may not be
+Many Monitoring Plugins test network services, some of which may not be
 present on all systems. To cater for this, C<checkCmd(...)> allows the
 tester to define exceptions based on the command's exit status. These
 exceptions are provided to skip tests if the test case developer
@@ -185,6 +185,15 @@ of times.
 
 =back
 
+=item C<skipMsg(...)>
+
+If for any reason the test harness must C<Test::skip()> some
+or all of the tests in a given test harness this function provides a
+simple iterator to issue an appropriate message the requested number
+of times.
+
+=back
+
 =head1 SEE ALSO
 
 L<Test>
@@ -199,7 +208,7 @@ Copyright (c) 2005 Peter Bray.  All rights reserved.
 
 This package is free software and is provided "as is" without express
 or implied warranty.  It may be used, redistributed and/or modified
-under the same terms as the Nagios Plugins release.
+under the same terms as the Monitoring Plugins release.
 
 =cut
 
@@ -304,6 +313,20 @@ sub skipMissingCmd
   return $testStatus;
 }
 
+sub skipMsg
+{
+  my( $msg, $count ) = @_;
+
+  my $testStatus;
+
+  for ( 1 .. $count )
+  {
+    $testStatus += skip( $msg, 1 );
+  }
+
+  return $testStatus;
+}
+
 sub getTestParameter
 {
   my( $param, $envvar, $default, $brief, $scoped );
@@ -347,7 +370,7 @@ sub getTestParameter
   }
 
   # Set "none" if no terminal attached (eg, tinderbox build servers when new variables set)
-  return "" unless (-t STDERR);
+  return "" unless (-t STDIN);
 
   my $userResponse = "";
 
@@ -438,7 +461,7 @@ sub LoadCache
 
     chomp($fileContents);
     my( $contentsRef ) = eval $fileContents;
-    %CACHE = %{$contentsRef};
+    %CACHE = %{$contentsRef} if (defined($contentsRef));
 
   }
 
@@ -494,26 +517,35 @@ sub SetCacheFilename
 
 sub DetermineTestHarnessDirectory
 {
-  my( $userSupplied ) = @_;
+  my( @userSupplied ) = @_;
+  my @dirs;
 
   # User Supplied
-  if ( defined( $userSupplied ) && $userSupplied )
+  if ( @userSupplied > 0 )
   {
-    if ( -d $userSupplied )
+    for my $u ( @userSupplied )
     {
-      return $userSupplied;
-    }
-    else
-    {
-      return undef; # userSupplied is invalid -> FAIL
+      if ( -d $u )
+      {
+        push ( @dirs, $u );
+      }
     }
   }
 
-  # Simple Case : "t" is a subdirectory of the current directory
+  # Simple Cases: "t" and tests are subdirectories of the current directory
   if ( -d "./t" )
   {
-    return "./t";
+    push ( @dirs, "./t");
   }
+  if ( -d "./tests" )
+  {
+    push ( @dirs, "./tests");
+  }
+
+	if ( @dirs > 0 )
+	{
+		return @dirs;
+	}
 
   # To be honest I don't understand which case satisfies the
   # original code in test.pl : when $tstdir == `pwd` w.r.t.
@@ -526,7 +558,7 @@ sub DetermineTestHarnessDirectory
 
   if ( $pwd =~ m|/t$| )
   {
-    return $pwd;
+    push ( @dirs, $pwd );
 
     # The alternate that might work better is
     # chdir( ".." );
@@ -535,7 +567,7 @@ sub DetermineTestHarnessDirectory
     # to be tested is in the current directory (ie "./check_disk ....")
   }
 
-  return undef;
+  return @dirs;
 }
 
 sub TestsFrom
@@ -618,12 +650,13 @@ sub only_output {
 }
 
 sub testCmd {
-	my $class = shift;
+	my $class   = shift;
 	my $command = shift or die "No command passed to testCmd";
+	my $timeout = shift || 120;
 	my $object = $class->new;
 
 	local $SIG{'ALRM'} = sub { die("timeout in command: $command"); };
-	alarm(120); # no test should take longer than 120 seconds
+	alarm($timeout); # no test should take longer than 120 seconds
 
 	my $output = `$command`;
 	$object->return_code($? >> 8);

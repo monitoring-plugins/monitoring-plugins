@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_disk plugin
+* Monitoring check_disk plugin
 * 
 * License: GPL
-* Copyright (c) 1999-2008 Nagios Plugins Development Team
+* Copyright (c) 1999-2008 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -29,7 +29,7 @@
 const char *progname = "check_disk";
 const char *program_name = "check_disk";  /* Required for coreutils libs */
 const char *copyright = "1999-2008";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 
 #include "common.h"
@@ -52,9 +52,11 @@ const char *email = "devel@nagios-plugins.org";
 #endif
 #include "regex.h"
 
-
-/* If nonzero, show inode information. */
-static int inode_format = 1;
+#ifdef __CYGWIN__
+# include <windows.h>
+# undef ERROR
+# define ERROR -1
+#endif
 
 /* If nonzero, show even filesystems with zero size or
    uninteresting types. */
@@ -166,14 +168,19 @@ main (int argc, char **argv)
   char *details;
   char *perf;
   char *preamble;
+  char *flag_header;
   double inode_space_pct;
   double warning_high_tide;
   double critical_high_tide;
   int temp_result;
 
   struct mount_entry *me;
-  struct fs_usage fsp, tmpfsp;
+  struct fs_usage fsp;
   struct parameter_list *temp_list, *path;
+
+#ifdef __CYGWIN__
+  char mountdir[32];
+#endif
 
   preamble = strdup (" - free space:");
   output = strdup ("");
@@ -221,7 +228,6 @@ main (int argc, char **argv)
 
   /* Process for every path in list */
   for (path = path_select_list; path; path=path->name_next) {
-
     if (verbose >= 3 && path->freespace_percent->warning != NULL && path->freespace_percent->critical != NULL)
       printf("Thresholds(pct) for %s warn: %f crit %f\n",path->name, path->freespace_percent->warning->end,
                                                          path->freespace_percent->critical->end);
@@ -234,6 +240,13 @@ main (int argc, char **argv)
 
     me = path->best_match;
 
+#ifdef __CYGWIN__
+    if (strncmp(path->name, "/cygdrive/", 10) != 0 || strlen(path->name) > 11)
+	    continue;
+    snprintf(mountdir, sizeof(mountdir), "%s:\\", me->me_mountdir + 10);
+    if (GetDriveType(mountdir) != DRIVE_FIXED)
+	    me->me_remote = 1;
+#endif
     /* Filters */
 
     /* Remove filesystems already seen */
@@ -338,18 +351,23 @@ main (int argc, char **argv)
       if (disk_result==STATE_OK && erronly && !verbose)
         continue;
 
-      xasprintf (&output, "%s %s %.0f %s (%.0f%%",
-                output,
+      if(disk_result && verbose >= 1) {
+	xasprintf(&flag_header, " %s [", state_text (disk_result));
+      } else {
+	xasprintf(&flag_header, "");
+      }
+      xasprintf (&output, "%s%s %s %.0f %s (%.0f%%",
+		output, flag_header,
                 (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
                 path->dfree_units,
                 units,
                 path->dfree_pct);
       if (path->dused_inodes_percent < 0) {
-        xasprintf(&output, "%s inode=-);", output);
+	xasprintf(&output, "%s inode=-)%s;", output, (disk_result ? "]" : ""));
       } else {
-        xasprintf(&output, "%s inode=%.0f%%);", output, path->dfree_inodes_percent );
+	xasprintf(&output, "%s inode=%.0f%%)%s;", output, path->dfree_inodes_percent, ((disk_result && verbose >= 1) ? "]" : ""));
       }
-
+      free(flag_header);
       /* TODO: Need to do a similar debug line
       xasprintf (&details, _("%s\n\
 %.0f of %.0f %s (%.0f%% inode=%.0f%%) free on %s (type %s mounted on %s) warn:%lu crit:%lu warn%%:%.0f%% crit%%:%.0f%%"),
@@ -402,9 +420,7 @@ process_arguments (int argc, char **argv)
   int c, err;
   struct parameter_list *se;
   struct parameter_list *temp_list = NULL, *previous = NULL;
-  struct parameter_list *temp_path_select_list = NULL;
-  struct mount_entry *me, *temp_me;
-  int result = OK;
+  struct mount_entry *me;
   regex_t re;
   int cflags = REG_NOSUB | REG_EXTENDED;
   int default_cflags = cflags;
@@ -741,10 +757,10 @@ process_arguments (int argc, char **argv)
       break;
     case 'V':                 /* version */
       print_revision (progname, NP_VERSION);
-      exit (STATE_OK);
+      exit (STATE_UNKNOWN);
     case 'h':                 /* help */
       print_help ();
-      exit (STATE_OK);
+      exit (STATE_UNKNOWN);
     case '?':                 /* help */
       usage (_("Unknown argument"));
     }
@@ -877,7 +893,7 @@ print_help (void)
   printf (" %s\n", "-K, --icritical=PERCENT%");
   printf ("    %s\n", _("Exit with CRITICAL status if less than PERCENT of inode space is free"));
   printf (" %s\n", "-p, --path=PATH, --partition=PARTITION");
-  printf ("    %s\n", _("Path or partition (may be repeated)"));
+  printf ("    %s\n", _("Mount point or block device as emitted by the mount(8) command (may be repeated)"));
   printf (" %s\n", "-x, --exclude_device=PATH <STRING>");
   printf ("    %s\n", _("Ignore device (only works if -p unspecified)"));
   printf (" %s\n", "-C, --clear");
@@ -911,7 +927,7 @@ print_help (void)
   printf ("    %s\n", _("Regular expression to ignore selected path/partition (case insensitive) (may be repeated)"));
   printf (" %s\n", "-i, --ignore-ereg-path=PATH, --ignore-ereg-partition=PARTITION");
   printf ("    %s\n", _("Regular expression to ignore selected path or partition (may be repeated)"));
-  printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+  printf (UT_PLUG_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
   printf (" %s\n", "-u, --units=STRING");
   printf ("    %s\n", _("Choose bytes, kB, MB, GB, TB (default: MB)"));
   printf (UT_VERBOSE);
@@ -970,6 +986,10 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
   } else {
     /* find all group members */
     for (p_list = path_select_list; p_list; p_list=p_list->name_next) {
+#ifdef __CYGWIN__
+      if (strncmp(p_list->name, "/cygdrive/", 10) != 0)
+        continue;
+#endif
       if (p_list->group && ! (strcmp(p_list->group, p->group))) {
         stat_path(p_list);
         get_fs_usage (p_list->best_match->me_mountdir, p_list->best_match->me_devname, &tmpfsp);

@@ -1,10 +1,10 @@
 /*****************************************************************************
 * 
-* Nagios plugins net utilities include file
+* Monitoring Plugins net utilities include file
 * 
 * License: GPL
 * Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
-* Copyright (c) 2003-2007 Nagios Plugins Development Team
+* Copyright (c) 2003-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -40,10 +40,14 @@
 #ifdef HAVE_SYS_UN_H
 # include <sys/un.h>
 # ifndef UNIX_PATH_MAX
-   /* linux uses this, on sun it's hard-coded at 108 without a define */
-#  define UNIX_PATH_MAX 108
+   /* linux uses this, on sun it's hard-coded at 108 without a define, on BSD at 104 */
+#  define UNIX_PATH_MAX 104
 # endif /* UNIX_PATH_MAX */
 #endif /* HAVE_SYS_UN_H */
+
+#ifndef HOST_MAX_BYTES
+# define HOST_MAX_BYTES 255
+#endif
 
 /* process_request and wrapper macros */
 #define process_tcp_request(addr, port, sbuf, rbuf, rsize) \
@@ -71,8 +75,9 @@ int send_request (int sd, int proto, const char *send_buffer, char *recv_buffer,
 /* "is_*" wrapper macros and functions */
 int is_host (const char *);
 int is_addr (const char *);
-int resolve_host_or_addr (const char *, int);
+int dns_lookup (const char *, struct sockaddr_storage *, int);
 void host_or_die(const char *str);
+#define resolve_host_or_addr(addr, family) dns_lookup(addr, NULL, family)
 #define is_inet_addr(addr) resolve_host_or_addr(addr, AF_INET)
 #ifdef USE_IPV6
 #  define is_inet6_addr(addr) resolve_host_or_addr(addr, AF_INET6)
@@ -91,6 +96,16 @@ RETSIGTYPE socket_timeout_alarm_handler (int) __attribute__((noreturn));
 
 /* SSL-Related functionality */
 #ifdef HAVE_SSL
+#  define MP_SSLv2 1
+#  define MP_SSLv3 2
+#  define MP_TLSv1 3
+#  define MP_TLSv1_1 4
+#  define MP_TLSv1_2 5
+#  define MP_SSLv2_OR_NEWER 6
+#  define MP_SSLv3_OR_NEWER 7
+#  define MP_TLSv1_OR_NEWER 8
+#  define MP_TLSv1_1_OR_NEWER 9
+#  define MP_TLSv1_2_OR_NEWER 10
 /* maybe this could be merged with the above np_net_connect, via some flags */
 int np_net_ssl_init(int sd);
 int np_net_ssl_init_with_hostname(int sd, char *host_name);

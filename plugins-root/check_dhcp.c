@@ -1,10 +1,10 @@
 /*****************************************************************************
 * 
-* Nagios check_dhcp plugin
+* Monitoring check_dhcp plugin
 * 
 * License: GPL
 * Copyright (c) 2001-2004 Ethan Galstad (nagios@nagios.org)
-* Copyright (c) 2001-2007 Nagios Plugin Development Team
+* Copyright (c) 2001-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -35,7 +35,7 @@
 
 const char *progname = "check_dhcp";
 const char *copyright = "2001-2007";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "netutils.h"
@@ -229,7 +229,7 @@ struct in_addr requested_address;
 
 int process_arguments(int, char **);
 int call_getopt(int, char **);
-int validate_arguments(void);
+int validate_arguments(int, int);
 void print_usage(void);
 void print_help(void);
 
@@ -269,9 +269,6 @@ int main(int argc, char **argv){
 	if(process_arguments(argc,argv)!=OK){
 		usage4 (_("Could not parse arguments"));
 		}
-
-	/* this plugin almost certainly needs root permissions. */
-	np_warn_if_not_root();
 
 	/* create socket for DHCP communications */
 	dhcp_socket=create_dhcp_socket();
@@ -466,10 +463,9 @@ int send_dhcp_discover(int sock){
 	discover_packet.hlen=ETHERNET_HARDWARE_ADDRESS_LENGTH;
 
 	/*
-	 * transaction ID is supposed to be random.  We won't use the address so
-	 * we don't care about high entropy here.  time(2) is good enough.
+	 * transaction ID is supposed to be random.
 	 */
-	srand(time(NULL));
+	srand(time(NULL)^getpid());
 	packet_xid=random();
 	discover_packet.xid=htonl(packet_xid);
 
@@ -695,17 +691,11 @@ int receive_dhcp_packet(void *buffer, int buffer_size, int sock, int timeout, st
                 }
 
         else{
-
-		/* why do we need to peek first?  i don't know, its a hack.  without it, the source address of the first packet received was
-		   not being interpreted correctly.  sigh... */
 		bzero(&source_address,sizeof(source_address));
 		address_size=sizeof(source_address);
-                recv_result=recvfrom(sock,(char *)buffer,buffer_size,MSG_PEEK,(struct sockaddr *)&source_address,&address_size);
-		if(verbose)
-			printf("recv_result_1: %d\n",recv_result);
                 recv_result=recvfrom(sock,(char *)buffer,buffer_size,0,(struct sockaddr *)&source_address,&address_size);
 		if(verbose)
-			printf("recv_result_2: %d\n",recv_result);
+			printf("recv_result: %d\n",recv_result);
 
                 if(recv_result==-1){
 			if(verbose){
@@ -837,7 +827,7 @@ int add_dhcp_offer(struct in_addr source,dhcp_packet *offer_packet){
 		return ERROR;
 
 	/* process all DHCP options present in the packet */
-	for(x=4;x<MAX_DHCP_OPTIONS_LENGTH;){
+	for(x=4;x<MAX_DHCP_OPTIONS_LENGTH-1;){
 
 		if((int)offer_packet->options[x]==-1)
 			break;
@@ -1062,29 +1052,19 @@ int get_results(void){
 
 /* process command-line arguments */
 int process_arguments(int argc, char **argv){
-	int c;
+	int arg_index;
 
 	if(argc<1)
 		return ERROR;
 
-	c=0;
-	while((c+=(call_getopt(argc-c,&argv[c])))<argc){
-
-		/*
-		if(is_option(argv[c]))
-			continue;
-		*/
-		}
-
-	return validate_arguments();
+	arg_index = call_getopt(argc,argv);
+	return validate_arguments(argc,arg_index);
         }
 
 
 
 int call_getopt(int argc, char **argv){
-	int c=0;
-	int i=0;
-
+	extern int optind;
 	int option_index = 0;
 	static struct option long_options[] =
 	{
@@ -1101,23 +1081,12 @@ int call_getopt(int argc, char **argv){
 	};
 
 	while(1){
-		c=getopt_long(argc,argv,"+hVvt:s:r:t:i:m:u",long_options,&option_index);
+		int c=0;
 
-		i++;
+		c=getopt_long(argc,argv,"+hVvt:s:r:t:i:m:u",long_options,&option_index);
 
 		if(c==-1||c==EOF||c==1)
 			break;
-
-		switch(c){
-		case 'w':
-		case 'r':
-		case 't':
-		case 'i':
-			i++;
-			break;
-		default:
-			break;
-		        }
 
 		switch(c){
 
@@ -1166,11 +1135,11 @@ int call_getopt(int argc, char **argv){
 
 		case 'V': /* version */
 			print_revision(progname, NP_VERSION);
-			exit(STATE_OK);
+			exit(STATE_UNKNOWN);
 
 		case 'h': /* help */
 			print_help();
-			exit(STATE_OK);
+			exit(STATE_UNKNOWN);
 
 		case 'v': /* verbose */
 			verbose=1;
@@ -1184,12 +1153,14 @@ int call_getopt(int argc, char **argv){
 			break;
 		        }
 	        }
-
-	return i;
+	return optind;
         }
 
 
-int validate_arguments(void){
+int validate_arguments(int argc, int arg_index){
+
+	if(argc-optind > 0)
+		usage(_("Got unexpected non-option argument"));
 
 	return OK;
         }

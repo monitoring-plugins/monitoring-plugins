@@ -21,6 +21,7 @@
 
 #include "tap.h"
 
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -29,31 +30,32 @@
 int
 main (int argc, char **argv)
 {
+	char state_path[1024];
 	range	*range;
 	double	temp;
 	thresholds *thresholds = NULL;
-	int	rc;
+	int	i, rc;
 	char	*temp_string;
 	state_key *temp_state_key = NULL;
 	state_data *temp_state_data;
 	time_t	current_time;
 
-	plan_tests(150);
+	plan_tests(185);
 
-	ok( this_nagios_plugin==NULL, "nagios_plugin not initialised");
+	ok( this_monitoring_plugin==NULL, "monitoring_plugin not initialised");
 
 	np_init( "check_test", argc, argv );
 
-	ok( this_nagios_plugin!=NULL, "nagios_plugin now initialised");
-	ok( !strcmp(this_nagios_plugin->plugin_name, "check_test"), "plugin name initialised" );
+	ok( this_monitoring_plugin!=NULL, "monitoring_plugin now initialised");
+	ok( !strcmp(this_monitoring_plugin->plugin_name, "check_test"), "plugin name initialised" );
 
-	ok( this_nagios_plugin->argc==argc, "Argc set" );
-	ok( this_nagios_plugin->argv==argv, "Argv set" );
+	ok( this_monitoring_plugin->argc==argc, "Argc set" );
+	ok( this_monitoring_plugin->argv==argv, "Argv set" );
 
 	np_set_args(0,0);
 
-	ok( this_nagios_plugin->argc==0, "argc changed" );
-	ok( this_nagios_plugin->argv==0, "argv changed" );
+	ok( this_monitoring_plugin->argc==0, "argc changed" );
+	ok( this_monitoring_plugin->argv==0, "argv changed" );
 
 	np_set_args(argc, argv);
 
@@ -182,6 +184,21 @@ main (int argc, char **argv)
 	ok( get_status(30.0001, thresholds) == STATE_WARNING, "30.0001 - warning");
 	ok( get_status(69, thresholds) == STATE_CRITICAL, "69 - critical");
 
+	rc = _set_thresholds(&thresholds, "-10:-2", "-30:20");
+	ok( rc == 0, "Thresholds ('-30:20', '-10:-2') set");
+	ok( thresholds->warning->start == -10, "Warning start set correctly");
+	ok( thresholds->warning->end == -2, "Warning end set correctly");
+	ok( thresholds->critical->start == -30, "Critical start set correctly");
+	ok( thresholds->critical->end == 20, "Critical end set correctly");
+	ok( get_status(-31, thresholds) == STATE_CRITICAL, "-31 - critical");
+	ok( get_status(-29, thresholds) == STATE_WARNING, "-29 - warning");
+	ok( get_status(-11, thresholds) == STATE_WARNING, "-11 - warning");
+	ok( get_status(-10, thresholds) == STATE_OK, "-10 - ok");
+	ok( get_status(-2, thresholds) == STATE_OK, "-2 - ok");
+	ok( get_status(-1, thresholds) == STATE_WARNING, "-1 - warning");
+	ok( get_status(19, thresholds) == STATE_WARNING, "19 - warning");
+	ok( get_status(21, thresholds) == STATE_CRITICAL, "21 - critical");
+
 	char *test;
 	test = np_escaped_string("bob\\n");
 	ok( strcmp(test, "bob\n") == 0, "bob\\n ok");
@@ -296,23 +313,23 @@ main (int argc, char **argv)
         diag( "You are probably running in wrong directory. Must run as ./test_utils" );
 
 
-	this_nagios_plugin->argc=4;
-	this_nagios_plugin->argv[0] = "./test_utils";
-	this_nagios_plugin->argv[1] = "here";
-	this_nagios_plugin->argv[2] = "--and";
-	this_nagios_plugin->argv[3] = "now";
+	this_monitoring_plugin->argc=4;
+	this_monitoring_plugin->argv[0] = "./test_utils";
+	this_monitoring_plugin->argv[1] = "here";
+	this_monitoring_plugin->argv[2] = "--and";
+	this_monitoring_plugin->argv[3] = "now";
 	temp_string = (char *) _np_state_generate_key();
 	ok(!strcmp(temp_string, "94b5e17bf5abf51cb15aff5f69b96f2f8dac5ecd"), "Got based on expected argv" );
 
-	unsetenv("NAGIOS_PLUGIN_STATE_DIRECTORY");
+	unsetenv("MP_STATE_PATH");
 	temp_string = (char *) _np_state_calculate_location_prefix();
 	ok(!strcmp(temp_string, NP_STATE_DIR_PREFIX), "Got default directory" );
 
-	setenv("NAGIOS_PLUGIN_STATE_DIRECTORY", "", 1);
+	setenv("MP_STATE_PATH", "", 1);
 	temp_string = (char *) _np_state_calculate_location_prefix();
 	ok(!strcmp(temp_string, NP_STATE_DIR_PREFIX), "Got default directory even with empty string" );
 
-	setenv("NAGIOS_PLUGIN_STATE_DIRECTORY", "/usr/local/nagios/var", 1);
+	setenv("MP_STATE_PATH", "/usr/local/nagios/var", 1);
 	temp_string = (char *) _np_state_calculate_location_prefix();
 	ok(!strcmp(temp_string, "/usr/local/nagios/var"), "Got default directory" );
 
@@ -320,36 +337,38 @@ main (int argc, char **argv)
 
 	ok(temp_state_key==NULL, "temp_state_key initially empty");
 
-	this_nagios_plugin->argc=1;
-	this_nagios_plugin->argv[0] = "./test_utils";
+	this_monitoring_plugin->argc=1;
+	this_monitoring_plugin->argv[0] = "./test_utils";
 	np_enable_state(NULL, 51);
-	temp_state_key = this_nagios_plugin->state;
+	temp_state_key = this_monitoring_plugin->state;
 	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
 	ok( !strcmp(temp_state_key->name, "83d877b6cdfefb5d6f06101fd6fe76762f21792c"), "Got generated filename" );
 
 
 	np_enable_state("allowedchars_in_keyname", 77);
-	temp_state_key = this_nagios_plugin->state;
+	temp_state_key = this_monitoring_plugin->state;
+	sprintf(state_path, "/usr/local/nagios/var/%lu/check_test/allowedchars_in_keyname", (unsigned long)geteuid());
 	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
 	ok( !strcmp(temp_state_key->name, "allowedchars_in_keyname"), "Got key name with valid chars" );
-	ok( !strcmp(temp_state_key->_filename, "/usr/local/nagios/var/check_test/allowedchars_in_keyname"), "Got internal filename" );
+	ok( !strcmp(temp_state_key->_filename, state_path), "Got internal filename" );
 
 
 	/* Don't do this test just yet. Will die */
 	/*
 	np_enable_state("bad^chars$in@here", 77);
-	temp_state_key = this_nagios_plugin->state;
+	temp_state_key = this_monitoring_plugin->state;
 	ok( !strcmp(temp_state_key->name, "bad_chars_in_here"), "Got key name with bad chars replaced" );
 	*/
 
 	np_enable_state("funnykeyname", 54);
-	temp_state_key = this_nagios_plugin->state;
+	temp_state_key = this_monitoring_plugin->state;
+	sprintf(state_path, "/usr/local/nagios/var/%lu/check_test/funnykeyname", (unsigned long)geteuid());
 	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
 	ok( !strcmp(temp_state_key->name, "funnykeyname"), "Got key name" );
 
 
 
-	ok( !strcmp(temp_state_key->_filename, "/usr/local/nagios/var/check_test/funnykeyname"), "Got internal filename" );
+	ok( !strcmp(temp_state_key->_filename, state_path), "Got internal filename" );
 	ok( temp_state_key->data_version==54, "Version set" );
 
 	temp_state_data = np_state_read();
@@ -367,9 +386,9 @@ main (int argc, char **argv)
 	
 	temp_state_key->_filename="var/statefile";
 	temp_state_data = np_state_read();
-	ok( this_nagios_plugin->state->state_data!=NULL, "Got state data now" ) || diag("Are you running in right directory? Will get coredump next if not");
-	ok( this_nagios_plugin->state->state_data->time==1234567890, "Got time" );
-	ok( !strcmp((char *)this_nagios_plugin->state->state_data->data, "String to read"), "Data as expected" );
+	ok( this_monitoring_plugin->state->state_data!=NULL, "Got state data now" ) || diag("Are you running in right directory? Will get coredump next if not");
+	ok( this_monitoring_plugin->state->state_data->time==1234567890, "Got time" );
+	ok( !strcmp((char *)this_monitoring_plugin->state->state_data->data, "String to read"), "Data as expected" );
 
 	temp_state_key->data_version=53;
 	temp_state_data = np_state_read();
@@ -379,7 +398,7 @@ main (int argc, char **argv)
 	temp_state_key->_filename="var/nonexistant";
 	temp_state_data = np_state_read();
 	ok( temp_state_data==NULL, "Missing file gives NULL" );
-	ok( this_nagios_plugin->state->state_data==NULL, "No state information" );
+	ok( this_monitoring_plugin->state->state_data==NULL, "No state information" );
 
 	temp_state_key->_filename="var/oldformat";
 	temp_state_data = np_state_read();
@@ -426,7 +445,7 @@ main (int argc, char **argv)
 	temp_state_data = np_state_read();
 	/* Check time is set to current_time */
 	ok(system("cmp var/generated var/statefile > /dev/null")!=0, "Generated file should be different this time");
-	ok(this_nagios_plugin->state->state_data->time-current_time<=1, "Has time generated from current time");
+	ok(this_monitoring_plugin->state->state_data->time-current_time<=1, "Has time generated from current time");
 	
 
 	/* Don't know how to automatically test this. Need to be able to redefine die and catch the error */
@@ -438,7 +457,54 @@ main (int argc, char **argv)
 
 	np_cleanup();
 
-	ok( this_nagios_plugin==NULL, "Free'd this_nagios_plugin" );
+	ok(this_monitoring_plugin==NULL, "Free'd this_monitoring_plugin");
+
+	ok(mp_suid() == FALSE, "Test aren't suid");
+
+	/* base states with random case */
+	char *states[] = {
+		"Ok",
+		"wArnINg",
+		"cRiTIcaL",
+		"UnKNoWN",
+		NULL
+	};
+
+	for (i=0; states[i]!=NULL; i++) {
+		/* out of the random case states, create the lower and upper versions + numeric string one */
+		char *statelower = strdup(states[i]);
+		char *stateupper = strdup(states[i]);
+		char statenum[2];
+		char *temp_ptr;
+		for (temp_ptr = statelower; *temp_ptr; temp_ptr++) {
+			*temp_ptr = tolower(*temp_ptr);
+		}
+		for (temp_ptr = stateupper; *temp_ptr; temp_ptr++) {
+			*temp_ptr = toupper(*temp_ptr);
+		}
+		snprintf(statenum, 2, "%i", i);
+
+		/* Base test names, we'll append the state string */
+		char testname[64] = "Translate state string: ";
+		int tlen = strlen(testname);
+
+		strcpy(testname+tlen, states[i]);
+		ok(i==mp_translate_state(states[i]), testname);
+
+		strcpy(testname+tlen, statelower);
+		ok(i==mp_translate_state(statelower), testname);
+
+		strcpy(testname+tlen, stateupper);
+		ok(i==mp_translate_state(stateupper), testname);
+
+		strcpy(testname+tlen, statenum);
+		ok(i==mp_translate_state(statenum), testname);
+	}
+	ok(ERROR==mp_translate_state("warningfewgw"), "Translate state string with garbage");
+	ok(ERROR==mp_translate_state("00"), "Translate state string: bad numeric string 1");
+	ok(ERROR==mp_translate_state("01"), "Translate state string: bad numeric string 2");
+	ok(ERROR==mp_translate_state("10"), "Translate state string: bad numeric string 3");
+	ok(ERROR==mp_translate_state(""), "Translate state string: empty string");
 
 	return exit_status();
 }

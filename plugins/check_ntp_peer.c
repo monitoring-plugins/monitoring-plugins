@@ -1,10 +1,10 @@
 /*****************************************************************************
 * 
-* Nagios check_ntp_peer plugin
+* Monitoring check_ntp_peer plugin
 * 
 * License: GPL
 * Copyright (c) 2006 Sean Finney <seanius@seanius.net>
-* Copyright (c) 2006-2008 Nagios Plugins Development Team
+* Copyright (c) 2006-2008 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -37,7 +37,7 @@
 
 const char *progname = "check_ntp_peer";
 const char *copyright = "2006-2008";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "netutils.h"
@@ -245,7 +245,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 		do {
 			/* Attempt to read the largest size packet possible */
 			req.count=htons(MAX_CM_SIZE);
-			DBG(printf("recieving READSTAT response"))
+			DBG(printf("receiving READSTAT response"))
 			if(read(conn, &req, SIZEOF_NTPCM(req)) == -1)
 				die(STATE_CRITICAL, "NTP CRITICAL: No response from NTP server\n");
 			DBG(print_ntp_control_message(&req));
@@ -448,11 +448,11 @@ int process_arguments(int argc, char **argv){
 		switch (c) {
 		case 'h':
 			print_help();
-			exit(STATE_OK);
+			exit(STATE_UNKNOWN);
 			break;
 		case 'V':
 			print_revision(progname, NP_VERSION);
-			exit(STATE_OK);
+			exit(STATE_UNKNOWN);
 			break;
 		case 'v':
 			verbose++;
@@ -560,7 +560,7 @@ char *perfd_truechimers (int num_truechimers)
 }
 
 int main(int argc, char *argv[]){
-	int result, offset_result, stratum, num_truechimers;
+	int result, offset_result, stratum, num_truechimers, oresult, jresult, sresult, tresult;
 	double offset=0, jitter=0;
 	char *result_line, *perfdata_line;
 
@@ -597,15 +597,22 @@ int main(int argc, char *argv[]){
 			result = STATE_UNKNOWN;
 		result = max_state_alt(result, get_status(fabs(offset), offset_thresholds));
 	}
+	oresult = result;
+	
+	if(do_truechimers) {
+		tresult = get_status(num_truechimers, truechimer_thresholds);
+		result = max_state_alt(result, tresult);
+	}
 
-	if(do_truechimers)
-		result = max_state_alt(result, get_status(num_truechimers, truechimer_thresholds));
+	if(do_stratum) {
+		sresult = get_status(stratum, stratum_thresholds);
+		result = max_state_alt(result, sresult);
+	}
 
-	if(do_stratum)
-		result = max_state_alt(result, get_status(stratum, stratum_thresholds));
-
-	if(do_jitter)
-		result = max_state_alt(result, get_status(jitter, jitter_thresholds));
+	if(do_jitter) {
+		jresult = get_status(jitter, jitter_thresholds);
+		result = max_state_alt(result, jresult);
+	}
 
 	switch (result) {
 		case STATE_CRITICAL :
@@ -629,20 +636,43 @@ int main(int argc, char *argv[]){
 	if(offset_result == STATE_UNKNOWN){
 		xasprintf(&result_line, "%s %s", result_line, _("Offset unknown"));
 		xasprintf(&perfdata_line, "");
+	} else if (oresult == STATE_WARNING) {
+		xasprintf(&result_line, "%s %s %.10g secs (WARNING)", result_line, _("Offset"), offset);
+	} else if (oresult == STATE_CRITICAL) {
+		xasprintf(&result_line, "%s %s %.10g secs (CRITICAL)", result_line, _("Offset"), offset);
 	} else {
 		xasprintf(&result_line, "%s %s %.10g secs", result_line, _("Offset"), offset);
-		xasprintf(&perfdata_line, "%s", perfd_offset(offset));
-	}
+	}	
+	xasprintf(&perfdata_line, "%s", perfd_offset(offset));
+	
 	if (do_jitter) {
-		xasprintf(&result_line, "%s, jitter=%f", result_line, jitter);
+		if (jresult == STATE_WARNING) {
+			xasprintf(&result_line, "%s, jitter=%f (WARNING)", result_line, jitter);
+		} else if (jresult == STATE_CRITICAL) {
+			xasprintf(&result_line, "%s, jitter=%f (CRITICAL)", result_line, jitter);
+		} else {
+			xasprintf(&result_line, "%s, jitter=%f", result_line, jitter);
+		}
 		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_jitter(jitter));
 	}
 	if (do_stratum) {
-		xasprintf(&result_line, "%s, stratum=%i", result_line, stratum);
+		if (sresult == STATE_WARNING) {
+			xasprintf(&result_line, "%s, stratum=%i (WARNING)", result_line, stratum);
+		} else if (sresult == STATE_CRITICAL) {
+			xasprintf(&result_line, "%s, stratum=%i (CRITICAL)", result_line, stratum);
+		} else {
+			xasprintf(&result_line, "%s, stratum=%i", result_line, stratum);
+		}
 		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_stratum(stratum));
 	}
 	if (do_truechimers) {
-		xasprintf(&result_line, "%s, truechimers=%i", result_line, num_truechimers);
+		if (tresult == STATE_WARNING) {
+			xasprintf(&result_line, "%s, truechimers=%i (WARNING)", result_line, num_truechimers);
+		} else if (tresult == STATE_CRITICAL) {
+			xasprintf(&result_line, "%s, truechimers=%i (CRITICAL)", result_line, num_truechimers);
+		} else {
+			xasprintf(&result_line, "%s, truechimers=%i", result_line, num_truechimers);
+		}
 		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_truechimers(num_truechimers));
 	}
 	printf("%s|%s\n", result_line, perfdata_line);
@@ -650,8 +680,6 @@ int main(int argc, char *argv[]){
 	if(server_address!=NULL) free(server_address);
 	return result;
 }
-
-
 
 void print_help(void){
 	print_revision(progname, NP_VERSION);
@@ -686,7 +714,7 @@ void print_help(void){
 	printf ("    %s\n", _("Warning threshold for number of usable time sources (\"truechimers\")"));
 	printf (" %s\n", "-n, --tcrit=THRESHOLD");
 	printf ("    %s\n", _("Critical threshold for number of usable time sources (\"truechimers\")"));
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf (UT_VERBOSE);
 
 	printf("\n");

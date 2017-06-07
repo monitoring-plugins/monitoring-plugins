@@ -1,9 +1,9 @@
-#!/usr/bin/perl -w
+#!@PERL@ -w
 #
 #
 # check_disk.pl <host> <share> <user> <pass> [warn] [critical] [port]
 #
-# Nagios host script to get the disk usage from a SMB share
+# Monitoring host script to get the disk usage from a SMB share
 #
 # Changes and Modifications
 # =========================
@@ -19,20 +19,24 @@
 #
 
 require 5.004;
-use POSIX;
+use POSIX qw(setsid);
 use strict;
 use Getopt::Long;
 use vars qw($opt_P $opt_V $opt_h $opt_H $opt_s $opt_W $opt_u $opt_p $opt_w $opt_c $opt_a $verbose);
 use vars qw($PROGNAME);
-use lib utils.pm ;
+use FindBin;
+use lib "$FindBin::Bin";
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
+
+# make us session leader which makes all childs exit if we do
+setsid;
 
 sub print_help ();
 sub print_usage ();
 
 $PROGNAME = "check_disk_smb";
 
-$ENV{'PATH'}='';
+$ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
 
@@ -53,10 +57,10 @@ GetOptions
 
 if ($opt_V) {
 	print_revision($PROGNAME,'@NP_VERSION@'); #'
-	exit $ERRORS{'OK'};
+	exit $ERRORS{'UNKNOWN'};
 }
 
-if ($opt_h) {print_help(); exit $ERRORS{'OK'};}
+if ($opt_h) {print_help(); exit $ERRORS{'UNKNOWN'};}
 
 my $smbclient = $utils::PATH_TO_SMBCLIENT;
 $smbclient    || usage("check requires smbclient, smbclient not set\n");
@@ -171,9 +175,11 @@ my $res = undef;
 my $perfdata = "";
 my @lines = undef;
 
-# Just in case of problems, let's not hang Nagios
+# Just in case of problems, let's not hang the monitoring system
 $SIG{'ALRM'} = sub { 
 	print "No Answer from Client\n";
+    $SIG{'INT'} = 'IGNORE';
+    kill(-2, $$);
 	exit $ERRORS{"UNKNOWN"};
 };
 alarm($TIMEOUT);
@@ -293,7 +299,7 @@ sub print_help () {
 	print_revision($PROGNAME,'@NP_VERSION@');
 	print "Copyright (c) 2000 Michael Anthon/Karl DeBisschop
 
-Perl Check SMB Disk plugin for Nagios
+Perl Check SMB Disk plugin for monitoring
 
 ";
 	print_usage();

@@ -1,10 +1,10 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2013 Nagios Plugins Development Team
+# Copyright (c) 2013 Monitoring Plugins Development Team
 #
 # Originally written by Holger Weiss <holger@zedat.fu-berlin.de>.
 #
-# This file is free software; the Nagios Plugins Development Team gives
+# This file is free software; the Monitoring Plugins Development Team gives
 # unlimited permission to copy and/or distribute it, with or without
 # modifications, as long as this notice is preserved.
 #
@@ -19,6 +19,7 @@ use Text::Wrap;
 
 # The lines will have a length of no more than $columns - 1.
 $Text::Wrap::columns = 81;
+$Text::Wrap::huge    = 'overflow';
 
 if (system('git rev-parse --git-dir >/dev/null 2>&1') != 0) {
 	print "Not a Git repository, so I won't update the ChangeLog.\n";
@@ -51,6 +52,7 @@ while ($git_log =~ /$regex/gm) {
 	$prev_date = $commit{date};
 	$prev_name = $commit{name};
 	$prev_email = $commit{email};
+	$commit{message} =~ s/\s*Signed\-off\-by.*$//sgmx;
 
 	my @files = split(/\n/, $commit{files});
 	my @message = map { s/^ {4}//; $_ } split(/\n/, $commit{message});

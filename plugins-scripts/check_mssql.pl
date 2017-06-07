@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!@PERL@ -w
 
 #
 # Copyright 2003 Roy Sigurd Karlsbakk
@@ -19,9 +19,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02111-1301, USA.
 #
-# Report bugs to: help@nagios-plugins.org
+# Report bugs to: help@monitoring-plugins.org
 # 
 #
 
@@ -29,11 +29,16 @@
 use DBI;
 use DBD::Sybase;
 use Getopt::Long;
-use lib ".";
+use FindBin;
+use lib "$FindBin::Bin";
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 use strict;
 
 my $PROGNAME = "check_mssql";
+
+$ENV{'PATH'}='@TRUSTED_PATH@';
+$ENV{'BASH_ENV'}=''; 
+$ENV{'ENV'}='';
 
 my (
 	$server,$database,$username,$password,$query,$help,$verbose,$timeout,
@@ -44,12 +49,12 @@ my $exitcode = $ERRORS{'OK'};
 
 process_arguments();
 
-# Just in case of problems, let's not hang Nagios
+# Just in case of problems, let's not hang the monitoring system
 $SIG{'ALRM'} = sub {
      print ("SQL UNKNOWN: ERROR connection $server (alarm timeout)\n");
      exit $ERRORS{"UNKNOWN"};
 };
-alarm($TIMEOUT);
+alarm($timeout);
 
 unless ($dbh = DBI->connect("dbi:Sybase:server=".uc($server), "$username", "$password")) {
 	printf "SQL CRITICAL: Can't connect to mssql server $DBI::errstr\n";
@@ -125,7 +130,7 @@ sub process_arguments {
 
 	if (defined $opt_V) {
 		print_revision($PROGNAME,'@NP_VERSION@');
-		exit $ERRORS{'OK'};
+		exit $ERRORS{'UNKNOWN'};
 	}
 
 	syntax("Help:") if ($help);

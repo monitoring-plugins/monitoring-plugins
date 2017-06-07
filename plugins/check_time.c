@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_time plugin
+* Monitoring check_time plugin
 * 
 * License: GPL
-* Copyright (c) 1999-2007 Nagios Plugins Development Team
+* Copyright (c) 1999-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -30,7 +30,7 @@
 
 const char *progname = "check_time";
 const char *copyright = "1999-2007";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "netutils.h"
@@ -231,10 +231,10 @@ process_arguments (int argc, char **argv)
 			usage5 ();
 		case 'h':									/* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'H':									/* hostname */
 			if (is_host (optarg) == FALSE)
 				usage2 (_("Invalid hostname/address"), optarg);
@@ -358,7 +358,7 @@ print_help (void)
   printf (" %s\n", "-C, --critical-connect=INTEGER");
   printf ("   %s\n", _("Response time (sec.) necessary to result in critical status"));
 
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 	printf (UT_SUPPORT);
 }

@@ -28,7 +28,7 @@
 # other built files.
 
 
-# This macro should be invoked from ./configure.in, in the section
+# This macro should be invoked from ./configure.ac, in the section
 # "Checks for programs", right after AC_PROG_CC, and certainly before
 # any checks for libraries, header files, types and library functions.
 AC_DEFUN([gl_EARLY],
@@ -70,6 +70,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module gettext-h:
   # Code from module havelib:
   # Code from module hostent:
+  # Code from module idpriv-droptemp:
   # Code from module include_next:
   # Code from module inet_ntop:
   # Code from module intprops:
@@ -119,10 +120,14 @@ AC_DEFUN([gl_EARLY],
   # Code from module stdint:
   # Code from module stdio:
   # Code from module stdlib:
+  # Code from module strcase:
+  # Code from module strcasestr:
+  # Code from module strcasestr-simple:
   # Code from module streq:
   # Code from module strerror:
   # Code from module strerror-override:
   # Code from module string:
+  # Code from module strings:
   # Code from module strndup:
   # Code from module strnlen:
   # Code from module strsep:
@@ -151,7 +156,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module xstrndup:
 ])
 
-# This macro should be invoked from ./configure.in, in the section
+# This macro should be invoked from ./configure.ac, in the section
 # "Check for header files, types and library functions".
 AC_DEFUN([gl_INIT],
 [
@@ -256,6 +261,7 @@ AC_DEFUN([gl_INIT],
   AC_SUBST([LIBINTL])
   AC_SUBST([LTLIBINTL])
   gl_HOSTENT
+  gl_IDPRIV
   gl_FUNC_INET_NTOP
   if test $HAVE_INET_NTOP = 0 || test $REPLACE_INET_NTOP = 1; then
     AC_LIBOBJ([inet_ntop])
@@ -377,6 +383,26 @@ AC_DEFUN([gl_INIT],
   gl_STDINT_H
   gl_STDIO_H
   gl_STDLIB_H
+  gl_STRCASE
+  if test $HAVE_STRCASECMP = 0; then
+    AC_LIBOBJ([strcasecmp])
+    gl_PREREQ_STRCASECMP
+  fi
+  if test $HAVE_STRNCASECMP = 0; then
+    AC_LIBOBJ([strncasecmp])
+    gl_PREREQ_STRNCASECMP
+  fi
+  gl_FUNC_STRCASESTR
+  if test $HAVE_STRCASESTR = 0 || test $REPLACE_STRCASESTR = 1; then
+    AC_LIBOBJ([strcasestr])
+    gl_PREREQ_STRCASESTR
+  fi
+  gl_FUNC_STRCASESTR_SIMPLE
+  if test $HAVE_STRCASESTR = 0 || test $REPLACE_STRCASESTR = 1; then
+    AC_LIBOBJ([strcasestr])
+    gl_PREREQ_STRCASESTR
+  fi
+  gl_STRING_MODULE_INDICATOR([strcasestr])
   gl_FUNC_STRERROR
   if test $REPLACE_STRERROR = 1; then
     AC_LIBOBJ([strerror])
@@ -390,6 +416,7 @@ AC_DEFUN([gl_INIT],
     gl_PREREQ_SYS_H_WINSOCK2
   fi
   gl_HEADER_STRING_H
+  gl_HEADER_STRINGS_H
   gl_FUNC_STRNDUP
   if test $HAVE_STRNDUP = 0 || test $REPLACE_STRNDUP = 1; then
     AC_LIBOBJ([strndup])
@@ -646,6 +673,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/glthread/lock.c
   lib/glthread/lock.h
   lib/glthread/threadlib.c
+  lib/idpriv-droptemp.c
+  lib/idpriv.h
   lib/inet_ntop.c
   lib/intprops.h
   lib/itold.c
@@ -706,12 +735,16 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/stdio.in.h
   lib/stdlib.in.h
   lib/str-two-way.h
+  lib/strcasecmp.c
+  lib/strcasestr.c
   lib/streq.h
   lib/strerror-override.c
   lib/strerror-override.h
   lib/strerror.c
   lib/string.in.h
+  lib/strings.in.h
   lib/stripslash.c
+  lib/strncasecmp.c
   lib/strndup.c
   lib/strnlen.c
   lib/strsep.c
@@ -775,6 +808,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/gnulib-common.m4
   m4/hostent.m4
   m4/iconv.m4
+  m4/idpriv.m4
   m4/include_next.m4
   m4/inet_ntop.m4
   m4/intdiv0.m4
@@ -845,8 +879,11 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/stdint_h.m4
   m4/stdio_h.m4
   m4/stdlib_h.m4
+  m4/strcase.m4
+  m4/strcasestr.m4
   m4/strerror.m4
   m4/string_h.m4
+  m4/strings_h.m4
   m4/strndup.m4
   m4/strnlen.m4
   m4/strsep.m4

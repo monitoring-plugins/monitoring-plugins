@@ -27,15 +27,17 @@ my $hostname_invalid   = getTestParameter( "hostname_invalid",   "NP_HOSTNAME_IN
 
 my $t;
 
-if ( -x "./check_fping" )
-{
+my $fping = qx(which fping 2> /dev/null);
+chomp($fping);
+if( ! -x "./check_fping") {
+  $t += skipMissingCmd( "./check_fping", $tests );
+}
+elsif ( $> != 0 && (!$fping || ! -u $fping)) {
+  $t += skipMsg( "./check_fping", $tests );
+} else {
   $t += checkCmd( "./check_fping $host_responsive",    0,       $successOutput );
   $t += checkCmd( "./check_fping $host_nonresponsive", [ 1, 2 ] );
   $t += checkCmd( "./check_fping $hostname_invalid",   [ 1, 2 ] );
-}
-else
-{
-  $t += skipMissingCmd( "./check_fping", $tests );
 }
 
 exit(0) if defined($Test::Harness::VERSION);

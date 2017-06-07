@@ -10,7 +10,7 @@ use NPTest;
 
 BEGIN {
     plan skip_all => 'check_snmp is not compiled' unless -x "./check_snmp";
-    plan tests => 60;
+    plan tests => 63;
 }
 
 my $res;
@@ -26,6 +26,7 @@ my $host_nonresponsive = getTestParameter( "host_nonresponsive", "NP_HOST_NONRES
 
 my $hostname_invalid   = getTestParameter( "hostname_invalid",   "NP_HOSTNAME_INVALID",   "nosuchhost",
                                            "An invalid (not known to DNS) hostname" );
+my $user_snmp = getTestParameter( "user_snmp",    "NP_SNMP_USER",    "auth_md5", "An SNMP user");
 
 $res = NPTest->testCmd( "./check_snmp -t 1" );
 is( $res->return_code, 3, "No host name" );
@@ -35,7 +36,7 @@ $res = NPTest->testCmd( "./check_snmp -H fakehostname" );
 is( $res->return_code, 3, "No OIDs specified" );
 is( $res->output, "No OIDs specified" );
 
-$res = NPTest->testCmd( "./check_snmp -H fakehost -o oids -P 3 --seclevel=rubbish" );
+$res = NPTest->testCmd( "./check_snmp -H fakehost -o oids -P 3 -U not_a_user --seclevel=rubbish" );
 is( $res->return_code, 3, "Invalid seclevel" );
 like( $res->output, "/check_snmp: Invalid seclevel - rubbish/" );
 
@@ -44,7 +45,7 @@ is( $res->return_code, 3, "Invalid protocol" );
 like( $res->output, "/check_snmp: Invalid SNMP version - 3c/" );
 
 SKIP: {
-    skip "no snmp host defined", 38 if ( ! $host_snmp );
+    skip "no snmp host defined", 50 if ( ! $host_snmp );
 
     $res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o system.sysUpTime.0 -w 1: -c 1:");
     cmp_ok( $res->return_code, '==', 0, "Exit OK when querying uptime" );
@@ -152,6 +153,16 @@ SKIP: {
     $res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o system.sysUpTime.0");
     cmp_ok( $res->return_code, '==', 0, "Timetick used as a string");
     like($res->output, '/^SNMP OK - Timeticks:\s\(\d+\)\s+(?:\d+ days?,\s+)?\d+:\d+:\d+\.\d+\s.*$/', "Timetick used as a string, result printed rather than parsed");
+
+    $res = NPTest->testCmd( "./check_snmp -H $host_snmp -C $snmp_community -o HOST-RESOURCES-MIB::hrSWRunName.1");
+    cmp_ok( $res->return_code, '==', 0, "snmp response without datatype");
+    like( $res->output, '/^SNMP OK - "(systemd|init)" \| $/', "snmp response without datatype" );
+}
+
+SKIP: {
+    skip "no SNMP user defined", 1 if ( ! $user_snmp );
+    $res = NPTest->testCmd( "./check_snmp -H $host_snmp -o HOST-RESOURCES-MIB::hrSystemUptime.0 -P 3 -U $user_snmp -L noAuthNoPriv");
+    like( $res->output, '/^SNMP OK - Timeticks:\s\(\d+\)\s+(?:\d+ days?,\s+)?\d+:\d+:\d+\.\d+\s.*$/', "noAuthNoPriv security level works properly" );
 }
 
 # These checks need a complete command line. An invalid community is used so
@@ -159,8 +170,8 @@ SKIP: {
 SKIP: {
     skip "no non responsive host defined", 2 if ( ! $host_nonresponsive );
     $res = NPTest->testCmd( "./check_snmp -H $host_nonresponsive -C np_foobar -o system.sysUpTime.0 -w 1: -c 1:");
-    cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN with non responsive host" );
-    like($res->output, '/External command error: Timeout: No Response from /', "String matches timeout problem");
+    cmp_ok( $res->return_code, '==', 2, "Exit CRITICAL with non responsive host" );
+    like($res->output, '/Plugin timed out while executing system call/', "String matches timeout problem");
 }
 
 SKIP: {

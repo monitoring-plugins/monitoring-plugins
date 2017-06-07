@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_users plugin
+* Monitoring check_users plugin
 * 
 * License: GPL
-* Copyright (c) 2000-2012 Nagios Plugins Development Team
+* Copyright (c) 2000-2012 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -32,12 +32,17 @@
 
 const char *progname = "check_users";
 const char *copyright = "2000-2007";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
 
-#if HAVE_UTMPX_H
+#if HAVE_WTSAPI32_H
+# include <windows.h>
+# include <wtsapi32.h>
+# undef ERROR
+# define ERROR -1
+#elif HAVE_UTMPX_H
 # include <utmpx.h>
 #else
 # include "popen.h"
@@ -49,16 +54,20 @@ int process_arguments (int, char **);
 void print_help (void);
 void print_usage (void);
 
-int wusers = -1;
-int cusers = -1;
+char *warning_range = NULL;
+char *critical_range = NULL;
+thresholds *thlds = NULL;
 
 int
 main (int argc, char **argv)
 {
 	int users = -1;
 	int result = STATE_UNKNOWN;
-	char *perf;
-#if HAVE_UTMPX_H
+#if HAVE_WTSAPI32_H
+	WTS_SESSION_INFO *wtsinfo;
+	DWORD wtscount;
+	DWORD index;
+#elif HAVE_UTMPX_H
 	struct utmpx *putmpx;
 #else
 	char input_buffer[MAX_INPUT_BUFFER];
@@ -68,8 +77,6 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
-	perf = strdup ("");
-
 	/* Parse extra opts if any */
 	argv = np_extra_opts (&argc, argv, progname);
 
@@ -78,7 +85,36 @@ main (int argc, char **argv)
 
 	users = 0;
 
-#if HAVE_UTMPX_H
+#if HAVE_WTSAPI32_H
+	if (!WTSEnumerateSessions(WTS_CURRENT_SERVER_HANDLE,
+	  0, 1, &wtsinfo, &wtscount)) {
+		printf(_("Could not enumerate RD sessions: %d\n"), GetLastError());
+		return STATE_UNKNOWN;
+	}
+
+	for (index = 0; index < wtscount; index++) {
+		LPTSTR username;
+		DWORD size;
+		int len;
+
+		if (!WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE,
+		  wtsinfo[index].SessionId, WTSUserName, &username, &size))
+			continue;
+
+		len = lstrlen(username);
+
+		WTSFreeMemory(username);
+
+		if (len == 0)
+			continue;
+
+		if (wtsinfo[index].State == WTSActive ||
+		  wtsinfo[index].State == WTSDisconnected)
+			users++;
+	}
+
+	WTSFreeMemory(wtsinfo);
+#elif HAVE_UTMPX_H
 	/* get currently logged users from utmpx */
 	setutxent ();
 
@@ -122,23 +158,15 @@ main (int argc, char **argv)
 #endif
 
 	/* check the user count against warning and critical thresholds */
-	if (users > cusers)
-		result = STATE_CRITICAL;
-	else if (users > wusers)
-		result = STATE_WARNING;
-	else if (users >= 0)
-		result = STATE_OK;
+	result = get_status((double)users, thlds);
 
 	if (result == STATE_UNKNOWN)
 		printf ("%s\n", _("Unable to read output"));
 	else {
-		xasprintf (&perf, "%s", perfdata ("users", users, "",
-		  TRUE, wusers,
-		  TRUE, cusers,
-		  TRUE, 0,
-		  FALSE, 0));
-		printf (_("USERS %s - %d users currently logged in |%s\n"), state_text (result),
-		  users, perf);
+		printf (_("USERS %s - %d users currently logged in |%s\n"), 
+				state_text(result), users,
+				sperfdata_int("users", users, "", warning_range,
+							critical_range, TRUE, 0, FALSE, 0));
 	}
 
 	return result;
@@ -172,38 +200,32 @@ process_arguments (int argc, char **argv)
 			usage5 ();
 		case 'h':									/* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'c':									/* critical */
-			if (!is_intnonneg (optarg))
-				usage4 (_("Critical threshold must be a positive integer"));
-			else
-				cusers = atoi (optarg);
+			critical_range = optarg;
 			break;
 		case 'w':									/* warning */
-			if (!is_intnonneg (optarg))
-				usage4 (_("Warning threshold must be a positive integer"));
-			else
-				wusers = atoi (optarg);
+			warning_range = optarg;
 			break;
 		}
 	}
 
 	c = optind;
-	if (wusers == -1 && argc > c) {
-		if (is_intnonneg (argv[c]) == FALSE)
-			usage4 (_("Warning threshold must be a positive integer"));
-		else
-			wusers = atoi (argv[c++]);
-	}
-	if (cusers == -1 && argc > c) {
-		if (is_intnonneg (argv[c]) == FALSE)
-			usage4 (_("Warning threshold must be a positive integer"));
-		else
-			cusers = atoi (argv[c]);
-	}
+	if (warning_range == NULL && argc > c)
+		warning_range = argv[c++];
+	if (critical_range == NULL && argc > c)
+		critical_range = argv[c++];
+
+	/* this will abort in case of invalid ranges */
+	set_thresholds (&thlds, warning_range, critical_range);
+
+	if (thlds->warning->end < 0)
+		usage4 (_("Warning threshold must be a positive integer"));
+	if (thlds->critical->end < 0)
+		usage4 (_("Critical threshold must be a positive integer"));
 
 	return OK;
 }

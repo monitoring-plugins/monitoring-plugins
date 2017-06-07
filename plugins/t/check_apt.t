@@ -23,7 +23,7 @@ sub make_result_regexp {
 }
 
 if (-x "./check_apt") {
-	plan tests => 28;
+	plan tests => 36;
 } else {
 	plan skip_all => "No check_apt compiled";
 }
@@ -40,7 +40,15 @@ $result = NPTest->testCmd( sprintf($testfile_command, "", "debian2") );
 is( $result->return_code, 1, "Debian apt output, warning" );
 like( $result->output, make_result_regexp(13, 0), "Output correct" );
 
+$result = NPTest->testCmd( sprintf($testfile_command, "-o", "debian2") );
+is( $result->return_code, 0, "Debian apt output, no critical" );
+like( $result->output, make_result_regexp(13, 0), "Output correct" );
+
 $result = NPTest->testCmd( sprintf($testfile_command, "", "debian3") );
+is( $result->return_code, 2, "Debian apt output, some critical" );
+like( $result->output, make_result_regexp(19, 4), "Output correct" );
+
+$result = NPTest->testCmd( sprintf($testfile_command, "-o", "debian3") );
 is( $result->return_code, 2, "Debian apt output, some critical" );
 like( $result->output, make_result_regexp(19, 4), "Output correct" );
 
@@ -50,6 +58,10 @@ like( $result->output, make_result_regexp(19, 4), "Output correct" );
 
 $result = NPTest->testCmd( sprintf($testfile_command, "-i libc6", "debian3") );
 is( $result->return_code, 1, "Debian apt output, filter for libc6" );
+like( $result->output, make_result_regexp(3, 0), "Output correct" );
+
+$result = NPTest->testCmd( sprintf($testfile_command, "-i libc6", "debian3") );
+is( $result->return_code, 1, "Debian apt output, filter for libc6, not critical" );
 like( $result->output, make_result_regexp(3, 0), "Output correct" );
 
 $result = NPTest->testCmd( sprintf($testfile_command, "-i libc6 -i xen", "debian3") );
@@ -62,6 +74,10 @@ like( $result->output, make_result_regexp(12, 4), "Output correct" );
 
 $result = NPTest->testCmd( sprintf($testfile_command, "-e libc6", "debian3") );
 is( $result->return_code, 2, "Debian apt output, filter out libc6" );
+like( $result->output, make_result_regexp(16, 4), "Output correct" );
+
+$result = NPTest->testCmd( sprintf($testfile_command, "-e libc6 -o", "debian3") );
+is( $result->return_code, 2, "Debian apt output, filter out libc6, critical" );
 like( $result->output, make_result_regexp(16, 4), "Output correct" );
 
 $result = NPTest->testCmd( sprintf($testfile_command, "-e libc6 -e xen", "debian3") );

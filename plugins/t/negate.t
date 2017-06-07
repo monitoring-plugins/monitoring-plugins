@@ -6,6 +6,7 @@
 
 use strict;
 use Test::More;
+use Cwd;
 use NPTest;
 
 # 15 tests in the first part, 9 in timeout tests and 2 * 32 in the last loops
@@ -13,7 +14,7 @@ plan tests => 88;
 
 my $res;
 
-my $PWD = $ENV{PWD};
+my $PWD = getcwd();
 
 $res = NPTest->testCmd( "./negate" );
 is( $res->return_code, 3, "Not enough parameters");
@@ -50,7 +51,7 @@ is( $res->output, "OK: a dummy okay", "The quoted string is passed through to su
 $res = NPTest->testCmd( "./negate '$PWD/check_dummy 0' 'a dummy okay'" );
 is( $res->output, "No data returned from command", "Bad command, as expected (trying to execute './check_dummy 0')");
 
-$res = NPTest->testCmd( './negate $PWD/check_dummy 0 \'$$ a dummy okay\'' );
+$res = NPTest->testCmd( './negate '.$PWD.'/check_dummy 0 \'$$ a dummy okay\'' );
 is( $res->output, 'OK: $$ a dummy okay', 'Proves that $$ is not being expanded again' );
 
 my %state = (
@@ -78,7 +79,7 @@ foreach my $current_state (keys(%state)) {
 	}
 }
 
-# Same as aboce with substitute
+# Same as above with substitute
 foreach my $current_state (keys(%state)) {
 	foreach my $new_state (keys(%state)) {
 		$res = NPTest->testCmd( "./negate -s --$current_state=$new_state ./check_dummy ".$state{$current_state}." 'Fake $new_state'" );

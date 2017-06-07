@@ -11,9 +11,10 @@ endif
 
 AM_CFLAGS = -DNP_VERSION='"$(NP_VERSION)"'
 
-VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t 
+VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t
 
-INCLUDES = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl @LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@
+AM_CPPFLAGS = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl \
+	@LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@
 
 localedir = $(datadir)/locale
 # gettext docs say to use AM_CPPFLAGS, but per module_CPPFLAGS override this
@@ -48,7 +49,7 @@ noinst_LIBRARIES = libnpcommon.a
 libnpcommon_a_SOURCES = utils.c netutils.c sslutils.c runcmd.c	\
 	popen.c utils.h netutils.h popen.h common.h runcmd.c runcmd.h
 
-BASEOBJS = libnpcommon.a ../lib/libnagiosplug.a ../gl/libgnu.a
+BASEOBJS = libnpcommon.a ../lib/libmonitoringplug.a ../gl/libgnu.a
 NETOBJS = $(BASEOBJS) $(EXTRA_NETOBLS)
 NETLIBS = $(NETOBJS) $(SOCKETLIBS)
 SSLOBJS = $(BASEOBJS) $(NETLIBS) $(SSLLIBS)
@@ -81,11 +82,11 @@ check_ldap_LDADD = $(NETLIBS) $(LDAPLIBS)
 check_load_LDADD = $(BASEOBJS)
 check_mrtg_LDADD = $(BASEOBJS)
 check_mrtgtraf_LDADD = $(BASEOBJS)
-check_mysql_CFLAGS = $(MYSQLCFLAGS) -DNP_VERSION='"$(NP_VERSION)"'
-check_mysql_CPPFLAGS = $(MYSQLINCLUDE)
+check_mysql_CFLAGS = $(AM_CFLAGS) $(MYSQLCFLAGS)
+check_mysql_CPPFLAGS = $(AM_CPPFLAGS) $(MYSQLINCLUDE)
 check_mysql_LDADD = $(NETLIBS) $(MYSQLLIBS)
-check_mysql_query_CFLAGS = $(MYSQLCFLAGS) -DNP_VERSION='"$(NP_VERSION)"'
-check_mysql_query_CPPFLAGS = $(MYSQLINCLUDE)
+check_mysql_query_CFLAGS = $(AM_CFLAGS) $(MYSQLCFLAGS)
+check_mysql_query_CPPFLAGS = $(AM_CPPFLAGS) $(MYSQLINCLUDE)
 check_mysql_query_LDADD = $(NETLIBS) $(MYSQLLIBS)
 check_nagios_LDADD = $(BASEOBJS)
 check_nt_LDADD = $(NETLIBS) 
@@ -106,7 +107,7 @@ check_tcp_LDADD = $(SSLOBJS)
 check_time_LDADD = $(NETLIBS)
 check_ntp_time_LDADD = $(NETLIBS) $(MATHLIBS)
 check_ups_LDADD = $(NETLIBS)
-check_users_LDADD = $(BASEOBJS)
+check_users_LDADD = $(BASEOBJS) $(WTSAPI32LIBS)
 check_by_ssh_LDADD = $(NETLIBS)
 check_ide_smart_LDADD = $(BASEOBJS)
 negate_LDADD = $(BASEOBJS)
@@ -129,11 +130,10 @@ install-exec-hook:
 	cd $(DESTDIR)$(libexecdir) && \
 	for i in $(check_tcp_programs) ; do rm -f $$i; ln -s check_tcp $$i ; done ;\
 	if [ -x check_ldap ] ; then rm -f check_ldaps ; ln -s check_ldap check_ldaps ; fi
-	
+
 clean-local:
 	rm -f $(check_tcp_programs)
 	rm -f NP-VERSION-FILE
 
 uninstall-local:
 	cd $(DESTDIR)$(libexecdir) && rm -f $(check_tcp_programs)
-

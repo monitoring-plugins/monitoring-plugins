@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_procs plugin
+* Monitoring check_procs plugin
 * 
 * License: GPL
-* Copyright (c) 2000-2008 Nagios Plugins Development Team
+* Copyright (c) 2000-2008 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -34,7 +34,7 @@
 const char *progname = "check_procs";
 const char *program_name = "check_procs";  /* Required for coreutils libs */
 const char *copyright = "2000-2008";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
@@ -123,6 +123,7 @@ main (int argc, char **argv)
 	char *procprog;
 
 	pid_t mypid = 0;
+	pid_t myppid = 0;
 	struct stat statbuf;
 	dev_t mydev = 0;
 	ino_t myino = 0;
@@ -172,6 +173,7 @@ main (int argc, char **argv)
 
 	/* find ourself */
 	mypid = getpid();
+	myppid = getppid();
 	if (usepid || stat_exe(mypid, &statbuf) == -1) {
 		/* usepid might have been set by -T */
 		usepid = 1;
@@ -239,6 +241,12 @@ main (int argc, char **argv)
 				 (ret == -1 && errno == ENOENT))) {
 				if (verbose >= 3)
 					 printf("not considering - is myself or gone\n");
+				continue;
+			}
+			/* Ignore parent*/
+			else if (myppid == procpid) {
+				if (verbose >= 3)
+					 printf("not considering - is parent\n");
 				continue;
 			}
 
@@ -420,10 +428,10 @@ process_arguments (int argc, char **argv)
 			usage5 ();
 		case 'h':									/* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 't':									/* timeout period */
 			if (!is_integer (optarg))
 				usage2 (_("Timeout interval must be a positive integer"), optarg);
@@ -707,7 +715,7 @@ print_help (void)
 #if defined( __linux__ )
 	printf ("  %s\n", _("ELAPSED - time elapsed in seconds"));
 #endif /* defined(__linux__) */
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_PLUG_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 	printf (" %s\n", "-v, --verbose");
   printf ("    %s\n", _("Extra information. Up to 3 verbosity levels"));

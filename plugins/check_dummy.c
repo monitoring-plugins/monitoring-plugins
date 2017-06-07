@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_dummy plugin
+* Monitoring check_dummy plugin
 * 
 * License: GPL
-* Copyright (c) 1999-2007 Nagios Plugins Development Team
+* Copyright (c) 1999-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -30,7 +30,7 @@
 
 const char *progname = "check_dummy";
 const char *copyright = "1999-2007";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
@@ -52,11 +52,11 @@ main (int argc, char **argv)
     usage4 (_("Could not parse arguments"));
   else if (strcmp (argv[1], "-V") == 0 || strcmp (argv[1], "--version") == 0) {
     print_revision (progname, NP_VERSION);
-    exit (STATE_OK);
+    exit (STATE_UNKNOWN);
   }
   else if (strcmp (argv[1], "-h") == 0 || strcmp (argv[1], "--help") == 0) {
     print_help ();
-    exit (STATE_OK);
+    exit (STATE_UNKNOWN);
   }
   else if (!is_integer (argv[1]))
     usage4 (_("Arguments to check_dummy must be an integer"));

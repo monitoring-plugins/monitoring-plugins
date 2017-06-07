@@ -34,11 +34,11 @@ my $nc;
 if(system("which nc.traditional >/dev/null 2>&1") == 0) {
 	$nc = 'nc.traditional -w 3 -l -u -p 3333';
 }
-elsif(system("which netcat >/dev/null 2>&1") == 0) {
-	$nc = 'netcat -w 3 -l -u -p 3333';
-}
 elsif(system("which nc >/dev/null 2>&1") == 0) {
 	$nc = 'nc -w 3 -l -u -4 localhost 3333';
+}
+elsif(system("which netcat >/dev/null 2>&1") == 0) {
+	$nc = 'netcat -w 3 -l -u -p 3333';
 }
 
 SKIP: {
@@ -62,7 +62,7 @@ SKIP: {
 	cmp_ok( $res->return_code, '==', '2', "Hung waiting for response");
 	like  ( $res->output, '/Socket timeout after 5 seconds/', "Timeout message");
 	like  ( $duration, '/^[56]$/', "Timeout after 5 (possibly 6) seconds");
-	my $read_nc = <NC>;
+	my $read_nc = <NC> || '';
 	close NC;
 	cmp_ok( $read_nc, 'eq', "foofoo", "Data received correctly" );
 }

@@ -1,14 +1,15 @@
-#!/usr/local/bin/perl -w
+#!@PERL@ -w
 #
-# check_ifstatus.pl - nagios plugin 
+# check_ifstatus.pl - monitoring plugin
 # 
 #
 # Copyright (C) 2000 Christoph Kron
-# Modified 5/2002 to conform to updated Nagios Plugin Guidelines (S. Ghosh)
+# Modified 5/2002 to conform to updated Monitoring Plugins Guidelines (S. Ghosh)
 #  Added -x option (4/2003)
 #  Added -u option (4/2003)
 #  Added -M option (10/2003)
 #  Added SNMPv3 support (10/2003)
+#  Added -n option (07/2014)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -22,17 +23,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 #
 #
-# Report bugs to: ck@zet.net, nagiosplug-help@lists.sf.net
+# Report bugs to: ck@zet.net, help@monitoring-plugins.org
 # 
 # 11.01.2000 Version 1.0
 #
 
 use POSIX;
 use strict;
-use lib utils.pm ;
+use FindBin;
+use lib "$FindBin::Bin";
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 
 use Net::SNMP;
@@ -46,6 +48,9 @@ sub usage ($);
 sub print_usage ();
 sub process_arguments ();
 
+$ENV{'PATH'}='@TRUSTED_PATH@';
+$ENV{'BASH_ENV'}=''; 
+$ENV{'ENV'}='';
 
 my $status;
 my %ifOperStatus =	('1','up',
@@ -90,8 +95,10 @@ my $ifXTable;
 my $opt_h ;
 my $opt_V ;
 my $opt_u;
+my $opt_n;
 my $opt_x ;
 my %excluded ;
+my %unused_names ;
 my @unused_ports ;
 my %session_opts;
 
@@ -99,7 +106,7 @@ my %session_opts;
 
 
 
-# Just in case of problems, let's not hang Nagios
+# Just in case of problems, let's not hang the monitoring system
 $SIG{'ALRM'} = sub {
      print ("ERROR: No snmp response from $hostname (alarm timeout)\n");
      exit $ERRORS{"UNKNOWN"};
@@ -112,7 +119,7 @@ $status = process_arguments();
 if ($status != 0)
 {
 	print_help() ;
-	exit $ERRORS{'OK'};
+	exit $ERRORS{'UNKNOWN'};
 }
 
 
@@ -166,27 +173,30 @@ alarm(0);
 foreach $key (keys %ifStatus) {
 
 	# skip unused interfaces
-	if (!defined($ifStatus{$key}{'notInUse'})) {
+	my $ifName = $ifStatus{$key}{$snmpIfDescr};
+
+	if (!defined($ifStatus{$key}{'notInUse'}) && !grep(/^${ifName}/, @unused_ports )) {
 		# check only if interface is administratively up
-    if ($ifStatus{$key}{$snmpIfAdminStatus} == 1 ) {
-    
-			# check only if interface type is not listed in %excluded
-			if (!defined $excluded{$ifStatus{$key}{$snmpIfType}} ) {
-				if ($ifStatus{$key}{$snmpIfOperStatus} == 1 ) { $ifup++ ;}
-				if ($ifStatus{$key}{$snmpIfOperStatus} == 2 ) {
-								$ifdown++ ;
-								if (defined $ifXTable) {
-									$ifmessage .= sprintf("%s: down -> %s<BR>",
-                                $ifStatus{$key}{$snmpIfName},
-																$ifStatus{$key}{$snmpIfAlias});
-								}else{
-									$ifmessage .= sprintf("%s: down <BR>",
-																$ifStatus{$key}{$snmpIfDescr});
-								}
+		if ($ifStatus{$key}{$snmpIfAdminStatus} == 1 ) {
+			#check only if interface is not excluded
+			if (!defined $unused_names{$ifStatus{$key}{$snmpIfDescr}} ) {
+				# check only if interface type is not listed in %excluded
+				if (!defined $excluded{$ifStatus{$key}{$snmpIfType}} ) {
+					if ($ifStatus{$key}{$snmpIfOperStatus} == 1 ) { $ifup++ ; }
+					if ($ifStatus{$key}{$snmpIfOperStatus} == 2 ) {
+									$ifdown++ ;
+									if (defined $ifXTable) {
+										$ifmessage .= sprintf("%s: down -> %s<BR>\n", $ifStatus{$key}{$snmpIfName}, $ifStatus{$key}{$snmpIfAlias});
+									}else{
+										$ifmessage .= sprintf("%s: down <BR>\n",$ifStatus{$key}{$snmpIfDescr});
+									}
+					}
+					if ($ifStatus{$key}{$snmpIfOperStatus} == 5 ) { $ifdormant++ ;}
+				} else {
+					$ifexclude++;
 				}
-				if ($ifStatus{$key}{$snmpIfOperStatus} == 5 ) { $ifdormant++ ;}
-			}else{
-				$ifexclude++;
+			} else {
+				$ifunused++;
 			}
 		
 		}
@@ -216,7 +226,7 @@ foreach $key (keys %ifStatus) {
 			$ifexclude,
 			$ifunused);
    }
-my $perfdata = sprintf("up=%d,down=%d,dormant=%d,excluded=%d,unused=%d",$ifup,$ifdown,$ifdormant,$ifexclude,$ifunused);
+my $perfdata = sprintf("up=%d down=%d dormant=%d excluded=%d unused=%d",$ifup,$ifdown,$ifdormant,$ifexclude,$ifunused);
 print ("$state: $answer |$perfdata\n");
 exit $ERRORS{$state};
 
@@ -239,7 +249,7 @@ sub print_usage() {
 sub print_help() {
 	print_revision($PROGNAME, '@NP_VERSION@');
 	print_usage();
-	printf "check_ifstatus plugin for Nagios monitors operational \n";
+	printf "check_ifstatus plugin for monitoring operational \n";
 	printf "status of each network interface on the target host\n";
 	printf "\nUsage:\n";
 	printf "   -H (--hostname)   Hostname to query - (required)\n";
@@ -254,6 +264,8 @@ sub print_help() {
 	printf "                     the descriptive name.  Do not use if you don't know what this is. \n";
 	printf "   -x (--exclude)    A comma separated list of ifType values that should be excluded \n";
 	printf "                     from the report (default for an empty list is PPP(23).\n";
+	printf "   -n (--unused_ports_by_name) A comma separated list of ifDescr values that should be excluded \n";
+	printf "                     from the report (default is an empty exclusion list).\n";
 	printf "   -u (--unused_ports) A comma separated list of ifIndex values that should be excluded \n";
 	printf "                     from the report (default is an empty exclusion list).\n";
 	printf "                     See the IANAifType-MIB for a list of interface types.\n";
@@ -268,7 +280,7 @@ sub print_help() {
 	printf "                     in hex with 0x prefix generated by using \"snmpkey\" utility\n"; 
 	printf "                     privacy password and authEngineID\n";
 	printf "   -P (--privproto)  privacy protocol (DES or AES; default: DES)\n";
-	printf "   -M (--maxmsgsize) Max message size - usefull only for v1 or v2c\n";
+	printf "   -M (--maxmsgsize) Max message size - useful only for v1 or v2c\n";
 	printf "   -t (--timeout)    seconds before the plugin times out (default=$TIMEOUT)\n";
 	printf "   -V (--version)    Plugin version\n";
 	printf "   -h (--help)       usage help \n\n";
@@ -294,23 +306,24 @@ sub process_arguments() {
 		"I"		=> \$ifXTable, "ifmib" => \$ifXTable,
 		"x:s"		=>	\$opt_x,   "exclude:s" => \$opt_x,
 		"u=s" => \$opt_u,  "unused_ports=s" => \$opt_u,
+		"n=s" => \$opt_n, "unused_ports_by_name=s" => \$opt_n,
 		"M=i" => \$maxmsgsize, "maxmsgsize=i" => \$maxmsgsize,
 		"t=i" => \$timeout,    "timeout=i" => \$timeout,
 		);
 		
 	if ($status == 0){
 		print_help();
-		exit $ERRORS{'OK'};
+		exit $ERRORS{'UNKNOWN'};
 	}
 
 	if ($opt_V) {
 		print_revision($PROGNAME,'@NP_VERSION@');
-		exit $ERRORS{'OK'};
+		exit $ERRORS{'UNKNOWN'};
 	}
 
 	if ($opt_h) {
 		print_help();
-		exit $ERRORS{'OK'};
+		exit $ERRORS{'UNKNOWN'};
 	}
 
 	unless (defined $timeout) {
@@ -401,6 +414,16 @@ sub process_arguments() {
 		}
 	}
 	
+	# Excluded interface descriptors
+	if (defined $opt_n) {
+		my @unused = split(/,/,$opt_n);
+		if ( @unused ) {
+			foreach $key (@unused) {
+				$unused_names{$key} = 1;
+			}
+		}
+	}
+
 	# Excluded interface ports (ifIndex) - management reasons
 	if ($opt_u) {
 		@unused_ports = split(/,/,$opt_u);

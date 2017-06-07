@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_overcr plugin
+* Monitoring check_overcr plugin
 * 
 * License: GPL
-* Copyright (c) 2000-2007 Nagios Plugins Development Team
+* Copyright (c) 2000-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -31,7 +31,7 @@
 
 const char *progname = "check_overcr";
 const char *copyright = "2000-2007";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "netutils.h"
@@ -340,10 +340,10 @@ process_arguments (int argc, char **argv)
 			usage5 ();
 		case 'h':									/* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'H':									/* hostname */
 			server_address = optarg;
 			break;
@@ -442,7 +442,7 @@ print_help (void)
   printf ("    %s\n", _("NET<port>     = number of active connections on TCP port <port>"));
   printf ("    %s\n", _("UPTIME        = system uptime in seconds"));
 
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
   printf (UT_VERBOSE);
 

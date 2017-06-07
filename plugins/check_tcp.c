@@ -1,9 +1,9 @@
 /*****************************************************************************
 *
-* Nagios check_tcp plugin
+* Monitoring check_tcp plugin
 *
 * License: GPL
-* Copyright (c) 1999-2013 Nagios Plugins Development Team
+* Copyright (c) 1999-2013 Monitoring Plugins Development Team
 *
 * Description:
 *
@@ -30,15 +30,14 @@
 /* progname "check_tcp" changes depending on symlink called */
 char *progname;
 const char *copyright = "1999-2008";
-const char *email = "devel@nagios-plugins.org";
-
-#include <ctype.h>
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
 #include "utils_tcp.h"
 
+#include <ctype.h>
 #include <sys/select.h>
 
 #ifdef HAVE_SSL
@@ -173,7 +172,7 @@ main (int argc, char **argv)
 	}
 	else if (!strncmp(SERVICE, "JABBER", 6)) {
 		SEND = "<stream:stream to=\'host\' xmlns=\'jabber:client\' xmlns:stream=\'http://etherx.jabber.org/streams\'>\n";
-		EXPECT = "<?xml version=\'1.0\'?><stream:stream xmlns=\'jabber:client\' xmlns:stream=\'http://etherx.jabber.org/streams\'";
+		EXPECT = "<?xml version=\'1.0\'";
 		QUIT = "</stream:stream>\n";
 		flags |= FLAG_HIDE_OUTPUT;
 		PORT = 5222;
@@ -238,7 +237,7 @@ main (int argc, char **argv)
 	gettimeofday (&tv, NULL);
 
 	result = np_net_connect (server_address, server_port, &sd, PROTOCOL);
-	if (result == STATE_CRITICAL) return STATE_CRITICAL;
+	if (result == STATE_CRITICAL) return econn_refuse_state;
 
 #ifdef HAVE_SSL
 	if (flags & FLAG_SSL){
@@ -248,8 +247,8 @@ main (int argc, char **argv)
 		}
 	}
 	if(result != STATE_OK){
-		np_net_ssl_cleanup();
 		if(sd) close(sd);
+		np_net_ssl_cleanup();
 		return result;
 	}
 #endif /* HAVE_SSL */
@@ -322,10 +321,10 @@ main (int argc, char **argv)
 	if (server_quit != NULL) {
 		my_send(server_quit, strlen(server_quit));
 	}
+	if (sd) close (sd);
 #ifdef HAVE_SSL
 	np_net_ssl_cleanup();
 #endif
-	if (sd) close (sd);
 
 	microsec = deltime (tv);
 	elapsed_time = (double)microsec / 1.0e6;
@@ -354,8 +353,13 @@ main (int argc, char **argv)
 			printf("Unexpected response from host/socket on ");
 		else
 			printf("%.3f second response time on ", elapsed_time);
-		if(server_address[0] != '/')
-			printf("port %d", server_port);
+		if(server_address[0] != '/') {
+			if (host_specified)
+				printf("%s port %d",
+				       server_address, server_port);
+			else
+				printf("port %d", server_port);
+		}
 		else
 			printf("socket %s", server_address);
 	}
@@ -459,10 +463,10 @@ process_arguments (int argc, char **argv)
 			usage5 ();
 		case 'h':                 /* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'V':                 /* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'v':                 /* verbose mode */
 			flags |= FLAG_VERBOSE;
 			match_flags |= NP_MATCH_VERBOSE;
@@ -573,7 +577,8 @@ process_arguments (int argc, char **argv)
 			if ((temp=strchr(optarg,','))!=NULL) {
 			    *temp='\0';
 			    if (!is_intnonneg (optarg))
-                               usage2 (_("Invalid certificate expiration period"), optarg);				 days_till_exp_warn = atoi(optarg);
+                               usage2 (_("Invalid certificate expiration period"), optarg);
+			    days_till_exp_warn = atoi (optarg);
 			    *temp=',';
 			    temp++;
 			    if (!is_intnonneg (temp))
@@ -639,7 +644,7 @@ print_help (void)
 	printf (UT_IPv46);
 
 	printf (" %s\n", "-E, --escape");
-  printf ("    %s\n", _("Can use \\n, \\r, \\t or \\ in send or quit string. Must come before send or quit option"));
+  printf ("    %s\n", _("Can use \\n, \\r, \\t or \\\\ in send or quit string. Must come before send or quit option"));
   printf ("    %s\n", _("Default: nothing added to send, \\r\\n added to end of quit"));
   printf (" %s\n", "-s, --send=STRING");
   printf ("    %s\n", _("String to send to the server"));
@@ -670,7 +675,7 @@ print_help (void)
 
 	printf (UT_WARN_CRIT);
 
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 	printf (UT_VERBOSE);
 

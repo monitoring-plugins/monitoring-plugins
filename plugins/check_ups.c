@@ -1,16 +1,16 @@
 /*****************************************************************************
 * 
-* Nagios check_ups plugin
+* Monitoring check_ups plugin
 * 
 * License: GPL
 * Copyright (c) 2000 Tom Shields
 *               2004 Alain Richard <alain.richard@equation.fr>
 *               2004 Arnaud Quette <arnaud.quette@mgeups.com>
-* Copyright (c) 2002-2007 Nagios Plugins Development Team
+* Copyright (c) 2002-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
-* This file contains Network UPS Tools plugin for Nagios
+* This file contains Network UPS Tools plugin for Monitoring
 * 
 * This plugin tests the UPS service on the specified host. Network UPS Tools
 * from www.networkupstools.org must be running for this plugin to work.
@@ -34,7 +34,7 @@
 
 const char *progname = "check_ups";
 const char *copyright = "2000-2007";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "netutils.h"
@@ -66,7 +66,7 @@ enum {
 #define UPSSTATUS_BOOST    512
 #define UPSSTATUS_CHRG    1024
 #define UPSSTATUS_DISCHRG 2048
-#define UPSSTATUS_UNKOWN  4096
+#define UPSSTATUS_UNKNOWN  4096
 
 enum { NOSUCHVAR = ERROR-1 };
 
@@ -181,7 +181,7 @@ main (int argc, char **argv)
 			if (status & UPSSTATUS_DISCHRG) {
 				xasprintf (&ups_status, "%s%s", ups_status, _(", Discharging"));
 			}
-			if (status & UPSSTATUS_UNKOWN) {
+			if (status & UPSSTATUS_UNKNOWN) {
 				xasprintf (&ups_status, "%s%s", ups_status, _(", Unknown"));
 			}
 		}
@@ -242,8 +242,8 @@ main (int argc, char **argv)
 			}
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("battery", (long)ups_battery_percent, "%",
-			                    check_warn, (long)(1000*warning_value),
-			                    check_crit, (long)(1000*critical_value),
+			                    check_warn, (long)(warning_value),
+			                    check_crit, (long)(critical_value),
 			                    TRUE, 0, TRUE, 100));
 		} else {
 			xasprintf (&data, "%s %s", data,
@@ -271,8 +271,8 @@ main (int argc, char **argv)
 			}
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("load", (long)ups_load_percent, "%",
-			                    check_warn, (long)(1000*warning_value),
-			                    check_crit, (long)(1000*critical_value),
+			                    check_warn, (long)(warning_value),
+			                    check_crit, (long)(critical_value),
 			                    TRUE, 0, TRUE, 100));
 		} else {
 			xasprintf (&data, "%s %s", data,
@@ -308,8 +308,8 @@ main (int argc, char **argv)
 			}
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("temp", (long)ups_temperature, tunits,
-			                    check_warn, (long)(1000*warning_value),
-			                    check_crit, (long)(1000*critical_value),
+			                    check_warn, (long)(warning_value),
+			                    check_crit, (long)(critical_value),
 			                    TRUE, 0, FALSE, 0));
 		} else {
 			xasprintf (&data, "%s %s", data,
@@ -379,7 +379,7 @@ determine_status (void)
 		else if (!strcmp (ptr, "DISCHRG"))
 			status |= UPSSTATUS_DISCHRG;
 		else
-			status |= UPSSTATUS_UNKOWN;
+			status |= UPSSTATUS_UNKNOWN;
 	}
 
 	return OK;
@@ -558,10 +558,10 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		}
 	}
 
@@ -625,7 +625,7 @@ print_help (void)
 
 	printf (UT_WARN_CRIT);
 
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 /* TODO: -v clashing with -v/-variable. Commenting out help text since verbose
          is unused up to now */

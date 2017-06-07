@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_nagios plugin
+* Monitoring check_nagios plugin
 * 
 * License: GPL
-* Copyright (c) 1999-2007 Nagios Plugins Development Team
+* Copyright (c) 1999-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -34,7 +34,7 @@
 
 const char *progname = "check_nagios";
 const char *copyright = "1999-2007";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "runcmd.h"
@@ -235,10 +235,10 @@ process_arguments (int argc, char **argv)
 		switch (c) {
 		case 'h':									/* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'F':									/* status log */
 			status_log = optarg;
 			break;

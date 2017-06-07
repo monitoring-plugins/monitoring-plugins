@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_mrtg plugin
+* Monitoring check_mrtg plugin
 * 
 * License: GPL
-* Copyright (c) 1999-2007 Nagios Plugins Development Team
+* Copyright (c) 1999-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -31,7 +31,7 @@
 
 const char *progname = "check_mrtg";
 const char *copyright = "1999-2007";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
@@ -234,10 +234,10 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case '?':									/* help */
 			usage5 ();
 		}
@@ -356,7 +356,7 @@ print_help (void)
 	printf (" %s\n", _("This plugin is useful for monitoring MRTG data that does not correspond to"));
   printf (" %s\n", _("bandwidth usage.  (Use the check_mrtgtraf plugin for monitoring bandwidth)."));
   printf (" %s\n", _("It can be used to monitor any kind of data that MRTG is monitoring - errors,"));
-  printf (" %s\n", _("packets/sec, etc.  I use MRTG in conjuction with the Novell NLM that allows"));
+  printf (" %s\n", _("packets/sec, etc.  I use MRTG in conjunction with the Novell NLM that allows"));
   printf (" %s\n", _("me to track processor utilization, user connections, drive space, etc and"));
   printf (" %s\n\n", _("this plugin works well for monitoring that kind of data as well."));
 

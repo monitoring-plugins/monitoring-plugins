@@ -1,6 +1,6 @@
 #ifndef _UTILS_BASE_
 #define _UTILS_BASE_
-/* Header file for nagios plugins utils_base.c */
+/* Header file for Monitoring Plugins utils_base.c */
 
 #include "sha1.h"
 
@@ -52,7 +52,7 @@ typedef struct np_struct {
 	state_key *state;
 	int       argc;
 	char      **argv;
-	} nagios_plugin;
+	} monitoring_plugin;
 
 range *parse_range_string (char *);
 int _set_thresholds(thresholds **, char *, char *);
@@ -75,9 +75,10 @@ void die (int, const char *, ...) __attribute__((noreturn,format(printf, 2, 3)))
 /* a simple check to see if we're running as root.  
  * returns zero on failure, nonzero on success */
 int np_check_if_root(void);
-/* and a helpful wrapper around that.  it returns the same status
- * code from the above function, in case it's helpful for testing */
-int np_warn_if_not_root(void);
+
+/* mp_suid() returns true if the real and effective uids differs, such as when
+ * running a suid plugin */
+#define mp_suid() (getuid() != geteuid())
 
 /*
  * Extract the value from key/value pairs, or return NULL. The value returned
@@ -93,6 +94,11 @@ char *np_extract_value(const char*, const char*, char);
  */
 #define np_extract_ntpvar(l, n) np_extract_value(l, n, ',')
 
+/*
+ * Read a string representing a state (ok, warning... or numeric: 0, 1) and
+ * return the corresponding NP_STATE or ERROR)
+ */
+int mp_translate_state (char *);
 
 void np_enable_state(char *, int);
 state_data *np_state_read();

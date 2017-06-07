@@ -1,10 +1,10 @@
 /*****************************************************************************
 * 
-* Nagios plugins common include file
+* Monitoring Plugins common include file
 * 
 * License: GPL
 * Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
-* Copyright (c) 2003-2007 Nagios Plugins Development Team
+* Copyright (c) 2003-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -158,6 +158,13 @@
 #      include <openssl/ssl.h>
 #      include <openssl/err.h>
 #    endif
+#  endif
+#endif
+
+/* openssl 1.1 does not set OPENSSL_NO_SSL2 by default but ships without ssl2 */
+#ifdef OPENSSL_VERSION_NUMBER
+#  if OPENSSL_VERSION_NUMBER >= 0x10100000
+#   define OPENSSL_NO_SSL2
 #  endif
 #endif
 

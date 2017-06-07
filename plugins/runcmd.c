@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios run command utilities
+* Monitoring run command utilities
 * 
 * License: GPL
-* Copyright (c) 2005-2006 Nagios Plugins Development Team
+* Copyright (c) 2005-2006 Monitoring Plugins Development Team
 * 
 * Description :
 * 
@@ -261,7 +261,7 @@ runcmd_timeout_alarm_handler (int signo)
 	size_t i;
 
 	if (signo == SIGALRM)
-		puts(_("CRITICAL - Plugin timed out while executing system call\n"));
+		puts(_("CRITICAL - Plugin timed out while executing system call"));
 
 	if(np_pids) for(i = 0; i < maxfd; i++) {
 		if(np_pids[i] != 0) kill(np_pids[i], SIGKILL);

@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_snmp plugin
+* Monitoring check_snmp plugin
 * 
 * License: GPL
-* Copyright (c) 1999-2007 Nagios Plugins Development Team
+* Copyright (c) 1999-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -30,7 +30,7 @@
 
 const char *progname = "check_snmp";
 const char *copyright = "1999-2007";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "runcmd.h"
@@ -41,7 +41,6 @@ const char *email = "devel@nagios-plugins.org";
 #define DEFAULT_PORT "161"
 #define DEFAULT_MIBLIST "ALL"
 #define DEFAULT_PROTOCOL "1"
-#define DEFAULT_TIMEOUT 1
 #define DEFAULT_RETRIES 5
 #define DEFAULT_AUTH_PROTOCOL "MD5"
 #define DEFAULT_PRIV_PROTOCOL "DES"
@@ -104,6 +103,8 @@ int errcode, excode;
 
 char *server_address = NULL;
 char *community = NULL;
+char **contextargs = NULL;
+char *context = NULL;
 char **authpriv = NULL;
 char *proto = NULL;
 char *seclevel = NULL;
@@ -128,6 +129,7 @@ size_t nunits = 0;
 size_t unitv_size = OID_COUNT_STEP;
 int numoids = 0;
 int numauthpriv = 0;
+int numcontext = 0;
 int verbose = 0;
 int usesnmpgetnext = FALSE;
 char *warning_thresholds = NULL;
@@ -150,7 +152,7 @@ state_data *previous_state;
 double *previous_value;
 size_t previous_size = OID_COUNT_STEP;
 int perf_labels = 1;
-
+char* ip_version = "";
 
 static char *fix_snmp_range(char *th)
 {
@@ -224,7 +226,7 @@ main (int argc, char **argv)
 	outbuff = strdup ("");
 	delimiter = strdup (" = ");
 	output_delim = strdup (DEFAULT_OUTPUT_DELIMITER);
-	timeout_interval = DEFAULT_TIMEOUT;
+	timeout_interval = DEFAULT_SOCKET_TIMEOUT;
 	retries = DEFAULT_RETRIES;
 
 	np_init( (char *) progname, argc, argv );
@@ -297,8 +299,8 @@ main (int argc, char **argv)
 		snmpcmd = strdup (PATH_TO_SNMPGET);
 	}
 
-	/* 10 arguments to pass before authpriv options + 1 for host and numoids. Add one for terminating NULL */
-	command_line = calloc (10 + numauthpriv + 1 + numoids + 1, sizeof (char *));
+	/* 10 arguments to pass before context and authpriv options + 1 for host and numoids. Add one for terminating NULL */
+	command_line = calloc (10 + numcontext + numauthpriv + 1 + numoids + 1, sizeof (char *));
 	command_line[0] = snmpcmd;
 	command_line[1] = strdup ("-Le");
 	command_line[2] = strdup ("-t");
@@ -310,23 +312,27 @@ main (int argc, char **argv)
 	command_line[8] = "-v";
 	command_line[9] = strdup (proto);
 
+	for (i = 0; i < numcontext; i++) {
+		command_line[10 + i] = contextargs[i];
+	}
+	
 	for (i = 0; i < numauthpriv; i++) {
-		command_line[10 + i] = authpriv[i];
+		command_line[10 + numcontext + i] = authpriv[i];
 	}
 
-	xasprintf (&command_line[10 + numauthpriv], "%s:%s", server_address, port);
+	xasprintf (&command_line[10 + numcontext + numauthpriv], "%s:%s", server_address, port);
 
 	/* This is just for display purposes, so it can remain a string */
-	xasprintf(&cl_hidden_auth, "%s -Le -t %d -r %d -m %s -v %s %s %s:%s",
-		snmpcmd, timeout_interval, retries, strlen(miblist) ? miblist : "''", proto, "[authpriv]",
+	xasprintf(&cl_hidden_auth, "%s -Le -t %d -r %d -m %s -v %s %s %s %s:%s",
+		snmpcmd, timeout_interval, retries, strlen(miblist) ? miblist : "''", proto, "[context]", "[authpriv]",
 		server_address, port);
 
 	for (i = 0; i < numoids; i++) {
-		command_line[10 + numauthpriv + 1 + i] = oids[i];
+		command_line[10 + numcontext + numauthpriv + 1 + i] = oids[i];
 		xasprintf(&cl_hidden_auth, "%s %s", cl_hidden_auth, oids[i]);	
 	}
 
-	command_line[10 + numauthpriv + 1 + numoids] = NULL;
+	command_line[10 + numcontext + numauthpriv + 1 + numoids] = NULL;
 
 	if (verbose)
 		printf ("%s\n", cl_hidden_auth);
@@ -410,6 +416,9 @@ main (int argc, char **argv)
 		}
 		else if (strstr (response, "INTEGER: ")) {
 			show = strstr (response, "INTEGER: ") + 9;
+		}
+		else if (strstr (response, "OID: ")) {
+			show = strstr (response, "OID: ") + 5;
 		}
 		else if (strstr (response, "STRING: ")) {
 			show = strstr (response, "STRING: ") + 8;
@@ -567,6 +576,18 @@ main (int argc, char **argv)
 			len = sizeof(perfstr)-strlen(perfstr)-1;
 			strncat(perfstr, show, len>ptr-show ? ptr-show : len);
 
+			if (warning_thresholds) {
+				strncat(perfstr, ";", sizeof(perfstr)-strlen(perfstr)-1);
+				strncat(perfstr, warning_thresholds, sizeof(perfstr)-strlen(perfstr)-1);
+			}
+
+			if (critical_thresholds) {
+				if (!warning_thresholds)
+					strncat(perfstr, ";", sizeof(perfstr)-strlen(perfstr)-1);
+				strncat(perfstr, ";", sizeof(perfstr)-strlen(perfstr)-1);
+				strncat(perfstr, critical_thresholds, sizeof(perfstr)-strlen(perfstr)-1);
+			}
+
 			if (type)
 				strncat(perfstr, type, sizeof(perfstr)-strlen(perfstr)-1);
 			strncat(perfstr, " ", sizeof(perfstr)-strlen(perfstr)-1);
@@ -646,6 +667,7 @@ process_arguments (int argc, char **argv)
 		{"retries", required_argument, 0, 'e'},
 		{"miblist", required_argument, 0, 'm'},
 		{"protocol", required_argument, 0, 'P'},
+		{"context", required_argument, 0, 'N'},
 		{"seclevel", required_argument, 0, 'L'},
 		{"secname", required_argument, 0, 'U'},
 		{"authproto", required_argument, 0, 'a'},
@@ -658,6 +680,8 @@ process_arguments (int argc, char **argv)
 		{"offset", required_argument, 0, L_OFFSET},
 		{"invert-search", no_argument, 0, L_INVERT_SEARCH},
 		{"perf-oids", no_argument, 0, 'O'},
+		{"ipv4", no_argument, 0, '4'},
+		{"ipv6", no_argument, 0, '6'},
 		{0, 0, 0, 0}
 	};
 
@@ -675,7 +699,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "nhvVOt:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:L:U:a:x:A:X:",
+		c = getopt_long (argc, argv, "nhvVO46t:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:N:L:U:a:x:A:X:",
 									 longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -686,10 +710,10 @@ process_arguments (int argc, char **argv)
 			usage5 ();
 		case 'h':	/* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'V':	/* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'v': /* verbose */
 			verbose++;
 			break;
@@ -712,6 +736,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'P':	/* SNMP protocol version */
 			proto = optarg;
+			break;
+		case 'N':	/* SNMPv3 context */
+			context = optarg;
 			break;
 		case 'L':	/* security level */
 			seclevel = optarg;
@@ -897,6 +924,13 @@ process_arguments (int argc, char **argv)
 		case 'O':
 			perf_labels=0;
 			break;
+		case '4':
+			break;
+		case '6':
+			xasprintf(&ip_version, "udp6:");
+			if(verbose>2)
+				printf("IPv6 detected! Will pass \"udp6:\" to snmpget.\n");
+			break;
 		}
 	}
 
@@ -960,14 +994,26 @@ validate_arguments ()
 		authpriv[1] = strdup (community);
 	}
 	else if ( strcmp (proto, "3") == 0 ) {		/* snmpv3 args */
+		if (!(context == NULL)) {
+			numcontext = 2;
+			contextargs = calloc (numcontext, sizeof (char *));
+			contextargs[0] = strdup ("-n");
+			contextargs[1] = strdup (context);
+		}
+		
 		if (seclevel == NULL)
 			xasprintf(&seclevel, "noAuthNoPriv");
 
+		if (secname == NULL)
+			die(STATE_UNKNOWN, _("Required parameter: %s\n"), "secname");
+
 		if (strcmp(seclevel, "noAuthNoPriv") == 0) {
-			numauthpriv = 2;
+			numauthpriv = 4;
 			authpriv = calloc (numauthpriv, sizeof (char *));
 			authpriv[0] = strdup ("-l");
 			authpriv[1] = strdup ("noAuthNoPriv");
+			authpriv[2] = strdup ("-u");
+			authpriv[3] = strdup (secname);
 		} else {
 			if (! ( (strcmp(seclevel, "authNoPriv")==0) || (strcmp(seclevel, "authPriv")==0) ) ) {
 				usage2 (_("Invalid seclevel"), seclevel);
@@ -975,9 +1021,6 @@ validate_arguments ()
 
 			if (authproto == NULL )
 				xasprintf(&authproto, DEFAULT_AUTH_PROTOCOL);
-
-			if (secname == NULL)
-				die(STATE_UNKNOWN, _("Required parameter: %s\n"), "secname");
 
 			if (authpasswd == NULL)
 				die(STATE_UNKNOWN, _("Required parameter: %s\n"), "authpasswd");
@@ -1093,6 +1136,7 @@ print_help (void)
 
 	printf (UT_HELP_VRSN);
 	printf (UT_EXTRA_OPTS);
+	printf (UT_IPv46);
 
 	printf (UT_HOST_PORT, 'p', DEFAULT_PORT);
 
@@ -1101,6 +1145,8 @@ print_help (void)
 	printf ("    %s\n", _("Use SNMP GETNEXT instead of SNMP GET"));
 	printf (" %s\n", "-P, --protocol=[1|2c|3]");
 	printf ("    %s\n", _("SNMP protocol version"));
+	printf (" %s\n", "-N, --context=CONTEXT");
+	printf ("    %s\n", _("SNMPv3 context"));
 	printf (" %s\n", "-L, --seclevel=[noAuthNoPriv|authNoPriv|authPriv]");
 	printf ("    %s\n", _("SNMPv3 securityLevel"));
 	printf (" %s\n", "-a, --authproto=[MD5|SHA]");
@@ -1160,7 +1206,7 @@ print_help (void)
 	printf (" %s\n", "-D, --output-delimiter=STRING");
 	printf ("    %s\n", _("Separates output on multiple OID requests"));
 
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf (" %s\n", "-e, --retries=INTEGER");
 	printf ("    %s\n", _("Number of retries to be used in the requests"));
 
@@ -1208,6 +1254,6 @@ print_usage (void)
 	printf ("%s -H <ip_address> -o <OID> [-w warn_range] [-c crit_range]\n",progname);
 	printf ("[-C community] [-s string] [-r regex] [-R regexi] [-t timeout] [-e retries]\n");
 	printf ("[-l label] [-u units] [-p port-number] [-d delimiter] [-D output-delimiter]\n");
-	printf ("[-m miblist] [-P snmp version] [-L seclevel] [-U secname] [-a authproto]\n");
-	printf ("[-A authpasswd] [-x privproto] [-X privpasswd]\n");
+	printf ("[-m miblist] [-P snmp version] [-N context] [-L seclevel] [-U secname]\n");
+	printf ("[-a authproto] [-A authpasswd] [-x privproto] [-X privpasswd] [-4|6]\n");
 }

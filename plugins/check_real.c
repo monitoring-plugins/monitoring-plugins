@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_real plugin
+* Monitoring check_real plugin
 * 
 * License: GPL
-* Copyright (c) 2000-2007 Nagios Plugins Development Team
+* Copyright (c) 2000-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -30,7 +30,7 @@
 
 const char *progname = "check_real";
 const char *copyright = "2000-2007";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "netutils.h"
@@ -163,21 +163,22 @@ main (int argc, char **argv)
 
 		/* Part I - Server Check */
 
-		/* send the OPTIONS request */
-		sprintf (buffer, "DESCRIBE rtsp://%s:%d%s RTSP/1.0\n", host_name,
+		/* send the DESCRIBE request */
+		sprintf (buffer, "DESCRIBE rtsp://%s:%d%s RTSP/1.0\r\n", host_name,
 						 server_port, server_url);
 		result = send (sd, buffer, strlen (buffer), 0);
 
 		/* send the header sync */
-		sprintf (buffer, "CSeq: 2\n");
+		sprintf (buffer, "CSeq: 2\r\n");
 		result = send (sd, buffer, strlen (buffer), 0);
 
 		/* send a newline so the server knows we're done with the request */
-		sprintf (buffer, "\n");
+		sprintf (buffer, "\r\n");
 		result = send (sd, buffer, strlen (buffer), 0);
 
 		/* watch for the REAL connection string */
 		result = recv (sd, buffer, MAX_INPUT_BUFFER - 1, 0);
+		buffer[result] = '\0'; /* null terminate recieved buffer */
 
 		/* return a CRITICAL status if we couldn't read any data */
 		if (result == -1) {
@@ -358,10 +359,10 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case '?':									/* usage */
 			usage5 ();
 		}
@@ -429,7 +430,7 @@ print_help (void)
 
 	printf (UT_WARN_CRIT);
 
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 	printf (UT_VERBOSE);
 
@@ -437,7 +438,7 @@ print_help (void)
 	printf ("%s\n", _("This plugin will attempt to open an RTSP connection with the host."));
   printf ("%s\n", _("Successul connects return STATE_OK, refusals and timeouts return"));
   printf ("%s\n", _("STATE_CRITICAL, other errors return STATE_UNKNOWN.  Successful connects,"));
-  printf ("%s\n", _("but incorrect reponse messages from the host result in STATE_WARNING return"));
+  printf ("%s\n", _("but incorrect response messages from the host result in STATE_WARNING return"));
   printf ("%s\n", _("values."));
 
 	printf (UT_SUPPORT);

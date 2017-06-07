@@ -1,11 +1,11 @@
 /*****************************************************************************
 * 
-* Nagios check_mysql plugin
+* Monitoring check_mysql plugin
 * 
 * License: GPL
 * Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)
 * Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
-* Copyright (c) 1999-2011 Nagios Plugins Development Team
+* Copyright (c) 1999-2011 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -32,7 +32,7 @@
 
 const char *progname = "check_mysql";
 const char *copyright = "1999-2011";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #define SLAVERESULTSIZE 70
 
@@ -42,6 +42,7 @@ const char *email = "devel@nagios-plugins.org";
 #include "netutils.h"
 
 #include <mysql.h>
+#include <mysqld_error.h>
 #include <errmsg.h>
 
 char *db_user = NULL;
@@ -59,6 +60,7 @@ char *opt_file = NULL;
 char *opt_group = NULL;
 unsigned int db_port = MYSQL_PORT;
 int check_slave = 0, warn_sec = 0, crit_sec = 0;
+int ignore_auth = 0;
 int verbose = 0;
 
 static double warning_time = 0;
@@ -136,7 +138,16 @@ main (int argc, char **argv)
 		mysql_ssl_set(&mysql,key,cert,ca_cert,ca_dir,ciphers);
 	/* establish a connection to the server and error checking */
 	if (!mysql_real_connect(&mysql,db_host,db_user,db_pass,db,db_port,db_socket,0)) {
-		if (mysql_errno (&mysql) == CR_UNKNOWN_HOST)
+		if (ignore_auth && mysql_errno (&mysql) == ER_ACCESS_DENIED_ERROR)
+		{
+			printf("MySQL OK - Version: %s (protocol %d)\n",
+				mysql_get_server_info(&mysql),
+				mysql_get_proto_info(&mysql)
+			);
+			mysql_close (&mysql);
+			return STATE_OK;
+		}
+		else if (mysql_errno (&mysql) == CR_UNKNOWN_HOST)
 			die (STATE_WARNING, "%s\n", mysql_error (&mysql));
 		else if (mysql_errno (&mysql) == CR_VERSION_ERROR)
 			die (STATE_WARNING, "%s\n", mysql_error (&mysql));
@@ -341,6 +352,7 @@ process_arguments (int argc, char **argv)
 		{"critical", required_argument, 0, 'c'},
 		{"warning", required_argument, 0, 'w'},
 		{"check-slave", no_argument, 0, 'S'},
+		{"ignore-auth", no_argument, 0, 'n'},
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
@@ -357,7 +369,7 @@ process_arguments (int argc, char **argv)
 		return ERROR;
 
 	while (1) {
-		c = getopt_long (argc, argv, "hlvVSP:p:u:d:H:s:c:w:a:k:C:D:L:f:g:", longopts, &option);
+		c = getopt_long (argc, argv, "hlvVnSP:p:u:d:H:s:c:w:a:k:C:D:L:f:g:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -419,6 +431,9 @@ process_arguments (int argc, char **argv)
 		case 'S':
 			check_slave = 1;							/* check-slave */
 			break;
+		case 'n':
+			ignore_auth = 1;							/* ignore-auth */
+			break;
 		case 'w':
 			warning = optarg;
 			warning_time = strtod (warning, NULL);
@@ -429,10 +444,10 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'v':
 			verbose++;
 			break;
@@ -476,12 +491,6 @@ validate_arguments (void)
 	if (db_user == NULL)
 		db_user = strdup("");
 
-	if (opt_file == NULL)
-		opt_file = strdup("");
-
-	if (opt_group == NULL)
-		opt_group = strdup("");
-
 	if (db_host == NULL)
 		db_host = strdup("");
 
@@ -512,6 +521,9 @@ print_help (void)
 	printf (UT_EXTRA_OPTS);
 
   printf (UT_HOST_PORT, 'P', myport);
+  printf (" %s\n", "-n, --ignore-auth");
+  printf ("    %s\n", _("Ignore authentication failure and check for mysql connectivity only"));
+
   printf (" %s\n", "-s, --socket=STRING");
   printf ("    %s\n", _("Use the specified socket (has no effect if -H is used)"));
 

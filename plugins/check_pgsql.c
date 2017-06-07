@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_pgsql plugin
+* Monitoring check_pgsql plugin
 * 
 * License: GPL
-* Copyright (c) 1999-2011 Nagios Plugins Development Team
+* Copyright (c) 1999-2011 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -30,7 +30,7 @@
 
 const char *progname = "check_pgsql";
 const char *copyright = "1999-2011";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
@@ -302,10 +302,10 @@ process_arguments (int argc, char **argv)
 			usage5 ();
 		case 'h':     /* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'V':     /* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 't':     /* timeout period */
 			if (!is_integer (optarg))
 				usage2 (_("Timeout interval must be a positive integer"), optarg);
@@ -514,7 +514,7 @@ print_help (void)
 
 	printf (" %s\n", "-d, --database=STRING");
 	printf ("    %s", _("Database to check "));
-	printf (_("(default: %s)"), DEFAULT_DB);
+	printf (_("(default: %s)\n"), DEFAULT_DB);
 	printf (" %s\n", "-l, --logname = STRING");
 	printf ("    %s\n", _("Login name of user"));
 	printf (" %s\n", "-p, --password = STRING");
@@ -524,7 +524,7 @@ print_help (void)
 
 	printf (UT_WARN_CRIT);
 
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 	printf (" %s\n", "-q, --query=STRING");
 	printf ("    %s\n", _("SQL query to run. Only first column in first row will be read"));
@@ -563,9 +563,9 @@ print_help (void)
 	printf (" %s\n", _("connect to a remote host, be sure that the remote postmaster accepts TCP/IP"));
 	printf (" %s\n\n", _("connections (start the postmaster with the -i option)."));
 
-	printf (" %s\n", _("Typically, the nagios user (unless the --logname option is used) should be"));
+	printf (" %s\n", _("Typically, the monitoring user (unless the --logname option is used) should be"));
 	printf (" %s\n", _("able to connect to the database without a password. The plugin can also send"));
-	printf (" %s\n", _("a password, but no effort is made to obsure or encrypt the password."));
+	printf (" %s\n", _("a password, but no effort is made to obscure or encrypt the password."));
 
 	printf (UT_SUPPORT);
 }

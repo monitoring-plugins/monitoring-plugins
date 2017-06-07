@@ -1,10 +1,10 @@
 /*****************************************************************************
 * 
-* Nagios check_ntp plugin
+* Monitoring check_ntp plugin
 * 
 * License: GPL
 * Copyright (c) 2006 Sean Finney <seanius@seanius.net>
-* Copyright (c) 2006-2008 Nagios Plugins Development Team
+* Copyright (c) 2006-2008 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -32,7 +32,7 @@
 
 const char *progname = "check_ntp";
 const char *copyright = "2006-2008";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "netutils.h"
@@ -54,7 +54,9 @@ void print_help (void);
 void print_usage (void);
 
 /* number of times to perform each request to get a good average. */
+#ifndef AVG_NUM
 #define AVG_NUM 4
+#endif
 
 /* max size of control message data */
 #define MAX_CM_SIZE 468
@@ -295,7 +297,7 @@ void setup_request(ntp_message *p){
  * this is done by filtering servers based on stratum, dispersion, and
  * finally round-trip delay. */
 int best_offset_server(const ntp_server_results *slist, int nservers){
-	int i=0, cserver=0, best_server=-1;
+	int cserver=0, best_server=-1;
 
 	/* for each server */
 	for(cserver=0; cserver<nservers; cserver++){
@@ -354,7 +356,7 @@ int best_offset_server(const ntp_server_results *slist, int nservers){
  *   we have to do it in a way that our lazy macros don't handle currently :( */
 double offset_request(const char *host, int *status){
 	int i=0, j=0, ga_result=0, num_hosts=0, *socklist=NULL, respnum=0;
-	int servers_completed=0, one_written=0, one_read=0, servers_readable=0, best_index=-1;
+	int servers_completed=0, one_read=0, servers_readable=0, best_index=-1;
 	time_t now_time=0, start_ts=0;
 	ntp_message *req=NULL;
 	double avg_offset=0.;
@@ -419,7 +421,6 @@ double offset_request(const char *host, int *status){
 		 * been touched in the past second or so and is still lacking
 		 * some responses.  for each of these servers, send a new request,
 		 * and update the "waiting" timestamp with the current time. */
-		one_written=0;
 		now_time=time(NULL);
 
 		for(i=0; i<num_hosts; i++){
@@ -429,7 +430,6 @@ double offset_request(const char *host, int *status){
 				setup_request(&req[i]);
 				write(socklist[i], &req[i], sizeof(ntp_message));
 				servers[i].waiting=now_time;
-				one_written=1;
 				break;
 			}
 		}
@@ -480,7 +480,7 @@ double offset_request(const char *host, int *status){
 	} else {
 		/* finally, calculate the average offset */
 		for(i=0; i<servers[best_index].num_responses;i++){
-			avg_offset+=servers[best_index].offset[j];
+			avg_offset+=servers[best_index].offset[i];
 		}
 		avg_offset/=servers[best_index].num_responses;
 	}
@@ -548,7 +548,7 @@ double jitter_request(const char *host, int *status){
 		DBG(print_ntp_control_message(&req));
 		/* Attempt to read the largest size packet possible */
 		req.count=htons(MAX_CM_SIZE);
-		DBG(printf("recieving READSTAT response"))
+		DBG(printf("receiving READSTAT response"))
 		read(conn, &req, SIZEOF_NTPCM(req));
 		DBG(print_ntp_control_message(&req));
 		/* Each peer identifier is 4 bytes in the data section, which
@@ -588,6 +588,9 @@ double jitter_request(const char *host, int *status){
 		for (i = 0; i < npeers; i++){
 			/* Only query this server if it is the current sync source */
 			if (PEER_SEL(peers[i].status) >= min_peer_sel){
+				char jitter_data[MAX_CM_SIZE+1];
+				size_t jitter_data_count;
+
 				num_selected++;
 				setup_control_request(&req, OP_READVAR, 2);
 				req.assoc = peers[i].assoc;
@@ -605,7 +608,7 @@ double jitter_request(const char *host, int *status){
 				DBG(print_ntp_control_message(&req));
 
 				req.count = htons(MAX_CM_SIZE);
-				DBG(printf("recieving READVAR response...\n"));
+				DBG(printf("receiving READVAR response...\n"));
 				read(conn, &req, SIZEOF_NTPCM(req));
 				DBG(print_ntp_control_message(&req));
 
@@ -621,7 +624,14 @@ double jitter_request(const char *host, int *status){
 				if(verbose) {
 					printf("parsing jitter from peer %.2x: ", ntohs(peers[i].assoc));
 				}
-				startofvalue = strchr(req.data, '=');
+				if((jitter_data_count = ntohs(req.count)) >= sizeof(jitter_data)){
+					die(STATE_UNKNOWN,
+					    _("jitter response too large (%lu bytes)\n"),
+					    (unsigned long)jitter_data_count);
+				}
+				memcpy(jitter_data, req.data, jitter_data_count);
+				jitter_data[jitter_data_count] = '\0';
+				startofvalue = strchr(jitter_data, '=');
 				if(startofvalue != NULL) {
 					startofvalue++;
 					jitter = strtod(startofvalue, &nptr);
@@ -679,11 +689,11 @@ int process_arguments(int argc, char **argv){
 		switch (c) {
 		case 'h':
 			print_help();
-			exit(STATE_OK);
+			exit(STATE_UNKNOWN);
 			break;
 		case 'V':
 			print_revision(progname, NP_VERSION);
-			exit(STATE_OK);
+			exit(STATE_UNKNOWN);
 			break;
 		case 'v':
 			verbose++;
@@ -858,7 +868,7 @@ void print_help(void){
 	printf ("    %s\n", _("Warning threshold for jitter"));
 	printf (" %s\n", "-k, --jcrit=THRESHOLD");
 	printf ("    %s\n", _("Critical threshold for jitter"));
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf (UT_VERBOSE);
 
 	printf("\n");

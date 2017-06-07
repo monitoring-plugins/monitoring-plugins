@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!@PERL@ -w
 #
 # usage: 
 #    check_flexlm.pl license_file
@@ -9,7 +9,7 @@
 # Check and interpret the output of lmstat
 # and create returncodes and output.
 #
-# Contrary to the nagios concept, this script takes
+# Contrary to most other plugins, this script takes
 # a file, not a hostname as an argument and returns
 # the status of hosts and services described in that
 # file. Use these hosts.cfg entries as an example
@@ -35,7 +35,8 @@
 use strict;
 use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_F $opt_t $verbose $PROGNAME);
-use lib utils.pm;
+use FindBin;
+use lib "$FindBin::Bin";
 use utils qw(%ERRORS &print_revision &support &usage);
 
 $PROGNAME="check_flexlm";
@@ -43,7 +44,7 @@ $PROGNAME="check_flexlm";
 sub print_help ();
 sub print_usage ();
 
-$ENV{'PATH'}='';
+$ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}=''; 
 $ENV{'ENV'}='';
 
@@ -57,7 +58,7 @@ GetOptions
 
 if ($opt_V) {
 	print_revision($PROGNAME,'@NP_VERSION@');
-	exit $ERRORS{'OK'};
+	exit $ERRORS{'UNKNOWN'};
 }
 
 unless (defined $opt_t) {
@@ -65,14 +66,14 @@ unless (defined $opt_t) {
 }
 
 
-if ($opt_h) {print_help(); exit $ERRORS{'OK'};}
+if ($opt_h) {print_help(); exit $ERRORS{'UNKNOWN'};}
 
 unless (defined $opt_F) {
 	print "Missing license.dat file\n";
 	print_usage();
 	exit $ERRORS{'UNKNOWN'};
 }
-# Just in case of problems, let's not hang Nagios
+# Just in case of problems, let's not hang the monitoring system
 $SIG{'ALRM'} = sub {
 	print "Timeout: No Answer from Client\n";
 	exit $ERRORS{'UNKNOWN'};

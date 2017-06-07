@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_load plugin
+* Monitoring check_load plugin
 * 
 * License: GPL
-* Copyright (c) 1999-2007 Nagios Plugins Development Team
+* Copyright (c) 1999-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -30,7 +30,7 @@
 
 const char *progname = "check_load";
 const char *copyright = "1999-2007";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
@@ -160,7 +160,7 @@ main (int argc, char **argv)
 	    sscanf (input_buffer, "%*[^l]load averages: %lf, %lf, %lf", &la1, &la5, &la15);
     }
     else {
-		printf (_("could not parse load from uptime: %s\n"), result, PATH_TO_UPTIME);
+		printf (_("could not parse load from uptime %s: %s\n"), PATH_TO_UPTIME, result);
 		return STATE_UNKNOWN;
     }
 
@@ -251,10 +251,10 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case '?':									/* help */
 			usage5 ();
 		}

@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_dns plugin
+* Monitoring check_dns plugin
 * 
 * License: GPL
-* Copyright (c) 2000-2008 Nagios Plugins Development Team
+* Copyright (c) 2000-2008 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -31,7 +31,7 @@
 
 const char *progname = "check_dns";
 const char *copyright = "2000-2008";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
@@ -42,6 +42,8 @@ const char *email = "devel@nagios-plugins.org";
 int process_arguments (int, char **);
 int validate_arguments (void);
 int error_scan (char *);
+int ip_match_cidr(const char *, const char *);
+unsigned long ip2long(const char *);
 void print_help (void);
 void print_usage (void);
 
@@ -81,7 +83,6 @@ main (int argc, char **argv)
   double elapsed_time;
   long microsec;
   struct timeval tv;
-  int multi_address;
   int parse_address = FALSE; /* This flag scans for Address: but only after Name: */
   output chld_out, chld_err;
   size_t i;
@@ -127,12 +128,34 @@ main (int argc, char **argv)
     if (verbose)
       puts(chld_out.line[i]);
 
-    if (strstr (chld_out.line[i], ".in-addr.arpa")) {
+    if (strcasestr (chld_out.line[i], ".in-addr.arpa") || strcasestr (chld_out.line[i], ".ip6.arpa")) {
       if ((temp_buffer = strstr (chld_out.line[i], "name = ")))
         addresses[n_addresses++] = strdup (temp_buffer + 7);
       else {
         msg = (char *)_("Warning plugin error");
         result = STATE_WARNING;
+      }
+    }
+
+    /* bug ID: 2946553 - Older versions of bind will use all available dns 
+                         servers, we have to match the one specified */
+    if (strstr (chld_out.line[i], "Server:") && strlen(dns_server) > 0) {
+      temp_buffer = strchr (chld_out.line[i], ':');
+      temp_buffer++;
+
+      /* Strip leading tabs */
+      for (; *temp_buffer != '\0' && *temp_buffer == '\t'; temp_buffer++)
+        /* NOOP */;
+
+      strip(temp_buffer);
+      if (temp_buffer==NULL || strlen(temp_buffer)==0) {
+        die (STATE_CRITICAL,
+             _("DNS CRITICAL - '%s' returned empty server string\n"),
+             NSLOOKUP_COMMAND);
+      }
+
+      if (strcmp(temp_buffer, dns_server) != 0) {
+        die (STATE_CRITICAL, _("DNS CRITICAL - No response from DNS %s\n"), dns_server);
       }
     }
 
@@ -205,9 +228,14 @@ main (int argc, char **argv)
   if (result == STATE_OK && expected_address_cnt > 0) {
     result = STATE_CRITICAL;
     temp_buffer = "";
+
     for (i=0; i<expected_address_cnt; i++) {
-      /* check if we get a match and prepare an error string */
-      if (strcmp(address, expected_address[i]) == 0) result = STATE_OK;
+      /* check if we get a match on 'raw' ip or cidr */
+      if ( strcmp(address, expected_address[i]) == 0
+           || ip_match_cidr(address, expected_address[i]) )
+        result = STATE_OK;
+
+      /* prepare an error string */
       xasprintf(&temp_buffer, "%s%s; ", temp_buffer, expected_address[i]);
     }
     if (result == STATE_CRITICAL) {
@@ -227,11 +255,6 @@ main (int argc, char **argv)
   elapsed_time = (double)microsec / 1.0e6;
 
   if (result == STATE_OK) {
-    if (strchr (address, ',') == NULL)
-      multi_address = FALSE;
-    else
-      multi_address = TRUE;
-
     result = get_status(elapsed_time, time_thresholds);
     if (result == STATE_OK) {
       printf ("DNS %s: ", _("OK"));
@@ -242,7 +265,23 @@ main (int argc, char **argv)
     }
     printf (ngettext("%.3f second response time", "%.3f seconds response time", elapsed_time), elapsed_time);
     printf (_(". %s returns %s"), query_address, address);
-    printf ("|%s\n", fperfdata ("time", elapsed_time, "s", FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
+    if ((time_thresholds->warning != NULL) && (time_thresholds->critical != NULL)) {
+      printf ("|%s\n", fperfdata ("time", elapsed_time, "s",
+                                  TRUE, time_thresholds->warning->end,
+                                  TRUE, time_thresholds->critical->end,
+                                  TRUE, 0, FALSE, 0));
+    } else if ((time_thresholds->warning == NULL) && (time_thresholds->critical != NULL)) {
+      printf ("|%s\n", fperfdata ("time", elapsed_time, "s",
+                                  FALSE, 0,
+                                  TRUE, time_thresholds->critical->end,
+                                  TRUE, 0, FALSE, 0));
+    } else if ((time_thresholds->warning != NULL) && (time_thresholds->critical == NULL)) {
+      printf ("|%s\n", fperfdata ("time", elapsed_time, "s",
+                                  TRUE, time_thresholds->warning->end,
+                                  FALSE, 0,
+                                  TRUE, 0, FALSE, 0));
+    } else
+      printf ("|%s\n", fperfdata ("time", elapsed_time, "s", FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
   }
   else if (result == STATE_WARNING)
     printf (_("DNS WARNING - %s\n"),
@@ -257,7 +296,32 @@ main (int argc, char **argv)
   return result;
 }
 
+int
+ip_match_cidr(const char *addr, const char *cidr_ro)
+{
+  char *subnet, *mask_c, *cidr = strdup(cidr_ro);
+  int mask;
+  subnet = strtok(cidr, "/");
+  mask_c = strtok(NULL, "\0");
+  if (!subnet || !mask_c)
+    return FALSE;
+  mask = atoi(mask_c);
 
+  /* https://www.cryptobells.com/verifying-ips-in-a-subnet-in-php/ */
+  return (ip2long(addr) & ~((1 << (32 - mask)) - 1)) == (ip2long(subnet) >> (32 - mask)) << (32 - mask);
+}
+
+unsigned long
+ip2long(const char* src) {
+  unsigned long ip[4];
+  /* http://computer-programming-forum.com/47-c-language/1376ffb92a12c471.htm */
+  return (sscanf(src, "%3lu.%3lu.%3lu.%3lu",
+                     &ip[0], &ip[1], &ip[2], &ip[3]) == 4 &&
+              ip[0] < 256 && ip[1] < 256 &&
+              ip[2] < 256 && ip[3] < 256)
+          ? ip[0] << 24 | ip[1] << 16 | ip[2] << 8 | ip[3]
+          : 0; 
+}
 
 int
 error_scan (char *input_buffer)
@@ -296,6 +360,7 @@ error_scan (char *input_buffer)
   /* Host or domain name does not exist */
   else if (strstr (input_buffer, "Non-existent") ||
            strstr (input_buffer, "** server can't find") ||
+           strstr (input_buffer, "** Can't find") ||
      strstr (input_buffer,"NXDOMAIN"))
     die (STATE_CRITICAL, _("Domain %s was not found by the server\n"), query_address);
 
@@ -357,10 +422,10 @@ process_arguments (int argc, char **argv)
     switch (c) {
     case 'h': /* help */
       print_help ();
-      exit (STATE_OK);
+      exit (STATE_UNKNOWN);
     case 'V': /* version */
       print_revision (progname, NP_VERSION);
-      exit (STATE_OK);
+      exit (STATE_UNKNOWN);
     case 'v': /* version */
       verbose = TRUE;
       break;
@@ -462,9 +527,9 @@ print_help (void)
   printf ("    %s\n", _("The name or address you want to query"));
   printf (" -s, --server=HOST\n");
   printf ("    %s\n", _("Optional DNS server you want to use for the lookup"));
-  printf (" -a, --expected-address=IP-ADDRESS|HOST\n");
-  printf ("    %s\n", _("Optional IP-ADDRESS you expect the DNS server to return. HOST must end with"));
-  printf ("    %s\n", _("a dot (.). This option can be repeated multiple times (Returns OK if any"));
+  printf (" -a, --expected-address=IP-ADDRESS|CIDR|HOST\n");
+  printf ("    %s\n", _("Optional IP-ADDRESS/CIDR you expect the DNS server to return. HOST must end"));
+  printf ("    %s\n", _("with a dot (.). This option can be repeated multiple times (Returns OK if any"));
   printf ("    %s\n", _("value match). If multiple addresses are returned at once, you have to match"));
   printf ("    %s\n", _("the whole string of addresses separated with commas (sorted alphabetically)."));
   printf (" -A, --expect-authority\n");
@@ -474,7 +539,7 @@ print_help (void)
   printf (" -c, --critical=seconds\n");
   printf ("    %s\n", _("Return critical if elapsed time exceeds value. Default off"));
 
-  printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+  printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
   printf (UT_SUPPORT);
 }

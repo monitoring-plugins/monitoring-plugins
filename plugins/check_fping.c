@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_fping plugin
+* Monitoring check_fping plugin
 * 
 * License: GPL
-* Copyright (c) 2000-2007 Nagios Plugins Development Team
+* Copyright (c) 2000-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -31,7 +31,7 @@
 
 const char *progname = "check_fping";
 const char *copyright = "2000-2007";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "popen.h"
@@ -105,7 +105,7 @@ main (int argc, char **argv)
     xasprintf(&option_string, "%s-I %s ", option_string, sourceif);
 
 #ifdef PATH_TO_FPING6
-  if (address_family == AF_INET6)
+  if (address_family != AF_INET && is_inet6_addr(server))
     fping_prog = strdup(PATH_TO_FPING6);
   else
     fping_prog = strdup(PATH_TO_FPING);
@@ -184,7 +184,7 @@ textscan (char *buf)
   int status = STATE_UNKNOWN;
 
   if (strstr (buf, "not found")) {
-    die (STATE_CRITICAL, _("FPING UNKNOW - %s not found\n"), server_name);
+    die (STATE_CRITICAL, _("FPING UNKNOWN - %s not found\n"), server_name);
 
   }
   else if (strstr (buf, "is unreachable") || strstr (buf, "Unreachable")) {
@@ -314,10 +314,10 @@ process_arguments (int argc, char **argv)
       usage5 ();
     case 'h':                 /* help */
       print_help ();
-      exit (STATE_OK);
+      exit (STATE_UNKNOWN);
     case 'V':                 /* version */
       print_revision (progname, NP_VERSION);
-      exit (STATE_OK);
+      exit (STATE_UNKNOWN);
     case 'v':                 /* verbose mode */
       verbose = TRUE;
       break;

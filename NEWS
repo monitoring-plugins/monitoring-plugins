@@ -1,20 +1,165 @@
 This file documents the major additions and syntax changes between releases.
 
+2.3 [...]
+	ENHANCEMENTS
+	check_dns: allow 'expected address' (-a) to be specified in CIDR notation
+	  (IPv4 only).
+	check_dns: allow for IPv6 RDNS
+	check_apt: add --only-critical switch
+	check_apt: add -l/--list option to print packages
+
+	FIXES
+	Fix regression where check_dhcp was rereading response in a tight loop
+
+2.2 29th November 2016
+	ENHANCEMENTS
+	The check_http -S/--ssl option now accepts the arguments "1.1" and "1.2"
+	  to force TLSv1.1 and TLSv1.2 connections, respectively
+	The check_http -S/--ssl option now allows for specifying the desired
+	  protocol with a "+" suffix to also accept newer versions
+	Let check_http check HTTPS web sites via proxies
+	check_http: add timeout to performance data as max value
+	check_http: report certificate expiry date in UTC
+	check_snmp: add IPv6 support
+	check_snmp's performance data now also includes warning/critical
+	  thresholds
+	New check_snmp -N option to specify SNMPv3 context name
+	Let check_smtp's -D option imply -S
+	Let check_smtp's -e option match against the full SMTP response
+	check_dig: expected response is now case-insensitive
+	New check_mailq -s option which tells the plugin to use sudo(8)
+	New check_nt -l parameters: seconds|minutes|hours|days
+	New -W/-C option for check_ldap to check number of entries
+	check_users: add support for range thresholds
+	check_fping now auto-detects IPv6 addresses
+	check_radius now supports the radcli library
+	Support OpenSSL 1.1
+
+	FIXES
+	check_http: fix host header port handling
+	Let check_real terminate lines with CRLF when talking to the server, as
+	  mandated by RFC 2326
+	Fix check_procs on HP-UX
+	check_smtp's -e/--expect option can now be combined with -S/--starttls
+	Fix incorrect performance data thresholds emitted by check_ups
+	Don't let check_procs miss some processes on busy Solaris systems
+
+	WARNINGS
+	The format of the performance data emitted by check_mrtgtraf has been
+	  changed to comply with the development guidelines
+	check_ssh now returns CRITICAL for protocol/version errors
+	If a plugin is invoked with -h/--help or -V/--version, the exit status
+	  is now UNKNOWN
+	The superseeded check_ntp.pl was removed, please use check_ntp_peer or
+	  check_ntp_time instead
+
+2.1.2 16th October 2015
+	FIXES
+	Fix incorrect performance data thresholds emitted by check_ups
+	Fix check_dhcp's option parsing to not crash with certain arguments
+	Fix check_snmp using correct timeout
+
+2.1.1 2nd December 2014
+	FIXES
+	Fix check_ntp's jitter checking
+	Fix check_ntp's handling of invalid server responses
+	Fix check_apt's handling of invalid regular expressions
+	Fix check_real's server response processing
+	Fix backslash escaping in check_tcp's --help output
+
+2.1 15th October 2014
+	ENHANCEMENTS
+	New check_hpjd -p option for port specification
+	New ./configure --with-qmail-qstat-command option to specify the path to
+	  qmail-qstat(8)
+	New check_ifstatus -n option to ignore interfaces by name
+	check_ntp_peer has now specific state output for each metric
+	New check_mysql -n option to ignore authentication failures
+	Added IP and port or socket name to error messages
+	New check_ntp_time -o option to add expected offset
+	check_disk shows now troubled partions in verbose mode
+	check_dig has now support for drill and dig
+	check_dig has now support for -6 option
+	Add performance data to check_file_age
+
+	FIXES
+	Fix check_jabber to work with Openfire servers
+	Fix check_oracle bad string matching when testing TNS server
+	Fixed check_ifstatus performance data output
+        Fixed expire time output for sslutils
+	check_dns now verifies if the answer is returning from the queried
+	  server
+	Fix check_by_ssh to accept --hostname as argument
+
+	WARNINGS
+	This release doesn't ship with an RPM spec file, please contribute to
+	  PR #1283 if you are interested in it
+
+2.0 11th July 2014
+	ENHANCEMENTS
+	check_mailq now supports auto detection of qmail, postfix, exim and nullmailer with
+	  fallback to sendmail
+	check_ide_smart now defaults to plugin output, original output appended with -v
+	Extra-Opts are now enabled by default, see:
+	  https://www.monitoring-plugins.org/doc/extra-opts.html
+	check_swap now supports a configurable state when there is no swap
+	check_radius now supports the FreeRADIUS Client library
+	New check_mysql_query -f option to specify a client options file
+	New check_mysql_query -g option to specify a client options group
+	Add performance data to check_mysql_query
+	New check_file_age -i/--ignore-missing option to return OK on nonexistent files
+	Make check_ping, check_users, and check_disk work on Windows
+	New check_ssh -P option to specify the expected SSH protocol version
+	check_dns now emits the warning and critical thresholds with the performance data
+
+	FIXES
+	Don't let e.g. check_http's -C option reset SSL version if e.g. -S 1 -C 5 is specified
+	Don't have check_http's -N option expect an argument
+	check_ide_smart could disable offline auto tests but could not re-enable them.
+	  For this reason all SMART command modes have been disabled.
+	check_dig: fix wrong IPv6 arguments order
+	check_dig: make sure not to give up too early when a timeout is specified with -t
+	check_log: don't stumble over log lines that include a "%" character
+	check_nt: add UPTIME to perfdata
+	Handle SNMPv3 noAuthNoPriv properly with check_snmp
+	Fix compilation with GnuTLS
+
+	WARNINGS
+	New default installation prefix: /usr/local instead of /usr/local/nagios
+	check_snmp now evaluates negative values properly, which means it might return CRITICAL
+	  in cases where it used to return OK. If this is undesired, the warning/critical
+	  threshold(s) must be fixed by specifying e.g. ~:100 instead of 100
+	check_procs now ignores its parent process to avoid unexpected results when invoked via
+	  certain shells
+	utils.sh no longer defines ECH
+	check_ide_smart -q/--quiet and -n/--nagios (Nagios-compatible output) are now deprecated
+	  but accepted for backward-compatibility
+	check_ide_smart -0/--auto-off, -1/--auto-on and -i/--immediate: options have
+	  been disabled because they were broken
+	State retention: the NAGIOS_PLUGIN_STATE_DIRECTORY environment variable has been
+	  renamed MP_STATE_PATH. The old variable will continue to work in v2.0.x
+	Add the UID of the invoking user to the state retention file path. This helps solving
+	  permission issues when different users run the same plugin
+	check_swap used to allow returning OK on a system without swap when only percent thresholds
+	  were used. This is no longer the case and one must now use -n/--no-swap=<state>
+	The Perl and Shell plugins now use the PATH specified via ./configure's --trusted-path
+	  option, or "/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin" by default
+
 1.5 2nd October 2013
 	ENHANCEMENTS
 	New check_dbi plugin for checking an (SQL) database using DBI
 	Let OpenSSL load its configuration file (see the OPENSSL_config(3) man page)
 	Add performance data to check_apt
 	Add performance data to check_procs
-	Added -4/-6 options to check_dig (Ville Mattila)
+	Added -4/-6 options to check_dig
 	New check_oracle --connect option to perform real login
 	New check_nagios -t option to override the default timeout
 	New check_disk -f/--freespace-ignore-reserved option to ignore space reserved for root
 	New check_disk -N/--include-type option to limit the filesystem types to check
 	Allow for building the plugins in parallel
 	Add --without-{dbi,ldap,radius} options to ./configure
-	Made Verbose output of check_sensors compliant (Gabriele Tozzi)
-	New switch -E/--extended-perfdata for check_http to print additional performance data (Sebastian Nohn)
+	Made Verbose output of check_sensors compliant
+	New switch -E/--extended-perfdata for check_http to print additional performance data
 	New check_http -d option to specify a string to expect within the response headers
 	New check_http -J/-K options for client certificate authentication support
 	Add support for executing queries to check_pgsql
@@ -37,11 +182,11 @@ This file documents the major additions and syntax changes between releases.
 	Change the MAIL FROM command generated by check_smtp to be RFC compliant
 	Fix compilation of check_http without SSL support
 	Fix check_snmp reversed threshold ranges (backward-compatibility)
-	Fix check_snmp memory violation when using more than 8 oids (Robin Sonefors)
-	Fix check_apt security regular expression (Alex Bradley)
-	Fix check_http handling extra header (-k) containing semicolons (Richard Leitner)
-	Fix check_apt handling unknown exit codes from apt-get (Richard Leitner)
-	Fix deprecated imports of check_nmap.py (Fabio Rueda)
+	Fix check_snmp memory violation when using more than 8 oids
+	Fix check_apt security regular expression
+	Fix check_http handling extra header (-k) containing semicolons
+	Fix check_apt handling unknown exit codes from apt-get
+	Fix deprecated imports of check_nmap.py
 
 	WARNINGS
 	check_http behaviour of -k/--header changed since it does not seperate multiple headers by semicolons anymore. Use multiple -k switches instead.
@@ -50,34 +195,34 @@ This file documents the major additions and syntax changes between releases.
 
 1.4.16 27th June 2012
 	ENHANCEMENTS
-	check_nt UPTIME accepts warning/critical thresholds (Ryan Kelly)
+	check_nt UPTIME accepts warning/critical thresholds
 	check_disk_smb now allows spaces in share names (#990948, #1370031, Debian #601699)
 	check_http now uses standard threshold functions (enables floating point and ranges)
-	check_http now checks for and prints the certificate cn (hostname) in SSL certificate checks (Stéphane Urbanovski)
-	check_http now supports an optional -S/--ssl value to choose the SSL protocol version (#3066166 - Jason Lunn)
-	Add perfdata to check_ssh (#3244097 - Marco Beck)
-	New option to check_smtp to ignore failures when sending QUIT (#3358348 - Duncan Ferguson)
-	New check_by_ssh -F option which allows for specifying an alternative ssh_config(5) file (#2895334 - Sven Nierlein)
-	check_sensors now detects faulty sensors unless --ignore-fault is specified (Jan Wagner)
-	utils.sh now provides a check_range function (Alex Griffin)
-	Improved the performance of check_users (Marc Remy)
-	Add perfdata to check_disk_smb (Debian #654259 - Charles-Henri Larose)
+	check_http now checks for and prints the certificate cn (hostname) in SSL certificate checks
+	check_http now supports an optional -S/--ssl value to choose the SSL protocol version (#3066166)
+	Add perfdata to check_ssh (#3244097)
+	New option to check_smtp to ignore failures when sending QUIT (#3358348)
+	New check_by_ssh -F option which allows for specifying an alternative ssh_config(5) file (#2895334)
+	check_sensors now detects faulty sensors unless --ignore-fault is specified
+	utils.sh now provides a check_range function
+	Improved the performance of check_users
+	Add perfdata to check_disk_smb (Debian #654259)
 	Updated Nagios::Plugin perl module
-	Add warning threshold to certificate expiration checks of check_tcp/http/smtp (William Leibzon)
-	Add --perf-oids option for check_snmp (Jochen Bern)
+	Add warning threshold to certificate expiration checks of check_tcp/http/smtp
+	Add --perf-oids option for check_snmp
 
 	FIXES
-	Fix check_disk free space calculation if blocksizes differ within a disk group (Bekar - #2973603)
+	Fix check_disk free space calculation if blocksizes differ within a disk group (#2973603)
 	check_disk_smb now handles NT_STATUS_ACCESS_DENIED properly (Debian #601696)
 	Make check_snmp work more like v1.4.14 with regard to using special values (Timeticks, STRING) as numeric thresholds
 	Fix check_ldap overriding the port when --ssl was specified after -p
 	Fix check_procs where regex input of '|' would get displayed in output - now replaced with ','
-	Fix segfault in check_host when hostname returns multiple IP addresses (Sebastian Harl)
+	Fix segfault in check_host when hostname returns multiple IP addresses
 	Fix check_smtp and check_tcp where duplicate messages were displayed for certificate errors
-	Fix check_ping's parsing of ping6(1) output (#1894850, Debian #514588, Debian #662638 - Matej Vela)
+	Fix check_ping's parsing of ping6(1) output (#1894850, Debian #514588, Debian #662638)
 	Fix a check_dhcp bug which was triggered by checking Windows 2003 DHCP servers (#3503921)
 	Disable RFC4507 support, to work around SSL negotiation issues with (at least) some Tomcat versions
-	Fix performance data label containing spaces in check_snmp (Jochen Bern)
+	Fix performance data label containing spaces in check_snmp
 
 1.4.15 27th July 2010
 	ENHANCEMENTS
@@ -87,30 +232,30 @@ This file documents the major additions and syntax changes between releases.
 	New check_snmp --rate option to store differences between invocations. Saves state in PREFIX/var/{plugin}
 	check_snmp -l label option now also changes the perfdata label. See WARNINGS
 	check_snmp has an --invert-search option which reverses status of the string and regexp searches
-	check_http now displays the missing search string and the URL in the output when failed (Duncan Ferguson - #2999924)
+	check_http now displays the missing search string and the URL in the output when failed (#2999924)
 	Updated Nagios::Plugin perl module
 	Updated gnulib to June 2010
 
 	FIXES
 	Fix check_ircd binding to wrong interface (#668778)
-	Add proxy-authorization option to check_http (Marcel Kuiper - #1323230, Bryan Irvine - #2863925)
+	Add proxy-authorization option to check_http (#1323230, #2863925)
 	check_icmp now increment the sequence counter in each packet
 	Fix usage of repeated -o options in check_snmp
 	Try to detect arguments passed via --with-ping[6]-command and set options accordingly (#2908236)
-	Fix memory leak in check_http for large pages (Jimmy Bergman - #2957455)
-	Fix compilation with GCC 2.96 (Konstantin Khomoutov - #2977105)
+	Fix memory leak in check_http for large pages (#2957455)
+	Fix compilation with GCC 2.96 (#2977105)
 	Fix regression introduced in #1867716 where partially valid performance strings would not be printed anymore
 	Fix regression in check_http ssl checks on some servers - make SNI an option
 	Fix guest mode support in check_disk_smb
 	Fix check_disk_smb and check_ircd failures when run via ePN
 	check_ldap now allows for specifying an empty LDAP base
 	Fix compilation error of pst3 in Solaris 8
-	Fix check_radius returning OK on unexpected results (Craig Leres - #2911752)
-	Fix translations when extra-opts aren't enabled (Jan Wagner - #2832884)
+	Fix check_radius returning OK on unexpected results (#2911752)
+	Fix translations when extra-opts aren't enabled (#2832884)
 	Fix parsing of multi-line strings in check_snmp (broken in 1.4.14) and enhance output in such case (#2832451)
 	Fix detection of pst3 64-bit compile flags with Sun CC
 	Fix cmd_run overwriting the environment, which would break some commands that needed it
-	Allow check_ifstatus to accept version=2c - used to only allow version=2 (Brian Landers)
+	Allow check_ifstatus to accept version=2c - used to only allow version=2
 	Fix examples in check_disk, where it implied was possible to suffix unit values to warn/crit parameters
 
 	WARNINGS
@@ -123,71 +268,71 @@ This file documents the major additions and syntax changes between releases.
 	check_http has options to specify the HTTP method (#2155152)
 	check_users thresholds were not working exactly as documented (>= rather than >)
 	Updated tinderbox_build script to point to new tinderbox server
-	check_ifoperstatus -n flag now works as expected (sf.net #1569488)
+	check_ifoperstatus -n flag now works as expected (#1569488)
 	check_ifoperstatus now supports ifType based lookup for ifIndex
-	check_ups now sends a LOGOUT string (debian bug #387001)
+	check_ups now sends a LOGOUT string (Debian #387001)
 	Extra-opts (C plugins) now allows both '#' and ';' for comments (like N::P)
 	Extra-opts (C plugins) does not allow trailing comments anymore (like N::P)
 	Fixed dependency issue on libtap when ./configure --enable-libtap used. Warning: will install libtap
 	Fixed segfault in extra-opts under some circumstance when reading multiple sections
 	Fix long options parsing in check_disk, check_dns, check_mrtg, check_mrtgtraf and check_tcp
 	Add missing long options for check_nt (for use with extra-opts)
-	check_icmp now reports min and max round trip time perfdata (Steve Rader)
-	Fixed check_http bug where additional headers with redirection caused a segfault (Dieter Van de Walle - 2089159)
-	check_disk: make autofs mount paths specified with -p before we determine the mount list (Erik Welch)
+	check_icmp now reports min and max round trip time perfdata
+	Fixed check_http bug where additional headers with redirection caused a segfault (2089159)
+	check_disk: make autofs mount paths specified with -p before we determine the mount list
 	Fixed buffer overflow in check_ntp/check_ntp_peer (#1999319, Ubuntu #291265)
 	Re-bundled libtap as a built-in library (--enable-libtap): detects system library as pre-1.4.13 and does not install the built-in library anymore
-	Fixed check_mrtg returning UNKNOWN instead of OK (bug #2378068)
-	Fixed check_http behaviour: all check are now performed as long as a valid response is returned (sf.net #1460312)
-	check_http --onredirect=sticky follows using the same IP address (sf.net #2550208)
+	Fixed check_mrtg returning UNKNOWN instead of OK (#2378068)
+	Fixed check_http behaviour: all check are now performed as long as a valid response is returned (#1460312)
+	check_http --onredirect=sticky follows using the same IP address (#2550208)
 	check_http --onredirect=stickyport also follows the same port
-	Fixed coredump from check_nt when invalid drive is specified (#2179754 - Olli Hauer)
-	Fixed crash from check_nt when -H unspecified or given multiple times (sf.net #2731755, debian #521097)
-	Fixed passing of quotes in OID for check_snmp (#1985230 - Jan Wagner, patch by John Barbuto)
+	Fixed coredump from check_nt when invalid drive is specified (#2179754)
+	Fixed crash from check_nt when -H unspecified or given multiple times (#2731755, Debian #521097)
+	Fixed passing of quotes in OID for check_snmp (#1985230)
 	Fixed check_http sending HTTP/1.0 with v1.1 headers (#2638765)
 	Fixed check_http not timing-out on redirects
 	Fixed negate not printing the real timeout in ALRM handler when left to default
 	negate timeout result is now configurable
-	Fixed segfault in check_mysql with old slaves (#2696823 - Oskar Ahner)
+	Fixed segfault in check_mysql with old slaves (#2696823)
 	check_nt can return UNKNOWN on timeouts (-u)
-	Fixed typos for check_disk (Chris Pepper)
-	Fixed check_mysql* not using password set in my.cnf (#2531905 - Ben Timby) - Specify an empty password explicitly if you need to override it.
-	Fixed awk subst.in/subst script path error (#2722832 - Martin Foster)
-	check_http: Add SSL/TLS hostname extension support (SNI) - (#1939022 - Joe Presbrey)
-	Fixed wrong perfdata label for output traffic in check_mrtgtraf (#2654308 - Gavin Williams)
+	Fixed typos for check_disk
+	Fixed check_mysql* not using password set in my.cnf (#2531905) - Specify an empty password explicitly if you need to override it.
+	Fixed awk subst.in/subst script path error (#2722832)
+	check_http: Add SSL/TLS hostname extension support (SNI) - (#1939022)
+	Fixed wrong perfdata label for output traffic in check_mrtgtraf (#2654308)
 	Fixed check_by_ssh interpretation of quotes in -C parameter (#1985246, #2268675)
 	check_snmp now supports standard threshold ranges and doubles (floating numbers) in thresholds
-	check_fping now supports passing target timeout and interval to fping (#2347686 - Martin Foster)
-	Fixed SNMPv3 behaviour of check_ifoperstatus and check_ifstatus. Added -P to define privprotocol (#2343438 - Robin Schroeder)
+	check_fping now supports passing target timeout and interval to fping (#2347686)
+	Fixed SNMPv3 behaviour of check_ifoperstatus and check_ifstatus. Added -P to define privprotocol (#2343438)
 	check_ifoperstatus and check_ifstatus are now more user-friendly in case of missing arguments
-	pst3 compile fix for Sun Studio Compiler (Grant Byers)
+	pst3 compile fix for Sun Studio Compiler
 
 1.4.13 25th Sept 2008
-	Fix Debian bug #460097: check_http --max-age broken (Hilko Bengen)
-	Optimised pst3 for systems with large number of processes (Duncan Ferguson)
+	Fix Debian bug #460097: check_http --max-age broken
+	Optimised pst3 for systems with large number of processes
 	Updated Nagios::Plugin to 0.27
-	Fix Debian bug #479013: check_dig's -l is mandatory now (sf.net #1986306)
+	Fix Debian bug #479013: check_dig's -l is mandatory now (#1986306)
 	check_dig now returns CRITICAL instead of WARNING when no answer section is found
 	check_procs now captures stderr in external command and adds to plugin output
 	check_snmp now only prints perfdata for non numeric values (#1867716)
 	check_icmp now supports packet size modification
-	check_http -e now accepts a comma-delimited list of expected status codes (Sven Nierlein)
+	check_http -e now accepts a comma-delimited list of expected status codes
 	libtap now included with this distribution for easier testing. Run ./configure with --enable-libtap
 	check_ntp_peer/check_ntp_time used to show port in --help but ignored the argument - now implemented
 	Fix possible segfault in check_ntp_peer with deliberately invalid packets
 
 1.4.12 27th May 2008
-	Added ./check_nt -v INSTANCES to count number of instances (Alessandro Ren)
+	Added ./check_nt -v INSTANCES to count number of instances
 	New check_icmp -s option to specify the source IP address
-	check_dns now sorts addresses for testing results for more than one returned IP (Matthias Urlichs)
-	Fix segfault in check_ntp_time and (deprecated) check_ntp (Bug #1862300)
+	check_dns now sorts addresses for testing results for more than one returned IP
+	Fix segfault in check_ntp_time and (deprecated) check_ntp (#1862300)
 	check_disk should now work with large file systems (2TB+) on all archs that supports it
-	Fixed check_disk disk usage calculation when using --group=NAME (related to bug #1348746)
-	Fix help text of check_ntp* (Bug #1880095)
+	Fixed check_disk disk usage calculation when using --group=NAME (related to #1348746)
+	Fix help text of check_ntp* (#1880095)
 	Fix bugs and flaws in best offset server selection of check_ntp_time and (deprecated) check_ntp
 	check_ntp_peer now checks for the LI_ALARM flag
 	Sync to latest Gnulib (includes new floorf function)
-	check_pgsql now successfully builds with postgres lib v8.3 (Bug #1878972)  
+	check_pgsql now successfully builds with postgres lib v8.3 (#1878972)
 	check_procs now accepts --ereg-argument-array for a regular expression match to the argument array
 	Reverted back to using pst3 for Solaris systems. Fixed issues re: -m64 needed to compile on 64bit systems
 	If applicable, Gettext linked dynamically instead of statically
@@ -197,7 +342,7 @@ This file documents the major additions and syntax changes between releases.
 	check_mysql and check_radius now try clearing password in processlist just like check_mysql_query
 	check_mysql and check_mysql_query now support sockets explicitely (-s, --socket)
 	negate now has the ability to replace the status text as well (-s, --substitute)
-	Added performance data to check_ping (Christian Schneemann)
+	Added performance data to check_ping
 	Added support for --extra-opts in all C plugins (disabled by default, see configure --help)
 	Fixed passive option in check_by_ssh
 	On non-skipped stderr, check_by_ssh now returns UNKNOWN or worse (result from command) instead of always UNKNOWN.
@@ -216,9 +361,9 @@ This file documents the major additions and syntax changes between releases.
 	  is "-1" as the default range starts at 0. See Examples in --help output.
 	Fixed broken usage2 in check_snmp and check_cluster
 	check_cluster now accepts all valid characters in its thresholds ("-", "@", "~")
-	Fixed check_disk reporting OK if disk usage grows over 100% (bug #1348746).
+	Fixed check_disk reporting OK if disk usage grows over 100% (#1348746).
 	  The problem happens to be in Gnulib but a workaround have been implemented in check_disk.c
-	Fixed check_load argument handling when not passing triplets (bug #1831890)
+	Fixed check_load argument handling when not passing triplets (#1831890)
 	Fixed buffer overflow in check_snmp (CVE-2007-5623)
 	Tinderbox builds now runs tests in a verbose mode
 	Updated Nagios::Plugin to 0.22
@@ -288,7 +433,7 @@ This file documents the major additions and syntax changes between releases.
 	check_icmp fix for *BSD when running for long time
 	check_ping times out 1 second quicker if host is unreachable
 	Root plugins installed with world executable
-	check_sybase from contrib now maintained in NagiosExchange
+	check_sybase from contrib now maintained in MonitoringExchange
 	--with-nagios-user/group reinstated ./configure option
 	New --without-world-permissions ./configure option
 
@@ -312,7 +457,7 @@ This file documents the major additions and syntax changes between releases.
 	New C based check_ntp. The perl version is now deprecated.
 	New check_apt plugin
 	Notice: plugins in contrib/ will start to be removed from this distribution.
-	  Please check at http://www.nagiosexchange.org for contributed plugins
+	  Please check at http://www.monitoringexchange.org for contributed plugins
 	Major bug fixes to check_disk where values were incorrectly calculated and alerted on.
 	check_udp2 removed. check_udp is now linked to check_tcp.c
 	check_mailq now errors if the sub-program run returns non-zero return code. This would appear

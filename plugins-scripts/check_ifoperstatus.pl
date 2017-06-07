@@ -1,9 +1,9 @@
-#!/usr/local/bin/perl -w
+#!@PERL@ -w
 #
-# check_ifoperstatus.pl - nagios plugin 
+# check_ifoperstatus.pl - monitoring plugin
 #
 # Copyright (C) 2000 Christoph Kron,
-# Modified 5/2002 to conform to updated Nagios Plugin Guidelines
+# Modified 5/2002 to conform to updated Monitoring Plugins Guidelines
 # Added support for named interfaces per Valdimir Ivaschenko (S. Ghosh)
 # Added SNMPv3 support (10/2003)
 #
@@ -19,10 +19,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+# Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
+# USA
 #
 #
-# Report bugs to:  help@nagios-plugins.org
+# Report bugs to:  help@monitoring-plugins.org
 #
 # 11.01.2000 Version 1.0
 #
@@ -34,7 +35,8 @@
 
 use POSIX;
 use strict;
-use lib utils.pm ;
+use FindBin;
+use lib "$FindBin::Bin";
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 
 use Net::SNMP;
@@ -46,6 +48,10 @@ sub print_help ();
 sub usage ($);
 sub print_usage ();
 sub process_arguments ();
+
+$ENV{'PATH'}='@TRUSTED_PATH@';
+$ENV{'BASH_ENV'}=''; 
+$ENV{'ENV'}='';
 
 my $timeout;
 my $status;
@@ -97,7 +103,7 @@ my %session_opts;
 $status = process_arguments();
 
 
-# Just in case of problems, let's not hang Nagios
+# Just in case of problems, let's not hang the monitoring system
 $SIG{'ALRM'} = sub {
 	print ("ERROR: No snmp response from $hostname (alarm)\n");
 	exit $ERRORS{"UNKNOWN"};
@@ -288,7 +294,7 @@ sub print_usage() {
 sub print_help() {
 	print_revision($PROGNAME, '@NP_VERSION@');
 	print_usage();
-	printf "check_ifoperstatus plugin for Nagios monitors operational \n";
+	printf "check_ifoperstatus plugin for monitoring operational \n";
 	printf "status of a particular network interface on the target host\n";
 	printf "\nUsage:\n";
 	printf "   -H (--hostname)   Hostname to query - (required)\n";
@@ -319,7 +325,7 @@ sub print_help() {
 	printf "                     (Implies the use of -I)\n";
 	printf "   -w (--warn =i|w|c) ignore|warn|crit if the interface is dormant (default critical)\n";
 	printf "   -D (--admin-down =i|w|c) same for administratively down interfaces (default warning)\n";
-	printf "   -M (--maxmsgsize) Max message size - usefull only for v1 or v2c\n";
+	printf "   -M (--maxmsgsize) Max message size - useful only for v1 or v2c\n";
 	printf "   -t (--timeout)    seconds before the plugin times out (default=$TIMEOUT)\n";
 	printf "   -V (--version)    Plugin version\n";
 	printf "   -h (--help)       usage help \n\n";
@@ -361,17 +367,17 @@ sub process_arguments() {
 
 	if ($status == 0){
 		print_help();
-		exit $ERRORS{'OK'};
+		exit $ERRORS{'UNKNOWN'};
 	}
 
 	if ($opt_V) {
 		print_revision($PROGNAME,'@NP_VERSION@');
-		exit $ERRORS{'OK'};
+		exit $ERRORS{'UNKNOWN'};
 	}
 
 	if ($opt_h) {
 		print_help();
-		exit $ERRORS{'OK'};
+		exit $ERRORS{'UNKNOWN'};
 	}
 
 	if (! utils::is_hostname($hostname)){

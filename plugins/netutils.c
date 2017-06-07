@@ -1,10 +1,10 @@
 /*****************************************************************************
 * 
-* Nagios plugins network utilities
+* Monitoring Plugins network utilities
 * 
 * License: GPL
 * Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
-* Copyright (c) 2003-2008 Nagios Plugins Development Team
+* Copyright (c) 2003-2008 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -161,17 +161,22 @@ process_request (const char *server_address, int server_port, int proto,
 int
 np_net_connect (const char *host_name, int port, int *sd, int proto)
 {
+        /* send back STATE_UNKOWN if there's an error
+           send back STATE_OK if we connect
+           send back STATE_CRITICAL if we can't connect.
+           Let upstream figure out what to send to the user. */
 	struct addrinfo hints;
 	struct addrinfo *r, *res;
 	struct sockaddr_un su;
 	char port_str[6], host[MAX_HOST_ADDRESS_LENGTH];
 	size_t len;
 	int socktype, result;
+	short is_socket = (host_name[0] == '/');
 
 	socktype = (proto == IPPROTO_UDP) ? SOCK_DGRAM : SOCK_STREAM;
 
 	/* as long as it doesn't start with a '/', it's assumed a host or ip */
-	if(host_name[0] != '/'){
+	if (!is_socket){
 		memset (&hints, 0, sizeof (hints));
 		hints.ai_family = address_family;
 		hints.ai_protocol = proto;
@@ -249,12 +254,14 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 	else if (was_refused) {
 		switch (econn_refuse_state) { /* a user-defined expected outcome */
 		case STATE_OK:
-		case STATE_WARNING:  /* user wants WARN or OK on refusal */
-			return econn_refuse_state;
-			break;
-		case STATE_CRITICAL: /* user did not set econn_refuse_state */
-			printf ("%s\n", strerror(errno));
-			return econn_refuse_state;
+		case STATE_WARNING:  /* user wants WARN or OK on refusal, or... */
+		case STATE_CRITICAL: /* user did not set econn_refuse_state, or wanted critical */
+			if (is_socket)
+				printf("connect to file socket %s: %s\n", host_name, strerror(errno));
+			else
+				printf("connect to address %s and port %d: %s\n",
+				       host_name, port, strerror(errno));
+			return STATE_CRITICAL;
 			break;
 		default: /* it's a logic error if we do not end up in STATE_(OK|WARNING|CRITICAL) */
 			return STATE_UNKNOWN;
@@ -262,7 +269,11 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 		}
 	}
 	else {
-		printf ("%s\n", strerror(errno));
+		if (is_socket)
+			printf("connect to file socket %s: %s\n", host_name, strerror(errno));
+		else
+			printf("connect to address %s and port %d: %s\n",
+			       host_name, port, strerror(errno));
 		return STATE_CRITICAL;
 	}
 }
@@ -348,20 +359,21 @@ is_addr (const char *address)
 }
 
 int
-resolve_host_or_addr (const char *address, int family)
+dns_lookup (const char *in, struct sockaddr_storage *ss, int family)
 {
 	struct addrinfo hints;
 	struct addrinfo *res;
 	int retval;
 
-	memset (&hints, 0, sizeof (hints));
+	memset (&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = family;
-	retval = getaddrinfo (address, NULL, &hints, &res);
 
+	retval = getaddrinfo (in, NULL, &hints, &res);
 	if (retval != 0)
 		return FALSE;
-	else {
-		freeaddrinfo (res);
-		return TRUE;
-	}
+
+	if (ss != NULL)
+		memcpy (ss, res->ai_addr, res->ai_addrlen);
+	freeaddrinfo (res);
+	return TRUE;
 }

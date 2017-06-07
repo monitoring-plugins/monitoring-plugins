@@ -4,12 +4,12 @@ These are the steps for adding someone to the team.
 
 Need to know:
   - Name
-  - Primary email for nagiosplug-team mailings
+  - Primary email for team mailings
   - GitHub account
   - Type of member (translator, developer, release manager, project administrator)
 
-1. Add member to nagiosplug-team mailing list (https://lists.sourceforge.net/lists/admin/nagiosplug-team)
-   and to the nagiosplug-checkins mailing list (https://lists.sourceforge.net/lists/admin/nagiosplug-checkins,
+1. Add member to team mailing list (https://www.monitoring-plugins.org/list/listinfo/team/)
+   and to the commits mailing list (https://www.monitoring-plugins.org/list/listinfo/commits/),
    add sourceforge email address via Privacy Options->Sender filters)
 2. Add Sourceforge access:
   - Translator: CVS access, Shell access, Release Tech (no)
@@ -21,4 +21,4 @@ Need to know:
 3. Create account on project server
   - Add public ssh keys
 4. Add Git access on repos.or.cz
-5. Send email to nagiosplug-team introducing new member
+5. Send email to team introducing new member

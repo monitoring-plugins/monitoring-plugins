@@ -29,7 +29,7 @@ my $hostname_invalid   = getTestParameter(
 			);
 
 
-my $jabberOK = '/JABBER OK\s-\s\d+\.\d+\ssecond response time on port 5222/';
+my $jabberOK = '/JABBER OK\s-\s\d+\.\d+\ssecond response time on '.$host_tcp_jabber.' port 5222/';
 
 my $jabberUnresponsive = '/CRITICAL\s-\sSocket timeout after\s\d+\sseconds/';
 
@@ -40,7 +40,7 @@ my $r;
 SKIP: {
 	skip "No jabber server defined", 6 unless $host_tcp_jabber;
 
-	$r = NPTest->testCmd( "./check_jabber $host_tcp_jabber" );
+	$r = NPTest->testCmd( "./check_jabber -H $host_tcp_jabber" );
 	is( $r->return_code, 0, "Connected okay");
 	like( $r->output, $jabberOK, "Output as expected" );
 
@@ -48,7 +48,7 @@ SKIP: {
 	is( $r->return_code, 0, "Connected okay, within limits" );
 	like( $r->output, $jabberOK, "Output as expected" );
 	
-	$r = NPTest->testCmd( "./check_jabber $host_tcp_jabber -wt 9 -ct 9 -to 10" );
+	$r = NPTest->testCmd( "./check_jabber -H $host_tcp_jabber -wt 9 -ct 9 -to 10" );
 	is( $r->return_code, 0, "Old syntax okay" );
 	like( $r->output, $jabberOK, "Output as expected" );
 

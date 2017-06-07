@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios negate plugin
+* Monitoring negate plugin
 * 
 * License: GPL
-* Copyright (c) 2002-2008 Nagios Plugins Development Team
+* Copyright (c) 2002-2008 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -31,21 +31,20 @@
 
 const char *progname = "negate";
 const char *copyright = "2002-2008";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #define DEFAULT_TIMEOUT 11
-
-#include <ctype.h>
 
 #include "common.h"
 #include "utils.h"
 #include "utils_cmd.h"
 
+#include <ctype.h>
+
 /* char *command_line; */
 
 static const char **process_arguments (int, char **);
-int validate_arguments (char **);
-int translate_state (char *);
+void validate_arguments (char **);
 void print_help (void);
 void print_usage (void);
 int subst_text = FALSE;
@@ -60,8 +59,8 @@ static int state[4] = {
 int
 main (int argc, char **argv)
 {
-	int found = 0, result = STATE_UNKNOWN;
-	char *buf, *sub;
+	int result = STATE_UNKNOWN;
+	char *sub;
 	char **command_line;
 	output chld_out, chld_err;
 	int i;
@@ -99,8 +98,7 @@ main (int argc, char **argv)
 		die (max_state_alt (result, STATE_UNKNOWN), _("No data returned from command\n"));
 
 	for (i = 0; i < chld_out.lines; i++) {
-		if (subst_text && result != state[result] &&
-		    result >= 0 && result <= 4) {
+		if (subst_text && result >= 0 && result <= 4 && result != state[result])  {
 			/* Loop over each match found */
 			while ((sub = strstr (chld_out.line[i], state_text (result)))) {
 				/* Terminate the first part and skip over the string we'll substitute */
@@ -166,27 +164,27 @@ process_arguments (int argc, char **argv)
 				timeout_interval = atoi (optarg);
 			break;
 		case 'T':     /* Result to return on timeouts */
-			if ((timeout_state = translate_state(optarg)) == ERROR)
+			if ((timeout_state = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Timeout result must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			break;
 		case 'o':     /* replacement for OK */
-			if ((state[STATE_OK] = translate_state(optarg)) == ERROR)
+			if ((state[STATE_OK] = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Ok must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			permute = FALSE;
 			break;
 
 		case 'w':     /* replacement for WARNING */
-			if ((state[STATE_WARNING] = translate_state(optarg)) == ERROR)
+			if ((state[STATE_WARNING] = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Warning must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			permute = FALSE;
 			break;
 		case 'c':     /* replacement for CRITICAL */
-			if ((state[STATE_CRITICAL] = translate_state(optarg)) == ERROR)
+			if ((state[STATE_CRITICAL] = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Critical must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			permute = FALSE;
 			break;
 		case 'u':     /* replacement for UNKNOWN */
-			if ((state[STATE_UNKNOWN] = translate_state(optarg)) == ERROR)
+			if ((state[STATE_UNKNOWN] = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Unknown must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			permute = FALSE;
 			break;
@@ -207,7 +205,7 @@ process_arguments (int argc, char **argv)
 }
 
 
-int
+void
 validate_arguments (char **command_line)
 {
 	if (command_line[0] == NULL)
@@ -217,24 +215,6 @@ validate_arguments (char **command_line)
 		usage4 (_("Require path to command"));
 }
 
-
-int
-translate_state (char *state_text)
-{
-	char *temp_ptr;
-	for (temp_ptr = state_text; *temp_ptr; temp_ptr++) {
-		*temp_ptr = toupper(*temp_ptr);
-	}
-	if (!strcmp(state_text,"OK") || !strcmp(state_text,"0"))
-		return STATE_OK;
-	if (!strcmp(state_text,"WARNING") || !strcmp(state_text,"1"))
-		return STATE_WARNING;
-	if (!strcmp(state_text,"CRITICAL") || !strcmp(state_text,"2"))
-		return STATE_CRITICAL;
-	if (!strcmp(state_text,"UNKNOWN") || !strcmp(state_text,"3"))
-		return STATE_UNKNOWN;
-	return ERROR;
-}
 
 void
 print_help (void)
@@ -252,7 +232,7 @@ print_help (void)
 
 	printf (UT_HELP_VRSN);
 
-	printf (UT_TIMEOUT, timeout_interval);
+	printf (UT_PLUG_TIMEOUT, timeout_interval);
 	printf ("    %s\n", _("Keep timeout longer than the plugin timeout to retain CRITICAL status."));
 	printf (" -T, --timeout-result=STATUS\n");
 	printf ("    %s\n", _("Custom result on Negate timeouts; see below for STATUS definition\n"));

@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_dbi plugin
+* Monitoring check_dbi plugin
 * 
 * License: GPL
-* Copyright (c) 2011 Nagios Plugins Development Team
+* Copyright (c) 2011 Monitoring Plugins Development Team
 * Author: Sebastian 'tokkee' Harl <sh@teamix.net>
 * 
 * Description:
@@ -31,7 +31,7 @@
 
 const char *progname = "check_dbi";
 const char *copyright = "2011";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
@@ -215,7 +215,7 @@ main (int argc, char **argv)
 	}
 
 	if (dbi_conn_connect (conn) < 0) {
-		np_dbi_print_error (conn, "UNKOWN - failed to connect to database");
+		np_dbi_print_error (conn, "UNKNOWN - failed to connect to database");
 		return STATE_UNKNOWN;
 	}
 
@@ -241,7 +241,7 @@ main (int argc, char **argv)
 			printf ("Selecting database '%s'\n", np_dbi_database);
 
 		if (dbi_conn_select_db (conn, np_dbi_database)) {
-			np_dbi_print_error (conn, "UNKOWN - failed to select database '%s'",
+			np_dbi_print_error (conn, "UNKNOWN - failed to select database '%s'",
 					np_dbi_database);
 			return STATE_UNKNOWN;
 		}
@@ -368,10 +368,10 @@ process_arguments (int argc, char **argv)
 			usage5 ();
 		case 'h':     /* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'V':     /* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 
 		case 'c':     /* critical range */
 			critical_range = optarg;
@@ -456,7 +456,7 @@ process_arguments (int argc, char **argv)
 				new = realloc (np_dbi_options,
 						(np_dbi_options_num + 1) * sizeof (*new));
 				if (! new) {
-					printf ("UNKOWN - failed to reallocate memory\n");
+					printf ("UNKNOWN - failed to reallocate memory\n");
 					exit (STATE_UNKNOWN);
 				}
 
@@ -562,7 +562,7 @@ print_help (void)
 	printf ("                   %s\n", _("(ignore the query result)"));
 	printf ("\n");
 
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 	printf (UT_VERBOSE);
 

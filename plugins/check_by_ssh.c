@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_by_ssh plugin
+* Monitoring check_by_ssh plugin
 * 
 * License: GPL
-* Copyright (c) 2000-2008 Nagios Plugins Development Team
+* Copyright (c) 2000-2008 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -28,7 +28,7 @@
 
 const char *progname = "check_by_ssh";
 const char *copyright = "2000-2008";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
@@ -100,6 +100,13 @@ main (int argc, char **argv)
 
 	result = cmd_run_array (commargv, &chld_out, &chld_err, 0);
 
+	if (verbose) {
+		for(i = 0; i < chld_out.lines; i++)
+			printf("stdout: %s\n", chld_out.line[i]);
+		for(i = 0; i < chld_err.lines; i++)
+			printf("stderr: %s\n", chld_err.line[i]);
+	}
+
 	if (skip_stdout == -1) /* --skip-stdout specified without argument */
 		skip_stdout = chld_out.lines;
 	if (skip_stderr == -1) /* --skip-stderr specified without argument */
@@ -169,7 +176,8 @@ process_arguments (int argc, char **argv)
 		{"verbose", no_argument, 0, 'v'},
 		{"fork", no_argument, 0, 'f'},
 		{"timeout", required_argument, 0, 't'},
-		{"host", required_argument, 0, 'H'},
+		{"host", required_argument, 0, 'H'},    /* backward compatibility */
+		{"hostname", required_argument, 0, 'H'},
 		{"port", required_argument,0,'p'},
 		{"output", required_argument, 0, 'O'},
 		{"name", required_argument, 0, 'n'},
@@ -208,10 +216,10 @@ process_arguments (int argc, char **argv)
 		switch (c) {
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
-			exit (STATE_OK);
+			exit (STATE_UNKNOWN);
 		case 'v':									/* help */
 			verbose = TRUE;
 			break;
@@ -246,7 +254,7 @@ process_arguments (int argc, char **argv)
 			}
 			service[services - 1] = p1;
 			break;
-		case 'n':									/* short name of host in nagios configuration */
+		case 'n':									/* short name of host in the monitoring configuration */
 			host_shortname = optarg;
 			break;
 
@@ -371,7 +379,7 @@ validate_arguments (void)
 		die (STATE_UNKNOWN, _("%s: In passive mode, you must provide a service name for each command.\n"), progname);
 
 	if (passive && host_shortname == NULL)
-		die (STATE_UNKNOWN, _("%s: In passive mode, you must provide the host short name from the nagios configs.\n"), progname);
+		die (STATE_UNKNOWN, _("%s: In passive mode, you must provide the host short name from the monitoring configs.\n"), progname);
 
 	return OK;
 }
@@ -416,11 +424,11 @@ print_help (void)
   printf (" %s\n","-i, --identity=KEYFILE");
   printf ("    %s\n", _("identity of an authorized key [optional]"));
   printf (" %s\n","-O, --output=FILE");
-  printf ("    %s\n", _("external command file for nagios [optional]"));
+  printf ("    %s\n", _("external command file for monitoring [optional]"));
   printf (" %s\n","-s, --services=LIST");
-  printf ("    %s\n", _("list of nagios service names, separated by ':' [optional]"));
+  printf ("    %s\n", _("list of monitoring service names, separated by ':' [optional]"));
   printf (" %s\n","-n, --name=NAME");
-  printf ("    %s\n", _("short name of host in nagios configuration [optional]"));
+  printf ("    %s\n", _("short name of host in the monitoring configuration [optional]"));
   printf (" %s\n","-o, --ssh-option=OPTION");
   printf ("    %s\n", _("Call ssh with '-o OPTION' (may be used multiple times) [optional]"));
   printf (" %s\n","-F, --configfile");
@@ -428,7 +436,7 @@ print_help (void)
   printf (" %s\n","-q, --quiet");
   printf ("    %s\n", _("Tell ssh to suppress warning and diagnostic messages [optional]"));
 	printf (UT_WARN_CRIT);
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf (UT_VERBOSE);
 	printf("\n");
   printf (" %s\n", _("The most common mode of use is to refer to a local identity file with"));

@@ -1,4 +1,4 @@
-The Nagios Plugins are brought to you by the Nagios Plugins Development Team.
+The Monitoring Plugins are brought to you by the Monitoring Plugins Development Team.
 
 Jeremy T. Bouse
 Peter Bray
@@ -11,6 +11,7 @@ Subhendu Ghosh
 Thomas Guyot-Sionnest
 Stanley Hopcroft
 Matthew Kent
+Sam Kottler
 Harper Mann
 Benoit Mortier
 Sven Nierlein
@@ -20,3 +21,4 @@ Ton Voon
 Jan Wagner
 Holger Weiss
 Michael Wirtgen
+Oliver Skibbe

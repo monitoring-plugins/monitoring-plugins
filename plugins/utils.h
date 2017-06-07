@@ -1,6 +1,6 @@
 #ifndef NP_UTILS_H
 #define NP_UTILS_H
-/* Header file for nagios plugins utils.c */
+/* Header file for Monitoring Plugins utils.c */
 
 /* This file should be included in all plugins */
 
@@ -94,29 +94,17 @@ const char *state_text (int);
 #define max(a,b) (((a)>(b))?(a):(b))
 #define min(a,b) (((a)<(b))?(a):(b))
 
-char *perfdata (const char *,
- long int,
- const char *,
- int,
- long int,
- int,
- long int,
- int,
- long int,
- int,
- long int);
+char *perfdata (const char *, long int, const char *, int, long int,
+                int, long int, int, long int, int, long int);
 
-char *fperfdata (const char *,
- double,
- const char *,
- int,
- double,
- int,
- double,
- int,
- double,
- int,
- double);
+char *fperfdata (const char *, double, const char *, int, double,
+                 int, double, int, double, int, double);
+
+char *sperfdata (const char *, double, const char *, char *, char *,
+                 int, double, int, double);
+
+char *sperfdata_int (const char *, int, const char *, char *, char *,
+                     int, int, int, int);
 
 /* The idea here is that, although not every plugin will use all of these, 
    most will or should.  Therefore, for consistency, these very common 
@@ -131,7 +119,7 @@ char *fperfdata (const char *,
 {"warning",required_argument,0,'w'},\
 {"hostname",required_argument,0,'H'}
 
-#define COPYRIGHT "Copyright (c) %s Nagios Plugin Development Team\n\
+#define COPYRIGHT "Copyright (c) %s Monitoring Plugins Development Team\n\
 \t<%s>\n\n"
 
 #define UT_HLP_VRS _("\
@@ -159,7 +147,8 @@ char *fperfdata (const char *,
 
 #define UT_VERBOSE _("\
  -v, --verbose\n\
-    Show details for command-line debugging (Nagios may truncate output)\n")
+    Show details for command-line debugging (output may be truncated by\n\
+    the monitoring system)\n")
 
 #define UT_WARN_CRIT _("\
  -w, --warning=DOUBLE\n\
@@ -173,32 +162,36 @@ char *fperfdata (const char *,
  -c, --critical=RANGE\n\
     Critical range\n")
 
-#define UT_TIMEOUT _("\
+#define UT_CONN_TIMEOUT _("\
  -t, --timeout=INTEGER\n\
     Seconds before connection times out (default: %d)\n")
+
+#define UT_PLUG_TIMEOUT _("\
+ -t, --timeout=INTEGER\n\
+    Seconds before plugin times out (default: %d)\n")
 
 #ifdef NP_EXTRA_OPTS
 #define UT_EXTRA_OPTS _("\
  --extra-opts=[section][@file]\n\
     Read options from an ini file. See\n\
-    https://www.nagios-plugins.org/doc/extra-opts.html\n\
+    https://www.monitoring-plugins.org/doc/extra-opts.html\n\
     for usage and examples.\n")
 #else
-#define UT_EXTRA_OPTS ""
+#define UT_EXTRA_OPTS " \b"
 #endif
 
 #define UT_THRESHOLDS_NOTES _("\
  See:\n\
- https://www.nagios-plugins.org/doc/guidelines.html#THRESHOLDFORMAT\n\
+ https://www.monitoring-plugins.org/doc/guidelines.html#THRESHOLDFORMAT\n\
  for THRESHOLD format and examples.\n")
 
 #define UT_SUPPORT _("\n\
-Send email to help@nagios-plugins.org if you have questions regarding use\n\
-of this software. To submit patches or suggest improvements, send email to\n\
-devel@nagios-plugins.org\n\n")
+Send email to help@monitoring-plugins.org if you have questions regarding\n\
+use of this software. To submit patches or suggest improvements, send email\n\
+to devel@monitoring-plugins.org\n\n")
 
 #define UT_NOWARRANTY _("\n\
-The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\
+The Monitoring Plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\
 copies of the plugins under the terms of the GNU General Public License.\n\
 For more information about these matters, see the file named COPYING.\n")
 

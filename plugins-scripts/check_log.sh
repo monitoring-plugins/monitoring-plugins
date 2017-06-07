@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Log file pattern detector plugin for Nagios
+# Log file pattern detector plugin for monitoring
 # Written by Ethan Galstad (nagios@nagios.org)
 # Last Modified: 07-31-1999
 #
@@ -29,15 +29,15 @@
 #
 # If you use this plugin make sure to keep the following in mind:
 #
-#    1.  The "max_attempts" value for the service should be 1, as this
-#        will prevent Nagios from retrying the service check (the
+#    1.  The "max_attempts" value for the service should be 1, as this will
+#        prevent the monitoring system from retrying the service check (the
 #        next time the check is run it will not produce the same results).
 #
-#    2.  The "notify_recovery" value for the service should be 0, so that
-#        Nagios does not notify you of "recoveries" for the check.  Since
-#        pattern matches in the log file will only be reported once and not
-#        the next time, there will always be "recoveries" for the service, even
-#        though recoveries really don't apply to this type of check.
+#    2.  The "notify_recovery" value for the service should be 0, so that the
+#        monitoring system does not notify you of "recoveries" for the check.
+#        Since pattern matches in the log file will only be reported once and
+#        not the next time, there will always be "recoveries" for the service,
+#        even though recoveries really don't apply to this type of check.
 #
 #    3.  You *must* supply a different <old_file_log> for each service that
 #        you define to use this plugin script - even if the different services
@@ -57,19 +57,10 @@
 
 # Paths to commands used in this script.  These
 # may have to be modified to match your system setup.
-# TV: removed PATH restriction. Need to think more about what this means overall
-#PATH=""
 
-ECHO="/bin/echo"
-GREP="/bin/egrep"
-DIFF="/bin/diff"
-TAIL="/bin/tail"
-CAT="/bin/cat"
-RM="/bin/rm"
-CHMOD="/bin/chmod"
-TOUCH="/bin/touch"
-
-PROGNAME=`/bin/basename $0`
+PATH="@TRUSTED_PATH@"
+export PATH
+PROGNAME=`basename $0`
 PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
 REVISION="@NP_VERSION@"
 
@@ -86,7 +77,7 @@ print_help() {
     echo ""
     print_usage
     echo ""
-    echo "Log file pattern detector plugin for Nagios"
+    echo "Log file pattern detector plugin for monitoring"
     echo ""
     support
 }
@@ -167,10 +158,10 @@ done
 # If the source log file doesn't exist, exit
 
 if [ ! -e $logfile ]; then
-    $ECHO "Log check error: Log file $logfile does not exist!\n"
+    echo "Log check error: Log file $logfile does not exist!"
     exit $STATE_UNKNOWN
 elif [ ! -r $logfile ] ; then
-    $ECHO "Log check error: Log file $logfile is not readable!\n"
+    echo "Log check error: Log file $logfile is not readable!"
     exit $STATE_UNKNOWN
 fi
 
@@ -179,8 +170,8 @@ fi
 # the old diff file and exit
 
 if [ ! -e $oldlog ]; then
-    $CAT $logfile > $oldlog
-    $ECHO "Log check data initialized...\n"
+    cat $logfile > $oldlog
+    echo "Log check data initialized..."
     exit $STATE_OK
 fi
 
@@ -193,26 +184,26 @@ if [ -x /bin/mktemp ]; then
 else
     tempdiff=`/bin/date '+%H%M%S'`
     tempdiff="/tmp/check_log.${tempdiff}"
-    $TOUCH $tempdiff
-    $CHMOD 600 $tempdiff
+    touch $tempdiff
+    chmod 600 $tempdiff
 fi
 
-$DIFF $logfile $oldlog | $GREP -v "^>" > $tempdiff
+diff $logfile $oldlog | grep -v "^>" > $tempdiff
 
 # Count the number of matching log entries we have
-count=`$GREP -c "$query" $tempdiff`
+count=`grep -c "$query" $tempdiff`
 
 # Get the last matching entry in the diff file
-lastentry=`$GREP "$query" $tempdiff | $TAIL -1`
+lastentry=`grep "$query" $tempdiff | tail -1`
 
-$RM -f $tempdiff
-$CAT $logfile > $oldlog
+rm -f $tempdiff
+cat $logfile > $oldlog
 
 if [ "$count" = "0" ]; then # no matches, exit with no error
-    $ECHO "Log check ok - 0 pattern matches found\n"
+    echo "Log check ok - 0 pattern matches found"
     exitstatus=$STATE_OK
 else # Print total matche count and the last entry we found
-    $ECHO "($count) $lastentry"
+    echo "($count) $lastentry"
     exitstatus=$STATE_CRITICAL
 fi
 

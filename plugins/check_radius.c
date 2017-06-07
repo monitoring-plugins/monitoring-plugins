@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_radius plugin
+* Monitoring check_radius plugin
 * 
 * License: GPL
-* Copyright (c) 1999-2008 Nagios Plugins Development Team
+* Copyright (c) 1999-2008 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -30,15 +30,18 @@
 
 const char *progname = "check_radius";
 const char *copyright = "2000-2008";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
 #include "netutils.h"
 
-#ifdef HAVE_LIBRADIUSCLIENT_NG
+#if defined(HAVE_LIBRADCLI)
+#include <radcli/radcli.h>
+#elif defined(HAVE_LIBFREERADIUS_CLIENT)
+#include <freeradius-client.h>
+#elif defined(HAVE_LIBRADIUSCLIENT_NG)
 #include <radiusclient-ng.h>
-rc_handle *rch = NULL;
 #else
 #include <radiusclient.h>
 #endif
@@ -47,19 +50,24 @@ int process_arguments (int, char **);
 void print_help (void);
 void print_usage (void);
 
-/* libradiusclient(-ng) wrapper functions */
-#ifdef HAVE_LIBRADIUSCLIENT_NG
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) || defined(HAVE_LIBRADCLI)
 #define my_rc_conf_str(a) rc_conf_str(rch,a)
+#if defined(HAVE_LIBRADCLI)
+#define my_rc_send_server(a,b) rc_send_server(rch,a,b,AUTH)
+#else
 #define my_rc_send_server(a,b) rc_send_server(rch,a,b)
+#endif
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADCLI)
+#define my_rc_buildreq(a,b,c,d,e,f) rc_buildreq(rch,a,b,c,d,(a)->secret,e,f)
+#else
 #define my_rc_buildreq(a,b,c,d,e,f) rc_buildreq(rch,a,b,c,d,e,f)
-#define my_rc_own_ipaddress() rc_own_ipaddress(rch)
+#endif
 #define my_rc_avpair_add(a,b,c,d) rc_avpair_add(rch,a,b,c,-1,d)
 #define my_rc_read_dictionary(a) rc_read_dictionary(rch, a)
 #else
 #define my_rc_conf_str(a) rc_conf_str(a)
 #define my_rc_send_server(a,b) rc_send_server(a, b)
 #define my_rc_buildreq(a,b,c,d,e,f) rc_buildreq(a,b,c,d,e,f)
-#define my_rc_own_ipaddress() rc_own_ipaddress()
 #define my_rc_avpair_add(a,b,c,d) rc_avpair_add(a, b, c, d)
 #define my_rc_read_dictionary(a) rc_read_dictionary(a)
 #endif
@@ -72,6 +80,10 @@ void print_usage (void);
 
 int my_rc_read_config(char *);
 
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) || defined(HAVE_LIBRADCLI)
+rc_handle *rch = NULL;
+#endif
+
 char *server = NULL;
 char *username = NULL;
 char *password = NULL;
@@ -82,7 +94,6 @@ char *config_file = NULL;
 unsigned short port = PW_AUTH_UDP_PORT;
 int retries = 1;
 int verbose = FALSE;
-ENV *env = NULL;
 
 /******************************************************************************
 
@@ -142,11 +153,12 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 int
 main (int argc, char **argv)
 {
-	UINT4 service;
+	struct sockaddr_storage ss;
+	char name[HOST_NAME_MAX];
 	char msg[BUFFER_LEN];
 	SEND_DATA data;
 	int result = STATE_UNKNOWN;
-	UINT4 client_id;
+	uint32_t client_id, service;
 	char *str;
 
 	setlocale (LC_ALL, "");
@@ -162,7 +174,7 @@ main (int argc, char **argv)
 	str = strdup ("dictionary");
 	if ((config_file && my_rc_read_config (config_file)) ||
 			my_rc_read_dictionary (my_rc_conf_str (str)))
-		die (STATE_UNKNOWN, _("Config file error"));
+		die (STATE_UNKNOWN, _("Config file error\n"));
 
 	service = PW_AUTHENTICATE_ONLY;
 
@@ -171,24 +183,23 @@ main (int argc, char **argv)
 				my_rc_avpair_add (&data.send_pairs, PW_USER_NAME, username, 0) &&
 				my_rc_avpair_add (&data.send_pairs, PW_USER_PASSWORD, password, 0)
 				))
-		die (STATE_UNKNOWN, _("Out of Memory?"));
+		die (STATE_UNKNOWN, _("Out of Memory?\n"));
 
 	if (nasid != NULL) {
 		if (!(my_rc_avpair_add (&data.send_pairs, PW_NAS_IDENTIFIER, nasid, 0)))
-			die (STATE_UNKNOWN, _("Invalid NAS-Identifier"));
+			die (STATE_UNKNOWN, _("Invalid NAS-Identifier\n"));
 	}
 
-	if (nasipaddress != NULL) {
-		if (rc_good_ipaddr (nasipaddress))
-			die (STATE_UNKNOWN, _("Invalid NAS-IP-Address"));
-		if ((client_id = rc_get_ipaddr(nasipaddress)) == 0)
-			die (STATE_UNKNOWN, _("Invalid NAS-IP-Address"));
-	} else {
-		if ((client_id = my_rc_own_ipaddress ()) == 0)
-			die (STATE_UNKNOWN, _("Can't find local IP for NAS-IP-Address"));
+	if (nasipaddress == NULL) {
+		if (gethostname (name, sizeof(name)) != 0)
+			die (STATE_UNKNOWN, _("gethostname() failed!\n"));
+		nasipaddress = name;
 	}
+	if (!dns_lookup (nasipaddress, &ss, AF_INET)) /* TODO: Support IPv6. */
+		die (STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
+	client_id = ntohl (((struct sockaddr_in *)&ss)->sin_addr.s_addr);
 	if (my_rc_avpair_add (&(data.send_pairs), PW_NAS_IP_ADDRESS, &client_id, 0) == NULL)
-		die (STATE_UNKNOWN, _("Invalid NAS-IP-Address"));
+		die (STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
 
 	my_rc_buildreq (&data, PW_ACCESS_REQUEST, server, port, (int)timeout_interval,
 	             retries);
@@ -199,19 +210,19 @@ main (int argc, char **argv)
 		rc_avpair_free (data.receive_pairs);
 
 	if (result == TIMEOUT_RC)
-		die (STATE_CRITICAL, _("Timeout"));
+		die (STATE_CRITICAL, _("Timeout\n"));
 	if (result == ERROR_RC)
-		die (STATE_CRITICAL, _("Auth Error"));
+		die (STATE_CRITICAL, _("Auth Error\n"));
 	if (result == REJECT_RC)
-		die (STATE_WARNING, _("Auth Failed"));
+		die (STATE_WARNING, _("Auth Failed\n"));
 	if (result == BADRESP_RC)
-		die (STATE_WARNING, _("Bad Response"));
+		die (STATE_WARNING, _("Bad Response\n"));
 	if (expect && !strstr (msg, expect))
-		die (STATE_WARNING, "%s", msg);
+		die (STATE_WARNING, "%s\n", msg);
 	if (result == OK_RC)
-		die (STATE_OK, _("Auth OK"));
+		die (STATE_OK, _("Auth OK\n"));
 	(void)snprintf(msg, sizeof(msg), _("Unexpected result code %d"), result);
-	die (STATE_UNKNOWN, "%s", msg);
+	die (STATE_UNKNOWN, "%s\n", msg);
 }
 
 
@@ -252,10 +263,10 @@ process_arguments (int argc, char **argv)
 			usage5 ();
 		case 'h':									/* help */
 			print_help ();
-			exit (OK);
+			exit (STATE_UNKNOWN);
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
-			exit (OK);
+			exit (STATE_UNKNOWN);
 		case 'v':									/* verbose mode */
 			verbose = TRUE;
 			break;
@@ -267,7 +278,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'P':									/* port */
 			if (is_intnonneg (optarg))
-				port = atoi (optarg);
+				port = (unsigned short)atoi (optarg);
 			else
 				usage4 (_("Port must be a positive integer"));
 			break;
@@ -303,7 +314,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 't':									/* timeout */
 			if (is_intpos (optarg))
-				timeout_interval = atoi (optarg);
+				timeout_interval = (unsigned)atoi (optarg);
 			else
 				usage2 (_("Timeout interval must be a positive integer"), optarg);
 			break;
@@ -349,7 +360,7 @@ print_help (void)
 	printf (" %s\n", "-u, --username=STRING");
   printf ("    %s\n", _("The user to authenticate"));
   printf (" %s\n", "-p, --password=STRING");
-  printf ("    %s\n", _("Password for autentication (SECURITY RISK)"));
+  printf ("    %s\n", _("Password for authentication (SECURITY RISK)"));
   printf (" %s\n", "-n, --nas-id=STRING");
   printf ("    %s\n", _("NAS identifier"));
   printf (" %s\n", "-N, --nas-ip-address=STRING");
@@ -361,7 +372,7 @@ print_help (void)
   printf (" %s\n", "-r, --retries=INTEGER");
   printf ("    %s\n", _("Number of times to retry a failed connection"));
 
-	printf (UT_TIMEOUT, timeout_interval);
+	printf (UT_CONN_TIMEOUT, timeout_interval);
 
   printf ("\n");
   printf ("%s\n", _("This plugin tests a RADIUS server to see if it is accepting connections."));
@@ -370,8 +381,8 @@ print_help (void)
   printf ("%s\n", _("the configuration file is described in the radiusclient library sources."));
 	printf ("%s\n", _("The password option presents a substantial security issue because the"));
   printf ("%s\n", _("password can possibly be determined by careful watching of the command line"));
-  printf ("%s\n", _("in a process listing. This risk is exacerbated because nagios will"));
-  printf ("%s\n", _("run the plugin at regular predictable intervals. Please be sure that"));
+  printf ("%s\n", _("in a process listing. This risk is exacerbated because the plugin will"));
+  printf ("%s\n", _("typically be executed at regular predictable intervals. Please be sure that"));
   printf ("%s\n", _("the password used does not allow access to sensitive system resources."));
 
 	printf (UT_SUPPORT);
@@ -392,7 +403,7 @@ print_usage (void)
 
 int my_rc_read_config(char * a)
 {
-#ifdef HAVE_LIBRADIUSCLIENT_NG
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) || defined(HAVE_LIBRADCLI)
 	rch = rc_read_config(a);
 	return (rch == NULL) ? 1 : 0;
 #else

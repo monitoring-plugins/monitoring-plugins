@@ -3,7 +3,7 @@
 # Tool to send git commit notifications
 #
 # Copyright 2005 Alexandre Julliard
-# Copyright 2009 Nagios Plugins Development Team
+# Copyright 2009 Monitoring Plugins Development Team
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as

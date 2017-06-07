@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_game plugin
+* Monitoring check_game plugin
 * 
 * License: GPL
-* Copyright (c) 2002-2007 Nagios Plugins Development Team
+* Copyright (c) 2002-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -31,7 +31,7 @@
 
 const char *progname = "check_game";
 const char *copyright = "2002-2007";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
@@ -196,10 +196,10 @@ process_arguments (int argc, char **argv)
     switch (c) {
     case 'h': /* help */
       print_help ();
-      exit (STATE_OK);
+      exit (STATE_UNKNOWN);
     case 'V': /* version */
       print_revision (progname, NP_VERSION);
-      exit (STATE_OK);
+      exit (STATE_UNKNOWN);
     case 'v': /* version */
       verbose = TRUE;
       break;
@@ -312,7 +312,7 @@ print_help (void)
   printf (" %s\n", "-pf");
   printf ("    %s\n", _("Field number in raw qstat output that contains ping time"));
 
-  printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+  printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
   printf ("\n");
   printf ("%s\n", _("Notes:"));

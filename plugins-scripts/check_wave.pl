@@ -1,9 +1,10 @@
-#!/usr/bin/perl -wT
+#!@PERL@ -w
 #
 
 
 use strict;
-use lib utils.pm;
+use FindBin;
+use lib "$FindBin::Bin";
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 use vars qw($PROGNAME);
 use Getopt::Long;
@@ -15,7 +16,7 @@ $PROGNAME = "check_wave";
 sub print_help ();
 sub print_usage ();
 
-$ENV{'PATH'}='';
+$ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
@@ -30,12 +31,12 @@ GetOptions
 
 if ($opt_V) {
 	print_revision($PROGNAME,'@NP_VERSION@'); #'
-	exit $ERRORS{'OK'};
+	exit $ERRORS{'UNKNOWN'};
 }
 
 if ($opt_h) {
 	print_help();
-	exit $ERRORS{'OK'};
+	exit $ERRORS{'UNKNOWN'};
 }
 
 $opt_H = shift unless ($opt_H);

@@ -1,9 +1,9 @@
 /*****************************************************************************
 *
-* Nagios check_http plugin
+* Monitoring check_http plugin
 *
 * License: GPL
-* Copyright (c) 1999-2013 Nagios Plugins Development Team
+* Copyright (c) 1999-2013 Monitoring Plugins Development Team
 *
 * Description:
 *
@@ -35,7 +35,7 @@
 
 const char *progname = "check_http";
 const char *copyright = "1999-2013";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "netutils.h"
@@ -57,7 +57,7 @@ enum {
 
 #ifdef HAVE_SSL
 int check_cert = FALSE;
-int ssl_version;
+int ssl_version = 0;
 int days_till_exp_warn, days_till_exp_crit;
 char *randbuff;
 X509 *server_cert;
@@ -91,10 +91,12 @@ struct timeval tv_temp;
 
 int specify_port = FALSE;
 int server_port = HTTP_PORT;
+int virtual_port = 0;
 char server_port_text[6] = "";
 char server_type[6] = "http";
 char *server_address;
 char *host_name;
+int host_name_length;
 char *server_url;
 char *user_agent;
 int server_url_length;
@@ -157,7 +159,7 @@ main (int argc, char **argv)
   /* Set default URL. Must be malloced for subsequent realloc if --onredirect=follow */
   server_url = strdup(HTTP_URL);
   server_url_length = strlen(server_url);
-  xasprintf (&user_agent, "User-Agent: check_http/v%s (nagios-plugins %s)",
+  xasprintf (&user_agent, "User-Agent: check_http/v%s (monitoring-plugins %s)",
             NP_VERSION, VERSION);
 
   /* Parse extra opts if any */
@@ -257,7 +259,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:N:E", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NE", longopts, &option);
     if (c == -1 || c == EOF)
       break;
 
@@ -267,11 +269,11 @@ process_arguments (int argc, char **argv)
       break;
     case 'h': /* help */
       print_help ();
-      exit (STATE_OK);
+      exit (STATE_UNKNOWN);
       break;
     case 'V': /* version */
       print_revision (progname, NP_VERSION);
-      exit (STATE_OK);
+      exit (STATE_UNKNOWN);
       break;
     case 't': /* timeout period */
       if (!is_intnonneg (optarg))
@@ -339,13 +341,24 @@ process_arguments (int argc, char **argv)
     case 'S': /* use SSL */
 #ifdef HAVE_SSL
     enable_ssl:
+      /* ssl_version initialized to 0 as a default. Only set if it's non-zero.  This helps when we include multiple
+         parameters, like -S and -C combinations */
       use_ssl = TRUE;
-      if (optarg == NULL || c != 'S')
-        ssl_version = 0;
-      else {
-        ssl_version = atoi(optarg);
-        if (ssl_version < 1 || ssl_version > 3)
-            usage4 (_("Invalid option - Valid values for SSL Version are 1 (TLSv1), 2 (SSLv2) or 3 (SSLv3)"));
+      if (c=='S' && optarg != NULL) {
+        int got_plus = strchr(optarg, '+') != NULL;
+
+        if (!strncmp (optarg, "1.2", 3))
+          ssl_version = got_plus ? MP_TLSv1_2_OR_NEWER : MP_TLSv1_2;
+        else if (!strncmp (optarg, "1.1", 3))
+          ssl_version = got_plus ? MP_TLSv1_1_OR_NEWER : MP_TLSv1_1;
+        else if (optarg[0] == '1')
+          ssl_version = got_plus ? MP_TLSv1_OR_NEWER : MP_TLSv1;
+        else if (optarg[0] == '3')
+          ssl_version = got_plus ? MP_SSLv3_OR_NEWER : MP_SSLv3;
+        else if (optarg[0] == '2')
+          ssl_version = got_plus ? MP_SSLv2_OR_NEWER : MP_SSLv2;
+        else
+          usage4 (_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2 (with optional '+' suffix)"));
       }
       if (specify_port == FALSE)
         server_port = HTTPS_PORT;
@@ -380,11 +393,25 @@ process_arguments (int argc, char **argv)
     case 'H': /* Host Name (virtual host) */
       host_name = strdup (optarg);
       if (host_name[0] == '[') {
-        if ((p = strstr (host_name, "]:")) != NULL) /* [IPv6]:port */
-          server_port = atoi (p + 2);
+        if ((p = strstr (host_name, "]:")) != NULL) { /* [IPv6]:port */
+          virtual_port = atoi (p + 2);
+          /* cut off the port */
+	  host_name_length = strlen (host_name) - strlen (p) - 1;
+          free (host_name);
+          host_name = strndup (optarg, host_name_length);
+          if (specify_port == FALSE)
+            server_port = virtual_port;
+	}
       } else if ((p = strchr (host_name, ':')) != NULL
-                 && strchr (++p, ':') == NULL) /* IPv4:port or host:port */
-          server_port = atoi (p);
+                 && strchr (++p, ':') == NULL) { /* IPv4:port or host:port */
+          virtual_port = atoi (p);
+          /* cut off the port */
+	  host_name_length = strlen (host_name) - strlen (p) - 1;
+          free (host_name);
+          host_name = strndup (optarg, host_name_length);
+          if (specify_port == FALSE)
+            server_port = virtual_port;
+        }
       break;
     case 'I': /* Server IP-address */
       server_address = strdup (optarg);
@@ -539,8 +566,11 @@ process_arguments (int argc, char **argv)
   if (http_method == NULL)
     http_method = strdup ("GET");
 
-  if (client_cert && !client_privkey) 
+  if (client_cert && !client_privkey)
     usage4 (_("If you use a client certificate you must also specify a private key file"));
+
+  if (virtual_port == 0)
+    virtual_port = server_port;
 
   return TRUE;
 }
@@ -869,53 +899,100 @@ check_http (void)
   double elapsed_time_transfer = 0.0;
   int page_len = 0;
   int result = STATE_OK;
+  char *force_host_header = NULL;
 
   /* try to connect to the host at the given port number */
   gettimeofday (&tv_temp, NULL);
   if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK)
     die (STATE_CRITICAL, _("HTTP CRITICAL - Unable to open TCP socket\n"));
   microsec_connect = deltime (tv_temp);
+
+    /* if we are called with the -I option, the -j method is CONNECT and */
+    /* we received -S for SSL, then we tunnel the request through a proxy*/
+    /* @20100414, public[at]frank4dd.com, http://www.frank4dd.com/howto  */
+
+    if ( server_address != NULL && strcmp(http_method, "CONNECT") == 0
+      && host_name != NULL && use_ssl == TRUE) {
+
+    if (verbose) printf ("Entering CONNECT tunnel mode with proxy %s:%d to dst %s:%d\n", server_address, server_port, host_name, HTTPS_PORT);
+    asprintf (&buf, "%s %s:%d HTTP/1.1\r\n%s\r\n", http_method, host_name, HTTPS_PORT, user_agent);
+    asprintf (&buf, "%sProxy-Connection: keep-alive\r\n", buf);
+    asprintf (&buf, "%sHost: %s\r\n", buf, host_name);
+    /* we finished our request, send empty line with CRLF */
+    asprintf (&buf, "%s%s", buf, CRLF);
+    if (verbose) printf ("%s\n", buf);
+    send(sd, buf, strlen (buf), 0);
+    buf[0]='\0';
+
+    if (verbose) printf ("Receive response from proxy\n");
+    read (sd, buffer, MAX_INPUT_BUFFER-1);
+    if (verbose) printf ("%s", buffer);
+    /* Here we should check if we got HTTP/1.1 200 Connection established */
+  }
 #ifdef HAVE_SSL
   elapsed_time_connect = (double)microsec_connect / 1.0e6;
   if (use_ssl == TRUE) {
     gettimeofday (&tv_temp, NULL);
     result = np_net_ssl_init_with_hostname_version_and_cert(sd, (use_sni ? host_name : NULL), ssl_version, client_cert, client_privkey);
+    if (verbose) printf ("SSL initialized\n");
     if (result != STATE_OK)
       die (STATE_CRITICAL, NULL);
     microsec_ssl = deltime (tv_temp);
     elapsed_time_ssl = (double)microsec_ssl / 1.0e6;
     if (check_cert == TRUE) {
       result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
-      np_net_ssl_cleanup();
       if (sd) close(sd);
+      np_net_ssl_cleanup();
       return result;
     }
   }
 #endif /* HAVE_SSL */
 
-  xasprintf (&buf, "%s %s %s\r\n%s\r\n", http_method, server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
+  if ( server_address != NULL && strcmp(http_method, "CONNECT") == 0
+       && host_name != NULL && use_ssl == TRUE)
+    asprintf (&buf, "%s %s %s\r\n%s\r\n", "GET", server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
+  else
+    asprintf (&buf, "%s %s %s\r\n%s\r\n", http_method, server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
 
   /* tell HTTP/1.1 servers not to keep the connection alive */
   xasprintf (&buf, "%sConnection: close\r\n", buf);
 
+  /* check if Host header is explicitly set in options */
+  if (http_opt_headers_count) {
+    for (i = 0; i < http_opt_headers_count ; i++) {
+      if (strncmp(http_opt_headers[i], "Host:", 5) == 0) {
+        force_host_header = http_opt_headers[i];
+      }
+    }
+  }
+
   /* optionally send the host header info */
   if (host_name) {
-    /*
-     * Specify the port only if we're using a non-default port (see RFC 2616,
-     * 14.23).  Some server applications/configurations cause trouble if the
-     * (default) port is explicitly specified in the "Host:" header line.
-     */
-    if ((use_ssl == FALSE && server_port == HTTP_PORT) ||
-        (use_ssl == TRUE && server_port == HTTPS_PORT))
-      xasprintf (&buf, "%sHost: %s\r\n", buf, host_name);
-    else
-      xasprintf (&buf, "%sHost: %s:%d\r\n", buf, host_name, server_port);
+    if (force_host_header) {
+      xasprintf (&buf, "%s%s\r\n", buf, force_host_header);
+    }
+    else {
+      /*
+       * Specify the port only if we're using a non-default port (see RFC 2616,
+       * 14.23).  Some server applications/configurations cause trouble if the
+       * (default) port is explicitly specified in the "Host:" header line.
+       */
+      if ((use_ssl == FALSE && virtual_port == HTTP_PORT) ||
+          (use_ssl == TRUE && virtual_port == HTTPS_PORT) ||
+          (server_address != NULL && strcmp(http_method, "CONNECT") == 0
+         && host_name != NULL && use_ssl == TRUE))
+        xasprintf (&buf, "%sHost: %s\r\n", buf, host_name);
+      else
+        xasprintf (&buf, "%sHost: %s:%d\r\n", buf, host_name, virtual_port);
+    }
   }
 
   /* optionally send any other header tag */
   if (http_opt_headers_count) {
     for (i = 0; i < http_opt_headers_count ; i++) {
-      xasprintf (&buf, "%s%s\r\n", buf, http_opt_headers[i]);
+      if (force_host_header != http_opt_headers[i]) {
+        xasprintf (&buf, "%s%s\r\n", buf, http_opt_headers[i]);
+      }
     }
     /* This cannot be free'd here because a redirection will then try to access this and segfault */
     /* Covered in a testcase in tests/check_http.t */
@@ -964,6 +1041,10 @@ check_http (void)
       microsec_firstbyte = deltime (tv_temp);
       elapsed_time_firstbyte = (double)microsec_firstbyte / 1.0e6;
     }
+    while (pos = memchr(buffer, '\0', i)) {
+      /* replace nul character with a blank */
+      *pos = ' ';
+    }
     buffer[i] = '\0';
     xasprintf (&full_page_new, "%s%s", full_page, buffer);
     free (full_page);
@@ -1005,10 +1086,10 @@ check_http (void)
     die (STATE_CRITICAL, _("HTTP CRITICAL - No data received from host\n"));
 
   /* close the connection */
+  if (sd) close(sd);
 #ifdef HAVE_SSL
   np_net_ssl_cleanup();
 #endif
-  if (sd) close(sd);
 
   /* Save check time */
   microsec = deltime (tv);
@@ -1243,6 +1324,7 @@ redir (char *pos, char *status_line)
   if (addr == NULL)
     die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate addr\n"));
 
+  memset(addr, 0, MAX_IPV4_HOSTLENGTH);
   url = malloc (strcspn (pos, "\r\n"));
   if (url == NULL)
     die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate URL\n"));
@@ -1333,8 +1415,8 @@ redir (char *pos, char *status_line)
          max_depth, type, addr, i, url, (display_html ? "</A>" : ""));
 
   if (server_port==i &&
-      !strcmp(server_address, addr) &&
-      (host_name && !strcmp(host_name, addr)) &&
+      !strncmp(server_address, addr, MAX_IPV4_HOSTLENGTH) &&
+      (host_name && !strncmp(host_name, addr, MAX_IPV4_HOSTLENGTH)) &&
       !strcmp(server_url, url))
     die (STATE_WARNING,
          _("HTTP WARNING - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
@@ -1343,11 +1425,11 @@ redir (char *pos, char *status_line)
   strcpy (server_type, type);
 
   free (host_name);
-  host_name = strdup (addr);
+  host_name = strndup (addr, MAX_IPV4_HOSTLENGTH);
 
   if (!(followsticky & STICKY_HOST)) {
     free (server_address);
-    server_address = strdup (addr);
+    server_address = strndup (addr, MAX_IPV4_HOSTLENGTH);
   }
   if (!(followsticky & STICKY_PORT)) {
     server_port = i;
@@ -1362,10 +1444,14 @@ redir (char *pos, char *status_line)
          MAX_PORT, server_type, server_address, server_port, server_url,
          display_html ? "</A>" : "");
 
+  /* reset virtual port */
+  virtual_port = server_port;
+
   if (verbose)
     printf (_("Redirection to %s://%s:%d%s\n"), server_type,
             host_name ? host_name : server_address, server_port, server_url);
 
+  free(addr);
   check_http ();
 }
 
@@ -1393,32 +1479,32 @@ char *perfd_time (double elapsed_time)
   return fperfdata ("time", elapsed_time, "s",
             thlds->warning?TRUE:FALSE, thlds->warning?thlds->warning->end:0,
             thlds->critical?TRUE:FALSE, thlds->critical?thlds->critical->end:0,
-                   TRUE, 0, FALSE, 0);
+                   TRUE, 0, TRUE, socket_timeout);
 }
 
 char *perfd_time_connect (double elapsed_time_connect)
 {
-  return fperfdata ("time_connect", elapsed_time_connect, "s", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);
+  return fperfdata ("time_connect", elapsed_time_connect, "s", FALSE, 0, FALSE, 0, FALSE, 0, TRUE, socket_timeout);
 }
 
 char *perfd_time_ssl (double elapsed_time_ssl)
 {
-  return fperfdata ("time_ssl", elapsed_time_ssl, "s", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);
+  return fperfdata ("time_ssl", elapsed_time_ssl, "s", FALSE, 0, FALSE, 0, FALSE, 0, TRUE, socket_timeout);
 }
 
 char *perfd_time_headers (double elapsed_time_headers)
 {
-  return fperfdata ("time_headers", elapsed_time_headers, "s", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);
+  return fperfdata ("time_headers", elapsed_time_headers, "s", FALSE, 0, FALSE, 0, FALSE, 0, TRUE, socket_timeout);
 }
 
 char *perfd_time_firstbyte (double elapsed_time_firstbyte)
 {
-  return fperfdata ("time_firstbyte", elapsed_time_firstbyte, "s", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);
+  return fperfdata ("time_firstbyte", elapsed_time_firstbyte, "s", FALSE, 0, FALSE, 0, FALSE, 0, TRUE, socket_timeout);
 }
 
 char *perfd_time_transfer (double elapsed_time_transfer)
 {
-  return fperfdata ("time_transfer", elapsed_time_transfer, "s", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);
+  return fperfdata ("time_transfer", elapsed_time_transfer, "s", FALSE, 0, FALSE, 0, FALSE, 0, TRUE, socket_timeout);
 }
 
 char *perfd_size (int page_len)
@@ -1465,9 +1551,10 @@ print_help (void)
   printf (UT_IPv46);
 
 #ifdef HAVE_SSL
-  printf (" %s\n", "-S, --ssl=VERSION");
+  printf (" %s\n", "-S, --ssl=VERSION[+]");
   printf ("    %s\n", _("Connect via SSL. Port defaults to 443. VERSION is optional, and prevents"));
-  printf ("    %s\n", _("auto-negotiation (1 = TLSv1, 2 = SSLv2, 3 = SSLv3)."));
+  printf ("    %s\n", _("auto-negotiation (2 = SSLv2, 3 = SSLv3, 1 = TLSv1, 1.1 = TLSv1.1,"));
+  printf ("    %s\n", _("1.2 = TLSv1.2). With a '+' suffix, newer versions are also accepted."));
   printf (" %s\n", "--sni");
   printf ("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
   printf (" %s\n", "-C, --certificate=INTEGER[,INTEGER]");
@@ -1494,7 +1581,7 @@ print_help (void)
   printf ("    %s\n", _("URL to GET or POST (default: /)"));
   printf (" %s\n", "-P, --post=STRING");
   printf ("    %s\n", _("URL encoded http POST data"));
-  printf (" %s\n", "-j, --method=STRING  (for example: HEAD, OPTIONS, TRACE, PUT, DELETE)");
+  printf (" %s\n", "-j, --method=STRING  (for example: HEAD, OPTIONS, TRACE, PUT, DELETE, CONNECT)");
   printf ("    %s\n", _("Set HTTP method."));
   printf (" %s\n", "-N, --no-body");
   printf ("    %s\n", _("Don't wait for document body: stop reading after headers."));
@@ -1534,7 +1621,7 @@ print_help (void)
 
   printf (UT_WARN_CRIT);
 
-  printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+  printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
   printf (UT_VERBOSE);
 
@@ -1542,7 +1629,7 @@ print_help (void)
   printf ("%s\n", _("Notes:"));
   printf (" %s\n", _("This plugin will attempt to open an HTTP connection with the host."));
   printf (" %s\n", _("Successful connects return STATE_OK, refusals and timeouts return STATE_CRITICAL"));
-  printf (" %s\n", _("other errors return STATE_UNKNOWN.  Successful connects, but incorrect reponse"));
+  printf (" %s\n", _("other errors return STATE_UNKNOWN.  Successful connects, but incorrect response"));
   printf (" %s\n", _("messages from the host result in STATE_WARNING return values.  If you are"));
   printf (" %s\n", _("checking a virtual server that uses 'host headers' you must supply the FQDN"));
   printf (" %s\n", _("(fully qualified domain name) as the [host_name] argument."));
@@ -1568,13 +1655,20 @@ print_help (void)
   printf (" %s\n", _("When the certificate of 'www.verisign.com' is valid for more than 14 days,"));
   printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
   printf (" %s\n", _("14 days, a STATE_WARNING is returned. A STATE_CRITICAL will be returned when"));
-  printf (" %s\n", _("the certificate is expired."));
+  printf (" %s\n\n", _("the certificate is expired."));
   printf ("\n");
   printf (" %s\n\n", "CHECK CERTIFICATE: check_http -H www.verisign.com -C 30,14");
   printf (" %s\n", _("When the certificate of 'www.verisign.com' is valid for more than 30 days,"));
   printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
   printf (" %s\n", _("30 days, but more than 14 days, a STATE_WARNING is returned."));
   printf (" %s\n", _("A STATE_CRITICAL will be returned when certificate expires in less than 14 days"));
+
+  printf (" %s\n\n", "CHECK SSL WEBSERVER CONTENT VIA PROXY USING HTTP 1.1 CONNECT: ");
+  printf (" %s\n", _("check_http -I 192.168.100.35 -p 80 -u https://www.verisign.com/ -S -j CONNECT -H www.verisign.com "));
+  printf (" %s\n", _("all these options are needed: -I <proxy> -p <proxy-port> -u <check-url> -S(sl) -j CONNECT -H <webserver>"));
+  printf (" %s\n", _("a STATE_OK will be returned. When the server returns its content but exceeds"));
+  printf (" %s\n", _("the 5-second threshold, a STATE_WARNING will be returned. When an error occurs,"));
+  printf (" %s\n", _("a STATE_CRITICAL will be returned."));
 
 #endif
 

@@ -1,9 +1,9 @@
 /*****************************************************************************
 * 
-* Nagios check_nwstat plugin
+* Monitoring check_nwstat plugin
 * 
 * License: GPL
-* Copyright (c) 2000-2007 Nagios Plugins Development Team
+* Copyright (c) 2000-2007 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -31,7 +31,7 @@
 
 const char *progname = "check_nwstat";
 const char *copyright = "2000-2007";
-const char *email = "devel@nagios-plugins.org";
+const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "netutils.h"
@@ -1354,10 +1354,10 @@ int process_arguments(int argc, char **argv) {
 			usage5 ();
 			case 'h': /* help */
 				print_help();
-				exit(STATE_OK);
+				exit(STATE_UNKNOWN);
 			case 'V': /* version */
 				print_revision(progname, NP_VERSION);
-				exit(STATE_OK);
+				exit(STATE_UNKNOWN);
 			case 'H': /* hostname */
 				server_address=optarg;
 				break;
@@ -1664,7 +1664,7 @@ void print_help(void)
   printf (" %s\n", "-o, --osversion");
   printf ("    %s\n", _("Include server version string in results"));
 
-	printf (UT_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
   printf ("\n");
   printf ("%s\n", _("Notes:"));

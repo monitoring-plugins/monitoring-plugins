@@ -1,6 +1,6 @@
-This file contains the origin of code copied verbatim into some or all of the Nagios plugins.
+This file contains the origin of code copied verbatim into some or all of the Monitoring Plugins.
 
-The NagiosPlugin team thanks the original authors.
+The Monitoring Plugins team thanks the original authors.
 
 Copied code is cited in the source by indented comments of the form
 

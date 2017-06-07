@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # tinderbox_build.pl
-# This script builds the nagiosplugins and then sends
+# This script builds the monitoringplugins and then sends
 # logs back to the master tinderbox server
 #
 # This script is based on mozilla-unix.pl which comes with tinderbox2
@@ -34,7 +34,7 @@ my $ReportStatus = 0;  # Do not send results to server
 my $Tinderbox_server = '-p 1022 -o StrictHostKeyChecking=no tinderbox2@tinderbox.opsera.com';
 
 # These shouldn't really need to be changed
-my $BuildTree = 'nagiosplug';
+my $BuildTree = 'monitoringplug';
 my $BuildName = '';
 my $ConfigureArgs = $ENV{CONFIGURE_ARGS};
 
@@ -81,7 +81,7 @@ sub BuildIt {
 	chdir("$StartDir");
 
 	my $StartTime = time;
-	if (-e (my $file = "nagios-plugins.spec")) {
+	if (-e (my $file = "monitoring-plugins.spec")) {
 		open F, $file;
 		while (<F>) {
 			if (/^Version: trunk-(\d\d\d\d)(\d\d)(\d\d)(\d\d)(\d\d)$/) {

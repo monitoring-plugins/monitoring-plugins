@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 if (! -e "./test_opts3") {
-	plan skip_all => "./test_opts3 not compiled - please install tap library and/or enable parse-ini to test";
+	plan skip_all => "./test_opts3 not compiled - please enable libtap library and/or extra-opts to test";
 }
 
 # array of argument arrays

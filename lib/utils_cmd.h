@@ -2,7 +2,7 @@
 #define _UTILS_CMD_
 
 /* 
- * Header file for nagios plugins utils_cmd.c
+ * Header file for Monitoring Plugins utils_cmd.c
  * 
  * 
  */

@@ -6,19 +6,13 @@ STATE_CRITICAL=2
 STATE_UNKNOWN=3
 STATE_DEPENDENT=4
 
-if test -x /usr/bin/printf; then
-	ECHO=/usr/bin/printf
-else
-	ECHO=echo
-fi
-
 print_revision() {
 	echo "$1 v$2 (@PACKAGE@ @VERSION@)"
-	$ECHO "@WARRANTY@" | sed -e 's/\n/ /g'
+	printf '%b' "@WARRANTY@"
 }
 
 support() {
-	$ECHO "@SUPPORT@" | sed -e 's/\n/ /g'
+	printf '%b' "@SUPPORT@"
 }
 
 #
