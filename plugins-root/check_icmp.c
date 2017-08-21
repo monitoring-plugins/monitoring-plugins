@@ -1090,7 +1090,6 @@ finish(int sig)
 	int hosts_ok = 0;
 	int hosts_warn = 0;
 	double R;
-	int	shown=0;
 
 	alarm(0);
 	if(debug > 1) printf("finish(%d) called\n", sig);
@@ -1255,64 +1254,58 @@ finish(int sig)
 			}
 		}
 		else {	/* !icmp_recv */
-			printf("%s: ", host->name);
+			printf("%s ", host->name);
 			/* rta text output */
 			if (rta_mode) {
-				shown=1;
 				if (status == STATE_OK)
-					printf("%s rta %0.3fms",(shown==1)?",":"", host->rta / 1000);
+					printf("rta %0.3fms", host->rta / 1000);
 				else if (status==STATE_WARNING && host->rta_status==status)
-					printf("%s rta %0.3fms > %0.3fms",(shown==1)?",":"", (float)host->rta / 1000, (float)warn.rta/1000);
+					printf("rta %0.3fms > %0.3fms", (float)host->rta / 1000, (float)warn.rta/1000);
 				else if (status==STATE_CRITICAL && host->rta_status==status)
-					printf("%s rta %0.3fms > %0.3fms",(shown==1)?",":"", (float)host->rta / 1000, (float)crit.rta/1000);
+					printf("rta %0.3fms > %0.3fms", (float)host->rta / 1000, (float)crit.rta/1000);
 			}
 			/* pl text output */
 			if (pl_mode) {
-				shown=1;
 				if (status == STATE_OK)
-					printf("%s lost %u%%",(shown==1)?",":"", host->pl);
+					printf("lost %u%%", host->pl);
 				else if (status==STATE_WARNING && host->pl_status==status)
-					printf("%s lost %u%% > %u%%",(shown==1)?",":"", host->pl, warn.pl);
+					printf("lost %u%% > %u%%", host->pl, warn.pl);
 				else if (status==STATE_CRITICAL && host->pl_status==status)
-					printf("%s lost %u%% > %u%%",(shown==1)?",":"", host->pl, crit.pl);
+					printf("lost %u%% > %u%%", host->pl, crit.pl);
 			}
 			/* jitter text output */
 			if (jitter_mode) {
-				shown=1;
 				if (status == STATE_OK)
-					printf("%s jitter %0.3fms",(shown==1)?",":"", (float)host->jitter);
+					printf("jitter %0.3fms", (float)host->jitter);
 				else if (status==STATE_WARNING && host->jitter_status==status)
-					printf("%s jitter %0.3fms > %0.3fms",(shown==1)?",":"", (float)host->jitter, warn.jitter);
+					printf("jitter %0.3fms > %0.3fms", (float)host->jitter, warn.jitter);
 				else if (status==STATE_CRITICAL && host->jitter_status==status)
-					printf("%s jitter %0.3fms > %0.3fms",(shown==1)?",":"", (float)host->jitter, crit.jitter);
+					printf("jitter %0.3fms > %0.3fms", (float)host->jitter, crit.jitter);
 			}
 			/* mos text output */
 			if (mos_mode) {
-				shown=1;
 				if (status == STATE_OK)
-					printf("%s MOS %0.1f",(shown==1)?",":"", (float)host->mos);
+					printf("MOS %0.1f", (float)host->mos);
 				else if (status==STATE_WARNING && host->mos_status==status)
-					printf("%s MOS %0.1f < %0.1f",(shown==1)?",":"", (float)host->mos, (float)warn.mos);
+					printf("MOS %0.1f < %0.1f", (float)host->mos, (float)warn.mos);
 				else if (status==STATE_CRITICAL && host->mos_status==status)
-					printf("%s MOS %0.1f < %0.1f",(shown==1)?",":"", (float)host->mos, (float)crit.mos);
+					printf("MOS %0.1f < %0.1f", (float)host->mos, (float)crit.mos);
 			}
 			/* score text output */
 			if (score_mode) {
-				shown=1;
 				if (status == STATE_OK)
-					printf("%s Score %u",(shown==1)?",":"", (int)host->score);
+					printf("Score %u", (int)host->score);
 				else if (status==STATE_WARNING && host->score_status==status )
-					printf("%s Score %u < %u",(shown==1)?",":"", (int)host->score, (int)warn.score);
+					printf("Score %u < %u", (int)host->score, (int)warn.score);
 				else if (status==STATE_CRITICAL && host->score_status==status )
-					printf("%s Score %u < %u",(shown==1)?",":"", (int)host->score, (int)crit.score);
+					printf("Score %u < %u", (int)host->score, (int)crit.score);
 			}
 			/* order statis text output */
 			if (order_mode) {
-				shown=1;
 				if (status == STATE_OK)
-					printf("%s Packets in order",(shown==1)?",":"");
+					printf("Packets in order");
 				else if (status==STATE_CRITICAL && host->order_status==status)
-					printf("%s Packets out of order",(shown==1)?",":"");
+					printf("Packets out of order");
 			}
 		}
 		host = host->next;
