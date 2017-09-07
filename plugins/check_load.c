@@ -33,6 +33,7 @@ const char *copyright = "1999-2007";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
+#include "runcmd.h"
 #include "utils.h"
 #include "popen.h"
 
@@ -52,6 +53,11 @@ static int process_arguments (int argc, char **argv);
 static int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
+static int print_top_consuming_processes();
+
+static int n_procs_to_show = 5;
+static int print_top_procs_on_warning = 0;
+static int print_top_procs_on_critical = 0;
 
 /* strictly for pretty-print usage in loops */
 static const int nums[3] = { 1, 5, 15 };
@@ -210,6 +216,11 @@ main (int argc, char **argv)
 		printf("load%d=%.3f;%.3f;%.3f;0; ", nums[i], la[i], wload[i], cload[i]);
 
 	putchar('\n');
+	if (result == STATE_CRITICAL && print_top_procs_on_critical) {
+		print_top_consuming_processes();
+	} else if (result == STATE_WARNING && print_top_procs_on_warning) {
+		print_top_consuming_processes();
+	}
 	return result;
 }
 
@@ -227,6 +238,9 @@ process_arguments (int argc, char **argv)
 		{"percpu", no_argument, 0, 'r'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
+		{"print-top-warning", no_argument, 0, 'W'},
+		{"print-top-critical", no_argument, 0, 'C'},
+		{"procs-to-show", required_argument, 0, 'n'},
 		{0, 0, 0, 0}
 	};
 
@@ -234,7 +248,7 @@ process_arguments (int argc, char **argv)
 		return ERROR;
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vhrc:w:", longopts, &option);
+		c = getopt_long (argc, argv, "Vhrc:w:WCn:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -255,6 +269,15 @@ process_arguments (int argc, char **argv)
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_UNKNOWN);
+		case 'n':
+			n_procs_to_show = atoi(optarg);
+			break;
+		case 'W':
+			print_top_procs_on_warning = 1;
+			break;
+		case 'C':
+			print_top_procs_on_critical = 1;
+			break;
 		case '?':									/* help */
 			usage5 ();
 		}
@@ -324,6 +347,13 @@ print_help (void)
   printf ("    %s\n", _("the load average format is the same used by \"uptime\" and \"w\""));
   printf (" %s\n", "-r, --percpu");
   printf ("    %s\n", _("Divide the load averages by the number of CPUs (when possible)"));
+  printf (" %s\n", "-W, --print-top-warning");
+  printf ("    %s\n", _("Print top consuming processes on WARNING status"));
+  printf (" %s\n", "-C, --print-top-critical");
+  printf ("    %s\n", _("Print top consuming processes on CRITICAL status"));
+  printf (" %s\n", "-n, --procs-to-show=NUMBER_OF_PROCS");
+  printf ("    %s\n", _("Number of processes to show when printing top consuming"));
+  printf ("    %s\n", _("processes. Not useful without -W or -C. Default value is 5"));
 
 	printf (UT_SUPPORT);
 }
@@ -332,5 +362,21 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-	printf ("%s [-r] -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15\n", progname);
+  printf ("%s [-r] -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15 [-W] [-C] [-n NUMBER_OF_PROCS]\n", progname);
+}
+
+static int print_top_consuming_processes() {
+	int i = 0;
+	struct output chld_out, chld_err;
+	char *cmdline = "/bin/ps -aux --sort=-pcpu";
+	if(np_runcmd(cmdline, &chld_out, &chld_err, 0) != 0){
+		fprintf(stderr, _("'%s' exited with non-zero status.\n"), cmdline);
+		return STATE_UNKNOWN;
+	}
+	int lines_to_show = chld_out.lines < (n_procs_to_show + 1)
+			? chld_out.lines : n_procs_to_show + 1;
+	for (i = 0; i < lines_to_show; i += 1) {
+		printf("%s\n", chld_out.line[i]);
+	}
+	return OK;
 }
