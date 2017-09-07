@@ -349,14 +349,37 @@ print_usage (void)
   printf ("%s [-r] -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15 [-n NUMBER_OF_PROCS]\n", progname);
 }
 
+int cmpstringp(const void *p1, const void *p2) {
+	int procuid = 0;
+	int procpid = 0;
+	int procppid = 0;
+	int procvsz = 0;
+	int procrss = 0;
+	float procpcpu = 0;
+	char procstat[8];
+#ifdef PS_USES_PROCETIME
+	char procetime[MAX_INPUT_BUFFER];
+#endif /* PS_USES_PROCETIME */
+	char procprog[MAX_INPUT_BUFFER];
+	int pos;
+	sscanf (* (char * const *) p1, PS_FORMAT, PS_VARLIST);
+	float procpcpu1 = procpcpu;
+	sscanf (* (char * const *) p2, PS_FORMAT, PS_VARLIST);
+	return procpcpu1 < procpcpu;
+}
+
 static int print_top_consuming_processes() {
 	int i = 0;
 	struct output chld_out, chld_err;
-	char *cmdline = "/bin/ps -aux --sort=-pcpu";
-	if(np_runcmd(cmdline, &chld_out, &chld_err, 0) != 0){
-		fprintf(stderr, _("'%s' exited with non-zero status.\n"), cmdline);
+	if(np_runcmd(PS_COMMAND, &chld_out, &chld_err, 0) != 0){
+		fprintf(stderr, _("'%s' exited with non-zero status.\n"), PS_COMMAND);
 		return STATE_UNKNOWN;
 	}
+	if (chld_out.lines < 2) {
+		fprintf(stderr, _("some error occurred getting procs list.\n"));
+		return STATE_UNKNOWN;
+	}
+	qsort(chld_out.line + 1, chld_out.lines - 1, sizeof(char*), cmpstringp);
 	int lines_to_show = chld_out.lines < (n_procs_to_show + 1)
 			? chld_out.lines : n_procs_to_show + 1;
 	for (i = 0; i < lines_to_show; i += 1) {
