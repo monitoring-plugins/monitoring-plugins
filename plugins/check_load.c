@@ -349,6 +349,7 @@ print_usage (void)
   printf ("%s [-r] -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15 [-n NUMBER_OF_PROCS]\n", progname);
 }
 
+#ifdef PS_USES_PROCPCPU
 int cmpstringp(const void *p1, const void *p2) {
 	int procuid = 0;
 	int procpid = 0;
@@ -367,6 +368,7 @@ int cmpstringp(const void *p1, const void *p2) {
 	sscanf (* (char * const *) p2, PS_FORMAT, PS_VARLIST);
 	return procpcpu1 < procpcpu;
 }
+#endif /* PS_USES_PROCPCPU */
 
 static int print_top_consuming_processes() {
 	int i = 0;
@@ -379,7 +381,9 @@ static int print_top_consuming_processes() {
 		fprintf(stderr, _("some error occurred getting procs list.\n"));
 		return STATE_UNKNOWN;
 	}
+#ifdef PS_USES_PROCPCPU
 	qsort(chld_out.line + 1, chld_out.lines - 1, sizeof(char*), cmpstringp);
+#endif /* PS_USES_PROCPCPU */
 	int lines_to_show = chld_out.lines < (n_procs_to_show + 1)
 			? chld_out.lines : n_procs_to_show + 1;
 	for (i = 0; i < lines_to_show; i += 1) {
