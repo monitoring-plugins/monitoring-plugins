@@ -27,7 +27,7 @@
 
 use POSIX;
 use strict;
-use Getopt::Long;
+use Getopt::Long qw(:config no_ignore_case);
 use vars qw($opt_V $opt_h $opt_v $verbose $PROGNAME $opt_w $opt_c $opt_t $opt_s
 					$opt_M $mailq $status $state $msg $msg_q $msg_p $opt_W $opt_C $mailq @lines
 					%srcdomains %dstdomains);
@@ -567,6 +567,8 @@ sub process_arguments(){
 		 "M:s" => \$opt_M, "mailserver:s" => \$opt_M, # mailserver (default	sendmail)
 		 "w=i" => \$opt_w, "warning=i"  => \$opt_w,   # warning if above this number
 		 "c=i" => \$opt_c, "critical=i" => \$opt_c,	  # critical if above this number
+		 "W=i" => \$opt_W, "Warning=i" => \$opt_W,    # warning if one domain is above this number
+		 "C=i" => \$opt_C, "Critical=i" => \$opt_C,   # critical if one domain is above this number
 		 "t=i" => \$opt_t, "timeout=i"  => \$opt_t,
 		 "s"   => \$opt_s, "sudo"       => \$opt_s
 		 );
