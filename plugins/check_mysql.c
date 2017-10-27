@@ -1,33 +1,33 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_mysql plugin
-* 
+*
 * License: GPL
 * Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)
 * Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
 * Copyright (c) 1999-2017 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_mysql plugin
-* 
+*
 * This program tests connections to a mysql server
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 const char *progname = "check_mysql";
@@ -129,7 +129,7 @@ main (int argc, char **argv)
 
 	/* initialize mysql  */
 	mysql_init (&mysql);
-	
+
 	if (opt_file != NULL)
 		mysql_options(&mysql,MYSQL_READ_DEFAULT_FILE,opt_file);
 
