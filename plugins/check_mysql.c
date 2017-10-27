@@ -36,6 +36,10 @@ const char *email = "devel@monitoring-plugins.org";
 
 #define SLAVERESULTSIZE 70
 
+/* The default port that MySQL servers listen on. */
+#define CHECK_PORT_DEFAULT 3306
+
+
 #include "common.h"
 #include "utils.h"
 #include "utils_base.h"
@@ -58,7 +62,7 @@ char *ciphers = NULL;
 bool ssl = false;
 char *opt_file = NULL;
 char *opt_group = NULL;
-unsigned int db_port = MYSQL_PORT;
+unsigned int db_port = CHECK_PORT_DEFAULT;
 int check_slave = 0, warn_sec = 0, crit_sec = 0;
 int ignore_auth = 0;
 int verbose = 0;
@@ -505,7 +509,7 @@ void
 print_help (void)
 {
 	char *myport;
-	xasprintf (&myport, "%d", MYSQL_PORT);
+	xasprintf (&myport, "%d", CHECK_PORT_DEFAULT);
 
 	print_revision (progname, NP_VERSION);
 
