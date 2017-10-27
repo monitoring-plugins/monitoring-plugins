@@ -5,7 +5,7 @@
 * License: GPL
 * Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)
 * Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
-* Copyright (c) 1999-2011 Monitoring Plugins Development Team
+* Copyright (c) 1999-2017 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -31,7 +31,7 @@
 *****************************************************************************/
 
 const char *progname = "check_mysql";
-const char *copyright = "1999-2011";
+const char *copyright = "1999-2017";
 const char *email = "devel@monitoring-plugins.org";
 
 #define SLAVERESULTSIZE 70

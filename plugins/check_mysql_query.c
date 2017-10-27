@@ -3,7 +3,7 @@
 * Monitoring check_mysql_query plugin
 * 
 * License: GPL
-* Copyright (c) 2006-2009 Monitoring Plugins Development Team
+* Copyright (c) 2006-2017 Monitoring Plugins Development Team
 * Original code from check_mysql, copyright 1999 Didi Rieder
 * 
 * Description:
@@ -30,7 +30,7 @@
 *****************************************************************************/
 
 const char *progname = "check_mysql_query";
-const char *copyright = "1999-2007";
+const char *copyright = "1999-2017";
 const char *email = "devel@monitoring-plugins.org";
 
 /* The default port that MySQL servers listen on. */
