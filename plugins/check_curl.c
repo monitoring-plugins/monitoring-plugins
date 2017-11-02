@@ -1320,10 +1320,10 @@ process_arguments (int argc, char **argv)
 #ifdef LIBCURL_FEATURE_SSL
     enable_ssl:
       use_ssl = TRUE;
-      /* ssl_version initialized to CURL_SSLVERSION_TLSv1_0 as a default.
+      /* ssl_version initialized to CURL_SSLVERSION_DEFAULT as a default.
        * Only set if it's non-zero.  This helps when we include multiple
        * parameters, like -S and -C combinations */
-      ssl_version = CURL_SSLVERSION_TLSv1_0;
+      ssl_version = CURL_SSLVERSION_DEFAULT;
       if (c=='S' && optarg != NULL) {
         char *plus_ptr = strchr(optarg, '+');
         if (plus_ptr) {
