@@ -1029,7 +1029,7 @@ AC_ARG_WITH(ping_command,
 AC_MSG_CHECKING(for ICMP ping syntax)
 ac_cv_ping_packets_first=no
 ac_cv_ping_has_timeout=no
-if test -n "$with_ping_command"
+if test -n "$PATH_TO_PING" && test -n "$with_ping_command"
 then
 	AC_MSG_RESULT([(command-line) $with_ping_command])
 	if echo "$with_ping_command" | grep '%d.*%d.*%s' >/dev/null
@@ -1121,7 +1121,7 @@ then
 	AC_MSG_RESULT([$with_ping_command])
 
 else
-	AC_MSG_WARN([unable to find usable ping syntax])
+	AC_MSG_WARN([unable to find usable ping command or syntax])
 fi
 
 AC_DEFINE_UNQUOTED(PING_COMMAND,"$with_ping_command",
@@ -1147,7 +1147,7 @@ AC_ARG_WITH(ping6_command,
 if test x"$with_ipv6" != xno ; then
 AC_MSG_CHECKING(for ICMPv6 ping syntax)
 ac_cv_ping6_packets_first=no
-if test -n "$with_ping6_command"
+if test -n "$PATH_TO_PING6" && test -n "$with_ping6_command"
 then
 	AC_MSG_RESULT([(command-line) $with_ping6_command])
 	if echo "$with_ping6_command" | grep '%d.*%d.*%s' >/dev/null
@@ -1300,7 +1300,8 @@ elif test "x$PATH_TO_PING" != "x"; then
 		AC_MSG_RESULT([$with_ping6_command])
 
 	fi
-
+else
+	AC_MSG_WARN([unable to find usable ping command or syntax for inet6])
 fi
 
 if test "x$with_ping6_command" != "x"; then
