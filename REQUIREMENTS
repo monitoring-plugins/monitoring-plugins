@@ -86,7 +86,7 @@ check_ups:
 check_ide_smart:
 	- Uses the Linux specific SMART interface [http://smartlinux.sourceforge.net/smart/index.php]. 
 
-check_ide_smart:
+check_ping:
 	- Requires iputils or iputils-ping package
 	  https://github.com/iputils/iputils
 
