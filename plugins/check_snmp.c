@@ -1209,7 +1209,7 @@ print_help (void)
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf ("    %s\n", _("NOTE the final timeout value is calculated using this formula: timeout_interval * retries + 5"));
 	printf (" %s\n", "-e, --retries=INTEGER");
-	printf ("    %s%i%s\n", _("Number of retries to be used in the requests (default: "), DEFAULT_RETRIES, _(")"));
+	printf ("    %s%i\n", _("Number of retries to be used in the requests, default: "), DEFAULT_RETRIES);
 
 	printf (" %s\n", "-O, --perf-oids");
 	printf ("    %s\n", _("Label performance data with OIDs instead of --label's"));
