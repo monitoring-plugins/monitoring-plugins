@@ -113,7 +113,7 @@ main (int argc, char **argv)
 		if (address_family != AF_INET && is_inet6_addr(addresses[i]))
 			rawcmd = strdup(PING6_COMMAND);
 		else
-			rawcmd = strdup(PING_COMMAND);
+			xasprintf (&rawcmd, "%s %s", PING_COMMAND, "-4");
 #else
 		rawcmd = strdup(PING_COMMAND);
 #endif
