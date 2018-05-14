@@ -3,7 +3,7 @@
 * Monitoring check_http plugin
 *
 * License: GPL
-* Copyright (c) 1999-2013 Monitoring Plugins Development Team
+* Copyright (c) 1999-2018 Monitoring Plugins Development Team
 *
 * Description:
 *
@@ -34,7 +34,7 @@
 /* splint -I. -I../../plugins -I../../lib/ -I/usr/kerberos/include/ ../../plugins/check_http.c */
 
 const char *progname = "check_http";
-const char *copyright = "1999-2013";
+const char *copyright = "1999-2018";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
@@ -117,7 +117,7 @@ int http_opt_headers_count = 0;
 int onredirect = STATE_OK;
 int followsticky = STICKY_NONE;
 int use_ssl = FALSE;
-int use_sni = FALSE;
+int use_sni = TRUE;
 int verbose = FALSE;
 int show_extended_perfdata = FALSE;
 int sd;
@@ -201,7 +201,7 @@ process_arguments (int argc, char **argv)
 
   enum {
     INVERT_REGEX = CHAR_MAX + 1,
-    SNI_OPTION
+    NOSNI_OPTION
   };
 
   int option = 0;
@@ -210,7 +210,7 @@ process_arguments (int argc, char **argv)
     {"link", no_argument, 0, 'L'},
     {"nohtml", no_argument, 0, 'n'},
     {"ssl", optional_argument, 0, 'S'},
-    {"sni", no_argument, 0, SNI_OPTION},
+    {"no-sni", no_argument, 0, NOSNI_OPTION},
     {"post", required_argument, 0, 'P'},
     {"method", required_argument, 0, 'j'},
     {"IP-address", required_argument, 0, 'I'},
@@ -367,8 +367,8 @@ process_arguments (int argc, char **argv)
       usage4 (_("Invalid option - SSL is not available"));
 #endif
       break;
-    case SNI_OPTION:
-      use_sni = TRUE;
+    case NOSNI_OPTION:
+      use_sni = FALSE;
       break;
     case 'f': /* onredirect */
       if (!strcmp (optarg, "stickyport"))
@@ -1555,8 +1555,8 @@ print_help (void)
   printf ("    %s\n", _("Connect via SSL. Port defaults to 443. VERSION is optional, and prevents"));
   printf ("    %s\n", _("auto-negotiation (2 = SSLv2, 3 = SSLv3, 1 = TLSv1, 1.1 = TLSv1.1,"));
   printf ("    %s\n", _("1.2 = TLSv1.2). With a '+' suffix, newer versions are also accepted."));
-  printf (" %s\n", "--sni");
-  printf ("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
+  printf (" %s\n", "--no-sni");
+  printf ("    %s\n", _("Disable SSL/TLS hostname extension support (SNI)"));
   printf (" %s\n", "-C, --certificate=INTEGER[,INTEGER]");
   printf ("    %s\n", _("Minimum number of days a certificate has to be valid. Port defaults to 443"));
   printf ("    %s\n", _("(when this option is used the URL is not checked.)"));
@@ -1688,6 +1688,6 @@ print_usage (void)
   printf ("       [-b proxy_auth] [-f <ok|warning|critcal|follow|sticky|stickyport>]\n");
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
-  printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
+  printf ("       [-A string] [-k string] [-S <version>] [--no-sni] [-C <warn_age>[,<crit_age>]]\n");
   printf ("       [-T <content-type>] [-j method]\n");
 }
