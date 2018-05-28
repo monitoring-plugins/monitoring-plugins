@@ -744,7 +744,6 @@ GOT_FIRST_CERT:
 
   /* make sure the status line matches the response we are looking for */
   if (!expected_statuscode(status_line.first_line, server_expect)) {
-    /* TODO: fix first_line being cut off */
     if (server_port == HTTP_PORT)
       snprintf(msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host: %s\n"), status_line.first_line);
     else
@@ -752,7 +751,6 @@ GOT_FIRST_CERT:
     die (STATE_CRITICAL, "HTTP CRITICAL - %s", msg);
   }
 
-  /* TODO: implement -d header tests */
   if( server_expect_yn  )  {
     snprintf(msg, DEFAULT_BUFFER_SIZE, _("Status line output matched \"%s\" - "), server_expect);
     if (verbose)
@@ -854,27 +852,13 @@ GOT_FIRST_CERT:
       result = STATE_CRITICAL;
     }
     else {
-      /* FIXME: Shouldn't that be UNKNOWN? */
       regerror (errcode, &preg, errbuf, MAX_INPUT_BUFFER);
       snprintf (msg, DEFAULT_BUFFER_SIZE, _("%sExecute Error: %s, "), msg, errbuf);
-      result = STATE_CRITICAL;
+      result = STATE_UNKNOWN;
     }
   }
 
-  /* make sure the page is of an appropriate size
-   * TODO: as far I can tell check_http gets the full size of header and
-   * if -N is not given header+body. Does this make sense?
-   *
-   * TODO: check_http.c had a get_length function, the question is really
-   * here what to use? the raw data size of the header_buf, the value of
-   * Content-Length, both and warn if they differ? Should the length be
-   * header+body or only body?
-   *
-   * One possible policy:
-   * - use header_buf.buflen (warning, if it mismatches to the Content-Length value
-   * - if -N (nobody) is given, use Content-Length only and hope the server set
-   *   the value correcly
-   */
+  /* make sure the page is of an appropriate size */
   page_len = get_content_length(&header_buf, &body_buf);
   if ((max_page_len > 0) && (page_len > max_page_len)) {
     snprintf (msg, DEFAULT_BUFFER_SIZE, _("%spage size %d too large, "), msg, page_len);
