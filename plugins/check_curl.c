@@ -129,7 +129,7 @@ int invert_regex = 0;
 
 char *server_address;
 char *host_name;
-char *server_url = DEFAULT_SERVER_URL;
+char *server_url = 0;
 char server_ip[DEFAULT_BUFFER_SIZE];
 struct curl_slist *server_ips = NULL;
 unsigned short server_port = HTTP_PORT;
@@ -1159,6 +1159,8 @@ process_arguments (int argc, char **argv)
     if (strcmp ("-nohtml", argv[c]) == 0)
       strcpy (argv[c], "-n");
   }
+
+  server_url = strdup(DEFAULT_SERVER_URL);
 
   while (1) {
     c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NE", longopts, &option);
