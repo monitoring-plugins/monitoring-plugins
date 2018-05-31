@@ -39,7 +39,7 @@ https://github.com/h2o/picohttpparser
 Use of the library for HTTP header parsing in check_curl.
 
 Copyright (C) 2007, Weijia Song <songweijia@gmail.com>
-Copyright (C) 2007, Sebastian Pipping <webmaster@hartwork.org>
+Copyright (C) 2007, Sebastian Pipping <sebastian@pipping.org>
 All rights reserved.
 uriparser - RFC 3986 URI parsing library
 http://uriparser.sourceforge.net/

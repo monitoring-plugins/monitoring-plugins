@@ -2,7 +2,7 @@
  * uriparser - RFC 3986 URI parsing library
  *
  * Copyright (C) 2007, Weijia Song <songweijia@gmail.com>
- * Copyright (C) 2007, Sebastian Pipping <webmaster@hartwork.org>
+ * Copyright (C) 2007, Sebastian Pipping <sebastian@pipping.org>
  * All rights reserved.
  *
  * Redistribution  and use in source and binary forms, with or without
@@ -131,7 +131,7 @@ static URI_INLINE UriBool URI_FUNC(EqualsAuthority)(const URI_TYPE(Uri) * first,
 
 
 
-int URI_FUNC(RemoveBaseUriImpl)(URI_TYPE(Uri) * dest,
+static int URI_FUNC(RemoveBaseUriImpl)(URI_TYPE(Uri) * dest,
 		const URI_TYPE(Uri) * absSource,
 		const URI_TYPE(Uri) * absBase,
 		UriBool domainRootMode) {
