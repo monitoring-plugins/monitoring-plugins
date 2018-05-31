@@ -2,7 +2,7 @@
  * uriparser - RFC 3986 URI parsing library
  *
  * Copyright (C) 2007, Weijia Song <songweijia@gmail.com>
- * Copyright (C) 2007, Sebastian Pipping <webmaster@hartwork.org>
+ * Copyright (C) 2007, Sebastian Pipping <sebastian@pipping.org>
  * All rights reserved.
  *
  * Redistribution  and use in source and binary forms, with or without
@@ -83,7 +83,7 @@ static URI_INLINE int URI_FUNC(FilenameToUriString)(const URI_CHAR * filename,
 	is_windows_network = (filename[0] == _UT('\\')) && (filename[1] == _UT('\\'));
 	absolute = fromUnix
 			? (filename[0] == _UT('/'))
-			: ((filename[0] != _UT('\0')) && (filename[1] == _UT(':'))
+			: (((filename[0] != _UT('\0')) && (filename[1] == _UT(':')))
 				|| is_windows_network);
 
 	if (absolute) {

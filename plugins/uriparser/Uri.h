@@ -1,8 +1,9 @@
-/*
+/* f9ca23a99fc1c8ff610e2bdc0bff3c4bb4d883ccbff5851fe7a1398f9b6aca57 (0.8.5+)
+ *
  * uriparser - RFC 3986 URI parsing library
  *
  * Copyright (C) 2007, Weijia Song <songweijia@gmail.com>
- * Copyright (C) 2007, Sebastian Pipping <webmaster@hartwork.org>
+ * Copyright (C) 2007, Sebastian Pipping <sebastian@pipping.org>
  * All rights reserved.
  *
  * Redistribution  and use in source and binary forms, with or without
@@ -157,7 +158,8 @@ typedef struct URI_TYPE(UriStruct) {
 	URI_TYPE(PathSegment) * pathTail; /**< Tail of the list behind pathHead */
 	URI_TYPE(TextRange) query; /**< Query without leading "?" */
 	URI_TYPE(TextRange) fragment; /**< Query without leading "#" */
-	UriBool absolutePath; /**< Absolute path flag, distincting "a" and "/a" */
+	UriBool absolutePath; /**< Absolute path flag, distincting "a" and "/a";
+								always <c>URI_FALSE</c> for URIs with host */
 	UriBool owner; /**< Memory owner flag */
 
 	void * reserved; /**< Reserved to the parser */
@@ -567,7 +569,7 @@ int URI_FUNC(UriStringToUnixFilename)(const URI_CHAR * uriString,
 
 /**
  * Extracts a Windows filename from a %URI string.
- * The destination buffer must be large enough to hold len(uriString) + 1 - 8
+ * The destination buffer must be large enough to hold len(uriString) + 1 - 5
  * characters in case of an absolute %URI or len(uriString) + 1 in case
  * of a relative %URI.
  *
