@@ -1920,11 +1920,11 @@ curlhelp_parse_statusline (const char *buf, curlhelp_statusline *status_line)
 
   /* Human readable message: "Not Found" CRLF */
 
-  free( first_line_buf );
   p = strtok( NULL, "" );
   if( p == NULL ) { free( status_line->first_line ); return -1; }
   status_line->msg = status_line->first_line + ( p - first_line_buf );
-
+  free( first_line_buf );
+	
   return 0;
 }
 
