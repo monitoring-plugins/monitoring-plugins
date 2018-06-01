@@ -73,6 +73,10 @@ AC_DEFUN([URIPARSER_CHECK],
         fi
 
         unset _uriparser_wanted
+     else
+        dnl no pkg-config, ok, to our best and set some defaults
+        URIPARSER_CPPFLAGS="-I/usr/include"
+        URIPARSER="-luriparser -L/usr/lib -L/usr/lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/i686-linux-gnu"
      fi
 
      if test $_uriparser_try_link = yes ; then
