@@ -14,7 +14,7 @@ check_ldaps, check_http --ssl, check_tcp --ssl, check_smtp --starttls
 check_curl:
     - Requires libcurl 7.15.2 or later
       http://www.haxx.se
-    - --ssl requires OpenSSL for certificate checks, otherwise
+    - --ssl/-S and -C requires OpenSSL for certificate checks, otherwise
       libcurl must be quite new to support CURLINFO_CRETINFO with
       GnuTLS and NSS libraries:
       - 7.42.0 or newer for GnuTLS
@@ -24,6 +24,8 @@ check_curl:
 	  http://www.openssl.org, http://www.gnu.org/software/gnutls,
 	  http://www.mozilla.org/projects/security/pki/nss/,
 	  other SSL implementations are currently not supported
+    - uriparser 0.7.5 or later
+      https://uriparser.github.io/
       
 check_fping:
 	- Requires the fping utility distributed with SATAN.  Either
