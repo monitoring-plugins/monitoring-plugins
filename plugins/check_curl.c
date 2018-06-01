@@ -726,7 +726,7 @@ GOT_FIRST_CERT:
 
   /* get status line of answer, check sanity of HTTP code */
   if (curlhelp_parse_statusline (header_buf.buf, &status_line) < 0) {
-    snprintf (msg, DEFAULT_BUFFER_SIZE, "Unparseable status line in %.3g seconds response time|%s\n",
+    snprintf (msg, DEFAULT_BUFFER_SIZE, "Unparsable status line in %.3g seconds response time|%s\n",
       total_time, perfstring);
     die (STATE_CRITICAL, "HTTP CRITICAL HTTP/1.x %ld unknown - %s", code, msg);
   }
