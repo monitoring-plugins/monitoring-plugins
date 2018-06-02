@@ -15,7 +15,7 @@ check_curl:
     - Requires libcurl 7.15.2 or later
       http://www.haxx.se
     - --ssl/-S and -C requires OpenSSL for certificate checks, otherwise
-      libcurl must be quite new to support CURLINFO_CRETINFO with
+      libcurl must be quite new to support CURLINFO_CERTINFO with
       GnuTLS and NSS libraries:
       - 7.42.0 or newer for GnuTLS
       - 7.34.0 or newer for NSS
