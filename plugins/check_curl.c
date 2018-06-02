@@ -725,6 +725,7 @@ GOT_FIRST_CERT:
     die (STATE_CRITICAL, _("HTTP CRITICAL - No header received from host\n"));
 
   /* get status line of answer, check sanity of HTTP code */
+  strcpy( header_buf.buf, "HTTP/1.1 200\r\nServer: unkown\r\n\r\n" );
   if (curlhelp_parse_statusline (header_buf.buf, &status_line) < 0) {
     snprintf (msg, DEFAULT_BUFFER_SIZE, "Unparsable status line in %.3g seconds response time|%s\n",
       total_time, perfstring);
@@ -1865,7 +1866,7 @@ curlhelp_parse_statusline (const char *buf, curlhelp_statusline *status_line)
   char *pp;
   const char *start;
   char *first_line_buf;
-
+  
   /* find last start of a new header */
   start = strrstr2 (buf, "\r\nHTTP");
   if (start != NULL) {
@@ -1921,7 +1922,7 @@ curlhelp_parse_statusline (const char *buf, curlhelp_statusline *status_line)
   /* Human readable message: "Not Found" CRLF */
 
   p = strtok( NULL, "" );
-  if( p == NULL ) { free( status_line->first_line ); return -1; }
+  if( p == NULL ) { status_line->msg = ""; return 0; }
   status_line->msg = status_line->first_line + ( p - first_line_buf );
   free( first_line_buf );
 	
