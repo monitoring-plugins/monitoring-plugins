@@ -725,7 +725,6 @@ GOT_FIRST_CERT:
     die (STATE_CRITICAL, _("HTTP CRITICAL - No header received from host\n"));
 
   /* get status line of answer, check sanity of HTTP code */
-  strcpy( header_buf.buf, "HTTP/1.1 200\r\nServer: unkown\r\n\r\n" );
   if (curlhelp_parse_statusline (header_buf.buf, &status_line) < 0) {
     snprintf (msg, DEFAULT_BUFFER_SIZE, "Unparsable status line in %.3g seconds response time|%s\n",
       total_time, perfstring);
