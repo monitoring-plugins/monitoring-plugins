@@ -1012,8 +1012,6 @@ redir (curlhelp_write_curlbuf* header_buf)
    * the original URL, so wy try to form a new absolute URL here
    */
   if (!uri.scheme.first && !uri.hostText.first) {
-    /* TODO: implement */
-    die (STATE_UNKNOWN, _("HTTP UNKNOWN - non-absolute location, not implemented yet!\n"));
     new_host = strdup (host_name ? host_name : server_address);
   } else {
     new_host = strdup (uri_string (uri.hostText, buf, DEFAULT_BUFFER_SIZE));
