@@ -1069,16 +1069,6 @@ redir (curlhelp_write_curlbuf* header_buf)
   check_http ();
 }
 
-#if 0
-
-int main(int argc, char *argv[]) {
-
-	for (; i < argc; i++) {
-
-		}
-		printf("\n");
-#endif
-
 /* check whether a file exists */
 void
 test_file (char *path)
