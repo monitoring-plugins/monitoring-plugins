@@ -1,4 +1,4 @@
-#!@PERL@ -w
+#!/usr/bin/perl -w
 
 # check_uptime - check uptime to see how long the system is running.
 #
@@ -41,6 +41,8 @@ $ENV{'ENV'}='';
 $PROGNAME = "check_uptime";
 $state = $ERRORS{'UNKNOWN'};
 
+my $uptime_file = "/proc/uptime";
+
 
 # Process arguments
 
@@ -53,8 +55,6 @@ if ($status){
 
 
 # Get uptime info from file
-
-my $uptime_file = "/proc/uptime";
 
 if ( ! -r $uptime_file ) {
 	print "ERROR: file '$uptime_file' is not readable\n";
