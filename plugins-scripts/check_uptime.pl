@@ -137,7 +137,7 @@ if ( $opt_s ) {
 $state = $ERRORS{$state_str};
 
 # Perfdata support
-print "$msg|uptime=$uptime_seconds;$opt_w;$opt_c;0\n";
+print "$msg|uptime=${uptime_seconds}s;$opt_w;$opt_c;0\n";
 exit $state;
 
 
