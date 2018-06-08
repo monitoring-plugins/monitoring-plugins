@@ -32,7 +32,7 @@
 *
 *
 *****************************************************************************/
-const char *progname = "check_curl";
+const char *progname = "check_http";
 
 const char *copyright = "2006-2018";
 const char *email = "devel@monitoring-plugins.org";
@@ -247,8 +247,8 @@ main (int argc, char **argv)
   argv = np_extra_opts (&argc, argv, progname);
 
   /* set defaults */
-  snprintf( user_agent, DEFAULT_BUFFER_SIZE, "%s/v%s (monitoring-plugins %s)",
-    progname, NP_VERSION, VERSION);
+  snprintf( user_agent, DEFAULT_BUFFER_SIZE, "%s/v%s (monitoring-plugins %s, %s)",
+    progname, NP_VERSION, VERSION, curl_version());
 
   /* parse arguments */
   if (process_arguments (argc, argv) == ERROR)
