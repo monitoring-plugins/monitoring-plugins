@@ -85,6 +85,7 @@ if ( $uptime_seconds !~ /^\d+$/ ) {
 
 my ( $secs, $mins, $hours, $days, $weeks );
 $secs = $uptime_seconds;
+$mins = $hours = $days = $weeks = 0;
 if ( $secs > 100 ) {
 	$mins = int( $secs / 60 );
 	$secs -= $mins * 60;
