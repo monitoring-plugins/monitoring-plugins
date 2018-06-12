@@ -62,7 +62,8 @@ $res = NPTest->testCmd(
 	"./$plugin $host_nonresponsive -wt 1 -ct 2 -t 3"
 	);
 cmp_ok( $res->return_code, '==', 2, "Webserver $host_nonresponsive not responding" );
-cmp_ok( $res->output, 'eq', "CRITICAL - Socket timeout after 3 seconds", "Output OK");
+# was CRITICAL only, but both check_curl and check_http print HTTP CRITICAL (puzzle?!)
+cmp_ok( $res->output, 'eq', "HTTP CRITICAL - Invalid HTTP response received from host on port 80: cURL returned 28 - Timeout was reached", "Output OK");
 
 $res = NPTest->testCmd(
 	"./$plugin $hostname_invalid -wt 1 -ct 2"
@@ -71,7 +72,8 @@ cmp_ok( $res->return_code, '==', 2, "Webserver $hostname_invalid not valid" );
 # The first part of the message comes from the OS catalogue, so cannot check this.
 # On Debian, it is Name or service not known, on Darwin, it is No address associated with nodename
 # Is also possible to get a socket timeout if DNS is not responding fast enough
-like( $res->output, "/Unable to open TCP socket|Socket timeout after/", "Output OK");
+# cURL gives us consistent strings from it's own 'lib/strerror.c'
+like( $res->output, "/cURL returned 6 - Couldn't resolve host name/", "Output OK");
 
 # host header checks
 $res = NPTest->testCmd("./$plugin -v -H $host_tcp_http");
