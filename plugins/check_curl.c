@@ -133,7 +133,7 @@ char *server_url = 0;
 char server_ip[DEFAULT_BUFFER_SIZE];
 struct curl_slist *server_ips = NULL;
 unsigned short server_port = HTTP_PORT;
-int virtual_port = 0;
+unsigned short virtual_port = 0;
 int host_name_length;
 char output_header_search[30] = "";
 char output_string_search[30] = "";
@@ -256,8 +256,10 @@ main (int argc, char **argv)
 
   if (display_html == TRUE)
     printf ("<A HREF=\"%s://%s:%d%s\" target=\"_blank\">",
-      use_ssl ? "https" : "http", host_name ? host_name : server_address,
-      server_port, server_url);
+      use_ssl ? "https" : "http",
+      host_name ? host_name : server_address,
+      virtual_port ? virtual_port : server_port,
+      server_url);
 
   result = check_http ();
   return result;
@@ -357,14 +359,24 @@ check_http (void)
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_TIMEOUT, socket_timeout), "CURLOPT_TIMEOUT");
 
   /* compose URL: must be the host_name, only if not given take the IP address. */
-  snprintf (url, DEFAULT_BUFFER_SIZE, "%s://%s%s", use_ssl ? "https" : "http",
-    host_name ? host_name : server_address, server_url);
+  if ((use_ssl == FALSE && virtual_port == HTTP_PORT) ||
+      (use_ssl == TRUE && virtual_port == HTTPS_PORT))
+    snprintf (url, DEFAULT_BUFFER_SIZE, "%s://%s%s", use_ssl ? "https" : "http",
+      host_name ? host_name : server_address, server_url);
+  else
+    snprintf (url, DEFAULT_BUFFER_SIZE, "%s://%s:%d%s", use_ssl ? "https" : "http",
+      host_name ? host_name : server_address, virtual_port, server_url);
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_URL, url), "CURLOPT_URL");
 
-  /* cURL does certificate checking with this host_name (and not the virtual host?
-   * So we force CURLOPT_RESOLVE to make sure the resolver pickes the right IP
-   * for this hostname. */
-#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 3)
+  /* cURL does certificate checking against the host name from the URL above
+   * So we use CURLOPT_CONNECT_TO or CURLOPT_RESOLVE to handle differing
+   * host names and/or ports */
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 49, 0)
+  snprintf (server_ip, DEFAULT_BUFFER_SIZE, "%s:%d:%s:%d", host_name ? host_name : server_address, virtual_port, server_address, server_port);
+  server_ips = curl_slist_append (server_ips, server_ip);
+  handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CONNECT_TO, server_ips), "CURLOPT_CONNECT_TO");
+
+#elif LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 3)
   if (host_name && strcmp (host_name, server_address)) {
     snprintf (server_ip, DEFAULT_BUFFER_SIZE, "%s:%d:%s", host_name, server_port, server_address);
     server_ips = curl_slist_append (server_ips, server_ip);
@@ -380,10 +392,6 @@ check_http (void)
       printf ("* curl CURLOPT_PROXY: %s:%d\n", server_address, server_port);
     http_method = "GET";
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_URL, server_url), "CURLOPT_URL");
-    virtual_port = use_ssl ? HTTPS_PORT : HTTP_PORT;
-  } else {
-    /* set port */
-    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_PORT, server_port), "CURLOPT_PORT");
   }
 
   /* set HTTP method */
@@ -396,7 +404,7 @@ check_http (void)
       handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CUSTOMREQUEST, http_method), "CURLOPT_CUSTOMREQUEST");
   }
 
-  /* set hostname (virtual hosts) */
+  /* set hostname (virtual hosts), not needed if CURLOPT_CONNECT_TO is used, but left in anyway */
   if(host_name != NULL) {
     if((virtual_port != HTTP_PORT && !use_ssl) || (virtual_port != HTTPS_PORT && use_ssl)) {
       snprintf(http_header, DEFAULT_BUFFER_SIZE, "Host: %s:%d", host_name, virtual_port);
@@ -1189,7 +1197,7 @@ process_arguments (int argc, char **argv)
           host_name_length = strlen (host_name) - strlen (p) - 1;
           free (host_name);
           host_name = strndup (optarg, host_name_length);
-          }
+	}
       } else if ((p = strchr (host_name, ':')) != NULL
                  && strchr (++p, ':') == NULL) { /* IPv4:port or host:port */
           virtual_port = atoi (p);
@@ -1530,6 +1538,11 @@ process_arguments (int argc, char **argv)
 
   if (virtual_port == 0)
     virtual_port = server_port;
+  else {
+    if ((use_ssl && server_port == HTTPS_PORT) ||
+        (!use_ssl && server_port == HTTP_PORT))
+      server_port = virtual_port;
+  }
 
   return TRUE;
 }
