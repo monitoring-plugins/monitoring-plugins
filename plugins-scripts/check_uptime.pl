@@ -26,6 +26,8 @@ use strict;
 use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_v $verbose $PROGNAME $opt_w $opt_c
 					$opt_f $opt_s
+					$lower_warn_threshold $upper_warn_threshold
+					$lower_crit_threshold $upper_crit_threshold
 					$status $state $msg);
 use FindBin;
 use lib "$FindBin::Bin";
@@ -118,10 +120,19 @@ $pretty_uptime .= sprintf( "%d second%s", $secs, $secs == 1 ? "" : "s" );
 my $state_str = "UNKNOWN";
 
 # Check values
-if ( $uptime_seconds > $opt_c ) {
+my $out_of_bounds_text = "";
+if ( $uptime_seconds > $upper_crit_threshold ) {
 	$state_str = "CRITICAL";
-} elsif ( $uptime_seconds > $opt_w ) {
+	$out_of_bounds_text = "Exceeds upper crit threshold";
+} elsif ( $uptime_seconds < $lower_crit_threshold ) {
+	$state_str = "CRITICAL";
+	$out_of_bounds_text = "Exceeds lower crit threshold";
+} elsif ( $uptime_seconds > $upper_warn_threshold ) {
 	$state_str = "WARNING";
+	$out_of_bounds_text = "Exceeds upper warn threshold";
+} elsif ( $uptime_seconds < $lower_warn_threshold ) {
+	$state_str = "WARNING";
+	$out_of_bounds_text = "Exceeds lower warn threshold";
 } else {
 	$state_str = "OK";
 }
@@ -129,6 +140,7 @@ if ( $uptime_seconds > $opt_c ) {
 $msg = "$state_str: ";
 
 $msg .= "uptime is $uptime_seconds seconds. ";
+$msg .= "$out_of_bounds_text. "  if  $out_of_bounds_text;
 $msg .= "Running for $pretty_uptime. "  if  $opt_f;
 if ( $opt_s ) {
 	chomp( my $up_since = `uptime -s` );
@@ -138,7 +150,7 @@ if ( $opt_s ) {
 $state = $ERRORS{$state_str};
 
 # Perfdata support
-print "$msg|uptime=${uptime_seconds}s;$opt_w;$opt_c;0\n";
+print "$msg|uptime=${uptime_seconds}s;$upper_warn_threshold;$upper_crit_threshold;0\n";
 exit $state;
 
 
@@ -176,51 +188,56 @@ sub process_arguments(){
 		exit $ERRORS{'UNKNOWN'};
 	}
 
-	# Check if suffix is present
-	# Calculate parameter to seconds (to get an integer value finally)
-	# s = seconds
-	# m = minutes
-	# h = hours
-	# d = days
-	# w = weeks
-	my %factor = ( "s" => 1,
-		       "m" => 60,
-		       "h" => 60 * 60,
-		       "d" => 60 * 60 * 24,
-		       "w" => 60 * 60 * 24 * 7,
-		     );
-	if ( $opt_w =~ /^(\d+)([a-z])$/ ) {
-		my $value = $1;
-		my $suffix = $2;
-		print "warning: value=$value, suffix=$suffix\n" if $verbose;
-		if ( ! defined $factor{$suffix} ) {
-			print "Error: wrong suffix ($suffix) for warning";
-			exit $ERRORS{'UNKNOWN'};
-		}
-		$opt_w = $value * $factor{$suffix};
-	}
-	if ( $opt_c =~ /^(\d+)([a-z])$/ ) {
-		my $value = $1;
-		my $suffix = $2;
-		print "critical: value=$value, suffix=$suffix\n" if $verbose;
-		if ( ! defined $factor{$suffix} ) {
-			print "Error: wrong suffix ($suffix) for critical";
-			exit $ERRORS{'UNKNOWN'};
-		}
-		$opt_c = $value * $factor{$suffix};
-	}
+    # Check if a range was supplied ("lowvalue:highvalue") for warning and critical
+    # Otherwise, set 0 as the lower threshold and the parameter value as upper threshold
+    # (the uptime should always be positive, so there should be no issue)
+    if ( $opt_w =~ /^(.+):(.+)$/ ) {
+        $lower_warn_threshold = $1;
+        $upper_warn_threshold = $2;
+    } else {
+        $lower_warn_threshold = 0;
+        $upper_warn_threshold = $opt_w;
+    }
+    if ( $opt_c =~ /^(.+):(.+)$/ ) {
+        $lower_crit_threshold = $1;
+        $upper_crit_threshold = $2;
+    } else {
+        $lower_crit_threshold = 0;
+        $upper_crit_threshold = $opt_c;
+    }
 
-	if ( $opt_w !~ /^\d+$/ ) {
-		print "Warning (-w) is not numeric\n";
+	# Set as seconds (calculate if suffix present)
+    $lower_warn_threshold = calc_as_seconds( $lower_warn_threshold );
+    $lower_crit_threshold = calc_as_seconds( $lower_crit_threshold );
+    $upper_warn_threshold = calc_as_seconds( $upper_warn_threshold );
+    $upper_crit_threshold = calc_as_seconds( $upper_crit_threshold );
+
+    # Check for numeric value of warning parameter
+	if ( $lower_warn_threshold !~ /^\d+$/ ) {
+		print "Lower warning (-w) is not numeric\n";
 		exit $ERRORS{'UNKNOWN'};
 	}
-	if ( $opt_c !~ /^\d+$/ ) {
-		print "Critical (-c) is not numeric\n";
+	if ( $upper_warn_threshold !~ /^\d+$/ ) {
+		print "Upper warning (-w) is not numeric\n";
+		exit $ERRORS{'UNKNOWN'};
+	}
+    # Check for numeric value of critical parameter
+	if ( $lower_crit_threshold !~ /^\d+$/ ) {
+		print "Lower critical (-c) is not numeric\n";
+		exit $ERRORS{'UNKNOWN'};
+	}
+	if ( $upper_crit_threshold !~ /^\d+$/ ) {
+		print "Upper critical (-c) is not numeric\n";
 		exit $ERRORS{'UNKNOWN'};
 	}
 
-	if ( $opt_w >= $opt_c) {
-		print "Warning (-w) cannot be greater than Critical (-c)!\n";
+    # Check boundaries
+	if ( $upper_warn_threshold >= $upper_crit_threshold ) {
+		print "Upper Warning (-w) cannot be greater than Critical (-c)!\n";
+		exit $ERRORS{'UNKNOWN'};
+	}
+	if ( $lower_warn_threshold < $lower_crit_threshold ) {
+		print "Lower Warning (-w) cannot be greater than Critical (-c)!\n";
 		exit $ERRORS{'UNKNOWN'};
 	}
 
@@ -253,4 +270,40 @@ sub print_help () {
 	print "";
 	print "\n\n";
 	support();
+}
+
+sub calc_as_seconds () {
+
+    my $parameter = shift;
+
+	# Check if suffix is present
+	# Calculate parameter to seconds (to get an integer value finally)
+	# If no suffix is present, just return the value
+
+	# Possible suffixes:
+	# s = seconds
+	# m = minutes
+	# h = hours
+	# d = days
+	# w = weeks
+	my %factor = ( "s" => 1,
+		       "m" => 60,
+		       "h" => 60 * 60,
+		       "d" => 60 * 60 * 24,
+		       "w" => 60 * 60 * 24 * 7,
+		     );
+
+	if ( $parameter =~ /^(\d+)([a-z])$/ ) {
+		my $value = $1;
+		my $suffix = $2;
+		print "detected: value=$value, suffix=$suffix\n" if $verbose;
+		if ( ! defined $factor{$suffix} ) {
+			print "Error: wrong suffix ($suffix) for value '$parameter'";
+			exit $ERRORS{'UNKNOWN'};
+		}
+		$parameter = $value * $factor{$suffix};
+	}
+
+    return $parameter;
+
 }

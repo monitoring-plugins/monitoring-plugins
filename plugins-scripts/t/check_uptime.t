@@ -26,7 +26,7 @@ $result = NPTest->testCmd(
 	"./check_uptime -w 5 -c 2"
 	);
 cmp_ok( $result->return_code, '==', 3, "Warning greater than critical" );
-like  ( $result->output, '/^Warning .*cannot be greater than Critical/', "Output for warning greater than critical correct" );
+like  ( $result->output, '/^Upper Warning .*cannot be greater than Critical/', "Output for warning greater than critical correct" );
 
 $result = NPTest->testCmd(
 	"./check_uptime -c 1000 -W 100 2>&1"
