@@ -107,9 +107,9 @@ if ( $days > 14 ) {
 
 my $pretty_uptime = "";
 $pretty_uptime .= sprintf( "%d week%s, ",   $weeks, $weeks == 1 ? "" : "s" )  if  $weeks;
-$pretty_uptime .= sprintf( "%d day%s, ",    $days, $days == 1 ? "" : "s" )    if  $days;
+$pretty_uptime .= sprintf( "%d day%s, ",    $days,  $days  == 1 ? "" : "s" )  if  $days;
 $pretty_uptime .= sprintf( "%d hour%s, ",   $hours, $hours == 1 ? "" : "s" )  if  $hours;
-$pretty_uptime .= sprintf( "%d minute%s, ", $mins, $mins == 1 ? "" : "s" )    if  $mins;
+$pretty_uptime .= sprintf( "%d minute%s, ", $mins,  $mins  == 1 ? "" : "s" )  if  $mins;
 # Replace last occurence of comma with "and"
 $pretty_uptime =~ s/, $/ and /;
 # Always print the seconds (though it may be 0 seconds)
@@ -123,16 +123,16 @@ my $state_str = "UNKNOWN";
 my $out_of_bounds_text = "";
 if ( $uptime_seconds > $upper_crit_threshold ) {
 	$state_str = "CRITICAL";
-	$out_of_bounds_text = "Exceeds upper crit threshold";
+	$out_of_bounds_text = "upper crit";
 } elsif ( $uptime_seconds < $lower_crit_threshold ) {
 	$state_str = "CRITICAL";
-	$out_of_bounds_text = "Exceeds lower crit threshold";
+	$out_of_bounds_text = "lower crit";
 } elsif ( $uptime_seconds > $upper_warn_threshold ) {
 	$state_str = "WARNING";
-	$out_of_bounds_text = "Exceeds upper warn threshold";
+	$out_of_bounds_text = "upper warn";
 } elsif ( $uptime_seconds < $lower_warn_threshold ) {
 	$state_str = "WARNING";
-	$out_of_bounds_text = "Exceeds lower warn threshold";
+	$out_of_bounds_text = "lower warn";
 } else {
 	$state_str = "OK";
 }
@@ -140,7 +140,7 @@ if ( $uptime_seconds > $upper_crit_threshold ) {
 $msg = "$state_str: ";
 
 $msg .= "uptime is $uptime_seconds seconds. ";
-$msg .= "$out_of_bounds_text. "  if  $out_of_bounds_text;
+$msg .= "Exceeds $out_of_bounds_text threshold. "  if  $out_of_bounds_text;
 $msg .= "Running for $pretty_uptime. "  if  $opt_f;
 if ( $opt_s ) {
 	chomp( my $up_since = `uptime -s` );
