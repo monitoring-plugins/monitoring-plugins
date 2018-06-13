@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!@PERL@ -w
 
 # check_uptime - check uptime to see how long the system is running.
 #
