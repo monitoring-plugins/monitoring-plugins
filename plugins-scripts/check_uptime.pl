@@ -124,7 +124,7 @@ my $out_of_bounds_text = "";
 if ( $uptime_seconds > $upper_crit_threshold ) {
 	$state_str = "CRITICAL";
 	$out_of_bounds_text = "upper crit";
-} elsif ( $uptime_seconds < $lower_crit_threshold ) {
+} elsif ( $uptime_seconds < $lower_crit_threshold ) {
 	$state_str = "CRITICAL";
 	$out_of_bounds_text = "lower crit";
 } elsif ( $uptime_seconds > $upper_warn_threshold ) {
