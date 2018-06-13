@@ -192,7 +192,7 @@ sub process_arguments(){
 	if ( $opt_w =~ /^(\d+)([a-z])$/ ) {
 		my $value = $1;
 		my $suffix = $2;
-                print "warning: value=$value, suffix=$suffix\n" if $verbose;
+		print "warning: value=$value, suffix=$suffix\n" if $verbose;
 		if ( ! defined $factor{$suffix} ) {
 			print "Error: wrong suffix ($suffix) for warning";
 			exit $ERRORS{'UNKNOWN'};
@@ -202,7 +202,7 @@ sub process_arguments(){
 	if ( $opt_c =~ /^(\d+)([a-z])$/ ) {
 		my $value = $1;
 		my $suffix = $2;
-                print "critical: value=$value, suffix=$suffix\n" if $verbose;
+		print "critical: value=$value, suffix=$suffix\n" if $verbose;
 		if ( ! defined $factor{$suffix} ) {
 			print "Error: wrong suffix ($suffix) for critical";
 			exit $ERRORS{'UNKNOWN'};
