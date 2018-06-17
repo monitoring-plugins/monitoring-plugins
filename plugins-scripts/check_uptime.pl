@@ -236,8 +236,9 @@ sub process_arguments(){
 		print "Upper Warning (-w) cannot be greater than Critical (-c)!\n";
 		exit $ERRORS{'UNKNOWN'};
 	}
+	# No "<=" since both values are zero if no range (only upper threshold values) is given
 	if ( $lower_warn_threshold < $lower_crit_threshold ) {
-		print "Lower Warning (-w) cannot be greater than Critical (-c)!\n";
+		print "Lower Warning (-w) cannot be less than Critical (-c)!\n";
 		exit $ERRORS{'UNKNOWN'};
 	}
 
