@@ -267,6 +267,12 @@ sub print_help () {
 	print "\n\n";
 	print "Note: -w and -c are required arguments.\n";
 	print "      You can suffix both values with s for seconds (default), m (minutes), h (hours), d (days) or w (weeks).\n";
+	print "\n";
+	print "Range support: You may specify a range for both warning and critical thresholds.\n";
+	print "               This works without additional Perl modules.\n";
+	print "Example: ./check_uptime -w 10m:4w -c 1m:8w\n";
+	print "         Results in a critical state when uptime is below 60 seconds or higher than 8 weeks,\n";
+	print "         and in a warning state when uptime is below 10 minutes or above 4 weeks.\n";
 	print "\n\n";
 	support();
 }
