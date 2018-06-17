@@ -143,7 +143,7 @@ $msg .= "uptime is $uptime_seconds seconds. ";
 $msg .= "Exceeds $out_of_bounds_text threshold. "  if  $out_of_bounds_text;
 $msg .= "Running for $pretty_uptime. "  if  $opt_f;
 if ( $opt_s ) {
-	chomp( my $up_since = `uptime -s` );
+	my $up_since = strftime( "%Y-%m-%d %H:%M:%S", localtime( time - $uptime_seconds ) );
 	$msg .= "Running since $up_since. ";
 }
 
