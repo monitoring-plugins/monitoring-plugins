@@ -267,7 +267,6 @@ sub print_help () {
 	print "\n\n";
 	print "Note: -w and -c are required arguments.\n";
 	print "      You can suffix both values with s for seconds (default), m (minutes), h (hours), d (days) or w (weeks).\n";
-	print "";
 	print "\n\n";
 	support();
 }
