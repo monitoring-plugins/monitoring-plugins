@@ -9,7 +9,7 @@ use NPTest;
 use FindBin qw($Bin);
 use POSIX qw/strftime/;
 
-my $tests = 73;
+my $tests = 75;
 # Check that all dependent modules are available
 eval {
 	require NetSNMP::OID;
@@ -57,9 +57,9 @@ if ($pid) {
 	exec("snmpd -c tests/conf/snmpd.conf -C -f -r udp:$port_snmp");
 }
 
-END { 
+END {
 	foreach my $pid (@pids) {
-		if ($pid) { print "Killing $pid\n"; kill "INT", $pid } 
+		if ($pid) { print "Killing $pid\n"; kill "INT", $pid }
 	}
 };
 
@@ -268,3 +268,9 @@ like($res->output, '/SNMP WARNING - \d+ \*-4\* | iso.3.6.1.4.1.8072.3.2.67.10=\d
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10,.1.3.6.1.4.1.8072.3.2.67.17 -w 1,2 -c 1" );
 is($res->return_code, 2, "Multiple OIDs with some thresholds" );
 like($res->output, '/SNMP CRITICAL - \*\d+\* \*-4\* | iso.3.6.1.4.1.8072.3.2.67.10=\d+c;1;2 iso.3.6.1.4.1.8072.3.2.67.17=-4;;/', "Multiple OIDs with thresholds output" );
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.2.1.25.2.2.0 -M .125 ");
+is($res->return_code, 0, "Multiply OK" );
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.2.1.25.2.2.0 --multiplier=.0009765625 -f '%.3f' ");
+is($res->return_code, 0, "Multiply format OK" );
