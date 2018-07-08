@@ -220,7 +220,7 @@ main (int argc, char **argv)
 
   while (temp_list) {
     if (! temp_list->best_match) {
-      die (STATE_CRITICAL, _("DISK %s: %s not found\n"), _("CRITICAL"), temp_list->name);
+      die (STATE_UNKNOWN, _("DISK %s: %s not found\n"), _("UNKNOWN"), temp_list->name);
     }
 
     temp_list = temp_list->name_next;
@@ -969,8 +969,7 @@ stat_path (struct parameter_list *p)
   if (stat (p->name, &stat_buf[0])) {
     if (verbose >= 3)
       printf("stat failed on %s\n", p->name);
-    printf("DISK %s - ", _("CRITICAL"));
-    die (STATE_CRITICAL, _("%s %s: %s\n"), p->name, _("is not accessible"), strerror(errno));
+    die (STATE_UNKNOWN, _("DISK %s - %s %s: %s\n"), _("UNKNOWN"), p->name, _("is not accessible"), strerror(errno));
   }
 }
 

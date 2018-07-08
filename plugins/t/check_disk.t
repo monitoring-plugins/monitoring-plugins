@@ -279,8 +279,8 @@ TODO: {
 }
 
 $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p /bob" );
-cmp_ok( $result->return_code, '==', 2, "Checking /bob - return error because /bob does not exist" );
-like( $result->output, '/^DISK CRITICAL - /bob is not accessible:.*$/', 'Output OK');
+cmp_ok( $result->return_code, '==', 3, "Checking /bob - return error because /bob does not exist" );
+like( $result->output, '/^DISK UNKNOWN - /bob is not accessible:.*$/', 'Output OK');
 
 $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p /" );
 my $root_output = $result->output;
@@ -290,7 +290,7 @@ cmp_ok( $result->return_code, '==', 0, "Checking /etc - should return info for /
 cmp_ok( $result->output, 'eq', $root_output, "check_disk /etc gives same as check_disk /");
 
 $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -E -p /etc " );
-cmp_ok( $result->return_code, '==', 2, "... unless -E/--exact-match is specified");
+cmp_ok( $result->return_code, '==', 3, "... unless -E/--exact-match is specified");
 
 $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p /etc -E " );
 cmp_ok( $result->return_code, '==', 3, "-E/--exact-match must be specified before -p");
@@ -299,7 +299,7 @@ $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -r /etc -E " );
 cmp_ok( $result->return_code, '==', 3, "-E/--exact-match must be specified before -r");
 
 $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p / -p /bob" );
-cmp_ok( $result->return_code, '==', 2, "Checking / and /bob gives critical");
+cmp_ok( $result->return_code, '==', 3, "Checking / and /bob gives critical");
 unlike( $result->perf_output, '/\/bob/', "perf data does not have /bob in it");
 
 $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p / -p /" );
@@ -311,7 +311,7 @@ like( $result->output, '/;.*;\|/', "-C selects partitions if -p is not given");
 
 # grouping: exit crit if the sum of free megs on mp1+mp2 is less than warn/crit
 $result = NPTest->testCmd( "./check_disk -w ". ($free_mb_on_all + 1) ." -c ". ($free_mb_on_all + 1) ."-g group -p $mountpoint_valid -p $mountpoint2_valid" );
-cmp_ok( $result->return_code, '==', 2, "grouping: exit crit if the sum of free megs on mp1+mp2 is less than warn/crit");
+cmp_ok( $result->return_code, '==', 3, "grouping: exit crit if the sum of free megs on mp1+mp2 is less than warn/crit");
 
 # grouping: exit warning if the sum of free megs on mp1+mp2 is between -w and -c
 $result = NPTest->testCmd( "./check_disk -w ". ($free_mb_on_all + 1) ." -c ". ($free_mb_on_all - 1) ." -g group -p $mountpoint_valid -p $mountpoint2_valid" );
