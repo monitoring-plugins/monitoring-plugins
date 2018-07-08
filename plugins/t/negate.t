@@ -63,7 +63,7 @@ my %state = (
 
 # Timeout tests
 $res = NPTest->testCmd( "./negate -t 2 /bin/sh -c 'sleep 5'" );
-is( $res->output, 'CRITICAL - Plugin timed out after 2 seconds' );
+is( $res->output, 'UNKNOWN - Plugin timed out after 2 seconds' );
 
 foreach my $state (keys(%state)) {
 	$res = NPTest->testCmd( "./negate -t 2 -T $state /bin/sh -c 'sleep 5'" );

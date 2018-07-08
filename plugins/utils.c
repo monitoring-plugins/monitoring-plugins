@@ -36,7 +36,7 @@ extern const char *progname;
 #define STRLEN 64
 #define TXTBLK 128
 
-unsigned int timeout_state = STATE_CRITICAL;
+unsigned int timeout_state = STATE_UNKNOWN;
 unsigned int timeout_interval = DEFAULT_SOCKET_TIMEOUT;
 
 time_t start_time, end_time;
