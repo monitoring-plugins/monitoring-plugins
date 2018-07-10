@@ -8,7 +8,7 @@ use Test::More;
 use NPTest;
 use FindBin qw($Bin);
 
-my $tests = 67;
+my $tests = 69;
 # Check that all dependent modules are available
 eval {
 	require NetSNMP::OID;
@@ -251,3 +251,8 @@ $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1
 is($res->return_code, 1, "Negative float WARNING" );
 is($res->output, 'SNMP WARNING - *-6.6* | iso.3.6.1.4.1.8072.3.2.67.18=-6.6;~:-6.65;~:-6.55 ', "Negative float WARNING output" );
 
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.2.1.25.2.2.0 -M .125 ");
+is($res->return_code, 0, "Multiply OK" );
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.2.1.25.2.2.0 --multiplier=.0009765625 -f '%.3f' ");
+is($res->return_code, 0, "Multiply format OK" );
