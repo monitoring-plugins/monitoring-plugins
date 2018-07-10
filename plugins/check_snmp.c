@@ -1135,7 +1135,11 @@ multiply (char *str)
 {
 	double val = strtod (str, NULL);
 	val *= multiplier;
-	sprintf(str, "%f", val);
+	if (val == (int)val) {
+		sprintf(str, "%d", val);
+	} else {
+		sprintf(str, "%f", val);
+	}
 	return str;
 }
 
