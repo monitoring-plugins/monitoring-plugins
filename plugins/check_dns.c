@@ -230,10 +230,15 @@ main (int argc, char **argv)
     temp_buffer = "";
 
     for (i=0; i<expected_address_cnt; i++) {
+      int j;
       /* check if we get a match on 'raw' ip or cidr */
-      if ( strcmp(address, expected_address[i]) == 0
-           || ip_match_cidr(address, expected_address[i]) )
-        result = STATE_OK;
+      for (j=0; j<n_addresses; j++) {
+        if ( strcmp(addresses[j], expected_address[i]) == 0
+             || ip_match_cidr(addresses[j], expected_address[i]) ) {
+          result = STATE_OK;
+          break;
+        }
+      }
 
       /* prepare an error string */
       xasprintf(&temp_buffer, "%s%s; ", temp_buffer, expected_address[i]);
@@ -530,8 +535,7 @@ print_help (void)
   printf (" -a, --expected-address=IP-ADDRESS|CIDR|HOST\n");
   printf ("    %s\n", _("Optional IP-ADDRESS/CIDR you expect the DNS server to return. HOST must end"));
   printf ("    %s\n", _("with a dot (.). This option can be repeated multiple times (Returns OK if any"));
-  printf ("    %s\n", _("value match). If multiple addresses are returned at once, you have to match"));
-  printf ("    %s\n", _("the whole string of addresses separated with commas (sorted alphabetically)."));
+  printf ("    %s\n", _("value matches)."));
   printf (" -A, --expect-authority\n");
   printf ("    %s\n", _("Optionally expect the DNS server to be authoritative for the lookup"));
   printf (" -w, --warning=seconds\n");
