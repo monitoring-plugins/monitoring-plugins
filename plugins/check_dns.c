@@ -168,8 +168,8 @@ main (int argc, char **argv)
       temp_buffer++;
 
       /* Strip leading spaces */
-      for (; *temp_buffer != '\0' && *temp_buffer == ' '; temp_buffer++)
-        /* NOOP */;
+      while (*temp_buffer == ' ')
+        temp_buffer++;
 
       strip(temp_buffer);
       if (temp_buffer==NULL || strlen(temp_buffer)==0) {
