@@ -56,6 +56,7 @@ char **expected_address = NULL;
 int expected_address_cnt = 0;
 
 int expect_authority = FALSE;
+int all_match = FALSE;
 thresholds *time_thresholds = NULL;
 
 static int
@@ -228,6 +229,8 @@ main (int argc, char **argv)
   if (result == STATE_OK && expected_address_cnt > 0) {
     result = STATE_CRITICAL;
     temp_buffer = "";
+    unsigned long expect_match = (1 << expected_address_cnt) - 1;
+    unsigned long addr_match = (1 << n_addresses) - 1;
 
     for (i=0; i<expected_address_cnt; i++) {
       int j;
@@ -236,13 +239,17 @@ main (int argc, char **argv)
         if ( strcmp(addresses[j], expected_address[i]) == 0
              || ip_match_cidr(addresses[j], expected_address[i]) ) {
           result = STATE_OK;
-          break;
+          addr_match &= ~(1 << j);
+          expect_match &= ~(1 << i);
         }
       }
 
       /* prepare an error string */
       xasprintf(&temp_buffer, "%s%s; ", temp_buffer, expected_address[i]);
     }
+    /* check if expected_address must cover all in addresses and none may be missing */
+    if (all_match && (expect_match != 0 || addr_match != 0))
+      result = STATE_CRITICAL;
     if (result == STATE_CRITICAL) {
       /* Strip off last semicolon... */
       temp_buffer[strlen(temp_buffer)-2] = '\0';
@@ -406,6 +413,7 @@ process_arguments (int argc, char **argv)
     {"reverse-server", required_argument, 0, 'r'},
     {"expected-address", required_argument, 0, 'a'},
     {"expect-authority", no_argument, 0, 'A'},
+    {"all", no_argument, 0, 'L'},
     {"warning", required_argument, 0, 'w'},
     {"critical", required_argument, 0, 'c'},
     {0, 0, 0, 0}
@@ -419,7 +427,7 @@ process_arguments (int argc, char **argv)
       strcpy (argv[c], "-t");
 
   while (1) {
-    c = getopt_long (argc, argv, "hVvAt:H:s:r:a:w:c:", long_opts, &opt_index);
+    c = getopt_long (argc, argv, "hVvALt:H:s:r:a:w:c:", long_opts, &opt_index);
 
     if (c == -1 || c == EOF)
       break;
@@ -466,6 +474,9 @@ process_arguments (int argc, char **argv)
       break;
     case 'A': /* expect authority */
       expect_authority = TRUE;
+      break;
+    case 'L': /* all must match */
+      all_match = TRUE;
       break;
     case 'w':
       warning = optarg;
@@ -542,6 +553,9 @@ print_help (void)
   printf ("    %s\n", _("Return warning if elapsed time exceeds value. Default off"));
   printf (" -c, --critical=seconds\n");
   printf ("    %s\n", _("Return critical if elapsed time exceeds value. Default off"));
+  printf (" -L, --all\n");
+  printf ("    %s\n", _("Return critical the list of expected addresses does not match all addresses"));
+  printf ("    %s\n", _("returned. Default off"));
 
   printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
@@ -553,5 +567,5 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-  printf ("%s -H host [-s server] [-a expected-address] [-A] [-t timeout] [-w warn] [-c crit]\n", progname);
+  printf ("%s -H host [-s server] [-a expected-address] [-A] [-t timeout] [-w warn] [-c crit] [-L]\n", progname);
 }
