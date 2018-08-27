@@ -113,7 +113,7 @@ char *authproto = NULL;
 char *privproto = NULL;
 char *authpasswd = NULL;
 char *privpasswd = NULL;
-int nulloid = 3;
+int nulloid = STATE_UNKNOWN;
 char **oids = NULL;
 size_t oids_size = 0;
 char *label;
