@@ -128,6 +128,7 @@ process_arguments (int argc, char **argv)
 	static struct option longopts[] = {
 		{"help", no_argument, 0, 'h'},
 		{"version", no_argument, 0, 'V'},
+		{"host", no_argument, 0, 'H'},
 		{"timeout", required_argument, 0, 't'},
 		{"timeout-result", required_argument, 0, 'T'},
 		{"ok", required_argument, 0, 'o'},
@@ -139,9 +140,9 @@ process_arguments (int argc, char **argv)
 	};
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVt:T:o:w:c:u:s", longopts, &option);
+		c = getopt_long (argc, argv, "+hVt:T:H:o:w:c:u:s", longopts, &option);
 
-		if (c == -1 || c == EOF)
+			if (c == -1 || c == EOF)
 			break;
 
 		switch (c) {
@@ -165,6 +166,8 @@ process_arguments (int argc, char **argv)
 			if ((timeout_state = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Timeout result must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			break;
+		case 'H':     /* ignore this parameter, librenms automatically adds this to every service check. */
+			break; 
 		case 'o':     /* replacement for OK */
 			if ((state[STATE_OK] = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Ok must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
@@ -233,6 +236,7 @@ print_help (void)
 	printf (UT_PLUG_TIMEOUT, timeout_interval);
 	printf ("    %s\n", _("Keep timeout longer than the plugin timeout to retain CRITICAL status."));
 	printf (" -T, --timeout-result=STATUS\n");
+	printf (" -H, --host Flag is ignored.\n");
 	printf ("    %s\n", _("Custom result on Negate timeouts; see below for STATUS definition\n"));
 
 	printf(" -o, --ok=STATUS\n");
