@@ -155,16 +155,16 @@ main (int argc, char **argv)
 		printf (_("Could not open stderr for %s\n"), PATH_TO_UPTIME);
 	}
 	fgets (input_buffer, MAX_INPUT_BUFFER - 1, child_process);
-    if(strstr(input_buffer, "load average:")) {
-	    sscanf (input_buffer, "%*[^l]load average: %lf, %lf, %lf", &la1, &la5, &la15);
-    }
-    else if(strstr(input_buffer, "load averages:")) {
-	    sscanf (input_buffer, "%*[^l]load averages: %lf, %lf, %lf", &la1, &la5, &la15);
-    }
-    else {
+	if(strstr(input_buffer, "load average:")) {
+		sscanf (input_buffer, "%*[^l]load average: %lf, %lf, %lf", &la1, &la5, &la15);
+	}
+	else if(strstr(input_buffer, "load averages:")) {
+		sscanf (input_buffer, "%*[^l]load averages: %lf, %lf, %lf", &la1, &la5, &la15);
+	}
+	else {
 		printf (_("could not parse load from uptime %s: %s\n"), PATH_TO_UPTIME, result);
 		return STATE_UNKNOWN;
-    }
+	}
 
 	result = spclose (child_process);
 	if (result) {
@@ -176,13 +176,13 @@ main (int argc, char **argv)
 
 	if (take_into_account_cpus == 1) {
 		if ((numcpus = GET_NUMBER_OF_CPUS()) > 0) {
-		    la_divisor = numcpus;
+			la_divisor = numcpus;
 		}
 	}
 
-    la_scaled[0] = la[0] / la_divisor;
-    la_scaled[1] = la[1] / la_divisor;
-    la_scaled[2] = la[2] / la_divisor;
+	la_scaled[0] = la[0] / la_divisor;
+	la_scaled[1] = la[1] / la_divisor;
+	la_scaled[2] = la[2] / la_divisor;
 
 	if ((la_scaled[0] < 0.0) || (la_scaled[1] < 0.0) || (la_scaled[2] < 0.0)) {
 #ifdef HAVE_GETLOADAVG
@@ -315,7 +315,7 @@ print_help (void)
 
 	printf (_("This plugin tests the current system load average."));
 
-  printf ("\n\n");
+	printf ("\n\n");
 
 	print_usage ();
 
@@ -323,12 +323,12 @@ print_help (void)
 	printf (UT_EXTRA_OPTS);
 
 	printf (" %s\n", "-w, --warning=WLOAD1,WLOAD5,WLOAD15");
-  printf ("    %s\n", _("Exit with WARNING status if load average exceeds WLOADn"));
-  printf (" %s\n", "-c, --critical=CLOAD1,CLOAD5,CLOAD15");
-  printf ("    %s\n", _("Exit with CRITICAL status if load average exceed CLOADn"));
-  printf ("    %s\n", _("the load average format is the same used by \"uptime\" and \"w\""));
-  printf (" %s\n", "-r, --percpu");
-  printf ("    %s\n", _("Divide the load averages by the number of CPUs (when possible)"));
+	printf ("    %s\n", _("Exit with WARNING status if load average exceeds WLOADn"));
+	printf (" %s\n", "-c, --critical=CLOAD1,CLOAD5,CLOAD15");
+	printf ("    %s\n", _("Exit with CRITICAL status if load average exceed CLOADn"));
+	printf ("    %s\n", _("the load average format is the same used by \"uptime\" and \"w\""));
+	printf (" %s\n", "-r, --percpu");
+	printf ("    %s\n", _("Divide the load averages by the number of CPUs (when possible)"));
 
 	printf (UT_SUPPORT);
 }
@@ -336,6 +336,6 @@ print_help (void)
 void
 print_usage (void)
 {
-  printf ("%s\n", _("Usage:"));
+	printf ("%s\n", _("Usage:"));
 	printf ("%s [-r] -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15\n", progname);
 }
