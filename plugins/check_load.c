@@ -102,6 +102,8 @@ main (int argc, char **argv)
 	long numcpus;
 
 	double la[3] = { 0.0, 0.0, 0.0 };	/* NetBSD complains about unitialized arrays */
+	double la_scaled[3] = { 0.0, 0.0, 0.0 };
+	long la_divisor = 1;
 #ifndef HAVE_GETLOADAVG
 	char input_buffer[MAX_INPUT_BUFFER];
 # ifdef HAVE_PROC_LOADAVG
@@ -174,12 +176,15 @@ main (int argc, char **argv)
 
 	if (take_into_account_cpus == 1) {
 		if ((numcpus = GET_NUMBER_OF_CPUS()) > 0) {
-			la[0] = la[0] / numcpus;
-			la[1] = la[1] / numcpus;
-			la[2] = la[2] / numcpus;
+		    la_divisor = numcpus;
 		}
 	}
-	if ((la[0] < 0.0) || (la[1] < 0.0) || (la[2] < 0.0)) {
+
+    la_scaled[0] = la[0] / la_divisor;
+    la_scaled[1] = la[1] / la_divisor;
+    la_scaled[2] = la[2] / la_divisor;
+
+	if ((la_scaled[0] < 0.0) || (la_scaled[1] < 0.0) || (la_scaled[2] < 0.0)) {
 #ifdef HAVE_GETLOADAVG
 		printf (_("Error in getloadavg()\n"));
 #else
@@ -198,16 +203,16 @@ main (int argc, char **argv)
 	xasprintf(&status_line, _("load average: %.2f, %.2f, %.2f"), la1, la5, la15);
 
 	for(i = 0; i < 3; i++) {
-		if(la[i] > cload[i]) {
+		if(la_scaled[i] > cload[i]) {
 			result = STATE_CRITICAL;
 			break;
 		}
-		else if(la[i] > wload[i]) result = STATE_WARNING;
+		else if(la_scaled[i] > wload[i]) result = STATE_WARNING;
 	}
 
 	printf("%s - %s|", state_text(result), status_line);
 	for(i = 0; i < 3; i++)
-		printf("load%d=%.3f;%.3f;%.3f;0; ", nums[i], la[i], wload[i], cload[i]);
+		printf("load%d=%.3f;%.3f;%.3f;0; ", nums[i], la_scaled[i], wload[i], cload[i]);
 
 	putchar('\n');
 	return result;
