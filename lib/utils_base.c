@@ -87,10 +87,13 @@ void _get_monitoring_plugin( monitoring_plugin **pointer ){
 void
 die (int result, const char *fmt, ...)
 {
-	va_list ap;
-	va_start (ap, fmt);
-	vprintf (fmt, ap);
-	va_end (ap);
+	if(fmt!=NULL) {
+		va_list ap;
+		va_start (ap, fmt);
+		vprintf (fmt, ap);
+		va_end (ap);
+	}
+
 	if(this_monitoring_plugin!=NULL) {
 		np_cleanup();
 	}
