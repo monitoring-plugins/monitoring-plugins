@@ -1532,6 +1532,10 @@ print_help (void)
 
   print_usage ();
 
+#ifdef HAVE_SSL
+  printf (_("In the first form, make an HTTP request."));
+  printf (_("In the second form, connect to the server and check the TLS certificate."));
+#endif
   printf (_("NOTE: One or both of -H and -I must be specified"));
 
   printf ("\n");
@@ -1688,6 +1692,8 @@ print_usage (void)
   printf ("       [-b proxy_auth] [-f <ok|warning|critcal|follow|sticky|stickyport>]\n");
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
-  printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
+  printf ("       [-A string] [-k string] [-S <version>] [--sni]\n");
   printf ("       [-T <content-type>] [-j method]\n");
+  printf (" %s -H <vhost> | -I <IP-address> -C <warn_age>[,<crit_age>]\n",progname);
+  printf ("       [-p <port>] [-t <timeout>] [-4|-6] [--sni]\n");
 }
