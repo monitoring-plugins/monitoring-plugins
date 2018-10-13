@@ -241,6 +241,7 @@ NP-VERSION-FILE
 /plugins-scripts/check_sensors
 /plugins-scripts/check_wave
 /plugins-scripts/check_file_age
+/plugins-scripts/check_uptime
 
 # /po/
 /po/Makefile
