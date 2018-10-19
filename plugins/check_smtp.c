@@ -138,18 +138,16 @@ main (int argc, char **argv)
 	argv=np_extra_opts (&argc, argv, progname);
 
 	if (process_arguments (argc, argv) == ERROR)
-		usage4 (_("Could not parse arguments"));
+                print_singleline_exit (STATE_UNKNOWN, _("Could not parse arguments"));
 
 	/* If localhostname not set on command line, use gethostname to set */
 	if(! localhostname){
 		localhostname = malloc (HOST_MAX_BYTES);
 		if(!localhostname){
-			printf(_("malloc() failed!\n"));
-			return STATE_CRITICAL;
+                        print_singleline_exit (STATE_CRITICAL, _("malloc() failed!"));
 		}
 		if(gethostname(localhostname, HOST_MAX_BYTES)){
-			printf(_("gethostname() failed!\n"));
-			return STATE_CRITICAL;
+                        print_singleline_exit (STATE_CRITICAL, _("gethostname() failed!"));
 		}
 	}
 	if(use_ehlo)
@@ -183,8 +181,7 @@ main (int argc, char **argv)
 		/* watch for the SMTP connection string and */
 		/* return a WARNING status if we couldn't read any data */
 		if (recvlines(buffer, MAX_INPUT_BUFFER) <= 0) {
-			printf (_("recv() failed\n"));
-			return STATE_WARNING;
+                        return print_singleline_return (STATE_WARNING, _("recv() failed"));
 		}
 
 		/* save connect return (220 hostname ..) for later use */
@@ -195,8 +192,7 @@ main (int argc, char **argv)
 
 		/* allow for response to helo command to reach us */
 		if (recvlines(buffer, MAX_INPUT_BUFFER) <= 0) {
-			printf (_("recv() failed\n"));
-			return STATE_WARNING;
+                        return print_singleline_return (STATE_WARNING, _("recv() failed"));
 		} else if(use_ehlo){
 			if(strstr(buffer, "250 STARTTLS") != NULL ||
 			   strstr(buffer, "250-STARTTLS") != NULL){
@@ -205,9 +201,8 @@ main (int argc, char **argv)
 		}
 
 		if(use_ssl && ! supports_tls){
-			printf(_("WARNING - TLS not supported by server\n"));
-			smtp_quit();
-			return STATE_WARNING;
+                        smtp_quit();
+                        return print_singleline_return (STATE_WARNING, _("TLS not supported by server"));
 		}
 
 #ifdef HAVE_SSL
@@ -217,16 +212,14 @@ main (int argc, char **argv)
 
 		  recvlines(buffer, MAX_INPUT_BUFFER); /* wait for it */
 		  if (!strstr (buffer, SMTP_EXPECT)) {
-		    printf (_("Server does not support STARTTLS\n"));
 		    smtp_quit();
-		    return STATE_UNKNOWN;
+		    return print_singleline_return (STATE_UNKNOWN, _("Server does not support STARTTLS"));
 		  }
 		  result = np_net_ssl_init(sd);
 		  if(result != STATE_OK) {
-		    printf (_("CRITICAL - Cannot create SSL context.\n"));
 		    close(sd);
 		    np_net_ssl_cleanup();
-		    return STATE_CRITICAL;
+		    return print_singleline_return (STATE_CRITICAL, _("Cannot create SSL context."));
 		  } else {
 			ssl_established = 1;
 		  }
@@ -243,16 +236,14 @@ main (int argc, char **argv)
 		 * we resent EHLO via TLS.
 		 */
 		if (my_send(helocmd, strlen(helocmd)) <= 0) {
-			printf("%s\n", _("SMTP UNKNOWN - Cannot send EHLO command via TLS."));
 			my_close();
-			return STATE_UNKNOWN;
+			return print_singleline_return (STATE_UNKNOWN, _("Cannot send EHLO command via TLS."));
 		}
 		if (verbose)
 			printf(_("sent %s"), helocmd);
 		if ((n = recvlines(buffer, MAX_INPUT_BUFFER)) <= 0) {
-			printf("%s\n", _("SMTP UNKNOWN - Cannot read EHLO response via TLS."));
 			my_close();
-			return STATE_UNKNOWN;
+			return print_singleline_return (STATE_UNKNOWN, _("Cannot read EHLO response via TLS."));
 		}
 		if (verbose) {
 			printf("%s", buffer);
@@ -280,11 +271,10 @@ main (int argc, char **argv)
 		/* make sure we find the droids we are looking for */
 		if (!strstr (server_response, server_expect)) {
 			if (server_port == SMTP_PORT)
-				printf (_("Invalid SMTP response received from host: %s\n"), server_response);
+				return print_singleline_return (STATE_WARNING, _("Invalid SMTP response received from host: %s"), server_response);
 			else
-				printf (_("Invalid SMTP response received from host on port %d: %s\n"),
+				return print_singleline_return (STATE_WARNING, _("Invalid SMTP response received from host on port %d: %s"),
 										server_port, server_response);
-			return STATE_WARNING;
 		}
 
 		if (send_mail_from) {
@@ -312,13 +302,11 @@ main (int argc, char **argv)
 					result = STATE_OK;
 				}
 				else if (excode == REG_NOMATCH) {
-					result = STATE_WARNING;
-					printf (_("SMTP %s - Invalid response '%s' to command '%s'\n"), state_text (result), buffer, commands[n]);
+					result = print_singleline_return (STATE_WARNING, _("Invalid response '%s' to command '%s'"), buffer, commands[n]);
 				}
 				else {
 					regerror (excode, &preg, errbuf, MAX_INPUT_BUFFER);
-					printf (_("Execute Error: %s\n"), errbuf);
-					result = STATE_UNKNOWN;
+                                        result = print_singleline_return (STATE_UNKNOWN, _("Execute Error: %s"), errbuf);
 				}
 			}
 			n++;
@@ -401,10 +389,8 @@ main (int argc, char **argv)
 					}
 					break;
 				} while (0);
-			} else {
-				result = STATE_CRITICAL;
-				xasprintf(&error_msg, _("only authtype LOGIN is supported, "));
-			}
+			} else
+				result = print_singleline_return (STATE_CRITICAL, _("only authtype LOGIN is supported"));
 		}
 
 		/* tell the server we're done */
@@ -427,8 +413,7 @@ main (int argc, char **argv)
 			result = STATE_WARNING;
 	}
 
-	printf (_("SMTP %s - %s%.3f sec. response time%s%s|%s\n"),
-			state_text (result),
+	print_singleline_exit (result, _("%s%.3f sec. response time%s%s|%s"),
 			error_msg,
 			elapsed_time,
 			verbose?", ":"", verbose?buffer:"",
@@ -436,8 +421,6 @@ main (int argc, char **argv)
 				(int)check_warning_time, warning_time,
 				(int)check_critical_time, critical_time,
 				TRUE, 0, FALSE, 0));
-
-	return result;
 }
 
 
@@ -500,14 +483,14 @@ process_arguments (int argc, char **argv)
 				server_address = optarg;
 			}
 			else {
-				usage2 (_("Invalid hostname/address"), optarg);
+				print_singleline_exit (STATE_UNKNOWN, _("Invalid hostname/address %s"), optarg);
 			}
 			break;
 		case 'p':									/* port */
 			if (is_intpos (optarg))
 				server_port = atoi (optarg);
 			else
-				usage4 (_("Port must be a positive integer"));
+				print_singleline_exit (STATE_UNKNOWN, _("Port must be a positive integer"));
 			break;
 		case 'F':
 		/* localhostname */
@@ -536,8 +519,8 @@ process_arguments (int argc, char **argv)
 				command_size+=8;
 				commands = realloc (commands, sizeof(char *) * command_size);
 				if (commands == NULL)
-					die (STATE_UNKNOWN,
-					     _("Could not realloc() units [%d]\n"), ncommands);
+					print_singleline_exit (STATE_UNKNOWN,
+					     _("Could not realloc() units [%d]"), ncommands);
 			}
 			commands[ncommands] = (char *) malloc (sizeof(char) * 255);
 			strncpy (commands[ncommands], optarg, 255);
@@ -548,8 +531,8 @@ process_arguments (int argc, char **argv)
 				response_size += 8;
 				responses = realloc (responses, sizeof(char *) * response_size);
 				if (responses == NULL)
-					die (STATE_UNKNOWN,
-					     _("Could not realloc() units [%d]\n"), nresponses);
+					print_singleline_exit (STATE_UNKNOWN,
+					     _("Could not realloc() units [%d]"), nresponses);
 			}
 			responses[nresponses] = (char *) malloc (sizeof(char) * 255);
 			strncpy (responses[nresponses], optarg, 255);
@@ -557,7 +540,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'c':									/* critical time threshold */
 			if (!is_nonnegative (optarg))
-				usage4 (_("Critical time must be a positive"));
+				print_singleline_exit (STATE_UNKNOWN, _("Critical time must be a positive"));
 			else {
 				critical_time = strtod (optarg, NULL);
 				check_critical_time = TRUE;
@@ -565,7 +548,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'w':									/* warning time threshold */
 			if (!is_nonnegative (optarg))
-				usage4 (_("Warning time must be a positive"));
+				print_singleline_exit (STATE_UNKNOWN, _("Warning time must be a positive"));
 			else {
 				warning_time = strtod (optarg, NULL);
 				check_warning_time = TRUE;
@@ -582,7 +565,7 @@ process_arguments (int argc, char **argv)
 				socket_timeout = atoi (optarg);
 			}
 			else {
-				usage4 (_("Timeout interval must be a positive integer"));
+				print_singleline_exit (STATE_UNKNOWN, _("Timeout interval must be a positive integer"));
 			}
 			break;
 		case 'D':
@@ -591,24 +574,24 @@ process_arguments (int argc, char **argv)
                         if ((temp=strchr(optarg,','))!=NULL) {
                             *temp='\0';
                             if (!is_intnonneg (optarg))
-                               usage2 ("Invalid certificate expiration period", optarg);
+                               print_singleline_exit (STATE_UNKNOWN, _("Invalid certificate expiration period %s"), optarg);
                             days_till_exp_warn = atoi(optarg);
                             *temp=',';
                             temp++;
                             if (!is_intnonneg (temp))
-                                usage2 (_("Invalid certificate expiration period"), temp);
+                                print_singleline_exit (STATE_UNKNOWN, _("Invalid certificate expiration period %s"), temp);
                             days_till_exp_crit = atoi (temp);
                         }
                         else {
                             days_till_exp_crit=0;
                             if (!is_intnonneg (optarg))
-                                usage2 ("Invalid certificate expiration period", optarg);
+                                print_singleline_exit (STATE_UNKNOWN, _("Invalid certificate expiration period %s"), optarg);
                             days_till_exp_warn = atoi (optarg);
                         }
 			check_cert = TRUE;
 			ignore_send_quit_failure = TRUE;
 #else
-			usage (_("SSL support not available - install OpenSSL and recompile"));
+			print_singleline_exit (STATE_UNKNOWN, _("SSL support not available - install OpenSSL and recompile"));
 #endif
 		case 'S':
 		/* starttls */
@@ -622,7 +605,7 @@ process_arguments (int argc, char **argv)
 #ifdef USE_IPV6
 			address_family = AF_INET6;
 #else
-			usage4 (_("IPv6 support not available"));
+			print_singleline_exit (STATE_UNKNOWN, _("IPv6 support not available"));
 #endif
 			break;
 		case 'V':									/* version */
@@ -642,7 +625,7 @@ process_arguments (int argc, char **argv)
 			if (is_host (argv[c]))
 				server_address = argv[c];
 			else
-				usage2 (_("Invalid hostname/address"), argv[c]);
+				print_singleline_exit (STATE_UNKNOWN, _("Invalid hostname/address %s"), argv[c]);
 		}
 		else {
 			xasprintf (&server_address, "127.0.0.1");
@@ -684,8 +667,8 @@ smtp_quit(void)
 			}
 			return;
 		}
-		die (STATE_UNKNOWN,
-			_("Connection closed by server before sending QUIT command\n"));
+		print_singleline_exit (STATE_UNKNOWN,
+			_("Connection closed by server before sending QUIT command"));
 	}
 
 	if (verbose)

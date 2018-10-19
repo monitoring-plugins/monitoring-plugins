@@ -31,9 +31,9 @@ my $internet_access    = getTestParameter( "NP_INTERNET_ACCESS",
                                            "Is this system directly connected to the internet?",
                                            "yes");
 
-my $successOutput = '/^TCP OK\s-\s+[0-9]?\.?[0-9]+ second response time on port [0-9]+/';
+my $successOutput = '/^TCP OK:\s+[0-9]?\.?[0-9]+ second response time on port [0-9]+/';
 
-my $failedExpect = '/^TCP WARNING\s-\sUnexpected response from host/socket on port [0-9]+/';
+my $failedExpect = '/^TCP WARNING:\sUnexpected response from host/socket on port [0-9]+/';
 
 my $t;
 

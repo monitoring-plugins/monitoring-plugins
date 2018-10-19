@@ -194,21 +194,21 @@ SKIP: {
 
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 14" );
 	is( $result->return_code, 0, "$command -p $port_https -S -C 14" );
-	is( $result->output, 'OK - Certificate \'Ton Voon\' will expire on Sun Mar  3 21:41:28 2019 +0000.', "output ok" );
+	is( $result->output, 'HTTP OK: Certificate \'Ton Voon\' will expire on Sun Mar  3 21:41:28 2019 +0000.', "output ok" );
 
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 14000" );
 	is( $result->return_code, 1, "$command -p $port_https -S -C 14000" );
-	like( $result->output, '/WARNING - Certificate \'Ton Voon\' expires in \d+ day\(s\) \(Sun Mar  3 21:41:28 2019 \+0000\)./', "output ok" );
+	like( $result->output, '/HTTP WARNING: Certificate \'Ton Voon\' expires in \d+ day\(s\) \(Sun Mar  3 21:41:28 2019 \+0000\)./', "output ok" );
 
 	# Expired cert tests
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 13960,14000" );
 	is( $result->return_code, 2, "$command -p $port_https -S -C 13960,14000" );
-	like( $result->output, '/CRITICAL - Certificate \'Ton Voon\' expires in \d+ day\(s\) \(Sun Mar  3 21:41:28 2019 \+0000\)./', "output ok" );
+	like( $result->output, '/HTTP CRITICAL: Certificate \'Ton Voon\' expires in \d+ day\(s\) \(Sun Mar  3 21:41:28 2019 \+0000\)./', "output ok" );
 
 	$result = NPTest->testCmd( "$command -p $port_https_expired -S -C 7" );
 	is( $result->return_code, 2, "$command -p $port_https_expired -S -C 7" );
 	is( $result->output,
-		'CRITICAL - Certificate \'Ton Voon\' expired on Thu Mar  5 00:13:16 2009 +0000.',
+		'HTTP CRITICAL: Certificate \'Ton Voon\' expired on Thu Mar  5 00:13:16 2009 +0000.',
 		"output ok" );
 
 }
@@ -306,7 +306,7 @@ sub run_common_tests {
 	$cmd = "$command -u /statuscode/201 -e 200";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 2, $cmd);
-	like( $result->output, '/^HTTP CRITICAL - Invalid HTTP response received from host on port \d+: HTTP/1.1 201 Created/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP CRITICAL: Invalid HTTP response received from host on port \d+: HTTP/1.1 201 Created/', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /statuscode/200 -e 200,201,202";
 	$result = NPTest->testCmd( $cmd );
@@ -321,7 +321,7 @@ sub run_common_tests {
 	$cmd = "$command -u /statuscode/203 -e 200,201,202";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 2, $cmd);
-	like( $result->output, '/^HTTP CRITICAL - Invalid HTTP response received from host on port (\d+): HTTP/1.1 203 Non-Authoritative Information/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP CRITICAL: Invalid HTTP response received from host on port (\d+): HTTP/1.1 203 Non-Authoritative Information/', "Output correct: ".$result->output );
 
 	$cmd = "$command -j HEAD -u /method";
 	$result = NPTest->testCmd( $cmd );

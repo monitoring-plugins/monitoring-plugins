@@ -148,22 +148,128 @@ print_revision (const char *command_name, const char *revision)
 	         command_name, revision, PACKAGE, VERSION);
 }
 
+
+/*
+ * Standard output function
+ * Format: SERVICE STATUS: Information text
+ */
+void
+print_singleline (int service_state, const char *fmt, ...)
+{
+        va_list ap;
+        char *str = NULL;
+        int result = 0;
+
+        va_start(ap, fmt);
+        result = xvasprintf (&str, fmt, ap);
+        va_end(ap);
+
+        if (result != -1 && &str != NULL)
+                printf("%s %s: %s\n", service_name(), state_text(service_state), str);
+}
+int
+print_singleline_return (int service_state, const char *fmt, ...)
+{
+        va_list ap;
+        char *str = NULL;
+        int result = 0;
+
+        va_start(ap, fmt);
+        result = xvasprintf (&str, fmt, ap);
+        va_end(ap);
+
+        if (result == -1 || &str == NULL)
+                return (FALSE);
+        else {
+                printf("%s %s: %s\n", service_name(), state_text(service_state), str);
+                return (service_state);
+        }
+}
+void
+print_singleline_exit (int service_state, const char *fmt, ...)
+{
+        va_list ap;
+        char *str = NULL;
+        int result = 0;
+
+        va_start(ap, fmt);
+        result = xvasprintf (&str, fmt, ap);
+        va_end(ap);
+
+        if (result == -1 || &str == NULL)
+                exit (FALSE);
+        else {
+                printf("%s %s: %s\n", service_name(), state_text(service_state), str);
+                exit (service_state);
+        }
+}
+
+
+/*
+ * Helper functions for standard output functions
+ */
+char *
+service_name(void)
+{
+        /* Prepare service name from progname */
+        char *service_name = NULL;
+        service_name = strscpy(service_name, progname);
+        service_name = strrev(service_name);
+        service_name = strpcpy(service_name, service_name, "_");
+        service_name = strrev(service_name);
+        service_name = strupper(service_name);
+        return service_name;
+}
 const char *
 state_text (int result)
 {
-	switch (result) {
-	case STATE_OK:
-		return "OK";
-	case STATE_WARNING:
-		return "WARNING";
-	case STATE_CRITICAL:
-		return "CRITICAL";
-	case STATE_DEPENDENT:
-		return "DEPENDENT";
-	default:
-		return "UNKNOWN";
-	}
+        switch (result) {
+        case STATE_OK:
+                return "OK";
+        case STATE_WARNING:
+                return "WARNING";
+        case STATE_CRITICAL:
+                return "CRITICAL";
+        case STATE_DEPENDENT:
+                return "DEPENDENT";
+        default:
+                return "UNKNOWN";
+        }
 }
+char *
+strrev (char *string)
+{
+        if (! string || ! *string)
+                return string;
+
+        char *p1 = NULL, *p2 = NULL;
+
+        for (p1 = string, p2 = string + strlen(string) - 1; p2 > p1; ++p1, --p2)
+        {
+                *p1 ^= *p2;
+                *p2 ^= *p1;
+                *p1 ^= *p2;
+        }
+
+        return string;
+}
+char *
+strupper (char *str)
+{
+        size_t len = 0, i = 0;
+
+        if (str)
+                len = strlen(str);
+        else
+                return NULL;
+
+        for (i=0; i<len; ++i)
+                str[i] = toupper(str[i]);
+
+        str[len] = '\0';
+        return str;
+}
+
 
 void
 timeout_alarm_handler (int signo)
