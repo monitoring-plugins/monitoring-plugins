@@ -207,6 +207,13 @@ int process_arguments (int, char**);
 void handle_curl_option_return_code (CURLcode res, const char* option);
 int check_http (void);
 void redir (curlhelp_write_curlbuf*);
+char *perfd_time (double microsec);
+char *perfd_time_connect (double microsec);
+char *perfd_time_ssl (double microsec);
+char *perfd_time_firstbyte (double microsec);
+char *perfd_time_headers (double microsec);
+char *perfd_time_transfer (double microsec);
+char *perfd_size (int page_len);
 void print_help (void);
 void print_usage (void);
 void print_curl_version (void);
@@ -222,7 +229,6 @@ int net_noopenssl_check_certificate (cert_ptr_union*, int, int);
 
 int curlhelp_parse_statusline (const char*, curlhelp_statusline *);
 void curlhelp_free_statusline (curlhelp_statusline *);
-char *perfd_time_ssl (double microsec);
 char *get_header_value (const struct phr_header* headers, const size_t nof_headers, const char* header);
 int check_document_dates (const curlhelp_write_curlbuf *, char (*msg)[DEFAULT_BUFFER_SIZE]);
 int get_content_length (const curlhelp_write_curlbuf* header_buf, const curlhelp_write_curlbuf* body_buf);
@@ -710,23 +716,20 @@ GOT_FIRST_CERT:
     handle_curl_option_return_code (curl_easy_getinfo(curl, CURLINFO_APPCONNECT_TIME, &time_appconnect), "CURLINFO_APPCONNECT_TIME");
     handle_curl_option_return_code (curl_easy_getinfo(curl, CURLINFO_PRETRANSFER_TIME, &time_headers), "CURLINFO_PRETRANSFER_TIME");
     handle_curl_option_return_code (curl_easy_getinfo(curl, CURLINFO_STARTTRANSFER_TIME, &time_firstbyte), "CURLINFO_STARTTRANSFER_TIME");
-    snprintf(perfstring, DEFAULT_BUFFER_SIZE, "time=%.6gs;%.6g;%.6g;; size=%dB;;; time_connect=%.6gs;;;; %s time_headers=%.6gs;;;; time_firstbyte=%.6gs;;;; time_transfer=%.6gs;;;;",
-      total_time,
-      warning_thresholds != NULL ? (double)thlds->warning->end : 0.0,
-      critical_thresholds != NULL ? (double)thlds->critical->end : 0.0,
-      page_len,
-      time_connect,
-      use_ssl == TRUE ? perfd_time_ssl(time_appconnect-time_connect) : "",
-      (time_headers - time_appconnect),
-      (time_firstbyte - time_headers),
-      (total_time-time_firstbyte)
-      );
+    snprintf(perfstring, DEFAULT_BUFFER_SIZE, "%s %s %s %s %s %s %s",
+      perfd_time(total_time),
+      perfd_size(page_len),
+      perfd_time_connect(time_connect),
+      use_ssl == TRUE ? perfd_time_ssl (time_appconnect-time_connect) : "",
+      perfd_time_headers(time_headers - time_appconnect),
+      perfd_time_firstbyte(time_firstbyte - time_headers),
+      perfd_time_transfer(total_time-time_firstbyte)
+    );
   } else {
-    snprintf(perfstring, DEFAULT_BUFFER_SIZE, "time=%.6gs;%.6g;%.6g;; size=%dB;;;",
-      total_time,
-      warning_thresholds != NULL ? (double)thlds->warning->end : 0.0,
-      critical_thresholds != NULL ? (double)thlds->critical->end : 0.0,
-      page_len);
+    snprintf(perfstring, DEFAULT_BUFFER_SIZE, "%s %s",
+      perfd_time(total_time),
+      perfd_size(page_len)
+    );
   }
 
   /* return a CRITICAL status if we couldn't read any data */
@@ -1547,6 +1550,47 @@ process_arguments (int argc, char **argv)
   return TRUE;
 }
 
+char *perfd_time (double elapsed_time)
+{
+  return fperfdata ("time", elapsed_time, "s",
+            thlds->warning?TRUE:FALSE, thlds->warning?thlds->warning->end:0,
+            thlds->critical?TRUE:FALSE, thlds->critical?thlds->critical->end:0,
+                   TRUE, 0, TRUE, socket_timeout);
+}
+
+char *perfd_time_connect (double elapsed_time_connect)
+{
+  return fperfdata ("time_connect", elapsed_time_connect, "s", FALSE, 0, FALSE, 0, FALSE, 0, TRUE, socket_timeout);
+}
+
+char *perfd_time_ssl (double elapsed_time_ssl)
+{
+  return fperfdata ("time_ssl", elapsed_time_ssl, "s", FALSE, 0, FALSE, 0, FALSE, 0, TRUE, socket_timeout);
+}
+
+char *perfd_time_headers (double elapsed_time_headers)
+{
+  return fperfdata ("time_headers", elapsed_time_headers, "s", FALSE, 0, FALSE, 0, FALSE, 0, TRUE, socket_timeout);
+}
+
+char *perfd_time_firstbyte (double elapsed_time_firstbyte)
+{
+  return fperfdata ("time_firstbyte", elapsed_time_firstbyte, "s", FALSE, 0, FALSE, 0, FALSE, 0, TRUE, socket_timeout);
+}
+
+char *perfd_time_transfer (double elapsed_time_transfer)
+{
+  return fperfdata ("time_transfer", elapsed_time_transfer, "s", FALSE, 0, FALSE, 0, FALSE, 0, TRUE, socket_timeout);
+}
+
+char *perfd_size (int page_len)
+{
+  return perfdata ("size", page_len, "B",
+            (min_page_len>0?TRUE:FALSE), min_page_len,
+            (min_page_len>0?TRUE:FALSE), 0,
+            TRUE, 0, FALSE, 0);
+}
+
 void
 print_help (void)
 {
@@ -1943,12 +1987,6 @@ remove_newlines (char *s)
   for (p = s; *p != '\0'; p++)
     if (*p == '\r' || *p == '\n')
       *p = ' ';
-}
-
-char *
-perfd_time_ssl (double elapsed_time_ssl)
-{
-  return fperfdata ("time_ssl", elapsed_time_ssl, "s", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0);
 }
 
 char *
