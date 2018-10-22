@@ -704,6 +704,7 @@ GOT_FIRST_CERT:
    * performance data to the answer always
    */
   handle_curl_option_return_code (curl_easy_getinfo (curl, CURLINFO_TOTAL_TIME, &total_time), "CURLINFO_TOTAL_TIME");
+  page_len = get_content_length(&header_buf, &body_buf);
   if(show_extended_perfdata) {
     handle_curl_option_return_code (curl_easy_getinfo(curl, CURLINFO_CONNECT_TIME, &time_connect), "CURLINFO_CONNECT_TIME");
     handle_curl_option_return_code (curl_easy_getinfo(curl, CURLINFO_APPCONNECT_TIME, &time_appconnect), "CURLINFO_APPCONNECT_TIME");
@@ -713,7 +714,7 @@ GOT_FIRST_CERT:
       total_time,
       warning_thresholds != NULL ? (double)thlds->warning->end : 0.0,
       critical_thresholds != NULL ? (double)thlds->critical->end : 0.0,
-      (int)body_buf.buflen,
+      page_len,
       time_connect,
       use_ssl == TRUE ? perfd_time_ssl(time_appconnect-time_connect) : "",
       (time_headers - time_appconnect),
@@ -725,7 +726,7 @@ GOT_FIRST_CERT:
       total_time,
       warning_thresholds != NULL ? (double)thlds->warning->end : 0.0,
       critical_thresholds != NULL ? (double)thlds->critical->end : 0.0,
-      (int)body_buf.buflen);
+      page_len);
   }
 
   /* return a CRITICAL status if we couldn't read any data */
@@ -867,7 +868,6 @@ GOT_FIRST_CERT:
   }
 
   /* make sure the page is of an appropriate size */
-  page_len = get_content_length(&header_buf, &body_buf);
   if ((max_page_len > 0) && (page_len > max_page_len)) {
     snprintf (msg, DEFAULT_BUFFER_SIZE, _("%spage size %d too large, "), msg, page_len);
     result = max_state_alt(STATE_WARNING, result);
@@ -1866,7 +1866,7 @@ curlhelp_parse_statusline (const char *buf, curlhelp_statusline *status_line)
   char *pp;
   const char *start;
   char *first_line_buf;
-  
+
   /* find last start of a new header */
   start = strrstr2 (buf, "\r\nHTTP");
   if (start != NULL) {
@@ -1925,7 +1925,7 @@ curlhelp_parse_statusline (const char *buf, curlhelp_statusline *status_line)
   if( p == NULL ) { status_line->msg = ""; return 0; }
   status_line->msg = status_line->first_line + ( p - first_line_buf );
   free( first_line_buf );
-	
+
   return 0;
 }
 
