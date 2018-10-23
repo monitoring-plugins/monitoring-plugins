@@ -385,16 +385,9 @@ if test "$ac_cv_header_wtsapi32_h" = "yes"; then
   AC_SUBST(WTSAPI32LIBS)
 fi
 
-AC_ARG_ENABLE(check-curl,
-	AC_HELP_STRING([--enable-check-curl],
-		[Enables compilation of check_curl (default: no)]),
-	[enable_check_curl=$enableval],
-	[enable_check_curl=no])
-if test "$enable_check_curl" = "yes" ; then
-  _can_enable_check_curl=no
-  
-  dnl Check for cURL library
-  LIBCURL_CHECK_CONFIG(yes, 7.15.2, [
+_can_enable_check_curl=no
+dnl Check for cURL library
+LIBCURL_CHECK_CONFIG(yes, 7.15.2, [
     _can_enable_check_curl=yes
     LIBCURLINCLUDE="$LIBCURL_CPPFLAGS"
     LIBCURLLIBS="$LIBCURL"
@@ -406,10 +399,10 @@ if test "$enable_check_curl" = "yes" ; then
     _can_enable_check_curl=no
     AC_MSG_WARN([Skipping curl plugin])
     AC_MSG_WARN([install libcurl libs to compile this plugin (see REQUIREMENTS).])
-  ])
-  
-  dnl Check for uriparser library
-  URIPARSER_CHECK(yes, 0.7.5, [
+])
+
+dnl Check for uriparser library
+URIPARSER_CHECK(yes, 0.7.5, [
     _can_enable_check_curl=yes
     URIPARSERINCLUDE="$URIPARSER_CPPFLAGS"
     URIPARSERLIBS="$URIPARSER"
@@ -421,18 +414,17 @@ if test "$enable_check_curl" = "yes" ; then
     _can_enable_check_curl=no
     AC_MSG_WARN([Skipping curl plugin])
     AC_MSG_WARN([install the uriparser library to compile this plugin (see REQUIREMENTS).])
-  ])
+])
 
-  dnl prerequisites met, enable the plugin
-  if test x$_can_enable_check_curl = xyes; then
-    EXTRAS="$EXTRAS check_curl\$(EXEEXT)"
+dnl prerequisites met, enable the plugin
+if test x$_can_enable_check_curl = xyes; then
+EXTRAS="$EXTRAS check_curl\$(EXEEXT)"
 
-    dnl Enable bundled picohttpparser library (for now)
-    AC_SUBST(PICOHTTPPARSER_DIR, picohttpparser)
-  fi
+dnl Enable bundled picohttpparser library (for now)
+AC_SUBST(PICOHTTPPARSER_DIR, picohttpparser)
 fi
-AM_CONDITIONAL([WITH_CHECK_CURL], [test "$enable_check_curl" = "yes"])
-AM_COND_IF([WITH_CHECK_CURL], 
+AM_CONDITIONAL([WITH_CHECK_CURL], [test "$_can_enable_check_curl" = "yes"])
+AM_COND_IF([WITH_CHECK_CURL],
   [AC_CONFIG_FILES([plugins/picohttpparser/Makefile])])
 
 dnl Fallback to who(1) if the system doesn't provide an utmpx(5) interface
@@ -1932,7 +1924,5 @@ ACX_FEATURE([enable],[perl-modules])
 ACX_FEATURE([with],[cgiurl])
 ACX_FEATURE([with],[trusted-path])
 ACX_FEATURE([enable],[libtap])
-ACX_FEATURE([enable],[check-curl])
 ACX_FEATURE([with],[libcurl])
 ACX_FEATURE([with],[uriparser])
-
