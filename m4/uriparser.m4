@@ -29,14 +29,13 @@ AC_DEFUN([URIPARSER_CHECK],
 
      _uriparser_try_link=yes
 
+     AC_CHECK_PROG(PKGCONFIG,pkg-config,pkg-config,no)
+
      if test -d "$_uriparser_with" ; then
         URIPARSER_CPPFLAGS="-I$withval/include"
         _uriparser_ldflags="-L$withval/lib"
-     fi
 
-     AC_CHECK_PROG(PKGCONFIG,pkg-config,pkg-config,no)
-
-     if test x$PKGCONFIG != xno; then
+     elif test x$PKGCONFIG != xno; then
 
         AC_CACHE_CHECK([for the version of uriparser],
            [uriparser_cv_uriparser_version],
@@ -83,7 +82,7 @@ AC_DEFUN([URIPARSER_CHECK],
 
         # we didn't find curl-config, so let's see if the user-supplied
         # link line (or failing that, "-luriparser") is enough.
-        URIPARSERLIBS=${URIPARSERLIBS-"$_uriparser_ldflags -luriparser"}
+        URIPARSER=${URIPARSER-"$_uriparser_ldflags -luriparser"}
 
         AC_CACHE_CHECK([whether uriparser is usable],
            [uriparser_cv_lib_uriparser_usable],
@@ -137,5 +136,3 @@ if (x == URI_SUCCESS) {;}
 
   unset _uriparser_with
 ])dnl
-
-
