@@ -31,7 +31,9 @@ AC_DEFUN([URIPARSER_CHECK],
 
      AC_CHECK_PROG(PKGCONFIG,pkg-config,pkg-config,no)
 
-     if test -d "$_uriparser_with" ; then
+     if test "x$URIPARSER" != "x" || test "x$URIPARSER_CPPFLAGS" != "x"; then
+        :
+     elif test -d "$_uriparser_with" ; then
         URIPARSER_CPPFLAGS="-I$withval/include"
         _uriparser_ldflags="-L$withval/lib"
 
@@ -73,14 +75,14 @@ AC_DEFUN([URIPARSER_CHECK],
 
         unset _uriparser_wanted
      else
-        dnl no pkg-config, ok, to our best and set some defaults
+        dnl no pkg-config, ok, do our best and set some defaults
         URIPARSER_CPPFLAGS="-I/usr/include"
         URIPARSER="-luriparser -L/usr/lib -L/usr/lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/i686-linux-gnu"
      fi
 
      if test $_uriparser_try_link = yes ; then
 
-        # we didn't find curl-config, so let's see if the user-supplied
+        # let's see if the user-supplied
         # link line (or failing that, "-luriparser") is enough.
         URIPARSER=${URIPARSER-"$_uriparser_ldflags -luriparser"}
 
