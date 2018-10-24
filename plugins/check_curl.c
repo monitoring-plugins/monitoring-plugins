@@ -481,7 +481,7 @@ check_http (void)
   ssl_library = curlhelp_get_ssl_library (curl);
 
   /* try hard to get a stack of certificates to verify against */
-  if (check_cert)
+  if (check_cert) {
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1)
     /* inform curl to report back certificates */
     switch (ssl_library) {
@@ -530,6 +530,7 @@ check_http (void)
     else
       die (STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates (no CURLOPT_SSL_CTX_FUNCTION, no OpenSSL library or libcurl too old and has no CURLOPT_CERTINFO)\n");
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1) */
+  }
 
 #endif /* LIBCURL_FEATURE_SSL */
 
