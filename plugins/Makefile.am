@@ -40,7 +40,7 @@ EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 	check_nagios check_by_ssh check_dns check_nt check_ide_smart	\
 	check_procs check_mysql_query check_apt check_dbi check_curl
 
-SUBDIRS = @PICOHTTPPARSER_DIR@
+SUBDIRS = picohttpparser
 
 EXTRA_DIST = t tests
 
