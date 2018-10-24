@@ -70,7 +70,7 @@ before_script:
   # Detect LDAP configuration (seems  volatile on trusty env)
   - sed -e 's/cn=admin,dc=nodomain/'$(sudo /usr/sbin/slapcat|grep ^dn:|grep cn=|awk '{print $2}')'/' -i plugins/t/NPTest.cache.travis
   - tools/setup
-  - ./configure --enable-libtap --enable-check-curl
+  - ./configure --enable-libtap
   - make
   - export NPTEST_CACHE="$(pwd)/plugins/t/NPTest.cache.travis"
   - ssh-keygen -t dsa -N "" -f ~/.ssh/id_dsa
