@@ -209,12 +209,6 @@ NP-VERSION-FILE
 /plugins/picohttpparser/.deps
 /plugins/picohttpparser/libpicohttpparser.a
 
-# /plugins/uriparser
-/plugins/uriparser/Makefile
-/plugins/uriparser/Makefile.in
-/plugins/uriparser/.deps
-/plugins/uriparser/liburiparser.a
-
 # /plugins/t/
 /plugins/t/*.tmp
 
