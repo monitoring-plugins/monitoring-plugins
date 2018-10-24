@@ -132,6 +132,7 @@ char *host_name;
 char *server_url = 0;
 char server_ip[DEFAULT_BUFFER_SIZE];
 struct curl_slist *server_ips = NULL;
+int specify_port = FALSE;
 unsigned short server_port = HTTP_PORT;
 unsigned short virtual_port = 0;
 int host_name_length;
@@ -1223,6 +1224,7 @@ process_arguments (int argc, char **argv)
         if( strtol(optarg, NULL, 10) > MAX_PORT)
           usage2 (_("Invalid port number, supplied port number is too big"), optarg);
         server_port = (unsigned short)strtol(optarg, NULL, 10);
+        specify_port = TRUE;
       }
       break;
     case 'a': /* authorization info */
@@ -1378,7 +1380,7 @@ process_arguments (int argc, char **argv)
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 54, 0) */
       if (verbose >= 2)
         printf(_("* Set SSL/TLS version to %d\n"), ssl_version);
-      if (server_port == HTTP_PORT)
+      if (specify_port == FALSE)
         server_port = HTTPS_PORT;
       break;
 #else /* LIBCURL_FEATURE_SSL */
@@ -1542,9 +1544,9 @@ process_arguments (int argc, char **argv)
   if (virtual_port == 0)
     virtual_port = server_port;
   else {
-    if ((use_ssl && server_port == HTTPS_PORT) ||
-        (!use_ssl && server_port == HTTP_PORT))
-      server_port = virtual_port;
+    if ((use_ssl && server_port == HTTPS_PORT) || (!use_ssl && server_port == HTTP_PORT))
+      if(specify_port == FALSE)
+        server_port = virtual_port;
   }
 
   return TRUE;
