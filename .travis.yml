@@ -56,6 +56,7 @@ install:
   - sudo apt-get install -qq --no-install-recommends faketime
   - sudo apt-get install -qq --no-install-recommends libmonitoring-plugin-perl
   - sudo apt-get install -qq --no-install-recommends libcurl4-openssl-dev
+  - sudo apt-get install -qq --no-install-recommends liburiparser-dev
   # Trusty related dependencies (not yet provided)
   - test "$(dpkg -l | grep -E "mysql-(client|server)-[0-9].[0-9]" | grep -c ^ii)" -gt 0 || sudo apt-get install -qq --no-install-recommends mariadb-client mariadb-server
   # enable ssl apache
