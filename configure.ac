@@ -403,7 +403,6 @@ LIBCURL_CHECK_CONFIG(yes, 7.15.2, [
 
 dnl Check for uriparser library
 URIPARSER_CHECK(yes, 0.7.5, [
-    _can_enable_check_curl=yes
     URIPARSERINCLUDE="$URIPARSER_CPPFLAGS"
     URIPARSERLIBS="$URIPARSER"
     URIPARSERCFLAGS="$URIPARSER_CPPFLAGS"
@@ -418,10 +417,10 @@ URIPARSER_CHECK(yes, 0.7.5, [
 
 dnl prerequisites met, enable the plugin
 if test x$_can_enable_check_curl = xyes; then
-EXTRAS="$EXTRAS check_curl\$(EXEEXT)"
+  EXTRAS="$EXTRAS check_curl\$(EXEEXT)"
 
-dnl Enable bundled picohttpparser library (for now)
-AC_SUBST(PICOHTTPPARSER_DIR, picohttpparser)
+  dnl Enable bundled picohttpparser library (for now)
+  AC_SUBST(PICOHTTPPARSER_DIR, picohttpparser)
 fi
 AM_CONDITIONAL([WITH_CHECK_CURL], [test "$_can_enable_check_curl" = "yes"])
 AM_COND_IF([WITH_CHECK_CURL],
