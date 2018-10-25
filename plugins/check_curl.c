@@ -365,25 +365,22 @@ check_http (void)
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CONNECTTIMEOUT, socket_timeout), "CURLOPT_CONNECTTIMEOUT");
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_TIMEOUT, socket_timeout), "CURLOPT_TIMEOUT");
 
-  /* compose URL: must be the host_name, only if not given take the IP address. */
-  if ((use_ssl == FALSE && virtual_port == HTTP_PORT) ||
-      (use_ssl == TRUE && virtual_port == HTTPS_PORT))
-    snprintf (url, DEFAULT_BUFFER_SIZE, "%s://%s%s", use_ssl ? "https" : "http",
-      host_name ? host_name : server_address, server_url);
-  else
-    snprintf (url, DEFAULT_BUFFER_SIZE, "%s://%s:%d%s", use_ssl ? "https" : "http",
-      host_name ? host_name : server_address, virtual_port, server_url);
+  /* compose URL: use the address we want to connect to, set Host: header later */
+  snprintf (url, DEFAULT_BUFFER_SIZE, "%s://%s:%d%s",
+      use_ssl ? "https" : "http",
+      server_address,
+      server_port,
+      server_url
+  );
+
+  if (verbose>=1)
+    printf ("* curl CURLOPT_URL: %s\n", url);
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_URL, url), "CURLOPT_URL");
 
   /* cURL does certificate checking against the host name from the URL above
    * So we use CURLOPT_CONNECT_TO or CURLOPT_RESOLVE to handle differing
    * host names and/or ports */
-#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 49, 0)
-  snprintf (server_ip, DEFAULT_BUFFER_SIZE, "%s:%d:%s:%d", host_name ? host_name : server_address, virtual_port, server_address, server_port);
-  server_ips = curl_slist_append (server_ips, server_ip);
-  handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CONNECT_TO, server_ips), "CURLOPT_CONNECT_TO");
-
-#elif LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 3)
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 3)
   if (host_name && strcmp (host_name, server_address)) {
     snprintf (server_ip, DEFAULT_BUFFER_SIZE, "%s:%d:%s", host_name, server_port, server_address);
     server_ips = curl_slist_append (server_ips, server_ip);
@@ -411,8 +408,17 @@ check_http (void)
       handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CUSTOMREQUEST, http_method), "CURLOPT_CUSTOMREQUEST");
   }
 
+  /* check if Host header is explicitly set in options */
+  if (http_opt_headers_count) {
+    for (i = 0; i < http_opt_headers_count ; i++) {
+      if (strncmp(http_opt_headers[i], "Host:", 5) == 0) {
+        force_host_header = http_opt_headers[i];
+      }
+    }
+  }
+
   /* set hostname (virtual hosts), not needed if CURLOPT_CONNECT_TO is used, but left in anyway */
-  if(host_name != NULL) {
+  if(host_name != NULL && force_host_header == NULL) {
     if((virtual_port != HTTP_PORT && !use_ssl) || (virtual_port != HTTPS_PORT && use_ssl)) {
       snprintf(http_header, DEFAULT_BUFFER_SIZE, "Host: %s:%d", host_name, virtual_port);
     } else {
@@ -425,22 +431,11 @@ check_http (void)
   snprintf (http_header, DEFAULT_BUFFER_SIZE, "Connection: close");
   header_list = curl_slist_append (header_list, http_header);
 
-  /* check if Host header is explicitly set in options */
-  if (http_opt_headers_count) {
-    for (i = 0; i < http_opt_headers_count ; i++) {
-      if (strncmp(http_opt_headers[i], "Host:", 5) == 0) {
-        force_host_header = http_opt_headers[i];
-      }
-    }
-  }
-
   /* attach additional headers supplied by the user */
   /* optionally send any other header tag */
   if (http_opt_headers_count) {
     for (i = 0; i < http_opt_headers_count ; i++) {
-      if (force_host_header != http_opt_headers[i]) {
-        header_list = curl_slist_append (header_list, http_opt_headers[i]);
-      }
+      header_list = curl_slist_append (header_list, http_opt_headers[i]);
     }
     /* This cannot be free'd here because a redirection will then try to access this and segfault */
     /* Covered in a testcase in tests/check_http.t */

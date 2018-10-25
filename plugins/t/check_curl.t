@@ -9,7 +9,7 @@ use Test::More;
 use POSIX qw/mktime strftime/;
 use NPTest;
 
-plan tests => 49;
+plan tests => 57;
 
 my $successOutput = '/OK.*HTTP.*second/';
 
@@ -78,15 +78,27 @@ like( $res->output, "/cURL returned 6 - Couldn't resolve host name/", "Output OK
 # host header checks
 $res = NPTest->testCmd("./$plugin -v -H $host_tcp_http");
 like( $res->output, '/^Host: '.$host_tcp_http.'\s*$/ms', "Host Header OK" );
+like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
 
 $res = NPTest->testCmd("./$plugin -v -H $host_tcp_http -p 80");
 like( $res->output, '/^Host: '.$host_tcp_http.'\s*$/ms', "Host Header OK" );
+like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
 
 $res = NPTest->testCmd("./$plugin -v -H $host_tcp_http:8080 -p 80");
 like( $res->output, '/^Host: '.$host_tcp_http.':8080\s*$/ms', "Host Header OK" );
+like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
 
 $res = NPTest->testCmd("./$plugin -v -H $host_tcp_http:8080 -p 80");
 like( $res->output, '/^Host: '.$host_tcp_http.':8080\s*$/ms', "Host Header OK" );
+like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
+
+$res = NPTest->testCmd("./$plugin -v -H $host_tcp_http:8080 -p 80 -k 'Host: testhost:8001'");
+like( $res->output, '/^Host: testhost:8001\s*$/ms', "Host Header OK" );
+like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
+
+$res = NPTest->testCmd("./$plugin -v -I $host_tcp_http -p 80 -k 'Host: testhost:8001'");
+like( $res->output, '/^Host: testhost:8001\s*$/ms', "Host Header OK" );
+like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
 
 SKIP: {
         skip "No internet access", 3 if $internet_access eq "no";
