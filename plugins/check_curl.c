@@ -377,17 +377,6 @@ check_http (void)
     printf ("* curl CURLOPT_URL: %s\n", url);
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_URL, url), "CURLOPT_URL");
 
-  /* cURL does certificate checking against the host name from the URL above
-   * So we use CURLOPT_CONNECT_TO or CURLOPT_RESOLVE to handle differing
-   * host names and/or ports */
-#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 3)
-  if (host_name && strcmp (host_name, server_address)) {
-    snprintf (server_ip, DEFAULT_BUFFER_SIZE, "%s:%d:%s", host_name, server_port, server_address);
-    server_ips = curl_slist_append (server_ips, server_ip);
-    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_RESOLVE, server_ips), "CURLOPT_RESOLVE");
-  }
-#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 3) */
-
   /* extract proxy information for legacy proxy https requests */
   if (!strcmp(http_method, "CONNECT") || strstr(server_url, "http") == server_url) {
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_PROXY, server_address), "CURLOPT_PROXY");
