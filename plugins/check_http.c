@@ -126,6 +126,7 @@ int max_page_len = 0;
 int redir_depth = 0;
 int max_depth = 15;
 char *http_method;
+char *http_method_proxy;
 char *http_post_data;
 char *http_content_type;
 char buffer[MAX_INPUT_BUFFER];
@@ -446,6 +447,12 @@ process_arguments (int argc, char **argv)
       if (http_method)
         free(http_method);
       http_method = strdup (optarg);
+      char *tmp;
+      if ((tmp = strstr(http_method, ":")) > 0) {
+        tmp[0] = '\0';
+        http_method = http_method;
+        http_method_proxy = ++tmp;
+      }
       break;
     case 'd': /* string or substring */
       strncpy (header_expect, optarg, MAX_INPUT_BUFFER - 1);
@@ -565,6 +572,9 @@ process_arguments (int argc, char **argv)
 
   if (http_method == NULL)
     http_method = strdup ("GET");
+
+  if (http_method_proxy == NULL)
+    http_method_proxy = strdup ("GET");
 
   if (client_cert && !client_privkey)
     usage4 (_("If you use a client certificate you must also specify a private key file"));
@@ -950,7 +960,7 @@ check_http (void)
 
   if ( server_address != NULL && strcmp(http_method, "CONNECT") == 0
        && host_name != NULL && use_ssl == TRUE)
-    asprintf (&buf, "%s %s %s\r\n%s\r\n", "GET", server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
+    asprintf (&buf, "%s %s %s\r\n%s\r\n", http_method_proxy, server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
   else
     asprintf (&buf, "%s %s %s\r\n%s\r\n", http_method, server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
 
@@ -1581,7 +1591,7 @@ print_help (void)
   printf ("    %s\n", _("URL to GET or POST (default: /)"));
   printf (" %s\n", "-P, --post=STRING");
   printf ("    %s\n", _("URL encoded http POST data"));
-  printf (" %s\n", "-j, --method=STRING  (for example: HEAD, OPTIONS, TRACE, PUT, DELETE, CONNECT)");
+  printf (" %s\n", "-j, --method=STRING  (for example: HEAD, OPTIONS, TRACE, PUT, DELETE, CONNECT, CONNECT:POST)");
   printf ("    %s\n", _("Set HTTP method."));
   printf (" %s\n", "-N, --no-body");
   printf ("    %s\n", _("Don't wait for document body: stop reading after headers."));
@@ -1668,7 +1678,8 @@ print_help (void)
   printf (" %s\n", _("all these options are needed: -I <proxy> -p <proxy-port> -u <check-url> -S(sl) -j CONNECT -H <webserver>"));
   printf (" %s\n", _("a STATE_OK will be returned. When the server returns its content but exceeds"));
   printf (" %s\n", _("the 5-second threshold, a STATE_WARNING will be returned. When an error occurs,"));
-  printf (" %s\n", _("a STATE_CRITICAL will be returned."));
+  printf (" %s\n", _("a STATE_CRITICAL will be returned. By adding a colon to the method you can set the method used"));
+  printf (" %s\n", _("inside the proxied connection: -j CONNECT:POST"));
 
 #endif
 
