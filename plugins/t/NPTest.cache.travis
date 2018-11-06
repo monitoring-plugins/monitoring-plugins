@@ -59,4 +59,6 @@
   'host_udp_time' => 'none',
   'host_tls_http' => 'localhost',
   'host_tls_cert' => 'localhost',
+  'NP_HOST_TCP_PROXY' => 'localhost',
+  'NP_PORT_TCP_PROXY' => '3128',
 }

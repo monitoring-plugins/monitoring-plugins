@@ -9,7 +9,7 @@ use Test::More;
 use POSIX qw/mktime strftime/;
 use NPTest;
 
-plan tests => 49;
+plan tests => 55;
 
 my $successOutput = '/OK.*HTTP.*second/';
 
@@ -41,6 +41,14 @@ my $internet_access = getTestParameter( "NP_INTERNET_ACCESS",
 my $host_tcp_http2  = getTestParameter( "NP_HOST_TCP_HTTP2",
             "A host providing an index page containing the string 'monitoring'",
             "test.monitoring-plugins.org" );
+
+my $host_tcp_proxy  = getTestParameter( "NP_HOST_TCP_PROXY",
+            "A host providing a HTTP proxy with CONNECT support",
+            "localhost");
+
+my $port_tcp_proxy  = getTestParameter( "NP_PORT_TCP_PROXY",
+            "Port of the proxy with HTTP and CONNECT support",
+            "3128");
 
 my $faketime = -x '/usr/bin/faketime' ? 1 : 0;
 
@@ -197,4 +205,20 @@ SKIP: {
 
         $res = NPTest->testCmd( "./check_http -H www.mozilla.com --extended-perfdata" );
         like  ( $res->output, '/time_connect=[\d\.]+/', 'Extended Performance Data Output OK' );
+}
+
+SKIP: {
+        skip "No internet access or proxy configured", 6 if $internet_access eq "no" or ! $host_tcp_proxy;
+
+        $res = NPTest->testCmd( "./check_http -I $host_tcp_proxy -p $port_tcp_proxy -u http://$host_tcp_http -e 200,301,302");
+        is( $res->return_code, 0, "Proxy HTTP works");
+        like($res->output, qr/OK: Status line output matched/, "Proxy HTTP Output is sufficent");
+
+        $res = NPTest->testCmd( "./check_http -I $host_tcp_proxy -p $port_tcp_proxy -H $host_tls_http -S -j CONNECT");
+        is( $res->return_code, 0, "Proxy HTTP CONNECT works");
+        like($res->output, qr/HTTP OK:/, "Proxy HTTP CONNECT output sufficent");
+
+        $res = NPTest->testCmd( "./check_http -I $host_tcp_proxy -p $port_tcp_proxy -H $host_tls_http -S -j CONNECT:HEAD");
+        is( $res->return_code, 0, "Proxy HTTP CONNECT works with override method");
+        like($res->output, qr/HTTP OK:/, "Proxy HTTP CONNECT output sufficent");
 }
