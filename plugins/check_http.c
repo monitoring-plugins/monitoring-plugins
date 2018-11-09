@@ -120,6 +120,7 @@ int use_ssl = FALSE;
 int use_sni = FALSE;
 int verbose = FALSE;
 int show_extended_perfdata = FALSE;
+int show_body = FALSE;
 int sd;
 int min_page_len = 0;
 int max_page_len = 0;
@@ -240,6 +241,7 @@ process_arguments (int argc, char **argv)
     {"use-ipv4", no_argument, 0, '4'},
     {"use-ipv6", no_argument, 0, '6'},
     {"extended-perfdata", no_argument, 0, 'E'},
+    {"show-body", no_argument, 0, 'B'},
     {0, 0, 0, 0}
   };
 
@@ -260,7 +262,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NEB", longopts, &option);
     if (c == -1 || c == EOF)
       break;
 
@@ -546,6 +548,9 @@ process_arguments (int argc, char **argv)
                   break;
     case 'E': /* show extended perfdata */
       show_extended_perfdata = TRUE;
+      break;
+    case 'B': /* print body content after status line */
+      show_body = TRUE;
       break;
     }
   }
@@ -1300,6 +1305,9 @@ check_http (void)
            perfd_time (elapsed_time),
            perfd_size (page_len));
 
+  if (show_body)
+    xasprintf (&msg, _("%s\n%s"), msg, page);
+
   result = max_state_alt(get_status(elapsed_time, thlds), result);
 
   die (result, "HTTP %s: %s\n", state_text(result), msg);
@@ -1621,6 +1629,8 @@ print_help (void)
   printf ("    %s\n", _("Any other tags to be sent in http header. Use multiple times for additional headers"));
   printf (" %s\n", "-E, --extended-perfdata");
   printf ("    %s\n", _("Print additional performance data"));
+  printf (" %s\n", "-B, --show-body");
+  printf ("    %s\n", _("Print body content below status line"));
   printf (" %s\n", "-L, --link");
   printf ("    %s\n", _("Wrap output in HTML link (obsoleted by urlize)"));
   printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow|sticky|stickyport>");
