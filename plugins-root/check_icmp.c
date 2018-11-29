@@ -419,7 +419,7 @@ main(int argc, char **argv)
 	 * that before pointer magic (esp. on network data) */
 	icmp_sockerrno = udp_sockerrno = tcp_sockerrno = sockets = 0;
 
-        address_family = AF_INET;
+        address_family = -1;
 	int icmp_proto = IPPROTO_ICMP;
 
 	/* get calling name the old-fashioned way for portability instead
@@ -526,12 +526,10 @@ main(int argc, char **argv)
 				break;
 			case '4':
 				address_family = AF_INET;
-				icmp_proto = IPPROTO_ICMP;
 				break;
 			case '6':
 #ifdef USE_IPV6
 				address_family = AF_INET6;
-				icmp_proto = IPPROTO_ICMPV6;
 #else
 				usage (_("IPv6 support not available\n"));
 #endif
@@ -539,29 +537,6 @@ main(int argc, char **argv)
 			}
 		}
 	}
-
-	if((icmp_sock = socket(address_family, SOCK_RAW, icmp_proto)) != -1)
-		sockets |= HAVE_ICMP;
-	else icmp_sockerrno = errno;
-
-	/* if((udp_sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) != -1) */
-	/* 	sockets |= HAVE_UDP; */
-	/* else udp_sockerrno = errno; */
-
-	/* if((tcp_sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) != -1) */
-	/* 	sockets |= HAVE_TCP; */
-	/* else tcp_sockerrno = errno; */
-
-	/* now drop privileges (no effect if not setsuid or geteuid() == 0) */
-	if (setuid(getuid()) == -1) {
-		printf("ERROR: Failed to drop privileges\n");
-		return 1;
-	}
-
-#ifdef SO_TIMESTAMP
-	if(setsockopt(icmp_sock, SOL_SOCKET, SO_TIMESTAMP, &on, sizeof(on)))
-	  if(debug) printf("Warning: no SO_TIMESTAMP support\n");
-#endif // SO_TIMESTAMP
 
 	/* POSIXLY_CORRECT might break things, so unset it (the portable way) */
 	environ = NULL;
@@ -591,6 +566,37 @@ main(int argc, char **argv)
 		errno = 0;
 		crash("No hosts to check");
 		exit(3);
+	}
+
+	// add_target might change address_family
+	switch ( address_family ){
+		case AF_INET:	icmp_proto = IPPROTO_ICMP;
+				break;
+		case AF_INET6:	icmp_proto = IPPROTO_ICMPV6;
+				break;
+		default:	crash("Address family not supported");
+	}
+	if((icmp_sock = socket(address_family, SOCK_RAW, icmp_proto)) != -1)
+		sockets |= HAVE_ICMP;
+	else icmp_sockerrno = errno;
+
+	/* if((udp_sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) != -1) */
+	/* 	sockets |= HAVE_UDP; */
+	/* else udp_sockerrno = errno; */
+
+	/* if((tcp_sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) != -1) */
+	/* 	sockets |= HAVE_TCP; */
+	/* else tcp_sockerrno = errno; */
+
+#ifdef SO_TIMESTAMP
+	if(setsockopt(icmp_sock, SOL_SOCKET, SO_TIMESTAMP, &on, sizeof(on)))
+	  if(debug) printf("Warning: no SO_TIMESTAMP support\n");
+#endif // SO_TIMESTAMP
+
+	/* now drop privileges (no effect if not setsuid or geteuid() == 0) */
+	if (setuid(getuid()) == -1) {
+		printf("ERROR: Failed to drop privileges\n");
+		return 1;
 	}
 
 	if(!sockets) {
@@ -1319,6 +1325,19 @@ add_target(char *arg)
 	struct sockaddr_in6 *sin6;
 
 	switch (address_family) {
+	case -1:
+		// -4 and -6 are not specified on cmdline
+		address_family = AF_INET;
+		sin = (struct sockaddr_in *)&ip;
+		result = inet_pton(address_family, arg, &sin->sin_addr);
+#ifdef USE_IPV6
+		if( result != 1 ){
+			address_family = AF_INET6;
+			sin6 = (struct sockaddr_in6 *)&ip;
+			result = inet_pton(address_family, arg, &sin6->sin6_addr);
+		}
+#endif
+		break;
 	case AF_INET:
 		sin = (struct sockaddr_in *)&ip;
 		result = inet_pton(address_family, arg, &sin->sin_addr);
