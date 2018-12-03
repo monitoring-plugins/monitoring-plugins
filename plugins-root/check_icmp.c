@@ -460,6 +460,28 @@ main(int argc, char **argv)
 		packets = 5;
 	}
 
+	/* Parse protocol arguments first */
+	for(i = 1; i < argc; i++) {
+		while((arg = getopt(argc, argv, "vhVw:c:n:p:t:H:s:i:b:I:l:m:64")) != EOF) {
+			unsigned short size;
+			switch(arg) {
+			case '4':
+				address_family = AF_INET;
+				break;
+			case '6':
+#ifdef USE_IPV6
+				address_family = AF_INET6;
+#else
+				usage (_("IPv6 support not available\n"));
+#endif
+				break;
+			}
+		}
+	}
+
+	/* Reset argument scanning */
+	optind = 1;
+
 	/* parse the arguments */
 	for(i = 1; i < argc; i++) {
 		while((arg = getopt(argc, argv, "vhVw:c:n:p:t:H:s:i:b:I:l:m:64")) != EOF) {
@@ -523,16 +545,6 @@ main(int argc, char **argv)
 			case 'h': /* help */
 				print_help ();
 				exit (STATE_UNKNOWN);
-				break;
-			case '4':
-				address_family = AF_INET;
-				break;
-			case '6':
-#ifdef USE_IPV6
-				address_family = AF_INET6;
-#else
-				usage (_("IPv6 support not available\n"));
-#endif
 				break;
 			}
 		}
