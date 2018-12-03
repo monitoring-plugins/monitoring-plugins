@@ -592,13 +592,6 @@ main(int argc, char **argv)
 		sockets |= HAVE_ICMP;
 	else icmp_sockerrno = errno;
 
-	/* if((udp_sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) != -1) */
-	/* 	sockets |= HAVE_UDP; */
-	/* else udp_sockerrno = errno; */
-
-	/* if((tcp_sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) != -1) */
-	/* 	sockets |= HAVE_TCP; */
-	/* else tcp_sockerrno = errno; */
 
 #ifdef SO_TIMESTAMP
 	if(setsockopt(icmp_sock, SOL_SOCKET, SO_TIMESTAMP, &on, sizeof(on)))
