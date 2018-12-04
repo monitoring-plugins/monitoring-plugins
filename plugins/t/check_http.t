@@ -9,46 +9,21 @@ use Test::More;
 use POSIX qw/mktime strftime/;
 use NPTest;
 
-plan tests => 55;
+plan tests => 50;
 
 my $successOutput = '/OK.*HTTP.*second/';
 
 my $res;
 
-my $host_tcp_http      = getTestParameter( "NP_HOST_TCP_HTTP",
-		"A host providing the HTTP Service (a web server)",
-		"localhost" );
-
-my $host_tls_http      = getTestParameter( "host_tls_http",      "NP_HOST_TLS_HTTP",      "localhost",
-					   "A host providing the HTTPS Service (a tls web server)" );
-
-my $host_tls_cert      = getTestParameter( "host_tls_cert",      "NP_HOST_TLS_CERT",      "localhost",
-					   "the common name of the certificate." );
-
-
-my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE",
-		"The hostname of system not responsive to network requests",
-		"10.0.0.1" );
-
-my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
-		"An invalid (not known to DNS) hostname",
-		"nosuchhost");
-
-my $internet_access = getTestParameter( "NP_INTERNET_ACCESS",
-                "Is this system directly connected to the internet?",
-                "yes");
-
-my $host_tcp_http2  = getTestParameter( "NP_HOST_TCP_HTTP2",
-            "A host providing an index page containing the string 'monitoring'",
-            "test.monitoring-plugins.org" );
-
-my $host_tcp_proxy  = getTestParameter( "NP_HOST_TCP_PROXY",
-            "A host providing a HTTP proxy with CONNECT support",
-            "localhost");
-
-my $port_tcp_proxy  = getTestParameter( "NP_PORT_TCP_PROXY",
-            "Port of the proxy with HTTP and CONNECT support",
-            "3128");
+my $host_tcp_http      = getTestParameter("NP_HOST_TCP_HTTP", "A host providing the HTTP Service (a web server)", "localhost");
+my $host_tls_http      = getTestParameter("NP_HOST_TLS_HTTP", "A host providing the HTTPS Service (a tls web server)", "localhost");
+my $host_tls_cert      = getTestParameter("NP_HOST_TLS_CERT", "the common name of the certificate.", "localhost");
+my $host_nonresponsive = getTestParameter("NP_HOST_NONRESPONSIVE", "The hostname of system not responsive to network requests", "10.0.0.1");
+my $hostname_invalid   = getTestParameter("NP_HOSTNAME_INVALID", "An invalid (not known to DNS) hostname", "nosuchhost");
+my $internet_access    = getTestParameter("NP_INTERNET_ACCESS", "Is this system directly connected to the internet?", "yes");
+my $host_tcp_http2     = getTestParameter("NP_HOST_TCP_HTTP2", "A host providing an index page containing the string 'monitoring'", "test.monitoring-plugins.org");
+my $host_tcp_proxy     = getTestParameter("NP_HOST_TCP_PROXY", "A host providing a HTTP proxy with CONNECT support", "localhost");
+my $port_tcp_proxy     = getTestParameter("NP_PORT_TCP_PROXY", "Port of the proxy with HTTP and CONNECT support", "3128");
 
 my $faketime = -x '/usr/bin/faketime' ? 1 : 0;
 
@@ -158,7 +133,7 @@ SKIP: {
 
         # run some certificate checks with faketime
         SKIP: {
-                skip "No faketime binary found", 12 if !$faketime;
+                skip "No faketime binary found", 7 if !$faketime;
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC ./check_http -C 1 $host_tls_http");
                 like($res->output, qr/OK - Certificate '$host_tls_cert' will expire on/, "Catch cert output");
                 is( $res->return_code, 0, "Catch cert output exit code" );
@@ -171,23 +146,18 @@ SKIP: {
                 my $time = strftime("%Y-%m-%d %H:%M:%S", localtime($ts));
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts))."' ./check_http -C 1 $host_tls_http");
                 like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' just expired/, "Output on expire date");
-                is( $res->return_code, 2, "Output on expire date" );
 
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-1))."' ./check_http -C 1 $host_tls_http");
                 like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expires in 0 minutes/, "cert expires in 1 second output");
-                is( $res->return_code, 2, "cert expires in 1 second exit code" );
 
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-120))."' ./check_http -C 1 $host_tls_http");
                 like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expires in 2 minutes/, "cert expires in 2 minutes output");
-                is( $res->return_code, 2, "cert expires in 2 minutes exit code" );
 
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-7200))."' ./check_http -C 1 $host_tls_http");
                 like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expires in 2 hours/, "cert expires in 2 hours output");
-                is( $res->return_code, 2, "cert expires in 2 hours exit code" );
 
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts+1))."' ./check_http -C 1 $host_tls_http");
                 like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expired on/, "Certificate expired output");
-                is( $res->return_code, 2, "Certificate expired exit code" );
         };
 
         $res = NPTest->testCmd( "./check_http --ssl $host_tls_http -E" );

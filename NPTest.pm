@@ -62,17 +62,6 @@ runs will use these values. The user is able to change the values by
 amending the values in the file /var/tmp/NPTest.cache, or by setting
 the appropriate environment variable before running the test.
 
-The option exists to store parameters in a scoped means, allowing a
-test harness to a localise a parameter should the need arise. This
-allows a parameter of the same name to exist in a test harness
-specific scope, while not affecting the globally scoped parameter. The
-scoping identifier is the name of the test harness sans the trailing
-".t".  All cache searches first look to a scoped parameter before
-looking for the parameter at global scope. Thus for a test harness
-called "check_disk.t" requesting the parameter "mountpoint_valid", the
-cache is first searched for "check_disk"/"mountpoint_valid", if this
-fails, then a search is conducted for "mountpoint_valid".
-
 To facilitate quick testing setup, it is possible to accept all the
 developer provided defaults by setting the environment variable
 "NPTEST_ACCEPTDEFAULT" to "1" (or any other perl truth value). Note
@@ -327,78 +316,51 @@ sub skipMsg
   return $testStatus;
 }
 
-sub getTestParameter
-{
-  my( $param, $envvar, $default, $brief, $scoped );
-  my $new_style;
-  if (scalar @_ <= 3) {
-    ($param, $brief, $default) = @_;
-    $envvar = $param;
-    $new_style = 1;
-  } else {
-    ( $param, $envvar, $default, $brief, $scoped ) = @_;
-    $new_style = 0;
+sub getTestParameter {
+  my($param, $description, $default) = @_;
+
+  if($param !~ m/^NP_[A-Z0-9_]+$/mx) {
+    die("parameter should be all uppercase and start with NP_ (requested from ".(caller(0))[1].")");
   }
 
-  # Apply default values for optional arguments
-  $scoped = ( defined( $scoped ) && $scoped );
+  return $ENV{$param} if $ENV{$param};
 
-  my $testharness = basename( (caller(0))[1], ".t" ); # used for scoping
-
-  if ( defined( $envvar ) &&  exists( $ENV{$envvar} ) && $ENV{$envvar} )
-  {
-    return $ENV{$envvar};
-  }
-
-  my $cachedValue = SearchCache( $param, $testharness );
-  if ( defined( $cachedValue ) )
-  {
-    # This save required to convert to new style because the key required is
-    # changing to the environment variable
-    if ($new_style == 0) {
-      SetCacheParameter( $envvar, undef, $cachedValue );
-    }
+  my $cachedValue = SearchCache($param);
+  if(defined $cachedValue) {
     return $cachedValue;
   }
 
-  my $defaultValid      = ( defined( $default ) && $default );
-  my $autoAcceptDefault = ( exists( $ENV{'NPTEST_ACCEPTDEFAULT'} ) && $ENV{'NPTEST_ACCEPTDEFAULT'} );
-
-  if ( $autoAcceptDefault && $defaultValid )
-  {
-    return $default;
+  if($ENV{'NPTEST_ACCEPTDEFAULT'}) {
+    return $default if $default;
+    return "";
   }
 
   # Set "none" if no terminal attached (eg, tinderbox build servers when new variables set)
   return "" unless (-t STDIN);
 
   my $userResponse = "";
-
-  while ( $userResponse eq "" )
-  {
+  while($userResponse eq "") {
     print STDERR "\n";
-    print STDERR "Test Harness         : $testharness\n";
-    print STDERR "Test Parameter       : $param\n";
-    print STDERR "Environment Variable : $envvar\n" if ($param ne $envvar);
-    print STDERR "Brief Description    : $brief\n";
-    print STDERR "Enter value (or 'none') ", ($defaultValid ? "[${default}]" : "[]"), " => ";
+    print STDERR "Test File      : ".(caller(0))[1]."\n";
+    print STDERR "Test Parameter : $param\n";
+    print STDERR "Description    : $description\n";
+    print STDERR "Enter value (or 'none') ", ($default ? "[${default}]" : "[]"), " => ";
     $userResponse = <STDIN>;
     $userResponse = "" if ! defined( $userResponse ); # Handle EOF
-    chomp( $userResponse );
-    if ( $defaultValid && $userResponse eq "" )
-    {
+    chomp($userResponse);
+    if($default && $userResponse eq "") {
       $userResponse = $default;
     }
   }
 
   print STDERR "\n";
 
-  if ($userResponse =~ /^(na|none)$/) {
+  if($userResponse =~ /^(na|none)$/) {
     $userResponse = "";
   }
 
-  # define all user responses at global scope
-  SetCacheParameter( $param, ( $scoped ? $testharness : undef ), $userResponse );
+  # store user responses
+  SetCacheParameter($param, $userResponse);
 
   return $userResponse;
 }
@@ -407,37 +369,20 @@ sub getTestParameter
 # Internal Cache Management Functions
 #
 
-sub SearchCache
-{
-  my( $param, $scope ) = @_;
+sub SearchCache {
+  my($param) = @_;
 
   LoadCache();
 
-  if ( exists( $CACHE{$scope} ) && exists( $CACHE{$scope}{$param} ) )
-  {
-    return $CACHE{$scope}{$param};
-  }
-
-  if ( exists( $CACHE{$param} ) )
-  {
+  if(exists $CACHE{$param}) {
     return $CACHE{$param};
   }
   return undef;    # Need this to say "nothing found"
 }
 
-sub SetCacheParameter
-{
-  my( $param, $scope, $value ) = @_;
-
-  if ( defined( $scope ) )
-  {
-    $CACHE{$scope}{$param} = $value;
-  }
-  else
-  {
-    $CACHE{$param} = $value;
-  }
-
+sub SetCacheParameter {
+  my($param, $value) = @_;
+  $CACHE{$param} = $value;
   SaveCache();
 }
 
@@ -475,6 +420,11 @@ sub SaveCache
   delete $CACHE{'_cache_loaded_'};
   my $oldFileContents = delete $CACHE{'_original_cache'};
 
+  # clean up old style params
+  for my $key (keys %CACHE) {
+    delete $CACHE{$key} if $key !~ m/^NP_[A-Z0-9_]+$/mx;
+  }
+
   my($dataDumper) = new Data::Dumper([\%CACHE]);
   $dataDumper->Terse(1);
   $dataDumper->Sortkeys(1);
@@ -486,7 +436,7 @@ sub SaveCache
   if($oldFileContents ne $data) {
     my($fileHandle) = new IO::File;
     if (!$fileHandle->open( "> ${CACHEFILENAME}")) {
-      print STDERR "NPTest::LoadCache() : Problem saving ${CACHEFILENAME} : $!\n";
+      print STDERR "NPTest::SaveCache() : Problem saving ${CACHEFILENAME} : $!\n";
       return;
     }
     print $fileHandle $data;

@@ -21,30 +21,11 @@ plan skip_all => "check_mysql not compiled" unless (-x "check_mysql");
 plan tests => 15;
 
 my $bad_login_output = '/Access denied for user /';
-my $mysqlserver = getTestParameter(
-		"NP_MYSQL_SERVER",
-		"A MySQL Server hostname or IP with no slaves setup"
-		);
-my $mysqlsocket = getTestParameter(
-		"NP_MYSQL_SOCKET",
-		"Full path to a MySQL Server socket with no slaves setup"
-		);
-my $mysql_login_details = getTestParameter(
-		"MYSQL_LOGIN_DETAILS",
-		"Command line parameters to specify login access (requires " .
-		"REPLICATION CLIENT privleges)",
-		"-u test -ptest",
-		);
-my $with_slave = getTestParameter(
-		"NP_MYSQL_WITH_SLAVE",
-		"MySQL server with slaves setup"
-		);
-my $with_slave_login = getTestParameter(
-		"NP_MYSQL_WITH_SLAVE_LOGIN",
-		"Login details for server with slave (requires REPLICATION CLIENT " .
-		"privleges)",
-		$mysql_login_details || "-u test -ptest"
-		);
+my $mysqlserver         = getTestParameter("NP_MYSQL_SERVER", "A MySQL Server hostname or IP with no slaves setup");
+my $mysqlsocket         = getTestParameter("NP_MYSQL_SOCKET", "Full path to a MySQL Server socket with no slaves setup");
+my $mysql_login_details = getTestParameter("NP_MYSQL_LOGIN_DETAILS", "Command line parameters to specify login access (requires REPLICATION CLIENT privleges)", "-u test -ptest");
+my $with_slave          = getTestParameter("NP_MYSQL_WITH_SLAVE", "MySQL server with slaves setup");
+my $with_slave_login    = getTestParameter("NP_MYSQL_WITH_SLAVE_LOGIN", "Login details for server with slave (requires REPLICATION CLIENT privleges)", $mysql_login_details || "-u test -ptest");
 
 my $result;
 
