@@ -53,8 +53,8 @@ developer to interactively request test parameter information from the
 user. The user can accept the developer's default value or reply "none"
 which will then be returned as "" for the test to skip if appropriate.
 
-If a parameter needs to be entered and the test is run without a tty 
-attached (such as a cronjob), the parameter will be assigned as if it 
+If a parameter needs to be entered and the test is run without a tty
+attached (such as a cronjob), the parameter will be assigned as if it
 was "none". Tests can check for the parameter and skip if not set.
 
 Responses are stored in an external, file-based cache so subsequent test
@@ -249,26 +249,26 @@ sub checkCmd
     {
       if ( scalar( grep { $_ == $exitStatus } @{$desiredExitStatus} ) )
       {
-	$desiredExitStatus = $exitStatus;
+    $desiredExitStatus = $exitStatus;
       }
       else
       {
-	$desiredExitStatus = -1;
+    $desiredExitStatus = -1;
       }
     }
     elsif ( ref $desiredExitStatus eq "HASH" )
     {
       if ( exists( ${$desiredExitStatus}{$exitStatus} ) )
       {
-	if ( defined( ${$desiredExitStatus}{$exitStatus} ) )
-	{
-	  $testOutput = ${$desiredExitStatus}{$exitStatus};
-	}
-	$desiredExitStatus = $exitStatus;
+    if ( defined( ${$desiredExitStatus}{$exitStatus} ) )
+    {
+      $testOutput = ${$desiredExitStatus}{$exitStatus};
+    }
+    $desiredExitStatus = $exitStatus;
       }
       else
       {
-	$desiredExitStatus = -1;
+    $desiredExitStatus = -1;
       }
     }
 
@@ -332,12 +332,12 @@ sub getTestParameter
   my( $param, $envvar, $default, $brief, $scoped );
   my $new_style;
   if (scalar @_ <= 3) {
-	($param, $brief, $default) = @_;
-	$envvar = $param;
-	$new_style = 1;
+    ($param, $brief, $default) = @_;
+    $envvar = $param;
+    $new_style = 1;
   } else {
-	( $param, $envvar, $default, $brief, $scoped ) = @_;
-	$new_style = 0;
+    ( $param, $envvar, $default, $brief, $scoped ) = @_;
+    $new_style = 0;
   }
 
   # Apply default values for optional arguments
@@ -394,7 +394,7 @@ sub getTestParameter
   print STDERR "\n";
 
   if ($userResponse =~ /^(na|none)$/) {
-	$userResponse = "";
+    $userResponse = "";
   }
 
   # define all user responses at global scope
@@ -422,7 +422,7 @@ sub SearchCache
   {
     return $CACHE{$param};
   }
-  return undef;	# Need this to say "nothing found"
+  return undef;    # Need this to say "nothing found"
 }
 
 sub SetCacheParameter
@@ -542,10 +542,10 @@ sub DetermineTestHarnessDirectory
     push ( @dirs, "./tests");
   }
 
-	if ( @dirs > 0 )
-	{
-		return @dirs;
-	}
+    if ( @dirs > 0 )
+    {
+        return @dirs;
+    }
 
   # To be honest I don't understand which case satisfies the
   # original code in test.pl : when $tstdir == `pwd` w.r.t.
@@ -611,73 +611,73 @@ sub TestsFrom
 
 # All the new object oriented stuff below
 
-sub new { 
-	my $type = shift;
-	my $self = {};
-	return bless $self, $type;
+sub new {
+    my $type = shift;
+    my $self = {};
+    return bless $self, $type;
 }
 
 # Accessors
 sub return_code {
-	my $self = shift;
-	if (@_) {
-		return $self->{return_code} = shift;
-	} else {
-		return $self->{return_code};
-	}
+    my $self = shift;
+    if (@_) {
+        return $self->{return_code} = shift;
+    } else {
+        return $self->{return_code};
+    }
 }
 sub output {
-	my $self = shift;
-	if (@_) {
-		return $self->{output} = shift;
-	} else {
-		return $self->{output};
-	}
+    my $self = shift;
+    if (@_) {
+        return $self->{output} = shift;
+    } else {
+        return $self->{output};
+    }
 }
 
 sub perf_output {
-	my $self = shift;
-	$_ = $self->{output};
-	/\|(.*)$/;
-	return $1 || "";
+    my $self = shift;
+    $_ = $self->{output};
+    /\|(.*)$/;
+    return $1 || "";
 }
 
 sub only_output {
-	my $self = shift;
-	$_ = $self->{output};
-	/(.*?)\|/;
-	return $1 || "";
+    my $self = shift;
+    $_ = $self->{output};
+    /(.*?)\|/;
+    return $1 || "";
 }
 
 sub testCmd {
-	my $class   = shift;
-	my $command = shift or die "No command passed to testCmd";
-	my $timeout = shift || 120;
-	my $object = $class->new;
+    my $class   = shift;
+    my $command = shift or die "No command passed to testCmd";
+    my $timeout = shift || 120;
+    my $object = $class->new;
 
-	local $SIG{'ALRM'} = sub { die("timeout in command: $command"); };
-	alarm($timeout); # no test should take longer than 120 seconds
+    local $SIG{'ALRM'} = sub { die("timeout in command: $command"); };
+    alarm($timeout); # no test should take longer than 120 seconds
 
-	my $output = `$command`;
-	$object->return_code($? >> 8);
-	$_ = $? & 127;
-	if ($_) {
-		die "Got signal $_ for command $command";
-	}
-	chomp $output;
-	$object->output($output);
+    my $output = `$command`;
+    $object->return_code($? >> 8);
+    $_ = $? & 127;
+    if ($_) {
+        die "Got signal $_ for command $command";
+    }
+    chomp $output;
+    $object->output($output);
 
-	alarm(0);
+    alarm(0);
 
-	my ($pkg, $file, $line) = caller(0);
-	print "Testing: $command", $/;
-	if ($ENV{'NPTEST_DEBUG'}) {
-		print "testCmd: Called from line $line in $file", $/;
-		print "Output:  ", $object->output, $/;
-		print "Return code: ", $object->return_code, $/;
-	}
+    my ($pkg, $file, $line) = caller(0);
+    print "Testing: $command", $/;
+    if ($ENV{'NPTEST_DEBUG'}) {
+        print "testCmd: Called from line $line in $file", $/;
+        print "Output:  ", $object->output, $/;
+        print "Return code: ", $object->return_code, $/;
+    }
 
-	return $object;
+    return $object;
 }
 
 # do we have ipv6
