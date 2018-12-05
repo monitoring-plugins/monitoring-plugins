@@ -72,7 +72,7 @@ int maximum_age = -1;
 
 enum {
   REGS = 2,
-  MAX_RE_SIZE = 256
+  MAX_RE_SIZE = 1024
 };
 #include "regex.h"
 regex_t preg;
