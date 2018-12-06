@@ -1362,13 +1362,14 @@ add_target(char *arg)
 	else {
 		errno = 0;
 		memset(&hints, 0, sizeof(hints));
-		hints.ai_family = address_family == AF_INET ? PF_INET : PF_INET6;
+		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_RAW;
 		if((error = getaddrinfo(arg, NULL, &hints, &res)) != 0) {
 			errno = 0;
 			crash("Failed to resolve %s: %s", arg, gai_strerror(error));
 			return -1;
 		}
+		address_family = res->ai_family;
 	}
 
 	/* possibly add all the IP's as targets */
