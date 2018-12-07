@@ -42,9 +42,6 @@ before_install:
   - sudo add-apt-repository -y ppa:waja/trusty-backports
   - sudo apt-get update -qq
   - sudo apt-get purge -qq gawk
-  # http://docs.travis-ci.com/user/trusty-ci-environment/ indicates, no MySQL on Trusty (yet)
-  # # ensure we have a test database in place for tests
-  # - mysql -e "create database IF NOT EXISTS test;" -uroot
 
 install:
   - sudo apt-get install -qq --no-install-recommends perl autotools-dev libdbi-dev libldap2-dev libpq-dev libmysqlclient-dev libradcli-dev libkrb5-dev libnet-snmp-perl procps
@@ -74,6 +71,7 @@ before_script:
   - tools/setup
   - ./configure --enable-libtap
   - make
+  - export NPTEST_ACCEPTDEFAULT=1
   - export NPTEST_CACHE="$(pwd)/plugins/t/NPTest.cache.travis"
   - ssh-keygen -t dsa -N "" -f ~/.ssh/id_dsa
   - cat ~/.ssh/id_dsa.pub >> ~/.ssh/authorized_keys
@@ -82,7 +80,7 @@ before_script:
   - sudo rm -f /usr/share/mibs/ietf/SNMPv2-PDU /usr/share/mibs/ietf/IPSEC-SPD-MIB /usr/share/mibs/ietf/IPATM-IPMC-MIB /usr/share/mibs/iana/IANA-IPPM-METRICS-REGISTRY-MIB
   - sudo mkdir -p /var/lib/snmp/mib_indexes
   - sudo mkdir /media/ramdisk && sudo chmod 777 /media/ramdisk && sudo mount -t tmpfs -o size=20% none /media/ramdisk
-  - sed "/host_tls_cert/s/.*/'host_tls_cert' => '$(hostname)',/" -i $NPTEST_CACHE
+  - sed "/NP_HOST_TLS_CERT/s/.*/'NP_HOST_TLS_CERT' => '$(hostname)',/" -i $NPTEST_CACHE
 
 script:
   - if [ "$COVERITY_SCAN_BRANCH" != 1 ]; then make test; fi
