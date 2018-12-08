@@ -69,6 +69,8 @@ np_add_parameter(struct parameter_list **list, const char *name)
   new_path->dtotal_units = 0;
   new_path->inodes_total = 0;
   new_path->inodes_free = 0;
+  new_path->inodes_free_to_root = 0;
+  new_path->inodes_used = 0;
   new_path->dused_inodes_percent = 0;
   new_path->dfree_inodes_percent = 0;
 

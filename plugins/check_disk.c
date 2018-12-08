@@ -141,6 +141,7 @@ int erronly = FALSE;
 int display_mntp = FALSE;
 int exact_match = FALSE;
 int freespace_ignore_reserved = FALSE;
+int display_inodes_perfdata = FALSE;
 char *warn_freespace_units = NULL;
 char *crit_freespace_units = NULL;
 char *warn_freespace_percent = NULL;
@@ -167,6 +168,7 @@ main (int argc, char **argv)
   char *output;
   char *details;
   char *perf;
+  char *perf_ilabel;
   char *preamble;
   char *flag_header;
   double inode_space_pct;
@@ -186,6 +188,7 @@ main (int argc, char **argv)
   output = strdup ("");
   details = strdup ("");
   perf = strdup ("");
+  perf_ilabel = strdup ("");
   stat_buf = malloc(sizeof *stat_buf);
 
   setlocale (LC_ALL, "");
@@ -348,6 +351,29 @@ main (int argc, char **argv)
                           TRUE, 0,
                           TRUE, path->dtotal_units));
 
+      if (display_inodes_perfdata) {
+        /* *_high_tide must be reinitialized at each run */
+        warning_high_tide = UINT_MAX;
+        critical_high_tide = UINT_MAX;
+
+        if (path->freeinodes_percent->warning != NULL) {
+          warning_high_tide = abs( min( (double) warning_high_tide, (double) (1.0 - path->freeinodes_percent->warning->end/100)*path->inodes_total ));
+        }
+        if (path->freeinodes_percent->critical != NULL) {
+          critical_high_tide = abs( min( (double) critical_high_tide, (double) (1.0 - path->freeinodes_percent->critical->end/100)*path->inodes_total ));
+        }
+
+        xasprintf (&perf_ilabel, "%s (inodes)", (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir);
+        /* Nb: *_high_tide are unset when == UINT_MAX */
+        xasprintf (&perf, "%s %s", perf,
+                   perfdata (perf_ilabel,
+                             path->inodes_used, "",
+                             (warning_high_tide != UINT_MAX ? TRUE : FALSE), warning_high_tide,
+                             (critical_high_tide != UINT_MAX ? TRUE : FALSE), critical_high_tide,
+                             TRUE, 0,
+                             TRUE, path->inodes_total));
+      }
+
       if (disk_result==STATE_OK && erronly && !verbose)
         continue;
 
@@ -455,6 +481,7 @@ process_arguments (int argc, char **argv)
     {"ignore-eregi-partition", required_argument, 0, 'I'},
     {"local", no_argument, 0, 'l'},
     {"stat-remote-fs", no_argument, 0, 'L'},
+    {"iperfdata", no_argument, 0, 'P'},
     {"mountpoint", no_argument, 0, 'M'},
     {"errors-only", no_argument, 0, 'e'},
     {"exact-match", no_argument, 0, 'E'},
@@ -477,7 +504,7 @@ process_arguments (int argc, char **argv)
       strcpy (argv[c], "-t");
 
   while (1) {
-    c = getopt_long (argc, argv, "+?VqhvefCt:c:w:K:W:u:p:x:X:N:mklLg:R:r:i:I:MEA", longopts, &option);
+    c = getopt_long (argc, argv, "+?VqhvefCt:c:w:K:W:u:p:x:X:N:mklLPg:R:r:i:I:MEA", longopts, &option);
 
     if (c == -1 || c == EOF)
       break;
@@ -582,8 +609,12 @@ process_arguments (int argc, char **argv)
       break;
     case 'L':
       stat_remote_fs = 1;
+      /* fallthrough */
     case 'l':
       show_local_fs = 1;
+      break;
+    case 'P':
+      display_inodes_perfdata = 1;
       break;
     case 'p':                 /* select path */
       if (! (warn_freespace_units || crit_freespace_units || warn_freespace_percent ||
@@ -1012,6 +1043,8 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
           p->dtotal_units += p_list->dtotal_units;
           p->inodes_total += p_list->inodes_total;
           p->inodes_free  += p_list->inodes_free;
+          p->inodes_free_to_root  += p_list->inodes_free_to_root;
+          p->inodes_used  += p_list->inodes_used;
         }
         first = 0;
       }
@@ -1050,7 +1083,18 @@ get_path_stats (struct parameter_list *p, struct fs_usage *fsp) {
   p->dused_units = p->used*fsp->fsu_blocksize/mult;
   p->dfree_units = p->available*fsp->fsu_blocksize/mult;
   p->dtotal_units = p->total*fsp->fsu_blocksize/mult;
-  p->inodes_total = fsp->fsu_files;      /* Total file nodes. */
-  p->inodes_free  = fsp->fsu_ffree;      /* Free file nodes. */
+  /* Free file nodes. Not sure the workaround is required, but in case...*/
+  p->inodes_free  = fsp->fsu_favail > fsp->fsu_ffree ? 0 : fsp->fsu_favail;
+  p->inodes_free_to_root  = fsp->fsu_ffree; /* Free file nodes for root. */
+  p->inodes_used = fsp->fsu_files - fsp->fsu_ffree;
+  if (freespace_ignore_reserved) {
+    /* option activated : we substract the root-reserved inodes from the total */
+    /* not all OS report fsp->fsu_favail, only the ones with statvfs syscall */
+    /* for others, fsp->fsu_ffree == fsp->fsu_favail */
+    p->inodes_total = fsp->fsu_files - p->inodes_free_to_root + p->inodes_free;
+  } else {
+    /* default behaviour : take all the inodes into account */
+    p->inodes_total = fsp->fsu_files;
+  }
   np_add_name(&seen, p->best_match->me_mountdir);
 }
