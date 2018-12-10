@@ -1336,7 +1336,7 @@ add_target(char *arg)
 
 	switch (address_family) {
 	case -1:
-		// -4 and -6 are not specified on cmdline
+		/* -4 and -6 are not specified on cmdline */
 		address_family = AF_INET;
 		sin = (struct sockaddr_in *)&ip;
 		result = inet_pton(address_family, arg, &sin->sin_addr);
@@ -1347,6 +1347,10 @@ add_target(char *arg)
 			result = inet_pton(address_family, arg, &sin6->sin6_addr);
 		}
 #endif
+		/* If we don't find any valid addresses, we still don't know the address_family */
+		if ( result != 1) {
+			address_family = -1;
+		}
 		break;
 	case AF_INET:
 		sin = (struct sockaddr_in *)&ip;
@@ -1367,7 +1371,11 @@ add_target(char *arg)
 	else {
 		errno = 0;
 		memset(&hints, 0, sizeof(hints));
-		hints.ai_family = AF_UNSPEC;
+		if (address_family == -1) {
+			hints.ai_family = AF_UNSPEC;
+		} else {
+			hints.ai_family = address_family == AF_INET ? PF_INET : PF_INET6;
+		}
 		hints.ai_socktype = SOCK_RAW;
 		if((error = getaddrinfo(arg, NULL, &hints, &res)) != 0) {
 			errno = 0;
