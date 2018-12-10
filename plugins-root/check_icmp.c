@@ -467,10 +467,14 @@ main(int argc, char **argv)
 			unsigned short size;
 			switch(arg) {
 			case '4':
+				if (address_family != -1)
+					crash("Multiple protocol versions not supported");
 				address_family = AF_INET;
 				break;
 			case '6':
 #ifdef USE_IPV6
+				if (address_family != -1)
+					crash("Multiple protocol versions not supported");
 				address_family = AF_INET6;
 #else
 				usage (_("IPv6 support not available\n"));
