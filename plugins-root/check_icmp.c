@@ -410,6 +410,7 @@ main(int argc, char **argv)
 #ifdef SO_TIMESTAMP
 	int on = 1;
 #endif
+	char * opts_str = "vhVw:c:n:p:t:H:s:i:b:I:l:m:64";
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -462,7 +463,7 @@ main(int argc, char **argv)
 
 	/* Parse protocol arguments first */
 	for(i = 1; i < argc; i++) {
-		while((arg = getopt(argc, argv, "vhVw:c:n:p:t:H:s:i:b:I:l:m:64")) != EOF) {
+		while((arg = getopt(argc, argv, opts_str)) != EOF) {
 			unsigned short size;
 			switch(arg) {
 			case '4':
@@ -484,7 +485,7 @@ main(int argc, char **argv)
 
 	/* parse the arguments */
 	for(i = 1; i < argc; i++) {
-		while((arg = getopt(argc, argv, "vhVw:c:n:p:t:H:s:i:b:I:l:m:64")) != EOF) {
+		while((arg = getopt(argc, argv, opts_str)) != EOF) {
 			unsigned short size;
 			switch(arg) {
 			case 'v':
