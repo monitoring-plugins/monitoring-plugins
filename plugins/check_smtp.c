@@ -52,6 +52,7 @@ int days_till_exp_warn, days_till_exp_crit;
 enum {
 	SMTP_PORT	= 25
 };
+#define PROXY_PREFIX "PROXY TCP4 0.0.0.0 0.0.0.0 25 25\r\n"
 #define SMTP_EXPECT "220"
 #define SMTP_HELO "HELO "
 #define SMTP_EHLO "EHLO "
@@ -102,6 +103,7 @@ double critical_time = 0;
 int check_critical_time = FALSE;
 int verbose = 0;
 int use_ssl = FALSE;
+short use_proxy_prefix = FALSE;
 short use_ehlo = FALSE;
 short use_lhlo = FALSE;
 short ssl_established = 0;
@@ -183,6 +185,13 @@ main (int argc, char **argv)
 	result = my_tcp_connect (server_address, server_port, &sd);
 
 	if (result == STATE_OK) { /* we connected */
+
+		/* If requested, send PROXY header */
+		if (use_proxy_prefix) {
+			if (verbose)
+				printf ("Sending header %s\n", PROXY_PREFIX);
+			send(sd, PROXY_PREFIX, strlen(PROXY_PREFIX), 0);
+		}
 
 		/* watch for the SMTP connection string and */
 		/* return a WARNING status if we couldn't read any data */
@@ -478,6 +487,7 @@ process_arguments (int argc, char **argv)
 		{"starttls",no_argument,0,'S'},
 		{"certificate",required_argument,0,'D'},
 		{"ignore-quit-failure",no_argument,0,'q'},
+		{"proxy",no_argument,0,'r'},
 		{0, 0, 0, 0}
 	};
 
@@ -494,7 +504,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVv46Lt:p:f:e:c:w:H:C:R:SD:F:A:U:P:q",
+		c = getopt_long (argc, argv, "+hVv46Lrt:p:f:e:c:w:H:C:R:SD:F:A:U:P:q",
 		                 longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -620,6 +630,9 @@ process_arguments (int argc, char **argv)
 		/* starttls */
 			use_ssl = TRUE;
 			use_ehlo = TRUE;
+			break;
+		case 'r':
+			use_proxy_prefix = TRUE;
 			break;
 		case 'L':
 			use_lhlo = TRUE;
@@ -819,6 +832,8 @@ print_help (void)
   printf ("    %s\n", _("FROM-address to include in MAIL command, required by Exchange 2000")),
   printf (" %s\n", "-F, --fqdn=STRING");
   printf ("    %s\n", _("FQDN used for HELO"));
+  printf (" %s\n", "-r, --proxy");
+  printf ("    %s\n", _("Use PROXY protocol prefix for the connection."));
 #ifdef HAVE_SSL
   printf (" %s\n", "-D, --certificate=INTEGER[,INTEGER]");
   printf ("    %s\n", _("Minimum number of days a certificate has to be valid."));
