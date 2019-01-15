@@ -45,6 +45,10 @@ const char *email = "devel@monitoring-plugins.org";
 #include <mysqld_error.h>
 #include <errmsg.h>
 
+#ifndef MYSQL_PORT
+#define MYSQL_PORT 3306
+#endif
+
 char *db_user = NULL;
 char *db_host = NULL;
 char *db_socket = NULL;
