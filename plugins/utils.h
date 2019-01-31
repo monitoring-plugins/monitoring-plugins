@@ -34,8 +34,6 @@ void print_revision (const char *, const char *);
 extern unsigned int timeout_state;
 extern unsigned int timeout_interval;
 
-RETSIGTYPE timeout_alarm_handler (int);
-
 extern time_t start_time, end_time;
 
 /* Test input types */

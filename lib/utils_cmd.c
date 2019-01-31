@@ -40,6 +40,7 @@
 
 /** includes **/
 #include "common.h"
+#include "utils.h"
 #include "utils_cmd.h"
 #include "utils_base.h"
 #include <fcntl.h>
@@ -64,31 +65,6 @@ extern char **environ;
 #if defined(SIG_IGN) && !defined(SIG_ERR)
 # define SIG_ERR ((Sigfunc *)-1)
 #endif
-
-/* This variable must be global, since there's no way the caller
- * can forcibly slay a dead or ungainly running program otherwise.
- * Multithreading apps and plugins can initialize it (via CMD_INIT)
- * in an async safe manner PRIOR to calling cmd_run() or cmd_run_array()
- * for the first time.
- *
- * The check for initialized values is atomic and can
- * occur in any number of threads simultaneously. */
-static pid_t *_cmd_pids = NULL;
-
-/* Try sysconf(_SC_OPEN_MAX) first, as it can be higher than OPEN_MAX.
- * If that fails and the macro isn't defined, we fall back to an educated
- * guess. There's no guarantee that our guess is adequate and the program
- * will die with SIGSEGV if it isn't and the upper boundary is breached. */
-#define DEFAULT_MAXFD  256   /* fallback value if no max open files value is set */
-#define MAXFD_LIMIT   8192   /* upper limit of open files */
-#ifdef _SC_OPEN_MAX
-static long maxfd = 0;
-#elif defined(OPEN_MAX)
-# define maxfd OPEN_MAX
-#else	/* sysconf macro unavailable, so guess (may be wildly inaccurate) */
-# define maxfd DEFAULT_MAXFD
-#endif
-
 
 /** prototypes **/
 static int _cmd_open (char *const *, int *, int *)
@@ -405,4 +381,20 @@ cmd_file_read ( char *filename, output *out, int flags)
 		die( STATE_UNKNOWN, _("Error closing %s: %s"), filename, strerror(errno) );
 
 	return 0;
+}
+
+void
+timeout_alarm_handler (int signo)
+{
+	size_t i;
+	if (signo == SIGALRM) {
+		printf (_("%s - Plugin timed out after %d seconds\n"),
+						state_text(timeout_state), timeout_interval);
+
+		if(_cmd_pids) for(i = 0; i < maxfd; i++) {
+			if(_cmd_pids[i] != 0) kill(_cmd_pids[i], SIGKILL);
+		}
+
+		exit (timeout_state);
+	}
 }

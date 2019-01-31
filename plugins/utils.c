@@ -165,16 +165,6 @@ state_text (int result)
 	}
 }
 
-void
-timeout_alarm_handler (int signo)
-{
-	if (signo == SIGALRM) {
-		printf (_("%s - Plugin timed out after %d seconds\n"),
-						state_text(timeout_state), timeout_interval);
-		exit (timeout_state);
-	}
-}
-
 int
 is_numeric (char *number)
 {
@@ -708,4 +698,3 @@ char *sperfdata_int (const char *label,
 
 	return data;
 }
-
