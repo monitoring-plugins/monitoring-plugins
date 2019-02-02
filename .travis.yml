@@ -61,6 +61,7 @@ install:
   - sudo service apache2 reload
   - sudo cp tools/squid.conf /etc/squid/squid.conf
   - sudo service squid reload
+  - sudo service mysql restart
 
 before_script:
   # ensure we have a test database in place for tests
