@@ -50,5 +50,5 @@
   'NP_SNMP_USER' => '',
   'NP_SSH_CONFIGFILE' => '~/.ssh/config',
   'NP_SSH_HOST' => 'localhost',
-  'NP_SSH_IDENTITY' => '~/.ssh/id_dsa'
+  'NP_SSH_IDENTITY' => '~/.ssh/id_rsa'
 }
