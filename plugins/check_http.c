@@ -1155,6 +1155,8 @@ check_http (void)
       xasprintf (&msg,
                 _("Invalid HTTP response received from host on port %d: %s\n"),
                 server_port, status_line);
+    if (show_body)
+        xasprintf (&msg, _("%s\n%s"), msg, page);
     die (STATE_CRITICAL, "HTTP CRITICAL - %s", msg);
   }
 
