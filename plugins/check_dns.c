@@ -554,7 +554,7 @@ print_help (void)
   printf (" -c, --critical=seconds\n");
   printf ("    %s\n", _("Return critical if elapsed time exceeds value. Default off"));
   printf (" -L, --all\n");
-  printf ("    %s\n", _("Return critical the list of expected addresses does not match all addresses"));
+  printf ("    %s\n", _("Return critical if the list of expected addresses does not match all addresses"));
   printf ("    %s\n", _("returned. Default off"));
 
   printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
