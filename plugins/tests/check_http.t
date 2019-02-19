@@ -4,13 +4,13 @@
 #
 # To create the https server certificate:
 # openssl req -new -x509 -keyout server-key.pem -out server-cert.pem -days 3650 -nodes
-# Country Name (2 letter code) [AU]:UK
-# State or Province Name (full name) [Some-State]:Derbyshire
-# Locality Name (eg, city) []:Belper
+# Country Name (2 letter code) [AU]:DE
+# State or Province Name (full name) [Some-State]:Bavaria
+# Locality Name (eg, city) []:Munich
 # Organization Name (eg, company) [Internet Widgits Pty Ltd]:Monitoring Plugins
 # Organizational Unit Name (eg, section) []:
-# Common Name (eg, YOUR name) []:Ton Voon
-# Email Address []:tonvoon@mac.com
+# Common Name (e.g. server FQDN or YOUR name) []:Monitoring Plugins
+# Email Address []:devel@monitoring-plugins.org
 
 use strict;
 use Test::More;
@@ -194,16 +194,16 @@ SKIP: {
 
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 14" );
 	is( $result->return_code, 0, "$command -p $port_https -S -C 14" );
-	is( $result->output, 'OK - Certificate \'Ton Voon\' will expire on Sun Mar  3 21:41:28 2019 +0000.', "output ok" );
+	is( $result->output, "OK - Certificate 'Monitoring Plugins' will expire on Fri Feb 16 15:31:44 2029 +0000.", "output ok" );
 
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 14000" );
 	is( $result->return_code, 1, "$command -p $port_https -S -C 14000" );
-	like( $result->output, '/WARNING - Certificate \'Ton Voon\' expires in \d+ day\(s\) \(Sun Mar  3 21:41:28 2019 \+0000\)./', "output ok" );
+	like( $result->output, '/WARNING - Certificate \'Monitoring Plugins\' expires in \d+ day\(s\) \(Fri Feb 16 15:31:44 2029 \+0000\)./', "output ok" );
 
 	# Expired cert tests
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 13960,14000" );
 	is( $result->return_code, 2, "$command -p $port_https -S -C 13960,14000" );
-	like( $result->output, '/CRITICAL - Certificate \'Ton Voon\' expires in \d+ day\(s\) \(Sun Mar  3 21:41:28 2019 \+0000\)./', "output ok" );
+	like( $result->output, '/CRITICAL - Certificate \'Monitoring Plugins\' expires in \d+ day\(s\) \(Fri Feb 16 15:31:44 2029 \+0000\)./', "output ok" );
 
 	$result = NPTest->testCmd( "$command -p $port_https_expired -S -C 7" );
 	is( $result->return_code, 2, "$command -p $port_https_expired -S -C 7" );
