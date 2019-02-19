@@ -33,6 +33,7 @@ const char *copyright = "1999-2007";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
+#include "runcmd.h"
 #include "utils.h"
 #include "popen.h"
 
@@ -52,6 +53,9 @@ static int process_arguments (int argc, char **argv);
 static int validate_arguments (void);
 void print_help (void);
 void print_usage (void);
+static int print_top_consuming_processes();
+
+static int n_procs_to_show = 0;
 
 /* strictly for pretty-print usage in loops */
 static const int nums[3] = { 1, 5, 15 };
@@ -210,6 +214,9 @@ main (int argc, char **argv)
 		printf("load%d=%.3f;%.3f;%.3f;0; ", nums[i], la[i], wload[i], cload[i]);
 
 	putchar('\n');
+	if (n_procs_to_show > 0) {
+		print_top_consuming_processes();
+	}
 	return result;
 }
 
@@ -227,6 +234,7 @@ process_arguments (int argc, char **argv)
 		{"percpu", no_argument, 0, 'r'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
+		{"procs-to-show", required_argument, 0, 'n'},
 		{0, 0, 0, 0}
 	};
 
@@ -234,7 +242,7 @@ process_arguments (int argc, char **argv)
 		return ERROR;
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vhrc:w:", longopts, &option);
+		c = getopt_long (argc, argv, "Vhrc:w:n:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -255,6 +263,9 @@ process_arguments (int argc, char **argv)
 		case 'h':									/* help */
 			print_help ();
 			exit (STATE_UNKNOWN);
+		case 'n':
+			n_procs_to_show = atoi(optarg);
+			break;
 		case '?':									/* help */
 			usage5 ();
 		}
@@ -324,6 +335,9 @@ print_help (void)
   printf ("    %s\n", _("the load average format is the same used by \"uptime\" and \"w\""));
   printf (" %s\n", "-r, --percpu");
   printf ("    %s\n", _("Divide the load averages by the number of CPUs (when possible)"));
+  printf (" %s\n", "-n, --procs-to-show=NUMBER_OF_PROCS");
+  printf ("    %s\n", _("Number of processes to show when printing the top consuming processes."));
+  printf ("    %s\n", _("NUMBER_OF_PROCS=0 disables this feature. Default value is 0"));
 
 	printf (UT_SUPPORT);
 }
@@ -332,5 +346,48 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-	printf ("%s [-r] -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15\n", progname);
+  printf ("%s [-r] -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15 [-n NUMBER_OF_PROCS]\n", progname);
+}
+
+#ifdef PS_USES_PROCPCPU
+int cmpstringp(const void *p1, const void *p2) {
+	int procuid = 0;
+	int procpid = 0;
+	int procppid = 0;
+	int procvsz = 0;
+	int procrss = 0;
+	float procpcpu = 0;
+	char procstat[8];
+#ifdef PS_USES_PROCETIME
+	char procetime[MAX_INPUT_BUFFER];
+#endif /* PS_USES_PROCETIME */
+	char procprog[MAX_INPUT_BUFFER];
+	int pos;
+	sscanf (* (char * const *) p1, PS_FORMAT, PS_VARLIST);
+	float procpcpu1 = procpcpu;
+	sscanf (* (char * const *) p2, PS_FORMAT, PS_VARLIST);
+	return procpcpu1 < procpcpu;
+}
+#endif /* PS_USES_PROCPCPU */
+
+static int print_top_consuming_processes() {
+	int i = 0;
+	struct output chld_out, chld_err;
+	if(np_runcmd(PS_COMMAND, &chld_out, &chld_err, 0) != 0){
+		fprintf(stderr, _("'%s' exited with non-zero status.\n"), PS_COMMAND);
+		return STATE_UNKNOWN;
+	}
+	if (chld_out.lines < 2) {
+		fprintf(stderr, _("some error occurred getting procs list.\n"));
+		return STATE_UNKNOWN;
+	}
+#ifdef PS_USES_PROCPCPU
+	qsort(chld_out.line + 1, chld_out.lines - 1, sizeof(char*), cmpstringp);
+#endif /* PS_USES_PROCPCPU */
+	int lines_to_show = chld_out.lines < (n_procs_to_show + 1)
+			? chld_out.lines : n_procs_to_show + 1;
+	for (i = 0; i < lines_to_show; i += 1) {
+		printf("%s\n", chld_out.line[i]);
+	}
+	return OK;
 }

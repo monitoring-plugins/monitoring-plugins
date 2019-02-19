@@ -1016,6 +1016,10 @@ if test -n "$ac_cv_ps_varlist" ; then
 		AC_DEFINE(PS_USES_PROCETIME,"yes",
 		          [Whether the ps utility uses the "procetime" field])
 	fi
+	if echo "$ac_cv_ps_varlist" | grep "procpcpu" >/dev/null; then
+		AC_DEFINE(PS_USES_PROCPCPU,"yes",
+		          [Whether the ps utility uses the "procpcpu" field])
+	fi
 fi
 
 AC_PATH_PROG(PATH_TO_PING,ping)
