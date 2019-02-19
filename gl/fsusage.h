@@ -32,7 +32,8 @@ struct fs_usage
   uintmax_t fsu_bavail;         /* Free blocks available to non-superuser. */
   bool fsu_bavail_top_bit_set;  /* 1 if fsu_bavail represents a value < 0.  */
   uintmax_t fsu_files;          /* Total file nodes. */
-  uintmax_t fsu_ffree;          /* Free file nodes. */
+  uintmax_t fsu_ffree;          /* Free file nodes to superuser. */
+  uintmax_t fsu_favail;         /* Free file nodes to non-superuser. */
 };
 
 int get_fs_usage (char const *file, char const *disk, struct fs_usage *fsp);
