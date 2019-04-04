@@ -67,6 +67,7 @@ void print_usage (void);
 char *community = NULL;
 char *address = NULL;
 char *port = NULL;
+int  check_paper_out = 1;
 
 int
 main (int argc, char **argv)
@@ -240,7 +241,8 @@ main (int argc, char **argv)
 			strcpy (errmsg, _("Paper Jam"));
 		}
 		else if (paper_out) {
-			result = STATE_WARNING;
+			if (check_paper_out)
+				result = STATE_WARNING;
 			strcpy (errmsg, _("Out of Paper"));
 		}
 		else if (line_status == OFFLINE) {
@@ -325,7 +327,7 @@ process_arguments (int argc, char **argv)
 
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVH:C:p:", longopts, &option);
+		c = getopt_long (argc, argv, "+hVH:C:p:D", longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)
 			break;
@@ -347,6 +349,8 @@ process_arguments (int argc, char **argv)
 				usage2 (_("Port must be a positive short integer"), optarg);
 			else
 				port = atoi(optarg);
+		case 'D':									/* disable paper out check*/
+			check_paper_out = 0;
 			break;
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
@@ -420,6 +424,8 @@ print_help (void)
 	printf ("    %s", _("Specify the port to check "));
 	printf (_("(default=%s)"), DEFAULT_PORT);
 	printf ("\n");
+	printf (" %s\n", "-D");
+	printf ("    %s", _("Disable paper check "));
 
 	printf (UT_SUPPORT);
 }
@@ -430,5 +436,5 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-	printf ("%s -H host [-C community] [-p port]\n", progname);
+	printf ("%s -H host [-C community] [-p port] [-D]\n", progname);
 }

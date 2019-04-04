@@ -78,7 +78,6 @@ RETSIGTYPE popen_timeout_alarm_handler (int);
 
 #define	min(a,b)	((a) < (b) ? (a) : (b))
 #define	max(a,b)	((a) > (b) ? (a) : (b))
-int open_max (void);						/* {Prog openmax} */
 static void err_sys (const char *, ...) __attribute__((noreturn,format(printf, 1, 2)));
 char *rtrim (char *, const char *);
 
@@ -86,7 +85,6 @@ char *pname = NULL;							/* caller can set this from argv[0] */
 
 /*int *childerr = NULL;*//* ptr to array allocated at run-time */
 /*extern pid_t *childpid = NULL; *//* ptr to array allocated at run-time */
-static int maxfd;								/* from our open_max(), {Prog openmax} */
 
 #ifdef REDHAT_SPOPEN_ERROR
 static volatile int childtermd = 0;
@@ -187,13 +185,11 @@ spopen (const char *cmdstring)
 	argv[i] = NULL;
 
 	if (childpid == NULL) {				/* first time through */
-		maxfd = open_max ();				/* allocate zeroed out array for child pids */
 		if ((childpid = calloc ((size_t)maxfd, sizeof (pid_t))) == NULL)
 			return (NULL);
 	}
 
 	if (child_stderr_array == NULL) {	/* first time through */
-		maxfd = open_max ();				/* allocate zeroed out array for child pids */
 		if ((child_stderr_array = calloc ((size_t)maxfd, sizeof (int))) == NULL)
 			return (NULL);
 	}
@@ -273,15 +269,6 @@ spclose (FILE * fp)
 	return (1);
 }
 
-#ifdef	OPEN_MAX
-static int openmax = OPEN_MAX;
-#else
-static int openmax = 0;
-#endif
-
-#define	OPEN_MAX_GUESS	256			/* if OPEN_MAX is indeterminate */
-				/* no guarantee this is adequate */
-
 #ifdef REDHAT_SPOPEN_ERROR
 RETSIGTYPE
 popen_sigchld_handler (int signo)
@@ -308,22 +295,6 @@ popen_timeout_alarm_handler (int signo)
 		}
 		exit (STATE_CRITICAL);
 	}
-}
-
-
-int
-open_max (void)
-{
-	if (openmax == 0) {						/* first time through */
-		errno = 0;
-		if ((openmax = sysconf (_SC_OPEN_MAX)) < 0) {
-			if (errno == 0)
-				openmax = OPEN_MAX_GUESS;	/* it's indeterminate */
-			else
-				err_sys (_("sysconf error for _SC_OPEN_MAX"));
-		}
-	}
-	return (openmax);
 }
 
 

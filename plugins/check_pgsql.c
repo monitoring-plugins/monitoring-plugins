@@ -34,6 +34,7 @@ const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
+#include "utils_cmd.h"
 
 #include "netutils.h"
 #include <libpq-fe.h>

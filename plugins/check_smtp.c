@@ -293,6 +293,7 @@ main (int argc, char **argv)
 		    printf("%s", buffer);
 		}
 
+		n = 0;
 		while (n < ncommands) {
 			xasprintf (&cmd_str, "%s%s", commands[n], "\r\n");
 			my_send(cmd_str, strlen(cmd_str));

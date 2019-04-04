@@ -7,6 +7,7 @@ use strict;
 use Test::More;
 use NPTest;
 use FindBin qw($Bin);
+use POSIX qw/strftime/;
 
 my $tests = 67;
 # Check that all dependent modules are available
@@ -37,6 +38,7 @@ if ($@) {
 
 my $port_snmp = 16100 + int(rand(100));
 
+my $faketime = -x '/usr/bin/faketime' ? 1 : 0;
 
 # Start up server
 my @pids;
@@ -118,77 +120,81 @@ like($res->output, '/'.quotemeta('SNMP OK - And now have fun with with this: \"C
 "And now have fun with with this: \"C:\\\\\"
 because we\'re not done yet!"').'/m', "Attempt to confuse parser No.3");
 
-system("rm -f ".$ENV{'MP_STATE_PATH'}."/check_snmp/*");
-$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -w 600" );
-is($res->return_code, 0, "Returns OK");
-is($res->output, "No previous data to calculate rate - assume okay");
+system("rm -f ".$ENV{'MP_STATE_PATH'}."/*/check_snmp/*");
 
-# Need to sleep, otherwise duration=0
-sleep 1;
+# run rate checks with faketime. rate checks depend on the exact amount of time spend between the
+# plugin runs which may fail on busy machines.
+# using faketime removes this race condition and also saves all the sleeps in between.
+SKIP: {
+    skip "No faketime binary found", 28 if !$faketime;
 
-$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -w 600" );
-is($res->return_code, 1, "WARNING - due to going above rate calculation" );
-is($res->output, "SNMP RATE WARNING - *666* | iso.3.6.1.4.1.8072.3.2.67.10=666;600 ");
+    my $ts = time();
+    $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts))."' ./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -w 600" );
+    is($res->return_code, 0, "Returns OK");
+    is($res->output, "No previous data to calculate rate - assume okay");
 
-$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -w 600" );
-is($res->return_code, 3, "UNKNOWN - basically the divide by zero error" );
-is($res->output, "Time duration between plugin calls is invalid");
+    # test rate 1 second later
+    $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts+1))."' ./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -w 600" );
+    is($res->return_code, 1, "WARNING - due to going above rate calculation" );
+    is($res->output, "SNMP RATE WARNING - *666* | iso.3.6.1.4.1.8072.3.2.67.10=666;600 ");
 
-
-$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets" );
-is($res->return_code, 0, "OK for first call" );
-is($res->output, "No previous data to calculate rate - assume okay" );
-
-# Need to sleep, otherwise duration=0
-sleep 1;
-
-$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets" );
-is($res->return_code, 0, "OK as no thresholds" );
-is($res->output, "SNMP RATE OK - inoctets 666 | inoctets=666 ", "Check label");
-
-sleep 2;
-
-$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets" );
-is($res->return_code, 0, "OK as no thresholds" );
-is($res->output, "SNMP RATE OK - inoctets 333 | inoctets=333 ", "Check rate decreases due to longer interval");
+    # test rate with same time
+    $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts+1))."' ./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -w 600" );
+    is($res->return_code, 3, "UNKNOWN - basically the divide by zero error" );
+    is($res->output, "Time duration between plugin calls is invalid");
 
 
-# label performance data check
-$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 -l test" );
-is($res->return_code, 0, "OK as no thresholds" );
-is($res->output, "SNMP OK - test 67996 | test=67996c ", "Check label");
+    $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts))."' ./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets" );
+    is($res->return_code, 0, "OK for first call" );
+    is($res->output, "No previous data to calculate rate - assume okay" );
 
-$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 -l \"test'test\"" );
-is($res->return_code, 0, "OK as no thresholds" );
-is($res->output, "SNMP OK - test'test 68662 | \"test'test\"=68662c ", "Check label");
+    # test rate 1 second later
+    $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts+1))."' ./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets" );
+    is($res->return_code, 0, "OK as no thresholds" );
+    is($res->output, "SNMP RATE OK - inoctets 666 | inoctets=666 ", "Check label");
 
-$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 -l 'test\"test'" );
-is($res->return_code, 0, "OK as no thresholds" );
-is($res->output, "SNMP OK - test\"test 69328 | 'test\"test'=69328c ", "Check label");
-
-$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 -l test -O" );
-is($res->return_code, 0, "OK as no thresholds" );
-is($res->output, "SNMP OK - test 69994 | iso.3.6.1.4.1.8072.3.2.67.10=69994c ", "Check label");
-
-$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10" );
-is($res->return_code, 0, "OK as no thresholds" );
-is($res->output, "SNMP OK - 70660 | iso.3.6.1.4.1.8072.3.2.67.10=70660c ", "Check label");
-
-$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 -l 'test test'" );
-is($res->return_code, 0, "OK as no thresholds" );
-is($res->output, "SNMP OK - test test 71326 | 'test test'=71326c ", "Check label");
+    # test rate 3 seconds later
+    $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts+3))."' ./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets" );
+    is($res->return_code, 0, "OK as no thresholds" );
+    is($res->output, "SNMP RATE OK - inoctets 333 | inoctets=333 ", "Check rate decreases due to longer interval");
 
 
-$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets_per_minute --rate-multiplier=60" );
-is($res->return_code, 0, "OK for first call" );
-is($res->output, "No previous data to calculate rate - assume okay" );
+    # label performance data check
+    $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 -l test" );
+    is($res->return_code, 0, "OK as no thresholds" );
+    is($res->output, "SNMP OK - test 67996 | test=67996c ", "Check label");
 
-# Need to sleep, otherwise duration=0
-sleep 1;
+    $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 -l \"test'test\"" );
+    is($res->return_code, 0, "OK as no thresholds" );
+    is($res->output, "SNMP OK - test'test 68662 | \"test'test\"=68662c ", "Check label");
 
-$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets_per_minute --rate-multiplier=60" );
-is($res->return_code, 0, "OK as no thresholds" );
-is($res->output, "SNMP RATE OK - inoctets_per_minute 39960 | inoctets_per_minute=39960 ", "Checking multiplier");
+    $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 -l 'test\"test'" );
+    is($res->return_code, 0, "OK as no thresholds" );
+    is($res->output, "SNMP OK - test\"test 69328 | 'test\"test'=69328c ", "Check label");
+
+    $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 -l test -O" );
+    is($res->return_code, 0, "OK as no thresholds" );
+    is($res->output, "SNMP OK - test 69994 | iso.3.6.1.4.1.8072.3.2.67.10=69994c ", "Check label");
+
+    $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10" );
+    is($res->return_code, 0, "OK as no thresholds" );
+    is($res->output, "SNMP OK - 70660 | iso.3.6.1.4.1.8072.3.2.67.10=70660c ", "Check label");
+
+    $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 -l 'test test'" );
+    is($res->return_code, 0, "OK as no thresholds" );
+    is($res->output, "SNMP OK - test test 71326 | 'test test'=71326c ", "Check label");
+
+
+    $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts))."' ./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets_per_minute --rate-multiplier=60" );
+    is($res->return_code, 0, "OK for first call" );
+    is($res->output, "No previous data to calculate rate - assume okay" );
+
+    # test 1 second later
+    $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts+1))."' ./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10 --rate -l inoctets_per_minute --rate-multiplier=60" );
+    is($res->return_code, 0, "OK as no thresholds" );
+    is($res->output, "SNMP RATE OK - inoctets_per_minute 39960 | inoctets_per_minute=39960 ", "Checking multiplier");
+};
+
 
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.11 -s '\"stringtests\"'" );

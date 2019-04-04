@@ -9,17 +9,9 @@ use Test::More;
 use NPTest;
 
 # Required parameters
-my $ssh_service = getTestParameter( "NP_SSH_HOST",
-    "A host providing SSH service",
-    "localhost");
-
-my $ssh_key = getTestParameter( "NP_SSH_IDENTITY",
-    "A key allowing access to NP_SSH_HOST",
-    "~/.ssh/id_dsa");
-
-my $ssh_conf = getTestParameter( "NP_SSH_CONFIGFILE",
-    "A config file with ssh settings",
-    "~/.ssh/config");
+my $ssh_service = getTestParameter("NP_SSH_HOST", "A host providing SSH service", "localhost");
+my $ssh_key     = getTestParameter("NP_SSH_IDENTITY", "A key allowing access to NP_SSH_HOST", "~/.ssh/id_dsa");
+my $ssh_conf    = getTestParameter( "NP_SSH_CONFIGFILE", "A config file with ssh settings", "~/.ssh/config");
 
 
 plan skip_all => "SSH_HOST and SSH_IDENTITY must be defined" unless ($ssh_service && $ssh_key);
