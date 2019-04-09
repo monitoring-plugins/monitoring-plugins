@@ -935,6 +935,8 @@ print_help (void)
   printf ("    %s\n", _("Display only devices/mountpoints with errors"));
   printf (" %s\n", "-f, --freespace-ignore-reserved");
   printf ("    %s\n", _("Don't account root-reserved blocks into freespace in perfdata"));
+  printf (" %s\n", "-P, --iperfdata");
+  printf ("    %s\n", _("Display inode usage in perfdata"));
   printf (" %s\n", "-g, --group=NAME");
   printf ("    %s\n", _("Group paths. Thresholds apply to (free-)space of all partitions together"));
   printf (" %s\n", "-k, --kilobytes");
