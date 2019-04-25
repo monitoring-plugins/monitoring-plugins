@@ -86,14 +86,8 @@ extern void die (int, const char *, ...)
  * through this api and thus achieve async-safeness throughout the api */
 void np_runcmd_init(void)
 {
-#ifndef maxfd
-	if(!maxfd && (maxfd = sysconf(_SC_OPEN_MAX)) < 0) {
-		/* possibly log or emit a warning here, since there's no
-		 * guarantee that our guess at maxfd will be adequate */
-		maxfd = 256;
-	}
-#endif
-
+	if(maxfd == 0)
+		maxfd = open_max();
 	if(!np_pids) np_pids = calloc(maxfd, sizeof(pid_t));
 }
 
