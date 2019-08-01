@@ -154,6 +154,7 @@ int main(int argc, char **argv) {
 	int crit = 0; /* number of processes in crit state */
 	int procvsz = 0;
 	int procrss = 0;
+	int procnlwp = 0;
 	int procseconds = 0;
 	float procpcpu = 0;
 	char procstat[8];
@@ -161,6 +162,7 @@ int main(int argc, char **argv) {
 	int resultsum = 0; /* bitmask of the filter criteria met by a process */
 	int found = 0;     /* counter for number of lines returned in `ps` output */
 	int procs = 0;     /* counter for number of processes meeting filter criteria */
+	int threads = 0; /* counter for number of threads meeting filter criteria */
 	char *input_buffer = malloc(MAX_INPUT_BUFFER);
 	char *procprog = malloc(MAX_INPUT_BUFFER);
 	const int expected_cols = PS_COLS - 1;
@@ -197,8 +199,13 @@ int main(int argc, char **argv) {
 			procseconds = convert_to_seconds(procetime, config.metric);
 
 			if (verbose >= 3) {
+#ifdef PS_USES_PROCNLWP
+				printf ("proc#=%d uid=%d vsz=%d rss=%d nlwp=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s\n", procs, procuid,
+					procvsz, procrss, procnlwp, procpid, procppid, procpcpu, procstat, procetime, procprog, procargs);
+#else
 				printf("proc#=%d uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s\n", procs, procuid, procvsz,
 					   procrss, procpid, procppid, procpcpu, procstat, procetime, procprog, procargs);
+#endif
 			}
 
 			/* Ignore self */
@@ -297,9 +304,19 @@ int main(int argc, char **argv) {
 			}
 
 			procs++;
+#ifdef PS_USES_PROCNLWP
+			threads = threads + procnlwp;
+#else
+			threads++;
+#endif
 			if (verbose >= 2) {
+#ifdef PS_USES_PROCNLWP
+				printf ("Matched: uid=%d vsz=%d rss=%d nlwp=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s\n", procuid,
+					procvsz, procrss, procnlwp, procpid, procppid, procpcpu, procstat, procetime, procprog, procargs);
+#else
 				printf("Matched: uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s\n", procuid, procvsz,
 					   procrss, procpid, procppid, procpcpu, procstat, procetime, procprog, procargs);
+#endif
 			}
 
 			mp_state_enum temporary_result = STATE_OK;
@@ -313,6 +330,9 @@ int main(int argc, char **argv) {
 				temporary_result = get_status(procpcpu, config.procs_thresholds);
 			} else if (config.metric == METRIC_ELAPSED) {
 				temporary_result = get_status((double)procseconds, config.procs_thresholds);
+			}
+			else if (config.metric == METRIC_NLWP) {
+				temporary_result = get_status ((double)procnlwp, config.procs_thresholds);
 			}
 
 			if (config.metric != METRIC_PROCS) {
@@ -345,7 +365,13 @@ int main(int argc, char **argv) {
 
 	/* Needed if procs found, but none match filter */
 	if (config.metric == METRIC_PROCS) {
-		result = max_state(result, get_status((double)procs, config.procs_thresholds));
+		if (config.usethreads) {
+			/* overwrite the metric name to show 'THREADS' instead of 'PROCS' for the output */
+			xasprintf (&config.metric_name, "THREADS");
+			result = max_state (result, get_status ((double)threads, config.procs_thresholds) );
+		} else {
+			result = max_state (result, get_status ((double)procs, config.procs_thresholds) );
+		}
 	}
 
 	if (result == STATE_OK) {
@@ -361,7 +387,12 @@ int main(int argc, char **argv) {
 			printf(_("%d crit, %d warn out of "), crit, warn);
 		}
 	}
-	printf(ngettext("%d process", "%d processes", (unsigned long)procs), procs);
+
+	if (config.usethreads && config.metric == METRIC_PROCS) {
+		printf (ngettext ("%d thread", "%d threads", (unsigned long) threads), threads);
+	} else {
+		printf (ngettext ("%d process", "%d processes", (unsigned long) procs), procs);
+	}
 
 	if (strcmp(config.fmt, "") != 0) {
 		printf(_(" with %s"), config.fmt);
@@ -372,10 +403,19 @@ int main(int argc, char **argv) {
 	}
 
 	if (config.metric == METRIC_PROCS) {
-		printf(" | procs=%d;%s;%s;0;", procs, config.warning_range ? config.warning_range : "",
-			   config.critical_range ? config.critical_range : "");
+		if (config.usethreads) {
+			printf (" | threads=%d;%s;%s;0;", threads, config.warning_range ? config.warning_range : "",
+					config.critical_range ? config.critical_range : "");
+		} else {
+			printf (" | procs=%d;%s;%s;0;", procs, config.warning_range ? config.warning_range : "",
+					config.critical_range ? config.critical_range : "");
+		}
 	} else {
+#ifdef PS_USES_PROCNLWP
+		printf (" | procs=%d;;;0; threads=%d;;;0; procs_warn=%d;;;0; procs_crit=%d;;;0;", procs, threads, warn, crit);
+#else
 		printf(" | procs=%d;;;0; procs_warn=%d;;;0; procs_crit=%d;;;0;", procs, warn, crit);
+#endif
 	}
 
 	printf("\n");
@@ -403,6 +443,7 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 									   {"ereg-argument-array", required_argument, 0, CHAR_MAX + 1},
 									   {"input-file", required_argument, 0, CHAR_MAX + 2},
 									   {"no-kthreads", required_argument, 0, 'k'},
+									   {"threads", no_argument, 0, 'n'},
 									   {"traditional-filter", no_argument, 0, 'T'},
 									   {"exclude-process", required_argument, 0, 'X'},
 									   {0, 0, 0, 0}};
@@ -420,7 +461,7 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 
 	while (true) {
 		int option = 0;
-		int option_index = getopt_long(argc, argv, "Vvhkt:c:w:p:s:u:C:a:z:r:m:P:T:X:", longopts, &option);
+		int option_index = getopt_long(argc, argv, "Vvhknt:c:w:p:s:u:C:a:z:r:m:P:T:X:", longopts, &option);
 
 		if (option_index == -1 || option_index == EOF) {
 			break;
@@ -607,11 +648,25 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.metric = METRIC_ELAPSED;
 				break;
 			}
-
+#ifdef PS_USES_PROCNLWP
+			if (strcmp(optarg, "NLWP") == 0) {
+				result.config.metric = METRIC_NLWP;
+				break;
+			}
+			usage4 (_("Metric must be one of PROCS, VSZ, RSS, CPU, ELAPSED, NLWP!"));
+#else
 			usage4(_("Metric must be one of PROCS, VSZ, RSS, CPU, ELAPSED!"));
+#endif
 		case 'k': /* linux kernel thread filter */
 			result.config.kthread_filter = true;
 			break;
+		case 'n': /* use threads instead of procs */
+#ifdef PS_USES_PROCNLWP
+			result.config.usethreads = true;
+			break;
+#else
+			usage4 (_("Check for threads unsupported."));
+#endif
 		case 'v': /* command */
 			verbose++;
 			break;
@@ -785,7 +840,8 @@ void print_help(void) {
 	printf("   %s\n", _("Exclude processes which match this comma separated list"));
 	printf(" %s\n", "-k, --no-kthreads");
 	printf("   %s\n", _("Only scan for non kernel threads (works on Linux only)."));
-
+	printf(" %s\n", "-n, --threads");
+	printf("   %s\n", _("Use number of threads overall instead of processes (only if ps supports nlwp/wq keyword)."));
 	printf(_("\n\
 RANGEs are specified 'min:max' or 'min:' or ':max' (or 'max'). If\n\
 specified 'max:min', a warning status will be generated if the\n\
@@ -822,5 +878,5 @@ void print_usage(void) {
 	printf("%s\n", _("Usage:"));
 	printf("%s -w <range> -c <range> [-m metric] [-s state] [-p ppid]\n", progname);
 	printf(" [-u user] [-r rss] [-z vsz] [-P %%cpu] [-a argument-array]\n");
-	printf(" [-C command] [-X process_to_exclude] [-k] [-t timeout] [-v]\n");
+	printf(" [-C command] [-X process_to_exclude] [-k] [-t timeout] [-n] [-v]\n");
 }
