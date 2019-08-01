@@ -783,6 +783,16 @@ dnl 	ac_cv_ps_format=["%*s %d %d %d %d %*d %*d %d %d%*[ 0123456789abcdef]%[OSRZT
 dnl 	ac_cv_ps_cols=8
 dnl 	AC_MSG_RESULT([$ac_cv_ps_command])
 
+dnl Check support for threads on gnu/linux systems...
+elif ps axwo 'stat comm vsz rss nlwp user uid pid ppid args' 2>/dev/null | \
+	egrep -i ["^ *STAT +[UCOMAND]+ +VSZ +RSS +NLWP +USER +UID +PID +PPID +COMMAND"] > /dev/null
+then
+	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procnlwp,&procpcpu,procprog,&pos]"
+	ac_cv_ps_command="$PATH_TO_PS axwo 'stat uid pid ppid vsz rss nlwp pcpu comm args'"
+	ac_cv_ps_format="%s %d %d %d %d %d %d %f %s %n"
+	ac_cv_ps_cols=10
+	AC_MSG_RESULT([$ac_cv_ps_command])
+
 dnl Some gnu/linux systems (debian for one) don't like -axwo and need axwo.
 dnl so test for this first...
 elif ps axwo 'stat comm vsz rss user uid pid ppid args' 2>/dev/null | \
@@ -792,6 +802,16 @@ then
 	ac_cv_ps_command="$PATH_TO_PS axwo 'stat uid pid ppid vsz rss pcpu comm args'"
 	ac_cv_ps_format="%s %d %d %d %d %d %f %s %n"
 	ac_cv_ps_cols=9
+	AC_MSG_RESULT([$ac_cv_ps_command])
+
+dnl Check support for threads on OpenBSD / FreeBSD systems...
+elif ps -axwo 'stat comm vsz rss nlwp user uid pid ppid args' 2>/dev/null | \
+	egrep -i ["^ *STAT +[UCOMAND]+ +VSZ +RSS +NLWP +USER +UID +PID +PPID +COMMAND"] > /dev/null
+then
+	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procnlwp,&procpcpu,procprog,&pos]"
+	ac_cv_ps_command="$PATH_TO_PS -axwo 'stat uid pid ppid vsz rss nlwp pcpu comm args'"
+	ac_cv_ps_format="%s %d %d %d %d %d %d %f %s %n"
+	ac_cv_ps_cols=10
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl For OpenBSD 3.2 & 3.3. Must come before ps -weo
@@ -804,6 +824,16 @@ then
 	ac_cv_ps_command="$PATH_TO_PS -axwo 'stat uid pid ppid vsz rss pcpu comm args'"
 	ac_cv_ps_format="%s %d %d %d %d %d %f %s %n"
 	ac_cv_ps_cols=9
+	AC_MSG_RESULT([$ac_cv_ps_command])
+
+dnl Check support for threads on *BSD...
+elif ps -axwo 'stat uid pid ppid vsz rss wq pcpu ucomm command' 2>/dev/null | \
+	egrep -i ["^ *STAT +UID +PID +PPID +VSZ +RSS +WQ +%CPU +UCOMM +COMMAND"] > /dev/null
+then
+	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procnlwp,&procpcpu,procprog,&pos]"
+	ac_cv_ps_command="$PATH_TO_PS -axwo 'stat uid pid ppid vsz rss wq pcpu ucomm command'"
+	ac_cv_ps_format="%s %d %d %d %d %d %d %f %s %n"
+	ac_cv_ps_cols=10
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl Some *BSDs have different format for ps. This is mainly to catch FreeBSD 4.
@@ -1055,6 +1085,10 @@ if test -n "$ac_cv_ps_varlist" ; then
 	if echo "$ac_cv_ps_varlist" | grep "procpcpu" >/dev/null; then
 		AC_DEFINE(PS_USES_PROCPCPU,"yes",
 		          [Whether the ps utility uses the "procpcpu" field])
+	fi
+	if echo "$ac_cv_ps_varlist" | grep "procnlwp" >/dev/null; then
+		AC_DEFINE(PS_USES_PROCNLWP,"yes",
+		          [Whether the ps utility uses the "procnlwp" field])
 	fi
 fi
 
