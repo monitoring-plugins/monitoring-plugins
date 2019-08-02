@@ -218,6 +218,27 @@ main (int argc, char **argv)
 
 		cols = sscanf (input_line, PS_FORMAT, PS_VARLIST);
 
+#ifdef PS_USES_PROCNLWP
+		/* Hotfix to parse non number output on field "nlwp" mostly on MacOS X */
+		if ( cols < 7 ) {
+			/* replace first occurance of "-" in process list and parse again */
+			int i=0;
+			while(input_line[i] != '\0') {
+				/* avoid transform negative uid */
+				if ( input_line[i] == '-' && procuid < 0 ) {
+					procuid = 0;
+				} else if ( input_line[i] == '-' ) {
+					input_line[i] = '1';
+					break;
+				}
+			i++;
+			}
+		}
+
+		cols = sscanf (input_line, PS_FORMAT, PS_VARLIST);
+		/* End of Hotfix */
+#endif
+
 		/* Zombie processes do not give a procprog command */
 		if ( cols < expected_cols && strstr(procstat, zombie) ) {
 			cols = expected_cols;
