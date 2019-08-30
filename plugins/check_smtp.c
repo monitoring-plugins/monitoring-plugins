@@ -103,6 +103,7 @@ double critical_time = 0;
 int check_critical_time = FALSE;
 int verbose = 0;
 int use_ssl = FALSE;
+int use_sni = FALSE;
 short use_proxy_prefix = FALSE;
 short use_ehlo = FALSE;
 short use_lhlo = FALSE;
@@ -234,7 +235,7 @@ main (int argc, char **argv)
 		    smtp_quit();
 		    return STATE_UNKNOWN;
 		  }
-		  result = np_net_ssl_init(sd);
+		  result = np_net_ssl_init_with_hostname(sd, (use_sni ? server_address : NULL));
 		  if(result != STATE_OK) {
 		    printf (_("CRITICAL - Cannot create SSL context.\n"));
 		    close(sd);
@@ -463,6 +464,10 @@ process_arguments (int argc, char **argv)
 	int c;
 	char* temp;
 
+	enum {
+	  SNI_OPTION
+	};
+
 	int option = 0;
 	static struct option longopts[] = {
 		{"hostname", required_argument, 0, 'H'},
@@ -485,6 +490,7 @@ process_arguments (int argc, char **argv)
 		{"help", no_argument, 0, 'h'},
 		{"lmtp", no_argument, 0, 'L'},
 		{"starttls",no_argument,0,'S'},
+		{"sni", no_argument, 0, SNI_OPTION},
 		{"certificate",required_argument,0,'D'},
 		{"ignore-quit-failure",no_argument,0,'q'},
 		{"proxy",no_argument,0,'r'},
@@ -630,6 +636,13 @@ process_arguments (int argc, char **argv)
 		/* starttls */
 			use_ssl = TRUE;
 			use_ehlo = TRUE;
+			break;
+		case SNI_OPTION:
+#ifdef HAVE_SSL
+			use_sni = TRUE;
+#else
+			usage (_("SSL support not available - install OpenSSL and recompile"));
+#endif
 			break;
 		case 'r':
 			use_proxy_prefix = TRUE;
@@ -839,6 +852,8 @@ print_help (void)
   printf ("    %s\n", _("Minimum number of days a certificate has to be valid."));
   printf (" %s\n", "-S, --starttls");
   printf ("    %s\n", _("Use STARTTLS for the connection."));
+  printf (" %s\n", "--sni");
+  printf ("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
 #endif
 
 	printf (" %s\n", "-A, --authtype=STRING");
@@ -875,6 +890,6 @@ print_usage (void)
   printf ("%s\n", _("Usage:"));
   printf ("%s -H host [-p port] [-4|-6] [-e expect] [-C command] [-R response] [-f from addr]\n", progname);
   printf ("[-A authtype -U authuser -P authpass] [-w warn] [-c crit] [-t timeout] [-q]\n");
-  printf ("[-F fqdn] [-S] [-L] [-D warn days cert expire[,crit days cert expire]] [-r] [-v] \n");
+  printf ("[-F fqdn] [-S] [-L] [-D warn days cert expire[,crit days cert expire]] [-r] [--sni] [-v] \n");
 }
 
