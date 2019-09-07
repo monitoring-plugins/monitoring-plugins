@@ -32,7 +32,7 @@
 *
 *
 *****************************************************************************/
-const char *progname = "check_http";
+const char *progname = "check_curl";
 
 const char *copyright = "2006-2018";
 const char *email = "devel@monitoring-plugins.org";
