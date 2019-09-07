@@ -419,7 +419,6 @@ dnl prerequisites met, enable the plugin
 if test x$_can_enable_check_curl = xyes; then
   EXTRAS="$EXTRAS check_curl\$(EXEEXT)"
 fi
-AM_CONDITIONAL([WITH_CHECK_CURL], [test "$_can_enable_check_curl" = "yes"])
 AC_CONFIG_FILES([plugins/picohttpparser/Makefile])
 
 dnl Fallback to who(1) if the system doesn't provide an utmpx(5) interface
