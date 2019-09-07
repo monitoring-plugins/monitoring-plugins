@@ -59,7 +59,7 @@ const char *email = "devel@monitoring-plugins.org";
 
 #define DEFAULT_BUFFER_SIZE 2048
 #define DEFAULT_SERVER_URL "/"
-#define HTTP_EXPECT "HTTP/1."
+#define HTTP_EXPECT "HTTP/"
 #define DEFAULT_MAX_REDIRS 15
 #define INET_ADDR_MAX_SIZE INET6_ADDRSTRLEN
 enum {
@@ -1915,44 +1915,55 @@ curlhelp_parse_statusline (const char *buf, curlhelp_statusline *status_line)
   status_line->first_line[first_line_len] = '\0';
   first_line_buf = strdup( status_line->first_line );
 
-  /* protocol and version: "HTTP/x.x" SP */
+  /* protocol and version: "HTTP/x.x" SP or "HTTP/2" SP */
 
   p = strtok(first_line_buf, "/");
   if( p == NULL ) { free( first_line_buf ); return -1; }
   if( strcmp( p, "HTTP" ) != 0 ) { free( first_line_buf ); return -1; }
 
-  p = strtok( NULL, "." );
-  if( p == NULL ) { free( first_line_buf ); return -1; }
-  status_line->http_major = (int)strtol( p, &pp, 10 );
-  if( *pp != '\0' ) { free( first_line_buf ); return -1; }
-
   p = strtok( NULL, " " );
   if( p == NULL ) { free( first_line_buf ); return -1; }
-  status_line->http_minor = (int)strtol( p, &pp, 10 );
-  if( *pp != '\0' ) { free( first_line_buf ); return -1; }
+  if( strchr( p, '.' ) != NULL ) {
+    
+    /* HTTP 1.x case */
+    char *ppp;
+    ppp = strtok( p, "." );
+    status_line->http_major = (int)strtol( p, &pp, 10 );
+    if( *pp != '\0' ) { free( first_line_buf ); return -1; }
+    ppp = strtok( NULL, " " );
+    status_line->http_minor = (int)strtol( p, &pp, 10 );
+    if( *pp != '\0' ) { free( first_line_buf ); return -1; }
+    p += 4; /* 1.x SP */
+  } else {
+    /* HTTP 2 case */
+    status_line->http_major = (int)strtol( p, &pp, 10 );
+    status_line->http_minor = 0;
+    p += 2; /* 2 SP */
+  }
 
   /* status code: "404" or "404.1", then SP */
 
-  p = strtok( NULL, " ." );
+  p = strtok( p, " " );
   if( p == NULL ) { free( first_line_buf ); return -1; }
   if( strchr( p, '.' ) != NULL ) {
     char *ppp;
     ppp = strtok( p, "." );
     status_line->http_code = (int)strtol( ppp, &pp, 10 );
     if( *pp != '\0' ) { free( first_line_buf ); return -1; }
-
     ppp = strtok( NULL, "" );
     status_line->http_subcode = (int)strtol( ppp, &pp, 10 );
     if( *pp != '\0' ) { free( first_line_buf ); return -1; }
+    p += 6; /* 400.1 SP */
   } else {
     status_line->http_code = (int)strtol( p, &pp, 10 );
     status_line->http_subcode = -1;
     if( *pp != '\0' ) { free( first_line_buf ); return -1; }
+    p += 4; /* 400 SP */
   }
 
   /* Human readable message: "Not Found" CRLF */
 
-  p = strtok( NULL, "" );
+  p = strtok( p, "" );
   if( p == NULL ) { status_line->msg = ""; return 0; }
   status_line->msg = status_line->first_line + ( p - first_line_buf );
   free( first_line_buf );
