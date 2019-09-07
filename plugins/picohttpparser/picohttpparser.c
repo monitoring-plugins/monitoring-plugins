@@ -36,8 +36,6 @@
 #endif
 #include "picohttpparser.h"
 
-/* $Id: a707070d11d499609f99d09f97535642cec910a8 $ */
-
 #if __GNUC__ >= 3
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
@@ -73,9 +71,9 @@
 #define ADVANCE_TOKEN(tok, toklen)                                                                                                 \
     do {                                                                                                                           \
         const char *tok_start = buf;                                                                                               \
-        static const char ALIGNED(16) ranges2[] = "\000\040\177\177";                                                              \
+        static const char ALIGNED(16) ranges2[16] = "\000\040\177\177";                                                            \
         int found2;                                                                                                                \
-        buf = findchar_fast(buf, buf_end, ranges2, sizeof(ranges2) - 1, &found2);                                                  \
+        buf = findchar_fast(buf, buf_end, ranges2, 4, &found2);                                                                    \
         if (!found2) {                                                                                                             \
             CHECK_EOF();                                                                                                           \
         }                                                                                                                          \
@@ -138,15 +136,11 @@ static const char *get_token_to_eol(const char *buf, const char *buf_end, const 
     const char *token_start = buf;
 
 #ifdef __SSE4_2__
-    static const char ranges1[] = "\0\010"
-                                  /* allow HT */
-                                  "\012\037"
-                                  /* allow SP and up to but not including DEL */
-                                  "\177\177"
-        /* allow chars w. MSB set */
-        ;
+    static const char ALIGNED(16) ranges1[16] = "\0\010"    /* allow HT */
+                                                "\012\037"  /* allow SP and up to but not including DEL */
+                                                "\177\177"; /* allow chars w. MSB set */
     int found;
-    buf = findchar_fast(buf, buf_end, ranges1, sizeof(ranges1) - 1, &found);
+    buf = findchar_fast(buf, buf_end, ranges1, 6, &found);
     if (found)
         goto FOUND_CTL;
 #else
@@ -325,9 +319,21 @@ static const char *parse_headers(const char *buf, const char *buf_end, struct ph
             headers[*num_headers].name = NULL;
             headers[*num_headers].name_len = 0;
         }
-        if ((buf = get_token_to_eol(buf, buf_end, &headers[*num_headers].value, &headers[*num_headers].value_len, ret)) == NULL) {
+        const char *value;
+        size_t value_len;
+        if ((buf = get_token_to_eol(buf, buf_end, &value, &value_len, ret)) == NULL) {
             return NULL;
         }
+        /* remove trailing SPs and HTABs */
+        const char *value_end = value + value_len;
+        for (; value_end != value; --value_end) {
+            const char c = *(value_end - 1);
+            if (!(c == ' ' || c == '\t')) {
+                break;
+            }
+        }
+        headers[*num_headers].value = value;
+        headers[*num_headers].value_len = value_end - value;
     }
     return buf;
 }
@@ -347,9 +353,17 @@ static const char *parse_request(const char *buf, const char *buf_end, const cha
 
     /* parse request line */
     ADVANCE_TOKEN(*method, *method_len);
-    ++buf;
+    do {
+        ++buf;
+    } while (*buf == ' ');
     ADVANCE_TOKEN(*path, *path_len);
-    ++buf;
+    do {
+        ++buf;
+    } while (*buf == ' ');
+    if (*method_len == 0 || *path_len == 0) {
+        *ret = -1;
+        return NULL;
+    }
     if ((buf = parse_http_version(buf, buf_end, minor_version, ret)) == NULL) {
         return NULL;
     }
@@ -402,10 +416,13 @@ static const char *parse_response(const char *buf, const char *buf_end, int *min
         return NULL;
     }
     /* skip space */
-    if (*buf++ != ' ') {
+    if (*buf != ' ') {
         *ret = -1;
         return NULL;
     }
+    do {
+        ++buf;
+    } while (*buf == ' ');
     /* parse status code, we want at least [:digit:][:digit:][:digit:]<other char> to try to parse */
     if (buf_end - buf < 4) {
         *ret = -2;
@@ -413,13 +430,21 @@ static const char *parse_response(const char *buf, const char *buf_end, int *min
     }
     PARSE_INT_3(status);
 
-    /* skip space */
-    if (*buf++ != ' ') {
-        *ret = -1;
+    /* get message includig preceding space */
+    if ((buf = get_token_to_eol(buf, buf_end, msg, msg_len, ret)) == NULL) {
         return NULL;
     }
-    /* get message */
-    if ((buf = get_token_to_eol(buf, buf_end, msg, msg_len, ret)) == NULL) {
+    if (*msg_len == 0) {
+        /* ok */
+    } else if (**msg == ' ') {
+        /* remove preceding space */
+        do {
+            ++*msg;
+            --*msg_len;
+        } while (**msg == ' ');
+    } else {
+        /* garbage found after status code */
+        *ret = -1;
         return NULL;
     }
 

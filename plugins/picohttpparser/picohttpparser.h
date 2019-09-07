@@ -33,8 +33,6 @@
 #define ssize_t intptr_t
 #endif
 
-/* $Id: 67fd3ee74103ada60258d8a16e868f483abcca87 $ */
-
 #ifdef __cplusplus
 extern "C" {
 #endif
