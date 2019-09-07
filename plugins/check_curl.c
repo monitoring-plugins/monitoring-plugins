@@ -1503,8 +1503,12 @@ process_arguments (int argc, char **argv)
         curl_http_version = CURL_HTTP_VERSION_1_0;
       } else if (strcmp (optarg, "1.1") == 0) {
         curl_http_version = CURL_HTTP_VERSION_1_1;
-      } else if (strcmp (optarg, "2") == 0) {
+      } else if ((strcmp (optarg, "2.0") == 0) || (strcmp (optarg, "2") == 0)) {
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 33, 0)
         curl_http_version = CURL_HTTP_VERSION_2_0;
+#else
+        curl_http_version = CURL_HTTP_VERSION_NONE;
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 33, 0) */
       } else {
         fprintf (stderr, "unkown http-version parameter: %s\n", optarg);
         exit (STATE_WARNING);
