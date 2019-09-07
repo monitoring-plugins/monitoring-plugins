@@ -203,6 +203,7 @@ int no_body = FALSE;
 int maximum_age = -1;
 int address_family = AF_UNSPEC;
 curlhelp_ssl_library ssl_library = CURLHELP_SSL_LIBRARY_UNKNOWN;
+int curl_http_version = CURL_HTTP_VERSION_NONE;
 
 int process_arguments (int, char**);
 void handle_curl_option_return_code (CURLcode res, const char* option);
@@ -386,6 +387,9 @@ check_http (void)
     http_method = "GET";
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_URL, server_url), "CURLOPT_URL");
   }
+  
+  /* set HTTP protocol version */
+  handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_HTTP_VERSION, curl_http_version), "CURLOPT_HTTP_VERSION");
 
   /* set HTTP method */
   if (http_method) {
@@ -1085,7 +1089,8 @@ process_arguments (int argc, char **argv)
   enum {
     INVERT_REGEX = CHAR_MAX + 1,
     SNI_OPTION,
-    CA_CERT_OPTION
+    CA_CERT_OPTION,
+    HTTP_VERSION_OPTION
   };
 
   int option = 0;
@@ -1125,6 +1130,7 @@ process_arguments (int argc, char **argv)
     {"use-ipv4", no_argument, 0, '4'},
     {"use-ipv6", no_argument, 0, '6'},
     {"extended-perfdata", no_argument, 0, 'E'},
+    {"http-version", required_argument, 0, HTTP_VERSION_OPTION},
     {0, 0, 0, 0}
   };
 
@@ -1491,6 +1497,19 @@ process_arguments (int argc, char **argv)
     case 'E': /* show extended perfdata */
       show_extended_perfdata = TRUE;
       break;
+    case HTTP_VERSION_OPTION:
+      curl_http_version = CURL_HTTP_VERSION_NONE;
+      if (strcmp (optarg, "1.0") == 0) { 
+        curl_http_version = CURL_HTTP_VERSION_1_0;
+      } else if (strcmp (optarg, "1.1") == 0) {
+        curl_http_version = CURL_HTTP_VERSION_1_1;
+      } else if (strcmp (optarg, "2") == 0) {
+        curl_http_version = CURL_HTTP_VERSION_2_0;
+      } else {
+        fprintf (stderr, "unkown http-version parameter: %s\n", optarg);
+        exit (STATE_WARNING);
+      }
+      break;
     case '?':
       /* print short usage statement if args not parsable */
       usage5 ();
@@ -1693,6 +1712,11 @@ print_help (void)
   printf ("    %s\n", _("curl uses CURL_FOLLOWLOCATION built into libcurl."));
   printf (" %s\n", "-m, --pagesize=INTEGER<:INTEGER>");
   printf ("    %s\n", _("Minimum page size required (bytes) : Maximum page size required (bytes)"));
+  printf ("\n");
+  printf (" %s\n", "--http-version=VERSION");
+  printf ("    %s\n", _("Connect via specific HTTP protocol."));
+  printf ("    %s\n", _("1.0 = HTTP/1.0, 1.1 = HTTP/1.1, 2.0 = HTTP/2 (HTTP/2 will fail without -S)"));  
+  printf ("\n");
 
   printf (UT_WARN_CRIT);
 
@@ -1776,6 +1800,7 @@ print_usage (void)
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
   printf ("       [-T <content-type>] [-j method]\n");
+  printf ("       [--http-version=<version>]\n");  
   printf ("\n");
   printf ("%s\n", _("WARNING: check_curl is experimental. Please use"));
   printf ("%s\n\n", _("check_http if you need a stable version."));
