@@ -49,6 +49,7 @@ static int quiet=0;
 static char *owarn="60";
 static char *ocrit="120";
 static int time_offset=0;
+static int delay=2;
 
 int process_arguments (int, char **);
 thresholds *offset_thresholds = NULL;
@@ -81,6 +82,7 @@ typedef struct {
 /* this structure holds data about results from querying offset from a peer */
 typedef struct {
 	time_t waiting;         /* ts set when we started waiting for a response */
+	int num_requests;       /* number of reqeusts sent excluduing re-sends */
 	int num_responses;      /* number of successfully recieved responses */
 	uint8_t stratum;        /* copied verbatim from the ntp_message */
 	double rtdelay;         /* converted from the ntp_message */
@@ -365,18 +367,21 @@ double offset_request(const char *host, int *status){
 	now_time=start_ts=time(NULL);
 	while(servers_completed<num_hosts && now_time-start_ts <= socket_timeout/2){
 		/* loop through each server and find each one which hasn't
-		 * been touched in the past second or so and is still lacking
-		 * some responses. For each of these servers, send a new request,
-		 * and update the "waiting" timestamp with the current time. */
+		 * timed out yet and is still lacking some responses. For each
+		 * of these servers, send a new request, and update the
+		 * "waiting" timestamp with the current time. */
 		now_time=time(NULL);
 
 		for(i=0; i<num_hosts; i++){
 			if(servers[i].waiting<now_time && servers[i].num_responses<AVG_NUM){
-				if(verbose && servers[i].waiting != 0) printf("re-");
+				if(verbose && servers[i].num_requests != servers[i].num_responses) printf("re-");
 				if(verbose) printf("sending request to peer %d\n", i);
 				setup_request(&req[i]);
 				write(socklist[i], &req[i], sizeof(ntp_message));
-				servers[i].waiting=now_time;
+				servers[i].waiting=now_time+delay;
+				if(servers[i].num_requests == servers[i].num_responses) {
+					servers[i].num_requests++;
+				}
 				break;
 			}
 		}
@@ -406,7 +411,7 @@ double offset_request(const char *host, int *status){
 				servers[i].stratum=req[i].stratum;
 				servers[i].rtdisp=NTP32asDOUBLE(req[i].rtdisp);
 				servers[i].rtdelay=NTP32asDOUBLE(req[i].rtdelay);
-				servers[i].waiting=0;
+				servers[i].waiting--;
 				servers[i].flags=req[i].flags;
 				servers_readable--;
 				one_read = 1;
@@ -455,6 +460,7 @@ int process_arguments(int argc, char **argv){
 		{"use-ipv6", no_argument, 0, '6'},
 		{"quiet", no_argument, 0, 'q'},
 		{"time-offset", optional_argument, 0, 'o'},
+		{"delay", optional_argument, 0, 'd'},
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
 		{"timeout", required_argument, 0, 't'},
@@ -468,7 +474,7 @@ int process_arguments(int argc, char **argv){
 		usage ("\n");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vhv46qw:c:t:H:p:o:", longopts, &option);
+		c = getopt_long (argc, argv, "Vhv46qw:c:t:H:p:o:d:", longopts, &option);
 		if (c == -1 || c == EOF || c == 1)
 			break;
 
@@ -506,6 +512,9 @@ int process_arguments(int argc, char **argv){
 			break;
 		case 'o':
 			time_offset=atoi(optarg);
+                        break;
+		case 'd':
+			delay=atoi(optarg);
                         break;
 		case '4':
 			address_family = AF_INET;
@@ -621,6 +630,8 @@ void print_help(void){
 	printf ("    %s\n", _("Offset to result in critical status (seconds)"));
 	printf (" %s\n", "-o, --time_offset=INTEGER");
 	printf ("    %s\n", _("Expected offset of the ntp server relative to local server (seconds)"));
+	printf (" %s\n", "-d, --delay=INTEGER");
+	printf ("    %s\n", _("Delay between each packet (seconds)"));
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf (UT_VERBOSE);
 
@@ -635,6 +646,8 @@ void print_help(void){
 	printf(" %s\n", _("check_ntp_peer."));
 	printf(" %s\n", _("--time-offset is useful for compensating for servers with known"));
 	printf(" %s\n", _("and expected clock skew."));
+	printf(" %s\n", _("--delay is useful if you are triggering the anti-DOS for the"));
+	printf(" %s\n", _("NTP server and need to leave a bigger gap between queries"));
 	printf("\n");
 	printf(UT_THRESHOLDS_NOTES);
 
@@ -649,6 +662,6 @@ void
 print_usage(void)
 {
 	printf ("%s\n", _("Usage:"));
-	printf(" %s -H <host> [-4|-6] [-w <warn>] [-c <crit>] [-v verbose] [-o <time offset>]\n", progname);
+	printf(" %s -H <host> [-4|-6] [-w <warn>] [-c <crit>] [-v verbose] [-o <time offset>] [-d <delay between packets>]\n", progname);
 }
 
