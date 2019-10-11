@@ -387,6 +387,11 @@ check_http (void)
     http_method = "GET";
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_URL, server_url), "CURLOPT_URL");
   }
+
+  /* disable body for HEAD request */
+  if (http_method && !strcmp (http_method, "HEAD" )) {
+    no_body = TRUE;
+  }
   
   /* set HTTP protocol version */
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_HTTP_VERSION, curl_http_version), "CURLOPT_HTTP_VERSION");
@@ -627,7 +632,7 @@ check_http (void)
       server_port, res, curl_easy_strerror(res));
     die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
   }
-
+  
   /* certificate checks */
 #ifdef LIBCURL_FEATURE_SSL
   if (use_ssl == TRUE) {
