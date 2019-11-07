@@ -2215,13 +2215,20 @@ net_noopenssl_check_certificate (cert_ptr_union* cert_ptr, int days_till_exp_war
 
   for (i = 0; i < cert_ptr->to_certinfo->num_of_certs; i++) {
     for (slist = cert_ptr->to_certinfo->certinfo[i]; slist; slist = slist->next) {
-      /* find first common name in subject, TODO: check alternative subjects for
+      /* find first common name in subject, 
+       * TODO: check alternative subjects for
+       * TODO: have a decent parser here and not a hack
        * multi-host certificate, check wildcards
        */
       if (strncasecmp (slist->data, "Subject:", 8) == 0) {
+        int d = 3;
         char* p = strstr (slist->data, "CN=");
+        if (p == NULL) {
+          d = 5;
+          p = strstr (slist->data, "CN = ");
+        }
         if (p != NULL) {
-          if (strncmp (host_name, p+3, strlen (host_name)) == 0) {
+          if (strncmp (host_name, p+d, strlen (host_name)) == 0) {
             cname_found = 1;
           }
         }
