@@ -2181,10 +2181,14 @@ parse_cert_date (const char *s)
 {
   struct tm tm;
   time_t date;
+  char *res;
 
   if (!s) return -1;
 
-  strptime (s, "%Y-%m-%d %H:%M:%S GMT", &tm);
+  /* Jan 17 14:25:12 2020 GMT */
+  res = strptime (s, "%Y-%m-%d %H:%M:%S GMT", &tm);
+  /* Sep 11 12:00:00 2020 GMT */
+  if (res == NULL) strptime (s, "%Y %m %d %H:%M:%S GMT", &tm);
   date = mktime (&tm);
 
   return date;
