@@ -324,8 +324,8 @@
 		</section>
 
 		<section><title>Performance data</title>
-		<para>Nagios 3 and newer will concatenate the parts following a "|" in a) the first
-		line output by the plugin, and b) in the second to last line, into a string it
+		<para>Nagios 3 and newer will concatenate the parts following a "|" in 	
+		each line of output by the plugin into a string it
 		passes to whatever performance data processing it has configured. (Note that it
 		currently does not insert additional whitespace between both, so the plugin needs
 		to provide some to prevent the last pair of a) and the first of b) getting run
