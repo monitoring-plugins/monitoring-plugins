@@ -39,9 +39,9 @@
 *****************************************************************************/
 
 #include "common.h"
+#include "utils.h"
 
 /* extern so plugin has pid to kill exec'd process on timeouts */
-extern int timeout_interval;
 extern pid_t *childpid;
 extern int *child_stderr_array;
 extern FILE *child_process;
@@ -76,8 +76,6 @@ RETSIGTYPE popen_timeout_alarm_handler (int);
 #define	SIG_ERR	((Sigfunc *)-1)
 #endif
 
-#define	min(a,b)	((a) < (b) ? (a) : (b))
-#define	max(a,b)	((a) > (b) ? (a) : (b))
 
 char *pname = NULL;							/* caller can set this from argv[0] */
 
