@@ -42,6 +42,8 @@ const char *email = "devel@monitoring-plugins.org";
 #include "utils.h"
 #include "base64.h"
 #include <ctype.h>
+#include <stdint.h>
+#include <string.h>
 
 #define STICKY_NONE 0
 #define STICKY_HOST 1
@@ -134,6 +136,33 @@ char buffer[MAX_INPUT_BUFFER];
 char *client_cert = NULL;
 char *client_privkey = NULL;
 
+/*
+ Bitmask of the status codes to yield OK on.
+ 1st bit for 100, 2nd for 101, etc.. None set means defaults.
+*/
+uint64_t status_expect[8] = { 0 };
+
+static inline
+int status_expect_isempty(void)
+{
+  char status_expect_none[sizeof(status_expect)] = { 0 };
+  return !memcmp(&status_expect, &status_expect_none, sizeof(status_expect));
+}
+
+static inline
+void status_expect_set(int code)
+{
+  uint64_t idx = code - 100;
+  status_expect[idx / 64u] |= 1u << (idx % 64u);
+}
+
+static inline
+int status_expect_isset(int code)
+{
+  uint64_t idx = code - 100;
+  return !!(status_expect[idx / 64u] & (1u << (idx % 64u)));
+}
+
 int process_arguments (int, char **);
 int check_http (void);
 void redir (char *pos, char *status_line);
@@ -203,7 +232,8 @@ process_arguments (int argc, char **argv)
 
   enum {
     INVERT_REGEX = CHAR_MAX + 1,
-    SNI_OPTION
+    SNI_OPTION,
+    STATUS_OPTION
   };
 
   int option = 0;
@@ -220,6 +250,7 @@ process_arguments (int argc, char **argv)
     {"port", required_argument, 0, 'p'},
     {"authorization", required_argument, 0, 'a'},
     {"proxy-authorization", required_argument, 0, 'b'},
+    {"status", required_argument, 0, STATUS_OPTION},
     {"header-string", required_argument, 0, 'd'},
     {"string", required_argument, 0, 's'},
     {"expect", required_argument, 0, 'e'},
@@ -454,6 +485,16 @@ process_arguments (int argc, char **argv)
         tmp[0] = '\0';
         http_method = http_method;
         http_method_proxy = ++tmp;
+      }
+      break;
+    case STATUS_OPTION:
+      {
+        int status = atoi(optarg);
+        if (status >= 600 || status < 100) {
+          printf (_("Invalid status: %s"), optarg);
+          return ERROR;
+        }
+        status_expect_set(status);
       }
       break;
     case 'd': /* string or substring */
@@ -1184,27 +1225,37 @@ check_http (void)
     if (http_status >= 600 || http_status < 100) {
       die (STATE_CRITICAL, _("HTTP CRITICAL: Invalid Status (%s)\n"), status_line);
     }
-    /* server errors result in a critical state */
-    else if (http_status >= 500) {
-      xasprintf (&msg, _("%s - "), status_line);
-      result = STATE_CRITICAL;
+    else if (status_expect_isempty()) {
+      /* server errors result in a critical state */
+      if (http_status >= 500) {
+        xasprintf (&msg, _("%s - "), status_line);
+        result = STATE_CRITICAL;
+      }
+      /* client errors result in a warning state */
+      else if (http_status >= 400) {
+        xasprintf (&msg, _("%s - "), status_line);
+        result = max_state_alt(STATE_WARNING, result);
+      }
+      /* check redirected page if specified */
+      else if (http_status >= 300) {
+        if (onredirect == STATE_DEPENDENT)
+          redir (header, status_line);
+        else
+          result = max_state_alt(onredirect, result);
+        xasprintf (&msg, _("%s - "), status_line);
+      } /* end if (http_status >= 300) */
+      else {
+        /* Print OK status anyway */
+        xasprintf (&msg, _("%s - "), status_line);
+      }
     }
-    /* client errors result in a warning state */
-    else if (http_status >= 400) {
-      xasprintf (&msg, _("%s - "), status_line);
-      result = max_state_alt(STATE_WARNING, result);
-    }
-    /* check redirected page if specified */
-    else if (http_status >= 300) {
-
-      if (onredirect == STATE_DEPENDENT)
-        redir (header, status_line);
-      else
-        result = max_state_alt(onredirect, result);
-      xasprintf (&msg, _("%s - "), status_line);
-    } /* end if (http_status >= 300) */
     else {
-      /* Print OK status anyway */
+      if (!status_expect_isset(http_status)) {
+        if (onredirect == STATE_DEPENDENT)
+          redir (header, status_line);
+        else
+          result = STATE_CRITICAL;
+      }
       xasprintf (&msg, _("%s - "), status_line);
     }
 
@@ -1593,6 +1644,8 @@ print_help (void)
   printf ("    %s", _("the first (status) line of the server response (default: "));
   printf ("%s)\n", HTTP_EXPECT);
   printf ("    %s\n", _("If specified skips all other status line logic (ex: 3xx, 4xx, 5xx processing)"));
+  printf (" %s\n", "--status=INTEGER");
+  printf ("    %s\n", _("HTTP status to allow (may be specified multiple times)"));
   printf (" %s\n", "-d, --header-string=STRING");
   printf ("    %s\n", _("String to expect in the response headers"));
   printf (" %s\n", "-s, --string=STRING");
