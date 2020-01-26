@@ -403,9 +403,6 @@ process_arguments (int argc, char **argv)
 			if (is_host (optarg)) {
 				db_host = optarg;
 			}
-			else if (*optarg == '/') {
-				db_socket = optarg;
-			}
 			else {
 				usage2 (_("Invalid hostname/address"), optarg);
 			}
@@ -571,6 +568,8 @@ print_help (void)
   printf ("    %s\n", _("Your clear-text password could be visible as a process table entry"));
   printf (" %s\n", "-S, --check-slave");
   printf ("    %s\n", _("Check if the slave thread is running properly."));
+  printf (" %s\n", "-N, --slave-name");
+  printf ("    %s\n", _("Use a named slave"));
   printf (" %s\n", "-w, --warning");
   printf ("    %s\n", _("Exit with WARNING status if slave server is more than INTEGER seconds"));
   printf ("    %s\n", _("behind master"));
@@ -610,6 +609,6 @@ print_usage (void)
 {
 	printf ("%s\n", _("Usage:"));
   printf (" %s [-d database] [-H host] [-P port] [-s socket]\n",progname);
-  printf ("       [-u user] [-p password] [-S] [-l] [-a cert] [-k key]\n");
+  printf ("       [-u user] [-p password] [-S] [-N slave] [-l] [-a cert] [-k key]\n");
   printf ("       [-C ca-cert] [-D ca-dir] [-L ciphers] [-f optfile] [-g group]\n");
 }
