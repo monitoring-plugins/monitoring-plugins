@@ -58,10 +58,14 @@ char *ciphers = NULL;
 bool ssl = false;
 char *opt_file = NULL;
 char *opt_group = NULL;
+char *slave_name = NULL;
+char *mysql_server_version = NULL;
+char *check_slave_query = NULL;
 unsigned int db_port = MYSQL_PORT;
 int check_slave = 0, warn_sec = 0, crit_sec = 0;
 int ignore_auth = 0;
 int verbose = 0;
+int num_slaves = 0;
 
 static double warning_time = 0;
 static double critical_time = 0;
@@ -207,7 +211,22 @@ main (int argc, char **argv)
 
 	if(check_slave) {
 		/* check the slave status */
-		if (mysql_query (&mysql, "show slave status") != 0) {
+		if(slave_name == NULL) {
+			check_slave_query = strdup("show slave status");
+		} else {
+			mysql_server_version = strdup(mysql_get_server_info(&mysql));
+			if (mysql_server_version == NULL) {
+				error = strdup(mysql_error(&mysql));
+				mysql_close (&mysql);
+				die (STATE_CRITICAL, _("mysql server version query error: %s\n"), error);
+			}
+			if (strstr(mysql_server_version, "MariaDB") != NULL) {			
+				asprintf(&check_slave_query, "show slave '%s' status", slave_name);
+			} else {
+				asprintf(&check_slave_query, "show slave status for channel '%s'", slave_name);
+			}
+		}
+		if (mysql_query (&mysql, check_slave_query) != 0) {
 			error = strdup(mysql_error(&mysql));
 			mysql_close (&mysql);
 			die (STATE_CRITICAL, _("slave query error: %s\n"), error);
@@ -221,9 +240,14 @@ main (int argc, char **argv)
 		}
 
 		/* Check there is some data */
-		if (mysql_num_rows(res) == 0) {
+		num_slaves = mysql_num_rows(res);
+		if (num_slaves != 1) {
 			mysql_close(&mysql);
-			die (STATE_WARNING, "%s\n", _("No slaves defined"));
+			die (STATE_WARNING, "%s\n",
+				num_slaves == 0
+					?  _("No slaves defined. Plase provide slave name as an argument if you have a named slave")
+					:  _("Too many slaves defined. Please provide slave name as an argument")
+			);
 		}
 
 		/* fetch the first row */
@@ -242,7 +266,6 @@ main (int argc, char **argv)
 				mysql_close (&mysql);
 				die (STATE_CRITICAL, "%s\n", slaveresult);
 			}
-
 		} else {
 			/* mysql 4.x.x and mysql 5.x.x */
 			int slave_io_field = -1 , slave_sql_field = -1, seconds_behind_field = -1, i, num_fields;
@@ -352,6 +375,7 @@ process_arguments (int argc, char **argv)
 		{"critical", required_argument, 0, 'c'},
 		{"warning", required_argument, 0, 'w'},
 		{"check-slave", no_argument, 0, 'S'},
+		{"slave-name", required_argument, 0, 'N'},
 		{"ignore-auth", no_argument, 0, 'n'},
 		{"verbose", no_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},
@@ -369,7 +393,7 @@ process_arguments (int argc, char **argv)
 		return ERROR;
 
 	while (1) {
-		c = getopt_long (argc, argv, "hlvVnSP:p:u:d:H:s:c:w:a:k:C:D:L:f:g:", longopts, &option);
+		c = getopt_long (argc, argv, "hlvVnSP:p:u:d:H:s:c:w:a:k:C:D:L:f:g:N:", longopts, &option);
 
 		if (c == -1 || c == EOF)
 			break;
@@ -433,6 +457,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'S':
 			check_slave = 1;							/* check-slave */
+			break;
+		case 'N':									/* slave-name */
+			slave_name = optarg;
 			break;
 		case 'n':
 			ignore_auth = 1;							/* ignore-auth */
