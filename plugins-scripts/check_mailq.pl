@@ -561,12 +561,14 @@ exit $state;
 
 sub process_arguments(){
 	GetOptions
-		("V"   => \$opt_V, "version"	=> \$opt_V,
-		 "v"   => \$opt_v, "verbose"	=> \$opt_v,
-		 "h"   => \$opt_h, "help"		=> \$opt_h,
+		("V"   => \$opt_V, "version"    => \$opt_V,
+		 "v"   => \$opt_v, "verbose"    => \$opt_v,
+		 "h"   => \$opt_h, "help"       => \$opt_h,
 		 "M:s" => \$opt_M, "mailserver:s" => \$opt_M, # mailserver (default	sendmail)
 		 "w=i" => \$opt_w, "warning=i"  => \$opt_w,   # warning if above this number
-		 "c=i" => \$opt_c, "critical=i" => \$opt_c,	  # critical if above this number
+		 "c=i" => \$opt_c, "critical=i" => \$opt_c,   # critical if above this number
+		 "W=i" => \$opt_W, "Warning=i"  => \$opt_W,   # Warning if above this number
+		 "C=i" => \$opt_C, "Critical=i" => \$opt_C,   # Critical if above this number
 		 "t=i" => \$opt_t, "timeout=i"  => \$opt_t,
 		 "s"   => \$opt_s, "sudo"       => \$opt_s
 		 );
