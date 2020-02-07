@@ -665,7 +665,7 @@ sub print_help () {
 	print "-w (--warning)         = Min. number of messages in queue to generate warning\n";
 	print "-c (--critical)        = Min. number of messages in queue to generate critical alert ( w < c )\n";
 	print "-W (--warning-domain)  = Min. number of messages for same domain in queue to generate warning\n";
-	print "-C (--Critical-domain) = Min. number of messages for same domain in queue to generate critical alert ( W < C )\n";
+	print "-C (--critical-domain) = Min. number of messages for same domain in queue to generate critical alert ( W < C )\n";
 	print "-t (--timeout)         = Plugin timeout in seconds (default = $utils::TIMEOUT)\n";
 	print "-M (--mailserver)      = [ sendmail | qmail | postfix | exim | nullmailer ] (default = autodetect)\n";
 	print "-s (--sudo)            = Use sudo to call the mailq command\n";
