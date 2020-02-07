@@ -561,12 +561,14 @@ exit $state;
 
 sub process_arguments(){
 	GetOptions
-		("V"   => \$opt_V, "version"	=> \$opt_V,
-		 "v"   => \$opt_v, "verbose"	=> \$opt_v,
-		 "h"   => \$opt_h, "help"		=> \$opt_h,
+		("V"   => \$opt_V, "version"    => \$opt_V,
+		 "v"   => \$opt_v, "verbose"    => \$opt_v,
+		 "h"   => \$opt_h, "help"       => \$opt_h,
 		 "M:s" => \$opt_M, "mailserver:s" => \$opt_M, # mailserver (default	sendmail)
 		 "w=i" => \$opt_w, "warning=i"  => \$opt_w,   # warning if above this number
-		 "c=i" => \$opt_c, "critical=i" => \$opt_c,	  # critical if above this number
+		 "c=i" => \$opt_c, "critical=i" => \$opt_c,   # critical if above this number
+		 "W=i" => \$opt_W, "warning-domain=i"  => \$opt_W,   # Warning if above this number
+		 "C=i" => \$opt_C, "critical-domain=i" => \$opt_C,   # Critical if above this number
 		 "t=i" => \$opt_t, "timeout=i"  => \$opt_t,
 		 "s"   => \$opt_s, "sudo"       => \$opt_s
 		 );
@@ -660,16 +662,16 @@ sub print_help () {
 	print "\n";
 	print "   Checks the number of messages in the mail queue (supports multiple sendmail queues, qmail)\n";
 	print "   Feedback/patches to support non-sendmail mailqueue welcome\n\n";
-	print "-w (--warning)   = Min. number of messages in queue to generate warning\n";
-	print "-c (--critical)  = Min. number of messages in queue to generate critical alert ( w < c )\n";
-	print "-W (--Warning)   = Min. number of messages for same domain in queue to generate warning\n";
-	print "-C (--Critical)  = Min. number of messages for same domain in queue to generate critical alert ( W < C )\n";
-	print "-t (--timeout)   = Plugin timeout in seconds (default = $utils::TIMEOUT)\n";
-	print "-M (--mailserver) = [ sendmail | qmail | postfix | exim | nullmailer ] (default = autodetect)\n";
-	print "-s (--sudo)      = Use sudo to call the mailq command\n";
+	print "-w (--warning)         = Min. number of messages in queue to generate warning\n";
+	print "-c (--critical)        = Min. number of messages in queue to generate critical alert ( w < c )\n";
+	print "-W (--warning-domain)  = Min. number of messages for same domain in queue to generate warning\n";
+	print "-C (--Critical-domain) = Min. number of messages for same domain in queue to generate critical alert ( W < C )\n";
+	print "-t (--timeout)         = Plugin timeout in seconds (default = $utils::TIMEOUT)\n";
+	print "-M (--mailserver)      = [ sendmail | qmail | postfix | exim | nullmailer ] (default = autodetect)\n";
+	print "-s (--sudo)            = Use sudo to call the mailq command\n";
 	print "-h (--help)\n";
 	print "-V (--version)\n";
-	print "-v (--verbose)   = debugging output\n";
+	print "-v (--verbose)         = debugging output\n";
 	print "\n\n";
 	print "Note: -w and -c are required arguments.  -W and -C are optional.\n";
 	print " -W and -C are applied to domains listed on the queues - both FROM and TO. (sendmail)\n";
