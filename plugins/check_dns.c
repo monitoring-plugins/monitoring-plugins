@@ -268,7 +268,7 @@ main (int argc, char **argv)
       result = STATE_CRITICAL;
       xasprintf(&msg, _("Domain '%s' was found by the server: '%s'\n"), query_address, address);
     } else {
-      if (address == NULL) free(address);
+      if (address != NULL) free(address);
       address = "NXDOMAIN";
     }
   }
