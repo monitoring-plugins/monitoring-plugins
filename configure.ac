@@ -1064,6 +1064,14 @@ then
 	ac_cv_ping_packets_first=yes
 	AC_MSG_RESULT([$with_ping_command])
 
+elif $PATH_TO_PING -4 -n -U -w 10 -c 1 127.0.0.1 2>/dev/null | \
+	egrep -i "^round-trip|^rtt" >/dev/null
+then
+	# check if -4 is supported - issue #1550
+	with_ping_command="$PATH_TO_PING -4 -n -U -w %d -c %d %s"
+	ac_cv_ping_packets_first=yes
+	ac_cv_ping_has_timeout=yes
+	AC_MSG_RESULT([$with_ping_command])
 elif $PATH_TO_PING -n -U -w 10 -c 1 127.0.0.1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
