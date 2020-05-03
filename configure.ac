@@ -364,7 +364,7 @@ if test $with_mysql = "no" ; then
   AC_MSG_WARN([Skipping mysql plugin])
   AC_MSG_WARN([install mysql client libs to compile this plugin (see REQUIREMENTS).])
 else
-  EXTRAS="$EXTRAS check_mysql\$(EXEEXT) check_mysql_query\$(EXEEXT)"
+  EXTRAS="$EXTRAS check_mysql\$(EXEEXT) check_mysql_query\$(EXEEXT) check_mysql_slave\$(EXEEXT)"
   MYSQLINCLUDE="$np_mysql_include"
   MYSQLLIBS="$np_mysql_libs"
   MYSQLCFLAGS="$np_mysql_cflags"
