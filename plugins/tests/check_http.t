@@ -4,6 +4,8 @@
 #
 # To create the https server certificate:
 # openssl req -new -x509 -keyout server-key.pem -out server-cert.pem -days 3650 -nodes
+# to create a new expired certificate:
+# faketime '2008-01-01 12:00:00' openssl req -new -x509 -keyout expired-key.pem -out expired-cert.pem -days 1 -nodes
 # Country Name (2 letter code) [AU]:DE
 # State or Province Name (full name) [Some-State]:Bavaria
 # Locality Name (eg, city) []:Munich
@@ -211,7 +213,7 @@ SKIP: {
 	$result = NPTest->testCmd( "$command -p $port_https_expired -S -C 7" );
 	is( $result->return_code, 2, "$command -p $port_https_expired -S -C 7" );
 	is( $result->output,
-		'CRITICAL - Certificate \'Ton Voon\' expired on Thu Mar  5 00:13:16 2009 +0000.',
+		'CRITICAL - Certificate \'Monitoring Plugins\' expired on Wed Jan  2 11:00:26 2008 +0000.',
 		"output ok" );
 
 }
