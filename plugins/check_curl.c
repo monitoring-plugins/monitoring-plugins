@@ -127,8 +127,8 @@ int cflags = REG_NOSUB | REG_EXTENDED | REG_NEWLINE;
 int errcode;
 int invert_regex = 0;
 
-char *server_address;
-char *host_name;
+char *server_address = NULL;
+char *host_name = NULL;
 char *server_url = 0;
 char server_ip[DEFAULT_BUFFER_SIZE];
 struct curl_slist *server_ips = NULL;
@@ -367,7 +367,7 @@ check_http (void)
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_TIMEOUT, socket_timeout), "CURLOPT_TIMEOUT");
 
   // fill dns resolve cache to make curl connect to the given server_address instead of the host_name, only required for ssl, because we use the host_name later on to make SNI happy
-  if(use_ssl) {
+  if(use_ssl && host_name != NULL) {
       struct curl_slist *host = NULL;
       char dnscache[DEFAULT_BUFFER_SIZE];
       snprintf (dnscache, DEFAULT_BUFFER_SIZE, "%s:%d:%s", host_name, server_port, server_address);
@@ -380,7 +380,7 @@ check_http (void)
   /* compose URL: use the address we want to connect to, set Host: header later */
   snprintf (url, DEFAULT_BUFFER_SIZE, "%s://%s:%d%s",
       use_ssl ? "https" : "http",
-      use_ssl ? host_name : server_address,
+      use_ssl & host_name != NULL ? host_name : server_address,
       server_port,
       server_url
   );
