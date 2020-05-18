@@ -366,6 +366,17 @@ check_http (void)
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CONNECTTIMEOUT, socket_timeout), "CURLOPT_CONNECTTIMEOUT");
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_TIMEOUT, socket_timeout), "CURLOPT_TIMEOUT");
 
+  // fill dns resolve cache to make curl connect to the given server_address instead of the host_name, only required for ssl, because we use the host_name later on to make SNI happy
+  if(use_ssl) {
+      struct curl_slist *host = NULL;
+      char dnscache[DEFAULT_BUFFER_SIZE];
+      snprintf (dnscache, DEFAULT_BUFFER_SIZE, "%s:%d:%s", host_name, server_port, server_address);
+      host = curl_slist_append(NULL, dnscache);
+      curl_easy_setopt(curl, CURLOPT_RESOLVE, host);
+      if (verbose>=1)
+        printf ("* curl CURLOPT_RESOLVE: %s\n", dnscache);
+  }
+
   /* compose URL: use the address we want to connect to, set Host: header later */
   snprintf (url, DEFAULT_BUFFER_SIZE, "%s://%s:%d%s",
       use_ssl ? "https" : "http",
