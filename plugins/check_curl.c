@@ -392,7 +392,7 @@ check_http (void)
   if (http_method && !strcmp (http_method, "HEAD" )) {
     no_body = TRUE;
   }
-  
+
   /* set HTTP protocol version */
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_HTTP_VERSION, curl_http_version), "CURLOPT_HTTP_VERSION");
 
@@ -632,7 +632,7 @@ check_http (void)
       server_port, res, curl_easy_strerror(res));
     die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
   }
-  
+
   /* certificate checks */
 #ifdef LIBCURL_FEATURE_SSL
   if (use_ssl == TRUE) {
@@ -1504,7 +1504,7 @@ process_arguments (int argc, char **argv)
       break;
     case HTTP_VERSION_OPTION:
       curl_http_version = CURL_HTTP_VERSION_NONE;
-      if (strcmp (optarg, "1.0") == 0) { 
+      if (strcmp (optarg, "1.0") == 0) {
         curl_http_version = CURL_HTTP_VERSION_1_0;
       } else if (strcmp (optarg, "1.1") == 0) {
         curl_http_version = CURL_HTTP_VERSION_1_1;
@@ -1724,7 +1724,7 @@ print_help (void)
   printf ("\n");
   printf (" %s\n", "--http-version=VERSION");
   printf ("    %s\n", _("Connect via specific HTTP protocol."));
-  printf ("    %s\n", _("1.0 = HTTP/1.0, 1.1 = HTTP/1.1, 2.0 = HTTP/2 (HTTP/2 will fail without -S)"));  
+  printf ("    %s\n", _("1.0 = HTTP/1.0, 1.1 = HTTP/1.1, 2.0 = HTTP/2 (HTTP/2 will fail without -S)"));
   printf ("\n");
 
   printf (UT_WARN_CRIT);
@@ -1809,7 +1809,7 @@ print_usage (void)
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
   printf ("       [-T <content-type>] [-j method]\n");
-  printf ("       [--http-version=<version>]\n");  
+  printf ("       [--http-version=<version>]\n");
   printf ("\n");
   printf ("%s\n", _("WARNING: check_curl is experimental. Please use"));
   printf ("%s\n\n", _("check_http if you need a stable version."));
@@ -1958,7 +1958,7 @@ curlhelp_parse_statusline (const char *buf, curlhelp_statusline *status_line)
   p = strtok( NULL, " " );
   if( p == NULL ) { free( first_line_buf ); return -1; }
   if( strchr( p, '.' ) != NULL ) {
-    
+
     /* HTTP 1.x case */
     char *ppp;
     ppp = strtok( p, "." );
@@ -2219,7 +2219,7 @@ net_noopenssl_check_certificate (cert_ptr_union* cert_ptr, int days_till_exp_war
 
   for (i = 0; i < cert_ptr->to_certinfo->num_of_certs; i++) {
     for (slist = cert_ptr->to_certinfo->certinfo[i]; slist; slist = slist->next) {
-      /* find first common name in subject, 
+      /* find first common name in subject,
        * TODO: check alternative subjects for
        * TODO: have a decent parser here and not a hack
        * multi-host certificate, check wildcards
