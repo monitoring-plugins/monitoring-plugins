@@ -202,7 +202,10 @@ main (int argc, char **argv)
     if (error_scan (chld_err.line[i]) != STATE_OK) {
       result = max_state (result, error_scan (chld_err.line[i]));
       msg = strchr(input_buffer, ':');
-      if(msg) msg++;
+      if(msg)
+         msg++;
+      else
+         msg = input_buffer;
     }
   }
 
@@ -347,6 +350,8 @@ error_scan (char *input_buffer)
 
   /* DNS server is not running... */
   else if (strstr (input_buffer, "No response from server"))
+    die (STATE_CRITICAL, _("No response from DNS %s\n"), dns_server);
+  else if (strstr (input_buffer, "no servers could be reached"))
     die (STATE_CRITICAL, _("No response from DNS %s\n"), dns_server);
 
   /* Host name is valid, but server doesn't have records... */
