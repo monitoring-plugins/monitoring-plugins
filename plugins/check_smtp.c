@@ -436,7 +436,8 @@ main (int argc, char **argv)
 			fperfdata ("time", elapsed_time, "s",
 				(int)check_warning_time, warning_time,
 				(int)check_critical_time, critical_time,
-				TRUE, 0, FALSE, 0));
+				TRUE, 0,
+				TRUE, socket_timeout));
 
 	return result;
 }
