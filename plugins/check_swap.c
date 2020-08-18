@@ -133,7 +133,7 @@ main (int argc, char **argv)
 					xasprintf (&status, "%s [%.0f (%d%%)]", status, dskfree_mb, 100 - percent);
 			}
 		}
-		else if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%[TotalFre]%*[:] %f %*[k]%*[B]", str, &tmp_mb)) {
+		else if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%[TotalFreCchd]%*[:] %f %*[k]%*[B]", str, &tmp_mb)) {
 			if (verbose >= 3) {
 				printf("Got %s with %f\n", str, tmp_mb);
 			}
@@ -142,7 +142,10 @@ main (int argc, char **argv)
 				dsktotal_mb = tmp_mb / 1024;
 			}
 			else if (strcmp ("Free", str) == 0) {
-				dskfree_mb = tmp_mb / 1024;
+				dskfree_mb = dskfree_mb + tmp_mb / 1024;
+			}
+			else if (strcmp ("Cached", str) == 0) {
+				dskfree_mb = dskfree_mb + tmp_mb / 1024;
 			}
 		}
 	}
