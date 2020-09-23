@@ -931,6 +931,21 @@ check_http (void)
 
     if (verbose) printf ("Entering CONNECT tunnel mode with proxy %s:%d to dst %s:%d\n", server_address, server_port, host_name, HTTPS_PORT);
     asprintf (&buf, "%s %s:%d HTTP/1.1\r\n%s\r\n", http_method, host_name, HTTPS_PORT, user_agent);
+    if (strlen(proxy_auth)) {
+      base64_encode_alloc (proxy_auth, strlen (proxy_auth), &auth);
+      xasprintf (&buf, "%sProxy-Authorization: Basic %s\r\n", buf, auth);
+    }
+    /* optionally send any other header tag */
+    if (http_opt_headers_count) {
+      for (i = 0; i < http_opt_headers_count ; i++) {
+        if (force_host_header != http_opt_headers[i]) {
+          xasprintf (&buf, "%s%s\r\n", buf, http_opt_headers[i]);
+        }
+      }
+      /* This cannot be free'd here because a redirection will then try to access this and segfault */
+      /* Covered in a testcase in tests/check_http.t */
+      /* free(http_opt_headers); */
+    }
     asprintf (&buf, "%sProxy-Connection: keep-alive\r\n", buf);
     asprintf (&buf, "%sHost: %s\r\n", buf, host_name);
     /* we finished our request, send empty line with CRLF */
