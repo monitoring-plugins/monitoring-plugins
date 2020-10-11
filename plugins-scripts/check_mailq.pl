@@ -29,7 +29,7 @@ use POSIX;
 use strict;
 use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_v $verbose $PROGNAME $opt_w $opt_c $opt_t $opt_s
-					$opt_M $mailq $status $state $msg $msg_q $msg_p $opt_W $opt_C $mailq @lines
+					$opt_M $mailq $status $state $msg $msg_q $msg_p $mailq @lines
 					%srcdomains %dstdomains);
 use FindBin;
 use lib "$FindBin::Bin";
@@ -228,80 +228,6 @@ if ($mailq eq "sendmail") {
 			$msg = "CRITICAL: $mailq mailq is $msg_q (threshold c = $opt_c)";
 			$state = $ERRORS{'CRITICAL'};
 		}
-
-		# check for domain specific queue lengths if requested
-		if (defined $opt_W) {
-		
-			# Apply threshold to queue lengths FROM domain
-			my @srckeys = sort { $srcdomains{$b} <=> $srcdomains{$a} } keys %srcdomains;
-  	  my $srcmaxkey = $srckeys[0];
-    	print "src max is $srcmaxkey with $srcdomains{$srcmaxkey} messages\n" if $verbose;
-		
-			if ($srcdomains{$srcmaxkey} >= $opt_W && $srcdomains{$srcmaxkey} < $opt_C) {
-				if ($state == $ERRORS{'OK'}) {
-					$msg = "WARNING: $srcdomains{$srcmaxkey} messages in queue FROM $srcmaxkey (threshold W = $opt_W)";
-					$state = $ERRORS{'WARNING'};
-				} elsif (($state == $ERRORS{'WARNING'}) || ($state == $ERRORS{'CRITICAL'})){
-		    	$msg .= " -and- $srcdomains{$srcmaxkey} messages in queue FROM $srcmaxkey (threshold W = $opt_W)";
-				} else {
-					$msg = "WARNING: $srcdomains{$srcmaxkey} messages in queue FROM $srcmaxkey (threshold W = $opt_W)";
-					$state = $ERRORS{'WARNING'};
-				}
-  	  } elsif ($srcdomains{$srcmaxkey} >= $opt_C) {
-				if ($state == $ERRORS{'OK'}) {
-					$msg = "CRITICAL: $srcdomains{$srcmaxkey} messages in queue FROM $srcmaxkey (threshold C = $opt_C)";
-					$state = $ERRORS{'CRITICAL'};
-				} elsif ($state == $ERRORS{'WARNING'}) {
-					$msg = "CRITICAL: $srcdomains{$srcmaxkey} messages in queue FROM $srcmaxkey (threshold C = $opt_C) -and- " . $msg;
-					$msg =~ s/WARNING: //;
-				} elsif ($state == $ERRORS{'CRITICAL'}) {
-					$msg .= " -and- $srcdomains{$srcmaxkey} messages in queue FROM $srcmaxkey (threshold W = $opt_W)";
-				} else {
-					$msg = "CRITICAL: $srcdomains{$srcmaxkey} messages in queue FROM $srcmaxkey (threshold W = $opt_W)";
-					$state = $ERRORS{'CRITICAL'};
-				}
-	    } else {
-				if ($srcdomains{$srcmaxkey} > 0) {
-					$msg .= " $srcdomains{$srcmaxkey} msgs. FROM $srcmaxkey is below threshold ($opt_W/$opt_C)";
-				}
-			}
-
-			# Apply threshold to queue lengths TO domain
-			my @dstkeys = sort { $dstdomains{$b} <=> $dstdomains{$a} } keys %dstdomains;
-	    my $dstmaxkey = $dstkeys[0];
-  	  print "dst max is $dstmaxkey with $dstdomains{$dstmaxkey} messages\n" if $verbose;
-		
-			if ($dstdomains{$dstmaxkey} >= $opt_W && $dstdomains{$dstmaxkey} < $opt_C) {
-				if ($state == $ERRORS{'OK'}) {
-					$msg = "WARNING: $dstdomains{$dstmaxkey} messages in queue TO $dstmaxkey (threshold W = $opt_W)";
-					$state = $ERRORS{'WARNING'};
-				} elsif (($state == $ERRORS{'WARNING'}) || ($state == $ERRORS{'CRITICAL'})){
-					$msg .= " -and- $dstdomains{$dstmaxkey} messages in queue TO $dstmaxkey (threshold W = $opt_W)";
-				} else {
-					$msg = "WARNING: $dstdomains{$dstmaxkey} messages in queue TO $dstmaxkey (threshold W = $opt_W)";
-					$state = $ERRORS{'WARNING'};
-				}
-			} elsif ($dstdomains{$dstmaxkey} >= $opt_C) {
-				if ($state == $ERRORS{'OK'}) {
-					$msg = "CRITICAL: $dstdomains{$dstmaxkey} messages in queue TO $dstmaxkey (threshold C = $opt_C)";
-					$state = $ERRORS{'CRITICAL'};
-				} elsif ($state == $ERRORS{'WARNING'}) {
-					$msg = "CRITICAL: $dstdomains{$dstmaxkey} messages in queue TO $dstmaxkey (threshold C = $opt_C) -and- " . $msg;
-					$msg =~ s/WARNING: //;
-				} elsif ($state == $ERRORS{'CRITICAL'}) {
-					$msg .= " -and- $dstdomains{$dstmaxkey} messages in queue TO $dstmaxkey (threshold W = $opt_W)";
-				} else {
-					$msg = "CRITICAL: $dstdomains{$dstmaxkey} messages in queue TO $dstmaxkey (threshold W = $opt_W)";
-					$state = $ERRORS{'CRITICAL'};
-				}
-			} else {
-				if ($dstdomains{$dstmaxkey} > 0) {
-					$msg .= " $dstdomains{$dstmaxkey} msgs. TO $dstmaxkey is below threshold ($opt_W/$opt_C)";
-				}
-			}
-
-		} # End of queue length thresholds
-
 	}
 
 } # end of ($mailq eq "sendmail")
@@ -373,18 +299,6 @@ elsif ( $mailq eq "postfix" ) {
                         $msg = "CRITICAL: $mailq mailq is $msg_q (threshold c = $opt_c)";
                         $state = $ERRORS{'CRITICAL'};
                 }
-
-                # check messages not yet preprocessed (only compare is $opt_W and $opt_C
-                # are defined)
-
-                #if (defined $opt_W) {
-                #        $msg .= "[Preprocessed = $msg_p]";
-                #        if ($msg_p >= $opt_W && $msg_p < $opt_C ) {
-                #                $state = $state == $ERRORS{"CRITICAL"} ? $ERRORS{"CRITICAL"} : $ERRORS{"WARNING"}  ;
-                #        }elsif ($msg_p >= $opt_C ) {
-                #                $state = $ERRORS{"CRITICAL"} ;
-                #        }
-                #}
         }
 } # end of ($mailq eq "postfix")
 elsif ( $mailq eq "qmail" ) {
@@ -452,18 +366,6 @@ elsif ( $mailq eq "qmail" ) {
 		}else {
 			$msg = "CRITICAL: $mailq mailq is $msg_q (threshold c = $opt_c)";
 			$state = $ERRORS{'CRITICAL'};
-		}
-
-		# check messages not yet preprocessed (only compare is $opt_W and $opt_C
-		# are defined)
-		
-		if (defined $opt_W) {
-			$msg .= "[Preprocessed = $msg_p]";
-			if ($msg_p >= $opt_W && $msg_p < $opt_C ) {
-				$state = $state == $ERRORS{"CRITICAL"} ? $ERRORS{"CRITICAL"} : $ERRORS{"WARNING"}  ;
-			}elsif ($msg_p >= $opt_C ) {
-				$state = $ERRORS{"CRITICAL"} ;
-			}
 		}
 	}				
 		
@@ -599,16 +501,6 @@ sub process_arguments(){
 		exit $ERRORS{'UNKNOWN'};
 	}
 
-	if (defined $opt_W && ! defined !$opt_C) {
-		print "Need -C if using -W\n";
-		exit $ERRORS{'UNKNOWN'};
-	}elsif(defined $opt_W && defined $opt_C) {
-		if ($opt_W >= $opt_C) {
-			print "Warning (-W) cannot be greater than Critical (-C)!\n";
-			exit $ERRORS{'UNKNOWN'};
-		}
-	}
-
 	if (defined $opt_M) {
 		if ($opt_M =~ /^(sendmail|qmail|postfix|exim|nullmailer)$/) {
 			$mailq = $opt_M ;
@@ -649,7 +541,7 @@ sub process_arguments(){
 }
 
 sub print_usage () {
-	print "Usage: $PROGNAME -w <warn> -c <crit> [-W <warn>] [-C <crit>] [-M <MTA>] [-t <timeout>] [-s] [-v]\n";
+	print "Usage: $PROGNAME -w <warn> -c <crit> [-M <MTA>] [-t <timeout>] [-s] [-v]\n";
 }
 
 sub print_help () {
@@ -662,8 +554,6 @@ sub print_help () {
 	print "   Feedback/patches to support non-sendmail mailqueue welcome\n\n";
 	print "-w (--warning)   = Min. number of messages in queue to generate warning\n";
 	print "-c (--critical)  = Min. number of messages in queue to generate critical alert ( w < c )\n";
-	print "-W (--Warning)   = Min. number of messages for same domain in queue to generate warning\n";
-	print "-C (--Critical)  = Min. number of messages for same domain in queue to generate critical alert ( W < C )\n";
 	print "-t (--timeout)   = Plugin timeout in seconds (default = $utils::TIMEOUT)\n";
 	print "-M (--mailserver) = [ sendmail | qmail | postfix | exim | nullmailer ] (default = autodetect)\n";
 	print "-s (--sudo)      = Use sudo to call the mailq command\n";
