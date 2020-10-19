@@ -1,14 +1,7 @@
 Monitoring Plugins
 ==================
 
-* For instructions on installing these plugins for use with your monitoring
-  system, see below.  In addition, generic instructions for the GNU
-  toolchain can be found in the `INSTALL` file.
-
 * For major changes between releases, read the `NEWS` file.
-
-* For information on detailed changes that have been made or plugins
-  that have been added, read the `ChangeLog` file.
 
 * Some plugins require that you have additional programs or
   libraries installed on your system before they can be used.  Plugins that
