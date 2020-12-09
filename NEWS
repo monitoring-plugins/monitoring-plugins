@@ -1,5 +1,10 @@
 This file documents the major additions and syntax changes between releases.
 
+2.4 [...]
+	ENHANCEMENTS
+
+	FIXES
+
 2.3 10th December 2020
 	ENHANCEMENTS
 	check_dns: allow 'expected address' (-a) to be specified in CIDR notation
