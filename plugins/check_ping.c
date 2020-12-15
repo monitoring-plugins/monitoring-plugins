@@ -487,6 +487,7 @@ run_ping (const char *cmd, const char *addr)
 	while (fgets (buf, MAX_INPUT_BUFFER - 1, child_stderr)) {
 		if (
 			! strstr(buf,"WARNING - no SO_TIMESTAMP support, falling back to SIOCGSTAMP")
+			&& ! strstr(buf,"WARNING: failed to install socket filter: Protocol not available")
 			&& ! strstr(buf,"Warning: time of day goes back")
 
 		) {
