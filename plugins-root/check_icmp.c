@@ -1134,7 +1134,7 @@ finish(int sig)
 	while(host) {
 		if(!host->icmp_recv) {
 			/* rta 0 is ofcourse not entirely correct, but will still show up
-			 * conspicuosly as missing entries in perfparse and cacti */
+			 * conspicuously as missing entries in perfparse and cacti */
 			pl = 100;
 			rta = 0;
 			status = STATE_CRITICAL;
