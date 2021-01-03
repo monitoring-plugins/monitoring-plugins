@@ -83,7 +83,7 @@ is( $result->output, 'PROCS OK: 3 processes with RSS >= 100000 | procs=3;;;0;', 
 
 $result = NPTest->testCmd( "$command -s S" );
 is( $result->return_code, 0, "Checking filter for sleeping processes" );
-like( $result->output, '/^PROCS OK: 44 processes with STATE = S/', "Output correct" );
+like( $result->output, '/^PROCS OK: 88 processes with STATE = S/', "Output correct" );
 
 $result = NPTest->testCmd( "$command -s Z" );
 is( $result->return_code, 0, "Checking filter for zombies" );
