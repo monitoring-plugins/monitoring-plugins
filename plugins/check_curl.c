@@ -1041,7 +1041,7 @@ redir (curlhelp_write_curlbuf* header_buf)
     const UriPathSegmentA* p = uri.pathHead;
     for (; p; p = p->next) {
       strncat (new_url, "/", DEFAULT_BUFFER_SIZE);
-      strncat (new_url, uri_string (p->text, buf, DEFAULT_BUFFER_SIZE), DEFAULT_BUFFER_SIZE);
+      strncat (new_url, uri_string (p->text, buf, DEFAULT_BUFFER_SIZE), DEFAULT_BUFFER_SIZE-1);
     }
   }
 
