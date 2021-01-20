@@ -959,9 +959,6 @@ process_arguments (int argc, char **argv)
 		}
 	}
 
-	if(verbose>2)
-		printf("IPv6 detected! Will add \"%s6:\" to snmpget.\n", server_scheme);
-
 	if (server_address == NULL)
 		server_address = argv[optind];
 
@@ -979,7 +976,7 @@ process_arguments (int argc, char **argv)
 		ip_version = 4;
 	}
 
-	if (verbose > 2)
+	if (ip_version == 6 && verbose > 2)
 		printf("IPv6 detected! Will add \"%s6:\" to snmpget.\n", server_scheme);
 
 	return rc;
