@@ -296,6 +296,28 @@ CURLcode sslctxfun(CURL *curl, SSL_CTX *sslctx, void *parm)
 #endif /* USE_OPENSSL */
 #endif /* HAVE_SSL */
 
+/* returns a string "HTTP/1.x" or "HTTP/2" */
+static char *string_statuscode (int major, int minor)
+{
+  static char buf[10];
+
+  switch (major) {
+    case 1:
+      snprintf (buf, sizeof (buf), "HTTP/%d.%d", major, minor);
+      break;
+    case 2:
+    case 3:
+      snprintf (buf, sizeof (buf), "HTTP/%d", major);
+      break;
+    default:
+      /* assuming here HTTP/N with N>=4 */
+      snprintf (buf, sizeof (buf), "HTTP/%d", major);
+      break;
+  }  
+  
+  return buf;
+}
+
 /* Checks if the server 'reply' is one of the expected 'statuscodes' */
 static int
 expected_statuscode (const char *reply, const char *statuscodes)
@@ -746,7 +768,8 @@ GOT_FIRST_CERT:
   if (curlhelp_parse_statusline (header_buf.buf, &status_line) < 0) {
     snprintf (msg, DEFAULT_BUFFER_SIZE, "Unparsable status line in %.3g seconds response time|%s\n",
       total_time, perfstring);
-    die (STATE_CRITICAL, "HTTP CRITICAL HTTP/1.x %ld unknown - %s", code, msg);
+    /* we cannot know the major/minor version here for sure as we cannot parse the first line */
+    die (STATE_CRITICAL, "HTTP CRITICAL HTTP/x.x %ld unknown - %s", code, msg);
   }
 
   /* get result code from cURL */
@@ -823,8 +846,8 @@ GOT_FIRST_CERT:
 
   /* check status codes, set exit status accordingly */
   if( status_line.http_code != code ) {
-    die (STATE_CRITICAL, _("HTTP CRITICAL HTTP/%d.%d %d %s - different HTTP codes (cUrl has %ld)\n"),
-      status_line.http_major, status_line.http_minor,
+    die (STATE_CRITICAL, _("HTTP CRITICAL %s %d %s - different HTTP codes (cUrl has %ld)\n"),
+      string_statuscode (status_line.http_major, status_line.http_minor),
       status_line.http_code, status_line.msg, code);
   }
 
@@ -895,8 +918,8 @@ GOT_FIRST_CERT:
     msg[strlen(msg)-3] = '\0';
 
   /* TODO: separate _() msg and status code: die (result, "HTTP %s: %s\n", state_text(result), msg); */
-  die (result, "HTTP %s: HTTP/%d.%d %d %s%s%s - %d bytes in %.3f second response time %s|%s\n",
-    state_text(result), status_line.http_major, status_line.http_minor,
+  die (result, "HTTP %s: %s %d %s%s%s - %d bytes in %.3f second response time %s|%s\n",
+    state_text(result), string_statuscode (status_line.http_major, status_line.http_minor),
     status_line.http_code, status_line.msg,
     strlen(msg) > 0 ? " - " : "",
     msg, page_len, total_time,
