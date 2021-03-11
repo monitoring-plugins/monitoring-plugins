@@ -21,7 +21,7 @@ use FindBin qw($Bin);
 
 $ENV{'LC_TIME'} = "C";
 
-my $common_tests = 70;
+my $common_tests = 72;
 my $ssl_only_tests = 8;
 # Check that all dependent modules are available
 eval "use HTTP::Daemon 6.01;";
@@ -188,6 +188,12 @@ sub run_server {
 				$c->send_basic_header;
 				$c->send_header('foo');
 				$c->send_crlf;
+			} elsif ($r->url->path eq "/header_broken_check") {
+				$c->send_basic_header;
+				$c->send_header('foo');
+				print $c "Test1:: broken\n";
+				print $c " Test2: leading whitespace\n";
+				$c->send_crlf;
 			} elsif ($r->url->path eq "/virtual_port") {
 				# return sent Host header
 				$c->send_basic_header;
@@ -247,7 +253,7 @@ my $cmd;
 # advanced checks with virtual hostname and virtual port
 SKIP: {
 	skip "libcurl version is smaller than $required_version", 6 unless $use_advanced_checks;
-	
+
 	# http without virtual port
 	$cmd = "./$plugin -H $virtual_host -I 127.0.0.1 -p $port_http -u /virtual_port -r ^$virtual_host:$port_http\$";
 	$result = NPTest->testCmd( $cmd );
@@ -259,7 +265,7 @@ SKIP: {
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
-	
+
 	# http with virtual port (80)
 	$cmd = "./$plugin -H $virtual_host:80 -I 127.0.0.1 -p $port_http -u /virtual_port -r ^$virtual_host\$";
 	$result = NPTest->testCmd( $cmd );
@@ -320,6 +326,10 @@ sub run_common_tests {
 	$result = NPTest->testCmd( "$command -u /header_check -d bar" );
 	is( $result->return_code, 2, "Missing header string check");
 	like( $result->output, qr%^HTTP CRITICAL: HTTP/1\.1 200 OK - header 'bar' not found on 'https?://127\.0\.0\.1:\d+/header_check'%, "Shows search string and location");
+
+	$result = NPTest->testCmd( "$command -u /header_broken_check" );
+	is( $result->return_code, 0, "header_check search for string");
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - 138 bytes in [\d\.]+ second/', "Output correct" );
 
 	my $cmd;
 	$cmd = "$command -u /slow";
