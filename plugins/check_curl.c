@@ -313,8 +313,8 @@ static char *string_statuscode (int major, int minor)
       /* assuming here HTTP/N with N>=4 */
       snprintf (buf, sizeof (buf), "HTTP/%d", major);
       break;
-  }  
-  
+  }
+
   return buf;
 }
 
@@ -662,7 +662,7 @@ check_http (void)
   /* Curl errors, result in critical Nagios state */
   if (res != CURLE_OK) {
     snprintf (msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host on port %d: cURL returned %d - %s"),
-      server_port, res, curl_easy_strerror(res));
+      server_port, res, errbuf[0] ? errbuf : curl_easy_strerror(res));
     die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
   }
 
