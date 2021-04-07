@@ -195,6 +195,7 @@ int ssl_version = CURL_SSLVERSION_DEFAULT;
 char *client_cert = NULL;
 char *client_privkey = NULL;
 char *ca_cert = NULL;
+int verify_peer_and_host = FALSE;
 int is_openssl_callback = FALSE;
 #if defined(HAVE_SSL) && defined(USE_OPENSSL)
 X509 *cert = NULL;
@@ -489,9 +490,11 @@ check_http (void)
   if (client_privkey)
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_SSLKEY, client_privkey), "CURLOPT_SSLKEY");
   if (ca_cert) {
+    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CAINFO, ca_cert), "CURLOPT_CAINFO");
+  }
+  if (ca_cert || verify_peer_and_host) {
     /* per default if we have a CA verify both the peer and the
      * hostname in the certificate, can be switched off later */
-    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CAINFO, ca_cert), "CURLOPT_CAINFO");
     handle_curl_option_return_code (curl_easy_setopt( curl, CURLOPT_SSL_VERIFYPEER, 1), "CURLOPT_SSL_VERIFYPEER");
     handle_curl_option_return_code (curl_easy_setopt( curl, CURLOPT_SSL_VERIFYHOST, 2), "CURLOPT_SSL_VERIFYHOST");
   } else {
@@ -1159,6 +1162,7 @@ process_arguments (int argc, char **argv)
     {"client-cert", required_argument, 0, 'J'},
     {"private-key", required_argument, 0, 'K'},
     {"ca-cert", required_argument, 0, CA_CERT_OPTION},
+    {"verify-cert", no_argument, 0, 'D'},
     {"useragent", required_argument, 0, 'A'},
     {"header", required_argument, 0, 'k'},
     {"no-body", no_argument, 0, 'N'},
@@ -1193,7 +1197,7 @@ process_arguments (int argc, char **argv)
   server_url = strdup(DEFAULT_SERVER_URL);
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:DnlLS::m:M:NE", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
       break;
 
@@ -1331,6 +1335,11 @@ process_arguments (int argc, char **argv)
     case CA_CERT_OPTION: /* use CA chain file */
       test_file(optarg);
       ca_cert = optarg;
+      goto enable_ssl;
+#endif
+#ifdef LIBCURL_FEATURE_SSL
+    case 'D': /* verify peer certificate & host */
+      verify_peer_and_host = TRUE;
       goto enable_ssl;
 #endif
     case 'S': /* use SSL */
@@ -1703,6 +1712,8 @@ print_help (void)
   printf ("   %s\n", _("matching the client certificate"));
   printf (" %s\n", "--ca-cert=FILE");
   printf ("   %s\n", _("CA certificate file to verify peer against"));
+  printf (" %s\n", "-D, --verify-cert");
+  printf ("   %s\n", _("Verify the peer's SSL certificate and hostname"));
 #endif
 
   printf (" %s\n", "-e, --expect=STRING");
@@ -1836,7 +1847,7 @@ print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
   printf (" %s -H <vhost> | -I <IP-address> [-u <uri>] [-p <port>]\n",progname);
-  printf ("       [-J <client certificate file>] [-K <private key>] [--ca-cert <CA certificate file>]\n");
+  printf ("       [-J <client certificate file>] [-K <private key>] [--ca-cert <CA certificate file>] [-D]\n");
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L] [-E] [-a auth]\n");
   printf ("       [-b proxy_auth] [-f <ok|warning|critcal|follow|sticky|stickyport|curl>]\n");
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");

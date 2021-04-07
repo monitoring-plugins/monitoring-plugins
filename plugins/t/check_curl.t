@@ -9,7 +9,7 @@ use Test::More;
 use POSIX qw/mktime strftime/;
 use NPTest;
 
-plan tests => 57;
+plan tests => 58;
 
 my $successOutput = '/OK.*HTTP.*second/';
 
@@ -94,6 +94,9 @@ SKIP: {
 
         $res = NPTest->testCmd("./$plugin -v -H $host_tls_http:443 -S -p 443");
         like( $res->output, '/^Host: '.$host_tls_http.'\s*$/ms', "Host Header OK" );
+
+        $res = NPTest->testCmd("./$plugin -v -H $host_tls_http -D -p 443");
+        like( $res->output, '/(^Host: '.$host_tls_http.'\s*$)|(cURL returned 60)/ms', "Host Header OK" );
 };
 
 SKIP: {
