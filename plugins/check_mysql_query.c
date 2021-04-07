@@ -136,17 +136,17 @@ main (int argc, char **argv)
 		die (STATE_CRITICAL, "QUERY %s: Fetch row error - %s\n", _("CRITICAL"), error);
 	}
 
-	/* free the result */
-	mysql_free_result (res);
-
-	/* close the connection */
-	mysql_close (&mysql);
-
 	if (! is_numeric(row[0])) {
 		die (STATE_CRITICAL, "QUERY %s: %s - '%s'\n", _("CRITICAL"), _("Is not a numeric"), row[0]);
 	}
 
 	value = strtod(row[0], NULL);
+
+	/* free the result */
+	mysql_free_result (res);
+
+	/* close the connection */
+	mysql_close (&mysql);
 
 	if (verbose >= 3)
 		printf("mysql result: %f\n", value);
