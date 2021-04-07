@@ -2060,7 +2060,7 @@ get_header_value (const struct phr_header* headers, const size_t nof_headers, co
 {
   int i;
   for( i = 0; i < nof_headers; i++ ) {
-    if( strncasecmp( header, headers[i].name, max( headers[i].name_len, 4 ) ) == 0 ) {
+    if(headers[i].name != NULL && strncasecmp( header, headers[i].name, max( headers[i].name_len, 4 ) ) == 0 ) {
       return strndup( headers[i].value, headers[i].value_len );
     }
   }
