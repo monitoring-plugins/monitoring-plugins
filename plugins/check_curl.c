@@ -1858,6 +1858,10 @@ print_usage (void)
   printf (" %s -H <vhost> | -I <IP-address> -C <warn_age>[,<crit_age>]\n",progname);
   printf ("       [-p <port>] [-t <timeout>] [-4|-6] [--sni]\n");
   printf ("\n");
+#ifdef LIBCURL_FEATURE_SSL
+  printf ("%s\n", _("In the first form, make an HTTP request."));
+  printf ("%s\n\n", _("In the second form, connect to the server and check the TLS certificate."));
+#endif
   printf ("%s\n", _("WARNING: check_curl is experimental. Please use"));
   printf ("%s\n\n", _("check_http if you need a stable version."));
 }
