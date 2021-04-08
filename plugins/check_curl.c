@@ -145,6 +145,7 @@ thresholds *thlds;
 char user_agent[DEFAULT_BUFFER_SIZE];
 int verbose = 0;
 int show_extended_perfdata = FALSE;
+int show_body = FALSE;
 int min_page_len = 0;
 int max_page_len = 0;
 int redir_depth = 0;
@@ -792,7 +793,9 @@ GOT_FIRST_CERT:
       snprintf(msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host: %s\n"), status_line.first_line);
     else
       snprintf(msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host on port %d: %s\n"), server_port, status_line.first_line);
-    die (STATE_CRITICAL, "HTTP CRITICAL - %s", msg);
+    die (STATE_CRITICAL, "HTTP CRITICAL - %s%s%s", msg,
+      show_body ? "\n" : "",
+      show_body ? body_buf.buf : "");
   }
 
   if( server_expect_yn  )  {
@@ -921,13 +924,15 @@ GOT_FIRST_CERT:
     msg[strlen(msg)-3] = '\0';
 
   /* TODO: separate _() msg and status code: die (result, "HTTP %s: %s\n", state_text(result), msg); */
-  die (result, "HTTP %s: %s %d %s%s%s - %d bytes in %.3f second response time %s|%s\n",
+  die (result, "HTTP %s: %s %d %s%s%s - %d bytes in %.3f second response time %s|%s\n%s%s",
     state_text(result), string_statuscode (status_line.http_major, status_line.http_minor),
     status_line.http_code, status_line.msg,
     strlen(msg) > 0 ? " - " : "",
     msg, page_len, total_time,
     (display_html ? "</A>" : ""),
-    perfstring);
+    perfstring,
+    (show_body ? body_buf.buf : ""),
+    (show_body ? "\n" : "") );
 
   /* proper cleanup after die? */
   curlhelp_free_statusline(&status_line);
@@ -1173,6 +1178,7 @@ process_arguments (int argc, char **argv)
     {"use-ipv4", no_argument, 0, '4'},
     {"use-ipv6", no_argument, 0, '6'},
     {"extended-perfdata", no_argument, 0, 'E'},
+    {"show-body", no_argument, 0, 'B'},
     {"http-version", required_argument, 0, HTTP_VERSION_OPTION},
     {0, 0, 0, 0}
   };
@@ -1197,7 +1203,7 @@ process_arguments (int argc, char **argv)
   server_url = strdup(DEFAULT_SERVER_URL);
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:DnlLS::m:M:NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:DnlLS::m:M:NEB", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
       break;
 
@@ -1545,6 +1551,9 @@ process_arguments (int argc, char **argv)
     case 'E': /* show extended perfdata */
       show_extended_perfdata = TRUE;
       break;
+    case 'B': /* print body content after status line */
+      show_body = TRUE;
+      break;
     case HTTP_VERSION_OPTION:
       curl_http_version = CURL_HTTP_VERSION_NONE;
       if (strcmp (optarg, "1.0") == 0) {
@@ -1757,6 +1766,8 @@ print_help (void)
   printf ("    %s\n", _("Any other tags to be sent in http header. Use multiple times for additional headers"));
   printf (" %s\n", "-E, --extended-perfdata");
   printf ("    %s\n", _("Print additional performance data"));
+  printf (" %s\n", "-B, --show-body");
+  printf ("    %s\n", _("Print body content below status line"));
   printf (" %s\n", "-L, --link");
   printf ("    %s\n", _("Wrap output in HTML link (obsoleted by urlize)"));
   printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow|sticky|stickyport|curl>");
