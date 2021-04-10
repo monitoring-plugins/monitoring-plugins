@@ -1,5 +1,25 @@
 This file documents the major additions and syntax changes between releases.
 
+2.3.1 10 April 2021
+	ENHANCEMENTS
+	check_curl: Add an option to verify the peer certificate & host using the system CA's
+
+	FIXES
+	check_icmp: fix simple typo, conspicuosly -> conspicuously
+	check_curl: fixed help, usage and errors for TLS 1.3
+	check_curl: fixed a potential buffer overflow in url buffer
+	check_dns: split multiple IP addresses passed in one -a argument
+	check_curl: added string_statuscode function for printing HTTP/1.1 and HTTP/2 correctly
+	check_curl: fix crash if http header contains leading spaces
+	check_curl: display a specific human-readable error message where possible
+	check_pgsql: Using snprintf which honors the buffers size and guarantees null termination.
+	check_snmp: put the "c" (to mark a counter) after the perfdata value
+	check_http: Increase regexp limit
+	check_http: make -C obvious
+	check_curl: Increase regexp limit (to 1024 as in check_http)
+	check_curl: make -C obvious (from check_http)
+	check_curl: backported --show-body/-B to print body (from check_http)
+
 2.3 10th December 2020
 	ENHANCEMENTS
 	check_dns: allow 'expected address' (-a) to be specified in CIDR notation
