@@ -1995,7 +1995,7 @@ curlhelp_parse_statusline (const char *buf, curlhelp_statusline *status_line)
   char *first_line_buf;
 
   /* find last start of a new header */
-  start = strrstr2 (buf, "\r\nHTTP");
+  start = strrstr2 (buf, "\r\nHTTP/");
   if (start != NULL) {
     start += 2;
     buf = start;
