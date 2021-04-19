@@ -1,31 +1,31 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_snmp plugin
-* 
+*
 * License: GPL
 * Copyright (c) 1999-2007 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_snmp plugin
-* 
+*
 * Check status of remote machines and obtain system information via SNMP
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 const char *progname = "check_snmp";
@@ -315,7 +315,7 @@ main (int argc, char **argv)
 	for (i = 0; i < numcontext; i++) {
 		command_line[10 + i] = contextargs[i];
 	}
-	
+
 	for (i = 0; i < numauthpriv; i++) {
 		command_line[10 + numcontext + i] = authpriv[i];
 	}
@@ -329,7 +329,7 @@ main (int argc, char **argv)
 
 	for (i = 0; i < numoids; i++) {
 		command_line[10 + numcontext + numauthpriv + 1 + i] = oids[i];
-		xasprintf(&cl_hidden_auth, "%s %s", cl_hidden_auth, oids[i]);	
+		xasprintf(&cl_hidden_auth, "%s %s", cl_hidden_auth, oids[i]);
 	}
 
 	command_line[10 + numcontext + numauthpriv + 1 + numoids] = NULL;
@@ -398,14 +398,14 @@ main (int argc, char **argv)
 		/* We strip out the datatype indicator for PHBs */
 		if (strstr (response, "Gauge: ")) {
 			show = strstr (response, "Gauge: ") + 7;
-		} 
+		}
 		else if (strstr (response, "Gauge32: ")) {
 			show = strstr (response, "Gauge32: ") + 9;
-		} 
+		}
 		else if (strstr (response, "Counter32: ")) {
 			show = strstr (response, "Counter32: ") + 11;
 			is_counter=1;
-			if(!calculate_rate) 
+			if(!calculate_rate)
 				strcpy(type, "c");
 		}
 		else if (strstr (response, "Counter64: ")) {
@@ -607,7 +607,7 @@ main (int argc, char **argv)
 		state_string=malloc(string_length);
 		if(state_string==NULL)
 			die(STATE_UNKNOWN, _("Cannot malloc"));
-		
+
 		current_length=0;
 		for(i=0; i<total_oids; i++) {
 			xasprintf(&temp_string,"%.0f",response_value[i]);
@@ -629,7 +629,7 @@ main (int argc, char **argv)
 		state_string[--current_length]='\0';
 		if (verbose > 2)
 			printf("State string=%s\n",state_string);
-		
+
 		/* This is not strictly the same as time now, but any subtle variations will cancel out */
 		np_state_write_string(current_time, state_string );
 		if(previous_state==NULL) {
@@ -1006,7 +1006,7 @@ validate_arguments ()
 			contextargs[0] = strdup ("-n");
 			contextargs[1] = strdup (context);
 		}
-		
+
 		if (seclevel == NULL)
 			xasprintf(&seclevel, "noAuthNoPriv");
 
@@ -1166,7 +1166,7 @@ print_help (void)
 	printf ("(%s \"%s\")\n", _("default is") ,DEFAULT_COMMUNITY);
 	printf (" %s\n", "-U, --secname=USERNAME");
 	printf ("    %s\n", _("SNMPv3 username"));
-	printf (" %s\n", "-A, --authpassword=PASSWORD");
+	printf (" %s\n", "-A, --authpasswd=PASSWORD");
 	printf ("    %s\n", _("SNMPv3 authentication password"));
 	printf (" %s\n", "-X, --privpasswd=PASSWORD");
 	printf ("    %s\n", _("SNMPv3 privacy password"));
