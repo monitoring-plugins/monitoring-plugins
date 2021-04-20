@@ -948,8 +948,7 @@ check_http (void)
     }
     asprintf (&buf, "%sProxy-Connection: keep-alive\r\n", buf);
     asprintf (&buf, "%sHost: %s\r\n", buf, host_name);
-    /* we finished our request, send empty line with CRLF */
-    asprintf (&buf, "%s%s", buf, CRLF);
+
     if (verbose) printf ("%s\n", buf);
     send(sd, buf, strlen (buf), 0);
     buf[0]='\0';
@@ -1050,7 +1049,7 @@ check_http (void)
     }
 
     xasprintf (&buf, "%sContent-Length: %i\r\n\r\n", buf, (int)strlen (http_post_data));
-    xasprintf (&buf, "%s%s%s", buf, http_post_data, CRLF);
+    xasprintf (&buf, "%s%s", buf, http_post_data);
   }
   else {
     /* or just a newline so the server knows we're done with the request */
