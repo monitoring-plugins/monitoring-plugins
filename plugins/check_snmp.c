@@ -90,6 +90,7 @@ char *thisarg (char *str);
 char *nextarg (char *str);
 void print_usage (void);
 void print_help (void);
+char *multiply (char *str);
 
 #include "regex.h"
 char regex_expect[MAX_INPUT_BUFFER] = "";
@@ -153,6 +154,8 @@ double *previous_value;
 size_t previous_size = OID_COUNT_STEP;
 int perf_labels = 1;
 char* ip_version = "";
+double multiplier = 1.0;
+char *fmtstr = "";
 
 static char *fix_snmp_range(char *th)
 {
@@ -397,10 +400,16 @@ main (int argc, char **argv)
 		is_counter=0;
 		/* We strip out the datatype indicator for PHBs */
 		if (strstr (response, "Gauge: ")) {
-			show = strstr (response, "Gauge: ") + 7;
+			show = multiply (strstr (response, "Gauge: ") + 7);
+			if (fmtstr != "") {
+				conv = fmtstr;
+			}
 		} 
 		else if (strstr (response, "Gauge32: ")) {
-			show = strstr (response, "Gauge32: ") + 9;
+			show = multiply (strstr (response, "Gauge32: ") + 9);
+			if (fmtstr != "") {
+				conv = fmtstr;
+			}
 		} 
 		else if (strstr (response, "Counter32: ")) {
 			show = strstr (response, "Counter32: ") + 11;
@@ -415,7 +424,10 @@ main (int argc, char **argv)
 				strcpy(type, "c");
 		}
 		else if (strstr (response, "INTEGER: ")) {
-			show = strstr (response, "INTEGER: ") + 9;
+			show = multiply (strstr (response, "INTEGER: ") + 9);
+			if (fmtstr != "") {
+				conv = fmtstr;
+			}
 		}
 		else if (strstr (response, "OID: ")) {
 			show = strstr (response, "OID: ") + 5;
@@ -683,6 +695,8 @@ process_arguments (int argc, char **argv)
 		{"perf-oids", no_argument, 0, 'O'},
 		{"ipv4", no_argument, 0, '4'},
 		{"ipv6", no_argument, 0, '6'},
+		{"multiplier", required_argument, 0, 'M'},
+		{"fmtstr", required_argument, 0, 'f'},
 		{0, 0, 0, 0}
 	};
 
@@ -700,7 +714,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "nhvVO46t:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:N:L:U:a:x:A:X:",
+		c = getopt_long (argc, argv, "nhvVO46t:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:N:L:U:a:x:A:X:M:f:",
 									 longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -932,6 +946,16 @@ process_arguments (int argc, char **argv)
 			if(verbose>2)
 				printf("IPv6 detected! Will pass \"udp6:\" to snmpget.\n");
 			break;
+		case 'M':
+			if ( strspn( optarg, "0123456789.," ) == strlen( optarg ) ) {
+				multiplier=strtod(optarg,NULL);
+			}
+			break;
+		case 'f':
+			if (multiplier != 1.0) {
+				fmtstr=optarg;
+			}
+			break;
 		}
 	}
 
@@ -1122,6 +1146,21 @@ nextarg (char *str)
 
 
 
+/* multiply result (values 0 < n < 1 work as divider) */
+char *
+multiply (char *str)
+{
+	double val = strtod (str, NULL);
+	val *= multiplier;
+	if (val == (int)val) {
+		sprintf(str, "%.0f", val);
+	} else {
+		sprintf(str, "%f", val);
+	}
+	return str;
+}
+
+
 void
 print_help (void)
 {
@@ -1206,6 +1245,10 @@ print_help (void)
 	printf ("    %s\n", _("Units label(s) for output data (e.g., 'sec.')."));
 	printf (" %s\n", "-D, --output-delimiter=STRING");
 	printf ("    %s\n", _("Separates output on multiple OID requests"));
+	printf (" %s\n", "-M, --multiplier=FLOAT");
+	printf ("    %s\n", _("Multiplies current value, 0 < n < 1 works as divider, defaults to 1"));
+	printf (" %s\n", "-f, --fmtstr=STRING");
+	printf ("    %s\n", _("C-style format string for float values (see option -M)"));
 
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf ("    %s\n", _("NOTE the final timeout value is calculated using this formula: timeout_interval * retries + 5"));
@@ -1258,4 +1301,5 @@ print_usage (void)
 	printf ("[-l label] [-u units] [-p port-number] [-d delimiter] [-D output-delimiter]\n");
 	printf ("[-m miblist] [-P snmp version] [-N context] [-L seclevel] [-U secname]\n");
 	printf ("[-a authproto] [-A authpasswd] [-x privproto] [-X privpasswd] [-4|6]\n");
+	printf ("[-M multiplier [-f format]]\n");
 }
