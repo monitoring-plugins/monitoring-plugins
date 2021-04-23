@@ -38,7 +38,7 @@ sub print_usage ();
 sub process_arguments ();
 
 $ENV{'PATH'}='@TRUSTED_PATH@';
-$ENV{'BASH_ENV'}=''; 
+$ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 $PROGNAME = "check_uptime";
 $state = $ERRORS{'UNKNOWN'};

@@ -16,7 +16,7 @@ $egrep = "/usr/bin/egrep";
 $pwd = `pwd`;
 if ($pwd =~ '\/usr\/local') {
         $pwd = $`;
-}            
+}
 die  "Wrong location, please cd to <PKGBASE>/usr/local/ and run again.\n"
         if ($pwd eq "");
 
@@ -38,7 +38,7 @@ while (<PREPROTO>) {
 		# Needs to be installed SUID root
 	  ($dir, $none, $file, $mode, $user, $group) = split / /,$thisline;
 	  print PROTO "$dir $none $file 4755 root bin\n";
-		
+
 	} elsif ($thisline =~ "^[fd] ") {
 	  # Change the ownership of files and directories
 	  ($dir, $none, $file, $mode, $user, $group) = split / /,$thisline;
@@ -54,9 +54,9 @@ close PREPROTO;
 # Now we can start building the package
 
 $os = `uname -r`;
-$os =~ '\.'; 
+$os =~ '\.';
 $os = "sol$'";
-chomp $os;   
+chomp $os;
 
 open (PKGINFO,"<$pkginfo") ||
 	die "Unable to read package information ($!)\n";
@@ -65,7 +65,7 @@ while (<PKGINFO>) {
 	chomp;
 	$thisline = $_;
 	($var,$value) = split /=/,$thisline;
-	if ("$var" eq "NAME" 
+	if ("$var" eq "NAME"
 	  or "$var" eq "PKG"
 	  or "$var" eq "VERSION"
 	  or "$var" eq "ARCH") {
@@ -79,7 +79,7 @@ while (<PKGINFO>) {
 			$$tmp = $value;
 		}
 	}
-}	
+}
 close PKGINFO;
 
 $packagename = "$name-$version-$os-$arch-local";

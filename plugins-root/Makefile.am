@@ -86,7 +86,7 @@ pst3_LDFLAGS = @PST3CFLAGS@
 # pst3 must not use monitoringplug/gnulib includes!
 pst3_CPPFLAGS =
 
-check_dhcp_DEPENDENCIES = check_dhcp.c $(NETOBJS) $(DEPLIBS) 
+check_dhcp_DEPENDENCIES = check_dhcp.c $(NETOBJS) $(DEPLIBS)
 check_icmp_DEPENDENCIES = check_icmp.c $(NETOBJS)
 
 clean-local:

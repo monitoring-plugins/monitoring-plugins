@@ -18,18 +18,18 @@
 * Care has been taken to make sure the functions are async-safe. The one
 * function which isn't is cmd_init() which it doesn't make sense to
 * call twice anyway, so the api as a whole should be considered async-safe.
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
@@ -373,10 +373,10 @@ cmd_file_read ( char *filename, output *out, int flags)
 	if ((fd = open(filename, O_RDONLY)) == -1) {
 		die( STATE_UNKNOWN, _("Error opening %s: %s"), filename, strerror(errno) );
 	}
-	
+
 	if(out)
 		out->lines = _cmd_fetch_output (fd, out, flags);
-	
+
 	if (close(fd) == -1)
 		die( STATE_UNKNOWN, _("Error closing %s: %s"), filename, strerror(errno) );
 

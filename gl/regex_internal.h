@@ -744,7 +744,7 @@ struct re_dfa_t
   (re_node_set_remove_at (set, re_node_set_contains (set, id) - 1))
 #define re_node_set_empty(p) ((p)->nelem = 0)
 #define re_node_set_free(set) re_free ((set)->elems)
-
+
 
 typedef enum
 {

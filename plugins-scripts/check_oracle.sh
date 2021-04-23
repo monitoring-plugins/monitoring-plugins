@@ -137,7 +137,7 @@ case "$cmd" in
 --tns)
     tnschk=` tnsping $2`
     tnschk2=` echo  $tnschk | grep -c OK`
-    if [ ${tnschk2} -eq 1 ] ; then 
+    if [ ${tnschk2} -eq 1 ] ; then
 	tnschk3=${tnschk##*(}; tnschk3=${tnschk3%)*}
 	echo "OK - reply time ${tnschk3} from $2"
 	exit $STATE_OK
@@ -183,7 +183,7 @@ case "$cmd" in
 --login)
     loginchk=`sqlplus dummy/user@$2 < /dev/null`
     loginchk2=` echo  $loginchk | grep -c ORA-01017`
-    if [ ${loginchk2} -eq 1 ] ; then 
+    if [ ${loginchk2} -eq 1 ] ; then
 	echo "OK - dummy login connected"
 	exit $STATE_OK
     else
@@ -225,15 +225,15 @@ EOF`
       exit $STATE_CRITICAL
     fi
 
-    buf_hr=`echo "$result" | awk '/^[0-9\. \t]+$/ {print int($1)}'` 
-    buf_hrx=`echo "$result" | awk '/^[0-9\. \t]+$/ {print $1}'` 
+    buf_hr=`echo "$result" | awk '/^[0-9\. \t]+$/ {print int($1)}'`
+    buf_hrx=`echo "$result" | awk '/^[0-9\. \t]+$/ {print $1}'`
     result=`sqlplus -s ${3}/${4}@${2} << EOF
 set pagesize 0
 set numf '9999999.99'
 select sum(lc.pins)/(sum(lc.pins)+sum(lc.reloads))*100
 from v\\$librarycache lc;
 EOF`
-	
+
     if [ -n "`echo $result | grep ORA-`" ] ; then
       error=` echo "$result" | grep "ORA-" | head -1`
       echo "CRITICAL - $error"
@@ -279,10 +279,10 @@ EOF`
       exit $STATE_CRITICAL
     fi
 
-    ts_free=`echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($1)}'` 
-    ts_total=`echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($2)}'` 
-    ts_pct=`echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($3)}'` 
-    ts_pctx=`echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print $3}'` 
+    ts_free=`echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($1)}'`
+    ts_total=`echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($2)}'`
+    ts_pct=`echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print int($3)}'`
+    ts_pctx=`echo "$result" | awk '/^[ 0-9\.\t ]+$/ {print $3}'`
     if [ "$ts_free" -eq 0 -a "$ts_total" -eq 0 -a "$ts_pct" -eq 0 ] ; then
         echo "No data returned by Oracle - tablespace $5 not found?"
         exit $STATE_UNKNOWN

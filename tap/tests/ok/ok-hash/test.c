@@ -47,6 +47,6 @@ main(int argc, char *argv[])
 
 	rc = ok(1, "Test with ## back to back hashes");
 	diag("Returned: %d", rc);
-	
+
 	return exit_status();
 }

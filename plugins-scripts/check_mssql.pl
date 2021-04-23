@@ -3,8 +3,8 @@
 #
 # Copyright 2003 Roy Sigurd Karlsbakk
 #
-# Requires freetds and DBD::Sybase 
-# http://www.freetds.org 
+# Requires freetds and DBD::Sybase
+# http://www.freetds.org
 # http://www.mbay.net/~mpeppler/
 #
 # This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02111-1301, USA.
 #
 # Report bugs to: help@monitoring-plugins.org
-# 
+#
 #
 
 
@@ -37,7 +37,7 @@ use strict;
 my $PROGNAME = "check_mssql";
 
 $ENV{'PATH'}='@TRUSTED_PATH@';
-$ENV{'BASH_ENV'}=''; 
+$ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
 my (
@@ -139,7 +139,7 @@ sub process_arguments {
 	syntax("Missing server") unless (defined($server));
 	syntax("Missing query string") unless (defined($query));
 	$timeout = $TIMEOUT unless (defined($timeout));
-	
+
 	return;
 
 }

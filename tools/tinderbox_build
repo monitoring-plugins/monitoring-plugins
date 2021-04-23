@@ -19,7 +19,7 @@ my $Version = `git describe --abbrev=4 HEAD`;
 my $myhost = hostname;
 chomp($myhost);
 my ($host, $junk) = split(/\./, $myhost);
-	
+
 my $BuildAdministrator = $ENV{TINDERBOX_BUILD_ADMIN} || "$ENV{'USER'}\@$myhost";
 my $TmpDir = $ENV{TMPDIR} || "/tmp";
 
@@ -40,25 +40,25 @@ my $ConfigureArgs = $ENV{CONFIGURE_ARGS};
 
 my $OS = `uname -s`;
 my $OSVer = `uname -r`;
-    
+
 chop($OS, $OSVer);
-    
+
 if ( $OS eq 'AIX' ) {
 	$OSVer = `uname -v`;
 	chop($OSVer);
 	$OSVer = $OSVer . "." . `uname -r`;
 	chop($OSVer);
 }
-        
+
 if ( $OS eq 'IRIX64' ) {
 	$OS = 'IRIX';
 }
-    
+
 if ( $OS eq 'SCO_SV' ) {
 	$OS = 'SCOOS';
 	$OSVer = '5.0';
 }
-    
+
 if ( "$host" ne "" ) {
 	$BuildName = $host . ' ';
 }
@@ -100,19 +100,19 @@ sub BuildIt {
 	}
 
 	unlink( "$logfile" );
-	
+
 	print "opening $logfile\n";
 	open( LOG, ">$logfile" ) || print "can't open $?\n";
 	print LOG "current dir is -- $host:$CurrentDir\n";
 	print LOG "Build Administrator is $BuildAdministrator\n";
 	&PrintEnv;
-	
+
 	my $BuildStatus;
 	if (&configure) {
 		if (&make) {
 			if (&maketest) {
 				$BuildStatus = "success";
-			} else {	
+			} else {
 				$BuildStatus = "test_failed";
 			}
 		} else {
@@ -126,25 +126,25 @@ sub BuildIt {
 
 	close(LOG);
 	chdir("$StartDir");
-	
+
 # TV: Leaving this in, because process mail program probably has some
 # limitation retained
 
 # this fun line added on 2/5/98. do not remove. Translated to english,
 # that's "take any line longer than 1000 characters, and split it into less
 # than 1000 char lines.  If any of the resulting lines is
-# a dot on a line by itself, replace that with a blank line."  
+# a dot on a line by itself, replace that with a blank line."
 # This is to prevent cases where a <cr>.<cr> occurs in the log file.  Sendmail
 # interprets that as the end of the mail, and truncates the log before
 # it gets to Tinderbox.  (terry weismann, chris yeh)
 #
-# This was replaced by a perl 'port' of the above, writen by 
+# This was replaced by a perl 'port' of the above, writen by
 # preed@netscape.com; good things: no need for system() call, and now it's
 # all in perl, so we don't have to do OS checking like before.
 
 	open(LOG, "$logfile") || die "Couldn't open logfile: $!\n";
 	open(OUTLOG, ">${logfile}.last") || die "Couldn't open logfile: $!\n";
-	    
+
 	print OUTLOG $/;
 	print OUTLOG "tinderbox: tree: $BuildTree\n";
 	print OUTLOG "tinderbox: builddate: $StartTime\n";
@@ -152,26 +152,26 @@ sub BuildIt {
 	print OUTLOG "tinderbox: build: $BuildName $fe\n";
 	print OUTLOG "tinderbox: errorparser: unix\n";
 	print OUTLOG "tinderbox: buildfamily: unix\n";
-	print OUTLOG "tinderbox: END\n";	    
+	print OUTLOG "tinderbox: END\n";
 	print OUTLOG $/;
 
 	while (<LOG>) {
 	    my $q = 0;
-	    
+
 	    for (;;) {
 		my $val = $q * 1000;
 		my $Output = substr($_, $val, 1000);
-		
+
 		last if $Output eq undef;
-		
+
 		$Output =~ s/^\.$//g;
 		$Output =~ s/\n//g;
 		print OUTLOG "$Output\n";
 		$q++;
 	    } #EndFor
-		
+
 	} #EndWhile
-	    
+
 	close(LOG);
 	close(OUTLOG);
 
@@ -184,7 +184,7 @@ If you have SSH keys setup on the tinderbox server, you can manually send
 with 'ssh $Tinderbox_server tinderbox_receive < ${logfile}.last'
 EOF
 	}
-	
+
 	unlink("$logfile");
 	print "Finished building for tinderbox",$/;
 
@@ -226,7 +226,7 @@ sub PrintEnv {
 		print LOG <F>;
 		close F;
 	}
-		
+
 } #EndSub-PrintEnv
 
 sub SetupPath {
@@ -255,7 +255,7 @@ sub configure {
         close(CONFIGURE);
 	return ! $?;
 }
-	
+
 sub make {
         # Building
         print LOG "make 2>&1\n";

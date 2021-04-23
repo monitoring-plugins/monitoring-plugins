@@ -1,19 +1,19 @@
 /*****************************************************************************
-* 
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 #include "common.h"
@@ -167,7 +167,7 @@ main (int argc, char **argv)
 	}
 	ok(found == 0, "first element successfully deleted");
 	found = 0;
-	
+
 	p=paths;
 	while (p) {
 		if (! strcmp(p->name, "/tmp"))
@@ -203,9 +203,9 @@ main (int argc, char **argv)
 }
 
 
-void 
+void
 np_test_mount_entry_regex (struct mount_entry *dummy_mount_list, char *regstr, int cflags, int expect, char *desc)
-{	
+{
 	int matches = 0;
 	regex_t re;
 	struct mount_entry *me;
@@ -214,7 +214,7 @@ np_test_mount_entry_regex (struct mount_entry *dummy_mount_list, char *regstr, i
 			if(np_regex_match_mount_entry(me,&re))
 				matches++;
 		}
-		ok( matches == expect, 
+		ok( matches == expect,
 	    	    "%s '%s' matched %i/3 entries. ok: %i/3",
 		    desc, regstr, expect, matches);
 

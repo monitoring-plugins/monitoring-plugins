@@ -82,7 +82,7 @@ AC_DEFUN([np_check_lib_mariadbclient],
 ])
 
 dnl Will take $1, find last occurrance of -LDIR and add DIR to LD_RUN_PATH
-AC_DEFUN([np_add_to_runpath], 
+AC_DEFUN([np_add_to_runpath],
 [
   dnl Need [[ ]] so autoconf gives us just one set
   np_libdir=`echo "$1" | sed -e 's/.*-L\([[^ ]]*\) .*/\1/'`

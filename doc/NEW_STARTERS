@@ -16,7 +16,7 @@ Need to know:
   - Developer: Project role: Developer, CVS access, Shell access, Release Tech (no), Task Manager (A&T),
                Forums (Moderator), Doc Manager (Editor)
                Update Developer Permissions.
-	       For each tracker, set to Technician (need to add all trackers first, then change to 
+	       For each tracker, set to Technician (need to add all trackers first, then change to
 		technician for each one)
 3. Create account on project server
   - Add public ssh keys

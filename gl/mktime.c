@@ -599,7 +599,7 @@ weak_alias (mktime, timelocal)
 libc_hidden_def (mktime)
 libc_hidden_weak (timelocal)
 #endif
-
+
 #if DEBUG
 
 static int
@@ -733,7 +733,7 @@ main (int argc, char **argv)
 }
 
 #endif /* DEBUG */
-
+
 /*
 Local Variables:
 compile-command: "gcc -DDEBUG -I. -Wall -W -O2 -g mktime.c -o mktime"

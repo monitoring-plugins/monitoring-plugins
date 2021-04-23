@@ -14,7 +14,7 @@ sub print_help ();
 sub print_usage ();
 
 $ENV{'PATH'}='@TRUSTED_PATH@';
-$ENV{'BASH_ENV'}=''; 
+$ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
 Getopt::Long::Configure('bundling');

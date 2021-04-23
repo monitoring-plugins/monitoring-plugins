@@ -2,7 +2,7 @@
 #
 # Hacked version of the sample code from the perlembedded doco.
 #
-# Only major changes are to separate the compiling and cacheing from 
+# Only major changes are to separate the compiling and cacheing from
 # the execution so that the cache can be kept in "non-volatile" parent
 # process while the execution is done from "volatile" child processes
 # and that STDOUT is redirected to a file by means of a tied filehandle
@@ -22,7 +22,7 @@ package OutputTrap;
 # Simply redirects STDOUT to a temporary file associated with the
 # current child/grandchild process.
 #
- 
+
 use strict;
 # Perl before 5.6 does not seem to have warnings.pm ???
 #use warnings;
@@ -92,7 +92,7 @@ sub CLOSE {
 
 	# cater for scripts that have embedded EOF symbols (__END__)
 	$sub =~ s/__END__/\;}\n__END__/;
-  
+
         #wrap the code into a subroutine inside our unique package
         my $eval = qq{
 		package main;
@@ -128,7 +128,7 @@ sub CLOSE {
      tie (*STDOUT, 'OutputTrap', $tmpfname);
 
      my @a = split(/ /,$ar);
-     
+
      eval {$res = $package->hndlr(@a);};
 
      if ($@){

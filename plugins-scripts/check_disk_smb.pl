@@ -37,7 +37,7 @@ sub print_usage ();
 $PROGNAME = "check_disk_smb";
 
 $ENV{'PATH'}='@TRUSTED_PATH@';
-$ENV{'BASH_ENV'}=''; 
+$ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
 Getopt::Long::Configure('bundling');
@@ -176,7 +176,7 @@ my $perfdata = "";
 my @lines = undef;
 
 # Just in case of problems, let's not hang the monitoring system
-$SIG{'ALRM'} = sub { 
+$SIG{'ALRM'} = sub {
 	print "No Answer from Client\n";
     $SIG{'INT'} = 'IGNORE';
     kill(-2, $$);
@@ -209,7 +209,7 @@ alarm(0);
 $_ = $lines[$#lines-1];
 #print "$_\n";
 
-#Process the last line to get free space.  
+#Process the last line to get free space.
 #If line does not match required regexp, return an UNKNOWN error
 if (/\s*(\d*) blocks of size (\d*)\. (\d*) blocks available/) {
 
@@ -291,7 +291,7 @@ print "$state\n" if ($verbose);
 exit $ERRORS{$state};
 
 sub print_usage () {
-	print "Usage: $PROGNAME -H <host> -s <share> -u <user> -p <password> 
+	print "Usage: $PROGNAME -H <host> -s <share> -u <user> -p <password>
       -w <warn> -c <crit> [-W <workgroup>] [-P <port>] [-a <IP>]\n";
 }
 
@@ -318,12 +318,12 @@ Perl Check SMB Disk plugin for monitoring
    Password to log in to server. (Defaults to an empty password)
 -w, --warning=INTEGER or INTEGER[kMG]
    Percent of used space at which a warning will be generated (Default: 85%)
-      
+
 -c, --critical=INTEGER or INTEGER[kMG]
    Percent of used space at which a critical will be generated (Defaults: 95%)
 -P, --port=INTEGER
    Port to be used to connect to. Some Windows boxes use 139, others 445 (Defaults to smbclient default)
-   
+
    If thresholds are followed by either a k, M, or G then check to see if that
    much disk space is available (kilobytes, Megabytes, Gigabytes)
 

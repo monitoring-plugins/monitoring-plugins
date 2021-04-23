@@ -18,7 +18,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
-
+
 #ifndef _LIBC
 # include <config.h>
 #endif
@@ -96,11 +96,11 @@ int optopt = '?';
 
 static struct _getopt_data getopt_data;
 
-
+
 #if defined HAVE_DECL_GETENV && !HAVE_DECL_GETENV
 extern char *getenv ();
 #endif
-
+
 #ifdef _LIBC
 /* Stored original parameters.
    XXX This is no good solution.  We should rather copy the args so
@@ -285,7 +285,7 @@ _getopt_initialize (int argc _GL_UNUSED,
 
   return optstring;
 }
-
+
 /* Scan elements of ARGV (whose length is ARGC) for option characters
    given in OPTSTRING.
 
@@ -1173,7 +1173,7 @@ __posix_getopt (int argc, char *const *argv, const char *optstring)
 }
 #endif
 
-
+
 #ifdef TEST
 
 /* Compile with -DTEST to make an executable for use in testing

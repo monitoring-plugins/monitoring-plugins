@@ -216,7 +216,7 @@ typedef unsigned long int reg_syntax_t;
    stored in the pattern buffer, so changing this does not affect
    already-compiled regexps.  */
 extern reg_syntax_t re_syntax_options;
-
+
 #ifdef __USE_GNU
 /* Define combinations of the above bits for the standard possibilities.
    (The [[[ comments delimit what gets put into the Texinfo file, so
@@ -400,7 +400,7 @@ typedef enum
 #define REG_EEND	_REG_EEND
 #define REG_ESIZE	_REG_ESIZE
 #define REG_ERPAREN	_REG_ERPAREN
-
+
 /* This data structure represents a compiled pattern.  Before calling
    the pattern compiler, the fields 'buffer', 'allocated', 'fastmap',
    and 'translate' can be set.  After the pattern has been compiled,
@@ -486,7 +486,7 @@ struct re_pattern_buffer
 };
 
 typedef struct re_pattern_buffer regex_t;
-
+
 /* Type for byte offsets within the string.  POSIX mandates this.  */
 #ifdef _REGEX_LARGE_OFFSETS
 /* POSIX 1003.1-2008 requires that regoff_t be at least as wide as
@@ -528,7 +528,7 @@ typedef struct
   regoff_t rm_so;  /* Byte offset from string's start to substring's start.  */
   regoff_t rm_eo;  /* Byte offset from string's start to substring's end.  */
 } regmatch_t;
-
+
 /* Declarations for routines.  */
 
 #ifdef __USE_GNU

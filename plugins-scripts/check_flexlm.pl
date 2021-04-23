@@ -1,6 +1,6 @@
 #!@PERL@ -w
 #
-# usage: 
+# usage:
 #    check_flexlm.pl license_file
 #
 # Check available flexlm license managers.
@@ -45,7 +45,7 @@ sub print_help ();
 sub print_usage ();
 
 $ENV{'PATH'}='@TRUSTED_PATH@';
-$ENV{'BASH_ENV'}=''; 
+$ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
 Getopt::Long::Configure('bundling');
@@ -98,12 +98,12 @@ if ( ! open(CMD,"$lmstat -c $licfile |") ) {
 }
 
 my $serverup = 0;
-my @upsrv; 
+my @upsrv;
 my @downsrv;  # list of servers up and down
 
 #my ($ls1,$ls2,$ls3,$lf1,$lf2,$lf3,$servers);
- 
-# key off of the term "license server" and 
+
+# key off of the term "license server" and
 # grab the status.  Keep going until "Vendor" is found
 #
 
@@ -116,7 +116,7 @@ while ( <CMD> ) {
 	next if (/^Flexible/); # ignore 2nd line - timestamp
 	(/^Vendor/) && last;   # ignore Vendor daemon status
 	print $_ if $verbose;
-	
+
 		if ($_ =~ /license server /) {	# matched 1 (of possibly 3) license server
 			s/^\s*//;					#some servers start at col 1, other have whitespace
 										# strip staring whitespace if any
@@ -125,13 +125,13 @@ while ( <CMD> ) {
 				push(@upsrv, $1);
 				print "up:$1:\n" if $verbose;
 			} else {
-				$_ =~ /^(.*):/; 
+				$_ =~ /^(.*):/;
 				push(@downsrv, $1);
 				print "down:$1:\n" if $verbose;
 			}
-		
+
 		}
-	
+
 
 #	if ( /^License server status: [0-9]*@([-0-9a-zA-Z_]*),[0-9]*@([-0-9a-zA-Z_]*),[0-9]*@([-0-9a-zA-Z_]*)/ ) {
 #	$ls1 = $1;
@@ -162,7 +162,7 @@ while ( <CMD> ) {
 
 #if ( $serverup == 0 ) {
 #    print " license server not running\n";
-#    exit 2;	
+#    exit 2;
 #}
 
 close CMD;
@@ -179,7 +179,7 @@ if ($verbose) {
 }
 
 #
-# print list of servers which are up. 
+# print list of servers which are up.
 #
 if (scalar(@upsrv) > 0) {
    print "License Servers running:";

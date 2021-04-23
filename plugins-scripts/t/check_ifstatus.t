@@ -33,7 +33,7 @@ SKIP: {
 	$res = NPTest->testCmd( "./$plugin" );
 	is( $res->return_code, 3, "No arguments" );
 	like( $res->output, '/usage/', "Output contains usage" );
-	
+
 	$res = NPTest->testCmd( "./$plugin -H fakehost -v 3 --seclevel rubbish --secname foobar" );
 	is( $res->return_code, 3, "invalid seclevel" );
 	like( $res->output, "/Must define a valid security level/", "Output contains 'Must define a valid security level'" );
@@ -45,7 +45,7 @@ SKIP: {
 		like($res->output, '/^.*host.*interfaces up/', "String contains host.*interfaces up");
 
 		$res = NPTest->testCmd( "./$plugin -H $host_snmp -C rubbish");
-		cmp_ok( $res->return_code, '==', 2, "Exit CRITICAL for community 'rubbish'" ); 
+		cmp_ok( $res->return_code, '==', 2, "Exit CRITICAL for community 'rubbish'" );
 
 	}
 
@@ -54,13 +54,13 @@ SKIP: {
 	SKIP: {
 		skip "no non responsive host defined", 1 if ( ! $host_nonresponsive );
 		$res = NPTest->testCmd( "./$plugin -H $host_nonresponsive -C np_foobar");
-		cmp_ok( $res->return_code, '==', 2, "Exit CRITICAL with non responsive host" ); 
+		cmp_ok( $res->return_code, '==', 2, "Exit CRITICAL with non responsive host" );
 	}
 
 	SKIP: {
 		skip "no invalid host defined", 2 if ( ! $hostname_invalid );
 		$res = NPTest->testCmd( "./$plugin -H $hostname_invalid -C np_foobar");
-		cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN with invalid host" ); 
+		cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN with invalid host" );
 		like($res->output, "/Unable to resolve.*$hostname_invalid/", "String matches unable to resolve.*$hostname_invalid");
 	}
 

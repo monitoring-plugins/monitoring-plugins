@@ -1,10 +1,10 @@
 #ifndef _UTILS_CMD_
 #define _UTILS_CMD_
 
-/* 
+/*
  * Header file for Monitoring Plugins utils_cmd.c
- * 
- * 
+ *
+ *
  */
 
 /** types **/

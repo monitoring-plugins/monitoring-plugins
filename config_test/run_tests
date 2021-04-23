@@ -26,5 +26,5 @@ while [[ $run -le $total_runs ]] ; do
 	run=$(($run+1))
 	[[ $total_runs -gt 1 ]] && print -u2 -n "."
 done
-[[ $total_runs -gt 1 ]] && print -u2 
+[[ $total_runs -gt 1 ]] && print -u2
 exit 0

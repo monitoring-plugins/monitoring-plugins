@@ -1,7 +1,7 @@
 #!@PERL@ -w
 
 # check_mailq - check to see how many messages are in the smtp queue awating
-#   transmittal.  
+#   transmittal.
 #
 # Initial version support sendmail's mailq command
 #  Support for mutiple sendmail queues (Carlos Canau)
@@ -42,7 +42,7 @@ sub print_usage ();
 sub process_arguments ();
 
 $ENV{'PATH'}='@TRUSTED_PATH@';
-$ENV{'BASH_ENV'}=''; 
+$ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 $PROGNAME = "check_mailq";
 $mailq = 'sendmail';	# default
@@ -78,7 +78,7 @@ alarm($opt_t);
 
 if ($mailq eq "sendmail") {
 
-	## open mailq 
+	## open mailq
 	if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
 		if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ | " ) ) {
 			print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
@@ -143,9 +143,9 @@ if ($mailq eq "sendmail") {
 ##/var/spool/mqueue/qF/df is empty
 ##                Total Requests: 1
 
-	
+
 	while (<MAILQ>) {
-	
+
 		# match email addr on queue listing
 		if ( (/<.*@.*\.(\w+\.\w+)>/) || (/<.*@(\w+\.\w+)>/) ) {
 			my $domain = $1;
@@ -155,21 +155,21 @@ if ($mailq eq "sendmail") {
 			}
 			next;
 		}
-	
+
 		#
 		# ...
-		# sendmail considers a message with more than one destiny, say N, to the same MX 
+		# sendmail considers a message with more than one destiny, say N, to the same MX
 		# to have N messages in queue.
 		# we will only consider one in this code
 		if (( /\s\(reply:\sread\serror\sfrom\s.*\.(\w+\.\w+)\.$/ ) || ( /\s\(reply:\sread\serror\sfrom\s(\w+\.\w+)\.$/ ) ||
 			( /\s\(timeout\swriting\smessage\sto\s.*\.(\w+\.\w+)\.:/ ) || ( /\s\(timeout\swriting\smessage\sto\s(\w+\.\w+)\.:/ ) ||
-			( /\s\(host\smap:\slookup\s\(.*\.(\w+\.\w+)\):/ ) || ( /\s\(host\smap:\slookup\s\((\w+\.\w+)\):/ ) || 
+			( /\s\(host\smap:\slookup\s\(.*\.(\w+\.\w+)\):/ ) || ( /\s\(host\smap:\slookup\s\((\w+\.\w+)\):/ ) ||
 			( /\s\(Deferred:\s.*\s.*\.(\w+\.\w+)\.\)/ ) || ( /\s\(Deferred:\s.*\s(\w+\.\w+)\.\)/ ) ) {
-	
+
 			print "$utils::PATH_TO_MAILQ = dstdomain = $1 \n" if $verbose ;
 			$dstdomains{$1} ++;
 		}
-	
+
 		if (/\s+\(I\/O\serror\)/) {
 			print "$utils::PATH_TO_MAILQ = dstdomain = UNKNOWN \n" if $verbose ;
 			$dstdomains{'UNKNOWN'} ++;
@@ -191,13 +191,13 @@ if ($mailq eq "sendmail") {
 			# multi queue: last line
 			$msg_q = $1 ;
 		}
-	
+
 	}
-	
+
 
 	## close mailq
 
-	close (MAILQ); 
+	close (MAILQ);
 
 	if ( $? ) {
 		print "CRITICAL: Error code ".($?>>8)." returned from $utils::PATH_TO_MAILQ",$/;
@@ -216,7 +216,7 @@ if ($mailq eq "sendmail") {
 		$state = $ERRORS{'OK'};
 	} else {
 		print "msg_q = $msg_q warn=$opt_w crit=$opt_c\n" if $verbose;
-	
+
 		# overall queue length
 		if ($msg_q < $opt_w) {
 			$msg = "OK: $mailq mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
@@ -231,12 +231,12 @@ if ($mailq eq "sendmail") {
 
 		# check for domain specific queue lengths if requested
 		if (defined $opt_W) {
-		
+
 			# Apply threshold to queue lengths FROM domain
 			my @srckeys = sort { $srcdomains{$b} <=> $srcdomains{$a} } keys %srcdomains;
   	  my $srcmaxkey = $srckeys[0];
     	print "src max is $srcmaxkey with $srcdomains{$srcmaxkey} messages\n" if $verbose;
-		
+
 			if ($srcdomains{$srcmaxkey} >= $opt_W && $srcdomains{$srcmaxkey} < $opt_C) {
 				if ($state == $ERRORS{'OK'}) {
 					$msg = "WARNING: $srcdomains{$srcmaxkey} messages in queue FROM $srcmaxkey (threshold W = $opt_W)";
@@ -270,7 +270,7 @@ if ($mailq eq "sendmail") {
 			my @dstkeys = sort { $dstdomains{$b} <=> $dstdomains{$a} } keys %dstdomains;
 	    my $dstmaxkey = $dstkeys[0];
   	  print "dst max is $dstmaxkey with $dstdomains{$dstmaxkey} messages\n" if $verbose;
-		
+
 			if ($dstdomains{$dstmaxkey} >= $opt_W && $dstdomains{$dstmaxkey} < $opt_C) {
 				if ($state == $ERRORS{'OK'}) {
 					$msg = "WARNING: $dstdomains{$dstmaxkey} messages in queue TO $dstmaxkey (threshold W = $opt_W)";
@@ -389,7 +389,7 @@ elsif ( $mailq eq "postfix" ) {
 } # end of ($mailq eq "postfix")
 elsif ( $mailq eq "qmail" ) {
 
-	# open qmail-qstat 
+	# open qmail-qstat
 	if ( defined $utils::PATH_TO_QMAIL_QSTAT && -x $utils::PATH_TO_QMAIL_QSTAT ) {
 		if (! open (MAILQ, "$sudo $utils::PATH_TO_QMAIL_QSTAT | " ) ) {
 			print "ERROR: could not open $utils::PATH_TO_QMAIL_QSTAT \n";
@@ -441,7 +441,7 @@ elsif ( $mailq eq "qmail" ) {
 		$state = $ERRORS{'OK'};
 	} else {
 		print "msg_q = $msg_q warn=$opt_w crit=$opt_c\n" if $verbose;
-		
+
 		# overall queue length
 		if ($msg_q < $opt_w) {
 			$msg = "OK: $mailq mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
@@ -456,7 +456,7 @@ elsif ( $mailq eq "qmail" ) {
 
 		# check messages not yet preprocessed (only compare is $opt_W and $opt_C
 		# are defined)
-		
+
 		if (defined $opt_W) {
 			$msg .= "[Preprocessed = $msg_p]";
 			if ($msg_p >= $opt_W && $msg_p < $opt_C ) {
@@ -465,13 +465,13 @@ elsif ( $mailq eq "qmail" ) {
 				$state = $ERRORS{"CRITICAL"} ;
 			}
 		}
-	}				
-		
+	}
+
 
 
 } # end of ($mailq eq "qmail")
 elsif ( $mailq eq "exim" ) {
-	## open mailq 
+	## open mailq
 	if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
 		if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ | " ) ) {
 			print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
@@ -646,7 +646,7 @@ sub process_arguments(){
 			$mailq = 'sendmail';
 		}
 	}
-		
+
 	return $ERRORS{'OK'};
 }
 

@@ -435,7 +435,7 @@
       || (defined LOAD_AVE_TYPE && ! defined __VMS))
 #  include <fcntl.h>
 # endif
-
+
 /* Avoid static vars inside a function since in HPUX they dump as pure.  */
 
 # ifdef NeXT
@@ -469,7 +469,7 @@ static kvm_t *kd;
 #  endif /* SUNOS_5 */
 
 # endif /* LOAD_AVE_TYPE && !HAVE_LIBKSTAT */
-
+
 /* Put the 1 minute, 5 minute and 15 minute load averages
    into the first NELEM elements of LOADAVG.
    Return the number written (never more than 3, but may be less than NELEM),

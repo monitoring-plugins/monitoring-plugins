@@ -1,14 +1,14 @@
-/* 
+/*
  *
  *  MINI_EPN.C - Mini Embedded Perl Nagios
  *  Contributed by Stanley Hopcroft
  *  Modified by Douglas Warner
  *  Last Modified: 05/02/2002
  *
- *  This is a sample mini embedded Perl interpreter (hacked out checks.c and 
- *  perlembed) for use in testing Perl plugins. 
+ *  This is a sample mini embedded Perl interpreter (hacked out checks.c and
+ *  perlembed) for use in testing Perl plugins.
  *
- *  It can be compiled with the following command (see 'man perlembed' for 
+ *  It can be compiled with the following command (see 'man perlembed' for
  *  more info):
  *
  *  gcc -omini_epn mini_epn.c `perl -MExtUtils::Embed -e ccopts -e ldopts`
@@ -50,7 +50,7 @@ extern "C" {
 #    define EXTERN_C extern
 #  endif
 #endif
- 
+
 
 EXTERN_C void xs_init _((void));
 
@@ -87,7 +87,7 @@ int main(int argc, char **argv, char **env)
 #ifdef THREADEDPERL
 	dTHX;
 #endif
-	dSP; 
+	dSP;
 
 	if ((perl=perl_alloc())==NULL) {
 		snprintf(buffer,sizeof(buffer),"Error: Could not allocate memory for embedded Perl interpreter!\n");
@@ -120,30 +120,30 @@ int main(int argc, char **argv, char **env)
 			perl_call_argv("Embed::Persistent::eval_file", G_DISCARD | G_EVAL, args);
 
 			perl_call_argv("Embed::Persistent::run_package", G_DISCARD | G_EVAL, args);
-			
+
 			/* check return status  */
 			if(SvTRUE(ERRSV)){
 				pclose_result=-2;
 				printf("embedded perl ran %s with error %s\n",fname,SvPV(ERRSV,PL_na));
 			}
-			
+
 			/* read back stdout from script */
 			fp=fopen(tmpfname, "r");
-			
+
 			/* default return string in case nothing was returned */
 			strcpy(plugin_output,"(No output!)");
-			
+
 			fgets(plugin_output,sizeof(plugin_output)-1,fp);
 			plugin_output[sizeof(plugin_output)-1]='\x0';
 			fclose(fp);
-			unlink(tmpfname);    
+			unlink(tmpfname);
 			printf("embedded perl plugin output was %d,%s\n",pclose_result, plugin_output);
 
 		}
 
 	}
 
-	
+
 	PL_perl_destruct_level = 0;
 	perl_destruct(perl);
 	perl_free(perl);

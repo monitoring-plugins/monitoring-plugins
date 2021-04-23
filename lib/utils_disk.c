@@ -1,29 +1,29 @@
 /*****************************************************************************
-* 
+*
 * Library for check_disk
-* 
+*
 * License: GPL
 * Copyright (c) 1999-2007 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains utilities for check_disk. These are tested by libtap
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 #include "common.h"
@@ -59,7 +59,7 @@ np_add_parameter(struct parameter_list **list, const char *name)
   new_path->freeinodes_percent = NULL;
   new_path->group = NULL;
   new_path->dfree_pct = -1;
-  new_path->dused_pct = -1; 
+  new_path->dused_pct = -1;
   new_path->total = 0;
   new_path->available = 0;
   new_path->available_to_root = 0;
