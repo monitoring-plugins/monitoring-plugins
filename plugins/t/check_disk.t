@@ -26,8 +26,8 @@ if ($mountpoint_valid eq "" or $mountpoint2_valid eq "") {
 	plan tests => 78;
 }
 
-$result = NPTest->testCmd( 
-	"./check_disk -w 1% -c 1% -p $mountpoint_valid -w 1% -c 1% -p $mountpoint2_valid" 
+$result = NPTest->testCmd(
+	"./check_disk -w 1% -c 1% -p $mountpoint_valid -w 1% -c 1% -p $mountpoint2_valid"
 	);
 cmp_ok( $result->return_code, "==", 0, "Checking two mountpoints (must have at least 1% free in space and inodes)");
 my $c = 0;
@@ -102,8 +102,8 @@ is ($crit_percth_data, int((1-10/100)*$total_percth_data), "Wrong critical in pe
 
 
 # Check when order of mount points are reversed, that perf data remains same
-$result = NPTest->testCmd( 
-	"./check_disk -w 1% -c 1% -p $mountpoint2_valid -w 1% -c 1% -p $mountpoint_valid" 
+$result = NPTest->testCmd(
+	"./check_disk -w 1% -c 1% -p $mountpoint2_valid -w 1% -c 1% -p $mountpoint_valid"
 	);
 @_ = sort(split(/ /, $result->perf_output));
 is_deeply( \@perf_data, \@_, "perf data for both filesystems same when reversed");
@@ -133,8 +133,8 @@ cmp_ok( $result->return_code, '==', 0, "Old syntax okay" );
 $result = NPTest->testCmd( "./check_disk -w 1% -c 1% -p $more_free" );
 cmp_ok( $result->return_code, "==", 0, "At least 1% free" );
 
-$result = NPTest->testCmd( 
-	"./check_disk -w 1% -c 1% -p $more_free -w 100% -c 100% -p $less_free" 
+$result = NPTest->testCmd(
+	"./check_disk -w 1% -c 1% -p $more_free -w 100% -c 100% -p $less_free"
 	);
 cmp_ok( $result->return_code, "==", 2, "Get critical on less_free mountpoint $less_free" );
 like( $result->output, $failureOutput, "Right output" );
@@ -150,14 +150,14 @@ $result = NPTest->testCmd(
 	);
 cmp_ok( $result->return_code, '==', 0, "Get ok on more_free mountpoint, when checking avg_free");
 
-$result = NPTest->testCmd( 
-	"./check_disk -w $avg_free% -c 0% -p $less_free -w $avg_free% -c $avg_free% -p $more_free" 
+$result = NPTest->testCmd(
+	"./check_disk -w $avg_free% -c 0% -p $less_free -w $avg_free% -c $avg_free% -p $more_free"
 	);
 cmp_ok( $result->return_code, "==", 1, "Combining above two tests, get warning");
 my $all_disks = $result->output;
 
 $result = NPTest->testCmd(
-	"./check_disk -e -w $avg_free% -c 0% -p $less_free -w $avg_free% -c $avg_free% -p $more_free" 
+	"./check_disk -e -w $avg_free% -c 0% -p $less_free -w $avg_free% -c $avg_free% -p $more_free"
 	);
 isnt( $result->output, $all_disks, "-e gives different output");
 
@@ -239,7 +239,7 @@ TODO: {
 	cmp_ok( $result->return_code, '==', 3, "Invalid command line options" );
 }
 
-$result = NPTest->testCmd( 
+$result = NPTest->testCmd(
 	"./check_disk -p $mountpoint_valid -w 10% -c 15%"
 	);
 cmp_ok( $result->return_code, "==", 3, "Invalid options: -p must come after thresholds" );
@@ -321,7 +321,7 @@ cmp_ok( $result->return_code, '==', 1, "grouping: exit warning if the sum of fre
 $result = NPTest->testCmd( "./check_disk -w ". ($free_mb_on_all - 1) ." -c ". ($free_mb_on_all - 1) ." -g group -p $mountpoint_valid -p $mountpoint2_valid" );
 cmp_ok( $result->return_code, '==', 0, "grouping: exit ok if the sum of free megs on mp1+mp2 is more than warn/crit");
 
-# grouping: exit unknown if group name is given after -p 
+# grouping: exit unknown if group name is given after -p
 $result = NPTest->testCmd( "./check_disk -w ". ($free_mb_on_all - 1) ." -c ". ($free_mb_on_all - 1) ." -p $mountpoint_valid -g group -p $mountpoint2_valid" );
 cmp_ok( $result->return_code, '==', 3, "Invalid options: -p must come after groupname");
 

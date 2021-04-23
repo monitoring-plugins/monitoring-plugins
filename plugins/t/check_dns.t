@@ -14,7 +14,7 @@ plan tests => 19;
 
 my $successOutput = '/DNS OK: [\.0-9]+ seconds? response time/';
 
-my $hostname_valid = getTestParameter( 
+my $hostname_valid = getTestParameter(
 			"NP_HOSTNAME_VALID",
 			"A valid (known to DNS) hostname",
 			"monitoring-plugins.org",
@@ -44,8 +44,8 @@ my $hostname_valid_reverse = getTestParameter(
 			"orwell.monitoring-plugins.org.",
 			);
 
-my $hostname_invalid = getTestParameter( 
-			"NP_HOSTNAME_INVALID", 
+my $hostname_invalid = getTestParameter(
+			"NP_HOSTNAME_INVALID",
 			"An invalid (not known to DNS) hostname",
 			"nosuchhost.altinity.com",
 			);

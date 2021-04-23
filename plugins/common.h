@@ -1,31 +1,31 @@
 /*****************************************************************************
-* 
+*
 * Monitoring Plugins common include file
-* 
+*
 * License: GPL
 * Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
 * Copyright (c) 2003-2007 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains common include files and defines used in many of
 * the plugins.
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 #ifndef _COMMON_H_
@@ -76,7 +76,7 @@
 #include <unistd.h>
 #endif
 
-/* GET_NUMBER_OF_CPUS is a macro to return 
+/* GET_NUMBER_OF_CPUS is a macro to return
    number of CPUs, if we can get that data.
    Use configure.in to test for various OS ways of
    getting that data

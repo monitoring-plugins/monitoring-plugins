@@ -1,38 +1,38 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_ntp_peer plugin
-* 
+*
 * License: GPL
 * Copyright (c) 2006 Sean Finney <seanius@seanius.net>
 * Copyright (c) 2006-2008 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_ntp_peer plugin
-* 
+*
 * This plugin checks an NTP server independent of any commandline
 * programs or external libraries.
-* 
+*
 * Use this plugin to check the health of an NTP server. It supports
 * checking the offset with the sync peer, the jitter and stratum. This
 * plugin will not check the clock offset between the local host and NTP
 * server; please use check_ntp_time for that purpose.
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 const char *progname = "check_ntp_peer";
@@ -598,7 +598,7 @@ int main(int argc, char *argv[]){
 		result = max_state_alt(result, get_status(fabs(offset), offset_thresholds));
 	}
 	oresult = result;
-	
+
 	if(do_truechimers) {
 		tresult = get_status(num_truechimers, truechimer_thresholds);
 		result = max_state_alt(result, tresult);
@@ -642,9 +642,9 @@ int main(int argc, char *argv[]){
 		xasprintf(&result_line, "%s %s %.10g secs (CRITICAL)", result_line, _("Offset"), offset);
 	} else {
 		xasprintf(&result_line, "%s %s %.10g secs", result_line, _("Offset"), offset);
-	}	
+	}
 	xasprintf(&perfdata_line, "%s", perfd_offset(offset));
-	
+
 	if (do_jitter) {
 		if (jresult == STATE_WARNING) {
 			xasprintf(&result_line, "%s, jitter=%f (WARNING)", result_line, jitter);

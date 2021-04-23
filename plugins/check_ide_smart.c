@@ -1,42 +1,42 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_ide_smart plugin
 * ide-smart 1.3 - IDE S.M.A.R.T. checking tool
-* 
+*
 * License: GPL
 * Copyright (C) 1998-1999 Ragnar Hojland Espinosa <ragnar@lightside.dhis.org>
 *               1998      Gadi Oxman <gadio@netvision.net.il>
 * Copyright (c) 2000 Robert Dale <rdale@digital-mission.com>
 * Copyright (c) 2000-2007 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_ide_smart plugin
-* 
+*
 * This plugin checks a local hard drive with the (Linux specific) SMART
 * interface
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 const char *progname = "check_ide_smart";
 const char *copyright = "1998-2007";
 const char *email = "devel@monitoring-plugins.org";
-	
+
 #include "common.h"
 #include "utils.h"
 
@@ -70,13 +70,13 @@ void print_usage (void);
 #define OPEN_MODE O_RDWR
 #endif /* __NetBSD__ */
 #include <errno.h>
-	
+
 #define NR_ATTRIBUTES	30
-	
+
 #ifndef TRUE
 #define TRUE 1
 #endif	/*  */
-	
+
 #define PREFAILURE 2
 #define ADVISORY 1
 #define OPERATIONAL 0
@@ -156,12 +156,12 @@ smart_command[] =
 	};
 
 
-/* Index to smart_command table, keep in order */ 
-enum SmartCommand 
+/* Index to smart_command table, keep in order */
+enum SmartCommand
 	{ SMART_CMD_ENABLE,
 		SMART_CMD_DISABLE,
 		SMART_CMD_IMMEDIATE_OFFLINE,
-		SMART_CMD_AUTO_OFFLINE 
+		SMART_CMD_AUTO_OFFLINE
 	};
 
 char *get_offline_text (int);
@@ -174,7 +174,7 @@ int smart_read_thresholds (int, thresholds_t *);
 int verbose = FALSE;
 
 int
-main (int argc, char *argv[]) 
+main (int argc, char *argv[])
 {
 	char *device = NULL;
 	int o, longindex;
@@ -184,14 +184,14 @@ main (int argc, char *argv[])
 	values_t values;
 	int fd;
 
-	static struct option longopts[] = { 
-		{"device", required_argument, 0, 'd'}, 
-		{"immediate", no_argument, 0, 'i'}, 
-		{"quiet-check", no_argument, 0, 'q'}, 
-		{"auto-on", no_argument, 0, '1'}, 
-		{"auto-off", no_argument, 0, '0'}, 
+	static struct option longopts[] = {
+		{"device", required_argument, 0, 'd'},
+		{"immediate", no_argument, 0, 'i'},
+		{"quiet-check", no_argument, 0, 'q'},
+		{"auto-on", no_argument, 0, '1'},
+		{"auto-off", no_argument, 0, '0'},
 		{"nagios", no_argument, 0, 'n'}, /* DEPRECATED, but we still accept it */
-		{"help", no_argument, 0, 'h'}, 
+		{"help", no_argument, 0, 'h'},
 		{"version", no_argument, 0, 'V'},
 		{0, 0, 0, 0}
 	};
@@ -204,7 +204,7 @@ main (int argc, char *argv[])
 	textdomain (PACKAGE);
 
 	while (1) {
-		
+
 		o = getopt_long (argc, argv, "+d:iq10nhVv", longopts, &longindex);
 
 		if (o == -1 || o == EOF || o == 1)
@@ -275,7 +275,7 @@ main (int argc, char *argv[])
 
 
 char *
-get_offline_text (int status) 
+get_offline_text (int status)
 {
 	int i;
 	for (i = 0; offline_status_text[i].text; i++) {
@@ -289,7 +289,7 @@ get_offline_text (int status)
 
 
 int
-smart_read_values (int fd, values_t * values) 
+smart_read_values (int fd, values_t * values)
 {
 #ifdef __linux__
 	int e;
@@ -339,7 +339,7 @@ smart_read_values (int fd, values_t * values)
 
 
 int
-nagios (values_t * p, thresholds_t * t) 
+nagios (values_t * p, thresholds_t * t)
 {
 	value_t * value = p->values;
 	threshold_t * threshold = t->thresholds;
@@ -404,7 +404,7 @@ nagios (values_t * p, thresholds_t * t)
 
 
 void
-print_value (value_t * p, threshold_t * t) 
+print_value (value_t * p, threshold_t * t)
 {
 	printf ("Id=%3d, Status=%2d {%s , %s}, Value=%3d, Threshold=%3d, %s\n",
 					p->id, p->status, p->status & 1 ? "PreFailure" : "Advisory   ",
@@ -448,7 +448,7 @@ print_values (values_t * p, thresholds_t * t)
 
 
 int
-smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0, char show_error) 
+smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0, char show_error)
 {
 	int e = STATE_UNKNOWN;
 #ifdef __linux__
@@ -503,7 +503,7 @@ smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0, char show_error)
 
 
 int
-smart_read_thresholds (int fd, thresholds_t * thresholds) 
+smart_read_thresholds (int fd, thresholds_t * thresholds)
 {
 #ifdef __linux__
 	int e;

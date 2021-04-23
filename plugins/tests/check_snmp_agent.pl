@@ -50,7 +50,7 @@ $agent->register('check_snmp_agent', $regoid, \&my_snmp_handler);
 
 sub my_snmp_handler {
 	my ($handler, $registration_info, $request_info, $requests) = @_;
-	
+
 	for (my $request = $requests; $request; $request = $request->next) {
 		my $oid = $request->getOID();
 		my $index;

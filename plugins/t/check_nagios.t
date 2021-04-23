@@ -25,7 +25,7 @@ my $result;
 
 # Did use init, but MacOSX 10.4 replaces init with launchd
 # Alternative is to insist that nagios is running to run this test
-# Reasonable to expect cron because build servers will 
+# Reasonable to expect cron because build servers will
 # invoke cron to run a build
 my $procname = "cron";
 

@@ -1,5 +1,5 @@
 STAT   UID   PID  PPID   VSZ  RSS %CPU COMMAND          COMMAND
-S        0     1     0  1504  428  0.0 init             init [2]          
+S        0     1     0  1504  428  0.0 init             init [2]
 SN       0     2     1     0    0  0.0 ksoftirqd/0      [ksoftirqd/0]
 S<       0     3     1     0    0  0.0 events/0         [events/0]
 S<       0     4     3     0    0  0.0 khelper          [khelper]

@@ -57,9 +57,9 @@ if ($pid) {
 	exec("snmpd -c tests/conf/snmpd.conf -C -f -r udp:$port_snmp");
 }
 
-END { 
+END {
 	foreach my $pid (@pids) {
-		if ($pid) { print "Killing $pid\n"; kill "INT", $pid } 
+		if ($pid) { print "Killing $pid\n"; kill "INT", $pid }
 	}
 };
 
@@ -77,7 +77,7 @@ my $res;
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.0");
 cmp_ok( $res->return_code, '==', 0, "Exit OK when querying a multi-line string" );
 like($res->output, '/^SNMP OK - /', "String contains SNMP OK");
-like($res->output, '/'.quotemeta('SNMP OK - Cisco Internetwork Operating System Software | 
+like($res->output, '/'.quotemeta('SNMP OK - Cisco Internetwork Operating System Software |
 .1.3.6.1.4.1.8072.3.2.67.0:
 "Cisco Internetwork Operating System Software
 IOS (tm) Catalyst 4000 \"L3\" Switch Software (cat4000-I9K91S-M), Version
@@ -90,7 +90,7 @@ Copyright (c) 1986-2004 by cisco Systems, Inc.
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.0 -o sysContact.0 -o .1.3.6.1.4.1.8072.3.2.67.1");
 cmp_ok( $res->return_code, '==', 0, "Exit OK when querying multi-line OIDs" );
 like($res->output, '/^SNMP OK - /', "String contains SNMP OK");
-like($res->output, '/'.quotemeta('SNMP OK - Cisco Internetwork Operating System Software ').'"?Alice"?'.quotemeta(' Kisco Outernetwork Oserating Gystem Totware | 
+like($res->output, '/'.quotemeta('SNMP OK - Cisco Internetwork Operating System Software ').'"?Alice"?'.quotemeta(' Kisco Outernetwork Oserating Gystem Totware |
 .1.3.6.1.4.1.8072.3.2.67.0:
 "Cisco Internetwork Operating System Software
 IOS (tm) Catalyst 4000 \"L3\" Switch Software (cat4000-I9K91S-M), Version
@@ -103,19 +103,19 @@ Copyright (c) 1986-2004 by cisco Systems, Inc.
 Copyleft (c) 2400-2689 by kisco Systrems, Inc."').'/m', "String contains all lines with multiple OIDs");
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.2");
-like($res->output, '/'.quotemeta('SNMP OK - This should not confuse check_snmp \"parser\" | 
+like($res->output, '/'.quotemeta('SNMP OK - This should not confuse check_snmp \"parser\" |
 .1.3.6.1.4.1.8072.3.2.67.2:
 "This should not confuse check_snmp \"parser\"
 into thinking there is no 2nd line"').'/m', "Attempt to confuse parser No.1");
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.3");
-like($res->output, '/'.quotemeta('SNMP OK - It\'s getting even harder if the line | 
+like($res->output, '/'.quotemeta('SNMP OK - It\'s getting even harder if the line |
 .1.3.6.1.4.1.8072.3.2.67.3:
 "It\'s getting even harder if the line
 ends with with this: C:\\\\"').'/m', "Attempt to confuse parser No.2");
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.4");
-like($res->output, '/'.quotemeta('SNMP OK - And now have fun with with this: \"C:\\\\\" | 
+like($res->output, '/'.quotemeta('SNMP OK - And now have fun with with this: \"C:\\\\\" |
 .1.3.6.1.4.1.8072.3.2.67.4:
 "And now have fun with with this: \"C:\\\\\"
 because we\'re not done yet!"').'/m', "Attempt to confuse parser No.3");

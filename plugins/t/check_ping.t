@@ -58,12 +58,12 @@ is( $res->return_code, 2, "Old syntax, with forced critical" );
 like( $res->output, $failureOutput, "Output OK" );
 
 
-# check_ping results will depend on whether the ping command discovered by 
+# check_ping results will depend on whether the ping command discovered by
 # ./configure has a timeout option. If it does, then the timeout will
 # be set, so check_ping will always get a response. If it doesn't
 # then check_ping will timeout. We do 2 tests for check_ping's timeout
 #  - 1 second
-#  - 15 seconds 
+#  - 15 seconds
 # The latter should be higher than normal ping timeouts, so should always give a packet loss result
 open(F, "../config.h") or die "Cannot open ../config.h";
 @_ = grep /define PING_HAS_TIMEOUT 1|define PING_PACKETS_FIRST 1/, <F>;

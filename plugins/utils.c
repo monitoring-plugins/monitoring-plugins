@@ -1,25 +1,25 @@
 /*****************************************************************************
-* 
+*
 * Library of useful functions for plugins
-* 
+*
 * License: GPL
 * Copyright (c) 2000 Karl DeBisschop (karl@debisschop.net)
 * Copyright (c) 2002-2007 Monitoring Plugins Development Team
-* 
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 #include "common.h"
@@ -352,7 +352,7 @@ strscpy (char *dest, const char *src)
  * This
  * is
  * a
- * 
+ *
  * multiline string buffer
  * ==============================
  *
@@ -365,7 +365,7 @@ strscpy (char *dest, const char *src)
  *   printf("%d %s",i++,firstword(ptr));
  *   ptr = strnl(ptr);
  * }
- * 
+ *
  * Produces the following:
  *
  * 1 This
@@ -452,7 +452,7 @@ strpcpy (char *dest, const char *src, const char *str)
  * str = strpcpy(str,"This is a line of text with no trailing newline","x");
  * str = strpcat(str,"This is a line of text with no trailing newline","x");
  * printf("%s\n",str);
- * 
+ *
  *This is a line of texThis is a line of tex
  *
  *****************************************************************************/

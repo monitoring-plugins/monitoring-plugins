@@ -3,7 +3,7 @@ NOTE: This is only a simulation!
       Keep also in mind that locking is deactivated,
       so don't depend on the relevance to the real current situation!
 Reading package lists... Done
-Building dependency tree       
+Building dependency tree
 Reading state information... Done
 The following packages will be upgraded:
   base-files debian-archive-keyring dpkg firmware-linux-free libc-bin libc-dev-bin libc6 libc6-dev linux-base

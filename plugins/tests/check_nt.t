@@ -40,7 +40,7 @@ if ($pid) {
 		my $rv = $client->recv($data, POSIX::BUFSIZ, 0);
 
 		my ($password, $command, $arg) = split('&', $data);
-		
+
 		if ($command eq "4") {
 			if ($arg eq "c") {
 				print $client "930000000&1000000000";

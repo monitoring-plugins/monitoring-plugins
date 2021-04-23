@@ -1,32 +1,32 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_mrtgtraf plugin
-* 
+*
 * License: GPL
 * Copyright (c) 1999-2007 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_mtrgtraf plugin
-* 
+*
 * This plugin will check the incoming/outgoing transfer rates of a router
 * switch, etc recorded in an MRTG log.
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 #include "common.h"
@@ -308,7 +308,7 @@ process_arguments (int argc, char **argv)
 	if (argc > c && outgoing_warning_threshold == 0) {
 		outgoing_warning_threshold = strtoul (argv[c++], NULL, 10);
 	}
-	
+
 	if (argc > c && outgoing_critical_threshold == 0) {
 		outgoing_critical_threshold = strtoul (argv[c++], NULL, 10);
 	}

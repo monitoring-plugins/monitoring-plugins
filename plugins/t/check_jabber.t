@@ -33,7 +33,7 @@ SKIP: {
 	$r = NPTest->testCmd( "./check_jabber -H $host_tcp_jabber -w 9 -c 9 -t 10" );
 	is( $r->return_code, 0, "Connected okay, within limits" );
 	like( $r->output, $jabberOK, "Output as expected" );
-	
+
 	$r = NPTest->testCmd( "./check_jabber -H $host_tcp_jabber -wt 9 -ct 9 -to 10" );
 	is( $r->return_code, 0, "Old syntax okay" );
 	like( $r->output, $jabberOK, "Output as expected" );
