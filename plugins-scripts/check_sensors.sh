@@ -46,7 +46,7 @@ case "$1" in
 		if test ${status} -eq 127; then
 			text="SENSORS UNKNOWN - command not found (did you install lmsensors?)"
 			exit=$STATE_UNKNOWN
-		elif test ${status} -ne 0; then
+		elif test "${status}" -ne 0; then
 			text="WARNING - sensors returned state $status"
 			exit=$STATE_WARNING
 		elif echo "${sensordata}" | egrep ALARM > /dev/null; then
