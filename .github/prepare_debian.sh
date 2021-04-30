@@ -65,10 +65,12 @@ ssh-keyscan localhost >> ~/.ssh/known_hosts
 touch ~/.ssh/config
 
 # start one login session, required for check_users
-( ssh -n -tt root@localhost "top" < /dev/null >/dev/null 2>&1 & )
-sleep 1
-who
-ssh root@localhost "top -b -n 1"
+#( ssh -n -tt root@localhost "top" < /dev/null >/dev/null 2>&1 & )
+ssh -tt localhost </dev/null >/dev/null 2>/dev/null &
+disown %1
+#sleep 1
+#who
+#ssh root@localhost "top -b -n 1"
 
 # snmpd
 for DIR in /usr/share/snmp/mibs /usr/share/mibs; do
