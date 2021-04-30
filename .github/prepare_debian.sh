@@ -41,8 +41,12 @@ cat /etc/hosts
 # apache
 a2enmod ssl
 a2ensite default-ssl
-make-ssl-cert generate-default-snakeoil --force-overwrite
-service apache2 start
+# replace snakeoil certs with openssl generated ones as the make-ssl-cert ones
+# seems to cause problems with our plugins
+rm /etc/ssl/certs/ssl-cert-snakeoil.pem
+rm /etc/ssl/private/ssl-cert-snakeoil.key
+openssl req -nodes -newkey rsa:2048 -x509 -sha256 -days 365 -nodes -keyout /etc/ssl/private/ssl-cert-snakeoil.key -out /etc/ssl/certs/ssl-cert-snakeoil.pem -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=$(hostname)"
+service apache2 restart
 
 # squid
 cp tools/squid.conf /etc/squid/squid.conf
