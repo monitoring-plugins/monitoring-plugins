@@ -265,7 +265,7 @@ main (int argc, char **argv)
 				}
 			}
 
-			if ((options & STAT) && (strstr (statopts, procstat)))
+			if ((options & STAT) && (strstr (procstat, statopts)))
 				resultsum |= STAT;
 			if ((options & ARGS) && procargs && (strstr (procargs, args) != NULL))
 				resultsum |= ARGS;
