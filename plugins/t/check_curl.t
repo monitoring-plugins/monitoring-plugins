@@ -193,8 +193,7 @@ SKIP: {
                 );
         cmp_ok( $res->return_code, "==", 0, "Can read https for www.e-paycobalt.com (uses AES certificate)" );
 
-
-        $res = NPTest->testCmd( "./$plugin -H www.mozilla.com -u /firefox -f follow" );
+        $res = NPTest->testCmd( "./$plugin -H www.mozilla.com -u /firefox -f curl" );
         is( $res->return_code, 0, "Redirection based on location is okay");
 
         $res = NPTest->testCmd( "./$plugin -H www.mozilla.com --extended-perfdata" );
