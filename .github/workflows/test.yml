@@ -74,4 +74,5 @@ jobs:
                 ./configure --enable-libtap --with-ipv6=no && \
                 make && \
                 make test'
-          docker volume rm tmp-vol
+          docker container prune -f
+          docker volume prune -f
