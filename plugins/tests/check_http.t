@@ -91,6 +91,8 @@ if ($pid) {
 				exit;
 			}
 		} else {
+			# closing the connection after -C cert checks make the daemon exit with a sigpipe otherwise
+			local $SIG{'PIPE'} = 'IGNORE';
 			my $d = HTTP::Daemon::SSL->new(
 				LocalPort => $port_https,
 				LocalAddr => "127.0.0.1",
@@ -415,22 +417,24 @@ sub run_common_tests {
 
 	# stickyport - on full urlS port is set back to 80 otherwise
 	$cmd = "$command -f stickyport -u /redir_external -t 5 -s redirected";
+	alarm(2);
 	eval {
 		local $SIG{ALRM} = sub { die "alarm\n" };
-		alarm(2);
 		$result = NPTest->testCmd( $cmd );
-		alarm(0);	};
+	};
 	isnt( $@, "alarm\n", $cmd );
+	alarm(0);
 	is( $result->return_code, 0, $cmd );
 
 	# Let's hope there won't be any web server on :80 returning "redirected"!
 	$cmd = "$command -f sticky -u /redir_external -t 5 -s redirected";
+	alarm(2);
 	eval {
 		local $SIG{ALRM} = sub { die "alarm\n" };
-		alarm(2);
 		$result = NPTest->testCmd( $cmd );
-		alarm(0); };
+	};
 	isnt( $@, "alarm\n", $cmd );
+	alarm(0);
 	isnt( $result->return_code, 0, $cmd );
 
 	# Test an external address - timeout
