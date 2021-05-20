@@ -126,8 +126,6 @@ if ($pid) {
 			exit;
 		}
 	}
-	# give our webservers some time to startup
-	sleep(1);
 } else {
 	# Child
 	#print "child\n";
@@ -139,6 +137,9 @@ if ($pid) {
 	run_server( $d );
 	exit;
 }
+
+# give our webservers some time to startup
+sleep(3);
 
 # Run the same server on http and https
 sub run_server {
