@@ -8,29 +8,7 @@ on:
 
 jobs:
 #  macos:
-#    name: Running tests on ${{ matrix.os }}
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        os:
-#          - macos-10.15
-#    runs-on: ${{ matrix.os }}
-#    steps:
-#
-#      - name: Git clone repository
-#        uses: actions/checkout@v2
-#      #- name: Setup tmate session, see https://github.com/marketplace/actions/debugging-with-tmate
-#      #  uses: mxschmitt/action-tmate@v3
-#      - name: Prepare machine
-#        run:  |
-#          brew install automake
-#      - name: Run the tests
-#        run:  |
-#          tools/setup \
-#          && ./configure --enable-libtap \
-#          && make \
-#          && make test
-
+#    ...
   linux:
     runs-on: ubuntu-latest
     name: Running tests on ${{ matrix.distro }}
@@ -38,22 +16,12 @@ jobs:
       fail-fast: false
       matrix:
         distro:
-          #- 'debian:10'
           - 'debian:testing'
-          #- 'ubuntu:20.10'
-          #- 'centos:7'
-          #- 'centos:8'
+          #...
         include:
-          #- distro: 'debian:10'
-          #  prepare: .github/prepare_debian.sh
           - distro: 'debian:testing'
             prepare: .github/prepare_debian.sh
-          #- distro: 'ubuntu:20.10'
-          #  prepare: .github/prepare_debian.sh
-          #- distro: 'centos:7'
-          #  prepare: .github/prepare_centos.sh
-          #- distro: 'centos:8'
-          #  prepare: .github/prepare_centos.sh
+          #...
     steps:
       - name: Git clone repository
         uses: actions/checkout@v2
