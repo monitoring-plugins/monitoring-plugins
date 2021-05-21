@@ -84,7 +84,7 @@ like( $res->output, '/^Host: testhost:8001\s*$/ms', "Host Header OK" );
 like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
 
 SKIP: {
-        skip "No internet access", 3 if $internet_access eq "no";
+        skip "No internet access", 4 if $internet_access eq "no";
 
         $res = NPTest->testCmd("./$plugin -v -H $host_tls_http -S");
         like( $res->output, '/^Host: '.$host_tls_http.'\s*$/ms', "Host Header OK" );
@@ -120,7 +120,7 @@ SKIP: {
         cmp_ok( $res->return_code, "==", 0, "And also when not found");
 }
 SKIP: {
-        skip "No internet access", 16 if $internet_access eq "no";
+        skip "No internet access", 28 if $internet_access eq "no";
 
         $res = NPTest->testCmd(
                 "./$plugin --ssl $host_tls_http"
@@ -193,8 +193,7 @@ SKIP: {
                 );
         cmp_ok( $res->return_code, "==", 0, "Can read https for www.e-paycobalt.com (uses AES certificate)" );
 
-
-        $res = NPTest->testCmd( "./$plugin -H www.mozilla.com -u /firefox -f follow" );
+        $res = NPTest->testCmd( "./$plugin -H www.mozilla.com -u /firefox -f curl" );
         is( $res->return_code, 0, "Redirection based on location is okay");
 
         $res = NPTest->testCmd( "./$plugin -H www.mozilla.com --extended-perfdata" );
