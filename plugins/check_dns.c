@@ -41,7 +41,7 @@ const char *email = "devel@monitoring-plugins.org";
 
 int process_arguments (int, char **);
 int validate_arguments (void);
-int error_scan (char *, int*);
+int error_scan (char *, int *);
 int ip_match_cidr(const char *, const char *);
 unsigned long ip2long(const char *);
 void print_help (void);
@@ -352,7 +352,7 @@ ip2long(const char* src) {
 }
 
 int
-error_scan (char *input_buffer, int* is_nxdomain)
+error_scan (char *input_buffer, int *is_nxdomain)
 {
 
   const int nxdomain = strstr (input_buffer, "Non-existent") ||

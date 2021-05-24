@@ -58,7 +58,7 @@ my $dns_server       = getTestParameter(
 my $host_nonresponsive = getTestParameter(
 			"NP_HOST_NONRESPONSIVE",
 			"The hostname of system not responsive to network requests",
-			"192.0.2.0",
+			"10.0.0.1",
 			);
 
 my $res;
