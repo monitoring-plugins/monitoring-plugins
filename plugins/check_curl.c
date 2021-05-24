@@ -1346,7 +1346,7 @@ process_arguments (int argc, char **argv)
 #ifdef LIBCURL_FEATURE_SSL
     case 'D': /* verify peer certificate & host */
       verify_peer_and_host = TRUE;
-      goto enable_ssl;
+      break;
 #endif
     case 'S': /* use SSL */
 #ifdef LIBCURL_FEATURE_SSL
