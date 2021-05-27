@@ -285,6 +285,18 @@ int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx)
    * TODO: is the last certificate always the server certificate?
    */
   cert = X509_STORE_CTX_get_current_cert(x509_ctx);
+  X509_up_ref(cert);
+  if (verbose>=2) {
+    puts("* SSL verify callback with certificate:");
+    X509_NAME *subject, *issuer;
+    printf("*   issuer:\n");
+    issuer = X509_get_issuer_name( cert );
+    X509_NAME_print_ex_fp(stdout, issuer, 5, XN_FLAG_MULTILINE);
+    printf("* curl verify_callback:\n*   subject:\n");
+    subject = X509_get_subject_name( cert );
+    X509_NAME_print_ex_fp(stdout, subject, 5, XN_FLAG_MULTILINE);
+    puts("");
+  }
   return 1;
 }
 
