@@ -134,7 +134,7 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 		return STATE_CRITICAL;
 	}
 	if (cert && privkey) {
-		SSL_CTX_use_certificate_file(c, cert, SSL_FILETYPE_PEM);
+		SSL_CTX_use_certificate_chain_file(c, cert);
 		SSL_CTX_use_PrivateKey_file(c, privkey, SSL_FILETYPE_PEM);
 #ifdef USE_OPENSSL
 		if (!SSL_CTX_check_private_key(c)) {
