@@ -206,6 +206,7 @@ int maximum_age = -1;
 int address_family = AF_UNSPEC;
 curlhelp_ssl_library ssl_library = CURLHELP_SSL_LIBRARY_UNKNOWN;
 int curl_http_version = CURL_HTTP_VERSION_NONE;
+int automatic_decompression = FALSE;
 
 int process_arguments (int, char**);
 void handle_curl_option_return_code (CURLcode res, const char* option);
@@ -382,6 +383,13 @@ check_http (void)
 
   /* print everything on stdout like check_http would do */
   handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_STDERR, stdout), "CURLOPT_STDERR");
+
+  if (automatic_decompression)
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 6)
+    handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, ""), "CURLOPT_ACCEPT_ENCODING");
+#else
+    handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_ENCODING, ""), "CURLOPT_ENCODING");
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 6) */
 
   /* initialize buffer for body of the answer */
   if (curlhelp_initwritebuffer(&body_buf) < 0)
@@ -1149,7 +1157,8 @@ process_arguments (int argc, char **argv)
     INVERT_REGEX = CHAR_MAX + 1,
     SNI_OPTION,
     CA_CERT_OPTION,
-    HTTP_VERSION_OPTION
+    HTTP_VERSION_OPTION,
+    AUTOMATIC_DECOMPRESSION
   };
 
   int option = 0;
@@ -1192,6 +1201,7 @@ process_arguments (int argc, char **argv)
     {"extended-perfdata", no_argument, 0, 'E'},
     {"show-body", no_argument, 0, 'B'},
     {"http-version", required_argument, 0, HTTP_VERSION_OPTION},
+    {"enable-automatic-decompression", no_argument, 0, AUTOMATIC_DECOMPRESSION},
     {0, 0, 0, 0}
   };
 
@@ -1583,6 +1593,9 @@ process_arguments (int argc, char **argv)
         exit (STATE_WARNING);
       }
       break;
+    case AUTOMATIC_DECOMPRESSION:
+      automatic_decompression = TRUE;
+      break;
     case '?':
       /* print short usage statement if args not parsable */
       usage5 ();
@@ -1793,6 +1806,8 @@ print_help (void)
   printf (" %s\n", "--http-version=VERSION");
   printf ("    %s\n", _("Connect via specific HTTP protocol."));
   printf ("    %s\n", _("1.0 = HTTP/1.0, 1.1 = HTTP/1.1, 2.0 = HTTP/2 (HTTP/2 will fail without -S)"));
+  printf (" %s\n", "--enable-automatic-decompression");
+  printf ("    %s\n", _("Enable automatic decompression of body (CURLOPT_ACCEPT_ENCODING)."));
   printf ("\n");
 
   printf (UT_WARN_CRIT);
