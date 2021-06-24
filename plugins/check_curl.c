@@ -55,6 +55,10 @@ const char *email = "devel@monitoring-plugins.org";
 
 #include <arpa/inet.h>
 
+#if defined(HAVE_SSL) && defined(USE_OPENSSL)
+#include <openssl/opensslv.h>
+#endif
+
 #define MAKE_LIBCURL_VERSION(major, minor, patch) ((major)*0x10000 + (minor)*0x100 + (patch))
 
 #define DEFAULT_BUFFER_SIZE 2048
@@ -286,7 +290,9 @@ int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx)
    * TODO: is the last certificate always the server certificate?
    */
   cert = X509_STORE_CTX_get_current_cert(x509_ctx);
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
   X509_up_ref(cert);
+#endif
   if (verbose>=2) {
     puts("* SSL verify callback with certificate:");
     X509_NAME *subject, *issuer;
