@@ -1453,8 +1453,8 @@ redir (char *pos, char *status_line)
       !strncmp(server_address, addr, MAX_IPV4_HOSTLENGTH) &&
       (host_name && !strncmp(host_name, addr, MAX_IPV4_HOSTLENGTH)) &&
       !strcmp(server_url, url))
-    die (STATE_WARNING,
-         _("HTTP WARNING - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
+    die (STATE_CRITICAL,
+         _("HTTP CRITICAL - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
          type, addr, i, url, (display_html ? "</A>" : ""));
 
   strcpy (server_type, type);
