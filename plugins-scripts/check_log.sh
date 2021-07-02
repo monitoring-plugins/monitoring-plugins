@@ -145,6 +145,22 @@ while test -n "$1"; do
             exitstatus=$2
             shift
             ;;
+        --extended-regex)
+            ERE=1
+            shift
+            ;;
+        -e)
+            ERE=1
+            shift
+            ;;
+        --perl-regex)
+            PRE=1
+            shift
+            ;;
+        -p)
+            PRE=1
+            shift
+            ;;
         *)
             echo "Unknown argument: $1"
             print_usage
@@ -153,6 +169,20 @@ while test -n "$1"; do
     esac
     shift
 done
+
+# Parameter sanity check
+if [ $ERE ] && [ $PRE ] ; then
+	echo "Can not use extended and perl regex at the same time"
+	exit "$STATE_UNKNOWN"
+fi
+
+if [ $ERE ]; then
+	GREP="grep -E"
+fi
+
+if [ $PRE ]; then
+	GREP="grep -P"
+fi
 
 # If the source log file doesn't exist, exit
 
@@ -190,10 +220,10 @@ fi
 diff "$logfile" "$oldlog" | grep -v "^>" > "$tempdiff"
 
 # Count the number of matching log entries we have
-count=$(grep -c "$query" "$tempdiff")
+count=$($GREP -c "$query" "$tempdiff")
 
 # Get the last matching entry in the diff file
-lastentry=$(grep "$query" "$tempdiff" | tail -1)
+lastentry=$($GREP "$query" "$tempdiff" | tail -1)
 
 rm -f "$tempdiff"
 cat "$logfile" > "$oldlog"
