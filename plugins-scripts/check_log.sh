@@ -1,8 +1,7 @@
 #!/bin/sh
 #
 # Log file pattern detector plugin for monitoring
-# Written by Ethan Galstad (nagios@nagios.org)
-# Last Modified: 07-31-1999
+# Written originally by Ethan Galstad (nagios@nagios.org)
 #
 # Usage: ./check_log <log_file> <old_log_file> <pattern>
 #
