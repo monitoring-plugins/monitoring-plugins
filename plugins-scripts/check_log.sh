@@ -59,11 +59,11 @@
 
 PATH="@TRUSTED_PATH@"
 export PATH
-PROGNAME=`basename $0`
-PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
+PROGNAME=$(basename "$0")
+PROGPATH=$(echo "$0" | sed -e 's,[\\/][^\\/][^\\/]*$,,')
 REVISION="@NP_VERSION@"
 
-. $PROGPATH/utils.sh
+. "$PROGPATH"/utils.sh
 
 print_usage() {
     echo "Usage: $PROGNAME -F logfile -O oldlog -q query"
@@ -72,7 +72,7 @@ print_usage() {
 }
 
 print_help() {
-    print_revision $PROGNAME $REVISION
+    print_revision "$PROGNAME" $REVISION
     echo ""
     print_usage
     echo ""
@@ -86,7 +86,7 @@ print_help() {
 
 if [ $# -lt 1 ]; then
     print_usage
-    exit $STATE_UNKNOWN
+    exit "$STATE_UNKNOWN"
 fi
 
 # Grab the command line arguments
@@ -99,19 +99,19 @@ while test -n "$1"; do
     case "$1" in
         --help)
             print_help
-            exit $STATE_OK
+            exit "$STATE_OK"
             ;;
         -h)
             print_help
-            exit $STATE_OK
+            exit "$STATE_OK"
             ;;
         --version)
-            print_revision $PROGNAME $REVISION
-            exit $STATE_OK
+            print_revision "$PROGNAME" $REVISION
+            exit "$STATE_OK"
             ;;
         -V)
-            print_revision $PROGNAME $REVISION
-            exit $STATE_OK
+            print_revision "$PROGNAME" $REVISION
+            exit "$STATE_OK"
             ;;
         --filename)
             logfile=$2
@@ -148,7 +148,7 @@ while test -n "$1"; do
         *)
             echo "Unknown argument: $1"
             print_usage
-            exit $STATE_UNKNOWN
+            exit "$STATE_UNKNOWN"
             ;;
     esac
     shift
@@ -156,22 +156,22 @@ done
 
 # If the source log file doesn't exist, exit
 
-if [ ! -e $logfile ]; then
+if [ ! -e "$logfile" ]; then
     echo "Log check error: Log file $logfile does not exist!"
-    exit $STATE_UNKNOWN
-elif [ ! -r $logfile ] ; then
+    exit "$STATE_UNKNOWN"
+elif [ ! -r "$logfile" ] ; then
     echo "Log check error: Log file $logfile is not readable!"
-    exit $STATE_UNKNOWN
+    exit "$STATE_UNKNOWN"
 fi
 
 # If the old log file doesn't exist, this must be the first time
 # we're running this test, so copy the original log file over to
 # the old diff file and exit
 
-if [ ! -e $oldlog ]; then
-    cat $logfile > $oldlog
+if [ ! -e "$oldlog" ]; then
+    cat "$logfile" > "$oldlog"
     echo "Log check data initialized..."
-    exit $STATE_OK
+    exit "$STATE_OK"
 fi
 
 # The old log file exists, so compare it to the original log now
@@ -179,24 +179,24 @@ fi
 # The temporary file that the script should use while
 # processing the log file.
 if [ -x /bin/mktemp ]; then
-    tempdiff=`/bin/mktemp /tmp/check_log.XXXXXXXXXX`
+    tempdiff=$(/bin/mktemp /tmp/check_log.XXXXXXXXXX)
 else
-    tempdiff=`/bin/date '+%H%M%S'`
+    tempdiff=$(/bin/date '+%H%M%S')
     tempdiff="/tmp/check_log.${tempdiff}"
-    touch $tempdiff
-    chmod 600 $tempdiff
+    touch "$tempdiff"
+    chmod 600 "$tempdiff"
 fi
 
-diff $logfile $oldlog | grep -v "^>" > $tempdiff
+diff "$logfile" "$oldlog" | grep -v "^>" > "$tempdiff"
 
 # Count the number of matching log entries we have
-count=`grep -c "$query" $tempdiff`
+count=$(grep -c "$query" "$tempdiff")
 
 # Get the last matching entry in the diff file
-lastentry=`grep "$query" $tempdiff | tail -1`
+lastentry=$(grep "$query" "$tempdiff" | tail -1)
 
-rm -f $tempdiff
-cat $logfile > $oldlog
+rm -f "$tempdiff"
+cat "$logfile" > "$oldlog"
 
 if [ "$count" = "0" ]; then # no matches, exit with no error
     echo "Log check ok - 0 pattern matches found"
@@ -206,4 +206,4 @@ else # Print total matche count and the last entry we found
     exitstatus=$STATE_CRITICAL
 fi
 
-exit $exitstatus
+exit "$exitstatus"
