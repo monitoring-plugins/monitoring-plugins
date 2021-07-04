@@ -1106,8 +1106,8 @@ redir (curlhelp_write_curlbuf* header_buf)
       !strncmp(server_address, new_host, MAX_IPV4_HOSTLENGTH) &&
       (host_name && !strncmp(host_name, new_host, MAX_IPV4_HOSTLENGTH)) &&
       !strcmp(server_url, new_url))
-    die (STATE_WARNING,
-         _("HTTP WARNING - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
+    die (STATE_CRITICAL,
+         _("HTTP CRITICAL - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
          use_ssl ? "https" : "http", new_host, new_port, new_url, (display_html ? "</A>" : ""));
 
   /* set new values for redirected request */
