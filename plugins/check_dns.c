@@ -473,9 +473,23 @@ process_arguments (int argc, char **argv)
     case 'a': /* expected address */
       if (strlen (optarg) >= ADDRESS_LENGTH)
         die (STATE_UNKNOWN, _("Input buffer overflow\n"));
-      expected_address = (char **)realloc(expected_address, (expected_address_cnt+1) * sizeof(char**));
-      expected_address[expected_address_cnt] = strdup(optarg);
-      expected_address_cnt++;
+      if (strchr(optarg, ',') != NULL) {
+	char *comma = strchr(optarg, ',');
+	while (comma != NULL) {
+	  expected_address = (char **)realloc(expected_address, (expected_address_cnt+1) * sizeof(char**));
+	  expected_address[expected_address_cnt] = strndup(optarg, comma - optarg);
+	  expected_address_cnt++;
+	  optarg = comma + 1;
+	  comma = strchr(optarg, ',');
+	}
+	expected_address = (char **)realloc(expected_address, (expected_address_cnt+1) * sizeof(char**));
+	expected_address[expected_address_cnt] = strdup(optarg);
+	expected_address_cnt++;
+      } else {
+	expected_address = (char **)realloc(expected_address, (expected_address_cnt+1) * sizeof(char**));
+	expected_address[expected_address_cnt] = strdup(optarg);
+	expected_address_cnt++;
+      }
       break;
     case 'A': /* expect authority */
       expect_authority = TRUE;
