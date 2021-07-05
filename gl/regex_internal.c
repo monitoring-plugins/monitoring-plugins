@@ -28,7 +28,7 @@ static re_dfastate_t *create_cd_newstate (const re_dfa_t *dfa,
 					  const re_node_set *nodes,
 					  unsigned int context,
 					  re_hashval_t hash) internal_function;
-
+
 /* Functions for string operation.  */
 
 /* This function allocate the buffers.  It is necessary to call
@@ -964,7 +964,7 @@ re_string_context_at (const re_string_t *input, Idx idx, int eflags)
       return IS_NEWLINE (c) && input->newline_anchor ? CONTEXT_NEWLINE : 0;
     }
 }
-
+
 /* Functions for set operation.  */
 
 static reg_errcode_t
@@ -1400,7 +1400,7 @@ re_node_set_remove_at (re_node_set *set, Idx idx)
   for (; idx < set->nelem; idx++)
     set->elems[idx] = set->elems[idx + 1];
 }
-
+
 
 /* Add the token TOKEN to dfa->nodes, and return the index of the token.
    Or return REG_MISSING if an error occurred.  */

@@ -63,7 +63,7 @@ sub bindRemote ($$);
 # -------------------------------------------------------------[ Enviroment ]--
 
 $ENV{'PATH'}='@TRUSTED_PATH@';
-$ENV{'BASH_ENV'}=''; 
+$ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
 # -----------------------------------------------------------------[ Global ]--
@@ -71,7 +71,7 @@ $ENV{'ENV'}='';
 $PROGNAME = "check_ircd";
 my $NICK="ircd$$";
 my $USER_INFO="monitor localhost localhost : ";
-	
+
 # -------------------------------------------------------------[ connection ]--
 sub connection ($$$$)
 {
@@ -81,7 +81,7 @@ sub connection ($$$$)
 
 	print "connection(debug): users = $in_users\n" if $verbose;
 	$in_users =~ s/\ //g;
-	
+
 	if ($in_users >= 0) {
 
 		if ($in_users > $in_crit) {
@@ -101,7 +101,7 @@ sub connection ($$$$)
 		$state = "UNKNOWN";
 		$answer = "Server $in_remotehost has less than 0 users! Something is Really WRONG!\n";
 	}
-	
+
 	print ClientSocket "quit\n";
 	print $answer;
 	exit $ERRORS{$state};
@@ -154,7 +154,7 @@ sub bindRemote ($$)
 	}
 	$sockaddr = 'S n a4 x8';
 	$that = pack($sockaddr, AF_INET, $in_remoteport, $thataddr);
-	if (!connect(ClientSocket, $that)) { 
+	if (!connect(ClientSocket, $that)) {
 	    print "IRCD UNKNOWN: Could not connect socket ($!)\n";
 	    exit $ERRORS{"UNKNOWN"};
 	}
@@ -209,27 +209,27 @@ MAIN:
 		print "Somthing is Taking a Long Time, Increase Your TIMEOUT (Currently Set At $TIMEOUT Seconds)\n";
 		exit $ERRORS{"UNKNOWN"};
 	};
-	
+
 	alarm($TIMEOUT);
 
 	my ($name, $alias, $proto) = getprotobyname('tcp');
 
 	print "MAIN(debug): binding to remote host: $remotehost -> $remoteport\n" if $verbose;
 	my $ClientSocket = &bindRemote($remotehost,$remoteport);
-	
+
 	print ClientSocket "NICK $NICK\nUSER $USER_INFO\n";
-	
+
 	while (<ClientSocket>) {
 		print "MAIN(debug): default var = $_\n" if $verbose;
 
 		# DALnet,LagNet,UnderNet etc. Require this!
 		# Replies with a PONG when presented with a PING query.
 		# If a server doesn't require it, it will be ignored.
-	
+
 		if (m/^PING (.*)/) {print ClientSocket "PONG $1\n";}
-	
+
 		alarm(0);
-	
+
 		# Look for pattern in IRCD Output to gather Client Connections total.
 		connection($remotehost,$1,$warn,$crit) if (m/:I have\s+(\d+)/);
 	}

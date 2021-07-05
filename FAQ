@@ -5,7 +5,7 @@ Q: Where can I find documentation for <insert name> plugin?
 
 A: All plugins that comply with minimal development guideline for
    this project include internal documentation.  The documentation
-   can be read executing plugin with the -h or --help option. If 
+   can be read executing plugin with the -h or --help option. If
    the '-h' option does not work, that is a bug.
 
 
@@ -51,5 +51,5 @@ Q: I have a plugin to offer. What can I do?
 A: You can make it available on MonitoringExchange (http://monitoringexchange.org)
    where other people can find it for use.
 
-   You can also get feedback on improving the plugin via the 
+   You can also get feedback on improving the plugin via the
    devel@monitoring-plugins.org mailing list.

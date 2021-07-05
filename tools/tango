@@ -73,7 +73,7 @@ while ($file = shift) {
 }
 
 # then execute the command, storing defines in %main::ents
-open T, "$cmd |"; 
+open T, "$cmd |";
 while (<T>) {
 	next if (m|\#define\s+[^\s\(]+\(|);
 	if (m|\#define\s+(\S+)\s+(\"?)(.*?)\2$|) {

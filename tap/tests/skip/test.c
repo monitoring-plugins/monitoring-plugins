@@ -45,7 +45,7 @@ main(int argc, char *argv[])
 			rc = skip(1, "Testing skipping");
 			continue;
 		}
-		
+
 		side_effect++;
 
 		ok(side_effect == 1, "side_effect checked out");

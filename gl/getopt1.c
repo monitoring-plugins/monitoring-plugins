@@ -15,7 +15,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
-
+
 #ifdef _LIBC
 # include <getopt.h>
 #else
@@ -76,7 +76,7 @@ _getopt_long_only_r (int argc, char **argv, const char *options,
                              1, d, 0);
 }
 
-
+
 #ifdef TEST
 
 #include <stdio.h>

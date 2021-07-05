@@ -23,7 +23,7 @@
 # Revision 1.1  2000/07/20 19:09:13  cwg
 # All the pieces needed to use my version of check_dns.
 #
-# 
+#
 
 use Getopt::Long;
 use Net::DNS;
@@ -37,7 +37,7 @@ sub print_version();
 sub print_usage ();
 
 $ENV{'PATH'}='@TRUSTED_PATH@';
-$ENV{'BASH_ENV'}=''; 
+$ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
 Getopt::Long::Configure(`bundling`);
@@ -56,7 +56,7 @@ if ($opt_V) { print_version(); exit 3; }
 # -H means host name
 $opt_H = shift unless ($opt_H);
 unless ($opt_H) { print_usage(); exit -1; }
-if ($opt_H && 
+if ($opt_H &&
 		$opt_H =~ m/^([0-9]+.[0-9]+.[0-9]+.[0-9]+|[a-zA-Z][-a-zA-Z0]+(.[a-zA-Z][-a-zA-Z0]+)*)$/)
 {
 	$host = $1;

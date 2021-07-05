@@ -38,7 +38,7 @@ sub print_usage ();
 sub in ($$);
 
 $ENV{'PATH'}='@TRUSTED_PATH@';
-$ENV{'BASH_ENV'}=''; 
+$ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 $ENV{'LC_ALL'}='C';
 

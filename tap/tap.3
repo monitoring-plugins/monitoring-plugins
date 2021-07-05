@@ -174,7 +174,7 @@ Sets of tests can be skipped.  Ordinarily you would do this because
 the test can't be run in this particular testing environment.
 .Pp
 For example, suppose some tests should be run as root.  If the test is
-not being run as root then the tests should be skipped.  In this 
+not being run as root then the tests should be skipped.  In this
 implementation, skipped tests are flagged as being ok, with a special
 message indicating that they were skipped.  It is your responsibility
 to ensure that the number of tests skipped (the first parameter to
@@ -259,7 +259,7 @@ isn't available.
 
 If it's something the programmer hasn't done yet, use TODO.
 This is for any code you haven't written yet, or bugs you have
-yet to fix, but want to put tests in your testing script 
+yet to fix, but want to put tests in your testing script
 (always a good idea).
 .Ed
 .Ss DIAGNOSTIC OUTPUT
@@ -311,7 +311,7 @@ functionality, written using
 Examine them for examples of how to construct test suites.
 .Sh COMPATABILITY
 .Nm
-strives to be compatible with the Perl Test::More and Test::Harness 
+strives to be compatible with the Perl Test::More and Test::Harness
 modules.  The test suite verifies that
 .Nm
 is bug-for-bug compatible with their behaviour.  This is why some

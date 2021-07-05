@@ -1,14 +1,14 @@
 
 Releases in the 1.3 series will be for development. Version 1.4.0 will
-be the next full production release. I am not planning on dates right now, 
+be the next full production release. I am not planning on dates right now,
 but you can expect maintennence releases for 1.2.9 as well.
 
-With that done, it's time to figure out what we are doing for release 
+With that done, it's time to figure out what we are doing for release
 1.3 development. I have a few ideas. Maybe others do as well.
 
 DOCUMENTATION:
-  We pretty much have decieded that we will doing something along 
-  the lines of a literate programming model. So far, we have site 
+  We pretty much have decieded that we will doing something along
+  the lines of a literate programming model. So far, we have site
   documentation in DocBook. I have some ideas here, which I will
   discuss in a separate thread.
 
@@ -17,12 +17,12 @@ DOCUMENTATION:
 OPTION PROCESSING:
   I believe we can remove reverse compatibility for non-Getopt
   option specifications. For example, 'check_ping 1 2 3 4 -p 2'
-  would not be supported anymore. Support for this is a hack, 
+  would not be supported anymore. Support for this is a hack,
   and making it portable is bug-prone. We should also review
   standardization of our options -- the current list is a little
   ad hoc, it should be nailed down. Details in a separate thread.
 
-Also, 
+Also,
 
   check_http -p 443 --ssl www.infoplease.com
 
@@ -53,17 +53,17 @@ Reserved:
 -v, --verbose
 -q, --quiet
 -t, --timeout = INTEGER (senonds)
--c, --critical = (INT|FLOAT|RANGE|LIST) 
+-c, --critical = (INT|FLOAT|RANGE|LIST)
 -w, --warning = (INT|FLOAT|RANGE|LIST)
 -H, --hostname = STRING
--F, --file = STRING (usually input) 
--O, --output = STRING (output file) 
+-F, --file = STRING (usually input)
+-O, --output = STRING (output file)
 
-Recommended, but not reserverd: 
+Recommended, but not reserverd:
 
 -I, --ipaddress = STRING
 -C, --community = STRING
--a, --auth(info) = STRING (authentication or password) 
+-a, --auth(info) = STRING (authentication or password)
 -l, --logname = STRING
 -p, --password = STRING
 -P, --port = INT
@@ -86,17 +86,17 @@ Programming:
   I would like to follow the GNU guidelines and remove all fixed
   length character assignments, at least to the extent possible,
   from the C-based plugins. To that end, I have made strscpy and
-  friends in utils.c -- I'd like to deploy them. I have comments 
+  friends in utils.c -- I'd like to deploy them. I have comments
   that there is alot of duplicated code, and techniques used that
   should be cleaned up. Details in a separate thread.
 
 Remote checks:
   I have a proposal in hand to incorporate ssh check into spopen()
-  so that remote machine checks can be seemless. A nice idea, but 
+  so that remote machine checks can be seemless. A nice idea, but
   complex enough to require discussion. Another thread.
 
-I also have a wish list, and I'm sure I've forgot some items. I'll 
-list mine, please respond with other items that can be put into the 
+I also have a wish list, and I'm sure I've forgot some items. I'll
+list mine, please respond with other items that can be put into the
 sourceforge task manager:
 
   Indent all code in a GNU-compatible manner (indent -ts 2 -br)

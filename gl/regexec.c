@@ -201,7 +201,7 @@ static bool check_node_accept (const re_match_context_t *mctx,
      internal_function;
 static reg_errcode_t extend_buffers (re_match_context_t *mctx, int min_len)
      internal_function;
-
+
 /* Entry point for POSIX code.  */
 
 /* regexec searches for a given pattern, specified by PREG, in the
@@ -600,7 +600,7 @@ re_set_registers (bufp, regs, num_regs, starts, ends)
 #ifdef _LIBC
 weak_alias (__re_set_registers, re_set_registers)
 #endif
-
+
 /* Entry points compatible with 4.2 BSD regex library.  We don't define
    them unless specifically requested.  */
 
@@ -615,7 +615,7 @@ re_exec (s)
   return 0 == regexec (&re_comp_buf, s, 0, NULL, 0);
 }
 #endif /* _REGEX_RE_COMP */
-
+
 /* Internal entry point.  */
 
 /* Searches for a compiled pattern PREG in the string STRING, whose
@@ -2277,7 +2277,7 @@ sift_states_iter_mb (const re_match_context_t *mctx, re_sift_context_t *sctx,
 }
 #endif /* RE_ENABLE_I18N */
 
-
+
 /* Functions for state transition.  */
 
 /* Return the next state to which the current state STATE will transit by
@@ -4183,7 +4183,7 @@ extend_buffers (re_match_context_t *mctx, int min_len)
   return REG_NOERROR;
 }
 
-
+
 /* Functions for matching context.  */
 
 /* Initialize MCTX.  */

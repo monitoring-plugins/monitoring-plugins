@@ -26,7 +26,7 @@ check_curl:
 	  other SSL implementations are currently not supported
 	- uriparser 0.7.5 or later
 	  https://uriparser.github.io/
-      
+
 check_fping:
 	- Requires the fping utility distributed with SATAN.  Either
 	  download and install SATAN or grab the fping program from
@@ -100,7 +100,7 @@ check_ups:
 	  http://www.networkupstools.org/
 
 check_ide_smart:
-	- Uses the Linux specific SMART interface [http://smartlinux.sourceforge.net/smart/index.php]. 
+	- Uses the Linux specific SMART interface [http://smartlinux.sourceforge.net/smart/index.php].
 
 OS Specific Issues
 ------------------

@@ -324,7 +324,7 @@ error (int status, int errnum, const char *message, ...)
 # endif
 #endif
 }
-
+
 /* Sometimes we want to have at most one error per line.  This
    variable controls whether this mode is selected or not.  */
 int error_one_per_line;

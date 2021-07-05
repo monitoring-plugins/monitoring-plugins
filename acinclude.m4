@@ -17,7 +17,7 @@ AC_DEFUN([ACX_WHICH_GETHOSTBYNAME_R],
 [AC_CACHE_CHECK(number of arguments to gethostbyname_r,
                 acx_which_gethostbyname_r, [
         AC_TRY_COMPILE([
-#               include <netdb.h> 
+#               include <netdb.h>
         ],      [
 
         char *name;
@@ -25,7 +25,7 @@ AC_DEFUN([ACX_WHICH_GETHOSTBYNAME_R],
         struct hostent_data data;
         (void) gethostbyname_r(name, he, &data);
 
-                ],acx_which_gethostbyname_r=3, 
+                ],acx_which_gethostbyname_r=3,
                         [
 dnl                     acx_which_gethostbyname_r=0
   AC_TRY_COMPILE([
@@ -38,7 +38,7 @@ dnl                     acx_which_gethostbyname_r=0
         int h_errnop;
         (void) gethostbyname_r(name, he, buffer, buflen, &res, &h_errnop)
   ],acx_which_gethostbyname_r=6,
-  
+
   [
 dnl  acx_which_gethostbyname_r=0
   AC_TRY_COMPILE([
@@ -53,7 +53,7 @@ dnl  acx_which_gethostbyname_r=0
   ],acx_which_gethostbyname_r=5,acx_which_gethostbyname_r=0)
 
   ]
-  
+
   )
                         ]
                 )
