@@ -95,7 +95,7 @@ SKIP: {
         $res = NPTest->testCmd("./$plugin -v -H $host_tls_http:443 -S -p 443");
         like( $res->output, '/^Host: '.$host_tls_http.'\s*$/ms', "Host Header OK" );
 
-        $res = NPTest->testCmd("./$plugin -v -H $host_tls_http -D -p 443");
+        $res = NPTest->testCmd("./$plugin -v -H $host_tls_http -D -S -p 443");
         like( $res->output, '/(^Host: '.$host_tls_http.'\s*$)|(cURL returned 60)/ms', "Host Header OK" );
 };
 
