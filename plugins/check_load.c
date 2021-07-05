@@ -209,7 +209,7 @@ main (int argc, char **argv)
 		else if(la[i] > wload[i]) result = STATE_WARNING;
 	}
 
-	printf("%s - %s|", state_text(result), status_line);
+	printf("%s %s - %s|", "LOAD", state_text(result), status_line);
 	for(i = 0; i < 3; i++)
 		printf("load%d=%.3f;%.3f;%.3f;0; ", nums[i], la[i], wload[i], cload[i]);
 
