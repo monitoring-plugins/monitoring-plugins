@@ -37,6 +37,8 @@ const char *email = "devel@monitoring-plugins.org";
 #include "popen.h"
 #include "utils.h"
 
+#include <signal.h>
+
 #define WARN_DUPLICATES "DUPLICATES FOUND! "
 #define UNKNOWN_TRIP_TIME -1.0	/* -1 seconds */
 
@@ -163,10 +165,14 @@ main (int argc, char **argv)
 			printf ("</A>");
 
 		/* Print performance data */
-		printf("|%s", fperfdata ("rta", (double) rta, "ms",
-		                          wrta>0?TRUE:FALSE, wrta,
-		                          crta>0?TRUE:FALSE, crta,
-		                          TRUE, 0, FALSE, 0));
+		if (pl != 100) {
+			printf("|%s", fperfdata ("rta", (double) rta, "ms",
+									  wrta>0?TRUE:FALSE, wrta,
+									  crta>0?TRUE:FALSE, crta,
+									  TRUE, 0, FALSE, 0));
+		} else {
+			printf("|");
+		}
 		printf(" %s\n", perfdata ("pl", (long) pl, "%",
 		                          wpl>0?TRUE:FALSE, wpl,
 		                          cpl>0?TRUE:FALSE, cpl,
