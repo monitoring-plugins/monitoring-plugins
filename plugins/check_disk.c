@@ -498,6 +498,9 @@ process_arguments (int argc, char **argv)
     return ERROR;
 
   np_add_name(&fs_exclude_list, "iso9660");
+  np_add_name(&fs_exclude_list, "squashfs");
+  np_add_name(&fs_exclude_list, "tmpfs");
+  np_add_name(&fs_exclude_list, "tracefs");
 
   for (c = 1; c < argc; c++)
     if (strcmp ("-to", argv[c]) == 0)
