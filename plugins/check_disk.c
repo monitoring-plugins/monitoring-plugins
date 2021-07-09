@@ -230,8 +230,10 @@ main (int argc, char **argv)
   /* Process for every path in list */
   for (path = path_select_list; path; path=path->name_next) {
     if (verbose >= 3 && path->freespace_percent->warning != NULL && path->freespace_percent->critical != NULL)
-      printf("Thresholds(pct) for %s warn: %f crit %f\n",path->name, path->freespace_percent->warning->end,
-                                                         path->freespace_percent->critical->end);
+      printf("Thresholds(pct) for %s warn: %f crit %f\n",
+			  path->name,
+			  path->freespace_percent->warning->end,
+              path->freespace_percent->critical->end);
 
     if (verbose >= 3 && path->group != NULL)
       printf("Group of %s: %s\n",path->name,path->group);
@@ -1040,9 +1042,15 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
         get_fs_usage (p_list->best_match->me_mountdir, p_list->best_match->me_devname, &tmpfsp);
         get_path_stats(p_list, &tmpfsp);
         if (verbose >= 3)
+<<<<<<< HEAD
           printf("Group %s: adding %llu blocks sized %llu, (%s) used_units=%lu free_units=%llu total_units=%llu mult=%llu\n",
                  p_list->group,
 				 tmpfsp.fsu_blocks,
+=======
+          printf("Group %s: adding %lu blocks sized %lu, (%s) used_units=%g free_units=%g total_units=%g mult=%lu\n",
+                 p_list->group,
+				 tmpfsp.fsu_bavail,
+>>>>>>> c14d729f (Fix several warnings (and some downright bugs probably) with formating in check_disk)
 				 tmpfsp.fsu_blocksize,
 				 p_list->best_match->me_mountdir,
 				 p_list->dused_units,
@@ -1068,6 +1076,7 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
         }
         first = 0;
       }
+<<<<<<< HEAD
       if (verbose >= 3)
         printf("Group %s now has: used_units=%llu free_units=%llu total_units=%llu fsu_blocksize=%llu mult=%llu\n",
                p->group,
@@ -1076,6 +1085,16 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
                p->dtotal_units,
                tmpfsp.fsu_blocksize,
                mult);
+=======
+      if (verbose >= 3) 
+        printf("Group %s now has: used_units=%g free_units=%g total_units=%g fsu_blocksize=%lu mult=%lu\n",
+               p->group,
+			   p->dused_units,
+               p->dfree_units,
+			   p->dtotal_units,
+			   tmpfsp.fsu_blocksize,
+			   mult);
+>>>>>>> c14d729f (Fix several warnings (and some downright bugs probably) with formating in check_disk)
     }
     /* modify devname and mountdir for output */
     p->best_match->me_mountdir = p->best_match->me_devname = p->group;
