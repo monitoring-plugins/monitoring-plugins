@@ -46,6 +46,7 @@ static char *ocrit="120";
 static short do_jitter=0;
 static char *jwarn="5000";
 static char *jcrit="10000";
+static int delay=2;
 
 int process_arguments (int, char **);
 thresholds *offset_thresholds = NULL;
@@ -79,6 +80,7 @@ typedef struct {
 /* this structure holds data about results from querying offset from a peer */
 typedef struct {
 	time_t waiting;         /* ts set when we started waiting for a response */
+	int num_requests;       /* number of reqeusts sent excluduing re-sends */
 	int num_responses;      /* number of successfully recieved responses */
 	uint8_t stratum;        /* copied verbatim from the ntp_message */
 	double rtdelay;         /* converted from the ntp_message */
@@ -418,18 +420,21 @@ double offset_request(const char *host, int *status){
 	now_time=start_ts=time(NULL);
 	while(servers_completed<num_hosts && now_time-start_ts <= socket_timeout/2){
 		/* loop through each server and find each one which hasn't
-		 * been touched in the past second or so and is still lacking
-		 * some responses.  for each of these servers, send a new request,
-		 * and update the "waiting" timestamp with the current time. */
+		 * timed out yet and is still lacking some responses. For each
+		 * of these servers, send a new request, and update the
+		 * "waiting" timestamp with the current time. */
 		now_time=time(NULL);
 
 		for(i=0; i<num_hosts; i++){
 			if(servers[i].waiting<now_time && servers[i].num_responses<AVG_NUM){
-				if(verbose && servers[i].waiting != 0) printf("re-");
+				if(verbose && servers[i].num_requests != servers[i].num_responses) printf("re-");
 				if(verbose) printf("sending request to peer %d\n", i);
 				setup_request(&req[i]);
 				write(socklist[i], &req[i], sizeof(ntp_message));
-				servers[i].waiting=now_time;
+				servers[i].waiting=now_time+delay;
+				if(servers[i].num_requests == servers[i].num_responses) {
+					servers[i].num_requests++;
+				}
 				break;
 			}
 		}
@@ -459,7 +464,7 @@ double offset_request(const char *host, int *status){
 				servers[i].stratum=req[i].stratum;
 				servers[i].rtdisp=NTP32asDOUBLE(req[i].rtdisp);
 				servers[i].rtdelay=NTP32asDOUBLE(req[i].rtdelay);
-				servers[i].waiting=0;
+				servers[i].waiting--;
 				servers[i].flags=req[i].flags;
 				servers_readable--;
 				one_read = 1;
@@ -668,6 +673,7 @@ int process_arguments(int argc, char **argv){
 		{"verbose", no_argument, 0, 'v'},
 		{"use-ipv4", no_argument, 0, '4'},
 		{"use-ipv6", no_argument, 0, '6'},
+		{"delay", optional_argument, 0, 'd'},
 		{"warning", required_argument, 0, 'w'},
 		{"critical", required_argument, 0, 'c'},
 		{"jwarn", required_argument, 0, 'j'},
@@ -682,7 +688,7 @@ int process_arguments(int argc, char **argv){
 		usage ("\n");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vhv46w:c:j:k:t:H:", longopts, &option);
+		c = getopt_long (argc, argv, "Vhv46d:w:c:j:k:t:H:", longopts, &option);
 		if (c == -1 || c == EOF || c == 1)
 			break;
 
@@ -697,6 +703,9 @@ int process_arguments(int argc, char **argv){
 			break;
 		case 'v':
 			verbose++;
+			break;
+		case 'd':
+			delay=atoi(optarg);
 			break;
 		case 'w':
 			do_offset=1;
@@ -868,11 +877,15 @@ void print_help(void){
 	printf ("    %s\n", _("Warning threshold for jitter"));
 	printf (" %s\n", "-k, --jcrit=THRESHOLD");
 	printf ("    %s\n", _("Critical threshold for jitter"));
+	printf (" %s\n", "-d, --delay=INTEGER");
+	printf ("    %s\n", _("Delay between each packet (seconds)"));
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf (UT_VERBOSE);
 
 	printf("\n");
 	printf("%s\n", _("Notes:"));
+	printf(" %s\n", _("--delay is useful if you are triggering the anti-DOS for the"));
+	printf(" %s\n", _("NTP server and need to leave a bigger gap between queries"));
 	printf(UT_THRESHOLDS_NOTES);
 
 	printf("\n");
@@ -896,5 +909,5 @@ print_usage(void)
 	printf ("%s\n", _("WARNING: check_ntp is deprecated. Please use check_ntp_peer or"));
 	printf ("%s\n\n", _("check_ntp_time instead."));
 	printf ("%s\n", _("Usage:"));
-	printf(" %s -H <host> [-w <warn>] [-c <crit>] [-j <warn>] [-k <crit>] [-4|-6] [-v verbose]\n", progname);
+	printf(" %s -H <host> [-w <warn>] [-c <crit>] [-j <warn>] [-k <crit>] [-4|-6] [-v verbose] [-d <delay between packets>]\n", progname);
 }
