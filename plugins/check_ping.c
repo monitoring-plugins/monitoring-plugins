@@ -99,6 +99,18 @@ main (int argc, char **argv)
 		usage4 (_("Cannot catch SIGALRM"));
 	}
 
+#ifdef PING6_COMMAND
+	/* Check if PING6_COMMAND existence */
+	if (strlen (PING6_COMMAND) <= 0) {
+		usage4 (_("Could not find usable PING6_COMMAND"));
+	}
+#else
+	/* Check if PING_COMMAND existence */
+	if (strlen (PING_COMMAND) <= 0) {
+		usage4 (_("Could not find usable PING_COMMAND"));
+	}
+#endif
+
 	/* If ./configure finds ping has timeout values, set plugin alarm slightly
 	 * higher so that we can use response from command line ping */
 #if defined(PING_PACKETS_FIRST) && defined(PING_HAS_TIMEOUT)
