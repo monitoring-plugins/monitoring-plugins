@@ -2,6 +2,7 @@ This file documents the major additions and syntax changes between releases.
 
 2.4 [...]
 	ENHANCEMENTS
+	check_snmp: support SNMPv3 TSM security (client certificates).
 
 	FIXES
 
@@ -20,7 +21,7 @@ This file documents the major additions and syntax changes between releases.
 	check_apt: adding packages-warning option
 	check_load: Adding top consuming processes option
 	check_http: Adding Proxy-Authorization and extra headers
-	check_snmp: make calcualtion of timeout value in help output more clear
+	check_snmp: make calculation of timeout value in help output more clear
 	check_uptime: new plugin for checking uptime to see how long the system is running
 	check_curl: check_http replacement based on libcurl
 	check_http: Allow user to specify HTTP method after proxy CONNECT
