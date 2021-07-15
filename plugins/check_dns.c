@@ -41,7 +41,7 @@ const char *email = "devel@monitoring-plugins.org";
 
 int process_arguments (int, char **);
 int validate_arguments (void);
-int error_scan (char *);
+int error_scan (char *, int *);
 int ip_match_cidr(const char *, const char *);
 unsigned long ip2long(const char *);
 void print_help (void);
@@ -54,6 +54,7 @@ char ptr_server[ADDRESS_LENGTH] = "";
 int verbose = FALSE;
 char **expected_address = NULL;
 int expected_address_cnt = 0;
+int expect_nxdomain = FALSE;
 
 int expect_authority = FALSE;
 int all_match = FALSE;
@@ -87,6 +88,7 @@ main (int argc, char **argv)
   int parse_address = FALSE; /* This flag scans for Address: but only after Name: */
   output chld_out, chld_err;
   size_t i;
+  int is_nxdomain = FALSE;
 
   setlocale (LC_ALL, "");
   bindtextdomain (PACKAGE, LOCALEDIR);
@@ -186,7 +188,7 @@ main (int argc, char **argv)
     }
 
 
-    result = error_scan (chld_out.line[i]);
+    result = error_scan (chld_out.line[i], &is_nxdomain);
     if (result != STATE_OK) {
       msg = strchr (chld_out.line[i], ':');
       if(msg) msg++;
@@ -199,14 +201,18 @@ main (int argc, char **argv)
     if (verbose)
       puts(chld_err.line[i]);
 
-    if (error_scan (chld_err.line[i]) != STATE_OK) {
-      result = max_state (result, error_scan (chld_err.line[i]));
+    if (error_scan (chld_err.line[i], &is_nxdomain) != STATE_OK) {
+      result = max_state (result, error_scan (chld_err.line[i], &is_nxdomain));
       msg = strchr(input_buffer, ':');
       if(msg)
          msg++;
       else
          msg = input_buffer;
     }
+  }
+
+  if (is_nxdomain && !expect_nxdomain) {
+    die (STATE_CRITICAL, _("Domain '%s' was not found by the server\n"), query_address);
   }
 
   if (addresses) {
@@ -257,6 +263,16 @@ main (int argc, char **argv)
       /* Strip off last semicolon... */
       temp_buffer[strlen(temp_buffer)-2] = '\0';
       xasprintf(&msg, _("expected '%s' but got '%s'"), temp_buffer, address);
+    }
+  }
+
+  if (expect_nxdomain) {
+    if (!is_nxdomain) {
+      result = STATE_CRITICAL;
+      xasprintf(&msg, _("Domain '%s' was found by the server: '%s'\n"), query_address, address);
+    } else {
+      if (address != NULL) free(address);
+      address = "NXDOMAIN";
     }
   }
 
@@ -339,8 +355,14 @@ ip2long(const char* src) {
 }
 
 int
-error_scan (char *input_buffer)
+error_scan (char *input_buffer, int *is_nxdomain)
 {
+
+  const int nxdomain = strstr (input_buffer, "Non-existent") ||
+                       strstr (input_buffer, "** server can't find") ||
+                       strstr (input_buffer, "** Can't find") ||
+                       strstr (input_buffer, "NXDOMAIN");
+  if (nxdomain) *is_nxdomain = TRUE;
 
   /* the DNS lookup timed out */
   if (strstr (input_buffer, _("Note: nslookup is deprecated and may be removed from future releases.")) ||
@@ -360,7 +382,7 @@ error_scan (char *input_buffer)
 
   /* Connection was refused */
   else if (strstr (input_buffer, "Connection refused") ||
-     strstr (input_buffer, "Couldn't find server") ||
+           strstr (input_buffer, "Couldn't find server") ||
            strstr (input_buffer, "Refused") ||
            (strstr (input_buffer, "** server can't find") &&
             strstr (input_buffer, ": REFUSED")))
@@ -373,13 +395,6 @@ error_scan (char *input_buffer)
   /* No information (e.g. nameserver IP has two PTR records) */
   else if (strstr (input_buffer, "No information"))
     die (STATE_CRITICAL, _("No information returned by DNS server at %s\n"), dns_server);
-
-  /* Host or domain name does not exist */
-  else if (strstr (input_buffer, "Non-existent") ||
-           strstr (input_buffer, "** server can't find") ||
-           strstr (input_buffer, "** Can't find") ||
-     strstr (input_buffer,"NXDOMAIN"))
-    die (STATE_CRITICAL, _("Domain %s was not found by the server\n"), query_address);
 
   /* Network is unreachable */
   else if (strstr (input_buffer, "Network is unreachable"))
@@ -417,6 +432,7 @@ process_arguments (int argc, char **argv)
     {"server", required_argument, 0, 's'},
     {"reverse-server", required_argument, 0, 'r'},
     {"expected-address", required_argument, 0, 'a'},
+    {"expect-nxdomain",  no_argument, 0, 'n'},
     {"expect-authority", no_argument, 0, 'A'},
     {"all", no_argument, 0, 'L'},
     {"warning", required_argument, 0, 'w'},
@@ -432,7 +448,7 @@ process_arguments (int argc, char **argv)
       strcpy (argv[c], "-t");
 
   while (1) {
-    c = getopt_long (argc, argv, "hVvALt:H:s:r:a:w:c:", long_opts, &opt_index);
+    c = getopt_long (argc, argv, "hVvALnt:H:s:r:a:w:c:", long_opts, &opt_index);
 
     if (c == -1 || c == EOF)
       break;
@@ -491,6 +507,9 @@ process_arguments (int argc, char **argv)
 	expected_address_cnt++;
       }
       break;
+    case 'n': /* expect NXDOMAIN */
+      expect_nxdomain = TRUE;
+      break;
     case 'A': /* expect authority */
       expect_authority = TRUE;
       break;
@@ -532,8 +551,15 @@ process_arguments (int argc, char **argv)
 int
 validate_arguments ()
 {
-  if (query_address[0] == 0)
+  if (query_address[0] == 0) {
+    printf ("missing --host argument\n");
     return ERROR;
+  }
+
+  if (expected_address_cnt > 0 && expect_nxdomain) {
+    printf ("--expected-address and --expect-nxdomain cannot be combined\n");
+    return ERROR;
+  }
 
   return OK;
 }
@@ -566,6 +592,9 @@ print_help (void)
   printf ("    %s\n", _("Optional IP-ADDRESS/CIDR you expect the DNS server to return. HOST must end"));
   printf ("    %s\n", _("with a dot (.). This option can be repeated multiple times (Returns OK if any"));
   printf ("    %s\n", _("value matches)."));
+  printf (" -n, --expect-nxdomain\n");
+  printf ("    %s\n", _("Expect the DNS server to return NXDOMAIN (i.e. the domain was not found)"));
+  printf ("    %s\n", _("Cannot be used together with -a"));
   printf (" -A, --expect-authority\n");
   printf ("    %s\n", _("Optionally expect the DNS server to be authoritative for the lookup"));
   printf (" -w, --warning=seconds\n");
@@ -586,5 +615,5 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-  printf ("%s -H host [-s server] [-a expected-address] [-A] [-t timeout] [-w warn] [-c crit] [-L]\n", progname);
+  printf ("%s -H host [-s server] [-a expected-address] [-n] [-A] [-t timeout] [-w warn] [-c crit] [-L]\n", progname);
 }
