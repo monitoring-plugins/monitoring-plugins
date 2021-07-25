@@ -59,6 +59,8 @@ const char *email = "devel@monitoring-plugins.org";
 #include <openssl/opensslv.h>
 #endif
 
+#include <netdb.h>
+
 #define MAKE_LIBCURL_VERSION(major, minor, patch) ((major)*0x10000 + (minor)*0x100 + (patch))
 
 #define DEFAULT_BUFFER_SIZE 2048
@@ -370,12 +372,55 @@ handle_curl_option_return_code (CURLcode res, const char* option)
 }
 
 int
+lookup_host (const char *host, char *buf, size_t buflen)
+{
+  struct addrinfo hints, *res, *result;
+  int errcode;
+  void *ptr;
+
+  memset (&hints, 0, sizeof (hints));
+  hints.ai_family = address_family;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags |= AI_CANONNAME;
+
+  errcode = getaddrinfo (host, NULL, &hints, &result);
+  if (errcode != 0)
+    return errcode;
+  
+  res = result;
+
+  while (res) {
+  inet_ntop (res->ai_family, res->ai_addr->sa_data, buf, buflen);
+  switch (res->ai_family) {
+    case AF_INET:
+      ptr = &((struct sockaddr_in *) res->ai_addr)->sin_addr;
+      break;
+    case AF_INET6:
+      ptr = &((struct sockaddr_in6 *) res->ai_addr)->sin6_addr;
+    break;
+    }
+    inet_ntop (res->ai_family, ptr, buf, buflen);
+    if (verbose >= 1)
+      printf ("* getaddrinfo IPv%d address: %s\n",
+        res->ai_family == PF_INET6 ? 6 : 4, buf);
+    res = res->ai_next;
+  }
+  
+  freeaddrinfo(result);
+
+  return 0;
+}
+
+int
 check_http (void)
 {
   int result = STATE_OK;
   int page_len = 0;
   int i;
   char *force_host_header = NULL;
+  struct curl_slist *host = NULL;
+  char addrstr[100];
+  char dnscache[DEFAULT_BUFFER_SIZE];
 
   /* initialize curl */
   if (curl_global_init (CURL_GLOBAL_DEFAULT) != CURLE_OK)
@@ -418,9 +463,12 @@ check_http (void)
 
   // fill dns resolve cache to make curl connect to the given server_address instead of the host_name, only required for ssl, because we use the host_name later on to make SNI happy
   if(use_ssl && host_name != NULL) {
-      struct curl_slist *host = NULL;
-      char dnscache[DEFAULT_BUFFER_SIZE];
-      snprintf (dnscache, DEFAULT_BUFFER_SIZE, "%s:%d:%s", host_name, server_port, server_address);
+      if ( (res=lookup_host (server_address, addrstr, 100)) != 0) {
+        snprintf (msg, DEFAULT_BUFFER_SIZE, _("Unable to lookup IP address for '%s': getaddrinfo returned %d - %s"),
+          server_address, res, gai_strerror (res));
+        die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
+      }
+      snprintf (dnscache, DEFAULT_BUFFER_SIZE, "%s:%d:%s", host_name, server_port, addrstr);
       host = curl_slist_append(NULL, dnscache);
       curl_easy_setopt(curl, CURLOPT_RESOLVE, host);
       if (verbose>=1)
