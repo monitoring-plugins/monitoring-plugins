@@ -1033,8 +1033,8 @@ char*
 uri_string (const UriTextRangeA range, char* buf, size_t buflen)
 {
   if (!range.first) return "(null)";
-  strncpy (buf, range.first, max (buflen, range.afterLast - range.first));
-  buf[max (buflen, range.afterLast - range.first)] = '\0';
+  strncpy (buf, range.first, max (buflen-1, range.afterLast - range.first));
+  buf[max (buflen-1, range.afterLast - range.first)] = '\0';
   buf[range.afterLast - range.first] = '\0';
   return buf;
 }
