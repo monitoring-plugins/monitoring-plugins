@@ -55,6 +55,12 @@ const char *email = "devel@monitoring-plugins.org";
 
 #include <arpa/inet.h>
 
+#if defined(HAVE_SSL) && defined(USE_OPENSSL)
+#include <openssl/opensslv.h>
+#endif
+
+#include <netdb.h>
+
 #define MAKE_LIBCURL_VERSION(major, minor, patch) ((major)*0x10000 + (minor)*0x100 + (patch))
 
 #define DEFAULT_BUFFER_SIZE 2048
@@ -206,6 +212,7 @@ int maximum_age = -1;
 int address_family = AF_UNSPEC;
 curlhelp_ssl_library ssl_library = CURLHELP_SSL_LIBRARY_UNKNOWN;
 int curl_http_version = CURL_HTTP_VERSION_NONE;
+int automatic_decompression = FALSE;
 
 int process_arguments (int, char**);
 void handle_curl_option_return_code (CURLcode res, const char* option);
@@ -285,7 +292,9 @@ int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx)
    * TODO: is the last certificate always the server certificate?
    */
   cert = X509_STORE_CTX_get_current_cert(x509_ctx);
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
   X509_up_ref(cert);
+#endif
   if (verbose>=2) {
     puts("* SSL verify callback with certificate:");
     X509_NAME *subject, *issuer;
@@ -363,12 +372,55 @@ handle_curl_option_return_code (CURLcode res, const char* option)
 }
 
 int
+lookup_host (const char *host, char *buf, size_t buflen)
+{
+  struct addrinfo hints, *res, *result;
+  int errcode;
+  void *ptr;
+
+  memset (&hints, 0, sizeof (hints));
+  hints.ai_family = address_family;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags |= AI_CANONNAME;
+
+  errcode = getaddrinfo (host, NULL, &hints, &result);
+  if (errcode != 0)
+    return errcode;
+  
+  res = result;
+
+  while (res) {
+  inet_ntop (res->ai_family, res->ai_addr->sa_data, buf, buflen);
+  switch (res->ai_family) {
+    case AF_INET:
+      ptr = &((struct sockaddr_in *) res->ai_addr)->sin_addr;
+      break;
+    case AF_INET6:
+      ptr = &((struct sockaddr_in6 *) res->ai_addr)->sin6_addr;
+    break;
+    }
+    inet_ntop (res->ai_family, ptr, buf, buflen);
+    if (verbose >= 1)
+      printf ("* getaddrinfo IPv%d address: %s\n",
+        res->ai_family == PF_INET6 ? 6 : 4, buf);
+    res = res->ai_next;
+  }
+  
+  freeaddrinfo(result);
+
+  return 0;
+}
+
+int
 check_http (void)
 {
   int result = STATE_OK;
   int page_len = 0;
   int i;
   char *force_host_header = NULL;
+  struct curl_slist *host = NULL;
+  char addrstr[100];
+  char dnscache[DEFAULT_BUFFER_SIZE];
 
   /* initialize curl */
   if (curl_global_init (CURL_GLOBAL_DEFAULT) != CURLE_OK)
@@ -382,6 +434,13 @@ check_http (void)
 
   /* print everything on stdout like check_http would do */
   handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_STDERR, stdout), "CURLOPT_STDERR");
+
+  if (automatic_decompression)
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 6)
+    handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, ""), "CURLOPT_ACCEPT_ENCODING");
+#else
+    handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_ENCODING, ""), "CURLOPT_ENCODING");
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 6) */
 
   /* initialize buffer for body of the answer */
   if (curlhelp_initwritebuffer(&body_buf) < 0)
@@ -404,9 +463,12 @@ check_http (void)
 
   // fill dns resolve cache to make curl connect to the given server_address instead of the host_name, only required for ssl, because we use the host_name later on to make SNI happy
   if(use_ssl && host_name != NULL) {
-      struct curl_slist *host = NULL;
-      char dnscache[DEFAULT_BUFFER_SIZE];
-      snprintf (dnscache, DEFAULT_BUFFER_SIZE, "%s:%d:%s", host_name, server_port, server_address);
+      if ( (res=lookup_host (server_address, addrstr, 100)) != 0) {
+        snprintf (msg, DEFAULT_BUFFER_SIZE, _("Unable to lookup IP address for '%s': getaddrinfo returned %d - %s"),
+          server_address, res, gai_strerror (res));
+        die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
+      }
+      snprintf (dnscache, DEFAULT_BUFFER_SIZE, "%s:%d:%s", host_name, server_port, addrstr);
       host = curl_slist_append(NULL, dnscache);
       curl_easy_setopt(curl, CURLOPT_RESOLVE, host);
       if (verbose>=1)
@@ -971,8 +1033,8 @@ char*
 uri_string (const UriTextRangeA range, char* buf, size_t buflen)
 {
   if (!range.first) return "(null)";
-  strncpy (buf, range.first, max (buflen, range.afterLast - range.first));
-  buf[max (buflen, range.afterLast - range.first)] = '\0';
+  strncpy (buf, range.first, max (buflen-1, range.afterLast - range.first));
+  buf[max (buflen-1, range.afterLast - range.first)] = '\0';
   buf[range.afterLast - range.first] = '\0';
   return buf;
 }
@@ -1092,8 +1154,8 @@ redir (curlhelp_write_curlbuf* header_buf)
       !strncmp(server_address, new_host, MAX_IPV4_HOSTLENGTH) &&
       (host_name && !strncmp(host_name, new_host, MAX_IPV4_HOSTLENGTH)) &&
       !strcmp(server_url, new_url))
-    die (STATE_WARNING,
-         _("HTTP WARNING - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
+    die (STATE_CRITICAL,
+         _("HTTP CRITICAL - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
          use_ssl ? "https" : "http", new_host, new_port, new_url, (display_html ? "</A>" : ""));
 
   /* set new values for redirected request */
@@ -1149,7 +1211,8 @@ process_arguments (int argc, char **argv)
     INVERT_REGEX = CHAR_MAX + 1,
     SNI_OPTION,
     CA_CERT_OPTION,
-    HTTP_VERSION_OPTION
+    HTTP_VERSION_OPTION,
+    AUTOMATIC_DECOMPRESSION
   };
 
   int option = 0;
@@ -1192,6 +1255,7 @@ process_arguments (int argc, char **argv)
     {"extended-perfdata", no_argument, 0, 'E'},
     {"show-body", no_argument, 0, 'B'},
     {"http-version", required_argument, 0, HTTP_VERSION_OPTION},
+    {"enable-automatic-decompression", no_argument, 0, AUTOMATIC_DECOMPRESSION},
     {0, 0, 0, 0}
   };
 
@@ -1583,6 +1647,9 @@ process_arguments (int argc, char **argv)
         exit (STATE_WARNING);
       }
       break;
+    case AUTOMATIC_DECOMPRESSION:
+      automatic_decompression = TRUE;
+      break;
     case '?':
       /* print short usage statement if args not parsable */
       usage5 ();
@@ -1793,6 +1860,8 @@ print_help (void)
   printf (" %s\n", "--http-version=VERSION");
   printf ("    %s\n", _("Connect via specific HTTP protocol."));
   printf ("    %s\n", _("1.0 = HTTP/1.0, 1.1 = HTTP/1.1, 2.0 = HTTP/2 (HTTP/2 will fail without -S)"));
+  printf (" %s\n", "--enable-automatic-decompression");
+  printf ("    %s\n", _("Enable automatic decompression of body (CURLOPT_ACCEPT_ENCODING)."));
   printf ("\n");
 
   printf (UT_WARN_CRIT);
