@@ -9,7 +9,7 @@ use Test::More;
 use POSIX qw/mktime strftime/;
 use NPTest;
 
-plan tests => 50;
+plan tests => 58;
 
 my $successOutput = '/OK.*HTTP.*second/';
 
@@ -45,7 +45,8 @@ $res = NPTest->testCmd(
 	"./$plugin $host_nonresponsive -wt 1 -ct 2 -t 3"
 	);
 cmp_ok( $res->return_code, '==', 2, "Webserver $host_nonresponsive not responding" );
-cmp_ok( $res->output, 'eq', "CRITICAL - Socket timeout after 3 seconds", "Output OK");
+# was CRITICAL only, but both check_curl and check_http print HTTP CRITICAL (puzzle?!)
+like( $res->output, "/HTTP CRITICAL - Invalid HTTP response received from host on port 80: cURL returned 28 - Connection timed out after/", "Output OK");
 
 $res = NPTest->testCmd(
 	"./$plugin $hostname_invalid -wt 1 -ct 2"
@@ -54,23 +55,36 @@ cmp_ok( $res->return_code, '==', 2, "Webserver $hostname_invalid not valid" );
 # The first part of the message comes from the OS catalogue, so cannot check this.
 # On Debian, it is Name or service not known, on Darwin, it is No address associated with nodename
 # Is also possible to get a socket timeout if DNS is not responding fast enough
-like( $res->output, "/Unable to open TCP socket|Socket timeout after/", "Output OK");
+# cURL gives us consistent strings from it's own 'lib/strerror.c'
+like( $res->output, "/cURL returned 6 - Could not resolve host:/", "Output OK");
 
 # host header checks
 $res = NPTest->testCmd("./$plugin -v -H $host_tcp_http");
 like( $res->output, '/^Host: '.$host_tcp_http.'\s*$/ms', "Host Header OK" );
+like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
 
 $res = NPTest->testCmd("./$plugin -v -H $host_tcp_http -p 80");
 like( $res->output, '/^Host: '.$host_tcp_http.'\s*$/ms', "Host Header OK" );
+like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
 
 $res = NPTest->testCmd("./$plugin -v -H $host_tcp_http:8080 -p 80");
 like( $res->output, '/^Host: '.$host_tcp_http.':8080\s*$/ms', "Host Header OK" );
+like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
 
 $res = NPTest->testCmd("./$plugin -v -H $host_tcp_http:8080 -p 80");
 like( $res->output, '/^Host: '.$host_tcp_http.':8080\s*$/ms', "Host Header OK" );
+like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
+
+$res = NPTest->testCmd("./$plugin -v -H $host_tcp_http:8080 -p 80 -k 'Host: testhost:8001'");
+like( $res->output, '/^Host: testhost:8001\s*$/ms', "Host Header OK" );
+like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
+
+$res = NPTest->testCmd("./$plugin -v -I $host_tcp_http -p 80 -k 'Host: testhost:8001'");
+like( $res->output, '/^Host: testhost:8001\s*$/ms', "Host Header OK" );
+like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
 
 SKIP: {
-        skip "No internet access", 3 if $internet_access eq "no";
+        skip "No internet access", 4 if $internet_access eq "no";
 
         $res = NPTest->testCmd("./$plugin -v -H $host_tls_http -S");
         like( $res->output, '/^Host: '.$host_tls_http.'\s*$/ms', "Host Header OK" );
@@ -80,6 +94,9 @@ SKIP: {
 
         $res = NPTest->testCmd("./$plugin -v -H $host_tls_http:443 -S -p 443");
         like( $res->output, '/^Host: '.$host_tls_http.'\s*$/ms', "Host Header OK" );
+
+        $res = NPTest->testCmd("./$plugin -v -H $host_tls_http -D -p 443");
+        like( $res->output, '/(^Host: '.$host_tls_http.'\s*$)|(cURL returned 60)/ms', "Host Header OK" );
 };
 
 SKIP: {
@@ -103,7 +120,7 @@ SKIP: {
         cmp_ok( $res->return_code, "==", 0, "And also when not found");
 }
 SKIP: {
-        skip "No internet access", 23 if $internet_access eq "no";
+        skip "No internet access", 28 if $internet_access eq "no";
 
         $res = NPTest->testCmd(
                 "./$plugin --ssl $host_tls_http"
@@ -135,7 +152,7 @@ SKIP: {
 
         # run some certificate checks with faketime
         SKIP: {
-                skip "No faketime binary found", 7 if !$faketime;
+                skip "No faketime binary found", 12 if !$faketime;
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC ./$plugin -C 1 $host_tls_http");
                 like($res->output, qr/OK - Certificate '$host_tls_cert' will expire on/, "Catch cert output");
                 is( $res->return_code, 0, "Catch cert output exit code" );
@@ -148,18 +165,23 @@ SKIP: {
                 my $time = strftime("%Y-%m-%d %H:%M:%S", localtime($ts));
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts))."' ./$plugin -C 1 $host_tls_http");
                 like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' just expired/, "Output on expire date");
+                is( $res->return_code, 2, "Output on expire date" );
 
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-1))."' ./$plugin -C 1 $host_tls_http");
                 like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expires in 0 minutes/, "cert expires in 1 second output");
+                is( $res->return_code, 2, "cert expires in 1 second exit code" );
 
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-120))."' ./$plugin -C 1 $host_tls_http");
                 like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expires in 2 minutes/, "cert expires in 2 minutes output");
+                is( $res->return_code, 2, "cert expires in 2 minutes exit code" );
 
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-7200))."' ./$plugin -C 1 $host_tls_http");
                 like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expires in 2 hours/, "cert expires in 2 hours output");
+                is( $res->return_code, 2, "cert expires in 2 hours exit code" );
 
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts+1))."' ./$plugin -C 1 $host_tls_http");
                 like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expired on/, "Certificate expired output");
+                is( $res->return_code, 2, "Certificate expired exit code" );
         };
 
         $res = NPTest->testCmd( "./$plugin --ssl $host_tls_http -E" );
@@ -171,26 +193,9 @@ SKIP: {
                 );
         cmp_ok( $res->return_code, "==", 0, "Can read https for www.e-paycobalt.com (uses AES certificate)" );
 
-
-        $res = NPTest->testCmd( "./$plugin -H www.mozilla.com -u /firefox -f follow" );
+        $res = NPTest->testCmd( "./$plugin -H www.mozilla.com -u /firefox -f curl" );
         is( $res->return_code, 0, "Redirection based on location is okay");
 
         $res = NPTest->testCmd( "./$plugin -H www.mozilla.com --extended-perfdata" );
         like  ( $res->output, '/time_connect=[\d\.]+/', 'Extended Performance Data Output OK' );
-}
-
-SKIP: {
-        skip "No internet access or proxy configured", 6 if $internet_access eq "no" or ! $host_tcp_proxy;
-
-        $res = NPTest->testCmd( "./$plugin -I $host_tcp_proxy -p $port_tcp_proxy -u http://$host_tcp_http -e 200,301,302");
-        is( $res->return_code, 0, "Proxy HTTP works");
-        like($res->output, qr/OK: Status line output matched/, "Proxy HTTP Output is sufficent");
-
-        $res = NPTest->testCmd( "./$plugin -I $host_tcp_proxy -p $port_tcp_proxy -H $host_tls_http -S -j CONNECT");
-        is( $res->return_code, 0, "Proxy HTTP CONNECT works");
-        like($res->output, qr/HTTP OK:/, "Proxy HTTP CONNECT output sufficent");
-
-        $res = NPTest->testCmd( "./$plugin -I $host_tcp_proxy -p $port_tcp_proxy -H $host_tls_http -S -j CONNECT:HEAD");
-        is( $res->return_code, 0, "Proxy HTTP CONNECT works with override method");
-        like($res->output, qr/HTTP OK:/, "Proxy HTTP CONNECT output sufficent");
 }

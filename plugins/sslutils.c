@@ -1,29 +1,29 @@
 /*****************************************************************************
-* 
+*
 * Monitoring Plugins SSL utilities
-* 
+*
 * License: GPL
 * Copyright (c) 2005-2010 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains common functions for plugins that require SSL.
-* 
+*
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 #define MAX_CN_LENGTH 256
@@ -193,12 +193,22 @@ int np_net_ssl_read(void *buf, int num) {
 
 int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
 #  ifdef USE_OPENSSL
-	X509 *certificate=NULL;
+	X509 *certificate = NULL;
+	certificate=SSL_get_peer_certificate(s);
+	return(np_net_ssl_check_certificate(certificate, days_till_exp_warn, days_till_exp_crit));
+#  else /* ifndef USE_OPENSSL */
+	printf("%s\n", _("WARNING - Plugin does not support checking certificates."));
+	return STATE_WARNING;
+#  endif /* USE_OPENSSL */
+}
+
+int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn, int days_till_exp_crit){
+#  ifdef USE_OPENSSL
 	X509_NAME *subj=NULL;
 	char timestamp[50] = "";
 	char cn[MAX_CN_LENGTH]= "";
 	char *tz;
-	
+
 	int cnlen =-1;
 	int status=STATE_UNKNOWN;
 
@@ -210,7 +220,6 @@ int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
 	int time_remaining;
 	time_t tm_t;
 
-	certificate=SSL_get_peer_certificate(s);
 	if (!certificate) {
 		printf("%s\n",_("CRITICAL - Cannot retrieve server certificate."));
 		return STATE_CRITICAL;

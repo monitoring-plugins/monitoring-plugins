@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
-AC_INIT(monitoring-plugins,2.2)
+AC_INIT(monitoring-plugins,2.3git)
 AC_CONFIG_SRCDIR(NPTest.pm)
 AC_CONFIG_FILES([gl/Makefile])
 AC_CONFIG_AUX_DIR(build-aux)
@@ -384,6 +384,42 @@ if test "$ac_cv_header_wtsapi32_h" = "yes"; then
   WTSAPI32LIBS="-lwtsapi32"
   AC_SUBST(WTSAPI32LIBS)
 fi
+
+_can_enable_check_curl=no
+dnl Check for cURL library
+LIBCURL_CHECK_CONFIG(yes, 7.15.2, [
+    _can_enable_check_curl=yes
+    LIBCURLINCLUDE="$LIBCURL_CPPFLAGS"
+    LIBCURLLIBS="$LIBCURL"
+    LIBCURLCFLAGS="$LIBCURL_CPPFLAGS"
+    AC_SUBST(LIBCURLINCLUDE)
+    AC_SUBST(LIBCURLLIBS)
+    AC_SUBST(LIBCURLCFLAGS)
+  ], [
+    _can_enable_check_curl=no
+    AC_MSG_WARN([Skipping curl plugin])
+    AC_MSG_WARN([install libcurl libs to compile this plugin (see REQUIREMENTS).])
+])
+
+dnl Check for uriparser library
+URIPARSER_CHECK(yes, 0.7.5, [
+    URIPARSERINCLUDE="$URIPARSER_CPPFLAGS"
+    URIPARSERLIBS="$URIPARSER"
+    URIPARSERCFLAGS="$URIPARSER_CPPFLAGS"
+    AC_SUBST(URIPARSERINCLUDE)
+    AC_SUBST(URIPARSERLIBS)
+    AC_SUBST(URIPARSERCFLAGS)
+  ], [
+    _can_enable_check_curl=no
+    AC_MSG_WARN([Skipping curl plugin])
+    AC_MSG_WARN([install the uriparser library to compile this plugin (see REQUIREMENTS).])
+])
+
+dnl prerequisites met, enable the plugin
+if test x$_can_enable_check_curl = xyes; then
+  EXTRAS="$EXTRAS check_curl\$(EXEEXT)"
+fi
+AC_CONFIG_FILES([plugins/picohttpparser/Makefile])
 
 dnl Fallback to who(1) if the system doesn't provide an utmpx(5) interface
 if test "$ac_cv_header_utmpx_h" = "no" -a "$ac_cv_header_wtsapi32_h" = "no"
@@ -1064,6 +1100,14 @@ then
 	ac_cv_ping_packets_first=yes
 	AC_MSG_RESULT([$with_ping_command])
 
+elif $PATH_TO_PING -4 -n -U -w 10 -c 1 127.0.0.1 2>/dev/null | \
+	egrep -i "^round-trip|^rtt" >/dev/null
+then
+	# check if -4 is supported - issue #1550
+	with_ping_command="$PATH_TO_PING -4 -n -U -w %d -c %d %s"
+	ac_cv_ping_packets_first=yes
+	ac_cv_ping_has_timeout=yes
+	AC_MSG_RESULT([$with_ping_command])
 elif $PATH_TO_PING -n -U -w 10 -c 1 127.0.0.1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
@@ -1886,4 +1930,5 @@ ACX_FEATURE([enable],[perl-modules])
 ACX_FEATURE([with],[cgiurl])
 ACX_FEATURE([with],[trusted-path])
 ACX_FEATURE([enable],[libtap])
-
+ACX_FEATURE([with],[libcurl])
+ACX_FEATURE([with],[uriparser])

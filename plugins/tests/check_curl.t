@@ -21,8 +21,7 @@ use FindBin qw($Bin);
 
 $ENV{'LC_TIME'} = "C";
 
-my $common_tests = 70;
-my $virtual_port_tests = 8;
+my $common_tests = 72;
 my $ssl_only_tests = 8;
 # Check that all dependent modules are available
 eval "use HTTP::Daemon 6.01;";
@@ -35,11 +34,36 @@ eval {
 my $plugin = 'check_http';
 $plugin    = 'check_curl' if $0 =~ m/check_curl/mx;
 
+# look for libcurl version to see if some advanced checks are possible (>= 7.49.0)
+my $advanced_checks = 12;
+my $use_advanced_checks = 0;
+my $required_version = '7.49.0';
+my $virtual_host = 'www.somefunnyhost.com';
+my $virtual_port = 42;
+my $curl_version = '';
+open (my $fh, '-|', "./$plugin --version") or die;
+while (<$fh>) {
+	if (m{libcurl/([\d.]+)\s}) {
+		$curl_version = $1;
+		last;
+	}
+}
+close ($fh);
+if ($curl_version) {
+	my ($major, $minor, $release) = split (/\./, $curl_version);
+	my ($req_major, $req_minor, $req_release) = split (/\./, $required_version);
+	my $check = ($major <=> $req_major or $minor <=> $req_minor or $release <=> $req_release);
+	if ($check >= 0) {
+		$use_advanced_checks = 1;
+		print "Found libcurl $major.$minor.$release. Using advanced checks\n";
+	}
+}
+
 if ($@) {
 	plan skip_all => "Missing required module for test: $@";
 } else {
 	if (-x "./$plugin") {
-		plan tests => $common_tests * 2 + $ssl_only_tests + $virtual_port_tests;
+		plan tests => $common_tests * 2 + $ssl_only_tests + $advanced_checks;
 	} else {
 		plan skip_all => "No $plugin compiled";
 	}
@@ -91,8 +115,6 @@ if ($pid) {
 				exit;
 			}
 		} else {
-			# closing the connection after -C cert checks make the daemon exit with a sigpipe otherwise
-			local $SIG{'PIPE'} = 'IGNORE';
 			my $d = HTTP::Daemon::SSL->new(
 				LocalPort => $port_https,
 				LocalAddr => "127.0.0.1",
@@ -167,6 +189,12 @@ sub run_server {
 				$c->send_basic_header;
 				$c->send_header('foo');
 				$c->send_crlf;
+			} elsif ($r->url->path eq "/header_broken_check") {
+				$c->send_basic_header;
+				$c->send_header('foo');
+				print $c "Test1:: broken\n";
+				print $c " Test2: leading whitespace\n";
+				$c->send_crlf;
 			} elsif ($r->url->path eq "/virtual_port") {
 				# return sent Host header
 				$c->send_basic_header;
@@ -222,30 +250,47 @@ SKIP: {
 }
 
 my $cmd;
-# check virtual port behaviour
-#
-# http without virtual port
-$cmd = "$command -p $port_http -u /virtual_port -r ^127.0.0.1:$port_http\$";
-$result = NPTest->testCmd( $cmd );
-is( $result->return_code, 0, $cmd);
-like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
-# http with virtual port
-$cmd = "$command:80 -p $port_http -u /virtual_port -r ^127.0.0.1\$";
-$result = NPTest->testCmd( $cmd );
-is( $result->return_code, 0, $cmd);
-like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
-
+# advanced checks with virtual hostname and virtual port
 SKIP: {
-	skip "HTTP::Daemon::SSL not installed", 4 if ! exists $servers->{https};
-	# https without virtual port
-	$cmd = "$command -p $port_https --ssl -u /virtual_port -r ^127.0.0.1:$port_https\$";
+	skip "libcurl version is smaller than $required_version", 6 unless $use_advanced_checks;
+
+	# http without virtual port
+	$cmd = "./$plugin -H $virtual_host -I 127.0.0.1 -p $port_http -u /virtual_port -r ^$virtual_host:$port_http\$";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
-	# https with virtual port
-	$cmd = "$command:443 -p $port_https --ssl -u /virtual_port -r ^127.0.0.1\$";
+	# http with virtual port (!= 80)
+	$cmd = "./$plugin -H $virtual_host:$virtual_port -I 127.0.0.1 -p $port_http -u /virtual_port -r ^$virtual_host:$virtual_port\$";
+	$result = NPTest->testCmd( $cmd );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+
+	# http with virtual port (80)
+	$cmd = "./$plugin -H $virtual_host:80 -I 127.0.0.1 -p $port_http -u /virtual_port -r ^$virtual_host\$";
+	$result = NPTest->testCmd( $cmd );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+}
+
+# and the same for SSL
+SKIP: {
+	skip "libcurl version is smaller than $required_version and/or HTTP::Daemon::SSL not installed", 6 if ! exists $servers->{https} or not $use_advanced_checks;
+	# https without virtual port
+	$cmd = "./$plugin -H $virtual_host -I 127.0.0.1 -p $port_https --ssl -u /virtual_port -r ^$virtual_host:$port_https\$";
+	$result = NPTest->testCmd( $cmd );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+
+	# https with virtual port (!= 443)
+	$cmd = "./$plugin -H $virtual_host:$virtual_port -I 127.0.0.1 -p $port_https --ssl -u /virtual_port -r ^$virtual_host:$virtual_port\$";
+	$result = NPTest->testCmd( $cmd );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+
+	# https with virtual port (443)
+	$cmd = "./$plugin -H $virtual_host:443 -I 127.0.0.1 -p $port_https --ssl -u /virtual_port -r ^$virtual_host\$";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
@@ -283,6 +328,10 @@ sub run_common_tests {
 	is( $result->return_code, 2, "Missing header string check");
 	like( $result->output, qr%^HTTP CRITICAL: HTTP/1\.1 200 OK - header 'bar' not found on 'https?://127\.0\.0\.1:\d+/header_check'%, "Shows search string and location");
 
+	$result = NPTest->testCmd( "$command -u /header_broken_check" );
+	is( $result->return_code, 0, "header_check search for string");
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - 138 bytes in [\d\.]+ second/', "Output correct" );
+
 	my $cmd;
 	$cmd = "$command -u /slow";
 	$result = NPTest->testCmd( $cmd );
@@ -299,7 +348,7 @@ sub run_common_tests {
 	$cmd = "$command -u /statuscode/200 -e 200";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK: Status line output matched "200" - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - Status line output matched "200" - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /statuscode/201";
 	$result = NPTest->testCmd( $cmd );
@@ -309,7 +358,7 @@ sub run_common_tests {
 	$cmd = "$command -u /statuscode/201 -e 201";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK: Status line output matched "201" - \d+ bytes in [\d\.]+ second /', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 201 Created - Status line output matched "201" - \d+ bytes in [\d\.]+ second /', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /statuscode/201 -e 200";
 	$result = NPTest->testCmd( $cmd );
@@ -319,12 +368,12 @@ sub run_common_tests {
 	$cmd = "$command -u /statuscode/200 -e 200,201,202";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK: Status line output matched "200,201,202" - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - Status line output matched "200,201,202" - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /statuscode/201 -e 200,201,202";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/^HTTP OK: Status line output matched "200,201,202" - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+	like( $result->output, '/^HTTP OK: HTTP/1.1 201 Created - Status line output matched "200,201,202" - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /statuscode/203 -e 200,201,202";
 	$result = NPTest->testCmd( $cmd );
@@ -417,24 +466,22 @@ sub run_common_tests {
 
 	# stickyport - on full urlS port is set back to 80 otherwise
 	$cmd = "$command -f stickyport -u /redir_external -t 5 -s redirected";
-	alarm(2);
 	eval {
 		local $SIG{ALRM} = sub { die "alarm\n" };
+		alarm(2);
 		$result = NPTest->testCmd( $cmd );
-	};
+		alarm(0);	};
 	isnt( $@, "alarm\n", $cmd );
-	alarm(0);
 	is( $result->return_code, 0, $cmd );
 
 	# Let's hope there won't be any web server on :80 returning "redirected"!
 	$cmd = "$command -f sticky -u /redir_external -t 5 -s redirected";
-	alarm(2);
 	eval {
 		local $SIG{ALRM} = sub { die "alarm\n" };
+		alarm(2);
 		$result = NPTest->testCmd( $cmd );
-	};
+		alarm(0); };
 	isnt( $@, "alarm\n", $cmd );
-	alarm(0);
 	isnt( $result->return_code, 0, $cmd );
 
 	# Test an external address - timeout

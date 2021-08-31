@@ -568,7 +568,9 @@ sub process_arguments(){
 		 "w=i" => \$opt_w, "warning=i"  => \$opt_w,   # warning if above this number
 		 "c=i" => \$opt_c, "critical=i" => \$opt_c,	  # critical if above this number
 		 "t=i" => \$opt_t, "timeout=i"  => \$opt_t,
-		 "s"   => \$opt_s, "sudo"       => \$opt_s
+		 "s"   => \$opt_s, "sudo"       => \$opt_s,
+		 "W=i" => \$opt_W,                            # warning if above this number
+		 "C=i" => \$opt_C,                            # critical if above this number
 		 );
 
 	if ($opt_V) {
@@ -662,8 +664,8 @@ sub print_help () {
 	print "   Feedback/patches to support non-sendmail mailqueue welcome\n\n";
 	print "-w (--warning)   = Min. number of messages in queue to generate warning\n";
 	print "-c (--critical)  = Min. number of messages in queue to generate critical alert ( w < c )\n";
-	print "-W (--Warning)   = Min. number of messages for same domain in queue to generate warning\n";
-	print "-C (--Critical)  = Min. number of messages for same domain in queue to generate critical alert ( W < C )\n";
+	print "-W               = Min. number of messages for same domain in queue to generate warning\n";
+	print "-C               = Min. number of messages for same domain in queue to generate critical alert ( W < C )\n";
 	print "-t (--timeout)   = Plugin timeout in seconds (default = $utils::TIMEOUT)\n";
 	print "-M (--mailserver) = [ sendmail | qmail | postfix | exim | nullmailer ] (default = autodetect)\n";
 	print "-s (--sudo)      = Use sudo to call the mailq command\n";
