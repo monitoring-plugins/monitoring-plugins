@@ -13,7 +13,7 @@ if [ $(lsb_release -is) = "Debian" ]; then
 fi
 apt-get -y install perl autotools-dev libdbi-dev libldap2-dev libpq-dev libradcli-dev libnet-snmp-perl procps
 apt-get -y install libdbi0-dev libdbd-sqlite3 libssl-dev dnsutils snmp-mibs-downloader libsnmp-perl snmpd
-apt-get -y install fping snmp netcat smbclient vsftpd apache2 ssl-cert postfix libhttp-daemon-ssl-perl
+apt-get -y install fping snmp netcat-openbsd smbclient vsftpd apache2 ssl-cert postfix libhttp-daemon-ssl-perl
 apt-get -y install libdbd-sybase-perl libnet-dns-perl
 apt-get -y install slapd ldap-utils
 apt-get -y install gcc make autoconf automake gettext
