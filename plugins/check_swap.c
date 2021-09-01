@@ -356,15 +356,15 @@ main (int argc, char **argv)
 	}
 
 	result = max_state (result, check_swap (percent_used, free_swap_mb, total_swap_mb));
-	printf (_("SWAP %s - %d%% free (%d MB out of %d MB) %s|"),
+	printf (_("SWAP %s - %d%% free (%d MiB out of %d MiB) %s|"),
 			state_text (result),
 			(100 - percent_used), (int) free_swap_mb, (int) total_swap_mb, status);
 
-	puts (perfdata ("swap", (long) free_swap_mb, "MB",
-	                TRUE, (long) max (warn_size_bytes/(1024 * 1024), warn_percent/100.0*total_swap_mb),
-	                TRUE, (long) max (crit_size_bytes/(1024 * 1024), crit_percent/100.0*total_swap_mb),
+	puts (fperfdata ("swap", free_swap_mb * 1024 * 1024, "B",
+	                TRUE, max (warn_size_bytes, warn_percent/100.0*total_swap_mb*1024*1024),
+	                TRUE, max (crit_size_bytes, crit_percent/100.0*total_swap_mb*1024*1024),
 	                TRUE, 0,
-	                TRUE, (long) total_swap_mb));
+	                TRUE, total_swap_mb * 1024 * 1024));
 
 	return result;
 }

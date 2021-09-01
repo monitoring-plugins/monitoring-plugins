@@ -344,12 +344,12 @@ main (int argc, char **argv)
 
       /* Nb: *_high_tide are unset when == UINT_MAX */
       xasprintf (&perf, "%s %s", perf,
-                perfdata ((!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
-                          path->dused_units, units,
-                          (warning_high_tide != UINT_MAX ? TRUE : FALSE), warning_high_tide,
-                          (critical_high_tide != UINT_MAX ? TRUE : FALSE), critical_high_tide,
+                fperfdata ((!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
+                          path->dused_units * mult, "B",
+                          (warning_high_tide != UINT_MAX ? TRUE : FALSE), warning_high_tide * mult,
+                          (critical_high_tide != UINT_MAX ? TRUE : FALSE), critical_high_tide * mult,
                           TRUE, 0,
-                          TRUE, path->dtotal_units));
+                          TRUE, path->dtotal_units * mult));
 
       if (display_inodes_perfdata) {
         /* *_high_tide must be reinitialized at each run */
@@ -579,16 +579,16 @@ process_arguments (int argc, char **argv)
         units = strdup ("B");
       } else if (! strcmp (optarg, "kB")) {
         mult = (uintmax_t)1024;
-        units = strdup ("kB");
+        units = strdup ("kiB");
       } else if (! strcmp (optarg, "MB")) {
         mult = (uintmax_t)1024 * 1024;
-        units = strdup ("MB");
+        units = strdup ("MiB");
       } else if (! strcmp (optarg, "GB")) {
         mult = (uintmax_t)1024 * 1024 * 1024;
-        units = strdup ("GB");
+        units = strdup ("GiB");
       } else if (! strcmp (optarg, "TB")) {
         mult = (uintmax_t)1024 * 1024 * 1024 * 1024;
-        units = strdup ("TB");
+        units = strdup ("TiB");
       } else {
         die (STATE_UNKNOWN, _("unit type %s not known\n"), optarg);
       }
@@ -812,7 +812,7 @@ process_arguments (int argc, char **argv)
   }
 
   if (units == NULL) {
-    units = strdup ("MB");
+    units = strdup ("MiB");
     mult = (uintmax_t)1024 * 1024;
   }
 
