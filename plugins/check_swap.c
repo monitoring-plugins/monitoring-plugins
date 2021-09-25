@@ -400,8 +400,8 @@ check_swap(float free_swap_mb, float total_swap_mb)
 
 	uint64_t free_swap = free_swap_mb * (1024 * 1024);		/* Convert back to bytes as warn and crit specified in bytes */
 
-	if (!crit.is_percentage && crit.value <= free_swap) return STATE_CRITICAL;
-	if (!warn.is_percentage && warn.value <= free_swap) return STATE_WARNING;
+	if (!crit.is_percentage && crit.value >= free_swap) return STATE_CRITICAL;
+	if (!warn.is_percentage && warn.value >= free_swap) return STATE_WARNING;
 
 
 	uint64_t usage_percentage = ((total_swap_mb - free_swap_mb) / total_swap_mb) * 100;
