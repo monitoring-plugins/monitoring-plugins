@@ -16,6 +16,9 @@ suite of plugins. */
 /* now some functions etc are being defined in ../lib/utils_base.c */
 #include "utils_base.h"
 
+
+#include <stdbool.h>
+
 #ifdef NP_EXTRA_OPTS
 /* Include extra-opts functions if compiled in */
 #include "extra_opts.h"
@@ -38,6 +41,7 @@ int is_intpos (char *);
 int is_intneg (char *);
 int is_intnonneg (char *);
 int is_intpercent (char *);
+bool is_uint64(char *number, uint64_t *target);
 
 int is_numeric (char *);
 int is_positive (char *);
@@ -87,6 +91,12 @@ void usage_va(const char *fmt, ...) __attribute__((noreturn));
 
 char *perfdata (const char *, long int, const char *, int, long int,
                 int, long int, int, long int, int, long int);
+
+char *perfdata_uint64 (const char *, uint64_t , const char *, int, uint64_t,
+                int, uint64_t, int, uint64_t, int, uint64_t);
+
+char *perfdata_int64 (const char *, int64_t, const char *, int, int64_t,
+                int, int64_t, int, int64_t, int, int64_t);
 
 char *fperfdata (const char *, double, const char *, int, double,
                  int, double, int, double, int, double);

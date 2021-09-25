@@ -27,6 +27,8 @@
 #include "utils_base.h"
 #include <stdarg.h>
 #include <limits.h>
+#include <string.h>
+#include <errno.h>
 
 #include <arpa/inet.h>
 
@@ -237,6 +239,46 @@ is_intnonneg (char *number)
 		return TRUE;
 	else
 		return FALSE;
+}
+
+/*
+ * Checks whether the number in the string _number_ can be put inside a int64_t
+ * On success the number will be written to the _target_ address, if _target_ is not set
+ * to NULL.
+ */
+bool is_int64(char *number, int64_t *target) {
+	errno = 0;
+	uint64_t tmp = strtoll(number, NULL, 10);
+	if (errno != 0) {
+		return false;
+	}
+	if (tmp < INT64_MIN || tmp > INT64_MAX) {
+		return false;
+	}
+	if (target != NULL) {
+		*target = tmp;
+	}
+	return true;
+}
+
+/*
+ * Checks whether the number in the string _number_ can be put inside a uint64_t
+ * On success the number will be written to the _target_ address, if _target_ is not set
+ * to NULL.
+ */
+bool is_uint64(char *number, uint64_t *target) {
+	errno = 0;
+	uint64_t tmp = strtoll(number, NULL, 10);
+	if (errno != 0) {
+		return false;
+	}
+	if (tmp < 0 || tmp > UINT64_MAX) {
+		return false;
+	}
+	if (target != NULL) {
+		*target = tmp;
+	}
+	return true;
 }
 
 int
@@ -528,6 +570,84 @@ char *perfdata (const char *label,
  long int minv,
  int maxp,
  long int maxv)
+{
+	char *data = NULL;
+
+	if (strpbrk (label, "'= "))
+		xasprintf (&data, "'%s'=%ld%s;", label, val, uom);
+	else
+		xasprintf (&data, "%s=%ld%s;", label, val, uom);
+
+	if (warnp)
+		xasprintf (&data, "%s%ld;", data, warn);
+	else
+		xasprintf (&data, "%s;", data);
+
+	if (critp)
+		xasprintf (&data, "%s%ld;", data, crit);
+	else
+		xasprintf (&data, "%s;", data);
+
+	if (minp)
+		xasprintf (&data, "%s%ld", data, minv);
+
+	if (maxp)
+		xasprintf (&data, "%s;%ld", data, maxv);
+
+	return data;
+}
+
+
+char *perfdata_uint64 (const char *label,
+ uint64_t val,
+ const char *uom,
+ int warnp,
+ uint64_t warn,
+ int critp,
+ uint64_t crit,
+ int minp,
+ uint64_t minv,
+ int maxp,
+ uint64_t maxv)
+{
+	char *data = NULL;
+
+	if (strpbrk (label, "'= "))
+		xasprintf (&data, "'%s'=%ld%s;", label, val, uom);
+	else
+		xasprintf (&data, "%s=%ld%s;", label, val, uom);
+
+	if (warnp)
+		xasprintf (&data, "%s%ld;", data, warn);
+	else
+		xasprintf (&data, "%s;", data);
+
+	if (critp)
+		xasprintf (&data, "%s%ld;", data, crit);
+	else
+		xasprintf (&data, "%s;", data);
+
+	if (minp)
+		xasprintf (&data, "%s%ld", data, minv);
+
+	if (maxp)
+		xasprintf (&data, "%s;%ld", data, maxv);
+
+	return data;
+}
+
+
+char *perfdata_int64 (const char *label,
+ int64_t val,
+ const char *uom,
+ int warnp,
+ int64_t warn,
+ int critp,
+ int64_t crit,
+ int minp,
+ int64_t minv,
+ int maxp,
+ int64_t maxv)
 {
 	char *data = NULL;
 
