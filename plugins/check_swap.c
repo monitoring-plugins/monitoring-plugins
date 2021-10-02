@@ -466,7 +466,7 @@ process_arguments (int argc, char **argv)
 				length = strlen(optarg);
 
 				if (optarg[length - 1] == '%') {
-					// It's percentage!
+					/* It's percentage */
 					warn.is_percentage = true;
 					optarg[length - 1] = '\0';
 					if (is_uint64(optarg, &warn.value)) {
@@ -477,7 +477,7 @@ process_arguments (int argc, char **argv)
 						}
 					}
 				} else {
-					// It's Bytes
+					/* It's Bytes */
 					warn.is_percentage = false;
 					if (is_uint64(optarg, &warn.value)) {
 						break;
@@ -497,7 +497,7 @@ process_arguments (int argc, char **argv)
 				length = strlen(optarg);
 
 				if (optarg[length - 1] == '%') {
-					// It's percentage!
+					/* It's percentage */
 					crit.is_percentage = true;
 					optarg[length - 1] = '\0';
 					if (is_uint64(optarg, &crit.value)) {
@@ -508,6 +508,7 @@ process_arguments (int argc, char **argv)
 						}
 					}
 				} else {
+					/* It's Bytes */
 					crit.is_percentage = false;
 					if (is_uint64(optarg, &crit.value)) {
 						break;
