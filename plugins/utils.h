@@ -17,8 +17,6 @@ suite of plugins. */
 #include "utils_base.h"
 
 
-#include <stdbool.h>
-
 #ifdef NP_EXTRA_OPTS
 /* Include extra-opts functions if compiled in */
 #include "extra_opts.h"
@@ -41,7 +39,8 @@ int is_intpos (char *);
 int is_intneg (char *);
 int is_intnonneg (char *);
 int is_intpercent (char *);
-bool is_uint64(char *number, uint64_t *target);
+int is_uint64(char *number, uint64_t *target);
+int is_int64(char *number, int64_t *target);
 
 int is_numeric (char *);
 int is_positive (char *);

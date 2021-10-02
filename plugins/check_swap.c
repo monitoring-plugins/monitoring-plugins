@@ -37,7 +37,6 @@ const char *email = "devel@monitoring-plugins.org";
 #include <string.h>
 #include <math.h>
 #include <libintl.h>
-#include <stdbool.h>
 
 #ifdef HAVE_DECL_SWAPCTL
 # ifdef HAVE_SYS_PARAM_H
@@ -56,7 +55,7 @@ const char *email = "devel@monitoring-plugins.org";
 #endif
 
 typedef struct {
-	bool is_percentage;
+	int is_percentage;
 	uint64_t value;
 } threshold_t;
 
@@ -69,7 +68,7 @@ void print_help (void);
 threshold_t warn;
 threshold_t crit;
 int verbose;
-bool allswaps;
+int allswaps;
 int no_swap_state = STATE_CRITICAL;
 
 int
@@ -467,7 +466,7 @@ process_arguments (int argc, char **argv)
 
 				if (optarg[length - 1] == '%') {
 					/* It's percentage */
-					warn.is_percentage = true;
+					warn.is_percentage = 1;
 					optarg[length - 1] = '\0';
 					if (is_uint64(optarg, &warn.value)) {
 						if (warn.value > 100) {
@@ -478,7 +477,7 @@ process_arguments (int argc, char **argv)
 					}
 				} else {
 					/* It's Bytes */
-					warn.is_percentage = false;
+					warn.is_percentage = 0;
 					if (is_uint64(optarg, &warn.value)) {
 						break;
 					} else {
@@ -498,7 +497,7 @@ process_arguments (int argc, char **argv)
 
 				if (optarg[length - 1] == '%') {
 					/* It's percentage */
-					crit.is_percentage = true;
+					crit.is_percentage = 1;
 					optarg[length - 1] = '\0';
 					if (is_uint64(optarg, &crit.value)) {
 						if (crit.value> 100) {
@@ -509,7 +508,7 @@ process_arguments (int argc, char **argv)
 					}
 				} else {
 					/* It's Bytes */
-					crit.is_percentage = false;
+					crit.is_percentage = 0;
 					if (is_uint64(optarg, &crit.value)) {
 						break;
 					} else {

@@ -246,19 +246,19 @@ is_intnonneg (char *number)
  * On success the number will be written to the _target_ address, if _target_ is not set
  * to NULL.
  */
-bool is_int64(char *number, int64_t *target) {
+int is_int64(char *number, int64_t *target) {
 	errno = 0;
 	uint64_t tmp = strtoll(number, NULL, 10);
 	if (errno != 0) {
-		return false;
+		return 0;
 	}
 	if (tmp < INT64_MIN || tmp > INT64_MAX) {
-		return false;
+		return 0;
 	}
 	if (target != NULL) {
 		*target = tmp;
 	}
-	return true;
+	return 1;
 }
 
 /*
@@ -266,19 +266,19 @@ bool is_int64(char *number, int64_t *target) {
  * On success the number will be written to the _target_ address, if _target_ is not set
  * to NULL.
  */
-bool is_uint64(char *number, uint64_t *target) {
+int is_uint64(char *number, uint64_t *target) {
 	errno = 0;
 	uint64_t tmp = strtoll(number, NULL, 10);
 	if (errno != 0) {
-		return false;
+		return 0;
 	}
 	if (tmp < 0 || tmp > UINT64_MAX) {
-		return false;
+		return 0;
 	}
 	if (target != NULL) {
 		*target = tmp;
 	}
-	return true;
+	return 1;
 }
 
 int
