@@ -69,6 +69,8 @@ $ENV{'ENV'}='';
 # -----------------------------------------------------------------[ Global ]--
 
 $PROGNAME = "check_ircd";
+# nickname shouldn't be longer than 9 chars, this might happen with large PIDs
+# To prevent this, we cut of the part over 10000
 my $NICK="ircd" . $$ % 10000;
 my $USER_INFO="monitor localhost localhost : ";
 	
