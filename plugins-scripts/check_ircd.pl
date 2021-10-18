@@ -69,7 +69,7 @@ $ENV{'ENV'}='';
 # -----------------------------------------------------------------[ Global ]--
 
 $PROGNAME = "check_ircd";
-my $NICK="ircd$$";
+my $NICK="ircd" . $$ % 10000;
 my $USER_INFO="monitor localhost localhost : ";
 	
 # -------------------------------------------------------------[ connection ]--
