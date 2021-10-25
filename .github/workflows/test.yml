@@ -35,6 +35,7 @@ jobs:
               -e NPTEST_CACHE="/src/.github/NPTest.cache" \
               -w /src -v ${PWD}:/src \
               --tmpfs /media/ramdisk1 \
+              -v /var/run/utmp:/var/run/utmp \
               --mount source=tmp-vol,destination=/src,target=/media/ramdisk2 \
               ${{ matrix.distro }} \
               /bin/sh -c '${{ matrix.prepare }} && \
