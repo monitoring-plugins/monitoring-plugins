@@ -288,8 +288,17 @@ main (int argc, char **argv)
       get_stats (path, &fsp);
 
       if (verbose >= 3) {
-        printf ("For %s, used_pct=%g free_pct=%g used_units=%g free_units=%g total_units=%g used_inodes_pct=%g free_inodes_pct=%g fsp.fsu_blocksize=%llu mult=%llu\n",
-          me->me_mountdir, path->dused_pct, path->dfree_pct, path->dused_units, path->dfree_units, path->dtotal_units, path->dused_inodes_percent, path->dfree_inodes_percent, fsp.fsu_blocksize, mult);
+        printf ("For %s, used_pct=%g free_pct=%g used_units=%llu free_units=%llu total_units=%llu used_inodes_pct=%g free_inodes_pct=%g fsp.fsu_blocksize=%llu mult=%llu\n",
+				me->me_mountdir,
+				path->dused_pct,
+				path->dfree_pct,
+				path->dused_units,
+				path->dfree_units,
+				path->dtotal_units,
+				path->dused_inodes_percent,
+				path->dfree_inodes_percent,
+				fsp.fsu_blocksize,
+				mult);
       }
 
       /* Threshold comparisons */
@@ -344,12 +353,13 @@ main (int argc, char **argv)
 
       /* Nb: *_high_tide are unset when == UINT_MAX */
       xasprintf (&perf, "%s %s", perf,
-                perfdata ((!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
-                          path->dused_units, units,
-                          (warning_high_tide != UINT_MAX ? TRUE : FALSE), warning_high_tide,
-                          (critical_high_tide != UINT_MAX ? TRUE : FALSE), critical_high_tide,
-                          TRUE, 0,
-                          TRUE, path->dtotal_units));
+			  perfdata_uint64 (
+				  (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
+				  path->dused_units * mult, "B",
+				  (warning_high_tide == UINT64_MAX ? FALSE : TRUE), warning_high_tide * mult,
+				  (critical_high_tide == UINT64_MAX ? FALSE : TRUE), critical_high_tide * mult,
+				  TRUE, 0,
+				  TRUE, path->dtotal_units * mult));
 
       if (display_inodes_perfdata) {
         /* *_high_tide must be reinitialized at each run */
@@ -366,12 +376,12 @@ main (int argc, char **argv)
         xasprintf (&perf_ilabel, "%s (inodes)", (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir);
         /* Nb: *_high_tide are unset when == UINT_MAX */
         xasprintf (&perf, "%s %s", perf,
-                   perfdata (perf_ilabel,
-                             path->inodes_used, "",
-                             (warning_high_tide != UINT_MAX ? TRUE : FALSE), warning_high_tide,
-                             (critical_high_tide != UINT_MAX ? TRUE : FALSE), critical_high_tide,
-                             TRUE, 0,
-                             TRUE, path->inodes_total));
+				perfdata_uint64 (perf_ilabel,
+					path->inodes_used, "",
+					(warning_high_tide != UINT64_MAX ? TRUE : FALSE), warning_high_tide,
+					(critical_high_tide != UINT64_MAX ? TRUE : FALSE), critical_high_tide,
+					TRUE, 0,
+					TRUE, path->inodes_total));
       }
 
       if (disk_result==STATE_OK && erronly && !verbose)
@@ -1055,8 +1065,14 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
       }
       if (verbose >= 3) 
         printf("Group %s now has: used_units=%g free_units=%g total_units=%g fsu_blocksize=%llu mult=%llu\n",
-               p->group, tmpfsp.fsu_bavail, tmpfsp.fsu_blocksize, p->best_match->me_mountdir, p->dused_units,
-               p->dfree_units, p->dtotal_units, mult);
+               p->group,
+			   tmpfsp.fsu_bavail,
+			   tmpfsp.fsu_blocksize,
+			   p->best_match->me_mountdir,
+			   p->dused_units,
+               p->dfree_units,
+			   p->dtotal_units,
+			   mult);
     }
     /* modify devname and mountdir for output */
     p->best_match->me_mountdir = p->best_match->me_devname = p->group;
