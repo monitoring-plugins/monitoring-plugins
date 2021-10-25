@@ -783,6 +783,16 @@ dnl 	ac_cv_ps_format=["%*s %d %d %d %d %*d %*d %d %d%*[ 0123456789abcdef]%[OSRZT
 dnl 	ac_cv_ps_cols=8
 dnl 	AC_MSG_RESULT([$ac_cv_ps_command])
 
+dnl This one is the exact same test as the next one but includes etime
+elif ps axwo 'stat comm vsz rss user uid pid ppid etime args' 2>/dev/null | \
+	egrep -i ["^ *STAT +[UCOMAND]+ +VSZ +RSS +USER +UID +PID +PPID +ELAPSED +COMMAND"] > /dev/null
+then
+	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procetime,procprog,&pos]"
+	ac_cv_ps_command="$PATH_TO_PS axwo 'stat uid pid ppid vsz rss pcpu etime comm args'"
+	ac_cv_ps_format="%s %d %d %d %d %d %f %s %s %n"
+	ac_cv_ps_cols=10
+	AC_MSG_RESULT([$ac_cv_ps_command])
+
 dnl Some gnu/linux systems (debian for one) don't like -axwo and need axwo.
 dnl so test for this first...
 elif ps axwo 'stat comm vsz rss user uid pid ppid args' 2>/dev/null | \
