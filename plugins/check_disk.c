@@ -172,8 +172,6 @@ main (int argc, char **argv)
   char *preamble;
   char *flag_header;
   double inode_space_pct;
-  double warning_high_tide;
-  double critical_high_tide;
   int temp_result;
 
   struct mount_entry *me;
@@ -335,23 +333,23 @@ main (int argc, char **argv)
       */
 
       /* *_high_tide must be reinitialized at each run */
-      warning_high_tide = UINT_MAX;
-      critical_high_tide = UINT_MAX;
+	  uint64_t warning_high_tide = UINT64_MAX;
+	  uint64_t critical_high_tide = UINT64_MAX;
 
       if (path->freespace_units->warning != NULL) {
         warning_high_tide = path->dtotal_units - path->freespace_units->warning->end;
       }
       if (path->freespace_percent->warning != NULL) {
-        warning_high_tide = abs( min( (double) warning_high_tide, (double) (1.0 - path->freespace_percent->warning->end/100)*path->dtotal_units ));
+        warning_high_tide = llabs( min( (double) warning_high_tide,  (1.0 -  path->freespace_percent->warning->end / 100 * path->dtotal_units) ));
       }
       if (path->freespace_units->critical != NULL) {
         critical_high_tide = path->dtotal_units - path->freespace_units->critical->end;
       }
       if (path->freespace_percent->critical != NULL) {
-        critical_high_tide = abs( min( (double) critical_high_tide, (double) (1.0 - path->freespace_percent->critical->end/100)*path->dtotal_units ));
+        critical_high_tide = llabs( min( (double) critical_high_tide, (double) (1.0 - path->freespace_percent->critical->end/100)*path->dtotal_units ));
       }
 
-      /* Nb: *_high_tide are unset when == UINT_MAX */
+      /* Nb: *_high_tide are unset when == UINT64_MAX */
       xasprintf (&perf, "%s %s", perf,
 			  perfdata_uint64 (
 				  (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
@@ -363,18 +361,18 @@ main (int argc, char **argv)
 
       if (display_inodes_perfdata) {
         /* *_high_tide must be reinitialized at each run */
-        warning_high_tide = UINT_MAX;
-        critical_high_tide = UINT_MAX;
+        warning_high_tide = UINT64_MAX;
+        critical_high_tide = UINT64_MAX;
 
         if (path->freeinodes_percent->warning != NULL) {
-          warning_high_tide = abs( min( (double) warning_high_tide, (double) (1.0 - path->freeinodes_percent->warning->end/100)*path->inodes_total ));
+          warning_high_tide = llabs( min( (double) warning_high_tide, (double) (1.0 - path->freeinodes_percent->warning->end/100)*path->inodes_total ));
         }
         if (path->freeinodes_percent->critical != NULL) {
-          critical_high_tide = abs( min( (double) critical_high_tide, (double) (1.0 - path->freeinodes_percent->critical->end/100)*path->inodes_total ));
+          critical_high_tide = llabs( min( (double) critical_high_tide, (double) (1.0 - path->freeinodes_percent->critical->end/100)*path->inodes_total ));
         }
 
         xasprintf (&perf_ilabel, "%s (inodes)", (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir);
-        /* Nb: *_high_tide are unset when == UINT_MAX */
+        /* Nb: *_high_tide are unset when == UINT64_MAX */
         xasprintf (&perf, "%s %s", perf,
 				perfdata_uint64 (perf_ilabel,
 					path->inodes_used, "",
@@ -392,7 +390,7 @@ main (int argc, char **argv)
       } else {
 	xasprintf(&flag_header, "");
       }
-      xasprintf (&output, "%s%s %s %.0f %s (%.0f%%",
+      xasprintf (&output, "%s%s %s %llu%s (%.0f%%",
 		output, flag_header,
                 (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
                 path->dfree_units,
