@@ -574,21 +574,24 @@ process_arguments (int argc, char **argv)
     case 'u':
       if (units)
         free(units);
-      if (! strcmp (optarg, "bytes")) {
+      if (! strcasecmp (optarg, "bytes")) {
         mult = (uintmax_t)1;
         units = strdup ("B");
-      } else if (! strcmp (optarg, "kB")) {
+      } else if ( (! strcmp (optarg, "kB")) || (!strcmp(optarg, "KiB")) ) {
         mult = (uintmax_t)1024;
-        units = strdup ("kB");
-      } else if (! strcmp (optarg, "MB")) {
+        units = strdup ("kiB");
+      } else if ( (! strcmp (optarg, "MB")) || (!strcmp(optarg, "MiB")) )  {
         mult = (uintmax_t)1024 * 1024;
-        units = strdup ("MB");
-      } else if (! strcmp (optarg, "GB")) {
+        units = strdup ("MiB");
+      } else if ( (! strcmp (optarg, "GB")) || (!strcmp(optarg, "GiB")) ) {
         mult = (uintmax_t)1024 * 1024 * 1024;
-        units = strdup ("GB");
-      } else if (! strcmp (optarg, "TB")) {
+        units = strdup ("GiB");
+      } else if ( (! strcmp (optarg, "TB")) || (!strcmp(optarg, "TiB")) ) {
         mult = (uintmax_t)1024 * 1024 * 1024 * 1024;
-        units = strdup ("TB");
+        units = strdup ("TiB");
+      } else if ( (! strcmp (optarg, "PB")) || (!strcmp(optarg, "PiB")) ) {
+        mult = (uintmax_t)1024 * 1024 * 1024 * 1024 * 1024;
+        units = strdup ("PiB");
       } else {
         die (STATE_UNKNOWN, _("unit type %s not known\n"), optarg);
       }
@@ -599,13 +602,13 @@ process_arguments (int argc, char **argv)
       mult = 1024;
       if (units)
         free(units);
-      units = strdup ("kB");
+      units = strdup ("kiB");
       break;
     case 'm': /* display mountpoint */
       mult = 1024 * 1024;
       if (units)
         free(units);
-      units = strdup ("MB");
+      units = strdup ("MiB");
       break;
     case 'L':
       stat_remote_fs = 1;
@@ -812,7 +815,7 @@ process_arguments (int argc, char **argv)
   }
 
   if (units == NULL) {
-    units = strdup ("MB");
+    units = strdup ("MiB");
     mult = (uintmax_t)1024 * 1024;
   }
 
