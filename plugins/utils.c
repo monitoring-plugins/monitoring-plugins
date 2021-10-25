@@ -601,12 +601,16 @@ char *perfdata (const char *label,
 char *perfdata_uint64 (const char *label,
  uint64_t val,
  const char *uom,
+
  int warnp,
  uint64_t warn,
+
  int critp,
  uint64_t crit,
+
  int minp,
  uint64_t minv,
+
  int maxp,
  uint64_t maxv)
 {
@@ -618,20 +622,16 @@ char *perfdata_uint64 (const char *label,
 		xasprintf (&data, "%s=%ld%s;", label, val, uom);
 
 	if (warnp)
-		xasprintf (&data, "%s%ld;", data, warn);
-	else
-		xasprintf (&data, "%s;", data);
+		xasprintf (&data, "%s%lu;", data, warn);
 
 	if (critp)
-		xasprintf (&data, "%s%ld;", data, crit);
-	else
-		xasprintf (&data, "%s;", data);
+		xasprintf (&data, "%s%lu;", data, crit);
 
 	if (minp)
-		xasprintf (&data, "%s%ld", data, minv);
+		xasprintf (&data, "%s%lu", data, minv);
 
 	if (maxp)
-		xasprintf (&data, "%s;%ld", data, maxv);
+		xasprintf (&data, "%s;%lu", data, maxv);
 
 	return data;
 }
@@ -658,13 +658,9 @@ char *perfdata_int64 (const char *label,
 
 	if (warnp)
 		xasprintf (&data, "%s%ld;", data, warn);
-	else
-		xasprintf (&data, "%s;", data);
 
 	if (critp)
 		xasprintf (&data, "%s%ld;", data, crit);
-	else
-		xasprintf (&data, "%s;", data);
 
 	if (minp)
 		xasprintf (&data, "%s%ld", data, minv);
