@@ -8,13 +8,14 @@ use Test::More;
 use NPTest;
 
 if (-x "./check_procs") {
-	plan tests => 50;
+	plan tests => 52;
 } else {
 	plan skip_all => "No check_procs compiled";
 }
 
 my $result;
-my $command = "./check_procs --input-file=tests/var/ps-axwo.darwin";
+my $command   = "./check_procs --input-file=tests/var/ps-axwo.darwin";
+my $cmd_etime = "./check_procs --input-file=tests/var/ps-axwo.debian";
 
 $result = NPTest->testCmd( "$command" );
 is( $result->return_code, 0, "Run with no options" );
@@ -75,6 +76,14 @@ SKIP: {
     $result = NPTest->testCmd( "$command --ereg-argument-array='mdworker.*501'" );
     is( $result->return_code, 0, "Checking regexp search of arguments" );
     is( $result->output, "PROCS OK: 1 process with regex args 'mdworker.*501' | procs=1;;;0;", "Output correct" );
+}
+
+SKIP: {
+    skip 'check_procs is compiled without etime format support', 2 if `$cmd_etime -vvv` !~ m/etime/mx;
+
+    $result = NPTest->testCmd( "$cmd_etime -m ELAPSED -C apache2 -w 1000 -c 2000" );
+    is( $result->return_code, 2, "Checking elapsed time threshold" );
+    is( $result->output, "ELAPSED CRITICAL: 10 crit, 0 warn out of 10 processes with command name 'apache2' | procs=10;;;0; procs_warn=0;;;0; procs_crit=10;;;0;", "Output correct" );
 }
 
 $result = NPTest->testCmd( "$command --vsz 1000000" );
