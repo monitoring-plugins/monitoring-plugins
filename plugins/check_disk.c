@@ -340,7 +340,7 @@ main (int argc, char **argv)
         warning_high_tide = path->dtotal_units - path->freespace_units->warning->end;
       }
       if (path->freespace_percent->warning != NULL) {
-        warning_high_tide = llabs( min( (double) warning_high_tide,  (1.0 -  path->freespace_percent->warning->end / 100 * path->dtotal_units) ));
+        warning_high_tide = llabs( min( (double) warning_high_tide,  (double) (1.0 -  path->freespace_percent->warning->end/100)* path->dtotal_units ));
       }
       if (path->freespace_units->critical != NULL) {
         critical_high_tide = path->dtotal_units - path->freespace_units->critical->end;
