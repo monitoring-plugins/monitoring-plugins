@@ -806,6 +806,17 @@ then
 	ac_cv_ps_cols=9
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
+dnl Recent FreeBSD, with jail support
+dnl Must come before ps -weo
+elif ps -axwo 'stat comm vsz rss user uid pid ppid args jid' 2>/dev/null | \
+	egrep -i "^ *STAT +COMMAND +VSZ +RSS +USER +UID +PID +PPID +COMMAND +JID" > /dev/null
+then
+	ac_cv_ps_varlist="procstat,&procuid,&procpid,&procppid,&procjid,&procvsz,&procrss,&procpcpu,procprog,&pos"
+	ac_cv_ps_command="$PATH_TO_PS -axwo 'stat uid pid ppid jid vsz rss pcpu comm args'"
+	ac_cv_ps_format="%s %d %d %d %d %d %d %f %s %n"
+	ac_cv_ps_cols=10
+	AC_MSG_RESULT([$ac_cv_ps_command])
+
 dnl Some *BSDs have different format for ps. This is mainly to catch FreeBSD 4.
 dnl Limitation: Only first 16 chars returned for ucomm field
 dnl Must come before ps -weo
