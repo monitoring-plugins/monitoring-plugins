@@ -601,41 +601,39 @@ char *perfdata (const char *label,
 char *perfdata_uint64 (const char *label,
  uint64_t val,
  const char *uom,
-
- int warnp,
+ int warnp, /* Warning present */
  uint64_t warn,
-
- int critp,
+ int critp, /* Critical present */
  uint64_t crit,
-
- int minp,
+ int minp, /* Minimum present */
  uint64_t minv,
-
- int maxp,
+ int maxp, /* Maximum present */
  uint64_t maxv)
 {
 	char *data = NULL;
 
 	if (strpbrk (label, "'= "))
-		xasprintf (&data, "'%s'=%ld%s", label, val, uom);
+		xasprintf (&data, "'%s'=%ld%s;", label, val, uom);
 	else
-		xasprintf (&data, "%s=%ld%s", label, val, uom);
-	xasprintf (&data, "%s;", data);
+		xasprintf (&data, "%s=%ld%s;", label, val, uom);
 
 	if (warnp)
-		xasprintf (&data, "%s%lu", data, warn);
-	xasprintf (&data, "%s;", data);
+		xasprintf (&data, "%s%lu;", data, warn);
+	else
+		xasprintf (&data, "%s;", data);
 
 	if (critp)
-		xasprintf (&data, "%s%lu", data, crit);
-	xasprintf (&data, "%s;", data);
+		xasprintf (&data, "%s%lu;", data, crit);
+	else
+		xasprintf (&data, "%s;", data);
 
 	if (minp)
-		xasprintf (&data, "%s%lu", data, minv);
-	xasprintf (&data, "%s;", data);
+		xasprintf (&data, "%s%lu;", data, minv);
+	else
+		xasprintf (&data, "%s;", data);
 
 	if (maxp)
-		xasprintf (&data, "%s;%lu", data, maxv);
+		xasprintf (&data, "%s%lu", data, maxv);
 
 	return data;
 }
@@ -644,37 +642,39 @@ char *perfdata_uint64 (const char *label,
 char *perfdata_int64 (const char *label,
  int64_t val,
  const char *uom,
- int warnp,
+ int warnp, /* Warning present */
  int64_t warn,
- int critp,
+ int critp, /* Critical present */
  int64_t crit,
- int minp,
+ int minp, /* Minimum present */
  int64_t minv,
- int maxp,
+ int maxp, /* Maximum present */
  int64_t maxv)
 {
 	char *data = NULL;
 
 	if (strpbrk (label, "'= "))
-		xasprintf (&data, "'%s'=%ld%s", label, val, uom);
+		xasprintf (&data, "'%s'=%ld%s;", label, val, uom);
 	else
-		xasprintf (&data, "%s=%ld%s", label, val, uom);
-	xasprintf (&data, "%s;", data);
+		xasprintf (&data, "%s=%ld%s;", label, val, uom);
 
 	if (warnp)
-		xasprintf (&data, "%s%ld", data, warn);
-	xasprintf (&data, "%s;", data);
+		xasprintf (&data, "%s%ld;", data, warn);
+	else
+		xasprintf (&data, "%s;", data);
 
 	if (critp)
-		xasprintf (&data, "%s%ld", data, crit);
-	xasprintf (&data, "%s;", data);
+		xasprintf (&data, "%s%ld;", data, crit);
+	else
+		xasprintf (&data, "%s;", data);
 
 	if (minp)
-		xasprintf (&data, "%s%ld", data, minv);
-	xasprintf (&data, "%s;", data);
+		xasprintf (&data, "%s%ld;", data, minv);
+	else
+		xasprintf (&data, "%s;", data);
 
 	if (maxp)
-		xasprintf (&data, "%s;%ld", data, maxv);
+		xasprintf (&data, "%s%ld", data, maxv);
 
 	return data;
 }
