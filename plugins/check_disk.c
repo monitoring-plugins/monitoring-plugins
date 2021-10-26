@@ -334,19 +334,21 @@ main (int argc, char **argv)
 
       /* *_high_tide must be reinitialized at each run */
 	  uint64_t warning_high_tide = UINT64_MAX;
-	  uint64_t critical_high_tide = UINT64_MAX;
 
       if (path->freespace_units->warning != NULL) {
-        warning_high_tide = path->dtotal_units - path->freespace_units->warning->end;
+        warning_high_tide = (path->dtotal_units - path->freespace_units->warning->end) * mult;
       }
       if (path->freespace_percent->warning != NULL) {
-        warning_high_tide = llabs( min( (double) warning_high_tide,  (double) (1.0 -  path->freespace_percent->warning->end/100)* path->dtotal_units ));
+        warning_high_tide = min( warning_high_tide, (uint64_t)((1.0 - path->freespace_percent->warning->end/100) * (path->dtotal_units * mult)) );
       }
+
+	  uint64_t critical_high_tide = UINT64_MAX;
+
       if (path->freespace_units->critical != NULL) {
-        critical_high_tide = path->dtotal_units - path->freespace_units->critical->end;
+        critical_high_tide = (path->dtotal_units - path->freespace_units->critical->end) * mult;
       }
       if (path->freespace_percent->critical != NULL) {
-        critical_high_tide = llabs( min( (double) critical_high_tide, (double) (1.0 - path->freespace_percent->critical->end/100)*path->dtotal_units ));
+        critical_high_tide = min( critical_high_tide, (uint64_t)((1.0 - path->freespace_percent->critical->end/100) * (path->dtotal_units * mult)) );
       }
 
       /* Nb: *_high_tide are unset when == UINT64_MAX */
@@ -354,8 +356,8 @@ main (int argc, char **argv)
 			  perfdata_uint64 (
 				  (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
 				  path->dused_units * mult, "B",
-				  (warning_high_tide == UINT64_MAX ? FALSE : TRUE), warning_high_tide * mult,
-				  (critical_high_tide == UINT64_MAX ? FALSE : TRUE), critical_high_tide * mult,
+				  (warning_high_tide == UINT64_MAX ? FALSE : TRUE), warning_high_tide,
+				  (critical_high_tide == UINT64_MAX ? FALSE : TRUE), critical_high_tide,
 				  TRUE, 0,
 				  TRUE, path->dtotal_units * mult));
 
