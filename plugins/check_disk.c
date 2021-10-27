@@ -46,7 +46,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include <stdarg.h>
 #include "fsusage.h"
 #include "mountlist.h"
-#include "intprops.h"	/* necessary for TYPE_MAXIMUM */
+#include "intprops.h"    /* necessary for TYPE_MAXIMUM */
 #if HAVE_LIMITS_H
 # include <limits.h>
 #endif
@@ -243,10 +243,10 @@ main (int argc, char **argv)
 
 #ifdef __CYGWIN__
     if (strncmp(path->name, "/cygdrive/", 10) != 0 || strlen(path->name) > 11)
-	    continue;
+        continue;
     snprintf(mountdir, sizeof(mountdir), "%s:\\", me->me_mountdir + 10);
     if (GetDriveType(mountdir) != DRIVE_FIXED)
-	    me->me_remote = 1;
+        me->me_remote = 1;
 #endif
     /* Filters */
 
@@ -287,16 +287,16 @@ main (int argc, char **argv)
 
       if (verbose >= 3) {
         printf ("For %s, used_pct=%g free_pct=%g used_units=%llu free_units=%llu total_units=%llu used_inodes_pct=%g free_inodes_pct=%g fsp.fsu_blocksize=%llu mult=%llu\n",
-				me->me_mountdir,
-				path->dused_pct,
-				path->dfree_pct,
-				path->dused_units,
-				path->dfree_units,
-				path->dtotal_units,
-				path->dused_inodes_percent,
-				path->dfree_inodes_percent,
-				fsp.fsu_blocksize,
-				mult);
+                me->me_mountdir,
+                path->dused_pct,
+                path->dfree_pct,
+                path->dused_units,
+                path->dfree_units,
+                path->dtotal_units,
+                path->dused_inodes_percent,
+                path->dfree_inodes_percent,
+                fsp.fsu_blocksize,
+                mult);
       }
 
       /* Threshold comparisons */
@@ -333,7 +333,7 @@ main (int argc, char **argv)
       */
 
       /* *_high_tide must be reinitialized at each run */
-	  uint64_t warning_high_tide = UINT64_MAX;
+      uint64_t warning_high_tide = UINT64_MAX;
 
       if (path->freespace_units->warning != NULL) {
         warning_high_tide = (path->dtotal_units - path->freespace_units->warning->end) * mult;
@@ -342,7 +342,7 @@ main (int argc, char **argv)
         warning_high_tide = min( warning_high_tide, (uint64_t)((1.0 - path->freespace_percent->warning->end/100) * (path->dtotal_units * mult)) );
       }
 
-	  uint64_t critical_high_tide = UINT64_MAX;
+      uint64_t critical_high_tide = UINT64_MAX;
 
       if (path->freespace_units->critical != NULL) {
         critical_high_tide = (path->dtotal_units - path->freespace_units->critical->end) * mult;
@@ -353,13 +353,13 @@ main (int argc, char **argv)
 
       /* Nb: *_high_tide are unset when == UINT64_MAX */
       xasprintf (&perf, "%s %s", perf,
-			  perfdata_uint64 (
-				  (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
-				  path->dused_units * mult, "B",
-				  (warning_high_tide == UINT64_MAX ? FALSE : TRUE), warning_high_tide,
-				  (critical_high_tide == UINT64_MAX ? FALSE : TRUE), critical_high_tide,
-				  TRUE, 0,
-				  TRUE, path->dtotal_units * mult));
+              perfdata_uint64 (
+                  (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
+                  path->dused_units * mult, "B",
+                  (warning_high_tide == UINT64_MAX ? FALSE : TRUE), warning_high_tide,
+                  (critical_high_tide == UINT64_MAX ? FALSE : TRUE), critical_high_tide,
+                  TRUE, 0,
+                  TRUE, path->dtotal_units * mult));
 
       if (display_inodes_perfdata) {
         /* *_high_tide must be reinitialized at each run */
@@ -376,37 +376,36 @@ main (int argc, char **argv)
         xasprintf (&perf_ilabel, "%s (inodes)", (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir);
         /* Nb: *_high_tide are unset when == UINT64_MAX */
         xasprintf (&perf, "%s %s", perf,
-				perfdata_uint64 (perf_ilabel,
-					path->inodes_used, "",
-					(warning_high_tide != UINT64_MAX ? TRUE : FALSE), warning_high_tide,
-					(critical_high_tide != UINT64_MAX ? TRUE : FALSE), critical_high_tide,
-					TRUE, 0,
-					TRUE, path->inodes_total));
+                perfdata_uint64 (perf_ilabel,
+                    path->inodes_used, "",
+                    (warning_high_tide != UINT64_MAX ? TRUE : FALSE), warning_high_tide,
+                    (critical_high_tide != UINT64_MAX ? TRUE : FALSE), critical_high_tide,
+                    TRUE, 0,
+                    TRUE, path->inodes_total));
       }
 
       if (disk_result==STATE_OK && erronly && !verbose)
         continue;
 
-      if(disk_result && verbose >= 1) {
-	xasprintf(&flag_header, " %s [", state_text (disk_result));
-      } else {
-	xasprintf(&flag_header, "");
-      }
-      xasprintf (&output, "%s%s %s %llu%s (%.0f%%",
-		output, flag_header,
-                (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
-                path->dfree_units,
-                units,
-                path->dfree_pct);
-      if (path->dused_inodes_percent < 0) {
-	xasprintf(&output, "%s inode=-)%s;", output, (disk_result ? "]" : ""));
-      } else {
-	xasprintf(&output, "%s inode=%.0f%%)%s;", output, path->dfree_inodes_percent, ((disk_result && verbose >= 1) ? "]" : ""));
-      }
+	  if(disk_result && verbose >= 1) {
+		  xasprintf(&flag_header, " %s [", state_text (disk_result));
+	  } else {
+		  xasprintf(&flag_header, "");
+	  }
+	  xasprintf (&output, "%s%s %s %llu%s (%.0f%%",
+			  output, flag_header,
+			  (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
+			  path->dfree_units,
+			  units,
+			  path->dfree_pct);
+	  if (path->dused_inodes_percent < 0) {
+		  xasprintf(&output, "%s inode=-)%s;", output, (disk_result ? "]" : ""));
+	  } else {
+		  xasprintf(&output, "%s inode=%.0f%%)%s;", output, path->dfree_inodes_percent, ((disk_result && verbose >= 1) ? "]" : ""));
+	  }
       free(flag_header);
       /* TODO: Need to do a similar debug line
-      xasprintf (&details, _("%s\n\
-%.0f of %.0f %s (%.0f%% inode=%.0f%%) free on %s (type %s mounted on %s) warn:%lu crit:%lu warn%%:%.0f%% crit%%:%.0f%%"),
+      xasprintf (&details, _("%s\n\%.0f of %.0f %s (%.0f%% inode=%.0f%%) free on %s (type %s mounted on %s) warn:%lu crit:%lu warn%%:%.0f%% crit%%:%.0f%%"),
                 details, dfree_units, dtotal_units, units, dfree_pct, inode_space_pct,
                 me->me_devname, me->me_type, me->me_mountdir,
                 (unsigned long)w_df, (unsigned long)c_df, w_dfp, c_dfp);
@@ -567,14 +566,14 @@ process_arguments (int argc, char **argv)
       }
       break;
 
-    case 'W':			/* warning inode threshold */
+    case 'W':            /* warning inode threshold */
       if (*optarg == '@') {
         warn_freeinodes_percent = optarg;
       } else {
         xasprintf(&warn_freeinodes_percent, "@%s", optarg);
       }
       break;
-    case 'K':			/* critical inode threshold */
+    case 'K':            /* critical inode threshold */
       if (*optarg == '@') {
         crit_freeinodes_percent = optarg;
       } else {
@@ -1066,19 +1065,19 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
       if (verbose >= 3)
         printf("Group %s now has: used_units=%g free_units=%g total_units=%g fsu_blocksize=%llu mult=%llu\n",
                p->group,
-			   tmpfsp.fsu_bavail,
-			   tmpfsp.fsu_blocksize,
-			   p->best_match->me_mountdir,
-			   p->dused_units,
+               tmpfsp.fsu_bavail,
+               tmpfsp.fsu_blocksize,
+               p->best_match->me_mountdir,
+               p->dused_units,
                p->dfree_units,
-			   p->dtotal_units,
-			   mult);
+               p->dtotal_units,
+               mult);
     }
     /* modify devname and mountdir for output */
     p->best_match->me_mountdir = p->best_match->me_devname = p->group;
   }
   /* finally calculate percentages for either plain FS or summed up group */
-  p->dused_pct = calculate_percent( p->used, p->used + p->available );	/* used + available can never be > uintmax */
+  p->dused_pct = calculate_percent( p->used, p->used + p->available );    /* used + available can never be > uintmax */
   p->dfree_pct = 100 - p->dused_pct;
   p->dused_inodes_percent = calculate_percent(p->inodes_total - p->inodes_free, p->inodes_total);
   p->dfree_inodes_percent = 100 - p->dused_inodes_percent;
