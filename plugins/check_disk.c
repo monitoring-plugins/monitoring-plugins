@@ -1,29 +1,29 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_disk plugin
-* 
+*
 * License: GPL
 * Copyright (c) 1999-2008 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_disk plugin
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 const char *progname = "check_disk";
@@ -253,7 +253,7 @@ main (int argc, char **argv)
     /* Remove filesystems already seen */
     if (np_seen_name(seen, me->me_mountdir)) {
       continue;
-    } 
+    }
     np_add_name(&seen, me->me_mountdir);
 
     if (path->group == NULL) {
@@ -1039,20 +1039,20 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
       if (p_list->group && ! (strcmp(p_list->group, p->group))) {
         stat_path(p_list);
         get_fs_usage (p_list->best_match->me_mountdir, p_list->best_match->me_devname, &tmpfsp);
-        get_path_stats(p_list, &tmpfsp); 
+        get_path_stats(p_list, &tmpfsp);
         if (verbose >= 3)
           printf("Group %s: adding %llu blocks sized %llu, (%s) used_units=%g free_units=%g total_units=%g fsu_blocksize=%llu mult=%llu\n",
                  p_list->group, tmpfsp.fsu_bavail, tmpfsp.fsu_blocksize, p_list->best_match->me_mountdir, p_list->dused_units, p_list->dfree_units,
                  p_list->dtotal_units, mult);
 
-        /* prevent counting the first FS of a group twice since its parameter_list entry 
+        /* prevent counting the first FS of a group twice since its parameter_list entry
          * is used to carry the information of all file systems of the entire group */
         if (! first) {
           p->total += p_list->total;
           p->available += p_list->available;
           p->available_to_root += p_list->available_to_root;
           p->used += p_list->used;
-            
+
           p->dused_units += p_list->dused_units;
           p->dfree_units += p_list->dfree_units;
           p->dtotal_units += p_list->dtotal_units;
@@ -1063,7 +1063,7 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
         }
         first = 0;
       }
-      if (verbose >= 3) 
+      if (verbose >= 3)
         printf("Group %s now has: used_units=%g free_units=%g total_units=%g fsu_blocksize=%llu mult=%llu\n",
                p->group,
 			   tmpfsp.fsu_bavail,
@@ -1082,7 +1082,7 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
   p->dfree_pct = 100 - p->dused_pct;
   p->dused_inodes_percent = calculate_percent(p->inodes_total - p->inodes_free, p->inodes_total);
   p->dfree_inodes_percent = 100 - p->dused_inodes_percent;
-  
+
 }
 
 void
@@ -1097,7 +1097,7 @@ get_path_stats (struct parameter_list *p, struct fs_usage *fsp) {
     /* default behaviour : take all the blocks into account */
     p->total = fsp->fsu_blocks;
   }
-  
+
   p->dused_units = p->used*fsp->fsu_blocksize/mult;
   p->dfree_units = p->available*fsp->fsu_blocksize/mult;
   p->dtotal_units = p->total*fsp->fsu_blocksize/mult;
