@@ -888,7 +888,7 @@ read_file_system_list (bool need_fs_type)
         else
           {
             me->me_remote = 0;
-            me->me_devname = xstrdup (thisent +
+            me->me_devname = xstrdup (thisent
                                       vmp->vmt_data[VMT_OBJECT].vmt_off);
           }
         me->me_mountdir = xstrdup (thisent + vmp->vmt_data[VMT_STUB].vmt_off);

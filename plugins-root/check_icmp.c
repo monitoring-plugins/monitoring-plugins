@@ -654,7 +654,7 @@ main(int argc, char **argv)
 	/* make sure we don't wait any longer than necessary */
 	gettimeofday(&prog_start, &tz);
 	max_completion_time =
-		((targets * packets * pkt_interval) + (targets * target_interval)) +
+		((targets * packets * pkt_interval) + (targets * target_interval))
 		(targets * packets * crit.rta) + crit.rta;
 
 	if(debug) {

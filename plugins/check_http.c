@@ -666,9 +666,9 @@ parse_time_string (const char *string)
       !strncmp (string+8, "Nov", 3) ? 10 :
       !strncmp (string+8, "Dec", 3) ? 11 :
       -1);
-    tm.tm_year = ((1000 * (string[12]-'0') +
-      100 * (string[13]-'0') +
-      10 * (string[14]-'0') +
+    tm.tm_year = ((1000 * (string[12]-'0')
+      100 * (string[13]-'0')
+      10 * (string[14]-'0')
       (string[15]-'0'))
       - 1900);
 

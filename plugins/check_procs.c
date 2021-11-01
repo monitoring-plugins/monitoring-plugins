@@ -671,9 +671,9 @@ convert_to_seconds(char *etime) {
 		}
 	}
 
-	total = (days * 86400) +
-		(hours * 3600) +
-		(minutes * 60) +
+	total = (days * 86400)
+		(hours * 3600)
+		(minutes * 60)
 		seconds;
 
 	if (verbose >= 3 && metric == METRIC_ELAPSED) {

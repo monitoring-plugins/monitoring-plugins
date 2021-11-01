@@ -256,7 +256,7 @@ int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn, int 
 			return STATE_CRITICAL;
 		} else {
 			stamp.tm_year =
-				(tm->data[0] - '0') * 1000 + (tm->data[1] - '0') * 100 +
+				(tm->data[0] - '0') * 1000 + (tm->data[1] - '0') * 100
 				(tm->data[2] - '0') * 10 + (tm->data[3] - '0');
 			stamp.tm_year -= 1900;
 			offset = 2;
