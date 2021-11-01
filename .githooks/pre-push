@@ -7,20 +7,20 @@
 C_FILES=$(find . -iname '*.c' -exec grep '\s+$' {} \; | wc -l)
 if [[ $C_FILES != "0" ]]; then
 	echo "There are trailing whitespaces in your C files. Please remove them."
-	echo "This could fix it: find . -iname '*.c' -exec sed -i 's/\s+$//' {} \; "
+	echo "This could fix it: find . -iname '*.c' -exec sed -i 's/\s\+$//' {} \; "
 	exit 1
 fi
 
 C_HEADERS=$(find . -iname '*.h' -exec grep '\s+$' {} \; | wc -l)
 if [[ $C_HEADERS != "0" ]]; then
 	echo "There are trailing whitespaces in your C headers. Please remove them."
-	echo "This could fix it: find . -iname '*.c' -exec sed -i 's/\s+$//' {} \; "
+	echo "This could fix it: find . -iname '*.c' -exec sed -i 's/\s\+$//' {} \; "
 	exit 1
 fi
 
 PERL_CODE=$(find . -iname '*.pl' -exec grep '\s+$' {} \; | wc -l)
 if [[ $PERL_CODE != "0" ]]; then
 	echo "There are trailing whitespaces in your C headers. Please remove them."
-	echo "This could fix it: find . -iname '*.pl' -exec sed -i 's/\s+$//' {} \; "
+	echo "This could fix it: find . -iname '*.pl' -exec sed -i 's/\s\+$//' {} \; "
 	exit 1
 fi
