@@ -20,7 +20,7 @@ fi
 
 PERL_CODE=$(find . -iname '*.pl' -exec grep '\s\+$' {} \; | wc -l)
 if [[ $PERL_CODE != "0" ]]; then
-	echo "There are trailing whitespaces in your C headers. Please remove them."
+	echo "There are trailing whitespaces in your Perl files. Please remove them."
 	echo "This could fix it: find . -iname '*.pl' -exec sed -i 's/\s\+$//' {} \; "
 	exit 1
 fi
