@@ -15,6 +15,10 @@ ACLOCAL_AMFLAGS = -I gl/m4 -I m4
 localedir = $(datadir)/locale
 DEFS = -DLOCALEDIR=\"$(localedir)\"
 
+
+init:
+	git config core.hooksPath .githooks
+
 #
 # The ChangeLog file is auto-generated from the Git history.  We let it depend
 # on NP-VERSION-GEN, as we bump our version number in that file.
