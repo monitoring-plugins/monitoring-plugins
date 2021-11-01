@@ -1,32 +1,32 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_dns plugin
-* 
+*
 * License: GPL
 * Copyright (c) 2000-2008 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_dns plugin
-* 
+*
 * LIMITATION: nslookup on Solaris 7 can return output over 2 lines, which
 * will not be picked up by this plugin
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 const char *progname = "check_dns";
@@ -138,7 +138,7 @@ main (int argc, char **argv)
       }
     }
 
-    /* bug ID: 2946553 - Older versions of bind will use all available dns 
+    /* bug ID: 2946553 - Older versions of bind will use all available dns
                          servers, we have to match the one specified */
     if (strstr (chld_out.line[i], "Server:") && strlen(dns_server) > 0) {
       temp_buffer = strchr (chld_out.line[i], ':');
@@ -335,7 +335,7 @@ ip2long(const char* src) {
               ip[0] < 256 && ip[1] < 256 &&
               ip[2] < 256 && ip[3] < 256)
           ? ip[0] << 24 | ip[1] << 16 | ip[2] << 8 | ip[3]
-          : 0; 
+          : 0;
 }
 
 int

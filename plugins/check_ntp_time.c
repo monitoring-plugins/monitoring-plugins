@@ -1,37 +1,37 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_ntp_time plugin
-* 
+*
 * License: GPL
 * Copyright (c) 2006 Sean Finney <seanius@seanius.net>
 * Copyright (c) 2006-2008 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_ntp_time plugin
-* 
+*
 * This plugin checks the clock offset between the local host and a
 * remote NTP server. It is independent of any commandline programs or
 * external libraries.
-* 
+*
 * If you'd rather want to monitor an NTP server, please use
 * check_ntp_peer.
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 const char *progname = "check_ntp_time";

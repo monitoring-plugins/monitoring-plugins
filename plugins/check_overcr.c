@@ -1,32 +1,32 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_overcr plugin
-* 
+*
 * License: GPL
 * Copyright (c) 2000-2007 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_overcr plugin
-* 
+*
 * This plugin attempts to contact the Over-CR collector daemon running on the
 * remote UNIX server in order to gather the requested system information.
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 const char *progname = "check_overcr";
@@ -118,7 +118,7 @@ main (int argc, char **argv)
 	case LOAD1:
 	case LOAD5:
 	case LOAD15:
-	
+
 		if (result != STATE_OK)
 			die (result, _("Unknown error fetching load data\n"));
 

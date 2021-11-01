@@ -1,32 +1,32 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_hpjd plugin
-* 
+*
 * License: GPL
 * Copyright (c) 2000-2007 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_hpjd plugin
-* 
+*
 * This plugin tests the STATUS of an HP printer with a JetDirect card.
 * Net-SNMP must be installed on the computer running the plugin.
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 const char *progname = "check_hpjd";
@@ -316,7 +316,7 @@ process_arguments (int argc, char **argv)
 		{"community", required_argument, 0, 'C'},
 /*  		{"critical",       required_argument,0,'c'}, */
 /*  		{"warning",        required_argument,0,'w'}, */
-  		{"port", required_argument,0,'p'}, 
+  		{"port", required_argument,0,'p'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
