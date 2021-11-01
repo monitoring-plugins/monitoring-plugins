@@ -14,7 +14,7 @@ fi
 C_HEADERS=$(find . -iname '*.h' -exec grep '\s\+$' {} \; | wc -l)
 if [[ $C_HEADERS != "0" ]]; then
 	echo "There are trailing whitespaces in your C headers. Please remove them."
-	echo "This could fix it: find . -iname '*.c' -exec sed -i 's/\s\+$//' {} \; "
+	echo "This could fix it: find . -iname '*.h' -exec sed -i 's/\s\+$//' {} \; "
 	exit 1
 fi
 
