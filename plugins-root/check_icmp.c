@@ -921,7 +921,7 @@ wait_for_reply(int sock, u_int t)
 		/* if we're in hostcheck mode, exit with limited printouts */
 		if(mode == MODE_HOSTCHECK) {
 			printf("OK - %s responds to ICMP. Packet %u, rta %0.3fms|"
-				"pkt=%u;;0;%u rta=%0.3f;%0.3f;%0.3f;;\n",
+				"pkt=%u;;;0;%u rta=%0.3f;%0.3f;%0.3f;;\n",
 				host->name, icmp_recv, (float)tdiff / 1000,
 				icmp_recv, packets, (float)tdiff / 1000,
 				(float)warn.rta / 1000, (float)crit.rta / 1000);
