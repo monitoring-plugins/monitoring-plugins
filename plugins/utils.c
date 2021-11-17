@@ -589,10 +589,12 @@ char *perfdata (const char *label,
 		xasprintf (&data, "%s;", data);
 
 	if (minp)
-		xasprintf (&data, "%s%ld", data, minv);
+		xasprintf (&data, "%s%ld;", data, minv);
+	else
+		xasprintf (&data, "%s;", data);
 
 	if (maxp)
-		xasprintf (&data, "%s;%ld", data, maxv);
+		xasprintf (&data, "%s%ld", data, maxv);
 
 	return data;
 }
