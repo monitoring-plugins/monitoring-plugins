@@ -171,7 +171,7 @@ main (int argc, char **argv)
 									  crta>0?TRUE:FALSE, crta,
 									  TRUE, 0, FALSE, 0));
 		} else {
-			printf("| rta=U;;;;;");
+			printf("| rta=U;%f;%f;;", wrta, crta);
 		}
 		printf(" %s\n", perfdata ("pl", (long) pl, "%",
 		                          wpl>0?TRUE:FALSE, wpl,
