@@ -468,6 +468,9 @@ main (int argc, char **argv)
 		/* Process this block for numeric comparisons */
 		/* Make some special values,like Timeticks numeric only if a threshold is defined */
 		if (thlds[i]->warning || thlds[i]->critical || calculate_rate) {
+			if (verbose > 2) {
+				print_thresholds("  thresholds", thlds[i]);
+			}
 			ptr = strpbrk (show, "-0123456789");
 			if (ptr == NULL)
 				die (STATE_UNKNOWN,_("No valid data returned (%s)\n"), show);
@@ -581,14 +584,16 @@ main (int argc, char **argv)
 
 			if (warning_thresholds) {
 				strncat(perfstr, ";", sizeof(perfstr)-strlen(perfstr)-1);
-				strncat(perfstr, warning_thresholds, sizeof(perfstr)-strlen(perfstr)-1);
+				if(thlds[i]->warning && thlds[i]->warning->text)
+					strncat(perfstr, thlds[i]->warning->text, sizeof(perfstr)-strlen(perfstr)-1);
 			}
 
 			if (critical_thresholds) {
 				if (!warning_thresholds)
 					strncat(perfstr, ";", sizeof(perfstr)-strlen(perfstr)-1);
 				strncat(perfstr, ";", sizeof(perfstr)-strlen(perfstr)-1);
-				strncat(perfstr, critical_thresholds, sizeof(perfstr)-strlen(perfstr)-1);
+				if(thlds[i]->critical && thlds[i]->critical->text)
+					strncat(perfstr, thlds[i]->critical->text, sizeof(perfstr)-strlen(perfstr)-1);
 			}
 
 			strncat(perfstr, " ", sizeof(perfstr)-strlen(perfstr)-1);

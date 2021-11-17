@@ -23,6 +23,7 @@ typedef struct range_struct {
 	double	end;
 	int	end_infinity;
 	int	alert_on;		/* OUTSIDE (default) or INSIDE */
+	char* text; /* original unparsed text input */
 	} range;
 
 typedef struct thresholds_struct {
