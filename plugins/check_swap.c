@@ -552,9 +552,12 @@ validate_arguments (void)
 	if (warn.value == 0 && crit.value == 0) {
 		return ERROR;
 	}
-	else if (warn.value < crit.value) {
-		usage4
-			(_("Warning should be more than critical"));
+	else if ((warn.is_percentage == crit.is_percentage) && (warn.value < crit.value)) {
+		/* This is NOT triggered if warn and crit are different units, e.g warn is percentage
+		 * and crit is absolut. We cannot determine the condition at this point since we
+		 * dont know the value of total swap yet
+		 */
+		usage4(_("Warning should be more than critical"));
 	}
 	return OK;
 }
@@ -570,7 +573,7 @@ print_help (void)
 
 	printf ("%s\n", _("Check swap space on local machine."));
 
-  printf ("\n\n");
+	printf ("\n\n");
 
 	print_usage ();
 
@@ -578,23 +581,23 @@ print_help (void)
 	printf (UT_EXTRA_OPTS);
 
 	printf (" %s\n", "-w, --warning=INTEGER");
-  printf ("    %s\n", _("Exit with WARNING status if less than INTEGER bytes of swap space are free"));
-  printf (" %s\n", "-w, --warning=PERCENT%%");
-  printf ("    %s\n", _("Exit with WARNING status if less than PERCENT of swap space is free"));
-  printf (" %s\n", "-c, --critical=INTEGER");
-  printf ("    %s\n", _("Exit with CRITICAL status if less than INTEGER bytes of swap space are free"));
-  printf (" %s\n", "-c, --critical=PERCENT%%");
-  printf ("    %s\n", _("Exit with CRITICAL status if less than PERCENT of swap space is free"));
-  printf (" %s\n", "-a, --allswaps");
-  printf ("    %s\n", _("Conduct comparisons for all swap partitions, one by one"));
-  printf (" %s\n", "-n, --no-swap=<ok|warning|critical|unknown>");
-  printf ("    %s %s\n", _("Resulting state when there is no swap regardless of thresholds. Default:"), state_text(no_swap_state));
+	printf ("    %s\n", _("Exit with WARNING status if less than INTEGER bytes of swap space are free"));
+	printf (" %s\n", "-w, --warning=PERCENT%");
+	printf ("    %s\n", _("Exit with WARNING status if less than PERCENT of swap space is free"));
+	printf (" %s\n", "-c, --critical=INTEGER");
+	printf ("    %s\n", _("Exit with CRITICAL status if less than INTEGER bytes of swap space are free"));
+	printf (" %s\n", "-c, --critical=PERCENT%");
+	printf ("    %s\n", _("Exit with CRITICAL status if less than PERCENT of swap space is free"));
+	printf (" %s\n", "-a, --allswaps");
+	printf ("    %s\n", _("Conduct comparisons for all swap partitions, one by one"));
+	printf (" %s\n", "-n, --no-swap=<ok|warning|critical|unknown>");
+	printf ("    %s %s\n", _("Resulting state when there is no swap regardless of thresholds. Default:"), state_text(no_swap_state));
 	printf (UT_VERBOSE);
 
 	printf ("\n");
-  printf ("%s\n", _("Notes:"));
-  printf (" %s\n", _("Both INTEGER and PERCENT thresholds can be specified, they are all checked."));
-  printf (" %s\n", _("On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s."));
+	printf ("%s\n", _("Notes:"));
+	printf (" %s\n", _("Both INTEGER and PERCENT thresholds can be specified, they are all checked."));
+	printf (" %s\n", _("On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s."));
 
 	printf (UT_SUPPORT);
 }
@@ -604,6 +607,6 @@ void
 print_usage (void)
 {
 	printf ("%s\n", _("Usage:"));
-  printf (" %s [-av] -w <percent_free>%% -c <percent_free>%%\n",progname);
-  printf ("  -w <bytes_free> -c <bytes_free> [-n <state>]\n");
+	printf (" %s [-av] -w <percent_free>%% -c <percent_free>%%\n",progname);
+	printf ("  -w <bytes_free> -c <bytes_free> [-n <state>]\n");
 }
