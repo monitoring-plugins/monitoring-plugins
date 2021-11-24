@@ -502,7 +502,7 @@ main(int argc, char **argv)
 					icmp_data_size = size;
 					icmp_pkt_size = size + ICMP_MINLEN;
 				} else
-					usage_va("ICMP data length must be between: %d and %d",
+					usage_va("ICMP data length must be between: %ul and %ul",
 					         sizeof(struct icmp) + sizeof(struct icmp_ping_data),
 					         MAX_PING_DATA - 1);
 				break;
@@ -1293,7 +1293,7 @@ add_target_ip(char *arg, struct sockaddr_storage *in)
 	if(!host) {
 		char straddr[INET6_ADDRSTRLEN];
 		parse_address((struct sockaddr_storage*)&in, straddr, sizeof(straddr));
-		crash("add_target_ip(%s, %s): malloc(%d) failed",
+		crash("add_target_ip(%s, %s): malloc(%ul) failed",
 			arg, straddr, sizeof(struct rta_host));
 	}
 	memset(host, 0, sizeof(struct rta_host));
