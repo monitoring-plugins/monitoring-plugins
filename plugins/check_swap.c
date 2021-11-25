@@ -142,7 +142,7 @@ main (int argc, char **argv)
 					percent = 100 * (((double) dskused_mb) / ((double) dsktotal_mb));
 				result = max_state (result, check_swap (dskfree_mb, dsktotal_mb));
 				if (verbose)
-					xasprintf (&status, "%s [%.0f (%d%%)]", status, dskfree_mb, 100 - percent);
+					xasprintf (&status, "%s [%lu (%d%%)]", status, dskfree_mb, 100 - percent);
 			}
 		}
 		/*

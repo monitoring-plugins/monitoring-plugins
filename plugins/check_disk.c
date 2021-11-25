@@ -1040,9 +1040,15 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
         get_fs_usage (p_list->best_match->me_mountdir, p_list->best_match->me_devname, &tmpfsp);
         get_path_stats(p_list, &tmpfsp);
         if (verbose >= 3)
-          printf("Group %s: adding %llu blocks sized %llu, (%s) used_units=%g free_units=%g total_units=%g fsu_blocksize=%llu mult=%llu\n",
-                 p_list->group, tmpfsp.fsu_bavail, tmpfsp.fsu_blocksize, p_list->best_match->me_mountdir, p_list->dused_units, p_list->dfree_units,
-                 p_list->dtotal_units, mult);
+          printf("Group %s: adding %llu blocks sized %llu, (%s) used_units=%lu free_units=%llu total_units=%llu mult=%llu\n",
+                 p_list->group,
+				 tmpfsp.fsu_blocks,
+				 tmpfsp.fsu_blocksize,
+				 p_list->best_match->me_mountdir,
+				 p_list->dused_units,
+				 p_list->dfree_units,
+                 p_list->dtotal_units,
+				 mult);
 
         /* prevent counting the first FS of a group twice since its parameter_list entry
          * is used to carry the information of all file systems of the entire group */
@@ -1063,14 +1069,12 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
         first = 0;
       }
       if (verbose >= 3)
-        printf("Group %s now has: used_units=%g free_units=%g total_units=%g fsu_blocksize=%llu mult=%llu\n",
+        printf("Group %s now has: used_units=%llu free_units=%llu total_units=%llu fsu_blocksize=%llu mult=%llu\n",
                p->group,
-               tmpfsp.fsu_bavail,
-               tmpfsp.fsu_blocksize,
-               p->best_match->me_mountdir,
                p->dused_units,
                p->dfree_units,
                p->dtotal_units,
+               tmpfsp.fsu_blocksize,
                mult);
     }
     /* modify devname and mountdir for output */
