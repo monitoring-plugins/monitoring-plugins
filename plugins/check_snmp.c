@@ -468,6 +468,9 @@ main (int argc, char **argv)
 		/* Process this block for numeric comparisons */
 		/* Make some special values,like Timeticks numeric only if a threshold is defined */
 		if (thlds[i]->warning || thlds[i]->critical || calculate_rate) {
+			if (verbose > 2) {
+				print_thresholds("  thresholds", thlds[i]);
+			}
 			ptr = strpbrk (show, "-0123456789");
 			if (ptr == NULL)
 				die (STATE_UNKNOWN,_("No valid data returned (%s)\n"), show);
@@ -576,20 +579,23 @@ main (int argc, char **argv)
 			len = sizeof(perfstr)-strlen(perfstr)-1;
 			strncat(perfstr, show, len>ptr-show ? ptr-show : len);
 
+			if (type)
+				strncat(perfstr, type, sizeof(perfstr)-strlen(perfstr)-1);
+
 			if (warning_thresholds) {
 				strncat(perfstr, ";", sizeof(perfstr)-strlen(perfstr)-1);
-				strncat(perfstr, warning_thresholds, sizeof(perfstr)-strlen(perfstr)-1);
+				if(thlds[i]->warning && thlds[i]->warning->text)
+					strncat(perfstr, thlds[i]->warning->text, sizeof(perfstr)-strlen(perfstr)-1);
 			}
 
 			if (critical_thresholds) {
 				if (!warning_thresholds)
 					strncat(perfstr, ";", sizeof(perfstr)-strlen(perfstr)-1);
 				strncat(perfstr, ";", sizeof(perfstr)-strlen(perfstr)-1);
-				strncat(perfstr, critical_thresholds, sizeof(perfstr)-strlen(perfstr)-1);
+				if(thlds[i]->critical && thlds[i]->critical->text)
+					strncat(perfstr, thlds[i]->critical->text, sizeof(perfstr)-strlen(perfstr)-1);
 			}
 
-			if (type)
-				strncat(perfstr, type, sizeof(perfstr)-strlen(perfstr)-1);
 			strncat(perfstr, " ", sizeof(perfstr)-strlen(perfstr)-1);
 		}
 	}
@@ -1160,7 +1166,7 @@ print_help (void)
 	printf ("(%s \"%s\")\n", _("default is") ,DEFAULT_COMMUNITY);
 	printf (" %s\n", "-U, --secname=USERNAME");
 	printf ("    %s\n", _("SNMPv3 username"));
-	printf (" %s\n", "-A, --authpassword=PASSWORD");
+	printf (" %s\n", "-A, --authpasswd=PASSWORD");
 	printf ("    %s\n", _("SNMPv3 authentication password"));
 	printf (" %s\n", "-X, --privpasswd=PASSWORD");
 	printf ("    %s\n", _("SNMPv3 privacy password"));
@@ -1207,8 +1213,9 @@ print_help (void)
 	printf ("    %s\n", _("Separates output on multiple OID requests"));
 
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf ("    %s\n", _("NOTE the final timeout value is calculated using this formula: timeout_interval * retries + 5"));
 	printf (" %s\n", "-e, --retries=INTEGER");
-	printf ("    %s\n", _("Number of retries to be used in the requests"));
+	printf ("    %s%i\n", _("Number of retries to be used in the requests, default: "), DEFAULT_RETRIES);
 
 	printf (" %s\n", "-O, --perf-oids");
 	printf ("    %s\n", _("Label performance data with OIDs instead of --label's"));

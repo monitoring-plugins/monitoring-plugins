@@ -86,11 +86,9 @@ main (int argc, char **argv)
 		result = cmd_run_array (command_line, &chld_out, &chld_err, 0);
 	}
 	if (chld_err.lines > 0) {
-		printf ("Error output from command:\n");
 		for (i = 0; i < chld_err.lines; i++) {
-			printf ("%s\n", chld_err.line[i]);
+			fprintf (stderr, "%s\n", chld_err.line[i]);
 		}
-		exit (STATE_WARNING);
 	}
 
 	/* Return UNKNOWN or worse if no output is returned */

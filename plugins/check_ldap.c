@@ -237,7 +237,7 @@ main (int argc, char *argv[])
 	if(entries_thresholds != NULL) {
 		if (verbose) {
 			printf ("entries found: %d\n", num_entries);
-			print_thresholds("entry threasholds", entries_thresholds);
+			print_thresholds("entry thresholds", entries_thresholds);
 		}
 		status_entries = get_status(num_entries, entries_thresholds);
 		if (status_entries == STATE_CRITICAL) {
@@ -432,6 +432,9 @@ validate_arguments ()
 		set_thresholds(&entries_thresholds,
 			warn_entries, crit_entries);
 	}
+	if (ld_passwd==NULL)
+		ld_passwd = getenv("LDAP_PASSWORD");
+
 	return OK;
 }
 
@@ -465,7 +468,7 @@ print_help (void)
   printf (" %s\n", "-D [--bind]");
   printf ("    %s\n", _("ldap bind DN (if required)"));
   printf (" %s\n", "-P [--pass]");
-  printf ("    %s\n", _("ldap password (if required)"));
+  printf ("    %s\n", _("ldap password (if required, or set the password through environment variable 'LDAP_PASSWORD')"));
   printf (" %s\n", "-T [--starttls]");
   printf ("    %s\n", _("use starttls mechanism introduced in protocol version 3"));
   printf (" %s\n", "-S [--ssl]");

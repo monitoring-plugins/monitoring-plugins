@@ -86,6 +86,11 @@ static char buffer[MAXBUF];
 static int expect_mismatch_state = STATE_WARNING;
 static int match_flags = NP_MATCH_EXACT;
 
+#ifdef HAVE_SSL
+static char *sni = NULL;
+static int sni_specified = FALSE;
+#endif
+
 #define FLAG_SSL 0x01
 #define FLAG_VERBOSE 0x02
 #define FLAG_TIME_WARN 0x04
@@ -241,7 +246,7 @@ main (int argc, char **argv)
 
 #ifdef HAVE_SSL
 	if (flags & FLAG_SSL){
-		result = np_net_ssl_init(sd);
+		result = np_net_ssl_init_with_hostname(sd, (sni_specified ? sni : NULL));
 		if (result == STATE_OK && check_cert == TRUE) {
 			result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
 		}
@@ -401,6 +406,10 @@ process_arguments (int argc, char **argv)
 	int escape = 0;
 	char *temp;
 
+	enum {
+		SNI_OPTION = CHAR_MAX + 1
+	};
+
 	int option = 0;
 	static struct option longopts[] = {
 		{"hostname", required_argument, 0, 'H'},
@@ -427,6 +436,7 @@ process_arguments (int argc, char **argv)
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
 		{"ssl", no_argument, 0, 'S'},
+		{"sni", required_argument, 0, SNI_OPTION},
 		{"certificate", required_argument, 0, 'D'},
 		{0, 0, 0, 0}
 	};
@@ -604,6 +614,15 @@ process_arguments (int argc, char **argv)
 			die (STATE_UNKNOWN, _("Invalid option - SSL is not available"));
 #endif
 			break;
+		case SNI_OPTION:
+#ifdef HAVE_SSL
+			flags |= FLAG_SSL;
+			sni_specified = TRUE;
+			sni = optarg;
+#else
+			die (STATE_UNKNOWN, _("Invalid option - SSL is not available"));
+#endif
+			break;
 		case 'A':
 			match_flags |= NP_MATCH_ALL;
 			break;
@@ -671,6 +690,8 @@ print_help (void)
   printf ("    %s\n", _("1st is #days for warning, 2nd is critical (if not specified - 0)."));
   printf (" %s\n", "-S, --ssl");
   printf ("    %s\n", _("Use SSL for the connection."));
+  printf (" %s\n", "--sni=STRING");
+  printf ("    %s\n", _("SSL server_name"));
 #endif
 
 	printf (UT_WARN_CRIT);

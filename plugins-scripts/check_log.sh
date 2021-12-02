@@ -1,8 +1,7 @@
 #!/bin/sh
 #
 # Log file pattern detector plugin for monitoring
-# Written by Ethan Galstad (nagios@nagios.org)
-# Last Modified: 07-31-1999
+# Written originally by Ethan Galstad (nagios@nagios.org)
 #
 # Usage: ./check_log <log_file> <old_log_file> <pattern>
 #
@@ -70,6 +69,11 @@ print_usage() {
     echo "Usage: $PROGNAME -F logfile -O oldlog -q query"
     echo "Usage: $PROGNAME --help"
     echo "Usage: $PROGNAME --version"
+	echo ""
+	echo "Other parameters:"
+	echo "	-a|--all : Print all matching lines"
+	echo "	-p|--perl-regex : Use perl style regular expressions in the query"
+	echo "	-e|--extended-regex : Use extended style regular expressions in the query (not necessary for GNU grep)"
 }
 
 print_help() {
@@ -116,34 +120,58 @@ while test -n "$1"; do
             ;;
         --filename)
             logfile=$2
-            shift
+            shift 2
             ;;
         -F)
             logfile=$2
-            shift
+            shift 2
             ;;
         --oldlog)
             oldlog=$2
-            shift
+            shift 2
             ;;
         -O)
             oldlog=$2
-            shift
+            shift 2
             ;;
         --query)
             query=$2
-            shift
+            shift 2
             ;;
         -q)
             query=$2
-            shift
+            shift 2
             ;;
         -x)
             exitstatus=$2
-            shift
+            shift 2
             ;;
         --exitstatus)
             exitstatus=$2
+            shift 2
+            ;;
+        --extended-regex)
+            ERE=1
+            shift
+            ;;
+        -e)
+            ERE=1
+            shift
+            ;;
+        --perl-regex)
+            PRE=1
+            shift
+            ;;
+        -p)
+            PRE=1
+            shift
+            ;;
+        --all)
+            ALL=1
+            shift
+            ;;
+        -a)
+            ALL=1
             shift
             ;;
         *)
@@ -152,8 +180,23 @@ while test -n "$1"; do
             exit "$STATE_UNKNOWN"
             ;;
     esac
-    shift
 done
+
+# Parameter sanity check
+if [ $ERE ] && [ $PRE ] ; then
+	echo "Can not use extended and perl regex at the same time"
+	exit "$STATE_UNKNOWN"
+fi
+
+GREP="grep"
+
+if [ $ERE ]; then
+	GREP="grep -E"
+fi
+
+if [ $PRE ]; then
+	GREP="grep -P"
+fi
 
 # If the source log file doesn't exist, exit
 
@@ -180,9 +223,10 @@ fi
 # The temporary file that the script should use while
 # processing the log file.
 if [ -x /bin/mktemp ]; then
-	tempdiff=$(/bin/mktemp /tmp/check_log.XXXXXXXXXX)
+
+    tempdiff=$(/bin/mktemp /tmp/check_log.XXXXXXXXXX)
 else
-	tempdiff=$(/bin/date '+%H%M%S')
+    tempdiff=$(/bin/date '+%H%M%S')
     tempdiff="/tmp/check_log.${tempdiff}"
     touch "$tempdiff"
     chmod 600 "$tempdiff"
@@ -190,11 +234,21 @@ fi
 
 diff "$logfile" "$oldlog" | grep -v "^>" > "$tempdiff"
 
-# Count the number of matching log entries we have
-count=$(grep -c "$query" "$tempdiff")
 
-# Get the last matching entry in the diff file
-lastentry=$(grep "$query" "$tempdiff" | tail -1)
+if [ $ALL ]; then
+	# Get the last matching entry in the diff file
+	entry=$($GREP "$query" "$tempdiff")
+
+	# Count the number of matching log entries we have
+	count=$(echo "$entry" | wc -l)
+
+else
+	# Count the number of matching log entries we have
+	count=$($GREP -c "$query" "$tempdiff")
+
+	# Get the last matching entry in the diff file
+	entry=$($GREP "$query" "$tempdiff" | tail -1)
+fi
 
 rm -f "$tempdiff"
 cat "$logfile" > "$oldlog"
@@ -203,7 +257,7 @@ if [ "$count" = "0" ]; then # no matches, exit with no error
     echo "Log check ok - 0 pattern matches found"
     exitstatus=$STATE_OK
 else # Print total matche count and the last entry we found
-    echo "($count) $lastentry"
+    echo "($count) $entry"
     exitstatus=$STATE_CRITICAL
 fi
 

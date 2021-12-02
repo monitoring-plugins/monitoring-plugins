@@ -143,6 +143,7 @@ get_fs_usage (char const *file, char const *disk, struct fs_usage *fsp)
       fsp->fsu_bavail_top_bit_set = EXTRACT_TOP_BIT (vfsd.f_bavail) != 0;
       fsp->fsu_files = PROPAGATE_ALL_ONES (vfsd.f_files);
       fsp->fsu_ffree = PROPAGATE_ALL_ONES (vfsd.f_ffree);
+      fsp->fsu_favail = PROPAGATE_ALL_ONES (vfsd.f_favail);
       return 0;
     }
 
@@ -174,6 +175,7 @@ get_fs_usage (char const *file, char const *disk, struct fs_usage *fsp)
   fsp->fsu_bavail_top_bit_set = EXTRACT_TOP_BIT (fsd.fd_req.bfreen) != 0;
   fsp->fsu_files = PROPAGATE_ALL_ONES (fsd.fd_req.gtot);
   fsp->fsu_ffree = PROPAGATE_ALL_ONES (fsd.fd_req.gfree);
+  fsp->fsu_favail = PROPAGATE_ALL_ONES (fsd.fd_req.gfree);
 
 #elif defined STAT_READ_FILSYS          /* SVR2 */
 # ifndef SUPERBOFF
@@ -209,6 +211,7 @@ get_fs_usage (char const *file, char const *disk, struct fs_usage *fsp)
                     ? UINTMAX_MAX
                     : (fsd.s_isize - 2) * INOPB * (fsd.s_type == Fs2b ? 2 : 1));
   fsp->fsu_ffree = PROPAGATE_ALL_ONES (fsd.s_tinode);
+  fsp->fsu_favail = PROPAGATE_ALL_ONES (fsd.s_tinode);
 
 #elif defined STAT_STATFS3_OSF1         /* OSF/1 */
 
@@ -296,6 +299,7 @@ get_fs_usage (char const *file, char const *disk, struct fs_usage *fsp)
   fsp->fsu_bavail_top_bit_set = EXTRACT_TOP_BIT (fsd.f_bavail) != 0;
   fsp->fsu_files = PROPAGATE_ALL_ONES (fsd.f_files);
   fsp->fsu_ffree = PROPAGATE_ALL_ONES (fsd.f_ffree);
+  fsp->fsu_favail = PROPAGATE_ALL_ONES (fsd.f_ffree);
 
 #endif
 
@@ -323,6 +327,7 @@ statfs (char *file, struct statfs *fsb)
   fsb->f_bavail = fsd.du_tfree;
   fsb->f_files  = (fsd.du_isize - 2) * fsd.du_inopb;
   fsb->f_ffree  = fsd.du_tinode;
+  fsb->f_favail  = fsd.du_tinode;
   fsb->f_fsid.val[0] = fsd.du_site;
   fsb->f_fsid.val[1] = fsd.du_pckno;
   return 0;

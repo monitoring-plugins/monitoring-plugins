@@ -4,13 +4,15 @@
 #
 # To create the https server certificate:
 # openssl req -new -x509 -keyout server-key.pem -out server-cert.pem -days 3650 -nodes
-# Country Name (2 letter code) [AU]:UK
-# State or Province Name (full name) [Some-State]:Derbyshire
-# Locality Name (eg, city) []:Belper
+# to create a new expired certificate:
+# faketime '2008-01-01 12:00:00' openssl req -new -x509 -keyout expired-key.pem -out expired-cert.pem -days 1 -nodes
+# Country Name (2 letter code) [AU]:DE
+# State or Province Name (full name) [Some-State]:Bavaria
+# Locality Name (eg, city) []:Munich
 # Organization Name (eg, company) [Internet Widgits Pty Ltd]:Monitoring Plugins
 # Organizational Unit Name (eg, section) []:
-# Common Name (eg, YOUR name) []:Ton Voon
-# Email Address []:tonvoon@mac.com
+# Common Name (e.g. server FQDN or YOUR name) []:Monitoring Plugins
+# Email Address []:devel@monitoring-plugins.org
 
 use strict;
 use Test::More;
@@ -20,6 +22,7 @@ use FindBin qw($Bin);
 $ENV{'LC_TIME'} = "C";
 
 my $common_tests = 70;
+my $virtual_port_tests = 8;
 my $ssl_only_tests = 8;
 # Check that all dependent modules are available
 eval "use HTTP::Daemon 6.01;";
@@ -29,13 +32,16 @@ eval {
 	require HTTP::Response;
 };
 
+my $plugin = 'check_http';
+$plugin    = 'check_curl' if $0 =~ m/check_curl/mx;
+
 if ($@) {
 	plan skip_all => "Missing required module for test: $@";
 } else {
-	if (-x "./check_http") {
-		plan tests => $common_tests * 2 + $ssl_only_tests;
+	if (-x "./$plugin") {
+		plan tests => $common_tests * 2 + $ssl_only_tests + $virtual_port_tests;
 	} else {
-		plan skip_all => "No check_http compiled";
+		plan skip_all => "No $plugin compiled";
 	}
 }
 
@@ -85,6 +91,8 @@ if ($pid) {
 				exit;
 			}
 		} else {
+			# closing the connection after -C cert checks make the daemon exit with a sigpipe otherwise
+			local $SIG{'PIPE'} = 'IGNORE';
 			my $d = HTTP::Daemon::SSL->new(
 				LocalPort => $port_https,
 				LocalAddr => "127.0.0.1",
@@ -96,8 +104,6 @@ if ($pid) {
 			exit;
 		}
 	}
-	# give our webservers some time to startup
-	sleep(1);
 } else {
 	# Child
 	#print "child\n";
@@ -109,6 +115,9 @@ if ($pid) {
 	run_server( $d );
 	exit;
 }
+
+# give our webservers some time to startup
+sleep(3);
 
 # Run the same server on http and https
 sub run_server {
@@ -158,6 +167,11 @@ sub run_server {
 				$c->send_basic_header;
 				$c->send_header('foo');
 				$c->send_crlf;
+			} elsif ($r->url->path eq "/virtual_port") {
+				# return sent Host header
+				$c->send_basic_header;
+				$c->send_crlf;
+				$c->send_response(HTTP::Response->new( 200, 'OK', undef, $r->header ('Host')));
 			} else {
 				$c->send_error(HTTP::Status->RC_FORBIDDEN);
 			}
@@ -179,7 +193,7 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 }
 
 my $result;
-my $command = "./check_http -H 127.0.0.1";
+my $command = "./$plugin -H 127.0.0.1";
 
 run_common_tests( { command => "$command -p $port_http" } );
 SKIP: {
@@ -188,24 +202,55 @@ SKIP: {
 
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 14" );
 	is( $result->return_code, 0, "$command -p $port_https -S -C 14" );
-	is( $result->output, 'OK - Certificate \'Ton Voon\' will expire on Sun Mar  3 21:41:28 2019 +0000.', "output ok" );
+	is( $result->output, "OK - Certificate 'Monitoring Plugins' will expire on Fri Feb 16 15:31:44 2029 +0000.", "output ok" );
 
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 14000" );
 	is( $result->return_code, 1, "$command -p $port_https -S -C 14000" );
-	like( $result->output, '/WARNING - Certificate \'Ton Voon\' expires in \d+ day\(s\) \(Sun Mar  3 21:41:28 2019 \+0000\)./', "output ok" );
+	like( $result->output, '/WARNING - Certificate \'Monitoring Plugins\' expires in \d+ day\(s\) \(Fri Feb 16 15:31:44 2029 \+0000\)./', "output ok" );
 
 	# Expired cert tests
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 13960,14000" );
 	is( $result->return_code, 2, "$command -p $port_https -S -C 13960,14000" );
-	like( $result->output, '/CRITICAL - Certificate \'Ton Voon\' expires in \d+ day\(s\) \(Sun Mar  3 21:41:28 2019 \+0000\)./', "output ok" );
+	like( $result->output, '/CRITICAL - Certificate \'Monitoring Plugins\' expires in \d+ day\(s\) \(Fri Feb 16 15:31:44 2029 \+0000\)./', "output ok" );
 
 	$result = NPTest->testCmd( "$command -p $port_https_expired -S -C 7" );
 	is( $result->return_code, 2, "$command -p $port_https_expired -S -C 7" );
 	is( $result->output,
-		'CRITICAL - Certificate \'Ton Voon\' expired on Thu Mar  5 00:13:16 2009 +0000.',
+		'CRITICAL - Certificate \'Monitoring Plugins\' expired on Wed Jan  2 11:00:26 2008 +0000.',
 		"output ok" );
 
 }
+
+my $cmd;
+# check virtual port behaviour
+#
+# http without virtual port
+$cmd = "$command -p $port_http -u /virtual_port -r ^127.0.0.1:$port_http\$";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 0, $cmd);
+like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+
+# http with virtual port
+$cmd = "$command:80 -p $port_http -u /virtual_port -r ^127.0.0.1\$";
+$result = NPTest->testCmd( $cmd );
+is( $result->return_code, 0, $cmd);
+like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+
+SKIP: {
+	skip "HTTP::Daemon::SSL not installed", 4 if ! exists $servers->{https};
+	# https without virtual port
+	$cmd = "$command -p $port_https --ssl -u /virtual_port -r ^127.0.0.1:$port_https\$";
+	$result = NPTest->testCmd( $cmd );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+
+	# https with virtual port
+	$cmd = "$command:443 -p $port_https --ssl -u /virtual_port -r ^127.0.0.1\$";
+	$result = NPTest->testCmd( $cmd );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+}
+
 
 sub run_common_tests {
 	my ($opts) = @_;
@@ -372,27 +417,29 @@ sub run_common_tests {
 
 	# stickyport - on full urlS port is set back to 80 otherwise
 	$cmd = "$command -f stickyport -u /redir_external -t 5 -s redirected";
+	alarm(2);
 	eval {
 		local $SIG{ALRM} = sub { die "alarm\n" };
-		alarm(2);
 		$result = NPTest->testCmd( $cmd );
-		alarm(0);	};
+	};
 	isnt( $@, "alarm\n", $cmd );
+	alarm(0);
 	is( $result->return_code, 0, $cmd );
 
 	# Let's hope there won't be any web server on :80 returning "redirected"!
 	$cmd = "$command -f sticky -u /redir_external -t 5 -s redirected";
+	alarm(2);
 	eval {
 		local $SIG{ALRM} = sub { die "alarm\n" };
-		alarm(2);
 		$result = NPTest->testCmd( $cmd );
-		alarm(0); };
+	};
 	isnt( $@, "alarm\n", $cmd );
+	alarm(0);
 	isnt( $result->return_code, 0, $cmd );
 
 	# Test an external address - timeout
 	SKIP: {
-		skip "This doesn't seems to work all the time", 1 unless ($ENV{HTTP_EXTERNAL});
+		skip "This doesn't seem to work all the time", 1 unless ($ENV{HTTP_EXTERNAL});
 		$cmd = "$command -f follow -u /redir_external -t 5";
 		eval {
 			$result = NPTest->testCmd( $cmd, 2 );

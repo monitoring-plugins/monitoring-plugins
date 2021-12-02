@@ -72,7 +72,7 @@ int maximum_age = -1;
 
 enum {
   REGS = 2,
-  MAX_RE_SIZE = 256
+  MAX_RE_SIZE = 1024
 };
 #include "regex.h"
 regex_t preg;
@@ -120,12 +120,14 @@ int use_ssl = FALSE;
 int use_sni = FALSE;
 int verbose = FALSE;
 int show_extended_perfdata = FALSE;
+int show_body = FALSE;
 int sd;
 int min_page_len = 0;
 int max_page_len = 0;
 int redir_depth = 0;
 int max_depth = 15;
 char *http_method;
+char *http_method_proxy;
 char *http_post_data;
 char *http_content_type;
 char buffer[MAX_INPUT_BUFFER];
@@ -239,6 +241,7 @@ process_arguments (int argc, char **argv)
     {"use-ipv4", no_argument, 0, '4'},
     {"use-ipv6", no_argument, 0, '6'},
     {"extended-perfdata", no_argument, 0, 'E'},
+    {"show-body", no_argument, 0, 'B'},
     {0, 0, 0, 0}
   };
 
@@ -259,7 +262,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NEB", longopts, &option);
     if (c == -1 || c == EOF)
       break;
 
@@ -446,6 +449,12 @@ process_arguments (int argc, char **argv)
       if (http_method)
         free(http_method);
       http_method = strdup (optarg);
+      char *tmp;
+      if ((tmp = strstr(http_method, ":")) > 0) {
+        tmp[0] = '\0';
+        http_method = http_method;
+        http_method_proxy = ++tmp;
+      }
       break;
     case 'd': /* string or substring */
       strncpy (header_expect, optarg, MAX_INPUT_BUFFER - 1);
@@ -540,6 +549,9 @@ process_arguments (int argc, char **argv)
     case 'E': /* show extended perfdata */
       show_extended_perfdata = TRUE;
       break;
+    case 'B': /* print body content after status line */
+      show_body = TRUE;
+      break;
     }
   }
 
@@ -565,6 +577,9 @@ process_arguments (int argc, char **argv)
 
   if (http_method == NULL)
     http_method = strdup ("GET");
+
+  if (http_method_proxy == NULL)
+    http_method_proxy = strdup ("GET");
 
   if (client_cert && !client_privkey)
     usage4 (_("If you use a client certificate you must also specify a private key file"));
@@ -916,6 +931,21 @@ check_http (void)
 
     if (verbose) printf ("Entering CONNECT tunnel mode with proxy %s:%d to dst %s:%d\n", server_address, server_port, host_name, HTTPS_PORT);
     asprintf (&buf, "%s %s:%d HTTP/1.1\r\n%s\r\n", http_method, host_name, HTTPS_PORT, user_agent);
+    if (strlen(proxy_auth)) {
+      base64_encode_alloc (proxy_auth, strlen (proxy_auth), &auth);
+      xasprintf (&buf, "%sProxy-Authorization: Basic %s\r\n", buf, auth);
+    }
+    /* optionally send any other header tag */
+    if (http_opt_headers_count) {
+      for (i = 0; i < http_opt_headers_count ; i++) {
+        if (force_host_header != http_opt_headers[i]) {
+          xasprintf (&buf, "%s%s\r\n", buf, http_opt_headers[i]);
+        }
+      }
+      /* This cannot be free'd here because a redirection will then try to access this and segfault */
+      /* Covered in a testcase in tests/check_http.t */
+      /* free(http_opt_headers); */
+    }
     asprintf (&buf, "%sProxy-Connection: keep-alive\r\n", buf);
     asprintf (&buf, "%sHost: %s\r\n", buf, host_name);
     /* we finished our request, send empty line with CRLF */
@@ -950,7 +980,7 @@ check_http (void)
 
   if ( server_address != NULL && strcmp(http_method, "CONNECT") == 0
        && host_name != NULL && use_ssl == TRUE)
-    asprintf (&buf, "%s %s %s\r\n%s\r\n", "GET", server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
+    asprintf (&buf, "%s %s %s\r\n%s\r\n", http_method_proxy, server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
   else
     asprintf (&buf, "%s %s %s\r\n%s\r\n", http_method, server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
 
@@ -1140,6 +1170,8 @@ check_http (void)
       xasprintf (&msg,
                 _("Invalid HTTP response received from host on port %d: %s\n"),
                 server_port, status_line);
+    if (show_body)
+        xasprintf (&msg, _("%s\n%s"), msg, page);
     die (STATE_CRITICAL, "HTTP CRITICAL - %s", msg);
   }
 
@@ -1290,6 +1322,9 @@ check_http (void)
            perfd_time (elapsed_time),
            perfd_size (page_len));
 
+  if (show_body)
+    xasprintf (&msg, _("%s\n%s"), msg, page);
+
   result = max_state_alt(get_status(elapsed_time, thlds), result);
 
   die (result, "HTTP %s: %s\n", state_text(result), msg);
@@ -1418,8 +1453,8 @@ redir (char *pos, char *status_line)
       !strncmp(server_address, addr, MAX_IPV4_HOSTLENGTH) &&
       (host_name && !strncmp(host_name, addr, MAX_IPV4_HOSTLENGTH)) &&
       !strcmp(server_url, url))
-    die (STATE_WARNING,
-         _("HTTP WARNING - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
+    die (STATE_CRITICAL,
+         _("HTTP CRITICAL - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
          type, addr, i, url, (display_html ? "</A>" : ""));
 
   strcpy (server_type, type);
@@ -1532,6 +1567,10 @@ print_help (void)
 
   print_usage ();
 
+#ifdef HAVE_SSL
+  printf (_("In the first form, make an HTTP request."));
+  printf (_("In the second form, connect to the server and check the TLS certificate."));
+#endif
   printf (_("NOTE: One or both of -H and -I must be specified"));
 
   printf ("\n");
@@ -1581,7 +1620,7 @@ print_help (void)
   printf ("    %s\n", _("URL to GET or POST (default: /)"));
   printf (" %s\n", "-P, --post=STRING");
   printf ("    %s\n", _("URL encoded http POST data"));
-  printf (" %s\n", "-j, --method=STRING  (for example: HEAD, OPTIONS, TRACE, PUT, DELETE, CONNECT)");
+  printf (" %s\n", "-j, --method=STRING  (for example: HEAD, OPTIONS, TRACE, PUT, DELETE, CONNECT, CONNECT:POST)");
   printf ("    %s\n", _("Set HTTP method."));
   printf (" %s\n", "-N, --no-body");
   printf ("    %s\n", _("Don't wait for document body: stop reading after headers."));
@@ -1611,6 +1650,8 @@ print_help (void)
   printf ("    %s\n", _("Any other tags to be sent in http header. Use multiple times for additional headers"));
   printf (" %s\n", "-E, --extended-perfdata");
   printf ("    %s\n", _("Print additional performance data"));
+  printf (" %s\n", "-B, --show-body");
+  printf ("    %s\n", _("Print body content below status line"));
   printf (" %s\n", "-L, --link");
   printf ("    %s\n", _("Wrap output in HTML link (obsoleted by urlize)"));
   printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow|sticky|stickyport>");
@@ -1629,7 +1670,7 @@ print_help (void)
   printf ("%s\n", _("Notes:"));
   printf (" %s\n", _("This plugin will attempt to open an HTTP connection with the host."));
   printf (" %s\n", _("Successful connects return STATE_OK, refusals and timeouts return STATE_CRITICAL"));
-  printf (" %s\n", _("other errors return STATE_UNKNOWN.  Successful connects, but incorrect reponse"));
+  printf (" %s\n", _("other errors return STATE_UNKNOWN.  Successful connects, but incorrect response"));
   printf (" %s\n", _("messages from the host result in STATE_WARNING return values.  If you are"));
   printf (" %s\n", _("checking a virtual server that uses 'host headers' you must supply the FQDN"));
   printf (" %s\n", _("(fully qualified domain name) as the [host_name] argument."));
@@ -1668,7 +1709,8 @@ print_help (void)
   printf (" %s\n", _("all these options are needed: -I <proxy> -p <proxy-port> -u <check-url> -S(sl) -j CONNECT -H <webserver>"));
   printf (" %s\n", _("a STATE_OK will be returned. When the server returns its content but exceeds"));
   printf (" %s\n", _("the 5-second threshold, a STATE_WARNING will be returned. When an error occurs,"));
-  printf (" %s\n", _("a STATE_CRITICAL will be returned."));
+  printf (" %s\n", _("a STATE_CRITICAL will be returned. By adding a colon to the method you can set the method used"));
+  printf (" %s\n", _("inside the proxied connection: -j CONNECT:POST"));
 
 #endif
 
@@ -1688,6 +1730,8 @@ print_usage (void)
   printf ("       [-b proxy_auth] [-f <ok|warning|critcal|follow|sticky|stickyport>]\n");
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
-  printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
+  printf ("       [-A string] [-k string] [-S <version>] [--sni]\n");
   printf ("       [-T <content-type>] [-j method]\n");
+  printf (" %s -H <vhost> | -I <IP-address> -C <warn_age>[,<crit_age>]\n",progname);
+  printf ("       [-p <port>] [-t <timeout>] [-4|-6] [--sni]\n");
 }
