@@ -223,6 +223,7 @@ fi
 # The temporary file that the script should use while
 # processing the log file.
 if [ -x /bin/mktemp ]; then
+
     tempdiff=$(/bin/mktemp /tmp/check_log.XXXXXXXXXX)
 else
     tempdiff=$(/bin/date '+%H%M%S')
@@ -232,6 +233,7 @@ else
 fi
 
 diff "$logfile" "$oldlog" | grep -v "^>" > "$tempdiff"
+
 
 if [ $ALL ]; then
 	# Get the last matching entry in the diff file
