@@ -43,6 +43,10 @@
 #        check the same <log_file> for pattern matches.  This is necessary
 #        because of the way the script operates.
 #
+#    4.  This plugin does NOT have an understanding of logrotation or similar
+#        mechanisms. Therefore bad timing could lead to missing events
+#
+#
 # Examples:
 #
 # Check for login failures in the syslog...
@@ -207,6 +211,11 @@ elif [ ! -r "$logfile" ] ; then
     echo "Log check error: Log file $logfile is not readable!"
     exit "$STATE_UNKNOWN"
 fi
+# If no oldlog was given this can not work properly, abort then
+if [ ! -v oldlog ]; then
+       echo "Oldlog parameter is needed"
+       exit $STATE_UNKNOWN
+fi
 
 # If the old log file doesn't exist, this must be the first time
 # we're running this test, so copy the original log file over to
@@ -256,7 +265,7 @@ cat "$logfile" > "$oldlog"
 if [ "$count" = "0" ]; then # no matches, exit with no error
     echo "Log check ok - 0 pattern matches found"
     exitstatus=$STATE_OK
-else # Print total matche count and the last entry we found
+else # Print total match count and the last entry we found
     echo "($count) $entry"
     exitstatus=$STATE_CRITICAL
 fi
