@@ -67,19 +67,6 @@
  * occur in any number of threads simultaneously. */
 static pid_t *np_pids = NULL;
 
-/* Try sysconf(_SC_OPEN_MAX) first, as it can be higher than OPEN_MAX.
- * If that fails and the macro isn't defined, we fall back to an educated
- * guess. There's no guarantee that our guess is adequate and the program
- * will die with SIGSEGV if it isn't and the upper boundary is breached. */
-#ifdef _SC_OPEN_MAX
-static long maxfd = 0;
-#elif defined(OPEN_MAX)
-# define maxfd OPEN_MAX
-#else /* sysconf macro unavailable, so guess (may be wildly inaccurate) */
-# define maxfd 256
-#endif
-
-
 /** prototypes **/
 static int np_runcmd_open(const char *, int *, int *)
 	__attribute__((__nonnull__(1, 2, 3)));
@@ -99,14 +86,8 @@ extern void die (int, const char *, ...)
  * through this api and thus achieve async-safeness throughout the api */
 void np_runcmd_init(void)
 {
-#ifndef maxfd
-	if(!maxfd && (maxfd = sysconf(_SC_OPEN_MAX)) < 0) {
-		/* possibly log or emit a warning here, since there's no
-		 * guarantee that our guess at maxfd will be adequate */
-		maxfd = 256;
-	}
-#endif
-
+	if(maxfd == 0)
+		maxfd = open_max();
 	if(!np_pids) np_pids = calloc(maxfd, sizeof(pid_t));
 }
 

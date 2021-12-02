@@ -539,7 +539,7 @@ elsif ( $mailq eq "nullmailer" ) {
 	while (<MAILQ>) {
 	    #2006-06-22 16:00:00  282 bytes
 
-	    if (/^[1-9][0-9]*-[01][0-9]-[0-3][0-9]\s[0-2][0-9]\:[0-2][0-9]\:[0-2][0-9]\s{2}[0-9]+\sbytes$/) {
+	    if (/^[1-9][0-9]*-[01][0-9]-[0-3][0-9]\s[0-2][0-9]\:[0-5][0-9]\:[0-5][0-9]\s+[0-9]+\sbytes/) {
 		$msg_q++ ;
 	    }
 	}
@@ -576,6 +576,8 @@ sub process_arguments(){
 		 "t=i" => \$opt_t, "timeout=i"  => \$opt_t,
 		 "s"   => \$opt_s, "sudo"       => \$opt_s,
 		 "d:s" => \$opt_d, "configdir:s" => \$opt_d
+		 "W=i" => \$opt_W,                            # warning if above this number
+		 "C=i" => \$opt_C,                            # critical if above this number
 		 );
 
 	if ($opt_V) {
@@ -669,8 +671,8 @@ sub print_help () {
 	print "   Feedback/patches to support non-sendmail mailqueue welcome\n\n";
 	print "-w (--warning)   = Min. number of messages in queue to generate warning\n";
 	print "-c (--critical)  = Min. number of messages in queue to generate critical alert ( w < c )\n";
-	print "-W (--Warning)   = Min. number of messages for same domain in queue to generate warning\n";
-	print "-C (--Critical)  = Min. number of messages for same domain in queue to generate critical alert ( W < C )\n";
+	print "-W               = Min. number of messages for same domain in queue to generate warning\n";
+	print "-C               = Min. number of messages for same domain in queue to generate critical alert ( W < C )\n";
 	print "-t (--timeout)   = Plugin timeout in seconds (default = $utils::TIMEOUT)\n";
 	print "-M (--mailserver) = [ sendmail | qmail | postfix | exim | nullmailer ] (default = autodetect)\n";
 	print "-s (--sudo)      = Use sudo to call the mailq command\n";

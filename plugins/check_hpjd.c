@@ -66,7 +66,8 @@ void print_usage (void);
 
 char *community = NULL;
 char *address = NULL;
-char *port = NULL;
+unsigned int port = 0;
+int  check_paper_out = 1;
 
 int
 main (int argc, char **argv)
@@ -120,8 +121,12 @@ main (int argc, char **argv)
 		 HPJD_GD_DOOR_OPEN, HPJD_GD_PAPER_OUTPUT, HPJD_GD_STATUS_DISPLAY);
 
 	/* get the command to run */
-	sprintf (command_line, "%s -OQa -m : -v 1 -c %s %s:%hd %s", PATH_TO_SNMPGET, community,
-									address, port, query_string);
+	sprintf (command_line, "%s -OQa -m : -v 1 -c %s %s:%u %s",
+			PATH_TO_SNMPGET,
+			community,
+			address,
+			port,
+			query_string);
 
 	/* run the command */
 	child_process = spopen (command_line);
@@ -240,7 +245,8 @@ main (int argc, char **argv)
 			strcpy (errmsg, _("Paper Jam"));
 		}
 		else if (paper_out) {
-			result = STATE_WARNING;
+			if (check_paper_out)
+				result = STATE_WARNING;
 			strcpy (errmsg, _("Out of Paper"));
 		}
 		else if (line_status == OFFLINE) {
@@ -325,7 +331,7 @@ process_arguments (int argc, char **argv)
 
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVH:C:p:", longopts, &option);
+		c = getopt_long (argc, argv, "+hVH:C:p:D", longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)
 			break;
@@ -347,6 +353,8 @@ process_arguments (int argc, char **argv)
 				usage2 (_("Port must be a positive short integer"), optarg);
 			else
 				port = atoi(optarg);
+		case 'D':									/* disable paper out check*/
+			check_paper_out = 0;
 			break;
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
@@ -376,11 +384,8 @@ process_arguments (int argc, char **argv)
 			community = strdup (DEFAULT_COMMUNITY);
 	}
 
-	if (port == NULL) {
-		if (argv[c] != NULL )
-			port = argv[c];
-		else
-			port = atoi (DEFAULT_PORT);
+	if (port == 0) {
+		port = atoi(DEFAULT_PORT);
 	}
 
 	return validate_arguments ();
@@ -420,6 +425,8 @@ print_help (void)
 	printf ("    %s", _("Specify the port to check "));
 	printf (_("(default=%s)"), DEFAULT_PORT);
 	printf ("\n");
+	printf (" %s\n", "-D");
+	printf ("    %s", _("Disable paper check "));
 
 	printf (UT_SUPPORT);
 }
@@ -430,5 +437,5 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-	printf ("%s -H host [-C community] [-p port]\n", progname);
+	printf ("%s -H host [-C community] [-p port] [-D]\n", progname);
 }

@@ -86,6 +86,8 @@ static char *do_include = NULL;  /* regexp to only include certain packages */
 static char *do_exclude = NULL;  /* regexp to only exclude certain packages */
 static char *do_critical = NULL;  /* regexp specifying critical packages */
 static char *input_filename = NULL; /* input filename for testing */
+/* number of packages available for upgrade to return WARNING status */
+static int packages_warning = 1;
 
 /* other global variables */
 static int stderr_warning = 0;   /* if a cmd issued output on stderr */
@@ -117,7 +119,7 @@ int main (int argc, char **argv) {
 
 	if(sec_count > 0){
 		result = max_state(result, STATE_CRITICAL);
-	} else if(packages_available > 0 && only_critical == 0){
+	} else if(packages_available >= packages_warning && only_critical == 0){
 		result = max_state(result, STATE_WARNING);
 	} else if(result > STATE_UNKNOWN){
 		result = STATE_UNKNOWN;
@@ -170,11 +172,12 @@ int process_arguments (int argc, char **argv) {
 		{"critical", required_argument, 0, 'c'},
 		{"only-critical", no_argument, 0, 'o'},
 		{"input-file", required_argument, 0, INPUT_FILE_OPT},
+		{"packages-warning", required_argument, 0, 'w'},
 		{0, 0, 0, 0}
 	};
 
 	while(1) {
-		c = getopt_long(argc, argv, "hVvt:u::U::d::nli:e:c:o", longopts, NULL);
+		c = getopt_long(argc, argv, "hVvt:u::U::d::nli:e:c:ow:", longopts, NULL);
 
 		if(c == -1 || c == EOF || c == 1) break;
 
@@ -232,6 +235,9 @@ int process_arguments (int argc, char **argv) {
 			break;
 		case INPUT_FILE_OPT:
 			input_filename = optarg;
+			break;
+		case 'w':
+			packages_warning = atoi(optarg);
 			break;
 		default:
 			/* print short usage statement if args not parsable */
@@ -530,7 +536,10 @@ print_help (void)
   printf (" %s\n", "-o, --only-critical");
   printf ("    %s\n", _("Only warn about upgrades matching the critical list.  The total number"));
   printf ("    %s\n", _("of upgrades will be printed, but any non-critical upgrades will not cause"));
-  printf ("    %s\n\n", _("the plugin to return WARNING status."));
+  printf ("    %s\n", _("the plugin to return WARNING status."));
+  printf (" %s\n", "-w, --packages-warning");
+  printf ("    %s\n", _("Minumum number of packages available for upgrade to return WARNING status."));
+  printf ("    %s\n\n", _("Default is 1 package."));
 
   printf ("%s\n\n", _("The following options require root privileges and should be used with care:"));
   printf (" %s\n", "-u, --update=OPTS");
@@ -548,5 +557,5 @@ void
 print_usage(void)
 {
   printf ("%s\n", _("Usage:"));
-  printf ("%s [[-d|-u|-U]opts] [-n] [-l] [-t timeout]\n", progname);
+  printf ("%s [[-d|-u|-U]opts] [-n] [-l] [-t timeout] [-w packages-warning]\n", progname);
 }
