@@ -207,7 +207,7 @@ static int add_target(char *);
 static int add_target_ip(char *, struct sockaddr_storage *);
 static int handle_random_icmp(unsigned char *, struct sockaddr_storage *);
 static void parse_address(struct sockaddr_storage *, char *, int);
-static unsigned short icmp_checksum(unsigned short *, int);
+static unsigned short icmp_checksum(uint16_t *, size_t);
 static void finish(int);
 static void crash(const char *, ...);
 
@@ -779,7 +779,7 @@ static int
 wait_for_reply(int sock, u_int t)
 {
 	int n, hlen;
-	static unsigned char buf[4096];
+	static unsigned char buf[65536];
 	struct sockaddr_storage resp_addr;
 	union ip_hdr *ip;
 	union icmp_packet packet;
@@ -916,9 +916,27 @@ wait_for_reply(int sock, u_int t)
 		if(debug) {
 			char address[INET6_ADDRSTRLEN];
 			parse_address(&resp_addr, address, sizeof(address));
-			printf("%0.3f ms rtt from %s, outgoing ttl: %u, incoming ttl: %u, max: %0.3f, min: %0.3f\n",
-				(float)tdiff / 1000, address,
-				ttl, ip->ip.ip_ttl, (float)host->rtmax / 1000, (float)host->rtmin / 1000);
+
+			switch(address_family) {
+				case AF_INET: {
+					printf("%0.3f ms rtt from %s, outgoing ttl: %u, incoming ttl: %u, max: %0.3f, min: %0.3f\n",
+						(float)tdiff / 1000,
+						address,
+						ttl,
+						ip->ip.ip_ttl,
+						(float)host->rtmax / 1000,
+						(float)host->rtmin / 1000);
+					break;
+					  };
+				case AF_INET6: {
+					printf("%0.3f ms rtt from %s, outgoing ttl: %u, max: %0.3f, min: %0.3f\n",
+						(float)tdiff / 1000,
+						address,
+						ttl,
+						(float)host->rtmax / 1000,
+						(float)host->rtmin / 1000);
+					  };
+			   }
 		}
 
 		/* if we're in hostcheck mode, exit with limited printouts */
@@ -980,7 +998,7 @@ send_icmp_ping(int sock, struct rta_host *host)
 		icp->icmp_cksum = 0;
 		icp->icmp_id = htons(pid);
 		icp->icmp_seq = htons(host->id++);
-		icp->icmp_cksum = icmp_checksum((unsigned short*)buf, icmp_pkt_size);
+		icp->icmp_cksum = icmp_checksum((uint16_t*)buf, (size_t)icmp_pkt_size);
 
 		if (debug > 2)
 			printf("Sending ICMP echo-request of len %lu, id %u, seq %u, cksum 0x%X to host %s\n",
@@ -1517,18 +1535,19 @@ get_threshold(char *str, threshold *th)
 }
 
 unsigned short
-icmp_checksum(unsigned short *p, int n)
+icmp_checksum(uint16_t *p, size_t n)
 {
 	unsigned short cksum;
 	long sum = 0;
 
-	while(n > 2) {
-		sum += *p++;
-		n -= sizeof(unsigned short);
+	/* sizeof(uint16_t) == 2 */
+	while(n >= 2) {
+		sum += *(p++);
+		n -= 2;
 	}
 
 	/* mop up the occasional odd byte */
-	if(n == 1) sum += (unsigned char)*p;
+	if(n == 1) sum += *((uint8_t *)p -1);
 
 	sum = (sum >> 16) + (sum & 0xffff);	/* add hi 16 to low 16 */
 	sum += (sum >> 16);			/* add carry */
