@@ -468,7 +468,6 @@ main(int argc, char **argv)
 	/* Parse protocol arguments first */
 	for(i = 1; i < argc; i++) {
 		while((arg = getopt(argc, argv, opts_str)) != EOF) {
-			unsigned short size;
 			switch(arg) {
 			case '4':
 				if (address_family != -1)
@@ -491,10 +490,10 @@ main(int argc, char **argv)
 	/* Reset argument scanning */
 	optind = 1;
 
+	unsigned short size;
 	/* parse the arguments */
 	for(i = 1; i < argc; i++) {
 		while((arg = getopt(argc, argv, opts_str)) != EOF) {
-			unsigned short size;
 			switch(arg) {
 			case 'v':
 				debug++;
