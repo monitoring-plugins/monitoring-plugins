@@ -722,7 +722,7 @@ main(int argc, char **argv)
 static void
 run_checks()
 {
-	u_int i, t, result;
+	u_int i, t;
 	u_int final_wait, time_passed;
 
 	/* this loop might actually violate the pkt_interval or target_interval
@@ -740,9 +740,9 @@ run_checks()
 
 			/* we're still in the game, so send next packet */
 			(void)send_icmp_ping(icmp_sock, table[t]);
-			result = wait_for_reply(icmp_sock, target_interval);
+			wait_for_reply(icmp_sock, target_interval);
 		}
-		result = wait_for_reply(icmp_sock, pkt_interval * targets);
+		wait_for_reply(icmp_sock, pkt_interval * targets);
 	}
 
 	if(icmp_pkts_en_route && targets_alive) {
@@ -762,7 +762,7 @@ run_checks()
 		 * haven't yet */
 		if(debug) printf("Waiting for %u micro-seconds (%0.3f msecs)\n",
 						 final_wait, (float)final_wait / 1000);
-		result = wait_for_reply(icmp_sock, final_wait);
+		wait_for_reply(icmp_sock, final_wait);
 	}
 }
 
