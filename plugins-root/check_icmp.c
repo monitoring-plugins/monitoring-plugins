@@ -50,6 +50,8 @@ const char *email = "devel@monitoring-plugins.org";
 #if HAVE_SYS_SOCKIO_H
 #include <sys/sockio.h>
 #endif
+
+/*
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -60,9 +62,12 @@ const char *email = "devel@monitoring-plugins.org";
 #include <stddef.h>
 #include <errno.h>
 #include <string.h>
-#include <ctype.h>
 #include <netdb.h>
 #include <sys/socket.h>
+#include <signal.h>
+#include <float.h>
+*/
+#include <ctype.h>
 #include <net/if.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -71,8 +76,6 @@ const char *email = "devel@monitoring-plugins.org";
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
 #include <arpa/inet.h>
-#include <signal.h>
-#include <float.h>
 
 
 /** sometimes undefined system macros (quite a few, actually) **/
