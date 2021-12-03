@@ -89,3 +89,14 @@ $res = NPTest->testCmd(
 is( $res->return_code, 0, "IPv4 source_ip accepted" );
 like( $res->output, $successOutput, "Output OK" );
 
+$res = NPTest->testCmd(
+	"$sudo ./check_icmp -H ::1 -b 65507"
+	);
+is( $res->return_code, 0, "Try max paket size" );
+like( $res->output, $successOutput, "Output OK - Didn't overflow" );
+
+$res = NPTest->testCmd(
+	"$sudo ./check_icmp -H ::1 -vvv"
+	);
+is( $res->return_code, 0, "Try IPv6 and vvv" );
+like( $res->output, $successOutput, "Output OK - Didn't overflow" );
