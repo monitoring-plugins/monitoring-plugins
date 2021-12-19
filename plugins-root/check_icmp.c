@@ -51,19 +51,6 @@ const char *email = "devel@monitoring-plugins.org";
 #include <sys/sockio.h>
 #endif
 
-/*
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <stddef.h>
-#include <string.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <float.h>
-*/
 #include <sys/time.h>
 #include <errno.h>
 #include <signal.h>
