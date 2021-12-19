@@ -212,7 +212,7 @@ elif [ ! -r "$logfile" ] ; then
     exit "$STATE_UNKNOWN"
 fi
 # If no oldlog was given this can not work properly, abort then
-if [ ! -v oldlog ]; then
+if [ -z "$oldlog" ]; then
        echo "Oldlog parameter is needed"
        exit $STATE_UNKNOWN
 fi
