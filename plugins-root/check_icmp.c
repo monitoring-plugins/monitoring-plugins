@@ -410,6 +410,7 @@ main(int argc, char **argv)
 #ifdef SO_TIMESTAMP
 	int on = 1;
 #endif
+	char *source_ip = NULL;
 	char * opts_str = "vhVw:c:n:p:t:H:s:i:b:I:l:m:64";
 
 	setlocale (LC_ALL, "");
@@ -542,7 +543,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 's': /* specify source IP address */
-				set_source_ip(optarg);
+				source_ip = optarg;
 				break;
 			case 'V': /* version */
 				print_revision (progname, NP_VERSION);
@@ -597,6 +598,8 @@ main(int argc, char **argv)
 		sockets |= HAVE_ICMP;
 	else icmp_sockerrno = errno;
 
+	if( source_ip )
+		set_source_ip(source_ip);
 
 #ifdef SO_TIMESTAMP
 	if(setsockopt(icmp_sock, SOL_SOCKET, SO_TIMESTAMP, &on, sizeof(on)))
