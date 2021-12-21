@@ -190,6 +190,9 @@ main (int argc, char **argv)
 			die (STATE_UNKNOWN, _("Invalid NAS-Identifier\n"));
 	}
 
+#if ! defined(HAVE_LIBRADCLI) && ! defined(HAVE_LIBFREERADIUS_CLIENT) && defined(HAVE_LIBRADIUSCLIENT_NG)
+	/* radiusclient-ng will always set NAS_IP_ADDRESS again. verified for version 0.5.6 */
+#else
 	if (nasipaddress == NULL) {
 		if (gethostname (name, sizeof(name)) != 0)
 			die (STATE_UNKNOWN, _("gethostname() failed!\n"));
@@ -200,6 +203,7 @@ main (int argc, char **argv)
 	client_id = ntohl (((struct sockaddr_in *)&ss)->sin_addr.s_addr);
 	if (my_rc_avpair_add (&(data.send_pairs), PW_NAS_IP_ADDRESS, &client_id, 0) == NULL)
 		die (STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
+#endif
 
 	my_rc_buildreq (&data, PW_ACCESS_REQUEST, server, port, (int)timeout_interval,
 	             retries);
@@ -298,7 +302,13 @@ process_arguments (int argc, char **argv)
 			nasid = optarg;
 			break;
 		case 'N':									/* nas ip address */
+#if ! defined(HAVE_LIBRADCLI) && ! defined(HAVE_LIBFREERADIUS_CLIENT) && defined(HAVE_LIBRADIUSCLIENT_NG) 
+			/* radiusclient-ng will determine the source ip of the request
+			** and set it as NAS_IP_ADDRESS. verified for version 0.5.6 */
+			usage4 (_("-N is not compatible with radiusclient-ng"));
+#else
 			nasipaddress = optarg;
+#endif
 			break;
 		case 'F':									/* configuration file */
 			config_file = optarg;
