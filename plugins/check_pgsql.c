@@ -347,7 +347,7 @@ process_arguments (int argc, char **argv)
 			if (!is_pg_dbname (optarg)) /* checks length and valid chars */
 				usage2 (_("Database name is not valid"), optarg);
 			else /* we know length, and know optarg is terminated, so us strcpy */
-				strcpy (dbName, optarg);
+				snprintf(dbName, NAMEDATALEN, "%s", optarg);
 			break;
 		case 'l':     /* login name */
 			if (!is_pg_logname (optarg))

@@ -103,7 +103,7 @@ SKIP: {
         cmp_ok( $res->return_code, "==", 0, "And also when not found");
 }
 SKIP: {
-        skip "No internet access", 16 if $internet_access eq "no";
+        skip "No internet access", 23 if $internet_access eq "no";
 
         $res = NPTest->testCmd(
                 "./$plugin --ssl $host_tls_http"
@@ -135,7 +135,7 @@ SKIP: {
 
         # run some certificate checks with faketime
         SKIP: {
-                skip "No faketime binary found", 12 if !$faketime;
+                skip "No faketime binary found", 7 if !$faketime;
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC ./$plugin -C 1 $host_tls_http");
                 like($res->output, qr/OK - Certificate '$host_tls_cert' will expire on/, "Catch cert output");
                 is( $res->return_code, 0, "Catch cert output exit code" );

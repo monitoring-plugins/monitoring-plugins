@@ -502,7 +502,7 @@ main(int argc, char **argv)
 					icmp_data_size = size;
 					icmp_pkt_size = size + ICMP_MINLEN;
 				} else
-					usage_va("ICMP data length must be between: %d and %d",
+					usage_va("ICMP data length must be between: %lu and %lu",
 					         sizeof(struct icmp) + sizeof(struct icmp_ping_data),
 					         MAX_PING_DATA - 1);
 				break;
@@ -921,7 +921,7 @@ wait_for_reply(int sock, u_int t)
 		/* if we're in hostcheck mode, exit with limited printouts */
 		if(mode == MODE_HOSTCHECK) {
 			printf("OK - %s responds to ICMP. Packet %u, rta %0.3fms|"
-				"pkt=%u;;0;%u rta=%0.3f;%0.3f;%0.3f;;\n",
+				"pkt=%u;;;0;%u rta=%0.3f;%0.3f;%0.3f;;\n",
 				host->name, icmp_recv, (float)tdiff / 1000,
 				icmp_recv, packets, (float)tdiff / 1000,
 				(float)warn.rta / 1000, (float)crit.rta / 1000);
@@ -1134,7 +1134,7 @@ finish(int sig)
 	while(host) {
 		if(!host->icmp_recv) {
 			/* rta 0 is ofcourse not entirely correct, but will still show up
-			 * conspicuosly as missing entries in perfparse and cacti */
+			 * conspicuously as missing entries in perfparse and cacti */
 			pl = 100;
 			rta = 0;
 			status = STATE_CRITICAL;
@@ -1293,7 +1293,7 @@ add_target_ip(char *arg, struct sockaddr_storage *in)
 	if(!host) {
 		char straddr[INET6_ADDRSTRLEN];
 		parse_address((struct sockaddr_storage*)&in, straddr, sizeof(straddr));
-		crash("add_target_ip(%s, %s): malloc(%d) failed",
+		crash("add_target_ip(%s, %s): malloc(%lu) failed",
 			arg, straddr, sizeof(struct rta_host));
 	}
 	memset(host, 0, sizeof(struct rta_host));

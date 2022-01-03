@@ -9,7 +9,7 @@ use NPTest;
 use FindBin qw($Bin);
 use POSIX qw/strftime/;
 
-my $tests = 67;
+my $tests = 73;
 # Check that all dependent modules are available
 eval {
 	require NetSNMP::OID;
@@ -251,9 +251,20 @@ is($res->output, 'SNMP CRITICAL - *-4* | iso.3.6.1.4.1.8072.3.2.67.17=-4;-2:;-3:
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.18 -c '~:-6.5'" );
 is($res->return_code, 0, "Negative float OK" );
-is($res->output, 'SNMP OK - -6.6 | iso.3.6.1.4.1.8072.3.2.67.18=-6.6;;~:-6.5 ', "Negative float OK output" );
+is($res->output, 'SNMP OK - -6.6 | iso.3.6.1.4.1.8072.3.2.67.18=-6.6;;@-6.5:~ ', "Negative float OK output" );
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.18 -w '~:-6.65' -c '~:-6.55'" );
 is($res->return_code, 1, "Negative float WARNING" );
-is($res->output, 'SNMP WARNING - *-6.6* | iso.3.6.1.4.1.8072.3.2.67.18=-6.6;~:-6.65;~:-6.55 ', "Negative float WARNING output" );
+is($res->output, 'SNMP WARNING - *-6.6* | iso.3.6.1.4.1.8072.3.2.67.18=-6.6;@-6.65:~;@-6.55:~ ', "Negative float WARNING output" );
 
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10,.1.3.6.1.4.1.8072.3.2.67.17 -w '1:100000,-10:20' -c '2:200000,-20:30'" );
+is($res->return_code, 0, "Multiple OIDs with thresholds" );
+like($res->output, '/SNMP OK - \d+ -4 | iso.3.6.1.4.1.8072.3.2.67.10=\d+c;1:100000;2:200000 iso.3.6.1.4.1.8072.3.2.67.17=-4;-10:20;-20:30/', "Multiple OIDs with thresholds output" );
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10,.1.3.6.1.4.1.8072.3.2.67.17 -w '1:100000,-1:2' -c '2:200000,-20:30'" );
+is($res->return_code, 1, "Multiple OIDs with thresholds" );
+like($res->output, '/SNMP WARNING - \d+ \*-4\* | iso.3.6.1.4.1.8072.3.2.67.10=\d+c;1:100000;2:200000 iso.3.6.1.4.1.8072.3.2.67.17=-4;-10:20;-20:30/', "Multiple OIDs with thresholds output" );
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10,.1.3.6.1.4.1.8072.3.2.67.17 -w 1,2 -c 1" );
+is($res->return_code, 2, "Multiple OIDs with some thresholds" );
+like($res->output, '/SNMP CRITICAL - \*\d+\* \*-4\* | iso.3.6.1.4.1.8072.3.2.67.10=\d+c;1;2 iso.3.6.1.4.1.8072.3.2.67.17=-4;;/', "Multiple OIDs with thresholds output" );

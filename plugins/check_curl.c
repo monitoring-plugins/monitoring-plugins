@@ -55,6 +55,12 @@ const char *email = "devel@monitoring-plugins.org";
 
 #include <arpa/inet.h>
 
+#if defined(HAVE_SSL) && defined(USE_OPENSSL)
+#include <openssl/opensslv.h>
+#endif
+
+#include <netdb.h>
+
 #define MAKE_LIBCURL_VERSION(major, minor, patch) ((major)*0x10000 + (minor)*0x100 + (patch))
 
 #define DEFAULT_BUFFER_SIZE 2048
@@ -117,7 +123,7 @@ typedef enum curlhelp_ssl_library {
 
 enum {
   REGS = 2,
-  MAX_RE_SIZE = 256
+  MAX_RE_SIZE = 1024
 };
 #include "regex.h"
 regex_t preg;
@@ -145,6 +151,7 @@ thresholds *thlds;
 char user_agent[DEFAULT_BUFFER_SIZE];
 int verbose = 0;
 int show_extended_perfdata = FALSE;
+int show_body = FALSE;
 int min_page_len = 0;
 int max_page_len = 0;
 int redir_depth = 0;
@@ -195,6 +202,7 @@ int ssl_version = CURL_SSLVERSION_DEFAULT;
 char *client_cert = NULL;
 char *client_privkey = NULL;
 char *ca_cert = NULL;
+int verify_peer_and_host = FALSE;
 int is_openssl_callback = FALSE;
 #if defined(HAVE_SSL) && defined(USE_OPENSSL)
 X509 *cert = NULL;
@@ -204,6 +212,7 @@ int maximum_age = -1;
 int address_family = AF_UNSPEC;
 curlhelp_ssl_library ssl_library = CURLHELP_SSL_LIBRARY_UNKNOWN;
 int curl_http_version = CURL_HTTP_VERSION_NONE;
+int automatic_decompression = FALSE;
 
 int process_arguments (int, char**);
 void handle_curl_option_return_code (CURLcode res, const char* option);
@@ -283,6 +292,20 @@ int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx)
    * TODO: is the last certificate always the server certificate?
    */
   cert = X509_STORE_CTX_get_current_cert(x509_ctx);
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+  X509_up_ref(cert);
+#endif
+  if (verbose>=2) {
+    puts("* SSL verify callback with certificate:");
+    X509_NAME *subject, *issuer;
+    printf("*   issuer:\n");
+    issuer = X509_get_issuer_name( cert );
+    X509_NAME_print_ex_fp(stdout, issuer, 5, XN_FLAG_MULTILINE);
+    printf("* curl verify_callback:\n*   subject:\n");
+    subject = X509_get_subject_name( cert );
+    X509_NAME_print_ex_fp(stdout, subject, 5, XN_FLAG_MULTILINE);
+    puts("");
+  }
   return 1;
 }
 
@@ -295,6 +318,28 @@ CURLcode sslctxfun(CURL *curl, SSL_CTX *sslctx, void *parm)
 
 #endif /* USE_OPENSSL */
 #endif /* HAVE_SSL */
+
+/* returns a string "HTTP/1.x" or "HTTP/2" */
+static char *string_statuscode (int major, int minor)
+{
+  static char buf[10];
+
+  switch (major) {
+    case 1:
+      snprintf (buf, sizeof (buf), "HTTP/%d.%d", major, minor);
+      break;
+    case 2:
+    case 3:
+      snprintf (buf, sizeof (buf), "HTTP/%d", major);
+      break;
+    default:
+      /* assuming here HTTP/N with N>=4 */
+      snprintf (buf, sizeof (buf), "HTTP/%d", major);
+      break;
+  }
+
+  return buf;
+}
 
 /* Checks if the server 'reply' is one of the expected 'statuscodes' */
 static int
@@ -327,12 +372,55 @@ handle_curl_option_return_code (CURLcode res, const char* option)
 }
 
 int
+lookup_host (const char *host, char *buf, size_t buflen)
+{
+  struct addrinfo hints, *res, *result;
+  int errcode;
+  void *ptr;
+
+  memset (&hints, 0, sizeof (hints));
+  hints.ai_family = address_family;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags |= AI_CANONNAME;
+
+  errcode = getaddrinfo (host, NULL, &hints, &result);
+  if (errcode != 0)
+    return errcode;
+  
+  res = result;
+
+  while (res) {
+  inet_ntop (res->ai_family, res->ai_addr->sa_data, buf, buflen);
+  switch (res->ai_family) {
+    case AF_INET:
+      ptr = &((struct sockaddr_in *) res->ai_addr)->sin_addr;
+      break;
+    case AF_INET6:
+      ptr = &((struct sockaddr_in6 *) res->ai_addr)->sin6_addr;
+    break;
+    }
+    inet_ntop (res->ai_family, ptr, buf, buflen);
+    if (verbose >= 1)
+      printf ("* getaddrinfo IPv%d address: %s\n",
+        res->ai_family == PF_INET6 ? 6 : 4, buf);
+    res = res->ai_next;
+  }
+  
+  freeaddrinfo(result);
+
+  return 0;
+}
+
+int
 check_http (void)
 {
   int result = STATE_OK;
   int page_len = 0;
   int i;
   char *force_host_header = NULL;
+  struct curl_slist *host = NULL;
+  char addrstr[100];
+  char dnscache[DEFAULT_BUFFER_SIZE];
 
   /* initialize curl */
   if (curl_global_init (CURL_GLOBAL_DEFAULT) != CURLE_OK)
@@ -346,6 +434,13 @@ check_http (void)
 
   /* print everything on stdout like check_http would do */
   handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_STDERR, stdout), "CURLOPT_STDERR");
+
+  if (automatic_decompression)
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 6)
+    handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, ""), "CURLOPT_ACCEPT_ENCODING");
+#else
+    handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_ENCODING, ""), "CURLOPT_ENCODING");
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 6) */
 
   /* initialize buffer for body of the answer */
   if (curlhelp_initwritebuffer(&body_buf) < 0)
@@ -368,9 +463,12 @@ check_http (void)
 
   // fill dns resolve cache to make curl connect to the given server_address instead of the host_name, only required for ssl, because we use the host_name later on to make SNI happy
   if(use_ssl && host_name != NULL) {
-      struct curl_slist *host = NULL;
-      char dnscache[DEFAULT_BUFFER_SIZE];
-      snprintf (dnscache, DEFAULT_BUFFER_SIZE, "%s:%d:%s", host_name, server_port, server_address);
+      if ( (res=lookup_host (server_address, addrstr, 100)) != 0) {
+        snprintf (msg, DEFAULT_BUFFER_SIZE, _("Unable to lookup IP address for '%s': getaddrinfo returned %d - %s"),
+          server_address, res, gai_strerror (res));
+        die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
+      }
+      snprintf (dnscache, DEFAULT_BUFFER_SIZE, "%s:%d:%s", host_name, server_port, addrstr);
       host = curl_slist_append(NULL, dnscache);
       curl_easy_setopt(curl, CURLOPT_RESOLVE, host);
       if (verbose>=1)
@@ -467,9 +565,11 @@ check_http (void)
   if (client_privkey)
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_SSLKEY, client_privkey), "CURLOPT_SSLKEY");
   if (ca_cert) {
+    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CAINFO, ca_cert), "CURLOPT_CAINFO");
+  }
+  if (ca_cert || verify_peer_and_host) {
     /* per default if we have a CA verify both the peer and the
      * hostname in the certificate, can be switched off later */
-    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CAINFO, ca_cert), "CURLOPT_CAINFO");
     handle_curl_option_return_code (curl_easy_setopt( curl, CURLOPT_SSL_VERIFYPEER, 1), "CURLOPT_SSL_VERIFYPEER");
     handle_curl_option_return_code (curl_easy_setopt( curl, CURLOPT_SSL_VERIFYHOST, 2), "CURLOPT_SSL_VERIFYHOST");
   } else {
@@ -640,7 +740,7 @@ check_http (void)
   /* Curl errors, result in critical Nagios state */
   if (res != CURLE_OK) {
     snprintf (msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host on port %d: cURL returned %d - %s"),
-      server_port, res, curl_easy_strerror(res));
+      server_port, res, errbuf[0] ? errbuf : curl_easy_strerror(res));
     die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
   }
 
@@ -746,7 +846,8 @@ GOT_FIRST_CERT:
   if (curlhelp_parse_statusline (header_buf.buf, &status_line) < 0) {
     snprintf (msg, DEFAULT_BUFFER_SIZE, "Unparsable status line in %.3g seconds response time|%s\n",
       total_time, perfstring);
-    die (STATE_CRITICAL, "HTTP CRITICAL HTTP/1.x %ld unknown - %s", code, msg);
+    /* we cannot know the major/minor version here for sure as we cannot parse the first line */
+    die (STATE_CRITICAL, "HTTP CRITICAL HTTP/x.x %ld unknown - %s", code, msg);
   }
 
   /* get result code from cURL */
@@ -766,7 +867,9 @@ GOT_FIRST_CERT:
       snprintf(msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host: %s\n"), status_line.first_line);
     else
       snprintf(msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host on port %d: %s\n"), server_port, status_line.first_line);
-    die (STATE_CRITICAL, "HTTP CRITICAL - %s", msg);
+    die (STATE_CRITICAL, "HTTP CRITICAL - %s%s%s", msg,
+      show_body ? "\n" : "",
+      show_body ? body_buf.buf : "");
   }
 
   if( server_expect_yn  )  {
@@ -823,8 +926,8 @@ GOT_FIRST_CERT:
 
   /* check status codes, set exit status accordingly */
   if( status_line.http_code != code ) {
-    die (STATE_CRITICAL, _("HTTP CRITICAL HTTP/%d.%d %d %s - different HTTP codes (cUrl has %ld)\n"),
-      status_line.http_major, status_line.http_minor,
+    die (STATE_CRITICAL, _("HTTP CRITICAL %s %d %s - different HTTP codes (cUrl has %ld)\n"),
+      string_statuscode (status_line.http_major, status_line.http_minor),
       status_line.http_code, status_line.msg, code);
   }
 
@@ -895,13 +998,15 @@ GOT_FIRST_CERT:
     msg[strlen(msg)-3] = '\0';
 
   /* TODO: separate _() msg and status code: die (result, "HTTP %s: %s\n", state_text(result), msg); */
-  die (result, "HTTP %s: HTTP/%d.%d %d %s%s%s - %d bytes in %.3f second response time %s|%s\n",
-    state_text(result), status_line.http_major, status_line.http_minor,
+  die (result, "HTTP %s: %s %d %s%s%s - %d bytes in %.3f second response time %s|%s\n%s%s",
+    state_text(result), string_statuscode (status_line.http_major, status_line.http_minor),
     status_line.http_code, status_line.msg,
     strlen(msg) > 0 ? " - " : "",
     msg, page_len, total_time,
     (display_html ? "</A>" : ""),
-    perfstring);
+    perfstring,
+    (show_body ? body_buf.buf : ""),
+    (show_body ? "\n" : "") );
 
   /* proper cleanup after die? */
   curlhelp_free_statusline(&status_line);
@@ -928,8 +1033,8 @@ char*
 uri_string (const UriTextRangeA range, char* buf, size_t buflen)
 {
   if (!range.first) return "(null)";
-  strncpy (buf, range.first, max (buflen, range.afterLast - range.first));
-  buf[max (buflen, range.afterLast - range.first)] = '\0';
+  strncpy (buf, range.first, max (buflen-1, range.afterLast - range.first));
+  buf[max (buflen-1, range.afterLast - range.first)] = '\0';
   buf[range.afterLast - range.first] = '\0';
   return buf;
 }
@@ -1041,7 +1146,7 @@ redir (curlhelp_write_curlbuf* header_buf)
     const UriPathSegmentA* p = uri.pathHead;
     for (; p; p = p->next) {
       strncat (new_url, "/", DEFAULT_BUFFER_SIZE);
-      strncat (new_url, uri_string (p->text, buf, DEFAULT_BUFFER_SIZE), DEFAULT_BUFFER_SIZE);
+      strncat (new_url, uri_string (p->text, buf, DEFAULT_BUFFER_SIZE), DEFAULT_BUFFER_SIZE-1);
     }
   }
 
@@ -1049,8 +1154,8 @@ redir (curlhelp_write_curlbuf* header_buf)
       !strncmp(server_address, new_host, MAX_IPV4_HOSTLENGTH) &&
       (host_name && !strncmp(host_name, new_host, MAX_IPV4_HOSTLENGTH)) &&
       !strcmp(server_url, new_url))
-    die (STATE_WARNING,
-         _("HTTP WARNING - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
+    die (STATE_CRITICAL,
+         _("HTTP CRITICAL - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
          use_ssl ? "https" : "http", new_host, new_port, new_url, (display_html ? "</A>" : ""));
 
   /* set new values for redirected request */
@@ -1106,7 +1211,8 @@ process_arguments (int argc, char **argv)
     INVERT_REGEX = CHAR_MAX + 1,
     SNI_OPTION,
     CA_CERT_OPTION,
-    HTTP_VERSION_OPTION
+    HTTP_VERSION_OPTION,
+    AUTOMATIC_DECOMPRESSION
   };
 
   int option = 0;
@@ -1136,6 +1242,7 @@ process_arguments (int argc, char **argv)
     {"client-cert", required_argument, 0, 'J'},
     {"private-key", required_argument, 0, 'K'},
     {"ca-cert", required_argument, 0, CA_CERT_OPTION},
+    {"verify-cert", no_argument, 0, 'D'},
     {"useragent", required_argument, 0, 'A'},
     {"header", required_argument, 0, 'k'},
     {"no-body", no_argument, 0, 'N'},
@@ -1146,7 +1253,9 @@ process_arguments (int argc, char **argv)
     {"use-ipv4", no_argument, 0, '4'},
     {"use-ipv6", no_argument, 0, '6'},
     {"extended-perfdata", no_argument, 0, 'E'},
+    {"show-body", no_argument, 0, 'B'},
     {"http-version", required_argument, 0, HTTP_VERSION_OPTION},
+    {"enable-automatic-decompression", no_argument, 0, AUTOMATIC_DECOMPRESSION},
     {0, 0, 0, 0}
   };
 
@@ -1170,7 +1279,7 @@ process_arguments (int argc, char **argv)
   server_url = strdup(DEFAULT_SERVER_URL);
 
   while (1) {
-    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:nlLS::m:M:NE", longopts, &option);
+    c = getopt_long (argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:DnlLS::m:M:NEB", longopts, &option);
     if (c == -1 || c == EOF || c == 1)
       break;
 
@@ -1310,6 +1419,11 @@ process_arguments (int argc, char **argv)
       ca_cert = optarg;
       goto enable_ssl;
 #endif
+#ifdef LIBCURL_FEATURE_SSL
+    case 'D': /* verify peer certificate & host */
+      verify_peer_and_host = TRUE;
+      break;
+#endif
     case 'S': /* use SSL */
 #ifdef LIBCURL_FEATURE_SSL
     enable_ssl:
@@ -1354,7 +1468,7 @@ process_arguments (int argc, char **argv)
           ssl_version = CURL_SSLVERSION_DEFAULT;
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 52, 0) */
         else
-          usage4 (_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2 (with optional '+' suffix)"));
+          usage4 (_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2, 1.3 (with optional '+' suffix)"));
       }
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 54, 0)
       if (got_plus) {
@@ -1513,6 +1627,9 @@ process_arguments (int argc, char **argv)
     case 'E': /* show extended perfdata */
       show_extended_perfdata = TRUE;
       break;
+    case 'B': /* print body content after status line */
+      show_body = TRUE;
+      break;
     case HTTP_VERSION_OPTION:
       curl_http_version = CURL_HTTP_VERSION_NONE;
       if (strcmp (optarg, "1.0") == 0) {
@@ -1529,6 +1646,9 @@ process_arguments (int argc, char **argv)
         fprintf (stderr, "unkown http-version parameter: %s\n", optarg);
         exit (STATE_WARNING);
       }
+      break;
+    case AUTOMATIC_DECOMPRESSION:
+      automatic_decompression = TRUE;
       break;
     case '?':
       /* print short usage statement if args not parsable */
@@ -1659,7 +1779,7 @@ print_help (void)
   printf (" %s\n", "-S, --ssl=VERSION[+]");
   printf ("    %s\n", _("Connect via SSL. Port defaults to 443. VERSION is optional, and prevents"));
   printf ("    %s\n", _("auto-negotiation (2 = SSLv2, 3 = SSLv3, 1 = TLSv1, 1.1 = TLSv1.1,"));
-  printf ("    %s\n", _("1.2 = TLSv1.2). With a '+' suffix, newer versions are also accepted."));
+  printf ("    %s\n", _("1.2 = TLSv1.2, 1.3 = TLSv1.3). With a '+' suffix, newer versions are also accepted."));
   printf ("    %s\n", _("Note: SSLv2 and SSLv3 are deprecated and are usually disabled in libcurl"));
   printf (" %s\n", "--sni");
   printf ("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
@@ -1680,6 +1800,8 @@ print_help (void)
   printf ("   %s\n", _("matching the client certificate"));
   printf (" %s\n", "--ca-cert=FILE");
   printf ("   %s\n", _("CA certificate file to verify peer against"));
+  printf (" %s\n", "-D, --verify-cert");
+  printf ("   %s\n", _("Verify the peer's SSL certificate and hostname"));
 #endif
 
   printf (" %s\n", "-e, --expect=STRING");
@@ -1723,6 +1845,8 @@ print_help (void)
   printf ("    %s\n", _("Any other tags to be sent in http header. Use multiple times for additional headers"));
   printf (" %s\n", "-E, --extended-perfdata");
   printf ("    %s\n", _("Print additional performance data"));
+  printf (" %s\n", "-B, --show-body");
+  printf ("    %s\n", _("Print body content below status line"));
   printf (" %s\n", "-L, --link");
   printf ("    %s\n", _("Wrap output in HTML link (obsoleted by urlize)"));
   printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow|sticky|stickyport|curl>");
@@ -1736,6 +1860,8 @@ print_help (void)
   printf (" %s\n", "--http-version=VERSION");
   printf ("    %s\n", _("Connect via specific HTTP protocol."));
   printf ("    %s\n", _("1.0 = HTTP/1.0, 1.1 = HTTP/1.1, 2.0 = HTTP/2 (HTTP/2 will fail without -S)"));
+  printf (" %s\n", "--enable-automatic-decompression");
+  printf ("    %s\n", _("Enable automatic decompression of body (CURLOPT_ACCEPT_ENCODING)."));
   printf ("\n");
 
   printf (UT_WARN_CRIT);
@@ -1813,15 +1939,21 @@ print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
   printf (" %s -H <vhost> | -I <IP-address> [-u <uri>] [-p <port>]\n",progname);
-  printf ("       [-J <client certificate file>] [-K <private key>] [--ca-cert <CA certificate file>]\n");
+  printf ("       [-J <client certificate file>] [-K <private key>] [--ca-cert <CA certificate file>] [-D]\n");
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L] [-E] [-a auth]\n");
   printf ("       [-b proxy_auth] [-f <ok|warning|critcal|follow|sticky|stickyport|curl>]\n");
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
-  printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
+  printf ("       [-A string] [-k string] [-S <version>] [--sni]\n");
   printf ("       [-T <content-type>] [-j method]\n");
   printf ("       [--http-version=<version>]\n");
+  printf (" %s -H <vhost> | -I <IP-address> -C <warn_age>[,<crit_age>]\n",progname);
+  printf ("       [-p <port>] [-t <timeout>] [-4|-6] [--sni]\n");
   printf ("\n");
+#ifdef LIBCURL_FEATURE_SSL
+  printf ("%s\n", _("In the first form, make an HTTP request."));
+  printf ("%s\n\n", _("In the second form, connect to the server and check the TLS certificate."));
+#endif
   printf ("%s\n", _("WARNING: check_curl is experimental. Please use"));
   printf ("%s\n\n", _("check_http if you need a stable version."));
 }
@@ -1944,7 +2076,7 @@ curlhelp_parse_statusline (const char *buf, curlhelp_statusline *status_line)
   char *first_line_buf;
 
   /* find last start of a new header */
-  start = strrstr2 (buf, "\r\nHTTP");
+  start = strrstr2 (buf, "\r\nHTTP/");
   if (start != NULL) {
     start += 2;
     buf = start;
@@ -2037,7 +2169,7 @@ get_header_value (const struct phr_header* headers, const size_t nof_headers, co
 {
   int i;
   for( i = 0; i < nof_headers; i++ ) {
-    if( strncasecmp( header, headers[i].name, max( headers[i].name_len, 4 ) ) == 0 ) {
+    if(headers[i].name != NULL && strncasecmp( header, headers[i].name, max( headers[i].name_len, 4 ) ) == 0 ) {
       return strndup( headers[i].value, headers[i].value_len );
     }
   }
