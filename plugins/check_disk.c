@@ -231,9 +231,9 @@ main (int argc, char **argv)
   for (path = path_select_list; path; path=path->name_next) {
     if (verbose >= 3 && path->freespace_percent->warning != NULL && path->freespace_percent->critical != NULL)
       printf("Thresholds(pct) for %s warn: %f crit %f\n",
-			  path->name,
-			  path->freespace_percent->warning->end,
-              path->freespace_percent->critical->end);
+        path->name,
+        path->freespace_percent->warning->end,
+        path->freespace_percent->critical->end);
 
     if (verbose >= 3 && path->group != NULL)
       printf("Group of %s: %s\n",path->name,path->group);
