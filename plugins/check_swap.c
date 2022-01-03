@@ -145,12 +145,12 @@ main (int argc, char **argv)
 					xasprintf (&status, "%s [%lu (%d%%)]", status, dskfree_mb, 100 - percent);
 			}
 		}
-    
+
 		/*
 		 * The following sscanf call looks for lines looking like: "SwapTotal: 123" and "SwapFree: 123"
 		 * This format exists at least on Debian Linux with a 5.* kernel
 		 */
-		else if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%[TotalFreCchd]%*[:] %f %*[k]%*[B]", str, &tmp_mb)) {
+		else if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%[TotalFreCchd]%*[:] %f %*[k]%*[B]", str, &tmp_KB)) {
 			if (verbose >= 3) {
 				printf("Got %s with %lu\n", str, tmp_KB);
 			}
@@ -159,10 +159,10 @@ main (int argc, char **argv)
 				dsktotal_mb = tmp_KB / 1024;
 			}
 			else if (strcmp ("Free", str) == 0) {
-				dskfree_mb = dskfree_mb + tmp_mb / 1024;
+				dskfree_mb = dskfree_mb + tmp_KB / 1024;
 			}
 			else if (strcmp ("Cached", str) == 0) {
-				dskfree_mb = dskfree_mb + tmp_mb / 1024;
+				dskfree_mb = dskfree_mb + tmp_KB / 1024;
 			}
 		}
 	}
