@@ -39,63 +39,54 @@ my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
 
 my $res;
 
-# 1
 $res = NPTest->testCmd(
 	"$sudo ./check_icmp -H $host_responsive -w 10000ms,100% -c 10000ms,100%"
 	);
 is( $res->return_code, 0, "Syntax ok" );
 like( $res->output, $successOutput, "Output OK" );
 
-# 2
 $res = NPTest->testCmd(
 	"$sudo ./check_icmp -H $host_responsive -w 0ms,0% -c 10000ms,100%"
 	);
 is( $res->return_code, 1, "Syntax ok, with forced warning" );
 like( $res->output, $failureOutput, "Output OK" );
 
-# 3
 $res = NPTest->testCmd(
 	"$sudo ./check_icmp -H $host_responsive -w 0,0% -c 0,0%"
 	);
 is( $res->return_code, 2, "Syntax ok, with forced critical" );
 like( $res->output, $failureOutput, "Output OK" );
 
-# 4
 $res = NPTest->testCmd(
 	"$sudo ./check_icmp -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100%"
 	);
 is( $res->return_code, 2, "Timeout - host nonresponsive" );
 like( $res->output, '/100%/', "Error contains '100%' string (for 100% packet loss)" );
 
-# 4
 $res = NPTest->testCmd(
 	"$sudo ./check_icmp -w 10000ms,100% -c 10000ms,100%"
 	);
 is( $res->return_code, 3, "No hostname" );
 like( $res->output, '/No hosts to check/', "Output with appropriate error message");
 
-# 5
 $res = NPTest->testCmd(
 	"$sudo ./check_icmp -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -n 1 -m 0"
 	);
 is( $res->return_code, 0, "One host nonresponsive - zero required" );
 like( $res->output, $successOutput, "Output OK" );
 
-# 6
 $res = NPTest->testCmd(
 	"$sudo ./check_icmp -H $host_responsive -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -n 1 -m 1"
 	);
 is( $res->return_code, 0, "One of two host nonresponsive - one required" );
 like( $res->output, $successOutput, "Output OK" );
 
-# 7
 $res = NPTest->testCmd(
 	"$sudo ./check_icmp -H $host_responsive -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -n 1 -m 2"
 	);
 is( $res->return_code, 2, "One of two host nonresponsive - two required" );
 like( $res->output, $failureOutput, "Output OK" );
 
-# 8
 $res = NPTest->testCmd(
 	"$sudo ./check_icmp -H $host_responsive -s 127.0.15.15 -w 10000ms,100% -c 10000ms,100% -n 1 -m 2"
 	);
@@ -108,7 +99,6 @@ $res = NPTest->testCmd(
 is( $res->return_code, 0, "Try max paket size" );
 like( $res->output, $successOutput, "Output OK - Didn't overflow" );
 
-# 9
 $res = NPTest->testCmd(
 	"$sudo ./check_icmp -H ::1 -vvv"
 	);
