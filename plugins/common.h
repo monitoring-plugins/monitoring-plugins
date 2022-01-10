@@ -184,7 +184,7 @@ enum {
 	ERROR = -1
 };
 
-enum {
+enum state_enum {
 	STATE_OK,
 	STATE_WARNING,
 	STATE_CRITICAL,
