@@ -527,12 +527,13 @@ int
 error_scan (char buf[MAX_INPUT_BUFFER], const char *addr)
 {
 	if (strstr (buf, "Network is unreachable") ||
-		strstr (buf, "Destination Net Unreachable")
+		strstr (buf, "Destination Net Unreachable") ||
+		strstr (buf, "No route")
 		)
 		die (STATE_CRITICAL, _("CRITICAL - Network Unreachable (%s)\n"), addr);
-	else if (strstr (buf, "Destination Host Unreachable"))
+	else if (strstr (buf, "Destination Host Unreachable") || strstr(buf, "Address unreachable"))
 		die (STATE_CRITICAL, _("CRITICAL - Host Unreachable (%s)\n"), addr);
-	else if (strstr (buf, "Destination Port Unreachable"))
+	else if (strstr (buf, "Destination Port Unreachable") || strstr(buf, "Port unreachable"))
 		die (STATE_CRITICAL, _("CRITICAL - Bogus ICMP: Port Unreachable (%s)\n"), addr);
 	else if (strstr (buf, "Destination Protocol Unreachable"))
 		die (STATE_CRITICAL, _("CRITICAL - Bogus ICMP: Protocol Unreachable (%s)\n"), addr);
@@ -540,11 +541,11 @@ error_scan (char buf[MAX_INPUT_BUFFER], const char *addr)
 		die (STATE_CRITICAL, _("CRITICAL - Network Prohibited (%s)\n"), addr);
 	else if (strstr (buf, "Destination Host Prohibited"))
 		die (STATE_CRITICAL, _("CRITICAL - Host Prohibited (%s)\n"), addr);
-	else if (strstr (buf, "Packet filtered"))
+	else if (strstr (buf, "Packet filtered") || strstr(buf, "Administratively prohibited"))
 		die (STATE_CRITICAL, _("CRITICAL - Packet Filtered (%s)\n"), addr);
 	else if (strstr (buf, "unknown host" ))
 		die (STATE_CRITICAL, _("CRITICAL - Host not found (%s)\n"), addr);
-	else if (strstr (buf, "Time to live exceeded"))
+	else if (strstr (buf, "Time to live exceeded") || strstr(buf, "Time exceeded"))
 		die (STATE_CRITICAL, _("CRITICAL - Time to live exceeded (%s)\n"), addr);
 	else if (strstr (buf, "Destination unreachable: "))
 		die (STATE_CRITICAL, _("CRITICAL - Destination Unreachable (%s)\n"), addr);
