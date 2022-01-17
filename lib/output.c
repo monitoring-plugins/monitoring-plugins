@@ -1,4 +1,3 @@
-
 #include "output.h"
 #include "./utils_base.h"
 
@@ -8,9 +7,7 @@ int add_subcheck(check_t *check_object, enum state_enum state, char *output, pd_
 	if (check_object == NULL || output == NULL ) {
 		die(STATE_UNKNOWN,
 			"%s - %s #%d: %s",
-			__FILE__,
-			__func__,
-			__LINE__,
+			__FILE__, __func__,	__LINE__,
 			"NULL pointer was given"
 			);
 	}
@@ -42,7 +39,6 @@ int add_subcheck(check_t *check_object, enum state_enum state, char *output, pd_
 	return 0;
 }
 
-
 int add_summary(check_t *check_object, char *summary) {
 	check_object->summary = summary;
 	return 0;
@@ -66,11 +62,12 @@ int print_output(check_t *check_object, enum output_format_t format) {
 			 * may have a limited size | Second part of performance data, which
 			 * may have continuation lines, too
 			 */
-			printf("%s: %s|%s\n", state_text(check_object->state), check_object->summary, print_pd_list(&check_object->perfdata));
+			printf("%s: %s|%s\n", state_text(check_object->state), check_object->summary, pd_list_to_string(&check_object->perfdata));
 			break;
 		case ICINGA2_FORMAT:
 			break;
 		default:
 			die(STATE_UNKNOWN, "Invalid format");
 	}
+	return 0;
 }

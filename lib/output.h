@@ -1,4 +1,3 @@
-
 #include "perfdata.h"
 #include "../plugins/common.h"
 
@@ -11,6 +10,7 @@ typedef struct {
 typedef struct subcheck_list {
 	subcheck_t subcheck;
 	struct subcheck_list *next;
+	pd_list perfdata;
 } subcheck_list_t;
 
 typedef struct {
@@ -32,5 +32,3 @@ int add_summary(check_t *check_object, char *summary);
 void cleanup_check(check_t *check_object);
 
 int print_output(check_t *, enum output_format_t);
-
-char *print_pd_list(pd_list *);
