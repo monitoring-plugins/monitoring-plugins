@@ -14,7 +14,8 @@ provided to standardize version and error reporting across the entire
 suite of plugins. */
 
 /* now some functions etc are being defined in ../lib/utils_base.c */
-#include "utils_base.h"
+#include "../lib/utils_base.h"
+#include <ctype.h>
 
 #include <stdbool.h>
 

@@ -31,7 +31,7 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
-#include "config.h"
+#include "../config.h"
 
 #ifdef HAVE_FEATURES_H
 #include <features.h>
