@@ -74,6 +74,7 @@ main (int argc, char **argv)
 
 	remotecmd = "";
 	comm_append(SSH_COMMAND);
+	comm_append("-o PasswordAuthentication=no");
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
