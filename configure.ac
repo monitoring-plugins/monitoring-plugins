@@ -1537,7 +1537,7 @@ AC_ARG_WITH(ssh_command,
                             [sets path for ssh]), PATH_TO_SSH=$withval)
 if test -n "$PATH_TO_SSH"
 then
-	AC_DEFINE_UNQUOTED(SSH_COMMAND,"$PATH_TO_SSH -o PasswordAuthentication=no",[path to ssh binary])
+	AC_DEFINE_UNQUOTED(SSH_COMMAND,"$PATH_TO_SSH",[path to ssh binary])
 	EXTRAS="$EXTRAS check_by_ssh\$(EXEEXT)"
 else
 	AC_MSG_WARN([Get ssh in order to make check_by_ssh plugin])
