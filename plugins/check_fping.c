@@ -65,6 +65,7 @@ double crta;
 double wrta;
 int cpl_p = FALSE;
 int wpl_p = FALSE;
+int alive_p = FALSE;
 int crta_p = FALSE;
 int wrta_p = FALSE;
 
@@ -150,6 +151,19 @@ main (int argc, char **argv)
   if (result = spclose (child_process))
     /* need to use max_state not max */
     status = max_state (status, STATE_WARNING);
+  if (alive_p && strstr (buf, "avg, 0% loss)")){
+    rtastr = strstr (buf, "ms (");
+    rtastr = 1 + index (rtastr, '(');
+    rta = strtod (rtastr, NULL);
+    loss=strtod ("0",NULL);
+    die (STATE_OK,
+         _("FPING %s - %s (rta=%f ms)|%s %s\n"),
+         state_text (STATE_OK), server_name,rta,
+         perfdata ("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, TRUE, 0, TRUE, 100),
+         fperfdata ("rta", rta/1.0e3, "s", wrta_p, wrta/1.0e3, crta_p, crta/1.0e3, TRUE, 0, FALSE, 0));
+
+  }
+
 
   if (result > 1 ) {
     status = max_state (status, STATE_UNKNOWN);
@@ -275,6 +289,9 @@ process_arguments (int argc, char **argv)
   static struct option longopts[] = {
     {"hostname", required_argument, 0, 'H'},
     {"sourceip", required_argument, 0, 'S'},
+    case 'a':                 /* host alive mode */
+      alive_p = TRUE;
+      break;
     {"sourceif", required_argument, 0, 'I'},
     {"critical", required_argument, 0, 'c'},
     {"warning", required_argument, 0, 'w'},
@@ -304,7 +321,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "+hVvH:S:c:w:b:n:T:i:I:46", longopts, &option);
+    c = getopt_long (argc, argv, "+hVvaH:S:c:w:b:n:T:i:I:46", longopts, &option);
 
     if (c == -1 || c == EOF || c == 1)
       break;
@@ -416,6 +433,9 @@ get_threshold (char *arg, char *rv[2])
     arg2 = 1 + strpbrk (arg1, ",:");
 
   if (arg2) {
+  printf (" %s\n", "-a");
+  printf ("    %s\n", _("Return OK after first successfull reply"));
+
     arg1[strcspn (arg1, ",:")] = 0;
     if (strstr (arg1, "%") && strstr (arg2, "%"))
       die (STATE_UNKNOWN,
