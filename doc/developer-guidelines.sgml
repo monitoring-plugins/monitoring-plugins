@@ -13,7 +13,7 @@
 
     <pubdate>2013</pubdate>
     <title>Monitoring Plugins Development Guidelines</title>
-	
+
     <revhistory>
        <revision>
           <revnumber>1796</revnumber>
@@ -72,14 +72,14 @@
 </section>
 
 <section id="PlugOutput"><title>Plugin Output for Nagios</title>
-	
-		<para>You should always print something to STDOUT that tells if the 
-		service is working or why it is failing. Try to keep the output short - 
-		probably less that 80 characters. Remember that you ideally would like 
+
+		<para>You should always print something to STDOUT that tells if the
+		service is working or why it is failing. Try to keep the output short -
+		probably less that 80 characters. Remember that you ideally would like
 		the entire output to appear in a pager message, which will get chopped
 		off after a certain length.</para>
 
-		<para>As Nagios does not capture stderr output, you should only output to 
+		<para>As Nagios does not capture stderr output, you should only output to
 		STDOUT and not print to STDERR.</para>
 
 		<section><title>Print only one line of text</title>
@@ -101,7 +101,7 @@
 		SERVICE STATUS: Information text
 		</literallayout>
 		<para>However, note that this is not a requirement of the API, so you cannot depend on this
-		being an accurate reflection of the status of the service - the status should always 
+		being an accurate reflection of the status of the service - the status should always
 		be determined by the return code.</para>
 		</section>
 
@@ -148,7 +148,7 @@
 		<para>Code and output should try to respect the 80x25 size of a
 		crt (remember when fixing stuff in the server room!)</para>
 		</section>
-		
+
 		<section><title>Plugin Return Codes</title>
 		<para>The return codes below are based on the POSIX spec of returning
 		a positive value.  Netsaint prior to v0.0.7 supported non-POSIX
@@ -157,11 +157,11 @@
 
 		<para>Note: Some plugins will on occasion print on STDOUT that an error
 		occurred and error code is 138 or 255 or some such number.  These
-		are usually caused by plugins using system commands and having not 
+		are usually caused by plugins using system commands and having not
 		enough checks to catch unexpected output.  Developers should include a
 		default catch-all for system command output that returns an UNKNOWN
 		return code.</para>
-		
+
 		<table id="ReturnCodes"><title>Plugin Return Codes</title>
 			<tgroup cols="3">
 				<thead>
@@ -175,20 +175,20 @@
 					<row>
 						<entry align="center"><para>0</para></entry>
 						<entry valign="middle"><para>OK</para></entry>
-						<entry><para>The plugin was able to check the service and it 
+						<entry><para>The plugin was able to check the service and it
 						appeared to be functioning properly</para></entry>
 					</row>
 					<row>
 						<entry align="center"><para>1</para></entry>
 						<entry valign="middle"><para>Warning</para></entry>
-						<entry><para>The plugin was able to check the service, but it 
-						appeared to be above some "warning" threshold or did not appear 
+						<entry><para>The plugin was able to check the service, but it
+						appeared to be above some "warning" threshold or did not appear
 						to be working properly</para></entry>
 					</row>
 					<row>
 						<entry align="center"><para>2</para></entry>
 						<entry valign="middle"><para>Critical</para></entry>
-						<entry><para>The plugin detected that either the service was not 
+						<entry><para>The plugin detected that either the service was not
 						running or it was above some "critical" threshold</para></entry>
 					</row>
 					<row>
@@ -207,7 +207,7 @@
 			</tgroup>
 		</table>
 
-      
+
 		</section>
 
 		<section id="thresholdformat"><title>Threshold and ranges</title>
@@ -218,7 +218,7 @@
 		set_thresholds(thresholds *, char *, char *) function to set the thresholds.
 		</para>
 		<para>The theory is that the plugin will do some sort of check which returns
-		back a numerical value, or metric, which is then compared to the warning and 
+		back a numerical value, or metric, which is then compared to the warning and
 		critical thresholds. Use the get_status(double, thresholds *) function to
 		compare the value against the thresholds.</para>
 		<para>This is the generalised format for ranges:</para>
@@ -226,14 +226,14 @@
 		<literallayout>
 		[@]start:end
 		</literallayout>
-	
+
 		<para>Notes:</para>
 		<orderedlist>
 		<listitem><para>start &le; end</para>
 			</listitem>
 		<listitem><para>start and ":" is not required if start=0</para>
 			</listitem>
-		<listitem><para>if range is of format "start:" and end is not specified, 
+		<listitem><para>if range is of format "start:" and end is not specified,
 			assume end is infinity</para>
 			</listitem>
 		<listitem><para>to specify negative infinity, use "~"</para>
@@ -245,7 +245,7 @@
 			(inclusive of endpoints)</para>
 			</listitem>
 		</orderedlist>
-		
+
 		<para>Note: Not all plugins are coded to expect ranges in this format yet.
 		There will be some work in providing multiple metrics.</para>
 
@@ -344,7 +344,7 @@
 			</listitem>
 		<listitem><para>label can contain any characters except the equals sign or single quote (')</para>
 			</listitem>
-		<listitem><para>the single quotes for the label are optional. Required if 
+		<listitem><para>the single quotes for the label are optional. Required if
 			spaces are in the label</para>
 			</listitem>
 		<listitem><para>label length is arbitrary, but ideally the first 19 characters
@@ -353,7 +353,7 @@
 			</listitem>
 		<listitem><para>to specify a quote character, use two single quotes</para>
 			</listitem>
-		<listitem><para>warn, crit, min or max may be null (for example, if the threshold is 
+		<listitem><para>warn, crit, min or max may be null (for example, if the threshold is
 			not defined or min and max do not apply). Trailing unfilled semicolons can be
 			dropped</para>
 			</listitem>
@@ -363,12 +363,12 @@
 			same UOM. value may be a literal "U" instead, this would indicate that the
 			actual value couldn't be determined</para>
 			</listitem>
-		<listitem><para>warn and crit are in the range format (see 
+		<listitem><para>warn and crit are in the range format (see
 			<xref linkend="thresholdformat">). Must be the same UOM</para>
 			</listitem>
 		<listitem><para>UOM (unit of measurement) is one of:</para>
 			<orderedlist>
-			<listitem><para>no unit specified - assume a number (int or float) 
+			<listitem><para>no unit specified - assume a number (int or float)
 				of things (eg, users, processes, load averages)</para>
 				</listitem>
 			<listitem><para>s - seconds (also us, ms)</para></listitem>
@@ -385,9 +385,9 @@
 		</section>
 
 	<section><title>Translations</title>
-	<para>If possible, use translation tools for all output to respect the user's language 
-		settings. See <xref linkend="translationsdevelopers"> for guidelines 
-		for the core plugins. 
+	<para>If possible, use translation tools for all output to respect the user's language
+		settings. See <xref linkend="translationsdevelopers"> for guidelines
+		for the core plugins.
 	</para>
 	</section>
 </section>
@@ -436,7 +436,7 @@
 		</section>
 
 </section>
-	
+
 
 
 
@@ -447,17 +447,17 @@
 		Perl Nagios (ePN) requires stricter use of the some of Perl's features.
 		This section outlines some of the steps needed to use ePN
 		effectively.</para>
-	  
+
 		<orderedlist>
-			
-			<listitem><para> Do not use BEGIN and END blocks since they will be called 
-			only once (when Nagios starts and shuts down) with Embedded Perl (ePN).  In 
+
+			<listitem><para> Do not use BEGIN and END blocks since they will be called
+			only once (when Nagios starts and shuts down) with Embedded Perl (ePN).  In
 			particular, do not use BEGIN blocks to initialize variables.</para>
 			</listitem>
-	  
+
 			<listitem><para>To use utils.pm, you need to provide a full path to the
 			module in order for it to work.</para>
-			
+
 	  <literallayout>
 	  e.g.
 		use lib "/usr/local/nagios/libexec";
@@ -467,24 +467,24 @@
 
 			<listitem><para>Perl scripts should be called with "-w"</para>
 	  		</listitem>
-			
+
 			<listitem><para>All Perl plugins must compile cleanly under "use strict" - i.e. at
 			least explicitly package names as in "$main::x" or predeclare every
 			variable. </para>
-			
+
 
 			<para>Explicitly initialize each variable in use.  Otherwise with
 			caching enabled, the plugin will not be recompiled each time, and
 			therefore Perl will not reinitialize all the variables.  All old
 			variable values will still be in effect.</para>
 	  		</listitem>
-			
+
 			<listitem><para>Do not use &gt;DATA&lt; handles (these simply do not compile under ePN).</para>
 	   		</listitem>
 
 			<listitem><para>Do not use global variables in named subroutines. This is bad practise anyway, but with ePN the
 			compiler will report an error "&lt;global_var&gt; will not stay shared ..". Values used by
-			subroutines should be passed in the argument list.</para> 
+			subroutines should be passed in the argument list.</para>
 			</listitem>
 
 			<listitem><para>If writing to a file (perhaps recording
@@ -492,8 +492,8 @@
 			calls <emphasis role="strong">exit</emphasis>; that is caught by
 			p1.pl, so output streams are never closed.</para>
 			</listitem>
-		
-			<listitem><para>As in <xref linkend="runtime"> all plugins need 
+
+			<listitem><para>As in <xref linkend="runtime"> all plugins need
 			to monitor their runtime, specially if they are using network
 			resources.  Use of the <emphasis>alarm</emphasis> is recommended
 			noting that some Perl modules (eg LWP) manage timers, so that an alarm
@@ -507,9 +507,9 @@
 			and then "exit $ERRORS{'OK'}" rather than "exit 0"
 			</para>
 			</listitem>
-			
+
 		</orderedlist>
-	  
+
 </section>
 
 <section id="runtime"><title>Runtime Timeouts</title>
@@ -524,14 +524,14 @@
 		df could lock up like that.  Plus, it should just be more error
 		resistant to be able to time out rather than consume
 		resources.</para>
-		
+
 		<section><title>Use DEFAULT_SOCKET_TIMEOUT</title>
 
 		<para>All network plugins should use DEFAULT_SOCKET_TIMEOUT to timeout</para>
 
 		</section>
 
-		
+
 		<section><title>Add alarms to network plugins</title>
 
 		<para>If you write a plugin which communicates with another
@@ -543,16 +543,16 @@
 
 		</section>
 
-		
+
 
 </section>
 
 <section id="PlugOptions"><title>Plugin Options</title>
-	
-		<para>A well written plugin should have --help as a way to get 
+
+		<para>A well written plugin should have --help as a way to get
 		verbose help. Code and output should try to respect the 80x25 size of a
 		crt (remember when fixing stuff in the server room!)</para>
-		
+
 		<section><title>Option Processing</title>
 
 		<para>For plugins written in C, we recommend the C standard
@@ -585,11 +585,11 @@
           -p port or password (--port or --passwd/--password)monitors operational
           -u url or username (--url or --username)
 		</literallayout>
-	  
+
 		<para>Look at check_pgsql and check_procs to see how I currently
 		think this can work.  Standard options are:</para>
 
-	  
+
 		<para>The option -V or --version should be present in all
 		plugins. For C plugins it should result in a call to print_revision, a
 		function in utils.c which takes two character arguments, the
@@ -603,7 +603,7 @@
 
 		<para>The option -h or --help should be present in all plugins.
 		In C plugins, it should result in a call to print_help (or
-		equivalent).  The function print_help should call print_revision, 
+		equivalent).  The function print_help should call print_revision,
 		then print_usage, then should provide detailed
 		help. Help text should fit on an 80-character width display, but
 		may run as many lines as needed.</para>
@@ -666,7 +666,7 @@
 
       <para>As always, comments are welcome - making this consistent
       without a host of long options was quite a hassle, and I would
-      suspect that there are flaws in this strategy. 
+      suspect that there are flaws in this strategy.
       </para>
     </section>
 </section>
@@ -678,7 +678,7 @@ create and update test cases where possible.
 </para>
 
 <para>
-To run a test, from the top level directory, run "make test". This will run 
+To run a test, from the top level directory, run "make test". This will run
 all the current tests and report an overall success rate.
 </para>
 
@@ -697,7 +697,7 @@ This runs the test in a summary format.
 </para>
 
 <para>
-For a good and amusing tutorial on using Test::More, see this 
+For a good and amusing tutorial on using Test::More, see this
 <ulink url="http://search.cpan.org/dist/Test-Simple/lib/Test/Tutorial.pod">
 link</ulink>
 </para>
@@ -706,16 +706,16 @@ link</ulink>
 
 <section><title>Testing the C library functions</title>
 <para>
-We use <ulink url="http://jc.ngo.org.uk/trac-bin/trac.cgi/wiki/LibTap">the libtap library</ulink>, which gives 
+We use <ulink url="http://jc.ngo.org.uk/trac-bin/trac.cgi/wiki/LibTap">the libtap library</ulink>, which gives
 perl's TAP
 (Test Anything Protocol) output. This is used by the FreeBSD team for their regression testing.
 </para>
 
 <para>
-To run tests using the libtap library, download the latest tar ball and extract. 
-There is a problem with tap-1.01 where 
+To run tests using the libtap library, download the latest tar ball and extract.
+There is a problem with tap-1.01 where
 <ulink url="http://jc.ngo.org.uk/trac-bin/trac.cgi/ticket/25">pthread support doesn't appear to work</ulink>
-properly on non-FreeBSD systems. Install with 'CPPFLAGS="-UHAVE_LIBPTHREAD" ./configure && make && make check && make install'. 
+properly on non-FreeBSD systems. Install with 'CPPFLAGS="-UHAVE_LIBPTHREAD" ./configure && make && make check && make install'.
 </para>
 
 <para>
@@ -729,8 +729,8 @@ setup the tests. Run "make test" to run all the tests.
 	<para>See <ulink url="http://www.gnu.org/prep/standards_toc.html">GNU
 	Coding standards</ulink> for general guidelines.</para>
 	<section><title>C coding</title>
-	
-	<para>Variables should be declared at the beginning of code blocks and 
+
+	<para>Variables should be declared at the beginning of code blocks and
 	not inline because of portability with older compilers.</para>
 
 	<para>You should use /* */ for comments and not // as some compilers
@@ -745,8 +745,8 @@ setup the tests. Run "make test" to run all the tests.
 	<para>If you have copied a routine from another source, make sure the licence
 	from your source allows this. Add a comment referencing the ACKNOWLEDGEMENTS
 	file, where you can put more detail about the source.</para>
-	<para>For contributed code, do not add any named credits in the source code 
-	- contributors should be added into the THANKS.in file instead. 
+	<para>For contributed code, do not add any named credits in the source code
+	- contributors should be added into the THANKS.in file instead.
 	</para>
 	</section>
 
@@ -809,11 +809,11 @@ setup the tests. Run "make test" to run all the tests.
 
 
 	<section id="Contributedplugins"><title>Contributed plugins</title>
-	<para>Plugins that have been contributed to the project and 
+	<para>Plugins that have been contributed to the project and
 	distributed with the Monitoring Plugins files are held in the contrib/ directory and are not installed
-	by default. These plugins are not officially supported by the team. 
-	The current policy is that these plugins should be owned and maintained by the original 
-	contributor, preferably hosted on <ulink url="http://monitoringexchange.org">Monitoring Exchange</ulink>.
+	by default. These plugins are not officially supported by the team.
+	The current policy is that these plugins should be owned and maintained by the original
+	contributor, preferably hosted on <ulink url="https://exchange.icinga.com/">Icinga Exchange</ulink>.
 	</para>
 	<para>If patches or bugs are raised to an contributed plugin, we will start communications with the
 	original contributor, but seek to remove the plugin from our distribution.
@@ -824,11 +824,11 @@ setup the tests. Run "make test" to run all the tests.
 
 	<section id="Newplugins"><title>New plugins</title>
 	<para>If you would like others to use your plugins, please add it to
-	the official 3rd party plugin repository, 
-	<ulink url="http://monitoringexchange.org">Monitoring Exchange</ulink>.
+	the official 3rd party plugin repository,
+	<ulink url="https://exchange.icinga.com/">Icinga Exchange</ulink>.
 	</para>
 
-	<para>We are not accepting requests for inclusion of plugins into 
+	<para>We are not accepting requests for inclusion of plugins into
 	our distribution at the moment, but when we do, these are the minimum
 	requirements:
 	</para>
@@ -843,9 +843,9 @@ setup the tests. Run "make test" to run all the tests.
 	  --timeout, --warning, --critical)</para>
 	</listitem>
 	<listitem>
-	  <para>It is determined to be not redundant (for instance, we would not 
-		add a new version of check_disk just because someone had provide 
-		a plugin that had perf checking - we would incorporate the features 
+	  <para>It is determined to be not redundant (for instance, we would not
+		add a new version of check_disk just because someone had provide
+		a plugin that had perf checking - we would incorporate the features
 		into an exisiting plugin)</para>
 	</listitem>
 	<listitem>
@@ -857,7 +857,7 @@ setup the tests. Run "make test" to run all the tests.
 utils (perl or c or sh) rather than using its own</para>
 	</listitem>
 	<listitem>
-	  <para>Includes patches to configure.in if required (via the EXTRAS list if 
+	  <para>Includes patches to configure.in if required (via the EXTRAS list if
 	  it will only work on some platforms)</para>
 	</listitem>
 	<listitem>
@@ -870,5 +870,5 @@ utils (perl or c or sh) rather than using its own</para>
 
 </section>
 </article>
-  
+
 </book>
