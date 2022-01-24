@@ -85,6 +85,8 @@ char *pgparams = NULL;
 double twarn = (double)DEFAULT_WARN;
 double tcrit = (double)DEFAULT_CRIT;
 char *pgquery = NULL;
+#define OPTID_QUERYNAME -1000
+char *pgqueryname = NULL;
 char *query_warning = NULL;
 char *query_critical = NULL;
 thresholds *qthresholds = NULL;
@@ -285,6 +287,7 @@ process_arguments (int argc, char **argv)
 		{"database", required_argument, 0, 'd'},
 		{"option", required_argument, 0, 'o'},
 		{"query", required_argument, 0, 'q'},
+		{"queryname", required_argument, 0, OPTID_QUERYNAME},
 		{"query_critical", required_argument, 0, 'C'},
 		{"query_warning", required_argument, 0, 'W'},
 		{"verbose", no_argument, 0, 'v'},
@@ -367,6 +370,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'q':
 			pgquery = optarg;
+			break;
+		case OPTID_QUERYNAME:
+			pgqueryname = optarg;
 			break;
 		case 'v':
 			verbose++;
@@ -529,6 +535,9 @@ print_help (void)
 
 	printf (" %s\n", "-q, --query=STRING");
 	printf ("    %s\n", _("SQL query to run. Only first column in first row will be read"));
+	printf (" %s\n", "--queryname=STRING");
+	printf ("    %s\n", _("A name for the query, this string is used instead of the query"));
+	printf ("    %s\n", _("in the long output of the plugin"));
 	printf (" %s\n", "-W, --query-warning=RANGE");
 	printf ("    %s\n", _("SQL query value to result in warning status (double)"));
 	printf (" %s\n", "-C, --query-critical=RANGE");
@@ -642,7 +651,13 @@ do_query (PGconn *conn, char *query)
 					: (my_status == STATE_CRITICAL)
 						? _("CRITICAL")
 						: _("UNKNOWN"));
-	printf (_("'%s' returned %f"), query, value);
+	if(pgqueryname) {
+		printf (_("%s returned %f"), pgqueryname, value);
+	}
+	else {
+		printf (_("'%s' returned %f"), query, value);
+	}
+
 	printf ("|query=%f;%s;%s;;\n", value,
 			query_warning ? query_warning : "",
 			query_critical ? query_critical : "");
