@@ -12,11 +12,7 @@ my $allow_sudo = getTestParameter( "NP_ALLOW_SUDO",
 	"no" );
 
 if ($allow_sudo eq "yes" or $> == 0) {
-<<<<<<< HEAD
 	plan tests => 18;
-=======
-	plan tests => 20;
->>>>>>> 44f19e79 (Fix tests (hopefully))
 } else {
 	plan skip_all => "Need sudo to test check_icmp";
 }
