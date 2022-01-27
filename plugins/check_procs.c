@@ -775,7 +775,7 @@ be the total number of running processes\n\n"));
   printf (" %s\n", "check_procs -w 50000 -c 100000 --metric=VSZ");
   printf ("  %s\n\n", _("Alert if VSZ of any processes over 50K or 100K"));
   printf (" %s\n", "check_procs -w 10 -c 20 --metric=CPU");
-  printf ("  %s\n", _("Alert if CPU of any processes over 10%% or 20%%"));
+  printf ("  %s\n", _("Alert if CPU of any processes over 10\% or 20\%"));
 
 	printf (UT_SUPPORT);
 }
