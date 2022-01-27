@@ -1054,7 +1054,7 @@ redir (curlhelp_write_curlbuf* header_buf)
   char *new_url;
 
   int res = phr_parse_response (header_buf->buf, header_buf->buflen,
-    &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
+    &status_line.http_major, &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
     headers, &nof_headers, 0);
 
   location = get_header_value (headers, nof_headers, "location");
@@ -2200,7 +2200,7 @@ check_document_dates (const curlhelp_write_curlbuf *header_buf, char (*msg)[DEFA
   size_t msglen;
 
   int res = phr_parse_response (header_buf->buf, header_buf->buflen,
-    &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
+    &status_line.http_major, &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
     headers, &nof_headers, 0);
 
   server_date = get_header_value (headers, nof_headers, "date");
@@ -2258,7 +2258,7 @@ get_content_length (const curlhelp_write_curlbuf* header_buf, const curlhelp_wri
   curlhelp_statusline status_line;
 
   int res = phr_parse_response (header_buf->buf, header_buf->buflen,
-    &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
+    &status_line.http_major, &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
     headers, &nof_headers, 0);
 
   content_length_s = get_header_value (headers, nof_headers, "content-length");
