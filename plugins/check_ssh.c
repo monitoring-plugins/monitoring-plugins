@@ -221,7 +221,7 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 	char *version_control_string = NULL;
 	char *output = NULL;
 	char *buffer = NULL;
-	char *tmp= NULL, *saveptr = NULL;
+	char *tmp= NULL;
 	char *ssh_proto = NULL;
 	char *ssh_server = NULL;
 	static char *rev_no = VERSION;
