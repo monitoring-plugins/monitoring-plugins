@@ -52,7 +52,8 @@ enum {
   MAX_IPV4_HOSTLENGTH = 255,
   HTTP_PORT = 80,
   HTTPS_PORT = 443,
-  MAX_PORT = 65535
+  MAX_PORT = 65535,
+  DEFAULT_MAX_REDIRS = 15
 };
 
 #ifdef HAVE_SSL
@@ -125,7 +126,7 @@ int sd;
 int min_page_len = 0;
 int max_page_len = 0;
 int redir_depth = 0;
-int max_depth = 15;
+int max_depth = DEFAULT_MAX_REDIRS;
 char *http_method;
 char *http_method_proxy;
 char *http_post_data;
@@ -203,7 +204,8 @@ process_arguments (int argc, char **argv)
 
   enum {
     INVERT_REGEX = CHAR_MAX + 1,
-    SNI_OPTION
+    SNI_OPTION,
+    MAX_REDIRS_OPTION
   };
 
   int option = 0;
@@ -242,6 +244,7 @@ process_arguments (int argc, char **argv)
     {"use-ipv6", no_argument, 0, '6'},
     {"extended-perfdata", no_argument, 0, 'E'},
     {"show-body", no_argument, 0, 'B'},
+    {"max-redirs", required_argument, 0, MAX_REDIRS_OPTION},
     {0, 0, 0, 0}
   };
 
@@ -373,6 +376,13 @@ process_arguments (int argc, char **argv)
     case SNI_OPTION:
       use_sni = TRUE;
       break;
+    case MAX_REDIRS_OPTION:
+      if (!is_intnonneg (optarg))
+        usage2 (_("Invalid max_redirs count"), optarg);
+      else {
+        max_depth = atoi (optarg);
+      }
+      break;    
     case 'f': /* onredirect */
       if (!strcmp (optarg, "stickyport"))
         onredirect = STATE_DEPENDENT, followsticky = STICKY_HOST|STICKY_PORT;
@@ -1657,9 +1667,11 @@ print_help (void)
   printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow|sticky|stickyport>");
   printf ("    %s\n", _("How to handle redirected pages. sticky is like follow but stick to the"));
   printf ("    %s\n", _("specified IP address. stickyport also ensures port stays the same."));
+  printf (" %s\n", "--max-redirs=INTEGER");
+  printf ("    %s", _("Maximal number of redirects (default: "));
+  printf ("%d)\n", DEFAULT_MAX_REDIRS);
   printf (" %s\n", "-m, --pagesize=INTEGER<:INTEGER>");
   printf ("    %s\n", _("Minimum page size required (bytes) : Maximum page size required (bytes)"));
-
   printf (UT_WARN_CRIT);
 
   printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);

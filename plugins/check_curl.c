@@ -66,13 +66,13 @@ const char *email = "devel@monitoring-plugins.org";
 #define DEFAULT_BUFFER_SIZE 2048
 #define DEFAULT_SERVER_URL "/"
 #define HTTP_EXPECT "HTTP/"
-#define DEFAULT_MAX_REDIRS 15
 #define INET_ADDR_MAX_SIZE INET6_ADDRSTRLEN
 enum {
   MAX_IPV4_HOSTLENGTH = 255,
   HTTP_PORT = 80,
   HTTPS_PORT = 443,
-  MAX_PORT = 65535
+  MAX_PORT = 65535,
+  DEFAULT_MAX_REDIRS = 15
 };
 
 enum {
@@ -1210,6 +1210,7 @@ process_arguments (int argc, char **argv)
   enum {
     INVERT_REGEX = CHAR_MAX + 1,
     SNI_OPTION,
+    MAX_REDIRS_OPTION,
     CA_CERT_OPTION,
     HTTP_VERSION_OPTION,
     AUTOMATIC_DECOMPRESSION
@@ -1254,6 +1255,7 @@ process_arguments (int argc, char **argv)
     {"use-ipv6", no_argument, 0, '6'},
     {"extended-perfdata", no_argument, 0, 'E'},
     {"show-body", no_argument, 0, 'B'},
+    {"max-redirs", required_argument, 0, MAX_REDIRS_OPTION},
     {"http-version", required_argument, 0, HTTP_VERSION_OPTION},
     {"enable-automatic-decompression", no_argument, 0, AUTOMATIC_DECOMPRESSION},
     {0, 0, 0, 0}
@@ -1512,6 +1514,13 @@ process_arguments (int argc, char **argv)
       use_sni = TRUE;
       break;
 #endif /* LIBCURL_FEATURE_SSL */
+    case MAX_REDIRS_OPTION:
+      if (!is_intnonneg (optarg))
+        usage2 (_("Invalid max_redirs count"), optarg);
+      else {
+        max_depth = atoi (optarg);
+      }
+      break;    
     case 'f': /* onredirect */
       if (!strcmp (optarg, "ok"))
         onredirect = STATE_OK;
@@ -1854,6 +1863,9 @@ print_help (void)
   printf ("    %s\n", _("specified IP address. stickyport also ensures port stays the same."));
   printf ("    %s\n", _("follow uses the old redirection algorithm of check_http."));
   printf ("    %s\n", _("curl uses CURL_FOLLOWLOCATION built into libcurl."));
+  printf (" %s\n", "--max-redirs=INTEGER");
+  printf ("    %s", _("Maximal number of redirects (default: "));
+  printf ("%d)\n", DEFAULT_MAX_REDIRS);
   printf (" %s\n", "-m, --pagesize=INTEGER<:INTEGER>");
   printf ("    %s\n", _("Minimum page size required (bytes) : Maximum page size required (bytes)"));
   printf ("\n");
