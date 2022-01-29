@@ -1,31 +1,31 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_ssh plugin
-* 
+*
 * License: GPL
 * Copyright (c) 2000-2007 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_ssh plugin
-* 
+*
 * Try to connect to an SSH server at specified server and port
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 const char *progname = "check_ssh";
@@ -365,7 +365,7 @@ print_help (void)
 
 	printf ("%s\n", _("Try to connect to an SSH server at specified server and port"));
 
-  printf ("\n\n");
+	printf ("\n\n");
 
 	print_usage ();
 
@@ -379,10 +379,10 @@ print_help (void)
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 	printf (" %s\n", "-r, --remote-version=STRING");
-  printf ("    %s\n", _("Alert if string doesn't match expected server version (ex: OpenSSH_3.9p1)"));
+	printf ("    %s\n", _("Alert if string doesn't match expected server version (ex: OpenSSH_3.9p1)"));
 
 	printf (" %s\n", "-P, --remote-protocol=STRING");
-  printf ("    %s\n", _("Alert if protocol doesn't match expected protocol version (ex: 2.0)"));
+	printf ("    %s\n", _("Alert if protocol doesn't match expected protocol version (ex: 2.0)"));
 
 	printf (UT_VERBOSE);
 
@@ -394,7 +394,7 @@ print_help (void)
 void
 print_usage (void)
 {
-  printf ("%s\n", _("Usage:"));
+	printf ("%s\n", _("Usage:"));
 	printf ("%s  [-4|-6] [-t <timeout>] [-r <remote version>] [-p <port>] <host>\n", progname);
 }
 
