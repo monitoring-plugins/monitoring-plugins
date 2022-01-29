@@ -4,31 +4,39 @@
 typedef struct {
 	enum state_enum state;
 	char *output;
-	pd_list perfdata;
+	pd_list *perfdata;
 } subcheck_t;
 
 typedef struct subcheck_list {
 	subcheck_t subcheck;
 	struct subcheck_list *next;
-	pd_list perfdata;
+	pd_list *perfdata;
 } subcheck_list_t;
-
-typedef struct {
-	enum state_enum state;
-	char *summary;
-	pd_list perfdata;
-	struct subcheck_list *subchecks;
-} check_t;
 
 enum output_format_t {
 	CLASSIC_FORMAT,
-	ICINGA2_FORMAT
+	ICINGA2_FORMAT,
+	SUMMARY_ONLY
 };
 
-int add_subcheck(check_t *check_object,enum state_enum state, char *output, pd_list perfdata_list);
+typedef struct {
+	enum state_enum state;
+	enum output_format_t format;
+	char *summary;
+	pd_list* perfdata;
+	struct subcheck_list *subchecks;
+} check_t;
 
-int add_summary(check_t *check_object, char *summary);
+extern check_t check;
 
-void cleanup_check(check_t *check_object);
+void init_check();
 
-int print_output(check_t *, enum output_format_t);
+void set_output_format(enum output_format_t);
+
+int add_subcheck(enum state_enum, char *, pd_list *);
+
+void add_summary(char *summary);
+
+void cleanup_check();
+
+void print_output();

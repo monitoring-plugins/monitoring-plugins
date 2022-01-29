@@ -19,20 +19,7 @@
 #define OUTSIDE 0
 #define INSIDE  1
 
-typedef struct range_struct {
-	double	start;
-	bool start_infinity;
-	double	end;
-	int	end_infinity;
-	int	alert_on;		/* OUTSIDE (default) or INSIDE */
-	char* text; /* original unparsed text input */
-	} range;
-
-typedef struct thresholds_struct {
-	range	*warning;
-	range	*critical;
-	} thresholds;
-
+#include "./perfdata.h"
 #define NP_STATE_FORMAT_VERSION 1
 
 typedef struct state_data_struct {
@@ -40,7 +27,6 @@ typedef struct state_data_struct {
 	void	*data;
 	int	length; /* Of binary data */
 	} state_data;
-
 
 typedef struct state_key_struct {
 	char       *name;

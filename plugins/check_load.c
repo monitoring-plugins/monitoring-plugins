@@ -32,12 +32,11 @@ const char *progname = "check_load";
 const char *copyright = "1999-2022";
 const char *email = "devel@monitoring-plugins.org";
 
-#include "./common.h"
-#include "./runcmd.h"
-#include "./utils.h"
-#include "./popen.h"
-
-#include <string.h>
+#include "common.h"
+#include "runcmd.h"
+#include "utils.h"
+#include "popen.h"
+#include "../lib/output.h"
 
 #ifdef HAVE_SYS_LOADAVG_H
 #include <sys/loadavg.h>
@@ -57,7 +56,7 @@ void print_help (void);
 void print_usage (void);
 static int print_top_consuming_processes();
 
-static int n_procs_to_show = 0;
+static uint64_t n_procs_to_show = 0;
 
 /* strictly for pretty-print usage in loops */
 static const int nums[3] = { 1, 5, 15 };
@@ -103,7 +102,7 @@ get_threshold(char *arg, double *th)
 int
 main (int argc, char **argv)
 {
-	int result = -1;
+	int result = STATE_UNKNOWN;
 	int i;
 	long numcpus;
 
@@ -192,58 +191,52 @@ main (int argc, char **argv)
 	}
 
 	/* we got this far, so assume OK until we've measured */
-	result = STATE_OK;
+	init_check();
+	check.state = STATE_OK;
 
-	xasprintf(&status_line, _("load average: %.2f, %.2f, %.2f"), la1, la5, la15);
-	xasprintf(&status_line, ("total %s"), status_line);
+	pd_list *perfdata = new_pd_list();
 
+	perfdata_t pd_value;
+	for(i = 0; i < 3; i++) {
+		char *pd_label = NULL;
+		xasprintf(&pd_label, "load%d", nums[i]);
+		pd_value.label = pd_label;
+		pd_value.value.pd_float = la[i];
+		pd_value.type = FLOAT;
+		pd_value.warn.pd_float = wload[i];
+		pd_value.warn_present = true;
+		pd_value.crit.pd_float = cload[i];
+		pd_value.crit_present = true;
 
-	double scaled_la[3] = { 0.0, 0.0, 0.0 };
-	bool is_using_scaled_load_values = false;
+		pd_list_append(perfdata, pd_value);
 
-	if (take_into_account_cpus == true && (numcpus = GET_NUMBER_OF_CPUS()) > 0) {
-		is_using_scaled_load_values = true;
-
-		scaled_la[0] = la[0] / numcpus;
-		scaled_la[1] = la[1] / numcpus;
-		scaled_la[2] = la[2] / numcpus;
-
-		char *tmp = NULL;
-		xasprintf(&tmp, _("load average: %.2f, %.2f, %.2f"), scaled_la[0], scaled_la[1], scaled_la[2]);
-		xasprintf(&status_line, "scaled %s - %s", tmp, status_line);
+		/* printf("%s\n", pd_to_string(pd_value)); */
+		/* printf("load%d=%.3f;%.3f;%.3f;0; ", nums[i], la[i], wload[i], cload[i]); */
 	}
 
+	char *subcheck_output = NULL;
+	xasprintf(&subcheck_output,_("load average: %.2f, %.2f, %.2f"), la[0], la[1], la[2]);
+	add_subcheck(
+			STATE_OK,
+			subcheck_output,
+			perfdata
+			);
+
 	for(i = 0; i < 3; i++) {
-		if (is_using_scaled_load_values) {
-			if(scaled_la[i] > cload[i]) {
-				result = STATE_CRITICAL;
-				break;
-			}
-			else if(scaled_la[i] > wload[i]) result = STATE_WARNING;
-		} else {
-			if(la[i] > cload[i]) {
-				result = STATE_CRITICAL;
-				break;
-			}
-			else if(la[i] > wload[i]) result = STATE_WARNING;
+		if(la[i] > cload[i]) {
+			check.state = STATE_CRITICAL;
+			break;
+		} else if(la[i] > wload[i]) {
+			check.state = STATE_WARNING;
 		}
 	}
 
-	printf("LOAD %s - %s|", state_text(result), status_line);
-	for(i = 0; i < 3; i++) {
-		if (is_using_scaled_load_values) {
-			printf("load%d=%.3f;;;0; ", nums[i], la[i]);
-			printf("scaled_load%d=%.3f;%.3f;%.3f;0; ", nums[i], scaled_la[i], wload[i], cload[i]);
-		} else {
-			printf("load%d=%.3f;%.3f;%.3f;0; ", nums[i], la[i], wload[i], cload[i]);
-		}
-	}
+	print_output();
 
-	putchar('\n');
 	if (n_procs_to_show > 0) {
 		print_top_consuming_processes();
 	}
-	return result;
+	return check.state;
 }
 
 
@@ -395,7 +388,7 @@ int cmpstringp(const void *p1, const void *p2) {
 #endif /* PS_USES_PROCPCPU */
 
 static int print_top_consuming_processes() {
-	int i = 0;
+	uint64_t i = 0;
 	struct output chld_out, chld_err;
 	if(np_runcmd(PS_COMMAND, &chld_out, &chld_err, 0) != 0){
 		fprintf(stderr, _("'%s' exited with non-zero status.\n"), PS_COMMAND);
@@ -408,8 +401,7 @@ static int print_top_consuming_processes() {
 #ifdef PS_USES_PROCPCPU
 	qsort(chld_out.line + 1, chld_out.lines - 1, sizeof(char*), cmpstringp);
 #endif /* PS_USES_PROCPCPU */
-	int lines_to_show = chld_out.lines < (size_t)(n_procs_to_show + 1)
-			? (int)chld_out.lines : n_procs_to_show + 1;
+	uint64_t lines_to_show = chld_out.lines < (n_procs_to_show + 1) ? chld_out.lines : n_procs_to_show + 1;
 	for (i = 0; i < lines_to_show; i += 1) {
 		printf("%s\n", chld_out.line[i]);
 	}

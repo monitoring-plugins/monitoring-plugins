@@ -25,6 +25,7 @@
 *****************************************************************************/
 
 #include "../plugins/common.h"
+#include "../plugins/utils.h"
 #include <stdarg.h>
 #include "utils_base.h"
 #include <ctype.h>
@@ -103,14 +104,43 @@ die (int result, const char *fmt, ...)
 	exit (result);
 }
 
-void set_range_start (range *this, double value) {
-	this->start = value;
-	this->start_infinity = false;
+void set_range_start_uint (range *r, uint64_t value) {
+	if (r->type != UINT && r->type != NONE) die(STATE_UNKNOWN, "Tried to use different types in range");
+	r->start.pd_uint = value;
+	r->type = UINT;
+	r->start_infinity = false;
 }
 
-void set_range_end (range *this, double value) {
-	this->end = value;
-	this->end_infinity = false;
+void set_range_start_int (range *r, int64_t value) {
+	if (r->type != INT && r->type != NONE) die(STATE_UNKNOWN, "Tried to use different types in range");
+	r->start.pd_int = value;
+	r->type = INT;
+	r->start_infinity = false;
+}
+
+void set_range_start_double (range *r, double value) {
+	if (r->type != DOUBLE && r->type != NONE) die(STATE_UNKNOWN, "Tried to use different types in range");
+	r->start.pd_double = value;
+	r->type = DOUBLE;
+	r->start_infinity = false;
+}
+
+void set_range_end_uint (range *r, uint64_t value) {
+	if (r->type != UINT && r->type != NONE) die(STATE_UNKNOWN, "Tried to use different types in range");
+	r->end.pd_uint = value;
+	r->end_infinity = false;
+}
+
+void set_range_end_int (range *r, int64_t value) {
+	if (r->type != INT && r->type != NONE) die(STATE_UNKNOWN, "Tried to use different types in range");
+	r->end.pd_int = value;
+	r->end_infinity = false;
+}
+
+void set_range_end_double (range *r, double value) {
+	if (r->type != DOUBLE && r->type != NONE) die(STATE_UNKNOWN, "Tried to use different types in range");
+	r->end.pd_double = value;
+	r->end_infinity = false;
 }
 
 range
@@ -123,9 +153,9 @@ range
 	temp_range = (range *) calloc(1, sizeof(range));
 
 	/* Set defaults */
-	temp_range->start = 0;
+	temp_range->start.pd_int = 0;
 	temp_range->start_infinity = false;
-	temp_range->end = 0;
+	temp_range->end.pd_int = 0;
 	temp_range->end_infinity = true;
 	temp_range->alert_on = OUTSIDE;
 	temp_range->text = strdup(str);
@@ -136,32 +166,43 @@ range
 	}
 
 	end_str = index(str, ':');
+	perfdata_value tmp;
 	if (end_str != NULL) {
 		if (str[0] == '~') {
 			temp_range->start_infinity = true;
 		} else {
-			start = strtod(str, NULL);	/* Will stop at the ':' */
-			set_range_start(temp_range, start);
+			if (is_uint64(str, &tmp.pd_uint)) {
+				set_range_start_uint(temp_range, start);
+			} else if (is_int64(str, &tmp.pd_int)) {
+				set_range_start_uint(temp_range, start);
+			} else {
+				set_range_start_double(temp_range, strtod(str, NULL));
+			}
 		}
 		end_str++;		/* Move past the ':' */
 	} else {
 		end_str = str;
 	}
-	end = strtod(end_str, NULL);
 	if (strcmp(end_str, "") != 0) {
-		set_range_end(temp_range, end);
+		if (is_uint64(end_str, &tmp.pd_uint)) {
+			set_range_start_uint(temp_range, start);
+		} else if (is_int64(end_str, &tmp.pd_int)) {
+			set_range_start_uint(temp_range, start);
+		} else {
+			set_range_start_double(temp_range, strtod(end_str, NULL));
+		}
 	}
 
 	if (temp_range->start_infinity == true ||
 		temp_range->end_infinity == true ||
-		temp_range->start <= temp_range->end) {
+		cmp_perfdata_value(&temp_range->start, &temp_range->end, temp_range->type) != -1) {
 		return temp_range;
 	}
 	free(temp_range);
 	return NULL;
 }
 
-/* returns 0 if okay, otherwise 1 */
+/* returns 0 if okay, otherwise error codes */
 int
 _set_thresholds(thresholds **my_thresholds, char *warn_string, char *critical_string)
 {
@@ -210,12 +251,54 @@ void print_thresholds(const char *threshold_name, thresholds *my_threshold) {
 		printf("Threshold not set");
 	} else {
 		if (my_threshold->warning) {
-			printf("Warning: start=%g end=%g; ", my_threshold->warning->start, my_threshold->warning->end);
+			switch (my_threshold->warning->type) {
+				case UINT:
+					printf("Warning: start=%lu end=%lu; ",
+							my_threshold->warning->start.pd_uint,
+							my_threshold->warning->end.pd_uint
+							);
+					break;
+				case INT:
+					printf("Warning: start=%ld end=%ld; ",
+							my_threshold->warning->start.pd_int,
+							my_threshold->warning->end.pd_int
+							);
+					break;
+				case DOUBLE:
+					printf("Warning: start=%f end=%f; ",
+							my_threshold->warning->start.pd_double,
+							my_threshold->warning->end.pd_double
+							);
+					break;
+				default:
+					die(STATE_UNKNOWN, "Invalid data type");
+			}
 		} else {
 			printf("Warning not set; ");
 		}
 		if (my_threshold->critical) {
-			printf("Critical: start=%g end=%g", my_threshold->critical->start, my_threshold->critical->end);
+			switch (my_threshold->critical->type) {
+				case UINT:
+					printf("Critical: start=%lu end=%lu; ",
+							my_threshold->critical->start.pd_uint,
+							my_threshold->critical->end.pd_uint
+							);
+					break;
+				case INT:
+					printf("Critical: start=%ld end=%ld; ",
+							my_threshold->critical->start.pd_int,
+							my_threshold->critical->end.pd_int
+							);
+					break;
+				case DOUBLE:
+					printf("Critical: start=%f end=%f; ",
+							my_threshold->critical->start.pd_double,
+							my_threshold->critical->end.pd_double
+							);
+					break;
+				default:
+					die(STATE_UNKNOWN, "Invalid data type");
+			}
 		} else {
 			printf("Critical not set");
 		}
@@ -234,26 +317,78 @@ bool check_range(double value, range *my_range)
 		yes = false;
 	}
 
-	if (my_range->end_infinity == false && my_range->start_infinity == false) {
-		if ((my_range->start <= value) && (value <= my_range->end)) {
-			return no;
-		} else {
-			return yes;
-		}
-	} else if (my_range->start_infinity == false && my_range->end_infinity == true) {
-		if (my_range->start <= value) {
-			return no;
-		} else {
-			return yes;
-		}
-	} else if (my_range->start_infinity == true && my_range->end_infinity == false) {
-		if (value <= my_range->end) {
-			return no;
-		} else {
-			return yes;
-		}
-	} else {
-		return no;
+	switch (my_range->type) {
+		case UINT:
+			if (my_range->end_infinity == false && my_range->start_infinity == false) {
+				if ((my_range->start.pd_uint <= value) && (value <= my_range->end.pd_uint)) {
+					return no;
+				} else {
+					return yes;
+				}
+			} else if (my_range->start_infinity == false && my_range->end_infinity == true) {
+				if (my_range->start.pd_uint <= value) {
+					return no;
+				} else {
+					return yes;
+				}
+			} else if (my_range->start_infinity == true && my_range->end_infinity == false) {
+				if (value <= my_range->end.pd_uint) {
+					return no;
+				} else {
+					return yes;
+				}
+			} else {
+				return no;
+			}
+			break;
+		case INT:
+			if (my_range->end_infinity == false && my_range->start_infinity == false) {
+				if ((my_range->start.pd_int <= value) && (value <= my_range->end.pd_int)) {
+					return no;
+				} else {
+					return yes;
+				}
+			} else if (my_range->start_infinity == false && my_range->end_infinity == true) {
+				if (my_range->start.pd_int <= value) {
+					return no;
+				} else {
+					return yes;
+				}
+			} else if (my_range->start_infinity == true && my_range->end_infinity == false) {
+				if (value <= my_range->end.pd_int) {
+					return no;
+				} else {
+					return yes;
+				}
+			} else {
+				return no;
+			}
+			break;
+		case DOUBLE:
+			if (my_range->end_infinity == false && my_range->start_infinity == false) {
+				if ((my_range->start.pd_double <= value) && (value <= my_range->end.pd_double)) {
+					return no;
+				} else {
+					return yes;
+				}
+			} else if (my_range->start_infinity == false && my_range->end_infinity == true) {
+				if (my_range->start.pd_double <= value) {
+					return no;
+				} else {
+					return yes;
+				}
+			} else if (my_range->start_infinity == true && my_range->end_infinity == false) {
+				if (value <= my_range->end.pd_double) {
+					return no;
+				} else {
+					return yes;
+				}
+			} else {
+				return no;
+			}
+			break;
+		default:
+			die(STATE_UNKNOWN, "Some Error in range checking");
 	}
 }
 

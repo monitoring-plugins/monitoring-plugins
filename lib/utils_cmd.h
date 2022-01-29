@@ -7,6 +7,9 @@
  *
  */
 
+#include <sys/types.h>
+#include "../plugins/common.h"
+
 /** types **/
 struct output
 {
