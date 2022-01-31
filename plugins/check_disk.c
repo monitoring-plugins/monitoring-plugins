@@ -445,7 +445,7 @@ double calculate_percent(uintmax_t value, uintmax_t total) {
 int
 process_arguments (int argc, char **argv)
 {
-  int c, err;
+  int c, err, i;
   struct parameter_list *se;
   struct parameter_list *temp_list = NULL, *previous = NULL;
   struct mount_entry *me;
@@ -496,10 +496,10 @@ process_arguments (int argc, char **argv)
     {0, 0, 0, 0}
   };
 
+  char filesystems[3][10] = { "tmpfs", "squashfs", "tracefs" };
+
   if (argc < 2)
     return ERROR;
-
-  np_add_name(&fs_exclude_list, "iso9660");
 
   for (c = 1; c < argc; c++)
     if (strcmp ("-to", argv[c]) == 0)
@@ -823,6 +823,13 @@ process_arguments (int argc, char **argv)
     units = strdup ("MiB");
     mult = (uintmax_t)1024 * 1024;
   }
+
+  for (i = 0; i < 3; i++)
+    if (!np_find_name (fs_include_list, filesystems[i]) && (path_selected == FALSE))
+      np_add_name(&fs_exclude_list, filesystems[i]);
+
+  np_add_name(&fs_exclude_list, "iso9660");
+
 
   return TRUE;
 }
