@@ -5,7 +5,7 @@
 #
 
 use strict;
-use Test::More tests => 40;
+use Test::More tests => 42;
 use NPTest;
 
 my $result;
@@ -44,6 +44,12 @@ $result = NPTest->testCmd(
 	);
 cmp_ok( $result->return_code, '==', 2, "Uptime higher than 2 seconds" );
 like  ( $result->output, '/Running since \d+/', "Output for the s parameter correct" );
+
+$result = NPTest->testCmd(
+	"./check_uptime -d -w 1 -c 2"
+	);
+cmp_ok( $result->return_code, '==', 2, "Uptime higher than 2 seconds" );
+like  ( $result->output, '/CRITICAL: uptime is \d+ days/', "Output for the d parameter correct" );
 
 $result = NPTest->testCmd(
 	"./check_uptime -w 1 -c 2"
