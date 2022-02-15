@@ -150,7 +150,7 @@ if ( $opt_d ) {
 
 $msg = "$state_str: ";
 
-$msg .= "uptime is $uptime_text $uptime_unit. ";
+$msg .= "Uptime is $uptime_text $uptime_unit. ";
 $msg .= "Exceeds $out_of_bounds_text threshold. "  if  $out_of_bounds_text;
 $msg .= "Running for $pretty_uptime. "  if  $opt_f;
 if ( $opt_s ) {
