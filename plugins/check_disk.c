@@ -961,7 +961,7 @@ print_help (void)
   printf ("    %s\n", _("Only check local filesystems against thresholds. Yet call stat on remote filesystems"));
   printf ("    %s\n", _("to test if they are accessible (e.g. to detect Stale NFS Handles)"));
   printf (" %s\n", "-M, --mountpoint");
-  printf ("    %s\n", _("Display the mountpoint instead of the partition"));
+  printf ("    %s\n", _("Display the (block) device instead of the mount point"));
   printf (" %s\n", "-m, --megabytes");
   printf ("    %s\n", _("Same as '--units MB'"));
   printf (" %s\n", "-A, --all");
