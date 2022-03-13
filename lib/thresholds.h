@@ -1,5 +1,11 @@
+#ifndef _THRESHOLDS_
+#define _THRESHOLDS_
+
 #include <inttypes.h>
 #include <stdbool.h>
+
+#define OUTSIDE 0
+#define INSIDE  1
 
 enum value_type_t {
 	NONE = 0,
@@ -15,7 +21,6 @@ typedef union {
 } perfdata_value;
 
 typedef struct range_struct {
-	enum value_type_t type;
 	perfdata_value start;
 	bool start_infinity;		/* FALSE (default) or TRUE */
 	perfdata_value end;
@@ -28,3 +33,8 @@ typedef struct thresholds_struct {
 	range	*warning;
 	range	*critical;
 } thresholds;
+
+
+char *range_to_string(range *, enum value_type_t);
+
+#endif /* _THRESHOLDS_ */
