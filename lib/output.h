@@ -1,3 +1,6 @@
+#ifndef _OUTPUT_
+#define _OUTPUT_
+
 #include "perfdata.h"
 #include "../plugins/common.h"
 
@@ -40,3 +43,5 @@ void add_summary(char *summary);
 void cleanup_check();
 
 void print_output();
+
+#endif /* _OUTPUT_ */

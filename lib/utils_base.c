@@ -27,12 +27,15 @@
 #include "../plugins/common.h"
 #include "../plugins/utils.h"
 #include <stdarg.h>
-#include "utils_base.h"
+#include "./utils_base.h"
 #include <ctype.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/types.h>
+
+#include <string.h>
+#include <stdlib.h>
 
 #define np_free(ptr) { if(ptr) { free(ptr); ptr = NULL; } }
 
@@ -45,7 +48,7 @@ bool _np_state_read_file(FILE *);
 
 void np_init( char *plugin_name, int argc, char **argv ) {
 	if (this_monitoring_plugin==NULL) {
-		this_monitoring_plugin = calloc(1, sizeof(monitoring_plugin));
+		this_monitoring_plugin = (monitoring_plugin *)calloc(1, sizeof(monitoring_plugin));
 		if (this_monitoring_plugin==NULL) {
 			die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
 			    strerror(errno));
@@ -105,40 +108,31 @@ die (int result, const char *fmt, ...)
 }
 
 void set_range_start_uint (range *r, uint64_t value) {
-	if (r->type != UINT && r->type != NONE) die(STATE_UNKNOWN, "Tried to use different types in range");
 	r->start.pd_uint = value;
-	r->type = UINT;
 	r->start_infinity = false;
 }
 
 void set_range_start_int (range *r, int64_t value) {
-	if (r->type != INT && r->type != NONE) die(STATE_UNKNOWN, "Tried to use different types in range");
 	r->start.pd_int = value;
-	r->type = INT;
 	r->start_infinity = false;
 }
 
 void set_range_start_double (range *r, double value) {
-	if (r->type != DOUBLE && r->type != NONE) die(STATE_UNKNOWN, "Tried to use different types in range");
 	r->start.pd_double = value;
-	r->type = DOUBLE;
 	r->start_infinity = false;
 }
 
 void set_range_end_uint (range *r, uint64_t value) {
-	if (r->type != UINT && r->type != NONE) die(STATE_UNKNOWN, "Tried to use different types in range");
 	r->end.pd_uint = value;
 	r->end_infinity = false;
 }
 
 void set_range_end_int (range *r, int64_t value) {
-	if (r->type != INT && r->type != NONE) die(STATE_UNKNOWN, "Tried to use different types in range");
 	r->end.pd_int = value;
 	r->end_infinity = false;
 }
 
 void set_range_end_double (range *r, double value) {
-	if (r->type != DOUBLE && r->type != NONE) die(STATE_UNKNOWN, "Tried to use different types in range");
 	r->end.pd_double = value;
 	r->end_infinity = false;
 }
@@ -167,16 +161,20 @@ range
 
 	end_str = index(str, ':');
 	perfdata_value tmp;
+	enum value_type_t tmp_type;
 	if (end_str != NULL) {
 		if (str[0] == '~') {
 			temp_range->start_infinity = true;
 		} else {
 			if (is_uint64(str, &tmp.pd_uint)) {
-				set_range_start_uint(temp_range, start);
+				set_range_start_uint(temp_range, tmp.pd_uint);
+				tmp_type = UINT;
 			} else if (is_int64(str, &tmp.pd_int)) {
-				set_range_start_uint(temp_range, start);
+				set_range_start_int(temp_range, tmp.pd_int);
+				tmp_type = INT;
 			} else {
 				set_range_start_double(temp_range, strtod(str, NULL));
+				tmp_type = DOUBLE;
 			}
 		}
 		end_str++;		/* Move past the ':' */
@@ -185,17 +183,17 @@ range
 	}
 	if (strcmp(end_str, "") != 0) {
 		if (is_uint64(end_str, &tmp.pd_uint)) {
-			set_range_start_uint(temp_range, start);
+			set_range_end_uint(temp_range, tmp.pd_uint);
 		} else if (is_int64(end_str, &tmp.pd_int)) {
-			set_range_start_uint(temp_range, start);
+			set_range_end_int(temp_range, tmp.pd_int);
 		} else {
-			set_range_start_double(temp_range, strtod(end_str, NULL));
+			set_range_end_double(temp_range, strtod(end_str, NULL));
 		}
 	}
 
 	if (temp_range->start_infinity == true ||
 		temp_range->end_infinity == true ||
-		cmp_perfdata_value(&temp_range->start, &temp_range->end, temp_range->type) != -1) {
+		cmp_perfdata_value(&temp_range->start, &temp_range->end, tmp_type) != -1) {
 		return temp_range;
 	}
 	free(temp_range);
@@ -245,13 +243,13 @@ set_thresholds(thresholds **my_thresholds, char *warn_string, char *critical_str
 	}
 }
 
-void print_thresholds(const char *threshold_name, thresholds *my_threshold) {
+void print_thresholds(const char *threshold_name, thresholds *my_threshold, enum value_type_t type) {
 	printf("%s - ", threshold_name);
 	if (! my_threshold) {
 		printf("Threshold not set");
 	} else {
 		if (my_threshold->warning) {
-			switch (my_threshold->warning->type) {
+			switch (type) {
 				case UINT:
 					printf("Warning: start=%lu end=%lu; ",
 							my_threshold->warning->start.pd_uint,
@@ -277,7 +275,7 @@ void print_thresholds(const char *threshold_name, thresholds *my_threshold) {
 			printf("Warning not set; ");
 		}
 		if (my_threshold->critical) {
-			switch (my_threshold->critical->type) {
+			switch (type) {
 				case UINT:
 					printf("Critical: start=%lu end=%lu; ",
 							my_threshold->critical->start.pd_uint,
@@ -306,8 +304,8 @@ void print_thresholds(const char *threshold_name, thresholds *my_threshold) {
 	printf("\n");
 }
 
-/* Returns true if alert should be raised based on the range */
-bool check_range(double value, range *my_range)
+/* Returns TRUE if alert should be raised based on the range */
+bool check_range(perfdata_value value, range *my_range, enum value_type_t type)
 {
 	bool no = false;
 	bool yes = true;
@@ -317,22 +315,22 @@ bool check_range(double value, range *my_range)
 		yes = false;
 	}
 
-	switch (my_range->type) {
+	switch (type) {
 		case UINT:
 			if (my_range->end_infinity == false && my_range->start_infinity == false) {
-				if ((my_range->start.pd_uint <= value) && (value <= my_range->end.pd_uint)) {
+				if ((my_range->start.pd_uint <= value.pd_uint) && (value.pd_uint <= my_range->end.pd_uint)) {
 					return no;
 				} else {
 					return yes;
 				}
 			} else if (my_range->start_infinity == false && my_range->end_infinity == true) {
-				if (my_range->start.pd_uint <= value) {
+				if (my_range->start.pd_uint <= value.pd_uint) {
 					return no;
 				} else {
 					return yes;
 				}
 			} else if (my_range->start_infinity == true && my_range->end_infinity == false) {
-				if (value <= my_range->end.pd_uint) {
+				if (value.pd_uint <= my_range->end.pd_uint) {
 					return no;
 				} else {
 					return yes;
@@ -343,19 +341,19 @@ bool check_range(double value, range *my_range)
 			break;
 		case INT:
 			if (my_range->end_infinity == false && my_range->start_infinity == false) {
-				if ((my_range->start.pd_int <= value) && (value <= my_range->end.pd_int)) {
+				if ((my_range->start.pd_int <= value.pd_int) && (value.pd_int <= my_range->end.pd_int)) {
 					return no;
 				} else {
 					return yes;
 				}
 			} else if (my_range->start_infinity == false && my_range->end_infinity == true) {
-				if (my_range->start.pd_int <= value) {
+				if (my_range->start.pd_int <= value.pd_int) {
 					return no;
 				} else {
 					return yes;
 				}
 			} else if (my_range->start_infinity == true && my_range->end_infinity == false) {
-				if (value <= my_range->end.pd_int) {
+				if (value.pd_int <= my_range->end.pd_int) {
 					return no;
 				} else {
 					return yes;
@@ -366,19 +364,19 @@ bool check_range(double value, range *my_range)
 			break;
 		case DOUBLE:
 			if (my_range->end_infinity == false && my_range->start_infinity == false) {
-				if ((my_range->start.pd_double <= value) && (value <= my_range->end.pd_double)) {
+				if ((my_range->start.pd_double <= value.pd_double) && (value.pd_double <= my_range->end.pd_double)) {
 					return no;
 				} else {
 					return yes;
 				}
 			} else if (my_range->start_infinity == false && my_range->end_infinity == true) {
-				if (my_range->start.pd_double <= value) {
+				if (my_range->start.pd_double <= value.pd_double) {
 					return no;
 				} else {
 					return yes;
 				}
 			} else if (my_range->start_infinity == true && my_range->end_infinity == false) {
-				if (value <= my_range->end.pd_double) {
+				if (value.pd_double <= my_range->end.pd_double) {
 					return no;
 				} else {
 					return yes;
@@ -394,15 +392,15 @@ bool check_range(double value, range *my_range)
 
 /* Returns status */
 int
-get_status(double value, thresholds *my_thresholds)
+get_status(perfdata_value value, thresholds *my_thresholds, enum value_type_t type)
 {
 	if (my_thresholds->critical != NULL) {
-		if (check_range(value, my_thresholds->critical) == true) {
+		if (check_range(value, my_thresholds->critical, type)) {
 			return STATE_CRITICAL;
 		}
 	}
 	if (my_thresholds->warning != NULL) {
-		if (check_range(value, my_thresholds->warning) == true) {
+		if (check_range(value, my_thresholds->warning, type)) {
 			return STATE_WARNING;
 		}
 	}
@@ -860,3 +858,222 @@ void np_state_write_string(time_t data_time, char *data_string) {
 
 	np_free(temp_file);
 }
+
+void
+strip (char *buffer)
+{
+	size_t x;
+	int i;
+
+	for (x = strlen (buffer); x >= 1; x--) {
+		i = x - 1;
+		if (buffer[i] == ' ' ||
+				buffer[i] == '\r' || buffer[i] == '\n' || buffer[i] == '\t')
+			buffer[i] = '\0';
+		else
+			break;
+	}
+	return;
+}
+
+
+/******************************************************************************
+ *
+ * Copies one string to another. Any previously existing data in
+ * the destination string is lost.
+ *
+ * Example:
+ *
+ * char *str=NULL;
+ * str = strscpy("This is a line of text with no trailing newline");
+ *
+ *****************************************************************************/
+
+char *
+strscpy (char *dest, const char *src)
+{
+	if (src == NULL)
+		return NULL;
+
+	xasprintf (&dest, "%s", src);
+
+	return dest;
+}
+
+
+
+/******************************************************************************
+ *
+ * Returns a pointer to the next line of a multiline string buffer
+ *
+ * Given a pointer string, find the text following the next sequence
+ * of \r and \n characters. This has the effect of skipping blank
+ * lines as well
+ *
+ * Example:
+ *
+ * Given text as follows:
+ *
+ * ==============================
+ * This
+ * is
+ * a
+ * 
+ * multiline string buffer
+ * ==============================
+ *
+ * int i=0;
+ * char *str=NULL;
+ * char *ptr=NULL;
+ * str = strscpy(str,"This\nis\r\na\n\nmultiline string buffer\n");
+ * ptr = str;
+ * while (ptr) {
+ *   printf("%d %s",i++,firstword(ptr));
+ *   ptr = strnl(ptr);
+ * }
+ * 
+ * Produces the following:
+ *
+ * 1 This
+ * 2 is
+ * 3 a
+ * 4 multiline
+ *
+ * NOTE: The 'firstword()' function is conceptual only and does not
+ *       exist in this package.
+ *
+ * NOTE: Although the second 'ptr' variable is not strictly needed in
+ *       this example, it is good practice with these utilities. Once
+ *       the * pointer is advance in this manner, it may no longer be
+ *       handled with * realloc(). So at the end of the code fragment
+ *       above, * strscpy(str,"foo") work perfectly fine, but
+ *       strscpy(ptr,"foo") will * cause the the program to crash with
+ *       a segmentation fault.
+ *
+ *****************************************************************************/
+
+char *
+strnl (char *str)
+{
+	size_t len;
+	if (str == NULL)
+		return NULL;
+	str = strpbrk (str, "\r\n");
+	if (str == NULL)
+		return NULL;
+	len = strspn (str, "\r\n");
+	if (str[len] == '\0')
+		return NULL;
+	str += len;
+	if (strlen (str) == 0)
+		return NULL;
+	return str;
+}
+
+
+/******************************************************************************
+ *
+ * Like strscpy, except only the portion of the source string up to
+ * the provided delimiter is copied.
+ *
+ * Example:
+ *
+ * str = strpcpy(str,"This is a line of text with no trailing newline","x");
+ * printf("%s\n",str);
+ *
+ * Produces:
+ *
+ *This is a line of te
+ *
+ *****************************************************************************/
+
+char *
+strpcpy (char *dest, const char *src, const char *str)
+{
+	size_t len;
+
+	if (src)
+		len = strcspn (src, str);
+	else
+		return NULL;
+
+	if (dest == NULL || strlen (dest) < len)
+		dest = realloc (dest, len + 1);
+	if (dest == NULL)
+		die (STATE_UNKNOWN, _("failed realloc in strpcpy\n"));
+
+	strncpy (dest, src, len);
+	dest[len] = '\0';
+
+	return dest;
+}
+
+
+
+/******************************************************************************
+ *
+ * Like strscat, except only the portion of the source string up to
+ * the provided delimiter is copied.
+ *
+ * str = strpcpy(str,"This is a line of text with no trailing newline","x");
+ * str = strpcat(str,"This is a line of text with no trailing newline","x");
+ * printf("%s\n",str);
+ * 
+ *This is a line of texThis is a line of tex
+ *
+ *****************************************************************************/
+
+char *
+strpcat (char *dest, const char *src, const char *str)
+{
+	size_t len, l2;
+
+	if (dest)
+		len = strlen (dest);
+	else
+		len = 0;
+
+	if (src) {
+		l2 = strcspn (src, str);
+	}
+	else {
+		return dest;
+	}
+
+	dest = realloc (dest, len + l2 + 1);
+	if (dest == NULL)
+		die (STATE_UNKNOWN, _("failed malloc in strscat\n"));
+
+	strncpy (dest + len, src, l2);
+	dest[len + l2] = '\0';
+
+	return dest;
+}
+
+
+/******************************************************************************
+ *
+ * asprintf, but die on failure
+ *
+ ******************************************************************************/
+
+int
+xvasprintf (char **strp, const char *fmt, va_list ap)
+{
+	int result = vasprintf (strp, fmt, ap);
+	if (result == -1 || *strp == NULL)
+		die (STATE_UNKNOWN, _("failed malloc in xvasprintf\n"));
+	return result;
+}
+
+int
+xasprintf (char **strp, const char *fmt, ...)
+{
+	va_list ap;
+	int result;
+	va_start (ap, fmt);
+	result = xvasprintf (strp, fmt, ap);
+	va_end (ap);
+	return result;
+}
+

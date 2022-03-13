@@ -12,12 +12,12 @@ char *pd_to_string(perfdata_t pd) {
 			xasprintf(&result, "%s", pd.uom);
 		}
 		if (pd.warn_present) {
-			xasprintf(&result, "%s;%lli", result, pd.warn.pd_int);
+			xasprintf(&result, "%s;%lli", result, range_to_string(&pd.warn, INT));
 		} else {
 			xasprintf(&result, "%s;", result);
 		}
 		if (pd.crit_present) {
-			xasprintf(&result, "%s;%lli", result, pd.crit.pd_int);
+			xasprintf(&result, "%s;%lli", result, range_to_string(&pd.crit, INT));
 		} else {
 			xasprintf(&result, "%s;", result);
 		}
@@ -35,12 +35,12 @@ char *pd_to_string(perfdata_t pd) {
 			xasprintf(&result, "%s", pd.uom);
 		}
 		if (pd.warn_present) {
-			xasprintf(&result, "%s;%llu", result, pd.warn.pd_uint);
+			xasprintf(&result, "%s;%llu", result, range_to_string(&pd.warn, UINT));
 		} else {
 			xasprintf(&result, "%s;", result);
 		}
 		if (pd.crit_present) {
-			xasprintf(&result, "%s;%llu", result, pd.crit.pd_uint);
+			xasprintf(&result, "%s;%llu", result, range_to_string(&pd.crit, UINT));
 		} else {
 			xasprintf(&result, "%s;", result);
 		}
@@ -52,28 +52,28 @@ char *pd_to_string(perfdata_t pd) {
 		if (pd.max_present)
 			xasprintf(&result, "%s;%llu", result, pd.max.pd_uint);
 		break;
-	case FLOAT:
-		xasprintf(&result, "%s%f", result, pd.value.pd_float);
+	case DOUBLE:
+		xasprintf(&result, "%s%f", result, pd.value.pd_double);
 		if (pd.uom != NULL) {
 			xasprintf(&result, "%s", pd.uom);
 		}
 		if (pd.warn_present) {
-			xasprintf(&result, "%s;%f", result, pd.warn.pd_float);
+			xasprintf(&result, "%s;%f", result, range_to_string(&pd.warn, DOUBLE));
 		} else {
 			xasprintf(&result, "%s;", result);
 		}
 		if (pd.crit_present) {
-			xasprintf(&result, "%s;%f", result, pd.crit.pd_float);
+			xasprintf(&result, "%s;%f", result, range_to_string(&pd.warn, DOUBLE));
 		} else {
 			xasprintf(&result, "%s;", result);
 		}
 		if (pd.min_present) {
-			xasprintf(&result, "%s;%f", result, pd.min.pd_float);
+			xasprintf(&result, "%s;%f", result, pd.min.pd_double);
 		} else {
 			xasprintf(&result, "%s;", result);
 		}
 		if (pd.max_present)
-			xasprintf(&result, "%s;%f", result, pd.max.pd_float);
+			xasprintf(&result, "%s;%f", result, pd.max.pd_double);
 		break;
 	default:
 		die(STATE_UNKNOWN, "Invalid perfdata mode\n");
@@ -98,6 +98,13 @@ char *pd_list_to_string(pd_list *pd) {
 	}
 
 	return result;
+}
+
+perfdata_t new_perfdata() {
+	perfdata_t pd;
+	memset(&pd, 0, sizeof(perfdata_t));
+	return pd;
+
 }
 
 pd_list *new_pd_list() {
@@ -134,7 +141,7 @@ void pd_list_free(pd_list *pdl) {
 	}
 }
 
-int cmp_perfdata_value(perfdata_value *a, perfdata_value *b, value_type_t type) {
+int cmp_perfdata_value(perfdata_value *a, perfdata_value *b, enum value_type_t type) {
 	switch (type) {
 		case UINT:
 			if (a->pd_uint < b->pd_uint) {

@@ -31,6 +31,8 @@ char *pd_to_string(perfdata_t);
 
 char *pd_list_to_string(pd_list *);
 
+perfdata_t new_perfdata();
+
 pd_list *new_pd_list();
 
 void pd_list_append(pd_list *, const perfdata_t);

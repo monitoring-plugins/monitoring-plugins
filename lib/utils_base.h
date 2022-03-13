@@ -6,6 +6,8 @@
 # include "sha256.h"
 #endif
 
+/* #include "./string_helper.h" */
+
 /* This file holds header information for thresholds - use this in preference to
    individual plugin logic */
 
@@ -16,10 +18,9 @@
    and utils_*.h for specific to plugin routines. If routines are
    placed in utils_*.h, then these can be tested with libtap */
 
-#define OUTSIDE 0
-#define INSIDE  1
 
 #include "./perfdata.h"
+#include "./output.h"
 #define NP_STATE_FORMAT_VERSION 1
 
 typedef struct state_data_struct {
@@ -46,9 +47,9 @@ typedef struct np_struct {
 range *parse_range_string (char *);
 int _set_thresholds(thresholds **, char *, char *);
 void set_thresholds(thresholds **, char *, char *);
-void print_thresholds(const char *, thresholds *);
-bool check_range(double, range *);
-int get_status(double, thresholds *);
+void print_thresholds(const char *, thresholds *, enum value_type_t);
+bool check_range(perfdata_value, range *, enum value_type_t);
+int get_status(perfdata_value, thresholds *, enum value_type_t);
 
 /* Handle timeouts */
 extern int timeout_state;
@@ -101,5 +102,16 @@ void np_init(char *, int argc, char **argv);
 void np_set_args(int argc, char **argv);
 void np_cleanup();
 const char *state_text (int);
+
+#include <stdio.h>
+
+/* Handle strings safely */
+void strip (char *);
+char *strscpy (char *, const char *);
+char *strnl (char *);
+char *strpcpy (char *, const char *, const char *);
+char *strpcat (char *, const char *, const char *);
+int xvasprintf (char **strp, const char *fmt, va_list ap);
+int xasprintf (char **strp, const char *fmt, ...);
 
 #endif /* _UTILS_BASE_ */
