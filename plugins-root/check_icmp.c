@@ -50,19 +50,11 @@ const char *email = "devel@monitoring-plugins.org";
 #if HAVE_SYS_SOCKIO_H
 #include <sys/sockio.h>
 #endif
-#include <sys/ioctl.h>
+
 #include <sys/time.h>
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <stddef.h>
 #include <errno.h>
-#include <string.h>
+#include <signal.h>
 #include <ctype.h>
-#include <netdb.h>
-#include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -71,8 +63,6 @@ const char *email = "devel@monitoring-plugins.org";
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
 #include <arpa/inet.h>
-#include <signal.h>
-#include <float.h>
 
 
 /** sometimes undefined system macros (quite a few, actually) **/
@@ -207,7 +197,7 @@ static int add_target(char *);
 static int add_target_ip(char *, struct sockaddr_storage *);
 static int handle_random_icmp(unsigned char *, struct sockaddr_storage *);
 static void parse_address(struct sockaddr_storage *, char *, int);
-static unsigned short icmp_checksum(unsigned short *, int);
+static unsigned short icmp_checksum(uint16_t *, size_t);
 static void finish(int);
 static void crash(const char *, ...);
 
@@ -465,7 +455,6 @@ main(int argc, char **argv)
 	/* Parse protocol arguments first */
 	for(i = 1; i < argc; i++) {
 		while((arg = getopt(argc, argv, opts_str)) != EOF) {
-			unsigned short size;
 			switch(arg) {
 			case '4':
 				if (address_family != -1)
@@ -488,10 +477,10 @@ main(int argc, char **argv)
 	/* Reset argument scanning */
 	optind = 1;
 
+	unsigned short size;
 	/* parse the arguments */
 	for(i = 1; i < argc; i++) {
 		while((arg = getopt(argc, argv, opts_str)) != EOF) {
-			unsigned short size;
 			switch(arg) {
 			case 'v':
 				debug++;
@@ -720,7 +709,7 @@ main(int argc, char **argv)
 static void
 run_checks()
 {
-	u_int i, t, result;
+	u_int i, t;
 	u_int final_wait, time_passed;
 
 	/* this loop might actually violate the pkt_interval or target_interval
@@ -738,9 +727,9 @@ run_checks()
 
 			/* we're still in the game, so send next packet */
 			(void)send_icmp_ping(icmp_sock, table[t]);
-			result = wait_for_reply(icmp_sock, target_interval);
+			wait_for_reply(icmp_sock, target_interval);
 		}
-		result = wait_for_reply(icmp_sock, pkt_interval * targets);
+		wait_for_reply(icmp_sock, pkt_interval * targets);
 	}
 
 	if(icmp_pkts_en_route && targets_alive) {
@@ -760,7 +749,7 @@ run_checks()
 		 * haven't yet */
 		if(debug) printf("Waiting for %u micro-seconds (%0.3f msecs)\n",
 						 final_wait, (float)final_wait / 1000);
-		result = wait_for_reply(icmp_sock, final_wait);
+		wait_for_reply(icmp_sock, final_wait);
 	}
 }
 
@@ -779,7 +768,7 @@ static int
 wait_for_reply(int sock, u_int t)
 {
 	int n, hlen;
-	static unsigned char buf[4096];
+	static unsigned char buf[65536];
 	struct sockaddr_storage resp_addr;
 	union ip_hdr *ip;
 	union icmp_packet packet;
@@ -916,9 +905,27 @@ wait_for_reply(int sock, u_int t)
 		if(debug) {
 			char address[INET6_ADDRSTRLEN];
 			parse_address(&resp_addr, address, sizeof(address));
-			printf("%0.3f ms rtt from %s, outgoing ttl: %u, incoming ttl: %u, max: %0.3f, min: %0.3f\n",
-				(float)tdiff / 1000, address,
-				ttl, ip->ip.ip_ttl, (float)host->rtmax / 1000, (float)host->rtmin / 1000);
+
+			switch(address_family) {
+				case AF_INET: {
+					printf("%0.3f ms rtt from %s, outgoing ttl: %u, incoming ttl: %u, max: %0.3f, min: %0.3f\n",
+						(float)tdiff / 1000,
+						address,
+						ttl,
+						ip->ip.ip_ttl,
+						(float)host->rtmax / 1000,
+						(float)host->rtmin / 1000);
+					break;
+					  };
+				case AF_INET6: {
+					printf("%0.3f ms rtt from %s, outgoing ttl: %u, max: %0.3f, min: %0.3f\n",
+						(float)tdiff / 1000,
+						address,
+						ttl,
+						(float)host->rtmax / 1000,
+						(float)host->rtmin / 1000);
+					  };
+			   }
 		}
 
 		/* if we're in hostcheck mode, exit with limited printouts */
@@ -980,7 +987,7 @@ send_icmp_ping(int sock, struct rta_host *host)
 		icp->icmp_cksum = 0;
 		icp->icmp_id = htons(pid);
 		icp->icmp_seq = htons(host->id++);
-		icp->icmp_cksum = icmp_checksum((unsigned short*)buf, icmp_pkt_size);
+		icp->icmp_cksum = icmp_checksum((uint16_t*)buf, (size_t)icmp_pkt_size);
 
 		if (debug > 2)
 			printf("Sending ICMP echo-request of len %lu, id %u, seq %u, cksum 0x%X to host %s\n",
@@ -1517,18 +1524,19 @@ get_threshold(char *str, threshold *th)
 }
 
 unsigned short
-icmp_checksum(unsigned short *p, int n)
+icmp_checksum(uint16_t *p, size_t n)
 {
 	unsigned short cksum;
 	long sum = 0;
 
-	while(n > 2) {
-		sum += *p++;
-		n -= sizeof(unsigned short);
+	/* sizeof(uint16_t) == 2 */
+	while(n >= 2) {
+		sum += *(p++);
+		n -= 2;
 	}
 
 	/* mop up the occasional odd byte */
-	if(n == 1) sum += (unsigned char)*p;
+	if(n == 1) sum += *((uint8_t *)p -1);
 
 	sum = (sum >> 16) + (sum & 0xffff);	/* add hi 16 to low 16 */
 	sum += (sum >> 16);			/* add carry */

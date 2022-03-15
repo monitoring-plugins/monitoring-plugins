@@ -12,7 +12,7 @@ my $allow_sudo = getTestParameter( "NP_ALLOW_SUDO",
 	"no" );
 
 if ($allow_sudo eq "yes" or $> == 0) {
-	plan tests => 18;
+	plan tests => 20;
 } else {
 	plan skip_all => "Need sudo to test check_icmp";
 }
@@ -89,3 +89,8 @@ $res = NPTest->testCmd(
 is( $res->return_code, 0, "IPv4 source_ip accepted" );
 like( $res->output, $successOutput, "Output OK" );
 
+$res = NPTest->testCmd(
+	"$sudo ./check_icmp -H $host_responsive -b 65507"
+	);
+is( $res->return_code, 0, "Try max paket size" );
+like( $res->output, $successOutput, "Output OK - Didn't overflow" );
