@@ -1555,6 +1555,17 @@ else
 	AC_MSG_WARN([Could not find sudo or eqivalent])
 fi
 
+AC_PATH_PROG(PATH_TO_DOAS,doas)
+AC_ARG_WITH(doas_command,
+            ACX_HELP_STRING([--with-doas-command=PATH],
+                            [sets path to doas]), PATH_TO_DOAS=$withval)
+if test -n "$PATH_TO_DOAS"
+then
+	AC_DEFINE_UNQUOTED(PATH_TO_DOAS,"$PATH_TO_DOAS",[path to doas])
+else
+	AC_MSG_WARN([Could not find doas or eqivalent])
+fi
+
 AC_PATH_PROG(PATH_TO_MAILQ,mailq)
 AC_ARG_WITH(mailq_command,
             ACX_HELP_STRING([--with-mailq-command=PATH],

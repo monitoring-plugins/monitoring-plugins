@@ -28,7 +28,7 @@
 use POSIX;
 use strict;
 use Getopt::Long;
-use vars qw($opt_V $opt_h $opt_v $verbose $PROGNAME $opt_w $opt_c $opt_t $opt_s $opt_d
+use vars qw($opt_V $opt_h $opt_v $verbose $PROGNAME $opt_w $opt_c $opt_t $opt_s $opt_d $opt_a
 					$opt_M $mailq $status $state $msg $msg_q $msg_p $opt_W $opt_C $mailq $mailq_args
 					@lines %srcdomains %dstdomains);
 use FindBin;
@@ -36,6 +36,7 @@ use lib "$FindBin::Bin";
 use utils qw(%ERRORS &print_revision &support &usage );
 
 my ($sudo);
+my ($doas);
 
 sub print_help ();
 sub print_usage ();
@@ -70,6 +71,17 @@ if ($opt_s) {
 	$sudo = "";
 }
 
+if ($opt_a) {
+	if (defined $utils::PATH_TO_DOAS && -x $utils::PATH_TO_DOAS) {
+		$doas = $utils::PATH_TO_DOAS;
+	} else {
+		print "ERROR: Cannot execute doas\n";
+		exit $ERRORS{'UNKNOWN'};
+	}
+} else {
+	$doas = "";
+}
+
 if ($opt_d) {
 	$mailq_args = $mailq_args . ' -C ' . $opt_d;
 }
@@ -86,7 +98,7 @@ if ($mailq eq "sendmail") {
 
 	## open mailq 
 	if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
-		if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ | " ) ) {
+		if (! open (MAILQ, "$doas$sudo $utils::PATH_TO_MAILQ | " ) ) {
 			print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
 			exit $ERRORS{'UNKNOWN'};
 		}
@@ -315,7 +327,7 @@ elsif ( $mailq eq "postfix" ) {
 
      ## open mailq
         if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
-                if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ$mailq_args | " ) ) {
+                if (! open (MAILQ, "$doas$sudo $utils::PATH_TO_MAILQ$mailq_args | " ) ) {
                         print "ERROR: could not open $utils::PATH_TO_MAILQ$mailq_args \n";
                         exit $ERRORS{'UNKNOWN'};
                 }
@@ -397,7 +409,7 @@ elsif ( $mailq eq "opensmtpd" ) {
 
 	 ## open mailq
 	if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
-		if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ$mailq_args | " ) ) {
+		if (! open (MAILQ, "$doas$sudo $utils::PATH_TO_MAILQ$mailq_args | " ) ) {
 			print "ERROR: could not open $utils::PATH_TO_MAILQ$mailq_args \n";
 			exit $ERRORS{'UNKNOWN'};
 		}
@@ -452,7 +464,7 @@ elsif ( $mailq eq "qmail" ) {
 
 	# open qmail-qstat 
 	if ( defined $utils::PATH_TO_QMAIL_QSTAT && -x $utils::PATH_TO_QMAIL_QSTAT ) {
-		if (! open (MAILQ, "$sudo $utils::PATH_TO_QMAIL_QSTAT | " ) ) {
+		if (! open (MAILQ, "$doas$sudo $utils::PATH_TO_QMAIL_QSTAT | " ) ) {
 			print "ERROR: could not open $utils::PATH_TO_QMAIL_QSTAT \n";
 			exit $ERRORS{'UNKNOWN'};
 		}
@@ -534,7 +546,7 @@ elsif ( $mailq eq "qmail" ) {
 elsif ( $mailq eq "exim" ) {
 	## open mailq 
 	if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
-		if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ | " ) ) {
+		if (! open (MAILQ, "$doas$sudo $utils::PATH_TO_MAILQ | " ) ) {
 			print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
 			exit $ERRORS{'UNKNOWN'};
 		}
@@ -577,7 +589,7 @@ elsif ( $mailq eq "exim" ) {
 elsif ( $mailq eq "nullmailer" ) {
 	## open mailq
 	if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
-		if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ | " ) ) {
+		if (! open (MAILQ, "$doas$sudo $utils::PATH_TO_MAILQ | " ) ) {
 			print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
 			exit $ERRORS{'UNKNOWN'};
 		}
@@ -632,6 +644,7 @@ sub process_arguments(){
 		 "C=i" => \$opt_C, "critical-domain=i" => \$opt_C,   # Critical if above this number
 		 "t=i" => \$opt_t, "timeout=i"  => \$opt_t,
 		 "s"   => \$opt_s, "sudo"       => \$opt_s,
+		 "a"   => \$opt_a, "doas"       => \$opt_a,
 		 "d:s" => \$opt_d, "configdir:s" => \$opt_d,
 		 "W=i" => \$opt_W,                            # warning if above this number
 		 "C=i" => \$opt_C,                            # critical if above this number
@@ -733,6 +746,7 @@ sub print_help () {
 	print "-t (--timeout)   = Plugin timeout in seconds (default = $utils::TIMEOUT)\n";
 	print "-M (--mailserver) = [ sendmail | qmail | postfix | exim | nullmailer  | opensmtpd] (default = autodetect)\n";
 	print "-s (--sudo)      = Use sudo to call the mailq command\n";
+	print "-a (--doas)      = Use doas to call the mailq command\n";
 	print "-d (--configdir) = Config file or directory\n";
 	print "-h (--help)\n";
 	print "-V (--version)\n";
