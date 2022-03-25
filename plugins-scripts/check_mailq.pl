@@ -393,6 +393,61 @@ elsif ( $mailq eq "postfix" ) {
                 #}
         }
 } # end of ($mailq eq "postfix")
+elsif ( $mailq eq "opensmtpd" ) {
+
+	 ## open mailq
+	if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
+		if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ$mailq_args | " ) ) {
+			print "ERROR: could not open $utils::PATH_TO_MAILQ$mailq_args \n";
+			exit $ERRORS{'UNKNOWN'};
+		}
+	}elsif( defined $utils::PATH_TO_MAILQ){
+		unless (-x $utils::PATH_TO_MAILQ) {
+			print "ERROR: $utils::PATH_TO_MAILQ is not executable by (uid $>:gid($)))\n";
+			exit $ERRORS{'UNKNOWN'};
+		}
+	} else {
+		print "ERROR: \$utils::PATH_TO_MAILQ is not defined\n";
+		exit $ERRORS{'UNKNOWN'};
+	}
+
+	@lines = reverse <MAILQ>;
+
+	# close qmail-qstat
+	close MAILQ;
+
+	if ( $? ) {
+		print "CRITICAL: Error code ".($?>>8)." returned from $utils::PATH_TO_MAILQ$mailq_args",$/;
+		exit $ERRORS{CRITICAL};
+	}
+
+	## shut off the alarm
+	alarm(0);
+
+	# get queue length
+	$msg_q = @lines;
+
+	# check queue length(s)
+	if ($msg_q == 0){
+		$msg = "OK: $mailq mailq reports queue is empty";
+		$state = $ERRORS{'OK'};
+	} else {
+		print "msg_q = $msg_q warn=$opt_w crit=$opt_c\n" if $verbose;
+
+		# overall queue length
+		if ($msg_q < $opt_w) {
+			$msg = "OK: $mailq mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
+			$state = $ERRORS{'OK'};
+		}elsif  ($msg_q >= $opt_w  && $msg_q < $opt_c) {
+			$msg = "WARNING: $mailq mailq is $msg_q (threshold w = $opt_w)";
+			$state = $ERRORS{'WARNING'};
+		}else {
+			$msg = "CRITICAL: $mailq mailq is $msg_q (threshold c = $opt_c)";
+			$state = $ERRORS{'CRITICAL'};
+		}
+
+	}
+} # end of ($mailq eq "opensmtpd")
 elsif ( $mailq eq "qmail" ) {
 
 	# open qmail-qstat 
@@ -621,7 +676,7 @@ sub process_arguments(){
 	}
 
 	if (defined $opt_M) {
-		if ($opt_M =~ /^(sendmail|qmail|postfix|exim|nullmailer)$/) {
+		if ($opt_M =~ /^(sendmail|qmail|postfix|exim|nullmailer|opensmtpd)$/) {
 			$mailq = $opt_M ;
 		}elsif( $opt_M eq ''){
 			$mailq = 'sendmail';
@@ -676,7 +731,7 @@ sub print_help () {
 	print "-W (--warning-domain)  = Min. number of messages for same domain in queue to generate warning\n";
 	print "-C (--critical-domain) = Min. number of messages for same domain in queue to generate critical alert ( W < C )\n";
 	print "-t (--timeout)   = Plugin timeout in seconds (default = $utils::TIMEOUT)\n";
-	print "-M (--mailserver) = [ sendmail | qmail | postfix | exim | nullmailer ] (default = autodetect)\n";
+	print "-M (--mailserver) = [ sendmail | qmail | postfix | exim | nullmailer  | opensmtpd] (default = autodetect)\n";
 	print "-s (--sudo)      = Use sudo to call the mailq command\n";
 	print "-d (--configdir) = Config file or directory\n";
 	print "-h (--help)\n";
