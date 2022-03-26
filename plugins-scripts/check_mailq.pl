@@ -578,8 +578,6 @@ sub process_arguments(){
 		 "t=i" => \$opt_t, "timeout=i"  => \$opt_t,
 		 "s"   => \$opt_s, "sudo"       => \$opt_s,
 		 "d:s" => \$opt_d, "configdir:s" => \$opt_d,
-		 "W=i" => \$opt_W,                            # warning if above this number
-		 "C=i" => \$opt_C,                            # critical if above this number
 		 );
 
 	if ($opt_V) {
