@@ -368,10 +368,10 @@ main (int argc, char **argv)
         critical_high_tide = UINT64_MAX;
 
         if (path->freeinodes_percent->warning != NULL) {
-          warning_high_tide = llabs( min( (double) warning_high_tide, (double) (1.0 - path->freeinodes_percent->warning->end/100)*path->inodes_total ));
+          warning_high_tide = (uint64_t) fabs( min( (double) warning_high_tide, (double) (1.0 - path->freeinodes_percent->warning->end/100)*path->inodes_total ));
         }
         if (path->freeinodes_percent->critical != NULL) {
-          critical_high_tide = llabs( min( (double) critical_high_tide, (double) (1.0 - path->freeinodes_percent->critical->end/100)*path->inodes_total ));
+          critical_high_tide = (uint64_t) fabs( min( (double) critical_high_tide, (double) (1.0 - path->freeinodes_percent->critical->end/100)*path->inodes_total ));
         }
 
         xasprintf (&perf_ilabel, "%s (inodes)", (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir);
