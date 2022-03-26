@@ -1,39 +1,39 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_icmp plugin
-* 
+*
 * License: GPL
 * Copyright (c) 2005-2008 Monitoring Plugins Development Team
 * Original Author : Andreas Ericsson <ae@op5.se>
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_icmp plugin
-* 
+*
 * Relevant RFC's: 792 (ICMP), 791 (IP)
-* 
+*
 * This program was modeled somewhat after the check_icmp program,
 * which was in turn a hack of fping (www.fping.org) but has been
 * completely rewritten since to generate higher precision rta values,
 * and support several different modes as well as setting ttl to control.
 * redundant routes. The only remainders of fping is currently a few
 * function names.
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 /* progname may change */
@@ -1545,74 +1545,73 @@ icmp_checksum(uint16_t *p, size_t n)
 void
 print_help(void)
 {
+	/*print_revision (progname);*/ /* FIXME: Why? */
 
-  /*print_revision (progname);*/ /* FIXME: Why? */
+	printf ("Copyright (c) 2005 Andreas Ericsson <ae@op5.se>\n");
+	printf (COPYRIGHT, copyright, email);
 
-  printf ("Copyright (c) 2005 Andreas Ericsson <ae@op5.se>\n");
-  printf (COPYRIGHT, copyright, email);
+	printf ("\n\n");
 
-  printf ("\n\n");
+	print_usage ();
 
-  print_usage ();
+	printf (UT_HELP_VRSN);
+	printf (UT_EXTRA_OPTS);
 
-  printf (UT_HELP_VRSN);
-  printf (UT_EXTRA_OPTS);
+	printf (" %s\n", "-H");
+	printf ("    %s\n", _("specify a target"));
+	printf (" %s\n", "[-4|-6]");
+	printf ("    %s\n", _("Use IPv4 (default) or IPv6 to communicate with the targets"));
+	printf (" %s\n", "-w");
+	printf ("    %s", _("warning threshold (currently "));
+	printf ("%0.3fms,%u%%)\n", (float)warn.rta / 1000, warn.pl);
+	printf (" %s\n", "-c");
+	printf ("    %s", _("critical threshold (currently "));
+	printf ("%0.3fms,%u%%)\n", (float)crit.rta / 1000, crit.pl);
+	printf (" %s\n", "-s");
+	printf ("    %s\n", _("specify a source IP address or device name"));
+	printf (" %s\n", "-n");
+	printf ("    %s", _("number of packets to send (currently "));
+	printf ("%u)\n",packets);
+	printf (" %s\n", "-i");
+	printf ("    %s", _("max packet interval (currently "));
+	printf ("%0.3fms)\n",(float)pkt_interval / 1000);
+	printf (" %s\n", "-I");
+	printf ("    %s", _("max target interval (currently "));
+	printf ("%0.3fms)\n", (float)target_interval / 1000);
+	printf (" %s\n", "-m");
+	printf ("    %s",_("number of alive hosts required for success"));
+	printf ("\n");
+	printf (" %s\n", "-l");
+	printf ("    %s", _("TTL on outgoing packets (currently "));
+	printf ("%u)\n", ttl);
+	printf (" %s\n", "-t");
+	printf ("    %s",_("timeout value (seconds, currently  "));
+	printf ("%u)\n", timeout);
+	printf (" %s\n", "-b");
+	printf ("    %s\n", _("Number of icmp data bytes to send"));
+	printf ("    %s %u + %d)\n", _("Packet size will be data bytes + icmp header (currently"),icmp_data_size, ICMP_MINLEN);
+	printf (" %s\n", "-v");
+	printf ("    %s\n", _("verbose"));
 
-  printf (" %s\n", "-H");
-  printf ("    %s\n", _("specify a target"));
-  printf (" %s\n", "[-4|-6]");
-  printf ("    %s\n", _("Use IPv4 (default) or IPv6 to communicate with the targets"));
-  printf (" %s\n", "-w");
-  printf ("    %s", _("warning threshold (currently "));
-  printf ("%0.3fms,%u%%)\n", (float)warn.rta / 1000, warn.pl);
-  printf (" %s\n", "-c");
-  printf ("    %s", _("critical threshold (currently "));
-  printf ("%0.3fms,%u%%)\n", (float)crit.rta / 1000, crit.pl);
-  printf (" %s\n", "-s");
-  printf ("    %s\n", _("specify a source IP address or device name"));
-  printf (" %s\n", "-n");
-  printf ("    %s", _("number of packets to send (currently "));
-  printf ("%u)\n",packets);
-  printf (" %s\n", "-i");
-  printf ("    %s", _("max packet interval (currently "));
-  printf ("%0.3fms)\n",(float)pkt_interval / 1000);
-  printf (" %s\n", "-I");
-  printf ("    %s", _("max target interval (currently "));
-  printf ("%0.3fms)\n", (float)target_interval / 1000);
-  printf (" %s\n", "-m");
-  printf ("    %s",_("number of alive hosts required for success"));
-  printf ("\n");
-  printf (" %s\n", "-l");
-  printf ("    %s", _("TTL on outgoing packets (currently "));
-  printf ("%u)\n", ttl);
-  printf (" %s\n", "-t");
-  printf ("    %s",_("timeout value (seconds, currently  "));
-  printf ("%u)\n", timeout);
-  printf (" %s\n", "-b");
-  printf ("    %s\n", _("Number of icmp data bytes to send"));
-  printf ("    %s %u + %d)\n", _("Packet size will be data bytes + icmp header (currently"),icmp_data_size, ICMP_MINLEN);
-  printf (" %s\n", "-v");
-  printf ("    %s\n", _("verbose"));
+	printf ("\n");
+	printf ("%s\n", _("Notes:"));
+	printf (" %s\n", _("The -H switch is optional. Naming a host (or several) to check is not."));
+	printf ("\n");
+	printf (" %s\n", _("Threshold format for -w and -c is 200.25,60% for 200.25 msec RTA and 60%"));
+	printf (" %s\n", _("packet loss.  The default values should work well for most users."));
+	printf (" %s\n", _("You can specify different RTA factors using the standardized abbreviations"));
+	printf (" %s\n", _("us (microseconds), ms (milliseconds, default) or just plain s for seconds."));
+	/* -d not yet implemented */
+	/*  printf ("%s\n", _("Threshold format for -d is warn,crit.  12,14 means WARNING if >= 12 hops"));
+		printf ("%s\n", _("are spent and CRITICAL if >= 14 hops are spent."));
+		printf ("%s\n\n", _("NOTE: Some systems decrease TTL when forming ICMP_ECHOREPLY, others do not."));*/
+	printf ("\n");
+	printf (" %s\n", _("The -v switch can be specified several times for increased verbosity."));
+	/*  printf ("%s\n", _("Long options are currently unsupported."));
+		printf ("%s\n", _("Options marked with * require an argument"));
+		*/
 
-  printf ("\n");
-  printf ("%s\n", _("Notes:"));
-  printf (" %s\n", _("The -H switch is optional. Naming a host (or several) to check is not."));
-  printf ("\n");
-  printf (" %s\n", _("Threshold format for -w and -c is 200.25,60% for 200.25 msec RTA and 60%"));
-  printf (" %s\n", _("packet loss.  The default values should work well for most users."));
-  printf (" %s\n", _("You can specify different RTA factors using the standardized abbreviations"));
-  printf (" %s\n", _("us (microseconds), ms (milliseconds, default) or just plain s for seconds."));
-/* -d not yet implemented */
-/*  printf ("%s\n", _("Threshold format for -d is warn,crit.  12,14 means WARNING if >= 12 hops"));
-  printf ("%s\n", _("are spent and CRITICAL if >= 14 hops are spent."));
-  printf ("%s\n\n", _("NOTE: Some systems decrease TTL when forming ICMP_ECHOREPLY, others do not."));*/
-  printf ("\n");
-  printf (" %s\n", _("The -v switch can be specified several times for increased verbosity."));
-/*  printf ("%s\n", _("Long options are currently unsupported."));
-  printf ("%s\n", _("Options marked with * require an argument"));
-*/
-
-  printf (UT_SUPPORT);
+	printf (UT_SUPPORT);
 }
 
 
@@ -1620,6 +1619,6 @@ print_help(void)
 void
 print_usage (void)
 {
-  printf ("%s\n", _("Usage:"));
-  printf(" %s [options] [-H] host1 host2 hostN\n", progname);
+	printf ("%s\n", _("Usage:"));
+	printf(" %s [options] [-H] host1 host2 hostN\n", progname);
 }
