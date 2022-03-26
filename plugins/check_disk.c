@@ -171,7 +171,6 @@ main (int argc, char **argv)
   char *perf_ilabel;
   char *preamble;
   char *flag_header;
-  double inode_space_pct;
   int temp_result;
 
   struct mount_entry *me;
