@@ -196,7 +196,7 @@ static int handle_random_icmp(unsigned char *, struct sockaddr_storage *);
 static void parse_address(struct sockaddr_storage *, char *, int);
 static unsigned short icmp_checksum(uint16_t *, size_t);
 static void finish(int);
-static void crash(const char *, ...);
+static void crash(const char *, ...) __attribute__((noreturn));
 
 /** external **/
 extern int optind, opterr, optopt;
