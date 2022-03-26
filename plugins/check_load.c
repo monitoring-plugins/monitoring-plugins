@@ -101,7 +101,7 @@ get_threshold(char *arg, double *th)
 int
 main (int argc, char **argv)
 {
-	int result;
+	int result = -1;
 	int i;
 	long numcpus;
 
@@ -164,7 +164,7 @@ main (int argc, char **argv)
 	    sscanf (input_buffer, "%*[^l]load averages: %lf, %lf, %lf", &la1, &la5, &la15);
     }
     else {
-		printf (_("could not parse load from uptime %s: %s\n"), PATH_TO_UPTIME, result);
+		printf (_("could not parse load from uptime %s: %d\n"), PATH_TO_UPTIME, result);
 		return STATE_UNKNOWN;
     }
 
@@ -384,8 +384,8 @@ static int print_top_consuming_processes() {
 #ifdef PS_USES_PROCPCPU
 	qsort(chld_out.line + 1, chld_out.lines - 1, sizeof(char*), cmpstringp);
 #endif /* PS_USES_PROCPCPU */
-	int lines_to_show = chld_out.lines < (n_procs_to_show + 1)
-			? chld_out.lines : n_procs_to_show + 1;
+	int lines_to_show = chld_out.lines < (size_t)(n_procs_to_show + 1)
+			? (int)chld_out.lines : n_procs_to_show + 1;
 	for (i = 0; i < lines_to_show; i += 1) {
 		printf("%s\n", chld_out.line[i]);
 	}
