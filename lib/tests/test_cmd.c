@@ -40,13 +40,11 @@ get_command (char *const *line)
 }
 
 int
-main (int argc, char **argv)
+main ()
 {
 	char **command_line = malloc (sizeof (char *) * COMMAND_LINE);
 	char *command = NULL;
-	char *perl;
-	output chld_out, chld_err;
-	int c;
+	cmd_output chld_out, chld_err;
 	int result = UNSET;
 
 	plan_tests(51);
@@ -54,8 +52,8 @@ main (int argc, char **argv)
 	diag ("Running plain echo command, set one");
 
 	/* ensure everything is empty before we begin */
-	memset (&chld_out, 0, sizeof (output));
-	memset (&chld_err, 0, sizeof (output));
+	memset (&chld_out, 0, sizeof (cmd_output));
+	memset (&chld_err, 0, sizeof (cmd_output));
 	ok (chld_out.lines == 0, "(initialised) Checking stdout is reset");
 	ok (chld_err.lines == 0, "(initialised) Checking stderr is reset");
 	ok (result == UNSET, "(initialised) Checking exit code is reset");
@@ -78,8 +76,8 @@ main (int argc, char **argv)
 	ok (result == 0, "(array) Checking exit code");
 
 	/* ensure everything is empty again */
-	memset (&chld_out, 0, sizeof (output));
-	memset (&chld_err, 0, sizeof (output));
+	memset (&chld_out, 0, sizeof (cmd_output));
+	memset (&chld_err, 0, sizeof (cmd_output));
 	result = UNSET;
 	ok (chld_out.lines == 0, "(initialised) Checking stdout is reset");
 	ok (chld_err.lines == 0, "(initialised) Checking stderr is reset");
@@ -98,8 +96,8 @@ main (int argc, char **argv)
 	diag ("Running plain echo command, set two");
 
 	/* ensure everything is empty again */
-	memset (&chld_out, 0, sizeof (output));
-	memset (&chld_err, 0, sizeof (output));
+	memset (&chld_out, 0, sizeof (cmd_output));
+	memset (&chld_err, 0, sizeof (cmd_output));
 	result = UNSET;
 	ok (chld_out.lines == 0, "(initialised) Checking stdout is reset");
 	ok (chld_err.lines == 0, "(initialised) Checking stderr is reset");
@@ -121,8 +119,8 @@ main (int argc, char **argv)
 	ok (result == 0, "(array) Checking exit code");
 
 	/* ensure everything is empty again */
-	memset (&chld_out, 0, sizeof (output));
-	memset (&chld_err, 0, sizeof (output));
+	memset (&chld_out, 0, sizeof (cmd_output));
+	memset (&chld_err, 0, sizeof (cmd_output));
 	result = UNSET;
 	ok (chld_out.lines == 0, "(initialised) Checking stdout is reset");
 	ok (chld_err.lines == 0, "(initialised) Checking stderr is reset");
@@ -140,8 +138,8 @@ main (int argc, char **argv)
 
 
 	/* ensure everything is empty again */
-	memset (&chld_out, 0, sizeof (output));
-	memset (&chld_err, 0, sizeof (output));
+	memset (&chld_out, 0, sizeof (cmd_output));
+	memset (&chld_err, 0, sizeof (cmd_output));
 	result = UNSET;
 	ok (chld_out.lines == 0, "(initialised) Checking stdout is reset");
 	ok (chld_err.lines == 0, "(initialised) Checking stderr is reset");
@@ -168,8 +166,8 @@ main (int argc, char **argv)
 
 
 	/* ensure everything is empty again */
-	memset (&chld_out, 0, sizeof (output));
-	memset (&chld_err, 0, sizeof (output));
+	memset (&chld_out, 0, sizeof (cmd_output));
+	memset (&chld_err, 0, sizeof (cmd_output));
 	result = UNSET;
 	ok (chld_out.lines == 0, "(initialised) Checking stdout is reset");
 	ok (chld_err.lines == 0, "(initialised) Checking stderr is reset");
@@ -187,8 +185,8 @@ main (int argc, char **argv)
 
 
 	/* ensure everything is empty again */
-	memset (&chld_out, 0, sizeof (output));
-	memset (&chld_err, 0, sizeof (output));
+	memset (&chld_out, 0, sizeof (cmd_output));
+	memset (&chld_err, 0, sizeof (cmd_output));
 	result = UNSET;
 
 	command = (char *)malloc(COMMAND_LINE);
@@ -214,8 +212,8 @@ main (int argc, char **argv)
 
 
 	/* ensure everything is empty again */
-	memset (&chld_out, 0, sizeof (output));
-	memset (&chld_err, 0, sizeof (output));
+	memset (&chld_out, 0, sizeof (cmd_output));
+	memset (&chld_err, 0, sizeof (cmd_output));
 	result = UNSET;
 
 	command = (char *)malloc(COMMAND_LINE);
