@@ -196,7 +196,7 @@ main (int argc, char **argv)
 	char *th_warn=NULL;
 	char *th_crit=NULL;
 	char type[8] = "";
-	output chld_out, chld_err;
+	struct cmd_output chld_out, chld_err;
 	char *previous_string=NULL;
 	char *ap=NULL;
 	char *state_string=NULL;

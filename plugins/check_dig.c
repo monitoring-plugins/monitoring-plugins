@@ -67,7 +67,7 @@ int
 main (int argc, char **argv)
 {
   char *command_line;
-  output chld_out, chld_err;
+  cmd_output chld_out, chld_err;
   char *msg = NULL;
   size_t i;
   char *t;

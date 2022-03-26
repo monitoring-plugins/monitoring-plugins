@@ -7,8 +7,10 @@
  * 
  */
 
+#include <sys/types.h>
+
 /** types **/
-struct output
+struct cmd_output
 {
 	char *buf;     /* output buffer */
 	size_t buflen; /* output buffer content length */
@@ -17,12 +19,12 @@ struct output
 	size_t lines;  /* lines of output */
 };
 
-typedef struct output output;
+typedef struct cmd_output cmd_output;
 
 /** prototypes **/
-int cmd_run (const char *, output *, output *, int);
-int cmd_run_array (char *const *, output *, output *, int);
-int cmd_file_read (char *, output *, int);
+int cmd_run (const char *, cmd_output *, cmd_output *, int);
+int cmd_run_array (char *const *, cmd_output *, cmd_output *, int);
+int cmd_file_read (char *, cmd_output *, int);
 
 /* only multi-threaded plugins need to bother with this */
 void cmd_init (void);

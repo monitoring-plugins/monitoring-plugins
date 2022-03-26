@@ -372,7 +372,7 @@ int cmpstringp(const void *p1, const void *p2) {
 
 static int print_top_consuming_processes() {
 	int i = 0;
-	struct output chld_out, chld_err;
+	struct cmd_output chld_out, chld_err;
 	if(np_runcmd(PS_COMMAND, &chld_out, &chld_err, 0) != 0){
 		fprintf(stderr, _("'%s' exited with non-zero status.\n"), PS_COMMAND);
 		return STATE_UNKNOWN;

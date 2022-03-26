@@ -77,7 +77,7 @@ main (int argc, char **argv)
 	int expected_cols = PS_COLS - 1;
 	const char *zombie = "Z";
 	char *temp_string;
-	output chld_out, chld_err;
+	cmd_output chld_out, chld_err;
 	size_t i;
 
 	setlocale (LC_ALL, "");

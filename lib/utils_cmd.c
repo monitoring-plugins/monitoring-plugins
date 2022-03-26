@@ -70,7 +70,7 @@ extern char **environ;
 static int _cmd_open (char *const *, int *, int *)
 	__attribute__ ((__nonnull__ (1, 2, 3)));
 
-static int _cmd_fetch_output (int, output *, int)
+static int _cmd_fetch_output (int, cmd_output *, int)
 	__attribute__ ((__nonnull__ (2)));
 
 static int _cmd_close (int);
@@ -196,7 +196,7 @@ _cmd_close (int fd)
 
 
 static int
-_cmd_fetch_output (int fd, output * op, int flags)
+_cmd_fetch_output (int fd, cmd_output * op, int flags)
 {
 	size_t len = 0, i = 0, lineno = 0;
 	size_t rsf = 6, ary_size = 0;	/* rsf = right shift factor, dec'ed uncond once */
@@ -267,9 +267,8 @@ _cmd_fetch_output (int fd, output * op, int flags)
 
 
 int
-cmd_run (const char *cmdstring, output * out, output * err, int flags)
+cmd_run (const char *cmdstring, cmd_output * out, cmd_output * err, int flags)
 {
-	int fd, pfd_out[2], pfd_err[2];
 	int i = 0, argc;
 	size_t cmdlen;
 	char **argv = NULL;
@@ -281,9 +280,9 @@ cmd_run (const char *cmdstring, output * out, output * err, int flags)
 
 	/* initialize the structs */
 	if (out)
-		memset (out, 0, sizeof (output));
+		memset (out, 0, sizeof (cmd_output));
 	if (err)
-		memset (err, 0, sizeof (output));
+		memset (err, 0, sizeof (cmd_output));
 
 	/* make copy of command string so strtok() doesn't silently modify it */
 	/* (the calling program may want to access it later) */
@@ -342,15 +341,15 @@ cmd_run (const char *cmdstring, output * out, output * err, int flags)
 }
 
 int
-cmd_run_array (char *const *argv, output * out, output * err, int flags)
+cmd_run_array (char *const *argv, cmd_output * out, cmd_output * err, int flags)
 {
 	int fd, pfd_out[2], pfd_err[2];
 
 	/* initialize the structs */
 	if (out)
-		memset (out, 0, sizeof (output));
+		memset (out, 0, sizeof (cmd_output));
 	if (err)
-		memset (err, 0, sizeof (output));
+		memset (err, 0, sizeof (cmd_output));
 
 	if ((fd = _cmd_open (argv, pfd_out, pfd_err)) == -1)
 		die (STATE_UNKNOWN, _("Could not open pipe: %s\n"), argv[0]);
@@ -364,11 +363,11 @@ cmd_run_array (char *const *argv, output * out, output * err, int flags)
 }
 
 int
-cmd_file_read ( char *filename, output *out, int flags)
+cmd_file_read ( char *filename, cmd_output *out, int flags)
 {
 	int fd;
 	if(out)
-		memset (out, 0, sizeof(output));
+		memset (out, 0, sizeof(cmd_output));
 
 	if ((fd = open(filename, O_RDONLY)) == -1) {
 		die( STATE_UNKNOWN, _("Error opening %s: %s"), filename, strerror(errno) );

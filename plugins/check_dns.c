@@ -86,7 +86,7 @@ main (int argc, char **argv)
   long microsec;
   struct timeval tv;
   int parse_address = FALSE; /* This flag scans for Address: but only after Name: */
-  output chld_out, chld_err;
+  cmd_output chld_out, chld_err;
   size_t i;
   int is_nxdomain = FALSE;
 

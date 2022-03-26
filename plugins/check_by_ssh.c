@@ -70,7 +70,7 @@ main (int argc, char **argv)
 	int i;
 	time_t local_time;
 	FILE *fp = NULL;
-	output chld_out, chld_err;
+	cmd_output chld_out, chld_err;
 
 	remotecmd = "";
 	comm_append(SSH_COMMAND);

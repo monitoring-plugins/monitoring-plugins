@@ -62,7 +62,7 @@ main (int argc, char **argv)
 	int result = STATE_UNKNOWN;
 	char *sub;
 	char **command_line;
-	output chld_out, chld_err;
+	cmd_output chld_out, chld_err;
 	int i;
 
 	setlocale (LC_ALL, "");

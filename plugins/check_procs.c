@@ -152,7 +152,7 @@ main (int argc, char **argv)
 	int i = 0, j = 0;
 	int result = STATE_UNKNOWN;
 	int ret = 0;
-	output chld_out, chld_err;
+	cmd_output chld_out, chld_err;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);

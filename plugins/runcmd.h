@@ -28,7 +28,7 @@
 #include "utils_cmd.h" /* for the "output" type */
 
 /** prototypes **/
-int np_runcmd(const char *, output *, output *, int);
+int np_runcmd(const char *, cmd_output *, cmd_output *, int);
 void runcmd_timeout_alarm_handler(int)
 	__attribute__((__noreturn__));
 

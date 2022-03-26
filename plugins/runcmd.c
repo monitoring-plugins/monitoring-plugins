@@ -71,7 +71,7 @@ static pid_t *np_pids = NULL;
 static int np_runcmd_open(const char *, int *, int *)
 	__attribute__((__nonnull__(1, 2, 3)));
 
-static int np_fetch_output(int, output *, int)
+static int np_fetch_output(int, cmd_output *, int)
 	__attribute__((__nonnull__(2)));
 
 static int np_runcmd_close(int);
@@ -253,7 +253,7 @@ runcmd_timeout_alarm_handler (int signo)
 
 
 static int
-np_fetch_output(int fd, output *op, int flags)
+np_fetch_output(int fd, cmd_output *op, int flags)
 {
 	size_t len = 0, i = 0, lineno = 0;
 	size_t rsf = 6, ary_size = 0; /* rsf = right shift factor, dec'ed uncond once */
@@ -322,13 +322,13 @@ np_fetch_output(int fd, output *op, int flags)
 
 
 int
-np_runcmd(const char *cmd, output *out, output *err, int flags)
+np_runcmd(const char *cmd, cmd_output *out, cmd_output *err, int flags)
 {
 	int fd, pfd_out[2], pfd_err[2];
 
 	/* initialize the structs */
-	if(out) memset(out, 0, sizeof(output));
-	if(err) memset(err, 0, sizeof(output));
+	if(out) memset(out, 0, sizeof(cmd_output));
+	if(err) memset(err, 0, sizeof(cmd_output));
 
 	if((fd = np_runcmd_open(cmd, pfd_out, pfd_err)) == -1)
 		die (STATE_UNKNOWN, _("Could not open pipe: %s\n"), cmd);
