@@ -32,10 +32,12 @@ const char *progname = "check_load";
 const char *copyright = "1999-2007";
 const char *email = "devel@monitoring-plugins.org";
 
-#include "common.h"
-#include "runcmd.h"
-#include "utils.h"
-#include "popen.h"
+#include "./common.h"
+#include "./runcmd.h"
+#include "./utils.h"
+#include "./popen.h"
+
+#include <string.h>
 
 #ifdef HAVE_SYS_LOADAVG_H
 #include <sys/loadavg.h>
