@@ -150,7 +150,7 @@ main (int argc, char **argv)
 		 * The following sscanf call looks for lines looking like: "SwapTotal: 123" and "SwapFree: 123"
 		 * This format exists at least on Debian Linux with a 5.* kernel
 		 */
-		else if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%[TotalFreCchd]%*[:] %f %*[k]%*[B]", str, &tmp_KB)) {
+		else if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%[TotalFreCchd]%*[:] %lu %*[k]%*[B]", str, &tmp_KB)) {
 			if (verbose >= 3) {
 				printf("Got %s with %lu\n", str, tmp_KB);
 			}
@@ -410,7 +410,6 @@ check_swap(float free_swap_mb, float total_swap_mb)
 	uint64_t usage_percentage = ((total_swap_mb - free_swap_mb) / total_swap_mb) * 100;
 
 	if (crit.is_percentage &&
-			usage_percentage >= 0 &&
 			crit.value != 0 &&
 			usage_percentage >= (100 - crit.value))
 	{
@@ -418,7 +417,6 @@ check_swap(float free_swap_mb, float total_swap_mb)
 	}
 
 	if (warn.is_percentage &&
-			usage_percentage >= 0 &&
 			warn.value != 0 &&
 			usage_percentage >= (100 - warn.value))
 	{
@@ -475,10 +473,9 @@ process_arguments (int argc, char **argv)
 					if (is_uint64(optarg, &warn.value)) {
 						if (warn.value > 100) {
 							usage4 (_("Warning threshold percentage must be <= 100!"));
-						} else {
-							break;
 						}
 					}
+					break;
 				} else {
 					/* It's Bytes */
 					warn.is_percentage = 0;
@@ -506,10 +503,9 @@ process_arguments (int argc, char **argv)
 					if (is_uint64(optarg, &crit.value)) {
 						if (crit.value> 100) {
 							usage4 (_("Critical threshold percentage must be <= 100!"));
-						} else {
-							break;
 						}
 					}
+					break;
 				} else {
 					/* It's Bytes */
 					crit.is_percentage = 0;
@@ -527,6 +523,7 @@ process_arguments (int argc, char **argv)
 			if ((no_swap_state = mp_translate_state(optarg)) == ERROR) {
 				usage4 (_("no-swap result must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			}
+			break;
 		case 'v':									/* verbose */
 			verbose++;
 			break;
