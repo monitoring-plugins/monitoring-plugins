@@ -63,6 +63,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
 #include <arpa/inet.h>
+#include <float.h>
 
 
 /** sometimes undefined system macros (quite a few, actually) **/
@@ -93,10 +94,6 @@ const char *email = "devel@monitoring-plugins.org";
 # define ICMP_UNREACH_FILTER_PROHIB 13
 # define ICMP_UNREACH_HOST_PRECEDENCE 14
 # define ICMP_UNREACH_PRECEDENCE_CUTOFF 15
-#endif
-
-#ifndef DBL_MAX
-# define DBL_MAX 9.9999999999e999
 #endif
 
 typedef unsigned short range_t;  /* type for get_range() -- unimplemented */
