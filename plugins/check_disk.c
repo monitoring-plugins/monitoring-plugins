@@ -287,7 +287,7 @@ main (int argc, char **argv)
       get_stats (path, &fsp);
 
       if (verbose >= 3) {
-        printf ("For %s, used_pct=%g free_pct=%g used_units=%llu free_units=%llu total_units=%llu used_inodes_pct=%g free_inodes_pct=%g fsp.fsu_blocksize=%llu mult=%llu\n",
+        printf ("For %s, used_pct=%g free_pct=%g used_units=%lu free_units=%lu total_units=%lu used_inodes_pct=%g free_inodes_pct=%g fsp.fsu_blocksize=%lu mult=%lu\n",
                 me->me_mountdir,
                 path->dused_pct,
                 path->dfree_pct,
@@ -1041,7 +1041,7 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
         get_fs_usage (p_list->best_match->me_mountdir, p_list->best_match->me_devname, &tmpfsp);
         get_path_stats(p_list, &tmpfsp);
         if (verbose >= 3)
-          printf("Group %s: adding %llu blocks sized %llu, (%s) used_units=%lu free_units=%llu total_units=%llu mult=%llu\n",
+          printf("Group %s: adding %lu blocks sized %lu, (%s) used_units=%lu free_units=%lu total_units=%lu mult=%lu\n",
                  p_list->group,
 				 tmpfsp.fsu_blocks,
 				 tmpfsp.fsu_blocksize,
@@ -1070,7 +1070,7 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
         first = 0;
       }
       if (verbose >= 3)
-        printf("Group %s now has: used_units=%llu free_units=%llu total_units=%llu fsu_blocksize=%llu mult=%llu\n",
+        printf("Group %s now has: used_units=%lu free_units=%lu total_units=%lu fsu_blocksize=%lu mult=%lu\n",
                p->group,
                p->dused_units,
                p->dfree_units,
