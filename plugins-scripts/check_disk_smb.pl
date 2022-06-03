@@ -22,7 +22,7 @@ require 5.004;
 use POSIX qw(setsid);
 use strict;
 use Getopt::Long;
-use vars qw($opt_P $opt_V $opt_h $opt_H $opt_s $opt_W $opt_u $opt_p $opt_w $opt_c $opt_a $opt_C $verbose);
+use vars qw($opt_P $opt_V $opt_h $opt_H $opt_s $opt_W $opt_u $opt_p $opt_w $opt_c $opt_a $opt_C $opt_t $verbose);
 use vars qw($PROGNAME);
 use FindBin;
 use lib "$FindBin::Bin";
@@ -37,28 +37,29 @@ sub print_usage ();
 $PROGNAME = "check_disk_smb";
 
 $ENV{'PATH'}='@TRUSTED_PATH@';
-$ENV{'BASH_ENV'}=''; 
+$ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
 Getopt::Long::Configure('bundling');
 GetOptions
-	("v"   => \$verbose, "verbose"    => \$verbose,
-	 "P=s" => \$opt_P, "port=s"     => \$opt_P,
-	 "V"   => \$opt_V, "version"    => \$opt_V,
-	 "h"   => \$opt_h, "help"       => \$opt_h,
-	 "w=s" => \$opt_w, "warning=s"  => \$opt_w,
-	 "c=s" => \$opt_c, "critical=s" => \$opt_c,
-	 "p=s" => \$opt_p, "password=s" => \$opt_p,
-	 "u=s" => \$opt_u, "username=s" => \$opt_u,
-	 "s=s" => \$opt_s, "share=s"    => \$opt_s,
-	 "W=s" => \$opt_W, "workgroup=s" => \$opt_W,
-	 "H=s" => \$opt_H, "hostname=s" => \$opt_H,
-	 "a=s" => \$opt_a, "address=s" => \$opt_a,
-	 "C=s" => \$opt_C, "configfile=s" => \$opt_C);
+  ("v"   => \$verbose, "verbose"    => \$verbose,
+   "t=i" => \$opt_t,  "timeout=i"  => \$opt_t,
+   "P=s" => \$opt_P, "port=s"     => \$opt_P,
+   "V"   => \$opt_V, "version"    => \$opt_V,
+   "h"   => \$opt_h, "help"       => \$opt_h,
+   "w=s" => \$opt_w, "warning=s"  => \$opt_w,
+   "c=s" => \$opt_c, "critical=s" => \$opt_c,
+   "p=s" => \$opt_p, "password=s" => \$opt_p,
+   "u=s" => \$opt_u, "username=s" => \$opt_u,
+   "s=s" => \$opt_s, "share=s"    => \$opt_s,
+   "W=s" => \$opt_W, "workgroup=s" => \$opt_W,
+   "H=s" => \$opt_H, "hostname=s" => \$opt_H,
+   "a=s" => \$opt_a, "address=s" => \$opt_a,
+   "C=s" => \$opt_C, "configfile=s" => \$opt_C);
 
 if ($opt_V) {
-	print_revision($PROGNAME,'@NP_VERSION@'); #'
-	exit $ERRORS{'UNKNOWN'};
+  print_revision($PROGNAME,'@NP_VERSION@'); #'
+  exit $ERRORS{'UNKNOWN'};
 }
 
 if ($opt_h) {print_help(); exit $ERRORS{'UNKNOWN'};}
@@ -96,22 +97,24 @@ my $crit = $1 if ($opt_c =~ /^([0-9]{1,2}\%?|100\%?|[0-9]+[kMG])$/);
 my $configfile = $opt_C if ($opt_C);
 usage("Unable to read config file $configfile\n") if ($configfile) && (! -r $configfile);
 
+if ($opt_t && $opt_t =~ /^([0-9]+)$/) { $TIMEOUT = $1; }
+
 # Execute the given command line and return anything it writes to STDOUT and/or
 # STDERR.  (This might be useful for other plugins, too, so it should possibly
 # be moved to utils.pm.)
 sub output_and_error_of {
-	local *CMD;
-	local $/ = undef;
-	my $pid = open CMD, "-|";
-	if (defined($pid)) {
-		if ($pid) {
-			return <CMD>;
-		} else {
-			open STDERR, ">&STDOUT" and exec @_;
-			exit(1);
-		}
-	}
-	return undef;
+  local *CMD;
+  local $/ = undef;
+  my $pid = open CMD, "-|";
+  if (defined($pid)) {
+    if ($pid) {
+      return <CMD>;
+    } else {
+      open STDERR, ">&STDOUT" and exec @_;
+      exit(1);
+    }
+  }
+  return undef;
 }
 
 # split the type from the unit value
@@ -121,50 +124,50 @@ my $warn_type;
 my $crit_type;
 
 if ($opt_w =~ /^([0-9]+)\%?$/) {
-	$warn = "$1";
-	$warn_type = "P";
+  $warn = "$1";
+  $warn_type = "P";
 } elsif ($opt_w =~ /^([0-9]+)k$/) {
-	$warn_type = "K";
-	$warn = $1;
+  $warn_type = "K";
+  $warn = $1;
 } elsif ($opt_w =~ /^([0-9]+)M$/) {
-	$warn_type = "K";
-	$warn = $1 * 1024;
+  $warn_type = "K";
+  $warn = $1 * 1024;
 } elsif ($opt_w =~ /^([0-9]+)G$/) {
-	$warn_type = "K";
-	$warn = $1 * 1048576;
+  $warn_type = "K";
+  $warn = $1 * 1048576;
 }
 if ($opt_c =~ /^([0-9]+)\%?$/) {
-	$crit = "$1";
-	$crit_type = "P";
+  $crit = "$1";
+  $crit_type = "P";
 } elsif ($opt_c =~ /^([0-9]+)k$/) {
-	$crit_type = "K";
-	$crit = $1;
+  $crit_type = "K";
+  $crit = $1;
 } elsif ($opt_c =~ /^([0-9]+)M$/) {
-	$crit_type = "K";
-	$crit = $1 * 1024;
+  $crit_type = "K";
+  $crit = $1 * 1024;
 } elsif ($opt_c =~ /^([0-9]+)G$/) {
-	$crit_type = "K";
-	$crit = $1 * 1048576;
+  $crit_type = "K";
+  $crit = $1 * 1048576;
 }
 
 # check if both warning and critical are percentage or size
 unless( ( $warn_type eq "P" && $crit_type eq "P" ) || ( $warn_type ne "P" && $crit_type ne "P" ) ){
-	$opt_w =~ s/\%/\%\%/g;
-	$opt_c =~ s/\%/\%\%/g;
-	usage("Both warning and critical should be same type- warning: $opt_w critical: $opt_c \n");
+  $opt_w =~ s/\%/\%\%/g;
+  $opt_c =~ s/\%/\%\%/g;
+  usage("Both warning and critical should be same type- warning: $opt_w critical: $opt_c \n");
 }
 
 # verify warning is less than critical
 if ( $warn_type eq "K") {
-	unless ( $warn > $crit) {
-		usage("Disk size: warning ($opt_w) should be greater than critical ($opt_c) \n");
-	}
+  unless ( $warn > $crit) {
+    usage("Disk size: warning ($opt_w) should be greater than critical ($opt_c) \n");
+  }
 }else{
-	unless ( $warn < $crit) {
-		$opt_w =~ s/\%/\%\%/g;
-		$opt_c =~ s/\%/\%\%/g;
-		usage("Percentage: warning ($opt_w) should be less than critical ($opt_c) \n");
-	}
+  unless ( $warn < $crit) {
+    $opt_w =~ s/\%/\%\%/g;
+    $opt_c =~ s/\%/\%\%/g;
+    usage("Percentage: warning ($opt_w) should be less than critical ($opt_c) \n");
+  }
 }
 
 my $workgroup = $1 if (defined($opt_W) && $opt_W =~ /(.*)/);
@@ -181,25 +184,25 @@ my $perfdata = "";
 my @lines = undef;
 
 # Just in case of problems, let's not hang the monitoring system
-$SIG{'ALRM'} = sub { 
-	print "No Answer from Client\n";
+$SIG{'ALRM'} = sub {
+  print "No Answer from Client\n";
     $SIG{'INT'} = 'IGNORE';
     kill(-2, $$);
-	exit $ERRORS{"UNKNOWN"};
+  exit $ERRORS{"UNKNOWN"};
 };
 alarm($TIMEOUT);
 
 # Execute a "du" on the share using smbclient program
 # get the results into $res
 my @cmd = (
-	$smbclient,
-	"//$host/$share",
-	"-U", "$user%$pass",
-	defined($workgroup) ? ("-W", $workgroup) : (),
-	defined($address) ? ("-I", $address) : (),
-	defined($opt_P) ? ("-p", $opt_P) : (),
-	defined($configfile) ? ("-s", $configfile) : (),
-	"-c", "du"
+  $smbclient,
+  "//$host/$share",
+  "-U", "$user%$pass",
+  defined($workgroup) ? ("-W", $workgroup) : (),
+  defined($address) ? ("-I", $address) : (),
+  defined($opt_P) ? ("-p", $opt_P) : (),
+  defined($configfile) ? ("-s", $configfile) : (),
+  "-c", "du"
 );
 
 print join(" ", @cmd) . "\n" if ($verbose);
@@ -215,78 +218,78 @@ alarm(0);
 $_ = $lines[$#lines-1];
 #print "$_\n";
 
-#Process the last line to get free space.  
+#Process the last line to get free space.
 #If line does not match required regexp, return an UNKNOWN error
 if (/\s*(\d*) blocks of size (\d*)\. (\d*) blocks available/) {
 
-	my ($avail_bytes) = $3 * $2;
-	my ($total_bytes) = $1 * $2;
-	my ($occupied_bytes) = $1 * $2 - $avail_bytes;
-	my ($avail) = $avail_bytes/1024;
-	my ($capper) = int(($3/$1)*100);
-	my ($mountpt) = "\\\\$host\\$share";
+  my ($avail_bytes) = $3 * $2;
+  my ($total_bytes) = $1 * $2;
+  my ($occupied_bytes) = $1 * $2 - $avail_bytes;
+  my ($avail) = $avail_bytes/1024;
+  my ($capper) = int(($3/$1)*100);
+  my ($mountpt) = "\\\\$host\\$share";
 
-	# TODO : why is the kB the standard unit for args ?
-	my ($warn_bytes) = $total_bytes - $warn * 1024;
-	if ($warn_type eq "P") {
-		$warn_bytes = $warn * $1 * $2 / 100;
-	}
-	my ($crit_bytes) = $total_bytes - $crit * 1024;
-	if ($crit_type eq "P") {
-		$crit_bytes = $crit * $1 * $2 / 100;
-	}
+  # TODO : why is the kB the standard unit for args ?
+  my ($warn_bytes) = $total_bytes - $warn * 1024;
+  if ($warn_type eq "P") {
+    $warn_bytes = $warn * $1 * $2 / 100;
+  }
+  my ($crit_bytes) = $total_bytes - $crit * 1024;
+  if ($crit_type eq "P") {
+    $crit_bytes = $crit * $1 * $2 / 100;
+  }
 
 
-	if (int($avail / 1024) > 0) {
-		$avail = int($avail / 1024);
-		if (int($avail /1024) > 0) {
-			$avail = (int(($avail / 1024)*100))/100;
-			$avail = $avail ."G";
-		} else {
-			$avail = $avail ."M";
-		}
-	} else {
-		$avail = $avail ."K";
-	}
+  if (int($avail / 1024) > 0) {
+    $avail = int($avail / 1024);
+    if (int($avail /1024) > 0) {
+      $avail = (int(($avail / 1024)*100))/100;
+      $avail = $avail ."G";
+    } else {
+      $avail = $avail ."M";
+    }
+  } else {
+    $avail = $avail ."K";
+  }
 
 #print ":$warn:$warn_type:\n";
 #print ":$crit:$crit_type:\n";
 #print ":$avail:$avail_bytes:$capper:$mountpt:\n";
-	$perfdata = "'" . $share . "'=" . $occupied_bytes . 'B;'
-		. $warn_bytes . ';'
-		. $crit_bytes . ';'
-		. '0;'
-		. $total_bytes;
+  $perfdata = "'" . $share . "'=" . $occupied_bytes . 'B;'
+    . $warn_bytes . ';'
+    . $crit_bytes . ';'
+    . '0;'
+    . $total_bytes;
 
-	if ($occupied_bytes > $crit_bytes) {
-		$state = "CRITICAL";
-		$answer = "CRITICAL: Only $avail ($capper%) free on $mountpt";
-	} elsif ( $occupied_bytes > $warn_bytes ) {
-		$state = "WARNING";
-		$answer = "WARNING: Only $avail ($capper%) free on $mountpt";
-	} else {
-		$answer = "Disk ok - $avail ($capper%) free on $mountpt";
-	}
+  if ($occupied_bytes > $crit_bytes) {
+    $state = "CRITICAL";
+    $answer = "CRITICAL: Only $avail ($capper%) free on $mountpt";
+  } elsif ( $occupied_bytes > $warn_bytes ) {
+    $state = "WARNING";
+    $answer = "WARNING: Only $avail ($capper%) free on $mountpt";
+  } else {
+    $answer = "Disk ok - $avail ($capper%) free on $mountpt";
+  }
 } else {
-	$answer = "Result from smbclient not suitable";
-	$state = "UNKNOWN";
-	foreach (@lines) {
-		if (/(Access denied|NT_STATUS_LOGON_FAILURE|NT_STATUS_ACCESS_DENIED)/) {
-			$answer = "Access Denied";
-			$state = "CRITICAL";
-			last;
-		}
-		if (/(Unknown host \w*|Connection.*failed)/) {
-			$answer = "$1";
-			$state = "CRITICAL";
-			last;
-		}
-		if (/(You specified an invalid share name|NT_STATUS_BAD_NETWORK_NAME)/) {
-			$answer = "Invalid share name \\\\$host\\$share";
-			$state = "CRITICAL";
-			last;
-		}
-	}
+  $answer = "Result from smbclient not suitable";
+  $state = "UNKNOWN";
+  foreach (@lines) {
+    if (/(Access denied|NT_STATUS_LOGON_FAILURE|NT_STATUS_ACCESS_DENIED)/) {
+      $answer = "Access Denied";
+      $state = "CRITICAL";
+      last;
+    }
+    if (/(Unknown host \w*|Connection.*failed)/) {
+      $answer = "$1";
+      $state = "CRITICAL";
+      last;
+    }
+    if (/(You specified an invalid share name|NT_STATUS_BAD_NETWORK_NAME)/) {
+      $answer = "Invalid share name \\\\$host\\$share";
+      $state = "CRITICAL";
+      last;
+    }
+  }
 }
 
 
@@ -297,19 +300,20 @@ print "$state\n" if ($verbose);
 exit $ERRORS{$state};
 
 sub print_usage () {
-	print "Usage: $PROGNAME -H <host> -s <share> -u <user> -p <password> 
-      -w <warn> -c <crit> [-W <workgroup>] [-P <port>] [-a <IP>] [-C <configfile>]\n";
+  print "Usage: $PROGNAME -H <host> -s <share> -u <user> -p <password>
+      -w <warn> -c <crit> [-W <workgroup>] [-P <port>] [-a <IP>] [-t timeout]
+      [-C <configfile>]\n";
 }
 
 sub print_help () {
-	print_revision($PROGNAME,'@NP_VERSION@');
-	print "Copyright (c) 2000 Michael Anthon/Karl DeBisschop
+  print_revision($PROGNAME,'@NP_VERSION@');
+  print "Copyright (c) 2000 Michael Anthon/Karl DeBisschop
 
 Perl Check SMB Disk plugin for monitoring
 
 ";
-	print_usage();
-	print "
+  print_usage();
+  print "
 -H, --hostname=HOST
    NetBIOS name of the server
 -s, --share=STRING
@@ -326,11 +330,13 @@ Perl Check SMB Disk plugin for monitoring
    Percent of used space at which a warning will be generated (Default: 85%)
 -c, --critical=INTEGER or INTEGER[kMG]
    Percent of used space at which a critical will be generated (Defaults: 95%)
+-t, --timeout=INTEGER
+   Seconds before connection times out (Default: 15)
 -P, --port=INTEGER
    Port to be used to connect to. Some Windows boxes use 139, others 445 (Defaults to smbclient default)
 -C, --configfile=STRING
    Path to configfile which should be used by smbclient (Defaults to smb.conf of your smb installation)
-   
+
    If thresholds are followed by either a k, M, or G then check to see if that
    much disk space is available (kilobytes, Megabytes, Gigabytes)
 
@@ -338,5 +344,5 @@ Perl Check SMB Disk plugin for monitoring
    Warning (remaining) disk space should be greater than critical.
 
 ";
-	support();
+  support();
 }
