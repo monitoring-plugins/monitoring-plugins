@@ -193,6 +193,7 @@ int followsticky = STICKY_NONE;
 int use_ssl = FALSE;
 int use_sni = TRUE;
 int check_cert = FALSE;
+int continue_after_check_cert = FALSE;
 typedef union {
   struct curl_slist* to_info;
   struct curl_certinfo* to_certinfo;
@@ -754,7 +755,9 @@ check_http (void)
          * and we actually have OpenSSL in the monitoring tools
          */
         result = np_net_ssl_check_certificate(cert, days_till_exp_warn, days_till_exp_crit);
-        return result;
+        if (continue_after_check_cert == FALSE) {
+          return result;
+        }
 #else /* USE_OPENSSL */
         die (STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates - OpenSSL callback used and not linked against OpenSSL\n");
 #endif /* USE_OPENSSL */
@@ -794,13 +797,17 @@ GOT_FIRST_CERT:
           }
           BIO_free (cert_BIO);
           result = np_net_ssl_check_certificate(cert, days_till_exp_warn, days_till_exp_crit);
-          return result;
+          if (continue_after_check_cert == FALSE) {
+            return result;
+          }
 #else /* USE_OPENSSL */
           /* We assume we don't have OpenSSL and np_net_ssl_check_certificate at our disposal,
            * so we use the libcurl CURLINFO data
            */
           result = net_noopenssl_check_certificate(&cert_ptr, days_till_exp_warn, days_till_exp_crit);
-          return result;
+          if (continue_after_check_cert == FALSE) {
+            return result;
+          }
 #endif /* USE_OPENSSL */
         } else {
           snprintf (msg, DEFAULT_BUFFER_SIZE, _("Cannot retrieve certificates - cURL returned %d - %s"),
@@ -1211,6 +1218,7 @@ process_arguments (int argc, char **argv)
     INVERT_REGEX = CHAR_MAX + 1,
     SNI_OPTION,
     MAX_REDIRS_OPTION,
+    CONTINUE_AFTER_CHECK_CERT,
     CA_CERT_OPTION,
     HTTP_VERSION_OPTION,
     AUTOMATIC_DECOMPRESSION
@@ -1244,6 +1252,7 @@ process_arguments (int argc, char **argv)
     {"private-key", required_argument, 0, 'K'},
     {"ca-cert", required_argument, 0, CA_CERT_OPTION},
     {"verify-cert", no_argument, 0, 'D'},
+    {"continue-after-certificate", no_argument, 0, CONTINUE_AFTER_CHECK_CERT},
     {"useragent", required_argument, 0, 'A'},
     {"header", required_argument, 0, 'k'},
     {"no-body", no_argument, 0, 'N'},
@@ -1402,6 +1411,11 @@ process_arguments (int argc, char **argv)
       }
       check_cert = TRUE;
       goto enable_ssl;
+#endif
+    case CONTINUE_AFTER_CHECK_CERT: /* don't stop after the certificate is checked */
+#ifdef HAVE_SSL
+      continue_after_check_cert = TRUE;
+      break;
 #endif
     case 'J': /* use client certificate */
 #ifdef LIBCURL_FEATURE_SSL
@@ -1800,7 +1814,11 @@ print_help (void)
 #endif
   printf (" %s\n", "-C, --certificate=INTEGER[,INTEGER]");
   printf ("    %s\n", _("Minimum number of days a certificate has to be valid. Port defaults to 443"));
-  printf ("    %s\n", _("(when this option is used the URL is not checked.)"));
+  printf ("    %s\n", _("(when this option is used the URL is not checked by default. You can use"));
+  printf ("    %s\n", _(" --continue-after-certificate to override this behavior)"));
+  printf (" %s\n", "--continue-after-certificate");
+  printf ("    %s\n", _("Allows the HTTP check to continue after performing the certificate check."));
+  printf ("    %s\n", _("Does nothing unless -C is used."));
   printf (" %s\n", "-J, --client-cert=FILE");
   printf ("   %s\n", _("Name of file that contains the client certificate (PEM format)"));
   printf ("   %s\n", _("to be used in establishing the SSL session"));
