@@ -53,6 +53,7 @@ jobs:
 
     - name: Install packages
       run: |
+        sudo apt update
         sudo apt-get install -y --no-install-recommends m4 gettext automake autoconf make build-essential
         sudo apt-get install -y --no-install-recommends perl autotools-dev libdbi-dev libldap2-dev libpq-dev \
                                                         libmysqlclient-dev libradcli-dev libkrb5-dev libdbi0-dev \
@@ -62,10 +63,10 @@ jobs:
       run: |
         ./tools/setup
         ./configure --enable-libtap
-    
+
     - name: Build
       run: |
         make
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
+      uses: github/codeql-action/analyze@v2
