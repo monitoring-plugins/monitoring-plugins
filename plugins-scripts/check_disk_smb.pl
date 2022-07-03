@@ -22,7 +22,7 @@ require 5.004;
 use POSIX qw(setsid);
 use strict;
 use Getopt::Long;
-use vars qw($opt_P $opt_V $opt_h $opt_H $opt_s $opt_W $opt_u $opt_p $opt_w $opt_c $opt_a $opt_C $verbose);
+use vars qw($opt_P $opt_V $opt_h $opt_H $opt_s $opt_W $opt_u $opt_p $opt_w $opt_c $opt_a $opt_C $opt_t $verbose);
 use vars qw($PROGNAME);
 use FindBin;
 use lib "$FindBin::Bin";
@@ -43,6 +43,7 @@ $ENV{'ENV'}='';
 Getopt::Long::Configure('bundling');
 GetOptions
 	("v"   => \$verbose, "verbose"    => \$verbose,
+   "t=i" => \$opt_t,  "timeout=i"  => \$opt_t,
 	 "P=s" => \$opt_P, "port=s"     => \$opt_P,
 	 "V"   => \$opt_V, "version"    => \$opt_V,
 	 "h"   => \$opt_h, "help"       => \$opt_h,
@@ -95,6 +96,8 @@ my $crit = $1 if ($opt_c =~ /^([0-9]{1,2}\%?|100\%?|[0-9]+[kMG])$/);
 ($opt_C) || ($opt_C = shift @ARGV) || ($opt_C = "");
 my $configfile = $opt_C if ($opt_C);
 usage("Unable to read config file $configfile\n") if ($configfile) && (! -r $configfile);
+
+if ($opt_t && $opt_t =~ /^([0-9]+)$/) { $TIMEOUT = $1; }
 
 # Execute the given command line and return anything it writes to STDOUT and/or
 # STDERR.  (This might be useful for other plugins, too, so it should possibly
@@ -298,7 +301,8 @@ exit $ERRORS{$state};
 
 sub print_usage () {
 	print "Usage: $PROGNAME -H <host> -s <share> -u <user> -p <password> 
-      -w <warn> -c <crit> [-W <workgroup>] [-P <port>] [-a <IP>] [-C <configfile>]\n";
+      -w <warn> -c <crit> [-W <workgroup>] [-P <port>] [-a <IP>] [-t timeout]
+      [-C <configfile>]\n";
 }
 
 sub print_help () {
@@ -326,6 +330,8 @@ Perl Check SMB Disk plugin for monitoring
    Percent of used space at which a warning will be generated (Default: 85%)
 -c, --critical=INTEGER or INTEGER[kMG]
    Percent of used space at which a critical will be generated (Defaults: 95%)
+-t, --timeout=INTEGER
+   Seconds before connection times out (Default: 15)
 -P, --port=INTEGER
    Port to be used to connect to. Some Windows boxes use 139, others 445 (Defaults to smbclient default)
 -C, --configfile=STRING

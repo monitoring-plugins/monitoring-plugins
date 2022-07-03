@@ -58,6 +58,7 @@ enum {
 
 #ifdef HAVE_SSL
 int check_cert = FALSE;
+int continue_after_check_cert = FALSE;
 int ssl_version = 0;
 int days_till_exp_warn, days_till_exp_crit;
 char *randbuff;
@@ -205,7 +206,8 @@ process_arguments (int argc, char **argv)
   enum {
     INVERT_REGEX = CHAR_MAX + 1,
     SNI_OPTION,
-    MAX_REDIRS_OPTION
+    MAX_REDIRS_OPTION,
+    CONTINUE_AFTER_CHECK_CERT
   };
 
   int option = 0;
@@ -233,6 +235,7 @@ process_arguments (int argc, char **argv)
     {"certificate", required_argument, 0, 'C'},
     {"client-cert", required_argument, 0, 'J'},
     {"private-key", required_argument, 0, 'K'},
+    {"continue-after-certificate", no_argument, 0, CONTINUE_AFTER_CHECK_CERT},
     {"useragent", required_argument, 0, 'A'},
     {"header", required_argument, 0, 'k'},
     {"no-body", no_argument, 0, 'N'},
@@ -331,6 +334,11 @@ process_arguments (int argc, char **argv)
       }
       check_cert = TRUE;
       goto enable_ssl;
+#endif
+    case CONTINUE_AFTER_CHECK_CERT: /* don't stop after the certificate is checked */
+#ifdef HAVE_SSL
+      continue_after_check_cert = TRUE;
+      break;
 #endif
     case 'J': /* use client certificate */
 #ifdef HAVE_SSL
@@ -981,9 +989,11 @@ check_http (void)
     elapsed_time_ssl = (double)microsec_ssl / 1.0e6;
     if (check_cert == TRUE) {
       result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
-      if (sd) close(sd);
-      np_net_ssl_cleanup();
-      return result;
+      if (continue_after_check_cert == FALSE) {
+        if (sd) close(sd);
+        np_net_ssl_cleanup();
+        return result;
+      }
     }
   }
 #endif /* HAVE_SSL */
@@ -1608,7 +1618,11 @@ print_help (void)
   printf ("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
   printf (" %s\n", "-C, --certificate=INTEGER[,INTEGER]");
   printf ("    %s\n", _("Minimum number of days a certificate has to be valid. Port defaults to 443"));
-  printf ("    %s\n", _("(when this option is used the URL is not checked.)"));
+  printf ("    %s\n", _("(when this option is used the URL is not checked by default. You can use"));
+  printf ("    %s\n", _(" --continue-after-certificate to override this behavior)"));
+  printf (" %s\n", "--continue-after-certificate");
+  printf ("    %s\n", _("Allows the HTTP check to continue after performing the certificate check."));
+  printf ("    %s\n", _("Does nothing unless -C is used."));
   printf (" %s\n", "-J, --client-cert=FILE");
   printf ("   %s\n", _("Name of file that contains the client certificate (PEM format)"));
   printf ("   %s\n", _("to be used in establishing the SSL session"));
