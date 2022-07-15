@@ -1004,7 +1004,7 @@ print_usage (void)
   printf ("%s\n", _("Usage:"));
   printf (" %s {-w absolute_limit |-W  percentage_limit} {-c absolute_limit|-C percentage_limit} {-p path | -x device}\n", progname);
   printf ("[-C] [-E] [-e] [-f] [-g group ] [-k] [-l] [-M] [-m] [-R path ] [-r path ]\n");
-  printf ("[-t timeout] [-u unit] [-v] [-X type] [-N type]\n\n");
+  printf ("[-t timeout] [-u unit] [-v] [-X type] [-N type]\n");
 }
 
 void
