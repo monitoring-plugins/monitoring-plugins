@@ -52,11 +52,13 @@ enum {
   MAX_IPV4_HOSTLENGTH = 255,
   HTTP_PORT = 80,
   HTTPS_PORT = 443,
-  MAX_PORT = 65535
+  MAX_PORT = 65535,
+  DEFAULT_MAX_REDIRS = 15
 };
 
 #ifdef HAVE_SSL
 int check_cert = FALSE;
+int continue_after_check_cert = FALSE;
 int ssl_version = 0;
 int days_till_exp_warn, days_till_exp_crit;
 char *randbuff;
@@ -72,7 +74,7 @@ int maximum_age = -1;
 
 enum {
   REGS = 2,
-  MAX_RE_SIZE = 256
+  MAX_RE_SIZE = 1024
 };
 #include "regex.h"
 regex_t preg;
@@ -125,7 +127,7 @@ int sd;
 int min_page_len = 0;
 int max_page_len = 0;
 int redir_depth = 0;
-int max_depth = 15;
+int max_depth = DEFAULT_MAX_REDIRS;
 char *http_method;
 char *http_method_proxy;
 char *http_post_data;
@@ -203,7 +205,9 @@ process_arguments (int argc, char **argv)
 
   enum {
     INVERT_REGEX = CHAR_MAX + 1,
-    SNI_OPTION
+    SNI_OPTION,
+    MAX_REDIRS_OPTION,
+    CONTINUE_AFTER_CHECK_CERT
   };
 
   int option = 0;
@@ -231,6 +235,7 @@ process_arguments (int argc, char **argv)
     {"certificate", required_argument, 0, 'C'},
     {"client-cert", required_argument, 0, 'J'},
     {"private-key", required_argument, 0, 'K'},
+    {"continue-after-certificate", no_argument, 0, CONTINUE_AFTER_CHECK_CERT},
     {"useragent", required_argument, 0, 'A'},
     {"header", required_argument, 0, 'k'},
     {"no-body", no_argument, 0, 'N'},
@@ -242,6 +247,7 @@ process_arguments (int argc, char **argv)
     {"use-ipv6", no_argument, 0, '6'},
     {"extended-perfdata", no_argument, 0, 'E'},
     {"show-body", no_argument, 0, 'B'},
+    {"max-redirs", required_argument, 0, MAX_REDIRS_OPTION},
     {0, 0, 0, 0}
   };
 
@@ -329,6 +335,11 @@ process_arguments (int argc, char **argv)
       check_cert = TRUE;
       goto enable_ssl;
 #endif
+    case CONTINUE_AFTER_CHECK_CERT: /* don't stop after the certificate is checked */
+#ifdef HAVE_SSL
+      continue_after_check_cert = TRUE;
+      break;
+#endif
     case 'J': /* use client certificate */
 #ifdef HAVE_SSL
       test_file(optarg);
@@ -373,6 +384,13 @@ process_arguments (int argc, char **argv)
     case SNI_OPTION:
       use_sni = TRUE;
       break;
+    case MAX_REDIRS_OPTION:
+      if (!is_intnonneg (optarg))
+        usage2 (_("Invalid max_redirs count"), optarg);
+      else {
+        max_depth = atoi (optarg);
+      }
+      break;    
     case 'f': /* onredirect */
       if (!strcmp (optarg, "stickyport"))
         onredirect = STATE_DEPENDENT, followsticky = STICKY_HOST|STICKY_PORT;
@@ -971,9 +989,11 @@ check_http (void)
     elapsed_time_ssl = (double)microsec_ssl / 1.0e6;
     if (check_cert == TRUE) {
       result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
-      if (sd) close(sd);
-      np_net_ssl_cleanup();
-      return result;
+      if (continue_after_check_cert == FALSE) {
+        if (sd) close(sd);
+        np_net_ssl_cleanup();
+        return result;
+      }
     }
   }
 #endif /* HAVE_SSL */
@@ -1453,8 +1473,8 @@ redir (char *pos, char *status_line)
       !strncmp(server_address, addr, MAX_IPV4_HOSTLENGTH) &&
       (host_name && !strncmp(host_name, addr, MAX_IPV4_HOSTLENGTH)) &&
       !strcmp(server_url, url))
-    die (STATE_WARNING,
-         _("HTTP WARNING - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
+    die (STATE_CRITICAL,
+         _("HTTP CRITICAL - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
          type, addr, i, url, (display_html ? "</A>" : ""));
 
   strcpy (server_type, type);
@@ -1567,6 +1587,10 @@ print_help (void)
 
   print_usage ();
 
+#ifdef HAVE_SSL
+  printf (_("In the first form, make an HTTP request."));
+  printf (_("In the second form, connect to the server and check the TLS certificate."));
+#endif
   printf (_("NOTE: One or both of -H and -I must be specified"));
 
   printf ("\n");
@@ -1594,7 +1618,11 @@ print_help (void)
   printf ("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
   printf (" %s\n", "-C, --certificate=INTEGER[,INTEGER]");
   printf ("    %s\n", _("Minimum number of days a certificate has to be valid. Port defaults to 443"));
-  printf ("    %s\n", _("(when this option is used the URL is not checked.)"));
+  printf ("    %s\n", _("(when this option is used the URL is not checked by default. You can use"));
+  printf ("    %s\n", _(" --continue-after-certificate to override this behavior)"));
+  printf (" %s\n", "--continue-after-certificate");
+  printf ("    %s\n", _("Allows the HTTP check to continue after performing the certificate check."));
+  printf ("    %s\n", _("Does nothing unless -C is used."));
   printf (" %s\n", "-J, --client-cert=FILE");
   printf ("   %s\n", _("Name of file that contains the client certificate (PEM format)"));
   printf ("   %s\n", _("to be used in establishing the SSL session"));
@@ -1653,9 +1681,11 @@ print_help (void)
   printf (" %s\n", "-f, --onredirect=<ok|warning|critical|follow|sticky|stickyport>");
   printf ("    %s\n", _("How to handle redirected pages. sticky is like follow but stick to the"));
   printf ("    %s\n", _("specified IP address. stickyport also ensures port stays the same."));
+  printf (" %s\n", "--max-redirs=INTEGER");
+  printf ("    %s", _("Maximal number of redirects (default: "));
+  printf ("%d)\n", DEFAULT_MAX_REDIRS);
   printf (" %s\n", "-m, --pagesize=INTEGER<:INTEGER>");
   printf ("    %s\n", _("Minimum page size required (bytes) : Maximum page size required (bytes)"));
-
   printf (UT_WARN_CRIT);
 
   printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
@@ -1726,6 +1756,8 @@ print_usage (void)
   printf ("       [-b proxy_auth] [-f <ok|warning|critcal|follow|sticky|stickyport>]\n");
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
-  printf ("       [-A string] [-k string] [-S <version>] [--sni] [-C <warn_age>[,<crit_age>]]\n");
+  printf ("       [-A string] [-k string] [-S <version>] [--sni]\n");
   printf ("       [-T <content-type>] [-j method]\n");
+  printf (" %s -H <vhost> | -I <IP-address> -C <warn_age>[,<crit_age>]\n",progname);
+  printf ("       [-p <port>] [-t <timeout>] [-4|-6] [--sni]\n");
 }

@@ -14,6 +14,7 @@ This file documents the major additions and syntax changes between releases.
 	check_dns: Accept CIDR
 	check_dns: allow unsorted addresses
 	check_dns: allow forcing complete match of all addresses
+	check_dns: option to expect NXDOMAIN
 	check_apt: add --only-critical switch
 	check_apt: add -l/--list option to print packages
         check_file_age: add range checking

@@ -27,7 +27,7 @@ struct parameter_list
   uintmax_t total, available, available_to_root, used,
     inodes_free, inodes_free_to_root, inodes_used, inodes_total;
   double dfree_pct, dused_pct;
-  double dused_units, dfree_units, dtotal_units;
+  uint64_t dused_units, dfree_units, dtotal_units;
   double dused_inodes_percent, dfree_inodes_percent;
 };
 

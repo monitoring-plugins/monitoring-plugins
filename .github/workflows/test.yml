@@ -1,0 +1,47 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+
+jobs:
+#  macos:
+#    ...
+  linux:
+    runs-on: ubuntu-latest
+    name: Running tests on ${{ matrix.distro }}
+    strategy:
+      fail-fast: false
+      matrix:
+        distro:
+          - 'debian:testing'
+          #...
+        include:
+          - distro: 'debian:testing'
+            prepare: .github/prepare_debian.sh
+          #...
+    steps:
+      - name: Git clone repository
+        uses: actions/checkout@v2
+      #- name: Setup tmate session, see https://github.com/marketplace/actions/debugging-with-tmate
+      #  uses: mxschmitt/action-tmate@v3
+      - name: Run the tests on ${{ matrix.distro }}
+        run: |
+          docker volume create --driver local --opt type=tmpfs --opt device=tmpfs --opt o=size=100m,uid=1000 tmp-vol
+          docker run \
+              -e NPTEST_ACCEPTDEFAULT=1 \
+              -e NPTEST_CACHE="/src/.github/NPTest.cache" \
+              -w /src -v ${PWD}:/src \
+              --tmpfs /media/ramdisk1 \
+              -v /var/run/utmp:/var/run/utmp \
+              --mount source=tmp-vol,destination=/src,target=/media/ramdisk2 \
+              ${{ matrix.distro }} \
+              /bin/sh -c '${{ matrix.prepare }} && \
+                tools/setup && \
+                ./configure --enable-libtap --with-ipv6=no && \
+                make && \
+                make test'
+          docker container prune -f
+          docker volume prune -f

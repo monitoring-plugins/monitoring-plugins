@@ -11,8 +11,8 @@ use NPTest;
 my $res;
 
 my $loadValue = "[0-9]+\.?[0-9]+";
-my $successOutput = "/^OK - load average: $loadValue, $loadValue, $loadValue/";
-my $failureOutput = "/^CRITICAL - load average: $loadValue, $loadValue, $loadValue/";
+my $successOutput = "/^LOAD OK - load average: $loadValue, $loadValue, $loadValue/";
+my $failureOutput = "/^LOAD CRITICAL - load average: $loadValue, $loadValue, $loadValue/";
 
 plan tests => 11;
 

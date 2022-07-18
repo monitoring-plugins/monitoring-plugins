@@ -121,6 +121,7 @@ char *authproto = NULL;
 char *privproto = NULL;
 char *authpasswd = NULL;
 char *privpasswd = NULL;
+int nulloid = STATE_UNKNOWN;
 char **oids = NULL;
 size_t oids_size = 0;
 char *label;
@@ -478,9 +479,20 @@ main (int argc, char **argv)
 		/* Process this block for numeric comparisons */
 		/* Make some special values,like Timeticks numeric only if a threshold is defined */
 		if (thlds[i]->warning || thlds[i]->critical || calculate_rate) {
+			if (verbose > 2) {
+				print_thresholds("  thresholds", thlds[i]);
+			}
 			ptr = strpbrk (show, "-0123456789");
-			if (ptr == NULL)
-				die (STATE_UNKNOWN,_("No valid data returned (%s)\n"), show);
+			if (ptr == NULL){
+				if (nulloid == 3)
+					die (STATE_UNKNOWN,_("No valid data returned (%s)\n"), show);
+				else if (nulloid == 0)
+					die (STATE_OK,_("No valid data returned (%s)\n"), show);
+				else if (nulloid == 1)
+					die (STATE_WARNING,_("No valid data returned (%s)\n"), show);
+				else if (nulloid == 2)
+					die (STATE_CRITICAL,_("No valid data returned (%s)\n"), show);
+			}
 			while (i >= response_size) {
 				response_size += OID_COUNT_STEP;
 				response_value = realloc(response_value, response_size * sizeof(*response_value));
@@ -586,20 +598,23 @@ main (int argc, char **argv)
 			len = sizeof(perfstr)-strlen(perfstr)-1;
 			strncat(perfstr, show, len>ptr-show ? ptr-show : len);
 
+			if (type)
+				strncat(perfstr, type, sizeof(perfstr)-strlen(perfstr)-1);
+
 			if (warning_thresholds) {
 				strncat(perfstr, ";", sizeof(perfstr)-strlen(perfstr)-1);
-				strncat(perfstr, warning_thresholds, sizeof(perfstr)-strlen(perfstr)-1);
+				if(thlds[i]->warning && thlds[i]->warning->text)
+					strncat(perfstr, thlds[i]->warning->text, sizeof(perfstr)-strlen(perfstr)-1);
 			}
 
 			if (critical_thresholds) {
 				if (!warning_thresholds)
 					strncat(perfstr, ";", sizeof(perfstr)-strlen(perfstr)-1);
 				strncat(perfstr, ";", sizeof(perfstr)-strlen(perfstr)-1);
-				strncat(perfstr, critical_thresholds, sizeof(perfstr)-strlen(perfstr)-1);
+				if(thlds[i]->critical && thlds[i]->critical->text)
+					strncat(perfstr, thlds[i]->critical->text, sizeof(perfstr)-strlen(perfstr)-1);
 			}
 
-			if (type)
-				strncat(perfstr, type, sizeof(perfstr)-strlen(perfstr)-1);
 			strncat(perfstr, " ", sizeof(perfstr)-strlen(perfstr)-1);
 		}
 	}
@@ -665,6 +680,7 @@ process_arguments (int argc, char **argv)
 		{"oid", required_argument, 0, 'o'},
 		{"object", required_argument, 0, 'o'},
 		{"delimiter", required_argument, 0, 'd'},
+		{"nulloid", required_argument, 0, 'z'},
 		{"output-delimiter", required_argument, 0, 'D'},
 		{"string", required_argument, 0, 's'},
 		{"timeout", required_argument, 0, 't'},
@@ -713,7 +729,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "nhvVO46t:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:N:L:U:a:x:A:X:",
+		c = getopt_long (argc, argv, "nhvVO46t:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:N:L:U:a:x:A:X:z:",
 									 longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -835,6 +851,12 @@ process_arguments (int argc, char **argv)
 				else if (c == 'e')
 					eval_method[j+1] |= CRIT_PRESENT;
 			}
+			break;
+		case 'z':	/* Null OID Return Check */
+			if (!is_integer (optarg))
+				usage2 (_("Exit status must be a positive integer"), optarg);
+			else
+				nulloid = atoi(optarg);
 			break;
 		case 's':									/* string or substring */
 			strncpy (string_value, optarg, sizeof (string_value) - 1);
@@ -1244,7 +1266,7 @@ print_help (void)
 	printf ("(%s \"%s\")\n", _("default is") ,DEFAULT_COMMUNITY);
 	printf (" %s\n", "-U, --secname=USERNAME");
 	printf ("    %s\n", _("SNMPv3 username"));
-	printf (" %s\n", "-A, --authpassword=PASSWORD");
+	printf (" %s\n", "-A, --authpasswd=PASSWORD");
 	printf ("    %s\n", _("SNMPv3 authentication password"));
 	printf (" %s\n", "-X, --privpasswd=PASSWORD");
 	printf ("    %s\n", _("SNMPv3 privacy password"));
@@ -1259,6 +1281,14 @@ print_help (void)
 	printf ("    %s \"%s\"\n", _("Delimiter to use when parsing returned data. Default is"), DEFAULT_DELIMITER);
 	printf ("    %s\n", _("Any data on the right hand side of the delimiter is considered"));
 	printf ("    %s\n", _("to be the data that should be used in the evaluation."));
+	printf (" %s\n", "-z, --nulloid=#");
+	printf ("    %s\n", _("If the check returns a 0 length string or NULL value"));
+	printf ("    %s\n", _("This option allows you to choose what status you want it to exit"));
+	printf ("    %s\n", _("Excluding this option renders the default exit of 3(STATE_UNKNOWN)"));
+	printf ("    %s\n", _("0 = OK"));
+	printf ("    %s\n", _("1 = WARNING"));
+	printf ("    %s\n", _("2 = CRITICAL"));
+	printf ("    %s\n", _("3 = UNKNOWN"));
 
 	/* Tests Against Integers */
 	printf (" %s\n", "-w, --warning=THRESHOLD(s)");

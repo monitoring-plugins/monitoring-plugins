@@ -3,16 +3,7 @@
 # Test check_http by having an actual HTTP server running
 #
 # To create the https server certificate:
-# openssl req -new -x509 -keyout server-key.pem -out server-cert.pem -days 3650 -nodes
-# to create a new expired certificate:
-# faketime '2008-01-01 12:00:00' openssl req -new -x509 -keyout expired-key.pem -out expired-cert.pem -days 1 -nodes
-# Country Name (2 letter code) [AU]:DE
-# State or Province Name (full name) [Some-State]:Bavaria
-# Locality Name (eg, city) []:Munich
-# Organization Name (eg, company) [Internet Widgits Pty Ltd]:Monitoring Plugins
-# Organizational Unit Name (eg, section) []:
-# Common Name (e.g. server FQDN or YOUR name) []:Monitoring Plugins
-# Email Address []:devel@monitoring-plugins.org
+# ./certs/generate-certs.sh
 
 use strict;
 use Test::More;
@@ -23,7 +14,7 @@ $ENV{'LC_TIME'} = "C";
 
 my $common_tests = 70;
 my $virtual_port_tests = 8;
-my $ssl_only_tests = 8;
+my $ssl_only_tests = 12;
 # Check that all dependent modules are available
 eval "use HTTP::Daemon 6.01;";
 plan skip_all => 'HTTP::Daemon >= 6.01 required' if $@;
@@ -59,120 +50,151 @@ $HTTP::Daemon::VERSION = "1.00";
 my $port_http = 50000 + int(rand(1000));
 my $port_https = $port_http + 1;
 my $port_https_expired = $port_http + 2;
+my $port_https_clientcert = $port_http + 3;
 
 # This array keeps sockets around for implementing timeouts
 my @persist;
 
 # Start up all servers
 my @pids;
-my $pid = fork();
-if ($pid) {
-	# Parent
-	push @pids, $pid;
-	if (exists $servers->{https}) {
-		# Fork a normal HTTPS server
-		$pid = fork();
-		if ($pid) {
-			# Parent
-			push @pids, $pid;
-			# Fork an expired cert server
-			$pid = fork();
-			if ($pid) {
-				push @pids, $pid;
-			} else {
-				my $d = HTTP::Daemon::SSL->new(
-					LocalPort => $port_https_expired,
-					LocalAddr => "127.0.0.1",
-					SSL_cert_file => "$Bin/certs/expired-cert.pem",
-					SSL_key_file => "$Bin/certs/expired-key.pem",
-				) || die;
-				print "Please contact https expired at: <URL:", $d->url, ">\n";
-				run_server( $d );
-				exit;
-			}
-		} else {
-			my $d = HTTP::Daemon::SSL->new(
-				LocalPort => $port_https,
-				LocalAddr => "127.0.0.1",
-				SSL_cert_file => "$Bin/certs/server-cert.pem",
-				SSL_key_file => "$Bin/certs/server-key.pem",
-			) || die;
-			print "Please contact https at: <URL:", $d->url, ">\n";
-			run_server( $d );
-			exit;
-		}
-	}
-	# give our webservers some time to startup
-	sleep(1);
-} else {
-	# Child
-	#print "child\n";
+# Fork a HTTP server
+my $pid = fork;
+defined $pid or die "Failed to fork";
+if (!$pid) {
+	undef @pids;
 	my $d = HTTP::Daemon->new(
 		LocalPort => $port_http,
 		LocalAddr => "127.0.0.1",
 	) || die;
 	print "Please contact http at: <URL:", $d->url, ">\n";
 	run_server( $d );
-	exit;
+	die "webserver stopped";
 }
+push @pids, $pid;
+
+if (exists $servers->{https}) {
+	# Fork a normal HTTPS server
+	$pid = fork;
+	defined $pid or die "Failed to fork";
+	if (!$pid) {
+		undef @pids;
+		# closing the connection after -C cert checks make the daemon exit with a sigpipe otherwise
+		local $SIG{'PIPE'} = 'IGNORE';
+		my $d = HTTP::Daemon::SSL->new(
+			LocalPort => $port_https,
+			LocalAddr => "127.0.0.1",
+			SSL_cert_file => "$Bin/certs/server-cert.pem",
+			SSL_key_file => "$Bin/certs/server-key.pem",
+		) || die;
+		print "Please contact https at: <URL:", $d->url, ">\n";
+		run_server( $d );
+		die "webserver stopped";
+	}
+	push @pids, $pid;
+
+	# Fork an expired cert server
+	$pid = fork;
+	defined $pid or die "Failed to fork";
+	if (!$pid) {
+		undef @pids;
+		# closing the connection after -C cert checks make the daemon exit with a sigpipe otherwise
+		local $SIG{'PIPE'} = 'IGNORE';
+		my $d = HTTP::Daemon::SSL->new(
+			LocalPort => $port_https_expired,
+			LocalAddr => "127.0.0.1",
+			SSL_cert_file => "$Bin/certs/expired-cert.pem",
+			SSL_key_file => "$Bin/certs/expired-key.pem",
+		) || die;
+		print "Please contact https expired at: <URL:", $d->url, ">\n";
+		run_server( $d );
+		die "webserver stopped";
+	}
+	push @pids, $pid;
+
+	# Fork an client cert expecting server
+	$pid = fork;
+	defined $pid or die "Failed to fork";
+	if (!$pid) {
+		undef @pids;
+		# closing the connection after -C cert checks make the daemon exit with a sigpipe otherwise
+		local $SIG{'PIPE'} = 'IGNORE';
+		my $d = HTTP::Daemon::SSL->new(
+			LocalPort => $port_https_clientcert,
+			LocalAddr => "127.0.0.1",
+			SSL_cert_file => "$Bin/certs/server-cert.pem",
+			SSL_key_file => "$Bin/certs/server-key.pem",
+			SSL_verify_mode => IO::Socket::SSL->SSL_VERIFY_PEER | IO::Socket::SSL->SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+			SSL_ca_file => "$Bin/certs/clientca-cert.pem",
+		) || die;
+		print "Please contact https client cert at: <URL:", $d->url, ">\n";
+		run_server( $d );
+		die "webserver stopped";
+	}
+	push @pids, $pid;
+}
+
+# give our webservers some time to startup
+sleep(3);
 
 # Run the same server on http and https
 sub run_server {
 	my $d = shift;
-	MAINLOOP: while (my $c = $d->accept ) {
-		while (my $r = $c->get_request) {
-			if ($r->method eq "GET" and $r->url->path =~ m^/statuscode/(\d+)^) {
-				$c->send_basic_header($1);
-				$c->send_crlf;
-			} elsif ($r->method eq "GET" and $r->url->path =~ m^/file/(.*)^) {
-				$c->send_basic_header;
-				$c->send_crlf;
-				$c->send_file_response("$Bin/var/$1");
-			} elsif ($r->method eq "GET" and $r->url->path eq "/slow") {
-				$c->send_basic_header;
-				$c->send_crlf;
-				sleep 1;
-				$c->send_response("slow");
-			} elsif ($r->url->path eq "/method") {
-				if ($r->method eq "DELETE") {
-					$c->send_error(HTTP::Status->RC_METHOD_NOT_ALLOWED);
-				} elsif ($r->method eq "foo") {
-					$c->send_error(HTTP::Status->RC_NOT_IMPLEMENTED);
+	while (1) {
+		MAINLOOP: while (my $c = $d->accept) {
+			while (my $r = $c->get_request) {
+				if ($r->method eq "GET" and $r->url->path =~ m^/statuscode/(\d+)^) {
+					$c->send_basic_header($1);
+					$c->send_crlf;
+				} elsif ($r->method eq "GET" and $r->url->path =~ m^/file/(.*)^) {
+					$c->send_basic_header;
+					$c->send_crlf;
+					$c->send_file_response("$Bin/var/$1");
+				} elsif ($r->method eq "GET" and $r->url->path eq "/slow") {
+					$c->send_basic_header;
+					$c->send_crlf;
+					sleep 1;
+					$c->send_response("slow");
+				} elsif ($r->url->path eq "/method") {
+					if ($r->method eq "DELETE") {
+						$c->send_error(HTTP::Status->RC_METHOD_NOT_ALLOWED);
+					} elsif ($r->method eq "foo") {
+						$c->send_error(HTTP::Status->RC_NOT_IMPLEMENTED);
+					} else {
+						$c->send_status_line(200, $r->method);
+					}
+				} elsif ($r->url->path eq "/postdata") {
+					$c->send_basic_header;
+					$c->send_crlf;
+					$c->send_response($r->method.":".$r->content);
+				} elsif ($r->url->path eq "/redirect") {
+					$c->send_redirect( "/redirect2" );
+				} elsif ($r->url->path eq "/redir_external") {
+					$c->send_redirect(($d->isa('HTTP::Daemon::SSL') ? "https" : "http") . "://169.254.169.254/redirect2" );
+				} elsif ($r->url->path eq "/redirect2") {
+					$c->send_basic_header;
+					$c->send_crlf;
+					$c->send_response(HTTP::Response->new( 200, 'OK', undef, 'redirected' ));
+				} elsif ($r->url->path eq "/redir_timeout") {
+					$c->send_redirect( "/timeout" );
+				} elsif ($r->url->path eq "/timeout") {
+					# Keep $c from being destroyed, but prevent severe leaks
+					unshift @persist, $c;
+					delete($persist[1000]);
+					next MAINLOOP;
+				} elsif ($r->url->path eq "/header_check") {
+					$c->send_basic_header;
+					$c->send_header('foo');
+					$c->send_crlf;
+				} elsif ($r->url->path eq "/virtual_port") {
+					# return sent Host header
+					$c->send_basic_header;
+					$c->send_crlf;
+					$c->send_response(HTTP::Response->new( 200, 'OK', undef, $r->header ('Host')));
 				} else {
-					$c->send_status_line(200, $r->method);
+					$c->send_error(HTTP::Status->RC_FORBIDDEN);
 				}
-			} elsif ($r->url->path eq "/postdata") {
-				$c->send_basic_header;
-				$c->send_crlf;
-				$c->send_response($r->method.":".$r->content);
-			} elsif ($r->url->path eq "/redirect") {
-				$c->send_redirect( "/redirect2" );
-			} elsif ($r->url->path eq "/redir_external") {
-				$c->send_redirect(($d->isa('HTTP::Daemon::SSL') ? "https" : "http") . "://169.254.169.254/redirect2" );
-			} elsif ($r->url->path eq "/redirect2") {
-				$c->send_basic_header;
-				$c->send_crlf;
-				$c->send_response(HTTP::Response->new( 200, 'OK', undef, 'redirected' ));
-			} elsif ($r->url->path eq "/redir_timeout") {
-				$c->send_redirect( "/timeout" );
-			} elsif ($r->url->path eq "/timeout") {
-				# Keep $c from being destroyed, but prevent severe leaks
-				unshift @persist, $c;
-				delete($persist[1000]);
-				next MAINLOOP;
-			} elsif ($r->url->path eq "/header_check") {
-				$c->send_basic_header;
-				$c->send_header('foo');
-				$c->send_crlf;
-			} elsif ($r->url->path eq "/virtual_port") {
-				# return sent Host header
-				$c->send_basic_header;
-				$c->send_crlf;
-				$c->send_response(HTTP::Response->new( 200, 'OK', undef, $r->header ('Host')));
-			} else {
-				$c->send_error(HTTP::Status->RC_FORBIDDEN);
+				$c->close;
 			}
-			$c->close;
 		}
 	}
 }
@@ -197,25 +219,44 @@ SKIP: {
 	skip "HTTP::Daemon::SSL not installed", $common_tests + $ssl_only_tests if ! exists $servers->{https};
 	run_common_tests( { command => "$command -p $port_https", ssl => 1 } );
 
+	my $expiry = "Thu Nov 28 21:02:11 2030 +0000";
+
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 14" );
 	is( $result->return_code, 0, "$command -p $port_https -S -C 14" );
-	is( $result->output, "OK - Certificate 'Monitoring Plugins' will expire on Fri Feb 16 15:31:44 2029 +0000.", "output ok" );
+	is( $result->output, "OK - Certificate 'Monitoring Plugins' will expire on $expiry.", "output ok" );
 
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 14000" );
 	is( $result->return_code, 1, "$command -p $port_https -S -C 14000" );
-	like( $result->output, '/WARNING - Certificate \'Monitoring Plugins\' expires in \d+ day\(s\) \(Fri Feb 16 15:31:44 2029 \+0000\)./', "output ok" );
+	like( $result->output, '/WARNING - Certificate \'Monitoring Plugins\' expires in \d+ day\(s\) \(' . quotemeta($expiry) . '\)./', "output ok" );
 
 	# Expired cert tests
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 13960,14000" );
 	is( $result->return_code, 2, "$command -p $port_https -S -C 13960,14000" );
-	like( $result->output, '/CRITICAL - Certificate \'Monitoring Plugins\' expires in \d+ day\(s\) \(Fri Feb 16 15:31:44 2029 \+0000\)./', "output ok" );
+	like( $result->output, '/CRITICAL - Certificate \'Monitoring Plugins\' expires in \d+ day\(s\) \(' . quotemeta($expiry) . '\)./', "output ok" );
 
 	$result = NPTest->testCmd( "$command -p $port_https_expired -S -C 7" );
 	is( $result->return_code, 2, "$command -p $port_https_expired -S -C 7" );
 	is( $result->output,
-		'CRITICAL - Certificate \'Monitoring Plugins\' expired on Wed Jan  2 11:00:26 2008 +0000.',
+		'CRITICAL - Certificate \'Monitoring Plugins\' expired on Wed Jan  2 12:00:00 2008 +0000.',
 		"output ok" );
 
+	# client cert tests
+	my $cmd;
+	$cmd = "$command -p $port_https_clientcert"
+		. " -J \"$Bin/certs/client-cert.pem\""
+		. " -K \"$Bin/certs/client-key.pem\""
+		. " -u /statuscode/200";
+	$result = NPTest->testCmd($cmd);
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+
+	$cmd = "$command -p $port_https_clientcert"
+		. " -J \"$Bin/certs/clientchain-cert.pem\""
+		. " -K \"$Bin/certs/clientchain-key.pem\""
+		. " -u /statuscode/200";
+	$result = NPTest->testCmd($cmd);
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 }
 
 my $cmd;
@@ -414,22 +455,24 @@ sub run_common_tests {
 
 	# stickyport - on full urlS port is set back to 80 otherwise
 	$cmd = "$command -f stickyport -u /redir_external -t 5 -s redirected";
+	alarm(2);
 	eval {
 		local $SIG{ALRM} = sub { die "alarm\n" };
-		alarm(2);
 		$result = NPTest->testCmd( $cmd );
-		alarm(0);	};
+	};
 	isnt( $@, "alarm\n", $cmd );
+	alarm(0);
 	is( $result->return_code, 0, $cmd );
 
 	# Let's hope there won't be any web server on :80 returning "redirected"!
 	$cmd = "$command -f sticky -u /redir_external -t 5 -s redirected";
+	alarm(2);
 	eval {
 		local $SIG{ALRM} = sub { die "alarm\n" };
-		alarm(2);
 		$result = NPTest->testCmd( $cmd );
-		alarm(0); };
+	};
 	isnt( $@, "alarm\n", $cmd );
+	alarm(0);
 	isnt( $result->return_code, 0, $cmd );
 
 	# Test an external address - timeout
