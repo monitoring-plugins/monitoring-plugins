@@ -162,6 +162,16 @@ SKIP: {
                 like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expired on/, "Certificate expired output");
         };
 
+        $res = NPTest->testCmd( "./$plugin --ssl $host_tls_http -E" );
+        like  ( $res->output, '/time_connect=[\d\.]+/', 'Extended Performance Data Output OK' );
+        like  ( $res->output, '/time_ssl=[\d\.]+/', 'Extended Performance Data SSL Output OK' );
+
+        $res = NPTest->testCmd(
+                "./$plugin --ssl -H www.e-paycobalt.com"
+                );
+        cmp_ok( $res->return_code, "==", 0, "Can read https for www.e-paycobalt.com (uses AES certificate)" );
+
+
         $res = NPTest->testCmd( "./$plugin -H www.mozilla.com -u /firefox -f follow" );
         is( $res->return_code, 0, "Redirection based on location is okay");
 
