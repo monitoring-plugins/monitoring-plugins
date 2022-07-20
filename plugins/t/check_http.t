@@ -9,7 +9,7 @@ use Test::More;
 use POSIX qw/mktime strftime/;
 use NPTest;
 
-plan tests => 50;
+plan tests => 47;
 
 my $successOutput = '/OK.*HTTP.*second/';
 
