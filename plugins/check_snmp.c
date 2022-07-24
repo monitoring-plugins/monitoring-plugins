@@ -376,7 +376,7 @@ main (int argc, char **argv)
 		}
 	}
 
-	for (line=0, i=0; line < chld_out.lines; line++, i++) {
+	for (line=0, i=0; line < chld_out.lines && i < numoids ; line++, i++) {
 		if(calculate_rate)
 			conv = "%.10g";
 		else
