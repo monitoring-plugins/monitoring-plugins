@@ -55,6 +55,7 @@ enum {
 #define SMTP_EXPECT "220"
 #define SMTP_HELO "HELO "
 #define SMTP_EHLO "EHLO "
+#define SMTP_LHLO "LHLO "
 #define SMTP_QUIT "QUIT\r\n"
 #define SMTP_STARTTLS "STARTTLS\r\n"
 #define SMTP_AUTH_LOGIN "AUTH LOGIN\r\n"
@@ -102,6 +103,7 @@ int check_critical_time = FALSE;
 int verbose = 0;
 int use_ssl = FALSE;
 short use_ehlo = FALSE;
+short use_lhlo = FALSE;
 short ssl_established = 0;
 char *localhostname = NULL;
 int sd;
@@ -152,7 +154,9 @@ main (int argc, char **argv)
 			return STATE_CRITICAL;
 		}
 	}
-	if(use_ehlo)
+	if(use_lhlo)
+		xasprintf (&helocmd, "%s%s%s", SMTP_LHLO, localhostname, "\r\n");
+	else if(use_ehlo)
 		xasprintf (&helocmd, "%s%s%s", SMTP_EHLO, localhostname, "\r\n");
 	else
 		xasprintf (&helocmd, "%s%s%s", SMTP_HELO, localhostname, "\r\n");
@@ -197,7 +201,7 @@ main (int argc, char **argv)
 		if (recvlines(buffer, MAX_INPUT_BUFFER) <= 0) {
 			printf (_("recv() failed\n"));
 			return STATE_WARNING;
-		} else if(use_ehlo){
+		} else if(use_ehlo || use_lhlo){
 			if(strstr(buffer, "250 STARTTLS") != NULL ||
 			   strstr(buffer, "250-STARTTLS") != NULL){
 				supports_tls=TRUE;
@@ -470,6 +474,7 @@ process_arguments (int argc, char **argv)
 		{"use-ipv4", no_argument, 0, '4'},
 		{"use-ipv6", no_argument, 0, '6'},
 		{"help", no_argument, 0, 'h'},
+		{"lmtp", no_argument, 0, 'L'},
 		{"starttls",no_argument,0,'S'},
 		{"certificate",required_argument,0,'D'},
 		{"ignore-quit-failure",no_argument,0,'q'},
@@ -489,7 +494,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVv46t:p:f:e:c:w:H:C:R:SD:F:A:U:P:q",
+		c = getopt_long (argc, argv, "+hVv46Lt:p:f:e:c:w:H:C:R:SD:F:A:U:P:q",
 		                 longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -615,6 +620,9 @@ process_arguments (int argc, char **argv)
 		/* starttls */
 			use_ssl = TRUE;
 			use_ehlo = TRUE;
+			break;
+		case 'L':
+			use_lhlo = TRUE;
 			break;
 		case '4':
 			address_family = AF_INET;
@@ -824,6 +832,8 @@ print_help (void)
   printf ("    %s\n", _("SMTP AUTH username"));
   printf (" %s\n", "-P, --authpass=STRING");
   printf ("    %s\n", _("SMTP AUTH password"));
+  printf (" %s\n", "-L, --lmtp");
+  printf ("    %s\n", _("Send LHLO instead of HELO/EHLO"));
   printf (" %s\n", "-q, --ignore-quit-failure");
   printf ("    %s\n", _("Ignore failure when sending QUIT command to server"));
    
@@ -850,6 +860,6 @@ print_usage (void)
   printf ("%s\n", _("Usage:"));
   printf ("%s -H host [-p port] [-4|-6] [-e expect] [-C command] [-R response] [-f from addr]\n", progname);
   printf ("[-A authtype -U authuser -P authpass] [-w warn] [-c crit] [-t timeout] [-q]\n");
-  printf ("[-F fqdn] [-S] [-D warn days cert expire[,crit days cert expire]] [-v] \n");
+  printf ("[-F fqdn] [-S] [-L] [-D warn days cert expire[,crit days cert expire]] [-v] \n");
 }
 

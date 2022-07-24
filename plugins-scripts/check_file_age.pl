@@ -147,7 +147,7 @@ sub print_help () {
 	print "\n";
 	print "  -i | --ignore-missing :  return OK if the file does not exist\n";
 	print "  <secs>  File must be no more than this many seconds old (default: warn 240 secs, crit 600)\n";
-	print "  <size>  File must be at least this many bytes long (default: crit 0 bytes)\n\n";
+	print "  <size>  File must be at least this many bytes long (default: file size is ignored (0 bytes))\n\n";
 	print "  Both <secs> and <size> can specify a range using the standard plugin syntax\n";
 	print "  If any of the warning and critical arguments are in range syntax (not just bare numbers)\n";
 	print "  then all warning and critical arguments will be interpreted as ranges.\n";
