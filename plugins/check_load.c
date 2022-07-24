@@ -70,7 +70,7 @@ double cload[3] = { 0.0, 0.0, 0.0 };
 #define la15 la[2]
 
 char *status_line;
-int take_into_account_cpus = 0;
+bool take_into_account_cpus = false;
 
 static void
 get_threshold(char *arg, double *th)
@@ -178,13 +178,6 @@ main (int argc, char **argv)
 # endif
 #endif
 
-	if (take_into_account_cpus == 1) {
-		if ((numcpus = GET_NUMBER_OF_CPUS()) > 0) {
-			la[0] = la[0] / numcpus;
-			la[1] = la[1] / numcpus;
-			la[2] = la[2] / numcpus;
-		}
-	}
 	if ((la[0] < 0.0) || (la[1] < 0.0) || (la[2] < 0.0)) {
 #ifdef HAVE_GETLOADAVG
 		printf (_("Error in getloadavg()\n"));
@@ -202,6 +195,8 @@ main (int argc, char **argv)
 	result = STATE_OK;
 
 	xasprintf(&status_line, _("load average: %.2f, %.2f, %.2f"), la1, la5, la15);
+	xasprintf(&status_line, ("total %s"), status_line);
+
 
 	for(i = 0; i < 3; i++) {
 		if(la[i] > cload[i]) {
@@ -211,9 +206,26 @@ main (int argc, char **argv)
 		else if(la[i] > wload[i]) result = STATE_WARNING;
 	}
 
+	double scaled_la[3] = { 0.0, 0.0, 0.0 };
+	if (take_into_account_cpus == true && (numcpus = GET_NUMBER_OF_CPUS()) > 0) {
+			scaled_la[0] = la[0] / numcpus;
+			scaled_la[1] = la[1] / numcpus;
+			scaled_la[2] = la[2] / numcpus;
+
+			char *tmp = NULL;
+			xasprintf(&tmp, _("load average: %.2f, %.2f, %.2f"), scaled_la[0], scaled_la[1], scaled_la[2]);
+			xasprintf(&status_line, "scaled %s - %s", tmp, status_line);
+	}
+
 	printf("LOAD %s - %s|", state_text(result), status_line);
-	for(i = 0; i < 3; i++)
-		printf("load%d=%.3f;%.3f;%.3f;0; ", nums[i], la[i], wload[i], cload[i]);
+	for(i = 0; i < 3; i++) {
+		if (scaled_la[i] != 0.0) {
+			printf("load%d=%.3f;;;0; ", nums[i], la[i]);
+			printf("scaled_load%d=%.3f;%.3f;%.3f;0; ", nums[i], scaled_la[i], wload[i], cload[i]);
+		} else {
+			printf("load%d=%.3f;%.3f;%.3f;0; ", nums[i], la[i], wload[i], cload[i]);
+		}
+	}
 
 	putchar('\n');
 	if (n_procs_to_show > 0) {
