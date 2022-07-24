@@ -29,7 +29,7 @@
 *****************************************************************************/
 
 const char *progname = "check_load";
-const char *copyright = "1999-2007";
+const char *copyright = "1999-2022";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "./common.h"
