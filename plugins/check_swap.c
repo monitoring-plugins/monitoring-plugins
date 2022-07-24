@@ -389,7 +389,7 @@ main (int argc, char **argv)
 	                TRUE, warn_print,
 	                TRUE, crit_print,
 	                TRUE, 0,
-	                TRUE, (long) total_swap_mb));
+	                TRUE, (long) total_swap_mb * 1024 * 1024));
 
 	return result;
 }
