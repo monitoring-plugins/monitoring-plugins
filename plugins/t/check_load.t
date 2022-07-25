@@ -13,7 +13,7 @@ my $res;
 my $loadValue = "[0-9]+\.?[0-9]+";
 my $successOutput = "/^LOAD OK - total load average: $loadValue, $loadValue, $loadValue/";
 my $successScaledOutput = "/^LOAD OK - scaled load average: $loadValue, $loadValue, $loadValue - total load average: $loadValue, $loadValue, $loadValue/";
-my $failureOutput = "/^LOAD CRITICAL - load average: $loadValue, $loadValue, $loadValue/";
+my $failureOutput = "/^LOAD CRITICAL - total load average: $loadValue, $loadValue, $loadValue/";
 my $failurScaledOutput = "/^LOAD CRITICAL - scaled load average: $loadValue, $loadValue, $loadValue - total load average: $loadValue, $loadValue, $loadValue/";
 
 plan tests => 11;
