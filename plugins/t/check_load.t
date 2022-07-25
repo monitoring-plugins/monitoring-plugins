@@ -14,6 +14,7 @@ my $loadValue = "[0-9]+\.?[0-9]+";
 my $successOutput = "/^LOAD OK - total load average: $loadValue, $loadValue, $loadValue/";
 my $successScaledOutput = "/^LOAD OK - scaled load average: $loadValue, $loadValue, $loadValue - total load average: $loadValue, $loadValue, $loadValue/";
 my $failureOutput = "/^LOAD CRITICAL - load average: $loadValue, $loadValue, $loadValue/";
+my $failurScaledOutput = "/^LOAD CRITICAL - scaled load average: $loadValue, $loadValue, $loadValue - total load average: $loadValue, $loadValue, $loadValue/";
 
 plan tests => 11;
 
@@ -27,7 +28,7 @@ like( $res->output, $failureOutput, "Output OK");
 
 $res = NPTest->testCmd( "./check_load -r -w 0,0,0 -c 0,0,0" );
 cmp_ok( $res->return_code, 'eq', 2, "Load over 0 with per cpu division");
-like( $res->output, $failureOutput, "Output OK");
+like( $res->output, $failurScaledOutput, "Output OK");
 
 $res = NPTest->testCmd( "./check_load -w 100 -c 100,110" );
 cmp_ok( $res->return_code, 'eq', 0, "Plugin can handle non-triplet-arguments");
