@@ -150,7 +150,7 @@ main (int argc, char **argv)
 		 * The following sscanf call looks for lines looking like: "SwapTotal: 123" and "SwapFree: 123"
 		 * This format exists at least on Debian Linux with a 5.* kernel
 		 */
-		else if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%[TotalFreCchd]%*[:] %f %*[k]%*[B]", str, &tmp_KB)) {
+		else if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%[TotalFreCchd]%*[:] %lu %*[k]%*[B]", str, &tmp_KB)) {
 			if (verbose >= 3) {
 				printf("Got %s with %lu\n", str, tmp_KB);
 			}
