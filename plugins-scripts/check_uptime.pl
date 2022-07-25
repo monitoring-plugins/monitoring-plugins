@@ -25,7 +25,7 @@ use POSIX;
 use strict;
 use Getopt::Long;
 use vars qw($opt_V $opt_h $opt_v $verbose $PROGNAME $opt_w $opt_c
-					$opt_f $opt_s
+					$opt_f $opt_s $opt_d
 					$lower_warn_threshold $upper_warn_threshold
 					$lower_crit_threshold $upper_crit_threshold
 					$status $state $msg);
@@ -137,9 +137,20 @@ if ( $uptime_seconds > $upper_crit_threshold ) {
 	$state_str = "OK";
 }
 
+# Prepare uptime value (seconds or days)
+my $uptime_text = "";
+my $uptime_unit = "";
+if ( $opt_d ) {
+	$uptime_text = floor($uptime_seconds / 60 / 60 / 24);
+	$uptime_unit = "days";
+} else {
+	$uptime_text = $uptime_seconds;
+	$uptime_unit = "seconds";
+}
+
 $msg = "$state_str: ";
 
-$msg .= "uptime is $uptime_seconds seconds. ";
+$msg .= "Uptime is $uptime_text $uptime_unit. ";
 $msg .= "Exceeds $out_of_bounds_text threshold. "  if  $out_of_bounds_text;
 $msg .= "Running for $pretty_uptime. "  if  $opt_f;
 if ( $opt_s ) {
@@ -167,6 +178,7 @@ sub process_arguments(){
 		 "c=s" => \$opt_c, "critical=s" => \$opt_c,	  # critical if above this number
 		 "f"   => \$opt_f, "for"        => \$opt_f,	  # show "running for ..."
 		 "s"   => \$opt_s, "since"      => \$opt_s,	  # show "running since ..."
+		 "d"   => \$opt_d, "days"       => \$opt_d,	  # report uptime in days
 		 );
 
 	if ($opt_V) {
@@ -262,6 +274,7 @@ sub print_help () {
 	print "-c (--critical)  = Min. number of uptime to generate critical alert ( w < c )\n";
 	print "-f (--for)       = Show uptime in a pretty format (Running for x weeks, x days, ...)\n";
 	print "-s (--since)     = Show last boot in yyyy-mm-dd HH:MM:SS format (output from 'uptime -s')\n";
+	print "-d (--days)      = Show uptime in days\n";
 	print "-h (--help)\n";
 	print "-V (--version)\n";
 	print "-v (--verbose)   = debugging output\n";
