@@ -417,8 +417,8 @@ main (int argc, char **argv)
         xasprintf (&perf, "%s %s", perf,
                 perfdata_uint64 (perf_ilabel,
                     path->inodes_used, "",
-                    (warning_high_tide != UINT64_MAX ? true : false), warning_high_tide,
-                    (critical_high_tide != UINT64_MAX ? true : false), critical_high_tide,
+                    (warning_high_tide != UINT64_MAX ? true: false), warning_high_tide,
+                    (critical_high_tide != UINT64_MAX ? true: false), critical_high_tide,
                     true, 0,
                     true, path->inodes_total));
       }
