@@ -379,6 +379,9 @@ process_arguments (int argc, char **argv)
 			if (is_host (optarg)) {
 				db_host = optarg;
 			}
+			else if (*optarg == '/') {
+				db_socket = optarg;
+			}
 			else {
 				usage2 (_("Invalid hostname/address"), optarg);
 			}

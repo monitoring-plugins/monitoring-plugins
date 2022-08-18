@@ -8,9 +8,9 @@ use strict;
 use Test::More tests => 8;
 use NPTest;
 
-my $successOutput = '/^SWAP OK - [0-9]+\% free \([0-9]+ MB out of [0-9]+ MB\)/';
-my $failureOutput = '/^SWAP CRITICAL - [0-9]+\% free \([0-9]+ MB out of [0-9]+ MB\)/';
-my $warnOutput    = '/^SWAP WARNING - [0-9]+\% free \([0-9]+ MB out of [0-9]+ MB\)/';
+my $successOutput = '/^SWAP OK - [0-9]+\% free \([0-9]+MB out of [0-9]+MB\)/';
+my $failureOutput = '/^SWAP CRITICAL - [0-9]+\% free \([0-9]+MB out of [0-9]+MB\)/';
+my $warnOutput    = '/^SWAP WARNING - [0-9]+\% free \([0-9]+MB out of [0-9]+MB\)/';
 
 my $result;
 

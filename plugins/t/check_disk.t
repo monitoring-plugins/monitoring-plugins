@@ -88,8 +88,9 @@ $result = NPTest->testCmd(
         );
 $_ = $result->perf_output;
 my ($warn_absth_data, $crit_absth_data, $total_absth_data) = (m/=.[^;]*;(\d+);(\d+);\d+;(\d+)/);
-is ($warn_absth_data, $total_absth_data - 20, "Wrong warning in perf data using absolute thresholds");
-is ($crit_absth_data, $total_absth_data - 10, "Wrong critical in perf data using absolute thresholds");
+# default unit is MiB, but perfdata is always bytes
+is ($warn_absth_data, $total_absth_data - (20 * (2 ** 20)), "Wrong warning in perf data using absolute thresholds");
+is ($crit_absth_data, $total_absth_data - (10 * (2 ** 20)), "Wrong critical in perf data using absolute thresholds");
 
 # Then check percent thresholds.
 $result = NPTest->testCmd(
@@ -119,7 +120,7 @@ like  ( $result->only_output, qr/$more_free/, "Have disk name in text");
 $result = NPTest->testCmd( "./check_disk -w 1 -c 1 -p $more_free -p $less_free" );
 cmp_ok( $result->return_code, '==', 0, "At least 1 MB available on $more_free and $less_free");
 $_ = $result->output;
-my ($free_mb_on_mp1, $free_mb_on_mp2) = (m/(\d+) MB .* (\d+) MB /g);
+my ($free_mb_on_mp1, $free_mb_on_mp2) = (m/(\d+)MiB .* (\d+)MiB /g);
 my $free_mb_on_all = $free_mb_on_mp1 + $free_mb_on_mp2;
 
 

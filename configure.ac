@@ -1,10 +1,11 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
-AC_INIT(monitoring-plugins,2.2)
+AC_INIT(monitoring-plugins,2.3git)
 AC_CONFIG_SRCDIR(NPTest.pm)
 AC_CONFIG_FILES([gl/Makefile])
 AC_CONFIG_AUX_DIR(build-aux)
 AM_INIT_AUTOMAKE([1.8.3])
+AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE([enable])
 AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_HOST
@@ -385,6 +386,42 @@ if test "$ac_cv_header_wtsapi32_h" = "yes"; then
   AC_SUBST(WTSAPI32LIBS)
 fi
 
+_can_enable_check_curl=no
+dnl Check for cURL library
+LIBCURL_CHECK_CONFIG(yes, 7.15.2, [
+    _can_enable_check_curl=yes
+    LIBCURLINCLUDE="$LIBCURL_CPPFLAGS"
+    LIBCURLLIBS="$LIBCURL"
+    LIBCURLCFLAGS="$LIBCURL_CPPFLAGS"
+    AC_SUBST(LIBCURLINCLUDE)
+    AC_SUBST(LIBCURLLIBS)
+    AC_SUBST(LIBCURLCFLAGS)
+  ], [
+    _can_enable_check_curl=no
+    AC_MSG_WARN([Skipping curl plugin])
+    AC_MSG_WARN([install libcurl libs to compile this plugin (see REQUIREMENTS).])
+])
+
+dnl Check for uriparser library
+URIPARSER_CHECK(yes, 0.7.5, [
+    URIPARSERINCLUDE="$URIPARSER_CPPFLAGS"
+    URIPARSERLIBS="$URIPARSER"
+    URIPARSERCFLAGS="$URIPARSER_CPPFLAGS"
+    AC_SUBST(URIPARSERINCLUDE)
+    AC_SUBST(URIPARSERLIBS)
+    AC_SUBST(URIPARSERCFLAGS)
+  ], [
+    _can_enable_check_curl=no
+    AC_MSG_WARN([Skipping curl plugin])
+    AC_MSG_WARN([install the uriparser library to compile this plugin (see REQUIREMENTS).])
+])
+
+dnl prerequisites met, enable the plugin
+if test x$_can_enable_check_curl = xyes; then
+  EXTRAS="$EXTRAS check_curl\$(EXEEXT)"
+fi
+AC_CONFIG_FILES([plugins/picohttpparser/Makefile])
+
 dnl Fallback to who(1) if the system doesn't provide an utmpx(5) interface
 if test "$ac_cv_header_utmpx_h" = "no" -a "$ac_cv_header_wtsapi32_h" = "no"
 then
@@ -747,6 +784,16 @@ dnl 	ac_cv_ps_format=["%*s %d %d %d %d %*d %*d %d %d%*[ 0123456789abcdef]%[OSRZT
 dnl 	ac_cv_ps_cols=8
 dnl 	AC_MSG_RESULT([$ac_cv_ps_command])
 
+dnl This one is the exact same test as the next one but includes etime
+elif ps axwo 'stat comm vsz rss user uid pid ppid etime args' 2>/dev/null | \
+	egrep -i ["^ *STAT +[UCOMAND]+ +VSZ +RSS +USER +UID +PID +PPID +ELAPSED +COMMAND"] > /dev/null
+then
+	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procetime,procprog,&pos]"
+	ac_cv_ps_command="$PATH_TO_PS axwo 'stat uid pid ppid vsz rss pcpu etime comm args'"
+	ac_cv_ps_format="%s %d %d %d %d %d %f %s %s %n"
+	ac_cv_ps_cols=10
+	AC_MSG_RESULT([$ac_cv_ps_command])
+
 dnl Some gnu/linux systems (debian for one) don't like -axwo and need axwo.
 dnl so test for this first...
 elif ps axwo 'stat comm vsz rss user uid pid ppid args' 2>/dev/null | \
@@ -1016,6 +1063,10 @@ if test -n "$ac_cv_ps_varlist" ; then
 		AC_DEFINE(PS_USES_PROCETIME,"yes",
 		          [Whether the ps utility uses the "procetime" field])
 	fi
+	if echo "$ac_cv_ps_varlist" | grep "procpcpu" >/dev/null; then
+		AC_DEFINE(PS_USES_PROCPCPU,"yes",
+		          [Whether the ps utility uses the "procpcpu" field])
+	fi
 fi
 
 AC_PATH_PROG(PATH_TO_PING,ping)
@@ -1060,6 +1111,14 @@ then
 	ac_cv_ping_packets_first=yes
 	AC_MSG_RESULT([$with_ping_command])
 
+elif $PATH_TO_PING -4 -n -U -w 10 -c 1 127.0.0.1 2>/dev/null | \
+	egrep -i "^round-trip|^rtt" >/dev/null
+then
+	# check if -4 is supported - issue #1550
+	with_ping_command="$PATH_TO_PING -4 -n -U -w %d -c %d %s"
+	ac_cv_ping_packets_first=yes
+	ac_cv_ping_has_timeout=yes
+	AC_MSG_RESULT([$with_ping_command])
 elif $PATH_TO_PING -n -U -w 10 -c 1 127.0.0.1 2>/dev/null | \
 	egrep -i "^round-trip|^rtt" >/dev/null
 then
@@ -1882,4 +1941,5 @@ ACX_FEATURE([enable],[perl-modules])
 ACX_FEATURE([with],[cgiurl])
 ACX_FEATURE([with],[trusted-path])
 ACX_FEATURE([enable],[libtap])
-
+ACX_FEATURE([with],[libcurl])
+ACX_FEATURE([with],[uriparser])

@@ -143,6 +143,7 @@ int main(int argc, char **argv){
 
 int process_arguments(int argc, char **argv){
 	int c;
+	char *ptr;
 	int option=0;
 	static struct option longopts[]={
 		{"data",     required_argument,0,'d'},
@@ -188,6 +189,15 @@ int process_arguments(int argc, char **argv){
 
 		case 'd': /* data values */
 			data_vals=(char *)strdup(optarg);
+			/* validate data */
+			for (ptr=data_vals;ptr!=NULL;ptr+=2){
+				if (ptr[0]<'0' || ptr[0]>'3')
+					return ERROR;
+				if (ptr[1]=='\0')
+					break;
+				if (ptr[1]!=',')
+					return ERROR;
+			}
 			break;
 
 		case 'l': /* text label */
