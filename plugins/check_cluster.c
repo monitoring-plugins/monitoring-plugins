@@ -28,7 +28,7 @@ const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
-#include "utils_base.h"
+#include "../lib/utils_base.h"
 
 #define CHECK_SERVICES	1
 #define CHECK_HOSTS	2
@@ -37,16 +37,15 @@ void print_help (void);
 void print_usage (void);
 
 int total_services_ok=0;
-int total_services_warning=0;
-int total_services_unknown=0;
-int total_services_critical=0;
+unsigned int total_services_warning=0;
+unsigned int total_services_unknown=0;
+unsigned int total_services_critical=0;
 
-int total_hosts_up=0;
-int total_hosts_down=0;
-int total_hosts_unreachable=0;
+unsigned int total_hosts_up=0;
+unsigned int total_hosts_down=0;
+unsigned int total_hosts_unreachable=0;
 
-char *warn_threshold;
-char *crit_threshold;
+thresholds plugin_thresholds;
 
 int check_type=CHECK_SERVICES;
 
@@ -74,11 +73,6 @@ int main(int argc, char **argv){
 
 	if(process_arguments(argc,argv)==ERROR)
 		usage(_("Could not parse arguments"));
-
-	/* Initialize the thresholds */
-	set_thresholds(&thresholds, warn_threshold, crit_threshold);
-	if(verbose)
-		print_thresholds("check_cluster", thresholds);
 
 	/* check the data values */
 	for(ptr=strtok(data_vals,",");ptr!=NULL;ptr=strtok(NULL,",")){
@@ -123,14 +117,18 @@ int main(int argc, char **argv){
 
 	/* return the status of the cluster */
 	if(check_type==CHECK_SERVICES){
-		return_code=get_status(total_services_warning+total_services_unknown+total_services_critical, thresholds);
+		perfdata_t pd_services = new_perfdata();
+		pd_services.value.pd_uint = total_services_warning+total_services_unknown+total_services_critical;
+		return_code=get_status(pd_services.value, thresholds, UINT);
 		printf("CLUSTER %s: %s: %d ok, %d warning, %d unknown, %d critical\n",
 			state_text(return_code), (label==NULL)?"Service cluster":label,
 			total_services_ok,total_services_warning,
 			total_services_unknown,total_services_critical);
 	}
 	else{
-		return_code=get_status(total_hosts_down+total_hosts_unreachable, thresholds);
+		perfdata_t pd_hosts = new_perfdata();
+		pd_hosts.value.pd_uint = total_hosts_down+total_hosts_unreachable;
+		return_code=get_status(pd_hosts.value, thresholds, UINT);
 		printf("CLUSTER %s: %s: %d up, %d down, %d unreachable\n",
 			state_text(return_code), (label==NULL)?"Host cluster":label,
 			total_hosts_up,total_hosts_down,total_hosts_unreachable);
@@ -162,6 +160,7 @@ int process_arguments(int argc, char **argv){
 	if(argc<2)
 		return ERROR;
 
+	char *crit_tmp = NULL, *warn_tmp = NULL;
 	while(1){
 
 		c=getopt_long(argc,argv,"hHsvVw:c:d:l:",longopts,&option);
@@ -180,11 +179,11 @@ int process_arguments(int argc, char **argv){
 			break;
 
 		case 'w': /* warning threshold */
-			warn_threshold = strdup(optarg);
+			warn_tmp = optarg;
 			break;
 
 		case 'c': /* warning threshold */
-			crit_threshold = strdup(optarg);
+			crit_tmp = optarg;
 			break;
 
 		case 'd': /* data values */
@@ -223,6 +222,12 @@ int process_arguments(int argc, char **argv){
 			break;
 	        }
 	}
+
+	thresholds *tmp_thrshlds = &plugin_thresholds;
+	/* Initialize the thresholds */
+	set_thresholds(&tmp_thrshlds, warn_tmp, crit_tmp);
+	if(verbose)
+		print_thresholds("check_cluster", &plugin_thresholds, UINT);
 
 	if(data_vals==NULL)
 		return ERROR;
