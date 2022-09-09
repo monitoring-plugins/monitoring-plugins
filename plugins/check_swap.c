@@ -1,30 +1,30 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_swap plugin
-* 
+*
 * License: GPL
 * Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
 * Copyright (c) 2000-2007 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_swap plugin
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 const char *progname = "check_swap";
@@ -150,7 +150,7 @@ main (int argc, char **argv)
 		 * The following sscanf call looks for lines looking like: "SwapTotal: 123" and "SwapFree: 123"
 		 * This format exists at least on Debian Linux with a 5.* kernel
 		 */
-		else if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%[TotalFreCchd]%*[:] %f %*[k]%*[B]", str, &tmp_KB)) {
+		else if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%[TotalFreCchd]%*[:] %lu %*[k]%*[B]", str, &tmp_KB)) {
 			if (verbose >= 3) {
 				printf("Got %s with %lu\n", str, tmp_KB);
 			}
@@ -389,7 +389,7 @@ main (int argc, char **argv)
 	                TRUE, warn_print,
 	                TRUE, crit_print,
 	                TRUE, 0,
-	                TRUE, (long) total_swap_mb));
+	                TRUE, (long) total_swap_mb * 1024 * 1024));
 
 	return result;
 }
