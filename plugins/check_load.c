@@ -1,41 +1,43 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_load plugin
-* 
+*
 * License: GPL
 * Copyright (c) 1999-2007 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_load plugin
-* 
+*
 * This plugin tests the current system load average.
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 const char *progname = "check_load";
 const char *copyright = "1999-2007";
 const char *email = "devel@monitoring-plugins.org";
 
-#include "common.h"
-#include "runcmd.h"
-#include "utils.h"
-#include "popen.h"
+#include "./common.h"
+#include "./runcmd.h"
+#include "./utils.h"
+#include "./popen.h"
+
+#include <string.h>
 
 #ifdef HAVE_SYS_LOADAVG_H
 #include <sys/loadavg.h>
@@ -101,7 +103,7 @@ get_threshold(char *arg, double *th)
 int
 main (int argc, char **argv)
 {
-	int result;
+	int result = -1;
 	int i;
 	long numcpus;
 
@@ -164,7 +166,7 @@ main (int argc, char **argv)
 	    sscanf (input_buffer, "%*[^l]load averages: %lf, %lf, %lf", &la1, &la5, &la15);
     }
     else {
-		printf (_("could not parse load from uptime %s: %s\n"), PATH_TO_UPTIME, result);
+		printf (_("could not parse load from uptime %s: %d\n"), PATH_TO_UPTIME, result);
 		return STATE_UNKNOWN;
     }
 
@@ -289,7 +291,6 @@ process_arguments (int argc, char **argv)
 }
 
 
-
 static int
 validate_arguments (void)
 {
@@ -310,7 +311,6 @@ validate_arguments (void)
 }
 
 
-
 void
 print_help (void)
 {
@@ -321,7 +321,7 @@ print_help (void)
 
 	printf (_("This plugin tests the current system load average."));
 
-  printf ("\n\n");
+	printf ("\n\n");
 
 	print_usage ();
 
@@ -329,15 +329,15 @@ print_help (void)
 	printf (UT_EXTRA_OPTS);
 
 	printf (" %s\n", "-w, --warning=WLOAD1,WLOAD5,WLOAD15");
-  printf ("    %s\n", _("Exit with WARNING status if load average exceeds WLOADn"));
-  printf (" %s\n", "-c, --critical=CLOAD1,CLOAD5,CLOAD15");
-  printf ("    %s\n", _("Exit with CRITICAL status if load average exceed CLOADn"));
-  printf ("    %s\n", _("the load average format is the same used by \"uptime\" and \"w\""));
-  printf (" %s\n", "-r, --percpu");
-  printf ("    %s\n", _("Divide the load averages by the number of CPUs (when possible)"));
-  printf (" %s\n", "-n, --procs-to-show=NUMBER_OF_PROCS");
-  printf ("    %s\n", _("Number of processes to show when printing the top consuming processes."));
-  printf ("    %s\n", _("NUMBER_OF_PROCS=0 disables this feature. Default value is 0"));
+	printf ("    %s\n", _("Exit with WARNING status if load average exceeds WLOADn"));
+	printf (" %s\n", "-c, --critical=CLOAD1,CLOAD5,CLOAD15");
+	printf ("    %s\n", _("Exit with CRITICAL status if load average exceed CLOADn"));
+	printf ("    %s\n", _("the load average format is the same used by \"uptime\" and \"w\""));
+	printf (" %s\n", "-r, --percpu");
+	printf ("    %s\n", _("Divide the load averages by the number of CPUs (when possible)"));
+	printf (" %s\n", "-n, --procs-to-show=NUMBER_OF_PROCS");
+	printf ("    %s\n", _("Number of processes to show when printing the top consuming processes."));
+	printf ("    %s\n", _("NUMBER_OF_PROCS=0 disables this feature. Default value is 0"));
 
 	printf (UT_SUPPORT);
 }
@@ -345,8 +345,8 @@ print_help (void)
 void
 print_usage (void)
 {
-  printf ("%s\n", _("Usage:"));
-  printf ("%s [-r] -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15 [-n NUMBER_OF_PROCS]\n", progname);
+	printf ("%s\n", _("Usage:"));
+	printf ("%s [-r] -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15 [-n NUMBER_OF_PROCS]\n", progname);
 }
 
 #ifdef PS_USES_PROCPCPU
@@ -384,8 +384,8 @@ static int print_top_consuming_processes() {
 #ifdef PS_USES_PROCPCPU
 	qsort(chld_out.line + 1, chld_out.lines - 1, sizeof(char*), cmpstringp);
 #endif /* PS_USES_PROCPCPU */
-	int lines_to_show = chld_out.lines < (n_procs_to_show + 1)
-			? chld_out.lines : n_procs_to_show + 1;
+	int lines_to_show = chld_out.lines < (size_t)(n_procs_to_show + 1)
+			? (int)chld_out.lines : n_procs_to_show + 1;
 	for (i = 0; i < lines_to_show; i += 1) {
 		printf("%s\n", chld_out.line[i]);
 	}
