@@ -355,7 +355,7 @@ int best_offset_server(const ntp_server_results *slist, int nservers){
  * - we also "manually" handle resolving host names and connecting, because
  *   we have to do it in a way that our lazy macros don't handle currently :( */
 double offset_request(const char *host, int *status){
-	int i=0, j=0, ga_result=0, num_hosts=0, *socklist=NULL, respnum=0;
+	int i=0, ga_result=0, num_hosts=0, *socklist=NULL, respnum=0;
 	int servers_completed=0, one_read=0, servers_readable=0, best_index=-1;
 	time_t now_time=0, start_ts=0;
 	ntp_message *req=NULL;
@@ -488,7 +488,7 @@ double offset_request(const char *host, int *status){
 	/* cleanup */
 	/* FIXME: Not closing the socket to avoid re-use of the local port
 	 * which can cause old NTP packets to be read instead of NTP control
-	 * pactets in jitter_request(). THERE MUST BE ANOTHER WAY...
+	 * packets in jitter_request(). THERE MUST BE ANOTHER WAY...
 	 * for(j=0; j<num_hosts; j++){ close(socklist[j]); } */
 	free(socklist);
 	free(ufds);
@@ -512,7 +512,7 @@ setup_control_request(ntp_control_message *p, uint8_t opcode, uint16_t seq){
 }
 
 /* XXX handle responses with the error bit set */
-double jitter_request(const char *host, int *status){
+double jitter_request(int *status){
 	int conn=-1, i, npeers=0, num_candidates=0, syncsource_found=0;
 	int run=0, min_peer_sel=PEER_INCLUDED, num_selected=0, num_valid=0;
 	int peers_size=0, peer_offset=0;
@@ -803,7 +803,7 @@ int main(int argc, char *argv[]){
 	 * (for example) will result in an error
 	 */
 	if(do_jitter){
-		jitter=jitter_request(server_address, &jitter_result);
+		jitter=jitter_request(&jitter_result);
 		result = max_state_alt(result, get_status(jitter, jitter_thresholds));
 		/* -1 indicates that we couldn't calculate the jitter
 		 * Only overrides STATE_OK from the offset */
