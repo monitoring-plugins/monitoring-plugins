@@ -331,7 +331,7 @@ print_help (void)
   printf ("Copyright (c) 2000 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n");
   printf (COPYRIGHT, copyright, email);
 
-  printf (_("This plugin test the DNS service on the specified host using dig"));
+  printf (_("This plugin tests the DNS service on the specified host using dig"));
 
   printf ("\n\n");
 

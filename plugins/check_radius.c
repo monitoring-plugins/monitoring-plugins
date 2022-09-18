@@ -360,7 +360,7 @@ print_help (void)
 	printf (" %s\n", "-u, --username=STRING");
   printf ("    %s\n", _("The user to authenticate"));
   printf (" %s\n", "-p, --password=STRING");
-  printf ("    %s\n", _("Password for autentication (SECURITY RISK)"));
+  printf ("    %s\n", _("Password for authentication (SECURITY RISK)"));
   printf (" %s\n", "-n, --nas-id=STRING");
   printf ("    %s\n", _("NAS identifier"));
   printf (" %s\n", "-N, --nas-ip-address=STRING");

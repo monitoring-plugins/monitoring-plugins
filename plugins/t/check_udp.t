@@ -34,11 +34,11 @@ my $nc;
 if(system("which nc.traditional >/dev/null 2>&1") == 0) {
 	$nc = 'nc.traditional -w 3 -l -u -p 3333';
 }
-elsif(system("which netcat >/dev/null 2>&1") == 0) {
-	$nc = 'netcat -w 3 -l -u -p 3333';
-}
 elsif(system("which nc >/dev/null 2>&1") == 0) {
 	$nc = 'nc -w 3 -l -u -4 localhost 3333';
+}
+elsif(system("which netcat >/dev/null 2>&1") == 0) {
+	$nc = 'netcat -w 3 -l -u -p 3333';
 }
 
 SKIP: {

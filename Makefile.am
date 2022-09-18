@@ -34,6 +34,7 @@ test test-debug:
 	if test "$(PERLMODS_DIR)" != ""; then cd perlmods && $(MAKE) $@; fi
 	cd plugins && $(MAKE) $@
 	cd plugins-scripts && $(MAKE) $@
+	cd plugins-root && $(MAKE) $@
 
 # Solaris pkgmk
 BUILDDIR = build-solaris

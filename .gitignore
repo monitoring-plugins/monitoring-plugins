@@ -142,6 +142,7 @@ NP-VERSION-FILE
 /plugins/check_by_ssh
 /plugins/check_clamd
 /plugins/check_cluster
+/plugins/check_curl
 /plugins/check_dbi
 /plugins/check_dig
 /plugins/check_disk
@@ -202,6 +203,12 @@ NP-VERSION-FILE
 /plugins/stamp-h*
 /plugins/urlize
 
+# /plugins/picohttpparser
+/plugins/picohttpparser/Makefile
+/plugins/picohttpparser/Makefile.in
+/plugins/picohttpparser/.deps
+/plugins/picohttpparser/libpicohttpparser.a
+
 # /plugins/t/
 /plugins/t/*.tmp
 
@@ -241,6 +248,7 @@ NP-VERSION-FILE
 /plugins-scripts/check_sensors
 /plugins-scripts/check_wave
 /plugins-scripts/check_file_age
+/plugins-scripts/check_uptime
 
 # /po/
 /po/Makefile

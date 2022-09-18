@@ -1,8 +1,57 @@
 This file documents the major additions and syntax changes between releases.
 
-2.3 [...]
+2.4 [...]
+	ENHANCEMENTS
+
+	FIXES
+
+2.3 10th December 2020
+	ENHANCEMENTS
+	check_dns: allow 'expected address' (-a) to be specified in CIDR notation
+	  (IPv4 only).
+	check_dns: allow for IPv6 RDNS
+	check_dns: Accept CIDR
+	check_dns: allow unsorted addresses
+	check_dns: allow forcing complete match of all addresses
+	check_dns: option to expect NXDOMAIN
+	check_apt: add --only-critical switch
+	check_apt: add -l/--list option to print packages
+        check_file_age: add range checking
+	check_file_age: enable to test for maximum file size
+	check_apt: adding packages-warning option
+	check_load: Adding top consuming processes option
+	check_http: Adding Proxy-Authorization and extra headers
+	check_snmp: make calcualtion of timeout value in help output more clear
+	check_uptime: new plugin for checking uptime to see how long the system is running
+	check_curl: check_http replacement based on libcurl
+	check_http: Allow user to specify HTTP method after proxy CONNECT
+	check_http: Add new flag --show-body/-B to print body
+	check_cluster: Added data argument validation
+	check_icmp: Add IPv6 support
+	check_icmp: Automatically detect IP protocol
+	check_icmp: emit error if multiple protocol version
+	check_disk: add support to display inodes usage in perfdata
+	check_hpjd: Added -D option to disable warning on 'out of paper'
+	check_http: support the --show-body/-B flag when --expect is used
+	check_mysql: allow mariadbclient to be used
+	check_tcp: add --sni
+	check_dns: detect unreachable dns service in nslookup output
+
 	FIXES
 	Fix regression where check_dhcp was rereading response in a tight loop
+	check_dns: fix error detection on sles nslookup
+	check_disk_smb: fix timeout issue
+	check_swap: repaired "-n" behaviour
+	check_icmp: Correctly set address_family on lookup
+	check_icmp: Do not overwrite -4,-6 on lookup
+	check_smtp: initializes n before it is used
+	check_dns: fix typo in parameter description
+	check_by_ssh: fix child process leak on timeouts
+	check_mysql: Allow sockets to be specified to -H
+	check_procs: improve command examples for 'at least' processes
+	check_swap: repaired "-n" behaviour
+	check_disk: include -P switch in help
+	check_mailq: restore accidentially removed options
 
 2.2 29th November 2016
 	ENHANCEMENTS

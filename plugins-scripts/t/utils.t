@@ -10,6 +10,7 @@ use strict;
 use Test::More;
 use NPTest;
 
+use lib ".";
 use lib "..";
 use utils;
 
