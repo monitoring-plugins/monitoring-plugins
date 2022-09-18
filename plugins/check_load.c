@@ -70,7 +70,7 @@ double cload[3] = { 0.0, 0.0, 0.0 };
 #define la15 la[2]
 
 char *status_line;
-int take_into_account_cpus = 0;
+bool take_into_account_cpus = false;
 
 static void
 get_threshold(char *arg, double *th)
@@ -108,6 +108,7 @@ main (int argc, char **argv)
 	long numcpus;
 
 	double la[3] = { 0.0, 0.0, 0.0 };	/* NetBSD complains about unitialized arrays */
+	double scaled_la[3] = { 0.0, 0.0, 0.0 };
 #ifndef HAVE_GETLOADAVG
 	char input_buffer[MAX_INPUT_BUFFER];
 # ifdef HAVE_PROC_LOADAVG
@@ -178,14 +179,16 @@ main (int argc, char **argv)
 # endif
 #endif
 
-	if (take_into_account_cpus == 1) {
-		if ((numcpus = GET_NUMBER_OF_CPUS()) > 0) {
-			la[0] = la[0] / numcpus;
-			la[1] = la[1] / numcpus;
-			la[2] = la[2] / numcpus;
-		}
+	bool is_using_scaled_values = false;
+
+	if ((take_into_account_cpus == true) && ((numcpus = GET_NUMBER_OF_CPUS()) > 0)) {
+		scaled_la[0] = la[0] / numcpus;
+		scaled_la[1] = la[1] / numcpus;
+		scaled_la[2] = la[2] / numcpus;
+		is_using_scaled_values = true;
 	}
-	if ((la[0] < 0.0) || (la[1] < 0.0) || (la[2] < 0.0)) {
+	if ((la[0] < 0.0) || (la[1] < 0.0) || (la[2] < 0.0)
+		|| (scaled_la[0] < 0.0) || (scaled_la[1] < 0.0) || (scaled_la[2] < 0.0) ) {
 #ifdef HAVE_GETLOADAVG
 		printf (_("Error in getloadavg()\n"));
 #else
@@ -202,18 +205,35 @@ main (int argc, char **argv)
 	result = STATE_OK;
 
 	xasprintf(&status_line, _("load average: %.2f, %.2f, %.2f"), la1, la5, la15);
+	if (is_using_scaled_values == true) {
+		xasprintf(&status_line, "%s, scaled load average: %.2f, %.2f, %.2f", status_line, scaled_la[0], scaled_la[1], scaled_la[2]);
+	}
 
 	for(i = 0; i < 3; i++) {
-		if(la[i] > cload[i]) {
-			result = STATE_CRITICAL;
-			break;
+		if (is_using_scaled_values == true) {
+			if(scaled_la[i] > cload[i]) {
+				result = STATE_CRITICAL;
+				break;
+			} else if(scaled_la[i] > wload[i]) {
+				result = STATE_WARNING;
+			}
+		} else {
+			if(la[i] > cload[i]) {
+				result = STATE_CRITICAL;
+				break;
+			} else if(la[i] > wload[i]) {
+				result = STATE_WARNING;
+			}
 		}
-		else if(la[i] > wload[i]) result = STATE_WARNING;
 	}
 
 	printf("LOAD %s - %s|", state_text(result), status_line);
-	for(i = 0; i < 3; i++)
+	for(i = 0; i < 3; i++) {
 		printf("load%d=%.3f;%.3f;%.3f;0; ", nums[i], la[i], wload[i], cload[i]);
+		if (is_using_scaled_values) {
+			printf("scaled_load%d=%.3f;%.3f;%.3f;0; ", nums[i], scaled_la[i], wload[i], cload[i]);
+		}
+	}
 
 	putchar('\n');
 	if (n_procs_to_show > 0) {
@@ -257,7 +277,7 @@ process_arguments (int argc, char **argv)
 			get_threshold(optarg, cload);
 			break;
 		case 'r': /* Divide load average by number of CPUs */
-			take_into_account_cpus = 1;
+			take_into_account_cpus = true;
 			break;
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
