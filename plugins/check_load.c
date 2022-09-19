@@ -198,28 +198,40 @@ main (int argc, char **argv)
 	xasprintf(&status_line, ("total %s"), status_line);
 
 
-	for(i = 0; i < 3; i++) {
-		if(la[i] > cload[i]) {
-			result = STATE_CRITICAL;
-			break;
-		}
-		else if(la[i] > wload[i]) result = STATE_WARNING;
+	double scaled_la[3] = { 0.0, 0.0, 0.0 };
+	bool is_using_scaled_load_values = false;
+
+	if (take_into_account_cpus == true && (numcpus = GET_NUMBER_OF_CPUS()) > 0) {
+		is_using_scaled_load_values = true;
+
+		scaled_la[0] = la[0] / numcpus;
+		scaled_la[1] = la[1] / numcpus;
+		scaled_la[2] = la[2] / numcpus;
+
+		char *tmp = NULL;
+		xasprintf(&tmp, _("load average: %.2f, %.2f, %.2f"), scaled_la[0], scaled_la[1], scaled_la[2]);
+		xasprintf(&status_line, "scaled %s - %s", tmp, status_line);
 	}
 
-	double scaled_la[3] = { 0.0, 0.0, 0.0 };
-	if (take_into_account_cpus == true && (numcpus = GET_NUMBER_OF_CPUS()) > 0) {
-			scaled_la[0] = la[0] / numcpus;
-			scaled_la[1] = la[1] / numcpus;
-			scaled_la[2] = la[2] / numcpus;
-
-			char *tmp = NULL;
-			xasprintf(&tmp, _("load average: %.2f, %.2f, %.2f"), scaled_la[0], scaled_la[1], scaled_la[2]);
-			xasprintf(&status_line, "scaled %s - %s", tmp, status_line);
+	for(i = 0; i < 3; i++) {
+		if (is_using_scaled_load_values) {
+			if(scaled_la[i] > cload[i]) {
+				result = STATE_CRITICAL;
+				break;
+			}
+			else if(scaled_la[i] > wload[i]) result = STATE_WARNING;
+		} else {
+			if(la[i] > cload[i]) {
+				result = STATE_CRITICAL;
+				break;
+			}
+			else if(la[i] > wload[i]) result = STATE_WARNING;
+		}
 	}
 
 	printf("LOAD %s - %s|", state_text(result), status_line);
 	for(i = 0; i < 3; i++) {
-		if (scaled_la[i] != 0.0) {
+		if (is_using_scaled_load_values) {
 			printf("load%d=%.3f;;;0; ", nums[i], la[i]);
 			printf("scaled_load%d=%.3f;%.3f;%.3f;0; ", nums[i], scaled_la[i], wload[i], cload[i]);
 		} else {
@@ -269,7 +281,7 @@ process_arguments (int argc, char **argv)
 			get_threshold(optarg, cload);
 			break;
 		case 'r': /* Divide load average by number of CPUs */
-			take_into_account_cpus = 1;
+			take_into_account_cpus = true;
 			break;
 		case 'V':									/* version */
 			print_revision (progname, NP_VERSION);
