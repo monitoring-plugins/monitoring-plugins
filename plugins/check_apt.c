@@ -76,9 +76,9 @@ int cmpstringp(const void *p1, const void *p2);
 
 /* configuration variables */
 static int verbose = 0;      /* -v */
-static int list = 0;         /* list packages available for upgrade */
-static int do_update = 0;    /* whether to call apt-get update */
-static int only_critical = 0;    /* whether to warn about non-critical updates */
+static bool list = false;         /* list packages available for upgrade */
+static bool do_update = false;    /* whether to call apt-get update */
+static bool only_critical = false;    /* whether to warn about non-critical updates */
 static upgrade_type upgrade = UPGRADE; /* which type of upgrade to do */
 static char *upgrade_opts = NULL; /* options to override defaults for upgrade */
 static char *update_opts = NULL; /* options to override defaults for update */
@@ -119,7 +119,7 @@ int main (int argc, char **argv) {
 
 	if(sec_count > 0){
 		result = max_state(result, STATE_CRITICAL);
-	} else if(packages_available >= packages_warning && only_critical == 0){
+	} else if(packages_available >= packages_warning && only_critical == false){
 		result = max_state(result, STATE_WARNING);
 	} else if(result > STATE_UNKNOWN){
 		result = STATE_UNKNOWN;
@@ -144,7 +144,7 @@ int main (int argc, char **argv) {
 
 		for(i = 0; i < sec_count; i++)
 			printf("%s (security)\n", secpackages_list[i]);
-		if (only_critical == 0) {
+		if (only_critical == false) {
 			for(i = 0; i < packages_available - sec_count; i++)
 				printf("%s\n", packages_list[i]);
 		}
@@ -166,7 +166,7 @@ int process_arguments (int argc, char **argv) {
 		{"upgrade", optional_argument, 0, 'U'},
 		{"no-upgrade", no_argument, 0, 'n'},
 		{"dist-upgrade", optional_argument, 0, 'd'},
-		{"list", no_argument, 0, 'l'},
+		{"list", no_argument, false, 'l'},
 		{"include", required_argument, 0, 'i'},
 		{"exclude", required_argument, 0, 'e'},
 		{"critical", required_argument, 0, 'c'},
@@ -212,14 +212,14 @@ int process_arguments (int argc, char **argv) {
 			upgrade=NO_UPGRADE;
 			break;
 		case 'u':
-			do_update=1;
+			do_update=true;
 			if(optarg!=NULL){
 				update_opts=strdup(optarg);
 				if(update_opts==NULL) die(STATE_UNKNOWN, "strdup failed");
 			}
 			break;
 		case 'l':
-			list=1;
+			list=true;
 			break;
 		case 'i':
 			do_include=add_to_regexp(do_include, optarg);
@@ -231,7 +231,7 @@ int process_arguments (int argc, char **argv) {
 			do_critical=add_to_regexp(do_critical, optarg);
 			break;
 		case 'o':
-			only_critical=1;
+			only_critical=true;
 			break;
 		case INPUT_FILE_OPT:
 			input_filename = optarg;
