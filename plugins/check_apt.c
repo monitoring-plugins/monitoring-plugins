@@ -371,7 +371,7 @@ int run_update(void){
 	struct output chld_out, chld_err;
 	char *cmdline;
 
-	/* run the upgrade */
+	/* run the update */
 	cmdline = construct_cmdline(NO_UPGRADE, update_opts);
 	result = np_runcmd(cmdline, &chld_out, &chld_err, 0);
 	/* apt-get update changes exit status if it can't fetch packages.
