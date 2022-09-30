@@ -501,16 +501,6 @@ print_help (void)
 
   printf(UT_PLUG_TIMEOUT, timeout_interval);
 
-  printf (" %s\n", "-U, --upgrade=OPTS");
-  printf ("    %s\n", _("[Default] Perform an upgrade.  If an optional OPTS argument is provided,"));
-  printf ("    %s\n", _("apt-get will be run with these command line options instead of the"));
-  printf ("    %s", _("default "));
-  printf ("(%s).\n", UPGRADE_DEFAULT_OPTS);
-  printf ("    %s\n", _("Note that you may be required to have root privileges if you do not use"));
-  printf ("    %s\n", _("the default options."));
-  printf (" %s\n", "-d, --dist-upgrade=OPTS");
-  printf ("    %s\n", _("Perform a dist-upgrade instead of normal upgrade. Like with -U OPTS"));
-  printf ("    %s\n", _("can be provided to override the default options."));
   printf (" %s\n", "-n, --no-upgrade");
   printf ("    %s\n", _("Do not run the upgrade.  Probably not useful (without -u at least)."));
   printf (" %s\n", "-l, --list");
@@ -547,6 +537,16 @@ print_help (void)
   printf ("    %s\n", _("the default options.  Note: you may also need to adjust the global"));
   printf ("    %s\n", _("timeout (with -t) to prevent the plugin from timing out if apt-get"));
   printf ("    %s\n", _("upgrade is expected to take longer than the default timeout."));
+  printf (" %s\n", "-U, --upgrade=OPTS");
+  printf ("    %s\n", _("Perform an upgrade. If an optional OPTS argument is provided,"));
+  printf ("    %s\n", _("apt-get will be run with these command line options instead of the"));
+  printf ("    %s", _("default "));
+  printf ("(%s).\n", UPGRADE_DEFAULT_OPTS);
+  printf ("    %s\n", _("Note that you may be required to have root privileges if you do not use"));
+  printf ("    %s\n", _("the default options, which will only run a simulation and NOT perform the upgrade"));
+  printf (" %s\n", "-d, --dist-upgrade=OPTS");
+  printf ("    %s\n", _("Perform a dist-upgrade instead of normal upgrade. Like with -U OPTS"));
+  printf ("    %s\n", _("can be provided to override the default options."));
 
   printf(UT_SUPPORT);
 }
