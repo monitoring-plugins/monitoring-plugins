@@ -49,10 +49,10 @@ case "$1" in
 		elif test "${status}" -ne 0; then
 			text="WARNING - sensors returned state $status"
 			exit=$STATE_WARNING
-		elif echo "${sensordata}" | egrep ALARM > /dev/null; then
+		elif echo "${sensordata}" | grep -E ALARM > /dev/null; then
 			text="SENSOR CRITICAL - Sensor alarm detected!"
 			exit=$STATE_CRITICAL
-		elif echo "${sensordata}" | egrep FAULT > /dev/null \
+		elif echo "${sensordata}" | grep -E FAULT > /dev/null \
 		    && test "$1" != "-i" -a "$1" != "--ignore-fault"; then
 			text="SENSOR UNKNOWN - Sensor reported fault"
 			exit=$STATE_UNKNOWN
