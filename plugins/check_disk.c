@@ -112,7 +112,8 @@ enum
 {
   SYNC_OPTION = CHAR_MAX + 1,
   NO_SYNC_OPTION,
-  BLOCK_SIZE_OPTION
+  BLOCK_SIZE_OPTION,
+  IGNORE_MISSING
 };
 
 #ifdef _AIX
@@ -140,6 +141,7 @@ int verbose = 0;
 int erronly = FALSE;
 int display_mntp = FALSE;
 int exact_match = FALSE;
+int ignore_missing = FALSE;
 int freespace_ignore_reserved = FALSE;
 int display_inodes_perfdata = FALSE;
 char *warn_freespace_units = NULL;
@@ -219,7 +221,9 @@ main (int argc, char **argv)
   temp_list = path_select_list;
 
   while (temp_list) {
-    if (! temp_list->best_match) {
+    if (! temp_list->best_match && ignore_missing == 1) {
+      die (STATE_OK, _("DISK %s: %s not found (ignoring)\n"), _("OK"), temp_list->name);
+    } else if (! temp_list->best_match) {
       die (STATE_CRITICAL, _("DISK %s: %s not found\n"), _("CRITICAL"), temp_list->name);
     }
 
@@ -481,6 +485,7 @@ process_arguments (int argc, char **argv)
     {"ignore-ereg-partition", required_argument, 0, 'i'},
     {"ignore-eregi-path", required_argument, 0, 'I'},
     {"ignore-eregi-partition", required_argument, 0, 'I'},
+    {"ignore-missing", no_argument, 0, IGNORE_MISSING},
     {"local", no_argument, 0, 'l'},
     {"stat-remote-fs", no_argument, 0, 'L'},
     {"iperfdata", no_argument, 0, 'P'},
@@ -718,6 +723,9 @@ process_arguments (int argc, char **argv)
       cflags = default_cflags;
       break;
 
+    case IGNORE_MISSING:
+      ignore_missing = 1;
+      break;
     case 'A':
       optarg = strdup(".*");
 	  // Intentional fallthrough
@@ -753,7 +761,10 @@ process_arguments (int argc, char **argv)
         }
       }
 
-      if (!fnd)
+      if (!fnd && ignore_missing == 1)
+        die (STATE_OK, "DISK %s: %s - %s\n",_("OK"),
+            _("Regular expression did not match any path or disk (ignoring)"), optarg);
+      else if (!fnd)
         die (STATE_UNKNOWN, "DISK %s: %s - %s\n",_("UNKNOWN"),
             _("Regular expression did not match any path or disk"), optarg);
 
@@ -923,6 +934,9 @@ print_help (void)
   printf ("    %s\n", _("Regular expression to ignore selected path/partition (case insensitive) (may be repeated)"));
   printf (" %s\n", "-i, --ignore-ereg-path=PATH, --ignore-ereg-partition=PARTITION");
   printf ("    %s\n", _("Regular expression to ignore selected path or partition (may be repeated)"));
+  printf (" %s\n", "--ignore-missing");
+  printf ("    %s\n", _("Return OK if no filesystem matches, filesystem does not exist or is inaccessible."));
+  printf ("    %s\n", _("(Provide this option before -r / --ereg-path if used)"));
   printf (UT_PLUG_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
   printf (" %s\n", "-u, --units=STRING");
   printf ("    %s\n", _("Choose bytes, kB, MB, GB, TB (default: MB)"));
@@ -965,8 +979,13 @@ stat_path (struct parameter_list *p)
   if (stat (p->name, &stat_buf[0])) {
     if (verbose >= 3)
       printf("stat failed on %s\n", p->name);
-    printf("DISK %s - ", _("CRITICAL"));
-    die (STATE_CRITICAL, _("%s %s: %s\n"), p->name, _("is not accessible"), strerror(errno));
+    if (ignore_missing == 1) {
+      printf("DISK %s - ", _("OK"));
+      die (STATE_OK, _("%s %s: %s\n"), p->name, _("is not accessible (ignoring)"), strerror(errno));
+    } else {
+      printf("DISK %s - ", _("CRITICAL"));
+      die (STATE_CRITICAL, _("%s %s: %s\n"), p->name, _("is not accessible"), strerror(errno));
+    }
   }
 }
 
