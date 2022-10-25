@@ -351,3 +351,18 @@ unlike( $result->output, qr/$mountpoint2_valid/, "output data does not have $mou
 $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p $mountpoint_valid -p $mountpoint2_valid -i '^barbazJodsf\$'");
 like( $result->output, qr/$mountpoint_valid/, "ignore: output data does have $mountpoint_valid when regex doesn't match");
 like( $result->output, qr/$mountpoint2_valid/,"ignore: output data does have $mountpoint2_valid when regex doesn't match");
+
+# ignore-missing: exit okay, when fs is not accessible
+$result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -p /bob");
+cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay for not existing filesystem /bob");
+like( $result->output, '/^DISK OK - /bob is not accessible .*$/', 'Output OK');
+
+# ignore-missing: exit okay, when regex does not match
+$result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -r /bob");
+cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay for regular expression not matching");
+like( $result->output, '/^DISK OK: Regular expression did not match any path or disk.*$/', 'Output OK');
+
+# ignore-missing: exit okay, when fs with exact match (-E) is not found
+$result = NPTest->testCmd( "./check_disk --ignore-missing -E -w 0% -c 0% -p /etc");
+cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay when exact match does not find fs");
+like( $result->output, '/^DISK OK: /etc not found.*$/', 'Output OK');
