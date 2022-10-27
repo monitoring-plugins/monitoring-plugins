@@ -615,9 +615,9 @@ char *perfdata_uint64 (const char *label,
 	char *data = NULL;
 
 	if (strpbrk (label, "'= "))
-		xasprintf (&data, "'%s'=%" PRId64 "%s;", label, val, uom);
+		xasprintf (&data, "'%s'=%" PRIu64 "%s;", label, val, uom);
 	else
-		xasprintf (&data, "%s=%" PRId64 "%s;", label, val, uom);
+		xasprintf (&data, "%s=%" PRIu64 "%s;", label, val, uom);
 
 	if (warnp)
 		xasprintf (&data, "%s%" PRIu64 ";", data, warn);
