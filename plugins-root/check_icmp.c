@@ -55,6 +55,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include <errno.h>
 #include <signal.h>
 #include <ctype.h>
+#include <float.h>
 #include <net/if.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -1220,7 +1221,7 @@ finish(int sig)
 			   host->rta / 1000, (float)warn.rta / 1000, (float)crit.rta / 1000,
 			   (targets > 1) ? host->name : "", host->pl, warn.pl, crit.pl,
 			   (targets > 1) ? host->name : "", (float)host->rtmax / 1000,
-			   (targets > 1) ? host->name : "", (host->rtmin < DBL_MAX) ? (float)host->rtmin / 1000 : (float)0);
+			   (targets > 1) ? host->name : "", (host->rtmin < INFINITY) ? (float)host->rtmin / 1000 : (float)0);
 
 		host = host->next;
 	}
@@ -1323,7 +1324,7 @@ add_target_ip(char *arg, struct sockaddr_storage *in)
 		memcpy(host_sin6->sin6_addr.s6_addr, sin6->sin6_addr.s6_addr, sizeof host_sin6->sin6_addr.s6_addr);
 	}
 
-	host->rtmin = DBL_MAX;
+	host->rtmin = INFINITY;
 
 	if(!list) list = cursor = host;
 	else cursor->next = host;
