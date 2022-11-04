@@ -81,7 +81,6 @@ check_dns_LDADD = $(NETLIBS)
 check_dummy_LDADD = $(BASEOBJS)
 check_fping_LDADD = $(NETLIBS)
 check_game_LDADD = $(BASEOBJS)
-check_http_LDADD = $(SSLOBJS)
 check_hpjd_LDADD = $(NETLIBS)
 check_ldap_LDADD = $(NETLIBS) $(LDAPLIBS)
 check_load_LDADD = $(BASEOBJS)
@@ -130,6 +129,11 @@ all-local: $(check_tcp_programs)
 $(check_tcp_programs): check_tcp
 	rm -f $@
 	ln -s check_tcp $@
+
+check_http: check_curl
+	rm -f $@
+	ln -s check_curl $@
+
 
 install-exec-hook:
 	cd $(DESTDIR)$(libexecdir) && \
