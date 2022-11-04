@@ -615,27 +615,27 @@ char *perfdata_uint64 (const char *label,
 	char *data = NULL;
 
 	if (strpbrk (label, "'= "))
-		xasprintf (&data, "'%s'=%ld%s;", label, val, uom);
+		xasprintf (&data, "'%s'=%" PRIu64 "%s;", label, val, uom);
 	else
-		xasprintf (&data, "%s=%ld%s;", label, val, uom);
+		xasprintf (&data, "%s=%" PRIu64 "%s;", label, val, uom);
 
 	if (warnp)
-		xasprintf (&data, "%s%lu;", data, warn);
+		xasprintf (&data, "%s%" PRIu64 ";", data, warn);
 	else
 		xasprintf (&data, "%s;", data);
 
 	if (critp)
-		xasprintf (&data, "%s%lu;", data, crit);
+		xasprintf (&data, "%s%" PRIu64 ";", data, crit);
 	else
 		xasprintf (&data, "%s;", data);
 
 	if (minp)
-		xasprintf (&data, "%s%lu;", data, minv);
+		xasprintf (&data, "%s%" PRIu64 ";", data, minv);
 	else
 		xasprintf (&data, "%s;", data);
 
 	if (maxp)
-		xasprintf (&data, "%s%lu", data, maxv);
+		xasprintf (&data, "%s%" PRIu64, data, maxv);
 
 	return data;
 }
@@ -656,27 +656,27 @@ char *perfdata_int64 (const char *label,
 	char *data = NULL;
 
 	if (strpbrk (label, "'= "))
-		xasprintf (&data, "'%s'=%ld%s;", label, val, uom);
+		xasprintf (&data, "'%s'=%" PRId64 "%s;", label, val, uom);
 	else
-		xasprintf (&data, "%s=%ld%s;", label, val, uom);
+		xasprintf (&data, "%s=%" PRId64 "%s;", label, val, uom);
 
 	if (warnp)
-		xasprintf (&data, "%s%ld;", data, warn);
+		xasprintf (&data, "%s%" PRId64 ";", data, warn);
 	else
 		xasprintf (&data, "%s;", data);
 
 	if (critp)
-		xasprintf (&data, "%s%ld;", data, crit);
+		xasprintf (&data, "%s%" PRId64 ";", data, crit);
 	else
 		xasprintf (&data, "%s;", data);
 
 	if (minp)
-		xasprintf (&data, "%s%ld;", data, minv);
+		xasprintf (&data, "%s%" PRId64 ";", data, minv);
 	else
 		xasprintf (&data, "%s;", data);
 
 	if (maxp)
-		xasprintf (&data, "%s%ld", data, maxv);
+		xasprintf (&data, "%s%" PRId64, data, maxv);
 
 	return data;
 }
