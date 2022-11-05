@@ -1011,10 +1011,12 @@ GOT_FIRST_CERT:
   result = max_state_alt(get_status(total_time, thlds), result);
 
   /* Cut-off trailing characters */
-  if(msg[strlen(msg)-2] == ',')
-    msg[strlen(msg)-2] = '\0';
-  else
-    msg[strlen(msg)-3] = '\0';
+  if (strlen(msg) >= 2) {
+      if(msg[strlen(msg)-2] == ',')
+        msg[strlen(msg)-2] = '\0';
+      else
+        msg[strlen(msg)-3] = '\0';
+    }
 
   /* TODO: separate _() msg and status code: die (result, "HTTP %s: %s\n", state_text(result), msg); */
   die (result, "HTTP %s: %s %d %s%s%s - %d bytes in %.3f second response time %s|%s\n%s%s",
