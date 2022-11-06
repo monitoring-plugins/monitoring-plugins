@@ -36,6 +36,13 @@ $res = NPTest->testCmd(
 cmp_ok( $res->return_code, '==', 0, "Webserver $host_tcp_http responded" );
 like( $res->output, $successOutput, "Output OK" );
 
+# Test for IPv6 formatting
+$res = NPTest->testCmd(
+	"./$plugin -I ::1 -wt 300 -ct 600"
+	);
+cmp_ok( $res->return_code, '==', 0, "IPv6 URL formatting is working" );
+like( $res->output, $successOutput, "Output OK" );
+
 $res = NPTest->testCmd(
 	"./$plugin $host_tcp_http -wt 300 -ct 600 -v -v -v -k 'bob:there' -k 'carl:frown'"
 	);
