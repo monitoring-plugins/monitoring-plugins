@@ -476,6 +476,18 @@ check_http (void)
         printf ("* curl CURLOPT_RESOLVE: %s\n", dnscache);
   }
 
+  // If server_address is an IPv6 address it must be surround by square brackets
+  struct in6_addr tmp_in_addr;
+  if (inet_pton(AF_INET6, server_address, &tmp_in_addr) == 1) {
+    char *new_server_address = malloc(strlen(server_address) + 3);
+    if (new_server_address == NULL) {
+      die(STATE_UNKNOWN, "HTTP UNKNOWN - Unable to allocate memory\n");
+    }
+    snprintf(new_server_address, strlen(server_address)+3, "[%s]", server_address);
+    free(server_address);
+    server_address = new_server_address;
+  }
+
   /* compose URL: use the address we want to connect to, set Host: header later */
   snprintf (url, DEFAULT_BUFFER_SIZE, "%s://%s:%d%s",
       use_ssl ? "https" : "http",
@@ -999,10 +1011,12 @@ GOT_FIRST_CERT:
   result = max_state_alt(get_status(total_time, thlds), result);
 
   /* Cut-off trailing characters */
-  if(msg[strlen(msg)-2] == ',')
-    msg[strlen(msg)-2] = '\0';
-  else
-    msg[strlen(msg)-3] = '\0';
+  if (strlen(msg) >= 2) {
+      if(msg[strlen(msg)-2] == ',')
+        msg[strlen(msg)-2] = '\0';
+      else
+        msg[strlen(msg)-3] = '\0';
+    }
 
   /* TODO: separate _() msg and status code: die (result, "HTTP %s: %s\n", state_text(result), msg); */
   die (result, "HTTP %s: %s %d %s%s%s - %d bytes in %.3f second response time %s|%s\n%s%s",

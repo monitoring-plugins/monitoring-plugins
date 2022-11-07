@@ -40,7 +40,7 @@ jobs:
               ${{ matrix.distro }} \
               /bin/sh -c '${{ matrix.prepare }} && \
                 tools/setup && \
-                ./configure --enable-libtap --with-ipv6=no && \
+                ./configure --enable-libtap  --with-ipv6=no && \
                 make && \
                 make test'
           docker container prune -f
