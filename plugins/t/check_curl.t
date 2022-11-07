@@ -1,6 +1,6 @@
 #! /usr/bin/perl -w -I ..
 #
-# HyperText Transfer Protocol (HTTP) Test via check_http
+# HyperText Transfer Protocol (HTTP) Test via check_curl
 #
 #
 
@@ -8,7 +8,7 @@ use strict;
 use Test::More;
 use POSIX qw/mktime strftime/;
 
-use vars qw($test $has_ipv6);
+use vars qw($tests $has_ipv6);
 
 BEGIN {
     use NPTest;
