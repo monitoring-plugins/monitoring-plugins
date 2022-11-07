@@ -8,6 +8,8 @@ use strict;
 use Test::More;
 use POSIX qw/mktime strftime/;
 
+use vars qw($test $has_ipv6);
+
 BEGIN {
     use NPTest;
     $has_ipv6 = NPTest::has_ipv6();
