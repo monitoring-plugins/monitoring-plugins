@@ -14,9 +14,9 @@ BEGIN {
     use NPTest;
     $has_ipv6 = NPTest::has_ipv6();
     $tests = $has_ipv6 ? 59 : 57;
+    plan tests => $tests;
 }
 
-plan tests => $tests;
 
 my $successOutput = '/OK.*HTTP.*second/';
 
