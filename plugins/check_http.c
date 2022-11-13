@@ -34,7 +34,7 @@
 /* splint -I. -I../../plugins -I../../lib/ -I/usr/kerberos/include/ ../../plugins/check_http.c */
 
 const char *progname = "check_http";
-const char *copyright = "1999-2013";
+const char *copyright = "1999-2022";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
