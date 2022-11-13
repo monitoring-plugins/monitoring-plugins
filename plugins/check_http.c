@@ -1111,25 +1111,7 @@ int check_http(void) {
   elapsed_time_transfer = (double)microsec_transfer / 1.0e6;
 
   if (i < 0 && errno != ECONNRESET) {
-#ifdef HAVE_SSL
-    /*
-    if (use_ssl) {
-      sslerr=SSL_get_error(ssl, i);
-      if ( sslerr == SSL_ERROR_SSL ) {
-        die (STATE_WARNING, _("HTTP WARNING - Client Certificate Required\n"));
-      } else {
-        die (STATE_CRITICAL, _("HTTP CRITICAL - Error on receive\n"));
-      }
-    }
-    else {
-    */
-#endif
     die(STATE_CRITICAL, _("HTTP CRITICAL - Error on receive\n"));
-#ifdef HAVE_SSL
-    /* XXX
-  }
-  */
-#endif
   }
 
   /* return a CRITICAL status if we couldn't read any data */
