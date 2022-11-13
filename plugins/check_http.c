@@ -148,7 +148,7 @@ char *perfd_time_transfer(double microsec);
 char *perfd_size(int page_len);
 void print_help(void);
 void print_usage(void);
-char *unchunk_content(char *content);
+char *unchunk_content(const char *content);
 
 int main(int argc, char **argv) {
   int result = STATE_UNKNOWN;
