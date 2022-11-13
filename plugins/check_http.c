@@ -57,8 +57,8 @@ enum {
 };
 
 #ifdef HAVE_SSL
-int check_cert = FALSE;
-int continue_after_check_cert = FALSE;
+bool check_cert = false;
+bool continue_after_check_cert = false;
 int ssl_version = 0;
 int days_till_exp_warn, days_till_exp_crit;
 char *randbuff;
@@ -69,7 +69,7 @@ X509 *server_cert;
 #  define my_recv(buf, len) read(sd, buf, len)
 #  define my_send(buf, len) send(sd, buf, len, 0)
 #endif /* HAVE_SSL */
-int no_body = FALSE;
+bool no_body = false;
 int maximum_age = -1;
 
 enum {
@@ -91,7 +91,7 @@ struct timeval tv_temp;
 #define HTTP_URL "/"
 #define CRLF "\r\n"
 
-int specify_port = FALSE;
+bool specify_port = false;
 int server_port = HTTP_PORT;
 int virtual_port = 0;
 char server_port_text[6] = "";
@@ -113,16 +113,16 @@ char *critical_thresholds = NULL;
 thresholds *thlds;
 char user_auth[MAX_INPUT_BUFFER] = "";
 char proxy_auth[MAX_INPUT_BUFFER] = "";
-int display_html = FALSE;
+bool display_html = false;
 char **http_opt_headers;
 int http_opt_headers_count = 0;
 int onredirect = STATE_OK;
 int followsticky = STICKY_NONE;
-int use_ssl = FALSE;
-int use_sni = FALSE;
-int verbose = FALSE;
-int show_extended_perfdata = FALSE;
-int show_body = FALSE;
+bool use_ssl = false;
+bool use_sni = false;
+bool verbose = false;
+bool show_extended_perfdata = false;
+bool show_body = false;
 int sd;
 int min_page_len = 0;
 int max_page_len = 0;
@@ -136,10 +136,10 @@ char buffer[MAX_INPUT_BUFFER];
 char *client_cert = NULL;
 char *client_privkey = NULL;
 
-int process_arguments (int, char **);
+bool process_arguments (int, char **);
 int check_http (void);
 void redir (char *pos, char *status_line);
-int server_type_check(const char *type);
+bool server_type_check(const char *type);
 int server_port_check(int ssl_flag);
 char *perfd_time (double microsec);
 char *perfd_time_connect (double microsec);
@@ -169,10 +169,10 @@ main (int argc, char **argv)
   /* Parse extra opts if any */
   argv=np_extra_opts (&argc, argv, progname);
 
-  if (process_arguments (argc, argv) == ERROR)
+  if (process_arguments (argc, argv) == false)
     usage4 (_("Could not parse arguments"));
 
-  if (display_html == TRUE)
+  if (display_html == true)
     printf ("<A HREF=\"%s://%s:%d%s\" target=\"_blank\">",
       use_ssl ? "https" : "http", host_name ? host_name : server_address,
       server_port, server_url);
@@ -196,8 +196,7 @@ test_file (char *path)
 }
 
 /* process command-line arguments */
-int
-process_arguments (int argc, char **argv)
+bool process_arguments (int argc, char **argv)
 {
   int c = 1;
   char *p;
@@ -252,7 +251,7 @@ process_arguments (int argc, char **argv)
   };
 
   if (argc < 2)
-    return ERROR;
+    return false;
 
   for (c = 1; c < argc; c++) {
     if (strcmp ("-to", argv[c]) == 0)
@@ -308,10 +307,10 @@ process_arguments (int argc, char **argv)
       /* xasprintf (&http_opt_headers, "%s", optarg); */
       break;
     case 'L': /* show html link */
-      display_html = TRUE;
+      display_html = true;
       break;
     case 'n': /* do not show html link */
-      display_html = FALSE;
+      display_html = false;
       break;
     case 'C': /* Check SSL cert validity */
 #ifdef HAVE_SSL
@@ -332,12 +331,12 @@ process_arguments (int argc, char **argv)
           usage2 (_("Invalid certificate expiration period"), optarg);
         days_till_exp_warn = atoi (optarg);
       }
-      check_cert = TRUE;
+      check_cert = true;
       goto enable_ssl;
 #endif
     case CONTINUE_AFTER_CHECK_CERT: /* don't stop after the certificate is checked */
 #ifdef HAVE_SSL
-      continue_after_check_cert = TRUE;
+      continue_after_check_cert = true;
       break;
 #endif
     case 'J': /* use client certificate */
@@ -357,7 +356,7 @@ process_arguments (int argc, char **argv)
     enable_ssl:
       /* ssl_version initialized to 0 as a default. Only set if it's non-zero.  This helps when we include multiple
          parameters, like -S and -C combinations */
-      use_ssl = TRUE;
+      use_ssl = true;
       if (c=='S' && optarg != NULL) {
         int got_plus = strchr(optarg, '+') != NULL;
 
@@ -374,7 +373,7 @@ process_arguments (int argc, char **argv)
         else
           usage4 (_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2 (with optional '+' suffix)"));
       }
-      if (specify_port == FALSE)
+      if (specify_port == false)
         server_port = HTTPS_PORT;
 #else
       /* -C -J and -K fall through to here without SSL */
@@ -382,7 +381,7 @@ process_arguments (int argc, char **argv)
 #endif
       break;
     case SNI_OPTION:
-      use_sni = TRUE;
+      use_sni = true;
       break;
     case MAX_REDIRS_OPTION:
       if (!is_intnonneg (optarg))
@@ -420,7 +419,7 @@ process_arguments (int argc, char **argv)
 	  host_name_length = strlen (host_name) - strlen (p) - 1;
           free (host_name);
           host_name = strndup (optarg, host_name_length);
-          if (specify_port == FALSE)
+          if (specify_port == false)
             server_port = virtual_port;
 	}
       } else if ((p = strchr (host_name, ':')) != NULL
@@ -430,7 +429,7 @@ process_arguments (int argc, char **argv)
 	  host_name_length = strlen (host_name) - strlen (p) - 1;
           free (host_name);
           host_name = strndup (optarg, host_name_length);
-          if (specify_port == FALSE)
+          if (specify_port == false)
             server_port = virtual_port;
         }
       break;
@@ -446,7 +445,7 @@ process_arguments (int argc, char **argv)
         usage2 (_("Invalid port number"), optarg);
       else {
         server_port = atoi (optarg);
-        specify_port = TRUE;
+        specify_port = true;
       }
       break;
     case 'a': /* authorization info */
@@ -502,7 +501,7 @@ process_arguments (int argc, char **argv)
       if (errcode != 0) {
         (void) regerror (errcode, &preg, errbuf, MAX_INPUT_BUFFER);
         printf (_("Could Not Compile Regular Expression: %s"), errbuf);
-        return ERROR;
+        return false;
       }
       break;
     case INVERT_REGEX:
@@ -519,7 +518,7 @@ process_arguments (int argc, char **argv)
 #endif
       break;
     case 'v': /* verbose */
-      verbose = TRUE;
+      verbose = true;
       break;
     case 'm': /* min_page_length */
       {
@@ -544,7 +543,7 @@ process_arguments (int argc, char **argv)
       break;
       }
     case 'N': /* no-body */
-      no_body = TRUE;
+      no_body = true;
       break;
     case 'M': /* max-age */
                   {
@@ -565,10 +564,10 @@ process_arguments (int argc, char **argv)
                   }
                   break;
     case 'E': /* show extended perfdata */
-      show_extended_perfdata = TRUE;
+      show_extended_perfdata = true;
       break;
     case 'B': /* print body content after status line */
-      show_body = TRUE;
+      show_body = true;
       break;
     }
   }
@@ -605,7 +604,7 @@ process_arguments (int argc, char **argv)
   if (virtual_port == 0)
     virtual_port = server_port;
 
-  return TRUE;
+  return true;
 }
 
 
@@ -945,7 +944,7 @@ check_http (void)
     /* @20100414, public[at]frank4dd.com, http://www.frank4dd.com/howto  */
 
     if ( server_address != NULL && strcmp(http_method, "CONNECT") == 0
-      && host_name != NULL && use_ssl == TRUE) {
+      && host_name != NULL && use_ssl == true) {
 
     if (verbose) printf ("Entering CONNECT tunnel mode with proxy %s:%d to dst %s:%d\n", server_address, server_port, host_name, HTTPS_PORT);
     asprintf (&buf, "%s %s:%d HTTP/1.1\r\n%s\r\n", http_method, host_name, HTTPS_PORT, user_agent);
@@ -979,7 +978,7 @@ check_http (void)
   }
 #ifdef HAVE_SSL
   elapsed_time_connect = (double)microsec_connect / 1.0e6;
-  if (use_ssl == TRUE) {
+  if (use_ssl == true) {
     gettimeofday (&tv_temp, NULL);
     result = np_net_ssl_init_with_hostname_version_and_cert(sd, (use_sni ? host_name : NULL), ssl_version, client_cert, client_privkey);
     if (verbose) printf ("SSL initialized\n");
@@ -987,9 +986,9 @@ check_http (void)
       die (STATE_CRITICAL, NULL);
     microsec_ssl = deltime (tv_temp);
     elapsed_time_ssl = (double)microsec_ssl / 1.0e6;
-    if (check_cert == TRUE) {
+    if (check_cert == true) {
       result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
-      if (continue_after_check_cert == FALSE) {
+      if (continue_after_check_cert == false) {
         if (sd) close(sd);
         np_net_ssl_cleanup();
         return result;
@@ -999,7 +998,7 @@ check_http (void)
 #endif /* HAVE_SSL */
 
   if ( server_address != NULL && strcmp(http_method, "CONNECT") == 0
-       && host_name != NULL && use_ssl == TRUE)
+       && host_name != NULL && use_ssl == true)
     asprintf (&buf, "%s %s %s\r\n%s\r\n", http_method_proxy, server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
   else
     asprintf (&buf, "%s %s %s\r\n%s\r\n", http_method, server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
@@ -1027,10 +1026,10 @@ check_http (void)
        * 14.23).  Some server applications/configurations cause trouble if the
        * (default) port is explicitly specified in the "Host:" header line.
        */
-      if ((use_ssl == FALSE && virtual_port == HTTP_PORT) ||
-          (use_ssl == TRUE && virtual_port == HTTPS_PORT) ||
+      if ((use_ssl == false && virtual_port == HTTP_PORT) ||
+          (use_ssl == true && virtual_port == HTTPS_PORT) ||
           (server_address != NULL && strcmp(http_method, "CONNECT") == 0
-         && host_name != NULL && use_ssl == TRUE))
+         && host_name != NULL && use_ssl == true))
         xasprintf (&buf, "%sHost: %s\r\n", buf, host_name);
       else
         xasprintf (&buf, "%sHost: %s:%d\r\n", buf, host_name, virtual_port);
@@ -1334,7 +1333,7 @@ check_http (void)
            perfd_time (elapsed_time),
            perfd_size (page_len),
            perfd_time_connect (elapsed_time_connect),
-           use_ssl == TRUE ? perfd_time_ssl (elapsed_time_ssl) : "",
+           use_ssl == true ? perfd_time_ssl (elapsed_time_ssl) : "",
            perfd_time_headers (elapsed_time_headers),
            perfd_time_firstbyte (elapsed_time_firstbyte),
            perfd_time_transfer (elapsed_time_transfer));
@@ -1529,13 +1528,13 @@ redir (char *pos, char *status_line)
 }
 
 
-int
+bool
 server_type_check (const char *type)
 {
   if (strcmp (type, "https"))
-    return FALSE;
+    return false;
   else
-    return TRUE;
+    return true;
 }
 
 int
@@ -1550,42 +1549,42 @@ server_port_check (int ssl_flag)
 char *perfd_time (double elapsed_time)
 {
   return fperfdata ("time", elapsed_time, "s",
-            thlds->warning?TRUE:FALSE, thlds->warning?thlds->warning->end:0,
-            thlds->critical?TRUE:FALSE, thlds->critical?thlds->critical->end:0,
-                   TRUE, 0, TRUE, socket_timeout);
+            thlds->warning?true:false, thlds->warning?thlds->warning->end:0,
+            thlds->critical?true:false, thlds->critical?thlds->critical->end:0,
+                   true, 0, true, socket_timeout);
 }
 
 char *perfd_time_connect (double elapsed_time_connect)
 {
-  return fperfdata ("time_connect", elapsed_time_connect, "s", FALSE, 0, FALSE, 0, FALSE, 0, TRUE, socket_timeout);
+  return fperfdata ("time_connect", elapsed_time_connect, "s", false, 0, false, 0, false, 0, true, socket_timeout);
 }
 
 char *perfd_time_ssl (double elapsed_time_ssl)
 {
-  return fperfdata ("time_ssl", elapsed_time_ssl, "s", FALSE, 0, FALSE, 0, FALSE, 0, TRUE, socket_timeout);
+  return fperfdata ("time_ssl", elapsed_time_ssl, "s", false, 0, false, 0, false, 0, true, socket_timeout);
 }
 
 char *perfd_time_headers (double elapsed_time_headers)
 {
-  return fperfdata ("time_headers", elapsed_time_headers, "s", FALSE, 0, FALSE, 0, FALSE, 0, TRUE, socket_timeout);
+  return fperfdata ("time_headers", elapsed_time_headers, "s", false, 0, false, 0, false, 0, true, socket_timeout);
 }
 
 char *perfd_time_firstbyte (double elapsed_time_firstbyte)
 {
-  return fperfdata ("time_firstbyte", elapsed_time_firstbyte, "s", FALSE, 0, FALSE, 0, FALSE, 0, TRUE, socket_timeout);
+  return fperfdata ("time_firstbyte", elapsed_time_firstbyte, "s", false, 0, false, 0, false, 0, true, socket_timeout);
 }
 
 char *perfd_time_transfer (double elapsed_time_transfer)
 {
-  return fperfdata ("time_transfer", elapsed_time_transfer, "s", FALSE, 0, FALSE, 0, FALSE, 0, TRUE, socket_timeout);
+  return fperfdata ("time_transfer", elapsed_time_transfer, "s", false, 0, false, 0, false, 0, true, socket_timeout);
 }
 
 char *perfd_size (int page_len)
 {
   return perfdata ("size", page_len, "B",
-            (min_page_len>0?TRUE:FALSE), min_page_len,
-            (min_page_len>0?TRUE:FALSE), 0,
-            TRUE, 0, FALSE, 0);
+            (min_page_len>0?true:false), min_page_len,
+            (min_page_len>0?true:false), 0,
+            true, 0, false, 0);
 }
 
 void
