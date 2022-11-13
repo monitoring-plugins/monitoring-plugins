@@ -146,6 +146,7 @@ char *perfd_time_transfer(double microsec);
 char *perfd_size(int page_len);
 void print_help(void);
 void print_usage(void);
+char *unchunk_content(char *content);
 
 int main(int argc, char **argv) {
   int result = STATE_UNKNOWN;
@@ -1252,7 +1253,26 @@ int check_http(void) {
     }
   }
 
-  if (strlen(string_expect)) {
+  // At this point we should test if the content is chunked and unchunk it, so
+  // it can be searched (and possibly printed)
+  const char *chunked_header_regex_string = "Transfer-Encoding:\\s*chunked\\s*"CRLF;
+  regex_t chunked_header_regex;
+
+  if (regcomp(&chunked_header_regex, chunked_header_regex_string, 0)) {
+    die(STATE_UNKNOWN, "HTTP %s: %s\n", state_text(STATE_UNKNOWN), "Failed to compile chunked_header_regex regex");
+  }
+
+  regmatch_t chre_pmatch[1]; // We actually do not care about this, since we only want to know IF it was found
+
+  if (regexec(&chunked_header_regex, header, 1, chre_pmatch, 0) == 0) {
+    // We actually found the chunked header
+    char *tmp = unchunk_content(page);
+    if (tmp == NULL) {
+      die(STATE_UNKNOWN, "HTTP %s: %s\n", state_text(STATE_UNKNOWN), "Failed to unchunk message body");
+    }
+  }
+
+  if (strlen(string_expect) > 0) {
     if (!strstr(page, string_expect)) {
       // We found the string the body, the rest is for building the output
       char output_string_search[30] = "";
@@ -1340,6 +1360,87 @@ int check_http(void) {
   die(result, "HTTP %s: %s\n", state_text(result), msg);
   /* die failed? */
   return STATE_UNKNOWN;
+}
+
+/* Receivces a pointer to the beginning of the body of a HTTP message
+ * which is chunked and returns a pointer to a freshly allocated memory
+ * region containing the unchunked body or NULL if something failed.
+ * The result must be freed by the caller.
+ */
+char *unchunk_content(const char *content) {
+  // https://en.wikipedia.org/wiki/Chunked_transfer_encoding
+  // https://www.rfc-editor.org/rfc/rfc7230#section-4.1
+  char *result = NULL;
+  size_t content_length = strlen(content);
+  char *start_of_chunk, end_of_chunk;
+  long size_of_chunk;
+  char *pointer = content;
+  char *endptr;
+  long length_of_chunk = 0;
+  size_t overall_size = 0;
+  char *result_ptr;
+
+  while (true) {
+    size_of_chunk = strtol(pointer, &endptr, 16);
+    if (size_of_chunk == LONG_MIN || size_of_chunk == LONG_MAX) {
+      // Apparently underflow or overflow, should not happen
+      if (verbose) {
+        printf("Got an underflow or overflow from strtol at: %u\n", __LINE__);
+      }
+      return NULL;
+    }
+    if (endptr == pointer) {
+      // Apparently this was not a number
+      if (verbose) {
+        printf("Chunked content did not start with a number at all (Line: %u)\n", __LINE__);
+      }
+      return NULL
+    }
+
+    // So, we got the length of the chunk
+    if (*endptr == ';') {
+      // Chunk extension starts here
+      // TODO
+      while (*endptr != '\r') {
+        endptr++;
+      }
+    }
+
+    start_of_chunk = endptr + 2;
+    end_of_chunk = start_of_chunk + size_of_chunk;
+    length_of_chunk = end_of_chunk - start_of_chunk;
+
+    if (length_of_chunk == 0) {
+      // Chunk length is 0, so this is the last one
+      break;
+    }
+
+    overall_size += length_of_chunk;
+
+    if (result == NULL) {
+      result = (char *)calloc(length_of_chunk, sizeof(char));
+      if (result == NULL) {
+        if (verbose) {
+          printf("Failed to allocate memory for unchunked body\n");
+        }
+        return NULL;
+      }
+      result_ptr = result;
+    } else {
+      void *tmp = realloc(result, overall_size);
+      if (tmp == NULL) {
+        if (verbose) {
+          printf("Failed to allocate memory for unchunked body\n");
+        }
+        return NULL;
+      }
+    }
+
+    memcpy(result_ptr, start_of_chunk, size_of_chunk);
+    result_ptr = result_ptr + size_of_chunk;
+  }
+
+  return result
 }
 
 /* per RFC 2396 */
