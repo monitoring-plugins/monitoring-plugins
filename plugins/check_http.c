@@ -1257,10 +1257,10 @@ int check_http(void) {
 
   // At this point we should test if the content is chunked and unchunk it, so
   // it can be searched (and possibly printed)
-  const char *chunked_header_regex_string = "Transfer-Encoding:\\s*chunked\\s*"CRLF;
+  const char *chunked_header_regex_string = "Transfer-Encoding: *chunked *";
   regex_t chunked_header_regex;
 
-  if (regcomp(&chunked_header_regex, chunked_header_regex_string, 0)) {
+  if (regcomp(&chunked_header_regex, chunked_header_regex_string, REG_ICASE)) {
     die(STATE_UNKNOWN, "HTTP %s: %s\n", state_text(STATE_UNKNOWN), "Failed to compile chunked_header_regex regex");
   }
 
