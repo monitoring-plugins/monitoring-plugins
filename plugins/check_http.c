@@ -1267,11 +1267,15 @@ int check_http(void) {
   regmatch_t chre_pmatch[1]; // We actually do not care about this, since we only want to know IF it was found
 
   if (regexec(&chunked_header_regex, header, 1, chre_pmatch, 0) == 0) {
+    if (verbose) {
+      printf("Found chunked content\n");
+    }
     // We actually found the chunked header
     char *tmp = unchunk_content(page);
     if (tmp == NULL) {
       die(STATE_UNKNOWN, "HTTP %s: %s\n", state_text(STATE_UNKNOWN), "Failed to unchunk message body");
     }
+    page = tmp;
   }
 
   if (strlen(string_expect) > 0) {
@@ -1374,9 +1378,10 @@ char *unchunk_content(const char *content) {
   // https://www.rfc-editor.org/rfc/rfc7230#section-4.1
   char *result = NULL;
   size_t content_length = strlen(content);
-  char *start_of_chunk, end_of_chunk;
+  char *start_of_chunk;
+  char* end_of_chunk;
   long size_of_chunk;
-  char *pointer = content;
+  const char *pointer = content;
   char *endptr;
   long length_of_chunk = 0;
   size_t overall_size = 0;
@@ -1396,13 +1401,12 @@ char *unchunk_content(const char *content) {
       if (verbose) {
         printf("Chunked content did not start with a number at all (Line: %u)\n", __LINE__);
       }
-      return NULL
+      return NULL;
     }
 
     // So, we got the length of the chunk
     if (*endptr == ';') {
       // Chunk extension starts here
-      // TODO
       while (*endptr != '\r') {
         endptr++;
       }
@@ -1410,7 +1414,8 @@ char *unchunk_content(const char *content) {
 
     start_of_chunk = endptr + 2;
     end_of_chunk = start_of_chunk + size_of_chunk;
-    length_of_chunk = end_of_chunk - start_of_chunk;
+    length_of_chunk = (long)(end_of_chunk - start_of_chunk);
+    pointer = end_of_chunk + 2; //Next number should be here
 
     if (length_of_chunk == 0) {
       // Chunk length is 0, so this is the last one
@@ -1442,7 +1447,8 @@ char *unchunk_content(const char *content) {
     result_ptr = result_ptr + size_of_chunk;
   }
 
-  return result
+  result[overall_size] = '\0';
+  return result;
 }
 
 /* per RFC 2396 */
