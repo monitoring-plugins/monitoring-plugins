@@ -195,7 +195,10 @@ test_file (char *path)
   usage2 (_("file does not exist or is not readable"), path);
 }
 
-/* process command-line arguments */
+/*
+ * process command-line arguments
+ * returns true on succes, false otherwise
+  */
 bool process_arguments (int argc, char **argv)
 {
   int c = 1;
