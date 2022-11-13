@@ -103,8 +103,6 @@ int server_expect_yn = 0;
 char server_expect[MAX_INPUT_BUFFER] = HTTP_EXPECT;
 char header_expect[MAX_INPUT_BUFFER] = "";
 char string_expect[MAX_INPUT_BUFFER] = "";
-char output_header_search[30] = "";
-char output_string_search[30] = "";
 char *warning_thresholds = NULL;
 char *critical_thresholds = NULL;
 thresholds *thlds;
@@ -1236,8 +1234,10 @@ int check_http(void) {
   }
 
   /* Page and Header content checks go here */
-  if (strlen(header_expect)) {
-    if (!strstr(header, header_expect)) {
+  if (strlen(header_expect) > 0) {
+    if (strstr(header, header_expect) == NULL) {
+      // We did not find the header, the rest is for building the output and setting the state
+      char output_header_search[30] = "";
       strncpy(&output_header_search[0], header_expect,
               sizeof(output_header_search));
       if (output_header_search[sizeof(output_header_search) - 1] != '\0') {
@@ -1254,6 +1254,8 @@ int check_http(void) {
 
   if (strlen(string_expect)) {
     if (!strstr(page, string_expect)) {
+      // We found the string the body, the rest is for building the output
+      char output_string_search[30] = "";
       strncpy(&output_string_search[0], string_expect,
               sizeof(output_string_search));
       if (output_string_search[sizeof(output_string_search) - 1] != '\0') {
@@ -1268,7 +1270,7 @@ int check_http(void) {
     }
   }
 
-  if (strlen(regexp)) {
+  if (strlen(regexp) > 0) {
     errcode = regexec(&preg, page, REGS, pmatch, 0);
     if ((errcode == 0 && invert_regex == 0) ||
         (errcode == REG_NOMATCH && invert_regex == 1)) {
