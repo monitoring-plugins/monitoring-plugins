@@ -31,9 +31,6 @@
  *
  *****************************************************************************/
 
-/* splint -I. -I../../plugins -I../../lib/ -I/usr/kerberos/include/
- * ../../plugins/check_http.c */
-
 const char *progname = "check_http";
 const char *copyright = "1999-2022";
 const char *email = "devel@monitoring-plugins.org";
@@ -136,6 +133,7 @@ char buffer[MAX_INPUT_BUFFER];
 char *client_cert = NULL;
 char *client_privkey = NULL;
 
+// Forward function declarations
 bool process_arguments(int, char **);
 int check_http(void);
 void redir(char *pos, char *status_line);
