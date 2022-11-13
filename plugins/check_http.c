@@ -35,8 +35,10 @@ const char *progname = "check_http";
 const char *copyright = "1999-2022";
 const char *email = "devel@monitoring-plugins.org";
 
-#include "base64.h"
+// Do NOT sort those headers, it will break the build
+// TODO: Fix this
 #include "common.h"
+#include "base64.h"
 #include "netutils.h"
 #include "utils.h"
 #include <ctype.h>
