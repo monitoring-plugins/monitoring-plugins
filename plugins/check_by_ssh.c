@@ -35,6 +35,10 @@ const char *email = "devel@monitoring-plugins.org";
 #include "netutils.h"
 #include "utils_cmd.h"
 
+#include <stdint.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #ifndef NP_MAXARGS
 #define NP_MAXARGS 1024
 #endif
@@ -60,6 +64,7 @@ char *host_shortname = NULL;
 char **service;
 int passive = FALSE;
 int verbose = FALSE;
+unsigned int random_wait_max = 0;
 
 int
 main (int argc, char **argv)
@@ -86,6 +91,16 @@ main (int argc, char **argv)
 	/* process arguments */
 	if (process_arguments (argc, argv) == ERROR)
 		usage_va(_("Could not parse arguments"));
+
+	/* Wait a random amount of time */
+	if (random_wait_max) {
+		uint8_t random = 0;
+		int fd = open("/dev/urandom", O_RDONLY);
+		read(fd, &random, sizeof(uint8_t));
+		close(fd);
+
+		sleep( (random_wait_max * random) / 255 );
+	}
 
 	/* Set signal handling and alarm timeout */
 	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR) {
@@ -210,6 +225,7 @@ process_arguments (int argc, char **argv)
 		{"ssh-option", required_argument, 0, 'o'},
 		{"quiet", no_argument, 0, 'q'},
 		{"configfile", optional_argument, 0, 'F'},
+		{"random-wait", optional_argument, 0, 'r'},
 		{0, 0, 0, 0}
 	};
 
@@ -221,7 +237,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvh1246fqt:UH:O:p:i:u:l:C:S::E::n:s:o:F:", longopts,
+		c = getopt_long (argc, argv, "Vvh1246fqt:UH:O:p:i:u:l:C:S::E::n:s:o:F:r:", longopts,
 		                 &option);
 
 		if (c == -1 || c == EOF)
@@ -337,6 +353,11 @@ process_arguments (int argc, char **argv)
 		case 'F': 									/* ssh configfile */
 			comm_append("-F");
 			comm_append(optarg);
+			break;
+		case 'r':
+			if (!is_integer (optarg))
+				usage_va(_("Port must be a positive integer"));
+			random_wait_max = atoi( optarg );
 			break;
 		default:									/* help */
 			usage5();
@@ -455,6 +476,8 @@ print_help (void)
   printf ("    %s\n", _("Tell ssh to use this configfile [optional]"));
   printf (" %s\n","-q, --quiet");
   printf ("    %s\n", _("Tell ssh to suppress warning and diagnostic messages [optional]"));
+  printf (" %s\n","-r, --random-wait=MAXTIME");
+  printf ("    %s\n", _("Wait a random amount of seconds between 0 and MAXTIME before connecting [optional]"));
 	printf (UT_WARN_CRIT);
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf (" %s\n","-U, --unknown-timeout");
@@ -491,6 +514,6 @@ print_usage (void)
 	printf (" %s -H <host> -C <command> [-fqvU] [-1|-2] [-4|-6]\n"
 	        "       [-S [lines]] [-E [lines]] [-W] [-t timeout] [-i identity]\n"
 	        "       [-l user] [-n name] [-s servicelist] [-O outputfile]\n"
-	        "       [-p port] [-o ssh-option] [-F configfile]\n",
+	        "       [-p port] [-o ssh-option] [-F configfile] [-r randomwait]\n",
 	        progname);
 }
