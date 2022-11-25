@@ -427,7 +427,7 @@ if test "$ac_cv_header_utmpx_h" = "no" -a "$ac_cv_header_wtsapi32_h" = "no"
 then
 	AC_PATH_PROG(PATH_TO_WHO,who)
 
-	if [$PATH_TO_WHO -q 2>/dev/null | egrep -i "^# users=[0-9]+$" >/dev/null]
+	if [$PATH_TO_WHO -q 2>/dev/null | grep -E -i "^# users=[0-9]+$" >/dev/null]
 	then
 		ac_cv_path_to_who="$PATH_TO_WHO -q"
 	else
@@ -776,7 +776,7 @@ dnl Removing this for the moment - Ton
 dnl Using /usr/ucb/ps on Solaris systems, to avoid truncation
 dnl Limitation that command name is not available
 dnl elif test "$ac_cv_uname_s" = "SunOS" && /usr/ucb/ps -alxwwn 2>/dev/null | \
-dnl	egrep -i ["^ *F +UID +PID +PPID +%C +PRI +NI +SZ +RSS +WCHAN +S +TT +TIME +COMMAND"] > /dev/null
+dnl	grep -E -i ["^ *F +UID +PID +PPID +%C +PRI +NI +SZ +RSS +WCHAN +S +TT +TIME +COMMAND"] > /dev/null
 dnl then
 dnl 	ac_cv_ps_varlist="[&procuid,&procpid,&procppid,&procpcpu,&procvsz,&procrss,procstat,&pos]"
 dnl 	ac_cv_ps_command="/usr/ucb/ps -alxwwn"
@@ -786,7 +786,7 @@ dnl 	AC_MSG_RESULT([$ac_cv_ps_command])
 
 dnl This one is the exact same test as the next one but includes etime
 elif ps axwo 'stat comm vsz rss user uid pid ppid etime args' 2>/dev/null | \
-	egrep -i ["^ *STAT +[UCOMAND]+ +VSZ +RSS +USER +UID +PID +PPID +ELAPSED +COMMAND"] > /dev/null
+	grep -E -i ["^ *STAT +[UCOMAND]+ +VSZ +RSS +USER +UID +PID +PPID +ELAPSED +COMMAND"] > /dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procetime,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS axwo 'stat uid pid ppid vsz rss pcpu etime comm args'"
@@ -797,7 +797,7 @@ then
 dnl Some gnu/linux systems (debian for one) don't like -axwo and need axwo.
 dnl so test for this first...
 elif ps axwo 'stat comm vsz rss user uid pid ppid args' 2>/dev/null | \
-	egrep -i ["^ *STAT +[UCOMAND]+ +VSZ +RSS +USER +UID +PID +PPID +COMMAND"] > /dev/null
+	grep -E -i ["^ *STAT +[UCOMAND]+ +VSZ +RSS +USER +UID +PID +PPID +COMMAND"] > /dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS axwo 'stat uid pid ppid vsz rss pcpu comm args'"
@@ -809,7 +809,7 @@ dnl For OpenBSD 3.2 & 3.3. Must come before ps -weo
 dnl Should also work for FreeBSD 5.2.1 and 5.3
 dnl  STAT UCOMM              VSZ   RSS USER      PPID COMMAND
 elif ps -axwo 'stat comm vsz rss user uid pid ppid args' 2>/dev/null | \
-	egrep -i ["^ *STAT +[UCOMAND]+ +VSZ +RSS +USER +UID +PID +PPID +COMMAND"] > /dev/null
+	grep -E -i ["^ *STAT +[UCOMAND]+ +VSZ +RSS +USER +UID +PID +PPID +COMMAND"] > /dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -axwo 'stat uid pid ppid vsz rss pcpu comm args'"
@@ -821,7 +821,7 @@ dnl Some *BSDs have different format for ps. This is mainly to catch FreeBSD 4.
 dnl Limitation: Only first 16 chars returned for ucomm field
 dnl Must come before ps -weo
 elif ps -axwo 'stat uid pid ppid vsz rss pcpu ucomm command' 2>/dev/null | \
-	egrep -i ["^ *STAT +UID +PID +PPID +VSZ +RSS +%CPU +UCOMM +COMMAND"] > /dev/null
+	grep -E -i ["^ *STAT +UID +PID +PPID +VSZ +RSS +%CPU +UCOMM +COMMAND"] > /dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -axwo 'stat uid pid ppid vsz rss pcpu ucomm command'"
@@ -831,7 +831,7 @@ then
 
 dnl  STAT UCOMM              VSZ   RSS USER       UID  PPID COMMAND
 elif ps -weo 'stat comm vsz rss user uid pid ppid etime args' 2>/dev/null | \
-	egrep -i ["^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ +U[ID]+ +P[ID]+ +P[PID]+ +[ELAPSD]+ +[RGSCOMDNA]+"] >/dev/null
+	grep -E -i ["^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ +U[ID]+ +P[ID]+ +P[PID]+ +[ELAPSD]+ +[RGSCOMDNA]+"] >/dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procetime,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -weo 'stat uid pid ppid vsz rss pcpu etime comm args'"
@@ -841,7 +841,7 @@ then
 
 dnl FreeBSD
 elif ps waxco 'state command vsz rss uid user pid ppid' 2>/dev/null | \
-	egrep -i ["^STAT +COMMAND +VSZ +RSS +UID +USER +PID +PPID"] >/dev/null
+	grep -E -i ["^STAT +COMMAND +VSZ +RSS +UID +USER +PID +PPID"] >/dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS waxco 'state uid pid ppid vsz rss pcpu command command'"
@@ -851,7 +851,7 @@ then
 
 dnl BSD-like mode in RH 6.1
 elif ps waxno 'state comm vsz rss uid user pid ppid args' 2>/dev/null | \
-	egrep -i ["^S +COMMAND +VSZ +RSS +UID +USER +PID +PPID +[RGSCOMDNA]+"] >/dev/null
+	grep -E -i ["^S +COMMAND +VSZ +RSS +UID +USER +PID +PPID +[RGSCOMDNA]+"] >/dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS waxno 'state uid pid ppid vsz rss pcpu comm args'"
@@ -863,7 +863,7 @@ dnl SunOS 4.1.3:
 dnl  F  UID  PID  PPID  CP  PRI  NI  SZ  RSS  WCHAN  STAT  TT  TIME  COMMAND
 dnl Need the head -1 otherwise test will work because arguments are found
 elif ps -laxnwww 2>/dev/null | head -1 | \
-	egrep -i ["^ *F(LAGS)? +UID +PID +PPID +CP +PRI +NI +(SZ)|(VSZ)|(SIZE) +RSS +WCHAN +STAT? +TTY? +TIME +COMMAND"] >/dev/null
+	grep -E -i ["^ *F(LAGS)? +UID +PID +PPID +CP +PRI +NI +(SZ)|(VSZ)|(SIZE) +RSS +WCHAN +STAT? +TTY? +TIME +COMMAND"] >/dev/null
 then
 	ac_cv_ps_varlist="[&procuid,&procpid,&procppid,&procvsz,&procrss,procstat,&pos,procprog]"
 	ac_cv_ps_command="$PATH_TO_PS -laxnwww"
@@ -876,7 +876,7 @@ dnl  FLAGS   UID   PID  PPID PRI  NI   SIZE   RSS WCHAN       STA TTY TIME COMMA
 dnl    100     0     1     0   0   0    776    76  c0131c8c   S  ffff  0:11 init [2]
 dnl
 elif ps laxnwww 2>/dev/null | \
-	egrep -i ["^ *F(LAGS)? +UID +PID +PPID +PRI +NI +(VSZ)|(SIZE) +RSS +WCHAN +STAT? TTY +TIME +COMMAND"] >/dev/null
+	grep -E -i ["^ *F(LAGS)? +UID +PID +PPID +PRI +NI +(VSZ)|(SIZE) +RSS +WCHAN +STAT? TTY +TIME +COMMAND"] >/dev/null
 then
 	ac_cv_ps_varlist="[&procuid,&procpid,&procppid,procstat,&procvsz,&procrss,&pos,procprog]"
 	ac_cv_ps_command="$PATH_TO_PS laxnwww"
@@ -886,7 +886,7 @@ then
 
 dnl OpenBSD (needs to come early because -exo appears to work, but does not give all procs)
 elif ps -axo 'stat comm vsz rss user uid pid ppid args' 2>/dev/null | \
-	egrep -i ["^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ +U[ID]+ +P[PID]+ +P[PID]+ +[RGSCOMDNA]+"] >/dev/null
+	grep -E -i ["^ *S[TAUES]* +[UCOMDNA]+ +[VSIZE]+ +R[S]+ +U[SER]+ +U[ID]+ +P[PID]+ +P[PID]+ +[RGSCOMDNA]+"] >/dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -axo 'stat uid pid ppid vsz rss pcpu comm args'"
@@ -899,7 +899,7 @@ dnl Has /usr/bin/ps and /sbin/ps - force sbin version
 dnl Can't use vsize and rssize because comes back with text (eg, 1.5M instead
 dnl of 1500). Will need big changes to check_procs to support
 elif /sbin/ps -eo 'stat uid pid ppid pcpu etime comm args' 2>/dev/null | \
-	egrep -i ["^ *S +[UID]+ +[PID]+ +[PID]+ +[%CPU]+ +[ELAPSD]+ +[COMMAND]+ +[COMMAND]+"] > /dev/null
+	grep -E -i ["^ *S +[UID]+ +[PID]+ +[PID]+ +[%CPU]+ +[ELAPSD]+ +[COMMAND]+ +[COMMAND]+"] > /dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procpcpu,procetime,procprog,&pos]"
 	ac_cv_ps_command="/sbin/ps -eo 'stat uid pid ppid pcpu etime comm args'"
@@ -908,7 +908,7 @@ then
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
 elif ps -eo 's comm vsz rss user uid pid ppid args' 2>/dev/null | \
-	egrep -i ["^S[TAUES]* +C[OMDNA]+ +[VSIZE]+ +U[SER]+ +U[ID]+ +P[PID]+ +P[PID]+ +[RGSCOMDNA]+"] >/dev/null
+	grep -E -i ["^S[TAUES]* +C[OMDNA]+ +[VSIZE]+ +U[SER]+ +U[ID]+ +P[PID]+ +P[PID]+ +[RGSCOMDNA]+"] >/dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -eo 's uid pid ppid vsz rss pcpu comm args'"
@@ -918,7 +918,7 @@ then
 
 dnl AIX 4.3.3 and 5.1 do not have an rss field
 elif ps -eo 'stat uid pid ppid vsz pcpu comm args' 2>/dev/null | \
-	egrep -i ["^ *S[TAUES]* +UID +PID +PPID +VSZ +%CPU +COMMAND +COMMAND"] >/dev/null
+	grep -E -i ["^ *S[TAUES]* +UID +PID +PPID +VSZ +%CPU +COMMAND +COMMAND"] >/dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -eo 'stat uid pid ppid vsz pcpu comm args'"
@@ -928,7 +928,7 @@ then
 
 dnl Solaris 2.6
 elif ps -Ao 's comm vsz rss uid user pid ppid args' 2>/dev/null | \
-	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PID +PPID +[RGSCOMDNA]+"] >/dev/null
+	grep -E -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PID +PPID +[RGSCOMDNA]+"] >/dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -Ao 's uid pid ppid vsz rss pcpu comm args'"
@@ -939,7 +939,7 @@ then
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
 elif ps -Ao 'status comm vsz rss uid user pid ppid args' 2>/dev/null | \
-	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PID +PPID +[RGSCOMDNA]+"] >/dev/null
+	grep -E -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PID +PPID +[RGSCOMDNA]+"] >/dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -Ao 'status uid pid ppid vsz rss pcpu comm args'"
@@ -948,7 +948,7 @@ then
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
 elif ps -Ao 'state comm vsz rss uid user pid ppid args' 2>/dev/null | \
-	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PID +PPID +[RGSCOMDNA]+"] >/dev/null
+	grep -E -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PID +PPID +[RGSCOMDNA]+"] >/dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -Ao 'state uid pid ppid vsz rss pcpu comm args'"
@@ -958,7 +958,7 @@ then
 
 dnl wonder who takes state instead of stat
 elif ps -ao 'state command vsz rss user pid ppid args' 2>/dev/null | \
-	egrep -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PID +PPID +[RGSCOMDNA]+"] >/dev/null
+	grep -E -i ["^S[TAUES]* +C[OMDNA]+ +V[SIZE]+ +RSS +UID +USER +PID +PPID +[RGSCOMDNA]+"] >/dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -ao 'state uid pid ppid vsz rss pcpu command args'"
@@ -968,7 +968,7 @@ then
 
 dnl IRIX 53
 elif ps -el 2>/dev/null | \
-	egrep -i ["^ *F +S +UID +PID +PPID +C +PRI +NI +P +SZ +RSS +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
+	grep -E -i ["^ *F +S +UID +PID +PPID +C +PRI +NI +P +SZ +RSS +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&pos,procprog]"
 	ac_cv_ps_command="$PATH_TO_PS -el (IRIX 53)"
@@ -978,7 +978,7 @@ then
 
 dnl IRIX 63
 elif ps -el 2>/dev/null | \
-	egrep -i ["^ *F +S +UID +PID +PPID +C +PRI +NI +P +ADDR +SZ +RSS +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
+	grep -E -i ["^ *F +S +UID +PID +PPID +C +PRI +NI +P +ADDR +SZ +RSS +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&pos,procprog]"
 	ac_cv_ps_command="$PATH_TO_PS -el (IRIX 63)"
@@ -991,7 +991,7 @@ dnl S        UID       RUID USER     RUSER      PID  PPID     VSZ  %CPU COMMAND 
 dnl S          0        400 root     oracle    2805     1   12904  0.00 ora_dism_SEA1X  ora_dism_SEA1X
 dnl S        400        400 oracle   oracle   19261     1  126488  0.00 tnslsnr         /u01/app/oracle/product/db/11.2.0.3/bin/tnslsnr LISTENER -inherit
 elif env UNIX95=1 ps -eo 'state uid ruid user ruser pid ppid vsz pcpu comm args' 2>/dev/null | head -n 1 | \
-    egrep -i ["^ *S +UID +RUID +USER +RUSER +PID +PPID +VSZ +%CPU +COMMAND +COMMAND"] >/dev/null
+    grep -E -i ["^ *S +UID +RUID +USER +RUSER +PID +PPID +VSZ +%CPU +COMMAND +COMMAND"] >/dev/null
 then
     ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procpcpu,procprog,&pos]"
     ac_cv_ps_command="$PATH_TO_ENV UNIX95=1 $PATH_TO_PS -eo 'state uid pid ppid vsz pcpu comm args'"
@@ -1003,7 +1003,7 @@ dnl AIX 4.1:
 dnl     F S      UID   PID  PPID   C PRI NI ADDR  SZ  RSS   WCHAN    TTY  TIME CMD
 dnl    303 A        0     0     0 120  16 -- 1c07  20   24              -  0:45 swapper
 elif ps -el 2>/dev/null | \
-	egrep -i ["^ *F +S +UID +PID +PPID +C +PRI +NI +ADDR +SZ +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
+	grep -E -i ["^ *F +S +UID +PID +PPID +C +PRI +NI +ADDR +SZ +WCHAN +TTY +TIME +[RGSCOMDNA]+"] >/dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&pos,procprog]"
 	ac_cv_ps_command="$PATH_TO_PS -el (AIX 4.1 and HP-UX)"
@@ -1013,7 +1013,7 @@ then
 
 dnl AIX?
 elif ps glaxen 2>/dev/null | \
-	egrep -i ["^ *F +UID +PID +PPID +PRI +NI +VSZ +RSS +WCHAN +STAT +TTY +TIME +COMMAND"] >/dev/null
+	grep -E -i ["^ *F +UID +PID +PPID +PRI +NI +VSZ +RSS +WCHAN +STAT +TTY +TIME +COMMAND"] >/dev/null
 then
 	ac_cv_ps_varlist="[&procuid,&procpid,&procppid,&procvsz,&procrss,procstat,&pos,procprog]"
 	ac_cv_ps_command="$PATH_TO_PS glaxen"
@@ -1027,7 +1027,7 @@ dnl Some truncation will happen in UCOMM column
 dnl STAT      VSZ    RSS   UID  PPID %CPU UCOMM            COMMAND
 dnl Ss      52756  22496   501     1   6.9 Window Manager   /System/Library/CoreServices/WindowServer -daemon
 elif ps wwaxo 'state vsz rss uid pid ppid pcpu ucomm command' 2>/dev/null | \
-	egrep -i ["^STAT +VSZ +RSS +UID +PPID +%CPU +UCOMM +COMMAND"] >/dev/null
+	grep -E -i ["^STAT +VSZ +RSS +UID +PPID +%CPU +UCOMM +COMMAND"] >/dev/null
 then
 	ac_cv_ps_command="$PATH_TO_PS wwaxo 'state vsz rss uid pid ppid pcpu ucomm command'"
 	ac_cv_ps_varlist="[procstat,&procvsz,&procrss,&procuid,&procpid,&procppid,&procpcpu,procprog,&pos]"
@@ -1037,7 +1037,7 @@ then
 
 dnl UnixWare
 elif ps -Al 2>/dev/null | \
-	egrep -i ["^ *F +S +UID +PID +PPID +CLS +PRI +NI +C +ADDR +SZ +WCHAN +TTY +TIME +COMD"] >/dev/null
+	grep -E -i ["^ *F +S +UID +PID +PPID +CLS +PRI +NI +C +ADDR +SZ +WCHAN +TTY +TIME +COMD"] >/dev/null
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&pos,procprog]"
 	ac_cv_ps_command="$PATH_TO_PS -Al"
@@ -1105,14 +1105,14 @@ then
 
 elif [[ "z$ac_cv_uname_s" = "zUnixWare" ]] && \
 	$PATH_TO_PING -n -s 127.0.0.1 56 1 2>/dev/null | \
-	egrep -i "^round-trip|^rtt" >/dev/null
+	grep -E -i "^round-trip|^rtt" >/dev/null
 then
 	with_ping_command="$PATH_TO_PING -n -U -c %d %s"
 	ac_cv_ping_packets_first=yes
 	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -4 -n -U -w 10 -c 1 127.0.0.1 2>/dev/null | \
-	egrep -i "^round-trip|^rtt" >/dev/null
+	grep -E -i "^round-trip|^rtt" >/dev/null
 then
 	# check if -4 is supported - issue #1550
 	with_ping_command="$PATH_TO_PING -4 -n -U -w %d -c %d %s"
@@ -1120,7 +1120,7 @@ then
 	ac_cv_ping_has_timeout=yes
 	AC_MSG_RESULT([$with_ping_command])
 elif $PATH_TO_PING -n -U -w 10 -c 1 127.0.0.1 2>/dev/null | \
-	egrep -i "^round-trip|^rtt" >/dev/null
+	grep -E -i "^round-trip|^rtt" >/dev/null
 then
 	with_ping_command="$PATH_TO_PING -n -U -w %d -c %d %s"
 	ac_cv_ping_packets_first=yes
@@ -1128,52 +1128,52 @@ then
 	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n -U -c 1 127.0.0.1 2>/dev/null | \
-	egrep -i "^round-trip|^rtt" >/dev/null
+	grep -E -i "^round-trip|^rtt" >/dev/null
 then
 	with_ping_command="$PATH_TO_PING -n -U -c %d %s"
 	ac_cv_ping_packets_first=yes
 	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n -c 1 127.0.0.1 2>/dev/null | \
-	egrep -i "^round-trip|^rtt" >/dev/null
+	grep -E -i "^round-trip|^rtt" >/dev/null
 then
 	with_ping_command="$PATH_TO_PING -n -c %d %s"
 	ac_cv_ping_packets_first=yes
 	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n 127.0.0.1 -c 1 2>/dev/null | \
-	egrep -i "^round-trip|^rtt" >/dev/null
+	grep -E -i "^round-trip|^rtt" >/dev/null
 then
 	with_ping_command="$PATH_TO_PING -n %s -c %d"
 	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING 127.0.0.1 -n 1 2>/dev/null | \
-	egrep -i "^round-trip|^rtt" >/dev/null
+	grep -E -i "^round-trip|^rtt" >/dev/null
 then
 	with_ping_command="$PATH_TO_PING %s -n %d"
 	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n -s 127.0.0.1 56 1 2>/dev/null | \
-	egrep -i "^round-trip|^rtt" >/dev/null
+	grep -E -i "^round-trip|^rtt" >/dev/null
 then
 	with_ping_command="$PATH_TO_PING -n -s %s 56 %d"
 	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n -h 127.0.0.1 -s 56 -c 1 2>/dev/null | \
-	egrep -i "^round-trip|^rtt" >/dev/null
+	grep -E -i "^round-trip|^rtt" >/dev/null
 then
 	with_ping_command="$PATH_TO_PING -n -h %s -s 56 -c %d"
 	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n -s 56 -c 1 127.0.0.1 2>/dev/null | \
-	egrep -i "^round-trip|^rtt" >/dev/null
+	grep -E -i "^round-trip|^rtt" >/dev/null
 then
 	with_ping_command="$PATH_TO_PING -n -s 56 -c %d %s"
 	ac_cv_ping_packets_first=yes
 	AC_MSG_RESULT([$with_ping_command])
 
 elif $PATH_TO_PING -n -c 1 127.0.0.1 2>/dev/null | \
-	egrep -i "^round-trip|^rtt" >/dev/null
+	grep -E -i "^round-trip|^rtt" >/dev/null
 then
 	with_ping_command="$PATH_TO_PING -n -c %d %s"
 	ac_cv_ping_packets_first=yes
@@ -1229,14 +1229,14 @@ elif [[ "z$ac_cv_uname_o" = "zCygwin" -a "x$PATH_TO_PING" != "x" ]]; then
 elif test "x$PATH_TO_PING6" != "x"; then
 	if [[ "z$ac_cv_uname_s" = "zUnixWare" ]] && \
 		$PATH_TO_PING6 -n -s ::1 56 1 2>/dev/null | \
-		egrep -i "^round-trip|^rtt" >/dev/null
+		grep -E -i "^round-trip|^rtt" >/dev/null
 	then
 		with_ping6_command="$PATH_TO_PING6 -n -U -c %d %s"
 		ac_cv_ping6_packets_first=yes
 		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING6 -n -U -w 10 -c 1 ::1 2>/dev/null | \
-		egrep -i "^round-trip|^rtt" >/dev/null
+		grep -E -i "^round-trip|^rtt" >/dev/null
 	then
 		with_ping6_command="$PATH_TO_PING6 -n -U -w %d -c %d %s"
 		ac_cv_ping6_packets_first=yes
@@ -1244,52 +1244,52 @@ elif test "x$PATH_TO_PING6" != "x"; then
 		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING6 -n -U -c 1 ::1 2>/dev/null | \
-		egrep -i "^round-trip|^rtt" >/dev/null
+		grep -E -i "^round-trip|^rtt" >/dev/null
 	then
 		with_ping6_command="$PATH_TO_PING6 -n -U -c %d %s"
 		ac_cv_ping6_packets_first=yes
 		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING6 -n -c 1 ::1 2>/dev/null | \
-		egrep -i "^round-trip|^rtt" >/dev/null
+		grep -E -i "^round-trip|^rtt" >/dev/null
 	then
 		with_ping6_command="$PATH_TO_PING6 -n -c %d %s"
 		ac_cv_ping6_packets_first=yes
 		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING6 -n ::1 -c 1 2>/dev/null | \
-		egrep -i "^round-trip|^rtt" >/dev/null
+		grep -E -i "^round-trip|^rtt" >/dev/null
 	then
 		with_ping6_command="$PATH_TO_PING6 -n %s -c %d"
 		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING6 ::1 -n 1 2>/dev/null | \
-		egrep -i "^round-trip|^rtt" >/dev/null
+		grep -E -i "^round-trip|^rtt" >/dev/null
 	then
 		with_ping6_command="$PATH_TO_PING6 %s -n %d"
 		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING6 -n -s ::1 56 1 2>/dev/null | \
-		egrep -i "^round-trip|^rtt" >/dev/null
+		grep -E -i "^round-trip|^rtt" >/dev/null
 	then
 		with_ping6_command="$PATH_TO_PING6 -n -s %s 56 %d"
 		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING6 -n -h ::1 -s 56 -c 1 2>/dev/null | \
-		egrep -i "^round-trip|^rtt" >/dev/null
+		grep -E -i "^round-trip|^rtt" >/dev/null
 	then
 		with_ping6_command="$PATH_TO_PING6 -n -h %s -s 56 -c %d"
 		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING6 -n -s 56 -c 1 ::1 2>/dev/null | \
-		egrep -i "^round-trip|^rtt" >/dev/null
+		grep -E -i "^round-trip|^rtt" >/dev/null
 	then
 		with_ping6_command="$PATH_TO_PING6 -n -s 56 -c %d %s"
 		ac_cv_ping6_packets_first=yes
 		AC_MSG_RESULT([$with_ping_command])
 
 	elif $PATH_TO_PING6 -n -c 1 ::1 2>/dev/null | \
-		egrep -i "^round-trip|^rtt" >/dev/null
+		grep -E -i "^round-trip|^rtt" >/dev/null
 	then
 		with_ping6_command="$PATH_TO_PING6 -n -c %d %s"
 		ac_cv_ping6_packets_first=yes
@@ -1300,59 +1300,59 @@ elif test "x$PATH_TO_PING6" != "x"; then
 elif test "x$PATH_TO_PING" != "x"; then
 	if [[ "z$ac_cv_uname_s" = "zUnixWare" ]] && \
 		$PATH_TO_PING -A inet6 -n -s ::1 56 1 2>/dev/null | \
-		egrep -i "^round-trip|^rtt" >/dev/null
+		grep -E -i "^round-trip|^rtt" >/dev/null
 	then
 		with_ping6_command="$PATH_TO_PING -A inet6 -n -U -c %d %s"
 		ac_cv_ping6_packets_first=yes
 		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING -A inet6 -n -U -c 1 ::1 2>/dev/null | \
-		egrep -i "^round-trip|^rtt" >/dev/null
+		grep -E -i "^round-trip|^rtt" >/dev/null
 	then
 		with_ping6_command="$PATH_TO_PING -A inet6 -n -U -c %d %s"
 		ac_cv_ping6_packets_first=yes
 		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING -A inet6 -n -c 1 ::1 2>/dev/null | \
-		egrep -i "^round-trip|^rtt" >/dev/null
+		grep -E -i "^round-trip|^rtt" >/dev/null
 	then
 		with_ping6_command="$PATH_TO_PING -A inet6 -n -c %d %s"
 		ac_cv_ping6_packets_first=yes
 		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING -A inet6 -n ::1 -c 1 2>/dev/null | \
-		egrep -i "^round-trip|^rtt" >/dev/null
+		grep -E -i "^round-trip|^rtt" >/dev/null
 	then
 		with_ping6_command="$PATH_TO_PING -A inet6 -n %s -c %d"
 		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING -A inet6 ::1 -n 1 2>/dev/null | \
-		egrep -i "^round-trip|^rtt" >/dev/null
+		grep -E -i "^round-trip|^rtt" >/dev/null
 	then
 		with_ping6_command="$PATH_TO_PING -A inet6 %s -n %d"
 		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING -A inet6 -n -s ::1 56 1 2>/dev/null | \
-		egrep -i "^round-trip|^rtt" >/dev/null
+		grep -E -i "^round-trip|^rtt" >/dev/null
 	then
 		with_ping6_command="$PATH_TO_PING -A inet6 -n -s %s 56 %d"
 		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING -A inet6 -n -h ::1 -s 56 -c 1 2>/dev/null | \
-		egrep -i "^round-trip|^rtt" >/dev/null
+		grep -E -i "^round-trip|^rtt" >/dev/null
 	then
 		with_ping6_command="$PATH_TO_PING -A inet6 -n -h %s -s 56 -c %d"
 		AC_MSG_RESULT([$with_ping6_command])
 
 	elif $PATH_TO_PING -A inet6 -n -s 56 -c 1 ::1 2>/dev/null | \
-		egrep -i "^round-trip|^rtt" >/dev/null
+		grep -E -i "^round-trip|^rtt" >/dev/null
 	then
 		with_ping6_command="$PATH_TO_PING -A inet6 -n -s 56 -c %d %s"
 		ac_cv_ping6_packets_first=yes
 		AC_MSG_RESULT([$with_ping_command])
 
 	elif $PATH_TO_PING -A inet6 -n -c 1 ::1 2>/dev/null | \
-		egrep -i "^round-trip|^rtt" >/dev/null
+		grep -E -i "^round-trip|^rtt" >/dev/null
 	then
 		with_ping6_command="$PATH_TO_PING -A inet6 -n -c %d %s"
 		ac_cv_ping6_packets_first=yes
@@ -1589,14 +1589,14 @@ then
 	ac_cv_have_swap=yes
 	ac_cv_swap_command="$PATH_TO_SWAP -l"
 	if [$PATH_TO_SWAP -l 2>/dev/null | \
-		egrep -i "^lswap +path +pri +swaplo +blocks +free +maxswap" \
+		grep -E -i "^lswap +path +pri +swaplo +blocks +free +maxswap" \
 		>/dev/null]
 	then
 		ac_cv_swap_format=[" %*d %*s %*d,%*d %*d %*d %f %f"]
 		ac_cv_swap_conv=2048
 		AC_MSG_RESULT([using IRIX format swap])
 
-	elif [$PATH_TO_SWAP -l 2>/dev/null | egrep -i "^path +dev +swaplo +blocks +free" >/dev/null]
+	elif [$PATH_TO_SWAP -l 2>/dev/null | grep -E -i "^path +dev +swaplo +blocks +free" >/dev/null]
 	then
 		ac_cv_swap_format=["%*s %*[0-9,-] %*d %f %f"]
 		ac_cv_swap_conv=2048
@@ -1615,19 +1615,19 @@ AC_PATH_PROG(PATH_TO_SWAPINFO,swapinfo)
 if (test -n "$PATH_TO_SWAPINFO")
 then
 AC_MSG_CHECKING([for $PATH_TO_SWAPINFO format])
-if [$PATH_TO_SWAPINFO -k 2>&1 | egrep -i "^Device" >/dev/null]
+if [$PATH_TO_SWAPINFO -k 2>&1 | grep -E -i "^Device" >/dev/null]
 then
 	ac_cv_have_swap=yes
 	ac_cv_swap_command="$PATH_TO_SWAPINFO -k"
 
-	if [$PATH_TO_SWAPINFO -k 2>/dev/null | egrep -i "^Device +1K-blocks +Used +Avail" >/dev/null]
+	if [$PATH_TO_SWAPINFO -k 2>/dev/null | grep -E -i "^Device +1K-blocks +Used +Avail" >/dev/null]
 	then
 		ac_cv_swap_format=["%*s %f %*d %f"]
 		ac_cv_swap_conv=1024
 		AC_MSG_RESULT([using FreeBSD format swapinfo])
 	fi
 
-elif [$PATH_TO_SWAPINFO -dfM 2>/dev/null | egrep -i "^TYPE +AVAIL +USED +FREE" >/dev/null]
+elif [$PATH_TO_SWAPINFO -dfM 2>/dev/null | grep -E -i "^TYPE +AVAIL +USED +FREE" >/dev/null]
 then
 	ac_cv_have_swap=yes
 	ac_cv_swap_command="$PATH_TO_SWAPINFO -dfM"
@@ -1642,7 +1642,7 @@ AC_PATH_PROG(PATH_TO_LSPS,lsps)
 if (test -n "$PATH_TO_LSPS")
 then
 AC_MSG_CHECKING([for $PATH_TO_LSPS format])
-if [$PATH_TO_LSPS -a 2>/dev/null | egrep -i "^Page Space" > /dev/null]
+if [$PATH_TO_LSPS -a 2>/dev/null | grep -E -i "^Page Space" > /dev/null]
 then
 	ac_cv_have_swap=yes
 	ac_cv_swap_command="$PATH_TO_LSPS -a"
@@ -1844,7 +1844,7 @@ AC_ARG_ENABLE(redhat-pthread-workaround,
 	[ac_cv_enable_redhat_pthread_workaround=$enableval],
 	[ac_cv_enable_redhat_pthread_workaround=test])
 if test "$ac_cv_enable_redhat_pthread_workaround" = "test" ; then
-	if echo $ac_cv_uname_r | egrep "\.EL(smp)?$" >/dev/null 2>&1 ; then
+	if echo $ac_cv_uname_r | grep -E "\.EL(smp)?$" >/dev/null 2>&1 ; then
 		AC_MSG_NOTICE([See https://www.monitoring-plugins.org/doc/faq/configure-hangs.html if this next part takes a long time])
 		AC_MSG_CHECKING(for redhat spopen problem)
 		( cd config_test && make && make test ) > /dev/null 2>&1
