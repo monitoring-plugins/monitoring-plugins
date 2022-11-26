@@ -6,18 +6,18 @@ char *pd_to_string(perfdata_t pd) {
 	char *result = NULL;
 	xasprintf(&result, "%s=", pd.label);
 	switch (pd.type) {
-	case INT:
+	case INT64:
 		xasprintf(&result, "%s%lli", result, pd.value.pd_int, pd.uom);
 		if (pd.uom != NULL) {
 			xasprintf(&result, "%s", pd.uom);
 		}
 		if (pd.warn_present) {
-			xasprintf(&result, "%s;%lli", result, range_to_string(&pd.warn, INT));
+			xasprintf(&result, "%s;%lli", result, range_to_string(&pd.warn, INT64));
 		} else {
 			xasprintf(&result, "%s;", result);
 		}
 		if (pd.crit_present) {
-			xasprintf(&result, "%s;%lli", result, range_to_string(&pd.crit, INT));
+			xasprintf(&result, "%s;%lli", result, range_to_string(&pd.crit, INT64));
 		} else {
 			xasprintf(&result, "%s;", result);
 		}
@@ -29,18 +29,18 @@ char *pd_to_string(perfdata_t pd) {
 		if (pd.max_present)
 			xasprintf(&result, "%s;%lli", result, pd.max.pd_int);
 		break;
-	case UINT:
+	case UINT64:
 		xasprintf(&result, "%s%llu", result, pd.value.pd_uint);
 		if (pd.uom != NULL) {
 			xasprintf(&result, "%s", pd.uom);
 		}
 		if (pd.warn_present) {
-			xasprintf(&result, "%s;%llu", result, range_to_string(&pd.warn, UINT));
+			xasprintf(&result, "%s;%llu", result, range_to_string(&pd.warn, UINT64));
 		} else {
 			xasprintf(&result, "%s;", result);
 		}
 		if (pd.crit_present) {
-			xasprintf(&result, "%s;%llu", result, range_to_string(&pd.crit, UINT));
+			xasprintf(&result, "%s;%llu", result, range_to_string(&pd.crit, UINT64));
 		} else {
 			xasprintf(&result, "%s;", result);
 		}
@@ -143,7 +143,7 @@ void pd_list_free(pd_list *pdl) {
 
 int cmp_perfdata_value(perfdata_value *a, perfdata_value *b, enum value_type_t type) {
 	switch (type) {
-		case UINT:
+		case UINT64:
 			if (a->pd_uint < b->pd_uint) {
 				return -1;
 			} else if (a->pd_uint == b->pd_uint) {
@@ -152,7 +152,7 @@ int cmp_perfdata_value(perfdata_value *a, perfdata_value *b, enum value_type_t t
 				return 1;
 			}
 			break;
-		case INT:
+		case INT64:
 			if (a->pd_int < b->pd_int) {
 				return -1;
 			} else if (a->pd_int == b->pd_int) {

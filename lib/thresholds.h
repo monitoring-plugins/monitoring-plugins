@@ -9,8 +9,8 @@
 
 enum value_type_t {
 	NONE = 0,
-	INT,
-	UINT,
+	INT64,
+	UINT64,
 	DOUBLE
 };
 
