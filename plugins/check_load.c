@@ -201,11 +201,11 @@ main (int argc, char **argv)
 		char *pd_label = NULL;
 		xasprintf(&pd_label, "load%d", nums[i]);
 		pd_value.label = pd_label;
-		pd_value.value.pd_float = la[i];
-		pd_value.type = FLOAT;
-		pd_value.warn.pd_float = wload[i];
+		pd_value.value.pd_double = la[i];
+		pd_value.type = DOUBLE;
+		pd_value.warn.end.pd_double = wload[i];
 		pd_value.warn_present = true;
-		pd_value.crit.pd_float = cload[i];
+		pd_value.crit.end.pd_double = cload[i];
 		pd_value.crit_present = true;
 
 		pd_list_append(perfdata, pd_value);
