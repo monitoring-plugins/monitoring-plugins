@@ -94,12 +94,8 @@ main (int argc, char **argv)
 
 	/* Wait a random amount of time */
 	if (random_wait_max) {
-		uint8_t random = 0;
-		int fd = open("/dev/urandom", O_RDONLY);
-		read(fd, &random, sizeof(uint8_t));
-		close(fd);
-
-		sleep( (random_wait_max * random) / 255 );
+		srand(time(NULL));
+		sleep(random() % random_wait_max);
 	}
 
 	/* Set signal handling and alarm timeout */
