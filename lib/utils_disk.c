@@ -133,7 +133,7 @@ np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list
       /* set best match if path name exactly matches a mounted device name */
       for (me = mount_list; me; me = me->me_next) {
 	if (get_fs_usage(me->me_mountdir, me->me_devname, &fsp) < 0)
-	  continue;
+	  continue; /* skip if permissions do not suffice for accessing device */
         if (strcmp(me->me_devname, d->name)==0)
           best_match = me;
       }
@@ -142,7 +142,7 @@ np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list
       if (! best_match) {
         for (me = mount_list; me; me = me->me_next) {
 	  if (get_fs_usage(me->me_mountdir, me->me_devname, &fsp) < 0)
-	    continue;
+	    continue; /* skip if permissions do not suffice for accessing device */
           size_t len = strlen (me->me_mountdir);
           if ((exact == FALSE && (best_match_len <= len && len <= name_len &&
              (len == 1 || strncmp (me->me_mountdir, d->name, len) == 0)))
