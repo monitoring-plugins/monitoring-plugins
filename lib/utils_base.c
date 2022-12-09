@@ -128,6 +128,7 @@ range
 	temp_range->end = 0;
 	temp_range->end_infinity = TRUE;
 	temp_range->alert_on = OUTSIDE;
+	temp_range->text = strdup(str);
 
 	if (str[0] == '@') {
 		temp_range->alert_on = INSIDE;
@@ -706,4 +707,3 @@ void np_state_write_string(time_t data_time, char *data_string) {
 
 	np_free(temp_file);
 }
-

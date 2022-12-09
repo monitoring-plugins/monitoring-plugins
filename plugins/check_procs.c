@@ -1,34 +1,34 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_procs plugin
-* 
+*
 * License: GPL
 * Copyright (c) 2000-2008 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_procs plugin
-* 
+*
 * Checks all processes and generates WARNING or CRITICAL states if the
 * specified metric is outside the required threshold ranges. The metric
 * defaults to number of processes.  Search filters can be applied to limit
 * the processes to check.
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 const char *progname = "check_procs";
@@ -50,7 +50,7 @@ const char *email = "devel@monitoring-plugins.org";
 
 int process_arguments (int, char **);
 int validate_arguments (void);
-int convert_to_seconds (char *); 
+int convert_to_seconds (char *);
 void print_help (void);
 void print_usage (void);
 
@@ -230,9 +230,9 @@ main (int argc, char **argv)
 			procseconds = convert_to_seconds(procetime);
 
 			if (verbose >= 3)
-				printf ("proc#=%d uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s\n", 
+				printf ("proc#=%d uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s\n",
 					procs, procuid, procvsz, procrss,
-					procpid, procppid, procpcpu, procstat, 
+					procpid, procppid, procpcpu, procstat,
 					procetime, procprog, procargs);
 
 			/* Ignore self */
@@ -265,7 +265,7 @@ main (int argc, char **argv)
 				}
 			}
 
-			if ((options & STAT) && (strstr (statopts, procstat)))
+			if ((options & STAT) && (strstr (procstat, statopts)))
 				resultsum |= STAT;
 			if ((options & ARGS) && procargs && (strstr (procargs, args) != NULL))
 				resultsum |= ARGS;
@@ -292,9 +292,9 @@ main (int argc, char **argv)
 
 			procs++;
 			if (verbose >= 2) {
-				printf ("Matched: uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s\n", 
+				printf ("Matched: uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s\n",
 					procuid, procvsz, procrss,
-					procpid, procppid, procpcpu, procstat, 
+					procpid, procppid, procpcpu, procstat,
 					procetime, procprog, procargs);
 			}
 
@@ -320,7 +320,7 @@ main (int argc, char **argv)
 					result = max_state (result, i);
 				}
 			}
-		} 
+		}
 		/* This should not happen */
 		else if (verbose) {
 			printf(_("Not parseable: %s"), input_buffer);
@@ -332,7 +332,7 @@ main (int argc, char **argv)
 		return STATE_UNKNOWN;
 	}
 
-	if ( result == STATE_UNKNOWN ) 
+	if ( result == STATE_UNKNOWN )
 		result = STATE_OK;
 
 	/* Needed if procs found, but none match filter */
@@ -352,9 +352,9 @@ main (int argc, char **argv)
 		if (metric != METRIC_PROCS) {
 			printf (_("%d crit, %d warn out of "), crit, warn);
 		}
-	} 
+	}
 	printf (ngettext ("%d process", "%d processes", (unsigned long) procs), procs);
-	
+
 	if (strcmp(fmt,"") != 0) {
 		printf (_(" with %s"), fmt);
 	}
@@ -440,7 +440,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'c':									/* critical threshold */
 			critical_range = optarg;
-			break;							 
+			break;
 		case 'w':									/* warning threshold */
 			warning_range = optarg;
 			break;
@@ -542,11 +542,11 @@ process_arguments (int argc, char **argv)
 			if ( strcmp(optarg, "PROCS") == 0) {
 				metric = METRIC_PROCS;
 				break;
-			} 
+			}
 			else if ( strcmp(optarg, "VSZ") == 0) {
 				metric = METRIC_VSZ;
 				break;
-			} 
+			}
 			else if ( strcmp(optarg, "RSS") == 0 ) {
 				metric = METRIC_RSS;
 				break;
@@ -559,7 +559,7 @@ process_arguments (int argc, char **argv)
 				metric = METRIC_ELAPSED;
 				break;
 			}
-				
+
 			usage4 (_("Metric must be one of PROCS, VSZ, RSS, CPU, ELAPSED!"));
 		case 'k':	/* linux kernel thread filter */
 			kthread_filter = 1;
@@ -642,7 +642,7 @@ convert_to_seconds(char *etime) {
 	seconds = 0;
 
 	for (ptr = etime; *ptr != '\0'; ptr++) {
-	
+
 		if (*ptr == '-') {
 			hyphcnt++;
 			continue;
@@ -775,7 +775,7 @@ be the total number of running processes\n\n"));
   printf (" %s\n", "check_procs -w 50000 -c 100000 --metric=VSZ");
   printf ("  %s\n\n", _("Alert if VSZ of any processes over 50K or 100K"));
   printf (" %s\n", "check_procs -w 10 -c 20 --metric=CPU");
-  printf ("  %s\n", _("Alert if CPU of any processes over 10%% or 20%%"));
+  printf ("  %s\n", _("Alert if CPU of any processes over 10\% or 20\%"));
 
 	printf (UT_SUPPORT);
 }

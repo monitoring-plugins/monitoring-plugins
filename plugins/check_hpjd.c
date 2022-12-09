@@ -66,7 +66,7 @@ void print_usage (void);
 
 char *community = NULL;
 char *address = NULL;
-char *port = NULL;
+unsigned int port = 0;
 int  check_paper_out = 1;
 
 int
@@ -121,8 +121,12 @@ main (int argc, char **argv)
 		 HPJD_GD_DOOR_OPEN, HPJD_GD_PAPER_OUTPUT, HPJD_GD_STATUS_DISPLAY);
 
 	/* get the command to run */
-	sprintf (command_line, "%s -OQa -m : -v 1 -c %s %s:%hd %s", PATH_TO_SNMPGET, community,
-									address, port, query_string);
+	sprintf (command_line, "%s -OQa -m : -v 1 -c %s %s:%u %s",
+			PATH_TO_SNMPGET,
+			community,
+			address,
+			port,
+			query_string);
 
 	/* run the command */
 	child_process = spopen (command_line);
@@ -380,11 +384,8 @@ process_arguments (int argc, char **argv)
 			community = strdup (DEFAULT_COMMUNITY);
 	}
 
-	if (port == NULL) {
-		if (argv[c] != NULL )
-			port = argv[c];
-		else
-			port = atoi (DEFAULT_PORT);
+	if (port == 0) {
+		port = atoi(DEFAULT_PORT);
 	}
 
 	return validate_arguments ();
