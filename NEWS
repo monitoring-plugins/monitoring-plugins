@@ -1,12 +1,163 @@
 This file documents the major additions and syntax changes between releases.
 
-2.3 [...]
+2.3.2 20th Oct 2022
+	GENERAL
+	Use netcat-openbsd for debian explicitely (by @RincewindsHat #1704)
+	Replace egrep with grep -E (by @RincewindsHat #1791)
+	Use silent automake by default (by @RincewindsHat #1747)
+
+	SINGLE PLUGINS
+	check_by_ssh: added option to exit with an warning, if there is output on STDERR (by @nafets #1301)
+	check_by_ssh: Add "-U" flag (#1123). (by @archiecobbs #1774)
+	check_by_ssh: Let ssh decide if a host is valid, enables usage of ssh .config file (by @RincewindsHat #1691)
+	check_curl: Add an option to check_curl to verify the peer certificate & host using the system CA's (by @bazzisoft #1669)
+	check_curl: fixed -ffollow for HTTP/2.0 (Fixes #1685): added major_version parsing to PicoHTTPParser (by @andreasbaumann #1742)
+	check_curl: fixes check_curl: "CRITICAL - Cannot retrieve certificate subject." (by @andreasbaumann #1689)
+	check_curl: fix if http header contains leading spaces (by @sni #1666)
+	check_curl: Update check_curl.c to display a specific human-readable error message where possible (by @bazzisoft #1668)
+	check_curl: verify certificates option should not force SSL to be used (by @bazzisoft #1688)
+	check_disk: Description for -M was the wrong way around (by @RincewindsHat #1746)
+	check_disk: Fixing the stuff that is broken on btrfs (by @waja #1388)
+	check_disk: Fix perfdata for big values for check disk (by @RincewindsHat #1714)
+	check_disk_smb: Add configfile feature (by @Napsty #1402)
+	check_disk_smb: Add timeout (by @cdruee #1770)
+	check_dns: Add --expect-nxdomain (by @Jonny007-MKD #1623)
+	check_dns: split multiple IP addresses passed in one -a argument (by @DerDakon #1649)
+	check_file_age: Make size parameter a little bit more intelligible (by @RincewindsHat #1730)
+	check_fping: Implements 'host-alive' mode (Closes. #1027) (by @waja #1740)
+	check_game: Update Url to qstat (by @RincewindsHat #1725)
+	check_http: changed 'STATE_CRITICAL' to 'STATE_WARNING' for infinite loop (by @xFuture603 #1690)
+	check_http: Increase regexp limit (by @hydrapolic #1566)
+	check_http: Support http redirect (by @waja #1449)
+	check_icmp: buffer offerflow (by @RincewindsHat #1733)
+	check_icmp: delay set_source_ip() until address_family is detected (by @ghciv6 #1735)
+	check_icmp: Fix "Invalid Argument" from sendmsg() under FreeBSD 13.1 and "setsockopt failed" for TTL setting (by @eriksejr #1771)
+	check_icmp: Fix pkt perfdata in check_host mode (by @sjoegren #1721)
+	check_ldap: Allows check_ldap to read password from environment variable (by @mullumaus #1724)
+	check_load: add LOAD prefix to load plugin (by @haraldj #1694)
+	check_load: Display total and scaled load values if check_load scales the values (by number of CPUs by @RincewindsHat #1778)
+	check_log: Missing oldlog now aborts check_log (by @RincewindsHat #1732)
+	check_mailq: Add mailq -C option for config dir or config file (by @leeclemens #1490)
+	check_mailq: Check mailq domain specific warnings (by @RincewindsHat #1731)
+	check_mailq: Fix regexp for nullmailer "mailq" output (by @darksoul42 #1493)
+	check_mysql: fix segfaults with mysql-connector-c #1562 (by @ghciv6 #1644)
+	check_pgsql: add --queryname parameter to check_pgsql (by @datamuc #1741)
+	check_ping: Do not show RTA if no connection was possible (by @RincewindsHat #1697)
+	check_ping: understang ping6 output from iputils package (by @glensc #1412)
+	check_proc: Fix check proc ps detection (by @sni #1712)
+	check_procs: exchange needle and haystack in strstr() for proper st… (by @wolfgangkarall #1654)
+	check_smtp: add -L flag to support LMTP (LHLO instead of HELO/EHLO). (by @ghen2 #1715)
+	check_snmp: Added option for null zero length string exit codes (by @FracKenA #1496)
+	check_snmp: fix performance thresholds when using multiple oids (by @sni #1722)
+	check_snmp fix segfaults (by @adrb #1589)
+	check_snmp: put the "c" (to mark a counter) after the perfdata value (by @lausser #1465)
+	check_swap: fix parsing swap values (by @sni #1780)
+	check_swap: Fix perfdata for check swap (by @RincewindsHat #1707)
+	check_swap: Fix unit for total in perfdata (by @RincewindsHat #1779)
+	check_swap: Handle cached swap (by @mdavranche #1642)
+	check_swap: Small fix to threshold validation and style (indentation) fixes (by @RincewindsHat #1723)
+	check_ups: Fix possible overflow in check_ups (by @phibos #1727)
+	check_uptime: Add option to report uptime in days instead of seconds (by @amotl #1750)
+	check_uptime: Fix/improve output message "Uptime is ..." (by @amotl #1751)
+
+	MULTIPLE PLUGINS
+	check_http, check_curl: added --max-redirs=N option (feature #1684) (by @andreasbaumann #1744)
+	check_http, check_curl: Enhancement --continue-after-certificate (backport from nagios-plugins) (by @andreasbaumann #1762)
+	check_http, check_curl: Remove check_http and check_curl test which are somehow always failing (by @RincewindsHat #1777)
+	check_log, check_oracle, check_sensors: Several fixes shellcheck complaining about (by @waja #1459)
+	sslutils: use chain from client certificates (by @tobiaswiese #1664)
+
+	NON FUNCTIONAL CHANGES
+	Trivial source code whitespace formatting fixes to standard. (by @ziesemer #1424)
+	docs: fix simple typo, conspicuosly -> conspicuously (by @timgates42 #1652)
+	Migrate to GitHub actions (by @jacobbaungard #1686)
+	Point to Icinga Exchange instead of dead Monitoring Exchange (by @RincewindsHat #1737)
+	github actions: fix check_users test case (by @sni #1713)
+	Add CodeQL checks (by @phibos #1682)
+	Fix some QL problems (by @RincewindsHat #1729)
+	Update CodeQL and update runner before installing (by @RincewindsHat #1775)
+	check_disk: Check disk compiler warnings (by @RincewindsHat #1758)
+	check_disk: Trivial printf fix and a little bit of code style (by @RincewindsHat #1695)
+	check_http: Docs: make -C obvious (by @stblassitude #1554)
+	check_ifoperstatus: Re-attach a comment to where it actually belongs (by @peternewman #1699)
+	check_ircd: Restrict the nickname length of the test user for check_ircd (by @RincewindsHat #1710)
+	check_load: Check load compiler warnings (by @RincewindsHat #1759)
+	check_log: Modernize check log (by @RincewindsHat #1692)
+	check_mailq: remove duplicate W=i/C=i args in check_mailq.pl (by @ichdasich #1755)
+	check_ntp: Check ntp remove unused variables (by @RincewindsHat #1781)
+	check_pgsql: Using snprintf which honors the buffers size and guarantees null temination. (Closes: #1601) (by @waja #1663)
+	check_procs: Fix double percentage sign in usage (by @RincewindsHat #1743)
+	check_sensors.sh: Make shellcheck happier (by @RincewindsHat #1679)
+	check_snmp: Fixed option description authpassword -> authpasswd + whitespaces (by @RincewindsHat #1676)
+	check_swap: Check swap compiler warnings (by @RincewindsHat #1756)
+
+2.3.1 10 April 2021
+	ENHANCEMENTS
+	check_curl: Add an option to verify the peer certificate & host using the system CA's
+
+	FIXES
+	check_icmp: fix simple typo, conspicuosly -> conspicuously
+	check_curl: fixed help, usage and errors for TLS 1.3
+	check_curl: fixed a potential buffer overflow in url buffer
+	check_dns: split multiple IP addresses passed in one -a argument
+	check_curl: added string_statuscode function for printing HTTP/1.1 and HTTP/2 correctly
+	check_curl: fix crash if http header contains leading spaces
+	check_curl: display a specific human-readable error message where possible
+	check_pgsql: Using snprintf which honors the buffers size and guarantees null termination.
+	check_snmp: put the "c" (to mark a counter) after the perfdata value
+	check_http: Increase regexp limit
+	check_http: make -C obvious
+	check_curl: Increase regexp limit (to 1024 as in check_http)
+	check_curl: make -C obvious (from check_http)
+	check_curl: backported --show-body/-B to print body (from check_http)
+
+2.3 10th December 2020
 	ENHANCEMENTS
 	check_dns: allow 'expected address' (-a) to be specified in CIDR notation
 	  (IPv4 only).
+	check_dns: allow for IPv6 RDNS
+	check_dns: Accept CIDR
+	check_dns: allow unsorted addresses
+	check_dns: allow forcing complete match of all addresses
+	check_dns: option to expect NXDOMAIN
+	check_apt: add --only-critical switch
+	check_apt: add -l/--list option to print packages
+        check_file_age: add range checking
+	check_file_age: enable to test for maximum file size
+	check_apt: adding packages-warning option
+	check_load: Adding top consuming processes option
+	check_http: Adding Proxy-Authorization and extra headers
+	check_snmp: make calcualtion of timeout value in help output more clear
+	check_uptime: new plugin for checking uptime to see how long the system is running
+	check_curl: check_http replacement based on libcurl
+	check_http: Allow user to specify HTTP method after proxy CONNECT
+	check_http: Add new flag --show-body/-B to print body
+	check_cluster: Added data argument validation
+	check_icmp: Add IPv6 support
+	check_icmp: Automatically detect IP protocol
+	check_icmp: emit error if multiple protocol version
+	check_disk: add support to display inodes usage in perfdata
+	check_hpjd: Added -D option to disable warning on 'out of paper'
+	check_http: support the --show-body/-B flag when --expect is used
+	check_mysql: allow mariadbclient to be used
+	check_tcp: add --sni
+	check_dns: detect unreachable dns service in nslookup output
 
 	FIXES
 	Fix regression where check_dhcp was rereading response in a tight loop
+	check_dns: fix error detection on sles nslookup
+	check_disk_smb: fix timeout issue
+	check_swap: repaired "-n" behaviour
+	check_icmp: Correctly set address_family on lookup
+	check_icmp: Do not overwrite -4,-6 on lookup
+	check_smtp: initializes n before it is used
+	check_dns: fix typo in parameter description
+	check_by_ssh: fix child process leak on timeouts
+	check_mysql: Allow sockets to be specified to -H
+	check_procs: improve command examples for 'at least' processes
+	check_swap: repaired "-n" behaviour
+	check_disk: include -P switch in help
+	check_mailq: restore accidentially removed options
 
 2.2 29th November 2016
 	ENHANCEMENTS
@@ -484,4 +635,3 @@ This file documents the major additions and syntax changes between releases.
 	check_swap % thresholds changed to measure amount free, instead of amount used
 	check_disk syntax changes for -p, -m/-M, defaults to MB instead of kB
 	check_procs -C expects no path for the command name
-

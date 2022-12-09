@@ -174,6 +174,11 @@
  *
  */
 
+/* MariaDB 10.2 client does not set MYSQL_PORT */
+#ifndef MYSQL_PORT
+#  define MYSQL_PORT 3306
+#endif
+
 enum {
 	OK = 0,
 	ERROR = -1
@@ -218,6 +223,20 @@ enum {
 /* For non-GNU compilers to ignore __attribute__ */
 #ifndef __GNUC__
 # define __attribute__(x) /* do nothing */
+#endif
+
+/* Try sysconf(_SC_OPEN_MAX) first, as it can be higher than OPEN_MAX.
+ * If that fails and the macro isn't defined, we fall back to an educated
+ * guess. There's no guarantee that our guess is adequate and the program
+ * will die with SIGSEGV if it isn't and the upper boundary is breached. */
+#define DEFAULT_MAXFD  256   /* fallback value if no max open files value is set */
+#define MAXFD_LIMIT   8192   /* upper limit of open files */
+#ifdef _SC_OPEN_MAX
+static long maxfd = 0;
+#elif defined(OPEN_MAX)
+# define maxfd OPEN_MAX
+#else	/* sysconf macro unavailable, so guess (may be wildly inaccurate) */
+# define maxfd DEFAULT_MAXFD
 #endif
 
 #endif /* _COMMON_H_ */

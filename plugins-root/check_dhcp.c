@@ -323,7 +323,8 @@ int get_hardware_address(int sock,char *interface_name){
 #elif defined(__bsd__)
 						/* King 2004	see ACKNOWLEDGEMENTS */
 
-        int                     mib[6], len;
+        size_t                  len;
+        int                     mib[6];
         char                    *buf;
         unsigned char           *ptr;
         struct if_msghdr        *ifm;

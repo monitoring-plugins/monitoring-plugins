@@ -23,6 +23,7 @@ typedef struct range_struct {
 	double	end;
 	int	end_infinity;
 	int	alert_on;		/* OUTSIDE (default) or INSIDE */
+	char* text; /* original unparsed text input */
 	} range;
 
 typedef struct thresholds_struct {
@@ -60,6 +61,10 @@ void set_thresholds(thresholds **, char *, char *);
 void print_thresholds(const char *, thresholds *);
 int check_range(double, range *);
 int get_status(double, thresholds *);
+
+/* Handle timeouts */
+extern unsigned int timeout_state;
+extern unsigned int timeout_interval;
 
 /* All possible characters in a threshold range */
 #define NP_THRESHOLDS_CHARS "-0123456789.:@~"
@@ -107,5 +112,6 @@ void np_state_write_string(time_t, char *);
 void np_init(char *, int argc, char **argv);
 void np_set_args(int argc, char **argv);
 void np_cleanup();
+const char *state_text (int);
 
 #endif /* _UTILS_BASE_ */

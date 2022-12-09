@@ -41,7 +41,7 @@ const char *email = "devel@monitoring-plugins.org";
 
 int process_arguments (int, char **);
 int validate_arguments (void);
-int error_scan (char *);
+int error_scan (char *, int *);
 int ip_match_cidr(const char *, const char *);
 unsigned long ip2long(const char *);
 void print_help (void);
@@ -54,8 +54,10 @@ char ptr_server[ADDRESS_LENGTH] = "";
 int verbose = FALSE;
 char **expected_address = NULL;
 int expected_address_cnt = 0;
+int expect_nxdomain = FALSE;
 
 int expect_authority = FALSE;
+int all_match = FALSE;
 thresholds *time_thresholds = NULL;
 
 static int
@@ -86,6 +88,7 @@ main (int argc, char **argv)
   int parse_address = FALSE; /* This flag scans for Address: but only after Name: */
   output chld_out, chld_err;
   size_t i;
+  int is_nxdomain = FALSE;
 
   setlocale (LC_ALL, "");
   bindtextdomain (PACKAGE, LOCALEDIR);
@@ -170,8 +173,8 @@ main (int argc, char **argv)
       temp_buffer++;
 
       /* Strip leading spaces */
-      for (; *temp_buffer != '\0' && *temp_buffer == ' '; temp_buffer++)
-        /* NOOP */;
+      while (*temp_buffer == ' ')
+        temp_buffer++;
 
       strip(temp_buffer);
       if (temp_buffer==NULL || strlen(temp_buffer)==0) {
@@ -187,7 +190,7 @@ main (int argc, char **argv)
     }
 
 
-    result = error_scan (chld_out.line[i]);
+    result = error_scan (chld_out.line[i], &is_nxdomain);
     if (result != STATE_OK) {
       msg = strchr (chld_out.line[i], ':');
       if(msg) msg++;
@@ -200,11 +203,18 @@ main (int argc, char **argv)
     if (verbose)
       puts(chld_err.line[i]);
 
-    if (error_scan (chld_err.line[i]) != STATE_OK) {
-      result = max_state (result, error_scan (chld_err.line[i]));
+    if (error_scan (chld_err.line[i], &is_nxdomain) != STATE_OK) {
+      result = max_state (result, error_scan (chld_err.line[i], &is_nxdomain));
       msg = strchr(input_buffer, ':');
-      if(msg) msg++;
+      if(msg)
+         msg++;
+      else
+         msg = input_buffer;
     }
+  }
+
+  if (is_nxdomain && !expect_nxdomain) {
+    die (STATE_CRITICAL, _("Domain '%s' was not found by the server\n"), query_address);
   }
 
   if (addresses) {
@@ -230,20 +240,41 @@ main (int argc, char **argv)
   if (result == STATE_OK && expected_address_cnt > 0) {
     result = STATE_CRITICAL;
     temp_buffer = "";
+    unsigned long expect_match = (1 << expected_address_cnt) - 1;
+    unsigned long addr_match = (1 << n_addresses) - 1;
 
     for (i=0; i<expected_address_cnt; i++) {
+      int j;
       /* check if we get a match on 'raw' ip or cidr */
-      if ( strcmp(address, expected_address[i]) == 0
-           || ip_match_cidr(address, expected_address[i]) )
-        result = STATE_OK;
+      for (j=0; j<n_addresses; j++) {
+        if ( strcmp(addresses[j], expected_address[i]) == 0
+             || ip_match_cidr(addresses[j], expected_address[i]) ) {
+          result = STATE_OK;
+          addr_match &= ~(1 << j);
+          expect_match &= ~(1 << i);
+        }
+      }
 
       /* prepare an error string */
       xasprintf(&temp_buffer, "%s%s; ", temp_buffer, expected_address[i]);
     }
+    /* check if expected_address must cover all in addresses and none may be missing */
+    if (all_match && (expect_match != 0 || addr_match != 0))
+      result = STATE_CRITICAL;
     if (result == STATE_CRITICAL) {
       /* Strip off last semicolon... */
       temp_buffer[strlen(temp_buffer)-2] = '\0';
       xasprintf(&msg, _("expected '%s' but got '%s'"), temp_buffer, address);
+    }
+  }
+
+  if (expect_nxdomain) {
+    if (!is_nxdomain) {
+      result = STATE_CRITICAL;
+      xasprintf(&msg, _("Domain '%s' was found by the server: '%s'\n"), query_address, address);
+    } else {
+      if (address != NULL) free(address);
+      address = "NXDOMAIN";
     }
   }
 
@@ -326,8 +357,14 @@ ip2long(const char* src) {
 }
 
 int
-error_scan (char *input_buffer)
+error_scan (char *input_buffer, int *is_nxdomain)
 {
+
+  const int nxdomain = strstr (input_buffer, "Non-existent") ||
+                       strstr (input_buffer, "** server can't find") ||
+                       strstr (input_buffer, "** Can't find") ||
+                       strstr (input_buffer, "NXDOMAIN");
+  if (nxdomain) *is_nxdomain = TRUE;
 
   /* the DNS lookup timed out */
   if (strstr (input_buffer, _("Note: nslookup is deprecated and may be removed from future releases.")) ||
@@ -338,6 +375,8 @@ error_scan (char *input_buffer)
   /* DNS server is not running... */
   else if (strstr (input_buffer, "No response from server"))
     die (STATE_CRITICAL, _("No response from DNS %s\n"), dns_server);
+  else if (strstr (input_buffer, "no servers could be reached"))
+    die (STATE_CRITICAL, _("No response from DNS %s\n"), dns_server);
 
   /* Host name is valid, but server doesn't have records... */
   else if (strstr (input_buffer, "No records"))
@@ -345,7 +384,7 @@ error_scan (char *input_buffer)
 
   /* Connection was refused */
   else if (strstr (input_buffer, "Connection refused") ||
-     strstr (input_buffer, "Couldn't find server") ||
+           strstr (input_buffer, "Couldn't find server") ||
            strstr (input_buffer, "Refused") ||
            (strstr (input_buffer, "** server can't find") &&
             strstr (input_buffer, ": REFUSED")))
@@ -358,12 +397,6 @@ error_scan (char *input_buffer)
   /* No information (e.g. nameserver IP has two PTR records) */
   else if (strstr (input_buffer, "No information"))
     die (STATE_CRITICAL, _("No information returned by DNS server at %s\n"), dns_server);
-
-  /* Host or domain name does not exist */
-  else if (strstr (input_buffer, "Non-existent") ||
-           strstr (input_buffer, "** server can't find") ||
-     strstr (input_buffer,"NXDOMAIN"))
-    die (STATE_CRITICAL, _("Domain %s was not found by the server\n"), query_address);
 
   /* Network is unreachable */
   else if (strstr (input_buffer, "Network is unreachable"))
@@ -401,7 +434,9 @@ process_arguments (int argc, char **argv)
     {"server", required_argument, 0, 's'},
     {"reverse-server", required_argument, 0, 'r'},
     {"expected-address", required_argument, 0, 'a'},
+    {"expect-nxdomain",  no_argument, 0, 'n'},
     {"expect-authority", no_argument, 0, 'A'},
+    {"all", no_argument, 0, 'L'},
     {"warning", required_argument, 0, 'w'},
     {"critical", required_argument, 0, 'c'},
     {0, 0, 0, 0}
@@ -415,7 +450,7 @@ process_arguments (int argc, char **argv)
       strcpy (argv[c], "-t");
 
   while (1) {
-    c = getopt_long (argc, argv, "hVvAt:H:s:r:a:w:c:", long_opts, &opt_index);
+    c = getopt_long (argc, argv, "hVvALnt:H:s:r:a:w:c:", long_opts, &opt_index);
 
     if (c == -1 || c == EOF)
       break;
@@ -456,12 +491,32 @@ process_arguments (int argc, char **argv)
     case 'a': /* expected address */
       if (strlen (optarg) >= ADDRESS_LENGTH)
         die (STATE_UNKNOWN, _("Input buffer overflow\n"));
-      expected_address = (char **)realloc(expected_address, (expected_address_cnt+1) * sizeof(char**));
-      expected_address[expected_address_cnt] = strdup(optarg);
-      expected_address_cnt++;
+      if (strchr(optarg, ',') != NULL) {
+	char *comma = strchr(optarg, ',');
+	while (comma != NULL) {
+	  expected_address = (char **)realloc(expected_address, (expected_address_cnt+1) * sizeof(char**));
+	  expected_address[expected_address_cnt] = strndup(optarg, comma - optarg);
+	  expected_address_cnt++;
+	  optarg = comma + 1;
+	  comma = strchr(optarg, ',');
+	}
+	expected_address = (char **)realloc(expected_address, (expected_address_cnt+1) * sizeof(char**));
+	expected_address[expected_address_cnt] = strdup(optarg);
+	expected_address_cnt++;
+      } else {
+	expected_address = (char **)realloc(expected_address, (expected_address_cnt+1) * sizeof(char**));
+	expected_address[expected_address_cnt] = strdup(optarg);
+	expected_address_cnt++;
+      }
+      break;
+    case 'n': /* expect NXDOMAIN */
+      expect_nxdomain = TRUE;
       break;
     case 'A': /* expect authority */
       expect_authority = TRUE;
+      break;
+    case 'L': /* all must match */
+      all_match = TRUE;
       break;
     case 'w':
       warning = optarg;
@@ -498,8 +553,15 @@ process_arguments (int argc, char **argv)
 int
 validate_arguments ()
 {
-  if (query_address[0] == 0)
+  if (query_address[0] == 0) {
+    printf ("missing --host argument\n");
     return ERROR;
+  }
+
+  if (expected_address_cnt > 0 && expect_nxdomain) {
+    printf ("--expected-address and --expect-nxdomain cannot be combined\n");
+    return ERROR;
+  }
 
   return OK;
 }
@@ -531,14 +593,19 @@ print_help (void)
   printf (" -a, --expected-address=IP-ADDRESS|CIDR|HOST\n");
   printf ("    %s\n", _("Optional IP-ADDRESS/CIDR you expect the DNS server to return. HOST must end"));
   printf ("    %s\n", _("with a dot (.). This option can be repeated multiple times (Returns OK if any"));
-  printf ("    %s\n", _("value match). If multiple addresses are returned at once, you have to match"));
-  printf ("    %s\n", _("the whole string of addresses separated with commas (sorted alphabetically)."));
+  printf ("    %s\n", _("value matches)."));
+  printf (" -n, --expect-nxdomain\n");
+  printf ("    %s\n", _("Expect the DNS server to return NXDOMAIN (i.e. the domain was not found)"));
+  printf ("    %s\n", _("Cannot be used together with -a"));
   printf (" -A, --expect-authority\n");
   printf ("    %s\n", _("Optionally expect the DNS server to be authoritative for the lookup"));
   printf (" -w, --warning=seconds\n");
   printf ("    %s\n", _("Return warning if elapsed time exceeds value. Default off"));
   printf (" -c, --critical=seconds\n");
   printf ("    %s\n", _("Return critical if elapsed time exceeds value. Default off"));
+  printf (" -L, --all\n");
+  printf ("    %s\n", _("Return critical if the list of expected addresses does not match all addresses"));
+  printf ("    %s\n", _("returned. Default off"));
 
   printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
@@ -550,5 +617,5 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-  printf ("%s -H host [-s server] [-a expected-address] [-A] [-t timeout] [-w warn] [-c crit]\n", progname);
+  printf ("%s -H host [-s server] [-a expected-address] [-n] [-A] [-t timeout] [-w warn] [-c crit] [-L]\n", progname);
 }
