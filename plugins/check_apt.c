@@ -1,32 +1,32 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_apt plugin
-* 
+*
 * License: GPL
 * Copyright (c) 2006-2008 Monitoring Plugins Development Team
-* 
+*
 * Original author: Sean Finney
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_apt plugin
-* 
+*
 * Check for available updates in apt package management systems
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
+*
 *****************************************************************************/
 
 const char *progname = "check_apt";
@@ -269,7 +269,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 			die(STATE_UNKNOWN, _("%s: Error compiling regexp: %s"), progname, rerrbuf);
 		}
 	}
-   
+
 	if(do_exclude!=NULL){
 		regres=regcomp(&ereg, do_exclude, REG_EXTENDED);
 		if(regres!=0) {
@@ -278,7 +278,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 			    progname, rerrbuf);
 		}
 	}
-   
+
 	const char *crit_ptr = (do_critical != NULL) ? do_critical : SECURITY_RE;
 	regres=regcomp(&sreg, crit_ptr, REG_EXTENDED);
 	if(regres!=0) {
@@ -295,7 +295,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 		/* run the upgrade */
 		result = np_runcmd(cmdline, &chld_out, &chld_err, 0);
 	}
-   
+
 	/* apt-get upgrade only changes exit status if there is an
 	 * internal error when run in dry-run mode.  therefore we will
 	 * treat such an error as UNKNOWN */
