@@ -1095,9 +1095,14 @@ check_http (void)
       *pos = ' ';
     }
     buffer[i] = '\0';
-    xasprintf (&full_page_new, "%s%s", full_page, buffer);
-    free (full_page);
+
+    if ((full_page_new = realloc(full_page, pagesize + i + 1)) == NULL)
+        die (STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate memory for full_page\n"));
+
+    memmove(&full_page_new[pagesize], buffer, i + 1);
+
     full_page = full_page_new;
+
     pagesize += i;
 
                 if (no_body && document_headers_done (full_page)) {
