@@ -279,7 +279,7 @@ is($res->output,'SNMP OK - 4.200000 | iso.3.6.1.4.1.8072.3.2.67.19=4.200000 ' , 
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.19 --multiplier=.1 -f '%.2f' ");
 is($res->return_code, 0, "Test multiply RC + format" );
-is($res->output, 'SNMP OK - 4.200000 | iso.3.6.1.4.1.8072.3.2.67.19=4.200000 ', "Test multiply .1 output + format" );
+is($res->output, 'SNMP OK - 4.20 | iso.3.6.1.4.1.8072.3.2.67.19=4.20 ', "Test multiply .1 output + format" );
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.19 --multiplier=.1 -f '%.2f' -w 1");
 is($res->return_code, 1, "Test multiply RC + format + thresholds" );
