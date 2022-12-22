@@ -103,7 +103,7 @@ SKIP: {
         cmp_ok( $res->return_code, "==", 0, "And also when not found");
 }
 SKIP: {
-        skip "No internet access", 23 if $internet_access eq "no";
+        skip "No internet access", 22 if $internet_access eq "no";
 
         $res = NPTest->testCmd(
                 "./$plugin --ssl $host_tls_http"
