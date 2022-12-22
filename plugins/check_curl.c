@@ -2024,9 +2024,12 @@ curlhelp_buffer_write_callback (void *buffer, size_t size, size_t nmemb, void *s
   curlhelp_write_curlbuf *buf = (curlhelp_write_curlbuf *)stream;
 
   while (buf->bufsize < buf->buflen + size * nmemb + 1) {
-    buf->bufsize *= buf->bufsize * 2;
+    buf->bufsize = buf->bufsize * 2;
     buf->buf = (char *)realloc (buf->buf, buf->bufsize);
-    if (buf->buf == NULL) return -1;
+    if (buf->buf == NULL) {
+      fprintf(stderr, "malloc failed (%d) %s\n", errno, strerror(errno));
+      return -1;
+    }
   }
 
   memcpy (buf->buf + buf->buflen, buffer, size * nmemb);
