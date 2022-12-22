@@ -1246,13 +1246,23 @@ check_http (void)
     if (strstr(header, header_expect) == NULL) {
       // We did not find the header, the rest is for building the output and setting the state
       char output_header_search[30] = "";
+
       strncpy(&output_header_search[0], header_expect,
               sizeof(output_header_search));
+
       if (output_header_search[sizeof(output_header_search) - 1] != '\0') {
-        bcopy("...", &output_header_search[sizeof(output_header_search) - 4],
-              4);
+        bcopy("...",
+            &output_header_search[sizeof(output_header_search) - 4],
+            4);
       }
-      xasprintf (&msg, _("%sheader '%s' not found on '%s://%s:%d%s', "), msg, output_header_search, use_ssl ? "https" : "http", host_name ? host_name : server_address, server_port, server_url);
+
+      xasprintf (&msg,
+          _("%sheader '%s' not found on '%s://%s:%d%s', "),
+          msg,
+          output_header_search, use_ssl ? "https" : "http",
+          host_name ? host_name : server_address, server_port,
+          server_url);
+
       result = STATE_CRITICAL;
     }
   }
