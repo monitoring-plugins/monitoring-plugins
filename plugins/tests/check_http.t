@@ -12,7 +12,7 @@ use FindBin qw($Bin);
 
 $ENV{'LC_TIME'} = "C";
 
-my $common_tests = 72;
+my $common_tests = 71;
 my $virtual_port_tests = 8;
 my $ssl_only_tests = 12;
 # Check that all dependent modules are available
@@ -191,9 +191,6 @@ sub run_server {
 					$c->send_crlf;
 					$c->send_response(HTTP::Response->new( 200, 'OK', undef, $r->header ('Host')));
 				} elsif ($r->url->path eq "/chunked") {
-					$c->send_basic_header;
-					$c->send_header('Transfer-Encoding', "chunked");
-					$c->send_crlf;
 					my $chunks = ["chunked", "encoding", "test\n"];
 					$c->send_response(HTTP::Response->new( 200, 'OK', undef, sub {
 						my $chunk = shift @{$chunks};
@@ -508,7 +505,7 @@ sub run_common_tests {
 	};
 	is( $@, "", $cmd );
 
-	$cmd = "$command -u /chunked -s 'chunkedencodingtest'";
+	$cmd = "$command -u /chunked -s 'chunkedencodingtest' -d 'Transfer-Encoding: chunked'";
 	eval {
 		$result = NPTest->testCmd( $cmd, 5 );
 	};
