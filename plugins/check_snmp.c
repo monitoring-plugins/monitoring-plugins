@@ -1167,10 +1167,14 @@ multiply (char *str)
 {
 	double val = strtod (str, NULL);
 	val *= multiplier;
+	char *conv = "%f";
+	if (fmtstr != "") {
+		conv = fmtstr;
+	}
 	if (val == (int)val) {
 		sprintf(str, "%.0f", val);
 	} else {
-		sprintf(str, "%f", val);
+		sprintf(str, conv, val);
 	}
 	return str;
 }
