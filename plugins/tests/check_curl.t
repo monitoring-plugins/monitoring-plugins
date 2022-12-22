@@ -21,7 +21,7 @@ use FindBin qw($Bin);
 
 $ENV{'LC_TIME'} = "C";
 
-my $common_tests = 74;
+my $common_tests = 73;
 my $ssl_only_tests = 8;
 # Check that all dependent modules are available
 eval "use HTTP::Daemon 6.01;";
@@ -200,17 +200,14 @@ sub run_server {
 				$c->send_basic_header;
 				$c->send_crlf;
 				$c->send_response(HTTP::Response->new( 200, 'OK', undef, $r->header ('Host')));
-				} elsif ($r->url->path eq "/chunked") {
-					$c->send_basic_header;
-					$c->send_header('Transfer-Encoding', "chunked");
-					$c->send_crlf;
-					my $chunks = ["chunked", "encoding", "test\n"];
-					$c->send_response(HTTP::Response->new( 200, 'OK', undef, sub {
-						my $chunk = shift @{$chunks};
-						return unless $chunk;
-						sleep(1);
-						return($chunk);
-					}));
+			} elsif ($r->url->path eq "/chunked") {
+				my $chunks = ["chunked", "encoding", "test\n"];
+				$c->send_response(HTTP::Response->new( 200, 'OK', undef, sub {
+					my $chunk = shift @{$chunks};
+					return unless $chunk;
+					sleep(1);
+					return($chunk);
+				}));
 			} else {
 				$c->send_error(HTTP::Status->RC_FORBIDDEN);
 			}
@@ -483,7 +480,8 @@ sub run_common_tests {
 		local $SIG{ALRM} = sub { die "alarm\n" };
 		alarm(2);
 		$result = NPTest->testCmd( $cmd );
-		alarm(0);	};
+	};
+	alarm(0);
 	isnt( $@, "alarm\n", $cmd );
 	is( $result->return_code, 0, $cmd );
 
@@ -493,7 +491,8 @@ sub run_common_tests {
 		local $SIG{ALRM} = sub { die "alarm\n" };
 		alarm(2);
 		$result = NPTest->testCmd( $cmd );
-		alarm(0); };
+	};
+	alarm(0);
 	isnt( $@, "alarm\n", $cmd );
 	isnt( $result->return_code, 0, $cmd );
 
@@ -519,7 +518,7 @@ sub run_common_tests {
 	};
 	is( $@, "", $cmd );
 
-	$cmd = "$command -u /chunked -s 'chunkedencodingtest'";
+	$cmd = "$command -u /chunked -s 'chunkedencodingtest' -d 'Transfer-Encoding: chunked'";
 	eval {
 		$result = NPTest->testCmd( $cmd, 5 );
 	};
