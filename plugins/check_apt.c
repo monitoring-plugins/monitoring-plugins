@@ -520,7 +520,7 @@ print_help (void)
   printf ("    %s\n", _("this REGEXP, the plugin will return CRITICAL status.  Can be specified"));
   printf ("    %s\n", _("multiple times like above.  Default is a regexp matching security"));
   printf ("    %s\n", _("upgrades for Debian and Ubuntu:"));
-  printf ("    \t\%s\n", SECURITY_RE);
+  printf ("    \t%s\n", SECURITY_RE);
   printf ("    %s\n", _("Note that the package must first match the include list before its"));
   printf ("    %s\n", _("information is compared against the critical list."));
   printf (" %s\n", "-o, --only-critical");
