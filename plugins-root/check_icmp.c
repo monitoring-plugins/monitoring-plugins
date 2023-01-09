@@ -213,7 +213,7 @@ static int mode, protocols, sockets, debug = 0, timeout = 10;
 static unsigned short icmp_data_size = DEFAULT_PING_DATA_SIZE;
 static unsigned short icmp_pkt_size = DEFAULT_PING_DATA_SIZE + ICMP_MINLEN;
 
-static unsigned int icmp_sent = 0, icmp_recv = 0, icmp_lost = 0;
+static unsigned int icmp_sent = 0, icmp_recv = 0, icmp_lost = 0, ttl = 0;
 #define icmp_pkts_en_route (icmp_sent - (icmp_recv + icmp_lost))
 static unsigned short targets_down = 0, targets = 0, packets = 0;
 #define targets_alive (targets - targets_down)
@@ -223,7 +223,6 @@ static pid_t pid;
 static struct timezone tz;
 static struct timeval prog_start;
 static unsigned long long max_completion_time = 0;
-static unsigned char ttl = 0;	/* outgoing ttl */
 static unsigned int warn_down = 1, crit_down = 1; /* host down threshold values */
 static int min_hosts_alive = -1;
 float pkt_backoff_factor = 1.5;
@@ -452,6 +451,14 @@ main(int argc, char **argv)
 		packets = 5;
 	}
 
+	/* support "--help" and "--version" */
+	if(argc == 2) {
+		if(!strcmp(argv[1], "--help"))
+			strcpy(argv[1], "-h");
+		if(!strcmp(argv[1], "--version"))
+			strcpy(argv[1], "-V");
+	}
+
 	/* Parse protocol arguments first */
 	for(i = 1; i < argc; i++) {
 		while((arg = getopt(argc, argv, opts_str)) != EOF) {
@@ -520,7 +527,7 @@ main(int argc, char **argv)
 				add_target(optarg);
 				break;
 			case 'l':
-				ttl = (unsigned char)strtoul(optarg, NULL, 0);
+				ttl = (int)strtoul(optarg, NULL, 0);
 				break;
 			case 'm':
 				min_hosts_alive = (int)strtoul(optarg, NULL, 0);
@@ -555,14 +562,6 @@ main(int argc, char **argv)
 
 	/* Parse extra opts if any */
 	argv=np_extra_opts(&argc, argv, progname);
-
-	/* support "--help" and "--version" */
-	if(argc == 2) {
-		if(!strcmp(argv[1], "--help"))
-			strcpy(argv[1], "-h");
-		if(!strcmp(argv[1], "--version"))
-			strcpy(argv[1], "-V");
-	}
 
 	argv = &argv[optind];
 	while(*argv) {
@@ -948,6 +947,7 @@ static int
 send_icmp_ping(int sock, struct rta_host *host)
 {
 	long int len;
+	size_t addrlen;
 	struct icmp_ping_data data;
 	struct msghdr hdr;
 	struct iovec iov;
@@ -979,6 +979,7 @@ send_icmp_ping(int sock, struct rta_host *host)
 
 	if (address_family == AF_INET) {
 		struct icmp *icp = (struct icmp*)buf;
+		addrlen = sizeof(struct sockaddr_in);
 
 		memcpy(&icp->icmp_data, &data, sizeof(data));
 
@@ -995,7 +996,10 @@ send_icmp_ping(int sock, struct rta_host *host)
 	}
 	else {
 		struct icmp6_hdr *icp6 = (struct icmp6_hdr*)buf;
+		addrlen = sizeof(struct sockaddr_in6);
+
 		memcpy(&icp6->icmp6_dataun.icmp6_un_data8[4], &data, sizeof(data));
+
 		icp6->icmp6_type = ICMP6_ECHO_REQUEST;
 		icp6->icmp6_code = 0;
 		icp6->icmp6_cksum = 0;
@@ -1016,7 +1020,7 @@ send_icmp_ping(int sock, struct rta_host *host)
 
 	memset(&hdr, 0, sizeof(hdr));
 	hdr.msg_name = (struct sockaddr *)&host->saddr_in;
-	hdr.msg_namelen = sizeof(struct sockaddr_storage);
+	hdr.msg_namelen = addrlen;
 	hdr.msg_iov = &iov;
 	hdr.msg_iovlen = 1;
 

@@ -28,6 +28,7 @@
 
 #include "common.h"
 #include "utils_disk.h"
+#include "gl/fsusage.h"
 
 void
 np_add_name (struct name_list **list, const char *name)
@@ -127,9 +128,12 @@ np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list
       size_t name_len = strlen(d->name);
       size_t best_match_len = 0;
       struct mount_entry *best_match = NULL;
+      struct fs_usage fsp;
 
       /* set best match if path name exactly matches a mounted device name */
       for (me = mount_list; me; me = me->me_next) {
+	if (get_fs_usage(me->me_mountdir, me->me_devname, &fsp) < 0)
+	  continue; /* skip if permissions do not suffice for accessing device */
         if (strcmp(me->me_devname, d->name)==0)
           best_match = me;
       }
@@ -137,6 +141,8 @@ np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list
       /* set best match by directory name if no match was found by devname */
       if (! best_match) {
         for (me = mount_list; me; me = me->me_next) {
+	  if (get_fs_usage(me->me_mountdir, me->me_devname, &fsp) < 0)
+	    continue; /* skip if permissions do not suffice for accessing device */
           size_t len = strlen (me->me_mountdir);
           if ((exact == FALSE && (best_match_len <= len && len <= name_len &&
              (len == 1 || strncmp (me->me_mountdir, d->name, len) == 0)))

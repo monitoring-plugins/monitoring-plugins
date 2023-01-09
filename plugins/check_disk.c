@@ -171,7 +171,6 @@ main (int argc, char **argv)
   char *perf_ilabel;
   char *preamble;
   char *flag_header;
-  double inode_space_pct;
   int temp_result;
 
   struct mount_entry *me;
@@ -288,7 +287,7 @@ main (int argc, char **argv)
       get_stats (path, &fsp);
 
       if (verbose >= 3) {
-        printf ("For %s, used_pct=%g free_pct=%g used_units=%llu free_units=%llu total_units=%llu used_inodes_pct=%g free_inodes_pct=%g fsp.fsu_blocksize=%llu mult=%llu\n",
+        printf ("For %s, used_pct=%g free_pct=%g used_units=%lu free_units=%lu total_units=%lu used_inodes_pct=%g free_inodes_pct=%g fsp.fsu_blocksize=%lu mult=%lu\n",
                 me->me_mountdir,
                 path->dused_pct,
                 path->dfree_pct,
@@ -369,10 +368,10 @@ main (int argc, char **argv)
         critical_high_tide = UINT64_MAX;
 
         if (path->freeinodes_percent->warning != NULL) {
-          warning_high_tide = llabs( min( (double) warning_high_tide, (double) (1.0 - path->freeinodes_percent->warning->end/100)*path->inodes_total ));
+          warning_high_tide = (uint64_t) fabs( min( (double) warning_high_tide, (double) (1.0 - path->freeinodes_percent->warning->end/100)*path->inodes_total ));
         }
         if (path->freeinodes_percent->critical != NULL) {
-          critical_high_tide = llabs( min( (double) critical_high_tide, (double) (1.0 - path->freeinodes_percent->critical->end/100)*path->inodes_total ));
+          critical_high_tide = (uint64_t) fabs( min( (double) critical_high_tide, (double) (1.0 - path->freeinodes_percent->critical->end/100)*path->inodes_total ));
         }
 
         xasprintf (&perf_ilabel, "%s (inodes)", (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir);
@@ -406,15 +405,7 @@ main (int argc, char **argv)
 		  xasprintf(&output, "%s inode=%.0f%%)%s;", output, path->dfree_inodes_percent, ((disk_result && verbose >= 1) ? "]" : ""));
 	  }
       free(flag_header);
-      /* TODO: Need to do a similar debug line
-      xasprintf (&details, _("%s\n\%.0f of %.0f %s (%.0f%% inode=%.0f%%) free on %s (type %s mounted on %s) warn:%lu crit:%lu warn%%:%.0f%% crit%%:%.0f%%"),
-                details, dfree_units, dtotal_units, units, dfree_pct, inode_space_pct,
-                me->me_devname, me->me_type, me->me_mountdir,
-                (unsigned long)w_df, (unsigned long)c_df, w_dfp, c_dfp);
-      */
-
     }
-
   }
 
   if (verbose >= 2)
@@ -689,6 +680,7 @@ process_arguments (int argc, char **argv)
       break;
     case 'I':
       cflags |= REG_ICASE;
+	  // Intentional fallthrough
     case 'i':
       if (!path_selected)
         die (STATE_UNKNOWN, "DISK %s: %s\n", _("UNKNOWN"), _("Paths need to be selected before using -i/-I. Use -A to select all paths explicitly"));
@@ -728,8 +720,10 @@ process_arguments (int argc, char **argv)
 
     case 'A':
       optarg = strdup(".*");
+	  // Intentional fallthrough
     case 'R':
       cflags |= REG_ICASE;
+	  // Intentional fallthrough
     case 'r':
       if (! (warn_freespace_units || crit_freespace_units || warn_freespace_percent ||
              crit_freespace_percent || warn_usedspace_units || crit_usedspace_units ||
@@ -861,51 +855,6 @@ set_all_thresholds (struct parameter_list *path)
     if (path->freeinodes_percent != NULL) free (path->freeinodes_percent);
     set_thresholds(&path->freeinodes_percent, warn_freeinodes_percent, crit_freeinodes_percent);
 }
-
-/* TODO: Remove?
-
-int
-validate_arguments (uintmax_t w, uintmax_t c, double wp, double cp, double iwp, double icp, char *mypath)
-{
-  if (w < 0 && c < 0 && wp < 0.0 && cp < 0.0) {
-    printf (_("INPUT ERROR: No thresholds specified"));
-    print_path (mypath);
-    return ERROR;
-  }
-  else if ((wp >= 0.0 || cp >= 0.0) &&
-           (wp < 0.0 || cp < 0.0 || wp > 100.0 || cp > 100.0 || cp > wp)) {
-    printf (_("\
-INPUT ERROR: C_DFP (%f) should be less than W_DFP (%.1f) and both should be between zero and 100 percent, inclusive"),
-            cp, wp);
-    print_path (mypath);
-    return ERROR;
-  }
-  else if ((iwp >= 0.0 || icp >= 0.0) &&
-           (iwp < 0.0 || icp < 0.0 || iwp > 100.0 || icp > 100.0 || icp > iwp)) {
-    printf (_("\
-INPUT ERROR: C_IDFP (%f) should be less than W_IDFP (%.1f) and both should be between zero and 100 percent, inclusive"),
-            icp, iwp);
-    print_path (mypath);
-    return ERROR;
-  }
-  else if ((w > 0 || c > 0) && (w == 0 || c == 0 || c > w)) {
-    printf (_("\
-INPUT ERROR: C_DF (%lu) should be less than W_DF (%lu) and both should be greater than zero"),
-            (unsigned long)c, (unsigned long)w);
-    print_path (mypath);
-    return ERROR;
-  }
-
-  return OK;
-}
-
-*/
-
-
-
-
-
-
 
 void
 print_help (void)
@@ -1042,7 +991,7 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
         get_fs_usage (p_list->best_match->me_mountdir, p_list->best_match->me_devname, &tmpfsp);
         get_path_stats(p_list, &tmpfsp);
         if (verbose >= 3)
-          printf("Group %s: adding %llu blocks sized %llu, (%s) used_units=%lu free_units=%llu total_units=%llu mult=%llu\n",
+          printf("Group %s: adding %lu blocks sized %lu, (%s) used_units=%lu free_units=%lu total_units=%lu mult=%lu\n",
                  p_list->group,
 				 tmpfsp.fsu_blocks,
 				 tmpfsp.fsu_blocksize,
@@ -1071,7 +1020,7 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
         first = 0;
       }
       if (verbose >= 3)
-        printf("Group %s now has: used_units=%llu free_units=%llu total_units=%llu fsu_blocksize=%llu mult=%llu\n",
+        printf("Group %s now has: used_units=%lu free_units=%lu total_units=%lu fsu_blocksize=%lu mult=%lu\n",
                p->group,
                p->dused_units,
                p->dfree_units,
