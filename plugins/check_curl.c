@@ -1680,7 +1680,7 @@ process_arguments (int argc, char **argv)
         curl_http_version = CURL_HTTP_VERSION_NONE;
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 33, 0) */
       } else {
-        fprintf (stderr, "unkown http-version parameter: %s\n", optarg);
+        fprintf (stderr, "unknown http-version parameter: %s\n", optarg);
         exit (STATE_WARNING);
       }
       break;

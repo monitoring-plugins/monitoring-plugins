@@ -528,7 +528,7 @@ print_help (void)
   printf ("    %s\n", _("of upgrades will be printed, but any non-critical upgrades will not cause"));
   printf ("    %s\n", _("the plugin to return WARNING status."));
   printf (" %s\n", "-w, --packages-warning");
-  printf ("    %s\n", _("Minumum number of packages available for upgrade to return WARNING status."));
+  printf ("    %s\n", _("Minimum number of packages available for upgrade to return WARNING status."));
   printf ("    %s\n\n", _("Default is 1 package."));
 
   printf ("%s\n\n", _("The following options require root privileges and should be used with care:"));
