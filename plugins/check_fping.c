@@ -492,7 +492,7 @@ void print_help (void) {
   printf (" %s\n", "-c, --critical=THRESHOLD");
   printf ("    %s\n", _("critical threshold pair"));
   printf (" %s\n", "-a, --alive");
-  printf ("    %s\n", _("Return OK after first successfull reply"));
+  printf ("    %s\n", _("Return OK after first successful reply"));
   printf (" %s\n", "-b, --bytes=INTEGER");
   printf ("    %s (default: %d)\n", _("size of ICMP packet"),PACKET_SIZE);
   printf (" %s\n", "-n, --number=INTEGER");
