@@ -153,18 +153,18 @@ done
 
 # Parameter sanity check
 if [ $ERE ] && [ $PRE ] ; then
-	echo "Can not use extended and perl regex at the same time"
-	exit "$STATE_UNKNOWN"
+    echo "Can not use extended and perl regex at the same time"
+    exit "$STATE_UNKNOWN"
 fi
 
 GREP="grep"
 
 if [ $ERE ]; then
-	GREP="grep -E"
+    GREP="grep -E"
 fi
 
 if [ $PRE ]; then
-	GREP="grep -P"
+    GREP="grep -P"
 fi
 
 # If the source log file doesn't exist, exit
