@@ -1165,17 +1165,36 @@ nextarg (char *str)
 char *
 multiply (char *str)
 {
-	double val = strtod (str, NULL);
-	val *= multiplier;
+	char *endptr;
+	double val;
 	char *conv = "%f";
+
+	if(verbose>2)
+		printf("    multiply input: %s\n", str);
+
+	val = strtod (str, &endptr);
+	if ((val == 0.0) && (endptr == str)) {
+		if(multiplier != 1) {
+			die(STATE_UNKNOWN, _("multiplier set (%.1f), but input is not a number: %s"), multiplier, str);
+		}
+		return str;
+	}
+
+	if(verbose>2)
+		printf("    multiply extracted double: %f\n", val);
+	val *= multiplier;
 	if (fmtstr != "") {
 		conv = fmtstr;
 	}
 	if (val == (int)val) {
 		sprintf(str, "%.0f", val);
 	} else {
+		if(verbose>2)
+			printf("    multiply using format: %s\n", conv);
 		sprintf(str, conv, val);
 	}
+	if(verbose>2)
+		printf("    multiply result: %s\n", str);
 	return str;
 }
 
