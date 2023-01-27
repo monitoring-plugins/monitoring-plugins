@@ -2,14 +2,14 @@ Releasing a New Monitoring Plugins Version
 ==========================================
 
 Throughout this document, it is assumed that the current Monitoring
-Plugins version is 2.2.1, and that we're about to publish version 2.3.
+Plugins version is 2.3.2, and that we're about to publish version 2.4.
 It is also assumed that the official repository on GitHub is tracked
 using the remote name `monitoring-plugins` (rather than `origin`).
 
 Before you start
 ----------------
 
-- Check Travis CI status.
+- Check Github Actions status.
 - Update local Git repository to the current `master` tip.  For a
   maintenance release (e.g., version 2.3.2), update to the current
   `maint-2.3` tip, instead.
@@ -55,7 +55,7 @@ Build the tarball
 -----------------
 
     cd /tmp/plugins
-    tools/setup
+    tools/setup     # requires docbook to be installed
     ./configure
     make dist
 

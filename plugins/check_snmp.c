@@ -1,31 +1,31 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_snmp plugin
-* 
+*
 * License: GPL
 * Copyright (c) 1999-2007 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_snmp plugin
-* 
+*
 * Check status of remote machines and obtain system information via SNMP
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 const char *progname = "check_snmp";
@@ -94,6 +94,7 @@ char *thisarg (char *str);
 char *nextarg (char *str);
 void print_usage (void);
 void print_help (void);
+char *multiply (char *str);
 
 #include "regex.h"
 char regex_expect[MAX_INPUT_BUFFER] = "";
@@ -161,8 +162,10 @@ state_data *previous_state;
 double *previous_value;
 size_t previous_size = OID_COUNT_STEP;
 int perf_labels = 1;
-int ip_version = 4;
 char *server_scheme = "udp";
+char* ip_version = "";
+double multiplier = 1.0;
+char *fmtstr = "";
 
 static char *fix_snmp_range(char *th)
 {
@@ -325,7 +328,7 @@ main (int argc, char **argv)
 	for (i = 0; i < numcontext; i++) {
 		command_line[10 + i] = contextargs[i];
 	}
-	
+
 	for (i = 0; i < numauthpriv; i++) {
 		command_line[10 + numcontext + i] = authpriv[i];
 	}
@@ -340,7 +343,7 @@ main (int argc, char **argv)
 
 	for (i = 0; i < numoids; i++) {
 		command_line[10 + numcontext + numauthpriv + 1 + i] = oids[i];
-		xasprintf(&cl_hidden_auth, "%s %s", cl_hidden_auth, oids[i]);	
+		xasprintf(&cl_hidden_auth, "%s %s", cl_hidden_auth, oids[i]);
 	}
 
 	command_line[10 + numcontext + numauthpriv + 1 + numoids] = NULL;
@@ -386,7 +389,7 @@ main (int argc, char **argv)
 		}
 	}
 
-	for (line=0, i=0; line < chld_out.lines; line++, i++) {
+	for (line=0, i=0; line < chld_out.lines && i < numoids ; line++, i++) {
 		if(calculate_rate)
 			conv = "%.10g";
 		else
@@ -408,15 +411,15 @@ main (int argc, char **argv)
 		is_counter=0;
 		/* We strip out the datatype indicator for PHBs */
 		if (strstr (response, "Gauge: ")) {
-			show = strstr (response, "Gauge: ") + 7;
-		} 
+			show = multiply (strstr (response, "Gauge: ") + 7);
+		}
 		else if (strstr (response, "Gauge32: ")) {
-			show = strstr (response, "Gauge32: ") + 9;
-		} 
+			show = multiply (strstr (response, "Gauge32: ") + 9);
+		}
 		else if (strstr (response, "Counter32: ")) {
 			show = strstr (response, "Counter32: ") + 11;
 			is_counter=1;
-			if(!calculate_rate) 
+			if(!calculate_rate)
 				strcpy(type, "c");
 		}
 		else if (strstr (response, "Counter64: ")) {
@@ -426,7 +429,10 @@ main (int argc, char **argv)
 				strcpy(type, "c");
 		}
 		else if (strstr (response, "INTEGER: ")) {
-			show = strstr (response, "INTEGER: ") + 9;
+			show = multiply (strstr (response, "INTEGER: ") + 9);
+			if (fmtstr != "") {
+				conv = fmtstr;
+			}
 		}
 		else if (strstr (response, "OID: ")) {
 			show = strstr (response, "OID: ") + 5;
@@ -626,7 +632,7 @@ main (int argc, char **argv)
 		state_string=malloc(string_length);
 		if(state_string==NULL)
 			die(STATE_UNKNOWN, _("Cannot malloc"));
-		
+
 		current_length=0;
 		for(i=0; i<total_oids; i++) {
 			xasprintf(&temp_string,"%.0f",response_value[i]);
@@ -648,7 +654,7 @@ main (int argc, char **argv)
 		state_string[--current_length]='\0';
 		if (verbose > 2)
 			printf("State string=%s\n",state_string);
-		
+
 		/* This is not strictly the same as time now, but any subtle variations will cancel out */
 		np_state_write_string(current_time, state_string );
 		if(previous_state==NULL) {
@@ -712,6 +718,8 @@ process_arguments (int argc, char **argv)
 		{"perf-oids", no_argument, 0, 'O'},
 		{"ipv4", no_argument, 0, '4'},
 		{"ipv6", no_argument, 0, '6'},
+		{"multiplier", required_argument, 0, 'M'},
+		{"fmtstr", required_argument, 0, 'f'},
 		{0, 0, 0, 0}
 	};
 
@@ -729,7 +737,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "nhvVO46t:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:N:L:U:a:x:A:X:z:",
+		c = getopt_long (argc, argv, "nhvVO46t:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:N:L:U:a:x:A:X:M:f:z:",
 									 longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -978,6 +986,16 @@ process_arguments (int argc, char **argv)
 		case '6':
 			ip_version = 6;
 			break;
+		case 'M':
+			if ( strspn( optarg, "0123456789.," ) == strlen( optarg ) ) {
+				multiplier=strtod(optarg,NULL);
+			}
+			break;
+		case 'f':
+			if (multiplier != 1.0) {
+				fmtstr=optarg;
+			}
+			break;
 		}
 	}
 
@@ -1061,6 +1079,9 @@ validate_arguments ()
 			contextargs[0] = strdup ("-n");
 			contextargs[1] = strdup (context);
 		}
+
+		if (seclevel == NULL)
+			xasprintf(&seclevel, "noAuthNoPriv");
 
 		if (localcert != NULL) {
 			numauthpriv = 2;
@@ -1219,6 +1240,44 @@ nextarg (char *str)
 
 
 
+/* multiply result (values 0 < n < 1 work as divider) */
+char *
+multiply (char *str)
+{
+	char *endptr;
+	double val;
+	char *conv = "%f";
+
+	if(verbose>2)
+		printf("    multiply input: %s\n", str);
+
+	val = strtod (str, &endptr);
+	if ((val == 0.0) && (endptr == str)) {
+		if(multiplier != 1) {
+			die(STATE_UNKNOWN, _("multiplier set (%.1f), but input is not a number: %s"), multiplier, str);
+		}
+		return str;
+	}
+
+	if(verbose>2)
+		printf("    multiply extracted double: %f\n", val);
+	val *= multiplier;
+	if (fmtstr != "") {
+		conv = fmtstr;
+	}
+	if (val == (int)val) {
+		sprintf(str, "%.0f", val);
+	} else {
+		if(verbose>2)
+			printf("    multiply using format: %s\n", conv);
+		sprintf(str, conv, val);
+	}
+	if(verbose>2)
+		printf("    multiply result: %s\n", str);
+	return str;
+}
+
+
 void
 print_help (void)
 {
@@ -1319,6 +1378,10 @@ print_help (void)
 	printf ("    %s\n", _("Units label(s) for output data (e.g., 'sec.')."));
 	printf (" %s\n", "-D, --output-delimiter=STRING");
 	printf ("    %s\n", _("Separates output on multiple OID requests"));
+	printf (" %s\n", "-M, --multiplier=FLOAT");
+	printf ("    %s\n", _("Multiplies current value, 0 < n < 1 works as divider, defaults to 1"));
+	printf (" %s\n", "-f, --fmtstr=STRING");
+	printf ("    %s\n", _("C-style format string for float values (see option -M)"));
 
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf ("    %s\n", _("NOTE the final timeout value is calculated using this formula: timeout_interval * retries + 5"));
@@ -1384,5 +1447,6 @@ print_usage (void)
 	printf ("[-l label] [-u units] [-p port-number] [-d delimiter] [-D output-delimiter]\n");
 	printf ("[-m miblist] [-P snmp version] [-N context] [-L seclevel] [-U secname]\n");
 	printf ("[-a authproto] [-A authpasswd] [-x privproto] [-X privpasswd] [-4|6]\n");
+	printf ("[-M multiplier [-f format]]\n");
 }
 
