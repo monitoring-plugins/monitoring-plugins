@@ -1438,7 +1438,8 @@ char *unchunk_content(const char *content) {
     overall_size += length_of_chunk;
 
     if (result == NULL) {
-      result = (char *)calloc(length_of_chunk, sizeof(char));
+      // Size of the chunk plus the ending NULL byte
+      result = (char *)malloc(length_of_chunk +1);
       if (result == NULL) {
         if (verbose) {
           printf("Failed to allocate memory for unchunked body\n");
@@ -1446,7 +1447,8 @@ char *unchunk_content(const char *content) {
         return NULL;
       }
     } else {
-      void *tmp = realloc(result, overall_size);
+      // Enlarge memory to the new size plus the ending NULL byte
+      void *tmp = realloc(result, overall_size +1);
       if (tmp == NULL) {
         if (verbose) {
           printf("Failed to allocate memory for unchunked body\n");
