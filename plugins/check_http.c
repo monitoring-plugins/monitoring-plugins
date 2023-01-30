@@ -1399,7 +1399,6 @@ char *unchunk_content(const char *content) {
   char *endptr;
   long length_of_chunk = 0;
   size_t overall_size = 0;
-  char *result_ptr;
 
   while (true) {
     size_of_chunk = strtol(pointer, &endptr, 16);
@@ -1446,7 +1445,6 @@ char *unchunk_content(const char *content) {
         }
         return NULL;
       }
-      result_ptr = result;
     } else {
       void *tmp = realloc(result, overall_size);
       if (tmp == NULL) {
@@ -1454,11 +1452,12 @@ char *unchunk_content(const char *content) {
           printf("Failed to allocate memory for unchunked body\n");
         }
         return NULL;
+      } else {
+        result = tmp;
       }
     }
 
-    memcpy(result_ptr, start_of_chunk, size_of_chunk);
-    result_ptr = result_ptr + size_of_chunk;
+    memcpy(result + (overall_size - size_of_chunk), start_of_chunk, size_of_chunk);
   }
 
   result[overall_size] = '\0';
