@@ -33,7 +33,6 @@
 #  --no-libtool \
 #  --macro-prefix=gl \
 #  --no-vc-files \
-#  --no-vc-files \
 #  base64 \
 #  crypto/sha256 \
 #  dirname \
@@ -44,7 +43,7 @@
 #  gethostname \
 #  getloadavg \
 #  getopt-gnu \
-#  gettext \
+#  gettext-h \
 #  idpriv-droptemp \
 #  mountlist \
 #  regex \
@@ -703,23 +702,6 @@ libgnu_a_SOURCES += getprogname.h getprogname.c
 
 ## end   gnulib module getprogname
 
-## begin gnulib module gettext
-
-# If your project uses "gettextize --intl" to put a source-code
-# copy of libintl into the package, every Makefile.am needs
-# -I$(top_builddir)/intl, so that <libintl.h> can be found in this directory.
-# Here's one way to do this:
-#AM_CPPFLAGS += -I$(top_builddir)/intl
-# This option has no effect when the user disables NLS (because then
-# the intl directory contains no libintl.h file).  This option is not
-# enabled by default because the intl directory might not exist if
-# your project does not use "gettext --intl", and some compilers
-# complain about -I options applied to nonexistent directories.
-
-EXTRA_DIST += $(top_srcdir)/build-aux/config.rpath
-
-## end   gnulib module gettext
-
 ## begin gnulib module gettext-h
 
 libgnu_a_SOURCES += gettext.h
@@ -766,13 +748,6 @@ libgnu_a_SOURCES += hard-locale.c
 EXTRA_DIST += hard-locale.h
 
 ## end   gnulib module hard-locale
-
-## begin gnulib module havelib
-
-
-EXTRA_DIST += $(top_srcdir)/build-aux/config.rpath
-
-## end   gnulib module havelib
 
 ## begin gnulib module ialloc
 

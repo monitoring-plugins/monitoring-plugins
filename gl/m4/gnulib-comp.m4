@@ -101,11 +101,9 @@ AC_DEFUN([gl_EARLY],
   # Code from module getopt-gnu:
   # Code from module getopt-posix:
   # Code from module getprogname:
-  # Code from module gettext:
   # Code from module gettext-h:
   # Code from module glibc-internal/dynarray:
   # Code from module hard-locale:
-  # Code from module havelib:
   # Code from module hostent:
   # Code from module ialloc:
   # Code from module idpriv-droptemp:
@@ -429,15 +427,12 @@ AC_DEFUN([gl_INIT],
   ])
   gl_UNISTD_MODULE_INDICATOR([getopt-posix])
   gl_FUNC_GETPROGNAME
-  dnl you must add AM_GNU_GETTEXT([external]) or similar to configure.ac.
-  AM_GNU_GETTEXT_VERSION([0.20])
   AC_SUBST([LIBINTL])
   AC_SUBST([LTLIBINTL])
   AC_PROG_MKDIR_P
   AC_REQUIRE([gl_FUNC_SETLOCALE_NULL])
   LIB_HARD_LOCALE="$LIB_SETLOCALE_NULL"
   AC_SUBST([LIB_HARD_LOCALE])
-  AC_DEFUN([gl_HAVE_MODULE_HAVELIB])
   gl_HOSTENT
   gl_IDPRIV
   gl_FUNC_INET_NTOP
@@ -977,7 +972,6 @@ AC_DEFUN([gltests_LIBSOURCES], [
 # This macro records the list of files which have been installed by
 # gnulib-tool and may be removed by future gnulib-tool invocations.
 AC_DEFUN([gl_FILE_LIST], [
-  build-aux/config.rpath
   lib/_Noreturn.h
   lib/af_alg.c
   lib/af_alg.h
@@ -1254,25 +1248,17 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/getloadavg.m4
   m4/getopt.m4
   m4/getprogname.m4
-  m4/gettext.m4
   m4/gl-openssl.m4
   m4/gnulib-common.m4
-  m4/host-cpu-c-abi.m4
   m4/hostent.m4
-  m4/iconv.m4
   m4/idpriv.m4
   m4/include_next.m4
   m4/inet_ntop.m4
-  m4/intl-thread-locale.m4
-  m4/intlmacosx.m4
   m4/intmax_t.m4
   m4/inttypes.m4
   m4/inttypes_h.m4
   m4/langinfo_h.m4
   m4/largefile.m4
-  m4/lib-ld.m4
-  m4/lib-link.m4
-  m4/lib-prefix.m4
   m4/limits-h.m4
   m4/localcharset.m4
   m4/locale-fr.m4
@@ -1301,7 +1287,6 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/netdb_h.m4
   m4/netinet_in_h.m4
   m4/nl_langinfo.m4
-  m4/nls.m4
   m4/nocrash.m4
   m4/off_t.m4
   m4/open-cloexec.m4
@@ -1309,9 +1294,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/open.m4
   m4/pathmax.m4
   m4/pid_t.m4
-  m4/po.m4
   m4/printf.m4
-  m4/progtest.m4
   m4/pthread_rwlock_rdlock.m4
   m4/realloc.m4
   m4/reallocarray.m4

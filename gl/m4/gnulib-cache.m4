@@ -38,7 +38,6 @@
 #  --no-libtool \
 #  --macro-prefix=gl \
 #  --no-vc-files \
-#  --no-vc-files \
 #  base64 \
 #  crypto/sha256 \
 #  dirname \
@@ -49,7 +48,7 @@
 #  gethostname \
 #  getloadavg \
 #  getopt-gnu \
-#  gettext \
+#  gettext-h \
 #  idpriv-droptemp \
 #  mountlist \
 #  regex \
@@ -65,7 +64,6 @@
 # Specification in the form of a few gnulib-tool.m4 macro invocations:
 gl_LOCAL_DIR([])
 gl_MODULES([
-  --no-vc-files
   base64
   crypto/sha256
   dirname
@@ -76,7 +74,7 @@ gl_MODULES([
   gethostname
   getloadavg
   getopt-gnu
-  gettext
+  gettext-h
   idpriv-droptemp
   mountlist
   regex
