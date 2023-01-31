@@ -56,7 +56,6 @@ NP-VERSION-FILE
 /gl/arg-nonnull.h
 /gl/arpa
 /gl/arpa_inet.h
-/gl/c++defs.h
 /gl/charset.alias
 /gl/configmake.h
 /gl/errno.h
