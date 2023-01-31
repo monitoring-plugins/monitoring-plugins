@@ -58,8 +58,8 @@ AC_DEFUN([gl_EARLY],
   # Code from module cloexec:
   # Code from module close:
   # Code from module crypto/af_alg:
-  # Code from module crypto/sha1:
-  # Code from module crypto/sha1-buffer:
+  # Code from module crypto/sha256:
+  # Code from module crypto/sha256-buffer:
   # Code from module dirname:
   # Code from module dirname-lgpl:
   # Code from module double-slash-root:
@@ -268,7 +268,7 @@ AC_DEFUN([gl_INIT],
   gl_UNISTD_MODULE_INDICATOR([close])
   gl_AF_ALG
   AC_REQUIRE([AC_C_RESTRICT])
-  gl_SHA1
+  gl_SHA256
   gl_MODULE_INDICATOR([dirname])
   gl_DOUBLE_SLASH_ROOT
   gl_FUNC_DUP2
@@ -1132,9 +1132,9 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/setlocale-lock.c
   lib/setlocale_null.c
   lib/setlocale_null.h
-  lib/sha1-stream.c
-  lib/sha1.c
-  lib/sha1.h
+  lib/sha256-stream.c
+  lib/sha256.c
+  lib/sha256.h
   lib/size_max.h
   lib/snprintf.c
   lib/sockets.c
@@ -1319,7 +1319,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/servent.m4
   m4/setenv.m4
   m4/setlocale_null.m4
-  m4/sha1.m4
+  m4/sha256.m4
   m4/size_max.m4
   m4/snprintf.m4
   m4/socketlib.m4

@@ -1,7 +1,7 @@
-/* sha1.c - Functions to compute SHA1 message digest of files or
-   memory blocks according to the NIST specification FIPS-180-1.
+/* sha256.c - Functions to compute SHA256 and SHA224 message digest of files or
+   memory blocks according to the NIST specification FIPS-180-2.
 
-   Copyright (C) 2000-2001, 2003-2006, 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2005-2006, 2008-2023 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -16,18 +16,17 @@
    You should have received a copy of the GNU Lesser General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
-/* Written by Scott G. Miller
-   Credits:
-      Robert Klep <robert@ilse.nl>  -- Expansion function fix
+/* Written by David Madore, considerably copypasting from
+   Scott G. Miller's sha1.c
 */
 
 #include <config.h>
 
 /* Specification.  */
-#if HAVE_OPENSSL_SHA1
+#if HAVE_OPENSSL_SHA256
 # define GL_OPENSSL_INLINE _GL_EXTERN_INLINE
 #endif
-#include "sha1.h"
+#include "sha256.h"
 
 #include <stdlib.h>
 
@@ -42,13 +41,16 @@
 # error "invalid BLOCKSIZE"
 #endif
 
-/* Compute SHA1 message digest for bytes read from STREAM.  The
-   resulting message digest number will be written into the 20 bytes
-   beginning at RESBLOCK.  */
-int
-sha1_stream (FILE *stream, void *resblock)
+/* Compute message digest for bytes read from STREAM using algorithm ALG.
+   Write the message digest into RESBLOCK, which contains HASHLEN bytes.
+   The initial and finishing operations are INIT_CTX and FINISH_CTX.
+   Return zero if and only if successful.  */
+static int
+shaxxx_stream (FILE *stream, char const *alg, void *resblock,
+               ssize_t hashlen, void (*init_ctx) (struct sha256_ctx *),
+               void *(*finish_ctx) (struct sha256_ctx *, void *))
 {
-  switch (afalg_stream (stream, "sha1", resblock, SHA1_DIGEST_SIZE))
+  switch (afalg_stream (stream, alg, resblock, hashlen))
     {
     case 0: return 0;
     case -EIO: return 1;
@@ -58,8 +60,8 @@ sha1_stream (FILE *stream, void *resblock)
   if (!buffer)
     return 1;
 
-  struct sha1_ctx ctx;
-  sha1_init_ctx (&ctx);
+  struct sha256_ctx ctx;
+  init_ctx (&ctx);
   size_t sum;
 
   /* Iterate over full file contents.  */
@@ -106,19 +108,33 @@ sha1_stream (FILE *stream, void *resblock)
       /* Process buffer with BLOCKSIZE bytes.  Note that
                         BLOCKSIZE % 64 == 0
        */
-      sha1_process_block (buffer, BLOCKSIZE, &ctx);
+      sha256_process_block (buffer, BLOCKSIZE, &ctx);
     }
 
  process_partial_block:;
 
   /* Process any remaining bytes.  */
   if (sum > 0)
-    sha1_process_bytes (buffer, sum, &ctx);
+    sha256_process_bytes (buffer, sum, &ctx);
 
   /* Construct result in desired memory.  */
-  sha1_finish_ctx (&ctx, resblock);
+  finish_ctx (&ctx, resblock);
   free (buffer);
   return 0;
+}
+
+int
+sha256_stream (FILE *stream, void *resblock)
+{
+  return shaxxx_stream (stream, "sha256", resblock, SHA256_DIGEST_SIZE,
+                        sha256_init_ctx, sha256_finish_ctx);
+}
+
+int
+sha224_stream (FILE *stream, void *resblock)
+{
+  return shaxxx_stream (stream, "sha224", resblock, SHA224_DIGEST_SIZE,
+                        sha224_init_ctx, sha224_finish_ctx);
 }
 
 /*

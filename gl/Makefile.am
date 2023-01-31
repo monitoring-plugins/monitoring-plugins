@@ -33,8 +33,9 @@
 #  --no-libtool \
 #  --macro-prefix=gl \
 #  --no-vc-files \
+#  --no-vc-files \
 #  base64 \
-#  crypto/sha1 \
+#  crypto/sha256 \
 #  dirname \
 #  environ \
 #  floorf \
@@ -272,19 +273,19 @@ EXTRA_DIST += af_alg.h sys-limits.h
 
 ## end   gnulib module crypto/af_alg
 
-## begin gnulib module crypto/sha1
+## begin gnulib module crypto/sha256
 
-libgnu_a_SOURCES += sha1-stream.c
+libgnu_a_SOURCES += sha256-stream.c
 
-## end   gnulib module crypto/sha1
+## end   gnulib module crypto/sha256
 
-## begin gnulib module crypto/sha1-buffer
+## begin gnulib module crypto/sha256-buffer
 
-libgnu_a_SOURCES += sha1.c
+libgnu_a_SOURCES += sha256.c
 
-EXTRA_DIST += gl_openssl.h sha1.h
+EXTRA_DIST += gl_openssl.h sha256.h
 
-## end   gnulib module crypto/sha1-buffer
+## end   gnulib module crypto/sha256-buffer
 
 ## begin gnulib module dirname
 

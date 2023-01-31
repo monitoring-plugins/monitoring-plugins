@@ -1,14 +1,14 @@
-# sha1.m4 serial 12
-dnl Copyright (C) 2002-2006, 2008-2023 Free Software Foundation, Inc.
+# sha256.m4 serial 8
+dnl Copyright (C) 2005, 2008-2023 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
-AC_DEFUN([gl_SHA1],
+AC_DEFUN([gl_SHA256],
 [
-  dnl Prerequisites of lib/sha1.c.
+  dnl Prerequisites of lib/sha256.c.
   AC_REQUIRE([gl_BIGENDIAN])
 
-  dnl Determine HAVE_OPENSSL_SHA1 and LIB_CRYPTO
-  gl_CRYPTO_CHECK([SHA1])
+  dnl Determine HAVE_OPENSSL_SHA256 and LIB_CRYPTO
+  gl_CRYPTO_CHECK([SHA256])
 ])

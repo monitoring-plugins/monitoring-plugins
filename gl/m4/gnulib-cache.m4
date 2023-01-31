@@ -38,8 +38,9 @@
 #  --no-libtool \
 #  --macro-prefix=gl \
 #  --no-vc-files \
+#  --no-vc-files \
 #  base64 \
-#  crypto/sha1 \
+#  crypto/sha256 \
 #  dirname \
 #  environ \
 #  floorf \
@@ -64,8 +65,9 @@
 # Specification in the form of a few gnulib-tool.m4 macro invocations:
 gl_LOCAL_DIR([])
 gl_MODULES([
+  --no-vc-files
   base64
-  crypto/sha1
+  crypto/sha256
   dirname
   environ
   floorf

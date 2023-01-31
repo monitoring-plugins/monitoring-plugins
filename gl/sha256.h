@@ -1,7 +1,6 @@
-/* Declarations of functions and data types used for SHA1 sum
+/* Declarations of functions and data types used for SHA256 and SHA224 sum
    library functions.
-   Copyright (C) 2000-2001, 2003, 2005-2006, 2008-2023 Free Software
-   Foundation, Inc.
+   Copyright (C) 2005-2006, 2008-2023 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -16,13 +15,13 @@
    You should have received a copy of the GNU Lesser General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
-#ifndef SHA1_H
-# define SHA1_H 1
+#ifndef SHA256_H
+# define SHA256_H 1
 
 # include <stdio.h>
 # include <stdint.h>
 
-# if HAVE_OPENSSL_SHA1
+# if HAVE_OPENSSL_SHA256
 #  ifndef OPENSSL_API_COMPAT
 #   define OPENSSL_API_COMPAT 0x10101000L /* FIXME: Use OpenSSL 1.1+ API.  */
 #  endif
@@ -33,72 +32,79 @@
 extern "C" {
 # endif
 
-# define SHA1_DIGEST_SIZE 20
+enum { SHA224_DIGEST_SIZE = 224 / 8 };
+enum { SHA256_DIGEST_SIZE = 256 / 8 };
 
-# if HAVE_OPENSSL_SHA1
-#  define GL_OPENSSL_NAME 1
+# if HAVE_OPENSSL_SHA256
+#  define GL_OPENSSL_NAME 224
+#  include "gl_openssl.h"
+#  define GL_OPENSSL_NAME 256
 #  include "gl_openssl.h"
 # else
 /* Structure to save state of computation between the single steps.  */
-struct sha1_ctx
+struct sha256_ctx
 {
-  uint32_t A;
-  uint32_t B;
-  uint32_t C;
-  uint32_t D;
-  uint32_t E;
+  uint32_t state[8];
 
   uint32_t total[2];
-  uint32_t buflen;     /* ≥ 0, ≤ 128 */
+  size_t buflen;       /* ≥ 0, ≤ 128 */
   uint32_t buffer[32]; /* 128 bytes; the first buflen bytes are in use */
 };
 
 /* Initialize structure containing state of computation. */
-extern void sha1_init_ctx (struct sha1_ctx *ctx);
+extern void sha256_init_ctx (struct sha256_ctx *ctx);
+extern void sha224_init_ctx (struct sha256_ctx *ctx);
 
 /* Starting with the result of former calls of this function (or the
    initialization function update the context for the next LEN bytes
    starting at BUFFER.
    It is necessary that LEN is a multiple of 64!!! */
-extern void sha1_process_block (const void *buffer, size_t len,
-                                struct sha1_ctx *ctx);
+extern void sha256_process_block (const void *buffer, size_t len,
+                                  struct sha256_ctx *ctx);
 
 /* Starting with the result of former calls of this function (or the
    initialization function update the context for the next LEN bytes
    starting at BUFFER.
    It is NOT required that LEN is a multiple of 64.  */
-extern void sha1_process_bytes (const void *buffer, size_t len,
-                                struct sha1_ctx *ctx);
+extern void sha256_process_bytes (const void *buffer, size_t len,
+                                  struct sha256_ctx *ctx);
 
 /* Process the remaining bytes in the buffer and put result from CTX
-   in first 20 bytes following RESBUF.  The result is always in little
+   in first 32 (28) bytes following RESBUF.  The result is always in little
    endian byte order, so that a byte-wise output yields to the wanted
    ASCII representation of the message digest.  */
-extern void *sha1_finish_ctx (struct sha1_ctx *ctx, void *restrict resbuf);
+extern void *sha256_finish_ctx (struct sha256_ctx *ctx, void *restrict resbuf);
+extern void *sha224_finish_ctx (struct sha256_ctx *ctx, void *restrict resbuf);
 
 
-/* Put result from CTX in first 20 bytes following RESBUF.  The result is
+/* Put result from CTX in first 32 (28) bytes following RESBUF.  The result is
    always in little endian byte order, so that a byte-wise output yields
    to the wanted ASCII representation of the message digest.  */
-extern void *sha1_read_ctx (const struct sha1_ctx *ctx, void *restrict resbuf);
+extern void *sha256_read_ctx (const struct sha256_ctx *ctx,
+                              void *restrict resbuf);
+extern void *sha224_read_ctx (const struct sha256_ctx *ctx,
+                              void *restrict resbuf);
 
 
-/* Compute SHA1 message digest for LEN bytes beginning at BUFFER.  The
-   result is always in little endian byte order, so that a byte-wise
+/* Compute SHA256 (SHA224) message digest for LEN bytes beginning at BUFFER.
+   The result is always in little endian byte order, so that a byte-wise
    output yields to the wanted ASCII representation of the message
    digest.  */
-extern void *sha1_buffer (const char *buffer, size_t len,
-                          void *restrict resblock);
+extern void *sha256_buffer (const char *buffer, size_t len,
+                            void *restrict resblock);
+extern void *sha224_buffer (const char *buffer, size_t len,
+                            void *restrict resblock);
 
 # endif
 
-/* Compute SHA1 message digest for bytes read from STREAM.
+/* Compute SHA256 (SHA224) message digest for bytes read from STREAM.
    STREAM is an open file stream.  Regular files are handled more efficiently.
    The contents of STREAM from its current position to its end will be read.
    The case that the last operation on STREAM was an 'ungetc' is not supported.
-   The resulting message digest number will be written into the 20 bytes
+   The resulting message digest number will be written into the 32 (28) bytes
    beginning at RESBLOCK.  */
-extern int sha1_stream (FILE *stream, void *resblock);
+extern int sha256_stream (FILE *stream, void *resblock);
+extern int sha224_stream (FILE *stream, void *resblock);
 
 
 # ifdef __cplusplus
