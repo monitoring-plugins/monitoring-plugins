@@ -53,7 +53,6 @@ NP-VERSION-FILE
 # /gl/
 /gl/.deps
 /gl/alloca.h
-/gl/arg-nonnull.h
 /gl/arpa
 /gl/arpa_inet.h
 /gl/charset.alias
@@ -87,7 +86,6 @@ NP-VERSION-FILE
 /gl/sys
 /gl/time.h
 /gl/unistd.h
-/gl/warn-on-use.h
 /gl/wchar.h
 /gl/wctype.h
 
