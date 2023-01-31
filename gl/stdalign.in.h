@@ -1,19 +1,19 @@
 /* A substitute for ISO C11 <stdalign.h>.
 
-   Copyright 2011-2013 Free Software Foundation, Inc.
+   Copyright 2011-2023 Free Software Foundation, Inc.
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3, or (at your option)
-   any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation; either version 2.1 of the
+   License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
+   You should have received a copy of the GNU Lesser General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* Written by Paul Eggert and Bruno Haible.  */
 
@@ -34,17 +34,15 @@
    requirement of a structure member (i.e., slot or field) that is of
    type TYPE, as an integer constant expression.
 
-   This differs from GCC's __alignof__ operator, which can yield a
-   better-performing alignment for an object of that type.  For
-   example, on x86 with GCC, __alignof__ (double) and __alignof__
-   (long long) are 8, whereas alignof (double) and alignof (long long)
-   are 4 unless the option '-malign-double' is used.
+   This differs from GCC's and clang's __alignof__ operator, which can
+   yield a better-performing alignment for an object of that type.  For
+   example, on x86 with GCC and on Linux/x86 with clang,
+   __alignof__ (double) and __alignof__ (long long) are 8, whereas
+   alignof (double) and alignof (long long) are 4 unless the option
+   '-malign-double' is used.
 
    The result cannot be used as a value for an 'enum' constant, if you
-   want to be portable to HP-UX 10.20 cc and AIX 3.2.5 xlc.
-
-   Include <stddef.h> for offsetof.  */
-#include <stddef.h>
+   want to be portable to HP-UX 10.20 cc and AIX 3.2.5 xlc.  */
 
 /* FreeBSD 9.1 <sys/cdefs.h>, included by <stddef.h> and lots of other
    standard headers, defines conflicting implementations of _Alignas
@@ -52,19 +50,33 @@
 #undef _Alignas
 #undef _Alignof
 
-#if !defined __STDC_VERSION__ || __STDC_VERSION__ < 201112
+/* GCC releases before GCC 4.9 had a bug in _Alignof.  See GCC bug 52023
+   <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52023>.
+   clang versions < 8.0.0 have the same bug.  */
+#if (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112 \
+     || (defined __GNUC__ && __GNUC__ < 4 + (__GNUC_MINOR__ < 9) \
+         && !defined __clang__) \
+     || (defined __clang__ && __clang_major__ < 8))
 # ifdef __cplusplus
-#  if 201103 <= __cplusplus
+#  if (201103 <= __cplusplus || defined _MSC_VER)
 #   define _Alignof(type) alignof (type)
 #  else
    template <class __t> struct __alignof_helper { char __a; __t __b; };
 #   define _Alignof(type) offsetof (__alignof_helper<type>, __b)
+#   define _GL_STDALIGN_NEEDS_STDDEF 1
 #  endif
 # else
-#  define _Alignof(type) offsetof (struct { char __a; type __b; }, __b)
+#  if (defined __GNUC__ && 4 <= __GNUC__) || defined __clang__
+#   define _Alignof(type) __builtin_offsetof (struct { char __a; type __b; }, __b)
+#  else
+#   define _Alignof(type) offsetof (struct { char __a; type __b; }, __b)
+#   define _GL_STDALIGN_NEEDS_STDDEF 1
+#  endif
 # endif
 #endif
-#define alignof _Alignof
+#if ! (defined __cplusplus && (201103 <= __cplusplus || defined _MSC_VER))
+# define alignof _Alignof
+#endif
 #define __alignof_is_defined 1
 
 /* alignas (A), also known as _Alignas (A), aligns a variable or type
@@ -93,17 +105,33 @@
    */
 
 #if !defined __STDC_VERSION__ || __STDC_VERSION__ < 201112
-# if defined __cplusplus && 201103 <= __cplusplus
+# if defined __cplusplus && (201103 <= __cplusplus || defined _MSC_VER)
 #  define _Alignas(a) alignas (a)
-# elif __GNUC__ || __IBMC__ || __IBMCPP__ || __ICC || 0x5110 <= __SUNPRO_C
+# elif (!defined __attribute__ \
+        && ((defined __APPLE__ && defined __MACH__ \
+             ? 4 < __GNUC__ + (1 <= __GNUC_MINOR__) \
+             : __GNUC__ && !defined __ibmxl__) \
+            || (4 <= __clang_major__) \
+            || (__ia64 && (61200 <= __HP_cc || 61200 <= __HP_aCC)) \
+            || __ICC || 0x590 <= __SUNPRO_C || 0x0600 <= __xlC__))
 #  define _Alignas(a) __attribute__ ((__aligned__ (a)))
 # elif 1300 <= _MSC_VER
 #  define _Alignas(a) __declspec (align (a))
 # endif
 #endif
-#if defined _Alignas || (defined __STDC_VERSION && 201112 <= __STDC_VERSION__)
+#if ((defined _Alignas \
+      && !(defined __cplusplus && (201103 <= __cplusplus || defined _MSC_VER))) \
+     || (defined __STDC_VERSION__ && 201112 <= __STDC_VERSION__))
 # define alignas _Alignas
+#endif
+#if (defined alignas \
+     || (defined __cplusplus && (201103 <= __cplusplus || defined _MSC_VER)))
 # define __alignas_is_defined 1
+#endif
+
+/* Include <stddef.h> if needed for offsetof.  */
+#if _GL_STDALIGN_NEEDS_STDDEF
+# include <stddef.h>
 #endif
 
 #endif /* _GL_STDALIGN_H */

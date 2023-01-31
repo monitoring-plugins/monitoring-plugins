@@ -1,20 +1,20 @@
 /* Declarations of functions and data types used for SHA1 sum
    library functions.
-   Copyright (C) 2000-2001, 2003, 2005-2006, 2008-2013 Free Software
+   Copyright (C) 2000-2001, 2003, 2005-2006, 2008-2023 Free Software
    Foundation, Inc.
 
-   This program is free software; you can redistribute it and/or modify it
-   under the terms of the GNU General Public License as published by the
-   Free Software Foundation; either version 3, or (at your option) any
-   later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation; either version 2.1 of the
+   License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
+   You should have received a copy of the GNU Lesser General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #ifndef SHA1_H
 # define SHA1_H 1
@@ -22,12 +22,23 @@
 # include <stdio.h>
 # include <stdint.h>
 
+# if HAVE_OPENSSL_SHA1
+#  ifndef OPENSSL_API_COMPAT
+#   define OPENSSL_API_COMPAT 0x10101000L /* FIXME: Use OpenSSL 1.1+ API.  */
+#  endif
+#  include <openssl/sha.h>
+# endif
+
 # ifdef __cplusplus
 extern "C" {
 # endif
 
-#define SHA1_DIGEST_SIZE 20
+# define SHA1_DIGEST_SIZE 20
 
+# if HAVE_OPENSSL_SHA1
+#  define GL_OPENSSL_NAME 1
+#  include "gl_openssl.h"
+# else
 /* Structure to save state of computation between the single steps.  */
 struct sha1_ctx
 {
@@ -38,10 +49,9 @@ struct sha1_ctx
   uint32_t E;
 
   uint32_t total[2];
-  uint32_t buflen;
-  uint32_t buffer[32];
+  uint32_t buflen;     /* ≥ 0, ≤ 128 */
+  uint32_t buffer[32]; /* 128 bytes; the first buflen bytes are in use */
 };
-
 
 /* Initialize structure containing state of computation. */
 extern void sha1_init_ctx (struct sha1_ctx *ctx);
@@ -64,28 +74,42 @@ extern void sha1_process_bytes (const void *buffer, size_t len,
    in first 20 bytes following RESBUF.  The result is always in little
    endian byte order, so that a byte-wise output yields to the wanted
    ASCII representation of the message digest.  */
-extern void *sha1_finish_ctx (struct sha1_ctx *ctx, void *resbuf);
+extern void *sha1_finish_ctx (struct sha1_ctx *ctx, void *restrict resbuf);
 
 
 /* Put result from CTX in first 20 bytes following RESBUF.  The result is
    always in little endian byte order, so that a byte-wise output yields
    to the wanted ASCII representation of the message digest.  */
-extern void *sha1_read_ctx (const struct sha1_ctx *ctx, void *resbuf);
+extern void *sha1_read_ctx (const struct sha1_ctx *ctx, void *restrict resbuf);
 
-
-/* Compute SHA1 message digest for bytes read from STREAM.  The
-   resulting message digest number will be written into the 20 bytes
-   beginning at RESBLOCK.  */
-extern int sha1_stream (FILE *stream, void *resblock);
 
 /* Compute SHA1 message digest for LEN bytes beginning at BUFFER.  The
    result is always in little endian byte order, so that a byte-wise
    output yields to the wanted ASCII representation of the message
    digest.  */
-extern void *sha1_buffer (const char *buffer, size_t len, void *resblock);
+extern void *sha1_buffer (const char *buffer, size_t len,
+                          void *restrict resblock);
+
+# endif
+
+/* Compute SHA1 message digest for bytes read from STREAM.
+   STREAM is an open file stream.  Regular files are handled more efficiently.
+   The contents of STREAM from its current position to its end will be read.
+   The case that the last operation on STREAM was an 'ungetc' is not supported.
+   The resulting message digest number will be written into the 20 bytes
+   beginning at RESBLOCK.  */
+extern int sha1_stream (FILE *stream, void *resblock);
+
 
 # ifdef __cplusplus
 }
 # endif
 
 #endif
+
+/*
+ * Hey Emacs!
+ * Local Variables:
+ * coding: utf-8
+ * End:
+ */
