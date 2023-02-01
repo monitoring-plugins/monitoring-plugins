@@ -1,5 +1,43 @@
 This file documents the major additions and syntax changes between releases.
 
+2.3.3 2nd Feb 2023
+        ENHANCEMENTS
+	using PRId64 and PRIu64 instead of %ld directly
+	check_http: Make faster with larger files
+	check_snmp: add 'multiplier' to modify current value
+	check_http: Implement chunked encoding decoding
+	check_http/check_curl: add chunked encoding test
+	check_log: Added --exclude to exclude patterns
+	check_log: Add tests
+	check_disk: Clarify usage possibilites
+
+	FIXES
+	fixed two PRId64 to PRIu64 in perfdata_uint64
+	check_pgsql: Removing is_pg_dbname alltogether,using postgres API.
+	check_http: Remove superflous CRLF in HTTP-Requests
+	check_curl: detect ipv6
+	check_icmp: fix parsing help/version long options
+	check_http: fix test plan
+	check_disk: Find accessible mount path if multiple are available
+	check_apt: Fix unknown escape sequence error output
+	check_curl: fix checking large bodys
+	check_snmp: Improve tests for check_snmp & multiply option
+	check_snmp: always apply format when applying multiplier
+	check_http: Use real booleans instead of ints
+	check_http: Document process_arguments a little bit better
+	check_http: Remove dead code
+	check_http: Fix several bug in the implementation of unchunking
+	check_http: Reformat a part to increase readability
+	check_apt: Put upgrade options in the root sections
+	check_apt: Fix comment
+	check_apt: Use real booleans
+	check_mailq: Fixing nullmailer regex
+	check_snmp: Fix regex matches
+	check_log: Fixed a bug when using --all
+	check_log: Cleaned up duplicated code in the args
+	check_http: Fix memory reallocation error in chunk decoding logic
+	check_http: Add space for ending NULL byte in array for chunked encoding
+
 2.3.2 20th Oct 2022
 	GENERAL
 	Use netcat-openbsd for debian explicitely (by @RincewindsHat #1704)
