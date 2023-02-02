@@ -191,17 +191,6 @@ int np_net_ssl_read(void *buf, int num) {
 	return SSL_read(s, buf, num);
 }
 
-int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
-#  ifdef USE_OPENSSL
-	X509 *certificate = NULL;
-	certificate=SSL_get_peer_certificate(s);
-	return(np_net_ssl_check_certificate(certificate, days_till_exp_warn, days_till_exp_crit));
-#  else /* ifndef USE_OPENSSL */
-	printf("%s\n", _("WARNING - Plugin does not support checking certificates."));
-	return STATE_WARNING;
-#  endif /* USE_OPENSSL */
-}
-
 int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn, int days_till_exp_crit){
 #  ifdef USE_OPENSSL
 	X509_NAME *subj=NULL;
@@ -327,5 +316,17 @@ int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn, int 
 	return STATE_WARNING;
 #  endif /* USE_OPENSSL */
 }
+
+int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
+#  ifdef USE_OPENSSL
+	X509 *certificate = NULL;
+	certificate=SSL_get_peer_certificate(s);
+	return(np_net_ssl_check_certificate(certificate, days_till_exp_warn, days_till_exp_crit));
+#  else /* ifndef USE_OPENSSL */
+	printf("%s\n", _("WARNING - Plugin does not support checking certificates."));
+	return STATE_WARNING;
+#  endif /* USE_OPENSSL */
+}
+
 
 #endif /* HAVE_SSL */
