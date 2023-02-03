@@ -500,6 +500,21 @@ process_arguments (int argc, char **argv)
     return ERROR;
 
   np_add_name(&fs_exclude_list, "iso9660");
+  np_add_name(&fs_exclude_list, "tmpfs");
+  np_add_name(&fs_exclude_list, "squashfs");
+  np_add_name(&fs_exclude_list, "tracefs");
+  np_add_name(&fs_exclude_list, "none");
+  np_add_name(&fs_exclude_list, "sysfs");
+  np_add_name(&fs_exclude_list, "proc");
+  np_add_name(&fs_exclude_list, "devfs");
+  np_add_name(&fs_exclude_list, "devtmpfs");
+  np_add_name(&fs_exclude_list, "mtmfs");
+  np_add_name(&fs_exclude_list, "cgroup");
+  np_add_name(&fs_exclude_list, "fuse.gvfsd-fuse");
+  np_add_name(&fs_exclude_list, "fuse.gvfs-fuse-daemon");
+  np_add_name(&fs_exclude_list, "fdescfs");
+  np_add_name(&fs_exclude_list, "overlay");
+  np_add_name(&fs_exclude_list, "nsfs");
 
   for (c = 1; c < argc; c++)
     if (strcmp ("-to", argv[c]) == 0)
