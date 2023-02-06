@@ -68,6 +68,7 @@ NP-VERSION-FILE
 /gl/locale.h
 /gl/Makefile
 /gl/Makefile.in
+/gl/malloc/.deps
 /gl/math.h
 /gl/netdb.h
 /gl/netinet_in.h
