@@ -9,12 +9,14 @@ use strict;
 use Test::More;
 use NPTest;
 use FindBin qw($Bin);
+use IO::Socket::INET;
 
 $ENV{'LC_TIME'} = "C";
 
 my $common_tests = 71;
 my $virtual_port_tests = 8;
 my $ssl_only_tests = 12;
+my $chunked_encoding_special_tests = 1;
 # Check that all dependent modules are available
 eval "use HTTP::Daemon 6.01;";
 plan skip_all => 'HTTP::Daemon >= 6.01 required' if $@;
@@ -30,7 +32,7 @@ if ($@) {
 	plan skip_all => "Missing required module for test: $@";
 } else {
 	if (-x "./$plugin") {
-		plan tests => $common_tests * 2 + $ssl_only_tests + $virtual_port_tests;
+		plan tests => $common_tests * 2 + $ssl_only_tests + $virtual_port_tests + $chunked_encoding_special_tests;
 	} else {
 		plan skip_all => "No $plugin compiled";
 	}
@@ -51,6 +53,7 @@ my $port_http = 50000 + int(rand(1000));
 my $port_https = $port_http + 1;
 my $port_https_expired = $port_http + 2;
 my $port_https_clientcert = $port_http + 3;
+my $port_hacked_http = $port_http + 4;
 
 # This array keeps sockets around for implementing timeouts
 my @persist;
@@ -69,6 +72,28 @@ if (!$pid) {
 	print "Please contact http at: <URL:", $d->url, ">\n";
 	run_server( $d );
 	die "webserver stopped";
+}
+push @pids, $pid;
+
+# Fork the hacked HTTP server
+undef $pid;
+$pid = fork;
+defined $pid or die "Failed to fork";
+if (!$pid) {
+	# this is the fork
+	undef @pids;
+	my $socket = new IO::Socket::INET (
+		LocalHost => '0.0.0.0',
+		LocalPort => $port_hacked_http,
+		Proto => 'tcp',
+		Listen => 5,
+		Reuse => 1
+	);
+	die "cannot create socket $!n" unless $socket;
+	my $local_sock = $socket->sockport();
+	print "server waiting for client connection on port $local_sock\n";
+	run_hacked_http_server ( $socket );
+	die "hacked http server stopped";
 }
 push @pids, $pid;
 
@@ -207,6 +232,37 @@ sub run_server {
 	}
 }
 
+sub run_hacked_http_server {
+	my $socket = shift;
+
+	# auto-flush on socket
+	$| = 1;
+
+
+	while(1)
+	{
+		# waiting for a new client connection
+		my $client_socket = $socket->accept();
+
+		# get information about a newly connected client
+		my $client_address = $client_socket->peerhost();
+		my $client_portn = $client_socket->peerport();
+		print "connection from $client_address:$client_portn";
+
+		# read up to 1024 characters from the connected client
+		my $data = "";
+		$client_socket->recv($data, 1024);
+		print "received data: $data";
+
+		# write response data to the connected client
+		$data = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\n";
+		$client_socket->send($data);
+
+		# notify client that response has been sent
+		shutdown($client_socket, 1);
+	}
+}
+
 END {
 	foreach my $pid (@pids) {
 		if ($pid) { print "Killing $pid\n"; kill "INT", $pid }
@@ -222,6 +278,7 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 my $result;
 my $command = "./$plugin -H 127.0.0.1";
 
+run_chunked_encoding_special_test( {command => "$command -p $port_hacked_http"});
 run_common_tests( { command => "$command -p $port_http" } );
 SKIP: {
 	skip "HTTP::Daemon::SSL not installed", $common_tests + $ssl_only_tests if ! exists $servers->{https};
@@ -506,6 +563,17 @@ sub run_common_tests {
 	is( $@, "", $cmd );
 
 	$cmd = "$command -u /chunked -s 'chunkedencodingtest' -d 'Transfer-Encoding: chunked'";
+	eval {
+		$result = NPTest->testCmd( $cmd, 5 );
+	};
+	is( $@, "", $cmd );
+}
+
+sub run_chunked_encoding_special_test {
+	my ($opts) = @_;
+	my $command = $opts->{command};
+
+	$cmd = "$command -u / -s 'ChunkedEncodingSpecialTest'";
 	eval {
 		$result = NPTest->testCmd( $cmd, 5 );
 	};
