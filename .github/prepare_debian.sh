@@ -5,6 +5,7 @@ set -e
 
 export DEBIAN_FRONTEND=noninteractive
 
+sed "s/main/non-free contrib/g" /etc/apt/sources.list.d/debian.sources > /etc/apt/sources.list.d/debian-nonfree.sources
 apt-get update
 apt-get -y install software-properties-common
 if [ $(lsb_release -is) = "Debian" ]; then
