@@ -136,12 +136,10 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 	if (cert && privkey) {
 #ifdef USE_OPENSSL
 		if (!SSL_CTX_use_certificate_chain_file(c, cert)) {
-#else
-#if USE_GNUTLS
+#elif  USE_GNUTLS
 		if (!SSL_CTX_use_certificate_file(c, cert, SSL_FILETYPE_PEM)) {
 #else
 #error Unported for unknown SSL library
-#endif
 #endif
 			printf ("%s\n", _("CRITICAL - Unable to open certificate chain file!\n"));
 			return STATE_CRITICAL;
