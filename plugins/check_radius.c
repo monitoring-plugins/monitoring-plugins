@@ -155,7 +155,11 @@ main (int argc, char **argv)
 {
 	struct sockaddr_storage ss;
 	char name[HOST_NAME_MAX];
+#ifdef RC_BUFFER_LEN
+	char msg[RC_BUFFER_LEN];
+#else
 	char msg[BUFFER_LEN];
+#endif
 	SEND_DATA data;
 	int result = STATE_UNKNOWN;
 	uint32_t client_id, service;
