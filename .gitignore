@@ -90,6 +90,11 @@ NP-VERSION-FILE
 /gl/unistd.h
 /gl/wchar.h
 /gl/wctype.h
+/gl/inttypes.h
+/gl/limits.h
+/gl/malloc/dynarray-skeleton.gl.h
+/gl/malloc/dynarray.gl.h
+/gl/stdckdint.
 
 # /lib/
 /lib/.deps
