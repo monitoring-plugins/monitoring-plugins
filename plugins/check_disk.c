@@ -951,7 +951,7 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-  printf (" %s -w limit -c limit [-W limit] [-K limit] {-p path | -x device}\n", progname);
+  printf (" %s {-w absolute_limit |-w  percentage_limit% | -W inode_percentage_limit } {-c absolute_limit|-c percentage_limit% | -K inode_percentage_limit } {-p path | -x device}\n", progname);
   printf ("[-C] [-E] [-e] [-f] [-g group ] [-k] [-l] [-M] [-m] [-R path ] [-r path ]\n");
   printf ("[-t timeout] [-u unit] [-v] [-X type] [-N type]\n");
 }
