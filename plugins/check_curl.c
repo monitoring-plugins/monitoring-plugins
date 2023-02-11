@@ -173,7 +173,7 @@ double time_connect;
 double time_appconnect;
 double time_headers;
 double time_firstbyte;
-char errbuf[CURL_ERROR_SIZE+1];
+char errbuf[MAX_INPUT_BUFFER];
 CURLcode res;
 char url[DEFAULT_BUFFER_SIZE];
 char msg[DEFAULT_BUFFER_SIZE];
