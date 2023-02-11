@@ -214,6 +214,7 @@ int address_family = AF_UNSPEC;
 curlhelp_ssl_library ssl_library = CURLHELP_SSL_LIBRARY_UNKNOWN;
 int curl_http_version = CURL_HTTP_VERSION_NONE;
 int automatic_decompression = FALSE;
+char *cookie_jar_file = NULL;
 
 int process_arguments (int, char**);
 void handle_curl_option_return_code (CURLcode res, const char* option);
@@ -410,6 +411,19 @@ lookup_host (const char *host, char *buf, size_t buflen)
   freeaddrinfo(result);
 
   return 0;
+}
+
+static void
+cleanup (void)
+{
+  curlhelp_free_statusline(&status_line);
+  curl_easy_cleanup (curl);
+  curl_global_cleanup ();
+  curlhelp_freewritebuffer (&body_buf);
+  curlhelp_freewritebuffer (&header_buf);
+  if (!strcmp (http_method, "PUT")) {
+    curlhelp_freereadbuffer (&put_buf);
+  }
 }
 
 int
@@ -743,7 +757,16 @@ check_http (void)
       handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_INFILESIZE, (curl_off_t)strlen (http_post_data)), "CURLOPT_INFILESIZE");
     }
   }
+  
+  /* cookie handling */
+  if (cookie_jar_file != NULL) {
+    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_COOKIEJAR, cookie_jar_file), "CURLOPT_COOKIEJAR");
+    handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_COOKIEFILE, cookie_jar_file), "CURLOPT_COOKIEFILE");
+  }
 
+  /* register cleanup function to shut down libcurl properly */
+  atexit (cleanup);
+  
   /* do the request */
   res = curl_easy_perform(curl);
 
@@ -1021,7 +1044,7 @@ GOT_FIRST_CERT:
       else
         msg[strlen(msg)-3] = '\0';
     }
-
+  
   /* TODO: separate _() msg and status code: die (result, "HTTP %s: %s\n", state_text(result), msg); */
   die (result, "HTTP %s: %s %d %s%s%s - %d bytes in %.3f second response time %s|%s\n%s%s",
     state_text(result), string_statuscode (status_line.http_major, status_line.http_minor),
@@ -1032,16 +1055,6 @@ GOT_FIRST_CERT:
     perfstring,
     (show_body ? body_buf.buf : ""),
     (show_body ? "\n" : "") );
-
-  /* proper cleanup after die? */
-  curlhelp_free_statusline(&status_line);
-  curl_easy_cleanup (curl);
-  curl_global_cleanup ();
-  curlhelp_freewritebuffer (&body_buf);
-  curlhelp_freewritebuffer (&header_buf);
-  if (!strcmp (http_method, "PUT")) {
-    curlhelp_freereadbuffer (&put_buf);
-  }
 
   return result;
 }
@@ -1239,7 +1252,8 @@ process_arguments (int argc, char **argv)
     CONTINUE_AFTER_CHECK_CERT,
     CA_CERT_OPTION,
     HTTP_VERSION_OPTION,
-    AUTOMATIC_DECOMPRESSION
+    AUTOMATIC_DECOMPRESSION,
+    COOKIE_JAR
   };
 
   int option = 0;
@@ -1285,6 +1299,7 @@ process_arguments (int argc, char **argv)
     {"max-redirs", required_argument, 0, MAX_REDIRS_OPTION},
     {"http-version", required_argument, 0, HTTP_VERSION_OPTION},
     {"enable-automatic-decompression", no_argument, 0, AUTOMATIC_DECOMPRESSION},
+    {"cookie-jar", required_argument, 0, COOKIE_JAR},
     {0, 0, 0, 0}
   };
 
@@ -1691,6 +1706,9 @@ process_arguments (int argc, char **argv)
     case AUTOMATIC_DECOMPRESSION:
       automatic_decompression = TRUE;
       break;
+    case COOKIE_JAR:
+      cookie_jar_file = optarg;
+      break;
     case '?':
       /* print short usage statement if args not parsable */
       usage5 ();
@@ -1910,6 +1928,8 @@ print_help (void)
   printf ("    %s\n", _("1.0 = HTTP/1.0, 1.1 = HTTP/1.1, 2.0 = HTTP/2 (HTTP/2 will fail without -S)"));
   printf (" %s\n", "--enable-automatic-decompression");
   printf ("    %s\n", _("Enable automatic decompression of body (CURLOPT_ACCEPT_ENCODING)."));
+  printf (" %s\n", "---cookie-jar=FILE");
+  printf ("    %s\n", _("Store cookies in the cookie jar and send them out when requested."));
   printf ("\n");
 
   printf (UT_WARN_CRIT);
@@ -1994,7 +2014,8 @@ print_usage (void)
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S <version>] [--sni]\n");
   printf ("       [-T <content-type>] [-j method]\n");
-  printf ("       [--http-version=<version>]\n");
+  printf ("       [--http-version=<version>] [--enable-automatic-decompression]\n");
+  printf ("       [--cookie-jar=<cookie jar file>\n");
   printf (" %s -H <vhost> | -I <IP-address> -C <warn_age>[,<crit_age>]\n",progname);
   printf ("       [-p <port>] [-t <timeout>] [-4|-6] [--sni]\n");
   printf ("\n");
