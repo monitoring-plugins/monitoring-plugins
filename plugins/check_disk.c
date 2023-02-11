@@ -1056,7 +1056,7 @@ get_path_stats (struct parameter_list *p, struct fs_usage *fsp) {
   p->dfree_units = p->available*fsp->fsu_blocksize/mult;
   p->dtotal_units = p->total*fsp->fsu_blocksize/mult;
   /* Free file nodes. Not sure the workaround is required, but in case...*/
-  p->inodes_free  = fsp->fsu_favail > fsp->fsu_ffree ? 0 : fsp->fsu_favail;
+  p->inodes_free  = fsp->fsu_ffree;
   p->inodes_free_to_root  = fsp->fsu_ffree; /* Free file nodes for root. */
   p->inodes_used = fsp->fsu_files - fsp->fsu_ffree;
   if (freespace_ignore_reserved) {
