@@ -161,9 +161,13 @@ char *http_post_data = NULL;
 char *http_content_type = NULL;
 CURL *curl;
 struct curl_slist *header_list = NULL;
+int body_buf_initialized = 0;
 curlhelp_write_curlbuf body_buf;
+int header_buf_initialized = 0;
 curlhelp_write_curlbuf header_buf;
+int status_line_initialized = 0;
 curlhelp_statusline status_line;
+int put_buf_initialized = 0;
 curlhelp_read_curlbuf put_buf;
 char http_header[DEFAULT_BUFFER_SIZE];
 long code;
@@ -416,14 +420,12 @@ lookup_host (const char *host, char *buf, size_t buflen)
 static void
 cleanup (void)
 {
-  curlhelp_free_statusline(&status_line);
+  if (status_line_initialized) curlhelp_free_statusline(&status_line);
   curl_easy_cleanup (curl);
   curl_global_cleanup ();
-  curlhelp_freewritebuffer (&body_buf);
-  curlhelp_freewritebuffer (&header_buf);
-  if (!strcmp (http_method, "PUT")) {
-    curlhelp_freereadbuffer (&put_buf);
-  }
+  if (body_buf_initialized) curlhelp_freewritebuffer (&body_buf);
+  if (header_buf_initialized) curlhelp_freewritebuffer (&header_buf);
+  if (put_buf_initialized) curlhelp_freereadbuffer (&put_buf);
 }
 
 int
@@ -441,9 +443,14 @@ check_http (void)
   if (curl_global_init (CURL_GLOBAL_DEFAULT) != CURLE_OK)
     die (STATE_UNKNOWN, "HTTP UNKNOWN - curl_global_init failed\n");
 
-  if ((curl = curl_easy_init()) == NULL)
+  if ((curl = curl_easy_init()) == NULL) {
+    curl_global_cleanup ();
     die (STATE_UNKNOWN, "HTTP UNKNOWN - curl_easy_init failed\n");
+  }
 
+  /* register cleanup function to shut down libcurl properly */
+  atexit (cleanup);
+  
   if (verbose >= 1)
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_VERBOSE, TRUE), "CURLOPT_VERBOSE");
 
@@ -460,12 +467,14 @@ check_http (void)
   /* initialize buffer for body of the answer */
   if (curlhelp_initwritebuffer(&body_buf) < 0)
     die (STATE_UNKNOWN, "HTTP CRITICAL - out of memory allocating buffer for body\n");
+  body_buf_initialized = 1;
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, (curl_write_callback)curlhelp_buffer_write_callback), "CURLOPT_WRITEFUNCTION");
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_WRITEDATA, (void *)&body_buf), "CURLOPT_WRITEDATA");
 
   /* initialize buffer for header of the answer */
   if (curlhelp_initwritebuffer( &header_buf ) < 0)
     die (STATE_UNKNOWN, "HTTP CRITICAL - out of memory allocating buffer for header\n" );
+  header_buf_initialized = 1;
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_HEADERFUNCTION, (curl_write_callback)curlhelp_buffer_write_callback), "CURLOPT_HEADERFUNCTION");
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_WRITEHEADER, (void *)&header_buf), "CURLOPT_WRITEHEADER");
 
@@ -752,7 +761,9 @@ check_http (void)
       handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_POSTFIELDS, http_post_data), "CURLOPT_POSTFIELDS");
     } else if (!strcmp(http_method, "PUT")) {
       handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_READFUNCTION, (curl_read_callback)curlhelp_buffer_read_callback), "CURLOPT_READFUNCTION");
-      curlhelp_initreadbuffer (&put_buf, http_post_data, strlen (http_post_data));
+      if (curlhelp_initreadbuffer (&put_buf, http_post_data, strlen (http_post_data)) < 0)
+        die (STATE_UNKNOWN, "HTTP CRITICAL - out of memory allocating read buffer for PUT\n");
+      put_buf_initialized = 1;
       handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_READDATA, (void *)&put_buf), "CURLOPT_READDATA");
       handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_INFILESIZE, (curl_off_t)strlen (http_post_data)), "CURLOPT_INFILESIZE");
     }
@@ -764,9 +775,6 @@ check_http (void)
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_COOKIEFILE, cookie_jar_file), "CURLOPT_COOKIEFILE");
   }
 
-  /* register cleanup function to shut down libcurl properly */
-  atexit (cleanup);
-  
   /* do the request */
   res = curl_easy_perform(curl);
 
@@ -2159,6 +2167,7 @@ curlhelp_parse_statusline (const char *buf, curlhelp_statusline *status_line)
 
   first_line_len = (size_t)(first_line_end - buf);
   status_line->first_line = (char *)malloc (first_line_len + 1);
+  status_line_initialized = 1;
   if (status_line->first_line == NULL) return -1;
   memcpy (status_line->first_line, buf, first_line_len);
   status_line->first_line[first_line_len] = '\0';
