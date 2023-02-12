@@ -160,6 +160,8 @@ char *http_method = NULL;
 char *http_post_data = NULL;
 char *http_content_type = NULL;
 CURL *curl;
+int curl_global_initialized = 0;
+int curl_easy_initialized = 0;
 struct curl_slist *header_list = NULL;
 int body_buf_initialized = 0;
 curlhelp_write_curlbuf body_buf;
@@ -421,11 +423,17 @@ static void
 cleanup (void)
 {
   if (status_line_initialized) curlhelp_free_statusline(&status_line);
-  curl_easy_cleanup (curl);
-  curl_global_cleanup ();
+  status_line_initialized = 0;
+  if (curl_easy_initialized) curl_easy_cleanup (curl);
+  curl_easy_initialized = 0;
+  if (curl_global_initialized) curl_global_cleanup ();
+  curl_global_initialized = 0;
   if (body_buf_initialized) curlhelp_freewritebuffer (&body_buf);
+  body_buf_initialized = 0;
   if (header_buf_initialized) curlhelp_freewritebuffer (&header_buf);
+  header_buf_initialized = 0;
   if (put_buf_initialized) curlhelp_freereadbuffer (&put_buf);
+  put_buf_initialized = 0;
 }
 
 int
@@ -442,11 +450,12 @@ check_http (void)
   /* initialize curl */
   if (curl_global_init (CURL_GLOBAL_DEFAULT) != CURLE_OK)
     die (STATE_UNKNOWN, "HTTP UNKNOWN - curl_global_init failed\n");
+  curl_global_initialized = 1;
 
   if ((curl = curl_easy_init()) == NULL) {
-    curl_global_cleanup ();
     die (STATE_UNKNOWN, "HTTP UNKNOWN - curl_easy_init failed\n");
   }
+  curl_easy_initialized = 1;
 
   /* register cleanup function to shut down libcurl properly */
   atexit (cleanup);
@@ -903,6 +912,7 @@ GOT_FIRST_CERT:
     /* we cannot know the major/minor version here for sure as we cannot parse the first line */
     die (STATE_CRITICAL, "HTTP CRITICAL HTTP/x.x %ld unknown - %s", code, msg);
   }
+  status_line_initialized = 1;
 
   /* get result code from cURL */
   handle_curl_option_return_code (curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &code), "CURLINFO_RESPONSE_CODE");
@@ -1234,6 +1244,7 @@ redir (curlhelp_write_curlbuf* header_buf)
    * attached to the URL in Location
    */
 
+  cleanup ();
   check_http ();
 }
 
@@ -2167,7 +2178,6 @@ curlhelp_parse_statusline (const char *buf, curlhelp_statusline *status_line)
 
   first_line_len = (size_t)(first_line_end - buf);
   status_line->first_line = (char *)malloc (first_line_len + 1);
-  status_line_initialized = 1;
   if (status_line->first_line == NULL) return -1;
   memcpy (status_line->first_line, buf, first_line_len);
   status_line->first_line[first_line_len] = '\0';
