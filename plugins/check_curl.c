@@ -722,11 +722,9 @@ check_http (void)
       /* for now allow only http and https (we are a http(s) check plugin in the end) */
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 85, 0)
       handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_REDIR_PROTOCOLS_STR, "http,https"), "CURLOPT_REDIR_PROTOCOLS_STR");
-#else
-#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 4)
+#elif LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 4)
       handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS), "CURLOPT_REDIRECT_PROTOCOLS");
-#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 4) */
-#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 85, 4) */
+#endif
 
       /* TODO: handle the following aspects of redirection, make them
        * command line options too later:
