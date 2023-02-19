@@ -23,7 +23,7 @@ my $mountpoint2_valid = getTestParameter( "NP_MOUNTPOINT2_VALID", "Path to anoth
 if ($mountpoint_valid eq "" or $mountpoint2_valid eq "") {
 	plan skip_all => "Need 2 mountpoints to test";
 } else {
-	plan tests => 84;
+	plan tests => 86;
 }
 
 $result = NPTest->testCmd( 
@@ -355,14 +355,24 @@ like( $result->output, qr/$mountpoint2_valid/,"ignore: output data does have $mo
 # ignore-missing: exit okay, when fs is not accessible
 $result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -p /bob");
 cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay for not existing filesystem /bob");
-like( $result->output, '/^DISK OK - /bob is not accessible .*$/', 'Output OK');
+like( $result->output, '/^DISK OK - No disks were found for provided parameters; ignored paths: /bob;.*$/', 'Output OK');
 
 # ignore-missing: exit okay, when regex does not match
 $result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -r /bob");
 cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay for regular expression not matching");
-like( $result->output, '/^DISK OK: Regular expression did not match any path or disk.*$/', 'Output OK');
+like( $result->output, '/^DISK OK - No disks were found for provided parameters;.*$/', 'Output OK');
 
 # ignore-missing: exit okay, when fs with exact match (-E) is not found
-$result = NPTest->testCmd( "./check_disk --ignore-missing -E -w 0% -c 0% -p /etc");
+$result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -E -p /etc");
 cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay when exact match does not find fs");
-like( $result->output, '/^DISK OK: /etc not found.*$/', 'Output OK');
+like( $result->output, '/^DISK OK - No disks were found for provided parameters; ignored paths: /etc;.*$/', 'Output OK');
+
+# ignore-missing: exit okay, when checking one existing fs and one non-existing fs (regex)
+$result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -r '/bob' -r '^/$'");
+cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay for regular expression not matching");
+like( $result->output, '/^DISK OK - free space: / .*$/', 'Output OK');
+
+# ignore-missing: exit okay, when checking one existing fs and one non-existing fs (path)
+$result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -p '/bob' -p '/'");
+cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay for regular expression not matching");
+like( $result->output, '/^DISK OK - free space: / .*; ignored paths: /bob;.*$/', 'Output OK');
