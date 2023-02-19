@@ -309,7 +309,7 @@ main (int argc, char **argv)
 
 	/* This is the result of running ./test_utils */
 	temp_string = (char *) _np_state_generate_key();
-	ok(!strcmp(temp_string, "83d877b6cdfefb5d6f06101fd6fe76762f21792c"), "Got hash with exe and no parameters" ) || 
+	ok(!strcmp(temp_string, "e2d17f995fd4c020411b85e3e3d0ff7306d4147e"), "Got hash with exe and no parameters" ) ||
         diag( "You are probably running in wrong directory. Must run as ./test_utils" );
 
 
@@ -319,7 +319,7 @@ main (int argc, char **argv)
 	this_monitoring_plugin->argv[2] = "--and";
 	this_monitoring_plugin->argv[3] = "now";
 	temp_string = (char *) _np_state_generate_key();
-	ok(!strcmp(temp_string, "94b5e17bf5abf51cb15aff5f69b96f2f8dac5ecd"), "Got based on expected argv" );
+	ok(!strcmp(temp_string, "bd72da9f78ff1419fad921ea5e43ce56508aef6c"), "Got based on expected argv" );
 
 	unsetenv("MP_STATE_PATH");
 	temp_string = (char *) _np_state_calculate_location_prefix();
@@ -342,7 +342,7 @@ main (int argc, char **argv)
 	np_enable_state(NULL, 51);
 	temp_state_key = this_monitoring_plugin->state;
 	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
-	ok( !strcmp(temp_state_key->name, "83d877b6cdfefb5d6f06101fd6fe76762f21792c"), "Got generated filename" );
+	ok( !strcmp(temp_state_key->name, "e2d17f995fd4c020411b85e3e3d0ff7306d4147e"), "Got generated filename" );
 
 
 	np_enable_state("allowedchars_in_keyname", 77);
