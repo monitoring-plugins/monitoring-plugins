@@ -18,7 +18,7 @@
 # On the first run of the plugin, it will return an OK state with a message
 # of "Log check data initialized".  On successive runs, it will return an OK
 # state if *no* pattern matches have been found in the *difference* between the
-# log file and the older copy of the log file.  If the plugin detects any 
+# log file and the older copy of the log file.  If the plugin detects any
 # pattern matches in the log diff, it will return a CRITICAL state and print
 # out a message is the following format: "(x) last_match", where "x" is the
 # total number of pattern matches found in the file and "last_match" is the
@@ -76,6 +76,7 @@ print_usage() {
 	echo ""
 	echo "Other parameters:"
 	echo "	-a|--all : Print all matching lines"
+	echo "  --exclude: Exclude a pattern (-p or -e also applies here when used)"
 	echo "	-p|--perl-regex : Use perl style regular expressions in the query"
 	echo "	-e|--extended-regex : Use extended style regular expressions in the query (not necessary for GNU grep)"
 }
@@ -99,82 +100,46 @@ if [ $# -lt 1 ]; then
 fi
 
 # Grab the command line arguments
-
-#logfile=$1
-#oldlog=$2
-#query=$3
 exitstatus=$STATE_WARNING #default
 while test -n "$1"; do
     case "$1" in
-        --help)
+        -h | --help)
             print_help
             exit "$STATE_OK"
             ;;
-        -h)
-            print_help
-            exit "$STATE_OK"
-            ;;
-        --version)
+        -V | --version)
             print_revision "$PROGNAME" "$REVISION"
             exit "$STATE_OK"
             ;;
-        -V)
-            print_revision "$PROGNAME" "$REVISION"
-            exit "$STATE_OK"
-            ;;
-        --filename)
+        -F | --filename)
             logfile=$2
             shift 2
             ;;
-        -F)
-            logfile=$2
-            shift 2
-            ;;
-        --oldlog)
+        -O | --oldlog)
             oldlog=$2
             shift 2
             ;;
-        -O)
-            oldlog=$2
-            shift 2
-            ;;
-        --query)
+        -q | --query)
             query=$2
             shift 2
             ;;
-        -q)
-            query=$2
+        --exclude)
+            exclude=$2
             shift 2
             ;;
-        -x)
+        -x | --exitstatus)
             exitstatus=$2
             shift 2
             ;;
-        --exitstatus)
-            exitstatus=$2
-            shift 2
-            ;;
-        --extended-regex)
+        -e | --extended-regex)
             ERE=1
             shift
             ;;
-        -e)
-            ERE=1
-            shift
-            ;;
-        --perl-regex)
+        -p | --perl-regex)
             PRE=1
             shift
             ;;
-        -p)
-            PRE=1
-            shift
-            ;;
-        --all)
-            ALL=1
-            shift
-            ;;
-        -a)
+        -a | --all)
             ALL=1
             shift
             ;;
@@ -188,18 +153,18 @@ done
 
 # Parameter sanity check
 if [ $ERE ] && [ $PRE ] ; then
-	echo "Can not use extended and perl regex at the same time"
-	exit "$STATE_UNKNOWN"
+    echo "Can not use extended and perl regex at the same time"
+    exit "$STATE_UNKNOWN"
 fi
 
 GREP="grep"
 
 if [ $ERE ]; then
-	GREP="grep -E"
+    GREP="grep -E"
 fi
 
 if [ $PRE ]; then
-	GREP="grep -P"
+    GREP="grep -P"
 fi
 
 # If the source log file doesn't exist, exit
@@ -213,8 +178,8 @@ elif [ ! -r "$logfile" ] ; then
 fi
 # If no oldlog was given this can not work properly, abort then
 if [ -z "$oldlog" ]; then
-       echo "Oldlog parameter is needed"
-       exit $STATE_UNKNOWN
+    echo "Oldlog parameter is needed"
+    exit $STATE_UNKNOWN
 fi
 
 # If the old log file doesn't exist, this must be the first time
@@ -245,18 +210,24 @@ diff "$logfile" "$oldlog" | grep -v "^>" > "$tempdiff"
 
 
 if [ $ALL ]; then
-	# Get the last matching entry in the diff file
-	entry=$($GREP "$query" "$tempdiff")
-
-	# Count the number of matching log entries we have
-	count=$(echo "$entry" | wc -l)
+    # Get all matching entries in the diff file
+    if [ -n "$exclude" ]; then
+        entry=$($GREP "$query" "$tempdiff" | $GREP -v "$exclude")
+        count=$($GREP "$query" "$tempdiff" | $GREP -vc "$exclude")
+    else
+        entry=$($GREP "$query" "$tempdiff")
+        count=$($GREP -c "$query" "$tempdiff")
+    fi
 
 else
-	# Count the number of matching log entries we have
-	count=$($GREP -c "$query" "$tempdiff")
-
-	# Get the last matching entry in the diff file
-	entry=$($GREP "$query" "$tempdiff" | tail -1)
+    # Get the last matching entry in the diff file
+    if [ -n "$exclude" ]; then
+        entry=$($GREP "$query" "$tempdiff" | $GREP -v "$exclude" | tail -1)
+        count=$($GREP "$query" "$tempdiff" | $GREP -vc "$exclude")
+    else
+        entry=$($GREP "$query" "$tempdiff" | tail -1)
+        count=$($GREP -c "$query" "$tempdiff")
+    fi
 fi
 
 rm -f "$tempdiff"

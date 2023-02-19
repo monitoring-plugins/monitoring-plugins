@@ -1,5 +1,5 @@
-# serial 25
-dnl Copyright (C) 2002-2003, 2005-2007, 2009-2013 Free Software Foundation,
+# serial 37
+dnl Copyright (C) 2002-2003, 2005-2007, 2009-2023 Free Software Foundation,
 dnl Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -7,24 +7,40 @@ dnl with or without modifications, as long as this notice is preserved.
 
 dnl From Jim Meyering.
 
-AC_DEFUN([gl_FUNC_MKTIME],
+AC_DEFUN([gl_TIME_T_IS_SIGNED],
 [
-  AC_REQUIRE([gl_HEADER_TIME_H_DEFAULTS])
+  AC_CACHE_CHECK([whether time_t is signed],
+    [gl_cv_time_t_is_signed],
+    [AC_COMPILE_IFELSE(
+       [AC_LANG_PROGRAM([[#include <time.h>
+                          char time_t_signed[(time_t) -1 < 0 ? 1 : -1];]])],
+       [gl_cv_time_t_is_signed=yes],
+       [gl_cv_time_t_is_signed=no])])
+  if test $gl_cv_time_t_is_signed = yes; then
+    AC_DEFINE([TIME_T_IS_SIGNED], [1], [Define to 1 if time_t is signed.])
+  fi
+])
+
+dnl Test whether mktime works. Set gl_cv_func_working_mktime.
+AC_DEFUN([gl_FUNC_MKTIME_WORKS],
+[
+  AC_REQUIRE([gl_TIME_T_IS_SIGNED])
+  AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
 
   dnl We don't use AC_FUNC_MKTIME any more, because it is no longer maintained
   dnl in Autoconf and because it invokes AC_LIBOBJ.
   AC_CHECK_HEADERS_ONCE([unistd.h])
   AC_CHECK_DECLS_ONCE([alarm])
   AC_REQUIRE([gl_MULTIARCH])
-  if test $APPLE_UNIVERSAL_BUILD = 1; then
-    # A universal build on Apple Mac OS X platforms.
-    # The test result would be 'yes' in 32-bit mode and 'no' in 64-bit mode.
-    # But we need a configuration result that is valid in both modes.
-    gl_cv_func_working_mktime=no
-  fi
   AC_CACHE_CHECK([for working mktime], [gl_cv_func_working_mktime],
-    [AC_RUN_IFELSE(
-       [AC_LANG_SOURCE(
+    [if test $APPLE_UNIVERSAL_BUILD = 1; then
+       # A universal build on Apple Mac OS X platforms.
+       # The test result would be 'yes' in 32-bit mode and 'no' in 64-bit mode.
+       # But we need a configuration result that is valid in both modes.
+       gl_cv_func_working_mktime="guessing no"
+     else
+       AC_RUN_IFELSE(
+         [AC_LANG_SOURCE(
 [[/* Test program from Paul Eggert and Tony Leneis.  */
 #include <limits.h>
 #include <stdlib.h>
@@ -38,8 +54,11 @@ AC_DEFUN([gl_FUNC_MKTIME],
 # include <signal.h>
 #endif
 
-/* Work around redefinition to rpl_putenv by other config tests.  */
-#undef putenv
+]GL_MDA_DEFINES[
+
+#ifndef TIME_T_IS_SIGNED
+# define TIME_T_IS_SIGNED 0
+#endif
 
 static time_t time_t_max;
 static time_t time_t_min;
@@ -63,7 +82,8 @@ spring_forward_gap ()
      instead of "TZ=America/Vancouver" in order to detect the bug even
      on systems that don't support the Olson extension, or don't have the
      full zoneinfo tables installed.  */
-  putenv ("TZ=PST8PDT,M4.1.0,M10.5.0");
+  if (putenv ("TZ=PST8PDT,M4.1.0,M10.5.0") != 0)
+    return -1;
 
   tm.tm_year = 98;
   tm.tm_mon = 3;
@@ -151,7 +171,8 @@ year_2050_test ()
      instead of "TZ=America/Vancouver" in order to detect the bug even
      on systems that don't support the Olson extension, or don't have the
      full zoneinfo tables installed.  */
-  putenv ("TZ=PST8PDT,M4.1.0,M10.5.0");
+  if (putenv ("TZ=PST8PDT,M4.1.0,M10.5.0") != 0)
+    return -1;
 
   t = mktime (&tm);
 
@@ -162,6 +183,25 @@ year_2050_test ()
           || (0 < t && answer - 120 <= t && t <= answer + 120));
 }
 
+static int
+indiana_test ()
+{
+  if (putenv ("TZ=America/Indiana/Indianapolis") != 0)
+    return -1;
+  struct tm tm;
+  tm.tm_year = 1986 - 1900; tm.tm_mon = 4 - 1; tm.tm_mday = 28;
+  tm.tm_hour = 16; tm.tm_min = 24; tm.tm_sec = 50; tm.tm_isdst = 0;
+  time_t std = mktime (&tm);
+  if (! (std == 515107490 || std == 515107503))
+    return 1;
+
+  /* This platform supports TZDB, either without or with leap seconds.
+     Return true if GNU Bug#48085 is absent.  */
+  tm.tm_isdst = 1;
+  time_t dst = mktime (&tm);
+  return std - dst == 60 * 60;
+}
+
 int
 main ()
 {
@@ -169,7 +209,6 @@ main ()
   time_t t, delta;
   int i, j;
   int time_t_signed_magnitude = (time_t) ~ (time_t) 0 < (time_t) -1;
-  int time_t_signed = ! ((time_t) 0 < (time_t) -1);
 
 #if HAVE_DECL_ALARM
   /* This test makes some buggy mktime implementations loop.
@@ -179,11 +218,11 @@ main ()
   alarm (60);
 #endif
 
-  time_t_max = (! time_t_signed
+  time_t_max = (! TIME_T_IS_SIGNED
                 ? (time_t) -1
                 : ((((time_t) 1 << (sizeof (time_t) * CHAR_BIT - 2)) - 1)
                    * 2 + 1));
-  time_t_min = (! time_t_signed
+  time_t_min = (! TIME_T_IS_SIGNED
                 ? (time_t) 0
                 : time_t_signed_magnitude
                 ? ~ (time_t) 0
@@ -218,35 +257,62 @@ main ()
     result |= 16;
   if (! spring_forward_gap ())
     result |= 32;
-  if (! year_2050_test ())
+  if (! year_2050_test () || ! indiana_test ())
     result |= 64;
   return result;
 }]])],
-       [gl_cv_func_working_mktime=yes],
-       [gl_cv_func_working_mktime=no],
-       [gl_cv_func_working_mktime=no])
+         [gl_cv_func_working_mktime=yes],
+         [gl_cv_func_working_mktime=no],
+         [case "$host_os" in
+                    # Guess no on native Windows.
+            mingw*) gl_cv_func_working_mktime="guessing no" ;;
+            *)      gl_cv_func_working_mktime="$gl_cross_guess_normal" ;;
+          esac
+         ])
+     fi
     ])
-
-  if test $gl_cv_func_working_mktime = no; then
-    REPLACE_MKTIME=1
-  else
-    REPLACE_MKTIME=0
-  fi
 ])
 
-AC_DEFUN([gl_FUNC_MKTIME_INTERNAL], [
-  AC_REQUIRE([gl_FUNC_MKTIME])
-  if test $REPLACE_MKTIME = 0; then
-    dnl BeOS has __mktime_internal in libc, but other platforms don't.
-    AC_CHECK_FUNC([__mktime_internal],
-      [AC_DEFINE([mktime_internal], [__mktime_internal],
-         [Define to the real name of the mktime_internal function.])
-      ],
-      [dnl mktime works but it doesn't export __mktime_internal,
-       dnl so we need to substitute our own mktime implementation.
-       REPLACE_MKTIME=1
-      ])
+dnl Main macro of module 'mktime'.
+AC_DEFUN([gl_FUNC_MKTIME],
+[
+  AC_REQUIRE([gl_TIME_H_DEFAULTS])
+  AC_REQUIRE([AC_CANONICAL_HOST])
+  AC_REQUIRE([gl_FUNC_MKTIME_WORKS])
+
+  REPLACE_MKTIME=0
+  if test "$gl_cv_func_working_mktime" != yes; then
+    REPLACE_MKTIME=1
+    AC_DEFINE([NEED_MKTIME_WORKING], [1],
+      [Define if the compilation of mktime.c should define 'mktime'
+       with the algorithmic workarounds.])
   fi
+  case "$host_os" in
+    mingw*)
+      REPLACE_MKTIME=1
+      AC_DEFINE([NEED_MKTIME_WINDOWS], [1],
+        [Define if the compilation of mktime.c should define 'mktime'
+         with the native Windows TZ workaround.])
+      ;;
+  esac
+])
+
+dnl Main macro of module 'mktime-internal'.
+AC_DEFUN([gl_FUNC_MKTIME_INTERNAL], [
+  AC_REQUIRE([gl_FUNC_MKTIME_WORKS])
+
+  WANT_MKTIME_INTERNAL=0
+  dnl BeOS has __mktime_internal in libc, but other platforms don't.
+  AC_CHECK_FUNC([__mktime_internal],
+    [AC_DEFINE([mktime_internal], [__mktime_internal],
+       [Define to the real name of the mktime_internal function.])
+    ],
+    [dnl mktime works but it doesn't export __mktime_internal,
+     dnl so we need to substitute our own mktime implementation.
+     WANT_MKTIME_INTERNAL=1
+     AC_DEFINE([NEED_MKTIME_INTERNAL], [1],
+       [Define if the compilation of mktime.c should define 'mktime_internal'.])
+    ])
 ])
 
 # Prerequisites of lib/mktime.c.

@@ -9,7 +9,7 @@ use NPTest;
 use FindBin qw($Bin);
 use POSIX qw/strftime/;
 
-my $tests = 73;
+my $tests = 81;
 # Check that all dependent modules are available
 eval {
 	require NetSNMP::OID;
@@ -57,9 +57,9 @@ if ($pid) {
 	exec("snmpd -c tests/conf/snmpd.conf -C -f -r udp:$port_snmp");
 }
 
-END { 
+END {
 	foreach my $pid (@pids) {
-		if ($pid) { print "Killing $pid\n"; kill "INT", $pid } 
+		if ($pid) { print "Killing $pid\n"; kill "INT", $pid }
 	}
 };
 
@@ -268,3 +268,19 @@ like($res->output, '/SNMP WARNING - \d+ \*-4\* | iso.3.6.1.4.1.8072.3.2.67.10=\d
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.10,.1.3.6.1.4.1.8072.3.2.67.17 -w 1,2 -c 1" );
 is($res->return_code, 2, "Multiple OIDs with some thresholds" );
 like($res->output, '/SNMP CRITICAL - \*\d+\* \*-4\* | iso.3.6.1.4.1.8072.3.2.67.10=\d+c;1;2 iso.3.6.1.4.1.8072.3.2.67.17=-4;;/', "Multiple OIDs with thresholds output" );
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.19");
+is($res->return_code, 0, "Test plain .1.3.6.1.4.1.8072.3.2.67.6 RC" );
+is($res->output,'SNMP OK - 42 | iso.3.6.1.4.1.8072.3.2.67.19=42 ', "Test plain value of .1.3.6.1.4.1.8072.3.2.67.1" );
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.19 -M .1");
+is($res->return_code, 0, "Test multiply RC" );
+is($res->output,'SNMP OK - 4.200000 | iso.3.6.1.4.1.8072.3.2.67.19=4.200000 ' , "Test multiply .1 output" );
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.19 --multiplier=.1 -f '%.2f' ");
+is($res->return_code, 0, "Test multiply RC + format" );
+is($res->output, 'SNMP OK - 4.20 | iso.3.6.1.4.1.8072.3.2.67.19=4.20 ', "Test multiply .1 output + format" );
+
+$res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.19 --multiplier=.1 -f '%.2f' -w 1");
+is($res->return_code, 1, "Test multiply RC + format + thresholds" );
+is($res->output, 'SNMP WARNING - *4.20* | iso.3.6.1.4.1.8072.3.2.67.19=4.20;1 ', "Test multiply .1 output + format + thresholds" );

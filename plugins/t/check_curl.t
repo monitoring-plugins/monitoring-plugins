@@ -1,15 +1,22 @@
 #! /usr/bin/perl -w -I ..
 #
-# HyperText Transfer Protocol (HTTP) Test via check_http
+# HyperText Transfer Protocol (HTTP) Test via check_curl
 #
 #
 
 use strict;
 use Test::More;
 use POSIX qw/mktime strftime/;
-use NPTest;
 
-plan tests => 57;
+use vars qw($tests $has_ipv6);
+
+BEGIN {
+    use NPTest;
+    $has_ipv6 = NPTest::has_ipv6();
+    $tests = $has_ipv6 ? 59 : 57;
+    plan tests => $tests;
+}
+
 
 my $successOutput = '/OK.*HTTP.*second/';
 
@@ -18,6 +25,7 @@ my $plugin = 'check_http';
 $plugin    = 'check_curl' if $0 =~ m/check_curl/mx;
 
 my $host_tcp_http      = getTestParameter("NP_HOST_TCP_HTTP", "A host providing the HTTP Service (a web server)", "localhost");
+my $host_tcp_http_ipv6      = getTestParameter("NP_HOST_TCP_HTTP_IPV6", "An IPv6 address providing a HTTP Service (a web server)", "::1");
 my $host_tls_http      = getTestParameter("NP_HOST_TLS_HTTP", "A host providing the HTTPS Service (a tls web server)", "localhost");
 my $host_tls_cert      = getTestParameter("NP_HOST_TLS_CERT", "the common name of the certificate.", "localhost");
 my $host_nonresponsive = getTestParameter("NP_HOST_NONRESPONSIVE", "The hostname of system not responsive to network requests", "10.0.0.1");
@@ -31,26 +39,35 @@ my $faketime = -x '/usr/bin/faketime' ? 1 : 0;
 
 
 $res = NPTest->testCmd(
-	"./$plugin $host_tcp_http -wt 300 -ct 600"
-	);
+    "./$plugin $host_tcp_http -wt 300 -ct 600"
+    );
 cmp_ok( $res->return_code, '==', 0, "Webserver $host_tcp_http responded" );
 like( $res->output, $successOutput, "Output OK" );
 
+if ($has_ipv6) {
+    # Test for IPv6 formatting
+    $res = NPTest->testCmd(
+        "./$plugin -I $host_tcp_http_ipv6 -wt 300 -ct 600"
+        );
+    cmp_ok( $res->return_code, '==', 0, "IPv6 URL formatting is working" );
+    like( $res->output, $successOutput, "Output OK" );
+}
+
 $res = NPTest->testCmd(
-	"./$plugin $host_tcp_http -wt 300 -ct 600 -v -v -v -k 'bob:there' -k 'carl:frown'"
-	);
+    "./$plugin $host_tcp_http -wt 300 -ct 600 -v -v -v -k 'bob:there' -k 'carl:frown'"
+    );
 like( $res->output, '/bob:there\r\ncarl:frown\r\n/', "Got headers with multiple -k options" );
 
 $res = NPTest->testCmd(
-	"./$plugin $host_nonresponsive -wt 1 -ct 2 -t 3"
-	);
+    "./$plugin $host_nonresponsive -wt 1 -ct 2 -t 3"
+    );
 cmp_ok( $res->return_code, '==', 2, "Webserver $host_nonresponsive not responding" );
 # was CRITICAL only, but both check_curl and check_http print HTTP CRITICAL (puzzle?!)
 like( $res->output, "/HTTP CRITICAL - Invalid HTTP response received from host on port 80: cURL returned 28 - Connection timed out after/", "Output OK");
 
 $res = NPTest->testCmd(
-	"./$plugin $hostname_invalid -wt 1 -ct 2"
-	);
+    "./$plugin $hostname_invalid -wt 1 -ct 2"
+    );
 cmp_ok( $res->return_code, '==', 2, "Webserver $hostname_invalid not valid" );
 # The first part of the message comes from the OS catalogue, so cannot check this.
 # On Debian, it is Name or service not known, on Darwin, it is No address associated with nodename

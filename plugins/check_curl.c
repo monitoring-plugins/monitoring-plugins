@@ -476,6 +476,18 @@ check_http (void)
         printf ("* curl CURLOPT_RESOLVE: %s\n", dnscache);
   }
 
+  // If server_address is an IPv6 address it must be surround by square brackets
+  struct in6_addr tmp_in_addr;
+  if (inet_pton(AF_INET6, server_address, &tmp_in_addr) == 1) {
+    char *new_server_address = malloc(strlen(server_address) + 3);
+    if (new_server_address == NULL) {
+      die(STATE_UNKNOWN, "HTTP UNKNOWN - Unable to allocate memory\n");
+    }
+    snprintf(new_server_address, strlen(server_address)+3, "[%s]", server_address);
+    free(server_address);
+    server_address = new_server_address;
+  }
+
   /* compose URL: use the address we want to connect to, set Host: header later */
   snprintf (url, DEFAULT_BUFFER_SIZE, "%s://%s:%d%s",
       use_ssl ? "https" : "http",
@@ -999,10 +1011,12 @@ GOT_FIRST_CERT:
   result = max_state_alt(get_status(total_time, thlds), result);
 
   /* Cut-off trailing characters */
-  if(msg[strlen(msg)-2] == ',')
-    msg[strlen(msg)-2] = '\0';
-  else
-    msg[strlen(msg)-3] = '\0';
+  if (strlen(msg) >= 2) {
+      if(msg[strlen(msg)-2] == ',')
+        msg[strlen(msg)-2] = '\0';
+      else
+        msg[strlen(msg)-3] = '\0';
+    }
 
   /* TODO: separate _() msg and status code: die (result, "HTTP %s: %s\n", state_text(result), msg); */
   die (result, "HTTP %s: %s %d %s%s%s - %d bytes in %.3f second response time %s|%s\n%s%s",
@@ -1666,7 +1680,7 @@ process_arguments (int argc, char **argv)
         curl_http_version = CURL_HTTP_VERSION_NONE;
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 33, 0) */
       } else {
-        fprintf (stderr, "unkown http-version parameter: %s\n", optarg);
+        fprintf (stderr, "unknown http-version parameter: %s\n", optarg);
         exit (STATE_WARNING);
       }
       break;
@@ -2010,9 +2024,12 @@ curlhelp_buffer_write_callback (void *buffer, size_t size, size_t nmemb, void *s
   curlhelp_write_curlbuf *buf = (curlhelp_write_curlbuf *)stream;
 
   while (buf->bufsize < buf->buflen + size * nmemb + 1) {
-    buf->bufsize *= buf->bufsize * 2;
+    buf->bufsize = buf->bufsize * 2;
     buf->buf = (char *)realloc (buf->buf, buf->bufsize);
-    if (buf->buf == NULL) return -1;
+    if (buf->buf == NULL) {
+      fprintf(stderr, "malloc failed (%d) %s\n", errno, strerror(errno));
+      return -1;
+    }
   }
 
   memcpy (buf->buf + buf->buflen, buffer, size * nmemb);
