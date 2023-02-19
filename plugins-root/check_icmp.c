@@ -1339,7 +1339,7 @@ add_target_ip(char *arg, struct sockaddr_storage *in)
 static int
 add_target(char *arg)
 {
-	int error, result;
+	int error, result = -1;
 	struct sockaddr_storage ip;
 	struct addrinfo hints, *res, *p;
 	struct sockaddr_in *sin;
