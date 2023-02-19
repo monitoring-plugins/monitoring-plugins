@@ -117,7 +117,7 @@ enum
 };
 
 #ifdef _AIX
- #pragma alloca
+#pragma alloca
 #endif
 
 int process_arguments (int, char **);
@@ -127,7 +127,7 @@ int validate_arguments (uintmax_t, uintmax_t, double, double, double, double, ch
 void print_help (void);
 void print_usage (void);
 double calculate_percent(uintmax_t, uintmax_t);
-void stat_path (struct parameter_list *p);
+bool stat_path (struct parameter_list *p);
 void get_stats (struct parameter_list *p, struct fs_usage *fsp);
 void get_path_stats (struct parameter_list *p, struct fs_usage *fsp);
 
@@ -157,6 +157,7 @@ char *crit_usedinodes_percent = NULL;
 char *warn_freeinodes_percent = NULL;
 char *crit_freeinodes_percent = NULL;
 int path_selected = FALSE;
+int path_ignored = FALSE;
 char *group = NULL;
 struct stat *stat_buf;
 struct name_list *seen = NULL;
@@ -168,10 +169,12 @@ main (int argc, char **argv)
   int result = STATE_UNKNOWN;
   int disk_result = STATE_UNKNOWN;
   char *output;
+  char *ignored;
   char *details;
   char *perf;
   char *perf_ilabel;
   char *preamble;
+  char *ignored_preamble;
   char *flag_header;
   int temp_result;
 
@@ -183,8 +186,10 @@ main (int argc, char **argv)
   char mountdir[32];
 #endif
 
-  preamble = strdup (" - free space:");
+  preamble = strdup (" free space:");
+  ignored_preamble = strdup (" ignored paths:");
   output = strdup ("");
+  ignored = strdup ("");
   details = strdup ("");
   perf = strdup ("");
   perf_ilabel = strdup ("");
@@ -205,7 +210,7 @@ main (int argc, char **argv)
   /* If a list of paths has not been selected, find entire
      mount list and create list of paths
    */
-  if (path_selected == FALSE) {
+  if (path_selected == FALSE && path_ignored == FALSE) {
     for (me = mount_list; me; me = me->me_next) {
       if (! (path = np_find_parameter(path_select_list, me->me_mountdir))) {
         path = np_add_parameter(&path_select_list, me->me_mountdir);
@@ -215,19 +220,40 @@ main (int argc, char **argv)
       set_all_thresholds(path);
     }
   }
-  np_set_best_match(path_select_list, mount_list, exact_match);
+
+  if (path_ignored == FALSE) {
+    np_set_best_match(path_select_list, mount_list, exact_match);
+  }
 
   /* Error if no match found for specified paths */
   temp_list = path_select_list;
 
-  while (temp_list) {
-    if (! temp_list->best_match && ignore_missing == 1) {
-      die (STATE_OK, _("DISK %s: %s not found (ignoring)\n"), _("OK"), temp_list->name);
-    } else if (! temp_list->best_match) {
-      die (STATE_CRITICAL, _("DISK %s: %s not found\n"), _("CRITICAL"), temp_list->name);
+  while (path_select_list) {
+    if (! path_select_list->best_match && ignore_missing == 1) {
+      /* If the first element will be deleted, the temp_list must be updated with the new start address as well */
+      if (path_select_list == temp_list) {
+        temp_list = path_select_list->name_next;
+      }
+      /* Add path argument to list of ignored paths to inform about missing paths being ignored and not alerted */
+      xasprintf (&ignored, "%s %s;", ignored, path_select_list->name);
+      /* Delete the path from the list so that it is not stat-checked later in the code. */
+      path_select_list = np_del_parameter(path_select_list, path_select_list->name_prev);
+    } else if (! path_select_list->best_match) {
+      /* Without --ignore-missing option, exit with Critical state. */
+      die (STATE_CRITICAL, _("DISK %s: %s not found\n"), _("CRITICAL"), path_select_list->name);
+    } else {
+      /* Continue jumping through the list */
+      path_select_list = path_select_list->name_next;
     }
+  }
 
-    temp_list = temp_list->name_next;
+  path_select_list = temp_list;
+
+  if (! path_select_list && ignore_missing == 1) {
+    result = STATE_OK;
+    if (verbose >= 2) {
+      printf ("None of the provided paths were found\n");
+    }
   }
 
   /* Process for every path in list */
@@ -245,6 +271,10 @@ main (int argc, char **argv)
     disk_result = STATE_UNKNOWN;
 
     me = path->best_match;
+
+    if (!me) {
+      continue;
+    }
 
 #ifdef __CYGWIN__
     if (strncmp(path->name, "/cygdrive/", 10) != 0 || strlen(path->name) > 11)
@@ -264,8 +294,12 @@ main (int argc, char **argv)
     if (path->group == NULL) {
       /* Skip remote filesystems if we're not interested in them */
       if (me->me_remote && show_local_fs) {
-        if (stat_remote_fs)
-          stat_path(path);
+        if (stat_remote_fs) {
+          if (!stat_path(path) && ignore_missing == 1) {
+              result = STATE_OK;
+              xasprintf (&ignored, "%s %s;", ignored, path->name);
+          }
+        }
         continue;
       /* Skip pseudo fs's if we haven't asked for all fs's */
       } else if (me->me_dummy && !show_all_fs) {
@@ -284,7 +318,13 @@ main (int argc, char **argv)
       }
     }
 
-    stat_path(path);
+    if (!stat_path(path)) {
+      if (ignore_missing == 1) {
+        result = STATE_OK;
+        xasprintf (&ignored, "%s %s;", ignored, path->name);
+      }
+      continue;
+    }
     get_fs_usage (me->me_mountdir, me->me_devname, &fsp);
 
     if (fsp.fsu_blocks && strcmp ("none", me->me_mountdir)) {
@@ -415,8 +455,12 @@ main (int argc, char **argv)
   if (verbose >= 2)
     xasprintf (&output, "%s%s", output, details);
 
+  if (strcmp(output, "") == 0) {
+    preamble = "";
+    xasprintf (&output, " No disks were found for provided parameters;");
+  }
 
-  printf ("DISK %s%s%s|%s\n", state_text (result), (erronly && result==STATE_OK) ? "" : preamble, output, perf);
+  printf ("DISK %s -%s%s%s%s|%s\n", state_text (result), ((erronly && result==STATE_OK)) ? "" : preamble, output, (strcmp(ignored, "") == 0) ? "" : ignored_preamble, ignored, perf);
   return result;
 }
 
@@ -637,12 +681,19 @@ process_arguments (int argc, char **argv)
       /* add parameter if not found. overwrite thresholds if path has already been added  */
       if (! (se = np_find_parameter(path_select_list, optarg))) {
           se = np_add_parameter(&path_select_list, optarg);
+
+          if (stat(optarg, &stat_buf[0]) && ignore_missing == 1) {
+            path_ignored = TRUE;
+            break;
+          }
       }
       se->group = group;
       set_all_thresholds(se);
 
       /* With autofs, it is required to stat() the path before re-populating the mount_list */
-      stat_path(se);
+      if (!stat_path(se)) {
+        break;
+      }
       /* NB: We can't free the old mount_list "just like that": both list pointers and struct
        * pointers are copied around. One of the reason it wasn't done yet is that other parts
        * of check_disk need the same kind of cleanup so it'd better be done as a whole */
@@ -761,10 +812,11 @@ process_arguments (int argc, char **argv)
         }
       }
 
-      if (!fnd && ignore_missing == 1)
-        die (STATE_OK, "DISK %s: %s - %s\n",_("OK"),
-            _("Regular expression did not match any path or disk (ignoring)"), optarg);
-      else if (!fnd)
+      if (!fnd && ignore_missing == 1) {
+        path_ignored = TRUE;
+        /* path_selected = TRUE;*/
+        break;
+      } else if (!fnd)
         die (STATE_UNKNOWN, "DISK %s: %s - %s\n",_("UNKNOWN"),
             _("Regular expression did not match any path or disk"), optarg);
 
@@ -936,7 +988,7 @@ print_help (void)
   printf ("    %s\n", _("Regular expression to ignore selected path or partition (may be repeated)"));
   printf (" %s\n", "--ignore-missing");
   printf ("    %s\n", _("Return OK if no filesystem matches, filesystem does not exist or is inaccessible."));
-  printf ("    %s\n", _("(Provide this option before -r / --ereg-path if used)"));
+  printf ("    %s\n", _("(Provide this option before -p / -r / --ereg-path if used)"));
   printf (UT_PLUG_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
   printf (" %s\n", "-u, --units=STRING");
   printf ("    %s\n", _("Choose bytes, kB, MB, GB, TB (default: MB)"));
@@ -970,7 +1022,7 @@ print_usage (void)
   printf ("[-t timeout] [-u unit] [-v] [-X type] [-N type]\n");
 }
 
-void
+bool
 stat_path (struct parameter_list *p)
 {
   /* Stat entry to check that dir exists and is accessible */
@@ -980,13 +1032,13 @@ stat_path (struct parameter_list *p)
     if (verbose >= 3)
       printf("stat failed on %s\n", p->name);
     if (ignore_missing == 1) {
-      printf("DISK %s - ", _("OK"));
-      die (STATE_OK, _("%s %s: %s\n"), p->name, _("is not accessible (ignoring)"), strerror(errno));
+      return false;
     } else {
       printf("DISK %s - ", _("CRITICAL"));
       die (STATE_CRITICAL, _("%s %s: %s\n"), p->name, _("is not accessible"), strerror(errno));
     }
   }
+  return true;
 }
 
 
@@ -1006,7 +1058,8 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
         continue;
 #endif
       if (p_list->group && ! (strcmp(p_list->group, p->group))) {
-        stat_path(p_list);
+        if (! stat_path(p_list))
+          continue;
         get_fs_usage (p_list->best_match->me_mountdir, p_list->best_match->me_devname, &tmpfsp);
         get_path_stats(p_list, &tmpfsp);
         if (verbose >= 3)
