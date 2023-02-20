@@ -23,7 +23,7 @@ my $mountpoint2_valid = getTestParameter( "NP_MOUNTPOINT2_VALID", "Path to anoth
 if ($mountpoint_valid eq "" or $mountpoint2_valid eq "") {
 	plan skip_all => "Need 2 mountpoints to test";
 } else {
-	plan tests => 86;
+	plan tests => 88;
 }
 
 $result = NPTest->testCmd( 
@@ -126,7 +126,7 @@ my $free_mb_on_all = $free_mb_on_mp1 + $free_mb_on_mp2;
 
 
 $result = NPTest->testCmd( "./check_disk -e -w 1 -c 1 -p $more_free" );
-is( $result->only_output, "DISK OK", "No print out of disks with -e for OKs");
+is( $result->only_output, "DISK OK - No disks were found for provided parameters;", "No print out of disks with -e for OKs");
 
 $result = NPTest->testCmd( "./check_disk 100 100 $more_free" );
 cmp_ok( $result->return_code, '==', 0, "Old syntax okay" );
@@ -368,9 +368,9 @@ cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay when exact m
 like( $result->output, '/^DISK OK - No disks were found for provided parameters; ignored paths: /etc;.*$/', 'Output OK');
 
 # ignore-missing: exit okay, when checking one existing fs and one non-existing fs (regex)
-$result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -r '/bob' -r '^/$'");
+$result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -r '/bob' -r '^/\$'");
 cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay for regular expression not matching");
-like( $result->output, '/^DISK OK - free space: / .*$/', 'Output OK');
+like( $result->output, '/^DISK OK - free space: \/ .*$/', 'Output OK');
 
 # ignore-missing: exit okay, when checking one existing fs and one non-existing fs (path)
 $result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -p '/bob' -p '/'");
