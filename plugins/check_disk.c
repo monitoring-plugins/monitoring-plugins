@@ -186,8 +186,8 @@ main (int argc, char **argv)
   char mountdir[32];
 #endif
 
-  preamble = strdup (" free space:");
-  ignored_preamble = strdup (" ignored paths:");
+  preamble = strdup (" - free space:");
+  ignored_preamble = strdup (" - ignored paths:");
   output = strdup ("");
   ignored = strdup ("");
   details = strdup ("");
@@ -455,12 +455,12 @@ main (int argc, char **argv)
   if (verbose >= 2)
     xasprintf (&output, "%s%s", output, details);
 
-  if (strcmp(output, "") == 0) {
+  if (strcmp(output, "") == 0 && ! erronly) {
     preamble = "";
-    xasprintf (&output, " No disks were found for provided parameters;");
+    xasprintf (&output, " - No disks were found for provided parameters;");
   }
 
-  printf ("DISK %s -%s%s%s%s|%s\n", state_text (result), ((erronly && result==STATE_OK)) ? "" : preamble, output, (strcmp(ignored, "") == 0) ? "" : ignored_preamble, ignored, perf);
+  printf ("DISK %s%s%s%s%s|%s\n", state_text (result), ((erronly && result==STATE_OK)) ? "" : preamble, output, (strcmp(ignored, "") == 0) ? "" : ignored_preamble, ignored, perf);
   return result;
 }
 
