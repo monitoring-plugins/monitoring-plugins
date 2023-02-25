@@ -500,7 +500,6 @@ process_arguments (int argc, char **argv)
     return ERROR;
 
   np_add_name(&fs_exclude_list, "iso9660");
-  np_add_name(&fs_exclude_list, "tmpfs");
   np_add_name(&fs_exclude_list, "squashfs");
   np_add_name(&fs_exclude_list, "tracefs");
   np_add_name(&fs_exclude_list, "none");
