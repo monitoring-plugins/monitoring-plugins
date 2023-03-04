@@ -1,39 +1,39 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_icmp plugin
-* 
+*
 * License: GPL
 * Copyright (c) 2005-2008 Monitoring Plugins Development Team
 * Original Author : Andreas Ericsson <ae@op5.se>
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_icmp plugin
-* 
+*
 * Relevant RFC's: 792 (ICMP), 791 (IP)
-* 
+*
 * This program was modeled somewhat after the check_icmp program,
 * which was in turn a hack of fping (www.fping.org) but has been
 * completely rewritten since to generate higher precision rta values,
 * and support several different modes as well as setting ttl to control.
 * redundant routes. The only remainders of fping is currently a few
 * function names.
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 /* progname may change */
@@ -55,6 +55,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include <errno.h>
 #include <signal.h>
 #include <ctype.h>
+#include <float.h>
 #include <net/if.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -93,10 +94,6 @@ const char *email = "devel@monitoring-plugins.org";
 # define ICMP_UNREACH_FILTER_PROHIB 13
 # define ICMP_UNREACH_HOST_PRECEDENCE 14
 # define ICMP_UNREACH_PRECEDENCE_CUTOFF 15
-#endif
-
-#ifndef DBL_MAX
-# define DBL_MAX 9.9999999999e999
 #endif
 
 typedef unsigned short range_t;  /* type for get_range() -- unimplemented */
@@ -1224,7 +1221,7 @@ finish(int sig)
 			   host->rta / 1000, (float)warn.rta / 1000, (float)crit.rta / 1000,
 			   (targets > 1) ? host->name : "", host->pl, warn.pl, crit.pl,
 			   (targets > 1) ? host->name : "", (float)host->rtmax / 1000,
-			   (targets > 1) ? host->name : "", (host->rtmin < DBL_MAX) ? (float)host->rtmin / 1000 : (float)0);
+			   (targets > 1) ? host->name : "", (host->rtmin < INFINITY) ? (float)host->rtmin / 1000 : (float)0);
 
 		host = host->next;
 	}
@@ -1327,7 +1324,7 @@ add_target_ip(char *arg, struct sockaddr_storage *in)
 		memcpy(host_sin6->sin6_addr.s6_addr, sin6->sin6_addr.s6_addr, sizeof host_sin6->sin6_addr.s6_addr);
 	}
 
-	host->rtmin = DBL_MAX;
+	host->rtmin = INFINITY;
 
 	if(!list) list = cursor = host;
 	else cursor->next = host;
@@ -1342,7 +1339,7 @@ add_target_ip(char *arg, struct sockaddr_storage *in)
 static int
 add_target(char *arg)
 {
-	int error, result;
+	int error, result = -1;
 	struct sockaddr_storage ip;
 	struct addrinfo hints, *res, *p;
 	struct sockaddr_in *sin;
@@ -1433,20 +1430,21 @@ set_source_ip(char *arg)
 static in_addr_t
 get_ip_address(const char *ifname)
 {
+  // TODO: Rewrite this so the function return an error and we exit somewhere else
+	struct sockaddr_in ip;
 #if defined(SIOCGIFADDR)
 	struct ifreq ifr;
-	struct sockaddr_in ip;
 
 	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name) - 1);
 	ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
 	if(ioctl(icmp_sock, SIOCGIFADDR, &ifr) == -1)
 		crash("Cannot determine IP address of interface %s", ifname);
 	memcpy(&ip, &ifr.ifr_addr, sizeof(ip));
-	return ip.sin_addr.s_addr;
 #else
 	errno = 0;
 	crash("Cannot get interface IP address on this platform.");
 #endif
+	return ip.sin_addr.s_addr;
 }
 
 /*
