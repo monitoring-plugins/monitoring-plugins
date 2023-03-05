@@ -1391,7 +1391,6 @@ char *unchunk_content(const char *content) {
   // https://en.wikipedia.org/wiki/Chunked_transfer_encoding
   // https://www.rfc-editor.org/rfc/rfc7230#section-4.1
   char *result = NULL;
-  size_t content_length = strlen(content);
   char *start_of_chunk;
   char* end_of_chunk;
   long size_of_chunk;
