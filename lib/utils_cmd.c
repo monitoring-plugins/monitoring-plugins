@@ -42,6 +42,16 @@
 #include "common.h"
 #include "utils.h"
 #include "utils_cmd.h"
+/* This variable must be global, since there's no way the caller
+ * can forcibly slay a dead or ungainly running program otherwise.
+ * Multithreading apps and plugins can initialize it (via CMD_INIT)
+ * in an async safe manner PRIOR to calling cmd_run() or cmd_run_array()
+ * for the first time.
+ *
+ * The check for initialized values is atomic and can
+ * occur in any number of threads simultaneously. */
+static pid_t *_cmd_pids = NULL;
+
 #include "utils_base.h"
 
 #include "./maxfd.h"
