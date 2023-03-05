@@ -44,6 +44,8 @@
 # include <sys/wait.h>
 #endif
 
+#include "./utils.h"
+
 /** macros **/
 #ifndef WEXITSTATUS
 # define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
