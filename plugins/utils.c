@@ -804,19 +804,3 @@ char *sperfdata_int (const char *label,
 
 	return data;
 }
-
-int
-open_max (void)
-{
-	errno = 0;
-	if (maxfd > 0)
-		return(maxfd);
-
-	if ((maxfd = sysconf (_SC_OPEN_MAX)) < 0) {
-		if (errno == 0)
-			maxfd = DEFAULT_MAXFD;   /* it's indeterminate */
-	else
-		die (STATE_UNKNOWN, _("sysconf error for _SC_OPEN_MAX\n"));
-	}
-	return(maxfd);
-}
