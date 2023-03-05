@@ -38,8 +38,9 @@
 * 
 *****************************************************************************/
 
-#include "common.h"
-#include "utils.h"
+#include "./common.h"
+#include "./utils.h"
+#include "../lib/maxfd.h"
 
 /* extern so plugin has pid to kill exec'd process on timeouts */
 extern pid_t *childpid;
@@ -177,8 +178,7 @@ spopen (const char *cmdstring)
 	}
 	argv[i] = NULL;
 
-	if(maxfd == 0)
-		maxfd = open_max();
+	long maxfd = open_max();
 
 	if (childpid == NULL) {				/* first time through */
 		if ((childpid = calloc ((size_t)maxfd, sizeof (pid_t))) == NULL)

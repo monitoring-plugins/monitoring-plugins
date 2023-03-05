@@ -106,8 +106,6 @@ char *sperfdata (const char *, double, const char *, char *, char *,
 char *sperfdata_int (const char *, int, const char *, char *, char *,
                      int, int, int, int);
 
-int open_max (void);
-
 /* The idea here is that, although not every plugin will use all of these, 
    most will or should.  Therefore, for consistency, these very common 
    options should have only these meanings throughout the overall suite */
