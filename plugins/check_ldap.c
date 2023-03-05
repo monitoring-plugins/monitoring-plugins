@@ -99,7 +99,6 @@ main (int argc, char *argv[])
 
 	/* for entry counting */
 
-	LDAPMessage *next_entry;
 	int status_entries = STATE_OK;
 	int num_entries = 0;
 
