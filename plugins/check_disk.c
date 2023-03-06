@@ -141,7 +141,7 @@ int verbose = 0;
 int erronly = FALSE;
 int display_mntp = FALSE;
 int exact_match = FALSE;
-int ignore_missing = FALSE;
+bool ignore_missing = false;
 int freespace_ignore_reserved = FALSE;
 int display_inodes_perfdata = FALSE;
 char *warn_freespace_units = NULL;
@@ -157,7 +157,7 @@ char *crit_usedinodes_percent = NULL;
 char *warn_freeinodes_percent = NULL;
 char *crit_freeinodes_percent = NULL;
 int path_selected = FALSE;
-int path_ignored = FALSE;
+bool path_ignored = false;
 char *group = NULL;
 struct stat *stat_buf;
 struct name_list *seen = NULL;
@@ -173,8 +173,8 @@ main (int argc, char **argv)
   char *details;
   char *perf;
   char *perf_ilabel;
-  char *preamble;
-  char *ignored_preamble;
+  char *preamble = " - free space:";
+  char *ignored_preamble = " - ignored paths:";
   char *flag_header;
   int temp_result;
 
@@ -186,8 +186,6 @@ main (int argc, char **argv)
   char mountdir[32];
 #endif
 
-  preamble = strdup (" - free space:");
-  ignored_preamble = strdup (" - ignored paths:");
   output = strdup ("");
   ignored = strdup ("");
   details = strdup ("");
@@ -210,7 +208,7 @@ main (int argc, char **argv)
   /* If a list of paths has not been selected, find entire
      mount list and create list of paths
    */
-  if (path_selected == FALSE && path_ignored == FALSE) {
+  if (path_selected == FALSE && path_ignored == false) {
     for (me = mount_list; me; me = me->me_next) {
       if (! (path = np_find_parameter(path_select_list, me->me_mountdir))) {
         path = np_add_parameter(&path_select_list, me->me_mountdir);
@@ -221,7 +219,7 @@ main (int argc, char **argv)
     }
   }
 
-  if (path_ignored == FALSE) {
+  if (path_ignored == false) {
     np_set_best_match(path_select_list, mount_list, exact_match);
   }
 
@@ -229,7 +227,7 @@ main (int argc, char **argv)
   temp_list = path_select_list;
 
   while (path_select_list) {
-    if (! path_select_list->best_match && ignore_missing == 1) {
+    if (! path_select_list->best_match && ignore_missing == true) {
       /* If the first element will be deleted, the temp_list must be updated with the new start address as well */
       if (path_select_list == temp_list) {
         temp_list = path_select_list->name_next;
@@ -249,7 +247,7 @@ main (int argc, char **argv)
 
   path_select_list = temp_list;
 
-  if (! path_select_list && ignore_missing == 1) {
+  if (! path_select_list && ignore_missing == true) {
     result = STATE_OK;
     if (verbose >= 2) {
       printf ("None of the provided paths were found\n");
@@ -295,7 +293,7 @@ main (int argc, char **argv)
       /* Skip remote filesystems if we're not interested in them */
       if (me->me_remote && show_local_fs) {
         if (stat_remote_fs) {
-          if (!stat_path(path) && ignore_missing == 1) {
+          if (!stat_path(path) && ignore_missing == true) {
               result = STATE_OK;
               xasprintf (&ignored, "%s %s;", ignored, path->name);
           }
@@ -319,7 +317,7 @@ main (int argc, char **argv)
     }
 
     if (!stat_path(path)) {
-      if (ignore_missing == 1) {
+      if (ignore_missing == true) {
         result = STATE_OK;
         xasprintf (&ignored, "%s %s;", ignored, path->name);
       }
@@ -682,8 +680,8 @@ process_arguments (int argc, char **argv)
       if (! (se = np_find_parameter(path_select_list, optarg))) {
           se = np_add_parameter(&path_select_list, optarg);
 
-          if (stat(optarg, &stat_buf[0]) && ignore_missing == 1) {
-            path_ignored = TRUE;
+          if (stat(optarg, &stat_buf[0]) && ignore_missing == true) {
+            path_ignored = true;
             break;
           }
       }
@@ -775,7 +773,7 @@ process_arguments (int argc, char **argv)
       break;
 
     case IGNORE_MISSING:
-      ignore_missing = 1;
+      ignore_missing = true;
       break;
     case 'A':
       optarg = strdup(".*");
@@ -812,8 +810,8 @@ process_arguments (int argc, char **argv)
         }
       }
 
-      if (!fnd && ignore_missing == 1) {
-        path_ignored = TRUE;
+      if (!fnd && ignore_missing == true) {
+        path_ignored = true;
         /* path_selected = TRUE;*/
         break;
       } else if (!fnd)
@@ -1031,7 +1029,7 @@ stat_path (struct parameter_list *p)
   if (stat (p->name, &stat_buf[0])) {
     if (verbose >= 3)
       printf("stat failed on %s\n", p->name);
-    if (ignore_missing == 1) {
+    if (ignore_missing == true) {
       return false;
     } else {
       printf("DISK %s - ", _("CRITICAL"));
