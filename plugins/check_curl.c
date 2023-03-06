@@ -383,7 +383,7 @@ handle_curl_option_return_code (CURLcode res, const char* option)
 int
 lookup_host (const char *host, char *buf, size_t buflen)
 {
-  struct addrinfo hints, *res, *result;
+  struct addrinfo hints, *res;
   int errcode;
   void *ptr;
 
@@ -392,13 +392,10 @@ lookup_host (const char *host, char *buf, size_t buflen)
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags |= AI_CANONNAME;
 
-  errcode = getaddrinfo (host, NULL, &hints, &result);
+  errcode = getaddrinfo (host, NULL, &hints, &res);
   if (errcode != 0)
     return errcode;
-  
-  res = result;
 
-  while (res) {
   inet_ntop (res->ai_family, res->ai_addr->sa_data, buf, buflen);
   switch (res->ai_family) {
     case AF_INET:
@@ -406,16 +403,15 @@ lookup_host (const char *host, char *buf, size_t buflen)
       break;
     case AF_INET6:
       ptr = &((struct sockaddr_in6 *) res->ai_addr)->sin6_addr;
-    break;
-    }
-    inet_ntop (res->ai_family, ptr, buf, buflen);
-    if (verbose >= 1)
-      printf ("* getaddrinfo IPv%d address: %s\n",
-        res->ai_family == PF_INET6 ? 6 : 4, buf);
-    res = res->ai_next;
+      break;
   }
-  
-  freeaddrinfo(result);
+  inet_ntop (res->ai_family, ptr, buf, buflen);
+
+  if (verbose >= 1)
+    printf ("* getaddrinfo IPv%d address: %s\n",
+      res->ai_family == PF_INET6 ? 6 : 4, buf);
+
+  freeaddrinfo(res);
 
   return 0;
 }
