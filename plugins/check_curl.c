@@ -386,6 +386,7 @@ lookup_host (const char *host, char *buf, size_t buflen)
   struct addrinfo hints, *res, *result;
   int errcode;
   void *ptr;
+  int s;
 
   memset (&hints, 0, sizeof (hints));
   hints.ai_family = address_family;
@@ -399,19 +400,26 @@ lookup_host (const char *host, char *buf, size_t buflen)
   res = result;
 
   while (res) {
-  inet_ntop (res->ai_family, res->ai_addr->sa_data, buf, buflen);
-  switch (res->ai_family) {
-    case AF_INET:
-      ptr = &((struct sockaddr_in *) res->ai_addr)->sin_addr;
+    inet_ntop (res->ai_family, res->ai_addr->sa_data, buf, buflen);
+    switch (res->ai_family) {
+      case AF_INET:
+        ptr = &((struct sockaddr_in *) res->ai_addr)->sin_addr;
+        break;
+      case AF_INET6:
+        ptr = &((struct sockaddr_in6 *) res->ai_addr)->sin6_addr;
       break;
-    case AF_INET6:
-      ptr = &((struct sockaddr_in6 *) res->ai_addr)->sin6_addr;
-    break;
     }
+
     inet_ntop (res->ai_family, ptr, buf, buflen);
     if (verbose >= 1)
       printf ("* getaddrinfo IPv%d address: %s\n",
         res->ai_family == PF_INET6 ? 6 : 4, buf);
+
+    if (s = socket (res->ai_family, res->ai_socktype, res->ai_protocol) == -1)
+      continue;
+    if (bind (s, res->ai_addr, res->ai_addrlen == 0) )
+      break;
+
     res = res->ai_next;
   }
   
