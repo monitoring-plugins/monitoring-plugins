@@ -384,9 +384,12 @@ int
 lookup_host (const char *host, char *buf, size_t buflen)
 {
   struct addrinfo hints, *res, *result;
+  char addrstr[100];
+  size_t addrstr_len;
   int errcode;
   void *ptr;
   int s;
+  size_t buflen_remaining = buflen - 1;
 
   memset (&hints, 0, sizeof (hints));
   hints.ai_family = address_family;
@@ -396,33 +399,40 @@ lookup_host (const char *host, char *buf, size_t buflen)
   errcode = getaddrinfo (host, NULL, &hints, &result);
   if (errcode != 0)
     return errcode;
-  
+
+  strcpy(buf, "");
   res = result;
 
   while (res) {
-    inet_ntop (res->ai_family, res->ai_addr->sa_data, buf, buflen);
     switch (res->ai_family) {
       case AF_INET:
         ptr = &((struct sockaddr_in *) res->ai_addr)->sin_addr;
         break;
       case AF_INET6:
         ptr = &((struct sockaddr_in6 *) res->ai_addr)->sin6_addr;
-      break;
+        break;
     }
 
-    inet_ntop (res->ai_family, ptr, buf, buflen);
-    if (verbose >= 1)
+    inet_ntop (res->ai_family, ptr, addrstr, 100);
+    if (verbose >= 1) {
       printf ("* getaddrinfo IPv%d address: %s\n",
-        res->ai_family == PF_INET6 ? 6 : 4, buf);
+        res->ai_family == PF_INET6 ? 6 : 4, addrstr);
+    }
 
-    if (s = socket (res->ai_family, res->ai_socktype, res->ai_protocol) == -1)
-      continue;
-    if (bind (s, res->ai_addr, res->ai_addrlen == 0) )
-      break;
+    // Append all IPs to buf as a comma-separated string
+    addrstr_len = strlen(addrstr);
+    if (buflen_remaining > addrstr_len + 1) {
+      if (buf[0] != '\0') {
+        strncat(buf, ",", buflen_remaining);
+        buflen_remaining -= 1;
+      }
+      strncat(buf, addrstr, buflen_remaining);
+      buflen_remaining -= addrstr_len;
+    }
 
     res = res->ai_next;
   }
-  
+
   freeaddrinfo(result);
 
   return 0;
@@ -453,7 +463,7 @@ check_http (void)
   int i;
   char *force_host_header = NULL;
   struct curl_slist *host = NULL;
-  char addrstr[100];
+  char addrstr[DEFAULT_BUFFER_SIZE/2];
   char dnscache[DEFAULT_BUFFER_SIZE];
 
   /* initialize curl */
@@ -505,7 +515,7 @@ check_http (void)
 
   // fill dns resolve cache to make curl connect to the given server_address instead of the host_name, only required for ssl, because we use the host_name later on to make SNI happy
   if(use_ssl && host_name != NULL) {
-      if ( (res=lookup_host (server_address, addrstr, 100)) != 0) {
+      if ( (res=lookup_host (server_address, addrstr, DEFAULT_BUFFER_SIZE/2)) != 0) {
         snprintf (msg, DEFAULT_BUFFER_SIZE, _("Unable to lookup IP address for '%s': getaddrinfo returned %d - %s"),
           server_address, res, gai_strerror (res));
         die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
@@ -800,6 +810,9 @@ check_http (void)
   /* free header and server IP resolve lists, we don't need it anymore */
   curl_slist_free_all (header_list); header_list = NULL;
   curl_slist_free_all (server_ips); server_ips = NULL;
+  if (host) {
+    curl_slist_free_all (host); host = NULL;
+  }
 
   /* Curl errors, result in critical Nagios state */
   if (res != CURLE_OK) {
