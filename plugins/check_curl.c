@@ -422,8 +422,8 @@ lookup_host (const char *host, char *buf, size_t buflen)
     // Append all IPs to buf as a comma-separated string
     addrstr_len = strlen(addrstr);
     if (buflen_remaining > addrstr_len + 1) {
-      if (buf[0] != NULL) {
-        strncat(buf, ",", 1);
+      if (buf[0] != '\0') {
+        strncat(buf, ",", buflen_remaining);
         buflen_remaining -= 1;
       }
       strncat(buf, addrstr, buflen_remaining);
