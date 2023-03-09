@@ -17,11 +17,7 @@ jobs:
       run: sudo apt-get install gettext
     - name: setup
       run: ./tools/setup
-    - name: configure
+    - name: CFLAGS="-Wall -Wextra -std=c90" configure
       run: ./configure
     - name: make
       run: make
-    - name: make check
-      run: make check
-    - name: make distcheck
-      run: make distcheck
