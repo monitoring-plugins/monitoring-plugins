@@ -13,6 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Install gettext
+      run: apt-get install gettext
     - name: setup
       run: ./tools/setup
     - name: configure
