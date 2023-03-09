@@ -1,20 +1,20 @@
 /* fsusage.c -- return space usage of mounted file systems
 
-   Copyright (C) 1991-1992, 1996, 1998-1999, 2002-2006, 2009-2013 Free Software
+   Copyright (C) 1991-1992, 1996, 1998-1999, 2002-2006, 2009-2023 Free Software
    Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation, either version 3 of the
+   License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   You should have received a copy of the GNU Lesser General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
@@ -43,22 +43,10 @@
 # if HAVE_SYS_FS_S5PARAM_H      /* Fujitsu UXP/V */
 #  include <sys/fs/s5param.h>
 # endif
-# if defined HAVE_SYS_FILSYS_H && !defined _CRAY
-#  include <sys/filsys.h>       /* SVR2 */
-# endif
 # if HAVE_SYS_STATFS_H
 #  include <sys/statfs.h>
 # endif
-# if HAVE_DUSTAT_H              /* AIX PS/2 */
-#  include <sys/dustat.h>
-# endif
-# include "full-read.h"
 #endif
-
-/* The results of open() in this file are not used with fchdir,
-   therefore save some unnecessary work in fchdir.c.  */
-#undef open
-#undef close
 
 /* Many space usage primitives use all 1 bits to denote a value that is
    not applicable or unknown.  Propagate this information by returning
@@ -143,7 +131,6 @@ get_fs_usage (char const *file, char const *disk, struct fs_usage *fsp)
       fsp->fsu_bavail_top_bit_set = EXTRACT_TOP_BIT (vfsd.f_bavail) != 0;
       fsp->fsu_files = PROPAGATE_ALL_ONES (vfsd.f_files);
       fsp->fsu_ffree = PROPAGATE_ALL_ONES (vfsd.f_ffree);
-      fsp->fsu_favail = PROPAGATE_ALL_ONES (vfsd.f_favail);
       return 0;
     }
 
@@ -160,58 +147,6 @@ get_fs_usage (char const *file, char const *disk, struct fs_usage *fsp)
   fsp->fsu_blocksize = (fsd.f_frsize
                         ? PROPAGATE_ALL_ONES (fsd.f_frsize)
                         : PROPAGATE_ALL_ONES (fsd.f_bsize));
-
-#elif defined STAT_STATFS2_FS_DATA      /* Ultrix */
-
-  struct fs_data fsd;
-
-  if (statfs (file, &fsd) != 1)
-    return -1;
-
-  fsp->fsu_blocksize = 1024;
-  fsp->fsu_blocks = PROPAGATE_ALL_ONES (fsd.fd_req.btot);
-  fsp->fsu_bfree = PROPAGATE_ALL_ONES (fsd.fd_req.bfree);
-  fsp->fsu_bavail = PROPAGATE_TOP_BIT (fsd.fd_req.bfreen);
-  fsp->fsu_bavail_top_bit_set = EXTRACT_TOP_BIT (fsd.fd_req.bfreen) != 0;
-  fsp->fsu_files = PROPAGATE_ALL_ONES (fsd.fd_req.gtot);
-  fsp->fsu_ffree = PROPAGATE_ALL_ONES (fsd.fd_req.gfree);
-  fsp->fsu_favail = PROPAGATE_ALL_ONES (fsd.fd_req.gfree);
-
-#elif defined STAT_READ_FILSYS          /* SVR2 */
-# ifndef SUPERBOFF
-#  define SUPERBOFF (SUPERB * 512)
-# endif
-
-  struct filsys fsd;
-  int fd;
-
-  if (! disk)
-    {
-      errno = 0;
-      return -1;
-    }
-
-  fd = open (disk, O_RDONLY);
-  if (fd < 0)
-    return -1;
-  lseek (fd, (off_t) SUPERBOFF, 0);
-  if (full_read (fd, (char *) &fsd, sizeof fsd) != sizeof fsd)
-    {
-      close (fd);
-      return -1;
-    }
-  close (fd);
-
-  fsp->fsu_blocksize = (fsd.s_type == Fs2b ? 1024 : 512);
-  fsp->fsu_blocks = PROPAGATE_ALL_ONES (fsd.s_fsize);
-  fsp->fsu_bfree = PROPAGATE_ALL_ONES (fsd.s_tfree);
-  fsp->fsu_bavail = PROPAGATE_TOP_BIT (fsd.s_tfree);
-  fsp->fsu_bavail_top_bit_set = EXTRACT_TOP_BIT (fsd.s_tfree) != 0;
-  fsp->fsu_files = (fsd.s_isize == -1
-                    ? UINTMAX_MAX
-                    : (fsd.s_isize - 2) * INOPB * (fsd.s_type == Fs2b ? 2 : 1));
-  fsp->fsu_ffree = PROPAGATE_ALL_ONES (fsd.s_tinode);
-  fsp->fsu_favail = PROPAGATE_ALL_ONES (fsd.s_tinode);
 
 #elif defined STAT_STATFS3_OSF1         /* OSF/1 */
 
@@ -266,12 +201,7 @@ get_fs_usage (char const *file, char const *disk, struct fs_usage *fsp)
 
   fsp->fsu_blocksize = PROPAGATE_ALL_ONES (fsd.f_fsize);
 
-#elif defined STAT_STATFS4              /* SVR3, Dynix, old Irix, old AIX, \
-                                           Dolphin */
-
-# if !_AIX && !defined _SEQUENT_ && !defined DOLPHIN
-#  define f_bavail f_bfree
-# endif
+#elif defined STAT_STATFS4              /* SVR3, old Irix */
 
   struct statfs fsd;
 
@@ -281,11 +211,7 @@ get_fs_usage (char const *file, char const *disk, struct fs_usage *fsp)
   /* Empirically, the block counts on most SVR3 and SVR3-derived
      systems seem to always be in terms of 512-byte blocks,
      no matter what value f_bsize has.  */
-# if _AIX || defined _CRAY
-   fsp->fsu_blocksize = PROPAGATE_ALL_ONES (fsd.f_bsize);
-# else
    fsp->fsu_blocksize = 512;
-# endif
 
 #endif
 
@@ -299,38 +225,9 @@ get_fs_usage (char const *file, char const *disk, struct fs_usage *fsp)
   fsp->fsu_bavail_top_bit_set = EXTRACT_TOP_BIT (fsd.f_bavail) != 0;
   fsp->fsu_files = PROPAGATE_ALL_ONES (fsd.f_files);
   fsp->fsu_ffree = PROPAGATE_ALL_ONES (fsd.f_ffree);
-  fsp->fsu_favail = PROPAGATE_ALL_ONES (fsd.f_ffree);
 
 #endif
 
   (void) disk;  /* avoid argument-unused warning */
   return 0;
 }
-
-#if defined _AIX && defined _I386
-/* AIX PS/2 does not supply statfs.  */
-
-int
-statfs (char *file, struct statfs *fsb)
-{
-  struct stat stats;
-  struct dustat fsd;
-
-  if (stat (file, &stats) != 0)
-    return -1;
-  if (dustat (stats.st_dev, 0, &fsd, sizeof (fsd)))
-    return -1;
-  fsb->f_type   = 0;
-  fsb->f_bsize  = fsd.du_bsize;
-  fsb->f_blocks = fsd.du_fsize - fsd.du_isize;
-  fsb->f_bfree  = fsd.du_tfree;
-  fsb->f_bavail = fsd.du_tfree;
-  fsb->f_files  = (fsd.du_isize - 2) * fsd.du_inopb;
-  fsb->f_ffree  = fsd.du_tinode;
-  fsb->f_favail  = fsd.du_tinode;
-  fsb->f_fsid.val[0] = fsd.du_site;
-  fsb->f_fsid.val[1] = fsd.du_pckno;
-  return 0;
-}
-
-#endif /* _AIX && _I386 */

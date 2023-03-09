@@ -1399,7 +1399,6 @@ char *unchunk_content(const char *content) {
   char *endptr;
   long length_of_chunk = 0;
   size_t overall_size = 0;
-  char *result_ptr;
 
   while (true) {
     size_of_chunk = strtol(pointer, &endptr, 16);
@@ -1439,29 +1438,37 @@ char *unchunk_content(const char *content) {
     overall_size += length_of_chunk;
 
     if (result == NULL) {
-      result = (char *)calloc(length_of_chunk, sizeof(char));
+      // Size of the chunk plus the ending NULL byte
+      result = (char *)malloc(length_of_chunk +1);
       if (result == NULL) {
         if (verbose) {
           printf("Failed to allocate memory for unchunked body\n");
         }
         return NULL;
       }
-      result_ptr = result;
     } else {
-      void *tmp = realloc(result, overall_size);
+      // Enlarge memory to the new size plus the ending NULL byte
+      void *tmp = realloc(result, overall_size +1);
       if (tmp == NULL) {
         if (verbose) {
           printf("Failed to allocate memory for unchunked body\n");
         }
         return NULL;
+      } else {
+        result = tmp;
       }
     }
 
-    memcpy(result_ptr, start_of_chunk, size_of_chunk);
-    result_ptr = result_ptr + size_of_chunk;
+    memcpy(result + (overall_size - size_of_chunk), start_of_chunk, size_of_chunk);
   }
 
-  result[overall_size] = '\0';
+  if (overall_size == 0 && result == NULL) {
+    // We might just have received the end chunk without previous content, so result is never allocated
+    result = calloc(1, sizeof(char));
+    // No error handling here, we can only return NULL anyway
+  } else {
+    result[overall_size] = '\0';
+  }
   return result;
 }
 
