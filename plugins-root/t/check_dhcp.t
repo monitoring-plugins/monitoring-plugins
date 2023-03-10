@@ -19,7 +19,7 @@ if ($allow_sudo eq "yes" or $> == 0) {
 my $sudo = $> == 0 ? '' : 'sudo';
 
 my $successOutput = '/OK: Received \d+ DHCPOFFER\(s\), \d+ of 1 requested servers responded, max lease time = \d+ sec\./';
-my $failureOutput = '/CRITICAL: No DHCPOFFERs were received/';
+my $failureOutput = '/CRITICAL: (No DHCPOFFERs were received|Received \d+ DHCPOFFER\(s\), 0 of 1 requested servers responded, max lease time = \d+ sec\.)/';
 my $invalidOutput = '/Invalid hostname/';
 
 my $host_responsive    = getTestParameter( "NP_HOST_DHCP_RESPONSIVE",
@@ -36,7 +36,12 @@ my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
 
 # try to determince interface
 my $interface = '';
-if(`ifconfig -a 2>/dev/null` =~ m/^(e\w*\d+)/mx and $1 ne 'eth0') {
+
+# find interface used for default route
+if (-x '/usr/sbin/ip' and `/usr/sbin/ip route get 1.1.1.1 2>/dev/null` =~ m/\sdev\s(\S+)/) {
+    $interface = "-i $1";
+}
+elsif (`ifconfig -a 2>/dev/null` =~ m/^(e\w*\d+)/mx and $1 ne 'eth0') {
     $interface = ' -i '.$1;
 }
 

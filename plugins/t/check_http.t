@@ -9,7 +9,7 @@ use Test::More;
 use POSIX qw/mktime strftime/;
 use NPTest;
 
-plan tests => 50;
+plan tests => 49;
 
 my $successOutput = '/OK.*HTTP.*second/';
 
@@ -103,7 +103,7 @@ SKIP: {
         cmp_ok( $res->return_code, "==", 0, "And also when not found");
 }
 SKIP: {
-        skip "No internet access", 16 if $internet_access eq "no";
+        skip "No internet access", 22 if $internet_access eq "no";
 
         $res = NPTest->testCmd(
                 "./$plugin --ssl $host_tls_http"
@@ -135,7 +135,7 @@ SKIP: {
 
         # run some certificate checks with faketime
         SKIP: {
-                skip "No faketime binary found", 12 if !$faketime;
+                skip "No faketime binary found", 7 if !$faketime;
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC ./$plugin -C 1 $host_tls_http");
                 like($res->output, qr/OK - Certificate '$host_tls_cert' will expire on/, "Catch cert output");
                 is( $res->return_code, 0, "Catch cert output exit code" );
@@ -165,12 +165,6 @@ SKIP: {
         $res = NPTest->testCmd( "./$plugin --ssl $host_tls_http -E" );
         like  ( $res->output, '/time_connect=[\d\.]+/', 'Extended Performance Data Output OK' );
         like  ( $res->output, '/time_ssl=[\d\.]+/', 'Extended Performance Data SSL Output OK' );
-
-        $res = NPTest->testCmd(
-                "./$plugin --ssl -H www.e-paycobalt.com"
-                );
-        cmp_ok( $res->return_code, "==", 0, "Can read https for www.e-paycobalt.com (uses AES certificate)" );
-
 
         $res = NPTest->testCmd( "./$plugin -H www.mozilla.com -u /firefox -f follow" );
         is( $res->return_code, 0, "Redirection based on location is okay");

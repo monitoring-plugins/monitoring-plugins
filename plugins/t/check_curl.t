@@ -1,15 +1,22 @@
 #! /usr/bin/perl -w -I ..
 #
-# HyperText Transfer Protocol (HTTP) Test via check_http
+# HyperText Transfer Protocol (HTTP) Test via check_curl
 #
 #
 
 use strict;
 use Test::More;
 use POSIX qw/mktime strftime/;
-use NPTest;
 
-plan tests => 57;
+use vars qw($tests $has_ipv6);
+
+BEGIN {
+    use NPTest;
+    $has_ipv6 = NPTest::has_ipv6();
+    $tests = $has_ipv6 ? 59 : 57;
+    plan tests => $tests;
+}
+
 
 my $successOutput = '/OK.*HTTP.*second/';
 
@@ -18,6 +25,7 @@ my $plugin = 'check_http';
 $plugin    = 'check_curl' if $0 =~ m/check_curl/mx;
 
 my $host_tcp_http      = getTestParameter("NP_HOST_TCP_HTTP", "A host providing the HTTP Service (a web server)", "localhost");
+my $host_tcp_http_ipv6      = getTestParameter("NP_HOST_TCP_HTTP_IPV6", "An IPv6 address providing a HTTP Service (a web server)", "::1");
 my $host_tls_http      = getTestParameter("NP_HOST_TLS_HTTP", "A host providing the HTTPS Service (a tls web server)", "localhost");
 my $host_tls_cert      = getTestParameter("NP_HOST_TLS_CERT", "the common name of the certificate.", "localhost");
 my $host_nonresponsive = getTestParameter("NP_HOST_NONRESPONSIVE", "The hostname of system not responsive to network requests", "10.0.0.1");
@@ -31,32 +39,41 @@ my $faketime = -x '/usr/bin/faketime' ? 1 : 0;
 
 
 $res = NPTest->testCmd(
-	"./$plugin $host_tcp_http -wt 300 -ct 600"
-	);
+    "./$plugin $host_tcp_http -wt 300 -ct 600"
+    );
 cmp_ok( $res->return_code, '==', 0, "Webserver $host_tcp_http responded" );
 like( $res->output, $successOutput, "Output OK" );
 
+if ($has_ipv6) {
+    # Test for IPv6 formatting
+    $res = NPTest->testCmd(
+        "./$plugin -I $host_tcp_http_ipv6 -wt 300 -ct 600"
+        );
+    cmp_ok( $res->return_code, '==', 0, "IPv6 URL formatting is working" );
+    like( $res->output, $successOutput, "Output OK" );
+}
+
 $res = NPTest->testCmd(
-	"./$plugin $host_tcp_http -wt 300 -ct 600 -v -v -v -k 'bob:there' -k 'carl:frown'"
-	);
+    "./$plugin $host_tcp_http -wt 300 -ct 600 -v -v -v -k 'bob:there' -k 'carl:frown'"
+    );
 like( $res->output, '/bob:there\r\ncarl:frown\r\n/', "Got headers with multiple -k options" );
 
 $res = NPTest->testCmd(
-	"./$plugin $host_nonresponsive -wt 1 -ct 2 -t 3"
-	);
+    "./$plugin $host_nonresponsive -wt 1 -ct 2 -t 3"
+    );
 cmp_ok( $res->return_code, '==', 2, "Webserver $host_nonresponsive not responding" );
 # was CRITICAL only, but both check_curl and check_http print HTTP CRITICAL (puzzle?!)
-cmp_ok( $res->output, 'eq', "HTTP CRITICAL - Invalid HTTP response received from host on port 80: cURL returned 28 - Timeout was reached", "Output OK");
+like( $res->output, "/HTTP CRITICAL - Invalid HTTP response received from host on port 80: cURL returned 28 - Connection timed out after/", "Output OK");
 
 $res = NPTest->testCmd(
-	"./$plugin $hostname_invalid -wt 1 -ct 2"
-	);
+    "./$plugin $hostname_invalid -wt 1 -ct 2"
+    );
 cmp_ok( $res->return_code, '==', 2, "Webserver $hostname_invalid not valid" );
 # The first part of the message comes from the OS catalogue, so cannot check this.
 # On Debian, it is Name or service not known, on Darwin, it is No address associated with nodename
 # Is also possible to get a socket timeout if DNS is not responding fast enough
 # cURL gives us consistent strings from it's own 'lib/strerror.c'
-like( $res->output, "/cURL returned 6 - Couldn't resolve host name/", "Output OK");
+like( $res->output, "/cURL returned 6 - Could not resolve host:/", "Output OK");
 
 # host header checks
 $res = NPTest->testCmd("./$plugin -v -H $host_tcp_http");
@@ -84,7 +101,7 @@ like( $res->output, '/^Host: testhost:8001\s*$/ms', "Host Header OK" );
 like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
 
 SKIP: {
-        skip "No internet access", 3 if $internet_access eq "no";
+        skip "No internet access", 4 if $internet_access eq "no";
 
         $res = NPTest->testCmd("./$plugin -v -H $host_tls_http -S");
         like( $res->output, '/^Host: '.$host_tls_http.'\s*$/ms', "Host Header OK" );
@@ -94,6 +111,9 @@ SKIP: {
 
         $res = NPTest->testCmd("./$plugin -v -H $host_tls_http:443 -S -p 443");
         like( $res->output, '/^Host: '.$host_tls_http.'\s*$/ms', "Host Header OK" );
+
+        $res = NPTest->testCmd("./$plugin -v -H $host_tls_http -D -S -p 443");
+        like( $res->output, '/(^Host: '.$host_tls_http.'\s*$)|(cURL returned 60)/ms', "Host Header OK" );
 };
 
 SKIP: {
@@ -117,7 +137,7 @@ SKIP: {
         cmp_ok( $res->return_code, "==", 0, "And also when not found");
 }
 SKIP: {
-        skip "No internet access", 16 if $internet_access eq "no";
+        skip "No internet access", 28 if $internet_access eq "no";
 
         $res = NPTest->testCmd(
                 "./$plugin --ssl $host_tls_http"
@@ -185,13 +205,7 @@ SKIP: {
         like  ( $res->output, '/time_connect=[\d\.]+/', 'Extended Performance Data Output OK' );
         like  ( $res->output, '/time_ssl=[\d\.]+/', 'Extended Performance Data SSL Output OK' );
 
-        $res = NPTest->testCmd(
-                "./$plugin --ssl -H www.e-paycobalt.com"
-                );
-        cmp_ok( $res->return_code, "==", 0, "Can read https for www.e-paycobalt.com (uses AES certificate)" );
-
-
-        $res = NPTest->testCmd( "./$plugin -H www.mozilla.com -u /firefox -f follow" );
+        $res = NPTest->testCmd( "./$plugin -H www.mozilla.com -u /firefox -f curl" );
         is( $res->return_code, 0, "Redirection based on location is okay");
 
         $res = NPTest->testCmd( "./$plugin -H www.mozilla.com --extended-perfdata" );

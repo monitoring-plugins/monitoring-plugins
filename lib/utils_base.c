@@ -128,6 +128,7 @@ range
 	temp_range->end = 0;
 	temp_range->end_infinity = TRUE;
 	temp_range->alert_on = OUTSIDE;
+	temp_range->text = strdup(str);
 
 	if (str[0] == '@') {
 		temp_range->alert_on = INSIDE;
@@ -401,20 +402,20 @@ int mp_translate_state (char *state_text) {
  * parse of argv, so that uniqueness in parameters are reflected there.
  */
 char *_np_state_generate_key() {
-	struct sha1_ctx ctx;
+	struct sha256_ctx ctx;
 	int i;
 	char **argv = this_monitoring_plugin->argv;
 	unsigned char result[20];
 	char keyname[41];
 	char *p=NULL;
 
-	sha1_init_ctx(&ctx);
+	sha256_init_ctx(&ctx);
 	
 	for(i=0; i<this_monitoring_plugin->argc; i++) {
-		sha1_process_bytes(argv[i], strlen(argv[i]), &ctx);
+		sha256_process_bytes(argv[i], strlen(argv[i]), &ctx);
 	}
 
-	sha1_finish_ctx(&ctx, &result);
+	sha256_finish_ctx(&ctx, &result);
 	
 	for (i=0; i<20; ++i) {
 		sprintf(&keyname[2*i], "%02x", result[i]);
@@ -706,4 +707,3 @@ void np_state_write_string(time_t data_time, char *data_string) {
 
 	np_free(temp_file);
 }
-

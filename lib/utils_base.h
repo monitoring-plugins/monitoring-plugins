@@ -2,7 +2,7 @@
 #define _UTILS_BASE_
 /* Header file for Monitoring Plugins utils_base.c */
 
-#include "sha1.h"
+#include "sha256.h"
 
 /* This file holds header information for thresholds - use this in preference to 
    individual plugin logic */
@@ -23,6 +23,7 @@ typedef struct range_struct {
 	double	end;
 	int	end_infinity;
 	int	alert_on;		/* OUTSIDE (default) or INSIDE */
+	char* text; /* original unparsed text input */
 	} range;
 
 typedef struct thresholds_struct {

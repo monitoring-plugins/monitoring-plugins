@@ -124,10 +124,10 @@ if (!defined($session)) {
 ## map ifdescr to ifindex - should look at being able to cache this value
 
 if (defined $ifdescr || defined $iftype) {
-	# escape "/" in ifdescr - very common in the Cisco world
 	if (defined $iftype) {
 		$status=fetch_ifindex($snmpIfType, $iftype);
 	} else {
+		# escape "/" in ifdescr - very common in the Cisco world
 		$ifdescr =~ s/\//\\\//g;
 		$status=fetch_ifindex($snmpIfDescr, $ifdescr);  # if using on device with large number of interfaces
 		                                                # recommend use of SNMP v2 (get-bulk)

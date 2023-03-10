@@ -69,7 +69,6 @@ int process_arguments (int, char **);
 int validate_arguments (void);
 void print_usage (void);
 void print_help (void);
-int is_pg_dbname (char *);
 int is_pg_logname (char *);
 int do_query (PGconn *, char *);
 
@@ -85,6 +84,8 @@ char *pgparams = NULL;
 double twarn = (double)DEFAULT_WARN;
 double tcrit = (double)DEFAULT_CRIT;
 char *pgquery = NULL;
+#define OPTID_QUERYNAME -1000
+char *pgqueryname = NULL;
 char *query_warning = NULL;
 char *query_critical = NULL;
 thresholds *qthresholds = NULL;
@@ -285,6 +286,7 @@ process_arguments (int argc, char **argv)
 		{"database", required_argument, 0, 'd'},
 		{"option", required_argument, 0, 'o'},
 		{"query", required_argument, 0, 'q'},
+		{"queryname", required_argument, 0, OPTID_QUERYNAME},
 		{"query_critical", required_argument, 0, 'C'},
 		{"query_warning", required_argument, 0, 'W'},
 		{"verbose", no_argument, 0, 'v'},
@@ -344,10 +346,10 @@ process_arguments (int argc, char **argv)
 				pgport = optarg;
 			break;
 		case 'd':     /* database name */
-			if (!is_pg_dbname (optarg)) /* checks length and valid chars */
-				usage2 (_("Database name is not valid"), optarg);
-			else /* we know length, and know optarg is terminated, so us strcpy */
-				strcpy (dbName, optarg);
+			if (strlen(optarg) >= NAMEDATALEN) {
+				usage2 (_("Database name exceeds the maximum length"), optarg);
+			}
+			snprintf(dbName, NAMEDATALEN, "%s", optarg);
 			break;
 		case 'l':     /* login name */
 			if (!is_pg_logname (optarg))
@@ -367,6 +369,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'q':
 			pgquery = optarg;
+			break;
+		case OPTID_QUERYNAME:
+			pgqueryname = optarg;
 			break;
 		case 'v':
 			verbose++;
@@ -406,45 +411,6 @@ int
 validate_arguments ()
 {
 	return OK;
-}
-
-
-/******************************************************************************
-
-@@-
-<sect3>
-<title>is_pg_dbname</title>
-
-<para>&PROTO_is_pg_dbname;</para>
-
-<para>Given a database name, this function returns TRUE if the string
-is a valid PostgreSQL database name, and returns false if it is
-not.</para>
-
-<para>Valid PostgreSQL database names are less than &NAMEDATALEN;
-characters long and consist of letters, numbers, and underscores. The
-first character cannot be a number, however.</para>
-
-</sect3>
--@@
-******************************************************************************/
-
-
-
-int
-is_pg_dbname (char *dbname)
-{
-	char txt[NAMEDATALEN];
-	char tmp[NAMEDATALEN];
-	if (strlen (dbname) > NAMEDATALEN - 1)
-		return (FALSE);
-	strncpy (txt, dbname, NAMEDATALEN - 1);
-	txt[NAMEDATALEN - 1] = 0;
-	if (sscanf (txt, "%[_a-zA-Z]%[^_a-zA-Z0-9-]", tmp, tmp) == 1)
-		return (TRUE);
-	if (sscanf (txt, "%[_a-zA-Z]%[_a-zA-Z0-9-]%[^_a-zA-Z0-9-]", tmp, tmp, tmp) ==
-			2) return (TRUE);
-	return (FALSE);
 }
 
 /**
@@ -529,6 +495,9 @@ print_help (void)
 
 	printf (" %s\n", "-q, --query=STRING");
 	printf ("    %s\n", _("SQL query to run. Only first column in first row will be read"));
+	printf (" %s\n", "--queryname=STRING");
+	printf ("    %s\n", _("A name for the query, this string is used instead of the query"));
+	printf ("    %s\n", _("in the long output of the plugin"));
 	printf (" %s\n", "-W, --query-warning=RANGE");
 	printf ("    %s\n", _("SQL query value to result in warning status (double)"));
 	printf (" %s\n", "-C, --query-critical=RANGE");
@@ -642,7 +611,13 @@ do_query (PGconn *conn, char *query)
 					: (my_status == STATE_CRITICAL)
 						? _("CRITICAL")
 						: _("UNKNOWN"));
-	printf (_("'%s' returned %f"), query, value);
+	if(pgqueryname) {
+		printf (_("%s returned %f"), pgqueryname, value);
+	}
+	else {
+		printf (_("'%s' returned %f"), query, value);
+	}
+
 	printf ("|query=%f;%s;%s;;\n", value,
 			query_warning ? query_warning : "",
 			query_critical ? query_critical : "");

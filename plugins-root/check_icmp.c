@@ -1,39 +1,39 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_icmp plugin
-* 
+*
 * License: GPL
 * Copyright (c) 2005-2008 Monitoring Plugins Development Team
 * Original Author : Andreas Ericsson <ae@op5.se>
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_icmp plugin
-* 
+*
 * Relevant RFC's: 792 (ICMP), 791 (IP)
-* 
+*
 * This program was modeled somewhat after the check_icmp program,
 * which was in turn a hack of fping (www.fping.org) but has been
 * completely rewritten since to generate higher precision rta values,
 * and support several different modes as well as setting ttl to control.
 * redundant routes. The only remainders of fping is currently a few
 * function names.
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 /* progname may change */
@@ -50,19 +50,12 @@ const char *email = "devel@monitoring-plugins.org";
 #if HAVE_SYS_SOCKIO_H
 #include <sys/sockio.h>
 #endif
-#include <sys/ioctl.h>
+
 #include <sys/time.h>
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <stddef.h>
 #include <errno.h>
-#include <string.h>
+#include <signal.h>
 #include <ctype.h>
-#include <netdb.h>
-#include <sys/socket.h>
+#include <float.h>
 #include <net/if.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -71,8 +64,6 @@ const char *email = "devel@monitoring-plugins.org";
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
 #include <arpa/inet.h>
-#include <signal.h>
-#include <float.h>
 
 
 /** sometimes undefined system macros (quite a few, actually) **/
@@ -103,10 +94,6 @@ const char *email = "devel@monitoring-plugins.org";
 # define ICMP_UNREACH_FILTER_PROHIB 13
 # define ICMP_UNREACH_HOST_PRECEDENCE 14
 # define ICMP_UNREACH_PRECEDENCE_CUTOFF 15
-#endif
-
-#ifndef DBL_MAX
-# define DBL_MAX 9.9999999999e999
 #endif
 
 typedef unsigned short range_t;  /* type for get_range() -- unimplemented */
@@ -207,7 +194,7 @@ static int add_target(char *);
 static int add_target_ip(char *, struct sockaddr_storage *);
 static int handle_random_icmp(unsigned char *, struct sockaddr_storage *);
 static void parse_address(struct sockaddr_storage *, char *, int);
-static unsigned short icmp_checksum(unsigned short *, int);
+static unsigned short icmp_checksum(uint16_t *, size_t);
 static void finish(int);
 static void crash(const char *, ...);
 
@@ -223,7 +210,7 @@ static int mode, protocols, sockets, debug = 0, timeout = 10;
 static unsigned short icmp_data_size = DEFAULT_PING_DATA_SIZE;
 static unsigned short icmp_pkt_size = DEFAULT_PING_DATA_SIZE + ICMP_MINLEN;
 
-static unsigned int icmp_sent = 0, icmp_recv = 0, icmp_lost = 0;
+static unsigned int icmp_sent = 0, icmp_recv = 0, icmp_lost = 0, ttl = 0;
 #define icmp_pkts_en_route (icmp_sent - (icmp_recv + icmp_lost))
 static unsigned short targets_down = 0, targets = 0, packets = 0;
 #define targets_alive (targets - targets_down)
@@ -233,7 +220,6 @@ static pid_t pid;
 static struct timezone tz;
 static struct timeval prog_start;
 static unsigned long long max_completion_time = 0;
-static unsigned char ttl = 0;	/* outgoing ttl */
 static unsigned int warn_down = 1, crit_down = 1; /* host down threshold values */
 static int min_hosts_alive = -1;
 float pkt_backoff_factor = 1.5;
@@ -410,6 +396,7 @@ main(int argc, char **argv)
 #ifdef SO_TIMESTAMP
 	int on = 1;
 #endif
+	char *source_ip = NULL;
 	char * opts_str = "vhVw:c:n:p:t:H:s:i:b:I:l:m:64";
 
 	setlocale (LC_ALL, "");
@@ -461,10 +448,17 @@ main(int argc, char **argv)
 		packets = 5;
 	}
 
+	/* support "--help" and "--version" */
+	if(argc == 2) {
+		if(!strcmp(argv[1], "--help"))
+			strcpy(argv[1], "-h");
+		if(!strcmp(argv[1], "--version"))
+			strcpy(argv[1], "-V");
+	}
+
 	/* Parse protocol arguments first */
 	for(i = 1; i < argc; i++) {
 		while((arg = getopt(argc, argv, opts_str)) != EOF) {
-			unsigned short size;
 			switch(arg) {
 			case '4':
 				if (address_family != -1)
@@ -487,10 +481,10 @@ main(int argc, char **argv)
 	/* Reset argument scanning */
 	optind = 1;
 
+	unsigned short size;
 	/* parse the arguments */
 	for(i = 1; i < argc; i++) {
 		while((arg = getopt(argc, argv, opts_str)) != EOF) {
-			unsigned short size;
 			switch(arg) {
 			case 'v':
 				debug++;
@@ -502,7 +496,7 @@ main(int argc, char **argv)
 					icmp_data_size = size;
 					icmp_pkt_size = size + ICMP_MINLEN;
 				} else
-					usage_va("ICMP data length must be between: %d and %d",
+					usage_va("ICMP data length must be between: %lu and %lu",
 					         sizeof(struct icmp) + sizeof(struct icmp_ping_data),
 					         MAX_PING_DATA - 1);
 				break;
@@ -530,7 +524,7 @@ main(int argc, char **argv)
 				add_target(optarg);
 				break;
 			case 'l':
-				ttl = (unsigned char)strtoul(optarg, NULL, 0);
+				ttl = (int)strtoul(optarg, NULL, 0);
 				break;
 			case 'm':
 				min_hosts_alive = (int)strtoul(optarg, NULL, 0);
@@ -542,7 +536,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 's': /* specify source IP address */
-				set_source_ip(optarg);
+				source_ip = optarg;
 				break;
 			case 'V': /* version */
 				print_revision (progname, NP_VERSION);
@@ -565,14 +559,6 @@ main(int argc, char **argv)
 
 	/* Parse extra opts if any */
 	argv=np_extra_opts(&argc, argv, progname);
-
-	/* support "--help" and "--version" */
-	if(argc == 2) {
-		if(!strcmp(argv[1], "--help"))
-			strcpy(argv[1], "-h");
-		if(!strcmp(argv[1], "--version"))
-			strcpy(argv[1], "-V");
-	}
 
 	argv = &argv[optind];
 	while(*argv) {
@@ -597,6 +583,8 @@ main(int argc, char **argv)
 		sockets |= HAVE_ICMP;
 	else icmp_sockerrno = errno;
 
+	if( source_ip )
+		set_source_ip(source_ip);
 
 #ifdef SO_TIMESTAMP
 	if(setsockopt(icmp_sock, SOL_SOCKET, SO_TIMESTAMP, &on, sizeof(on)))
@@ -717,7 +705,7 @@ main(int argc, char **argv)
 static void
 run_checks()
 {
-	u_int i, t, result;
+	u_int i, t;
 	u_int final_wait, time_passed;
 
 	/* this loop might actually violate the pkt_interval or target_interval
@@ -735,9 +723,9 @@ run_checks()
 
 			/* we're still in the game, so send next packet */
 			(void)send_icmp_ping(icmp_sock, table[t]);
-			result = wait_for_reply(icmp_sock, target_interval);
+			wait_for_reply(icmp_sock, target_interval);
 		}
-		result = wait_for_reply(icmp_sock, pkt_interval * targets);
+		wait_for_reply(icmp_sock, pkt_interval * targets);
 	}
 
 	if(icmp_pkts_en_route && targets_alive) {
@@ -757,7 +745,7 @@ run_checks()
 		 * haven't yet */
 		if(debug) printf("Waiting for %u micro-seconds (%0.3f msecs)\n",
 						 final_wait, (float)final_wait / 1000);
-		result = wait_for_reply(icmp_sock, final_wait);
+		wait_for_reply(icmp_sock, final_wait);
 	}
 }
 
@@ -776,7 +764,7 @@ static int
 wait_for_reply(int sock, u_int t)
 {
 	int n, hlen;
-	static unsigned char buf[4096];
+	static unsigned char buf[65536];
 	struct sockaddr_storage resp_addr;
 	union ip_hdr *ip;
 	union icmp_packet packet;
@@ -913,15 +901,33 @@ wait_for_reply(int sock, u_int t)
 		if(debug) {
 			char address[INET6_ADDRSTRLEN];
 			parse_address(&resp_addr, address, sizeof(address));
-			printf("%0.3f ms rtt from %s, outgoing ttl: %u, incoming ttl: %u, max: %0.3f, min: %0.3f\n",
-				(float)tdiff / 1000, address,
-				ttl, ip->ip.ip_ttl, (float)host->rtmax / 1000, (float)host->rtmin / 1000);
+
+			switch(address_family) {
+				case AF_INET: {
+					printf("%0.3f ms rtt from %s, outgoing ttl: %u, incoming ttl: %u, max: %0.3f, min: %0.3f\n",
+						(float)tdiff / 1000,
+						address,
+						ttl,
+						ip->ip.ip_ttl,
+						(float)host->rtmax / 1000,
+						(float)host->rtmin / 1000);
+					break;
+					  };
+				case AF_INET6: {
+					printf("%0.3f ms rtt from %s, outgoing ttl: %u, max: %0.3f, min: %0.3f\n",
+						(float)tdiff / 1000,
+						address,
+						ttl,
+						(float)host->rtmax / 1000,
+						(float)host->rtmin / 1000);
+					  };
+			   }
 		}
 
 		/* if we're in hostcheck mode, exit with limited printouts */
 		if(mode == MODE_HOSTCHECK) {
 			printf("OK - %s responds to ICMP. Packet %u, rta %0.3fms|"
-				"pkt=%u;;0;%u rta=%0.3f;%0.3f;%0.3f;;\n",
+				"pkt=%u;;;0;%u rta=%0.3f;%0.3f;%0.3f;;\n",
 				host->name, icmp_recv, (float)tdiff / 1000,
 				icmp_recv, packets, (float)tdiff / 1000,
 				(float)warn.rta / 1000, (float)crit.rta / 1000);
@@ -938,6 +944,7 @@ static int
 send_icmp_ping(int sock, struct rta_host *host)
 {
 	long int len;
+	size_t addrlen;
 	struct icmp_ping_data data;
 	struct msghdr hdr;
 	struct iovec iov;
@@ -969,6 +976,7 @@ send_icmp_ping(int sock, struct rta_host *host)
 
 	if (address_family == AF_INET) {
 		struct icmp *icp = (struct icmp*)buf;
+		addrlen = sizeof(struct sockaddr_in);
 
 		memcpy(&icp->icmp_data, &data, sizeof(data));
 
@@ -977,7 +985,7 @@ send_icmp_ping(int sock, struct rta_host *host)
 		icp->icmp_cksum = 0;
 		icp->icmp_id = htons(pid);
 		icp->icmp_seq = htons(host->id++);
-		icp->icmp_cksum = icmp_checksum((unsigned short*)buf, icmp_pkt_size);
+		icp->icmp_cksum = icmp_checksum((uint16_t*)buf, (size_t)icmp_pkt_size);
 
 		if (debug > 2)
 			printf("Sending ICMP echo-request of len %lu, id %u, seq %u, cksum 0x%X to host %s\n",
@@ -985,7 +993,10 @@ send_icmp_ping(int sock, struct rta_host *host)
 	}
 	else {
 		struct icmp6_hdr *icp6 = (struct icmp6_hdr*)buf;
+		addrlen = sizeof(struct sockaddr_in6);
+
 		memcpy(&icp6->icmp6_dataun.icmp6_un_data8[4], &data, sizeof(data));
+
 		icp6->icmp6_type = ICMP6_ECHO_REQUEST;
 		icp6->icmp6_code = 0;
 		icp6->icmp6_cksum = 0;
@@ -1006,7 +1017,7 @@ send_icmp_ping(int sock, struct rta_host *host)
 
 	memset(&hdr, 0, sizeof(hdr));
 	hdr.msg_name = (struct sockaddr *)&host->saddr_in;
-	hdr.msg_namelen = sizeof(struct sockaddr_storage);
+	hdr.msg_namelen = addrlen;
 	hdr.msg_iov = &iov;
 	hdr.msg_iovlen = 1;
 
@@ -1134,7 +1145,7 @@ finish(int sig)
 	while(host) {
 		if(!host->icmp_recv) {
 			/* rta 0 is ofcourse not entirely correct, but will still show up
-			 * conspicuosly as missing entries in perfparse and cacti */
+			 * conspicuously as missing entries in perfparse and cacti */
 			pl = 100;
 			rta = 0;
 			status = STATE_CRITICAL;
@@ -1210,7 +1221,7 @@ finish(int sig)
 			   host->rta / 1000, (float)warn.rta / 1000, (float)crit.rta / 1000,
 			   (targets > 1) ? host->name : "", host->pl, warn.pl, crit.pl,
 			   (targets > 1) ? host->name : "", (float)host->rtmax / 1000,
-			   (targets > 1) ? host->name : "", (host->rtmin < DBL_MAX) ? (float)host->rtmin / 1000 : (float)0);
+			   (targets > 1) ? host->name : "", (host->rtmin < INFINITY) ? (float)host->rtmin / 1000 : (float)0);
 
 		host = host->next;
 	}
@@ -1293,7 +1304,7 @@ add_target_ip(char *arg, struct sockaddr_storage *in)
 	if(!host) {
 		char straddr[INET6_ADDRSTRLEN];
 		parse_address((struct sockaddr_storage*)&in, straddr, sizeof(straddr));
-		crash("add_target_ip(%s, %s): malloc(%d) failed",
+		crash("add_target_ip(%s, %s): malloc(%lu) failed",
 			arg, straddr, sizeof(struct rta_host));
 	}
 	memset(host, 0, sizeof(struct rta_host));
@@ -1313,7 +1324,7 @@ add_target_ip(char *arg, struct sockaddr_storage *in)
 		memcpy(host_sin6->sin6_addr.s6_addr, sin6->sin6_addr.s6_addr, sizeof host_sin6->sin6_addr.s6_addr);
 	}
 
-	host->rtmin = DBL_MAX;
+	host->rtmin = INFINITY;
 
 	if(!list) list = cursor = host;
 	else cursor->next = host;
@@ -1328,7 +1339,7 @@ add_target_ip(char *arg, struct sockaddr_storage *in)
 static int
 add_target(char *arg)
 {
-	int error, result;
+	int error, result = -1;
 	struct sockaddr_storage ip;
 	struct addrinfo hints, *res, *p;
 	struct sockaddr_in *sin;
@@ -1419,20 +1430,21 @@ set_source_ip(char *arg)
 static in_addr_t
 get_ip_address(const char *ifname)
 {
+  // TODO: Rewrite this so the function return an error and we exit somewhere else
+	struct sockaddr_in ip;
 #if defined(SIOCGIFADDR)
 	struct ifreq ifr;
-	struct sockaddr_in ip;
 
 	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name) - 1);
 	ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
 	if(ioctl(icmp_sock, SIOCGIFADDR, &ifr) == -1)
 		crash("Cannot determine IP address of interface %s", ifname);
 	memcpy(&ip, &ifr.ifr_addr, sizeof(ip));
-	return ip.sin_addr.s_addr;
 #else
 	errno = 0;
 	crash("Cannot get interface IP address on this platform.");
 #endif
+	return ip.sin_addr.s_addr;
 }
 
 /*
@@ -1514,18 +1526,19 @@ get_threshold(char *str, threshold *th)
 }
 
 unsigned short
-icmp_checksum(unsigned short *p, int n)
+icmp_checksum(uint16_t *p, size_t n)
 {
 	unsigned short cksum;
 	long sum = 0;
 
-	while(n > 2) {
-		sum += *p++;
-		n -= sizeof(unsigned short);
+	/* sizeof(uint16_t) == 2 */
+	while(n >= 2) {
+		sum += *(p++);
+		n -= 2;
 	}
 
 	/* mop up the occasional odd byte */
-	if(n == 1) sum += (unsigned char)*p;
+	if(n == 1) sum += *((uint8_t *)p -1);
 
 	sum = (sum >> 16) + (sum & 0xffff);	/* add hi 16 to low 16 */
 	sum += (sum >> 16);			/* add carry */
