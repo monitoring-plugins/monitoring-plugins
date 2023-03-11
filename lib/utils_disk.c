@@ -47,9 +47,10 @@ np_add_parameter(struct parameter_list **list, const char *name)
   struct parameter_list *current = *list;
   struct parameter_list *new_path;
   new_path = (struct parameter_list *) malloc (sizeof *new_path);
-  new_path->name = (char *) name;
+  new_path->name = (char *) malloc(strlen(name) + 1);
   new_path->best_match = NULL;
   new_path->name_next = NULL;
+  new_path->name_prev = NULL;
   new_path->freespace_bytes = NULL;
   new_path->freespace_units = NULL;
   new_path->freespace_percent = NULL;
@@ -75,13 +76,17 @@ np_add_parameter(struct parameter_list **list, const char *name)
   new_path->dused_inodes_percent = 0;
   new_path->dfree_inodes_percent = 0;
 
+  strcpy(new_path->name, name);
+
   if (current == NULL) {
     *list = new_path;
+    new_path->name_prev = NULL;
   } else {
     while (current->name_next) {
       current = current->name_next;
     }
     current->name_next = new_path;
+    new_path->name_prev = current;
   }
   return new_path;
 }
@@ -90,6 +95,9 @@ np_add_parameter(struct parameter_list **list, const char *name)
 struct parameter_list *
 np_del_parameter(struct parameter_list *item, struct parameter_list *prev)
 {
+  if (item == NULL) {
+    return NULL;
+  }
   struct parameter_list *next;
 
   if (item->name_next)
@@ -97,9 +105,16 @@ np_del_parameter(struct parameter_list *item, struct parameter_list *prev)
   else
     next = NULL;
 
-  free(item);
+  if (next)
+    next->name_prev = prev;
+
   if (prev)
     prev->name_next = next;
+
+  if (item->name) {
+    free(item->name);
+  }
+  free(item);
 
   return next;
 }
