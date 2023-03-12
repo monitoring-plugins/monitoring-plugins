@@ -244,7 +244,7 @@ void curlhelp_freewritebuffer (curlhelp_write_curlbuf*);
 int curlhelp_initreadbuffer (curlhelp_read_curlbuf *, const char *, size_t);
 int curlhelp_buffer_read_callback (void *, size_t , size_t , void *);
 void curlhelp_freereadbuffer (curlhelp_read_curlbuf *);
-curlhelp_ssl_library curlhelp_get_ssl_library (CURL*);
+curlhelp_ssl_library curlhelp_get_ssl_library ();
 const char* curlhelp_get_ssl_library_string (curlhelp_ssl_library);
 int net_noopenssl_check_certificate (cert_ptr_union*, int, int);
 
@@ -297,6 +297,7 @@ main (int argc, char **argv)
 
 int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx)
 {
+	(void) preverify_ok;
   /* TODO: we get all certificates of the chain, so which ones
    * should we test?
    * TODO: is the last certificate always the server certificate?
@@ -321,6 +322,8 @@ int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx)
 
 CURLcode sslctxfun(CURL *curl, SSL_CTX *sslctx, void *parm)
 {
+	(void) curl; // ignore unused parameter
+	(void) parm; // ignore unused parameter
   SSL_CTX_set_verify(sslctx, SSL_VERIFY_PEER, verify_callback);
 
   return CURLE_OK;
@@ -646,7 +649,7 @@ check_http (void)
   }
 
   /* detect SSL library used by libcurl */
-  ssl_library = curlhelp_get_ssl_library (curl);
+  ssl_library = curlhelp_get_ssl_library ();
 
   /* try hard to get a stack of certificates to verify against */
   if (check_cert) {
@@ -2381,7 +2384,7 @@ get_content_length (const curlhelp_write_curlbuf* header_buf, const curlhelp_wri
 
 /* TODO: is there a better way in libcurl to check for the SSL library? */
 curlhelp_ssl_library
-curlhelp_get_ssl_library (CURL* curl)
+curlhelp_get_ssl_library ()
 {
   curl_version_info_data* version_data;
   char *ssl_version;
