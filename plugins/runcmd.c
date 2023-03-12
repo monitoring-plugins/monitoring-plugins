@@ -46,6 +46,8 @@
 
 #include "./utils.h"
 
+#include "../lib/maxfd.h"
+
 /** macros **/
 #ifndef WEXITSTATUS
 # define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
