@@ -125,10 +125,6 @@ _cmd_open (char *const *argv, int *pfd, int *pfderr)
 
 	int i = 0;
 
-	/* if no command was passed, return with no error */
-	if (argv == NULL)
-		return -1;
-
 	if (!_cmd_pids)
 		CMD_INIT;
 

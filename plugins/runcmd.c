@@ -115,10 +115,6 @@ np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
 	env[0] = strdup("LC_ALL=C");
 	env[1] = '\0';
 
-	/* if no command was passed, return with no error */
-	if (cmdstring == NULL)
-		return -1;
-
 	/* make copy of command string so strtok() doesn't silently modify it */
 	/* (the calling program may want to access it later) */
 	cmdlen = strlen(cmdstring);
