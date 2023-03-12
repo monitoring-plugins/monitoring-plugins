@@ -332,7 +332,7 @@ char *np_extract_value(const char *varlist, const char *name, char sep) {
 				/* strip leading spaces */
 				for (; isspace(varlist[0]); varlist++);
 
-				if (tmp = index(varlist, sep)) {
+				if (( tmp = index(varlist, sep) )) {
 					/* Value is delimited by a comma */
 					if (tmp-varlist == 0) continue;
 					value = (char *)calloc(1, tmp-varlist+1);
@@ -348,7 +348,7 @@ char *np_extract_value(const char *varlist, const char *name, char sep) {
 				break;
 			}
 		}
-		if (tmp = index(varlist, sep)) {
+		if ((tmp = index(varlist, sep))) {
 			/* More keys, keep going... */
 			varlist = tmp + 1;
 		} else {

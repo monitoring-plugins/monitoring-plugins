@@ -93,14 +93,14 @@ char **np_extra_opts(int *argc, char **argv, const char *plugin_name){
 			/* append the list to extra_args */
 			if(extra_args==NULL){
 				extra_args=ea1;
-				while(ea1=ea1->next) ea_num++;
+				while((ea1 = ea1->next)) ea_num++;
 			}else{
 				ea_tmp=extra_args;
 				while(ea_tmp->next) {
 					ea_tmp=ea_tmp->next;
 				}
 				ea_tmp->next=ea1;
-				while(ea1=ea1->next) ea_num++;
+				while((ea1=ea1->next)) ea_num++;
 			}
 			ea1=ea_tmp=NULL;
 		}

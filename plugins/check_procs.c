@@ -236,9 +236,11 @@ main (int argc, char **argv)
 					procetime, procprog, procargs);
 
 			/* Ignore self */
-			if ((usepid && mypid == procpid) ||
-				(!usepid && ((ret = stat_exe(procpid, &statbuf) != -1) && statbuf.st_dev == mydev && statbuf.st_ino == myino) ||
-				 (ret == -1 && errno == ENOENT))) {
+			if (
+					(usepid && mypid == procpid) ||
+					((!usepid && 	((ret = stat_exe(procpid, &statbuf) != -1) && statbuf.st_dev == mydev && statbuf.st_ino == myino)) ||
+					(ret == -1 && errno == ENOENT))
+					) {
 				if (verbose >= 3)
 					 printf("not considering - is myself or gone\n");
 				continue;

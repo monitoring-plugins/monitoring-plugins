@@ -1093,7 +1093,7 @@ check_http (void)
       microsec_firstbyte = deltime (tv_temp);
       elapsed_time_firstbyte = (double)microsec_firstbyte / 1.0e6;
     }
-    while (pos = memchr(buffer, '\0', i)) {
+    while ((pos = memchr(buffer, '\0', i)) != NULL) {
       /* replace nul character with a blank */
       *pos = ' ';
     }
