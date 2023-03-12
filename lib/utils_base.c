@@ -404,9 +404,15 @@ int mp_translate_state (char *state_text) {
 char *_np_state_generate_key() {
 	int i;
 	char **argv = this_monitoring_plugin->argv;
-	unsigned char result[20];
 	char keyname[41];
 	char *p=NULL;
+
+	unsigned char *result = malloc(256 * sizeof(unsigned char));
+
+	if (result == NULL) {
+		die(STATE_UNKNOWN, _("Failed to allocate memory for hashes: %s"), strerror(errno));
+	}
+
 #ifdef USE_OPENSSL
 	/*
 	 * This code path is chosen if openssl is available (which should be the most common
@@ -421,16 +427,22 @@ char *_np_state_generate_key() {
 		EVP_DigestUpdate(ctx, argv[i], strlen(argv[i]));
 	}
 
-	EVP_DigestFinalXOF(ctx, &result, 20);
+	EVP_DigestFinal(ctx, result, NULL);
 #else
+
 	struct sha256_ctx ctx;
 
 	for(i=0; i<this_monitoring_plugin->argc; i++) {
 		sha256_process_bytes(argv[i], strlen(argv[i]), &ctx);
 	}
 
-	sha256_finish_ctx(&ctx, &result);
+	sha256_finish_ctx(&ctx, result);
 #endif // FOUNDOPENSSL
+
+	for (i=0; i<20; ++i) {
+		sprintf(&keyname[2*i], "%02x", result[i]);
+	}
+
 	keyname[40]='\0';
 
 	p = strdup(keyname);
