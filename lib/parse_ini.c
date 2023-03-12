@@ -324,14 +324,16 @@ add_option(FILE *f, np_arg_list **optlst)
 
 	read_pos = 0;
 	optnew->arg = malloc(cfg_len + 1);
+
 	/* 1-character params needs only one dash */
 	if (opt_len == 1) {
-		strncpy(&optnew->arg[read_pos], "-", 1);
+		strncpy(&optnew->arg[read_pos], "-", 2);
 		read_pos += 1;
 	} else {
-		strncpy(&optnew->arg[read_pos], "--", 2);
+		strncpy(&optnew->arg[read_pos], "--", 3);
 		read_pos += 2;
 	}
+
 	strncpy(&optnew->arg[read_pos], optptr, opt_len);
 	read_pos += opt_len;
 	if (value) {
