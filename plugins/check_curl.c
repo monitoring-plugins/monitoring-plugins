@@ -374,8 +374,12 @@ void
 handle_curl_option_return_code (CURLcode res, const char* option)
 {
   if (res != CURLE_OK) {
-    snprintf (msg, DEFAULT_BUFFER_SIZE, _("Error while setting cURL option '%s': cURL returned %d - %s"),
-      option, res, curl_easy_strerror(res));
+		snprintf (msg,
+			DEFAULT_BUFFER_SIZE,
+			_("Error while setting cURL option '%s': cURL returned %d - %s"),
+			option,
+			res,
+			curl_easy_strerror(res));
     die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
   }
 }
@@ -515,9 +519,13 @@ check_http (void)
   // fill dns resolve cache to make curl connect to the given server_address instead of the host_name, only required for ssl, because we use the host_name later on to make SNI happy
   if(use_ssl && host_name != NULL) {
       if ( (res=lookup_host (server_address, addrstr, DEFAULT_BUFFER_SIZE/2)) != 0) {
-        snprintf (msg, DEFAULT_BUFFER_SIZE, _("Unable to lookup IP address for '%s': getaddrinfo returned %d - %s"),
-          server_address, res, gai_strerror (res));
-        die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
+				snprintf (msg,
+					DEFAULT_BUFFER_SIZE,
+					_("Unable to lookup IP address for '%s': getaddrinfo returned %d - %s"),
+					server_address,
+					res,
+					gai_strerror (res));
+				die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
       }
       snprintf (dnscache, DEFAULT_BUFFER_SIZE, "%s:%d:%s", host_name, server_port, addrstr);
       host = curl_slist_append(NULL, dnscache);
@@ -815,9 +823,13 @@ check_http (void)
 
   /* Curl errors, result in critical Nagios state */
   if (res != CURLE_OK) {
-    snprintf (msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host on port %d: cURL returned %d - %s"),
-      server_port, res, errbuf[0] ? errbuf : curl_easy_strerror(res));
-    die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
+		snprintf (msg,
+			DEFAULT_BUFFER_SIZE,
+			_("Invalid HTTP response received from host on port %d: cURL returned %d - %s"),
+			server_port,
+			res,
+			errbuf[0] ? errbuf : curl_easy_strerror(res));
+		die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
   }
 
   /* certificate checks */
@@ -860,15 +872,19 @@ check_http (void)
           }
 GOT_FIRST_CERT:
           if (!raw_cert) {
-            snprintf (msg, DEFAULT_BUFFER_SIZE, _("Cannot retrieve certificates from CERTINFO information - certificate data was empty"));
-            die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
+						snprintf (msg,
+							DEFAULT_BUFFER_SIZE,
+							_("Cannot retrieve certificates from CERTINFO information - certificate data was empty"));
+						die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
           }
           BIO* cert_BIO = BIO_new (BIO_s_mem());
           BIO_write (cert_BIO, raw_cert, strlen(raw_cert));
           cert = PEM_read_bio_X509 (cert_BIO, NULL, NULL, NULL);
           if (!cert) {
-            snprintf (msg, DEFAULT_BUFFER_SIZE, _("Cannot read certificate from CERTINFO information - BIO error"));
-            die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
+						snprintf (msg,
+							DEFAULT_BUFFER_SIZE,
+							_("Cannot read certificate from CERTINFO information - BIO error"));
+						die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
           }
           BIO_free (cert_BIO);
           result = np_net_ssl_check_certificate(cert, days_till_exp_warn, days_till_exp_crit);
@@ -885,9 +901,12 @@ GOT_FIRST_CERT:
           }
 #endif /* USE_OPENSSL */
         } else {
-          snprintf (msg, DEFAULT_BUFFER_SIZE, _("Cannot retrieve certificates - cURL returned %d - %s"),
-            res, curl_easy_strerror(res));
-          die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
+					snprintf (msg,
+						DEFAULT_BUFFER_SIZE,
+						_("Cannot retrieve certificates - cURL returned %d - %s"),
+						res,
+						curl_easy_strerror(res));
+					die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
         }
       }
     }
@@ -926,8 +945,11 @@ GOT_FIRST_CERT:
 
   /* get status line of answer, check sanity of HTTP code */
   if (curlhelp_parse_statusline (header_buf.buf, &status_line) < 0) {
-    snprintf (msg, DEFAULT_BUFFER_SIZE, "Unparsable status line in %.3g seconds response time|%s\n",
-      total_time, perfstring);
+		snprintf (msg,
+			DEFAULT_BUFFER_SIZE,
+			"Unparsable status line in %.3g seconds response time|%s\n",
+			total_time,
+			perfstring);
     /* we cannot know the major/minor version here for sure as we cannot parse the first line */
     die (STATE_CRITICAL, "HTTP CRITICAL HTTP/x.x %ld unknown - %s", code, msg);
   }
@@ -947,9 +969,16 @@ GOT_FIRST_CERT:
   /* make sure the status line matches the response we are looking for */
   if (!expected_statuscode(status_line.first_line, server_expect)) {
     if (server_port == HTTP_PORT)
-      snprintf(msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host: %s\n"), status_line.first_line);
+			snprintf(msg,
+				DEFAULT_BUFFER_SIZE,
+				_("Invalid HTTP response received from host: %s\n"),
+				status_line.first_line);
     else
-      snprintf(msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host on port %d: %s\n"), server_port, status_line.first_line);
+			snprintf(msg,
+					DEFAULT_BUFFER_SIZE,
+					_("Invalid HTTP response received from host on port %d: %s\n"),
+					server_port,
+					status_line.first_line);
     die (STATE_CRITICAL, "HTTP CRITICAL - %s%s%s", msg,
       show_body ? "\n" : "",
       show_body ? body_buf.buf : "");
@@ -1022,23 +1051,60 @@ GOT_FIRST_CERT:
 
   if (strlen (header_expect)) {
     if (!strstr (header_buf.buf, header_expect)) {
+
       strncpy(&output_header_search[0],header_expect,sizeof(output_header_search));
+
       if(output_header_search[sizeof(output_header_search)-1]!='\0') {
         bcopy("...",&output_header_search[sizeof(output_header_search)-4],4);
       }
-      snprintf (msg, DEFAULT_BUFFER_SIZE, _("%sheader '%s' not found on '%s://%s:%d%s', "), msg, output_header_search, use_ssl ? "https" : "http", host_name ? host_name : server_address, server_port, server_url);
-      result = STATE_CRITICAL;
+
+				char *tmp = malloc(DEFAULT_BUFFER_SIZE);
+
+				if (tmp == NULL) {
+					die(STATE_UNKNOWN, "Failed to allocate buffer for output: %s\n", strerror(errno));
+				}
+
+				snprintf (tmp,
+					DEFAULT_BUFFER_SIZE,
+					_("%sheader '%s' not found on '%s://%s:%d%s', "),
+					msg,
+					output_header_search,
+					use_ssl ? "https" : "http",
+					host_name ? host_name : server_address,
+					server_port,
+					server_url);
+
+				strcpy(msg, tmp);
+				free(tmp);
+
+				result = STATE_CRITICAL;
     }
   }
 
   if (strlen (string_expect)) {
     if (!strstr (body_buf.buf, string_expect)) {
+
       strncpy(&output_string_search[0],string_expect,sizeof(output_string_search));
+
       if(output_string_search[sizeof(output_string_search)-1]!='\0') {
         bcopy("...",&output_string_search[sizeof(output_string_search)-4],4);
       }
-      snprintf (msg, DEFAULT_BUFFER_SIZE, _("%sstring '%s' not found on '%s://%s:%d%s', "), msg, output_string_search, use_ssl ? "https" : "http", host_name ? host_name : server_address, server_port, server_url);
-      result = STATE_CRITICAL;
+
+			char tmp[DEFAULT_BUFFER_SIZE];
+
+			snprintf (tmp,
+					DEFAULT_BUFFER_SIZE,
+					_("%sstring '%s' not found on '%s://%s:%d%s', "),
+					msg,
+					output_string_search,
+					use_ssl ? "https" : "http",
+					host_name ? host_name : server_address,
+					server_port,
+					server_url);
+
+			strcpy(msg, tmp);
+
+			result = STATE_CRITICAL;
     }
   }
 
@@ -1049,27 +1115,48 @@ GOT_FIRST_CERT:
       result = max_state_alt(STATE_OK, result);
     }
     else if ((errcode == REG_NOMATCH && !invert_regex) || (errcode == 0 && invert_regex)) {
-      if (!invert_regex)
-        snprintf (msg, DEFAULT_BUFFER_SIZE, _("%spattern not found, "), msg);
-      else
-        snprintf (msg, DEFAULT_BUFFER_SIZE, _("%spattern found, "), msg);
-      result = STATE_CRITICAL;
-    }
-    else {
-      regerror (errcode, &preg, errbuf, MAX_INPUT_BUFFER);
-      snprintf (msg, DEFAULT_BUFFER_SIZE, _("%sExecute Error: %s, "), msg, errbuf);
-      result = STATE_UNKNOWN;
-    }
+			if (!invert_regex) {
+				char tmp[DEFAULT_BUFFER_SIZE];
+
+				snprintf (tmp, DEFAULT_BUFFER_SIZE, _("%spattern not found, "), msg);
+				strcpy(msg, tmp);
+
+			} else {
+				char tmp[DEFAULT_BUFFER_SIZE];
+
+				snprintf (tmp, DEFAULT_BUFFER_SIZE, _("%spattern found, "), msg);
+				strcpy(msg, tmp);
+
+			}
+			result = STATE_CRITICAL;
+		} else {
+			regerror (errcode, &preg, errbuf, MAX_INPUT_BUFFER);
+
+			char tmp[DEFAULT_BUFFER_SIZE];
+
+			snprintf (tmp, DEFAULT_BUFFER_SIZE, _("%sExecute Error: %s, "), msg, errbuf);
+			strcpy(msg, tmp);
+			result = STATE_UNKNOWN;
+		}
   }
 
   /* make sure the page is of an appropriate size */
-  if ((max_page_len > 0) && (page_len > max_page_len)) {
-    snprintf (msg, DEFAULT_BUFFER_SIZE, _("%spage size %d too large, "), msg, page_len);
-    result = max_state_alt(STATE_WARNING, result);
-  } else if ((min_page_len > 0) && (page_len < min_page_len)) {
-    snprintf (msg, DEFAULT_BUFFER_SIZE, _("%spage size %d too small, "), msg, page_len);
-    result = max_state_alt(STATE_WARNING, result);
-  }
+	if ((max_page_len > 0) && (page_len > max_page_len)) {
+		char tmp[DEFAULT_BUFFER_SIZE];
+
+		snprintf (tmp, DEFAULT_BUFFER_SIZE, _("%spage size %d too large, "), msg, page_len);
+
+		strcpy(msg, tmp);
+
+		result = max_state_alt(STATE_WARNING, result);
+
+	} else if ((min_page_len > 0) && (page_len < min_page_len)) {
+		char tmp[DEFAULT_BUFFER_SIZE];
+
+		snprintf (tmp, DEFAULT_BUFFER_SIZE, _("%spage size %d too small, "), msg, page_len);
+		strcpy(msg, tmp);
+		result = max_state_alt(STATE_WARNING, result);
+	}
 
   /* -w, -c: check warning and critical level */
   result = max_state_alt(get_status(total_time, thlds), result);
@@ -2314,37 +2401,67 @@ check_document_dates (const curlhelp_write_curlbuf *header_buf, char (*msg)[DEFA
   server_date = get_header_value (headers, nof_headers, "date");
   document_date = get_header_value (headers, nof_headers, "last-modified");
 
-  if (!server_date || !*server_date) {
-    snprintf (*msg, DEFAULT_BUFFER_SIZE, _("%sServer date unknown, "), *msg);
-    date_result = max_state_alt(STATE_UNKNOWN, date_result);
-  } else if (!document_date || !*document_date) {
-    snprintf (*msg, DEFAULT_BUFFER_SIZE, _("%sDocument modification date unknown, "), *msg);
-    date_result = max_state_alt(STATE_CRITICAL, date_result);
+	if (!server_date || !*server_date) {
+		char tmp[DEFAULT_BUFFER_SIZE];
+
+		snprintf (tmp, DEFAULT_BUFFER_SIZE, _("%sServer date unknown, "), *msg);
+		strcpy(*msg, tmp);
+
+		date_result = max_state_alt(STATE_UNKNOWN, date_result);
+
+	} else if (!document_date || !*document_date) {
+		char tmp[DEFAULT_BUFFER_SIZE];
+
+		snprintf (tmp, DEFAULT_BUFFER_SIZE, _("%sDocument modification date unknown, "), *msg);
+		strcpy(*msg, tmp);
+
+		date_result = max_state_alt(STATE_CRITICAL, date_result);
+
   } else {
     time_t srv_data = curl_getdate (server_date, NULL);
     time_t doc_data = curl_getdate (document_date, NULL);
     if (verbose >= 2)
       printf ("* server date: '%s' (%d), doc_date: '%s' (%d)\n", server_date, (int)srv_data, document_date, (int)doc_data);
-    if (srv_data <= 0) {
-      snprintf (*msg, DEFAULT_BUFFER_SIZE, _("%sServer date \"%100s\" unparsable, "), *msg, server_date);
-      date_result = max_state_alt(STATE_CRITICAL, date_result);
-    } else if (doc_data <= 0) {
-      snprintf (*msg, DEFAULT_BUFFER_SIZE, _("%sDocument date \"%100s\" unparsable, "), *msg, document_date);
-      date_result = max_state_alt(STATE_CRITICAL, date_result);
-    } else if (doc_data > srv_data + 30) {
-      snprintf (*msg, DEFAULT_BUFFER_SIZE, _("%sDocument is %d seconds in the future, "), *msg, (int)doc_data - (int)srv_data);
-      date_result = max_state_alt(STATE_CRITICAL, date_result);
-    } else if (doc_data < srv_data - maximum_age) {
-      int n = (srv_data - doc_data);
-      if (n > (60 * 60 * 24 * 2)) {
-        snprintf (*msg, DEFAULT_BUFFER_SIZE, _("%sLast modified %.1f days ago, "), *msg, ((float) n) / (60 * 60 * 24));
-        date_result = max_state_alt(STATE_CRITICAL, date_result);
-      } else {
-        snprintf (*msg, DEFAULT_BUFFER_SIZE, _("%sLast modified %d:%02d:%02d ago, "), *msg, n / (60 * 60), (n / 60) % 60, n % 60);
-        date_result = max_state_alt(STATE_CRITICAL, date_result);
-      }
-    }
-  }
+		if (srv_data <= 0) {
+			char tmp[DEFAULT_BUFFER_SIZE];
+
+			snprintf (tmp, DEFAULT_BUFFER_SIZE, _("%sServer date \"%100s\" unparsable, "), *msg, server_date);
+			strcpy(*msg, tmp);
+
+			date_result = max_state_alt(STATE_CRITICAL, date_result);
+		} else if (doc_data <= 0) {
+			char tmp[DEFAULT_BUFFER_SIZE];
+
+			snprintf (tmp, DEFAULT_BUFFER_SIZE, _("%sDocument date \"%100s\" unparsable, "), *msg, document_date);
+			strcpy(*msg, tmp);
+
+			date_result = max_state_alt(STATE_CRITICAL, date_result);
+		} else if (doc_data > srv_data + 30) {
+			char tmp[DEFAULT_BUFFER_SIZE];
+
+			snprintf (tmp, DEFAULT_BUFFER_SIZE, _("%sDocument is %d seconds in the future, "), *msg, (int)doc_data - (int)srv_data);
+			strcpy(*msg, tmp);
+
+			date_result = max_state_alt(STATE_CRITICAL, date_result);
+		} else if (doc_data < srv_data - maximum_age) {
+			int n = (srv_data - doc_data);
+			if (n > (60 * 60 * 24 * 2)) {
+				char tmp[DEFAULT_BUFFER_SIZE];
+
+				snprintf (tmp, DEFAULT_BUFFER_SIZE, _("%sLast modified %.1f days ago, "), *msg, ((float) n) / (60 * 60 * 24));
+			strcpy(*msg, tmp);
+
+				date_result = max_state_alt(STATE_CRITICAL, date_result);
+			} else {
+				char tmp[DEFAULT_BUFFER_SIZE];
+
+				snprintf (tmp, DEFAULT_BUFFER_SIZE, _("%sLast modified %d:%02d:%02d ago, "), *msg, n / (60 * 60), (n / 60) % 60, n % 60);
+				strcpy(*msg, tmp);
+
+				date_result = max_state_alt(STATE_CRITICAL, date_result);
+			}
+		}
+	}
 
   if (server_date) free (server_date);
   if (document_date) free (document_date);
