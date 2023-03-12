@@ -420,7 +420,8 @@ main (int argc, char **argv)
 		}
 		else if (strstr (response, "INTEGER: ")) {
 			show = multiply (strstr (response, "INTEGER: ") + 9);
-			if (fmtstr != "") {
+
+			if (strcmp(fmtstr, "") != 0) {
 				conv = fmtstr;
 			}
 		}
@@ -594,8 +595,9 @@ main (int argc, char **argv)
 			len = sizeof(perfstr)-strlen(perfstr)-1;
 			strncat(perfstr, show, len>ptr-show ? ptr-show : len);
 
-			if (type)
+			if (strcmp(type, "") != 0) {
 				strncat(perfstr, type, sizeof(perfstr)-strlen(perfstr)-1);
+			}
 
 			if (warning_thresholds) {
 				strncat(perfstr, ";", sizeof(perfstr)-strlen(perfstr)-1);
@@ -1183,7 +1185,7 @@ multiply (char *str)
 	if(verbose>2)
 		printf("    multiply extracted double: %f\n", val);
 	val *= multiplier;
-	if (fmtstr != "") {
+	if (strcmp(fmtstr, "") != 0) {
 		conv = fmtstr;
 	}
 	if (val == (int)val) {
