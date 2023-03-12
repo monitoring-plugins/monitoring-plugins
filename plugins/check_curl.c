@@ -1133,6 +1133,11 @@ redir (curlhelp_write_curlbuf* header_buf)
     &status_line.http_major, &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
     headers, &nof_headers, 0);
 
+	if (res == -1) {
+		die (STATE_UNKNOWN,
+				_("HTTP UNKNOWN - Could not parse redirect response\n"));
+	}
+
   location = get_header_value (headers, nof_headers, "location");
 
   if (verbose >= 2)
@@ -2305,6 +2310,11 @@ check_document_dates (const curlhelp_write_curlbuf *header_buf, char (*msg)[DEFA
     &status_line.http_major, &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
     headers, &nof_headers, 0);
 
+	if (res == -1) {
+		die (STATE_UNKNOWN,
+				_("HTTP UNKNOWN - Could not parse response\n"));
+	}
+
   server_date = get_header_value (headers, nof_headers, "date");
   document_date = get_header_value (headers, nof_headers, "last-modified");
 
@@ -2362,6 +2372,11 @@ get_content_length (const curlhelp_write_curlbuf* header_buf, const curlhelp_wri
   int res = phr_parse_response (header_buf->buf, header_buf->buflen,
     &status_line.http_major, &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
     headers, &nof_headers, 0);
+
+	if (res == -1) {
+		die (STATE_UNKNOWN,
+				_("HTTP UNKNOWN - Could not parse response\n"));
+	}
 
   content_length_s = get_header_value (headers, nof_headers, "content-length");
   if (!content_length_s) {
