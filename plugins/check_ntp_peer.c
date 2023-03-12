@@ -199,7 +199,7 @@ setup_control_request(ntp_control_message *p, uint8_t opcode, uint16_t seq){
  *  status is pretty much useless as syncsource_found is a global variable
  *  used later in main to check is the server was synchronized. It works
  *  so I left it alone */
-int ntp_request(const char *host, double *offset, int *offset_result, double *jitter, int *stratum, int *num_truechimers){
+int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum, int *num_truechimers){
 	int conn=-1, i, npeers=0, num_candidates=0;
 	double tmp_offset = 0;
 	int min_peer_sel=PEER_INCLUDED;
@@ -586,7 +586,7 @@ int main(int argc, char *argv[]){
 	alarm (socket_timeout);
 
 	/* This returns either OK or WARNING (See comment preceeding ntp_request) */
-	result = ntp_request(server_address, &offset, &offset_result, &jitter, &stratum, &num_truechimers);
+	result = ntp_request(&offset, &offset_result, &jitter, &stratum, &num_truechimers);
 
 	if(offset_result == STATE_UNKNOWN) {
 		/* if there's no sync peer (this overrides ntp_request output): */

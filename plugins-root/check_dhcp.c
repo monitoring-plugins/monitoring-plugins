@@ -229,7 +229,7 @@ struct in_addr requested_address;
 
 int process_arguments(int, char **);
 int call_getopt(int, char **);
-int validate_arguments(int, int);
+int validate_arguments(int);
 void print_usage(void);
 void print_help(void);
 
@@ -1055,8 +1055,8 @@ int process_arguments(int argc, char **argv){
 		return ERROR;
 
 	arg_index = call_getopt(argc,argv);
-	return validate_arguments(argc,arg_index);
-        }
+	return validate_arguments(argc);
+}
 
 
 
@@ -1154,13 +1154,13 @@ int call_getopt(int argc, char **argv){
         }
 
 
-int validate_arguments(int argc, int arg_index){
+int validate_arguments(int argc){
 
-	if(argc-optind > 0)
+	if(argc - optind > 0)
 		usage(_("Got unexpected non-option argument"));
 
 	return OK;
-        }
+}
 
 
 #if defined(__sun__) || defined(__solaris__) || defined(__hpux__)
