@@ -354,6 +354,7 @@ process_arguments (int argc, char **argv)
       break;
     case 'I':                 /* sourceip */
       sourceif = strscpy (sourceif, optarg);
+			break;
     case '4':                 /* IPv4 only */
       address_family = AF_INET;
       break;
