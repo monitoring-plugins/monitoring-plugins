@@ -13,7 +13,7 @@ use vars qw($tests $has_ipv6);
 BEGIN {
     use NPTest;
     $has_ipv6 = NPTest::has_ipv6();
-    $tests = $has_ipv6 ? 59 : 57;
+    $tests = $has_ipv6 ? 59 : 58;
     plan tests => $tests;
 }
 
