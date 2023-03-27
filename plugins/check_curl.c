@@ -55,6 +55,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "uriparser/Uri.h"
 
 #include <arpa/inet.h>
+#include <netinet/in.h>
 
 #if defined(HAVE_SSL) && defined(USE_OPENSSL)
 #include <openssl/opensslv.h>
@@ -541,7 +542,7 @@ check_http (void)
   /* compose URL: use the address we want to connect to, set Host: header later */
   snprintf (url, DEFAULT_BUFFER_SIZE, "%s://%s:%d%s",
       use_ssl ? "https" : "http",
-      use_ssl & host_name != NULL ? host_name : server_address,
+      ( use_ssl & ( host_name != NULL ) ) ? host_name : server_address,
       server_port,
       server_url
   );
