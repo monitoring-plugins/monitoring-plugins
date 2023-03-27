@@ -1179,10 +1179,7 @@ multiply (char *str)
 
 	val = strtod (str, &endptr);
 	if ((val == 0.0) && (endptr == str)) {
-		if(multiplier != 1) {
-			die(STATE_UNKNOWN, _("multiplier set (%.1f), but input is not a number: %s"), multiplier, str);
-		}
-		return str;
+		die(STATE_UNKNOWN, _("multiplier set (%.1f), but input is not a number: %s"), multiplier, str);
 	}
 
 	if(verbose>2)
