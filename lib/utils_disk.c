@@ -28,6 +28,7 @@
 
 #include "common.h"
 #include "utils_disk.h"
+#include "gl/fsusage.h"
 
 void
 np_add_name (struct name_list **list, const char *name)
@@ -46,9 +47,10 @@ np_add_parameter(struct parameter_list **list, const char *name)
   struct parameter_list *current = *list;
   struct parameter_list *new_path;
   new_path = (struct parameter_list *) malloc (sizeof *new_path);
-  new_path->name = (char *) name;
+  new_path->name = (char *) malloc(strlen(name) + 1);
   new_path->best_match = NULL;
   new_path->name_next = NULL;
+  new_path->name_prev = NULL;
   new_path->freespace_bytes = NULL;
   new_path->freespace_units = NULL;
   new_path->freespace_percent = NULL;
@@ -74,13 +76,17 @@ np_add_parameter(struct parameter_list **list, const char *name)
   new_path->dused_inodes_percent = 0;
   new_path->dfree_inodes_percent = 0;
 
+  strcpy(new_path->name, name);
+
   if (current == NULL) {
     *list = new_path;
+    new_path->name_prev = NULL;
   } else {
     while (current->name_next) {
       current = current->name_next;
     }
     current->name_next = new_path;
+    new_path->name_prev = current;
   }
   return new_path;
 }
@@ -89,6 +95,9 @@ np_add_parameter(struct parameter_list **list, const char *name)
 struct parameter_list *
 np_del_parameter(struct parameter_list *item, struct parameter_list *prev)
 {
+  if (item == NULL) {
+    return NULL;
+  }
   struct parameter_list *next;
 
   if (item->name_next)
@@ -96,9 +105,16 @@ np_del_parameter(struct parameter_list *item, struct parameter_list *prev)
   else
     next = NULL;
 
-  free(item);
+  if (next)
+    next->name_prev = prev;
+
   if (prev)
     prev->name_next = next;
+
+  if (item->name) {
+    free(item->name);
+  }
+  free(item);
 
   return next;
 }
@@ -127,9 +143,12 @@ np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list
       size_t name_len = strlen(d->name);
       size_t best_match_len = 0;
       struct mount_entry *best_match = NULL;
+      struct fs_usage fsp;
 
       /* set best match if path name exactly matches a mounted device name */
       for (me = mount_list; me; me = me->me_next) {
+	if (get_fs_usage(me->me_mountdir, me->me_devname, &fsp) < 0)
+	  continue; /* skip if permissions do not suffice for accessing device */
         if (strcmp(me->me_devname, d->name)==0)
           best_match = me;
       }
@@ -137,6 +156,8 @@ np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list
       /* set best match by directory name if no match was found by devname */
       if (! best_match) {
         for (me = mount_list; me; me = me->me_next) {
+	  if (get_fs_usage(me->me_mountdir, me->me_devname, &fsp) < 0)
+	    continue; /* skip if permissions do not suffice for accessing device */
           size_t len = strlen (me->me_mountdir);
           if ((exact == FALSE && (best_match_len <= len && len <= name_len &&
              (len == 1 || strncmp (me->me_mountdir, d->name, len) == 0)))

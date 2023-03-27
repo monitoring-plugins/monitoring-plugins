@@ -149,7 +149,26 @@ if ($mailq eq "sendmail") {
 ##/var/spool/mqueue/qF/df is empty
 ##                Total Requests: 1
 
-	
+# separate submission/transport queues, empty
+## MSP Queue status...
+## /var/spool/mqueue-client is empty
+##                 Total requests: 0
+## MTA Queue status...
+## /var/spool/mqueue is empty
+##                 Total requests: 0
+# separate submission/transport queues: 1
+## MSP Queue status...
+##                 /var/spool/mqueue-client (1 request)
+## -----Q-ID----- --Size-- -----Q-Time----- ------------Sender/Recipient-----------
+## oAJEfhdW014123        5 Fri Nov 19 14:41 jwm
+##                  (Deferred: Connection refused by [127.0.0.1])
+##                                          root
+##                 Total requests: 1
+## MTA Queue status...
+## /var/spool/mqueue is empty
+##                 Total requests: 0
+
+	my $this_msg_q = 0;
 	while (<MAILQ>) {
 	
 		# match email addr on queue listing
@@ -189,13 +208,18 @@ if ($mailq eq "sendmail") {
 	    	#
 		    # single queue: first line
 		    # multi queue: one for each queue. overwrite on multi queue below
-	  	  $msg_q = $1 ;
+		  $this_msg_q = $1 ;
+	  	  $msg_q += $1 ;
 			}
 		} elsif (/^\s+Total\sRequests:\s(\d+)$/i) {
-			print "$utils::PATH_TO_MAILQ = $_ \n" if $verbose ;
-			#
-			# multi queue: last line
-			$msg_q = $1 ;
+			if ($this_msg_q) {
+				$this_msg_q = 0 ;
+			} else {
+				print "$utils::PATH_TO_MAILQ = $_ \n" if $verbose ;
+				#
+				# multi queue: last line
+				$msg_q += $1 ;
+			}
 		}
 	
 	}
@@ -537,9 +561,9 @@ elsif ( $mailq eq "nullmailer" ) {
 	}
 
 	while (<MAILQ>) {
-	    #2006-06-22 16:00:00  282 bytes
+	    #2022-08-25 01:30:40 502 bytes from <user@example.com>
 
-	    if (/^[1-9][0-9]*-[01][0-9]-[0-3][0-9]\s[0-2][0-9]\:[0-5][0-9]\:[0-5][0-9]\s+[0-9]+\sbytes/) {
+	    if (/^\d{4}-\d{2}-\d{2}\s+\d{2}\:\d{2}\:\d{2}\s+\d+\sbytes/) {
 		$msg_q++ ;
 	    }
 	}
