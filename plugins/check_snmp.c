@@ -46,6 +46,7 @@ const char *email = "devel@monitoring-plugins.org";
 #define DEFAULT_PRIV_PROTOCOL "DES"
 #define DEFAULT_DELIMITER "="
 #define DEFAULT_OUTPUT_DELIMITER " "
+#define DEFAULT_BUFFER_SIZE 100
 
 #define mark(a) ((a)!=0?"*":"")
 
@@ -166,6 +167,7 @@ char *server_scheme = "udp";
 char* ip_version = "";
 double multiplier = 1.0;
 char *fmtstr = "";
+char buffer[DEFAULT_BUFFER_SIZE];
 
 static char *fix_snmp_range(char *th)
 {
@@ -1248,15 +1250,15 @@ multiply (char *str)
 	double val;
 	char *conv = "%f";
 
+	if(multiplier == 1)
+		return(str);
+
 	if(verbose>2)
 		printf("    multiply input: %s\n", str);
 
 	val = strtod (str, &endptr);
 	if ((val == 0.0) && (endptr == str)) {
-		if(multiplier != 1) {
-			die(STATE_UNKNOWN, _("multiplier set (%.1f), but input is not a number: %s"), multiplier, str);
-		}
-		return str;
+		die(STATE_UNKNOWN, _("multiplier set (%.1f), but input is not a number: %s"), multiplier, str);
 	}
 
 	if(verbose>2)
@@ -1266,15 +1268,15 @@ multiply (char *str)
 		conv = fmtstr;
 	}
 	if (val == (int)val) {
-		sprintf(str, "%.0f", val);
+		snprintf(buffer, DEFAULT_BUFFER_SIZE, "%.0f", val);
 	} else {
 		if(verbose>2)
 			printf("    multiply using format: %s\n", conv);
-		sprintf(str, conv, val);
+		snprintf(buffer, DEFAULT_BUFFER_SIZE, conv, val);
 	}
 	if(verbose>2)
-		printf("    multiply result: %s\n", str);
-	return str;
+		printf("    multiply result: %s\n", buffer);
+	return buffer;
 }
 
 
