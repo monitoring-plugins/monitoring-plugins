@@ -38,7 +38,7 @@ case "$1" in
 		;;
 	-V)
 		print_revision "$PROGNAME" "$REVISION"
-		exit "$STATE_OK"
+		exit "$STATE_UNKNOWN"
 		;;
 	*)
 		sensordata=$(sensors 2>&1)
