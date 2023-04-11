@@ -95,7 +95,7 @@ case "$cmd" in
     ;;
 --version)
 		print_revision "$PROGNAME" "$REVISION"
-    exit "$STATE_OK"
+    exit "$STATE_UNKNOWN"
     ;;
 -V)
 		print_revision "$PROGNAME" "$REVISION"

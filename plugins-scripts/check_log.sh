@@ -109,7 +109,7 @@ while test -n "$1"; do
             ;;
         -V | --version)
             print_revision "$PROGNAME" "$REVISION"
-            exit "$STATE_OK"
+            exit "$STATE_UNKNOWN"
             ;;
         -F | --filename)
             logfile=$2
