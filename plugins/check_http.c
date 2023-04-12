@@ -1156,7 +1156,7 @@ check_http (void)
         use_ssl ? "https" : "http", proxy_server_address, proxy_server_port,
         server_url, (int)pagesize);
     } else {
-      printf ("%s://%s:%d%s%s returned %d bytes\n",
+      printf ("%s://%s:%d%s returned %d bytes\n",
         use_ssl ? "https" : "http", server_address,
         server_port, server_url, (int)pagesize);
     }
