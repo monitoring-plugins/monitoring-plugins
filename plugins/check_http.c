@@ -126,6 +126,9 @@ int sd;
 int min_page_len = 0;
 int max_page_len = 0;
 int redir_depth = 0;
+bool ssl_proxy = false;
+char *proxy_server_address;
+int proxy_server_port;
 int max_depth = DEFAULT_MAX_REDIRS;
 char *http_method;
 char *http_method_proxy;
@@ -139,6 +142,7 @@ char *client_privkey = NULL;
 bool process_arguments (int, char **);
 int check_http (void);
 void redir (char *pos, char *status_line);
+const char *find_uri_path (const char *url);
 bool server_type_check(const char *type);
 int server_port_check(int ssl_flag);
 char *perfd_time (double microsec);
@@ -608,6 +612,17 @@ bool process_arguments (int argc, char **argv)
   if (virtual_port == 0)
     virtual_port = server_port;
 
+  /* if we are called with the -I option, the -j method is CONNECT and */
+  /* we received -S for SSL, then we tunnel the request through a proxy*/
+  /* @20100414, public[at]frank4dd.com, http://www.frank4dd.com/howto  */
+
+  ssl_proxy = server_address != NULL && strcmp(http_method, "CONNECT") == 0
+    && host_name != NULL && use_ssl == true;
+  if (ssl_proxy) {
+    proxy_server_address = strdup(server_address);
+    proxy_server_port = server_port;
+  }
+
   return true;
 }
 
@@ -939,18 +954,18 @@ check_http (void)
 
   /* try to connect to the host at the given port number */
   gettimeofday (&tv_temp, NULL);
-  if (my_tcp_connect (server_address, server_port, &sd) != STATE_OK)
+  result = ssl_proxy ?
+    my_tcp_connect (proxy_server_address, proxy_server_port, &sd) :
+    my_tcp_connect (server_address, server_port, &sd);
+  if (result != STATE_OK)
     die (STATE_CRITICAL, _("HTTP CRITICAL - Unable to open TCP socket\n"));
   microsec_connect = deltime (tv_temp);
 
-    /* if we are called with the -I option, the -j method is CONNECT and */
-    /* we received -S for SSL, then we tunnel the request through a proxy*/
-    /* @20100414, public[at]frank4dd.com, http://www.frank4dd.com/howto  */
+  /* handle connection via SSL proxy */
+  if (ssl_proxy) {
 
-    if ( server_address != NULL && strcmp(http_method, "CONNECT") == 0
-      && host_name != NULL && use_ssl == true) {
-
-    if (verbose) printf ("Entering CONNECT tunnel mode with proxy %s:%d to dst %s:%d\n", server_address, server_port, host_name, HTTPS_PORT);
+    if (verbose) printf ("Entering CONNECT tunnel mode with proxy %s:%d to dst %s:%d\n",
+      proxy_server_address, proxy_server_port, host_name, HTTPS_PORT);
     asprintf (&buf, "%s %s:%d HTTP/1.1\r\n%s\r\n", http_method, host_name, HTTPS_PORT, user_agent);
     if (strlen(proxy_auth)) {
       base64_encode_alloc (proxy_auth, strlen (proxy_auth), &auth);
@@ -985,7 +1000,7 @@ check_http (void)
   if (use_ssl == true) {
     gettimeofday (&tv_temp, NULL);
     result = np_net_ssl_init_with_hostname_version_and_cert(sd, (use_sni ? host_name : NULL), ssl_version, client_cert, client_privkey);
-    if (verbose) printf ("SSL initialized\n");
+    if (verbose) printf ("SSL initialization %s\n", result == STATE_OK ? "successful" : "failed");
     if (result != STATE_OK)
       die (STATE_CRITICAL, NULL);
     microsec_ssl = deltime (tv_temp);
@@ -1001,9 +1016,8 @@ check_http (void)
   }
 #endif /* HAVE_SSL */
 
-  if ( server_address != NULL && strcmp(http_method, "CONNECT") == 0
-       && host_name != NULL && use_ssl == true)
-    asprintf (&buf, "%s %s %s\r\n%s\r\n", http_method_proxy, server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
+  if (ssl_proxy)
+    asprintf (&buf, "%s %s %s\r\n%s\r\n", http_method_proxy, find_uri_path(server_url), host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
   else
     asprintf (&buf, "%s %s %s\r\n%s\r\n", http_method, server_url, host_name ? "HTTP/1.1" : "HTTP/1.0", user_agent);
 
@@ -1032,8 +1046,7 @@ check_http (void)
        */
       if ((use_ssl == false && virtual_port == HTTP_PORT) ||
           (use_ssl == true && virtual_port == HTTPS_PORT) ||
-          (server_address != NULL && strcmp(http_method, "CONNECT") == 0
-         && host_name != NULL && use_ssl == true))
+          ssl_proxy)
         xasprintf (&buf, "%sHost: %s\r\n", buf, host_name);
       else
         xasprintf (&buf, "%sHost: %s:%d\r\n", buf, host_name, virtual_port);
@@ -1137,10 +1150,17 @@ check_http (void)
   /* leave full_page untouched so we can free it later */
   page = full_page;
 
-  if (verbose)
-    printf ("%s://%s:%d%s is %d characters\n",
-      use_ssl ? "https" : "http", server_address,
-      server_port, server_url, (int)pagesize);
+  if (verbose) {
+    if (ssl_proxy)  {
+      printf ("[via proxy %s://%s:%d] %s returned %d bytes\n",
+        use_ssl ? "https" : "http", proxy_server_address, proxy_server_port,
+        server_url, (int)pagesize);
+    } else {
+      printf ("%s://%s:%d%s%s returned %d bytes\n",
+        use_ssl ? "https" : "http", server_address,
+        server_port, server_url, (int)pagesize);
+    }
+  }
 
   /* find status line and null-terminate it */
   status_line = page;
@@ -1300,7 +1320,12 @@ check_http (void)
         bcopy("...", &output_string_search[sizeof(output_string_search) - 4],
               4);
       }
-      xasprintf (&msg, _("%sstring '%s' not found on '%s://%s:%d%s', "), msg, output_string_search, use_ssl ? "https" : "http", host_name ? host_name : server_address, server_port, server_url);
+      if (ssl_proxy) {
+        xasprintf (&msg, _("%sstring '%s' not found on '%s', "), msg, output_string_search, server_url);
+      } else {
+        xasprintf (&msg, _("%sstring '%s' not found on '%s://%s:%d%s', "), msg, output_string_search,
+          use_ssl ? "https" : "http", host_name ? host_name : server_address, server_port, server_url);
+      }
       result = STATE_CRITICAL;
     }
   }
@@ -1642,6 +1667,25 @@ redir (char *pos, char *status_line)
   check_http ();
 }
 
+// Locate the URI path inside a complete URL. If we fail, just return the original URL.
+const char *
+find_uri_path (const char *url)
+{
+  const char *s = url;
+
+  if (strncmp(s, "http://", 7) == 0)
+    s += 7;
+  else if (strncmp(s, "https://", 8) == 0)
+    s += 8;
+  else
+    return url;
+  while (*s != '\0') {
+    if (strchr("/?#", *s) != NULL)
+      return s;
+    s++;
+  }
+  return url;
+}
 
 bool
 server_type_check (const char *type)
@@ -1861,7 +1905,7 @@ print_help (void)
   printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
   printf (" %s\n", _("30 days, but more than 14 days, a STATE_WARNING is returned."));
   printf (" %s\n", _("A STATE_CRITICAL will be returned when certificate expires in less than 14 days"));
-
+  printf ("\n");
   printf (" %s\n\n", "CHECK SSL WEBSERVER CONTENT VIA PROXY USING HTTP 1.1 CONNECT: ");
   printf (" %s\n", _("check_http -I 192.168.100.35 -p 80 -u https://www.verisign.com/ -S -j CONNECT -H www.verisign.com "));
   printf (" %s\n", _("all these options are needed: -I <proxy> -p <proxy-port> -u <check-url> -S(sl) -j CONNECT -H <webserver>"));
