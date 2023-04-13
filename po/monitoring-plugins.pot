@@ -3225,7 +3225,7 @@ msgid "Include server version string in results"
 msgstr ""
 
 #: plugins/check_nwstat.c:1671
-msgid "- This plugin requres that the MRTGEXT.NLM file from James Drews' MRTG"
+msgid "- This plugin requires that the MRTGEXT.NLM file from James Drews' MRTG"
 msgstr ""
 
 #: plugins/check_nwstat.c:1672
