@@ -84,7 +84,7 @@ foreach my $current_state (keys(%state)) {
 	foreach my $new_state (keys(%state)) {
 		$res = NPTest->testCmd( "./negate -s --$current_state=$new_state ./check_dummy ".$state{$current_state}." 'Fake $new_state'" );
 		is( $res->return_code, $state{$new_state}, "Got fake $new_state (with substitute)" );
-		is( $res->output, uc($new_state).": Fake $new_state", "Substitued fake $new_state output");
+		is( $res->output, uc($new_state).": Fake $new_state", "Substituted fake $new_state output");
 	}
 }
 

@@ -9,12 +9,12 @@ This file documents the major additions and syntax changes between releases.
 	check_http/check_curl: add chunked encoding test
 	check_log: Added --exclude to exclude patterns
 	check_log: Add tests
-	check_disk: Clarify usage possibilites
+	check_disk: Clarify usage possibilities
 
 	FIXES
 	fixed two PRId64 to PRIu64 in perfdata_uint64
-	check_pgsql: Removing is_pg_dbname alltogether,using postgres API.
-	check_http: Remove superflous CRLF in HTTP-Requests
+	check_pgsql: Removing is_pg_dbname altogether,using postgres API.
+	check_http: Remove superfluous CRLF in HTTP-Requests
 	check_curl: detect ipv6
 	check_icmp: fix parsing help/version long options
 	check_http: fix test plan
@@ -40,7 +40,7 @@ This file documents the major additions and syntax changes between releases.
 
 2.3.2 20th Oct 2022
 	GENERAL
-	Use netcat-openbsd for debian explicitely (by @RincewindsHat #1704)
+	Use netcat-openbsd for debian explicitly (by @RincewindsHat #1704)
 	Replace egrep with grep -E (by @RincewindsHat #1791)
 	Use silent automake by default (by @RincewindsHat #1747)
 
@@ -123,7 +123,7 @@ This file documents the major additions and syntax changes between releases.
 	check_log: Modernize check log (by @RincewindsHat #1692)
 	check_mailq: remove duplicate W=i/C=i args in check_mailq.pl (by @ichdasich #1755)
 	check_ntp: Check ntp remove unused variables (by @RincewindsHat #1781)
-	check_pgsql: Using snprintf which honors the buffers size and guarantees null temination. (Closes: #1601) (by @waja #1663)
+	check_pgsql: Using snprintf which honors the buffers size and guarantees null termination. (Closes: #1601) (by @waja #1663)
 	check_procs: Fix double percentage sign in usage (by @RincewindsHat #1743)
 	check_sensors.sh: Make shellcheck happier (by @RincewindsHat #1679)
 	check_snmp: Fixed option description authpassword -> authpasswd + whitespaces (by @RincewindsHat #1676)
@@ -165,7 +165,7 @@ This file documents the major additions and syntax changes between releases.
 	check_apt: adding packages-warning option
 	check_load: Adding top consuming processes option
 	check_http: Adding Proxy-Authorization and extra headers
-	check_snmp: make calcualtion of timeout value in help output more clear
+	check_snmp: make calculation of timeout value in help output more clear
 	check_uptime: new plugin for checking uptime to see how long the system is running
 	check_curl: check_http replacement based on libcurl
 	check_http: Allow user to specify HTTP method after proxy CONNECT
@@ -195,7 +195,7 @@ This file documents the major additions and syntax changes between releases.
 	check_procs: improve command examples for 'at least' processes
 	check_swap: repaired "-n" behaviour
 	check_disk: include -P switch in help
-	check_mailq: restore accidentially removed options
+	check_mailq: restore accidentally removed options
 
 2.2 29th November 2016
 	ENHANCEMENTS
@@ -236,7 +236,7 @@ This file documents the major additions and syntax changes between releases.
 	check_ssh now returns CRITICAL for protocol/version errors
 	If a plugin is invoked with -h/--help or -V/--version, the exit status
 	  is now UNKNOWN
-	The superseeded check_ntp.pl was removed, please use check_ntp_peer or
+	The superseded check_ntp.pl was removed, please use check_ntp_peer or
 	  check_ntp_time instead
 
 2.1.2 16th October 2015
@@ -263,7 +263,7 @@ This file documents the major additions and syntax changes between releases.
 	New check_mysql -n option to ignore authentication failures
 	Added IP and port or socket name to error messages
 	New check_ntp_time -o option to add expected offset
-	check_disk shows now troubled partions in verbose mode
+	check_disk shows now troubled partitions in verbose mode
 	check_dig has now support for drill and dig
 	check_dig has now support for -6 option
 	Add performance data to check_file_age
@@ -357,10 +357,10 @@ This file documents the major additions and syntax changes between releases.
 	New check_procs -k option to ignore kernel threads (on Linux)
 	Let check_procs use /proc/<PID>/exe (if available) instead of getpid(2), unless -T is specified
 	Let check_mysql support SSL
-	Let check_mysql add perfromance metrics for all checks
+	Let check_mysql add performance metrics for all checks
 	New check_mysql -f option to specify a client options file
 	New check_mysql -g option to specify a client options group
-	New check_snmp --offset option to allow for adding/substracting an offset value to sensor data
+	New check_snmp --offset option to allow for adding/subtracting an offset value to sensor data
 	Let check_snmp support an arbitrary number of OIDs
 	Let check_ide_smart support NetBSD
 
@@ -375,7 +375,7 @@ This file documents the major additions and syntax changes between releases.
 	Fix deprecated imports of check_nmap.py
 
 	WARNINGS
-	check_http behaviour of -k/--header changed since it does not seperate multiple headers by semicolons anymore. Use multiple -k switches instead.
+	check_http behaviour of -k/--header changed since it does not separate multiple headers by semicolons anymore. Use multiple -k switches instead.
 	check_http's --proxy_authorization option is now called --proxy-authorization (it was always documented this way)
 	The contrib directory has been removed from this distribution
 
@@ -526,7 +526,7 @@ This file documents the major additions and syntax changes between releases.
 	check_ntp and check_ntp_peer now show proper jitter/stratum thresholds longopts in --help
 	check_dns now allow to repeat -a to match multiple possibly returned address (common with load balancers)
 	check_mysql and check_radius now try clearing password in processlist just like check_mysql_query
-	check_mysql and check_mysql_query now support sockets explicitely (-s, --socket)
+	check_mysql and check_mysql_query now support sockets explicitly (-s, --socket)
 	negate now has the ability to replace the status text as well (-s, --substitute)
 	Added performance data to check_ping
 	Added support for --extra-opts in all C plugins (disabled by default, see configure --help)
@@ -566,7 +566,7 @@ This file documents the major additions and syntax changes between releases.
 	New check_disk option -L: Only check local filesystems, but call stat() on remote ones, too.
 	  Thus accessibility of remote filesystems can be checked without any threshold comparison.
 	Check_disk's --help now prints some examples for the new features introduced in 1.4.8
-	New check_disk -i/-I option to ignore pathes/partitions based on regular expressions
+	New check_disk -i/-I option to ignore paths/partitions based on regular expressions
 	New check_disk -A option to select all filesystems explicitly
 	WARNING: check_disk's -E option must now be passed before -p or -r/-R arguments
 	  Passing -E after -p or -r results in UNKNOWN state, now
@@ -615,7 +615,7 @@ This file documents the major additions and syntax changes between releases.
 	Fixed MKINSTALLDIRS problem in po/
 	./configure now detects if possible to compile check_mysql
 	Fixed broken HELO in check_smtp
-	check_icmp now allows to set a minimum number of hosts required for successs (-m)
+	check_icmp now allows to set a minimum number of hosts required for success (-m)
 	check_icmp fix for *BSD when running for long time
 	check_ping times out 1 second quicker if host is unreachable
 	Root plugins installed with world executable

@@ -151,14 +151,14 @@ of testing against a set of desired exit status values.
 =item *
 
 Firstly, if C<$desiredExitStatus> is a reference to an array of exit
-stati, if the actual exit status of the command is present in the
+statuses, if the actual exit status of the command is present in the
 array, it is used in the call to C<Test::ok(...)> when testing the
 exit status.
 
 =item *
 
 Alternatively, if C<$desiredExitStatus> is a reference to a hash of
-exit stati (mapped to the strings "continue" or "skip"), similar
+exit  statuses(mapped to the strings "continue" or "skip"), similar
 processing to the above occurs with the side affect of determining if
 any generated output testing should proceed. Note: only the string
 "skip" will result in generated output testing being skipped.
@@ -207,7 +207,7 @@ under the same terms as the Monitoring Plugins release.
 
 my( %CACHE ) = ();
 
-# I'm not really sure wether to house a site-specific cache inside
+# I'm not really sure whether to house a site-specific cache inside
 # or outside of the extracted source / build tree - lets default to outside
 my( $CACHEFILENAME ) = ( exists( $ENV{'NPTEST_CACHE'} ) && $ENV{'NPTEST_CACHE'} )
                        ? $ENV{'NPTEST_CACHE'} : "/var/tmp/NPTest.cache"; # "../Cache.pdd";
