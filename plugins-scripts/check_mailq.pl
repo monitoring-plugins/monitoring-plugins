@@ -4,7 +4,7 @@
 #   transmittal.  
 #
 # Initial version support sendmail's mailq command
-#  Support for mutiple sendmail queues (Carlos Canau)
+#  Support for multiple sendmail queues (Carlos Canau)
 #  Support for qmail (Benjamin Schmid)
 
 # License Information:

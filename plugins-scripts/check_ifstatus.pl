@@ -354,7 +354,7 @@ sub process_arguments() {
 		if (defined $seclevel && defined $secname) {
 			$session_opts{'-username'} = $secname;
 		
-			# Must define a security level even though defualt is noAuthNoPriv
+			# Must define a security level even though default is noAuthNoPriv
 			unless ( grep /^$seclevel$/, qw(noAuthNoPriv authNoPriv authPriv) ) {
 				usage("Must define a valid security level even though default is noAuthNoPriv");
 			}

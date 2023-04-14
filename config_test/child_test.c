@@ -30,7 +30,7 @@ int main(){
             /* pipefd[1] is for writing to the pipe. We want the output
              * that used to go to the standard output (file descriptor 1)
              * to be written to the pipe. The following command does this,
-             * creating a new file descripter 1 (the lowest available) 
+             * creating a new file descriptor 1 (the lowest available) 
              * that writes where pipefd[1] goes. */
             dup (pipefd[1]); /* points pipefd at file descriptor */
             /* the child isn't going to read from the pipe, so
