@@ -586,7 +586,7 @@ int main(int argc, char *argv[]){
 	alarm (socket_timeout);
 
 	/* This returns either OK or WARNING (See comment preceeding ntp_request) */
-	result = ntp_request(server_address, &offset, &offset_result, &jitter, &stratum, &num_truechimers);
+	result = ntp_request(&offset, &offset_result, &jitter, &stratum, &num_truechimers);
 
 	if(offset_result == STATE_UNKNOWN) {
 		/* if there's no sync peer (this overrides ntp_request output): */
