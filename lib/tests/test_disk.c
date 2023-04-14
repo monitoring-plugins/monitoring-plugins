@@ -88,10 +88,10 @@ main (int argc, char **argv)
 		                  cflags, 3,strdup("regex on dev names:"));
 	np_test_mount_entry_regex(dummy_mount_list, strdup("/foo"),
 		                  cflags, 0,
-			 	  strdup("regex on non existant dev/path:"));
+			 	  strdup("regex on non existent dev/path:"));
 	np_test_mount_entry_regex(dummy_mount_list, strdup("/Foo"),
 		                  cflags | REG_ICASE,0,
-			 	  strdup("regi on non existant dev/path:"));
+			 	  strdup("regi on non existent dev/path:"));
 	np_test_mount_entry_regex(dummy_mount_list, strdup("/c.t0"),
 		                  cflags, 3,
 			 	  strdup("partial devname regex match:"));

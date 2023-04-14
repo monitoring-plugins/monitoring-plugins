@@ -73,7 +73,7 @@ int wrta_p = FALSE;
 int
 main (int argc, char **argv)
 {
-/* normaly should be  int result = STATE_UNKNOWN; */
+/* normally should be  int result = STATE_UNKNOWN; */
 
   int status = STATE_UNKNOWN;
   int result = 0;

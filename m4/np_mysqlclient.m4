@@ -81,7 +81,7 @@ AC_DEFUN([np_check_lib_mariadbclient],
     ], [with_mysql=no], [$np_mysql_libs])
 ])
 
-dnl Will take $1, find last occurrance of -LDIR and add DIR to LD_RUN_PATH
+dnl Will take $1, find last occurrence of -LDIR and add DIR to LD_RUN_PATH
 AC_DEFUN([np_add_to_runpath], 
 [
   dnl Need [[ ]] so autoconf gives us just one set

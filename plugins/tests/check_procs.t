@@ -8,7 +8,7 @@ use Test::More;
 use NPTest;
 
 if (-x "./check_procs") {
-	plan tests => 52;
+	plan tests => 54;
 } else {
 	plan skip_all => "No check_procs compiled";
 }
@@ -34,8 +34,12 @@ is( $result->return_code, 0, "Checking no threshold breeched" );
 is( $result->output, "PROCS OK: 95 processes | procs=95;100;200;0;", "Output correct" );
 
 $result = NPTest->testCmd( "$command -C launchd -c 5" );
-is( $result->return_code, 2, "Checking processes filtered by command name" );
+is( $result->return_code, 2, "Checking processes matched by command name" );
 is( $result->output, "PROCS CRITICAL: 6 processes with command name 'launchd' | procs=6;;5;0;", "Output correct" );
+
+$result = NPTest->testCmd( "$command -X bash -c 5" );
+is( $result->return_code, 2, "Checking processes excluded by command name" );
+is( $result->output, "PROCS CRITICAL: 95 processes with exclude progs 'bash' | procs=95;;5;0;", "Output correct" );
 
 SKIP: {
     skip 'user with uid 501 required', 4 unless getpwuid(501);

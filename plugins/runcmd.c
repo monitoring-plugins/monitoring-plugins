@@ -203,7 +203,7 @@ np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
 	}
 
 	/* parent picks up execution here */
-	/* close childs descriptors in our address space */
+	/* close children descriptors in our address space */
 	close(pfd[1]);
 	close(pfderr[1]);
 

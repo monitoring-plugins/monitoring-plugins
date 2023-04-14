@@ -221,7 +221,7 @@ main (int argc, char *argv[])
 	/* reset the alarm handler */
 	alarm (0);
 
-	/* calcutate the elapsed time and compare to thresholds */
+	/* calculate the elapsed time and compare to thresholds */
 
 	microsec = deltime (tv);
 	elapsed_time = (double)microsec / 1.0e6;

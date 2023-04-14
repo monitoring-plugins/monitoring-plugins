@@ -507,7 +507,7 @@ process_arguments (int argc, char **argv)
 				usage2 (_("Invalid hostname/address"), optarg);
 			}
 			break;
-		case 'T': /* FIXME: to be improved (ie "-T C" for Celsius or "-T F" for Farenheit) */
+		case 'T': /* FIXME: to be improved (ie "-T C" for Celsius or "-T F" for Fahrenheit) */
 			temp_output_c = 1;
 			break;
 		case 'u':									/* ups name */
