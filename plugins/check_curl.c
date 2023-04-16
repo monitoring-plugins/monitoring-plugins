@@ -1055,7 +1055,6 @@ GOT_FIRST_CERT:
 
   if (strlen (header_expect)) {
     if (!strstr (header_buf.buf, header_expect)) {
-
       strncpy(&output_header_search[0],header_expect,sizeof(output_header_search));
 
       if(output_header_search[sizeof(output_header_search)-1]!='\0') {
