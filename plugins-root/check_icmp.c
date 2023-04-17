@@ -1432,7 +1432,7 @@ get_ip_address(const char *ifname)
 {
   // TODO: Rewrite this so the function return an error and we exit somewhere else
 	struct sockaddr_in ip;
-	ip.sin_addr.s_addr = 0; // Fake inititialization to make compiler happy
+	ip.sin_addr.s_addr = 0; // Fake initialization to make compiler happy
 #if defined(SIOCGIFADDR)
 	struct ifreq ifr;
 

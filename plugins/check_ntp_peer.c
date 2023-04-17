@@ -585,7 +585,7 @@ int main(int argc, char *argv[]){
 	/* set socket timeout */
 	alarm (socket_timeout);
 
-	/* This returns either OK or WARNING (See comment preceeding ntp_request) */
+	/* This returns either OK or WARNING (See comment preceding ntp_request) */
 	result = ntp_request(&offset, &offset_result, &jitter, &stratum, &num_truechimers);
 
 	if(offset_result == STATE_UNKNOWN) {
