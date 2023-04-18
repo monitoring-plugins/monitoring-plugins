@@ -75,7 +75,7 @@ main (int argc, char **argv)
 {
   char *command_line = NULL;
   char input_buffer[MAX_INPUT_BUFFER];
-  char *address = NULL; /* comma seperated str with addrs/ptrs (sorted) */
+  char *address = NULL; /* comma separated str with addrs/ptrs (sorted) */
   char **addresses = NULL;
   int n_addresses = 0;
   char *msg = NULL;

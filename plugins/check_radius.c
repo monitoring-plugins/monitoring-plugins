@@ -97,7 +97,7 @@ int verbose = FALSE;
 
 /******************************************************************************
 
-The (psuedo?)literate programming XML is contained within \@\@\- <XML> \-\@\@
+The (pseudo?)literate programming XML is contained within \@\@\- <XML> \-\@\@
 tags in the comments. With in the tags, the XML is assembled sequentially.
 You can define entities in tags. You also have all the #defines available as
 entities.
@@ -155,7 +155,11 @@ main (int argc, char **argv)
 {
 	struct sockaddr_storage ss;
 	char name[HOST_NAME_MAX];
+#ifdef RC_BUFFER_LEN
+	char msg[RC_BUFFER_LEN];
+#else
 	char msg[BUFFER_LEN];
+#endif
 	SEND_DATA data;
 	int result = STATE_UNKNOWN;
 	uint32_t client_id, service;

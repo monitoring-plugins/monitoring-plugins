@@ -3225,7 +3225,7 @@ msgid "Include server version string in results"
 msgstr ""
 
 #: plugins/check_nwstat.c:1671
-msgid "- This plugin requres that the MRTGEXT.NLM file from James Drews' MRTG"
+msgid "- This plugin requires that the MRTGEXT.NLM file from James Drews' MRTG"
 msgstr ""
 
 #: plugins/check_nwstat.c:1672
@@ -4193,7 +4193,7 @@ msgid "This plugin will attempt to open an RTSP connection with the host."
 msgstr ""
 
 #: plugins/check_real.c:438 plugins/check_smtp.c:830
-msgid "Successul connects return STATE_OK, refusals and timeouts return"
+msgid "Successful connects return STATE_OK, refusals and timeouts return"
 msgstr ""
 
 #: plugins/check_real.c:439
@@ -4597,7 +4597,7 @@ msgid ""
 msgstr ""
 
 #: plugins/check_snmp.c:1143
-msgid "Add/substract the specified OFFSET to numeric sensor data"
+msgid "Add/subtract the specified OFFSET to numeric sensor data"
 msgstr ""
 
 #: plugins/check_snmp.c:1147
@@ -4817,7 +4817,7 @@ msgid ""
 msgstr ""
 
 #: plugins/check_swap.c:541
-msgid "Exit with CRITCAL status if less than PERCENT of swap space is free"
+msgid "Exit with CRITICAL status if less than PERCENT of swap space is free"
 msgstr ""
 
 #: plugins/check_swap.c:543
