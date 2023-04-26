@@ -1592,13 +1592,13 @@ then
 		grep -E -i "^lswap +path +pri +swaplo +blocks +free +maxswap" \
 		>/dev/null]
 	then
-		ac_cv_swap_format=[" %*d %*s %*d,%*d %*d %*d %f %f"]
+		ac_cv_swap_format=[" %*d %*s %*d,%*d %*d %*d %lu %lu"]
 		ac_cv_swap_conv=2048
 		AC_MSG_RESULT([using IRIX format swap])
 
 	elif [$PATH_TO_SWAP -l 2>/dev/null | grep -E -i "^path +dev +swaplo +blocks +free" >/dev/null]
 	then
-		ac_cv_swap_format=["%*s %*[0-9,-] %*d %f %f"]
+		ac_cv_swap_format=["%*s %*[0-9,-] %*d %lu %lu"]
 		ac_cv_swap_conv=2048
 		AC_MSG_RESULT([using Unixware format swap])
 	else
@@ -1622,7 +1622,7 @@ then
 
 	if [$PATH_TO_SWAPINFO -k 2>/dev/null | grep -E -i "^Device +1K-blocks +Used +Avail" >/dev/null]
 	then
-		ac_cv_swap_format=["%*s %f %*d %f"]
+		ac_cv_swap_format=["%*s %lu %*d %lu"]
 		ac_cv_swap_conv=1024
 		AC_MSG_RESULT([using FreeBSD format swapinfo])
 	fi
@@ -1631,7 +1631,7 @@ elif [$PATH_TO_SWAPINFO -dfM 2>/dev/null | grep -E -i "^TYPE +AVAIL +USED +FREE"
 then
 	ac_cv_have_swap=yes
 	ac_cv_swap_command="$PATH_TO_SWAPINFO -dfM"
-	ac_cv_swap_format=["%*s %f %*d %f"]
+	ac_cv_swap_format=["%*s %lu %*d %lu"]
 	ac_cv_swap_conv=1024
 	AC_MSG_RESULT([using HP-UX format swapinfo])
 fi
@@ -1646,7 +1646,7 @@ if [$PATH_TO_LSPS -a 2>/dev/null | grep -E -i "^Page Space" > /dev/null]
 then
 	ac_cv_have_swap=yes
 	ac_cv_swap_command="$PATH_TO_LSPS -a"
-	ac_cv_swap_format=["%*s %*s %*s %f%*s %f %*s"]
+	ac_cv_swap_format=["%*s %*s %*s %lu%*s %lu %*s"]
 	ac_cv_swap_conv=1
 	AC_MSG_RESULT([using AIX lsps])
 fi
