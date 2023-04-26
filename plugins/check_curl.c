@@ -1062,11 +1062,7 @@ GOT_FIRST_CERT:
         bcopy("...",&output_header_search[sizeof(output_header_search)-4],4);
       }
 
-				char *tmp = malloc(DEFAULT_BUFFER_SIZE);
-
-				if (tmp == NULL) {
-					die(STATE_UNKNOWN, "Failed to allocate buffer for output: %s\n", strerror(errno));
-				}
+				char tmp[DEFAULT_BUFFER_SIZE];
 
 				snprintf (tmp,
 					DEFAULT_BUFFER_SIZE,
@@ -1079,7 +1075,6 @@ GOT_FIRST_CERT:
 					server_url);
 
 				strcpy(msg, tmp);
-				free(tmp);
 
 				result = STATE_CRITICAL;
     }
