@@ -4,7 +4,7 @@
 #   transmittal.  
 #
 # Initial version support sendmail's mailq command
-#  Support for mutiple sendmail queues (Carlos Canau)
+#  Support for multiple sendmail queues (Carlos Canau)
 #  Support for qmail (Benjamin Schmid)
 
 # License Information:
@@ -149,7 +149,26 @@ if ($mailq eq "sendmail") {
 ##/var/spool/mqueue/qF/df is empty
 ##                Total Requests: 1
 
-	
+# separate submission/transport queues, empty
+## MSP Queue status...
+## /var/spool/mqueue-client is empty
+##                 Total requests: 0
+## MTA Queue status...
+## /var/spool/mqueue is empty
+##                 Total requests: 0
+# separate submission/transport queues: 1
+## MSP Queue status...
+##                 /var/spool/mqueue-client (1 request)
+## -----Q-ID----- --Size-- -----Q-Time----- ------------Sender/Recipient-----------
+## oAJEfhdW014123        5 Fri Nov 19 14:41 jwm
+##                  (Deferred: Connection refused by [127.0.0.1])
+##                                          root
+##                 Total requests: 1
+## MTA Queue status...
+## /var/spool/mqueue is empty
+##                 Total requests: 0
+
+	my $this_msg_q = 0;
 	while (<MAILQ>) {
 	
 		# match email addr on queue listing
@@ -189,13 +208,18 @@ if ($mailq eq "sendmail") {
 	    	#
 		    # single queue: first line
 		    # multi queue: one for each queue. overwrite on multi queue below
-	  	  $msg_q = $1 ;
+		  $this_msg_q = $1 ;
+	  	  $msg_q += $1 ;
 			}
 		} elsif (/^\s+Total\sRequests:\s(\d+)$/i) {
-			print "$utils::PATH_TO_MAILQ = $_ \n" if $verbose ;
-			#
-			# multi queue: last line
-			$msg_q = $1 ;
+			if ($this_msg_q) {
+				$this_msg_q = 0 ;
+			} else {
+				print "$utils::PATH_TO_MAILQ = $_ \n" if $verbose ;
+				#
+				# multi queue: last line
+				$msg_q += $1 ;
+			}
 		}
 	
 	}

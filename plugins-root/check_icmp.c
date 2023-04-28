@@ -274,7 +274,7 @@ get_icmp_error_msg(unsigned char icmp_type, unsigned char icmp_code)
 		break;
 
 	case ICMP_TIMXCEED:
-		/* really 'out of reach', or non-existant host behind a router serving
+		/* really 'out of reach', or non-existent host behind a router serving
 		 * two different subnets */
 		switch(icmp_code) {
 		case ICMP_TIMXCEED_INTRANS: msg = "Time to live exceeded in transit"; break;
