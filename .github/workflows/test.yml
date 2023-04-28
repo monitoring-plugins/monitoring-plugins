@@ -15,8 +15,8 @@ jobs:
       run: sudo apt-get install gettext
     - name: setup
       run: ./tools/setup
-    - name: CFLAGS="-Wall -Wextra -std=c90" configure
-      run: ./configure
+    - name: configure
+      run: CFLAGS="-Wall -Wextra -Werror=pedantic -std=c90" ./configure
     - name: make
       run: make
 
