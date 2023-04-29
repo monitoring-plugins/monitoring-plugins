@@ -551,7 +551,7 @@ print_help (void)
   printf ("    %s\n", _("Exit with CRITICAL status if slave server is more then INTEGER seconds"));
   printf ("    %s\n", _("behind master"));
   printf (" %s\n", "-l, --ssl");
-  printf ("    %s\n", _("Use ssl encryptation"));
+  printf ("    %s\n", _("Use ssl encryption"));
   printf (" %s\n", "-C, --ca-cert=STRING");
   printf ("    %s\n", _("Path to CA signing the cert"));
   printf (" %s\n", "-a, --cert=STRING");
