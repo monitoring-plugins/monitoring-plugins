@@ -87,11 +87,11 @@ esac
 case "$cmd" in
 --help)
     print_help
-    exit "$STATE_OK"
+    exit "$STATE_UNKNOWN"
     ;;
 -h)
     print_help
-    exit "$STATE_OK"
+    exit "$STATE_UNKNOWN"
     ;;
 --version)
     print_revision "$PROGNAME" "$REVISION"
