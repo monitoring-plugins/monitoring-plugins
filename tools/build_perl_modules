@@ -140,7 +140,7 @@ my $libs = "$destdir/$prefix/lib:$destdir/$prefix/lib/$Config{archname}";
 
 my $topdir = cwd();
 
-# set an initial value if there isnt one already
+# set an initial value if there isn't one already
 # Need to use PERL5LIB to ensure we get pre-installed mods from earlier
 # tags in the install_order file
 $ENV{PERL5LIB} ||= q{};
@@ -149,8 +149,8 @@ $ENV{PERL5LIB} ||= q{};
 $ENV{PERL_AUTOINSTALL} = "--skipdeps";
 
 # keep a record of how many times a module build is done.  This is so they may
-# be built a second time to include optional prereq's that couldnt
-# previously be built due to circular dependancies
+# be built a second time to include optional prereq's that couldn't
+# previously be built due to circular dependencies
 my %built_modules;
 foreach my $tarball (@tarballs) {
     ( my $dir = $tarball ) =~ s/\.(?:tgz|tar.gz)$//;
