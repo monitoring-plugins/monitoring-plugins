@@ -93,7 +93,7 @@ int verbose = 0;
 
 /******************************************************************************
 
-The (psuedo?)literate programming XML is contained within \@\@\- <XML> \-\@\@
+The (pseudo?)literate programming XML is contained within \@\@\- <XML> \-\@\@
 tags in the comments. With in the tags, the XML is assembled sequentially.
 You can define entities in tags. You also have all the #defines available as
 entities.
