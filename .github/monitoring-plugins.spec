@@ -127,7 +127,7 @@ Common files for Monitoring Plugins
 %configure \
     --prefix=%{_prefix} \
     --libexecdir=%{plugindir} \
-    --with-openssl=yes \
+    --with-openssl=/usr \
     --with-ping-command="/usr/bin/ping -4 -n -U -w %d -c %d %s" \
     --with-ping6-command="/usr/bin/ping -6 -n -U -w %d -c %d %s"
 %make_build
