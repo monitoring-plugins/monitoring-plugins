@@ -5,13 +5,18 @@ set -e
 
 export DEBIAN_FRONTEND=noninteractive
 
-sed "s/main/non-free contrib/g" /etc/apt/sources.list.d/debian.sources > /etc/apt/sources.list.d/debian-nonfree.sources
-apt-get update
-apt-get -y install software-properties-common
-if [ $(lsb_release -is) = "Debian" ]; then
-  apt-add-repository non-free
-  apt-get update
+source /etc/os-release
+
+if [ ${ID} = "debian" ]; then
+	if [ -f /etc/apt/sources.list.d/debian.sources  ]; then
+		sed "s/main/non-free contrib/g" /etc/apt/sources.list.d/debian.sources > /etc/apt/sources.list.d/debian-nonfree.sources
+	else
+		apt-get update
+		apt-get -y install software-properties-common
+		apt-add-repository non-free
+	fi
 fi
+apt-get update
 apt-get -y install perl \
 	autotools-dev \
 	libdbi-dev \
