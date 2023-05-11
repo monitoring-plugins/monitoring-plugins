@@ -31,7 +31,8 @@ if command -v git > /dev/null 2>&1; then
   SRC_RPM="monitoring-plugins-*git.$(echo ${SHA:0:7})*.${platform_id}.src.rpm"
 fi
 mkdir -p "${SRCRPM_DIR}" "${RPM_DIR}"
-rpmbuild --undefine=_disable_source_fetch --define "_sourcedir ${SOURCE_DIR}" -ba ${SPEC_FILE}
+#rpmbuild --undefine=_disable_source_fetch --define "_sourcedir ${SOURCE_DIR}" -ba ${SPEC_FILE}
+dnf -y --setopt="tsflags=nodocs" install rpmdevtools && spectool -g -C ${SOURCE_DIR} ${SPEC_FILE} && \
 mock --dnf --clean --spec ${SPEC_FILE} --sources=${SOURCE_DIR} --result=${SRCRPM_DIR} --build || { cat ${SRCRPM_DIR}/{root,build}.log; exit 1; }
 mock --dnf --clean --sources=${SOURCE_DIR} --result=${RPM_DIR} --rebuild ${SRCRPM_DIR}/${SRC_RPM} || { cat ${RPM_DIR}/{root,build}.log; exit 1; }
 ls -la ${SOURCE_DIR} ${SRCRPM_DIR} ${RPM_DIR}
