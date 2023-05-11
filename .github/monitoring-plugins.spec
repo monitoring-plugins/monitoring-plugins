@@ -1,6 +1,6 @@
 %global upstream_name monitoring-plugins
 %global version 2.3.3
-%global plugindir %{_libdir}/nagios/plugins
+%global plugindir %{_libdir}/monitoring/plugins
 %global commit 72dd0a308130b9778828d143d1b9d9906218d6ac
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
 %global fromgit 0
