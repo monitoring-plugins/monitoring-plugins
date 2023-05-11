@@ -82,3 +82,37 @@ jobs:
                 make test'
           docker container prune -f
           docker volume prune -f
+  linux-rpm:
+    needs:
+      - codespell
+#      - super-linter
+    runs-on: ubuntu-latest
+    name: Running rpm build test on ${{ matrix.distro }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {"distro": "fedora:latest", "build": ".github/mock.sh"}
+          - {"distro": "rockylinux:8", "build": ".github/mock.sh"}
+          - {"distro": "rockylinux:9", "build": ".github/mock.sh"}
+          - {"distro": "almalinux:8", "build": ".github/mock.sh"}
+          - {"distro": "almalinux:9", "build": ".github/mock.sh"}
+    steps:
+      - name: Git clone repository
+        uses: actions/checkout@v3
+      - name: Run the tests on ${{ matrix.distro }}
+        run: |
+          docker volume create --driver local --opt type=tmpfs --opt device=tmpfs --opt o=size=100m,uid=1000 tmp-vol
+          docker run \
+              --privileged=true \
+              -e NPTEST_ACCEPTDEFAULT=1 \
+              -e NPTEST_CACHE="/src/.github/NPTest.cache" \
+              -w /src -v ${PWD}:/src \
+              --tmpfs /media/ramdisk1 \
+              -v /var/run/utmp:/var/run/utmp \
+              --mount source=tmp-vol,destination=/src,target=/media/ramdisk2 \
+              ${{ matrix.distro }} \
+              /bin/sh -c '${{ matrix.build }} && \
+                ls -la'
+          docker container prune -f
+          docker volume prune -f
