@@ -93,6 +93,7 @@ jobs:
       matrix:
         include:
           - {"distro": "fedora:latest", "build": ".github/mock.sh"}
+          - {"distro": "fedora:rawhide", "build": ".github/mock.sh"}
           - {"distro": "rockylinux:8", "build": ".github/mock.sh"}
           - {"distro": "rockylinux:9", "build": ".github/mock.sh"}
           - {"distro": "almalinux:8", "build": ".github/mock.sh"}
