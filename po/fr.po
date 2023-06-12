@@ -4848,7 +4848,7 @@ msgstr ""
 
 #: plugins/check_smtp.c:836
 msgid "Use PROXY protocol prefix for the connection."
-msgstr ""
+msgstr "Utiliser le préfixe du protocole PROXY pour la connexion."
 
 #: plugins/check_smtp.c:839 plugins/check_tcp.c:689
 msgid "Minimum number of days a certificate has to be valid."
