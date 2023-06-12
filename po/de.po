@@ -4727,7 +4727,7 @@ msgstr ""
 
 #: plugins/check_smtp.c:720
 msgid "Set either -s/--ssl/--tls or -S/--starttls"
-msgstr ""
+msgstr "Setze entweder -s/--ssl/--tls oder -S/--starttls"
 
 #: plugins/check_smtp.c:749 plugins/check_smtp.c:754
 #, c-format
@@ -4781,16 +4781,16 @@ msgstr ""
 #: plugins/check_smtp.c:885
 #, fuzzy
 msgid "Use SSL/TLS for the connection."
-msgstr "Benutze PROXY-Protokoll-Präfix für die Verbindung."
+msgstr "Benutze SSL/TLS für die Verbindung."
 
 #: plugins/check_smtp.c:886
 #, c-format
 msgid "    Sets default port to %d.\n"
-msgstr ""
+msgstr "    Setze den Default-Port auf %d.\n"
 
 #: plugins/check_smtp.c:888
 msgid "Use STARTTLS for the connection."
-msgstr ""
+msgstr "Benutze STARTTLS für die Verbindung."
 
 #: plugins/check_smtp.c:894
 msgid "SMTP AUTH type to check (default none, only LOGIN supported)"

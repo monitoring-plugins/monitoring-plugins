@@ -4806,7 +4806,7 @@ msgstr "SSL n'est pas disponible - installer OpenSSL et recompilez"
 
 #: plugins/check_smtp.c:720
 msgid "Set either -s/--ssl/--tls or -S/--starttls"
-msgstr ""
+msgstr "Définissez -s/--ssl/--tls ou -S/--starttls"
 
 #: plugins/check_smtp.c:749 plugins/check_smtp.c:754
 #, c-format
@@ -4861,16 +4861,16 @@ msgstr "Nombre de jours minimum pour que le certificat soit valide."
 #: plugins/check_smtp.c:885
 #, fuzzy
 msgid "Use SSL/TLS for the connection."
-msgstr "Utiliser le préfixe du protocole PROXY pour la connexion."
+msgstr "Utiliser SSL/TLS pour la connexion."
 
 #: plugins/check_smtp.c:886
 #, c-format
 msgid "    Sets default port to %d.\n"
-msgstr ""
+msgstr "    Définit le port par défaut à %d.\n"
 
 #: plugins/check_smtp.c:888
 msgid "Use STARTTLS for the connection."
-msgstr ""
+msgstr "Utiliser STARTTLS pour la connexion."
 
 #: plugins/check_smtp.c:894
 msgid "SMTP AUTH type to check (default none, only LOGIN supported)"
