@@ -875,6 +875,6 @@ print_usage (void)
   printf ("%s\n", _("Usage:"));
   printf ("%s -H host [-p port] [-4|-6] [-e expect] [-C command] [-R response] [-f from addr]\n", progname);
   printf ("[-A authtype -U authuser -P authpass] [-w warn] [-c crit] [-t timeout] [-q]\n");
-  printf ("[-F fqdn] [-S] [-L] [-D warn days cert expire[,crit days cert expire]] [-v] \n");
+  printf ("[-F fqdn] [-S] [-L] [-D warn days cert expire[,crit days cert expire]] [-r] [-v] \n");
 }
 
