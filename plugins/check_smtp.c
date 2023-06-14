@@ -505,6 +505,7 @@ process_arguments (int argc, char **argv)
 		{"help", no_argument, 0, 'h'},
 		{"lmtp", no_argument, 0, 'L'},
 		{"ssl", no_argument, 0, 's'},
+		{"tls", no_argument, 0, 's'},
 		{"starttls",no_argument,0,'S'},
 		{"sni", no_argument, 0, SNI_OPTION},
 		{"certificate",required_argument,0,'D'},
@@ -715,7 +716,7 @@ process_arguments (int argc, char **argv)
 		from_arg = strdup(" ");
 
 	if (use_starttls && use_ssl) {
-		usage4 (_("Set either -s/--ssl or -S/--starttls"));
+		usage4 (_("Set either -s/--ssl/--tls or -S/--starttls"));
 	}
 
 	return validate_arguments ();
@@ -875,7 +876,7 @@ print_help (void)
 #ifdef HAVE_SSL
   printf (" %s\n", "-D, --certificate=INTEGER[,INTEGER]");
   printf ("    %s\n", _("Minimum number of days a certificate has to be valid."));
-  printf (" %s\n", "-s, --ssl");
+  printf (" %s\n", "-s, --ssl, --tls");
   printf ("    %s\n", _("Use SSL/TLS for the connection."));
   printf (_("    Sets default port to %d.\n"), SMTPS_PORT);
   printf (" %s\n", "-S, --starttls");
