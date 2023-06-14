@@ -188,6 +188,13 @@ main (int argc, char **argv)
 	result = my_tcp_connect (server_address, server_port, &sd);
 
 	if (result == STATE_OK) { /* we connected */
+		/* If requested, send PROXY header */
+		if (use_proxy_prefix) {
+			if (verbose)
+				printf ("Sending header %s\n", PROXY_PREFIX);
+			my_send(PROXY_PREFIX, strlen(PROXY_PREFIX));
+		}
+
 #ifdef HAVE_SSL
 		if (use_ssl) {
 			result = np_net_ssl_init_with_hostname(sd, (use_sni ? server_address : NULL));
@@ -201,13 +208,6 @@ main (int argc, char **argv)
 			}
 		}
 #endif
-
-		/* If requested, send PROXY header */
-		if (use_proxy_prefix) {
-			if (verbose)
-				printf ("Sending header %s\n", PROXY_PREFIX);
-			my_send(PROXY_PREFIX, strlen(PROXY_PREFIX));
-		}
 
 		/* watch for the SMTP connection string and */
 		/* return a WARNING status if we couldn't read any data */
@@ -716,10 +716,6 @@ process_arguments (int argc, char **argv)
 
 	if (use_starttls && use_ssl) {
 		usage4 (_("Set either -s/--ssl or -S/--starttls"));
-	}
-
-	if (use_ssl && use_proxy_prefix) {
-		usage4 (_("PROXY protocol (-r/--proxy) is not implemented with SSL/TLS (-s/--ssl), yet."));
 	}
 
 	return validate_arguments ();
