@@ -50,7 +50,8 @@ int days_till_exp_warn, days_till_exp_crit;
 #endif
 
 enum {
-	SMTP_PORT	= 25
+	SMTP_PORT	= 25,
+	SMTPS_PORT	= 465
 };
 #define PROXY_PREFIX "PROXY TCP4 0.0.0.0 0.0.0.0 25 25\r\n"
 #define SMTP_EXPECT "220"
@@ -650,6 +651,7 @@ process_arguments (int argc, char **argv)
 		case 's':
 		/* ssl */
 			use_ssl = TRUE;
+			server_port = SMTPS_PORT;
 			break;
 		case 'S':
 		/* starttls */
@@ -879,6 +881,7 @@ print_help (void)
   printf ("    %s\n", _("Minimum number of days a certificate has to be valid."));
   printf (" %s\n", "-s, --ssl");
   printf ("    %s\n", _("Use SSL/TLS for the connection."));
+  printf (_("    Sets default port to %d.\n"), SMTPS_PORT);
   printf (" %s\n", "-S, --starttls");
   printf ("    %s\n", _("Use STARTTLS for the connection."));
   printf (" %s\n", "--sni");
