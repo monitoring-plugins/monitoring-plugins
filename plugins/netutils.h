@@ -49,6 +49,10 @@
 # define HOST_MAX_BYTES 255
 #endif
 
+#define PROXY_PROTOCOL_V1_HEADER_MAX_SIZE 108
+
+int proxy_protocol_v1_header(char *, size_t, int);
+
 /* process_request and wrapper macros */
 #define process_tcp_request(addr, port, sbuf, rbuf, rsize) \
 	process_request(addr, port, IPPROTO_TCP, sbuf, rbuf, rsize)

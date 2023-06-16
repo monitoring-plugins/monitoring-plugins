@@ -377,3 +377,53 @@ dns_lookup (const char *in, struct sockaddr_storage *ss, int family)
 	freeaddrinfo (res);
 	return TRUE;
 }
+
+/* synthesize header for Proxy Protocol V1
+   https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt */
+int
+proxy_protocol_v1_header(char *header, size_t headersize, int sockfd)
+{
+	struct sockaddr_storage local_addr;
+	struct sockaddr_storage remote_addr;
+	socklen_t local_addr_len = sizeof(local_addr);
+	socklen_t remote_addr_len = sizeof(remote_addr);
+
+	if (getsockname(sockfd, (struct sockaddr *)&local_addr, &local_addr_len) != 0) {
+		printf(_("CRITICAL - proxy_protocol_header()/getsockname(): %s\n"), strerror(errno));
+		return STATE_CRITICAL;
+	}
+
+	if (getpeername(sockfd, (struct sockaddr*)&remote_addr, &remote_addr_len) != 0) {
+		printf(_("CRITICAL - proxy_protocol_header()/getpeername(): %s\n"), strerror(errno));
+		return STATE_CRITICAL;
+	}
+
+	if (local_addr.ss_family == AF_INET) {
+		// IPv4 address
+		struct sockaddr_in *local_addr_ipv4 = (struct sockaddr_in *)&local_addr;
+		struct sockaddr_in *remote_addr_ipv4 = (struct sockaddr_in *)&remote_addr;
+		char local_ip_address[INET_ADDRSTRLEN];
+		char remote_ip_address[INET_ADDRSTRLEN];
+
+		inet_ntop(AF_INET, &(local_addr_ipv4->sin_addr), local_ip_address, INET_ADDRSTRLEN);
+		inet_ntop(AF_INET, &(remote_addr_ipv4->sin_addr), remote_ip_address, INET_ADDRSTRLEN);
+
+		snprintf(header, headersize, "PROXY TCP4 %s %s %d %d\r\n", local_ip_address, remote_ip_address, ntohs(local_addr_ipv4->sin_port), ntohs(remote_addr_ipv4->sin_port));
+	} else if (local_addr.ss_family == AF_INET6) {
+		// IPv6 address
+		struct sockaddr_in6 *local_addr_ipv6 = (struct sockaddr_in6 *)&local_addr;
+		struct sockaddr_in6 *remote_addr_ipv6 = (struct sockaddr_in6 *)&remote_addr;
+		char local_ip_address[INET6_ADDRSTRLEN];
+		char remote_ip_address[INET6_ADDRSTRLEN];
+
+		inet_ntop(AF_INET6, &(local_addr_ipv6->sin6_addr), local_ip_address, INET6_ADDRSTRLEN);
+		inet_ntop(AF_INET6, &(remote_addr_ipv6->sin6_addr), remote_ip_address, INET6_ADDRSTRLEN);
+
+		snprintf(header, headersize, "PROXY TCP6 %s %s %d %d\r\n", local_ip_address, remote_ip_address, ntohs(local_addr_ipv6->sin6_port), ntohs(remote_addr_ipv6->sin6_port));
+	} else {
+		printf(_("CRITICAL - proxy_protocol_header(): Unhandled address family: %d\n"), local_addr.ss_family);
+		return STATE_CRITICAL;
+	}
+
+	return STATE_OK;
+}
