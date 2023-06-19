@@ -53,7 +53,6 @@ enum {
 	SMTP_PORT	= 25,
 	SMTPS_PORT	= 465
 };
-#define PROXY_PREFIX "PROXY TCP4 0.0.0.0 0.0.0.0 25 25\r\n"
 #define SMTP_EXPECT "220"
 #define SMTP_HELO "HELO "
 #define SMTP_EHLO "EHLO "
@@ -191,9 +190,18 @@ main (int argc, char **argv)
 	if (result == STATE_OK) { /* we connected */
 		/* If requested, send PROXY header */
 		if (use_proxy_prefix) {
-			if (verbose)
-				printf ("Sending header %s\n", PROXY_PREFIX);
-			my_send(PROXY_PREFIX, strlen(PROXY_PREFIX));
+			char proxy_prefix[PROXY_PROTOCOL_V1_HEADER_MAX_SIZE + 1];
+
+			result = proxy_protocol_v1_header(proxy_prefix, PROXY_PROTOCOL_V1_HEADER_MAX_SIZE, sd);
+			if (result == STATE_OK) {
+				if (verbose) {
+					printf (_("Sending header %s\n"), proxy_prefix);
+				}
+
+				my_send(proxy_prefix, strlen(proxy_prefix));
+			} else {
+				return result;
+			}
 		}
 
 #ifdef HAVE_SSL
