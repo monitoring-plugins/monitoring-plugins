@@ -3,7 +3,7 @@
 * Monitoring check_smtp plugin
 * 
 * License: GPL
-* Copyright (c) 2000-2007 Monitoring Plugins Development Team
+* Copyright (c) 2000-2023 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -52,6 +52,7 @@ int days_till_exp_warn, days_till_exp_crit;
 enum {
 	SMTP_PORT	= 25
 };
+#define PROXY_PREFIX "PROXY TCP4 0.0.0.0 0.0.0.0 25 25\r\n"
 #define SMTP_EXPECT "220"
 #define SMTP_HELO "HELO "
 #define SMTP_EHLO "EHLO "
@@ -102,6 +103,8 @@ double critical_time = 0;
 int check_critical_time = FALSE;
 int verbose = 0;
 int use_ssl = FALSE;
+int use_sni = FALSE;
+short use_proxy_prefix = FALSE;
 short use_ehlo = FALSE;
 short use_lhlo = FALSE;
 short ssl_established = 0;
@@ -184,6 +187,13 @@ main (int argc, char **argv)
 
 	if (result == STATE_OK) { /* we connected */
 
+		/* If requested, send PROXY header */
+		if (use_proxy_prefix) {
+			if (verbose)
+				printf ("Sending header %s\n", PROXY_PREFIX);
+			send(sd, PROXY_PREFIX, strlen(PROXY_PREFIX), 0);
+		}
+
 		/* watch for the SMTP connection string and */
 		/* return a WARNING status if we couldn't read any data */
 		if (recvlines(buffer, MAX_INPUT_BUFFER) <= 0) {
@@ -225,7 +235,7 @@ main (int argc, char **argv)
 		    smtp_quit();
 		    return STATE_UNKNOWN;
 		  }
-		  result = np_net_ssl_init(sd);
+		  result = np_net_ssl_init_with_hostname(sd, (use_sni ? server_address : NULL));
 		  if(result != STATE_OK) {
 		    printf (_("CRITICAL - Cannot create SSL context.\n"));
 		    close(sd);
@@ -454,6 +464,10 @@ process_arguments (int argc, char **argv)
 	int c;
 	char* temp;
 
+	enum {
+	  SNI_OPTION
+	};
+
 	int option = 0;
 	static struct option longopts[] = {
 		{"hostname", required_argument, 0, 'H'},
@@ -476,8 +490,10 @@ process_arguments (int argc, char **argv)
 		{"help", no_argument, 0, 'h'},
 		{"lmtp", no_argument, 0, 'L'},
 		{"starttls",no_argument,0,'S'},
+		{"sni", no_argument, 0, SNI_OPTION},
 		{"certificate",required_argument,0,'D'},
 		{"ignore-quit-failure",no_argument,0,'q'},
+		{"proxy",no_argument,0,'r'},
 		{0, 0, 0, 0}
 	};
 
@@ -494,7 +510,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long (argc, argv, "+hVv46Lt:p:f:e:c:w:H:C:R:SD:F:A:U:P:q",
+		c = getopt_long (argc, argv, "+hVv46Lrt:p:f:e:c:w:H:C:R:SD:F:A:U:P:q",
 		                 longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -620,6 +636,16 @@ process_arguments (int argc, char **argv)
 		/* starttls */
 			use_ssl = TRUE;
 			use_ehlo = TRUE;
+			break;
+		case SNI_OPTION:
+#ifdef HAVE_SSL
+			use_sni = TRUE;
+#else
+			usage (_("SSL support not available - install OpenSSL and recompile"));
+#endif
+			break;
+		case 'r':
+			use_proxy_prefix = TRUE;
 			break;
 		case 'L':
 			use_lhlo = TRUE;
@@ -819,11 +845,15 @@ print_help (void)
   printf ("    %s\n", _("FROM-address to include in MAIL command, required by Exchange 2000")),
   printf (" %s\n", "-F, --fqdn=STRING");
   printf ("    %s\n", _("FQDN used for HELO"));
+  printf (" %s\n", "-r, --proxy");
+  printf ("    %s\n", _("Use PROXY protocol prefix for the connection."));
 #ifdef HAVE_SSL
   printf (" %s\n", "-D, --certificate=INTEGER[,INTEGER]");
   printf ("    %s\n", _("Minimum number of days a certificate has to be valid."));
   printf (" %s\n", "-S, --starttls");
   printf ("    %s\n", _("Use STARTTLS for the connection."));
+  printf (" %s\n", "--sni");
+  printf ("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
 #endif
 
 	printf (" %s\n", "-A, --authtype=STRING");
@@ -860,6 +890,6 @@ print_usage (void)
   printf ("%s\n", _("Usage:"));
   printf ("%s -H host [-p port] [-4|-6] [-e expect] [-C command] [-R response] [-f from addr]\n", progname);
   printf ("[-A authtype -U authuser -P authpass] [-w warn] [-c crit] [-t timeout] [-q]\n");
-  printf ("[-F fqdn] [-S] [-L] [-D warn days cert expire[,crit days cert expire]] [-v] \n");
+  printf ("[-F fqdn] [-S] [-L] [-D warn days cert expire[,crit days cert expire]] [-r] [--sni] [-v] \n");
 }
 
