@@ -626,21 +626,36 @@ process_arguments (int argc, char **argv)
       if (! strcasecmp (optarg, "bytes")) {
         mult = (uintmax_t)1;
         units = strdup ("B");
-      } else if ( (! strcmp (optarg, "kB")) || (!strcmp(optarg, "KiB")) ) {
+      } else if (!strcmp(optarg, "KiB")) {
         mult = (uintmax_t)1024;
-        units = strdup ("kiB");
-      } else if ( (! strcmp (optarg, "MB")) || (!strcmp(optarg, "MiB")) )  {
+        units = strdup ("KiB");
+      } else if (! strcmp (optarg, "kB")) {
+        mult = (uintmax_t)1000;
+        units = strdup ("kB");
+      } else if (!strcmp(optarg, "MiB")) {
         mult = (uintmax_t)1024 * 1024;
         units = strdup ("MiB");
-      } else if ( (! strcmp (optarg, "GB")) || (!strcmp(optarg, "GiB")) ) {
+      } else if (! strcmp (optarg, "MB")) {
+        mult = (uintmax_t)1000 * 1000;
+        units = strdup ("MB");
+      } else if (!strcmp(optarg, "GiB")) {
         mult = (uintmax_t)1024 * 1024 * 1024;
         units = strdup ("GiB");
-      } else if ( (! strcmp (optarg, "TB")) || (!strcmp(optarg, "TiB")) ) {
+      } else if (! strcmp (optarg, "GB")){
+        mult = (uintmax_t)1000 * 1000 * 1000;
+        units = strdup ("GB");
+      } else if (!strcmp(optarg, "TiB")) {
         mult = (uintmax_t)1024 * 1024 * 1024 * 1024;
         units = strdup ("TiB");
-      } else if ( (! strcmp (optarg, "PB")) || (!strcmp(optarg, "PiB")) ) {
+      } else if (! strcmp (optarg, "TB")) {
+        mult = (uintmax_t)1000 * 1000 * 1000 * 1000;
+        units = strdup ("TB");
+      } else if (!strcmp(optarg, "PiB")) {
         mult = (uintmax_t)1024 * 1024 * 1024 * 1024 * 1024;
         units = strdup ("PiB");
+      } else if (! strcmp (optarg, "PB")){
+        mult = (uintmax_t)1000 * 1000 * 1000 * 1000 * 1000;
+        units = strdup ("PB");
       } else {
         die (STATE_UNKNOWN, _("unit type %s not known\n"), optarg);
       }

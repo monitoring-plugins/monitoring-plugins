@@ -138,7 +138,10 @@ main (int argc, char **argv)
 		mysql_ssl_set(&mysql,key,cert,ca_cert,ca_dir,ciphers);
 	/* establish a connection to the server and error checking */
 	if (!mysql_real_connect(&mysql,db_host,db_user,db_pass,db,db_port,db_socket,0)) {
-		if (ignore_auth && mysql_errno (&mysql) == ER_ACCESS_DENIED_ERROR)
+		/* Depending on internally-selected auth plugin MySQL might return */
+		/* ER_ACCESS_DENIED_NO_PASSWORD_ERROR or ER_ACCESS_DENIED_ERROR. */
+		/* Semantically these errors are the same. */
+		if (ignore_auth && (mysql_errno (&mysql) == ER_ACCESS_DENIED_ERROR || mysql_errno (&mysql) == ER_ACCESS_DENIED_NO_PASSWORD_ERROR))
 		{
 			printf("MySQL OK - Version: %s (protocol %d)\n",
 				mysql_get_server_info(&mysql),
