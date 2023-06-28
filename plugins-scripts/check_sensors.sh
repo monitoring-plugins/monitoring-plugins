@@ -26,19 +26,19 @@ print_help() {
 case "$1" in
 	--help)
 		print_help
-		exit "$STATE_OK"
+		exit "$STATE_UNKNOWN"
 		;;
 	-h)
 		print_help
-		exit "$STATE_OK"
+		exit "$STATE_UNKNOWN"
 		;;
 	--version)
 		print_revision "$PROGNAME" "$REVISION"
-		exit "$STATE_OK"
+		exit "$STATE_UNKNOWN"
 		;;
 	-V)
 		print_revision "$PROGNAME" "$REVISION"
-		exit "$STATE_OK"
+		exit "$STATE_UNKNOWN"
 		;;
 	*)
 		sensordata=$(sensors 2>&1)
