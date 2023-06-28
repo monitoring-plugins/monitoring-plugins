@@ -2217,11 +2217,10 @@ curlhelp_parse_statusline (const char *buf, curlhelp_statusline *status_line)
   if( strchr( p, '.' ) != NULL ) {
 
     /* HTTP 1.x case */
-    char *ppp;
-    ppp = strtok( p, "." );
+    strtok( p, "." );
     status_line->http_major = (int)strtol( p, &pp, 10 );
     if( *pp != '\0' ) { free( first_line_buf ); return -1; }
-    ppp = strtok( NULL, " " );
+    strtok( NULL, " " );
     status_line->http_minor = (int)strtol( p, &pp, 10 );
     if( *pp != '\0' ) { free( first_line_buf ); return -1; }
     p += 4; /* 1.x SP */

@@ -246,6 +246,7 @@ NP-VERSION-FILE
 /plugins-scripts/check_ircd
 /plugins-scripts/check_log
 /plugins-scripts/check_mailq
+/plugins-scripts/check_mssql
 /plugins-scripts/check_ntp
 /plugins-scripts/check_oracle
 /plugins-scripts/check_rpc

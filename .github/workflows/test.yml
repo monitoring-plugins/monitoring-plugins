@@ -1,9 +1,11 @@
+---
 name: Test
 
 on:
   push:
     branches:
       - '*'
+  # Run test for any PRs
   pull_request:
 
 jobs:
