@@ -470,10 +470,6 @@ int send_dhcp_discover(int sock){
 	packet_xid=random();
 	discover_packet.xid=htonl(packet_xid);
 
-	/**** WHAT THE HECK IS UP WITH THIS?!?  IF I DON'T MAKE THIS CALL, ONLY ONE SERVER RESPONSE IS PROCESSED!!!! ****/
-	/* downright bizzarre... */
-	ntohl(discover_packet.xid);
-
 	/*discover_packet.secs=htons(65535);*/
 	discover_packet.secs=0xFF;
 
