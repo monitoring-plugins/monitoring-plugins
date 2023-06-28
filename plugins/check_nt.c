@@ -341,7 +341,7 @@ int main(int argc, char **argv){
 
 		2) If the counter you're going to measure is percent-based, the code will detect
 		 the percent sign in its name and will attribute minimum (0%) and maximum (100%)
-		 values automagically, as well the ¨%" sign to graph units.
+		 values automagically, as well the "%" sign to graph units.
 
 		3) OTOH, if the counter is "absolute", you'll have to provide the following
 		 the counter unit - that is, the dimensions of the counter you're getting. Examples:
