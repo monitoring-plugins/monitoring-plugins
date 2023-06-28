@@ -36,7 +36,7 @@ cmp_ok( $result->return_code, '==', 1, "Log over 5 minutes old" );
 like  ( $result->output, $warningOutput, "Output for warning correct" );
 
 my $now = time;
-# This substitution is dependant on the testcase
+# This substitution is dependent on the testcase
 system( "perl -pe 's/1133537544/$now/' $nagios1 > $nagios1.tmp" ) == 0 or die "Problem with munging $nagios1";
 
 $result = NPTest->testCmd(

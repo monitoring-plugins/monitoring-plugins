@@ -31,7 +31,7 @@
 
 <preface id="preface"><title>Preface</title>
     <para>The purpose of this guidelines is to provide a reference for
-    the plugin developers and encourage the standarization of the
+    the plugin developers and encourage the standardization of the
     different kind of plugins: C, shell, perl, python, etc.</para>
 
         <para>Monitoring Plugins Development Guidelines Copyright (C) 2000-2013
@@ -374,7 +374,7 @@
 			<listitem><para>s - seconds (also us, ms)</para></listitem>
 			<listitem><para>% - percentage</para></listitem>
 			<listitem><para>B - bytes (also KB, MB, TB)</para></listitem>
-			<listitem><para>c - a continous counter (such as bytes
+			<listitem><para>c - a continuous counter (such as bytes
 				transmitted on an interface)</para></listitem>
 			</orderedlist>
 			</listitem>
@@ -397,7 +397,7 @@
 		<section><title>Don't execute system commands without specifying their
 		full path</title>
 		<para>Don't use exec(), popen(), etc. to execute external
-		commands without explicity using the full path of the external
+		commands without explicitly using the full path of the external
 		program.</para>
 
 		<para>Doing otherwise makes the plugin vulnerable to hijacking
@@ -655,7 +655,7 @@
 	  <para>If possible when writing lists, use tokens to make the
 	  list easy to remember and non-order dependent - so
 	  check_disk uses '-c 10000,10%' so that it is clear which is
-	  the precentage and which is the KB values (note that due to
+	  the percentage and which is the KB values (note that due to
 	  my own lack of foresight, that used to be '-c 10000:10%' but
 	  such constructs should all be changed for consistency,
 	  though providing reverse compatibility is fairly
@@ -686,7 +686,7 @@ all the current tests and report an overall success rate.
 <para>These use perl's Test::More. To do a one time test, run "cd plugins && perl t/check_disk.t".
 </para>
 
-<para>There will somtimes be failures seen in this output which are known failures that
+<para>There will sometimes be failures seen in this output which are known failures that
 need to be fixed. As long as the return code is 0, it will be reported as "test pass".
 (If you have a fix so that the specific test passes, that will be gratefully received!)
 </para>
@@ -846,7 +846,7 @@ setup the tests. Run "make test" to run all the tests.
 	  <para>It is determined to be not redundant (for instance, we would not
 		add a new version of check_disk just because someone had provide
 		a plugin that had perf checking - we would incorporate the features
-		into an exisiting plugin)</para>
+		into an existing plugin)</para>
 	</listitem>
 	<listitem>
 	  <para>One of the developers has had the time to audit the code and declare

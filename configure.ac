@@ -932,7 +932,7 @@ elif ps -Ao 's comm vsz rss uid user pid ppid args' 2>/dev/null | \
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -Ao 's uid pid ppid vsz rss pcpu comm args'"
-	# There must be no space between the %s and %n due to a wierd problem in sscanf where
+	# There must be no space between the %s and %n due to a weird problem in sscanf where
 	# it will return %n as longer than the line length
 	ac_cv_ps_format="%s %d %d %d %d %d %f %s%n"
 	ac_cv_ps_cols=9
@@ -1552,7 +1552,7 @@ if test -n "$PATH_TO_SUDO"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_SUDO,"$PATH_TO_SUDO",[path to sudo])
 else
-	AC_MSG_WARN([Could not find sudo or eqivalent])
+	AC_MSG_WARN([Could not find sudo or equivalent])
 fi
 
 AC_PATH_PROG(PATH_TO_MAILQ,mailq)
@@ -1563,7 +1563,7 @@ if test -n "$PATH_TO_MAILQ"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_MAILQ,"$PATH_TO_MAILQ",[path to mailq])
 else
-	AC_MSG_WARN([Could not find mailq or eqivalent])
+	AC_MSG_WARN([Could not find mailq or equivalent])
 fi
 
 AC_PATH_PROG(PATH_TO_QMAIL_QSTAT,qmail-qstat)
@@ -1574,7 +1574,7 @@ if test -n "$PATH_TO_QMAIL_QSTAT"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_QMAIL_QSTAT,"$PATH_TO_QMAIL_QSTAT",[path to qmail-qstat])
 else
-	AC_MSG_WARN([Could not find qmail-qstat or eqivalent])
+	AC_MSG_WARN([Could not find qmail-qstat or equivalent])
 fi
 
 dnl SWAP info required is amount allocated/available and amount free
@@ -1832,7 +1832,7 @@ AM_GNU_GETTEXT([external], [need-ngettext])
 AM_GNU_GETTEXT_VERSION(0.15)
 
 dnl Check for Redhat spopen problem
-dnl Wierd problem where ECHILD is returned from a wait call in error
+dnl Weird problem where ECHILD is returned from a wait call in error
 dnl Only appears to affect nslookup and dig calls. Only affects redhat around
 dnl 2.6.9-11 (okay in 2.6.9-5). Redhat investigating root cause
 dnl We patch plugins/popen.c

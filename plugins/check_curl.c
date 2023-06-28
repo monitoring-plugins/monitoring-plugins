@@ -618,7 +618,7 @@ check_http (void)
 
 #ifdef LIBCURL_FEATURE_SSL
 
-  /* set SSL version, warn about unsecure or unsupported versions */
+  /* set SSL version, warn about insecure or unsupported versions */
   if (use_ssl) {
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_SSLVERSION, ssl_version), "CURLOPT_SSLVERSION");
   }
@@ -986,7 +986,7 @@ GOT_FIRST_CERT:
         }
       } else {
         /* this is a specific code in the command line to
-         * be returned when a redirection is encoutered
+         * be returned when a redirection is encountered
          */
       }
       result = max_state_alt (onredirect, result);
@@ -2051,7 +2051,7 @@ print_usage (void)
   printf (" %s -H <vhost> | -I <IP-address> [-u <uri>] [-p <port>]\n",progname);
   printf ("       [-J <client certificate file>] [-K <private key>] [--ca-cert <CA certificate file>] [-D]\n");
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L] [-E] [-a auth]\n");
-  printf ("       [-b proxy_auth] [-f <ok|warning|critcal|follow|sticky|stickyport|curl>]\n");
+  printf ("       [-b proxy_auth] [-f <ok|warning|critical|follow|sticky|stickyport|curl>]\n");
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S <version>] [--sni]\n");
@@ -2217,11 +2217,10 @@ curlhelp_parse_statusline (const char *buf, curlhelp_statusline *status_line)
   if( strchr( p, '.' ) != NULL ) {
 
     /* HTTP 1.x case */
-    char *ppp;
-    ppp = strtok( p, "." );
+    strtok( p, "." );
     status_line->http_major = (int)strtol( p, &pp, 10 );
     if( *pp != '\0' ) { free( first_line_buf ); return -1; }
-    ppp = strtok( NULL, " " );
+    strtok( NULL, " " );
     status_line->http_minor = (int)strtol( p, &pp, 10 );
     if( *pp != '\0' ) { free( first_line_buf ); return -1; }
     p += 4; /* 1.x SP */

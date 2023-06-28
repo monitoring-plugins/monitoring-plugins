@@ -202,7 +202,7 @@ test_file (char *path)
 
 /*
  * process command-line arguments
- * returns true on succes, false otherwise
+ * returns true on success, false otherwise
   */
 bool process_arguments (int argc, char **argv)
 {
@@ -1416,7 +1416,6 @@ char *unchunk_content(const char *content) {
   // https://en.wikipedia.org/wiki/Chunked_transfer_encoding
   // https://www.rfc-editor.org/rfc/rfc7230#section-4.1
   char *result = NULL;
-  size_t content_length = strlen(content);
   char *start_of_chunk;
   char* end_of_chunk;
   long size_of_chunk;
@@ -1929,7 +1928,7 @@ print_usage (void)
   printf (" %s -H <vhost> | -I <IP-address> [-u <uri>] [-p <port>]\n",progname);
   printf ("       [-J <client certificate file>] [-K <private key>]\n");
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L] [-E] [-a auth]\n");
-  printf ("       [-b proxy_auth] [-f <ok|warning|critcal|follow|sticky|stickyport>]\n");
+  printf ("       [-b proxy_auth] [-f <ok|warning|critical|follow|sticky|stickyport>]\n");
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S <version>] [--sni]\n");

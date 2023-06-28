@@ -552,7 +552,7 @@ validate_arguments (void)
 	}
 	else if ((warn.is_percentage == crit.is_percentage) && (warn.value < crit.value)) {
 		/* This is NOT triggered if warn and crit are different units, e.g warn is percentage
-		 * and crit is absolut. We cannot determine the condition at this point since we
+		 * and crit is absolute. We cannot determine the condition at this point since we
 		 * dont know the value of total swap yet
 		 */
 		usage4(_("Warning should be more than critical"));
