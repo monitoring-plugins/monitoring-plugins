@@ -158,6 +158,7 @@ int perf_labels = 1;
 char* ip_version = "";
 double multiplier = 1.0;
 char *fmtstr = "";
+bool fmtstr_set = false;
 char buffer[DEFAULT_BUFFER_SIZE];
 
 static char *fix_snmp_range(char *th)
@@ -423,7 +424,7 @@ main (int argc, char **argv)
 		else if (strstr (response, "INTEGER: ")) {
 			show = multiply (strstr (response, "INTEGER: ") + 9);
 
-			if (strcmp(fmtstr, "") != 0) {
+			if (fmtstr_set) {
 				conv = fmtstr;
 			}
 		}
@@ -973,6 +974,7 @@ process_arguments (int argc, char **argv)
 		case 'f':
 			if (multiplier != 1.0) {
 				fmtstr=optarg;
+				fmtstr_set = true;
 			}
 			break;
 		}
@@ -1187,7 +1189,7 @@ multiply (char *str)
 	if(verbose>2)
 		printf("    multiply extracted double: %f\n", val);
 	val *= multiplier;
-	if (strcmp(fmtstr, "") != 0) {
+	if (fmtstr_set) {
 		conv = fmtstr;
 	}
 	if (val == (int)val) {
