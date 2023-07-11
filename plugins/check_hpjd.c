@@ -353,6 +353,7 @@ process_arguments (int argc, char **argv)
 				usage2 (_("Port must be a positive short integer"), optarg);
 			else
 				port = atoi(optarg);
+			break;
 		case 'D':									/* disable paper out check*/
 			check_paper_out = 0;
 			break;

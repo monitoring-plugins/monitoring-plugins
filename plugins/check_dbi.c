@@ -426,6 +426,7 @@ process_arguments (int argc, char **argv)
 			else
 				timeout_interval = atoi (optarg);
 
+			break;
 		case 'H':     /* host */
 			if (!is_host (optarg))
 				usage2 (_("Invalid hostname/address"), optarg);
