@@ -152,6 +152,8 @@ void print_help (void);
 void print_usage (void);
 char *unchunk_content(const char *content);
 
+extern int check_hostname;
+
 int
 main (int argc, char **argv)
 {
@@ -209,6 +211,7 @@ bool process_arguments (int argc, char **argv)
   enum {
     INVERT_REGEX = CHAR_MAX + 1,
     SNI_OPTION,
+    VERIFY_HOST,
     MAX_REDIRS_OPTION,
     CONTINUE_AFTER_CHECK_CERT
   };
@@ -220,6 +223,7 @@ bool process_arguments (int argc, char **argv)
     {"nohtml", no_argument, 0, 'n'},
     {"ssl", optional_argument, 0, 'S'},
     {"sni", no_argument, 0, SNI_OPTION},
+		{"verify-host", no_argument, 0, VERIFY_HOST},
     {"post", required_argument, 0, 'P'},
     {"method", required_argument, 0, 'j'},
     {"IP-address", required_argument, 0, 'I'},
@@ -386,6 +390,9 @@ bool process_arguments (int argc, char **argv)
       break;
     case SNI_OPTION:
       use_sni = true;
+      break;
+    case VERIFY_HOST:
+      check_hostname = 1;
       break;
     case MAX_REDIRS_OPTION:
       if (!is_intnonneg (optarg))
@@ -1748,6 +1755,10 @@ print_help (void)
   printf ("    %s\n", _("1.2 = TLSv1.2). With a '+' suffix, newer versions are also accepted."));
   printf (" %s\n", "--sni");
   printf ("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
+#if OPENSSL_VERSION_NUMBER >= 0x10002000L
+	printf (" %s\n", "--verify-host");
+  printf ("    %s\n", _("Verify SSL certificate is for the -H hostname (with --sni and -S)"));
+#endif
   printf (" %s\n", "-C, --certificate=INTEGER[,INTEGER]");
   printf ("    %s\n", _("Minimum number of days a certificate has to be valid. Port defaults to 443"));
   printf ("    %s\n", _("(when this option is used the URL is not checked by default. You can use"));
@@ -1891,5 +1902,5 @@ print_usage (void)
   printf ("       [-A string] [-k string] [-S <version>] [--sni]\n");
   printf ("       [-T <content-type>] [-j method]\n");
   printf (" %s -H <vhost> | -I <IP-address> -C <warn_age>[,<crit_age>]\n",progname);
-  printf ("       [-p <port>] [-t <timeout>] [-4|-6] [--sni]\n");
+  printf ("       [-p <port>] [-t <timeout>] [-4|-6] [--sni] [--verify-host]\n");
 }

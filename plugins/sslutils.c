@@ -35,6 +35,8 @@ static SSL_CTX *c=NULL;
 static SSL *s=NULL;
 static int initialized=0;
 
+int check_hostname = 0;
+
 int np_net_ssl_init(int sd) {
 	return np_net_ssl_init_with_hostname(sd, NULL);
 }
@@ -164,6 +166,16 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 #endif
 		SSL_set_fd(s, sd);
 		if (SSL_connect(s) == 1) {
+#if OPENSSL_VERSION_NUMBER >= 0x10002000L
+			if (check_hostname && host_name && *host_name) {
+				X509 *certificate=SSL_get_peer_certificate(s);
+				int rc = X509_check_host(certificate, host_name, 0, 0, NULL);
+				if (rc != 1) {
+					printf("%s\n", _("CRITICAL - Hostname mismatch."));
+					return STATE_CRITICAL;
+				}
+			}
+#endif
 			return OK;
 		} else {
 			printf("%s\n", _("CRITICAL - Cannot make SSL connection."));
