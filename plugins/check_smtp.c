@@ -632,6 +632,7 @@ process_arguments (int argc, char **argv)
 #else
 			usage (_("SSL support not available - install OpenSSL and recompile"));
 #endif
+			// fall through
 		case 'S':
 		/* starttls */
 			use_ssl = TRUE;
