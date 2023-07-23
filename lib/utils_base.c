@@ -407,11 +407,7 @@ char *_np_state_generate_key() {
 	char keyname[41];
 	char *p=NULL;
 
-	unsigned char *result = malloc(256 * sizeof(unsigned char));
-
-	if (result == NULL) {
-		die(STATE_UNKNOWN, _("Failed to allocate memory for hashes: %s"), strerror(errno));
-	}
+	unsigned char result[256];
 
 #ifdef USE_OPENSSL
 	/*
