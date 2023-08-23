@@ -40,6 +40,17 @@ np_add_name (struct name_list **list, const char *name)
   *list = new_entry;
 }
 
+/* Initialises a new regex at the begin of list via regcomp(3) */
+int
+np_add_regex (struct regex_list **list, const char *regex, int cflags)
+{
+  struct regex_list *new_entry = (struct regex_list *) malloc (sizeof *new_entry);
+  new_entry->next = *list;
+  *list = new_entry;
+
+  return regcomp(&new_entry->regex, regex, cflags);
+}
+
 /* Initialises a new parameter at the end of list */
 struct parameter_list *
 np_add_parameter(struct parameter_list **list, const char *name)
