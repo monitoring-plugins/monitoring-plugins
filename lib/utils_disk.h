@@ -10,6 +10,12 @@ struct name_list
   struct name_list *next;
 };
 
+struct regex_list
+{
+  regex_t regex;
+  struct regex_list *next;
+};
+
 struct parameter_list
 {
   char *name;
