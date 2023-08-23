@@ -29,6 +29,7 @@
 #include "common.h"
 #include "utils_disk.h"
 #include "gl/fsusage.h"
+#include <string.h>
 
 void
 np_add_name (struct name_list **list, const char *name)
@@ -205,6 +206,30 @@ np_find_name (struct name_list *list, const char *name)
     }
   }
   return FALSE;
+}
+
+/* Returns TRUE if name is in list */
+bool
+np_find_regmatch (struct regex_list *list, const char *name)
+{
+  int len;
+  regmatch_t m;
+
+  if (name == NULL) {
+    return false;
+  }
+
+  len = strlen(name);
+
+  for (; list; list = list->next) {
+    /* Emulate a full match as if surrounded with ^( )$
+       by checking whether the match spans the whole name */
+    if (!regexec(&list->regex, name, 1, &m, 0) && m.rm_so == 0 && m.rm_eo == len) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 int

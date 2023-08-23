@@ -42,6 +42,7 @@ void np_add_name (struct name_list **list, const char *name);
 int np_find_name (struct name_list *list, const char *name);
 int np_seen_name (struct name_list *list, const char *name);
 int np_add_regex (struct regex_list **list, const char *regex, int cflags);
+bool np_find_regmatch (struct regex_list *list, const char *name);
 struct parameter_list *np_add_parameter(struct parameter_list **list, const char *name);
 struct parameter_list *np_find_parameter(struct parameter_list *list, const char *name);
 struct parameter_list *np_del_parameter(struct parameter_list *item, struct parameter_list *prev);
