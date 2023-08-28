@@ -273,7 +273,7 @@ main (int argc, char **argv)
 			  }
 			}
 
-			/* filter kernel threads (childs of KTHREAD_PARENT)*/
+			/* filter kernel threads (children of KTHREAD_PARENT)*/
 			/* TODO adapt for other OSes than GNU/Linux
 					sorry for not doing that, but I've no other OSes to test :-( */
 			if (kthread_filter == 1) {
@@ -787,7 +787,7 @@ print_help (void)
   printf (" %s\n", "-C, --command=COMMAND");
   printf ("   %s\n", _("Only scan for exact matches of COMMAND (without path)."));
   printf (" %s\n", "-X, --exclude-process");
-  printf ("   %s\n", _("Exclude processes which match this comma seperated list"));
+  printf ("   %s\n", _("Exclude processes which match this comma separated list"));
   printf (" %s\n", "-k, --no-kthreads");
   printf ("   %s\n", _("Only scan for non kernel threads (works on Linux only)."));
 

@@ -7,7 +7,7 @@ With that done, it's time to figure out what we are doing for release
 1.3 development. I have a few ideas. Maybe others do as well.
 
 DOCUMENTATION:
-  We pretty much have decieded that we will doing something along 
+  We pretty much have decided that we will doing something along 
   the lines of a literate programming model. So far, we have site 
   documentation in DocBook. I have some ideas here, which I will
   discuss in a separate thread.
@@ -39,9 +39,9 @@ inconsistent mess and I'd love to ditch it. I only created it to
 satisfy people that wanted reverse compatibility and did not have
 GNU getopt.
 
-Bu I would like to urge that all standard plugins contain
+But I would like to urge that all standard plugins contain
 validate_arguments(). I think this will help convey the idea that
-validations hould be done, even if we don't insist on the specific
+validations should be done, even if we don't insist on the specific
 extent that each plugin must do that validation.
 
 This is the set of standard options I envision:
@@ -59,7 +59,7 @@ Reserved:
 -F, --file = STRING (usually input) 
 -O, --output = STRING (output file) 
 
-Recommended, but not reserverd: 
+Recommended, but not reserved: 
 
 -I, --ipaddress = STRING
 -C, --community = STRING
@@ -69,7 +69,7 @@ Recommended, but not reserverd:
 -P, --port = INT
 -u, --url = STRING (also --username if --url is not needed)
 
-I am suggesting that port alway be '-P' (uppercase) -- we are
+I am suggesting that port always be '-P' (uppercase) -- we are
 currently inconsistent in that regard.
 
 I am also adding '-q' for silent running. This is totally self
@@ -87,12 +87,12 @@ Programming:
   length character assignments, at least to the extent possible,
   from the C-based plugins. To that end, I have made strscpy and
   friends in utils.c -- I'd like to deploy them. I have comments 
-  that there is alot of duplicated code, and techniques used that
+  that there is a lot of duplicated code, and techniques used that
   should be cleaned up. Details in a separate thread.
 
 Remote checks:
   I have a proposal in hand to incorporate ssh check into spopen()
-  so that remote machine checks can be seemless. A nice idea, but 
+  so that remote machine checks can be seamless. A nice idea, but 
   complex enough to require discussion. Another thread.
 
 I also have a wish list, and I'm sure I've forgot some items. I'll 

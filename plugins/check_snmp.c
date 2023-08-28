@@ -881,6 +881,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'R':									/* regex */
 			cflags = REG_ICASE;
+			// fall through
 		case 'r':									/* regex */
 			cflags |= REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
 			strncpy (regex_expect, optarg, sizeof (regex_expect) - 1);
@@ -1361,7 +1362,7 @@ print_help (void)
 	printf (" %s\n", "--rate-multiplier");
 	printf ("    %s\n", _("Converts rate per second. For example, set to 60 to convert to per minute"));
 	printf (" %s\n", "--offset=OFFSET");
-	printf ("    %s\n", _("Add/substract the specified OFFSET to numeric sensor data"));
+	printf ("    %s\n", _("Add/subtract the specified OFFSET to numeric sensor data"));
 
 	/* Tests Against Strings */
 	printf (" %s\n", "-s, --string=STRING");

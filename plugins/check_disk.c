@@ -587,7 +587,7 @@ process_arguments (int argc, char **argv)
 
     /* Awful mistake where the range values do not make sense. Normally,
        you alert if the value is within the range, but since we are using
-       freespace, we have to alert if outside the range. Thus we artifically
+       freespace, we have to alert if outside the range. Thus we artificially
        force @ at the beginning of the range, so that it is backwards compatible
     */
     case 'c':                 /* critical threshold */
@@ -626,21 +626,36 @@ process_arguments (int argc, char **argv)
       if (! strcasecmp (optarg, "bytes")) {
         mult = (uintmax_t)1;
         units = strdup ("B");
-      } else if ( (! strcmp (optarg, "kB")) || (!strcmp(optarg, "KiB")) ) {
+      } else if (!strcmp(optarg, "KiB")) {
         mult = (uintmax_t)1024;
-        units = strdup ("kiB");
-      } else if ( (! strcmp (optarg, "MB")) || (!strcmp(optarg, "MiB")) )  {
+        units = strdup ("KiB");
+      } else if (! strcmp (optarg, "kB")) {
+        mult = (uintmax_t)1000;
+        units = strdup ("kB");
+      } else if (!strcmp(optarg, "MiB")) {
         mult = (uintmax_t)1024 * 1024;
         units = strdup ("MiB");
-      } else if ( (! strcmp (optarg, "GB")) || (!strcmp(optarg, "GiB")) ) {
+      } else if (! strcmp (optarg, "MB")) {
+        mult = (uintmax_t)1000 * 1000;
+        units = strdup ("MB");
+      } else if (!strcmp(optarg, "GiB")) {
         mult = (uintmax_t)1024 * 1024 * 1024;
         units = strdup ("GiB");
-      } else if ( (! strcmp (optarg, "TB")) || (!strcmp(optarg, "TiB")) ) {
+      } else if (! strcmp (optarg, "GB")){
+        mult = (uintmax_t)1000 * 1000 * 1000;
+        units = strdup ("GB");
+      } else if (!strcmp(optarg, "TiB")) {
         mult = (uintmax_t)1024 * 1024 * 1024 * 1024;
         units = strdup ("TiB");
-      } else if ( (! strcmp (optarg, "PB")) || (!strcmp(optarg, "PiB")) ) {
+      } else if (! strcmp (optarg, "TB")) {
+        mult = (uintmax_t)1000 * 1000 * 1000 * 1000;
+        units = strdup ("TB");
+      } else if (!strcmp(optarg, "PiB")) {
         mult = (uintmax_t)1024 * 1024 * 1024 * 1024 * 1024;
         units = strdup ("PiB");
+      } else if (! strcmp (optarg, "PB")){
+        mult = (uintmax_t)1000 * 1000 * 1000 * 1000 * 1000;
+        units = strdup ("PB");
       } else {
         die (STATE_UNKNOWN, _("unit type %s not known\n"), optarg);
       }
@@ -1115,7 +1130,7 @@ get_path_stats (struct parameter_list *p, struct fs_usage *fsp) {
   p->available_to_root = fsp->fsu_bfree;
   p->used = fsp->fsu_blocks - fsp->fsu_bfree;
   if (freespace_ignore_reserved) {
-    /* option activated : we substract the root-reserved space from the total */
+    /* option activated : we subtract the root-reserved space from the total */
     p->total = fsp->fsu_blocks - p->available_to_root + p->available;
   } else {
     /* default behaviour : take all the blocks into account */
@@ -1130,7 +1145,7 @@ get_path_stats (struct parameter_list *p, struct fs_usage *fsp) {
   p->inodes_free_to_root  = fsp->fsu_ffree; /* Free file nodes for root. */
   p->inodes_used = fsp->fsu_files - fsp->fsu_ffree;
   if (freespace_ignore_reserved) {
-    /* option activated : we substract the root-reserved inodes from the total */
+    /* option activated : we subtract the root-reserved inodes from the total */
     /* not all OS report fsp->fsu_favail, only the ones with statvfs syscall */
     /* for others, fsp->fsu_ffree == fsp->fsu_favail */
     p->inodes_total = fsp->fsu_files - p->inodes_free_to_root + p->inodes_free;
