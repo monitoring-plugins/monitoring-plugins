@@ -347,15 +347,6 @@ main (int argc, char **argv)
 	 server_address,
 	 port);
 
-
-
-	/* This is just for display purposes, so it can remain a string */
-	/*
-	xasprintf(&cl_hidden_auth, "%s -Le -t %d -r %d -m %s -v %s %s %s %s:%s",
-		snmpcmd, timeout_interval, retries, strlen(miblist) ? miblist : "''", proto, "[context]", "[authpriv]",
-		server_address, port);
-		*/
-
 	for (i = 0; i < numoids; i++) {
 		command_line[index++] = oids[i];
 		xasprintf(&cl_hidden_auth, "%s %s", cl_hidden_auth, oids[i]);
