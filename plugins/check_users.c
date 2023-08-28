@@ -1,33 +1,33 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_users plugin
-* 
+*
 * License: GPL
 * Copyright (c) 2000-2012 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_users plugin
-* 
+*
 * This plugin checks the number of users currently logged in on the local
 * system and generates an error if the number exceeds the thresholds
 * specified.
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 const char *progname = "check_users";
@@ -46,6 +46,11 @@ const char *email = "devel@monitoring-plugins.org";
 # include <utmpx.h>
 #else
 # include "popen.h"
+#endif
+
+#ifdef HAVE_LIBSYSTEMD
+#include <systemd/sd-daemon.h>
+#include <systemd/sd-login.h>
 #endif
 
 #define possibly_set(a,b) ((a) == 0 ? (b) : 0)
@@ -85,6 +90,11 @@ main (int argc, char **argv)
 
 	users = 0;
 
+#ifdef HAVE_LIBSYSTEMD
+	if (sd_booted () > 0)
+	        users = sd_get_sessions (NULL);
+	else {
+#endif
 #if HAVE_WTSAPI32_H
 	if (!WTSEnumerateSessions(WTS_CURRENT_SERVER_HANDLE,
 	  0, 1, &wtsinfo, &wtscount)) {
@@ -156,6 +166,9 @@ main (int argc, char **argv)
 	if (spclose (child_process))
 		result = possibly_set (result, STATE_UNKNOWN);
 #endif
+#ifdef HAVE_LIBSYSTEMD
+	}
+#endif
 
 	/* check the user count against warning and critical thresholds */
 	result = get_status((double)users, thlds);
@@ -163,7 +176,7 @@ main (int argc, char **argv)
 	if (result == STATE_UNKNOWN)
 		printf ("%s\n", _("Unable to read output"));
 	else {
-		printf (_("USERS %s - %d users currently logged in |%s\n"), 
+		printf (_("USERS %s - %d users currently logged in |%s\n"),
 				state_text(result), users,
 				sperfdata_int("users", users, "", warning_range,
 							critical_range, TRUE, 0, FALSE, 0));

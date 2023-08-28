@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-08-28 11:16+0200\n"
+"POT-Creation-Date: 2023-08-28 14:50+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,7 +30,7 @@ msgstr ""
 #: plugins/check_radius.c:176 plugins/check_real.c:80 plugins/check_smtp.c:146
 #: plugins/check_snmp.c:250 plugins/check_ssh.c:74 plugins/check_swap.c:115
 #: plugins/check_tcp.c:222 plugins/check_time.c:78 plugins/check_ups.c:122
-#: plugins/check_users.c:84 plugins/negate.c:210 plugins-root/check_dhcp.c:270
+#: plugins/check_users.c:89 plugins/negate.c:210 plugins-root/check_dhcp.c:270
 msgid "Could not parse arguments"
 msgstr ""
 
@@ -246,7 +246,7 @@ msgstr ""
 #: plugins/check_radius.c:400 plugins/check_real.c:452 plugins/check_smtp.c:891
 #: plugins/check_snmp.c:1368 plugins/check_ssh.c:325 plugins/check_swap.c:607
 #: plugins/check_tcp.c:710 plugins/check_time.c:371 plugins/check_ups.c:663
-#: plugins/check_users.c:262 plugins/check_ide_smart.c:606 plugins/negate.c:273
+#: plugins/check_users.c:275 plugins/check_ide_smart.c:606 plugins/negate.c:273
 #: plugins/urlize.c:196 plugins-root/check_dhcp.c:1390
 #: plugins-root/check_icmp.c:1633
 msgid "Usage:"
@@ -870,13 +870,13 @@ msgid "of the <state> argument with optional text"
 msgstr ""
 
 #: plugins/check_fping.c:127 plugins/check_hpjd.c:134 plugins/check_ping.c:444
-#: plugins/check_swap.c:193 plugins/check_users.c:130 plugins/urlize.c:109
+#: plugins/check_swap.c:193 plugins/check_users.c:140 plugins/urlize.c:109
 #, c-format
 msgid "Could not open pipe: %s\n"
 msgstr ""
 
 #: plugins/check_fping.c:133 plugins/check_hpjd.c:140 plugins/check_load.c:159
-#: plugins/check_swap.c:199 plugins/check_users.c:136 plugins/urlize.c:115
+#: plugins/check_swap.c:199 plugins/check_users.c:146 plugins/urlize.c:115
 #, c-format
 msgid "Could not open stderr for %s\n"
 msgstr ""
@@ -3592,12 +3592,12 @@ msgid " %s - database %s (%f sec.)|%s\n"
 msgstr ""
 
 #: plugins/check_pgsql.c:320 plugins/check_time.c:277 plugins/check_time.c:289
-#: plugins/check_users.c:228
+#: plugins/check_users.c:241
 msgid "Critical threshold must be a positive integer"
 msgstr ""
 
 #: plugins/check_pgsql.c:326 plugins/check_time.c:258 plugins/check_time.c:282
-#: plugins/check_users.c:226
+#: plugins/check_users.c:239
 msgid "Warning threshold must be a positive integer"
 msgstr ""
 
@@ -5517,39 +5517,39 @@ msgstr ""
 msgid "http://www.networkupstools.org"
 msgstr ""
 
-#: plugins/check_users.c:91
+#: plugins/check_users.c:101
 #, c-format
 msgid "Could not enumerate RD sessions: %d\n"
 msgstr ""
 
-#: plugins/check_users.c:146
+#: plugins/check_users.c:156
 #, c-format
 msgid "# users=%d"
 msgstr ""
 
-#: plugins/check_users.c:164
+#: plugins/check_users.c:177
 msgid "Unable to read output"
 msgstr ""
 
-#: plugins/check_users.c:166
+#: plugins/check_users.c:179
 #, c-format
 msgid "USERS %s - %d users currently logged in |%s\n"
 msgstr ""
 
-#: plugins/check_users.c:241
+#: plugins/check_users.c:254
 msgid "This plugin checks the number of users currently logged in on the local"
 msgstr ""
 
-#: plugins/check_users.c:242
+#: plugins/check_users.c:255
 msgid ""
 "system and generates an error if the number exceeds the thresholds specified."
 msgstr ""
 
-#: plugins/check_users.c:252
+#: plugins/check_users.c:265
 msgid "Set WARNING status if more than INTEGER users are logged in"
 msgstr ""
 
-#: plugins/check_users.c:254
+#: plugins/check_users.c:267
 msgid "Set CRITICAL status if more than INTEGER users are logged in"
 msgstr ""
 
