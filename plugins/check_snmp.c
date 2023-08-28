@@ -65,6 +65,10 @@ const char *email = "devel@monitoring-plugins.org";
 #define L_RATE_MULTIPLIER CHAR_MAX+2
 #define L_INVERT_SEARCH CHAR_MAX+3
 #define L_OFFSET CHAR_MAX+4
+#define L_LOCAL_CERT CHAR_MAX+5
+#define L_PEER_CERT CHAR_MAX+6
+#define L_PEER_HOSTNAME CHAR_MAX+7
+#define L_TRUST_CERT CHAR_MAX+8
 
 /* Gobble to string - stop incrementing c when c[0] match one of the
  * characters in s */
@@ -107,6 +111,10 @@ char *server_address = NULL;
 char *community = NULL;
 char **contextargs = NULL;
 char *context = NULL;
+char *localcert = NULL;
+char *peercert = NULL;
+char *peerhostname = NULL;
+char *trustcert = NULL;
 char **authpriv = NULL;
 char *proto = NULL;
 char *seclevel = NULL;
@@ -155,6 +163,7 @@ state_data *previous_state;
 double *previous_value;
 size_t previous_size = OID_COUNT_STEP;
 int perf_labels = 1;
+char *server_scheme = "udp";
 char* ip_version = "";
 double multiplier = 1.0;
 char *fmtstr = "";
@@ -326,12 +335,13 @@ main (int argc, char **argv)
 		command_line[10 + numcontext + i] = authpriv[i];
 	}
 
-	xasprintf (&command_line[10 + numcontext + numauthpriv], "%s:%s", server_address, port);
+	xasprintf (&command_line[10 + numcontext + numauthpriv], "%s%s:%s:%s",
+			server_scheme, ip_version == 6 ? "6" : "", server_address, port);
 
 	/* This is just for display purposes, so it can remain a string */
-	xasprintf(&cl_hidden_auth, "%s -Le -t %d -r %d -m %s -v %s %s %s %s:%s",
+	xasprintf(&cl_hidden_auth, "%s -Le -t %d -r %d -m %s -v %s %s %s %s%s:%s:%s",
 		snmpcmd, timeout_interval, retries, strlen(miblist) ? miblist : "''", proto, "[context]", "[authpriv]",
-		server_address, port);
+		server_scheme, ip_version == 6 ? "6" : "", server_address, port);
 
 	for (i = 0; i < numoids; i++) {
 		command_line[10 + numcontext + numauthpriv + 1 + i] = oids[i];
@@ -668,7 +678,7 @@ int
 process_arguments (int argc, char **argv)
 {
 	char *ptr;
-	int c = 1;
+	int c = 1, rc;
 	int j = 0, jj = 0, ii = 0;
 
 	int option = 0;
@@ -703,6 +713,10 @@ process_arguments (int argc, char **argv)
 		{"rate-multiplier", required_argument, 0, L_RATE_MULTIPLIER},
 		{"offset", required_argument, 0, L_OFFSET},
 		{"invert-search", no_argument, 0, L_INVERT_SEARCH},
+		{"localcert", required_argument, 0, L_LOCAL_CERT},
+		{"peercert", required_argument, 0, L_PEER_CERT},
+		{"peerhostname", required_argument, 0, L_PEER_HOSTNAME},
+		{"trustcert", required_argument, 0, L_TRUST_CERT},
 		{"perf-oids", no_argument, 0, 'O'},
 		{"ipv4", no_argument, 0, '4'},
 		{"ipv6", no_argument, 0, '6'},
@@ -765,6 +779,18 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'N':	/* SNMPv3 context */
 			context = optarg;
+			break;
+		case L_LOCAL_CERT:	/* local certificate */
+			localcert = optarg;
+			break;
+		case L_PEER_CERT:	/* peer certificate */
+			peercert = optarg;
+			break;
+		case L_PEER_HOSTNAME:	/* peer hostname */
+			peerhostname = optarg;
+			break;
+		case L_TRUST_CERT:	/* trust certificate */
+			trustcert =  optarg;
 			break;
 		case 'L':	/* security level */
 			seclevel = optarg;
@@ -949,7 +975,7 @@ process_arguments (int argc, char **argv)
 				usage2(_("Rate multiplier must be a positive integer"),optarg);
 			break;
 		case L_OFFSET:
-                        offset=strtod(optarg,NULL);
+			offset=strtod(optarg,NULL);
 			break;
 		case L_INVERT_SEARCH:
 			invert_search=1;
@@ -958,11 +984,10 @@ process_arguments (int argc, char **argv)
 			perf_labels=0;
 			break;
 		case '4':
+			ip_version = 4;
 			break;
 		case '6':
-			xasprintf(&ip_version, "udp6:");
-			if(verbose>2)
-				printf("IPv6 detected! Will pass \"udp6:\" to snmpget.\n");
+			ip_version = 6;
 			break;
 		case 'M':
 			if ( strspn( optarg, "0123456789.," ) == strlen( optarg ) ) {
@@ -983,7 +1008,21 @@ process_arguments (int argc, char **argv)
 	if (community == NULL)
 		community = strdup (DEFAULT_COMMUNITY);
 
-	return validate_arguments ();
+	rc = validate_arguments ();
+
+	/* preserve any scheme passed by the caller */
+	ptr = server_address ? strchr (server_address, ':') : NULL;
+	if (ptr != NULL) {
+		server_scheme = server_address;
+		*(ptr++) = 0;
+		server_address = ptr;
+		ip_version = 4;
+	}
+
+	if (ip_version == 6 && verbose > 2)
+		printf("IPv6 detected! Will add \"%s6:\" to snmpget.\n", server_scheme);
+
+	return rc;
 }
 
 
@@ -1047,59 +1086,99 @@ validate_arguments ()
 		if (seclevel == NULL)
 			xasprintf(&seclevel, "noAuthNoPriv");
 
-		if (secname == NULL)
-			die(STATE_UNKNOWN, _("Required parameter: %s\n"), "secname");
-
-		if (strcmp(seclevel, "noAuthNoPriv") == 0) {
-			numauthpriv = 4;
+		if (localcert != NULL) {
+			numauthpriv = 2;
 			authpriv = calloc (numauthpriv, sizeof (char *));
-			authpriv[0] = strdup ("-l");
-			authpriv[1] = strdup ("noAuthNoPriv");
-			authpriv[2] = strdup ("-u");
-			authpriv[3] = strdup (secname);
-		} else {
-			if (! ( (strcmp(seclevel, "authNoPriv")==0) || (strcmp(seclevel, "authPriv")==0) ) ) {
-				usage2 (_("Invalid seclevel"), seclevel);
+			authpriv[0] = strdup ("-T");
+			authpriv[1] = malloc (strlen(localcert) + 11);
+			strcpy (authpriv[1], "localCert=");
+			strcat (authpriv[1], localcert);
+
+			if (peercert != NULL) {
+				authpriv = realloc (authpriv, (numauthpriv + 2) * sizeof (char *));
+				authpriv[numauthpriv++] = strdup ("-T");
+				authpriv[numauthpriv] = malloc (strlen(peercert) + 10);
+				strcpy (authpriv[numauthpriv], "peerCert=");
+				strcat (authpriv[numauthpriv++], peercert);
 			}
 
-			if (authproto == NULL )
-				xasprintf(&authproto, DEFAULT_AUTH_PROTOCOL);
+			if (peerhostname != NULL) {
+				authpriv = realloc (authpriv, (numauthpriv + 2) * sizeof (char *));
+				authpriv[numauthpriv++] = strdup ("-T");
+				authpriv[numauthpriv] = malloc (strlen(peerhostname) + 14);
+				strcpy (authpriv[numauthpriv], "peerHostname=");
+				strcat (authpriv[numauthpriv++], peerhostname);
+			}
 
-			if (authpasswd == NULL)
-				die(STATE_UNKNOWN, _("Required parameter: %s\n"), "authpasswd");
+			if (trustcert != NULL) {
+				authpriv = realloc (authpriv, (numauthpriv + 2) * sizeof (char *));
+				authpriv[numauthpriv++] = strdup ("-T");
+				authpriv[numauthpriv] = malloc (strlen(trustcert) + 11);
+				strcpy (authpriv[numauthpriv], "trustCert=");
+				strcat (authpriv[numauthpriv++], trustcert);
+			}
 
-			if ( strcmp(seclevel, "authNoPriv") == 0 ) {
-				numauthpriv = 8;
+			server_scheme = "dtlsudp";
+		}
+		else {
+
+			if (seclevel == NULL)
+				xasprintf(&seclevel, "noAuthNoPriv");
+
+			if (secname == NULL)
+				die(STATE_UNKNOWN, _("Required parameter: %s\n"), "secname");
+
+			if (strcmp(seclevel, "noAuthNoPriv") == 0) {
+				numauthpriv = 4;
 				authpriv = calloc (numauthpriv, sizeof (char *));
 				authpriv[0] = strdup ("-l");
-				authpriv[1] = strdup ("authNoPriv");
-				authpriv[2] = strdup ("-a");
-				authpriv[3] = strdup (authproto);
-				authpriv[4] = strdup ("-u");
-				authpriv[5] = strdup (secname);
-				authpriv[6] = strdup ("-A");
-				authpriv[7] = strdup (authpasswd);
-			} else if ( strcmp(seclevel, "authPriv") == 0 ) {
-				if (privproto == NULL )
-					xasprintf(&privproto, DEFAULT_PRIV_PROTOCOL);
+				authpriv[1] = strdup ("noAuthNoPriv");
+				authpriv[2] = strdup ("-u");
+				authpriv[3] = strdup (secname);
+			} else {
+				if (! ( (strcmp(seclevel, "authNoPriv")==0) || (strcmp(seclevel, "authPriv")==0) ) ) {
+					usage2 (_("Invalid seclevel"), seclevel);
+				}
 
-				if (privpasswd == NULL)
-					die(STATE_UNKNOWN, _("Required parameter: %s\n"), "privpasswd");
+				if (authproto == NULL )
+					xasprintf(&authproto, DEFAULT_AUTH_PROTOCOL);
 
-				numauthpriv = 12;
-				authpriv = calloc (numauthpriv, sizeof (char *));
-				authpriv[0] = strdup ("-l");
-				authpriv[1] = strdup ("authPriv");
-				authpriv[2] = strdup ("-a");
-				authpriv[3] = strdup (authproto);
-				authpriv[4] = strdup ("-u");
-				authpriv[5] = strdup (secname);
-				authpriv[6] = strdup ("-A");
-				authpriv[7] = strdup (authpasswd);
-				authpriv[8] = strdup ("-x");
-				authpriv[9] = strdup (privproto);
-				authpriv[10] = strdup ("-X");
-				authpriv[11] = strdup (privpasswd);
+				if (authpasswd == NULL)
+					die(STATE_UNKNOWN, _("Required parameter: %s\n"), "authpasswd");
+
+				if ( strcmp(seclevel, "authNoPriv") == 0 ) {
+					numauthpriv = 8;
+					authpriv = calloc (numauthpriv, sizeof (char *));
+					authpriv[0] = strdup ("-l");
+					authpriv[1] = strdup ("authNoPriv");
+					authpriv[2] = strdup ("-a");
+					authpriv[3] = strdup (authproto);
+					authpriv[4] = strdup ("-u");
+					authpriv[5] = strdup (secname);
+					authpriv[6] = strdup ("-A");
+					authpriv[7] = strdup (authpasswd);
+				} else if ( strcmp(seclevel, "authPriv") == 0 ) {
+					if (privproto == NULL )
+						xasprintf(&privproto, DEFAULT_PRIV_PROTOCOL);
+
+					if (privpasswd == NULL)
+						die(STATE_UNKNOWN, _("Required parameter: %s\n"), "privpasswd");
+
+					numauthpriv = 12;
+					authpriv = calloc (numauthpriv, sizeof (char *));
+					authpriv[0] = strdup ("-l");
+					authpriv[1] = strdup ("authPriv");
+					authpriv[2] = strdup ("-a");
+					authpriv[3] = strdup (authproto);
+					authpriv[4] = strdup ("-u");
+					authpriv[5] = strdup (secname);
+					authpriv[6] = strdup ("-A");
+					authpriv[7] = strdup (authpasswd);
+					authpriv[8] = strdup ("-x");
+					authpriv[9] = strdup (privproto);
+					authpriv[10] = strdup ("-X");
+					authpriv[11] = strdup (privpasswd);
+				}
 			}
 		}
 
@@ -1228,9 +1307,17 @@ print_help (void)
 	printf ("    %s\n", _("SNMP protocol version"));
 	printf (" %s\n", "-N, --context=CONTEXT");
 	printf ("    %s\n", _("SNMPv3 context"));
+	printf (" %s\n", "--localcert=prefix");
+	printf ("    %s\n", _("SNMPv3 local certificate prefix / fingerprint"));
+	printf (" %s\n", "--peercert=prefix");
+	printf ("    %s\n", _("SNMPv3 peer certificate prefix / fingerprint"));
+	printf (" %s\n", "--peerhostname=HOSTNAME");
+	printf ("    %s\n", _("SNMPv3 verify hostname in peer certificate"));
+	printf (" %s\n", "--trustcert=prefix");
+	printf ("    %s\n", _("SNMPv3 trusted certificate prefix / fingerprint"));
 	printf (" %s\n", "-L, --seclevel=[noAuthNoPriv|authNoPriv|authPriv]");
 	printf ("    %s\n", _("SNMPv3 securityLevel"));
-	printf (" %s\n", "-a, --authproto=[MD5|SHA]");
+	printf (" %s\n", "-a, --authproto=[MD5|SHA|SHA224|SHA256|SHA384|SHA512]");
 	printf ("    %s\n", _("SNMPv3 auth proto"));
 	printf (" %s\n", "-x, --privproto=[DES|AES]");
 	printf ("    %s\n", _("SNMPv3 priv proto (default DES)"));
@@ -1336,6 +1423,19 @@ print_help (void)
 	printf(" %s\n", _("The state is uniquely determined by the arguments to the plugin, so"));
 	printf(" %s\n", _("changing the arguments will create a new state file."));
 
+	printf("\n");
+	printf("%s\n", _("SNMPv3 Security:"));
+	printf(" %s\n", _("When --localcert is specified, SNMPv3 TSM using client certificates is"));
+	printf(" %s\n", _("enabled. The option specifies the filename prefix or the fingerprint"));
+	printf(" %s\n", _("of the certificate to use. Certificates are scanned for in the tls directory"));
+	printf(" %s\n", _("below the elements of SNMPCONFPATH. If a self signed certificate is expected"));
+	printf(" %s\n", _("from the server, specify the filename prefix or fingerprint using --peercert."));
+	printf(" %s\n", _("Alternatively use --trustcert to specify the filename prefix of the CA"));
+	printf(" %s\n", _("certificates or fingerprint of the CA certificate to trust."));
+	printf(" %s\n", _("When --localcert is not specified, SNMPv3 USM using shared keys is used"));
+	printf(" %s\n", _("with the user specified using --secname. The --seclevel option is used to"));
+	printf(" %s\n", _("indicate whether requests are signed or signed and encrypted."));
+
 	printf (UT_SUPPORT);
 }
 
@@ -1352,3 +1452,4 @@ print_usage (void)
 	printf ("[-a authproto] [-A authpasswd] [-x privproto] [-X privpasswd] [-4|6]\n");
 	printf ("[-M multiplier [-f format]]\n");
 }
+
