@@ -596,7 +596,7 @@ main (int argc, char **argv)
 			len = sizeof(perfstr)-strlen(perfstr)-1;
 			strncat(perfstr, show, len>ptr-show ? ptr-show : len);
 
-			if (type[0] != '\0')
+			if (type[0])
 				strncat(perfstr, type, sizeof(perfstr)-strlen(perfstr)-1);
 
 			if (warning_thresholds) {
