@@ -109,12 +109,6 @@ disown %1
 
 # snmpd
 service snmpd stop
-#for DIR in /usr/share/snmp/mibs /usr/share/mibs; do
-#    rm -f $DIR/ietf/SNMPv2-PDU \
-#          $DIR/ietf/IPSEC-SPD-MIB \
-#          $DIR/ietf/IPATM-IPMC-MIB \
-#          $DIR/iana/IANA-IPPM-METRICS-REGISTRY-MIB
-#done
 mkdir -p /var/lib/snmp/mib_indexes
 sed -e 's/^agentaddress.*/agentaddress 127.0.0.1/' -i /etc/snmp/snmpd.conf
 service snmpd start
