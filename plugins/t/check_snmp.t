@@ -172,5 +172,5 @@ SKIP: {
     skip "no non invalid host defined", 2 if ( ! $hostname_invalid );
     $res = NPTest->testCmd( "./check_snmp -H $hostname_invalid --ignore-mib-parsing-errors -C np_foobar -o system.sysUpTime.0 -w 1: -c 1:");
     cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN with non responsive host" );
-    like($res->output, '/External command error: .*(nosuchhost|Name or service not known|Unknown host)/', "String matches invalid host");
+    like($res->output, '/External command error: .*(nosuchhost|Name or service not known|Unknown host).*/s', "String matches invalid host");
 }
