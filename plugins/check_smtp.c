@@ -84,6 +84,7 @@ int eflags = 0;
 int errcode, excode;
 
 int server_port = SMTP_PORT;
+int server_port_option = 0;
 char *server_address = NULL;
 char *server_expect = NULL;
 char *mail_command = NULL;
@@ -544,7 +545,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'p':									/* port */
 			if (is_intpos (optarg))
-				server_port = atoi (optarg);
+				server_port_option = atoi (optarg);
 			else
 				usage4 (_("Port must be a positive integer"));
 			break;
@@ -717,6 +718,10 @@ process_arguments (int argc, char **argv)
 
 	if (use_starttls && use_ssl) {
 		usage4 (_("Set either -s/--ssl/--tls or -S/--starttls"));
+	}
+
+	if (server_port_option != 0) {
+		server_port = server_port_option;
 	}
 
 	return validate_arguments ();
