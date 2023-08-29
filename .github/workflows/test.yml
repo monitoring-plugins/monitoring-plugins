@@ -1,15 +1,48 @@
+---
 name: Test
 
 on:
   push:
     branches:
       - '*'
+  # Run test for any PRs
   pull_request:
 
 jobs:
+  codespell:
+    name: codespell
+    strategy:
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Codespell
+        uses: codespell-project/actions-codespell@master
+        with:
+          skip: "./.git,./.gitignore,./ABOUT-NLS,*.po,./gl,./po,./tools/squid.conf,./build-aux/ltmain.sh"
+          ignore_words_list: allright,gord,didi,hda,nd,alis,clen,scrit,ser,fot,te,parm,isnt,consol,oneliners
+          check_filenames: true
+          check_hidden: true
+#  super-linter:
+#    name: super-linter
+#    strategy:
+#      fail-fast: false
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v3
+#      - name: Lint Code Base
+#        uses: github/super-linter@v5.0.0
+#        env:
+#          DEFAULT_BRANCH: master
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 #  macos:
 #    ...
   linux:
+    needs:
+      - codespell
+#      - super-linter
     runs-on: ubuntu-latest
     name: Running tests on ${{ matrix.distro }}
     strategy:
@@ -41,6 +74,10 @@ jobs:
               /bin/sh -c '${{ matrix.prepare }} && \
                 tools/setup && \
                 ./configure --enable-libtap  --with-ipv6=no && \
+                set -x && \
+                tmp_dir=$(mktemp -d -t test-XXXX) && cp -a po/ $tmp_dir/  && \
+                cd po && make update-po && cd .. && \
+                diff -Nur $tmp_dir/po/*.po po/*.po | tee -a /tmp/po.diff && diff -Nur $tmp_dir/po/*.pot po/*.pot | tee -a /tmp/po.diff && if [ $(wc -l /tmp/po.diff | cut -f 1 -d" ") -gt 0 ]; then echo "Error: Translations needs to be updated with make update-po!" && exit 1; fi && \ 
                 make && \
                 make test'
           docker container prune -f

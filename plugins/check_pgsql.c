@@ -93,7 +93,7 @@ int verbose = 0;
 
 /******************************************************************************
 
-The (psuedo?)literate programming XML is contained within \@\@\- <XML> \-\@\@
+The (pseudo?)literate programming XML is contained within \@\@\- <XML> \-\@\@
 tags in the comments. With in the tags, the XML is assembled sequentially.
 You can define entities in tags. You also have all the #defines available as
 entities.
@@ -517,7 +517,10 @@ print_help (void)
 	printf (" %s\n", _("connecting to the server. The result from the query has to be numeric."));
 	printf (" %s\n", _("Multiple SQL commands, separated by semicolon, are allowed but the result "));
 	printf (" %s\n", _("of the last command is taken into account only. The value of the first"));
-	printf (" %s\n\n", _("column in the first row is used as the check result."));
+	printf (" %s\n", _("column in the first row is used as the check result. If a second column is"));
+	printf (" %s\n", _("present in the result set, this is added to the plugin output with a"));
+	printf (" %s\n", _("prefix of \"Extra Info:\". This information can be displayed in the system"));
+	printf (" %s\n\n", _("executing the plugin."));
 
 	printf (" %s\n", _("See the chapter \"Monitoring Database Activity\" of the PostgreSQL manual"));
 	printf (" %s\n\n", _("for details about how to access internal statistics of the database server."));
@@ -557,6 +560,7 @@ do_query (PGconn *conn, char *query)
 	PGresult *res;
 
 	char *val_str;
+	char *extra_info;
 	double value;
 
 	char *endptr = NULL;
@@ -621,6 +625,12 @@ do_query (PGconn *conn, char *query)
 	printf ("|query=%f;%s;%s;;\n", value,
 			query_warning ? query_warning : "",
 			query_critical ? query_critical : "");
+	if (PQnfields (res) > 1) {
+		extra_info = PQgetvalue (res, 0, 1);
+		if (extra_info != NULL) {
+			printf ("Extra Info: %s\n", extra_info);
+		}
+	}
 	return my_status;
 }
 

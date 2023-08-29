@@ -1,4 +1,4 @@
-# (this check is rougly based on and inspired libcurl.m4)
+# (this check is roughly based on and inspired libcurl.m4)
 # URIPARSER_CHECK ([DEFAULT-ACTION], [MINIMUM-VERSION],
 #                       [ACTION-IF-YES], [ACTION-IF-NO])
 # Checks for uriparser library.  DEFAULT-ACTION is the string yes or no to

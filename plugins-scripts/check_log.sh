@@ -105,11 +105,11 @@ while test -n "$1"; do
     case "$1" in
         -h | --help)
             print_help
-            exit "$STATE_OK"
+            exit "$STATE_UNKNOWN"
             ;;
         -V | --version)
             print_revision "$PROGNAME" "$REVISION"
-            exit "$STATE_OK"
+            exit "$STATE_UNKNOWN"
             ;;
         -F | --filename)
             logfile=$2
