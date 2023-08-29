@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nagiosplug\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-08-28 14:50+0200\n"
+"POT-Creation-Date: 2023-08-29 09:47+0200\n"
 "PO-Revision-Date: 2004-12-23 17:46+0100\n"
 "Last-Translator:  <>\n"
 "Language-Team: English <en@li.org>\n"
@@ -28,7 +28,7 @@ msgstr ""
 #: plugins/check_ntp_peer.c:575 plugins/check_ntp_time.c:557
 #: plugins/check_nwstat.c:173 plugins/check_overcr.c:102
 #: plugins/check_pgsql.c:174 plugins/check_ping.c:97 plugins/check_procs.c:176
-#: plugins/check_radius.c:176 plugins/check_real.c:80 plugins/check_smtp.c:146
+#: plugins/check_radius.c:176 plugins/check_real.c:80 plugins/check_smtp.c:149
 #: plugins/check_snmp.c:250 plugins/check_ssh.c:74 plugins/check_swap.c:115
 #: plugins/check_tcp.c:222 plugins/check_time.c:78 plugins/check_ups.c:122
 #: plugins/check_users.c:89 plugins/negate.c:210 plugins-root/check_dhcp.c:270
@@ -68,14 +68,14 @@ msgstr ""
 
 #: plugins/check_by_ssh.c:242 plugins/check_disk.c:568 plugins/check_http.c:292
 #: plugins/check_ldap.c:334 plugins/check_pgsql.c:314 plugins/check_procs.c:461
-#: plugins/check_radius.c:323 plugins/check_real.c:357 plugins/check_smtp.c:607
+#: plugins/check_radius.c:323 plugins/check_real.c:357 plugins/check_smtp.c:625
 #: plugins/check_snmp.c:805 plugins/check_ssh.c:140 plugins/check_tcp.c:519
 #: plugins/check_time.c:302 plugins/check_ups.c:559 plugins/negate.c:160
 msgid "Timeout interval must be a positive integer"
 msgstr "Timeout interval muss ein positiver Integer sein"
 
 #: plugins/check_by_ssh.c:254 plugins/check_pgsql.c:344
-#: plugins/check_radius.c:287 plugins/check_real.c:328 plugins/check_smtp.c:532
+#: plugins/check_radius.c:287 plugins/check_real.c:328 plugins/check_smtp.c:550
 #: plugins/check_tcp.c:525 plugins/check_time.c:296 plugins/check_ups.c:521
 msgid "Port must be a positive integer"
 msgstr "Port muss ein positiver Integer sein"
@@ -252,7 +252,7 @@ msgstr ""
 #: plugins/check_ntp_peer.c:753 plugins/check_ntp_time.c:651
 #: plugins/check_nwstat.c:1685 plugins/check_overcr.c:467
 #: plugins/check_pgsql.c:551 plugins/check_ping.c:617 plugins/check_procs.c:829
-#: plugins/check_radius.c:400 plugins/check_real.c:452 plugins/check_smtp.c:891
+#: plugins/check_radius.c:400 plugins/check_real.c:452 plugins/check_smtp.c:924
 #: plugins/check_snmp.c:1368 plugins/check_ssh.c:325 plugins/check_swap.c:607
 #: plugins/check_tcp.c:710 plugins/check_time.c:371 plugins/check_ups.c:663
 #: plugins/check_users.c:275 plugins/check_ide_smart.c:606 plugins/negate.c:273
@@ -957,8 +957,8 @@ msgstr "FPING %s - %s (verloren=%.0f%% )|%s\n"
 #: plugins/check_ntp.c:719 plugins/check_ntp_peer.c:497
 #: plugins/check_ntp_time.c:498 plugins/check_pgsql.c:338
 #: plugins/check_ping.c:301 plugins/check_ping.c:424 plugins/check_radius.c:279
-#: plugins/check_real.c:315 plugins/check_real.c:377 plugins/check_smtp.c:525
-#: plugins/check_smtp.c:681 plugins/check_ssh.c:162 plugins/check_time.c:240
+#: plugins/check_real.c:315 plugins/check_real.c:377 plugins/check_smtp.c:543
+#: plugins/check_smtp.c:703 plugins/check_ssh.c:162 plugins/check_time.c:240
 #: plugins/check_time.c:315 plugins/check_ups.c:507 plugins/check_ups.c:576
 msgid "Invalid hostname/address"
 msgstr "Ungültige(r) Hostname/Adresse"
@@ -1227,7 +1227,7 @@ msgid "file does not exist or is not readable"
 msgstr ""
 
 #: plugins/check_http.c:324 plugins/check_http.c:329 plugins/check_http.c:335
-#: plugins/check_smtp.c:621 plugins/check_tcp.c:590 plugins/check_tcp.c:595
+#: plugins/check_smtp.c:639 plugins/check_tcp.c:590 plugins/check_tcp.c:595
 #: plugins/check_tcp.c:601
 msgid "Invalid certificate expiration period"
 msgstr "Ungültiger Zertifikatsablauftermin"
@@ -1267,7 +1267,7 @@ msgstr ""
 
 #: plugins/check_http.c:522 plugins/check_ntp.c:732
 #: plugins/check_ntp_peer.c:513 plugins/check_ntp_time.c:517
-#: plugins/check_smtp.c:661 plugins/check_ssh.c:151 plugins/check_tcp.c:491
+#: plugins/check_smtp.c:683 plugins/check_ssh.c:151 plugins/check_tcp.c:491
 msgid "IPv6 support not available"
 msgstr "IPv6 Unterstützung nicht vorhanden"
 
@@ -1532,7 +1532,7 @@ msgstr ""
 msgid "1.2 = TLSv1.2). With a '+' suffix, newer versions are also accepted."
 msgstr ""
 
-#: plugins/check_http.c:1750 plugins/check_smtp.c:857
+#: plugins/check_http.c:1750 plugins/check_smtp.c:890
 msgid "Enable SSL/TLS hostname extension support (SNI)"
 msgstr ""
 
@@ -4376,7 +4376,7 @@ msgstr "Kein Papier"
 msgid "Invalid NAS-Identifier\n"
 msgstr "Ungültige(r) Hostname/Adresse"
 
-#: plugins/check_radius.c:199 plugins/check_smtp.c:156
+#: plugins/check_radius.c:199 plugins/check_smtp.c:159
 #, c-format
 msgid "gethostname() failed!\n"
 msgstr ""
@@ -4568,7 +4568,7 @@ msgstr ""
 msgid "This plugin will attempt to open an RTSP connection with the host."
 msgstr "Dieses plugin testet Gameserververbindungen zum angegebenen Host."
 
-#: plugins/check_real.c:439 plugins/check_smtp.c:878
+#: plugins/check_real.c:439 plugins/check_smtp.c:911
 msgid "Successful connects return STATE_OK, refusals and timeouts return"
 msgstr ""
 
@@ -4586,227 +4586,241 @@ msgstr ""
 msgid "values."
 msgstr ""
 
-#: plugins/check_smtp.c:152 plugins/check_swap.c:283 plugins/check_swap.c:289
+#: plugins/check_smtp.c:155 plugins/check_swap.c:283 plugins/check_swap.c:289
 #, c-format
 msgid "malloc() failed!\n"
 msgstr ""
 
-#: plugins/check_smtp.c:200 plugins/check_smtp.c:212
-#, c-format
-msgid "recv() failed\n"
-msgstr ""
-
-#: plugins/check_smtp.c:222
-#, c-format
-msgid "WARNING - TLS not supported by server\n"
-msgstr ""
-
-#: plugins/check_smtp.c:234
-#, c-format
-msgid "Server does not support STARTTLS\n"
-msgstr ""
-
-#: plugins/check_smtp.c:240
+#: plugins/check_smtp.c:203 plugins/check_smtp.c:256
 #, c-format
 msgid "CRITICAL - Cannot create SSL context.\n"
 msgstr ""
 
-#: plugins/check_smtp.c:260
+#: plugins/check_smtp.c:216 plugins/check_smtp.c:228
+#, c-format
+msgid "recv() failed\n"
+msgstr ""
+
+#: plugins/check_smtp.c:238
+#, c-format
+msgid "WARNING - TLS not supported by server\n"
+msgstr ""
+
+#: plugins/check_smtp.c:250
+#, c-format
+msgid "Server does not support STARTTLS\n"
+msgstr ""
+
+#: plugins/check_smtp.c:276
 msgid "SMTP UNKNOWN - Cannot send EHLO command via TLS."
 msgstr ""
 
-#: plugins/check_smtp.c:265
+#: plugins/check_smtp.c:281
 #, c-format
 msgid "sent %s"
 msgstr ""
 
-#: plugins/check_smtp.c:267
+#: plugins/check_smtp.c:283
 msgid "SMTP UNKNOWN - Cannot read EHLO response via TLS."
 msgstr ""
 
-#: plugins/check_smtp.c:297
+#: plugins/check_smtp.c:313
 #, fuzzy, c-format
 msgid "Invalid SMTP response received from host: %s\n"
 msgstr "Ungültige HTTP Antwort von Host empfangen\n"
 
-#: plugins/check_smtp.c:299
+#: plugins/check_smtp.c:315
 #, fuzzy, c-format
 msgid "Invalid SMTP response received from host on port %d: %s\n"
 msgstr "Ungültige HTTP Antwort von Host erhalten auf Port %d\n"
 
-#: plugins/check_smtp.c:322 plugins/check_snmp.c:882
+#: plugins/check_smtp.c:338 plugins/check_snmp.c:882
 #, c-format
 msgid "Could Not Compile Regular Expression"
 msgstr ""
 
-#: plugins/check_smtp.c:331
+#: plugins/check_smtp.c:347
 #, c-format
 msgid "SMTP %s - Invalid response '%s' to command '%s'\n"
 msgstr ""
 
-#: plugins/check_smtp.c:335 plugins/check_snmp.c:555
+#: plugins/check_smtp.c:351 plugins/check_snmp.c:555
 #, c-format
 msgid "Execute Error: %s\n"
 msgstr ""
 
-#: plugins/check_smtp.c:349
+#: plugins/check_smtp.c:365
 msgid "no authuser specified, "
 msgstr ""
 
-#: plugins/check_smtp.c:354
+#: plugins/check_smtp.c:370
 msgid "no authpass specified, "
 msgstr ""
 
-#: plugins/check_smtp.c:361 plugins/check_smtp.c:382 plugins/check_smtp.c:402
-#: plugins/check_smtp.c:728
+#: plugins/check_smtp.c:377 plugins/check_smtp.c:398 plugins/check_smtp.c:418
+#: plugins/check_smtp.c:758
 #, c-format
 msgid "sent %s\n"
 msgstr ""
 
-#: plugins/check_smtp.c:364
+#: plugins/check_smtp.c:380
 #, fuzzy
 msgid "recv() failed after AUTH LOGIN, "
 msgstr "Ungültige HTTP Antwort von Host empfangen\n"
 
-#: plugins/check_smtp.c:369 plugins/check_smtp.c:390 plugins/check_smtp.c:410
-#: plugins/check_smtp.c:739
+#: plugins/check_smtp.c:385 plugins/check_smtp.c:406 plugins/check_smtp.c:426
+#: plugins/check_smtp.c:769
 #, fuzzy, c-format
 msgid "received %s\n"
 msgstr "Keine Daten empfangen %s\n"
 
-#: plugins/check_smtp.c:373
+#: plugins/check_smtp.c:389
 #, fuzzy
 msgid "invalid response received after AUTH LOGIN, "
 msgstr "Ungültige HTTP Antwort von Host empfangen\n"
 
-#: plugins/check_smtp.c:386
+#: plugins/check_smtp.c:402
 msgid "recv() failed after sending authuser, "
 msgstr ""
 
-#: plugins/check_smtp.c:394
+#: plugins/check_smtp.c:410
 #, fuzzy
 msgid "invalid response received after authuser, "
 msgstr "Ungültige HTTP Antwort von Host empfangen\n"
 
-#: plugins/check_smtp.c:406
+#: plugins/check_smtp.c:422
 msgid "recv() failed after sending authpass, "
 msgstr ""
 
-#: plugins/check_smtp.c:414
+#: plugins/check_smtp.c:430
 #, fuzzy
 msgid "invalid response received after authpass, "
 msgstr "Ungültige HTTP Antwort von Host empfangen\n"
 
-#: plugins/check_smtp.c:421
+#: plugins/check_smtp.c:437
 msgid "only authtype LOGIN is supported, "
 msgstr ""
 
-#: plugins/check_smtp.c:445
+#: plugins/check_smtp.c:461
 #, fuzzy, c-format
 msgid "SMTP %s - %s%.3f sec. response time%s%s|%s\n"
 msgstr " - %s - %.3f Sekunden Antwortzeit %s%s|%s %s\n"
 
-#: plugins/check_smtp.c:562 plugins/check_smtp.c:574
+#: plugins/check_smtp.c:580 plugins/check_smtp.c:592
 #, c-format
 msgid "Could not realloc() units [%d]\n"
 msgstr ""
 
-#: plugins/check_smtp.c:582
+#: plugins/check_smtp.c:600
 #, fuzzy
 msgid "Critical time must be a positive"
 msgstr "Critical time muss ein positiver Integer sein"
 
-#: plugins/check_smtp.c:590
+#: plugins/check_smtp.c:608
 #, fuzzy
 msgid "Warning time must be a positive"
 msgstr "Warnung time muss ein positiver Integer sein"
 
-#: plugins/check_smtp.c:633 plugins/check_smtp.c:645
+#: plugins/check_smtp.c:651 plugins/check_smtp.c:667
 msgid "SSL support not available - install OpenSSL and recompile"
 msgstr ""
 
-#: plugins/check_smtp.c:719 plugins/check_smtp.c:724
+#: plugins/check_smtp.c:720
+msgid "Set either -s/--ssl/--tls or -S/--starttls"
+msgstr "Setze entweder -s/--ssl/--tls oder -S/--starttls"
+
+#: plugins/check_smtp.c:749 plugins/check_smtp.c:754
 #, c-format
 msgid "Connection closed by server before sending QUIT command\n"
 msgstr ""
 
-#: plugins/check_smtp.c:734
+#: plugins/check_smtp.c:764
 #, fuzzy, c-format
 msgid "recv() failed after QUIT."
 msgstr "Ungültige HTTP Antwort von Host empfangen\n"
 
-#: plugins/check_smtp.c:736
+#: plugins/check_smtp.c:766
 #, c-format
 msgid "Connection reset by peer."
 msgstr ""
 
-#: plugins/check_smtp.c:826
+#: plugins/check_smtp.c:856
 #, fuzzy
 msgid "This plugin will attempt to open an SMTP connection with the host."
 msgstr "Dieses plugin testet Gameserververbindungen zum angegebenen Host."
 
-#: plugins/check_smtp.c:840
+#: plugins/check_smtp.c:870
 #, c-format
 msgid "    String to expect in first line of server response (default: '%s')\n"
 msgstr ""
 
-#: plugins/check_smtp.c:842
+#: plugins/check_smtp.c:872
 msgid "SMTP command (may be used repeatedly)"
 msgstr ""
 
-#: plugins/check_smtp.c:844
+#: plugins/check_smtp.c:874
 msgid "Expected response to command (may be used repeatedly)"
 msgstr ""
 
-#: plugins/check_smtp.c:846
+#: plugins/check_smtp.c:876
 msgid "FROM-address to include in MAIL command, required by Exchange 2000"
 msgstr ""
 
-#: plugins/check_smtp.c:848
+#: plugins/check_smtp.c:878
 msgid "FQDN used for HELO"
 msgstr ""
 
-#: plugins/check_smtp.c:850
+#: plugins/check_smtp.c:880
 msgid "Use PROXY protocol prefix for the connection."
 msgstr "Benutze PROXY-Protokoll-Präfix für die Verbindung."
 
-#: plugins/check_smtp.c:853 plugins/check_tcp.c:689
+#: plugins/check_smtp.c:883 plugins/check_tcp.c:689
 msgid "Minimum number of days a certificate has to be valid."
 msgstr ""
 
-#: plugins/check_smtp.c:855
-msgid "Use STARTTLS for the connection."
-msgstr ""
+#: plugins/check_smtp.c:885
+#, fuzzy
+msgid "Use SSL/TLS for the connection."
+msgstr "Benutze SSL/TLS für die Verbindung."
 
-#: plugins/check_smtp.c:861
+#: plugins/check_smtp.c:886
+#, c-format
+msgid "    Sets default port to %d.\n"
+msgstr "    Setze den Default-Port auf %d.\n"
+
+#: plugins/check_smtp.c:888
+msgid "Use STARTTLS for the connection."
+msgstr "Benutze STARTTLS für die Verbindung."
+
+#: plugins/check_smtp.c:894
 msgid "SMTP AUTH type to check (default none, only LOGIN supported)"
 msgstr ""
 
-#: plugins/check_smtp.c:863
+#: plugins/check_smtp.c:896
 msgid "SMTP AUTH username"
 msgstr ""
 
-#: plugins/check_smtp.c:865
+#: plugins/check_smtp.c:898
 msgid "SMTP AUTH password"
 msgstr ""
 
-#: plugins/check_smtp.c:867
+#: plugins/check_smtp.c:900
 msgid "Send LHLO instead of HELO/EHLO"
 msgstr ""
 
-#: plugins/check_smtp.c:869
+#: plugins/check_smtp.c:902
 msgid "Ignore failure when sending QUIT command to server"
 msgstr ""
 
-#: plugins/check_smtp.c:879
+#: plugins/check_smtp.c:912
 msgid "STATE_CRITICAL, other errors return STATE_UNKNOWN.  Successful"
 msgstr ""
 
-#: plugins/check_smtp.c:880
+#: plugins/check_smtp.c:913
 msgid "connects, but incorrect response messages from the host result in"
 msgstr ""
 
-#: plugins/check_smtp.c:881
+#: plugins/check_smtp.c:914
 msgid "STATE_WARNING return values."
 msgstr ""
 
