@@ -74,6 +74,10 @@ jobs:
               /bin/sh -c '${{ matrix.prepare }} && \
                 tools/setup && \
                 ./configure --enable-libtap  --with-ipv6=no && \
+                set -x && \
+                tmp_dir=$(mktemp -d -t test-XXXX) && cp -a po/ $tmp_dir/  && \
+                cd po && make update-po && cd .. && \
+                diff -Nur $tmp_dir/po/*.po po/*.po | tee -a /tmp/po.diff && diff -Nur $tmp_dir/po/*.pot po/*.pot | tee -a /tmp/po.diff && if [ $(wc -l /tmp/po.diff | cut -f 1 -d" ") -gt 0 ]; then echo "Error: Translations needs to be updated with make update-po!" && exit 1; fi && \ 
                 make && \
                 make test'
           docker container prune -f
