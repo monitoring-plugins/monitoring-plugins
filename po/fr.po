@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-08-29 09:47+0200\n"
+"POT-Creation-Date: 2023-09-05 00:31+0200\n"
 "PO-Revision-Date: 2010-04-21 23:38-0400\n"
 "Last-Translator: Thomas Guyot-Sionnest <dermoth@aei.ca>\n"
 "Language-Team: Nagios Plugin Development Mailing List <nagiosplug-"
@@ -4561,8 +4561,7 @@ msgid ""
 msgstr ""
 
 #: plugins/check_radius.c:384
-msgid ""
-"name and password. A configuration file may also be present. The format of"
+msgid "name and password. A configuration file must be present. The format of"
 msgstr ""
 
 #: plugins/check_radius.c:385
