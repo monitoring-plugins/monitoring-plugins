@@ -28,6 +28,7 @@
   'NP_HOST_TCP_SMTP_NOSTARTTLS' => '',
   'NP_HOST_TCP_SMTP_STARTTLS' => 'localhost',
   'NP_HOST_TCP_SMTP_TLS' => 'localhost',
+  'NP_PORT_TCP_SMTP_PROXY_PROT' => '',
   'NP_HOST_TLS_CERT' => 'localhost',
   'NP_HOST_TLS_HTTP' => 'localhost',
   'NP_HOST_UDP_TIME' => 'none',

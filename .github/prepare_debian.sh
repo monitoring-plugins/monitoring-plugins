@@ -117,11 +117,15 @@ service snmpd start
 cron
 
 # postfix
+proxy_protocol_port="2525"
 cat <<EOD >> /etc/postfix/master.cf
 smtps     inet  n       -       n       -       -       smtpd
   -o smtpd_tls_wrappermode=yes
+${proxy_protocol_port}      inet  n       -       n       -       -       smtpd
+  -o smtpd_upstream_proxy_protocol=haproxy
 EOD
 service postfix start
+sed "/NP_PORT_TCP_SMTP_PROXY_PROT/c\ \ 'NP_PORT_TCP_SMTP_PROXY_PROT' => '${proxy_protocol_port}'," -i /src/.github/NPTest.cache
 
 # start ftpd
 service vsftpd start
