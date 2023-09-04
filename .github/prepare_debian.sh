@@ -92,7 +92,7 @@ service mariadb start || service mysql start
 mysql -e "create database IF NOT EXISTS test;" -uroot
 
 # ldap
-sed -e 's/cn=admin,dc=nodomain/'$(/usr/sbin/slapcat|grep ^dn:|awk '{print $2}')'/' -i .github/NPTest.cache
+sed -e 's/cn=admin,dc=nodomain/'$(/usr/sbin/slapcat|grep ^dn:|awk '{print $2}')'/' -i "${NPTEST_CACHE}"
 service slapd start
 
 # sshd
@@ -125,13 +125,13 @@ ${proxy_protocol_port}      inet  n       -       n       -       -       smtpd
   -o smtpd_upstream_proxy_protocol=haproxy
 EOD
 service postfix start
-sed "/NP_PORT_TCP_SMTP_PROXY_PROT/c\ \ 'NP_PORT_TCP_SMTP_PROXY_PROT' => '${proxy_protocol_port}'," -i /src/.github/NPTest.cache
+sed "/NP_PORT_TCP_SMTP_PROXY_PROT/c\ \ 'NP_PORT_TCP_SMTP_PROXY_PROT' => '${proxy_protocol_port}'," -i "${NPTEST_CACHE}"
 
 # start ftpd
 service vsftpd start
 
 # hostname
-sed "/NP_HOST_TLS_CERT/s/.*/'NP_HOST_TLS_CERT' => '$(hostname)',/" -i /src/.github/NPTest.cache
+sed "/NP_HOST_TLS_CERT/s/.*/'NP_HOST_TLS_CERT' => '$(hostname)',/" -i "${NPTEST_CACHE}"
 
 # create some test files to lower inodes
 for i in $(seq 10); do
