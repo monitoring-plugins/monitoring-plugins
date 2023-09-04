@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nagiosplug\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-09-05 00:31+0200\n"
+"POT-Creation-Date: 2023-09-05 23:54+0200\n"
 "PO-Revision-Date: 2004-12-23 17:46+0100\n"
 "Last-Translator:  <>\n"
 "Language-Team: English <en@li.org>\n"
@@ -3503,6 +3503,10 @@ msgid "malloc() failed!\n"
 msgstr ""
 
 #, c-format
+msgid "Sending header %s\n"
+msgstr "Sende Kopfzeile %s\n"
+
+#, c-format
 msgid "CRITICAL - Cannot create SSL context.\n"
 msgstr ""
 
@@ -4611,6 +4615,18 @@ msgid "Invalid hostname/address - %s"
 msgstr ""
 "Ungültige(r) Name/Adresse: %s\n"
 "\n"
+
+#, c-format
+msgid "CRITICAL - proxy_protocol_header()/getsockname(): %s\n"
+msgstr "CRITICAL - proxy_protocol_header()/getsockname(): %s\n"
+
+#, c-format
+msgid "CRITICAL - proxy_protocol_header()/getpeername(): %s\n"
+msgstr "CRITICAL - proxy_protocol_header()/getpeername(): %s\n"
+
+#, c-format
+msgid "CRITICAL - proxy_protocol_header(): Unhandled address family: %d\n"
+msgstr "CRITICAL - proxy_protocol_header(): Unbehandelte Adressfamilie: %d\n"
 
 #, fuzzy
 msgid "Could not malloc argv array in popen()"
