@@ -18,7 +18,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Codespell
-        uses: codespell-project/actions-codespell@master
+        uses: codespell-project/actions-codespell@v2
         with:
           skip: "./.git,./.gitignore,./ABOUT-NLS,*.po,./gl,./po,./tools/squid.conf,./build-aux/ltmain.sh"
           ignore_words_list: allright,gord,didi,hda,nd,alis,clen,scrit,ser,fot,te,parm,isnt,consol,oneliners
