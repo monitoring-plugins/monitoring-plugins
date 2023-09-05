@@ -3497,7 +3497,6 @@ msgid ""
 "The server to test must be specified in the invocation, as well as a user"
 msgstr ""
 
-msgid ""
 msgid "name and password. A configuration file must be present. The format of"
 msgstr ""
 
