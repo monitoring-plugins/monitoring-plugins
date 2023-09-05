@@ -3498,7 +3498,7 @@ msgid ""
 msgstr ""
 
 msgid ""
-msgid "name and password. A configuration file must be present. The format of"
+"name and password. A configuration file must be present. The format of"
 msgstr ""
 
 msgid ""
