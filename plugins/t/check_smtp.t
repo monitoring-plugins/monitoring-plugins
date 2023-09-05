@@ -16,6 +16,10 @@ my $host_tcp_smtp_nostarttls = getTestParameter( "NP_HOST_TCP_SMTP_NOSTARTTLS",
 					   "A host providing SMTP without STARTTLS", "");
 my $host_tcp_smtp_tls        = getTestParameter( "NP_HOST_TCP_SMTP_TLS",
 					   "A host providing SMTP with TLS", $host_tcp_smtp);
+my $host_tcp_smtp_proxy_prot = getTestParameter( "NP_HOST_TCP_SMTP_PROXY_PROT",
+					   "A host providing SMTP with proxy protocol", $host_tcp_smtp);
+my $port_tcp_smtp_proxy_prot = getTestParameter( "NP_PORT_TCP_SMTP_PROXY_PROT",
+					   "A port providing SMTP with proxy protocol", "");
 
 my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE", 
 					   "The hostname of system not responsive to network requests", "10.0.0.1" );
@@ -24,7 +28,7 @@ my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
                                            "An invalid (not known to DNS) hostname", "nosuchhost" );
 my $res;
 
-plan tests => 16;
+plan tests => 17;
 
 SKIP: {
 	skip "No SMTP server defined", 4 unless $host_tcp_smtp;
@@ -74,6 +78,12 @@ SKIP: {
 	$res = NPTest->testCmd( "./check_smtp -H $host_tcp_smtp_tls -p $unused_port --ssl" );
 	is ($res->return_code, 2, "Check rc of connecting to $host_tcp_smtp_tls with TLS on unused port $unused_port" );
 	like ($res->output, qr/^connect to address $host_tcp_smtp_tls and port $unused_port: Connection refused/, "Check output of connecting to $host_tcp_smtp_tls with TLS on unused port $unused_port");
+}
+
+SKIP: {
+	skip "No parameters for proxy protocol defined", 1 unless $host_tcp_smtp_proxy_prot or $port_tcp_smtp_proxy_prot;
+	$res = NPTest->testCmd( "./check_smtp -H $host_tcp_smtp_proxy_prot --proxy -p $port_tcp_smtp_proxy_prot" );
+	is ($res->return_code, 0, "Check rc of connecting to $host_tcp_smtp_proxy_prot port $port_tcp_smtp_proxy_prot with proxy protocol" );
 }
 
 $res = NPTest->testCmd( "./check_smtp $host_nonresponsive" );

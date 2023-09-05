@@ -53,7 +53,6 @@ enum {
 	SMTP_PORT	= 25,
 	SMTPS_PORT	= 465
 };
-#define PROXY_PREFIX "PROXY TCP4 0.0.0.0 0.0.0.0 25 25\r\n"
 #define SMTP_EXPECT "220"
 #define SMTP_HELO "HELO "
 #define SMTP_EHLO "EHLO "
@@ -191,9 +190,18 @@ main (int argc, char **argv)
 	if (result == STATE_OK) { /* we connected */
 		/* If requested, send PROXY header */
 		if (use_proxy_prefix) {
-			if (verbose)
-				printf ("Sending header %s\n", PROXY_PREFIX);
-			my_send(PROXY_PREFIX, strlen(PROXY_PREFIX));
+			char proxy_prefix[PROXY_PROTOCOL_V1_HEADER_MAX_SIZE + 1];
+
+			result = proxy_protocol_v1_header(proxy_prefix, PROXY_PROTOCOL_V1_HEADER_MAX_SIZE, sd);
+			if (result == STATE_OK) {
+				if (verbose) {
+					printf (_("Sending header %s\n"), proxy_prefix);
+				}
+
+				my_send(proxy_prefix, strlen(proxy_prefix));
+			} else {
+				return result;
+			}
 		}
 
 #ifdef HAVE_SSL
@@ -288,16 +296,17 @@ main (int argc, char **argv)
 			printf("%s", buffer);
 		}
 
-#  ifdef USE_OPENSSL
-		  if ( check_cert ) {
+		}
+#endif
+
+#ifdef USE_OPENSSL
+		if ( (use_ssl || use_starttls) && check_cert ) {
                     result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
 		    smtp_quit();
 		    my_close();
 		    return result;
 		  }
-#  endif /* USE_OPENSSL */
-		}
-#endif
+#endif /* USE_OPENSSL */
 
 		if (verbose)
 			printf ("%s", buffer);
@@ -650,6 +659,7 @@ process_arguments (int argc, char **argv)
 #else
 			usage (_("SSL support not available - install OpenSSL and recompile"));
 #endif
+			break;
 		case 's':
 		/* ssl */
 			use_ssl = TRUE;

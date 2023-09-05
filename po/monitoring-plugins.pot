@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-09-05 15:21+0200\n"
+"POT-Creation-Date: 2023-09-05 23:54+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3388,6 +3388,10 @@ msgid "malloc() failed!\n"
 msgstr ""
 
 #, c-format
+msgid "Sending header %s\n"
+msgstr ""
+
+#, c-format
 msgid "CRITICAL - Cannot create SSL context.\n"
 msgstr ""
 
@@ -4445,6 +4449,18 @@ msgstr ""
 
 #, c-format
 msgid "Invalid hostname/address - %s"
+msgstr ""
+
+#, c-format
+msgid "CRITICAL - proxy_protocol_header()/getsockname(): %s\n"
+msgstr ""
+
+#, c-format
+msgid "CRITICAL - proxy_protocol_header()/getpeername(): %s\n"
+msgstr ""
+
+#, c-format
+msgid "CRITICAL - proxy_protocol_header(): Unhandled address family: %d\n"
 msgstr ""
 
 msgid "Could not malloc argv array in popen()"

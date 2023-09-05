@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-09-05 00:31+0200\n"
+"POT-Creation-Date: 2023-09-05 23:54+0200\n"
 "PO-Revision-Date: 2010-04-21 23:38-0400\n"
 "Last-Translator: Thomas Guyot-Sionnest <dermoth@aei.ca>\n"
 "Language-Team: Nagios Plugin Development Mailing List <nagiosplug-"
@@ -3586,6 +3586,10 @@ msgid "malloc() failed!\n"
 msgstr "l'allocation mémoire à échoué!\n"
 
 #, c-format
+msgid "Sending header %s\n"
+msgstr "En-tête d'envoi %s\n"
+
+#, c-format
 msgid "CRITICAL - Cannot create SSL context.\n"
 msgstr "CRITIQUE - Impossible de créer le contexte SSL.\n"
 
@@ -4745,6 +4749,19 @@ msgstr "La réception à échoué"
 #, c-format
 msgid "Invalid hostname/address - %s"
 msgstr "Adresse/Nom invalide - %s"
+
+#, c-format
+msgid "CRITICAL - proxy_protocol_header()/getsockname(): %s\n"
+msgstr "CRITICAL - proxy_protocol_header()/getsockname(): %s\n"
+
+#, c-format
+msgid "CRITICAL - proxy_protocol_header()/getpeername(): %s\n"
+msgstr "CRITICAL - proxy_protocol_header()/getpeername(): %s\n"
+
+#, c-format
+msgid "CRITICAL - proxy_protocol_header(): Unhandled address family: %d\n"
+msgstr ""
+"CRITICAL - proxy_protocol_header(): Famille d'adresses non traitées: %d\n"
 
 msgid "Could not malloc argv array in popen()"
 msgstr "Impossible de réallouer un tableau pour les paramètres dans popen()"
