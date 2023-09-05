@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Codespell
         uses: codespell-project/actions-codespell@v2
         with:
@@ -31,7 +31,7 @@ jobs:
 #    runs-on: ubuntu-latest
 #    steps:
 #      - name: Checkout
-#        uses: actions/checkout@v3
+#        uses: actions/checkout@v4
 #      - name: Lint Code Base
 #        uses: github/super-linter@v5.0.0
 #        env:
@@ -57,7 +57,7 @@ jobs:
           #...
     steps:
       - name: Git clone repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       #- name: Setup tmate session, see https://github.com/marketplace/actions/debugging-with-tmate
       #  uses: mxschmitt/action-tmate@v3
       - name: Run the tests on ${{ matrix.distro }}
