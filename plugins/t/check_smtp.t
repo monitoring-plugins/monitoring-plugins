@@ -16,6 +16,8 @@ my $host_tcp_smtp_nostarttls = getTestParameter( "NP_HOST_TCP_SMTP_NOSTARTTLS",
 					   "A host providing SMTP without STARTTLS", "");
 my $host_tcp_smtp_tls        = getTestParameter( "NP_HOST_TCP_SMTP_TLS",
 					   "A host providing SMTP with TLS", $host_tcp_smtp);
+my $host_tls_cert            = getTestParameter( "NP_HOST_TLS_CERT",
+					   "the common name of the certificate.", "localhost");
 
 my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE", 
 					   "The hostname of system not responsive to network requests", "10.0.0.1" );
@@ -24,7 +26,7 @@ my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
                                            "An invalid (not known to DNS) hostname", "nosuchhost" );
 my $res;
 
-plan tests => 16;
+plan tests => 24;
 
 SKIP: {
 	skip "No SMTP server defined", 4 unless $host_tcp_smtp;
@@ -55,6 +57,14 @@ SKIP: {
 	# SSL connection for STARTTLS
 	$res = NPTest->testCmd( "./check_smtp -H $host_tcp_smtp_starttls -p 25 -S" );
 	is ($res->return_code, 0, "OK, with STARTTLS" );
+
+	$res = NPTest->testCmd( "./check_smtp -H $host_tcp_smtp_starttls -p 25 -S -D 14" );
+	is ($res->return_code, 0, "Check rc of successful certificate check with STARTTLS");
+	like ($res->output, qr/^OK - Certificate '$host_tls_cert' will expire on /, "Check output of successful certificate check with STARTTLS");
+
+	$res = NPTest->testCmd( "./check_smtp -H $host_tcp_smtp_starttls -p 25 -S -D 3650" );
+	is ($res->return_code, 1, "Check rc of expired certificate check");
+	like ($res->output, qr/^WARNING - Certificate '$host_tls_cert' expires in /, "Check output of expired certificate check with STARTTLS");
 }
 
 SKIP: {
@@ -74,6 +84,14 @@ SKIP: {
 	$res = NPTest->testCmd( "./check_smtp -H $host_tcp_smtp_tls -p $unused_port --ssl" );
 	is ($res->return_code, 2, "Check rc of connecting to $host_tcp_smtp_tls with TLS on unused port $unused_port" );
 	like ($res->output, qr/^connect to address $host_tcp_smtp_tls and port $unused_port: Connection refused/, "Check output of connecting to $host_tcp_smtp_tls with TLS on unused port $unused_port");
+
+	$res = NPTest->testCmd( "./check_smtp -H $host_tcp_smtp_tls --ssl -D 14" );
+	is ($res->return_code, 0, "Check rc of successful certificate check with STARTTLS");
+	like ($res->output, qr/^OK - Certificate '$host_tls_cert' will expire on /, "Check output of successful certificate check with TLS");
+
+	$res = NPTest->testCmd( "./check_smtp -H $host_tcp_smtp_tls --ssl -D 3650" );
+	is ($res->return_code, 1, "Check rc of expired certificate check");
+	like ($res->output, qr/^WARNING - Certificate '$host_tls_cert' expires in /, "Check output of expired certificate check with TLS");
 }
 
 $res = NPTest->testCmd( "./check_smtp $host_nonresponsive" );
