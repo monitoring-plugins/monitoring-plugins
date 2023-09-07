@@ -3,10 +3,10 @@
 if RELEASE_PRESENT
 MP_VERSION = @MP_RELEASE@
 else
-NP-VERSION-FILE: .FORCE-NP-VERSION-FILE
-	@$(SHELL_PATH) $(top_srcdir)/NP-VERSION-GEN
-.FORCE-NP-VERSION-FILE:
--include NP-VERSION-FILE
+MP-VERSION-FILE: .FORCE-MP-VERSION-FILE
+	@$(SHELL_PATH) $(top_srcdir)/MP-VERSION-GEN
+.FORCE-MP-VERSION-FILE:
+-include MP-VERSION-FILE
 endif
 
 AM_CFLAGS = -DMP_VERSION='"$(MP_VERSION)"'
@@ -138,7 +138,7 @@ install-exec-hook:
 
 clean-local:
 	rm -f $(check_tcp_programs)
-	rm -f NP-VERSION-FILE
+	rm -f MP-VERSION-FILE
 
 uninstall-local:
 	cd $(DESTDIR)$(libexecdir) && rm -f $(check_tcp_programs)
