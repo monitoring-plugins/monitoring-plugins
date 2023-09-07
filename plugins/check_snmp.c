@@ -65,6 +65,7 @@ const char *email = "devel@monitoring-plugins.org";
 #define L_RATE_MULTIPLIER CHAR_MAX+2
 #define L_INVERT_SEARCH CHAR_MAX+3
 #define L_OFFSET CHAR_MAX+4
+#define L_IGNORE_MIB_PARSING_ERRORS CHAR_MAX+5
 
 /* Gobble to string - stop incrementing c when c[0] match one of the
  * characters in s */
@@ -159,6 +160,7 @@ char* ip_version = "";
 double multiplier = 1.0;
 char *fmtstr = "";
 char buffer[DEFAULT_BUFFER_SIZE];
+bool ignore_mib_parsing_errors = false;
 
 static char *fix_snmp_range(char *th)
 {
@@ -306,42 +308,55 @@ main (int argc, char **argv)
 	}
 
 	/* 10 arguments to pass before context and authpriv options + 1 for host and numoids. Add one for terminating NULL */
-	command_line = calloc (10 + numcontext + numauthpriv + 1 + numoids + 1, sizeof (char *));
-	command_line[0] = snmpcmd;
-	command_line[1] = strdup ("-Le");
-	command_line[2] = strdup ("-t");
-	xasprintf (&command_line[3], "%d", timeout_interval);
-	command_line[4] = strdup ("-r");
-	xasprintf (&command_line[5], "%d", retries);
-	command_line[6] = strdup ("-m");
-	command_line[7] = strdup (miblist);
-	command_line[8] = "-v";
-	command_line[9] = strdup (proto);
+
+	unsigned index = 0;
+	command_line = calloc (11 + numcontext + numauthpriv + 1 + numoids + 1, sizeof (char *));
+
+	command_line[index++] = snmpcmd;
+	command_line[index++] = strdup ("-Le");
+	command_line[index++] = strdup ("-t");
+	xasprintf (&command_line[index++], "%d", timeout_interval);
+	command_line[index++] = strdup ("-r");
+	xasprintf (&command_line[index++], "%d", retries);
+	command_line[index++] = strdup ("-m");
+	command_line[index++] = strdup (miblist);
+	command_line[index++] = "-v";
+	command_line[index++] = strdup (proto);
+
+	xasprintf(&cl_hidden_auth, "%s -Le -t %d -r %d -m %s -v %s",
+		snmpcmd, timeout_interval, retries, strlen(miblist) ? miblist : "''", proto);
+
+	if (ignore_mib_parsing_errors) {
+		command_line[index++] = "-Pe";
+		xasprintf(&cl_hidden_auth, "%s -Pe", cl_hidden_auth);
+	}
+
 
 	for (i = 0; i < numcontext; i++) {
-		command_line[10 + i] = contextargs[i];
+		command_line[index++] = contextargs[i];
 	}
 
 	for (i = 0; i < numauthpriv; i++) {
-		command_line[10 + numcontext + i] = authpriv[i];
+		command_line[index++] = authpriv[i];
 	}
 
-	xasprintf (&command_line[10 + numcontext + numauthpriv], "%s:%s", server_address, port);
+	xasprintf (&command_line[index++], "%s:%s", server_address, port);
 
-	/* This is just for display purposes, so it can remain a string */
-	xasprintf(&cl_hidden_auth, "%s -Le -t %d -r %d -m %s -v %s %s %s %s:%s",
-		snmpcmd, timeout_interval, retries, strlen(miblist) ? miblist : "''", proto, "[context]", "[authpriv]",
-		server_address, port);
+	xasprintf(&cl_hidden_auth, "%s [context] [authpriv] %s:%s",
+	 cl_hidden_auth,
+	 server_address,
+	 port);
 
 	for (i = 0; i < numoids; i++) {
-		command_line[10 + numcontext + numauthpriv + 1 + i] = oids[i];
+		command_line[index++] = oids[i];
 		xasprintf(&cl_hidden_auth, "%s %s", cl_hidden_auth, oids[i]);
 	}
 
-	command_line[10 + numcontext + numauthpriv + 1 + numoids] = NULL;
+	command_line[index++] = NULL;
 
-	if (verbose)
+	if (verbose) {
 		printf ("%s\n", cl_hidden_auth);
+	}
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, runcmd_timeout_alarm_handler) == SIG_ERR) {
@@ -708,6 +723,7 @@ process_arguments (int argc, char **argv)
 		{"ipv6", no_argument, 0, '6'},
 		{"multiplier", required_argument, 0, 'M'},
 		{"fmtstr", required_argument, 0, 'f'},
+		{"ignore-mib-parsing-errors", no_argument, false, L_IGNORE_MIB_PARSING_ERRORS},
 		{0, 0, 0, 0}
 	};
 
@@ -855,6 +871,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'R':									/* regex */
 			cflags = REG_ICASE;
+			// fall through
 		case 'r':									/* regex */
 			cflags |= REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
 			strncpy (regex_expect, optarg, sizeof (regex_expect) - 1);
@@ -973,6 +990,8 @@ process_arguments (int argc, char **argv)
 				fmtstr=optarg;
 			}
 			break;
+		case L_IGNORE_MIB_PARSING_ERRORS:
+			ignore_mib_parsing_errors = true;
 		}
 	}
 
@@ -1305,6 +1324,9 @@ print_help (void)
 
 	printf (" %s\n", "-O, --perf-oids");
 	printf ("    %s\n", _("Label performance data with OIDs instead of --label's"));
+
+	printf (" %s\n", "--ignore-mib-parsing-errors");
+	printf ("    %s\n", _("Tell snmpget to not print errors encountered when parsing MIB files"));
 
 	printf (UT_VERBOSE);
 

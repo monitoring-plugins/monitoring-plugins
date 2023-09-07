@@ -178,7 +178,7 @@ main (int argc, char **argv)
 #  ifdef _AIX
 	if (!allswaps) {
 		xasprintf(&swap_command, "%s", "/usr/sbin/lsps -s");
-		xasprintf(&swap_format, "%s", "%f%*s %f");
+		xasprintf(&swap_format, "%s", "%lu%*s %lu");
 		conv_factor = 1;
 	}
 #  endif
@@ -205,9 +205,9 @@ main (int argc, char **argv)
 		temp_buffer = strtok (input_buffer, " \n");
 		while (temp_buffer) {
 			if (strstr (temp_buffer, "blocks"))
-				sprintf (str, "%s %s", str, "%f");
+				sprintf (str, "%s %s", str, "%lu");
 			else if (strstr (temp_buffer, "dskfree"))
-				sprintf (str, "%s %s", str, "%f");
+				sprintf (str, "%s %s", str, "%lu");
 			else
 				sprintf (str, "%s %s", str, "%*s");
 			temp_buffer = strtok (NULL, " \n");

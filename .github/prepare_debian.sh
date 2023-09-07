@@ -108,12 +108,7 @@ ssh -tt localhost </dev/null >/dev/null 2>/dev/null &
 disown %1
 
 # snmpd
-for DIR in /usr/share/snmp/mibs /usr/share/mibs; do
-    rm -f $DIR/ietf/SNMPv2-PDU \
-          $DIR/ietf/IPSEC-SPD-MIB \
-          $DIR/ietf/IPATM-IPMC-MIB \
-          $DIR/iana/IANA-IPPM-METRICS-REGISTRY-MIB
-done
+service snmpd stop
 mkdir -p /var/lib/snmp/mib_indexes
 sed -e 's/^agentaddress.*/agentaddress 127.0.0.1/' -i /etc/snmp/snmpd.conf
 service snmpd start
@@ -121,7 +116,11 @@ service snmpd start
 # start cron, will be used by check_nagios
 cron
 
-# start postfix
+# postfix
+cat <<EOD >> /etc/postfix/master.cf
+smtps     inet  n       -       n       -       -       smtpd
+  -o smtpd_tls_wrappermode=yes
+EOD
 service postfix start
 
 # start ftpd
