@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-09-05 00:31+0200\n"
+"POT-Creation-Date: 2023-09-07 16:33+0200\n"
 "PO-Revision-Date: 2010-04-21 23:38-0400\n"
 "Last-Translator: Thomas Guyot-Sionnest <dermoth@aei.ca>\n"
 "Language-Team: Nagios Plugin Development Mailing List <nagiosplug-"
@@ -4820,9 +4820,6 @@ msgstr "La fonction malloc à échoué dans strscat\n"
 #, fuzzy
 msgid "failed malloc in xvasprintf\n"
 msgstr "La fonction malloc à échoué dans strscat\n"
-
-msgid "sysconf error for _SC_OPEN_MAX\n"
-msgstr ""
 
 #, c-format
 msgid ""
