@@ -116,7 +116,11 @@ service snmpd start
 # start cron, will be used by check_nagios
 cron
 
-# start postfix
+# postfix
+cat <<EOD >> /etc/postfix/master.cf
+smtps     inet  n       -       n       -       -       smtpd
+  -o smtpd_tls_wrappermode=yes
+EOD
 service postfix start
 
 # start ftpd
