@@ -328,6 +328,25 @@ AS_IF([test "x$with_ldap" != "xno"], [
   LIBS="$_SAVEDLIBS"
 ])
 
+
+AC_ARG_WITH([systemd], [AS_HELP_STRING([--without-systemd], [Skips systemd support])])
+
+dnl Check for libsystemd
+AS_IF([test "x$with_systemd" != "xno"], [
+  _SAVEDLIBS="$LIBS"
+  AC_CHECK_LIB(systemd,sd_get_sessions,,,-lsystemd)
+  if test "$ac_cv_lib_systemd_sd_get_sessions" = "yes"; then
+    SYSTEMDLIBS="-lsystemd"
+    SYSTEMDINCLUDE=""
+    AC_SUBST(SYSTEMDLIBS)
+    AC_SUBST(SYSTEMDINCLUDE)
+  else
+    AC_MSG_WARN([Skipping systemd support])
+  fi
+  LIBS="$_SAVEDLIBS"
+])
+
+
 dnl Check for headers used by check_ide_smart
 case $host in
   *linux*)
