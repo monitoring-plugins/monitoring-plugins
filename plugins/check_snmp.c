@@ -286,8 +286,8 @@ main (int argc, char **argv)
 
 		/* Skip empty thresholds, while avoiding segfault */
 		set_thresholds(&thlds[i],
-		               w ? strpbrk(w, NP_THRESHOLDS_CHARS) : NULL,
-		               c ? strpbrk(c, NP_THRESHOLDS_CHARS) : NULL);
+		               w ? strpbrk(w, MP_THRESHOLDS_CHARS) : NULL,
+		               c ? strpbrk(c, MP_THRESHOLDS_CHARS) : NULL);
 		if (w) {
 			th_warn=strchr(th_warn, ',');
 			if (th_warn) th_warn++;
@@ -754,7 +754,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_UNKNOWN);
 		case 'V':	/* version */
-			print_revision (progname, NP_VERSION);
+			print_revision (progname, MP_VERSION);
 			exit (STATE_UNKNOWN);
 		case 'v': /* verbose */
 			verbose++;
@@ -1223,7 +1223,7 @@ multiply (char *str)
 void
 print_help (void)
 {
-	print_revision (progname, NP_VERSION);
+	print_revision (progname, MP_VERSION);
 
 	printf (COPYRIGHT, copyright, email);
 

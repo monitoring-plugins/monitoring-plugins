@@ -15,30 +15,30 @@ my $successOutput = '/^Printer ok - /';
 my $failureOutput = '/Timeout: No [Rr]esponse from /';
 
 my $host_tcp_hpjd = getTestParameter( 
-			"NP_HOST_TCP_HPJD",
+			"MP_HOST_TCP_HPJD",
 			"A host (usually a printer) providing the HP-JetDirect Services"
 			);
 
 my $host_hpjd_port_invalid = getTestParameter( 
-			"NP_HOST_HPJD_PORT_INVALID",
+			"MP_HOST_HPJD_PORT_INVALID",
 			"A port that HP-JetDirect Services is not listening on",
 			"162"
 			);
 
 my $host_hpjd_port_valid = getTestParameter( 
-			"NP_HOST_HPJD_PORT_VALID",
+			"MP_HOST_HPJD_PORT_VALID",
 			"The port that HP-JetDirect Services is currently listening on",
 			"161"
 			);
 
 my $host_nonresponsive = getTestParameter( 
-			"NP_HOST_NONRESPONSIVE",
+			"MP_HOST_NONRESPONSIVE",
 			"The hostname of system not responsive to network requests",
 			"10.0.0.1"
 			);
 
 my $hostname_invalid = getTestParameter( 
-			"NP_HOSTNAME_INVALID",
+			"MP_HOSTNAME_INVALID",
 			"An invalid (not known to DNS) hostname",
 			"nosuchhost"
 			);

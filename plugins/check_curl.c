@@ -275,7 +275,7 @@ main (int argc, char **argv)
 
   /* set defaults */
   snprintf( user_agent, DEFAULT_BUFFER_SIZE, "%s/v%s (monitoring-plugins %s, %s)",
-    progname, NP_VERSION, VERSION, curl_version());
+    progname, MP_VERSION, VERSION, curl_version());
 
   /* parse arguments */
   if (process_arguments (argc, argv) == false)
@@ -1460,7 +1460,7 @@ process_arguments (int argc, char **argv)
       exit(STATE_UNKNOWN);
       break;
     case 'V':
-      print_revision(progname, NP_VERSION);
+      print_revision(progname, MP_VERSION);
       print_curl_version();
       exit(STATE_UNKNOWN);
       break;
@@ -1927,7 +1927,7 @@ char *perfd_size (int page_len)
 void
 print_help (void)
 {
-  print_revision (progname, NP_VERSION);
+  print_revision (progname, MP_VERSION);
 
   printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
   printf (COPYRIGHT, copyright, email);

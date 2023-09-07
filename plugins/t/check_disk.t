@@ -17,8 +17,8 @@ my $warningOutput = '/^DISK WARNING/';
 
 my $result;
 
-my $mountpoint_valid  = getTestParameter( "NP_MOUNTPOINT_VALID", "Path to valid mountpoint",  "/");
-my $mountpoint2_valid = getTestParameter( "NP_MOUNTPOINT2_VALID", "Path to another valid mountpoint. Must be different from 1st one", "/var");
+my $mountpoint_valid  = getTestParameter( "MP_MOUNTPOINT_VALID", "Path to valid mountpoint",  "/");
+my $mountpoint2_valid = getTestParameter( "MP_MOUNTPOINT2_VALID", "Path to another valid mountpoint. Must be different from 1st one", "/var");
 
 if ($mountpoint_valid eq "" or $mountpoint2_valid eq "") {
 	plan skip_all => "Need 2 mountpoints to test";

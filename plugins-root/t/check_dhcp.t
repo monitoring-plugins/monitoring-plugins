@@ -7,7 +7,7 @@ use strict;
 use Test::More;
 use NPTest;
 
-my $allow_sudo = getTestParameter( "NP_ALLOW_SUDO",
+my $allow_sudo = getTestParameter( "MP_ALLOW_SUDO",
                                    "If sudo is setup for this user to run any command as root ('yes' to allow)",
                                    "no" );
 
@@ -22,15 +22,15 @@ my $successOutput = '/OK: Received \d+ DHCPOFFER\(s\), \d+ of 1 requested server
 my $failureOutput = '/CRITICAL: (No DHCPOFFERs were received|Received \d+ DHCPOFFER\(s\), 0 of 1 requested servers responded, max lease time = \d+ sec\.)/';
 my $invalidOutput = '/Invalid hostname/';
 
-my $host_responsive    = getTestParameter( "NP_HOST_DHCP_RESPONSIVE",
+my $host_responsive    = getTestParameter( "MP_HOST_DHCP_RESPONSIVE",
                                            "The hostname of system responsive to dhcp requests",
                                            "localhost" );
 
-my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE",
+my $host_nonresponsive = getTestParameter( "MP_HOST_NONRESPONSIVE",
                                            "The hostname of system not responsive to dhcp requests",
                                            "10.0.0.1" );
 
-my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
+my $hostname_invalid   = getTestParameter( "MP_HOSTNAME_INVALID",
                                            "An invalid (not known to DNS) hostname",
                                            "nosuchhost" );
 

@@ -4,7 +4,7 @@ PATH="@TRUSTED_PATH@"
 export PATH
 PROGNAME=$(basename "$0")
 PROGPATH=$(echo "$0" | sed -e 's,[\\/][^\\/][^\\/]*$,,')
-REVISION="@NP_VERSION@"
+REVISION="@MP_VERSION@"
 
 . "$PROGPATH"/utils.sh
 

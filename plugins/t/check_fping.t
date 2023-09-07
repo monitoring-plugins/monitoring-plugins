@@ -8,9 +8,9 @@ use strict;
 use Test::More;
 use NPTest;
 
-my $host_responsive    = getTestParameter("NP_HOST_RESPONSIVE", "The hostname of system responsive to network requests", "localhost");
-my $host_nonresponsive = getTestParameter("NP_HOST_NONRESPONSIVE", "The hostname of system not responsive to network requests", "10.0.0.1");
-my $hostname_invalid   = getTestParameter("NP_HOSTNAME_INVALID", "An invalid (not known to DNS) hostname", "nosuchhost");
+my $host_responsive    = getTestParameter("MP_HOST_RESPONSIVE", "The hostname of system responsive to network requests", "localhost");
+my $host_nonresponsive = getTestParameter("MP_HOST_NONRESPONSIVE", "The hostname of system not responsive to network requests", "10.0.0.1");
+my $hostname_invalid   = getTestParameter("MP_HOSTNAME_INVALID", "An invalid (not known to DNS) hostname", "nosuchhost");
 
 my $res;
 

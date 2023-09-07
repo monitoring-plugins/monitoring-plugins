@@ -105,11 +105,11 @@ AM_CONDITIONAL([RELEASE_PRESENT], [test -f $srcdir/release])
 
 # Also read in the version from it
 if test -f $srcdir/release; then
-	NP_RELEASE="$(<release)"
+	MP_RELEASE="$(<release)"
 else
-	NP_RELEASE="$PACKAGE_VERSION"
+	MP_RELEASE="$PACKAGE_VERSION"
 fi
-AC_SUBST(NP_RELEASE)
+AC_SUBST(MP_RELEASE)
 
 dnl Checks for programs.
 AC_PATH_PROG(PERL,perl)
@@ -195,7 +195,7 @@ AC_ARG_ENABLE(extra-opts,
 	[enable_extra_opts=yes])
 AM_CONDITIONAL([USE_PARSE_INI],[test "$enable_extra_opts" = "yes"])
 if test "$enable_extra_opts" = "yes" ; then
-	AC_DEFINE(NP_EXTRA_OPTS,[1],[Enable INI file parsing.])
+	AC_DEFINE(MP_EXTRA_OPTS,[1],[Enable INI file parsing.])
 	if test "$enable_libtap" = "yes"; then
 		EXTRA_TEST="$EXTRA_TEST test_ini1 test_ini3 test_opts1 test_opts2 test_opts3"
 		AC_SUBST(EXTRA_TEST)

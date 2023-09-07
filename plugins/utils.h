@@ -1,5 +1,5 @@
-#ifndef NP_UTILS_H
-#define NP_UTILS_H
+#ifndef MP_UTILS_H
+#define MP_UTILS_H
 /* Header file for Monitoring Plugins utils.c */
 
 /* This file should be included in all plugins */
@@ -17,7 +17,7 @@ suite of plugins. */
 #include "utils_base.h"
 
 
-#ifdef NP_EXTRA_OPTS
+#ifdef MP_EXTRA_OPTS
 /* Include extra-opts functions if compiled in */
 #include "extra_opts.h"
 #else
@@ -172,7 +172,7 @@ int open_max (void);
  -t, --timeout=INTEGER\n\
     Seconds before plugin times out (default: %d)\n")
 
-#ifdef NP_EXTRA_OPTS
+#ifdef MP_EXTRA_OPTS
 #define UT_EXTRA_OPTS _("\
  --extra-opts=[section][@file]\n\
     Read options from an ini file. See\n\
@@ -197,4 +197,4 @@ The Monitoring Plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\
 copies of the plugins under the terms of the GNU General Public License.\n\
 For more information about these matters, see the file named COPYING.\n")
 
-#endif /* NP_UTILS_H */
+#endif /* MP_UTILS_H */

@@ -31,7 +31,7 @@
 
 #define VERBOSE(message)                        \
 	do {                                    \
-		if (flags & NP_MATCH_VERBOSE)   \
+		if (flags & MP_MATCH_VERBOSE)   \
 			puts(message);          \
 	} while (0)
 
@@ -41,13 +41,13 @@ np_expect_match(char *status, char **server_expect, int expect_count, int flags)
 	int i, match = 0, partial = 0;
 
 	for (i = 0; i < expect_count; i++) {
-		if (flags & NP_MATCH_VERBOSE)
+		if (flags & MP_MATCH_VERBOSE)
 			printf("looking for [%s] %s [%s]\n", server_expect[i],
-			    (flags & NP_MATCH_EXACT) ?
+			    (flags & MP_MATCH_EXACT) ?
 			    "in beginning of" : "anywhere in",
 			    status);
 
-		if (flags & NP_MATCH_EXACT) {
+		if (flags & MP_MATCH_EXACT) {
 			if (strncmp(status, server_expect[i], strlen(server_expect[i])) == 0) {
 				VERBOSE("found it");
 				match++;
@@ -65,11 +65,11 @@ np_expect_match(char *status, char **server_expect, int expect_count, int flags)
 		VERBOSE("couldn't find it");
 	}
 
-	if ((flags & NP_MATCH_ALL && match == expect_count) ||
-	    (!(flags & NP_MATCH_ALL) && match >= 1))
-		return NP_MATCH_SUCCESS;
-	else if (partial > 0 || !(flags & NP_MATCH_EXACT))
-		return NP_MATCH_RETRY;
+	if ((flags & MP_MATCH_ALL && match == expect_count) ||
+	    (!(flags & MP_MATCH_ALL) && match >= 1))
+		return MP_MATCH_SUCCESS;
+	else if (partial > 0 || !(flags & MP_MATCH_EXACT))
+		return MP_MATCH_RETRY;
 	else
-		return NP_MATCH_FAILURE;
+		return MP_MATCH_FAILURE;
 }

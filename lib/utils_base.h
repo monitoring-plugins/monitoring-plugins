@@ -31,7 +31,7 @@ typedef struct thresholds_struct {
 	range	*critical;
 	} thresholds;
 
-#define NP_STATE_FORMAT_VERSION 1
+#define MP_STATE_FORMAT_VERSION 1
 
 typedef struct state_data_struct {
 	time_t	time;
@@ -67,15 +67,15 @@ extern unsigned int timeout_state;
 extern unsigned int timeout_interval;
 
 /* All possible characters in a threshold range */
-#define NP_THRESHOLDS_CHARS "-0123456789.:@~"
+#define MP_THRESHOLDS_CHARS "-0123456789.:@~"
 
 char *np_escaped_string (const char *);
 
 void die (int, const char *, ...) __attribute__((noreturn,format(printf, 2, 3)));
 
 /* Return codes for _set_thresholds */
-#define NP_RANGE_UNPARSEABLE 1
-#define NP_WARN_WITHIN_CRIT 2
+#define MP_RANGE_UNPARSEABLE 1
+#define MP_WARN_WITHIN_CRIT 2
 
 /* a simple check to see if we're running as root.  
  * returns zero on failure, nonzero on success */
@@ -101,7 +101,7 @@ char *np_extract_value(const char*, const char*, char);
 
 /*
  * Read a string representing a state (ok, warning... or numeric: 0, 1) and
- * return the corresponding NP_STATE or ERROR)
+ * return the corresponding MP_STATE or ERROR)
  */
 int mp_translate_state (char *);
 

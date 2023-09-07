@@ -684,7 +684,7 @@ process_arguments (int argc, char **argv)
 #endif
 			break;
 		case 'V':									/* version */
-			print_revision (progname, NP_VERSION);
+			print_revision (progname, MP_VERSION);
 			exit (STATE_UNKNOWN);
 		case 'h':									/* help */
 			print_help ();
@@ -848,7 +848,7 @@ print_help (void)
 	char *myport;
 	xasprintf (&myport, "%d", SMTP_PORT);
 
-	print_revision (progname, NP_VERSION);
+	print_revision (progname, MP_VERSION);
 
 	printf ("Copyright (c) 1999-2001 Ethan Galstad <nagios@nagios.org>\n");
 	printf (COPYRIGHT, copyright, email);

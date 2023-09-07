@@ -11,9 +11,9 @@ use NPTest;
 use vars qw($tests);
 BEGIN {$tests = 8; plan tests => $tests}
 
-my $host_udp_time      = getTestParameter("NP_HOST_UDP_TIME", "A host providing the UDP Time Service", "localhost");
-my $host_nonresponsive = getTestParameter("NP_HOST_NONRESPONSIVE", "The hostname of system not responsive to network requests", "10.0.0.1");
-my $hostname_invalid   = getTestParameter("NP_HOSTNAME_INVALID", "An invalid (not known to DNS) hostname", "nosuchhost");
+my $host_udp_time      = getTestParameter("MP_HOST_UDP_TIME", "A host providing the UDP Time Service", "localhost");
+my $host_nonresponsive = getTestParameter("MP_HOST_NONRESPONSIVE", "The hostname of system not responsive to network requests", "10.0.0.1");
+my $hostname_invalid   = getTestParameter("MP_HOSTNAME_INVALID", "An invalid (not known to DNS) hostname", "nosuchhost");
 
 my $successOutput = '/^TIME OK - [0-9]+ second time difference/';
 

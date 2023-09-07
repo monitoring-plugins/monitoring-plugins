@@ -15,11 +15,11 @@ BEGIN {
 }
 
 
-my $host_tcp_http      = getTestParameter("NP_HOST_TCP_HTTP", "A host providing the HTTP Service (a web server)", "localhost");
-my $host_tls_http      = getTestParameter("NP_HOST_TLS_HTTP", "A host providing the HTTPS Service (a tls web server)", "localhost");
-my $host_nonresponsive = getTestParameter("NP_HOST_NONRESPONSIVE", "The hostname of system not responsive to network requests", "10.0.0.1");
-my $hostname_invalid   = getTestParameter("NP_HOSTNAME_INVALID", "An invalid (not known to DNS) hostname", "nosuchhost");
-my $internet_access    = getTestParameter("NP_INTERNET_ACCESS", "Is this system directly connected to the internet?", "yes");
+my $host_tcp_http      = getTestParameter("MP_HOST_TCP_HTTP", "A host providing the HTTP Service (a web server)", "localhost");
+my $host_tls_http      = getTestParameter("MP_HOST_TLS_HTTP", "A host providing the HTTPS Service (a tls web server)", "localhost");
+my $host_nonresponsive = getTestParameter("MP_HOST_NONRESPONSIVE", "The hostname of system not responsive to network requests", "10.0.0.1");
+my $hostname_invalid   = getTestParameter("MP_HOSTNAME_INVALID", "An invalid (not known to DNS) hostname", "nosuchhost");
+my $internet_access    = getTestParameter("MP_INTERNET_ACCESS", "Is this system directly connected to the internet?", "yes");
 
 my $successOutput = '/^TCP OK\s-\s+[0-9]?\.?[0-9]+ second response time on port [0-9]+/';
 

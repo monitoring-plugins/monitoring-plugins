@@ -127,7 +127,7 @@ service postfix start
 service vsftpd start
 
 # hostname
-sed "/NP_HOST_TLS_CERT/s/.*/'NP_HOST_TLS_CERT' => '$(hostname)',/" -i /src/.github/NPTest.cache
+sed "/MP_HOST_TLS_CERT/s/.*/'MP_HOST_TLS_CERT' => '$(hostname)',/" -i /src/.github/NPTest.cache
 
 # create some test files to lower inodes
 for i in $(seq 10); do

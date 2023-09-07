@@ -27,7 +27,7 @@ GetOptions
 	 "C=s" => \$opt_C, "community=s" => \$opt_C);
 
 if ($opt_V) {
-	print_revision($PROGNAME,'@NP_VERSION@');
+	print_revision($PROGNAME,'@MP_VERSION@');
 	exit $ERRORS{'UNKNOWN'};
 }
 
@@ -66,7 +66,7 @@ sub print_usage () {
 }
 
 sub print_help () {
-	print_revision($PROGNAME,'@NP_VERSION@');
+	print_revision($PROGNAME,'@MP_VERSION@');
 	print "Copyright (c) 2000 Jeffrey Blank/Karl DeBisschop
 
 This plugin reports the signal strength of a Breezecom wireless equipment

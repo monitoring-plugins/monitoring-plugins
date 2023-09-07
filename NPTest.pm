@@ -319,8 +319,8 @@ sub skipMsg
 sub getTestParameter {
   my($param, $description, $default) = @_;
 
-  if($param !~ m/^NP_[A-Z0-9_]+$/mx) {
-    die("parameter should be all uppercase and start with NP_ (requested from ".(caller(0))[1].")");
+  if($param !~ m/^MP_[A-Z0-9_]+$/mx) {
+    die("parameter should be all uppercase and start with MP_ (requested from ".(caller(0))[1].")");
   }
 
   return $ENV{$param} if $ENV{$param};
@@ -422,7 +422,7 @@ sub SaveCache
 
   # clean up old style params
   for my $key (keys %CACHE) {
-    delete $CACHE{$key} if $key !~ m/^NP_[A-Z0-9_]+$/mx;
+    delete $CACHE{$key} if $key !~ m/^MP_[A-Z0-9_]+$/mx;
   }
 
   my($dataDumper) = new Data::Dumper([\%CACHE]);

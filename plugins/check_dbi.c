@@ -378,7 +378,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_UNKNOWN);
 		case 'V':     /* version */
-			print_revision (progname, NP_VERSION);
+			print_revision (progname, MP_VERSION);
 			exit (STATE_UNKNOWN);
 
 		case 'c':     /* critical range */
@@ -525,7 +525,7 @@ validate_arguments ()
 void
 print_help (void)
 {
-	print_revision (progname, NP_VERSION);
+	print_revision (progname, MP_VERSION);
 
 	printf (COPYRIGHT, copyright, email);
 
@@ -540,7 +540,7 @@ print_help (void)
 	printf (UT_HELP_VRSN);
 /* include this conditionally to avoid 'zero-length printf format string'
  * compiler warnings */
-#ifdef NP_EXTRA_OPTS
+#ifdef MP_EXTRA_OPTS
 	printf (UT_EXTRA_OPTS);
 #endif
 	printf ("\n");
