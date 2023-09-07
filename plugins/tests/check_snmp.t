@@ -69,7 +69,7 @@ if ($ARGV[0] && $ARGV[0] eq "-d") {
 	}
 }
 
-# We should merge that with $ENV{'NPTEST_CACHE'}, use one dir for all test data
+# We should merge that with $ENV{'MPTEST_CACHE'}, use one dir for all test data
 $ENV{'MP_STATE_PATH'} ||= "/var/tmp";
 
 my $res;

@@ -64,7 +64,7 @@ the appropriate environment variable before running the test.
 
 To facilitate quick testing setup, it is possible to accept all the
 developer provided defaults by setting the environment variable
-"NPTEST_ACCEPTDEFAULT" to "1" (or any other perl truth value). Note
+"MPTEST_ACCEPTDEFAULT" to "1" (or any other perl truth value). Note
 that, such defaults are not stored in the cache, as there is currently
 no mechanism to edit existing cache entries, save the use of text
 editor or removing the cache file completely.
@@ -90,7 +90,7 @@ provided without additional effort on the part of the test harness
 developer.
 
 It is possible to enable debugging via the environment variable
-C<NPTEST_DEBUG>. If this environment variable exists and its value in PERL's
+C<MPTEST_DEBUG>. If this environment variable exists and its value in PERL's
 boolean context evaluates to true, debugging is enabled.
 
 The function prototype can be expressed as follows:
@@ -209,8 +209,8 @@ my( %CACHE ) = ();
 
 # I'm not really sure whether to house a site-specific cache inside
 # or outside of the extracted source / build tree - lets default to outside
-my( $CACHEFILENAME ) = ( exists( $ENV{'NPTEST_CACHE'} ) && $ENV{'NPTEST_CACHE'} )
-                       ? $ENV{'NPTEST_CACHE'} : "/var/tmp/MPTest.cache"; # "../Cache.pdd";
+my( $CACHEFILENAME ) = ( exists( $ENV{'MPTEST_CACHE'} ) && $ENV{'MPTEST_CACHE'} )
+                       ? $ENV{'MPTEST_CACHE'} : "/var/tmp/MPTest.cache"; # "../Cache.pdd";
 
 #
 # Testing Functions
@@ -330,7 +330,7 @@ sub getTestParameter {
     return $cachedValue;
   }
 
-  if($ENV{'NPTEST_ACCEPTDEFAULT'}) {
+  if($ENV{'MPTEST_ACCEPTDEFAULT'}) {
     return $default if $default;
     return "";
   }
@@ -621,7 +621,7 @@ sub testCmd {
 
     my ($pkg, $file, $line) = caller(0);
     print "Testing: $command", $/;
-    if ($ENV{'NPTEST_DEBUG'}) {
+    if ($ENV{'MPTEST_DEBUG'}) {
         print "testCmd: Called from line $line in $file", $/;
         print "Output:  ", $object->output, $/;
         print "Return code: ", $object->return_code, $/;

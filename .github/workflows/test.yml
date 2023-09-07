@@ -64,8 +64,8 @@ jobs:
         run: |
           docker volume create --driver local --opt type=tmpfs --opt device=tmpfs --opt o=size=100m,uid=1000 tmp-vol
           docker run \
-              -e NPTEST_ACCEPTDEFAULT=1 \
-              -e NPTEST_CACHE="/src/.github/MPTest.cache" \
+              -e MPTEST_ACCEPTDEFAULT=1 \
+              -e MPTEST_CACHE="/src/.github/MPTest.cache" \
               -w /src -v ${PWD}:/src \
               --tmpfs /media/ramdisk1 \
               -v /var/run/utmp:/var/run/utmp \
