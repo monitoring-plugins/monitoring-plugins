@@ -46,12 +46,12 @@ EXTRA_DIST = t tests
 
 PLUGINHDRS = common.h
 
-noinst_LIBRARIES = libnpcommon.a
+noinst_LIBRARIES = libmpcommon.a
 
-libnpcommon_a_SOURCES = utils.c netutils.c sslutils.c runcmd.c	\
+libmpcommon_a_SOURCES = utils.c netutils.c sslutils.c runcmd.c	\
 	popen.c utils.h netutils.h popen.h common.h runcmd.c runcmd.h
 
-BASEOBJS = libnpcommon.a ../lib/libmonitoringplug.a ../gl/libgnu.a $(LIB_CRYPTO)
+BASEOBJS = libmpcommon.a ../lib/libmonitoringplug.a ../gl/libgnu.a $(LIB_CRYPTO)
 NETOBJS = $(BASEOBJS) $(EXTRA_NETOBLS)
 NETLIBS = $(NETOBJS) $(SOCKETLIBS)
 SSLOBJS = $(BASEOBJS) $(NETLIBS) $(SSLLIBS) $(LIB_CRYPTO)
