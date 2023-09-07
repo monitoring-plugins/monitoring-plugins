@@ -381,7 +381,7 @@ print_help (void)
   printf ("\n");
   printf ("%s\n", _("This plugin tests a RADIUS server to see if it is accepting connections."));
   printf ("%s\n", _("The server to test must be specified in the invocation, as well as a user"));
-  printf ("%s\n", _("name and password. A configuration file may also be present. The format of"));
+  printf ("%s\n", _("name and password. A configuration file must be present. The format of"));
   printf ("%s\n", _("the configuration file is described in the radiusclient library sources."));
 	printf ("%s\n", _("The password option presents a substantial security issue because the"));
   printf ("%s\n", _("password can possibly be determined by careful watching of the command line"));
