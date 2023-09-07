@@ -6,7 +6,7 @@
 
 use strict;
 use Test::More tests => 7;
-use NPTest;
+use MPTest;
 
 my $host_tcp_smtp      = getTestParameter("MP_HOST_TCP_SMTP", "A host providing an STMP Service (a mail server)", "mailhost");
 my $host_tcp_imap      = getTestParameter("MP_HOST_TCP_IMAP", "A host providing an IMAP Service (a mail server)", $host_tcp_smtp);
@@ -15,24 +15,24 @@ my $hostname_invalid   = getTestParameter("MP_HOSTNAME_INVALID", "An invalid (no
 
 my $t;
 
-$t = NPTest->testCmd( "./check_imap $host_tcp_imap" );
+$t = MPTest->testCmd( "./check_imap $host_tcp_imap" );
 cmp_ok( $t->return_code, '==', 0, "Contacted imap" );
 
-$t = NPTest->testCmd( "./check_imap -H $host_tcp_imap -p 143 -w 9 -c 9 -to 10 -e '* OK'" );
+$t = MPTest->testCmd( "./check_imap -H $host_tcp_imap -p 143 -w 9 -c 9 -to 10 -e '* OK'" );
 cmp_ok( $t->return_code, '==', 0, "Got right response" );
 
-$t = NPTest->testCmd( "./check_imap $host_tcp_imap -p 143 -wt 9 -ct 9 -to 10 -e '* OK'" );
+$t = MPTest->testCmd( "./check_imap $host_tcp_imap -p 143 -wt 9 -ct 9 -to 10 -e '* OK'" );
 cmp_ok( $t->return_code, '==', 0, "Check old parameter options" );
 
-$t = NPTest->testCmd( "./check_imap $host_nonresponsive" );
+$t = MPTest->testCmd( "./check_imap $host_nonresponsive" );
 cmp_ok( $t->return_code, '==', 2, "Get error with non reponsive host" );
 
-$t = NPTest->testCmd( "./check_imap $hostname_invalid" );
+$t = MPTest->testCmd( "./check_imap $hostname_invalid" );
 cmp_ok( $t->return_code, '==', 2, "Invalid hostname" );
 
-$t = NPTest->testCmd( "./check_imap -H $host_tcp_imap -e unlikely_string");
+$t = MPTest->testCmd( "./check_imap -H $host_tcp_imap -e unlikely_string");
 cmp_ok( $t->return_code, '==', 1, "Got warning with bad response" );
 
-$t = NPTest->testCmd( "./check_imap -H $host_tcp_imap -e unlikely_string -M crit");
+$t = MPTest->testCmd( "./check_imap -H $host_tcp_imap -e unlikely_string -M crit");
 cmp_ok( $t->return_code, '==', 2, "Got critical error with bad response" );
 

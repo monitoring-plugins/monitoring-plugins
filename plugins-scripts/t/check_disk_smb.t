@@ -5,7 +5,7 @@
 
 use strict;
 use Test::More;
-use NPTest;
+use MPTest;
 
 my $tests = 14;
 plan tests => $tests;
@@ -44,13 +44,13 @@ SKIP: {
 
 
 
-	$res = NPTest->testCmd( "./$plugin" );
+	$res = MPTest->testCmd( "./$plugin" );
 	is( $res->return_code, 3, "No arguments" );
 
-	$res = NPTest->testCmd( "./$plugin -H fakehostname" );
+	$res = MPTest->testCmd( "./$plugin -H fakehostname" );
 	is( $res->return_code, 3, "No share specified" );
 
-	$res = NPTest->testCmd( "./$plugin -H fakehostname -s share -w 100G -c 101G" );
+	$res = MPTest->testCmd( "./$plugin -H fakehostname -s share -w 100G -c 101G" );
 	is( $res->return_code, 3, "warn is less than critical" );
 
 	SKIP: {
@@ -58,29 +58,29 @@ SKIP: {
 
 		SKIP: {
 			skip "no share name defined", 2 if ( ! $smb_share );
-			$res = NPTest->testCmd( "./$plugin -H $host $auth -s $smb_share -w 2k -c 1k" );
+			$res = MPTest->testCmd( "./$plugin -H $host $auth -s $smb_share -w 2k -c 1k" );
 			cmp_ok( $res->return_code, '==', 0, "Exit OK if $smb_share has > 1k free space");
 			like($res->output, '/free/i', "String contains the word 'free'");
 
-			$res = NPTest->testCmd( "./$plugin -H $host $auth -s $smb_share -w 10001G -c 10000G" );
+			$res = MPTest->testCmd( "./$plugin -H $host $auth -s $smb_share -w 10001G -c 10000G" );
 			cmp_ok( $res->return_code, '==', 2, "Exit CRIT if $smb_share has < 10000G free space");
 			like($res->output, '/free/i', "String contains the word 'free'");
 
-			$res = NPTest->testCmd( "./$plugin -H $host $auth -s $smb_share -w 10000G -c 1k" );
+			$res = MPTest->testCmd( "./$plugin -H $host $auth -s $smb_share -w 10000G -c 1k" );
 			cmp_ok( $res->return_code, '==', 1, "Exit WARN if $smb_share has > 10000G and <1k free space");
 			like($res->output, '/free/i', "String contains the word 'free'");
 		}
 
 		SKIP: {
 			skip "no share name containing spaces defined", 2 if ( ! $smb_share_spc );
-			$res = NPTest->testCmd( "./$plugin -H $host $auth -s '$smb_share_spc' -w 2k -c 1k" );
+			$res = MPTest->testCmd( "./$plugin -H $host $auth -s '$smb_share_spc' -w 2k -c 1k" );
 			cmp_ok( $res->return_code, '==', 0, "Exit OK if '$smb_share_spc' has > 1k free space");
 			like($res->output, '/free/i', "String contains the word 'free'");
 
 		}
 		SKIP: {
 			skip "no share name without permissions ", 2 if ( ! $smb_share_deny );
-			$res = NPTest->testCmd( "./$plugin -H $host $auth -s $smb_share_deny -w 2k -c 1k" );
+			$res = MPTest->testCmd( "./$plugin -H $host $auth -s $smb_share_deny -w 2k -c 1k" );
 			cmp_ok( $res->return_code, '==', 2, "Exit CRIT if $smb_share_deny has > 1k free space");
 			unlike($res->output, '/free/i', "String does not contain the word 'free'");
 
@@ -89,7 +89,7 @@ SKIP: {
 
 	SKIP: {
 		skip "no non responsive host defined", 1 if ( ! $host_nonresponsive );
-		$res = NPTest->testCmd( "./$plugin -H $host_nonresponsive -s np_foobar ");
+		$res = MPTest->testCmd( "./$plugin -H $host_nonresponsive -s np_foobar ");
 		cmp_ok( $res->return_code, '>=', 2, "Exit CRITICAL/UNKNOWN with non responsive host" );
 	}
 

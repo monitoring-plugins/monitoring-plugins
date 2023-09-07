@@ -9,8 +9,8 @@ use Test;
 
 use vars qw($tests $has_ipv6);
 BEGIN {
-    use NPTest;
-    $has_ipv6 = NPTest::has_ipv6();
+    use MPTest;
+    $has_ipv6 = MPTest::has_ipv6();
     $tests = $has_ipv6 ? 14 : 11;
 }
 

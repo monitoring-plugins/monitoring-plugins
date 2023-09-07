@@ -6,7 +6,7 @@
 
 use strict;
 use Test::More;
-use NPTest;
+use MPTest;
 
 plan tests => 10;
 
@@ -26,25 +26,25 @@ my $r;
 SKIP: {
 	skip "No jabber server defined", 6 unless $host_tcp_jabber;
 
-	$r = NPTest->testCmd( "./check_jabber -H $host_tcp_jabber" );
+	$r = MPTest->testCmd( "./check_jabber -H $host_tcp_jabber" );
 	is( $r->return_code, 0, "Connected okay");
 	like( $r->output, $jabberOK, "Output as expected" );
 
-	$r = NPTest->testCmd( "./check_jabber -H $host_tcp_jabber -w 9 -c 9 -t 10" );
+	$r = MPTest->testCmd( "./check_jabber -H $host_tcp_jabber -w 9 -c 9 -t 10" );
 	is( $r->return_code, 0, "Connected okay, within limits" );
 	like( $r->output, $jabberOK, "Output as expected" );
 	
-	$r = NPTest->testCmd( "./check_jabber -H $host_tcp_jabber -wt 9 -ct 9 -to 10" );
+	$r = MPTest->testCmd( "./check_jabber -H $host_tcp_jabber -wt 9 -ct 9 -to 10" );
 	is( $r->return_code, 0, "Old syntax okay" );
 	like( $r->output, $jabberOK, "Output as expected" );
 
 }
 
-$r = NPTest->testCmd( "./check_jabber $host_nonresponsive" );
+$r = MPTest->testCmd( "./check_jabber $host_nonresponsive" );
 is( $r->return_code, 2, "Unresponsive host gives critical" );
 like( $r->output, $jabberUnresponsive );
 
-$r = NPTest->testCmd( "./check_jabber $hostname_invalid" );
+$r = MPTest->testCmd( "./check_jabber $hostname_invalid" );
 is( $r->return_code, 2, "Invalid hostname gives critical" );
 like( $r->output, $jabberInvalid );
 

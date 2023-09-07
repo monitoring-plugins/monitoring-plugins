@@ -6,7 +6,7 @@
 
 use strict;
 use Test::More;
-use NPTest;
+use MPTest;
 
 my $tests = 15;
 plan tests => $tests;
@@ -40,35 +40,35 @@ SKIP: {
 
 
 
-	$res = NPTest->testCmd( "./$plugin" );
+	$res = MPTest->testCmd( "./$plugin" );
 	is( $res->return_code, 3, "No arguments" );
 	like( $res->output, '/usage/', "Output contains usage" );
 	
-	$res = NPTest->testCmd( "./$plugin -H fakehostname" );
+	$res = MPTest->testCmd( "./$plugin -H fakehostname" );
 	is( $res->return_code, 3, "No key/descr specified" );
 	like( $res->output, '/Either a valid snmp key/', "Output contains 'Either a valid snmp key'" );
 
-	$res = NPTest->testCmd( "./$plugin -H fakehost -k 1 -v 3 --seclevel rubbish --secname foobar" );
+	$res = MPTest->testCmd( "./$plugin -H fakehost -k 1 -v 3 --seclevel rubbish --secname foobar" );
 	is( $res->return_code, 3, "invalid seclevel" );
 	like( $res->output, "/Must define a valid security level/", "Output contains 'Must define a valid security level'" );
 
 	SKIP: {
 		skip "no snmp host defined", 6 if ( ! $host_snmp );
 
-		$res = NPTest->testCmd( "./$plugin -H $host_snmp -C $snmp_community -k 1");
+		$res = MPTest->testCmd( "./$plugin -H $host_snmp -C $snmp_community -k 1");
 		cmp_ok( $res->return_code, '==', 0, "Exit OK for ifindex 1" ); 
 		like($res->output, '/^OK.*Interface.*is up/', "String contains OK Interface is up");
 
 		SKIP: {
 			skip "no snmp interface defined", 2 if ( ! $snmp_interface );
-			$res = NPTest->testCmd( "./$plugin -H $host_snmp -C $snmp_community -d $snmp_interface");
+			$res = MPTest->testCmd( "./$plugin -H $host_snmp -C $snmp_community -d $snmp_interface");
 			cmp_ok( $res->return_code, '==', 0, "Exit OK for ifdescr $snmp_interface" );
 			like($res->output, '/^OK.*Interface.*is up/', "String contains OK Interface is up");
 		}
 
 		SKIP: {
 			skip "ifxtable not available", 2 if ( ! $snmp_ifxtable );
-			$res = NPTest->testCmd( "./$plugin -H $host_snmp -C $snmp_community -k 1 -n rubbish");
+			$res = MPTest->testCmd( "./$plugin -H $host_snmp -C $snmp_community -k 1 -n rubbish");
 			cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN if interface name doesn't match" ); 
 			like($res->output, '/doesn\'t match snmp value/', "String contains 'doesn't match snmp value'");
 		}
@@ -76,16 +76,16 @@ SKIP: {
 	}
 
 	# These checks need a complete command line. An invalid community is used so
-	# the tests can run on hosts w/o snmp host/community in NPTest.cache. Execution will fail anyway
+	# the tests can run on hosts w/o snmp host/community in MPTest.cache. Execution will fail anyway
 	SKIP: {
 		skip "no non responsive host defined", 1 if ( ! $host_nonresponsive );
-		$res = NPTest->testCmd( "./$plugin -H $host_nonresponsive -C np_foobar -k 1");
+		$res = MPTest->testCmd( "./$plugin -H $host_nonresponsive -C np_foobar -k 1");
 		cmp_ok( $res->return_code, '==', 1, "Exit WARNING with non responsive host" ); 
 	}
 
 	SKIP: {
 		skip "no invalid host defined", 2 if ( ! $hostname_invalid );
-		$res = NPTest->testCmd( "./$plugin -H $hostname_invalid -C np_foobar -k 1");
+		$res = MPTest->testCmd( "./$plugin -H $hostname_invalid -C np_foobar -k 1");
 		cmp_ok( $res->return_code, '==', 3, "Exit UNKNOWN with invalid host" ); 
 		like($res->output, "/Unable to resolve.*$hostname_invalid/", "String matches unable to resolve.*$hostname_invalid");
 	}

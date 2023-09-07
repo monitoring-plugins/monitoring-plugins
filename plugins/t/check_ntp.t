@@ -6,7 +6,7 @@
 
 use strict;
 use Test::More;
-use NPTest;
+use MPTest;
 
 my @PLUGINS1 = ('check_ntp', 'check_ntp_peer', 'check_ntp_time');
 my @PLUGINS2 = ('check_ntp_peer');
@@ -44,19 +44,19 @@ my $ntp_nosuchhost = '/^check_ntp.*: Invalid hostname/address - ' . $hostname_in
 foreach my $plugin (@PLUGINS1) {
 	SKIP: {
 		skip "No NTP server defined", 6 unless $ntp_service;
-		$res = NPTest->testCmd(
+		$res = MPTest->testCmd(
 			"./$plugin -H $ntp_service -w 1000 -c 2000"
 			);
 		cmp_ok( $res->return_code, '==', 0, "$plugin: Good NTP result (simple check)" );
 		like( $res->output, $ntp_okmatch1, "$plugin: Output match OK (simple check)" );
 
-		$res = NPTest->testCmd(
+		$res = MPTest->testCmd(
 			"./$plugin -H $ntp_service -w 1000: -c 2000"
 			);
 		cmp_ok( $res->return_code, '==', 1, "$plugin: Warning NTP result (simple check)" );
 		like( $res->output, $ntp_warnmatch1, "$plugin: Output match WARNING (simple check)" );
 
-		$res = NPTest->testCmd(
+		$res = MPTest->testCmd(
 			"./$plugin -H $ntp_service -w 1000 -c 2000:"
 			);
 		cmp_ok( $res->return_code, '==', 2, "$plugin: Critical NTP result (simple check)" );
@@ -65,20 +65,20 @@ foreach my $plugin (@PLUGINS1) {
 
 	SKIP: {
 		skip "No bad NTP server defined", 1 unless $no_ntp_service;
-		$res = NPTest->testCmd(
+		$res = MPTest->testCmd(
 			"./$plugin -H $no_ntp_service -t 3"
 			);
 		cmp_ok( $res->return_code, '==', 2, "$plugin: No NTP service" );
 		like( $res->output, $ntp_noresponse, "$plugin: Output match no NTP service" );
 	}
 
-	$res = NPTest->testCmd(
+	$res = MPTest->testCmd(
 		"./$plugin -H $host_nonresponsive -t 3"
 		);
 	cmp_ok( $res->return_code, '==', 2, "$plugin: Server not responding" );
 	like( $res->output, $ntp_noresponse, "$plugin: Output match non-responsive" );
 
-	$res = NPTest->testCmd(
+	$res = MPTest->testCmd(
 		"./$plugin -H $hostname_invalid"
 		);
 	cmp_ok( $res->return_code, '==', 3, "$plugin: Invalid hostname/address" );
@@ -89,19 +89,19 @@ foreach my $plugin (@PLUGINS1) {
 foreach my $plugin (@PLUGINS2) {
 	SKIP: {
 		skip "No NTP server defined", 6 unless $ntp_service;
-		$res = NPTest->testCmd(
+		$res = MPTest->testCmd(
 			"./$plugin -H $ntp_service -w 1000 -c 2000 -W 20 -C 21 -j 100000 -k 200000 -m 1: -n 0:"
 			);
 		cmp_ok( $res->return_code, '==', 0, "$plugin: Good NTP result with jitter, stratum, and truechimers check" );
 		like( $res->output, $ntp_okmatch2, "$plugin: Output match OK with jitter, stratum, and truechimers" );
 
-		$res = NPTest->testCmd(
+		$res = MPTest->testCmd(
 			"./$plugin -H $ntp_service -w 1000 -c 2000 -W \\~:-1 -C 21 -j 100000 -k 200000 -m 1: -n 0:"
 			);
 		cmp_ok( $res->return_code, '==', 1, "$plugin: Warning NTP result with jitter, stratum, and truechimers check" );
 		like( $res->output, $ntp_warnmatch2, "$plugin: Output match WARNING with jitter, stratum, and truechimers" );
 
-		$res = NPTest->testCmd(
+		$res = MPTest->testCmd(
 			"./$plugin -H $ntp_service -w 1000 -c 2000 -W 20 -C 21 -j 100000 -k \\~:-1 -m 1: -n 0:"
 			);
 		cmp_ok( $res->return_code, '==', 2, "$plugin: Critical NTP result with jitter, stratum, and truechimers check" );

@@ -5,7 +5,7 @@
 
 use strict;
 use Test::More;
-use NPTest;
+use MPTest;
 use FindBin qw($Bin);
 
 use IO::Socket;
@@ -67,14 +67,14 @@ if (-x "./check_nt") {
 my $result;
 my $command = "./check_nt -H 127.0.0.1 -p $port";
 
-$result = NPTest->testCmd( "$command -v USEDDISKSPACE -l c" );
+$result = MPTest->testCmd( "$command -v USEDDISKSPACE -l c" );
 is( $result->return_code, 0, "USEDDISKSPACE c");
 is( $result->output, q{c:\ - total: 0.93 Gb - used: 0.07 Gb (7%) - free 0.87 Gb (93%) | 'c:\ Used Space'=0.07Gb;0.00;0.00;0.00;0.93}, "Output right" );
 
-$result = NPTest->testCmd( "$command -v USEDDISKSPACE -l d" );
+$result = MPTest->testCmd( "$command -v USEDDISKSPACE -l d" );
 is( $result->return_code, 3, "USEDDISKSPACE d - invalid");
 is( $result->output, "Free disk space : Invalid drive", "Output right" );
 
-$result = NPTest->testCmd( "./check_nt -v USEDDISKSPACE -l d" );
+$result = MPTest->testCmd( "./check_nt -v USEDDISKSPACE -l d" );
 is( $result->return_code, 3, "Fail if -H missing");
 

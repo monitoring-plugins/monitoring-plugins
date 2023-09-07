@@ -92,7 +92,7 @@ service mariadb start || service mysql start
 mysql -e "create database IF NOT EXISTS test;" -uroot
 
 # ldap
-sed -e 's/cn=admin,dc=nodomain/'$(/usr/sbin/slapcat|grep ^dn:|awk '{print $2}')'/' -i .github/NPTest.cache
+sed -e 's/cn=admin,dc=nodomain/'$(/usr/sbin/slapcat|grep ^dn:|awk '{print $2}')'/' -i .github/MPTest.cache
 service slapd start
 
 # sshd
@@ -127,7 +127,7 @@ service postfix start
 service vsftpd start
 
 # hostname
-sed "/MP_HOST_TLS_CERT/s/.*/'MP_HOST_TLS_CERT' => '$(hostname)',/" -i /src/.github/NPTest.cache
+sed "/MP_HOST_TLS_CERT/s/.*/'MP_HOST_TLS_CERT' => '$(hostname)',/" -i /src/.github/MPTest.cache
 
 # create some test files to lower inodes
 for i in $(seq 10); do

@@ -6,7 +6,7 @@
 
 use strict;
 use Test::More;
-use NPTest;
+use MPTest;
 
 plan skip_all => "check_dns not compiled" unless (-x "check_dns");
 
@@ -63,53 +63,53 @@ my $host_nonresponsive = getTestParameter(
 
 my $res;
 
-$res = NPTest->testCmd("./check_dns -H $hostname_valid -t 5");
+$res = MPTest->testCmd("./check_dns -H $hostname_valid -t 5");
 cmp_ok( $res->return_code, '==', 0, "Found $hostname_valid");
 like  ( $res->output, $successOutput, "Output OK" );
 
-$res = NPTest->testCmd("./check_dns -H $hostname_valid -t 5 -w 0 -c 0");
+$res = MPTest->testCmd("./check_dns -H $hostname_valid -t 5 -w 0 -c 0");
 cmp_ok( $res->return_code, '==', 2, "Critical threshold passed");
 
-$res = NPTest->testCmd("./check_dns -H $hostname_valid -t 5 -w 0 -c 5");
+$res = MPTest->testCmd("./check_dns -H $hostname_valid -t 5 -w 0 -c 5");
 cmp_ok( $res->return_code, '==', 1, "Warning threshold passed");
 like( $res->output, '/\|time=[\d\.]+s;0.0*;5\.0*;0\.0*/', "Output performance data OK" );
 
-$res = NPTest->testCmd("./check_dns -H $hostname_invalid -t 1");
+$res = MPTest->testCmd("./check_dns -H $hostname_invalid -t 1");
 cmp_ok( $res->return_code, '==', 2, "Invalid $hostname_invalid");
 
-$res = NPTest->testCmd("./check_dns -H $hostname_valid -s $dns_server -t 5");
+$res = MPTest->testCmd("./check_dns -H $hostname_valid -s $dns_server -t 5");
 cmp_ok( $res->return_code, '==', 0, "Found $hostname_valid on $dns_server");
 like  ( $res->output, $successOutput, "Output OK" );
 
-$res = NPTest->testCmd("./check_dns -H $hostname_invalid -s $dns_server -t 1");
+$res = MPTest->testCmd("./check_dns -H $hostname_invalid -s $dns_server -t 1");
 cmp_ok( $res->return_code, '==', 2, "Invalid $hostname_invalid on $dns_server");
 
-$res = NPTest->testCmd("./check_dns -H $hostname_valid -a $hostname_valid_ip -s $host_nonresponsive -t 2");
+$res = MPTest->testCmd("./check_dns -H $hostname_valid -a $hostname_valid_ip -s $host_nonresponsive -t 2");
 cmp_ok( $res->return_code, '==', 2, "Got no answer from unresponsive server");
 like  ( $res->output, "/CRITICAL - /", "Output OK");
 
-$res = NPTest->testCmd("./check_dns -H $hostname_valid -a $hostname_valid_ip -t 5");
+$res = MPTest->testCmd("./check_dns -H $hostname_valid -a $hostname_valid_ip -t 5");
 cmp_ok( $res->return_code, '==', 0, "Got expected address");
 
-$res = NPTest->testCmd("./check_dns -H $hostname_valid -a 10.10.10.10 -t 5");
+$res = MPTest->testCmd("./check_dns -H $hostname_valid -a 10.10.10.10 -t 5");
 cmp_ok( $res->return_code, '==', 2, "Got wrong address");
 like  ( $res->output, "/^DNS CRITICAL.*expected '10.10.10.10' but got '$hostname_valid_ip'".'$/', "Output OK");
 
-$res = NPTest->testCmd("./check_dns -H $hostname_valid_ip -a $hostname_valid_reverse -t 5");
+$res = MPTest->testCmd("./check_dns -H $hostname_valid_ip -a $hostname_valid_reverse -t 5");
 cmp_ok( $res->return_code, '==', 0, "Got expected fqdn");
 like  ( $res->output, $successOutput, "Output OK");
 
-$res = NPTest->testCmd("./check_dns -H $hostname_valid -a $hostname_valid_cidr -t 5");
+$res = MPTest->testCmd("./check_dns -H $hostname_valid -a $hostname_valid_cidr -t 5");
 cmp_ok( $res->return_code, '==', 0, "Got expected address");
 
-$res = NPTest->testCmd("./check_dns -H $hostname_valid -a $hostname_invalid_cidr -t 5");
+$res = MPTest->testCmd("./check_dns -H $hostname_valid -a $hostname_invalid_cidr -t 5");
 cmp_ok( $res->return_code, '==', 2, "Got wrong address");
 like  ( $res->output, "/^DNS CRITICAL.*expected '$hostname_invalid_cidr' but got '$hostname_valid_ip'".'$/', "Output OK");
 
-$res = NPTest->testCmd("./check_dns -H $hostname_valid -n");
+$res = MPTest->testCmd("./check_dns -H $hostname_valid -n");
 cmp_ok( $res->return_code, '==', 2, "Found $hostname_valid");
 like  ( $res->output, "/^DNS CRITICAL.*Domain '$hostname_valid' was found by the server:/", "Output OK");
 
-$res = NPTest->testCmd("./check_dns -H $hostname_invalid -n");
+$res = MPTest->testCmd("./check_dns -H $hostname_invalid -n");
 cmp_ok( $res->return_code, '==', 0, "Did not find $hostname_invalid");
 like  ( $res->output, $successOutput, "Output OK" );

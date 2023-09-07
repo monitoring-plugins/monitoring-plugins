@@ -11,7 +11,7 @@
 
 use strict;
 use Test::More;
-use NPTest;
+use MPTest;
 
 use vars qw($tests);
 
@@ -27,32 +27,32 @@ if (! $mysqlserver) {
 	plan tests => 13;
 }
 
-$result = NPTest->testCmd("./check_mysql_query -q 'SELECT 1+1' -H $mysqlserver $mysql_login_details");
+$result = MPTest->testCmd("./check_mysql_query -q 'SELECT 1+1' -H $mysqlserver $mysql_login_details");
 cmp_ok( $result->return_code, '==', 0, "Can run query");
 
-$result = NPTest->testCmd("./check_mysql_query -H $mysqlserver $mysql_login_details");
+$result = MPTest->testCmd("./check_mysql_query -H $mysqlserver $mysql_login_details");
 cmp_ok( $result->return_code, '==', 3, "Missing query parameter");
 like( $result->output, "/Must specify a SQL query to run/", "Missing query error message");
 
-$result = NPTest->testCmd("./check_mysql_query -q 'SELECT 1+1' -H $mysqlserver -u dummy -d mysql");
+$result = MPTest->testCmd("./check_mysql_query -q 'SELECT 1+1' -H $mysqlserver -u dummy -d mysql");
 cmp_ok( $result->return_code, '==', 2, "Login failure");
 like( $result->output, "/Access denied for user /", "Expected login failure message");
 
-$result = NPTest->testCmd("./check_mysql_query -q 'SELECT PI()' -w 3 -c 4 -H $mysqlserver $mysql_login_details");
+$result = MPTest->testCmd("./check_mysql_query -q 'SELECT PI()' -w 3 -c 4 -H $mysqlserver $mysql_login_details");
 cmp_ok( $result->return_code, '==', 1, "Got warning");
 
-$result = NPTest->testCmd("./check_mysql_query -q 'SELECT PI()*2' -w 3 -c 4 -H $mysqlserver $mysql_login_details");
+$result = MPTest->testCmd("./check_mysql_query -q 'SELECT PI()*2' -w 3 -c 4 -H $mysqlserver $mysql_login_details");
 cmp_ok( $result->return_code, '==', 2, "Got critical");
 
-$result = NPTest->testCmd("./check_mysql_query -q 'SELECT * FROM adsf' -H $mysqlserver $mysql_login_details");
+$result = MPTest->testCmd("./check_mysql_query -q 'SELECT * FROM adsf' -H $mysqlserver $mysql_login_details");
 cmp_ok( $result->return_code, '==', 2, "Bad query");
 like( $result->output, "/Error with query/", "Bad query error message");
 
-$result = NPTest->testCmd("./check_mysql_query -q 'SHOW VARIABLES LIKE \"bob\"' -H $mysqlserver $mysql_login_details");
+$result = MPTest->testCmd("./check_mysql_query -q 'SHOW VARIABLES LIKE \"bob\"' -H $mysqlserver $mysql_login_details");
 cmp_ok( $result->return_code, '==', 1, "No rows");
 like( $result->output, "/No rows returned/", "No rows error message");
 
-$result = NPTest->testCmd("./check_mysql_query -q 'SHOW VARIABLES' -H $mysqlserver $mysql_login_details");
+$result = MPTest->testCmd("./check_mysql_query -q 'SHOW VARIABLES' -H $mysqlserver $mysql_login_details");
 cmp_ok( $result->return_code, '==', 2, "Data not numeric");
 like( $result->output, "/Is not a numeric/", "Data not numeric error message");
 

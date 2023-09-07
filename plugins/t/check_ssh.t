@@ -6,7 +6,7 @@
 
 use strict;
 use Test::More;
-use NPTest;
+use MPTest;
 
 # Required parameters
 my $ssh_host           = getTestParameter("MP_SSH_HOST", "A host providing SSH service", "localhost");
@@ -18,14 +18,14 @@ plan skip_all => "SSH_HOST must be defined" unless $ssh_host;
 plan tests    => 6;
 
 
-my $result = NPTest->testCmd(
+my $result = MPTest->testCmd(
     "./check_ssh -H $ssh_host"
     );
 cmp_ok($result->return_code, '==', 0, "Exit with return code 0 (OK)");
 like($result->output, '/^SSH OK - /', "Status text if command returned none (OK)");
 
 
-$result = NPTest->testCmd(
+$result = MPTest->testCmd(
     "./check_ssh -H $host_nonresponsive -t 2"
     );
 cmp_ok($result->return_code, '==', 2, "Exit with return code 0 (OK)");
@@ -33,7 +33,7 @@ like($result->output, '/^CRITICAL - Socket timeout after 2 seconds/', "Status te
 
 
 
-$result = NPTest->testCmd(
+$result = MPTest->testCmd(
     "./check_ssh -H $hostname_invalid -t 2"
     );
 cmp_ok($result->return_code, '==', 3, "Exit with return code 0 (OK)");

@@ -6,7 +6,7 @@
 
 use strict;
 use Test::More;
-use NPTest;
+use MPTest;
 
 plan skip_all => "check_hpjd not compiled" unless (-x "check_hpjd");
 
@@ -49,23 +49,23 @@ my $res;
 
 SKIP: {
 	skip "No HP JetDirect defined", 2 unless $host_tcp_hpjd;
-	$res = NPTest->testCmd("./check_hpjd -H $host_tcp_hpjd");
+	$res = MPTest->testCmd("./check_hpjd -H $host_tcp_hpjd");
 	cmp_ok( $res->return_code, 'eq', 0, "Jetdirect responding" );
 	like  ( $res->output, $successOutput, "Output correct" );
 
-	$res = NPTest->testCmd("./check_hpjd -H $host_tcp_hpjd -p $host_hpjd_port_valid");
+	$res = MPTest->testCmd("./check_hpjd -H $host_tcp_hpjd -p $host_hpjd_port_valid");
 	cmp_ok( $res->return_code, 'eq', 0, "Jetdirect responding on port $host_hpjd_port_valid" );
 	like  ( $res->output, $successOutput, "Output correct" );
 
-	$res = NPTest->testCmd("./check_hpjd -H $host_tcp_hpjd -p $host_hpjd_port_invalid");
+	$res = MPTest->testCmd("./check_hpjd -H $host_tcp_hpjd -p $host_hpjd_port_invalid");
 	cmp_ok( $res->return_code, 'eq', 2, "Jetdirect not responding on port $host_hpjd_port_invalid" );
 	like  ( $res->output, $failureOutput, "Output correct" );
 }
 
-$res = NPTest->testCmd("./check_hpjd -H $host_nonresponsive");
+$res = MPTest->testCmd("./check_hpjd -H $host_nonresponsive");
 cmp_ok( $res->return_code, 'eq', 2, "Host not responding");
 like  ( $res->output, $failureOutput, "Output OK" );
 
-$res = NPTest->testCmd("./check_hpjd -H $hostname_invalid");
+$res = MPTest->testCmd("./check_hpjd -H $hostname_invalid");
 cmp_ok( $res->return_code, 'eq', 3, "Hostname invalid");
 

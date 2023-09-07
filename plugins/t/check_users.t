@@ -10,7 +10,7 @@
 
 use strict;
 use Test;
-use NPTest;
+use MPTest;
 
 use vars qw($tests);
 BEGIN {$tests = 8; plan tests => $tests}

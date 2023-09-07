@@ -7,7 +7,7 @@ use strict;
 
 use Getopt::Long;
 
-use NPTest qw(DetermineTestHarnessDirectory TestsFrom);
+use MPTest qw(DetermineTestHarnessDirectory TestsFrom);
 
 $ENV{LC_ALL} = 'C';
 

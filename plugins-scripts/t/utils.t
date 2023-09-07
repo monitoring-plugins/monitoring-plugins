@@ -8,7 +8,7 @@
 use warnings;
 use strict;
 use Test::More;
-use NPTest;
+use MPTest;
 
 use lib ".";
 use lib "..";

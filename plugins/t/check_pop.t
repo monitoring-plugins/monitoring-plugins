@@ -6,7 +6,7 @@
 
 use strict;
 use Test::More;
-use NPTest;
+use MPTest;
 
 plan tests => 5;
 
@@ -39,17 +39,17 @@ my %exceptions = ( 2 => "No POP Server present?" );
 my $t;
 my $res;
 
-$res = NPTest->testCmd( "./check_pop $host_tcp_pop" );
+$res = MPTest->testCmd( "./check_pop $host_tcp_pop" );
 cmp_ok( $res->return_code, '==', 0, "POP server ok");
 
-$res = NPTest->testCmd( "./check_pop -H $host_tcp_pop -p 110 -w 9 -c 9 -t 10 -e '+OK'");
+$res = MPTest->testCmd( "./check_pop -H $host_tcp_pop -p 110 -w 9 -c 9 -t 10 -e '+OK'");
 cmp_ok( $res->return_code, '==', 0, "POP server returned +OK");
 
-$res = NPTest->testCmd( "./check_pop $host_tcp_pop -p 110 -wt 9 -ct 9 -to 10 -e '+OK'");
+$res = MPTest->testCmd( "./check_pop $host_tcp_pop -p 110 -wt 9 -ct 9 -to 10 -e '+OK'");
 cmp_ok( $res->return_code, '==', 0, "Old syntax");
 
-$res = NPTest->testCmd( "./check_pop $host_nonresponsive" );
+$res = MPTest->testCmd( "./check_pop $host_nonresponsive" );
 cmp_ok( $res->return_code, '==', 2, "Non responsive host");
 
-$res = NPTest->testCmd( "./check_pop $hostname_invalid" );
+$res = MPTest->testCmd( "./check_pop $hostname_invalid" );
 cmp_ok( $res->return_code, '==', 2, "Invalid host");

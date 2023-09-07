@@ -5,7 +5,7 @@
 
 use strict;
 use Test::More;
-use NPTest;
+use MPTest;
 
 my $allow_sudo = getTestParameter( "MP_ALLOW_SUDO",
                                    "If sudo is setup for this user to run any command as root ('yes' to allow)",
@@ -48,7 +48,7 @@ elsif (`ifconfig -a 2>/dev/null` =~ m/^(e\w*\d+)/mx and $1 ne 'eth0') {
 my $res;
 SKIP: {
     skip('need responsive test host', 2) unless $host_responsive;
-    $res = NPTest->testCmd(
+    $res = MPTest->testCmd(
         "$sudo ./check_dhcp $interface -u -s $host_responsive"
     );
     is( $res->return_code, 0, "Syntax ok" );
@@ -57,7 +57,7 @@ SKIP: {
 
 SKIP: {
     skip('need nonresponsive test host', 2) unless $host_nonresponsive;
-    $res = NPTest->testCmd(
+    $res = MPTest->testCmd(
         "$sudo ./check_dhcp $interface -u -s $host_nonresponsive"
     );
     is( $res->return_code, 2, "Exit code - host nonresponsive" );
@@ -66,7 +66,7 @@ SKIP: {
 
 SKIP: {
     skip('need invalid test host', 2) unless $hostname_invalid;
-    $res = NPTest->testCmd(
+    $res = MPTest->testCmd(
         "$sudo ./check_dhcp $interface -u -s $hostname_invalid"
     );
     is( $res->return_code, 3, "Exit code - host invalid" );

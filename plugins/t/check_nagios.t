@@ -6,7 +6,7 @@
 
 use strict;
 use Test::More;
-use NPTest;
+use MPTest;
 
 if (`uname -s` eq "SunOS\n") {
         plan skip_all => "Ignoring tests on solaris because of pst3";
@@ -29,7 +29,7 @@ my $result;
 # invoke cron to run a build
 my $procname = "cron";
 
-$result = NPTest->testCmd(
+$result = MPTest->testCmd(
 	"./check_nagios -F $nagios1 -e 5 -C $procname"
 	);
 cmp_ok( $result->return_code, '==', 1, "Log over 5 minutes old" );
@@ -39,7 +39,7 @@ my $now = time;
 # This substitution is dependent on the testcase
 system( "perl -pe 's/1133537544/$now/' $nagios1 > $nagios1.tmp" ) == 0 or die "Problem with munging $nagios1";
 
-$result = NPTest->testCmd(
+$result = MPTest->testCmd(
 	"./check_nagios -F $nagios1.tmp -e 1 -C $procname"
 	);
 cmp_ok( $result->return_code, "==", 0, "Log up to date" );
@@ -48,20 +48,20 @@ like  ( $result->output, $successOutput, "Output for success correct" );
 my $later = $now - 61;
 system( "perl -pe 's/1133537544/$later/' $nagios1 > $nagios1.tmp" ) == 0 or die "Problem with munging $nagios1";
 
-$result = NPTest->testCmd(
+$result = MPTest->testCmd(
         "./check_nagios -F $nagios1.tmp -e 1 -C $procname"
         );
 cmp_ok( $result->return_code, "==", 1, "Log correctly seen as over 1 minute old" );
 my ($age) = ($_ = $result->output) =~ /status log updated (\d+) seconds ago/;
 like( $age, '/^6[0-9]$/', "Log correctly seen as between 60-69 seconds old" );
 
-$result = NPTest->testCmd(
+$result = MPTest->testCmd(
 	"./check_nagios -F $nagios1.tmp -e 5 -C unlikely_command_string"
 	);
 cmp_ok( $result->return_code, "==", 2, "Nagios command not found" );
 like  ( $result->output, $failureOutput, "Output for failure correct" );
 
-$result = NPTest->testCmd(
+$result = MPTest->testCmd(
 	"./check_nagios -F $nagios2 -e 5 -C $procname"
 	);
 cmp_ok( $result->return_code, "==", 1, "Nagios2 for logfile over 5 mins old" );
@@ -69,7 +69,7 @@ cmp_ok( $result->return_code, "==", 1, "Nagios2 for logfile over 5 mins old" );
 $now = time;
 system( "perl -pe 's/1133537302/$now/' $nagios2 > $nagios2.tmp" ) == 0 or die "Problem with munging $nagios2";
 
-$result = NPTest->testCmd(
+$result = MPTest->testCmd(
 	"./check_nagios -F $nagios2.tmp -e 1 -C $procname"
 	);
 cmp_ok( $result->return_code, "==", 0, "Nagios2 log up to date" );
@@ -77,14 +77,14 @@ cmp_ok( $result->return_code, "==", 0, "Nagios2 log up to date" );
 $later = $now - 61;
 system( "perl -pe 's/1133537302/$later/' $nagios2 > $nagios2.tmp" ) == 0 or die "Problem with munging $nagios2";
 
-$result = NPTest->testCmd(
+$result = MPTest->testCmd(
         "./check_nagios -F $nagios2.tmp -e 1 -C $procname"
         );
 cmp_ok( $result->return_code, "==", 1, "Nagios2 log correctly seen as over 1 minute old" );
 ($age) = ($_ = $result->output) =~ /status log updated (\d+) seconds ago/;
 like( $age, '/^6[0-9]$/', "Log correctly seen as between 60-69 seconds old" );
 
-$result = NPTest->testCmd(
+$result = MPTest->testCmd(
 	"./check_nagios -F t/check_nagios.t -e 1 -C $procname"
 	);
 cmp_ok( $result->return_code, "==", 2, "Invalid log file" );

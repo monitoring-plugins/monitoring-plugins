@@ -7,7 +7,7 @@
 
 use strict;
 use Test::More;
-use NPTest;
+use MPTest;
 use FindBin qw($Bin);
 use IO::Socket::INET;
 
@@ -286,20 +286,20 @@ SKIP: {
 
 	my $expiry = "Thu Nov 28 21:02:11 2030 +0000";
 
-	$result = NPTest->testCmd( "$command -p $port_https -S -C 14" );
+	$result = MPTest->testCmd( "$command -p $port_https -S -C 14" );
 	is( $result->return_code, 0, "$command -p $port_https -S -C 14" );
 	is( $result->output, "OK - Certificate 'Monitoring Plugins' will expire on $expiry.", "output ok" );
 
-	$result = NPTest->testCmd( "$command -p $port_https -S -C 14000" );
+	$result = MPTest->testCmd( "$command -p $port_https -S -C 14000" );
 	is( $result->return_code, 1, "$command -p $port_https -S -C 14000" );
 	like( $result->output, '/WARNING - Certificate \'Monitoring Plugins\' expires in \d+ day\(s\) \(' . quotemeta($expiry) . '\)./', "output ok" );
 
 	# Expired cert tests
-	$result = NPTest->testCmd( "$command -p $port_https -S -C 13960,14000" );
+	$result = MPTest->testCmd( "$command -p $port_https -S -C 13960,14000" );
 	is( $result->return_code, 2, "$command -p $port_https -S -C 13960,14000" );
 	like( $result->output, '/CRITICAL - Certificate \'Monitoring Plugins\' expires in \d+ day\(s\) \(' . quotemeta($expiry) . '\)./', "output ok" );
 
-	$result = NPTest->testCmd( "$command -p $port_https_expired -S -C 7" );
+	$result = MPTest->testCmd( "$command -p $port_https_expired -S -C 7" );
 	is( $result->return_code, 2, "$command -p $port_https_expired -S -C 7" );
 	is( $result->output,
 		'CRITICAL - Certificate \'Monitoring Plugins\' expired on Wed Jan  2 12:00:00 2008 +0000.',
@@ -311,7 +311,7 @@ SKIP: {
 		. " -J \"$Bin/certs/client-cert.pem\""
 		. " -K \"$Bin/certs/client-key.pem\""
 		. " -u /statuscode/200";
-	$result = NPTest->testCmd($cmd);
+	$result = MPTest->testCmd($cmd);
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
@@ -319,7 +319,7 @@ SKIP: {
 		. " -J \"$Bin/certs/clientchain-cert.pem\""
 		. " -K \"$Bin/certs/clientchain-key.pem\""
 		. " -u /statuscode/200";
-	$result = NPTest->testCmd($cmd);
+	$result = MPTest->testCmd($cmd);
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 }
@@ -329,13 +329,13 @@ my $cmd;
 #
 # http without virtual port
 $cmd = "$command -p $port_http -u /virtual_port -r ^127.0.0.1:$port_http\$";
-$result = NPTest->testCmd( $cmd );
+$result = MPTest->testCmd( $cmd );
 is( $result->return_code, 0, $cmd);
 like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 # http with virtual port
 $cmd = "$command:80 -p $port_http -u /virtual_port -r ^127.0.0.1\$";
-$result = NPTest->testCmd( $cmd );
+$result = MPTest->testCmd( $cmd );
 is( $result->return_code, 0, $cmd);
 like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
@@ -343,13 +343,13 @@ SKIP: {
 	skip "HTTP::Daemon::SSL not installed", 4 if ! exists $servers->{https};
 	# https without virtual port
 	$cmd = "$command -p $port_https --ssl -u /virtual_port -r ^127.0.0.1:$port_https\$";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	# https with virtual port
 	$cmd = "$command:443 -p $port_https --ssl -u /virtual_port -r ^127.0.0.1\$";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 }
@@ -362,156 +362,156 @@ sub run_common_tests {
 		$command .= " --ssl";
 	}
 
-	$result = NPTest->testCmd( "$command -u /file/root" );
+	$result = MPTest->testCmd( "$command -u /file/root" );
 	is( $result->return_code, 0, "/file/root");
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - 274 bytes in [\d\.]+ second/', "Output correct" );
 
-	$result = NPTest->testCmd( "$command -u /file/root -s Root" );
+	$result = MPTest->testCmd( "$command -u /file/root -s Root" );
 	is( $result->return_code, 0, "/file/root search for string");
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - 274 bytes in [\d\.]+ second/', "Output correct" );
 
-	$result = NPTest->testCmd( "$command -u /file/root -s NonRoot" );
+	$result = MPTest->testCmd( "$command -u /file/root -s NonRoot" );
 	is( $result->return_code, 2, "Missing string check");
 	like( $result->output, qr%^HTTP CRITICAL: HTTP/1\.1 200 OK - string 'NonRoot' not found on 'https?://127\.0\.0\.1:\d+/file/root'%, "Shows search string and location");
 
-	$result = NPTest->testCmd( "$command -u /file/root -s NonRootWithOver30charsAndMoreFunThanAWetFish" );
+	$result = MPTest->testCmd( "$command -u /file/root -s NonRootWithOver30charsAndMoreFunThanAWetFish" );
 	is( $result->return_code, 2, "Missing string check");
 	like( $result->output, qr%HTTP CRITICAL: HTTP/1\.1 200 OK - string 'NonRootWithOver30charsAndM...' not found on 'https?://127\.0\.0\.1:\d+/file/root'%, "Shows search string and location");
 
-	$result = NPTest->testCmd( "$command -u /header_check -d foo" );
+	$result = MPTest->testCmd( "$command -u /header_check -d foo" );
 	is( $result->return_code, 0, "header_check search for string");
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - 96 bytes in [\d\.]+ second/', "Output correct" );
 
-	$result = NPTest->testCmd( "$command -u /header_check -d bar" );
+	$result = MPTest->testCmd( "$command -u /header_check -d bar" );
 	is( $result->return_code, 2, "Missing header string check");
 	like( $result->output, qr%^HTTP CRITICAL: HTTP/1\.1 200 OK - header 'bar' not found on 'https?://127\.0\.0\.1:\d+/header_check'%, "Shows search string and location");
 
 	my $cmd;
 	$cmd = "$command -u /slow";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, "$cmd");
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 	$result->output =~ /in ([\d\.]+) second/;
 	cmp_ok( $1, ">", 1, "Time is > 1 second" );
 
 	$cmd = "$command -u /statuscode/200";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /statuscode/200 -e 200";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: Status line output matched "200" - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /statuscode/201";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 201 Created - \d+ bytes in [\d\.]+ second /', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /statuscode/201 -e 201";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: Status line output matched "201" - \d+ bytes in [\d\.]+ second /', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /statuscode/201 -e 200";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 2, $cmd);
 	like( $result->output, '/^HTTP CRITICAL - Invalid HTTP response received from host on port \d+: HTTP/1.1 201 Created/', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /statuscode/200 -e 200,201,202";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: Status line output matched "200,201,202" - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /statuscode/201 -e 200,201,202";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: Status line output matched "200,201,202" - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /statuscode/203 -e 200,201,202";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 2, $cmd);
 	like( $result->output, '/^HTTP CRITICAL - Invalid HTTP response received from host on port (\d+): HTTP/1.1 203 Non-Authoritative Information/', "Output correct: ".$result->output );
 
 	$cmd = "$command -j HEAD -u /method";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 HEAD - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -j POST -u /method";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 POST - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -j GET -u /method";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 GET - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /method";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 GET - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -P foo -u /method";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 POST - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -j DELETE -u /method";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 1, $cmd);
 	like( $result->output, '/^HTTP WARNING: HTTP/1.1 405 Method Not Allowed/', "Output correct: ".$result->output );
 
 	$cmd = "$command -j foo -u /method";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 2, $cmd);
 	like( $result->output, '/^HTTP CRITICAL: HTTP/1.1 501 Not Implemented/', "Output correct: ".$result->output );
 
 	$cmd = "$command -P stufftoinclude -u /postdata -s POST:stufftoinclude";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -j PUT -P stufftoinclude -u /postdata -s PUT:stufftoinclude";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	# To confirm that the free doesn't segfault
 	$cmd = "$command -P stufftoinclude -j PUT -u /postdata -s PUT:stufftoinclude";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /redirect";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 301 Moved Permanently - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -f follow -u /redirect";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -u /redirect -k 'follow: me'";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 301 Moved Permanently - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -f follow -u /redirect -k 'follow: me'";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -f sticky -u /redirect -k 'follow: me'";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -f stickyport -u /redirect -k 'follow: me'";
-	$result = NPTest->testCmd( $cmd );
+	$result = MPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
@@ -523,7 +523,7 @@ sub run_common_tests {
 	alarm(2);
 	eval {
 		local $SIG{ALRM} = sub { die "alarm\n" };
-		$result = NPTest->testCmd( $cmd );
+		$result = MPTest->testCmd( $cmd );
 	};
 	isnt( $@, "alarm\n", $cmd );
 	alarm(0);
@@ -534,7 +534,7 @@ sub run_common_tests {
 	alarm(2);
 	eval {
 		local $SIG{ALRM} = sub { die "alarm\n" };
-		$result = NPTest->testCmd( $cmd );
+		$result = MPTest->testCmd( $cmd );
 	};
 	isnt( $@, "alarm\n", $cmd );
 	alarm(0);
@@ -545,26 +545,26 @@ sub run_common_tests {
 		skip "This doesn't seem to work all the time", 1 unless ($ENV{HTTP_EXTERNAL});
 		$cmd = "$command -f follow -u /redir_external -t 5";
 		eval {
-			$result = NPTest->testCmd( $cmd, 2 );
+			$result = MPTest->testCmd( $cmd, 2 );
 		};
 		like( $@, "/timeout in command: $cmd/", $cmd );
 	}
 
 	$cmd = "$command -u /timeout -t 5";
 	eval {
-		$result = NPTest->testCmd( $cmd, 2 );
+		$result = MPTest->testCmd( $cmd, 2 );
 	};
 	like( $@, "/timeout in command: $cmd/", $cmd );
 
 	$cmd = "$command -f follow -u /redir_timeout -t 2";
 	eval {
-		$result = NPTest->testCmd( $cmd, 5 );
+		$result = MPTest->testCmd( $cmd, 5 );
 	};
 	is( $@, "", $cmd );
 
 	$cmd = "$command -u /chunked -s 'chunkedencodingtest' -d 'Transfer-Encoding: chunked'";
 	eval {
-		$result = NPTest->testCmd( $cmd, 5 );
+		$result = MPTest->testCmd( $cmd, 5 );
 	};
 	is( $@, "", $cmd );
 }
@@ -575,7 +575,7 @@ sub run_chunked_encoding_special_test {
 
 	$cmd = "$command -u / -s 'ChunkedEncodingSpecialTest'";
 	eval {
-		$result = NPTest->testCmd( $cmd, 5 );
+		$result = MPTest->testCmd( $cmd, 5 );
 	};
 	is( $@, "", $cmd );
 }

@@ -6,7 +6,7 @@
 
 use strict;
 use Test::More;
-use NPTest;
+use MPTest;
 
 my $host_responsive    = getTestParameter("MP_HOST_RESPONSIVE", "The hostname of system responsive to network requests", "localhost");
 my $host_nonresponsive = getTestParameter("MP_HOST_NONRESPONSIVE", "The hostname of system not responsive to network requests", "10.0.0.1");
@@ -23,12 +23,12 @@ elsif ( !$fping || !-x $fping ) {
 	plan skip_all => "fping not found or cannot be executed, skipping tests";
 } else {
   plan tests => 3;
-  $res = NPTest->testCmd( "./check_fping $host_responsive" );
+  $res = MPTest->testCmd( "./check_fping $host_responsive" );
   cmp_ok( $res->return_code, '==', 0, "Responsive host returns OK");
 
-  $res = NPTest->testCmd( "./check_fping $host_nonresponsive" );
+  $res = MPTest->testCmd( "./check_fping $host_nonresponsive" );
   cmp_ok( $res->return_code, '==', 2, "Non-Responsive host returns Critical");
 
-  $res = NPTest->testCmd( "./check_fping $hostname_invalid" );
+  $res = MPTest->testCmd( "./check_fping $hostname_invalid" );
   cmp_ok( $res->return_code, '==', 3, "Invalid host returns Unknown");
 }

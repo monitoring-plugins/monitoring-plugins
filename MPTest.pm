@@ -1,4 +1,4 @@
-package NPTest;
+package MPTest;
 
 #
 # Helper Functions for testing Monitoring Plugins
@@ -25,7 +25,7 @@ $VERSION = "1556."; # must be all one line, for MakeMaker
 
 =head1 NAME
 
-NPTest - Simplify the testing of Monitoring Plugins
+MPTest - Simplify the testing of Monitoring Plugins
 
 =head1 DESCRIPTION
 
@@ -40,7 +40,7 @@ testing.
 
 This module defines four public functions, C<getTestParameter(...)>,
 C<checkCmd(...)>, C<skipMissingCmd(...)> and C<skipMsg(...)>.  These are exported by
-default via the C<use NPTest;> statement.
+default via the C<use MPTest;> statement.
 
 =over
 
@@ -59,7 +59,7 @@ was "none". Tests can check for the parameter and skip if not set.
 
 Responses are stored in an external, file-based cache so subsequent test
 runs will use these values. The user is able to change the values by
-amending the values in the file /var/tmp/NPTest.cache, or by setting
+amending the values in the file /var/tmp/MPTest.cache, or by setting
 the appropriate environment variable before running the test.
 
 To facilitate quick testing setup, it is possible to accept all the
@@ -71,7 +71,7 @@ editor or removing the cache file completely.
 
 =item C<testCmd($command)>
 
-Call with NPTest->testCmd("./check_disk ...."). This returns a NPTest object
+Call with MPTest->testCmd("./check_disk ...."). This returns a MPTest object
 which you can then run $object->return_code or $object->output against.
 
 Testing of results would be done in your test script, not in this module.
@@ -210,7 +210,7 @@ my( %CACHE ) = ();
 # I'm not really sure whether to house a site-specific cache inside
 # or outside of the extracted source / build tree - lets default to outside
 my( $CACHEFILENAME ) = ( exists( $ENV{'NPTEST_CACHE'} ) && $ENV{'NPTEST_CACHE'} )
-                       ? $ENV{'NPTEST_CACHE'} : "/var/tmp/NPTest.cache"; # "../Cache.pdd";
+                       ? $ENV{'NPTEST_CACHE'} : "/var/tmp/MPTest.cache"; # "../Cache.pdd";
 
 #
 # Testing Functions
@@ -220,7 +220,7 @@ sub checkCmd
 {
   my( $command, $desiredExitStatus, $desiredOutput, %exceptions ) = @_;
 
-  my $result = NPTest->testCmd($command);
+  my $result = MPTest->testCmd($command);
 
   my $output     = $result->output;
   my $exitStatus = $result->return_code;
@@ -397,7 +397,7 @@ sub LoadCache
 
     if ( ! $fileHandle->open( "< ${CACHEFILENAME}" ) )
     {
-      print STDERR "NPTest::LoadCache() : Problem opening ${CACHEFILENAME} : $!\n";
+      print STDERR "MPTest::LoadCache() : Problem opening ${CACHEFILENAME} : $!\n";
       return;
     }
 
@@ -436,7 +436,7 @@ sub SaveCache
   if($oldFileContents ne $data) {
     my($fileHandle) = new IO::File;
     if (!$fileHandle->open( "> ${CACHEFILENAME}")) {
-      print STDERR "NPTest::SaveCache() : Problem saving ${CACHEFILENAME} : $!\n";
+      print STDERR "MPTest::SaveCache() : Problem saving ${CACHEFILENAME} : $!\n";
       return;
     }
     print $fileHandle $data;
@@ -528,7 +528,7 @@ sub TestsFrom
 
   if ( ! opendir( DIR, $directory ) )
   {
-    print STDERR "NPTest::TestsFrom() - Failed to open ${directory} : $!\n";
+    print STDERR "MPTest::TestsFrom() - Failed to open ${directory} : $!\n";
     return ();
   }
 

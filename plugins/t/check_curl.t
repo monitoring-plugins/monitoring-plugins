@@ -11,8 +11,8 @@ use POSIX qw/mktime strftime/;
 use vars qw($tests $has_ipv6);
 
 BEGIN {
-    use NPTest;
-    $has_ipv6 = NPTest::has_ipv6();
+    use MPTest;
+    $has_ipv6 = MPTest::has_ipv6();
     $tests = $has_ipv6 ? 59 : 57;
     plan tests => $tests;
 }
@@ -38,7 +38,7 @@ my $port_tcp_proxy     = getTestParameter("MP_PORT_TCP_PROXY", "Port of the prox
 my $faketime = -x '/usr/bin/faketime' ? 1 : 0;
 
 
-$res = NPTest->testCmd(
+$res = MPTest->testCmd(
     "./$plugin $host_tcp_http -wt 300 -ct 600"
     );
 cmp_ok( $res->return_code, '==', 0, "Webserver $host_tcp_http responded" );
@@ -46,26 +46,26 @@ like( $res->output, $successOutput, "Output OK" );
 
 if ($has_ipv6) {
     # Test for IPv6 formatting
-    $res = NPTest->testCmd(
+    $res = MPTest->testCmd(
         "./$plugin -I $host_tcp_http_ipv6 -wt 300 -ct 600"
         );
     cmp_ok( $res->return_code, '==', 0, "IPv6 URL formatting is working" );
     like( $res->output, $successOutput, "Output OK" );
 }
 
-$res = NPTest->testCmd(
+$res = MPTest->testCmd(
     "./$plugin $host_tcp_http -wt 300 -ct 600 -v -v -v -k 'bob:there' -k 'carl:frown'"
     );
 like( $res->output, '/bob:there\r\ncarl:frown\r\n/', "Got headers with multiple -k options" );
 
-$res = NPTest->testCmd(
+$res = MPTest->testCmd(
     "./$plugin $host_nonresponsive -wt 1 -ct 2 -t 3"
     );
 cmp_ok( $res->return_code, '==', 2, "Webserver $host_nonresponsive not responding" );
 # was CRITICAL only, but both check_curl and check_http print HTTP CRITICAL (puzzle?!)
 like( $res->output, "/HTTP CRITICAL - Invalid HTTP response received from host on port 80: cURL returned 28 - Connection timed out after/", "Output OK");
 
-$res = NPTest->testCmd(
+$res = MPTest->testCmd(
     "./$plugin $hostname_invalid -wt 1 -ct 2"
     );
 cmp_ok( $res->return_code, '==', 2, "Webserver $hostname_invalid not valid" );
@@ -76,101 +76,101 @@ cmp_ok( $res->return_code, '==', 2, "Webserver $hostname_invalid not valid" );
 like( $res->output, "/cURL returned 6 - Could not resolve host:/", "Output OK");
 
 # host header checks
-$res = NPTest->testCmd("./$plugin -v -H $host_tcp_http");
+$res = MPTest->testCmd("./$plugin -v -H $host_tcp_http");
 like( $res->output, '/^Host: '.$host_tcp_http.'\s*$/ms', "Host Header OK" );
 like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
 
-$res = NPTest->testCmd("./$plugin -v -H $host_tcp_http -p 80");
+$res = MPTest->testCmd("./$plugin -v -H $host_tcp_http -p 80");
 like( $res->output, '/^Host: '.$host_tcp_http.'\s*$/ms', "Host Header OK" );
 like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
 
-$res = NPTest->testCmd("./$plugin -v -H $host_tcp_http:8080 -p 80");
+$res = MPTest->testCmd("./$plugin -v -H $host_tcp_http:8080 -p 80");
 like( $res->output, '/^Host: '.$host_tcp_http.':8080\s*$/ms', "Host Header OK" );
 like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
 
-$res = NPTest->testCmd("./$plugin -v -H $host_tcp_http:8080 -p 80");
+$res = MPTest->testCmd("./$plugin -v -H $host_tcp_http:8080 -p 80");
 like( $res->output, '/^Host: '.$host_tcp_http.':8080\s*$/ms', "Host Header OK" );
 like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
 
-$res = NPTest->testCmd("./$plugin -v -H $host_tcp_http:8080 -p 80 -k 'Host: testhost:8001'");
+$res = MPTest->testCmd("./$plugin -v -H $host_tcp_http:8080 -p 80 -k 'Host: testhost:8001'");
 like( $res->output, '/^Host: testhost:8001\s*$/ms', "Host Header OK" );
 like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
 
-$res = NPTest->testCmd("./$plugin -v -I $host_tcp_http -p 80 -k 'Host: testhost:8001'");
+$res = MPTest->testCmd("./$plugin -v -I $host_tcp_http -p 80 -k 'Host: testhost:8001'");
 like( $res->output, '/^Host: testhost:8001\s*$/ms', "Host Header OK" );
 like( $res->output, '/CURLOPT_URL: http:\/\/'.$host_tcp_http.':80\//ms', "Url OK" );
 
 SKIP: {
         skip "No internet access", 4 if $internet_access eq "no";
 
-        $res = NPTest->testCmd("./$plugin -v -H $host_tls_http -S");
+        $res = MPTest->testCmd("./$plugin -v -H $host_tls_http -S");
         like( $res->output, '/^Host: '.$host_tls_http.'\s*$/ms', "Host Header OK" );
 
-        $res = NPTest->testCmd("./$plugin -v -H $host_tls_http:8080 -S -p 443");
+        $res = MPTest->testCmd("./$plugin -v -H $host_tls_http:8080 -S -p 443");
         like( $res->output, '/^Host: '.$host_tls_http.':8080\s*$/ms', "Host Header OK" );
 
-        $res = NPTest->testCmd("./$plugin -v -H $host_tls_http:443 -S -p 443");
+        $res = MPTest->testCmd("./$plugin -v -H $host_tls_http:443 -S -p 443");
         like( $res->output, '/^Host: '.$host_tls_http.'\s*$/ms', "Host Header OK" );
 
-        $res = NPTest->testCmd("./$plugin -v -H $host_tls_http -D -S -p 443");
+        $res = MPTest->testCmd("./$plugin -v -H $host_tls_http -D -S -p 443");
         like( $res->output, '/(^Host: '.$host_tls_http.'\s*$)|(cURL returned 60)/ms', "Host Header OK" );
 };
 
 SKIP: {
         skip "No host serving monitoring in index file", 7 unless $host_tcp_http2;
 
-        $res = NPTest->testCmd( "./$plugin -H $host_tcp_http2 -r 'monitoring'" );
+        $res = MPTest->testCmd( "./$plugin -H $host_tcp_http2 -r 'monitoring'" );
         cmp_ok( $res->return_code, "==", 0, "Got a reference to 'monitoring'");
 
-        $res = NPTest->testCmd( "./$plugin -H $host_tcp_http2 -r 'mONiTORing'" );
+        $res = MPTest->testCmd( "./$plugin -H $host_tcp_http2 -r 'mONiTORing'" );
         cmp_ok( $res->return_code, "==", 2, "Not got 'mONiTORing'");
         like ( $res->output, "/pattern not found/", "Error message says 'pattern not found'");
 
-        $res = NPTest->testCmd( "./$plugin -H $host_tcp_http2 -R 'mONiTORing'" );
+        $res = MPTest->testCmd( "./$plugin -H $host_tcp_http2 -R 'mONiTORing'" );
         cmp_ok( $res->return_code, "==", 0, "But case insensitive doesn't mind 'mONiTORing'");
 
-        $res = NPTest->testCmd( "./$plugin -H $host_tcp_http2 -r 'monitoring' --invert-regex" );
+        $res = MPTest->testCmd( "./$plugin -H $host_tcp_http2 -r 'monitoring' --invert-regex" );
         cmp_ok( $res->return_code, "==", 2, "Invert results work when found");
         like ( $res->output, "/pattern found/", "Error message says 'pattern found'");
 
-        $res = NPTest->testCmd( "./$plugin -H $host_tcp_http2 -r 'mONiTORing' --invert-regex" );
+        $res = MPTest->testCmd( "./$plugin -H $host_tcp_http2 -r 'mONiTORing' --invert-regex" );
         cmp_ok( $res->return_code, "==", 0, "And also when not found");
 }
 SKIP: {
         skip "No internet access", 28 if $internet_access eq "no";
 
-        $res = NPTest->testCmd(
+        $res = MPTest->testCmd(
                 "./$plugin --ssl $host_tls_http"
                 );
         cmp_ok( $res->return_code, '==', 0, "Can read https for $host_tls_http" );
 
-        $res = NPTest->testCmd( "./$plugin -C 1 --ssl $host_tls_http" );
+        $res = MPTest->testCmd( "./$plugin -C 1 --ssl $host_tls_http" );
         cmp_ok( $res->return_code, '==', 0, "Checking certificate for $host_tls_http");
         like  ( $res->output, "/Certificate '$host_tls_cert' will expire on/", "Output OK" );
         my $saved_cert_output = $res->output;
 
-        $res = NPTest->testCmd( "./$plugin -C 8000,1 --ssl $host_tls_http" );
+        $res = MPTest->testCmd( "./$plugin -C 8000,1 --ssl $host_tls_http" );
         cmp_ok( $res->return_code, '==', 1, "Checking certificate for $host_tls_http");
         like  ( $res->output, qr/WARNING - Certificate '$host_tls_cert' expires in \d+ day/, "Output Warning" );
 
-        $res = NPTest->testCmd( "./$plugin $host_tls_http -C 1" );
+        $res = MPTest->testCmd( "./$plugin $host_tls_http -C 1" );
         is( $res->return_code, 0, "Old syntax for cert checking okay" );
         is( $res->output, $saved_cert_output, "Same output as new syntax" );
 
-        $res = NPTest->testCmd( "./$plugin -H $host_tls_http -C 1" );
+        $res = MPTest->testCmd( "./$plugin -H $host_tls_http -C 1" );
         is( $res->return_code, 0, "Updated syntax for cert checking okay" );
         is( $res->output, $saved_cert_output, "Same output as new syntax" );
 
-        $res = NPTest->testCmd( "./$plugin -C 1 $host_tls_http" );
+        $res = MPTest->testCmd( "./$plugin -C 1 $host_tls_http" );
         cmp_ok( $res->output, 'eq', $saved_cert_output, "--ssl option automatically added");
 
-        $res = NPTest->testCmd( "./$plugin $host_tls_http -C 1" );
+        $res = MPTest->testCmd( "./$plugin $host_tls_http -C 1" );
         cmp_ok( $res->output, 'eq', $saved_cert_output, "Old syntax for cert checking still works");
 
         # run some certificate checks with faketime
         SKIP: {
                 skip "No faketime binary found", 12 if !$faketime;
-                $res = NPTest->testCmd("LC_TIME=C TZ=UTC ./$plugin -C 1 $host_tls_http");
+                $res = MPTest->testCmd("LC_TIME=C TZ=UTC ./$plugin -C 1 $host_tls_http");
                 like($res->output, qr/OK - Certificate '$host_tls_cert' will expire on/, "Catch cert output");
                 is( $res->return_code, 0, "Catch cert output exit code" );
                 my($mon,$day,$hour,$min,$sec,$year) = ($res->output =~ /(\w+)\s+(\d+)\s+(\d+):(\d+):(\d+)\s+(\d+)/);
@@ -180,34 +180,34 @@ SKIP: {
                 my $months = {'Jan' => 0, 'Feb' => 1, 'Mar' => 2, 'Apr' => 3, 'May' => 4, 'Jun' => 5, 'Jul' => 6, 'Aug' => 7, 'Sep' => 8, 'Oct' => 9, 'Nov' => 10, 'Dec' => 11};
                 my $ts   = mktime($sec, $min, $hour, $day, $months->{$mon}, $year-1900);
                 my $time = strftime("%Y-%m-%d %H:%M:%S", localtime($ts));
-                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts))."' ./$plugin -C 1 $host_tls_http");
+                $res = MPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts))."' ./$plugin -C 1 $host_tls_http");
                 like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' just expired/, "Output on expire date");
                 is( $res->return_code, 2, "Output on expire date" );
 
-                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-1))."' ./$plugin -C 1 $host_tls_http");
+                $res = MPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-1))."' ./$plugin -C 1 $host_tls_http");
                 like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expires in 0 minutes/, "cert expires in 1 second output");
                 is( $res->return_code, 2, "cert expires in 1 second exit code" );
 
-                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-120))."' ./$plugin -C 1 $host_tls_http");
+                $res = MPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-120))."' ./$plugin -C 1 $host_tls_http");
                 like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expires in 2 minutes/, "cert expires in 2 minutes output");
                 is( $res->return_code, 2, "cert expires in 2 minutes exit code" );
 
-                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-7200))."' ./$plugin -C 1 $host_tls_http");
+                $res = MPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-7200))."' ./$plugin -C 1 $host_tls_http");
                 like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expires in 2 hours/, "cert expires in 2 hours output");
                 is( $res->return_code, 2, "cert expires in 2 hours exit code" );
 
-                $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts+1))."' ./$plugin -C 1 $host_tls_http");
+                $res = MPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts+1))."' ./$plugin -C 1 $host_tls_http");
                 like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expired on/, "Certificate expired output");
                 is( $res->return_code, 2, "Certificate expired exit code" );
         };
 
-        $res = NPTest->testCmd( "./$plugin --ssl $host_tls_http -E" );
+        $res = MPTest->testCmd( "./$plugin --ssl $host_tls_http -E" );
         like  ( $res->output, '/time_connect=[\d\.]+/', 'Extended Performance Data Output OK' );
         like  ( $res->output, '/time_ssl=[\d\.]+/', 'Extended Performance Data SSL Output OK' );
 
-        $res = NPTest->testCmd( "./$plugin -H www.mozilla.com -u /firefox -f curl" );
+        $res = MPTest->testCmd( "./$plugin -H www.mozilla.com -u /firefox -f curl" );
         is( $res->return_code, 0, "Redirection based on location is okay");
 
-        $res = NPTest->testCmd( "./$plugin -H www.mozilla.com --extended-perfdata" );
+        $res = MPTest->testCmd( "./$plugin -H www.mozilla.com --extended-perfdata" );
         like  ( $res->output, '/time_connect=[\d\.]+/', 'Extended Performance Data Output OK' );
 }

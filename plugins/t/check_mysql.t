@@ -12,7 +12,7 @@
 
 use strict;
 use Test::More;
-use NPTest;
+use MPTest;
 
 use vars qw($tests);
 
@@ -31,44 +31,44 @@ my $result;
 
 SKIP: {
 	skip "No mysql server defined", 5 unless $mysqlserver;
-	$result = NPTest->testCmd("./check_mysql -H $mysqlserver $mysql_login_details");
+	$result = MPTest->testCmd("./check_mysql -H $mysqlserver $mysql_login_details");
 	cmp_ok( $result->return_code, '==', 0, "Login okay");
 
-	$result = NPTest->testCmd("./check_mysql -H $mysqlserver -u dummy -pdummy");
+	$result = MPTest->testCmd("./check_mysql -H $mysqlserver -u dummy -pdummy");
 	cmp_ok( $result->return_code, '==', 2, "Login failure");
 	like( $result->output, $bad_login_output, "Expected login failure message");
 
-	$result = NPTest->testCmd("./check_mysql -S -H $mysqlserver $mysql_login_details");
+	$result = MPTest->testCmd("./check_mysql -S -H $mysqlserver $mysql_login_details");
 	cmp_ok( $result->return_code, "==", 1, "No slaves defined" );
 	like( $result->output, "/No slaves defined/", "Correct error message");
 }
 
 SKIP: {
 	skip "No mysql socket defined", 5 unless $mysqlsocket;
-	$result = NPTest->testCmd("./check_mysql -s $mysqlsocket $mysql_login_details");
+	$result = MPTest->testCmd("./check_mysql -s $mysqlsocket $mysql_login_details");
 	cmp_ok( $result->return_code, '==', 0, "Login okay");
 
-	$result = NPTest->testCmd("./check_mysql -s $mysqlsocket -u dummy -pdummy");
+	$result = MPTest->testCmd("./check_mysql -s $mysqlsocket -u dummy -pdummy");
 	cmp_ok( $result->return_code, '==', 2, "Login failure");
 	like( $result->output, $bad_login_output, "Expected login failure message");
 
-	$result = NPTest->testCmd("./check_mysql -S -s $mysqlsocket $mysql_login_details");
+	$result = MPTest->testCmd("./check_mysql -S -s $mysqlsocket $mysql_login_details");
 	cmp_ok( $result->return_code, "==", 1, "No slaves defined" );
 	like( $result->output, "/No slaves defined/", "Correct error message");
 }
 
 SKIP: {
 	skip "No mysql server with slaves defined", 5 unless $with_slave;
-	$result = NPTest->testCmd("./check_mysql -H $with_slave $with_slave_login");
+	$result = MPTest->testCmd("./check_mysql -H $with_slave $with_slave_login");
 	cmp_ok( $result->return_code, '==', 0, "Login okay");
 
-	$result = NPTest->testCmd("./check_mysql -S -H $with_slave $with_slave_login");
+	$result = MPTest->testCmd("./check_mysql -S -H $with_slave $with_slave_login");
 	cmp_ok( $result->return_code, "==", 0, "Slaves okay" );
 
-	$result = NPTest->testCmd("./check_mysql -S -H $with_slave $with_slave_login -w 60");
+	$result = MPTest->testCmd("./check_mysql -S -H $with_slave $with_slave_login -w 60");
 	cmp_ok( $result->return_code, '==', 0, 'Slaves are not > 60 seconds behind');
 
-	$result = NPTest->testCmd("./check_mysql -S -H $with_slave $with_slave_login -w 60:");
+	$result = MPTest->testCmd("./check_mysql -S -H $with_slave $with_slave_login -w 60:");
 	cmp_ok( $result->return_code, '==', 1, 'Alert warning if < 60 seconds behind');
 	like( $result->output, "/^SLOW_SLAVE WARNING:/", "Output okay");
 }

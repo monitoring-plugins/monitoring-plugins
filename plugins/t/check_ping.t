@@ -6,7 +6,7 @@
 
 use strict;
 use Test::More;
-use NPTest;
+use MPTest;
 
 plan tests => 20;
 
@@ -27,31 +27,31 @@ my $hostname_invalid   = getTestParameter( "MP_HOSTNAME_INVALID",
 
 my $res;
 
-$res = NPTest->testCmd(
+$res = MPTest->testCmd(
 	"./check_ping -H $host_responsive -w 10,100% -c 10,100% -p 1"
 	);
 is( $res->return_code, 0, "Syntax ok" );
 like( $res->output, $successOutput, "Output OK" );
 
-$res = NPTest->testCmd(
+$res = MPTest->testCmd(
 	"./check_ping -H $host_responsive -w 0,0% -c 10,100% -p 1"
 	);
 is( $res->return_code, 1, "Syntax ok, with forced warning" );
 like( $res->output, $failureOutput, "Output OK" );
 
-$res = NPTest->testCmd(
+$res = MPTest->testCmd(
 	"./check_ping -H $host_responsive -w 0,0% -c 0,0% -p 1"
 	);
 is( $res->return_code, 2, "Syntax ok, with forced critical" );
 like( $res->output, $failureOutput, "Output OK" );
 
-$res = NPTest->testCmd(
+$res = MPTest->testCmd(
 	"./check_ping $host_responsive 100 100 1000 1000 -p 1"
 	);
 is( $res->return_code, 0, "Old syntax ok" );
 like( $res->output, $successOutput, "Output OK" );
 
-$res = NPTest->testCmd(
+$res = MPTest->testCmd(
 	"./check_ping $host_responsive 0 0 0 0 -p 1"
 	);
 is( $res->return_code, 2, "Old syntax, with forced critical" );
@@ -70,7 +70,7 @@ open(F, "../config.h") or die "Cannot open ../config.h";
 my $has_timeout;
 $has_timeout = 1 if (scalar @_ == 2);	# Need both defined
 close F;
-$res = NPTest->testCmd(
+$res = MPTest->testCmd(
 	"./check_ping -H $host_nonresponsive -w 10,100% -c 10,100% -p 1 -t 1"
 	);
 is( $res->return_code, 2, "Timeout 1 second - host nonresponsive" );
@@ -80,7 +80,7 @@ if ($has_timeout) {
 	like( $res->output, '/timed out/', "Error contains 'timed out' string" );
 }
 
-$res = NPTest->testCmd(
+$res = MPTest->testCmd(
 	"./check_ping -H $host_nonresponsive -w 10,100% -c 10,100% -p 1 -t 15"
 	);
 is( $res->return_code, 2, "Timeout 15 seconds - host nonresponsive" );
@@ -89,19 +89,19 @@ like( $res->output, '/100%/', "Error contains '100%' string (for 100% packet los
 
 
 
-$res = NPTest->testCmd(
+$res = MPTest->testCmd(
 	"./check_ping $host_nonresponsive -p 1 -t 15 100 100 1000 10000"
 	);
 is( $res->return_code, 2, "Old syntax: Timeout - host nonresponsive" );
 like( $res->output, '/100%/', "Error contains '100%' string (for 100% packet loss)" );
 
-$res = NPTest->testCmd(
+$res = MPTest->testCmd(
 	"./check_ping $hostname_invalid 0 0 0 0 -p 1 -t 1"
 	);
 is( $res->return_code, 3, "Invalid hostname" );
 like( $res->output, '/invalid hostname/i', "Error contains 'invalid hostname' string");
 
-$res = NPTest->testCmd(
+$res = MPTest->testCmd(
 	"./check_ping -w 100,10% -c 200,20%"
 	);
 is( $res->return_code, 3, "No hostname" );
