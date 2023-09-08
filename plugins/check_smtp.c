@@ -289,7 +289,7 @@ main (int argc, char **argv)
 		}
 
 		}
-#endif
+#endif /* HAVE_SSL */
 
 #ifdef USE_OPENSSL
 		if ( (use_ssl || use_starttls) && check_cert ) {
