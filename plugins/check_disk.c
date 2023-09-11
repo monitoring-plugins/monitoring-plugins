@@ -131,9 +131,6 @@ bool stat_path (struct parameter_list *p);
 void get_stats (struct parameter_list *p, struct fs_usage *fsp);
 void get_path_stats (struct parameter_list *p, struct fs_usage *fsp);
 
-double w_dfp = -1.0;
-double c_dfp = -1.0;
-char *path;
 char *exclude_device;
 char *units;
 uintmax_t mult = 1024 * 1024;
@@ -889,7 +886,7 @@ process_arguments (int argc, char **argv)
   if (crit_usedspace_percent == NULL && argc > c && is_intnonneg (argv[c]))
     crit_usedspace_percent = argv[c++];
 
-  if (argc > c && path == NULL) {
+  if (argc > c) {
     se = np_add_parameter(&path_select_list, strdup(argv[c++]));
     path_selected = TRUE;
     set_all_thresholds(se);
