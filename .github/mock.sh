@@ -19,6 +19,18 @@ cd ${BASE_PATH}
 
 dnf -y --setopt="tsflags=nodocs" update && \
   if [ ${distro_id} != "fedora" ]; then dnf -y --setopt="tsflags=nodocs" install epel-release; else platform_id="$(echo ${platform_id} | sed s/^f/fc/)"; fi && \
+  case ${distro_id} in
+    ol)
+      case ${platform_id} in
+        el9)
+          dnf config-manager --add-repo https://copr.fedorainfracloud.org/coprs/g/mock/mock-stable/repo/epel-9/group_mock-mock-stable-epel-9.repo
+          ;;
+        el8)
+          dnf config-manager --add-repo https://copr.fedorainfracloud.org/coprs/g/mock/mock-stable/repo/epel-8/group_mock-mock-stable-epel-8.repo
+          ;;
+      esac
+      ;;
+  esac
   dnf -y --setopt="tsflags=nodocs" install mock rpm-build git-core && \
   usermod -a -G mock $(whoami)
 SRC_RPM="monitoring-plugins-*-1.${platform_id}.src.rpm"
