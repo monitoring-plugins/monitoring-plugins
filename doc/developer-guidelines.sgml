@@ -733,9 +733,9 @@ setup the tests. Run "make test" to run all the tests.
 	<para>Variables should be declared at the beginning of code blocks and
 	not inline because of portability with older compilers.</para>
 
-	<para>You should also avoid using the type "bool" and its values
-	"true" and "false". Instead use the "int" type and the plugins' own
-	"TRUE"/"FALSE" values to keep the code uniformly.</para>
+	<para>You should use the type "bool" and its values
+	"true" and "false" instead of the "int" type for booleans.
+	</para>
 	</section>
 
 	<section><title>Crediting sources</title>
