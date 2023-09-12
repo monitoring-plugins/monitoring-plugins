@@ -1,6 +1,6 @@
 # translation of fr.po to
 # Messages français pour Nagios Plugins
-# Copyright (C) 2003-2004 Nagios Plugin Development Group
+# Copyright (C) 2003-2023 Nagios Plugin Development Group
 # This file is distributed under the same license as the nagiosplug package.
 #
 # Karl DeBisschop <kdebisschop@users.sourceforge.net>, 2003.
@@ -8,14 +8,13 @@
 # Thomas Guyot-Sionnest <dermoth@aei.ca>, 2007.
 msgid ""
 msgstr ""
-"Project-Id-Version: fr\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
 "POT-Creation-Date: 2023-09-05 00:31+0200\n"
 "PO-Revision-Date: 2010-04-21 23:38-0400\n"
-"Last-Translator: Thomas Guyot-Sionnest <dermoth@aei.ca>\n"
-"Language-Team: Nagios Plugin Development Mailing List <nagiosplug-"
-"devel@monitoring-plugins.org>\n"
-"Language: \n"
+"Last-Translator: \n"
+"Language-Team: Monitoring Plugin Development Team <devel@monitoring-plugins.org>\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
