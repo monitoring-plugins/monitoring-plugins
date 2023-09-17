@@ -10,10 +10,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-09-05 00:31+0200\n"
+"POT-Creation-Date: 2023-09-17 23:47+0200\n"
 "PO-Revision-Date: 2010-04-21 23:38-0400\n"
 "Last-Translator: \n"
-"Language-Team: Monitoring Plugin Development Team <devel@monitoring-plugins.org>\n"
+"Language-Team: Monitoring Plugin Development Team <devel@monitoring-plugins."
+"org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -4044,9 +4045,10 @@ msgstr ""
 msgid "Port number must be a positive integer"
 msgstr "Le numéro du port doit être un nombre entier positif"
 
-#, c-format
-msgid "Server answer: %s"
-msgstr "Réponse du serveur: %s"
+#, fuzzy, c-format
+msgid "SSH CRITICAL - Invalid protocol version control string %s\n"
+msgstr ""
+"SSH AVERTISSEMENT - %s (protocole %s) différence de version, attendu'%s'\n"
 
 #, fuzzy, c-format
 msgid "SSH CRITICAL - %s (protocol %s) version mismatch, expected '%s'\n"
@@ -5320,6 +5322,10 @@ msgstr ""
 
 msgid "The -v switch can be specified several times for increased verbosity."
 msgstr ""
+
+#, c-format
+#~ msgid "Server answer: %s"
+#~ msgstr "Réponse du serveur: %s"
 
 #~ msgid "Path or partition (may be repeated)"
 #~ msgstr "Répertoire ou partition (peut être utilisé plusieurs fois)"

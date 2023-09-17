@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-09-12 01:33+0200\n"
+"POT-Creation-Date: 2023-09-17 23:47+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3829,7 +3829,7 @@ msgid "Port number must be a positive integer"
 msgstr ""
 
 #, c-format
-msgid "Server answer: %s"
+msgid "SSH CRITICAL - Invalid protocol version control string %s\n"
 msgstr ""
 
 #, c-format
