@@ -395,7 +395,7 @@ main (int argc, char **argv)
 	ok( temp_state_data==NULL, "Older data version gives NULL" );
 	temp_state_key->data_version=54;
 
-	temp_state_key->_filename="var/nonexistant";
+	temp_state_key->_filename="var/nonexistent";
 	temp_state_data = np_state_read();
 	ok( temp_state_data==NULL, "Missing file gives NULL" );
 	ok( this_monitoring_plugin->state->state_data==NULL, "No state information" );

@@ -1668,7 +1668,7 @@ void print_help(void)
 
   printf ("\n");
   printf ("%s\n", _("Notes:"));
-	printf (" %s\n", _("- This plugin requres that the MRTGEXT.NLM file from James Drews' MRTG"));
+	printf (" %s\n", _("- This plugin requires that the MRTGEXT.NLM file from James Drews' MRTG"));
   printf (" %s\n", _("  extension for NetWare be loaded on the Novell servers you wish to check."));
   printf (" %s\n", _("  (available from http://www.engr.wisc.edu/~drews/mrtg/)"));
   printf (" %s\n", _("- Values for critical thresholds should be lower than warning thresholds"));

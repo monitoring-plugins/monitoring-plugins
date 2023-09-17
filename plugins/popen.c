@@ -14,7 +14,7 @@
 * FILE * spopen(const char *);
 * int spclose(FILE *);
 * 
-* Code taken with liitle modification from "Advanced Programming for the Unix
+* Code taken with little modification from "Advanced Programming for the Unix
 * Environment" by W. Richard Stevens
 * 
 * This is considered safe in that no shell is spawned, and the environment

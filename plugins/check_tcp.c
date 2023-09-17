@@ -128,7 +128,7 @@ main (int argc, char **argv)
 			SERVICE[i] = toupper(SERVICE[i]);
 	}
 
-	/* set up a resonable buffer at first (will be realloc()'ed if
+	/* set up a reasonable buffer at first (will be realloc()'ed if
 	 * user specifies other options) */
 	server_expect = calloc(sizeof(char *), 2);
 

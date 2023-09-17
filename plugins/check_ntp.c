@@ -10,7 +10,7 @@
 * 
 * This file contains the check_ntp plugin
 * 
-* This plugin to check ntp servers independant of any commandline
+* This plugin to check ntp servers independent of any commandline
 * programs or external libraries.
 * 
 * 
@@ -79,7 +79,7 @@ typedef struct {
 /* this structure holds data about results from querying offset from a peer */
 typedef struct {
 	time_t waiting;         /* ts set when we started waiting for a response */
-	int num_responses;      /* number of successfully recieved responses */
+	int num_responses;      /* number of successfully received responses */
 	uint8_t stratum;        /* copied verbatim from the ntp_message */
 	double rtdelay;         /* converted from the ntp_message */
 	double rtdisp;          /* converted from the ntp_message */
@@ -100,7 +100,7 @@ typedef struct {
 	                        /* NB: not necessarily NULL terminated! */
 } ntp_control_message;
 
-/* this is an association/status-word pair found in control packet reponses */
+/* this is an association/status-word pair found in control packet responses */
 typedef struct {
 	uint16_t assoc;
 	uint16_t status;
@@ -575,7 +575,7 @@ double jitter_request(int *status){
 			}
 		}
 	}
-	if(verbose) printf("%d candiate peers available\n", num_candidates);
+	if(verbose) printf("%d candidate peers available\n", num_candidates);
 	if(verbose && syncsource_found) printf("synchronization source found\n");
 	if(! syncsource_found){
 		*status = STATE_UNKNOWN;
@@ -597,7 +597,7 @@ double jitter_request(int *status){
 				/* By spec, putting the variable name "jitter"  in the request
 				 * should cause the server to provide _only_ the jitter value.
 				 * thus reducing net traffic, guaranteeing us only a single
-				 * datagram in reply, and making intepretation much simpler
+				 * datagram in reply, and making interpretation much simpler
 				 */
 				/* Older servers doesn't know what jitter is, so if we get an
 				 * error on the first pass we redo it with "dispersion" */

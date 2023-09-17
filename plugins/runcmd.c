@@ -44,6 +44,8 @@
 # include <sys/wait.h>
 #endif
 
+#include "./utils.h"
+
 /** macros **/
 #ifndef WEXITSTATUS
 # define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
@@ -203,7 +205,7 @@ np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
 	}
 
 	/* parent picks up execution here */
-	/* close childs descriptors in our address space */
+	/* close children descriptors in our address space */
 	close(pfd[1]);
 	close(pfderr[1]);
 

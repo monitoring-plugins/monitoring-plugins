@@ -257,6 +257,6 @@ void usage() {
   printf("\tRSS      - Real memory usage (kilobytes)\n");
   printf("\t%%CPU     - CPU usage\n");
   printf("\tCOMMAND  - Command being run\n");
-  printf("\tARGS     - Full command line with arguements\n");
+  printf("\tARGS     - Full command line with arguments\n");
   return;
 }
